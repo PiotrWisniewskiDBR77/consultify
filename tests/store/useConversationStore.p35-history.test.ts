@@ -24,6 +24,11 @@ vi.mock('@/services/api', () => ({ Api: mockApi }));
 
 vi.mock('@/i18n', () => ({
   isValidLanguage: (lang: string) => ['pl', 'en', 'de'].includes(lang),
+  normalizeLanguageCode: (lang?: string | null) =>
+    String(lang || 'en')
+      .trim()
+      .toLowerCase()
+      .split('-')[0],
 }));
 
 describe('P35-B: useConversationStore — History Library', () => {

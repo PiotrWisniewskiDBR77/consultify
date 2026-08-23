@@ -1,6 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 import { MoreHorizontal } from 'lucide-react';
-import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { actionPillClass, type PillColorScheme } from './previewStyles';
@@ -83,6 +83,10 @@ const OverflowTrigger: React.FC<{
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<{ top: number; left: number; maxHeight: number } | null>(null);
+  const closeAndRestoreFocus = useCallback(() => {
+    onClose();
+    requestAnimationFrame(() => triggerRef.current?.focus());
+  }, [onClose]);
 
   const place = useCallback(() => {
     const trigger = triggerRef.current;
@@ -121,9 +125,21 @@ const OverflowTrigger: React.FC<{
     };
   }, [open, place]);
 
+  useEffect(() => {
+    if (!open) return undefined;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      closeAndRestoreFocus();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [closeAndRestoreFocus, open]);
+
   return (
     <div className="relative shrink-0">
       <button
+        type="button"
         ref={triggerRef}
         onClick={onToggle}
         aria-label={label}
@@ -136,7 +152,7 @@ const OverflowTrigger: React.FC<{
       {open && typeof document !== 'undefined'
         ? createPortal(
             <>
-              <div className="fixed inset-0 z-dropdown" onClick={onClose} />
+              <div className="fixed inset-0 z-dropdown" onClick={closeAndRestoreFocus} />
               <div
                 ref={menuRef}
                 role="menu"
@@ -153,11 +169,12 @@ const OverflowTrigger: React.FC<{
                   const Icon = btn.icon;
                   return (
                     <button
+                      type="button"
                       key={i}
                       role="menuitem"
                       onClick={() => {
                         btn.onClick();
-                        onClose();
+                        closeAndRestoreFocus();
                       }}
                       disabled={btn.disabled}
                       className="w-full flex items-center gap-2 px-3 py-2 text-left text-xs hover:bg-c-surface text-c-text-secondary disabled:opacity-50 disabled:cursor-not-allowed"
@@ -244,6 +261,7 @@ export const PreviewActionBar: React.FC<PreviewActionBarProps> = ({
               const Icon = btn.icon;
               return (
                 <button
+                  type="button"
                   key={btnIdx}
                   onClick={btn.onClick}
                   disabled={btn.disabled}

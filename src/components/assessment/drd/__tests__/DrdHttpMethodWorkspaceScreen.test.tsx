@@ -18,7 +18,7 @@
  * re-derive — mocking a full offline/reconnect HTTP sequence through the
  * UI would mostly re-test the same mock.)
  */
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -113,6 +113,7 @@ describe('requirement 1 — flag OFF: legacy runtime, zero HTTP calls', () => {
 
     // The legacy path's own indicator — proves which store actually backed
     // this paint (DEMO_LOCAL), not merely "no HTTP mock was hit by luck".
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
     const indicator = screen.getAllByTestId('drd-source-indicator')[0];
     expect(indicator).toHaveAttribute('data-source', 'DEMO_LOCAL');
   });
@@ -128,6 +129,7 @@ describe('requirement 2 — flag ON: DrdHttpSessionRuntime, indicator shows SERV
     expect(await screen.findByTestId('method-workspace-shell')).toBeInTheDocument();
     expect(hoisted.createSession).toHaveBeenCalledTimes(1);
 
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
     const indicator = await screen.findByTestId('drd-source-indicator');
     expect(indicator).toHaveAttribute('data-source', 'SERVER');
   });
@@ -180,11 +182,16 @@ describe('canonical cold reopen identity and read-only contract', () => {
     hoisted.listEvents.mockResolvedValue([]);
     render(<DrdHttpMethodWorkspaceScreen storage={makeMemoryStorage()} demoSessionId="sess-http-1" />);
 
-    expect(await screen.findByText('ID: sess-http-1')).toBeInTheDocument();
-    expect(screen.getByText(`method: ${DRD_METHOD_PACK_ID}@${DRD_METHOD_PACK_VERSION}`)).toBeInTheDocument();
-    expect(screen.getByText('session: v7')).toBeInTheDocument();
+    expect(await screen.findByText(/DRD/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+    const settings = screen.getByTestId('method-workspace-settings');
+    expect(within(settings).getByText('Sesja sess-http-1')).toBeInTheDocument();
+    expect(within(settings).getByText(new RegExp(DRD_METHOD_PACK_VERSION.replaceAll('.', '\\.')))).toBeInTheDocument();
+    expect(within(settings).getByText('Wersja sesji v7')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Zapisz teraz' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Pracuję samodzielnie' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Pracuję samodzielnie' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Prowadzi Teresa' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Settings' })).toBeEnabled();
   });
 });
 
@@ -199,6 +206,7 @@ describe('requirement 3 — a 409 on write shows an explicit conflict screen, ne
 
     render(<DrdHttpMethodWorkspaceScreen storage={storage} demoSessionId="sess-http-1" />);
 
+    fireEvent.click(await screen.findByRole('button', { name: 'Settings' }));
     expect(await screen.findByTestId('freeze-button')).toBeDisabled();
     expect(hoisted.freeze).not.toHaveBeenCalled();
   });
@@ -212,6 +220,7 @@ describe('requirement 3 — a 409 on write shows an explicit conflict screen, ne
     );
 
     render(<DrdHttpMethodWorkspaceScreen storage={storage} demoSessionId="sess-http-1" />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Settings' }));
     fireEvent.click(await screen.findByRole('button', { name: /Wyślij do przeglądu/i }));
 
     expect(await screen.findByTestId('drd-http-conflict-view')).toBeInTheDocument();

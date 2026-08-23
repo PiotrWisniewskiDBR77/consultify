@@ -22,6 +22,7 @@ import {
   Briefcase,
   Calculator,
   CheckCircle2,
+  ExternalLink,
   GitFork,
   History,
   Loader2,
@@ -61,6 +62,7 @@ import {
   startSheetGeneration,
 } from '@/services/deliverablesGeneration';
 
+import type { ActionResult } from '../../actions/registry/types';
 // Z4 transport (fala „Teresa steruje Ideą przez rejestr") — manifest narzędzi z
 // rejestru akcji + wykonawca (ta sama ścieżka, co klik człowieka).
 import {
@@ -69,7 +71,6 @@ import {
   shouldUseLegacyIdeaIntentFallback,
   toServerIdeaActionManifest,
 } from '../../actions/teresaActionManifest';
-import type { ActionResult } from '../../actions/registry/types';
 import { useTeresaVoiceContext } from '../../contexts/TeresaVoiceContext';
 import { useAIStream } from '../../hooks/useAIStream';
 import { useChatActions } from '../../hooks/useChatActions';
@@ -78,7 +79,6 @@ import { useUniversalVoice } from '../../hooks/useUniversalVoice';
 import { Api } from '../../services/api';
 import { V8ChatApi } from '../../services/api/v8';
 import type { GovernedChatHandoffProposal } from '../../services/api/v8/chat';
-import { retiredChatWriteCommand } from '../../utils/chatSlashCommandPolicy';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
 import type { ChatContextAction } from '../../store/slices/uiSlice';
 import { useAIActionsStore } from '../../store/useAIActionsStore';
@@ -102,6 +102,7 @@ import type {
 import { ChatDisplayMode, WorkspaceContext } from '../../types/workspace';
 import { notifyBargeIn } from '../../utils/bargeInToast';
 import { buildPersistedAiResponseMetadata } from '../../utils/chatPersistence';
+import { retiredChatWriteCommand } from '../../utils/chatSlashCommandPolicy';
 import { detectMessageLanguage } from '../../utils/detectMessageLanguage';
 import { cleanTextForSpeech } from '../../utils/textCleaning';
 import { isRtlLanguage } from '../../utils/textDirection';
@@ -116,10 +117,13 @@ import {
   MAX_CHAT_ATTACHMENT_BYTES,
   SUPPORTED_CHAT_ATTACHMENT_LABEL,
 } from './chatAttachmentSupport';
+import {
+  CHAT_HEADER_CONTROL_ACTIVE_CLASS,
+  CHAT_HEADER_ICON_CONTROL_CLASS,
+} from './chatHeaderControlStyles';
 import { pushRecentAttachment } from './chatRecentAttachments';
 import { ChatSignalsPanel } from './ChatSignalsPanel';
 import { ChatSlidingPanel } from './ChatSlidingPanel';
-import { CHAT_HEADER_ICON_CONTROL_CLASS } from './chatHeaderControlStyles';
 import { ContextBadge } from './ContextBadge';
 import {
   detectDocumentIntent,
@@ -143,8 +147,8 @@ import {
   getTeresaEmptyResponseMessage,
   getTeresaStartFailureMessage,
 } from './teresaRuntimeCopy';
-import { getSafeTeresaWelcomeFirstName } from './teresaWelcome';
 import { TeresaTTSPlayer } from './TeresaTTSPlayer';
+import { getHydratedTeresaWelcomeFirstName } from './teresaWelcome';
 import { V8ArtifactRunControl } from './V8ArtifactRunControl';
 import { V8ContextIndicator } from './V8ContextIndicator';
 import { detectWhiteboardIntent } from './whiteboardIntentDetector';
@@ -827,6 +831,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     setAIConfig,
     currentUser,
     currentOrganization,
+    isAuthInitializing,
   } = useAppStore();
 
   const {
@@ -5294,6 +5299,28 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     [setAIConfig]
   );
 
+  const handleCapabilityDeepLink = useCallback(
+    (capabilityId: string, label: string, route: string, prompt: string) => {
+      trackFunnelEvent('chat_capability_deep_linked', {
+        capabilityId,
+        destination: route,
+        returnContext: 'chat',
+      });
+      try {
+        if (typeof window !== 'undefined') {
+          window.sessionStorage.setItem(
+            'consultify.teresa.capabilityReturnContext',
+            JSON.stringify({ capabilityId, label, route, prompt, ts: Date.now() })
+          );
+        }
+      } catch {
+        /* Analytics/navigation must remain available when storage is unavailable. */
+      }
+      navigateToRoute(`${route}${route.includes('?') ? '&' : '?'}from=chat`);
+    },
+    [navigateToRoute]
+  );
+
   const handleCopyMessage = useCallback(
     async (content: string, messageId: string) => {
       try {
@@ -5672,11 +5699,14 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
   const handleSelectBranch = useCallback(
     async (branchId: string) => {
+      setBranchesError(null);
       try {
         await useConversationStore.getState().setActiveConversation(branchId);
       } catch (err) {
         console.error('[UnifiedChatPanel] Failed to switch branch:', err);
-        toast.error(t('branch.switchFailed', 'Could not switch to that branch.'));
+        const message = t('branch.switchFailed', 'Could not switch to that branch.');
+        setBranchesError(message);
+        toast.error(message);
       }
     },
     [t]
@@ -5693,6 +5723,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       const lastRealMsg = [...msgs]
         .reverse()
         .find((m: any) => !String(m.id || '').startsWith('local-'));
+      setBranchesError(null);
       setBranchCreating(true);
       try {
         const res: any = await Api.branchConversation(sourceId, lastRealMsg?.id, name);
@@ -5713,6 +5744,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
   const handleRenameBranch = useCallback(
     async (branchId: string, newName: string) => {
+      setBranchesError(null);
       try {
         await Api.updateConversation(branchId, { title: newName });
         const sourceId = useConversationStore.getState().activeConversationId;
@@ -5720,7 +5752,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         await useConversationStore.getState().fetchConversations?.();
       } catch (err) {
         console.error('[UnifiedChatPanel] Rename branch failed:', err);
-        toast.error(t('branch.renameFailed', 'Could not rename branch.'));
+        const message = t('branch.renameFailed', 'Could not rename branch.');
+        setBranchesError(message);
+        toast.error(message);
       }
     },
     [refreshBranches, t]
@@ -5728,6 +5762,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
   const handleDeleteBranch = useCallback(
     async (branchId: string) => {
+      setBranchesError(null);
       try {
         await Api.deleteConversation(branchId);
         // `branchId` is always one of the active conversation's own children
@@ -5739,7 +5774,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         await useConversationStore.getState().fetchConversations?.();
       } catch (err) {
         console.error('[UnifiedChatPanel] Delete branch failed:', err);
-        toast.error(t('branch.deleteFailed', 'Could not delete branch.'));
+        const message = t('branch.deleteFailed', 'Could not delete branch.');
+        setBranchesError(message);
+        toast.error(message);
       }
     },
     [refreshBranches, t]
@@ -6449,7 +6486,12 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     },
     [setPersistedWorkCanvasWidth, workCanvasWidthPercent]
   );
-  const teresaWelcomeFirstName = getSafeTeresaWelcomeFirstName(currentUser?.firstName);
+  const teresaWelcomeFirstName = getHydratedTeresaWelcomeFirstName({
+    firstName: currentUser?.firstName,
+    userId: currentUser?.id,
+    isAuthenticated: currentUser?.isAuthenticated,
+    isAuthInitializing,
+  });
 
   return (
     <div
@@ -6486,9 +6528,12 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             code reading — bumping the dropdown's own z-index to 9999 did
             NOT fix it, proving the escape was the real cause). */}
         <div
-          className={`relative z-10 flex h-[42px] items-center justify-between ${isCompact ? 'px-3' : 'px-4'} border-b border-c-border-subtle bg-c-surface/50 backdrop-blur-sm`}
+          className={`relative z-10 flex h-[42px] flex-nowrap items-center justify-between gap-y-1 max-[520px]:h-auto max-[520px]:min-h-[42px] max-[520px]:flex-wrap max-[520px]:py-1 ${isCompact ? 'px-3' : 'px-4'} border-b border-c-border-subtle bg-c-surface/50 backdrop-blur-sm`}
         >
-          <div className="flex items-center gap-0.5">
+          <div
+            className="flex min-w-0 flex-1 flex-wrap items-center gap-0.5"
+            data-testid="chat-header-left-controls"
+          >
             <button
               onClick={handleNewChat}
               disabled={isConversationAccessForbidden}
@@ -6505,9 +6550,11 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 onClick={() => toggleSidebar()}
                 data-testid="chat-history-button"
                 data-chat-toggle
-                className={`${CHAT_HEADER_ICON_CONTROL_CLASS} ${isSidebarOpen ? 'ring-1 ring-c-border' : ''}`}
+                className={`${CHAT_HEADER_ICON_CONTROL_CLASS} ${isSidebarOpen ? CHAT_HEADER_CONTROL_ACTIVE_CLASS : ''}`}
                 title={t('aiChat.history', 'History')}
                 aria-label={t('aiChat.history', 'Chat history')}
+                aria-expanded={isSidebarOpen}
+                aria-controls="chat-history-panel"
               >
                 <History size={18} strokeWidth={1.75} />
               </button>
@@ -6573,16 +6620,21 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               <button
                 onClick={() => setSignalsOpen(true)}
                 data-testid="chat-signals-button"
-                className={CHAT_HEADER_ICON_CONTROL_CLASS}
+                className={`${CHAT_HEADER_ICON_CONTROL_CLASS} ${signalsOpen ? CHAT_HEADER_CONTROL_ACTIVE_CLASS : ''}`}
                 title={t('aiChat.signals.title', 'Important signals')}
                 aria-label={t('aiChat.signals.title', 'Important signals')}
+                aria-expanded={signalsOpen}
+                aria-controls="chat-signals-panel"
               >
                 <Sparkles size={18} strokeWidth={1.75} />
               </button>
             )}
           </div>
 
-          <div className="flex items-center gap-0.5">
+          <div
+            className="ml-auto flex shrink-0 flex-wrap items-center justify-end gap-0.5"
+            data-testid="chat-header-right-controls"
+          >
             <V8ArtifactRunControl
               conversationId={activeConversationId}
               defaultGoal={latestUserGoalHint}
@@ -6604,11 +6656,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 onClick={() => setIsWorkPanelOpen((open) => !open)}
                 data-testid="chat-work-panel-button"
                 aria-pressed={showWorkPanel}
-                className={`p-1.5 rounded-lg transition-colors ${
-                  showWorkPanel
-                    ? 'text-c-text bg-c-surface-raised'
-                    : 'text-c-text-muted hover:bg-c-surface-raised hover:text-c-text'
-                }`}
+                className={`${CHAT_HEADER_ICON_CONTROL_CLASS} ${showWorkPanel ? CHAT_HEADER_CONTROL_ACTIVE_CLASS : ''}`}
                 title={t('aiChat.workPanel.open', 'Open work panel')}
                 aria-label={t('aiChat.workPanel.open', 'Open work panel')}
               >
@@ -6637,11 +6685,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                   setAIConfig({ textToSpeech: nextState } as any);
                 }}
                 data-testid="chat-autoread-button"
-                className={`p-1.5 rounded-lg transition-colors ${
-                  autoReadEnabled
-                    ? 'text-c-text bg-c-surface-raised'
-                    : 'text-c-text-muted hover:bg-c-surface-raised hover:text-c-text'
-                }`}
+                aria-pressed={autoReadEnabled}
+                className={`${CHAT_HEADER_ICON_CONTROL_CLASS} ${autoReadEnabled ? CHAT_HEADER_CONTROL_ACTIVE_CLASS : ''}`}
                 title={
                   voiceState.isSpeaking
                     ? t('aiChat.muteNow', 'Mute now')
@@ -6849,6 +6894,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               <div className="mt-6 grid w-full max-w-2xl grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
                 {[
                   {
+                    id: 'market-analysis',
                     icon: Search,
                     label: t('aiChat.homeCards.market.label', 'Analiza rynku'),
                     desc: t(
@@ -6861,10 +6907,12 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                     ),
                     // Market analysis = web-backed market research mode.
                     preset: { marketResearch: true, webSearch: true },
+                    route: '/tools',
                     color: 'text-indigo-500',
                     bg: 'bg-indigo-50 dark:bg-indigo-900/20',
                   },
                   {
+                    id: 'financial-analysis',
                     icon: Calculator,
                     label: t('aiChat.homeCards.finance.label', 'Analiza finansowa'),
                     desc: t('aiChat.homeCards.finance.desc', 'Analyze ROI, budgets, and scenarios'),
@@ -6874,10 +6922,12 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                     ),
                     // Financial analysis = data/metrics/tables-first answer style.
                     preset: { responseStyle: 'analyst' },
+                    route: '/finance',
                     color: 'text-emerald-500',
                     bg: 'bg-emerald-50 dark:bg-emerald-900/20',
                   },
                   {
+                    id: 'classic-consulting',
                     icon: Wrench,
                     label: t('aiChat.homeCards.consulting.label', 'Klasyczny consulting'),
                     desc: t('aiChat.homeCards.consulting.desc', 'Use classic frameworks and tools'),
@@ -6887,10 +6937,12 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                     ),
                     // Classic consulting = multi-consultant persona system prompt.
                     preset: { coThinkerMode: 'multi_consultant' },
+                    route: '/tools',
                     color: 'text-amber-500',
                     bg: 'bg-amber-50 dark:bg-amber-900/20',
                   },
                   {
+                    id: 'digital-transformation',
                     icon: CheckCircle2,
                     label: t('aiChat.homeCards.digital.label', 'Transformacja cyfrowa'),
                     desc: t(
@@ -6903,26 +6955,43 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                     ),
                     // Digital transformation = multi-step deep-thinking diagnosis.
                     preset: { deepResearch: true },
+                    route: '/assessment',
                     color: 'text-blue-500',
                     bg: 'bg-blue-50 dark:bg-blue-900/20',
                   },
                 ].map((cap) => (
-                  <button
+                  <div
                     key={cap.label}
-                    type="button"
-                    onClick={() => handleModeTile(cap.preset, cap.prompt, 'capability-tile')}
                     className="group flex flex-col items-start gap-1.5 rounded-lg border border-c-border-subtle bg-c-surface p-2.5 text-left transition-[background-color,border-color] duration-200 hover:border-c-border-subtle hover:bg-c-surface-raised"
                   >
-                    <div className={`rounded-md p-1.5 ${cap.bg}`}>
-                      <cap.icon size={15} className={cap.color} />
-                    </div>
-                    <div>
-                      <div className="text-[11px] font-semibold text-c-text">{cap.label}</div>
-                      <div className="mt-0.5 text-[9px] leading-tight text-c-text-secondary">
-                        {cap.desc}
+                    <button
+                      type="button"
+                      onClick={() => handleModeTile(cap.preset, cap.prompt, 'capability-tile')}
+                      className="flex w-full flex-1 flex-col items-start gap-1.5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                      aria-label={`${cap.label}: ${cap.desc}. ${t('aiChat.homeCards.startInChat', 'Start in chat')}`}
+                    >
+                      <div className={`rounded-md p-1.5 ${cap.bg}`}>
+                        <cap.icon size={15} className={cap.color} />
                       </div>
-                    </div>
-                  </button>
+                      <div>
+                        <div className="text-[11px] font-semibold text-c-text">{cap.label}</div>
+                        <div className="mt-0.5 text-[9px] leading-tight text-c-text-secondary">
+                          {cap.desc}
+                        </div>
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleCapabilityDeepLink(cap.id, cap.label, cap.route, cap.prompt)
+                      }
+                      className="mt-1 inline-flex items-center gap-1 text-[9px] font-semibold text-c-link hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                      aria-label={`${t('aiChat.homeCards.openCapability', 'Open capability')}: ${cap.label}`}
+                    >
+                      {t('aiChat.homeCards.openCapability', 'Open capability')}
+                      <ExternalLink size={10} aria-hidden="true" />
+                    </button>
+                  </div>
                 ))}
               </div>
 

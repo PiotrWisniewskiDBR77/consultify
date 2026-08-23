@@ -23,6 +23,28 @@ interface Member {
   email?: string;
 }
 
+interface ProjectKnowledgeItem {
+  id: string;
+  kind: 'text' | 'file';
+  title?: string | null;
+  content?: string | null;
+  added_by?: string | null;
+  added_at?: string | null;
+  version?: number | null;
+  content_hash?: string | null;
+  hash_basis?: 'content' | 'source_reference' | null;
+  provenance?: { type?: string; reference?: string | null } | null;
+}
+
+interface ProjectContextHistoryEvent {
+  id: string;
+  timestamp?: string;
+  actorId?: string | null;
+  action?: string;
+  before?: Record<string, unknown>;
+  after?: Record<string, unknown>;
+}
+
 interface ProjectMembersModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -49,7 +71,11 @@ export const ProjectMembersModal: React.FC<ProjectMembersModalProps> = ({
   const [visibility, setVisibility] = useState<'org' | 'private'>(project?.visibility || 'org');
 
   // F3: project knowledge
-  const [knowledge, setKnowledge] = useState<any[]>([]);
+  const [knowledge, setKnowledge] = useState<ProjectKnowledgeItem[]>([]);
+  const [contextHistory, setContextHistory] = useState<ProjectContextHistoryEvent[]>([]);
+  const [contextHistoryStatus, setContextHistoryStatus] = useState<
+    'loading' | 'available' | 'unavailable'
+  >('loading');
   const [snippet, setSnippet] = useState('');
   const [snippetTitle, setSnippetTitle] = useState('');
   const [knBusy, setKnBusy] = useState(false);
@@ -59,11 +85,16 @@ export const ProjectMembersModal: React.FC<ProjectMembersModalProps> = ({
   const canManage = myRole === 'owner' || myRole === 'editor';
 
   const loadKnowledge = useCallback(async () => {
+    setContextHistoryStatus('loading');
     try {
       const res: any = await Api.getProjectKnowledge(projectId);
       setKnowledge(Array.isArray(res?.knowledge) ? res.knowledge : []);
+      setContextHistory(Array.isArray(res?.history) ? res.history : []);
+      setContextHistoryStatus(res?.historyStatus === 'available' ? 'available' : 'unavailable');
     } catch {
-      /* ignore */
+      setKnowledge([]);
+      setContextHistory([]);
+      setContextHistoryStatus('unavailable');
     }
   }, [projectId]);
 
@@ -437,6 +468,19 @@ export const ProjectMembersModal: React.FC<ProjectMembersModalProps> = ({
                           {k.content}
                         </div>
                       )}
+                      <div className="mt-1 text-[9px] text-slate-500 dark:text-slate-400 break-all">
+                        {t('aiChat.knowledge.owner', 'Owner')}: {k.added_by || '—'} ·{' '}
+                        {t('aiChat.knowledge.version', 'Version')}:{' '}
+                        {k.provenance && k.content_hash ? (k.version ?? '—') : 'legacy'} ·{' '}
+                        {t('aiChat.knowledge.source', 'Source')}: {k.provenance?.type || 'legacy'}
+                        {k.content_hash
+                          ? ` · ${
+                              k.hash_basis === 'source_reference'
+                                ? t('aiChat.knowledge.referenceHash', 'Reference hash')
+                                : t('aiChat.knowledge.contentHash', 'Content hash')
+                            }: ${k.content_hash}`
+                          : ''}
+                      </div>
                     </div>
                     {canManage && (
                       <button
@@ -451,6 +495,37 @@ export const ProjectMembersModal: React.FC<ProjectMembersModalProps> = ({
                 ))}
               </div>
             )}
+            <details className="mt-2 rounded-lg border border-slate-200 dark:border-navy-700 px-2 py-1.5">
+              <summary className="cursor-pointer text-[10px] font-medium text-slate-600 dark:text-slate-300">
+                {t('aiChat.knowledge.history', 'Context history')} ({contextHistory.length})
+              </summary>
+              {contextHistoryStatus === 'loading' ? (
+                <div className="py-2 text-[10px] text-slate-500" role="status">
+                  {t('common.loading', 'Loading')}
+                </div>
+              ) : contextHistoryStatus === 'unavailable' ? (
+                <div className="py-2 text-[10px] text-danger-600" role="alert">
+                  {t('aiChat.knowledge.historyUnavailable', 'Context history could not be loaded.')}
+                </div>
+              ) : contextHistory.length === 0 ? (
+                <div className="py-2 text-[10px] text-slate-500">
+                  {t('aiChat.knowledge.historyEmpty', 'No context changes recorded.')}
+                </div>
+              ) : (
+                <ul className="mt-1 space-y-1">
+                  {contextHistory.map((event) => {
+                    const payload = event.after || event.before || {};
+                    return (
+                      <li key={event.id} className="text-[9px] text-slate-500 break-all">
+                        {event.action || '—'} · {event.actorId || '—'} ·{' '}
+                        {String(payload.version ?? '—')} · {String(payload.contentHash ?? '—')} ·{' '}
+                        {event.timestamp ? new Date(event.timestamp).toLocaleString() : '—'}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </details>
           </div>
         </div>
       </div>

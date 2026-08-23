@@ -1,6 +1,19 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const { canvasAuthState } = vi.hoisted(() => ({
+  canvasAuthState: {
+    currentUser: null as { id: string } | null,
+    currentOrganization: null as { id: string; name: string } | null,
+    isAuthInitializing: true,
+  },
+}));
+
+vi.mock('@/store/useAppStore', () => ({
+  useAppStore: (selector?: (state: typeof canvasAuthState) => unknown) =>
+    selector ? selector(canvasAuthState) : canvasAuthState,
+}));
 
 import { WorkCanvasDocumentPanel } from '../../../src/components/AIChat/WorkCanvasDocumentPanel';
 
@@ -35,6 +48,9 @@ describe('WorkCanvasDocumentPanel', () => {
     window.localStorage.setItem('workCanvas.viewMode.v2', 'document');
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
+    canvasAuthState.currentUser = null;
+    canvasAuthState.currentOrganization = null;
+    canvasAuthState.isAuthInitializing = true;
     Object.defineProperty(navigator, 'clipboard', {
       configurable: true,
       value: { writeText: vi.fn(async () => undefined) },
@@ -48,6 +64,30 @@ describe('WorkCanvasDocumentPanel', () => {
       value: vi.fn(),
     });
     vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
+  });
+
+  it('contains Canvas menu in the viewport and restores trigger focus on Escape/outside close', async () => {
+    const user = userEvent.setup();
+    render(<WorkCanvasDocumentPanel />);
+    await screen.findByTestId('canvas-document-view');
+
+    const trigger = screen.getByRole('button', { name: /Canvas menu/i });
+    await user.click(trigger);
+    const menu = screen.getByTestId('canvas-diagnostics-menu');
+    expect(menu).toHaveFocus();
+    expect(menu).toHaveClass('z-50', 'overscroll-contain', 'overflow-y-auto', 'bg-[#ffffff]');
+    expect(menu).toHaveClass('dark:bg-[#151E32]');
+    expect(menu.style.maxHeight).toContain('calc(100dvh');
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+    await waitFor(() => expect(screen.queryByTestId('canvas-diagnostics-menu')).toBeNull());
+    expect(trigger).toHaveFocus();
+
+    await user.click(trigger);
+    expect(screen.getByTestId('canvas-diagnostics-menu')).toHaveFocus();
+    fireEvent.mouseDown(document.body);
+    await waitFor(() => expect(screen.queryByTestId('canvas-diagnostics-menu')).toBeNull());
+    expect(trigger).toHaveFocus();
   });
 
   it('switches between document and Markdown views from the same source', async () => {
@@ -2853,5 +2893,292 @@ describe('WorkCanvasDocumentPanel', () => {
       expect.stringContaining('/api/work-canvas/drafts/draft-tryb-b'),
       expect.anything()
     );
+  });
+
+  it('locks an async command synchronously and exposes its loading state', async () => {
+    let resolveOutput!: (response: Response) => void;
+    const outputResponse = new Promise<Response>((resolve) => {
+      resolveOutput = resolve;
+    });
+    const fetchMock = vi.fn((url: string, init?: RequestInit) => {
+      if (url === '/api/work-canvas/drafts') {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            data: {
+              id: 'draft-command-lock',
+              title: 'Company Work Note',
+              contentMd: '# Company Work Note',
+              saveState: 'saved',
+              lifecycleState: 'draft',
+              markdownProjectionStatus: 'synced',
+            },
+          }),
+        } as Response);
+      }
+      if (url === '/api/work-canvas/drafts/draft-command-lock/create-output') {
+        expect(init?.method).toBe('POST');
+        return outputResponse;
+      }
+      throw new Error(`Unexpected fetch ${url}`);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<WorkCanvasDocumentPanel />);
+    await screen.findByTestId('canvas-document-view');
+
+    const command = screen.getByRole('button', { name: /Create presentation/i });
+    // Same event-loop double activation previously crossed the React render
+    // boundary twice. The synchronous ref lock must permit one command only.
+    fireEvent.click(command);
+    fireEvent.click(command);
+
+    await waitFor(() => expect(command).toBeDisabled());
+    expect(command).toHaveAttribute('aria-busy', 'true');
+    expect(command).toHaveAttribute('data-action-status', 'loading');
+    await waitFor(() =>
+      expect(
+        fetchMock.mock.calls.filter(
+          ([url]) => url === '/api/work-canvas/drafts/draft-command-lock/create-output'
+        )
+      ).toHaveLength(1)
+    );
+
+    resolveOutput({
+      ok: true,
+      json: async () => ({
+        success: true,
+        data: {
+          draft: {
+            id: 'draft-command-lock',
+            title: 'Company Work Note',
+            contentMd: '# Company Work Note',
+          },
+          outputResource: {
+            type: 'presentation',
+            id: 'deck-command-lock',
+            title: 'Presentation: Company Work Note',
+            url: '/presentations/builder/deck-command-lock',
+          },
+          readBack: { status: 'created' },
+        },
+      }),
+    } as Response);
+
+    await waitFor(() => expect(command).not.toBeDisabled());
+    expect(command).not.toHaveAttribute('aria-busy');
+    expect(await screen.findByTestId('canvas-action-feedback')).toHaveTextContent(
+      'Presentation: Company Work Note created. deck-command-lock'
+    );
+  });
+
+  it('drops prior capability grants immediately when user or tenant changes', async () => {
+    let accessCalls = 0;
+    let resolveReload!: (response: Response) => void;
+    const pendingReload = new Promise<Response>((resolve) => {
+      resolveReload = resolve;
+    });
+    window.localStorage.setItem('token', 'test-token');
+    canvasAuthState.currentUser = { id: 'user-a' };
+    canvasAuthState.currentOrganization = { id: 'org-a', name: 'Org A' };
+    canvasAuthState.isAuthInitializing = false;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: string) => {
+        if (url.startsWith('/api/access/effective?capability=')) {
+          accessCalls += 1;
+          if (accessCalls <= 9) {
+            return Promise.resolve({
+              ok: true,
+              json: async () => ({ decision: { allowed: true } }),
+            } as Response);
+          }
+          return pendingReload;
+        }
+        throw new Error(`Unexpected fetch ${url}`);
+      })
+    );
+
+    const { rerender } = render(<WorkCanvasDocumentPanel />);
+    const presentation = await screen.findByRole('button', { name: /Create presentation/i });
+    await waitFor(() => expect(presentation).toHaveAttribute('data-action-status', 'enabled'));
+
+    canvasAuthState.currentUser = { id: 'user-b' };
+    canvasAuthState.currentOrganization = { id: 'org-b', name: 'Org B' };
+    rerender(<WorkCanvasDocumentPanel />);
+
+    await waitFor(() =>
+      expect(presentation).toHaveAttribute('data-action-status', 'disabled_missing_runtime')
+    );
+    await act(async () => {
+      resolveReload({
+        ok: true,
+        json: async () => ({ decision: { allowed: false } }),
+      } as Response);
+      await pendingReload;
+    });
+    await waitFor(() =>
+      expect(presentation).toHaveAttribute('data-action-status', 'disabled_missing_runtime')
+    );
+  });
+
+  it('ignores a late command response after the active draft changes', async () => {
+    let resolveOldOutput!: (response: Response) => void;
+    const oldOutput = new Promise<Response>((resolve) => {
+      resolveOldOutput = resolve;
+    });
+    const fetchMock = vi.fn((url: string, init?: RequestInit) => {
+      if (url === '/api/work-canvas/drafts/draft-a') {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            data: {
+              draft: {
+                id: 'draft-a',
+                title: 'Draft A',
+                contentMd: '# Draft A',
+                saveState: 'saved',
+                lifecycleState: 'draft',
+                markdownProjectionStatus: 'synced',
+              },
+              proposals: [],
+            },
+          }),
+        } as Response);
+      }
+      if (url === '/api/work-canvas/drafts/draft-a/create-output') return oldOutput;
+      if (url === '/api/work-canvas/drafts' && init?.method === 'POST') {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            data: {
+              id: 'draft-b',
+              title: 'Working Notes',
+              contentMd: '# Working Notes',
+              saveState: 'saved',
+              lifecycleState: 'draft',
+              markdownProjectionStatus: 'synced',
+            },
+          }),
+        } as Response);
+      }
+      throw new Error(`Unexpected fetch ${url}`);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<WorkCanvasDocumentPanel initialDraftId="draft-a" />);
+    await waitFor(() => expect(screen.getByLabelText('Canvas document title')).toHaveValue('Draft A'));
+    fireEvent.click(screen.getByRole('button', { name: /Create presentation/i }));
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/work-canvas/drafts/draft-a/create-output',
+        expect.objectContaining({ method: 'POST' })
+      )
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /New Canvas/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /Zbierz myśli/i }));
+    await waitFor(() =>
+      expect(screen.getByLabelText('Canvas document title')).toHaveValue('Working Notes')
+    );
+    await waitFor(() =>
+      expect(
+        fetchMock.mock.calls.some(
+          ([url, init]) => url === '/api/work-canvas/drafts' && init?.method === 'POST'
+        )
+      ).toBe(true)
+    );
+
+    await act(async () => {
+      resolveOldOutput({
+        ok: true,
+        json: async () => ({
+          success: true,
+          data: {
+            draft: { id: 'draft-a', title: 'Draft A', contentMd: '# Draft A' },
+            outputResource: {
+              type: 'presentation',
+              id: 'deck-from-a',
+              title: 'Old draft deck',
+            },
+          },
+        }),
+      } as Response);
+      await oldOutput;
+    });
+
+    expect(screen.getByLabelText('Canvas document title')).toHaveValue('Working Notes');
+    expect(screen.queryByText(/Old draft deck created/i)).not.toBeInTheDocument();
+  });
+
+  it('does not surface a late command error on a different active draft', async () => {
+    let rejectOldOutput!: (error: Error) => void;
+    const oldOutput = new Promise<Response>((_resolve, reject) => {
+      rejectOldOutput = reject;
+    });
+    const fetchMock = vi.fn((url: string, init?: RequestInit) => {
+      if (url === '/api/work-canvas/drafts/draft-error-a') {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            data: {
+              draft: {
+                id: 'draft-error-a',
+                title: 'Error Draft A',
+                contentMd: '# Error Draft A',
+                saveState: 'saved',
+                lifecycleState: 'draft',
+                markdownProjectionStatus: 'synced',
+              },
+              proposals: [],
+            },
+          }),
+        } as Response);
+      }
+      if (url === '/api/work-canvas/drafts/draft-error-a/create-output') return oldOutput;
+      if (url === '/api/work-canvas/drafts' && init?.method === 'POST') {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            data: {
+              id: 'draft-error-b',
+              title: 'Working Notes',
+              contentMd: '# Working Notes',
+              saveState: 'saved',
+              lifecycleState: 'draft',
+              markdownProjectionStatus: 'synced',
+            },
+          }),
+        } as Response);
+      }
+      throw new Error(`Unexpected fetch ${url}`);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<WorkCanvasDocumentPanel initialDraftId="draft-error-a" />);
+    await waitFor(() =>
+      expect(screen.getByLabelText('Canvas document title')).toHaveValue('Error Draft A')
+    );
+    fireEvent.click(screen.getByRole('button', { name: /Create presentation/i }));
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/work-canvas/drafts/draft-error-a/create-output',
+        expect.objectContaining({ method: 'POST' })
+      )
+    );
+    fireEvent.click(screen.getByRole('button', { name: /New Canvas/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /Zbierz myśli/i }));
+    await waitFor(() =>
+      expect(screen.getByLabelText('Canvas document title')).toHaveValue('Working Notes')
+    );
+
+    await act(async () => {
+      rejectOldOutput(new Error('old draft request failed'));
+      await oldOutput.catch(() => undefined);
+    });
+
+    expect(screen.getByLabelText('Canvas document title')).toHaveValue('Working Notes');
+    expect(screen.queryByText(/Failed to create presentation/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/old draft request failed/i)).not.toBeInTheDocument();
   });
 });

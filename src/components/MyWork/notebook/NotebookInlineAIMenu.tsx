@@ -27,7 +27,7 @@ import { INLINE_ACTIONS } from '@/components/DocumentStudio/inline-ai/inlineActi
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
-const MENU_WIDTH = 220;
+const MENU_WIDTH = 420;
 const MARGIN = 8;
 const SELECTION_GAP = 12; // offset below caret so we clear the format bubble
 
@@ -40,6 +40,9 @@ interface MenuPosition {
 
 interface PendingReplace {
   proposalId: string;
+  originalText: string;
+  revisedText: string;
+  actionLabel: string;
 }
 
 export interface NotebookInlineAIMenuProps {
@@ -47,6 +50,8 @@ export interface NotebookInlineAIMenuProps {
   pageId: string | null;
   /** Called after an approved proposal has been applied so the host can reload. */
   onApplied: () => void;
+  /** Undefined preserves legacy integrators; the production Notebook passes an explicit capability set. */
+  receiptCapableActionIds?: string[];
 }
 
 /** Split rewritten text into paragraph blocks (TipTap doc nodes). */
@@ -66,6 +71,7 @@ export const NotebookInlineAIMenu: React.FC<NotebookInlineAIMenuProps> = ({
   editor,
   pageId,
   onApplied,
+  receiptCapableActionIds,
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = (i18n.language || 'pl').startsWith('pl');
@@ -73,8 +79,13 @@ export const NotebookInlineAIMenu: React.FC<NotebookInlineAIMenuProps> = ({
   const [showActions, setShowActions] = useState(false);
   const [status, setStatus] = useState<Status>('idle');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [errorAction, setErrorAction] = useState<'generate' | 'approve' | 'reject' | null>(null);
   const pendingRef = useRef<PendingReplace | null>(null);
+  const lastActionIdRef = useRef<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const resolutionInFlightRef = useRef(false);
+  const isReceiptCapable = (actionId: string) =>
+    receiptCapableActionIds === undefined || receiptCapableActionIds.includes(actionId);
 
   // Track selection → position the trigger just below it.
   useEffect(() => {
@@ -111,11 +122,13 @@ export const NotebookInlineAIMenu: React.FC<NotebookInlineAIMenuProps> = ({
     pendingRef.current = null;
     setStatus('idle');
     setErrorMsg(null);
+    setErrorAction(null);
     setShowActions(false);
     setPosition(null);
   };
 
   const handleAction = async (actionId: string) => {
+    if (!isReceiptCapable(actionId)) return;
     if (!editor || !pageId) return;
     const action = INLINE_ACTIONS.find((a) => a.id === actionId);
     if (!action) return;
@@ -124,6 +137,7 @@ export const NotebookInlineAIMenu: React.FC<NotebookInlineAIMenuProps> = ({
     const { $from, $to, from, to } = state.selection;
     const selectedText = state.doc.textBetween(from, to, '\n\n').trim();
     if (!selectedText) return;
+    lastActionIdRef.current = actionId;
 
     // Resolve top-level block index range + the full text of that range so the
     // model can preserve unselected content while rewriting the fragment.
@@ -174,6 +188,7 @@ export const NotebookInlineAIMenu: React.FC<NotebookInlineAIMenuProps> = ({
             const revised = result.trim();
             if (!revised) {
               setStatus('error');
+              setErrorAction('generate');
               setErrorMsg(
                 t('myWorkNotebook.inlineAi.empty', 'AI nie zwróciło treści. Spróbuj ponownie.')
               );
@@ -202,7 +217,12 @@ export const NotebookInlineAIMenu: React.FC<NotebookInlineAIMenuProps> = ({
               if (!proposalId) {
                 throw new Error('missing proposal id');
               }
-              pendingRef.current = { proposalId };
+              pendingRef.current = {
+                proposalId,
+                originalText: contextText,
+                revisedText: revised,
+                actionLabel: isPolish ? action.labelPl : action.labelEn,
+              };
               trackFunnelEvent('notebook_inline_ai_rewrite_proposed', {
                 actionId,
                 selectionLength: selectedText.length,
@@ -210,6 +230,7 @@ export const NotebookInlineAIMenu: React.FC<NotebookInlineAIMenuProps> = ({
               setStatus('done');
             } catch {
               setStatus('error');
+              setErrorAction('generate');
               setErrorMsg(
                 t('myWorkNotebook.inlineAi.proposalFailed', 'Nie udało się utworzyć propozycji AI.')
               );
@@ -227,35 +248,53 @@ export const NotebookInlineAIMenu: React.FC<NotebookInlineAIMenuProps> = ({
     } catch (err) {
       if ((err as { name?: string })?.name !== 'AbortError') {
         setStatus('error');
+        setErrorAction('generate');
         setErrorMsg(t('myWorkNotebook.inlineAi.executeFailed', 'Błąd AI. Spróbuj ponownie.'));
       }
     }
   };
 
   const handleApprove = async () => {
+    if (!isReceiptCapable('approve')) return;
     const pending = pendingRef.current;
-    if (!pending) return;
+    if (!pending || resolutionInFlightRef.current) return;
+    resolutionInFlightRef.current = true;
+    setStatus('loading');
     try {
       await Api.notebookResolveAIProposal(pending.proposalId, 'accepted');
       trackFunnelEvent('notebook_inline_ai_rewrite_accepted', {});
       onApplied();
     } catch {
       setStatus('error');
+      setErrorAction('approve');
       setErrorMsg(t('myWorkNotebook.inlineAi.approveFailed', 'Nie udało się zatwierdzić.'));
+      resolutionInFlightRef.current = false;
       return;
     }
+    resolutionInFlightRef.current = false;
     reset();
   };
 
   const handleReject = async () => {
+    if (!isReceiptCapable('reject')) return;
     const pending = pendingRef.current;
+    if (resolutionInFlightRef.current) return;
+    resolutionInFlightRef.current = true;
+    setStatus('loading');
     if (pending) {
       try {
         await Api.notebookResolveAIProposal(pending.proposalId, 'rejected');
       } catch {
-        /* best-effort cleanup */
+        setStatus('error');
+        setErrorAction('reject');
+        setErrorMsg(
+          t('myWorkNotebook.inlineAi.rejectFailed', 'Nie udało się odrzucić propozycji.')
+        );
+        resolutionInFlightRef.current = false;
+        return;
       }
     }
+    resolutionInFlightRef.current = false;
     reset();
   };
 
@@ -282,37 +321,91 @@ export const NotebookInlineAIMenu: React.FC<NotebookInlineAIMenuProps> = ({
       )}
 
       {status === 'done' && (
-        <div className="flex items-center gap-1">
-          <button
-            data-testid="notebook-inline-ai-approve"
-            onClick={handleApprove}
-            className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-white bg-c-success hover:bg-c-success/90 transition-colors"
-          >
-            <Check size={12} />
-            {t('myWorkNotebook.inlineAi.approve', 'Zatwierdź')}
-          </button>
-          <button
-            data-testid="notebook-inline-ai-reject"
-            onClick={handleReject}
-            className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-c-text-secondary bg-c-surface-raised/[0.06] hover:bg-c-border-subtle transition-colors"
-          >
-            <X size={12} />
-            {t('myWorkNotebook.inlineAi.reject', 'Odrzuć')}
-          </button>
+        <div className="space-y-2" data-testid="notebook-inline-ai-preview">
+          <div className="text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">
+            {t('myWorkNotebook.inlineAi.provenance', 'Teresa proposal')}
+            {pendingRef.current?.actionLabel ? ` · ${pendingRef.current.actionLabel}` : ''}
+          </div>
+          <div className="grid max-h-52 gap-2 overflow-y-auto sm:grid-cols-2">
+            <section className="rounded border border-c-border-subtle bg-c-surface-raised p-2">
+              <h4 className="text-[10px] font-semibold uppercase text-c-text-muted">
+                {t('myWorkNotebook.inlineAi.before', 'Before')}
+              </h4>
+              <p className="mt-1 whitespace-pre-wrap text-xs text-c-text-secondary">
+                {pendingRef.current?.originalText}
+              </p>
+            </section>
+            <section className="rounded border border-c-accent/30 bg-c-accent-soft p-2">
+              <h4 className="text-[10px] font-semibold uppercase text-c-text-muted">
+                {t('myWorkNotebook.inlineAi.proposed', 'Proposed')}
+              </h4>
+              <p className="mt-1 whitespace-pre-wrap text-xs text-c-text">
+                {pendingRef.current?.revisedText}
+              </p>
+            </section>
+          </div>
+          <div className="flex items-center gap-1">
+            <button
+              data-testid="notebook-inline-ai-approve"
+              data-notebook-action-id="inline-ai:approve"
+              aria-disabled={!isReceiptCapable('approve') || undefined}
+              onClick={handleApprove}
+              className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-white bg-c-success hover:bg-c-success/90 transition-colors"
+            >
+              <Check size={12} />
+              {t('myWorkNotebook.inlineAi.approve', 'Zatwierdź')}
+            </button>
+            <button
+              data-testid="notebook-inline-ai-reject"
+              data-notebook-action-id="inline-ai:reject"
+              aria-disabled={!isReceiptCapable('reject') || undefined}
+              onClick={handleReject}
+              className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-c-text-secondary bg-c-surface-raised/[0.06] hover:bg-c-border-subtle transition-colors"
+            >
+              <X size={12} />
+              {t('myWorkNotebook.inlineAi.reject', 'Odrzuć')}
+            </button>
+          </div>
         </div>
       )}
 
       {status === 'error' && (
-        <div className="space-y-1">
+        <div className="space-y-1" role="alert">
           <p className="text-xs text-c-danger">
             {errorMsg ?? t('myWorkNotebook.inlineAi.error', 'Błąd AI. Spróbuj ponownie.')}
           </p>
-          <button
-            onClick={reset}
-            className="text-xs text-c-text-secondary underline hover:text-c-text"
-          >
-            {t('myWorkNotebook.inlineAi.close', 'Zamknij')}
-          </button>
+          <div className="flex gap-2">
+            {errorAction && (
+              <button
+                type="button"
+                data-notebook-action-id="inline-ai:retry"
+                onClick={() => {
+                  setStatus(errorAction === 'generate' ? 'idle' : 'done');
+                  setErrorMsg(null);
+                  const action = errorAction;
+                  setErrorAction(null);
+                  if (action === 'generate' && lastActionIdRef.current) {
+                    void handleAction(lastActionIdRef.current);
+                  } else if (action === 'approve') {
+                    void handleApprove();
+                  } else if (action === 'reject') {
+                    void handleReject();
+                  }
+                }}
+                className="text-xs font-semibold text-c-text-secondary underline hover:text-c-text"
+              >
+                {t('common.retry', 'Retry')}
+              </button>
+            )}
+            <button
+              type="button"
+              data-notebook-action-id="inline-ai:close"
+              onClick={reset}
+              className="text-xs text-c-text-secondary underline hover:text-c-text"
+            >
+              {t('myWorkNotebook.inlineAi.close', 'Zamknij')}
+            </button>
+          </div>
         </div>
       )}
 
@@ -321,6 +414,7 @@ export const NotebookInlineAIMenu: React.FC<NotebookInlineAIMenuProps> = ({
           {!showActions ? (
             <button
               data-testid="notebook-inline-ai-trigger"
+              data-notebook-action-id="inline-ai:trigger"
               onClick={() => setShowActions(true)}
               className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-c-accent hover:bg-c-accent-soft transition-colors w-full"
             >
@@ -330,12 +424,30 @@ export const NotebookInlineAIMenu: React.FC<NotebookInlineAIMenuProps> = ({
             </button>
           ) : (
             <div className="space-y-0.5">
+              {receiptCapableActionIds?.length === 0 ? (
+                <p
+                  id="notebook-inline-ai-receipt-unavailable"
+                  className="px-2 py-1 text-[11px] text-c-text-muted"
+                >
+                  {t(
+                    'myWorkNotebook.inlineAi.receiptUnavailable',
+                    'Unavailable until the server can return a durable action receipt'
+                  )}
+                </p>
+              ) : null}
               {INLINE_ACTIONS.map((action) => (
                 <button
                   key={action.id}
                   data-testid={`notebook-inline-ai-${action.id}`}
+                  data-notebook-action-id={`inline-ai:${action.id}`}
+                  aria-disabled={!isReceiptCapable(action.id) || undefined}
+                  aria-describedby={
+                    !isReceiptCapable(action.id)
+                      ? 'notebook-inline-ai-receipt-unavailable'
+                      : undefined
+                  }
                   onClick={() => handleAction(action.id)}
-                  className="w-full rounded px-2 py-1 text-left text-xs text-c-text hover:bg-c-surface-raised/[0.06] transition-colors"
+                  className="w-full rounded px-2 py-1 text-left text-xs text-c-text hover:bg-c-surface-raised/[0.06] transition-colors aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
                 >
                   {isPolish ? action.labelPl : action.labelEn}
                 </button>

@@ -34,6 +34,7 @@ import type {
 } from '@/components/AIChat/WorkCanvas/types';
 import { Api } from '@/services/api';
 import { WorkCanvasApi } from '@/services/api/workCanvas';
+import { useAppStore } from '@/store/useAppStore';
 import type {
   ActiveCanvasDocument,
   CanvasActionAvailability,
@@ -67,6 +68,7 @@ import { CanvasVersionHistory } from './CanvasEditor/CanvasVersionHistory';
 import { getInitialCanvasMode, persistCanvasMode } from './CanvasEditor/canvasViewMode';
 import { useCanvasAIStream } from './CanvasEditor/useCanvasAIStream';
 import { CanvasMarkdownRenderer } from './CanvasMarkdownRenderer';
+import { CanvasViewModeControl } from './CanvasViewModeControl';
 import { CanvasPresentationView } from './CanvasPresentationView';
 
 export type { ActiveCanvasDocument } from '@/types/canvasWorkspace';
@@ -403,6 +405,18 @@ const menuOutputActionIds: CanvasActionId[] = [
 ];
 
 const isVitestRuntime = typeof process !== 'undefined' && Boolean(process.env?.VITEST);
+
+const failClosedCanvasRuntimeCapabilities: CanvasRuntimeCapabilities = {
+  canCreatePresentation: false,
+  canCreateTable: false,
+  canCreateReport: false,
+  canSendToIdea: false,
+  canSaveAsNote: false,
+  canCreateInitiative: false,
+  canCreateDecision: false,
+  canCreateTask: false,
+  canShare: false,
+};
 
 const defaultCanvasRuntimeCapabilities: CanvasRuntimeCapabilities = {
   canCreatePresentation: isVitestRuntime,
@@ -868,6 +882,10 @@ function WorkCanvasMarkdownDocumentPanel({
 }: WorkCanvasDocumentPanelProps) {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const authUserId = useAppStore((state) => state.currentUser?.id || null);
+  const authOrganizationId = useAppStore((state) => state.currentOrganization?.id || null);
+  const isAuthInitializing = useAppStore((state) => state.isAuthInitializing);
+  const currentCapabilityAuthScope = `${authUserId || 'anonymous'}:${authOrganizationId || 'no-organization'}`;
   const [mode, setMode] = React.useState<CanvasMode>(() => getInitialCanvasMode());
   const [documentState, setDocumentState] = React.useState<CanvasDocumentState>(() =>
     createDocumentState(
@@ -909,6 +927,13 @@ function WorkCanvasMarkdownDocumentPanel({
     title: string;
   } | null>(null);
   const [activeActionId, setActiveActionId] = React.useState<CanvasActionId | null>(null);
+  // State alone is not a sufficient duplicate-submit guard: two clicks can be
+  // dispatched before React commits the loading render. Keep the command lock
+  // synchronous and release it only after the command settles.
+  const commandActionInFlightRef = React.useRef<Set<CanvasActionId>>(new Set());
+  const activeDraftIdRef = React.useRef<string | null>(documentState.draftId || null);
+  activeDraftIdRef.current = documentState.draftId || null;
+  const capabilityAuthScopeRef = React.useRef<string | null>(null);
   // Active public share for the loaded draft (mirrors provenance.share).
   const [shareInfo, setShareInfo] = React.useState<CanvasShareInfo | null>(null);
   const [isRevokingShare, setIsRevokingShare] = React.useState(false);
@@ -971,6 +996,15 @@ function WorkCanvasMarkdownDocumentPanel({
   const [runtimeCapabilities, setRuntimeCapabilities] = React.useState<CanvasRuntimeCapabilities>(
     defaultCanvasRuntimeCapabilities
   );
+  const [runtimeCapabilityAuthScope, setRuntimeCapabilityAuthScope] = React.useState(
+    currentCapabilityAuthScope
+  );
+  // Render and handlers fail closed before passive effects run. A capability
+  // snapshot is valid only for the exact auth/tenant scope that produced it.
+  const effectiveRuntimeCapabilities =
+    runtimeCapabilityAuthScope === currentCapabilityAuthScope
+      ? runtimeCapabilities
+      : failClosedCanvasRuntimeCapabilities;
   const documentViewRef = React.useRef<HTMLElement | null>(null);
   const lastSavedContentRef = React.useRef(documentState.contentMd);
   const lastSavedTitleRef = React.useRef(documentState.title);
@@ -1417,8 +1451,22 @@ function WorkCanvasMarkdownDocumentPanel({
 
   React.useEffect(() => {
     let cancelled = false;
+    const authScope = currentCapabilityAuthScope;
+    if (capabilityAuthScopeRef.current !== authScope) {
+      const previousScope = capabilityAuthScopeRef.current;
+      capabilityAuthScopeRef.current = authScope;
+      // Never retain an allowed decision across an account or tenant switch.
+      // The new scope must earn every capability again from the server.
+      if (previousScope !== null || !isVitestRuntime) {
+        setRuntimeCapabilities(failClosedCanvasRuntimeCapabilities);
+      }
+    }
+    if (isAuthInitializing) return undefined;
     const token = window.localStorage.getItem('token') || '';
-    if (!token) return;
+    if (!token) {
+      if (!isVitestRuntime) setRuntimeCapabilities(failClosedCanvasRuntimeCapabilities);
+      return undefined;
+    }
 
     const capabilityMap: Array<[keyof CanvasRuntimeCapabilities, string]> = [
       ['canCreatePresentation', 'canvas.output.presentation'],
@@ -1453,18 +1501,19 @@ function WorkCanvasMarkdownDocumentPanel({
       );
 
       if (cancelled) return;
-      const next: CanvasRuntimeCapabilities = { ...defaultCanvasRuntimeCapabilities };
+      const next: CanvasRuntimeCapabilities = { ...failClosedCanvasRuntimeCapabilities };
       for (const [key, allowed] of entries) {
         next[key] = allowed;
       }
       setRuntimeCapabilities(next);
+      setRuntimeCapabilityAuthScope(authScope);
     };
 
     void loadCapabilities();
     return () => {
       cancelled = true;
     };
-  }, [conversationId]);
+  }, [authOrganizationId, authUserId, conversationId, currentCapabilityAuthScope, isAuthInitializing]);
 
   React.useEffect(() => {
     persistCanvasMode(mode);
@@ -2717,16 +2766,24 @@ function WorkCanvasMarkdownDocumentPanel({
     actionId: CanvasActionId,
     target: 'idea' | 'note' | 'initiative' | 'decision' | 'task'
   ) => {
+    if (commandActionInFlightRef.current.has(actionId)) return;
+    commandActionInFlightRef.current.add(actionId);
+    let commandDraftId: string | null = null;
     setActiveActionId(actionId);
     setStatusFeedback(`Saving Canvas to ${target}...`);
     try {
       const draft = await ensurePersistedDraft();
       if (!draft?.draftId) throw new Error('Canvas draft could not be saved before handoff.');
+      if (!activeDraftIdRef.current) activeDraftIdRef.current = draft.draftId;
+      commandDraftId = draft.draftId;
       const receipt = await runGovernedHandoff(draft, target);
+      if (activeDraftIdRef.current !== commandDraftId) return;
       showDurableHandoffReceipt(receipt);
     } catch (error) {
+      if (commandDraftId && activeDraftIdRef.current !== commandDraftId) return;
       setCanvasErrorFeedback(error, `Failed to save Canvas to ${target}.`);
     } finally {
+      commandActionInFlightRef.current.delete(actionId);
       setActiveActionId(null);
     }
   };
@@ -2735,13 +2792,19 @@ function WorkCanvasMarkdownDocumentPanel({
     actionId: CanvasActionId,
     outputType: 'presentation' | 'table' | 'report'
   ) => {
+    if (commandActionInFlightRef.current.has(actionId)) return;
+    commandActionInFlightRef.current.add(actionId);
+    let commandDraftId: string | null = null;
     setActiveActionId(actionId);
     setStatusFeedback(`Creating ${outputType} from Canvas...`);
     try {
       const draft = await ensurePersistedDraft();
       if (!draft?.draftId)
         throw new Error('Canvas draft could not be saved before output creation.');
+      if (!activeDraftIdRef.current) activeDraftIdRef.current = draft.draftId;
+      commandDraftId = draft.draftId;
       const result = await Api.workCanvasCreateOutput(draft.draftId, { outputType });
+      if (activeDraftIdRef.current !== commandDraftId) return;
       const output = result.data.outputResource;
       setDocumentState((current) =>
         mapDraftResponseToCanvasDocumentState(result.data.draft, {
@@ -2751,8 +2814,10 @@ function WorkCanvasMarkdownDocumentPanel({
       );
       setStatusFeedback(`${output.title} created. ${output.id}`);
     } catch (error) {
+      if (commandDraftId && activeDraftIdRef.current !== commandDraftId) return;
       setCanvasErrorFeedback(error, `Failed to create ${outputType}.`);
     } finally {
+      commandActionInFlightRef.current.delete(actionId);
       setActiveActionId(null);
     }
   };
@@ -2787,12 +2852,18 @@ function WorkCanvasMarkdownDocumentPanel({
   };
 
   const runShareAction = async () => {
+    if (commandActionInFlightRef.current.has('share')) return;
+    commandActionInFlightRef.current.add('share');
+    let commandDraftId: string | null = null;
     setActiveActionId('share');
     setStatusFeedback('Preparing Canvas share link...');
     try {
       const draft = await ensurePersistedDraft();
       if (!draft?.draftId) throw new Error('Canvas draft could not be saved before sharing.');
+      if (!activeDraftIdRef.current) activeDraftIdRef.current = draft.draftId;
+      commandDraftId = draft.draftId;
       const result = await Api.workCanvasShare(draft.draftId);
+      if (activeDraftIdRef.current !== commandDraftId) return;
       const share: CanvasShareInfo = {
         token: result.data.share.token,
         url: result.data.share.url,
@@ -2808,10 +2879,13 @@ function WorkCanvasMarkdownDocumentPanel({
       setShareInfo(share);
       setIsShareStripDismissed(false);
       await navigator.clipboard?.writeText(shareUrl);
+      if (activeDraftIdRef.current !== commandDraftId) return;
       setStatusFeedback(`Share link ready and copied: ${shareUrl}`);
     } catch (error) {
+      if (commandDraftId && activeDraftIdRef.current !== commandDraftId) return;
       setCanvasErrorFeedback(error, 'Failed to share Canvas draft.');
     } finally {
+      commandActionInFlightRef.current.delete('share');
       setActiveActionId(null);
     }
   };
@@ -3068,7 +3142,11 @@ function WorkCanvasMarkdownDocumentPanel({
   };
 
   const handleCommandAction = (actionId: CanvasActionId) => {
-    const availability = getCanvasActionAvailability(actionId, documentState, runtimeCapabilities);
+    const availability = getCanvasActionAvailability(
+      actionId,
+      documentState,
+      effectiveRuntimeCapabilities
+    );
     if (availability.status !== 'enabled') {
       handleUnavailableAction(availability);
       return;
@@ -3111,7 +3189,11 @@ function WorkCanvasMarkdownDocumentPanel({
   };
 
   const renderCommandButton = (actionId: CanvasActionId) => {
-    const availability = getCanvasActionAvailability(actionId, documentState, runtimeCapabilities);
+    const availability = getCanvasActionAvailability(
+      actionId,
+      documentState,
+      effectiveRuntimeCapabilities
+    );
     const Icon = actionIcons[actionId];
     const isUnavailable = availability.status !== 'enabled';
     const isLoading = activeActionId === actionId;
@@ -3129,7 +3211,9 @@ function WorkCanvasMarkdownDocumentPanel({
         type="button"
         onClick={() => handleCommandAction(actionId)}
         aria-label={availability.label}
-        aria-disabled={isUnavailable}
+        aria-disabled={isUnavailable || isLoading}
+        aria-busy={isLoading || undefined}
+        disabled={isLoading}
         title={title}
         className={`inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors ${
           isUnavailable
@@ -3267,7 +3351,10 @@ function WorkCanvasMarkdownDocumentPanel({
 
   return (
     <div className="relative flex h-full min-h-0 flex-col bg-slate-50 text-slate-950 dark:bg-navy-950 dark:text-slate-100">
-      <div className="relative z-30 flex min-h-[42px] shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-slate-200/70 bg-white/70 px-4 py-1 backdrop-blur dark:border-white/[0.06] dark:bg-navy-950/60">
+      <div
+        className="relative z-30 flex h-[42px] shrink-0 flex-nowrap items-center justify-between gap-3 border-b border-slate-200/70 bg-white/70 px-4 backdrop-blur dark:border-white/[0.06] dark:bg-navy-950/60"
+        data-testid="canvas-header"
+      >
         {/* #17 (rewizja 07-12): "z canvasu musi być łatwy powrót do TEJ
             KONKRETNEJ notatki [nie tylko do listy]" — persistent breadcrumb,
             visible for the whole time this note-derived draft is open (not a
@@ -3295,7 +3382,7 @@ function WorkCanvasMarkdownDocumentPanel({
             </span>
           </button>
         ) : null}
-        <div className="min-w-0 flex-1">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
           <label htmlFor="canvas-document-title" className="sr-only">
             Document title
           </label>
@@ -3309,13 +3396,13 @@ function WorkCanvasMarkdownDocumentPanel({
             }}
             data-testid="canvas-active-title"
             aria-label="Canvas document title"
-            className="w-full min-w-0 rounded-lg border border-transparent bg-transparent px-1 py-0.5 text-[15px] font-semibold text-slate-950 outline-none transition-colors hover:border-slate-200 hover:bg-white/60 focus:border-slate-300 focus:bg-white dark:text-white dark:hover:border-white/10 dark:hover:bg-white/[0.04] dark:focus:border-white/20 dark:focus:bg-white/[0.06]"
+            className="min-w-0 flex-1 rounded-lg border border-transparent bg-transparent px-1 py-0.5 text-[15px] font-semibold text-slate-950 outline-none transition-colors hover:border-slate-200 hover:bg-white/60 focus:border-slate-300 focus:bg-white dark:text-white dark:hover:border-white/10 dark:hover:bg-white/[0.04] dark:focus:border-white/20 dark:focus:bg-white/[0.06]"
           />
           {/* Save status lived only inside the diagnostics popover, so the
               document never showed whether it was saved. Announced politely so
               it is not silent for screen-reader users either. */}
           <div
-            className="mt-0.5 flex items-center gap-1.5 px-1 text-[11px] text-c-text-muted"
+            className="flex shrink-0 items-center gap-1.5 whitespace-nowrap text-[11px] text-c-text-muted"
             data-testid="canvas-save-status"
             role="status"
             aria-live="polite"
@@ -3334,37 +3421,20 @@ function WorkCanvasMarkdownDocumentPanel({
                 {t('canvas.panel.saveState.at', 'at')} {lastSavedAtLabel}
               </span>
             ) : null}
+            {documentState.saveState === 'failed' ? (
+              <button
+                type="button"
+                onClick={() => void persistDraft()}
+                className="rounded px-1 py-0.5 font-semibold text-c-text underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+              >
+                {t('common.retry', 'Retry')}
+              </button>
+            ) : null}
           </div>
         </div>
 
         <div className="flex min-w-0 shrink-0 items-center gap-2">
-          <div
-            className="inline-flex shrink-0 rounded-full border border-slate-200 bg-slate-100/80 p-0.5 dark:border-white/10 dark:bg-white/10"
-            data-testid="canvas-direct-view-switcher"
-            aria-label="Canvas view"
-          >
-            {(
-              [
-                ['rich', 'Rich'],
-                ['document', 'DOC'],
-                ['md', 'MD'],
-              ] as const
-            ).map(([viewMode, label]) => (
-              <button
-                key={viewMode}
-                type="button"
-                onClick={() => setMode(viewMode)}
-                aria-pressed={mode === viewMode}
-                className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors ${
-                  mode === viewMode
-                    ? 'bg-white text-slate-950 shadow-sm dark:bg-white dark:text-slate-950'
-                    : 'text-slate-600 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+          <CanvasViewModeControl mode={mode} onModeChange={setMode} />
           <div className="relative" data-testid="canvas-new-menu-root">
             <button
               type="button"
@@ -3649,9 +3719,10 @@ function WorkCanvasMarkdownDocumentPanel({
                 tabIndex={-1}
                 className="absolute right-0 top-full z-50 mt-2 w-[min(360px,calc(100vw-24px))] overscroll-contain overflow-y-auto rounded-2xl border border-slate-200 bg-[#ffffff] p-3 text-xs opacity-100 shadow-2xl outline-none ring-1 ring-black/5 dark:border-white/10 dark:bg-[#151E32] dark:ring-white/5"
                 style={{
-                  maxHeight: `calc(100dvh - ${Math.ceil(
-                    diagnosticsTriggerRef.current?.getBoundingClientRect().bottom ?? 72
-                  ) + 12}px)`,
+                  maxHeight: `calc(100dvh - ${
+                    Math.ceil(diagnosticsTriggerRef.current?.getBoundingClientRect().bottom ?? 72) +
+                    12
+                  }px)`,
                 }}
                 data-testid="canvas-diagnostics-menu"
               >

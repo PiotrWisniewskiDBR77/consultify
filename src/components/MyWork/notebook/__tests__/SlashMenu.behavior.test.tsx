@@ -91,6 +91,7 @@ function renderMenu(opts: {
   state: SlashMenuState;
   onClose?: () => void;
   onAICommand?: (c: string) => void;
+  receiptCapableActionIds?: string[];
 }) {
   const editor = makeEditorStub();
   const onClose = opts.onClose ?? vi.fn();
@@ -104,6 +105,7 @@ function renderMenu(opts: {
         onClose={onClose}
         containerRef={containerRef}
         onAICommand={onAICommand as never}
+        receiptCapableActionIds={opts.receiptCapableActionIds}
       />
     </div>
   );
@@ -128,7 +130,7 @@ describe('SlashMenu', () => {
     expect(screen.getByText('AI: Ask')).toBeTruthy();
     expect(screen.getByText('Create Task')).toBeTruthy();
     // 23 commands total (added: Image, Quote, Date, 2 Columns) → 23 buttons.
-    expect(screen.getAllByRole('button')).toHaveLength(23);
+    expect(screen.getAllByRole('menuitem')).toHaveLength(23);
   });
 
   it('filters commands by label/keyword when a query is typed', () => {
@@ -137,7 +139,7 @@ describe('SlashMenu', () => {
     expect(screen.getByText('Heading 2')).toBeTruthy();
     expect(screen.getByText('Heading 3')).toBeTruthy();
     expect(screen.queryByText('Bullet List')).toBeNull();
-    expect(screen.getAllByRole('button')).toHaveLength(3);
+    expect(screen.getAllByRole('menuitem')).toHaveLength(3);
   });
 
   it('filters by id substring (e.g. "ai")', () => {
@@ -147,6 +149,18 @@ describe('SlashMenu', () => {
     expect(screen.getByText('AI: Expand')).toBeTruthy();
     expect(screen.getByText('AI: Challenge')).toBeTruthy();
     expect(screen.getByText('AI: Next Steps')).toBeTruthy();
+  });
+
+  it('keeps unqualified durable handoffs focusable, explained and fail closed', () => {
+    const dispatched = vi.fn();
+    window.addEventListener('notebook-create-task', dispatched);
+    renderMenu({ state: openState({ query: 'create task' }), receiptCapableActionIds: [] });
+    const item = screen.getByRole('menuitem', { name: /Create Task/ });
+    expect(item).toHaveAttribute('aria-disabled', 'true');
+    expect(item).toHaveAccessibleDescription(/durable action receipt/);
+    fireEvent.mouseDown(item);
+    expect(dispatched).not.toHaveBeenCalled();
+    window.removeEventListener('notebook-create-task', dispatched);
   });
 
   it('renders nothing when no command matches the query', () => {

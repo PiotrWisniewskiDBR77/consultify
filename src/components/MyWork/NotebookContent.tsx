@@ -9,6 +9,7 @@ import TaskItem from '@tiptap/extension-task-item';
 import TaskList from '@tiptap/extension-task-list';
 import TextAlign from '@tiptap/extension-text-align';
 import UnderlineExt from '@tiptap/extension-underline';
+import { TextSelection } from '@tiptap/pm/state';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import {
@@ -29,6 +30,7 @@ import {
   Pen,
   Pin,
   Play,
+  Plus,
   RefreshCw,
   Sparkles,
   Tag,
@@ -758,6 +760,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     currentUser,
   } = useAppStore();
   const currentUserId = String(currentUser?.id || '');
+  const currentOrganizationId = String(currentUser?.organizationId || '');
   const [pages, setPages] = useState<NotebookPage[]>([]);
   // Live mirror of `pages` for use inside stable callbacks (e.g. autosave) that
   // must read the latest optimistic-lock version without re-subscribing.
@@ -771,7 +774,72 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   const [hasMore, setHasMore] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
   const activePage = useMemo(() => pages.find((p) => p.id === activeId) || null, [pages, activeId]);
+  const [deleteCapability, setDeleteCapability] = useState<{
+    pageId: string;
+    pageVersion: string | null;
+    actorUserId: string;
+    organizationId: string;
+    allowed: boolean;
+    receiptContract: string | null;
+  } | null>(null);
+  const isDeleteReceiptCapable = useMemo(
+    () =>
+      Boolean(
+        activePage &&
+        deleteCapability?.allowed === true &&
+        deleteCapability.pageId === activePage.id &&
+        deleteCapability.actorUserId === currentUserId &&
+        deleteCapability.organizationId === currentOrganizationId &&
+        deleteCapability.receiptContract === 'notebook_delete_receipt_v1' &&
+        (!activePage.updatedAt ||
+          (deleteCapability.pageVersion !== null &&
+            new Date(deleteCapability.pageVersion).getTime() ===
+              new Date(activePage.updatedAt).getTime()))
+      ),
+    [activePage, currentOrganizationId, currentUserId, deleteCapability]
+  );
   const attemptedOpenPageRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const pageId = activePage?.id;
+    const pageVersion = activePage?.updatedAt || null;
+    if (!pageId || !currentUserId || !currentOrganizationId) {
+      setDeleteCapability(null);
+      return;
+    }
+    let cancelled = false;
+    setDeleteCapability(null);
+    void Api.getNotebookActionCapabilities(pageId)
+      .then((result) => {
+        if (cancelled) return;
+        const versionMatches =
+          pageVersion === null ||
+          (result.pageVersion !== null &&
+            new Date(result.pageVersion).getTime() === new Date(pageVersion).getTime());
+        if (
+          result.pageId !== pageId ||
+          result.actorUserId !== currentUserId ||
+          result.organizationId !== currentOrganizationId ||
+          !versionMatches
+        ) {
+          return;
+        }
+        setDeleteCapability({
+          pageId: result.pageId,
+          pageVersion: result.pageVersion,
+          actorUserId: result.actorUserId,
+          organizationId: result.organizationId,
+          allowed: result.actions.delete.allowed,
+          receiptContract: result.actions.delete.receiptContract,
+        });
+      })
+      .catch(() => {
+        if (!cancelled) setDeleteCapability(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activePage?.id, activePage?.updatedAt, currentOrganizationId, currentUserId]);
 
   // #23 Notatnik-centrum-myśli — live presence for the open note. Reuses the Deck
   // presence protocol (/ws/notebook/:noteId). Fail-open to solo: no token /
@@ -867,6 +935,10 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   const [saveState, setSaveState] = useState<
     'saving' | 'saved' | 'error' | 'conflict' | 'offline' | null
   >(null);
+  // The owner-approved governance surface is NotebookRightRail. Keep the old
+  // JSX unmounted during the migration so there is only one rendered control
+  // for verification/review; remove the legacy source block in the cleanup pass.
+  const showLegacyNotebookGovernanceControls: boolean = false;
   // Fresh server copy of the page returned by a 409 conflict response, kept
   // so the "Reload" action can load it without a second round-trip.
   const [conflictServerPage, setConflictServerPage] = useState<NotebookPage | null>(null);
@@ -899,6 +971,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   // Bumped whenever this note's link graph changes, to refresh the backlinks bar.
   const [backlinksRefresh, setBacklinksRefresh] = useState(0);
   const editorContainerRef = useRef<HTMLDivElement>(null);
+  const notebookRailToggleRef = useRef<HTMLButtonElement>(null);
 
   // Inline-image upload bridge — set after the upload helper is defined so the
   // editor's paste/drop handlers (declared earlier inside useEditor) can call it.
@@ -942,6 +1015,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   // verification & review surface, just not reachable from the ⋯ menu before).
   const verificationStripRef = useRef<HTMLDivElement | null>(null);
   const proposalRequestSeqRef = useRef(0);
+  const deleteRequestRef = useRef<{ pageId: string; idempotencyKey: string } | null>(null);
 
   // Auto-summary
   const summaryTimer = useRef<number | null>(null);
@@ -999,6 +1073,38 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       attributes: {
         class:
           'prose prose-sm max-w-none dark:prose-invert focus:outline-none min-h-[360px] px-3 py-3',
+      },
+      handleDOMEvents: {
+        contextmenu: (view, event) => {
+          const mouseEvent = event as MouseEvent;
+          const hit = view.posAtCoords({ left: mouseEvent.clientX, top: mouseEvent.clientY });
+          if (!hit) return false;
+          mouseEvent.preventDefault();
+          const selection = TextSelection.near(view.state.doc.resolve(hit.pos));
+          view.dispatch(view.state.tr.setSelection(selection));
+          setSlashState({
+            open: true,
+            query: '',
+            triggerPos: selection.from,
+            coords: { top: mouseEvent.clientY + 4, left: mouseEvent.clientX },
+            mode: 'context',
+          });
+          return true;
+        },
+      },
+      handleKeyDown: (view, event) => {
+        if (!(event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10'))) return false;
+        event.preventDefault();
+        const from = view.state.selection.from;
+        const coords = view.coordsAtPos(from);
+        setSlashState({
+          open: true,
+          query: '',
+          triggerPos: from,
+          coords: { top: coords.bottom + 4, left: coords.left },
+          mode: 'context',
+        });
+        return true;
       },
       handleClick: (_view, _pos, event) => {
         const target = event.target as HTMLElement | null;
@@ -1652,6 +1758,13 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     void persistNotebookDraft(current);
   }, [activePage, pages, persistNotebookDraft]);
 
+  const handleRetrySave = useCallback(() => {
+    if (!activePage) return;
+    const current = pages.find((page) => page.id === activePage.id);
+    if (!current) return;
+    void persistNotebookDraft(current);
+  }, [activePage, pages, persistNotebookDraft]);
+
   // Reset the indicator when switching notes — a "Saved"/"Conflict" left
   // over from the PREVIOUS page must never bleed into the newly opened one.
   useEffect(() => {
@@ -2051,14 +2164,40 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
 
   const handleDeletePage = async () => {
     if (!activePage) return;
+    if (!isDeleteReceiptCapable) {
+      throw new Error('Notebook delete capability is unavailable or stale');
+    }
+    const request =
+      deleteRequestRef.current?.pageId === activePage.id
+        ? deleteRequestRef.current
+        : {
+            pageId: activePage.id,
+            idempotencyKey: globalThis.crypto.randomUUID(),
+          };
+    deleteRequestRef.current = request;
     try {
-      await Api.deleteNotebookPage(activePage.id);
+      const receipt = await Api.deleteNotebookPage(
+        activePage.id,
+        request.idempotencyKey,
+        activePage.updatedAt
+      );
+      const readBack = await Api.getNotebookActionReceipt(receipt.receiptId);
+      if (
+        readBack.receiptId !== receipt.receiptId ||
+        readBack.resourceId !== activePage.id ||
+        readBack.action !== 'NOTEBOOK_PAGE_DELETED'
+      ) {
+        throw new Error('Notebook delete receipt readback mismatch');
+      }
+      deleteRequestRef.current = null;
       await fetchPages();
       toast.success(t('notebook.notebookContent.toastSuccess8', 'Page deleted'));
+      return receipt;
     } catch (e) {
       // eslint-disable-next-line no-console
       console.error('Failed to delete notebook page', e);
       toast.error(t('myWork.errors.deleteFailed', 'Failed to delete'));
+      throw e;
     }
   };
 
@@ -2457,6 +2596,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
         );
       } catch (err: any) {
         toast.error(err?.message || 'Conversion failed');
+        throw err;
       }
     },
     [activePage, canConvertDeliverable, deliverableGuardMessage, isPolish, emitMyWorkEvent]
@@ -2488,6 +2628,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     } catch (error: any) {
       console.error('Failed to expand note into Canvas document', error);
       toast.error(t('notebook.notebookContent.toastError15', 'Failed to create the document'));
+      throw error;
     } finally {
       setIsExpandingToDocument(false);
     }
@@ -3170,54 +3311,11 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                     >
                       <History size={14} />
                     </button>
-                    {/* N4 (U12): icon-only + tooltip — expand note into a Canvas document draft */}
-                    <button
-                      onClick={() => void handleExpandToDocument()}
-                      disabled={isExpandingToDocument}
-                      data-testid="notebook-expand-to-document"
-                      title={t(
-                        'notebook.notebookContent.title8',
-                        'Expand into document — create a Canvas doc from this note'
-                      )}
-                      aria-label={t('notebook.notebookContent.ariaLabel2', 'Expand into document')}
-                      className="ml-auto shrink-0 p-1.5 rounded-lg text-c-text-muted hover:bg-c-surface-raised transition-colors disabled:opacity-60 disabled:cursor-wait"
+                    <div
+                      className="ml-auto flex shrink-0 items-center gap-1"
+                      data-testid="notebook-toolbar-right-actions"
                     >
-                      <FileText
-                        size={14}
-                        className={isExpandingToDocument ? 'animate-pulse' : ''}
-                      />
-                    </button>
-                    {/* N4 (U12): connection graph — icon-only + tooltip, monochrome active */}
-                    <button
-                      onClick={() => setShowGraphView((v) => !v)}
-                      title={t('notebook.notebookContent.title9', 'Connection graph')}
-                      aria-label={t('notebook.notebookContent.ariaLabel3', 'Connection graph')}
-                      className={`shrink-0 p-1.5 rounded-lg transition-colors ${showGraphView ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted hover:bg-c-surface-raised'}`}
-                    >
-                      <Network size={14} />
-                    </button>
-                    {/* #33 — contextual AI-CTA on the Note card ("Zapytaj AI" / "Ask AI"),
-                      same doctrine (D17) as TaskDetailView's "Create Ideas",
-                      DecisionDetailView's "Analyze options" and InitiativeDocumentView's
-                      "Propose next steps": ONE docked Teresa panel, pre-seeded with a
-                      note-specific kickoff message (handleAskAI → buildAskAIMessage +
-                      setChatKickoffMessage — the mechanism already used by the hamburger
-                      menu's "Ask AI" entry). Made visible in the action bar (icon-only +
-                      tooltip, matching the History/Expand/Graph buttons above) instead of
-                      being reachable only via the ⋯ hamburger menu. */}
-                    <button
-                      type="button"
-                      onClick={handleAskAI}
-                      title={t('notebook.notebookContent.title10', 'Ask AI about this note')}
-                      aria-label={t(
-                        'notebook.notebookContent.ariaLabel4',
-                        'Ask AI about this note'
-                      )}
-                      className="shrink-0 p-1.5 rounded-lg text-c-text-muted hover:bg-c-surface-raised transition-colors"
-                    >
-                      <Sparkles size={14} />
-                    </button>
-                    {/* MW-08: the rail (Teresa/Powiązania) is a fixed-width
+                      {/* MW-08: the rail (Teresa/Powiązania) is a fixed-width
                       third column with no mobile treatment of its own, and
                       its content is explicitly out of this package's scope
                       (Notes AI/handoffs). Rather than ship a broken overlay,
@@ -3225,40 +3323,42 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                       simply not offered below the mobile breakpoint; this is
                       a deliberate, documented scope decision, not an
                       oversight. */}
-                    {!isMobile && (
+                      {!isMobile && (
+                        <button
+                          ref={notebookRailToggleRef}
+                          type="button"
+                          onClick={() => setNotebookRailOpen(!notebookRailOpen)}
+                          title={
+                            notebookRailOpen
+                              ? t('notebook.notebookContent.label57', 'Close side panel')
+                              : t(
+                                  'notebook.notebookContent.label58',
+                                  'Open side panel (AI tools + context)'
+                                )
+                          }
+                          className={`mr-2 inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-2 py-1 text-[11px] font-medium transition-colors ${
+                            notebookRailOpen
+                              ? 'border-c-text bg-c-text text-c-surface'
+                              : 'border-c-border-subtle bg-c-surface text-c-text-muted hover:bg-c-surface-raised'
+                          }`}
+                        >
+                          <Layers size={12} />
+                        </button>
+                      )}
+                      {/* N1: hamburger ⋯ — all note actions in one menu */}
                       <button
                         type="button"
-                        onClick={() => setNotebookRailOpen(!notebookRailOpen)}
-                        title={
-                          notebookRailOpen
-                            ? t('notebook.notebookContent.label57', 'Close side panel')
-                            : t(
-                                'notebook.notebookContent.label58',
-                                'Open side panel (AI tools + context)'
-                              )
-                        }
-                        className={`mr-2 inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-2 py-1 text-[11px] font-medium transition-colors ${
-                          notebookRailOpen
-                            ? 'border-c-text bg-c-text text-c-surface'
-                            : 'border-c-border-subtle bg-c-surface text-c-text-muted hover:bg-c-surface-raised'
-                        }`}
+                        onClick={(e) => {
+                          const r = e.currentTarget.getBoundingClientRect();
+                          setHamburgerPos({ x: Math.max(8, r.right - 240), y: r.bottom + 4 });
+                        }}
+                        title={t('notebook.notebookContent.title11', 'Note menu')}
+                        aria-label={t('notebook.notebookContent.ariaLabel5', 'Note menu')}
+                        className="shrink-0 p-1.5 rounded-lg text-c-text-muted hover:bg-c-surface-raised transition-colors"
                       >
-                        <Layers size={12} />
+                        <MoreHorizontal size={16} />
                       </button>
-                    )}
-                    {/* N1: hamburger ⋯ — all note actions in one menu */}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        const r = e.currentTarget.getBoundingClientRect();
-                        setHamburgerPos({ x: Math.max(8, r.right - 240), y: r.bottom + 4 });
-                      }}
-                      title={t('notebook.notebookContent.title11', 'Note menu')}
-                      aria-label={t('notebook.notebookContent.ariaLabel5', 'Note menu')}
-                      className="shrink-0 p-1.5 rounded-lg text-c-text-muted hover:bg-c-surface-raised transition-colors"
-                    >
-                      <MoreHorizontal size={16} />
-                    </button>
+                    </div>
                   </div>
                 </div>
 
@@ -3274,19 +3374,20 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                         block: 'start',
                       })
                     }
-                    onVerification={() =>
-                      verificationStripRef.current?.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start',
-                      })
-                    }
+                    onVerification={() => {
+                      setNotebookRailOpen(true);
+                      setNotebookRailTab('work');
+                      window.requestAnimationFrame(() => notebookRailToggleRef.current?.focus());
+                    }}
                     onShare={handleShareEmail}
-                    onExpandDocument={() => void handleExpandToDocument()}
+                    onExpandDocument={() => handleExpandToDocument()}
+                    onGraph={() => setShowGraphView((v) => !v)}
                     onConvert={(t: NotebookConvertTarget) =>
-                      void handleConvertFromPanel(t as ConvertTarget)
+                      handleConvertFromPanel(t as ConvertTarget)
                     }
                     onAskAI={() => setAiCommand('action')}
-                    onDelete={() => void handleDeletePage()}
+                    onDelete={() => handleDeletePage()}
+                    receiptCapableActionIds={isDeleteReceiptCapable ? ['delete'] : []}
                   />
                 )}
 
@@ -3472,68 +3573,6 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                         </div>
                       </div>
 
-                      {/* MW-08 — explicit save state, owner, visibility. Header
-                        anatomy required by the Notes IA standard §6/§9: the
-                        user must always know whether the page saved, and
-                        who can see it. `aria-live="polite"` so a screen
-                        reader announces state changes without the developer
-                        needing to move focus. */}
-                      <div
-                        className="mt-2 flex items-center gap-3 flex-wrap text-[11px]"
-                        aria-live="polite"
-                        data-testid="notebook-save-state"
-                      >
-                        {saveState === 'saving' && (
-                          <span className="inline-flex items-center gap-1 text-c-text-muted">
-                            <RefreshCw size={11} className="animate-spin" />
-                            {t('notebook.notebookContent.saveStateSaving', 'Saving…')}
-                          </span>
-                        )}
-                        {saveState === 'saved' && (
-                          <span className="inline-flex items-center gap-1 text-c-success">
-                            <CheckCircle2 size={11} />
-                            {t('notebook.notebookContent.saveStateSaved', 'Saved')}
-                          </span>
-                        )}
-                        {saveState === 'error' && (
-                          <span className="inline-flex items-center gap-1 text-danger-500">
-                            <AlertTriangle size={11} />
-                            {t('notebook.notebookContent.saveStateError', 'Save failed')}
-                          </span>
-                        )}
-                        {saveState === 'offline' && (
-                          <span className="inline-flex items-center gap-1 text-c-text-muted">
-                            <WifiOff size={11} />
-                            {t(
-                              'notebook.notebookContent.saveStateOffline',
-                              'Offline — your edits are kept and will save when back online'
-                            )}
-                          </span>
-                        )}
-                        <span
-                          className="inline-flex items-center gap-1 text-c-text-muted"
-                          title={t('notebook.notebookContent.ownerTooltip', 'Who owns this page')}
-                        >
-                          {(() => {
-                            const isOwnPage =
-                              !activePage.ownerUserId || activePage.ownerUserId === currentUserId;
-                            return isOwnPage
-                              ? t('notebook.notebookContent.ownerYou', 'You')
-                              : t('notebook.notebookContent.ownerOther', 'Another user');
-                          })()}
-                        </span>
-                        <span className="inline-flex items-center gap-1 text-c-text-muted">
-                          {activePage.visibility === 'project' ? (
-                            <Users size={11} />
-                          ) : (
-                            <Lock size={11} />
-                          )}
-                          {activePage.visibility === 'project'
-                            ? t('notebook.notebookContent.visibilityProject', 'Shared with project')
-                            : t('notebook.notebookContent.visibilityPrivate', 'Private')}
-                        </span>
-                      </div>
-
                       {/* MW-08 — conflict recovery banner. Persistent (unlike
                         the toast, which fades) so the user can't miss it,
                         and never disappears until they explicitly choose an
@@ -3569,121 +3608,123 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                         </div>
                       )}
 
-                      {/* N3: Lifecycle strip — clean status pills (status-aware, no raw selects) */}
-                      <div
-                        ref={verificationStripRef}
-                        className="mt-3 flex items-center gap-2 flex-wrap"
-                      >
-                        <select
-                          value={
-                            (activePage.verificationStatus as NotebookVerificationStatus) ??
-                            'unverified'
-                          }
-                          onChange={(e) => {
-                            const v = e.target.value as NotebookVerificationStatus;
-                            scheduleSave({ verificationStatus: v });
-                            setPages((prev) =>
-                              prev.map((p) =>
-                                p.id === activePage.id ? { ...p, verificationStatus: v } : p
-                              )
-                            );
-                          }}
-                          title={t('notebook.notebookContent.title13', 'Verification')}
-                          className={`text-[11px] px-2.5 py-1 rounded-md border cursor-pointer transition-colors ${
-                            (activePage.verificationStatus as NotebookVerificationStatus) ===
-                            'verified'
-                              ? 'bg-emerald-500/10 border-emerald-300/40 text-emerald-700 dark:text-emerald-300'
-                              : (activePage.verificationStatus as NotebookVerificationStatus) ===
-                                  'disputed'
-                                ? 'bg-amber-500/10 border-amber-300/40 text-amber-700 dark:text-amber-300'
-                                : 'bg-c-surface-raised border-c-border-subtle text-c-text-secondary'
-                          }`}
+                      {/* Governance controls moved to the canonical Work rail (MYW-NBK-CORE-001). */}
+                      {showLegacyNotebookGovernanceControls && (
+                        <div
+                          ref={verificationStripRef}
+                          className="mt-3 flex items-center gap-2 flex-wrap"
                         >
-                          <option value="unverified">
-                            {t('notebook.notebookContent.label60', '○ Unverified')}
-                          </option>
-                          <option value="verified">
-                            {t('notebook.notebookContent.label61', '✓ Verified')}
-                          </option>
-                          <option value="disputed">
-                            {t('notebook.notebookContent.label62', '! Disputed')}
-                          </option>
-                        </select>
-                        <select
-                          value={(activePage.reviewCadence as NotebookReviewCadence) ?? 'monthly'}
-                          onChange={(e) => {
-                            const v = e.target.value as NotebookReviewCadence;
-                            scheduleSave({ reviewCadence: v });
-                            setPages((prev) =>
-                              prev.map((p) =>
-                                p.id === activePage.id ? { ...p, reviewCadence: v } : p
-                              )
-                            );
-                          }}
-                          title={t('notebook.notebookContent.title14', 'Review cadence')}
-                          className="text-[11px] px-2.5 py-1 rounded-md border bg-c-surface-raised border-c-border-subtle text-c-text-secondary cursor-pointer"
-                        >
-                          <option value="weekly">
-                            {t('notebook.notebookContent.label63', 'Weekly')}
-                          </option>
-                          <option value="monthly">
-                            {t('notebook.notebookContent.label64', 'Monthly')}
-                          </option>
-                          <option value="quarterly">
-                            {t('notebook.notebookContent.label65', 'Quarterly')}
-                          </option>
-                          <option value="never">
-                            {t('notebook.notebookContent.label66', 'Never')}
-                          </option>
-                        </select>
-                        {(activePage.staleAt || activePage.lastReviewedAt) && (
-                          <span className="text-[11px]">
-                            {activePage.staleAt ? (
-                              <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400">
-                                <AlertTriangle size={11} />
-                                {t('notebook.notebookContent.label67', 'Stale')}
-                              </span>
-                            ) : activePage.lastReviewedAt ? (
-                              <span className="inline-flex items-center gap-1 text-c-text-muted">
-                                <CheckCircle2 size={11} className="text-emerald-500" />
-                                {t('notebook.notebookContent.label68', 'Reviewed')}{' '}
-                                {relativeTime(activePage.lastReviewedAt)}
-                              </span>
-                            ) : null}
-                          </span>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const now = new Date().toISOString();
-                            scheduleSave({
-                              lastReviewedAt: now,
-                              staleAt: null,
-                              verificationStatus:
-                                (activePage.verificationStatus as NotebookVerificationStatus) ||
-                                'verified',
-                            });
-                            setPages((prev) =>
-                              prev.map((p) =>
-                                p.id === activePage.id
-                                  ? {
-                                      ...p,
-                                      lastReviewedAt: now,
-                                      staleAt: null,
-                                      verificationStatus:
-                                        (p.verificationStatus as NotebookVerificationStatus) ||
-                                        'verified',
-                                    }
-                                  : p
-                              )
-                            );
-                          }}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-c-border-subtle text-c-text-secondary hover:bg-c-surface-raised text-[11px] font-medium transition-colors"
-                        >
-                          <RefreshCw size={10} />
-                          {t('notebook.notebookContent.label69', 'Mark reviewed')}
-                        </button>
-                      </div>
+                          <select
+                            value={
+                              (activePage.verificationStatus as NotebookVerificationStatus) ??
+                              'unverified'
+                            }
+                            onChange={(e) => {
+                              const v = e.target.value as NotebookVerificationStatus;
+                              scheduleSave({ verificationStatus: v });
+                              setPages((prev) =>
+                                prev.map((p) =>
+                                  p.id === activePage.id ? { ...p, verificationStatus: v } : p
+                                )
+                              );
+                            }}
+                            title={t('notebook.notebookContent.title13', 'Verification')}
+                            className={`text-[11px] px-2.5 py-1 rounded-md border cursor-pointer transition-colors ${
+                              (activePage.verificationStatus as NotebookVerificationStatus) ===
+                              'verified'
+                                ? 'bg-emerald-500/10 border-emerald-300/40 text-emerald-700 dark:text-emerald-300'
+                                : (activePage.verificationStatus as NotebookVerificationStatus) ===
+                                    'disputed'
+                                  ? 'bg-amber-500/10 border-amber-300/40 text-amber-700 dark:text-amber-300'
+                                  : 'bg-c-surface-raised border-c-border-subtle text-c-text-secondary'
+                            }`}
+                          >
+                            <option value="unverified">
+                              {t('notebook.notebookContent.label60', '○ Unverified')}
+                            </option>
+                            <option value="verified">
+                              {t('notebook.notebookContent.label61', '✓ Verified')}
+                            </option>
+                            <option value="disputed">
+                              {t('notebook.notebookContent.label62', '! Disputed')}
+                            </option>
+                          </select>
+                          <select
+                            value={(activePage.reviewCadence as NotebookReviewCadence) ?? 'monthly'}
+                            onChange={(e) => {
+                              const v = e.target.value as NotebookReviewCadence;
+                              scheduleSave({ reviewCadence: v });
+                              setPages((prev) =>
+                                prev.map((p) =>
+                                  p.id === activePage.id ? { ...p, reviewCadence: v } : p
+                                )
+                              );
+                            }}
+                            title={t('notebook.notebookContent.title14', 'Review cadence')}
+                            className="text-[11px] px-2.5 py-1 rounded-md border bg-c-surface-raised border-c-border-subtle text-c-text-secondary cursor-pointer"
+                          >
+                            <option value="weekly">
+                              {t('notebook.notebookContent.label63', 'Weekly')}
+                            </option>
+                            <option value="monthly">
+                              {t('notebook.notebookContent.label64', 'Monthly')}
+                            </option>
+                            <option value="quarterly">
+                              {t('notebook.notebookContent.label65', 'Quarterly')}
+                            </option>
+                            <option value="never">
+                              {t('notebook.notebookContent.label66', 'Never')}
+                            </option>
+                          </select>
+                          {(activePage.staleAt || activePage.lastReviewedAt) && (
+                            <span className="text-[11px]">
+                              {activePage.staleAt ? (
+                                <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400">
+                                  <AlertTriangle size={11} />
+                                  {t('notebook.notebookContent.label67', 'Stale')}
+                                </span>
+                              ) : activePage.lastReviewedAt ? (
+                                <span className="inline-flex items-center gap-1 text-c-text-muted">
+                                  <CheckCircle2 size={11} className="text-emerald-500" />
+                                  {t('notebook.notebookContent.label68', 'Reviewed')}{' '}
+                                  {relativeTime(activePage.lastReviewedAt)}
+                                </span>
+                              ) : null}
+                            </span>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const now = new Date().toISOString();
+                              scheduleSave({
+                                lastReviewedAt: now,
+                                staleAt: null,
+                                verificationStatus:
+                                  (activePage.verificationStatus as NotebookVerificationStatus) ||
+                                  'verified',
+                              });
+                              setPages((prev) =>
+                                prev.map((p) =>
+                                  p.id === activePage.id
+                                    ? {
+                                        ...p,
+                                        lastReviewedAt: now,
+                                        staleAt: null,
+                                        verificationStatus:
+                                          (p.verificationStatus as NotebookVerificationStatus) ||
+                                          'verified',
+                                      }
+                                    : p
+                                )
+                              );
+                            }}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-c-border-subtle text-c-text-secondary hover:bg-c-surface-raised text-[11px] font-medium transition-colors"
+                          >
+                            <RefreshCw size={10} />
+                            {t('notebook.notebookContent.label69', 'Mark reviewed')}
+                          </button>
+                        </div>
+                      )}
 
                       {/* Subtle divider */}
                       <div className="h-px bg-gradient-to-r from-transparent via-slate-200 dark:via-navy-700 to-transparent mt-3" />
@@ -3874,10 +3915,31 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                       <NotebookInlineAIMenu
                         editor={editor}
                         pageId={activePage.id}
+                        receiptCapableActionIds={[]}
                         onApplied={() => {
                           void Promise.all([fetchPages(), refreshAIProposals(activePage.id)]);
                         }}
                       />
+                    )}
+                    {editor && (
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          const rect = event.currentTarget.getBoundingClientRect();
+                          setSlashState({
+                            open: true,
+                            query: '',
+                            triggerPos: editor.state.selection.from,
+                            coords: { top: rect.bottom + 4, left: rect.left },
+                            mode: 'insert',
+                          });
+                        }}
+                        aria-label={t('notebook.notebookContent.insertBlock', 'Insert block')}
+                        className="mb-2 inline-flex items-center gap-1.5 rounded-lg border border-c-border-subtle bg-c-surface px-2.5 py-1.5 text-xs font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                      >
+                        <Plus size={13} aria-hidden="true" />
+                        {t('notebook.notebookContent.insertBlock', 'Insert block')}
+                      </button>
                     )}
                     <EditorContent editor={editor} />
 
@@ -3940,6 +4002,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                       state={slashState}
                       onClose={() => setSlashState(INITIAL_SLASH_STATE)}
                       containerRef={editorContainerRef}
+                      receiptCapableActionIds={[]}
                       onAICommand={(cmd) => setAiCommand(cmd)}
                     />
                   )}
@@ -4029,7 +4092,17 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
               open={notebookRailOpen}
               activeTab={notebookRailTab}
               onTabChange={setNotebookRailTab}
-              onClose={() => setNotebookRailOpen(false)}
+              onClose={() => {
+                setNotebookRailOpen(false);
+                window.requestAnimationFrame(() => notebookRailToggleRef.current?.focus());
+              }}
+              ownerLabel={
+                activePage?.ownerUserId === currentUserId
+                  ? currentUser?.displayName ||
+                    `${currentUser?.firstName || ''} ${currentUser?.lastName || ''}`.trim() ||
+                    currentUser?.email
+                  : undefined
+              }
               activePage={activePage}
               allPages={pages}
               editor={editor}
@@ -4073,6 +4146,28 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                     prev.map((p) => (p.id === activePage.id ? { ...p, visibility: 'project' } : p))
                   );
                 }
+              }}
+              saveState={saveState}
+              receiptCapableActionIds={[]}
+              onRetrySave={handleRetrySave}
+              onReloadConflict={handleReloadFromConflict}
+              onKeepMineConflict={handleRetryAfterConflict}
+              onSetVerificationStatus={(next) => {
+                if (!activePage) return;
+                scheduleSave({ verificationStatus: next });
+              }}
+              onSetReviewCadence={(next) => {
+                if (!activePage) return;
+                scheduleSave({ reviewCadence: next });
+              }}
+              onMarkReviewed={() => {
+                if (!activePage) return;
+                scheduleSave({
+                  lastReviewedAt: new Date().toISOString(),
+                  staleAt: null,
+                  verificationStatus:
+                    (activePage.verificationStatus as NotebookVerificationStatus) || 'verified',
+                });
               }}
               getRelativeTime={(iso) => relativeTime(iso)}
               onOpenAIChat={() => setChatOpen(true)}

@@ -48,7 +48,7 @@ interface PrivateModeDetailsProps {
 }
 
 const BADGE_CLASSNAME =
-  'mr-1 inline-flex items-center gap-1 rounded-full border border-primary-200 bg-primary-50 px-2 py-0.5 text-[11px] font-medium text-primary-700 dark:border-primary-800/70 dark:bg-primary-900/25 dark:text-primary-300';
+  'mr-1 inline-flex h-8 shrink-0 items-center gap-1 rounded-xl border border-primary-200 bg-primary-50 px-2 text-[11px] font-medium text-primary-700 dark:border-primary-800/70 dark:bg-primary-900/25 dark:text-primary-300';
 
 export const PrivateModeDetails: React.FC<PrivateModeDetailsProps> = ({
   isEnabled = isPrivateModeDetailsEnabled,
@@ -108,6 +108,7 @@ export const PrivateModeDetails: React.FC<PrivateModeDetailsProps> = ({
     return (
       <div
         data-testid="private-mode-badge-static"
+        data-chat-header-control-variant="status-selector"
         className={BADGE_CLASSNAME}
         title={tooltip}
         aria-label={label}
@@ -119,7 +120,11 @@ export const PrivateModeDetails: React.FC<PrivateModeDetailsProps> = ({
   }
 
   return (
-    <div ref={containerRef} className="relative inline-flex">
+    <div
+      ref={containerRef}
+      className="relative inline-flex"
+      data-chat-header-control-variant="status-selector"
+    >
       <button
         type="button"
         data-testid="private-mode-badge-trigger"

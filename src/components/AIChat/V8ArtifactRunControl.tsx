@@ -16,6 +16,10 @@ import { useNavigate } from 'react-router-dom';
 
 import { TrustStatePreviewSection } from '@/components/ReportsAndPresentations/TrustStatePreviewSection';
 import { useTrustState } from '@/components/ReportsAndPresentations/useTrustState';
+import {
+  CHAT_HEADER_CONTROL_ACTIVE_CLASS,
+  CHAT_HEADER_ICON_CONTROL_CLASS,
+} from '@/components/AIChat/chatHeaderControlStyles';
 import type {
   ArtifactFamily,
   ArtifactPlanOutputType,
@@ -409,17 +413,13 @@ export function V8ArtifactRunControl({
   };
 
   return (
-    <div className="relative">
+    <div className="relative" data-chat-header-control-variant="icon-action">
       <button
         type="button"
         data-testid="v8-artifact-run-button"
         onClick={() => setIsOpen((prev) => !prev)}
         disabled={!latestSnapshot?.snapshotId && !snapshotsLoading && !canCaptureSnapshot}
-        className={`relative p-1.5 rounded-lg transition-colors ${
-          isOpen
-            ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-300'
-            : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200'
-        } disabled:cursor-not-allowed disabled:opacity-50`}
+        className={`relative ${CHAT_HEADER_ICON_CONTROL_CLASS} ${isOpen ? CHAT_HEADER_CONTROL_ACTIVE_CLASS : ''}`}
         title={
           latestSnapshot?.snapshotId
             ? t('v8.artifactRun.trigger', 'Create governed output plan')

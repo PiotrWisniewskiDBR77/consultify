@@ -20,4 +20,12 @@ describe('Dynamic SWOT Input & Exploration owner feedback', () => {
     expect(source).toContain('acceptedSignals.length > 0 &&');
     expect(source).not.toContain('{labels.emptyAccepted}');
   });
+
+  it('puts the current AI proposal before accepted points and manual entry', () => {
+    expect(source).toContain('className={`order-1 mt-4 rounded-[24px]');
+    expect(source).toContain('className="order-2 mt-4 rounded-[24px]');
+    expect(source).toContain('className="order-3 mt-4 flex flex-wrap gap-2"');
+    expect(source).toContain("if (event.key === 'Enter') {");
+    expect(source).toContain('setManualEntryOpen(false)');
+  });
 });

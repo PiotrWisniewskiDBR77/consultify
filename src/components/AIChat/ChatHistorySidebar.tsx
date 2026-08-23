@@ -34,6 +34,7 @@ import {
   X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
@@ -50,6 +51,7 @@ import {
 } from '../../store/useConversationStore';
 import { EmptyState } from '../ui/composed/EmptyState';
 import { LoadingState } from '../ui/primitives';
+import { requiresOrganizationVisibilityConsent } from './chatHistoryVisibility';
 import { CONVERSATION_DND_TYPE, ConversationItem } from './ConversationItem';
 import { ConversationList } from './ConversationList';
 import { ConversationSearch } from './ConversationSearch';
@@ -682,6 +684,36 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
   // Section collapse state for My Folders / Team Folders
   const [myFoldersCollapsed, setMyFoldersCollapsed] = useState(false);
   const [teamFoldersCollapsed, setTeamFoldersCollapsed] = useState(false);
+  const historyPreferenceKey = `consultify-chat-history:${String((currentUser as any)?.id || 'anonymous')}:${String((currentUser as any)?.organizationId || 'personal')}`;
+
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(window.localStorage.getItem(historyPreferenceKey) || '{}');
+      setMyFoldersCollapsed(saved.myFoldersCollapsed === true);
+      setTeamFoldersCollapsed(saved.teamFoldersCollapsed === true);
+    } catch {
+      setMyFoldersCollapsed(false);
+      setTeamFoldersCollapsed(false);
+    }
+  }, [historyPreferenceKey]);
+
+  const togglePersistedSection = useCallback(
+    (section: 'personal' | 'team') => {
+      const nextMy = section === 'personal' ? !myFoldersCollapsed : myFoldersCollapsed;
+      const nextTeam = section === 'team' ? !teamFoldersCollapsed : teamFoldersCollapsed;
+      setMyFoldersCollapsed(nextMy);
+      setTeamFoldersCollapsed(nextTeam);
+      try {
+        window.localStorage.setItem(
+          historyPreferenceKey,
+          JSON.stringify({ myFoldersCollapsed: nextMy, teamFoldersCollapsed: nextTeam })
+        );
+      } catch {
+        // Storage can be unavailable in privacy-restricted browser contexts.
+      }
+    },
+    [historyPreferenceKey, myFoldersCollapsed, teamFoldersCollapsed]
+  );
 
   // C3.3: Active folder filter — clicking a folder name filters to that folder's conversations
   const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
@@ -895,13 +927,41 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
   // DnD: move conversation to a folder
   const handleDropToFolder = useCallback(
     async (conversationId: string, folderId: string) => {
+      const destination = projects.find((project) => project.id === folderId);
+      const conversation = conversations.find((item) => item.id === conversationId);
+      const source = conversation?.chatProjectId
+        ? projects.find((project) => project.id === conversation.chatProjectId)
+        : null;
+      const broadensVisibility = requiresOrganizationVisibilityConsent(
+        destination?.scope,
+        source?.scope
+      );
+      if (
+        broadensVisibility &&
+        !window.confirm(
+          t(
+            'aiChat.confirmMovePrivateToOrganization',
+            'Move this private conversation to an organization folder? Organization members with access to the folder will be able to see it.'
+          )
+        )
+      ) {
+        return;
+      }
       try {
-        await moveConversationToProject(conversationId, folderId);
+        const result = await moveConversationToProject(conversationId, folderId, {
+          visibilityConsent: broadensVisibility,
+        });
+        if (result.visibilityReceiptId) {
+          toast.success(
+            `${t('aiChat.visibilityConsentRecorded', 'Organization visibility recorded. Receipt')}: ${result.visibilityReceiptId}`,
+            { duration: 8000 }
+          );
+        }
       } catch (err) {
         console.error('[ChatHistorySidebar] DnD move to folder failed:', err);
       }
     },
-    [moveConversationToProject]
+    [conversations, moveConversationToProject, projects, t]
   );
 
   // DnD: remove conversation from folder (drop onto unassigned area)
@@ -951,6 +1011,11 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
       {/* Sidebar Panel - Floating Overlay */}
       {shouldRenderSidebar && (
         <div
+          id="chat-history-panel"
+          role="complementary"
+          aria-label={t('aiChat.history', 'Chat history')}
+          aria-hidden={!isSidebarOpen}
+          inert={!isSidebarOpen}
           data-testid="chat-history-sidebar"
           onTransitionEnd={(e) => {
             if (e.currentTarget !== e.target) return;
@@ -1189,7 +1254,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                     t={t}
                     onFolderClick={setActiveFolderId}
                     sectionCollapsed={myFoldersCollapsed}
-                    onToggleSectionCollapsed={() => setMyFoldersCollapsed((v) => !v)}
+                    onToggleSectionCollapsed={() => togglePersistedSection('personal')}
                     onDropConversation={handleDropToFolder}
                   />
 
@@ -1216,7 +1281,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                     t={t}
                     onFolderClick={setActiveFolderId}
                     sectionCollapsed={teamFoldersCollapsed}
-                    onToggleSectionCollapsed={() => setTeamFoldersCollapsed((v) => !v)}
+                    onToggleSectionCollapsed={() => togglePersistedSection('team')}
                     onDropConversation={handleDropToFolder}
                   />
                 </div>

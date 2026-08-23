@@ -79,6 +79,8 @@ import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
 import { buildArtifactCode } from '@/utils/artifactLinks';
 
+import { TASK_GENERATED_SECTION_PERSISTENCE } from './taskGeneratedSectionPersistence';
+
 // ── AI Field Enhancer (shared) ───────────────────────────────────────────────
 import { AIFieldEnhancer } from '../shared/AIFieldEnhancer';
 import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
@@ -548,6 +550,8 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
 
   // New sections state
   const [risks, setRisks] = useState<RiskItem[]>([]);
+  const [riskAnalysisError, setRiskAnalysisError] = useState<string | null>(null);
+  const riskAnalysisInFlightRef = useRef(false);
   const [alternatives, setAlternatives] = useState<Alternative[]>([]);
   const [selectedAlternativeId, setSelectedAlternativeId] = useState<string>('');
   const [implementationIdeas, setImplementationIdeas] = useState<ImplementationIdea[]>([]);
@@ -2066,6 +2070,9 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   // „Resource shortage") niezależne od treści zadania, meldowane jako
   // „AI risks generated". Teraz: realne wywołanie modelu.
   const generateRisksAI = async () => {
+    if (riskAnalysisInFlightRef.current) return;
+    riskAnalysisInFlightRef.current = true;
+    setRiskAnalysisError(null);
     setIsGeneratingRisks(true);
     try {
       const levels = ['low', 'medium', 'high', 'critical'];
@@ -2109,6 +2116,11 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
       });
 
       if (aiRisks.length === 0) {
+        setRiskAnalysisError(
+          isPolish
+            ? 'Analiza nie zwróciła żadnego prawidłowego ryzyka. Lista pozostała bez zmian.'
+            : 'Analysis returned no valid risks. The list was left unchanged.'
+        );
         toast.error(
           isPolish
             ? 'AI nie zwróciło żadnego ryzyka — lista bez zmian.'
@@ -2117,11 +2129,19 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
         return;
       }
 
-      setRisks([...risks, ...aiRisks]);
+      // Preserve manual edits that may land while the provider request is in flight.
+      setRisks((currentRisks) => [...currentRisks, ...aiRisks]);
       toast.success(t('myWork.taskDetail.toastSuccess4', 'AI risks generated'));
     } catch (error) {
+      const reason = describeAiError(error);
+      setRiskAnalysisError(
+        isPolish
+          ? `Analiza niedostępna (${reason}). Lista pozostała bez zmian.`
+          : `Analysis unavailable (${reason}). The list was left unchanged.`
+      );
       notifyAiUnavailable(error);
     } finally {
+      riskAnalysisInFlightRef.current = false;
       setIsGeneratingRisks(false);
     }
   };
@@ -2910,15 +2930,21 @@ Return ONLY the final comment text.`;
   // ── ActivityLogCanvas props mapping ──────────────────────────────────────
   const nModeActivityEntries: NModeActivityLogEntry[] = useMemo(
     () =>
-      activityLog.map((e) => ({
-        id: e.id,
-        type: e.type,
-        description: e.description,
-        timestamp: e.timestamp,
-        userName: e.userName,
-        oldValue: e.oldValue,
-        newValue: e.newValue,
-      })),
+      [...activityLog]
+        .sort((a, b) => {
+          const right = new Date(b.timestamp).getTime();
+          const left = new Date(a.timestamp).getTime();
+          return (Number.isNaN(right) ? 0 : right) - (Number.isNaN(left) ? 0 : left);
+        })
+        .map((e) => ({
+          id: e.id,
+          type: e.type,
+          description: e.description,
+          timestamp: e.timestamp,
+          userName: e.userName,
+          oldValue: e.oldValue,
+          newValue: e.newValue,
+        })),
     [activityLog]
   );
 
@@ -3071,6 +3097,23 @@ Return ONLY the final comment text.`;
         applyGeneratedCard(key, result?.content);
         setCardAI((p) => ({ ...p, [key]: true }));
         setCard(key, 'ai-draft');
+        const persistence = TASK_GENERATED_SECTION_PERSISTENCE[key];
+        toast.success(
+          persistence === 'task-save'
+            ? t(
+                'myWork.taskDetail.generatedSectionReady',
+                'Draft generated. Review it and save the task to persist your changes.'
+              )
+            : persistence === 'local-only'
+              ? t(
+                  'myWork.taskDetail.generatedSectionLocalOnly',
+                  'Draft generated for this view. It is not included in the server Task Save.'
+                )
+              : t(
+                  'myWork.taskDetail.generatedSectionReferenceOnly',
+                  'Suggestions generated for reference. They are not included in Task Save.'
+                )
+        );
       } catch (err) {
         console.error('[TaskDetailView] section generation failed', err);
         setCard(key, 'error');
@@ -3845,6 +3888,8 @@ Return ONLY the final comment text.`;
               onRemoveRisk={removeRisk}
               onAIGenerate={generateRisksAI}
               isGeneratingAI={isGeneratingRisks}
+              aiErrorMessage={riskAnalysisError}
+              onAIRetry={generateRisksAI}
               locked={readMode}
               artifactType="task"
               artifactContext={{ title, status, priority, type: 'task' }}
@@ -4387,7 +4432,7 @@ Return ONLY the final comment text.`;
       }
 
       // ── Wzorzec N: opakuj sekcje AI-zapisywalne w NModeCardState ──────────
-      // (badge AI-draft + pasek ✨Regeneruj · ✎Edytuj · ✓Zaakceptuj).
+      // (badge AI-draft + realne akcje ✨Regeneruj · ✎Edytuj).
       // SPEC-N §2.5: KAŻDA sekcja deklaruje kontrakt AI albo jawne wykluczenie
       // {none, reason}. Milczenie (wcześniej 6 z 10 sekcji nie mówiło nic) nie
       // jest już dopuszczalne — deklaracje pełne w TASK_AI_CARD_META +
@@ -4406,11 +4451,28 @@ Return ONLY the final comment text.`;
             /* Podgląd = widok dla klienta: znika też badge stanu redakcyjnego
                („Szkic AI"/„Edytowane"/„Gotowe"). W Edycji bez zmian. */
             hideBadge={readMode}
+            persistenceNotice={
+              TASK_GENERATED_SECTION_PERSISTENCE[cKey] === 'task-save'
+                ? t(
+                    'myWork.taskDetail.generatedSectionSaveNotice',
+                    'Review this draft, then save the task to persist it.'
+                  )
+                : TASK_GENERATED_SECTION_PERSISTENCE[cKey] === 'local-only'
+                  ? t(
+                      'myWork.taskDetail.generatedSectionLocalOnlyNotice',
+                      'This draft is local to this view and is not included in the server Task Save.'
+                    )
+                  : t(
+                      'myWork.taskDetail.generatedSectionReferenceOnlyNotice',
+                      'These suggestions are reference-only and are not included in Task Save.'
+                    )
+            }
             onRegenerate={() => generateCard(cKey)}
             onGenerate={() => generateCard(cKey)}
             onFillManually={() => setCard(cKey, 'edited')}
             onEdit={() => setCard(cKey, 'edited')}
-            onAccept={() => setCard(cKey, 'done')}
+            // MYW-TASK-REC-003: do not expose a local-only "Accept" receipt.
+            // Card acceptance has no persisted task field/readback contract yet.
             onRetry={() => generateCard(cKey)}
           >
             {component}
@@ -5423,9 +5485,8 @@ Return ONLY the final comment text.`;
       },
       {
         id: 'history',
-        // SPEC-N §2.1: `activity-log` również zeszło tu z lewej nawigacji.
-        // Pełny ActivityLogCanvas (statystyki + filtry typów), bo skrót
-        // „8 ostatnich wpisów" gubił oba.
+        // Owner review MYW-TASK-REC-002: task history is a light chronological
+        // list. Technical before/after values remain available on demand.
         label: t('myWork.taskDetail.label12', 'History'),
         icon: History,
         defaultOpen: false,
@@ -5437,6 +5498,7 @@ Return ONLY the final comment text.`;
             entries={nModeActivityEntries}
             stats={nModeActivityStats}
             typeMeta={nModeActivityTypeMeta}
+            variant="compact-list"
           />
         ),
       },
@@ -5674,14 +5736,14 @@ Return ONLY the final comment text.`;
                               ? 'border-c-info/40 text-c-info bg-[color-mix(in_srgb,var(--c-info)_10%,transparent)]'
                               : 'border-c-info/40 text-c-info bg-[color-mix(in_srgb,var(--c-info)_10%,transparent)] hover:bg-[color-mix(in_srgb,var(--c-info)_15%,transparent)]'
                           } disabled:opacity-40 disabled:cursor-not-allowed`}
-                          title={t('myWork.taskDetail.title13', 'Analyze risks with AI')}
+                          title={t('myWork.taskDetail.title13', 'Analyze')}
                         >
                           {isGeneratingRisks ? (
                             <Loader2 size={13} className="animate-spin" />
                           ) : (
                             <Sparkles size={13} />
                           )}
-                          {t('myWork.taskDetail.analyzeRisks', 'Analyze risks')}
+                          {t('myWork.taskDetail.analyzeRisks', 'Analyze')}
                         </button>
                       )}
 

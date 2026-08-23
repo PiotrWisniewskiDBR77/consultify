@@ -84,10 +84,13 @@ export async function v8Patch<T>(path: string, body?: unknown): Promise<T> {
   return json.data;
 }
 
-export async function v8Delete<T>(path: string): Promise<T> {
+export async function v8Delete<T>(
+  path: string,
+  options?: { extraHeaders?: Record<string, string> }
+): Promise<T> {
   const res = await fetchWithRetry(`${V8_BASE}${path}`, {
     method: 'DELETE',
-    headers: getHeaders(),
+    headers: options?.extraHeaders ? { ...getHeaders(), ...options.extraHeaders } : getHeaders(),
   });
   // `handleResponse` returns `null` (not `{ data }`) for a genuine 204 No Content — a legal,
   // empty-body DELETE response, not an error. Reading `.data` off `null` unconditionally used to

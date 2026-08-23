@@ -5,6 +5,11 @@ import path from 'path';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+// This route contract includes real multipart array uploads. The shared test
+// setup intentionally stubs multer.array() with an empty file list, which can
+// only exercise the FILE_REQUIRED branch and cannot verify the upload path.
+vi.unmock('multer');
+
 const mockGetTableColumns = vi.fn();
 const mockQueryAll = vi.fn();
 const mockQueryOne = vi.fn();
@@ -29,6 +34,7 @@ vi.mock('../../../utils/queryHelpers.js', () => ({
   queryAll: (...args: unknown[]) => mockQueryAll(...args),
   queryOne: (...args: unknown[]) => mockQueryOne(...args),
   queryRun: (...args: unknown[]) => mockQueryRun(...args),
+  withPgTransaction: (callback: () => unknown) => callback(),
 }));
 
 vi.mock('../../../services/notebookService.js', () => ({
@@ -110,8 +116,13 @@ function createApp(): Express {
 
 describe('V8 My Work notebook routes', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    // Reset queued and persistent mock implementations as well as call history.
+    // Several route tests configure queryOne with one-shot responses; clearing
+    // calls alone lets unused responses leak into the next test and makes the
+    // ownership checks fail nondeterministically.
+    vi.resetAllMocks();
     mockGetTableColumns.mockResolvedValue(new Map([['id', { name: 'id' }]]));
+    mockQueryRun.mockResolvedValue({ changes: 1 });
   });
 
   it('lists notebook pages through the V8 envelope', async () => {
@@ -580,9 +591,9 @@ describe('V8 My Work notebook routes', () => {
         status: 'converted',
         pinned: 1,
         verificationStatus: 'verified',
-        reviewCadence: 'monthly',
+        reviewCadence: 'quarterly',
         staleAt: null,
-        lastReviewedAt: null,
+        lastReviewedAt: '2026-03-26T10:04:00.000Z',
         convertedToJson: JSON.stringify([{ type: 'report', id: 'report-1' }]),
         createdAt: '2026-03-26T10:00:00.000Z',
         updatedAt: '2026-03-26T10:05:00.000Z',
@@ -595,6 +606,9 @@ describe('V8 My Work notebook routes', () => {
         contentText: 'updated',
         tags: ['beta'],
         status: 'converted',
+        verificationStatus: 'verified',
+        reviewCadence: 'quarterly',
+        lastReviewedAt: '2026-03-26T10:04:00.000Z',
         convertedTo: [{ type: 'report', id: 'report-1' }],
       });
 
@@ -602,7 +616,12 @@ describe('V8 My Work notebook routes', () => {
     expect(mockQueryRun).toHaveBeenCalled();
     expect(mockQueryRun).toHaveBeenCalledWith(
       expect.stringContaining('converted_to_json = ?'),
-      expect.arrayContaining([JSON.stringify([{ type: 'report', id: 'report-1' }])])
+      expect.arrayContaining([
+        'verified',
+        'quarterly',
+        '2026-03-26T10:04:00.000Z',
+        JSON.stringify([{ type: 'report', id: 'report-1' }]),
+      ])
     );
     expect(res.body.data).toMatchObject({
       id: 'note-3',
@@ -610,6 +629,9 @@ describe('V8 My Work notebook routes', () => {
       tags: ['beta'],
       pinned: true,
       status: 'converted',
+      verificationStatus: 'verified',
+      reviewCadence: 'quarterly',
+      lastReviewedAt: '2026-03-26T10:04:00.000Z',
       convertedTo: [{ type: 'report', id: 'report-1' }],
     });
   });
@@ -763,16 +785,218 @@ describe('V8 My Work notebook routes', () => {
   });
 
   it('deletes an owned notebook page through the V8 namespace', async () => {
+    mockQueryAll.mockResolvedValue([]);
     mockQueryOne.mockResolvedValue({
       id: 'note-5',
       owner_user_id: USER_ID,
       organization_id: ORG,
+      title: 'Delete me',
+      updated_at: '2026-08-23T10:00:00.000Z',
     });
-    mockQueryRun.mockResolvedValue({});
 
-    const res = await request(createApp()).delete('/api/v8/my-work/notebook/pages/note-5');
+    const res = await request(createApp())
+      .delete('/api/v8/my-work/notebook/pages/note-5')
+      .set('Idempotency-Key', 'delete-note-5-request')
+      .set('X-Notebook-Expected-Updated-At', '2026-08-23T10:00:00.000Z');
 
     expect(res.status).toBe(200);
-    expect(res.body.data).toEqual({ success: true, id: 'note-5' });
+    expect(res.body.data).toMatchObject({
+      success: true,
+      id: 'note-5',
+      deletedId: 'note-5',
+      replay: false,
+      receiptId: expect.stringMatching(/^ae-/),
+    });
+    expect(mockQueryRun).toHaveBeenCalledWith(
+      expect.stringContaining('DELETE FROM notebook_pages'),
+      ['note-5', ORG, USER_ID]
+    );
+    expect(mockQueryRun).toHaveBeenCalledWith(
+      expect.stringContaining('INSERT INTO audit_events'),
+      expect.arrayContaining([res.body.data.receiptId, USER_ID, ORG, 'note-5'])
+    );
+  });
+
+  it('requires an idempotency key before deleting a notebook page', async () => {
+    const res = await request(createApp()).delete('/api/v8/my-work/notebook/pages/note-5');
+    expect(res.status).toBe(428);
+    expect(res.body.code).toBe('NOTEBOOK_IDEMPOTENCY_KEY_REQUIRED');
+    expect(mockQueryRun).not.toHaveBeenCalled();
+  });
+
+  it('binds delete capability to the authenticated actor, organization, page and version', async () => {
+    mockQueryOne.mockResolvedValue({
+      id: 'note-5',
+      owner_user_id: USER_ID,
+      organization_id: ORG,
+      updated_at: '2026-08-23T10:00:00.000Z',
+    });
+    const res = await request(createApp()).get(
+      '/api/v8/my-work/notebook/pages/note-5/action-capabilities'
+    );
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({
+      pageId: 'note-5',
+      pageVersion: '2026-08-23T10:00:00.000Z',
+      actorUserId: USER_ID,
+      organizationId: ORG,
+      actions: {
+        delete: {
+          allowed: true,
+          reason: null,
+          receiptContract: 'notebook_delete_receipt_v1',
+        },
+      },
+    });
+  });
+
+  it('returns an explicit owner-only denial capability without enabling Delete', async () => {
+    mockQueryOne
+      .mockResolvedValueOnce({
+        id: 'note-5',
+        owner_user_id: 'another-user',
+        organization_id: ORG,
+        project_id: 'project-1',
+        visibility: 'project',
+        updated_at: '2026-08-23T10:00:00.000Z',
+      })
+      .mockResolvedValueOnce({ ok: 1 });
+    const res = await request(createApp()).get(
+      '/api/v8/my-work/notebook/pages/note-5/action-capabilities'
+    );
+    expect(res.status).toBe(200);
+    expect(res.body.data.actions.delete).toEqual({
+      allowed: false,
+      reason: 'Only the note owner can delete this page.',
+      receiptContract: null,
+    });
+  });
+
+  it('does not disclose delete capability or version for a private page owned by another user', async () => {
+    mockQueryOne.mockResolvedValue({
+      id: 'note-private',
+      owner_user_id: 'another-user',
+      organization_id: ORG,
+      project_id: null,
+      visibility: 'private',
+      updated_at: '2026-08-23T10:00:00.000Z',
+    });
+    const res = await request(createApp()).get(
+      '/api/v8/my-work/notebook/pages/note-private/action-capabilities'
+    );
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('NOTEBOOK_PAGE_FORBIDDEN');
+    expect(res.body.data).toBeUndefined();
+  });
+
+  it('replays the immutable delete receipt without deleting twice', async () => {
+    mockQueryAll.mockResolvedValue([
+      {
+        id: 'ae-existing',
+        ts: '2026-08-23T10:01:00.000Z',
+        resource_id: 'note-5',
+        metadata_json: JSON.stringify({ idempotencyKey: 'same-request' }),
+      },
+    ]);
+    const res = await request(createApp())
+      .delete('/api/v8/my-work/notebook/pages/note-5')
+      .set('Idempotency-Key', 'same-request');
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({
+      receiptId: 'ae-existing',
+      deletedId: 'note-5',
+      replay: true,
+    });
+    expect(mockQueryRun).not.toHaveBeenCalledWith(
+      expect.stringContaining('DELETE FROM notebook_pages'),
+      expect.anything()
+    );
+  });
+
+  it('rejects reuse of a delete idempotency key with a different page version', async () => {
+    mockQueryAll.mockResolvedValue([
+      {
+        id: 'ae-existing',
+        ts: '2026-08-23T10:01:00.000Z',
+        resource_id: 'note-5',
+        metadata_json: JSON.stringify({
+          idempotencyKey: 'same-request',
+          expectedUpdatedAt: '2026-08-23T10:00:00.000Z',
+        }),
+      },
+    ]);
+    const res = await request(createApp())
+      .delete('/api/v8/my-work/notebook/pages/note-5')
+      .set('Idempotency-Key', 'same-request')
+      .set('X-Notebook-Expected-Updated-At', '2026-08-23T11:00:00.000Z');
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe('NOTEBOOK_IDEMPOTENCY_CONFLICT');
+  });
+
+  it('denies notebook deletion before mutation for a foreign owner', async () => {
+    mockQueryAll.mockResolvedValue([]);
+    mockQueryOne.mockResolvedValue({
+      id: 'note-5',
+      owner_user_id: 'another-user',
+      organization_id: ORG,
+      updated_at: '2026-08-23T10:00:00.000Z',
+    });
+    const res = await request(createApp())
+      .delete('/api/v8/my-work/notebook/pages/note-5')
+      .set('Idempotency-Key', 'denied-request');
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('NOTEBOOK_PAGE_OWNER_ONLY');
+    expect(mockQueryRun).not.toHaveBeenCalledWith(
+      expect.stringContaining('DELETE FROM notebook_pages'),
+      expect.anything()
+    );
+  });
+
+  it('rejects a stale notebook delete version before mutation', async () => {
+    mockQueryAll.mockResolvedValue([]);
+    mockQueryOne.mockResolvedValue({
+      id: 'note-5',
+      owner_user_id: USER_ID,
+      organization_id: ORG,
+      updated_at: '2026-08-23T10:00:00.000Z',
+    });
+    const res = await request(createApp())
+      .delete('/api/v8/my-work/notebook/pages/note-5')
+      .set('Idempotency-Key', 'stale-request')
+      .set('X-Notebook-Expected-Updated-At', '2026-08-23T11:00:00.000Z');
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe('NOTEBOOK_PAGE_CONFLICT');
+    expect(mockQueryRun).not.toHaveBeenCalledWith(
+      expect.stringContaining('DELETE FROM notebook_pages'),
+      expect.anything()
+    );
+  });
+
+  it('reads a delete receipt only through the scoped V8 contract', async () => {
+    mockQueryOne.mockResolvedValue({
+      id: 'ae-existing',
+      ts: '2026-08-23T10:01:00.000Z',
+      action: 'NOTEBOOK_PAGE_DELETED',
+      resource_type: 'notebook_page',
+      resource_id: 'note-5',
+      before_json: JSON.stringify({ id: 'note-5', title: 'Delete me' }),
+      after_json: JSON.stringify({ deleted: true, id: 'note-5' }),
+      metadata_json: JSON.stringify({ contract: 'notebook_delete_receipt_v1' }),
+    });
+    const res = await request(createApp()).get(
+      '/api/v8/my-work/notebook/action-receipts/ae-existing'
+    );
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({
+      receiptId: 'ae-existing',
+      action: 'NOTEBOOK_PAGE_DELETED',
+      resourceId: 'note-5',
+      after: { deleted: true, id: 'note-5' },
+    });
+    expect(mockQueryOne).toHaveBeenCalledWith(expect.stringContaining('org_id = ?'), [
+      'ae-existing',
+      ORG,
+      USER_ID,
+    ]);
   });
 });

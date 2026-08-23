@@ -1620,24 +1620,223 @@ router.delete(
     if (!(await requireNotebookPagesTable(res))) return;
 
     const id = String(req.params.id || '').trim();
-    const existing = await queryHelpers.queryOne<any>(
-      `SELECT id, owner_user_id, organization_id FROM notebook_pages WHERE id = ? LIMIT 1`,
+    const idempotencyKey = String(req.header('idempotency-key') || '').trim();
+    const expectedUpdatedAt = String(req.header('x-notebook-expected-updated-at') || '').trim();
+    if (!idempotencyKey || idempotencyKey.length > 200) {
+      return res.status(428).json({
+        error: 'A valid Idempotency-Key header is required',
+        code: 'NOTEBOOK_IDEMPOTENCY_KEY_REQUIRED',
+      });
+    }
+    if (expectedUpdatedAt && !Number.isFinite(new Date(expectedUpdatedAt).getTime())) {
+      return res.status(400).json({
+        error: 'X-Notebook-Expected-Updated-At must be a valid timestamp',
+        code: 'INVALID_EXPECTED_UPDATED_AT',
+      });
+    }
+
+    let outcome: { receiptId: string; deletedId: string; replay: boolean };
+    try {
+      outcome = await queryHelpers.withPgTransaction(async () => {
+        const lockKey = `notebook-delete:${organizationId}:${id}:${idempotencyKey}`;
+        await queryHelpers.queryRun(`SELECT pg_advisory_xact_lock(hashtext(?))`, [lockKey]);
+
+        const priorEvents = await queryHelpers.queryAll<any>(
+          `SELECT id, ts, resource_id, metadata_json
+         FROM audit_events
+         WHERE org_id = ? AND actor_id = ? AND action = 'NOTEBOOK_PAGE_DELETED'
+           AND resource_type = 'notebook_page' AND resource_id = ?
+         ORDER BY ts DESC LIMIT 100`,
+          [organizationId, userId, id]
+        );
+        const replay = priorEvents
+          .map((event) => {
+            try {
+              const metadata =
+                typeof event.metadata_json === 'string'
+                  ? JSON.parse(event.metadata_json)
+                  : event.metadata_json || {};
+              return metadata.idempotencyKey === idempotencyKey ? { event, metadata } : null;
+            } catch {
+              return null;
+            }
+          })
+          .find(Boolean);
+        if (replay) {
+          if (String(replay.metadata.expectedUpdatedAt || '') !== expectedUpdatedAt) {
+            const error = new Error(
+              'Idempotency key was already used with another page version'
+            ) as Error & {
+              status?: number;
+              code?: string;
+            };
+            error.status = 409;
+            error.code = 'NOTEBOOK_IDEMPOTENCY_CONFLICT';
+            throw error;
+          }
+          return { receiptId: String(replay.event.id), deletedId: id, replay: true };
+        }
+
+        const existing = await queryHelpers.queryOne<any>(
+          `SELECT id, owner_user_id, organization_id, title, updated_at
+         FROM notebook_pages WHERE id = ? LIMIT 1 FOR UPDATE`,
+          [id]
+        );
+        if (!existing) {
+          const error = new Error('Not found') as Error & { status?: number; code?: string };
+          error.status = 404;
+          error.code = 'NOTEBOOK_PAGE_NOT_FOUND';
+          throw error;
+        }
+        if (String(existing.organization_id || '') !== String(organizationId)) {
+          const error = new Error('Forbidden') as Error & { status?: number; code?: string };
+          error.status = 403;
+          error.code = 'NOTEBOOK_PAGE_FORBIDDEN';
+          throw error;
+        }
+        if (String(existing.owner_user_id || '') !== String(userId)) {
+          const error = new Error('Owner-only') as Error & { status?: number; code?: string };
+          error.status = 403;
+          error.code = 'NOTEBOOK_PAGE_OWNER_ONLY';
+          throw error;
+        }
+        const currentUpdatedAt = existing.updated_at
+          ? new Date(existing.updated_at).toISOString()
+          : '';
+        if (
+          expectedUpdatedAt &&
+          new Date(expectedUpdatedAt).getTime() !== new Date(currentUpdatedAt).getTime()
+        ) {
+          const error = new Error('Page was modified elsewhere') as Error & {
+            status?: number;
+            code?: string;
+          };
+          error.status = 409;
+          error.code = 'NOTEBOOK_PAGE_CONFLICT';
+          throw error;
+        }
+
+        const deleted = await queryHelpers.queryRun(
+          `DELETE FROM notebook_pages WHERE id = ? AND organization_id = ? AND owner_user_id = ?`,
+          [id, organizationId, userId]
+        );
+        if (deleted.changes !== 1) throw new Error('NOTEBOOK_PAGE_DELETE_NOT_APPLIED');
+
+        const receiptId = `ae-${randomUUID()}`;
+        await queryHelpers.queryRun(
+          `INSERT INTO audit_events (
+          id, ts, actor_id, actor_type, org_id, action, resource_type, resource_id,
+          before_json, after_json, metadata_json
+        ) VALUES (?, ?, ?, 'USER', ?, 'NOTEBOOK_PAGE_DELETED', 'notebook_page', ?, ?, ?, ?)`,
+          [
+            receiptId,
+            new Date().toISOString(),
+            userId,
+            organizationId,
+            id,
+            JSON.stringify({
+              id,
+              title: existing.title || null,
+              updatedAt: currentUpdatedAt || null,
+            }),
+            JSON.stringify({ deleted: true, id }),
+            JSON.stringify({
+              idempotencyKey,
+              expectedUpdatedAt: expectedUpdatedAt || null,
+              contract: 'notebook_delete_receipt_v1',
+            }),
+          ]
+        );
+        return { receiptId, deletedId: id, replay: false };
+      });
+    } catch (error) {
+      const governed = error as { status?: number; code?: string; message?: string };
+      if (governed.status && governed.code) {
+        return res.status(governed.status).json({ error: governed.message, code: governed.code });
+      }
+      throw error;
+    }
+
+    return res.json({
+      data: { success: true, id, ...outcome },
+      meta: { version: 'v8', contract: V8_NOTEBOOK_CONTRACT },
+    });
+  })
+);
+
+router.get(
+  '/notebook/pages/:id/action-capabilities',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    if (!(await requireNotebookPagesTable(res))) return;
+    const id = String(req.params.id || '').trim();
+    const page = await queryHelpers.queryOne<any>(
+      `SELECT id, owner_user_id, organization_id, project_id, visibility, updated_at
+       FROM notebook_pages WHERE id = ? LIMIT 1`,
       [id]
     );
-
-    if (!existing) {
+    if (!page) {
       return res.status(404).json({ error: 'Not found', code: 'NOTEBOOK_PAGE_NOT_FOUND' });
     }
-    if (String(existing.organization_id || '') !== String(organizationId)) {
+    if (!(await canAccessNotebookRow(userId, organizationId, page))) {
       return res.status(403).json({ error: 'Forbidden', code: 'NOTEBOOK_PAGE_FORBIDDEN' });
     }
-    if (String(existing.owner_user_id || '') !== String(userId)) {
-      return res.status(403).json({ error: 'Owner-only', code: 'NOTEBOOK_PAGE_OWNER_ONLY' });
-    }
-
-    await queryHelpers.queryRun(`DELETE FROM notebook_pages WHERE id = ?`, [id]);
+    const isOwner = String(page.owner_user_id || '') === String(userId);
     return res.json({
-      data: { success: true, id },
+      data: {
+        pageId: id,
+        pageVersion: page.updated_at ? new Date(page.updated_at).toISOString() : null,
+        actorUserId: userId,
+        organizationId,
+        actions: {
+          delete: {
+            allowed: isOwner,
+            reason: isOwner ? null : 'Only the note owner can delete this page.',
+            receiptContract: isOwner ? 'notebook_delete_receipt_v1' : null,
+          },
+        },
+      },
+      meta: { version: 'v8', contract: V8_NOTEBOOK_CONTRACT },
+    });
+  })
+);
+
+router.get(
+  '/notebook/action-receipts/:receiptId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const receiptId = String(req.params.receiptId || '').trim();
+    const event = await queryHelpers.queryOne<any>(
+      `SELECT id, ts, action, resource_type, resource_id, before_json, after_json, metadata_json
+       FROM audit_events
+       WHERE id = ? AND org_id = ? AND actor_id = ? AND action = 'NOTEBOOK_PAGE_DELETED'
+       LIMIT 1`,
+      [receiptId, organizationId, userId]
+    );
+    if (!event) {
+      return res
+        .status(404)
+        .json({ error: 'Receipt not found', code: 'NOTEBOOK_RECEIPT_NOT_FOUND' });
+    }
+    const parse = (value: unknown) => {
+      if (typeof value !== 'string') return value || null;
+      try {
+        return JSON.parse(value);
+      } catch {
+        return null;
+      }
+    };
+    return res.json({
+      data: {
+        receiptId: event.id,
+        action: event.action,
+        resourceType: event.resource_type,
+        resourceId: event.resource_id,
+        timestamp: event.ts,
+        before: parse(event.before_json),
+        after: parse(event.after_json),
+        metadata: parse(event.metadata_json),
+      },
       meta: { version: 'v8', contract: V8_NOTEBOOK_CONTRACT },
     });
   })

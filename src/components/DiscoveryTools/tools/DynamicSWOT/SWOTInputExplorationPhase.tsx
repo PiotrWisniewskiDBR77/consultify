@@ -973,7 +973,7 @@ export function SWOTInputExplorationPhase({
                     key={streamId}
                     id={`swot-stream-panel-${streamId}`}
                     role="tabpanel"
-                    className={`rounded-[26px] border p-5 ${meta.surface}`}
+                    className={`flex flex-col rounded-[26px] border p-5 ${meta.surface}`}
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div>
@@ -991,16 +991,16 @@ export function SWOTInputExplorationPhase({
                       </span>
                     </div>
 
-                    <div className="mt-4 flex flex-wrap items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
-                      {isConfirmed && (
+                    {isConfirmed && (
+                      <div className="mt-4 flex flex-wrap items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
                         <span className="inline-flex rounded-full border border-emerald-300/50 bg-emerald-50 px-2.5 py-1 font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300">
                           {labels.confirmed}
                         </span>
-                      )}
-                    </div>
+                      </div>
+                    )}
 
                     {acceptedSignals.length > 0 && (
-                      <div className="mt-4 rounded-[24px] border border-white/70 bg-white/75 p-4 dark:border-white/10 dark:bg-white/[0.04]">
+                      <div className="order-2 mt-4 rounded-[24px] border border-white/70 bg-white/75 p-4 dark:border-white/10 dark:bg-white/[0.04]">
                         <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
                           {labels.acceptedList}
                         </div>
@@ -1219,7 +1219,7 @@ export function SWOTInputExplorationPhase({
                       </div>
                     )}
 
-                    <div className="mt-4 flex flex-wrap gap-2">
+                    <div className="order-3 mt-4 flex flex-wrap gap-2">
                       {!manualEntryOpen ? (
                         <button
                           type="button"
@@ -1237,7 +1237,10 @@ export function SWOTInputExplorationPhase({
                             value={manualItem}
                             onChange={(event) => setManualItem(event.target.value)}
                             onKeyDown={(event) => {
-                              if (event.key === 'Enter') addManualItem(streamId);
+                              if (event.key === 'Enter') {
+                                addManualItem(streamId);
+                                setManualEntryOpen(false);
+                              }
                               if (event.key === 'Escape') setManualEntryOpen(false);
                             }}
                             aria-label={isPolish ? 'Dodaj własny punkt' : 'Add your own point'}
@@ -1260,7 +1263,9 @@ export function SWOTInputExplorationPhase({
                     </div>
 
                     {acceptedCount < 5 && (
-                      <div className={`mt-4 rounded-[24px] border p-5 ${meta.proposalTone}`}>
+                      <div
+                        className={`order-1 mt-4 rounded-[24px] border p-5 ${meta.proposalTone}`}
+                      >
                         <div className="flex items-center justify-between gap-3">
                           <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
                             {labels.aiProposal}

@@ -31,7 +31,10 @@ import {
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { CHAT_HEADER_SELECTOR_CLASS } from './chatHeaderControlStyles';
+import {
+  CHAT_HEADER_CONTROL_ACTIVE_CLASS,
+  CHAT_HEADER_SELECTOR_CLASS,
+} from './chatHeaderControlStyles';
 
 // ==========================================
 // TYPES
@@ -123,6 +126,15 @@ const BranchItem: React.FC<BranchItemProps> = ({
         }
       `}
       onClick={() => !isEditing && onSelect()}
+      onKeyDown={(event) => {
+        if (isEditing || (event.key !== 'Enter' && event.key !== ' ')) return;
+        event.preventDefault();
+        onSelect();
+      }}
+      role="button"
+      tabIndex={isEditing ? -1 : 0}
+      aria-current={isActive ? 'page' : undefined}
+      aria-label={`${t('branch.open', 'Open branch')}: ${branch.name}`}
     >
       <GitBranch
         size={14}
@@ -159,17 +171,22 @@ const BranchItem: React.FC<BranchItemProps> = ({
               setShowMenu(!showMenu);
             }}
             className="p-1 opacity-0 group-hover:opacity-100 hover:bg-slate-200 dark:hover:bg-navy-700 rounded transition-all"
+            aria-label={`${t('branch.actions', 'Branch actions')}: ${branch.name}`}
+            aria-expanded={showMenu}
+            aria-haspopup="menu"
           >
             <MoreHorizontal size={14} />
           </button>
 
           {showMenu && (
             <div
+              role="menu"
               className="absolute right-0 top-full mt-1 w-36 bg-white dark:bg-navy-800 rounded-lg shadow-lg border border-slate-200 dark:border-navy-700 py-1 z-50"
               onClick={(e) => e.stopPropagation()}
             >
               {onRename && (
                 <button
+                  role="menuitem"
                   onClick={() => {
                     setIsEditing(true);
                     setShowMenu(false);
@@ -182,6 +199,7 @@ const BranchItem: React.FC<BranchItemProps> = ({
               )}
               {onDelete && (
                 <button
+                  role="menuitem"
                   onClick={() => {
                     onDelete();
                     setShowMenu(false);
@@ -221,6 +239,8 @@ export const BranchSelector: React.FC<BranchSelectorProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newBranchName, setNewBranchName] = useState('');
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   const activeBranch = branches.find((b) => b.id === activeBranchId);
 
@@ -243,11 +263,50 @@ export const BranchSelector: React.FC<BranchSelectorProps> = ({
   const wasCreatingRef = useRef(false);
   useEffect(() => {
     if (wasCreatingRef.current && !isCreating) {
-      setShowCreateForm(false);
-      setNewBranchName('');
+      // Preserve the attempted name and form on failure so the user can retry
+      // without reconstructing input. Success is the only path that clears it.
+      if (!error) {
+        setShowCreateForm(false);
+        setNewBranchName('');
+      }
     }
     wasCreatingRef.current = isCreating;
-  }, [isCreating]);
+  }, [error, isCreating]);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    dialogRef.current?.focus();
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setIsOpen(false);
+        requestAnimationFrame(() => triggerRef.current?.focus());
+        return;
+      }
+      if (event.key !== 'Tab' || !dialogRef.current) return;
+      const focusable = Array.from(
+        dialogRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), input:not([disabled]), [href], [tabindex]:not([tabindex="-1"])'
+        )
+      );
+      if (focusable.length === 0) {
+        event.preventDefault();
+        dialogRef.current.focus();
+        return;
+      }
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen]);
 
   // `branches` no longer includes an implicit "main" row (see the
   // ConversationBranch doc-comment above) — hide the selector only when
@@ -260,10 +319,18 @@ export const BranchSelector: React.FC<BranchSelectorProps> = ({
     <div className={`relative ${className}`}>
       {/* Trigger button */}
       <button
+        ref={triggerRef}
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
         data-testid="branch-selector-trigger"
-        className={CHAT_HEADER_SELECTOR_CLASS}
+        className={`${CHAT_HEADER_SELECTOR_CLASS} ${isOpen ? CHAT_HEADER_CONTROL_ACTIVE_CLASS : ''}`}
+        aria-expanded={isOpen}
+        aria-haspopup="dialog"
+        aria-controls="chat-branch-selector-menu"
+        aria-label={t('branch.currentBranch', 'Current branch: {{name}}', {
+          name: activeBranch?.name || currentLabel || t('branch.main', 'Main'),
+        })}
+        title={activeBranch?.name || currentLabel || t('branch.main', 'Main')}
       >
         <GitBranch size={14} className="text-slate-500" />
         <span className="max-w-[120px] truncate">
@@ -284,10 +351,24 @@ export const BranchSelector: React.FC<BranchSelectorProps> = ({
       {isOpen && (
         <>
           {/* Backdrop */}
-          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => {
+              setIsOpen(false);
+              requestAnimationFrame(() => triggerRef.current?.focus());
+            }}
+          />
 
           {/* Menu */}
-          <div className="absolute top-full left-0 mt-1 w-64 bg-white dark:bg-navy-800 rounded-xl shadow-xl border border-slate-200 dark:border-navy-700 py-2 z-50">
+          <div
+            ref={dialogRef}
+            id="chat-branch-selector-menu"
+            role="dialog"
+            aria-modal="true"
+            tabIndex={-1}
+            aria-label={t('branch.title', 'Conversation Branches')}
+            className="absolute top-full left-0 mt-1 w-64 bg-white dark:bg-navy-800 rounded-xl shadow-xl border border-slate-200 dark:border-navy-700 py-2 z-50"
+          >
             {/* Header */}
             <div className="px-3 pb-2 mb-2 border-b border-slate-100 dark:border-navy-700">
               <h4 className="text-xs font-medium text-slate-500 uppercase tracking-wide">
@@ -299,6 +380,7 @@ export const BranchSelector: React.FC<BranchSelectorProps> = ({
               <div
                 className="mx-2 mb-2 px-2 py-1.5 text-xs rounded-lg bg-danger-50 dark:bg-danger-900/20 text-danger-600 dark:text-danger-400"
                 data-testid="branch-selector-error"
+                role="alert"
               >
                 {error}
               </div>
@@ -353,9 +435,11 @@ export const BranchSelector: React.FC<BranchSelectorProps> = ({
                       onKeyDown={(e) => e.key === 'Enter' && handleCreateBranch()}
                     />
                     <button
+                      type="button"
                       onClick={handleCreateBranch}
                       disabled={!newBranchName.trim() || isCreating}
                       data-testid="branch-selector-submit-create"
+                      aria-label={t('branch.createSubmit', 'Create branch')}
                       className="p-1.5 bg-c-text text-c-bg rounded-lg hover:bg-c-text-secondary disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isCreating ? (
@@ -367,6 +451,7 @@ export const BranchSelector: React.FC<BranchSelectorProps> = ({
                   </div>
                 ) : (
                   <button
+                    type="button"
                     onClick={() => setShowCreateForm(true)}
                     data-testid="branch-selector-open-create"
                     className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg transition-colors"

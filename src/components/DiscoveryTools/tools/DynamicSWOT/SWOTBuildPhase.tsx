@@ -14,7 +14,6 @@ import {
   useToolStore,
 } from '@/store/useToolStore';
 
-import { InlineAssist } from '../../InlineAssist';
 import { SwotMatrixVisual } from '../../shared/StrategicCanvasVisuals';
 import { EvidenceEditor } from './EvidenceEditor';
 import { TeresaSwotProposals } from './TeresaSwotProposals';
@@ -99,7 +98,7 @@ function QuadrantCard({
   isPolish: boolean;
 }) {
   const { t } = useTranslation();
-  const { addSWOTItem, removeSWOTItem, updateSWOTItem } = useToolStore();
+  const { addSWOTItem, updateSWOTItem } = useToolStore();
   const [draft, setDraft] = useState('');
   const meta = QUADRANT_META[quadrant];
 
@@ -159,70 +158,6 @@ function QuadrantCard({
         >
           <Plus className="h-4 w-4" />
         </button>
-      </div>
-
-      <div className="space-y-2">
-        {items.length === 0 ? (
-          <div className="rounded-xl border-2 border-dashed border-white/70 bg-white/40 p-5 text-center text-sm text-slate-500 dark:border-navy-700 dark:bg-navy-950/30 dark:text-slate-400">
-            {t('discoveryToolsTools.dynamicSwot.buildPhase.noPoints')}
-          </div>
-        ) : (
-          items.map((item) => (
-            <div
-              key={item.id}
-              className="rounded-2xl border border-white/80 bg-white/90 p-3 shadow-[0_8px_24px_-18px_rgba(15,23,42,0.45)] dark:border-navy-700 dark:bg-navy-950/50"
-            >
-              <div className="mb-2 flex items-start justify-between gap-2">
-                <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600">
-                  {t('discoveryToolsTools.dynamicSwot.buildPhase.swotPoint')}
-                </div>
-                <div className="flex items-center gap-1">
-                  <label className="sr-only" htmlFor={`impact-${item.id}`}>
-                    {t('discoveryToolsTools.dynamicSwot.quadrantStep.highImpact')}
-                  </label>
-                  <select
-                    id={`impact-${item.id}`}
-                    value={item.impact}
-                    onChange={(e) =>
-                      updateSWOTItem(item.id, {
-                        impact: e.target.value as 'high' | 'medium' | 'low',
-                      })
-                    }
-                    className="h-7 rounded-lg border border-slate-200 bg-white px-1.5 text-[11px] text-slate-700 focus:outline-none focus:ring-1 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-900 dark:text-slate-200"
-                  >
-                    <option value="high">
-                      {t('discoveryToolsTools.dynamicSwot.quadrantStep.highImpact')}
-                    </option>
-                    <option value="medium">
-                      {t('discoveryToolsTools.dynamicSwot.quadrantStep.mediumImpact')}
-                    </option>
-                    <option value="low">
-                      {t('discoveryToolsTools.dynamicSwot.quadrantStep.lowImpact')}
-                    </option>
-                  </select>
-                  <button
-                    type="button"
-                    onClick={() => removeSWOTItem(item.id)}
-                    className="rounded-lg p-1.5 text-slate-600 transition hover:bg-danger-50 hover:text-danger-600 dark:hover:bg-danger-900/30"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-              <textarea
-                value={item.text}
-                onChange={(e) => updateSWOTItem(item.id, { text: e.target.value })}
-                rows={3}
-                className="w-full resize-none rounded-xl border border-transparent bg-transparent px-0 py-0 text-sm font-medium leading-relaxed text-slate-900 outline-none dark:text-slate-100"
-              />
-              <EvidenceEditor
-                item={item}
-                isPolish={isPolish}
-                onChange={(patch) => updateSWOTItem(item.id, patch)}
-              />
-            </div>
-          ))
-        )}
       </div>
 
       {proposals.length > 0 ? (
@@ -514,23 +449,12 @@ export function SWOTBuildPhase({ session, isPolish, isGeneratingAI = false }: Bu
 
   return (
     <div className="space-y-6 p-1">
-      <div className="rounded-[28px] border border-slate-200/70 bg-white p-5 dark:border-navy-700/70 dark:bg-navy-900/40">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-          <div className="max-w-3xl">
-            <div className="text-sm leading-relaxed text-slate-700 dark:text-slate-300">
-              {t('discoveryToolsTools.dynamicSwot.buildPhase.oneMatrixNote')}
-            </div>
-            <InlineAssist hint={t('discoveryToolsTools.dynamicSwot.buildPhase.acceptHint')} />
-          </div>
-
-          {isGeneratingAI ? (
-            <div className="inline-flex items-center gap-2 rounded-2xl border border-sky-300/50 bg-sky-50 px-4 py-2 text-sm font-medium text-sky-700 dark:border-sky-900/40 dark:bg-sky-950/20 dark:text-sky-300">
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-              {t('discoveryToolsTools.dynamicSwot.buildPhase.aiPreparing')}
-            </div>
-          ) : null}
+      {isGeneratingAI ? (
+        <div className="inline-flex items-center gap-2 self-start rounded-2xl border border-sky-300/50 bg-sky-50 px-4 py-2 text-sm font-medium text-sky-700 dark:border-sky-900/40 dark:bg-sky-950/20 dark:text-sky-300">
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+          {t('discoveryToolsTools.dynamicSwot.buildPhase.aiPreparing')}
         </div>
-      </div>
+      ) : null}
 
       {/* TLS-04: Teresa-assisted SWOT — proposals are generated + persisted
           server-side (swot_proposals table) and only ever change the matrix
@@ -539,7 +463,58 @@ export function SWOTBuildPhase({ session, isPolish, isGeneratingAI = false }: Bu
           in scope without threading new props through ToolCanvas. */}
       <TeresaSwotProposals toolSessionId={session.id} isPolish={isPolish} />
 
-      <SwotMatrixVisual data={swotData} isPolish={isPolish} />
+      <SwotMatrixVisual
+        data={swotData}
+        isPolish={isPolish}
+        onUpdateItem={(itemId, text) => updateSWOTItem(itemId, { text })}
+        renderItemControls={(item) => (
+          <div className="mt-3 border-t border-current/10 pt-3">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-300">
+                {t('discoveryToolsTools.dynamicSwot.buildPhase.swotPoint')}
+              </div>
+              <div className="flex items-center gap-1">
+                <label className="sr-only" htmlFor={`impact-${item.id}`}>
+                  {t('discoveryToolsTools.dynamicSwot.quadrantStep.highImpact')}
+                </label>
+                <select
+                  id={`impact-${item.id}`}
+                  value={item.impact}
+                  onChange={(event) =>
+                    updateSWOTItem(item.id, {
+                      impact: event.target.value as 'high' | 'medium' | 'low',
+                    })
+                  }
+                  className="h-7 rounded-lg border border-current/20 bg-white/70 px-1.5 text-[11px] text-slate-700 dark:bg-navy-900 dark:text-slate-200"
+                >
+                  <option value="high">
+                    {t('discoveryToolsTools.dynamicSwot.quadrantStep.highImpact')}
+                  </option>
+                  <option value="medium">
+                    {t('discoveryToolsTools.dynamicSwot.quadrantStep.mediumImpact')}
+                  </option>
+                  <option value="low">
+                    {t('discoveryToolsTools.dynamicSwot.quadrantStep.lowImpact')}
+                  </option>
+                </select>
+                <button
+                  type="button"
+                  onClick={() => removeSWOTItem(item.id)}
+                  aria-label={isPolish ? 'Usuń punkt SWOT' : 'Delete SWOT point'}
+                  className="rounded-lg p-1.5 text-slate-600 transition hover:bg-danger-50 hover:text-danger-600 dark:hover:bg-danger-900/30"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+            <EvidenceEditor
+              item={item}
+              isPolish={isPolish}
+              onChange={(patch) => updateSWOTItem(item.id, patch)}
+            />
+          </div>
+        )}
+      />
 
       <div className="grid gap-4 md:grid-cols-2">
         {ALL_QUADRANTS.map((quadrant) => (

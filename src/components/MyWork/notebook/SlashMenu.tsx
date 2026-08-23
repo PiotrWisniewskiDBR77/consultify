@@ -1,11 +1,15 @@
+import { TextSelection } from '@tiptap/pm/state';
 import type { Editor } from '@tiptap/react';
 import {
   AlertTriangle,
+  ArrowDown,
+  ArrowUp,
   CalendarDays,
   CheckSquare,
   Code,
   Columns2,
   Columns3,
+  Copy,
   Heading1,
   Heading2,
   Heading3,
@@ -22,6 +26,7 @@ import {
   ShieldQuestion,
   Sparkles,
   ToggleRight,
+  Trash2,
   Zap,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -29,7 +34,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { AICommandType } from './AIInlineResponse';
 
-type SlashGroupId = 'basic' | 'insert' | 'ai' | 'create';
+type SlashGroupId = 'block' | 'basic' | 'insert' | 'ai' | 'create';
 
 interface SlashCommand {
   id: string;
@@ -41,11 +46,15 @@ interface SlashCommand {
   keywords: string[];
   action: (editor: Editor) => void;
   aiCommand?: AICommandType;
+  contextOnly?: boolean;
+  canRun?: (editor: Editor) => boolean;
+  visibleWhen?: (editor: Editor) => boolean;
 }
 
-const SLASH_GROUP_ORDER: SlashGroupId[] = ['basic', 'insert', 'ai', 'create'];
+const SLASH_GROUP_ORDER: SlashGroupId[] = ['block', 'basic', 'insert', 'ai', 'create'];
 
 const SLASH_GROUP_LABELS: Record<SlashGroupId, { en: string; pl: string }> = {
+  block: { en: 'Current block', pl: 'Bieżący blok' },
   basic: { en: 'Basic blocks', pl: 'Podstawowe' },
   insert: { en: 'Insert', pl: 'Wstaw' },
   ai: { en: 'AI', pl: 'AI' },
@@ -54,6 +63,10 @@ const SLASH_GROUP_LABELS: Record<SlashGroupId, { en: string; pl: string }> = {
 
 // Group derived from command id (keeps the 23 command objects untouched).
 const SLASH_GROUP_OF: Record<string, SlashGroupId> = {
+  'block-duplicate': 'block',
+  'block-move-up': 'block',
+  'block-move-down': 'block',
+  'block-delete': 'block',
   h1: 'basic',
   h2: 'basic',
   h3: 'basic',
@@ -82,7 +95,220 @@ const slashGroupOf = (id: string): SlashGroupId => SLASH_GROUP_OF[id] ?? 'basic'
 
 const ICON_SIZE = 16;
 
+function selectedTopLevelBlock(editor: Editor) {
+  const { $from } = editor.state.selection;
+  if ($from.depth < 1) {
+    const node = $from.nodeAfter;
+    if (!node) return null;
+    return {
+      node,
+      pos: $from.pos,
+      index: $from.index(0),
+      siblingCount: editor.state.doc.childCount,
+    };
+  }
+  return {
+    node: $from.node(1),
+    pos: $from.before(1),
+    index: $from.index(0),
+    siblingCount: editor.state.doc.childCount,
+  };
+}
+
+export function duplicateSelectedNotebookBlock(editor: Editor): boolean {
+  const block = selectedTopLevelBlock(editor);
+  if (!block) return false;
+  editor.view.dispatch(editor.state.tr.insert(block.pos + block.node.nodeSize, block.node));
+  editor.commands.focus();
+  return true;
+}
+
+export function deleteSelectedNotebookBlock(editor: Editor): boolean {
+  const block = selectedTopLevelBlock(editor);
+  if (!block) return false;
+  editor.view.dispatch(editor.state.tr.delete(block.pos, block.pos + block.node.nodeSize));
+  editor.commands.focus();
+  return true;
+}
+
+export function moveSelectedNotebookBlock(editor: Editor, direction: 'up' | 'down'): boolean {
+  const block = selectedTopLevelBlock(editor);
+  if (!block) return false;
+  if (direction === 'up') {
+    if (block.index <= 0) return false;
+    const previous = editor.state.doc.child(block.index - 1);
+    const targetPos = block.pos - previous.nodeSize;
+    const transaction = editor.state.tr
+      .delete(block.pos, block.pos + block.node.nodeSize)
+      .insert(targetPos, block.node);
+    transaction.setSelection(TextSelection.near(transaction.doc.resolve(targetPos + 1)));
+    editor.view.dispatch(transaction);
+  } else {
+    if (block.index >= block.siblingCount - 1) return false;
+    const next = editor.state.doc.child(block.index + 1);
+    const targetPos = block.pos + next.nodeSize;
+    const transaction = editor.state.tr
+      .delete(block.pos, block.pos + block.node.nodeSize)
+      .insert(targetPos, block.node);
+    transaction.setSelection(TextSelection.near(transaction.doc.resolve(targetPos + 1)));
+    editor.view.dispatch(transaction);
+  }
+  editor.commands.focus();
+  return true;
+}
+
 const COMMANDS: SlashCommand[] = [
+  {
+    id: 'block-duplicate',
+    label: 'Duplicate block',
+    labelPl: 'Duplikuj blok',
+    description: 'Create an editable copy below',
+    descriptionPl: 'Utwórz edytowalną kopię poniżej',
+    icon: <Copy size={ICON_SIZE} />,
+    keywords: ['duplicate', 'copy', 'duplikuj', 'kopiuj'],
+    action: duplicateSelectedNotebookBlock,
+    contextOnly: true,
+    canRun: (editor) => selectedTopLevelBlock(editor) !== null,
+  },
+  {
+    id: 'block-move-up',
+    label: 'Move block up',
+    labelPl: 'Przenieś blok wyżej',
+    description: 'Move before the previous block',
+    descriptionPl: 'Przenieś przed poprzedni blok',
+    icon: <ArrowUp size={ICON_SIZE} />,
+    keywords: ['move', 'up', 'przenies', 'wyzej'],
+    action: (editor) => void moveSelectedNotebookBlock(editor, 'up'),
+    contextOnly: true,
+    canRun: (editor) => (selectedTopLevelBlock(editor)?.index ?? 0) > 0,
+  },
+  {
+    id: 'block-move-down',
+    label: 'Move block down',
+    labelPl: 'Przenieś blok niżej',
+    description: 'Move after the next block',
+    descriptionPl: 'Przenieś za następny blok',
+    icon: <ArrowDown size={ICON_SIZE} />,
+    keywords: ['move', 'down', 'przenies', 'nizej'],
+    action: (editor) => void moveSelectedNotebookBlock(editor, 'down'),
+    contextOnly: true,
+    canRun: (editor) => {
+      const block = selectedTopLevelBlock(editor);
+      return !!block && block.index < block.siblingCount - 1;
+    },
+  },
+  {
+    id: 'block-delete',
+    label: 'Delete block',
+    labelPl: 'Usuń blok',
+    description: 'Remove this block; Undo remains available',
+    descriptionPl: 'Usuń ten blok; Cofnij pozostaje dostępne',
+    icon: <Trash2 size={ICON_SIZE} />,
+    keywords: ['delete', 'remove', 'usun'],
+    action: deleteSelectedNotebookBlock,
+    contextOnly: true,
+    canRun: (editor) => selectedTopLevelBlock(editor) !== null,
+  },
+  {
+    id: 'block-callout-info',
+    label: 'Callout: Info',
+    labelPl: 'Wyróżnienie: Informacja',
+    description: 'Set a neutral information meaning',
+    descriptionPl: 'Ustaw neutralne znaczenie informacyjne',
+    icon: <Info size={ICON_SIZE} />,
+    keywords: ['callout', 'info', 'variant'],
+    action: (editor) =>
+      editor.chain().focus().updateAttributes('callout', { variant: 'info' }).run(),
+    contextOnly: true,
+    visibleWhen: (editor) => selectedTopLevelBlock(editor)?.node.type.name === 'callout',
+  },
+  {
+    id: 'block-callout-warning',
+    label: 'Callout: Warning',
+    labelPl: 'Wyróżnienie: Ostrzeżenie',
+    description: 'Mark the block as a warning',
+    descriptionPl: 'Oznacz blok jako ostrzeżenie',
+    icon: <AlertTriangle size={ICON_SIZE} />,
+    keywords: ['callout', 'warning', 'variant'],
+    action: (editor) =>
+      editor.chain().focus().updateAttributes('callout', { variant: 'warning' }).run(),
+    contextOnly: true,
+    visibleWhen: (editor) => selectedTopLevelBlock(editor)?.node.type.name === 'callout',
+  },
+  {
+    id: 'block-callout-success',
+    label: 'Callout: Success',
+    labelPl: 'Wyróżnienie: Sukces',
+    description: 'Mark a positive confirmed outcome',
+    descriptionPl: 'Oznacz pozytywny potwierdzony wynik',
+    icon: <CheckSquare size={ICON_SIZE} />,
+    keywords: ['callout', 'success', 'variant'],
+    action: (editor) =>
+      editor.chain().focus().updateAttributes('callout', { variant: 'success' }).run(),
+    contextOnly: true,
+    visibleWhen: (editor) => selectedTopLevelBlock(editor)?.node.type.name === 'callout',
+  },
+  {
+    id: 'block-callout-critical',
+    label: 'Callout: Critical',
+    labelPl: 'Wyróżnienie: Krytyczne',
+    description: 'Mark a critical issue',
+    descriptionPl: 'Oznacz problem krytyczny',
+    icon: <Zap size={ICON_SIZE} />,
+    keywords: ['callout', 'critical', 'variant'],
+    action: (editor) =>
+      editor.chain().focus().updateAttributes('callout', { variant: 'critical' }).run(),
+    contextOnly: true,
+    visibleWhen: (editor) => selectedTopLevelBlock(editor)?.node.type.name === 'callout',
+  },
+  {
+    id: 'block-toggle-open',
+    label: 'Toggle: Expanded',
+    labelPl: 'Sekcja: Rozwinięta',
+    description: 'Show its content by default',
+    descriptionPl: 'Domyślnie pokaż zawartość',
+    icon: <ToggleRight size={ICON_SIZE} />,
+    keywords: ['toggle', 'open', 'expanded'],
+    action: (editor) => editor.chain().focus().updateAttributes('details', { open: true }).run(),
+    contextOnly: true,
+    visibleWhen: (editor) => selectedTopLevelBlock(editor)?.node.type.name === 'details',
+  },
+  {
+    id: 'block-toggle-closed',
+    label: 'Toggle: Collapsed',
+    labelPl: 'Sekcja: Zwinięta',
+    description: 'Hide its content by default',
+    descriptionPl: 'Domyślnie ukryj zawartość',
+    icon: <ToggleRight size={ICON_SIZE} />,
+    keywords: ['toggle', 'closed', 'collapsed'],
+    action: (editor) => editor.chain().focus().updateAttributes('details', { open: false }).run(),
+    contextOnly: true,
+    visibleWhen: (editor) => selectedTopLevelBlock(editor)?.node.type.name === 'details',
+  },
+  {
+    id: 'block-table-row',
+    label: 'Table: Add row below',
+    labelPl: 'Tabela: Dodaj wiersz poniżej',
+    description: 'Extend the current table',
+    descriptionPl: 'Rozszerz bieżącą tabelę',
+    icon: <Columns2 size={ICON_SIZE} />,
+    keywords: ['table', 'row', 'wiersz'],
+    action: (editor) => editor.chain().focus().addRowAfter().run(),
+    contextOnly: true,
+    visibleWhen: (editor) => editor.isActive('table'),
+  },
+  {
+    id: 'block-table-column',
+    label: 'Table: Add column right',
+    labelPl: 'Tabela: Dodaj kolumnę z prawej',
+    description: 'Extend the current table',
+    descriptionPl: 'Rozszerz bieżącą tabelę',
+    icon: <Columns3 size={ICON_SIZE} />,
+    keywords: ['table', 'column', 'kolumna'],
+    action: (editor) => editor.chain().focus().addColumnAfter().run(),
+    contextOnly: true,
+    visibleWhen: (editor) => editor.isActive('table'),
+  },
   {
     id: 'h1',
     label: 'Heading 1',
@@ -356,6 +582,7 @@ export interface SlashMenuState {
   query: string;
   triggerPos: number;
   coords: { top: number; left: number };
+  mode: 'insert' | 'context';
 }
 
 export const INITIAL_SLASH_STATE: SlashMenuState = {
@@ -363,6 +590,7 @@ export const INITIAL_SLASH_STATE: SlashMenuState = {
   query: '',
   triggerPos: 0,
   coords: { top: 0, left: 0 },
+  mode: 'insert',
 };
 
 /**
@@ -384,6 +612,7 @@ export function detectSlashTrigger(editor: Editor): SlashMenuState | null {
       query: match[1],
       triggerPos: from,
       coords: { top: coords.bottom + 4, left: coords.left },
+      mode: 'insert',
     };
   } catch {
     return null;
@@ -396,6 +625,7 @@ interface SlashMenuProps {
   onClose: () => void;
   containerRef: React.RefObject<HTMLDivElement | null>;
   onAICommand?: (command: AICommandType) => void;
+  receiptCapableActionIds?: string[];
 }
 
 export const SlashMenu: React.FC<SlashMenuProps> = ({
@@ -404,6 +634,7 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({
   onClose,
   containerRef,
   onAICommand,
+  receiptCapableActionIds,
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
@@ -412,14 +643,19 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({
 
   const filteredItems = useMemo(() => {
     const q = state.query.toLowerCase();
-    if (!q) return COMMANDS;
-    return COMMANDS.filter(
+    const available = COMMANDS.filter(
+      (command) =>
+        (state.mode === 'context' || !command.contextOnly) &&
+        (!command.visibleWhen || command.visibleWhen(editor))
+    );
+    if (!q) return available;
+    return available.filter(
       (c) =>
         c.id.includes(q) ||
         c.label.toLowerCase().includes(q) ||
         c.keywords.some((k) => k.includes(q))
     );
-  }, [state.query]);
+  }, [editor, state.mode, state.query]);
 
   // Keyboard nav must follow the VISUAL (grouped) order, not the flat COMMANDS
   // order — otherwise the highlight jumps between groups because COMMANDS
@@ -435,6 +671,12 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({
 
   const executeCommand = useCallback(
     (cmd: SlashCommand) => {
+      if (
+        ['create-task', 'create-decision', 'save-as-idea'].includes(cmd.id) &&
+        !(receiptCapableActionIds || []).includes(cmd.id)
+      ) {
+        return;
+      }
       const { from } = editor.state.selection;
       const deleteFrom = state.triggerPos;
       editor.chain().focus().deleteRange({ from: deleteFrom, to: from }).run();
@@ -446,7 +688,7 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({
       }
       onClose();
     },
-    [editor, state.triggerPos, onClose, onAICommand]
+    [editor, state.triggerPos, onClose, onAICommand, receiptCapableActionIds]
   );
 
   useEffect(() => {
@@ -495,6 +737,8 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({
   return (
     <div
       ref={menuRef}
+      role="menu"
+      aria-label={isPolish ? 'Polecenia notatnika' : 'Notebook commands'}
       className="absolute z-50 w-72 max-h-80 overflow-y-auto rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-lg py-1"
       style={{ top, left }}
     >
@@ -510,15 +754,27 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({
             {groupItems.map((cmd) => {
               const idx = orderedItems.indexOf(cmd);
               const isActive = idx === selectedIdx;
+              const governedUnavailable =
+                ['create-task', 'create-decision', 'save-as-idea'].includes(cmd.id) &&
+                !(receiptCapableActionIds || []).includes(cmd.id);
+              const editorUnavailable = cmd.canRun ? !cmd.canRun(editor) : false;
+              const unavailable = governedUnavailable || editorUnavailable;
+              const reasonId = `notebook-slash-${cmd.id}-reason`;
               return (
                 <button
                   key={cmd.id}
+                  type="button"
+                  role="menuitem"
+                  data-notebook-action-id={`block:${cmd.id}`}
+                  aria-disabled={unavailable || undefined}
+                  aria-describedby={unavailable ? reasonId : undefined}
                   onMouseDown={(e) => {
                     e.preventDefault();
+                    if (unavailable) return;
                     executeCommand(cmd);
                   }}
                   onMouseEnter={() => setSelectedIdx(idx)}
-                  className={`w-full flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-left transition-colors ${
+                  className={`w-full flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
                     isActive ? 'bg-c-surface-raised' : 'hover:bg-c-surface-raised'
                   }`}
                 >
@@ -535,8 +791,17 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({
                     <span className="block truncate font-medium text-[13px] text-c-text">
                       {isPolish ? cmd.labelPl : cmd.label}
                     </span>
-                    <span className="block truncate text-[11px] text-c-text-muted">
-                      {isPolish ? cmd.descriptionPl : cmd.description}
+                    <span
+                      id={unavailable ? reasonId : undefined}
+                      className="block text-[11px] text-c-text-muted"
+                    >
+                      {governedUnavailable
+                        ? isPolish
+                          ? 'Niedostępne, dopóki serwer nie zwróci trwałego potwierdzenia'
+                          : 'Unavailable until the server can return a durable action receipt'
+                        : isPolish
+                          ? cmd.descriptionPl
+                          : cmd.description}
                     </span>
                   </span>
                   {cmd.aiCommand ? (

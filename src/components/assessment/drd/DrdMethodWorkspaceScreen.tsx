@@ -18,6 +18,7 @@ import { AlertTriangle, ArrowLeft, FileText, Lightbulb, Lock, RotateCcw } from '
 import React, { useCallback, useMemo, useState } from 'react';
 
 import { MethodWorkspaceShell } from '@/components/method-workspace/MethodWorkspaceShell';
+import { LiveMatrix } from '@/components/method-workspace/LiveMatrix';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { StandardTable } from '@/components/standard/StandardTable';
 import type {
@@ -49,7 +50,6 @@ import { DrdSourceIndicator } from './DrdSourceIndicator';
 import { drdAdapter } from '@/method-core/methods/drd/drdAdapter';
 import {
   createDrdDemoSession,
-  DRD_DEMO_SESSION_NOTICE,
   DrdSessionRuntime,
   listDemoSessionIds,
 } from '@/method-core/methods/drd/drdSessionRuntime';
@@ -470,46 +470,12 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center gap-3 border-b border-c-border-subtle bg-c-warning/5 px-4 py-1.5 text-[11px] text-c-text-secondary">
-        <AlertTriangle size={12} className="shrink-0 text-c-warning" />
-        <span>{DRD_DEMO_SESSION_NOTICE}</span>
-        <DrdSourceIndicator source="DEMO_LOCAL" title="Stary runtime — localStorage jest jedynym magazynem (flaga drdHttpSourceOfTruthV1 = OFF)." />
-        <span className="ml-auto flex items-center gap-2 shrink-0">
-          Aktor:
-          <select
-            data-testid="actor-select"
-            value={actorUserId}
-            onChange={(e) => setActorUserId(e.target.value)}
-            className="rounded border border-c-border bg-c-surface px-1.5 py-0.5 text-[11px] text-c-text"
-          >
-            <option value={OWNER_ACTOR}>Piotr (owner/lead_assessor/assessor)</option>
-            <option value={APPROVER_ACTOR}>Anna (approver)</option>
-          </select>
-        </span>
-      </div>
       {lastRefusal && (
         <div role="alert" className="flex items-center gap-2 border-b border-c-danger/30 bg-c-danger/10 px-4 py-1.5 text-xs text-c-danger">
           <AlertTriangle size={12} />
           {lastRefusal}
         </div>
       )}
-      <div className="flex items-center gap-2 border-b border-c-border-subtle px-4 py-1.5 text-[11px]">
-        <span className="font-medium text-c-text-secondary">Oś:</span>
-        {DRD_STRUCTURE.map((axis) => (
-          <button
-            key={axis.id}
-            type="button"
-            data-testid={`axis-tab-${axis.id}`}
-            onClick={() => {
-              setActiveAxisId(axis.id);
-              setActiveUnitId(axis.areas[0].id);
-            }}
-            className={`rounded-md px-2 py-1 font-medium ${axis.id === activeAxisId ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted hover:text-c-text'}`}
-          >
-            {axis.id}. {axis.namePL || axis.name} ({axis.levelCount}L)
-          </button>
-        ))}
-      </div>
       <div className="min-h-0 flex-1">
         <MethodWorkspaceShell
           session={session}
@@ -598,27 +564,83 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
               </div>
             ),
           }}
+          reportContent={(
+            <div className="space-y-4">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">DRD report · axis {activeAxis.id}</p>
+                <h2 className="text-lg font-semibold text-c-text">{activeAxis.namePL || activeAxis.name}</h2>
+                <p className="mt-1 max-w-3xl text-sm text-c-text-secondary">
+                  Roboczy rozdział raportu korzysta z tego samego stanu odpowiedzi, dowodów i targetów co Interview i Matrix.
+                </p>
+              </div>
+              <div className="rounded-xl border border-c-border bg-c-surface p-4">
+                <h3 className="mb-3 text-sm font-semibold text-c-text">Macierz osi</h3>
+                <LiveMatrix
+                  rows={matrixRows}
+                  levels={matrixLevels}
+                  selection={matrixSelection}
+                  onSelect={(selection) => {
+                    setMatrixSelection(selection);
+                    setActiveUnitId(selection.unitId);
+                  }}
+                  onCloseSideSheet={() => setMatrixSelection(null)}
+                  methodName={pack.manifest.name}
+                />
+              </div>
+              <div className="grid gap-3 md:grid-cols-2">
+                {activeAxis.areas.map((area) => (
+                  <article key={area.id} className="rounded-xl border border-c-border bg-c-surface p-4">
+                    <p className="text-[11px] font-semibold text-c-text-muted">{area.id}</p>
+                    <h3 className="text-sm font-semibold text-c-text">{area.namePL || area.name}</h3>
+                    <p className="mt-2 text-xs text-c-text-secondary">
+                      {confirmedLevelsFor(events, area.id).length > 0
+                        ? `Potwierdzone poziomy: ${confirmedLevelsFor(events, area.id).join(', ')}. Komentarz ekspercki pozostaje roboczy do zatwierdzenia.`
+                        : 'Brak potwierdzonej oceny — raport nie może udawać wniosku dla tego obszaru.'}
+                    </p>
+                  </article>
+                ))}
+              </div>
+            </div>
+          )}
+          documentSourceLabel="DEMO_LOCAL"
+          documentSourceIndicator={<DrdSourceIndicator source="DEMO_LOCAL" />}
+          settingsContent={(
+            <label className="inline-flex items-center gap-2 font-medium text-c-text-secondary">
+              Aktor testowy
+              <select
+                data-testid="actor-select"
+                value={actorUserId}
+                onChange={(event) => setActorUserId(event.target.value)}
+                className="rounded border border-c-border bg-c-surface px-2 py-1 text-xs text-c-text"
+              >
+                <option value={OWNER_ACTOR}>Piotr (owner/lead assessor/assessor)</option>
+                <option value={APPROVER_ACTOR}>Anna (approver)</option>
+              </select>
+            </label>
+          )}
+          governanceActions={(
+            <>
+              <button
+                type="button"
+                onClick={() => handleFreezeTransition('in_review')}
+                disabled={session.state !== 'active'}
+                className="rounded-md border border-c-border px-2.5 py-1 font-medium text-c-text-secondary disabled:opacity-40 hover:bg-c-surface-raised"
+              >
+                Wyślij do przeglądu
+              </button>
+              <button
+                type="button"
+                onClick={() => handleFreezeTransition('frozen')}
+                disabled={session.state !== 'in_review'}
+                data-testid="freeze-button"
+                className="inline-flex items-center gap-1.5 rounded-md border border-c-border bg-c-surface-raised px-2.5 py-1 font-semibold text-c-text disabled:opacity-40 hover:bg-c-border-subtle"
+              >
+                <Lock size={12} />
+                Zamroź
+              </button>
+            </>
+          )}
         />
-      </div>
-      <div className="flex shrink-0 items-center gap-2 border-t border-c-border-subtle px-4 py-2 text-xs">
-        <button
-          type="button"
-          onClick={() => handleFreezeTransition('in_review')}
-          disabled={session.state !== 'active'}
-          className="rounded-md border border-c-border px-2.5 py-1 font-medium text-c-text-secondary disabled:opacity-40 hover:bg-c-surface-raised"
-        >
-          Wyślij do przeglądu
-        </button>
-        <button
-          type="button"
-          onClick={() => handleFreezeTransition('frozen')}
-          disabled={session.state !== 'in_review'}
-          data-testid="freeze-button"
-          className="inline-flex items-center gap-1.5 rounded-md border border-c-border bg-c-surface-raised px-2.5 py-1 font-semibold text-c-text disabled:opacity-40 hover:bg-c-border-subtle"
-        >
-          <Lock size={12} />
-          Zamroź (tylko approver)
-        </button>
       </div>
     </div>
   );

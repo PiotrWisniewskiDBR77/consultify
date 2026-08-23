@@ -233,16 +233,20 @@ export const InterviewTemplatePreviewFooter: React.FC<InterviewTemplatePreviewFo
               },
             ]
           : []),
-        {
-          label: canAssign
-            ? t('interview.templatePreview.edit')
-            : t('interview.templatePreview.open'),
-          icon: ExternalLink,
-          onClick: onOpenFull,
-          colorScheme: onAssign ? 'primary' : 'primary',
-          flex: true,
-          shortcut: 'O',
-        },
+        ...(canAssign
+          ? [
+              {
+                // Object-specific Edit is valid here; the only generic Open
+                // remains in PreviewPaneShell's header (INT-PREV-OWN-001).
+                label: t('interview.templatePreview.edit'),
+                icon: ExternalLink,
+                onClick: onOpenFull,
+                colorScheme: 'primary' as const,
+                flex: true,
+                shortcut: 'E',
+              },
+            ]
+          : []),
         ...(onClone
           ? [
               {

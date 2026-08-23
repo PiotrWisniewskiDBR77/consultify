@@ -10,16 +10,21 @@
  *
  * Permission checks for team projects use chatPermissionService.
  */
+import { createHash } from 'node:crypto';
+
 import { Request, Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 
 import { getDatabase } from '../database/index.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
+import { requireAudit } from '../middleware/requireAudit.middleware.js';
 import { emitChatProjectsChanged } from '../realtime/chatProjectsRealtime.js';
+import auditEventsService from '../services/AuditEventsService.js';
 import { checkChatPermission } from '../services/chatPermissionService.js';
 import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
+import { withPgTransaction } from '../utils/queryHelpers.js';
 
 const router = Router();
 
@@ -81,8 +86,18 @@ async function ensureProjectRbacSchema(): Promise<boolean> {
       content    TEXT,
       doc_id     TEXT,
       added_by   TEXT,
-      added_at   TEXT
+      added_at   TEXT,
+      version    INTEGER NOT NULL DEFAULT 1,
+      content_hash TEXT,
+      hash_basis TEXT,
+      provenance_json TEXT,
+      updated_at TEXT
     )`);
+    await db.run('ALTER TABLE project_knowledge ADD COLUMN IF NOT EXISTS version INTEGER');
+    await db.run('ALTER TABLE project_knowledge ADD COLUMN IF NOT EXISTS content_hash TEXT');
+    await db.run('ALTER TABLE project_knowledge ADD COLUMN IF NOT EXISTS hash_basis TEXT');
+    await db.run('ALTER TABLE project_knowledge ADD COLUMN IF NOT EXISTS provenance_json TEXT');
+    await db.run('ALTER TABLE project_knowledge ADD COLUMN IF NOT EXISTS updated_at TEXT');
     await db.run('CREATE INDEX IF NOT EXISTS idx_pk_project ON project_knowledge(project_id)');
     // Backfill creator-as-owner for team projects missing it.
     await db.run(`INSERT INTO chat_project_members (project_id, user_id, role, added_by, added_at)
@@ -223,6 +238,82 @@ router.get('/', verifyToken, async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Failed to fetch projects' });
   }
 });
+
+// ==================== VISIBILITY RECEIPT READBACK ====================
+
+router.get(
+  '/conversations/:conversationId/visibility-receipts',
+  verifyToken,
+  async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId || (req as any).user?.id;
+      const orgId = (req as any).organizationId || (req as any).user?.organizationId;
+      const { conversationId } = req.params;
+
+      if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+      const db = getDatabase();
+      const conversation = (await dbGetOne(
+        db,
+        `SELECT c.id, c.user_id, c.created_by, c.organization_id, c.chat_project_id,
+                cp.user_id AS project_user_id, cp.scope AS project_scope,
+                cp.visibility AS project_visibility,
+                CASE WHEN EXISTS (
+                  SELECT 1 FROM chat_project_members cpm
+                  WHERE cpm.project_id = c.chat_project_id AND cpm.user_id = ?
+                ) THEN 1 ELSE 0 END AS is_project_member
+         FROM conversations c
+         LEFT JOIN chat_projects cp ON cp.id = c.chat_project_id
+         WHERE c.id = ?`,
+        [userId, conversationId]
+      )) as any;
+
+      const ownsConversation =
+        conversation?.user_id === userId || conversation?.created_by === userId;
+      const sameOrganization = Boolean(orgId) && conversation?.organization_id === orgId;
+      const isTeamProject = conversation?.project_scope === 'team';
+      const isPrivateTeamProject = conversation?.project_visibility === 'private';
+      const isProjectOwner = conversation?.project_user_id === userId;
+      const isProjectMember =
+        conversation?.is_project_member === true ||
+        conversation?.is_project_member === 1 ||
+        conversation?.is_project_member === '1';
+      const canReadReceipts =
+        ownsConversation ||
+        (sameOrganization &&
+          isTeamProject &&
+          (!isPrivateTeamProject || isProjectOwner || isProjectMember));
+
+      // Do not reveal whether an inaccessible conversation has governance history.
+      if (!conversation || !canReadReceipts) {
+        return res.status(404).json({ error: 'Conversation not found' });
+      }
+
+      const { data } = await auditEventsService.query({
+        organizationId: orgId || undefined,
+        resourceType: 'conversation',
+        resourceId: conversationId,
+        limit: 50,
+      });
+      const receipts = data
+        .filter((event: any) => event.action === 'chat.visibility_consent_recorded')
+        .map((event: any) => ({
+          id: event.id,
+          timestamp: event.timestamp,
+          actorId: event.actorId,
+          from: event.before,
+          to: event.after,
+          policyVersion: event.metadata?.policyVersion || null,
+          requestedOperation: event.metadata?.requestedOperation || null,
+        }));
+
+      return res.json({ receipts });
+    } catch (error: any) {
+      logger.error('[ChatProjects] Visibility receipt readback error:', error);
+      return res.status(500).json({ error: 'Failed to load visibility receipts' });
+    }
+  }
+);
 
 // ==================== GET SINGLE PROJECT ====================
 
@@ -751,17 +842,14 @@ router.delete('/:id/members/:memberUserId', verifyToken, async (req: Request, re
 // Determine if a user can see a project (member, creator, or org-visible team).
 async function canSeeProject(db: any, project: any, userId: string, orgId: string | null) {
   if (!project) return false;
-  if (project.user_id === userId) return true;
-  const role = await getProjectRole(db, project.id, userId);
-  if (role) return true;
-  if (
-    project.scope === 'team' &&
-    project.organization_id === orgId &&
-    (project.visibility !== 'private' || !project.visibility)
-  ) {
-    return true;
+  if (project.scope === 'team') {
+    if (!orgId || project.organization_id !== orgId) return false;
+    if (project.user_id === userId) return true;
+    const role = await getProjectRole(db, project.id, userId);
+    if (role) return true;
+    return project.visibility !== 'private' || !project.visibility;
   }
-  return project.scope !== 'team' && project.user_id === userId;
+  return project.user_id === userId;
 }
 
 router.get('/:id/knowledge', verifyToken, async (req: Request, res: Response) => {
@@ -782,11 +870,29 @@ router.get('/:id/knowledge', verifyToken, async (req: Request, res: Response) =>
       return res.status(403).json({ error: 'No access to this project' });
     }
     const rows = (await db.query(
-      `SELECT id, kind, title, content, doc_id, added_by, added_at
+      `SELECT id, kind, title, content, doc_id, added_by, added_at,
+              version, content_hash, hash_basis, provenance_json, updated_at
        FROM project_knowledge WHERE project_id = ? ORDER BY added_at DESC`,
       [id]
     )) as any;
-    return res.json({ knowledge: Array.isArray(rows) ? rows : rows?.rows || [] });
+    const knowledgeRows = Array.isArray(rows) ? rows : rows?.rows || [];
+    const knowledge = knowledgeRows.map((row: any) => ({
+      ...row,
+      provenance: row.provenance_json ? JSON.parse(row.provenance_json) : null,
+      provenance_json: undefined,
+    }));
+    try {
+      const { data } = await auditEventsService.query({
+        organizationId: orgId || undefined,
+        resourceType: 'chat_project_context',
+        resourceId: id,
+        limit: 100,
+      });
+      return res.json({ knowledge, history: data, historyStatus: 'available' });
+    } catch (auditError: any) {
+      logger.warn('[ChatProjects] Context history readback unavailable:', auditError?.message);
+      return res.json({ knowledge, history: [], historyStatus: 'unavailable' });
+    }
   } catch (error: any) {
     logger.error('[ChatProjects] List knowledge error:', error?.message);
     return res.status(500).json({ error: 'Failed to load knowledge' });
@@ -796,6 +902,7 @@ router.get('/:id/knowledge', verifyToken, async (req: Request, res: Response) =>
 router.post('/:id/knowledge', verifyToken, async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId || (req as any).user?.id;
+    const orgId = (req as any).organizationId || (req as any).user?.organizationId;
     const { id } = req.params;
     const { kind, title, content, docId } = req.body || {};
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
@@ -803,10 +910,13 @@ router.post('/:id/knowledge', verifyToken, async (req: Request, res: Response) =
     await ensureProjectRbacSchema();
     const project = (await dbGetOne(
       db,
-      `SELECT id, user_id, scope FROM chat_projects WHERE id = ?`,
+      `SELECT id, user_id, scope, organization_id FROM chat_projects WHERE id = ?`,
       [id]
     )) as any;
     if (!project) return res.status(404).json({ error: 'Project not found' });
+    if (project.scope === 'team' && (!orgId || project.organization_id !== orgId)) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
     // Owner/editor (team) or the personal-project owner may add knowledge.
     const role =
       (await getProjectRole(db, id, userId)) || (project.user_id === userId ? 'owner' : null);
@@ -822,25 +932,66 @@ router.post('/:id/knowledge', verifyToken, async (req: Request, res: Response) =
     }
     const kid = uuidv4();
     const now = new Date().toISOString();
-    await db.run(
-      `INSERT INTO project_knowledge (id, project_id, kind, title, content, doc_id, added_by, added_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        kid,
-        id,
-        itemKind,
-        title ? String(title).slice(0, 300) : null,
-        itemKind === 'text' ? String(content).slice(0, 8000) : null,
-        itemKind === 'file' ? String(docId) : null,
-        userId,
-        now,
-      ]
-    );
+    const storedContent = itemKind === 'text' ? String(content).slice(0, 8000) : null;
+    const storedDocId = itemKind === 'file' ? String(docId) : null;
+    const provenance = {
+      type: itemKind === 'file' ? 'uploaded_document' : 'user_note',
+      reference: storedDocId,
+    };
+    const contentHash = `sha256:${createHash('sha256')
+      .update(storedContent || storedDocId || '')
+      .digest('hex')}`;
+    const hashBasis = itemKind === 'file' ? 'source_reference' : 'content';
+    await withPgTransaction(async (transaction) => {
+      await transaction.query(
+        `INSERT INTO project_knowledge (
+          id, project_id, kind, title, content, doc_id, added_by, added_at,
+          version, content_hash, hash_basis, provenance_json, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          kid,
+          id,
+          itemKind,
+          title ? String(title).slice(0, 300) : null,
+          storedContent,
+          storedDocId,
+          userId,
+          now,
+          1,
+          contentHash,
+          hashBasis,
+          JSON.stringify(provenance),
+          now,
+        ]
+      );
+      await auditEventsService.log({
+        actorId: userId,
+        actorType: 'USER',
+        action: 'chat.project_context_added',
+        resourceType: 'chat_project_context',
+        resourceId: id,
+        organizationId: (req as any).organizationId || (req as any).user?.organizationId,
+        after: {
+          knowledgeId: kid,
+          ownerId: userId,
+          kind: itemKind,
+          version: 1,
+          contentHash,
+          hashBasis,
+          provenance,
+        },
+      });
+    });
     return res.status(201).json({
       id: kid,
       kind: itemKind,
       title: title || null,
       doc_id: docId || null,
+      ownerId: userId,
+      version: 1,
+      contentHash,
+      hashBasis,
+      provenance,
       added_at: now,
     });
   } catch (error: any) {
@@ -852,22 +1003,58 @@ router.post('/:id/knowledge', verifyToken, async (req: Request, res: Response) =
 router.delete('/:id/knowledge/:knowledgeId', verifyToken, async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId || (req as any).user?.id;
+    const orgId = (req as any).organizationId || (req as any).user?.organizationId;
     const { id, knowledgeId } = req.params;
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
     const db = getDatabase();
     await ensureProjectRbacSchema();
-    const project = (await dbGetOne(db, `SELECT user_id FROM chat_projects WHERE id = ?`, [
-      id,
-    ])) as any;
+    const project = (await dbGetOne(
+      db,
+      `SELECT user_id, scope, organization_id FROM chat_projects WHERE id = ?`,
+      [id]
+    )) as any;
     if (!project) return res.status(404).json({ error: 'Project not found' });
+    if (project.scope === 'team' && (!orgId || project.organization_id !== orgId)) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
     const role =
       (await getProjectRole(db, id, userId)) || (project.user_id === userId ? 'owner' : null);
     const canWrite = role === 'owner' || role === 'editor' || project.user_id === userId;
     if (!canWrite) return res.status(403).json({ error: 'No permission' });
-    await db.run(`DELETE FROM project_knowledge WHERE id = ? AND project_id = ?`, [
-      knowledgeId,
-      id,
-    ]);
+    const existingKnowledge = (await dbGetOne(
+      db,
+      `SELECT id, kind, title, doc_id, added_by, version, content_hash, hash_basis, provenance_json
+       FROM project_knowledge WHERE id = ? AND project_id = ?`,
+      [knowledgeId, id]
+    )) as any;
+    if (!existingKnowledge) return res.status(404).json({ error: 'Knowledge item not found' });
+    await withPgTransaction(async (transaction) => {
+      await auditEventsService.log({
+        actorId: userId,
+        actorType: 'USER',
+        action: 'chat.project_context_removed',
+        resourceType: 'chat_project_context',
+        resourceId: id,
+        organizationId: (req as any).organizationId || (req as any).user?.organizationId,
+        before: {
+          knowledgeId,
+          ownerId: existingKnowledge.added_by,
+          kind: existingKnowledge.kind,
+          title: existingKnowledge.title,
+          documentId: existingKnowledge.doc_id,
+          version: existingKnowledge.version,
+          contentHash: existingKnowledge.content_hash,
+          hashBasis: existingKnowledge.hash_basis,
+          provenance: existingKnowledge.provenance_json
+            ? JSON.parse(existingKnowledge.provenance_json)
+            : null,
+        },
+      });
+      await transaction.query(`DELETE FROM project_knowledge WHERE id = ? AND project_id = ?`, [
+        knowledgeId,
+        id,
+      ]);
+    });
     return res.json({ success: true });
   } catch (error: any) {
     logger.error('[ChatProjects] Delete knowledge error:', error?.message);
@@ -936,6 +1123,7 @@ router.delete('/:id', verifyToken, async (req: Request, res: Response) => {
 router.post(
   '/:id/conversations/:conversationId',
   verifyToken,
+  requireAudit,
   async (req: Request, res: Response) => {
     try {
       const userId = (req as any).userId || (req as any).user?.id;
@@ -975,31 +1163,89 @@ router.post(
 
       // Check conversation access (personal ownership/creator or same org).
       // Some legacy rows use created_by as the owner field, so accept both.
-      const conversation = await dbGetOne(
+      const conversation = (await dbGetOne(
         db,
-        `SELECT id FROM conversations
+        `SELECT id, chat_project_id FROM conversations
          WHERE id = ? AND (
            user_id = ?
            OR created_by = ?
            OR (organization_id IS NOT NULL AND organization_id = ?)
          )`,
         [conversationId, userId, userId, orgId || null]
-      );
+      )) as any;
 
       if (!conversation) {
         return res.status(404).json({ error: 'Conversation not found' });
       }
 
-      // Move conversation to project
-      await db.run(`UPDATE conversations SET chat_project_id = ?, updated_at = ? WHERE id = ?`, [
-        id,
-        new Date().toISOString(),
-        conversationId,
-      ]);
+      // Moving content from private/unassigned history into an organization
+      // folder changes who may discover and open it. Require an explicit user
+      // decision at the API boundary; a custom client must not bypass the UI
+      // confirmation. Moving between team folders does not broaden visibility.
+      let sourceScope: string | null = null;
+      if (conversation.chat_project_id) {
+        const sourceProject = (await dbGetOne(db, `SELECT scope FROM chat_projects WHERE id = ?`, [
+          conversation.chat_project_id,
+        ])) as any;
+        sourceScope = sourceProject?.scope || null;
+      }
+      const broadensVisibility = project.scope === 'team' && sourceScope !== 'team';
+      if (broadensVisibility && req.body?.visibilityConsent !== true) {
+        return res.status(409).json({
+          error: 'Explicit visibility consent is required before moving private content',
+          code: 'VISIBILITY_CONSENT_REQUIRED',
+        });
+      }
+
+      let visibilityReceiptId: string | null = null;
+      if (broadensVisibility) {
+        try {
+          visibilityReceiptId = await withPgTransaction(async (transaction) => {
+            const receiptId =
+              (await req.emitAuditEvent?.({
+                // The audit service detects this pinned transaction. Therefore
+                // both the consent receipt and the move commit, or both roll back.
+                action: 'chat.visibility_consent_recorded',
+                resourceType: 'conversation',
+                resourceId: conversationId,
+                before: {
+                  folderId: conversation.chat_project_id || null,
+                  scope: sourceScope || 'private_unassigned',
+                },
+                after: {
+                  folderId: id,
+                  scope: 'organization',
+                },
+                metadata: {
+                  policyVersion: 'chat-history-visibility-v1',
+                  destinationOrganizationId: project.organization_id,
+                  requestedOperation: 'move_to_organization_folder',
+                },
+              })) || null;
+            await transaction.query(
+              `UPDATE conversations SET chat_project_id = ?, updated_at = ? WHERE id = ?`,
+              [id, new Date().toISOString(), conversationId]
+            );
+            return receiptId;
+          });
+        } catch (error: any) {
+          logger.error('[ChatProjects] Atomic visibility move failed:', error);
+          return res.status(503).json({
+            error: 'The governed visibility move could not be committed. Nothing was changed.',
+            code: 'VISIBILITY_MOVE_ATOMIC_FAILURE',
+          });
+        }
+      } else {
+        await db.run(`UPDATE conversations SET chat_project_id = ?, updated_at = ? WHERE id = ?`, [
+          id,
+          new Date().toISOString(),
+          conversationId,
+        ]);
+      }
 
       logger.info(`[ChatProjects] Moved conversation ${conversationId} to project ${id}`);
       emitChatProjectsChanged((req as any).organizationId);
-      res.json({ success: true });
+      res.json({ success: true, visibilityReceiptId });
     } catch (error: any) {
       logger.error('[ChatProjects] Move conversation error:', error);
       res.status(500).json({ error: 'Failed to move conversation' });

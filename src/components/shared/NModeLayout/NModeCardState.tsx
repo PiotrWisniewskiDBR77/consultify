@@ -329,6 +329,9 @@ export interface NModeCardStateProps {
    */
   hideBadge?: boolean;
 
+  /** Optional honest hand-off when this card still requires the parent artifact's Save action. */
+  persistenceNotice?: string;
+
   /**
    * Treść karty (pola strukturalne / listy / edytor). Renderowana w stanach
    * `ai-draft` · `edited` · `done`. W `generating`/`empty`/`error` komponent
@@ -357,6 +360,7 @@ export const NModeCardState: React.FC<NModeCardStateProps> = ({
   isPolish: isPolishProp,
   hideActions = false,
   hideBadge = false,
+  persistenceNotice,
   children,
 }) => {
   const { t: tHook, i18n } = useTranslation();
@@ -532,6 +536,11 @@ export const NModeCardState: React.FC<NModeCardStateProps> = ({
     <div className="space-y-3">
       {header}
       {body}
+      {persistenceNotice && (state === 'ai-draft' || state === 'edited') ? (
+        <p role="status" className="text-xs text-c-text-muted">
+          {persistenceNotice}
+        </p>
+      ) : null}
       {actionBar}
     </div>
   );

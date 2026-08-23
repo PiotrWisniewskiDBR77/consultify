@@ -4138,8 +4138,8 @@
       "reassign": "Reassign",
       "generateImplementationPlanWith": "Generate implementation plan with AI",
       "createIdeas": "Create Ideas",
-      "title13": "Analyze risks with AI",
-      "analyzeRisks": "Analyze risks",
+      "title13": "Analyze",
+      "analyzeRisks": "Analyze",
       "generateChecklistWithAI": "Generate checklist with AI",
       "createChecklist": "Create Checklist",
       "title14": "Generate AI comments",
@@ -6379,6 +6379,13 @@
       }
     },
     "templateBuilder": {
+      "firstUseTitle": "Create a usable interview template in three steps",
+      "firstUseDescription": "Define the purpose, prepare the questions, then preview and check quality before you publish.",
+      "firstUseStepTopic": "Name the topic and choose its library.",
+      "firstUseStepQuestions": "Add questions, import a source or ask AI for a draft.",
+      "firstUseStepVerify": "Preview, check quality, then save a draft or publish.",
+      "startWithTopic": "Start with the topic",
+      "dismissFirstUseGuide": "Dismiss getting-started guide",
       "freeTextAnswer": "Free text answer…",
       "yes": "Yes",
       "no": "No",
@@ -6679,6 +6686,12 @@
       "completedAt": "Completed",
       "sessionDetails": "Session details",
       "latestReviewDecisionLabel": "Latest review decision",
+      "decisionTime": "Decision time",
+      "reviewerRole": "Reviewer role",
+      "reviewerId": "Reviewer ID",
+      "aiAlignment": "AI alignment",
+      "decisionRecordId": "Decision record ID",
+      "returnReason": "Reason",
       "property": "Property",
       "value": "Value"
     },
@@ -7104,7 +7117,18 @@
       "failedToLoadTemplatesX": "Failed to load templates: {{msg}}",
       "failedToLoadUsersX": "Failed to load users: {{msg}}",
       "createdSeparateAssignmentsCount": "Created {{count}} separate assignments",
-      "interviewAssignedToCount": "Interview assigned to {{count}} user(s)"
+      "interviewAssignedToCount": "Interview assigned to {{count}} user(s)",
+      "templateUnavailableNotApproved": "Not approved for assignment",
+      "templateUnavailableInvalidVersion": "Published version is invalid",
+      "templateUnavailableNoPublishedVersion": "No published version",
+      "unavailableTemplatesTitle": "Templates unavailable for assignment",
+      "templateLoadFailed": "Templates could not load",
+      "noTemplatesAvailable": "No templates are available in your scope.",
+      "pinnedVersion": "Pinned assignment version",
+      "openTemplate": "Open template",
+      "publishedVersionChanged": "This template version changed. Availability was refreshed; review the pinned version and retry.",
+      "assignmentChangedOnRetry": "This assignment changed while it was being retried. Review the form and retry.",
+      "selectedTemplateNoLongerAvailable": "The previously selected template is no longer assignable. Select another published version; the rest of your form is preserved."
     },
     "newSessionModal": {
       "pleaseSelectATemplate": "Please select a template",
@@ -19806,16 +19830,46 @@
         "unavailable": "Document extraction is not yet configured on this server"
       },
       "guidance": {
-        "organizationType": { "message": "Start by selecting your organization type — this helps me show you the right questions.", "downstream": "All modules" },
-        "industry": { "message": "Which industry are you in? Assessment uses this for benchmarking and framework selection.", "downstream": "Assessment, Competitive Intelligence" },
-        "companySize": { "message": "What is your company size? This calibrates recommendations to your scale.", "downstream": "Assessment, Planning, Reports" },
-        "strategicPriorities": { "message": "Add strategic priorities — AI aligns every recommendation, initiative, and report to your goals.", "downstream": "Deep Research, Initiatives, Reports" },
-        "mission": { "message": "A mission statement helps AI maintain consistency across all generated content.", "downstream": "Reports, Presentations, AI Chat" },
-        "technologyStack": { "message": "List your tech stack — Assessment and Tool recommendations improve significantly with this.", "downstream": "Assessment, Tools, Integration Planning" },
-        "regulations": { "message": "Select applicable regulations — AI will avoid suggesting non-compliant solutions.", "downstream": "Assessment, Risk Management, Initiatives" },
-        "communicationStyle": { "message": "Set your preferred communication style — Teresa will adapt her language to match your culture.", "downstream": "All AI interactions" },
-        "productionType": { "message": "Select your production type — this helps Assessment evaluate Industry 4.0 readiness accurately.", "downstream": "Assessment, Tool Recommendations" },
-        "completeness": { "message": "Your profile is {{completeness}}% complete. The more context you provide, the better AI can help you.", "downstream": "All modules" }
+        "organizationType": {
+          "message": "Start by selecting your organization type — this helps me show you the right questions.",
+          "downstream": "All modules"
+        },
+        "industry": {
+          "message": "Which industry are you in? Assessment uses this for benchmarking and framework selection.",
+          "downstream": "Assessment, Competitive Intelligence"
+        },
+        "companySize": {
+          "message": "What is your company size? This calibrates recommendations to your scale.",
+          "downstream": "Assessment, Planning, Reports"
+        },
+        "strategicPriorities": {
+          "message": "Add strategic priorities — AI aligns every recommendation, initiative, and report to your goals.",
+          "downstream": "Deep Research, Initiatives, Reports"
+        },
+        "mission": {
+          "message": "A mission statement helps AI maintain consistency across all generated content.",
+          "downstream": "Reports, Presentations, AI Chat"
+        },
+        "technologyStack": {
+          "message": "List your tech stack — Assessment and Tool recommendations improve significantly with this.",
+          "downstream": "Assessment, Tools, Integration Planning"
+        },
+        "regulations": {
+          "message": "Select applicable regulations — AI will avoid suggesting non-compliant solutions.",
+          "downstream": "Assessment, Risk Management, Initiatives"
+        },
+        "communicationStyle": {
+          "message": "Set your preferred communication style — Teresa will adapt her language to match your culture.",
+          "downstream": "All AI interactions"
+        },
+        "productionType": {
+          "message": "Select your production type — this helps Assessment evaluate Industry 4.0 readiness accurately.",
+          "downstream": "Assessment, Tool Recommendations"
+        },
+        "completeness": {
+          "message": "Your profile is {{completeness}}% complete. The more context you provide, the better AI can help you.",
+          "downstream": "All modules"
+        }
       },
       "readiness": {
         "label": "Readiness",
@@ -19829,7 +19883,12 @@
           "ai_chat": { "label": "AI Chat (Teresa)" }
         },
         "fields": {
-          "industry": "industry", "company_size": "company size", "strategic_priorities": "strategic priorities", "name_or_industry": "name or industry", "key_competitors": "key competitors", "organization_type": "organization type"
+          "industry": "industry",
+          "company_size": "company size",
+          "strategic_priorities": "strategic priorities",
+          "name_or_industry": "name or industry",
+          "key_competitors": "key competitors",
+          "organization_type": "organization type"
         }
       },
       "validation": {
@@ -19896,31 +19955,119 @@
       },
       "options": {
         "organizationType": {
-          "MANUFACTURING": { "label": "Manufacturing", "hint": "Production, assembly, process industry" },
-          "SERVICES": { "label": "Professional Services", "hint": "Consulting, legal, accounting, staffing" },
+          "MANUFACTURING": {
+            "label": "Manufacturing",
+            "hint": "Production, assembly, process industry"
+          },
+          "SERVICES": {
+            "label": "Professional Services",
+            "hint": "Consulting, legal, accounting, staffing"
+          },
           "TECHNOLOGY": { "label": "Technology", "hint": "Software, SaaS, hardware, IT services" },
-          "PUBLIC_SECTOR": { "label": "Public Sector", "hint": "Government, education, healthcare" },
-          "NONPROFIT": { "label": "Nonprofit / NGO", "hint": "Foundations, associations, social enterprises" },
+          "PUBLIC_SECTOR": {
+            "label": "Public Sector",
+            "hint": "Government, education, healthcare"
+          },
+          "NONPROFIT": {
+            "label": "Nonprofit / NGO",
+            "hint": "Foundations, associations, social enterprises"
+          },
           "OTHER": { "label": "Other", "hint": "Retail, real estate, energy, transport, etc." }
         },
-        "companySize": { "STARTUP": "Startup (< 50)", "SMB": "SMB (50-250)", "MID_MARKET": "Mid-Market (250-1000)", "ENTERPRISE": "Enterprise (1000+)" },
-        "productionArchetype": { "DISCRETE": "Discrete Manufacturing", "PROCESS": "Process Manufacturing", "HYBRID": "Hybrid" },
-        "shiftPattern": { "SINGLE": "Single Shift", "DOUBLE": "Double Shift", "TRIPLE": "Triple Shift", "CONTINUOUS": "Continuous (24/7)" },
-        "automationLevel": { "MANUAL": "Manual", "SEMI_AUTOMATED": "Semi-Automated", "FULLY_AUTOMATED": "Fully Automated" },
-        "competitivePosition": { "LEADER": "Market Leader", "CHALLENGER": "Challenger", "FOLLOWER": "Follower", "NICHE": "Niche Player" },
-        "growthStage": { "STARTUP": "Startup", "SCALE_UP": "Scale-up", "MATURE": "Mature", "TURNAROUND": "Turnaround" },
-        "cloudAdoption": { "NONE": "None", "EXPLORING": "Exploring", "PARTIAL": "Partial", "CLOUD_FIRST": "Cloud First", "CLOUD_NATIVE": "Cloud Native" },
-        "communicationStyle": { "FORMAL": "Formal", "BUSINESS_CASUAL": "Business Casual", "CASUAL": "Casual / Startup", "TECHNICAL": "Technical / Engineering" },
-        "jargonLevel": { "NONE": "Plain language", "MODERATE": "Moderate industry terms", "HEAVY": "Heavy industry jargon" },
-        "riskAppetite": { "CONSERVATIVE": "Conservative", "MODERATE": "Moderate", "AGGRESSIVE": "Aggressive" },
+        "companySize": {
+          "STARTUP": "Startup (< 50)",
+          "SMB": "SMB (50-250)",
+          "MID_MARKET": "Mid-Market (250-1000)",
+          "ENTERPRISE": "Enterprise (1000+)"
+        },
+        "productionArchetype": {
+          "DISCRETE": "Discrete Manufacturing",
+          "PROCESS": "Process Manufacturing",
+          "HYBRID": "Hybrid"
+        },
+        "shiftPattern": {
+          "SINGLE": "Single Shift",
+          "DOUBLE": "Double Shift",
+          "TRIPLE": "Triple Shift",
+          "CONTINUOUS": "Continuous (24/7)"
+        },
+        "automationLevel": {
+          "MANUAL": "Manual",
+          "SEMI_AUTOMATED": "Semi-Automated",
+          "FULLY_AUTOMATED": "Fully Automated"
+        },
+        "competitivePosition": {
+          "LEADER": "Market Leader",
+          "CHALLENGER": "Challenger",
+          "FOLLOWER": "Follower",
+          "NICHE": "Niche Player"
+        },
+        "growthStage": {
+          "STARTUP": "Startup",
+          "SCALE_UP": "Scale-up",
+          "MATURE": "Mature",
+          "TURNAROUND": "Turnaround"
+        },
+        "cloudAdoption": {
+          "NONE": "None",
+          "EXPLORING": "Exploring",
+          "PARTIAL": "Partial",
+          "CLOUD_FIRST": "Cloud First",
+          "CLOUD_NATIVE": "Cloud Native"
+        },
+        "communicationStyle": {
+          "FORMAL": "Formal",
+          "BUSINESS_CASUAL": "Business Casual",
+          "CASUAL": "Casual / Startup",
+          "TECHNICAL": "Technical / Engineering"
+        },
+        "jargonLevel": {
+          "NONE": "Plain language",
+          "MODERATE": "Moderate industry terms",
+          "HEAVY": "Heavy industry jargon"
+        },
+        "riskAppetite": {
+          "CONSERVATIVE": "Conservative",
+          "MODERATE": "Moderate",
+          "AGGRESSIVE": "Aggressive"
+        },
         "deliveryModel": {
-          "projects": "Projects", "products": "Products", "managed_services": "Managed services", "platform_marketplace": "Platform / Marketplace", "consulting_engagements": "Consulting engagements", "mixed": "Mixed"
+          "projects": "Projects",
+          "products": "Products",
+          "managed_services": "Managed services",
+          "platform_marketplace": "Platform / Marketplace",
+          "consulting_engagements": "Consulting engagements",
+          "mixed": "Mixed"
         },
         "revenueModel": {
-          "subscription_saas": "Subscription / SaaS", "project_based": "Project-based", "product_sales": "Product sales", "managed_services": "Managed services", "licensing": "Licensing", "grant_funded": "Grant-funded", "mixed_hybrid": "Mixed / Hybrid"
+          "subscription_saas": "Subscription / SaaS",
+          "project_based": "Project-based",
+          "product_sales": "Product sales",
+          "managed_services": "Managed services",
+          "licensing": "Licensing",
+          "grant_funded": "Grant-funded",
+          "mixed_hybrid": "Mixed / Hybrid"
         },
         "industry": {
-          "technology": "Technology", "financial_services": "Financial Services", "healthcare": "Healthcare", "manufacturing": "Manufacturing", "industrial": "Industrial", "consumer": "Consumer", "energy": "Energy", "telecommunications": "Telecommunications", "real_estate": "Real Estate", "transportation_logistics": "Transportation & Logistics", "education": "Education", "government": "Government", "retail_e_commerce": "Retail & E-commerce", "media_entertainment": "Media & Entertainment", "agriculture": "Agriculture", "construction": "Construction", "hospitality": "Hospitality", "professional_services": "Professional Services", "other": "Other"
+          "technology": "Technology",
+          "financial_services": "Financial Services",
+          "healthcare": "Healthcare",
+          "manufacturing": "Manufacturing",
+          "industrial": "Industrial",
+          "consumer": "Consumer",
+          "energy": "Energy",
+          "telecommunications": "Telecommunications",
+          "real_estate": "Real Estate",
+          "transportation_logistics": "Transportation & Logistics",
+          "education": "Education",
+          "government": "Government",
+          "retail_e_commerce": "Retail & E-commerce",
+          "media_entertainment": "Media & Entertainment",
+          "agriculture": "Agriculture",
+          "construction": "Construction",
+          "hospitality": "Hospitality",
+          "professional_services": "Professional Services",
+          "other": "Other"
         }
       }
     },

@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { useV8CreateHandoff, useV8Handoffs, useV8Snapshots } from '@/hooks/useV8Chat';
 import { useV8Gate } from '@/hooks/useV8Gate';
 import { useV8ConversationRetrievalTraces } from '@/hooks/useV8Retrieval';
+import { CHAT_HEADER_SELECTOR_CLASS } from '@/components/AIChat/chatHeaderControlStyles';
 
 interface V8ContextIndicatorProps {
   conversationId: string | null;
@@ -124,7 +125,7 @@ export function V8ContextIndicator({ conversationId, defaultGoal = '' }: V8Conte
   };
 
   return (
-    <div className="relative">
+    <div className="relative" data-chat-header-control-variant="status-selector">
       <button
         ref={triggerRef}
         type="button"
@@ -133,7 +134,7 @@ export function V8ContextIndicator({ conversationId, defaultGoal = '' }: V8Conte
         aria-expanded={isOpen}
         aria-controls={panelId}
         aria-haspopup="dialog"
-        className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
+        className={`${CHAT_HEADER_SELECTOR_CLASS} px-2 text-[11px] font-medium ${
           isDegraded
             ? 'border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200'
             : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-800/70 dark:bg-emerald-900/25 dark:text-emerald-300 dark:hover:bg-emerald-900/35'

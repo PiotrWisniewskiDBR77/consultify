@@ -6,6 +6,7 @@ import {
   Lightbulb,
   ListChecks,
   Maximize2,
+  Network,
   Paperclip,
   Presentation,
   Rocket,
@@ -14,9 +15,10 @@ import {
   Sparkles,
   Trash2,
 } from 'lucide-react';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import i18n from '../../../i18n';
+import { getNotebookActionContract, type NotebookActionContract } from './notebookActionRegistry';
 
 /**
  * Target entity types the note can be converted into (canon: "Convert to" group).
@@ -40,11 +42,12 @@ export interface NotebookMenuAction {
   id: string;
   label: string;
   icon: React.ReactNode;
-  onClick: () => void;
+  onClick: () => unknown | Promise<unknown>;
   danger?: boolean;
   disabled?: boolean;
   /** Render a thin divider above this item (group boundary). */
   separatorBefore?: boolean;
+  contract: NotebookActionContract;
 }
 
 export interface NotebookHamburgerMenuProps {
@@ -58,19 +61,21 @@ export interface NotebookHamburgerMenuProps {
 
   // --- Group "Note" --------------------------------------------------------
   /** Export the note (PDF/Markdown/etc.). */
-  onExport?: () => void;
+  onExport?: () => unknown | Promise<unknown>;
   /** Open sources & attachments panel. */
-  onSources?: () => void;
+  onSources?: () => unknown | Promise<unknown>;
   /** Open verification & review panel. */
-  onVerification?: () => void;
+  onVerification?: () => unknown | Promise<unknown>;
   /** Share the note. */
-  onShare?: () => void;
+  onShare?: () => unknown | Promise<unknown>;
   /** Expand the note into a full document deliverable. */
-  onExpandDocument?: () => void;
+  onExpandDocument?: () => unknown | Promise<unknown>;
+  /** Open the note connection graph. */
+  onGraph?: () => unknown | Promise<unknown>;
 
   // --- Group "Convert to" --------------------------------------------------
   /** Convert the note into another entity. Item only renders when provided. */
-  onConvert?: (target: NotebookConvertTarget) => void;
+  onConvert?: (target: NotebookConvertTarget) => unknown | Promise<unknown>;
   /**
    * Restrict which convert targets are offered. Defaults to all targets.
    * Ignored when `onConvert` is not provided (whole group hidden).
@@ -79,13 +84,15 @@ export interface NotebookHamburgerMenuProps {
 
   // --- Group "AI" ----------------------------------------------------------
   /** Open Ask AI / command prompt. */
-  onAskAI?: () => void;
+  onAskAI?: () => unknown | Promise<unknown>;
 
   // --- Group "Danger" ------------------------------------------------------
   /** Delete the note. */
-  onDelete?: () => void;
+  onDelete?: () => unknown | Promise<unknown>;
   /** Disable the Delete item (e.g. read-only / demo session). */
   deleteDisabled?: boolean;
+  /** Durable actions stay disabled unless their backend receipt contract is proven. */
+  receiptCapableActionIds?: string[];
 }
 
 const ALL_CONVERT_TARGETS: NotebookConvertTarget[] = [
@@ -112,13 +119,14 @@ const CONVERT_META: Record<
 };
 
 /** Build the flat, grouped action list from the props (skips any item with no handler). */
-function buildActions(props: NotebookHamburgerMenuProps): NotebookMenuAction[] {
+export function buildNotebookMenuActions(props: NotebookHamburgerMenuProps): NotebookMenuAction[] {
   const {
     onExport,
     onSources,
     onVerification,
     onShare,
     onExpandDocument,
+    onGraph,
     onConvert,
     convertTargets,
     onAskAI,
@@ -126,7 +134,7 @@ function buildActions(props: NotebookHamburgerMenuProps): NotebookMenuAction[] {
     deleteDisabled,
   } = props;
 
-  const items: NotebookMenuAction[] = [];
+  const items: Array<Omit<NotebookMenuAction, 'contract'>> = [];
 
   // --- Group: Note ---------------------------------------------------------
   if (onExport) {
@@ -167,6 +175,14 @@ function buildActions(props: NotebookHamburgerMenuProps): NotebookMenuAction[] {
       label: i18n.t('notebook.hamburgerMenu.expandDocument', 'Expand into document'),
       icon: <Maximize2 size={14} />,
       onClick: onExpandDocument,
+    });
+  }
+  if (onGraph) {
+    items.push({
+      id: 'connection-graph',
+      label: i18n.t('notebook.hamburgerMenu.connectionGraph', 'Connection graph'),
+      icon: <Network size={14} />,
+      onClick: onGraph,
     });
   }
 
@@ -211,7 +227,11 @@ function buildActions(props: NotebookHamburgerMenuProps): NotebookMenuAction[] {
     });
   }
 
-  return items;
+  return items.map((item) => {
+    const actionContract = getNotebookActionContract(item.id);
+    if (!actionContract) throw new Error(`Missing Notebook action contract: ${item.id}`);
+    return { ...item, contract: actionContract };
+  });
 }
 
 /** Heading label shown above the "Convert to" group (rendered inline before first convert item). */
@@ -228,8 +248,25 @@ function convertHeading(_pl: boolean): string {
  * Closes on Escape, outside-click, and after any action fires.
  */
 export const NotebookHamburgerMenu: React.FC<NotebookHamburgerMenuProps> = (props) => {
-  const { x, y, onClose, isPolish } = props;
+  const { x, y, onClose, isPolish, receiptCapableActionIds = [] } = props;
   const menuRef = useRef<HTMLDivElement>(null);
+  const executionLockRef = useRef(false);
+  const [runningActionId, setRunningActionId] = useState<string | null>(null);
+  const [executionError, setExecutionError] = useState<string | null>(null);
+  const [failedAction, setFailedAction] = useState<NotebookMenuAction | null>(null);
+  const returnFocusRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    returnFocusRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const frame = window.requestAnimationFrame(() => {
+      menuRef.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
+    });
+    return () => {
+      window.cancelAnimationFrame(frame);
+      returnFocusRef.current?.focus();
+    };
+  }, []);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -243,21 +280,87 @@ export const NotebookHamburgerMenu: React.FC<NotebookHamburgerMenuProps> = (prop
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+        return;
+      }
+      if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(e.key)) return;
+      const items = Array.from(
+        menuRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]:not(:disabled)') || []
+      );
+      if (items.length === 0) return;
+      e.preventDefault();
+      const current = items.indexOf(document.activeElement as HTMLElement);
+      const next =
+        e.key === 'Home'
+          ? 0
+          : e.key === 'End'
+            ? items.length - 1
+            : e.key === 'ArrowDown'
+              ? (current + 1 + items.length) % items.length
+              : (current - 1 + items.length) % items.length;
+      items[next]?.focus();
     };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
   }, [onClose]);
 
-  const actions = buildActions(props);
+  const actions = buildNotebookMenuActions(props);
+  const viewportWidth = typeof window === 'undefined' ? 1024 : window.innerWidth;
+  const viewportHeight = typeof window === 'undefined' ? 768 : window.innerHeight;
+  const menuLeft = Math.max(8, Math.min(x, Math.max(8, viewportWidth - 236)));
+  const menuTop = Math.max(8, Math.min(y, Math.max(8, viewportHeight - 80)));
+
+  const executeAction = async (action: NotebookMenuAction) => {
+    if (executionLockRef.current || action.disabled) return;
+    executionLockRef.current = true;
+    setRunningActionId(action.id);
+    setExecutionError(null);
+    setFailedAction(null);
+    try {
+      const result = await action.onClick();
+      if (action.contract.outcome === 'server-receipt-required') {
+        const receiptId =
+          result && typeof result === 'object' && 'receiptId' in result
+            ? String((result as { receiptId?: unknown }).receiptId || '')
+            : '';
+        if (!receiptId) throw new Error('The server did not return an action receipt.');
+      }
+      onClose();
+    } catch (error) {
+      setExecutionError(
+        error instanceof Error ? error.message : 'The action failed. Your note was not changed.'
+      );
+      setFailedAction(action);
+    } finally {
+      executionLockRef.current = false;
+      setRunningActionId(null);
+    }
+  };
 
   return (
     <div
       ref={menuRef}
       role="menu"
-      className="fixed z-50 min-w-[220px] rounded-lg border border-slate-200/60 dark:border-white/[0.03]/70 bg-c-surface py-1 shadow-xl dark:border-navy-700/70 dark:bg-navy-900"
-      style={{ top: y, left: x }}
+      aria-label={i18n.t('notebook.hamburgerMenu.actions', 'Note actions')}
+      className="fixed z-50 min-w-[220px] max-w-[calc(100vw-16px)] overflow-y-auto rounded-lg border border-slate-200/60 dark:border-white/[0.03]/70 bg-c-surface py-1 shadow-xl dark:border-navy-700/70 dark:bg-navy-900"
+      style={{ top: menuTop, left: menuLeft, maxHeight: 'calc(100vh - 16px)' }}
     >
+      {executionError ? (
+        <div role="alert" className="mx-2 mb-1 rounded-md border border-danger-300 p-2 text-xs">
+          <div>{executionError}</div>
+          {failedAction ? (
+            <button
+              type="button"
+              className="mt-1 font-semibold underline"
+              onClick={() => void executeAction(failedAction)}
+            >
+              {i18n.t('common.retry', 'Retry')}
+            </button>
+          ) : null}
+        </div>
+      ) : null}
       {actions.map((action) => (
         <React.Fragment key={action.id}>
           {action.separatorBefore && <div className="my-1 border-t border-c-border-subtle" />}
@@ -266,23 +369,52 @@ export const NotebookHamburgerMenu: React.FC<NotebookHamburgerMenuProps> = (prop
               {convertHeading(isPolish)}
             </div>
           )}
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => {
-              action.onClick();
-              onClose();
-            }}
-            disabled={action.disabled}
-            className={`flex w-full items-center gap-2.5 px-3 py-2 text-[13px] transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
-              action.danger
-                ? 'text-danger-600 hover:bg-danger-50 dark:text-danger-400 dark:hover:bg-danger-900/20'
-                : 'text-c-text-secondary hover:bg-c-surface-raised dark:text-c-text-secondary dark:hover:bg-c-surface-raised'
-            }`}
-          >
-            <span className="shrink-0 text-c-text-muted">{action.icon}</span>
-            {action.label}
-          </button>
+          {(() => {
+            const receiptUnavailable =
+              action.contract.outcome === 'server-receipt-required' &&
+              !receiptCapableActionIds.includes(action.id);
+            const unavailableReasonId = `notebook-action-${action.id}-unavailable`;
+            const unavailableReason = i18n.t(
+              'notebook.hamburgerMenu.receiptUnavailable',
+              'Unavailable until the server can return a durable action receipt'
+            );
+            return (
+              <div className={receiptUnavailable ? 'py-1' : undefined}>
+                <button
+                  type="button"
+                  role="menuitem"
+                  data-notebook-action-id={action.contract.id}
+                  data-notebook-action-execution={action.contract.execution}
+                  data-notebook-action-permission={action.contract.permission}
+                  data-notebook-action-outcome={action.contract.outcome}
+                  data-notebook-action-receipt-ready={String(!receiptUnavailable)}
+                  aria-disabled={receiptUnavailable || action.disabled || undefined}
+                  aria-describedby={receiptUnavailable ? unavailableReasonId : undefined}
+                  onClick={() => {
+                    if (receiptUnavailable) return;
+                    void executeAction(action);
+                  }}
+                  disabled={action.disabled || runningActionId !== null}
+                  aria-busy={runningActionId === action.id || undefined}
+                  className={`flex w-full items-center gap-2.5 px-3 py-2 text-[13px] transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+                    receiptUnavailable
+                      ? 'cursor-not-allowed opacity-60'
+                      : action.danger
+                        ? 'text-danger-600 hover:bg-danger-50 dark:text-danger-400 dark:hover:bg-danger-900/20'
+                        : 'text-c-text-secondary hover:bg-c-surface-raised dark:text-c-text-secondary dark:hover:bg-c-surface-raised'
+                  }`}
+                >
+                  <span className="shrink-0 text-c-text-muted">{action.icon}</span>
+                  {action.label}
+                </button>
+                {receiptUnavailable ? (
+                  <p id={unavailableReasonId} className="px-3 pb-1 text-[10px] text-c-text-muted">
+                    {unavailableReason}
+                  </p>
+                ) : null}
+              </div>
+            );
+          })()}
         </React.Fragment>
       ))}
     </div>

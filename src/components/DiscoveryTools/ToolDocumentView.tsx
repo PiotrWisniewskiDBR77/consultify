@@ -56,7 +56,6 @@ import {
   type SortOrder,
 } from '../shared/NModeSections';
 import { countAiCardStatuses, getAiReviewTotal, scrollToAiCards } from './aiCardGovernance';
-import { GenerateInitiativesModal } from './GenerateInitiativesModal';
 import { ToolPhaseAiActions } from './shared/ToolPhaseAiActions';
 import { getToolPhaseAiActions } from './toolAiActions';
 import { ToolCanvas } from './ToolCanvas';
@@ -288,7 +287,6 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     isStrategicPhaseTool ? 'mission' : 'work'
   );
   const [commandRowPortalTarget, setCommandRowPortalTarget] = useState<HTMLElement | null>(null);
-  const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [showRequestReviewModal, setShowRequestReviewModal] = useState(false);
   const [showTeresaProposals, setShowTeresaProposals] = useState(false);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
@@ -880,33 +878,6 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     }
   };
 
-  const handleGenerate = async (payload: {
-    methodologyId: string;
-    count: number;
-    includeChatContext: boolean;
-    decisionOwnerId?: string;
-  }) => {
-    if (!toolSessionId) return;
-    if (toolPermissions.canGenerate === false) {
-      toast.error(t('discoveryToolsMain.toolDocumentView.permissionDenied'));
-      return;
-    }
-    try {
-      setGenerationDefaults(payload);
-      const result = await Api.generateToolInitiatives(toolSessionId, payload);
-      if (result?.status) {
-        setToolStatus(String(result.status).toUpperCase() as any);
-      }
-      const updated = await Api.getToolGeneratedInitiatives(toolSessionId);
-      setGeneratedInitiatives(updated.initiatives || []);
-      setShowGenerateModal(false);
-      await fetchAll();
-      toast.success(t('discoveryToolsMain.toolDocumentView.initiativesGenerated'));
-    } catch (err: any) {
-      toast.error(err?.message || 'Failed to generate');
-    }
-  };
-
   const handleGenerateAI = async () => {
     const primaryAction = phaseAiActions[0];
     if (!primaryAction) return;
@@ -1254,7 +1225,6 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
               streamedContent={streamedContent || ''}
               isPolish={isPolish}
               onOpenChat={handleOpenChat}
-              onOpenInitiatives={() => setShowGenerateModal(true)}
               generatedInitiatives={generatedInitiatives}
               missionSuggestion={missionSuggestion}
               onApplyMissionSuggestion={applyMissionSuggestion}
@@ -1645,7 +1615,6 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
         orgName={currentOrganization?.name}
         aiContent={isStreaming ? streamedContent : undefined}
         onOpenChat={handleOpenChat}
-        onOpenInitiatives={() => setShowGenerateModal(true)}
         generatedInitiatives={generatedInitiatives}
         recentInitiatives={generatedInitiatives.slice(0, 5)}
         chatSnippets={(activeChatMessages || []).slice(-6).map((message: any) => ({
@@ -1745,7 +1714,6 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
                   streamedContent={streamedContent || ''}
                   isPolish={isPolish}
                   onOpenChat={handleOpenChat}
-                  onOpenInitiatives={() => setShowGenerateModal(true)}
                   generatedInitiatives={generatedInitiatives}
                   onGenerateFullSession={generateFullSession}
                   missionSuggestion={missionSuggestion}
@@ -1999,7 +1967,6 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     progress,
     reviewGaps,
     setCurrentStep,
-    showGenerateModal,
     stepDefs,
     streamedContent,
     swotData?.outputCandidates,
@@ -2105,18 +2072,6 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
               {t('discoveryToolsMain.toolDocumentView.sendBack')}
             </button>
           </>
-        ) : null}
-        {['APPROVED', 'GENERATED', 'COMPLETED'].includes(toolStatus) ? (
-          <button
-            type="button"
-            onClick={() => setShowGenerateModal(true)}
-            disabled={toolPermissions.canGenerate === false}
-            className={getMenu3AiButtonClass(false)}
-            title={t('discoveryToolsMain.toolDocumentView.generateInitiativesTitle')}
-          >
-            <Sparkles size={12} />
-            {t('discoveryToolsMain.toolDocumentView.generateInitiatives')}
-          </button>
         ) : null}
         {showAiActions ? (
           <ToolPhaseAiActions
@@ -2359,15 +2314,6 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
           </div>
         )}
       </div>
-
-      {showGenerateModal && (
-        <GenerateInitiativesModal
-          isPolish={isPolish}
-          defaults={generationDefaults}
-          onClose={() => setShowGenerateModal(false)}
-          onGenerate={handleGenerate}
-        />
-      )}
 
       {showRequestReviewModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">

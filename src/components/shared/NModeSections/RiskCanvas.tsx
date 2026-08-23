@@ -55,6 +55,10 @@ export interface RiskCanvasProps {
   onAIGenerate?: () => void;
   /** Whether AI generation is in progress */
   isGeneratingAI?: boolean;
+  /** Truthful inline provider/generation failure; omit when there is no failure */
+  aiErrorMessage?: string | null;
+  /** Retry the same provider-backed analysis after an error */
+  onAIRetry?: () => void;
   /** Whether inputs are locked/read-only (e.g. decision stage lock) */
   locked?: boolean;
   /** Artifact type for AIFieldEnhancer context */
@@ -108,6 +112,8 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
   onRemoveRisk,
   onAIGenerate,
   isGeneratingAI = false,
+  aiErrorMessage,
+  onAIRetry,
   locked = false,
   artifactContext,
   fieldKeyPrefix,
@@ -161,6 +167,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
         </h2>
         <div className="flex items-center gap-2">
           <button
+            type="button"
             onClick={onAddRisk}
             disabled={locked}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border/60 dark:border-c-border-strong/50 text-c-text-secondary dark:text-c-text-secondary hover:text-c-text dark:hover:text-c-text-muted hover:border-c-border-strong dark:hover:border-c-border-strong hover:bg-c-surface dark:hover:bg-c-surface-raised/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
@@ -170,8 +177,10 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
           </button>
           {onAIGenerate && (
             <button
+              type="button"
               onClick={onAIGenerate}
               disabled={locked || isGeneratingAI}
+              aria-busy={isGeneratingAI}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-c-info hover:bg-c-surface-raised transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {isGeneratingAI ? (
@@ -184,6 +193,25 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
           )}
         </div>
       </div>
+
+      {aiErrorMessage ? (
+        <div
+          role="alert"
+          className="flex items-center justify-between gap-3 rounded-lg border border-danger-500/30 bg-danger-500/10 px-3 py-2 text-sm text-danger-700 dark:text-danger-300"
+        >
+          <span>{aiErrorMessage}</span>
+          {onAIRetry ? (
+            <button
+              type="button"
+              onClick={onAIRetry}
+              disabled={locked || isGeneratingAI}
+              className="shrink-0 rounded-md border border-danger-500/40 px-2.5 py-1 text-xs font-semibold hover:bg-danger-500/10 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {t('sharedComponents.riskCanvas.retry', 'Retry')}
+            </button>
+          ) : null}
+        </div>
+      ) : null}
 
       {/* Empty state */}
       {risks.length === 0 ? (

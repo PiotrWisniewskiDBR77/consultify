@@ -471,7 +471,9 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
   const [isCloning, setIsCloning] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showRespondentPreview, setShowRespondentPreview] = useState(false);
+  const [showFirstUseGuide, setShowFirstUseGuide] = useState(true);
   const reviewImportInputRef = useRef<HTMLInputElement | null>(null);
+  const topicInputRef = useRef<HTMLInputElement | null>(null);
 
   // AI quality gate (V6-B04) — POST /interview/templates/evaluate-quality
   const [isCheckingQuality, setIsCheckingQuality] = useState(false);
@@ -510,6 +512,7 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
       setShowAiProposalModal(false);
       setIsAnswerTypeMenuOpen(false);
       setIsAreaTagsMenuOpen(false);
+      setShowFirstUseGuide(true);
     }
   }, [isOpen, templateId]);
 
@@ -1823,6 +1826,8 @@ ${sourceText || '(none)'}`;
                   {t('interview.templateBuilder.topic')} *
                 </label>
                 <input
+                  ref={topicInputRef}
+                  id="interview-template-topic"
                   type="text"
                   value={template.name || ''}
                   onChange={(e) => setTemplate((prev) => ({ ...prev, name: e.target.value }))}
@@ -2167,6 +2172,57 @@ ${sourceText || '(none)'}`;
                   if (file) void handleUploadAndReview(file);
                 }}
               />
+
+              {!templateId && showFirstUseGuide && (
+                <section
+                  aria-labelledby="template-first-use-title"
+                  className="mx-3 mt-3 rounded-xl border border-c-info/25 bg-c-info/5 px-4 py-3"
+                  data-testid="template-builder-first-use-guide"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h3
+                        id="template-first-use-title"
+                        className="text-sm font-semibold text-c-text"
+                      >
+                        {t('interview.templateBuilder.firstUseTitle')}
+                      </h3>
+                      <p className="mt-1 text-xs leading-relaxed text-c-text-muted">
+                        {t('interview.templateBuilder.firstUseDescription')}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowFirstUseGuide(false)}
+                      className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-c-text-muted hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                      aria-label={t('interview.templateBuilder.dismissFirstUseGuide')}
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                  <ol className="mt-3 grid gap-2 text-xs text-c-text-secondary md:grid-cols-3">
+                    <li>
+                      <span className="font-semibold text-c-text">1. </span>
+                      {t('interview.templateBuilder.firstUseStepTopic')}
+                    </li>
+                    <li>
+                      <span className="font-semibold text-c-text">2. </span>
+                      {t('interview.templateBuilder.firstUseStepQuestions')}
+                    </li>
+                    <li>
+                      <span className="font-semibold text-c-text">3. </span>
+                      {t('interview.templateBuilder.firstUseStepVerify')}
+                    </li>
+                  </ol>
+                  <button
+                    type="button"
+                    onClick={() => topicInputRef.current?.focus()}
+                    className="mt-3 inline-flex h-8 items-center rounded-lg border border-c-info/30 bg-c-surface px-3 text-xs font-semibold text-c-info transition-colors hover:bg-c-info/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                  >
+                    {t('interview.templateBuilder.startWithTopic')}
+                  </button>
+                </section>
+              )}
 
               {/* Questions List */}
               <div className="flex-1 overflow-auto p-3 space-y-2">

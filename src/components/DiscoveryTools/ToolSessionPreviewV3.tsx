@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next';
-import { Check, ExternalLink, Send, Sparkles, X } from 'lucide-react';
+import { Check, ExternalLink, Send, X } from 'lucide-react';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -298,7 +298,8 @@ export const ToolSessionPreviewV3Footer: React.FC<{
   onRequestReview: () => Promise<void>;
   onApprove: () => Promise<void>;
   onSendBack: () => Promise<void>;
-  onOpenGenerateModal: () => void;
+  /** @deprecated TOOL-08: downstream creation belongs in the Initiatives creator. */
+  onOpenGenerateModal?: () => void;
 }> = ({
   details,
   detailsLoading,
@@ -309,7 +310,6 @@ export const ToolSessionPreviewV3Footer: React.FC<{
   onRequestReview,
   onApprove,
   onSendBack,
-  onOpenGenerateModal,
 }) => {
   const { i18n, t } = useTranslation();
   const isPolish = i18n.language === 'pl';
@@ -368,10 +368,6 @@ export const ToolSessionPreviewV3Footer: React.FC<{
     (details?.progress ?? 0) >= 100 &&
     (details?.confidenceAvg ?? 0) >= 3;
   const canApproveTool = statusUpper === 'REVIEW' && details?.permissions?.canApproveTool !== false;
-  const canGenerate =
-    (statusUpper === 'APPROVED' || statusUpper === 'GENERATED' || statusUpper === 'COMPLETED') &&
-    details?.permissions?.canGenerate !== false;
-
   const initiativeRelations = (details?.generatedInitiatives || []).slice(0, 6);
   const decisionRelations = (details?.decisions || []).slice(0, 3);
 
@@ -465,20 +461,6 @@ export const ToolSessionPreviewV3Footer: React.FC<{
                 colorScheme: 'red' as const,
                 icon: X,
                 flex: true,
-              },
-            ],
-          },
-        ]
-      : []),
-    ...(canGenerate
-      ? [
-          {
-            buttons: [
-              {
-                label: t('preview.generateInitiatives', 'Generate initiatives'),
-                onClick: onOpenGenerateModal,
-                colorScheme: 'neutral' as const,
-                icon: Sparkles,
               },
             ],
           },

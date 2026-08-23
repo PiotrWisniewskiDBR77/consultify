@@ -16,7 +16,7 @@
  *   └────────────────────────────────────────────────────────┘
  *   Bottom status: save · version · evidence · review · blockers
  *
- * Three view modes (`interview` / `split` / `matrix`) are pure presentations
+ * Three view modes (`interview` / `matrix` / `report`) are pure presentations
  * of the SAME state — switching never re-fetches or forks data. The chosen
  * mode and the last matrix position are remembered per session in
  * localStorage (UI-NAV §6 "System zapamiętuje preferowany widok i ostatnią
@@ -24,13 +24,12 @@
  */
 import {
   AlertTriangle,
-  ChevronDown,
-  ChevronUp,
   LayoutGrid,
   LogOut,
   MessageSquareText,
   MoreHorizontal,
-  Rows3,
+  FileText,
+  Settings,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -44,7 +43,6 @@ import type { MethodNavigatorProps } from './MethodNavigator';
 import { MethodNavigator } from './MethodNavigator';
 import { SaveStateIndicator } from './SaveStateIndicator';
 import type { TeresaPreviewPanelProps } from './TeresaPreviewPanel';
-import { TeresaPreviewPanel } from './TeresaPreviewPanel';
 import type { MethodWorkspaceViewMode } from './types';
 
 export interface MethodWorkspaceShellProps {
@@ -67,6 +65,16 @@ export interface MethodWorkspaceShellProps {
   interviewProps: Omit<InterviewFocusPanelProps, 'className'>;
   teresaProps: Omit<TeresaPreviewPanelProps, 'className'>;
   matrixProps: Omit<LiveMatrixProps, 'className' | 'legendCollapsed' | 'methodName'>;
+  /** Method-specific report workspace; it reads the same session state. */
+  reportContent: React.ReactNode;
+  /** Runtime provenance shown in Settings instead of occupying a permanent technical stripe. */
+  documentSourceLabel?: string;
+  /** Canonical source proof component, kept inside Settings. */
+  documentSourceIndicator?: React.ReactNode;
+  /** Method-specific controls that belong to document settings, not the working canvas. */
+  settingsContent?: React.ReactNode;
+  /** Governed lifecycle actions live with approval settings, never in a permanent footer. */
+  governanceActions?: React.ReactNode;
 
   /** Uncontrolled by default (persists to localStorage); pass to control externally. */
   viewMode?: MethodWorkspaceViewMode;
@@ -88,7 +96,7 @@ function storageKey(sessionId: string): string {
 function readStoredViewMode(sessionId: string): MethodWorkspaceViewMode {
   try {
     const raw = window.localStorage.getItem(storageKey(sessionId));
-    if (raw === 'interview' || raw === 'split' || raw === 'matrix') return raw;
+    if (raw === 'interview' || raw === 'matrix' || raw === 'report') return raw;
   } catch {
     // localStorage unavailable (privacy mode, SSR) — fall back silently.
   }
@@ -97,8 +105,8 @@ function readStoredViewMode(sessionId: string): MethodWorkspaceViewMode {
 
 const VIEW_MODE_OPTIONS: Array<{ id: MethodWorkspaceViewMode; label: string; icon: React.ReactNode }> = [
   { id: 'interview', label: 'Interview', icon: <MessageSquareText size={13} /> },
-  { id: 'split', label: 'Split', icon: <Rows3 size={13} /> },
   { id: 'matrix', label: 'Matrix', icon: <LayoutGrid size={13} /> },
+  { id: 'report', label: 'Report', icon: <FileText size={13} /> },
 ];
 
 export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
@@ -107,7 +115,6 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
   packVersionLabel,
   readiness,
   mode,
-  onModeChange,
   onExit,
   saveState,
   saveLastSavedAt,
@@ -117,8 +124,12 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
   onSaveStay,
   navigatorProps,
   interviewProps,
-  teresaProps,
   matrixProps,
+  reportContent,
+  documentSourceLabel,
+  documentSourceIndicator,
+  settingsContent,
+  governanceActions,
   viewMode: viewModeProp,
   onViewModeChange,
   degradedMessage,
@@ -132,8 +143,8 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
   );
   const viewMode = viewModeProp ?? internalViewMode;
 
-  const [mirrorExpanded, setMirrorExpanded] = useState(false);
   const [menu3Open, setMenu3Open] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
   useEffect(() => {
@@ -235,31 +246,6 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
           {statusLabel}
         </span>
 
-        <div className="shrink-0 flex items-center rounded-lg border border-c-border p-0.5 text-[11px]">
-          <button
-            type="button"
-            onClick={() => onModeChange('guided_manual')}
-            disabled={readOnly}
-            aria-pressed={mode === 'guided_manual'}
-            className={`rounded-md px-2 py-1 font-medium transition-colors ${
-              mode === 'guided_manual' ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted hover:text-c-text'
-            }`}
-          >
-            Pracuję samodzielnie
-          </button>
-          <button
-            type="button"
-            onClick={() => onModeChange('teresa_led')}
-            disabled={readOnly}
-            aria-pressed={mode === 'teresa_led'}
-            className={`rounded-md px-2 py-1 font-medium transition-colors ${
-              mode === 'teresa_led' ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted hover:text-c-text'
-            }`}
-          >
-            Prowadzi Teresa
-          </button>
-        </div>
-
         <SaveStateIndicator
           compact
           state={saveState}
@@ -277,6 +263,17 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
           className="shrink-0 rounded-lg border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           Zapisz teraz
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setSettingsOpen((value) => !value)}
+          aria-expanded={settingsOpen}
+          aria-controls="method-workspace-settings"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+        >
+          <Settings size={13} />
+          Settings
         </button>
 
         <div className="relative shrink-0">
@@ -328,6 +325,46 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
         </div>
       </header>
 
+      {settingsOpen && (
+        <section
+          id="method-workspace-settings"
+          data-testid="method-workspace-settings"
+          className="grid shrink-0 gap-3 border-b border-c-border bg-c-surface px-4 py-3 text-xs text-c-text-secondary md:grid-cols-4"
+        >
+          <div>
+            <p className="font-semibold text-c-text">Informacje o dokumencie</p>
+            <p>Sesja {session.id}</p>
+            <p>Metoda {methodName} · {packVersionLabel}</p>
+            <p>Wersja sesji v{session.version}</p>
+            {documentSourceLabel && <p>Źródło: {documentSourceLabel}</p>}
+            {documentSourceIndicator && <div className="mt-2">{documentSourceIndicator}</div>}
+            <p className="mt-2">Zapis: {saveState === 'saved' ? 'zapisano' : saveState}</p>
+            <p>
+              Dowody: {readiness.totalUnits - readiness.unitsMissingEvidence}/{readiness.totalUnits}
+            </p>
+            <p>Do przeglądu: {readiness.openDiscrepancies}</p>
+            <p>Blokery zamrożenia: {readiness.freezeBlockers.length}</p>
+          </div>
+          <div>
+            <p className="font-semibold text-c-text">Zespół i uprawnienia</p>
+            <p>Tryb pracy: {mode === 'teresa_led' ? 'AI assisted' : 'human led'}</p>
+            <p>{readOnly ? 'Tylko odczyt' : 'Edycja dozwolona'}</p>
+          </div>
+          <div>
+            <p className="font-semibold text-c-text">Zatwierdzenia</p>
+            <p>Odpowiedzi: {session.state === 'in_review' || session.state === 'frozen' ? 'w przeglądzie lub zatwierdzone' : 'robocze'}</p>
+            <p>Targety i raport: {session.state === 'frozen' ? 'zamrożone' : 'niezatwierdzone'}</p>
+            {governanceActions && <div className="mt-2 flex flex-wrap gap-2">{governanceActions}</div>}
+          </div>
+          <div>
+            <p className="font-semibold text-c-text">Licencja i wersje</p>
+            <p>Status subskrypcji: do potwierdzenia przez backend</p>
+            <p>Historia wersji dostępna z menu dokumentu</p>
+          </div>
+          {settingsContent && <div className="md:col-span-4">{settingsContent}</div>}
+        </section>
+      )}
+
       {degradedMessage && (
         <div
           role="status"
@@ -367,67 +404,25 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
 
       {/* Body */}
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        {viewMode === 'matrix' ? (
-          <div className="flex-1 overflow-auto p-4">
-            <LiveMatrix {...matrixProps} methodName={methodName} className="h-full" />
+        <div className="flex min-h-0 flex-1 overflow-hidden">
+          <div className="hidden w-60 shrink-0 overflow-y-auto border-r border-c-border-subtle p-3 lg:block">
+            <MethodNavigator {...navigatorProps} />
           </div>
-        ) : (
-          <div className="flex min-h-0 flex-1 overflow-hidden">
-            <div className="hidden w-60 shrink-0 overflow-y-auto border-r border-c-border-subtle p-3 lg:block">
-              <MethodNavigator {...navigatorProps} />
+          {viewMode === 'matrix' ? (
+            <div className="min-w-0 flex-1 overflow-auto p-4">
+              <LiveMatrix {...matrixProps} methodName={methodName} className="h-full" />
             </div>
+          ) : viewMode === 'report' ? (
+            <div className="min-h-0 min-w-0 flex-1 overflow-y-auto p-4" data-testid="method-report-workspace">
+              {reportContent}
+            </div>
+          ) : (
             <div className="min-w-0 flex-1 overflow-y-auto p-4">
               <InterviewFocusPanel {...interviewProps} readOnly={readOnly} />
-              {viewMode === 'split' && (
-                <div className="mt-4 rounded-xl border border-c-border-subtle p-3">
-                  <LiveMatrix {...matrixProps} methodName={methodName} legendCollapsed />
-                </div>
-              )}
             </div>
-            <div className="hidden w-72 shrink-0 overflow-y-auto border-l border-c-border-subtle p-3 xl:block">
-              <TeresaPreviewPanel {...teresaProps} readOnly={readOnly} />
-            </div>
-          </div>
-        )}
-
-        {/* Graphic Mirror — sticky/expandable, hidden while in full-screen matrix mode */}
-        {viewMode === 'interview' && (
-          <div className="shrink-0 border-t border-c-border-subtle">
-            <button
-              type="button"
-              onClick={() => setMirrorExpanded((v) => !v)}
-              aria-expanded={mirrorExpanded}
-              data-testid="graphic-mirror-toggle"
-              className="flex w-full items-center justify-between px-4 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised"
-            >
-              Macierz na żywo (Graphic Mirror)
-              {mirrorExpanded ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
-            </button>
-            {mirrorExpanded && (
-              <div className={`max-h-64 overflow-auto p-3 ${transitionClass}`}>
-                <LiveMatrix {...matrixProps} methodName={methodName} />
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Bottom status bar */}
-        <div className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-1 border-t border-c-border px-4 py-1.5 text-[11px] text-c-text-muted">
-          <SaveStateIndicator state={saveState} lastSavedAt={saveLastSavedAt} errorMessage={saveErrorMessage} />
-          <span>Wersja metody {packVersionLabel}</span>
-          <span>
-            Evidence: {readiness.totalUnits - readiness.unitsMissingEvidence}/{readiness.totalUnits}
-          </span>
-          <span>{readiness.openDiscrepancies} do przeglądu</span>
-          {readiness.freezeBlockers.length > 0 ? (
-            <span className="flex items-center gap-1 text-c-warning">
-              <AlertTriangle size={11} />
-              {readiness.freezeBlockers.length} blokerów freeze
-            </span>
-          ) : (
-            <span className="text-c-success">Gotowe do zamrożenia</span>
           )}
         </div>
+
       </div>
     </div>
   );

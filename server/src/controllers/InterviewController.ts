@@ -1332,8 +1332,9 @@ async function snapshotInterviewAnswers(params: {
   reason: 'submission' | 'send_back';
   savedAt: string;
   savedBy: string;
+  ensureTable?: boolean;
 }): Promise<number> {
-  await ensureInterviewAnswerHistoryTable();
+  if (params.ensureTable !== false) await ensureInterviewAnswerHistoryTable();
   const answeredQuestions = await queryHelpers.queryAll(
     `SELECT id, answer_text FROM interview_questions
       WHERE session_id = ?
@@ -2913,7 +2914,8 @@ async function evaluateInterviewSessionAnswers(params: {
   // at all (there is nothing to judge), they are scored 0/unanswered in code.
   // Only answered questions are sent for rubric evaluation.
   const answeredQuestions = (questions as any[]).filter(
-    (q) => canonicalStatusToken(q.status) === 'answered' && String(q.answer_text || '').trim().length > 0
+    (q) =>
+      canonicalStatusToken(q.status) === 'answered' && String(q.answer_text || '').trim().length > 0
   );
 
   const criterionKeys = INTERVIEW_RUBRIC_CRITERIA.map((c) => c.key) as [string, ...string[]];
@@ -4420,6 +4422,34 @@ export const InterviewController = {
     const completenessPercent = Math.round(completenessRatio * 100);
     const now = new Date().toISOString();
 
+    // An ambiguous network retry after a successful submit is a read, not a
+    // second transition. Return the already-submitted state without appending
+    // another answer snapshot or notifying the reviewer twice. Concurrent first
+    // submits are serialized by the conditional UPDATE inside the transaction.
+    if (canonicalStatusToken((assignment as any).status) === 'submitted') {
+      const persistedAiReview = parseAiReviewSnapshot((assignment as any)?.ai_review_snapshot_json);
+      res.json({
+        assignment: {
+          ...(assignment as any),
+          aiReview: persistedAiReview,
+          aiReviewedAt: (assignment as any)?.ai_reviewed_at || null,
+          reviewDecisionMemory: parseReviewDecisionMemory(
+            (assignment as any)?.review_decision_memory_json
+          ),
+        },
+        session: buildSessionResponse({
+          ...(sessionRow as any),
+          answered_questions: answered,
+          total_questions: total,
+        }),
+        completenessPercent,
+        entersContext: false,
+        aiReview: persistedAiReview,
+        idempotentReplay: true,
+      });
+      return;
+    }
+
     // ── L-07 / SPEC_13 §5.1 — hard submit floor (objective insufficiency) ──
     // Compute the AI review BEFORE flipping status so we can block an objectively
     // insufficient submission. The hard floor is deterministic + objective only:
@@ -4511,79 +4541,84 @@ export const InterviewController = {
 
     const newAssignmentStatus = 'submitted';
 
-    // INT-05 — persist the exact answer version before changing lifecycle
-    // state. Submission is fail-closed: success without a durable snapshot
-    // would leave the manager reviewing mutable, unverifiable data.
+    // INT-05 / INT-APPROVAL-OWN-001 — snapshot + assignment + session + task
+    // + AI review are one fail-closed lifecycle transition.
+    await ensureInterviewAnswerHistoryTable();
+    const assignmentColumns = await getTableColumns('interview_assignments');
+    const supportsMissingItems = assignmentColumns.has('missing_items_json');
+    let updatedAssignment: any;
+    let updatedSession: any;
     try {
-      await snapshotInterviewAnswers({
-        organizationId: user.organizationId,
-        assignmentId: id,
-        sessionId,
-        reason: 'submission',
-        savedAt: now,
-        savedBy: user.id,
+      const result = await queryHelpers.withPgTransaction(async () => {
+        await snapshotInterviewAnswers({
+          organizationId: user.organizationId,
+          assignmentId: id,
+          sessionId,
+          reason: 'submission',
+          savedAt: now,
+          savedBy: user.id,
+          ensureTable: false,
+        });
+
+        const transition = supportsMissingItems
+          ? await queryHelpers.queryRun(
+              `UPDATE interview_assignments
+               SET status = ?, submitted_at = ?, sent_back_at = NULL, sent_back_reason = NULL, missing_items_json = NULL, ai_review_snapshot_json = NULL, ai_reviewed_at = NULL, updated_at = ?
+               WHERE id = ? AND status IN ('in_progress', 'sent_back')`,
+              [newAssignmentStatus, now, now, id]
+            )
+          : await queryHelpers.queryRun(
+              `UPDATE interview_assignments
+               SET status = ?, submitted_at = ?, sent_back_at = NULL, sent_back_reason = NULL, ai_review_snapshot_json = NULL, ai_reviewed_at = NULL, updated_at = ?
+               WHERE id = ? AND status IN ('in_progress', 'sent_back')`,
+              [newAssignmentStatus, now, now, id]
+            );
+        if (transition.changes !== 1) throw new Error('INTERVIEW_SUBMIT_STATE_CONFLICT');
+
+        const sessionTransition = await queryHelpers.queryRun(
+          `UPDATE interview_sessions SET status = 'submitted', updated_at = ?, last_activity_at = ? WHERE id = ?`,
+          [now, now, sessionId]
+        );
+        if (sessionTransition.changes !== 1) throw new Error('INTERVIEW_SUBMIT_SESSION_MISSING');
+
+        if ((assignment as any).task_id) {
+          const taskTransition = await queryHelpers.queryRun(
+            `UPDATE tasks SET status = ?, progress = ?, updated_at = ? WHERE id = ?`,
+            ['in_progress', completenessPercent, now, (assignment as any).task_id]
+          );
+          if (taskTransition.changes !== 1) throw new Error('INTERVIEW_SUBMIT_TASK_MISSING');
+        }
+
+        if (aiReview) {
+          await queryHelpers.queryRun(
+            `UPDATE interview_assignments
+             SET ai_review_snapshot_json = ?, ai_reviewed_at = ?, updated_at = ?
+             WHERE id = ?`,
+            [JSON.stringify(aiReview), now, now, id]
+          );
+        }
+
+        return {
+          updatedAssignment: await queryHelpers.queryOne(
+            `SELECT * FROM interview_assignments WHERE id = ?`,
+            [id]
+          ),
+          updatedSession: await queryHelpers.queryOne(
+            `SELECT * FROM interview_sessions WHERE id = ?`,
+            [sessionId]
+          ),
+        };
       });
+      updatedAssignment = result.updatedAssignment;
+      updatedSession = result.updatedSession;
     } catch (error) {
-      logger.error('[InterviewController] Failed to snapshot interview submission', error);
+      logger.error('[InterviewController] Failed atomic interview submission', error);
       res.status(500).json({
         error: 'Submission could not be safely persisted. Please retry.',
-        code: 'SUBMISSION_SNAPSHOT_FAILED',
+        code: 'SUBMISSION_ATOMIC_PERSISTENCE_FAILED',
       });
       return;
     }
-
-    try {
-      await queryHelpers.queryRun(
-        `UPDATE interview_assignments
-         SET status = ?, submitted_at = ?, sent_back_at = NULL, sent_back_reason = NULL, missing_items_json = NULL, ai_review_snapshot_json = NULL, ai_reviewed_at = NULL, updated_at = ?
-         WHERE id = ?`,
-        [newAssignmentStatus, now, now, id]
-      );
-    } catch {
-      await queryHelpers.queryRun(
-        `UPDATE interview_assignments
-         SET status = ?, submitted_at = ?, sent_back_at = NULL, sent_back_reason = NULL, ai_review_snapshot_json = NULL, ai_reviewed_at = NULL, updated_at = ?
-         WHERE id = ?`,
-        [newAssignmentStatus, now, now, id]
-      );
-    }
-
-    await queryHelpers.queryRun(
-      `UPDATE interview_sessions SET status = 'submitted', updated_at = ?, last_activity_at = ? WHERE id = ?`,
-      [now, now, sessionId]
-    );
-
-    if ((assignment as any).task_id) {
-      await queryHelpers.queryRun(
-        `UPDATE tasks SET status = ?, progress = ?, updated_at = ? WHERE id = ?`,
-        ['in_progress', completenessPercent, now, (assignment as any).task_id]
-      );
-    }
-
-    // Persist the AI review snapshot computed above (score, verdict, weak answers,
-    // recommendations) so the sender's review panel shows the score (Z-04). Reuses
-    // the single evaluation from the hard-floor gate — no second LLM call.
-    if (aiReview) {
-      try {
-        await queryHelpers.queryRun(
-          `UPDATE interview_assignments
-           SET ai_review_snapshot_json = ?, ai_reviewed_at = ?, updated_at = ?
-           WHERE id = ?`,
-          [JSON.stringify(aiReview), now, now, id]
-        );
-      } catch (error) {
-        logger.warn('[InterviewController] Failed to persist AI review on submit', error);
-      }
-    }
-
-    const updatedAssignment = await queryHelpers.queryOne(
-      `SELECT * FROM interview_assignments WHERE id = ?`,
-      [id]
-    );
-    const updatedSession = await queryHelpers.queryOne(
-      `SELECT * FROM interview_sessions WHERE id = ?`,
-      [(assignment as any).session_id]
-    );
 
     // Notify the assignment creator (manager/reviewer) that review is needed.
     // Z-06 / SPEC_13 §5 — carry the AI score + top recommendation so the sender
@@ -4735,26 +4770,6 @@ export const InterviewController = {
 
     const now = new Date().toISOString();
 
-    // #48B — snapshot the current answers BEFORE send-back so a subsequent
-    // re-submit never silently loses what was there before (migration 923,
-    // interview_answer_history). Fail-open: a snapshot hiccup must never
-    // block the send-back itself — history is an audit nicety on top.
-    try {
-      await snapshotInterviewAnswers({
-        organizationId: admin.organizationId,
-        assignmentId: id,
-        sessionId: (assignment as any).session_id,
-        reason: 'send_back',
-        savedAt: now,
-        savedBy: admin.id,
-      });
-    } catch (err) {
-      logger.warn(
-        '[InterviewController] sendBackAssignment: answer-history snapshot skipped (fail-open)',
-        err
-      );
-    }
-
     const missingItemsJson = JSON.stringify(normalizedMissingItems);
     const aiReview = parseAiReviewSnapshot((assignment as any)?.ai_review_snapshot_json);
     const reviewDecisionMemory = appendInterviewReviewDecisionMemory({
@@ -4768,48 +4783,67 @@ export const InterviewController = {
       createdAt: now,
     });
     const reviewDecisionMemoryJson = JSON.stringify(reviewDecisionMemory);
-    try {
-      await queryHelpers.queryRun(
-        `UPDATE interview_assignments
-         SET status = 'in_progress', sent_back_at = ?, sent_back_reason = ?, missing_items_json = ?, review_decision_memory_json = ?, updated_at = ?
-         WHERE id = ?`,
-        [now, normalizedReason, missingItemsJson, reviewDecisionMemoryJson, now, id]
-      );
-    } catch (error) {
-      // Back-compat for environments without missing_items_json column.
-      await queryHelpers.queryRun(
-        `UPDATE interview_assignments
-         SET status = 'in_progress', sent_back_at = ?, sent_back_reason = ?, review_decision_memory_json = ?, updated_at = ?
-         WHERE id = ?`,
-        [now, normalizedReason, reviewDecisionMemoryJson, now, id]
-      );
-      logger.warn(
-        '[InterviewController] sendBackAssignment: missing_items_json column unavailable, using reason-only fallback'
-      );
-      logger.debug('[InterviewController] sendBackAssignment fallback details', error);
-    }
+    await ensureInterviewAnswerHistoryTable();
+    const assignmentColumns = await getTableColumns('interview_assignments');
+    const supportsMissingItems = assignmentColumns.has('missing_items_json');
 
-    await queryHelpers.queryRun(
-      `UPDATE interview_sessions SET status = 'active', updated_at = ?, last_activity_at = ? WHERE id = ?`,
-      [now, now, (assignment as any).session_id]
-    );
+    // INT-APPROVAL-OWN-001 — history + assignment + session + optional task are
+    // one fail-closed PostgreSQL unit of work. AsyncLocalStorage in queryHelpers
+    // routes every nested query below (including snapshotInterviewAnswers) to the
+    // same pinned client, so a failure cannot leave lifecycle rows divergent.
+    const { updated, updatedSession } = await queryHelpers.withPgTransaction(async () => {
+      await snapshotInterviewAnswers({
+        organizationId: admin.organizationId,
+        assignmentId: id,
+        sessionId: (assignment as any).session_id,
+        reason: 'send_back',
+        savedAt: now,
+        savedBy: admin.id,
+        ensureTable: false,
+      });
 
-    if ((assignment as any).task_id) {
-      await queryHelpers.queryRun(`UPDATE tasks SET status = ?, updated_at = ? WHERE id = ?`, [
-        'in_progress',
-        now,
-        (assignment as any).task_id,
-      ]);
-    }
+      if (supportsMissingItems) {
+        const transition = await queryHelpers.queryRun(
+          `UPDATE interview_assignments
+           SET status = 'in_progress', sent_back_at = ?, sent_back_reason = ?, missing_items_json = ?, review_decision_memory_json = ?, updated_at = ?
+           WHERE id = ? AND status = 'submitted'`,
+          [now, normalizedReason, missingItemsJson, reviewDecisionMemoryJson, now, id]
+        );
+        if (transition.changes !== 1) throw new Error('INTERVIEW_SEND_BACK_STATE_CONFLICT');
+      } else {
+        const transition = await queryHelpers.queryRun(
+          `UPDATE interview_assignments
+           SET status = 'in_progress', sent_back_at = ?, sent_back_reason = ?, review_decision_memory_json = ?, updated_at = ?
+           WHERE id = ? AND status = 'submitted'`,
+          [now, normalizedReason, reviewDecisionMemoryJson, now, id]
+        );
+        if (transition.changes !== 1) throw new Error('INTERVIEW_SEND_BACK_STATE_CONFLICT');
+      }
 
-    const updated = await queryHelpers.queryOne(
-      `SELECT * FROM interview_assignments WHERE id = ?`,
-      [id]
-    );
-    const updatedSession = await queryHelpers.queryOne(
-      `SELECT * FROM interview_sessions WHERE id = ?`,
-      [(assignment as any).session_id]
-    );
+      const sessionTransition = await queryHelpers.queryRun(
+        `UPDATE interview_sessions SET status = 'active', updated_at = ?, last_activity_at = ? WHERE id = ?`,
+        [now, now, (assignment as any).session_id]
+      );
+      if (sessionTransition.changes !== 1) throw new Error('INTERVIEW_SEND_BACK_SESSION_MISSING');
+
+      if ((assignment as any).task_id) {
+        const taskTransition = await queryHelpers.queryRun(
+          `UPDATE tasks SET status = ?, updated_at = ? WHERE id = ?`,
+          ['in_progress', now, (assignment as any).task_id]
+        );
+        if (taskTransition.changes !== 1) throw new Error('INTERVIEW_SEND_BACK_TASK_MISSING');
+      }
+
+      return {
+        updated: await queryHelpers.queryOne(`SELECT * FROM interview_assignments WHERE id = ?`, [
+          id,
+        ]),
+        updatedSession: await queryHelpers.queryOne(
+          `SELECT * FROM interview_sessions WHERE id = ?`,
+          [(assignment as any).session_id]
+        ),
+      };
+    });
 
     // Notify assignee(s) that interview was sent back (team-aware).
     try {
@@ -5013,23 +5047,40 @@ export const InterviewController = {
       aiReview,
       createdAt: now,
     });
-    await queryHelpers.queryRun(
-      `UPDATE interview_assignments
-       SET status = 'approved', review_decision_memory_json = ?, updated_at = ?
-       WHERE id = ?`,
-      [JSON.stringify(reviewDecisionMemory), now, id]
-    );
-    await queryHelpers.queryRun(
-      `UPDATE interview_sessions SET status = 'completed', completed_at = ?, updated_at = ? WHERE id = ?`,
-      [now, now, (assignment as any).session_id]
-    );
-
-    if ((assignment as any).task_id) {
-      await queryHelpers.queryRun(
-        `UPDATE tasks SET status = ?, progress = ?, updated_at = ? WHERE id = ?`,
-        ['done', 100, now, (assignment as any).task_id]
+    const { updatedAssignment, updatedSession } = await queryHelpers.withPgTransaction(async () => {
+      const transition = await queryHelpers.queryRun(
+        `UPDATE interview_assignments
+           SET status = 'approved', review_decision_memory_json = ?, updated_at = ?
+           WHERE id = ? AND status = 'submitted'`,
+        [JSON.stringify(reviewDecisionMemory), now, id]
       );
-    }
+      if (transition.changes !== 1) throw new Error('INTERVIEW_APPROVE_STATE_CONFLICT');
+
+      const sessionTransition = await queryHelpers.queryRun(
+        `UPDATE interview_sessions SET status = 'completed', completed_at = ?, updated_at = ? WHERE id = ?`,
+        [now, now, (assignment as any).session_id]
+      );
+      if (sessionTransition.changes !== 1) throw new Error('INTERVIEW_APPROVE_SESSION_MISSING');
+
+      if ((assignment as any).task_id) {
+        const taskTransition = await queryHelpers.queryRun(
+          `UPDATE tasks SET status = ?, progress = ?, updated_at = ? WHERE id = ?`,
+          ['done', 100, now, (assignment as any).task_id]
+        );
+        if (taskTransition.changes !== 1) throw new Error('INTERVIEW_APPROVE_TASK_MISSING');
+      }
+
+      return {
+        updatedAssignment: await queryHelpers.queryOne(
+          `SELECT * FROM interview_assignments WHERE id = ?`,
+          [id]
+        ),
+        updatedSession: await queryHelpers.queryOne(
+          `SELECT * FROM interview_sessions WHERE id = ?`,
+          [(assignment as any).session_id]
+        ),
+      };
+    });
 
     // Notify assignee(s) that interview is approved (team-aware).
     try {
@@ -5064,15 +5115,6 @@ export const InterviewController = {
     } catch (e) {
       logger.warn('[InterviewController] Failed to send interview_approved notification', e);
     }
-
-    const updatedAssignment = await queryHelpers.queryOne(
-      `SELECT * FROM interview_assignments WHERE id = ?`,
-      [id]
-    );
-    const updatedSession = await queryHelpers.queryOne(
-      `SELECT * FROM interview_sessions WHERE id = ?`,
-      [(assignment as any).session_id]
-    );
 
     // D18-A hard wall — approveAssignment is always called by the reviewer
     // (never the respondent); redact + strip the raw snapshot JSON the same
@@ -7643,7 +7685,8 @@ ${JSON.stringify(questions || [], null, 2)}
     // precondition. The client receives `updatedAt` from every read/PATCH and
     // must round-trip it. Silent last-write-wins is not a valid delivery
     // contract: a missing token is distinct from a stale token (428 vs 409).
-    const hasCasGuard = typeof expectedUpdatedAt === 'string' && expectedUpdatedAt.trim().length > 0;
+    const hasCasGuard =
+      typeof expectedUpdatedAt === 'string' && expectedUpdatedAt.trim().length > 0;
     if (!hasCasGuard) {
       res.status(428).json({
         error: 'expectedUpdatedAt is required. Reload the answer and try again.',

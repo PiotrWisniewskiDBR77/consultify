@@ -133,7 +133,11 @@ interface ChatProjectState {
   deleteProject: (id: string) => Promise<void>;
 
   // Actions - Conversation Management
-  moveConversationToProject: (conversationId: string, projectId: string | null) => Promise<void>;
+  moveConversationToProject: (
+    conversationId: string,
+    projectId: string | null,
+    options?: { visibilityConsent?: boolean }
+  ) => Promise<{ visibilityReceiptId?: string | null }>;
 
   // Actions - UI
   setActiveProject: (id: string | null) => void;
@@ -277,10 +281,11 @@ export const useChatProjectStore = create<ChatProjectState>()(
 
       // ==================== CONVERSATION MANAGEMENT ====================
 
-      moveConversationToProject: async (conversationId, projectId) => {
+      moveConversationToProject: async (conversationId, projectId, options) => {
         try {
+          let result: { visibilityReceiptId?: string | null } = {};
           if (projectId) {
-            await Api.moveConversationToProject(projectId, conversationId);
+            result = await Api.moveConversationToProject(projectId, conversationId, options);
           } else {
             // Update conversation to remove from project
             await Api.updateConversation(conversationId, { chatProjectId: null });
@@ -301,6 +306,7 @@ export const useChatProjectStore = create<ChatProjectState>()(
             get().fetchProjects({ force: true }),
             useConversationStore.getState().fetchConversations({ force: true }),
           ]);
+          return result;
         } catch (err: any) {
           console.error('[ChatProjectStore] Move conversation error:', err);
           set({ error: err.message || 'Failed to move conversation' });

@@ -3,6 +3,10 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const source = fs.readFileSync(path.resolve(__dirname, '../WorkCanvasDocumentPanel.tsx'), 'utf8');
+const viewControlSource = fs.readFileSync(
+  path.resolve(__dirname, '../CanvasViewModeControl.tsx'),
+  'utf8'
+);
 
 describe('WorkCanvasDocumentPanel owner feedback', () => {
   it('uses an explicit workspace outcome instead of the unexplained PROMOTE label', () => {
@@ -25,14 +29,20 @@ describe('WorkCanvasDocumentPanel owner feedback', () => {
   });
 
   it('puts the Rich, DOC and MD switcher directly in the Canvas bar without menu duplicates', () => {
-    expect(source).toContain('data-testid="canvas-direct-view-switcher"');
-    expect(source).toContain("['rich', 'Rich']");
-    expect(source).toContain("['document', 'DOC']");
-    expect(source).toContain("['md', 'MD']");
+    expect(source).toContain('<CanvasViewModeControl mode={mode} onModeChange={setMode} />');
+    expect(viewControlSource).toContain('data-testid="canvas-direct-view-switcher"');
+    expect(viewControlSource).toContain("['rich', 'Rich']");
+    expect(viewControlSource).toContain("['document', 'DOC']");
+    expect(viewControlSource).toContain("['md', 'MD']");
     expect(source).not.toContain('data-testid="canvas-view-actions"');
     expect(source).not.toContain('Switch Rich/Dock/MD view');
     expect(source).not.toContain('Edit Markdown manually');
     expect(source).not.toContain('Back to document view');
+    expect(viewControlSource).toContain('role="radiogroup"');
+    expect(viewControlSource).toContain('role="radio"');
+    expect(viewControlSource).toContain('aria-checked={mode === viewMode}');
+    expect(viewControlSource).toContain('tabIndex={mode === viewMode ? 0 : -1}');
+    expect(viewControlSource).toContain("['ArrowLeft', 'ArrowRight', 'Home', 'End']");
   });
 
   it('contains the floating menu in an opaque elevated layer and restores trigger focus', () => {
@@ -47,5 +57,15 @@ describe('WorkCanvasDocumentPanel owner feedback', () => {
     expect(source).toContain('overscroll-contain');
     expect(source).toContain('bg-[#ffffff]');
     expect(source).toContain('dark:bg-[#151E32]');
+  });
+
+  it('shares the fixed 42px chat-header height and keeps save state inline with retry', () => {
+    expect(source).toContain('h-[42px] shrink-0 flex-nowrap');
+    expect(source).not.toContain('min-h-[42px] shrink-0 flex-wrap');
+    expect(source).toContain('data-testid="canvas-header"');
+    expect(source).toContain('data-testid="canvas-save-status"');
+    expect(source).toContain("documentState.saveState === 'failed'");
+    expect(source).toContain("t('common.retry', 'Retry')");
+    expect(source).toContain('onClick={() => void persistDraft()}');
   });
 });

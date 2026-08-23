@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  *
- * WORKBENCH §5.1 / UI-NAV §6: Interview / Split / Matrix are three
+ * Owner-approved Assessment navigation: Interview / Matrix / Report are three
  * presentations of the SAME state. This test drives the shell through all
  * three view modes with one shared `matrixProps` object and confirms the
  * matrix reflects identical cell data in every mode, and that a selection
@@ -22,7 +22,7 @@ import {
   makeSession,
 } from './fixtures';
 
-function Harness({ initialViewMode }: { initialViewMode: 'interview' | 'split' | 'matrix' }) {
+function Harness({ initialViewMode }: { initialViewMode: 'interview' | 'matrix' | 'report' }) {
   const [selection, setSelection] = useState<MatrixSelection | null>(null);
   const [viewMode, setViewMode] = useState(initialViewMode);
   const row = makeMatrixRow();
@@ -85,6 +85,7 @@ function Harness({ initialViewMode }: { initialViewMode: 'interview' | 'split' |
         onCloseSideSheet: () => setSelection(null),
         renderSideSheet: (sel) => <p data-testid="shell-side-sheet-content">Wybrano {sel.unitId}/{sel.level}</p>,
       }}
+      reportContent={<p data-testid="report-content">Raport z tej samej sesji</p>}
     />
   );
 }
@@ -107,20 +108,21 @@ describe('MethodWorkspaceShell — view modes share one state', () => {
     ).toBeInTheDocument();
   });
 
-  it('a selection made in Matrix mode survives switching to Split and back to Matrix', () => {
+  it('a selection made in Matrix mode survives switching to Report and back to Matrix', () => {
     render(<Harness initialViewMode="matrix" />);
     fireEvent.click(screen.getByLabelText(/poziom 3,/));
     expect(screen.getByTestId('shell-side-sheet-content')).toHaveTextContent('Wybrano unit-1/3');
 
-    fireEvent.click(screen.getByTestId('view-mode-split'));
-    // Split renders a compact matrix mirror; switch back to Matrix.
+    fireEvent.click(screen.getByTestId('view-mode-report'));
+    expect(screen.getByTestId('report-content')).toBeInTheDocument();
     fireEvent.click(screen.getByTestId('view-mode-matrix'));
     expect(screen.getByTestId('shell-side-sheet-content')).toHaveTextContent('Wybrano unit-1/3');
   });
 
-  it('Split mode shows both the Interview Focus panel and a compact matrix mirror of the same rows', () => {
-    render(<Harness initialViewMode="split" />);
-    expect(screen.getByTestId('interview-focus-panel')).toBeInTheDocument();
-    expect(screen.getByTestId('live-matrix')).toBeInTheDocument();
+  it('Report mode is a distinct workspace and does not duplicate Interview or Matrix', () => {
+    render(<Harness initialViewMode="report" />);
+    expect(screen.getByTestId('report-content')).toBeInTheDocument();
+    expect(screen.queryByTestId('interview-focus-panel')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('live-matrix')).not.toBeInTheDocument();
   });
 });

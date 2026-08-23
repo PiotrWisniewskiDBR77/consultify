@@ -383,8 +383,44 @@ export const V8MyWorkApi = {
   }) => v8Post<V8NotebookPage>('/my-work/notebook/pages', page),
   updateNotebookPage: (id: string, updates: Record<string, unknown>) =>
     v8Put<V8NotebookPage>(`/my-work/notebook/pages/${encodeURIComponent(id)}`, updates),
-  deleteNotebookPage: (id: string) =>
-    v8Delete<{ success: boolean; id: string }>(`/my-work/notebook/pages/${encodeURIComponent(id)}`),
+  deleteNotebookPage: (id: string, idempotencyKey: string, expectedUpdatedAt?: string | null) =>
+    v8Delete<{
+      success: boolean;
+      id: string;
+      deletedId: string;
+      receiptId: string;
+      replay: boolean;
+    }>(`/my-work/notebook/pages/${encodeURIComponent(id)}`, {
+      extraHeaders: {
+        'Idempotency-Key': idempotencyKey,
+        ...(expectedUpdatedAt ? { 'X-Notebook-Expected-Updated-At': expectedUpdatedAt } : {}),
+      },
+    }),
+  getNotebookActionReceipt: (receiptId: string) =>
+    v8Get<{
+      receiptId: string;
+      action: string;
+      resourceType: string;
+      resourceId: string;
+      timestamp: string;
+      before: Record<string, unknown> | null;
+      after: Record<string, unknown> | null;
+      metadata: Record<string, unknown> | null;
+    }>(`/my-work/notebook/action-receipts/${encodeURIComponent(receiptId)}`),
+  getNotebookActionCapabilities: (id: string) =>
+    v8Get<{
+      pageId: string;
+      pageVersion: string | null;
+      actorUserId: string;
+      organizationId: string;
+      actions: {
+        delete: {
+          allowed: boolean;
+          reason: string | null;
+          receiptContract: 'notebook_delete_receipt_v1' | null;
+        };
+      };
+    }>(`/my-work/notebook/pages/${encodeURIComponent(id)}/action-capabilities`),
   pinNotebookPage: (id: string) =>
     v8Put<{ id: string; pinned: boolean }>(`/my-work/notebook/pages/${encodeURIComponent(id)}/pin`),
   setNotebookPageStatus: (id: string, status: string) =>

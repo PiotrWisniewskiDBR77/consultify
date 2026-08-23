@@ -53,6 +53,52 @@ function wireSavingFetch() {
   return fetchMock;
 }
 
+function wireDeferredSaveFetch() {
+  let resolveWrite: ((value: Response) => void) | null = null;
+  const writePromise = new Promise<Response>((resolve) => {
+    resolveWrite = resolve;
+  });
+  const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+    const isWrite = init?.method === 'POST' || init?.method === 'PUT';
+    if (String(url).startsWith('/api/work-canvas/drafts') && isWrite) return writePromise;
+    return { ok: true, status: 200, json: async () => ({ data: ORIGINAL_VERSION }) } as Response;
+  });
+  vi.stubGlobal('fetch', fetchMock);
+  return {
+    resolveWrite: () =>
+      resolveWrite?.({
+        ok: true,
+        status: 200,
+        json: async () => ({ data: { ...ORIGINAL_VERSION, updatedAt: '2026-08-04T10:10:00.000Z' } }),
+      } as Response),
+  };
+}
+
+function wireFailureThenSuccessFetch() {
+  let writes = 0;
+  const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+    const isWrite = init?.method === 'POST' || init?.method === 'PUT';
+    if (String(url).startsWith('/api/work-canvas/drafts') && isWrite) {
+      writes += 1;
+      if (writes === 1) {
+        return {
+          ok: false,
+          status: 500,
+          json: async () => ({ error: 'temporary storage failure' }),
+        } as Response;
+      }
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ data: { ...ORIGINAL_VERSION, updatedAt: '2026-08-04T10:11:00.000Z' } }),
+      } as Response;
+    }
+    return { ok: true, status: 200, json: async () => ({ data: ORIGINAL_VERSION }) } as Response;
+  });
+  vi.stubGlobal('fetch', fetchMock);
+  return fetchMock;
+}
+
 /** First write is rejected as a conflict; the GET returns the other version. */
 function wireConflictFetch() {
   const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
@@ -179,6 +225,42 @@ describe('M01-011 — Canvas save status', () => {
 
     await waitFor(() => expect(screen.getByTestId('canvas-last-saved-at')).toBeInTheDocument());
     expect(screen.getByTestId('canvas-save-status')).toHaveTextContent(/Saved/i);
+  });
+
+  it('shows unsaved then saving then saved without adding a second header row', async () => {
+    const deferred = wireDeferredSaveFetch();
+    const user = userEvent.setup();
+    render(<WorkCanvasDocumentPanel conversationId="conv-1" initialDraftId="draft-1" />);
+
+    const title = await screen.findByLabelText('Canvas document title');
+    await waitFor(() => expect(title).toHaveValue(ORIGINAL_VERSION.title));
+    await user.clear(title);
+    await user.type(title, 'Client memo');
+    expect(screen.getByTestId('canvas-save-status')).toHaveTextContent(/Unsaved changes/i);
+
+    await user.tab();
+    await waitFor(() => expect(screen.getByTestId('canvas-save-status')).toHaveTextContent(/Saving/i));
+    expect(screen.getByTestId('canvas-header')).toHaveClass('h-[42px]', 'flex-nowrap');
+
+    deferred.resolveWrite();
+    await waitFor(() => expect(screen.getByTestId('canvas-save-status')).toHaveTextContent(/Saved/i));
+  });
+
+  it('keeps failed state visible and Retry uses the same save path to recover', async () => {
+    const fetchMock = wireFailureThenSuccessFetch();
+    const user = userEvent.setup();
+    render(<WorkCanvasDocumentPanel conversationId="conv-1" initialDraftId="draft-1" />);
+
+    const title = await screen.findByLabelText('Canvas document title');
+    await waitFor(() => expect(title).toHaveValue(ORIGINAL_VERSION.title));
+    await user.clear(title);
+    await user.type(title, 'Retry this memo');
+    await user.tab();
+
+    await waitFor(() => expect(screen.getByTestId('canvas-save-status')).toHaveTextContent(/Save failed/i));
+    await user.click(screen.getByRole('button', { name: 'Retry' }));
+    await waitFor(() => expect(writeCount(fetchMock)).toBe(2));
+    await waitFor(() => expect(screen.getByTestId('canvas-save-status')).toHaveTextContent(/Saved/i));
   });
 });
 

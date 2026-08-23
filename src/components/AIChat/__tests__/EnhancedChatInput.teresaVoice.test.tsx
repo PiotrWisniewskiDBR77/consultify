@@ -9,7 +9,7 @@
  * - When voice is live, the button switches to a stop affordance.
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -100,6 +100,37 @@ vi.mock('../../../components/AIChat/NextModelChip', () => ({ NextModelChip: () =
 vi.mock('../../../components/AIChat/VoiceModeLegend', () => ({ VoiceModeLegend: () => null }));
 
 describe('EnhancedChatInput — Teresa voice CTA', () => {
+  it('shows the restrained pulse only while the composer is empty, enabled and idle', async () => {
+    const { container } = renderInput(
+      <EnhancedChatInput onSend={vi.fn()} teresaVoiceAvailable={false} />
+    );
+    const composer = container.querySelector('[data-idle-pulse]');
+    const input = screen.getByRole('textbox');
+    expect(composer).toHaveAttribute('data-idle-pulse', 'true');
+    expect(composer).toHaveClass('chat-composer-idle-pulse');
+
+    fireEvent.focus(input);
+    expect(composer).toHaveAttribute('data-idle-pulse', 'false');
+    expect(composer).not.toHaveClass('chat-composer-idle-pulse');
+
+    await userEvent.type(input, 'Client context');
+    fireEvent.blur(input);
+    expect(composer).toHaveAttribute('data-idle-pulse', 'false');
+
+    await userEvent.clear(input);
+    fireEvent.blur(input);
+    expect(composer).toHaveAttribute('data-idle-pulse', 'true');
+  });
+
+  it('never pulses when the composer is disabled', () => {
+    const { container } = renderInput(
+      <EnhancedChatInput onSend={vi.fn()} disabled teresaVoiceAvailable={false} />
+    );
+    const composer = container.querySelector('[data-idle-pulse]');
+    expect(composer).toHaveAttribute('data-idle-pulse', 'false');
+    expect(composer).not.toHaveClass('chat-composer-idle-pulse');
+  });
+
   it('always exposes an accessible Send button and dispatches Enter', async () => {
     const onSend = vi.fn();
     renderInput(<EnhancedChatInput onSend={onSend} teresaVoiceAvailable={false} />);

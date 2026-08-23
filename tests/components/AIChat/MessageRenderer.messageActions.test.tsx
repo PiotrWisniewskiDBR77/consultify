@@ -131,13 +131,13 @@ describe('MessageRenderer message actions (M01-010)', () => {
     expect(handleSendMessage).toHaveBeenCalledWith('Summarise the Q3 plan.');
   });
 
-  it('hides regenerate when there is no preceding user message', () => {
+  it('keeps regenerate mounted but disabled when there is no preceding user message', () => {
     render(
       <MessageRenderer {...buildProps({ index: 0, displayMessages: [AI_MESSAGE] })} />
     );
 
     openMoreActions();
-    expect(screen.queryByTestId('message-action-regenerate')).not.toBeInTheDocument();
+    expect(screen.getByTestId('message-action-regenerate')).toBeDisabled();
   });
 
   it('continue sends a continuation instruction through the same send path', () => {
@@ -241,7 +241,7 @@ describe('MessageRenderer message actions (M01-010)', () => {
     expect(screen.getAllByTitle('Branch from here')).toHaveLength(1);
   });
 
-  it('hides Report on a message that has not been persisted yet', () => {
+  it('keeps Report mounted but disabled on a message that has not been persisted yet', () => {
     // /api/ai/report validates messageId as a uuid, so an optimistic `local-`
     // id could only ever come back 400. Offering the action would be a button
     // that cannot succeed.
@@ -255,9 +255,51 @@ describe('MessageRenderer message actions (M01-010)', () => {
 
     openMoreActions();
 
-    expect(screen.queryByTestId('message-action-report')).toBeNull();
+    expect(screen.getByTestId('message-action-report')).toBeDisabled();
     // The other actions remain available.
     expect(screen.getByTestId('message-action-continue')).toBeInTheDocument();
+  });
+
+  it('keeps one stable disabled capsule while a response is streaming', () => {
+    render(
+      <MessageRenderer
+        {...buildProps()}
+        msg={{ ...AI_MESSAGE, isStreaming: true }}
+      />
+    );
+
+    const capsule = screen.getByTestId('message-response-actions');
+    expect(capsule).toHaveAttribute('data-response-state', 'streaming');
+    expect(screen.getByRole('button', { name: 'Copy' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Speak' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'More actions' })).toBeDisabled();
+    expect(screen.getByTestId('message-response-actions-expanded')).toBeInTheDocument();
+  });
+
+  it('uses the same capsule for long code-rich and error responses', () => {
+    const handleCopyMessage = vi.fn();
+    const longCode = `${'Detailed client context. '.repeat(80)}\n\n\`\`\`ts\nconst answer = 42;\n\`\`\``;
+    const { rerender } = render(
+      <MessageRenderer
+        {...buildProps({ handleCopyMessage })}
+        msg={{ ...AI_MESSAGE, content: longCode }}
+      />
+    );
+    expect(screen.getAllByTestId('message-response-actions')).toHaveLength(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Copy' }));
+    expect(handleCopyMessage).toHaveBeenCalledWith(longCode, 'm-ai-1');
+
+    rerender(
+      <MessageRenderer
+        {...buildProps()}
+        msg={{ ...AI_MESSAGE, content: 'The response failed safely.', error: 'provider_timeout' } as any}
+      />
+    );
+    expect(screen.getAllByTestId('message-response-actions')).toHaveLength(1);
+    expect(screen.getByTestId('message-response-actions')).toHaveAttribute(
+      'data-response-state',
+      'ready'
+    );
   });
 
   /**

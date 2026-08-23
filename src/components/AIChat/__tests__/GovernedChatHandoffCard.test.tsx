@@ -44,6 +44,13 @@ describe('GovernedChatHandoffCard', () => {
     );
     expect(screen.getByText('Pinned strategy')).toBeInTheDocument();
     expect(screen.getByText(/3 source references preserved/)).toBeInTheDocument();
+    const provenance = screen.getByTestId('governed-chat-handoff-provenance');
+    expect(provenance).toHaveTextContent('Source');
+    expect(provenance).toHaveTextContent('message-1');
+    expect(provenance).toHaveTextContent('Hash');
+    expect(provenance).toHaveTextContent('a'.repeat(64));
+    expect(provenance).toHaveTextContent('Version');
+    expect(provenance).toHaveTextContent('1');
     expect(screen.queryByText('Create document')).not.toBeInTheDocument();
     fireEvent.click(screen.getByText('Approve'));
     fireEvent.click(screen.getByText('Reject'));
@@ -65,6 +72,10 @@ describe('GovernedChatHandoffCard', () => {
     );
     expect(screen.getByRole('alert')).toHaveTextContent('Owner role is required');
     expect(screen.getByText('Create document').closest('button')).toBeDisabled();
+    expect(screen.getByText('Create document').closest('button')).toHaveAttribute(
+      'aria-busy',
+      'true'
+    );
 
     rerender(
       <GovernedChatHandoffCard
@@ -81,7 +92,7 @@ describe('GovernedChatHandoffCard', () => {
 
   it.each([
     ['pending', 'pending', 'Pending review'],
-    ['approved', 'materializable', 'Ready to create'],
+    ['approved', 'approved', 'Approved'],
     ['rejected', 'rejected', 'Rejected'],
     ['materialized', 'materialized', 'Created'],
     ['failed', 'failed', 'Action failed'],
@@ -99,6 +110,23 @@ describe('GovernedChatHandoffCard', () => {
       visualState
     );
     expect(screen.getByTestId('governed-chat-handoff-state')).toHaveTextContent(label);
+    expect(screen.getByTestId('governed-chat-handoff-state')).toHaveAttribute('role', 'status');
+  });
+
+  it('separates the approved decision from materializable readiness', () => {
+    render(
+      <GovernedChatHandoffCard
+        proposal={proposal('approved')}
+        onApprove={vi.fn()}
+        onReject={vi.fn()}
+        onMaterialize={vi.fn()}
+      />
+    );
+    expect(screen.getByTestId('governed-chat-handoff-state')).toHaveTextContent('Approved');
+    expect(screen.getByTestId('governed-chat-handoff-materializable')).toHaveTextContent(
+      'Ready to create'
+    );
+    expect(screen.getByRole('button', { name: 'Create document' })).toBeEnabled();
   });
 
   it('distinguishes working and failed UI states from the underlying proposal state', () => {

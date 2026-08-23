@@ -12,6 +12,10 @@ import {
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import type { NOTEBOOK_BUBBLE_TOOLBAR_ACTION_IDS } from './notebookActionRegistry';
+
+type NotebookBubbleToolbarActionId = (typeof NOTEBOOK_BUBBLE_TOOLBAR_ACTION_IDS)[number];
+
 /**
  * NotebookBubbleToolbar — N8 floating format toolbar (Notion/Craft-grade).
  *
@@ -30,6 +34,7 @@ interface NotebookBubbleToolbarProps {
 }
 
 interface MarkBtnProps {
+  actionId: NotebookBubbleToolbarActionId;
   icon: React.ComponentType<{ size?: number }>;
   onClick: () => void;
   isActive?: boolean;
@@ -37,9 +42,17 @@ interface MarkBtnProps {
   ariaLabel: string;
 }
 
-const MarkBtn: React.FC<MarkBtnProps> = ({ icon: Icon, onClick, isActive, title, ariaLabel }) => (
+const MarkBtn: React.FC<MarkBtnProps> = ({
+  actionId,
+  icon: Icon,
+  onClick,
+  isActive,
+  title,
+  ariaLabel,
+}) => (
   <button
     type="button"
+    data-notebook-action-id={`format:bubble:${actionId}`}
     aria-label={ariaLabel}
     aria-pressed={!!isActive}
     title={title}
@@ -88,8 +101,11 @@ export const NotebookBubbleToolbar: React.FC<NotebookBubbleToolbarProps> = ({ ed
         return text.length > 0;
       }}
       className="flex items-center gap-0.5 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-1 shadow-lg dark:border-navy-700 dark:bg-navy-900"
+      role="toolbar"
+      aria-label={t('notebook.bubbleToolbar.formatting', 'Selection formatting')}
     >
       <MarkBtn
+        actionId="bold"
         icon={Bold}
         onClick={() => editor.chain().focus().toggleBold().run()}
         isActive={editor.isActive('bold')}
@@ -97,6 +113,7 @@ export const NotebookBubbleToolbar: React.FC<NotebookBubbleToolbarProps> = ({ ed
         ariaLabel={t('notebook.bubbleToolbar.bold', 'Bold')}
       />
       <MarkBtn
+        actionId="italic"
         icon={Italic}
         onClick={() => editor.chain().focus().toggleItalic().run()}
         isActive={editor.isActive('italic')}
@@ -104,6 +121,7 @@ export const NotebookBubbleToolbar: React.FC<NotebookBubbleToolbarProps> = ({ ed
         ariaLabel={t('notebook.bubbleToolbar.italic', 'Italic')}
       />
       <MarkBtn
+        actionId="underline"
         icon={UnderlineIcon}
         onClick={() => editor.chain().focus().toggleUnderline().run()}
         isActive={editor.isActive('underline')}
@@ -111,6 +129,7 @@ export const NotebookBubbleToolbar: React.FC<NotebookBubbleToolbarProps> = ({ ed
         ariaLabel={t('notebook.bubbleToolbar.underline', 'Underline')}
       />
       <MarkBtn
+        actionId="strike"
         icon={Strikethrough}
         onClick={() => editor.chain().focus().toggleStrike().run()}
         isActive={editor.isActive('strike')}
@@ -119,6 +138,7 @@ export const NotebookBubbleToolbar: React.FC<NotebookBubbleToolbarProps> = ({ ed
       />
       <div className="mx-0.5 h-5 w-px bg-c-surface-raised" />
       <MarkBtn
+        actionId="code"
         icon={CodeIcon}
         onClick={() => editor.chain().focus().toggleCode().run()}
         isActive={editor.isActive('code')}
@@ -126,6 +146,7 @@ export const NotebookBubbleToolbar: React.FC<NotebookBubbleToolbarProps> = ({ ed
         ariaLabel={t('notebook.bubbleToolbar.inlineCode', 'Inline code')}
       />
       <MarkBtn
+        actionId="highlight"
         icon={Highlighter}
         onClick={() => editor.chain().focus().toggleHighlight().run()}
         isActive={editor.isActive('highlight')}
@@ -133,6 +154,7 @@ export const NotebookBubbleToolbar: React.FC<NotebookBubbleToolbarProps> = ({ ed
         ariaLabel={t('notebook.bubbleToolbar.highlight', 'Highlight')}
       />
       <MarkBtn
+        actionId="link"
         icon={LinkIcon}
         onClick={setLink}
         isActive={editor.isActive('link')}

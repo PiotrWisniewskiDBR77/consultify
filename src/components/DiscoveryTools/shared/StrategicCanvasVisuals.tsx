@@ -12,6 +12,7 @@ import type {
   PortfolioPriorityData,
   RiskUncertaintyData,
   SWOTData,
+  SWOTItem,
   ValueActivity,
   ValueActivityId,
   ValueChainData,
@@ -20,47 +21,139 @@ import type {
 const cardClass =
   'rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm dark:border-navy-700 dark:bg-navy-950/60';
 
-export function SwotMatrixVisual({ data }: { data: SWOTData; isPolish: boolean }) {
+export function SwotMatrixVisual({
+  data,
+  isPolish,
+  onUpdateItem,
+  renderItemControls,
+}: {
+  data: SWOTData;
+  isPolish: boolean;
+  onUpdateItem?: (itemId: string, text: string) => void;
+  renderItemControls?: (item: SWOTItem) => React.ReactNode;
+}) {
   const { t } = useTranslation();
   const quadrants = [
     [
       'strengths',
       t('discoveryToolsSteps.strategicCanvasVisuals.swotMatrix.strengths'),
-      'bg-emerald-50 text-emerald-700',
+      'border-emerald-200 bg-emerald-50/80 text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/25 dark:text-emerald-200',
     ],
     [
       'weaknesses',
       t('discoveryToolsSteps.strategicCanvasVisuals.swotMatrix.weaknesses'),
-      'bg-amber-50 text-amber-700',
+      'border-amber-200 bg-amber-50/80 text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/25 dark:text-amber-200',
     ],
     [
       'opportunities',
       t('discoveryToolsSteps.strategicCanvasVisuals.swotMatrix.opportunities'),
-      'bg-sky-50 text-sky-700',
+      'border-sky-200 bg-sky-50/80 text-sky-800 dark:border-sky-900/50 dark:bg-sky-950/25 dark:text-sky-200',
     ],
     [
       'threats',
       t('discoveryToolsSteps.strategicCanvasVisuals.swotMatrix.threats'),
-      'bg-danger-50 text-danger-700',
+      'border-danger-200 bg-danger-50/80 text-danger-800 dark:border-danger-900/50 dark:bg-danger-950/25 dark:text-danger-200',
     ],
   ] as const;
   return (
-    <div className={cardClass}>
-      <div className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
-        SWOT 2x2
+    <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm dark:border-navy-700 dark:bg-navy-950/60">
+      <div className="border-b border-slate-200 px-5 py-4 dark:border-navy-700">
+        <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-300">
+          {isPolish ? 'Finalna macierz SWOT' : 'Final SWOT matrix'}
+        </div>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          {isPolish
+            ? 'Zwięzłe, gotowe do prezentacji stwierdzenia z widocznym kontekstem źródłowym.'
+            : 'Concise, presentation-ready statements with visible source context.'}
+        </p>
       </div>
-      <div className="grid grid-cols-2 gap-2">
-        {quadrants.map(([id, label, tone]) => (
-          <div key={id} className={`rounded-xl p-3 ${tone}`}>
-            <div className="text-xs font-semibold">{label}</div>
-            <div className="mt-2 text-2xl font-bold">
-              {(data.items || []).filter((i) => i.quadrant === id).length}
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="mt-3 rounded-xl bg-slate-50 px-3 py-2 text-xs text-slate-500 dark:bg-navy-900 dark:text-slate-300">
-        {t('discoveryToolsSteps.strategicCanvasVisuals.swotMatrix.tensionsHint')}
+      <div className="grid grid-cols-1 md:grid-cols-2">
+        {quadrants.map(([id, label, tone], quadrantIndex) => {
+          const items = (data.items || []).filter(
+            (item) =>
+              item.quadrant === id &&
+              item.status !== 'proposed' &&
+              item.proposalStatus !== 'ai-proposed'
+          );
+          return (
+            <section
+              key={id}
+              aria-labelledby={`swot-matrix-${id}`}
+              className={`min-h-56 border p-5 ${tone} ${quadrantIndex % 2 === 0 ? 'md:border-r' : ''}`}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <h3 id={`swot-matrix-${id}`} className="text-sm font-semibold">
+                  {label}
+                </h3>
+                <span className="text-xs font-semibold tabular-nums">{items.length}/5</span>
+              </div>
+              {items.length === 0 ? (
+                <p className="mt-8 rounded-xl border-2 border-dashed border-white/70 bg-white/40 p-5 text-center text-sm opacity-70 dark:bg-navy-950/30">
+                  {t('discoveryToolsTools.dynamicSwot.buildPhase.noPoints')}
+                </p>
+              ) : (
+                <ol className="mt-4 space-y-3">
+                  {items.slice(0, 5).map((item, index) => {
+                    const linkedSources = (item.linkedSignalIds || [])
+                      .map(
+                        (signalId) =>
+                          data.signals?.find((signal) => signal.id === signalId)?.sourceLabel
+                      )
+                      .filter((source): source is string => Boolean(source));
+                    const sourceContext = item.evidenceSource || linkedSources.join(', ');
+                    return (
+                      <li
+                        key={item.id}
+                        className="rounded-xl border border-current/15 bg-white/70 p-3 dark:bg-white/[0.04]"
+                      >
+                        <div className="flex items-start gap-2">
+                          <span className="mt-1 text-xs font-bold opacity-60">{index + 1}.</span>
+                          <textarea
+                            value={item.text}
+                            onChange={(event) => onUpdateItem?.(item.id, event.target.value)}
+                            readOnly={!onUpdateItem}
+                            rows={2}
+                            aria-label={`${label} ${index + 1}`}
+                            className="min-h-12 w-full resize-y bg-transparent text-sm font-medium leading-relaxed text-slate-900 outline-none focus-visible:ring-2 focus-visible:ring-c-focus dark:text-slate-100"
+                          />
+                        </div>
+                        {renderItemControls?.(item)}
+                        <div className="mt-2 space-y-1 text-[10px] font-semibold uppercase tracking-[0.12em] opacity-60">
+                          <div>
+                            {item.source === 'ai'
+                              ? isPolish
+                                ? 'Propozycja AI · zaakceptowana przez człowieka'
+                                : 'AI proposal · human accepted'
+                              : isPolish
+                                ? 'Wpis konsultanta'
+                                : 'Consultant entry'}
+                          </div>
+                          <div>
+                            {sourceContext
+                              ? `${isPolish ? 'Źródło' : 'Source'}: ${sourceContext}`
+                              : isPolish
+                                ? 'Źródło: deklaracja bez referencji'
+                                : 'Source: declaration without a reference'}
+                            {item.evidenceStatus
+                              ? ` · ${isPolish ? 'status dowodu' : 'evidence status'}: ${item.evidenceStatus}`
+                              : ''}
+                          </div>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ol>
+              )}
+              {items.length > 5 ? (
+                <p role="alert" className="mt-3 text-xs font-semibold">
+                  {isPolish
+                    ? `Ta macierz zawiera ${items.length} stwierdzeń. Skróć listę do maksymalnie 5 przed finalizacją.`
+                    : `This matrix contains ${items.length} statements. Reduce it to 5 before finalizing.`}
+                </p>
+              ) : null}
+            </section>
+          );
+        })}
       </div>
     </div>
   );

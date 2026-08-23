@@ -65,23 +65,11 @@
  * + `useHubBarSlot` zamiast własnego paska.
  */
 
-import {
-  Download,
-  FileText,
-  Folder,
-  FolderPlus,
-  Info,
-  Layers,
-  Pencil,
-  RefreshCw,
-  Search,
-  Trash2,
-} from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Download, FileText, Folder, Info, Layers, Pencil, Search, Trash2 } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { FolderCreateDialog } from '@/components/shared/FolderCreateDialog';
 import { useHubBarSlot } from '@/components/shared/HubBarSlots';
 import { Menu3DropdownChip } from '@/components/shared/Menu3DropdownChip';
 import type { FilterChip } from '@/components/shared/ModuleHub/ActiveFilters';
@@ -124,6 +112,7 @@ import {
   type VaultProject,
   type VaultScope,
 } from './vaultDocuments';
+import { shouldAutoRefreshVaultIndex } from './vaultIndexRefreshPolicy';
 
 export interface VaultDocumentsViewProps {
   /** Sejf, w którym stoimy (wiersz z tabeli sejfów). */
@@ -138,7 +127,9 @@ const STATUS_GROUP = (status: string): Exclude<StatusChipId, 'all'> => {
   const tone = indexStatusTone(status);
   if (tone === 'success') return 'indexed';
   if (tone === 'danger') return 'failed';
-  return 'processing';
+  if (tone === 'warning') return 'processing';
+  // Unknown backend states need attention but must not create endless polling.
+  return 'failed';
 };
 
 // Kształt 1:1 z pigułkami filtrów obok (Folder / Wszystkie / Zindeksowane…) —
@@ -157,6 +148,10 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
   const [projects, setProjects] = useState<VaultProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [backgroundRefreshError, setBackgroundRefreshError] = useState<string | null>(null);
+  const [backgroundRefreshing, setBackgroundRefreshing] = useState(false);
+  const loadSequenceRef = useRef(0);
+  const pollInFlightRef = useRef(false);
 
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
@@ -171,34 +166,71 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
   const [panelMode, setPanelMode] = useState<'add' | 'edit' | null>(null);
   const [editedDocument, setEditedDocument] = useState<VaultDocument | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await Api.getKnowledgeDocuments({
-        scope: safe.type,
-        projectId: safe.type === 'project' ? safe.projectId || undefined : undefined,
-      });
-      setDocuments(normalizeVaultDocuments(data));
-    } catch (err: unknown) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : t(
-              'vault.docs.loadError',
-              isPolish ? 'Nie udało się wczytać dokumentów' : 'Failed to load documents'
-            )
-      );
-      setDocuments([]);
-    } finally {
-      setLoading(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [safe.type, safe.projectId]);
+  const load = useCallback(
+    async (options?: { background?: boolean }) => {
+      const background = options?.background === true;
+      const sequence = ++loadSequenceRef.current;
+      if (!background) {
+        setLoading(true);
+        setError(null);
+      }
+      try {
+        const data = await Api.getKnowledgeDocuments({
+          scope: safe.type,
+          projectId: safe.type === 'project' ? safe.projectId || undefined : undefined,
+        });
+        if (sequence !== loadSequenceRef.current) return;
+        setDocuments(normalizeVaultDocuments(data));
+        setBackgroundRefreshError(null);
+      } catch (err: unknown) {
+        if (sequence !== loadSequenceRef.current) return;
+        const message =
+          err instanceof Error
+            ? err.message
+            : t(
+                'vault.docs.loadError',
+                isPolish ? 'Nie udało się wczytać dokumentów' : 'Failed to load documents'
+              );
+        if (background) {
+          setBackgroundRefreshError(message);
+        } else {
+          setError(message);
+          setDocuments([]);
+        }
+      } finally {
+        if (!background && sequence === loadSequenceRef.current) setLoading(false);
+      }
+    },
+    [safe.type, safe.projectId, t, isPolish]
+  );
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  const refreshInBackground = useCallback(async () => {
+    if (pollInFlightRef.current) return;
+    pollInFlightRef.current = true;
+    setBackgroundRefreshing(true);
+    try {
+      await load({ background: true });
+    } finally {
+      pollInFlightRef.current = false;
+      setBackgroundRefreshing(false);
+    }
+  }, [load]);
+
+  // MYW-CV-REC-008 — an opened safe refreshes index progress itself. Poll only
+  // while a document is genuinely in-flight; settled lists make no background
+  // requests. The user no longer has to discover a manual Refresh command.
+  useEffect(() => {
+    const hasProcessingDocument = shouldAutoRefreshVaultIndex(
+      documents.map((document) => document.status)
+    );
+    if (!hasProcessingDocument) return;
+    const timer = window.setInterval(() => void refreshInBackground(), 5000);
+    return () => window.clearInterval(timer);
+  }, [documents, refreshInBackground]);
 
   useEffect(() => {
     Api.getMyProjectMemberships()
@@ -213,12 +245,6 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
   const [folders, setFolders] = useState<Array<{ id: string; name: string }>>([]);
   const [foldersAvailable, setFoldersAvailable] = useState(false);
   const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
-  // AGT-015 §6 D4 — dialog tworzenia folderu (zastępuje window.prompt), wzór
-  // 1:1 `AgentHubShell.tsx`. Poziom TU jest NARZUCONY przez sejf (`safe.type`
-  // /`safe.projectId`) — dialog dostaje `fixedScope`, pyta TYLKO o nazwę.
-  const [folderDialogOpen, setFolderDialogOpen] = useState(false);
-  const [folderDialogBusy, setFolderDialogBusy] = useState(false);
-  const [folderDialogError, setFolderDialogError] = useState<string | null>(null);
 
   const loadFolders = useCallback(async () => {
     try {
@@ -231,50 +257,12 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
     } catch {
       setFoldersAvailable(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [safe.type, safe.projectId]);
 
   useEffect(() => {
     setActiveFolderId(null);
     void loadFolders();
   }, [loadFolders]);
-
-  // AGT-015 §6 D4 (odbiór, 2026-07-28): `window.prompt` zastąpiony wspólnym
-  // `FolderCreateDialog` (dzieli komponent z `AgentHubShell.handleCreateFolder`).
-  // API backendu (`Api.createVaultFolder`) NIEZMIENIONE.
-  const handleCreateFolder = useCallback(() => {
-    setFolderDialogError(null);
-    setFolderDialogOpen(true);
-  }, []);
-
-  const handleFolderDialogSubmit = useCallback(
-    async (input: { name: string }) => {
-      setFolderDialogBusy(true);
-      setFolderDialogError(null);
-      try {
-        const created = await Api.createVaultFolder({
-          name: input.name,
-          scope: safe.type,
-          projectId: safe.type === 'project' ? safe.projectId : undefined,
-        });
-        setFolders((prev) => [...prev, { id: created.id, name: created.name }]);
-        setFoldersAvailable(true);
-        setFolderDialogOpen(false);
-      } catch (err: unknown) {
-        setFolderDialogError(
-          err instanceof Error
-            ? err.message
-            : t(
-                'vault.docs.folderCreateFailed',
-                isPolish ? 'Nie udało się utworzyć folderu' : 'Failed to create folder'
-              )
-        );
-      } finally {
-        setFolderDialogBusy(false);
-      }
-    },
-    [safe.type, safe.projectId, t, isPolish]
-  );
 
   const handleDeleteFolder = useCallback(
     async (folderId: string) => {
@@ -633,8 +621,8 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
               ? t(
                   'vault.docs.moveToFolderNote',
                   isPolish
-                    ? 'Brak folderów — utwórz jeden w pasku filtrów'
-                    : 'No folders yet — create one in the filter bar'
+                    ? 'Brak dostępnych folderów na tym poziomie'
+                    : 'No folders are available at this level'
                 )
               : undefined,
           submenu: [
@@ -881,13 +869,6 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
                 trailing: activeFolderId === f.id ? '✓' : undefined,
                 onSelect: () => setActiveFolderId(f.id),
               })),
-              {
-                id: 'new-folder',
-                label: t('vault.docs.newFolder', isPolish ? 'Nowy folder…' : 'New folder…'),
-                icon: <FolderPlus size={14} />,
-                dividerBefore: true,
-                onSelect: () => void handleCreateFolder(),
-              },
               ...(activeFolderId
                 ? [
                     {
@@ -922,12 +903,6 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
               kind: 'context',
               actions: [
                 {
-                  id: 'refresh',
-                  label: t('common.refresh', isPolish ? 'Odśwież' : 'Refresh'),
-                  icon: RefreshCw,
-                  onClick: () => void load(),
-                },
-                {
                   id: 'export-csv',
                   label: t(
                     'vault.docs.exportCsv',
@@ -951,7 +926,6 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
       statusCounts,
       statusChipDefs,
       rows.length,
-      load,
       exportCsv,
       t,
       isPolish,
@@ -959,7 +933,6 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
       folders,
       activeFolderId,
       folderNameById,
-      handleCreateFolder,
       handleDeleteFolder,
     ]
   );
@@ -1031,6 +1004,32 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
         <div className="min-w-0 flex-1 overflow-auto pb-4 pl-4 pr-1.5 pt-3">
           {filterBarNode}
           {renderBulkBar()}
+          {backgroundRefreshError ? (
+            <div
+              role="alert"
+              data-testid="vault-background-refresh-error"
+              className="mb-2 flex items-center justify-between gap-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100"
+            >
+              <span>
+                {t(
+                  'vault.docs.backgroundRefreshError',
+                  isPolish
+                    ? 'Nie udało się odświeżyć statusu indeksowania. Pokazujemy ostatnie poprawne dane.'
+                    : 'Index status could not be refreshed. Showing the last successful data.'
+                )}
+              </span>
+              <button
+                type="button"
+                disabled={backgroundRefreshing}
+                className="shrink-0 rounded-md border border-current px-2 py-1 text-xs font-semibold"
+                onClick={() => void refreshInBackground()}
+              >
+                {backgroundRefreshing
+                  ? t('common.loading', isPolish ? 'Odświeżanie…' : 'Refreshing…')
+                  : t('common.retry', isPolish ? 'Ponów' : 'Retry')}
+              </button>
+            </div>
+          ) : null}
           <StandardTable
             columns={columns}
             data={rows as unknown as TableRow[]}
@@ -1157,24 +1156,6 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
           setEditedDocument(null);
         }}
         onSaved={() => void load()}
-      />
-
-      {/* AGT-015 §6 D4 — dialog "Nowy folder" (zastępuje window.prompt). Poziom
-          narzucony przez sejf, w którym stoimy — `fixedScope`, brak wyboru
-          projektu (ten sejf już jest w konkretnym projekcie/na konkretnym
-          poziomie). */}
-      <FolderCreateDialog
-        open={folderDialogOpen}
-        onClose={() => {
-          if (folderDialogBusy) return;
-          setFolderDialogOpen(false);
-        }}
-        onSubmit={handleFolderDialogSubmit}
-        fixedScope={safe.type}
-        fixedScopeContextLabel={safe.name}
-        busy={folderDialogBusy}
-        errorMessage={folderDialogError}
-        title={t('vault.docs.newFolder', isPolish ? 'Nowy folder…' : 'New folder…')}
       />
     </div>
   );

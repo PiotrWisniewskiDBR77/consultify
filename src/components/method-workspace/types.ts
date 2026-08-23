@@ -41,7 +41,15 @@ export const METHOD_ANSWER_STATES: readonly MethodAnswerState[] = [
 ] as const;
 
 /** Three interchangeable presentations of the same session state (UI-NAV §6). */
-export type MethodWorkspaceViewMode = 'interview' | 'split' | 'matrix';
+/**
+ * Owner-approved Assessment workspace surfaces.
+ *
+ * `split` was an implementation experiment, not a product surface. The answer
+ * register belongs to Interview and the downstream narrative belongs to
+ * Report, so keeping `split` in the public contract made navigation diverge
+ * from the accepted Assessment information architecture.
+ */
+export type MethodWorkspaceViewMode = 'interview' | 'matrix' | 'report';
 
 /** Evidence rollup used by both the Navigator and the Matrix — UI-NAV §3. */
 export type MethodEvidenceState = 'complete' | 'weak' | 'missing' | 'conflicting';

@@ -13568,15 +13568,37 @@ export const Api = {
     });
     return handleResponse(res, 'Failed to delete chat folder');
   },
-  moveConversationToProject: async (projectId: string, conversationId: string) => {
+  moveConversationToProject: async (
+    projectId: string,
+    conversationId: string,
+    options?: { visibilityConsent?: boolean }
+  ) => {
     const res = await fetchWithRetry(
       `${API_URL}/chat-projects/${projectId}/conversations/${conversationId}`,
       {
         method: 'POST',
         headers: getHeaders(),
+        body: JSON.stringify({ visibilityConsent: options?.visibilityConsent === true }),
       }
     );
     return handleResponse(res, 'Failed to move conversation to folder');
+  },
+  getConversationVisibilityReceipts: async (conversationId: string) => {
+    const res = await fetchWithRetry(
+      `${API_URL}/chat-projects/conversations/${encodeURIComponent(conversationId)}/visibility-receipts`,
+      { headers: getHeaders() }
+    );
+    return handleResponse(res, 'Failed to load visibility receipts') as Promise<{
+      receipts: Array<{
+        id: string;
+        timestamp: string;
+        actorId?: string | null;
+        from?: { folderId?: string | null; scope?: string };
+        to?: { folderId?: string | null; scope?: string };
+        policyVersion?: string | null;
+        requestedOperation?: string | null;
+      }>;
+    }>;
   },
   /** Create (or return existing) a public share link for a conversation (F4). */
   shareConversation: async (
@@ -18468,20 +18490,22 @@ export const Api = {
     });
   },
 
-  deleteNotebookPage: async (id: string): Promise<void> => {
-    try {
-      await V8MyWorkApi.deleteNotebookPage(id);
-    } catch (error) {
-      if (!Api.shouldFallbackToLegacyMyWorkNotebook(error)) {
-        throw error;
-      }
-      const res = await fetch(`${API_URL}/my-work/notebook/pages/${id}`, {
-        method: 'DELETE',
-        headers: getHeaders(),
-      });
-      await handleResponse(res, 'Failed to delete notebook page');
-    }
+  deleteNotebookPage: async (
+    id: string,
+    idempotencyKey: string,
+    expectedUpdatedAt?: string | null
+  ): Promise<{ receiptId: string; deletedId: string; replay: boolean }> => {
+    // Governed deletion intentionally has no legacy fallback: deleting first
+    // and discovering afterwards that no immutable receipt exists would be a
+    // false-success boundary and cannot be repaired client-side.
+    return V8MyWorkApi.deleteNotebookPage(id, idempotencyKey, expectedUpdatedAt);
   },
+
+  getNotebookActionReceipt: async (receiptId: string) =>
+    V8MyWorkApi.getNotebookActionReceipt(receiptId),
+
+  getNotebookActionCapabilities: async (id: string) =>
+    V8MyWorkApi.getNotebookActionCapabilities(id),
 
   pinNotebookPage: async (id: string): Promise<any> => {
     try {

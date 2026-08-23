@@ -569,8 +569,39 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     const decisions = Array.isArray((assignmentInfo as any)?.reviewDecisionMemory)
       ? ((assignmentInfo as any)?.reviewDecisionMemory as Array<Record<string, unknown>>)
       : [];
-    return decisions.length > 0 ? decisions[decisions.length - 1] : null;
+    return (
+      [...decisions].sort((left, right) => {
+        const leftTime = Date.parse(String(left.createdAt || ''));
+        const rightTime = Date.parse(String(right.createdAt || ''));
+        const safeLeft = Number.isNaN(leftTime) ? Number.NEGATIVE_INFINITY : leftTime;
+        const safeRight = Number.isNaN(rightTime) ? Number.NEGATIVE_INFINITY : rightTime;
+        return safeRight - safeLeft;
+      })[0] || null
+    );
   }, [assignmentInfo]);
+  const latestReviewReceipt = useMemo(() => {
+    if (!latestReviewDecision) return null;
+    const action = String(latestReviewDecision.action || '');
+    const createdAt = String(latestReviewDecision.createdAt || '');
+    const parsedCreatedAt = createdAt ? new Date(createdAt) : null;
+    return {
+      id: String(latestReviewDecision.id || ''),
+      actionLabel:
+        action === 'approve'
+          ? t('interview.workspace.approved', 'Approved')
+          : action === 'send_back'
+            ? t('interview.workspace.sentBack', 'Sent back')
+            : action || '—',
+      createdAtLabel:
+        parsedCreatedAt && !Number.isNaN(parsedCreatedAt.getTime())
+          ? parsedCreatedAt.toLocaleString(isPolish ? 'pl-PL' : 'en-US')
+          : createdAt || '—',
+      actorRole: String(latestReviewDecision.actorRole || ''),
+      actorId: String(latestReviewDecision.actorId || ''),
+      alignment: String(latestReviewDecision.alignment || ''),
+      reason: String(latestReviewDecision.reason || ''),
+    };
+  }, [isPolish, latestReviewDecision, t]);
   // #3 — True lifecycle status for the read-back pill. Unlike `currentStatus`
   // (which collapses sent_back → in_progress so the respondent can resume
   // editing), this preserves `sent_back` so the header pill clearly shows a
@@ -1593,12 +1624,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       const result = (await V8InterviewApi.sendBackAssignment(session.assignmentId, {
         reason: sendBackReason.trim(),
         missingItems,
-      }).catch(() =>
-        Api.post(`/interview/assignments/${session.assignmentId}/send-back`, {
-          reason: sendBackReason.trim(),
-          missingItems,
-        })
-      )) as any;
+      })) as any;
       const updatedAssignment = result?.assignment || result;
       const updatedSession = result?.session;
       if (updatedAssignment?.status) {
@@ -1617,7 +1643,16 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       toast.success(t('interview.workspace.interviewSentBackForRevision'));
     } catch (error) {
       console.error('[InterviewWorkspace] Failed to send back:', error);
-      toast.error(t('interview.workspace.failedToSendBack'));
+      const status = Number((error as any)?.status || (error as any)?.response?.status || 0);
+      toast.error(
+        status === 409
+          ? isPolish
+            ? 'Status wywiadu zmienił się w międzyczasie. Odśwież dane przed kolejną decyzją.'
+            : 'The interview status changed while you were reviewing it. Reload before deciding again.'
+          : isPolish
+            ? 'Nie udało się potwierdzić wyniku zwrotu. Odśwież status przed ponowieniem.'
+            : 'The send-back outcome could not be confirmed. Reload the status before retrying.'
+      );
     } finally {
       setIsSendingBack(false);
     }
@@ -1634,9 +1669,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     if (!session?.assignmentId) return;
     setIsApproving(true);
     try {
-      const result = (await V8InterviewApi.approveAssignment(session.assignmentId).catch(() =>
-        Api.post(`/interview/assignments/${session.assignmentId}/approve`, {})
-      )) as any;
+      const result = (await V8InterviewApi.approveAssignment(session.assignmentId)) as any;
       const updatedAssignment = (result as any)?.assignment;
       const updatedSession = (result as any)?.session;
       if (updatedAssignment?.status) {
@@ -1650,7 +1683,16 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       toast.success(t('interview.workspace.interviewApproved'));
     } catch (error) {
       console.error('[InterviewWorkspace] Failed to approve:', error);
-      toast.error(t('interview.workspace.failedToApprove'));
+      const status = Number((error as any)?.status || (error as any)?.response?.status || 0);
+      toast.error(
+        status === 409
+          ? isPolish
+            ? 'Status wywiadu zmienił się w międzyczasie. Odśwież dane przed kolejną decyzją.'
+            : 'The interview status changed while you were reviewing it. Reload before deciding again.'
+          : isPolish
+            ? 'Nie udało się potwierdzić zatwierdzenia. Odśwież status przed ponowieniem.'
+            : 'The approval outcome could not be confirmed. Reload the status before retrying.'
+      );
     } finally {
       setIsApproving(false);
     }
@@ -2325,14 +2367,73 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               </span>
             </div>
           ))}
-          {latestReviewDecision && (
-            <div className="mt-1 rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2">
+          {latestReviewReceipt && (
+            <div
+              className="mt-1 rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2"
+              data-testid="interview-review-decision-receipt"
+            >
               <p className="text-[11px] uppercase tracking-wide text-c-text-muted">
                 {t('interview.workspace.latestReviewDecisionLabel', 'Latest review decision')}
               </p>
-              <p className="text-xs font-medium text-c-text-secondary">
-                {String(latestReviewDecision.action || '—')}
+              <p className="mt-1 text-sm font-semibold text-c-text">
+                {latestReviewReceipt.actionLabel}
               </p>
+              <dl className="mt-2 grid grid-cols-[auto_minmax(0,1fr)] gap-x-2 gap-y-1 text-xs">
+                <dt className="text-c-text-muted">
+                  {t('interview.workspace.decisionTime', 'Decision time')}
+                </dt>
+                <dd className="min-w-0 text-right text-c-text-secondary tabular-nums">
+                  {latestReviewReceipt.createdAtLabel}
+                </dd>
+                {latestReviewReceipt.actorRole && (
+                  <>
+                    <dt className="text-c-text-muted">
+                      {t('interview.workspace.reviewerRole', 'Reviewer role')}
+                    </dt>
+                    <dd className="min-w-0 truncate text-right text-c-text-secondary">
+                      {latestReviewReceipt.actorRole}
+                    </dd>
+                  </>
+                )}
+                {latestReviewReceipt.actorId && (
+                  <>
+                    <dt className="text-c-text-muted">
+                      {t('interview.workspace.reviewerId', 'Reviewer ID')}
+                    </dt>
+                    <dd className="min-w-0 break-all text-right font-mono text-[11px] text-c-text-secondary">
+                      {latestReviewReceipt.actorId}
+                    </dd>
+                  </>
+                )}
+                {latestReviewReceipt.alignment && (
+                  <>
+                    <dt className="text-c-text-muted">
+                      {t('interview.workspace.aiAlignment', 'AI alignment')}
+                    </dt>
+                    <dd className="min-w-0 break-words text-right text-c-text-secondary">
+                      {latestReviewReceipt.alignment.replaceAll('_', ' ')}
+                    </dd>
+                  </>
+                )}
+                {latestReviewReceipt.id && (
+                  <>
+                    <dt className="text-c-text-muted">
+                      {t('interview.workspace.decisionRecordId', 'Decision record ID')}
+                    </dt>
+                    <dd className="min-w-0 break-all text-right font-mono text-[11px] text-c-text-secondary">
+                      {latestReviewReceipt.id}
+                    </dd>
+                  </>
+                )}
+              </dl>
+              {latestReviewReceipt.reason && (
+                <p className="mt-2 border-t border-c-border-subtle pt-2 text-xs text-c-text-secondary">
+                  <span className="font-medium text-c-text">
+                    {t('interview.workspace.returnReason', 'Reason')}:{' '}
+                  </span>
+                  {latestReviewReceipt.reason}
+                </p>
+              )}
             </div>
           )}
         </div>

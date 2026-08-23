@@ -43,12 +43,15 @@ import {
   Lightbulb,
   List,
   Lock,
+  Network,
+  PenTool,
   Rocket,
   Scale,
   Search,
   Sparkles,
   Sprout,
   Star,
+  Table2,
   Tag,
   Target,
   Trash2,
@@ -93,6 +96,7 @@ import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { useUserCan } from '@/hooks/useUserCan';
 import i18n from '@/i18n';
+import { Api } from '@/services/api';
 import { getMyWorkContextSummary, type MyWorkContextSummary } from '@/services/api/myWorkContext';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
@@ -128,6 +132,7 @@ import { useObjectEditBarSlotHasContent } from './canvas/objectEditBarDock';
 import { type DecisionsBulkBarPayload, DecisionsPanelContent } from './DecisionsPanelContent';
 import type { FocusFilter, FocusItem, FocusSort } from './Focus/FocusView';
 import type { HomeScreenAction } from './Home/homeV2Types';
+import { IdeaDocumentTabRename } from './IdeaDocumentTabRename';
 import {
   composeIdeaBodyFromSeedIntent,
   deriveIdeaTitleFromSeedIntent,
@@ -696,6 +701,16 @@ const TYPE_COLORS = {
   idea: 'border-l-blue-500',
   decision: 'border-l-amber-500',
   notification: 'border-l-danger-500',
+};
+
+const IDEA_TOOL_TAB_VISUALS: Record<
+  CanvasToolType,
+  { icon: React.ComponentType<{ size?: number; 'aria-hidden'?: boolean }>; border: string }
+> = {
+  mindmap: { icon: Network, border: 'border-l-violet-500' },
+  process_flow: { icon: GitBranch, border: 'border-l-blue-500' },
+  table: { icon: Table2, border: 'border-l-emerald-500' },
+  whiteboard: { icon: PenTool, border: 'border-l-amber-500' },
 };
 
 const STATUS_COLORS: Record<ItemStatus, string> = {
@@ -1279,8 +1294,17 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     (tool: CanvasToolType) => {
       setIdeaActiveTool(tool);
       updateActiveIdeaWorkspaceState({ activeTool: tool });
+      // MYW-IDEAS-006: the scoped open-document record is the persisted tab
+      // contract. Keep its tool identity current without changing tab order.
+      if (activeIdeaDoc) {
+        setOpenDocuments((prev) =>
+          prev.map((doc) =>
+            doc.id === activeIdeaDoc.id ? { ...doc, data: { ...doc.data, initialTool: tool } } : doc
+          )
+        );
+      }
     },
-    [updateActiveIdeaWorkspaceState]
+    [activeIdeaDoc, updateActiveIdeaWorkspaceState]
   );
 
   const handleIdeaSelectionChange = useCallback(
@@ -2080,6 +2104,25 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     // handleCloseDocument(docId);
   }, []);
 
+  const handleIdeaTabRename = useCallback(async (ideaId: string, nextName: string) => {
+    const updated = await Api.updateMyIdea(ideaId, { title: nextName });
+    const persistedName = typeof updated?.title === 'string' ? updated.title.trim() : '';
+    if (!persistedName) {
+      throw new Error('Idea rename response did not include a canonical title');
+    }
+    setOpenDocuments((previous) =>
+      previous.map((document) =>
+        document.id === ideaId && document.type === 'idea'
+          ? {
+              ...document,
+              name: persistedName,
+              data: { ...(document.data || {}), ...(updated || {}), title: persistedName },
+            }
+          : document
+      )
+    );
+  }, []);
+
   // Count update handlers
   const handleTaskCountsChange = useCallback(
     (counts: {
@@ -2719,52 +2762,127 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
                 {/* Separator */}
                 <div className="w-px h-6 bg-slate-200/70 dark:bg-white/[0.06] shrink-0" />
+
+                {activeTab === 'ideas' && activeDocumentId && (
+                  <button
+                    type="button"
+                    onClick={handleCreateIdea}
+                    className={TAB_INACTIVE.replace('border-l-2', '')}
+                    data-testid="ideas-contextual-new-idea"
+                  >
+                    <Lightbulb size={14} aria-hidden="true" />
+                    <span>{t('myWork.hub.label18', 'New Idea')}</span>
+                  </button>
+                )}
               </>
             )}
 
             {/* Document Tabs (hub's own — tasks/ideas/decisions/inbox) */}
-            {visibleHubDocs.map((doc) => {
-              const isActive = doc.id === activeDocumentId;
-              const leftBorderColor = TYPE_COLORS[doc.type];
-              const statusColor = STATUS_COLORS[doc.status] || 'bg-slate-400';
-
-              return (
-                <div
-                  key={doc.id}
-                  className={`group shrink-0 ${isActive ? TAB_ACTIVE : TAB_INACTIVE} ${leftBorderColor} border-l-2`}
-                  onClick={() => setActiveDocumentId(doc.id)}
-                >
-                  {/* Type Icon */}
-                  {doc.type === 'task' && <CheckSquare size={14} />}
-                  {doc.type === 'idea' && <Lightbulb size={14} />}
-                  {doc.type === 'decision' && <Scale size={14} />}
-                  {doc.type === 'notification' && <Bell size={14} />}
-                  {doc.type === 'initiative' && <Rocket size={14} />}
-
-                  {/* Name (truncated) */}
-                  <span className={docNameClass}>{doc.name}</span>
-
-                  {/* Status Dot */}
-                  <span className={`w-2 h-2 rounded-full ${statusColor}`} title={doc.status} />
-
-                  {/* Close Button */}
+            <div
+              role="tablist"
+              aria-label={t('myWork.openDocuments', 'Open documents')}
+              className="contents"
+            >
+              {visibleHubDocs.map((doc, docIndex) => {
+                const isActive = doc.id === activeDocumentId;
+                const ideaTool =
+                  doc.type === 'idea'
+                    ? ideaWorkspaceStateById[doc.id]?.activeTool ||
+                      normalizePreferredSystem(doc.data?.initialTool) ||
+                      'mindmap'
+                    : null;
+                const ideaVisual = ideaTool ? IDEA_TOOL_TAB_VISUALS[ideaTool] : null;
+                const leftBorderColor = ideaVisual?.border || TYPE_COLORS[doc.type];
+                const statusColor = STATUS_COLORS[doc.status] || 'bg-slate-400';
+                const IdeaToolIcon = ideaVisual?.icon;
+                const renderDocumentActivator = (renameControls?: {
+                  ref: React.RefObject<HTMLButtonElement | null>;
+                  onDoubleClick: (event: React.MouseEvent) => void;
+                  onKeyDown: (event: React.KeyboardEvent) => void;
+                }) => (
                   <button
+                    ref={renameControls?.ref}
                     type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleCloseDocument(doc.id);
+                    role="tab"
+                    id={`my-work-document-tab-${doc.id}`}
+                    aria-controls={`my-work-document-panel-${doc.id}`}
+                    aria-selected={isActive}
+                    tabIndex={isActive ? 0 : -1}
+                    onClick={() => setActiveDocumentId(doc.id)}
+                    onDoubleClick={renameControls?.onDoubleClick}
+                    onKeyDown={(event) => {
+                      renameControls?.onKeyDown(event);
+                      if (event.defaultPrevented) return;
+                      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+                      event.preventDefault();
+                      const nextIndex =
+                        event.key === 'Home'
+                          ? 0
+                          : event.key === 'End'
+                            ? visibleHubDocs.length - 1
+                            : (docIndex +
+                                (event.key === 'ArrowRight' ? 1 : -1) +
+                                visibleHubDocs.length) %
+                              visibleHubDocs.length;
+                      const nextDoc = visibleHubDocs[nextIndex];
+                      if (!nextDoc) return;
+                      setActiveDocumentId(nextDoc.id);
+                      document.getElementById(`my-work-document-tab-${nextDoc.id}`)?.focus();
                     }}
-                    // Sam „X" nie mowi czytnikowi ekranu NIC, a takich przyciskow
-                    // jest tyle, ile otwartych kart — nazwa musi wskazywac ktora.
-                    title={t('myWork.closeOpenDocument', { nazwa: doc.name })}
-                    aria-label={t('myWork.closeOpenDocument', { nazwa: doc.name })}
-                    className="p-1 rounded-md opacity-0 group-hover:opacity-100 text-slate-500 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-white/[0.06] transition-all"
+                    className="flex min-w-0 items-center gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                   >
-                    <X size={14} aria-hidden="true" />
+                    {doc.type === 'task' && <CheckSquare size={14} />}
+                    {doc.type === 'idea' && IdeaToolIcon && (
+                      <IdeaToolIcon size={14} aria-hidden={true} />
+                    )}
+                    {doc.type === 'idea' && ideaTool && (
+                      <span className="sr-only">
+                        {getIdeaWorkspaceToolLabel(ideaTool, Boolean(isPolish))}
+                      </span>
+                    )}
+                    {doc.type === 'decision' && <Scale size={14} />}
+                    {doc.type === 'notification' && <Bell size={14} />}
+                    {doc.type === 'initiative' && <Rocket size={14} />}
+                    <span className={docNameClass}>{doc.name}</span>
+                    <span className={`w-2 h-2 rounded-full ${statusColor}`} title={doc.status} />
                   </button>
-                </div>
-              );
-            })}
+                );
+
+                return (
+                  <div
+                    key={doc.id}
+                    className={`group shrink-0 ${isActive ? TAB_ACTIVE : TAB_INACTIVE} ${leftBorderColor} border-l-2`}
+                  >
+                    {doc.type === 'idea' ? (
+                      <IdeaDocumentTabRename
+                        ideaId={doc.id}
+                        name={doc.name}
+                        onPersist={handleIdeaTabRename}
+                        renderActivator={renderDocumentActivator}
+                      />
+                    ) : (
+                      renderDocumentActivator()
+                    )}
+
+                    {/* Close Button */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCloseDocument(doc.id);
+                      }}
+                      // Sam „X" nie mowi czytnikowi ekranu NIC, a takich przyciskow
+                      // jest tyle, ile otwartych kart — nazwa musi wskazywac ktora.
+                      title={t('myWork.closeOpenDocument', { nazwa: doc.name })}
+                      aria-label={t('myWork.closeOpenDocument', { nazwa: doc.name })}
+                      className="p-1 rounded-md opacity-0 group-hover:opacity-100 text-slate-500 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-white/[0.06] transition-all"
+                    >
+                      <X size={14} aria-hidden="true" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
 
             {/* Child cards DOKLEJONE z HubBarSlots (np. Run agent — otwarte
                 procesy). Te same klasy TAB_ACTIVE/TAB_INACTIVE co karty huba
@@ -4073,7 +4191,16 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       if (!openDocuments.find((d) => d.id === activeDocumentId)) {
         return renderListContent();
       }
-      return renderDocumentContent();
+      return (
+        <div
+          role="tabpanel"
+          id={`my-work-document-panel-${activeDocumentId}`}
+          aria-labelledby={`my-work-document-tab-${activeDocumentId}`}
+          className="min-h-0 flex-1"
+        >
+          {renderDocumentContent()}
+        </div>
+      );
     }
     return renderListContent();
   };

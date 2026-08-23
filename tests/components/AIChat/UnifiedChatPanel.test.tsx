@@ -632,6 +632,25 @@ describe('UnifiedChatPanel (L2)', () => {
     expect(screen.getByTestId('chat-history-button')).toBeInTheDocument();
   });
 
+  it('renders the immediate conversation-header actions with one measured control contract', () => {
+    renderWithRouter(<UnifiedChatPanel mode="full" />);
+
+    const left = screen.getByTestId('chat-header-left-controls');
+    const right = screen.getByTestId('chat-header-right-controls');
+    expect(left).toHaveClass('flex-wrap');
+    expect(right).toHaveClass('flex-wrap');
+    for (const testId of [
+      'chat-new-button',
+      'chat-history-button',
+      'chat-work-panel-button',
+      'chat-autoread-button',
+    ]) {
+      expect(screen.getByTestId(testId)).toHaveClass('h-8', 'w-8', 'rounded-xl');
+    }
+    expect(screen.getByTestId('chat-work-panel-button')).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByTestId('chat-autoread-button')).toHaveAttribute('aria-pressed', 'false');
+  });
+
   it.each([
     ['permission_denied', 'You do not have access to this conversation'],
     ['not_found', 'This conversation does not exist'],
@@ -808,12 +827,41 @@ describe('UnifiedChatPanel (L2)', () => {
 
       fireEvent.click(trigger);
       expect(await screen.findByText('Existing branch')).toBeInTheDocument();
+      fireEvent.click(
+        screen.getByRole('button', { name: 'Open branch: Existing branch' })
+      );
+      await waitFor(() =>
+        expect(setActiveConversationMock).toHaveBeenCalledWith('conv-existing-branch')
+      );
     });
 
-    it('does NOT fetch or render a branch selector for a local (not-yet-persisted) conversation', () => {
-      conversationStoreState.activeConversationId = 'local-draft-1';
+    it('shows durable parent lineage on a reopened branch and navigates back to the source', async () => {
+      conversationStoreState.activeConversationId = 'conv-child';
+      conversationStoreState.activeMessages = [{ id: 'msg-child', role: 'user', content: 'child' }];
+      h.apiMock.getConversationBranches.mockResolvedValue({
+        conversationId: 'conv-child',
+        isBranch: true,
+        parentConversationId: 'conv-parent',
+        parentBranchId: null,
+        forkMessageId: 'msg-parent-1',
+        branchName: 'Alternative path',
+        branches: [],
+      });
 
       renderWithRouter(<UnifiedChatPanel mode="full" />);
+
+      const back = await screen.findByTestId('chat-branch-back-to-parent');
+      expect(screen.getByTestId('branch-selector-trigger')).toHaveTextContent('Alternative path');
+      fireEvent.click(back);
+      await waitFor(() => expect(setActiveConversationMock).toHaveBeenCalledWith('conv-parent'));
+    });
+
+    it('does NOT fetch or render a branch selector for a local (not-yet-persisted) conversation', async () => {
+      conversationStoreState.activeConversationId = 'local-draft-1';
+
+      await act(async () => {
+        renderWithRouter(<UnifiedChatPanel mode="full" />);
+      });
 
       expect(h.apiMock.getConversationBranches).not.toHaveBeenCalled();
       expect(screen.queryByTestId('branch-selector-trigger')).not.toBeInTheDocument();

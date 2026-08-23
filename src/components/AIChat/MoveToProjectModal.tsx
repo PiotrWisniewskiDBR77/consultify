@@ -8,9 +8,12 @@
 import { Folder, Plus, Search, Users, X } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { Api } from '../../services/api';
 import { useChatProjectStore } from '../../store/useChatProjectStore';
+import { requiresOrganizationVisibilityConsent } from './chatHistoryVisibility';
 
 interface ConversationLike {
   id: string;
@@ -55,6 +58,18 @@ export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({
   const [instructions, setInstructions] = useState('');
   const [instructionsBusy, setInstructionsBusy] = useState(false);
   const [instructionsSaved, setInstructionsSaved] = useState(false);
+  const [visibilityReceipts, setVisibilityReceipts] = useState<
+    Array<{
+      id: string;
+      timestamp: string;
+      actorId?: string | null;
+      from?: { scope?: string };
+      to?: { scope?: string };
+      policyVersion?: string | null;
+    }>
+  >([]);
+  const [receiptsLoading, setReceiptsLoading] = useState(false);
+  const [receiptsError, setReceiptsError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -63,8 +78,19 @@ export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({
     setShowCreate(false);
     setNewName('');
     void fetchProjects();
+    setReceiptsLoading(true);
+    setReceiptsError(null);
+    void Api.getConversationVisibilityReceipts(conversation.id)
+      .then((result) => setVisibilityReceipts(result.receipts || []))
+      .catch(() => {
+        setVisibilityReceipts([]);
+        setReceiptsError(
+          t('aiChat.visibilityHistoryUnavailable', 'Visibility history could not be loaded.')
+        );
+      })
+      .finally(() => setReceiptsLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen]);
+  }, [isOpen, conversation.id]);
 
   const currentProject = useMemo(() => {
     const id = conversation?.chatProjectId;
@@ -115,10 +141,34 @@ export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({
   }, [getTeamProjects, normalizedQuery, projects]);
 
   const handleMove = async (projectId: string | null) => {
+    const destination = projectId ? projects.find((project) => project.id === projectId) : null;
+    const broadensVisibility = requiresOrganizationVisibilityConsent(
+      destination?.scope,
+      currentProject?.scope
+    );
+    if (
+      broadensVisibility &&
+      !window.confirm(
+        t(
+          'aiChat.confirmMovePrivateToOrganization',
+          'Move this private conversation to an organization folder? Organization members with access to the folder will be able to see it.'
+        )
+      )
+    ) {
+      return;
+    }
     setError(null);
     setBusyId(projectId || 'remove');
     try {
-      await moveConversationToProject(conversation.id, projectId);
+      const result = await moveConversationToProject(conversation.id, projectId, {
+        visibilityConsent: broadensVisibility,
+      });
+      if (result.visibilityReceiptId) {
+        toast.success(
+          `${t('aiChat.visibilityConsentRecorded', 'Organization visibility recorded. Receipt')}: ${result.visibilityReceiptId}`,
+          { duration: 8000 }
+        );
+      }
       onMove?.(projectId);
       onClose();
     } catch (e: any) {
@@ -275,6 +325,51 @@ export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({
               </div>
             )}
           </div>
+
+          <section
+            className="mb-4 rounded-xl border border-slate-200 dark:border-navy-700 p-3"
+            aria-labelledby="visibility-history-heading"
+          >
+            <div
+              id="visibility-history-heading"
+              className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider"
+            >
+              {t('aiChat.visibilityHistory', 'Visibility history')}
+            </div>
+            {receiptsLoading ? (
+              <p className="mt-2 text-xs text-slate-500" role="status">
+                {t('common.loading', 'Loading')}
+              </p>
+            ) : receiptsError ? (
+              <p className="mt-2 text-xs text-danger-600 dark:text-danger-400" role="alert">
+                {receiptsError}
+              </p>
+            ) : visibilityReceipts.length === 0 ? (
+              <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                {t('aiChat.noVisibilityChanges', 'No organization visibility changes recorded.')}
+              </p>
+            ) : (
+              <ul className="mt-2 space-y-2">
+                {visibilityReceipts.map((receipt) => (
+                  <li key={receipt.id} className="text-xs text-slate-600 dark:text-slate-300">
+                    <div>
+                      {t('aiChat.visibilityChanged', 'Visibility changed')}:{' '}
+                      {receipt.from?.scope || '—'} → {receipt.to?.scope || '—'}
+                    </div>
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                      {new Date(receipt.timestamp).toLocaleString()} ·{' '}
+                      {receipt.policyVersion || '—'} · {receipt.id}
+                    </div>
+                    {receipt.actorId && (
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                        {t('aiChat.visibilityChangedBy', 'Actor')}: {receipt.actorId}
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
 
           {/* Search */}
           <div className="relative mb-4">

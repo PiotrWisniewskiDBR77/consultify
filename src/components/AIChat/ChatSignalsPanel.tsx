@@ -329,7 +329,13 @@ export const ChatSignalsPanel: React.FC<ChatSignalsPanelProps> = ({ open, onClos
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50">
+    <div
+      id="chat-signals-panel"
+      role="dialog"
+      aria-modal="true"
+      aria-label={t('aiChat.signals.title', 'Important signals')}
+      className="fixed inset-0 z-50"
+    >
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/30" onClick={onClose} />
 

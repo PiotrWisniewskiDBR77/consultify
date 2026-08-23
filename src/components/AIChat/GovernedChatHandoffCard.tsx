@@ -1,4 +1,12 @@
-import { CheckCircle2, FileText, Loader2, ShieldCheck, XCircle } from 'lucide-react';
+import {
+  CheckCircle2,
+  CircleAlert,
+  Clock3,
+  FileText,
+  Loader2,
+  ShieldCheck,
+  XCircle,
+} from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -35,7 +43,7 @@ export const GovernedChatHandoffCard: React.FC<GovernedChatHandoffCardProps> = (
       : isDone
         ? 'materialized'
         : isApproved
-          ? 'materializable'
+          ? 'approved'
           : proposal.state;
   const stateStyle = {
     pending: {
@@ -81,6 +89,15 @@ export const GovernedChatHandoffCard: React.FC<GovernedChatHandoffCardProps> = (
       label: t('chat.governedHandoff.state.approved', 'Approved'),
     },
   }[visualState];
+  const StateIcon = {
+    pending: Clock3,
+    approved: ShieldCheck,
+    materializable: FileText,
+    working: Loader2,
+    materialized: CheckCircle2,
+    rejected: XCircle,
+    failed: CircleAlert,
+  }[visualState];
 
   return (
     <section
@@ -94,7 +111,11 @@ export const GovernedChatHandoffCard: React.FC<GovernedChatHandoffCardProps> = (
         <div
           className={`mt-0.5 rounded-xl bg-white/70 p-2 shadow-sm dark:bg-white/[0.06] ${stateStyle.icon}`}
         >
-          <ShieldCheck size={16} aria-hidden="true" />
+          <StateIcon
+            size={16}
+            aria-hidden="true"
+            className={visualState === 'working' ? 'animate-spin' : undefined}
+          />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-start justify-between gap-2">
@@ -104,6 +125,8 @@ export const GovernedChatHandoffCard: React.FC<GovernedChatHandoffCardProps> = (
             </div>
             <span
               data-testid="governed-chat-handoff-state"
+              role="status"
+              aria-live="polite"
               className={`rounded-full px-2 py-1 text-[10px] font-semibold ${stateStyle.badge}`}
             >
               {stateStyle.label}
@@ -120,9 +143,21 @@ export const GovernedChatHandoffCard: React.FC<GovernedChatHandoffCardProps> = (
                 })
               : t('chat.governedHandoff.noCitations', 'No source references were found.')}
           </div>
-          <div className="mt-1 font-mono text-[10px] text-c-text-muted">
-            {proposal.sourceContentHash.slice(0, 12)} · v{proposal.sourceVersion}
-          </div>
+          <dl
+            className="mt-2 grid grid-cols-[auto_minmax(0,1fr)] gap-x-2 gap-y-1 text-[10px] text-c-text-muted"
+            data-testid="governed-chat-handoff-provenance"
+          >
+            <dt>{t('chat.governedHandoff.source', 'Source')}</dt>
+            <dd className="break-all font-mono">
+              {proposal.producerRecordId}
+            </dd>
+            <dt>{t('chat.governedHandoff.hash', 'Hash')}</dt>
+            <dd className="break-all font-mono">
+              {proposal.sourceContentHash}
+            </dd>
+            <dt>{t('chat.governedHandoff.version', 'Version')}</dt>
+            <dd className="font-mono">{proposal.sourceVersion}</dd>
+          </dl>
 
           {error ? (
             <div role="alert" className="mt-2 text-[11px] text-danger-600 dark:text-danger-400">
@@ -137,6 +172,7 @@ export const GovernedChatHandoffCard: React.FC<GovernedChatHandoffCardProps> = (
                   type="button"
                   onClick={onApprove}
                   disabled={Boolean(busy)}
+                  aria-busy={busy === 'approve' || undefined}
                   className="inline-flex items-center gap-1.5 rounded-md bg-c-text px-2.5 py-1.5 text-[11px] font-medium text-c-surface disabled:opacity-50"
                 >
                   {busy === 'approve' ? (
@@ -150,6 +186,7 @@ export const GovernedChatHandoffCard: React.FC<GovernedChatHandoffCardProps> = (
                   type="button"
                   onClick={onReject}
                   disabled={Boolean(busy)}
+                  aria-busy={busy === 'reject' || undefined}
                   className="inline-flex items-center gap-1.5 rounded-md border border-c-border px-2.5 py-1.5 text-[11px] text-c-text-secondary disabled:opacity-50"
                 >
                   {busy === 'reject' ? (
@@ -163,19 +200,29 @@ export const GovernedChatHandoffCard: React.FC<GovernedChatHandoffCardProps> = (
             ) : null}
 
             {isApproved ? (
-              <button
-                type="button"
-                onClick={onMaterialize}
-                disabled={Boolean(busy)}
-                className="inline-flex items-center gap-1.5 rounded-md bg-c-text px-2.5 py-1.5 text-[11px] font-medium text-c-surface disabled:opacity-50"
-              >
-                {busy === 'materialize' ? (
-                  <Loader2 size={12} className="animate-spin" />
-                ) : (
-                  <FileText size={12} />
-                )}
-                {t('chat.governedHandoff.createDocument', 'Create document')}
-              </button>
+              <div className="flex flex-wrap items-center gap-2">
+                <span
+                  data-testid="governed-chat-handoff-materializable"
+                  className="inline-flex items-center gap-1 text-[10px] font-semibold text-sky-700 dark:text-sky-200"
+                >
+                  <FileText size={12} aria-hidden="true" />
+                  {t('chat.governedHandoff.state.materializable', 'Ready to create')}
+                </span>
+                <button
+                  type="button"
+                  onClick={onMaterialize}
+                  disabled={Boolean(busy)}
+                  aria-busy={busy === 'materialize' || undefined}
+                  className="inline-flex items-center gap-1.5 rounded-md bg-c-text px-2.5 py-1.5 text-[11px] font-medium text-c-surface disabled:opacity-50"
+                >
+                  {busy === 'materialize' ? (
+                    <Loader2 size={12} className="animate-spin" />
+                  ) : (
+                    <FileText size={12} />
+                  )}
+                  {t('chat.governedHandoff.createDocument', 'Create document')}
+                </button>
+              </div>
             ) : null}
 
             {isDone ? (

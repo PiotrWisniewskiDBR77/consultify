@@ -32,10 +32,10 @@ failed promotion, duplicate promotion and no false completed state.
 | G10 | Alternate-state owner review | `PARTIAL` | Library availability states, approved/draft Processes and active/frozen DRD surfaces were observed. Full empty/error/permission/theme/responsive owner review remains open. |
 | G11 | Every owner observation/screenshot durably registered | `PASS_INTAKE` | Dedicated register `../../owner_feedback/04_ASSESSMENT/OWNER_FEEDBACK_REGISTER.md` preserves `ASM-OWN-001`–`ASM-OWN-009`; its evidence index retains 14 copied and hashed images. |
 | G12 | Owner register reconciled and confirmed | `NOT_STARTED` | — |
-| G13 | Solution and impact analysis | `DRAFT_READY_FOR_WORKSHOP` | `../../owner_feedback/04_ASSESSMENT/ASSESSMENT_WORKSHOP_PACKET.md` defines the hybrid target: retain the lighter visual language, rebuild Interview, add Split/Matrix/Report around one Method Core truth model. Owner decisions remain open. |
-| G14 | Remediation with finding-to-commit traceability | `BOUNDED_WIP_PARTIAL` | Pure Library and full-height Processes Preview are implemented in the preserved WIP; canonical Preview Details/Menu 3 contracts and Method Core Outputs tests were restored. No commit or acceptance is claimed. |
-| G15 | Integrator self-QA and impacted regression | `PASS_FOR_CURRENT_BOUNDED_WIP` | Full Assessment component suite `274/274 PASS`; root typecheck PASS; production build PASS with `NODE_OPTIONS=--max-old-space-size=8192`; local Library/methodology Preview/Processes Preview smoke PASS; `git diff --check` PASS. |
-| G16 | Before/after owner retest packet | `NOT_STARTED` | — |
+| G13 | Solution and impact analysis | `OWNER_DIRECTION_RECONCILED / DETAIL_OPEN` | The earlier workshop draft proposed Split/Matrix/Report, but the later explicit owner decision supersedes it: canonical process modes are `Interview`, `Matrix`, `Report`; `Settings` is separate; the answer register belongs inside Interview; no permanent Teresa rail; downstream registers are `Insights`, `Reports`, `Initiatives`. The retained lighter visual language and one Method Core truth model still apply. Detailed acceptance remains open. |
+| G14 | Remediation with finding-to-commit traceability | `BOUNDED_WIP_PARTIAL` | Pure Library and full-height Processes Preview are implemented in preserved WIP. The DRD workspace now exposes Interview/Matrix/Report plus separate Settings; Interview uses one active question with compact sequence steps; the permanent Teresa rail and technical footer are absent; document truth is retained in Settings. Canonical Preview Details/Menu 3 contracts and Method Core Outputs tests remain restored. No commit or acceptance is claimed. |
+| G15 | Integrator self-QA and impacted regression | `PASS_FOR_CURRENT_BOUNDED_WIP` | Historical broad Assessment evidence remains qualified above. Current workspace-focused replay: `4/4` files and `29/29` tests PASS; four local runtime views render without observed console warnings/errors; scoped and repository-wide `git diff --check` PASS. This is not full-suite, persistence, role/tenant, responsive, a11y or release evidence. |
+| G16 | Before/after owner retest packet | `PARTIAL_CURRENT_AFTER_PACKET` | Current after-state screenshots for Interview, Matrix, Report and Settings plus SHA-256 hashes are recorded under `../../evidence/exact-candidate-43730-photo-gate-2026-08-23/`. Owner comparison/retest and final finding mapping remain open. |
 | G17 | Owner retest decisions for every finding | `NOT_STARTED` | — |
 | G18 | Module accepted on exact SHA and checkpointed | `NOT_STARTED` | — |
 | G19 | Later-change regression obligations resolved | `NOT_STARTED` | — |
@@ -82,7 +82,7 @@ These are technical observations, not Piotr owner findings.
 
 | Finding IDs | Root cause | Approved solution | Commit | Shared surfaces | Impacted modules | Tests/self-QA | Regression |
 |---|---|---|---|---|---|---|---|
-| _none_ | | | | | | | |
+| `ASM-OWN-004..009` plus current Assessment expert findings | Workspace information architecture and interaction density diverged from the owner-approved flow; the draft documentation also retained a superseded top-level Split mode. | Use Interview/Matrix/Report plus separate Settings; keep the answer register in Interview; remove permanent Teresa and technical footer; present one active question at a time; preserve document truth in Settings. | working tree beyond `43730f86f8a7` | `MethodWorkspaceShell`, `InterviewFocusPanel`, DRD mounted screens, Matrix/Report/Settings runtime | Assessment | focused `4/4` files, `29/29 PASS`; four runtime screenshots; console warnings/errors `0/0`; `git diff --check` PASS | Owner replay, persistence/roles/tenant/responsive/a11y and exact-SHA replay remain open. |
 
 ## Preflight implementation ledger
 

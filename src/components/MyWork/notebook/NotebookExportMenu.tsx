@@ -16,6 +16,9 @@ import {
 } from '@/utils/notebookExport';
 
 import i18n from '../../../i18n';
+import type { NOTEBOOK_EXPORT_ACTION_IDS } from './notebookActionRegistry';
+
+type NotebookExportActionId = (typeof NOTEBOOK_EXPORT_ACTION_IDS)[number];
 
 interface NotebookExportMenuProps {
   page: NotebookExportPage;
@@ -35,26 +38,55 @@ const labels = () => ({
 
 export const NotebookExportMenu: React.FC<NotebookExportMenuProps> = ({
   page,
-  isPolish = false,
+  isPolish: _isPolish = false,
   className = '',
   disabled = false,
 }) => {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState<NotebookExportFormat | null>(null);
+  const [failedFormat, setFailedFormat] = useState<NotebookExportFormat | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const executionLockRef = useRef(false);
   const exportLabels = labels();
 
   useEffect(() => {
     if (!open) return;
+    const frame = window.requestAnimationFrame(() => {
+      rootRef.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
+    });
     const onDocClick = (e: MouseEvent) => {
       if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
     };
     const onEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setOpen(false);
+        triggerRef.current?.focus();
+        return;
+      }
+      if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(e.key)) return;
+      const items = Array.from(
+        rootRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]:not(:disabled)') || []
+      );
+      if (items.length === 0) return;
+      e.preventDefault();
+      const current = items.indexOf(document.activeElement as HTMLElement);
+      const next =
+        e.key === 'Home'
+          ? 0
+          : e.key === 'End'
+            ? items.length - 1
+            : e.key === 'ArrowDown'
+              ? (current + 1 + items.length) % items.length
+              : (current - 1 + items.length) % items.length;
+      items[next]?.focus();
     };
     document.addEventListener('mousedown', onDocClick);
     document.addEventListener('keydown', onEsc);
     return () => {
+      window.cancelAnimationFrame(frame);
       document.removeEventListener('mousedown', onDocClick);
       document.removeEventListener('keydown', onEsc);
     };
@@ -62,14 +94,20 @@ export const NotebookExportMenu: React.FC<NotebookExportMenuProps> = ({
 
   const run = useCallback(
     async (format: NotebookExportFormat) => {
+      if (executionLockRef.current) return;
+      executionLockRef.current = true;
       setBusy(format);
+      setError(null);
+      setFailedFormat(null);
       try {
         await exportNotebookPage(page, format);
-      } catch {
-        // Export failures are non-fatal; the menu simply closes.
-      } finally {
-        setBusy(null);
         setOpen(false);
+      } catch {
+        setError(i18n.t('notebook.exportMenu.failed', 'Export failed. Your note was not changed.'));
+        setFailedFormat(format);
+      } finally {
+        executionLockRef.current = false;
+        setBusy(null);
       }
     },
     [page]
@@ -81,7 +119,9 @@ export const NotebookExportMenu: React.FC<NotebookExportMenuProps> = ({
   return (
     <div ref={rootRef} className={`relative inline-block ${className}`}>
       <button
+        ref={triggerRef}
         type="button"
+        data-notebook-action-id={'export:trigger' satisfies `export:${NotebookExportActionId}`}
         onClick={() => setOpen((v) => !v)}
         disabled={disabled}
         aria-haspopup="menu"
@@ -96,11 +136,30 @@ export const NotebookExportMenu: React.FC<NotebookExportMenuProps> = ({
         <div
           role="menu"
           aria-label={exportLabels.ariaMenu}
-          className="absolute right-0 z-50 mt-1 w-52 overflow-hidden rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface py-1 shadow-lg dark:border-white/10 dark:bg-navy-900"
+          className="absolute right-0 z-50 mt-1 max-h-[calc(100vh-16px)] w-52 max-w-[calc(100vw-16px)] overflow-y-auto rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface py-1 shadow-lg dark:border-white/10 dark:bg-navy-900"
         >
+          {error ? (
+            <div
+              role="alert"
+              className="mx-2 mb-1 rounded-md border border-c-danger/40 p-2 text-xs text-c-danger"
+            >
+              <p>{error}</p>
+              {failedFormat ? (
+                <button
+                  type="button"
+                  data-notebook-action-id={`export:${failedFormat}`}
+                  className="mt-1 font-semibold underline"
+                  onClick={() => void run(failedFormat)}
+                >
+                  {i18n.t('common.retry', 'Retry')}
+                </button>
+              ) : null}
+            </div>
+          ) : null}
           <button
             type="button"
             role="menuitem"
+            data-notebook-action-id="export:markdown"
             className={itemBase}
             disabled={busy !== null}
             onClick={() => run('markdown')}
@@ -111,6 +170,7 @@ export const NotebookExportMenu: React.FC<NotebookExportMenuProps> = ({
           <button
             type="button"
             role="menuitem"
+            data-notebook-action-id="export:pdf"
             className={itemBase}
             disabled={busy !== null}
             onClick={() => run('pdf')}
@@ -121,6 +181,7 @@ export const NotebookExportMenu: React.FC<NotebookExportMenuProps> = ({
           <button
             type="button"
             role="menuitem"
+            data-notebook-action-id="export:docx"
             className={itemBase}
             disabled={busy !== null}
             onClick={() => run('docx')}

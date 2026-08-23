@@ -8,8 +8,8 @@
  * write into the SAME `answerText`/`answerState` — there is no separate save
  * path per channel (A5 spec, cross-cutting requirement).
  */
-import { ArrowLeft, ArrowRight, Paperclip, SkipForward, Sparkles } from 'lucide-react';
-import React, { useState } from 'react';
+import { ArrowLeft, ArrowRight, Check, ChevronDown, Paperclip, SkipForward, Sparkles } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 
 import type { MethodEvidenceState, ResolutionAction, ResolutionCardData } from './types';
 import type { InterviewFocusQuestion } from './types';
@@ -70,8 +70,13 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
   const [skipJustification, setSkipJustification] = useState('');
   const [skipping, setSkipping] = useState(false);
   const [dragActive, setDragActive] = useState<string | null>(null);
-
+  const [activeSequenceIndex, setActiveSequenceIndex] = useState(0);
   const primary = questions[0];
+
+  useEffect(() => {
+    setActiveSequenceIndex(0);
+  }, [primary?.question.questionId]);
+
   if (!primary) {
     return (
       <div className="p-6 text-sm text-c-text-muted" data-testid="interview-focus-empty">
@@ -102,12 +107,39 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
       </div>
 
       {questions.length > 1 && (
-        <p className="text-xs text-c-text-muted -mt-2">
-          Te {questions.length} pytania tworzą nierozdzielną sekwencję — odpowiedz na wszystkie razem.
-        </p>
+        <div className="-mt-2 flex items-center justify-between gap-3 rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-xs text-c-text-muted">
+          <span>Ta jednostka ma {questions.length} krótkie kroki. Na ekranie pozostaje otwarty tylko bieżący krok.</span>
+          <span className="shrink-0 font-medium text-c-text-secondary">
+            Krok {activeSequenceIndex + 1}/{questions.length}
+          </span>
+        </div>
       )}
 
-      {questions.map((q) => (
+      {questions.map((q, sequenceIndex) => {
+        const expanded = sequenceIndex === activeSequenceIndex;
+        const answered = q.answerState !== null || q.answerText.trim().length > 0;
+
+        if (!expanded) {
+          return (
+            <button
+              key={q.question.questionId}
+              type="button"
+              onClick={() => setActiveSequenceIndex(sequenceIndex)}
+              className="flex w-full items-center gap-3 rounded-xl border border-c-border-subtle bg-c-surface px-4 py-3 text-left hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+              aria-label={`Otwórz krok ${sequenceIndex + 1}: ${q.question.canonicalWording}`}
+            >
+              <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${answered ? 'bg-c-success/10 text-c-success' : 'bg-c-surface-raised text-c-text-muted'}`}>
+                {answered ? <Check size={14} /> : sequenceIndex + 1}
+              </span>
+              <span className="min-w-0 flex-1 truncate text-sm font-medium text-c-text-secondary">
+                {q.question.canonicalWording}
+              </span>
+              <ChevronDown size={14} className="shrink-0 text-c-text-muted" />
+            </button>
+          );
+        }
+
+        return (
         <div key={q.question.questionId} className="rounded-xl border border-c-border bg-c-surface p-4 space-y-4">
           <div>
             <h2 className="text-base font-semibold text-c-text">{q.question.canonicalWording}</h2>
@@ -224,8 +256,30 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
               )}
             </span>
           </div>
+
+          {questions.length > 1 && (
+            <div className="flex items-center justify-end gap-2 border-t border-c-border-subtle pt-3">
+              <button
+                type="button"
+                disabled={sequenceIndex === 0}
+                onClick={() => setActiveSequenceIndex((value) => Math.max(0, value - 1))}
+                className="rounded-lg border border-c-border px-3 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Poprzedni krok
+              </button>
+              <button
+                type="button"
+                disabled={sequenceIndex === questions.length - 1}
+                onClick={() => setActiveSequenceIndex((value) => Math.min(questions.length - 1, value + 1))}
+                className="rounded-lg border border-c-border bg-c-surface-raised px-3 py-1.5 text-xs font-semibold text-c-text hover:bg-c-border-subtle disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Następny krok
+              </button>
+            </div>
+          )}
         </div>
-      ))}
+        );
+      })}
 
       {/* Command row: Wstecz / Zapisz / Dalej / Pomiń z uzasadnieniem + dyskretne Zapytaj Teresę */}
       <div className="flex flex-wrap items-center gap-2 pt-1">

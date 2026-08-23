@@ -83,6 +83,20 @@ afterEach(() => {
 });
 
 describe('TemplateBuilder smoke', () => {
+  it('orients a first-time author and moves focus to the first required decision', () => {
+    render(<TemplateBuilder isOpen onClose={vi.fn()} onSuccess={vi.fn()} />);
+
+    expect(screen.getByTestId('template-builder-first-use-guide')).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /Create a usable interview template in three steps/i })
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Start with the topic/i }));
+    expect(document.activeElement).toBe(screen.getByPlaceholderText(/digital maturity/i));
+
+    fireEvent.click(screen.getByRole('button', { name: /Dismiss getting-started guide/i }));
+    expect(screen.queryByTestId('template-builder-first-use-guide')).not.toBeInTheDocument();
+  });
+
   it('renders the new-template editor with a Save Draft action', () => {
     render(<TemplateBuilder isOpen onClose={vi.fn()} onSuccess={vi.fn()} />);
     expect(screen.getByText('Save Draft')).toBeInTheDocument();

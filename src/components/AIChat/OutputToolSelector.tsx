@@ -50,7 +50,11 @@ export const OutputToolSelector: React.FC = () => {
   const setChatOutputTool = useAppStore((s) => s.setChatOutputTool);
 
   return (
-    <div className="flex items-center gap-1 mb-2">
+    <div
+      className="flex items-center gap-1 mb-2"
+      role="group"
+      aria-label={t('chatOutputTool.groupLabel', 'Output')}
+    >
       {/* Leading group label so the pills read as OUTPUT routing, not model
           selection — the bare "Auto" pill was being misread as "AI picks the
           best model" (composer audit D1). */}
@@ -71,7 +75,10 @@ export const OutputToolSelector: React.FC = () => {
         return (
           <button
             key={tool.id}
+            type="button"
             onClick={() => setChatOutputTool(tool.id)}
+            aria-pressed={isActive}
+            aria-label={`${label}. ${title}`}
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all border ${
               isActive
                 ? 'bg-slate-200 dark:bg-white/10 text-c-text border-c-border-strong'

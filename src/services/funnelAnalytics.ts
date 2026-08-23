@@ -60,6 +60,7 @@ export type FunnelEventName =
   | 'cothinker_mode_selected'
   | 'cothinker_response_generated'
   | 'chat_start_control_selected'
+  | 'chat_capability_deep_linked'
   | 'oauth_login_started'
   | 'oauth_login_succeeded'
   | 'oauth_login_failed'

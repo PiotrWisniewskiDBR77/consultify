@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import logger from '../utils/Logger.js';
+import { getCurrentPgTransactionClient } from '../utils/queryHelpers.js';
 
 export type ActorType = 'USER' | 'SYSTEM' | 'AI' | 'INTEGRATION' | 'CONSULTANT';
 
@@ -51,10 +52,13 @@ class AuditEventsService {
    * Log an audit event
    */
   async log(input: AuditEventInput): Promise<string> {
-    const db = await this.getDb();
+    const transactionClient = getCurrentPgTransactionClient();
+    const db = transactionClient ? null : await this.getDb();
+    const run = (sql: string, params: unknown[]) =>
+      transactionClient ? transactionClient.query(sql, params) : db!.run(sql, params);
     const id = `ae-${uuidv4()}`;
     try {
-      await db.run(
+      await run(
         `INSERT INTO audit_events (
           id, ts, actor_id, actor_type, org_id, action, resource_type, resource_id,
           before_json, after_json, metadata_json, ip, user_agent
@@ -80,7 +84,7 @@ class AuditEventsService {
       const message = String(err?.message || '');
       logger.warn('[AuditEventsService] Unified insert failed, trying legacy schema:', message);
       try {
-        await db.run(
+        await run(
           `INSERT INTO audit_events (
             id, ts, actor_id, actor_user_id, actor_type, org_id,
             action, action_type, resource_type, resource_id, entity_type, entity_id,

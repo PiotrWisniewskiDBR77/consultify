@@ -97,8 +97,8 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
     goal: '',
     constraints: '',
   });
-  // #10-Start (bug#1): klik karty = tylko selekcja, akcja odpala się dopiero
-  // przez przycisk "Start" (lub Enter / podwójny klik jako skrót).
+  // #10-Start (bug#1): click selects only. Creation requires the explicit
+  // Start button, or Enter while the already-selected action card has focus.
   const [selectedAction, setSelectedAction] = useState<StartAction | null>(null);
 
   const handleSelect = useCallback(
@@ -137,13 +137,6 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
     setSelectedAction(action);
   }, []);
 
-  const handleCardDoubleClick = useCallback(
-    (action: StartAction) => {
-      handleSelect(action);
-    },
-    [handleSelect]
-  );
-
   const handleStart = useCallback(() => {
     if (!selectedAction) return;
     handleSelect(selectedAction);
@@ -153,19 +146,6 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
   useEffect(() => {
     if (open) setSelectedAction(null);
   }, [open]);
-
-  // Enter = Start (only while an action card is selected).
-  useEffect(() => {
-    if (!open) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Enter' && selectedAction) {
-        e.preventDefault();
-        handleSelect(selectedAction);
-      }
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [open, selectedAction, handleSelect]);
 
   const handlePopularStart = useCallback(
     (start: (typeof popularStarts)[number]) => {
@@ -190,22 +170,25 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
   const PrimaryStartButton = ({
     children,
     onClick,
-    onDoubleClick,
     className,
     selected,
   }: {
     children: React.ReactNode;
     onClick: () => void;
-    onDoubleClick: () => void;
     className: string;
     selected: boolean;
   }) => (
     <button
       type="button"
       onClick={onClick}
-      onDoubleClick={onDoubleClick}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' && selected) {
+          event.preventDefault();
+          handleStart();
+        }
+      }}
       aria-pressed={selected}
-      className={`${className} ${
+      className={`${className} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-2 ${
         selected
           ? 'ring-2 ring-c-focus ring-offset-1 ring-offset-c-surface shadow-lg -translate-y-0.5'
           : ''
@@ -217,13 +200,18 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
 
   const containerRef = useRef<HTMLDivElement>(null);
   const heroTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const briefProblemRef = useRef<HTMLInputElement>(null);
   useDialogA11y({ open, onClose, containerRef, initialFocusRef: heroTextareaRef });
+
+  useEffect(() => {
+    if (showStructuredBrief) briefProblemRef.current?.focus();
+  }, [showStructuredBrief]);
 
   if (!open) return null;
 
   return (
     <div
-      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-md animate-in fade-in duration-200"
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 p-4 backdrop-blur-md animate-in fade-in duration-200"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -234,7 +222,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
         aria-modal="true"
         aria-labelledby="idea-startup-templates-heading"
         tabIndex={-1}
-        className="w-[520px] max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-[0_32px_64px_-12px_rgba(0,0,0,0.35)] backdrop-blur-xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 outline-none"
+        className="w-[520px] max-w-full max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-[0_32px_64px_-12px_rgba(0,0,0,0.35)] backdrop-blur-xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 outline-none"
       >
         {/* ── Header ─────────────────────────────────────────── */}
         <div className="relative flex items-center justify-between px-6 py-4 border-b border-c-border-subtle">
@@ -253,7 +241,9 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
             </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
+            aria-label={t('common.close', 'Close')}
             className="relative p-1.5 rounded-lg hover:bg-c-surface-raised transition-colors duration-150"
           >
             <X size={16} className="text-c-text-secondary" />
@@ -267,7 +257,10 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
             <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-c-text-muted mb-1.5">
               {t('myWorkTable.ideaStartupTemplates.yourIdea')}
             </div>
-            <h4 className="text-lg font-semibold text-c-text tracking-tight">
+            <h4
+              id="idea-seed-description-label"
+              className="text-lg font-semibold text-c-text tracking-tight"
+            >
               {t('myWorkTable.ideaStartupTemplates.describeTheProblemIdeaOr')}
             </h4>
             <p className="mt-1 text-[13px] text-c-text-muted leading-relaxed">
@@ -275,6 +268,8 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
             </p>
             <textarea
               ref={heroTextareaRef}
+              id="idea-seed-description"
+              aria-labelledby="idea-seed-description-label"
               value={heroText}
               onChange={(e) => setHeroText(e.target.value)}
               rows={3}
@@ -289,7 +284,11 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
             <div className="text-[10px] font-semibold uppercase tracking-[0.15em] text-c-text-muted mb-2.5">
               {t('myWorkTable.ideaStartupTemplates.n1ChooseYourTool')}
             </div>
-            <div className="grid grid-cols-4 gap-2">
+            <div
+              className="grid grid-cols-2 gap-2 sm:grid-cols-4"
+              role="group"
+              aria-label={t('myWorkTable.ideaStartupTemplates.n1ChooseYourTool')}
+            >
               {TEMPLATES.map((ws) => {
                 const active = selectedWorkspace === ws.id;
                 const c = COLOR_MAP[ws.color];
@@ -299,6 +298,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
                     key={ws.id}
                     type="button"
                     onClick={() => setSelectedWorkspace(ws.id)}
+                    aria-pressed={active}
                     className={`
                       flex flex-col items-center gap-1.5 rounded-xl px-2 py-3 text-center transition-all duration-200
                       ${
@@ -325,11 +325,14 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
             <div className="text-[10px] font-semibold uppercase tracking-[0.15em] text-c-text-muted mb-2.5">
               {t('myWorkTable.ideaStartupTemplates.n2ChooseAStart')}
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div
+              className="grid grid-cols-1 gap-3 sm:grid-cols-3"
+              role="group"
+              aria-label={t('myWorkTable.ideaStartupTemplates.n2ChooseAStart')}
+            >
               {/* Start with AI */}
               <PrimaryStartButton
                 onClick={() => handleCardClick('describe_with_ai')}
-                onDoubleClick={() => handleCardDoubleClick('describe_with_ai')}
                 selected={selectedAction === 'describe_with_ai'}
                 className="group flex flex-col items-center gap-2.5 rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-4 text-center transition-all duration-200 hover:border-c-border-subtle hover:shadow-lg hover:-translate-y-0.5"
               >
@@ -353,7 +356,6 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
               {/* Blank canvas */}
               <PrimaryStartButton
                 onClick={() => handleCardClick('blank_canvas')}
-                onDoubleClick={() => handleCardDoubleClick('blank_canvas')}
                 selected={selectedAction === 'blank_canvas'}
                 className="group flex flex-col items-center gap-2.5 rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-4 text-center transition-all duration-200 hover:border-c-border-subtle hover:shadow-lg hover:-translate-y-0.5"
               >
@@ -377,20 +379,14 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
               {/* Use template */}
               <PrimaryStartButton
                 onClick={() => handleCardClick('use_template')}
-                onDoubleClick={() => handleCardDoubleClick('use_template')}
                 selected={selectedAction === 'use_template'}
-                className="group flex flex-col items-center gap-2.5 rounded-xl border border-c-success bg-c-surface-raised px-3 py-4 text-center transition-all duration-200 hover:border-c-success hover:shadow-lg hover:-translate-y-0.5"
+                className="group flex flex-col items-center gap-2.5 rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-4 text-center transition-all duration-200 hover:border-c-border hover:shadow-lg hover:-translate-y-0.5"
               >
-                <div
-                  className="rounded-xl p-2.5 text-c-success transition-transform duration-200 group-hover:scale-110"
-                  style={{
-                    backgroundColor: 'color-mix(in srgb, var(--c-success) 12%, transparent)',
-                  }}
-                >
+                <div className="rounded-xl p-2.5 bg-c-surface text-c-text-muted transition-transform duration-200 group-hover:scale-110">
                   <LayoutGrid size={18} />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-[13px] font-semibold text-emerald-600 dark:text-emerald-300">
+                  <div className="text-[13px] font-semibold text-c-text">
                     {t('myWorkTable.ideaStartupTemplates.useTemplate')}
                   </div>
                   <div className="mt-0.5 text-[10px] text-c-text-muted leading-snug">
@@ -413,6 +409,8 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
               <button
                 type="button"
                 onClick={() => setShowStructuredBrief((next) => !next)}
+                aria-expanded={showStructuredBrief}
+                aria-controls="idea-structured-brief"
                 className="text-[11px] font-medium text-c-text hover:underline"
               >
                 {showStructuredBrief
@@ -433,8 +431,13 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
               ))}
             </div>
             {showStructuredBrief && (
-              <div className="mt-3 grid gap-2">
+              <div id="idea-structured-brief" className="mt-3 grid gap-2">
+                <label htmlFor="idea-brief-problem" className="sr-only">
+                  {t('myWorkTable.ideaStartupTemplates.problem')}
+                </label>
                 <input
+                  ref={briefProblemRef}
+                  id="idea-brief-problem"
                   value={structuredBrief.problem}
                   onChange={(e) =>
                     setStructuredBrief((prev) => ({ ...prev, problem: e.target.value }))
@@ -442,7 +445,11 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
                   placeholder={t('myWorkTable.ideaStartupTemplates.problem')}
                   className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] dark:border-c-border-subtle bg-c-surface px-3 py-2 text-xs"
                 />
+                <label htmlFor="idea-brief-goal" className="sr-only">
+                  {t('myWorkTable.ideaStartupTemplates.goalOutcome')}
+                </label>
                 <input
+                  id="idea-brief-goal"
                   value={structuredBrief.goal}
                   onChange={(e) =>
                     setStructuredBrief((prev) => ({ ...prev, goal: e.target.value }))
@@ -450,7 +457,11 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
                   placeholder={t('myWorkTable.ideaStartupTemplates.goalOutcome')}
                   className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] dark:border-c-border-subtle bg-c-surface px-3 py-2 text-xs"
                 />
+                <label htmlFor="idea-brief-constraints" className="sr-only">
+                  {t('myWorkTable.ideaStartupTemplates.constraintsOnePerLine')}
+                </label>
                 <textarea
+                  id="idea-brief-constraints"
                   value={structuredBrief.constraints}
                   onChange={(e) =>
                     setStructuredBrief((prev) => ({ ...prev, constraints: e.target.value }))
@@ -466,6 +477,13 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
 
         {/* ── Footer — Start action, disabled until a card is selected ── */}
         <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-c-border-subtle">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg px-4 py-2 text-[13px] font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+          >
+            {t('common.cancel', 'Cancel')}
+          </button>
           <button
             type="button"
             onClick={handleStart}

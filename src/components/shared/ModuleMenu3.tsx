@@ -153,6 +153,7 @@ export function Menu3Chip({
     <button
       type="button"
       disabled={disabled}
+      aria-pressed={typeof active === 'boolean' ? active : undefined}
       className={cn(
         active ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE,
         disabled && 'cursor-not-allowed opacity-60',

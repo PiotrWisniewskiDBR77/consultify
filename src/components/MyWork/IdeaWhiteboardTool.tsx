@@ -253,282 +253,221 @@ export interface WhiteboardCanvasHandle {
 // Z15: node types that expose the floating per-element style bar.
 const STYLEABLE_WB_NODE_TYPES = new Set(['stickyNote', 'textBlock', 'shapeNode']);
 
-const WhiteboardCanvas = React.forwardRef<WhiteboardCanvasHandle, WhiteboardCanvasProps>(({
-  nodes,
-  edges,
-  locked,
-  cursorMode = 'select',
-  isPolish = false,
-  onNodesChange,
-  onEdgesChange,
-  onConnect,
-  onNodeDoubleClick,
-  bgPattern = 'dots',
-  onViewportChange,
-  onExternalInsert,
-  onFullscreenToggle: externalOnFullscreenToggle,
-  isFullscreen: externalIsFullscreen = false,
-  onContextMenu: externalOnContextMenu,
-  onEdgeContextMenu: externalOnEdgeContextMenu,
-  onNodeStyleChange,
-  suppressFloatingStyleBar,
-  onNodeDragStopReconcile,
-}, ref) => {
-  const { screenToFlowPosition, setViewport, fitView } = useReactFlow();
-  // Z15: subscribe to the live viewport transform so the floating style bar
-  // tracks the node while panning/zooming (re-renders on [x,y,zoom] change).
-  const rfTransform = useReactFlowStore((s) => s.transform);
-  // Z14: 8px grid + magnetic neighbour-edge snapping while dragging.
-  const { onNodeDrag: onSnapNodeDrag, onNodeDragStop: onSnapNodeDragStop } = useCanvasSnapping({
-    enabled: !locked,
-    grid: 8,
-    threshold: 6,
-  });
-  // WB-FRAME-02 (drag containment, 2026-08-10): composes with the existing
-  // snap drag-stop handler (currently a no-op, kept for lifecycle parity —
-  // see useCanvasSnapping's own header) and then reconciles frame membership
-  // against wherever the node visually ended up.
-  const handleNodeDragStop = React.useCallback(
-    (event?: unknown, node?: Node) => {
-      onSnapNodeDragStop(event, node);
-      if (node?.id) onNodeDragStopReconcile?.(node.id);
+const WhiteboardCanvas = React.forwardRef<WhiteboardCanvasHandle, WhiteboardCanvasProps>(
+  (
+    {
+      nodes,
+      edges,
+      locked,
+      cursorMode = 'select',
+      isPolish = false,
+      onNodesChange,
+      onEdgesChange,
+      onConnect,
+      onNodeDoubleClick,
+      bgPattern = 'dots',
+      onViewportChange,
+      onExternalInsert,
+      onFullscreenToggle: externalOnFullscreenToggle,
+      isFullscreen: externalIsFullscreen = false,
+      onContextMenu: externalOnContextMenu,
+      onEdgeContextMenu: externalOnEdgeContextMenu,
+      onNodeStyleChange,
+      suppressFloatingStyleBar,
+      onNodeDragStopReconcile,
     },
-    [onSnapNodeDragStop, onNodeDragStopReconcile]
-  );
-  const { t } = useTranslation();
-  const isDarkCanvas = useIsDark();
-  const containerRef = React.useRef<HTMLDivElement>(null);
-  const [showMiniMap, setShowMiniMap] = React.useState(false);
-  const [internalFullscreen, setInternalFullscreen] = React.useState(false);
-
-  const toggleInternalFullscreen = React.useCallback(() => {
-    if (!containerRef.current) return;
-    if (!document.fullscreenElement) {
-      containerRef.current
-        .requestFullscreen?.()
-        .then(() => setInternalFullscreen(true))
-        .catch(() => {});
-    } else {
-      document
-        .exitFullscreen?.()
-        .then(() => setInternalFullscreen(false))
-        .catch(() => {});
-    }
-  }, []);
-
-  React.useEffect(() => {
-    if (externalOnFullscreenToggle) return;
-    const handler = () => setInternalFullscreen(!!document.fullscreenElement);
-    document.addEventListener('fullscreenchange', handler);
-    return () => document.removeEventListener('fullscreenchange', handler);
-  }, [externalOnFullscreenToggle]);
-
-  const onFullscreenToggle = externalOnFullscreenToggle ?? toggleInternalFullscreen;
-  const isFullscreen = externalOnFullscreenToggle ? externalIsFullscreen : internalFullscreen;
-
-  const selectedNodeId = React.useMemo(
-    () => nodes.find((node) => node.selected)?.id ?? null,
-    [nodes]
-  );
-
-  // Z15: floating style bar — active only when EXACTLY ONE styleable node is
-  // selected. Anchor = top-center of the node, transformed into screen space via
-  // the live viewport (mirrors the Mind Map FloatingNodeToolbar anchor math).
-  const styleBarTarget = React.useMemo(() => {
-    if (locked || !onNodeStyleChange || suppressFloatingStyleBar) return null;
-    const selected = nodes.filter((n) => n.selected);
-    if (selected.length !== 1) return null;
-    const node = selected[0];
-    if (!node.type || !STYLEABLE_WB_NODE_TYPES.has(node.type)) return null;
-    if (node.data?.locked) return null;
-    if (!node.position) return null;
-    const [tx, ty, zoom] = rfTransform;
-    const width = node.width || 180;
-    const screenX = node.position.x * zoom + tx + (width * zoom) / 2;
-    const screenY = node.position.y * zoom + ty;
-    return { node, position: { x: screenX, y: screenY } };
-  }, [locked, onNodeStyleChange, suppressFloatingStyleBar, nodes, rfTransform]);
-
-  React.useEffect(() => {
-    // Naprawa 2026-07-26 (Zadanie B — Scenes nie przełącza widoku): `.react-flow`
-    // to DZIECKO tego kontenera (`<div ref={containerRef}><ReactFlow/></div>`,
-    // patrz JSX niżej), nie jego PRZODEK. `Element.closest()` przeszukuje
-    // WYŁĄCZNIE element i jego przodków, więc zawsze zwracał `null` tutaj —
-    // efekt bailował na `if (!rfEl) return`, a nasłuch na
-    // `idea-whiteboard-set-viewport` NIGDY się nie rejestrował. Scena wciąż
-    // poprawnie dispatchowała zdarzenie (`idea-whiteboard-navigate` w innym
-    // efekcie niżej), ale nic go tu nie odbierało — kliknięcie sceny wyglądało
-    // jak martwe, mimo że cały łańcuch zdarzeń działał aż do tego miejsca.
-    const rfEl = containerRef.current?.querySelector('.react-flow');
-    if (!rfEl) return;
-    const handler = (e: Event) => {
-      const detail = (e as CustomEvent).detail;
-      // If fit flag is set, use fitView instead of setViewport
-      if (detail?.fit) {
-        const fitOpts: Record<string, unknown> = {
-          padding: detail.padding || 0.2,
-          duration: detail.duration || 300,
-        };
-        // Optional: fit to a specific subset of nodes (e.g. unconnected nodes
-        // highlighted from the AI nudge strip) instead of the whole canvas.
-        if (Array.isArray(detail.nodeIds) && detail.nodeIds.length > 0) {
-          fitOpts.nodes = detail.nodeIds.map((id: string) => ({ id }));
-        }
-        fitView(fitOpts);
-      } else if (
-        detail &&
-        typeof detail.x === 'number' &&
-        typeof detail.y === 'number' &&
-        typeof detail.zoom === 'number'
-      ) {
-        setViewport(detail, { duration: 600 });
-      }
-    };
-    rfEl.addEventListener('idea-whiteboard-set-viewport', handler);
-    return () => rfEl.removeEventListener('idea-whiteboard-set-viewport', handler);
-  }, [setViewport, fitView]);
-
-  // A6: zoom-to-fit shortcuts (Cmd/Ctrl+0 and Shift+1) — consistent with the
-  // Mind Map and Process Flow tools. Whiteboard previously had neither.
-  React.useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      const t = e.target as HTMLElement | null;
-      const typing =
-        !!t && (['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName) || t.isContentEditable);
-      if ((e.metaKey || e.ctrlKey) && e.key === '0') {
-        e.preventDefault();
-        fitView({ padding: 0.2, duration: 300 });
-        return;
-      }
-      // e.code is layout-independent (Shift+1 yields "!" on most layouts).
-      if (!typing && e.shiftKey && !e.metaKey && !e.ctrlKey && !e.altKey && e.code === 'Digit1') {
-        e.preventDefault();
-        fitView({ padding: 0.2, duration: 300 });
-      }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [fitView]);
-
-  const getCenter = React.useCallback(() => {
-    return screenToFlowPosition({
-      x: (containerRef.current?.clientWidth ?? 400) / 2,
-      y: (containerRef.current?.clientHeight ?? 300) / 2,
+    ref
+  ) => {
+    const { screenToFlowPosition, setViewport, fitView } = useReactFlow();
+    // Z15: subscribe to the live viewport transform so the floating style bar
+    // tracks the node while panning/zooming (re-renders on [x,y,zoom] change).
+    const rfTransform = useReactFlowStore((s) => s.transform);
+    // Z14: 8px grid + magnetic neighbour-edge snapping while dragging.
+    const { onNodeDrag: onSnapNodeDrag, onNodeDragStop: onSnapNodeDragStop } = useCanvasSnapping({
+      enabled: !locked,
+      grid: 8,
+      threshold: 6,
     });
-  }, [screenToFlowPosition]);
+    // WB-FRAME-02 (drag containment, 2026-08-10): composes with the existing
+    // snap drag-stop handler (currently a no-op, kept for lifecycle parity —
+    // see useCanvasSnapping's own header) and then reconciles frame membership
+    // against wherever the node visually ended up.
+    const handleNodeDragStop = React.useCallback(
+      (event?: unknown, node?: Node) => {
+        onSnapNodeDragStop(event, node);
+        if (node?.id) onNodeDragStopReconcile?.(node.id);
+      },
+      [onSnapNodeDragStop, onNodeDragStopReconcile]
+    );
+    const { t } = useTranslation();
+    const isDarkCanvas = useIsDark();
+    const containerRef = React.useRef<HTMLDivElement>(null);
+    const [showMiniMap, setShowMiniMap] = React.useState(false);
+    const [internalFullscreen, setInternalFullscreen] = React.useState(false);
 
-  // WB-P1-02: visible viewport in flow coordinates, used by the placement
-  // service to clamp fresh inserts on-screen at any pan/zoom (including
-  // browser-level zoom, which scales clientWidth/Height the same way).
-  const getViewportRect = React.useCallback((): WhiteboardRect => {
-    const topLeft = screenToFlowPosition({ x: 0, y: 0 });
-    const bottomRight = screenToFlowPosition({
-      x: containerRef.current?.clientWidth ?? 400,
-      y: containerRef.current?.clientHeight ?? 300,
-    });
-    return {
-      x: topLeft.x,
-      y: topLeft.y,
-      width: Math.max(bottomRight.x - topLeft.x, 1),
-      height: Math.max(bottomRight.y - topLeft.y, 1),
-    };
-  }, [screenToFlowPosition]);
+    const toggleInternalFullscreen = React.useCallback(() => {
+      if (!containerRef.current) return;
+      if (!document.fullscreenElement) {
+        containerRef.current
+          .requestFullscreen?.()
+          .then(() => setInternalFullscreen(true))
+          .catch(() => {});
+      } else {
+        document
+          .exitFullscreen?.()
+          .then(() => setInternalFullscreen(false))
+          .catch(() => {});
+      }
+    }, []);
 
-  // WB-P1-02: expose both to the outer `IdeaWhiteboardTool`, which needs
-  // them for the shared placement service but renders outside
-  // `<ReactFlowProvider>` (see `WhiteboardCanvasHandle` doc above).
-  React.useImperativeHandle(ref, () => ({ getCenter, getViewportRect }), [
-    getCenter,
-    getViewportRect,
-  ]);
+    React.useEffect(() => {
+      if (externalOnFullscreenToggle) return;
+      const handler = () => setInternalFullscreen(!!document.fullscreenElement);
+      document.addEventListener('fullscreenchange', handler);
+      return () => document.removeEventListener('fullscreenchange', handler);
+    }, [externalOnFullscreenToggle]);
 
-  const handlePaste = React.useCallback(
-    (e: ClipboardEvent) => {
-      if (locked) return;
-      const items = e.clipboardData?.items;
-      if (!items) return;
+    const onFullscreenToggle = externalOnFullscreenToggle ?? toggleInternalFullscreen;
+    const isFullscreen = externalOnFullscreenToggle ? externalIsFullscreen : internalFullscreen;
 
-      for (let i = 0; i < items.length; i++) {
-        const item = items[i];
-        if (item.type.startsWith('image/')) {
-          e.preventDefault();
-          const file = item.getAsFile();
-          if (!file) return;
-          // L-05/D-02: cap inline base64 images at 10MB (request body limit).
-          if (file.size > MAX_WHITEBOARD_IMAGE_BYTES) {
-            toast.error(t('myWork.whiteboard.errors.imageTooLarge', 'Image too large (max 10MB)'));
-            return;
+    const selectedNodeId = React.useMemo(
+      () => nodes.find((node) => node.selected)?.id ?? null,
+      [nodes]
+    );
+
+    // Z15: floating style bar — active only when EXACTLY ONE styleable node is
+    // selected. Anchor = top-center of the node, transformed into screen space via
+    // the live viewport (mirrors the Mind Map FloatingNodeToolbar anchor math).
+    const styleBarTarget = React.useMemo(() => {
+      if (locked || !onNodeStyleChange || suppressFloatingStyleBar) return null;
+      const selected = nodes.filter((n) => n.selected);
+      if (selected.length !== 1) return null;
+      const node = selected[0];
+      if (!node.type || !STYLEABLE_WB_NODE_TYPES.has(node.type)) return null;
+      if (node.data?.locked) return null;
+      if (!node.position) return null;
+      const [tx, ty, zoom] = rfTransform;
+      const width = node.width || 180;
+      const screenX = node.position.x * zoom + tx + (width * zoom) / 2;
+      const screenY = node.position.y * zoom + ty;
+      return { node, position: { x: screenX, y: screenY } };
+    }, [locked, onNodeStyleChange, suppressFloatingStyleBar, nodes, rfTransform]);
+
+    React.useEffect(() => {
+      // Naprawa 2026-07-26 (Zadanie B — Scenes nie przełącza widoku): `.react-flow`
+      // to DZIECKO tego kontenera (`<div ref={containerRef}><ReactFlow/></div>`,
+      // patrz JSX niżej), nie jego PRZODEK. `Element.closest()` przeszukuje
+      // WYŁĄCZNIE element i jego przodków, więc zawsze zwracał `null` tutaj —
+      // efekt bailował na `if (!rfEl) return`, a nasłuch na
+      // `idea-whiteboard-set-viewport` NIGDY się nie rejestrował. Scena wciąż
+      // poprawnie dispatchowała zdarzenie (`idea-whiteboard-navigate` w innym
+      // efekcie niżej), ale nic go tu nie odbierało — kliknięcie sceny wyglądało
+      // jak martwe, mimo że cały łańcuch zdarzeń działał aż do tego miejsca.
+      const rfEl = containerRef.current?.querySelector('.react-flow');
+      if (!rfEl) return;
+      const handler = (e: Event) => {
+        const detail = (e as CustomEvent).detail;
+        // If fit flag is set, use fitView instead of setViewport
+        if (detail?.fit) {
+          const fitOpts: Record<string, unknown> = {
+            padding: detail.padding || 0.2,
+            duration: detail.duration || 300,
+          };
+          // Optional: fit to a specific subset of nodes (e.g. unconnected nodes
+          // highlighted from the AI nudge strip) instead of the whole canvas.
+          if (Array.isArray(detail.nodeIds) && detail.nodeIds.length > 0) {
+            fitOpts.nodes = detail.nodeIds.map((id: string) => ({ id }));
           }
+          fitView(fitOpts);
+        } else if (
+          detail &&
+          typeof detail.x === 'number' &&
+          typeof detail.y === 'number' &&
+          typeof detail.zoom === 'number'
+        ) {
+          setViewport(detail, { duration: 600 });
+        }
+      };
+      rfEl.addEventListener('idea-whiteboard-set-viewport', handler);
+      return () => rfEl.removeEventListener('idea-whiteboard-set-viewport', handler);
+    }, [setViewport, fitView]);
 
-          const center = getCenter();
-          const label = file.name || 'Pasted image';
-          void uploadWhiteboardImageWithFallback(file).then((result) => {
-            if (!result.uploaded) {
-              toast(
-                t(
-                  'myWork.whiteboard.errors.imageUploadFallback',
-                  'Image saved locally (offline) — storage upload unavailable'
-                ),
-                { icon: '⚠️' }
-              );
-            }
-            onExternalInsert?.([
-              {
-                kind: 'image',
-                label,
-                imageUrl: result.imageUrl,
-                src: result.src,
-                width: 300,
-                position: center,
-              },
-            ]);
-          });
+    // A6: zoom-to-fit shortcuts (Cmd/Ctrl+0 and Shift+1) — consistent with the
+    // Mind Map and Process Flow tools. Whiteboard previously had neither.
+    React.useEffect(() => {
+      const handler = (e: KeyboardEvent) => {
+        const t = e.target as HTMLElement | null;
+        const typing =
+          !!t && (['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName) || t.isContentEditable);
+        if ((e.metaKey || e.ctrlKey) && e.key === '0') {
+          e.preventDefault();
+          fitView({ padding: 0.2, duration: 300 });
           return;
         }
-      }
+        // e.code is layout-independent (Shift+1 yields "!" on most layouts).
+        if (!typing && e.shiftKey && !e.metaKey && !e.ctrlKey && !e.altKey && e.code === 'Digit1') {
+          e.preventDefault();
+          fitView({ padding: 0.2, duration: 300 });
+        }
+      };
+      window.addEventListener('keydown', handler);
+      return () => window.removeEventListener('keydown', handler);
+    }, [fitView]);
 
-      const text = e.clipboardData?.getData('text/plain')?.trim();
-      if (text) {
-        e.preventDefault();
-        const center = getCenter();
-        const isUrl = /^https?:\/\//i.test(text);
-        onExternalInsert?.([
-          isUrl
-            ? { kind: 'link', label: text, url: text, position: center }
-            : {
-                kind: 'text',
-                label: text,
-                position: center,
-                colorIndex: Math.floor(Math.random() * STICKY_COLORS.length),
-              },
-        ]);
-      }
-    },
-    [getCenter, locked, onExternalInsert]
-  );
+    const getCenter = React.useCallback(() => {
+      return screenToFlowPosition({
+        x: (containerRef.current?.clientWidth ?? 400) / 2,
+        y: (containerRef.current?.clientHeight ?? 300) / 2,
+      });
+    }, [screenToFlowPosition]);
 
-  const handleDrop = React.useCallback(
-    (e: React.DragEvent) => {
-      if (locked) return;
-      e.preventDefault();
+    // WB-P1-02: visible viewport in flow coordinates, used by the placement
+    // service to clamp fresh inserts on-screen at any pan/zoom (including
+    // browser-level zoom, which scales clientWidth/Height the same way).
+    const getViewportRect = React.useCallback((): WhiteboardRect => {
+      const topLeft = screenToFlowPosition({ x: 0, y: 0 });
+      const bottomRight = screenToFlowPosition({
+        x: containerRef.current?.clientWidth ?? 400,
+        y: containerRef.current?.clientHeight ?? 300,
+      });
+      return {
+        x: topLeft.x,
+        y: topLeft.y,
+        width: Math.max(bottomRight.x - topLeft.x, 1),
+        height: Math.max(bottomRight.y - topLeft.y, 1),
+      };
+    }, [screenToFlowPosition]);
 
-      const pos = screenToFlowPosition({ x: e.clientX, y: e.clientY });
-      const files = e.dataTransfer.files;
+    // WB-P1-02: expose both to the outer `IdeaWhiteboardTool`, which needs
+    // them for the shared placement service but renders outside
+    // `<ReactFlowProvider>` (see `WhiteboardCanvasHandle` doc above).
+    React.useImperativeHandle(ref, () => ({ getCenter, getViewportRect }), [
+      getCenter,
+      getViewportRect,
+    ]);
 
-      if (files.length > 0) {
-        for (let i = 0; i < files.length; i++) {
-          const file = files[i];
-          const id = `wb-drop-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 6)}`;
+    const handlePaste = React.useCallback(
+      (e: ClipboardEvent) => {
+        if (locked) return;
+        const items = e.clipboardData?.items;
+        if (!items) return;
 
-          if (file.type.startsWith('image/')) {
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+          if (item.type.startsWith('image/')) {
+            e.preventDefault();
+            const file = item.getAsFile();
+            if (!file) return;
             // L-05/D-02: cap inline base64 images at 10MB (request body limit).
             if (file.size > MAX_WHITEBOARD_IMAGE_BYTES) {
               toast.error(
                 t('myWork.whiteboard.errors.imageTooLarge', 'Image too large (max 10MB)')
               );
-              continue;
+              return;
             }
-            const dropPosition = { x: pos.x + i * 30, y: pos.y + i * 30 };
+
+            const center = getCenter();
+            const label = file.name || 'Pasted image';
             void uploadWhiteboardImageWithFallback(file).then((result) => {
               if (!result.uploaded) {
                 toast(
@@ -542,203 +481,271 @@ const WhiteboardCanvas = React.forwardRef<WhiteboardCanvasHandle, WhiteboardCanv
               onExternalInsert?.([
                 {
                   kind: 'image',
-                  label: file.name,
+                  label,
                   imageUrl: result.imageUrl,
                   src: result.src,
-                  width: 250,
-                  position: dropPosition,
+                  width: 300,
+                  position: center,
                 },
               ]);
             });
-          } else {
-            onExternalInsert?.([
-              {
-                kind: 'link',
-                label: file.name,
-                url: '',
-                position: { x: pos.x + i * 30, y: pos.y + i * 30 },
-              },
-            ]);
+            return;
           }
         }
-        return;
-      }
 
-      const text = e.dataTransfer.getData('text/plain')?.trim();
-      if (text) {
-        const isUrl = /^https?:\/\//i.test(text);
-        onExternalInsert?.([
-          isUrl
-            ? { kind: 'link', label: text, url: text, position: pos }
-            : {
-                kind: 'text',
-                label: text,
-                position: pos,
-                colorIndex: Math.floor(Math.random() * STICKY_COLORS.length),
-              },
-        ]);
-      }
-    },
-    [locked, onExternalInsert, screenToFlowPosition]
-  );
-
-  const handleDragOver = React.useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'copy';
-  }, []);
-
-  React.useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    el.addEventListener('paste', handlePaste);
-    return () => el.removeEventListener('paste', handlePaste);
-  }, [handlePaste]);
-
-  // Perf measurement (docs/qa/ideas-complete-transformation-2026-08-09/
-  // 17_PERFORMANCE_MEASUREMENT.md): the whiteboard mounted every node's DOM
-  // unconditionally (no `onlyRenderVisibleElements`), unlike Mind Map which
-  // gates the same ReactFlow prop behind `mindmapVirtualization`
-  // (M06 Fala 3.3, threshold 300 — see mindmap/virtualization.ts). Manual
-  // "Add element" already hard-blocks at 500 nodes (see `addElement` P13
-  // limit enforcement above), so this only ever engages in the narrow
-  // 300–500 band that path can reach — paste/import/AI-batch paths are NOT
-  // confirmed to share that cap and could exceed it. Threshold matches Mind
-  // Map's for consistency. Deliberately NOT behind a new feature flag (kept
-  // inside this file per the fix's scope) — per CLAUDE.md rule #7/#9 this
-  // still needs a screenshot-acceptance pass before it ships to demo, since
-  // it changes what's mounted in the DOM.
-  const onlyRenderVisibleElements = nodes.length >= 300;
-
-  return (
-    <div
-      ref={containerRef}
-      className="w-full h-full relative"
-      tabIndex={0}
-      onDrop={handleDrop}
-      onDragOver={handleDragOver}
-    >
-      {styleBarTarget && onNodeStyleChange && (
-        <WhiteboardStyleBar
-          node={styleBarTarget.node}
-          position={styleBarTarget.position}
-          locked={locked}
-          onChange={onNodeStyleChange}
-        />
-      )}
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={locked ? undefined : onNodesChange}
-        onEdgesChange={locked ? undefined : onEdgesChange}
-        onConnect={onConnect}
-        onNodeDrag={locked ? undefined : onSnapNodeDrag}
-        onNodeDragStop={locked ? undefined : handleNodeDragStop}
-        {...(onlyRenderVisibleElements ? { onlyRenderVisibleElements: true } : {})}
-        nodeTypes={nodeTypes}
-        edgeTypes={edgeTypes}
-        onNodeDoubleClick={(_event: any, node: any) => {
-          if (onNodeDoubleClick) onNodeDoubleClick(node.id, node.data);
-        }}
-        onNodeContextMenu={(event: any, node: any) => {
-          event.preventDefault();
-          externalOnContextMenu?.(event, node.id, node.data, node);
-        }}
-        onEdgeContextMenu={(event: any, edge: any) => {
-          event.preventDefault();
-          externalOnEdgeContextMenu?.(event, edge.id);
-        }}
-        onPaneContextMenu={(event: any) => {
-          event.preventDefault();
-          externalOnContextMenu?.(event);
-        }}
-        {...getIdeasToolInteractionProps('whiteboard', { locked })}
-        // Z1 (rozdz. 06 §3): tryb kursora z lewego raila REALNIE przestawia
-        // płótno. `select` = zero nadpisań (zachowanie Z10), `pan` = rączka
-        // (nic nie da się ruszyć ani zaznaczyć). Spread MUSI być po
-        // getIdeasToolInteractionProps, żeby wygrał z domyślnymi.
-        {...getIdeaCanvasCursorProps(cursorMode)}
-        // Fala 8: connectionMode="loose" already comes from
-        // getIdeasToolInteractionProps (spread above); connectionRadius widens
-        // the drop-snap zone around each 4-side handle (parity with Process
-        // Flow's IdeaProcessFlowTool, same magnetic-connector feel).
-        connectionRadius={40}
-        deleteKeyCode={null}
-        fitView
-        className={`bg-c-surface-raised ${getIdeaCanvasCursorClass(cursorMode)}`}
-        defaultEdgeOptions={{ type: 'labeled' }}
-        onMoveEnd={(_event: unknown, viewport: { x: number; y: number; zoom: number }) =>
-          onViewportChange?.(viewport)
+        const text = e.clipboardData?.getData('text/plain')?.trim();
+        if (text) {
+          e.preventDefault();
+          const center = getCenter();
+          const isUrl = /^https?:\/\//i.test(text);
+          onExternalInsert?.([
+            isUrl
+              ? { kind: 'link', label: text, url: text, position: center }
+              : {
+                  kind: 'text',
+                  label: text,
+                  position: center,
+                  colorIndex: Math.floor(Math.random() * STICKY_COLORS.length),
+                },
+          ]);
         }
+      },
+      [getCenter, locked, onExternalInsert]
+    );
+
+    const handleDrop = React.useCallback(
+      (e: React.DragEvent) => {
+        if (locked) return;
+        e.preventDefault();
+
+        const pos = screenToFlowPosition({ x: e.clientX, y: e.clientY });
+        const files = e.dataTransfer.files;
+
+        if (files.length > 0) {
+          for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const id = `wb-drop-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 6)}`;
+
+            if (file.type.startsWith('image/')) {
+              // L-05/D-02: cap inline base64 images at 10MB (request body limit).
+              if (file.size > MAX_WHITEBOARD_IMAGE_BYTES) {
+                toast.error(
+                  t('myWork.whiteboard.errors.imageTooLarge', 'Image too large (max 10MB)')
+                );
+                continue;
+              }
+              const dropPosition = { x: pos.x + i * 30, y: pos.y + i * 30 };
+              void uploadWhiteboardImageWithFallback(file).then((result) => {
+                if (!result.uploaded) {
+                  toast(
+                    t(
+                      'myWork.whiteboard.errors.imageUploadFallback',
+                      'Image saved locally (offline) — storage upload unavailable'
+                    ),
+                    { icon: '⚠️' }
+                  );
+                }
+                onExternalInsert?.([
+                  {
+                    kind: 'image',
+                    label: file.name,
+                    imageUrl: result.imageUrl,
+                    src: result.src,
+                    width: 250,
+                    position: dropPosition,
+                  },
+                ]);
+              });
+            } else {
+              onExternalInsert?.([
+                {
+                  kind: 'link',
+                  label: file.name,
+                  url: '',
+                  position: { x: pos.x + i * 30, y: pos.y + i * 30 },
+                },
+              ]);
+            }
+          }
+          return;
+        }
+
+        const text = e.dataTransfer.getData('text/plain')?.trim();
+        if (text) {
+          const isUrl = /^https?:\/\//i.test(text);
+          onExternalInsert?.([
+            isUrl
+              ? { kind: 'link', label: text, url: text, position: pos }
+              : {
+                  kind: 'text',
+                  label: text,
+                  position: pos,
+                  colorIndex: Math.floor(Math.random() * STICKY_COLORS.length),
+                },
+          ]);
+        }
+      },
+      [locked, onExternalInsert, screenToFlowPosition]
+    );
+
+    const handleDragOver = React.useCallback((e: React.DragEvent) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+    }, []);
+
+    React.useEffect(() => {
+      const el = containerRef.current;
+      if (!el) return;
+      el.addEventListener('paste', handlePaste);
+      return () => el.removeEventListener('paste', handlePaste);
+    }, [handlePaste]);
+
+    // Perf measurement (docs/qa/ideas-complete-transformation-2026-08-09/
+    // 17_PERFORMANCE_MEASUREMENT.md): the whiteboard mounted every node's DOM
+    // unconditionally (no `onlyRenderVisibleElements`), unlike Mind Map which
+    // gates the same ReactFlow prop behind `mindmapVirtualization`
+    // (M06 Fala 3.3, threshold 300 — see mindmap/virtualization.ts). Manual
+    // "Add element" already hard-blocks at 500 nodes (see `addElement` P13
+    // limit enforcement above), so this only ever engages in the narrow
+    // 300–500 band that path can reach — paste/import/AI-batch paths are NOT
+    // confirmed to share that cap and could exceed it. Threshold matches Mind
+    // Map's for consistency. Deliberately NOT behind a new feature flag (kept
+    // inside this file per the fix's scope) — per CLAUDE.md rule #7/#9 this
+    // still needs a screenshot-acceptance pass before it ships to demo, since
+    // it changes what's mounted in the DOM.
+    const onlyRenderVisibleElements = nodes.length >= 300;
+
+    return (
+      <div
+        ref={containerRef}
+        className="w-full h-full relative"
+        tabIndex={0}
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
       >
-        {bgPattern !== 'blank' && (
-          <Background
-            gap={bgPattern === 'lines' ? 48 : 24}
-            size={bgPattern === 'grid' ? 24 : 1}
-            color={getCanvasBg('whiteboard', isDarkCanvas ? 'dark' : 'light').color}
-            variant={
-              bgPattern === 'grid'
-                ? ('cross' as any)
-                : bgPattern === 'lines'
-                  ? ('lines' as any)
-                  : ('dots' as any)
-            }
+        {styleBarTarget && onNodeStyleChange && (
+          <WhiteboardStyleBar
+            node={styleBarTarget.node}
+            position={styleBarTarget.position}
+            locked={locked}
+            onChange={onNodeStyleChange}
           />
         )}
-        {showMiniMap && (
-          <MiniMap
-            nodeColor={(n: Node) => {
-              if (n.type === 'stickyNote') {
-                const idx = (n.data?.colorIndex ?? 0) % STICKY_COLORS.length;
-                const c = STICKY_COLORS[idx];
-                return isDarkCanvas ? c.darkHex || c.hex : c.hex;
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={locked ? undefined : onNodesChange}
+          onEdgesChange={locked ? undefined : onEdgesChange}
+          onConnect={onConnect}
+          onNodeDrag={locked ? undefined : onSnapNodeDrag}
+          onNodeDragStop={locked ? undefined : handleNodeDragStop}
+          {...(onlyRenderVisibleElements ? { onlyRenderVisibleElements: true } : {})}
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+          onNodeDoubleClick={(_event: any, node: any) => {
+            if (onNodeDoubleClick) onNodeDoubleClick(node.id, node.data);
+          }}
+          onNodeContextMenu={(event: any, node: any) => {
+            event.preventDefault();
+            externalOnContextMenu?.(event, node.id, node.data, node);
+          }}
+          onEdgeContextMenu={(event: any, edge: any) => {
+            event.preventDefault();
+            externalOnEdgeContextMenu?.(event, edge.id);
+          }}
+          onPaneContextMenu={(event: any) => {
+            event.preventDefault();
+            externalOnContextMenu?.(event);
+          }}
+          {...getIdeasToolInteractionProps('whiteboard', { locked })}
+          // Z1 (rozdz. 06 §3): tryb kursora z lewego raila REALNIE przestawia
+          // płótno. `select` = zero nadpisań (zachowanie Z10), `pan` = rączka
+          // (nic nie da się ruszyć ani zaznaczyć). Spread MUSI być po
+          // getIdeasToolInteractionProps, żeby wygrał z domyślnymi.
+          {...getIdeaCanvasCursorProps(cursorMode)}
+          // Fala 8: connectionMode="loose" already comes from
+          // getIdeasToolInteractionProps (spread above); connectionRadius widens
+          // the drop-snap zone around each 4-side handle (parity with Process
+          // Flow's IdeaProcessFlowTool, same magnetic-connector feel).
+          connectionRadius={40}
+          deleteKeyCode={null}
+          fitView
+          className={`bg-c-surface-raised ${getIdeaCanvasCursorClass(cursorMode)}`}
+          defaultEdgeOptions={{ type: 'labeled' }}
+          onMoveEnd={(_event: unknown, viewport: { x: number; y: number; zoom: number }) =>
+            onViewportChange?.(viewport)
+          }
+        >
+          {bgPattern !== 'blank' && (
+            <Background
+              gap={bgPattern === 'lines' ? 48 : 24}
+              size={bgPattern === 'grid' ? 24 : 1}
+              color={getCanvasBg('whiteboard', isDarkCanvas ? 'dark' : 'light').color}
+              variant={
+                bgPattern === 'grid'
+                  ? ('cross' as any)
+                  : bgPattern === 'lines'
+                    ? ('lines' as any)
+                    : ('dots' as any)
               }
-              if (n.type === 'kpiBadge') {
-                const s = n.data?.status;
-                return s === 'on_track'
-                  ? 'var(--c-success)'
-                  : s === 'off_track'
-                    ? 'var(--c-danger)'
-                    : s === 'at_risk'
-                      ? 'var(--c-warning)'
-                      : 'var(--c-text-muted)';
+            />
+          )}
+          {showMiniMap && (
+            <MiniMap
+              nodeColor={(n: Node) => {
+                if (n.type === 'stickyNote') {
+                  const idx = (n.data?.colorIndex ?? 0) % STICKY_COLORS.length;
+                  const c = STICKY_COLORS[idx];
+                  return isDarkCanvas ? c.darkHex || c.hex : c.hex;
+                }
+                if (n.type === 'kpiBadge') {
+                  const s = n.data?.status;
+                  return s === 'on_track'
+                    ? 'var(--c-success)'
+                    : s === 'off_track'
+                      ? 'var(--c-danger)'
+                      : s === 'at_risk'
+                        ? 'var(--c-warning)'
+                        : 'var(--c-text-muted)';
+                }
+                if (n.type === 'scoreNode') return 'var(--c-tag-2)';
+                if (n.type === 'progressNode') return 'var(--c-info)';
+                if (n.type === 'summaryCard') return 'var(--c-tag-3)';
+                if (n.type === 'frameNode') return 'var(--c-surface-raised)';
+                if (n.type === 'shapeNode')
+                  return n.data?.bgColor || 'color-mix(in srgb, var(--c-tag-2) 20%, transparent)';
+                if (n.type === 'groupNode') return 'var(--c-surface)';
+                return 'var(--c-border-subtle)';
+              }}
+              maskColor={isDarkCanvas ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0.08)'}
+              className="!bg-c-surface !border-c-border-subtle !rounded-xl"
+              /**
+               * Wymaganie #6 dolnego paska: minimapa nie może wjeżdżać POD pasek
+               * (pasek `z-dropdown`, minimapa domyślnie `z-index:5`). Mapa myśli
+               * ma to uniesienie od dawna na sztywno; tutaj wchodzi razem z flagą
+               * `ideaBottomBarUnified`, bo to zmiana wizualna (OFF = jak dziś).
+               */
+              style={
+                isIdeaBottomBarUnifiedEnabled()
+                  ? { marginBottom: IDEA_BOTTOM_BAR_MINIMAP_LIFT, zIndex: 10 }
+                  : undefined
               }
-              if (n.type === 'scoreNode') return 'var(--c-tag-2)';
-              if (n.type === 'progressNode') return 'var(--c-info)';
-              if (n.type === 'summaryCard') return 'var(--c-tag-3)';
-              if (n.type === 'frameNode') return 'var(--c-surface-raised)';
-              if (n.type === 'shapeNode')
-                return n.data?.bgColor || 'color-mix(in srgb, var(--c-tag-2) 20%, transparent)';
-              if (n.type === 'groupNode') return 'var(--c-surface)';
-              return 'var(--c-border-subtle)';
-            }}
-            maskColor={isDarkCanvas ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0.08)'}
-            className="!bg-c-surface !border-c-border-subtle !rounded-xl"
-            /**
-             * Wymaganie #6 dolnego paska: minimapa nie może wjeżdżać POD pasek
-             * (pasek `z-dropdown`, minimapa domyślnie `z-index:5`). Mapa myśli
-             * ma to uniesienie od dawna na sztywno; tutaj wchodzi razem z flagą
-             * `ideaBottomBarUnified`, bo to zmiana wizualna (OFF = jak dziś).
-             */
-            style={
-              isIdeaBottomBarUnifiedEnabled()
-                ? { marginBottom: IDEA_BOTTOM_BAR_MINIMAP_LIFT, zIndex: 10 }
-                : undefined
-            }
+            />
+          )}
+          <CanvasZoomControls
+            isPolish={isPolish}
+            selectedNodeId={selectedNodeId}
+            showMiniMap={showMiniMap}
+            onToggleMiniMap={() => setShowMiniMap((prev) => !prev)}
+            onFullscreenToggle={onFullscreenToggle}
+            isFullscreen={isFullscreen}
           />
-        )}
-        <CanvasZoomControls
-          isPolish={isPolish}
-          selectedNodeId={selectedNodeId}
-          showMiniMap={showMiniMap}
-          onToggleMiniMap={() => setShowMiniMap((prev) => !prev)}
-          onFullscreenToggle={onFullscreenToggle}
-          isFullscreen={isFullscreen}
-        />
-        {!locked && <CanvasSnapGuides threshold={6} />}
-      </ReactFlow>
-    </div>
-  );
-});
+          {!locked && <CanvasSnapGuides threshold={6} />}
+        </ReactFlow>
+      </div>
+    );
+  }
+);
 WhiteboardCanvas.displayName = 'WhiteboardCanvas';
 
 // ── Main component ───────────────────────────────────────────────────────────
@@ -2238,9 +2245,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
         onConsumeAutoEdit: () => {
           setNodes((nds: Node[]) =>
             nds.map((nd: Node) =>
-              nd.id === id && nd.data?._isNew
-                ? { ...nd, data: { ...nd.data, _isNew: false } }
-                : nd
+              nd.id === id && nd.data?._isNew ? { ...nd, data: { ...nd.data, _isNew: false } } : nd
             )
           );
         },
@@ -2395,14 +2400,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       }
       return newNode;
     },
-    [
-      currentUserId,
-      handleToggleReaction,
-      isPl,
-      locked,
-      nodes,
-      setNodes,
-    ]
+    [currentUserId, handleToggleReaction, isPl, locked, nodes, setNodes]
   );
 
   const createOutcomeRecord = useCallback(
@@ -3874,9 +3872,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       // on this action's context-menu entry, `IdeaCanvasContextMenu.tsx`).
       if (generatorType === 'wb_find_themes') {
         const scopeNodes =
-          selectedNodeIds.length > 0
-            ? nodes.filter((n) => selectedNodeIds.includes(n.id))
-            : nodes;
+          selectedNodeIds.length > 0 ? nodes.filter((n) => selectedNodeIds.includes(n.id)) : nodes;
         const generic = collectGenericWhiteboardLabels(t);
         const hasRealLabel = scopeNodes.some(
           (n) => !isGenericWhiteboardLabel(n.data?.label, generic)
@@ -4840,6 +4836,8 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
           {!proposalBatch && nodes.length > 0 && (
             <IdeaAINudgeStrip
               ideaId={ideaId}
+              userId={currentUser?.id || null}
+              organizationId={currentUser?.organizationId || null}
               activeTool={'whiteboard' as any}
               title={ideaTitle}
               seedText={ideaSeedText}
@@ -4852,20 +4850,22 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
               // Whiteboardzie oba przyciski nie robiły NIC. Podpięte do realnych
               // generatorów tablicy (useWhiteboardQuickActions → AI_ACTION_MAP,
               // ścieżka propozycja→akceptacja).
-              onActionExpand={() =>
+              onActionExpand={() => {
                 window.dispatchEvent(
                   new CustomEvent('idea-workspace-quick-action', {
                     detail: { action: 'wb_ai_find_themes', ideaId },
                   })
-                )
-              }
-              onActionConvert={() =>
+                );
+                return { status: 'handed_off' as const };
+              }}
+              onActionConvert={() => {
                 window.dispatchEvent(
                   new CustomEvent('idea-workspace-quick-action', {
                     detail: { action: 'wb_ai_to_map', ideaId },
                   })
-                )
-              }
+                );
+                return { status: 'handed_off' as const };
+              }}
               // AGT/whiteboard fix: "N unconnected elements" pill's "Go" button had no
               // handler of its own — it silently fell through to onActionExpand
               // (wb_ai_find_themes), an unrelated AI action. There is no existing
@@ -4883,6 +4883,13 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
                     })
                   );
                 }
+                return {
+                  status: 'handed_off' as const,
+                  message: t(
+                    'myWorkIdeas.aiNudgeStrip.selectionReady',
+                    'Selected the unconnected elements. Connect them on the canvas; this suggestion will remain until you confirm the result.'
+                  ),
+                };
               }}
             />
           )}

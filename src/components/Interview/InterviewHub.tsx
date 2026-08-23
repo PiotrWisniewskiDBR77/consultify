@@ -9616,6 +9616,13 @@ Return ONLY the answer text (no markdown fences).`;
       {/* Assign Interview Modal */}
       <AssignInterviewModal
         isOpen={showAssignModal}
+        onManageTemplate={(templateId) => {
+          setShowAssignModal(false);
+          setSelectedTemplateForAssign(null);
+          changeInterviewTab('templates');
+          const template = templates.find((item) => item.id === templateId);
+          if (template) handleViewTemplate(template);
+        }}
         onClose={() => {
           setShowAssignModal(false);
           setSelectedTemplateForAssign(null);

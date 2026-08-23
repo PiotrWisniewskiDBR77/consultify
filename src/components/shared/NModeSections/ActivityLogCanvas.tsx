@@ -48,6 +48,8 @@ interface ActivityLogCanvasProps {
   typeMeta: (type: string) => ActivityTypeMeta;
   /** Optional custom stat cards (overrides default 4-card grid) */
   customStats?: { label: { en: string; pl: string }; value: number }[];
+  /** Task-owner review variant: a light chronological list, without dashboard cards. */
+  variant?: 'dashboard' | 'compact-list';
 }
 
 // ── Component ───────────────────────────────────────────────────────────────
@@ -57,9 +59,11 @@ export const ActivityLogCanvas: React.FC<ActivityLogCanvasProps> = ({
   stats,
   typeMeta,
   customStats,
+  variant = 'dashboard',
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
+  const locale = isPolish ? 'pl-PL' : 'en-US';
 
   const defaultStatCards = [
     { label: t('sharedComponents.activityLogCanvas.entries'), value: stats.total },
@@ -74,6 +78,65 @@ export const ActivityLogCanvas: React.FC<ActivityLogCanvasProps> = ({
         value: c.value,
       }))
     : defaultStatCards;
+
+  if (variant === 'compact-list') {
+    return (
+      <div className="space-y-3">
+        <h2 className="text-lg font-semibold text-c-text dark:text-white">
+          {t('sharedComponents.activityLogCanvas.title')}
+        </h2>
+        {entries.length === 0 ? (
+          <p className="py-4 text-sm text-c-text-secondary dark:text-c-text-muted">
+            {t('sharedComponents.activityLogCanvas.noEntries')}
+          </p>
+        ) : (
+          <ol className="divide-y divide-c-border/60 dark:divide-c-border/60">
+            {entries.map((entry) => {
+              const meta = typeMeta(entry.type);
+              const hasTechnicalDetails = Boolean(entry.oldValue || entry.newValue);
+              const parsedTimestamp = new Date(entry.timestamp);
+              const hasValidTimestamp = !Number.isNaN(parsedTimestamp.getTime());
+              return (
+                <li key={entry.id} className="py-3 first:pt-0 last:pb-0">
+                  <div className="flex items-start gap-3">
+                    <span className="mt-0.5 text-c-text-muted" aria-hidden="true">
+                      {meta.icon}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm text-c-text dark:text-c-text">{entry.description}</p>
+                      <p className="mt-1 text-xs text-c-text-secondary dark:text-c-text-muted">
+                        <time dateTime={entry.timestamp}>
+                          {hasValidTimestamp
+                            ? parsedTimestamp.toLocaleString(locale)
+                            : t('sharedComponents.activityLogCanvas.unknownDate', 'Unknown date')}
+                        </time>
+                        <span>{` · ${entry.userName || t('sharedComponents.activityLogCanvas.systemActor', 'System')}`}</span>
+                      </p>
+                      {hasTechnicalDetails && (
+                        <details className="mt-1.5 text-xs text-c-text-secondary dark:text-c-text-muted">
+                          <summary className="w-fit cursor-pointer select-none hover:text-c-text">
+                            {t('common.details', 'Details')}
+                          </summary>
+                          <div className="mt-1">
+                            {entry.oldValue && (
+                              <p>{`${t('sharedComponents.activityLogCanvas.from')}: ${entry.oldValue}`}</p>
+                            )}
+                            {entry.newValue && (
+                              <p>{`${t('sharedComponents.activityLogCanvas.to')}: ${entry.newValue}`}</p>
+                            )}
+                          </div>
+                        </details>
+                      )}
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

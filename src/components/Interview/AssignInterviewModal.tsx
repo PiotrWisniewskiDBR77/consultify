@@ -10,7 +10,7 @@
  */
 
 import { AlertTriangle, EyeOff, FileText, UserPlus, Users, X } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -49,6 +49,28 @@ interface InterviewTemplate {
   hasPublishedVersion?: boolean;
 }
 
+export type InterviewTemplateAssignmentEligibility =
+  | { eligible: true; reason: null }
+  | {
+      eligible: false;
+      reason: 'not_approved' | 'no_published_version' | 'invalid_published_version';
+    };
+
+export const getInterviewTemplateAssignmentEligibility = (
+  template: Pick<InterviewTemplate, 'status' | 'hasPublishedVersion' | 'version'>
+): InterviewTemplateAssignmentEligibility => {
+  if (String(template.status || '').toLowerCase() !== 'approved') {
+    return { eligible: false, reason: 'not_approved' };
+  }
+  if (template.hasPublishedVersion !== true) {
+    return { eligible: false, reason: 'no_published_version' };
+  }
+  if (!Number.isInteger(Number(template.version)) || Number(template.version) < 1) {
+    return { eligible: false, reason: 'invalid_published_version' };
+  }
+  return { eligible: true, reason: null };
+};
+
 interface User {
   id: string;
   name: string;
@@ -61,6 +83,7 @@ interface AssignInterviewModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  onManageTemplate?: (templateId: string) => void;
   preselectedTemplateId?: string;
   reassignAssignment?: {
     id: string;
@@ -78,6 +101,7 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
   isOpen,
   onClose,
   onSuccess,
+  onManageTemplate,
   preselectedTemplateId,
   reassignAssignment,
 }) => {
@@ -100,10 +124,71 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
 
   // Data state
   const [templates, setTemplates] = useState<InterviewTemplate[]>([]);
+  const [ineligibleTemplates, setIneligibleTemplates] = useState<
+    Array<
+      InterviewTemplate & {
+        eligibilityReason: Exclude<
+          InterviewTemplateAssignmentEligibility,
+          { eligible: true }
+        >['reason'];
+      }
+    >
+  >([]);
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [templateLoadError, setTemplateLoadError] = useState<string | null>(null);
+  const [eligibilityRefreshMessage, setEligibilityRefreshMessage] = useState<string | null>(null);
+  const [reloadNonce, setReloadNonce] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const requestKeyRef = React.useRef('');
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
+  const isSubmittingRef = useRef(false);
+
+  useEffect(() => {
+    isSubmittingRef.current = isSubmitting;
+  }, [isSubmitting]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
+    const focusFrame = window.requestAnimationFrame(() => closeButtonRef.current?.focus());
+
+    const handleDialogKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !isSubmittingRef.current) {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+
+      const focusable = Array.from(
+        dialogRef.current?.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [href], [tabindex]:not([tabindex="-1"])'
+        ) ?? []
+      ).filter((element) => !element.hasAttribute('aria-hidden'));
+      if (focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener('keydown', handleDialogKeyDown);
+    return () => {
+      window.cancelAnimationFrame(focusFrame);
+      document.removeEventListener('keydown', handleDialogKeyDown);
+      previouslyFocusedRef.current?.focus();
+    };
+  }, [isOpen, onClose]);
 
   // Load templates and users
   useEffect(() => {
@@ -120,6 +205,7 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
         try {
           const templatesData = await Api.get('/interview/templates');
           templatesRes = Array.isArray(templatesData) ? templatesData : [];
+          setTemplateLoadError(null);
         } catch (err: any) {
           console.error(
             '[AssignInterviewModal] Failed to load templates:',
@@ -127,6 +213,7 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
             err?.message
           );
           const errorMsg = err?.response?.data?.error || err?.message || 'Failed to load templates';
+          setTemplateLoadError(typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg));
           if (err?.response?.status === 403) {
             toast.error(t('interview.assignModal.noPermissionToViewTemplates'));
           } else {
@@ -160,18 +247,54 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
           usersRes = [];
         }
 
-        setTemplates(
-          templatesRes
-            .filter(
-              (template) =>
-                String(template?.status || '').toLowerCase() === 'approved' &&
-                template?.hasPublishedVersion === true
+        const normalizedTemplates = templatesRes.map((template) => ({
+          ...template,
+          version: Number(template?.version || 0),
+          scope: ((template?.scope || 'private') as TemplateScope) || 'private',
+          areaTags: normalizeInterviewTemplateAreaTags(template?.areaTags),
+        }));
+        const classifiedTemplates = normalizedTemplates.map((template) => ({
+          template,
+          eligibility: getInterviewTemplateAssignmentEligibility(template),
+        }));
+        const eligibleTemplates = classifiedTemplates
+          .filter(
+            (entry): entry is typeof entry & { eligibility: { eligible: true; reason: null } } =>
+              entry.eligibility.eligible
+          )
+          .map((entry) => entry.template);
+        setTemplates(eligibleTemplates);
+        if (
+          selectedTemplateId &&
+          !eligibleTemplates.some((template) => template.id === selectedTemplateId)
+        ) {
+          setEligibilityRefreshMessage(
+            t(
+              'interview.assignModal.selectedTemplateNoLongerAvailable',
+              'The previously selected template is no longer assignable. Select another published version; the rest of your form is preserved.'
             )
-            .map((template) => ({
-              ...template,
-              version: Number(template?.version || 0),
-              scope: ((template?.scope || 'private') as TemplateScope) || 'private',
-              areaTags: normalizeInterviewTemplateAreaTags(template?.areaTags),
+          );
+        } else {
+          setEligibilityRefreshMessage(null);
+        }
+        setSelectedTemplateId((currentTemplateId) =>
+          currentTemplateId &&
+          !eligibleTemplates.some((template) => template.id === currentTemplateId)
+            ? ''
+            : currentTemplateId
+        );
+        setIneligibleTemplates(
+          classifiedTemplates
+            .filter(
+              (
+                entry
+              ): entry is typeof entry & {
+                eligibility: Exclude<InterviewTemplateAssignmentEligibility, { eligible: true }>;
+              } => !entry.eligibility.eligible
+            )
+            .map((entry) => ({
+              ...entry.template,
+              eligibilityReason: entry.eligibility.reason,
             }))
         );
 
@@ -212,7 +335,7 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
     };
 
     loadData();
-  }, [isOpen, isPolish]);
+  }, [isOpen, isPolish, reloadNonce]);
 
   // Reset form when modal opens
   useEffect(() => {
@@ -240,7 +363,10 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
           getTemplateSourceLabel(template.scope, t),
           ...(template.areaTags || []).map((tag) => getTemplateAreaTagLabel(tag, t)),
         ].filter(Boolean);
-        const label = tags.length ? `${template.name} · ${tags.join(' · ')}` : template.name;
+        const versionLabel = `v${template.version}`;
+        const label = tags.length
+          ? `${template.name} · ${versionLabel} · ${tags.join(' · ')}`
+          : `${template.name} · ${versionLabel}`;
         return {
           value: template.id,
           label,
@@ -248,6 +374,28 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
         };
       }),
     [templates, isPolish]
+  );
+
+  const templateEligibilityReasonLabel = useCallback(
+    (reason: (typeof ineligibleTemplates)[number]['eligibilityReason']) => {
+      if (reason === 'not_approved') {
+        return t(
+          'interview.assignModal.templateUnavailableNotApproved',
+          'Not approved for assignment'
+        );
+      }
+      if (reason === 'invalid_published_version') {
+        return t(
+          'interview.assignModal.templateUnavailableInvalidVersion',
+          'Published version is invalid'
+        );
+      }
+      return t(
+        'interview.assignModal.templateUnavailableNoPublishedVersion',
+        'No published version'
+      );
+    },
+    [t]
   );
 
   // User options for the portal-based MultiSelect.
@@ -370,11 +518,18 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
         error?.data?.code || error?.response?.data?.code || error?.code || ''
       );
       if (errorCode === 'PUBLISHED_TEMPLATE_VERSION_NOT_FOUND') {
-        errorMessage =
-          'This template version is no longer available. Reload and select a published version.';
+        errorMessage = t(
+          'interview.assignModal.publishedVersionChanged',
+          'This template version changed. Availability was refreshed; review the pinned version and retry.'
+        );
+        setReloadNonce((value) => value + 1);
       } else if (errorCode === 'ASSIGNMENT_IDEMPOTENCY_PAYLOAD_MISMATCH') {
-        errorMessage =
-          'This assignment changed while it was being retried. Close and reopen the form.';
+        errorMessage = t(
+          'interview.assignModal.assignmentChangedOnRetry',
+          'This assignment changed while it was being retried. Review the form and retry.'
+        );
+        requestKeyRef.current =
+          globalThis.crypto?.randomUUID?.() ?? `assignment-${Date.now()}-${Math.random()}`;
       } else if (typeof error === 'string') {
         errorMessage = error;
       } else if (error?.data?.error || error?.response?.data?.error) {
@@ -400,11 +555,21 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
           (same layer as the Modal primitive: black/30 light, black/50 dark). */}
       <div
         className="absolute inset-0 bg-black/30 dark:bg-black/50 backdrop-blur-sm"
-        onClick={onClose}
+        onClick={() => {
+          if (!isSubmitting) onClose();
+        }}
+        aria-hidden="true"
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-hidden bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-2xl shadow-2xl">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="assign-interview-dialog-title"
+        aria-describedby="assign-interview-dialog-description"
+        className="relative mx-4 flex max-h-[min(90vh,900px)] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-navy-700 dark:bg-navy-900 sm:mx-6"
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-navy-700">
           <div className="flex items-center gap-3">
@@ -412,12 +577,18 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
               <UserPlus size={20} className="text-c-accent" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+              <h2
+                id="assign-interview-dialog-title"
+                className="text-lg font-semibold text-slate-900 dark:text-white"
+              >
                 {reassignAssignment
                   ? t('interview.assignModal.reassignInterview', 'Reassign interview')
                   : t('interview.assignModal.assignInterview')}
               </h2>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p
+                id="assign-interview-dialog-description"
+                className="text-sm text-slate-500 dark:text-slate-400"
+              >
                 {reassignAssignment
                   ? t(
                       'interview.assignModal.selectNewAssignee',
@@ -428,15 +599,19 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
             </div>
           </div>
           <button
+            ref={closeButtonRef}
+            type="button"
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+            disabled={isSubmitting}
+            aria-label={t('common.close', 'Close')}
+            className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
           >
             <X size={20} />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)] space-y-6">
+        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-4 sm:p-6">
           {isLoading ? (
             <LoadingState variant="spinner" className="py-12" />
           ) : (
@@ -452,6 +627,88 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
                   aria-label={t('interview.assignModal.interviewTemplate')}
                   disabled={Boolean(reassignAssignment)}
                 />
+                {templateLoadError && (
+                  <div
+                    role="alert"
+                    className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-900/60 dark:bg-red-950/20 dark:text-red-300"
+                  >
+                    <span>
+                      {t('interview.assignModal.templateLoadFailed', 'Templates could not load')}
+                      {`: ${templateLoadError}`}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setReloadNonce((value) => value + 1)}
+                    >
+                      {t('common.retry', 'Retry')}
+                    </Button>
+                  </div>
+                )}
+                {eligibilityRefreshMessage && (
+                  <div
+                    role="status"
+                    className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/20 dark:text-amber-300"
+                  >
+                    {eligibilityRefreshMessage}
+                  </div>
+                )}
+                {!templateLoadError &&
+                  templates.length === 0 &&
+                  ineligibleTemplates.length === 0 && (
+                    <div
+                      role="status"
+                      className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600 dark:border-navy-700 dark:bg-navy-800/50 dark:text-slate-300"
+                    >
+                      {t(
+                        'interview.assignModal.noTemplatesAvailable',
+                        'No templates are available in your scope.'
+                      )}
+                    </div>
+                  )}
+                {selectedTemplateId &&
+                  templates.find((template) => template.id === selectedTemplateId) && (
+                    <p className="mt-2 text-xs text-slate-500 dark:text-slate-400" role="status">
+                      {t('interview.assignModal.pinnedVersion', 'Pinned assignment version')}: v
+                      {templates.find((template) => template.id === selectedTemplateId)?.version}
+                    </p>
+                  )}
+                {ineligibleTemplates.length > 0 && (
+                  <div
+                    className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm dark:border-amber-900/60 dark:bg-amber-950/20"
+                    aria-labelledby="assign-interview-unavailable-templates-title"
+                  >
+                    <p
+                      id="assign-interview-unavailable-templates-title"
+                      className="font-medium text-amber-900 dark:text-amber-200"
+                    >
+                      {t(
+                        'interview.assignModal.unavailableTemplatesTitle',
+                        'Templates unavailable for assignment'
+                      )}
+                    </p>
+                    <ul className="mt-2 space-y-1 text-amber-800 dark:text-amber-300">
+                      {ineligibleTemplates.map((template) => (
+                        <li key={template.id} className="flex items-center justify-between gap-3">
+                          <span>
+                            <span className="font-medium">{template.name}</span>
+                            {' — '}
+                            {templateEligibilityReasonLabel(template.eligibilityReason)}
+                          </span>
+                          {onManageTemplate && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => onManageTemplate(template.id)}
+                            >
+                              {t('interview.assignModal.openTemplate', 'Open template')}
+                            </Button>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </Field>
 
               {/* User Selection */}
@@ -506,7 +763,7 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
               </Field>
 
               {/* Due Date & Priority */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <Field>
                   <FieldLabel required>{t('interview.assignModal.dueDate')}</FieldLabel>
                   <DatePicker
