@@ -27,6 +27,19 @@ SHA-256: `43b1a9f6947b7085e70f0b7f3ff43109f0745ae7a37d33d3f896bda05fcdd30f`
 
 The current runtime does not contain canonical records for these explicit review IDs.
 The document route opens Document Studio but returns `Nie znaleziono tego dokumentu`.
+
+## Recovered canonical Materials lane
+
+A read-only identity check found the already-running isolated Materials owner runtime:
+
+- frontend: `http://127.0.0.1:4342`;
+- API: `http://127.0.0.1:4341` (`/api/health` = `200`);
+- database: local PostgreSQL `consultify_w3_materials_owner_recovered_20260823` on loopback;
+- no database, Railway or staging mutation was performed.
+
+The canonical registry contains one presentation, `Plan transformacji — 90 dni`. Opening it from the registry cold-opens the full Deck Builder with four slides, slide navigation, editing controls, presentation mode, comments, AI actions and the Teresa side panel. Evidence: `materials-presentation-full-card-4342.jpg`.
+
+This recovered lane does not currently expose canonical Document or Sheet records. Therefore the presentation full-card path is proven, while Document Studio and Workbook full-card readback remain open integration work.
 The attempted presentation and workbook paths are not mounted canonical routes and fall
 back to Chat. Therefore this replay proves the registry/table integration only. It does
 not claim DOC/PPT/XLSX cold-open, persistence, export, or owner acceptance.
