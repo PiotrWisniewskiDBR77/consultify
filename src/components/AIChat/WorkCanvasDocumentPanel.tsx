@@ -3472,19 +3472,17 @@ function WorkCanvasMarkdownDocumentPanel({
             {menuOutputActionIds.map((actionId) => renderCommandButton(actionId))}
           </div>
 
-          {/* C4.5 — Promote group: one-click promotion of Canvas content into
-              Tasks, Decisions, Initiatives, Ideas, Notes. #86/#87: brought to the
-              artifact toolbar canon — crimson is reserved for critical semantics
-              only, so this cluster now uses the same NEUTRAL group language as the
-              output/file groups (was a loud crimson-tinted strip). The "Promote"
-              caption stays; the workspace-action buttons are unchanged. */}
+          {/* Workspace destinations: create a platform entity from the Canvas
+              content. Keep the concrete actions, but name the group after the
+              user-visible outcome rather than the unexplained internal term
+              "Promote" (CHAT-OWN-005). */}
           <div
             className="flex items-center gap-2 rounded-full border border-slate-200 px-2 py-0.5 dark:border-white/10"
-            data-testid="canvas-promote-strip"
-            title="Promote Canvas content into platform entities"
+            data-testid="canvas-workspace-destinations"
+            title="Create a workspace item from this Canvas"
           >
             <span className="select-none px-1 text-[9px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-              Promote
+              Create in workspace
             </span>
             <div className="flex items-center gap-1" data-testid="canvas-workspace-actions">
               {menuWorkspaceActionIds.map((actionId) => renderCommandButton(actionId))}

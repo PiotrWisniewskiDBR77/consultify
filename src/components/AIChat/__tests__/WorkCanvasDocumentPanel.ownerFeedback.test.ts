@@ -1,0 +1,29 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { describe, expect, it } from 'vitest';
+
+const source = fs.readFileSync(
+  path.resolve(__dirname, '../WorkCanvasDocumentPanel.tsx'),
+  'utf8'
+);
+
+describe('WorkCanvasDocumentPanel owner feedback', () => {
+  it('uses an explicit workspace outcome instead of the unexplained PROMOTE label', () => {
+    expect(source).toContain('data-testid="canvas-workspace-destinations"');
+    expect(source).toContain('Create in workspace');
+    expect(source).not.toContain('data-testid="canvas-promote-strip"');
+    expect(source).not.toMatch(/>\s*Promote\s*</);
+  });
+
+  it('retains the concrete workspace destination commands', () => {
+    for (const actionId of [
+      'send-to-idea',
+      'save-as-note',
+      'create-initiative',
+      'create-decision',
+      'create-task',
+    ]) {
+      expect(source).toContain(`'${actionId}'`);
+    }
+  });
+});
