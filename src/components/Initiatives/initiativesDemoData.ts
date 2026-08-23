@@ -1,4 +1,5 @@
 import { InitiativeStatus, type PortfolioInitiative } from '../../types';
+import { nextStepForLifecycle } from './initiativeRegisterProjection';
 
 type DemoInitiativeContext = {
   currentUserId?: string;
@@ -121,6 +122,37 @@ const getStatusTimeline = (status: InitiativeStatus) => {
   ];
   const currentIndex = Math.max(ordered.indexOf(status), 0);
   return ordered.slice(0, currentIndex + 1);
+};
+
+const lifecycleForDemoStatus = (status: InitiativeStatus): string => {
+  switch (status) {
+    case InitiativeStatus.DRAFT:
+      return 'REGISTERED_DRAFT';
+    case InitiativeStatus.PENDING_REVIEW:
+      return 'DEFINING';
+    case InitiativeStatus.REVIEW:
+      return 'ANALYZING';
+    case InitiativeStatus.PROMOTED:
+      return 'READY_FOR_DECISION';
+    case InitiativeStatus.PLANNING:
+    case InitiativeStatus.APPROVED:
+      return 'APPROVED_BACKLOG';
+    case InitiativeStatus.SCHEDULED:
+      return 'SCHEDULED';
+    case InitiativeStatus.EXECUTING:
+    case InitiativeStatus.BLOCKED:
+      return 'IN_EXECUTION';
+    case InitiativeStatus.DONE:
+      return 'DELIVERED';
+    case InitiativeStatus.TRACKING:
+      return 'BENEFITS_TRACKING';
+    case InitiativeStatus.CANCELLED:
+      return 'CANCELLED';
+    case InitiativeStatus.ARCHIVED:
+      return 'ARCHIVED';
+    default:
+      return 'REGISTERED_DRAFT';
+  }
 };
 
 export function createInitiativesDemoDataset(context: DemoInitiativeContext = {}): DemoDataset {
@@ -737,6 +769,9 @@ export function createInitiativesDemoDataset(context: DemoInitiativeContext = {}
     const ownerExecution = userRef(blueprint.ownerExecutionId);
     const initiativeId = makeId(blueprint.key);
     const dependencies = (blueprint.dependencyKeys || []).map((key) => makeId(key));
+    const displayStatus = lifecycleForDemoStatus(blueprint.status);
+    const nextStep = nextStepForLifecycle(displayStatus);
+    const isBlocked = blueprint.status === InitiativeStatus.BLOCKED;
 
     return {
       id: initiativeId,
@@ -746,6 +781,29 @@ export function createInitiativesDemoDataset(context: DemoInitiativeContext = {}
       description: blueprint.description,
       axis: blueprint.axis,
       status: blueprint.status,
+      displayStatus,
+      lifecycle: displayStatus,
+      gateName: nextStep.gate,
+      gateReadiness: isBlocked
+        ? 'BLOCKED'
+        : blueprint.progress >= 70
+          ? 'READY'
+          : blueprint.progress >= 30
+            ? 'PARTIAL'
+            : 'NOT_READY',
+      nextAction: isBlocked ? 'Usuń blokadę realizacji' : nextStep.action,
+      expectedImpact: blueprint.targetDescription,
+      impactConfidence:
+        blueprint.progress >= 70 ? 'HIGH' : blueprint.progress >= 30 ? 'MEDIUM' : 'LOW',
+      plannedWindow: `${isoOffsetDays(blueprint.startOffsetDays)} / ${isoOffsetDays(blueprint.endOffsetDays)}`,
+      healthState: isBlocked
+        ? 'CRITICAL'
+        : blueprint.riskScore >= 60
+          ? 'AT_RISK'
+          : blueprint.progress >= 70
+            ? 'ON_TRACK'
+            : 'WATCH',
+      sourceFreshness: 'CURRENT',
       priority: blueprint.priority,
       progress: blueprint.progress,
       budget: blueprint.budget,

@@ -15,13 +15,11 @@ export function hasInitiativeStatusReadDrift(
     | null
     | undefined
 ): boolean {
-  if (initiative?.statusReadDrift === true) return true;
-  const raw = String(initiative?.status ?? '')
-    .trim()
-    .toUpperCase();
-  const disp = String(initiative?.displayStatus ?? '')
-    .trim()
-    .toUpperCase();
-  if (!raw || !disp) return false;
-  return raw !== disp;
+  // `status` and `displayStatus` intentionally belong to different vocabularies:
+  // the first is the detailed initiative workflow, while the second is the
+  // normalized portfolio lifecycle used by the registry. Their values are not
+  // expected to be equal. The V8 read service performs the actual schema-drift
+  // check and exposes its result explicitly, so the UI must not infer drift by
+  // comparing the two legitimate representations.
+  return initiative?.statusReadDrift === true;
 }

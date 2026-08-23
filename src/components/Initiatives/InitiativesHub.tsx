@@ -9,7 +9,6 @@ import {
   Activity,
   AlertTriangle,
   Archive,
-  BarChart3,
   CalendarClock,
   CheckCircle2,
   Clock,
@@ -19,7 +18,6 @@ import {
   ExternalLink,
   Filter,
   GitBranch,
-  Inbox,
   Lightbulb,
   List,
   Plus,
@@ -238,8 +236,6 @@ interface InitiativesHubProps {
 
 const CANONICAL_INITIATIVES_TABS = new Set<ModuleTab>([
   'list',
-  'candidates',
-  'portfolio',
   'plan',
   'capacity',
 ]);
@@ -659,29 +655,21 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     return counts;
   }, [initiatives]);
 
-  // Available view modes — hide when Analysis tab is active
+  // Available view modes — plan and capacity are dedicated analysis workspaces.
   const availableViewModes: ViewMode[] =
-    activeTab === 'portfolio' || activeTab === 'plan' || activeTab === 'capacity'
+    activeTab === 'plan' || activeTab === 'capacity'
       ? []
       : ['table', 'kanban', 'timeline', 'grid'];
 
-  // V3-F02: Portfolio Analysis tab + main portfolio tab
+  // Owner-approved IA: lifecycle/statuses belong to the initiative registry.
+  // Candidate and portfolio semantics remain preserved in the data model, but
+  // are no longer exposed as duplicate top-level destinations.
   const tabs = useMemo(
     () => [
       {
         id: 'list' as ModuleTab,
         label: 'Inicjatywy',
         icon: <List size={16} />,
-      },
-      {
-        id: 'candidates' as ModuleTab,
-        label: 'Kandydaci',
-        icon: <Inbox size={16} />,
-      },
-      {
-        id: 'portfolio' as ModuleTab,
-        label: 'Portfel',
-        icon: <BarChart3 size={16} />,
       },
       {
         id: 'plan' as ModuleTab,
@@ -696,6 +684,18 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     ],
     [t]
   );
+
+  useEffect(() => {
+    const requestedTab = searchParams.get('tab') as ModuleTab | null;
+    if (!requestedTab || CANONICAL_INITIATIVES_TABS.has(requestedTab)) return;
+    const next = new URLSearchParams(searchParams);
+    next.delete('tab');
+    next.delete('candidateInbox');
+    next.delete('candidateId');
+    next.delete('sourceProposalId');
+    setActiveTab('list');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   // ============================================
   // HANDLERS
@@ -744,6 +744,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
   const handleOpenInitiativeDocument = useCallback(
     (initiative: PortfolioInitiative) => {
+      const desiredSubType = isShowcaseInitiativeId(initiative.id)
+        ? 'showcase'
+        : 'canonical-runtime';
       const existingDoc = openDocuments.find(
         (document) => document.id === initiative.id && document.type === 'initiative'
       );
@@ -752,15 +755,15 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           id: initiative.id,
           name: initiative.name || t('initiatives.document.untitled', 'Untitled initiative'),
           type: 'initiative',
-          subType: 'canonical-runtime',
+          subType: desiredSubType,
           status: (initiative.status || InitiativeStatus.DRAFT) as any,
         };
         setOpenDocuments((prev) => [...prev, newDoc]);
-      } else if (existingDoc.subType !== 'canonical-runtime') {
+      } else if (existingDoc.subType !== desiredSubType) {
         setOpenDocuments((prev) =>
           prev.map((document) =>
             document.id === initiative.id && document.type === 'initiative'
-              ? { ...document, subType: 'canonical-runtime' }
+              ? { ...document, subType: desiredSubType }
               : document
           )
         );
