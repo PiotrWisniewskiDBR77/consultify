@@ -277,20 +277,33 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const [canonicalMenu3Counts, setCanonicalMenu3Counts] = useState<
     Record<string, Record<string, number>>
   >({});
-  const handlePortfolioMenu3Counts = useCallback(
-    (counts: Record<string, number>) =>
-      setCanonicalMenu3Counts((current) => ({ ...current, portfolio: counts })),
+  const updateCanonicalMenu3Counts = useCallback(
+    (surface: string, counts: Record<string, number>) =>
+      setCanonicalMenu3Counts((current) => {
+        const previous = current[surface];
+        const keys = Object.keys(counts);
+        if (
+          previous &&
+          Object.keys(previous).length === keys.length &&
+          keys.every((key) => previous[key] === counts[key])
+        ) {
+          return current;
+        }
+        return { ...current, [surface]: counts };
+      }),
     []
+  );
+  const handlePortfolioMenu3Counts = useCallback(
+    (counts: Record<string, number>) => updateCanonicalMenu3Counts('portfolio', counts),
+    [updateCanonicalMenu3Counts]
   );
   const handlePlanMenu3Counts = useCallback(
-    (counts: Record<string, number>) =>
-      setCanonicalMenu3Counts((current) => ({ ...current, plan: counts })),
-    []
+    (counts: Record<string, number>) => updateCanonicalMenu3Counts('plan', counts),
+    [updateCanonicalMenu3Counts]
   );
   const handleCapacityMenu3Counts = useCallback(
-    (counts: Record<string, number>) =>
-      setCanonicalMenu3Counts((current) => ({ ...current, capacity: counts })),
-    []
+    (counts: Record<string, number>) => updateCanonicalMenu3Counts('capacity', counts),
+    [updateCanonicalMenu3Counts]
   );
   /** Active/All scope toggle — used for Kanban columns and data filtering */
   const [scope, setScope] = useState<KanbanScope>('active');
@@ -298,6 +311,14 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // Data state
   const [initiatives, setInitiatives] = useState<PortfolioInitiative[]>([]);
   const [allInitiatives, setAllInitiatives] = useState<PortfolioInitiative[]>([]); // For duplicate detection
+  const planInitiatives = useMemo(
+    () =>
+      allInitiatives.map((initiative) => ({
+        id: initiative.id,
+        name: initiative.name || initiative.title || initiative.id,
+      })),
+    [allInitiatives]
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -1667,10 +1688,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       return (
         <PlanScenarioSurface
           demoMode={allowDemoData}
-          initiatives={allInitiatives.map((initiative) => ({
-            id: initiative.id,
-            name: initiative.name || initiative.title || initiative.id,
-          }))}
+          initiatives={planInitiatives}
           activePreset={canonicalMenu3Preset.plan}
           onCountsChange={handlePlanMenu3Counts}
         />
