@@ -2,10 +2,33 @@
 
 Date: 2026-08-23
 Branch: `codex/wave3-16-module-acceptance-20260821`
-Current checkpoint HEAD: `ca9ef20646584f4b41bd5732eda3eca993ba0b73`
+Qualified product SHA: `bcfb01483a368fb4baa133d35dbc7b56ba6c7857`
 Production / Railway mutation: `NOT_AUTHORIZED`
 
-## Result
+## Final-candidate result
+
+The final repository-owned release denominator was rerun on the exact product
+SHA above and passed:
+
+- `RELEASE_30M_50U`, 50 authenticated users, requested `1,800,000 ms`, actual
+  `1,800,792 ms`;
+- `111,400` requests, `0` errors;
+- read p95 `103.897959 ms`, write p95 `98.506333 ms`;
+- `8,950/8,950` expected/reconciled writes, `0` loss, `0` duplicates and `0`
+  tenant false-successes;
+- signed desktop Web Vitals p75: LCP `552 ms`, CLS `0.000236686`, INP `16 ms`;
+- signed mobile Web Vitals p75: LCP `436 ms`, CLS `0`, INP `16 ms`;
+- generated manifest confirms `credentialsPersisted=false`; independent SHA-256
+  readback matched both the report and Web Vitals input hashes.
+
+The disposable PostgreSQL database was removed by the harness; catalog
+readback retained only `postgres`. The isolated native cluster was stopped and
+moved recoverably to the Trash. Production and Railway were untouched.
+
+Artifacts are preserved under `/private/tmp/nfr-perf-bcfb-final/`. Piotr owner
+acceptance and release authorization remain separate gates.
+
+## Earlier reconciliation basis
 
 The complete NFR-owned allowlist is byte-for-byte identical between the last
 qualified product SHA `0115b8bb8534b72ac4aa1d7411b60ecff3c30b56` and the
