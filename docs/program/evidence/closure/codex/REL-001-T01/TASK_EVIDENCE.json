@@ -136,6 +136,36 @@
     "productionTouched": false,
     "releaseGo": false
   },
+  "finalProductCandidateAttempt20260823": {
+    "candidateSha": "bcfb01483a368fb4baa133d35dbc7b56ba6c7857",
+    "treeSha": "d90cffbab92a3f19a7effdf41d6e1a8aaefdd45d",
+    "candidateRef": "refs/recovery/final-mvp-product-bcfb-20260823",
+    "previousVerifiedSha": "e6ca206c0035f653118d9aadbfddf61d452ab52e",
+    "bundlePath": "/private/tmp/consultify-release-bundle-bcfb-v3",
+    "manifestSha256": "bc533dc56cc9f1a0d2cc82fe065774c61858b32075f4a41468544381bf644319",
+    "freshReceipts": {
+      "reporter82": "PASS; denominator 82, 73 DONE_CURRENT_SHA, 9 PARTIAL, missing 0, invalid 0",
+      "typecheck": "PASS",
+      "backendBuild": "PASS; 9 runtime mirrors verified",
+      "frontendBuild": "PASS with the established 8 GB heap ceiling; chunk-size warnings only"
+    },
+    "generator": "PASS; deterministic bundle emitted with authorization NOT_AUTHORIZED and releaseGo false.",
+    "independentVerifier": {
+      "verified": false,
+      "technicalStatus": "NOT_VERIFIED",
+      "releaseGo": false,
+      "errorCount": 158,
+      "files": 37,
+      "byCode": {
+        "DESTRUCTIVE_ALTER_DROP": 13,
+        "DESTRUCTIVE_CASCADE": 5,
+        "DESTRUCTIVE_DATA_REWRITE": 49,
+        "DESTRUCTIVE_DROP": 15,
+        "MIGRATION_STATEMENT_UNCLASSIFIED": 76
+      }
+    },
+    "decision": "NO_GO. Using exact staging-qualified e6ca as previousVerifiedSha removes the false rollback-modified finding, but 158 findings across 37 new migrations remain. Do not suppress or waive them; audit and classify every statement before regenerating the bundle. No push, deploy, Railway mutation or release was performed."
+  },
   "technicalVerdict": "STAGING_QUALIFIED_ROLLBACK_PASS_CANDIDATE_RESTORED_NOT_AUTHORIZED",
   "verdict": "PARTIAL",
   "blockers": [

@@ -343,5 +343,14 @@
       "Deployed desktop/mobile acceptance and rollback rehearsal remain NOT VERIFIED.",
       "Production release remains NOT AUTHORIZED."
     ]
+  },
+  "finalExactProductShaAdoptionRequalification20260823": {
+    "testedProductSha": "bcfb01483a368fb4baa133d35dbc7b56ba6c7857",
+    "scope": "Exact-project adoption of an accepted classic Initiative into runtime-v1 Execution, combined with the preserved four-source producer-to-PIR lineage.",
+    "tests": "Material command unit 10/10, accepted classic runtime adoption RealPG 3/3 and four-source lineage RealPG 7/7 passed; root typecheck, backend build and frontend build passed.",
+    "receiptBinding": "The adoption receipt is database-validated against exact tenant, Candidate, Initiative, project, handoff, output, version, content hash and accepted status; it is append-only and transactionally committed with the runtime aggregate.",
+    "negativeControls": "Wrong project, tenant forgery, ambiguous legacy/runtime identity, idempotency collision, immutability and missing transaction capability fail closed.",
+    "migration": "20261061 applied and repeated successfully; validation and immutability triggers were present and enabled.",
+    "boundary": "Repository and local RealPG FLOW are exact-product-SHA PASS. Signed authenticated browser/API/SQL identity across the full end-user journey, authorized deployed rollback rehearsal and owner acceptance remain open."
   }
 }

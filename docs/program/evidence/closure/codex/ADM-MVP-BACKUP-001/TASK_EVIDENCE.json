@@ -122,6 +122,16 @@
     "rejectedInfrastructureRun": "An earlier attempt is invalid evidence: the Docker VM exhausted space while migrating the second disposable database, PostgreSQL entered crash recovery and the target stopped at 414 migrations. Only dangling image layers were pruned; no volume was pruned. PostgreSQL recovered and the 16/16 owner-fixture audit passed before the target was rebuilt from zero.",
     "boundary": "Repository/local DR is current and green. Deployment scheduler observation, environment-managed key rotation/object storage, authorized staging restore and production release remain unexecuted and unauthorized."
   },
+  "finalExactProductShaRequalification20260823": {
+    "testedProductSha": "bcfb01483a368fb4baa133d35dbc7b56ba6c7857",
+    "databaseRuntime": "Two isolated native PostgreSQL 16 databases in the exact disposable ADM namespace; the recovered owner fixtures and Railway databases were not used or mutated.",
+    "realPostgres": "19/19 current encrypted backup, isolated restore and durable lifecycle tests passed across the two suites. This current denominator is one larger than the earlier 18/18 packet because the source now contains nine lifecycle tests.",
+    "nonDb": "13/13 scheduler lifecycle, BackupCron and mounted no-stub route tests passed.",
+    "negativeControls": "Wrong key, corrupted object, source/same target, cross-tenant restore, mid-restore rollback, append-only audit, stale fence, storage failure and audit failure all remained fail-closed.",
+    "residue": "After the successful runs both source and target contained zero owned fixture organizations/users/memberships, manifests, audit rows and restore receipts; local storage contained zero files.",
+    "cleanup": "The isolated PG16 server was stopped and moved recoverably to the Trash after catalog/residue readback. Production, Railway and owner runtime 4363/4364 were untouched.",
+    "boundary": "Local exact-product-SHA DATA-DR is PASS. Staging scheduler observation, managed key rotation/object storage, staging restore and release remain externally gated and NOT_AUTHORIZED."
+  },
   "technicalVerdict": "PASS_REPOSITORY_CURRENT_SHA_PARTIAL_ENVIRONMENT_NOT_AUTHORIZED",
   "verdict": "PARTIAL",
   "openBlockers": [
