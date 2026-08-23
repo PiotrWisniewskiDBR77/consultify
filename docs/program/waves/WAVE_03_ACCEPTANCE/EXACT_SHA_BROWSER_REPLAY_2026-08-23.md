@@ -8,6 +8,8 @@ Runtime candidates:
 - `6d28066e5e9b273e44662c3b272a3b90e0510d05` — Results, Finance and Materials.
 - `62b8ca12cbfe94490140ddffff2ad22500b9d7a9` — Audits after the fail-closed
   coverage-contract repair.
+- `c02afa5205a5d2fff900902a7d414ec1c6931829` — Chat, Admin, Settings and
+  Partner; its only change from the Audits candidate is this evidence document.
 
 Scope: credentialed in-app browser replay against isolated recovered local
 PostgreSQL databases. Railway, staging, demo and production were not mutated.
@@ -33,6 +35,10 @@ This is runtime evidence, not Piotr owner acceptance or release authorization.
 | Finance | Real OWNER login; `/finance?tab=statements` rendered three statements, two rejected imports, zero repair-queue items, one ready statement, the approved CD PROJEKT 2024 statement and the two truthful 2025 draft states. | `BROWSER_PASS_OWNER_ACCEPTANCE_REQUIRED` |
 | Materials | Real OWNER login; canonical document, presentation and workbook routes rendered the transformation plan with two substantive sections, the four-slide deck and the pilot-budget workbook/XLSX identity. | `BROWSER_PASS_OWNER_ACCEPTANCE_REQUIRED` |
 | Audits | The initial replay exposed a real contract defect: the list and criterion showed `1/1`, while the preview silently rendered `0/0`. The server returned canonical `applicableTotal`/`concludedTotal` fields but the client read obsolete `...Criteria` names and defaulted them to zero. Commit `62b8ca12cb` maps the canonical fields and rejects malformed coverage instead of fabricating zeroes. Exact-SHA runtime replay on the preserved fixture then rendered `Postęp 1/1`, `Pokrycie 1/1`, `Dowód niewystarczający 0`, and criterion `TA.1` as `1 / 1`. | `BROWSER_PASS_OWNER_ACCEPTANCE_REQUIRED` |
+| Chat | Real OWNER login and canonical conversation deep link rendered the sourced Pilot Atlas message, external evidence link, two preserved source references, content hash/version and the governed proposal in truthful `Pending review` state with separate Approve/Reject controls. No decision or materialization write was performed. | `BROWSER_PASS_OWNER_ACCEPTANCE_REQUIRED` |
+| Admin | Real OWNER login and `/admin/audit/events` rendered the rebuilt task-oriented Admin navigation and a reconciled audit surface: `3` total, `3` unresolved, `3` high-risk, with all three durable IAM events present in the table. No export or IAM mutation was performed. | `BROWSER_PASS_OWNER_ACCEPTANCE_REQUIRED` |
+| Settings | Real OWNER login and `/settings/data-controls` rendered the pending export with durable receipt and the previous deletion request as cancelled, explicitly stating that no automated erasure is scheduled. No consent, retention, export or deletion mutation was performed. Broad GDPR-compliance copy remains a separate legal/source-authorization gate; this replay does not substantiate it. | `BROWSER_PASS_OWNER_ACCEPTANCE_REQUIRED` |
+| Partner | Real OWNER login and `/partner/profile` rendered active partner state, certification `1/10`, one attribution, one participant-ledger record and zero accrued economics. The governed boundary explicitly disables accrual, payout and self-approval without an approved versioned rule. The navigation still exposes commission/payout sections while economics is policy-gated; the previously recorded owner IA decision remains open. | `BROWSER_PASS_OWNER_ACCEPTANCE_REQUIRED / IA_DECISION_OPEN / ECONOMICS_OFF` |
 
 ## Qualification notes
 
@@ -56,8 +62,10 @@ This is runtime evidence, not Piotr owner acceptance or release authorization.
 
 ## Remaining denominator
 
-Browser-qualified across the exact-SHA candidate lineage: `12/16` modules.
+Browser-qualified across the exact-SHA candidate lineage: `16/16` modules.
 
-Pending exact-SHA browser replay: Chat, Admin, Settings and Partner.
-Responsive/accessibility checks and Piotr owner acceptance remain open for the
-full denominator.
+The desktop exact-SHA browser denominator is complete. This is a technical
+replay across the candidate lineage, not one frozen final-candidate regression
+run and not Piotr owner acceptance. Responsive/accessibility checks, the
+Partner IA/economics decision, Settings legal-copy substantiation and Piotr
+owner acceptance remain open.
