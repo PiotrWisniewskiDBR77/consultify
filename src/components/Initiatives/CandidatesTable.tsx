@@ -37,17 +37,38 @@ export interface CandidatesTableProps {
   onAccept?: (payload: AcceptCandidatePayload) => void;
   initialSelectedId?: string | null;
   onSelectionChange?: (candidateId: string | null) => void;
+  demoMode?: boolean;
 }
+
+const demoCandidates = [
+  {
+    id: 'demo-candidate-predictive-maintenance', organizationId: 'demo', sourceType: 'Assessment insight', sourceId: 'drd-1',
+    title: 'Predictive Maintenance Pilot', rationale: 'DRD evidence shows repeated unplanned downtime and enough machine telemetry for a bounded pilot.',
+    fitScore: 0.92, status: 'pending' as const, createdAt: '2026-08-22T10:00:00.000Z',
+  },
+  {
+    id: 'demo-candidate-supplier-risk', organizationId: 'demo', sourceType: 'Interview finding', sourceId: 'interview-7',
+    title: 'Supplier Risk Early-Warning Board', rationale: 'Procurement teams currently discover material shortages after production plans have already been committed.',
+    fitScore: 0.84, status: 'pending' as const, createdAt: '2026-08-21T13:30:00.000Z',
+  },
+  {
+    id: 'demo-candidate-energy', organizationId: 'demo', sourceType: 'Audit recommendation', sourceId: 'audit-3',
+    title: 'Energy Consumption Control Loop', rationale: 'Meter data exists, but no owner receives actionable deviation alerts or verifies corrective actions.',
+    fitScore: 0.76, status: 'pending' as const, createdAt: '2026-08-20T08:15:00.000Z',
+  },
+];
 
 export const CandidatesTable: React.FC<CandidatesTableProps> = ({
   onAccept,
   initialSelectedId = null,
   onSelectionChange,
+  demoMode = false,
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
   const { candidates, loading, error, busyId, scanning, refresh, scan, accept, dismiss } =
     useCandidates('pending');
+  const visibleCandidates = demoMode ? demoCandidates : candidates;
 
   const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId);
 
@@ -64,18 +85,18 @@ export const CandidatesTable: React.FC<CandidatesTableProps> = ({
   );
 
   const selected = useMemo(
-    () => candidates.find((c) => c.id === selectedId) ?? null,
-    [candidates, selectedId]
+    () => visibleCandidates.find((c) => c.id === selectedId) ?? null,
+    [visibleCandidates, selectedId]
   );
 
   // Selected row can disappear from `candidates` the instant accept/dismiss
   // resolves (the hook filters it out of state) — close the preview rather
   // than show a stale/ghost record.
   React.useEffect(() => {
-    if (!loading && selectedId && !candidates.some((c) => c.id === selectedId)) {
+    if (!loading && selectedId && !visibleCandidates.some((c) => c.id === selectedId)) {
       selectCandidate(null);
     }
-  }, [candidates, loading, selectCandidate, selectedId]);
+  }, [visibleCandidates, loading, selectCandidate, selectedId]);
 
   const handleAccept = useCallback(
     async (id: string) => {
@@ -152,16 +173,16 @@ export const CandidatesTable: React.FC<CandidatesTableProps> = ({
             label: t('initiatives.candidatesTable.accept', 'Accept'),
             icon: ThumbsUp,
             onClick: () => void handleAccept(String(row.id)),
-            disabled: busy,
-            note: busy ? (isPolish ? 'Przetwarzanie…' : 'Processing…') : undefined,
+            disabled: busy || demoMode,
+            note: demoMode ? 'Sample data · read only' : busy ? (isPolish ? 'Przetwarzanie…' : 'Processing…') : undefined,
           },
           {
             id: 'dismiss',
             label: t('initiatives.candidatesTable.dismiss', 'Dismiss'),
             icon: ThumbsDown,
             onClick: () => void dismiss(String(row.id)),
-            disabled: busy,
-            note: busy ? (isPolish ? 'Przetwarzanie…' : 'Processing…') : undefined,
+            disabled: busy || demoMode,
+            note: demoMode ? 'Sample data · read only' : busy ? (isPolish ? 'Przetwarzanie…' : 'Processing…') : undefined,
           },
         ],
         universalHandlers: {
@@ -169,7 +190,7 @@ export const CandidatesTable: React.FC<CandidatesTableProps> = ({
         },
       };
     },
-    [busyId, handleAccept, dismiss, t, isPolish, selectCandidate]
+    [busyId, demoMode, handleAccept, dismiss, t, isPolish, selectCandidate]
   );
 
   return (
@@ -194,10 +215,10 @@ export const CandidatesTable: React.FC<CandidatesTableProps> = ({
           <StandardTable
             surfaceId="T28"
             columns={columns}
-            data={candidates as unknown as TableRow[]}
-            loading={loading}
+            data={visibleCandidates as unknown as TableRow[]}
+            loading={demoMode ? false : loading}
             error={
-              error
+              !demoMode && error
                 ? isPolish
                   ? 'Nie udało się wczytać kandydatów. Spróbuj ponownie.'
                   : 'Failed to load candidates. Please try again.'

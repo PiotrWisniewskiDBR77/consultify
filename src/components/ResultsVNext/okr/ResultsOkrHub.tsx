@@ -73,14 +73,20 @@
  */
 import { Blocks, CalendarClock } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
-import type { StandardBreadcrumb, StandardCounterChip, StandardModuleTab, TableRow } from '@/components/standard';
+import type { StandardBreadcrumb, StandardCounterChip, TableRow } from '@/components/standard';
 import { Button } from '@/components/ui/primitives';
 import { ROUTES } from '@/routes/routeConfig';
 
+import {
+  getResultsDomainPath,
+  isResultsDomain,
+  RESULTS_DOMAIN_TABS,
+} from '../resultsDomainNavigation';
 import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
+import { toUserFacingErrorMessage } from '../shared/errorMessage';
 import type { ResultsVNextForbiddenDetail } from '../types';
 import {
   getOkrSet,
@@ -89,17 +95,20 @@ import {
   listOkrSets,
   type OkrSetDto,
 } from './okrApi';
+import { OkrCheckInsView } from './OkrCheckInsView';
+import { OkrKeyResultsView } from './OkrKeyResultsView';
+import type { OkrKeyResultDto, OkrObjectiveWithKeyResultsDto } from './okrObjectiveApi';
+import { OkrObjectivesView } from './OkrObjectivesView';
 import {
   OKR_SET_STATUS_BUCKET,
   OKR_SET_STATUS_BUCKET_LABEL,
   type OkrSetStatusBucket,
 } from './okrRegistryMappers';
-import { buildOkrSetColumns, buildOkrSetPreview, buildOkrSetRowMenu } from './okrRegistryPresenters';
-import type { OkrKeyResultDto, OkrObjectiveWithKeyResultsDto } from './okrObjectiveApi';
-import { OkrObjectivesView } from './OkrObjectivesView';
-import { OkrKeyResultsView } from './OkrKeyResultsView';
-import { OkrCheckInsView } from './OkrCheckInsView';
-import { toUserFacingErrorMessage } from '../shared/errorMessage';
+import {
+  buildOkrSetColumns,
+  buildOkrSetPreview,
+  buildOkrSetRowMenu,
+} from './okrRegistryPresenters';
 
 type OkrTab = 'org' | 'my' | 'company';
 const OKR_SETS_FETCH_LIMIT = 200;
@@ -116,7 +125,12 @@ const OKR_SETS_FETCH_LIMIT = 200;
 type OkrDrill =
   | { level: 'objectives'; set: OkrSetDto }
   | { level: 'keyResults'; set: OkrSetDto; objective: OkrObjectiveWithKeyResultsDto }
-  | { level: 'checkIns'; set: OkrSetDto; objective: OkrObjectiveWithKeyResultsDto; keyResult: OkrKeyResultDto };
+  | {
+      level: 'checkIns';
+      set: OkrSetDto;
+      objective: OkrObjectiveWithKeyResultsDto;
+      keyResult: OkrKeyResultDto;
+    };
 
 function withId<T extends { setId: string }>(row: T): T & { id: string } {
   return { ...row, id: row.setId };
@@ -156,13 +170,15 @@ export const ResultsOkrHub: React.FC = () => {
   const navigate = useNavigate();
 
   const restoredUiState = useMemo(() => readOkrHubUiState(), []);
-  const [tab, setTab] = useState<OkrTab>(restoredUiState.tab ?? 'org');
+  const [tab] = useState<OkrTab>(restoredUiState.tab ?? 'org');
   const [chip, setChip] = useState<'all' | OkrSetStatusBucket>(restoredUiState.chip ?? 'all');
 
   const [sets, setSets] = useState<OkrSetDto[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [selectedSetId, setSelectedSetId] = useState<string | null>(restoredUiState.selectedSetId ?? null);
+  const [selectedSetId, setSelectedSetId] = useState<string | null>(
+    restoredUiState.selectedSetId ?? null
+  );
   const [forbidden, setForbidden] = useState<ResultsVNextForbiddenDetail | null>(null);
 
   // RN-G2 §G #25 — drill-down (see file header). `null` = showing the Sets
@@ -258,12 +274,6 @@ export const ResultsOkrHub: React.FC = () => {
     [sets, selectedSetId]
   );
 
-  const tabs: StandardModuleTab[] = [
-    { id: 'org', label: isPolish ? 'Organizacja' : 'Organization' },
-    { id: 'my', label: isPolish ? 'Moje' : 'My' },
-    { id: 'company', label: isPolish ? 'Firma' : 'Company' },
-  ];
-
   // RN-G5 (2026-08-12) — see file header "RE-ROUTED FULL WORKSPACE": the
   // ONLY entry point in the whole app to `ROUTES.RESULTS_OKR.PROGRAMS`/
   // `.CYCLES` (both real, mounted routes with zero prior links anywhere).
@@ -297,22 +307,30 @@ export const ResultsOkrHub: React.FC = () => {
     { id: 'all', label: isPolish ? 'Wszystkie' : 'All', count: sets?.length ?? 0 },
     {
       id: 'in_progress',
-      label: isPolish ? OKR_SET_STATUS_BUCKET_LABEL.in_progress.pl : OKR_SET_STATUS_BUCKET_LABEL.in_progress.en,
+      label: isPolish
+        ? OKR_SET_STATUS_BUCKET_LABEL.in_progress.pl
+        : OKR_SET_STATUS_BUCKET_LABEL.in_progress.en,
       count: bucketCounts.in_progress,
     },
     {
       id: 'in_review',
-      label: isPolish ? OKR_SET_STATUS_BUCKET_LABEL.in_review.pl : OKR_SET_STATUS_BUCKET_LABEL.in_review.en,
+      label: isPolish
+        ? OKR_SET_STATUS_BUCKET_LABEL.in_review.pl
+        : OKR_SET_STATUS_BUCKET_LABEL.in_review.en,
       count: bucketCounts.in_review,
     },
     {
       id: 'active',
-      label: isPolish ? OKR_SET_STATUS_BUCKET_LABEL.active.pl : OKR_SET_STATUS_BUCKET_LABEL.active.en,
+      label: isPolish
+        ? OKR_SET_STATUS_BUCKET_LABEL.active.pl
+        : OKR_SET_STATUS_BUCKET_LABEL.active.en,
       count: bucketCounts.active,
     },
     {
       id: 'closed_out',
-      label: isPolish ? OKR_SET_STATUS_BUCKET_LABEL.closed_out.pl : OKR_SET_STATUS_BUCKET_LABEL.closed_out.en,
+      label: isPolish
+        ? OKR_SET_STATUS_BUCKET_LABEL.closed_out.pl
+        : OKR_SET_STATUS_BUCKET_LABEL.closed_out.en,
       count: bucketCounts.closed_out,
     },
   ];
@@ -372,7 +390,9 @@ export const ResultsOkrHub: React.FC = () => {
         objectiveId={drill.objective.objectiveId}
         isPolish={isPolish}
         breadcrumbs={breadcrumbs}
-        onOpenCheckIns={(keyResult, objective, set) => setDrill({ level: 'checkIns', set, objective, keyResult })}
+        onOpenCheckIns={(keyResult, objective, set) =>
+          setDrill({ level: 'checkIns', set, objective, keyResult })
+        }
       />
     );
   }
@@ -383,7 +403,8 @@ export const ResultsOkrHub: React.FC = () => {
       { label: drill.set.title, onClick: () => setDrill({ level: 'objectives', set: drill.set }) },
       {
         label: drill.objective.title,
-        onClick: () => setDrill({ level: 'keyResults', set: drill.set, objective: drill.objective }),
+        onClick: () =>
+          setDrill({ level: 'keyResults', set: drill.set, objective: drill.objective }),
       },
       { label: drill.keyResult.title },
     ];
@@ -402,9 +423,11 @@ export const ResultsOkrHub: React.FC = () => {
     <ResultsVNextRegistryShell
       domain="okr"
       moduleBar={{
-        tabs,
-        activeTab: tab,
-        onTabChange: (id) => setTab(id as OkrTab),
+        tabs: RESULTS_DOMAIN_TABS,
+        activeTab: 'okr',
+        onTabChange: (id) => {
+          if (isResultsDomain(id)) navigate(getResultsDomainPath(id));
+        },
         showTabCounts: false,
         viewModes: ['table'],
         viewMode: 'table',
@@ -426,7 +449,9 @@ export const ResultsOkrHub: React.FC = () => {
               ? emptyOrgCopy
               : {
                   title: isPolish ? 'Brak wierszy dla tego filtra' : 'No rows for this filter',
-                  description: isPolish ? 'Żaden zestaw nie pasuje do tego filtra.' : 'No set matches this filter.',
+                  description: isPolish
+                    ? 'Żaden zestaw nie pasuje do tego filtra.'
+                    : 'No set matches this filter.',
                 }
             : undefined,
         selectedRowId: selectedSetId,
@@ -435,7 +460,10 @@ export const ResultsOkrHub: React.FC = () => {
           buildOkrSetRowMenu(row as unknown as OkrSetDto, isPolish, {
             onPreview: (r) => setSelectedSetId(r.setId),
             onOpenObjectives: (r) => setDrill({ level: 'objectives', set: r }),
-            onOpenWorkspace: (r) => navigate(`${ROUTES.RESULTS_OKR.SET.replace(':okrSetId', r.setId)}${window.location.search}`),
+            onOpenWorkspace: (r) =>
+              navigate(
+                `${ROUTES.RESULTS_OKR.SET.replace(':okrSetId', r.setId)}${window.location.search}`
+              ),
           }),
         defaultSort: { columnId: 'updatedAt', direction: 'desc' },
       }}
@@ -445,7 +473,10 @@ export const ResultsOkrHub: React.FC = () => {
               isPolish,
               onClose: () => setSelectedSetId(null),
               onOpenObjectives: (r) => setDrill({ level: 'objectives', set: r }),
-              onOpenWorkspace: (r) => navigate(`${ROUTES.RESULTS_OKR.SET.replace(':okrSetId', r.setId)}${window.location.search}`),
+              onOpenWorkspace: (r) =>
+                navigate(
+                  `${ROUTES.RESULTS_OKR.SET.replace(':okrSetId', r.setId)}${window.location.search}`
+                ),
             })
           : null
       }

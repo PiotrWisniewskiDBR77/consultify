@@ -239,6 +239,9 @@ export interface ListKpisParams {
 
 /** `GET /api/vnext/results/kpi` — the only real registry-list endpoint. */
 export async function listKpis(params: ListKpisParams = {}): Promise<KpiDefinitionDto[]> {
+  const { RESULTS_VNEXT_SAMPLE_KPIS, shouldUseResultsVNextOwnerSampleData } =
+    await import('./resultsVNextOwnerSampleData');
+  if (shouldUseResultsVNextOwnerSampleData()) return RESULTS_VNEXT_SAMPLE_KPIS;
   const qs = new URLSearchParams();
   if (params.status) qs.set('status', params.status);
   qs.set('limit', String(params.limit ?? 200));
@@ -255,6 +258,11 @@ export async function listKpis(params: ListKpisParams = {}): Promise<KpiDefiniti
  * §B defines for the platform in general).
  */
 export async function getKpi(kpiId: string): Promise<KpiDefinitionDto | null> {
+  const { RESULTS_VNEXT_SAMPLE_KPIS, shouldUseResultsVNextOwnerSampleData } =
+    await import('./resultsVNextOwnerSampleData');
+  if (shouldUseResultsVNextOwnerSampleData() || kpiId.startsWith('sample-kpi-')) {
+    return RESULTS_VNEXT_SAMPLE_KPIS.find((kpi) => kpi.kpiId === kpiId) ?? null;
+  }
   try {
     const resp = await Api.get(`/vnext/results/kpi/${encodeURIComponent(kpiId)}`);
     return (resp?.kpi ?? null) as KpiDefinitionDto | null;
@@ -278,6 +286,11 @@ export async function getKpi(kpiId: string): Promise<KpiDefinitionDto | null> {
 export async function getKpiCurrentDefinitionVersion(
   kpiId: string
 ): Promise<KpiDefinitionVersionDto | null> {
+  const { RESULTS_VNEXT_SAMPLE_KPI_VERSIONS, shouldUseResultsVNextOwnerSampleData } =
+    await import('./resultsVNextOwnerSampleData');
+  if (shouldUseResultsVNextOwnerSampleData() || kpiId.startsWith('sample-kpi-')) {
+    return RESULTS_VNEXT_SAMPLE_KPI_VERSIONS.find((version) => version.kpiId === kpiId) ?? null;
+  }
   try {
     const resp = await Api.get(`/vnext/results/kpi/${encodeURIComponent(kpiId)}/version`);
     return (resp?.definitionVersion ?? null) as KpiDefinitionVersionDto | null;
@@ -346,7 +359,10 @@ export async function createKpiDraft(input: CreateKpiDraftInput): Promise<Create
     reason: input.reason ?? null,
     idempotencyKey: input.idempotencyKey,
   });
-  return { kpi: resp?.kpi as KpiDefinitionDto, definitionVersion: resp?.definitionVersion as KpiDefinitionVersionDto };
+  return {
+    kpi: resp?.kpi as KpiDefinitionDto,
+    definitionVersion: resp?.definitionVersion as KpiDefinitionVersionDto,
+  };
 }
 
 export interface EditKpiDraftInput {
@@ -440,7 +456,11 @@ export async function approveKpiDefinitionVersion(
 ): Promise<KpiDefinitionVersionDto> {
   const resp = await Api.post(
     `/vnext/results/kpi/${encodeURIComponent(kpiId)}/definition-versions/${encodeURIComponent(versionId)}/approve`,
-    { expectedVersion: input.expectedVersion, reason: input.reason ?? null, idempotencyKey: input.idempotencyKey }
+    {
+      expectedVersion: input.expectedVersion,
+      reason: input.reason ?? null,
+      idempotencyKey: input.idempotencyKey,
+    }
   );
   return resp?.definitionVersion as KpiDefinitionVersionDto;
 }
@@ -499,7 +519,11 @@ export async function reviseKpiDefinition(
 ): Promise<KpiDefinitionVersionDto> {
   const resp = await Api.post(
     `/vnext/results/kpi/${encodeURIComponent(kpiId)}/definition-versions/${encodeURIComponent(versionId)}/revise`,
-    { expectedVersion: input.expectedVersion, reason: input.reason ?? null, idempotencyKey: input.idempotencyKey }
+    {
+      expectedVersion: input.expectedVersion,
+      reason: input.reason ?? null,
+      idempotencyKey: input.idempotencyKey,
+    }
   );
   return resp?.definitionVersion as KpiDefinitionVersionDto;
 }
@@ -524,6 +548,15 @@ export async function listKpiMeasurements(
   kpiId: string,
   params: ListKpiMeasurementsParams = {}
 ): Promise<KpiMeasurementDto[]> {
+  const { RESULTS_VNEXT_SAMPLE_KPI_MEASUREMENTS, shouldUseResultsVNextOwnerSampleData } =
+    await import('./resultsVNextOwnerSampleData');
+  if (shouldUseResultsVNextOwnerSampleData() || kpiId.startsWith('sample-kpi-')) {
+    const offset = params.offset ?? 0;
+    const limit = params.limit ?? 1;
+    return RESULTS_VNEXT_SAMPLE_KPI_MEASUREMENTS.filter(
+      (measurement) => measurement.kpiId === kpiId
+    ).slice(offset, offset + limit);
+  }
   const qs = new URLSearchParams();
   qs.set('limit', String(params.limit ?? 1));
   if (params.offset) qs.set('offset', String(params.offset));
@@ -621,7 +654,10 @@ export async function correctKpiMeasurement(
     `/vnext/results/kpi/${encodeURIComponent(kpiId)}/measurements/${encodeURIComponent(measurementId)}/corrections`,
     { actualValue: input.actualValue, correctionReason: input.correctionReason }
   );
-  return { original: resp?.original, measurement: resp?.measurement } as KpiMeasurementSupersedeResult;
+  return {
+    original: resp?.original,
+    measurement: resp?.measurement,
+  } as KpiMeasurementSupersedeResult;
 }
 
 export interface VerifyKpiMeasurementInput {
@@ -637,7 +673,10 @@ export async function verifyKpiMeasurement(
     `/vnext/results/kpi/${encodeURIComponent(kpiId)}/measurements/${encodeURIComponent(measurementId)}/verify`,
     { notes: input.notes ?? null }
   );
-  return { original: resp?.original, measurement: resp?.measurement } as KpiMeasurementSupersedeResult;
+  return {
+    original: resp?.original,
+    measurement: resp?.measurement,
+  } as KpiMeasurementSupersedeResult;
 }
 
 export interface DisputeKpiMeasurementInput {
@@ -653,7 +692,10 @@ export async function disputeKpiMeasurement(
     `/vnext/results/kpi/${encodeURIComponent(kpiId)}/measurements/${encodeURIComponent(measurementId)}/dispute`,
     { disputeReason: input.disputeReason }
   );
-  return { original: resp?.original, measurement: resp?.measurement } as KpiMeasurementSupersedeResult;
+  return {
+    original: resp?.original,
+    measurement: resp?.measurement,
+  } as KpiMeasurementSupersedeResult;
 }
 
 export interface KpiLifecycleActionInput {
@@ -675,6 +717,7 @@ async function postLifecycleAction(
 
 /** `POST /:kpiId/activate` — 409 `NO_APPROVED_VERSION` when the KPI has no
  * approved definition version yet (draft/pending_approval rows). */
-export const activateKpi = (input: KpiLifecycleActionInput) => postLifecycleAction('activate', input);
+export const activateKpi = (input: KpiLifecycleActionInput) =>
+  postLifecycleAction('activate', input);
 export const suspendKpi = (input: KpiLifecycleActionInput) => postLifecycleAction('suspend', input);
 export const archiveKpi = (input: KpiLifecycleActionInput) => postLifecycleAction('archive', input);

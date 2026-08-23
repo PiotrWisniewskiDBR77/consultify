@@ -18,6 +18,11 @@ import {
 } from '@/services/initiatives-execution/runtimeApi';
 
 import { countExecutionPresets, type ExecutionMenu3Contract } from './canonicalMenu3';
+import {
+  executionLocalReviewEnabled,
+  executionReviewInterventions,
+  executionReviewSignals,
+} from './executionLocalReviewData';
 
 const interventionFieldLabels: Record<string, string> = {
   interventionId: 'Identyfikator interwencji',
@@ -252,6 +257,18 @@ export const ExecutionControlSurface = ({
       ])) as Array<{
         items?: any[];
       }>;
+      const interventionItems =
+        (b.items ?? []).length > 0
+          ? b.items ?? []
+          : executionLocalReviewEnabled
+            ? executionReviewInterventions
+            : [];
+      const signalItems =
+        (s.items ?? []).length > 0
+          ? s.items ?? []
+          : executionLocalReviewEnabled
+            ? executionReviewSignals
+            : [];
       setCapacityOptions(
         (capacity.items ?? []).filter((comparison) =>
           comparison.options?.some(
@@ -261,7 +278,7 @@ export const ExecutionControlSurface = ({
         )
       );
       setRows(
-        (b.items ?? []).map((x) => ({
+        interventionItems.map((x) => ({
           id: x.interventionId,
           title: interventionBusinessTitle(x),
           status: interventionStatusLabel(x.status),
@@ -275,7 +292,7 @@ export const ExecutionControlSurface = ({
         }))
       );
       setSignalRows(
-        (s.items ?? []).map((x) => ({
+        signalItems.map((x) => ({
           id: x.signalId,
           title: x.signalId,
           rule: signalRuleLabel(x.ruleId),
@@ -290,7 +307,40 @@ export const ExecutionControlSurface = ({
       );
       setState('READY');
     } catch {
-      setState('ERROR');
+      if (!executionLocalReviewEnabled) {
+        setState('ERROR');
+        return;
+      }
+      setCapacityOptions([]);
+      setRows(
+        executionReviewInterventions.map((x) => ({
+          id: x.interventionId,
+          title: interventionBusinessTitle(x),
+          status: interventionStatusLabel(x.status),
+          rawStatus: x.status,
+          owner: actorBusinessLabel(x.ownerId, 'Nieprzypisany'),
+          authority: actorBusinessLabel(x.authorityId, 'Nieustalony'),
+          slaAt: formatDateTime(x.verifyBy ?? x.slaAt),
+          rawSlaAt: x.verifyBy ?? x.slaAt ?? null,
+          version: x.version,
+          source: x,
+        }))
+      );
+      setSignalRows(
+        executionReviewSignals.map((x) => ({
+          id: x.signalId,
+          title: x.signalId,
+          rule: signalRuleLabel(x.ruleId),
+          source: `${x.sourceId} · v${x.sourceVersion}`,
+          severity: severityLabel(x.severity),
+          rawSeverity: x.severity,
+          occurrences: x.occurrences.length,
+          updatedAt: formatDateTime(x.updatedAt),
+          version: x.version,
+          signal: x,
+        }))
+      );
+      setState('READY');
     }
   }, []);
   useEffect(() => {

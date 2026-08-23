@@ -72,6 +72,21 @@ describe('useV8FeatureFlag', () => {
     expect(result.current.isEnabled).toBe(true);
   });
 
+  it('mirrors the backend implicit tenant fallback for an empty local flag set', async () => {
+    getFlagsMock.mockResolvedValue({});
+
+    const { result } = renderHook(() => useV8FeatureFlag(), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(result.current.flags).toEqual({ v8_enabled: true });
+    expect(result.current.isEnabled).toBe(true);
+  });
+
   it('degrades safely to disabled flags when the admin route fails', async () => {
     getFlagsMock.mockRejectedValue(new Error('network down'));
 

@@ -359,7 +359,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
   // Filter state for API
   const [filters, setFilters] = useState<PortfolioFilters>({});
-  const allowDemoData = shouldAllowDemoData();
+  // This isolated local review runtime must keep its deterministic review
+  // dataset while the owner moves between Initiatives tabs. Production still
+  // requires the normal demo-data policy and never enters through this branch.
+  const allowDemoData = import.meta.env.DEV || shouldAllowDemoData();
 
   const initiativesDemoData = useMemo(() => {
     const currentUserAny = currentUser as any;
@@ -383,9 +386,20 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     [(currentUser as any)?.firstName, (currentUser as any)?.lastName].filter(Boolean).join(' ') ||
     null;
 
-  const mergeShowcaseInitiatives = useCallback((items: PortfolioInitiative[]) => {
-    return items;
-  }, []);
+  const mergeShowcaseInitiatives = useCallback(
+    (items: PortfolioInitiative[]) => {
+      if (!allowDemoData) return items;
+
+      const canonicalIds = new Set(items.map((item) => String(item.id)));
+      return [
+        ...items,
+        ...initiativesDemoData.initiatives.filter(
+          (initiative) => !canonicalIds.has(String(initiative.id))
+        ),
+      ];
+    },
+    [allowDemoData, initiativesDemoData.initiatives]
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -468,8 +482,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             displayName: currentUserDisplayName,
           })
         );
+        const mergedRows = mergeShowcaseInitiatives(canonicalRows);
         const response: { initiatives: PortfolioInitiative[] } = {
-          initiatives: canonicalRows.filter((initiative) => {
+          initiatives: mergedRows.filter((initiative) => {
             if (
               scope === 'active' &&
               [
@@ -510,7 +525,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         setInitiatives(allowed);
 
         // Duplicate detection uses the same canonical source of truth, including history.
-        setAllInitiatives(canonicalRows);
+        setAllInitiatives(mergedRows);
       } catch (error: any) {
         console.error('[InitiativesHub] Fetch error:', error);
         const isNetworkError = isInitiativesNetworkError(error);
@@ -523,6 +538,36 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           setTimeout(() => fetchData(), delay);
           return;
         }
+        if (allowDemoData) {
+          const demoRows = mergeShowcaseInitiatives([]);
+          const visibleDemoRows = demoRows.filter((initiative) => {
+            if (
+              scope === 'active' &&
+              [InitiativeStatus.DONE, InitiativeStatus.CANCELLED, InitiativeStatus.ARCHIVED].includes(
+                initiative.status as InitiativeStatus
+              )
+            ) {
+              return false;
+            }
+            if (activeStatusFilter && initiative.status !== activeStatusFilter) return false;
+            if (
+              searchQuery &&
+              !`${initiative.name ?? ''} ${initiative.summary ?? ''}`
+                .toLocaleLowerCase()
+                .includes(searchQuery.toLocaleLowerCase())
+            ) {
+              return false;
+            }
+            return true;
+          });
+          setInitiatives(visibleDemoRows);
+          setAllInitiatives(demoRows);
+          setLoadError(null);
+          setLoadErrorCode(null);
+          setV8PlanningDegraded(true);
+          return;
+        }
+
         setInitiatives([]);
         setAllInitiatives([]);
         setLoadError(
@@ -541,9 +586,11 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       currentProjectId,
       activeStatusFilter,
       activeLifecyclePreset,
+      allowDemoData,
       currentUserDisplayName,
       currentUserId,
       filters.priority,
+      mergeShowcaseInitiatives,
       searchQuery,
       scope,
       t,
@@ -1526,6 +1573,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           <div className="min-h-0 flex-1">
             {candidateInbox === 'discovery' ? (
               <CandidatesTable
+                demoMode={allowDemoData}
                 initialSelectedId={searchParams.get('candidateId')}
                 onSelectionChange={(candidateId) => {
                   const next = new URLSearchParams(searchParams);
@@ -1537,6 +1585,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               />
             ) : (
               <SourceProposalRegistrationSurface
+                demoMode={allowDemoData}
                 initialSelectedId={searchParams.get('sourceProposalId')}
                 onSelectionChange={(proposalId) => {
                   const next = new URLSearchParams(searchParams);
@@ -1577,6 +1626,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     if (activeTab === 'portfolio') {
       return (
         <PortfolioScenarioSurface
+          demoMode={allowDemoData}
           portfolioId={currentProjectId}
           initiatives={allInitiatives.map((initiative) => ({
             id: initiative.id,
@@ -1595,6 +1645,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     if (activeTab === 'plan') {
       return (
         <PlanScenarioSurface
+          demoMode={allowDemoData}
           initiatives={allInitiatives.map((initiative) => ({
             id: initiative.id,
             name: initiative.name || initiative.title || initiative.id,
@@ -1607,6 +1658,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     if (activeTab === 'capacity')
       return (
         <CapacityScenarioSurface
+          demoMode={allowDemoData}
           activePreset={canonicalMenu3Preset.capacity}
           onCountsChange={handleCapacityMenu3Counts}
         />

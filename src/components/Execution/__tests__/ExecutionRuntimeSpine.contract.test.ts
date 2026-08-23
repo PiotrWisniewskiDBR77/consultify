@@ -7,36 +7,31 @@ import { describe, expect, it } from 'vitest';
 const read = (relative: string) => fs.readFileSync(path.resolve(process.cwd(), relative), 'utf8');
 
 describe('Execution mounted initiative truth spine', () => {
-  it('mounts Realizacje from the runtime-v1 surface with no later legacy portfolio branch', () => {
+  it('mounts the initiative register as the primary Execution list', () => {
     const hub = read('src/components/Execution/ExecutionHub.tsx');
     const renderStart = hub.indexOf('const renderContent = () =>');
     const mountedList = hub.indexOf("if (activeTab === 'list')", renderStart);
-    const runtimeSurface = hub.indexOf('<ExecutionRealizationsSurface', mountedList);
-    const legacyPortfolioBranch = hub.indexOf("if (activeTab === 'list')", mountedList + 1);
+    const initiativeTable = hub.indexOf('<StandardTable', mountedList);
+    const executionCaseSurface = hub.indexOf('<ExecutionRealizationsSurface', mountedList);
 
     expect(renderStart).toBeGreaterThan(-1);
     expect(mountedList).toBeGreaterThan(renderStart);
-    expect(runtimeSurface).toBeGreaterThan(mountedList);
-    expect(legacyPortfolioBranch).toBe(-1);
+    expect(initiativeTable).toBeGreaterThan(mountedList);
+    expect(executionCaseSurface).toBe(-1);
   });
 
-  it('hydrates the mounted surface only through runtime-v1 initiative and case readers', () => {
-    const surface = read('src/components/Execution/ExecutionRealizationsSurface.tsx');
-
-    expect(surface).toContain('listExecutionCases');
-    expect(surface).toContain('readExecutionCase');
-    expect(surface).toContain('readRegisteredInitiative');
-    expect(surface).not.toContain('Api.getInitiatives');
-    expect(surface).not.toContain('/initiatives/${');
-  });
-
-  it('contains no legacy initiative status writer in ExecutionHub', () => {
+  it('uses the same initiative identities and full initiative document in Execution', () => {
     const hub = read('src/components/Execution/ExecutionHub.tsx');
 
-    expect(hub).not.toContain('Api.patch(`/initiatives/${initiativeId}/status`');
-    expect(hub).not.toContain('Api.patch(`/initiatives/${id}/status`');
-    expect(hub).not.toContain('handleInlineStatusChange');
-    expect(hub).not.toContain('handleBulkStatusChange');
+    expect(hub).toContain('summaryInitiatives');
+    expect(hub).toContain('<ExecutionInitiativeDocumentView');
+  });
+
+  it('does not mount the rejected Execution Case register in the primary list', () => {
+    const hub = read('src/components/Execution/ExecutionHub.tsx');
+
+    expect(hub).not.toContain("import { ExecutionRealizationsSurface }");
+    expect(hub).not.toContain('<ExecutionRealizationsSurface');
   });
 
   it('mounts and resolves the canonical execution-case deep link', () => {

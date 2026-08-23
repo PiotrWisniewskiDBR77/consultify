@@ -16,7 +16,24 @@ interface Props {
   onOpenInitiative: (initiativeId: string) => void;
   initialSelectedId?: string | null;
   onSelectionChange?: (proposalId: string | null) => void;
+  demoMode?: boolean;
 }
+
+const demoSourceProposals: SourceProposal[] = [
+  ['demo-proposal-margin', 'Margin Leakage Recovery Sprint', 'Order-to-cash exceptions create recurring pricing and claims leakage.', 'Recover 2–3 margin points in the pilot scope.', 'Assessment', 'READY', 'CLEAR'],
+  ['demo-proposal-control-tower', 'Revenue Control Tower', 'Commercial and fulfillment teams operate from conflicting KPI definitions.', 'Create one governed cross-functional performance view.', 'Interview', 'PARTIAL', 'POSSIBLE'],
+  ['demo-proposal-onboarding', 'Supplier Onboarding Portal', 'Email-driven onboarding delays supplier activation and loses compliance evidence.', 'Cut onboarding lead time and make approvals auditable.', 'Audit', 'READY', 'CLEAR'],
+  ['demo-proposal-knowledge', 'Knowledge Hub Rollout', 'Delivery playbooks and onboarding material are fragmented across teams.', 'Provide one searchable operating hub with ownership.', 'Notebook', 'STALE', 'UNKNOWN'],
+].map(([id, title, problem, proposedOutcome, sourceType, evidenceState, duplicateState], index) => ({
+  id, title, problem, proposedOutcome, sourceType, sourceId: `${sourceType.toLowerCase()}-${index + 1}`,
+  sourceVersion: 1, proposalVersion: 1, projectId: 'demo-transformation', projectName: 'Atelier Transformation 2026',
+  initiativeOwnerId: index % 2 ? 'owner-lena' : 'owner-piotr', ownerName: index % 2 ? 'Lena Meyer' : 'Piotr Wiśniewski',
+  evidenceState: evidenceState as SourceProposal['evidenceState'], duplicateState: duplicateState as SourceProposal['duplicateState'],
+  provenance: { system: sourceType, recordType: 'finding', capturedAt: `2026-08-${22 - index}T10:00:00.000Z`, evidenceRefs: [`evidence-${index + 1}`] },
+  policyRef: { policyId: 'initiative-intake-standard', policyVersion: 1 }, updatedAt: `2026-08-${22 - index}T10:00:00.000Z`, status: 'AWAITING_VALIDATION',
+  policy: { policyId: 'initiative-intake-standard', version: 1, baseline: 'STANDARD', strictness: 2, source: 'PRODUCT' },
+  capabilities: { canRegister: false, canMerge: false, canExtend: false, canReturn: false, canDefer: false, canDismiss: false },
+}));
 
 function toProposal(row: SourceProposalReadModel): SourceProposal {
   return {
@@ -31,6 +48,7 @@ export const SourceProposalRegistrationSurface: React.FC<Props> = ({
   onOpenInitiative,
   initialSelectedId = null,
   onSelectionChange,
+  demoMode = false,
 }) => {
   const surfaceRef = useRef<HTMLDivElement>(null);
   const [proposals, setProposals] = useState<SourceProposal[]>([]);
@@ -38,6 +56,11 @@ export const SourceProposalRegistrationSurface: React.FC<Props> = ({
   const [validationId, setValidationId] = useState<string | null>(null);
 
   useEffect(() => {
+    if (demoMode) {
+      setProposals(demoSourceProposals);
+      setState('READY');
+      return;
+    }
     const controller = new AbortController();
     setState('LOADING');
     Promise.all([
@@ -59,7 +82,7 @@ export const SourceProposalRegistrationSurface: React.FC<Props> = ({
         setState('ERROR');
       });
     return () => controller.abort();
-  }, [initialSelectedId]);
+  }, [demoMode, initialSelectedId]);
 
   useEffect(() => {
     if (state !== 'READY') return;

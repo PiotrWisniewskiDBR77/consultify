@@ -78,10 +78,11 @@
  * reason (TRIADA §C3 "visible, disabled, with a reason", same discipline
  * `noApprovedVersionReason` below already applies to Activate).
  */
+import { Blocks, Plus } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
 
 import { EmptyState } from '@/components/shared/states';
 import {
@@ -91,9 +92,8 @@ import {
   type TableColumn,
 } from '@/components/standard';
 import { StatusChip, type StatusTone } from '@/components/ui/primitives';
-import { useAppStore } from '@/store/useAppStore';
 import { ROUTES } from '@/routes/routeConfig';
-import { Blocks, Plus } from 'lucide-react';
+import { useAppStore } from '@/store/useAppStore';
 
 import { HonestValueCell } from './HonestValue';
 import {
@@ -102,17 +102,17 @@ import {
   archiveKpi,
   createKpiDraft,
   editKpiDraft,
+  getKpi,
+  getKpiCurrentDefinitionVersion,
   isConflictError,
   isSelfApprovalDeniedError,
+  KPI_STATUSES,
   type KpiDefinitionDto,
   type KpiDefinitionVersionDto,
   type KpiMeasurementDto,
-  KPI_STATUSES,
   type KpiStatus,
   listKpiMeasurements,
   listKpis,
-  getKpi,
-  getKpiCurrentDefinitionVersion,
   newKpiIdempotencyKey,
   rejectKpiDefinitionVersion,
   reviseKpiDefinition,
@@ -120,30 +120,38 @@ import {
   suspendKpi,
 } from './kpiApi';
 import { KpiDraftFormModal, type KpiDraftFormValues } from './KpiDraftFormModal';
-import { KpiTransitionDialog, type KpiTransitionKind } from './KpiTransitionDialog';
-import { LifecycleLockBadge, lockedRowMenuAction } from './LifecycleLockBadge';
-import { isResultsVNextFlagEnabled } from './resultsVNextFeatureFlags';
-import type { ResultsVNextForbiddenDetail } from './types';
-import { ResultsVNextRegistryShell, type ResultsVNextTableProps } from './ResultsVNextRegistryShell';
+import { ResultsKpiMeasurementsPanel } from './kpiMeasurements/ResultsKpiMeasurementsPanel';
+import {
+  type CreateKpiScorecardFormValues,
+  CreateKpiScorecardModal,
+} from './kpiScorecards/CreateKpiScorecardModal';
 import {
   activateKpiScorecard,
   archiveKpiScorecard,
   createKpiScorecard,
+  type KpiScorecardDto,
   listKpiScorecards,
   suspendKpiScorecard,
-  type KpiScorecardDto,
 } from './kpiScorecards/kpiScorecardApi';
 import {
   buildKpiScorecardColumns,
   buildKpiScorecardPreview,
   buildKpiScorecardRowMenu,
 } from './kpiScorecards/kpiScorecardPresenters';
+import { KpiTransitionDialog, type KpiTransitionKind } from './KpiTransitionDialog';
+import { LifecycleLockBadge, lockedRowMenuAction } from './LifecycleLockBadge';
 import {
-  CreateKpiScorecardModal,
-  type CreateKpiScorecardFormValues,
-} from './kpiScorecards/CreateKpiScorecardModal';
-import { ResultsKpiMeasurementsPanel } from './kpiMeasurements/ResultsKpiMeasurementsPanel';
+  getResultsDomainPath,
+  isResultsDomain,
+  RESULTS_DOMAIN_TABS,
+} from './resultsDomainNavigation';
+import { isResultsVNextFlagEnabled } from './resultsVNextFeatureFlags';
+import {
+  ResultsVNextRegistryShell,
+  type ResultsVNextTableProps,
+} from './ResultsVNextRegistryShell';
 import { toUserFacingErrorMessage } from './shared/errorMessage';
+import type { ResultsVNextForbiddenDetail } from './types';
 
 const STATUS_TONE: Record<KpiStatus, StatusTone> = {
   draft: 'info',
@@ -256,7 +264,14 @@ const REVISE_DEFINITION_LABEL = { pl: 'Popraw i zgłoś', en: 'Revise and resubm
 function buildDefinitionActions(
   row: KpiDefinitionDto,
   ctx: DefinitionActionsContext
-): { id: string; label: string; onClick: () => void; disabled?: boolean; note?: string; kind: 'edit' | 'submit' | 'approve' | 'reject' | 'revise' }[] {
+): {
+  id: string;
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+  note?: string;
+  kind: 'edit' | 'submit' | 'approve' | 'reject' | 'revise';
+}[] {
   const t = (pl: string, en: string) => (ctx.isPolish ? pl : en);
   if (row.status !== 'draft' && row.status !== 'pending_approval') return [];
   const known = ctx.knownVersions[row.kpiId] ?? null;
@@ -313,12 +328,23 @@ function buildDefinitionActions(
               'Wersja już zatwierdzona — aktywuj KPI z menu statusu, aby zacząć pomiary.',
               'Version already approved — activate the KPI from the status menu to start measuring.'
             )
-          : t(
-              'Wersja już odrzucona.',
-              'Version already rejected.'
-            );
-      out.push({ id: 'approve-definition', label: t('Zatwierdź', 'Approve'), onClick: () => {}, disabled: true, note: alreadyDecidedReason, kind: 'approve' });
-      out.push({ id: 'reject-definition', label: t('Odrzuć', 'Reject'), onClick: () => {}, disabled: true, note: alreadyDecidedReason, kind: 'reject' });
+          : t('Wersja już odrzucona.', 'Version already rejected.');
+      out.push({
+        id: 'approve-definition',
+        label: t('Zatwierdź', 'Approve'),
+        onClick: () => {},
+        disabled: true,
+        note: alreadyDecidedReason,
+        kind: 'approve',
+      });
+      out.push({
+        id: 'reject-definition',
+        label: t('Odrzuć', 'Reject'),
+        onClick: () => {},
+        disabled: true,
+        note: alreadyDecidedReason,
+        kind: 'reject',
+      });
       return out;
     }
     out.push({
@@ -410,15 +436,28 @@ function buildRowMenu(row: KpiDefinitionDto, ctx: RowMenuContext): StandardRowMe
   let statusTransitions: StandardRowMenu['statusTransitions'];
   if (row.status === 'active') {
     statusTransitions = [
-      { id: 'suspend', label: t('Zawieś', 'Suspend'), onClick: () => ctx.onSuspend(row), disabled: isBusy },
+      {
+        id: 'suspend',
+        label: t('Zawieś', 'Suspend'),
+        onClick: () => ctx.onSuspend(row),
+        disabled: isBusy,
+      },
     ];
   } else if (row.status === 'suspended') {
     statusTransitions = [
-      { id: 'activate', label: t('Aktywuj', 'Activate'), onClick: () => ctx.onActivate(row), disabled: isBusy },
+      {
+        id: 'activate',
+        label: t('Aktywuj', 'Activate'),
+        onClick: () => ctx.onActivate(row),
+        disabled: isBusy,
+      },
     ];
   } else if (row.status === 'draft' || row.status === 'pending_approval') {
     statusTransitions = [
-      lockedRowMenuAction({ id: 'activate', label: t('Aktywuj', 'Activate') }, noApprovedVersionReason),
+      lockedRowMenuAction(
+        { id: 'activate', label: t('Aktywuj', 'Activate') },
+        noApprovedVersionReason
+      ),
     ];
   } else {
     // archived — terminal, single locked entry so the action stays visible
@@ -440,10 +479,18 @@ function buildRowMenu(row: KpiDefinitionDto, ctx: RowMenuContext): StandardRowMe
       // RN-G3 lane (2026-08-11) — full KPI tool (klasa L, D03), same
       // "kebab navigates directly" convention `buildKpiScorecardRowMenu`
       // already established (`onOpenDetail` -> `/results/kpi/scorecards/:id`).
-      { id: 'open-tool', label: t('Otwórz pełne narzędzie', 'Open full tool'), onClick: () => ctx.onOpenTool(row.kpiId) },
+      {
+        id: 'open-tool',
+        label: t('Otwórz pełne narzędzie', 'Open full tool'),
+        onClick: () => ctx.onOpenTool(row.kpiId),
+      },
       // RN-G2 §G #7 — sub-view entry point (see ResultsKpiMeasurementsPanel.tsx
       // header for the "why here, not a new tab/route" placement decision).
-      { id: 'measurements', label: t('Pomiary', 'Measurements'), onClick: () => ctx.onOpenMeasurements(row) },
+      {
+        id: 'measurements',
+        label: t('Pomiary', 'Measurements'),
+        onClick: () => ctx.onOpenMeasurements(row),
+      },
       // RN-G5 — definition-lifecycle entries (edit/submit/approve/reject),
       // gated by `buildDefinitionActions` (see its own doc comment).
       ...defActions,
@@ -568,7 +615,11 @@ function buildPreview(
           value: ownerDisplay(row.ownerUserId, ctx.currentUserId, ctx.isPolish),
         },
         { id: 'process', label: t('Proces', 'Process'), value: shortId(row.primaryProcessId) },
-        { id: 'created', label: t('Utworzono', 'Created'), value: formatDate(row.createdAt, ctx.isPolish) },
+        {
+          id: 'created',
+          label: t('Utworzono', 'Created'),
+          value: formatDate(row.createdAt, ctx.isPolish),
+        },
         {
           id: 'measurement',
           label: t('Ostatni pomiar', 'Latest measurement'),
@@ -577,7 +628,11 @@ function buildPreview(
           ) : (
             <HonestValueCell
               value={measurement ? measurement.actualValue : null}
-              format={(v) => <span className="tabular-nums font-medium text-c-text">{v.toLocaleString(lang)}</span>}
+              format={(v) => (
+                <span className="tabular-nums font-medium text-c-text">
+                  {v.toLocaleString(lang)}
+                </span>
+              )}
             />
           ),
         },
@@ -648,8 +703,8 @@ function buildPreview(
                         disabled: isBusy,
                       },
                     ]
-                  // draft / pending_approval — RN-G5 approve/reject.
-                  : defResolutions,
+                  : // draft / pending_approval — RN-G5 approve/reject.
+                    defResolutions,
             informational: [
               {
                 id: 'measurements',
@@ -754,10 +809,12 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
   // separate from `tab` so the scorecards branch never touches KPI-scope
   // logic.
   const [tab, setTab] = useState<'my' | 'org' | 'scorecards'>(
-    initialTab ?? restoredUiState.tab ?? 'my'
+    initialTab ?? 'org'
   );
   const scope: 'my' | 'org' = tab === 'org' ? 'org' : 'my';
-  const [statusFilter, setStatusFilter] = useState<KpiStatus | null>(restoredUiState.statusFilter ?? null);
+  const [statusFilter, setStatusFilter] = useState<KpiStatus | null>(
+    restoredUiState.statusFilter ?? null
+  );
   const [selectedId, setSelectedId] = useState<string | null>(restoredUiState.selectedId ?? null);
   const [measurement, setMeasurement] = useState<KpiMeasurementDto | null | 'loading'>(null);
   const [pending, setPending] = useState<PendingAction>(null);
@@ -783,7 +840,10 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
   // Submit/approve/reject reason dialog — one shared dialog, keyed by
   // {row, kind}, same convention `RoiTransitionDialog`/`transition` uses in
   // `ResultsRoiHub.tsx`.
-  const [transition, setTransition] = useState<{ row: KpiDefinitionDto; kind: KpiTransitionKind } | null>(null);
+  const [transition, setTransition] = useState<{
+    row: KpiDefinitionDto;
+    kind: KpiTransitionKind;
+  } | null>(null);
   const [defPending, setDefPending] = useState<DefPendingAction>(null);
   const [transitionError, setTransitionError] = useState<string | null>(null);
   const [transitionIsConflict, setTransitionIsConflict] = useState(false);
@@ -891,7 +951,9 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
           // prior filter") — the identical rule, applied to the identical
           // failure mode.
           setStatusFilter(null);
-          setTab((t) => (t === 'scorecards' || (t === 'my' && kpi.ownerUserId !== currentUser?.id) ? 'org' : t));
+          setTab((t) =>
+            t === 'scorecards' || (t === 'my' && kpi.ownerUserId !== currentUser?.id) ? 'org' : t
+          );
         }
       } catch {
         if (!cancelled) setForbidden({ reason: 'NO_VISIBILITY_RECORD' });
@@ -956,7 +1018,8 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
     async (row: KpiDefinitionDto, action: 'activate' | 'suspend' | 'archive') => {
       setPending({ kpiId: row.kpiId, action });
       try {
-        const runner = action === 'activate' ? activateKpi : action === 'suspend' ? suspendKpi : archiveKpi;
+        const runner =
+          action === 'activate' ? activateKpi : action === 'suspend' ? suspendKpi : archiveKpi;
         await runner({ kpiId: row.kpiId, expectedVersion: row.rowVersion });
         await fetchRows();
       } catch (err) {
@@ -1028,7 +1091,11 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
         setFormBusy(false);
         return;
       }
-      editKpiDraft(kpiId, { ...values, expectedVersion: known.rowVersion, idempotencyKey: formIdempotencyKey })
+      editKpiDraft(kpiId, {
+        ...values,
+        expectedVersion: known.rowVersion,
+        idempotencyKey: formIdempotencyKey,
+      })
         .then((definitionVersion) => {
           setKnownVersions((prev) => ({ ...prev, [kpiId]: definitionVersion }));
           setFormOpen(false);
@@ -1177,7 +1244,11 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
       setScorecardPending(true);
       try {
         const runner =
-          action === 'activate' ? activateKpiScorecard : action === 'suspend' ? suspendKpiScorecard : archiveKpiScorecard;
+          action === 'activate'
+            ? activateKpiScorecard
+            : action === 'suspend'
+              ? suspendKpiScorecard
+              : archiveKpiScorecard;
         await runner({ scorecardId: row.scorecardId, expectedVersion: row.rowVersion });
         await fetchScorecardRows();
       } catch (err) {
@@ -1233,11 +1304,18 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
     for (const r of scopedRows) counts[r.status] = (counts[r.status] ?? 0) + 1;
     return [
       { id: 'all', label: isPolish ? 'Wszystkie' : 'All', count: scopedRows.length },
-      ...KPI_STATUSES.map((s) => ({ id: s, label: statusLabel(s, isPolish), count: counts[s] ?? 0 })),
+      ...KPI_STATUSES.map((s) => ({
+        id: s,
+        label: statusLabel(s, isPolish),
+        count: counts[s] ?? 0,
+      })),
     ];
   }, [scopedRows, isPolish]);
 
-  const columns = useMemo(() => buildColumns(isPolish, currentUser?.id), [isPolish, currentUser?.id]);
+  const columns = useMemo(
+    () => buildColumns(isPolish, currentUser?.id),
+    [isPolish, currentUser?.id]
+  );
 
   const selectedRow = visibleRows.find((r) => r.kpiId === selectedId) ?? null;
 
@@ -1256,13 +1334,19 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
   // regardless of which branch below ultimately returns — moved above all
   // early returns, same discipline as `selectedRow`/`columns` above it.
   const tableRows = useMemo(
-    () => visibleRows.map((r) => ({ ...r, id: r.kpiId }) as unknown as Record<string, unknown> & { id: string }),
+    () =>
+      visibleRows.map(
+        (r) => ({ ...r, id: r.kpiId }) as unknown as Record<string, unknown> & { id: string }
+      ),
     [visibleRows]
   );
 
   if (!enabled) {
     return (
-      <div className="h-full flex items-center justify-center p-6" data-testid="results-vnext-kpi-disabled">
+      <div
+        className="h-full flex items-center justify-center p-6"
+        data-testid="results-vnext-kpi-disabled"
+      >
         <EmptyState
           variant="new"
           icon={Blocks}
@@ -1302,7 +1386,8 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
     const scorecardTableRows = scorecardRows.map(
       (r) => ({ ...r, id: r.scorecardId }) as unknown as Record<string, unknown> & { id: string }
     );
-    const selectedScorecard = scorecardRows.find((r) => r.scorecardId === selectedScorecardId) ?? null;
+    const selectedScorecard =
+      scorecardRows.find((r) => r.scorecardId === selectedScorecardId) ?? null;
     const openDetail = (scorecardId: string) =>
       navigate(ROUTES.RESULTS_KPI.SCORECARD.replace(':scorecardId', scorecardId));
 
@@ -1311,13 +1396,11 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
         <ResultsVNextRegistryShell
           domain="kpi"
           moduleBar={{
-            tabs: [
-              { id: 'my', label: isPolish ? 'Moje' : 'My' },
-              { id: 'org', label: isPolish ? 'Organizacja' : 'Org' },
-              { id: 'scorecards', label: isPolish ? 'Karty wyników' : 'Scorecards' },
-            ],
-            activeTab: tab,
-            onTabChange: (id) => setTab(id === 'org' ? 'org' : id === 'scorecards' ? 'scorecards' : 'my'),
+            tabs: RESULTS_DOMAIN_TABS,
+            activeTab: 'kpi',
+            onTabChange: (id) => {
+              if (isResultsDomain(id)) navigate(getResultsDomainPath(id));
+            },
             showTabCounts: false,
             viewModes: ['table'],
             viewMode: 'table',
@@ -1442,13 +1525,11 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
         <ResultsVNextRegistryShell
           domain="kpi"
           moduleBar={{
-            tabs: [
-              { id: 'my', label: isPolish ? 'Moje' : 'My' },
-              { id: 'org', label: isPolish ? 'Organizacja' : 'Org' },
-              { id: 'scorecards', label: isPolish ? 'Karty wyników' : 'Scorecards' },
-            ],
-            activeTab: tab,
-            onTabChange: (id) => setTab(id === 'org' ? 'org' : id === 'scorecards' ? 'scorecards' : 'my'),
+            tabs: RESULTS_DOMAIN_TABS,
+            activeTab: 'kpi',
+            onTabChange: (id) => {
+              if (isResultsDomain(id)) navigate(getResultsDomainPath(id));
+            },
             showTabCounts: false,
             viewModes: ['table'],
             viewMode: 'table',
@@ -1479,7 +1560,8 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
                   knownVersions,
                   defPending,
                   onClose: () => setSelectedId(null),
-                  onOpenFull: () => navigate(ROUTES.RESULTS_KPI.TOOL.replace(':kpiId', selectedRow.kpiId)),
+                  onOpenFull: () =>
+                    navigate(ROUTES.RESULTS_KPI.TOOL.replace(':kpiId', selectedRow.kpiId)),
                   onOpenMeasurements: (r) => setMeasurementsKpi(r),
                   onActivate: (r) => void runLifecycleAction(r, 'activate'),
                   onSuspend: (r) => void runLifecycleAction(r, 'suspend'),

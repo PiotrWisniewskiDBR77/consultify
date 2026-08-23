@@ -115,12 +115,12 @@ import {
   Menu3Chip,
 } from '../shared/ModuleMenu3';
 import { StandardModuleBar } from '../standard/StandardModuleBar';
+import { createInitiativesDemoDataset } from '../Initiatives/initiativesDemoData';
 import { ExecutionControlSurface } from './ExecutionControlSurface';
 import { ExecutionDeliveryClosurePanel } from './ExecutionDeliveryClosurePanel';
 import { isExecutionFlagEnabled } from './executionFeatureFlags';
 import { ExecutionManagementView } from './ExecutionManagementView';
 import { normalizeExecutionArrayEnvelope } from './executionPayloadGuards';
-import { ExecutionRealizationsSurface } from './ExecutionRealizationsSurface';
 import {
   buildReportMarkdown,
   computeRAG,
@@ -713,6 +713,15 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const toggleChatCollapse = useAppStore((s) => s.toggleChatCollapse);
   const isChatCollapsed = useAppStore((s) => s.isChatCollapsed);
   const isPilotParticipant = isPilotParticipantRole(currentUser?.role);
+  const executionDemoData = useMemo(() => {
+    const user = currentUser as any;
+    return createInitiativesDemoDataset({
+      currentUserId: user?.id,
+      currentUserName:
+        user?.name || [user?.firstName, user?.lastName].filter(Boolean).join(' ') || 'Piotr Wisniewski',
+      currentUserEmail: user?.email,
+    });
+  }, [currentUser]);
 
   // State
   const [activeTab, setActiveTab] = useState<ModuleTab>(initialTab);
@@ -742,9 +751,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
   const [openDocuments, setOpenDocuments] = useState<OpenDocument[]>([]);
   const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null);
-  const [activeStatusFilter, setActiveStatusFilter] = useState<string | null>(
-    InitiativeStatus.EXECUTING
-  );
+  const [activeStatusFilter, setActiveStatusFilter] = useState<string | null>(null);
   // Active/All toggle (consistent with InitiativesHub)
   const [scope, setScope] = useState<'active' | 'all'>('active');
   const [selectedInitiative, setSelectedInitiative] = useState<FullInitiative | null>(null);
@@ -1183,13 +1190,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
   // Fetch initiatives in execution phase
   useEffect(() => {
-    // Frozen Realizacje is backed exclusively by canonical Execution Case APIs.
-    // Do not issue the legacy initiatives portfolio request on this route.
-    if (activeTab === 'list') {
-      setIsLoading(false);
-      setInitiativesLoadError(null);
-      return;
-    }
     initRetryRef.current = 0;
     const loadInitiatives = async () => {
       setIsLoading(true);
@@ -1199,11 +1199,22 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         const response = await Api.getInitiatives(currentProjectId || undefined);
         const data = normalizeExecutionArrayEnvelope<FullInitiative>(response, ['initiatives']);
 
-        const executionInitiatives = data.filter((i: FullInitiative) =>
+        const canonicalExecutionInitiatives = data.filter((i: FullInitiative) =>
           EXECUTION_STATUSES.includes(i.status)
         );
+        const canonicalIds = new Set(canonicalExecutionInitiatives.map((initiative) => String(initiative.id)));
+        const reviewInitiatives = import.meta.env.DEV
+          ? executionDemoData.initiatives.filter(
+              (initiative) =>
+                EXECUTION_STATUSES.includes(initiative.status) &&
+                !canonicalIds.has(String(initiative.id))
+            )
+          : [];
 
-        setInitiatives(executionInitiatives);
+        setInitiatives([
+          ...canonicalExecutionInitiatives,
+          ...(reviewInitiatives as unknown as FullInitiative[]),
+        ]);
         initRetryRef.current = 0;
       } catch (err: any) {
         console.error('[ExecutionHub] Failed to load:', err);
@@ -1220,10 +1231,20 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           setTimeout(loadInitiatives, delay);
           return;
         }
-        const executionInitiatives = (fullSessionData?.initiatives || []).filter(
+        const sessionInitiatives = (fullSessionData?.initiatives || []).filter(
           (i: FullInitiative) => EXECUTION_STATUSES.includes(i.status)
         );
-        setInitiatives(executionInitiatives);
+        const fallbackInitiatives = import.meta.env.DEV
+          ? (executionDemoData.initiatives.filter((initiative) =>
+              EXECUTION_STATUSES.includes(initiative.status)
+            ) as unknown as FullInitiative[])
+          : sessionInitiatives;
+        setInitiatives(fallbackInitiatives);
+        if (import.meta.env.DEV) {
+          setInitiativesLoadError(null);
+          setInitiativesLoadErrorCode(null);
+          return;
+        }
         const { message, code } = mapHubLoadFailureToPresentation(
           err,
           t('execution.hub.failedToLoad', 'Failed to load execution initiatives.')
@@ -1235,7 +1256,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       }
     };
     loadInitiatives();
-  }, [activeTab, currentProjectId, executionTruthRefreshKey, fullSessionData?.initiatives, t]);
+  }, [activeTab, currentProjectId, executionDemoData.initiatives, executionTruthRefreshKey, fullSessionData?.initiatives, t]);
 
   useEffect(() => {
     const loadRiskSignals = async () => {
@@ -5181,14 +5202,131 @@ Please return:
 
   // Render content
   const renderContent = () => {
-    if (activeTab === 'list')
+    if (activeTab === 'list') {
+      // 'list' (Portfolio) tab → StandardTable + StandardPreview, 1:1 with the
+      // Assessment 'list' / Meeting 'list' / Results KPI catalog adopters.
+      // Module declares TYLKO data + kebab contract (buildInitiativeRowMenu);
+      // all chrome comes from the Standard* facades.
+      const selectedRow = selectedSummaryInitiative;
+      const previewModel = selectedRow ? mapToPreviewModel(selectedRow) : null;
+
       return (
-        <ExecutionRealizationsSurface
-          scope={scope}
-          activePreset={canonicalMenu3Preset.list}
-          onCountsChange={menu3CountHandlers.list}
-        />
+        <div className="flex h-full flex-col overflow-hidden">
+          {/* T32 R14: EVM/what-if analytics panels moved BELOW the canonical
+              table (T32-TABLE-T13) — relocated, not deleted. */}
+          <div className="min-h-0 flex-1 flex overflow-hidden">
+            <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
+              <StandardTable
+                columns={columns}
+                data={
+                  summaryInitiatives as unknown as Array<Record<string, unknown> & { id: string }>
+                }
+                selectedRowId={summaryPreviewInitiativeId}
+                onRowClick={(row) => setSummaryPreviewInitiativeId(String((row as any).id))}
+                onRowDoubleClick={(row) => {
+                  const init = summaryInitiatives.find((x) => x.id === (row as any).id);
+                  if (init) handleOpenDocument(init);
+                }}
+                rowDescription={() => null}
+                persistKey="execution-summary"
+                density="compact"
+                selection={{ selectedIds: summarySelectedIds, onChange: setSummarySelectedIds }}
+                empty={{
+                  icon: LayoutDashboard,
+                  title: t('execution.empty.noInExecution', 'No initiatives in execution'),
+                  description: t(
+                    'execution.empty.noInExecutionDesc',
+                    'Initiatives promoted to execution will appear here.'
+                  ),
+                }}
+                rowMenu={(row) => {
+                  const init = summaryInitiatives.find((x) => x.id === (row as any).id);
+                  return init
+                    ? buildInitiativeRowMenu(init)
+                    : ({ primary: [], universalHandlers: {}, destructive: {} } as StandardRowMenu);
+                }}
+                activeFilters={summaryFilters}
+                onFilterChange={setSummaryFilters}
+              />
+            </div>
+
+            {selectedRow && previewModel ? (
+              <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+                <StandardPreview
+                  title={selectedRow.name || t('execution.initiativeLabel', 'Initiative')}
+                  onClose={() => setSummaryPreviewInitiativeId(null)}
+                  onOpenFull={() => handleOpenDocument(selectedRow)}
+                  meta={{
+                    pills: [
+                      {
+                        label:
+                          STATUS_METADATA[selectedRow.status as InitiativeStatus]?.label ||
+                          String(selectedRow.status),
+                        tone: statusChipTone(String(selectedRow.status)),
+                      },
+                      {
+                        label: `${previewModel.progress ?? 0}%`,
+                        tone: 'neutral',
+                      },
+                    ],
+                    trailing: (
+                      <span className="text-[11px] font-semibold text-c-text-secondary">
+                        {selectedRow.plannedEndDate
+                          ? new Date(selectedRow.plannedEndDate).toLocaleDateString()
+                          : '—'}
+                      </span>
+                    ),
+                  }}
+                  details={{
+                    text: [
+                      `${t('execution.table.assignee', 'Owner')}: ${
+                        previewModel.ownerBusiness
+                          ? `${previewModel.ownerBusiness.firstName ?? ''} ${previewModel.ownerBusiness.lastName ?? ''}`.trim()
+                          : t('execution.table.unassigned', 'Unassigned')
+                      }`,
+                      `${t('execution.table.progress', 'Progress')}: ${previewModel.progress ?? 0}%`,
+                      `${t('execution.table.deadline', 'Due')}: ${
+                        selectedRow.plannedEndDate
+                          ? new Date(selectedRow.plannedEndDate).toLocaleDateString()
+                          : '—'
+                      }`,
+                      `${t('execution.table.tasks', 'Tasks')}: ${
+                        tasksByInitiative[selectedRow.id]?.length ?? 0
+                      }`,
+                      '',
+                      previewModel.summary?.trim() ||
+                        previewModel.description?.trim() ||
+                        t('common.noDescription', 'No description'),
+                    ].join('\n'),
+                    onCopy: () => {
+                      void navigator.clipboard?.writeText(
+                        `${selectedRow.name} — ${selectedRow.status} (${previewModel.progress ?? 0}%)`
+                      );
+                    },
+                  }}
+                  ai={{
+                    hints: [
+                      t(
+                        'execution.summary.summarizePrompt',
+                        'Summarize this initiative in 5 bullets and propose 3 next steps.'
+                      ),
+                    ],
+                    onRunHint: (hint) => openAiChatForInitiative(selectedRow, hint),
+                  }}
+                  relations={
+                    previewModel.sourceType
+                      ? [{ label: `${t('common.source', 'Source')}: ${previewModel.sourceType}` }]
+                      : []
+                  }
+                  actions={listPreviewActions}
+                />
+              </aside>
+            ) : null}
+          </div>
+        </div>
       );
+    }
+
     if (activeTab === ('work' as ModuleTab))
       return (
         <ExecutionWorkSurface
@@ -5455,11 +5593,15 @@ Please return:
         viewModes={availableViewModes}
         commandRowContent={undefined}
         commandRowRightContent={undefined}
-        chips={(EXECUTION_MENU3[activeTab] ?? []).map((preset) => ({
-          ...preset,
-          count: canonicalMenu3Counts[activeTab]?.[preset.id] ?? 0,
-        }))}
-        activeChip={canonicalMenu3Preset[activeTab] ?? null}
+        chips={
+          activeTab === 'list'
+            ? []
+            : (EXECUTION_MENU3[activeTab] ?? []).map((preset) => ({
+                ...preset,
+                count: canonicalMenu3Counts[activeTab]?.[preset.id] ?? 0,
+              }))
+        }
+        activeChip={activeTab === 'list' ? null : (canonicalMenu3Preset[activeTab] ?? null)}
         onChipChange={(id) =>
           setCanonicalMenu3Preset((current) => ({ ...current, [activeTab]: id }))
         }

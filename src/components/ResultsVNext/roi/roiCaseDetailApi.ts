@@ -200,6 +200,32 @@ interface WriteTrailer {
 // ==========================================
 
 export async function getRoiBaseline(caseId: string): Promise<RoiBaseline | null> {
+  if (caseId.startsWith('sample-roi-')) {
+    return {
+      baselineId: `${caseId}-baseline`,
+      caseId,
+      organizationId: 'sample-org',
+      baselinePeriodStart: '2025-01-01',
+      baselinePeriodEnd: '2025-12-31',
+      currentMeasuredValue: 1240000,
+      currentMeasuredUnit: 'PLN/year',
+      currentMeasuredAsOf: '2025-12-31',
+      bauProjectionMethod: 'flat',
+      bauGrowthRatePct: 0,
+      bauReferenceValue: 1240000,
+      interventionComparisonNotes:
+        'Owner-review sample baseline used to evaluate the full ROI card.',
+      source: 'Owner review sample',
+      confidence: 'medium',
+      ownerUserId: 'Piotr Wiśniewski',
+      frozenAt: null,
+      frozenBy: null,
+      rowVersion: 1,
+      createdBy: 'Piotr Wiśniewski',
+      createdAt: '2026-01-15T08:00:00.000Z',
+      updatedAt: '2026-08-23T14:30:00.000Z',
+    };
+  }
   try {
     const { baseline } = await getJson<{ baseline: RoiBaseline }>(
       `/vnext/results/roi/cases/${encodeURIComponent(caseId)}/baseline`
@@ -253,7 +279,30 @@ export async function putRoiBaseline(
 // GET/PUT .../calculation-policy
 // ==========================================
 
-export async function getRoiCalculationPolicy(caseId: string): Promise<RoiCalculationPolicy | null> {
+export async function getRoiCalculationPolicy(
+  caseId: string
+): Promise<RoiCalculationPolicy | null> {
+  if (caseId.startsWith('sample-roi-')) {
+    return {
+      policyRowId: `${caseId}-policy`,
+      caseId,
+      organizationId: 'sample-org',
+      discountRatePct: 8,
+      taxTreatment: 'pre_tax',
+      inflationRatePct: 2.5,
+      roundingPolicy: 'half_up_2dp',
+      requiredMetrics: ['NPV', 'IRR', 'payback_period'],
+      notes: 'Owner-review sample policy used to evaluate the full ROI card.',
+      confidence: 'medium',
+      ownerUserId: 'Piotr Wiśniewski',
+      frozenAt: null,
+      frozenBy: null,
+      rowVersion: 1,
+      createdBy: 'Piotr Wiśniewski',
+      createdAt: '2026-01-15T08:00:00.000Z',
+      updatedAt: '2026-08-23T14:30:00.000Z',
+    };
+  }
   try {
     const { calculationPolicy } = await getJson<{ calculationPolicy: RoiCalculationPolicy }>(
       `/vnext/results/roi/cases/${encodeURIComponent(caseId)}/calculation-policy`

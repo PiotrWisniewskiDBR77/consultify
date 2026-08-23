@@ -176,7 +176,10 @@ export function newRoiIdempotencyKey(): string {
  * whole `roi/` folder already follows (`roiRegistryMappers.ts` shared by
  * `roiRegistryPresenters.tsx` + the dev-render harness).
  */
-export async function getJson<T>(path: string, params?: Record<string, string | number | boolean | undefined>): Promise<T> {
+export async function getJson<T>(
+  path: string,
+  params?: Record<string, string | number | boolean | undefined>
+): Promise<T> {
   const query = params
     ? Object.entries(params)
         .filter(([, v]) => v !== undefined && v !== null && v !== '')
@@ -236,7 +239,11 @@ export async function mutateJson<T>(
     // non-JSON body — fall through with a generic message/empty details
   }
   if (!res.ok) {
-    const { error, code, ...details } = parsed as { error?: string; code?: string; [k: string]: unknown };
+    const { error, code, ...details } = parsed as {
+      error?: string;
+      code?: string;
+      [k: string]: unknown;
+    };
     throw new RoiApiError(
       (typeof error === 'string' && error) || `Request failed (${res.status})`,
       res.status,
@@ -259,6 +266,9 @@ export interface ListRoiCasesParams {
 }
 
 export async function listRoiCases(params: ListRoiCasesParams = {}): Promise<RoiCaseListItem[]> {
+  const { RESULTS_VNEXT_SAMPLE_ROI_CASES, shouldUseResultsVNextOwnerSampleData } =
+    await import('../resultsVNextOwnerSampleData');
+  if (shouldUseResultsVNextOwnerSampleData()) return RESULTS_VNEXT_SAMPLE_ROI_CASES;
   // Cast is safe: every `ListRoiCasesParams` field genuinely IS
   // `string | number | boolean | undefined` — the cast only appeases TS's
   // "interface without an index signature isn't assignable to Record<string, X>"
@@ -288,6 +298,11 @@ export async function listRoiCases(params: ListRoiCasesParams = {}): Promise<Roi
 // ==========================================
 
 export async function getRoiCase(caseId: string): Promise<RoiCaseListItem | null> {
+  const { RESULTS_VNEXT_SAMPLE_ROI_CASES, shouldUseResultsVNextOwnerSampleData } =
+    await import('../resultsVNextOwnerSampleData');
+  if (shouldUseResultsVNextOwnerSampleData() || caseId.startsWith('sample-roi-')) {
+    return RESULTS_VNEXT_SAMPLE_ROI_CASES.find((roiCase) => roiCase.caseId === caseId) ?? null;
+  }
   try {
     const { case: roiCase } = await getJson<{ case: RoiCaseListItem }>(
       `/vnext/results/roi/cases/${encodeURIComponent(caseId)}`
@@ -305,7 +320,9 @@ export async function getRoiCase(caseId: string): Promise<RoiCaseListItem | null
 // full runs list/compare view is a later package, RN_G2_UI_SCOPE.md §G #15)
 // ==========================================
 
-export async function getLatestRoiCalculationRun(caseId: string): Promise<RoiCalculationRunSummary | null> {
+export async function getLatestRoiCalculationRun(
+  caseId: string
+): Promise<RoiCalculationRunSummary | null> {
   const { runs } = await getJson<{ runs: RoiCalculationRunSummary[] }>(
     `/vnext/results/roi/cases/${encodeURIComponent(caseId)}/calculation-runs`,
     { limit: 1, offset: 0 }
@@ -366,7 +383,9 @@ export interface RoiOrgPirOutcomes {
 }
 
 export async function listOrgRoiPirOutcomes(): Promise<RoiOrgPirOutcomes> {
-  const { outcomes } = await getJson<{ outcomes: RoiOrgPirOutcomes }>('/vnext/results/roi/org/pir-outcomes');
+  const { outcomes } = await getJson<{ outcomes: RoiOrgPirOutcomes }>(
+    '/vnext/results/roi/org/pir-outcomes'
+  );
   return outcomes;
 }
 

@@ -60,17 +60,20 @@
  */
 import { Plus } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
-import type { StandardCounterChip, StandardModuleTab, TableRow } from '@/components/standard';
+import type { StandardCounterChip, TableRow } from '@/components/standard';
+import { ROUTES } from '@/routes/routeConfig';
 import { InitiativeApi } from '@/services/api/initiatives.api';
 import { tokenService } from '@/services/tokenService';
-import { ROUTES } from '@/routes/routeConfig';
 
+import {
+  getResultsDomainPath,
+  isResultsDomain,
+  RESULTS_DOMAIN_TABS,
+} from '../resultsDomainNavigation';
 import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
-import { RoiCaseCreateModal, type RoiCaseCreateFormValues, type RoiCaseCreateInitiativeOption } from './RoiCaseCreateModal';
-import { RoiTransitionDialog } from './RoiTransitionDialog';
 import { toUserFacingErrorMessage } from '../shared/errorMessage';
 import {
   approveRoiCase,
@@ -80,23 +83,28 @@ import {
   getLatestRoiCalculationRun,
   listOrgRoiBenefitsRealization,
   listRoiCases,
+  markRoiCasePostInvestmentReviewDueCase,
+  markRoiCaseReadyForReview,
   newRoiIdempotencyKey,
   rejectRoiCase,
-  markRoiCaseReadyForReview,
   reopenRoiCaseForRevision,
   requestChangesOnRoiCase,
   RoiApiError,
-  markRoiCasePostInvestmentReviewDueCase,
+  type RoiCalculationRunSummary,
+  type RoiCaseListItem,
+  type RoiOrgBenefitsRealizationRow,
+  type RoiTransitionResult,
   startModelingRoiCase,
   startPirRoiCase,
   startRoiCaseBenefitsRealizationCase,
   startRoiCaseTrackingCase,
   submitRoiCaseForApprovalCase,
-  type RoiCalculationRunSummary,
-  type RoiCaseListItem,
-  type RoiOrgBenefitsRealizationRow,
-  type RoiTransitionResult,
 } from './roiApi';
+import {
+  type RoiCaseCreateFormValues,
+  type RoiCaseCreateInitiativeOption,
+  RoiCaseCreateModal,
+} from './RoiCaseCreateModal';
 import {
   ROI_STATUS_BUCKET,
   ROI_STATUS_BUCKET_LABEL,
@@ -111,6 +119,7 @@ import {
   buildRoiCaseRowMenu,
   type RoiBenefitsRealizationRowVm,
 } from './roiRegistryPresenters';
+import { RoiTransitionDialog } from './RoiTransitionDialog';
 
 type RoiTab = 'all' | 'benefits';
 const ROI_CASES_FETCH_LIMIT = 200;
@@ -155,9 +164,17 @@ async function runRoiTransition(
     case 'start_tracking':
       return startRoiCaseTrackingCase(caseId, { expectedVersion, reason, idempotencyKey });
     case 'start_benefits_realization':
-      return startRoiCaseBenefitsRealizationCase(caseId, { expectedVersion, reason, idempotencyKey });
+      return startRoiCaseBenefitsRealizationCase(caseId, {
+        expectedVersion,
+        reason,
+        idempotencyKey,
+      });
     case 'mark_pir_due':
-      return markRoiCasePostInvestmentReviewDueCase(caseId, { expectedVersion, reason, idempotencyKey });
+      return markRoiCasePostInvestmentReviewDueCase(caseId, {
+        expectedVersion,
+        reason,
+        idempotencyKey,
+      });
     case 'approve':
       return approveRoiCase(caseId, { expectedVersion, reason, idempotencyKey });
     case 'reject':
@@ -165,7 +182,11 @@ async function runRoiTransition(
       return rejectRoiCase(caseId, { expectedVersion, rejectionReason: reason, idempotencyKey });
     case 'request_changes':
       if (!reason) throw new Error('changeRequestNotes is required');
-      return requestChangesOnRoiCase(caseId, { expectedVersion, changeRequestNotes: reason, idempotencyKey });
+      return requestChangesOnRoiCase(caseId, {
+        expectedVersion,
+        changeRequestNotes: reason,
+        idempotencyKey,
+      });
     case 'reopen_for_revision':
       if (!reason) throw new Error('reason is required');
       return reopenRoiCaseForRevision(caseId, { expectedVersion, reason, idempotencyKey });
@@ -222,15 +243,19 @@ export const ResultsRoiHub: React.FC = () => {
   const navigate = useNavigate();
 
   const restoredUiState = useMemo(() => readRoiHubUiState(), []);
-  const [tab, setTab] = useState<RoiTab>(restoredUiState.tab ?? 'all');
+  const [tab] = useState<RoiTab>(restoredUiState.tab ?? 'all');
   const [chip, setChip] = useState<'all' | RoiStatusBucket>(restoredUiState.chip ?? 'all');
 
   // "All cases" tab state
   const [cases, setCases] = useState<RoiCaseListItem[] | null>(null);
   const [casesError, setCasesError] = useState<string | null>(null);
   const [casesLoading, setCasesLoading] = useState(false);
-  const [selectedCaseId, setSelectedCaseId] = useState<string | null>(restoredUiState.selectedCaseId ?? null);
-  const [calculationRun, setCalculationRun] = useState<RoiCalculationRunSummary | null | undefined>(undefined);
+  const [selectedCaseId, setSelectedCaseId] = useState<string | null>(
+    restoredUiState.selectedCaseId ?? null
+  );
+  const [calculationRun, setCalculationRun] = useState<RoiCalculationRunSummary | null | undefined>(
+    undefined
+  );
 
   // "Benefits realization" tab state
   const [benefitsRows, setBenefitsRows] = useState<RoiOrgBenefitsRealizationRow[] | null>(null);
@@ -252,9 +277,7 @@ export const ResultsRoiHub: React.FC = () => {
     setCasesError(null);
     listRoiCases({ limit: ROI_CASES_FETCH_LIMIT })
       .then((rows) => setCases(rows))
-      .catch((err) =>
-        setCasesError(toUserFacingErrorMessage(err, isPolish))
-      )
+      .catch((err) => setCasesError(toUserFacingErrorMessage(err, isPolish)))
       .finally(() => setCasesLoading(false));
   }, []);
 
@@ -263,9 +286,7 @@ export const ResultsRoiHub: React.FC = () => {
     setBenefitsError(null);
     listOrgRoiBenefitsRealization()
       .then((res) => setBenefitsRows(res.cases))
-      .catch((err) =>
-        setBenefitsError(toUserFacingErrorMessage(err, isPolish))
-      )
+      .catch((err) => setBenefitsError(toUserFacingErrorMessage(err, isPolish)))
       .finally(() => setBenefitsLoading(false));
   }, []);
 
@@ -282,7 +303,10 @@ export const ResultsRoiHub: React.FC = () => {
 
   // Lifecycle-transition dialog state — one shared dialog for all 7 wired
   // transitions (§G #16 subset), keyed by {row, transitionId}.
-  const [transition, setTransition] = useState<{ row: RoiCaseListItem; id: RoiTransitionId } | null>(null);
+  const [transition, setTransition] = useState<{
+    row: RoiCaseListItem;
+    id: RoiTransitionId;
+  } | null>(null);
   const [transitionBusy, setTransitionBusy] = useState(false);
   const [transitionError, setTransitionError] = useState<string | null>(null);
   const [transitionIsConflict, setTransitionIsConflict] = useState(false);
@@ -303,7 +327,10 @@ export const ResultsRoiHub: React.FC = () => {
             // initiative picker load throws `Cannot read properties of
             // undefined (reading 'localeCompare')` on the very first sort —
             // reproduced live while running the ROI gold flow end-to-end.
-            .map((i) => ({ id: i.id, title: i.title || (i as unknown as { name?: string }).name || i.id }))
+            .map((i) => ({
+              id: i.id,
+              title: i.title || (i as unknown as { name?: string }).name || i.id,
+            }))
             .sort((a, b) => a.title.localeCompare(b.title))
         )
       )
@@ -439,16 +466,13 @@ export const ResultsRoiHub: React.FC = () => {
     [benefitsRows, selectedBenefitsCaseId]
   );
 
-  const tabs: StandardModuleTab[] = [
-    { id: 'all', label: isPolish ? 'Wszystkie sprawy' : 'All cases' },
-    { id: 'benefits', label: isPolish ? 'Realizacja korzyści' : 'Benefits realization' },
-  ];
-
   const chips: StandardCounterChip[] = [
     { id: 'all', label: isPolish ? 'Wszystkie' : 'All', count: cases?.length ?? 0 },
     {
       id: 'in_progress',
-      label: isPolish ? ROI_STATUS_BUCKET_LABEL.in_progress.pl : ROI_STATUS_BUCKET_LABEL.in_progress.en,
+      label: isPolish
+        ? ROI_STATUS_BUCKET_LABEL.in_progress.pl
+        : ROI_STATUS_BUCKET_LABEL.in_progress.en,
       count: bucketCounts.in_progress,
     },
     {
@@ -463,7 +487,9 @@ export const ResultsRoiHub: React.FC = () => {
     },
     {
       id: 'closed_out',
-      label: isPolish ? ROI_STATUS_BUCKET_LABEL.closed_out.pl : ROI_STATUS_BUCKET_LABEL.closed_out.en,
+      label: isPolish
+        ? ROI_STATUS_BUCKET_LABEL.closed_out.pl
+        : ROI_STATUS_BUCKET_LABEL.closed_out.en,
       count: bucketCounts.closed_out,
     },
   ];
@@ -492,9 +518,11 @@ export const ResultsRoiHub: React.FC = () => {
         <ResultsVNextRegistryShell
           domain="roi"
           moduleBar={{
-            tabs,
-            activeTab: tab,
-            onTabChange: (id) => setTab(id as RoiTab),
+            tabs: RESULTS_DOMAIN_TABS,
+            activeTab: 'roi',
+            onTabChange: (id) => {
+              if (isResultsDomain(id)) navigate(getResultsDomainPath(id));
+            },
             showTabCounts: false,
             viewModes: ['table'],
             viewMode: 'table',
@@ -544,9 +572,11 @@ export const ResultsRoiHub: React.FC = () => {
       <ResultsVNextRegistryShell
         domain="roi"
         moduleBar={{
-          tabs,
-          activeTab: tab,
-          onTabChange: (id) => setTab(id as RoiTab),
+          tabs: RESULTS_DOMAIN_TABS,
+          activeTab: 'roi',
+          onTabChange: (id) => {
+            if (isResultsDomain(id)) navigate(getResultsDomainPath(id));
+          },
           showTabCounts: false,
           viewModes: ['table'],
           viewMode: 'table',

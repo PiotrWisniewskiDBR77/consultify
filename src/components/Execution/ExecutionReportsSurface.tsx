@@ -21,6 +21,12 @@ import {
 } from '@/services/initiatives-execution/runtimeApi';
 
 import { countExecutionPresets, type ExecutionMenu3Contract } from './canonicalMenu3';
+import {
+  executionLocalReviewEnabled,
+  executionReviewCases,
+  executionReviewReportDefinitions,
+  executionReviewReportRuns,
+} from './executionLocalReviewData';
 interface Row extends TableRow {
   id: string;
   title: string;
@@ -198,8 +204,26 @@ export const ExecutionReportsSurface = ({
         listReportDefinitions(),
         listExecutionCases(),
       ])) as Array<{ items?: any[]; cases?: any[] }>;
+      const reportRuns =
+        (b.items ?? []).length > 0
+          ? b.items ?? []
+          : executionLocalReviewEnabled
+            ? executionReviewReportRuns
+            : [];
+      const reportDefinitions =
+        (definitionList.items ?? []).length > 0
+          ? definitionList.items ?? []
+          : executionLocalReviewEnabled
+            ? executionReviewReportDefinitions
+            : [];
       const definitionDetails = await Promise.all(
-        (definitionList.items ?? []).map((item) => getReportDefinition(item.definitionId))
+        reportDefinitions.map((item) =>
+          executionReviewReportDefinitions.some(
+            (definition) => definition.definitionId === item.definitionId
+          )
+            ? item
+            : getReportDefinition(item.definitionId)
+        )
       );
       const definitionNames = new Map(
         definitionDetails.map((definition: any) => {
@@ -210,7 +234,7 @@ export const ExecutionReportsSurface = ({
         })
       );
       setRows(
-        (b.items ?? []).map((x) => ({
+        reportRuns.map((x) => ({
           id: x.reportRunId,
           title: `${definitionNames.get(x.definitionRef.definitionId) ?? 'Raport'} · ${formatDate(x.asOf)}`,
           status: reportStatusLabel(x.status),
@@ -241,10 +265,57 @@ export const ExecutionReportsSurface = ({
           };
         })
       );
-      setExecutionCases(c.cases ?? []);
+      setExecutionCases(
+        (c.cases ?? []).length > 0
+          ? c.cases ?? []
+          : executionLocalReviewEnabled
+            ? executionReviewCases
+            : []
+      );
       setState('READY');
     } catch {
-      setState('ERROR');
+      if (!executionLocalReviewEnabled) {
+        setState('ERROR');
+        return;
+      }
+      const names = new Map(
+        executionReviewReportDefinitions.map((definition) => [
+          definition.definitionId,
+          definition.versions[0]?.name ?? definition.definitionId,
+        ])
+      );
+      setRows(
+        executionReviewReportRuns.map((x) => ({
+          id: x.reportRunId,
+          title: `${names.get(x.definitionRef.definitionId) ?? 'Raport'} · ${formatDate(x.asOf)}`,
+          status: reportStatusLabel(x.status),
+          rawStatus: x.status,
+          definition: `${names.get(x.definitionRef.definitionId) ?? x.definitionRef.definitionId} · v${x.definitionRef.version}`,
+          period: `${formatDate(x.period.start)} – ${formatDate(x.period.end)}`,
+          asOf: formatDate(x.asOf),
+          version: x.version,
+          source: x,
+        }))
+      );
+      setDefinitions(
+        executionReviewReportDefinitions.map((definition) => {
+          const current = definition.versions[0];
+          return {
+            id: definition.definitionId,
+            title: current?.name ?? definition.definitionId,
+            state: reportStatusLabel(current?.state ?? 'UNKNOWN'),
+            rawState: current?.state ?? 'UNKNOWN',
+            currentVersion: definition.currentVersion,
+            aggregateVersion: definition.version,
+            owner: current?.ownerId ?? 'UNKNOWN',
+            approver: current?.approverId ?? 'UNKNOWN',
+            updatedAt: definition.updatedAt,
+            definition,
+          };
+        })
+      );
+      setExecutionCases(executionReviewCases);
+      setState('READY');
     }
   }, []);
   useEffect(() => {

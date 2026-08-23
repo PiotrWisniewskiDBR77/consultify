@@ -15,6 +15,13 @@ import {
 } from '@/services/initiatives-execution/runtimeApi';
 
 import { countExecutionPresets, type ExecutionMenu3Contract } from './canonicalMenu3';
+import {
+  executionLocalReviewEnabled,
+  executionReviewCases,
+  getExecutionReviewAllocations,
+  getExecutionReviewCase,
+  getExecutionReviewWork,
+} from './executionLocalReviewData';
 const resourcePresets = [
   'all',
   'overallocated',
@@ -89,14 +96,27 @@ export const ExecutionResourcesSurface = ({
     setState('LOADING');
     try {
       const body = (await listExecutionCases()) as any;
-      const nextCases = body.cases ?? [];
+      const nextCases =
+        (body.cases ?? []).length > 0
+          ? body.cases
+          : executionLocalReviewEnabled
+            ? executionReviewCases
+            : [];
       setCases(nextCases);
       const allocationSets = await Promise.all(
         nextCases.map(async (executionCase: any) => {
-          const [result, work] = (await Promise.all([
-            readOperationalAllocations(executionCase.executionCaseId),
-            readExecutionWork(executionCase.executionCaseId),
-          ])) as any[];
+          const isReview = executionReviewCases.some(
+            (item) => item.executionCaseId === executionCase.executionCaseId
+          );
+          const [result, work] = isReview
+            ? [
+                getExecutionReviewAllocations(executionCase.executionCaseId),
+                getExecutionReviewWork(executionCase.executionCaseId),
+              ]
+            : ((await Promise.all([
+                readOperationalAllocations(executionCase.executionCaseId),
+                readExecutionWork(executionCase.executionCaseId),
+              ])) as any[]);
           return (result.items ?? []).map((item: any) => ({
             ...item,
             executionCaseId: executionCase.executionCaseId,
@@ -107,7 +127,24 @@ export const ExecutionResourcesSurface = ({
       setItems(allocationSets.flat());
       setState('READY');
     } catch {
-      setState('ERROR');
+      if (!executionLocalReviewEnabled) {
+        setState('ERROR');
+        return;
+      }
+      setCases(executionReviewCases);
+      setItems(
+        executionReviewCases.flatMap((executionCase) => {
+          const work = getExecutionReviewWork(executionCase.executionCaseId);
+          return (getExecutionReviewAllocations(executionCase.executionCaseId).items ?? []).map(
+            (item: any) => ({
+              ...item,
+              executionCaseId: executionCase.executionCaseId,
+              taskTitle: (work.tasks ?? []).find((task: any) => task.taskId === item.taskId)?.title,
+            })
+          );
+        })
+      );
+      setState('READY');
     }
   }, []);
   useEffect(() => {
@@ -117,11 +154,14 @@ export const ExecutionResourcesSurface = ({
     setCaseId(id);
     setState('LOADING');
     try {
-      const [c, a, work] = (await Promise.all([
-        readExecutionCase(id),
-        readOperationalAllocations(id),
-        readExecutionWork(id),
-      ])) as any[];
+      const reviewCase = getExecutionReviewCase(id);
+      const [c, a, work] = reviewCase
+        ? [reviewCase, getExecutionReviewAllocations(id), getExecutionReviewWork(id)]
+        : ((await Promise.all([
+            readExecutionCase(id),
+            readOperationalAllocations(id),
+            readExecutionWork(id),
+          ])) as any[]);
       setCaseVersion(c.version);
       const nextItems = (a.items ?? []).map((item: any) => ({ ...item, executionCaseId: id }));
       setItems(nextItems);

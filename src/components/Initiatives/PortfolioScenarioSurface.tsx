@@ -75,6 +75,7 @@ interface ScenarioRow extends TableRow {
 interface Props extends CanonicalMenu3Contract {
   portfolioId: string | null;
   initiatives: InitiativeOption[];
+  demoMode?: boolean;
 }
 
 const unknown = <T,>(reason: string): TriState<T> => ({ state: 'UNKNOWN', value: null, reason });
@@ -147,6 +148,7 @@ export const PortfolioScenarioSurface: React.FC<Props> = ({
   initiatives,
   activePreset,
   onCountsChange,
+  demoMode = false,
 }) => {
   const [rows, setRows] = useState<ScenarioRow[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -243,6 +245,32 @@ export const PortfolioScenarioSurface: React.FC<Props> = ({
   useEffect(() => {
     let cancelled = false;
     void (async () => {
+      if (demoMode) {
+        const scenario: Scenario = {
+          scenarioId: 'Atelier Growth Portfolio', scenarioVersion: 3, status: 'PUBLISHED',
+          scope: { portfolioId: portfolioId || 'demo-portfolio', goalIds: ['growth', 'resilience'], asOf: '2026-08-23T09:00:00.000Z' },
+          model: { modelId: 'human-portfolio-v1', version: 1 }, decompositionKeys: ['value', 'risk', 'fit'],
+          memberships: initiatives.slice(0, 8).map((initiative, index) => ({
+            initiativeId: initiative.id, initiativeVersion: initiative.version || 1,
+            disposition: (index < 4 ? 'INCLUDED' : index < 6 ? 'CONDITIONAL' : 'DEFERRED') as Disposition,
+            scoreDecomposition: { value: 92 - index * 6, risk: 30 + index * 5, fit: 95 - index * 4 }, rank: index + 1, rankOverride: null,
+            coverage: { state: 'KNOWN', value: 78 - index * 3, basis: 'Demo strategy coverage review' },
+            overlap: { state: 'KNOWN', value: index === 3 ? [initiatives[0]?.id || 'demo'] : [], basis: 'Demo dependency review' },
+            roughDemand: { state: 'ESTIMATED', value: { unit: 'FTE-month', low: 3 + index, base: 5 + index, high: 8 + index }, basis: 'Workshop estimate' },
+            confidence: index < 3 ? 'HIGH' : index < 6 ? 'MEDIUM' : 'LOW', rationale: 'Illustrative portfolio decision prepared for owner review.',
+            strategicFit: { state: 'KNOWN', value: 92 - index * 5, basis: 'Strategy workshop' },
+            expectedValue: { state: 'ESTIMATED', value: { amount: 420 - index * 35, currency: 'kEUR', period: 'annual' }, basis: 'Benefits hypothesis' },
+            costEnvelope: { state: 'ESTIMATED', value: { amount: 90 + index * 18, currency: 'kEUR' }, basis: 'ROM estimate' },
+            risk: { state: 'KNOWN', value: index % 3 === 0 ? 'MEDIUM' : 'LOW', basis: 'Risk review' }, readiness: index < 4 ? 'READY' : 'NEEDS_EVIDENCE',
+            coverageContribution: { state: 'KNOWN', value: 12 - index, basis: 'Portfolio map' }, overlapSynergy: { state: 'KNOWN', value: [], basis: 'Portfolio map' },
+            ownerId: index % 2 ? 'Lena Meyer' : 'Piotr Wiśniewski', mandatory: index === 0,
+          })),
+          createdBy: 'demo', updatedBy: 'demo', publishedBy: 'owner-piotr', publishedAt: '2026-08-23T09:00:00.000Z', previousPublishedVersion: 2,
+        };
+        const row: ScenarioRow = { id: scenario.scenarioId, title: scenario.scenarioId, status: scenario.status, version: scenario.scenarioVersion, members: scenario.memberships.length, confidence: 'MIXED', updated: scenario.scope.asOf, scenario, aggregateVersion: 3 };
+        setRows([row]); setSelectedId(row.id); setWriteState('IDLE');
+        return;
+      }
       try {
         const register = (await listPortfolioScenarioRegister()) as {
           scenarios?: Array<{ id: string }>;
@@ -343,7 +371,7 @@ export const PortfolioScenarioSurface: React.FC<Props> = ({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [demoMode, initiatives, portfolioId]);
 
   const upsert = (scenario: Scenario, aggregateVersion: number) => {
     const confidences = new Set(scenario.memberships.map((member) => member.confidence));

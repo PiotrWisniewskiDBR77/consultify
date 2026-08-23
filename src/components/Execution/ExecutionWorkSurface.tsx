@@ -27,6 +27,13 @@ import {
 import { useAppStore } from '@/store/useAppStore';
 
 import { countExecutionPresets, type ExecutionMenu3Contract } from './canonicalMenu3';
+import {
+  executionLocalReviewEnabled,
+  executionReviewCases,
+  getExecutionReviewCase,
+  getExecutionReviewMilestones,
+  getExecutionReviewWork,
+} from './executionLocalReviewData';
 type WorkKind = 'TASK' | 'DECISION';
 interface Row extends TableRow {
   id: string;
@@ -175,11 +182,21 @@ export const ExecutionWorkSurface = ({ activePreset, onCountsChange }: Execution
     setState('LOADING');
     try {
       const body = (await listExecutionCases()) as any;
-      const nextCases = body.cases ?? [];
+      const nextCases =
+        (body.cases ?? []).length > 0
+          ? body.cases
+          : executionLocalReviewEnabled
+            ? executionReviewCases
+            : [];
       setCases(nextCases);
       const workSets = await Promise.all(
         nextCases.map(async (executionCase: any) => {
-          const work = (await readExecutionWork(executionCase.executionCaseId)) as any;
+          const reviewWork = getExecutionReviewWork(executionCase.executionCaseId);
+          const work = executionReviewCases.some(
+            (item) => item.executionCaseId === executionCase.executionCaseId
+          )
+            ? reviewWork
+            : ((await readExecutionWork(executionCase.executionCaseId)) as any);
           return [
             ...(work.tasks ?? []).map((item: any) => ({
               id: item.taskId,
@@ -213,7 +230,45 @@ export const ExecutionWorkSurface = ({ activePreset, onCountsChange }: Execution
       setRows(workSets.flat());
       setState('READY');
     } catch {
-      setState('ERROR');
+      if (!executionLocalReviewEnabled) {
+        setState('ERROR');
+        return;
+      }
+      setCases(executionReviewCases);
+      setRows(
+        executionReviewCases.flatMap((executionCase) => {
+          const work = getExecutionReviewWork(executionCase.executionCaseId);
+          return [
+            ...(work.tasks ?? []).map((item: any) => ({
+              id: item.taskId,
+              title: item.title,
+              kind: 'TASK' as const,
+              status: item.status,
+              owner: item.assigneeId,
+              dueAt: `${formatDateTime(item.dueAt)} · SLA ${formatDateTime(item.slaAt)}`,
+              rawDueAt: item.dueAt ?? null,
+              version: item.version,
+              executionCaseId: executionCase.executionCaseId,
+              initiativeId: executionCase.initiativeId,
+              source: item,
+            })),
+            ...(work.decisions ?? []).map((item: any) => ({
+              id: item.decisionId,
+              title: item.title,
+              kind: 'DECISION' as const,
+              status: item.status,
+              owner: item.authorityId,
+              dueAt: formatDateTime(item.dueAt),
+              rawDueAt: item.dueAt ?? null,
+              version: item.version,
+              executionCaseId: executionCase.executionCaseId,
+              initiativeId: executionCase.initiativeId,
+              source: item,
+            })),
+          ];
+        })
+      );
+      setState('READY');
     }
   }, []);
   useEffect(() => {
@@ -223,11 +278,14 @@ export const ExecutionWorkSurface = ({ activePreset, onCountsChange }: Execution
     setCaseId(id);
     setState('LOADING');
     try {
-      const [c, w, m] = (await Promise.all([
-        readExecutionCase(id),
-        readExecutionWork(id),
-        readExecutionMilestones(id),
-      ])) as any[];
+      const reviewCase = getExecutionReviewCase(id);
+      const [c, w, m] = reviewCase
+        ? [reviewCase, getExecutionReviewWork(id), getExecutionReviewMilestones(id)]
+        : ((await Promise.all([
+            readExecutionCase(id),
+            readExecutionWork(id),
+            readExecutionMilestones(id),
+          ])) as any[]);
       setCaseVersion(c.version);
       setInitiativeId(c.detail.initiativeId);
       setBaselineRef({

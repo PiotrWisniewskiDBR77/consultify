@@ -144,7 +144,10 @@ export class OkrApiError extends Error {
   }
 }
 
-async function getJson<T>(path: string, params?: Record<string, string | number | boolean | undefined>): Promise<T> {
+async function getJson<T>(
+  path: string,
+  params?: Record<string, string | number | boolean | undefined>
+): Promise<T> {
   const query = params
     ? Object.entries(params)
         .filter(([, v]) => v !== undefined && v !== null && v !== '')
@@ -186,6 +189,9 @@ export interface ListOkrSetsParams {
 }
 
 export async function listOkrSets(params: ListOkrSetsParams = {}): Promise<OkrSetDto[]> {
+  const { RESULTS_VNEXT_SAMPLE_OKR_SETS, shouldUseResultsVNextOwnerSampleData } =
+    await import('../resultsVNextOwnerSampleData');
+  if (shouldUseResultsVNextOwnerSampleData()) return RESULTS_VNEXT_SAMPLE_OKR_SETS;
   const { sets } = await getJson<{ sets: OkrSetDto[] }>(
     '/vnext/results/okr/sets',
     params as Record<string, string | number | boolean | undefined>
@@ -209,6 +215,9 @@ export interface ListMyOkrSetsParams {
 }
 
 export async function listMyOkrSets(params: ListMyOkrSetsParams = {}): Promise<OkrSetDto[]> {
+  const { RESULTS_VNEXT_SAMPLE_OKR_SETS, shouldUseResultsVNextOwnerSampleData } =
+    await import('../resultsVNextOwnerSampleData');
+  if (shouldUseResultsVNextOwnerSampleData()) return RESULTS_VNEXT_SAMPLE_OKR_SETS.slice(0, 2);
   const { sets } = await getJson<{ sets: OkrSetDto[] }>(
     '/vnext/results/okr/my',
     params as Record<string, string | number | boolean | undefined>
@@ -232,7 +241,13 @@ export interface ListCompanyOkrSetsParams {
   offset?: number;
 }
 
-export async function listCompanyOkrSets(params: ListCompanyOkrSetsParams = {}): Promise<OkrSetDto[]> {
+export async function listCompanyOkrSets(
+  params: ListCompanyOkrSetsParams = {}
+): Promise<OkrSetDto[]> {
+  const { RESULTS_VNEXT_SAMPLE_OKR_SETS, shouldUseResultsVNextOwnerSampleData } =
+    await import('../resultsVNextOwnerSampleData');
+  if (shouldUseResultsVNextOwnerSampleData())
+    return RESULTS_VNEXT_SAMPLE_OKR_SETS.filter((set) => set.scopeType === 'company');
   const { sets } = await getJson<{ sets: OkrSetDto[] }>(
     '/vnext/results/okr/company',
     params as Record<string, string | number | boolean | undefined>
@@ -253,8 +268,15 @@ export async function listCompanyOkrSets(params: ListCompanyOkrSetsParams = {}):
 // ==========================================
 
 export async function getOkrSet(setId: string): Promise<OkrSetDto | null> {
+  const { RESULTS_VNEXT_SAMPLE_OKR_SETS, shouldUseResultsVNextOwnerSampleData } =
+    await import('../resultsVNextOwnerSampleData');
+  if (shouldUseResultsVNextOwnerSampleData() || setId.startsWith('sample-okr-')) {
+    return RESULTS_VNEXT_SAMPLE_OKR_SETS.find((set) => set.setId === setId) ?? null;
+  }
   try {
-    const { set } = await getJson<{ set: OkrSetDto }>(`/vnext/results/okr/sets/${encodeURIComponent(setId)}`);
+    const { set } = await getJson<{ set: OkrSetDto }>(
+      `/vnext/results/okr/sets/${encodeURIComponent(setId)}`
+    );
     return set;
   } catch (err) {
     if (err instanceof OkrApiError && err.status === 404) return null;
