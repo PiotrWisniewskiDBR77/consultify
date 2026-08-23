@@ -7,6 +7,19 @@ Owner: Piotr Wisniewski
 Integrator: Codex
 Mobile: `DEFERRED_NON_GATING`
 
+> Recovery replay — 2026-08-23: the historical 817-migration database recorded
+> below was absent at catalog revalidation. Replacement local-only database
+> `consultify_w3_results_owner_recovered_20260823` passed the exact 831-migration
+> chain and an independent post-restart SQL readback of KPI, Execution receipt,
+> ROI Actual and OKR check-in. Its new FINAL `0600` receipt is marker-bound.
+> Exact clean SHA `62e4b71ad7e3ec3e7100ee2086342a013f62a091` adopted it on
+> server/client `4337/4338`: health/readiness/frontend `200/200/200`, migration
+> ledgers `ok/ok`, client and SQL markers passed. OWNER login and KPI, ROI,
+> program, cycle and OKR-set lists all returned `200`; MEMBER ROI access returned
+> governed `403`, foreign KPI list returned an empty `200`, and anonymous KPI
+> access `401`. This restores current technical API/storage readiness, not
+> authenticated browser evidence, Piotr acceptance or release authority.
+
 ## Contract
 
 Primary journey: inspect KPI/ROI/OKR, add an allowed observation and follow

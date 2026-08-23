@@ -150,3 +150,23 @@ database remained in the named volume.
 Credentialed browser replay, recording/transcription/provider capability and
 Piotr acceptance remain pending. Current reconstructed storage readiness:
 `3/16` — Initiatives, Execution and Meetings.
+
+Results was reconstructed fourth as
+`consultify_w3_results_owner_recovered_20260823`. It passed `831/831` successful
+migrations and wrote a new FINAL `0600` manifest with marker nonce
+`76ed9e370f2f07cef395999f03f839f29684ae110bc6438431cb69827923dce2`.
+Seed readback proved two KPI measurements, one deviation, one Execution receipt,
+one ROI Actual/reconciliation/PIR/approval snapshot/current pointer, one OKR key
+result/check-in/review, three visibility rows, one ROI governance publication,
+one complete Execution graph and zero graph orphans. After PostgreSQL restart,
+independent SQL rechecked `831/831`, marker `1`, KPI points `2`, receipt `1`, ROI
+Actual `1` and OKR check-in `1`. Exact clean SHA
+`62e4b71ad7e3ec3e7100ee2086342a013f62a091` adopted the database on
+server/client `4337/4338`; runtime and marker gates passed. Five canonical OWNER
+lists returned `200`; MEMBER ROI was governed `403`, foreign KPI list was empty
+`200`, and anonymous KPI access was `401`. Runtime and container were stopped
+while preserving the database.
+
+Credentialed browser replay and Piotr acceptance remain pending. Current
+reconstructed storage readiness: `4/16` — Initiatives, Execution, Meetings and
+Results.
