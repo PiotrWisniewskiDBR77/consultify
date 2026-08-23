@@ -75,6 +75,7 @@ import {
   clearGlobalTransportFailure,
   getHeaders,
   resetAuthLoopGuard,
+  shouldAllowDemoData,
 } from '@/services/api';
 import {
   shouldFallbackToLegacyExecutionControl,
@@ -713,6 +714,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const toggleChatCollapse = useAppStore((s) => s.toggleChatCollapse);
   const isChatCollapsed = useAppStore((s) => s.isChatCollapsed);
   const isPilotParticipant = isPilotParticipantRole(currentUser?.role);
+  const allowDemoData = shouldAllowDemoData();
   const executionDemoData = useMemo(() => {
     const user = currentUser as any;
     return createInitiativesDemoDataset({
@@ -1203,7 +1205,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           EXECUTION_STATUSES.includes(i.status)
         );
         const canonicalIds = new Set(canonicalExecutionInitiatives.map((initiative) => String(initiative.id)));
-        const reviewInitiatives = import.meta.env.DEV
+        const reviewInitiatives = allowDemoData
           ? executionDemoData.initiatives.filter(
               (initiative) =>
                 EXECUTION_STATUSES.includes(initiative.status) &&
@@ -1231,16 +1233,13 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           setTimeout(loadInitiatives, delay);
           return;
         }
-        const sessionInitiatives = (fullSessionData?.initiatives || []).filter(
-          (i: FullInitiative) => EXECUTION_STATUSES.includes(i.status)
-        );
-        const fallbackInitiatives = import.meta.env.DEV
+        const fallbackInitiatives = allowDemoData
           ? (executionDemoData.initiatives.filter((initiative) =>
               EXECUTION_STATUSES.includes(initiative.status)
             ) as unknown as FullInitiative[])
-          : sessionInitiatives;
+          : [];
         setInitiatives(fallbackInitiatives);
-        if (import.meta.env.DEV) {
+        if (allowDemoData) {
           setInitiativesLoadError(null);
           setInitiativesLoadErrorCode(null);
           return;
@@ -1256,7 +1255,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       }
     };
     loadInitiatives();
-  }, [activeTab, currentProjectId, executionDemoData.initiatives, executionTruthRefreshKey, fullSessionData?.initiatives, t]);
+  }, [activeTab, allowDemoData, currentProjectId, executionDemoData.initiatives, executionTruthRefreshKey, t]);
 
   useEffect(() => {
     const loadRiskSignals = async () => {
