@@ -45,4 +45,19 @@ describe('AdminOrganizationDefaultsPanel', () => {
     expect(await screen.findByText(/V8 nie jest włączone/)).toBeInTheDocument();
     expect(screen.getByText('Zapisz lokalizację i format')).toBeEnabled();
   });
+
+  it('blocks profile save after a failed read and offers retry', async () => {
+    vi.mocked(Api.get).mockRejectedValue(new Error('profile unavailable'));
+    render(<AdminOrganizationDefaultsPanel organizationId="org-1" />);
+    expect(await screen.findByText('profile unavailable')).toBeInTheDocument();
+    expect(screen.getByText('Zapisz lokalizację i format')).toBeDisabled();
+    expect(screen.getAllByText('Spróbuj ponownie').length).toBeGreaterThan(0);
+  });
+
+  it('blocks finance save after a failed read and offers retry', async () => {
+    vi.mocked(V8FinanceApi.getSettings).mockRejectedValue(new Error('finance unavailable'));
+    render(<AdminOrganizationDefaultsPanel organizationId="org-1" />);
+    expect(await screen.findByText('finance unavailable')).toBeInTheDocument();
+    expect(screen.getByText('Zapisz domyślne finansowe')).toBeDisabled();
+  });
 });
