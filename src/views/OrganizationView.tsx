@@ -25,6 +25,7 @@ import OrganizationSidebar, {
 } from '../components/Organization/OrganizationSidebar';
 import { OrgContextSummaryBanner } from '../components/Organization/OrgContextSummaryBanner';
 import OrganizationDirectionConstraintsScreen from '../components/Organization/redesign/OrganizationDirectionConstraintsScreen';
+import OrganizationGoalsMetricsScreen from '../components/Organization/redesign/OrganizationGoalsMetricsScreen';
 import OrganizationIdentityOperatingScreen from '../components/Organization/redesign/OrganizationIdentityOperatingScreen';
 import {
   getOrganizationRedesignModules,
@@ -360,6 +361,26 @@ export const OrganizationView: React.FC = () => {
             </OrganizationScreenShell>
           )}
         </OrganizationDirectionConstraintsScreen>
+      );
+    }
+
+    if (activeLocation.module === 'goals' && activeLocation.screen === 'strategic-intent') {
+      return (
+        <OrganizationGoalsMetricsScreen>
+          {(args) => (
+            <OrganizationScreenShell
+              sections={args.sections}
+              activeSection={args.activeSection}
+              onSectionChange={args.onSectionChange}
+              chips={args.chips}
+              activeChip={args.activeChip}
+              onChipChange={args.onChipChange}
+              statePanel={args.statePanel}
+            >
+              {args.content}
+            </OrganizationScreenShell>
+          )}
+        </OrganizationGoalsMetricsScreen>
       );
     }
 
