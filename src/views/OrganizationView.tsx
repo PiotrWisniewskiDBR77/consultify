@@ -374,7 +374,7 @@ export const OrganizationView: React.FC = () => {
 
     if (activeLocation.module === 'goals' && activeLocation.screen === 'strategic-intent') {
       return (
-        <OrganizationGoalsMetricsScreen>
+        <OrganizationGoalsMetricsScreen contextSync={contextSync}>
           {(args) => (
             <OrganizationScreenShell
               sections={args.sections}
@@ -394,7 +394,7 @@ export const OrganizationView: React.FC = () => {
 
     if (activeLocation.module === 'goals' && activeLocation.screen === 'stakeholder-expectations') {
       return (
-        <OrganizationScopeCollaborationScreen>
+        <OrganizationScopeCollaborationScreen contextSync={contextSync}>
           {(args) => (
             <OrganizationScreenShell
               sections={args.sections}
@@ -414,7 +414,7 @@ export const OrganizationView: React.FC = () => {
 
     if (activeLocation.module === 'challenges' && activeLocation.screen === 'declared-challenges') {
       return (
-        <OrganizationChallengesEvidenceScreen>
+        <OrganizationChallengesEvidenceScreen contextSync={contextSync}>
           {(args) => (
             <OrganizationScreenShell
               sections={args.sections}
@@ -434,7 +434,7 @@ export const OrganizationView: React.FC = () => {
 
     if (activeLocation.module === 'challenges' && activeLocation.screen === 'root-causes') {
       return (
-        <OrganizationRootCausesBlockersScreen>
+        <OrganizationRootCausesBlockersScreen contextSync={contextSync}>
           {(args) => (
             <OrganizationScreenShell
               sections={args.sections}
@@ -454,7 +454,7 @@ export const OrganizationView: React.FC = () => {
 
     if (activeLocation.module === 'strategy' && activeLocation.screen === 'risks-opportunities') {
       return (
-        <OrganizationRisksOpportunitiesScreen>
+        <OrganizationRisksOpportunitiesScreen contextSync={contextSync}>
           {(args) => (
             <OrganizationScreenShell
               sections={args.sections}
@@ -524,6 +524,7 @@ export const OrganizationView: React.FC = () => {
     renderLegacyContent,
     currentMeta.title,
     isOrgAdmin,
+    contextSync,
   ]);
 
   return (

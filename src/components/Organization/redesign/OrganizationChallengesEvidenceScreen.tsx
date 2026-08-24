@@ -8,10 +8,10 @@
  * DANE SĄ REALNE PO OBU STRONACH (FAZA 2, DEC-2026-08-24-15) — ten sam
  * magazyn co stary `ChallengeMapModule`:
  *   `useContextBuilderStore().challenges` (`declaredChallenges`/`evidence`)
- *   jako bufor roboczy edycji + `PUT /organization-context-store`
- *   (`{ challenges }`) + readback na „Zapisz zmiany" (`useOrgContextStoreSection`,
- *   dzieli klucz `challenges` z ekranem „Przyczyny i blockery" — trasa
- *   serwerowa aktualizuje tylko przysłane klucze).
+ *   jako bufor roboczy edycji + „Zapisz zmiany" → `contextSync.saveNow()`
+ *   (prop z `OrganizationView`, JEDYNY pisarz do `/organization-context-store`
+ *   — patrz `useOrgContextStoreSection.ts`), dzieli klucz `challenges` z
+ *   ekranem „Przyczyny i blockery" przez ten sam współdzielony hak.
  *
  * `ContextDocUploader` (wspólny komponent `views/ContextBuilder/shared/`)
  * wraca w sekcji „Dowody" — DEC-2026-08-24-15 warunek (b). Komponent NIE był
@@ -28,7 +28,10 @@ import { ContextDocUploader } from '../../../views/ContextBuilder/shared/Context
 import type { StandardCounterChip, StandardModuleTab } from '../../standard/StandardModuleBar';
 import { OrgRecordList, OrgSectionCard } from './OrganizationCardPrimitives';
 import type { OrganizationStatePanelProps } from './OrganizationStatePanel';
-import { useOrgContextStoreSection } from './useOrgContextStoreSection';
+import {
+  type OrgContextSyncHandle,
+  useOrgContextStoreSection,
+} from './useOrgContextStoreSection';
 
 export type ChallengesEvidenceSection = 'challenges' | 'evidence';
 
@@ -56,13 +59,15 @@ export interface ChallengesEvidenceRenderArgs {
 }
 
 export const OrganizationChallengesEvidenceScreen: React.FC<{
+  /** Jedyny pisarz do `/organization-context-store` — patrz `OrganizationView`. */
+  contextSync?: OrgContextSyncHandle;
   children: (args: ChallengesEvidenceRenderArgs) => React.ReactNode;
-}> = ({ children }) => {
-  const { challenges, setChallenges, updateChallengesList } = useContextBuilderStore();
+}> = ({ contextSync, children }) => {
+  const { challenges, updateChallengesList } = useContextBuilderStore();
   const [activeSection, setActiveSection] = useState<ChallengesEvidenceSection>('challenges');
   const [activeChip, setActiveChip] = useState<string>('all');
   const [saved, setSaved] = useState(false);
-  const contextStore = useOrgContextStoreSection('challenges', challenges, setChallenges);
+  const contextStore = useOrgContextStoreSection(contextSync);
 
   const challengeHandlers = useMemo(
     () => ({

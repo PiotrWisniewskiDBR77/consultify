@@ -8,12 +8,12 @@
  * DANE SĄ REALNE PO OBU STRONACH (FAZA 2, DEC-2026-08-24-15):
  *   - edycja pola → `useContextBuilderStore().goals` (`setGoals`/`updateGoalsList`,
  *     nadal persist → localStorage — teraz to WYŁĄCZNIE bufor roboczy),
- *   - „Zapisz zmiany" → `PUT /organization-context-store` (`{ goals }`) +
- *     READBACK (`useOrgContextStoreSection`, wzorzec 1:1 z zapisem profilu
- *     w „Tożsamość i model działania" — `PUT /organization-profiles/:orgId`),
- *   - przy montowaniu ekran POBIERA `GET /organization-context-store` i
- *     hydratuje lokalny store danymi z serwera (jeśli tam są) — server jest
- *     źródłem prawdy, local-storage tylko przyspiesza wpisywanie.
+ *   - „Zapisz zmiany" → `contextSync.saveNow()` (prop z `OrganizationView`,
+ *     hak `useOrgContextSync` — JEDYNY pisarz do `/organization-context-store`,
+ *     patrz komentarz w `useOrgContextStoreSection.ts` o wyścigu, który
+ *     wykrył live-runtime dowód końcowy tego kroku),
+ *   - hydratacja ze servera dzieje się RAZ, globalnie, w `OrganizationView`
+ *     (ten sam `useOrgContextSync`) — ekran jej nie duplikuje.
  *
  * Lista KPI używa `OrgRecordList` (nowy prymityw etapu B) zamiast starego
  * `DynamicList` — `DynamicList` miało 8 użyć `primary-*` (crimson, zakazane
@@ -39,7 +39,10 @@ import {
   OrgTextField,
 } from './OrganizationCardPrimitives';
 import type { OrganizationStatePanelProps } from './OrganizationStatePanel';
-import { useOrgContextStoreSection } from './useOrgContextStoreSection';
+import {
+  type OrgContextSyncHandle,
+  useOrgContextStoreSection,
+} from './useOrgContextStoreSection';
 
 export type GoalsMetricsSection = 'intent' | 'metrics';
 
@@ -75,13 +78,15 @@ export interface GoalsMetricsRenderArgs {
 }
 
 export const OrganizationGoalsMetricsScreen: React.FC<{
+  /** Jedyny pisarz do `/organization-context-store` — patrz `OrganizationView`. */
+  contextSync?: OrgContextSyncHandle;
   children: (args: GoalsMetricsRenderArgs) => React.ReactNode;
-}> = ({ children }) => {
+}> = ({ contextSync, children }) => {
   const { goals, setGoals, updateGoalsList } = useContextBuilderStore();
   const [activeSection, setActiveSection] = useState<GoalsMetricsSection>('intent');
   const [activeChip, setActiveChip] = useState<string>('all');
   const [saved, setSaved] = useState(false);
-  const contextStore = useOrgContextStoreSection('goals', goals, setGoals);
+  const contextStore = useOrgContextStoreSection(contextSync);
 
   const kpiHandlers = useMemo(
     () => ({

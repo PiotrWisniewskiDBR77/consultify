@@ -8,9 +8,10 @@
  * DANE SĄ REALNE PO OBU STRONACH (FAZA 2, DEC-2026-08-24-15) — ten sam
  * magazyn co stary `ChallengeMapModule`:
  *   `useContextBuilderStore().challenges` (`rootCauseAnswers`/`activeBlockers`)
- *   jako bufor roboczy edycji + `PUT /organization-context-store`
- *   (`{ challenges }`) + readback na „Zapisz zmiany" (`useOrgContextStoreSection`,
- *   dzieli klucz `challenges` z ekranem „Wyzwania i dowody").
+ *   jako bufor roboczy edycji + „Zapisz zmiany" → `contextSync.saveNow()`
+ *   (prop z `OrganizationView`, JEDYNY pisarz do `/organization-context-store`
+ *   — patrz `useOrgContextStoreSection.ts`), dzieli klucz `challenges` z
+ *   ekranem „Wyzwania i dowody" przez ten sam współdzielony hak.
  *   Cztery pytania diagnostyczne to ten sam tekst co w starym ekranie
  *   (`ROOT_CAUSE_QUESTIONS`) — realne pytania, nie atrapa.
  *
@@ -34,7 +35,10 @@ import { useContextBuilderStore } from '../../../store/useContextBuilderStore';
 import type { StandardCounterChip, StandardModuleTab } from '../../standard/StandardModuleBar';
 import { ORG_L1, OrgRecordList, OrgSectionCard, OrgTextField } from './OrganizationCardPrimitives';
 import type { OrganizationStatePanelProps } from './OrganizationStatePanel';
-import { useOrgContextStoreSection } from './useOrgContextStoreSection';
+import {
+  type OrgContextSyncHandle,
+  useOrgContextStoreSection,
+} from './useOrgContextStoreSection';
 
 export type RootCausesBlockersSection = 'rootcause' | 'blockers';
 
@@ -105,13 +109,15 @@ export interface RootCausesBlockersRenderArgs {
 }
 
 export const OrganizationRootCausesBlockersScreen: React.FC<{
+  /** Jedyny pisarz do `/organization-context-store` — patrz `OrganizationView`. */
+  contextSync?: OrgContextSyncHandle;
   children: (args: RootCausesBlockersRenderArgs) => React.ReactNode;
-}> = ({ children }) => {
+}> = ({ contextSync, children }) => {
   const { challenges, setChallenges } = useContextBuilderStore();
   const [activeSection, setActiveSection] = useState<RootCausesBlockersSection>('rootcause');
   const [activeChip, setActiveChip] = useState<string>('all');
   const [saved, setSaved] = useState(false);
-  const contextStore = useOrgContextStoreSection('challenges', challenges, setChallenges);
+  const contextStore = useOrgContextStoreSection(contextSync);
 
   const blockerHandlers = useMemo(
     () => ({

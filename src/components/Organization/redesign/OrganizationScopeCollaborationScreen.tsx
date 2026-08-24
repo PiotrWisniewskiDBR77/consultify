@@ -8,11 +8,11 @@
  * DANE SĄ REALNE PO OBU STRONACH (FAZA 2, DEC-2026-08-24-15) — ten sam
  * magazyn co stary `GoalsExpectationsModule`:
  *   `useContextBuilderStore().goals` (`inScope`/`outScope`/`transformationArchetype`
- *   /`aiRole`/`steeringCadence`) jako bufor roboczy edycji + `PUT
- *   /organization-context-store` (`{ goals }`) + readback na „Zapisz zmiany",
+ *   /`aiRole`/`steeringCadence`) jako bufor roboczy edycji + „Zapisz zmiany"
+ *   → `contextSync.saveNow()` (prop z `OrganizationView`, JEDYNY pisarz do
+ *   `/organization-context-store` — patrz `useOrgContextStoreSection.ts`),
  *   dokładnie jak w „Cele i mierniki" (współdzielą klucz `goals` w jednym
- *   wierszu — trasa serwerowa aktualizuje tylko przysłane klucze, patrz
- *   `useOrgContextStoreSection`).
+ *   wierszu, ale zapis idzie przez WSPÓLNY hak, nie dwa niezależne).
  *
  * ŚWIADOMIE POMINIĘTE (poza mapą 11 ekranów — patrz `org-konsolidacja-propozycja.md`):
  *   - zakładka „No-Go Zone" (`goals.noGo`) — nie ma dziś trasy w `ORGANIZATION_MODULES`
@@ -33,7 +33,10 @@ import {
   OrgSectionCard,
 } from './OrganizationCardPrimitives';
 import type { OrganizationStatePanelProps } from './OrganizationStatePanel';
-import { useOrgContextStoreSection } from './useOrgContextStoreSection';
+import {
+  type OrgContextSyncHandle,
+  useOrgContextStoreSection,
+} from './useOrgContextStoreSection';
 
 export type ScopeCollaborationSection = 'scope' | 'collaboration';
 
@@ -71,13 +74,15 @@ export interface ScopeCollaborationRenderArgs {
 }
 
 export const OrganizationScopeCollaborationScreen: React.FC<{
+  /** Jedyny pisarz do `/organization-context-store` — patrz `OrganizationView`. */
+  contextSync?: OrgContextSyncHandle;
   children: (args: ScopeCollaborationRenderArgs) => React.ReactNode;
-}> = ({ children }) => {
+}> = ({ contextSync, children }) => {
   const { goals, setGoals, updateGoalsList } = useContextBuilderStore();
   const [activeSection, setActiveSection] = useState<ScopeCollaborationSection>('scope');
   const [activeChip, setActiveChip] = useState<string>('all');
   const [saved, setSaved] = useState(false);
-  const contextStore = useOrgContextStoreSection('goals', goals, setGoals);
+  const contextStore = useOrgContextStoreSection(contextSync);
 
   const listHandlers = (listName: 'inScope' | 'outScope', items: typeof goals.inScope) => ({
     onAdd: () =>

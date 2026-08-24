@@ -10,9 +10,9 @@
  * DANE SĄ REALNE PO OBU STRONACH (FAZA 2, DEC-2026-08-24-15) — ten sam
  * magazyn co stary `StrategicSynthesisModule`:
  *   `useContextBuilderStore().synthesis` (`risks`/`strengths`) jako bufor
- *   roboczy edycji + `PUT /organization-context-store` (`{ synthesis }`) +
- *   readback na „Zapisz zmiany" (`useOrgContextStoreSection`, wzorzec 1:1
- *   z zapisem profilu w „Tożsamość i model działania").
+ *   roboczy edycji + „Zapisz zmiany" → `contextSync.saveNow()` (prop z
+ *   `OrganizationView`, JEDYNY pisarz do `/organization-context-store` —
+ *   patrz `useOrgContextStoreSection.ts`).
  *
  * ŚWIADOMIE POMINIĘTE (zero atrap):
  *   - modal ze szczegółami ryzyka/szansy po kliknięciu wiersza — pokazywał
@@ -31,7 +31,10 @@ import { useContextBuilderStore } from '../../../store/useContextBuilderStore';
 import type { StandardCounterChip, StandardModuleTab } from '../../standard/StandardModuleBar';
 import { OrgRecordList, OrgSectionCard } from './OrganizationCardPrimitives';
 import type { OrganizationStatePanelProps } from './OrganizationStatePanel';
-import { useOrgContextStoreSection } from './useOrgContextStoreSection';
+import {
+  type OrgContextSyncHandle,
+  useOrgContextStoreSection,
+} from './useOrgContextStoreSection';
 
 export type RisksOpportunitiesSection = 'risks' | 'strengths';
 
@@ -59,13 +62,15 @@ export interface RisksOpportunitiesRenderArgs {
 }
 
 export const OrganizationRisksOpportunitiesScreen: React.FC<{
+  /** Jedyny pisarz do `/organization-context-store` — patrz `OrganizationView`. */
+  contextSync?: OrgContextSyncHandle;
   children: (args: RisksOpportunitiesRenderArgs) => React.ReactNode;
-}> = ({ children }) => {
-  const { synthesis, setSynthesis, updateSynthesisList } = useContextBuilderStore();
+}> = ({ contextSync, children }) => {
+  const { synthesis, updateSynthesisList } = useContextBuilderStore();
   const [activeSection, setActiveSection] = useState<RisksOpportunitiesSection>('risks');
   const [activeChip, setActiveChip] = useState<string>('all');
   const [saved, setSaved] = useState(false);
-  const contextStore = useOrgContextStoreSection('synthesis', synthesis, setSynthesis);
+  const contextStore = useOrgContextStoreSection(contextSync);
 
   const riskHandlers = useMemo(
     () => ({

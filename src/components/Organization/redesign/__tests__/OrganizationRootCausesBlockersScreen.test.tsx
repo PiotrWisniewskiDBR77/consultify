@@ -2,15 +2,16 @@
  * „Przyczyny i blockery" — szósty ekran redesignu (etap B/FAZA 2).
  * Sprawdzamy: dwie sekcje z dawnych dwóch ekranów Wyzwań na JEDNYM ekranie,
  * REALNE dane z `useContextBuilderStore().challenges` (bufor edycji) ORAZ
- * realny zapis serwerowy `PUT /organization-context-store` + readback na
- * „Zapisz zmiany" (DEC-2026-08-24-15, warunek (a)), a także powrót galerii
- * czterech gotowych blockerów do dodania jednym kliknięciem (warunek (c)).
+ * że „Zapisz zmiany" woła `contextSync.saveNow()` — JEDYNY pisarz do
+ * `/organization-context-store` (DEC-2026-08-24-15 warunek (a)), a także
+ * powrót galerii czterech gotowych blockerów do dodania jednym kliknięciem
+ * (warunek (c)).
  */
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { Api } from '../../../../services/api';
+import type { OrgContextSyncHandle } from '../useOrgContextStoreSection';
 import { useContextBuilderStore } from '../../../../store/useContextBuilderStore';
 import OrganizationRootCausesBlockersScreen from '../OrganizationRootCausesBlockersScreen';
 import OrganizationStatePanel from '../OrganizationStatePanel';
@@ -25,16 +26,22 @@ vi.mock('react-hot-toast', () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 
-vi.mock('../../../../services/api', () => ({
-  Api: {
-    get: vi.fn(),
-    put: vi.fn(),
-  },
-}));
+// See OrganizationGoalsMetricsScreen.test.tsx header comment — minimal stub
+// to short-circuit the real services/api.ts → i18n init transitive import.
+vi.mock('../../../../services/api', () => ({ Api: {} }));
 
-function renderScreen() {
+function makeContextSync(overrides?: Partial<OrgContextSyncHandle>): OrgContextSyncHandle {
+  return {
+    saveNow: vi.fn().mockResolvedValue(true),
+    isSyncing: false,
+    isUnsynced: false,
+    ...overrides,
+  };
+}
+
+function renderScreen(contextSync: OrgContextSyncHandle = makeContextSync()) {
   return render(
-    <OrganizationRootCausesBlockersScreen>
+    <OrganizationRootCausesBlockersScreen contextSync={contextSync}>
       {(args) => (
         <div>
           {args.chips.map((chip) => (
@@ -64,8 +71,6 @@ describe('OrganizationRootCausesBlockersScreen', () => {
 
   beforeEach(() => {
     setChallenges.mockReset();
-    vi.mocked(Api.get).mockReset().mockResolvedValue({});
-    vi.mocked(Api.put).mockReset().mockResolvedValue({ ok: true });
     vi.mocked(useContextBuilderStore).mockReturnValue({
       challenges: CHALLENGES_FIXTURE,
       setChallenges,
@@ -133,34 +138,20 @@ describe('OrganizationRootCausesBlockersScreen', () => {
     });
   });
 
-  it('przy montowaniu pobiera GET /organization-context-store i hydratuje store, gdy serwer ma dane', async () => {
-    const serverChallenges = {
-      ...CHALLENGES_FIXTURE,
-      rootCauseAnswers: { 0: 'Odpowiedź z serwera.' },
-    };
-    vi.mocked(Api.get).mockResolvedValue({ challenges: serverChallenges });
-
-    renderScreen();
-
-    await waitFor(() => expect(setChallenges).toHaveBeenCalledWith(serverChallenges));
-  });
-
-  it('„Zapisz zmiany" zapisuje sekcję challenges na serwerze i weryfikuje odczyt zwrotny (readback)', async () => {
-    vi.mocked(Api.get)
-      .mockResolvedValueOnce({}) // mount — brak danych na serwerze
-      .mockResolvedValueOnce({ challenges: CHALLENGES_FIXTURE }); // readback po zapisie
-
-    renderScreen();
-    await waitFor(() => expect(Api.get).toHaveBeenCalledTimes(1));
+  it('„Zapisz zmiany" woła contextSync.saveNow() — JEDYNY pisarz do serwera', () => {
+    const contextSync = makeContextSync();
+    renderScreen(contextSync);
 
     fireEvent.click(screen.getByTestId('org-state-panel-save'));
 
-    await waitFor(() => expect(Api.put).toHaveBeenCalledTimes(1));
-    const [url, payload] = vi.mocked(Api.put).mock.calls[0];
-    expect(url).toBe('/organization-context-store');
-    expect(payload).toEqual({ challenges: CHALLENGES_FIXTURE });
+    expect(contextSync.saveNow).toHaveBeenCalledTimes(1);
+  });
 
-    await waitFor(() => expect(Api.get).toHaveBeenCalledTimes(2));
-    await waitFor(() => expect(setChallenges).toHaveBeenCalledWith(CHALLENGES_FIXTURE));
+  it('gdy contextSync.isUnsynced=true, panel pokazuje napis o buforze lokalnym', () => {
+    renderScreen(makeContextSync({ isUnsynced: true }));
+
+    expect(
+      screen.getByText(/Dane zapisywane są lokalnie \(bufor roboczy\)/)
+    ).toBeInTheDocument();
   });
 });
