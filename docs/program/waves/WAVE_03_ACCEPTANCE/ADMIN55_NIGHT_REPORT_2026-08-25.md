@@ -30,7 +30,7 @@ Start: 2026-08-24 (Europe/Warsaw) · Koniec: —
 | 10 | billing/seats-licences | 3 | `1a926118e2` | DONE | realna konfiguracja/historia; auto-add z readbackiem; zakup contact-sales |
 | 11 | health/dependencies | 3 | — | STOP | brak jawnej mapy probe→zależność; rejestr opisuje przepływy produktowe, nie zależności |
 | 12 | health/incident-history | 4/B | — | STOP | ledger platformowy nie ma `organization_id`; zakaz zmiany semantyki migracją |
-| 13 | health/queues-jobs | 4/B | — | NIE ZACZĘTO | |
+| 13 | health/queues-jobs | 4/B | `341bdb4cf4` | DONE | tenantowy read-only odczyt `admin_iam_jobs`; bez retry/cancel |
 | 14 | health/sla-slo | 4/B | — | NIE ZACZĘTO | |
 | 15 | security/security-alerts | 4/A | — | NIE ZACZĘTO | |
 | 16 | security/sessions | 3 | — | NIE ZACZĘTO | |
@@ -86,6 +86,8 @@ Stan: NIE ZACOMMITOWANO.
 
 | # | Znalezisko | Plik:linia | Klasa | Dlaczego nie naprawiłem |
 |---|---|---|---|---|
+| 1 | Router z jobs/retry/cancel jest eksportowany, ale niezamontowany | `server/src/routes/actionDecisions.routes.ts:944-1157`, `server/src/routes/index.ts:33` | martwa powierzchnia API | montaż zmieniłby cudzą, nieodebraną powierzchnię |
+| 2 | Handlery action-decisions używają `async_jobs`, której migracja jest w `never-ran` | `server/migrations/never-ran/025_ai_actions_complete.sql.sql` | schema/runtime drift | ekran oparto wyłącznie na żywej `admin_iam_jobs` |
 
 ## Korekty inwentarza
 
@@ -115,6 +117,10 @@ Brak na starcie dyżuru.
 - `npx esbuild src/components/Admin/AdminSeatsLicencesPanel.tsx --loader:.tsx=tsx --outfile=/dev/null` — PASS.
 - `bash scripts/check-list-canon.sh src/components/Admin/AdminSeatsLicencesPanel.tsx` — PASS, 0 nowych naruszeń.
 - `npx vitest run server/src/routes/__tests__/seats.routes.test.ts src/components/Admin/__tests__/AdminSeatsLicencesPanel.test.tsx src/views/admin/__tests__/AdminSettingsModule.test.tsx` — PASS, 3 pliki / 38 testów (ostrzeżenie testowe `act`, bez błędów).
+- `npx esbuild server/src/routes/admin/health-panel.routes.ts --platform=node --format=esm --outfile=/dev/null` — PASS.
+- `npx esbuild src/components/Admin/AdminJobsPanel.tsx --loader:.tsx=tsx --outfile=/dev/null` — PASS.
+- `bash scripts/check-list-canon.sh src/components/Admin/AdminJobsPanel.tsx` — PASS, 0 nowych naruszeń.
+- `npx vitest run server/src/routes/__tests__/health-jobs.routes.test.ts src/components/Admin/__tests__/AdminJobsPanel.test.tsx src/views/admin/__tests__/AdminSettingsModule.test.tsx` — PASS, 3 pliki / 37 testów.
 
 ## Migracje
 
