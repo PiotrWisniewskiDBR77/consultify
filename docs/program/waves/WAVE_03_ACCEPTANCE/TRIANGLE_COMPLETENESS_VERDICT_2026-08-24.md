@@ -1,0 +1,53 @@
+# Werdykt nadzorcy — kompletność integracji Admin + Settings + Superadmin
+
+Data: 2026-08-24 · Podpis: Fable (sesja nadzorcza programu dokończenia)
+Status: `SIGNED / BINDING_FOR_MODULE_02_03_ACCEPTANCE`
+
+Zakres na polecenie właściciela (2026-08-24): finalna kompletność integracji
+logicznej i funkcjonalnej trójkąta Admin + Settings + Superadmin ma być
+wykonana lub nadzorowana osobiście przez Fable. Materiał zebrały cztery
+niezależne zadania robotnicze (analiza uwag i kompletności; weryfikacja
+superadmin end-to-end na żywym runtime; dowody przeglądarkowe m02; integracja
+m03). Trzy twierdzenia nośne zweryfikowałem osobiście w kodzie
+(`requireActiveMembership` na endpointach osobistych; biała lista podłączonych
+ekranów Admina; brak konsumentów trzech przełączników bezpieczeństwa) —
+wszystkie potwierdzone.
+
+## Werdykt per obszar
+
+| Obszar | Werdykt | Uzasadnienie |
+|---|---|---|
+| **Settings (15)** | `FUNCTIONALLY_COMPLETE / CLEANUPS_PENDING` | 36 ekranów podłączonych; zapis/odczyt działa (dowody m02); rozplątanie D10 wykonane na poziomie tras (m02+m03). Porządki: OAuth backend gotowy przy UI „Coming soon"; osierocony `AppearanceSettings`; brak PL dla etykiety grupy Billing. |
+| **Admin (14)** | `STRUCTURE_OK / CONTENT_14_OF_55 / NOT_ACCEPTABLE_AS_WHOLE` | Siedem domen i powłoka zgodne ze spec; realnie podłączonych 14/55 ekranów (biała lista w `AdminSettingsModule.tsx`), 40 renderuje uczciwe „Niezweryfikowane". Założenie właściciela z 21.08 („wszystko podłączone") obalone przez kod. |
+| **Superadmin** | `ARCHITECTURE_AS_DESIGNED / TWO_DEFECTS` | Rozdzielenie ról zamierzone i udokumentowane (SUPERADMIN nie dziedziczy `/admin/*` — decyzja P0 ADM-RAW-P0-001, potwierdzona w runtime). Defekty: P1 i P2 poniżej. |
+
+## Lista MUST przed odbiorem modułów 02/03
+
+| ID | Problem | Dowód | Działanie |
+|---|---|---|---|
+| TRI-MUST-01 | **Superadmin nie zapisze własnych ustawień osobistych** — 10 endpointów osobistych (powiadomienia, wygląd, GDPR) za `requireActiveMembership`, które 403-uje konto bez wiersza `organization_members`; komunikat `ORG_MEMBERSHIP_REVOKED` mylący. | `server/src/routes/settings.routes.ts:533,1035,2849…5752`; żywy 403 na runtime | Rozdzielić endpointy osobiste od organizacyjnych: preferencje własne konta chronione tożsamością, nie członkostwem. Naprawa + test + powtórka na runtime. |
+| TRI-MUST-02 | **Trzy przełączniki bezpieczeństwa Admina nic nie egzekwują** (goście, link-sharing, zatwierdzanie narzędzi) — zapis/odczyt tylko w `adminP32.routes.ts` + rejestr; zero konsumentów. Panel potwierdza politykę, która nie istnieje. | grep konsumentów: brak poza storage/testami | Decyzja właściciela: wdrożyć egzekwowanie (większa praca) albo ukryć/oznaczyć „nieaktywne" do czasu wdrożenia (mała praca). Zakaz pozostawienia placebo. |
+| TRI-MUST-03 | **Cztery działające funkcje uwięzione w zakładkach** (`api-access`, `scim-lifecycle`, `risk-summary`, `ai-operations`) — ich pozycje w lewym menu mówią „Niezweryfikowane", a realny ekran żyje jako pozioma zakładka gdzie indziej; łamie kontrakt menu. | `AdminSettingsModule.tsx` biała lista vs nawigacja | Wpiąć ekrany pod ich pozycje menu (rozszerzyć białą listę o istniejące implementacje). |
+| TRI-MUST-04 | **Podwójna redirekcja gubi superadmina**: `/settings/billing` itd. → `/admin/*` → P0-guard odbija na `/superadmin/customers` bez wyjaśnienia. | runtime, zrzuty m03 evidence | Dla roli SUPERADMIN kierować na odpowiednik w `/superadmin/*` albo pokazywać ekran wyjaśniający; nie zmieniać decyzji P0. |
+| TRI-MUST-05 | **Ryzyko schematu na świeżej bazie**: `migrationIdentity.ts:56` akceptuje ~2/3 plików migracji (poza zakresem m.in. klucze API, rejestr ustawień); plus znana podwójna migracja `20260412` (dwa niezsynchronizowane systemy migracji). | analiza + incydent runtime m01 | Obowiązkowa weryfikacja na świeżej bazie PRZED fazą 3 (staging). Osobne zadanie naprawcze. |
+| TRI-MUST-06 | **Brak domu dla „ustawień domyślnych organizacji"** (język/strefa/waluta/udostępnianie): spec 7 domen nie przewiduje edytora; przekierowania tymczasowo → Command Center (werdykt 08e2beec19). | spec 14_ADMIN + kod | Decyzja właściciela: gdzie ekran ma żyć (proponowane: nowe dziecko w Command Center lub Team & Access). |
+
+## Zamknięte w ramach tej weryfikacji
+
+- Fantom `/admin/operations` naprawiony osobiście (commit `08e2beec19`): Domains → spec-exact `Security & Identity → Domains`; branding/organization/tenant-defaults → Command Center; alias `operations→command`; test anty-fantomowy.
+- Aliasy `ROUTES.ADMIN` sprzątnięte (m03, `dff7fa528a`); bramki `OWN-GATE-001..005` = ACCEPTED (`f5fe0cc6b0`).
+- Rozplątanie D10 na poziomie tras: m01 (`34080ef9f3`), m02 (`baf89f836e`).
+- Gałęzie zachowane nie zawierają utraconej wiedzy o Settings/Admin (sprawdzone).
+
+## Rejestr uwag właściciela
+
+16 uwag z przeglądów 21–24.08 zebrane w `settings-admin-analiza.md` (materiał
+sesji nadzorczej): 6 zamkniętych, 10 otwartych — każda otwarta mapowana na
+pozycję MUST powyżej albo na listę po-MVP (OAuth UI, AppearanceSettings,
+12 kluczy P31 bez konsumenta, egzekwowanie limitów planu, PL etykiety).
+
+## Skutek
+
+Moduły 02/03 NIE trafiają do odbioru właściciela przed zamknięciem
+TRI-MUST-01..04 oraz decyzjami właściciela w TRI-MUST-02 (wariant) i
+TRI-MUST-06 (lokalizacja). TRI-MUST-05 blokuje fazę 3, nie odbiór modułów.
