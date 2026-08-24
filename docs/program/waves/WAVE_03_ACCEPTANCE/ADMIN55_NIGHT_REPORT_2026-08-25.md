@@ -19,7 +19,7 @@ Start: 2026-08-24 (Europe/Warsaw) · Koniec: —
 | # | Ekran | Fala | Commit | Status | Uwagi |
 |---|---|---|---|---|---|
 | 1 | team/teams | 2 | `6838861109` | DONE | realny CRUD zespołu i składu; mutacje z readbackiem |
-| 2 | billing/plan-history | 4/A | — | NIE ZACZĘTO | |
+| 2 | billing/plan-history | 4/A | `52195ad3b7` | DONE | tenant-scoped, tylko odczyt, paginacja |
 | 3 | security/domains | 4/A | — | NIE ZACZĘTO | |
 | 4 | team/access-requests | 4/A | — | NIE ZACZĘTO | |
 | 5 | security/service-accounts | 4/A | — | NIE ZACZĘTO | |
@@ -64,6 +64,10 @@ Brak na starcie dyżuru.
 - `npx esbuild src/components/Admin/AdminTeamsPanel.tsx --loader:.tsx=tsx --outfile=/dev/null` — PASS.
 - `bash scripts/check-list-canon.sh src/components/Admin/AdminTeamsPanel.tsx` — PASS, 0 nowych naruszeń.
 - `npx vitest run src/components/Admin/__tests__/AdminTeamsPanel.test.tsx src/views/admin/__tests__/AdminSettingsModule.test.tsx` — PASS, 2 pliki / 32 testy.
+- `npx esbuild src/components/Admin/AdminPlanHistoryPanel.tsx --loader:.tsx=tsx --outfile=/dev/null` — PASS.
+- `npx esbuild server/src/routes/admin/billing-history.routes.ts --platform=node --format=esm --outfile=/dev/null` — PASS.
+- `bash scripts/check-list-canon.sh src/components/Admin/AdminPlanHistoryPanel.tsx` — PASS, 0 nowych naruszeń.
+- `npx vitest run server/src/routes/__tests__/billing-history.routes.test.ts src/components/Admin/__tests__/AdminPlanHistoryPanel.test.tsx src/views/admin/__tests__/AdminSettingsModule.test.tsx` — PASS, 3 pliki / 35 testów.
 
 ## Migracje
 
