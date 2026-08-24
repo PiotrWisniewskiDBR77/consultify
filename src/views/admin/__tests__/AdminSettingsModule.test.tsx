@@ -18,7 +18,11 @@ vi.mock('../../../components/Admin/AdminMembersRolesPanel', () => ({
   AdminMembersRolesPanel: () => <div data-testid="panel-people">people</div>,
 }));
 vi.mock('../../../components/Admin/AdminBillingFinOpsPanel', () => ({
-  AdminBillingFinOpsPanel: () => <div data-testid="panel-billing">billing</div>,
+  AdminBillingFinOpsPanel: ({ screen }: { screen?: string }) => (
+    <div data-testid="panel-billing" data-screen={screen}>
+      billing
+    </div>
+  ),
 }));
 vi.mock('../../../components/Admin/AdminAIControlCenterPanel', () => ({
   AdminAIControlCenterPanel: () => <div data-testid="panel-ai">ai</div>,
@@ -157,6 +161,15 @@ describe('AdminSettingsModule section routing', () => {
 
       renderAt('/admin/command/cost-capacity');
       expect(screen.queryByTestId('panel-command')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('WIRE_ONLY screens (Admin komplet 55, Fala 1)', () => {
+    it('wires Billing Details to the Budgets & tax (controls) tab', () => {
+      renderAt('/admin/billing/billing-details');
+      const panel = screen.getByTestId('panel-billing');
+      expect(panel).toBeInTheDocument();
+      expect(panel).toHaveAttribute('data-screen', 'controls');
     });
   });
 });

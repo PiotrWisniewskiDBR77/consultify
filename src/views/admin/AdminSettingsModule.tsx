@@ -276,9 +276,14 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
       (resolvedLocation.domain === 'team' &&
         ['members', 'invitations', 'ownership'].includes(resolvedLocation.screen)) ||
       (resolvedLocation.domain === 'billing' &&
-        ['plan-limits', 'usage-costs', 'payment-methods', 'invoices', 'budgets-alerts'].includes(
-          resolvedLocation.screen
-        )) ||
+        [
+          'plan-limits',
+          'usage-costs',
+          'payment-methods',
+          'invoices',
+          'budgets-alerts',
+          'billing-details',
+        ].includes(resolvedLocation.screen)) ||
       // Fala 0 (Admin komplet 55): the Command Center's 7 enterprise-compliance
       // tabs (SOC2 audit, DLP, residency, retention, org AI policy, agent
       // trace, benchmark) are fully wired to /api/admin/enterprise-compliance/*
@@ -312,6 +317,11 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
                   'payment-methods': 'payments',
                   invoices: 'invoices',
                   'budgets-alerts': 'controls',
+                  // WIRE_ONLY (Admin komplet 55): "Billing details" has no tab
+                  // of its own yet — the tax settings it needs
+                  // (/billing/tax-settings) already live inside the
+                  // "Budgets & tax" (`controls`) tab, same as budgets-alerts.
+                  'billing-details': 'controls',
                 } as const
               )[
                 resolvedLocation.screen as
@@ -321,6 +331,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
                   | 'payment-methods'
                   | 'invoices'
                   | 'budgets-alerts'
+                  | 'billing-details'
               ]
             }
           />
