@@ -26,6 +26,7 @@ import { AdminAuditExportHistoryPanel } from '../../components/Admin/AdminAuditE
 import { AdminAuditIntegrityPanel } from '../../components/Admin/AdminAuditIntegrityPanel';
 import { PersonasPanel } from '../../components/Admin/AI/PersonasPanel';
 import { AdminAiIncidentsPanel } from '../../components/Admin/AdminAiIncidentsPanel';
+import { AdminConfigurationVersionsPanel } from '../../components/Admin/AdminConfigurationVersionsPanel';
 import { AdminSeatsLicencesPanel } from '../../components/Admin/AdminSeatsLicencesPanel';
 import { AdminTeamsPanel } from '../../components/Admin/AdminTeamsPanel';
 import {
@@ -371,7 +372,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
       // AI_MODULE_TAB_BY_SCREEN below.
       (resolvedLocation.domain === 'ai' &&
         Object.prototype.hasOwnProperty.call(AI_MODULE_TAB_BY_SCREEN, resolvedLocation.screen)) ||
-      (resolvedLocation.domain === 'ai' && ['personas', 'ai-incidents'].includes(resolvedLocation.screen));
+      (resolvedLocation.domain === 'ai' && ['personas', 'ai-incidents', 'configuration-versions'].includes(resolvedLocation.screen));
     if (!connected) {
       return (
         <AdminCapabilityState
@@ -427,6 +428,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
       case 'ai':
         if (resolvedLocation.screen === 'personas') return <PersonasPanel />;
         if (resolvedLocation.screen === 'ai-incidents') return <AdminAiIncidentsPanel />;
+        if (resolvedLocation.screen === 'configuration-versions') return <AdminConfigurationVersionsPanel />;
         return (
           <AdminAIControlCenterPanel
             initialAiModuleTab={AI_MODULE_TAB_BY_SCREEN[resolvedLocation.screen]}
