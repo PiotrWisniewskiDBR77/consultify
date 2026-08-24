@@ -289,7 +289,18 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
       // trace, benchmark) are fully wired to /api/admin/enterprise-compliance/*
       // — only the "Postawa zgodności" nav slot was missing. Overview stays
       // aggregation-only per FINAL_IMPLEMENTATION_SPEC.md.
-      (resolvedLocation.domain === 'command' && resolvedLocation.screen === 'compliance-posture');
+      (resolvedLocation.domain === 'command' && resolvedLocation.screen === 'compliance-posture') ||
+      // Fala 1 (Admin komplet 55): high-risk-changes and retention-export have
+      // no dedicated sub-view — AdminAuditLogPanel (already the `events`
+      // default) already renders the high-risk count and the
+      // retention/export controls unconditionally, so both nav slots just
+      // need to stop falling through to AdminCapabilityState.
+      (resolvedLocation.domain === 'audit' &&
+        ['high-risk-changes', 'retention-export'].includes(resolvedLocation.screen)) ||
+      // Fala 1 (Admin komplet 55): Diagnostics is the same probe UI as the
+      // connected `service-status` default (AdminHealthPanel renders both
+      // unconditionally) — just missing its own nav slot.
+      (resolvedLocation.domain === 'health' && resolvedLocation.screen === 'diagnostics');
     if (!connected) {
       return (
         <AdminCapabilityState

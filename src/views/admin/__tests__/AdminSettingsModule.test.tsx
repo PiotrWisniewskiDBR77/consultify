@@ -171,5 +171,20 @@ describe('AdminSettingsModule section routing', () => {
       expect(panel).toBeInTheDocument();
       expect(panel).toHaveAttribute('data-screen', 'controls');
     });
+
+    it('wires High-risk Changes to the existing audit panel', () => {
+      renderAt('/admin/audit/high-risk-changes');
+      expect(screen.getByTestId('panel-audit')).toBeInTheDocument();
+    });
+
+    it('wires Retention & Export to the existing audit panel', () => {
+      renderAt('/admin/audit/retention-export');
+      expect(screen.getByTestId('panel-audit')).toBeInTheDocument();
+    });
+
+    it('wires Diagnostics to the existing health panel', () => {
+      renderAt('/admin/health/diagnostics');
+      expect(screen.getByTestId('panel-health')).toBeInTheDocument();
+    });
   });
 });
