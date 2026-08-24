@@ -33,7 +33,7 @@ Start: 2026-08-24 (Europe/Warsaw) · Koniec: —
 | 13 | health/queues-jobs | 4/B | `341bdb4cf4` | DONE | tenantowy read-only odczyt `admin_iam_jobs`; bez retry/cancel |
 | 14 | health/sla-slo | 4/B | `14128f2ab4` | DONE | realny tenant-scoped SLO + odczyt AI SLA; bez mutacji; stałe targety ujawnione |
 | 15 | security/security-alerts | 4/A | `59f55ba6ce` | DONE | nowa tenant-safe lista i resolve z 404 cross-tenant + readback |
-| 16 | security/sessions | 3 | — | NIE ZACZĘTO | |
+| 16 | security/sessions | 3 | `2960b3680f` | DONE | schema-aware tenant-safe lista; revoke/delete z 404 cross-tenant i readback FE |
 | 17 | security/break-glass | 3 | — | NIE ZACZĘTO | |
 | 18 | team/guests-external | 4/A | — | NIE ZACZĘTO | |
 | 19 | team/access-reviews | 4/B | — | NIE ZACZĘTO | |
@@ -89,6 +89,9 @@ Stan: NIE ZACOMMITOWANO.
 | 1 | Router z jobs/retry/cancel jest eksportowany, ale niezamontowany | `server/src/routes/actionDecisions.routes.ts:944-1157`, `server/src/routes/index.ts:33` | martwa powierzchnia API | montaż zmieniłby cudzą, nieodebraną powierzchnię |
 | 2 | Handlery action-decisions używają `async_jobs`, której migracja jest w `never-ran` | `server/migrations/never-ran/025_ai_actions_complete.sql.sql` | schema/runtime drift | ekran oparto wyłącznie na żywej `admin_iam_jobs` |
 | 3 | Istniejący odczyt security-events przyjmuje org z URL | `server/src/routes/admin-data.routes.ts:215-260` | cross-tenant read IDOR | dodano osobną trasę z org wyłącznie z tokenu; cudzych konsumentów nie zmieniano |
+| 4 | Lista wszystkich sesji organizacji nie sprawdza roli admina | `server/src/routes/security.routes.ts:157-193` | nadmiarowy odczyt | nowy ekran używa wyłącznie `/api/admin/sessions` |
+| 5 | Istniejące kasowanie sesji nie sprawdza organizacji | `server/src/routes/security.routes.ts:196-214` | cross-tenant delete IDOR | nowa trasa najpierw dowodzi przynależności i zwraca 404 |
+| 6 | Admin-data pobiera sesje dla org z parametru URL | `server/src/routes/admin-data.routes.ts:401` | cross-tenant read IDOR | nie użyto tej trasy i nie zmieniano cudzych konsumentów |
 
 ## Korekty inwentarza
 
@@ -128,6 +131,10 @@ Brak na starcie dyżuru.
 - `npx esbuild src/components/Admin/AdminSecurityAlertsPanel.tsx --loader:.tsx=tsx --outfile=/dev/null` — PASS.
 - `bash scripts/check-list-canon.sh src/components/Admin/AdminSecurityAlertsPanel.tsx` — PASS, 0 nowych naruszeń.
 - `npx vitest run server/src/routes/__tests__/security-alerts.routes.test.ts src/components/Admin/__tests__/AdminSecurityAlertsPanel.test.tsx src/views/admin/__tests__/AdminSettingsModule.test.tsx` — backend/routing PASS; panel PASS po korekcie kontraktu `rowMenu` (ostrzeżenia testowe React, bez błędów).
+- `npx esbuild server/src/routes/admin/sessions.routes.ts --platform=node --format=esm --outfile=/dev/null` — PASS.
+- `npx esbuild src/components/Admin/AdminSessionsPanel.tsx --loader:.tsx=tsx --outfile=/dev/null` — PASS.
+- `bash scripts/check-list-canon.sh src/components/Admin/AdminSessionsPanel.tsx` — PASS, 0 nowych naruszeń.
+- `npx vitest run server/src/routes/__tests__/sessions.routes.test.ts src/components/Admin/__tests__/AdminSessionsPanel.test.tsx src/views/admin/__tests__/AdminSettingsModule.test.tsx` — route/routing PASS; panel PASS po korekcie menu (ostrzeżenia testowe `act`, bez błędów).
 
 ## Migracje
 
