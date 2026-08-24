@@ -160,7 +160,7 @@ Most Chat, Interview, My Work, shared preview/N-mode, API, service and test prod
 - Activity Log canvas, Module Menu 3 selection and audit transaction tests;
 - selected Chat governance tests.
 
-`PRESERVE_AS_DOCUMENTATION` because these files are absent from the candidate:
+`PRESERVED_AS_DOCUMENTATION_EXACT` — restored into the candidate as byte-identical documentation-only blobs from `7c3b559ca8`:
 
 - `CHAT_TO_TOOLS_BACKLOG_BELOW_9_2026-08-23.md`;
 - `CHAT_TO_TOOLS_CONSULTING_ATOMIC_REVIEW_2026-08-23.md`;
@@ -174,7 +174,7 @@ Most Chat, Interview, My Work, shared preview/N-mode, API, service and test prod
 - `false/_npx/**`;
 - `false/_update-notifier-last-checked`.
 
-Control decision: preserve the five missing documents through an explicit documentation-only change after checking their destinations; review only the named divergent paths; exclude the `false/**` cache material permanently from any selection.
+Control decision: the five documents are now preserved at their original canonical documentation paths; their blob hashes match `7c3b559ca8`. Review only the named divergent product paths; exclude the `false/**` cache material permanently from any selection.
 
 ### Dirty owner worktree overlay
 
