@@ -10,16 +10,34 @@ export interface Team {
   name: string;
   description?: string;
   leadId?: string;
+  lead?: {
+    id: string;
+    firstName?: string | null;
+    lastName?: string | null;
+    avatarUrl?: string | null;
+  } | null;
   organizationId: string;
   members: TeamMember[];
+  memberCount?: number;
+  color?: string;
+  defaultProjectRole?: string;
+  teamType?: string;
+  isActive?: boolean;
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
 }
 
 export interface TeamMember {
   userId: string;
-  role: 'lead' | 'member';
-  joinedAt: string;
+  role: string;
+  joinedAt?: string;
+  user?: {
+    id: string;
+    firstName?: string | null;
+    lastName?: string | null;
+    email?: string | null;
+    avatarUrl?: string | null;
+  };
 }
 
 export const TeamApi = {
@@ -43,6 +61,9 @@ export const TeamApi = {
     name: string;
     description?: string;
     leadId?: string;
+    color?: string;
+    defaultProjectRole?: string;
+    teamType?: string;
   }): Promise<Team> => {
     const res = await fetch(`${API_URL}/teams`, {
       method: 'POST',

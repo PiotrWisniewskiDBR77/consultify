@@ -10,6 +10,7 @@ import { AdminCapabilityState } from '../../components/Admin/AdminCapabilityStat
 import { AdminCommandCenterPanel } from '../../components/Admin/AdminCommandCenterPanel';
 import { AdminHealthPanel } from '../../components/Admin/AdminHealthPanel';
 import { AdminMembersRolesPanel } from '../../components/Admin/AdminMembersRolesPanel';
+import { AdminTeamsPanel } from '../../components/Admin/AdminTeamsPanel';
 import {
   ADMIN_DEFAULTS,
   ADMIN_DOMAINS,
@@ -301,7 +302,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
     const connected =
       resolvedLocation.screen === ADMIN_DEFAULTS[resolvedLocation.domain] ||
       (resolvedLocation.domain === 'team' &&
-        ['members', 'invitations', 'ownership'].includes(resolvedLocation.screen)) ||
+        ['members', 'invitations', 'ownership', 'teams'].includes(resolvedLocation.screen)) ||
       (resolvedLocation.domain === 'billing' &&
         [
           'plan-limits',
@@ -349,6 +350,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
     }
     switch (resolvedLocation.domain) {
       case 'team':
+        if (resolvedLocation.screen === 'teams') return <AdminTeamsPanel />;
         return (
           <AdminMembersRolesPanel
             screen={resolvedLocation.screen as 'members' | 'invitations' | 'ownership'}

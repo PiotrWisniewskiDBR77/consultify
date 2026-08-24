@@ -17,6 +17,9 @@ import AdminSettingsModule from '../AdminSettingsModule';
 vi.mock('../../../components/Admin/AdminMembersRolesPanel', () => ({
   AdminMembersRolesPanel: () => <div data-testid="panel-people">people</div>,
 }));
+vi.mock('../../../components/Admin/AdminTeamsPanel', () => ({
+  AdminTeamsPanel: () => <div data-testid="panel-teams">teams</div>,
+}));
 vi.mock('../../../components/Admin/AdminBillingFinOpsPanel', () => ({
   AdminBillingFinOpsPanel: ({ screen }: { screen?: string }) => (
     <div data-testid="panel-billing" data-screen={screen}>
@@ -70,6 +73,11 @@ const renderAt = (path: string) =>
   );
 
 describe('AdminSettingsModule section routing', () => {
+  it('wires team/teams to the teams management panel', () => {
+    renderAt('/admin/team/teams');
+    expect(screen.getByTestId('panel-teams')).toBeInTheDocument();
+    expect(screen.queryByTestId('panel-people')).not.toBeInTheDocument();
+  });
   it('renders the people panel at /admin/people', () => {
     renderAt('/admin/people');
     expect(screen.getByTestId('panel-people')).toBeInTheDocument();
