@@ -22,7 +22,7 @@ Start: 2026-08-24 (Europe/Warsaw) · Koniec: —
 | 2 | billing/plan-history | 4/A | `52195ad3b7` | DONE | tenant-scoped, tylko odczyt, paginacja |
 | 3 | security/domains | 4/A | — | STOP | endpoint verify automatycznie oznacza domenę jako zweryfikowaną bez DNS/TXT |
 | 4 | team/access-requests | 4/A | — | STOP | żywy approve tworzy nową organizację; brak kontraktu dołączenia do bieżącej org |
-| 5 | security/service-accounts | 4/A | — | NIE ZACZĘTO | |
+| 5 | security/service-accounts | 4/A | `26caf7f2b7` | DONE | nowa admin-only trasa; sekret tylko raz; readback |
 | 6 | ai/quality-evaluations | 2 | — | NIE ZACZĘTO | |
 | 7 | command/attention-queue | 2 | — | NIE ZACZĘTO | |
 | 8 | command/cost-capacity | 2 | — | NIE ZACZĘTO | |
@@ -78,6 +78,10 @@ Brak na starcie dyżuru.
 - `npx esbuild server/src/routes/admin/billing-history.routes.ts --platform=node --format=esm --outfile=/dev/null` — PASS.
 - `bash scripts/check-list-canon.sh src/components/Admin/AdminPlanHistoryPanel.tsx` — PASS, 0 nowych naruszeń.
 - `npx vitest run server/src/routes/__tests__/billing-history.routes.test.ts src/components/Admin/__tests__/AdminPlanHistoryPanel.test.tsx src/views/admin/__tests__/AdminSettingsModule.test.tsx` — PASS, 3 pliki / 35 testów.
+- `npx esbuild src/components/Admin/AdminServiceAccountsPanel.tsx --loader:.tsx=tsx --outfile=/dev/null` — PASS.
+- `npx esbuild server/src/routes/admin/service-accounts.routes.ts --platform=node --format=esm --outfile=/dev/null` — PASS.
+- `bash scripts/check-list-canon.sh src/components/Admin/AdminServiceAccountsPanel.tsx` — PASS, 0 nowych naruszeń.
+- `npx vitest run server/src/routes/__tests__/service-accounts.routes.test.ts src/components/Admin/__tests__/AdminServiceAccountsPanel.test.tsx src/views/admin/__tests__/AdminSettingsModule.test.tsx` — PASS, 3 pliki / 36 testów.
 
 ## Migracje
 
