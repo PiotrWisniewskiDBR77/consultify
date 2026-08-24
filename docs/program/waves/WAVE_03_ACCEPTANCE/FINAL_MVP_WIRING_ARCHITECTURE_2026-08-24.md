@@ -126,6 +126,14 @@ The integration seed is composed from owned seed builders or exported determinis
 
 - All 16 module registers and all 21 gate rows per module exist.
 - All 16 guarded owner fixture families are admitted by the local owner-runtime allowlist.
-- This proves reconstructibility capability, not that the current visible runtime is connected correctly.
+- Retained database audit on 2026-08-24 found all `16/16` databases with `831`
+  successful migrations. Exact manifest-to-SQL-marker identity passed for
+  `15/16`. Materials is `BLOCKED_MARKER_MISMATCH`: its FINAL manifest nonce
+  does not match the current `W3-MATERIALS-OWNER-v1` database marker. The
+  Materials database must not be adopted until it is freshly reconstructed or
+  a new valid FINAL receipt is produced by the guarded seed.
+- This proves reconstructibility capability and preserves fifteen immediately
+  adoptable isolated fixtures; it does not prove that the current visible
+  runtime is connected correctly.
 - `/results` had a confirmed legacy fallback regression. Source is checkpointed at `8df1cd413d` with focused tests passing, but the visible runtime has not been changed or claimed fixed.
 - No production, Railway or customer data was changed.
