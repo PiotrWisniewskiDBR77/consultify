@@ -315,6 +315,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       allInitiatives.map((initiative) => ({
         id: initiative.id,
         name: initiative.name || initiative.title || initiative.id,
+        lifecycle: initiative.p11LifecycleState || initiative.displayStatus || initiative.status,
       })),
     [allInitiatives]
   );

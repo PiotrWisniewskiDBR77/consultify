@@ -69,7 +69,7 @@ interface RegisterRow extends TableRow {
   timeBasisState: 'KNOWN' | 'UNKNOWN';
 }
 interface Props extends CanonicalMenu3Contract {
-  initiatives: Array<{ id: string; name: string }>;
+  initiatives: Array<{ id: string; name: string; lifecycle?: string }>;
   demoMode?: boolean;
 }
 const formatDate = (value: string | null) => {
@@ -176,6 +176,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
   const [newStart, setNewStart] = useState(() => new Date().toISOString().slice(0, 10));
   const [newWeekCount, setNewWeekCount] = useState(12);
   const [showCreate, setShowCreate] = useState(false);
+  const [initiativeLifecycleFilter, setInitiativeLifecycleFilter] = useState('ALL');
   const commandIds = useRef(new Map<string, string>());
 
   const loadRegister = useCallback(async () => {
@@ -381,37 +382,40 @@ export const PlanScenarioSurface: React.FC<Props> = ({
       }));
     return [...scheduled, ...unscheduled];
   }, [draft, initiatives]);
-  const matchesPlanPreset = (row: (typeof planWindowRows)[number], preset: string) =>
-    preset === 'all'
-      ? true
-      : preset === 'unscheduled'
-        ? row.band === 'UNSCHEDULED'
-        : preset === 'now'
-          ? row.band === 'NOW'
-          : preset === 'next'
-            ? row.band === 'NEXT'
-            : preset === 'later'
-              ? row.band === 'LATER'
-              : preset === 'conflicted'
-                ? row.conflict !== 'NONE'
-                : preset === 'missing-dependencies'
-                  ? row.dependency === 'UNKNOWN'
-                  : preset === 'needs-capacity'
-                    ? row.capacity === 'UNKNOWN'
-                    : preset === 'ready'
-                      ? row.band !== 'UNSCHEDULED' &&
-                        row.dependency === 'KNOWN' &&
-                        row.capacity === 'KNOWN'
-                      : preset === 'published'
-                        ? row.published === 'PUBLISHED'
-                        : false;
+  const matchesPlanPreset = useCallback(
+    (row: (typeof planWindowRows)[number], preset: string) =>
+      preset === 'all'
+        ? true
+        : preset === 'unscheduled'
+          ? row.band === 'UNSCHEDULED'
+          : preset === 'now'
+            ? row.band === 'NOW'
+            : preset === 'next'
+              ? row.band === 'NEXT'
+              : preset === 'later'
+                ? row.band === 'LATER'
+                : preset === 'conflicted'
+                  ? row.conflict !== 'NONE'
+                  : preset === 'missing-dependencies'
+                    ? row.dependency === 'UNKNOWN'
+                    : preset === 'needs-capacity'
+                      ? row.capacity === 'UNKNOWN'
+                      : preset === 'ready'
+                        ? row.band !== 'UNSCHEDULED' &&
+                          row.dependency === 'KNOWN' &&
+                          row.capacity === 'KNOWN'
+                        : preset === 'published'
+                          ? row.published === 'PUBLISHED'
+                          : false,
+    []
+  );
   const effectivePreset = activePreset || 'all';
   const visiblePlanWindows = planWindowRows.filter((row) =>
     matchesPlanPreset(row, effectivePreset)
   );
   useEffect(
     () => onCountsChange?.(countPresets(planWindowRows, planPresets, matchesPlanPreset)),
-    [planWindowRows, onCountsChange]
+    [planWindowRows, onCountsChange, matchesPlanPreset]
   );
 
   const open = async (id: string) => {
@@ -537,6 +541,36 @@ export const PlanScenarioSurface: React.FC<Props> = ({
             ],
           }
     );
+  const removeWindow = (initiativeId: string) =>
+    setDraft((current) =>
+      current
+        ? {
+            ...current,
+            windows: current.windows.filter((window) => window.initiativeId !== initiativeId),
+          }
+        : current
+    );
+  const assignWindowToPeriod = (initiativeId: string, periodIndex: number) => {
+    const period = draft?.periods[periodIndex];
+    if (!period) return;
+    updateWindow(initiativeId, {
+      earliest: period.start,
+      target: period.start,
+      latest: period.end,
+    });
+  };
+  const moveWindowAcrossPeriods = (initiativeId: string, delta: -1 | 1) => {
+    const window = draft?.windows.find((item) => item.initiativeId === initiativeId);
+    if (!draft || !window) return;
+    const currentIndex = draft.periods.findIndex(
+      (period) => window.target && window.target >= period.start && window.target < period.end
+    );
+    const nextIndex = Math.min(
+      draft.periods.length - 1,
+      Math.max(0, (currentIndex < 0 ? (delta > 0 ? -1 : 1) : currentIndex) + delta)
+    );
+    assignWindowToPeriod(initiativeId, nextIndex);
+  };
   const move = (index: number, delta: -1 | 1) =>
     setDraft((current) => {
       if (!current) return current;
@@ -582,12 +616,20 @@ export const PlanScenarioSurface: React.FC<Props> = ({
         ? { ...current, periods: current.periods.filter((_, periodIndex) => periodIndex !== index) }
         : current
     );
-  const available = useMemo(
+  const lifecycleOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(initiatives.map((initiative) => initiative.lifecycle).filter(Boolean) as string[])
+      ).sort(),
+    [initiatives]
+  );
+  const selectableInitiatives = useMemo(
     () =>
       initiatives.filter(
-        (item) => !draft?.windows.some((window) => window.initiativeId === item.id)
+        (initiative) =>
+          initiativeLifecycleFilter === 'ALL' || initiative.lifecycle === initiativeLifecycleFilter
       ),
-    [draft, initiatives]
+    [initiativeLifecycleFilter, initiatives]
   );
 
   if (state === 'LOADING')
@@ -1015,6 +1057,174 @@ export const PlanScenarioSurface: React.FC<Props> = ({
               </button>
             </div>
           </fieldset>
+          <fieldset className="mb-4 rounded-md border border-c-border p-3">
+            <legend className="px-1 text-sm font-medium">Zakres inicjatyw</legend>
+            <div className="mb-3 flex flex-wrap items-end gap-3">
+              <label className="text-xs">
+                Status inicjatywy
+                <select
+                  aria-label="Filtr statusu inicjatyw planu"
+                  className="mt-1 block min-w-48 bg-c-surface p-2"
+                  value={initiativeLifecycleFilter}
+                  onChange={(event) => setInitiativeLifecycleFilter(event.target.value)}
+                >
+                  <option value="ALL">Wszystkie statusy</option>
+                  {lifecycleOptions.map((lifecycle) => (
+                    <option key={lifecycle} value={lifecycle}>
+                      {lifecycle}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <span className="text-xs text-c-text-muted">
+                W planie: {draft.windows.length} / {initiatives.length}
+              </span>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+              {selectableInitiatives.map((initiative) => {
+                const included = draft.windows.some(
+                  (window) => window.initiativeId === initiative.id
+                );
+                return (
+                  <label
+                    key={initiative.id}
+                    className="flex cursor-pointer items-start gap-2 rounded border border-c-border p-2"
+                  >
+                    <input
+                      aria-label={`Uwzględnij ${initiative.name}`}
+                      type="checkbox"
+                      checked={included}
+                      onChange={() =>
+                        included ? removeWindow(initiative.id) : addWindow(initiative.id)
+                      }
+                    />
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-medium">{initiative.name}</span>
+                      <span className="block text-xs text-c-text-muted">
+                        {initiative.lifecycle || 'Status nieznany'}
+                      </span>
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </fieldset>
+          <section
+            aria-label="Tygodniowa oś czasu planu"
+            className="mb-4 rounded-md border border-c-border p-3"
+          >
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h4 className="text-sm font-medium">Oś czasu</h4>
+                <p className="text-xs text-c-text-muted">
+                  Kliknij tydzień, aby przypisać okno. Strzałki przesuwają inicjatywę o jeden okres.
+                </p>
+              </div>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-max border-collapse text-xs">
+                <thead>
+                  <tr className="border-b border-c-border">
+                    <th scope="col" className="min-w-60 p-2 text-left font-medium">
+                      Inicjatywa
+                    </th>
+                    {draft.periods.map((period) => (
+                      <th
+                        key={period.periodId}
+                        scope="col"
+                        className="min-w-28 border-l border-c-border p-2 text-center"
+                      >
+                        <span className="block font-medium">{period.periodId}</span>
+                        <span className="text-c-text-muted">
+                          {formatDate(period.start)}–{formatDate(period.end)}
+                        </span>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {draft.windows.map((window) => {
+                    const activePeriod = draft.periods.findIndex(
+                      (period) =>
+                        window.target && window.target >= period.start && window.target < period.end
+                    );
+                    const initiativeName =
+                      initiatives.find((initiative) => initiative.id === window.initiativeId)
+                        ?.name ?? window.initiativeId;
+                    return (
+                      <tr
+                        key={window.initiativeId}
+                        className="border-b border-c-border last:border-b-0"
+                      >
+                        <th scope="row" className="min-w-60 p-2 text-left font-normal">
+                          <span className="flex items-center justify-between gap-2">
+                            <span className="min-w-0 truncate text-sm font-medium">
+                              {initiativeName}
+                            </span>
+                            <span className="flex shrink-0 gap-1">
+                              <button
+                                type="button"
+                                className="btn-ghost p-1"
+                                aria-label={`Przesuń ${initiativeName} w lewo`}
+                                disabled={activePeriod === 0}
+                                onClick={() => moveWindowAcrossPeriods(window.initiativeId, -1)}
+                              >
+                                ←
+                              </button>
+                              <button
+                                type="button"
+                                className="btn-ghost p-1"
+                                aria-label={`Przesuń ${initiativeName} w prawo`}
+                                disabled={activePeriod === draft.periods.length - 1}
+                                onClick={() => moveWindowAcrossPeriods(window.initiativeId, 1)}
+                              >
+                                →
+                              </button>
+                            </span>
+                          </span>
+                        </th>
+                        {draft.periods.map((period, periodIndex) => {
+                          const active = activePeriod === periodIndex;
+                          return (
+                            <td
+                              key={period.periodId}
+                              className="min-w-28 border-l border-c-border p-0"
+                            >
+                              <button
+                                type="button"
+                                aria-label={`Przypisz ${initiativeName} do ${period.periodId}`}
+                                aria-pressed={active}
+                                className={`min-h-12 w-full p-2 text-xs transition ${
+                                  active
+                                    ? 'bg-c-accent text-white'
+                                    : 'bg-c-surface hover:bg-c-surface-raised'
+                                }`}
+                                onClick={() =>
+                                  assignWindowToPeriod(window.initiativeId, periodIndex)
+                                }
+                              >
+                                {active ? window.confidence : '—'}
+                              </button>
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    );
+                  })}
+                  {!draft.windows.length && (
+                    <tr>
+                      <td
+                        colSpan={draft.periods.length + 1}
+                        className="p-4 text-sm text-c-text-muted"
+                      >
+                        Wybierz co najmniej jedną inicjatywę, aby zbudować wariant planu.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
           {!knownTimeBasis(draft) && (
             <p role="alert" className="mb-4 text-sm text-c-danger">
               UNKNOWN time basis — exact window unit, timezone and ordered periods are required;
@@ -1190,23 +1400,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
               />
             </div>
             <aside className="space-y-3">
-              <h4 className="font-medium">Scenario controls</h4>
-              <select
-                aria-label="Add Plan Initiative"
-                className="w-full bg-c-surface p-2"
-                defaultValue=""
-                onChange={(e) => {
-                  if (e.target.value) addWindow(e.target.value);
-                  e.target.value = '';
-                }}
-              >
-                <option value="">Add approved Initiative…</option>
-                {available.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.name}
-                  </option>
-                ))}
-              </select>
+              <h4 className="font-medium">Założenia i zmiany</h4>
               <label className="block text-xs">
                 Assumptions
                 <textarea

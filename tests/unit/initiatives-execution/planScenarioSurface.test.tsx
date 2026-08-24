@@ -29,7 +29,10 @@ const plan = {
   portfolioScenarioVersion: 3,
   windowUnit: 'WEEK',
   timezone: 'Europe/Warsaw',
-  periods: [{ periodId: 'w1', start: '2026-09-01T00:00:00Z', end: '2026-09-08T00:00:00Z' }],
+  periods: [
+    { periodId: 'w1', start: '2026-09-01T00:00:00Z', end: '2026-09-08T00:00:00Z' },
+    { periodId: 'w2', start: '2026-09-08T00:00:00Z', end: '2026-09-15T00:00:00Z' },
+  ],
   windows: [
     {
       initiativeId: 'initiative-1',
@@ -109,16 +112,23 @@ describe('PlanScenarioSurface', () => {
     render(
       <PlanScenarioSurface
         initiatives={[
-          { id: 'initiative-1', name: 'Automation' },
-          { id: 'initiative-2', name: 'Digital' },
+          { id: 'initiative-1', name: 'Automation', lifecycle: 'IN_EXECUTION' },
+          { id: 'initiative-2', name: 'Digital', lifecycle: 'SCHEDULED' },
         ]}
       />
     );
     fireEvent.doubleClick((await screen.findByText('Automation')).closest('tr')!);
     await screen.findByRole('region', { name: 'Plan Scenario Workbench' });
-    fireEvent.change(screen.getByLabelText('Add Plan Initiative'), {
-      target: { value: 'initiative-2' },
+    expect(screen.getByLabelText('Uwzględnij Automation')).toBeChecked();
+    fireEvent.change(screen.getByLabelText('Filtr statusu inicjatyw planu'), {
+      target: { value: 'SCHEDULED' },
     });
+    expect(screen.queryByLabelText('Uwzględnij Automation')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByLabelText('Uwzględnij Digital'));
+    fireEvent.click(screen.getByLabelText('Przypisz Digital do w1'));
+    expect(screen.getByLabelText('Przypisz Digital do w1')).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(screen.getByLabelText('Przesuń Digital w prawo'));
+    expect(screen.getByLabelText('Przypisz Digital do w2')).toHaveAttribute('aria-pressed', 'true');
     fireEvent.click(screen.getByLabelText('Move initiative-2 up'));
     expect(writePlanScenario).not.toHaveBeenCalled();
     fireEvent.change(screen.getByLabelText('Plan assumptions'), {
@@ -135,6 +145,12 @@ describe('PlanScenarioSurface', () => {
             windowUnit: 'WEEK',
             timezone: 'Europe/Warsaw',
             periods: plan.periods,
+            windows: expect.arrayContaining([
+              expect.objectContaining({
+                initiativeId: 'initiative-2',
+                target: '2026-09-08T00:00:00Z',
+              }),
+            ]),
           }),
         })
       )
