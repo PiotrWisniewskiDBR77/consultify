@@ -51,3 +51,19 @@ pozycję MUST powyżej albo na listę po-MVP (OAuth UI, AppearanceSettings,
 Moduły 02/03 NIE trafiają do odbioru właściciela przed zamknięciem
 TRI-MUST-01..04 oraz decyzjami właściciela w TRI-MUST-02 (wariant) i
 TRI-MUST-06 (lokalizacja). TRI-MUST-05 blokuje fazę 3, nie odbiór modułów.
+
+## Aktualizacja nocna — 2026-08-25 (podpis: Fable)
+
+| ID | Status | Dowód |
+|---|---|---|
+| TRI-MUST-01 | **CLOSED** | Naprawa 51d78e9182; żywy dowód 9176945792: PUT preferencje → 200 + readback po pełnym reloadzie; izolacja nieosłabiona (kontrola negatywna 403/200). |
+| TRI-MUST-02 | **CLOSED** | DEC-12: kontrolki ukryte (0bd36932c5) + spójność w Settings read-only (d345ceac1e). Egzekwowanie = po-MVP z własnym odbiorem. |
+| TRI-MUST-03 | **CLOSED** | Fala 1 (5fc3016b05, ea9e00476e): cztery uwięzione funkcje wpięte pod ich pozycje menu. |
+| TRI-MUST-04 | **CLOSED** | Naprawa ba0a4759d2; dowód 9176945792: superadmin nie tranzytuje przez /admin. Nowa obserwacja P2 (nie-blokująca): SuperAdminView po ~300ms normalizuje URL do /superadmin/customers (stan Zustand niesynchronizowany z URL) — do sprzątnięcia przy module SuperAdmin, bez wpływu na bezpieczeństwo. |
+| TRI-MUST-05 | **OPEN — bramka fazy 3** | Weryfikacja migracji na świeżej bazie (filtr ~2/3 + podwójna 20260412) + testy PG (GDPR/deletion/cold-session) przed stagingiem. |
+| TRI-MUST-06 | **DECIDED** | DEC-13: edytor tenant-defaults w Command Center; budowa w nocnym programie Admin 55. |
+| TRI-MUST-07 | **NEW — MUST przed wdrożeniem** | Trzy niebezpieczne endpointy odkryte przy autorstwie instrukcji nocnej: GET /api/security/sessions/all bez guardu roli; DELETE /sessions/:id bez sprawdzenia przynależności; /api/admin-data/*: org z URL zamiast z tokenu. Instrukcja nocna zakazuje podpinania UI; wymagane trasy tenant-bezpieczne. |
+
+**Werdykt obszaru Superadmin: ZAMKNIĘTY** (architektura zamierzona, oba defekty naprawione i dowiedzione na żywo).
+**Settings:** czeka na finisz graficzny (w toku) i werdykt właściciela.
+**Admin:** program „komplet 55/56" w toku (Fale 0+1 done: ~28 ekranów; nocny dyżur Codex buduje dalej).
