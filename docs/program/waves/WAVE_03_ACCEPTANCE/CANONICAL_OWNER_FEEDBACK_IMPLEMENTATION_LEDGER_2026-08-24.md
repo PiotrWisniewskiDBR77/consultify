@@ -145,6 +145,28 @@ Focused regression result: `6 files / 49 tests PASS`. This freezes the chosen
 source architecture and prevents reintroduction of the older sparse Finance
 surface; it is not an owner-acceptance or production-readiness claim.
 
+## Materials reconciliation receipt
+
+Materials uses one canonical artifact registry for Documents, Presentations
+and Sheets, while each full card remains owned by its dedicated editor. The
+three card records were present in the guarded owner-review reconstruction, but
+the presentation lane did not explicitly create the same registry projection
+and primary-origin link already created for Document Studio and Workbook.
+
+| Contract | State | Candidate evidence |
+| --- | --- | --- |
+| Registry maps `native_artifact`, `presentation` and `sheet` to three distinct material rows | `ALREADY_IN_CANDIDATE_SOURCE` | `mapRegistryItemToUnified` and canonical artifact hook tests |
+| Guarded fixture creates all three editor records | `ALREADY_IN_CANDIDATE_SOURCE` | `seed-wave3-materials-owner-review.ts` |
+| Guarded fixture creates and read-checks all three registry projections | `IMPLEMENT_NOW_UNEQUIVOCAL` implemented in the frozen candidate | explicit output-artifact/origin-link insert for Presentation plus three projection counters |
+| Existing isolated owner database reflects the repaired reconstruction | `BACKEND_OR_RUNTIME_GATE` | database was deliberately not mutated; it must be rebuilt through the guarded local-only seed before browser replay |
+| Full row-to-card navigation, persistence/export and owner visual acceptance | `BACKEND_OR_RUNTIME_GATE` / `OWNER_DECISION_REQUIRED` | requires authenticated replay against one rebuilt candidate runtime |
+
+Focused registry mapping evidence: `useRapData.canonicalArtifacts.test.tsx`
+passes its document/presentation/sheet contracts. The broader Hub test run has
+one unrelated stale harness assertion for a removed `active-tab` test marker;
+it is not counted as passing evidence and was not hidden by changing product
+code.
+
 ## Work order
 
 1. Reconcile explicit module atoms into this state model without changing code.

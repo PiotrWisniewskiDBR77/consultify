@@ -308,6 +308,29 @@ try {
     `INSERT INTO presentation_deck_versions(id,deck_id,version,deck_json_snapshot,slide_count,created_by,created_at) VALUES($1,$2,1,$3,4,$4,$5)`,
     [I.deckV1, I.deck, JSON.stringify(unifiedDeck), I.user, fixed]
   );
+  // The editor record is not the Materials registry projection. Seed the
+  // canonical output artifact and its primary origin explicitly, exactly as
+  // the document and workbook lanes below do. Without these rows the full
+  // presentation card exists but can disappear from the shared library.
+  await db.query(
+    `INSERT INTO v8_output_artifacts(artifact_id,organization_id,output_type,delivery_state,artifact_family,title_snapshot,owner_user_id,canonical_home,visibility_scope,origin_summary_json,is_draft,created_by,created_at,last_transition_at) VALUES($1,$2,'presentation','ready','presentation','Plan transformacji — 90 dni',$3,'outputs_library','organization',$4::jsonb,0,$3,$5,$5)`,
+    [
+      I.deck,
+      I.org,
+      I.user,
+      JSON.stringify({
+        fixture: 'wave3-materials',
+        origin: 'presentation_decks',
+        deckType: 'strategy',
+        slideCount: 4,
+      }),
+      fixed,
+    ]
+  );
+  await db.query(
+    `INSERT INTO v8_artifact_origin_links(link_id,artifact_id,organization_id,origin_runtime,origin_record_id,is_primary_origin,created_at) VALUES($1,$2,$3,'presentation',$2,1,$4)`,
+    ['b1170000-0000-4000-8000-000000000099', I.deck, I.org, fixed]
+  );
   await db.query(
     `INSERT INTO generated_workbooks(id,organization_id,title,description,schema_json,sheet_count,created_by,created_at,lifecycle_status,version,quality_report_json) VALUES($1,$2,'Budżet pilotażu','Owner-review formula workbook',$3,1,$4,$5,'draft',1,'{"formulaCells":1,"fixture":"wave3-materials"}')`,
     [I.workbook, I.org, JSON.stringify(workbookV1), I.user, fixed]
@@ -335,15 +358,21 @@ try {
     (SELECT count(*)::int FROM presentation_decks WHERE id=$2 AND slide_count BETWEEN 3 AND 5) decks,
     (SELECT count(*)::int FROM presentation_deck_versions WHERE deck_id=$2) deck_versions,
     (SELECT count(*)::int FROM generated_workbook_revisions WHERE workbook_id=$3 AND schema_json LIKE '%=B2-B3%') workbook_revisions,
+    (SELECT count(*)::int FROM v8_artifact_origin_links WHERE organization_id=$6 AND artifact_id=$1 AND origin_runtime='native_artifact') document_registry_projections,
+    (SELECT count(*)::int FROM v8_artifact_origin_links WHERE organization_id=$6 AND artifact_id=$2 AND origin_runtime='presentation') presentation_registry_projections,
+    (SELECT count(*)::int FROM v8_artifact_origin_links WHERE organization_id=$6 AND artifact_id=$3 AND origin_runtime='sheet') workbook_registry_projections,
     (SELECT count(*)::int FROM document_studio_templates WHERE template_id=$4 AND status='approved') approved_templates,
     (SELECT count(*)::int FROM document_studio_templates WHERE template_id=$5 AND notes='RIGHTS_UNKNOWN_QUARANTINED') unknown_templates`,
-    [I.artifact, I.deck, I.workbook, I.docApproved, I.docUnknown]
+    [I.artifact, I.deck, I.workbook, I.docApproved, I.docUnknown, I.org]
   );
   const expected = {
     doc_versions: 2,
     decks: 1,
     deck_versions: 1,
     workbook_revisions: 1,
+    document_registry_projections: 1,
+    presentation_registry_projections: 1,
+    workbook_registry_projections: 1,
     approved_templates: 1,
     unknown_templates: 1,
   };
