@@ -241,6 +241,33 @@ c35a6d7cb7fd02b145e29b6048cc1f9512f1d239  scripts/recovery/report-worktree-inven
 
 Control decision: retain the overlay exactly where it is. Before any reuse, each entry receives a destination, requirement linkage and classification of `DOCUMENTATION_ONLY`, `TEST_OR_TOOLING`, `PRODUCT_WIP`, `CONFIGURATION_RISK` or `OWNER_DECISION_REQUIRED`. No reset, stash, clean, bulk copy or merge is authorized.
 
+### Documentation-only overlay reconciliation
+
+Ten source-only documents have now been copied through the controlled candidate
+as byte-identical preserved records. Their original paths and SHA-256 content
+remain unchanged:
+
+- `LIVE_RUNTIME_IDENTITY_MAP_2026-08-23.md`;
+- the Initiatives implementation-ready contract and its Plan/Capacity expert syntheses;
+- the Results final implementation specification;
+- the Finance recovery and completion contract;
+- the three Assessment owner/expert review documents;
+- the Assessment technical evidence note.
+
+Five existing candidate registers are divergent from the dirty overlay and are
+therefore deliberately not overwritten:
+
+- Initiatives `MODULE_ACCEPTANCE.md`;
+- Results `MODULE_ACCEPTANCE.md`;
+- Assessment workshop packet;
+- Assessment owner-feedback register;
+- cross-module row-menu audit register.
+
+These five require atomic requirement reconciliation. Until then, both versions
+remain preserved and neither difference is silently promoted to canonical truth.
+Configuration, product WIP and test/tooling paths remain in the dirty overlay and
+were not copied in this documentation-only step.
+
 ## Required connection record for every module
 
 Each module receives one row per surface with these fields before coding resumes:
