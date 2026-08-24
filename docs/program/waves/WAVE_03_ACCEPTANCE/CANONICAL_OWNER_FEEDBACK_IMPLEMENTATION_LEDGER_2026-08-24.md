@@ -123,6 +123,28 @@ Focused regression result: `5 files / 18 tests PASS`. This protects route
 selection and the three-tool information architecture; it does not yet prove
 the complete 21-gate Results acceptance package or owner visual acceptance.
 
+## Finance reconciliation receipt
+
+Finance is not to be reconstructed from the sparse historical screen. The
+selected candidate contains five canonical detail routes and dedicated
+workspaces for statement packs, Analysis, Prediction, Valuation and Baseline.
+The list uses the shared table/preview contract; full tools retain provenance,
+explicit missing-value semantics and local error boundaries.
+
+| Contract | State | Focused evidence |
+| --- | --- | --- |
+| `/finance` and all five detail routes are canonical | `ALREADY_IN_CANDIDATE_SOURCE` | finance canonical-route tests |
+| Statements open through list + single preview and exact recovery ID | `ALREADY_IN_CANDIDATE_SOURCE` | statement preview canon tests |
+| Statement evidence chain and report actions preserve one artifact identity | `ALREADY_IN_CANDIDATE_SOURCE` | Statement Pack V2 tests |
+| Analysis never disguises missing KPI data as zero and exposes a real creator | `ALREADY_IN_CANDIDATE_SOURCE` | Analysis workspace tests |
+| Prediction saves authoring, reconciles conflicts and cold-reads computed results | `ALREADY_IN_CANDIDATE_SOURCE` | Prediction workspace tests |
+| Valuation distinguishes zero from N/A/missing and isolates step failures | `ALREADY_IN_CANDIDATE_SOURCE` | Valuation workspace tests |
+| Authenticated database lineage, persistence/readback and final rendered acceptance | `BACKEND_OR_RUNTIME_GATE` | not proven by component tests |
+
+Focused regression result: `6 files / 49 tests PASS`. This freezes the chosen
+source architecture and prevents reintroduction of the older sparse Finance
+surface; it is not an owner-acceptance or production-readiness claim.
+
 ## Work order
 
 1. Reconcile explicit module atoms into this state model without changing code.
