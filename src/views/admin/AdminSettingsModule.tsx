@@ -24,6 +24,7 @@ import { AdminRolesPermissionsPanel } from '../../components/Admin/AdminRolesPer
 import { AdminLegalHoldPanel } from '../../components/Admin/AdminLegalHoldPanel';
 import { AdminAuditExportHistoryPanel } from '../../components/Admin/AdminAuditExportHistoryPanel';
 import { AdminAuditIntegrityPanel } from '../../components/Admin/AdminAuditIntegrityPanel';
+import { PersonasPanel } from '../../components/Admin/AI/PersonasPanel';
 import { AdminSeatsLicencesPanel } from '../../components/Admin/AdminSeatsLicencesPanel';
 import { AdminTeamsPanel } from '../../components/Admin/AdminTeamsPanel';
 import {
@@ -368,7 +369,8 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
       // AIModule (nested under AdminAIControlCenterPanel) — see
       // AI_MODULE_TAB_BY_SCREEN below.
       (resolvedLocation.domain === 'ai' &&
-        Object.prototype.hasOwnProperty.call(AI_MODULE_TAB_BY_SCREEN, resolvedLocation.screen));
+        Object.prototype.hasOwnProperty.call(AI_MODULE_TAB_BY_SCREEN, resolvedLocation.screen)) ||
+      (resolvedLocation.domain === 'ai' && resolvedLocation.screen === 'personas');
     if (!connected) {
       return (
         <AdminCapabilityState
@@ -422,6 +424,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
           />
         );
       case 'ai':
+        if (resolvedLocation.screen === 'personas') return <PersonasPanel />;
         return (
           <AdminAIControlCenterPanel
             initialAiModuleTab={AI_MODULE_TAB_BY_SCREEN[resolvedLocation.screen]}

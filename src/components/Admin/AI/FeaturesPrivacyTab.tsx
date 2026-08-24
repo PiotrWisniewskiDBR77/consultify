@@ -34,12 +34,11 @@ import { useTranslation } from 'react-i18next';
 
 import { LoadingState } from '@/components/ui/primitives';
 
-import { Api } from '../../../services/api';
 import { useAppStore } from '../../../store/useAppStore';
 import { OrgAISettings } from '../../../types';
-import type { SystemPrompt, SystemPromptContextConfig } from '../../../types/domain/ai';
 import { SettingsCard, SettingsToggle } from '../../AISettings';
 import { SettingsHeaderActionPortal } from '../../settings/SettingsHeaderActions';
+import { PersonasPanel } from './PersonasPanel';
 
 export const FeaturesPrivacyTab: React.FC = () => {
   const { t } = useTranslation();
@@ -96,10 +95,6 @@ export const FeaturesPrivacyTab: React.FC = () => {
     'features' | 'data' | 'instructions' | 'personas'
   >('features');
 
-  // System prompts state
-  const [prompts, setPrompts] = useState<SystemPrompt[]>([]);
-  const [editingPrompt, setEditingPrompt] = useState<SystemPrompt | null>(null);
-
   // Custom instructions state
   const [customInstructions, setCustomInstructions] = useState('');
   const [toneGuidelines, setToneGuidelines] = useState('professional');
@@ -109,15 +104,9 @@ export const FeaturesPrivacyTab: React.FC = () => {
   const [aiLearningEnabled, setAILearningEnabled] = useState(false);
   const [externalDataEnabled, setExternalDataEnabled] = useState(false);
 
-  const formatPromptDate = (prompt: SystemPrompt) => {
-    const timestamp = prompt.updated_at ?? prompt.updatedAt;
-    return timestamp ? new Date(timestamp).toLocaleDateString() : '—';
-  };
-
   useEffect(() => {
     if (currentOrganization?.id) {
       loadSettings();
-      loadPrompts();
     }
   }, [currentOrganization?.id]);
 
@@ -136,15 +125,6 @@ export const FeaturesPrivacyTab: React.FC = () => {
       console.error('Failed to load settings:', error);
     }
     setLoading(false);
-  };
-
-  const loadPrompts = async () => {
-    try {
-      const promptsData = await Api.aiGetSystemPrompts();
-      setPrompts(promptsData);
-    } catch (e) {
-      console.error('Failed to load prompts:', e);
-    }
   };
 
   const saveSettings = async () => {
@@ -183,28 +163,6 @@ export const FeaturesPrivacyTab: React.FC = () => {
   const updateSetting = <K extends keyof OrgAISettings>(key: K, value: OrgAISettings[K]) => {
     setSettings((prev) => (prev ? { ...prev, [key]: value } : null));
     setHasChanges(true);
-  };
-
-  const handleUpdatePrompt = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingPrompt) return;
-    try {
-      await Api.aiUpdateSystemPrompt(editingPrompt.key, {
-        content: editingPrompt.content,
-        description: editingPrompt.description,
-        context_config: editingPrompt.context_config,
-        updatedBy: 'Admin',
-      });
-      toast.success(
-        t('admin.aiControlCenter.featuresPrivacy.toasts.promptUpdated', 'System Prompt Updated')
-      );
-      setEditingPrompt(null);
-      loadPrompts();
-    } catch (e) {
-      toast.error(
-        t('admin.aiControlCenter.featuresPrivacy.errors.updatePrompt', 'Failed to update prompt')
-      );
-    }
   };
 
   if (loading) {
@@ -836,191 +794,7 @@ export const FeaturesPrivacyTab: React.FC = () => {
         </div>
       )}
 
-      {/* System Personas */}
-      {activeSubTab === 'personas' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <h3 className="text-sm font-medium text-slate-600 dark:text-slate-500 uppercase tracking-wider">
-              {t('admin.aiControlCenter.featuresPrivacy.personas.available', 'Available Personas')}
-            </h3>
-            {prompts.map((p) => (
-              <div
-                key={p.key}
-                onClick={() => setEditingPrompt(p)}
-                className={`p-4 rounded-xl border cursor-pointer transition-all ${
-                  editingPrompt?.key === p.key
-                    ? 'bg-primary-500/20 border-primary-500'
-                    : 'bg-c-surface border-white/5 hover:border-white/20'
-                }`}
-              >
-                <div className="flex justify-between items-center mb-2">
-                  <h3 className="font-bold text-c-text">{p.key}</h3>
-                  <span className="text-xs text-slate-600 dark:text-slate-500">
-                    {formatPromptDate(p)}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-600 dark:text-slate-500 line-clamp-2">
-                  {p.description}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          <div className="bg-c-surface border border-white/10 rounded-xl p-6 h-fit">
-            {editingPrompt ? (
-              <form onSubmit={handleUpdatePrompt}>
-                <h3 className="text-lg font-bold text-c-text mb-4">
-                  {t('admin.aiControlCenter.featuresPrivacy.personas.editPrefix', 'Edit: {{key}}', {
-                    key: editingPrompt.key,
-                  })}
-                </h3>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 dark:text-slate-500 mb-1">
-                      {t(
-                        'admin.aiControlCenter.featuresPrivacy.personas.descriptionLabel',
-                        'Description'
-                      )}
-                    </label>
-                    <input
-                      value={editingPrompt.description}
-                      onChange={(e) =>
-                        setEditingPrompt({ ...editingPrompt, description: e.target.value })
-                      }
-                      className="w-full bg-c-text text-c-bg border border-white/10 rounded p-2 text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 dark:text-slate-500 mb-1">
-                      {t(
-                        'admin.aiControlCenter.featuresPrivacy.personas.systemPromptLabel',
-                        'System Prompt'
-                      )}
-                    </label>
-                    <textarea
-                      value={editingPrompt.content}
-                      onChange={(e) =>
-                        setEditingPrompt({ ...editingPrompt, content: e.target.value })
-                      }
-                      className="w-full h-64 bg-c-text text-c-bg border border-white/10 rounded p-4 font-mono text-sm leading-relaxed focus:border-primary-500 outline-none resize-none"
-                    />
-                  </div>
-
-                  {/* Context Injection Controls */}
-                  <div className="bg-c-bg border border-white/5 rounded-lg p-4">
-                    <h4 className="text-sm font-semibold text-c-text mb-3 flex items-center gap-2">
-                      <Shield size={14} className="text-primary-400" />
-                      {t(
-                        'admin.aiControlCenter.featuresPrivacy.personas.contextInjection',
-                        'Context Injection'
-                      )}
-                    </h4>
-                    <div className="grid grid-cols-2 gap-3">
-                      {[
-                        {
-                          id: 'include_project_context',
-                          label: t(
-                            'admin.aiControlCenter.featuresPrivacy.personas.context.project',
-                            'Project Context'
-                          ),
-                        },
-                        {
-                          id: 'include_user_profile',
-                          label: t(
-                            'admin.aiControlCenter.featuresPrivacy.personas.context.userProfile',
-                            'User Profile'
-                          ),
-                        },
-                        {
-                          id: 'include_assessment_data',
-                          label: t(
-                            'admin.aiControlCenter.featuresPrivacy.personas.context.assessmentData',
-                            'Assessment Data'
-                          ),
-                        },
-                        {
-                          id: 'include_kb_articles',
-                          label: t(
-                            'admin.aiControlCenter.featuresPrivacy.personas.context.knowledgeBase',
-                            'Knowledge Base'
-                          ),
-                        },
-                        {
-                          id: 'include_task_history',
-                          label: t(
-                            'admin.aiControlCenter.featuresPrivacy.personas.context.taskHistory',
-                            'Task History'
-                          ),
-                        },
-                      ].map((opt) => {
-                        const config: SystemPromptContextConfig =
-                          typeof editingPrompt.context_config === 'string'
-                            ? (JSON.parse(
-                                editingPrompt.context_config || '{}'
-                              ) as SystemPromptContextConfig)
-                            : editingPrompt.context_config || {};
-
-                        return (
-                          <label
-                            key={opt.id}
-                            className="flex items-center gap-2 cursor-pointer group"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={!!config[opt.id]}
-                              onChange={(e) => {
-                                const newConfig: SystemPromptContextConfig = {
-                                  ...config,
-                                  [opt.id]: e.target.checked,
-                                };
-                                setEditingPrompt({
-                                  ...editingPrompt,
-                                  context_config: newConfig,
-                                });
-                              }}
-                              className="w-4 h-4 rounded border-slate-600 text-primary-500 focus:ring-primary-500 bg-c-surface-raised"
-                            />
-                            <span className="text-xs text-slate-600">{opt.label}</span>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setEditingPrompt(null)}
-                      className="px-4 py-2 text-slate-600 dark:text-slate-500 hover:text-white"
-                    >
-                      {t('admin.aiControlCenter.featuresPrivacy.personas.cancel', 'Cancel')}
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium flex items-center gap-2"
-                    >
-                      <Save size={16} />{' '}
-                      {t('admin.aiControlCenter.featuresPrivacy.personas.save', 'Save Persona')}
-                    </button>
-                  </div>
-                </div>
-              </form>
-            ) : (
-              <div className="h-64 flex items-center justify-center text-slate-500 dark:text-slate-400">
-                <div className="text-center">
-                  <Brain size={40} className="mx-auto mb-3 opacity-50" />
-                  <p>
-                    {t(
-                      'admin.aiControlCenter.featuresPrivacy.personas.selectToEdit',
-                      'Select a persona to edit'
-                    )}
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {activeSubTab === 'personas' && <PersonasPanel />}
     </div>
   );
 };

@@ -38,6 +38,7 @@ vi.mock('../../../components/Admin/AdminRolesPermissionsPanel', () => ({ AdminRo
 vi.mock('../../../components/Admin/AdminLegalHoldPanel', () => ({ AdminLegalHoldPanel: () => <div data-testid="panel-legal-hold">legal hold</div> }));
 vi.mock('../../../components/Admin/AdminAuditExportHistoryPanel', () => ({ AdminAuditExportHistoryPanel: () => <div data-testid="panel-export-history">exports</div> }));
 vi.mock('../../../components/Admin/AdminAuditIntegrityPanel', () => ({ AdminAuditIntegrityPanel: () => <div data-testid="panel-integrity">integrity</div> }));
+vi.mock('../../../components/Admin/AI/PersonasPanel', () => ({ PersonasPanel: () => <div data-testid="panel-personas">personas</div> }));
 vi.mock('../../../components/Admin/AdminBillingFinOpsPanel', () => ({
   AdminBillingFinOpsPanel: ({ screen }: { screen?: string }) => (
     <div data-testid="panel-billing" data-screen={screen}>
@@ -150,6 +151,7 @@ describe('AdminSettingsModule section routing', () => {
   it('wires audit/legal-hold read-only', () => { renderAt('/admin/audit/legal-hold'); expect(screen.getByTestId('panel-legal-hold')).toBeInTheDocument(); });
   it('wires audit/export-history', () => { renderAt('/admin/audit/export-history'); expect(screen.getByTestId('panel-export-history')).toBeInTheDocument(); });
   it('wires audit/integrity honestly', () => { renderAt('/admin/audit/integrity'); expect(screen.getByTestId('panel-integrity')).toBeInTheDocument(); });
+  it('wires ai/personas to the shared personas implementation', () => { renderAt('/admin/ai/personas'); expect(screen.getByTestId('panel-personas')).toBeInTheDocument(); });
 
   it('resolves the iam alias to the security panel', () => {
     renderAt('/admin/iam');
