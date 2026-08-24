@@ -2,9 +2,9 @@
 
 Date: 2026-08-24  
 Module: `INI`  
-Documentation HEAD: `79be2f32ae`  
+Documentation HEAD: `8a3fc80deb`
 Latest browser-qualified product SHA: `e04797f99335f8e268e4dc5153c4bd2dd7a2b725`  
-Latest exact-SHA runtime-qualified candidate: `22ce590d7aecbc75e70edf63bd9046deb7aef655`
+Latest exact-SHA runtime-qualified candidate: `8a3fc80deb6283e25e944aa2f29c006197cd8105`
 Decision: `NO-GO_FOR_OWNER_ACCEPTANCE / REMEDIATION_REQUIRED`
 
 ## Purpose and evidence boundary
@@ -30,7 +30,7 @@ production were not changed.
 | `INI-C04`                  | `PARTIAL_EXACT_SHA_PASS`                             | Product SHA `e04797f993` was verified in browser on client/server `4007/4006`; local DB manifest records 834 migrations and deterministic counts. Execution regression evidence is indexed under `current-sha-e04797f9-2026-08-24`.                                                                                                                                              | Full 21-gate Initiatives package and owner verdict are not complete.                                                                     |
 | `INI-C05`                  | `OPEN_PRODUCT_WORK`                                  | Premise-first creation components and tests exist.                                                                                                                                                                                                                                                                                                                               | Complete AI proposal, human review, assumptions/source retention and idempotent save/readback still require end-to-end qualification.    |
 | `INI-C06`                  | `PARTIAL_PRODUCT_IMPLEMENTATION / EXACT_SHA_RUNTIME_PASS` | Versioned Plan domain and API foundation exist. Commits `1dc1761cfd` and `02aca5ee25` remove raw period JSON, generate and edit a bounded weekly horizon, expose lifecycle/status filtering and include/exclude selection, and render a clickable weekly timeline with one-period movement. Commit `22ce590d7a` connects persistent scenario history/diff to explicit read-only comparison. Commit `a5a2f427fe` adds an event-stored Plan-analysis proposal pinned to exact aggregate/scenario versions, explicit assumptions/rationale/conflicts, human Accept/Reject review and before/after changes. Accept applies only to the unsaved UI draft; Save and Publish remain separate decisions. The proposal engine is currently deterministic dependency ordering and is not misrepresented as provider-backed AI. Focused Plan regression: `2 files / 9 tests PASS`; touched-file lint has zero errors. Candidate `a5a2f427fe` passed the isolated owner-runtime contract on server/client `4046/4047`: health, readiness, frontend and transformed client marker all returned the exact candidate SHA; both migration ledgers were green with 834 migrations and the marked Initiatives fixture database was preserved. | Provider-backed AI/provenance, richer Gantt interaction, authenticated visible browser replay and independent cold reopen remain open. |
-| `INI-C07`                  | `OPEN_PRODUCT_WORK`                                  | Versioned Capacity domain and API foundation exist.                                                                                                                                                                                                                                                                                                                              | Multiple analyses per Plan, person/team saturation, governed recommendations and independent cold readback remain open.                  |
+| `INI-C07`                  | `PARTIAL_PRODUCT_IMPLEMENTATION / EXACT_SHA_RUNTIME_PASS` | Commit `8a3fc80deb` adds an explicit New Analysis flow bound to an exact published Plan/version, independent DRAFT analysis identity, readable person/team saturation ranges, preserved `UNKNOWN` demand/supply states and the existing versioned Capacity register/write contract. Focused Capacity regression: `2 files / 5 tests PASS`; touched-file lint has zero errors. The same SHA passed the isolated owner-runtime contract on server/client `4056/4057` with 834 migrations and the preserved marked fixture database. | The retained fixture contains no Plan/Capacity aggregates, so two-analysis persistent cold readback is still `EVIDENCE_MISSING`. Provider-backed AI, explicit governed proposal acceptance and authenticated browser replay also remain open. |
 | `INI-C09`                  | `OPEN_SHARED_UI_WORK`                                | Shared table/preview primitives are present.                                                                                                                                                                                                                                                                                                                                     | One canonical preview, concise row menu, reachable bulk selection, tablet/keyboard verification and owner visual acceptance remain open. |
 | `INI-C10`                  | `OPEN_PRODUCT_WORK`                                  | Versioned report definitions/runs exist in the backend foundation.                                                                                                                                                                                                                                                                                                               | Final Plan/Capacity decision-report workflow, lineage UI and export/readback remain open.                                                |
 | `INI-C11`–`INI-C13`        | `OPEN_HARDENING_WORK`                                | Partial error, locale and component coverage exists.                                                                                                                                                                                                                                                                                                                             | Supporting-data error taxonomy, dead-branch isolation, PL/EN, responsive and accessibility gates remain open.                            |
@@ -97,6 +97,26 @@ auth bypass, the authenticated Analyze/Accept/Reject replay remains
 `PENDING`, not passed. The canonical stop contract terminated only owned process
 groups, released both ports and preserved the database/catalog.
 
+Current bounded Capacity increment:
+
+```text
+pnpm exec vitest run \
+  tests/unit/initiatives-execution/capacityScenarioSurface.test.tsx \
+  tests/unit/initiatives-execution/capacityScenario.test.ts
+```
+
+Result: `2 files / 5 tests PASS`. Touched-file lint: zero errors and four
+pre-existing warnings. Exact-SHA runtime `8a3fc80deb` passed on `4056/4057`:
+health, authoritative readiness, frontend and transformed client marker matched
+the candidate; both migration ledgers were green with 834 migrations; the
+marked Initiatives fixture database was preserved. Normal browser navigation
+reached the real login gate with all test auth bypasses disabled. A direct
+read-only database check found no `plan_scenario` or `capacity_scenario`
+aggregates in that retained Execution fixture. Therefore authenticated UI replay
+and persistent independent multi-analysis cold readback remain explicitly
+pending. The canonical stop contract terminated only owned process groups,
+released both ports and preserved the database/catalog.
+
 Limitations: React `act(...)` warnings remain in the New-Initiative accessibility
 test lane. They are test-quality debt and are not promoted to an owner/browser
 pass. The expected fail-closed test logs the canonical API error by design.
@@ -110,7 +130,9 @@ runtime evidence; `C04` is partial. The decisive product work remains:
 1. `C05` — one governed premise-to-AI-draft creation flow;
 2. `C06` — qualify and finish the now-readable Plan what-if: governed AI
    proposal, richer weekly Gantt interaction and cold reopen;
-3. `C07` — Plan-bound multi-analysis Capacity workspace;
+3. `C07` — finish provider-backed governed recommendations, authenticated replay
+   and two independent cold-reopened analyses for the now Plan-bound Capacity
+   workspace;
 4. `C09` — canonical preview/menu/selection behavior;
 5. `C10` — versioned decision reports with lineage;
 6. `C11`–`C13` — error semantics, branch isolation, locale, responsive and a11y;
