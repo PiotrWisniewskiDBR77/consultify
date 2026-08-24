@@ -28,7 +28,7 @@ Start: 2026-08-24 (Europe/Warsaw) · Koniec: —
 | 8 | command/cost-capacity | 2 | `a92af5e497` | DONE | 5 źródeł; atrybucja StandardTable; tylko odczyt + deep-linki |
 | 9 | audit/compliance-evidence | 2 | `f91a3a6849` | DONE | 6 źródeł dowodowych; źródło/świeżość/deep-link; eksport audytu |
 | 10 | billing/seats-licences | 3 | `1a926118e2` | DONE | realna konfiguracja/historia; auto-add z readbackiem; zakup contact-sales |
-| 11 | health/dependencies | 3 | — | NIE ZACZĘTO | |
+| 11 | health/dependencies | 3 | — | STOP | brak jawnej mapy probe→zależność; rejestr opisuje przepływy produktowe, nie zależności |
 | 12 | health/incident-history | 4/B | — | NIE ZACZĘTO | |
 | 13 | health/queues-jobs | 4/B | — | NIE ZACZĘTO | |
 | 14 | health/sla-slo | 4/B | — | NIE ZACZĘTO | |
@@ -69,6 +69,12 @@ Stan: NIE ZACOMMITOWANO.
 ### STOP — billing/seats-licences / purchaseSeats
 Powód: nie wystawiono mutacji finansowej `purchaseSeats` bez kontraktu potwierdzenia, idempotencji, readbacku dostawcy płatności i paragonu.
 Stan: ekran odczytu, historii i auto-add jest gotowy; zakup jest jawnie oznaczony jako contact-sales.
+
+### STOP — health/dependencies
+Powód: `HEALTH_PROBES` rejestruje próby przepływów produktowych (np. KPI round-trip, lista inicjatyw, Assessment→M13), ale nie zawiera jawnej kategorii zależności ani mapy probe→baza/dostawca/usługa/kolejka. Utworzenie takiej mapy wymagałoby zgadywania, czego §4.4 wprost zakazuje.
+Dowód: `server/src/services/health/healthProbeService.ts:104-107`, `:496-515`, `:528-570`; typ `HealthProbeDefinition` nie ma pola zależności.
+Co zrobiłbym po decyzji X: po zatwierdzeniu kanonicznego katalogu zależności i jawnego przypisania probe'ów dodałbym wyłącznie customer-safe agregację ostatnich wyników, bez danych hosta i credentiali.
+Stan: NIE ZACOMMITOWANO.
 
 ## Znaleziska (problemy w istniejącym kodzie — NIE naprawiane przeze mnie)
 
