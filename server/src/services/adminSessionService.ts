@@ -54,7 +54,7 @@ class AdminSessionServiceClass {
     return dt.toISOString();
   }
 
-  async getActiveSessions(adminId?: string): Promise<any[]> {
+  async getActiveSessions(adminId?: string, organizationId?: string): Promise<any[]> {
     // Defensive strategy: the repo contains multiple historical `admin_sessions` schemas.
     // - Extended: user_id, is_active, mfa_verified, ip_address, user_agent, expires_at
     // - Minimal (initdb stub): admin_user_id, session_token, expires_at, created_at
@@ -106,6 +106,10 @@ class AdminSessionServiceClass {
         WHERE s.is_active = 1
       `;
       const params: any[] = [];
+      if (organizationId) {
+        query += ' AND s.organization_id = ?';
+        params.push(organizationId);
+      }
       if (adminId) {
         query += ' AND s.user_id = ?';
         params.push(adminId);
@@ -137,6 +141,10 @@ class AdminSessionServiceClass {
         WHERE s.expires_at > CURRENT_TIMESTAMP
       `;
       const params: any[] = [];
+      if (organizationId) {
+        query += ' AND s.organization_id = ?';
+        params.push(organizationId);
+      }
       if (adminId) {
         query += ' AND s.admin_user_id = ?';
         params.push(adminId);
@@ -159,6 +167,7 @@ class AdminSessionServiceClass {
     const breakGlassReason = data?.breakGlassReason || null;
     const approvedBy = data?.approvedBy || null;
     const createdBy = data?.createdBy || adminId;
+    const organizationId = data?.organizationId || null;
     const expiresAt = data?.expiresAt || this.computeExpiresAt(data?.expiresInHours, sessionType);
 
     try {
@@ -168,8 +177,8 @@ class AdminSessionServiceClass {
       await this.db.run(
         `INSERT INTO admin_sessions
           (id, admin_user_id, user_id, session_token, expires_at, created_at, mfa_verified, is_active, ip_address, user_agent,
-           session_type, requested_capability, justification, break_glass_reason, approved_by, created_by)
-         VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           session_type, requested_capability, justification, break_glass_reason, approved_by, created_by, organization_id)
+         VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           id,
           adminId,
@@ -186,14 +195,15 @@ class AdminSessionServiceClass {
           breakGlassReason,
           approvedBy,
           createdBy,
+          organizationId,
         ]
       );
     } catch (_err) {
       // Fallback to minimal schema.
       await this.db.run(
-        `INSERT INTO admin_sessions (id, admin_user_id, session_token, expires_at, created_at)
-         VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-        [id, adminId, sessionToken, expiresAt]
+        `INSERT INTO admin_sessions (id, admin_user_id, session_token, expires_at, created_at, organization_id)
+         VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, ?)`,
+        [id, adminId, sessionToken, expiresAt, organizationId]
       );
     }
 

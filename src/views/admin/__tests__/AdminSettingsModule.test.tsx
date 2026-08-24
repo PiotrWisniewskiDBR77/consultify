@@ -31,6 +31,7 @@ vi.mock('../../../components/Admin/AdminSlaSloPanel', () => ({ AdminSlaSloPanel:
 vi.mock('../../../components/Admin/AdminServiceAccountsPanel', () => ({ AdminServiceAccountsPanel: () => <div data-testid="panel-service-accounts">service accounts</div> }));
 vi.mock('../../../components/Admin/AdminSecurityAlertsPanel', () => ({ AdminSecurityAlertsPanel: () => <div data-testid="panel-security-alerts">alerts</div> }));
 vi.mock('../../../components/Admin/AdminSessionsPanel', () => ({ AdminSessionsPanel: () => <div data-testid="panel-sessions">sessions</div> }));
+vi.mock('../../../components/Admin/AdminBreakGlassPanel', () => ({ AdminBreakGlassPanel: () => <div data-testid="panel-break-glass">break glass</div> }));
 vi.mock('../../../components/Admin/AdminBillingFinOpsPanel', () => ({
   AdminBillingFinOpsPanel: ({ screen }: { screen?: string }) => (
     <div data-testid="panel-billing" data-screen={screen}>
@@ -104,6 +105,7 @@ describe('AdminSettingsModule section routing', () => {
   it('wires security/service-accounts to the service accounts panel', () => { renderAt('/admin/security/service-accounts'); expect(screen.getByTestId('panel-service-accounts')).toBeInTheDocument(); });
   it('wires security/security-alerts safely', () => { renderAt('/admin/security/security-alerts'); expect(screen.getByTestId('panel-security-alerts')).toBeInTheDocument(); });
   it('wires security/sessions safely', () => { renderAt('/admin/security/sessions'); expect(screen.getByTestId('panel-sessions')).toBeInTheDocument(); });
+  it('wires security/break-glass safely', () => { renderAt('/admin/security/break-glass'); expect(screen.getByTestId('panel-break-glass')).toBeInTheDocument(); });
   it('renders the people panel at /admin/people', () => {
     renderAt('/admin/people');
     expect(screen.getByTestId('panel-people')).toBeInTheDocument();
