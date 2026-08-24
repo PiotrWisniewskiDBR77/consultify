@@ -20,6 +20,9 @@ vi.mock('../../../components/Admin/AdminMembersRolesPanel', () => ({
 vi.mock('../../../components/Admin/AdminTeamsPanel', () => ({
   AdminTeamsPanel: () => <div data-testid="panel-teams">teams</div>,
 }));
+vi.mock('../../../components/Admin/AdminPlanHistoryPanel', () => ({
+  AdminPlanHistoryPanel: () => <div data-testid="panel-plan-history">plan history</div>,
+}));
 vi.mock('../../../components/Admin/AdminBillingFinOpsPanel', () => ({
   AdminBillingFinOpsPanel: ({ screen }: { screen?: string }) => (
     <div data-testid="panel-billing" data-screen={screen}>
@@ -77,6 +80,11 @@ describe('AdminSettingsModule section routing', () => {
     renderAt('/admin/team/teams');
     expect(screen.getByTestId('panel-teams')).toBeInTheDocument();
     expect(screen.queryByTestId('panel-people')).not.toBeInTheDocument();
+  });
+
+  it('wires billing/plan-history to the read-only history panel', () => {
+    renderAt('/admin/billing/plan-history');
+    expect(screen.getByTestId('panel-plan-history')).toBeInTheDocument();
   });
   it('renders the people panel at /admin/people', () => {
     renderAt('/admin/people');

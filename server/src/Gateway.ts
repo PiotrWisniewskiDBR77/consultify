@@ -21,6 +21,7 @@ import aiObservabilityAdminRoutes from './routes/admin/ai-observability.routes.j
 import adminAIQualityRoutes from './routes/admin/ai-quality.routes.js';
 import adminBackupRoutes from './routes/admin/backup.routes.js';
 import enterpriseComplianceAdminRoutes from './routes/admin/enterprise-compliance.routes.js';
+import billingHistoryAdminRoutes from './routes/admin/billing-history.routes.js';
 import healthPanelAdminRoutes from './routes/admin/health-panel.routes.js';
 import adminBulkRoutes from './routes/admin-bulk.routes.js';
 import adminDataRoutes from './routes/admin-data.routes.js';
@@ -770,6 +771,7 @@ export class ApiGateway {
       app.use('/api/superadmin', resourceManagementRoutes);
       app.use('/api/admin/ai-observability', aiObservabilityAdminRoutes);
       app.use('/api/admin/health-panel', healthPanelAdminRoutes);
+      app.use('/api/admin/billing-history', billingHistoryAdminRoutes);
       // Wiring (2026-07-15): route was defined but never mounted (0 Gateway refs).
       // Own auth (verifyToken + admin-role check) is applied inside the router —
       // matches ai-quality.routes.ts pattern. Distinct from '/api/compliance'
