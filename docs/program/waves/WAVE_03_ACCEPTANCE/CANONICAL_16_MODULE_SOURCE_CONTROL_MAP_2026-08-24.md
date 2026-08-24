@@ -161,7 +161,7 @@ Control decision: preserve the five missing documents through an explicit docume
 
 ### Dirty owner worktree overlay
 
-The dirty `/Users/piotrwisniewski/Developer/Consultify` worktree is an evidence and owner-intent source, not a cleanup target. Its current 22-entry overlay includes:
+The dirty `/Users/piotrwisniewski/Developer/Consultify` worktree is an evidence and owner-intent source, not a cleanup target. Its current 23-entry overlay includes:
 
 - modified Railway ignore configuration;
 - modified Initiatives and Results module acceptance registers;
@@ -175,6 +175,45 @@ The dirty `/Users/piotrwisniewski/Developer/Consultify` worktree is an evidence 
 - untracked Finance recovery contract;
 - untracked Assessment owner/expert documentation and evidence directory;
 - untracked recovery scripts and acceptance-gate report scripts/tests.
+
+Current read-only overlay manifest (refreshed 2026-08-24; no source file was edited):
+
+| Class | Paths | Recovery handling |
+|---|---|---|
+| `CONFIGURATION_RISK` | `.railwayignore` | Preserve in place. Review independently against deployment scope; never fold into a documentation or product-code change. |
+| `DOCUMENTATION_ONLY` | `modules/05_INITIATIVES/MODULE_ACCEPTANCE.md`; `modules/09_RESULTS/MODULE_ACCEPTANCE.md`; Assessment workshop/register files; cross-module row-menu register; live-runtime identity map; Initiatives contract and two expert syntheses; Results final implementation specification; Finance recovery contract; three Assessment expert/owner documents; Assessment technical evidence note | Preserve every file. Reconcile requirement IDs and destination paths into the existing module registers; do not replace atomic owner observations with summaries. |
+| `TEST_OR_TOOLING` | `scripts/release/verify-release-candidate-bundle.mjs`; its unit test; `scripts/recovery/report-worktree-inventory.mjs` and test; `scripts/wave3/report-acceptance-gates.mjs` and test | Review as bounded tooling commits after the canonical map is frozen. Passing these tools cannot establish owner acceptance or release readiness by itself. |
+| `PRODUCT_WIP` | `src/components/Initiatives/InitiativesHub.tsx` | Preserve in place. Compare requirement-to-code atoms against the frozen Initiatives contract; do not copy, cherry-pick or merge before owner freeze. |
+
+Manifest denominator: `23` paths = `1 CONFIGURATION_RISK` + `15 DOCUMENTATION_ONLY` + `6 TEST_OR_TOOLING` + `1 PRODUCT_WIP`. No path is classified as disposable.
+
+Exact content checkpoint (`git hash-object`, refreshed 2026-08-24):
+
+```text
+0eeb1fa7e3ae01cb7321667c33edaa718d87b8ed  .railwayignore
+7b8ff4aeb5258dcf50c7b162deae40305b37a89c  docs/program/waves/WAVE_03_ACCEPTANCE/modules/05_INITIATIVES/MODULE_ACCEPTANCE.md
+79d5ce76ee551efda42aceef6cf53a391eb1a8ac  docs/program/waves/WAVE_03_ACCEPTANCE/modules/09_RESULTS/MODULE_ACCEPTANCE.md
+96bc25cbf2c9ec0cd917ad1f9d8592c09e9802a0  docs/program/waves/WAVE_03_ACCEPTANCE/owner_feedback/04_ASSESSMENT/ASSESSMENT_WORKSHOP_PACKET.md
+cc34096048531cad2ecfe1885093001590c7fcc9  docs/program/waves/WAVE_03_ACCEPTANCE/owner_feedback/04_ASSESSMENT/OWNER_FEEDBACK_REGISTER.md
+a7b7cf305488814cc92e760f97cadbb8d4384c4b  docs/program/waves/WAVE_03_ACCEPTANCE/owner_feedback/CROSS_MODULE/ROW_MENU_AUDIT_REGISTER.md
+c9bb984df9860e26b874536bbff3247499293dc5  scripts/release/verify-release-candidate-bundle.mjs
+9f5f5bfcb4d6556b62f9ebc37de7848a3c72a4c1  src/components/Initiatives/InitiativesHub.tsx
+f182e27865f9d82ed40a2753fe9ae6c136c1be80  tests/unit/release/verify-release-candidate-bundle.test.mjs
+849180c8e3bf46a8f6a6f9c8e4a524ffefaf98c3  docs/program/waves/WAVE_03_ACCEPTANCE/LIVE_RUNTIME_IDENTITY_MAP_2026-08-23.md
+8ba43eb6b3f5c15b3315a9d9d558dce429efa8fa  docs/program/waves/WAVE_03_ACCEPTANCE/modules/05_INITIATIVES/INITIATIVES_IMPLEMENTATION_READY_CONTRACT_2026-08-23.md
+6c1868991dfea2e2fd799a0c2fe5db18834e20af  docs/program/waves/WAVE_03_ACCEPTANCE/modules/05_INITIATIVES/INITIATIVE_CAPACITY_ANALYSIS_EXPERT_SYNTHESIS_2026-08-23.md
+ebc05862652f5a1fb06d267deee35df3d30cd859  docs/program/waves/WAVE_03_ACCEPTANCE/modules/05_INITIATIVES/INITIATIVE_PLAN_WHAT_IF_EXPERT_SYNTHESIS_2026-08-23.md
+bdbe59a5e567cb8827ee6d8d78fa223c2ed20f8f  docs/program/waves/WAVE_03_ACCEPTANCE/modules/09_RESULTS/RESULTS_OWNER_FINAL_IMPLEMENTATION_SPEC_2026-08-23.md
+fb9065e64a60a6a3e76ffb71ea0b18fc0f1b0219  docs/program/waves/WAVE_03_ACCEPTANCE/modules/10_FINANCE/FINANCE_RECOVERY_AND_COMPLETION_CONTRACT_2026-08-23.md
+02e931403d5d5ca37d988ac0ef61d2eb5e5e0e40  docs/program/waves/WAVE_03_ACCEPTANCE/owner_feedback/04_ASSESSMENT/ASSESSMENT_COMPLETE_EXPERT_AUDIT_2026-08-23.md
+08f0e4dc8ca594df2ade001264c7299c315cbc89  docs/program/waves/WAVE_03_ACCEPTANCE/owner_feedback/04_ASSESSMENT/ASSESSMENT_LEVEL_CARD_SKEPTICAL_REVIEW_2026-08-23.md
+bf185730a2d52d06f473a4906b4fd01f9f39a412  docs/program/waves/WAVE_03_ACCEPTANCE/owner_feedback/04_ASSESSMENT/ASSESSMENT_OWNER_REVIEW_SUMMARY_2026-08-23.md
+ef85125f7fc26e10721da8b473043c2522b6a675  evidence/assessment/ASSESSMENT_EXPERT_TECH_REVIEW_2026-08-23.md
+0d7d536d11b7e7c7329306a4d3752eaf5d8d0b61  scripts/recovery/__tests__/report-worktree-inventory.test.mjs
+c35a6d7cb7fd02b145e29b6048cc1f9512f1d239  scripts/recovery/report-worktree-inventory.mjs
+27c3ecfe6d8744d0e5ce321308ab410ef8077e1d  scripts/wave3/__tests__/report-acceptance-gates.test.mjs
+3e763033289d1d3a83f78d04aaa22452b3637393  scripts/wave3/report-acceptance-gates.mjs
+```
 
 Control decision: retain the overlay exactly where it is. Before any reuse, each entry receives a destination, requirement linkage and classification of `DOCUMENTATION_ONLY`, `TEST_OR_TOOLING`, `PRODUCT_WIP`, `CONFIGURATION_RISK` or `OWNER_DECISION_REQUIRED`. No reset, stash, clean, bulk copy or merge is authorized.
 
