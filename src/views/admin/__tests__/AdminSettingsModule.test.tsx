@@ -52,8 +52,8 @@ vi.mock('../../../components/Admin/AdminHealthPanel', () => ({
   AdminHealthPanel: () => <div data-testid="panel-health">health</div>,
 }));
 vi.mock('../../../components/Admin/AdminCommandCenterPanel', () => ({
-  AdminCommandCenterPanel: ({ aggregationOnly }: { aggregationOnly?: boolean }) => (
-    <div data-testid="panel-command" data-aggregation-only={String(Boolean(aggregationOnly))}>
+  AdminCommandCenterPanel: ({ aggregationOnly, screen: commandScreen }: { aggregationOnly?: boolean; screen?: string }) => (
+    <div data-testid="panel-command" data-aggregation-only={String(Boolean(aggregationOnly))} data-screen={commandScreen}>
       command
     </div>
   ),
@@ -181,9 +181,10 @@ describe('AdminSettingsModule section routing', () => {
       expect(panel).toHaveAttribute('data-aggregation-only', 'false');
     });
 
-    it('still blocks Attention Queue and Cost & Capacity (FRONT_MISSING, not in scope)', () => {
-      renderAt('/admin/command/attention-queue');
-      expect(screen.queryByTestId('panel-command')).not.toBeInTheDocument();
+    it('wires Attention Queue while Cost & Capacity remains pending', () => {
+      const attention = renderAt('/admin/command/attention-queue');
+      expect(screen.getByTestId('panel-command')).toHaveAttribute('data-screen', 'attention-queue');
+      attention.unmount();
 
       renderAt('/admin/command/cost-capacity');
       expect(screen.queryByTestId('panel-command')).not.toBeInTheDocument();

@@ -321,6 +321,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
       // — only the "Postawa zgodności" nav slot was missing. Overview stays
       // aggregation-only per FINAL_IMPLEMENTATION_SPEC.md.
       (resolvedLocation.domain === 'command' && resolvedLocation.screen === 'compliance-posture') ||
+      (resolvedLocation.domain === 'command' && resolvedLocation.screen === 'attention-queue') ||
       // Fala 1 (Admin komplet 55): high-risk-changes and retention-export have
       // no dedicated sub-view — AdminAuditLogPanel (already the `events`
       // default) already renders the high-risk count and the
@@ -410,6 +411,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
       case 'command':
         return (
           <AdminCommandCenterPanel
+            screen={resolvedLocation.screen === 'attention-queue' ? 'attention-queue' : undefined}
             // Only the Overview screen aggregates signals read-only (per
             // FINAL_IMPLEMENTATION_SPEC.md, Command "aggregates signals
             // only"). Every other Command Center screen (currently just

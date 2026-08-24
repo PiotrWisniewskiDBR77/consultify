@@ -32,6 +32,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 
+import { Api } from '../../services/api';
 import {
   type AuditExportResult,
   type DataResidencyPolicy,
@@ -66,7 +67,52 @@ type TabId =
 interface AdminCommandCenterPanelProps {
   onSectionChange?: (section: AdminSettingsSection) => void;
   aggregationOnly?: boolean;
+  screen?: 'attention-queue' | 'cost-capacity';
 }
+
+interface AttentionSignal {
+  id: string;
+  title: string;
+  source: string;
+  freshness: string;
+  severity: 'critical' | 'warning' | 'info';
+  href: string;
+  detail: string;
+}
+
+const CommandCenterAttentionQueue: React.FC = () => {
+  const [signals, setSignals] = useState<AttentionSignal[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    void (async () => {
+      const freshness = new Date().toLocaleString();
+      const results = await Promise.allSettled([
+        Api.getAdminRiskSummary(), Api.getTenantAdminAuditStats(),
+        Api.getAdminBillingAlerts(), Api.getHealthPanelSummary(),
+      ]);
+      if (!alive) return;
+      const [risk, audit, billing, health] = results.map((item) => item.status === 'fulfilled' ? item.value : null);
+      const next: AttentionSignal[] = [];
+      if (risk) next.push({ id: 'risk', title: 'Ryzyka wymagające przeglądu', source: 'GET /api/admin/risk/summary', freshness, severity: Number(risk?.highRiskCount ?? 0) > 0 ? 'critical' : 'info', href: '/admin/security/risk-summary', detail: `${Number(risk?.highRiskCount ?? 0)} wysokiego ryzyka` });
+      if (audit) next.push({ id: 'audit', title: 'Nierozwiązane zdarzenia audytowe', source: 'GET /api/admin/audit-logs/stats', freshness, severity: Number(audit?.unresolvedCount ?? 0) > 0 ? 'warning' : 'info', href: '/admin/audit/events', detail: `${Number(audit?.unresolvedCount ?? 0)} nierozwiązanych` });
+      const billingItems = billing ? (Array.isArray(billing?.alerts) ? billing.alerts : Array.isArray(billing) ? billing : []) : null;
+      if (billingItems) next.push({ id: 'billing', title: 'Alerty budżetowe', source: 'GET /api/admin/billing/alerts', freshness, severity: billingItems.length > 0 ? 'warning' : 'info', href: '/admin/billing/budgets-alerts', detail: `${billingItems.length} aktywnych alertów` });
+      if (health) next.push({ id: 'health', title: 'Stan usług organizacji', source: 'GET /api/admin/health-panel/summary', freshness, severity: Number(health?.summary?.failed ?? health?.failed ?? 0) > 0 ? 'critical' : 'info', href: '/admin/health/service-status', detail: `${Number(health?.summary?.failed ?? health?.failed ?? 0)} testów nieudanych` });
+      const rank = { critical: 0, warning: 1, info: 2 };
+      setSignals(next.sort((a, b) => rank[a.severity] - rank[b.severity]));
+      setError(next.length === 0 ? 'Nie udało się odczytać żadnego źródła sygnałów.' : null);
+      setLoading(false);
+    })();
+    return () => { alive = false; };
+  }, []);
+
+  if (loading) return <div className="flex items-center gap-2 text-sm text-c-text-secondary"><Loader2 className="h-4 w-4 animate-spin" /> Ładowanie kolejki uwagi…</div>;
+  if (error) return <div role="alert" className="rounded-xl border border-c-danger bg-c-surface p-4 text-sm text-c-danger">{error}</div>;
+  return <div className="space-y-4"><div><h2 className="text-lg font-semibold text-c-text">Kolejka uwagi</h2><p className="mt-1 text-sm text-c-text-secondary">Sygnały z systemów kanonicznych; działania wykonuje się na ekranach źródłowych.</p></div><div className="grid gap-3 md:grid-cols-2">{signals.map((signal) => <a key={signal.id} href={signal.href} className="rounded-xl border border-c-border bg-c-surface p-4 hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 ring-[color:var(--c-focus)]"><div className="flex items-center justify-between gap-3"><h3 className="font-semibold text-c-text">{signal.title}</h3><span className={signal.severity === 'critical' ? 'text-xs font-medium text-c-danger' : 'text-xs font-medium text-c-text-secondary'}>{signal.severity}</span></div><p className="mt-2 text-sm text-c-text-secondary">{signal.detail}</p><dl className="mt-3 space-y-1 text-xs text-c-text-muted"><div><dt className="inline font-medium">Źródło: </dt><dd className="inline">{signal.source}</dd></div><div><dt className="inline font-medium">Świeżość: </dt><dd className="inline">{signal.freshness}</dd></div></dl><span className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-c-text">Otwórz ekran kanoniczny <ArrowRight className="h-4 w-4" /></span></a>)}</div></div>;
+};
 
 interface LinkTile {
   id: string;
@@ -483,6 +529,7 @@ const CommandCenterOverviewTab: React.FC<{
 export const AdminCommandCenterPanel: React.FC<AdminCommandCenterPanelProps> = ({
   onSectionChange,
   aggregationOnly = false,
+  screen,
 }) => {
   const { t } = useTranslation();
   const tabs: Array<{ id: TabId; label: string; icon: React.ElementType }> = useMemo(
@@ -548,6 +595,8 @@ export const AdminCommandCenterPanel: React.FC<AdminCommandCenterPanelProps> = (
     nextParams.set('tab', tab);
     setSearchParams(nextParams, { replace: true });
   };
+
+  if (screen === 'attention-queue') return <CommandCenterAttentionQueue />;
 
   return (
     <div className="space-y-6">
