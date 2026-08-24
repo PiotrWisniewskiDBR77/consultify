@@ -27,6 +27,7 @@ import { AdminAuditIntegrityPanel } from '../../components/Admin/AdminAuditInteg
 import { PersonasPanel } from '../../components/Admin/AI/PersonasPanel';
 import { AdminAiIncidentsPanel } from '../../components/Admin/AdminAiIncidentsPanel';
 import { AdminConfigurationVersionsPanel } from '../../components/Admin/AdminConfigurationVersionsPanel';
+import { AdminOrganizationDefaultsPanel } from '../../components/Admin/AdminOrganizationDefaultsPanel';
 import { AdminSeatsLicencesPanel } from '../../components/Admin/AdminSeatsLicencesPanel';
 import { AdminTeamsPanel } from '../../components/Admin/AdminTeamsPanel';
 import {
@@ -247,7 +248,7 @@ export function resolveAdminLocation(
   return { domain, screen: ADMIN_DEFAULTS[domain] };
 }
 
-export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initialTab }) => {
+export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initialTab, currentUser }) => {
   const [headerActionsTarget, setHeaderActionsTarget] = useState<HTMLDivElement | null>(null);
   const { t, i18n } = useTranslation();
   const { setCurrentView } = useAppStore();
@@ -340,6 +341,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
       (resolvedLocation.domain === 'command' && resolvedLocation.screen === 'compliance-posture') ||
       (resolvedLocation.domain === 'command' && resolvedLocation.screen === 'attention-queue') ||
       (resolvedLocation.domain === 'command' && resolvedLocation.screen === 'cost-capacity') ||
+      (resolvedLocation.domain === 'command' && resolvedLocation.screen === 'organization-defaults') ||
       // Fala 1 (Admin komplet 55): high-risk-changes and retention-export have
       // no dedicated sub-view — AdminAuditLogPanel (already the `events`
       // default) already renders the high-risk count and the
@@ -451,6 +453,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
         if (resolvedLocation.screen === 'integrity') return <AdminAuditIntegrityPanel />;
         return <AdminAuditLogPanel />;
       case 'command':
+        if (resolvedLocation.screen === 'organization-defaults') return <AdminOrganizationDefaultsPanel organizationId={currentUser.organizationId} />;
         return (
           <AdminCommandCenterPanel
             screen={resolvedLocation.screen === 'attention-queue' || resolvedLocation.screen === 'cost-capacity' ? resolvedLocation.screen : undefined}
@@ -478,6 +481,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
   }, [
     resolvedLocation.domain,
     resolvedLocation.screen,
+    currentUser.organizationId,
     handleLocationChange,
     i18n?.language,
     i18n?.resolvedLanguage,

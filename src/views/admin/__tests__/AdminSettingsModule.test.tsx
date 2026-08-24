@@ -41,6 +41,7 @@ vi.mock('../../../components/Admin/AdminAuditIntegrityPanel', () => ({ AdminAudi
 vi.mock('../../../components/Admin/AI/PersonasPanel', () => ({ PersonasPanel: () => <div data-testid="panel-personas">personas</div> }));
 vi.mock('../../../components/Admin/AdminAiIncidentsPanel', () => ({ AdminAiIncidentsPanel: () => <div data-testid="panel-ai-incidents">incidents</div> }));
 vi.mock('../../../components/Admin/AdminConfigurationVersionsPanel', () => ({ AdminConfigurationVersionsPanel: () => <div data-testid="panel-configuration-versions">versions</div> }));
+vi.mock('../../../components/Admin/AdminOrganizationDefaultsPanel', () => ({ AdminOrganizationDefaultsPanel: () => <div data-testid="panel-organization-defaults">defaults</div> }));
 vi.mock('../../../components/Admin/AdminBillingFinOpsPanel', () => ({
   AdminBillingFinOpsPanel: ({ screen }: { screen?: string }) => (
     <div data-testid="panel-billing" data-screen={screen}>
@@ -156,6 +157,7 @@ describe('AdminSettingsModule section routing', () => {
   it('wires ai/personas to the shared personas implementation', () => { renderAt('/admin/ai/personas'); expect(screen.getByTestId('panel-personas')).toBeInTheDocument(); });
   it('wires ai/ai-incidents', () => { renderAt('/admin/ai/ai-incidents'); expect(screen.getByTestId('panel-ai-incidents')).toBeInTheDocument(); });
   it('wires ai/configuration-versions', () => { renderAt('/admin/ai/configuration-versions'); expect(screen.getByTestId('panel-configuration-versions')).toBeInTheDocument(); });
+  it('wires command/organization-defaults', () => { renderAt('/admin/command/organization-defaults'); expect(screen.getByTestId('panel-organization-defaults')).toBeInTheDocument(); });
 
   it('resolves the iam alias to the security panel', () => {
     renderAt('/admin/iam');

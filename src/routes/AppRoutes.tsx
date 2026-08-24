@@ -3091,7 +3091,7 @@ export const AppRoutes: React.FC = () => {
                         element={
                           <RedirectWithTracking
                             from={ROUTES.SETTINGS.TENANT_DEFAULTS}
-                            to={ROUTES.ADMIN.COMMAND}
+                            to={`${ROUTES.ADMIN.COMMAND}/organization-defaults`}
                             superadminTo={ROUTES.SUPERADMIN.CUSTOMERS_ORGANIZATIONS}
                             reason="settings_admin_handoff"
                           />
