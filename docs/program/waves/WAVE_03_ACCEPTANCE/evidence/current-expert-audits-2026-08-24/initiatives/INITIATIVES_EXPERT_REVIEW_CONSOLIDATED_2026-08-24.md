@@ -27,9 +27,28 @@ The repository contains a substantial canonical Initiative and Execution foundat
 | `INI-C03` | `TECHNICAL_REALDB_RESTART_BROWSER_PASS / OWNER_ACCEPTANCE_PENDING` | Concurrent handoff acceptance produced exactly one stable Execution Case and relation; retry replayed the winner; cold pool retained identical IDs; foreign tenant returned null. At clean runtime SHA `68d59c4774`, Execution joined the canonical active Execution Case to the same Initiative ID and displayed `Automatyzacja planowania przezbrojeń` as `Executing`. Historical demo rows were absent. Fix checkpoint: `68d59c4774`; this is technical evidence, not owner acceptance. |
 | Dialog regression | `SOURCE_FIX_PASS` | The historical New-Initiative dialog focus restoration and label contract were restored; no claim is made for a complete current browser accessibility matrix. |
 
+### Exact-SHA integration addendum — 2026-08-24
+
+At clean SHA `14da3e6d07578ca035daf62f1b7731cbb53dcfdb`, client/server
+`4007/4006`, real local authentication and preserved 834-migration PostgreSQL
+database `consultify_w3_initiatives_owner_execution_20260824` proved:
+
+- one canonical Initiative ID linked to one active Execution Case;
+- the same visible initiative in Initiatives and Execution / Realizacje;
+- non-empty Work, Resources, Control and Reports projections;
+- SQL counts for tasks `2`, decisions `1`, allocations `2`, signal/intervention
+  `1/1` and report definition/run `1/1`;
+- six record-aware screenshots captured only after expected content appeared.
+
+Evidence index:
+`../../current-sha-14da3e6d-2026-08-24/initiatives-execution/EVIDENCE_INDEX.md`.
+This technically completes the current identity/readback/browser portion of
+`INI-C03` and materially advances `INI-C04`. It does not close the complete
+21-gate package, the remaining closure packages or owner acceptance.
+
 This checkpoint does not change the consolidated decision: `NO-GO_FOR_OWNER_ACCEPTANCE`.
-`INI-C04`, owner acceptance of `INI-C02`/`INI-C03`, current exact-SHA
-browser qualification and owner retest remain open.
+The remaining `INI-C04` gate work, owner acceptance of `INI-C02`/`INI-C03`
+and guided owner retest remain open.
 
 ## Consolidated closure packages
 
@@ -60,4 +79,7 @@ browser qualification and owner retest remain open.
 
 ## Claims deliberately not made
 
-`RUNTIME_NOT_VERIFIED`, `DB_APPLIED_STATE_NOT_VERIFIED`, `PERSISTENCE_NOT_VERIFIED`, `BROWSER_NOT_VERIFIED_FOR_CURRENT_HEAD`, `OWNER_ACCEPTED_NO`, `RELEASE_READY_NO`.
+For the exact integration path above, runtime, applied DB state, persistence and
+current-SHA desktop browser readback are verified. The deliberately unmade
+claims are now: `FULL_21_GATE_PASS_NO`, `COMPLETE_PRODUCT_CONTRACT_NO`,
+`OWNER_ACCEPTED_NO`, `RELEASE_READY_NO`.

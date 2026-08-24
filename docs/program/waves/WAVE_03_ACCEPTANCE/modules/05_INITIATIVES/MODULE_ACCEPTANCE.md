@@ -15,9 +15,19 @@ It supersedes optimistic gate wording, but does not delete historical technical
 evidence below. The source architecture is substantial; current acceptance is
 still `NO-GO`. Source checkpoint `b88f23e1494b45900b20e6488313d7702809f5eb`
 removed implicit DEV fixtures and made ordinary local Plan and Capacity select
-their canonical APIs. Create/save/refresh/reopen against a disposable DB, the
-current exact-SHA Initiative → Execution identity, and browser/readback
-qualification have not yet been proven.
+their canonical APIs. At the time of that expert review,
+create/save/refresh/reopen against a disposable DB, the exact-SHA Initiative →
+Execution identity, and current browser/readback qualification had not yet been
+proven.
+
+Current exact-SHA integration evidence at
+`../../evidence/current-sha-14da3e6d-2026-08-24/initiatives-execution/EVIDENCE_INDEX.md`
+now proves one persisted canonical Initiative through its active Execution Case
+and the non-empty Work, Resources, Control and Reports projections. The packet
+uses real local authentication, a preserved 834-migration PostgreSQL database
+and six record-aware screenshots. It is a technical integration pass only;
+the wider product contract, three-expert findings and owner acceptance remain
+open.
 
 Targeted exact-SHA remediation evidence at
 `../../evidence/exact-sha-76e119dd-2026-08-24/initiatives/EVIDENCE_INDEX.md`
@@ -52,8 +62,8 @@ invalid deep link, insufficient role, foreign tenant and duplicate command.
 | G12 | Owner register reconciled and confirmed | `IN_PROGRESS` | Latest owner IA supersedes the historical Candidates/Portfolio top-level tabs; no owner acceptance inferred. |
 | G13 | Solution and impact analysis | `PASS_FOR_CURRENT_P0` | Root causes for unclassified demo rows, duplicated IA and unopenable showcase cards identified; Plan/Capacity specifications remain implementation work. |
 | G14 | Remediation with finding-to-commit traceability | `PASS_TECHNICAL` | UI repair: `5c6d72066f`; truthful source: `b88f23e149`; scenario durability: `4e5fbbe0f6`; implicit Execution fixtures removed: `482d0d7363`; canonical Execution Case joined to the Initiative register by ID: `68d59c4774`; explicit sample-source isolation: `8acbb2203a`; premise-first creation: `98df1c6135`; Plan unscheduled visibility and readable Capacity workbench: `76e119dda7`; canonical Initiative→Execution link retained for `IN_EXECUTION`: `673363f63c`. Owner retest remains required. |
-| G15 | Integrator self-QA and impacted regression | `TECHNICAL_BROWSER_PASS_WITH_OPEN_FINDINGS` | Earlier Hub/error/modal `17/17 PASS`; Plan/Capacity domain+surface `9/9 PASS`; Plan/Capacity RealDB `3/3 PASS`; Initiative→Execution identity `2/2 PASS`; focused canonical-source contract `3/3 PASS`; root typecheck PASS with an 8 GB Node heap. Current focused Plan/Capacity remediation: `6/6 PASS`, touched-file ESLint PASS and diff-check PASS. Exact-SHA `76e119dda7` browser replay on client `:3987`, server `:3986`, retained 834-migration DB verified the canonical unscheduled Initiative, readable Capacity labels and the non-blank same-route Capacity workbench. Expert findings, full product-contract closure and owner acceptance remain open. |
-| G16 | Before/after owner retest packet | `NOT_STARTED` | — |
+| G15 | Integrator self-QA and impacted regression | `TECHNICAL_BROWSER_PASS_WITH_OPEN_FINDINGS` | Earlier Hub/error/modal `17/17 PASS`; Plan/Capacity domain+surface `9/9 PASS`; Plan/Capacity RealDB `3/3 PASS`; Initiative→Execution identity `2/2 PASS`; focused canonical-source contract `3/3 PASS`; root typecheck PASS with an 8 GB Node heap. Current focused Plan/Capacity remediation: `6/6 PASS`, touched-file ESLint PASS and diff-check PASS. Exact-SHA `76e119dda7` verified the targeted Plan/Capacity repairs. Exact-SHA `14da3e6d07578ca035daf62f1b7731cbb53dcfdb` on client/server `4007/4006` with a preserved 834-migration DB additionally verified the same canonical Initiative in Initiatives and Execution plus non-empty Work, Resources, Control and Reports; evidence index linked above. Expert findings, full product-contract closure and owner acceptance remain open. |
+| G16 | Before/after owner retest packet | `CURRENT_AFTER_PACKET_READY / BEFORE_HISTORY_PRESERVED` | Current six-screen exact-SHA packet linked above; historical owner screenshots remain preserved. This does not replace the guided owner retest or close individual findings. |
 | G17 | Owner retest decisions for every finding | `NOT_STARTED` | — |
 | G18 | Module accepted on exact SHA and checkpointed | `NOT_STARTED` | — |
 | G19 | Later-change regression obligations resolved | `NOT_STARTED` | — |
