@@ -186,6 +186,14 @@ router.post(
       return res.status(400).json({ error: 'Team name is required' });
     }
 
+    if (leadId) {
+      const lead = await dbGet<{ id: string }>(
+        'SELECT id FROM users WHERE id = ? AND organization_id = ?',
+        [leadId, orgId]
+      );
+      if (!lead) return res.status(404).json({ error: 'Team lead not found in organization' });
+    }
+
     const id = uuidv4();
     const now = new Date().toISOString();
 
@@ -245,6 +253,14 @@ router.put(
     }
 
     const { name, description, leadId } = req.body;
+
+    if (leadId) {
+      const lead = await dbGet<{ id: string }>(
+        'SELECT id FROM users WHERE id = ? AND organization_id = ?',
+        [leadId, orgId]
+      );
+      if (!lead) return res.status(404).json({ error: 'Team lead not found in organization' });
+    }
 
     const sql = `
         UPDATE teams SET

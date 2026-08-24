@@ -29,4 +29,14 @@ describe('team deletion tenant boundary', () => {
     expect(run.mock.calls[0][0]).toContain('DELETE FROM team_members');
     expect(run.mock.calls[1][0]).toContain('organization_id = ?');
   });
+
+  it('rejects a foreign lead before create or update mutations', async () => {
+    get.mockResolvedValue(undefined);
+    const created = await request(app()).post('/api/teams').send({ name: 'Team', leadId: 'foreign-user' });
+    const updated = await request(app()).put('/api/teams/team-1').send({ leadId: 'foreign-user' });
+    expect(created.status).toBe(404);
+    expect(updated.status).toBe(404);
+    expect(get).toHaveBeenCalledWith(expect.stringContaining('users WHERE id = ? AND organization_id = ?'), ['foreign-user', 'org-1']);
+    expect(run).not.toHaveBeenCalled();
+  });
 });
