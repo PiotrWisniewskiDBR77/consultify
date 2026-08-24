@@ -42,7 +42,7 @@ Start: 2026-08-24 (Europe/Warsaw) · Koniec: —
 | 22 | audit/export-history | 4/B | `c90847a2a3` | DONE | addytywne paragony CSV; non-blocking INSERT; tenantowa lista |
 | 23 | audit/integrity | 4/B | `19ffa63d6f` | DONE | realne stats; access-control claim; jawny brak hash chain |
 | 24 | ai/personas | 4/A | `daee8f0b59` | DONE | jedna współdzielona implementacja; real load/update/readback; data-privacy zachowane |
-| 25 | ai/ai-incidents | 4/B | — | NIE ZACZĘTO | |
+| 25 | ai/ai-incidents | 4/B | `14eeb254ab` | DONE | 2 realne źródła; wyliczany charakter jawny; pusty stan jako dobra wiadomość |
 | 26 | ai/configuration-versions | 2 | — | NIE ZACZĘTO | |
 | 27 | command/organization-defaults | DEC-13 | — | NIE ZACZĘTO | licznik docelowy: 56 |
 
@@ -167,6 +167,9 @@ Brak na starcie dyżuru.
 - `npx esbuild src/components/Admin/AI/FeaturesPrivacyTab.tsx --loader:.tsx=tsx --outfile=/dev/null` — PASS po wydzieleniu.
 - `npx esbuild src/components/Admin/AI/PersonasPanel.tsx --loader:.tsx=tsx --outfile=/dev/null` — PASS.
 - `npx vitest run src/components/Admin/__tests__/PersonasPanel.test.tsx src/views/admin/__tests__/AdminSettingsModule.test.tsx` — panel PASS po oczekiwaniu na readback; routing PASS.
+- `npx esbuild src/components/Admin/AdminAiIncidentsPanel.tsx --loader:.tsx=tsx --outfile=/dev/null` — PASS.
+- `bash scripts/check-list-canon.sh src/components/Admin/AdminAiIncidentsPanel.tsx` — PASS, 0 nowych naruszeń.
+- `npx vitest run src/components/Admin/__tests__/AdminAiIncidentsPanel.test.tsx src/views/admin/__tests__/AdminSettingsModule.test.tsx` — PASS, 2 pliki / 47 testów.
 
 ## Migracje
 
