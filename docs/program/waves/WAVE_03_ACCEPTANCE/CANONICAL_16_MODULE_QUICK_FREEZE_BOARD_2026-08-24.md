@@ -26,7 +26,7 @@ It never proves the current runtime, persistence, authorization or acceptance.
 
 | # | Module | Entry route | Selected component | Menu / canonical surfaces | Visual qualification | Known integration boundary | Owner verdict |
 |---:|---|---|---|---|---|---|---|
-| 01 | Organization | `/organization` | `OrganizationView` | Profile; Goals; Challenges; Strategy; Context governance | `USEFUL_FRAGMENT` | remove Wave 2 identity and legacy Megatrends/Synthesis/Knowledge Graph navigation | `PENDING` |
+| 01 | Organization | `/organization` | `OrganizationView` | Profile; Goals; Challenges; Strategic Synthesis; Sources & Knowledge; Readiness & Governance | `USEFUL_FRAGMENT` | [freeze card](modules/01_ORGANIZATION/CANONICAL_OWNER_FREEZE_CARD_2026-08-24.md): remove Megatrends/Admin duplication; keep Knowledge Graph secondary; confirm three owner IA decisions | `PENDING` |
 | 02 | Interview | `/interview` | `InterviewHub` | Inbox; Sessions; Assigned; Templates; Insights; Initiatives | `TARGET_REFERENCE_CANDIDATE` | direct route/sidebar reconciliation; authoring and governed V8 authority remain split | `PENDING` |
 | 03 | Tools | `/discovery-tools` | `DiscoveryToolsHub` | Library; Sessions; Insights; Reports; Initiatives | `USEFUL_FRAGMENT` | captured image still says Outputs; Dynamic SWOT is the canonical working MVP | `PENDING` |
 | 04 | Assessment | `/assessment/overview?tab=library` | `AssessmentHub` + `AssessmentSessionEditorView` | Library; Processes; Insights; Reports; Initiatives; full card Interview–Matrix–Report–Settings | `USEFUL_FRAGMENT` | freeze one DRD implementation; captured Library still says Outputs | `PENDING` |
@@ -77,4 +77,3 @@ The documentation freeze is complete only when:
 - one integrated deterministic local dataset and runtime can then be built
   without borrowing records from another tenant or treating isolated module
   fixtures as an integrated application.
-
