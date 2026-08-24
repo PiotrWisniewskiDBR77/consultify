@@ -124,6 +124,14 @@ Every statement is copied atomically into the relevant owner register and then
 into the binding manifest. A summary never replaces the original wording or
 screenshot.
 
+Individual observations are first captured in the append-only intake journal
+`canonical-16-module-owner-observations.json` with
+`scripts/dev/record-canonical-owner-observation.mjs`. The recorder stores the
+verbatim wording in a durable file, copies the supplied screenshot into the
+module evidence directory, records its SHA-256 and leaves the observation
+`CAPTURED_UNRECONCILED`. An observation has no verdict effect until Piotr gives
+an explicit module verdict.
+
 The controlled recorder is
 `scripts/dev/record-canonical-owner-verdict.mjs`. It refuses to record a verdict
 unless the verbatim quote and every evidence path already exist under this

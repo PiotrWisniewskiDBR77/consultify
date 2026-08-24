@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -15,6 +16,10 @@ const verdictsPath = path.join(
   repoRoot,
   'docs/program/waves/WAVE_03_ACCEPTANCE/canonical-16-module-owner-verdicts.json'
 );
+const observationsPath = path.join(
+  repoRoot,
+  'docs/program/waves/WAVE_03_ACCEPTANCE/canonical-16-module-owner-observations.json'
+);
 const acceptanceRoot = path.dirname(verdictsPath);
 
 function assertAcceptanceEvidence(relativePath, label) {
@@ -24,18 +29,20 @@ function assertAcceptanceEvidence(relativePath, label) {
     absolutePath.startsWith(`${acceptanceRoot}${path.sep}`),
     `${label}: path escapes WAVE_03_ACCEPTANCE`
   );
-  return readFile(absolutePath, 'utf8');
+  return readFile(absolutePath);
 }
 
-const [manifestRaw, verdictsRaw, routes, routeConfig, menu] = await Promise.all([
+const [manifestRaw, verdictsRaw, observationsRaw, routes, routeConfig, menu] = await Promise.all([
   readFile(manifestPath, 'utf8'),
   readFile(verdictsPath, 'utf8'),
+  readFile(observationsPath, 'utf8'),
   readFile(routesPath, 'utf8'),
   readFile(routeConfigPath, 'utf8'),
   readFile(menuPath, 'utf8'),
 ]);
 const manifest = JSON.parse(manifestRaw);
 const verdicts = JSON.parse(verdictsRaw);
+const observations = JSON.parse(observationsRaw);
 
 assert.equal(manifest.schemaVersion, 1, 'Unsupported binding manifest version');
 assert.equal(manifest.modules.length, 16, 'The canonical denominator must remain exactly 16');
@@ -70,6 +77,28 @@ for (const record of verdicts.records) {
   }
 }
 await Promise.all(evidenceReads);
+
+assert.equal(
+  new Set(observations.records.map((record) => record.observationId)).size,
+  observations.records.length,
+  'observation IDs must be unique'
+);
+for (const record of observations.records) {
+  assert.ok(manifest.modules.some((module) => module.id === record.module), `${record.module}: unknown observation module`);
+  assert.equal(record.disposition, 'CAPTURED_UNRECONCILED', `${record.observationId}: unexpected disposition`);
+  assert.equal(record.ownerVerdictEffect, 'NONE_UNTIL_EXPLICIT_VERDICT');
+  const quote = await assertAcceptanceEvidence(record.quoteFile, `${record.observationId}: quote`);
+  assert.equal(
+    crypto.createHash('sha256').update(quote).digest('hex'),
+    record.quoteSha256,
+    `${record.observationId}: quote hash drifted`
+  );
+  for (const item of record.evidence || []) {
+    const bytes = await assertAcceptanceEvidence(item.path, `${record.observationId}: screenshot`);
+    assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'), item.sha256);
+    assert.equal(Buffer.byteLength(bytes), item.bytes);
+  }
+}
 const nonPending = manifest.modules.filter((module) => module.ownerDecision !== 'PENDING');
 assert.equal(nonPending.length, verdicts.records.length, 'binding and verdict denominators disagree');
 if (nonPending.length < 16) {
@@ -135,6 +164,7 @@ console.log(
       apiQualifiedGapModules: gaps.filter((module) => module.dataStatus?.startsWith('QUALIFIED_')).length,
       ownerFreeze: manifest.status,
       ownerVerdictsCaptured: verdicts.records.length,
+      ownerObservationsCaptured: observations.records.length,
     },
     null,
     2
