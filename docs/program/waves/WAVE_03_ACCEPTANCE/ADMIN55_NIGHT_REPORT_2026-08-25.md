@@ -36,7 +36,7 @@ Start: 2026-08-24 (Europe/Warsaw) · Koniec: —
 | 16 | security/sessions | 3 | `2960b3680f` | DONE | schema-aware tenant-safe lista; revoke/delete z 404 cross-tenant i readback FE |
 | 17 | security/break-glass | 3 | `8eb2c8252a` | DONE | addytywny org-scope; 1h; policy approvers; typed confirm; 400/404 cross-tenant |
 | 18 | team/guests-external | 4/A | `7453ad85a6` | DONE | faktyczny stan GUEST+zaproszenia; revoke 404 tenant; brak placebo switcha |
-| 19 | team/access-reviews | 4/B | — | NIE ZACZĘTO | |
+| 19 | team/access-reviews | 4/B | `b266c76026` | DONE | 2 realne odczyty; privileged accounts; termin; brak fikcyjnej historii/edycji |
 | 20 | team/roles-permissions | 2 | — | NIE ZACZĘTO | |
 | 21 | audit/legal-hold | 4/B | — | NIE ZACZĘTO | |
 | 22 | audit/export-history | 4/B | — | NIE ZACZĘTO | |
@@ -145,6 +145,9 @@ Brak na starcie dyżuru.
 - `npx esbuild src/components/Admin/AdminGuestsPanel.tsx --loader:.tsx=tsx --outfile=/dev/null` — PASS.
 - `bash scripts/check-list-canon.sh src/components/Admin/AdminGuestsPanel.tsx` — PASS, 0 nowych naruszeń.
 - `npx vitest run server/src/routes/__tests__/guests.routes.test.ts src/components/Admin/__tests__/AdminGuestsPanel.test.tsx src/views/admin/__tests__/AdminSettingsModule.test.tsx` — route/routing PASS; panel PASS po korekcie asercji duplikatu danych tabeli.
+- `npx esbuild src/components/Admin/AdminAccessReviewsPanel.tsx --loader:.tsx=tsx --outfile=/dev/null` — PASS.
+- `bash scripts/check-list-canon.sh src/components/Admin/AdminAccessReviewsPanel.tsx` — PASS, 0 nowych naruszeń.
+- `npx vitest run src/components/Admin/__tests__/AdminAccessReviewsPanel.test.tsx src/views/admin/__tests__/AdminSettingsModule.test.tsx` — PASS, 2 pliki / 40 testów.
 
 ## Migracje
 
