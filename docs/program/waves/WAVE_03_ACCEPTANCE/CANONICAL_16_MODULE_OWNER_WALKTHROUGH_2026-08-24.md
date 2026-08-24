@@ -7,6 +7,10 @@ all sixteen modules. It does not replace any owner register, screenshot index,
 specification or acceptance file. Its only output is one architecture decision
 per module: `ACCEPT`, `CHANGE: ...`, or `BLOCKED: ...`.
 
+The compact review order and current visual qualification are maintained in
+`CANONICAL_16_MODULE_QUICK_FREEZE_BOARD_2026-08-24.md`. This walkthrough remains
+the detailed contract; the quick-freeze board is the owner-facing index.
+
 ## Safety and identity
 
 - integration checkout: `/Users/piotrwisniewski/Developer/Consultify-final-mvp-integration-20260823`
