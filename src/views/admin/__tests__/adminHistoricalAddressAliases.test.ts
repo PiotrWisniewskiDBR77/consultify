@@ -40,7 +40,9 @@ describe('Historical Admin address aliases resolve to the correct canonical doma
     [ROUTES.ADMIN.AI, 'ai'], // /admin/ai
     [ROUTES.ADMIN.INTEGRATIONS, 'security'], // /admin/integrations — was also ADMIN_WORKSPACE's real target
     [ROUTES.ADMIN.AUDIT, 'audit'], // /admin/audit
-    [ROUTES.ADMIN.OPERATIONS, 'team'], // /admin/operations — was also ORGANIZATION, WORKSPACE
+    // DEC-2026-08-24-10 (werdykt nadzorcy): operations to nie-domena; alias na Command Center,
+    // nie cichy fallback na team. Regres: przekierowania lądowały na Team & Access.
+    [ROUTES.ADMIN.OPERATIONS, 'command'], // /admin/operations — was also ORGANIZATION, WORKSPACE
     [ROUTES.ADMIN.COMPLIANCE, 'audit'], // /admin/compliance
   ] as const)('%s resolves to the %s domain', (path, expectedDomain) => {
     expect(domainFor(path)).toBe(expectedDomain);

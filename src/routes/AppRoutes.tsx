@@ -3060,7 +3060,7 @@ export const AppRoutes: React.FC = () => {
                         element={
                           <RedirectWithTracking
                             from={ROUTES.SETTINGS.ORGANIZATION}
-                            to={ROUTES.ADMIN.OPERATIONS}
+                            to={ROUTES.ADMIN.COMMAND}
                             reason="settings_admin_handoff"
                           />
                         }
@@ -3070,7 +3070,7 @@ export const AppRoutes: React.FC = () => {
                         element={
                           <RedirectWithTracking
                             from={ROUTES.SETTINGS.TENANT_DEFAULTS}
-                            to={ROUTES.ADMIN.OPERATIONS}
+                            to={ROUTES.ADMIN.COMMAND}
                             reason="settings_admin_handoff"
                           />
                         }
@@ -3143,7 +3143,7 @@ export const AppRoutes: React.FC = () => {
                         element={
                           <RedirectWithTracking
                             from={ROUTES.ORGANIZATION.DOMAINS}
-                            to={ROUTES.ADMIN.OPERATIONS}
+                            to={ROUTES.ADMIN.SECURITY_DOMAINS}
                             reason="organization_admin_handoff"
                           />
                         }
@@ -3153,7 +3153,7 @@ export const AppRoutes: React.FC = () => {
                         element={
                           <RedirectWithTracking
                             from={ROUTES.ORGANIZATION.BRANDING}
-                            to={ROUTES.ADMIN.OPERATIONS}
+                            to={ROUTES.ADMIN.COMMAND}
                             reason="organization_admin_handoff"
                           />
                         }

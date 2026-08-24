@@ -20,8 +20,8 @@ describe('Organization administrative route redirects (DEC-...-10)', () => {
     ['members/*', 'ROUTES.ORGANIZATION.MEMBERS', 'ROUTES.ADMIN.PEOPLE'],
     ['billing/*', 'ROUTES.ORGANIZATION.BILLING', 'ROUTES.ADMIN.BILLING'],
     ['limits/*', 'ROUTES.ORGANIZATION.LIMITS', 'ROUTES.ADMIN.BILLING'],
-    ['domains/*', 'ROUTES.ORGANIZATION.DOMAINS', 'ROUTES.ADMIN.OPERATIONS'],
-    ['branding/*', 'ROUTES.ORGANIZATION.BRANDING', 'ROUTES.ADMIN.OPERATIONS'],
+    ['domains/*', 'ROUTES.ORGANIZATION.DOMAINS', 'ROUTES.ADMIN.SECURITY_DOMAINS'],
+    ['branding/*', 'ROUTES.ORGANIZATION.BRANDING', 'ROUTES.ADMIN.COMMAND'],
   ])('redirects organization %s to the canonical Admin screen', (path, from, to) => {
     const routeIndex = organizationBlock.indexOf(`path="${path}"`);
     expect(routeIndex).toBeGreaterThan(-1);
@@ -40,6 +40,7 @@ describe('Organization administrative route redirects (DEC-...-10)', () => {
 
     expect(ROUTES.ADMIN.PEOPLE).toBe('/admin/people');
     expect(ROUTES.ADMIN.BILLING).toBe('/admin/billing');
-    expect(ROUTES.ADMIN.OPERATIONS).toBe('/admin/operations');
+    expect(ROUTES.ADMIN.COMMAND).toBe('/admin/command');
+    expect(ROUTES.ADMIN.SECURITY_DOMAINS).toBe('/admin/security/domains');
   });
 });

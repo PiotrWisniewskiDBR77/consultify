@@ -204,7 +204,12 @@ export const ROUTES = {
     AI: '/admin/ai',
     INTEGRATIONS: '/admin/integrations',
     AUDIT: '/admin/audit',
+    // DEPRECATED nazwa: /admin/operations nie jest domeną spec-u; URL rozwiązuje
+    // się aliasem `operations` -> Command Center. Nowe cele używaj COMMAND.
     OPERATIONS: '/admin/operations',
+    COMMAND: '/admin/command',
+    HEALTH: '/admin/health',
+    SECURITY_DOMAINS: '/admin/security/domains',
     COMPLIANCE: '/admin/compliance',
   },
 

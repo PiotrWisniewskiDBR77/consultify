@@ -128,6 +128,7 @@ const SECTION_ALIASES: Record<string, AdminSettingsSection> = {
   'audit-log': 'audit',
   compliance: 'audit',
   command: 'command',
+  operations: 'command',
   'command-center': 'command',
   'trust-control': 'command',
   posture: 'command',
