@@ -75,6 +75,99 @@ All acceptance paths above are relative to `docs/program/waves/WAVE_03_ACCEPTANC
 4. **Dirty main contains owner-authored evidence.** Its 22 entries are not disposable dirt. They are an overlay requiring a manifest and destination decision.
 5. **Screenshots are acceptance evidence, not route authority.** A visually better historical image does not by itself prove the correct backend, persistence, tenant, permissions or source lineage.
 
+## Preserved-source reconciliation ledger
+
+This ledger prevents a whole-branch merge from replacing newer candidate work. `EXACT_IN_CANDIDATE` means the preserved source blob is already byte-identical at the same path. `SEMANTIC_REVIEW_REQUIRED` means only a focused diff against the current contract is permitted. `PRESERVE_AS_DOCUMENTATION` means copy/merge decisions concern evidence and specifications, not product wiring.
+
+### Finance preservation `e7574b340e`
+
+Most of the Finance preservation work is already represented exactly in the candidate. The branch is therefore not a missing implementation and must not be cherry-picked wholesale.
+
+`EXACT_IN_CANDIDATE` includes:
+
+- canonical artifact version and KPI compute services;
+- analysis, baseline, prediction and statement-pack workspaces;
+- Finance owner-review feature-flag hooks and route synchronization;
+- protected-route and deep-link coverage;
+- Finance API types and the existing owner-review runner;
+- relevant component and unit tests already present with identical blobs.
+
+`SEMANTIC_REVIEW_REQUIRED` is limited to:
+
+- `docs/program/waves/WAVE_03_ACCEPTANCE/modules/10_FINANCE/MODULE_ACCEPTANCE.md`;
+- `public/locales/en/translation.json` and `public/locales/pl/translation.json`;
+- `scripts/dev/start-wave3-owner-runtime.mjs`;
+- `server/scripts/seed-wave3-finance-owner-review.ts`;
+- Finance cross-tenant and statement-owner PostgreSQL tests;
+- the Finance artifacts server route;
+- `src/components/Economics/FinanceHub.tsx`;
+- `src/components/Economics/financeTypes.ts`;
+- `src/components/Economics/hooks/useFinanceData.ts` and its focused test;
+- `src/components/shared/ModuleHub/ModuleNavBar.tsx`;
+- `src/services/api/financeV2.api.ts`;
+- `tests/unit/scripts/wave3OwnerRuntimeGuard.test.ts`.
+
+Control decision: review these paths one by one against owner requirements and current route/data contracts. No product file is selected during the cleanup phase.
+
+### Chat-to-Tools preservation `7c3b559ca8`
+
+Most Chat, Interview, My Work, shared preview/N-mode, API, service and test product blobs from this preservation commit are already exact in the candidate. This source is not a safe merge unit because it also contains generated cache trees.
+
+`EXACT_IN_CANDIDATE` includes the dominant product surface:
+
+- Interview hub, workspace, templates, assignment modal and owner tests;
+- most Chat components and focused tests;
+- nearly all My Work and Notebook product code and tests;
+- shared `ModuleMenu3`, `PreviewActionBar` and N-mode cards;
+- relevant V8 API clients, conversation store and vault policy.
+
+`SEMANTIC_REVIEW_REQUIRED` is limited to:
+
+- Polish translations and the Chat project-context migration;
+- the My Work Notebook route test;
+- `CanvasViewModeControl.tsx` and its tests;
+- `chatHistoryVisibility.ts`;
+- `DiscoveryToolsHub.tsx` and `ToolDocumentView.tsx`;
+- Dynamic SWOT build/input phases;
+- selected Notebook block-menu, export and toolbar tests;
+- Activity Log canvas, Module Menu 3 selection and audit transaction tests;
+- selected Chat governance tests.
+
+`PRESERVE_AS_DOCUMENTATION` because these files are absent from the candidate:
+
+- `CHAT_TO_TOOLS_BACKLOG_BELOW_9_2026-08-23.md`;
+- `CHAT_TO_TOOLS_CONSULTING_ATOMIC_REVIEW_2026-08-23.md`;
+- `CHAT_TO_TOOLS_FINAL_THREE_PERSON_PANEL_2026-08-23.md`;
+- `CHAT_TO_TOOLS_INTEGRATION_HANDOFF_2026-08-23.md`;
+- `CHAT_TO_TOOLS_UX_ATOMIC_REVIEW_2026-08-23.md`.
+
+`PROHIBITED_JUNK` and never a recovery source:
+
+- `false/_cacache/**`;
+- `false/_npx/**`;
+- `false/_update-notifier-last-checked`.
+
+Control decision: preserve the five missing documents through an explicit documentation-only change after checking their destinations; review only the named divergent paths; exclude the `false/**` cache material permanently from any selection.
+
+### Dirty owner worktree overlay
+
+The dirty `/Users/piotrwisniewski/Developer/Consultify` worktree is an evidence and owner-intent source, not a cleanup target. Its current 22-entry overlay includes:
+
+- modified Railway ignore configuration;
+- modified Initiatives and Results module acceptance registers;
+- modified Assessment workshop/register material;
+- modified cross-module row-menu audit material;
+- modified release-verifier script and test;
+- modified `src/components/Initiatives/InitiativesHub.tsx`;
+- untracked live-runtime identity mapping;
+- untracked Initiatives implementation contract and expert syntheses;
+- untracked Results final implementation specification;
+- untracked Finance recovery contract;
+- untracked Assessment owner/expert documentation and evidence directory;
+- untracked recovery scripts and acceptance-gate report scripts/tests.
+
+Control decision: retain the overlay exactly where it is. Before any reuse, each entry receives a destination, requirement linkage and classification of `DOCUMENTATION_ONLY`, `TEST_OR_TOOLING`, `PRODUCT_WIP`, `CONFIGURATION_RISK` or `OWNER_DECISION_REQUIRED`. No reset, stash, clean, bulk copy or merge is authorized.
+
 ## Required connection record for every module
 
 Each module receives one row per surface with these fields before coding resumes:
