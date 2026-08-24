@@ -124,6 +124,7 @@ import {
 } from './InitiativePreviewV3';
 import { initiativeLoadErrorCode, isInitiativesNetworkError } from './initiativeLoadError';
 import {
+  canonicalInitiativeMatchesRegisterFilters,
   INITIATIVE_LIFECYCLE_LABELS,
   INITIATIVE_LIFECYCLE_PRESETS,
   type InitiativeLifecyclePreset,
@@ -496,20 +497,6 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       try {
         setLoadError(null);
         setLoadErrorCode(null);
-        const params = new URLSearchParams();
-        if (currentProjectId) params.append('projectId', currentProjectId);
-        // Scope-based filtering: 'active' sends only core statuses, 'all' sends everything.
-        if (scope === 'active' && !activeStatusFilter) {
-          params.append('statuses', ACTIVE_STATUSES.join(','));
-        } else if (
-          activeStatusFilter &&
-          ALLOWED_STATUSES.includes(activeStatusFilter as InitiativeStatus)
-        ) {
-          params.append('status', activeStatusFilter);
-        }
-        if (filters.priority?.length) filters.priority.forEach((p) => params.append('priority', p));
-        if (searchQuery) params.append('search', searchQuery);
-
         const canonical = await listRegisteredInitiatives();
         const canonicalRows: PortfolioInitiative[] = canonical.initiatives.map((record) =>
           toCanonicalInitiativeRegisterItem(record, {
@@ -520,6 +507,14 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         const mergedRows = mergeShowcaseInitiatives(canonicalRows);
         const response: { initiatives: PortfolioInitiative[] } = {
           initiatives: mergedRows.filter((initiative) => {
+            if (
+              !canonicalInitiativeMatchesRegisterFilters(initiative, {
+                projectId: currentProjectId,
+                priorities: filters.priority,
+              })
+            ) {
+              return false;
+            }
             if (
               scope === 'active' &&
               [

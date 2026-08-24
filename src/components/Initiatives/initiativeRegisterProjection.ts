@@ -87,6 +87,29 @@ export const lifecycleMatchesPreset = (
   );
 };
 
+export interface CanonicalInitiativeRegisterFilters {
+  projectId?: string | null;
+  priorities?: string[];
+}
+
+/** Keep the visible register and its counters inside the selected canonical scope. */
+export const canonicalInitiativeMatchesRegisterFilters = (
+  initiative: Pick<PortfolioInitiative, 'projectId' | 'priority'>,
+  filters: CanonicalInitiativeRegisterFilters
+) => {
+  const requestedProjectId = String(filters.projectId || '').trim();
+  if (requestedProjectId && String(initiative.projectId || '') !== requestedProjectId) return false;
+
+  const requestedPriorities = (filters.priorities || [])
+    .map((priority) => String(priority || '').trim().toUpperCase())
+    .filter(Boolean);
+  if (requestedPriorities.length > 0) {
+    const initiativePriority = String(initiative.priority || '').trim().toUpperCase();
+    if (!initiativePriority || !requestedPriorities.includes(initiativePriority)) return false;
+  }
+  return true;
+};
+
 export const projectCanonicalInitiativeRegisterRow = (record: RegisteredInitiativeReadModel) => {
   const lifecycle = record.initiative.lifecycleState.toUpperCase();
   const nextStep = nextStepForLifecycle(lifecycle);
