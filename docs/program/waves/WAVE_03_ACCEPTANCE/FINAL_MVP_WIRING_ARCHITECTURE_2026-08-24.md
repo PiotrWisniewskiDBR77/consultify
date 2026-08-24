@@ -122,6 +122,42 @@ The integration seed is composed from owned seed builders or exported determinis
 | 4 | Build and validate the cross-module integration manifest | Schema validation, deterministic counts/IDs/edges and fresh-seed replay |
 | 5 | Start one exact candidate integration runtime and perform the full replay | Runtime ledger plus 16 module evidence manifests |
 
+## Route/component audit ledger
+
+This ledger is the implementation queue, not an acceptance claim. `CONNECTED`
+requires the complete connection chain above; `SOURCE_MAPPED` means only that
+the canonical source entry is known. Redirect-only historical aliases are
+allowed when they preserve query/deep-link identity and land on the canonical
+surface. Rendering a historical component after an API error is forbidden.
+
+| Module | Route entry/component | API or adapter boundary | Current architecture status |
+|---|---|---|---|
+| Organization | `/organization` → `OrganizationView` | organization/profile APIs | `SOURCE_MAPPED`; fixture replay pending |
+| Interview | `/interview` → `InterviewHub`; public respondent isolated | interview APIs | `SOURCE_MAPPED`; authorization paths remain separate |
+| Tools | `/discovery-tools` → `DiscoveryToolsHub` | discovery-tools APIs | `SOURCE_MAPPED`; existing evidence retained |
+| Assessment | `/assessment/*` → `AssessmentHub` / `AssessmentSessionEditorView` | assessment/method-core APIs | `SOURCE_MAPPED`; duplicate/debug surface audit pending |
+| Initiatives | `/initiatives` → `InitiativesHub` | initiatives APIs | `SOURCE_MAPPED`; owner requirements not yet implemented |
+| Execution | `/execution[/case]` → `ExecutionHub` | V8 execution-control adapter | `SOURCE_MAPPED`; error-driven legacy fallback audit open |
+| My Work | `/my-work` → canonical My Work entry | My Work/Agent adapters | `SOURCE_MAPPED`; exact entry assertion pending |
+| Meetings | `/meeting` → `MeetingHub` | meeting APIs | `SOURCE_MAPPED`; fixture replay pending |
+| Results | `/results` → redirect → `/results/kpi`; KPI/OKR/ROI registry pages | `/api/vnext/results/*` through `V8ResultsApi` | `API_CONNECTED`: fresh DB + authenticated list reads; UI login/render and cold readback pending |
+| Finance | `/finance` and tool routes → `FinanceHub`/Finance workspaces | `V8FinanceApi` | `SOURCE_MAPPED`; owner-review currently suppresses fallback, canonical-by-default cutover pending |
+| Materials | `/document-studio`, `/presentations`, `/excele` | document/presentation/workbook APIs | `BLOCKED_DATA`: retained fixture marker mismatch; reconstruct before use |
+| Audits | `/audit-programs` → `AuditsMethodHub` | `/api/audits/*` | `SOURCE_MAPPED`; fixture replay pending |
+| Chat | `/chat` → `UnifiedChatPanel` | chat APIs | `SOURCE_MAPPED`; existing evidence retained |
+| Admin | `/admin` plus isolated `/superadmin/system` | tenant/platform admin APIs | `SOURCE_MAPPED`; control-plane separation required |
+| Settings | `/settings` → settings entry | settings APIs | `SOURCE_MAPPED`; exact entry assertion pending |
+| Partner | `/partner` family → partner views | partner APIs | `SOURCE_MAPPED`; operational landing decision open |
+
+### Active data attachment ledger
+
+| Module | Isolated DB/runtime | Fixture/API result | Remaining before `CONNECTED` |
+|---|---|---|---|
+| Results | fresh PostgreSQL 17 DB; backend `4417`, frontend `4418` | guarded `W3-RESULTS-OWNER-v1`; KPI `1`, OKR `1`, ROI `1` authenticated API readback | authenticated browser table/preview/card, safe mutation if permitted, warm and cold readback |
+| Materials | none adopted | retained marker mismatch | fresh migration + guarded seed + marker verification |
+| Finance | not yet reconstructed | no current-candidate claim | fresh migration + guarded seed + API/UI chain |
+| Assessment | not yet reconstructed | no current-candidate claim | fresh migration + guarded seed + API/UI chain |
+
 ## Current truth
 
 - All 16 module registers and all 21 gate rows per module exist.

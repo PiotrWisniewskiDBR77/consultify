@@ -2677,10 +2677,9 @@ export const AppRoutes: React.FC = () => {
             </BetaGate>
           }
         />
-        {/* RN-G2 (2026-08-10) — Results Next registries: KPI / ROI / OKR.
-            EXACT-path routes new alongside the legacy `/results` route above
-            (React Router matches exact paths first, so no collision). Same
-            entitlement chain the legacy hub uses (BetaGate MODULE_BENEFITS +
+        {/* Results canonical registries: KPI / ROI / OKR. The `/results` route
+            above is an entry redirect to KPI, never a legacy product switch.
+            Exact registry routes share the same entitlement chain (BetaGate MODULE_BENEFITS +
             ProductionModuleGate "Results") — reused, not reinvented, per
             RN_G2_UI_SCOPE.md §E. Each page is internally gated OFF by its own
             resultsVNextFeatureFlags.ts flag until its domain vertical ships
