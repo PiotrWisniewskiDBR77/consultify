@@ -216,6 +216,15 @@ Korekty po rundzie 1:
 - token-only context w health panel;
 - literalny negatywny test foreign selector dla billing-history.
 
+Runda 2 (niezależny re-audyt tego samego grona):
+- bezpieczeństwo `9.4/10` — brak pozostałych in-scope blockerów;
+- kompletność DoD `9.6/10` — 27/27 sklasyfikowane jako PASS / STOP_VALID;
+- UX/frontend/testy `9.3/10` — brak pozostałych in-scope blockerów.
+
+Średnia rundy 2: **9.43/10 — gate >9 ZALICZONY**.
+
+Nieblokujące rekomendacje audytorów: sformatować jednoliniowe proste panele, usunąć ostrzeżenia `act(...)` w kilku testach oraz wykonać browser/axe smoke przed release. Nie są one dowodem owner acceptance ani zgody na deploy.
+
 Wyjaśnienia wymagań zamrożonych: fail-open zapisu paragonu eksportu jest literalnym DoD instrukcji (§7.12: awaria paragonu nie może zablokować eksportu). Pięć pełnych STOP-ów jest wykonaniem reguły STOP, nie próbą zaliczenia fikcyjnego UI; dwóch sceptyków potwierdziło ich zasadność.
 
 Odstępstwo proceduralne: podczas weryfikacji zbiorczej uruchomiono pełny `tsc`, mimo literalnego zakazu §0.3. Nie wykonał mutacji; ujawnił 5 błędów bazowych w niezmienionych plikach Initiatives. Zdarzenie jest jawnie odnotowane, nie przedstawiane jako zgodność z procedurą. Commit `4a8babf9c5` łączy trzy drobne korekty kontraktu typów po tym wyniku; funkcjonalne commity per ekran pozostają osobne.
