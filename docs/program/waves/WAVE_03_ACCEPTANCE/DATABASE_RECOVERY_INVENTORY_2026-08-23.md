@@ -1,6 +1,72 @@
 # Database recovery inventory — 2026-08-23
 
-Status: `SOURCE_DUMPS_PRESERVED / PROD_AND_DEMO_RESTORE_PASS / FIXTURE_CATALOG_DRIFT`
+Status: `SOURCE_DUMPS_PRESERVED / PROD_AND_DEMO_RESTORE_PASS / LIVE_MAPPING_NOT_PROVEN`
+
+## 2026-08-24 canonical environment and database control matrix
+
+This is the single control matrix for environment/database reconciliation. It
+does not replace the hash-addressed dump and fixture evidence below. No live
+database was queried or mutated while adding this checkpoint.
+
+### Consultify Railway assets discovered read-only
+
+| Environment | Environment ID | App service | Database candidates | Proven application-to-database binding | Authorization |
+| --- | --- | --- | --- | --- | --- |
+| `dev` | `379582b3-63f2-4645-803e-35725104920d` | `consultify` `8f65b820-3d55-4dd9-8076-929d01cc4157` | `Postgres` `842e4cf0-21af-44e1-9d91-4198b0c18735`; `pgvector` `de81443b-4678-4780-b4d1-742ab36ecd83`; rehearsal `fc377fcb-2f98-4fb7-b772-932012fd7dd3` | `NOT_PROVEN` | `READ_ONLY_DISCOVERY_ONLY` |
+| `staging` | `487a33ba-84b0-4e2e-b18b-7f981ae5334d` | same Railway service identity | same project-level database candidates | `NOT_PROVEN` | `READ_ONLY_DISCOVERY_ONLY` |
+| `demo` | `a257fce9-33f0-4e10-8e7c-a9cec472f377` | same Railway service identity | same project-level database candidates | `NOT_PROVEN` | `READ_ONLY_DISCOVERY_ONLY` |
+| `production` | `39f2f768-2449-48b6-b05e-031cad063cdc` | same Railway service identity | same project-level database candidates | `NOT_PROVEN` | `NOT_AUTHORIZED` |
+
+Project-level discovery also found `Redis`
+`afcae226-f39e-4280-b624-ba7f720b8d65`. Discovery of a service in the project
+does not prove that every environment contains or uses that service, nor which
+connection variables are active.
+
+The rehearsal service
+`Postgres-Rehearsal-20260820-71316e`
+(`fc377fcb-2f98-4fb7-b772-932012fd7dd3`) remains a separate asset. Its name is
+not proof that it is current, complete, canonical or safe to promote.
+
+### Pitchdeck assets isolated from Consultify
+
+| Workspace / project / environment | Service | Observed state | Data identity | Disposition |
+| --- | --- | --- | --- | --- |
+| `DBR77 / Pitchdeck / production` | `Pitchdeck` `bf3f7b24-79e8-4f62-8016-efbc2e6dfd3b` | running at read-only inspection | application data binding `NOT_INSPECTED` | `DO_NOT_TOUCH` |
+| same | `Postgres` `7bba7edd-5e54-4aae-b1f1-02b7ffb2a332` | running; ready volume; approx. `1135.58 MB` | `UNKNOWN / CONTENT_NOT_INSPECTED` | `PRESERVE_SEPARATELY / DO_NOT_TOUCH` |
+| same | `Postgres-S_aE` `dece45d4-a648-457e-8b5f-cf1ecc365dd2` | running; ready volume; approx. `1106.39 MB` | `UNKNOWN / CONTENT_NOT_INSPECTED` | `PRESERVE_SEPARATELY / DO_NOT_TOUCH` |
+
+These Pitchdeck assets appear here because the canonical Consultify checkout
+currently inherits the parent-directory Railway CLI mapping to this production
+project. They are not classified as Consultify assets. No deletion,
+deduplication, migration, backup, restore or query is authorized.
+
+### Evidence classes and remaining proof
+
+| Asset class | Current evidence | What is still required before use |
+| --- | --- | --- |
+| five incident dump archives | exact local path inventory, byte size, timestamp, SHA-256 and archive TOC; qualified disposable restores for production and demo | independent second copy; remaining isolated restores; ledger reconciliation against the frozen candidate |
+| reconstructed Wave 3 owner fixtures | guarded seed/marker/readback evidence recorded below | revalidation against the final integrated exact SHA; browser/owner acceptance where required |
+| live Consultify Railway databases | service identities discovered only | explicit environment binding, server/DB identity, tenant boundary, backup proof, schema/ledger comparison and cold application readback |
+| live Pitchdeck databases | two distinct service/volume identities discovered only | separate owner-authorized inventory outside the Consultify release path |
+
+No `DATABASE_URL`, password, token, secret or live database content was read in
+this checkpoint. Until the remaining proof exists, a live service being
+`SUCCESS` or a volume being `READY` is not evidence of correct application
+binding or recoverability.
+
+### Fail-closed operating gate
+
+1. Never run Railway from a checkout that resolves by parent-directory
+   fallback.
+2. Before any future database read, prove the exact workspace, project,
+   environment, service, server, database and tenant target without exposing
+   credentials.
+3. Preserve Pitchdeck, Consultify production, rehearsal, incident dumps and
+   local reconstructed fixtures as separate assets.
+4. Do not infer canonical status from names, service health, database size or
+   successful connection alone.
+5. Production remains unchanged until a separate explicit release
+   authorization.
 
 ## Safety boundary
 
