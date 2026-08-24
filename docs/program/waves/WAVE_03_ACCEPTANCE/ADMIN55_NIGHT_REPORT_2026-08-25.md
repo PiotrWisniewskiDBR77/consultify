@@ -27,7 +27,7 @@ Start: 2026-08-24 (Europe/Warsaw) · Koniec: —
 | 7 | command/attention-queue | 2 | `358d4a2307` | DONE | 4 realne źródła; źródło/świeżość/severity/deep-link; bez mutacji |
 | 8 | command/cost-capacity | 2 | `a92af5e497` | DONE | 5 źródeł; atrybucja StandardTable; tylko odczyt + deep-linki |
 | 9 | audit/compliance-evidence | 2 | `f91a3a6849` | DONE | 6 źródeł dowodowych; źródło/świeżość/deep-link; eksport audytu |
-| 10 | billing/seats-licences | 3 | — | NIE ZACZĘTO | |
+| 10 | billing/seats-licences | 3 | `1a926118e2` | DONE | realna konfiguracja/historia; auto-add z readbackiem; zakup contact-sales |
 | 11 | health/dependencies | 3 | — | NIE ZACZĘTO | |
 | 12 | health/incident-history | 4/B | — | NIE ZACZĘTO | |
 | 13 | health/queues-jobs | 4/B | — | NIE ZACZĘTO | |
@@ -66,6 +66,10 @@ Dowód: `server/src/routes/access-control.routes.ts:83-104` (globalna lista + `r
 Co zrobiłbym, gdyby zapadła decyzja X: po zatwierdzeniu modelu wniosku do istniejącej organizacji dodałbym tenant-scoped command z jednoznacznym `organization_id`, obsługą istniejącego użytkownika i idempotencją, następnie approve/reject z readbackiem i testem cross-tenant.
 Stan: NIE ZACOMMITOWANO.
 
+### STOP — billing/seats-licences / purchaseSeats
+Powód: nie wystawiono mutacji finansowej `purchaseSeats` bez kontraktu potwierdzenia, idempotencji, readbacku dostawcy płatności i paragonu.
+Stan: ekran odczytu, historii i auto-add jest gotowy; zakup jest jawnie oznaczony jako contact-sales.
+
 ## Znaleziska (problemy w istniejącym kodzie — NIE naprawiane przeze mnie)
 
 | # | Znalezisko | Plik:linia | Klasa | Dlaczego nie naprawiłem |
@@ -95,6 +99,10 @@ Brak na starcie dyżuru.
 - `npx esbuild src/components/Admin/AdminComplianceEvidencePanel.tsx --loader:.tsx=tsx --outfile=/dev/null` — PASS.
 - `bash scripts/check-list-canon.sh src/components/Admin/AdminComplianceEvidencePanel.tsx` — PASS, 0 nowych naruszeń.
 - `npx vitest run src/components/Admin/__tests__/AdminComplianceEvidencePanel.test.tsx src/views/admin/__tests__/AdminSettingsModule.test.tsx` — PASS, 2 pliki / 33 testy.
+- `npx esbuild server/src/routes/admin/seats.routes.ts --platform=node --format=esm --outfile=/dev/null` — PASS.
+- `npx esbuild src/components/Admin/AdminSeatsLicencesPanel.tsx --loader:.tsx=tsx --outfile=/dev/null` — PASS.
+- `bash scripts/check-list-canon.sh src/components/Admin/AdminSeatsLicencesPanel.tsx` — PASS, 0 nowych naruszeń.
+- `npx vitest run server/src/routes/__tests__/seats.routes.test.ts src/components/Admin/__tests__/AdminSeatsLicencesPanel.test.tsx src/views/admin/__tests__/AdminSettingsModule.test.tsx` — PASS, 3 pliki / 38 testów (ostrzeżenie testowe `act`, bez błędów).
 
 ## Migracje
 
