@@ -132,8 +132,17 @@ The integration seed is composed from owned seed builders or exported determinis
   does not match the current `W3-MATERIALS-OWNER-v1` database marker. The
   Materials database must not be adopted until it is freshly reconstructed or
   a new valid FINAL receipt is produced by the guarded seed.
-- This proves reconstructibility capability and preserves fifteen immediately
-  adoptable isolated fixtures; it does not prove that the current visible
-  runtime is connected correctly.
-- `/results` had a confirmed legacy fallback regression. Source is checkpointed at `8df1cd413d` with focused tests passing, but the visible runtime has not been changed or claimed fixed.
+- This proves reconstructibility capability, but the retained databases are not
+  automatically adoptable by the current candidate. A guarded Results adoption
+  stopped on a historical migration-checksum mismatch, so no unsafe bypass was
+  used and current-source databases must be reconstructed module by module.
+- `/results` had a confirmed legacy fallback regression. Source is checkpointed
+  at `8df1cd413d` with focused tests passing.
+- Results has now completed the first current-source qualification slice on
+  candidate `c0d18720b3bcf0ab32626b5413869f637142bdcc`: a fresh isolated database
+  applied `834` migrations, the guarded seed produced a FINAL marker-matched
+  receipt, and authenticated canonical API readback returned exactly one KPI,
+  one OKR set and one ROI case. The isolated runtime is healthy on backend
+  `127.0.0.1:4417` and frontend `127.0.0.1:4418`. Browser rendering and cold
+  readback remain open; this is not owner acceptance.
 - No production, Railway or customer data was changed.
