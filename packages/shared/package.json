@@ -10,8 +10,8 @@
     "react": "^19.0.0"
   },
   "devDependencies": {
-    "typescript": "^5.0.0",
-    "@types/node": "^22.0.0",
+    "typescript": "^5.9.3",
+    "@types/node": "^22.20.1",
     "@types/react": "^19.0.0",
     "@types/html2canvas": "^1.0.0",
     "@types/jspdf": "^2.0.0"
