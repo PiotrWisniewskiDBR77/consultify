@@ -110,11 +110,9 @@ const InitiativesHub = lazyWithRetry(() =>
 const ExecutionHub = lazyWithRetry(() =>
   import('@/components/Execution/ExecutionHub').then((m) => ({ default: m.ExecutionHub }))
 );
-const ResultsHub = lazyWithRetry(() =>
-  import('@/components/Results/ResultsHub').then((m) => ({ default: m.default }))
-);
-// RN-G2 (2026-08-10) — Results Next registry shells (P0). New routes ALONGSIDE
-// the legacy ResultsHub above, not instead of it — see RN_G2_UI_SCOPE.md §E.
+// RN-G2 (2026-08-10) — Results Next registry shells (P0). The canonical
+// `/results` entry now redirects here; the retired split ResultsHub is no
+// longer a reachable route fallback.
 const ResultsKpiRegistryPage = lazyWithRetry(() =>
   import('@/components/ResultsVNext/ResultsKpiRegistryPage').then((m) => ({
     default: m.default,
@@ -2672,7 +2670,7 @@ export const AppRoutes: React.FC = () => {
                   moduleName="Results"
                 >
                   <RouteErrorBoundary>
-                    <ResultsOwnerReviewEntry fallback={<ResultsHub />} />
+                    <ResultsOwnerReviewEntry />
                   </RouteErrorBoundary>
                 </ProductionModuleGate>
               </MainLayout>

@@ -10,36 +10,30 @@ import { ResultsOwnerReviewEntry } from '../ResultsOwnerReviewEntry';
 describe('ResultsOwnerReviewEntry', () => {
   beforeEach(() => window.localStorage.clear());
 
-  it('redirects explicit owner review away from the split legacy hub', async () => {
-    window.localStorage.setItem('ff.wave3_results_owner_review', '1');
+  it('always redirects the bare Results route to the canonical KPI registry', async () => {
     render(
       <MemoryRouter initialEntries={['/results']}>
         <Routes>
-          <Route
-            path="/results"
-            element={<ResultsOwnerReviewEntry fallback={<div>legacy hub</div>} />}
-          />
+          <Route path="/results" element={<ResultsOwnerReviewEntry />} />
           <Route path="/results/kpi" element={<div>canonical KPI registry</div>} />
         </Routes>
       </MemoryRouter>
     );
 
     expect(await screen.findByText('canonical KPI registry')).toBeInTheDocument();
-    expect(screen.queryByText('legacy hub')).not.toBeInTheDocument();
   });
 
-  it('preserves the normal hub when the profile is not explicitly enabled', () => {
+  it('ignores a stale disabled owner-review profile and still forbids the legacy hub', async () => {
+    window.localStorage.setItem('ff.wave3_results_owner_review', '0');
     render(
       <MemoryRouter initialEntries={['/results']}>
         <Routes>
-          <Route
-            path="/results"
-            element={<ResultsOwnerReviewEntry fallback={<div>normal hub</div>} />}
-          />
+          <Route path="/results" element={<ResultsOwnerReviewEntry />} />
+          <Route path="/results/kpi" element={<div>canonical KPI registry</div>} />
         </Routes>
       </MemoryRouter>
     );
 
-    expect(screen.getByText('normal hub')).toBeInTheDocument();
+    expect(await screen.findByText('canonical KPI registry')).toBeInTheDocument();
   });
 });
