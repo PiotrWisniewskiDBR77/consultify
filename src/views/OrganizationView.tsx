@@ -24,9 +24,11 @@ import OrganizationSidebar, {
   type OrganizationScreen,
 } from '../components/Organization/OrganizationSidebar';
 import { OrgContextSummaryBanner } from '../components/Organization/OrgContextSummaryBanner';
+import OrganizationChallengesEvidenceScreen from '../components/Organization/redesign/OrganizationChallengesEvidenceScreen';
 import OrganizationDirectionConstraintsScreen from '../components/Organization/redesign/OrganizationDirectionConstraintsScreen';
 import OrganizationGoalsMetricsScreen from '../components/Organization/redesign/OrganizationGoalsMetricsScreen';
 import OrganizationIdentityOperatingScreen from '../components/Organization/redesign/OrganizationIdentityOperatingScreen';
+import OrganizationRootCausesBlockersScreen from '../components/Organization/redesign/OrganizationRootCausesBlockersScreen';
 import OrganizationScopeCollaborationScreen from '../components/Organization/redesign/OrganizationScopeCollaborationScreen';
 import {
   getOrganizationRedesignModules,
@@ -402,6 +404,46 @@ export const OrganizationView: React.FC = () => {
             </OrganizationScreenShell>
           )}
         </OrganizationScopeCollaborationScreen>
+      );
+    }
+
+    if (activeLocation.module === 'challenges' && activeLocation.screen === 'declared-challenges') {
+      return (
+        <OrganizationChallengesEvidenceScreen>
+          {(args) => (
+            <OrganizationScreenShell
+              sections={args.sections}
+              activeSection={args.activeSection}
+              onSectionChange={args.onSectionChange}
+              chips={args.chips}
+              activeChip={args.activeChip}
+              onChipChange={args.onChipChange}
+              statePanel={args.statePanel}
+            >
+              {args.content}
+            </OrganizationScreenShell>
+          )}
+        </OrganizationChallengesEvidenceScreen>
+      );
+    }
+
+    if (activeLocation.module === 'challenges' && activeLocation.screen === 'root-causes') {
+      return (
+        <OrganizationRootCausesBlockersScreen>
+          {(args) => (
+            <OrganizationScreenShell
+              sections={args.sections}
+              activeSection={args.activeSection}
+              onSectionChange={args.onSectionChange}
+              chips={args.chips}
+              activeChip={args.activeChip}
+              onChipChange={args.onChipChange}
+              statePanel={args.statePanel}
+            >
+              {args.content}
+            </OrganizationScreenShell>
+          )}
+        </OrganizationRootCausesBlockersScreen>
       );
     }
 
