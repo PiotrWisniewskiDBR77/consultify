@@ -22,6 +22,67 @@ No further module may be wired by selecting whichever screen happens to render. 
 8. **Exact identity is recorded.** Every proof records branch, full SHA, dirty fingerprint, frontend/backend ports, database name, fixture ID and screenshot manifest.
 9. **Production and Railway remain untouched.** This architecture governs local Wave 3 qualification and final local integration until a separate release authorization is given.
 
+## Final-version selection authority
+
+The phrase "latest screen" is not sufficient evidence. A later screenshot can
+show an older component exposed by a route regression. The final version of a
+module is selected using this precedence order:
+
+1. the latest explicit owner decision in the atomic module register;
+2. the module final implementation specification or workshop packet;
+3. the current 21-gate module acceptance contract;
+4. a screenshot that is already mapped to that decision and exact product SHA;
+5. current code only after route, component and data-contract reconciliation.
+
+Conflicts stop selection and are recorded as `OWNER_DECISION_REQUIRED`; they
+must not be resolved by picking the screen that happens to render. Historical
+screens and components are preserved until the canonical replacement passes
+cold readback, but must be marked `HISTORICAL / UNREACHABLE_FROM_CANONICAL`.
+
+### Binding selection record per module
+
+Every module must have exactly one completed record before wiring:
+
+| Field | Required evidence |
+|---|---|
+| Owner contract | Atomic finding IDs and the source register/specification paths |
+| Reference visuals | Exact image paths and hashes, classified as target, useful fragment or rejected historical state |
+| Canonical entry | One Menu-1 route and the allowed Menu-2/Menu-3 route family |
+| Canonical code | Route component, registry component, preview component and full-card/workspace component |
+| Data contract | Canonical API family, list/detail/write endpoints and guarded fixture ID |
+| Persistence | Stable object IDs, harmless mutation receipt, refresh and cold-restart readback |
+| Legacy quarantine | Every old route/component/fallback that must become unreachable |
+| Verification | Exact SHA, runtime coordinates, screenshot manifest and open limitations |
+
+The record states one of five statuses only: `SOURCE_INVENTORIED`,
+`FINAL_SELECTED`, `DATA_ATTACHED`, `COLD_READBACK_PASS`, or `BLOCKED`. No
+module is called connected before `COLD_READBACK_PASS`.
+
+## Final-source selection ledger
+
+This ledger prevents another weekly rediscovery cycle. It identifies the
+authoritative decision packet and current visual evidence source. A row marked
+`SOURCE_INVENTORIED` is not yet a final visual choice.
+
+| Module | Authoritative decision packet | Current visual source | Selection status |
+|---|---|---|---|
+| Organization | `owner_feedback/01_ORGANIZATION/OWNER_FEEDBACK_REGISTER.md`; `FINAL_IMPLEMENTATION_SPEC.md`; `ORG-OWN-003_SCREEN_BLUEPRINT.md` | `modules/01_ORGANIZATION/preflight-profile.png` and the three cold-readback images; must be reconciled to current SHA | `SOURCE_INVENTORIED` |
+| Interview | `modules/02_INTERVIEW/MODULE_ACCEPTANCE.md`; recommendation register and creator guidelines | module evidence indexes referenced by G11/G12; manager and public respondent remain separate | `SOURCE_INVENTORIED` |
+| Tools | `modules/03_TOOLS/TOOLS_OWNER_REVIEW_REGISTER.md`; final report; Dynamic SWOT final work model | exact-candidate photo-gate `04-tools.png` plus its expert review; fragments only until reconciled | `SOURCE_INVENTORIED` |
+| Assessment | `owner_feedback/04_ASSESSMENT/OWNER_FEEDBACK_REGISTER.md`; `ASSESSMENT_WORKSHOP_PACKET.md`; module acceptance | current-browser Library, Processes, DRD Interview, Matrix and Report images referenced in G16 | `FINAL_SELECTED / DATA_RECONSTRUCTION_PENDING` |
+| Initiatives | `modules/05_INITIATIVES/MODULE_ACCEPTANCE.md`; current-head reconciliation and consolidated expert review | current exact-SHA initiatives evidence indexes referenced by the module contract | `SOURCE_INVENTORIED` |
+| Execution | `modules/06_EXECUTION/MODULE_ACCEPTANCE.md` and owner observations captured in the current replay | current initiatives-execution evidence index; unavailable/V8 placeholder explicitly rejected | `SOURCE_INVENTORIED` |
+| My Work / Agent | `modules/07_MY_WORK_AGENT/MODULE_ACCEPTANCE.md`; Ideas and Notebook owner reviews | exact-candidate photo-gate `02-my-work.png` and owner overlay plus expert review | `SOURCE_INVENTORIED` |
+| Meetings | `modules/08_MEETINGS/MODULE_ACCEPTANCE.md` | module G11/G16 evidence index; provider-disabled states remain explicit | `SOURCE_INVENTORIED` |
+| Results | `modules/09_RESULTS/MODULE_ACCEPTANCE.md` plus owner intake requiring KPI/OKR/ROI registries and rebuilt cards | current KPI/OKR/ROI registry/preview evidence; legacy three-pairs cockpit rejected | `FINAL_SELECTED / DATA_ATTACHED / BROWSER_OPEN` |
+| Finance | `modules/10_FINANCE/MODULE_ACCEPTANCE.md` plus the latest owner reconstruction requirements | Statements, Analysis, Baseline, Prediction and Valuation workspace evidence; simplified Finance shells rejected | `FINAL_SELECTED / DATA_ATTACHED / API_PROOF_OPEN` |
+| Materials | `modules/11_MATERIALS/MODULE_ACCEPTANCE.md` | current replay manifest for common registry and three native full cards | `FINAL_SELECTED / BLOCKED_FRESH_FIXTURE` |
+| Audits | `modules/12_AUDITS/MODULE_ACCEPTANCE.md` | module evidence; external named standards stay OFF | `SOURCE_INVENTORIED` |
+| Chat | `modules/13_CHAT/OWNER_REVIEW_2026-08-22.md`; module acceptance | exact-candidate photo-gate `01-chat-start.png` and expert review | `SOURCE_INVENTORIED` |
+| Admin | `owner_feedback/14_ADMIN/OWNER_FEEDBACK_REGISTER.md`; seven-task blueprint; final spec | evidence index for seven Admin tasks; tenant and superadmin planes stay separate | `SOURCE_INVENTORIED / OWNER_DECISIONS_OPEN` |
+| Settings | `owner_feedback/13_SETTINGS/OWNER_FEEDBACK_REGISTER.md`; final spec; module acceptance | Settings evidence index; destructive/OAuth/MFA states remain guarded | `SOURCE_INVENTORIED` |
+| Partner | `owner_feedback/16_PARTNERS/OWNER_FEEDBACK_REGISTER.md`; content audit; module acceptance | Partner evidence index; operational landing decision remains open | `BLOCKED_OWNER_DECISION` |
+
 ## Three data planes
 
 | Plane | Purpose | Allowed data | Acceptance meaning |
