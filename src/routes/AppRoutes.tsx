@@ -2339,11 +2339,9 @@ export const AppRoutes: React.FC = () => {
               >
                 <RouteErrorBoundary>
                   <AnimationWrapper variant="slideUp">
-                    <V8UnavailableBanner moduleName="Execution">
-                      <Suspense fallback={<LoadingScreen message="Loading..." />}>
-                        <ExecutionHub />
-                      </Suspense>
-                    </V8UnavailableBanner>
+                    <Suspense fallback={<LoadingScreen message="Loading..." />}>
+                      <ExecutionHub />
+                    </Suspense>
                   </AnimationWrapper>
                 </RouteErrorBoundary>
               </ProductionModuleGate>
@@ -2360,11 +2358,9 @@ export const AppRoutes: React.FC = () => {
               >
                 <RouteErrorBoundary>
                   <AnimationWrapper variant="slideUp">
-                    <V8UnavailableBanner moduleName="Execution">
-                      <Suspense fallback={<LoadingScreen message="Loading..." />}>
-                        <ExecutionHub />
-                      </Suspense>
-                    </V8UnavailableBanner>
+                    <Suspense fallback={<LoadingScreen message="Loading..." />}>
+                      <ExecutionHub />
+                    </Suspense>
                   </AnimationWrapper>
                 </RouteErrorBoundary>
               </ProductionModuleGate>

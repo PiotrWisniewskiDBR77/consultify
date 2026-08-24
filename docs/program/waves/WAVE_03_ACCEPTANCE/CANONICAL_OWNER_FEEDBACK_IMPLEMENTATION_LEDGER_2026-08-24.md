@@ -167,6 +167,28 @@ one unrelated stale harness assertion for a removed `active-tab` test marker;
 it is not counted as passing evidence and was not hidden by changing product
 code.
 
+## Execution reconciliation receipt
+
+Execution already has a canonical five-surface hub (`Realizations`, `Work`,
+`Resources`, `Steering`, `Reports`) and dedicated APIs. The route layer was
+nevertheless wrapping the entire hub in the global V8 availability banner.
+Consequently a failed or empty capability-discovery response could replace the
+usable module with `Execution is unavailable`. This was a route-gating
+regression, not evidence that the Execution source had disappeared.
+
+| Contract | State | Candidate evidence |
+| --- | --- | --- |
+| `/execution` and `/execution/:executionCaseId` mount the canonical `ExecutionHub` | `IMPLEMENT_NOW_UNEQUIVOCAL` implemented in the frozen candidate | both route elements mount the hub directly inside their existing production and error boundaries |
+| Global V8 capability discovery cannot blank the entire Execution module | `IMPLEMENT_NOW_UNEQUIVOCAL` implemented in the frozen candidate | route source guard asserts no Execution-level `V8UnavailableBanner` |
+| Operation-level permissions and backend command gates remain enforced | `ALREADY_IN_CANDIDATE_SOURCE` | only the route wrapper was removed; no command/API authorization was changed |
+| Canonical Work queue and Reports lifecycle remain intact | `ALREADY_IN_CANDIDATE_SOURCE` | focused Work queue and Reports surface tests |
+| Authenticated runtime data, cross-tab readback and owner visual acceptance | `BACKEND_OR_RUNTIME_GATE` | requires the later frozen-SHA browser and database gate pass |
+
+Focused regression result: `3 files / 12 tests PASS`. This proves the route no
+longer substitutes the global unavailable screen and protects focused Work and
+Reports behavior. It does not yet prove authenticated data integration or
+owner acceptance.
+
 ## Work order
 
 1. Reconcile explicit module atoms into this state model without changing code.
