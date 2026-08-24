@@ -67,3 +67,12 @@ TRI-MUST-06 (lokalizacja). TRI-MUST-05 blokuje fazę 3, nie odbiór modułów.
 **Werdykt obszaru Superadmin: ZAMKNIĘTY** (architektura zamierzona, oba defekty naprawione i dowiedzione na żywo).
 **Settings:** czeka na finisz graficzny (w toku) i werdykt właściciela.
 **Admin:** program „komplet 55/56" w toku (Fale 0+1 done: ~28 ekranów; nocny dyżur Codex buduje dalej).
+
+## Uzupełnienie — ustalenia z macierzy przepływów (2026-08-25, podpis: Fable)
+
+| ID | Problem | Dowód | Klasyfikacja |
+|---|---|---|---|
+| TRI-MUST-08 | **Audyt mutacji admina nie jest uniwersalny**: projekcja /api/admin/audit-logs ma tylko 2 źródła (19 jawnych logAction w adminP32.routes.ts + role_change_audit_events); mutacje zespołów, domen, ai-settings/ai-governance nie zostawiają wpisu. Narusza kontrakt spec „every Admin mutation defines … audit trail" (AC-005). Stan zastany, nie wina nocnych ekranów. | macierz przepływów, grep adminAuditService | MUST w programie Admin 55 (przed CLOSED_FINAL modułu 03) |
+| TRI-OBS-09 | Zmiana planu (PUT /api/admin/billing/plan) nie zapisuje subscription_history (jedyny writer: dunningService.ts:502) — ekran „Plan history" pokaże pustkę mimo zmian. | macierz przepływów | WAŻNE — dołączyć do fali Billing |
+| TRI-OBS-10 | „Configuration Versions" wersjonuje Prompt OS, nie politykę ai-settings/ai-governance — dwa rozłączne systemy. | macierz przepływów | WAŻNE — decyzja przy fali AI |
+| TRI-MUST-11 | GET /api/access-control/requests: superadmin-only i bez filtra organizacji (access-control.routes.ts:89) — ekran „Access requests" NIE może go wołać; wymagany endpoint tenant-scoped. | access-control.routes.ts:89 | MUST — reguła weryfikacji nocnej (jak TRI-MUST-07) |
