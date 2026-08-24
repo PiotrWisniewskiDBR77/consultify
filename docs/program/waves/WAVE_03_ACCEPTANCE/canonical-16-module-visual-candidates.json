@@ -12,10 +12,10 @@
     {
       "order": 1,
       "id": "organization",
-      "classification": "TARGET_REFERENCE_CANDIDATE",
+      "classification": "USEFUL_FRAGMENT",
       "path": "docs/program/waves/WAVE_03_ACCEPTANCE/modules/01_ORGANIZATION/cold-readback-chrome-pl-dark.png",
       "sha256": "eee14e37b94d115437bf9bbda703bee063792738e1ec0c39b82f31cc32fb2f8d",
-      "limitation": "Cold-readback evidence for the module; owner must freeze which profile, goals, challenges and strategy surfaces remain canonical."
+      "limitation": "Recoverable Organization styling and strategic-synthesis fragment, but not a complete canonical candidate: it carries Wave 2 identity and extra legacy navigation (Megatrends, Strategic synthesis, Knowledge graph). Owner freeze must use the five-area contract: Profile, Goals, Challenges, Strategy and Context governance."
     },
     {
       "order": 2,
