@@ -24,7 +24,7 @@ Start: 2026-08-24 (Europe/Warsaw) · Koniec: —
 | 4 | team/access-requests | 4/A | — | STOP | żywy approve tworzy nową organizację; brak kontraktu dołączenia do bieżącej org |
 | 5 | security/service-accounts | 4/A | `26caf7f2b7` | DONE | nowa admin-only trasa; sekret tylko raz; readback |
 | 6 | ai/quality-evaluations | 2 | — | STOP | obie mutacje bez tenant-scope (`WHERE id = ?`) |
-| 7 | command/attention-queue | 2 | — | NIE ZACZĘTO | |
+| 7 | command/attention-queue | 2 | `358d4a2307` | DONE | 4 realne źródła; źródło/świeżość/severity/deep-link; bez mutacji |
 | 8 | command/cost-capacity | 2 | — | NIE ZACZĘTO | |
 | 9 | audit/compliance-evidence | 2 | — | NIE ZACZĘTO | |
 | 10 | billing/seats-licences | 3 | — | NIE ZACZĘTO | |
@@ -88,6 +88,9 @@ Brak na starcie dyżuru.
 - `npx esbuild server/src/routes/admin/service-accounts.routes.ts --platform=node --format=esm --outfile=/dev/null` — PASS.
 - `bash scripts/check-list-canon.sh src/components/Admin/AdminServiceAccountsPanel.tsx` — PASS, 0 nowych naruszeń.
 - `npx vitest run server/src/routes/__tests__/service-accounts.routes.test.ts src/components/Admin/__tests__/AdminServiceAccountsPanel.test.tsx src/views/admin/__tests__/AdminSettingsModule.test.tsx` — PASS, 3 pliki / 36 testów.
+- `npx esbuild src/components/Admin/AdminCommandCenterPanel.tsx --loader:.tsx=tsx --outfile=/dev/null` — PASS.
+- `npx vitest run src/components/Admin/__tests__/AdminCommandCenterAttentionQueue.test.tsx src/views/admin/__tests__/AdminSettingsModule.test.tsx` — PASS, 2 pliki / 32 testy.
+- `bash scripts/check-list-canon.sh src/components/Admin/AdminCommandCenterPanel.tsx` — PASS, 0 nowych naruszeń.
 
 ## Migracje
 
