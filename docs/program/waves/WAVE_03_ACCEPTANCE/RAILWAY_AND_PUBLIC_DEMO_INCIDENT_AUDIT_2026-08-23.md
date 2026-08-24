@@ -1,6 +1,76 @@
 # Railway and public-demo incident audit — 2026-08-23
 
-Status: `READ_ONLY_RAILWAY_DIAGNOSIS / LOCAL_REALPG_REMEDIATION_PASS / RELEASE_NOT_AUTHORIZED`
+Status: `READ_ONLY_RAILWAY_DIAGNOSIS / UNSAFE_INHERITED_PARENT_LINK / RELEASE_NOT_AUTHORIZED`
+
+## 2026-08-24 control correction — final candidate inherits Pitchdeck production
+
+This correction supersedes the checkout-link statement in the historical
+2026-08-23 checkpoint below. It does not erase that earlier observation.
+
+Read-only inspection from the canonical integration checkout
+`/Users/piotrwisniewski/Developer/Consultify-final-mvp-integration-20260823`
+showed that the checkout has no exact entry in the global Railway CLI project
+map. Railway CLI therefore falls back to the mapped parent path
+`/Users/piotrwisniewski` and resolves to:
+
+- workspace: `DBR77`;
+- project: `Pitchdeck` (`7632d2da-3f45-4ed1-b123-625ea8dbb2e4`);
+- environment: `production` (`63cdf6d2-f1c1-4073-9c74-12f4954f1d07`);
+- selected service: `Pitchdeck` (`bf3f7b24-79e8-4f62-8016-efbc2e6dfd3b`).
+
+That project also exposes two distinct running PostgreSQL services with ready
+volumes. They remain separate unidentified assets and MUST NOT be deleted,
+merged, deduplicated, queried or treated as Consultify data without a separate
+identity and reconstructibility proof:
+
+- `Postgres` (`7bba7edd-5e54-4aae-b1f1-02b7ffb2a332`), volume approximately
+  `1135.58 MB` at inspection time;
+- `Postgres-S_aE` (`dece45d4-a648-457e-8b5f-cf1ecc365dd2`), volume
+  approximately `1106.39 MB` at inspection time.
+
+No Railway link, variable, service, database, deployment or global CLI config
+was changed. No database content was read. This is a context-resolution defect,
+not evidence that Pitchdeck data is corrupt or that Consultify data is absent.
+
+### Actual Consultify Railway identity discovered read-only
+
+- workspace: `Piotr Wisniewski's Projects`;
+- project: `consultify` (`a6d59e88-263d-45f3-96bc-861f66bf467b`);
+- environments: `dev` (`379582b3-63f2-4645-803e-35725104920d`),
+  `production` (`39f2f768-2449-48b6-b05e-031cad063cdc`), `staging`
+  (`487a33ba-84b0-4e2e-b18b-7f981ae5334d`) and `demo`
+  (`a257fce9-33f0-4e10-8e7c-a9cec472f377`);
+- services: `Postgres` (`842e4cf0-21af-44e1-9d91-4198b0c18735`), app
+  `consultify` (`8f65b820-3d55-4dd9-8076-929d01cc4157`), `Redis`
+  (`afcae226-f39e-4280-b624-ba7f720b8d65`), `pgvector`
+  (`de81443b-4678-4780-b4d1-742ab36ecd83`) and
+  `Postgres-Rehearsal-20260820-71316e`
+  (`fc377fcb-2f98-4fb7-b772-932012fd7dd3`).
+
+These identifiers prove discovery only. They do not prove which database is
+canonical for any environment, current schema compatibility, tenant identity,
+backup completeness or application readback. Every database remains
+`IDENTITY_DISCOVERED / CONTENT_NOT_INSPECTED / READBACK_NOT_PROVEN` until its
+own controlled gate is passed. The rehearsal database is not presumed to be
+the current canonical database.
+
+### Mandatory stop gate
+
+Before ANY future Railway operation from the canonical checkout:
+
+1. prove an exact checkout-path binding rather than a parent-path fallback;
+2. prove workspace, project, environment and service IDs with a fresh
+   read-only status command;
+3. use explicit project/environment/service selectors where the CLI supports
+   them;
+4. separately prove the intended database, tenant and reconstruction/backup
+   boundary before any database access;
+5. retain `production = NOT_AUTHORIZED` until Piotr gives a separate explicit
+   release authorization.
+
+`railway link` is itself a state change and was not performed during this
+audit. Correcting the global CLI map requires a separate authorized control
+action.
 
 ## Safety boundary
 
@@ -11,13 +81,16 @@ Status: `READ_ONLY_RAILWAY_DIAGNOSIS / LOCAL_REALPG_REMEDIATION_PASS / RELEASE_N
   container and a fail-closed exact-SHA runtime harness.
 - The disposable runtime database and container were removed after verification.
 
-## Railway context reconciliation
+## Historical 2026-08-23 Railway context reconciliation
 
 CLI identity and context were re-read from the repository checkout.
 
 - Project: `consultify` (`a6d59e88-263d-45f3-96bc-861f66bf467b`)
 - Workspace: `Piotr Wisniewski's Projects`
-- The checkout was **not** linked to a pitchdeck project.
+- At that historical inspection point, the inspected checkout resolved to
+  Consultify rather than Pitchdeck. This observation MUST NOT be generalized to
+  another checkout path; the 2026-08-24 canonical integration checkout instead
+  inherited the unsafe parent-path Pitchdeck production link documented above.
 - `production`, `staging` and `demo` reported the `consultify` service as
   `SUCCESS` at inspection time.
 - `dev` reported `CRASHED`; latest deployment

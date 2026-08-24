@@ -28,10 +28,18 @@ not evidence that the corresponding database or module code disappeared.
 
 ## Railway boundary
 
-Read-only CLI context resolves to project `consultify`
-(`a6d59e88-263d-45f3-96bc-861f66bf467b`) in workspace
-`Piotr Wisniewski's Projects`. It is not a pitchdeck project. This checkpoint
-does not treat CLI linkage as proof of the database used by any local process.
+This section is a historical statement about the checkout inspected on
+2026-08-23. It does not apply to every source path. A subsequent read-only
+inspection on 2026-08-24 proved that the canonical integration checkout
+`/Users/piotrwisniewski/Developer/Consultify-final-mvp-integration-20260823`
+has no exact global Railway CLI mapping and inherits the parent
+`/Users/piotrwisniewski` mapping to `DBR77 / Pitchdeck / production`.
+
+The authoritative correction and stop gate are recorded in
+`RAILWAY_AND_PUBLIC_DEMO_INCIDENT_AUDIT_2026-08-23.md`. No CLI linkage is proof
+of the database used by any local process, and no Railway operation is allowed
+from the candidate until the exact path, project, environment, service,
+database and tenant identities are proven.
 
 ## Stabilization gate
 
@@ -46,4 +54,3 @@ Before the next owner replay:
 5. stop obsolete review runtimes only after their source/WIP fingerprints and
    reconstruction commands have been preserved and the owner authorizes the
    cleanup.
-
