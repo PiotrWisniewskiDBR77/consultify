@@ -89,7 +89,17 @@ describe('SettingsOwnershipPanels triad handoffs', () => {
     expect(await screen.findByText('Security handoff to Admin')).toBeInTheDocument();
     expect(screen.getByText('MFA required')).toBeInTheDocument();
     expect(screen.getByText('SSO enforced')).toBeInTheDocument();
-    expect(screen.getAllByText('Read-only').length).toBeGreaterThanOrEqual(5);
+    expect(screen.getAllByText('Read-only').length).toBeGreaterThanOrEqual(3);
+
+    // DEC-2026-08-24-12: guest access / external link sharing / tool approval
+    // are unenforced no-ops, so they no longer render as read-only values —
+    // they share the same planned notice as AdminCollaborationControlsPanel.
+    expect(screen.queryByText('Guest access')).not.toBeInTheDocument();
+    expect(screen.queryByText('External link sharing')).not.toBeInTheDocument();
+    expect(screen.queryByText('Tool approval required')).not.toBeInTheDocument();
+    expect(
+      screen.getByText('Planned — this policy will be enforced once implemented.')
+    ).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Open Admin Security' }));
 
@@ -119,6 +129,13 @@ describe('SettingsOwnershipPanels triad handoffs', () => {
     expect(await screen.findByText('Module preferences')).toBeInTheDocument();
     expect(screen.getByText('Interview')).toBeInTheDocument();
     expect(screen.getByText('AI / Copilot')).toBeInTheDocument();
+
+    // DEC-2026-08-24-12: the Tools card no longer shows the unenforced
+    // "Tool approval" value — it shows the shared planned notice instead.
+    expect(screen.queryByText(/Tool approval:/)).not.toBeInTheDocument();
+    expect(
+      screen.getByText('Planned — this policy will be enforced once implemented.')
+    ).toBeInTheDocument();
 
     const buttons = await screen.findAllByRole('button');
     await user.click(buttons[0]);

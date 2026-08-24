@@ -1,5 +1,13 @@
 import type { TFunction } from 'i18next';
-import { AlertTriangle, Building2, ExternalLink, Settings2, Shield, Sparkles } from 'lucide-react';
+import {
+  AlertTriangle,
+  Building2,
+  ExternalLink,
+  Link2,
+  Settings2,
+  Shield,
+  Sparkles,
+} from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -16,6 +24,14 @@ import { SettingsTaxonomyPanel } from './SettingsTaxonomyPanel';
 type RegistryResolveResponse = {
   value: unknown;
   source: 'personal' | 'module' | 'tenant' | 'system' | 'default';
+};
+
+type ModulePreferenceCard = {
+  id: string;
+  title: string;
+  target: SettingsSection;
+  values: [string, string][];
+  notice?: string;
 };
 
 type OrganizationContextSummary = {
@@ -348,30 +364,29 @@ function TenantSecurityPanel({
         readOnly
         t={t}
       />
-      <ValueRow
-        label={t('settings.ownership.guestAccess', 'Guest access')}
-        value={formatValue(resolved.guest_access_enabled?.value, t)}
-        source={resolved.guest_access_enabled?.source}
-        readOnly
-        t={t}
-      />
-      <ValueRow
-        label={t('settings.ownership.externalLinkSharing', 'External link sharing')}
-        value={formatValue(resolved.external_link_sharing?.value, t)}
-        source={resolved.external_link_sharing?.source}
-        readOnly
-        t={t}
-      />
-      <ValueRow
-        label={t('settings.ownership.toolApprovalRequired', 'Tool approval required')}
-        value={formatValue(resolved.tool_approval_required?.value, t)}
-        source={resolved.tool_approval_required?.source}
-        readOnly
-        t={t}
-      />
+      <CollaborationControlsPlannedNotice t={t} />
     </SectionCard>
   );
 }
+
+/**
+ * DEC-2026-08-24-12 — guest access, external link sharing, and tool approval
+ * required are not enforced anywhere downstream (see
+ * AdminCollaborationControlsPanel.tsx for the full rationale). Showing them
+ * here as read-only values would repeat the same "policy placebo" the owner
+ * ruled out for the Admin panel, so both places share this notice instead.
+ */
+const CollaborationControlsPlannedNotice: React.FC<{ t: TFunction }> = ({ t }) => (
+  <div className="flex items-start gap-3 rounded-xl border border-dashed border-c-border-subtle dark:border-navy-700 bg-c-surface-raised px-4 py-3">
+    <Link2 size={16} className="mt-0.5 shrink-0 text-c-text-muted" aria-hidden="true" />
+    <p className="text-sm text-c-text-secondary">
+      {t(
+        'admin.security.collaborationControls.plannedNotice',
+        'Planned — this policy will be enforced once implemented.'
+      )}
+    </p>
+  </div>
+);
 
 function ModulePreferencesPanel({
   resolved,
@@ -382,7 +397,7 @@ function ModulePreferencesPanel({
   onOpenSection?: (section: SettingsSection) => void;
   t: TFunction;
 }) {
-  const cards = useMemo(
+  const cards = useMemo<ModulePreferenceCard[]>(
     () => [
       {
         id: 'interview',
@@ -408,11 +423,14 @@ function ModulePreferencesPanel({
             t('settings.ownership.defaultToolVisibility', 'Default tool visibility'),
             formatValue(resolved.default_tool_visibility?.value, t),
           ],
-          [
-            t('settings.ownership.toolApproval', 'Tool approval'),
-            formatValue(resolved.tool_approval_required?.value, t),
-          ],
         ],
+        // DEC-2026-08-24-12 — tool approval is not enforced downstream; show
+        // the same planned notice as AdminCollaborationControlsPanel instead
+        // of a read-only value.
+        notice: t(
+          'admin.security.collaborationControls.plannedNotice',
+          'Planned — this policy will be enforced once implemented.'
+        ),
       },
       {
         id: 'outputs',
@@ -479,6 +497,12 @@ function ModulePreferencesPanel({
                       <span className="font-medium text-c-text">{label}:</span> {value}
                     </div>
                   ))}
+                  {card.notice ? (
+                    <div className="flex items-start gap-1.5 pt-1 text-xs text-c-text-muted">
+                      <Link2 size={12} className="mt-0.5 shrink-0" aria-hidden="true" />
+                      <span>{card.notice}</span>
+                    </div>
+                  ) : null}
                 </div>
               </div>
               {onOpenSection ? (
