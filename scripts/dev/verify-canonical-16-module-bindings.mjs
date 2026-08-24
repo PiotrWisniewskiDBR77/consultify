@@ -77,6 +77,11 @@ const resultsRouteBlock = routes.slice(resultsRouteAt, resultsNextRouteAt);
 assert.ok(!resultsRouteBlock.includes('<ResultsHub'), 'Canonical /results remounted retired ResultsHub');
 
 const gaps = manifest.modules.filter((module) => module.sourceStatus === 'CANONICAL_WITH_GAP');
+for (const module of gaps) {
+  assert.ok(module.dataStatus?.startsWith('QUALIFIED_'), `${module.id}: data/API status is not qualified`);
+  assert.ok(module.apiFamilies?.length > 0, `${module.id}: API family evidence is missing`);
+  assert.ok(module.gap, `${module.id}: qualified gap description is missing`);
+}
 console.log(
   JSON.stringify(
     {
@@ -85,6 +90,7 @@ console.log(
       canonicalReachable: manifest.modules.length - gaps.length,
       canonicalWithGap: gaps.length,
       gapModules: gaps.map((module) => module.id),
+      apiQualifiedGapModules: gaps.filter((module) => module.dataStatus?.startsWith('QUALIFIED_')).length,
       ownerFreeze: manifest.status,
     },
     null,
