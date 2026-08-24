@@ -27,4 +27,15 @@ describe('Execution canonical data-source contract', () => {
     expect(source).toContain('activeExecutionInitiativeIds.has(String(initiative.id))');
     expect(source).toContain('status: InitiativeStatus.EXECUTING');
   });
+
+  it('opens the canonical Initiative before resolving the list-tab default', () => {
+    const openBranch = source.indexOf("if (openId && (mode === 'doc' || mode === 'initiative'))");
+    const tabBranch = source.indexOf(
+      "if (['list', 'work', 'resources', 'control', 'reports'].includes(targetTab))"
+    );
+
+    expect(openBranch).toBeGreaterThan(-1);
+    expect(tabBranch).toBeGreaterThan(openBranch);
+    expect(source).toContain('setActiveDocumentId(openId);');
+  });
 });

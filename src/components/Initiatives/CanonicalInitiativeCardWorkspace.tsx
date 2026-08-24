@@ -40,7 +40,7 @@ import {
 interface Props {
   initiativeId: string;
   onBack: () => void;
-  onOpenExecution?: (executionCaseId: string) => void;
+  onOpenExecution?: (executionCaseId: string, initiativeId: string) => void;
   initialCardKey?: string | null;
   initialFindingId?: string | null;
   onContextChange?: (context: {
@@ -1273,7 +1273,9 @@ export const CanonicalInitiativeCardWorkspace: React.FC<Props> = ({
                         <button
                           type="button"
                           className="btn-secondary"
-                          onClick={() => onOpenExecution(linkedExecutionCase.executionCaseId)}
+                          onClick={() =>
+                            onOpenExecution(linkedExecutionCase.executionCaseId, initiativeId)
+                          }
                         >
                           Open Execution
                         </button>

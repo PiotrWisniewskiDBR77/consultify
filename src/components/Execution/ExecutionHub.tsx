@@ -919,6 +919,18 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       .trim()
       .toLowerCase();
 
+    // A canonical Initiative deep link wins over the list-tab default. The
+    // executionCaseId may remain in the URL as correlation metadata, but the
+    // visible document identity is always the Initiative ID.
+    if (openId && (mode === 'doc' || mode === 'initiative')) {
+      setActiveTab('list');
+      setViewMode('table');
+      setActiveDocumentId(openId);
+      setIsSidePanelOpen(false);
+      setDeepLinkHandled(true);
+      return;
+    }
+
     if (['list', 'work', 'resources', 'control', 'reports'].includes(targetTab)) {
       setActiveTab(targetTab as ModuleTab);
       setViewMode(targetView === 'grid' ? 'grid' : 'table');
@@ -933,13 +945,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       return;
     }
 
-    if (openId && (mode === 'doc' || mode === 'initiative')) {
-      setActiveTab('list');
-      setViewMode('table');
-      setActiveDocumentId(openId);
-      setIsSidePanelOpen(false);
-      setDeepLinkHandled(true);
-    }
   }, [deepLinkHandled, searchParams]);
 
   useEffect(() => {

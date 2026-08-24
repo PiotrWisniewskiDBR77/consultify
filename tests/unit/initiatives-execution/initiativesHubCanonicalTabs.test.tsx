@@ -9,22 +9,21 @@ const source = readFileSync(
 );
 
 describe('InitiativesHub canonical intake navigation', () => {
-  it('accepts and renders the governed candidates tab instead of normalizing its deep link to list', () => {
+  it('keeps the owner-approved three-tab information architecture', () => {
     const canonicalTabs = source.slice(
       source.indexOf('const CANONICAL_INITIATIVES_TABS'),
       source.indexOf('export const InitiativesHub')
     );
-    expect(canonicalTabs).toContain("'candidates'");
-    expect(source).toContain("id: 'candidates' as ModuleTab");
-    expect(source).toContain("if (activeTab === 'candidates')");
-    expect(source).toContain('<SourceProposalRegistrationSurface');
+    expect(canonicalTabs).toContain("['list', 'plan', 'capacity']");
+    expect(canonicalTabs).not.toContain("'candidates'");
+    expect(canonicalTabs).not.toContain("'portfolio'");
   });
 
   it('preserves the selected proposal in URL context and links a scheduled initiative to Execution', () => {
     expect(source).toContain("next.set('sourceProposalId', proposalId)");
-    expect(source).toContain('onOpenExecution={(executionCaseId) =>');
+    expect(source).toContain('onOpenExecution={(executionCaseId, initiativeId) =>');
     expect(source).toContain(
-      'navigate(`/execution?tab=list&open=${encodeURIComponent(executionCaseId)}`)'
+      '`/execution?tab=list&mode=initiative&open=${encodeURIComponent(initiativeId)}&executionCaseId=${encodeURIComponent(executionCaseId)}`'
     );
   });
 });

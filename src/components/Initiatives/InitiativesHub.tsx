@@ -1717,8 +1717,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           return (
             <CanonicalInitiativeCardWorkspace
               initiativeId={activeDocumentId}
-              onOpenExecution={(executionCaseId) =>
-                navigate(`/execution?tab=list&open=${encodeURIComponent(executionCaseId)}`)
+              onOpenExecution={(executionCaseId, initiativeId) =>
+                navigate(
+                  `/execution?tab=list&mode=initiative&open=${encodeURIComponent(initiativeId)}&executionCaseId=${encodeURIComponent(executionCaseId)}`
+                )
               }
               initialCardKey={searchParams.get('cardKey')}
               initialFindingId={searchParams.get('findingId')}
