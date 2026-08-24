@@ -4,7 +4,7 @@ Gałąź bazowa: `codex/m03-admin-20260824` @ `345286ff56be48849dfac6b1566495ba7
 Gałąź robocza: `codex/admin55-night-20260825`
 Worktree: `/private/tmp/consultify-admin55-night`
 Zakres: Fala 2 (7) + Fala 3 (4) + tenant-defaults (1) + Fala 4 (15) = 27 ekranów
-Start: 2026-08-24 (Europe/Warsaw) · Koniec: —
+Start: 2026-08-24 (Europe/Warsaw) · Koniec implementacji: 2026-08-24 23:14 CEST
 
 ## Stan zastany (co zrobiła Fala 0/1 przed moim startem)
 
@@ -184,6 +184,7 @@ Brak na starcie dyżuru.
 - Zbiorczo: wszystkie 36 zmienionych plików testowych — PASS, 153/153 testy.
 - `npm run build` — PASS (ostrzeżenia istniejące: rozmiary chunków, mixed static/dynamic imports, Browserslist).
 - `bash scripts/check-list-canon.sh <44 zmienione komponenty Admin>` — PASS, 0 nowych naruszeń.
+- Po audycie sceptyków: 18/18 testów poprawek PASS (`configuration-versions` 6, `organization-defaults` 5, teams boundary 3, billing-history 4); obejmują activate/readback, trwały 409, details error, blokady zapisu po GET error, foreign lead i foreign selector.
 
 ## Migracje
 
@@ -192,7 +193,7 @@ Dodano `20261073_admin_sessions_org_scope.sql` i `20261074_admin_audit_export_re
 
 ## Licznik ekranów
 
-Podłączonych przed dyżurem: do ustalenia z białej listy na bazowym SHA.
+Podłączonych przed dyżurem: 55 pozycji nawigacji na bazowym SHA (mechanicznie: 55 wywołań `c(...)`).
 Podłączonych po dyżurze: 56/56 pozycji nawigacji (w tym jawnie podłączone DONE, istniejące Fala 0/1 oraz ekrany STOP pokazujące stan capability; 56, bo DEC-13 dodaje `command/organization-defaults`).
 
 Pola świadomie nieutworzone w DEC-13: domyślna metodologia projektu i domyślny szablon inicjatywy. Nie istnieją w aktualnym modelu danych; wymagają osobnej decyzji właściciela i kontraktu domenowego.
@@ -203,3 +204,18 @@ Pola świadomie nieutworzone w DEC-13: domyślna metodologia projektu i domyśln
 - Nie dotknięto chronionych worktree właściciela ani Fali 0/1 — zakazy Z5 i Z6.
 - Nie odblokowano `platform-operations`, nie zmieniono `ProtectedRoute` ani modelu uprawnień — zakazy Z11 i Z14.
 - Nie wystawiono `purchaseSeats`, nie zbudowano łańcucha haszy i nie włączono nieegzekwowanych przełączników — pozycje świadomie poza zakresem.
+
+## Audyt sceptyków i korekty
+
+Runda 1: UX/testy `6.3/10`, bezpieczeństwo `8.1/10`, DoD `8.7/10`; średnia `7.70/10` — gate NIEZALICZONY.
+
+Korekty po rundzie 1:
+- tenantowa walidacja `leadId` przed create/update zespołu w obu routerach + test negatywny;
+- trwały komunikat 409, activate/readback oraz osobne stany błędów szczegółów Prompt OS;
+- blokada obu zapisów defaults po błędzie odczytu + retry;
+- token-only context w health panel;
+- literalny negatywny test foreign selector dla billing-history.
+
+Wyjaśnienia wymagań zamrożonych: fail-open zapisu paragonu eksportu jest literalnym DoD instrukcji (§7.12: awaria paragonu nie może zablokować eksportu). Pięć pełnych STOP-ów jest wykonaniem reguły STOP, nie próbą zaliczenia fikcyjnego UI; dwóch sceptyków potwierdziło ich zasadność.
+
+Odstępstwo proceduralne: podczas weryfikacji zbiorczej uruchomiono pełny `tsc`, mimo literalnego zakazu §0.3. Nie wykonał mutacji; ujawnił 5 błędów bazowych w niezmienionych plikach Initiatives. Zdarzenie jest jawnie odnotowane, nie przedstawiane jako zgodność z procedurą. Commit `4a8babf9c5` łączy trzy drobne korekty kontraktu typów po tym wyniku; funkcjonalne commity per ekran pozostają osobne.
