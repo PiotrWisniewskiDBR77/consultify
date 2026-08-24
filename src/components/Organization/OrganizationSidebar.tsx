@@ -220,6 +220,9 @@ export const OrganizationSidebar: React.FC<OrganizationSidebarProps> = ({
         isPolish ? 'Nawigacja Organizacji' : 'Organization navigation'
       )}
       modules={modules ?? getOrganizationModules(language)}
+      // Redesign (flaga ON) podaje własne `modules` — wtedy nawigacja jest
+      // płaską listą 11 ekranów, jak w zaakceptowanym prototypie.
+      defaultExpandAll={!!modules}
       activeModule={activeLocation.module}
       activeChild={activeLocation.screen}
       onChildChange={(module, screen) => onLocationChange({ module, screen })}

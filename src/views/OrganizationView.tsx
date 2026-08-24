@@ -383,6 +383,9 @@ export const OrganizationView: React.FC = () => {
             ]}
             title={currentMeta.title}
             subtitle={currentMeta.subtitle}
+            // Pod flagą ON zostaje sam breadcrumb (prototyp) — H1 dublował
+            // ostatni okruszek. OFF: nagłówek bez zmian.
+            hideTitle={redesignEnabled}
             actionsRef={setHeaderActionsTarget}
             menuControl={
               <button

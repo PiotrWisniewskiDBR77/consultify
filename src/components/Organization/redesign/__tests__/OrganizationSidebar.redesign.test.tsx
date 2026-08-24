@@ -38,6 +38,8 @@ describe('OrganizationSidebar — flaga orgRedesignV1', () => {
       .getAllByRole('button')
       .filter((button) => button.hasAttribute('aria-expanded'));
     expect(groups).toHaveLength(6);
+    // OFF: akordeon jak dotąd — rozwinięta wyłącznie grupa aktywna.
+    expect(groups.filter((group) => group.getAttribute('aria-expanded') === 'true')).toHaveLength(1);
 
     expandAll();
     const legacyScreens = ORGANIZATION_MODULES.flatMap((module) => module.children);
@@ -60,8 +62,10 @@ describe('OrganizationSidebar — flaga orgRedesignV1', () => {
       .getAllByRole('button')
       .filter((button) => button.hasAttribute('aria-expanded'));
     expect(groups).toHaveLength(6);
+    // ON: płaska lista — wszystkie grupy rozwinięte OD RAZU, bez klikania
+    // (decyzja nadzorcy 2026-08-24; po konsolidacji 11 ekranów mieści się naraz).
+    expect(groups.every((group) => group.getAttribute('aria-expanded') === 'true')).toBe(true);
 
-    expandAll();
     const screenButtons = screen
       .getAllByRole('button')
       .filter((button) => !button.hasAttribute('aria-expanded'));

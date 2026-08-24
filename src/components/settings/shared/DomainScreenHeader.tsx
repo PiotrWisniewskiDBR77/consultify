@@ -18,6 +18,13 @@ interface DomainScreenHeaderProps {
   sticky?: boolean;
   className?: string;
   titleId?: string;
+  /**
+   * Ukrywa H1 i podtytuł, zostawiając sam breadcrumb (+ slot akcji).
+   * Redesign Organizacji: ostatni okruszek NIESIE już nazwę ekranu, więc H1 był
+   * jej dokładnym duplikatem — prototyp ma sam breadcrumb. Pominięte ⇒ nagłówek
+   * renderuje się bajt w bajt jak dotąd (Admin, Ustawienia, Organizacja OFF).
+   */
+  hideTitle?: boolean;
 }
 
 /** Shared Wave 3 screen header for Organization, Admin and Settings. */
@@ -31,6 +38,7 @@ export const DomainScreenHeader: React.FC<DomainScreenHeaderProps> = ({
   sticky = true,
   className,
   titleId,
+  hideTitle = false,
 }) => (
   <header
     className={cn(
@@ -39,7 +47,12 @@ export const DomainScreenHeader: React.FC<DomainScreenHeaderProps> = ({
       className
     )}
   >
-    <div className="domain-screen-container flex min-h-[96px] items-center gap-3">
+    <div
+      className={cn(
+        'domain-screen-container flex items-center gap-3',
+        hideTitle ? 'min-h-[56px]' : 'min-h-[96px]'
+      )}
+    >
       {menuControl}
       <div className="min-w-0 flex-1">
         <nav aria-label="Breadcrumb" className="mb-1">
@@ -72,11 +85,17 @@ export const DomainScreenHeader: React.FC<DomainScreenHeaderProps> = ({
             })}
           </ol>
         </nav>
-        <h1 id={titleId} className="type-page-title truncate text-[var(--c-text)]">
-          {title}
-        </h1>
-        {subtitle && (
-          <p className="type-helper mt-0.5 truncate text-[var(--c-text-secondary)]">{subtitle}</p>
+        {!hideTitle && (
+          <>
+            <h1 id={titleId} className="type-page-title truncate text-[var(--c-text)]">
+              {title}
+            </h1>
+            {subtitle && (
+              <p className="type-helper mt-0.5 truncate text-[var(--c-text-secondary)]">
+                {subtitle}
+              </p>
+            )}
+          </>
         )}
       </div>
       <div ref={actionsRef} className="domain-screen-actions flex shrink-0 items-center gap-2">

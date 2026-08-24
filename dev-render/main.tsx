@@ -1249,8 +1249,11 @@ createRoot(mount).render(
       >
         {entry ? entry.render() : <Fallback />}
       </React.Suspense>
-      {/* Panel uwag właściciela — obecny na KAŻDYM ekranie odbioru (zapis: /__uwagi). */}
-      <PanelUwag ekran={screenKey} />
+      {/* Panel uwag właściciela — obecny na KAŻDYM ekranie odbioru (zapis: /__uwagi).
+          `&uwagi=0` wycina go z kadru: pływające „← Lista"/„Uwagi" to kontrolki
+          HARNESSU, a nie produkt — na zrzucie do akceptu nie mogą się pojawić
+          („zrzut czysty", CLAUDE.md §7c). */}
+      {params.get('uwagi') !== '0' && <PanelUwag ekran={screenKey} />}
       {/* Toasty (react-hot-toast). Do 2026-07-23 harness NIE montował <Toaster/>,
           więc każdy `toast.error(...)` z ekranu był NIEWIDOCZNY — a to właśnie
           toastem produkt mówi „AI niedostępne, oto powód". Bez tego nie dało się

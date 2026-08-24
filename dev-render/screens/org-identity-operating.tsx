@@ -72,6 +72,41 @@ const MOCK_PROFILE = {
   profile_completeness: 71,
 };
 
+/**
+ * DWA surowe `fetch`-e omijają obiekt `Api`, więc samo podmienienie `Api.*`
+ * ich nie łapie — a bez backendu vite oddaje im `index.html`, co kończy się
+ * „Unexpected token '<'" i żółtym banerem „Changes are stored locally…":
+ *   - `useOrgContextSync` → GET/PUT `/api/organization-context-store`
+ *     (src/hooks/useOrgContextSync.ts) — to ON zapala baner,
+ *   - `OrgContext` → GET `/api/organizations/current` (błąd w konsoli).
+ * Oba to WYŁĄCZNIE brak backendu w harnessie, nie ścieżka zapisu nowego ekranu
+ * (ta idzie przez `Api.put('/organization-profiles/:id')`, podmienione niżej).
+ * Reszta `/api/**` celowo leci dalej — żeby prawdziwe błędy nadal było widać.
+ */
+const originalFetch = window.fetch.bind(window);
+window.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+  const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+  const json = (body: unknown) =>
+    new Response(JSON.stringify(body), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+  if (url.includes('/api/organization-context-store')) {
+    const method = (init?.method || 'GET').toUpperCase();
+    if (method === 'GET') return json({ goals: {}, challenges: {}, synthesis: {}, version: 'v1' });
+    return json({ ok: true, version: 'v1' });
+  }
+  if (url.includes('/api/organizations/current')) {
+    return json({
+      organizations: [
+        { id: 'org-dbr77-demo', name: 'Northstar Advisory Group', is_current: true },
+      ],
+    });
+  }
+  return originalFetch(input as RequestInfo, init);
+}) as typeof window.fetch;
+
 const originalGet = Api.get.bind(Api);
 (Api as any).get = async (path: string, ...rest: unknown[]) => {
   if (path.startsWith('/organization-profiles/')) {

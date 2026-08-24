@@ -27,6 +27,14 @@ interface DomainNavigationProps<TModule extends string, TChild extends string> {
   onBack?: () => void;
   backLabel?: string;
   className?: string;
+  /**
+   * Start z WSZYSTKIMI grupami rozwiniętymi (płaska lista wszystkich ekranów).
+   * Pominięte/false ⇒ dotychczasowe zachowanie: rozwinięta tylko grupa aktywna.
+   * Użyte przez redesign Organizacji (flaga `orgRedesignV1`) — po konsolidacji
+   * 11 ekranów mieści się naraz, więc akordeon tylko ukrywa nawigację.
+   * Zwijanie ręczne działa dalej tak samo.
+   */
+  defaultExpandAll?: boolean;
 }
 
 /**
@@ -45,9 +53,10 @@ export function DomainNavigation<TModule extends string, TChild extends string>(
   onBack,
   backLabel = 'Back',
   className,
+  defaultExpandAll = false,
 }: DomainNavigationProps<TModule, TChild>) {
-  const [expandedModules, setExpandedModules] = useState<Set<TModule>>(
-    () => new Set([activeModule])
+  const [expandedModules, setExpandedModules] = useState<Set<TModule>>(() =>
+    defaultExpandAll ? new Set(modules.map((module) => module.id)) : new Set([activeModule])
   );
 
   useEffect(() => {
