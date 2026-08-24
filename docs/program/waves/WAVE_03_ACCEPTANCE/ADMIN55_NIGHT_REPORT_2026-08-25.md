@@ -39,7 +39,7 @@ Start: 2026-08-24 (Europe/Warsaw) · Koniec: —
 | 19 | team/access-reviews | 4/B | `b266c76026` | DONE | 2 realne odczyty; privileged accounts; termin; brak fikcyjnej historii/edycji |
 | 20 | team/roles-permissions | 2 | `9f36b11c7e` | DONE | OWNER CRUD+readback; ADMIN 403 fail-closed bez formularza |
 | 21 | audit/legal-hold | 4/B | `75c63d3458` | DONE | realna flaga org; blokowane operacje; brak mutacji i fikcyjnego rejestru |
-| 22 | audit/export-history | 4/B | — | NIE ZACZĘTO | |
+| 22 | audit/export-history | 4/B | `c90847a2a3` | DONE | addytywne paragony CSV; non-blocking INSERT; tenantowa lista |
 | 23 | audit/integrity | 4/B | — | NIE ZACZĘTO | |
 | 24 | ai/personas | 4/A | — | NIE ZACZĘTO | |
 | 25 | ai/ai-incidents | 4/B | — | NIE ZACZĘTO | |
@@ -94,6 +94,7 @@ Stan: NIE ZACOMMITOWANO.
 | 6 | Admin-data pobiera sesje dla org z parametru URL | `server/src/routes/admin-data.routes.ts:401` | cross-tenant read IDOR | nie użyto tej trasy i nie zmieniano cudzych konsumentów |
 | 7 | Serwis sesji admina nie waliduje powodu ani zatwierdzającego break-glass | `server/src/services/adminSessionService.ts:149-214` | brak walidacji domenowej | nowa trasa egzekwuje oba warunki; cudzej trasy superadmina nie zmieniano |
 | 8 | `legal_holds` jest martwe i prawdopodobnie nieuruchomione | `server/migrations/263_gdpr_compliance.sql:332` | schema/runtime drift | ekran pokazuje wyłącznie żywą flagę `org_policies`; bez migracji |
+| 9 | `audit_export_history` z `259_` jest martwe; eksporty dataExport nie mają wspólnego kontraktu paragonu | `server/migrations/259_audit_logging.sql:105`, `server/src/routes/dataExport.routes.ts` | schema/runtime drift / poza zakresem | dodano odrębny minimalny receipt tylko do admin audit CSV |
 
 ## Korekty inwentarza
 
@@ -155,11 +156,16 @@ Brak na starcie dyżuru.
 - `npx esbuild server/src/routes/admin/legal-hold.routes.ts --platform=node --format=esm --outfile=/dev/null` — PASS.
 - `npx esbuild src/components/Admin/AdminLegalHoldPanel.tsx --loader:.tsx=tsx --outfile=/dev/null` — PASS.
 - `npx vitest run server/src/routes/__tests__/legal-hold.routes.test.ts src/components/Admin/__tests__/AdminLegalHoldPanel.test.tsx src/views/admin/__tests__/AdminSettingsModule.test.tsx` — PASS, 3 pliki / 43 testy.
+- `server/migrations/20261074_admin_audit_export_receipts.sql` na jednorazowym PostgreSQL 16 — PASS dwa przebiegi; 8 kolumn i indeks potwierdzone; kontener usunięty.
+- `npx esbuild server/src/routes/admin/audit-export-history.routes.ts --platform=node --format=esm --outfile=/dev/null` — PASS.
+- `npx esbuild src/components/Admin/AdminAuditExportHistoryPanel.tsx --loader:.tsx=tsx --outfile=/dev/null` — PASS.
+- `bash scripts/check-list-canon.sh src/components/Admin/AdminAuditExportHistoryPanel.tsx` — PASS, 0 nowych naruszeń.
+- `npx vitest run server/src/routes/__tests__/audit-export-history.routes.test.ts server/src/routes/__tests__/adminP32.routes.test.ts src/components/Admin/__tests__/AdminAuditExportHistoryPanel.test.tsx src/views/admin/__tests__/AdminSettingsModule.test.tsx` — PASS, 4 pliki / 74 testy; obejmuje awarię receipt INSERT przy CSV 200.
 
 ## Migracje
 
 Najwyższy ośmiocyfrowy prefiks na starcie: `20261072_finance_statement_pack_archive_command.sql`.
-Dodano `20261073_admin_sessions_org_scope.sql`; dwukrotny przebieg i struktura potwierdzone lokalnie na PostgreSQL 16.
+Dodano `20261073_admin_sessions_org_scope.sql` i `20261074_admin_audit_export_receipts.sql`; oba potwierdzone dwukrotnym przebiegiem i kontrolą struktury na lokalnym PostgreSQL 16.
 
 ## Licznik ekranów
 
