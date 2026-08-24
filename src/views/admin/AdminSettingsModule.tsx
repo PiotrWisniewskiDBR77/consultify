@@ -11,6 +11,7 @@ import { AdminCommandCenterPanel } from '../../components/Admin/AdminCommandCent
 import { AdminComplianceEvidencePanel } from '../../components/Admin/AdminComplianceEvidencePanel';
 import { AdminHealthPanel } from '../../components/Admin/AdminHealthPanel';
 import { AdminJobsPanel } from '../../components/Admin/AdminJobsPanel';
+import { AdminSlaSloPanel } from '../../components/Admin/AdminSlaSloPanel';
 import { AdminMembersRolesPanel } from '../../components/Admin/AdminMembersRolesPanel';
 import { AdminPlanHistoryPanel } from '../../components/Admin/AdminPlanHistoryPanel';
 import { AdminServiceAccountsPanel } from '../../components/Admin/AdminServiceAccountsPanel';
@@ -340,6 +341,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
       // unconditionally) — just missing its own nav slot.
       (resolvedLocation.domain === 'health' && resolvedLocation.screen === 'diagnostics') ||
       (resolvedLocation.domain === 'health' && resolvedLocation.screen === 'queues-jobs') ||
+      (resolvedLocation.domain === 'health' && resolvedLocation.screen === 'sla-slo') ||
       // Fala 1 (Admin komplet 55): sso/scim-lifecycle/api-access/risk-summary
       // already have working tabs inside AdminSecurityIdentityPanel — see
       // SECURITY_TAB_BY_SCREEN below.
@@ -437,6 +439,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
         );
       case 'health':
         if (resolvedLocation.screen === 'queues-jobs') return <AdminJobsPanel />;
+        if (resolvedLocation.screen === 'sla-slo') return <AdminSlaSloPanel />;
         return <AdminHealthPanel canRunDiagnostics={CAN_ACCESS_PLATFORM_OPERATIONS} />;
       default:
         return <AdminMembersRolesPanel />;
