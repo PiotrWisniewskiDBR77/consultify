@@ -17,6 +17,9 @@ No new parallel architecture register may be created for the same purpose. New f
 - Candidate worktree: `/Users/piotrwisniewski/Developer/Consultify-final-mvp-integration-20260823`
 - Candidate branch: `codex/final-mvp-integration-20260823`
 - Frozen baseline: `2b6c8c360812f55d860eac5b99dcedfabc3cae04`
+- Last closed recovery-document checkpoint before this ledger update: `cf0cdb076855`.
+- The frozen baseline names product code. Later documentation-only checkpoints do
+  not authorize a product-code change or redefine the product baseline.
 - Product-code development: **FROZEN** until this map is reconciled and owner-approved.
 - Runtime on port `3987`: **PROTECTED / DO NOT TOUCH**.
 - Dirty worktree `/Users/piotrwisniewski/Developer/Consultify`: **PRESERVE / DO NOT CLEAN, RESET, STASH OR MERGE**.
@@ -39,8 +42,8 @@ Allowed during this phase: read-only inventory, file comparison, lineage analysi
 
 | Source | SHA | Classification | Control decision |
 |---|---:|---|---|
-| Final MVP integration | `2b6c8c3608` | `CANONICAL_CANDIDATE` | Only place where the recovery map may be updated. Product code remains frozen. |
-| Main developer worktree | `43730f86f8` plus 22 dirty entries | `PRESERVED_WIP` | Preserve exactly; inventory only. Never clean/reset/stash. |
+| Final MVP integration | product baseline `2b6c8c3608`; recovery documents through `cf0cdb076855` before this update | `CANONICAL_CANDIDATE` | Only place where the recovery map may be updated. Product code remains frozen. |
+| Main developer worktree | `43730f86f8` plus 23 dirty entries | `PRESERVED_WIP` | Preserve exactly; inventory only. Never clean/reset/stash. |
 | Recovery vault | `b21affa8cd` | `REPRESENTED` | Ancestor of candidate; no merge. |
 | Wave 3 acceptance branch | `43730f86f8` | `REPRESENTED` | Ancestor of candidate; dirty overlay remains separate WIP. |
 | Final demo preservation | `9f29cb00ff` | `REPRESENTED` | Patch-equivalent in candidate; no merge. |
@@ -82,7 +85,7 @@ All acceptance paths above are relative to `docs/program/waves/WAVE_03_ACCEPTANC
 1. **Results has two source generations but one routed owner.** `src/components/Results/*` and `src/components/ResultsVNext/*` coexist, but `/results` is forced by `ResultsOwnerReviewEntry` to `/results/kpi`, and the KPI/OKR/ROI list and full-tool routes mount `ResultsVNext/*`. `ResultsHub` is `UNREACHABLE_REFERENCE_ONLY`, not a canonical candidate. The remaining risk is runtime selection: data profile, feature flags, entitlements and fallback behavior must not reintroduce the retired cockpit.
 2. **Finance has a unique preserved patch.** The `e7574b340e` branch is not patch-equivalent to the candidate. It contains UI, runtime, server, seed and test changes. It must be decomposed into intended requirements and compared against current blobs; a wholesale cherry-pick is prohibited.
 3. **Chat-to-Tools preservation is contaminated.** The branch contains valuable documents/screenshots and cache material under `false/_cacache`. The commit is not a merge unit.
-4. **Dirty main contains owner-authored evidence.** Its 22 entries are not disposable dirt. They are an overlay requiring a manifest and destination decision.
+4. **Dirty main contains owner-authored evidence.** Its 23 entries are not disposable dirt. They are an overlay requiring a manifest and destination decision.
 5. **Screenshots are acceptance evidence, not route authority.** A visually better historical image does not by itself prove the correct backend, persistence, tenant, permissions or source lineage.
 
 ### Conflict and competing-source register
@@ -202,7 +205,11 @@ Current read-only overlay manifest (refreshed 2026-08-24; no source file was edi
 | `TEST_OR_TOOLING` | `scripts/release/verify-release-candidate-bundle.mjs`; its unit test; `scripts/recovery/report-worktree-inventory.mjs` and test; `scripts/wave3/report-acceptance-gates.mjs` and test | Review as bounded tooling commits after the canonical map is frozen. Passing these tools cannot establish owner acceptance or release readiness by itself. |
 | `PRODUCT_WIP` | `src/components/Initiatives/InitiativesHub.tsx` | Preserve in place. Compare requirement-to-code atoms against the frozen Initiatives contract; do not copy, cherry-pick or merge before owner freeze. |
 
-Manifest denominator: `23` paths = `1 CONFIGURATION_RISK` + `15 DOCUMENTATION_ONLY` + `6 TEST_OR_TOOLING` + `1 PRODUCT_WIP`. No path is classified as disposable.
+Manifest denominator: `23` file paths (`git status --porcelain=v1 -uall`), shown
+as `22` compact entries by the default status because one untracked directory
+contains two files. Classification: `1 CONFIGURATION_RISK` +
+`15 DOCUMENTATION_ONLY` + `6 TEST_OR_TOOLING` + `1 PRODUCT_WIP`. No path is
+classified as disposable.
 
 Exact content checkpoint (`git hash-object`, refreshed 2026-08-24):
 
@@ -252,13 +259,43 @@ Each module receives one row per surface with these fields before coding resumes
 ## Safe consolidation sequence
 
 1. Freeze baseline and record all worktree identities — complete.
-2. Manifest the dirty main overlay without editing it.
-3. Compare unique preservation branches at file/blob level; never cherry-pick them wholesale.
-4. Complete the 16 route → component → API → data → test → evidence records.
-5. Produce a conflict register with a proposed canonical owner and rollback source for each conflict.
+2. Manifest the dirty main overlay without editing it — complete for the current 23-path denominator; refresh before any later reuse.
+3. Compare unique preservation branches at file/blob level; never cherry-pick them wholesale — complete for the named Chat-to-Tools and Finance sources; detached references remain read-only until their module gate.
+4. Complete the 16 route → component → API → data → test → evidence records — complete as a source map; runtime proof remains explicitly pending where named.
+5. Produce a conflict register with a proposed canonical owner and rollback source for each conflict — complete; unresolved choices remain `OWNER_DECISION_REQUIRED`.
 6. Owner reviews the map and explicitly freezes canonical choices.
 7. Only then resume bounded integration, one module at a time, preserving the frozen baseline.
 8. Run the 21/22 acceptance gates only on a frozen candidate SHA: source, build, focused tests, authenticated browser, API, persistence/readback, visual evidence, expert review and owner acceptance remain separate facts.
+
+## Proposed reversible module integration order
+
+This is an execution dependency order, not authorization to start coding. Every
+row is a separate future bounded change. A failed stop gate leaves the candidate
+at the preceding exact SHA; it does not trigger a fallback to another historical
+screen or a whole-branch merge.
+
+| Order | Module | Why it enters here | Required freeze before integration | Stop gate |
+|---:|---|---|---|---|
+| 01 | Organization | Establishes tenant-owned context used by later modules. | Canonical organization profile/context owner. | Tenant isolation, authenticated read and cold readback are unproven. |
+| 02 | Settings | Establishes user/workspace preferences and shared integration policy. | Canonical settings sections and persistence authority. | A preference renders but does not persist or leaks across tenants. |
+| 03 | Admin | Establishes governed users, organizations, access and operational controls. | Role/permission policy and forbidden actions. | Any owner/admin boundary is ambiguous or bypassable. |
+| 04 | Chat | Establishes conversation, proposal and governed-action provenance. | Canonical Canvas/action contract from the owner register. | Proposal is presented as execution or durable target readback is absent. |
+| 05 | Interview | Produces governed source material for downstream insights. | Canonical URL aliases, question workspace and approval lifecycle. | Submitted material can bypass review or answers/history are lost. |
+| 06 | Meetings | Adds meeting evidence, decisions and actions to the same provenance chain. | Stable object deep-link grammar. | Collection works but an object cannot be reopened by stable identity. |
+| 07 | My Work | Consolidates assigned tasks, decisions, ideas and notebook work. | Canonical object-table primacy and Chat-to-Tools reconciliation. | Technical/legacy surfaces displace the accepted working lists. |
+| 08 | Tools | Converts source material into governed insights, reports and initiatives. | Library/process/insight/report/initiative vocabulary and tool-card owner. | Output chain has no source linkage, persistence or reopen path. |
+| 09 | Assessment | Adds the canonical assessment process and DRD full-tool workflow. | Accepted DRD route/card and Interview–Matrix–Report formula. | A historical summary/output card replaces the actual assessment tool. |
+| 10 | Audits | Reuses the governed library/process/evidence/findings/report pattern. | Audit object lifecycle and evidence authority. | Findings or reports are generated without auditable source evidence. |
+| 11 | Initiatives | Becomes the single planning registry fed by upstream modules. | Initiatives/Plan/Capacity contract and preserved dirty WIP disposition. | Candidate/portfolio legacy concepts reappear or source proposals lose lineage. |
+| 12 | Execution | Consumes approved initiatives for realizations, work, resources and steering. | Capability gate behavior and initiative-to-execution identity. | Unavailable banner masks a valid runtime or execution cards diverge from initiatives. |
+| 13 | Results | Measures outcomes through the routed KPI/OKR/ROI generation only. | `ResultsVNext` authority, fixture/data profile and no `ResultsHub` fallback. | Legacy cockpit becomes reachable or KPI/OKR/ROI cold readback fails. |
+| 14 | Finance | Applies statement, analysis, baseline, prediction and valuation semantics. | Path-by-path Finance branch disposition and five-surface data authority. | Dual-stack responses disagree or preserved branch would require wholesale merge. |
+| 15 | Materials | Publishes documents, presentations and sheets from governed sources. | Canonical sheet engine (`ExceleView` or `TabeleView`). | Two engines can own the same route or exported material loses provenance. |
+| 16 | Partner | Exposes only approved connected-state information across the external boundary. | First-run versus connected landing and partner access policy. | Internal-only data/action becomes visible or connection state is misrepresented. |
+
+Cross-module rule: a later module may not compensate for a failed earlier gate.
+Integration advances only from a clean exact-SHA checkpoint with a recorded
+requirement-to-source delta and rollback parent.
 
 ## Current conclusion
 
