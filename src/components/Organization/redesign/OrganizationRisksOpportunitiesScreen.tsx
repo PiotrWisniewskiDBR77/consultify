@@ -7,8 +7,12 @@
  * o tej samej strukturze, dokładnie jak w uzasadnieniu §3 dokumentu
  * konsolidacji.
  *
- * DANE SĄ REALNE — ten sam magazyn co stary `StrategicSynthesisModule`:
- *   `useContextBuilderStore().synthesis` (`risks`/`strengths`).
+ * DANE SĄ REALNE PO OBU STRONACH (FAZA 2, DEC-2026-08-24-15) — ten sam
+ * magazyn co stary `StrategicSynthesisModule`:
+ *   `useContextBuilderStore().synthesis` (`risks`/`strengths`) jako bufor
+ *   roboczy edycji + `PUT /organization-context-store` (`{ synthesis }`) +
+ *   readback na „Zapisz zmiany" (`useOrgContextStoreSection`, wzorzec 1:1
+ *   z zapisem profilu w „Tożsamość i model działania").
  *
  * ŚWIADOMIE POMINIĘTE (zero atrap):
  *   - modal ze szczegółami ryzyka/szansy po kliknięciu wiersza — pokazywał
@@ -27,6 +31,7 @@ import { useContextBuilderStore } from '../../../store/useContextBuilderStore';
 import type { StandardCounterChip, StandardModuleTab } from '../../standard/StandardModuleBar';
 import { OrgRecordList, OrgSectionCard } from './OrganizationCardPrimitives';
 import type { OrganizationStatePanelProps } from './OrganizationStatePanel';
+import { useOrgContextStoreSection } from './useOrgContextStoreSection';
 
 export type RisksOpportunitiesSection = 'risks' | 'strengths';
 
@@ -56,10 +61,11 @@ export interface RisksOpportunitiesRenderArgs {
 export const OrganizationRisksOpportunitiesScreen: React.FC<{
   children: (args: RisksOpportunitiesRenderArgs) => React.ReactNode;
 }> = ({ children }) => {
-  const { synthesis, updateSynthesisList } = useContextBuilderStore();
+  const { synthesis, setSynthesis, updateSynthesisList } = useContextBuilderStore();
   const [activeSection, setActiveSection] = useState<RisksOpportunitiesSection>('risks');
   const [activeChip, setActiveChip] = useState<string>('all');
   const [saved, setSaved] = useState(false);
+  const contextStore = useOrgContextStoreSection('synthesis', synthesis, setSynthesis);
 
   const riskHandlers = useMemo(
     () => ({
@@ -128,16 +134,19 @@ export const OrganizationRisksOpportunitiesScreen: React.FC<{
     { id: 'missing', label: 'Do uzupełnienia', count: counts.missing },
   ];
 
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async () => {
+    const ok = await contextStore.handleSave();
+    if (!ok) return;
     setSaved(true);
     window.setTimeout(() => setSaved(false), 1500);
-  }, []);
+  }, [contextStore]);
 
   const statePanel: OrganizationStatePanelProps = {
     filledFields: counts.filled,
     totalFields: counts.all,
-    completenessNote: 'Dane zapisywane są lokalnie na bieżąco — przycisk potwierdza stan.',
+    completenessNote: contextStore.completenessNote,
     onSave: handleSave,
+    saving: contextStore.saving,
     saveLabel: saved ? 'Zapisano' : 'Zapisz zmiany',
   };
 

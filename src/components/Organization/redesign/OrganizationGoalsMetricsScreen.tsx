@@ -5,13 +5,15 @@
  * §2, pozycje #5 „Intencja strategiczna" + #6 „Mierniki sukcesu"). Dwie sekcje
  * ekranu = dwie pigułki Menu 2: Intencja strategiczna · Mierniki sukcesu (KPI).
  *
- * DANE SĄ REALNE — ten sam magazyn co stary `GoalsExpectationsModule`:
- *   `useContextBuilderStore().goals` (persist → localStorage, `zustand/middleware`).
- *   Nie ma tu osobnego backendowego zapisu — edycja pola JUŻ jest trwała
- *   (każdy `setGoals`/`updateGoalsList` commituje do store'u synchronicznie).
- *   „Zapisz zmiany" w panelu stanu jest więc potwierdzeniem, nie odrębnym
- *   zapisem sieciowym — DECYZJA DO WERYFIKACJI z właścicielem, czy Cele mają
- *   docelowo dostać prawdziwy endpoint jak Profil (patrz RAPORT etapu B).
+ * DANE SĄ REALNE PO OBU STRONACH (FAZA 2, DEC-2026-08-24-15):
+ *   - edycja pola → `useContextBuilderStore().goals` (`setGoals`/`updateGoalsList`,
+ *     nadal persist → localStorage — teraz to WYŁĄCZNIE bufor roboczy),
+ *   - „Zapisz zmiany" → `PUT /organization-context-store` (`{ goals }`) +
+ *     READBACK (`useOrgContextStoreSection`, wzorzec 1:1 z zapisem profilu
+ *     w „Tożsamość i model działania" — `PUT /organization-profiles/:orgId`),
+ *   - przy montowaniu ekran POBIERA `GET /organization-context-store` i
+ *     hydratuje lokalny store danymi z serwera (jeśli tam są) — server jest
+ *     źródłem prawdy, local-storage tylko przyspiesza wpisywanie.
  *
  * Lista KPI używa `OrgRecordList` (nowy prymityw etapu B) zamiast starego
  * `DynamicList` — `DynamicList` miało 8 użyć `primary-*` (crimson, zakazane
@@ -19,9 +21,7 @@
  *
  * ŚWIADOMIE POMINIĘTE (zero atrap, brak w mapie 11 ekranów):
  *   - baner "AI Suggested Addition" — była to atrapa lokalnego stanu UI, nie
- *     rzeczywista sugestia AI (komentarz w starym pliku: „Mock State"),
- *   - `ContextDocUploader` — generyczny wgrywacz dokumentów bez realnej ekstrakcji
- *     w tym ekranie; do decyzji czy wraca w kolejnym kroku (patrz RAPORT).
+ *     rzeczywista sugestia AI (komentarz w starym pliku: „Mock State").
  */
 
 import { Goal, LineChart } from 'lucide-react';
@@ -39,6 +39,7 @@ import {
   OrgTextField,
 } from './OrganizationCardPrimitives';
 import type { OrganizationStatePanelProps } from './OrganizationStatePanel';
+import { useOrgContextStoreSection } from './useOrgContextStoreSection';
 
 export type GoalsMetricsSection = 'intent' | 'metrics';
 
@@ -80,6 +81,7 @@ export const OrganizationGoalsMetricsScreen: React.FC<{
   const [activeSection, setActiveSection] = useState<GoalsMetricsSection>('intent');
   const [activeChip, setActiveChip] = useState<string>('all');
   const [saved, setSaved] = useState(false);
+  const contextStore = useOrgContextStoreSection('goals', goals, setGoals);
 
   const kpiHandlers = useMemo(
     () => ({
@@ -132,18 +134,19 @@ export const OrganizationGoalsMetricsScreen: React.FC<{
     { id: 'missing', label: 'Do uzupełnienia', count: counts.missing },
   ];
 
-  const handleSave = useCallback(() => {
-    // Store lokalny (persist → localStorage) już zapisał każdą zmianę —
-    // to potwierdzenie, nie odrębny zapis sieciowy (patrz nagłówek pliku).
+  const handleSave = useCallback(async () => {
+    const ok = await contextStore.handleSave();
+    if (!ok) return;
     setSaved(true);
     window.setTimeout(() => setSaved(false), 1500);
-  }, []);
+  }, [contextStore]);
 
   const statePanel: OrganizationStatePanelProps = {
     filledFields: counts.filled,
     totalFields: counts.all,
-    completenessNote: 'Dane zapisywane są lokalnie na bieżąco — przycisk potwierdza stan.',
+    completenessNote: contextStore.completenessNote,
     onSave: handleSave,
+    saving: contextStore.saving,
     saveLabel: saved ? 'Zapisano' : 'Zapisz zmiany',
   };
 

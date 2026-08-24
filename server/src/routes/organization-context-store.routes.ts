@@ -74,7 +74,17 @@ router.put('/', async (req: AuthRequest, res: Response): Promise<void> => {
     return;
   }
 
-  const { goals, challenges, synthesis } = req.body ?? {};
+  const body = req.body ?? {};
+  const { goals, challenges, synthesis } = body;
+  // M01 etap B (DEC-2026-08-24-15): pięć ekranów redesignu dzielą TRZY klucze
+  // (goals/challenges/synthesis) między sobą (np. „Cele i mierniki" i „Zakres
+  // i tryb współpracy" oba piszą do `goals`, ale różne pola wewnątrz). Zapis z
+  // JEDNEGO ekranu nie może więc nadpisywać kluczy, których nie przysłał —
+  // stąd `hasOwnProperty` per klucz zamiast bezwarunkowego INSERT/UPDATE
+  // wszystkich trzech kolumn na każdy PUT.
+  const hasGoals = Object.prototype.hasOwnProperty.call(body, 'goals');
+  const hasChallenges = Object.prototype.hasOwnProperty.call(body, 'challenges');
+  const hasSynthesis = Object.prototype.hasOwnProperty.call(body, 'synthesis');
 
   try {
     await dbRun(
@@ -82,9 +92,9 @@ router.put('/', async (req: AuthRequest, res: Response): Promise<void> => {
            (organization_id, goals_json, challenges_json, synthesis_json, company_profile_json, updated_at, updated_by)
          VALUES ($1, $2, $3, $4, '{}', CURRENT_TIMESTAMP, $5)
          ON CONFLICT (organization_id) DO UPDATE SET
-           goals_json           = EXCLUDED.goals_json,
-           challenges_json      = EXCLUDED.challenges_json,
-           synthesis_json       = EXCLUDED.synthesis_json,
+           goals_json           = CASE WHEN $6 THEN EXCLUDED.goals_json ELSE organization_context_store.goals_json END,
+           challenges_json      = CASE WHEN $7 THEN EXCLUDED.challenges_json ELSE organization_context_store.challenges_json END,
+           synthesis_json       = CASE WHEN $8 THEN EXCLUDED.synthesis_json ELSE organization_context_store.synthesis_json END,
            updated_at           = EXCLUDED.updated_at,
            updated_by           = EXCLUDED.updated_by`,
       [
@@ -93,6 +103,9 @@ router.put('/', async (req: AuthRequest, res: Response): Promise<void> => {
         JSON.stringify(challenges ?? {}),
         JSON.stringify(synthesis ?? {}),
         userId ?? null,
+        hasGoals,
+        hasChallenges,
+        hasSynthesis,
       ],
       { fallback: false }
     );
