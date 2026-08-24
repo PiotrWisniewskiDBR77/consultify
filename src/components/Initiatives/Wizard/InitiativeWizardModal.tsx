@@ -287,7 +287,7 @@ interface CapacitySignal {
 const WIZARD_COPY: Record<WizardLanguage, Record<string, string>> = {
   pl: {
     wizardTitle: 'Kreator Inicjatyw AI',
-    stepInsights: 'Wnioski',
+    stepInsights: 'Źródło',
     selectInsightsTitle: 'Wybierz wnioski do analizy',
     selectInsightsHint:
       'Zaznacz 1 lub więcej wniosków z wywiadów. Inicjatywy zostaną wygenerowane na ich podstawie, a lineage (źródło → inicjatywa) będzie zapisany.',
@@ -324,9 +324,9 @@ const WIZARD_COPY: Record<WizardLanguage, Record<string, string>> = {
     extendedBadge: 'Rozszerzono istniejącą',
     createAnywayPicked: 'Utworzysz osobną inicjatywę mimo podobieństwa.',
     // #29h — progressive fill / AI assist
-    coreTitle: 'Rdzeń inicjatywy (auto-uzupełniony z wniosku)',
+    coreTitle: 'Założenie i rdzeń inicjatywy',
     coreHint:
-      'Pola rdzenia uzupełniliśmy z wybranego wniosku. Przejrzyj je, a puste sekcje uzupełnij z pomocą AI.',
+      'Opisz problem i oczekiwany rezultat. Jeśli wybrano źródło, pola są wstępnie uzupełnione; przejrzyj je przed wygenerowaniem szkicu AI.',
     fieldProblem: 'Problem',
     fieldSolution: 'Rozwiązanie',
     fieldScope: 'Zakres',
@@ -339,10 +339,10 @@ const WIZARD_COPY: Record<WizardLanguage, Record<string, string>> = {
     prefilledFromInsight: 'z wniosku',
     // footer
     cancel: 'Anuluj',
-    setIntentHint: 'Ustaw intencję i wygeneruj kandydatów.',
+    setIntentHint: 'Uzupełnij założenie i wygeneruj szkic AI.',
     shortlistGateOk: 'Shortlist gate OK',
-    generateCandidates: 'Wygeneruj kandydatów',
-    governancePreview: 'Governance preview',
+    generateCandidates: 'Wygeneruj szkic AI',
+    governancePreview: 'Przejdź do zatwierdzenia',
     shortlistGateTitle:
       'Shortlist gate: rozstrzygnij contradicted / uzupełnij evidence przed Utwórz drafty.',
     // intent step
@@ -369,11 +369,11 @@ const WIZARD_COPY: Record<WizardLanguage, Record<string, string>> = {
     consultantNotePlaceholder:
       'Np. po assessment chcemy wybrać 3 inicjatywy o największym efekcie na marżę, terminowość i jakość danych...',
     // candidates step
-    noCandidatesTitle: 'Brak kandydatów do triage',
+    noCandidatesTitle: 'Brak szkicu AI do przeglądu',
     noCandidatesHint:
-      'Wróć do kroku Intencja i wygeneruj kandydatów. Jeżeli sourceBasket jest pusty, system zaproponuje kandydatów z portfolio hygieny (oznaczonych niższym confidence).',
+      'Wróć do kroku Założenie i wygeneruj szkic. Jeżeli nie wskazano źródła, system użyje opisu użytkownika i kontrolowanej analizy portfolio.',
     similarInitiative: 'Podobna inicjatywa',
-    candidateDetails: 'Szczegóły kandydata',
+    candidateDetails: 'Szczegóły szkicu',
     needsEvidence: 'Brak evidence',
     ready: 'Gotowy',
     linkAlreadyCovered: 'Powiąż jako już pokryty',
@@ -393,7 +393,7 @@ const WIZARD_COPY: Record<WizardLanguage, Record<string, string>> = {
   },
   en: {
     wizardTitle: 'AI Initiative Wizard',
-    stepInsights: 'Insights',
+    stepInsights: 'Source',
     selectInsightsTitle: 'Select insights to analyze',
     selectInsightsHint:
       'Pick 1 or more interview insights. Initiatives will be generated from them, and the lineage (source → initiative) will be recorded.',
@@ -430,9 +430,9 @@ const WIZARD_COPY: Record<WizardLanguage, Record<string, string>> = {
     extendedBadge: 'Extended existing',
     createAnywayPicked: 'You will create a separate initiative despite the overlap.',
     // #29h — progressive fill / AI assist
-    coreTitle: 'Initiative core (auto-filled from the insight)',
+    coreTitle: 'Initiative premise and core',
     coreHint:
-      'We pre-filled the core fields from the selected insight. Review them and use AI to fill the empty sections.',
+      'Describe the problem and expected result. When a source is selected, fields are pre-filled; review them before generating the AI draft.',
     fieldProblem: 'Problem',
     fieldSolution: 'Solution',
     fieldScope: 'Scope',
@@ -445,10 +445,10 @@ const WIZARD_COPY: Record<WizardLanguage, Record<string, string>> = {
     prefilledFromInsight: 'from insight',
     // footer
     cancel: 'Cancel',
-    setIntentHint: 'Set the intent and generate candidates.',
+    setIntentHint: 'Complete the premise and generate an AI draft.',
     shortlistGateOk: 'Shortlist gate OK',
-    generateCandidates: 'Generate candidates',
-    governancePreview: 'Governance preview',
+    generateCandidates: 'Generate AI draft',
+    governancePreview: 'Continue to approval',
     shortlistGateTitle: 'Shortlist gate: resolve contradicted / add evidence before Create drafts.',
     // intent step
     transformDecision: 'Transformation decision',
@@ -474,11 +474,11 @@ const WIZARD_COPY: Record<WizardLanguage, Record<string, string>> = {
     consultantNotePlaceholder:
       'E.g. after the assessment we want to pick 3 initiatives with the biggest impact on margin, on-time delivery and data quality...',
     // candidates step
-    noCandidatesTitle: 'No candidates to triage',
+    noCandidatesTitle: 'No AI draft to review',
     noCandidatesHint:
-      'Go back to the Intent step and generate candidates. If the sourceBasket is empty, the system will propose candidates from portfolio hygiene (flagged with lower confidence).',
+      'Go back to the Premise step and generate a draft. If no source was selected, the system uses the user brief and controlled portfolio analysis.',
     similarInitiative: 'Similar initiative',
-    candidateDetails: 'Candidate details',
+    candidateDetails: 'Draft details',
     needsEvidence: 'Needs evidence',
     ready: 'Ready',
     linkAlreadyCovered: 'Link as already covered',
@@ -1103,6 +1103,19 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
       );
       return;
     }
+    const hasCreationBasis =
+      selectedInsightIds.length > 0 ||
+      initialSourceBasket.length > 0 ||
+      manualNotes.trim().length > 0 ||
+      Object.values(coreFields).some((value) => value.trim().length > 0);
+    if (!hasCreationBasis) {
+      toast.error(
+        language === 'pl'
+          ? 'Opisz założenie inicjatywy albo wybierz źródło przed wygenerowaniem szkicu AI.'
+          : 'Describe the initiative premise or select a source before generating the AI draft.'
+      );
+      return;
+    }
     setIsWorking(true);
     try {
       // #29b — selected insights become the evidence sourceBasket so the backend
@@ -1635,11 +1648,10 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
     </div>
   );
 
-  // #29h — progressive-fill CORE panel. Shown in the Intent step once at least
-  // one insight is selected, so the user reviews the auto-filled rdzeń and can
-  // fill empty sections with AI before generating candidates.
+  // INI-OWN-006 — the premise is mandatory in the product flow even when the
+  // user starts manually. Selected evidence can prefill it, but must never be
+  // required merely to make the review/edit surface appear.
   const renderCorePanel = () => {
-    if (selectedInsightIds.length === 0) return null;
     return (
       <div
         data-testid="initiative-wizard-core-panel"
@@ -1657,13 +1669,17 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
         <div className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
           {CORE_FIELD_DEFS.map((def) => {
             const value = coreFields[def.key];
+            const fieldId = `initiative-wizard-core-${def.key}`;
             const isEmpty = value.trim().length === 0;
             const isPrefilled = corePrefilled[def.key];
             const isFilling = aiFillingField === def.key;
             return (
               <div key={def.key} className="flex flex-col">
                 <div className="mb-1 flex items-center justify-between gap-2">
-                  <label className="flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-300">
+                  <label
+                    htmlFor={fieldId}
+                    className="flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-300"
+                  >
                     {t[def.labelKey]}
                     {isPrefilled && (
                       <span className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
@@ -1688,6 +1704,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
                   </button>
                 </div>
                 <textarea
+                  id={fieldId}
                   value={value}
                   onChange={(event) => setCoreField(def.key, event.target.value)}
                   rows={def.rows}
@@ -2471,26 +2488,26 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
     },
     {
       id: 'intent',
-      label: { pl: 'Intencja', en: 'Intent' },
-      hint: { pl: 'Cel, priorytety, rdzeń', en: 'Goal, priorities, core' },
+      label: { pl: 'Założenie', en: 'Premise' },
+      hint: { pl: 'Problem, rezultat i zakres', en: 'Problem, outcome and scope' },
       status: stepStatusFor('intent', 1),
     },
     {
       id: 'candidates',
-      label: { pl: 'Kandydaci', en: 'Candidates' },
-      hint: { pl: 'Triage i podobieństwa', en: 'Triage & similarity' },
+      label: { pl: 'Szkic AI', en: 'AI draft' },
+      hint: { pl: 'Przegląd, korekta i podobieństwa', en: 'Review, edit and similarity' },
       status: stepStatusFor('candidates', 2),
     },
     {
       id: 'governance',
-      label: { pl: 'Governance', en: 'Governance' },
-      hint: { pl: 'Wybór i shortlist gate', en: 'Selection & shortlist gate' },
+      label: { pl: 'Zatwierdzenie', en: 'Approval' },
+      hint: { pl: 'Wybór, dowody i reguły', en: 'Selection, evidence and rules' },
       status: stepStatusFor('governance', 3),
     },
     {
       id: 'result',
-      label: { pl: 'Wynik', en: 'Result' },
-      hint: { pl: 'Drafty i ślad audytu', en: 'Drafts & audit trail' },
+      label: { pl: 'Potwierdzenie', en: 'Receipt' },
+      hint: { pl: 'Zapis i ślad audytu', en: 'Save and audit trail' },
       status: stepStatusFor('result', 4),
     },
   ];
@@ -2625,7 +2642,16 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
               <Button
                 type="button"
                 variant="primary"
-                disabled={isWorking || !selectedProjectId}
+                disabled={
+                  isWorking ||
+                  !selectedProjectId ||
+                  !(
+                    selectedInsightIds.length > 0 ||
+                    initialSourceBasket.length > 0 ||
+                    manualNotes.trim().length > 0 ||
+                    Object.values(coreFields).some((value) => value.trim().length > 0)
+                  )
+                }
                 onClick={startWizard}
                 loading={isWorking}
                 icon={isWorking ? undefined : <Sparkles size={16} />}

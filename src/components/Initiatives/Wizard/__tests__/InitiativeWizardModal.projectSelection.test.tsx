@@ -100,17 +100,21 @@ describe('InitiativeWizardModal project anchoring', () => {
     );
 
     const projectPicker = await screen.findByLabelText('Project *');
-    const generate = await screen.findByRole('button', { name: 'Generate candidates' });
+    const generate = await screen.findByRole('button', { name: 'Generate AI draft' });
     expect(generate).toBeDisabled();
 
     fireEvent.change(projectPicker, { target: { value: 'project-b' } });
+    expect(generate).toBeDisabled();
+    fireEvent.change(screen.getByLabelText('Problem'), {
+      target: { value: 'Orders are delivered late and customers have no reliable ETA.' },
+    });
     expect(generate).toBeEnabled();
     fireEvent.click(generate);
 
     expect((await screen.findAllByText('Governed initiative')).length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole('button', { name: 'Accept' }));
     await waitFor(() => expect(apiPatch).toHaveBeenCalled());
-    fireEvent.click(screen.getByRole('button', { name: 'Governance preview' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Continue to approval' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Create drafts (1)' }));
 
     await waitFor(() => expect(createInitiativeWriteTruth).toHaveBeenCalledTimes(1));
@@ -150,6 +154,11 @@ describe('InitiativeWizardModal project anchoring', () => {
 
     await waitFor(() => expect(createProject).toHaveBeenCalledWith({ name: 'FullTruth Project' }));
     expect(screen.getByLabelText('Project *')).toHaveValue('project-new');
-    expect(screen.getByRole('button', { name: 'Generate candidates' })).toBeEnabled();
+    const generate = screen.getByRole('button', { name: 'Generate AI draft' });
+    expect(generate).toBeDisabled();
+    fireEvent.change(screen.getByLabelText('Problem'), {
+      target: { value: 'A measurable operational problem.' },
+    });
+    expect(generate).toBeEnabled();
   });
 });
