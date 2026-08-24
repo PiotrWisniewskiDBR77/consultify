@@ -63,4 +63,34 @@ describe('AdminSecurityIdentityPanel', () => {
     fireEvent.keyDown(tabs[1], { key: 'End' });
     expect(tabs[tabs.length - 1]).toHaveFocus();
   });
+
+  describe('initialTab prop (Admin komplet 55, Fala 1)', () => {
+    it('opens on the tab requested by the caller when no ?tab= is present', () => {
+      render(
+        <MemoryRouter initialEntries={['/admin/security/scim-lifecycle']}>
+          <AdminSecurityIdentityPanel initialTab="scim" />
+        </MemoryRouter>
+      );
+
+      expect(screen.getByRole('tab', { name: /SCIM & lifecycle/i })).toHaveAttribute(
+        'aria-selected',
+        'true'
+      );
+      expect(screen.getByText('SCIM mocked')).toBeInTheDocument();
+    });
+
+    it('lets an explicit ?tab= query param win over initialTab', () => {
+      render(
+        <MemoryRouter initialEntries={['/admin/security/scim-lifecycle?tab=risk']}>
+          <AdminSecurityIdentityPanel initialTab="scim" />
+        </MemoryRouter>
+      );
+
+      expect(screen.getByRole('tab', { name: /Risk summary/i })).toHaveAttribute(
+        'aria-selected',
+        'true'
+      );
+      expect(screen.getByText('Risk summary mocked')).toBeInTheDocument();
+    });
+  });
 });

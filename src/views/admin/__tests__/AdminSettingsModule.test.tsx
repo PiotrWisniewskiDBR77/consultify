@@ -28,7 +28,11 @@ vi.mock('../../../components/Admin/AdminAIControlCenterPanel', () => ({
   AdminAIControlCenterPanel: () => <div data-testid="panel-ai">ai</div>,
 }));
 vi.mock('../../../components/Admin/AdminSecurityIdentityPanel', () => ({
-  AdminSecurityIdentityPanel: () => <div data-testid="panel-security">security</div>,
+  AdminSecurityIdentityPanel: ({ initialTab }: { initialTab?: string }) => (
+    <div data-testid="panel-security" data-initial-tab={initialTab}>
+      security
+    </div>
+  ),
 }));
 vi.mock('../../../components/Admin/AdminAuditLogPanel', () => ({
   AdminAuditLogPanel: () => <div data-testid="panel-audit">audit</div>,
@@ -185,6 +189,18 @@ describe('AdminSettingsModule section routing', () => {
     it('wires Diagnostics to the existing health panel', () => {
       renderAt('/admin/health/diagnostics');
       expect(screen.getByTestId('panel-health')).toBeInTheDocument();
+    });
+
+    it.each([
+      ['sso', 'policy'],
+      ['scim-lifecycle', 'scim'],
+      ['api-access', 'api-access'],
+      ['risk-summary', 'risk'],
+    ])('wires security/%s to the %s tab of AdminSecurityIdentityPanel', (screenId, tabId) => {
+      renderAt(`/admin/security/${screenId}`);
+      const panel = screen.getByTestId('panel-security');
+      expect(panel).toBeInTheDocument();
+      expect(panel).toHaveAttribute('data-initial-tab', tabId);
     });
   });
 });

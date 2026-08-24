@@ -17,7 +17,10 @@ import {
   type AdminScreen,
   getAdminDomains,
 } from '../../components/Admin/adminNavigation';
-import { AdminSecurityIdentityPanel } from '../../components/Admin/AdminSecurityIdentityPanel';
+import {
+  AdminSecurityIdentityPanel,
+  type AdminSecurityIdentityTabId,
+} from '../../components/Admin/AdminSecurityIdentityPanel';
 import {
   type AdminLocation,
   AdminSettingsSection,
@@ -180,6 +183,17 @@ const DOMAIN_LEGACY: Record<AdminDomain, AdminSettingsSection> = {
   health: 'health',
 };
 
+// Admin komplet 55, Fala 1 — AdminSecurityIdentityPanel already has a tab per
+// WIRE_ONLY security screen (SSO lives inside the `policy` tab via
+// AdminSsoSelfServiceCard, see AdminSecurityPolicyPanel.tsx). Maps the
+// AdminScreen nav slot to the panel's internal tab id.
+const SECURITY_TAB_BY_SCREEN: Partial<Record<AdminScreen, AdminSecurityIdentityTabId>> = {
+  sso: 'policy',
+  'scim-lifecycle': 'scim',
+  'api-access': 'api-access',
+  'risk-summary': 'risk',
+};
+
 // Exported for the same DEC-2026-08-24-10 regression test as
 // resolveAdminState above — pure function, no behavior change.
 export function resolveAdminLocation(
@@ -300,7 +314,12 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
       // Fala 1 (Admin komplet 55): Diagnostics is the same probe UI as the
       // connected `service-status` default (AdminHealthPanel renders both
       // unconditionally) — just missing its own nav slot.
-      (resolvedLocation.domain === 'health' && resolvedLocation.screen === 'diagnostics');
+      (resolvedLocation.domain === 'health' && resolvedLocation.screen === 'diagnostics') ||
+      // Fala 1 (Admin komplet 55): sso/scim-lifecycle/api-access/risk-summary
+      // already have working tabs inside AdminSecurityIdentityPanel — see
+      // SECURITY_TAB_BY_SCREEN below.
+      (resolvedLocation.domain === 'security' &&
+        Object.prototype.hasOwnProperty.call(SECURITY_TAB_BY_SCREEN, resolvedLocation.screen));
     if (!connected) {
       return (
         <AdminCapabilityState
@@ -350,7 +369,11 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
       case 'ai':
         return <AdminAIControlCenterPanel />;
       case 'security':
-        return <AdminSecurityIdentityPanel />;
+        return (
+          <AdminSecurityIdentityPanel
+            initialTab={SECURITY_TAB_BY_SCREEN[resolvedLocation.screen]}
+          />
+        );
       case 'audit':
         return <AdminAuditLogPanel />;
       case 'command':

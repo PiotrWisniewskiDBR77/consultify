@@ -11,9 +11,27 @@ import { AdminRiskSummaryPanel } from './AdminRiskSummaryPanel';
 import { AdminScimLifecyclePanel } from './AdminScimLifecyclePanel';
 import { AdminSecurityPolicyPanel } from './AdminSecurityPolicyPanel';
 
-type TabId = 'policy' | 'collaboration' | 'api-access' | 'iam' | 'scim' | 'risk';
+export type AdminSecurityIdentityTabId =
+  | 'policy'
+  | 'collaboration'
+  | 'api-access'
+  | 'iam'
+  | 'scim'
+  | 'risk';
+type TabId = AdminSecurityIdentityTabId;
 
-export const AdminSecurityIdentityPanel: React.FC = () => {
+interface AdminSecurityIdentityPanelProps {
+  // Admin komplet 55, Fala 1 — lets AdminSettingsModule open this panel on a
+  // specific tab when a caller navigates to a WIRE_ONLY nav slot that has no
+  // AdminScreen of its own (e.g. "SSO", "API access"). The `?tab=` URL param
+  // set by clicking a tab inside the panel still wins, so in-panel
+  // navigation keeps working exactly as before.
+  initialTab?: TabId;
+}
+
+export const AdminSecurityIdentityPanel: React.FC<AdminSecurityIdentityPanelProps> = ({
+  initialTab,
+}) => {
   const { t } = useTranslation();
   const tabs: Array<{ id: TabId; label: string; icon: React.ElementType }> = [
     {
@@ -50,8 +68,10 @@ export const AdminSecurityIdentityPanel: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedTab = useMemo(() => {
     const raw = searchParams.get('tab');
-    return tabs.some((tab) => tab.id === raw) ? (raw as TabId) : 'policy';
-  }, [searchParams]);
+    if (tabs.some((tab) => tab.id === raw)) return raw as TabId;
+    if (initialTab && tabs.some((tab) => tab.id === initialTab)) return initialTab;
+    return 'policy';
+  }, [searchParams, initialTab]);
   const [activeTab, setActiveTab] = useState<TabId>(requestedTab);
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
