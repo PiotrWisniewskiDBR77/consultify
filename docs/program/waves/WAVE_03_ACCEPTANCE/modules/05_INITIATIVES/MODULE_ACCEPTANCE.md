@@ -3,6 +3,12 @@
 ID: `INI`
 Routes: `/initiatives`, candidate and profile deep links
 Current gate: `EXPERT_NO_GO / REMEDIATION_REQUIRED / OWNER_RETEST_PENDING`
+
+Current-HEAD reconciliation (2026-08-24):
+`../../evidence/current-expert-audits-2026-08-24/initiatives/INITIATIVES_CURRENT_HEAD_RECONCILIATION_2026-08-24.md`.
+It records later technical closure evidence for `INI-C01`, `INI-C02`,
+`INI-C03` and `INI-C08`, while preserving the expert NO-GO and the genuinely
+open product/owner gates.
 Owner: Piotr Wisniewski
 Integrator: Codex
 Mobile: `DEFERRED_NON_GATING`
@@ -62,7 +68,7 @@ invalid deep link, insufficient role, foreign tenant and duplicate command.
 | G12 | Owner register reconciled and confirmed | `IN_PROGRESS` | Latest owner IA supersedes the historical Candidates/Portfolio top-level tabs; no owner acceptance inferred. |
 | G13 | Solution and impact analysis | `PASS_FOR_CURRENT_P0` | Root causes for unclassified demo rows, duplicated IA and unopenable showcase cards identified; Plan/Capacity specifications remain implementation work. |
 | G14 | Remediation with finding-to-commit traceability | `PASS_TECHNICAL` | UI repair: `5c6d72066f`; truthful source: `b88f23e149`; scenario durability: `4e5fbbe0f6`; implicit Execution fixtures removed: `482d0d7363`; canonical Execution Case joined to the Initiative register by ID: `68d59c4774`; explicit sample-source isolation: `8acbb2203a`; premise-first creation: `98df1c6135`; Plan unscheduled visibility and readable Capacity workbench: `76e119dda7`; canonical Initiative→Execution link retained for `IN_EXECUTION`: `673363f63c`. Owner retest remains required. |
-| G15 | Integrator self-QA and impacted regression | `TECHNICAL_BROWSER_PASS_WITH_OPEN_FINDINGS` | Earlier Hub/error/modal `17/17 PASS`; Plan/Capacity domain+surface `9/9 PASS`; Plan/Capacity RealDB `3/3 PASS`; Initiative→Execution identity `2/2 PASS`; focused canonical-source contract `3/3 PASS`; root typecheck PASS with an 8 GB Node heap. Current focused Plan/Capacity remediation: `6/6 PASS`, touched-file ESLint PASS and diff-check PASS. Exact-SHA `76e119dda7` verified the targeted Plan/Capacity repairs. Exact-SHA `14da3e6d07578ca035daf62f1b7731cbb53dcfdb` on client/server `4007/4006` with a preserved 834-migration DB additionally verified the same canonical Initiative in Initiatives and Execution plus non-empty Work, Resources, Control and Reports; evidence index linked above. Expert findings, full product-contract closure and owner acceptance remain open. |
+| G15 | Integrator self-QA and impacted regression | `TECHNICAL_BROWSER_PASS_WITH_OPEN_FINDINGS` | Earlier Hub/error/modal `17/17 PASS`; Plan/Capacity domain+surface `9/9 PASS`; Plan/Capacity RealDB `3/3 PASS`; Initiative→Execution identity `2/2 PASS`; focused canonical-source contract `3/3 PASS`; root typecheck PASS with an 8 GB Node heap. Current focused Initiatives regression at documentation HEAD `79be2f32ae`: `4 files / 136 tests PASS`, with non-blocking React `act(...)` warnings retained as test debt. Exact-SHA product runtime `e04797f993` on client/server `4007/4006` with a preserved 834-migration DB verified the same canonical Initiative in Initiatives and Execution plus non-empty Work, Resources, Control and Reports. Expert findings, complete product-contract closure and owner acceptance remain open. |
 | G16 | Before/after owner retest packet | `CURRENT_AFTER_PACKET_READY / BEFORE_HISTORY_PRESERVED` | Current six-screen exact-SHA packet linked above; historical owner screenshots remain preserved. This does not replace the guided owner retest or close individual findings. |
 | G17 | Owner retest decisions for every finding | `NOT_STARTED` | — |
 | G18 | Module accepted on exact SHA and checkpointed | `NOT_STARTED` | — |
