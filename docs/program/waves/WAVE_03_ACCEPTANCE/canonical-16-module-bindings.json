@@ -2,6 +2,27 @@
   "schemaVersion": 1,
   "status": "OWNER_FREEZE_PENDING",
   "candidateBranch": "codex/final-mvp-integration-20260823",
+  "recoveryControl": {
+    "productBaseline": "2b6c8c360812f55d860eac5b99dcedfabc3cae04",
+    "measuredAtRecoveryCheckpoint": "dc9efec8e0e29feee89c35cbbaa3b974c6d9cce4",
+    "scope": "DOCUMENTATION_AND_CONTROL_ONLY",
+    "runtimeExecution": "NOT_RUN_IN_FREEZE",
+    "ownerAcceptance": "NOT_PROVEN",
+    "releaseAuthorization": "NOT_AUTHORIZED",
+    "gateSnapshot": {
+      "modules": 16,
+      "gatesPerModule": 21,
+      "gatesPresent": 336,
+      "gatesMissing": 0,
+      "terminalClosed": 31,
+      "qualifiedPass": 71,
+      "ownerGated": 28,
+      "policyGated": 4,
+      "open": 202,
+      "unresolved": 305,
+      "fullyClosedModules": 0
+    }
+  },
   "acceptanceRegisters": {
     "organization": "docs/program/waves/WAVE_03_ACCEPTANCE/modules/01_ORGANIZATION/MODULE_ACCEPTANCE.md",
     "interview": "docs/program/waves/WAVE_03_ACCEPTANCE/modules/02_INTERVIEW/MODULE_ACCEPTANCE.md",

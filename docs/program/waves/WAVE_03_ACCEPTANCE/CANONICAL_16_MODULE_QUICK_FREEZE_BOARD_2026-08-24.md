@@ -5,6 +5,9 @@ Candidate branch: `codex/final-mvp-integration-20260823`
 Protected runtime: `http://127.0.0.1:3987` — do not mutate  
 Production/Railway release: `NOT_AUTHORIZED`
 
+Measured control checkpoint: `dc9efec8e0e29feee89c35cbbaa3b974c6d9cce4`
+Frozen product baseline: `2b6c8c360812f55d860eac5b99dcedfabc3cae04`
+
 ## Purpose
 
 This is the short owner-facing control board for the final 16-module review.
@@ -21,6 +24,27 @@ For every module the owner gives exactly one verdict:
 
 An image classified as `TARGET_REFERENCE_CANDIDATE` is still only a candidate.
 It never proves the current runtime, persistence, authorization or acceptance.
+
+## Current gate reality
+
+The acceptance corpus is structurally complete but the product is not accepted:
+
+| Measure | Current evidence |
+|---|---:|
+| Modules represented | 16 |
+| Gate rows present | 336 / 336 |
+| Missing gate rows | 0 |
+| Terminally closed gates | 31 |
+| Qualified technical passes | 71 |
+| Owner-gated | 28 |
+| Policy-gated | 4 |
+| Open | 202 |
+| Total unresolved | 305 |
+| Fully closed modules | 0 / 16 |
+
+This is a documentation-control result, not runtime acceptance. The parser was
+run read-only at the measured checkpoint. No app, API, browser, database,
+persistence, Railway or production test was run to produce this snapshot.
 
 ## Quick review board
 
@@ -42,6 +66,36 @@ It never proves the current runtime, persistence, authorization or acceptance.
 | 14 | Admin | `/admin` | `AdminView` | Overview; Users; Organizations; Access; AI/Models; Operations/Audit | `HISTORICAL_ORIENTATION_ONLY` | tenant-admin and superadmin boundaries must remain separate | `PENDING` |
 | 15 | Settings | `/settings` | `SettingsView` | Profile; Workspace; Notifications; Integrations; Security/Privacy | `HISTORICAL_ORIENTATION_ONLY` | freeze ownership split between user, organization and administration settings | `PENDING` |
 | 16 | Partner | `/partner` | `PartnerPortalViewNew` | Overview; Opportunities; Connections; Collaboration; Materials; Settings | `HISTORICAL_ORIENTATION_ONLY` | operational landing for an already connected partner is not frozen | `PENDING` |
+
+## Decisions that must be frozen before any wiring
+
+These choices are intentionally unresolved. A developer or agent must not infer
+an answer from whichever historical component happens to compile:
+
+1. **Interview route identity:** whether `/interview` is the sole canonical URL
+   and `/discovery` plus `/project-intelligence` become redirects, or whether
+   aliases remain supported.
+2. **Assessment full tool:** freeze one DRD implementation and the current
+   `Interview → Matrix → Report` flow with separate `Settings`; `Split` and
+   `Workspace` are historical provenance, not parallel target tabs.
+3. **Execution capability behavior:** distinguish a legitimate unavailable
+   state from the regression where `V8UnavailableBanner` hides a usable module.
+4. **Results source generation:** `ResultsVNext` KPI/OKR/ROI registries and full
+   tools are the routed candidate; the centered legacy `ResultsHub` cockpit must
+   not return as fallback.
+5. **Finance cutover:** select one governed artifact and API lineage from the
+   routed stack and the preserved Finance branch; no wholesale branch merge.
+6. **Materials sheet engine:** choose `ExceleView` or `TabeleView`, and record
+   the disposition of the non-selected engine.
+7. **Meeting object URL:** define the stable deep-link grammar before cards are
+   integrated.
+8. **Partner landing:** distinguish the valid first-run connection surface from
+   the operational landing for an already connected partner.
+9. **Menu vocabulary:** reconcile the detailed owner labels with summary labels
+   for Organization, Interview and Materials; do not silently rename or omit a
+   surface.
+10. **Ownership boundaries:** freeze user Settings versus Organization versus
+    Admin responsibilities before any settings consolidation.
 
 ## Atomic owner-feedback protocol
 

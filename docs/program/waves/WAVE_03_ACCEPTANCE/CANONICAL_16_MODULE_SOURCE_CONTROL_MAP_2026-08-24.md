@@ -61,11 +61,11 @@ The `Source owner` column records the owner currently wired in `src/routes/AppRo
 
 | # | Module | Canonical entry | Expected Menu 2 | Current source owner | Primary acceptance source | Current control status |
 |---:|---|---|---|---|---|---|
-| 01 | Organization | `/organization` | Profile; Goals; Challenges; Strategy; Context governance | `src/views/OrganizationView.tsx` | `modules/01_ORGANIZATION/MODULE_ACCEPTANCE.md` | `CANONICAL_CANDIDATE`; dirty owner notes must be reconciled |
+| 01 | Organization | `/organization` | Profile; Goals; Challenges; Strategy; Context governance | `src/views/OrganizationView.tsx` | `modules/01_ORGANIZATION/MODULE_ACCEPTANCE.md` | `CANONICAL_CANDIDATE`; owner vocabulary and IA freeze pending |
 | 02 | Interview | `/interview` | Inbox; Assigned/Managed; Templates; Results/Insights | `src/components/Interview/InterviewHub.tsx` | `modules/02_INTERVIEW/MODULE_ACCEPTANCE.md` | `CANONICAL_CANDIDATE`; Chat-to-Tools WIP comparison pending |
 | 03 | Tools | `/discovery-tools` | Library; Processes/Sessions; Insights; Reports; Initiatives | `src/components/Discovery/DiscoveryToolsHub.tsx` | `modules/03_TOOLS/MODULE_ACCEPTANCE.md` | `CANONICAL_CANDIDATE`; `7c3b...` intended-path reconciliation pending |
-| 04 | Assessment | `/assessment/overview?tab=library` | Library; Processes; Insights; Reports; Initiatives | `src/components/assessment/AssessmentHub.tsx`; full tool `src/views/AssessmentSessionEditorView.tsx` | `modules/04_ASSESSMENT/MODULE_ACCEPTANCE.md` and owner register | `CANONICAL_CANDIDATE`; owner workshop WIP preserved separately |
-| 05 | Initiatives | `/initiatives` | Initiatives; Plan; Capacity | `src/components/Initiatives/InitiativesHub.tsx` | `modules/05_INITIATIVES/MODULE_ACCEPTANCE.md` | `CANONICAL_CANDIDATE`; dirty implementation contract/expert notes pending |
+| 04 | Assessment | `/assessment/overview?tab=library` | Library; Processes; Insights; Reports; Initiatives | `src/components/assessment/AssessmentHub.tsx`; full tool `src/views/AssessmentSessionEditorView.tsx` | `modules/04_ASSESSMENT/MODULE_ACCEPTANCE.md` and owner register | `CANONICAL_CANDIDATE`; owner workshop reconciled, one DRD implementation still requires owner freeze |
+| 05 | Initiatives | `/initiatives` | Initiatives; Plan; Capacity | `src/components/Initiatives/InitiativesHub.tsx` | `modules/05_INITIATIVES/MODULE_ACCEPTANCE.md` | `CANONICAL_CANDIDATE`; owner contracts preserved and cross-walked; mixed product WIP requires later atom reconciliation |
 | 06 | Execution | `/execution` | Realizations; Work; Resources; Steering; Reports | `src/components/Execution/ExecutionHub.tsx` | `modules/06_EXECUTION/MODULE_ACCEPTANCE.md` | `CANONICAL_CANDIDATE`; visible runtime is protected; no further edits |
 | 07 | My Work | `/my-work` | Inbox/Triage; Tasks; Decisions; Ideas; Notebook; Agent activity | `src/views/MyWorkView.tsx` | `modules/07_MY_WORK_AGENT/MODULE_ACCEPTANCE.md` | `CANONICAL_CANDIDATE`; Chat-to-Tools WIP comparison pending |
 | 08 | Meetings | `/meeting` | Meetings; Agenda/Templates; Minutes; Decisions/Actions | `src/components/Meeting/MeetingHub.tsx` | `modules/08_MEETINGS/MODULE_ACCEPTANCE.md` | `CANONICAL_CANDIDATE`; data/API proof pending |
@@ -76,7 +76,7 @@ The `Source owner` column records the owner currently wired in `src/routes/AppRo
 | 13 | Chat | `/chat` | Conversations; Sourced context/Snapshots; Proposals; Decisions | `src/components/AIChat/UnifiedChatPanel.tsx` | `modules/13_CHAT/MODULE_ACCEPTANCE.md` | `CANONICAL_CANDIDATE`; Chat-to-Tools WIP comparison pending |
 | 14 | Admin | `/admin` | Overview; Users; Organizations; Access; AI/Models; Operations/Audit | `src/views/admin/AdminView.tsx` | `modules/14_ADMIN/MODULE_ACCEPTANCE.md` | `CANONICAL_CANDIDATE`; unresolved policies remain gated |
 | 15 | Settings | `/settings` | Profile; Workspace; Notifications; Integrations; Security/Privacy | `src/views/SettingsView.tsx` | `modules/15_SETTINGS/MODULE_ACCEPTANCE.md` | `CANONICAL_CANDIDATE`; cross-module standard is binding input |
-| 16 | Partner | `/partner` | Overview; Opportunities; Connections; Collaboration; Materials; Settings | `src/views/partner/PartnerPortalView.tsx` | `modules/16_PARTNER/MODULE_ACCEPTANCE.md` | `CANONICAL_CANDIDATE`; content/source audit pending reconciliation |
+| 16 | Partner | `/partner` | Overview; Opportunities; Connections; Collaboration; Materials; Settings | `src/views/partner/PartnerPortalView.tsx`, exporting the routed `PartnerPortalViewNew` | `modules/16_PARTNER/MODULE_ACCEPTANCE.md` | `CANONICAL_CANDIDATE`; connected operational landing remains owner-gated |
 
 All acceptance paths above are relative to `docs/program/waves/WAVE_03_ACCEPTANCE/`.
 
