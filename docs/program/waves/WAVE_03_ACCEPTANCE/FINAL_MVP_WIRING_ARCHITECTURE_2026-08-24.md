@@ -203,7 +203,7 @@ surface. Rendering a historical component after an API error is forbidden.
 | Meetings | `/meeting` → `MeetingHub` | meeting APIs | `SOURCE_MAPPED`; fixture replay pending |
 | Results | `/results` → redirect → `/results/kpi`; KPI/OKR/ROI registry pages | `/api/vnext/results/*` through `V8ResultsApi` | `API_CONNECTED`: fresh DB + authenticated list reads; UI login/render and cold readback pending |
 | Finance | `/finance` and tool routes → `FinanceHub`/Finance workspaces | `V8FinanceApi` | `SOURCE_MAPPED`; owner-review currently suppresses fallback, canonical-by-default cutover pending |
-| Materials | `/document-studio`, `/presentations`, `/excele` | document/presentation/workbook APIs | `BLOCKED_DATA`: retained fixture marker mismatch; reconstruct before use |
+| Materials | `/document-studio`, `/presentations`, `/excele` | document/presentation/workbook APIs | `DATA_RECEIPT_RECONCILED`: later FINAL live receipt matches the retained SQL marker; registry projection gap remains |
 | Audits | `/audit-programs` → `AuditsMethodHub` | `/api/audits/*` | `SOURCE_MAPPED`; fixture replay pending |
 | Chat | `/chat` → `UnifiedChatPanel` | chat APIs | `SOURCE_MAPPED`; existing evidence retained |
 | Admin | `/admin` plus isolated `/superadmin/system` | tenant/platform admin APIs | `SOURCE_MAPPED`; control-plane separation required |
@@ -215,7 +215,7 @@ surface. Rendering a historical component after an API error is forbidden.
 | Module | Isolated DB/runtime | Fixture/API result | Remaining before `CONNECTED` |
 |---|---|---|---|
 | Results | fresh PostgreSQL 17 DB; backend `4417`, frontend `4418` | guarded `W3-RESULTS-OWNER-v1`; KPI `1`, OKR `1`, ROI `1` authenticated API readback | authenticated browser table/preview/card, safe mutation if permitted, warm and cold readback |
-| Materials | none adopted | retained marker mismatch | fresh migration + guarded seed + marker verification |
+| Materials | retained isolated local DB | later FINAL live receipt and SQL marker match; document/deck/workbook payload retained | authenticated current-candidate registry/detail replay; Document and Sheet projection gap remains |
 | Finance | fresh PostgreSQL 17 DB `consultify_w3_finance_owner_arch_v2_20260824` | guarded `W3-FINANCE-OWNER-v1`; `834` migrations, `6` statements, `6` source receipts, `5` approved versions, `1` baseline context and lifecycle/hash identity verified | isolated API runtime, authenticated registry/detail reads, browser table/preview/card, warm and cold runtime readback |
 | Assessment | not yet reconstructed | no current-candidate claim | fresh migration + guarded seed + API/UI chain |
 
@@ -224,11 +224,12 @@ surface. Rendering a historical component after an API error is forbidden.
 - All 16 module registers and all 21 gate rows per module exist.
 - All 16 guarded owner fixture families are admitted by the local owner-runtime allowlist.
 - Retained database audit on 2026-08-24 found all `16/16` databases with `831`
-  successful migrations. Exact manifest-to-SQL-marker identity passed for
-  `15/16`. Materials is `BLOCKED_MARKER_MISMATCH`: its FINAL manifest nonce
-  does not match the current `W3-MATERIALS-OWNER-v1` database marker. The
-  Materials database must not be adopted until it is freshly reconstructed or
-  a new valid FINAL receipt is produced by the guarded seed.
+  successful migrations. The first run used the historical Materials receipt
+  from `04:48` and correctly stopped on a marker mismatch. Read-only
+  reconciliation found the later `18:43` FINAL live receipt with the exact
+  current SQL marker. The audit now selects that canonical receipt and passes
+  exact manifest-to-SQL-marker identity for `16/16`; the historical receipt is
+  preserved and is not silently rewritten.
 - This proves reconstructibility capability, but the retained databases are not
   automatically adoptable by the current candidate. A guarded Results adoption
   stopped on a historical migration-checksum mismatch, so no unsafe bypass was

@@ -6,6 +6,11 @@ import pg from 'pg';
 const databaseUrl = process.env.WAVE3_RECOVERY_DATABASE_URL || '';
 const manifestDirectory = process.env.WAVE3_RECOVERY_MANIFEST_DIR || '/tmp';
 const expectedMigrations = 831;
+const canonicalReceiptOverrides = Object.freeze({
+  // The original recovered receipt is retained as historical evidence. The
+  // later live receipt is the marker-bound result of the final local replay.
+  materials: 'consultify-wave3-materials-owner-live-20260823.json',
+});
 const fixtures = Object.freeze([
   ['organization', 'W3-ORGANIZATION-OWNER-v1'],
   ['interview', 'W3-INTERVIEW-OWNER-v1'],
@@ -42,10 +47,10 @@ const manifests = [];
 const databaseNames = new Set();
 const nonces = new Set();
 for (const [module, fixtureId] of fixtures) {
-  const manifestPath = path.join(
-    manifestDirectory,
-    `consultify-wave3-${module}-owner-recovered-20260823.json`
-  );
+  const receiptName =
+    canonicalReceiptOverrides[module] ??
+    `consultify-wave3-${module}-owner-recovered-20260823.json`;
+  const manifestPath = path.join(manifestDirectory, receiptName);
   if (!fs.existsSync(manifestPath)) fail(`${module}: manifest is absent`);
   const stat = fs.lstatSync(manifestPath);
   if (!stat.isFile() || stat.isSymbolicLink() || (stat.mode & 0o777) !== 0o600) {
