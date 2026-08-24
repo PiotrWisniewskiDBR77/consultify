@@ -31,6 +31,25 @@ const reviewOrder = Object.freeze([
   ['partner', '/partner', 'W3-PARTNER-OWNER-v1'],
 ]);
 
+const reviewMetadata = Object.freeze({
+  organization: ['Organization', '01_ORGANIZATION', 'Profile; Goals; Challenges; Strategy; Context governance'],
+  interview: ['Interview', '02_INTERVIEW', 'Inbox; Assigned/Managed; Templates; Results/Insights'],
+  tools: ['Tools', '03_TOOLS', 'Library; Processes/Sessions; Insights; Reports; Initiatives'],
+  assessment: ['Assessment', '04_ASSESSMENT', 'Library; Processes; Insights; Reports; Initiatives'],
+  initiatives: ['Initiatives', '05_INITIATIVES', 'Initiatives; Plan; Capacity'],
+  execution: ['Execution', '06_EXECUTION', 'Realizations; Work; Resources; Steering; Reports'],
+  'my-work': ['My Work / Agent', '07_MY_WORK_AGENT', 'Inbox/Triage; Tasks; Decisions; Ideas; Notebook; Agent activity'],
+  meetings: ['Meetings', '08_MEETINGS', 'Meetings; Agenda/Templates; Minutes; Decisions/Actions'],
+  results: ['Results', '09_RESULTS', 'KPI; OKR; ROI'],
+  finance: ['Finance', '10_FINANCE', 'Statements; Analysis; Baseline; Prediction; Valuation'],
+  materials: ['Materials', '11_MATERIALS', 'All; Documents; Presentations; Sheets; Template Library'],
+  audits: ['Audits', '12_AUDITS', 'Library; Programs/Processes; Evidence; Findings; Reports; Initiatives'],
+  chat: ['Chat', '13_CHAT', 'Conversations; Sourced context/Snapshots; Proposals; Decisions'],
+  admin: ['Admin', '14_ADMIN', 'Overview; Users; Organizations; Access; AI/Models; Operations/Audit'],
+  settings: ['Settings', '15_SETTINGS', 'Profile; Workspace; Notifications; Integrations; Security/Privacy'],
+  partner: ['Partner', '16_PARTNER', 'Overview; Opportunities; Connections; Collaboration; Materials; Settings'],
+});
+
 const receiptOverrides = Object.freeze({
   materials: 'consultify-wave3-materials-owner-live-20260823.json',
 });
@@ -76,14 +95,44 @@ const modules = reviewOrder.map(([id, entryPath, fixtureId], index) => {
   databases.add(receipt.databaseName);
   nonces.add(receipt.ownershipNonce);
 
+  const [name, registerDirectory, menu2] = reviewMetadata[id] || [];
+  if (!name || !registerDirectory || !menu2) fail(`${id}: review metadata is absent`);
+  const acceptanceRegister = path.join(
+    repoRoot,
+    'docs/program/waves/WAVE_03_ACCEPTANCE/modules',
+    registerDirectory,
+    'MODULE_ACCEPTANCE.md'
+  );
+  if (!fs.existsSync(acceptanceRegister)) fail(`${id}: module acceptance register is absent`);
+  const registerSource = fs.readFileSync(acceptanceRegister, 'utf8');
+  const gateMatches = [...registerSource.matchAll(/^\|\s*`?(G(?:0\d|1\d|20))`?\s*\|[^\n]*?\|\s*`?([^|`]+?)`?\s*\|/gm)];
+  const gates = Object.fromEntries(gateMatches.map((match) => [match[1], match[2].trim()]));
+  const expectedGates = Array.from({ length: 21 }, (_, gate) => `G${String(gate).padStart(2, '0')}`);
+  if (gateMatches.length !== 21 || expectedGates.some((gate) => !gates[gate])) {
+    fail(`${id}: acceptance register must expose exactly G00-G20`);
+  }
+  const gateSummary = Object.values(gates).reduce((summary, state) => {
+    summary[state] = (summary[state] || 0) + 1;
+    return summary;
+  }, {});
+
   return {
     order: index + 1,
     id,
+    name,
     entryPath,
     reviewUrl: new URL(entryPath, baseUrl).toString(),
+    expectedMenu2: menu2,
     selectedComponent: selected.component,
     sourceStatus: selected.sourceStatus,
     ownerDecision: selected.ownerDecision,
+    acceptance: {
+      registerPath: path.relative(repoRoot, acceptanceRegister),
+      gateDenominator: expectedGates.length,
+      gateSummary,
+      gates,
+      authority: 'CURRENT_REGISTER_STATE_NOT_OWNER_ACCEPTANCE',
+    },
     fixture: {
       fixtureId,
       receiptPath,
