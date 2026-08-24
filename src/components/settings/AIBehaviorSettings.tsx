@@ -11,7 +11,7 @@
  *  4. Context Settings (include context toggle + max context length)
  */
 
-import { MessageSquare, Sparkles, Wand2 } from 'lucide-react';
+import { Briefcase, MessageSquare, Palette, Sparkles, Wrench, Zap } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -55,28 +55,28 @@ const PROMPT_TEMPLATES = [
   {
     id: 'professional',
     name: 'Professional',
-    icon: '💼',
+    icon: Briefcase,
     prompt:
       'I prefer formal, professional responses. Focus on accuracy and clarity. Use industry-standard terminology.',
   },
   {
     id: 'creative',
     name: 'Creative',
-    icon: '🎨',
+    icon: Palette,
     prompt:
       'Be creative and think outside the box. Suggest innovative solutions. Use analogies and examples.',
   },
   {
     id: 'technical',
     name: 'Technical',
-    icon: '⚙️',
+    icon: Wrench,
     prompt:
       'Provide detailed technical explanations. Include code examples when relevant. Be precise with specifications.',
   },
   {
     id: 'concise',
     name: 'Concise',
-    icon: '⚡',
+    icon: Zap,
     prompt:
       'Keep responses brief and to the point. Use bullet points. Avoid unnecessary explanations.',
   },
@@ -260,18 +260,21 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
               {t('settings.ai.quickTemplates', 'Quick Templates')}
             </label>
             <div className="flex flex-wrap gap-2">
-              {PROMPT_TEMPLATES.map((tpl) => (
-                <button
-                  key={tpl.id}
-                  onClick={() => applyTemplate(tpl)}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-c-surface-raised hover:bg-c-surface-raised dark:hover:bg-navy-700
-                    border border-c-border-subtle rounded-lg text-sm text-c-text-secondary
-                    hover:text-c-text dark:hover:text-white transition-all duration-200"
-                >
-                  <Wand2 size={14} />
-                  {t(`settings.ai.behaviorTemplates.${tpl.id}.name`, tpl.name)}
-                </button>
-              ))}
+              {PROMPT_TEMPLATES.map((tpl) => {
+                const TplIcon = tpl.icon;
+                return (
+                  <button
+                    key={tpl.id}
+                    onClick={() => applyTemplate(tpl)}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-c-surface-raised hover:bg-c-surface-raised dark:hover:bg-navy-700
+                      border border-c-border-subtle rounded-lg text-sm text-c-text-secondary
+                      hover:text-c-text dark:hover:text-white transition-all duration-200"
+                  >
+                    <TplIcon size={14} />
+                    {t(`settings.ai.behaviorTemplates.${tpl.id}.name`, tpl.name)}
+                  </button>
+                );
+              })}
             </div>
           </div>
 

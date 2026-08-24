@@ -103,7 +103,7 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
           'This calendar integration is coming soon.'
         );
         setActionError(comingSoon);
-        toast(comingSoon, { icon: '🗓️' });
+        toast(comingSoon);
         return;
       }
       const message = normalizeApiErrorMessage(
