@@ -293,6 +293,17 @@ describe('adminP32Routes', () => {
     );
   });
 
+  it('keeps a successful CSV export available when receipt persistence fails', async () => {
+    dbGet.mockResolvedValue({ role: 'OWNER', status: 'ACTIVE' });
+    getLogs.mockResolvedValue([{ id: 'a1', organization_id: 'org-1', admin_id: 'user-1', action_type: 'read', created_at: '2026-08-24T00:00:00Z' }]);
+    dbAll.mockResolvedValue([]);
+    dbRun.mockRejectedValueOnce(new Error('receipt unavailable'));
+    const exported = await request(createApp()).get('/api/admin/audit-logs/export');
+    expect(exported.status).toBe(200);
+    expect(exported.headers['content-type']).toContain('text/csv');
+    expect(exported.text).toContain('a1');
+  });
+
   it('does not admit a foreign canonical IAM audit into the tenant projection', async () => {
     dbGet.mockResolvedValue({ role: 'OWNER', status: 'ACTIVE' });
     getLogs.mockResolvedValue([]);

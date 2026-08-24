@@ -3083,6 +3083,16 @@ router.get(
     );
     const csv = [headers.join(','), ...rows].join('\n');
 
+    try {
+      await dbRun(
+        `INSERT INTO admin_audit_export_receipts (id, organization_id, requested_by, export_kind, filters_json, row_count, output_format, created_at)
+         VALUES (?, ?, ?, 'audit_logs_csv', ?, ?, 'csv', CURRENT_TIMESTAMP)`,
+        [uuidv4(), orgId, actor.actorId, JSON.stringify({}), scoped.length]
+      );
+    } catch {
+      // Receipt persistence is additive evidence and must never break a successful export.
+    }
+
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', 'attachment; filename="admin-audit.csv"');
     return res.send(csv);
