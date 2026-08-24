@@ -28,7 +28,7 @@ import {
   summarizeResults,
 } from '../../services/health/healthProbeService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
-import { get as dbGet } from '../../utils/DbPromise.js';
+import { all as dbAll, get as dbGet } from '../../utils/DbPromise.js';
 
 const router = Router();
 
@@ -200,5 +200,22 @@ router.get(
     });
   })
 );
+
+router.get('/jobs', asyncHandler(async (req: AuthRequest, res: Response) => {
+  const ctx = getContext(req);
+  if (!ctx) return res.status(401).json({ success: false, error: 'Unauthorized' });
+  const rawLimit = Number.parseInt(String(req.query.limit || '50'), 10);
+  const rawOffset = Number.parseInt(String(req.query.offset || '0'), 10);
+  const limit = Math.min(200, Math.max(1, Number.isFinite(rawLimit) ? rawLimit : 50));
+  const offset = Math.max(0, Number.isFinite(rawOffset) ? rawOffset : 0);
+  const status = String(req.query.status || '').trim().toLowerCase();
+  if (status && !['queued', 'running', 'succeeded', 'failed'].includes(status)) return res.status(400).json({ success: false, error: 'Invalid status' });
+  const params: unknown[] = [ctx.organizationId];
+  const statusClause = status ? ' AND status = ?' : '';
+  if (status) params.push(status);
+  params.push(limit, offset);
+  const jobs = await dbAll(`SELECT id, job_type, status, attempt_count, max_attempts, last_error, available_at, created_at, updated_at FROM admin_iam_jobs WHERE organization_id = ?${statusClause} ORDER BY created_at DESC LIMIT ? OFFSET ?`, params, { fallback: false });
+  res.json({ success: true, jobs, pagination: { limit, offset } });
+}));
 
 export default router;

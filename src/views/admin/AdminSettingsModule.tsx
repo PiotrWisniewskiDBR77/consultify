@@ -10,6 +10,7 @@ import { AdminCapabilityState } from '../../components/Admin/AdminCapabilityStat
 import { AdminCommandCenterPanel } from '../../components/Admin/AdminCommandCenterPanel';
 import { AdminComplianceEvidencePanel } from '../../components/Admin/AdminComplianceEvidencePanel';
 import { AdminHealthPanel } from '../../components/Admin/AdminHealthPanel';
+import { AdminJobsPanel } from '../../components/Admin/AdminJobsPanel';
 import { AdminMembersRolesPanel } from '../../components/Admin/AdminMembersRolesPanel';
 import { AdminPlanHistoryPanel } from '../../components/Admin/AdminPlanHistoryPanel';
 import { AdminServiceAccountsPanel } from '../../components/Admin/AdminServiceAccountsPanel';
@@ -338,6 +339,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
       // connected `service-status` default (AdminHealthPanel renders both
       // unconditionally) — just missing its own nav slot.
       (resolvedLocation.domain === 'health' && resolvedLocation.screen === 'diagnostics') ||
+      (resolvedLocation.domain === 'health' && resolvedLocation.screen === 'queues-jobs') ||
       // Fala 1 (Admin komplet 55): sso/scim-lifecycle/api-access/risk-summary
       // already have working tabs inside AdminSecurityIdentityPanel — see
       // SECURITY_TAB_BY_SCREEN below.
@@ -434,6 +436,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
           />
         );
       case 'health':
+        if (resolvedLocation.screen === 'queues-jobs') return <AdminJobsPanel />;
         return <AdminHealthPanel canRunDiagnostics={CAN_ACCESS_PLATFORM_OPERATIONS} />;
       default:
         return <AdminMembersRolesPanel />;
