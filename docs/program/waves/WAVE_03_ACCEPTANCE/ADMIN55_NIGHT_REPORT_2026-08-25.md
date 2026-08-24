@@ -29,7 +29,7 @@ Start: 2026-08-24 (Europe/Warsaw) · Koniec: —
 | 9 | audit/compliance-evidence | 2 | `f91a3a6849` | DONE | 6 źródeł dowodowych; źródło/świeżość/deep-link; eksport audytu |
 | 10 | billing/seats-licences | 3 | `1a926118e2` | DONE | realna konfiguracja/historia; auto-add z readbackiem; zakup contact-sales |
 | 11 | health/dependencies | 3 | — | STOP | brak jawnej mapy probe→zależność; rejestr opisuje przepływy produktowe, nie zależności |
-| 12 | health/incident-history | 4/B | — | NIE ZACZĘTO | |
+| 12 | health/incident-history | 4/B | — | STOP | ledger platformowy nie ma `organization_id`; zakaz zmiany semantyki migracją |
 | 13 | health/queues-jobs | 4/B | — | NIE ZACZĘTO | |
 | 14 | health/sla-slo | 4/B | — | NIE ZACZĘTO | |
 | 15 | security/security-alerts | 4/A | — | NIE ZACZĘTO | |
@@ -74,6 +74,12 @@ Stan: ekran odczytu, historii i auto-add jest gotowy; zakup jest jawnie oznaczon
 Powód: `HEALTH_PROBES` rejestruje próby przepływów produktowych (np. KPI round-trip, lista inicjatyw, Assessment→M13), ale nie zawiera jawnej kategorii zależności ani mapy probe→baza/dostawca/usługa/kolejka. Utworzenie takiej mapy wymagałoby zgadywania, czego §4.4 wprost zakazuje.
 Dowód: `server/src/services/health/healthProbeService.ts:104-107`, `:496-515`, `:528-570`; typ `HealthProbeDefinition` nie ma pola zależności.
 Co zrobiłbym po decyzji X: po zatwierdzeniu kanonicznego katalogu zależności i jawnego przypisania probe'ów dodałbym wyłącznie customer-safe agregację ostatnich wyników, bez danych hosta i credentiali.
+Stan: NIE ZACOMMITOWANO.
+
+### STOP — health/incident-history
+Powód: `operational_alert_incidents` i tabela zdarzeń nie mają `organization_id`; nie da się wykonać wymaganego tenant-scope. Instrukcja zabrania dodania migracji zmieniającej semantykę cudzego ledgera.
+Dowód: `server/migrations/20260925_operational_alert_incident_ledger.sql:3-28` i `:35-46`.
+Co zrobiłbym po decyzji X: po ustanowieniu tenantowego modelu incydentów i backfillu dodałbym odczyt customer-safe; obecnego ledgera platformowego nie ujawniam.
 Stan: NIE ZACOMMITOWANO.
 
 ## Znaleziska (problemy w istniejącym kodzie — NIE naprawiane przeze mnie)
