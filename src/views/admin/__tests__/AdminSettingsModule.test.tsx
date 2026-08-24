@@ -33,6 +33,7 @@ vi.mock('../../../components/Admin/AdminSecurityAlertsPanel', () => ({ AdminSecu
 vi.mock('../../../components/Admin/AdminSessionsPanel', () => ({ AdminSessionsPanel: () => <div data-testid="panel-sessions">sessions</div> }));
 vi.mock('../../../components/Admin/AdminBreakGlassPanel', () => ({ AdminBreakGlassPanel: () => <div data-testid="panel-break-glass">break glass</div> }));
 vi.mock('../../../components/Admin/AdminGuestsPanel', () => ({ AdminGuestsPanel: () => <div data-testid="panel-guests">guests</div> }));
+vi.mock('../../../components/Admin/AdminAccessReviewsPanel', () => ({ AdminAccessReviewsPanel: () => <div data-testid="panel-access-reviews">reviews</div> }));
 vi.mock('../../../components/Admin/AdminBillingFinOpsPanel', () => ({
   AdminBillingFinOpsPanel: ({ screen }: { screen?: string }) => (
     <div data-testid="panel-billing" data-screen={screen}>
@@ -93,6 +94,7 @@ describe('AdminSettingsModule section routing', () => {
     expect(screen.queryByTestId('panel-people')).not.toBeInTheDocument();
   });
   it('wires team/guests-external safely', () => { renderAt('/admin/team/guests-external'); expect(screen.getByTestId('panel-guests')).toBeInTheDocument(); });
+  it('wires team/access-reviews read-only', () => { renderAt('/admin/team/access-reviews'); expect(screen.getByTestId('panel-access-reviews')).toBeInTheDocument(); });
 
   it('wires billing/plan-history to the read-only history panel', () => {
     renderAt('/admin/billing/plan-history');
