@@ -13878,6 +13878,8 @@
       "currentAccent": "Current accent color",
       "densityLabel": "UI Density",
       "densityDesc": "Control the spacing and compactness of the interface",
+      "fontScaleLabel": "Font Size",
+      "fontScaleDesc": "Scale text across the whole application",
       "previewNote": "Changes are previewed instantly and saved to your account",
       "accent": {
         "violet": "Violet",
@@ -13976,6 +13978,7 @@
         "security": "SECURITY",
         "integrations": "INTEGRATIONS",
         "dataPrivacy": "DATA & PRIVACY",
+        "billing": "BILLING",
         "appearance": "APPEARANCE",
         "advanced": "ADVANCED"
       },
@@ -14021,6 +14024,7 @@
       "privacy": "Privacy",
       "exportData": "Export Data",
       "deleteAccount": "Delete Account",
+      "billing": "Subscription & Billing",
       "theme": "Theme",
       "accessibility": "Accessibility",
       "shortcuts": "Keyboard Shortcuts",

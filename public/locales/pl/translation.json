@@ -13275,6 +13275,8 @@
       "currentAccent": "Aktualny kolor akcentu",
       "densityLabel": "Gęstość interfejsu",
       "densityDesc": "Kontroluj odstępy i kompaktowość interfejsu",
+      "fontScaleLabel": "Rozmiar czcionki",
+      "fontScaleDesc": "Skaluj tekst w całej aplikacji",
       "previewNote": "Zmiany są podglądane od razu i zapisywane na Twoim koncie",
       "accent": {
         "violet": "Fioletowy",
@@ -13373,6 +13375,7 @@
         "security": "BEZPIECZEŃSTWO",
         "integrations": "INTEGRACJE",
         "dataPrivacy": "DANE I PRYWATNOŚĆ",
+        "billing": "PŁATNOŚCI",
         "appearance": "WYGLĄD",
         "advanced": "ZAAWANSOWANE"
       },
@@ -13418,6 +13421,7 @@
       "privacy": "Prywatność",
       "exportData": "Eksport danych",
       "deleteAccount": "Usuń konto",
+      "billing": "Subskrypcja i płatności",
       "theme": "Motyw",
       "accessibility": "Dostępność",
       "shortcuts": "Skróty klawiszowe",

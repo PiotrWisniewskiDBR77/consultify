@@ -74,6 +74,10 @@ type AppearancePreferences = {
   theme: 'light' | 'dark' | 'system';
   accentColor: string;
   density: 'compact' | 'comfortable' | 'spacious';
+  // Percent scale (90/100/110/120) applied to the root font size. The server
+  // stores this as a raw multiplier (default 1); normalize/serialize convert
+  // between the two representations so the UI always deals in whole percent.
+  fontScale: number;
 };
 
 type VoicePreferences = {
@@ -182,7 +186,20 @@ const serializeAccessibilityPreferences = (
   focusIndicator: preferences.focusIndicatorStyle,
 });
 
-const normalizeAppearancePreferences = (
+export const FONT_SCALE_STEPS = [90, 100, 110, 120];
+
+export const normalizeFontScale = (raw: unknown): number => {
+  const n = typeof raw === 'number' && Number.isFinite(raw) ? raw : NaN;
+  if (Number.isNaN(n) || n <= 0) return 100;
+  // The server's default preference row stores a multiplier (e.g. 1 = 100%);
+  // anything already saved from this UI is a whole percent (90/100/110/120).
+  const percent = Math.round(n <= 2 ? n * 100 : n);
+  return FONT_SCALE_STEPS.reduce((closest, step) =>
+    Math.abs(step - percent) < Math.abs(closest - percent) ? step : closest
+  );
+};
+
+export const normalizeAppearancePreferences = (
   preferences: Record<string, unknown> = {}
 ): AppearancePreferences => ({
   theme: (preferences.theme as AppearancePreferences['theme']) || 'system',
@@ -190,14 +207,16 @@ const normalizeAppearancePreferences = (
   density:
     (preferences.density as AppearancePreferences['density']) ||
     ((preferences.uiDensity as AppearancePreferences['density']) ?? 'comfortable'),
+  fontScale: normalizeFontScale(preferences.fontScale),
 });
 
-const serializeAppearancePreferences = (
+export const serializeAppearancePreferences = (
   preferences: AppearancePreferences
 ): Record<string, unknown> => ({
   theme: preferences.theme,
   accentColor: preferences.accentColor,
   uiDensity: preferences.density,
+  fontScale: preferences.fontScale,
 });
 
 const normalizePromptLibrary = (items: unknown): PromptLibraryItem[] => {

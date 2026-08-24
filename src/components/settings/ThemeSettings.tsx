@@ -7,7 +7,7 @@
  * @version 3.0
  */
 
-import { Check, Columns3, Monitor, Moon, Palette, Sparkles, Sun } from 'lucide-react';
+import { Check, Columns3, Monitor, Moon, Palette, Sparkles, Sun, Type } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -19,7 +19,7 @@ import Api from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { DegradedState } from '../Admin/AdminState';
-import { SettingsDivider, SettingsFormRow, SettingsSection } from './shared';
+import { SettingsButtonGroup, SettingsDivider, SettingsFormRow, SettingsSection } from './shared';
 
 interface ThemeSettingsProps {
   className?: string;
@@ -27,6 +27,13 @@ interface ThemeSettingsProps {
 
 type Theme = 'light' | 'dark' | 'system';
 type Density = 'compact' | 'comfortable' | 'spacious';
+
+const FONT_SCALE_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: '90', label: 'S' },
+  { value: '100', label: 'M' },
+  { value: '110', label: 'L' },
+  { value: '120', label: 'XL' },
+];
 
 const ACCENT_COLORS = [
   { key: 'crimson', name: 'Crimson', value: '#A51C30', class: 'bg-c-accent' },
@@ -94,16 +101,21 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
   const toggleTheme = useAppStore((s) => s.toggleTheme);
   const [accentColor, setAccentColor] = useState('#A51C30');
   const [density, setDensity] = useState<Density>('comfortable');
+  const [fontScale, setFontScale] = useState(100);
   const [originalTheme, setOriginalTheme] = useState<Theme>('system');
   const [originalAccent, setOriginalAccent] = useState('#A51C30');
   const [originalDensity, setOriginalDensity] = useState<Density>('comfortable');
+  const [originalFontScale, setOriginalFontScale] = useState(100);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
   const isDirty =
-    theme !== originalTheme || accentColor !== originalAccent || density !== originalDensity;
+    theme !== originalTheme ||
+    accentColor !== originalAccent ||
+    density !== originalDensity ||
+    fontScale !== originalFontScale;
 
   useEffect(() => {
     const loadTheme = async () => {
@@ -116,6 +128,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
         const savedTheme = response?.preferences?.theme as Theme;
         const savedAccent = response?.preferences?.accentColor;
         const savedDensity = response?.preferences?.density as Density;
+        const savedFontScale = response?.preferences?.fontScale;
 
         if (savedTheme) {
           toggleTheme(savedTheme);
@@ -132,6 +145,11 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
           setDensity(savedDensity);
           setOriginalDensity(savedDensity);
           applyDensity(savedDensity);
+        }
+        if (typeof savedFontScale === 'number' && Number.isFinite(savedFontScale)) {
+          setFontScale(savedFontScale);
+          setOriginalFontScale(savedFontScale);
+          applyFontScale(savedFontScale);
         }
       } catch (err: unknown) {
         setLoadError(normalizeApiErrorMessage(err, 'Failed to load appearance preferences'));
@@ -153,6 +171,19 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
     applyDensity(d as Density);
   };
 
+  // Scales the rem-based root font size; every Tailwind rem/em value in the
+  // app cascades from this, so the preview is instant and needs no per-
+  // component change.
+  const applyFontScale = (percent: number) => {
+    document.documentElement.style.fontSize = `${(16 * percent) / 100}px`;
+  };
+
+  const handleFontScaleChange = (value: string) => {
+    const percent = Number(value);
+    setFontScale(percent);
+    applyFontScale(percent);
+  };
+
   const handleAccentChange = (hex: string) => {
     setAccentColor(hex);
     applyAccent(hex);
@@ -162,7 +193,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
     setSaving(true);
     try {
       setActionError(null);
-      await Api.saveAppearancePreferences({ theme, accentColor, density });
+      await Api.saveAppearancePreferences({ theme, accentColor, density, fontScale });
       const response = await Api.getAppearancePreferences();
       if (!response?.preferences) {
         throw new Error('Appearance settings save was not confirmed by the server');
@@ -170,7 +201,13 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
       const nextTheme = response.preferences.theme as Theme;
       const nextAccent = response.preferences.accentColor;
       const nextDensity = response.preferences.density as Density;
-      if (nextTheme !== theme || nextAccent !== accentColor || nextDensity !== density) {
+      const nextFontScale = response.preferences.fontScale;
+      if (
+        nextTheme !== theme ||
+        nextAccent !== accentColor ||
+        nextDensity !== density ||
+        nextFontScale !== fontScale
+      ) {
         throw new Error('Appearance settings save was not confirmed by the server');
       }
       toggleTheme(nextTheme);
@@ -178,9 +215,12 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
       applyAccent(nextAccent);
       setDensity(nextDensity);
       applyDensity(nextDensity);
+      setFontScale(nextFontScale);
+      applyFontScale(nextFontScale);
       setOriginalTheme(nextTheme);
       setOriginalAccent(nextAccent);
       setOriginalDensity(nextDensity);
+      setOriginalFontScale(nextFontScale);
       toast.success(t('settings.appearance.saved', 'Appearance settings saved'));
     } catch (err: unknown) {
       const message = normalizeApiErrorMessage(
@@ -444,6 +484,28 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
                   </button>
                 );
               })}
+            </div>
+          </SettingsFormRow>
+
+          <SettingsDivider />
+
+          {/* Font Size */}
+          <SettingsFormRow
+            label={t('settings.appearance.fontScaleLabel', 'Font Size')}
+            description={t(
+              'settings.appearance.fontScaleDesc',
+              'Scale text across the whole application'
+            )}
+          >
+            <div className="flex items-center gap-3 mt-3">
+              <Type size={16} className="text-c-text-muted" />
+              <SettingsButtonGroup
+                options={FONT_SCALE_OPTIONS}
+                value={String(fontScale)}
+                onChange={handleFontScaleChange}
+                size="sm"
+              />
+              <span className="text-xs text-c-text-muted">{fontScale}%</span>
             </div>
           </SettingsFormRow>
 
