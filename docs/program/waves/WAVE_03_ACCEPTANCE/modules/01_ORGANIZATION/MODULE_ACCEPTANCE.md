@@ -144,3 +144,17 @@ Accepted SHA: —
 Date: —
 Accepted-out/deferred: —
 Evidence manifest: —
+
+## CLOSED_FINAL — 2026-08-25
+
+Status: `CLOSED_FINAL` · Werdykt właściciela: DEC-2026-08-24-11 (akcept wzorca),
+DEC-2026-08-24-15 (akcept końcowy warunkowy — warunki a/b/c SPEŁNIONE).
+Final SHA: `b5aa07a28f` · Tag: `final-01-organization`.
+
+Zakres zamknięcia: trasy+nawigacja (DEC-10), naprawa pickBestClaim (eeac624e3a,
+cold readback OK), redesign 21→11 na wspólnym szkielecie za flagą orgRedesignV1,
+realny zapis serwerowy 5 ekranów sekcji (organization_context_store, jeden
+pisarz saveNow, dowód cold readback „Cele i mierniki" OK), wgrywacz dokumentów
+i galeria blockerów przywrócone. Dowody: evidence-m01-20260824/ (komplet 22
+zrzutów + cold readbacki). Zamknięte znaczy zamknięte: nowe pomysły → backlog
+po-MVP z nowym ID; ponowne otwarcie wyłącznie nową jawną decyzją właściciela.
