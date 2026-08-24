@@ -30,6 +30,7 @@ vi.mock('../../../components/Admin/AdminJobsPanel', () => ({ AdminJobsPanel: () 
 vi.mock('../../../components/Admin/AdminSlaSloPanel', () => ({ AdminSlaSloPanel: () => <div data-testid="panel-sla">sla</div> }));
 vi.mock('../../../components/Admin/AdminServiceAccountsPanel', () => ({ AdminServiceAccountsPanel: () => <div data-testid="panel-service-accounts">service accounts</div> }));
 vi.mock('../../../components/Admin/AdminSecurityAlertsPanel', () => ({ AdminSecurityAlertsPanel: () => <div data-testid="panel-security-alerts">alerts</div> }));
+vi.mock('../../../components/Admin/AdminSessionsPanel', () => ({ AdminSessionsPanel: () => <div data-testid="panel-sessions">sessions</div> }));
 vi.mock('../../../components/Admin/AdminBillingFinOpsPanel', () => ({
   AdminBillingFinOpsPanel: ({ screen }: { screen?: string }) => (
     <div data-testid="panel-billing" data-screen={screen}>
@@ -102,6 +103,7 @@ describe('AdminSettingsModule section routing', () => {
   it('wires health/sla-slo to tenant SLOs', () => { renderAt('/admin/health/sla-slo'); expect(screen.getByTestId('panel-sla')).toBeInTheDocument(); });
   it('wires security/service-accounts to the service accounts panel', () => { renderAt('/admin/security/service-accounts'); expect(screen.getByTestId('panel-service-accounts')).toBeInTheDocument(); });
   it('wires security/security-alerts safely', () => { renderAt('/admin/security/security-alerts'); expect(screen.getByTestId('panel-security-alerts')).toBeInTheDocument(); });
+  it('wires security/sessions safely', () => { renderAt('/admin/security/sessions'); expect(screen.getByTestId('panel-sessions')).toBeInTheDocument(); });
   it('renders the people panel at /admin/people', () => {
     renderAt('/admin/people');
     expect(screen.getByTestId('panel-people')).toBeInTheDocument();

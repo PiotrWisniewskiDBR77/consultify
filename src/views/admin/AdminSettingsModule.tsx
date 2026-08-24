@@ -16,6 +16,7 @@ import { AdminMembersRolesPanel } from '../../components/Admin/AdminMembersRoles
 import { AdminPlanHistoryPanel } from '../../components/Admin/AdminPlanHistoryPanel';
 import { AdminServiceAccountsPanel } from '../../components/Admin/AdminServiceAccountsPanel';
 import { AdminSecurityAlertsPanel } from '../../components/Admin/AdminSecurityAlertsPanel';
+import { AdminSessionsPanel } from '../../components/Admin/AdminSessionsPanel';
 import { AdminSeatsLicencesPanel } from '../../components/Admin/AdminSeatsLicencesPanel';
 import { AdminTeamsPanel } from '../../components/Admin/AdminTeamsPanel';
 import {
@@ -350,6 +351,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
         Object.prototype.hasOwnProperty.call(SECURITY_TAB_BY_SCREEN, resolvedLocation.screen)) ||
       (resolvedLocation.domain === 'security' && resolvedLocation.screen === 'service-accounts') ||
       (resolvedLocation.domain === 'security' && resolvedLocation.screen === 'security-alerts') ||
+      (resolvedLocation.domain === 'security' && resolvedLocation.screen === 'sessions') ||
       // Fala 1 (Admin komplet 55): models-providers/ai-limits-budgets/
       // data-privacy/ai-operations/ai-audit already have working tabs inside
       // AIModule (nested under AdminAIControlCenterPanel) — see
@@ -414,6 +416,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
       case 'security':
         if (resolvedLocation.screen === 'service-accounts') return <AdminServiceAccountsPanel />;
         if (resolvedLocation.screen === 'security-alerts') return <AdminSecurityAlertsPanel />;
+        if (resolvedLocation.screen === 'sessions') return <AdminSessionsPanel />;
         return (
           <AdminSecurityIdentityPanel
             initialTab={SECURITY_TAB_BY_SCREEN[resolvedLocation.screen]}
