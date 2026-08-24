@@ -1,4 +1,15 @@
-import { AlertTriangle, ArrowDown, ArrowUp, Eye, Loader2, Plus, Save, Send, X } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowDown,
+  ArrowUp,
+  Eye,
+  Loader2,
+  Plus,
+  Save,
+  Send,
+  Trash2,
+  X,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
@@ -24,6 +35,11 @@ interface WindowDraft {
   rationale: string;
   dependencySnapshot: string[];
   constraintSnapshot: Array<{ constraintId: string; state: 'KNOWN' | 'UNKNOWN'; detail: string }>;
+}
+interface PeriodDraft {
+  periodId: string;
+  start: string;
+  end: string;
 }
 interface PlanScenario {
   scenarioId: string;
@@ -69,6 +85,23 @@ const formatDate = (value: string | null) => {
 
 const toInput = (value: string | null) => (value ? value.slice(0, 16) : '');
 const toIso = (value: string) => (value ? new Date(value).toISOString() : null);
+const toDateInput = (value: string) => value.slice(0, 10);
+const toDateIso = (value: string) => `${value}T00:00:00.000Z`;
+const createWeeklyPeriods = (start: string, count: number): PeriodDraft[] => {
+  const first = new Date(toDateIso(start));
+  if (Number.isNaN(first.getTime()) || count < 1) return [];
+  return Array.from({ length: count }, (_, index) => {
+    const periodStart = new Date(first);
+    periodStart.setUTCDate(first.getUTCDate() + index * 7);
+    const periodEnd = new Date(periodStart);
+    periodEnd.setUTCDate(periodStart.getUTCDate() + 7);
+    return {
+      periodId: `Tydzień ${index + 1}`,
+      start: periodStart.toISOString(),
+      end: periodEnd.toISOString(),
+    };
+  });
+};
 const parsePeriods = (value: string) => {
   try {
     const parsed = JSON.parse(value) as Array<{ periodId: string; start: string; end: string }>;
@@ -98,7 +131,8 @@ const knownTimeBasis = (scenario: PlanScenario | null) =>
     scenario?.windowUnit?.trim() &&
     scenario.timezone?.trim() &&
     Array.isArray(scenario.periods) &&
-    scenario.periods.length
+    scenario.periods.length &&
+    parsePeriods(JSON.stringify(scenario.periods))
   );
 const planStatusLabel: Record<PlanScenario['status'], string> = {
   DRAFT: 'Szkic',
@@ -139,7 +173,8 @@ export const PlanScenarioSurface: React.FC<Props> = ({
   const [portfolioVersion, setPortfolioVersion] = useState(1);
   const [newWindowUnit, setNewWindowUnit] = useState('WEEK');
   const [newTimezone, setNewTimezone] = useState('Europe/Warsaw');
-  const [newPeriods, setNewPeriods] = useState('');
+  const [newStart, setNewStart] = useState(() => new Date().toISOString().slice(0, 10));
+  const [newWeekCount, setNewWeekCount] = useState(12);
   const [showCreate, setShowCreate] = useState(false);
   const commandIds = useRef(new Map<string, string>());
 
@@ -402,14 +437,14 @@ export const PlanScenarioSurface: React.FC<Props> = ({
     if (draft && selectedId) setWorkspaceOpen(true);
   };
   const create = () => {
-    const periods = parsePeriods(newPeriods);
+    const periods = createWeeklyPeriods(newStart, newWeekCount);
     if (
       !newId.trim() ||
       !portfolioId.trim() ||
       portfolioVersion < 1 ||
       !newWindowUnit.trim() ||
       !newTimezone.trim() ||
-      !periods
+      !periods.length
     )
       return;
     const scenario: PlanScenario = {
@@ -511,6 +546,42 @@ export const PlanScenarioSurface: React.FC<Props> = ({
       [windows[index], windows[target]] = [windows[target], windows[index]];
       return { ...current, windows };
     });
+  const updatePeriod = (index: number, patch: Partial<PeriodDraft>) =>
+    setDraft((current) =>
+      current
+        ? {
+            ...current,
+            periods: current.periods.map((period, periodIndex) =>
+              periodIndex === index ? { ...period, ...patch } : period
+            ),
+          }
+        : current
+    );
+  const addPeriod = () =>
+    setDraft((current) => {
+      if (!current) return current;
+      const previousEnd = current.periods.at(-1)?.end ?? new Date().toISOString();
+      const start = new Date(previousEnd);
+      const end = new Date(start);
+      end.setUTCDate(start.getUTCDate() + 7);
+      return {
+        ...current,
+        periods: [
+          ...current.periods,
+          {
+            periodId: `Tydzień ${current.periods.length + 1}`,
+            start: start.toISOString(),
+            end: end.toISOString(),
+          },
+        ],
+      };
+    });
+  const removePeriod = (index: number) =>
+    setDraft((current) =>
+      current
+        ? { ...current, periods: current.periods.filter((_, periodIndex) => periodIndex !== index) }
+        : current
+    );
   const available = useMemo(
     () =>
       initiatives.filter(
@@ -552,7 +623,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
       {showCreate && (
         <div className="flex flex-wrap items-end gap-2 border-b border-c-border p-3">
           <label className="text-xs">
-            Scenario ID
+            Nazwa planu
             <input
               aria-label="Plan Scenario ID"
               className="mt-1 block bg-c-surface p-2"
@@ -561,7 +632,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
             />
           </label>
           <label className="text-xs">
-            Published Portfolio Scenario
+            Źródłowy portfel
             <input
               aria-label="Portfolio Scenario ID"
               className="mt-1 block bg-c-surface p-2"
@@ -570,7 +641,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
             />
           </label>
           <label className="text-xs">
-            Exact version
+            Wersja portfela
             <input
               aria-label="Portfolio Scenario version"
               className="mt-1 block w-20 bg-c-surface p-2"
@@ -581,16 +652,19 @@ export const PlanScenarioSurface: React.FC<Props> = ({
             />
           </label>
           <label className="text-xs">
-            Window unit
-            <input
+            Jednostka czasu
+            <select
               aria-label="Plan window unit"
               className="mt-1 block w-24 bg-c-surface p-2"
               value={newWindowUnit}
               onChange={(event) => setNewWindowUnit(event.target.value)}
-            />
+            >
+              <option value="WEEK">Tydzień</option>
+              <option value="MONTH">Miesiąc</option>
+            </select>
           </label>
           <label className="text-xs">
-            Timezone
+            Strefa czasowa
             <input
               aria-label="Plan timezone"
               className="mt-1 block min-w-40 bg-c-surface p-2"
@@ -598,14 +672,26 @@ export const PlanScenarioSurface: React.FC<Props> = ({
               onChange={(event) => setNewTimezone(event.target.value)}
             />
           </label>
-          <label className="min-w-64 flex-1 text-xs">
-            Ordered periods JSON
-            <textarea
-              aria-label="Plan ordered periods"
-              className="mt-1 block min-h-16 w-full bg-c-surface p-2 font-mono"
-              placeholder='[{"periodId":"2026-W40","start":"...","end":"..."}]'
-              value={newPeriods}
-              onChange={(event) => setNewPeriods(event.target.value)}
+          <label className="text-xs">
+            Początek horyzontu
+            <input
+              aria-label="Plan start date"
+              className="mt-1 block bg-c-surface p-2"
+              type="date"
+              value={newStart}
+              onChange={(event) => setNewStart(event.target.value)}
+            />
+          </label>
+          <label className="text-xs">
+            Liczba tygodni
+            <input
+              aria-label="Plan week count"
+              className="mt-1 block w-24 bg-c-surface p-2"
+              type="number"
+              min={1}
+              max={104}
+              value={newWeekCount}
+              onChange={(event) => setNewWeekCount(Number(event.target.value))}
             />
           </label>
           <button
@@ -616,7 +702,9 @@ export const PlanScenarioSurface: React.FC<Props> = ({
               !portfolioId.trim() ||
               !newWindowUnit.trim() ||
               !newTimezone.trim() ||
-              !parsePeriods(newPeriods)
+              !newStart ||
+              newWeekCount < 1 ||
+              newWeekCount > 104
             }
             onClick={create}
           >
@@ -840,46 +928,92 @@ export const PlanScenarioSurface: React.FC<Props> = ({
               }}
             />
           </div>
-          <fieldset className="mb-4 grid grid-cols-1 gap-3 rounded-md border border-c-border p-3 sm:grid-cols-2 xl:grid-cols-[10rem_16rem_minmax(0,1fr)]">
-            <legend className="px-1 text-sm font-medium">Canonical time basis</legend>
-            <label className="text-xs">
-              Window unit
-              <input
-                aria-label="Workbench Plan window unit"
-                className="mt-1 block w-full bg-c-surface p-2"
-                value={draft.windowUnit}
-                onChange={(event) =>
-                  setDraft((current) =>
-                    current ? { ...current, windowUnit: event.target.value } : current
-                  )
-                }
-              />
-            </label>
-            <label className="text-xs">
-              Timezone
-              <input
-                aria-label="Workbench Plan timezone"
-                className="mt-1 block w-full bg-c-surface p-2"
-                value={draft.timezone}
-                onChange={(event) =>
-                  setDraft((current) =>
-                    current ? { ...current, timezone: event.target.value } : current
-                  )
-                }
-              />
-            </label>
-            <label className="text-xs">
-              Ordered periods JSON
-              <textarea
-                aria-label="Workbench Plan ordered periods"
-                className="mt-1 block min-h-20 w-full bg-c-surface p-2 font-mono"
-                value={JSON.stringify(draft.periods, null, 2)}
-                onChange={(event) => {
-                  const periods = parsePeriods(event.target.value);
-                  if (periods) setDraft((current) => (current ? { ...current, periods } : current));
-                }}
-              />
-            </label>
+          <fieldset className="mb-4 rounded-md border border-c-border p-3">
+            <legend className="px-1 text-sm font-medium">Horyzont planowania</legend>
+            <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <label className="text-xs">
+                Jednostka czasu
+                <select
+                  aria-label="Workbench Plan window unit"
+                  className="mt-1 block w-full bg-c-surface p-2"
+                  value={draft.windowUnit}
+                  onChange={(event) =>
+                    setDraft((current) =>
+                      current ? { ...current, windowUnit: event.target.value } : current
+                    )
+                  }
+                >
+                  <option value="WEEK">Tydzień</option>
+                  <option value="MONTH">Miesiąc</option>
+                </select>
+              </label>
+              <label className="text-xs">
+                Strefa czasowa
+                <input
+                  aria-label="Workbench Plan timezone"
+                  className="mt-1 block w-full bg-c-surface p-2"
+                  value={draft.timezone}
+                  onChange={(event) =>
+                    setDraft((current) =>
+                      current ? { ...current, timezone: event.target.value } : current
+                    )
+                  }
+                />
+              </label>
+            </div>
+            <div className="space-y-2" aria-label="Okresy planu">
+              {draft.periods.map((period, index) => (
+                <div
+                  key={`${period.periodId}-${index}`}
+                  className="grid grid-cols-1 items-end gap-2 rounded border border-c-border p-2 sm:grid-cols-[minmax(8rem,1fr)_10rem_10rem_auto]"
+                >
+                  <label className="text-xs">
+                    Nazwa okresu
+                    <input
+                      aria-label={`Nazwa okresu ${index + 1}`}
+                      className="mt-1 block w-full bg-c-surface p-2"
+                      value={period.periodId}
+                      onChange={(event) => updatePeriod(index, { periodId: event.target.value })}
+                    />
+                  </label>
+                  <label className="text-xs">
+                    Od
+                    <input
+                      aria-label={`Początek okresu ${index + 1}`}
+                      className="mt-1 block w-full bg-c-surface p-2"
+                      type="date"
+                      value={toDateInput(period.start)}
+                      onChange={(event) =>
+                        updatePeriod(index, { start: toDateIso(event.target.value) })
+                      }
+                    />
+                  </label>
+                  <label className="text-xs">
+                    Do
+                    <input
+                      aria-label={`Koniec okresu ${index + 1}`}
+                      className="mt-1 block w-full bg-c-surface p-2"
+                      type="date"
+                      value={toDateInput(period.end)}
+                      onChange={(event) =>
+                        updatePeriod(index, { end: toDateIso(event.target.value) })
+                      }
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    className="btn-ghost"
+                    aria-label={`Usuń okres ${index + 1}`}
+                    onClick={() => removePeriod(index)}
+                  >
+                    <Trash2 size={15} /> Usuń
+                  </button>
+                </div>
+              ))}
+              <button type="button" className="btn-secondary" onClick={addPeriod}>
+                <Plus size={15} /> Dodaj okres
+              </button>
+            </div>
           </fieldset>
           {!knownTimeBasis(draft) && (
             <p role="alert" className="mb-4 text-sm text-c-danger">

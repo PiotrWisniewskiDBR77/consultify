@@ -175,4 +175,54 @@ describe('PlanScenarioSurface', () => {
     expect(screen.getByText('Nie przypisano okna planu')).toBeInTheDocument();
     expect(screen.getByText('ADD_TO_PLAN_OR_EXCLUDE')).toBeInTheDocument();
   });
+
+  it('creates a weekly planning horizon without exposing raw JSON', async () => {
+    render(<PlanScenarioSurface initiatives={[{ id: 'initiative-1', name: 'Automation' }]} />);
+    await screen.findByLabelText('Active Plan Scenario');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Nowy plan' }));
+    expect(screen.queryByText('Ordered periods JSON')).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Plan Scenario ID'), {
+      target: { value: 'plan-transformation' },
+    });
+    fireEvent.change(screen.getByLabelText('Portfolio Scenario ID'), {
+      target: { value: 'portfolio-approved' },
+    });
+    fireEvent.change(screen.getByLabelText('Plan start date'), {
+      target: { value: '2026-09-07' },
+    });
+    fireEvent.change(screen.getByLabelText('Plan week count'), { target: { value: '2' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Utwórz plan' }));
+
+    expect(
+      await screen.findByRole('region', { name: 'Plan Scenario Workbench' })
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText('Nazwa okresu 1')).toHaveValue('Tydzień 1');
+    expect(screen.getByLabelText('Początek okresu 1')).toHaveValue('2026-09-07');
+    expect(screen.getByLabelText('Koniec okresu 2')).toHaveValue('2026-09-21');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save draft' }));
+    await waitFor(() =>
+      expect(writePlanScenario).toHaveBeenCalledWith(
+        'plan-transformation',
+        expect.objectContaining({
+          operation: 'CREATE',
+          scenario: expect.objectContaining({
+            periods: [
+              expect.objectContaining({
+                periodId: 'Tydzień 1',
+                start: '2026-09-07T00:00:00.000Z',
+                end: '2026-09-14T00:00:00.000Z',
+              }),
+              expect.objectContaining({
+                periodId: 'Tydzień 2',
+                start: '2026-09-14T00:00:00.000Z',
+                end: '2026-09-21T00:00:00.000Z',
+              }),
+            ],
+          }),
+        })
+      )
+    );
+  });
 });
