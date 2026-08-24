@@ -25,7 +25,7 @@ Start: 2026-08-24 (Europe/Warsaw) · Koniec: —
 | 5 | security/service-accounts | 4/A | `26caf7f2b7` | DONE | nowa admin-only trasa; sekret tylko raz; readback |
 | 6 | ai/quality-evaluations | 2 | — | STOP | obie mutacje bez tenant-scope (`WHERE id = ?`) |
 | 7 | command/attention-queue | 2 | `358d4a2307` | DONE | 4 realne źródła; źródło/świeżość/severity/deep-link; bez mutacji |
-| 8 | command/cost-capacity | 2 | — | NIE ZACZĘTO | |
+| 8 | command/cost-capacity | 2 | `a92af5e497` | DONE | 5 źródeł; atrybucja StandardTable; tylko odczyt + deep-linki |
 | 9 | audit/compliance-evidence | 2 | — | NIE ZACZĘTO | |
 | 10 | billing/seats-licences | 3 | — | NIE ZACZĘTO | |
 | 11 | health/dependencies | 3 | — | NIE ZACZĘTO | |
@@ -91,6 +91,7 @@ Brak na starcie dyżuru.
 - `npx esbuild src/components/Admin/AdminCommandCenterPanel.tsx --loader:.tsx=tsx --outfile=/dev/null` — PASS.
 - `npx vitest run src/components/Admin/__tests__/AdminCommandCenterAttentionQueue.test.tsx src/views/admin/__tests__/AdminSettingsModule.test.tsx` — PASS, 2 pliki / 32 testy.
 - `bash scripts/check-list-canon.sh src/components/Admin/AdminCommandCenterPanel.tsx` — PASS, 0 nowych naruszeń.
+- `npx vitest run src/components/Admin/__tests__/AdminCommandCenterCostCapacity.test.tsx src/views/admin/__tests__/AdminSettingsModule.test.tsx` — PASS, 2 pliki / 31 testów.
 
 ## Migracje
 
