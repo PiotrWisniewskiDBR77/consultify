@@ -27,6 +27,7 @@ import { OrgContextSummaryBanner } from '../components/Organization/OrgContextSu
 import OrganizationDirectionConstraintsScreen from '../components/Organization/redesign/OrganizationDirectionConstraintsScreen';
 import OrganizationGoalsMetricsScreen from '../components/Organization/redesign/OrganizationGoalsMetricsScreen';
 import OrganizationIdentityOperatingScreen from '../components/Organization/redesign/OrganizationIdentityOperatingScreen';
+import OrganizationScopeCollaborationScreen from '../components/Organization/redesign/OrganizationScopeCollaborationScreen';
 import {
   getOrganizationRedesignModules,
   ORGANIZATION_REDESIGN_MODULES,
@@ -381,6 +382,26 @@ export const OrganizationView: React.FC = () => {
             </OrganizationScreenShell>
           )}
         </OrganizationGoalsMetricsScreen>
+      );
+    }
+
+    if (activeLocation.module === 'goals' && activeLocation.screen === 'stakeholder-expectations') {
+      return (
+        <OrganizationScopeCollaborationScreen>
+          {(args) => (
+            <OrganizationScreenShell
+              sections={args.sections}
+              activeSection={args.activeSection}
+              onSectionChange={args.onSectionChange}
+              chips={args.chips}
+              activeChip={args.activeChip}
+              onChipChange={args.onChipChange}
+              statePanel={args.statePanel}
+            >
+              {args.content}
+            </OrganizationScreenShell>
+          )}
+        </OrganizationScopeCollaborationScreen>
       );
     }
 
