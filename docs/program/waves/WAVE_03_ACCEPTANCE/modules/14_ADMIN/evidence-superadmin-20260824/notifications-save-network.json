@@ -1,0 +1,6 @@
+[
+  "200 GET http://127.0.0.1:4411/api/settings/preferences/accessibility",
+  "200 GET http://127.0.0.1:4411/api/settings/preferences/accessibility",
+  "200 GET http://127.0.0.1:4411/api/settings/preferences/notifications",
+  "403 PUT http://127.0.0.1:4411/api/settings/preferences/notifications"
+]
