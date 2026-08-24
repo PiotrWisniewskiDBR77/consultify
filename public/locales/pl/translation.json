@@ -17344,6 +17344,7 @@
         },
         "title": "Kontrole współpracy",
         "description": "Kanoniczne kontrole P32 dla dostępu gości, udostępniania i zatwierdzania narzędzi.",
+        "plannedNotice": "Planowane — ta polityka będzie egzekwowana po wdrożeniu.",
         "actions": {
           "save": "Zapisz kontrole"
         }

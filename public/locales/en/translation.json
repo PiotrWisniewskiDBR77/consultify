@@ -16498,6 +16498,7 @@
         },
         "title": "Collaboration Controls",
         "description": "Canonical P32 controls for guest access, sharing, and tool approval.",
+        "plannedNotice": "Planned — this policy will be enforced once implemented.",
         "actions": {
           "save": "Save controls"
         }
