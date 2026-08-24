@@ -175,12 +175,15 @@ Brak na starcie dyżuru.
 - `npx esbuild src/components/Admin/AdminConfigurationVersionsPanel.tsx --loader:.tsx=tsx --outfile=/dev/null` — PASS.
 - `bash scripts/check-list-canon.sh src/components/Admin/AdminConfigurationVersionsPanel.tsx` — PASS, 0 nowych naruszeń.
 - `npx vitest run src/components/Admin/__tests__/AdminConfigurationVersionsPanel.test.tsx src/views/admin/__tests__/AdminSettingsModule.test.tsx` — PASS, 2 pliki / 49 testów; obejmuje osobny stan `V8_DISABLED`, wymagany powód rollback i readback.
-- `npx tsc --noEmit --pretty false` — NOT PROVEN: proces wyczerpał limit sterty Node 4 GB; zostanie powtórzony z kontrolowanym większym limitem podczas weryfikacji zbiorczej.
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false` — zakres Admin PASS (po korekcie trzech lokalnych błędów); pełne repo nadal FAIL przez 5 błędów bazowych wyłącznie w niezmienionych `InitiativesHub.tsx` i `initiativeRegisterProjection.scope.test.ts`.
 - `npx esbuild src/components/Admin/AdminOrganizationDefaultsPanel.tsx --loader:.tsx=tsx --outfile=/dev/null` — PASS.
 - `bash scripts/check-list-canon.sh src/components/Admin/AdminOrganizationDefaultsPanel.tsx` — PASS, 0 nowych naruszeń.
 - `npx vitest run src/components/Admin/__tests__/AdminOrganizationDefaultsPanel.test.tsx src/views/admin/__tests__/AdminSettingsModule.test.tsx src/routes/__tests__/settingsAdminRedirect.test.ts` — PASS, 3 pliki / 56 testów; obejmuje oba readbacki, V8 disabled i precyzyjny redirect.
 - `npx vitest run server/src/routes/__tests__/teams-tenant-delete.routes.test.ts` — PASS, 1 plik / 2 testy; dowodzi 404 i braku mutacji child rows dla obcego team ID.
 - `npx esbuild server/src/routes/organization/teams.routes.ts --platform=node --format=esm --outfile=/dev/null` — PASS po domknięciu tenant-boundary przed kasowaniem członkostw.
+- Zbiorczo: wszystkie 36 zmienionych plików testowych — PASS, 153/153 testy.
+- `npm run build` — PASS (ostrzeżenia istniejące: rozmiary chunków, mixed static/dynamic imports, Browserslist).
+- `bash scripts/check-list-canon.sh <44 zmienione komponenty Admin>` — PASS, 0 nowych naruszeń.
 
 ## Migracje
 
