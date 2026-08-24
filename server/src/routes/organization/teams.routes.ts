@@ -351,6 +351,16 @@ router.delete(
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
+    // Prove tenant ownership before touching child rows. Deleting memberships
+    // first allowed an admin who guessed a foreign team id to mutate that team.
+    const team = await dbGet<{ id: string }>(
+      'SELECT id FROM teams WHERE id = ? AND organization_id = ?',
+      [id, orgId]
+    );
+    if (!team) {
+      return res.status(404).json({ error: 'Team not found' });
+    }
+
     // Delete team members first
     const runResult1 = await dbRun('DELETE FROM team_members WHERE team_id = ?', [id]);
 
