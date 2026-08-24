@@ -297,8 +297,30 @@ No conflicting ID is silently renumbered or promoted. The source overlay remains
 preserved read-only, while this crosswalk supplies a single navigation point for
 later atom-by-atom integration.
 
-Configuration, product WIP and test/tooling paths remain in the dirty overlay and
-were not copied in this documentation-only step.
+Configuration, product WIP and divergent release-tool paths remain in the dirty
+overlay and were not copied in this documentation-only step.
+
+### Test and recovery-tool reconciliation
+
+The four source-only recovery/Wave 3 gate files have now been preserved in the
+controlled candidate as byte-identical files:
+
+- `scripts/recovery/report-worktree-inventory.mjs` and its unit test;
+- `scripts/wave3/report-acceptance-gates.mjs` and its unit test.
+
+They are preservation tooling only. They have not been executed in this cleanup
+step, and their presence does not prove any module gate, owner acceptance,
+runtime, persistence, release or deployment result.
+
+The two release-bundle files are divergent rather than source-only:
+
+- `scripts/release/verify-release-candidate-bundle.mjs`;
+- `tests/unit/release/verify-release-candidate-bundle.test.mjs`.
+
+The dirty overlay is substantially shorter and removes existing candidate
+checks. It is therefore retained as an unpromoted variant pending an atomic
+release-tool contract review; it must not overwrite the current candidate by
+file copy. No product or release operation is authorized by this classification.
 
 ## Required connection record for every module
 
