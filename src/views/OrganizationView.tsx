@@ -28,10 +28,13 @@ import OrganizationChallengesEvidenceScreen from '../components/Organization/red
 import OrganizationDirectionConstraintsScreen from '../components/Organization/redesign/OrganizationDirectionConstraintsScreen';
 import OrganizationGoalsMetricsScreen from '../components/Organization/redesign/OrganizationGoalsMetricsScreen';
 import OrganizationIdentityOperatingScreen from '../components/Organization/redesign/OrganizationIdentityOperatingScreen';
+import OrganizationKnowledgeGraphScreen from '../components/Organization/redesign/OrganizationKnowledgeGraphScreen';
+import OrganizationReadinessScreen from '../components/Organization/redesign/OrganizationReadinessScreen';
 import OrganizationRisksOpportunitiesScreen from '../components/Organization/redesign/OrganizationRisksOpportunitiesScreen';
 import OrganizationRootCausesBlockersScreen from '../components/Organization/redesign/OrganizationRootCausesBlockersScreen';
 import OrganizationScenariosBriefScreen from '../components/Organization/redesign/OrganizationScenariosBriefScreen';
 import OrganizationScopeCollaborationScreen from '../components/Organization/redesign/OrganizationScopeCollaborationScreen';
+import OrganizationSourcesClaimsScreen from '../components/Organization/redesign/OrganizationSourcesClaimsScreen';
 import {
   getOrganizationRedesignModules,
   ORGANIZATION_REDESIGN_MODULES,
@@ -489,8 +492,39 @@ export const OrganizationView: React.FC = () => {
       );
     }
 
+    if (activeLocation.module === 'sources' && activeLocation.screen === 'claims-sources') {
+      return (
+        <OrganizationScreenShell>
+          <OrganizationSourcesClaimsScreen isAdmin={isOrgAdmin} />
+        </OrganizationScreenShell>
+      );
+    }
+
+    if (activeLocation.module === 'sources' && activeLocation.screen === 'knowledge-graph') {
+      return (
+        <OrganizationScreenShell>
+          <OrganizationKnowledgeGraphScreen />
+        </OrganizationScreenShell>
+      );
+    }
+
+    if (activeLocation.module === 'readiness' && activeLocation.screen === 'summary') {
+      return (
+        <OrganizationScreenShell>
+          <OrganizationReadinessScreen title={currentMeta.title} />
+        </OrganizationScreenShell>
+      );
+    }
+
     return <OrganizationScreenShell>{renderLegacyContent()}</OrganizationScreenShell>;
-  }, [activeLocation.module, activeLocation.screen, redesignEnabled, renderLegacyContent]);
+  }, [
+    activeLocation.module,
+    activeLocation.screen,
+    redesignEnabled,
+    renderLegacyContent,
+    currentMeta.title,
+    isOrgAdmin,
+  ]);
 
   return (
     <SettingsHeaderActionsProvider value={headerActionsTarget}>
