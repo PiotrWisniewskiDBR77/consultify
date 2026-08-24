@@ -19,6 +19,7 @@ export interface SubmitSourceProposalPayload {
   title: string;
   problem: string;
   proposedOutcome: string | null;
+  priority?: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
   projectId: string;
   initiativeOwnerId: string;
   visibility: 'PROJECT' | 'ORGANIZATION_RESTRICTED';
@@ -67,6 +68,7 @@ function validate(payload: SubmitSourceProposalPayload): SubmitSourceProposalPay
     problem: required(payload.problem, 'problem'),
     projectId: required(payload.projectId, 'projectId'),
     initiativeOwnerId: required(payload.initiativeOwnerId, 'initiativeOwnerId'),
+    priority: payload.priority || 'MEDIUM',
     provenance: {
       system: required(payload.provenance.system, 'provenance.system'),
       recordType: required(payload.provenance.recordType, 'provenance.recordType'),

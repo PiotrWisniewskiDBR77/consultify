@@ -16,6 +16,7 @@ export interface RegisterInitiativePayload {
   title: string;
   problem: string;
   proposedOutcome: string | null;
+  priority?: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
   projectId: string;
   visibility: 'PROJECT' | 'ORGANIZATION_RESTRICTED';
   initiativeOwnerId: string;
@@ -28,6 +29,7 @@ export interface RegisteredInitiative {
   title: string;
   problem: string;
   proposedOutcome: string | null;
+  priority: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
   projectId: string;
   visibility: RegisterInitiativePayload['visibility'];
   initiativeOwnerId: string;
@@ -71,6 +73,7 @@ function validate(payload: RegisterInitiativePayload): RegisterInitiativePayload
     problem: required(payload.problem, 'problem'),
     projectId: required(payload.projectId, 'projectId'),
     initiativeOwnerId: required(payload.initiativeOwnerId, 'initiativeOwnerId'),
+    priority: payload.priority || 'MEDIUM',
   };
 }
 
@@ -115,6 +118,7 @@ export async function registerInitiative(
       proposal.title === payload.title &&
       proposal.problem === payload.problem &&
       proposal.proposedOutcome === payload.proposedOutcome &&
+      (proposal.priority || 'MEDIUM') === payload.priority &&
       proposal.projectId === payload.projectId &&
       proposal.visibility === payload.visibility &&
       proposal.initiativeOwnerId === payload.initiativeOwnerId;
@@ -132,6 +136,7 @@ export async function registerInitiative(
       title: proposal.title,
       problem: proposal.problem,
       proposedOutcome: proposal.proposedOutcome,
+      priority: proposal.priority || 'MEDIUM',
       projectId: proposal.projectId,
       visibility: proposal.visibility,
       initiativeOwnerId: proposal.initiativeOwnerId,

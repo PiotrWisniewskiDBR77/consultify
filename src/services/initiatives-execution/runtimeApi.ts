@@ -10,6 +10,7 @@ export interface SourceProposalRegistration {
   title: string;
   problem: string;
   proposedOutcome: string | null;
+  priority?: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
   projectId: string;
   visibility: 'PROJECT' | 'ORGANIZATION_RESTRICTED';
   initiativeOwnerId: string;
@@ -283,6 +284,7 @@ export interface RegisteredInitiativeReadModel {
     title: string;
     problem?: string;
     proposedOutcome?: string | null;
+    priority?: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
     projectId: string;
     initiativeOwnerId?: string;
     readiness: 'NOT_EVALUATED';
@@ -474,6 +476,7 @@ export interface SourceProposalSubmission {
   title: string;
   problem: string;
   proposedOutcome: string | null;
+  priority?: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
   projectId: string;
   initiativeOwnerId: string;
   visibility: 'PROJECT' | 'ORGANIZATION_RESTRICTED';

@@ -97,11 +97,14 @@ describe('initiativeWriteTruth', () => {
       initiativeOwnerId: 'owner-1',
       title: 'Alpha',
       problem: 'Problem Alpha',
+      priority: 'high',
     });
 
     expect(Api.post).not.toHaveBeenCalled();
     expect(submitSourceProposal).toHaveBeenCalledOnce();
     expect(registerSourceProposal).toHaveBeenCalledOnce();
+    expect(submitSourceProposal).toHaveBeenCalledWith(expect.objectContaining({ priority: 'HIGH' }));
+    expect(registerSourceProposal).toHaveBeenCalledWith(expect.objectContaining({ priority: 'HIGH' }));
     expect(readRegisteredInitiative).toHaveBeenCalledOnce();
     expect(result.createdId).toBe(vi.mocked(readRegisteredInitiative).mock.calls[0]?.[0]);
     expect(result.truth.initiative?.title).toBe('Alpha');

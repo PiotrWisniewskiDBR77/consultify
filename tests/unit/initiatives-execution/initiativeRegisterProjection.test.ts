@@ -16,6 +16,7 @@ const record = (overrides: Record<string, unknown> = {}) => ({
     title: 'Digital Performance Management',
     problem: 'Decisions use stale operating data.',
     proposedOutcome: null,
+    priority: 'HIGH' as const,
     projectId: 'project-1',
     initiativeOwnerId: 'owner-1',
     readiness: 'NOT_EVALUATED' as const,
@@ -50,6 +51,7 @@ describe('canonical Initiative register projection', () => {
       healthState: 'N/A',
       sourceFreshness: 'STALE',
     });
+    expect(toCanonicalInitiativeRegisterItem(record()).priority).toBe('HIGH');
   });
 
   it('covers the complete business lifecycle with stable mutually exclusive presets', () => {

@@ -152,6 +152,15 @@ export async function createInitiativeWriteTruth(payload: Record<string, unknown
   const sourceId = newCommandId('manual-hub');
   const capturedAt = new Date().toISOString();
   const proposedOutcome = String(payload.proposedOutcome || '').trim() || null;
+  const requestedPriority = String(payload.priority || 'MEDIUM').trim().toUpperCase();
+  const priority: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' = [
+    'CRITICAL',
+    'HIGH',
+    'MEDIUM',
+    'LOW',
+  ].includes(requestedPriority)
+    ? (requestedPriority as 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW')
+    : 'MEDIUM';
 
   await submitSourceProposal({
     proposalId,
@@ -169,6 +178,7 @@ export async function createInitiativeWriteTruth(payload: Record<string, unknown
     title: String(payload.title || '').trim(),
     problem,
     proposedOutcome,
+    priority,
     projectId,
     initiativeOwnerId,
     visibility:
@@ -187,6 +197,7 @@ export async function createInitiativeWriteTruth(payload: Record<string, unknown
     title: String(payload.title || '').trim(),
     problem,
     proposedOutcome,
+    priority,
     projectId,
     visibility:
       payload.visibility === 'ORGANIZATION_RESTRICTED' ? 'ORGANIZATION_RESTRICTED' : 'PROJECT',
@@ -205,7 +216,7 @@ export async function createInitiativeWriteTruth(payload: Record<string, unknown
       description: cold.initiative.problem || '',
       axis: String(payload.axis || 'transformational'),
       status: 'DRAFT',
-      priority: String(payload.priority || 'MEDIUM'),
+      priority,
       progress: 0,
       budget: 0,
       createdAt: cold.updatedAt,

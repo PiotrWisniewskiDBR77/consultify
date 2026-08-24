@@ -174,7 +174,7 @@ export const toCanonicalInitiativeRegisterItem = (
     axis: 'operational',
     status: lifecycleToInitiativeStatus(projection.lifecycle),
     displayStatus: projection.lifecycle,
-    priority: undefined as unknown as PortfolioInitiative['priority'],
+    priority: initiative.priority as PortfolioInitiative['priority'],
     progress: undefined as unknown as number,
     budget: undefined as unknown as number,
     projectId: initiative.projectId,
