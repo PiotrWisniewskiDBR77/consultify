@@ -56,4 +56,11 @@ describe('billing history admin routes', () => {
     expect(dbAll).toHaveBeenCalledWith(expect.stringContaining('WHERE organization_id = ?'), ['org-1', 200, 2], { fallback: false });
     expect(response.body.pagination).toEqual({ limit: 200, offset: 2 });
   });
+
+  it('never admits a foreign organization selector into the query', async () => {
+    await request(app()).get('/api/admin/billing-history?organizationId=org-foreign');
+    const params = dbAll.mock.calls[0][1];
+    expect(params).toContain('org-1');
+    expect(params).not.toContain('org-foreign');
+  });
 });
