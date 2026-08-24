@@ -130,6 +130,40 @@ describe('Organization context store mounted auth + PostgreSQL persistence', () 
     });
   });
 
+  it('PUT with only one key updates ONLY that column — a second screen writing "goals" cannot wipe "challenges"/"synthesis" (M01 FAZA 2, DEC-2026-08-24-15 warunek a)', async () => {
+    // Seed all three keys first (simulates "Cele i mierniki" having already saved).
+    const seed = await request(app)
+      .put('/api/organization-context-store')
+      .set(auth(userA, orgA))
+      .send({
+        goals: { primaryObjective: 'Seeded goal' },
+        challenges: { declaredChallenges: [{ id: 'c1', text: 'Seeded challenge' }] },
+        synthesis: { selectedScenarioId: 'balanced' },
+      });
+    expect(seed.status, JSON.stringify(seed.body)).toBe(200);
+
+    // "Przyczyny i blockery" screen saves ONLY `challenges` (its own section) —
+    // must NOT touch the `goals` or `synthesis` columns another screen owns.
+    const partial = await request(app)
+      .put('/api/organization-context-store')
+      .set(auth(userA, orgA))
+      .send({ challenges: { activeBlockers: [{ id: 'b1', title: 'Fear of failure' }] } });
+    expect(partial.status, JSON.stringify(partial.body)).toBe(200);
+    expect(partial.body.version).not.toBe(seed.body.version);
+
+    const after = await request(app).get('/api/organization-context-store').set(auth(userA, orgA));
+    expect(after.status).toBe(200);
+    expect(after.body).toMatchObject({
+      // goals/synthesis from the FIRST write must survive untouched.
+      goals: { primaryObjective: 'Seeded goal' },
+      synthesis: { selectedScenarioId: 'balanced' },
+      // challenges must reflect ONLY the second write (fully replaced, not merged —
+      // each screen sends its section's complete state).
+      challenges: { activeBlockers: [{ id: 'b1', title: 'Fear of failure' }] },
+      version: partial.body.version,
+    });
+  });
+
   it('returns non-2xx when the durable table is unavailable', async () => {
     await pool.query(
       `ALTER TABLE organization_context_store RENAME TO organization_context_store_proof_failure`
