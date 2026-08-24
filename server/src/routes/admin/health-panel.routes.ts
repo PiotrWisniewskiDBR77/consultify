@@ -92,8 +92,8 @@ router.use(
 router.use(verifyAdmin);
 
 function getContext(req: AuthRequest): HealthProbeContext | null {
-  const organizationId = req.user?.organizationId || req.organizationId || '';
-  const userId = req.user?.id || req.userId || '';
+  const organizationId = req.user?.organizationId || '';
+  const userId = req.user?.id || '';
   if (!organizationId || !userId) return null;
   return { organizationId, userId };
 }
