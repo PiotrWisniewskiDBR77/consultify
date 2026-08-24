@@ -28,6 +28,29 @@ export function resolveLegacySyncSettingsEntry(
   }
 }
 
+/**
+ * Same resolution as `resolveLegacySyncSettingsEntry`, but preserves the
+ * query string and hash across the redirect.
+ *
+ * The OAuth callback (server/src/routes/settings.routes.ts) redirects the
+ * browser to the legacy `/settings/integrations` alias with
+ * `?oauth_success=<connector>` or `?oauth_error=<reason>`. SettingsView then
+ * bounces that legacy alias to the canonical `/settings/connected-apps`
+ * route; if that redirect drops the search string, ConnectedAppsSettings
+ * never sees the OAuth result and the connect/disconnect confirmation is
+ * silently lost.
+ */
+export function resolveLegacySyncSettingsRedirectTarget(
+  pathname: string,
+  search: string,
+  hash: string,
+  role: string | null | undefined
+): string | null {
+  const target = resolveLegacySyncSettingsEntry(pathname, role);
+  if (!target) return null;
+  return `${target}${search}${hash}`;
+}
+
 const LEGACY_AI_SECTION_MAP: Record<string, string> = {
   'ai-instructions': 'ai-behavior',
   'ai-personality': 'ai-behavior',

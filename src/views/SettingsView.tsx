@@ -79,6 +79,7 @@ import {
 import {
   normalizeSettingsSectionFromPath,
   resolveLegacySyncSettingsEntry,
+  resolveLegacySyncSettingsRedirectTarget,
 } from './settings/syncEntryResolver';
 
 interface SettingsViewProps {
@@ -254,10 +255,20 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       navigate(ROUTES.SETTINGS.PROFILE, { replace: true });
       return;
     }
-    const redirectTarget = resolveLegacySyncSettingsEntry(location.pathname, currentUser?.role);
+    // Preserve the query string (and hash) across the legacy-alias redirect.
+    // The OAuth callback (server/src/routes/settings.routes.ts) lands on the
+    // legacy `/settings/integrations` alias with `?oauth_success=...` /
+    // `?oauth_error=...`; dropping the search here would silently discard
+    // those params before ConnectedAppsSettings ever reads them.
+    const redirectTarget = resolveLegacySyncSettingsRedirectTarget(
+      location.pathname,
+      location.search,
+      location.hash,
+      currentUser?.role
+    );
     if (!redirectTarget) return;
     navigate(redirectTarget, { replace: true });
-  }, [currentUser?.role, location.pathname, navigate]);
+  }, [currentUser?.role, location.pathname, location.search, location.hash, navigate]);
 
   // Get section from URL path
   const activeSection = useMemo(() => {
