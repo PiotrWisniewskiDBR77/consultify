@@ -69,6 +69,28 @@ Every atom must have exactly one current state:
 | Finance / Materials | recovered multi-card/artifact registries are canonical candidates; owner acceptance and runtime readback remain open | canonical freeze board and module receipts |
 | Admin / AI OS / Partners | implement only explicit atoms from their owner registers; policy and permission ambiguity stays gated | corresponding owner-feedback registers |
 
+## Assessment reconciliation receipt
+
+Assessment was reconciled against the later canonical owner walkthrough and
+module acceptance card. The older four-mode proposal containing `Split` is
+`SUPERSEDED_BY_LATER_CANONICAL_CHANGE`; it must not be reintroduced over the
+selected `Interview / Matrix / Report` workspace with separate Settings.
+
+| Owner requirement | Current state | Candidate evidence |
+| --- | --- | --- |
+| Library is a pure assessment catalog; sessions belong to Processes | `ALREADY_IN_CANDIDATE_SOURCE` | `AssessmentHub` library/process separation and focused navigation tests |
+| User-facing artifact name is `Insights`, not `Outputs` | `ALREADY_IN_CANDIDATE_SOURCE` | canonical navigation plus `AssessmentHub.five-surfaces.test.tsx` |
+| Process preview follows the full-height preview-card standard | `ALREADY_IN_CANDIDATE_SOURCE` | focused Assessment preview-height tests |
+| DRD workspace uses `Interview / Matrix / Report`; no permanent Teresa rail | `ALREADY_IN_CANDIDATE_SOURCE` | current DRD workspace screens and focused workspace tests |
+| Persist answers, evidence, targets, approvals, report generation and readback | `BACKEND_OR_RUNTIME_GATE` until authenticated persistence and cold readback are proven | technical UI tests are insufficient |
+| Owner acceptance of the final visual and methodological flow | `OWNER_DECISION_REQUIRED` | reserved for owner review; never inferred from fixtures or tests |
+
+Focused evidence on the frozen candidate: 25 Assessment tests executed across
+hub navigation, DRD workspace, matrix and preview-height coverage. The only
+initial failure was a stale test expecting the superseded label `Outputs`.
+After aligning that test with the already-selected `Insights` contract, the
+navigation file passes `6/6`; no product behavior was changed by that repair.
+
 ## Work order
 
 1. Reconcile explicit module atoms into this state model without changing code.

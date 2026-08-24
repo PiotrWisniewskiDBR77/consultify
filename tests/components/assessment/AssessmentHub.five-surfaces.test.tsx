@@ -186,7 +186,7 @@ describe('AssessmentHub — five surfaces (assessmentFiveSurfacesV1 ON)', () => 
     expect(screen.queryByTestId('assessment-library-tab')).not.toBeInTheDocument();
   });
 
-  it('renders all 5 tabs: Library, Processes, Outputs, Reports, Initiatives', async () => {
+  it('renders all 5 tabs: Library, Processes, Insights, Reports, Initiatives', async () => {
     render(
       <MemoryRouter initialEntries={['/assessment']}>
         <LocationProbe />
@@ -198,7 +198,7 @@ describe('AssessmentHub — five surfaces (assessmentFiveSurfacesV1 ON)', () => 
     const tabs = screen.getAllByRole('tab').map((el) => el.textContent);
     expect(tabs.some((t) => /Library/.test(t || ''))).toBe(true);
     expect(tabs.some((t) => /Processes/.test(t || ''))).toBe(true);
-    expect(tabs.some((t) => /Outputs/.test(t || ''))).toBe(true);
+    expect(tabs.some((t) => /Insights/.test(t || ''))).toBe(true);
     expect(tabs.some((t) => /Reports/.test(t || ''))).toBe(true);
     expect(tabs.some((t) => /Initiatives/.test(t || ''))).toBe(true);
   });
