@@ -110,6 +110,56 @@ describe('initiativeWriteTruth', () => {
     expect(result.truth.initiative?.title).toBe('Alpha');
   });
 
+  it('preserves source lineage and uses stable ids for a retried wizard creation', async () => {
+    vi.mocked(submitSourceProposal).mockResolvedValue({} as any);
+    vi.mocked(registerSourceProposal).mockResolvedValue({} as any);
+    vi.mocked(readRegisteredInitiative).mockResolvedValue({
+      version: 1,
+      updatedAt: '2026-08-24T00:00:00.000Z',
+      initiative: {
+        initiativeId: 'initiative-wizard-1:candidate-1',
+        title: 'Source backed',
+        lifecycleState: 'REGISTERED_DRAFT',
+        source: {},
+      },
+    } as any);
+
+    await createInitiativeWriteTruth({
+      projectId: 'project-1',
+      initiativeOwnerId: 'owner-1',
+      creationRequestId: 'wizard-1:candidate-1',
+      sourceType: 'interview_insight',
+      sourceId: 'insight-1',
+      sourceVersion: 2,
+      evidenceRefs: ['interview_insight:insight-1'],
+      title: 'Source backed',
+      problem: 'Observed problem',
+    });
+
+    expect(submitSourceProposal).toHaveBeenCalledWith(
+      expect.objectContaining({
+        proposalId: 'proposal-wizard-1:candidate-1',
+        clientRequestId: 'submit-wizard-1:candidate-1',
+        sourceType: 'interview_insight',
+        sourceId: 'insight-1',
+        sourceVersion: 2,
+        provenance: expect.objectContaining({
+          recordType: 'source-backed-initiative-proposal',
+          evidenceRefs: expect.arrayContaining(['interview_insight:insight-1']),
+        }),
+      })
+    );
+    expect(registerSourceProposal).toHaveBeenCalledWith(
+      expect.objectContaining({
+        initiativeId: 'initiative-wizard-1:candidate-1',
+        clientRequestId: 'register-wizard-1:candidate-1',
+        sourceType: 'interview_insight',
+        sourceId: 'insight-1',
+        sourceVersion: 2,
+      })
+    );
+  });
+
   it('falls back to legacy initiative governance reads when V8 reads fail', async () => {
     vi.mocked(V8PlanningApi.getInitiative).mockRejectedValue(new Error('v8 down'));
     vi.mocked(V8PlanningApi.getGateReadiness).mockRejectedValue(new Error('v8 down'));

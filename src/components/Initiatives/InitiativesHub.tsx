@@ -2454,6 +2454,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         isOpen={showInitiativeWizard}
         language={i18n.language === 'pl' ? 'pl' : 'en'}
         projectId={currentProjectId || undefined}
+        initiativeOwnerId={String((currentUser as any)?.id || '')}
         existingInitiatives={allInitiatives}
         onClose={() => setShowInitiativeWizard(false)}
         onCreated={(created) => {

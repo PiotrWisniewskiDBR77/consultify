@@ -138,6 +138,14 @@ export interface CanonicalInitiativeCreateInput {
 
 const newCommandId = (prefix: string) => `${prefix}-${crypto.randomUUID()}`;
 
+const stableCommandId = (prefix: string, value: unknown) => {
+  const normalized = String(value || '')
+    .trim()
+    .replace(/[^a-zA-Z0-9._:-]+/g, '-')
+    .slice(0, 180);
+  return normalized ? `${prefix}-${normalized}` : newCommandId(prefix);
+};
+
 export async function createInitiativeWriteTruth(payload: Record<string, unknown>) {
   const projectId = String(payload.projectId || '').trim();
   const initiativeOwnerId = String(payload.initiativeOwnerId || payload.ownerId || '').trim();
@@ -147,9 +155,24 @@ export async function createInitiativeWriteTruth(payload: Record<string, unknown
   if (!projectId || !initiativeOwnerId) {
     throw new Error('Canonical initiative creation requires projectId and initiativeOwnerId');
   }
-  const proposalId = newCommandId('proposal');
-  const initiativeId = newCommandId('initiative');
-  const sourceId = newCommandId('manual-hub');
+  const creationRequestId = payload.creationRequestId;
+  const proposalId = stableCommandId('proposal', creationRequestId);
+  const initiativeId = stableCommandId('initiative', creationRequestId);
+  const requestedSourceType = String(payload.sourceType || '').trim();
+  const requestedSourceId = String(payload.sourceId || '').trim();
+  const sourceType = requestedSourceType || 'MANUAL_HUB';
+  const sourceId = requestedSourceId || stableCommandId('manual-hub', creationRequestId);
+  const requestedSourceVersion = Number(payload.sourceVersion || 1);
+  const sourceVersion = Number.isInteger(requestedSourceVersion) && requestedSourceVersion > 0
+    ? requestedSourceVersion
+    : 1;
+  const evidenceRefs = Array.from(
+    new Set(
+      (Array.isArray(payload.evidenceRefs) ? payload.evidenceRefs : [])
+        .map((ref) => String(ref || '').trim())
+        .filter(Boolean)
+    )
+  );
   const capturedAt = new Date().toISOString();
   const proposedOutcome = String(payload.proposedOutcome || '').trim() || null;
   const requestedPriority = String(payload.priority || 'MEDIUM').trim().toUpperCase();
@@ -165,15 +188,17 @@ export async function createInitiativeWriteTruth(payload: Record<string, unknown
   await submitSourceProposal({
     proposalId,
     expectedVersion: 0,
-    clientRequestId: newCommandId('submit'),
-    sourceType: 'MANUAL_HUB',
+    clientRequestId: stableCommandId('submit', creationRequestId),
+    sourceType,
     sourceId,
-    sourceVersion: 1,
+    sourceVersion,
     provenance: {
       system: 'consultify.initiatives-hub',
-      recordType: 'manual-initiative-proposal',
+      recordType: requestedSourceType ? 'source-backed-initiative-proposal' : 'manual-initiative-proposal',
       capturedAt,
-      evidenceRefs: [`consultify://initiatives/source-proposals/${proposalId}`],
+      evidenceRefs: Array.from(
+        new Set([...evidenceRefs, `consultify://initiatives/source-proposals/${proposalId}`])
+      ),
     },
     title: String(payload.title || '').trim(),
     problem,
@@ -188,12 +213,12 @@ export async function createInitiativeWriteTruth(payload: Record<string, unknown
   await registerSourceProposal({
     initiativeId,
     expectedVersion: 0,
-    clientRequestId: newCommandId('register'),
+    clientRequestId: stableCommandId('register', creationRequestId),
     proposalId,
     proposalVersion: 1,
-    sourceType: 'MANUAL_HUB',
+    sourceType,
     sourceId,
-    sourceVersion: 1,
+    sourceVersion,
     title: String(payload.title || '').trim(),
     problem,
     proposedOutcome,

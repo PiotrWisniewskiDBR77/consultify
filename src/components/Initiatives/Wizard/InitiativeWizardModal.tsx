@@ -582,6 +582,7 @@ function formatInsightDate(value: string | undefined, language: WizardLanguage):
 interface InitiativeWizardModalProps {
   isOpen: boolean;
   projectId?: string | null;
+  initiativeOwnerId?: string | null;
   existingInitiatives: ExistingInitiativeMatch[];
   initialMode?: string;
   initialBusinessPriorities?: string[];
@@ -665,6 +666,7 @@ function extractCandidateAnchoredSource(candidate: WizardCandidate): AnchoredSou
 export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
   isOpen,
   projectId,
+  initiativeOwnerId,
   existingInitiatives,
   initialMode = 'create_first_portfolio',
   initialBusinessPriorities = ['margin', 'quality'],
@@ -1257,6 +1259,8 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
         );
         const result = await createInitiativeWriteTruth({
           projectId: sessionProjectId,
+          initiativeOwnerId,
+          creationRequestId: `${sessionId}:${candidate.id}`,
           title: candidate.title,
           summary:
             applyCore && coreFields.solution.trim()

@@ -31,6 +31,7 @@ vi.mock('@/services/api', () => ({
   Api: {
     get: vi.fn(async () => ({})),
     post: vi.fn(async () => ({})),
+    getProjects: vi.fn(async () => []),
   },
 }));
 

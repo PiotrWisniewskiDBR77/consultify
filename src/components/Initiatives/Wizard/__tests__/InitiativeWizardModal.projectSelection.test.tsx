@@ -91,6 +91,7 @@ describe('InitiativeWizardModal project anchoring', () => {
     render(
       <InitiativeWizardModal
         isOpen
+        initiativeOwnerId="owner-1"
         existingInitiatives={[]}
         language="en"
         onClose={() => {}}
@@ -122,7 +123,11 @@ describe('InitiativeWizardModal project anchoring', () => {
       expect.objectContaining({ projectId: 'project-b' })
     );
     expect(createInitiativeWriteTruth).toHaveBeenCalledWith(
-      expect.objectContaining({ projectId: 'project-b' })
+      expect.objectContaining({
+        projectId: 'project-b',
+        initiativeOwnerId: 'owner-1',
+        creationRequestId: expect.any(String),
+      })
     );
   });
 
