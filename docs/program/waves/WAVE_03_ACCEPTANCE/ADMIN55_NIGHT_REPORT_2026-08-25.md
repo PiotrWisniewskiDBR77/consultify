@@ -43,8 +43,8 @@ Start: 2026-08-24 (Europe/Warsaw) · Koniec: —
 | 23 | audit/integrity | 4/B | `19ffa63d6f` | DONE | realne stats; access-control claim; jawny brak hash chain |
 | 24 | ai/personas | 4/A | `daee8f0b59` | DONE | jedna współdzielona implementacja; real load/update/readback; data-privacy zachowane |
 | 25 | ai/ai-incidents | 4/B | `14eeb254ab` | DONE | 2 realne źródła; wyliczany charakter jawny; pusty stan jako dobra wiadomość |
-| 26 | ai/configuration-versions | 2 | — | NIE ZACZĘTO | |
-| 27 | command/organization-defaults | DEC-13 | — | NIE ZACZĘTO | licznik docelowy: 56 |
+| 26 | ai/configuration-versions | 2 | `4820d77ac2` | DONE | realne V8 summary/bundles/details; osobne gate states; activate/rollback z readbackiem i 409 |
+| 27 | command/organization-defaults | DEC-13 | `6fc215f349` | DONE | dwa źródła i zapisy; profil GET-readback; finanse version/readback; V8 fail-open tylko dla profilu; licznik 56 |
 
 ## Pozycje STOP
 
@@ -96,6 +96,8 @@ Stan: NIE ZACOMMITOWANO.
 | 8 | `legal_holds` jest martwe i prawdopodobnie nieuruchomione | `server/migrations/263_gdpr_compliance.sql:332` | schema/runtime drift | ekran pokazuje wyłącznie żywą flagę `org_policies`; bez migracji |
 | 9 | `audit_export_history` z `259_` jest martwe; eksporty dataExport nie mają wspólnego kontraktu paragonu | `server/migrations/259_audit_logging.sql:105`, `server/src/routes/dataExport.routes.ts` | schema/runtime drift / poza zakresem | dodano odrębny minimalny receipt tylko do admin audit CSV |
 | 10 | Brak żywego hash chain dziennika audytu | `server/migrations/never-ran/200_security_mvp_enterprise.sql.sql:556-579` | brak dowodu kryptograficznego | ekran mówi wprost o kontroli dostępu; rekomendowany prior-art `20261007`, `20261008`, `20260914`, `20260908` |
+| 11 | `toolsOrgAdminService.ts` nie ma zamontowanej trasy | `server/src/services/v8/toolsOrgAdminService.ts` | serwis-sierota | zgodnie z DEC-13 nie montowano go i nie użyto jako magazynu ustawień |
+| 12 | Stary `OrganizationSettings.tsx` duplikuje edycję ustawień finansowych | `src/components/settings/OrganizationSettings.tsx:54-83` | przyszła konsolidacja UX | zgodnie z instrukcją nie zmieniano; docelowo powinien linkować do nowego ekranu |
 
 ## Korekty inwentarza
 
@@ -174,6 +176,11 @@ Brak na starcie dyżuru.
 - `bash scripts/check-list-canon.sh src/components/Admin/AdminConfigurationVersionsPanel.tsx` — PASS, 0 nowych naruszeń.
 - `npx vitest run src/components/Admin/__tests__/AdminConfigurationVersionsPanel.test.tsx src/views/admin/__tests__/AdminSettingsModule.test.tsx` — PASS, 2 pliki / 49 testów; obejmuje osobny stan `V8_DISABLED`, wymagany powód rollback i readback.
 - `npx tsc --noEmit --pretty false` — NOT PROVEN: proces wyczerpał limit sterty Node 4 GB; zostanie powtórzony z kontrolowanym większym limitem podczas weryfikacji zbiorczej.
+- `npx esbuild src/components/Admin/AdminOrganizationDefaultsPanel.tsx --loader:.tsx=tsx --outfile=/dev/null` — PASS.
+- `bash scripts/check-list-canon.sh src/components/Admin/AdminOrganizationDefaultsPanel.tsx` — PASS, 0 nowych naruszeń.
+- `npx vitest run src/components/Admin/__tests__/AdminOrganizationDefaultsPanel.test.tsx src/views/admin/__tests__/AdminSettingsModule.test.tsx src/routes/__tests__/settingsAdminRedirect.test.ts` — PASS, 3 pliki / 56 testów; obejmuje oba readbacki, V8 disabled i precyzyjny redirect.
+- `npx vitest run server/src/routes/__tests__/teams-tenant-delete.routes.test.ts` — PASS, 1 plik / 2 testy; dowodzi 404 i braku mutacji child rows dla obcego team ID.
+- `npx esbuild server/src/routes/organization/teams.routes.ts --platform=node --format=esm --outfile=/dev/null` — PASS po domknięciu tenant-boundary przed kasowaniem członkostw.
 
 ## Migracje
 
@@ -183,7 +190,9 @@ Dodano `20261073_admin_sessions_org_scope.sql` i `20261074_admin_audit_export_re
 ## Licznik ekranów
 
 Podłączonych przed dyżurem: do ustalenia z białej listy na bazowym SHA.
-Podłączonych po dyżurze: do ustalenia /56 (56, bo DEC-13 dodaje `command/organization-defaults`).
+Podłączonych po dyżurze: 56/56 pozycji nawigacji (w tym jawnie podłączone DONE, istniejące Fala 0/1 oraz ekrany STOP pokazujące stan capability; 56, bo DEC-13 dodaje `command/organization-defaults`).
+
+Pola świadomie nieutworzone w DEC-13: domyślna metodologia projektu i domyślny szablon inicjatywy. Nie istnieją w aktualnym modelu danych; wymagają osobnej decyzji właściciela i kontraktu domenowego.
 
 ## Czego NIE zrobiłem i dlaczego
 
