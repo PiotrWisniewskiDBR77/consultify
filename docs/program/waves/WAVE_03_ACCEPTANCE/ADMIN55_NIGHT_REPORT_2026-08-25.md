@@ -31,7 +31,7 @@ Start: 2026-08-24 (Europe/Warsaw) · Koniec: —
 | 11 | health/dependencies | 3 | — | STOP | brak jawnej mapy probe→zależność; rejestr opisuje przepływy produktowe, nie zależności |
 | 12 | health/incident-history | 4/B | — | STOP | ledger platformowy nie ma `organization_id`; zakaz zmiany semantyki migracją |
 | 13 | health/queues-jobs | 4/B | `341bdb4cf4` | DONE | tenantowy read-only odczyt `admin_iam_jobs`; bez retry/cancel |
-| 14 | health/sla-slo | 4/B | — | NIE ZACZĘTO | |
+| 14 | health/sla-slo | 4/B | `14128f2ab4` | DONE | realny tenant-scoped SLO + odczyt AI SLA; bez mutacji; stałe targety ujawnione |
 | 15 | security/security-alerts | 4/A | — | NIE ZACZĘTO | |
 | 16 | security/sessions | 3 | — | NIE ZACZĘTO | |
 | 17 | security/break-glass | 3 | — | NIE ZACZĘTO | |
@@ -121,6 +121,8 @@ Brak na starcie dyżuru.
 - `npx esbuild src/components/Admin/AdminJobsPanel.tsx --loader:.tsx=tsx --outfile=/dev/null` — PASS.
 - `bash scripts/check-list-canon.sh src/components/Admin/AdminJobsPanel.tsx` — PASS, 0 nowych naruszeń.
 - `npx vitest run server/src/routes/__tests__/health-jobs.routes.test.ts src/components/Admin/__tests__/AdminJobsPanel.test.tsx src/views/admin/__tests__/AdminSettingsModule.test.tsx` — PASS, 3 pliki / 37 testów.
+- `npx esbuild src/components/Admin/AdminSlaSloPanel.tsx --loader:.tsx=tsx --outfile=/dev/null` — PASS.
+- `npx vitest run src/components/Admin/__tests__/AdminSlaSloPanel.test.tsx src/views/admin/__tests__/AdminSettingsModule.test.tsx` — PASS, 2 pliki / 35 testów.
 
 ## Migracje
 
