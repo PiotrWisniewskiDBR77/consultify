@@ -3055,7 +3055,10 @@ export const AppRoutes: React.FC = () => {
           }
         />
 
-        {/* Organization with nested routes - Protected & Error Boundary */}
+        {/* Organization with nested routes - Protected & Error Boundary
+            DEC-...-10 — Administration is not an Organization concern: the five
+            legacy administrative sub-routes redirect to the canonical Admin
+            screens before OrganizationView ever mounts. */}
         <Route
           path={`${ROUTES.ORGANIZATION.ROOT}/*`}
           element={
@@ -3063,7 +3066,59 @@ export const AppRoutes: React.FC = () => {
               <MainLayout breadcrumbs={breadcrumbs || ['Organization']} noPadding>
                 <RouteErrorBoundary>
                   <AnimationWrapper variant="fade">
-                    <OrganizationView />
+                    <Routes>
+                      <Route
+                        path="members/*"
+                        element={
+                          <RedirectWithTracking
+                            from={ROUTES.ORGANIZATION.MEMBERS}
+                            to={ROUTES.ADMIN.PEOPLE}
+                            reason="organization_admin_handoff"
+                          />
+                        }
+                      />
+                      <Route
+                        path="billing/*"
+                        element={
+                          <RedirectWithTracking
+                            from={ROUTES.ORGANIZATION.BILLING}
+                            to={ROUTES.ADMIN.BILLING}
+                            reason="organization_admin_handoff"
+                          />
+                        }
+                      />
+                      <Route
+                        path="limits/*"
+                        element={
+                          <RedirectWithTracking
+                            from={ROUTES.ORGANIZATION.LIMITS}
+                            to={ROUTES.ADMIN.BILLING}
+                            reason="organization_admin_handoff"
+                          />
+                        }
+                      />
+                      <Route
+                        path="domains/*"
+                        element={
+                          <RedirectWithTracking
+                            from={ROUTES.ORGANIZATION.DOMAINS}
+                            to={ROUTES.ADMIN.OPERATIONS}
+                            reason="organization_admin_handoff"
+                          />
+                        }
+                      />
+                      <Route
+                        path="branding/*"
+                        element={
+                          <RedirectWithTracking
+                            from={ROUTES.ORGANIZATION.BRANDING}
+                            to={ROUTES.ADMIN.OPERATIONS}
+                            reason="organization_admin_handoff"
+                          />
+                        }
+                      />
+                      <Route path="*" element={<OrganizationView />} />
+                    </Routes>
                   </AnimationWrapper>
                 </RouteErrorBoundary>
               </MainLayout>
