@@ -103,6 +103,26 @@ These dispositions intentionally prevent cosmetic implementation from creating
 false permission, commercial or runtime promises. They do not count as owner
 acceptance and do not block work on unrelated unequivocal regressions.
 
+## Results reconciliation receipt
+
+The historical `/results` fallback that rendered an isolated dark `0 KPI`
+screen is not the selected product. Bare and legacy Results routes are required
+to canonicalize to the Results registry, whose Menu 2 destinations are
+`KPI / OKR / ROI` and whose full-tool deep links have explicit loading, error,
+forbidden and cold-load states.
+
+| Contract | State | Focused evidence |
+| --- | --- | --- |
+| `/results` never returns the retired legacy hub | `ALREADY_IN_CANDIDATE_SOURCE` | canonical route and owner-review entry tests |
+| KPI, OKR and ROI remain three distinct registry destinations | `ALREADY_IN_CANDIDATE_SOURCE` | three-pairs navigation test |
+| OKR and ROI full-tool deep links do not render blank on direct load or error | `ALREADY_IN_CANDIDATE_SOURCE` | focused tool-page cold-load/error/404 tests |
+| Deterministic owner sample data is review-only and explicit | `ALREADY_IN_CANDIDATE_SOURCE` | `resultsVNextOwnerSampleData.ts`; not production evidence |
+| Authenticated server persistence, measurement/approval lifecycle and cold readback | `BACKEND_OR_RUNTIME_GATE` | component tests do not prove database behavior |
+
+Focused regression result: `5 files / 18 tests PASS`. This protects route
+selection and the three-tool information architecture; it does not yet prove
+the complete 21-gate Results acceptance package or owner visual acceptance.
+
 ## Work order
 
 1. Reconcile explicit module atoms into this state model without changing code.
