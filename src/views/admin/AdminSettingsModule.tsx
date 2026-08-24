@@ -11,6 +11,7 @@ import { AdminCommandCenterPanel } from '../../components/Admin/AdminCommandCent
 import { AdminHealthPanel } from '../../components/Admin/AdminHealthPanel';
 import { AdminMembersRolesPanel } from '../../components/Admin/AdminMembersRolesPanel';
 import { AdminPlanHistoryPanel } from '../../components/Admin/AdminPlanHistoryPanel';
+import { AdminServiceAccountsPanel } from '../../components/Admin/AdminServiceAccountsPanel';
 import { AdminTeamsPanel } from '../../components/Admin/AdminTeamsPanel';
 import {
   ADMIN_DEFAULTS,
@@ -336,6 +337,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
       // SECURITY_TAB_BY_SCREEN below.
       (resolvedLocation.domain === 'security' &&
         Object.prototype.hasOwnProperty.call(SECURITY_TAB_BY_SCREEN, resolvedLocation.screen)) ||
+      (resolvedLocation.domain === 'security' && resolvedLocation.screen === 'service-accounts') ||
       // Fala 1 (Admin komplet 55): models-providers/ai-limits-budgets/
       // data-privacy/ai-operations/ai-audit already have working tabs inside
       // AIModule (nested under AdminAIControlCenterPanel) — see
@@ -397,6 +399,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
           />
         );
       case 'security':
+        if (resolvedLocation.screen === 'service-accounts') return <AdminServiceAccountsPanel />;
         return (
           <AdminSecurityIdentityPanel
             initialTab={SECURITY_TAB_BY_SCREEN[resolvedLocation.screen]}
