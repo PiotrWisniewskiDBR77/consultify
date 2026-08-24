@@ -148,7 +148,8 @@ async function main() {
   };
   const portfolioScenarioId = `${initiativeId}-owner-portfolio`;
   const planScenarioId = `${initiativeId}-owner-plan`;
-  const capacityScenarioId = `${initiativeId}-owner-capacity`;
+  const capacityBaselineScenarioId = `${initiativeId}-owner-capacity`;
+  const capacityStressScenarioId = `${initiativeId}-owner-capacity-stress`;
   const portfolioScenario = {
     scenarioId: portfolioScenarioId,
     scenarioVersion: 0,
@@ -190,28 +191,50 @@ async function main() {
     ],
     createdBy: '', updatedBy: '', publishedBy: null, publishedAt: null,
   };
-  const range = {
-    knowledgeState: 'KNOWN', low: 0.5, base: 1, high: 1.5,
-    sourceRef: 'wave03-owner-capacity', sourceVersion: 1,
-    asOf: '2026-08-24T08:00:00.000Z', confidence: 'HIGH',
-    ownerId: fixture.personas.find((person) => person.role === 'ADMIN')?.id,
-    reason: 'Explicit bounded synthetic capacity.',
-  };
-  if (!range.ownerId) fail('fixture manifest has no active admin persona');
-  const capacityScenario = {
-    scenarioId: capacityScenarioId,
+  const ownerId = fixture.personas.find((person) => person.role === 'ADMIN')?.id;
+  if (!ownerId) fail('fixture manifest has no active admin persona');
+  const capacityRange = (variant, kind, low, base, high, reason) => ({
+    knowledgeState: 'ESTIMATED', low, base, high,
+    sourceRef: `wave03-owner-capacity-${variant}-${kind}`, sourceVersion: 1,
+    asOf: '2026-08-24T08:00:00.000Z', confidence: variant === 'baseline' ? 'HIGH' : 'MEDIUM',
+    ownerId,
+    reason,
+  });
+  const capacityScenario = (scenarioId, demand, supply) => ({
+    scenarioId,
     scenarioVersion: 0,
     status: 'DRAFT',
     planScenarioId, planScenarioVersion: 2,
     windowUnit: 'WEEK', timezone: 'Europe/Warsaw',
-    periods: [{ ...period, demand: range, supply: range }],
+    periods: [{ ...period, demand, supply }],
     constraints: [], proposedAssignments: [],
     createdBy: '', updatedBy: '', publishedBy: null, publishedAt: null,
-  };
+  });
+  const baselineCapacityScenario = capacityScenario(
+    capacityBaselineScenarioId,
+    capacityRange('baseline', 'demand', 0.5, 1, 1.5, 'Baseline synthetic demand estimate.'),
+    capacityRange('baseline', 'supply', 0.5, 1, 1.5, 'Baseline synthetic supply estimate.'),
+  );
+  const stressCapacityScenario = capacityScenario(
+    capacityStressScenarioId,
+    capacityRange('stress', 'demand', 1.2, 1.6, 2, 'Stress-case synthetic demand estimate.'),
+    capacityRange('stress', 'supply', 0.8, 1, 1.2, 'Stress-case synthetic supply estimate.'),
+  );
 
   const portfolio = await ensureScenario(target, token, 'portfolio-scenarios', portfolioScenario);
   const plan = await ensureScenario(target, token, 'plan-scenarios', planScenario);
-  const capacity = await ensureScenario(target, token, 'capacity-scenarios', capacityScenario);
+  const capacityBaseline = await ensureScenario(
+    target,
+    token,
+    'capacity-scenarios',
+    baselineCapacityScenario,
+  );
+  const capacityStress = await ensureScenario(
+    target,
+    token,
+    'capacity-scenarios',
+    stressCapacityScenario,
+  );
   const proof = {
     fixtureId: expectedFixtureId,
     productionWrites: false,
@@ -219,7 +242,13 @@ async function main() {
     initiativeId,
     projectId,
     initiativeVersion,
-    scenarios: { portfolio, plan, capacity },
+    scenarios: {
+      portfolio,
+      plan,
+      // Preserve the original key for consumers of the first evidence manifest.
+      capacity: capacityBaseline,
+      capacities: [capacityBaseline, capacityStress],
+    },
     verifiedAt: new Date().toISOString(),
   };
   if (command === 'seed') {

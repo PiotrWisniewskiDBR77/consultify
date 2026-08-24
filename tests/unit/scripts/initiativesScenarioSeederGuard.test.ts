@@ -22,6 +22,14 @@ function run(baseUrl: string, fixtureManifest = '') {
 }
 
 describe('Wave 3 Initiatives scenario seeder guard', () => {
+  it('defines two independent capacity analyses bound to the retained plan proof', () => {
+    const source = fs.readFileSync(script, 'utf8');
+    expect(source).toContain("`${initiativeId}-owner-capacity`");
+    expect(source).toContain("`${initiativeId}-owner-capacity-stress`");
+    expect(source).toContain('capacities: [capacityBaseline, capacityStress]');
+    expect(source).toContain('planScenarioId, planScenarioVersion: 2');
+  });
+
   it('rejects a non-local runtime', () => {
     const result = run('https://demo.consultify.ai', '/tmp/fixture.json');
     expect(result.status).not.toBe(0);
