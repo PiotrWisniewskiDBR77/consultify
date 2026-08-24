@@ -37,7 +37,7 @@ Start: 2026-08-24 (Europe/Warsaw) · Koniec: —
 | 17 | security/break-glass | 3 | `8eb2c8252a` | DONE | addytywny org-scope; 1h; policy approvers; typed confirm; 400/404 cross-tenant |
 | 18 | team/guests-external | 4/A | `7453ad85a6` | DONE | faktyczny stan GUEST+zaproszenia; revoke 404 tenant; brak placebo switcha |
 | 19 | team/access-reviews | 4/B | `b266c76026` | DONE | 2 realne odczyty; privileged accounts; termin; brak fikcyjnej historii/edycji |
-| 20 | team/roles-permissions | 2 | — | NIE ZACZĘTO | |
+| 20 | team/roles-permissions | 2 | `9f36b11c7e` | DONE | OWNER CRUD+readback; ADMIN 403 fail-closed bez formularza |
 | 21 | audit/legal-hold | 4/B | — | NIE ZACZĘTO | |
 | 22 | audit/export-history | 4/B | — | NIE ZACZĘTO | |
 | 23 | audit/integrity | 4/B | — | NIE ZACZĘTO | |
@@ -148,6 +148,9 @@ Brak na starcie dyżuru.
 - `npx esbuild src/components/Admin/AdminAccessReviewsPanel.tsx --loader:.tsx=tsx --outfile=/dev/null` — PASS.
 - `bash scripts/check-list-canon.sh src/components/Admin/AdminAccessReviewsPanel.tsx` — PASS, 0 nowych naruszeń.
 - `npx vitest run src/components/Admin/__tests__/AdminAccessReviewsPanel.test.tsx src/views/admin/__tests__/AdminSettingsModule.test.tsx` — PASS, 2 pliki / 40 testów.
+- `npx esbuild src/components/Admin/AdminRolesPermissionsPanel.tsx --loader:.tsx=tsx --outfile=/dev/null` — PASS.
+- `bash scripts/check-list-canon.sh src/components/Admin/AdminRolesPermissionsPanel.tsx` — PASS, 0 nowych naruszeń.
+- `npx vitest run src/components/Admin/__tests__/AdminRolesPermissionsPanel.test.tsx src/views/admin/__tests__/AdminSettingsModule.test.tsx` — PASS, 2 pliki / 43 testy.
 
 ## Migracje
 
