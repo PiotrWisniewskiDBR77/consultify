@@ -83,6 +83,19 @@ const MOCK_PROFILE = {
  * (ta idzie przez `Api.put('/organization-profiles/:id')`, podmienione niżej).
  * Reszta `/api/**` celowo leci dalej — żeby prawdziwe błędy nadal było widać.
  */
+// M01 FAZA 2 (DEC-2026-08-24-15): stan w pamięci, TAK JAK realna trasa
+// `/api/organization-context-store` (GET zwraca to, co ostatni PUT zapisał;
+// PUT nadpisuje TYLKO klucze przysłane w body — patrz `server/src/routes/
+// organization-context-store.routes.ts`). Bez tego „Zapisz zmiany" na pięciu
+// ekranach etapu B zawsze wyglądałoby na nieudane w harnessie (GET zawsze
+// zwracałby puste `{}`, readback nigdy by się nie zgadzał).
+const orgContextStoreState: { goals: unknown; challenges: unknown; synthesis: unknown } = {
+  goals: {},
+  challenges: {},
+  synthesis: {},
+};
+let orgContextStoreVersion = 0;
+
 const originalFetch = window.fetch.bind(window);
 window.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
   const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
@@ -94,8 +107,22 @@ window.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
 
   if (url.includes('/api/organization-context-store')) {
     const method = (init?.method || 'GET').toUpperCase();
-    if (method === 'GET') return json({ goals: {}, challenges: {}, synthesis: {}, version: 'v1' });
-    return json({ ok: true, version: 'v1' });
+    if (method === 'GET') {
+      return json({
+        goals: orgContextStoreState.goals,
+        challenges: orgContextStoreState.challenges,
+        synthesis: orgContextStoreState.synthesis,
+        version: String(orgContextStoreVersion),
+      });
+    }
+    const body = init?.body ? JSON.parse(String(init.body)) : {};
+    if (Object.prototype.hasOwnProperty.call(body, 'goals')) orgContextStoreState.goals = body.goals;
+    if (Object.prototype.hasOwnProperty.call(body, 'challenges'))
+      orgContextStoreState.challenges = body.challenges;
+    if (Object.prototype.hasOwnProperty.call(body, 'synthesis'))
+      orgContextStoreState.synthesis = body.synthesis;
+    orgContextStoreVersion += 1;
+    return json({ ok: true, version: String(orgContextStoreVersion) });
   }
   if (url.includes('/api/organizations/current')) {
     return json({
