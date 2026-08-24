@@ -5,23 +5,30 @@
  * §2, pozycje #9 „Zadeklarowane wyzwania" + #12 „Dowody"). Dwie sekcje ekranu
  * = dwie pigułki Menu 2: Zadeklarowane wyzwania · Dowody.
  *
- * DANE SĄ REALNE — ten sam magazyn co stary `ChallengeMapModule`:
- *   `useContextBuilderStore().challenges` (`declaredChallenges`/`evidence`).
- *   Store lokalny (persist → localStorage) — jak w pozostałych ekranach etapu B
- *   opartych o ten magazyn, „Zapisz zmiany" jest potwierdzeniem (patrz RAPORT).
+ * DANE SĄ REALNE PO OBU STRONACH (FAZA 2, DEC-2026-08-24-15) — ten sam
+ * magazyn co stary `ChallengeMapModule`:
+ *   `useContextBuilderStore().challenges` (`declaredChallenges`/`evidence`)
+ *   jako bufor roboczy edycji + `PUT /organization-context-store`
+ *   (`{ challenges }`) + readback na „Zapisz zmiany" (`useOrgContextStoreSection`,
+ *   dzieli klucz `challenges` z ekranem „Przyczyny i blockery" — trasa
+ *   serwerowa aktualizuje tylko przysłane klucze).
  *
- * ŚWIADOMIE POMINIĘTE (zero atrap):
- *   - `ContextDocUploader` na obu starych zakładkach — generyczny wgrywacz bez
- *     realnej ekstrakcji w tym ekranie; do decyzji w kolejnym kroku.
+ * `ContextDocUploader` (wspólny komponent `views/ContextBuilder/shared/`)
+ * wraca w sekcji „Dowody" — DEC-2026-08-24-15 warunek (b). Komponent NIE był
+ * modyfikowany (współdzielony z innymi miejscami wywołania); jego wewnętrzne
+ * `primary-*` to zastany dług wspólnego pliku, nie nowe naruszenie kanonu tego
+ * ekranu — otoczony `OrgSectionCard`, więc rama sekcji zostaje kanoniczna.
  */
 
 import { FileSearch, ShieldAlert } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import { useContextBuilderStore } from '../../../store/useContextBuilderStore';
+import { ContextDocUploader } from '../../../views/ContextBuilder/shared/ContextDocUploader';
 import type { StandardCounterChip, StandardModuleTab } from '../../standard/StandardModuleBar';
 import { OrgRecordList, OrgSectionCard } from './OrganizationCardPrimitives';
 import type { OrganizationStatePanelProps } from './OrganizationStatePanel';
+import { useOrgContextStoreSection } from './useOrgContextStoreSection';
 
 export type ChallengesEvidenceSection = 'challenges' | 'evidence';
 
@@ -51,10 +58,11 @@ export interface ChallengesEvidenceRenderArgs {
 export const OrganizationChallengesEvidenceScreen: React.FC<{
   children: (args: ChallengesEvidenceRenderArgs) => React.ReactNode;
 }> = ({ children }) => {
-  const { challenges, updateChallengesList } = useContextBuilderStore();
+  const { challenges, setChallenges, updateChallengesList } = useContextBuilderStore();
   const [activeSection, setActiveSection] = useState<ChallengesEvidenceSection>('challenges');
   const [activeChip, setActiveChip] = useState<string>('all');
   const [saved, setSaved] = useState(false);
+  const contextStore = useOrgContextStoreSection('challenges', challenges, setChallenges);
 
   const challengeHandlers = useMemo(
     () => ({
@@ -127,16 +135,19 @@ export const OrganizationChallengesEvidenceScreen: React.FC<{
     { id: 'missing', label: 'Do uzupełnienia', count: counts.missing },
   ];
 
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async () => {
+    const ok = await contextStore.handleSave();
+    if (!ok) return;
     setSaved(true);
     window.setTimeout(() => setSaved(false), 1500);
-  }, []);
+  }, [contextStore]);
 
   const statePanel: OrganizationStatePanelProps = {
     filledFields: counts.filled,
     totalFields: counts.all,
-    completenessNote: 'Dane zapisywane są lokalnie na bieżąco — przycisk potwierdza stan.',
+    completenessNote: contextStore.completenessNote,
     onSave: handleSave,
+    saving: contextStore.saving,
     saveLabel: saved ? 'Zapisano' : 'Zapisz zmiany',
   };
 
@@ -174,6 +185,17 @@ export const OrganizationChallengesEvidenceScreen: React.FC<{
           icon={FileSearch}
           lead="Twarde fakty, metryki lub logi potwierdzające istnienie wyzwań."
         >
+          <div className="mb-4">
+            <ContextDocUploader
+              tabName="Dowody"
+              suggestions={[
+                'Eksport surowych danych',
+                'Dashboard KPI',
+                'Logi systemowe',
+                'Raporty finansowe',
+              ]}
+            />
+          </div>
           <OrgRecordList
             columns={[
               { key: 'metric', label: 'Metryka / dana', placeholder: 'np. Braki 12%' },

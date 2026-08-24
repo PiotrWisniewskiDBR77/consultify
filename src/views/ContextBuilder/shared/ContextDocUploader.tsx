@@ -25,7 +25,7 @@ export const ContextDocUploader: React.FC<ContextDocUploaderProps> = ({ tabName,
     try {
       await Api.uploadDocument(file, { tabName, type: 'context_support' });
       setUploadStatus('success');
-      setStatusMessage(`Accessed ${file.name}`);
+      setStatusMessage(`Przetworzono ${file.name}`);
       // Reset after 3s
       setTimeout(() => {
         setUploadStatus('idle');
@@ -33,7 +33,7 @@ export const ContextDocUploader: React.FC<ContextDocUploaderProps> = ({ tabName,
       }, 3000);
     } catch (error: any) {
       setUploadStatus('error');
-      setStatusMessage(error instanceof Error ? error.message : 'Upload failed');
+      setStatusMessage(error instanceof Error ? error.message : 'Wgrywanie nie powiodło się');
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -41,7 +41,7 @@ export const ContextDocUploader: React.FC<ContextDocUploaderProps> = ({ tabName,
   };
 
   return (
-    <div className="bg-slate-50 dark:bg-navy-900/50 border border-slate-200 dark:border-navy-700 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6 transition-all hover:border-primary-200 dark:hover:border-primary-500/30">
+    <div className="bg-slate-50 dark:bg-navy-900/50 border border-slate-200 dark:border-navy-700 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6 transition-all hover:border-c-border-strong">
       <input
         type="file"
         ref={fileInputRef}
@@ -56,7 +56,7 @@ export const ContextDocUploader: React.FC<ContextDocUploaderProps> = ({ tabName,
             ? 'bg-green-100 border-green-200 text-green-600'
             : uploadStatus === 'error'
               ? 'bg-danger-100 border-danger-200 text-danger-600'
-              : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-700 text-primary-600'
+              : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-700 text-c-text-secondary'
         }`}
       >
         {isUploading ? (
@@ -72,26 +72,24 @@ export const ContextDocUploader: React.FC<ContextDocUploaderProps> = ({ tabName,
 
       <div className="flex-1">
         <h4 className="text-sm font-bold text-navy-900 dark:text-white flex items-center gap-2">
-          Supporting Documents
+          Dokumenty pomocnicze
           <span className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 font-medium bg-slate-100 dark:bg-white/5 px-2 py-0.5 rounded-full">
-            For {tabName}
+            Dla: {tabName}
           </span>
         </h4>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
           {uploadStatus === 'success' ? (
-            <span className="text-green-600 font-medium">
-              Successfully processed: {statusMessage}
-            </span>
+            <span className="text-green-600 font-medium">Przetworzono: {statusMessage}</span>
           ) : uploadStatus === 'error' ? (
-            <span className="text-danger-600 font-medium">Error: {statusMessage}</span>
+            <span className="text-danger-600 font-medium">Błąd: {statusMessage}</span>
           ) : (
             <>
-              Upload relevant files to help AI understand your context better.
+              Wgraj pliki, które pomogą AI lepiej zrozumieć kontekst.
               <button
                 onClick={() => setShowHints(!showHints)}
-                className="ml-2 text-primary-600 hover:text-primary-700 font-medium inline-flex items-center gap-1 transition-colors group"
+                className="ml-2 text-c-text font-medium inline-flex items-center gap-1 transition-colors hover:text-c-text-secondary group"
               >
-                What should I upload?
+                Co warto wgrać?
                 <Info size={12} className="group-hover:scale-110 transition-transform" />
               </button>
             </>
@@ -103,15 +101,15 @@ export const ContextDocUploader: React.FC<ContextDocUploaderProps> = ({ tabName,
           className={`grid transition-all duration-300 ease-in-out ${showHints && uploadStatus === 'idle' ? 'grid-rows-[1fr] opacity-100 mt-3' : 'grid-rows-[0fr] opacity-0'}`}
         >
           <div className="overflow-hidden">
-            <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-100 dark:border-primary-500/10 rounded-lg p-3">
-              <p className="text-[10px] font-bold text-primary-700 dark:text-primary-300 uppercase mb-2">
-                Recommended for {tabName}:
+            <div className="rounded-lg border border-c-border-subtle bg-c-surface-raised p-3">
+              <p className="text-[10px] font-bold text-c-text-muted uppercase mb-2">
+                Rekomendowane dla: {tabName}
               </p>
               <div className="flex flex-wrap gap-2">
                 {suggestions.map((s) => (
                   <span
                     key={s}
-                    className="px-2 py-1 bg-white dark:bg-navy-900 border border-primary-100 dark:border-primary-500/20 rounded text-xs text-primary-600 dark:text-primary-300"
+                    className="rounded border border-c-border-subtle bg-c-surface px-2 py-1 text-xs text-c-text-secondary"
                   >
                     {s}
                   </span>
@@ -128,11 +126,11 @@ export const ContextDocUploader: React.FC<ContextDocUploaderProps> = ({ tabName,
         className="px-4 py-2 bg-white dark:bg-navy-800 hover:bg-slate-50 dark:hover:bg-navy-700 text-navy-900 dark:text-white text-xs font-bold border border-slate-200 dark:border-navy-700 rounded-lg shadow-sm hover:shadow transition-all flex items-center gap-2 shrink-0 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isUploading ? (
-          'Processing...'
+          'Przetwarzanie…'
         ) : (
           <>
-            <UploadCloud size={14} className="text-primary-500" />
-            Upload Document
+            <UploadCloud size={14} className="text-c-text-muted" />
+            Wgraj dokument
           </>
         )}
       </button>
