@@ -4,6 +4,16 @@
 
 This document is the single navigation and control map for recovering Consultify. It does not replace module acceptance registers, owner-feedback registers, screenshots, specifications, or tests.
 
+Document hierarchy — these are not competing SSOTs:
+
+1. **This file** is the recovery and source-selection control ledger.
+2. `CANONICAL_16_MODULE_ROUTE_COMPONENT_AUDIT_2026-08-24.md` is its read-only route/component evidence appendix.
+3. `canonical-16-module-bindings.json` is the machine-readable binding guard consumed by verification tooling.
+4. `CANONICAL_16_MODULE_QUICK_FREEZE_BOARD_2026-08-24.md` is the owner-facing verdict board.
+5. Per-module `MODULE_ACCEPTANCE.md` files retain atomic observations, screenshots, gates and owner decisions.
+
+No new parallel architecture register may be created for the same purpose. New findings must update this ledger or the appropriate evidence appendix/register.
+
 - Candidate worktree: `/Users/piotrwisniewski/Developer/Consultify-final-mvp-integration-20260823`
 - Candidate branch: `codex/final-mvp-integration-20260823`
 - Frozen baseline: `2b6c8c360812f55d860eac5b99dcedfabc3cae04`
@@ -56,7 +66,7 @@ The `Source owner` column records the owner currently wired in `src/routes/AppRo
 | 06 | Execution | `/execution` | Realizations; Work; Resources; Steering; Reports | `src/components/Execution/ExecutionHub.tsx` | `modules/06_EXECUTION/MODULE_ACCEPTANCE.md` | `CANONICAL_CANDIDATE`; visible runtime is protected; no further edits |
 | 07 | My Work | `/my-work` | Inbox/Triage; Tasks; Decisions; Ideas; Notebook; Agent activity | `src/views/MyWorkView.tsx` | `modules/07_MY_WORK_AGENT/MODULE_ACCEPTANCE.md` | `CANONICAL_CANDIDATE`; Chat-to-Tools WIP comparison pending |
 | 08 | Meetings | `/meeting` | Meetings; Agenda/Templates; Minutes; Decisions/Actions | `src/components/Meeting/MeetingHub.tsx` | `modules/08_MEETINGS/MODULE_ACCEPTANCE.md` | `CANONICAL_CANDIDATE`; data/API proof pending |
-| 09 | Results | `/results/kpi` | KPI; OKR; ROI | registries `src/components/ResultsVNext/*`; `/results` entry `ResultsOwnerReviewEntry` | `modules/09_RESULTS/MODULE_ACCEPTANCE.md` | `DUPLICATE_OWNER`: `Results/*` and `ResultsVNext/*`; freeze until lineage matrix resolves owner |
+| 09 | Results | `/results` → `/results/kpi`; sibling `/results/okr`, `/results/roi` | KPI; OKR; ROI | registries and full tools under `src/components/ResultsVNext/*`; `/results` entry `ResultsOwnerReviewEntry` | `modules/09_RESULTS/MODULE_ACCEPTANCE.md` | `CANONICAL_CANDIDATE`; `ResultsHub` is `UNREACHABLE_REFERENCE_ONLY`; data profile, feature flags and readback remain unproven |
 | 10 | Finance | `/finance?tab=statements` | Statements; Analysis; Baseline; Prediction; Valuation | `src/views/EconomicsView.tsx` → `src/components/Economics/FinanceHub.tsx` | `modules/10_FINANCE/MODULE_ACCEPTANCE.md` | `PRESERVED_WIP`: compare 37-file Finance branch patch before selection |
 | 11 | Materials | `/presentations?tab=all` | All; Documents; Presentations; Sheets; Template Library | `src/components/ReportsAndPresentations/ReportsAndPresentationsHub.tsx` | `modules/11_MATERIALS/MODULE_ACCEPTANCE.md` | `CANONICAL_CANDIDATE`; detached live source comparison pending |
 | 12 | Audits | `/audit-programs` | Library; Programs/Processes; Evidence; Findings; Reports; Initiatives | `src/components/Audit/method/AuditsMethodHub.tsx` | `modules/12_AUDITS/MODULE_ACCEPTANCE.md` | `CANONICAL_CANDIDATE`; route/API proof pending |
@@ -69,7 +79,7 @@ All acceptance paths above are relative to `docs/program/waves/WAVE_03_ACCEPTANC
 
 ## Known architecture conflicts requiring resolution
 
-1. **Results has two product generations.** `src/components/Results/*` and `src/components/ResultsVNext/*` coexist. `/results` and `/results/kpi|okr|roi` do not currently have one obvious source owner. Do not reconnect screens until a route-to-component-to-contract matrix proves the intended owner for list, preview and full tool.
+1. **Results has two source generations but one routed owner.** `src/components/Results/*` and `src/components/ResultsVNext/*` coexist, but `/results` is forced by `ResultsOwnerReviewEntry` to `/results/kpi`, and the KPI/OKR/ROI list and full-tool routes mount `ResultsVNext/*`. `ResultsHub` is `UNREACHABLE_REFERENCE_ONLY`, not a canonical candidate. The remaining risk is runtime selection: data profile, feature flags, entitlements and fallback behavior must not reintroduce the retired cockpit.
 2. **Finance has a unique preserved patch.** The `e7574b340e` branch is not patch-equivalent to the candidate. It contains UI, runtime, server, seed and test changes. It must be decomposed into intended requirements and compared against current blobs; a wholesale cherry-pick is prohibited.
 3. **Chat-to-Tools preservation is contaminated.** The branch contains valuable documents/screenshots and cache material under `false/_cacache`. The commit is not a merge unit.
 4. **Dirty main contains owner-authored evidence.** Its 22 entries are not disposable dirt. They are an overlay requiring a manifest and destination decision.
