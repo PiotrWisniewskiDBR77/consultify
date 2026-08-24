@@ -39,6 +39,7 @@ const {
   portfolioStoreState,
   appStoreState,
   conversationStoreState,
+  demoModeState,
 } = vi.hoisted(() => ({
   getPortfolio: vi.fn(),
   getInitiative: vi.fn(),
@@ -51,6 +52,7 @@ const {
     currentOrganization: { id: 'org-1' },
   },
   conversationStoreState: { addMessage: vi.fn() },
+  demoModeState: { enabled: false },
 }));
 
 vi.mock('@/services/initiatives-execution/runtimeApi', async (importOriginal) => ({
@@ -76,7 +78,7 @@ vi.mock('@/services/api', () => ({
     getUsers: vi.fn(async () => []),
     generateInitiatives: vi.fn(async () => ({ success: true, id: 'g1', message: 'ok' })),
   },
-  shouldAllowDemoData: () => false,
+  shouldAllowDemoData: () => demoModeState.enabled,
 }));
 
 vi.mock('@/hooks/useOpenChatWithContext', () => ({
@@ -140,6 +142,7 @@ const renderHubAt = (entry: string) =>
   );
 
 beforeEach(() => {
+  demoModeState.enabled = false;
   getPortfolio.mockReset();
   getPortfolio.mockResolvedValue({ initiatives: [] });
   getInitiative.mockReset();

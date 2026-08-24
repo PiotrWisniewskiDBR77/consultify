@@ -107,6 +107,7 @@ import {
 } from '../shared/ModuleMenu3';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { StandardModuleBar } from '../standard/StandardModuleBar';
+import { CandidatesTable } from './CandidatesTable';
 import { CanonicalInitiativeCardWorkspace } from './CanonicalInitiativeCardWorkspace';
 import { CanonicalInitiativeRegister } from './CanonicalInitiativeRegister';
 import { CapacityScenarioSurface } from './CapacityScenarioSurface';
@@ -116,13 +117,13 @@ import {
   upsertPortfolioInitiative,
 } from './initiativeCreateFlow';
 import { InitiativeDocumentView } from './InitiativeDocumentView';
+import { initiativeLoadErrorCode, isInitiativesNetworkError } from './initiativeLoadError';
 import { InitiativeObservabilityPanel } from './InitiativeObservabilityPanel';
 import {
   InitiativePreviewV3Body,
   InitiativePreviewV3Footer,
   type InitiativePreviewV3Model,
 } from './InitiativePreviewV3';
-import { initiativeLoadErrorCode, isInitiativesNetworkError } from './initiativeLoadError';
 import {
   canonicalInitiativeMatchesRegisterFilters,
   filterCanonicalInitiativeRegisterScope,
@@ -131,6 +132,7 @@ import {
   type InitiativeLifecyclePreset,
   lifecycleMatchesPreset,
   projectCanonicalInitiativeRegisterRow,
+  selectInitiativeRegisterSource,
   toCanonicalInitiativeRegisterItem,
 } from './initiativeRegisterProjection';
 import { createInitiativesDemoDataset, isShowcaseInitiativeId } from './initiativesDemoData';
@@ -141,7 +143,6 @@ import { PlanScenarioSurface } from './PlanScenarioSurface';
 import PortfolioHealthView from './PortfolioHealthView';
 import { PortfolioScenarioSurface } from './PortfolioScenarioSurface';
 import { SourceProposalRegistrationSurface } from './SourceProposalRegistrationSurface';
-import { CandidatesTable } from './CandidatesTable';
 import { InitiativeWizardModal } from './Wizard/InitiativeWizardModal';
 
 const MODULE_STATUSES = getStatusesForModule('initiatives');
@@ -324,7 +325,6 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // L-05: governed V8 Planning runtime degraded (env-off / org not V8-enabled).
   // Set when the V8 portfolio read fails and we silently fall back to legacy
   // reads — surfaces an honest degraded banner instead of a silent fallback.
-  const [v8PlanningDegraded, setV8PlanningDegraded] = useState(false);
   const fetchRetryRef = useRef(0);
   const [v8PendingDecisionChains, setV8PendingDecisionChains] = useState<V8PlanningDecisionChain[]>(
     []
@@ -419,21 +419,6 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     [(currentUser as any)?.firstName, (currentUser as any)?.lastName].filter(Boolean).join(' ') ||
     null;
 
-  const mergeShowcaseInitiatives = useCallback(
-    (items: PortfolioInitiative[]) => {
-      if (!allowDemoData) return items;
-
-      const canonicalIds = new Set(items.map((item) => String(item.id)));
-      return [
-        ...items,
-        ...initiativesDemoData.initiatives.filter(
-          (initiative) => !canonicalIds.has(String(initiative.id))
-        ),
-      ];
-    },
-    [allowDemoData, initiativesDemoData.initiatives]
-  );
-
   useEffect(() => {
     let cancelled = false;
     const loadPendingDecisionChains = async () => {
@@ -494,16 +479,23 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       try {
         setLoadError(null);
         setLoadErrorCode(null);
-        const canonical = await listRegisteredInitiatives();
-        const canonicalRows: PortfolioInitiative[] = canonical.initiatives.map((record) =>
-          toCanonicalInitiativeRegisterItem(record, {
-            id: currentUserId,
-            displayName: currentUserDisplayName,
-          })
+        // Explicit fixture mode is an exclusive source, never an overlay on
+        // canonical rows. Ordinary DEV follows the same API path as production.
+        const canonicalRows: PortfolioInitiative[] = allowDemoData
+          ? []
+          : (await listRegisteredInitiatives()).initiatives.map((record) =>
+              toCanonicalInitiativeRegisterItem(record, {
+                id: currentUserId,
+                displayName: currentUserDisplayName,
+              })
+            );
+        const sourceRows = selectInitiativeRegisterSource(
+          canonicalRows,
+          initiativesDemoData.initiatives,
+          allowDemoData
         );
-        const mergedRows = mergeShowcaseInitiatives(canonicalRows);
         const response: { initiatives: PortfolioInitiative[] } = {
-          initiatives: mergedRows.filter((initiative) => {
+          initiatives: sourceRows.filter((initiative) => {
             if (
               !canonicalInitiativeMatchesRegisterFilters(initiative, {
                 projectId: currentProjectId,
@@ -544,15 +536,13 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             return true;
           }),
         };
-        setV8PlanningDegraded(false);
-
         const allowed = (response.initiatives || []).filter((i) =>
           ALLOWED_STATUSES.includes(i.status as InitiativeStatus)
         );
         setInitiatives(allowed);
 
         // Duplicate detection uses the same canonical source of truth, including history.
-        setAllInitiatives(mergedRows);
+        setAllInitiatives(sourceRows);
       } catch (error: any) {
         console.error('[InitiativesHub] Fetch error:', error);
         const isNetworkError = isInitiativesNetworkError(error);
@@ -565,38 +555,6 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           setTimeout(() => fetchData(), delay);
           return;
         }
-        if (allowDemoData) {
-          const demoRows = mergeShowcaseInitiatives([]);
-          const visibleDemoRows = demoRows.filter((initiative) => {
-            if (
-              scope === 'active' &&
-              [
-                InitiativeStatus.DONE,
-                InitiativeStatus.CANCELLED,
-                InitiativeStatus.ARCHIVED,
-              ].includes(initiative.status as InitiativeStatus)
-            ) {
-              return false;
-            }
-            if (activeStatusFilter && initiative.status !== activeStatusFilter) return false;
-            if (
-              searchQuery &&
-              !`${initiative.name ?? ''} ${initiative.summary ?? ''}`
-                .toLocaleLowerCase()
-                .includes(searchQuery.toLocaleLowerCase())
-            ) {
-              return false;
-            }
-            return true;
-          });
-          setInitiatives(visibleDemoRows);
-          setAllInitiatives(demoRows);
-          setLoadError(null);
-          setLoadErrorCode(null);
-          setV8PlanningDegraded(true);
-          return;
-        }
-
         setInitiatives([]);
         setAllInitiatives([]);
         setLoadError(
@@ -619,7 +577,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       currentUserDisplayName,
       currentUserId,
       filters.priority,
-      mergeShowcaseInitiatives,
+      initiativesDemoData.initiatives,
       searchQuery,
       scope,
       t,
@@ -2176,25 +2134,37 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   );
   const rightControls = (
     <div className="flex items-center gap-2">
-      {priorityFilter}
-      <select
-        id="initiative-priority-filter"
-        aria-label={t('initiatives.filters.priority', 'Priority')}
-        value={filters.priority?.[0] || ''}
-        onChange={(event) =>
-          handlePriorityFilterChange(
-            event.target.value as '' | 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW'
-          )
-        }
-        className="h-9 rounded-lg border border-c-border-subtle bg-c-surface px-3 text-xs font-medium text-c-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-      >
-        <option value="">{t('initiatives.filters.allPriorities', 'All priorities')}</option>
-        <option value="CRITICAL">{t('initiatives.priority.critical', 'Critical')}</option>
-        <option value="HIGH">{t('initiatives.priority.high', 'High')}</option>
-        <option value="MEDIUM">{t('initiatives.priority.medium', 'Medium')}</option>
-        <option value="LOW">{t('initiatives.priority.low', 'Low')}</option>
-      </select>
-      {scopeToggle}
+      {allowDemoData && (
+        <span
+          data-testid="initiatives-sample-data-marker"
+          className="inline-flex h-8 items-center rounded-full border border-amber-300 bg-amber-50 px-3 text-[11px] font-semibold text-amber-800"
+        >
+          {t('common.sampleData', 'SAMPLE DATA')}
+        </span>
+      )}
+      {activeTab === 'list' && (
+        <>
+          {priorityFilter}
+          <select
+            id="initiative-priority-filter"
+            aria-label={t('initiatives.filters.priority', 'Priority')}
+            value={filters.priority?.[0] || ''}
+            onChange={(event) =>
+              handlePriorityFilterChange(
+                event.target.value as '' | 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW'
+              )
+            }
+            className="h-9 rounded-lg border border-c-border-subtle bg-c-surface px-3 text-xs font-medium text-c-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+          >
+            <option value="">{t('initiatives.filters.allPriorities', 'All priorities')}</option>
+            <option value="CRITICAL">{t('initiatives.priority.critical', 'Critical')}</option>
+            <option value="HIGH">{t('initiatives.priority.high', 'High')}</option>
+            <option value="MEDIUM">{t('initiatives.priority.medium', 'Medium')}</option>
+            <option value="LOW">{t('initiatives.priority.low', 'Low')}</option>
+          </select>
+          {scopeToggle}
+        </>
+      )}
     </div>
   );
 

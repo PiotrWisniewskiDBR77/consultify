@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { filterCanonicalInitiativeRegisterScope } from '../initiativeRegisterProjection';
+import {
+  filterCanonicalInitiativeRegisterScope,
+  selectInitiativeRegisterSource,
+} from '../initiativeRegisterProjection';
 
 describe('canonical initiative register scope', () => {
   const rows = [
@@ -25,5 +28,13 @@ describe('canonical initiative register scope', () => {
         projectId: 'project-1',
       }).map((row) => row.id)
     ).toEqual(['p1-high', 'p1-low', 'p1-none']);
+  });
+
+  it('uses sample rows as an exclusive source only in explicit sample mode', () => {
+    const canonical = [{ id: 'canonical' }];
+    const sample = [{ id: 'sample' }];
+
+    expect(selectInitiativeRegisterSource(canonical, sample, false)).toEqual(canonical);
+    expect(selectInitiativeRegisterSource(canonical, sample, true)).toEqual(sample);
   });
 });

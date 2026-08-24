@@ -92,6 +92,13 @@ export interface CanonicalInitiativeRegisterFilters {
   priorities?: string[];
 }
 
+/** Fixture mode replaces the canonical source; it must never overlay it. */
+export const selectInitiativeRegisterSource = <T>(
+  canonicalRows: T[],
+  sampleRows: T[],
+  sampleMode: boolean
+) => (sampleMode ? sampleRows : canonicalRows);
+
 /** Keep the visible register and its counters inside the selected canonical scope. */
 export const canonicalInitiativeMatchesRegisterFilters = (
   initiative: Pick<PortfolioInitiative, 'projectId' | 'priority'>,
