@@ -20,6 +20,24 @@
     "settings": "docs/program/waves/WAVE_03_ACCEPTANCE/modules/15_SETTINGS/MODULE_ACCEPTANCE.md",
     "partner": "docs/program/waves/WAVE_03_ACCEPTANCE/modules/16_PARTNER/MODULE_ACCEPTANCE.md"
   },
+  "existingTestSourcesNotExecutedInFreeze": {
+    "organization": ["tests/unit/components/Organization/OrganizationView.smoke.test.tsx", "tests/acceptance/organization-context-store-mounted.realpg.test.ts"],
+    "interview": ["src/components/Interview/__tests__/InterviewHub.smoke.test.tsx", "server/src/routes/interviewDelivery/__tests__/interviewDeliveryMountedAuth.pg.test.ts"],
+    "tools": ["src/components/Discovery/__tests__/DiscoveryToolsHub.networkBootstrap.test.ts", "server/src/routes/__tests__/m11-tools-cross-org-idor.test.ts"],
+    "assessment": ["tests/components/assessment/AssessmentHub.method-core-cutover.test.tsx", "server/src/routes/assessmentCatalog/__tests__/assessmentMethodCatalog.pg.test.ts"],
+    "initiatives": ["src/components/Initiatives/__tests__/InitiativesHub.smoke.test.tsx", "server/src/routes/__tests__/initiatives-crud.test.ts"],
+    "execution": ["src/components/Execution/__tests__/ExecutionHub.reportingMenu.smoke.test.tsx", "server/src/routes/v8/__tests__/execution-control.routes.test.ts"],
+    "my-work": ["tests/integration/mywork/my-work.golden-flow-inbox-task.test.ts", "server/src/routes/v8/__tests__/my-work-inbox-canonical.routes.test.ts"],
+    "meetings": ["src/components/Meeting/__tests__/MeetingHub.smoke.test.tsx", "server/src/routes/__tests__/meeting.routes.test.ts"],
+    "results": ["src/components/Results/__tests__/ResultsOwnerReviewEntry.test.tsx", "server/src/routes/resultsVnext/__tests__/kpi.routes.test.ts", "server/src/routes/resultsVnext/__tests__/okr.routes.test.ts", "server/src/routes/resultsVnext/__tests__/roi.routes.test.ts"],
+    "finance": ["src/components/Economics/__tests__/FinanceHub.statementsPreview.canon.test.tsx", "server/src/routes/v8/__tests__/finance.routes.test.ts"],
+    "materials": ["tests/components/ReportsAndPresentations/ReportsAndPresentationsHub.canonicalDataPath.test.tsx", "tests/e2e/documents/materials-library-list-open.spec.ts"],
+    "audits": ["src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx", "server/src/routes/audits/__tests__/mounting.integration.test.ts"],
+    "chat": ["tests/components/AIChat/UnifiedChatPanel.test.tsx", "server/src/services/v8/__tests__/chat-routes.test.ts"],
+    "admin": ["tests/components/SuperAdmin/SuperAdminView.root-closure.test.tsx", "server/src/routes/v8/__tests__/admin.routes.test.ts"],
+    "settings": ["src/components/settings/__tests__/ProfileSettings.smoke.test.tsx", "server/src/routes/__tests__/settings.routes.test.ts"],
+    "partner": ["tests/components/partner/PartnerCanonicalRuntimePanel.test.tsx", "server/src/routes/v8/__tests__/v8-partner-read.test.ts"]
+  },
   "modules": [
     { "id": "organization", "route": "/organization/*", "component": "OrganizationView", "sourceStatus": "CANONICAL_REACHABLE", "dataStatus": "RETAINED_FIXTURE_RECONCILED_API_REPLAY_PENDING", "fixtureId": "W3-ORGANIZATION-OWNER-v1", "fixtureBuilder": "server/scripts/seed-wave3-organization-owner-review.ts", "apiFamilies": ["/api/organizations", "/api/organization-context", "/api/organization-context-store", "/api/organization-profiles"], "ownerDecision": "PENDING" },
     { "id": "interview", "route": "/interview", "component": "InterviewHub", "sourceStatus": "CANONICAL_WITH_GAP", "dataStatus": "QUALIFIED_SPLIT_AUTHORITY", "fixtureId": "W3-INTERVIEW-OWNER-v1", "fixtureBuilder": "server/scripts/seed-wave3-interview-owner-review.ts", "apiFamilies": ["/api/interview", "/api/v8/interview"], "ownerDecision": "PENDING", "gap": "Sidebar still resolves Interview through /discovery; /project-intelligence mounts the hub instead of redirecting. Authoring remains canonical on /api/interview while assignment and insight governance use V8." },
