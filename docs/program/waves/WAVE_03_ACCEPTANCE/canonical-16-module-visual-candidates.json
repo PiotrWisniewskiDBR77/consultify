@@ -1,0 +1,141 @@
+{
+  "schemaVersion": 1,
+  "status": "OWNER_FREEZE_PENDING",
+  "candidateHeadAtInventory": "9317be94dc",
+  "rules": {
+    "TARGET_REFERENCE_CANDIDATE": "A concrete visual candidate for owner review. It is not proof of the current integrated runtime.",
+    "USEFUL_FRAGMENT": "A recoverable interaction or visual fragment. It cannot define the whole module.",
+    "HISTORICAL_ORIENTATION_ONLY": "Historical evidence retained for comparison. It must not be wired as the canonical module.",
+    "REJECTED_REFERENCE": "Evidence of a known rejected direction. It exists to prevent regression."
+  },
+  "modules": [
+    {
+      "order": 1,
+      "id": "organization",
+      "classification": "TARGET_REFERENCE_CANDIDATE",
+      "path": "docs/program/waves/WAVE_03_ACCEPTANCE/modules/01_ORGANIZATION/cold-readback-chrome-pl-dark.png",
+      "sha256": "eee14e37b94d115437bf9bbda703bee063792738e1ec0c39b82f31cc32fb2f8d",
+      "limitation": "Cold-readback evidence for the module; owner must freeze which profile, goals, challenges and strategy surfaces remain canonical."
+    },
+    {
+      "order": 2,
+      "id": "interview",
+      "classification": "TARGET_REFERENCE_CANDIDATE",
+      "path": "docs/program/waves/WAVE_03_ACCEPTANCE/evidence/exact-candidate-43730-photo-gate-2026-08-23/03-interview.png",
+      "sha256": "09ba788b2001ad7502a7894f3a8d5bfc81b439162aaffcf6dce48ba09513a509",
+      "limitation": "Exact-candidate photo-gate; detailed owner evidence remains authoritative for menus, tables, preview and creator."
+    },
+    {
+      "order": 3,
+      "id": "tools",
+      "classification": "TARGET_REFERENCE_CANDIDATE",
+      "path": "docs/program/waves/WAVE_03_ACCEPTANCE/evidence/exact-candidate-43730-photo-gate-2026-08-23/04-tools.png",
+      "sha256": "fcbf50127ecdf3c6238d28127034d5b3e6bac0bc7604f7cadd2e261f093a25c4",
+      "limitation": "Exact-candidate hub reference; Dynamic SWOT is the canonical working MVP and unavailable tools remain coming soon."
+    },
+    {
+      "order": 4,
+      "id": "assessment",
+      "classification": "TARGET_REFERENCE_CANDIDATE",
+      "path": "docs/program/waves/WAVE_03_ACCEPTANCE/evidence/exact-candidate-43730-photo-gate-2026-08-23/assessment/ASM-G04-library.png",
+      "sha256": "026e5a701e2852b8fb0da2a8c7f261cc37791b5a1c768812099752b9ceb34231",
+      "limitation": "Library entry point only; Interview, Matrix, Report and Settings have separate evidence and must be frozen as one DRD workspace."
+    },
+    {
+      "order": 5,
+      "id": "initiatives",
+      "classification": "TARGET_REFERENCE_CANDIDATE",
+      "path": "docs/program/waves/WAVE_03_ACCEPTANCE/evidence/exact-sha-8acbb220-2026-08-24/initiatives/01-initiatives-list.png",
+      "sha256": "1989dde74276719e8543c385a63fafd5571ea919fd78034d2769cdfddb7fc6a4",
+      "limitation": "Exact-SHA registry evidence; Plan and Capacity require their own frozen cards and shared initiative identity."
+    },
+    {
+      "order": 6,
+      "id": "execution",
+      "classification": "TARGET_REFERENCE_CANDIDATE",
+      "path": "docs/program/waves/WAVE_03_ACCEPTANCE/evidence/current-sha-14da3e6d-2026-08-24/initiatives-execution/INI-EXE-002-execution-list.png",
+      "sha256": "939d79bb53054232381109ce221dfc9f6afca3b7927c62bfc2709453ff6772ee",
+      "limitation": "Current-SHA list evidence from its captured candidate, not proof of the final integrated runtime; the unavailable placeholder is explicitly forbidden."
+    },
+    {
+      "order": 7,
+      "id": "my-work",
+      "classification": "TARGET_REFERENCE_CANDIDATE",
+      "path": "docs/program/waves/WAVE_03_ACCEPTANCE/evidence/exact-candidate-43730-photo-gate-2026-08-23/02-my-work.png",
+      "sha256": "c12db30d4acd021877c8cd5b9280d98779fc57f104d6c71350247e05ba2ceab8",
+      "limitation": "Exact-candidate photo-gate; source-object identity and governed writeback still require integration proof."
+    },
+    {
+      "order": 8,
+      "id": "meetings",
+      "classification": "HISTORICAL_ORIENTATION_ONLY",
+      "path": "docs/program/waves/WAVE_03_ACCEPTANCE/owner_feedback/CROSS_MODULE/evidence/2026-08-21_AUTOMATED_SWEEP/08_MEETINGS.png",
+      "sha256": "5c968a7abac8d4e3b45f0c123e27c07d7686e0c8ff6f1b68d79b8d5f38e6b6f3",
+      "limitation": "Orientation only; stable deep object route and final meeting card are not frozen."
+    },
+    {
+      "order": 9,
+      "id": "results",
+      "classification": "REJECTED_REFERENCE",
+      "path": "docs/program/waves/WAVE_03_ACCEPTANCE/owner_feedback/CROSS_MODULE/evidence/2026-08-21_AUTOMATED_SWEEP/09_RESULTS.png",
+      "sha256": "673036248c0879aae5eb18cb8ab688a1e21192ee5d654d69209d19c5e5b91f0f",
+      "limitation": "Regression guard only. Canonical Results is the light registry/card system with KPI, OKR and ROI; the old centered Results cockpit is forbidden."
+    },
+    {
+      "order": 10,
+      "id": "finance",
+      "classification": "REJECTED_REFERENCE",
+      "path": "docs/program/waves/WAVE_03_ACCEPTANCE/owner_feedback/CROSS_MODULE/evidence/2026-08-21_AUTOMATED_SWEEP/10_FINANCE_SHARED.png",
+      "sha256": "25c056ec0570fb61211e182895de3c5d774998dd429a205b161849cd5838c8de",
+      "limitation": "Regression guard only. Canonical Finance requires Statements, Analysis, Baseline, Prediction and Valuation with one governed artifact lineage."
+    },
+    {
+      "order": 11,
+      "id": "materials",
+      "classification": "HISTORICAL_ORIENTATION_ONLY",
+      "path": "docs/program/waves/WAVE_03_ACCEPTANCE/owner_feedback/CROSS_MODULE/evidence/2026-08-21_AUTOMATED_SWEEP/11_MATERIALS.png",
+      "sha256": "7a38c2ad6a77badebc5644ca6a6c9297b8eafb9d15e4a53a970f47915a15ec8d",
+      "limitation": "Orientation only; canonical common library must include Documents, Presentations, Sheets and Templates with native cards."
+    },
+    {
+      "order": 12,
+      "id": "audits",
+      "classification": "HISTORICAL_ORIENTATION_ONLY",
+      "path": "docs/program/waves/WAVE_03_ACCEPTANCE/owner_feedback/CROSS_MODULE/evidence/2026-08-21_AUTOMATED_SWEEP/12_AUDITS.png",
+      "sha256": "bb462c9e941a97fa00abeff492a443826703caa7d2e1390566ff97afaffef90c",
+      "limitation": "Orientation only; rights-safe internal method packs and criterion-to-remediation flow remain the freeze contract."
+    },
+    {
+      "order": 13,
+      "id": "chat",
+      "classification": "TARGET_REFERENCE_CANDIDATE",
+      "path": "docs/program/waves/WAVE_03_ACCEPTANCE/evidence/exact-candidate-43730-photo-gate-2026-08-23/01-chat-start.png",
+      "sha256": "d433c9d16717dddea5ff95cfaf3faecacdfc3ca6a4652c91799038b9549b77ed",
+      "limitation": "Exact-candidate start surface; proposal decisions and delivery receipts still require cross-module integration proof."
+    },
+    {
+      "order": 14,
+      "id": "admin",
+      "classification": "HISTORICAL_ORIENTATION_ONLY",
+      "path": "docs/program/waves/WAVE_03_ACCEPTANCE/owner_feedback/CROSS_MODULE/evidence/2026-08-21_AUTOMATED_SWEEP/14_ADMIN.png",
+      "sha256": "bd8cdf1c1843f394db2d9f515f3127562b01fdc0c4999be29230777364ffcd79",
+      "limitation": "Orientation only; tenant admin and superadmin boundaries must remain separate."
+    },
+    {
+      "order": 15,
+      "id": "settings",
+      "classification": "HISTORICAL_ORIENTATION_ONLY",
+      "path": "docs/program/waves/WAVE_03_ACCEPTANCE/owner_feedback/CROSS_MODULE/evidence/2026-08-21_AUTOMATED_SWEEP/15_SETTINGS.png",
+      "sha256": "27eed982b4aadb32e351fbe383cc3baa96ec7591be05232869b9cbf88b96e690",
+      "limitation": "Orientation only; user, organization, integrations and security settings need a final ownership split."
+    },
+    {
+      "order": 16,
+      "id": "partner",
+      "classification": "HISTORICAL_ORIENTATION_ONLY",
+      "path": "docs/program/waves/WAVE_03_ACCEPTANCE/owner_feedback/CROSS_MODULE/evidence/2026-08-21_AUTOMATED_SWEEP/16_PARTNER.png",
+      "sha256": "d9513aa2c54ea8b31851f51b780c7126bd4b19ebd4f067f2006316976f63644b",
+      "limitation": "Orientation only; connected-partner operational landing is still an owner freeze decision."
+    }
+  ]
+}

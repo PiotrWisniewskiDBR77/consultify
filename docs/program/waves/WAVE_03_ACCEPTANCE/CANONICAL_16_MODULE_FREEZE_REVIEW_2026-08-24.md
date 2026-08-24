@@ -2,6 +2,13 @@
 
 Status: `OWNER REVIEW PACKET / NO IMPLEMENTATION UNTIL FREEZE`
 
+Visual review manifest:
+`canonical-16-module-visual-candidates.json`. Every referenced image is pinned by
+SHA-256 and classified as a target candidate, useful fragment, historical
+orientation or rejected regression evidence. None of these images alone proves
+the current integrated runtime; that proof is generated only after the owner
+freeze and one-runtime build.
+
 Purpose: perform one fast owner pass over the whole application and select the
 canonical product architecture before any further screen wiring. This packet is
 navigation; atomic owner registers, screenshots and specifications remain the
