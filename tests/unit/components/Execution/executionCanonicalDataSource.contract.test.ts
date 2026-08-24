@@ -38,4 +38,14 @@ describe('Execution canonical data-source contract', () => {
     expect(tabBranch).toBeGreaterThan(openBranch);
     expect(source).toContain('setActiveDocumentId(openId);');
   });
+
+  it('renders an opened canonical Initiative before the list catalog', () => {
+    const renderContent = source.indexOf('const renderContent = () => {');
+    const documentBranch = source.indexOf('if (activeDocumentId) {', renderContent);
+    const listBranch = source.indexOf("if (activeTab === 'list') {", renderContent);
+
+    expect(renderContent).toBeGreaterThan(-1);
+    expect(documentBranch).toBeGreaterThan(renderContent);
+    expect(listBranch).toBeGreaterThan(documentBranch);
+  });
 });

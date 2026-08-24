@@ -5249,6 +5249,36 @@ Please return:
 
   // Render content
   const renderContent = () => {
+    // An explicitly opened document always wins over the catalog for its tab.
+    // Otherwise a canonical Initiative deep link can update the URL correctly
+    // while the `list` branch below still masks the document with the table.
+    if (activeDocumentId) {
+      if (activeDocumentId.startsWith('report:')) {
+        const reportId = activeDocumentId.replace('report:', '');
+        const report = enrichedReportCatalog.find((r) => r.id === reportId);
+        if (report) {
+          return (
+            <ReportDocumentView
+              report={report}
+              data={reportDataContext}
+              onBack={handleShowList}
+              onGenerateAI={handleGenerateReport}
+            />
+          );
+        }
+      }
+      return (
+        <Suspense fallback={<HubWorkAreaLoading />}>
+          <ExecutionInitiativeDocumentView
+            initiativeId={activeDocumentId}
+            onBack={handleShowList}
+            onStatusChange={isPilotParticipant ? undefined : () => handleRefresh()}
+            sourceModule="execution"
+          />
+        </Suspense>
+      );
+    }
+
     if (activeTab === 'list') {
       // 'list' (Portfolio) tab → StandardTable + StandardPreview, 1:1 with the
       // Assessment 'list' / Meeting 'list' / Results KPI catalog adopters.
@@ -5521,33 +5551,6 @@ Please return:
               : undefined
           }
         />
-      );
-    }
-
-    if (activeDocumentId) {
-      if (activeDocumentId.startsWith('report:')) {
-        const reportId = activeDocumentId.replace('report:', '');
-        const report = enrichedReportCatalog.find((r) => r.id === reportId);
-        if (report) {
-          return (
-            <ReportDocumentView
-              report={report}
-              data={reportDataContext}
-              onBack={handleShowList}
-              onGenerateAI={handleGenerateReport}
-            />
-          );
-        }
-      }
-      return (
-        <Suspense fallback={<HubWorkAreaLoading />}>
-          <ExecutionInitiativeDocumentView
-            initiativeId={activeDocumentId}
-            onBack={handleShowList}
-            onStatusChange={isPilotParticipant ? undefined : () => handleRefresh()}
-            sourceModule="execution"
-          />
-        </Suspense>
       );
     }
 

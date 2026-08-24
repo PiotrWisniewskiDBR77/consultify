@@ -242,7 +242,10 @@ export const CanonicalInitiativeCardWorkspace: React.FC<Props> = ({
             }
           : null
       );
-      if (initiative.initiative.lifecycleState === 'SCHEDULED') {
+      if (
+        initiative.initiative.lifecycleState === 'SCHEDULED' ||
+        initiative.initiative.lifecycleState === 'IN_EXECUTION'
+      ) {
         const linked = (await readExecutionCaseByInitiative(initiativeId, signal)) as {
           executionCaseId: string;
           detail: { state: string };
@@ -1244,19 +1247,21 @@ export const CanonicalInitiativeCardWorkspace: React.FC<Props> = ({
               <dd>{definitionReadiness?.readiness ?? 'NOT_EVALUATED'}</dd>
             </div>
           </dl>
-          {(lifecycleState === 'APPROVED_BACKLOG' || lifecycleState === 'SCHEDULED') && (
+          {(lifecycleState === 'APPROVED_BACKLOG' ||
+            lifecycleState === 'SCHEDULED' ||
+            lifecycleState === 'IN_EXECUTION') && (
             <section aria-label="Schedule readiness" className="mt-5 border-t border-c-border pt-4">
               <h4 className="font-medium">Schedule readiness</h4>
               <p className="mt-1 text-xs text-c-text-muted">
                 Exact published inputs only. References use <code>canonical-id@version</code>.
                 Scheduling freezes a handoff; it never starts Execution.
               </p>
-              {lifecycleState === 'SCHEDULED' ? (
+              {lifecycleState === 'SCHEDULED' || lifecycleState === 'IN_EXECUTION' ? (
                 <div
                   role="status"
                   className="mt-3 rounded-md border border-c-success/40 p-3 text-xs"
                 >
-                  <strong>SCHEDULED</strong>
+                  <strong>{lifecycleState}</strong>
                   <div className="mt-1 break-all">
                     Frozen Handoff Package{' '}
                     {handoffPackage
