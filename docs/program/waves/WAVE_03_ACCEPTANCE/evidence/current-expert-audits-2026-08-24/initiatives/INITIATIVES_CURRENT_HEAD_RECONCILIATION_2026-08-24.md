@@ -4,7 +4,7 @@ Date: 2026-08-24
 Module: `INI`  
 Documentation HEAD: `79be2f32ae`  
 Latest browser-qualified product SHA: `e04797f99335f8e268e4dc5153c4bd2dd7a2b725`  
-Latest exact-SHA runtime-qualified candidate: `581e44d4a38f2aab75670192d8707422da231108`
+Latest exact-SHA runtime-qualified candidate: `22ce590d7aecbc75e70edf63bd9046deb7aef655`
 Decision: `NO-GO_FOR_OWNER_ACCEPTANCE / REMEDIATION_REQUIRED`
 
 ## Purpose and evidence boundary
@@ -29,7 +29,7 @@ production were not changed.
 | `INI-C08` / `INI-TECH-003` | `SUPERSEDED_BY_LATER_FIX / SOURCE_AND_TEST_PASS`     | `canonicalInitiativeMatchesRegisterFilters` applies project and priority scope before the visible projection; mixed-scope focused tests pass.                                                                                                                                                                                                                                    | Full browser counter/filter matrix remains part of owner qualification.                                                                  |
 | `INI-C04`                  | `PARTIAL_EXACT_SHA_PASS`                             | Product SHA `e04797f993` was verified in browser on client/server `4007/4006`; local DB manifest records 834 migrations and deterministic counts. Execution regression evidence is indexed under `current-sha-e04797f9-2026-08-24`.                                                                                                                                              | Full 21-gate Initiatives package and owner verdict are not complete.                                                                     |
 | `INI-C05`                  | `OPEN_PRODUCT_WORK`                                  | Premise-first creation components and tests exist.                                                                                                                                                                                                                                                                                                                               | Complete AI proposal, human review, assumptions/source retention and idempotent save/readback still require end-to-end qualification.    |
-| `INI-C06`                  | `PARTIAL_PRODUCT_IMPLEMENTATION / EXACT_SHA_RUNTIME_PASS` | Versioned Plan domain and API foundation exist. Commits `1dc1761cfd` and `02aca5ee25` remove raw period JSON, generate and edit a bounded weekly horizon, expose lifecycle/status filtering and include/exclude selection, and render a clickable weekly timeline with one-period movement. Focused Plan regression: `2 files / 7 tests PASS`; component lint has zero findings. Candidate `581e44d4a3` passed the isolated owner-runtime contract on server/client `4016/4017`: health, readiness, frontend and transformed client marker all returned the exact candidate SHA; both migration ledgers were green and the marked Initiatives fixture database was preserved. | Governed AI proposal, richer Gantt interaction, comparison, visible browser qualification and independent cold reopen remain open. |
+| `INI-C06`                  | `PARTIAL_PRODUCT_IMPLEMENTATION / EXACT_SHA_RUNTIME_PASS` | Versioned Plan domain and API foundation exist. Commits `1dc1761cfd` and `02aca5ee25` remove raw period JSON, generate and edit a bounded weekly horizon, expose lifecycle/status filtering and include/exclude selection, and render a clickable weekly timeline with one-period movement. Commit `22ce590d7a` connects the existing persistent scenario-history and diff APIs to explicit baseline/comparison selectors and a read-only change list; comparison does not mutate the source scenario. Earlier focused Plan regression: `2 files / 7 tests PASS`; the current bounded comparison regression: `1 file / 6 tests PASS`; component lint has zero findings. Candidate `22ce590d7a` passed the isolated owner-runtime contract on server/client `4036/4037`: health, readiness, frontend and transformed client marker all returned the exact candidate SHA; both migration ledgers were green with 834 migrations and the marked Initiatives fixture database was preserved. | Governed AI proposal, richer Gantt interaction, visible browser qualification and independent cold reopen remain open. |
 | `INI-C07`                  | `OPEN_PRODUCT_WORK`                                  | Versioned Capacity domain and API foundation exist.                                                                                                                                                                                                                                                                                                                              | Multiple analyses per Plan, person/team saturation, governed recommendations and independent cold readback remain open.                  |
 | `INI-C09`                  | `OPEN_SHARED_UI_WORK`                                | Shared table/preview primitives are present.                                                                                                                                                                                                                                                                                                                                     | One canonical preview, concise row menu, reachable bulk selection, tablet/keyboard verification and owner visual acceptance remain open. |
 | `INI-C10`                  | `OPEN_PRODUCT_WORK`                                  | Versioned report definitions/runs exist in the backend foundation.                                                                                                                                                                                                                                                                                                               | Final Plan/Capacity decision-report workflow, lineage UI and export/readback remain open.                                                |
@@ -62,6 +62,25 @@ Result: `2 files / 7 tests PASS`. Component lint: zero findings. This is
 source/component evidence only. It does not upgrade `C06` to browser-qualified,
 owner-accepted or complete Gantt behavior.
 
+Current bounded scenario-comparison increment:
+
+```text
+npx vitest run \
+  tests/unit/initiatives-execution/planScenarioSurface.test.tsx
+```
+
+Result: `1 file / 6 tests PASS`. Component lint: zero findings. The isolated
+exact-SHA runtime on `4036/4037` qualified product SHA `22ce590d7a`, both
+migration ledgers and the preserved fixture database. The runtime was then
+stopped through the canonical stop contract; only owned process groups were
+terminated, ports were released and the database/catalog were preserved.
+
+The full TypeScript check completed with a larger heap and reported five
+pre-existing errors outside the touched component: four in
+`initiativeRegisterProjection.scope.test.ts` and one in `InitiativesHub.tsx`.
+They remain explicit repository debt and are not misreported as caused or fixed
+by this bounded C06 increment.
+
 Limitations: React `act(...)` warnings remain in the New-Initiative accessibility
 test lane. They are test-quality debt and are not promoted to an owner/browser
 pass. The expected fail-closed test logs the canonical API error by design.
@@ -74,7 +93,7 @@ runtime evidence; `C04` is partial. The decisive product work remains:
 
 1. `C05` — one governed premise-to-AI-draft creation flow;
 2. `C06` — qualify and finish the now-readable Plan what-if: governed AI
-   proposal, richer weekly Gantt interaction, comparison and cold reopen;
+   proposal, richer weekly Gantt interaction and cold reopen;
 3. `C07` — Plan-bound multi-analysis Capacity workspace;
 4. `C09` — canonical preview/menu/selection behavior;
 5. `C10` — versioned decision reports with lineage;
