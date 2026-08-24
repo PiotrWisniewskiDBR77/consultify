@@ -45,4 +45,38 @@ describe('AdminConfigurationVersionsPanel', () => {
     await waitFor(() => expect(V8PromptOsApi.rollbackBundle).toHaveBeenCalledWith('b1', 'Regresja jakości'));
     expect(V8PromptOsApi.getBundles).toHaveBeenCalledTimes(2);
   });
+
+  it('activates a draft and performs list readback', async () => {
+    const draft = { ...bundle, status: 'draft' as const };
+    vi.mocked(V8PromptOsApi.getBundles).mockResolvedValue([draft]);
+    vi.mocked(V8PromptOsApi.activateBundle).mockResolvedValue({ ...draft, status: 'active' });
+    render(<AdminConfigurationVersionsPanel />);
+    await screen.findByText('1.2.3');
+    fireEvent.click(screen.getByLabelText('Row actions'));
+    fireEvent.click(await screen.findByText('Aktywuj'));
+    await waitFor(() => expect(V8PromptOsApi.activateBundle).toHaveBeenCalledWith('b1'));
+    expect(V8PromptOsApi.getBundles).toHaveBeenCalledTimes(2);
+  });
+
+  it('preserves the 409 conflict message after readback', async () => {
+    const draft = { ...bundle, status: 'draft' as const };
+    vi.mocked(V8PromptOsApi.getBundles).mockResolvedValue([draft]);
+    vi.mocked(V8PromptOsApi.activateBundle).mockRejectedValue(Object.assign(new Error('conflict'), { status: 409 }));
+    render(<AdminConfigurationVersionsPanel />);
+    await screen.findByText('1.2.3');
+    fireEvent.click(screen.getByLabelText('Row actions'));
+    fireEvent.click(await screen.findByText('Aktywuj'));
+    expect(await screen.findByText(/zmieniła się równolegle/)).toBeInTheDocument();
+    expect(V8PromptOsApi.getBundles).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not present a details failure as an empty state', async () => {
+    vi.mocked(V8PromptOsApi.getEvalGates).mockRejectedValue(new Error('gate network failure'));
+    render(<AdminConfigurationVersionsPanel />);
+    await screen.findByText('1.2.3');
+    fireEvent.click(screen.getByLabelText('Row actions'));
+    fireEvent.click(await screen.findByText('Pokaż szczegóły'));
+    expect(await screen.findByText('gate network failure')).toBeInTheDocument();
+    expect(screen.queryByText('Bramki: brak wyników')).not.toBeInTheDocument();
+  });
 });

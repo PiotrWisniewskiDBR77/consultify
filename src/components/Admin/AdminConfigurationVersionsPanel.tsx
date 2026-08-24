@@ -16,7 +16,7 @@ const errorCode = (error: unknown) => {
   const text = `${value?.code || ''} ${value?.data?.code || ''} ${value?.message || ''}`;
   return text.includes('V8_DISABLED') || text.includes('V8_MISSING_ORG_CONTEXT')
     ? 'disabled'
-    : text.includes('409') || text.includes('PROMPT_OS_ACTIVATION_CONFLICT') || text.includes('PROMPT_OS_ROLLBACK_CONFLICT')
+    : value?.status === 409 || text.includes('409') || text.includes('PROMPT_OS_ACTIVATION_CONFLICT') || text.includes('PROMPT_OS_ROLLBACK_CONFLICT')
       ? 'conflict'
       : 'error';
 };
@@ -27,15 +27,17 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
   const [selected, setSelected] = useState<V8PromptOsBundle | null>(null);
   const [gates, setGates] = useState<V8PromptOsEvalGate[]>([]);
   const [canary, setCanary] = useState<V8PromptOsCanary | null>(null);
+  const [detailsState, setDetailsState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [detailsMessage, setDetailsMessage] = useState('');
   const [state, setState] = useState<'loading' | 'ready' | 'disabled' | 'error'>('loading');
   const [message, setMessage] = useState('');
   const [rollbackTarget, setRollbackTarget] = useState<V8PromptOsBundle | null>(null);
   const [reason, setReason] = useState('');
   const [confirmOpen, setConfirmOpen] = useState(false);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (preserveMessage = false) => {
     setState('loading');
-    setMessage('');
+    if (!preserveMessage) setMessage('');
     try {
       const [nextSummary, nextBundles] = await Promise.all([
         V8PromptOsApi.getRuntimeSummary(),
@@ -55,13 +57,26 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
 
   const showDetails = async (bundle: V8PromptOsBundle) => {
     setSelected(bundle);
-    setMessage('');
+    setDetailsState('loading');
+    setDetailsMessage('');
     const [gateResult, canaryResult] = await Promise.allSettled([
       V8PromptOsApi.getEvalGates(bundle.bundleId),
       V8PromptOsApi.getCanary(bundle.bundleId),
     ]);
-    setGates(gateResult.status === 'fulfilled' ? gateResult.value : []);
-    setCanary(canaryResult.status === 'fulfilled' ? canaryResult.value : null);
+    if (gateResult.status === 'rejected') {
+      setGates([]); setCanary(null); setDetailsState('error');
+      setDetailsMessage(gateResult.reason instanceof Error ? gateResult.reason.message : 'Nie udało się pobrać bramek ewaluacji.');
+      return;
+    }
+    setGates(gateResult.value);
+    if (canaryResult.status === 'fulfilled') setCanary(canaryResult.value);
+    else if (`${(canaryResult.reason as { data?: { code?: string }; message?: string })?.data?.code || ''} ${(canaryResult.reason as Error)?.message || ''}`.includes('CANARY_NOT_FOUND')) setCanary(null);
+    else {
+      setCanary(null); setDetailsState('error');
+      setDetailsMessage(canaryResult.reason instanceof Error ? canaryResult.reason.message : 'Nie udało się pobrać konfiguracji canary.');
+      return;
+    }
+    setDetailsState('ready');
   };
 
   const mutate = async (kind: 'activate' | 'rollback', bundle: V8PromptOsBundle) => {
@@ -76,7 +91,7 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
       setMessage(errorCode(error) === 'conflict'
         ? 'Konfiguracja zmieniła się równolegle (409). Odświeżono dane — sprawdź stan przed ponowieniem.'
         : error instanceof Error ? error.message : 'Operacja nie powiodła się.');
-      await load();
+      await load(true);
     }
   };
 
@@ -100,7 +115,7 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
     {message && <div role="alert">{message}</div>}
     {summary && <dl className="grid gap-3 rounded-xl border border-c-border p-4 sm:grid-cols-4"><div><dt>Kontrakt</dt><dd>{summary.contract}</dd></div><div><dt>Presety</dt><dd>{summary.presetCount}</dd></div><div><dt>Bundle</dt><dd>{summary.bundleCount}</dd></div><div><dt>Aktywne</dt><dd>{summary.activeBundleCount}</dd></div></dl>}
     <StandardTable columns={columns} data={rows} loading={state === 'loading'} rowMenu={(row) => { const bundle = bundles.find((item) => item.bundleId === row.id)!; return { primary: [{ id: 'details', label: 'Pokaż szczegóły', onClick: () => void showDetails(bundle) }, ...(bundle.status !== 'active' ? [{ id: 'activate', label: 'Aktywuj', onClick: () => void mutate('activate', bundle) }] : [])], destructive: bundle.status === 'active' ? { label: 'Wycofaj wersję', onClick: () => setRollbackTarget(bundle) } : undefined }; }} empty={{ icon: FileClock, title: 'Brak wersji konfiguracji', description: 'Prompt OS jest włączony, ale organizacja nie ma jeszcze bundle konfiguracji.' }} persistKey="admin.configurationVersions"/>
-    {selected && <section className="rounded-xl border border-c-border p-4"><h3 className="font-semibold">Szczegóły {selected.version}</h3><p className="mt-2 text-sm">Bramki: {gates.length ? gates.map((gate) => `${gate.gateType}: ${gate.result}`).join(', ') : 'brak wyników'}</p><p className="text-sm">Canary: {canary ? `rollback ${canary.rollbackEnabled ? 'włączony' : 'wyłączony'}, org scope ${canary.orgScoped ? 'tak' : 'nie'}` : 'brak konfiguracji'}</p></section>}
+    {selected && <section className="rounded-xl border border-c-border p-4"><h3 className="font-semibold">Szczegóły {selected.version}</h3>{detailsState === 'loading' && <p role="status">Ładowanie szczegółów…</p>}{detailsState === 'error' ? <div role="alert"><p>{detailsMessage}</p><button onClick={() => void showDetails(selected)} className="mt-2 rounded border border-c-border px-3 py-2">Spróbuj ponownie</button></div> : detailsState === 'ready' && <><p className="mt-2 text-sm">Bramki: {gates.length ? gates.map((gate) => `${gate.gateType}: ${gate.result}`).join(', ') : 'brak wyników'}</p><p className="text-sm">Canary: {canary ? `rollback ${canary.rollbackEnabled ? 'włączony' : 'wyłączony'}, org scope ${canary.orgScoped ? 'tak' : 'nie'}` : 'brak konfiguracji'}</p></>}</section>}
     {rollbackTarget && !confirmOpen && <label className="block rounded-xl border border-c-danger p-4">Powód wycofania (wymagany)<textarea aria-label="Powód wycofania" value={reason} onChange={(event) => setReason(event.target.value)} className="mt-2 block w-full rounded border border-c-border bg-c-surface p-2"/><button disabled={!reason.trim()} onClick={() => setConfirmOpen(true)} className="mt-2 rounded bg-c-danger px-3 py-2 text-white disabled:opacity-50">Przejdź do potwierdzenia</button></label>}
     <ConfirmDialog isOpen={confirmOpen} onCancel={() => { setConfirmOpen(false); setRollbackTarget(null); setReason(''); }} onConfirm={() => rollbackTarget && void mutate('rollback', rollbackTarget)} title="Wycofać aktywną konfigurację?" description={`Powód: ${reason}. Operacja zmieni runtime organizacji i zostanie zapisana w historii Prompt OS.`} confirmLabel="Wycofaj wersję" variant="danger"/>
   </div>;
