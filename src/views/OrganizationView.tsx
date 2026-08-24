@@ -28,7 +28,9 @@ import OrganizationChallengesEvidenceScreen from '../components/Organization/red
 import OrganizationDirectionConstraintsScreen from '../components/Organization/redesign/OrganizationDirectionConstraintsScreen';
 import OrganizationGoalsMetricsScreen from '../components/Organization/redesign/OrganizationGoalsMetricsScreen';
 import OrganizationIdentityOperatingScreen from '../components/Organization/redesign/OrganizationIdentityOperatingScreen';
+import OrganizationRisksOpportunitiesScreen from '../components/Organization/redesign/OrganizationRisksOpportunitiesScreen';
 import OrganizationRootCausesBlockersScreen from '../components/Organization/redesign/OrganizationRootCausesBlockersScreen';
+import OrganizationScenariosBriefScreen from '../components/Organization/redesign/OrganizationScenariosBriefScreen';
 import OrganizationScopeCollaborationScreen from '../components/Organization/redesign/OrganizationScopeCollaborationScreen';
 import {
   getOrganizationRedesignModules,
@@ -444,6 +446,46 @@ export const OrganizationView: React.FC = () => {
             </OrganizationScreenShell>
           )}
         </OrganizationRootCausesBlockersScreen>
+      );
+    }
+
+    if (activeLocation.module === 'strategy' && activeLocation.screen === 'risks-opportunities') {
+      return (
+        <OrganizationRisksOpportunitiesScreen>
+          {(args) => (
+            <OrganizationScreenShell
+              sections={args.sections}
+              activeSection={args.activeSection}
+              onSectionChange={args.onSectionChange}
+              chips={args.chips}
+              activeChip={args.activeChip}
+              onChipChange={args.onChipChange}
+              statePanel={args.statePanel}
+            >
+              {args.content}
+            </OrganizationScreenShell>
+          )}
+        </OrganizationRisksOpportunitiesScreen>
+      );
+    }
+
+    if (activeLocation.module === 'strategy' && activeLocation.screen === 'executive-brief') {
+      return (
+        <OrganizationScenariosBriefScreen>
+          {(args) => (
+            <OrganizationScreenShell
+              sections={args.sections}
+              activeSection={args.activeSection}
+              onSectionChange={args.onSectionChange}
+              chips={args.chips}
+              activeChip={args.activeChip}
+              onChipChange={args.onChipChange}
+              statePanel={args.statePanel}
+            >
+              {args.content}
+            </OrganizationScreenShell>
+          )}
+        </OrganizationScenariosBriefScreen>
       );
     }
 
