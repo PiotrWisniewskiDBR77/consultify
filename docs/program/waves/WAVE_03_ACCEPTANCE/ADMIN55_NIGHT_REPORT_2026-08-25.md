@@ -38,7 +38,7 @@ Start: 2026-08-24 (Europe/Warsaw) · Koniec: —
 | 18 | team/guests-external | 4/A | `7453ad85a6` | DONE | faktyczny stan GUEST+zaproszenia; revoke 404 tenant; brak placebo switcha |
 | 19 | team/access-reviews | 4/B | `b266c76026` | DONE | 2 realne odczyty; privileged accounts; termin; brak fikcyjnej historii/edycji |
 | 20 | team/roles-permissions | 2 | `9f36b11c7e` | DONE | OWNER CRUD+readback; ADMIN 403 fail-closed bez formularza |
-| 21 | audit/legal-hold | 4/B | — | NIE ZACZĘTO | |
+| 21 | audit/legal-hold | 4/B | `75c63d3458` | DONE | realna flaga org; blokowane operacje; brak mutacji i fikcyjnego rejestru |
 | 22 | audit/export-history | 4/B | — | NIE ZACZĘTO | |
 | 23 | audit/integrity | 4/B | — | NIE ZACZĘTO | |
 | 24 | ai/personas | 4/A | — | NIE ZACZĘTO | |
@@ -93,6 +93,7 @@ Stan: NIE ZACOMMITOWANO.
 | 5 | Istniejące kasowanie sesji nie sprawdza organizacji | `server/src/routes/security.routes.ts:196-214` | cross-tenant delete IDOR | nowa trasa najpierw dowodzi przynależności i zwraca 404 |
 | 6 | Admin-data pobiera sesje dla org z parametru URL | `server/src/routes/admin-data.routes.ts:401` | cross-tenant read IDOR | nie użyto tej trasy i nie zmieniano cudzych konsumentów |
 | 7 | Serwis sesji admina nie waliduje powodu ani zatwierdzającego break-glass | `server/src/services/adminSessionService.ts:149-214` | brak walidacji domenowej | nowa trasa egzekwuje oba warunki; cudzej trasy superadmina nie zmieniano |
+| 8 | `legal_holds` jest martwe i prawdopodobnie nieuruchomione | `server/migrations/263_gdpr_compliance.sql:332` | schema/runtime drift | ekran pokazuje wyłącznie żywą flagę `org_policies`; bez migracji |
 
 ## Korekty inwentarza
 
@@ -151,6 +152,9 @@ Brak na starcie dyżuru.
 - `npx esbuild src/components/Admin/AdminRolesPermissionsPanel.tsx --loader:.tsx=tsx --outfile=/dev/null` — PASS.
 - `bash scripts/check-list-canon.sh src/components/Admin/AdminRolesPermissionsPanel.tsx` — PASS, 0 nowych naruszeń.
 - `npx vitest run src/components/Admin/__tests__/AdminRolesPermissionsPanel.test.tsx src/views/admin/__tests__/AdminSettingsModule.test.tsx` — PASS, 2 pliki / 43 testy.
+- `npx esbuild server/src/routes/admin/legal-hold.routes.ts --platform=node --format=esm --outfile=/dev/null` — PASS.
+- `npx esbuild src/components/Admin/AdminLegalHoldPanel.tsx --loader:.tsx=tsx --outfile=/dev/null` — PASS.
+- `npx vitest run server/src/routes/__tests__/legal-hold.routes.test.ts src/components/Admin/__tests__/AdminLegalHoldPanel.test.tsx src/views/admin/__tests__/AdminSettingsModule.test.tsx` — PASS, 3 pliki / 43 testy.
 
 ## Migracje
 
