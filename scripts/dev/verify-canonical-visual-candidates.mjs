@@ -4,7 +4,9 @@ import process from 'node:process';
 
 const root = process.cwd();
 const manifestPath = `${root}/docs/program/waves/WAVE_03_ACCEPTANCE/canonical-16-module-visual-candidates.json`;
+const bindingsPath = `${root}/docs/program/waves/WAVE_03_ACCEPTANCE/canonical-16-module-bindings.json`;
 const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+const bindings = JSON.parse(await readFile(bindingsPath, 'utf8'));
 
 if (manifest.modules.length !== 16) {
   throw new Error(`Expected 16 visual candidates, received ${manifest.modules.length}`);
@@ -31,6 +33,12 @@ for (const candidate of manifest.modules) {
 const expectedOrder = Array.from({ length: 16 }, (_, index) => index + 1);
 if (JSON.stringify([...orders].sort((a, b) => a - b)) !== JSON.stringify(expectedOrder)) {
   throw new Error('Module order must be exactly 1..16');
+}
+
+const visualIds = manifest.modules.map((module) => module.id);
+const bindingIds = bindings.modules.map((module) => module.id);
+if (JSON.stringify(visualIds) !== JSON.stringify(bindingIds)) {
+  throw new Error('Visual module identities/order do not match canonical bindings');
 }
 
 console.log(JSON.stringify({ modules: manifest.modules.length, verifiedHashes: manifest.modules.length, classifications: counts }, null, 2));

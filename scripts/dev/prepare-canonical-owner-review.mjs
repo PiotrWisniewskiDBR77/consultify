@@ -9,6 +9,10 @@ const bindingPath = path.join(
   repoRoot,
   'docs/program/waves/WAVE_03_ACCEPTANCE/canonical-16-module-bindings.json'
 );
+const visualManifestPath = path.join(
+  repoRoot,
+  'docs/program/waves/WAVE_03_ACCEPTANCE/canonical-16-module-visual-candidates.json'
+);
 const receiptDirectory = process.env.WAVE3_RECOVERY_MANIFEST_DIR || '/tmp';
 const baseUrl = process.env.CANONICAL_OWNER_REVIEW_BASE_URL || 'http://127.0.0.1:4418';
 
@@ -63,15 +67,20 @@ function git(...args) {
 }
 
 const binding = JSON.parse(fs.readFileSync(bindingPath, 'utf8'));
+const visualManifest = JSON.parse(fs.readFileSync(visualManifestPath, 'utf8'));
 if (binding.modules?.length !== 16) fail('binding denominator is not 16');
 if (reviewOrder.length !== 16) fail('review denominator is not 16');
+if (visualManifest.modules?.length !== 16) fail('visual denominator is not 16');
 
 const byId = new Map(binding.modules.map((module) => [module.id, module]));
+const visualById = new Map(visualManifest.modules.map((module) => [module.id, module]));
 const databases = new Set();
 const nonces = new Set();
 const modules = reviewOrder.map(([id, entryPath, fixtureId], index) => {
   const selected = byId.get(id);
   if (!selected) fail(`${id}: binding is absent`);
+  const visual = visualById.get(id);
+  if (!visual) fail(`${id}: visual candidate is absent`);
   const receiptName =
     receiptOverrides[id] ?? `consultify-wave3-${id}-owner-recovered-20260823.json`;
   const receiptPath = path.join(receiptDirectory, receiptName);
@@ -126,6 +135,13 @@ const modules = reviewOrder.map(([id, entryPath, fixtureId], index) => {
     selectedComponent: selected.component,
     sourceStatus: selected.sourceStatus,
     ownerDecision: selected.ownerDecision,
+    visual: {
+      classification: visual.classification,
+      path: visual.path,
+      sha256: visual.sha256,
+      limitation: visual.limitation,
+      authority: 'OWNER_REVIEW_REFERENCE_NOT_CURRENT_RUNTIME_PROOF',
+    },
     acceptance: {
       registerPath: path.relative(repoRoot, acceptanceRegister),
       gateDenominator: expectedGates.length,
