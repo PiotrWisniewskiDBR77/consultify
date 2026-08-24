@@ -17,7 +17,7 @@ import {
   SlidersHorizontal,
   UserCog,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -41,6 +41,16 @@ interface AIModuleProps {
 export const AIModule: React.FC<AIModuleProps> = ({ initialTab }) => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState(initialTab || 'llm-config');
+
+  // Admin komplet 55, Fala 1 — AdminAIControlCenterPanel keeps this module
+  // mounted across navigation and re-passes `initialTab` when the caller
+  // (AdminSettingsModule) points at a different WIRE_ONLY AI screen. Sync so
+  // that navigation actually changes the visible tab, not just the prop's
+  // initial value; a user's own in-module tab clicks are unaffected because
+  // this only re-fires when `initialTab` itself changes.
+  useEffect(() => {
+    if (initialTab) setActiveTab(initialTab);
+  }, [initialTab]);
   const organizationId = useAppStore(
     (s) => s.currentOrganization?.id || (s.currentUser as any)?.organizationId || ''
   );

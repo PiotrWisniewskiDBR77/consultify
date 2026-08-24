@@ -25,7 +25,11 @@ vi.mock('../../../components/Admin/AdminBillingFinOpsPanel', () => ({
   ),
 }));
 vi.mock('../../../components/Admin/AdminAIControlCenterPanel', () => ({
-  AdminAIControlCenterPanel: () => <div data-testid="panel-ai">ai</div>,
+  AdminAIControlCenterPanel: ({ initialAiModuleTab }: { initialAiModuleTab?: string }) => (
+    <div data-testid="panel-ai" data-initial-ai-module-tab={initialAiModuleTab}>
+      ai
+    </div>
+  ),
 }));
 vi.mock('../../../components/Admin/AdminSecurityIdentityPanel', () => ({
   AdminSecurityIdentityPanel: ({ initialTab }: { initialTab?: string }) => (
@@ -202,5 +206,21 @@ describe('AdminSettingsModule section routing', () => {
       expect(panel).toBeInTheDocument();
       expect(panel).toHaveAttribute('data-initial-tab', tabId);
     });
+
+    it.each([
+      ['models-providers', 'models-providers'],
+      ['ai-limits-budgets', 'access-limits'],
+      ['data-privacy', 'features-privacy'],
+      ['ai-operations', 'ai-health'],
+      ['ai-audit', 'audit-compliance'],
+    ])(
+      'wires ai/%s to the %s tab of AdminAIControlCenterPanel/AIModule',
+      (screenId, aiModuleTabId) => {
+        renderAt(`/admin/ai/${screenId}`);
+        const panel = screen.getByTestId('panel-ai');
+        expect(panel).toBeInTheDocument();
+        expect(panel).toHaveAttribute('data-initial-ai-module-tab', aiModuleTabId);
+      }
+    );
   });
 });

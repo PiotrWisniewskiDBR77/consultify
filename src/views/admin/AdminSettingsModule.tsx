@@ -194,6 +194,19 @@ const SECURITY_TAB_BY_SCREEN: Partial<Record<AdminScreen, AdminSecurityIdentityT
   'risk-summary': 'risk',
 };
 
+// Admin komplet 55, Fala 1 — these 5 AI screens are all uwięzione two levels
+// deep: AdminAIControlCenterPanel's "operations" tab renders AIModule
+// (src/views/admin/AIModule.tsx), which has its own 9 tabs, each already
+// wired to real endpoints (/api/llm/*, /api/ai-settings/org/:id,
+// /api/admin-data/*). Maps the AdminScreen nav slot to the AIModule tab id.
+const AI_MODULE_TAB_BY_SCREEN: Partial<Record<AdminScreen, string>> = {
+  'models-providers': 'models-providers',
+  'ai-limits-budgets': 'access-limits',
+  'data-privacy': 'features-privacy',
+  'ai-operations': 'ai-health',
+  'ai-audit': 'audit-compliance',
+};
+
 // Exported for the same DEC-2026-08-24-10 regression test as
 // resolveAdminState above — pure function, no behavior change.
 export function resolveAdminLocation(
@@ -319,7 +332,13 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
       // already have working tabs inside AdminSecurityIdentityPanel — see
       // SECURITY_TAB_BY_SCREEN below.
       (resolvedLocation.domain === 'security' &&
-        Object.prototype.hasOwnProperty.call(SECURITY_TAB_BY_SCREEN, resolvedLocation.screen));
+        Object.prototype.hasOwnProperty.call(SECURITY_TAB_BY_SCREEN, resolvedLocation.screen)) ||
+      // Fala 1 (Admin komplet 55): models-providers/ai-limits-budgets/
+      // data-privacy/ai-operations/ai-audit already have working tabs inside
+      // AIModule (nested under AdminAIControlCenterPanel) — see
+      // AI_MODULE_TAB_BY_SCREEN below.
+      (resolvedLocation.domain === 'ai' &&
+        Object.prototype.hasOwnProperty.call(AI_MODULE_TAB_BY_SCREEN, resolvedLocation.screen));
     if (!connected) {
       return (
         <AdminCapabilityState
@@ -367,7 +386,11 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
           />
         );
       case 'ai':
-        return <AdminAIControlCenterPanel />;
+        return (
+          <AdminAIControlCenterPanel
+            initialAiModuleTab={AI_MODULE_TAB_BY_SCREEN[resolvedLocation.screen]}
+          />
+        );
       case 'security':
         return (
           <AdminSecurityIdentityPanel

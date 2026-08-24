@@ -22,7 +22,21 @@ type AiSummaryResponse = {
 
 type TabId = 'settings' | 'operations';
 
-export const AdminAIControlCenterPanel: React.FC = () => {
+interface AdminAIControlCenterPanelProps {
+  // Admin komplet 55, Fala 1 — AIModule (rendered under the "operations" tab)
+  // has 9 tabs of its own (llm-config, access-limits, policy-governance,
+  // models-providers, features-privacy, audit-compliance, ai-health,
+  // help-analytics, token-management). AdminSettingsModule passes one of
+  // those ids for its WIRE_ONLY AI screens (models-providers,
+  // ai-limits-budgets, data-privacy, ai-operations, ai-audit); when set, the
+  // panel opens straight into "AI operations" on that tab instead of
+  // defaulting to "Governance settings".
+  initialAiModuleTab?: string;
+}
+
+export const AdminAIControlCenterPanel: React.FC<AdminAIControlCenterPanelProps> = ({
+  initialAiModuleTab,
+}) => {
   const { t } = useTranslation();
   const tabs: Array<{ id: TabId; label: string }> = [
     {
@@ -31,8 +45,12 @@ export const AdminAIControlCenterPanel: React.FC = () => {
     },
     { id: 'operations', label: t('admin.aiControlCenter.panel.tabs.operations', 'AI operations') },
   ];
-  const [activeTab, setActiveTab] = useState<TabId>('settings');
+  const [activeTab, setActiveTab] = useState<TabId>(initialAiModuleTab ? 'operations' : 'settings');
   const [summary, setSummary] = useState<AiSummaryResponse | null>(null);
+
+  useEffect(() => {
+    if (initialAiModuleTab) setActiveTab('operations');
+  }, [initialAiModuleTab]);
 
   useEffect(() => {
     const load = async () => {
@@ -140,7 +158,11 @@ export const AdminAIControlCenterPanel: React.FC = () => {
         </p>
       </div>
 
-      {activeTab === 'settings' ? <OrgAISettingsView /> : <AIModule initialTab="ai-health" />}
+      {activeTab === 'settings' ? (
+        <OrgAISettingsView />
+      ) : (
+        <AIModule initialTab={initialAiModuleTab || 'ai-health'} />
+      )}
     </div>
   );
 };
