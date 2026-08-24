@@ -31,6 +31,16 @@ Mobile: `DEFERRED_NON_GATING`
 > This closes the current wiring/readback proof, not owner acceptance or the
 > open product and visual findings.
 
+> Bounded regression closure — 2026-08-24: exact clean SHA
+> `e04797f99335f8e268e4dc5153c4bd2dd7a2b725` was replayed with real local
+> authentication on server/client `4006/4007` against the guarded synthetic
+> 834-migration fixture. Browser evidence confirms the Polish `W realizacji`
+> lifecycle label, readable Control owner/approver names and removal of the
+> historical closure panel. Focused checks are `20/20 PASS`. Evidence:
+> `../../evidence/current-sha-e04797f9-2026-08-24/initiatives-execution/EVIDENCE_INDEX.md`.
+> This is an exact-SHA technical pass; owner retest and the broader G06/G20
+> denominator remain open.
+
 ## Contract
 
 Primary journey: open a case, inspect capacity/health, perform a governed action
@@ -47,7 +57,7 @@ concurrency conflict, foreign tenant and rollback receipt.
 | G03 | Named allowed/denied personas | `PASS_FOR_PREFLIGHT` | Allowed: active same-tenant OWNER/ADMIN plus distinct approver. Denied: MEMBER for governed mutation, inactive/revoked member, foreign tenant, forged JWT, stale CAS writer and hidden/unregistered action caller. Live persona `cw-local-user` and distinct local actors passed real login/JWT checks; owner-review personas will be bound to the stable UI fixture. |
 | G04 | Reproducible realistic and boundary fixtures | `SEEDED_RETAINED` | Fresh disposable local DB `consultify_w3_execution_owner_final_ui_20260822` passed all `817` exact-current migrations. Retained secret-free `0600` FINAL manifest: `/tmp/w3-execution-owner-final-ui-20260822-v3.json`; durable marker, exact DB/family binding and six personas verified. The fixture now seeds the explicit tenant V8 row and a deterministic accepted runtime-v1 Initiative/Handoff/Execution Case snapshot in addition to the governed BVP action/budget/evidence/close and immutable Results receipt. Reset fails closed instead of disabling the immutable Results trigger; use manifest-bound drop + fresh provision after a completed lineage. DB and manifest are preserved for owner review. |
 | G05 | Functional preflight and cold readback | `PASS_TECHNICAL_BROWSER_PARTIAL` | Existing technical denominator remains `137/137 PASS`. Exact-source adopted runtime on `3982/3983` reported health/ready/frontend `200`, exact full SHA `3d61730fd8ad18d19cf9967cb5513697659003cc`, `817` migrations and verified SQL marker. Real login succeeded. Browser mounted all five tabs; Realizacje showed the exact customer pilot and the repaired `/execution/w3-exe-case-v1` cold deep link opened `Execution Case ...@v1`. Independent API cold reads returned Initiative `v3`, Case `v1 ACTIVE`, work `0 tasks / 0 decisions`; SQL parity confirmed the accepted runtime-v1 trio, governed BVP `CLOSED v3`, budget reference and one Results receipt. Focused deep-link/runtime-spine regression `4/4 PASS`; Execution runtime-family guard `1/1 PASS`. |
-| G06 | Desktop/tablet, PL/EN, themes, states, a11y, console/HTTP | `PARTIAL_DESKTOP_PL_CURRENT_REPLAY` | Current exact-SHA replay is linked above; the earlier local PL replay remains at `../../../../evidence/current-browser-replay/2026-08-23/execution/MANIFEST.md`. Current screenshots confirm three visible residuals: `Executing` is untranslated, Sterowanie still exposes the historical closure block above its register, and owner/approver are raw UUIDs. Tablet, EN, theme, keyboard/a11y, clean console/HTTP capture and owner visual judgment remain open. |
+| G06 | Desktop/tablet, PL/EN, themes, states, a11y, console/HTTP | `PARTIAL_DESKTOP_PL_CURRENT_REPLAY` | Exact-SHA `e04797f99335` browser evidence closes the three bounded visible regressions from the prior replay: lifecycle is `W realizacji`, Sterowanie no longer exposes the historical closure block, and owner/approver are readable names. The earlier PL replay remains at `../../../../evidence/current-browser-replay/2026-08-23/execution/MANIFEST.md`. Tablet, EN, theme, keyboard/a11y, clean console/HTTP capture and owner visual judgment remain open. |
 | G07 | Piotr review card | `READY_FOR_GUIDED_REPLAY` | Shared operator card: `../../GUIDED_OWNER_REPLAY.md`, row 7. Owner decisions remain pending. |
 | G08 | First-impression review | `NOT_STARTED` | — |
 | G09 | Guided CX journey review | `NOT_STARTED` | — |
@@ -56,7 +66,7 @@ concurrency conflict, foreign tenant and rollback receipt.
 | G12 | Owner register reconciled and confirmed | `NOT_STARTED` | — |
 | G13 | Solution and impact analysis | `NOT_STARTED` | — |
 | G14 | Remediation with finding-to-commit traceability | `NOT_STARTED` | — |
-| G15 | Integrator self-QA and impacted regression | `TECHNICAL_EXACT_SHA_PASS_WITH_OPEN_FINDINGS` | Exact-SHA `14da3e6d07578ca035daf62f1b7731cbb53dcfdb`; focused Initiative/Execution contract lane `11/11 PASS`; real auth; API/SQL identity parity; record-aware browser captures for Realizacje, Work, Resources, Control and Reports. Full product regression and all visual/methodological findings remain open. |
+| G15 | Integrator self-QA and impacted regression | `TECHNICAL_EXACT_SHA_PASS_WITH_OPEN_FINDINGS` | Exact-SHA `e04797f99335f8e268e4dc5153c4bd2dd7a2b725`; focused regression checks `20/20 PASS`; real auth; ready/migration/fixture readback; browser checks for the Polish lifecycle label, readable Control actors and absent historical closure panel. The earlier Initiative/Execution identity-parity packet remains preserved at `14da3e6d07578ca035daf62f1b7731cbb53dcfdb`. Full product regression and broader visual/methodological findings remain open. |
 | G16 | Before/after owner retest packet | `CURRENT_AFTER_PACKET_READY / BEFORE_HISTORY_PRESERVED` | Six-screen packet linked above; historical owner screenshots remain in this register. Guided owner retest is still pending. |
 | G17 | Owner retest decisions for every finding | `NOT_STARTED` | — |
 | G18 | Module accepted on exact SHA and checkpointed | `NOT_STARTED` | — |
