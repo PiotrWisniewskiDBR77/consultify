@@ -181,13 +181,13 @@ describe('AdminSettingsModule section routing', () => {
       expect(panel).toHaveAttribute('data-aggregation-only', 'false');
     });
 
-    it('wires Attention Queue while Cost & Capacity remains pending', () => {
+    it('wires Attention Queue and Cost & Capacity', () => {
       const attention = renderAt('/admin/command/attention-queue');
       expect(screen.getByTestId('panel-command')).toHaveAttribute('data-screen', 'attention-queue');
       attention.unmount();
 
       renderAt('/admin/command/cost-capacity');
-      expect(screen.queryByTestId('panel-command')).not.toBeInTheDocument();
+      expect(screen.getByTestId('panel-command')).toHaveAttribute('data-screen', 'cost-capacity');
     });
   });
 

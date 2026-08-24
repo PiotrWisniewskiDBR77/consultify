@@ -6,7 +6,7 @@ import { Api } from '../../../services/api';
 import { AdminCommandCenterPanel } from '../AdminCommandCenterPanel';
 
 vi.mock('../../../services/api', () => ({ Api: { getAdminRiskSummary: vi.fn(), getTenantAdminAuditStats: vi.fn(), getAdminBillingAlerts: vi.fn(), getHealthPanelSummary: vi.fn() } }));
-vi.mock('../../../services/enterpriseComplianceApi', () => ({}));
+vi.mock('../../../services/enterpriseComplianceApi', () => ({ getComplianceCostAttribution: vi.fn() }));
 const api = vi.mocked(Api);
 const renderPanel = () => render(<MemoryRouter><AdminCommandCenterPanel screen="attention-queue" /></MemoryRouter>);
 
