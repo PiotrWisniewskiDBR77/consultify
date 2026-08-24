@@ -60,6 +60,7 @@ import {
   showOperatingSection,
   showProductionSection,
   showRevenueModel,
+  computeCompleteness,
   type OrganizationType,
   type OrgProfile,
   type ProfileArea,
@@ -288,27 +289,6 @@ function computeDownstreamReadiness(p: OrgProfile): ReadinessCheck[] {
 }
 
 // ─── Completeness calculation ───
-
-function computeCompleteness(p: OrgProfile): number {
-  const checks = [
-    p.organization_type,
-    p.industry,
-    p.companySize,
-    p.headquarters_country,
-    p.strategic_priorities.length > 0,
-    p.competitive_position,
-    p.growth_stage,
-    p.technology_stack.length > 0,
-    p.mission_statement,
-    p.description,
-    p.employee_count,
-    p.risk_appetite,
-    p.regulatory_environment.length > 0,
-    p.communication_style,
-    p.key_competitors.length > 0,
-  ];
-  return Math.round((checks.filter(Boolean).length / checks.length) * 100);
-}
 
 // ─── Helpers ───
 

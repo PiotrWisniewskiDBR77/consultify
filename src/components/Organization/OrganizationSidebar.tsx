@@ -76,6 +76,11 @@ interface OrganizationSidebarProps {
   onLocationChange: (location: OrganizationLocation) => void;
   className?: string;
   onBack?: () => void;
+  /**
+   * Nadpisanie informacji-architektury (redesign v1, flaga `orgRedesignV1`).
+   * Pominięte ⇒ kanoniczne 21 ekranów, zachowanie bajt w bajt jak dotąd.
+   */
+  modules?: DomainNavigationModule<OrganizationModule, OrganizationScreen>[];
 }
 
 export const ORGANIZATION_MODULES: DomainNavigationModule<
@@ -196,6 +201,7 @@ export const OrganizationSidebar: React.FC<OrganizationSidebarProps> = ({
   onLocationChange,
   className,
   onBack,
+  modules,
 }) => {
   const { t, i18n } = useTranslation();
   const language = i18n?.resolvedLanguage || i18n?.language || 'pl';
@@ -213,7 +219,7 @@ export const OrganizationSidebar: React.FC<OrganizationSidebarProps> = ({
         'organization.sidebar.navigation',
         isPolish ? 'Nawigacja Organizacji' : 'Organization navigation'
       )}
-      modules={getOrganizationModules(language)}
+      modules={modules ?? getOrganizationModules(language)}
       activeModule={activeLocation.module}
       activeChild={activeLocation.screen}
       onChildChange={(module, screen) => onLocationChange({ module, screen })}

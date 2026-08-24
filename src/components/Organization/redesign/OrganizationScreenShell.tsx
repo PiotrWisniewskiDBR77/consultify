@@ -75,9 +75,13 @@ export const OrganizationScreenShell: React.FC<OrganizationScreenShellProps> = (
   className,
 }) => {
   const hasPanel = !!statePanel;
+  // Ekrany etapu B nie deklarują jeszcze własnych sekcji/chipów — wtedy pasek
+  // modułu się NIE renderuje (pusty pasek udawałby funkcję, której nie ma).
+  const showModuleBar = !!sections?.length || !!chips?.length || !!primaryCta;
 
   return (
     <div data-testid="org-screen-shell" className={cn('flex min-w-0 flex-col', className)}>
+      {showModuleBar && (
       <StandardModuleBar
         tabs={sections}
         activeTab={activeSection}
@@ -91,6 +95,7 @@ export const OrganizationScreenShell: React.FC<OrganizationScreenShellProps> = (
         menu3Right={aiAction}
         className="-mx-1"
       />
+      )}
       <div
         className={cn(
           'grid min-w-0 items-start gap-6 pt-4',

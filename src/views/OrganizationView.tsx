@@ -24,6 +24,13 @@ import OrganizationSidebar, {
   type OrganizationScreen,
 } from '../components/Organization/OrganizationSidebar';
 import { OrgContextSummaryBanner } from '../components/Organization/OrgContextSummaryBanner';
+import OrganizationIdentityOperatingScreen from '../components/Organization/redesign/OrganizationIdentityOperatingScreen';
+import {
+  getOrganizationRedesignModules,
+  ORGANIZATION_REDESIGN_MODULES,
+  resolveRedesignScreen,
+} from '../components/Organization/redesign/organizationRedesignNav';
+import OrganizationScreenShell from '../components/Organization/redesign/OrganizationScreenShell';
 import { SettingsHeaderActionsProvider } from '../components/settings/SettingsHeaderActions';
 import DomainScreenHeader from '../components/settings/shared/DomainScreenHeader';
 import { useOrgContextSync } from '../hooks/useOrgContextSync';
@@ -31,6 +38,7 @@ import { ROUTES } from '../routes/routeConfig';
 import { trackFunnelEvent } from '../services/funnelAnalytics';
 import { useAppStore } from '../store/useAppStore';
 import { AppView } from '../types';
+import { isOrgRedesignV1Enabled } from '../utils/orgRedesignFlag';
 import { ChallengeMapModule, type ChallengeTab } from './ContextBuilder/modules/ChallengeMapModule';
 import {
   GoalsExpectationsModule,
@@ -73,18 +81,30 @@ const SCREEN_META: Record<OrganizationScreen, { title: string; subtitle: string 
     )
   ) as Record<OrganizationScreen, { title: string; subtitle: string }>;
 
-function resolveOrganizationLocation(pathname: string): OrganizationLocation {
+function resolveOrganizationLocation(
+  pathname: string,
+  redesign = false
+): OrganizationLocation {
+  const modules = redesign ? ORGANIZATION_REDESIGN_MODULES : ORGANIZATION_MODULES;
   const segments = pathname
     .replace(/^\/organization\/?/, '')
     .split('/')
     .filter(Boolean);
   if (!segments.length) return LEGACY_LOCATIONS.profile;
-  if (segments.length === 1 && LEGACY_LOCATIONS[segments[0]]) return LEGACY_LOCATIONS[segments[0]];
+  if (segments.length === 1 && LEGACY_LOCATIONS[segments[0]]) {
+    const legacy = LEGACY_LOCATIONS[segments[0]];
+    return redesign ? { ...legacy, screen: resolveRedesignScreen(legacy.screen) } : legacy;
+  }
   if (segments[0] === 'readiness') return { module: 'readiness', screen: 'summary' };
-  const [module, screen] = segments as [OrganizationModule, OrganizationScreen];
-  const match = ORGANIZATION_MODULES.find((item) => item.id === module);
+  const [module, rawScreen] = segments as [OrganizationModule, OrganizationScreen];
+  // Pod flagą ON ekran wchłonięty (np. `operating-model`) prowadzi do ekranu,
+  // który przejął jego treść — stare linki zostają żywe, bez migracji.
+  const screen = redesign ? resolveRedesignScreen(rawScreen) : rawScreen;
+  const match = modules.find((item) => item.id === module);
   if (match?.children.some((child) => child.id === screen)) return { module, screen };
-  return LEGACY_LOCATIONS.profile;
+  return redesign
+    ? { module: 'profile', screen: resolveRedesignScreen(LEGACY_LOCATIONS.profile.screen) }
+    : LEGACY_LOCATIONS.profile;
 }
 
 export const OrganizationView: React.FC = () => {
@@ -97,6 +117,9 @@ export const OrganizationView: React.FC = () => {
   const menuButtonRef = useRef<HTMLButtonElement>(null);
 
   const contextSync = useOrgContextSync(!!currentUser?.isAuthenticated);
+  // Flaga czytana RAZ na mount — przełączenie IA w trakcie sesji nawigacyjnej
+  // dałoby niespójny stan trasy. OFF ⇒ ta ścieżka jest bajt w bajt jak dotąd.
+  const [redesignEnabled] = useState(() => isOrgRedesignV1Enabled());
 
   useEffect(() => {
     const path = location.pathname.replace(/\/+$/, '');
@@ -118,8 +141,8 @@ export const OrganizationView: React.FC = () => {
   }, [location.pathname, navigate]);
 
   const activeLocation = useMemo(
-    () => resolveOrganizationLocation(location.pathname),
-    [location.pathname]
+    () => resolveOrganizationLocation(location.pathname, redesignEnabled),
+    [location.pathname, redesignEnabled]
   );
 
   useEffect(() => {
@@ -162,7 +185,9 @@ export const OrganizationView: React.FC = () => {
 
   const currentMeta = useMemo(() => {
     const language = i18n?.resolvedLanguage || i18n?.language || 'pl';
-    const localized = getOrganizationModules(language);
+    const localized = redesignEnabled
+      ? getOrganizationRedesignModules(language)
+      : getOrganizationModules(language);
     const module = localized.find((item) => item.id === activeLocation.module);
     const screen = module?.children.find((item) => item.id === activeLocation.screen);
     const isPolish = language.toLowerCase().startsWith('pl');
@@ -175,13 +200,22 @@ export const OrganizationView: React.FC = () => {
           : 'Facts, decisions, and status for this area'
       }`,
     };
-  }, [activeLocation, i18n?.language, i18n?.resolvedLanguage]);
+  }, [activeLocation, i18n?.language, i18n?.resolvedLanguage, redesignEnabled]);
+
+  // Pod flagą OFF przekazujemy `undefined` — sidebar zachowuje kanoniczne 21 ekranów.
+  const redesignModules = useMemo(
+    () =>
+      redesignEnabled
+        ? getOrganizationRedesignModules(i18n?.resolvedLanguage || i18n?.language || 'pl')
+        : undefined,
+    [i18n?.language, i18n?.resolvedLanguage, redesignEnabled]
+  );
 
   const isOrgAdmin = ['admin', 'owner', 'superadmin'].includes(
     (currentUser?.role || '').toLowerCase()
   );
 
-  const renderContent = useCallback(() => {
+  const renderLegacyContent = useCallback(() => {
     switch (activeLocation.module) {
       case 'goals':
         return (
@@ -274,6 +308,41 @@ export const OrganizationView: React.FC = () => {
     }
   }, [activeLocation, currentMeta.title, isOrgAdmin]);
 
+  /**
+   * Redesign v1 (flaga OFF domyślnie):
+   *  - „Tożsamość i model działania" = nowy, skonsolidowany ekran na szkielecie,
+   *  - pozostałych 10 ekranów = DOTYCHCZASOWE komponenty w nowym szkielecie
+   *    (bez scalania treści — to etap B).
+   */
+  const renderContent = useCallback(() => {
+    if (!redesignEnabled) return renderLegacyContent();
+
+    if (activeLocation.module === 'profile' && activeLocation.screen === 'identity-scale') {
+      return (
+        <OrganizationIdentityOperatingScreen>
+          {(args) => (
+            <OrganizationScreenShell
+              sections={args.sections}
+              activeSection={args.activeSection}
+              onSectionChange={args.onSectionChange}
+              chips={args.chips}
+              activeChip={args.activeChip}
+              onChipChange={args.onChipChange}
+              searchValue={args.searchValue}
+              onSearch={args.onSearch}
+              primaryCta={args.primaryCta}
+              statePanel={args.statePanel}
+            >
+              {args.content}
+            </OrganizationScreenShell>
+          )}
+        </OrganizationIdentityOperatingScreen>
+      );
+    }
+
+    return <OrganizationScreenShell>{renderLegacyContent()}</OrganizationScreenShell>;
+  }, [activeLocation.module, activeLocation.screen, redesignEnabled, renderLegacyContent]);
+
   return (
     <SettingsHeaderActionsProvider value={headerActionsTarget}>
       <div className="flex h-[calc(100vh-64px)] bg-slate-50 dark:bg-navy-950">
@@ -290,6 +359,7 @@ export const OrganizationView: React.FC = () => {
             activeLocation={activeLocation}
             onLocationChange={handleSectionChange}
             onBack={handleBackToDashboard}
+            modules={redesignModules}
           />
         </div>
         <div
@@ -301,6 +371,7 @@ export const OrganizationView: React.FC = () => {
             onLocationChange={handleSectionChange}
             onBack={handleBackToDashboard}
             className="h-full bg-white dark:bg-navy-900"
+            modules={redesignModules}
           />
         </div>
         <div className="flex-1 overflow-auto">
@@ -342,11 +413,16 @@ export const OrganizationView: React.FC = () => {
                 {contextSync.error ? ` ${contextSync.error}` : ''}
               </div>
             )}
-            <OrgContextSummaryBanner
-              organizationId={currentOrganization?.id}
-              isAdmin={false}
-              className="mb-4"
-            />
+            {/* §5.2 konsolidacji: pod flagą ON baner Teresy znika z KAŻDEGO
+                ekranu — jego treść (liczba twierdzeń, ostatnia aktualizacja)
+                mieszka w prawym panelu stanu. */}
+            {!redesignEnabled && (
+              <OrgContextSummaryBanner
+                organizationId={currentOrganization?.id}
+                isAdmin={false}
+                className="mb-4"
+              />
+            )}
           </div>
           <div className="organization-domain-content mx-auto w-full max-w-[1280px] px-4 pb-6 pt-0 sm:px-5 lg:px-6">
             {renderContent()}
