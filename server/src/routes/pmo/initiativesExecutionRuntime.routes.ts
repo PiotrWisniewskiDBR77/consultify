@@ -86,6 +86,10 @@ import {
   transitionOperationalAllocation,
 } from '../../domain/initiatives-execution/operationalAllocation.js';
 import {
+  createPlanAnalysisProposal,
+  reviewPlanAnalysisProposal,
+} from '../../domain/initiatives-execution/planAnalysisProposal.js';
+import {
   diffPlanScenarios,
   mutatePlanScenario,
 } from '../../domain/initiatives-execution/planScenario.js';
@@ -456,6 +460,18 @@ const PlanScenarioSchema = z.object({
     publishedBy: z.string().nullable(),
     publishedAt: z.string().nullable(),
   }),
+});
+const PlanAnalysisCreateSchema = z.object({
+  expectedVersion: z.literal(0),
+  clientRequestId: z.string().min(1),
+  scenarioId: z.string().min(1),
+  inputAggregateVersion: z.number().int().min(1),
+});
+const PlanAnalysisReviewSchema = z.object({
+  expectedVersion: z.number().int().min(1),
+  clientRequestId: z.string().min(1),
+  outcome: z.enum(['ACCEPT', 'REJECT']),
+  rationale: z.string().min(1),
 });
 const CapacityRangeSchema = z.object({
   knowledgeState: z.enum(['KNOWN', 'ESTIMATED', 'UNKNOWN', 'UNCONFIRMED']),
@@ -3145,6 +3161,90 @@ export function createInitiativesExecutionRuntimeRouter(
         to: to.scenarioVersion,
         changes: diffPlanScenarios(from, to),
       });
+    })
+  );
+  router.post(
+    '/plan-scenarios/:scenarioId/analysis-proposals/:proposalId',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      const parsed = PlanAnalysisCreateSchema.safeParse(req.body);
+      if (!actor) {
+        res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+        return;
+      }
+      if (!parsed.success || parsed.data.scenarioId !== req.params.scenarioId) {
+        res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
+        return;
+      }
+      const found = await deps.reader.findPlanScenario(
+        actor.organizationId,
+        firstParam(req.params.scenarioId)
+      );
+      const portfolio = found
+        ? await deps.reader.findPortfolioScenario(
+            actor.organizationId,
+            found.scenario.portfolioScenarioId
+          )
+        : null;
+      if (
+        !found ||
+        !portfolio ||
+        !(await deps.authorize(actor, portfolio.scenario.scope.portfolioId, 'initiative.update'))
+      ) {
+        res.status(404).json({ error: { code: 'NOT_FOUND' } });
+        return;
+      }
+      const policy = await deps.resolvePolicy(
+        actor.organizationId,
+        portfolio.scenario.scope.portfolioId
+      );
+      const result = await createPlanAnalysisProposal(deps.unitOfWork, {
+        organizationId: actor.organizationId,
+        actorId: actor.userId,
+        aggregateType: 'plan_analysis_proposal',
+        aggregateId: firstParam(req.params.proposalId),
+        expectedVersion: 0,
+        clientRequestId: parsed.data.clientRequestId,
+        correlationId: `plan-analysis-${parsed.data.clientRequestId}`,
+        policyId: policy.policyId,
+        policyVersion: policy.version,
+        commandType: 'plan-analysis.create',
+        createIfMissing: true,
+        payload: {
+          scenarioId: parsed.data.scenarioId,
+          inputAggregateVersion: parsed.data.inputAggregateVersion,
+        },
+      });
+      res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
+    })
+  );
+  router.post(
+    '/plan-analysis-proposals/:proposalId/review',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      const parsed = PlanAnalysisReviewSchema.safeParse(req.body);
+      if (!actor) {
+        res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+        return;
+      }
+      if (!parsed.success) {
+        res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
+        return;
+      }
+      const result = await reviewPlanAnalysisProposal(deps.unitOfWork, {
+        organizationId: actor.organizationId,
+        actorId: actor.userId,
+        aggregateType: 'plan_analysis_proposal',
+        aggregateId: firstParam(req.params.proposalId),
+        expectedVersion: parsed.data.expectedVersion,
+        clientRequestId: parsed.data.clientRequestId,
+        correlationId: `plan-analysis-review-${parsed.data.clientRequestId}`,
+        policyId: 'plan-analysis-review',
+        policyVersion: 1,
+        commandType: 'plan-analysis.review',
+        payload: { outcome: parsed.data.outcome, rationale: parsed.data.rationale },
+      });
+      res.json(result);
     })
   );
 

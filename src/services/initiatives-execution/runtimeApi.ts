@@ -967,23 +967,53 @@ export async function readRegisteredInitiative(
 
 export async function amendRegisteredInitiative(
   initiativeId: string,
-  command: { expectedVersion: number; clientRequestId: string; title?: string; problem?: string; proposedOutcome?: string | null; initiativeOwnerId?: string }
+  command: {
+    expectedVersion: number;
+    clientRequestId: string;
+    title?: string;
+    problem?: string;
+    proposedOutcome?: string | null;
+    initiativeOwnerId?: string;
+  }
 ) {
-  const response = await fetch(`/api/initiatives/runtime-v1/initiatives/${encodeURIComponent(initiativeId)}/metadata`, {
-    method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(command),
-  });
+  const response = await fetch(
+    `/api/initiatives/runtime-v1/initiatives/${encodeURIComponent(initiativeId)}/metadata`,
+    {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(command),
+    }
+  );
   const body = await readJson(response);
   if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
-  return body as { status: 'APPLIED' | 'REPLAYED'; aggregateVersion: number; initiative: RegisteredInitiativeReadModel };
+  return body as {
+    status: 'APPLIED' | 'REPLAYED';
+    aggregateVersion: number;
+    initiative: RegisteredInitiativeReadModel;
+  };
 }
 
-export async function cancelRegisteredInitiative(initiativeId: string, command: { expectedVersion: number; clientRequestId: string; reason: string }) {
-  const response = await fetch(`/api/initiatives/runtime-v1/initiatives/${encodeURIComponent(initiativeId)}/cancel`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(command),
-  });
+export async function cancelRegisteredInitiative(
+  initiativeId: string,
+  command: { expectedVersion: number; clientRequestId: string; reason: string }
+) {
+  const response = await fetch(
+    `/api/initiatives/runtime-v1/initiatives/${encodeURIComponent(initiativeId)}/cancel`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(command),
+    }
+  );
   const body = await readJson(response);
   if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
-  return body as { status: 'APPLIED' | 'REPLAYED'; aggregateVersion: number; initiative: RegisteredInitiativeReadModel };
+  return body as {
+    status: 'APPLIED' | 'REPLAYED';
+    aggregateVersion: number;
+    initiative: RegisteredInitiativeReadModel;
+  };
 }
 
 export async function listRegisteredInitiatives(signal?: AbortSignal): Promise<{
@@ -1554,6 +1584,24 @@ export function listAIAnalysisProposals() {
 }
 export function listMyAIAnalysisReviews() {
   return allocationRequest('/my-work/ai-analysis-reviews', 'GET');
+}
+export function createPlanAnalysisProposal(
+  scenarioId: string,
+  proposalId: string,
+  command: unknown
+) {
+  return allocationRequest(
+    `/plan-scenarios/${encodeURIComponent(scenarioId)}/analysis-proposals/${encodeURIComponent(proposalId)}`,
+    'POST',
+    command
+  );
+}
+export function reviewPlanAnalysisProposal(proposalId: string, command: unknown) {
+  return allocationRequest(
+    `/plan-analysis-proposals/${encodeURIComponent(proposalId)}/review`,
+    'POST',
+    command
+  );
 }
 export function createCapacityOptions(id: string, command: unknown) {
   return allocationRequest(`/capacity-options/${encodeURIComponent(id)}`, 'POST', command);

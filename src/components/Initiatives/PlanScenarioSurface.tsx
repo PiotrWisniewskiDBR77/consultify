@@ -7,6 +7,7 @@ import {
   Plus,
   Save,
   Send,
+  Sparkles,
   Trash2,
   X,
 } from 'lucide-react';
@@ -16,10 +17,12 @@ import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayo
 import { StandardPreview } from '@/components/standard/StandardPreview';
 import { StandardTable, type TableRow } from '@/components/standard/StandardTable';
 import {
+  createPlanAnalysisProposal,
   listPlanScenarioRegister,
   readPlanScenario,
   readPlanScenarioDiff,
   readPlanScenarioHistory,
+  reviewPlanAnalysisProposal,
   RuntimeApiError,
   writePlanScenario,
 } from '@/services/initiatives-execution/runtimeApi';
@@ -57,6 +60,16 @@ interface PlanScenario {
   updatedBy: string;
   publishedBy: string | null;
   publishedAt: string | null;
+}
+interface PlanAnalysisProposal {
+  proposalId: string;
+  inputAggregateVersion: number;
+  inputScenarioVersion: number;
+  status: 'PENDING_REVIEW' | 'ACCEPTED' | 'REJECTED';
+  assumptions: string[];
+  rationale: string;
+  conflicts: string[];
+  changes: Array<{ initiativeId: string; before: WindowDraft; after: WindowDraft }>;
 }
 type PlanScenarioHistoryEntry = PlanScenario;
 interface RegisterRow extends TableRow {
@@ -174,6 +187,8 @@ export const PlanScenarioSurface: React.FC<Props> = ({
   const [compareFrom, setCompareFrom] = useState<number | null>(null);
   const [compareTo, setCompareTo] = useState<number | null>(null);
   const [compareState, setCompareState] = useState<'IDLE' | 'LOADING' | 'ERROR'>('IDLE');
+  const [analysisProposal, setAnalysisProposal] = useState<PlanAnalysisProposal | null>(null);
+  const [analysisState, setAnalysisState] = useState<'IDLE' | 'LOADING' | 'ERROR'>('IDLE');
   const [newId, setNewId] = useState('');
   const [portfolioId, setPortfolioId] = useState('');
   const [portfolioVersion, setPortfolioVersion] = useState(1);
@@ -558,6 +573,54 @@ export const PlanScenarioSurface: React.FC<Props> = ({
       setCompareState('IDLE');
     } catch {
       setCompareState('ERROR');
+    }
+  };
+  const analyzePlan = async () => {
+    if (!draft || !aggregateVersion || draft.status !== 'DRAFT') return;
+    setAnalysisState('LOADING');
+    const proposalId = `plan-analysis-${draft.scenarioId}-${crypto.randomUUID()}`;
+    try {
+      const result = (await createPlanAnalysisProposal(draft.scenarioId, proposalId, {
+        expectedVersion: 0,
+        clientRequestId: crypto.randomUUID(),
+        scenarioId: draft.scenarioId,
+        inputAggregateVersion: aggregateVersion,
+      })) as { response: PlanAnalysisProposal };
+      setAnalysisProposal(result.response);
+      setAnalysisState('IDLE');
+    } catch {
+      setAnalysisState('ERROR');
+    }
+  };
+  const reviewAnalysis = async (outcome: 'ACCEPT' | 'REJECT') => {
+    if (!analysisProposal || !draft) return;
+    setAnalysisState('LOADING');
+    try {
+      await reviewPlanAnalysisProposal(analysisProposal.proposalId, {
+        expectedVersion: 1,
+        clientRequestId: crypto.randomUUID(),
+        outcome,
+        rationale:
+          outcome === 'ACCEPT'
+            ? 'Human accepted proposal for the editable draft.'
+            : 'Human rejected proposal; draft remains unchanged.',
+      });
+      if (outcome === 'ACCEPT') {
+        const proposed = new Map(
+          analysisProposal.changes.map((change) => [change.initiativeId, change.after])
+        );
+        setDraft({
+          ...draft,
+          windows: draft.windows.map((window) => proposed.get(window.initiativeId) ?? window),
+        });
+      }
+      setAnalysisProposal({
+        ...analysisProposal,
+        status: outcome === 'ACCEPT' ? 'ACCEPTED' : 'REJECTED',
+      });
+      setAnalysisState('IDLE');
+    } catch {
+      setAnalysisState('ERROR');
     }
   };
   const updateWindow = (initiativeId: string, patch: Partial<WindowDraft>) =>
@@ -965,6 +1028,21 @@ export const PlanScenarioSurface: React.FC<Props> = ({
               Portfolio {draft.portfolioScenarioId}:v{draft.portfolioScenarioVersion}
             </span>
             <div className="flex w-full flex-wrap gap-2 sm:ml-auto sm:w-auto">
+              <button
+                type="button"
+                className="btn-secondary"
+                disabled={
+                  !aggregateVersion || draft.status !== 'DRAFT' || analysisState === 'LOADING'
+                }
+                onClick={() => void analyzePlan()}
+              >
+                {analysisState === 'LOADING' ? (
+                  <Loader2 className="animate-spin" size={15} />
+                ) : (
+                  <Sparkles size={15} />
+                )}{' '}
+                Analyze
+              </button>
               <button
                 type="button"
                 className="btn-ghost"
@@ -1453,6 +1531,57 @@ export const PlanScenarioSurface: React.FC<Props> = ({
             </div>
             <aside className="space-y-3">
               <h4 className="font-medium">Założenia i zmiany</h4>
+              {analysisProposal && (
+                <section
+                  aria-label="Plan analysis proposal"
+                  className="rounded-md border border-c-border p-3 text-xs"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <h4 className="font-medium">Propozycja analizy</h4>
+                    <span>{analysisProposal.status}</span>
+                  </div>
+                  <p className="mt-2 text-c-text-muted">
+                    Input: plan v{analysisProposal.inputScenarioVersion}, aggregate v
+                    {analysisProposal.inputAggregateVersion}
+                  </p>
+                  <p className="mt-2">{analysisProposal.rationale}</p>
+                  <p className="mt-2">
+                    Zmiany: {analysisProposal.changes.length} · Konflikty:{' '}
+                    {analysisProposal.conflicts.length}
+                  </p>
+                  {analysisProposal.conflicts.map((conflict) => (
+                    <p key={conflict} className="mt-1 text-c-danger">
+                      {conflict}
+                    </p>
+                  ))}
+                  {analysisProposal.status === 'PENDING_REVIEW' && (
+                    <div className="mt-3 flex gap-2">
+                      <button
+                        type="button"
+                        className="btn-primary"
+                        onClick={() => void reviewAnalysis('ACCEPT')}
+                      >
+                        Zastosuj do szkicu
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-secondary"
+                        onClick={() => void reviewAnalysis('REJECT')}
+                      >
+                        Odrzuć
+                      </button>
+                    </div>
+                  )}
+                  <p className="mt-2 text-c-text-muted">
+                    Zapis i publikacja pozostają oddzielnymi decyzjami.
+                  </p>
+                </section>
+              )}
+              {analysisState === 'ERROR' && (
+                <p role="alert" className="text-xs text-c-danger">
+                  Analiza nie powiodła się; szkic nie został zmieniony.
+                </p>
+              )}
               <label className="block text-xs">
                 Assumptions
                 <textarea

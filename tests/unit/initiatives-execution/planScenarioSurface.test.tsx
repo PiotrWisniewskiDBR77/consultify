@@ -3,11 +3,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PlanScenarioSurface } from '../../../src/components/Initiatives/PlanScenarioSurface';
 import {
+  createPlanAnalysisProposal,
   listPlanScenarioRegister,
   readPlanScenario,
   readPlanScenarioDiff,
   readPlanScenarioHistory,
   writePlanScenario,
+  reviewPlanAnalysisProposal,
 } from '../../../src/services/initiatives-execution/runtimeApi';
 
 vi.mock('../../../src/services/initiatives-execution/runtimeApi', () => ({
@@ -16,11 +18,13 @@ vi.mock('../../../src/services/initiatives-execution/runtimeApi', () => ({
       super(String(status));
     }
   },
+  createPlanAnalysisProposal: vi.fn(),
   listPlanScenarioRegister: vi.fn(),
   readPlanScenario: vi.fn(),
   readPlanScenarioDiff: vi.fn(),
   readPlanScenarioHistory: vi.fn(),
   writePlanScenario: vi.fn(),
+  reviewPlanAnalysisProposal: vi.fn(),
 }));
 
 const plan = {
@@ -97,6 +101,27 @@ describe('PlanScenarioSurface', () => {
     vi.mocked(writePlanScenario)
       .mockReset()
       .mockResolvedValue({ aggregateVersion: 5, response: { ...plan, scenarioVersion: 2 } });
+    vi.mocked(createPlanAnalysisProposal)
+      .mockReset()
+      .mockResolvedValue({
+        response: {
+          proposalId: 'proposal-1',
+          inputAggregateVersion: 4,
+          inputScenarioVersion: 1,
+          status: 'PENDING_REVIEW',
+          assumptions: ['Dependencies precede dependants'],
+          rationale: 'No source record changed.',
+          conflicts: [],
+          changes: [
+            {
+              initiativeId: 'initiative-1',
+              before: plan.windows[0],
+              after: { ...plan.windows[0], target: '2026-09-01T00:00:00Z' },
+            },
+          ],
+        },
+      });
+    vi.mocked(reviewPlanAnalysisProposal).mockReset().mockResolvedValue({});
   });
 
   it('loads the persistent register and opens exact Plan Workbench with Enter', async () => {
@@ -278,5 +303,20 @@ describe('PlanScenarioSurface', () => {
         })
       )
     );
+  });
+
+  it('reviews an analysis proposal before applying it to the unsaved draft', async () => {
+    render(<PlanScenarioSurface initiatives={[{ id: 'initiative-1', name: 'Automation' }]} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Otwórz narzędzia planu' }));
+    await screen.findByRole('region', { name: 'Plan Scenario Workbench' });
+    fireEvent.click(screen.getByRole('button', { name: 'Analyze' }));
+    expect(await screen.findByRole('region', { name: 'Plan analysis proposal' })).toHaveTextContent(
+      'PENDING_REVIEW'
+    );
+    expect(writePlanScenario).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Zastosuj do szkicu' }));
+    await waitFor(() => expect(reviewPlanAnalysisProposal).toHaveBeenCalled());
+    expect(screen.getByLabelText('target initiative-1')).toHaveValue('2026-09-01T00:00');
+    expect(writePlanScenario).not.toHaveBeenCalled();
   });
 });
