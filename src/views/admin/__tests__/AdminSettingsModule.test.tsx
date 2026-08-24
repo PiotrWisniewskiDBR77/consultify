@@ -23,6 +23,9 @@ vi.mock('../../../components/Admin/AdminTeamsPanel', () => ({
 vi.mock('../../../components/Admin/AdminPlanHistoryPanel', () => ({
   AdminPlanHistoryPanel: () => <div data-testid="panel-plan-history">plan history</div>,
 }));
+vi.mock('../../../components/Admin/AdminSeatsLicencesPanel', () => ({
+  AdminSeatsLicencesPanel: () => <div data-testid="panel-seats">seats</div>,
+}));
 vi.mock('../../../components/Admin/AdminServiceAccountsPanel', () => ({ AdminServiceAccountsPanel: () => <div data-testid="panel-service-accounts">service accounts</div> }));
 vi.mock('../../../components/Admin/AdminBillingFinOpsPanel', () => ({
   AdminBillingFinOpsPanel: ({ screen }: { screen?: string }) => (
@@ -87,6 +90,10 @@ describe('AdminSettingsModule section routing', () => {
   it('wires billing/plan-history to the read-only history panel', () => {
     renderAt('/admin/billing/plan-history');
     expect(screen.getByTestId('panel-plan-history')).toBeInTheDocument();
+  });
+  it('wires billing/seats-licences to seat management', () => {
+    renderAt('/admin/billing/seats-licences');
+    expect(screen.getByTestId('panel-seats')).toBeInTheDocument();
   });
   it('wires security/service-accounts to the service accounts panel', () => { renderAt('/admin/security/service-accounts'); expect(screen.getByTestId('panel-service-accounts')).toBeInTheDocument(); });
   it('renders the people panel at /admin/people', () => {

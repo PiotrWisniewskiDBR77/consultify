@@ -13,6 +13,7 @@ import { AdminHealthPanel } from '../../components/Admin/AdminHealthPanel';
 import { AdminMembersRolesPanel } from '../../components/Admin/AdminMembersRolesPanel';
 import { AdminPlanHistoryPanel } from '../../components/Admin/AdminPlanHistoryPanel';
 import { AdminServiceAccountsPanel } from '../../components/Admin/AdminServiceAccountsPanel';
+import { AdminSeatsLicencesPanel } from '../../components/Admin/AdminSeatsLicencesPanel';
 import { AdminTeamsPanel } from '../../components/Admin/AdminTeamsPanel';
 import {
   ADMIN_DEFAULTS,
@@ -315,6 +316,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
           'budgets-alerts',
           'billing-details',
           'plan-history',
+          'seats-licences',
         ].includes(resolvedLocation.screen)) ||
       // Fala 0 (Admin komplet 55): the Command Center's 7 enterprise-compliance
       // tabs (SOC2 audit, DLP, residency, retention, org AI policy, agent
@@ -366,6 +368,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
         );
       case 'billing':
         if (resolvedLocation.screen === 'plan-history') return <AdminPlanHistoryPanel />;
+        if (resolvedLocation.screen === 'seats-licences') return <AdminSeatsLicencesPanel />;
         return (
           <AdminBillingFinOpsPanel
             screen={
