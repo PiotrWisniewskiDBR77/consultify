@@ -107,15 +107,85 @@ window.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
   return originalFetch(input as RequestInfo, init);
 }) as typeof window.fetch;
 
+/**
+ * Etap B (10 dalszych ekranów): „Źródła i twierdzenia" i „Gotowość organizacji"
+ * osadzają REALNE `GovernedContextWorkspace`/`OrganizationDecisionQualityPanel`,
+ * które wołają `organizationGovernedContextApi.listClaims/listVersions` →
+ * `Api.get('/organization-context/governed/claims|versions')`. Bez mocka te
+ * dwa ekrany renderują banery błędu w harnessie (brak backendu) — to WYŁĄCZNIE
+ * luka danych harnessu, nie wada UI (patrz `org-identity-operating` §3 wyżej
+ * dla tej samej zasady przy `/organization-context-store`). Realistyczne
+ * dane poniżej, żeby zrzut pokazywał docelowy wygląd, nie pusty stan błędu.
+ */
+const MOCK_CLAIMS = [
+  {
+    claimId: 'claim-1',
+    itemId: 'item-1',
+    claimPath: 'profile.description',
+    value: 'Niezależna firma usług profesjonalnych.',
+    confidence: 0.86,
+    sourceType: 'interview',
+    visibilityScope: 'organization',
+    reviewState: 'approved' as const,
+    approved: true,
+    approvalSource: 'explicit_review' as const,
+    decidedBy: 'owner-1',
+    decidedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    claimId: 'claim-2',
+    itemId: 'item-2',
+    claimPath: 'profile.industry',
+    value: 'Professional Services',
+    confidence: 0.91,
+    sourceType: 'document',
+    visibilityScope: 'organization',
+    reviewState: 'pending' as const,
+    approved: false,
+    approvalSource: 'legacy_auto_accept' as const,
+    decidedBy: null,
+    decidedAt: null,
+    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+];
+const MOCK_VERSIONS = [
+  {
+    snapshotId: 'snap-1',
+    organizationId: 'org-dbr77-demo',
+    version: 1,
+    schemaVersion: 1,
+    contentHash: 'sha256-mock',
+    claimCount: 201,
+    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+    createdBy: 'owner-1',
+  },
+];
+
 const originalGet = Api.get.bind(Api);
 (Api as any).get = async (path: string, ...rest: unknown[]) => {
   if (path.startsWith('/organization-profiles/')) {
     return { exists: true, profile: MOCK_PROFILE };
   }
+  if (path.startsWith('/organization-context/governed/claims')) {
+    return { claims: MOCK_CLAIMS };
+  }
+  if (path.startsWith('/organization-context/governed/versions')) {
+    return { versions: MOCK_VERSIONS };
+  }
   return (originalGet as any)(path, ...rest);
 };
 
 (Api as any).put = async () => ({ ok: true });
+
+(Api as any).kgGetStats = async () => ({
+  totalEntities: 42,
+  totalRelations: 87,
+  entityTypes: { Organization: 1, Person: 12, System: 8, Process: 21 },
+  avgConfidence: 0.82,
+  staleEntities: 3,
+  redactedEntities: 0,
+});
 
 (Api as any).organizationContextGet = async () => ({
   organizationId: 'org-dbr77-demo',
