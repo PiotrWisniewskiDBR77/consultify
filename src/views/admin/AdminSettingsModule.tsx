@@ -278,7 +278,13 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
       (resolvedLocation.domain === 'billing' &&
         ['plan-limits', 'usage-costs', 'payment-methods', 'invoices', 'budgets-alerts'].includes(
           resolvedLocation.screen
-        ));
+        )) ||
+      // Fala 0 (Admin komplet 55): the Command Center's 7 enterprise-compliance
+      // tabs (SOC2 audit, DLP, residency, retention, org AI policy, agent
+      // trace, benchmark) are fully wired to /api/admin/enterprise-compliance/*
+      // — only the "Postawa zgodności" nav slot was missing. Overview stays
+      // aggregation-only per FINAL_IMPLEMENTATION_SPEC.md.
+      (resolvedLocation.domain === 'command' && resolvedLocation.screen === 'compliance-posture');
     if (!connected) {
       return (
         <AdminCapabilityState
@@ -328,7 +334,12 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
       case 'command':
         return (
           <AdminCommandCenterPanel
-            aggregationOnly
+            // Only the Overview screen aggregates signals read-only (per
+            // FINAL_IMPLEMENTATION_SPEC.md, Command "aggregates signals
+            // only"). Every other Command Center screen (currently just
+            // "compliance-posture", gated by `connected` above) gets the
+            // panel's full tabbed experience.
+            aggregationOnly={resolvedLocation.screen === 'overview'}
             onSectionChange={(section) =>
               handleLocationChange({
                 domain: LEGACY_DOMAIN[section],

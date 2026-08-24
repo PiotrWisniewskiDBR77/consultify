@@ -29,6 +29,16 @@ vi.mock('../../../components/Admin/AdminSecurityIdentityPanel', () => ({
 vi.mock('../../../components/Admin/AdminAuditLogPanel', () => ({
   AdminAuditLogPanel: () => <div data-testid="panel-audit">audit</div>,
 }));
+vi.mock('../../../components/Admin/AdminHealthPanel', () => ({
+  AdminHealthPanel: () => <div data-testid="panel-health">health</div>,
+}));
+vi.mock('../../../components/Admin/AdminCommandCenterPanel', () => ({
+  AdminCommandCenterPanel: ({ aggregationOnly }: { aggregationOnly?: boolean }) => (
+    <div data-testid="panel-command" data-aggregation-only={String(Boolean(aggregationOnly))}>
+      command
+    </div>
+  ),
+}));
 
 vi.mock('../../../store/useAppStore', () => ({
   useAppStore: () => ({ setCurrentView: vi.fn() }),
@@ -126,5 +136,27 @@ describe('AdminSettingsModule section routing', () => {
     expect(
       screen.queryByRole('button', { name: /Operacje platformowe|Platform Operations/i })
     ).not.toBeInTheDocument();
+  });
+
+  describe('Command Center aggregationOnly (Fala 0, Admin komplet 55)', () => {
+    it('keeps aggregationOnly on for the Overview screen', () => {
+      renderAt('/admin/command/overview');
+      const panel = screen.getByTestId('panel-command');
+      expect(panel).toHaveAttribute('data-aggregation-only', 'true');
+    });
+
+    it('unlocks the full tabbed experience for Compliance Posture', () => {
+      renderAt('/admin/command/compliance-posture');
+      const panel = screen.getByTestId('panel-command');
+      expect(panel).toHaveAttribute('data-aggregation-only', 'false');
+    });
+
+    it('still blocks Attention Queue and Cost & Capacity (FRONT_MISSING, not in scope)', () => {
+      renderAt('/admin/command/attention-queue');
+      expect(screen.queryByTestId('panel-command')).not.toBeInTheDocument();
+
+      renderAt('/admin/command/cost-capacity');
+      expect(screen.queryByTestId('panel-command')).not.toBeInTheDocument();
+    });
   });
 });
