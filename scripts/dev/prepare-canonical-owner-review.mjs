@@ -37,7 +37,7 @@ const reviewOrder = Object.freeze([
 
 const reviewMetadata = Object.freeze({
   organization: ['Organization', '01_ORGANIZATION', 'Profile; Goals; Challenges; Strategy; Context governance'],
-  interview: ['Interview', '02_INTERVIEW', 'Inbox; Assigned/Managed; Templates; Results/Insights'],
+  interview: ['Interview', '02_INTERVIEW', 'Inbox; Sessions; Assigned; Templates; Insights; Initiatives'],
   tools: ['Tools', '03_TOOLS', 'Library; Processes/Sessions; Insights; Reports; Initiatives'],
   assessment: ['Assessment', '04_ASSESSMENT', 'Library; Processes; Insights; Reports; Initiatives'],
   initiatives: ['Initiatives', '05_INITIATIVES', 'Initiatives; Plan; Capacity'],

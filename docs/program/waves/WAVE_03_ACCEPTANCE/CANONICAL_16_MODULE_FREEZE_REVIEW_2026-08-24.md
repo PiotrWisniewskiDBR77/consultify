@@ -66,7 +66,7 @@ the route/component/data integration contract.
 ### 02 — Interview
 
 - **Purpose:** create, assign, conduct and govern structured interviews.
-- **Menu 2:** Inbox; Assigned/Managed; Templates; Results/Insights.
+- **Menu 2:** Inbox; Sessions; Assigned; Templates; Insights; Initiatives.
 - **Core flow:** select published template → assign exact version → respondent
   answers through isolated token journey → manager reviews/sends back/approves
   → governed insight or initiative proposal.

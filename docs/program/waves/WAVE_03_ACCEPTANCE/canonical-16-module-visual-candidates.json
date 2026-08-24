@@ -28,18 +28,18 @@
     {
       "order": 3,
       "id": "tools",
-      "classification": "TARGET_REFERENCE_CANDIDATE",
+      "classification": "USEFUL_FRAGMENT",
       "path": "docs/program/waves/WAVE_03_ACCEPTANCE/evidence/exact-candidate-43730-photo-gate-2026-08-23/04-tools.png",
       "sha256": "fcbf50127ecdf3c6238d28127034d5b3e6bac0bc7604f7cadd2e261f093a25c4",
-      "limitation": "Exact-candidate hub reference; Dynamic SWOT is the canonical working MVP and unavailable tools remain coming soon."
+      "limitation": "Useful hub/library fragment only: the captured navigation still says Outputs, while the owner-selected contract is Library, Sessions, Insights, Reports and Initiatives. Dynamic SWOT remains the canonical working MVP and unavailable tools remain coming soon."
     },
     {
       "order": 4,
       "id": "assessment",
-      "classification": "TARGET_REFERENCE_CANDIDATE",
+      "classification": "USEFUL_FRAGMENT",
       "path": "docs/program/waves/WAVE_03_ACCEPTANCE/evidence/exact-candidate-43730-photo-gate-2026-08-23/assessment/ASM-G04-library.png",
       "sha256": "026e5a701e2852b8fb0da2a8c7f261cc37791b5a1c768812099752b9ceb34231",
-      "limitation": "Library entry point only; Interview, Matrix, Report and Settings have separate evidence and must be frozen as one DRD workspace."
+      "limitation": "Useful Library fragment only: the captured navigation still says Outputs instead of Insights. Interview, Matrix, Report and Settings have separate evidence and must be frozen as one DRD workspace."
     },
     {
       "order": 5,
@@ -60,10 +60,10 @@
     {
       "order": 7,
       "id": "my-work",
-      "classification": "TARGET_REFERENCE_CANDIDATE",
+      "classification": "USEFUL_FRAGMENT",
       "path": "docs/program/waves/WAVE_03_ACCEPTANCE/evidence/exact-candidate-43730-photo-gate-2026-08-23/02-my-work.png",
       "sha256": "c12db30d4acd021877c8cd5b9280d98779fc57f104d6c71350247e05ba2ceab8",
-      "limitation": "Exact-candidate photo-gate; source-object identity and governed writeback still require integration proof."
+      "limitation": "Shell and navigation fragment only. The captured owner scope is empty, the menu overflows and the expert review is NO-GO for owner retest; source-object identity, same-tenant fixture data and governed writeback still require integration proof."
     },
     {
       "order": 8,
