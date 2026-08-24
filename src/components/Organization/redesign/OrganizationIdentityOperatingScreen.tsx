@@ -413,6 +413,10 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
     onPublish: goToSources,
   };
 
+  const deliveryMissingCount = visibleFields.filter(
+    (field) => field.section === 'delivery' && !isFilled(profile, field.id)
+  ).length;
+
   const content = loading ? (
     <div
       role="status"
@@ -576,8 +580,13 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
             title="Model dostawy"
             icon={Briefcase}
             status={
-              !isFilled(profile, 'delivery_model') || !isFilled(profile, 'revenue_model')
-                ? { tone: 'muted', label: 'pola do uzupełnienia' }
+              deliveryMissingCount > 0
+                ? {
+                    tone: 'muted',
+                    label: `${deliveryMissingCount} ${
+                      deliveryMissingCount === 1 ? 'pole' : 'pola'
+                    } do uzupełnienia`,
+                  }
                 : undefined
             }
           >
