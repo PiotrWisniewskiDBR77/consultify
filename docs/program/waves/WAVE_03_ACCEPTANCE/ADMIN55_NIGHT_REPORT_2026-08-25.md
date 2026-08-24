@@ -20,8 +20,8 @@ Start: 2026-08-24 (Europe/Warsaw) · Koniec: —
 |---|---|---|---|---|---|
 | 1 | team/teams | 2 | `6838861109` | DONE | realny CRUD zespołu i składu; mutacje z readbackiem |
 | 2 | billing/plan-history | 4/A | `52195ad3b7` | DONE | tenant-scoped, tylko odczyt, paginacja |
-| 3 | security/domains | 4/A | — | NIE ZACZĘTO | |
-| 4 | team/access-requests | 4/A | — | NIE ZACZĘTO | |
+| 3 | security/domains | 4/A | — | STOP | endpoint verify automatycznie oznacza domenę jako zweryfikowaną bez DNS/TXT |
+| 4 | team/access-requests | 4/A | — | STOP | żywy approve tworzy nową organizację; brak kontraktu dołączenia do bieżącej org |
 | 5 | security/service-accounts | 4/A | — | NIE ZACZĘTO | |
 | 6 | ai/quality-evaluations | 2 | — | NIE ZACZĘTO | |
 | 7 | command/attention-queue | 2 | — | NIE ZACZĘTO | |
@@ -48,7 +48,17 @@ Start: 2026-08-24 (Europe/Warsaw) · Koniec: —
 
 ## Pozycje STOP
 
-Brak na starcie dyżuru.
+### STOP — security/domains
+Powód: istniejący endpoint weryfikacji nie wykonuje weryfikacji DNS/TXT i bezwarunkowo zapisuje `verified = 1`, więc podpięcie go stworzyłoby fałszywy sukces bezpieczeństwa.
+Dowód: `server/src/routes/organization/approved-domains.routes.ts:261-268`; `rg -n "resolveTxt|verification_token|verify.*domain" server/src src` nie wskazuje innego mechanizmu DNS dla approved domains.
+Co zrobiłbym, gdyby zapadła decyzja X: po zatwierdzeniu kontraktu DNS dodałbym resolver TXT z oczekiwanym tokenem, rozróżnienie `pending/verified/failed`, timeout i testy negatywne; dopiero potem podłączyłbym UI z instrukcją rekordu TXT.
+Stan: NIE ZACOMMITOWANO.
+
+### STOP — team/access-requests
+Powód: istniejące API nie obsługuje zatwierdzenia dołączenia do bieżącej organizacji; endpoint listy jest globalny/superadmin-only, a `approve` tworzy nową organizację i użytkownika.
+Dowód: `server/src/routes/access-control.routes.ts:83-104` (globalna lista + `requireSuperAdmin`) oraz `:107-189` (tworzenie `organizations` i `users`); publiczny `POST /requests` nie zapisuje docelowego `organization_id` (`:35-76`).
+Co zrobiłbym, gdyby zapadła decyzja X: po zatwierdzeniu modelu wniosku do istniejącej organizacji dodałbym tenant-scoped command z jednoznacznym `organization_id`, obsługą istniejącego użytkownika i idempotencją, następnie approve/reject z readbackiem i testem cross-tenant.
+Stan: NIE ZACOMMITOWANO.
 
 ## Znaleziska (problemy w istniejącym kodzie — NIE naprawiane przeze mnie)
 
