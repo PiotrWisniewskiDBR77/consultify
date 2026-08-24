@@ -3032,7 +3032,11 @@ export const AppRoutes: React.FC = () => {
         <Route path={ROUTES.MCP_IRIS} element={<Navigate to={ROUTES.AI_CHAT} replace />} />
         <Route path={ROUTES.MCP_MARKETPLACE} element={<Navigate to={ROUTES.AI_CHAT} replace />} />
 
-        {/* Settings with nested routes - Protected & Error Boundary */}
+        {/* Settings with nested routes - Protected & Error Boundary
+            DEC-...-10 — Settings is personal preferences only. Billing and
+            organization-wide policy are not a Settings concern: the legacy
+            sub-routes redirect to the canonical Admin screens before
+            SettingsView ever mounts. */}
         <Route
           path={`${ROUTES.SETTINGS.ROOT}/*`}
           element={
@@ -3040,14 +3044,51 @@ export const AppRoutes: React.FC = () => {
               <MainLayout breadcrumbs={breadcrumbs || ['Settings']}>
                 <RouteErrorBoundary>
                   <AnimationWrapper variant="fade">
-                    <SettingsView
-                      currentUser={currentUser as any}
-                      onUpdateUser={(updates) =>
-                        setCurrentUser(currentUser ? { ...currentUser, ...updates } : null)
-                      }
-                      theme={theme as 'light' | 'dark' | 'system'}
-                      toggleTheme={toggleTheme}
-                    />
+                    <Routes>
+                      <Route
+                        path="billing/*"
+                        element={
+                          <RedirectWithTracking
+                            from={ROUTES.SETTINGS.BILLING}
+                            to={ROUTES.ADMIN.BILLING}
+                            reason="settings_admin_handoff"
+                          />
+                        }
+                      />
+                      <Route
+                        path="organization/*"
+                        element={
+                          <RedirectWithTracking
+                            from={ROUTES.SETTINGS.ORGANIZATION}
+                            to={ROUTES.ADMIN.OPERATIONS}
+                            reason="settings_admin_handoff"
+                          />
+                        }
+                      />
+                      <Route
+                        path="tenant-defaults/*"
+                        element={
+                          <RedirectWithTracking
+                            from={ROUTES.SETTINGS.TENANT_DEFAULTS}
+                            to={ROUTES.ADMIN.OPERATIONS}
+                            reason="settings_admin_handoff"
+                          />
+                        }
+                      />
+                      <Route
+                        path="*"
+                        element={
+                          <SettingsView
+                            currentUser={currentUser as any}
+                            onUpdateUser={(updates) =>
+                              setCurrentUser(currentUser ? { ...currentUser, ...updates } : null)
+                            }
+                            theme={theme as 'light' | 'dark' | 'system'}
+                            toggleTheme={toggleTheme}
+                          />
+                        }
+                      />
+                    </Routes>
                   </AnimationWrapper>
                 </RouteErrorBoundary>
               </MainLayout>

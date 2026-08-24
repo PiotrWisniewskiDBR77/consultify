@@ -213,6 +213,7 @@ export const ROUTES = {
     NOTIFICATIONS: '/settings/notifications',
     INTEGRATIONS: '/settings/integrations',
     ORGANIZATION: '/settings/organization',
+    TENANT_DEFAULTS: '/settings/tenant-defaults',
     SECURITY: '/settings/security',
   },
 
