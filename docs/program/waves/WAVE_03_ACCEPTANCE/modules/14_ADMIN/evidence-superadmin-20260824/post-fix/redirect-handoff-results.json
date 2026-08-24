@@ -1,0 +1,32 @@
+{
+  "account": "w3.admin.superadmin@local.test (SUPERADMIN)",
+  "method": "Playwright, page.goto() hard navigation to each URL while authenticated, then page.url() polled every 250ms for 2s to see both the transient and settled state.",
+  "targets": [
+    {
+      "from": "/settings/billing",
+      "transient_url_after_redirect": "http://127.0.0.1:4431/superadmin/customers/commercial/billing",
+      "settled_page_url": "http://127.0.0.1:4431/superadmin/customers",
+      "console_warning": "[SuperAdminView] Falling back to command center for: SETTINGS_BILLING"
+    },
+    {
+      "from": "/settings/organization",
+      "transient_url_after_redirect": "http://127.0.0.1:4431/superadmin/customers/organizations",
+      "settled_page_url": "http://127.0.0.1:4431/superadmin/customers",
+      "console_warning": "[SuperAdminView] Falling back to command center for: SETTINGS_PROFILE_MODULE"
+    },
+    {
+      "from": "/organization/members",
+      "transient_url_after_redirect": "http://127.0.0.1:4431/superadmin/customers/users",
+      "settled_page_url": "http://127.0.0.1:4431/superadmin/customers",
+      "console_warning": "[SuperAdminView] Falling back to command center for: ORGANIZATION_PROFILE"
+    },
+    {
+      "from": "/organization/domains",
+      "transient_url_after_redirect": "http://127.0.0.1:4431/superadmin?from=%2Forganization%2Fdomains",
+      "settled_page_url": "http://127.0.0.1:4431/superadmin/customers",
+      "console_warning": "[SuperAdminView] Falling back to command center for: ORGANIZATION_PROFILE"
+    }
+  ],
+  "verified_positive": "For all 4 legacy URLs, the superadmin NEVER transits through /admin/* (the un-renderable P0-guarded screen) any more. RedirectWithTracking correctly computes the differentiated superadminTo target from ba0a4759d2 (visible transiently in page.url()) and the domains fallback correctly produces /superadmin?from=%2Forganization%2Fdomains. No crash, no white screen, no console error (only a pre-existing informational warning).",
+  "residual_finding_NOT_part_of_TRI-MUST-04_scope": "SuperAdminView (src/views/superadmin/SuperAdminView.tsx:83-95) keys its rendered tab off the Zustand `currentView` app-state, not off the URL. `<Navigate to={superadminTo} replace>` only changes the browser location, it never calls setCurrentView(). Because currentView still holds a non-SUPERADMIN_* value from the settings/organization AppView mapping, SuperAdminView's own (pre-existing, unrelated to this fix) normalization effect fires a SECOND replace back to the generic /superadmin/customers within ~250-500ms, so the specific commercial-billing/organizations/users landing and the domains ?from= query never durably render — the user ends up on the generic Tenant Command Center for all 4 cases. This is a separate, narrower UX gap (loses the specific-tab intent) than the P0-guard bounce TRI-MUST-04 fixed, and does not reopen the P0/security defect."
+}

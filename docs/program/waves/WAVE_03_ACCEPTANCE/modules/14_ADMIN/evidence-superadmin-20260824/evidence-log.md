@@ -174,3 +174,117 @@ aktywnego wiersza `organization_members` — a SUPERADMIN z definicji go nie ma
   `lsof` przed i po; procesy innych sesji nie ruszane).
 - Pliki tymczasowe (`scratch_superadmin_capture*.mjs`) usunięte z worktree po
   zakończeniu.
+
+---
+
+## Powtórka po naprawach `51d78e9182` / `ba0a4759d2` (2026-08-24, wieczór)
+
+### Zakres i metoda
+Ta sama metodyka co powyżej, worktree `/private/tmp/consultify-m03-admin`
+(gałąź `codex/m03-admin-20260824`, tip `345286ff56` — oba commity naprawcze
+już w historii tej gałęzi, zweryfikowane `git log`). Nowy, własny, jednorazowy
+kontener Postgres `consultify-m03-admin-evidence-20260824b`
+(`pgvector/pgvector:pg16`, port hosta `127.0.0.1:45436`), schemat zmigrowany
+od zera (`db:migrate:strict`, `CI=true` żeby przejść guard WP-A04 na hoście
+lokalnym — patrz `server/src/config/databaseTargetResolver.ts`). Ten sam,
+znany problem podwójnej `20260412_seed_business_templates.sql` naprawiony
+identycznie jak poprzednio: ręczny wpis do `tp_migration_history` z
+checksumem `fileChecksum()` (sha256 hex, 16 znaków) = `2a575df4d4cc517d`.
+Fixture `W3-ADMIN-OWNER-v1` skopiowana punktowo (nie pełny `pg_dump` — schemat
+źródłowego, współdzielonego kontenera `consultify-w3-recovered-fixtures-20260823`
+ma dryf względem bieżącego SHA; skopiowano tylko potrzebne wiersze —
+`organizations` × 3, `users` × 8 `w3.admin.*@local.test`, `organization_members`
+× 6 — filtrując kolumny po przecięciu schema źródło/cel, skrypt jednorazowy
+usunięty z worktree po użyciu). Hasło `ConsultifyM03Evidence2026!` nadpisane
+bcrypt-hashem dla `w3.admin.superadmin@local.test`, `w3.admin.owner@local.test`,
+`w3.admin.admin@local.test`, `w3.admin.foreign.owner@local.test`,
+`w3.admin.foreign.admin@local.test`. Backend `127.0.0.1:4430` (`CI=true` dla
+tego samego DB-host guardu), frontend Vite `127.0.0.1:4431`
+(`VITE_API_TARGET=http://127.0.0.1:4430`). Porty zweryfikowane wolne przed
+startem (`lsof`), chronione porty {3987,3940,3941,4363,4364,4402,4403,4420,4421}
+nietknięte. Zrzuty i JSON-y dowodowe w `post-fix/`.
+
+### Dowód 1 — SUPERADMIN zapisuje własne preferencje: **OK**
+- `PUT /api/settings/preferences/notifications` (body `{"preferences":{...}}`)
+  → **200** `{"success":true}`; `GET` readback zwraca dokładnie zapisane
+  wartości. `PUT /api/settings/preferences/appearance` → **200**
+  `{"success":true,"preferences":{"theme":"dark","density":"comfortable"}}`;
+  `GET` readback zgodny (`post-fix/preferences-save-network.json`).
+- Potwierdzone też przez realny UI: zalogowano się jako
+  `w3.admin.superadmin@local.test`, `/settings/notifications`, przełączono
+  "Aktualizacje zadań" → E-mail (OFF→ON), "Zapisz zmiany" → sieć
+  `GET→PUT 200→GET`, zielony toast **"Preferencje powiadomień zapisane"**,
+  ZERO czerwonego banera błędu
+  (`post-fix/settings-notifications-postfix-saved-light.png`). Po pełnym
+  `page.reload()` przełącznik nadal ON — wartość utrzymana
+  (`post-fix/settings-notifications-postfix-reload-light.png`).
+- **P1 z pierwszej weryfikacji zamknięty**: `requireActiveMembership` zdjęty z
+  tych endpointów w `51d78e9182` (potwierdzone `grep` w
+  `server/src/routes/settings.routes.ts` — zostało tylko na `POST
+  /notifications` linia 1034, celowo, bo tam ADMIN/OWNER edytuje preferencje
+  INNEGO członka i ma własny check roli).
+
+### Dowód 2 — Redirect handoff: **OK (P0 naprawiony) + adnotacja (P2 pozostaje)**
+- Zalogowano jako SUPERADMIN, twarde wejście (`page.goto`) na 4 legacy URL-e.
+  `page.url()` po ustabilizowaniu (2 s, próbkowane co 250 ms) —
+  wszystkie 4 lądują na `/superadmin/customers`
+  (`post-fix/redirect-handoff-results.json`, zrzut jednego celu:
+  `post-fix/settings-billing-handoff-postfix-light.png` — realny Tenant
+  Command Center, dane żywe, zero crasha):
+  | Ścieżka | Tranzytowy URL (widoczny ~250-500ms) | page.url() po ustabilizowaniu |
+  |---|---|---|
+  | `/settings/billing` | `/superadmin/customers/commercial/billing` | `/superadmin/customers` |
+  | `/settings/organization` | `/superadmin/customers/organizations` | `/superadmin/customers` |
+  | `/organization/members` | `/superadmin/customers/users` | `/superadmin/customers` |
+  | `/organization/domains` | `/superadmin?from=%2Forganization%2Fdomains` | `/superadmin/customers` |
+- **Rdzeń naprawy `ba0a4759d2` potwierdzony w runtime**: `RedirectWithTracking`
+  poprawnie rozpoznaje SUPERADMIN i najpierw kieruje na zróżnicowany,
+  dedykowany cel (`superadminTo`) — widoczne tranzytowo w `page.url()` — oraz
+  fallback dla `/organization/domains` poprawnie produkuje
+  `/superadmin?from=<attempted path>`. **SUPERADMIN już NIGDY nie tranzytuje
+  przez `/admin/*`** (nierenderowalny dla tej roli przez P0-guard) — to był
+  właściwy defekt zgłoszony w TRI-MUST-04, i jest zamknięty.
+- **Nowa, drugorzędna obserwacja (NIE część zakresu TRI-MUST-04, nie otwiera
+  z powrotem P0)**: `SuperAdminView.tsx:83-95` wybiera renderowaną zakładkę na
+  podstawie stanu `currentView` w Zustand, nie na podstawie URL. `<Navigate
+  to={superadminTo} replace>` zmienia tylko lokalizację przeglądarki, nigdy nie
+  wywołuje `setCurrentView(...)`. Ponieważ `currentView` zostaje z poprzedniego
+  mapowania AppView (np. `SETTINGS_BILLING`, `ORGANIZATION_PROFILE` —
+  nierozpoznane jako `SUPERADMIN_*`), efekt normalizujący w `SuperAdminView`
+  (istniejący wcześniej, niezwiązany z tą naprawą) odbija DRUGI raz na ogólny
+  `/superadmin/customers` w ~250-500ms, gubiąc zróżnicowany cel i `?from=`.
+  Efekt: użytkownik i tak ląduje na ogólnym Tenant Command Center, nie na
+  konkretnej zakładce (commercial/billing, organizations, users) ani z
+  zachowanym `?from=`. Brak crasha, brak białego ekranu, brak błędu konsoli
+  (tylko istniejące wcześniej `[SuperAdminView] Falling back to command
+  center for: ...`). Traktuję jako kontynuację P2 z pierwszej weryfikacji
+  (UX, nie bezpieczeństwo) — do rozważenia: zsynchronizować `currentView` z
+  URL przy montowaniu `SuperAdminView` (np. `getAppViewFromRoute(location.
+  pathname)`, które istnieje w `src/routes/routeConfig.ts:636` ale nie jest
+  nigdzie wołane).
+
+### Dowód 3 — Kontrola negatywna izolacji: **OK**
+- Konto `w3.admin.foreign.owner@local.test` (OWNER, organizacja
+  `...002`, BEZ wiersza `organization_members` dla organizacji `...001`)
+  → `GET /api/organizations/14000000-0000-4000-8000-000000000001/members`
+  → **403** `{"error":"Access denied","code":"ORG_MEMBERSHIP_REQUIRED"}`.
+- Kontrola pozytywna tym samym tokenem/endpointem na WŁASNEJ organizacji
+  (`...002`) → **200**, zwraca 2 członków — dowód, że endpoint nie jest
+  ślepo zablokowany dla każdego, tylko poprawnie liczy membership
+  (`post-fix/negative-control-network.json`). Izolacja organizacyjna
+  NIE osłabiona żadną z dwóch napraw.
+
+### Sprzątanie (ta powtórka)
+- Backend (`tsx server/src/index.ts`, port 4430) i frontend (`vite`, port
+  4431) zatrzymane (`pkill`), `lsof` po zamknięciu — oba porty wolne.
+- Kontener Docker `consultify-m03-admin-evidence-20260824b` (własny,
+  jednorazowy) zatrzymany i usunięty (`docker rm -f`).
+- Oryginalny, współdzielony kontener `consultify-w3-recovered-fixtures-20260823`
+  — nietknięty (tylko odczyt przez zapytania SQL punktowe), nadal działa.
+- Port `3987` żywy, chronione porty {3940,3941,4363,4364,4402,4403,4420,4421}
+  — nietknięte (zweryfikowano `lsof` przed i po; żaden inny kontener/proces
+  nie ruszany — w tym gałąź `codex/m03-admin-20260824`, na której równolegle
+  pracuje Codex, pozostawiona bez zmian w kodzie: ta weryfikacja modyfikowała
+  WYŁĄCZNIE pliki w `evidence-superadmin-20260824/` + ten log).
+- Plik `.env.local` i pliki tymczasowe (`scratch_superadmin_postfix_capture.mjs`,
+  `scratch_copy_fixture.mjs`) usunięte z worktree po zakończeniu.

@@ -1,0 +1,21 @@
+{
+  "scenario": "TRI-MUST negative control — org isolation must NOT be weakened by the SUPERADMIN fixes",
+  "account": "w3.admin.foreign.owner@local.test (OWNER, organization_id=14000000-0000-4000-8000-000000000002, NOT a member of 14000000-0000-4000-8000-000000000001)",
+  "requests": [
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:4430/api/organizations/14000000-0000-4000-8000-000000000001/members",
+      "note": "foreign org the account has no membership row in",
+      "status": 403,
+      "body": { "error": "Access denied", "code": "ORG_MEMBERSHIP_REQUIRED" }
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:4430/api/organizations/14000000-0000-4000-8000-000000000002/members",
+      "note": "sanity check — the account's OWN org, same endpoint, same account, same token",
+      "status": 200,
+      "bodySample": "2 members returned (w3.admin.foreign.owner@local.test OWNER, w3.admin.foreign.admin@local.test ADMIN)"
+    }
+  ],
+  "conclusion": "403/ORG_MEMBERSHIP_REQUIRED on the foreign org and 200 on the account's own org via the identical endpoint proves the isolation check is live (not a blanket-403 endpoint) and was not weakened by TRI-MUST-01/04."
+}

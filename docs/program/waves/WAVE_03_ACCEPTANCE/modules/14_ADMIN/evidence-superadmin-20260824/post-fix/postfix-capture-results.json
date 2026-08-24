@@ -1,0 +1,55 @@
+{
+  "evidence1": {
+    "toggleError": "TimeoutError: locator.click: Timeout 5000ms exceeded.\nCall log:\n  - waiting for locator('input[type=\"checkbox\"], [role=\"switch\"]').first()\n    - locator resolved to <button role=\"switch\" aria-checked=\"true\" class=\"relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:ring-offset-2 focus:ring-offset-c-surface bg-c-focus-solid\">…</button>\n  - attempting click action\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <li class=\"flex items-start gap-2.5 text-sm text-c-text-secondary\">…</li> from <div class=\"↵            fixed inset-0 z-modal flex items-center justify-center p-4↵            backdrop-blur-sm↵          \">…</div> subtree intercepts pointer events\n    - retrying click action\n    - waiting 20ms\n    - waiting for element to be visible, enabled and stable\n    - element is visible, enabled and stable\n    - scrolling into view if needed\n    - done scrolling\n    - <li class=\"flex items-start gap-2.5 text-sm text-c-text-secondary\">…</li> from <div class=\"↵            fixed inset-0 z-modal flex items-center justify-center p-4↵            backdrop-blur-sm↵          \">…</div> subtree intercepts pointer events\n  2 × retrying click action\n      - waiting 100ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <h1 class=\"mt-2 text-2xl font-bold text-c-text\">Poznaj Teresę — konsultantkę, która rozmawia</h1> from <div class=\"↵            fixed inset-0 z-modal flex items-center justify-center p-4↵            backdrop-blur-sm↵          \">…</div> subtree intercepts pointer events\n  2 × retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <li class=\"flex items-start gap-2.5 text-sm text-c-text-secondary\">…</li> from <div class=\"↵            fixed inset-0 z-modal flex items-center justify-center p-4↵            backdrop-blur-sm↵          \">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <li class=\"flex items-start gap-2.5 text-sm text-c-text-secondary\">…</li> from <div class=\"↵            fixed inset-0 z-modal flex items-center justify-center p-4↵            backdrop-blur-sm↵          \">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <h1 class=\"mt-2 text-2xl font-bold text-c-text\">Poznaj Teresę — konsultantkę, która rozmawia</h1> from <div class=\"↵            fixed inset-0 z-modal flex items-center justify-center p-4↵            backdrop-blur-sm↵          \">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <h1 class=\"mt-2 text-2xl font-bold text-c-text\">Poznaj Teresę — konsultantkę, która rozmawia</h1> from <div class=\"↵            fixed inset-0 z-modal flex items-center justify-center p-4↵            backdrop-blur-sm↵          \">…</div> subtree intercepts pointer events\n  - retrying click action\n    - waiting 500ms\n",
+    "saveError": "TimeoutError: locator.click: Timeout 5000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: /zapisz|save/i }).first()\n    - locator resolved to <button disabled type=\"button\" class=\"type-control flex items-center gap-2 rounded-lg px-4 py-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)] cursor-not-allowed bg-[var(--c-surface-raised)] text-[var(--c-text-muted)]\">…</button>\n  - attempting click action\n    2 × waiting for element to be visible, enabled and stable\n      - element is not enabled\n    - retrying click action\n    - waiting 20ms\n    2 × waiting for element to be visible, enabled and stable\n      - element is not enabled\n    - retrying click action\n      - waiting 100ms\n    9 × waiting for element to be visible, enabled and stable\n      - element is not enabled\n    - retrying click action\n      - waiting 500ms\n",
+    "uiToggled": false,
+    "uiSaveClicked": false,
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "settingsNetworkEvents": [
+      {
+        "url": "http://127.0.0.1:4431/api/settings/preferences/accessibility",
+        "status": 200,
+        "method": "GET"
+      },
+      {
+        "url": "http://127.0.0.1:4431/api/settings/preferences/accessibility",
+        "status": 200,
+        "method": "GET"
+      },
+      {
+        "url": "http://127.0.0.1:4431/api/settings/preferences/notifications",
+        "status": 200,
+        "method": "GET"
+      }
+    ],
+    "tokenFoundInLocalStorage": true
+  },
+  "evidence2": {
+    "navigations": [
+      {
+        "name": "settings-billing",
+        "from": "/settings/billing",
+        "finalUrl": "http://127.0.0.1:4431/superadmin/customers"
+      },
+      {
+        "name": "settings-organization",
+        "from": "/settings/organization",
+        "finalUrl": "http://127.0.0.1:4431/superadmin/customers"
+      },
+      {
+        "name": "organization-members",
+        "from": "/organization/members",
+        "finalUrl": "http://127.0.0.1:4431/superadmin/customers"
+      },
+      {
+        "name": "organization-domains",
+        "from": "/organization/domains",
+        "finalUrl": "http://127.0.0.1:4431/superadmin/customers"
+      }
+    ],
+    "screenshotFinalUrl": "http://127.0.0.1:4431/superadmin/customers"
+  },
+  "evidence3": {}
+}

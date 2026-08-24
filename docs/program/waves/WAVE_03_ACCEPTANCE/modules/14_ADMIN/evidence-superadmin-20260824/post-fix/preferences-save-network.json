@@ -1,0 +1,48 @@
+{
+  "account": "w3.admin.superadmin@local.test (SUPERADMIN, no organization_members row)",
+  "api_level": [
+    {
+      "method": "PUT",
+      "url": "/api/settings/preferences/notifications",
+      "body": {"preferences": {"email": false, "push": true, "inApp": true, "digest": "weekly"}},
+      "status": 200,
+      "response": {"success": true}
+    },
+    {
+      "method": "GET",
+      "url": "/api/settings/preferences/notifications",
+      "status": 200,
+      "response": {"preferences": {"email": false, "push": true, "inApp": true, "digest": "weekly"}},
+      "note": "readback matches the PUT payload"
+    },
+    {
+      "method": "PUT",
+      "url": "/api/settings/preferences/appearance",
+      "body": {"theme": "dark", "density": "comfortable"},
+      "status": 200,
+      "response": {"success": true, "preferences": {"theme": "dark", "density": "comfortable"}}
+    },
+    {
+      "method": "GET",
+      "url": "/api/settings/preferences/appearance",
+      "status": 200,
+      "response": {"preferences": {"theme": "dark", "accentColor": "#6366f1", "uiDensity": "comfortable", "fontScale": 1, "startPage": "dashboard", "sidebarCollapsed": false, "animations": true, "reducedMotion": false, "density": "comfortable"}},
+      "note": "readback reflects the saved theme/density"
+    }
+  ],
+  "ui_level": {
+    "route": "/settings/notifications",
+    "action": "toggled 'Aktualizacje zadań' E-mail switch OFF->ON, clicked 'Zapisz zmiany'",
+    "network": [
+      {"method": "GET", "url": "/api/settings/preferences/notifications", "status": 200},
+      {"method": "PUT", "url": "/api/settings/preferences/notifications", "status": 200},
+      {"method": "GET", "url": "/api/settings/preferences/notifications", "status": 200}
+    ],
+    "toast": "Preferencje powiadomień zapisane (green success toast, no red error banner)",
+    "reload_readback": "Full page reload (page.reload) — 'Aktualizacje zadań' E-mail switch still ON after reload",
+    "screenshots": [
+      "settings-notifications-postfix-saved-light.png",
+      "settings-notifications-postfix-reload-light.png"
+    ]
+  }
+}
