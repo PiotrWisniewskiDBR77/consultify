@@ -91,6 +91,18 @@ initial failure was a stale test expecting the superseded label `Outputs`.
 After aligning that test with the already-selected `Insights` contract, the
 navigation file passes `6/6`; no product behavior was changed by that repair.
 
+## Admin, AI OS and Partners reconciliation
+
+| Scope | Reconciled state | Reason |
+| --- | --- | --- |
+| Admin | `OWNER_DECISION_REQUIRED` | The register leaves role model, customer-versus-platform operations, billing mutation, Command Center scope and Admin/Settings/Organization ownership open. Implementing those semantics would invent permissions and policy. |
+| AI OS | `OWNER_DECISION_REQUIRED` | The sole owner observation asks whether the surface is useful; retain, relocate or remove remains explicitly undecided. Static PASS history must not be promoted as current runtime evidence. |
+| Partners | `ALREADY_IN_CANDIDATE_SOURCE` with `BACKEND_OR_RUNTIME_GATE` and commercial owner gates | Role-aware program and safe CTA behavior have technical evidence. Commission, tier, payout, SLA, references and live-capability claims remain suppressed until approved and verified. |
+
+These dispositions intentionally prevent cosmetic implementation from creating
+false permission, commercial or runtime promises. They do not count as owner
+acceptance and do not block work on unrelated unequivocal regressions.
+
 ## Work order
 
 1. Reconcile explicit module atoms into this state model without changing code.
