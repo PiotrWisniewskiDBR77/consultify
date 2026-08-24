@@ -55,3 +55,12 @@ Obserwacja poboczna z weryfikacji adwersaryjnej (do sprawdzenia w fazie 2,
 moduł Finance): flaga `isFinanceOwnerSampleDataEnabled()` podmienia listy
 Finance na zaszyte `FINANCE_OWNER_SAMPLE_*` — zweryfikować przed jakimkolwiek
 demo (reguła „dane demo = twarz produktu").
+
+## Uzupełnienie — sesja wieczorna 2026-08-24
+
+| ID | Decyzja | Werdykt | Treść zamrożona |
+|---|---|---|---|
+| DEC-2026-08-24-11 | Organizacja — ekran wzorcowy redesignu | **OWNER_ACCEPT** | Realny ekran „Tożsamość i model działania" (SHA 14b1a8fc73, flaga `orgRedesignV1` OFF) zaakceptowany jako wzorzec; etap B = pozostałe 10 ekranów przez ten sam szkielet wg mapy 21→11. Flaga pozostaje OFF do odbioru całości modułu. |
+| DEC-2026-08-24-12 | Admin — przełączniki bezpieczeństwa bez egzekwowania (TRI-MUST-02) | **OWNER_ACCEPT** | Trzy przełączniki (goście, link-sharing, zatwierdzanie narzędzi) UKRYTE/oznaczone „planowane" do czasu wdrożenia realnego egzekwowania; egzekwowanie = zadanie po-MVP z własnym odbiorem. Zakaz placebo polityk. |
+| DEC-2026-08-24-13 | Admin — dom „ustawień domyślnych organizacji" (TRI-MUST-06) | **OWNER_ACCEPT** | Edytor tenant-defaults powstaje jako ekran-dziecko w Admin Command Center; przekierowania już tam celują (08e2beec19). |
+| DEC-2026-08-24-14 | Admin — zakres domknięcia modułu w MVP | **OWNER_DECISION: FULL_55** | Moduł Admin zostaje otwarty do czasu podłączenia WSZYSTKICH 55 ekranów; odbioru częściowego nie będzie. Program budowy 40 brakujących ekranów staje się jawnym torem prac MVP (inwentarz → fale wdrożeniowe → odbiory per domena). |
