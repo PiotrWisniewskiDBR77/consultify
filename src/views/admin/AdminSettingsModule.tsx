@@ -8,6 +8,7 @@ import { AdminAuditLogPanel } from '../../components/Admin/AdminAuditLogPanel';
 import { AdminBillingFinOpsPanel } from '../../components/Admin/AdminBillingFinOpsPanel';
 import { AdminCapabilityState } from '../../components/Admin/AdminCapabilityState';
 import { AdminCommandCenterPanel } from '../../components/Admin/AdminCommandCenterPanel';
+import { AdminComplianceEvidencePanel } from '../../components/Admin/AdminComplianceEvidencePanel';
 import { AdminHealthPanel } from '../../components/Admin/AdminHealthPanel';
 import { AdminMembersRolesPanel } from '../../components/Admin/AdminMembersRolesPanel';
 import { AdminPlanHistoryPanel } from '../../components/Admin/AdminPlanHistoryPanel';
@@ -330,6 +331,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
       // need to stop falling through to AdminCapabilityState.
       (resolvedLocation.domain === 'audit' &&
         ['high-risk-changes', 'retention-export'].includes(resolvedLocation.screen)) ||
+      (resolvedLocation.domain === 'audit' && resolvedLocation.screen === 'compliance-evidence') ||
       // Fala 1 (Admin komplet 55): Diagnostics is the same probe UI as the
       // connected `service-status` default (AdminHealthPanel renders both
       // unconditionally) — just missing its own nav slot.
@@ -408,6 +410,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
           />
         );
       case 'audit':
+        if (resolvedLocation.screen === 'compliance-evidence') return <AdminComplianceEvidencePanel />;
         return <AdminAuditLogPanel />;
       case 'command':
         return (

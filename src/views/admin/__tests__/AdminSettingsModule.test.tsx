@@ -48,6 +48,7 @@ vi.mock('../../../components/Admin/AdminSecurityIdentityPanel', () => ({
 vi.mock('../../../components/Admin/AdminAuditLogPanel', () => ({
   AdminAuditLogPanel: () => <div data-testid="panel-audit">audit</div>,
 }));
+vi.mock('../../../components/Admin/AdminComplianceEvidencePanel', () => ({ AdminComplianceEvidencePanel: () => <div data-testid="panel-compliance-evidence">evidence</div> }));
 vi.mock('../../../components/Admin/AdminHealthPanel', () => ({
   AdminHealthPanel: () => <div data-testid="panel-health">health</div>,
 }));
@@ -119,6 +120,7 @@ describe('AdminSettingsModule section routing', () => {
     renderAt('/admin/audit');
     expect(screen.getByTestId('panel-audit')).toBeInTheDocument();
   });
+  it('wires audit/compliance-evidence to the evidence panel', () => { renderAt('/admin/audit/compliance-evidence'); expect(screen.getByTestId('panel-compliance-evidence')).toBeInTheDocument(); });
 
   it('resolves the iam alias to the security panel', () => {
     renderAt('/admin/iam');
