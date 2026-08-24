@@ -186,21 +186,25 @@ export const ROUTES = {
   STUDIO: '/studio',
 
   // Admin
+  // DEC-2026-08-24-10 — one canonical address per Admin domain. `MEMBERS`,
+  // `TEAM`, `ORGANIZATION`, `WORKSPACE` and `COLLABORATION` were duplicate
+  // names pointing at the same values as `PEOPLE`/`OPERATIONS`/`SECURITY`
+  // ("several names, one screen") and were removed; callers now reference
+  // the canonical key directly. No URL behavior changes — `/admin/*` is a
+  // single catch-all route (see AppRoutes.tsx) whose in-app navigation
+  // (AdminSettingsModule) already resolves historical path segments
+  // (`overview`, `members`, `team`, `workspace`, `organization`,
+  // `integrations`, `compliance`, ...) to their canonical domain.
   ADMIN: {
     ROOT: '/admin',
     OVERVIEW: '/admin/overview',
     PEOPLE: '/admin/people',
-    MEMBERS: '/admin/people',
     SECURITY: '/admin/security',
     BILLING: '/admin/billing',
     AI: '/admin/ai',
     INTEGRATIONS: '/admin/integrations',
     AUDIT: '/admin/audit',
     OPERATIONS: '/admin/operations',
-    ORGANIZATION: '/admin/operations',
-    TEAM: '/admin/people',
-    WORKSPACE: '/admin/operations',
-    COLLABORATION: '/admin/security',
     COMPLIANCE: '/admin/compliance',
   },
 
@@ -449,9 +453,9 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
   // Admin
   [AppView.ADMIN_DASHBOARD]: ROUTES.ADMIN.ROOT,
   [AppView.ADMIN_OVERVIEW]: ROUTES.ADMIN.OVERVIEW,
-  [AppView.ADMIN_ORGANIZATION]: ROUTES.ADMIN.ORGANIZATION,
-  [AppView.ADMIN_ORGANIZATION_SETTINGS]: ROUTES.ADMIN.ORGANIZATION,
-  [AppView.ADMIN_TEAM]: ROUTES.ADMIN.TEAM,
+  [AppView.ADMIN_ORGANIZATION]: ROUTES.ADMIN.OPERATIONS,
+  [AppView.ADMIN_ORGANIZATION_SETTINGS]: ROUTES.ADMIN.OPERATIONS,
+  [AppView.ADMIN_TEAM]: ROUTES.ADMIN.PEOPLE,
   [AppView.ADMIN_WORKSPACE]: ROUTES.ADMIN.INTEGRATIONS,
   [AppView.ADMIN_PROJECT_DETAILS]: ROUTES.ADMIN.INTEGRATIONS,
   [AppView.ADMIN_AI]: ROUTES.ADMIN.AI,

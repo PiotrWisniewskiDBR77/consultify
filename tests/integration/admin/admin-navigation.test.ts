@@ -12,16 +12,19 @@ describe('Admin Panel Navigation Integration', () => {
     expect(getRouteFromAppView(AppView.ADMIN_OVERVIEW)).toBe(ROUTES.ADMIN.OVERVIEW);
   });
 
+  // DEC-2026-08-24-10 — ROUTES.ADMIN.ORGANIZATION/TEAM/WORKSPACE were removed
+  // as duplicate alias names ("several names, one screen"); AppView entries
+  // now resolve directly to the canonical OPERATIONS/PEOPLE/INTEGRATIONS keys.
   it('should map Organization route to ADMIN_ORGANIZATION AppView', () => {
-    expect(getRouteFromAppView(AppView.ADMIN_ORGANIZATION)).toBe(ROUTES.ADMIN.ORGANIZATION);
+    expect(getRouteFromAppView(AppView.ADMIN_ORGANIZATION)).toBe(ROUTES.ADMIN.OPERATIONS);
   });
 
   it('should map Team route to ADMIN_TEAM AppView', () => {
-    expect(getRouteFromAppView(AppView.ADMIN_TEAM)).toBe(ROUTES.ADMIN.TEAM);
+    expect(getRouteFromAppView(AppView.ADMIN_TEAM)).toBe(ROUTES.ADMIN.PEOPLE);
   });
 
   it('should map Workspace route to ADMIN_WORKSPACE AppView', () => {
-    expect(getRouteFromAppView(AppView.ADMIN_WORKSPACE)).toBe(ROUTES.ADMIN.WORKSPACE);
+    expect(getRouteFromAppView(AppView.ADMIN_WORKSPACE)).toBe(ROUTES.ADMIN.INTEGRATIONS);
   });
 
   it('should map AI route to ADMIN_AI AppView', () => {
@@ -37,13 +40,18 @@ describe('Admin Panel Navigation Integration', () => {
   });
 
   it('should map URL to AppView correctly', () => {
-    expect(getAppViewFromRoute('/admin/overview')).toBe(AppView.ADMIN_OVERVIEW);
-    expect(getAppViewFromRoute('/admin/organization')).toBe(AppView.ADMIN_ORGANIZATION);
-    expect(getAppViewFromRoute('/admin/team')).toBe(AppView.ADMIN_TEAM);
-    expect(getAppViewFromRoute('/admin/workspace')).toBe(AppView.ADMIN_WORKSPACE);
-    expect(getAppViewFromRoute('/admin/ai')).toBe(AppView.ADMIN_AI);
-    expect(getAppViewFromRoute('/admin/billing')).toBe(AppView.ADMIN_BILLING);
-    expect(getAppViewFromRoute('/admin/security')).toBe(AppView.ADMIN_SECURITY);
+    // Uses the live ROUTES.ADMIN values rather than hand-typed literals so
+    // this cannot silently drift from routeConfig.ts again (the previous
+    // literals '/admin/organization' and '/admin/team' never matched the
+    // real ORGANIZATION/TEAM values, which is exactly the alias confusion
+    // DEC-2026-08-24-10 removed).
+    expect(getAppViewFromRoute(ROUTES.ADMIN.OVERVIEW)).toBe(AppView.ADMIN_OVERVIEW);
+    expect(getAppViewFromRoute(ROUTES.ADMIN.OPERATIONS)).toBe(AppView.ADMIN_ORGANIZATION);
+    expect(getAppViewFromRoute(ROUTES.ADMIN.PEOPLE)).toBe(AppView.ADMIN_TEAM);
+    expect(getAppViewFromRoute(ROUTES.ADMIN.INTEGRATIONS)).toBe(AppView.ADMIN_WORKSPACE);
+    expect(getAppViewFromRoute(ROUTES.ADMIN.AI)).toBe(AppView.ADMIN_AI);
+    expect(getAppViewFromRoute(ROUTES.ADMIN.BILLING)).toBe(AppView.ADMIN_BILLING);
+    expect(getAppViewFromRoute(ROUTES.ADMIN.SECURITY)).toBe(AppView.ADMIN_SECURITY);
   });
 
   it('should have consistent bidirectional mapping', () => {

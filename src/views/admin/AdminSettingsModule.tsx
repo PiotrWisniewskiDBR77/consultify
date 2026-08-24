@@ -136,7 +136,10 @@ const SECTION_ALIASES: Record<string, AdminSettingsSection> = {
   diagnostics: 'health',
 };
 
-function resolveAdminState(
+// Exported for the DEC-2026-08-24-10 alias-resolution regression test
+// (src/views/admin/__tests__/adminHistoricalAddressAliases.test.ts) — a pure
+// function, so exporting it adds no behavior and no new render surface.
+export function resolveAdminState(
   pathname: string,
   search: string,
   initialTab?: AdminSettingsSection
@@ -176,7 +179,9 @@ const DOMAIN_LEGACY: Record<AdminDomain, AdminSettingsSection> = {
   health: 'health',
 };
 
-function resolveAdminLocation(
+// Exported for the same DEC-2026-08-24-10 regression test as
+// resolveAdminState above — pure function, no behavior change.
+export function resolveAdminLocation(
   pathname: string,
   search: string,
   initialTab?: AdminSettingsSection
