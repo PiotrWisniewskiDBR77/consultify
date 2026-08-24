@@ -23,7 +23,7 @@ Start: 2026-08-24 (Europe/Warsaw) · Koniec: —
 | 3 | security/domains | 4/A | — | STOP | endpoint verify automatycznie oznacza domenę jako zweryfikowaną bez DNS/TXT |
 | 4 | team/access-requests | 4/A | — | STOP | żywy approve tworzy nową organizację; brak kontraktu dołączenia do bieżącej org |
 | 5 | security/service-accounts | 4/A | `26caf7f2b7` | DONE | nowa admin-only trasa; sekret tylko raz; readback |
-| 6 | ai/quality-evaluations | 2 | — | NIE ZACZĘTO | |
+| 6 | ai/quality-evaluations | 2 | — | STOP | obie mutacje bez tenant-scope (`WHERE id = ?`) |
 | 7 | command/attention-queue | 2 | — | NIE ZACZĘTO | |
 | 8 | command/cost-capacity | 2 | — | NIE ZACZĘTO | |
 | 9 | audit/compliance-evidence | 2 | — | NIE ZACZĘTO | |
@@ -52,6 +52,12 @@ Start: 2026-08-24 (Europe/Warsaw) · Koniec: —
 Powód: istniejący endpoint weryfikacji nie wykonuje weryfikacji DNS/TXT i bezwarunkowo zapisuje `verified = 1`, więc podpięcie go stworzyłoby fałszywy sukces bezpieczeństwa.
 Dowód: `server/src/routes/organization/approved-domains.routes.ts:261-268`; `rg -n "resolveTxt|verification_token|verify.*domain" server/src src` nie wskazuje innego mechanizmu DNS dla approved domains.
 Co zrobiłbym, gdyby zapadła decyzja X: po zatwierdzeniu kontraktu DNS dodałbym resolver TXT z oczekiwanym tokenem, rozróżnienie `pending/verified/failed`, timeout i testy negatywne; dopiero potem podłączyłbym UI z instrukcją rekordu TXT.
+Stan: NIE ZACOMMITOWANO.
+
+### STOP — ai/quality-evaluations
+Powód: oba endpointy mutujące opisane jako tenant-scoped aktualizują rekord wyłącznie po `id`, bez `organization_id`, co tworzy ryzyko cross-tenant IDOR.
+Dowód: `server/src/routes/admin/ai-quality.routes.ts:243-251` (`ai_feedback WHERE id = ?`) oraz `:343-351` (`ai_style_learning_patterns WHERE id = ?`).
+Co zrobiłbym, gdyby zapadła decyzja X: w osobnej poprawce bezpieczeństwa dodałbym `organization_id` z tokenu do obu UPDATE, 404 dla zasobu spoza organizacji, sprawdzenie `changes` i testy negatywne cross-tenant; dopiero potem panel z mutacjami i readbackiem.
 Stan: NIE ZACOMMITOWANO.
 
 ### STOP — team/access-requests
