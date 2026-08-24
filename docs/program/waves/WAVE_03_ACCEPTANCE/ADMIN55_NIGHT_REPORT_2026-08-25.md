@@ -34,7 +34,7 @@ Start: 2026-08-24 (Europe/Warsaw) · Koniec: —
 | 14 | health/sla-slo | 4/B | `14128f2ab4` | DONE | realny tenant-scoped SLO + odczyt AI SLA; bez mutacji; stałe targety ujawnione |
 | 15 | security/security-alerts | 4/A | `59f55ba6ce` | DONE | nowa tenant-safe lista i resolve z 404 cross-tenant + readback |
 | 16 | security/sessions | 3 | `2960b3680f` | DONE | schema-aware tenant-safe lista; revoke/delete z 404 cross-tenant i readback FE |
-| 17 | security/break-glass | 3 | — | NIE ZACZĘTO | |
+| 17 | security/break-glass | 3 | `8eb2c8252a` | DONE | addytywny org-scope; 1h; policy approvers; typed confirm; 400/404 cross-tenant |
 | 18 | team/guests-external | 4/A | — | NIE ZACZĘTO | |
 | 19 | team/access-reviews | 4/B | — | NIE ZACZĘTO | |
 | 20 | team/roles-permissions | 2 | — | NIE ZACZĘTO | |
@@ -92,6 +92,7 @@ Stan: NIE ZACOMMITOWANO.
 | 4 | Lista wszystkich sesji organizacji nie sprawdza roli admina | `server/src/routes/security.routes.ts:157-193` | nadmiarowy odczyt | nowy ekran używa wyłącznie `/api/admin/sessions` |
 | 5 | Istniejące kasowanie sesji nie sprawdza organizacji | `server/src/routes/security.routes.ts:196-214` | cross-tenant delete IDOR | nowa trasa najpierw dowodzi przynależności i zwraca 404 |
 | 6 | Admin-data pobiera sesje dla org z parametru URL | `server/src/routes/admin-data.routes.ts:401` | cross-tenant read IDOR | nie użyto tej trasy i nie zmieniano cudzych konsumentów |
+| 7 | Serwis sesji admina nie waliduje powodu ani zatwierdzającego break-glass | `server/src/services/adminSessionService.ts:149-214` | brak walidacji domenowej | nowa trasa egzekwuje oba warunki; cudzej trasy superadmina nie zmieniano |
 
 ## Korekty inwentarza
 
@@ -135,11 +136,16 @@ Brak na starcie dyżuru.
 - `npx esbuild src/components/Admin/AdminSessionsPanel.tsx --loader:.tsx=tsx --outfile=/dev/null` — PASS.
 - `bash scripts/check-list-canon.sh src/components/Admin/AdminSessionsPanel.tsx` — PASS, 0 nowych naruszeń.
 - `npx vitest run server/src/routes/__tests__/sessions.routes.test.ts src/components/Admin/__tests__/AdminSessionsPanel.test.tsx src/views/admin/__tests__/AdminSettingsModule.test.tsx` — route/routing PASS; panel PASS po korekcie menu (ostrzeżenia testowe `act`, bez błędów).
+- `server/migrations/20261073_admin_sessions_org_scope.sql` na jednorazowym PostgreSQL 16 — PASS dwa przebiegi; potwierdzone `organization_id` i `idx_admin_sessions_organization_id`; kontener `admin55-pg` usunięty.
+- `npx esbuild server/src/routes/admin/break-glass.routes.ts --platform=node --format=esm --outfile=/dev/null` — PASS.
+- `npx esbuild src/components/Admin/AdminBreakGlassPanel.tsx --loader:.tsx=tsx --outfile=/dev/null` — PASS.
+- `bash scripts/check-list-canon.sh src/components/Admin/AdminBreakGlassPanel.tsx` — PASS, 0 nowych naruszeń.
+- `npx vitest run server/src/routes/__tests__/break-glass.routes.test.ts src/components/Admin/__tests__/AdminBreakGlassPanel.test.tsx src/views/admin/__tests__/AdminSettingsModule.test.tsx` — PASS, 3 pliki / 42 testy (ostrzeżenia testowe `act`, bez błędów).
 
 ## Migracje
 
 Najwyższy ośmiocyfrowy prefiks na starcie: `20261072_finance_statement_pack_archive_command.sql`.
-Nie dodano jeszcze migracji.
+Dodano `20261073_admin_sessions_org_scope.sql`; dwukrotny przebieg i struktura potwierdzone lokalnie na PostgreSQL 16.
 
 ## Licznik ekranów
 
