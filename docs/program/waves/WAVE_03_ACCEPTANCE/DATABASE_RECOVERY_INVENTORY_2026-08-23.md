@@ -10,17 +10,40 @@ database was queried or mutated while adding this checkpoint.
 
 ### Consultify Railway assets discovered read-only
 
-| Environment | Environment ID | App service | Database candidates | Proven application-to-database binding | Authorization |
+| Environment | Environment ID | Observed service instances | Observed volumes | Proven application-to-database binding | Authorization |
 | --- | --- | --- | --- | --- | --- |
-| `dev` | `379582b3-63f2-4645-803e-35725104920d` | `consultify` `8f65b820-3d55-4dd9-8076-929d01cc4157` | `Postgres` `842e4cf0-21af-44e1-9d91-4198b0c18735`; `pgvector` `de81443b-4678-4780-b4d1-742ab36ecd83`; rehearsal `fc377fcb-2f98-4fb7-b772-932012fd7dd3` | `NOT_PROVEN` | `READ_ONLY_DISCOVERY_ONLY` |
-| `staging` | `487a33ba-84b0-4e2e-b18b-7f981ae5334d` | same Railway service identity | same project-level database candidates | `NOT_PROVEN` | `READ_ONLY_DISCOVERY_ONLY` |
-| `demo` | `a257fce9-33f0-4e10-8e7c-a9cec472f377` | same Railway service identity | same project-level database candidates | `NOT_PROVEN` | `READ_ONLY_DISCOVERY_ONLY` |
-| `production` | `39f2f768-2449-48b6-b05e-031cad063cdc` | same Railway service identity | same project-level database candidates | `NOT_PROVEN` | `NOT_AUTHORIZED` |
+| `dev` | `379582b3-63f2-4645-803e-35725104920d` | app `CRASHED` at `bbe5e8d2eca0eb5e25cda052670a270cc482ed0b`; `Redis SUCCESS`; `Postgres SUCCESS` | attached Redis approx. `149.45 MB`; attached Postgres approx. `498.97 MB`; unattached `pgvector-volume` approx. `197.76 MB` | `NOT_PROVEN` | `READ_ONLY_DISCOVERY_ONLY` |
+| `staging` | `487a33ba-84b0-4e2e-b18b-7f981ae5334d` | app, Redis, Postgres, pgvector and rehearsal all report `SUCCESS` | four attached ready volumes: Redis approx. `1061.85 MB`, rehearsal approx. `1153.39 MB`, pgvector approx. `1108.95 MB`, Postgres approx. `1244.94 MB`; plus unattached `postgres-volume` approx. `1057.25 MB` mounted at `/tmp` | `NOT_PROVEN` | `READ_ONLY_DISCOVERY_ONLY` |
+| `demo` | `a257fce9-33f0-4e10-8e7c-a9cec472f377` | app, Redis and pgvector report `SUCCESS`; no Postgres service instance was returned | attached pgvector approx. `1468.93 MB`, app `consultify-volume` approx. `865.02 MB`, Redis approx. `529.44 MB`; plus unattached `postgres-volume` approx. `148.43 MB` at `/tmp` | `NOT_PROVEN` | `READ_ONLY_DISCOVERY_ONLY` |
+| `production` | `39f2f768-2449-48b6-b05e-031cad063cdc` | pgvector, Postgres and Redis report `SUCCESS`; app latest deployment `FAILED`, while an older active deployment remains `SUCCESS` | attached Postgres approx. `674.35 MB`, pgvector approx. `1121.22 MB`, Redis approx. `682.75 MB`; plus unattached `postgres-volume` approx. `197.33 MB` | `NOT_PROVEN` | `NOT_AUTHORIZED` |
 
 Project-level discovery also found `Redis`
 `afcae226-f39e-4280-b624-ba7f720b8d65`. Discovery of a service in the project
 does not prove that every environment contains or uses that service, nor which
 connection variables are active.
+
+The same project-level service ID can have a different environment-specific
+instance, deployment and volume. The table therefore records observed
+environment instances rather than assuming that a project-level service exists
+or is wired identically everywhere. `UNATTACHED` means Railway returned no
+service ID for that volume instance; it does not mean that the data is empty or
+safe to delete.
+
+### Production deployment discrepancy observed 2026-08-24
+
+The production app returned two different deployment facts:
+
+- active deployment `9844648c-4ea9-44c4-80a2-f5a0b15954a0`: `SUCCESS`, created
+  `2026-08-14T10:07:32.377Z`;
+- latest deployment `7e610c66-b9a3-459e-b0f0-404a2fd2ef59`: `FAILED`, created
+  `2026-08-24T04:48:42.731Z`, CLI message
+  `trim registry payload and restore landing assets; candidate 19e6b0e3b08a`.
+
+This audit did not initiate, restart, stop or retry either deployment. The
+failed latest deployment is evidence of a production release attempt that must
+be reconciled with the release ledger and authorization history. It is not
+evidence that the active production deployment changed, and no such claim is
+made.
 
 The rehearsal service
 `Postgres-Rehearsal-20260820-71316e`

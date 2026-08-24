@@ -72,6 +72,25 @@ Before ANY future Railway operation from the canonical checkout:
 audit. Correcting the global CLI map requires a separate authorized control
 action.
 
+### Production release-history alert discovered with explicit selectors
+
+An explicit read-only query against the Consultify project and production
+environment bypassed the unsafe inherited Pitchdeck context. It showed:
+
+- the active app deployment remains
+  `9844648c-4ea9-44c4-80a2-f5a0b15954a0`, `SUCCESS`, created
+  `2026-08-14T10:07:32.377Z`;
+- the latest app deployment is
+  `7e610c66-b9a3-459e-b0f0-404a2fd2ef59`, `FAILED`, created
+  `2026-08-24T04:48:42.731Z`, with CLI message
+  `trim registry payload and restore landing assets; candidate 19e6b0e3b08a`.
+
+This audit did not initiate that attempt and did not retry, stop, restart or
+redeploy anything. The event requires reconciliation with the release ledger
+and explicit authorization record. The older active `SUCCESS` deployment is
+still returned by Railway, so this failed attempt alone does not prove a
+production cutover.
+
 ## Safety boundary
 
 - Railway inspection was read-only. No deployment, restart, variable change,
