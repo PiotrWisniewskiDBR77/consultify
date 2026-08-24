@@ -170,6 +170,10 @@ Brak na starcie dyżuru.
 - `npx esbuild src/components/Admin/AdminAiIncidentsPanel.tsx --loader:.tsx=tsx --outfile=/dev/null` — PASS.
 - `bash scripts/check-list-canon.sh src/components/Admin/AdminAiIncidentsPanel.tsx` — PASS, 0 nowych naruszeń.
 - `npx vitest run src/components/Admin/__tests__/AdminAiIncidentsPanel.test.tsx src/views/admin/__tests__/AdminSettingsModule.test.tsx` — PASS, 2 pliki / 47 testów.
+- `npx esbuild src/components/Admin/AdminConfigurationVersionsPanel.tsx --loader:.tsx=tsx --outfile=/dev/null` — PASS.
+- `bash scripts/check-list-canon.sh src/components/Admin/AdminConfigurationVersionsPanel.tsx` — PASS, 0 nowych naruszeń.
+- `npx vitest run src/components/Admin/__tests__/AdminConfigurationVersionsPanel.test.tsx src/views/admin/__tests__/AdminSettingsModule.test.tsx` — PASS, 2 pliki / 49 testów; obejmuje osobny stan `V8_DISABLED`, wymagany powód rollback i readback.
+- `npx tsc --noEmit --pretty false` — NOT PROVEN: proces wyczerpał limit sterty Node 4 GB; zostanie powtórzony z kontrolowanym większym limitem podczas weryfikacji zbiorczej.
 
 ## Migracje
 
