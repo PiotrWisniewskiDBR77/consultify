@@ -254,8 +254,8 @@ remain unchanged:
 - the three Assessment owner/expert review documents;
 - the Assessment technical evidence note.
 
-Five existing candidate registers are divergent from the dirty overlay and are
-therefore deliberately not overwritten:
+Five existing candidate registers were divergent from the dirty overlay and
+were deliberately not bulk-overwritten:
 
 - Initiatives `MODULE_ACCEPTANCE.md`;
 - Results `MODULE_ACCEPTANCE.md`;
@@ -263,8 +263,40 @@ therefore deliberately not overwritten:
 - Assessment owner-feedback register;
 - cross-module row-menu audit register.
 
-These five require atomic requirement reconciliation. Until then, both versions
-remain preserved and neither difference is silently promoted to canonical truth.
+Reconciliation status:
+
+- Assessment owner-feedback register: the candidate was proven to be an exact
+  byte prefix of the dirty overlay; the complete additive suffix
+  `ASM-OWN-013..028` was applied, and the reconciled candidate is now byte-identical
+  with the source overlay.
+- Assessment workshop packet: the later owner decision removing `Split` and
+  `Workspace` as standalone modes was added as an explicit supersession notice;
+  the four-mode body remains preserved as historical decision provenance.
+- cross-module row-menu register: the missing Initiatives finding
+  `INI-OWN-003` and its screenshot hashes were added without replacing the
+  broader audit denominator.
+- Results acceptance register: candidate retained. The dirty variant is an
+  older condensation that resets gates and removes detailed findings/evidence;
+  its intended final specification is preserved separately in
+  `RESULTS_OWNER_FINAL_IMPLEMENTATION_SPEC_2026-08-23.md`.
+- Initiatives acceptance register: candidate retained because its current IDs
+  `INI-OWN-008..010` conflict with different IDs in the dirty overlay. Unique
+  dirty requirements remain preserved in the implementation-ready contract and
+  Plan/Capacity expert syntheses. The collision crosswalk is recorded below.
+
+| Dirty Initiatives ID | Preserved requirement | Canonical destination |
+|---|---|---|
+| `INI-OWN-008` | Wider semantic date/action columns, horizontal scroll and frozen identity column | Plan UI acceptance atom; not yet implemented |
+| `INI-OWN-009` | Versioned What-If scenarios, status inclusion, weekly timeline, deterministic arrange plus advisory AI | `INITIATIVE_PLAN_WHAT_IF_EXPERT_SYNTHESIS_2026-08-23.md` |
+| `INI-OWN-010` | Simplified registry/workshop IA, persistent named versions and editable Gantt | Plan contract and implementation-ready contract |
+| `INI-OWN-011` | Plan-derived capacity analyses with honest ranges and human-approved recommendations | `INITIATIVE_CAPACITY_ANALYSIS_EXPERT_SYNTHESIS_2026-08-23.md` |
+| `INI-OWN-012` | Module remains not accepted; full Initiative-card review is deferred but mandatory | Initiatives owner-replay gate |
+| `INI-OWN-013` | Unified implementation-ready F1-F9 flow and `INI-CODE-01..15` backlog | `INITIATIVES_IMPLEMENTATION_READY_CONTRACT_2026-08-23.md` |
+
+No conflicting ID is silently renumbered or promoted. The source overlay remains
+preserved read-only, while this crosswalk supplies a single navigation point for
+later atom-by-atom integration.
+
 Configuration, product WIP and test/tooling paths remain in the dirty overlay and
 were not copied in this documentation-only step.
 
