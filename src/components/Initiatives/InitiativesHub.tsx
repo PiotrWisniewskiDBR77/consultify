@@ -1022,7 +1022,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     activeStatusFilter,
   ]);
 
-  // Deep link: open "New Initiative" modal
+  // Deep link: open the canonical initiative wizard.
   // Supported: /initiatives?new=1
   useEffect(() => {
     if (handledDeepLinkNew) return;
@@ -1038,7 +1038,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         setHandledDeepLinkNew(true);
         return;
       }
-      setShowNewModal(true);
+      setShowInitiativeWizard(true);
       const next = new URLSearchParams(searchParams);
       next.delete('new');
       setSearchParams(next, { replace: true });
@@ -1808,7 +1808,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               ? undefined
               : {
                   label: t('initiatives.form.newInitiative'),
-                  onClick: () => setShowNewModal(true),
+                  onClick: () => setShowInitiativeWizard(true),
                   icon: Plus,
                   testId: NEW_INITIATIVE_EMPTY_CTA_TESTID,
                 }
