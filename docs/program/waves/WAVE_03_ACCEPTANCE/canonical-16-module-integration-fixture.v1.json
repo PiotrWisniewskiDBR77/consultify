@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "status": "BUILD_CONTRACT_ONLY_OWNER_FREEZE_PENDING",
+  "databasePolicy": {
+    "namePattern": "^consultify_w3_runtime_[a-z0-9_]+$",
+    "createFresh": true,
+    "applyMigrationsOnce": true,
+    "databaseDumpImportAllowed": false,
+    "composeFromOwnedSeedDefinitions": true,
+    "productionTargetAllowed": false
+  },
+  "sharedRoots": {
+    "organizationKey": "consultify-final-mvp-owner-org",
+    "ownerUserKey": "consultify-final-mvp-owner",
+    "timezone": "Europe/Warsaw",
+    "locale": "pl-PL",
+    "currency": "PLN"
+  },
+  "canonicalObjects": [
+    { "key": "organization", "ownerModule": "organization", "identity": "org:consultify-final-mvp-owner-org" },
+    { "key": "source-context", "ownerModule": "organization", "identity": "context:final-mvp-v1" },
+    { "key": "interview", "ownerModule": "interview", "identity": "interview:final-mvp-v1" },
+    { "key": "tool-session", "ownerModule": "tools", "identity": "tool-session:final-mvp-v1" },
+    { "key": "assessment", "ownerModule": "assessment", "identity": "assessment:final-mvp-v1" },
+    { "key": "audit-program", "ownerModule": "audits", "identity": "audit-program:final-mvp-v1" },
+    { "key": "meeting", "ownerModule": "meetings", "identity": "meeting:final-mvp-v1" },
+    { "key": "conversation", "ownerModule": "chat", "identity": "conversation:final-mvp-v1" },
+    { "key": "governed-proposal", "ownerModule": "my-work", "identity": "proposal:final-mvp-v1" },
+    { "key": "initiative", "ownerModule": "initiatives", "identity": "initiative:final-mvp-v1" },
+    { "key": "execution-case", "ownerModule": "execution", "identity": "execution:final-mvp-v1" },
+    { "key": "results-kpi", "ownerModule": "results", "identity": "kpi:final-mvp-v1" },
+    { "key": "results-okr", "ownerModule": "results", "identity": "okr:final-mvp-v1" },
+    { "key": "results-roi", "ownerModule": "results", "identity": "roi:final-mvp-v1" },
+    { "key": "finance-model", "ownerModule": "finance", "identity": "finance-model:final-mvp-v1" },
+    { "key": "material", "ownerModule": "materials", "identity": "material:final-mvp-v1" }
+  ],
+  "modules": [
+    { "id": "organization", "fixtureId": "W3-ORGANIZATION-OWNER-v1", "builder": "server/scripts/seed-wave3-organization-owner-review.ts", "mode": "ADAPT_OWNED_DEFINITION" },
+    { "id": "interview", "fixtureId": "W3-INTERVIEW-OWNER-v1", "builder": "server/scripts/seed-wave3-interview-owner-review.ts", "mode": "ADAPT_OWNED_DEFINITION" },
+    { "id": "tools", "fixtureId": "W3-TOOLS-OWNER-v1", "builder": "server/scripts/seed-wave3-tools-owner-review.ts", "mode": "ADAPT_OWNED_DEFINITION" },
+    { "id": "assessment", "fixtureId": "W3-ASSESSMENT-OWNER-v1", "builder": "server/scripts/seed-wave3-assessment-owner-review.ts", "mode": "ADAPT_OWNED_DEFINITION" },
+    { "id": "initiatives", "fixtureId": "W3-INITIATIVES-OWNER-v1", "builder": "server/scripts/seed-wave3-initiatives-owner-review.ts", "mode": "ADAPT_OWNED_DEFINITION" },
+    { "id": "execution", "fixtureId": "W3-EXECUTION-OWNER-v1", "builder": "scripts/dev/seed-wave3-execution-owner-review.mjs", "mode": "ADAPT_OWNED_DEFINITION" },
+    { "id": "my-work", "fixtureId": "W3-MY-WORK-OWNER-v1", "builder": "scripts/dev/seed-wave3-my-work-owner-review-owned.mjs", "mode": "ADAPT_OWNED_DEFINITION" },
+    { "id": "meetings", "fixtureId": "W3-MEETINGS-OWNER-v1", "builder": "scripts/dev/seed-wave3-meetings-owner-review.mjs", "mode": "ADAPT_OWNED_DEFINITION" },
+    { "id": "results", "fixtureId": "W3-RESULTS-OWNER-v1", "builder": "server/scripts/seed-wave3-results-owner-review.ts", "mode": "ADAPT_OWNED_DEFINITION" },
+    { "id": "finance", "fixtureId": "W3-FINANCE-OWNER-v1", "builder": "server/scripts/seed-wave3-finance-owner-review.ts", "mode": "ADAPT_OWNED_DEFINITION" },
+    { "id": "materials", "fixtureId": "W3-MATERIALS-OWNER-v1", "builder": "server/scripts/seed-wave3-materials-owner-review.ts", "mode": "ADAPT_OWNED_DEFINITION" },
+    { "id": "audits", "fixtureId": "W3-AUDITS-OWNER-v1", "builder": "scripts/dev/seed-wave3-audits-owner-review.mjs", "mode": "ADAPT_OWNED_DEFINITION" },
+    { "id": "chat", "fixtureId": "W3-CHAT-OWNER-v1", "builder": "scripts/dev/seed-wave3-chat-owner-review.mjs", "mode": "ADAPT_OWNED_DEFINITION" },
+    { "id": "admin", "fixtureId": "W3-ADMIN-OWNER-v1", "builder": "server/scripts/seed-wave3-admin-owner-review.ts", "mode": "ADAPT_OWNED_DEFINITION" },
+    { "id": "settings", "fixtureId": "W3-SETTINGS-OWNER-v1", "builder": "scripts/dev/seed-wave3-settings-owner-review.mjs", "mode": "ADAPT_OWNED_DEFINITION" },
+    { "id": "partner", "fixtureId": "W3-PARTNER-OWNER-v1", "builder": "server/scripts/seed-wave3-partner-owner-review.ts", "mode": "ADAPT_OWNED_DEFINITION" }
+  ],
+  "edges": [
+    { "from": "organization", "to": "source-context", "contract": "OWNS_CONTEXT", "receiptRequired": true },
+    { "from": "source-context", "to": "interview", "contract": "SCOPES", "receiptRequired": false },
+    { "from": "source-context", "to": "tool-session", "contract": "SCOPES", "receiptRequired": false },
+    { "from": "source-context", "to": "assessment", "contract": "SCOPES", "receiptRequired": false },
+    { "from": "assessment", "to": "governed-proposal", "contract": "PROPOSES_ONLY", "receiptRequired": true },
+    { "from": "tool-session", "to": "governed-proposal", "contract": "PROPOSES_ONLY", "receiptRequired": true },
+    { "from": "interview", "to": "governed-proposal", "contract": "PROPOSES_ONLY", "receiptRequired": true },
+    { "from": "audit-program", "to": "governed-proposal", "contract": "PROPOSES_ONLY", "receiptRequired": true },
+    { "from": "meeting", "to": "governed-proposal", "contract": "PROPOSES_ONLY", "receiptRequired": true },
+    { "from": "conversation", "to": "governed-proposal", "contract": "PROPOSES_ONLY", "receiptRequired": true },
+    { "from": "governed-proposal", "to": "initiative", "contract": "HUMAN_DECISION_MATERIALIZES", "receiptRequired": true },
+    { "from": "initiative", "to": "execution-case", "contract": "PRESERVES_INITIATIVE_IDENTITY", "receiptRequired": true },
+    { "from": "execution-case", "to": "results-kpi", "contract": "IMMUTABLE_ACTUAL", "receiptRequired": true },
+    { "from": "execution-case", "to": "results-okr", "contract": "IMMUTABLE_ACTUAL", "receiptRequired": true },
+    { "from": "execution-case", "to": "results-roi", "contract": "IMMUTABLE_ACTUAL", "receiptRequired": true },
+    { "from": "results-kpi", "to": "finance-model", "contract": "REFERENCES_ACTUAL_NO_OVERWRITE", "receiptRequired": true },
+    { "from": "results-roi", "to": "finance-model", "contract": "REFERENCES_ACTUAL_NO_OVERWRITE", "receiptRequired": true },
+    { "from": "finance-model", "to": "material", "contract": "EXPORTS_VERSIONED_SNAPSHOT", "receiptRequired": true }
+  ],
+  "freezeGate": {
+    "requiredOwnerVerdicts": 16,
+    "allowedVerdicts": ["ACCEPT", "CHANGE", "BLOCKED"],
+    "buildAllowedBeforeFreeze": false,
+    "historicalSurfacePolicy": "KEEP_UNTIL_EQUIVALENCE_PROVEN"
+  }
+}

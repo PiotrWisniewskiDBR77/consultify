@@ -36,6 +36,13 @@ The controlled sequence is therefore:
 6. capture current screenshots and run the 21 acceptance gates per module;
 7. disconnect historical routes only after equivalence and readback proof.
 
+The machine-readable build contract is
+`canonical-16-module-integration-fixture.v1.json`. It fixes the shared roots,
+owned seed-builder inputs, canonical object identities and explicit handoff
+edges. It is deliberately non-executable until all sixteen owner verdicts are
+captured; this prevents a provisional screen choice from becoming a new de
+facto architecture.
+
 ## Application-wide contract to review once
 
 - Menu 1 selects the global module.
