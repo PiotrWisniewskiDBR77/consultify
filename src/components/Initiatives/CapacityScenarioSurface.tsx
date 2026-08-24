@@ -1,4 +1,4 @@
-import { AlertTriangle, Eye, Loader2, X } from 'lucide-react';
+import { AlertTriangle, Eye, Loader2, Plus, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
@@ -9,6 +9,7 @@ import {
   decideResourceCommitment,
   listCapacityOptions,
   listCapacityScenarioRegister,
+  listPlanScenarioRegister,
   readCapacityScenario,
   requestResourceCommitment,
   RuntimeApiError,
@@ -156,6 +157,14 @@ interface CapacityRegisterItem {
   updatedAt: string;
   version: number;
 }
+interface PublishedPlanBasis {
+  id: string;
+  name: string;
+  version: number;
+  windowUnit: string;
+  timezone: string;
+  periods: Array<{ periodId: string; start: string; end: string }>;
+}
 const capacityPresets = [
   'all',
   'critical',
@@ -179,8 +188,12 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
     [workspaceOpen, setWorkspaceOpen] = useState(false),
     [scenario, setScenario] = useState<Scenario | null>(null),
     [comparisons, setComparisons] = useState<CapacityComparison[]>([]),
+    [publishedPlans, setPublishedPlans] = useState<PublishedPlanBasis[]>([]),
     [aggregateVersion, setAggregateVersion] = useState(0),
     [writeState, setWriteState] = useState<'IDLE' | 'SAVING' | 'CONFLICT' | 'FAILED'>('IDLE');
+  const [showCreate, setShowCreate] = useState(false);
+  const [newAnalysisId, setNewAnalysisId] = useState('');
+  const [newPlanId, setNewPlanId] = useState('');
   const [nextInputKind, setNextInputKind] = useState<'MATERIAL_CHANGE' | 'SCHEDULE_DECISION'>(
     'MATERIAL_CHANGE'
   );
@@ -203,6 +216,18 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
         period.demand.base != null && period.supply.base != null
           ? period.supply.base - period.demand.base
           : 'UNKNOWN',
+      saturation:
+        period.demand.low != null &&
+        period.demand.base != null &&
+        period.demand.high != null &&
+        period.supply.low != null &&
+        period.supply.base != null &&
+        period.supply.high != null &&
+        period.supply.low > 0 &&
+        period.supply.base > 0 &&
+        period.supply.high > 0
+          ? `${Math.round((period.demand.low / period.supply.high) * 100)}–${Math.round((period.demand.high / period.supply.low) * 100)}% (bazowo ${Math.round((period.demand.base / period.supply.base) * 100)}%)`
+          : 'UNKNOWN — brak pełnego zakresu',
       confidence:
         period.demand.confidence === 'UNKNOWN' || period.supply.confidence === 'UNKNOWN'
           ? 'UNKNOWN'
@@ -231,6 +256,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
       supply: constraint.state,
       supplyState: constraint.state,
       gap: 'UNKNOWN',
+      saturation: 'UNKNOWN — nie dotyczy ograniczenia',
       confidence: 'UNKNOWN',
       criticality: constraint.state === 'UNKNOWN' ? 'UNKNOWN' : 'KNOWN',
       owner: constraint.ownerId || 'UNKNOWN',
@@ -399,14 +425,43 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
       setScenario(scenario);
       setAggregateVersion(2);
       setComparisons([]);
+      setPublishedPlans([
+        {
+          id: scenario.planScenarioId,
+          name: scenario.planScenarioId,
+          version: scenario.planScenarioVersion,
+          windowUnit: scenario.windowUnit,
+          timezone: scenario.timezone,
+          periods: scenario.periods.map(({ periodId, start, end }) => ({ periodId, start, end })),
+        },
+      ]);
+      setNewPlanId(scenario.planScenarioId);
       setState('READY');
       return;
     }
     try {
-      const [body, optionBody] = (await Promise.all([
+      const [body, optionBody, planBody] = (await Promise.all([
         listCapacityScenarioRegister(),
         listCapacityOptions(),
-      ])) as [{ scenarios?: CapacityRegisterItem[] }, { items?: CapacityComparison[] }];
+        listPlanScenarioRegister(),
+      ])) as [
+        { scenarios?: CapacityRegisterItem[] },
+        { items?: CapacityComparison[] },
+        {
+          scenarios?: Array<{
+            id: string;
+            name: string;
+            state: string;
+            version: number;
+            timeBasis?: {
+              windowUnit: string;
+              timezone: string;
+              periods: Array<{ periodId: string; start: string; end: string }>;
+              knowledgeState: 'KNOWN' | 'UNKNOWN';
+            };
+          }>;
+        },
+      ];
       const nextRows = (body.scenarios ?? []).map((x) => ({
         id: x.id,
         title: x.name,
@@ -429,6 +484,23 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
         setScenario(loaded.scenario);
       }
       setComparisons(optionBody.items ?? []);
+      const plans = (planBody.scenarios ?? [])
+        .filter(
+          (item) =>
+            item.state === 'PUBLISHED' &&
+            item.timeBasis?.knowledgeState === 'KNOWN' &&
+            item.timeBasis.periods.length > 0
+        )
+        .map((item) => ({
+          id: item.id,
+          name: item.name,
+          version: item.version,
+          windowUnit: item.timeBasis!.windowUnit,
+          timezone: item.timeBasis!.timezone,
+          periods: item.timeBasis!.periods,
+        }));
+      setPublishedPlans(plans);
+      setNewPlanId((current) => current || plans[0]?.id || '');
       setState('READY');
     } catch {
       setState('ERROR');
@@ -451,6 +523,66 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
   };
   const showWorkspace = () => {
     if (scenario && selectedId) setWorkspaceOpen(true);
+  };
+  const createAnalysis = async () => {
+    const plan = publishedPlans.find((item) => item.id === newPlanId);
+    const scenarioId = newAnalysisId.trim();
+    if (!plan || !scenarioId || writeState === 'SAVING') return;
+    const unknownRange = (ownerId: string): Range => ({
+      knowledgeState: 'UNKNOWN',
+      low: null,
+      base: null,
+      high: null,
+      sourceRef: null,
+      sourceVersion: null,
+      asOf: new Date().toISOString(),
+      confidence: 'UNKNOWN',
+      ownerId,
+      reason: 'Wymaga estymacji i potwierdzenia źródła.',
+    });
+    const next: Scenario = {
+      scenarioId,
+      scenarioVersion: 0,
+      status: 'DRAFT',
+      planScenarioId: plan.id,
+      planScenarioVersion: plan.version,
+      windowUnit: plan.windowUnit,
+      timezone: plan.timezone,
+      periods: plan.periods.map((period) => ({
+        ...period,
+        demand: unknownRange('capacity-owner'),
+        supply: unknownRange('resource-manager'),
+      })),
+      constraints: [],
+      proposedAssignments: [],
+      createdBy: '',
+      updatedBy: '',
+      publishedBy: null,
+      publishedAt: null,
+    };
+    setWriteState('SAVING');
+    try {
+      const result = (await writeCapacityScenario(scenarioId, {
+        expectedVersion: 0,
+        clientRequestId: crypto.randomUUID(),
+        operation: 'CREATE',
+        scenario: next,
+      })) as { aggregateVersion: number; response: Scenario };
+      setSelectedId(scenarioId);
+      setAggregateVersion(result.aggregateVersion);
+      setScenario(result.response);
+      setWorkspaceOpen(true);
+      setShowCreate(false);
+      setNewAnalysisId('');
+      await load();
+      await open(scenarioId);
+      setWorkspaceOpen(true);
+      setWriteState('IDLE');
+    } catch (error) {
+      setWriteState(
+        error instanceof RuntimeApiError && error.status === 409 ? 'CONFLICT' : 'FAILED'
+      );
+    }
   };
   const commandId = (key: string) => {
     const value = ids.current.get(key) ?? crypto.randomUUID();
@@ -576,6 +708,60 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
           Zakresy pokazują stan wiedzy i dowodów, a nie pozorną dokładność wykorzystania zasobów.
         </p>
       </header>
+      <div className="mb-3 flex justify-end">
+        <button
+          type="button"
+          className="btn-primary"
+          onClick={() => setShowCreate((open) => !open)}
+        >
+          <Plus size={15} /> Nowa analiza
+        </button>
+      </div>
+      {showCreate && (
+        <div className="mb-3 flex flex-wrap items-end gap-3 rounded border border-c-border p-3">
+          <label className="text-xs">
+            Nazwa analizy
+            <input
+              aria-label="Capacity analysis name"
+              className="mt-1 block rounded border border-c-border bg-c-surface p-2"
+              value={newAnalysisId}
+              onChange={(event) => setNewAnalysisId(event.target.value)}
+              placeholder="np. Plan bazowy — obciążenie v1"
+            />
+          </label>
+          <label className="text-xs">
+            Opublikowany plan źródłowy
+            <select
+              aria-label="Capacity source plan"
+              className="mt-1 block rounded border border-c-border bg-c-surface p-2"
+              value={newPlanId}
+              onChange={(event) => setNewPlanId(event.target.value)}
+            >
+              {publishedPlans.map((plan) => (
+                <option key={plan.id} value={plan.id}>
+                  {plan.name} · v{plan.version}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button
+            type="button"
+            className="btn-primary"
+            disabled={!newAnalysisId.trim() || !newPlanId || writeState === 'SAVING'}
+            onClick={() => void createAnalysis()}
+          >
+            Utwórz analizę
+          </button>
+          <button type="button" className="btn-secondary" onClick={() => setShowCreate(false)}>
+            Anuluj
+          </button>
+          {publishedPlans.length === 0 && (
+            <p className="w-full text-xs text-c-warning">
+              Brak opublikowanego planu z potwierdzoną osią czasu. Najpierw opublikuj plan.
+            </p>
+          )}
+        </div>
+      )}
       <div className="mb-3 flex min-w-0 flex-wrap items-center gap-2">
         <label className="w-full min-w-0 text-xs text-c-text-muted sm:w-auto">
           Aktywny wariant obciążenia
@@ -697,6 +883,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
               filterable: true,
             },
             { id: 'gap', label: 'Luka', sortable: true },
+            { id: 'saturation', label: 'Saturacja (zakres)', sortable: true },
             {
               id: 'confidence',
               label: 'Pewność',

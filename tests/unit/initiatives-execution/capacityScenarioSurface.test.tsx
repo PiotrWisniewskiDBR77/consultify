@@ -4,6 +4,7 @@ import { CapacityScenarioSurface } from '../../../src/components/Initiatives/Cap
 import {
   listCapacityScenarioRegister,
   listCapacityOptions,
+  listPlanScenarioRegister,
   readCapacityScenario,
   requestResourceCommitment,
   selectCapacityOption,
@@ -15,6 +16,7 @@ vi.mock('../../../src/services/initiatives-execution/runtimeApi', () => ({
   },
   listCapacityScenarioRegister: vi.fn(),
   listCapacityOptions: vi.fn(),
+  listPlanScenarioRegister: vi.fn(),
   readCapacityScenario: vi.fn(),
   writeCapacityScenario: vi.fn(),
   requestResourceCommitment: vi.fn(),
@@ -36,6 +38,28 @@ const range = {
 };
 describe('CapacityScenarioSurface', () => {
   beforeEach(() => {
+    vi.mocked(listPlanScenarioRegister).mockResolvedValue({
+      scenarios: [
+        {
+          id: 'plan-1',
+          name: 'Published transformation plan',
+          state: 'PUBLISHED',
+          version: 4,
+          timeBasis: {
+            windowUnit: 'WEEK',
+            timezone: 'Europe/Warsaw',
+            knowledgeState: 'KNOWN',
+            periods: [
+              {
+                periodId: 'p1',
+                start: '2026-10-01T00:00:00.000Z',
+                end: '2026-10-08T00:00:00.000Z',
+              },
+            ],
+          },
+        },
+      ],
+    });
     vi.mocked(listCapacityScenarioRegister).mockResolvedValue({
       scenarios: [
         {
@@ -221,5 +245,62 @@ describe('CapacityScenarioSurface', () => {
       )
     );
     expect(writeCapacityScenario).not.toHaveBeenCalled();
+  });
+  it('creates an independent draft analysis from an exact published Plan snapshot', async () => {
+    vi.mocked(writeCapacityScenario).mockResolvedValue({
+      aggregateVersion: 1,
+      response: {
+        scenarioId: 'capacity-plan-1-variant-b',
+        scenarioVersion: 1,
+        status: 'DRAFT',
+        planScenarioId: 'plan-1',
+        planScenarioVersion: 4,
+        windowUnit: 'WEEK',
+        timezone: 'Europe/Warsaw',
+        periods: [
+          {
+            periodId: 'p1',
+            start: '2026-10-01T00:00:00.000Z',
+            end: '2026-10-08T00:00:00.000Z',
+            demand: range,
+            supply: range,
+          },
+        ],
+        constraints: [],
+        proposedAssignments: [],
+        createdBy: 'x',
+        updatedBy: 'x',
+        publishedBy: null,
+        publishedAt: null,
+      },
+    });
+    render(<CapacityScenarioSurface />);
+    await screen.findByText('p1');
+    fireEvent.click(screen.getByRole('button', { name: /Nowa analiza/ }));
+    fireEvent.change(screen.getByLabelText('Capacity analysis name'), {
+      target: { value: 'capacity-plan-1-variant-b' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Utwórz analizę' }));
+    await waitFor(() =>
+      expect(writeCapacityScenario).toHaveBeenCalledWith(
+        'capacity-plan-1-variant-b',
+        expect.objectContaining({
+          expectedVersion: 0,
+          operation: 'CREATE',
+          scenario: expect.objectContaining({
+            planScenarioId: 'plan-1',
+            planScenarioVersion: 4,
+            windowUnit: 'WEEK',
+            periods: [
+              expect.objectContaining({
+                periodId: 'p1',
+                demand: expect.objectContaining({ knowledgeState: 'UNKNOWN', base: null }),
+                supply: expect.objectContaining({ knowledgeState: 'UNKNOWN', base: null }),
+              }),
+            ],
+          }),
+        })
+      )
+    );
   });
 });
