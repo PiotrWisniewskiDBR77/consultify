@@ -6,6 +6,7 @@ import {
   listPlanScenarioRegister,
   readPlanScenario,
   readPlanScenarioDiff,
+  readPlanScenarioHistory,
   writePlanScenario,
 } from '../../../src/services/initiatives-execution/runtimeApi';
 
@@ -18,6 +19,7 @@ vi.mock('../../../src/services/initiatives-execution/runtimeApi', () => ({
   listPlanScenarioRegister: vi.fn(),
   readPlanScenario: vi.fn(),
   readPlanScenarioDiff: vi.fn(),
+  readPlanScenarioHistory: vi.fn(),
   writePlanScenario: vi.fn(),
 }));
 
@@ -80,6 +82,18 @@ describe('PlanScenarioSurface', () => {
       });
     vi.mocked(readPlanScenario).mockReset().mockResolvedValue({ version: 4, scenario: plan });
     vi.mocked(readPlanScenarioDiff).mockReset().mockResolvedValue({ changes: [] });
+    vi.mocked(readPlanScenarioHistory)
+      .mockReset()
+      .mockResolvedValue({
+        versions: [
+          { ...plan, scenarioVersion: 1 },
+          {
+            ...plan,
+            scenarioVersion: 2,
+            windows: [{ ...plan.windows[0], target: '2026-10-22T00:00:00.000Z' }],
+          },
+        ],
+      });
     vi.mocked(writePlanScenario)
       .mockReset()
       .mockResolvedValue({ aggregateVersion: 5, response: { ...plan, scenarioVersion: 2 } });
@@ -175,6 +189,30 @@ describe('PlanScenarioSurface', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('UNKNOWN time basis');
     expect(screen.getByRole('button', { name: 'Save draft' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Publish Plan Scenario' })).toBeDisabled();
+  });
+
+  it('compares two persistent Plan versions without mutating the scenario', async () => {
+    vi.mocked(readPlanScenarioDiff).mockResolvedValueOnce({
+      changes: [
+        {
+          initiativeId: 'initiative-1',
+          before: plan.windows[0],
+          after: { ...plan.windows[0], target: '2026-10-22T00:00:00.000Z' },
+        },
+      ],
+    });
+    render(<PlanScenarioSurface initiatives={[{ id: 'initiative-1', name: 'Automation' }]} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Otwórz narzędzia planu' }));
+    await screen.findByRole('region', { name: 'Plan Scenario Workbench' });
+
+    expect(readPlanScenarioHistory).toHaveBeenCalledWith('plan-q4');
+    expect(screen.getByLabelText('Bazowa wersja planu')).toHaveValue('1');
+    expect(screen.getByLabelText('Porównywana wersja planu')).toHaveValue('2');
+    fireEvent.click(screen.getByRole('button', { name: 'Porównaj wersje' }));
+
+    await waitFor(() => expect(readPlanScenarioDiff).toHaveBeenCalledWith('plan-q4', 1, 2));
+    expect(screen.getByText(/initiative-1:.*2026-10-15.*2026-10-22/)).toBeInTheDocument();
+    expect(writePlanScenario).not.toHaveBeenCalled();
   });
 
   it('keeps current initiatives visible as unscheduled when the scenario has no window', async () => {

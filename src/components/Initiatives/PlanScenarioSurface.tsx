@@ -19,6 +19,7 @@ import {
   listPlanScenarioRegister,
   readPlanScenario,
   readPlanScenarioDiff,
+  readPlanScenarioHistory,
   RuntimeApiError,
   writePlanScenario,
 } from '@/services/initiatives-execution/runtimeApi';
@@ -57,6 +58,7 @@ interface PlanScenario {
   publishedBy: string | null;
   publishedAt: string | null;
 }
+type PlanScenarioHistoryEntry = PlanScenario;
 interface RegisterRow extends TableRow {
   id: string;
   title: string;
@@ -168,6 +170,10 @@ export const PlanScenarioSurface: React.FC<Props> = ({
   const [diff, setDiff] = useState<
     Array<{ initiativeId: string; before: WindowDraft | null; after: WindowDraft | null }>
   >([]);
+  const [history, setHistory] = useState<PlanScenarioHistoryEntry[]>([]);
+  const [compareFrom, setCompareFrom] = useState<number | null>(null);
+  const [compareTo, setCompareTo] = useState<number | null>(null);
+  const [compareState, setCompareState] = useState<'IDLE' | 'LOADING' | 'ERROR'>('IDLE');
   const [newId, setNewId] = useState('');
   const [portfolioId, setPortfolioId] = useState('');
   const [portfolioVersion, setPortfolioVersion] = useState(1);
@@ -178,6 +184,33 @@ export const PlanScenarioSurface: React.FC<Props> = ({
   const [showCreate, setShowCreate] = useState(false);
   const [initiativeLifecycleFilter, setInitiativeLifecycleFilter] = useState('ALL');
   const commandIds = useRef(new Map<string, string>());
+
+  const loadHistory = useCallback(
+    async (scenarioId: string) => {
+      if (demoMode) {
+        setHistory([]);
+        setCompareFrom(null);
+        setCompareTo(null);
+        return;
+      }
+      try {
+        const result = (await readPlanScenarioHistory(scenarioId)) as {
+          versions?: PlanScenarioHistoryEntry[];
+        };
+        const versions = [...(result.versions ?? [])].sort(
+          (left, right) => left.scenarioVersion - right.scenarioVersion
+        );
+        setHistory(versions);
+        setCompareFrom(versions.length > 1 ? (versions.at(-2)?.scenarioVersion ?? null) : null);
+        setCompareTo(versions.at(-1)?.scenarioVersion ?? null);
+      } catch {
+        setHistory([]);
+        setCompareFrom(null);
+        setCompareTo(null);
+      }
+    },
+    [demoMode]
+  );
 
   const loadRegister = useCallback(async () => {
     setState('LOADING');
@@ -306,12 +339,13 @@ export const PlanScenarioSurface: React.FC<Props> = ({
             periods: loaded.scenario.periods ?? [],
           })
         );
+        await loadHistory(initial.id);
       }
       setState('READY');
     } catch {
       setState('ERROR');
     }
-  }, [demoMode, initiatives]);
+  }, [demoMode, initiatives, loadHistory]);
   useEffect(() => {
     void loadRegister();
   }, [loadRegister]);
@@ -433,6 +467,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
           periods: result.scenario.periods ?? [],
         })
       );
+      await loadHistory(id);
     } catch {
       setWriteState('ERROR');
     }
@@ -471,6 +506,9 @@ export const PlanScenarioSurface: React.FC<Props> = ({
     setAggregateVersion(0);
     setDraft(scenario);
     setDiff([]);
+    setHistory([]);
+    setCompareFrom(null);
+    setCompareTo(null);
     setWorkspaceOpen(true);
   };
   const write = async (operation: 'CREATE' | 'UPDATE' | 'PUBLISH') => {
@@ -494,6 +532,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
       setWriteState('IDLE');
       await loadRegister();
       setSelectedId(result.response.scenarioId);
+      await loadHistory(result.response.scenarioId);
       if (result.response.scenarioVersion > 1) {
         const d = (await readPlanScenarioDiff(
           result.response.scenarioId,
@@ -506,6 +545,19 @@ export const PlanScenarioSurface: React.FC<Props> = ({
       setWriteState(
         error instanceof RuntimeApiError && error.status === 409 ? 'CONFLICT' : 'ERROR'
       );
+    }
+  };
+  const compareVersions = async () => {
+    if (!draft || compareFrom === null || compareTo === null || compareFrom === compareTo) return;
+    setCompareState('LOADING');
+    try {
+      const result = (await readPlanScenarioDiff(draft.scenarioId, compareFrom, compareTo)) as {
+        changes: typeof diff;
+      };
+      setDiff(result.changes);
+      setCompareState('IDLE');
+    } catch {
+      setCompareState('ERROR');
     }
   };
   const updateWindow = (initiativeId: string, patch: Partial<WindowDraft>) =>
@@ -1419,7 +1471,74 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                 />
               </label>
               <section aria-label="Plan diff">
-                <h4 className="font-medium">Latest diff ({diff.length})</h4>
+                <h4 className="font-medium">Porównanie wersji</h4>
+                {history.length < 2 ? (
+                  <p className="mt-1 text-xs text-c-text-muted">
+                    Porównanie będzie dostępne po zapisaniu co najmniej dwóch wersji planu.
+                  </p>
+                ) : (
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    <label className="text-xs">
+                      Wersja bazowa
+                      <select
+                        aria-label="Bazowa wersja planu"
+                        className="mt-1 block w-full bg-c-surface p-1"
+                        value={compareFrom ?? ''}
+                        onChange={(event) => setCompareFrom(Number(event.target.value))}
+                      >
+                        {history.map((version) => (
+                          <option key={version.scenarioVersion} value={version.scenarioVersion}>
+                            v{version.scenarioVersion} · {planStatusLabel[version.status]}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="text-xs">
+                      Wersja porównywana
+                      <select
+                        aria-label="Porównywana wersja planu"
+                        className="mt-1 block w-full bg-c-surface p-1"
+                        value={compareTo ?? ''}
+                        onChange={(event) => setCompareTo(Number(event.target.value))}
+                      >
+                        {history.map((version) => (
+                          <option key={version.scenarioVersion} value={version.scenarioVersion}>
+                            v{version.scenarioVersion} · {planStatusLabel[version.status]}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <button
+                      type="button"
+                      className="btn-secondary col-span-2"
+                      disabled={
+                        compareState === 'LOADING' ||
+                        compareFrom === null ||
+                        compareTo === null ||
+                        compareFrom === compareTo
+                      }
+                      onClick={() => void compareVersions()}
+                    >
+                      {compareState === 'LOADING' ? (
+                        <Loader2 className="animate-spin" size={15} />
+                      ) : (
+                        <Eye size={15} />
+                      )}{' '}
+                      Porównaj wersje
+                    </button>
+                  </div>
+                )}
+                {compareState === 'ERROR' && (
+                  <p role="alert" className="mt-2 text-xs text-c-danger">
+                    Nie udało się odczytać porównania. Plan nie został zmieniony.
+                  </p>
+                )}
+                <h5 className="mt-3 text-xs font-medium">Zmiany ({diff.length})</h5>
+                {history.length >= 2 && compareState === 'IDLE' && diff.length === 0 && (
+                  <p className="mt-1 text-xs text-c-text-muted">
+                    Brak różnic w oknach inicjatyw dla wybranych wersji.
+                  </p>
+                )}
                 {diff.map((change) => (
                   <div
                     key={change.initiativeId}
