@@ -13,6 +13,7 @@
  *  - fokus = pierścień `--c-focus` (niebieski), nie obrys marki.
  */
 
+import { Plus, X } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import React from 'react';
 
@@ -286,6 +287,105 @@ export const OrgChoiceSegment: React.FC<{
         </button>
       );
     })}
+  </div>
+);
+
+/**
+ * Lista rekordów edytowalnych wierszami (zastępuje `DynamicList` ze starych
+ * ekranów Cele/Wyzwania/Synteza — TA implementacja ma zero `primary-*`,
+ * `DynamicList` miało 8). Każdy wiersz = siatka pól zgodnie z `columns`;
+ * puste = „—" (placeholder), usuwanie = ikona X, dodawanie = jeden ghost-button
+ * pod listą. Pusta lista = jedno zdanie, nie duża ramka-zaproszenie.
+ */
+export interface OrgRecordListColumn {
+  key: string;
+  label: string;
+  type?: 'text' | 'select' | 'textarea';
+  options?: OrgSelectOption[];
+  placeholder?: string;
+}
+
+export interface OrgRecordListProps {
+  columns: OrgRecordListColumn[];
+  items: Array<Record<string, string> & { id: string }>;
+  onAdd: () => void;
+  onUpdate: (id: string, key: string, value: string) => void;
+  onRemove: (id: string) => void;
+  addLabel?: string;
+  emptyLabel?: string;
+}
+
+export const OrgRecordList: React.FC<OrgRecordListProps> = ({
+  columns,
+  items,
+  onAdd,
+  onUpdate,
+  onRemove,
+  addLabel = 'Dodaj pozycję',
+  emptyLabel = 'Brak pozycji.',
+}) => (
+  <div className="space-y-2">
+    {items.length === 0 && <p className="text-[13px] text-c-text-muted">{emptyLabel}</p>}
+    {items.map((item) => (
+      <div
+        key={item.id}
+        className="group relative rounded-lg border border-c-border-subtle bg-c-surface-raised p-3 pr-9"
+      >
+        <button
+          type="button"
+          aria-label="Usuń pozycję"
+          onClick={() => onRemove(item.id)}
+          className="absolute right-2 top-2 rounded-md p-1 text-c-text-muted opacity-0 transition-opacity hover:bg-c-surface hover:text-c-text focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)] group-hover:opacity-100 group-focus-within:opacity-100"
+        >
+          <X aria-hidden="true" className="h-3.5 w-3.5" />
+        </button>
+        <div className={cn('grid grid-cols-1 gap-x-4 gap-y-2', columns.length > 2 && 'md:grid-cols-2')}>
+          {columns.map((column) => (
+            <div key={column.key}>
+              <label className={cn(ORG_L1, 'mb-0.5 block')}>{column.label}</label>
+              {column.type === 'select' ? (
+                <select
+                  value={item[column.key] ?? ''}
+                  onChange={(event) => onUpdate(item.id, column.key, event.target.value)}
+                  className={cn(CONTROL_BASE, 'cursor-pointer', !item[column.key] && 'text-c-text-muted')}
+                >
+                  <option value="">—</option>
+                  {(column.options ?? []).map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              ) : column.type === 'textarea' ? (
+                <textarea
+                  rows={2}
+                  value={item[column.key] ?? ''}
+                  placeholder={column.placeholder ?? '—'}
+                  onChange={(event) => onUpdate(item.id, column.key, event.target.value)}
+                  className={cn(CONTROL_BASE, 'resize-none')}
+                />
+              ) : (
+                <input
+                  type="text"
+                  value={item[column.key] ?? ''}
+                  placeholder={column.placeholder ?? '—'}
+                  onChange={(event) => onUpdate(item.id, column.key, event.target.value)}
+                  className={CONTROL_BASE}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    ))}
+    <button
+      type="button"
+      onClick={onAdd}
+      className="inline-flex h-8 items-center gap-1.5 rounded-full border border-dashed border-c-border px-3 text-[12px] font-medium text-c-text-secondary transition-colors hover:border-c-border-strong hover:text-c-text focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"
+    >
+      <Plus aria-hidden="true" className="h-3.5 w-3.5" />
+      {addLabel}
+    </button>
   </div>
 );
 

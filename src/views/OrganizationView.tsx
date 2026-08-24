@@ -24,6 +24,7 @@ import OrganizationSidebar, {
   type OrganizationScreen,
 } from '../components/Organization/OrganizationSidebar';
 import { OrgContextSummaryBanner } from '../components/Organization/OrgContextSummaryBanner';
+import OrganizationDirectionConstraintsScreen from '../components/Organization/redesign/OrganizationDirectionConstraintsScreen';
 import OrganizationIdentityOperatingScreen from '../components/Organization/redesign/OrganizationIdentityOperatingScreen';
 import {
   getOrganizationRedesignModules,
@@ -337,6 +338,28 @@ export const OrganizationView: React.FC = () => {
             </OrganizationScreenShell>
           )}
         </OrganizationIdentityOperatingScreen>
+      );
+    }
+
+    if (activeLocation.module === 'profile' && activeLocation.screen === 'position-direction') {
+      return (
+        <OrganizationDirectionConstraintsScreen>
+          {(args) => (
+            <OrganizationScreenShell
+              sections={args.sections}
+              activeSection={args.activeSection}
+              onSectionChange={args.onSectionChange}
+              chips={args.chips}
+              activeChip={args.activeChip}
+              onChipChange={args.onChipChange}
+              searchValue={args.searchValue}
+              onSearch={args.onSearch}
+              statePanel={args.statePanel}
+            >
+              {args.content}
+            </OrganizationScreenShell>
+          )}
+        </OrganizationDirectionConstraintsScreen>
       );
     }
 
