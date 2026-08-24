@@ -147,25 +147,81 @@ export const PlanScenarioSurface: React.FC<Props> = ({
     setState('LOADING');
     if (demoMode) {
       const periods = [
-        { periodId: 'NOW · Sep–Oct', start: '2026-09-01T00:00:00.000Z', end: '2026-11-01T00:00:00.000Z' },
-        { periodId: 'NEXT · Nov–Dec', start: '2026-11-01T00:00:00.000Z', end: '2027-01-01T00:00:00.000Z' },
-        { periodId: 'LATER · Q1', start: '2027-01-01T00:00:00.000Z', end: '2027-04-01T00:00:00.000Z' },
+        {
+          periodId: 'NOW · Sep–Oct',
+          start: '2026-09-01T00:00:00.000Z',
+          end: '2026-11-01T00:00:00.000Z',
+        },
+        {
+          periodId: 'NEXT · Nov–Dec',
+          start: '2026-11-01T00:00:00.000Z',
+          end: '2027-01-01T00:00:00.000Z',
+        },
+        {
+          periodId: 'LATER · Q1',
+          start: '2027-01-01T00:00:00.000Z',
+          end: '2027-04-01T00:00:00.000Z',
+        },
       ];
       const scenario: PlanScenario = {
-        scenarioId: 'Atelier Transformation Plan', scenarioVersion: 2, status: 'PUBLISHED', portfolioScenarioId: 'Atelier Growth Portfolio', portfolioScenarioVersion: 3,
-        windowUnit: 'MONTH', timezone: 'Europe/Warsaw', periods,
+        scenarioId: 'Atelier Transformation Plan',
+        scenarioVersion: 2,
+        status: 'PUBLISHED',
+        portfolioScenarioId: 'Atelier Growth Portfolio',
+        portfolioScenarioVersion: 3,
+        windowUnit: 'MONTH',
+        timezone: 'Europe/Warsaw',
+        periods,
         windows: initiatives.slice(0, 8).map((initiative, index) => ({
-          initiativeId: initiative.id, initiativeVersion: 1,
-          earliest: ['2026-09-01', '2026-11-01', '2027-01-01'][Math.min(2, Math.floor(index / 3))] + 'T00:00:00.000Z',
-          target: ['2026-10-01', '2026-12-01', '2027-02-01'][Math.min(2, Math.floor(index / 3))] + 'T00:00:00.000Z',
-          latest: ['2026-10-31', '2026-12-31', '2027-03-31'][Math.min(2, Math.floor(index / 3))] + 'T00:00:00.000Z',
-          confidence: index < 3 ? 'HIGH' : index < 6 ? 'MEDIUM' : 'LOW', rationale: 'Illustrative delivery window for owner review.',
-          dependencySnapshot: index === 0 ? [] : [initiatives[Math.max(0, index - 1)]?.id || 'demo-dependency'],
-          constraintSnapshot: index === 5 ? [{ constraintId: 'data-engineering-capacity', state: 'UNKNOWN', detail: 'Confirm specialist availability' }] : [],
-        })), assumptions: ['Budget envelope remains valid', 'Named owners are available'], createdBy: 'demo', updatedBy: 'demo', publishedBy: 'owner-piotr', publishedAt: '2026-08-23T09:00:00.000Z',
+          initiativeId: initiative.id,
+          initiativeVersion: 1,
+          earliest:
+            ['2026-09-01', '2026-11-01', '2027-01-01'][Math.min(2, Math.floor(index / 3))] +
+            'T00:00:00.000Z',
+          target:
+            ['2026-10-01', '2026-12-01', '2027-02-01'][Math.min(2, Math.floor(index / 3))] +
+            'T00:00:00.000Z',
+          latest:
+            ['2026-10-31', '2026-12-31', '2027-03-31'][Math.min(2, Math.floor(index / 3))] +
+            'T00:00:00.000Z',
+          confidence: index < 3 ? 'HIGH' : index < 6 ? 'MEDIUM' : 'LOW',
+          rationale: 'Illustrative delivery window for owner review.',
+          dependencySnapshot:
+            index === 0 ? [] : [initiatives[Math.max(0, index - 1)]?.id || 'demo-dependency'],
+          constraintSnapshot:
+            index === 5
+              ? [
+                  {
+                    constraintId: 'data-engineering-capacity',
+                    state: 'UNKNOWN',
+                    detail: 'Confirm specialist availability',
+                  },
+                ]
+              : [],
+        })),
+        assumptions: ['Budget envelope remains valid', 'Named owners are available'],
+        createdBy: 'demo',
+        updatedBy: 'demo',
+        publishedBy: 'owner-piotr',
+        publishedAt: '2026-08-23T09:00:00.000Z',
       };
-      setRows([{ id: scenario.scenarioId, title: scenario.scenarioId, state: scenario.status, version: scenario.scenarioVersion, portfolio: `${scenario.portfolioScenarioId}:v${scenario.portfolioScenarioVersion}`, earliest: periods[0].start, latest: periods[2].end, updatedAt: scenario.publishedAt || '', timeBasisState: 'KNOWN' }]);
-      setSelectedId(scenario.scenarioId); setAggregateVersion(2); setDraft(scenario); setState('READY');
+      setRows([
+        {
+          id: scenario.scenarioId,
+          title: scenario.scenarioId,
+          state: scenario.status,
+          version: scenario.scenarioVersion,
+          portfolio: `${scenario.portfolioScenarioId}:v${scenario.portfolioScenarioVersion}`,
+          earliest: periods[0].start,
+          latest: periods[2].end,
+          updatedAt: scenario.publishedAt || '',
+          timeBasisState: 'KNOWN',
+        },
+      ]);
+      setSelectedId(scenario.scenarioId);
+      setAggregateVersion(2);
+      setDraft(scenario);
+      setState('READY');
       return;
     }
     try {
@@ -225,7 +281,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
   }, [loadRegister]);
   const planWindowRows = useMemo(() => {
     const names = new Map(initiatives.map((item) => [item.id, item.name]));
-    return (draft?.windows ?? []).map((window) => {
+    const scheduled = (draft?.windows ?? []).map((window) => {
       const periodIndex =
         draft?.periods.findIndex(
           (period) => window.target && window.target >= period.start && window.target < period.end
@@ -266,6 +322,29 @@ export const PlanScenarioSurface: React.FC<Props> = ({
         published: draft?.status === 'PUBLISHED' ? 'PUBLISHED' : 'DRAFT',
       };
     });
+    const scheduledIds = new Set(scheduled.map((row) => row.id));
+    const unscheduled = initiatives
+      .filter((initiative) => !scheduledIds.has(initiative.id))
+      .map((initiative) => ({
+        id: initiative.id,
+        title: initiative.name,
+        backlogState: 'CURRENT',
+        earliest: '—',
+        target: '—',
+        latest: '—',
+        proposedWindow: 'Nie przypisano okna planu',
+        band: 'UNSCHEDULED',
+        dependency: 'UNKNOWN',
+        capacity: 'UNKNOWN',
+        confidence: 'UNKNOWN',
+        conflict: 'NONE',
+        mandatoryDeadline: 'UNKNOWN',
+        costOfDelay: 'UNKNOWN',
+        roughDemand: 'UNKNOWN',
+        nextAction: 'ADD_TO_PLAN_OR_EXCLUDE',
+        published: draft?.status === 'PUBLISHED' ? 'PUBLISHED' : 'DRAFT',
+      }));
+    return [...scheduled, ...unscheduled];
   }, [draft, initiatives]);
   const matchesPlanPreset = (row: (typeof planWindowRows)[number], preset: string) =>
     preset === 'all'

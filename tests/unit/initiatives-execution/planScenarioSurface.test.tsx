@@ -160,4 +160,19 @@ describe('PlanScenarioSurface', () => {
     expect(screen.getByRole('button', { name: 'Save draft' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Publish Plan Scenario' })).toBeDisabled();
   });
+
+  it('keeps current initiatives visible as unscheduled when the scenario has no window', async () => {
+    vi.mocked(readPlanScenario).mockResolvedValueOnce({
+      version: 4,
+      scenario: { ...plan, status: 'PUBLISHED', windows: [] },
+    });
+    render(
+      <PlanScenarioSurface
+        initiatives={[{ id: 'initiative-in-execution', name: 'Automation in execution' }]}
+      />
+    );
+    expect(await screen.findByText('Automation in execution')).toBeInTheDocument();
+    expect(screen.getByText('Nie przypisano okna planu')).toBeInTheDocument();
+    expect(screen.getByText('ADD_TO_PLAN_OR_EXCLUDE')).toBeInTheDocument();
+  });
 });

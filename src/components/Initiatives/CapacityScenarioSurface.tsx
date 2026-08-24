@@ -45,12 +45,14 @@ const criticalityLabel: Record<string, string> = {
   UNKNOWN: 'Do oceny',
 };
 const actorLabel = (value: string) =>
-  ({
-    'resource-manager': 'Resource Manager',
-    'capacity-owner': 'Właściciel obciążenia',
-    'controls-engineer': 'Controls Engineer',
-    'role:controls-engineer': 'Controls Engineer',
-  })[value] ?? value.replace(/^role:/, '').replaceAll('-', ' ');
+  /^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(value)
+    ? 'Właściciel zasobów'
+    : ({
+        'resource-manager': 'Resource Manager',
+        'capacity-owner': 'Właściciel obciążenia',
+        'controls-engineer': 'Controls Engineer',
+        'role:controls-engineer': 'Controls Engineer',
+      }[value] ?? value.replace(/^role:/, '').replaceAll('-', ' '));
 const formatPeriodDate = (value: string) => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return 'UNKNOWN';
@@ -192,7 +194,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
       id: `period:${period.periodId}`,
       title: period.periodId,
       kind: 'PERIOD',
-      roleTeamSkill: 'UNKNOWN',
+      roleTeamSkill: actorLabel(period.supply.ownerId || 'UNKNOWN'),
       demand: formatRange(period.demand),
       demandState: period.demand.knowledgeState,
       supply: formatRange(period.supply),
@@ -223,7 +225,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
       id: `constraint:${constraint.constraintId}`,
       title: constraint.constraintId,
       kind: 'CONSTRAINT',
-      roleTeamSkill: 'UNKNOWN',
+      roleTeamSkill: 'Ograniczenie przekrojowe',
       demand: 'UNKNOWN',
       demandState: 'UNKNOWN',
       supply: constraint.state,
@@ -286,29 +288,118 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
   const load = useCallback(async () => {
     setState('LOADING');
     if (demoMode) {
-      const range = (base: number, ownerId: string, state: K = 'ESTIMATED'): Range => ({ knowledgeState: state, low: base - 2, base, high: base + 3, sourceRef: 'demo-capacity-workshop', sourceVersion: 1, asOf: '2026-08-23T09:00:00.000Z', confidence: state === 'KNOWN' ? 'HIGH' : 'MEDIUM', ownerId, reason: null });
+      const range = (base: number, ownerId: string, state: K = 'ESTIMATED'): Range => ({
+        knowledgeState: state,
+        low: base - 2,
+        base,
+        high: base + 3,
+        sourceRef: 'demo-capacity-workshop',
+        sourceVersion: 1,
+        asOf: '2026-08-23T09:00:00.000Z',
+        confidence: state === 'KNOWN' ? 'HIGH' : 'MEDIUM',
+        ownerId,
+        reason: null,
+      });
       const scenario: Scenario = {
-        scenarioId: 'Atelier Capacity Baseline', scenarioVersion: 2, status: 'PUBLISHED', planScenarioId: 'Atelier Transformation Plan', planScenarioVersion: 2, windowUnit: 'FTE-month', timezone: 'Europe/Warsaw',
+        scenarioId: 'Atelier Capacity Baseline',
+        scenarioVersion: 2,
+        status: 'PUBLISHED',
+        planScenarioId: 'Atelier Transformation Plan',
+        planScenarioVersion: 2,
+        windowUnit: 'FTE-month',
+        timezone: 'Europe/Warsaw',
         periods: [
-          { periodId: 'NOW · Sep–Oct', start: '2026-09-01T00:00:00.000Z', end: '2026-11-01T00:00:00.000Z', demand: range(18, 'Transformation Office'), supply: range(15, 'Resource Manager', 'KNOWN') },
-          { periodId: 'NEXT · Nov–Dec', start: '2026-11-01T00:00:00.000Z', end: '2027-01-01T00:00:00.000Z', demand: range(24, 'Transformation Office'), supply: range(17, 'Resource Manager') },
-          { periodId: 'LATER · Q1', start: '2027-01-01T00:00:00.000Z', end: '2027-04-01T00:00:00.000Z', demand: range(20, 'Transformation Office'), supply: range(19, 'Resource Manager', 'UNCONFIRMED') },
+          {
+            periodId: 'NOW · Sep–Oct',
+            start: '2026-09-01T00:00:00.000Z',
+            end: '2026-11-01T00:00:00.000Z',
+            demand: range(18, 'Transformation Office'),
+            supply: range(15, 'Resource Manager', 'KNOWN'),
+          },
+          {
+            periodId: 'NEXT · Nov–Dec',
+            start: '2026-11-01T00:00:00.000Z',
+            end: '2027-01-01T00:00:00.000Z',
+            demand: range(24, 'Transformation Office'),
+            supply: range(17, 'Resource Manager'),
+          },
+          {
+            periodId: 'LATER · Q1',
+            start: '2027-01-01T00:00:00.000Z',
+            end: '2027-04-01T00:00:00.000Z',
+            demand: range(20, 'Transformation Office'),
+            supply: range(19, 'Resource Manager', 'UNCONFIRMED'),
+          },
         ],
         constraints: [
-          { constraintId: 'Data engineering skill gap', state: 'KNOWN', detail: 'Two initiatives compete for the same senior data-engineering skill.', ownerId: 'Resource Manager' },
-          { constraintId: 'Management load', state: 'ESTIMATED', detail: 'Operations leadership can sponsor at most three concurrent waves.', ownerId: 'COO' },
-          { constraintId: 'Budget envelope', state: 'UNKNOWN', detail: 'Q1 external-services budget still requires confirmation.', ownerId: 'CFO' },
+          {
+            constraintId: 'Data engineering skill gap',
+            state: 'KNOWN',
+            detail: 'Two initiatives compete for the same senior data-engineering skill.',
+            ownerId: 'Resource Manager',
+          },
+          {
+            constraintId: 'Management load',
+            state: 'ESTIMATED',
+            detail: 'Operations leadership can sponsor at most three concurrent waves.',
+            ownerId: 'COO',
+          },
+          {
+            constraintId: 'Budget envelope',
+            state: 'UNKNOWN',
+            detail: 'Q1 external-services budget still requires confirmation.',
+            ownerId: 'CFO',
+          },
         ],
         proposedAssignments: [
-          { assignmentId: 'assign-control-tower', initiativeId: 'demo-initiative-revenue-control-tower', resourceOrRoleId: 'role:controls-engineer', periodIds: ['NOW · Sep–Oct'], demand: range(6, 'Resource Manager'), rationale: 'Critical dependency for benefits tracking.' },
-          { assignmentId: 'assign-procurement-ai', initiativeId: 'demo-initiative-procurement-ai-copilot', resourceOrRoleId: 'data-engineering-team', periodIds: ['NEXT · Nov–Dec'], demand: range(8, 'Resource Manager'), rationale: 'Sequence after master-data baseline.' },
-        ], createdBy: 'demo', updatedBy: 'demo', publishedBy: 'owner-piotr', publishedAt: '2026-08-23T09:00:00.000Z',
+          {
+            assignmentId: 'assign-control-tower',
+            initiativeId: 'demo-initiative-revenue-control-tower',
+            resourceOrRoleId: 'role:controls-engineer',
+            periodIds: ['NOW · Sep–Oct'],
+            demand: range(6, 'Resource Manager'),
+            rationale: 'Critical dependency for benefits tracking.',
+          },
+          {
+            assignmentId: 'assign-procurement-ai',
+            initiativeId: 'demo-initiative-procurement-ai-copilot',
+            resourceOrRoleId: 'data-engineering-team',
+            periodIds: ['NEXT · Nov–Dec'],
+            demand: range(8, 'Resource Manager'),
+            rationale: 'Sequence after master-data baseline.',
+          },
+        ],
+        createdBy: 'demo',
+        updatedBy: 'demo',
+        publishedBy: 'owner-piotr',
+        publishedAt: '2026-08-23T09:00:00.000Z',
       };
-      const known = scenario.periods.flatMap((period) => [period.demand, period.supply]).filter((item) => item.knowledgeState === 'KNOWN').length;
-      const estimated = scenario.periods.flatMap((period) => [period.demand, period.supply]).filter((item) => item.knowledgeState === 'ESTIMATED').length;
-      const unconfirmed = scenario.periods.flatMap((period) => [period.demand, period.supply]).filter((item) => item.knowledgeState === 'UNCONFIRMED').length;
-      setRows([{ id: scenario.scenarioId, title: scenario.scenarioId, state: scenario.status, plan: `${scenario.planScenarioId} v${scenario.planScenarioVersion}`, window: `${scenario.periods[0].start} → ${scenario.periods[2].end}`, knowledge: `K ${known} · E ${estimated} · U 0 · UC ${unconfirmed}`, updatedAt: scenario.publishedAt || '', version: scenario.scenarioVersion }]);
-      setSelectedId(scenario.scenarioId); setScenario(scenario); setAggregateVersion(2); setComparisons([]); setState('READY');
+      const known = scenario.periods
+        .flatMap((period) => [period.demand, period.supply])
+        .filter((item) => item.knowledgeState === 'KNOWN').length;
+      const estimated = scenario.periods
+        .flatMap((period) => [period.demand, period.supply])
+        .filter((item) => item.knowledgeState === 'ESTIMATED').length;
+      const unconfirmed = scenario.periods
+        .flatMap((period) => [period.demand, period.supply])
+        .filter((item) => item.knowledgeState === 'UNCONFIRMED').length;
+      setRows([
+        {
+          id: scenario.scenarioId,
+          title: scenario.scenarioId,
+          state: scenario.status,
+          plan: `${scenario.planScenarioId} v${scenario.planScenarioVersion}`,
+          window: `${scenario.periods[0].start} → ${scenario.periods[2].end}`,
+          knowledge: `K ${known} · E ${estimated} · U 0 · UC ${unconfirmed}`,
+          updatedAt: scenario.publishedAt || '',
+          version: scenario.scenarioVersion,
+        },
+      ]);
+      setSelectedId(scenario.scenarioId);
+      setScenario(scenario);
+      setAggregateVersion(2);
+      setComparisons([]);
+      setState('READY');
       return;
     }
     try {

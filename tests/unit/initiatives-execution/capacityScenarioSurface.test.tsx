@@ -31,7 +31,7 @@ const range = {
   sourceVersion: null,
   asOf: '2026-08-10T00:00:00.000Z',
   confidence: 'UNKNOWN',
-  ownerId: 'owner',
+  ownerId: '05000000-0000-4000-8000-000000000012',
   reason: 'No evidence',
 };
 describe('CapacityScenarioSurface', () => {
@@ -142,6 +142,8 @@ describe('CapacityScenarioSurface', () => {
   it('opens persistent register by keyboard and keeps UNKNOWN non-numeric', async () => {
     render(<CapacityScenarioSurface />);
     const row = (await screen.findByText('p1')).closest('tr')!;
+    expect(screen.getAllByText('Właściciel zasobów').length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryByText(range.ownerId)).not.toBeInTheDocument();
     fireEvent.click(row);
     expect(screen.getByText('Stan obciążenia i dowodów')).toBeInTheDocument();
     const layout = row.closest('div[tabindex="0"]')!;
