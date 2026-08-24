@@ -125,6 +125,7 @@ import {
 import { initiativeLoadErrorCode, isInitiativesNetworkError } from './initiativeLoadError';
 import {
   canonicalInitiativeMatchesRegisterFilters,
+  filterCanonicalInitiativeRegisterScope,
   INITIATIVE_LIFECYCLE_LABELS,
   INITIATIVE_LIFECYCLE_PRESETS,
   type InitiativeLifecyclePreset,
@@ -238,11 +239,7 @@ interface InitiativesHubProps {
 
 const NEW_INITIATIVE_EMPTY_CTA_TESTID = 'initiatives-new-modal-empty-cta';
 
-const CANONICAL_INITIATIVES_TABS = new Set<ModuleTab>([
-  'list',
-  'plan',
-  'capacity',
-]);
+const CANONICAL_INITIATIVES_TABS = new Set<ModuleTab>(['list', 'plan', 'capacity']);
 
 export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'list' }) => {
   const { t, i18n } = useTranslation();
@@ -573,9 +570,11 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           const visibleDemoRows = demoRows.filter((initiative) => {
             if (
               scope === 'active' &&
-              [InitiativeStatus.DONE, InitiativeStatus.CANCELLED, InitiativeStatus.ARCHIVED].includes(
-                initiative.status as InitiativeStatus
-              )
+              [
+                InitiativeStatus.DONE,
+                InitiativeStatus.CANCELLED,
+                InitiativeStatus.ARCHIVED,
+              ].includes(initiative.status as InitiativeStatus)
             ) {
               return false;
             }
@@ -691,9 +690,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
   // Available view modes — plan and capacity are dedicated analysis workspaces.
   const availableViewModes: ViewMode[] =
-    activeTab === 'plan' || activeTab === 'capacity'
-      ? []
-      : ['table', 'kanban', 'timeline', 'grid'];
+    activeTab === 'plan' || activeTab === 'capacity' ? [] : ['table', 'kanban', 'timeline', 'grid'];
 
   // Owner-approved IA: lifecycle/statuses belong to the initiative registry.
   // Candidate and portfolio semantics remain preserved in the data model, but
@@ -1198,7 +1195,11 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         const truth = await quickUpdateInitiativeWriteTruth(
           initiativeId,
           updates as Record<string, unknown>,
-          (initiatives.find((item) => item.id === initiativeId) as PortfolioInitiative & { canonicalVersion?: number })?.canonicalVersion
+          (
+            initiatives.find((item) => item.id === initiativeId) as PortfolioInitiative & {
+              canonicalVersion?: number;
+            }
+          )?.canonicalVersion
         );
         const refreshed = truth.initiative;
         setInitiatives((prev) =>
@@ -1248,6 +1249,24 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     setActiveFilters([]);
     setFilters({});
   }, []);
+
+  const handlePriorityFilterChange = useCallback(
+    (value: '' | 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW') => {
+      setFilters((prev) => ({ ...prev, priority: value ? [value] : undefined }));
+      setActiveFilters((prev) => [
+        ...prev.filter((filter) => !filter.id.startsWith('priority:')),
+        ...(value
+          ? [
+              {
+                id: `priority:${value}`,
+                label: `${t('initiatives.filters.priority', 'Priority')}: ${value}`,
+              },
+            ]
+          : []),
+      ]);
+    },
+    [t]
+  );
 
   const handleResetInitiativeRegisterFilters = useCallback(() => {
     handleClearFilters();
@@ -1327,7 +1346,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     const quickUpdates =
       Object.keys(quickUpdatePayload).length > 0
         ? ids.map((id) => {
-            const row = initiatives.find((item) => item.id === id) as PortfolioInitiative & { canonicalVersion?: number } | undefined;
+            const row = initiatives.find((item) => item.id === id) as
+              | (PortfolioInitiative & { canonicalVersion?: number })
+              | undefined;
             return quickUpdateInitiativeWriteTruth(id, quickUpdatePayload, row?.canonicalVersion);
           })
         : [];
@@ -1363,7 +1384,12 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const handleArchiveInitiative = useCallback(
     async (initiative: PortfolioInitiative) => {
       try {
-        toast.error(t('initiatives.toast.archiveGoverned', 'Archive is available only from the governed closure workflow.'));
+        toast.error(
+          t(
+            'initiatives.toast.archiveGoverned',
+            'Archive is available only from the governed closure workflow.'
+          )
+        );
       } catch {
         toast.error(t('initiatives.toast.archiveFailed', 'Could not archive initiative'));
       }
@@ -1382,9 +1408,14 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       );
       if (!shouldProceed) return;
       try {
-        const version = (initiative as PortfolioInitiative & { canonicalVersion?: number }).canonicalVersion;
+        const version = (initiative as PortfolioInitiative & { canonicalVersion?: number })
+          .canonicalVersion;
         if (!version) throw new Error('Canonical version is required');
-        await cancelInitiativeWriteTruth(initiative.id, version, `Cancelled from Initiatives Hub: ${name || initiative.id}`);
+        await cancelInitiativeWriteTruth(
+          initiative.id,
+          version,
+          `Cancelled from Initiatives Hub: ${name || initiative.id}`
+        );
         toast.success(t('initiatives.toast.cancelled', 'Initiative cancelled'));
         await fetchData(true);
       } catch {
@@ -2138,7 +2169,34 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     </div>
   );
 
-  const rightControls = <div className="flex items-center gap-2">{scopeToggle}</div>;
+  const priorityFilter = (
+    <label className="sr-only" htmlFor="initiative-priority-filter">
+      {t('initiatives.filters.priority', 'Priority')}
+    </label>
+  );
+  const rightControls = (
+    <div className="flex items-center gap-2">
+      {priorityFilter}
+      <select
+        id="initiative-priority-filter"
+        aria-label={t('initiatives.filters.priority', 'Priority')}
+        value={filters.priority?.[0] || ''}
+        onChange={(event) =>
+          handlePriorityFilterChange(
+            event.target.value as '' | 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW'
+          )
+        }
+        className="h-9 rounded-lg border border-c-border-subtle bg-c-surface px-3 text-xs font-medium text-c-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+      >
+        <option value="">{t('initiatives.filters.allPriorities', 'All priorities')}</option>
+        <option value="CRITICAL">{t('initiatives.priority.critical', 'Critical')}</option>
+        <option value="HIGH">{t('initiatives.priority.high', 'High')}</option>
+        <option value="MEDIUM">{t('initiatives.priority.medium', 'Medium')}</option>
+        <option value="LOW">{t('initiatives.priority.low', 'Low')}</option>
+      </select>
+      {scopeToggle}
+    </div>
+  );
 
   const totalPendingDecisionEntries = v8PendingDecisionChains.reduce(
     (sum, chain) =>
@@ -2160,15 +2218,19 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       : 0;
 
   const lifecyclePresetCounts = useMemo(() => {
+    const registerScoped = filterCanonicalInitiativeRegisterScope(allInitiatives, {
+      projectId: currentProjectId,
+      priorities: filters.priority,
+    });
     const countable =
       scope === 'active'
-        ? allInitiatives.filter(
+        ? registerScoped.filter(
             (initiative) =>
               !['CLOSED', 'ARCHIVED', 'CANCELLED'].includes(
                 String((initiative as any).displayStatus)
               )
           )
-        : allInitiatives;
+        : registerScoped;
     const counts: Record<string, number> = { all: countable.length };
     for (const preset of INITIATIVE_LIFECYCLE_PRESETS) {
       counts[preset.id] = countable.filter((initiative) =>
@@ -2176,7 +2238,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       ).length;
     }
     return counts;
-  }, [allInitiatives, scope]);
+  }, [allInitiatives, currentProjectId, filters.priority, scope]);
 
   // Canon §15.3 Formula 2 — MULTI-SELECT bulk action bar.
   // When ≥1 row is selected in table view, Menu 3 becomes a bulk bar:
@@ -2507,13 +2569,19 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             tabIndex={-1}
             className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto outline-none"
           >
-            <h2 id="initiatives-new-modal-heading" className="text-lg font-semibold text-c-text mb-4">
+            <h2
+              id="initiatives-new-modal-heading"
+              className="text-lg font-semibold text-c-text mb-4"
+            >
               {t('initiatives.form.createNew')}
             </h2>
             <div className="space-y-4">
               {/* Title */}
               <div>
-                <label htmlFor="initiatives-new-modal-title" className="block text-xs text-c-text-muted mb-1">
+                <label
+                  htmlFor="initiatives-new-modal-title"
+                  className="block text-xs text-c-text-muted mb-1"
+                >
                   {t('initiatives.form.titleRequired')}
                 </label>
                 <input
@@ -2727,56 +2795,62 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               {t('initiatives.bulkEdit.selectedCount', { count: selectedIds.size })}
             </p>
             <div className="space-y-4">
-              {false && <div>
-                <label className="block text-xs text-c-text-muted mb-1">
-                  {t('initiatives.bulkEdit.status')}
-                </label>
-                <select
-                  value={bulkStatus}
-                  onChange={(e) => setBulkStatus(e.target.value as InitiativeStatus)}
-                  className="w-full px-3 py-2 bg-c-bg border border-c-border-subtle rounded-lg text-sm text-c-text"
-                >
-                  <option value="">{t('initiatives.bulkEdit.noChange')}</option>
-                  {ALLOWED_STATUSES.map((s) => (
-                    <option key={s} value={s}>
-                      {STATUS_METADATA[s].label}
-                    </option>
-                  ))}
-                </select>
-              </div>}
-              {false && <div>
-                <label className="block text-xs text-c-text-muted mb-1">
-                  {t('initiatives.bulkEdit.priority')}
-                </label>
-                <select
-                  value={bulkPriority}
-                  onChange={(e) => setBulkPriority(e.target.value as any)}
-                  className="w-full px-3 py-2 bg-c-bg border border-c-border-subtle rounded-lg text-sm text-c-text"
-                >
-                  <option value="">{t('initiatives.bulkEdit.noChange')}</option>
-                  <option value="CRITICAL">{t('initiatives.priority.critical')}</option>
-                  <option value="HIGH">{t('initiatives.priority.high')}</option>
-                  <option value="MEDIUM">{t('initiatives.priority.medium')}</option>
-                  <option value="LOW">{t('initiatives.priority.low')}</option>
-                </select>
-              </div>}
-              {false && <div>
-                <label className="block text-xs text-c-text-muted mb-1">
-                  {t('initiatives.bulkEdit.businessOwner')}
-                </label>
-                <select
-                  value={bulkOwnerBusinessId}
-                  onChange={(e) => setBulkOwnerBusinessId(e.target.value)}
-                  className="w-full px-3 py-2 bg-c-bg border border-c-border-subtle rounded-lg text-sm text-c-text"
-                >
-                  <option value="">{t('initiatives.bulkEdit.noChange')}</option>
-                  {users.map((user) => (
-                    <option key={user.id} value={user.id}>
-                      {user.firstName} {user.lastName}
-                    </option>
-                  ))}
-                </select>
-              </div>}
+              {false && (
+                <div>
+                  <label className="block text-xs text-c-text-muted mb-1">
+                    {t('initiatives.bulkEdit.status')}
+                  </label>
+                  <select
+                    value={bulkStatus}
+                    onChange={(e) => setBulkStatus(e.target.value as InitiativeStatus)}
+                    className="w-full px-3 py-2 bg-c-bg border border-c-border-subtle rounded-lg text-sm text-c-text"
+                  >
+                    <option value="">{t('initiatives.bulkEdit.noChange')}</option>
+                    {ALLOWED_STATUSES.map((s) => (
+                      <option key={s} value={s}>
+                        {STATUS_METADATA[s].label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              {false && (
+                <div>
+                  <label className="block text-xs text-c-text-muted mb-1">
+                    {t('initiatives.bulkEdit.priority')}
+                  </label>
+                  <select
+                    value={bulkPriority}
+                    onChange={(e) => setBulkPriority(e.target.value as any)}
+                    className="w-full px-3 py-2 bg-c-bg border border-c-border-subtle rounded-lg text-sm text-c-text"
+                  >
+                    <option value="">{t('initiatives.bulkEdit.noChange')}</option>
+                    <option value="CRITICAL">{t('initiatives.priority.critical')}</option>
+                    <option value="HIGH">{t('initiatives.priority.high')}</option>
+                    <option value="MEDIUM">{t('initiatives.priority.medium')}</option>
+                    <option value="LOW">{t('initiatives.priority.low')}</option>
+                  </select>
+                </div>
+              )}
+              {false && (
+                <div>
+                  <label className="block text-xs text-c-text-muted mb-1">
+                    {t('initiatives.bulkEdit.businessOwner')}
+                  </label>
+                  <select
+                    value={bulkOwnerBusinessId}
+                    onChange={(e) => setBulkOwnerBusinessId(e.target.value)}
+                    className="w-full px-3 py-2 bg-c-bg border border-c-border-subtle rounded-lg text-sm text-c-text"
+                  >
+                    <option value="">{t('initiatives.bulkEdit.noChange')}</option>
+                    {users.map((user) => (
+                      <option key={user.id} value={user.id}>
+                        {user.firstName} {user.lastName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div>
                 <label className="block text-xs text-c-text-muted mb-1">
                   {t('initiatives.bulkEdit.executionOwner')}
