@@ -427,14 +427,25 @@ export class PostgresInitiativeReader {
       version: number;
       aggregate_id: string;
       payload_json: Record<string, unknown>;
+      owner_name: string | null;
+      authority_name: string | null;
     }>(
-      `SELECT version,aggregate_id,payload_json FROM ie_aggregate_state WHERE organization_id=$1 AND aggregate_type='intervention_case' ORDER BY updated_at DESC`,
+      `SELECT s.version,s.aggregate_id,s.payload_json,
+              COALESCE(NULLIF(TRIM(COALESCE(owner.first_name,'') || ' ' || COALESCE(owner.last_name,'')),''),owner.email) AS owner_name,
+              COALESCE(NULLIF(TRIM(COALESCE(authority.first_name,'') || ' ' || COALESCE(authority.last_name,'')),''),authority.email) AS authority_name
+         FROM ie_aggregate_state s
+         LEFT JOIN users owner ON owner.id=s.payload_json->>'ownerId' AND owner.organization_id=s.organization_id
+         LEFT JOIN users authority ON authority.id=s.payload_json->>'authorityId' AND authority.organization_id=s.organization_id
+        WHERE s.organization_id=$1 AND s.aggregate_type='intervention_case'
+        ORDER BY s.updated_at DESC`,
       [organizationId]
     );
     return result.rows.map((r) => ({
       version: r.version,
       interventionId: r.aggregate_id,
       ...r.payload_json,
+      ownerName: r.owner_name,
+      authorityName: r.authority_name,
     }));
   }
   async findReportDefinition(organizationId: string, definitionId: string) {

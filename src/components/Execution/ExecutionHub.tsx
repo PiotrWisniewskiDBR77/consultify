@@ -119,7 +119,6 @@ import {
 import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { createInitiativesDemoDataset } from '../Initiatives/initiativesDemoData';
 import { ExecutionControlSurface } from './ExecutionControlSurface';
-import { ExecutionDeliveryClosurePanel } from './ExecutionDeliveryClosurePanel';
 import { isExecutionFlagEnabled } from './executionFeatureFlags';
 import { ExecutionManagementView } from './ExecutionManagementView';
 import { normalizeExecutionArrayEnvelope } from './executionPayloadGuards';
@@ -2105,7 +2104,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           const meta = STATUS_METADATA[status];
           return {
             value: status,
-            label: meta?.label || String(status),
+            label:
+              isPolish && status === InitiativeStatus.EXECUTING
+                ? 'W realizacji'
+                : meta?.label || String(status),
             color: meta?.dotColor || 'bg-slate-400',
           };
         }),
@@ -2114,7 +2116,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           return (
             <EntityStatusChip
               status={String(row.status)}
-              label={meta?.label || String(row.status)}
+              label={
+                isPolish && row.status === InitiativeStatus.EXECUTING
+                  ? 'W realizacji'
+                  : meta?.label || String(row.status)
+              }
             />
           );
         },
@@ -2283,7 +2289,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         },
       },
     ],
-    [decisionsByInitiative, t, tasksByInitiative]
+    [decisionsByInitiative, isPolish, t, tasksByInitiative]
   );
 
   const scopeToggle = (
@@ -5433,15 +5439,6 @@ Please return:
     if (activeTab === ('control' as ModuleTab))
       return (
         <div className="min-h-0 flex-1 overflow-auto p-4">
-          <ExecutionDeliveryClosurePanel
-            initialLinkId={searchParams.get('executionLinkId')}
-            onLinkIdChange={(linkId) => {
-              const next = new URLSearchParams(searchParams);
-              next.set('tab', 'control');
-              next.set('executionLinkId', linkId);
-              setSearchParams(next, { replace: true });
-            }}
-          />
           <ExecutionControlSurface
             activePreset={canonicalMenu3Preset.control}
             onCountsChange={menu3CountHandlers.control}

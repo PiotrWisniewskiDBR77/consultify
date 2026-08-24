@@ -48,6 +48,8 @@ const USERS = Object.freeze([
     email: 'w3.initiatives.owner@local.test',
     role: 'OWNER',
     membership: 'ACTIVE',
+    firstName: 'Piotr',
+    lastName: 'Wiśniewski',
     purpose: 'owner candidate acceptance and governed profile command',
     password: 'Wave3IniOwner!2026',
   },
@@ -57,6 +59,8 @@ const USERS = Object.freeze([
     email: 'w3.initiatives.admin@local.test',
     role: 'ADMIN',
     membership: 'ACTIVE',
+    firstName: 'Anna',
+    lastName: 'Kowalska',
     purpose: 'allowed same-tenant admin alternate',
     password: 'Wave3IniAdmin!2026',
   },
@@ -66,6 +70,8 @@ const USERS = Object.freeze([
     email: 'w3.initiatives.project.actor@local.test',
     role: 'MEMBER',
     membership: 'ACTIVE',
+    firstName: 'Marek',
+    lastName: 'Nowak',
     purpose: 'system-portfolio PROJECT_MANAGER for capability-bound review',
     password: 'Wave3IniProject!2026',
   },
@@ -75,6 +81,8 @@ const USERS = Object.freeze([
     email: 'w3.initiatives.member@local.test',
     role: 'MEMBER',
     membership: 'ACTIVE',
+    firstName: 'Ewa',
+    lastName: 'Nowicka',
     purpose: 'role-denied profile command',
     password: 'Wave3IniMember!2026',
   },
@@ -84,6 +92,8 @@ const USERS = Object.freeze([
     email: 'w3.initiatives.inactive@local.test',
     role: 'ADMIN',
     membership: 'REVOKED',
+    firstName: 'Nieaktywny',
+    lastName: 'Użytkownik',
     purpose: 'inactive membership denial',
     password: 'Wave3IniInactive!2026',
   },
@@ -93,6 +103,8 @@ const USERS = Object.freeze([
     email: 'w3.initiatives.foreign@local.test',
     role: 'OWNER',
     membership: 'ACTIVE',
+    firstName: 'Obcy',
+    lastName: 'Właściciel',
     purpose: 'foreign-tenant non-disclosure',
     password: 'Wave3IniForeign!2026',
   },
@@ -242,8 +254,8 @@ async function seedBase(ownershipNonce: string) {
     for (const user of USERS) {
       const hash = await bcrypt.hash(user.password, 10);
       await c.query(
-        `INSERT INTO users(id,organization_id,email,password,first_name,last_name,role,status,language,timezone) VALUES($1,$2,$3,$4,'Initiatives','Fixture',$5,'active','pl','Europe/Warsaw')`,
-        [user.id, user.org, user.email, hash, user.role]
+        `INSERT INTO users(id,organization_id,email,password,first_name,last_name,role,status,language,timezone) VALUES($1,$2,$3,$4,$5,$6,$7,'active','pl','Europe/Warsaw')`,
+        [user.id, user.org, user.email, hash, user.firstName, user.lastName, user.role]
       );
       await c.query(
         `INSERT INTO organization_members(id,organization_id,user_id,role,status) VALUES($1,$2,$3,$4,$5)`,

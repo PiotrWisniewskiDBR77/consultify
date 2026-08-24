@@ -48,4 +48,10 @@ describe('Wave 3 Initiatives to Execution owner fixture', () => {
       expect(source).toContain(expected);
     }
   });
+
+  it('seeds readable actor identities for owner-review surfaces', () => {
+    expect(source).toContain("firstName: 'Piotr'");
+    expect(source).toContain("lastName: 'Wiśniewski'");
+    expect(source).toContain('user.firstName, user.lastName, user.role');
+  });
 });

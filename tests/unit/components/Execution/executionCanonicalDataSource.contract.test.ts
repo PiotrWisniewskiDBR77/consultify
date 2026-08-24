@@ -48,4 +48,14 @@ describe('Execution canonical data-source contract', () => {
     expect(documentBranch).toBeGreaterThan(renderContent);
     expect(listBranch).toBeGreaterThan(documentBranch);
   });
+
+  it('keeps the Control register free of the retired delivery-closure panel', () => {
+    expect(source).not.toContain("import { ExecutionDeliveryClosurePanel }");
+    expect(source).not.toContain('<ExecutionDeliveryClosurePanel');
+  });
+
+  it('renders the executing lifecycle label in Polish when the locale is Polish', () => {
+    expect(source).toContain("isPolish && row.status === InitiativeStatus.EXECUTING");
+    expect(source).toContain("? 'W realizacji'");
+  });
 });
