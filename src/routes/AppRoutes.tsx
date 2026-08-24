@@ -594,15 +594,34 @@ const OurStoryPage = lazyWithRetry(() =>
   import('@/views/OurStoryPage').then((m) => ({ default: m.OurStoryPage }))
 );
 
-const RedirectWithTracking: React.FC<{ from: string; to: string; reason: string }> = ({
-  from,
-  to,
-  reason,
-}) => {
+const RedirectWithTracking: React.FC<{
+  from: string;
+  to: string;
+  reason: string;
+  /**
+   * TRI-MUST-04 (2026-08-24): these legacy Settings/Organization sub-routes
+   * hand off to canonical Admin screens, but a SUPERADMIN is barred from
+   * `/admin/*` by design (P0 guard, ADM-RAW-P0-001 — never bypass that guard
+   * here). Without this, a superadmin hitting e.g. /settings/billing bounced
+   * twice: once here to /admin/billing, then silently again to
+   * /superadmin/customers with zero explanation. Give SUPERADMIN a direct,
+   * sensible landing in the superadmin console instead of routing them
+   * through a screen they can never render. When no dedicated superadmin
+   * equivalent exists, fall back to /superadmin?from=<attempted path> so the
+   * attempted destination isn't lost.
+   */
+  superadminTo?: string;
+}> = ({ from, to, reason, superadminTo }) => {
+  const { currentUser } = useAppStore();
+  const isSuperAdmin = isSuperAdminRole(currentUser?.role);
+  const target = isSuperAdmin
+    ? superadminTo || `${ROUTES.SUPERADMIN.ROOT}?from=${encodeURIComponent(from)}`
+    : to;
+  const effectiveReason = isSuperAdmin ? `${reason}_superadmin` : reason;
   React.useEffect(() => {
-    trackFunnelEvent('route_redirected', { from, to, reason });
-  }, [from, to, reason]);
-  return <Navigate to={to} replace />;
+    trackFunnelEvent('route_redirected', { from, to: target, reason: effectiveReason });
+  }, [from, target, effectiveReason]);
+  return <Navigate to={target} replace />;
 };
 
 const RedirectPreservingQuery: React.FC<{ from: string; to: string; reason: string }> = ({
@@ -3051,6 +3070,7 @@ export const AppRoutes: React.FC = () => {
                           <RedirectWithTracking
                             from={ROUTES.SETTINGS.BILLING}
                             to={ROUTES.ADMIN.BILLING}
+                            superadminTo={ROUTES.SUPERADMIN.CUSTOMERS_BILLING}
                             reason="settings_admin_handoff"
                           />
                         }
@@ -3061,6 +3081,7 @@ export const AppRoutes: React.FC = () => {
                           <RedirectWithTracking
                             from={ROUTES.SETTINGS.ORGANIZATION}
                             to={ROUTES.ADMIN.COMMAND}
+                            superadminTo={ROUTES.SUPERADMIN.CUSTOMERS_ORGANIZATIONS}
                             reason="settings_admin_handoff"
                           />
                         }
@@ -3071,6 +3092,7 @@ export const AppRoutes: React.FC = () => {
                           <RedirectWithTracking
                             from={ROUTES.SETTINGS.TENANT_DEFAULTS}
                             to={ROUTES.ADMIN.COMMAND}
+                            superadminTo={ROUTES.SUPERADMIN.CUSTOMERS_ORGANIZATIONS}
                             reason="settings_admin_handoff"
                           />
                         }
@@ -3114,6 +3136,7 @@ export const AppRoutes: React.FC = () => {
                           <RedirectWithTracking
                             from={ROUTES.ORGANIZATION.MEMBERS}
                             to={ROUTES.ADMIN.PEOPLE}
+                            superadminTo={ROUTES.SUPERADMIN.CUSTOMERS_USERS}
                             reason="organization_admin_handoff"
                           />
                         }
@@ -3124,6 +3147,7 @@ export const AppRoutes: React.FC = () => {
                           <RedirectWithTracking
                             from={ROUTES.ORGANIZATION.BILLING}
                             to={ROUTES.ADMIN.BILLING}
+                            superadminTo={ROUTES.SUPERADMIN.CUSTOMERS_BILLING}
                             reason="organization_admin_handoff"
                           />
                         }
@@ -3134,6 +3158,7 @@ export const AppRoutes: React.FC = () => {
                           <RedirectWithTracking
                             from={ROUTES.ORGANIZATION.LIMITS}
                             to={ROUTES.ADMIN.BILLING}
+                            superadminTo={ROUTES.SUPERADMIN.CUSTOMERS_BILLING}
                             reason="organization_admin_handoff"
                           />
                         }
@@ -3154,6 +3179,7 @@ export const AppRoutes: React.FC = () => {
                           <RedirectWithTracking
                             from={ROUTES.ORGANIZATION.BRANDING}
                             to={ROUTES.ADMIN.COMMAND}
+                            superadminTo={ROUTES.SUPERADMIN.CONFIGURATION_WHITELABEL}
                             reason="organization_admin_handoff"
                           />
                         }
