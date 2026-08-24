@@ -8,7 +8,7 @@ const guardedFixtureScripts = [
   ['scripts/dev/seed-wave3-settings-owner-review.mjs', 831],
   ['server/scripts/seed-wave3-admin-owner-review.ts', 831],
   ['server/scripts/seed-wave3-assessment-owner-review.ts', 831],
-  ['server/scripts/seed-wave3-finance-owner-review.ts', 831],
+  ['server/scripts/seed-wave3-finance-owner-review.ts', 834],
   ['server/scripts/seed-wave3-initiatives-owner-review.ts', 834],
   ['server/scripts/seed-wave3-organization-owner-review.ts', 831],
   ['server/scripts/seed-wave3-partner-owner-review.ts', 831],

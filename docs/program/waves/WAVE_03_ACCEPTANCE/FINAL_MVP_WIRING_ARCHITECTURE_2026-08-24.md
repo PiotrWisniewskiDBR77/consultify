@@ -155,7 +155,7 @@ surface. Rendering a historical component after an API error is forbidden.
 |---|---|---|---|
 | Results | fresh PostgreSQL 17 DB; backend `4417`, frontend `4418` | guarded `W3-RESULTS-OWNER-v1`; KPI `1`, OKR `1`, ROI `1` authenticated API readback | authenticated browser table/preview/card, safe mutation if permitted, warm and cold readback |
 | Materials | none adopted | retained marker mismatch | fresh migration + guarded seed + marker verification |
-| Finance | not yet reconstructed | no current-candidate claim | fresh migration + guarded seed + API/UI chain |
+| Finance | fresh PostgreSQL 17 DB `consultify_w3_finance_owner_arch_v2_20260824` | guarded `W3-FINANCE-OWNER-v1`; `834` migrations, `6` statements, `6` source receipts, `5` approved versions, `1` baseline context and lifecycle/hash identity verified | isolated API runtime, authenticated registry/detail reads, browser table/preview/card, warm and cold runtime readback |
 | Assessment | not yet reconstructed | no current-candidate claim | fresh migration + guarded seed + API/UI chain |
 
 ## Current truth
@@ -181,4 +181,12 @@ surface. Rendering a historical component after an API error is forbidden.
   one OKR set and one ROI case. The isolated runtime is healthy on backend
   `127.0.0.1:4417` and frontend `127.0.0.1:4418`. Browser rendering and cold
   readback remain open; this is not owner acceptance.
+- Finance has completed its current-source guarded reconstruction on the
+  separately named synthetic database
+  `consultify_w3_finance_owner_arch_v2_20260824`. Seed readback proves `834`
+  migrations, six statement siblings and source receipts, five approved
+  versions, one baseline context and lifecycle/hash identity. The earlier
+  failed `...owner_arch_20260824` database and receipt remain preserved as
+  failure evidence; they were not reset or reused. API and browser wiring are
+  still open, so this is not owner acceptance.
 - No production, Railway or customer data was changed.

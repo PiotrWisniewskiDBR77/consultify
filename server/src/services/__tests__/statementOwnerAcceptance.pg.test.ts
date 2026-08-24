@@ -186,12 +186,13 @@ describe.runIf(enabled)(
       await admin.end();
     });
 
-    it('backfills every confidence boundary and rejects recurrence at the database wall', async () => {
+    it('preserves historical confidence drift and rejects recurrence at the database wall', async () => {
       const client = await pool.connect();
+      const confidenceSchema = `confidence_${crypto.randomUUID().replaceAll('-', '')}`;
       try {
         await client.query('BEGIN');
-        await client.query(`CREATE SCHEMA confidence_${nonce}`);
-        await client.query(`SET LOCAL search_path TO confidence_${nonce}`);
+        await client.query(`CREATE SCHEMA ${confidenceSchema}`);
+        await client.query(`SET LOCAL search_path TO ${confidenceSchema}`);
         await client.query(`CREATE TABLE financial_statements(id text, overall_confidence real)`);
         await client.query(
           `CREATE TABLE financial_statement_values(id text, confidence real, mapping_confidence real)`
@@ -219,7 +220,7 @@ describe.runIf(enabled)(
         );
         await client.query(`INSERT INTO financial_statement_value_evidence VALUES ('evidence',-5)`);
         const migration = await fs.readFile(
-          path.resolve('server/migrations/20261054_finance_statement_confidence_bounds.sql'),
+          path.resolve('server/migrations/20261057_finance_statement_confidence_bounds.sql'),
           'utf8'
         );
         await client.query(migration);
@@ -234,13 +235,13 @@ describe.runIf(enabled)(
            (SELECT array_agg(weight) FROM financial_statement_value_evidence) evidence_weight`
         );
         expect(values.rows[0]).toMatchObject({
-          statements: [1, 0, 0],
-          value_confidence: [1],
-          mapping_confidence: [0],
-          section_confidence: [1],
-          row_confidence: [0],
-          mapping_score: [1],
-          evidence_weight: [0],
+          statements: [1.7, -0.2, null],
+          value_confidence: [2],
+          mapping_confidence: [-1],
+          section_confidence: [1.4],
+          row_confidence: [-0.4],
+          mapping_score: [8],
+          evidence_weight: [-5],
         });
         await expect(
           client.query(`INSERT INTO financial_statement_values VALUES ('invalid',1.01,0.5)`)
