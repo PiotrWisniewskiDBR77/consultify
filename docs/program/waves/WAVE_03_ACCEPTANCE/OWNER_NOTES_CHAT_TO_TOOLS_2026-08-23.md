@@ -29,6 +29,15 @@ Canonical detailed sources:
 - Tools: [TOOLS_OWNER_REVIEW_REGISTER.md](modules/03_TOOLS/TOOLS_OWNER_REVIEW_REGISTER.md)
 - Tools final working-model report: [TOOLS_OWNER_REVIEW_FINAL_REPORT_2026-08-22.md](modules/03_TOOLS/TOOLS_OWNER_REVIEW_FINAL_REPORT_2026-08-22.md)
 - Cross-module menu policy: [ROW_MENU_AUDIT_REGISTER.md](owner_feedback/CROSS_MODULE/ROW_MENU_AUDIT_REGISTER.md)
+- Atomic consulting review: [CHAT_TO_TOOLS_CONSULTING_ATOMIC_REVIEW_2026-08-23.md](CHAT_TO_TOOLS_CONSULTING_ATOMIC_REVIEW_2026-08-23.md)
+- Atomic UX review: [CHAT_TO_TOOLS_UX_ATOMIC_REVIEW_2026-08-23.md](CHAT_TO_TOOLS_UX_ATOMIC_REVIEW_2026-08-23.md)
+- Final three-person review panel: [CHAT_TO_TOOLS_FINAL_THREE_PERSON_PANEL_2026-08-23.md](CHAT_TO_TOOLS_FINAL_THREE_PERSON_PANEL_2026-08-23.md)
+- Sub-9 remediation backlog: [CHAT_TO_TOOLS_BACKLOG_BELOW_9_2026-08-23.md](CHAT_TO_TOOLS_BACKLOG_BELOW_9_2026-08-23.md)
+- Integration handoff and bounded implementation evidence: [CHAT_TO_TOOLS_INTEGRATION_HANDOFF_2026-08-23.md](CHAT_TO_TOOLS_INTEGRATION_HANDOFF_2026-08-23.md)
+
+The five recovered Chat-to-Tools documents above are preserved source records.
+Their presence in this index does not promote their observations to implemented,
+verified, owner-accepted or release-ready status.
 
 ## Executive summary
 
