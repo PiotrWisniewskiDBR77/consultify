@@ -53,6 +53,20 @@ The controlled sequence is therefore:
 
 ## Fast pass — 16 decisions
 
+Prepare the exact ordered review packet without starting, stopping or reseeding
+any runtime:
+
+```bash
+node scripts/dev/prepare-canonical-owner-review.mjs \
+  > /tmp/consultify-canonical-16-owner-review.json
+```
+
+The packet verifies all sixteen FINAL `0600` fixture receipts and labels each
+database `ISOLATED_MODULE_EVIDENCE_ONLY`. Its URLs are navigation targets for
+the future single integration runtime, not proof that sixteen isolated
+databases have already been merged. The protected runtime on `:3987` is never a
+target of this command.
+
 | # | Module | Canonical entry | Expected Menu 2 / primary surface | Existing guarded data family | Owner verdict |
 |---:|---|---|---|---|---|
 | 01 | Organization | `/organization` | Profile; Goals; Challenges; Strategy; Context governance | `W3-ORGANIZATION-OWNER-v1` | `PENDING` |
