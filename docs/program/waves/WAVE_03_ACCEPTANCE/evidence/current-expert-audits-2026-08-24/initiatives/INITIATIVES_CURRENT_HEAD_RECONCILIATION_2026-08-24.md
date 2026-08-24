@@ -28,7 +28,7 @@ production were not changed.
 | `INI-C08` / `INI-TECH-003` | `SUPERSEDED_BY_LATER_FIX / SOURCE_AND_TEST_PASS` | `canonicalInitiativeMatchesRegisterFilters` applies project and priority scope before the visible projection; mixed-scope focused tests pass. | Full browser counter/filter matrix remains part of owner qualification. |
 | `INI-C04` | `PARTIAL_EXACT_SHA_PASS` | Product SHA `e04797f993` was verified in browser on client/server `4007/4006`; local DB manifest records 834 migrations and deterministic counts. Execution regression evidence is indexed under `current-sha-e04797f9-2026-08-24`. | Full 21-gate Initiatives package and owner verdict are not complete. |
 | `INI-C05` | `OPEN_PRODUCT_WORK` | Premise-first creation components and tests exist. | Complete AI proposal, human review, assumptions/source retention and idempotent save/readback still require end-to-end qualification. |
-| `INI-C06` | `OPEN_PRODUCT_WORK` | Versioned Plan domain and API foundation exist. | Status/include selection, governed AI proposal, editable weekly Gantt, comparison and cold reopen remain open. |
+| `INI-C06` | `PARTIAL_PRODUCT_IMPLEMENTATION` | Versioned Plan domain and API foundation exist. The current working candidate removes raw period JSON from plan creation/workbench, generates a bounded weekly horizon from business inputs, and allows readable period add/edit/remove before save. Focused Plan regression: `2 files / 7 tests PASS`. | Status/include selection, governed AI proposal, visual editable weekly Gantt, comparison, browser qualification and cold reopen remain open. |
 | `INI-C07` | `OPEN_PRODUCT_WORK` | Versioned Capacity domain and API foundation exist. | Multiple analyses per Plan, person/team saturation, governed recommendations and independent cold readback remain open. |
 | `INI-C09` | `OPEN_SHARED_UI_WORK` | Shared table/preview primitives are present. | One canonical preview, concise row menu, reachable bulk selection, tablet/keyboard verification and owner visual acceptance remain open. |
 | `INI-C10` | `OPEN_PRODUCT_WORK` | Versioned report definitions/runs exist in the backend foundation. | Final Plan/Capacity decision-report workflow, lineage UI and export/readback remain open. |
@@ -49,6 +49,18 @@ npx vitest run \
 
 Result: `4 files / 136 tests PASS`.
 
+Current bounded Plan increment:
+
+```text
+npx vitest run \
+  tests/unit/initiatives-execution/planScenario.test.ts \
+  tests/unit/initiatives-execution/planScenarioSurface.test.tsx
+```
+
+Result: `2 files / 7 tests PASS`. This is source/component evidence only. It
+does not upgrade `C06` to browser-qualified, owner-accepted or complete Gantt
+behavior.
+
 Limitations: React `act(...)` warnings remain in the New-Initiative accessibility
 test lane. They are test-quality debt and are not promoted to an owner/browser
 pass. The expected fail-closed test logs the canonical API error by design.
@@ -60,7 +72,8 @@ technical defects/gates (`C01`, `C02`, `C03`, `C08`) now have later source or
 runtime evidence; `C04` is partial. The decisive product work remains:
 
 1. `C05` — one governed premise-to-AI-draft creation flow;
-2. `C06` — Plan what-if with editable weekly Gantt;
+2. `C06` — finish the now-readable Plan what-if with include/status selection,
+   governed AI proposal, visual weekly Gantt, comparison and cold reopen;
 3. `C07` — Plan-bound multi-analysis Capacity workspace;
 4. `C09` — canonical preview/menu/selection behavior;
 5. `C10` — versioned decision reports with lineage;
