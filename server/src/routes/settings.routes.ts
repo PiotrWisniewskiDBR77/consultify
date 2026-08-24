@@ -530,7 +530,6 @@ router.get(
 router.put(
   '/preferences/notifications',
   verifyToken,
-  requireActiveMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
     const { preferences } = req.body;
@@ -2846,7 +2845,6 @@ router.put(
 router.post(
   '/export-data',
   verifyToken,
-  requireActiveMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
@@ -3012,7 +3010,6 @@ const ensureGdprRequestsTable = async () => {
 router.get(
   '/gdpr/export-status',
   verifyToken,
-  requireActiveMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
@@ -3056,7 +3053,6 @@ router.get(
 router.post(
   '/gdpr/export-request',
   verifyToken,
-  requireActiveMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
@@ -3181,7 +3177,6 @@ router.post(
 router.get(
   '/gdpr/export-download/:requestId',
   verifyToken,
-  requireActiveMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
     const { requestId } = req.params;
@@ -3223,7 +3218,6 @@ router.get(
 router.post(
   '/gdpr/deletion-request',
   verifyToken,
-  requireActiveMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
     const tokenOrganizationId = req.user?.organizationId;
@@ -3296,7 +3290,6 @@ router.post(
 router.get(
   '/gdpr/deletion-status',
   verifyToken,
-  requireActiveMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
@@ -3358,7 +3351,6 @@ router.get(
 router.post(
   '/gdpr/cancel-deletion',
   verifyToken,
-  requireActiveMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
     const { requestId } = req.body || {};
@@ -5749,7 +5741,6 @@ router.get(
 router.put(
   '/preferences/appearance',
   verifyToken,
-  requireActiveMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
     const preferences = req.body;
