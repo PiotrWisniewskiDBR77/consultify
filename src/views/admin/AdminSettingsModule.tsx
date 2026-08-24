@@ -18,6 +18,7 @@ import { AdminServiceAccountsPanel } from '../../components/Admin/AdminServiceAc
 import { AdminSecurityAlertsPanel } from '../../components/Admin/AdminSecurityAlertsPanel';
 import { AdminSessionsPanel } from '../../components/Admin/AdminSessionsPanel';
 import { AdminBreakGlassPanel } from '../../components/Admin/AdminBreakGlassPanel';
+import { AdminGuestsPanel } from '../../components/Admin/AdminGuestsPanel';
 import { AdminSeatsLicencesPanel } from '../../components/Admin/AdminSeatsLicencesPanel';
 import { AdminTeamsPanel } from '../../components/Admin/AdminTeamsPanel';
 import {
@@ -311,7 +312,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
     const connected =
       resolvedLocation.screen === ADMIN_DEFAULTS[resolvedLocation.domain] ||
       (resolvedLocation.domain === 'team' &&
-        ['members', 'invitations', 'ownership', 'teams'].includes(resolvedLocation.screen)) ||
+        ['members', 'invitations', 'ownership', 'teams', 'guests-external'].includes(resolvedLocation.screen)) ||
       (resolvedLocation.domain === 'billing' &&
         [
           'plan-limits',
@@ -371,6 +372,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
     switch (resolvedLocation.domain) {
       case 'team':
         if (resolvedLocation.screen === 'teams') return <AdminTeamsPanel />;
+        if (resolvedLocation.screen === 'guests-external') return <AdminGuestsPanel />;
         return (
           <AdminMembersRolesPanel
             screen={resolvedLocation.screen as 'members' | 'invitations' | 'ownership'}

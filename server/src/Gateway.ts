@@ -26,6 +26,7 @@ import seatsAdminRoutes from './routes/admin/seats.routes.js';
 import securityAlertsAdminRoutes from './routes/admin/security-alerts.routes.js';
 import sessionsAdminRoutes from './routes/admin/sessions.routes.js';
 import breakGlassAdminRoutes from './routes/admin/break-glass.routes.js';
+import guestsAdminRoutes from './routes/admin/guests.routes.js';
 import serviceAccountsAdminRoutes from './routes/admin/service-accounts.routes.js';
 import healthPanelAdminRoutes from './routes/admin/health-panel.routes.js';
 import adminBulkRoutes from './routes/admin-bulk.routes.js';
@@ -781,6 +782,7 @@ export class ApiGateway {
       app.use('/api/admin/security-alerts', securityAlertsAdminRoutes);
       app.use('/api/admin/sessions', sessionsAdminRoutes);
       app.use('/api/admin/break-glass', breakGlassAdminRoutes);
+      app.use('/api/admin/guests', guestsAdminRoutes);
       app.use('/api/admin/service-accounts', serviceAccountsAdminRoutes);
       // Wiring (2026-07-15): route was defined but never mounted (0 Gateway refs).
       // Own auth (verifyToken + admin-role check) is applied inside the router —
