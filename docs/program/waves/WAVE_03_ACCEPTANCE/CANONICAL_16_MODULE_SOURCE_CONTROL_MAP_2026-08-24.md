@@ -322,6 +322,32 @@ checks. It is therefore retained as an unpromoted variant pending an atomic
 release-tool contract review; it must not overwrite the current candidate by
 file copy. No product or release operation is authorized by this classification.
 
+### Remaining non-document overlay disposition
+
+| Path | Read-only finding | Control decision |
+|---|---|---|
+| `.railwayignore` | Dirty variant removes exclusions for `public/images` and `public/assets` and records the rationale that Vite must copy them into the Railway build to prevent `ASSET_NOT_FOUND`. | `VALID_CONFIG_FIX_CANDIDATE / NOT_PROMOTED`. Keep isolated from documentation and product work. Revalidate only inside a separately authorized deployment-scope review; no deploy or Railway mutation is authorized. |
+| `src/components/Initiatives/InitiativesHub.tsx` | Large mixed variant (`187` added, `283` removed relative to candidate) changes data fallback/merging, planning degradation, source-proposal behavior, controls and modal/workspace logic while also deleting candidate accessibility and canonical-menu work. It is not a safe whole-file successor. | `PRESERVED_PRODUCT_WIP / ATOM_RECONCILIATION_REQUIRED / NO_COPY`. Reconcile only requirement by requirement against the frozen Initiatives contract after owner freeze. |
+| release bundle verifier plus unit test | Dirty variant is materially shorter and removes existing checks. | `DIVERGENT_TOOL_VARIANT / CANDIDATE_RETAINED / NO_COPY`. Review only as an isolated release-tool contract, never as part of module UI integration. |
+
+## Cleanup checkpoint — 2026-08-24
+
+The recovery inventory is now controlled without product-code development:
+
+- all `15` documentation paths are either preserved byte-identically,
+  reconciled atomically or retained through an explicit non-overwrite decision;
+- all `6` test/tool paths are either preserved byte-identically (`4`) or
+  classified as divergent non-promoted variants (`2`);
+- the single product WIP path and single configuration path remain preserved in
+  the source overlay with explicit no-copy decisions;
+- no file is classified as disposable;
+- no runtime, browser, database, Railway, deployment or release action was run;
+- product baseline remains frozen and owner acceptance remains open.
+
+This closes inventory/reconciliation only. It does not authorize coding. The
+next gate is owner freeze of the canonical route/source/contract map, followed
+by one-module-at-a-time integration and the `21` acceptance gates per module.
+
 ## Required connection record for every module
 
 Each module receives one row per surface with these fields before coding resumes:
