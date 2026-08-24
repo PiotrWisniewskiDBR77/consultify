@@ -40,7 +40,7 @@ Start: 2026-08-24 (Europe/Warsaw) · Koniec: —
 | 20 | team/roles-permissions | 2 | `9f36b11c7e` | DONE | OWNER CRUD+readback; ADMIN 403 fail-closed bez formularza |
 | 21 | audit/legal-hold | 4/B | `75c63d3458` | DONE | realna flaga org; blokowane operacje; brak mutacji i fikcyjnego rejestru |
 | 22 | audit/export-history | 4/B | `c90847a2a3` | DONE | addytywne paragony CSV; non-blocking INSERT; tenantowa lista |
-| 23 | audit/integrity | 4/B | — | NIE ZACZĘTO | |
+| 23 | audit/integrity | 4/B | `19ffa63d6f` | DONE | realne stats; access-control claim; jawny brak hash chain |
 | 24 | ai/personas | 4/A | — | NIE ZACZĘTO | |
 | 25 | ai/ai-incidents | 4/B | — | NIE ZACZĘTO | |
 | 26 | ai/configuration-versions | 2 | — | NIE ZACZĘTO | |
@@ -95,6 +95,7 @@ Stan: NIE ZACOMMITOWANO.
 | 7 | Serwis sesji admina nie waliduje powodu ani zatwierdzającego break-glass | `server/src/services/adminSessionService.ts:149-214` | brak walidacji domenowej | nowa trasa egzekwuje oba warunki; cudzej trasy superadmina nie zmieniano |
 | 8 | `legal_holds` jest martwe i prawdopodobnie nieuruchomione | `server/migrations/263_gdpr_compliance.sql:332` | schema/runtime drift | ekran pokazuje wyłącznie żywą flagę `org_policies`; bez migracji |
 | 9 | `audit_export_history` z `259_` jest martwe; eksporty dataExport nie mają wspólnego kontraktu paragonu | `server/migrations/259_audit_logging.sql:105`, `server/src/routes/dataExport.routes.ts` | schema/runtime drift / poza zakresem | dodano odrębny minimalny receipt tylko do admin audit CSV |
+| 10 | Brak żywego hash chain dziennika audytu | `server/migrations/never-ran/200_security_mvp_enterprise.sql.sql:556-579` | brak dowodu kryptograficznego | ekran mówi wprost o kontroli dostępu; rekomendowany prior-art `20261007`, `20261008`, `20260914`, `20260908` |
 
 ## Korekty inwentarza
 
@@ -161,6 +162,8 @@ Brak na starcie dyżuru.
 - `npx esbuild src/components/Admin/AdminAuditExportHistoryPanel.tsx --loader:.tsx=tsx --outfile=/dev/null` — PASS.
 - `bash scripts/check-list-canon.sh src/components/Admin/AdminAuditExportHistoryPanel.tsx` — PASS, 0 nowych naruszeń.
 - `npx vitest run server/src/routes/__tests__/audit-export-history.routes.test.ts server/src/routes/__tests__/adminP32.routes.test.ts src/components/Admin/__tests__/AdminAuditExportHistoryPanel.test.tsx src/views/admin/__tests__/AdminSettingsModule.test.tsx` — PASS, 4 pliki / 74 testy; obejmuje awarię receipt INSERT przy CSV 200.
+- `npx esbuild src/components/Admin/AdminAuditIntegrityPanel.tsx --loader:.tsx=tsx --outfile=/dev/null` — PASS.
+- `npx vitest run src/components/Admin/__tests__/AdminAuditIntegrityPanel.test.tsx src/views/admin/__tests__/AdminSettingsModule.test.tsx` — PASS, 2 pliki / 44 testy.
 
 ## Migracje
 
