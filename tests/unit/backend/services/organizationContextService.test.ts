@@ -212,4 +212,81 @@ describe('OrganizationContextService', () => {
     expect(context.snapshotUpdatedAt).toBe('2026-03-12T10:00:00.000Z');
     expect(context.counts).toEqual({ items: 2, claims: 3, conflicts: 0 });
   });
+
+  it('prefers the newest tied claim even when created_at arrives as a Date object (M01 cold-readback regression)', async () => {
+    // Regression test for: PUT /api/organization-profiles/:orgId returns 200
+    // and the value survives an immediate re-read, but reverts to the old
+    // value after a full page reload.
+    //
+    // Root cause: `organization_context_claims.created_at` is a Postgres
+    // `timestamp without time zone` column. node-postgres (the `pg` driver)
+    // parses that column into a native JS `Date` object by default — this
+    // codebase sets no `pg.types.setTypeParser` override anywhere (verified
+    // via grep). `pickBestClaim`'s tie-break used to compare
+    // `String(row.created_at)`, i.e. `Date#toString()`, which starts with the
+    // weekday abbreviation ("Mon", "Tue", ... "Sun"). Lexical comparison of
+    // that string does NOT sort chronologically: "Mon" < "Sun" alphabetically
+    // even though a Monday can be *later* than the preceding Sunday. So an
+    // older claim seeded on a Sunday would incorrectly outrank a same-day
+    // (confidence/is_explicit tied) newer claim written by a PUT on the
+    // following Monday.
+    //
+    // This test feeds `created_at` as real `Date` instances (matching actual
+    // pg driver behavior, unlike the ISO-string fixtures used elsewhere in
+    // this file) with exactly that Sunday-then-Monday pairing, and asserts
+    // the resolved profile reflects the NEWER claim.
+    const olderSundayClaim = new Date('2026-08-23T09:00:00.000Z'); // Sunday (seeded/original)
+    const newerMondayClaim = new Date('2026-08-24T15:00:00.000Z'); // Monday (written by PUT)
+
+    mockDbGet.mockImplementation(async (sql: string) => {
+      if (sql.includes('FROM organizations')) {
+        return { id: 'org-1', name: 'Org', default_language: 'en', default_timezone: 'UTC' };
+      }
+      if (sql.includes('FROM organization_context_snapshots')) return null;
+      return null;
+    });
+
+    mockDbAll.mockImplementation(async (sql: string) => {
+      if (sql.includes('FROM organization_context_claims c')) {
+        return [
+          {
+            id: 'claim-old',
+            item_id: 'item-old',
+            claim_path: 'profile.description',
+            value_json: JSON.stringify('Original description before the PUT.'),
+            confidence: 1,
+            claim_type: 'fact',
+            review_status: 'accepted',
+            created_at: olderSundayClaim,
+            source_type: 'organization_profile',
+            source_label: 'Profile updated',
+            item_created_at: olderSundayClaim,
+            is_explicit: 1,
+          },
+          {
+            id: 'claim-new',
+            item_id: 'item-new',
+            claim_path: 'profile.description',
+            value_json: JSON.stringify('Updated description from the PUT.'),
+            confidence: 1,
+            claim_type: 'fact',
+            review_status: 'accepted',
+            created_at: newerMondayClaim,
+            source_type: 'organization_profile',
+            source_label: 'Profile updated',
+            item_created_at: newerMondayClaim,
+            is_explicit: 1,
+          },
+        ];
+      }
+      return [];
+    });
+
+    const mod = await import(
+      '../../../../server/src/services/organizationContext/OrganizationContextService.js'
+    );
+    const context = await mod.organizationContextService.buildResolvedContext('org-1');
+
+    expect(context.profile.description).toBe('Updated description from the PUT.');
+  });
 });
