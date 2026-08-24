@@ -124,6 +124,13 @@ Every statement is copied atomically into the relevant owner register and then
 into the binding manifest. A summary never replaces the original wording or
 screenshot.
 
+The controlled recorder is
+`scripts/dev/record-canonical-owner-verdict.mjs`. It refuses to record a verdict
+unless the verbatim quote and every evidence path already exist under this
+acceptance directory. It also refuses to overwrite an earlier verdict. An
+amendment therefore remains a separate, reviewable change instead of silently
+rewriting history.
+
 ## Freeze completion gate
 
 The architecture is frozen only when:

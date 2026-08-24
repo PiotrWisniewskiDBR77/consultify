@@ -11,14 +11,31 @@ const manifestPath = path.join(
 const routesPath = path.join(repoRoot, 'src/routes/AppRoutes.tsx');
 const routeConfigPath = path.join(repoRoot, 'src/routes/routeConfig.ts');
 const menuPath = path.join(repoRoot, 'src/components/navigation/Sidebar/menuConfig.ts');
+const verdictsPath = path.join(
+  repoRoot,
+  'docs/program/waves/WAVE_03_ACCEPTANCE/canonical-16-module-owner-verdicts.json'
+);
+const acceptanceRoot = path.dirname(verdictsPath);
 
-const [manifestRaw, routes, routeConfig, menu] = await Promise.all([
+function assertAcceptanceEvidence(relativePath, label) {
+  assert.ok(relativePath, `${label}: path is missing`);
+  const absolutePath = path.resolve(repoRoot, relativePath);
+  assert.ok(
+    absolutePath.startsWith(`${acceptanceRoot}${path.sep}`),
+    `${label}: path escapes WAVE_03_ACCEPTANCE`
+  );
+  return readFile(absolutePath, 'utf8');
+}
+
+const [manifestRaw, verdictsRaw, routes, routeConfig, menu] = await Promise.all([
   readFile(manifestPath, 'utf8'),
+  readFile(verdictsPath, 'utf8'),
   readFile(routesPath, 'utf8'),
   readFile(routeConfigPath, 'utf8'),
   readFile(menuPath, 'utf8'),
 ]);
 const manifest = JSON.parse(manifestRaw);
+const verdicts = JSON.parse(verdictsRaw);
 
 assert.equal(manifest.schemaVersion, 1, 'Unsupported binding manifest version');
 assert.equal(manifest.modules.length, 16, 'The canonical denominator must remain exactly 16');
@@ -32,7 +49,32 @@ for (const module of manifest.modules) {
     ['CANONICAL_REACHABLE', 'CANONICAL_WITH_GAP'].includes(module.sourceStatus),
     `${module.id}: invalid source status`
   );
-  assert.equal(module.ownerDecision, 'PENDING', `${module.id}: owner decision changed without freeze review`);
+  assert.ok(
+    ['PENDING', 'ACCEPT', 'CHANGE', 'BLOCKED'].includes(module.ownerDecision),
+    `${module.id}: invalid owner decision`
+  );
+}
+
+assert.equal(new Set(verdicts.records.map((record) => record.module)).size, verdicts.records.length);
+const evidenceReads = [];
+for (const record of verdicts.records) {
+  const module = manifest.modules.find((entry) => entry.id === record.module);
+  assert.ok(module, `${record.module}: verdict refers to an unknown module`);
+  assert.equal(module.ownerDecision, record.verdict, `${record.module}: verdict and binding disagree`);
+  assert.ok(module.ownerDecisionRecord, `${record.module}: binding lacks verdict record reference`);
+  assert.ok(record.quoteFile, `${record.module}: verbatim quote file is missing`);
+  assert.ok(record.evidence?.length > 0, `${record.module}: evidence is missing`);
+  evidenceReads.push(assertAcceptanceEvidence(record.quoteFile, `${record.module}: quote`));
+  for (const evidencePath of record.evidence) {
+    evidenceReads.push(assertAcceptanceEvidence(evidencePath, `${record.module}: evidence`));
+  }
+}
+await Promise.all(evidenceReads);
+const nonPending = manifest.modules.filter((module) => module.ownerDecision !== 'PENDING');
+assert.equal(nonPending.length, verdicts.records.length, 'binding and verdict denominators disagree');
+if (nonPending.length < 16) {
+  assert.equal(manifest.status, 'OWNER_FREEZE_PENDING');
+  assert.equal(verdicts.status, 'OWNER_FREEZE_PENDING');
 }
 
 const requiredRouteContracts = [
@@ -92,6 +134,7 @@ console.log(
       gapModules: gaps.map((module) => module.id),
       apiQualifiedGapModules: gaps.filter((module) => module.dataStatus?.startsWith('QUALIFIED_')).length,
       ownerFreeze: manifest.status,
+      ownerVerdictsCaptured: verdicts.records.length,
     },
     null,
     2
