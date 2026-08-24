@@ -85,6 +85,23 @@ All acceptance paths above are relative to `docs/program/waves/WAVE_03_ACCEPTANC
 4. **Dirty main contains owner-authored evidence.** Its 22 entries are not disposable dirt. They are an overlay requiring a manifest and destination decision.
 5. **Screenshots are acceptance evidence, not route authority.** A visually better historical image does not by itself prove the correct backend, persistence, tenant, permissions or source lineage.
 
+### Conflict and competing-source register
+
+This table records source ownership without resolving product decisions on the owner's behalf. `Proposed routed owner` means the component currently selected by source, not `OWNER_ACCEPTED`.
+
+| Module | Proposed routed owner | Competing or conditional source | Classification now | Resolution gate | Rollback source |
+|---|---|---|---|---|---|
+| Interview | `/interview` → `src/components/Interview/InterviewHub.tsx` | `/discovery` and `/project-intelligence` mount the same hub under legacy identities | `OWNER_DECISION_REQUIRED` for URL normalization; component remains `CANONICAL_CANDIDATE` | Owner freezes `/interview` as sole identity or explicitly retains aliases | Candidate parent SHA before any future route-only change |
+| Assessment | `AssessmentHub` plus `AssessmentSessionEditorView` | backward-compatible framework/session paths and historical DRD variants | `OWNER_DECISION_REQUIRED`; no legacy deletion | Owner freezes the accepted DRD full-tool card and route | Current candidate plus preserved Assessment owner workshop/evidence hashes |
+| Execution | `ExecutionHub` | `V8UnavailableBanner` may replace the hub; built-in demo/report fallbacks also exist | `CONDITIONAL_RUNTIME`, not an alternate canonical UI | Capability/auth/data replay must distinguish valid unavailable state from regression | Current candidate and protected visible runtime remain untouched |
+| Results | `ResultsOwnerReviewEntry` and `ResultsVNext/*` registries/tools | `src/components/Results/ResultsHub.tsx` and old three-pairs cockpit | `UNREACHABLE_REFERENCE_ONLY`; prohibited as route fallback | Route/source guard plus authenticated KPI/OKR/ROI data readback | Current candidate; legacy files remain retained until equivalence proof |
+| Finance | `EconomicsView` / `FinanceHub` routed stack | V8 projections, legacy list/read models and preserved Finance branch `e7574b340e` | `SEMANTIC_REVIEW_REQUIRED`; wholesale branch merge prohibited | Five owner surfaces, API authority and cold readback frozen independently | Current candidate plus named preserved branch, path-by-path only |
+| Materials | `ReportsAndPresentationsHub` and deep tools | `ExceleView` versus `TabeleView` selected by feature flag | `OWNER_DECISION_REQUIRED` | Owner chooses the canonical sheet engine and disposition of the other route | Current candidate before any flag/route change |
+| Meetings | `MeetingHub` | no frozen stable object deep route | `OWNER_DECISION_REQUIRED`, not missing code | Owner freezes object URL grammar before card integration | Current collection route remains canonical candidate |
+| Partner | `PartnerPortalViewNew` export from `PartnerPortalView.tsx` | connect-state surface, legacy-section redirects and operational dashboard state | `OWNER_DECISION_REQUIRED` for connected landing; valid first-run state retained | Owner distinguishes first-run connect state from connected operational landing | Current candidate before any landing/redirect change |
+
+No competing source in this table is authorized for deletion. `DELETE_AFTER_EQUIVALENCE_PROOF` remains a later, separately evidenced action.
+
 ## Preserved-source reconciliation ledger
 
 This ledger prevents a whole-branch merge from replacing newer candidate work. `EXACT_IN_CANDIDATE` means the preserved source blob is already byte-identical at the same path. `SEMANTIC_REVIEW_REQUIRED` means only a focused diff against the current contract is permitted. `PRESERVE_AS_DOCUMENTATION` means copy/merge decisions concern evidence and specifications, not product wiring.
