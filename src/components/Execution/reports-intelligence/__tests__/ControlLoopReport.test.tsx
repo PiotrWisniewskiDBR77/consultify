@@ -14,7 +14,7 @@ vi.mock('@/components/standard/StandardTable', () => ({
     <div data-testid="standard-table">
       {data.map((row: any) => (
         <span key={`${row.kind}:${row.id}`}>
-          {row.title} · {row.verification}
+          {row.title} · {row.verification} · {row.severity}
         </span>
       ))}
     </div>
@@ -41,6 +41,7 @@ describe('Management Control Loop report', () => {
           decisionId: 'd1',
           taskId: 't1',
           evidenceRefs: ['e1'],
+          verificationState: 'VERIFIED',
           status: 'CLOSED',
           version: 3,
         },
@@ -51,6 +52,36 @@ describe('Management Control Loop report', () => {
     expect(
       screen.getByText(/INTERVENTION:x1 → decision:d1 → work:t1 → verification:VERIFIED/)
     ).toBeInTheDocument();
+  });
+
+  it('does not infer VERIFIED from a non-empty evidenceRefs array alone', async () => {
+    api.listManagementSignals.mockResolvedValue({ signals: [] });
+    api.listInterventions.mockResolvedValue({
+      interventions: [
+        {
+          interventionId: 'x2',
+          title: 'Attached but undecided',
+          evidenceRefs: ['e1', 'e2'],
+          status: 'OPEN',
+        },
+      ],
+    });
+    render(<ControlLoopReport />);
+    expect(await screen.findByTestId('standard-table')).toHaveTextContent(
+      'Attached but undecided · NOT_VERIFIED'
+    );
+  });
+
+  it('defaults missing severity to UNKNOWN rather than DECISION_REQUIRED', async () => {
+    api.listManagementSignals.mockResolvedValue({
+      signals: [{ signalId: 's1', title: 'No severity on source' }],
+    });
+    api.listInterventions.mockResolvedValue({ interventions: [] });
+    render(<ControlLoopReport />);
+    expect(await screen.findByTestId('standard-table')).toHaveTextContent(
+      'No severity on source · NOT_VERIFIED · UNKNOWN'
+    );
+    expect(screen.queryByText(/DECISION_REQUIRED/)).toBeNull();
   });
 
   it('marks a closed intervention without evidence as NOT_VERIFIED', async () => {

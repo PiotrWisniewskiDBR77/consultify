@@ -45,7 +45,7 @@ export function ControlLoopReport(): React.ReactElement {
               item.title || item.summary || item.signalType || item.signalId || 'UNKNOWN'
             ),
             status: String(item.status || 'UNKNOWN'),
-            severity: String(item.severity || 'DECISION_REQUIRED'),
+            severity: String(item.severity || 'UNKNOWN'),
             owner: String(item.ownerId || item.analysisOwnerId || 'OWNER_MISSING'),
             decisionId: String(item.decisionId || 'UNKNOWN'),
             workItemId: String(item.taskId || item.workItemId || 'UNKNOWN'),
@@ -59,23 +59,20 @@ export function ControlLoopReport(): React.ReactElement {
           'interventions',
           'data',
         ]).map((item: any) => {
-          const hasEvidence = Array.isArray(item.evidenceRefs) && item.evidenceRefs.length > 0;
-          const closed = ['RESOLVED', 'CLOSED', 'COMPLETED'].includes(
-            String(item.status).toUpperCase()
-          );
+          // F6: presence of evidenceRefs is not proof of verification — only an
+          // explicit `verificationState` from the source counts. An intervention
+          // closed with attachments but no recorded verification decision must
+          // still read NOT_VERIFIED, not be inferred as VERIFIED.
           return {
             id: String(item.interventionId || item.id),
             kind: 'INTERVENTION',
             title: String(item.title || item.interventionType || item.interventionId || 'UNKNOWN'),
             status: String(item.status || 'UNKNOWN'),
-            severity: String(item.severity || 'DECISION_REQUIRED'),
+            severity: String(item.severity || 'UNKNOWN'),
             owner: String(item.ownerId || 'OWNER_MISSING'),
             decisionId: String(item.decisionId || 'UNKNOWN'),
             workItemId: String(item.taskId || item.workItemId || 'UNKNOWN'),
-            verification:
-              closed && !hasEvidence
-                ? 'NOT_VERIFIED'
-                : String(item.verificationState || (hasEvidence ? 'VERIFIED' : 'NOT_VERIFIED')),
+            verification: String(item.verificationState || 'NOT_VERIFIED'),
             sourceVersion: String(item.version ?? 'UNKNOWN'),
             source: item,
           };
