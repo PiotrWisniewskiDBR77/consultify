@@ -846,12 +846,11 @@ describe('V8 My Work notebook routes', () => {
           reason: null,
           receiptContract: 'notebook_delete_receipt_v1',
         },
-        // DEC-25: "Expand into document" shares delete's owner-only write gate
-        // (see the PUT /notebook/pages/:id NOTEBOOK_PAGE_OWNER_ONLY check above).
         expandDocument: {
-          allowed: true,
-          reason: null,
-          receiptContract: 'notebook_expand_document_receipt_v1',
+          allowed: false,
+          reason:
+            'Document expansion stays disabled until Canvas draft creation writes an audit receipt with readback.',
+          receiptContract: null,
         },
       },
     });

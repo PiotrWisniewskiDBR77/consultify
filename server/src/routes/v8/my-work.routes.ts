@@ -1808,11 +1808,11 @@ router.get(
           // identical NOTEBOOK_PAGE_OWNER_ONLY rule for page-write), so the
           // capability check mirrors it rather than inventing a new rule.
           expandDocument: {
-            allowed: isOwner,
+            allowed: false,
             reason: isOwner
-              ? null
+              ? 'Document expansion stays disabled until Canvas draft creation writes an audit receipt with readback.'
               : 'Only the note owner can create a document draft from this page.',
-            receiptContract: isOwner ? 'notebook_expand_document_receipt_v1' : null,
+            receiptContract: null,
           },
         },
       },
