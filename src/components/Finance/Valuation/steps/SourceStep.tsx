@@ -25,6 +25,18 @@
  * width, and Source's remaining shortfall after that fix was mostly HEIGHT, not width) — a
  * multi-card lineage chain benefits from the full available width for its 4-column fact grid,
  * same as the other six steps already do at `max-w-5xl`.
+ *
+ * ★ 2026-08-26 night-fixes-a P0 (NIGHT_SWEEP_A_REPORT_20260826.md #2): the per-edge card used to
+ * put the raw database graph — `edge-*` ids, `sha256:*` hashes, `run-*` compute ids, `user-*`
+ * author ids — front and center as the card's MAIN content, handed straight to a CFO/owner. That
+ * is exactly the "zero żargonu deweloperskiego w UI" line the module's own review card draws.
+ * Fixed by splitting each step into a readable headline (artifact type -> artifact type, the
+ * human date, the already-localized transformation kind) and folding every raw identifier
+ * (`edgeId`/`sourceVersionId`/`targetVersionId`/`assumptionSnapshotHash`/`computeRunId`/
+ * `authorId`/raw `edgeType`) into a collapsed native `<details>` "Szczegóły techniczne" section —
+ * still fully honest (nothing hidden, nothing invented: there is no user-directory wired into this
+ * workspace to resolve `authorId` to a real name, so it stays labeled as an ID rather than being
+ * dressed up as a name), just not the primary thing the reader's eye lands on.
  */
 import React from 'react';
 
@@ -58,6 +70,13 @@ function formatFreeformLineageCode(code: string): string {
     .join(' ');
 }
 
+/** Human date for the provenance headline — `pl-PL`, matches the format `FinancialStatementImportWizard.tsx` already uses for a lineage timestamp elsewhere in Finance. */
+function formatLineageDate(iso: string): string {
+  const parsed = new Date(iso);
+  if (Number.isNaN(parsed.getTime())) return iso;
+  return new Intl.DateTimeFormat('pl-PL', { dateStyle: 'medium' }).format(parsed);
+}
+
 export function SourceStep(props: SourceStepProps): React.ReactElement {
   const { businessVersionId, variant, lineage } = props;
   // ★ FIXC: full chain, chronological (root/oldest first) — the DB query has no ORDER BY of its
@@ -87,11 +106,10 @@ export function SourceStep(props: SourceStepProps): React.ReactElement {
       {lineage && sourceEdges.length > 0 && (
         <div className="space-y-3" data-testid="source-edge-present">
           <p className="text-sm text-c-text">
-            Powiązano z wersją źródłową{' '}
-            <span className="font-mono">{immediateEdge?.sourceVersionId}</span> (
-            {immediateEdge ? financeArtifactTypeLabel(immediateEdge.sourceArtifactType) : '—'})
-            przez łańcuch {sourceEdges.length}{' '}
-            {sourceEdges.length === 1 ? 'powiązania' : 'powiązań'} pochodzenia.
+            Powiązano z{' '}
+            {immediateEdge ? financeArtifactTypeLabel(immediateEdge.sourceArtifactType) : 'źródłem'}
+            {immediateEdge ? ` z ${formatLineageDate(immediateEdge.createdAt)}` : ''} przez łańcuch{' '}
+            {sourceEdges.length} {sourceEdges.length === 1 ? 'powiązania' : 'powiązań'} pochodzenia.
           </p>
           {sourceEdges.map((edge, index) => (
             <div
@@ -99,33 +117,37 @@ export function SourceStep(props: SourceStepProps): React.ReactElement {
               className="rounded-xl border border-c-border-subtle bg-c-surface p-4"
               data-testid={`source-edge-${edge.edgeId}`}
             >
-              <p className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
-                Krok {index + 1}/{sourceEdges.length} ·{' '}
-                {financeArtifactTypeLabel(edge.sourceArtifactType)} →{' '}
+              <p className="text-sm font-medium text-c-text">
+                Krok {index + 1}/{sourceEdges.length}: {financeArtifactTypeLabel(edge.sourceArtifactType)}
+                {' → '}
                 {financeArtifactTypeLabel(edge.targetArtifactType)}
               </p>
-              <p className="mt-1 text-sm text-c-text">
-                <span className="font-mono">{edge.sourceVersionId}</span> →{' '}
-                <span className="font-mono">{edge.targetVersionId}</span>
+              <p className="mt-1 text-xs text-c-text-muted">
+                Utworzono {formatLineageDate(edge.createdAt)} ·{' '}
+                {financeLineageTransformationKindLabel(edge.transformationKind)}
               </p>
-              <dl className="mt-2 grid grid-cols-2 gap-x-6 gap-y-3 text-xs text-c-text-muted md:grid-cols-4">
-                <dt>Typ powiązania</dt>
-                <dd className="text-c-text">{formatFreeformLineageCode(edge.edgeType)}</dd>
-                <dt>Typ transformacji</dt>
-                <dd className="text-c-text">
-                  {financeLineageTransformationKindLabel(edge.transformationKind)}
-                </dd>
-                <dt>Hash migawki założeń</dt>
-                <dd className="font-mono text-c-text">{edge.assumptionSnapshotHash ?? '—'}</dd>
-                <dt>Compute run</dt>
-                <dd className="font-mono text-c-text">{edge.computeRunId ?? '—'}</dd>
-                <dt>Autor</dt>
-                <dd className="text-c-text">{edge.authorId ?? '—'}</dd>
-                <dt>Utworzono</dt>
-                <dd className="text-c-text">{edge.createdAt}</dd>
-                <dt>ID powiązania</dt>
-                <dd className="font-mono text-c-text">{edge.edgeId}</dd>
-              </dl>
+
+              <details className="mt-3">
+                <summary className="cursor-pointer text-xs font-medium text-c-text-muted select-none hover:text-c-text">
+                  Szczegóły techniczne
+                </summary>
+                <dl className="mt-2 grid grid-cols-2 gap-x-6 gap-y-3 text-xs text-c-text-muted md:grid-cols-4">
+                  <dt>ID wersji źródłowej</dt>
+                  <dd className="font-mono text-c-text">{edge.sourceVersionId}</dd>
+                  <dt>ID wersji docelowej</dt>
+                  <dd className="font-mono text-c-text">{edge.targetVersionId}</dd>
+                  <dt>Typ powiązania</dt>
+                  <dd className="text-c-text">{formatFreeformLineageCode(edge.edgeType)}</dd>
+                  <dt>Hash migawki założeń</dt>
+                  <dd className="font-mono text-c-text">{edge.assumptionSnapshotHash ?? '—'}</dd>
+                  <dt>Compute run</dt>
+                  <dd className="font-mono text-c-text">{edge.computeRunId ?? '—'}</dd>
+                  <dt>Autor (ID techniczne)</dt>
+                  <dd className="font-mono text-c-text">{edge.authorId ?? '—'}</dd>
+                  <dt>ID powiązania</dt>
+                  <dd className="font-mono text-c-text">{edge.edgeId}</dd>
+                </dl>
+              </details>
             </div>
           ))}
         </div>
