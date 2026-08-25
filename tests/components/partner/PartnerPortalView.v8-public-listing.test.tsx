@@ -23,6 +23,7 @@ vi.mock('../../../src/services/api', () => ({
 
 vi.mock('../../../src/services/api/v8', () => ({
   V8PartnerApi: {
+    getConnection: vi.fn(),
     updateOrganizationListing: vi.fn(),
   },
   shouldFallbackToLegacyPartner: vi.fn(),
@@ -45,26 +46,15 @@ function renderView() {
       <I18nextProvider i18n={i18n}>
         <PartnerPortalViewNew />
       </I18nextProvider>
-    </MemoryRouter>,
+    </MemoryRouter>
   );
 }
 
 describe('PartnerPortalView public listing V8 seam', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(V8PartnerApi.getConnection).mockResolvedValue({ connected: true } as any);
     vi.mocked(Api.get).mockImplementation(async (url: string) => {
-      if (url === '/api/partners/connection') {
-        return {
-          success: true,
-          data: {
-            data: {
-              connected: true,
-              organization: { name: 'Test Partner Co' },
-            },
-          },
-        } as any;
-      }
-
       if (url === '/api/partners/organization') {
         return {
           success: true,
@@ -96,14 +86,21 @@ describe('PartnerPortalView public listing V8 seam', () => {
 
     renderView();
 
-    const toggle = await screen.findByRole('button', { name: 'Toggle public listing' }, { timeout: 10000 });
+    const toggle = await screen.findByRole(
+      'button',
+      { name: 'Toggle public listing' },
+      { timeout: 10000 }
+    );
     fireEvent.click(toggle);
 
-    await waitFor(() => {
-      expect(V8PartnerApi.updateOrganizationListing).toHaveBeenCalledWith({
-        publicListingEnabled: true,
-      });
-    }, { timeout: 10000 });
+    await waitFor(
+      () => {
+        expect(V8PartnerApi.updateOrganizationListing).toHaveBeenCalledWith({
+          publicListingEnabled: true,
+        });
+      },
+      { timeout: 10000 }
+    );
     expect(Api.put).not.toHaveBeenCalled();
     expect(toastSuccess).toHaveBeenCalledWith('Public listing enabled');
   });
@@ -117,11 +114,21 @@ describe('PartnerPortalView public listing V8 seam', () => {
 
     renderView();
 
-    const toggle = await screen.findByRole('button', { name: 'Toggle public listing' }, { timeout: 10000 });
+    const toggle = await screen.findByRole(
+      'button',
+      { name: 'Toggle public listing' },
+      { timeout: 10000 }
+    );
     fireEvent.click(toggle);
 
-    await waitFor(() => expect(toastError).toHaveBeenCalledWith('Failed to update listing settings'), { timeout: 10000 });
-    expect(Api.put).not.toHaveBeenCalledWith('/api/partners/organization/listing', expect.anything());
+    await waitFor(
+      () => expect(toastError).toHaveBeenCalledWith('Failed to update listing settings'),
+      { timeout: 10000 }
+    );
+    expect(Api.put).not.toHaveBeenCalledWith(
+      '/api/partners/organization/listing',
+      expect.anything()
+    );
     expect(toastSuccess).not.toHaveBeenCalledWith('Public listing enabled');
   });
 });

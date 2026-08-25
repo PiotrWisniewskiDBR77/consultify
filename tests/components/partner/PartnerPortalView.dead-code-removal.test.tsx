@@ -30,6 +30,7 @@ vi.mock('../../../src/services/api', () => ({
 
 vi.mock('../../../src/services/api/v8', () => ({
   V8PartnerApi: {
+    getConnection: vi.fn(),
     getReferralAnalytics: vi.fn(),
     getEarningsSummary: vi.fn(),
     getProgramStatus: vi.fn(),
@@ -120,13 +121,8 @@ describe('MetricsSection — API-wired score breakdown (module 19 MVP)', () => {
       certificationProgress: 44,
     };
 
+    vi.mocked(V8PartnerApi.getConnection).mockResolvedValue({ connected: true } as any);
     vi.mocked(Api.get).mockImplementation(async (url: string) => {
-      if (url === '/api/partners/connection') {
-        return {
-          success: true,
-          data: { data: { connected: true, organization: { name: 'Partner Org' } } },
-        } as any;
-      }
       if (url === '/api/partners/metrics') {
         return {
           success: true,
