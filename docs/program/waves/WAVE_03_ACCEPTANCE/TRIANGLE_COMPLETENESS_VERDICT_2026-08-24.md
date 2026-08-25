@@ -143,7 +143,7 @@ konfiguracji repo (obowiązuje wszystkie worktree'y). Konsekwencja: historyczna
 
 | ID | Problem | Dowód | Klasyfikacja |
 |---|---|---|---|
-| TRI-OBS-17 | Aktywacja hooksPath (TRI-MUST-16) odsłoniła zastały dług rejestru akcji: 5 plików `src/components/MyWork/` (ClosureDecisionQueue.tsx, EffectivenessClosureQueue.tsx, notebook/NotebookExportMenu.tsx, notebook/NotebookHamburgerMenu.tsx, notebook/NotebookInlineAIMenu.tsx) mają akcjopodobne `onClick`/handlery bez traceability do `IDEA_ACTION_REGISTRY` (R10, `scripts/check-action-coverage.sh`) — potwierdzone realnym `--all` skanem, nie artefaktem błędu strażnika. Przy okazji naprawiono osobny defekt: `check-actions.sh` w trybie pre-commit wołał R10 bez argumentów, co przy stage'u WYŁĄCZNIE pliku `__tests__/*.tsx` trafiało w fallback „pusty staging → pełny skan repo" i blokowało commity nietykające tego długu (naprawa: commit `57ceb1101d`, staged-only scope + `--full` dla CI/audytów, żadna reguła nie osłabiona). | `scripts/check-action-coverage.baseline.txt`, live run `bash scripts/check-action-coverage.sh --all` (2026-08-25), commit 57ceb1101d | do rozwiązania przy scaleniu dnia 3 (dodać wpisy do `ideaActionRegistry.ts` albo przepiąć handlery przez `runIdeaAction`) |
+| TRI-OBS-17 | Aktywacja hooksPath (TRI-MUST-16) odsłoniła zastały dług rejestru akcji: 5 plików `src/components/MyWork/` (ClosureDecisionQueue.tsx, EffectivenessClosureQueue.tsx, notebook/NotebookExportMenu.tsx, notebook/NotebookHamburgerMenu.tsx, notebook/NotebookInlineAIMenu.tsx) mają akcjopodobne `onClick`/handlery bez traceability do `IDEA_ACTION_REGISTRY` (R10, `scripts/check-action-coverage.sh`) — potwierdzone realnym `--all` skanem, nie artefaktem błędu strażnika. Przy okazji naprawiono osobny defekt: `check-actions.sh` w trybie pre-commit wołał R10 bez argumentów, co przy stage'u WYŁĄCZNIE pliku `__tests__/*.tsx` trafiało w fallback „pusty staging → pełny skan repo" i blokowało commity nietykające tego długu (naprawa: commit `57ceb1101d`, staged-only scope + `--full` dla CI/audytów, żadna reguła nie osłabiona). | `scripts/check-action-coverage.baseline.txt`, live run `bash scripts/check-action-coverage.sh --all` (2026-08-25), commit 57ceb1101d | ROZWIĄZANY 2026-08-25: commit `efa2e9075b` (rejestr/`runAction` dla 5 plików, R10 12→0, baseline −5); podpis w MYWORK_DAY3_REPORT (`727a28dfa0`) |
 
 ## Odbiór dnia 3 Codexa — PODPIS warstwy 3 (2026-08-25, Fable)
 
@@ -167,3 +167,19 @@ sesji lokalnej właściciela (ten sam git-user); zweryfikowane merytorycznie
 
 Gałęzie mywork-day3 + day3-fixes scalone do m03. Flagi ff_ideaInspectorRightRail
 i ff_myWorkCalendarV2 pozostają OFF do werdyktu właściciela na pakiecie zrzutów.
+
+## Przejęcie nadzoru + TRI-OBS-18 (2026-08-25, podpis: Fable-następca)
+
+Nadzór programu przejęty przez sesję-następcę (potwierdzenie przekazania
+cross-session od sesji pierwotnej po zakończeniu wielkiego scalania;
+m03 tip `2c15368b88`). TRI-OBS-17 zamknięty (patrz wiersz wyżej).
+
+| ID | Problem | Dowód | Klasyfikacja |
+|---|---|---|---|
+| TRI-OBS-18 | Dziura strukturalna odtwarzalności migracji: ~68 tabel (m.in. `conversations`, `conversation_messages`, `report_builder_templates`, `admin_audit_logs`, rodziny `valuations`/`budget_*`/`kpi_*`) nie ma ŻADNEGO producenta w łańcuchach runtime (#1 `migrationRunner.ts` z allowlistą ani #2 `DatabaseInitializer`) — tworzy je wyłącznie pełny runner (`migrate.postgres.ts`) przez pliki numerowane <700 poza `MIGRATION_PATTERN`. Świeża baza + sam start backendu = FAIL (po naprawie klasy 736 pierwsza awaria: `773_chat_project_rbac.sql`, brak `conversations`; producent `073_conversations.sql` poza wzorcem i allowlistą). Ścieżka odtwarzalna UDOWODNIONA: świeża baza → pełny runner → start → `/api/ready` 200 (weryfikacja A, dzień 6). Naprawa klasy 736 (allowlista w Drodze B): commit `f3dce64207` na `codex/templates-day6-20260825`. | `TEMPLATES_DAY6_REPORT_20260825.md` sekcja „Naprawa nadzorcy (S1.6 unblock)" — pełne komendy i wyniki weryfikacji A/B | OTWARTE — wchodzi do bramki fazy 3 razem z TRI-MUST-05: definicja odtwarzalności dla świeżych środowisk = pełny runner PRZED startem backendu; zasypanie dziury (allowlista/renumeracja producentów) = osobny blok roboczy, decyzja zakresu przy planowaniu fazy 3 |
+
+Adnotacja infra: 2026-08-25 ~04:40 dysk VM Dockera (40 GB) osiągnął 100% i
+wykonano `docker volume prune` (inna sesja, 72 osierocone wolumeny). Wszystkie
+instrukcje przebiegów z jednorazowym PostgreSQL MUSZĄ nakazywać sprzątanie
+kontenerów ORAZ wolumenów (wzór: weryfikacje A/B dnia 6 — tmpfs + `docker rm -f`
++ `docker volume rm`, potwierdzone puste listingi).
