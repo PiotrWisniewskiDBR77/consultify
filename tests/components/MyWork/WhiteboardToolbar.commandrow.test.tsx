@@ -54,10 +54,20 @@ describe('WhiteboardToolbar — command-row hierarchy', () => {
     expect(screen.getByRole('button', { name: /myWork\.whiteboard\.toolbar\.save/i })).toBeInTheDocument();
   });
 
-  it('keeps Undo/Redo as visible secondary actions', () => {
+  // 2026-07-28 (Zadanie C, src/utils/canvasUndoInRailOnlyFlag.ts): the owner
+  // reviewed the real screens and accepted removing the Undo/Redo pair from
+  // this horizontal toolbar row — the same action stays live in the LEFT rail
+  // (`wb_undo`/`wb_redo` slots), the Ctrl/Cmd+Z shortcuts, and the right
+  // panel's History section ("ZERO UTRATY FUNKCJI"). `ff_canvasUndoInRailOnly`
+  // now defaults ON, so this toolbar no longer renders its own Undo/Redo
+  // buttons by default — this test previously asserted the pre-acceptance
+  // layout and had gone stale. The flag's escape hatch (`?ff_canvasUndoInRailOnly=0`)
+  // still exists for the legacy in-toolbar rendering; that path is exercised
+  // directly against the flag module, not here.
+  it('does not duplicate Undo/Redo in the toolbar row (rail-only by default)', () => {
     render(<WhiteboardToolbar {...makeProps()} />);
-    expect(screen.getByRole('button', { name: /myWork\.whiteboard\.toolbar\.undo/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /myWork\.whiteboard\.toolbar\.redo/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /myWork\.whiteboard\.toolbar\.undo/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: /myWork\.whiteboard\.toolbar\.redo/i })).toBeNull();
   });
 
   it('collapses secondary tools behind a single overflow "…" (no flat row)', () => {
