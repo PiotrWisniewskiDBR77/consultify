@@ -64,6 +64,7 @@ import { type ActionContext, runIdeaAction } from '@/actions/ideaActionRegistry'
 import type { LaneOpOutcome } from '@/actions/quickActionAck';
 import { ErrorState, SkeletonState } from '@/components/shared/states';
 import { Api } from '@/services/api';
+import { isIdeaInspectorRightRailEnabled } from '@/utils/ideaInspectorRightRailFlag';
 import {
   generateAIProposal,
   generateProcessSummary,
@@ -4019,7 +4020,10 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         </div>
       )}
 
-      {showPropertiesPanel && (
+      {/* FIX-8 (Day 3 acceptance): when the shared IdeaElementInspector rail
+          (ff_ideaInspectorRightRail) is ON, this legacy panel must NOT also
+          render — that was the "two panels at once" defect. */}
+      {showPropertiesPanel && !isIdeaInspectorRightRailEnabled() && (
         <div className="absolute right-0 top-0 bottom-0 w-80 z-30 border-l border-slate-200/60 dark:border-navy-700/60 bg-c-bg overflow-y-auto shadow-lg">
           <div className="flex items-center justify-between p-3 border-b border-slate-200/60 dark:border-navy-700/60">
             <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">

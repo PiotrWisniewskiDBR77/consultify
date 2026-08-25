@@ -85,6 +85,8 @@ import {
 import { EmptyStateInline } from '../shared/NModeBlocks/EmptyStateInline';
 import { IdeaAINudgeStrip } from './IdeaAINudgeStrip';
 import { getCanvasEdgeKindLabel } from './canvas/canvasEdgeKindVocabulary';
+import { isIdeaInspectorRightRailEnabled } from '@/utils/ideaInspectorRightRailFlag';
+
 import { getCanvasNodeTypeLabel } from './canvas/canvasNodeTypeVocabulary';
 import {
   EMPTY_SELECTION,
@@ -4687,9 +4689,14 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         </TableDataProvider>
       </div>
 
-      {/* Row Detail Panel */}
+      {/* Row Detail Panel.
+          FIX-8 (Day 3 acceptance): when the shared IdeaElementInspector rail
+          (ff_ideaInspectorRightRail) is ON, this legacy panel must NOT also
+          render — that was the "two panels at once" defect. `open` alone
+          used to only depend on `detailNodeId`; it now also requires the
+          flag to be off. */}
       <RowDetailPanel
-        open={!!detailNodeId}
+        open={!!detailNodeId && !isIdeaInspectorRightRailEnabled()}
         onClose={() => {
           setDetailNodeId(null);
           setDetailInitialTab('properties');
