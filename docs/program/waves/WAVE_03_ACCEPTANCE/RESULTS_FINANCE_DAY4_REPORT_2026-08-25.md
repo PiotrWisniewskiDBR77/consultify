@@ -61,16 +61,16 @@ Właściciel poza publiczną produkcją wpisuje `/results?ff_wave3ResultsOwnerRe
 
 ## Sekcja F — Finance (DEC-2026-08-24-05)
 
-| Pozycja                               | Status           | Commit                     | Testy          | Uwagi                                                         |
-| ------------------------------------- | ---------------- | -------------------------- | -------------- | ------------------------------------------------------------- |
-| F.1 inwentarz FIN-REC-001             | DONE_CURRENT_SHA | `4ab7a61403`               | audyt źródłowy | Sześć gałęzi i pięć flag zamrożone poniżej                    |
-| F.2 resolver FIN-REC-002              | DONE_CURRENT_SHA | `5502e8fdb2`, `1970fa02f1` | 94/94 PASS     | Resolver + blokada błędu/mismatch przed V3 i legacy           |
-| F.3 wspólny shell FIN-REC-003         | PARTIAL / STOP   | `b284ca6e43`               | 10/10 PASS     | Mechaniczne luki zamknięte; cold Back nie utrwala filtrów     |
-| F.4 `financeOwnerSampleData`          | DONE_CURRENT_SHA | `207124e9e9`               | 5/5 PASS       | Host produkcyjny fail-closed, jawny banner, licznik zamrożony |
-| F.5 ochrona danych i ufności          | PARTIAL / STOP   | `1cc0724847`               | 4/4 PASS       | Brak testu 6 mountów z POST/PUT-throwing mockiem              |
-| F.6 stany brzegowe FIN-REC-011        | STOP             | `3a9e2f625f`               | audyt 5×8      | Brak jednolitych capability/error contracts                   |
-| F.7 testy FIN-REC-014                 | PARTIAL / STOP   | `e0e97da8d1`               | 3/3 PASS       | Statusy udowodnione; RealPG/runtime/E2E niezweryfikowane      |
-| F.8 przygotowanie odłączenia Benefits | DONE_CURRENT_SHA | `fd9fb22245`               | 1/1 PASS       | Dokładnie 3 importy; zero zmian importów                      |
+| Pozycja                               | Status           | Commit                | Testy          | Uwagi                                                         |
+| ------------------------------------- | ---------------- | --------------------- | -------------- | ------------------------------------------------------------- |
+| F.1 inwentarz FIN-REC-001             | DONE_CURRENT_SHA | `4ab7a61403`          | audyt źródłowy | Sześć gałęzi i pięć flag zamrożone poniżej                    |
+| F.2 resolver FIN-REC-002              | DONE_CURRENT_SHA | `5502e8fdb2` + 2 fixy | 98/98 PASS     | Blokada także częściowego identity przed legacy               |
+| F.3 wspólny shell FIN-REC-003         | PARTIAL / STOP   | `b284ca6e43`          | 10/10 PASS     | Mechaniczne luki zamknięte; cold Back nie utrwala filtrów     |
+| F.4 `financeOwnerSampleData`          | DONE_CURRENT_SHA | `207124e9e9`          | 5/5 PASS       | Host produkcyjny fail-closed, jawny banner, licznik zamrożony |
+| F.5 ochrona danych i ufności          | PARTIAL / STOP   | `1cc0724847`          | 4/4 PASS       | Brak testu 6 mountów z POST/PUT-throwing mockiem              |
+| F.6 stany brzegowe FIN-REC-011        | STOP             | `3a9e2f625f`          | audyt 5×8      | Brak jednolitych capability/error contracts                   |
+| F.7 testy FIN-REC-014                 | PARTIAL / STOP   | `e0e97da8d1`          | 3/3 PASS       | Statusy udowodnione; RealPG/runtime/E2E niezweryfikowane      |
+| F.8 przygotowanie odłączenia Benefits | DONE_CURRENT_SHA | `fd9fb22245`          | 1/1 PASS       | Dokładnie 3 importy; zero zmian importów                      |
 
 ### F.1 — manifest runtime i zamrożenie
 
@@ -111,6 +111,7 @@ Komponenty Benefits nie są kasowane ani odłączane w tym dyżurze.
 - Resolver jest czysty, nie importuje Benefits i nie ma operacji sieciowych ani mutacji.
 - Bezpośrednia ścieżka kanoniczna obsługuje teraz także `STATEMENT_PACK`; niezgodne ID/type renderują stan błędu z bezpiecznym powrotem do listy.
 - Integracja gałęzi odróżnia brak identity od błędu resolvera. Błąd i mismatch `kind↔artifactType` blokują zarówno V3, jak i legacy; 13/13 kontrprzypadków PASS. Asynchroniczny błąd direct path nie aktualizuje stanu po unmount.
+- Adapter listy i URL traktuje obecność dowolnego z trzech pól canonical jako próbę tożsamości. Brak artifact ID, business-version ID albo typu nie może już zostać sprowadzony do `identity=undefined`; 4/4 testy partial/no-signal PASS.
 
 ### F.2 — odczyt nie tworzy rekordu
 
@@ -239,7 +240,7 @@ Stan: NIE ZACOMMITOWANO w kodzie produkcyjnym; audyt w raporcie.
 
 | Zakres                                    | Wynik                                              | Interpretacja                                                                         |
 | ----------------------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| Nowe testy R.1–R.3                        | 35/35 PASS                                         | strażnik, sample backdoors, flagi i produkcja fail-closed                             |
+| Zmienione testy Results + canonical guard | 26/26 Vitest + 5/5 `node:test` PASS                | sample backdoors, flagi, produkcja fail-closed i strażnik                             |
 | Nowe testy F.2–F.8                        | PASS                                               | resolver, OFF regression, shell, sample, confidence, status i Benefits                |
 | Pięć testów stanu wyjściowego po zmianach | 15/15 PASS + 6/6 PASS `node:test`                  | identyczny zielony baseline; test release trwał 99,1 s                                |
 | Results — katalogi konsumentów            | 98 plików PASS; 1066 testów PASS, 5 FAIL, 412 SKIP | 99 plików RealPG FAIL na brak schematu; 5 zastanych FAIL w UI persistence/postmortem  |
@@ -355,7 +356,7 @@ tests/unit/finance/confidencePolicy.guard.test.ts
 | `npx vitest run tests/components/ResultsVNext tests/unit/results src/components/Results/__tests__ tests/resultsVnext`                           | 1066 PASS, 5 FAIL, 412 SKIP; 99 plików RealPG setup FAIL |
 | `npx vitest run tests/components/Finance tests/components/Economics src/components/Finance/shared/__tests__ src/components/Economics/__tests__` | 384 PASS, 17 FAIL                                        |
 | `npx vitest run tests/unit/finance`                                                                                                             | 795 PASS, 2 FAIL                                         |
-| dedykowane zmienione/nowe testy kandydata                                                                                                       | 116/116 Vitest PASS + 5/5 node guard PASS                |
+| dedykowane zmienione/nowe testy kandydata                                                                                                       | 120/120 Vitest PASS + 5/5 node guard PASS                |
 
 **Czerwone ścieżki z pełnych agregatów:**
 
@@ -373,7 +374,7 @@ $ git diff --name-only ca292730...HEAD | grep -E "^server/migrations/"
 <PUSTO>
 $ git diff ca292730...HEAD -- src/hooks/useFinance*WorkspaceFlag*.ts src/components/ResultsVNext/resultsVNextFeatureFlags.ts | grep -E "^[+-].*defaultValue|^[+-].*return (true|false)"
 <PUSTO>
-$ git diff --name-only ca292730...HEAD | grep -vE "<literalny dozwolony wzór Z17 z instrukcji>"
+$ git diff --name-only ca292730...HEAD | grep -vE "^(src/components/(ResultsVNext|Results|Economics|Finance)/|src/views/EconomicsView|src/hooks/useFinance|src/utils/(financeOwnerReviewMode|demoAcceptanceProfile)|server/src/routes/v8/finance-v2/|scripts/dev/verify-canonical-16|docs/program/waves/WAVE_03_ACCEPTANCE/|tests/(resultsVnext|components/(ResultsVNext|Results|Finance|Economics)|unit/(results|finance)|unit/release)/|public/locales/|package.json)"
 scripts/dev/__tests__/verifyCanonical16Bindings.test.mjs
 ```
 
