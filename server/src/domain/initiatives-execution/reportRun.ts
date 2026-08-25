@@ -163,6 +163,23 @@ type Action =
       taskId: string;
       taskVersion: number;
     };
+
+export function reportSourceValidationFindings(sources: ReportSource[]): string[] {
+  const findings: string[] = [];
+  if (sources.length === 0) findings.push('NO_SOURCES');
+  if (sources.some((source) => source.freshness !== 'CURRENT'))
+    findings.push('STALE_OR_UNKNOWN_SOURCE');
+  if (sources.some((source) => source.accessState === 'DENIED'))
+    findings.push('SOURCE_ACCESS_DENIED');
+  if (
+    sources.some(
+      (source) => !source.version || !source.capturedAt || source.confidence === 'UNKNOWN'
+    )
+  )
+    findings.push('SOURCE_EVIDENCE_INCOMPLETE');
+  return findings;
+}
+
 export async function transitionReportRun(
   uow: MaterialCommandUnitOfWork,
   envelope: MaterialCommandEnvelope<Action>
@@ -183,12 +200,7 @@ export async function transitionReportRun(
       if (r.status !== 'DRAFT' || envelope.actorId !== r.ownerId)
         throw new MaterialCommandValidationError('Owner validates DRAFT');
       await exactDefinition(tx, envelope.organizationId, r.definitionRef);
-      const findings: string[] = [];
-      if (r.sources.some((s) => s.freshness !== 'CURRENT'))
-        findings.push('STALE_OR_UNKNOWN_SOURCE');
-      if (r.sources.some((s) => s.accessState === 'DENIED')) findings.push('SOURCE_ACCESS_DENIED');
-      if (r.sources.some((s) => !s.version || !s.capturedAt || s.confidence === 'UNKNOWN'))
-        findings.push('SOURCE_EVIDENCE_INCOMPLETE');
+      const findings = reportSourceValidationFindings(r.sources);
       if (findings.length)
         throw new MaterialCommandValidationError(`Report validation failed: ${findings.join(',')}`);
       next = { ...r, status: 'VALIDATED', validationFindings: [], updatedAt: now };
