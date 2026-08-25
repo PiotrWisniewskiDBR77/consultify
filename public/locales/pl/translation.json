@@ -2432,8 +2432,8 @@
       "markItemsAsDone": "Oznaczaj elementy jako gotowe (E), żeby tu trafiały.",
       "noSavedItems": "Brak zapisanych elementów",
       "useSaveBTo": "Użyj Zapisz (B) aby odłożyć elementy na później.",
-      "inboxIsEmptyZero": "Inbox jest pusty — zero zaległości!",
-      "everythingProcessedGreatJob": "Wszystko przetworzone. Świetna robota!",
+      "inboxIsEmptyZero": "Inbox jest pusty",
+      "everythingProcessedGreatJob": "Brak otwartych pozycji. Jeśli spodziewałeś się tu czegoś, sprawdź czy patrzysz na właściwą organizację/projekt.",
       "urgency": {
         "critical": "Krytyczna",
         "high": "Wysoka",

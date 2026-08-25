@@ -3125,8 +3125,8 @@
       "markItemsAsDone": "Mark items as Done (E) and they'll appear here.",
       "noSavedItems": "No saved items",
       "useSaveBTo": "Use Save (B) to bookmark items for later.",
-      "inboxIsEmptyZero": "Inbox is empty — zero backlog!",
-      "everythingProcessedGreatJob": "Everything processed. Great job!",
+      "inboxIsEmptyZero": "Inbox is empty",
+      "everythingProcessedGreatJob": "No open items right now. If you expected to see something here, check that you're looking at the right organization/project.",
       "urgency": {
         "critical": "Critical",
         "high": "High",

@@ -4207,12 +4207,18 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                 <>
                   <Inbox size={40} className="mx-auto mb-4 text-c-text-muted" />
                   <p className="text-base font-semibold mb-1">
-                    {t('myWork.inboxContent.inboxIsEmptyZero', 'Inbox is empty — zero backlog!')}
+                    {t('myWork.inboxContent.inboxIsEmptyZero', 'Inbox is empty')}
                   </p>
+                  {/* MYW-PHOTO-002: a successful, in-scope, genuinely-empty
+                      query is not distinguishable here from a zero caused by
+                      tenant/project scope, a missing fixture or unavailable
+                      data — so this can no longer claim an unverifiable
+                      "you succeeded" (the loading/error states above already
+                      cover the load-failure case honestly). */}
                   <p className="text-sm text-c-text-muted">
                     {t(
                       'myWork.inboxContent.everythingProcessedGreatJob',
-                      'Everything processed. Great job!'
+                      "No open items right now. If you expected to see something here, check that you're looking at the right organization/project."
                     )}
                   </p>
                 </>
