@@ -5,7 +5,7 @@ Marker: `dfd259af47` — POTWIERDZONY
 Gałąź robocza: `codex/creator-day13-20260825`  
 Worktree: `/private/tmp/consultify-creator-day13`  
 Porty użyte: harness dev-render `3356` · Baza: ŻADNA · Migracje: ZERO  
-Czas pracy: 2026-08-25 22:27 CEST–w toku
+Czas pracy: 2026-08-25 22:27–22:48 CEST
 
 ## Oświadczenie o chronionym WIP (Z4/Z5) i o prototypie (Z14)
 
@@ -68,9 +68,10 @@ Nie wykonałem żadnego deployu, żadnej operacji Railway, żadnej zdalnej migra
 | K.1          | —              | STOP        | kod ma 12 typów (6+6), prototyp/instrukcja wymaga 13 (6+7); brakującego typu nie zgaduję                        |
 | K.2–K.3      | —              | NIE ZACZĘTA | —                                                                                                               |
 | W.1–W.2      | —              | NIE ZACZĘTA | —                                                                                                               |
-| T.5          | bieżący commit | CZĘŚCIOWA   | realny komponent, lokalne mocki, jawne ON/OFF; 4 zrzuty; brak pełnych scen/fixture stresowego                   |
+| T.5          | `aaad789d2d`   | CZĘŚCIOWA   | realny komponent, lokalne mocki, jawne ON/OFF; 4 zrzuty; brak pełnych scen/fixture stresowego                   |
 | T.1–T.4, T.6 | —              | NIE ZACZĘTA | —                                                                                                               |
-| R.1–R.2      | —              | NIE ZACZĘTA | —                                                                                                               |
+| R.1          | bieżący commit | DONE        | rejestr opisuje stan częściowy bez zmiany `PENDING` i bez skasowania `STEPS_3_5_EVIDENCE_MISSING`               |
+| R.2          | `aaad789d2d`   | CZĘŚCIOWA   | krok 1 light/dark + OFF light/dark; tabela parytetu; brak kroków 2–3 i pozostałych scen                         |
 
 ## ★ Parytet wizualny z prototypem (produkt R.2)
 
@@ -115,11 +116,17 @@ Stan: NIE ZACOMMITOWANO.
 
 ### STOP — C-O2 API listy wykluczonych sesji
 
-Inwentarz w toku; bez API kontrolka nie powstanie.
+Powód: kreator pobiera wyłącznie `/interview/sessions/completed`; odpowiedź nie niesie listy sesji odrzuconych/oczekujących wraz z powodem i datą.  
+Dowód: `InsightCreatorModal.tsx:953` oraz typ `CompletedSession`; brak wywołania endpointu exclusions.  
+Co zrobiłbym po kontrakcie API: wyrenderowałbym licznik i pełną listę z serwerowych rekordów, bez rekonstruowania powodów po stronie klienta.  
+Stan: BRAK_API / kontrolka `Pokaż wykluczone` NIE POWSTAŁA.
 
 ### STOP — C-O3 typowany błąd AI (cztery przyczyny)
 
-Inwentarz w toku; bez uczciwego typowania nie powstaną zmyślone stany.
+Powód: istniejący catch rozróżnia 401/403, heurystyczne 502/503/504 lub słowa `llm/model/timeout`, a całą resztę składa do jednego błędu. Nie ma typowanego kontraktu walidacja/pole, sukcesu częściowego ani identyfikatora retry fragmentu.  
+Dowód: `InsightCreatorModal.tsx:1380-1405`.  
+Co zrobiłbym po kontrakcie API: mapowałbym jawny enum przyczyny i identyfikatory części operacji, zachowując stan formularza i retry tylko nieudanej części.  
+Stan: BRAK_API / cztery nowe stany NIE POWSTAŁY.
 
 ### STOP — C-O4 adopcja powłoki przez trzech pozostałych konsumentów
 
@@ -149,15 +156,25 @@ Stan: NIE ZACOMMITOWANO; K.1 nie jest sztucznie oznaczony jako DONE.
 
 ### Testy własne
 
-Nie rozpoczęto.
+- flaga Creator Shell: 5/5 PASS;
+- kontrakty geometrii/pasów/fallbacku/zakresu `WizardModal`: 9/9 PASS;
+- `InsightCreatorModal.a11y`: 12/12 PASS, w tym OFF, ON, live scope i etykiety stopki;
+- punktowy esbuild `InsightCreatorModal`, `InitiativeWizardModal`, `WizardModal`: PASS.
 
 ### Zmiana testu istniejącego (§T.1) — przed/po, cytat
 
 Brak.
 
-### Pomiar zasięgu (§0.4a)
+### Pomiar zasięgu (§0.4a): ZASIĘG CZĘŚCIOWY
 
-Do wykonania w Bloku 6.
+- `src/components/Interview/__tests__`: 15 plików / 82 testy PASS;
+- `src/components/Initiatives/Wizard/__tests__`: 2 / 8 PASS;
+- `tests/components/Interview`: 8 / 32 PASS;
+- `tests/components/ToolWizardShell.canon-runtime.test.tsx`: 1 / 1 PASS;
+- `src/components/Audit/__tests__`: 3 / 17 PASS;
+- `src/routes/__tests__/interviewAliasRedirect.test.ts`: 1 / 6 PASS;
+- flagi Interview: 2 / 10 PASS;
+- `src/components/Reports/__tests__`: katalog NIE ISTNIEJE, dlatego nie deklaruję `ZASIĘG PEŁNY` dla pięciu konsumentów.
 
 ### Testy stanu wyjściowego — przed i po
 
@@ -169,7 +186,13 @@ Do wykonania w Bloku 6.
 
 ## Siedem dowodów Bloku 6
 
-Do wykonania.
+1. Z18: diff od tipa startowego nie zawiera `tests/setup`, `tests/helpers`, `tests/__mocks__` ani konfiguracji vitest — PASS.
+2. Z10/DEC-65: diff nie zawiera `server/`, migracji ani backendu — PASS.
+3. Flagi: dokładnie jedna nowa flaga, trzy stabilne klucze, fallback `false`; test default OFF — PASS.
+4. Z17: wszystkie własne pliki mieszczą się w ramce dozwolonej — PASS. Diff względem starszej `codex/m03-admin-20260824` pokazuje też instrukcję i prototypy wniesione przez zastany tip `8d5c30fa49`; diff `8d5c30fa49...HEAD` potwierdza, że dyżur ich nie zmienił.
+5. Z17.a: `InterviewHub.tsx` nietknięty, diff 0 linii — PASS.
+6. Kanon tabel: 404 naruszenia / baseline 404, dług nie wzrósł; baseline nietknięty — PASS.
+7. Prototyp/WIP: diff od tipa startowego dla `prototypes/` jest pusty; chronionego worktree właściciela nie otwierano — PASS.
 
 ## Zrzuty (R.2)
 
@@ -183,8 +206,8 @@ Do wykonania.
 
 ## Licznik
 
-W toku.
+Pozycji DONE: 4 (`S.0`, `S.1`, `S.3`, `R.1`) · CZĘŚCIOWYCH: 4 (`S.2`, `S.4`, `T.5`, `R.2`) · STOP: K.1 oraz kwestie otwarte · commitów pozycyjnych przed raportem końcowym: 5 · plików własnego diffu: 20 · linii diffu w `InterviewHub.tsx`: 0.
 
 ## Czego NIE zrobiłem i dlaczego
 
-W toku. Nie wykonano żadnej operacji chmurowej, bazodanowej, deployu, pushu ani zmiany poza dozwolonym worktree.
+Nie ukończyłem S.5–S.7, K.2–K.3, W.1–W.2 ani pełnego T/R, ponieważ twarda rozbieżność K.1 (12 typów w runtime wobec wiążących 13) zatrzymała parytet treści, a instrukcja nakazuje Blok 6 zamiast dalszej improwizacji. Nie zbudowałem atrap `Pokaż wykluczone`, czterech błędów AI ani serwerowego szkicu. Nie wykonałem żadnej operacji chmurowej, bazodanowej, deployu, pushu ani zmiany poza dozwolonym worktree. Stan jest **częściowy i gotowy do zrzutu oraz odbioru przez nadzorcę**, nie do włączenia flagi.
