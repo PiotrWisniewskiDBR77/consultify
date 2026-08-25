@@ -11,6 +11,7 @@ import type { Stripe as StripeTypes } from 'stripe';
 import Stripe from 'stripe';
 import { v4 as uuidv4 } from 'uuid';
 
+import { send as sendNotification } from '../../services/notificationService.js';
 import * as PartnerCommissionService from '../../services/partnerCommissionService.js';
 // Partner services for commission tracking
 import * as PartnerReferralService from '../../services/partnerReferralService.js';
@@ -672,12 +673,12 @@ async function handleInvoicePaymentFailed(invoice: StripeTypes.Invoice): Promise
     logger.error('[Stripe Webhook] Dunning service error:', dunningErr);
   }
 
-  await createNotification(
+  // N1.2: routed through the notification engine (see notifyPaymentFailedAdmins
+  // below) instead of the direct-SQL createNotification() helper, so this
+  // critical, registry-seeded-for-email type actually sends email.
+  await notifyPaymentFailedAdmins(
     orgId,
-    'payment_failed',
-    'Payment Failed',
-    'Your payment could not be processed. Please update your payment method to avoid service interruption.',
-    'high'
+    'Your payment could not be processed. Please update your payment method to avoid service interruption.'
   );
   return orgId;
 }
@@ -821,6 +822,49 @@ export async function createNotification(
     }
   } catch (err) {
     logger.error('[Stripe Webhook] Error creating notifications:', err);
+    // Don't throw - notification failure shouldn't break webhook processing
+  }
+}
+
+/**
+ * Helper: notify organization admins of a failed payment through the
+ * notification engine (notificationService.send), instead of the direct
+ * `INSERT INTO notifications` used by createNotification() above.
+ *
+ * N1.2 (DEC-2026-08-25-21): `payment_failed` is seeded in the
+ * notification_types registry as is_critical with default channels
+ * ["in_app","email"] (server/migrations/257_notification_system.sql:60),
+ * but the direct-SQL path never sent email — a failed payment only
+ * surfaced if the admin happened to open the app
+ * (notyfikacje-audyt.md §1B). Routing through send() gives it the same
+ * preference/channel handling as every other registry type, including
+ * the email delivery the registry already promises for it.
+ *
+ * Scoped to payment_failed only — the other four createNotification()
+ * call sites in this file (subscription_created/canceled, invoice_paid,
+ * invoice_finalized) are a separate, larger migration (audit's M2) and
+ * are intentionally left untouched here.
+ */
+export async function notifyPaymentFailedAdmins(orgId: string, message: string): Promise<void> {
+  try {
+    const users = await dbAll<{ id: string }>(
+      'SELECT id FROM users WHERE organization_id = ? AND role IN (?, ?)',
+      [orgId, 'ADMIN', 'SUPERADMIN']
+    );
+
+    for (const user of users || []) {
+      await sendNotification({
+        userId: user.id,
+        organizationId: orgId,
+        type: 'payment_failed',
+        title: 'Payment Failed',
+        body: message,
+        priority: 'high',
+        entityType: 'billing',
+      });
+    }
+  } catch (err) {
+    logger.error('[Stripe Webhook] Error sending payment_failed notification:', err);
     // Don't throw - notification failure shouldn't break webhook processing
   }
 }
