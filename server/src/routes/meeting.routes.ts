@@ -12,11 +12,19 @@ import {
   proposeMeetingNote,
 } from '../services/meetingBoundary/meetingBoundaryService.js';
 import {
+  createMeetingDecisionRecord,
+  createMeetingFollowUpRecord,
   createMeeting,
+  deleteMeetingDecisionRecord,
+  deleteMeetingFollowUpRecord,
   deleteMeeting,
   ensureMeetingTables,
   getMeeting,
+  listMeetingDecisionRecords,
+  listMeetingFollowUpRecords,
   listMeetings,
+  updateMeetingDecisionRecord,
+  updateMeetingFollowUpRecord,
   updateMeeting,
   updateMeetingStatus,
 } from '../services/meetingService.js';
@@ -304,6 +312,175 @@ router.patch(
     });
     if (!meeting) return res.status(404).json({ error: 'Meeting not found' });
     return res.json({ meeting });
+  })
+);
+
+router.get(
+  '/:id/decision-records',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const meeting = await getMeeting({ organizationId: orgId, meetingId: String(req.params.id) });
+    if (!canAccessMeeting(req, meeting)) return denyMeetingAccess(res);
+    const decisions = await listMeetingDecisionRecords({
+      organizationId: orgId,
+      meetingId: meeting!.id,
+    });
+    return res.json({ decisions });
+  })
+);
+
+router.post(
+  '/:id/decision-records',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    const userId = req.user?.id;
+    if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
+    const statement = String(req.body?.statement || '').trim();
+    if (!statement) return res.status(400).json({ error: 'statement is required' });
+    const meeting = await getMeeting({ organizationId: orgId, meetingId: String(req.params.id) });
+    if (!canAccessMeeting(req, meeting)) return denyMeetingAccess(res);
+    const decision = await createMeetingDecisionRecord({
+      organizationId: orgId,
+      meetingId: meeting!.id,
+      statement,
+      rationale: String(req.body?.rationale || ''),
+      decidedBy: userId,
+      createdBy: userId,
+    });
+    return res.status(201).json({ decision });
+  })
+);
+
+router.patch(
+  '/:id/decision-records/:decisionId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    if (req.body?.statement !== undefined && !String(req.body.statement || '').trim()) {
+      return res.status(400).json({ error: 'statement cannot be empty' });
+    }
+    const status = req.body?.status;
+    if (status !== undefined && status !== 'recorded' && status !== 'superseded') {
+      return res.status(400).json({ error: 'status must be recorded or superseded' });
+    }
+    const meeting = await getMeeting({ organizationId: orgId, meetingId: String(req.params.id) });
+    if (!canAccessMeeting(req, meeting)) return denyMeetingAccess(res);
+    const decision = await updateMeetingDecisionRecord({
+      organizationId: orgId,
+      meetingId: meeting!.id,
+      decisionId: String(req.params.decisionId),
+      statement: typeof req.body?.statement === 'string' ? req.body.statement : undefined,
+      rationale: typeof req.body?.rationale === 'string' ? req.body.rationale : undefined,
+      status,
+    });
+    if (!decision) return res.status(404).json({ error: 'Decision not found' });
+    return res.json({ decision });
+  })
+);
+
+router.delete(
+  '/:id/decision-records/:decisionId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const meeting = await getMeeting({ organizationId: orgId, meetingId: String(req.params.id) });
+    if (!canAccessMeeting(req, meeting)) return denyMeetingAccess(res);
+    const deleted = await deleteMeetingDecisionRecord({
+      organizationId: orgId,
+      meetingId: meeting!.id,
+      decisionId: String(req.params.decisionId),
+    });
+    if (!deleted) return res.status(404).json({ error: 'Decision not found' });
+    return res.json({ deleted: true });
+  })
+);
+
+router.get(
+  '/:id/follow-up-records',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const meeting = await getMeeting({ organizationId: orgId, meetingId: String(req.params.id) });
+    if (!canAccessMeeting(req, meeting)) return denyMeetingAccess(res);
+    const followUps = await listMeetingFollowUpRecords({
+      organizationId: orgId,
+      meetingId: meeting!.id,
+    });
+    return res.json({ followUps });
+  })
+);
+
+router.post(
+  '/:id/follow-up-records',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const title = String(req.body?.title || '').trim();
+    if (!title) return res.status(400).json({ error: 'title is required' });
+    const meeting = await getMeeting({ organizationId: orgId, meetingId: String(req.params.id) });
+    if (!canAccessMeeting(req, meeting)) return denyMeetingAccess(res);
+    const followUp = await createMeetingFollowUpRecord({
+      organizationId: orgId,
+      meetingId: meeting!.id,
+      title,
+      owner: String(req.body?.owner || ''),
+      ownerUserId: typeof req.body?.ownerUserId === 'string' ? req.body.ownerUserId : null,
+      dueAt: typeof req.body?.dueAt === 'string' ? req.body.dueAt : null,
+    });
+    return res.status(201).json({ followUp });
+  })
+);
+
+router.patch(
+  '/:id/follow-up-records/:followUpId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    if (req.body?.title !== undefined && !String(req.body.title || '').trim()) {
+      return res.status(400).json({ error: 'title cannot be empty' });
+    }
+    const status = req.body?.status;
+    if (status !== undefined && status !== 'open' && status !== 'done') {
+      return res.status(400).json({ error: 'status must be open or done' });
+    }
+    const meeting = await getMeeting({ organizationId: orgId, meetingId: String(req.params.id) });
+    if (!canAccessMeeting(req, meeting)) return denyMeetingAccess(res);
+    const followUp = await updateMeetingFollowUpRecord({
+      organizationId: orgId,
+      meetingId: meeting!.id,
+      followUpId: String(req.params.followUpId),
+      title: typeof req.body?.title === 'string' ? req.body.title : undefined,
+      owner: typeof req.body?.owner === 'string' ? req.body.owner : undefined,
+      ownerUserId:
+        req.body?.ownerUserId === null || typeof req.body?.ownerUserId === 'string'
+          ? req.body.ownerUserId
+          : undefined,
+      dueAt:
+        req.body?.dueAt === null || typeof req.body?.dueAt === 'string'
+          ? req.body.dueAt
+          : undefined,
+      status,
+    });
+    if (!followUp) return res.status(404).json({ error: 'Follow-up not found' });
+    return res.json({ followUp });
+  })
+);
+
+router.delete(
+  '/:id/follow-up-records/:followUpId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const meeting = await getMeeting({ organizationId: orgId, meetingId: String(req.params.id) });
+    if (!canAccessMeeting(req, meeting)) return denyMeetingAccess(res);
+    const deleted = await deleteMeetingFollowUpRecord({
+      organizationId: orgId,
+      meetingId: meeting!.id,
+      followUpId: String(req.params.followUpId),
+    });
+    if (!deleted) return res.status(404).json({ error: 'Follow-up not found' });
+    return res.json({ deleted: true });
   })
 );
 

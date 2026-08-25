@@ -53,6 +53,21 @@ materializacja wskazuje `note.id`; Materials nadal używa
 | Produkcyjni konsumenci legacy writers      | BRAK                | `rg` zwraca tylko komentarz E2E i testy                 |
 | Kontrakt 410                               | JEST                | 10 asercji `toBe(410)` w golden-flows                   |
 
+## D.3 — strukturalne API
+
+Nowe zasoby zachowują stare trasy 410 bez zmian:
+
+| Grupa      | Trasy                                          | Happy/readback | 400  | 404 rekord | Obcy tenant |
+| ---------- | ---------------------------------------------- | -------------- | ---- | ---------- | ----------- |
+| decyzje    | GET/POST/PATCH/DELETE `/:id/decision-records`  | PASS           | PASS | PASS       | PASS        |
+| follow-upy | GET/POST/PATCH/DELETE `/:id/follow-up-records` | PASS           | PASS | PASS       | PASS        |
+
+Dowód behawioralny na realnym PostgreSQL:
+`meeting.day10.records.routes.pg.test.ts` — **6/6 PASS**. Test przechodzi
+przez realny router i realne serwisy; mockowana jest wyłącznie autoryzacja
+parametryzowana nagłówkami. Pakiet golden-flows po zmianie: **49/49 PASS**,
+bez modyfikacji pliku i z zachowaniem 10 asercji 410.
+
 ## Testy stanu wyjściowego
 
 | Pakiet                             | Przed                                       |
