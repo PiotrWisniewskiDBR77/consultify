@@ -53,6 +53,7 @@ import PresentationBenchmarkTrendView from './PresentationBenchmarkTrendView';
 import PresentationGovernanceAlertSubscriptionsView from './PresentationGovernanceAlertSubscriptionsView';
 import PresentationGovernanceWatchlistView from './PresentationGovernanceWatchlistView';
 import PresentationOperationsHealthView from './PresentationOperationsHealthView';
+import PlatformOperationsView from './PlatformOperationsView';
 import PresentationTemplateGovernanceView from './PresentationTemplateGovernanceView';
 
 interface SystemModuleProps {
@@ -95,6 +96,7 @@ const RENDERABLE_TABS: ReadonlySet<string> = new Set<string>([
   'presentation-benchmark-trend',
   'presentation-alert-subscriptions',
   'presentation-template-governance',
+  'platform-operations',
 ]);
 
 // Tab IDs that participate in the cross-tab deep-link contract. We only
@@ -221,6 +223,7 @@ export const SystemModule: React.FC<SystemModuleProps> = ({ initialTab }) => {
     { id: 'analytics', label: 'Analytics', icon: <BarChart3 size={16} /> },
     { id: 'backup', label: 'Backup', icon: <HardDrive size={16} /> },
     { id: 'api-keys', label: 'API Keys', icon: <Key size={16} /> },
+    { id: 'platform-operations', label: 'Operacje platformowe', icon: <ShieldAlert size={16} /> },
     {
       id: 'presentation-watchlist',
       label: 'Governance Watchlist',
@@ -253,6 +256,8 @@ export const SystemModule: React.FC<SystemModuleProps> = ({ initialTab }) => {
       case 'health':
         // Use enterprise health monitor for comprehensive monitoring
         return <EnterpriseHealthMonitor />;
+      case 'platform-operations':
+        return <PlatformOperationsView />;
       case 'audit-log':
         // Use enterprise audit log with compliance and export features
         return <EnterpriseAuditLog />;

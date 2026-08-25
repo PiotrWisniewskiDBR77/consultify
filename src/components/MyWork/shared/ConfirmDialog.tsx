@@ -18,6 +18,7 @@ export interface ConfirmDialogProps {
   variant?: 'danger' | 'warning' | 'default';
   icon?: React.ReactNode;
   children?: React.ReactNode;
+  confirmDisabled?: boolean;
 }
 
 export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
@@ -31,6 +32,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   variant = 'danger',
   icon,
   children,
+  confirmDisabled = false,
 }) => {
   const confirmRef = useRef<HTMLButtonElement>(null);
   const titleId = useId();
@@ -149,6 +151,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
                 type="button"
                 ref={confirmRef}
                 onClick={onConfirm}
+                disabled={confirmDisabled}
                 className={`h-9 px-4 rounded-lg text-sm font-medium text-white transition-colors focus:outline-none focus:ring-2 ${style.confirmBg}`}
               >
                 {confirmLabel}
