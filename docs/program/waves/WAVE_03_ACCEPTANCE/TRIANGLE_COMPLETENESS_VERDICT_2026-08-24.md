@@ -144,3 +144,26 @@ konfiguracji repo (obowiązuje wszystkie worktree'y). Konsekwencja: historyczna
 | ID | Problem | Dowód | Klasyfikacja |
 |---|---|---|---|
 | TRI-OBS-17 | Aktywacja hooksPath (TRI-MUST-16) odsłoniła zastały dług rejestru akcji: 5 plików `src/components/MyWork/` (ClosureDecisionQueue.tsx, EffectivenessClosureQueue.tsx, notebook/NotebookExportMenu.tsx, notebook/NotebookHamburgerMenu.tsx, notebook/NotebookInlineAIMenu.tsx) mają akcjopodobne `onClick`/handlery bez traceability do `IDEA_ACTION_REGISTRY` (R10, `scripts/check-action-coverage.sh`) — potwierdzone realnym `--all` skanem, nie artefaktem błędu strażnika. Przy okazji naprawiono osobny defekt: `check-actions.sh` w trybie pre-commit wołał R10 bez argumentów, co przy stage'u WYŁĄCZNIE pliku `__tests__/*.tsx` trafiało w fallback „pusty staging → pełny skan repo" i blokowało commity nietykające tego długu (naprawa: commit `57ceb1101d`, staged-only scope + `--full` dla CI/audytów, żadna reguła nie osłabiona). | `scripts/check-action-coverage.baseline.txt`, live run `bash scripts/check-action-coverage.sh --all` (2026-08-25), commit 57ceb1101d | do rozwiązania przy scaleniu dnia 3 (dodać wpisy do `ideaActionRegistry.ts` albo przepiąć handlery przez `runIdeaAction`) |
+
+## Odbiór dnia 3 Codexa — PODPIS warstwy 3 (2026-08-25, Fable)
+
+Werdykt: **PRZYJĘTE W CAŁOŚCI po naprawach i wykończeniach.** Warstwa 1:
+warunkowy ACCEPT → FIX-1..12 wykonane. Warstwa 2 (przepływy): 2 FAIL_DNIA3
+naprawione jako FIX-13 (unified read kalendarza nie czytał calendar_events —
+naprawa + dowód sieciowy: POST→reload→GET zwraca event, widoczny też dla
+uczestnika) i FIX-14/15 (uchwyt bloku; martwe akcje konwersji → realne kwitancje
+NOTEBOOK_PAGE_EXPANDED w audit_events). Warstwa wizualna: 14/14 pozycji OK vs
+prototypy (motyw jasny DZIAŁA — przełącznik w menu profilu, domyślny dark;
+poprzednie „dark-only" = błędna diagnoza). Wykończenia PROTO_DIFF: pole
+Uczestnicy (typeahead org-scoped, nowy GET /users/search), ConfirmDialog
+powielenia (+ naprawa realnego buga portal/z-index — dialog był niewidoczny pod
+modalem), Właściciel (naprawa odczytu assignee vs owner) + Priorytet liczbowo,
+humanizacja statusów, i18n sejfu. TRI-OBS-17 ROZWIĄZANY (rejestr akcji 5 plików).
+DEC-49: słowniki stanów natywne per narzędzie.
+
+Adnotacja proweniencji: commity efa2e9075b i f6433139ed powstały w równoległej
+sesji lokalnej właściciela (ten sam git-user); zweryfikowane merytorycznie
+(poprawne, testy+strażniki zielone), przyjęte świadomie.
+
+Gałęzie mywork-day3 + day3-fixes scalone do m03. Flagi ff_ideaInspectorRightRail
+i ff_myWorkCalendarV2 pozostają OFF do werdyktu właściciela na pakiecie zrzutów.
