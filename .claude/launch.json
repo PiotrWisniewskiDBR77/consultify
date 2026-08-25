@@ -336,6 +336,19 @@
         "--strictPort"
       ],
       "port": 5305
+    },
+    {
+      "name": "mod06-meetings-etap2",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "4490",
+        "--strictPort"
+      ],
+      "port": 4490
     }
   ]
 }

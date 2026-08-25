@@ -258,6 +258,12 @@ const DeckBuilder = lazyWithRetry(() =>
 const MeetingHub = lazyWithRetry(() =>
   import('@/components/Meeting/MeetingHub').then((m) => ({ default: m.MeetingHub }))
 );
+// DEC-2026-08-24-07 — `/meetings/:meetingId` object card (stage 1: simple
+// read skeleton over real data, not a SPEC-A artifact shell — see the
+// component's own header comment).
+const MeetingObjectPage = lazyWithRetry(() =>
+  import('@/components/Meeting/MeetingObjectPage').then((m) => ({ default: m.MeetingObjectPage }))
+);
 // NOTE: Legacy Management Reports UI has been deprecated in favor of the unified
 // Reports & Presentations hub under /presentations (tab=documents).
 
@@ -649,6 +655,31 @@ const RedirectToCanonicalTab: React.FC<{
     trackFunnelEvent('route_redirected', { from, to: target, reason });
   }, [from, target, reason]);
   return <Navigate to={target} replace />;
+};
+
+/**
+ * DEC-2026-08-24-07 (OWNER_DECISION_LEDGER): `/meeting` (singular) is a
+ * permanent redirect to the canonical `/meetings` list. `/meeting?meetingId=X`
+ * used the query string as a deep link to one meeting — the canonical
+ * address for that is now the object route `/meetings/:meetingId`, so the
+ * param is REWRITTEN onto the path, not just carried along like
+ * `RedirectPreservingQuery` does for other legacy aliases.
+ */
+const MeetingLegacyRedirect: React.FC = () => {
+  const [searchParams] = useSearchParams();
+  const meetingId = searchParams.get('meetingId');
+  const to = meetingId
+    ? `${ROUTES.MEETINGS.ROOT}/${encodeURIComponent(meetingId)}`
+    : ROUTES.MEETINGS.ROOT;
+  React.useEffect(() => {
+    trackFunnelEvent('route_redirected', {
+      from: meetingId ? `${ROUTES.MEETING}?meetingId=${meetingId}` : ROUTES.MEETING,
+      to,
+      reason: 'meetings_canonical_route',
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [meetingId, to]);
+  return <Navigate to={to} replace />;
 };
 
 const ReportsBuilderLegacyRedirect: React.FC = () => {
@@ -2541,8 +2572,15 @@ export const AppRoutes: React.FC = () => {
           }
         />
         <Route path={ROUTES.PRESENTATION_STUDIO} element={<PresentationStudioRedirect />} />
+        {/*
+          DEC-2026-08-24-07: `/meeting` (singular) is a permanent alias that
+          redirects to canonical `/meetings`, rewriting `?meetingId=X` onto
+          the object path `/meetings/:meetingId` instead of just carrying the
+          query along (see MeetingLegacyRedirect above).
+        */}
+        <Route path={ROUTES.MEETING} element={<MeetingLegacyRedirect />} />
         <Route
-          path={ROUTES.MEETING}
+          path={ROUTES.MEETINGS.ROOT}
           element={
             <BetaGate moduleId="MODULE_MEETING">
               <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.meeting', 'Meeting')]} noPadding>
@@ -2552,6 +2590,102 @@ export const AppRoutes: React.FC = () => {
                 >
                   <RouteErrorBoundary>
                     <MeetingHub />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
+          }
+        />
+        {/*
+          Object card (stage 1 — routes + simple real-data skeleton, see
+          MeetingObjectPage.tsx header comment). `MINUTES`/`DECISIONS`/`NOTE`
+          share the same page for now so the full DEC-2026-08-24-07 grammar
+          resolves to real content instead of 404ing — splitting them into
+          distinct in-page views is stage 2's job once the full artifact
+          ships.
+        */}
+        <Route
+          path={ROUTES.MEETINGS.OBJECT}
+          element={
+            <BetaGate moduleId="MODULE_MEETING">
+              <MainLayout
+                breadcrumbs={
+                  breadcrumbs || [t('sidebar.meeting', 'Meeting'), t('meeting.meetingLabel', 'Meeting')]
+                }
+                noPadding
+              >
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Meeting"
+                >
+                  <RouteErrorBoundary>
+                    <MeetingObjectPage />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
+          }
+        />
+        <Route
+          path={ROUTES.MEETINGS.MINUTES}
+          element={
+            <BetaGate moduleId="MODULE_MEETING">
+              <MainLayout
+                breadcrumbs={
+                  breadcrumbs || [t('sidebar.meeting', 'Meeting'), t('meeting.meetingLabel', 'Meeting')]
+                }
+                noPadding
+              >
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Meeting"
+                >
+                  <RouteErrorBoundary>
+                    <MeetingObjectPage />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
+          }
+        />
+        <Route
+          path={ROUTES.MEETINGS.DECISIONS}
+          element={
+            <BetaGate moduleId="MODULE_MEETING">
+              <MainLayout
+                breadcrumbs={
+                  breadcrumbs || [t('sidebar.meeting', 'Meeting'), t('meeting.meetingLabel', 'Meeting')]
+                }
+                noPadding
+              >
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Meeting"
+                >
+                  <RouteErrorBoundary>
+                    <MeetingObjectPage />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
+          }
+        />
+        <Route
+          path={ROUTES.MEETINGS.NOTE}
+          element={
+            <BetaGate moduleId="MODULE_MEETING">
+              <MainLayout
+                breadcrumbs={
+                  breadcrumbs || [t('sidebar.meeting', 'Meeting'), t('meeting.meetingLabel', 'Meeting')]
+                }
+                noPadding
+              >
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Meeting"
+                >
+                  <RouteErrorBoundary>
+                    <MeetingObjectPage />
                   </RouteErrorBoundary>
                 </ProductionModuleGate>
               </MainLayout>

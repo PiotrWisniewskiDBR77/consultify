@@ -291,8 +291,11 @@ function getBasePath(type: ArtifactType, id: string): string {
       return `/prezentacje?artifactId=${id}`;
     case 'sheet':
       return `/tabele?artifactId=${id}`;
+    // DEC-2026-08-24-07: links straight to the canonical object card
+    // (`/meetings/:meetingId`) instead of the generic list — every other
+    // case here that has an `id` does the same.
     case 'meeting':
-      return `/meeting?meetingId=${encodeURIComponent(id)}`;
+      return `/meetings/${id}`;
     // V5-IDEA-34: Finance artifact parity
     case 'financial_model':
       return `/economics?tab=models&open=${id}`;

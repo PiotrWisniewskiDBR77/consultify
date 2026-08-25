@@ -185,7 +185,14 @@ const requiredRouteContracts = [
   ['finance', 'path={ROUTES.FINANCE}', '<EconomicsView'],
   ['execution', 'path={ROUTES.EXECUTION}', '<ExecutionHub'],
   ['materials', 'path={ROUTES.PRESENTATIONS}', '<ReportsAndPresentationsHub'],
-  ['meetings', 'path={ROUTES.MEETING}', '<MeetingHub'],
+  // DEC-2026-08-24-07 (OWNER_DECISION_LEDGER, "meetings" contract): the
+  // canonical Meeting address is the object card `/meetings/:meetingId`,
+  // not the list root. `/meeting` (singular) is now a permanent legacy
+  // alias that must keep redirecting via <MeetingLegacyRedirect> instead of
+  // silently disappearing or remounting a real screen. Both bindings are
+  // asserted so neither can drift without failing this guard.
+  ['meetings', 'path={ROUTES.MEETINGS.OBJECT}', '<MeetingObjectPage'],
+  ['meetings-legacy-redirect', 'path={ROUTES.MEETING}', '<MeetingLegacyRedirect'],
   ['results', 'path={ROUTES.RESULTS}', '<ResultsOwnerReviewEntry'],
   ['settings', 'path={`${ROUTES.SETTINGS.ROOT}/*`', '<SettingsView'],
   ['organization', 'path={`${ROUTES.ORGANIZATION.ROOT}/*`', '<OrganizationView'],

@@ -3,12 +3,9 @@ import {
   CheckSquare2,
   ChevronLeft,
   ChevronRight,
-  ClipboardList,
   ExternalLink,
-  FileText,
   Loader2,
   Sparkles,
-  Users,
   X,
 } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -19,7 +16,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { type FilterChip, type ModuleTab, type ViewMode } from '@/components/shared/ModuleHub';
 import { getMenu3AiButtonClass } from '@/components/shared/ModuleHub/menu3ActionButtonStyles';
 import { Menu3Row } from '@/components/shared/ModuleHub/Menu3Row';
-import { useModuleOpenDocuments } from '@/components/shared/ModuleHub/useModuleOpenDocuments';
 import {
   MENU_3_ALL_DOT_CLASS,
   MENU_3_BADGE_ACTIVE,
@@ -38,6 +34,7 @@ import {
 import { StandardModuleBar } from '@/components/standard/StandardModuleBar';
 import { ErrorState, LoadingState } from '@/components/ui/primitives';
 import { StatusChip } from '@/components/ui/primitives/chips';
+import { ROUTES } from '@/routes/routeConfig';
 import { Api, type GovernedMeetingNoteDto } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -69,7 +66,7 @@ export interface MeetingItem {
 export const MeetingHub: React.FC = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const isPolish = i18n.language?.startsWith('pl');
   const currentUser = useAppStore((state) => state.currentUser);
   const canApproveMeetingNotes = ['OWNER', 'ADMIN', 'SUPERADMIN'].includes(
@@ -116,8 +113,11 @@ export const MeetingHub: React.FC = () => {
     agenda: '',
   });
 
-  const { openDocuments, setOpenDocuments, activeDocumentId, setActiveDocumentId } =
-    useModuleOpenDocuments('meeting');
+  // Notes modal target is deliberately its own id, independent of `selectedId`
+  // (the preview-pane selection) — mirrors the old activeDocumentId/selectedId
+  // separation so the modal doesn't silently retarget if the user changes the
+  // table selection while it's open.
+  const [notesMeetingId, setNotesMeetingId] = useState<string | null>(null);
 
   const loadMeetings = async () => {
     setLoading(true);
@@ -206,11 +206,15 @@ export const MeetingHub: React.FC = () => {
     () => filteredMeetings.find((item) => item.id === selectedId) || null,
     [filteredMeetings, selectedId]
   );
-  const activeMeeting = useMemo(
-    () => meetings.find((item) => item.id === activeDocumentId) || null,
-    [meetings, activeDocumentId]
+  // DEC-2026-08-24-07: opening a meeting now navigates to the object route
+  // (MeetingObjectPage.tsx) instead of expanding an inline document view in
+  // place, so the preview-pane selection is the only "which meeting" state
+  // left on this list route.
+  const briefingMeeting = selectedMeeting;
+  const notesMeeting = useMemo(
+    () => meetings.find((item) => item.id === notesMeetingId) || null,
+    [meetings, notesMeetingId]
   );
-  const briefingMeeting = activeMeeting || selectedMeeting;
 
   useEffect(() => {
     let cancelled = false;
@@ -257,28 +261,28 @@ export const MeetingHub: React.FC = () => {
     };
   }, [briefingMeeting?.id, operatorBriefReloadKey]);
 
+  /**
+   * DEC-2026-08-24-07 (OWNER_DECISION_LEDGER): "opening" a meeting navigates
+   * to the canonical object route (`/meetings/:meetingId` —
+   * `MeetingObjectPage.tsx`) instead of expanding an inline document view in
+   * place. Stage 2 removed the `openDocuments`/`activeDocumentId` document-
+   * tab state and the `MeetingDetailView` branch this function used to
+   * populate — they had been dormant since this navigate-away landed in
+   * stage 1.
+   */
   const openMeetingDocument = (row: MeetingItem) => {
-    setSelectedId(row.id);
-    const doc = {
-      id: row.id,
-      type: 'report' as const,
-      subType: 'meeting',
-      name: row.title,
-      status: 'DRAFT' as const,
-    };
-    setOpenDocuments((prev) => (prev.some((item) => item.id === row.id) ? prev : [...prev, doc]));
-    setActiveDocumentId(row.id);
-    const next = new URLSearchParams(searchParams);
-    next.set('meetingId', row.id);
-    setSearchParams(next, { replace: true });
+    navigate(`${ROUTES.MEETINGS.ROOT}/${encodeURIComponent(row.id)}`);
   };
 
+  // Backward compatibility (DEC-2026-08-24-07): `/meeting?meetingId=X` is
+  // rewritten by AppRoutes to `/meetings/:meetingId` before it ever reaches
+  // this component, but a bookmark/integration hitting `/meetings?meetingId=X`
+  // directly still lands here — forward it to the canonical object route too.
   const deepLinkMeetingId = searchParams.get('meetingId');
   useEffect(() => {
-    if (!deepLinkMeetingId || activeDocumentId === deepLinkMeetingId) return;
-    const meeting = meetings.find((item) => item.id === deepLinkMeetingId);
-    if (meeting) openMeetingDocument(meeting);
-  }, [activeDocumentId, deepLinkMeetingId, meetings]);
+    if (!deepLinkMeetingId) return;
+    navigate(`${ROUTES.MEETINGS.ROOT}/${encodeURIComponent(deepLinkMeetingId)}`, { replace: true });
+  }, [deepLinkMeetingId, navigate]);
 
   const tabs = useMemo(
     () => [
@@ -491,7 +495,7 @@ export const MeetingHub: React.FC = () => {
             onClick={() => {
               if (briefingMeeting) openMeetingDocument(briefingMeeting);
             }}
-            className={getMenu3AiButtonClass(Boolean(briefingMeeting && activeDocumentId))}
+            className={getMenu3AiButtonClass(false)}
             title={t('meeting.actions.operatorBrief', 'Open operator brief')}
           >
             <Sparkles size={12} />
@@ -500,7 +504,7 @@ export const MeetingHub: React.FC = () => {
         }
       />
     );
-  }, [activeDocumentId, activeFilters, briefingMeeting, counts, openMeetingDocument, t]);
+  }, [activeFilters, briefingMeeting, counts, openMeetingDocument, t]);
 
   const resetDraft = () => {
     setDraft({
@@ -589,8 +593,7 @@ export const MeetingHub: React.FC = () => {
       const removedId = deleteTarget.id;
       setMeetings((prev) => prev.filter((item) => item.id !== removedId));
       if (selectedId === removedId) setSelectedId(null);
-      if (activeDocumentId === removedId) setActiveDocumentId(null);
-      setOpenDocuments((prev) => prev.filter((doc) => doc.id !== removedId));
+      if (notesMeetingId === removedId) setNotesMeetingId(null);
       setDeleteTarget(null);
       toast.success(t('meeting.notifications.deleted', 'Meeting deleted'));
     } catch (error) {
@@ -617,10 +620,10 @@ export const MeetingHub: React.FC = () => {
   };
 
   const handleGenerateNotes = async () => {
-    if (!activeMeeting || !notesTranscript.trim()) return;
+    if (!notesMeetingId || !notesTranscript.trim()) return;
     const transcript = notesTranscript.trim();
     const language = isPolish ? 'pl' : 'en';
-    const signature = JSON.stringify([activeMeeting.id, language, transcript]);
+    const signature = JSON.stringify([notesMeetingId, language, transcript]);
     if (noteGenerationCommandRef.current?.signature !== signature) {
       noteGenerationCommandRef.current = {
         signature,
@@ -632,7 +635,7 @@ export const MeetingHub: React.FC = () => {
     setGeneratingNotes(true);
     setGeneratedNote(null);
     try {
-      const response = await (Api as any).generateMeetingNotes?.(activeMeeting.id, {
+      const response = await (Api as any).generateMeetingNotes?.(notesMeetingId, {
         transcript,
         language,
         idempotencyKey: noteGenerationCommandRef.current.key,
@@ -687,19 +690,19 @@ export const MeetingHub: React.FC = () => {
     }
   };
 
-  const openGovernedNotes = () => {
-    if (!activeMeeting) return;
+  const openGovernedNotes = (meetingId: string) => {
+    setNotesMeetingId(meetingId);
     setGeneratedNote(null);
     setNotesTranscript('');
     setShowNotesModal(true);
-    void loadGovernedNotes(activeMeeting.id);
+    void loadGovernedNotes(meetingId);
   };
 
   const decideGovernedNote = async (note: GovernedMeetingNoteDto, action: 'approve' | 'reject') => {
-    if (!activeMeeting) return;
+    if (!notesMeetingId) return;
     setDecidingNoteId(note.id);
     try {
-      const response = await Api.decideMeetingNote(activeMeeting.id, note.id, {
+      const response = await Api.decideMeetingNote(notesMeetingId, note.id, {
         action,
       });
       if (!response?.note || !response?.proposal) throw new Error('Decision was not persisted');
@@ -723,7 +726,7 @@ export const MeetingHub: React.FC = () => {
           ? t('meeting.notes.stale', 'This proposal changed. Reloading the authoritative state.')
           : t('meeting.notes.errors.decisionFailed', 'Could not update the proposal.')
       );
-      if (stale) await loadGovernedNotes(activeMeeting.id);
+      if (stale) await loadGovernedNotes(notesMeetingId);
     } finally {
       setDecidingNoteId(null);
     }
@@ -749,15 +752,22 @@ export const MeetingHub: React.FC = () => {
                 icon: CheckSquare2,
                 onClick: () => handleToggleMeetingStatus(selectedMeeting.id),
               },
+              {
+                id: 'ai-notes',
+                variant: 'neutral',
+                label: t('meeting.aiNotes', 'AI Notes'),
+                icon: Sparkles,
+                onClick: () => openGovernedNotes(selectedMeeting.id),
+              },
             ],
           }
         : undefined,
-    [selectedMeeting, t, openMeetingDocument, handleToggleMeetingStatus]
+    [selectedMeeting, t, openMeetingDocument, handleToggleMeetingStatus, openGovernedNotes]
   );
 
   // Esc closes preview; single-key shortcuts (O) active while preview open (kanon B.24/B.31).
   useEffect(() => {
-    if (viewMode !== 'table' || activeDocumentId || !selectedId) return;
+    if (viewMode !== 'table' || !selectedId) return;
     const shortcuts = standardPreviewShortcuts(listPreviewActions);
     const onKey = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName;
@@ -775,7 +785,7 @@ export const MeetingHub: React.FC = () => {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [viewMode, activeDocumentId, selectedId, listPreviewActions]);
+  }, [viewMode, selectedId, listPreviewActions]);
 
   return (
     <>
@@ -786,14 +796,6 @@ export const MeetingHub: React.FC = () => {
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         onSearch={setSearchQuery}
-        openItems={openDocuments}
-        activeItemId={activeDocumentId}
-        onSelectItem={setActiveDocumentId}
-        onCloseItem={(id) => {
-          setOpenDocuments((prev) => prev.filter((doc) => doc.id !== id));
-          if (activeDocumentId === id) setActiveDocumentId(null);
-        }}
-        onShowList={() => setActiveDocumentId(null)}
         activeFilters={activeFilters}
         onRemoveFilter={(id) => setActiveFilters((prev) => prev.filter((item) => item.id !== id))}
         onClearFilters={() => setActiveFilters([])}
@@ -820,22 +822,6 @@ export const MeetingHub: React.FC = () => {
           <LoadingState variant="spinner" className="h-full" />
         ) : loadError ? (
           <ErrorState message={loadError} retry={() => void loadMeetings()} />
-        ) : activeMeeting ? (
-          <MeetingDetailView
-            meeting={activeMeeting}
-            isPolish={isPolish}
-            operatorBrief={
-              briefMatchesMeeting(operatorBrief, activeMeeting.id) ? operatorBrief : null
-            }
-            operatorBriefLoading={operatorBriefLoading}
-            operatorBriefError={operatorBriefError && briefingMeeting?.id === activeMeeting.id}
-            onRetryOperatorBrief={() => setOperatorBriefReloadKey((k) => k + 1)}
-            onBack={() => setActiveDocumentId(null)}
-            onEdit={() => openEditModal(activeMeeting)}
-            onDelete={() => setDeleteTarget(activeMeeting)}
-            onToggleStatus={() => handleToggleMeetingStatus(activeMeeting.id)}
-            onGenerateNotes={openGovernedNotes}
-          />
         ) : viewMode === 'calendar' ? (
           <MeetingCalendarView
             meetings={filteredMeetings}
@@ -1151,7 +1137,7 @@ export const MeetingHub: React.FC = () => {
           </div>
         </div>
       ) : null}
-      {showNotesModal && activeMeeting ? (
+      {showNotesModal && notesMeeting ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-2xl rounded-2xl bg-c-surface border border-slate-200/60 dark:border-white/[0.03] max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-c-border-subtle">
@@ -1160,7 +1146,7 @@ export const MeetingHub: React.FC = () => {
                   <Sparkles size={16} className="text-c-text-secondary" />
                   {t('meeting.aiMeetingNotes2')}
                 </div>
-                <div className="text-xs text-c-text-muted">{activeMeeting.title}</div>
+                <div className="text-xs text-c-text-muted">{notesMeeting.title}</div>
               </div>
               <button
                 type="button"
@@ -1201,7 +1187,7 @@ export const MeetingHub: React.FC = () => {
                     {notesError ? (
                       <ErrorState
                         message={notesError}
-                        retry={() => void loadGovernedNotes(activeMeeting.id)}
+                        retry={() => void loadGovernedNotes(notesMeeting.id)}
                       />
                     ) : null}
                     {!notesLoading && !notesError && governedNotes.length === 0 ? (
@@ -1442,239 +1428,6 @@ const Field: React.FC<{ label: string; children: React.ReactNode }> = ({ label, 
   </label>
 );
 
-const MeetingDetailView: React.FC<{
-  meeting: MeetingItem;
-  isPolish: boolean;
-  operatorBrief?: any;
-  operatorBriefLoading?: boolean;
-  operatorBriefError?: boolean;
-  onRetryOperatorBrief?: () => void;
-  onBack: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
-  onToggleStatus: () => void;
-  onGenerateNotes: () => void;
-}> = ({
-  meeting,
-  isPolish,
-  operatorBrief,
-  operatorBriefLoading,
-  operatorBriefError,
-  onRetryOperatorBrief,
-  onBack,
-  onEdit,
-  onDelete,
-  onToggleStatus,
-  onGenerateNotes,
-}) => {
-  const { t } = useTranslation();
-  return (
-    <div className="p-4 lg:p-6">
-      <div className="rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface overflow-hidden">
-        <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-c-border-subtle">
-          <div className="min-w-0">
-            <div className="text-[11px] uppercase tracking-wide text-c-text-muted">
-              {t('meeting.meetingLabel')}
-            </div>
-            <div className="text-lg font-semibold text-c-text truncate">{meeting.title}</div>
-            <div className="mt-1 text-sm text-c-text-muted">
-              {formatDateTime(meeting.startAt, isPolish)}
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={onEdit}
-              className="h-9 px-4 rounded-full border border-c-border text-sm font-medium"
-            >
-              {t('meeting.edit2')}
-            </button>
-            <button
-              type="button"
-              onClick={onDelete}
-              className="h-9 px-4 rounded-full border border-red-200 text-red-600 dark:border-red-500/30 dark:text-red-400 text-sm font-medium hover:bg-red-50 dark:hover:bg-red-500/10"
-            >
-              {t('meeting.delete4')}
-            </button>
-            <button
-              type="button"
-              onClick={onToggleStatus}
-              className="h-9 px-4 rounded-full border border-c-border text-sm font-medium"
-            >
-              {meeting.status === 'completed'
-                ? t('meeting.markScheduled')
-                : t('meeting.markCompleted')}
-            </button>
-            <button
-              type="button"
-              onClick={onGenerateNotes}
-              className="h-9 px-4 rounded-full bg-c-text text-c-surface text-sm font-medium inline-flex items-center gap-1.5 hover:opacity-90"
-              title={t('meeting.generateAiNotesFromTranscript')}
-            >
-              <Sparkles className="w-4 h-4" />
-              {t('meeting.aiNotes')}
-            </button>
-            <button
-              type="button"
-              onClick={onBack}
-              className="h-9 px-4 rounded-full border border-c-border text-sm"
-            >
-              {t('meeting.backToList')}
-            </button>
-          </div>
-        </div>
-        <div className="grid gap-4 p-5 lg:grid-cols-2">
-          <MeetingOperatorBriefCard
-            isPolish={isPolish}
-            brief={operatorBrief}
-            loading={operatorBriefLoading}
-            error={operatorBriefError}
-            onRetry={onRetryOperatorBrief}
-            className="lg:col-span-2"
-          />
-          <PreviewSection
-            icon={<Users size={14} />}
-            title={t('meeting.attendees2')}
-            items={meeting.attendees}
-            emptyLabel={t('meeting.noAttendeesYet')}
-          />
-          <PreviewSection
-            icon={<FileText size={14} />}
-            title={'Pre-read'}
-            items={meeting.preRead}
-            emptyLabel={t('meeting.noPreReadYet')}
-          />
-          <PreviewSection
-            icon={<ClipboardList size={14} />}
-            title={'Agenda'}
-            items={meeting.agenda}
-            emptyLabel={t('meeting.noAgendaYet')}
-          />
-          <PreviewSection
-            icon={<CheckSquare2 size={14} />}
-            title={t('meeting.decisions2')}
-            items={meeting.decisions}
-            emptyLabel={t('meeting.noDecisionsYet')}
-          />
-          <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3 lg:col-span-2">
-            <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-c-text-muted">
-              <CheckSquare2 size={14} />
-              <span>{t('meeting.followUps2')}</span>
-            </div>
-            {meeting.followUps.length ? (
-              <div className="space-y-2">
-                {meeting.followUps.map((item) => (
-                  <div
-                    key={item.id}
-                    className="w-full rounded-xl border border-c-border-subtle px-3 py-2 text-left"
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="text-sm font-medium text-c-text truncate">{item.title}</div>
-                        <div className="text-xs text-c-text-muted">{item.owner}</div>
-                      </div>
-                      <StatusChip
-                        tone={item.status === 'done' ? 'success' : 'warning'}
-                        label={item.status === 'done' ? t('meeting.done') : t('meeting.open2')}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-sm text-c-text-muted">{t('meeting.noFollowUpsYet')}</div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const MeetingOperatorBriefCard: React.FC<{
-  isPolish: boolean;
-  brief?: any;
-  loading?: boolean;
-  error?: boolean;
-  onRetry?: () => void;
-  className?: string;
-}> = ({ isPolish, brief, loading = false, error = false, onRetry, className = '' }) => {
-  const { t } = useTranslation();
-  return (
-    <div
-      className={`rounded-xl border border-c-border-subtle bg-c-surface-raised p-3 ${className}`.trim()}
-    >
-      <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-c-text-secondary">
-        <Sparkles size={14} />
-        <span>{'Operator brief'}</span>
-      </div>
-      {loading ? (
-        <div className="text-sm text-c-text-muted">{t('meeting.preparingMeetingBrief')}</div>
-      ) : error ? (
-        <div className="flex flex-col items-start gap-2">
-          <div className="text-sm text-amber-600 dark:text-amber-400">
-            {t('meeting.operatorBriefError', 'Could not load the operator brief.')}
-          </div>
-          {onRetry ? (
-            <button
-              type="button"
-              onClick={onRetry}
-              className="text-xs font-medium text-c-text-secondary underline underline-offset-2 hover:text-c-text"
-            >
-              {t('common.retry', 'Retry')}
-            </button>
-          ) : null}
-        </div>
-      ) : brief ? (
-        <div className="space-y-2">
-          <div className="text-sm text-c-text-secondary">{brief.prepSummary}</div>
-          {Array.isArray(brief.agendaGaps) && brief.agendaGaps.length ? (
-            <div className="text-xs text-c-text-muted">
-              {(brief.agendaGaps as string[]).slice(0, 2).join(' • ')}
-            </div>
-          ) : null}
-          {Array.isArray(brief.followUpSuggestions) && brief.followUpSuggestions.length ? (
-            <div className="space-y-1">
-              {(brief.followUpSuggestions as string[]).slice(0, 3).map((item) => (
-                <div key={item} className="text-xs text-c-text-secondary">
-                  {item}
-                </div>
-              ))}
-            </div>
-          ) : null}
-        </div>
-      ) : (
-        <div className="text-sm text-c-text-muted">{t('meeting.noOperatorBrief')}</div>
-      )}
-    </div>
-  );
-};
-
-const PreviewSection: React.FC<{
-  icon: React.ReactNode;
-  title: string;
-  items: string[];
-  emptyLabel: string;
-}> = ({ icon, title, items, emptyLabel }) => (
-  <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3">
-    <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-c-text-muted">
-      {icon}
-      <span>{title}</span>
-    </div>
-    {items.length ? (
-      <div className="space-y-1.5">
-        {items.map((item, idx) => (
-          <div key={`${title}-${idx}`} className="text-sm text-c-text-secondary">
-            {item}
-          </div>
-        ))}
-      </div>
-    ) : (
-      <div className="text-sm text-c-text-muted">{emptyLabel}</div>
-    )}
-  </div>
-);
-
 const dayKey = (date: Date): string =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(
     date.getDate()
@@ -1902,7 +1655,7 @@ function splitLines(value: string): string[] {
     .filter(Boolean);
 }
 
-function formatDateTime(value: string, isPolish: boolean): string {
+export function formatDateTime(value: string, isPolish: boolean): string {
   if (!value) return '—';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
