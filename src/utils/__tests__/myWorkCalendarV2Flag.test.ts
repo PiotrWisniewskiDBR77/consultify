@@ -7,24 +7,24 @@ import {
   resetMyWorkCalendarV2FlagCache,
 } from '../myWorkCalendarV2Flag';
 
-describe('My Work Calendar V2 default-on flag (DEC-2026-08-25-50)', () => {
+describe('My Work Calendar V2 opt-in flag', () => {
   beforeEach(() => {
     window.history.replaceState({}, '', '/');
     window.localStorage.clear();
     resetMyWorkCalendarV2FlagCache();
   });
 
-  it('defaults ON with no query or local override', () => {
-    expect(isMyWorkCalendarV2Enabled()).toBe(true);
+  it('defaults OFF with no query or local opt-in', () => {
+    expect(isMyWorkCalendarV2Enabled()).toBe(false);
   });
 
-  it('can be explicitly opted out via query or local storage', () => {
-    window.localStorage.setItem('ff.my_work_calendar_v2', 'off');
-    resetMyWorkCalendarV2FlagCache();
-    expect(isMyWorkCalendarV2Enabled()).toBe(false);
-    resetMyWorkCalendarV2FlagCache();
+  it('enables only through an explicit opt-in and can be explicitly disabled', () => {
     window.localStorage.setItem('ff.my_work_calendar_v2', '1');
+    resetMyWorkCalendarV2FlagCache();
     expect(isMyWorkCalendarV2Enabled()).toBe(true);
+    resetMyWorkCalendarV2FlagCache();
+    window.localStorage.setItem('ff.my_work_calendar_v2', 'off');
+    expect(isMyWorkCalendarV2Enabled()).toBe(false);
   });
 
   it('routes OFF to the legacy CalendarView and ON to CalendarV2', () => {

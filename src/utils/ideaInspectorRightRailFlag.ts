@@ -21,10 +21,7 @@ export function isIdeaInspectorRightRailEnabled(): boolean {
       ? parse(window.localStorage.getItem(LS_KEY))
       : null;
   const env = parse((import.meta as unknown as { env?: Record<string, string> }).env?.[ENV_KEY]);
-  // DEC-2026-08-25-50: owner accepted the Idea Inspector right rail on
-  // screenshots — default flips ON. query/localStorage/env still allow an
-  // explicit opt-out back to the legacy per-tool detail panels.
-  cached = query ?? local ?? env ?? true;
+  cached = query ?? local ?? env ?? false;
   return cached;
 }
 
