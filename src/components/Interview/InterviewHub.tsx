@@ -1676,7 +1676,7 @@ export const InterviewHub: React.FC = () => {
         id: session.id,
         type: 'interview_session',
         subType: 'interview',
-        name: session.name || 'Interview Session',
+        name: session.name || t('interview.defaultSessionName', 'Interview Session'),
         status: (workflowStatus.toUpperCase() || 'DRAFT') as any,
       });
     },
@@ -2277,7 +2277,7 @@ export const InterviewHub: React.FC = () => {
     }> = [
       {
         id: 'my_assignments' as ModuleTab,
-        label: withStep('my_assignments', 'Inbox'),
+        label: withStep('my_assignments', t('interview.hub.inbox', 'Inbox')),
         icon: <Inbox size={16} />,
         count: myAssignments.filter((a) => a.status !== 'approved' && a.status !== 'completed')
           .length,
@@ -2430,7 +2430,12 @@ export const InterviewHub: React.FC = () => {
           createResponse) as InterviewSession
       );
       if (!createdSession?.id) {
-        throw new Error('Interview session create response did not include an id');
+        throw new Error(
+          t(
+            'interview.hub.sessionCreateMissingId',
+            'Interview session create response did not include an id'
+          )
+        );
       }
 
       // The Sessions table is server truth. Re-read the canonical org-scoped
@@ -2442,7 +2447,10 @@ export const InterviewHub: React.FC = () => {
       );
       if (!confirmedSession) {
         throw new Error(
-          'Created interview session was not returned by the canonical sessions list'
+          t(
+            'interview.hub.sessionCreateNotInList',
+            'Created interview session was not returned by the canonical sessions list'
+          )
         );
       }
       setSessions(confirmedSessions);
@@ -2451,7 +2459,7 @@ export const InterviewHub: React.FC = () => {
       const doc: OpenDocument = {
         id: confirmedSession.id,
         type: 'interview_session',
-        name: confirmedSession.name || 'Interview Session',
+        name: confirmedSession.name || t('interview.defaultSessionName', 'Interview Session'),
         subType: 'interview',
         status: (confirmedSession.status || 'IN_PROGRESS').toString().toUpperCase() as any,
       };
@@ -2504,7 +2512,12 @@ export const InterviewHub: React.FC = () => {
     (session: InterviewSession) => {
       setOpenDocuments((prev) =>
         prev.map((doc) =>
-          doc.id === session.id ? { ...doc, name: session.name || 'Interview Session' } : doc
+          doc.id === session.id
+            ? {
+                ...doc,
+                name: session.name || t('interview.defaultSessionName', 'Interview Session'),
+              }
+            : doc
         )
       );
       const completenessPercent =
@@ -3195,7 +3208,7 @@ export const InterviewHub: React.FC = () => {
         const s = (await V8InterviewApi.getSession(sessionId)
           .then((res) => res.session)
           .catch(() => Api.get(`/interview/sessions/${sessionId}`))) as any;
-        if (!s?.id) throw new Error('Session not found');
+        if (!s?.id) throw new Error(t('interview.hub.sessionNotFound', 'Session not found'));
         handleViewSession(s as InterviewSession);
       } catch (error: any) {
         console.error('[InterviewHub] Failed to open session by id:', error);
@@ -4623,7 +4636,7 @@ export const InterviewHub: React.FC = () => {
               <Brain size={15} />
             </div>
             <span className="text-sm font-semibold text-c-text block truncate">
-              {row.name || 'Discovery Interview'}
+              {row.name || t('interview.defaultSessionName', 'Interview Session')}
             </span>
           </div>
         ),
@@ -4839,7 +4852,7 @@ export const InterviewHub: React.FC = () => {
             {/* Title */}
             <div className="px-4 pb-3">
               <h4 className="text-sm font-medium text-c-text line-clamp-2 min-h-[40px]">
-                {session.name || 'Discovery Interview'}
+                {session.name || t('interview.defaultSessionName', 'Interview Session')}
               </h4>
               <div className="mt-1 text-xs text-slate-600 dark:text-slate-400 line-clamp-2">
                 {session.assigneeName || session.respondentName || '—'}
@@ -5499,7 +5512,7 @@ export const InterviewHub: React.FC = () => {
                   id: newSession.id,
                   type: 'interview_session',
                   subType: 'interview',
-                  name: newSession.name || 'Interview Session',
+                  name: newSession.name || t('interview.defaultSessionName', 'Interview Session'),
                   status: ((newSession as any)?.status || 'in_progress').toUpperCase() as any,
                 });
                 toast.success(t('interview.hub.sessionCreated'));
@@ -5880,7 +5893,7 @@ export const InterviewHub: React.FC = () => {
                     </span>
                     {template.isDefault && (
                       <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-c-info/10 text-c-info dark:text-c-info">
-                        Default
+                        {t('interview.hub.default', 'Default')}
                       </span>
                     )}
                   </div>
@@ -6193,7 +6206,7 @@ export const InterviewHub: React.FC = () => {
             id: session.id,
             type: 'interview_session',
             subType: 'interview',
-            name: session.name || 'Interview Session',
+            name: session.name || t('interview.defaultSessionName', 'Interview Session'),
             status: (session.status || 'in_progress').toUpperCase() as any,
           });
         } else {
@@ -6241,13 +6254,17 @@ export const InterviewHub: React.FC = () => {
                 .catch(() => Api.get(`/interview/sessions/${sid}`))
                 .catch(() => demoSession || null);
           if (!session) {
-            throw new Error('Failed to load session');
+            throw new Error(
+              t('interview.hub.failedToLoadSessionGeneric', 'Failed to load session')
+            );
           }
           handleOpenDocument({
             id: (session as InterviewSession).id,
             type: 'interview_session',
             subType: 'interview',
-            name: (session as InterviewSession).name || 'Interview Session',
+            name:
+              (session as InterviewSession).name ||
+              t('interview.defaultSessionName', 'Interview Session'),
             status: ((session as any)?.status || 'in_progress').toUpperCase() as any,
           });
           return;
@@ -6370,7 +6387,9 @@ Return ONLY the answer text (no markdown fences).`;
                     id: (session as InterviewSession).id,
                     type: 'interview_session',
                     subType: 'interview',
-                    name: (session as InterviewSession).name || 'Interview Session',
+                    name:
+                      (session as InterviewSession).name ||
+                      t('interview.defaultSessionName', 'Interview Session'),
                     status: ((session as any)?.status || 'in_progress').toUpperCase() as any,
                   });
                 },
@@ -6389,7 +6408,9 @@ Return ONLY the answer text (no markdown fences).`;
                     id: (session as InterviewSession).id,
                     type: 'interview_session',
                     subType: 'interview',
-                    name: (session as InterviewSession).name || 'Interview Session',
+                    name:
+                      (session as InterviewSession).name ||
+                      t('interview.defaultSessionName', 'Interview Session'),
                     status: ((session as any)?.status || 'in_progress').toUpperCase() as any,
                   });
                 },
@@ -6923,7 +6944,10 @@ Return ONLY the answer text (no markdown fences).`;
       const rows = filteredSessions || [];
       const selected = previewSessionId ? rows.find((s) => s.id === previewSessionId) : null;
       const selectedItem = selected
-        ? ({ ...selected, title: selected.name || 'Interview Session' } as InterviewSession & {
+        ? ({
+            ...selected,
+            title: selected.name || t('interview.defaultSessionName', 'Interview Session'),
+          } as InterviewSession & {
             title: string;
           })
         : null;
@@ -6942,7 +6966,12 @@ Return ONLY the answer text (no markdown fences).`;
             itemIds={rows.map((r) => r.id)}
             getItemById={(id) => {
               const x = rows.find((i) => i.id === id);
-              return x ? ({ ...x, title: x.name || 'Interview Session' } as any) : null;
+              return x
+                ? ({
+                    ...x,
+                    title: x.name || t('interview.defaultSessionName', 'Interview Session'),
+                  } as any)
+                : null;
             }}
             renderPreview={(item) => {
               const s = item as InterviewSession;
@@ -7845,7 +7874,7 @@ Return ONLY the answer text (no markdown fences).`;
                                 className={`inline-flex items-center gap-1 rounded-full border border-current/20 px-2 py-0.5 text-[11px] font-medium leading-none transition-colors ${sourceStyle.bg} ${sourceStyle.text}`}
                               >
                                 <Lightbulb size={12} />
-                                Insight
+                                {t('interview.hub.insight', 'Insight')}
                               </button>
                             );
                           }
@@ -9521,7 +9550,8 @@ Return ONLY the answer text (no markdown fences).`;
               </p>
               <div className="bg-slate-50 dark:bg-navy-800 rounded-lg p-3 mb-4">
                 <div className="text-sm text-c-text font-medium truncate">
-                  {sessionDeleteTarget.name || 'Discovery Interview'}
+                  {sessionDeleteTarget.name ||
+                    t('interview.defaultSessionName', 'Interview Session')}
                 </div>
               </div>
               <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">

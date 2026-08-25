@@ -2136,7 +2136,7 @@ ${sourceText || '(none)'}`;
                     disabled={isImportingSource || isApplicationTemplate}
                     loading={isImportingSource}
                   >
-                    Upload
+                    {t('interview.templateBuilder.upload', 'Upload')}
                   </Button>
                   <Button
                     variant="primary"

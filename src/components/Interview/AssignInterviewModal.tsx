@@ -484,7 +484,12 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
         !Number.isInteger(selectedTemplate.version) ||
         selectedTemplate.version < 1
       ) {
-        toast.error('The selected template has no published version. Publish it before assigning.');
+        toast.error(
+          t(
+            'interview.assignModal.templateHasNoPublishedVersion',
+            'The selected template has no published version. Publish it before assigning.'
+          )
+        );
         return;
       }
 
