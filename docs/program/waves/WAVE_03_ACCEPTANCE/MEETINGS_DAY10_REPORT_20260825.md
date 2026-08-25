@@ -164,3 +164,46 @@ Deklaracja: **IDEMPOTENCJA_PEŁNA**.
 - Materials preferuje runtime zamiast `originSummary.sourceType`.
 - Tryb `?sampleData=materials-vnext` podmienia dane.
 - Heurystyka szkicu ukrywa tytuły zawierające `test/smoke/probe/E2E`.
+- Po D.2 zastany quickfix B8 nie usuwa nowych `meeting_decisions`. Próba
+  dopisania kasowania zapaliła 3/13 testów SQLite, ponieważ zgodnie z zakazem
+  nie rozszerzono `ensureMeetingTables()` o tabelę migracyjną. Zmianę wycofano;
+  wymaga osobnego, wielosilnikowego kontraktu kasowania. Stan: **STOP**.
+
+## Domknięcie bieżącego przebiegu
+
+| Pozycja                   | Status                  | Commit / dowód                                    |
+| ------------------------- | ----------------------- | ------------------------------------------------- |
+| D.1                       | ZROBIONE_WG_DoD         | `d9db8a28a4`                                      |
+| D.2                       | ZROBIONE_WG_DoD         | `ec38fa5442`; pełna idempotencja PG               |
+| D.3                       | ZROBIONE_WG_DoD backend | `e989dec165`; real PG 6/6; golden 49/49           |
+| B.1                       | CZĘŚCIOWO               | `48ee0a45a0`; 4/4; brak zrzutów                   |
+| G.1                       | ZROBIONE_WG_DoD         | `36396e105b`; moduł nadal `closed`                |
+| G.2                       | CZĘŚCIOWO               | closed 8/8; brak pełnej macierzy realnego routera |
+| D.4–D.5, H.1–H.4, U.1–U.5 | NIE_ZACZĘTE             | brak bezpiecznego domknięcia w tym przebiegu      |
+| T.5–T.6, R.1–R.2          | NIE_ZACZĘTE             | brak zrzutów; rejestr odbiorowy nietknięty        |
+
+### Pomiar zasięgu
+
+Deklaracja: **ZASIĘG CZĘŚCIOWY**. Celowane pakiety końcowe:
+
+- Meeting UI: 31/31 PASS;
+- canonical routes: 14/14 PASS;
+- meetingService: 13/13 PASS;
+- meeting routes: 26/26 PASS;
+- beta gate: 8/8 PASS;
+- unit Meeting: 2/2 PASS;
+- pilotAccess: 4/4 PASS;
+- real-PG Day 10: 6/6 PASS;
+- golden-flows: 49/49 PASS.
+
+Nie uruchomiono całego `tests/unit/services` dla współdzielonych tłumaczeń ani
+testów e2e/acceptance (te ostatnie są poza zakresem Z17). Z18: wynik pusty.
+Migracje w diffie: wyłącznie `20260826_meetings_day10_decisions.sql`.
+Kanon: 404/baseline 404. Baseline nietknięty. Docker: kontenery i wolumeny
+`cx-day10` — pusto. `MODULE_MEETING` nadal `closed`; żadnej flagi nie dodano.
+
+## Licznik
+
+Pozycji w zakresie: 25. Domknięte wg DoD: 4 (D.1, D.2, D.3 backend, G.1).
+Częściowo: 2 (B.1, G.2). STOP: 6 (pięć decyzji otwartych + cleanup D.2/B8).
+Niezaczęte: 13. Moduł nie został otwarty. Stan najwyższy: **TECHNICAL_PARTIAL**.
