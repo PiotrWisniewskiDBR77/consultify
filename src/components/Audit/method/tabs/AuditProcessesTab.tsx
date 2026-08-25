@@ -54,7 +54,19 @@ export interface AuditProcessesTabProps {
   /** Called after a lifecycle transition succeeds, so the Hub can refresh the list. */
   onProgramChanged: () => void;
   initialSelectedId?: string | null;
+  /**
+   * `packId` → `"Title vN"`, built by the Hub from `packsAll` (already
+   * loaded for Library). `AuditProgramSummary.packTitle` is a frontend-only
+   * field the backend never populates (`programService.ts` mapping has no
+   * `pack_title`) — resolving it here from real, already-fetched data closes
+   * that gap without touching the server.
+   */
+  packTitleById?: Map<string, string>;
+  /** `userId` → display name, same gap/fix pattern for `leadAuditorName`. */
+  userNameById?: Map<string, string>;
 }
+
+const EMPTY_MAP = new Map<string, string>();
 
 export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
   programs,
@@ -64,6 +76,8 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
   isPolish,
   onProgramChanged,
   initialSelectedId = null,
+  packTitleById = EMPTY_MAP,
+  userNameById = EMPTY_MAP,
 }) => {
   const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId);
   const [detail, setDetail] = useState<AuditProgramDetail | null>(null);
@@ -145,7 +159,8 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
       width: '180px',
       render: (row: AuditProgramSummary) => (
         <span className="text-xs text-c-text-secondary truncate block max-w-[160px]">
-          {row.packTitle ? `${row.packTitle}${row.packVersion ? ` v${row.packVersion}` : ''}` : '—'}
+          {packTitleById.get(row.packId) ||
+            (row.packTitle ? `${row.packTitle}${row.packVersion ? ` v${row.packVersion}` : ''}` : '—')}
         </span>
       ),
     },
@@ -189,10 +204,20 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
       id: 'leadAuditor',
       label: isPolish ? 'Audytor wiodący' : 'Lead auditor',
       width: '160px',
+      render: (row: AuditProgramSummary) => {
+        const name = (row.leadAuditorId && userNameById.get(row.leadAuditorId)) || row.leadAuditorName;
+        return (
+          <span className="text-sm text-c-text truncate">{name || <span className="text-slate-400">—</span>}</span>
+        );
+      },
+    },
+    {
+      id: 'plannedStart',
+      label: isPolish ? 'Start' : 'Start',
+      width: '110px',
+      sortable: true,
       render: (row: AuditProgramSummary) => (
-        <span className="text-sm text-c-text truncate">
-          {row.leadAuditorName || <span className="text-slate-400">—</span>}
-        </span>
+        <span className="text-xs text-c-text-secondary tabular-nums">{formatListDate(row.plannedStart)}</span>
       ),
     },
     {

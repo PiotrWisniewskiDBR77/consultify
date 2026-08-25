@@ -14,11 +14,12 @@
  * pięć pigułek zakładek — druga nazywa się „Sesje"/„Sessions" (Piotr,
  * P0 2026-08-13: „Processes" mylące dla klienta; id `?tab=processes`
  * ZOSTAJE dla zgodności istniejących linków — zmienia się WYŁĄCZNIE etykieta
- * widoczna). Menu 3: DWA niezależne rzędy chipów na Library (typ źródła +
- * weryfikacja — P0 rozdzielenia osi, patrz `auditStatusTones.ts`) przez luk
- * ucieczkowy `commandRowContent` (fasada ma tylko JEDEN wbudowany tor
- * `chips`/`activeChip`/`onChipChange`, za mało na dwie niezależne osie) /
- * chipy etapu lifecycle (Processes) — wszystkie z LICZNIKAMI, to tu a NIE na
+ * widoczna). Menu 3: JEDEN tor chipów z licznikami — weryfikacja (Library) /
+ * etap lifecycle (Processes) — na wbudowanym `chips`/`activeChip`/
+ * `onChipChange` StandardModuleBar (kanon A3, DEC-2026-08-25-66: dwa stacked
+ * rzędy chipów — typ źródła + weryfikacja — czytały się jako „czwarte menu";
+ * `sourceType` zostaje filtrowalny przez lejek kolumny w `AuditLibraryTab`,
+ * patrz `auditStatusTones.ts` dla obu osi danych). Bez liczników na
  * pigułkach zakładek (kanon: „bez liczników w Menu 2"; `StandardModuleTab`
  * nawet nie ma pola `count`, więc naruszenie nie jest tu fizycznie możliwe).
  */
@@ -30,6 +31,7 @@ import { useSearchParams } from 'react-router-dom';
 
 import { type StandardCounterChip, StandardModuleBar, type StandardModuleTab } from '@/components/standard';
 import type { StatusTone } from '@/components/ui/primitives/chips';
+import { Api } from '@/services/api';
 import {
   clearPersistentCommandId,
   persistentCommandId,
@@ -37,10 +39,7 @@ import {
 import { useAppStore } from '@/store/useAppStore';
 import { formatListDate } from '@/utils/listDateFormat';
 
-import { Menu3Badge, Menu3Chip, MENU_3_LEFT_CLASS } from '../../shared/ModuleMenu3';
 import {
-  packSourceTypeLabel,
-  packSourceTypeTone,
   packVerificationLabel,
   packVerificationTone,
   programLifecycleLabel,
@@ -51,12 +50,10 @@ import {
   getProgram,
   listPacks,
   listPrograms,
-  AUDIT_SOURCE_TYPES,
   AUDIT_VERIFICATION_STATES,
   AUDIT_LIFECYCLE_STATES,
   type AuditPackSummary,
   type AuditProgramSummary,
-  type AuditSourceType,
   type AuditVerificationState,
   type AuditLifecycleState,
 } from './auditsMethodApi';
@@ -146,8 +143,13 @@ export const AuditsMethodHub: React.FC = () => {
   }, [searchParams]);
 
   const [search, setSearch] = useState('');
-  // DWIE NIEZALEŻNE OSIE Library — patrz nagłówek pliku i `auditStatusTones.ts`.
-  const [librarySourceType, setLibrarySourceType] = useState<'all' | AuditSourceType>('all');
+  // Library ma DWIE osie w danych (`sourceType` + `verificationStatus`, patrz
+  // nagłówek pliku i `auditStatusTones.ts`), ale Menu 3 kanonicznie niesie
+  // TYLKO JEDNĄ (DEC-2026-08-25-66 — dwa stacked rzędy chipów czytały się jako
+  // "czwarte menu"; ten sam wzorzec co Processes' `processesChips` — jeden
+  // tor). `sourceType` zostaje filtrowalny przez lejek w nagłówku kolumny
+  // tabeli (`AuditLibraryTab` → `filterable`/`filterOptions` na kolumnie
+  // „Typ źródła") — mechanika kolumnowa działa niezależnie od stanu tutaj.
   const [libraryVerification, setLibraryVerification] = useState<'all' | AuditVerificationState>('all');
   const [processesLifecycle, setProcessesLifecycle] = useState<'all' | AuditLifecycleState>('all');
 
@@ -193,15 +195,10 @@ export const AuditsMethodHub: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]);
 
-  // Filtry kombinowalne: oba warunki AND — wybranie osi A nie resetuje osi B.
   const filteredPacks = useMemo(
     () =>
-      packsAll.filter(
-        (p) =>
-          (librarySourceType === 'all' || p.sourceType === librarySourceType) &&
-          (libraryVerification === 'all' || p.verificationStatus === libraryVerification)
-      ),
-    [packsAll, librarySourceType, libraryVerification]
+      packsAll.filter((p) => libraryVerification === 'all' || p.verificationStatus === libraryVerification),
+    [packsAll, libraryVerification]
   );
 
   const filteredPrograms = useMemo(
@@ -212,42 +209,17 @@ export const AuditsMethodHub: React.FC = () => {
     [programsAll, processesLifecycle]
   );
 
-  // Liczniki „faceted": każda oś liczy na podstawie packsAll przefiltrowanych
-  // przez WYBÓR DRUGIEJ osi (nie przez samą siebie) — więc liczby aktualizują
-  // się, gdy użytkownik zawęzi drugi filtr, a chipy obu osi zawsze widać razem.
-  const packsForSourceTypeCounts = useMemo(
-    () => packsAll.filter((p) => libraryVerification === 'all' || p.verificationStatus === libraryVerification),
-    [packsAll, libraryVerification]
-  );
-  const packsForVerificationCounts = useMemo(
-    () => packsAll.filter((p) => librarySourceType === 'all' || p.sourceType === librarySourceType),
-    [packsAll, librarySourceType]
-  );
-
-  const sourceTypeChips: StandardCounterChip[] = useMemo(
-    () => [
-      { id: 'all', label: isPolish ? 'Wszystkie' : 'All', count: packsForSourceTypeCounts.length },
-      ...AUDIT_SOURCE_TYPES.map((value) => ({
-        id: value,
-        label: packSourceTypeLabel(value, isPolish),
-        count: packsForSourceTypeCounts.filter((p) => p.sourceType === value).length,
-        dot: TONE_DOT_CLASS[packSourceTypeTone(value)],
-      })),
-    ],
-    [packsForSourceTypeCounts, isPolish]
-  );
-
   const verificationChips: StandardCounterChip[] = useMemo(
     () => [
-      { id: 'all', label: isPolish ? 'Wszystkie' : 'All', count: packsForVerificationCounts.length },
+      { id: 'all', label: isPolish ? 'Wszystkie' : 'All', count: packsAll.length },
       ...AUDIT_VERIFICATION_STATES.map((value) => ({
         id: value,
         label: packVerificationLabel(value, isPolish),
-        count: packsForVerificationCounts.filter((p) => p.verificationStatus === value).length,
+        count: packsAll.filter((p) => p.verificationStatus === value).length,
         dot: TONE_DOT_CLASS[packVerificationTone(value)],
       })),
     ],
-    [packsForVerificationCounts, isPolish]
+    [packsAll, isPolish]
   );
 
   const processesChips: StandardCounterChip[] = useMemo(
@@ -331,62 +303,58 @@ export const AuditsMethodHub: React.FC = () => {
     [t, isPolish]
   );
 
-  // Library ma DWIE niezależne osie filtrów — więcej niż fasada obsługuje
-  // przez wbudowany `chips` (jeden tor). Budujemy własny rząd (dwa
-  // podrzędy) przez luk ucieczkowy `commandRowContent`; Processes zostaje na
-  // wbudowanym torze `chips`, bez zmian.
-  const libraryCommandRow =
-    activeTab === 'library' ? (
-      <div className="flex flex-col gap-1 px-4 pb-3">
-        <div className={`${MENU_3_LEFT_CLASS} overflow-x-auto whitespace-nowrap no-scrollbar`}>
-          <span className="mr-1 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">
-            {isPolish ? 'Typ źródła' : 'Source type'}
-          </span>
-          {sourceTypeChips.map((chip) => {
-            const active = librarySourceType === chip.id;
-            return (
-              <Menu3Chip
-                key={chip.id}
-                active={active}
-                onClick={() => setLibrarySourceType(chip.id as 'all' | AuditSourceType)}
-                aria-pressed={active}
-                data-testid={`audits-library-source-type-chip-${chip.id}`}
-              >
-                {chip.dot ? <span className={`h-1.5 w-1.5 rounded-full ${chip.dot}`} /> : null}
-                <span>{chip.label}</span>
-                {chip.count !== undefined ? <Menu3Badge count={chip.count} active={active} /> : null}
-              </Menu3Chip>
-            );
-          })}
-        </div>
-        <div className={`${MENU_3_LEFT_CLASS} overflow-x-auto whitespace-nowrap no-scrollbar`}>
-          <span className="mr-1 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">
-            {isPolish ? 'Weryfikacja' : 'Verification'}
-          </span>
-          {verificationChips.map((chip) => {
-            const active = libraryVerification === chip.id;
-            return (
-              <Menu3Chip
-                key={chip.id}
-                active={active}
-                onClick={() => setLibraryVerification(chip.id as 'all' | AuditVerificationState)}
-                aria-pressed={active}
-                data-testid={`audits-library-verification-chip-${chip.id}`}
-              >
-                {chip.dot ? <span className={`h-1.5 w-1.5 rounded-full ${chip.dot}`} /> : null}
-                <span>{chip.label}</span>
-                {chip.count !== undefined ? <Menu3Badge count={chip.count} active={active} /> : null}
-              </Menu3Chip>
-            );
-          })}
-        </div>
-      </div>
-    ) : undefined;
-
-  const chips = activeTab === 'processes' ? processesChips : undefined;
-  const activeChip = activeTab === 'processes' ? processesLifecycle : null;
+  // Menu 3 = JEDEN tor (kanon A3/DEC-2026-08-25-66) — Library i Processes
+  // dzielą dokładnie ten sam wbudowany `chips`/`activeChip`/`onChipChange`
+  // mechanizm StandardModuleBar, zero escape-hatchu `commandRowContent`.
+  const chips = activeTab === 'library' ? verificationChips : activeTab === 'processes' ? processesChips : undefined;
+  const activeChip =
+    activeTab === 'library' ? libraryVerification : activeTab === 'processes' ? processesLifecycle : null;
   const onChipChange =
-    activeTab === 'processes' ? (id: string) => setProcessesLifecycle(id as 'all' | AuditLifecycleState) : undefined;
+    activeTab === 'library'
+      ? (id: string) => setLibraryVerification(id as 'all' | AuditVerificationState)
+      : activeTab === 'processes'
+        ? (id: string) => setProcessesLifecycle(id as 'all' | AuditLifecycleState)
+        : undefined;
+
+  // Rozwiązywanie ID → nazwa dla kolumn/podglądu w Reports/Outputs/
+  // Initiatives/Processes. `/api/audits/{reports,outputs,proposals}` NIE
+  // dołącza `programName`/`finalizedByName`/`leadAuditorName` (zweryfikowano
+  // w `server/src/services/audits/{reportService,outputService,programService}.ts`
+  // — te pola nie istnieją w wierszu, tylko `*Id`); frontendowy typ je
+  // deklarował, ale zawsze renderowały się jako „—”. Zamiast dotykać
+  // backendu (poza zakresem DEC-2026-08-25-66, czysto UI), rozwiązujemy je
+  // tutaj z danych, które Hub już wczytuje (`programsAll`, `packsAll`) plus
+  // jedno dodatkowe pobranie listy użytkowników organizacji — dokładnie wzór
+  // `authorNameById` z `DiscoveryToolsHub.tsx`.
+  const programNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const p of programsAll) map.set(p.id, p.name);
+    return map;
+  }, [programsAll]);
+
+  const packTitleById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const p of packsAll) map.set(p.id, p.version ? `${p.title} v${p.version}` : p.title);
+    return map;
+  }, [packsAll]);
+
+  const [orgUsers, setOrgUsers] = useState<Array<{ id: string; firstName: string; lastName: string }>>([]);
+  useEffect(() => {
+    let cancelled = false;
+    Api.getUsers()
+      .then((fetched) => {
+        if (!cancelled) setOrgUsers(fetched || []);
+      })
+      .catch((err) => console.error('[AuditsMethodHub] Failed to load users for name resolution', err));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const userNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const u of orgUsers) map.set(u.id, `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.id);
+    return map;
+  }, [orgUsers]);
 
   return (
     <StandardModuleBar
@@ -398,7 +366,6 @@ export const AuditsMethodHub: React.FC = () => {
       chips={chips}
       activeChip={activeChip}
       onChipChange={onChipChange}
-      commandRowContent={libraryCommandRow}
     >
       <div className="min-h-0 flex-1 overflow-hidden">
         {activeTab === 'library' ? (
@@ -420,13 +387,15 @@ export const AuditsMethodHub: React.FC = () => {
             onRetry={loadPrograms}
             isPolish={isPolish}
             onProgramChanged={loadPrograms}
+            packTitleById={packTitleById}
+            userNameById={userNameById}
           />
         ) : activeTab === 'outputs' ? (
-          <AuditOutputsTab isPolish={isPolish} />
+          <AuditOutputsTab isPolish={isPolish} programNameById={programNameById} userNameById={userNameById} />
         ) : activeTab === 'reports' ? (
-          <AuditReportsTab isPolish={isPolish} />
+          <AuditReportsTab isPolish={isPolish} programNameById={programNameById} />
         ) : (
-          <AuditInitiativesTab isPolish={isPolish} />
+          <AuditInitiativesTab isPolish={isPolish} programNameById={programNameById} />
         )}
       </div>
     </StandardModuleBar>

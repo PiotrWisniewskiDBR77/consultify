@@ -22,15 +22,31 @@ import {
 } from '@/components/standard';
 import type { ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
 import { ErrorState } from '@/components/shared/states';
+import { StatusChip } from '@/components/ui/primitives/chips';
 import { formatListDate } from '@/utils/listDateFormat';
 
 import { listOutputs, type AuditOutputSummary } from '../auditsMethodApi';
 
 export interface AuditOutputsTabProps {
   isPolish: boolean;
+  /**
+   * `programId`/`userId` → display name — `/api/audits/outputs` never sends
+   * `programName`/`finalizedByName` (`outputService.ts` mapping has no such
+   * fields, only the raw ids), so the frontend type declaring them always
+   * rendered „—". Resolved here from data the Hub already loaded, same fix
+   * pattern as `AuditProcessesTab`.
+   */
+  programNameById?: Map<string, string>;
+  userNameById?: Map<string, string>;
 }
 
-export const AuditOutputsTab: React.FC<AuditOutputsTabProps> = ({ isPolish }) => {
+const EMPTY_MAP = new Map<string, string>();
+
+export const AuditOutputsTab: React.FC<AuditOutputsTabProps> = ({
+  isPolish,
+  programNameById = EMPTY_MAP,
+  userNameById = EMPTY_MAP,
+}) => {
   const [items, setItems] = useState<AuditOutputSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -56,11 +72,34 @@ export const AuditOutputsTab: React.FC<AuditOutputsTabProps> = ({ isPolish }) =>
       render: (row: AuditOutputSummary) => (
         <div className="flex flex-col">
           <span className="text-sm font-semibold text-c-text">{row.title}</span>
-          <span className="text-[11px] text-c-text-muted">{row.programName || '—'}</span>
+          <span className="text-[11px] text-c-text-muted">
+            {programNameById.get(row.programId) || row.programName || '—'}
+          </span>
         </div>
       ),
     },
+    {
+      id: 'status',
+      label: isPolish ? 'Status' : 'Status',
+      width: '130px',
+      render: (row: AuditOutputSummary) =>
+        row.supersededBy ? (
+          <StatusChip label={isPolish ? 'Zastąpiony' : 'Superseded'} tone="neutral" />
+        ) : (
+          <StatusChip label={isPolish ? 'Aktualny' : 'Current'} tone="success" />
+        ),
+    },
     { id: 'version', label: isPolish ? 'Wersja' : 'Version', width: '90px' },
+    {
+      id: 'packVersion',
+      label: isPolish ? 'Wersja pakietu' : 'Pack version',
+      width: '110px',
+      render: (row: AuditOutputSummary) => (
+        <span className="text-xs text-c-text-secondary tabular-nums">
+          {row.packVersion != null ? `v${row.packVersion}` : '—'}
+        </span>
+      ),
+    },
     {
       id: 'finalizedAt',
       label: isPolish ? 'Data finalizacji' : 'Finalized at',
@@ -74,11 +113,12 @@ export const AuditOutputsTab: React.FC<AuditOutputsTabProps> = ({ isPolish }) =>
       id: 'finalizedByName',
       label: isPolish ? 'Kto' : 'By',
       width: '160px',
-      render: (row: AuditOutputSummary) => (
-        <span className="text-sm text-c-text truncate">
-          {row.finalizedByName || <span className="text-slate-400">—</span>}
-        </span>
-      ),
+      render: (row: AuditOutputSummary) => {
+        const name = (row.finalizedBy && userNameById.get(row.finalizedBy)) || row.finalizedByName;
+        return (
+          <span className="text-sm text-c-text truncate">{name || <span className="text-slate-400">—</span>}</span>
+        );
+      },
     },
   ];
 
@@ -95,12 +135,18 @@ export const AuditOutputsTab: React.FC<AuditOutputsTabProps> = ({ isPolish }) =>
         {
           id: 'program',
           label: isPolish ? 'Program' : 'Program',
-          value: selected.programName || '—',
+          value: programNameById.get(selected.programId) || selected.programName || '—',
         },
         {
           id: 'version',
           label: isPolish ? 'Wersja' : 'Version',
           value: String(selected.version),
+          mono: true,
+        },
+        {
+          id: 'packVersion',
+          label: isPolish ? 'Wersja pakietu' : 'Pack version',
+          value: selected.packVersion != null ? `v${selected.packVersion}` : '—',
           mono: true,
         },
         {
@@ -111,7 +157,19 @@ export const AuditOutputsTab: React.FC<AuditOutputsTabProps> = ({ isPolish }) =>
         {
           id: 'finalizedBy',
           label: isPolish ? 'Kto' : 'By',
-          value: selected.finalizedByName || '—',
+          value:
+            (selected.finalizedBy && userNameById.get(selected.finalizedBy)) || selected.finalizedByName || '—',
+        },
+        {
+          id: 'status',
+          label: isPolish ? 'Status' : 'Status',
+          value: selected.supersededBy
+            ? isPolish
+              ? 'Zastąpiony nowszą wersją'
+              : 'Superseded by a newer version'
+            : isPolish
+              ? 'Aktualny'
+              : 'Current',
         },
         {
           id: 'contentHash',
