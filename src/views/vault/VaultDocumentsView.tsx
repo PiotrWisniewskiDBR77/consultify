@@ -98,6 +98,7 @@ import { cn } from '@/utils/cn';
 
 import { Api } from '../../services/api';
 import { VaultDocumentPanel } from './VaultDocumentPanel';
+import { deleteVaultDocumentsWithReceipts } from './deleteVaultDocumentsWithReceipts';
 import {
   DOCUMENT_CATEGORIES,
   formatBytes,
@@ -384,26 +385,36 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
               })
             );
       if (!confirmed) return;
-      try {
-        await Promise.all(ids.map((id) => Api.deleteKnowledgeDocument(id)));
+      const receipts = await deleteVaultDocumentsWithReceipts(ids, (id) =>
+        Api.deleteKnowledgeDocument(id)
+      );
+      const deleted = receipts.filter((receipt) => receipt.status === 'deleted');
+      const failed = receipts.filter((receipt) => receipt.status === 'failed');
+      if (deleted.length > 0) {
         toast.success(
           t('vault.docs.deleted', {
             defaultValue: isPolish
               ? 'Usunięto {{count}} dokument(y)'
               : 'Deleted {{count}} document(s)',
-            count: ids.length,
+            count: deleted.length,
           })
         );
-        setSelectedRowIds(new Set());
-        if (selectedId && ids.includes(selectedId)) setSelectedId(null);
-        await load();
-      } catch (err: unknown) {
+      }
+      if (failed.length > 0) {
         toast.error(
-          err instanceof Error
-            ? err.message
-            : t('vault.docs.deleteFailed', isPolish ? 'Nie udało się usunąć' : 'Delete failed')
+          t('vault.docs.deletePartial', {
+            defaultValue: isPolish
+              ? 'Usunięto {{deleted}} z {{total}}. Nie udało się: {{failedIds}}'
+              : 'Deleted {{deleted}} of {{total}}. Failed: {{failedIds}}',
+            deleted: deleted.length,
+            total: ids.length,
+            failedIds: failed.map((receipt) => receipt.id).join(', '),
+          })
         );
       }
+      setSelectedRowIds(new Set(failed.map((receipt) => receipt.id)));
+      if (selectedId && deleted.some((receipt) => receipt.id === selectedId)) setSelectedId(null);
+      if (deleted.length > 0) await load();
     },
     [t, isPolish, load, selectedId]
   );
