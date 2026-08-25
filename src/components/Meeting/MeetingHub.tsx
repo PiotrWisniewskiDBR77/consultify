@@ -61,6 +61,11 @@ export interface MeetingItem {
   decisions: string[];
   followUps: FollowUpItem[];
   status: MeetingStatus;
+  // FIX-M-2 (DEC-58 sceptyk): server includes this on every meeting row
+  // (meetingService.ts mapMeeting → createdBy) but it was never declared
+  // here, so nothing in this file could gate on it. Needed to mirror the
+  // server's admin-or-creator checks (PUT /:id, PATCH /:id/status) in the UI.
+  createdBy?: string;
 }
 
 export const MeetingHub: React.FC = () => {
@@ -72,6 +77,17 @@ export const MeetingHub: React.FC = () => {
   const canApproveMeetingNotes = ['OWNER', 'ADMIN', 'SUPERADMIN'].includes(
     String(currentUser?.role || '').toUpperCase()
   );
+  // FIX-M-2 (DEC-58 sceptyk): the preview + kebab used to render "Mark
+  // completed"/"Edit"/"Delete" unconditionally, even for roles the server
+  // rejects (403). Gate each action on exactly the role check the matching
+  // route applies, same pattern as `canApproveMeetingNotes` above:
+  //  - DELETE /:id → requireMeetingAdmin (admin/owner/superadmin only,
+  //    meeting.routes.ts) — identical set to canApproveMeetingNotes.
+  //  - PUT /:id (edit) and PATCH /:id/status (after FIX-M-3) → admin/owner/
+  //    superadmin OR the meeting's own creator.
+  const canDeleteMeeting = canApproveMeetingNotes;
+  const canManageMeeting = (meeting: Pick<MeetingItem, 'createdBy'>) =>
+    canApproveMeetingNotes || (!!currentUser?.id && meeting.createdBy === currentUser.id);
 
   const [activeTab, setActiveTab] = useState<ModuleTab>('list');
   const [viewMode, setViewMode] = useState<ViewMode>('table');
@@ -752,16 +768,23 @@ export const MeetingHub: React.FC = () => {
             // przekazywane do StandardPreview w tym samym renderze (header ma już Open).
             // Jedyna pozycja informational była duplikatem, więc tablica znika całkiem.
             resolutions: [
-              {
-                id: 'toggle-status',
-                variant: 'neutral',
-                label:
-                  selectedMeeting.status === 'completed'
-                    ? t('meeting.markScheduled', 'Mark scheduled')
-                    : t('meeting.markCompleted', 'Mark completed'),
-                icon: CheckSquare2,
-                onClick: () => handleToggleMeetingStatus(selectedMeeting.id),
-              },
+              // FIX-M-2: PATCH /:id/status (server) is admin/owner/superadmin
+              // OR the meeting's own creator since FIX-M-3 — hide the toggle
+              // for anyone else instead of rendering a button the server 403s.
+              ...(canManageMeeting(selectedMeeting)
+                ? [
+                    {
+                      id: 'toggle-status',
+                      variant: 'neutral' as const,
+                      label:
+                        selectedMeeting.status === 'completed'
+                          ? t('meeting.markScheduled', 'Mark scheduled')
+                          : t('meeting.markCompleted', 'Mark completed'),
+                      icon: CheckSquare2,
+                      onClick: () => handleToggleMeetingStatus(selectedMeeting.id),
+                    },
+                  ]
+                : []),
               {
                 id: 'ai-notes',
                 variant: 'neutral',
@@ -772,7 +795,15 @@ export const MeetingHub: React.FC = () => {
             ],
           }
         : undefined,
-    [selectedMeeting, t, openMeetingDocument, handleToggleMeetingStatus, openGovernedNotes]
+    [
+      selectedMeeting,
+      t,
+      openMeetingDocument,
+      handleToggleMeetingStatus,
+      openGovernedNotes,
+      canApproveMeetingNotes,
+      currentUser?.id,
+    ]
   );
 
   // Esc closes preview; single-key shortcuts (O) active while preview open (kanon B.24/B.31).
@@ -866,6 +897,10 @@ export const MeetingHub: React.FC = () => {
                 }}
                 rowMenu={(row): StandardRowMenu => {
                   const meeting = row as unknown as MeetingItem;
+                  // FIX-M-2 (DEC-58 sceptyk): mirror the server's per-route
+                  // role gates instead of always rendering status/edit/delete
+                  // — "pokaż akcje tylko rolom, którym serwer nie odmówi".
+                  const canManage = canManageMeeting(meeting);
                   return {
                     primary: [
                       {
@@ -875,27 +910,43 @@ export const MeetingHub: React.FC = () => {
                         onClick: () => openMeetingDocument(meeting),
                       },
                     ],
-                    statusTransitions: [
-                      {
-                        id: 'toggle-status',
-                        label:
-                          meeting.status === 'completed'
-                            ? t('meeting.markScheduled', 'Mark scheduled')
-                            : t('meeting.markCompleted', 'Mark completed'),
-                        icon: CheckSquare2,
-                        onClick: () => handleToggleMeetingStatus(meeting.id),
-                      },
-                    ],
+                    statusTransitions: canManage
+                      ? [
+                          {
+                            id: 'toggle-status',
+                            label:
+                              meeting.status === 'completed'
+                                ? t('meeting.markScheduled', 'Mark scheduled')
+                                : t('meeting.markCompleted', 'Mark completed'),
+                            icon: CheckSquare2,
+                            onClick: () => handleToggleMeetingStatus(meeting.id),
+                          },
+                        ]
+                      : [],
                     universalHandlers: {
                       preview: () => setSelectedId(meeting.id),
-                      edit: () => openEditModal(meeting),
-                      // Brak API archiwizacji spotkania — pozycja disabled z notą
-                      // (StandardTable dokłada ją sama, canon A6 blok 4).
+                      // PUT /:id (server) requires admin/owner/superadmin OR
+                      // the meeting's own creator — same `canManage` check
+                      // PATCH /:id/status uses above.
+                      ...(canManage ? { edit: () => openEditModal(meeting) } : {}),
+                      // Brak API archiwizacji spotkania — `archiveNote` (bez
+                      // `archive`) sprawia, że StandardTable renderuje pozycję
+                      // Archiwizuj jako disabled z tą notą (StandardTable.tsx
+                      // rowMenuToSections, canon A6 blok 4) zamiast pomijać ją
+                      // całkiem lub udawać atrapę bez handlera.
+                      archiveNote: t('common.comingSoonBackend', 'Coming soon (backend)'),
                     },
-                    destructive: {
-                      // Confirm dialog, nie natychmiastowy delete — istniejący flow.
-                      onClick: () => setDeleteTarget(meeting),
-                    },
+                    // DELETE /:id (server) requires admin/owner/superadmin —
+                    // requireMeetingAdmin, no creator exception (unlike edit/
+                    // status). Section omitted entirely for anyone else.
+                    ...(canDeleteMeeting
+                      ? {
+                          destructive: {
+                            // Confirm dialog, nie natychmiastowy delete — istniejący flow.
+                            onClick: () => setDeleteTarget(meeting),
+                          },
+                        }
+                      : {}),
                   };
                 }}
                 activeFilters={activeFilters}
@@ -1401,7 +1452,7 @@ export const MeetingHub: React.FC = () => {
             <div className="px-5 py-4 text-sm text-c-text-secondary">
               {t(
                 'meeting.delete.confirm',
-                'This permanently removes the meeting, its decisions, and follow-ups. This cannot be undone.'
+                'This permanently removes the meeting, its decisions, follow-ups, meeting notes, and any pending note proposals. This cannot be undone.'
               )}
               <div className="mt-2 font-medium text-c-text">{deleteTarget.title}</div>
             </div>

@@ -280,13 +280,23 @@ router.patch(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
-    if (!requireMeetingAdmin(req, res)) return;
     const status = String(req.body?.status || '')
       .trim()
       .toLowerCase();
     if (!['scheduled', 'completed'].includes(status)) {
       return res.status(400).json({ error: 'status must be scheduled or completed' });
     }
+    // FIX-M-3 (DEC-58 sceptyk, 2026-08-25): this route used to require
+    // requireMeetingAdmin (admin/owner/superadmin only). Relaxed to the same
+    // admin-OR-creator check PUT /:id already applies above (line ~245) —
+    // marking your own meeting scheduled/completed should not need an admin,
+    // same as editing it doesn't.
+    const existing = await getMeeting({
+      organizationId: orgId,
+      meetingId: String(req.params.id),
+    });
+    if (!existing) return res.status(404).json({ error: 'Meeting not found' });
+    if (!isMeetingAdmin(req) && existing.createdBy !== req.user?.id) return denyMeetingAccess(res);
     const meeting = await updateMeetingStatus({
       organizationId: orgId,
       meetingId: String(req.params.id),

@@ -20,9 +20,15 @@
  * wołający `<StandardArtifactShell>`).
  *
  * Co z tego wynika wprost (§10.2/§11.2):
- *  · Menu 1 = powrót · ikona-typ (CalendarDays, z `ARTIFACT_IDENTITY.meeting`)
- *    · tytuł · pigułka statusu (cykl życia spotkania) · wskaźnik zapisu ·
- *    kebab z kodem obiektu i linkiem — wszystko z `NModeHeader`,
+ *  · Menu 1 = powrót · tytuł · pigułka statusu (cykl życia spotkania) ·
+ *    wskaźnik zapisu · kebab z kodem obiektu i linkiem — wszystko z
+ *    `NModeHeader`. UCZCIWIE: `ARTIFACT_IDENTITY.meeting.icon` deklaruje
+ *    `CalendarDays` (`src/utils/artifactLinks.ts`), ale `NModeHeader.tsx`'s
+ *    `TYPE_ICON` (lokalna mapa nazw ikon na komponenty Lucide) nie zna dziś
+ *    tego klucza — Menu 1 renderuje więc bez ikony-typu dla „meeting" (cichy
+ *    fallback `null`, bez błędu). Dopisanie `CalendarDays` do `TYPE_ICON` to
+ *    zmiana wspólnej powłoki (`NModeHeader.tsx`, dzieli ją 7+ artefaktów) —
+ *    poza zakresem tego ekranu,
  *  · Szczegóły · Protokół · Decyzje i działania to KANONICZNA nawigacja
  *    powłoki (`sections`), nie własny pasek zakładek,
  *  · prawy panel to accordion o stałej kolejności Akcje · Właściwości ·
@@ -293,8 +299,16 @@ export const MeetingObjectPage: React.FC = () => {
   const detailsContent = (
     <div className="grid gap-4 p-5 lg:grid-cols-2">
       <ListField icon={<Users size={14} />} label={t('meeting.attendees2', 'Attendees')} items={meeting.attendees} />
-      <ListField icon={<FileText size={14} />} label="Pre-read" items={meeting.preRead} />
-      <ListField icon={<ClipboardList size={14} />} label="Agenda" items={meeting.agenda} />
+      <ListField
+        icon={<FileText size={14} />}
+        label={t('meeting.preRead', 'Pre-read')}
+        items={meeting.preRead}
+      />
+      <ListField
+        icon={<ClipboardList size={14} />}
+        label={t('meeting.agenda', 'Agenda')}
+        items={meeting.agenda}
+      />
     </div>
   );
 
@@ -467,16 +481,32 @@ export const MeetingObjectPage: React.FC = () => {
     lifecycle === 'completed' ? 'success' : lifecycle === 'past_needs_update' ? 'warning' : 'info';
 
   const wierszeWlasciwosci = [
-    { id: 'status', label: 'Stan', value: <StatusChip tone={statusChipTone} label={statusLabel} /> },
-    { id: 'termin', label: 'Termin', value: terminValue, mono: true },
-    { id: 'lokalizacja', label: 'Lokalizacja', value: meeting.location || '—' },
-    { id: 'uczestnicy', label: 'Uczestnicy', value: String(meeting.attendees.length) },
-    { id: 'notatki', label: 'Notatki (Protokół)', value: String(notes.length) },
+    {
+      id: 'status',
+      label: t('meeting.object.propStatus', 'Status'),
+      value: <StatusChip tone={statusChipTone} label={statusLabel} />,
+    },
+    { id: 'termin', label: t('meeting.columns.when', 'When'), value: terminValue, mono: true },
+    {
+      id: 'lokalizacja',
+      label: t('meeting.object.propLocation', 'Location'),
+      value: meeting.location || '—',
+    },
+    {
+      id: 'uczestnicy',
+      label: t('meeting.attendees2', 'Attendees'),
+      value: String(meeting.attendees.length),
+    },
+    {
+      id: 'notatki',
+      label: t('meeting.object.propNotes', 'Notes (Minutes)'),
+      value: String(notes.length),
+    },
   ];
 
   const prawyPanel = {
     actions: {
-      label: 'Akcje',
+      label: t('common.actions', 'Actions'),
       icon: RefreshCw,
       children: (
         <PreviewActionBar
@@ -484,14 +514,14 @@ export const MeetingObjectPage: React.FC = () => {
             {
               buttons: [
                 {
-                  label: 'Wczytaj ponownie',
+                  label: t('meeting.object.reload', 'Reload'),
                   icon: RefreshCw,
                   colorScheme: 'neutral' as const,
                   flex: true,
                   onClick: () => void loadMeeting(),
                 },
                 {
-                  label: 'Wróć do listy',
+                  label: t('meeting.backToList', 'Back to list'),
                   icon: ListChecks,
                   colorScheme: 'neutral' as const,
                   flex: true,
@@ -505,9 +535,13 @@ export const MeetingObjectPage: React.FC = () => {
       actionIds: ['wczytaj-ponownie', 'wroc-do-listy'],
     },
     properties: {
-      label: 'Właściwości',
+      label: t('meeting.object.properties', 'Properties'),
       children: (
-        <ArtifactPropertiesTable rows={wierszeWlasciwosci} propertyLabel="Właściwość" valueLabel="Wartość" />
+        <ArtifactPropertiesTable
+          rows={wierszeWlasciwosci}
+          propertyLabel={t('meeting.object.propertyLabel', 'Property')}
+          valueLabel={t('meeting.object.valueLabel', 'Value')}
+        />
       ),
     },
     relations: {
@@ -549,7 +583,7 @@ export const MeetingObjectPage: React.FC = () => {
           artifactId: meeting.id,
           onSave: () => undefined,
           saveState: 'saved',
-          lastSavedLabel: 'Dane odczytane z serwera',
+          lastSavedLabel: t('meeting.object.lastSavedLabel', 'Data read from server'),
           onClose: goToList,
           statusLabel,
           statusTone,
@@ -565,7 +599,7 @@ export const MeetingObjectPage: React.FC = () => {
         onSectionChange={goToSection}
         densityMode={gestosc}
         onDensityModeChange={setGestosc}
-        panelAriaLabel="Szczegóły spotkania"
+        panelAriaLabel={t('meeting.object.panelAriaLabel', 'Meeting details')}
         loading={false}
       />
     </div>

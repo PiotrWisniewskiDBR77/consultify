@@ -2,22 +2,32 @@
  * CLAUDE-NEXT-LEGACY-CUTOVER — MEETINGS domain (`/api/meeting`, router
  * `server/src/routes/meeting.routes.ts`).
  *
- * WHY THIS EXISTS: `meeting.routes.ts:262-280` documents the L-05/MTG-BVP-001
- * fix — `generate-notes` no longer auto-persists AI-extracted decisions/action
+ * WHY THIS EXISTS: `meeting.routes.ts` documents the L-05/MTG-BVP-001 fix —
+ * `generate-notes` no longer auto-persists AI-extracted decisions/action
  * items into `meetings.decisions_json` / `meeting_follow_ups`, and an explicit
- * `persist:true` is rejected with 409 (`meeting.routes.ts:293-298`). That claim
- * is true for those two tables, but false for a THIRD one the same comment
- * never mentions: `meetingIntelligenceService.persistNote`
- * (`server/src/services/ai/meetingIntelligenceService.ts:239-262`, called
- * unconditionally at line 183, independent of `req.body.persist`) writes the
- * same AI-extracted content into `notebook_pages` immediately — no idempotency
- * key (`randomUUID()` per call, line 161/219), no approval gate, before the
- * route's own governed `proposeMeetingNote` call (line 333) ever runs. That is
- * MEETINGS-W08 below, registered as `observed` (not `disabled` — the lane rule
- * is no writer is retired without a telemetry window, and the governed
- * sibling flow has zero UI caller today, so disabling this would remove the
- * only durable copy of AI meeting notes without anywhere for a human to
- * approve the replacement).
+ * `persist:true` is rejected with 409. That claim holds for those two tables.
+ *
+ * ★ CORRECTED 2026-08-25 (DEC-58 sceptyk, FIX-M-5c): this file used to claim a
+ * THIRD, ungoverned writer here — `meetingIntelligenceService.persistNote`
+ * allegedly writing straight into `notebook_pages`, unconditionally, ahead of
+ * the governed `proposeMeetingNote` call. That code does not exist in this
+ * baseline: `server/src/services/ai/meetingIntelligenceService.ts` is 226
+ * lines total (no line 239-262, no `persistNote` export — `grep -rn
+ * persistNote server/src/services/ai/meetingIntelligenceService.ts` is 0
+ * hits), and `notebook_pages` has zero references anywhere under
+ * `server/src/services/ai/` or `server/src/routes/meeting.routes.ts`. The
+ * ACTUAL `POST /:id/generate-notes` handler (`meeting.routes.ts`, see its own
+ * header comment above that route) calls
+ * `meetingIntelligenceService.generateMeetingNotes` for pure text extraction
+ * (no persistence side effect in that call) and then durably stores the
+ * result via `proposeMeetingNote` (`meetingBoundaryService.ts`) straight into
+ * the governed `meeting_notes` table + an `artifact_handoff_proposals` row —
+ * the SAME governed path `MEETINGS-W09-CANONICAL` below approves/rejects.
+ * There is no separate ungoverned copy. MEETINGS-W08 is corrected below to
+ * describe this actual `meeting_notes` write instead of the fabricated
+ * `notebook_pages` one; kept `observed` (not `disabled`/removed) because the
+ * route still exists and still writes a table outside `meetings`/
+ * `meeting_follow_ups`, so it stays in scope for this domain's telemetry.
  *
  * Also registered: the two manual outcome writers (`POST /:id/decisions`,
  * `POST /:id/follow-ups` + `PATCH .../follow-ups/:id`) that
@@ -134,9 +144,9 @@ export const MEETINGS_CUTOVER: LegacyCutoverDomainConfig = {
       path: /^\/[^/]+\/generate-notes\/?$/,
       state: 'observed',
       successor: null,
-      legacyTable: 'notebook_pages',
+      legacyTable: 'meeting_notes',
       reason:
-        'THE PRIMARY FINDING. meeting.routes.ts:262-280 documents the L-05/MTG-BVP-001 fix (nothing written into meetings.decisions_json / meeting_follow_ups until human approval, persist:true rejected with 409 at meeting.routes.ts:293-298) — verified true for those two tables. But meetingIntelligenceService.persistNote (server/src/services/ai/meetingIntelligenceService.ts:239-262) is called unconditionally inside generateWithLLM (line 183, independent of req.body.persist), and its INSERT INTO notebook_pages (lines 245-249) lands the same AI-extracted decisions/action items into a readable page SYNCHRONOUSLY, with a fresh randomUUID() per call (line 161 — no idempotency, a retried request duplicates the page) and no human-approval gate, BEFORE the route own governed proposeMeetingNote call (meeting.routes.ts:333) even runs. The governed sibling (meeting_notes + artifact_handoff_proposals, targetKind material) has zero UI caller — MeetingHub.tsx:647-665 only displays response.note, never calls POST /:id/notes/:noteId/decision (MEETINGS-W09-CANONICAL below) — so in practice every real "Generate Notes" click persists ungoverned content while the governed proposal sits in "proposed" forever. Registered observed, not disabled: this is the only durable copy of AI meeting notes today, and the lane does not retire a writer without a telemetry window plus a working replacement UI path, neither of which exist yet — see INTEGRATOR_REQUEST in the report for what disabling this would actually require.',
+        'CORRECTED 2026-08-25 (DEC-58 sceptyk, FIX-M-5c) — see the file header for the full re-verification. This writer previously claimed an unconditional, ungoverned INSERT INTO notebook_pages via a `meetingIntelligenceService.persistNote` that does not exist in this baseline (meetingIntelligenceService.ts is 226 lines, no persistNote export, zero notebook_pages references under server/src/services/ai/ or meeting.routes.ts). What the route actually does: meetingIntelligenceService.generateMeetingNotes extracts summary/decisions/action items with no persistence side effect, then proposeMeetingNote (meetingBoundaryService.ts) durably stores the result into meeting_notes plus an artifact_handoff_proposals row (targetKind material) — the SAME governed record MEETINGS-W09-CANONICAL below approves/rejects/materializes. Registered observed (not disabled): the route still writes meeting_notes directly with only base auth (verifyToken/isAuthenticated) and no admin/creator role gate, so it stays in scope for this domain\'s telemetry even though the earlier ungoverned-writer finding was false.',
     },
     {
       writerId: 'MEETINGS-W09-CANONICAL',

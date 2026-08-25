@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import { ensureMeetingBoundaryTables } from './meetingBoundary/meetingBoundaryService.js';
 
 export type MeetingStatus = 'scheduled' | 'completed';
 export type FollowUpStatus = 'open' | 'done';
@@ -302,6 +303,34 @@ export async function deleteMeeting(input: {
     meetingId: input.meetingId,
   });
   if (!existing) return false;
+
+  // FIX-M-4 (DEC-58 sceptyk, 2026-08-25): deleting a meeting used to leave
+  // orphaned governed-note records behind — `meeting_notes`
+  // (meetingBoundaryService.ts, the durable minutes/proposals shown on the
+  // Protokół tab) and their `artifact_handoff_proposals` /
+  // `artifact_handoff_receipts` rows (handoffSpineService.ts,
+  // producer_kind = 'meeting', producer_record_id = this meeting's id) had
+  // no FK/cascade tying them to `meetings`. Clean up the full governed-note
+  // trail before removing the meeting itself. Receipts reference proposals
+  // with `ON DELETE RESTRICT` (20260912_claude_c_handoff_spine.sql), so
+  // receipts must be deleted first or the proposal delete below would fail.
+  await ensureMeetingBoundaryTables();
+  await dbRun(
+    `DELETE FROM artifact_handoff_receipts WHERE proposal_id IN (
+       SELECT proposal_id FROM artifact_handoff_proposals
+       WHERE organization_id = ? AND producer_kind = 'meeting' AND producer_record_id = ?
+     )`,
+    [input.organizationId, input.meetingId]
+  );
+  await dbRun(
+    `DELETE FROM artifact_handoff_proposals
+       WHERE organization_id = ? AND producer_kind = 'meeting' AND producer_record_id = ?`,
+    [input.organizationId, input.meetingId]
+  );
+  await dbRun(`DELETE FROM meeting_notes WHERE organization_id = ? AND meeting_id = ?`, [
+    input.organizationId,
+    input.meetingId,
+  ]);
   await dbRun(`DELETE FROM meeting_follow_ups WHERE meeting_id = ?`, [input.meetingId]);
   await dbRun(`DELETE FROM meetings WHERE id = ? AND organization_id = ?`, [
     input.meetingId,

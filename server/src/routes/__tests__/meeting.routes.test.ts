@@ -256,7 +256,10 @@ describe('meeting routes', () => {
   });
 
   // L-04: role gate on destructive/administrative operations. Org-scope alone
-  // let any member DELETE / change status; now only admin/owner/superadmin may.
+  // let any member DELETE / change status; now DELETE requires admin/owner/
+  // superadmin, and status (relaxed by FIX-M-3, DEC-58 sceptyk 2026-08-25)
+  // requires admin/owner/superadmin OR the meeting's own creator — mirroring
+  // the admin-or-creator check PUT /:id already used before this fix.
   describe('L-04 role gate', () => {
     it('DELETE /:id returns 403 for a non-admin member', async () => {
       const res = await request(createApp())
@@ -286,12 +289,16 @@ describe('meeting routes', () => {
       expect(res.status).toBe(200);
     });
 
-    it('PATCH /:id/status returns 403 for a non-admin member', async () => {
+    it('PATCH /:id/status returns 404 for a non-admin member who is not the creator', async () => {
+      mockGet.mockResolvedValue({ ...sampleMeeting, createdBy: 'someone-else' });
       const res = await request(createApp())
         .patch('/api/meeting/meeting-1/status')
         .set('x-test-role', 'team_member')
         .send({ status: 'completed' });
-      expect(res.status).toBe(403);
+      // denyMeetingAccess deliberately answers 404 (not 403) to avoid
+      // revealing a same-tenant meeting's existence to a non-participant —
+      // same status code PUT /:id already uses for this exact check.
+      expect(res.status).toBe(404);
       expect(mockUpdateStatus).not.toHaveBeenCalled();
     });
 
@@ -300,6 +307,17 @@ describe('meeting routes', () => {
       const res = await request(createApp())
         .patch('/api/meeting/meeting-1/status')
         .set('x-test-role', 'admin')
+        .send({ status: 'completed' });
+      expect(res.status).toBe(200);
+      expect(res.body.meeting.status).toBe('completed');
+    });
+
+    it('PATCH /:id/status is allowed for the meeting creator without an admin role (FIX-M-3)', async () => {
+      mockGet.mockResolvedValue({ ...sampleMeeting, createdBy: 'user-1' });
+      mockUpdateStatus.mockResolvedValue({ ...sampleMeeting, status: 'completed' });
+      const res = await request(createApp())
+        .patch('/api/meeting/meeting-1/status')
+        .set('x-test-role', 'team_member')
         .send({ status: 'completed' });
       expect(res.status).toBe(200);
       expect(res.body.meeting.status).toBe('completed');
