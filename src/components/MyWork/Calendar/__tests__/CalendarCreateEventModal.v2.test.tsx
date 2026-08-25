@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { createEvent, duplicate, success, error } = vi.hoisted(() => ({
@@ -55,24 +55,36 @@ describe('CalendarCreateEventModal V2 duplication', () => {
     createEvent.mockResolvedValue({ id: 'event-1' });
   });
 
+  // FIX-20 (Day 3 layer-2 acceptance): window.confirm() replaced with the
+  // canonical ConfirmDialog (src/components/MyWork/shared/ConfirmDialog.tsx)
+  // — these two cases now drive the real dialog's buttons instead of
+  // mocking window.confirm.
+
   it('asks before the first write and cancel produces zero POSTs', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(false);
     renderModal();
     fireEvent.click(screen.getByRole('button', { name: 'Add' }));
-    await waitFor(() => expect(window.confirm).toHaveBeenCalledTimes(1));
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toHaveTextContent('Duplicate for the next 4 weeks');
+    // Two "Cancel"-named controls live inside the dialog: the icon-only ×
+    // close button (aria-label="Cancel") and the visible footer button — the
+    // footer one is last in DOM order.
+    const cancelButtons = within(dialog).getAllByRole('button', { name: 'Cancel' });
+    fireEvent.click(cancelButtons[cancelButtons.length - 1]);
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(createEvent).not.toHaveBeenCalled();
     expect(duplicate).not.toHaveBeenCalled();
     expect(success).not.toHaveBeenCalled();
   });
 
   it('reports partial duplication only as an error', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
     duplicate.mockResolvedValue({
       created: [{ date: '2026-09-01' }],
       failed: [{ date: '2026-09-08', error: new Error('conflict') }],
     });
     renderModal();
     fireEvent.click(screen.getByRole('button', { name: 'Add' }));
+    await screen.findByRole('dialog');
+    fireEvent.click(screen.getByRole('button', { name: 'Create copies' }));
     await waitFor(() => expect(error).toHaveBeenCalledTimes(1));
     expect(createEvent).toHaveBeenCalledTimes(1);
     expect(duplicate).toHaveBeenCalledTimes(1);

@@ -4167,6 +4167,7 @@
       "busy": "Zajęte",
       "organization": "Organizacja",
       "duplicateFourWeeks": "Powiel na kolejne 4 tygodnie",
+      "duplicateConfirmAction": "Utwórz kopie",
       "attendees": "Uczestnicy",
       "attendeesHint": "(opcjonalnie, tylko z organizacji)",
       "attendeesSearchPlaceholder": "Dodaj osobę…",

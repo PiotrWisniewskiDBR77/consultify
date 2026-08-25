@@ -9,6 +9,7 @@ import Api from '@/services/api';
 import { isMyWorkCalendarV2Enabled } from '@/utils/myWorkCalendarV2Flag';
 
 import { duplicateCalendarEventFourWeeks } from '../CalendarV2/duplicateCalendarEvent';
+import { useConfirmDialog } from '../shared/ConfirmDialog';
 import { CalendarAttendeesField, type CalendarAttendeeOption } from './CalendarAttendeesField';
 
 interface CalendarConflictItem {
@@ -51,6 +52,7 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
 }) => {
   const { t } = useTranslation();
   const v2 = isMyWorkCalendarV2Enabled();
+  const { dialog: duplicateConfirmDialog, confirm: confirmDuplicate } = useConfirmDialog();
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -163,12 +165,20 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
             next.setUTCDate(next.getUTCDate() + week * 7);
             return next.toLocaleDateString();
           });
-          const confirmed = window.confirm(
-            t('myWork.calendarV2.duplicateConfirm', {
+          // FIX-20 (Day 3 layer-2 acceptance): window.confirm() replaced with
+          // the canonical ConfirmDialog — same golden-standard modal every
+          // other destructive/multi-write confirmation in My Work uses —
+          // listing the 4 target dates instead of a native browser dialog.
+          const confirmed = await confirmDuplicate({
+            title: t('myWork.calendarV2.duplicateFourWeeks', 'Duplicate for the next 4 weeks'),
+            description: t('myWork.calendarV2.duplicateConfirm', {
               defaultValue: 'Create 4 independent copies on: {{dates}}?',
               dates: dates.join(', '),
-            })
-          );
+            }),
+            confirmLabel: t('myWork.calendarV2.duplicateConfirmAction', 'Create copies'),
+            cancelLabel: t('myWork.calendarCreateEvent.cancel', 'Cancel'),
+            variant: 'default',
+          });
           if (!confirmed) {
             return;
           }
@@ -212,6 +222,7 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
   };
 
   return (
+    <>
     <Modal
       open={open}
       onClose={onClose}
@@ -450,6 +461,8 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
         </div>
       </form>
     </Modal>
+    {duplicateConfirmDialog}
+    </>
   );
 };
 
