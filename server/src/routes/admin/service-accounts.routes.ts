@@ -5,7 +5,6 @@ import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.
 import { serviceAccountService } from '../../services/tablePlatform/ServiceAccountService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { get as dbGet } from '../../utils/DbPromise.js';
-import { getDatabase } from '../../database/Database.js';
 
 const router = Router();
 router.use(verifyToken);
@@ -65,12 +64,12 @@ router.delete(
   '/:id',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const organizationId = String(req.user?.organizationId || '');
-    const result = await getDatabase().query(
-      'SELECT id FROM tp_service_accounts WHERE id = $1 AND organization_id = $2',
-      [req.params.id, organizationId]
+    const found = await dbGet<{ id: string }>(
+      'SELECT id FROM tp_service_accounts WHERE id = ? AND organization_id = ?',
+      [req.params.id, organizationId],
+      { fallback: false }
     );
-    if (result.rows.length === 0)
-      return res.status(404).json({ success: false, error: 'Service account not found' });
+    if (!found) return res.status(404).json({ success: false, error: 'Service account not found' });
     await serviceAccountService.revokeServiceAccount(req.params.id);
     return res.status(204).send();
   })
