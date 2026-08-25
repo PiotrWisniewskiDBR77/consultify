@@ -956,7 +956,9 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           meta: {
             nodeType: primary?.type,
             shape: primary?.data?.shape,
+            color: primary?.data?.color,
             laneId: primary?.data?.laneId,
+            laneName: lanes.find((lane) => lane.id === primary?.data?.laneId)?.label,
             label: primary?.data?.label,
             description: primary?.data?.description,
             owner: primary?.data?.owner,
@@ -972,7 +974,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         });
       }
     },
-    [onSelectionChange]
+    [onSelectionChange, lanes]
   );
 
   // ── PASEK EDYCJI OBIEKTU (ff_canvasObjectEditBar) ──────────────────────

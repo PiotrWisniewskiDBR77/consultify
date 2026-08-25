@@ -2083,6 +2083,41 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     [detailNodeId, effectiveNodes]
   );
 
+  // FIX-3 (Day 3 acceptance): the shared IdeaElementInspector rail (ff_ideaInspectorRightRail)
+  // never received a real row selection because every row-open path only set
+  // `detailNodeId` (RowDetailPanel's own trigger). Report the SAME row this table already
+  // resolved for RowDetailPanel — same data source, no duplicate edit surface — including
+  // the real, currently visible columns so the inspector's "Kolumna" tool section reads
+  // genuine values instead of nothing.
+  useEffect(() => {
+    if (!onSelectionChange) return;
+    if (!detailNode) {
+      onSelectionChange(EMPTY_SELECTION);
+      return;
+    }
+    onSelectionChange({
+      type: 'row',
+      count: 1,
+      ids: [detailNode.id],
+      primaryId: detailNode.id,
+      meta: {
+        nodeType: detailNode.type,
+        label: detailNode.data?.label,
+        description: detailNode.data?.description,
+        owner: detailNode.data?.owner,
+        status: detailNode.data?.status,
+        tags: Array.isArray(detailNode.data?.tags) ? detailNode.data?.tags : undefined,
+        color: typeof detailNode.data?.color === 'string' ? detailNode.data?.color : undefined,
+        columns: _visCols.map((col) => ({
+          key: col.key,
+          label: col.header,
+          value: (detailNode.data as Record<string, unknown> | undefined)?.[col.key],
+        })),
+      },
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [detailNode, _visCols, onSelectionChange]);
+
   // ── Render row ─────────────────────────────────────────────────────────────
   const renderRow = (row: TableNode, rowIdx: number) => {
     const isSelected = _selIds.has(row.id);

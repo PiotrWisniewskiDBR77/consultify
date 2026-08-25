@@ -2861,7 +2861,21 @@ function MindMapInner({
             count: selected.length,
             ids: selected.map((n: Node) => n.id),
             primaryId: selected[0]?.id,
-            meta: { nodeType: selected[0]?.type, label: selected[0]?.data?.label },
+            meta: {
+              nodeType: selected[0]?.type,
+              shape: selected[0]?.data?.shape,
+              color: selected[0]?.data?.color,
+              label: selected[0]?.data?.label,
+              description: selected[0]?.data?.description,
+              owner: selected[0]?.data?.owner,
+              semanticType: selected[0]?.data?.semanticType,
+              status: selected[0]?.data?.status,
+              tags: Array.isArray(selected[0]?.data?.tags) ? selected[0]?.data?.tags : undefined,
+              artifactRef: selected[0]?.data?.artifactRef,
+              attachments: Array.isArray(selected[0]?.data?.attachments)
+                ? selected[0]?.data?.attachments
+                : undefined,
+            },
           });
         }
       } catch (err: any) {

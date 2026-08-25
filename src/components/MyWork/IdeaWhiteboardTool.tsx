@@ -1296,6 +1296,8 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
               : undefined,
             shape:
               typeof selected[0]?.data?.shape === 'string' ? selected[0]?.data?.shape : undefined,
+            color:
+              typeof selected[0]?.data?.color === 'string' ? selected[0]?.data?.color : undefined,
             semanticType: inferWhiteboardSemanticType(selected[0]),
           },
         });

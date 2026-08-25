@@ -33,7 +33,11 @@ export interface IdeaWorkspaceSelection {
   meta?: {
     nodeType?: string;
     shape?: string;
+    color?: string;
     laneId?: string;
+    laneName?: string;
+    /** Real table column values for the selected row (FIX-3: IdeaElementInspector "Kolumna" tool section). */
+    columns?: Array<{ key: string; label: string; value: unknown }>;
     label?: string;
     description?: string;
     owner?: string;

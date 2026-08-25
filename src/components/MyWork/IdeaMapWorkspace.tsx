@@ -66,7 +66,11 @@ import { IdeaCanvasMelsView } from './IdeaCanvasMelsView';
 import { IdeaSaveIndicator, IdeaStageChip, IdeaToolIcon } from './IdeaCanvasMenu1Bits';
 import { IdeaCanvasSecondBar } from './IdeaCanvasSecondBar';
 import { IdeaContextPanel } from './IdeaContextPanel';
-import { IdeaElementInspector, type IdeaInspectorTool } from './panel/IdeaElementInspector';
+import {
+  IdeaElementInspector,
+  type IdeaInspectorItem,
+  type IdeaInspectorTool,
+} from './panel/IdeaElementInspector';
 import { ConversionPreviewDialog, type ConversionPreviewData } from './ConversionPreviewDialog';
 import { IdeaConvertMenu } from './IdeaConvertMenu';
 import {
@@ -632,6 +636,26 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     },
     [activeTool, externalOnSelectionChange, realId]
   );
+
+  // FIX-3 (Day 3 acceptance): IdeaElementInspector's empty state can offer real
+  // recently-selected elements instead of nothing. Tracks the last distinct primary
+  // selections across all 4 tools — genuine selection history, not fabricated data.
+  const [recentInspectorItems, setRecentInspectorItems] = useState<IdeaInspectorItem[]>([]);
+  useEffect(() => {
+    if (selection.type === 'none' || !selection.primaryId) return;
+    const id = selection.primaryId;
+    const title = selection.meta?.label || id;
+    const type = selection.meta?.semanticType || selection.meta?.nodeType || activeTool;
+    const date = new Date().toLocaleTimeString(isPolish ? 'pl' : 'en', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    setRecentInspectorItems((prev) => {
+      const withoutDupe = prev.filter((item) => item.id !== id);
+      return [{ id, title, type, date }, ...withoutDupe].slice(0, 5);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selection.primaryId]);
 
   const conflictRefreshRef = useRef<(() => Promise<void>) | null>(null);
   // A brand-new board auto-seeds its first node (mindmap root / whiteboard sticky) into
@@ -3027,6 +3051,112 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     [activeTool, graphRuntime, i18n.language, realId]
   );
 
+  // FIX-3 (Day 3 acceptance): per-tool section of the shared IdeaElementInspector rail.
+  // Reads REAL state each tool already tracks (node color/shape, process lane, live
+  // whiteboard facilitation session, table column values) — no fabricated content, and
+  // no duplicate editor for state that already has a proper editor on the canvas itself.
+  const inspectorToolSection = useMemo(() => {
+    if (!selection.primaryId) return undefined;
+    const meta = selection.meta;
+    if (activeTool === 'mindmap') {
+      return (
+        <div className="space-y-2 text-sm">
+          <label className="flex items-center justify-between gap-2">
+            <span>{t('myWork.ideaInspector.nodeColor', 'Kolor gałęzi')}</span>
+            <input
+              type="color"
+              aria-label={t('myWork.ideaInspector.nodeColor', 'Kolor gałęzi')}
+              value={meta?.color || '#94a3b8'}
+              onChange={(e) => {
+                const nodeId = selection.primaryId;
+                if (nodeId) void handleNodeDataChange(nodeId, { color: e.target.value } as any);
+              }}
+              className="h-6 w-10 rounded border border-c-border bg-transparent"
+            />
+          </label>
+          <p className="text-c-text-secondary">
+            {t('myWork.ideaInspector.nodeShape', 'Kształt')}:{' '}
+            {meta?.shape || t('myWork.ideaInspector.nodeShapeDefault', 'domyślny')}
+          </p>
+        </div>
+      );
+    }
+    if (activeTool === 'process_flow') {
+      return (
+        <div className="space-y-1 text-sm">
+          <p>
+            {t('myWork.ideaInspector.lane', 'Tor')}:{' '}
+            {meta?.laneName || meta?.laneId || t('myWork.ideaInspector.laneNone', 'Brak toru')}
+          </p>
+          <p className="text-c-text-secondary">
+            {t(
+              'myWork.ideaInspector.edgeHint',
+              'Kierunek i styl krawędzi edytujesz na kanwie po kliknięciu strzałki.'
+            )}
+          </p>
+        </div>
+      );
+    }
+    if (activeTool === 'whiteboard') {
+      if (!whiteboardSession) {
+        return (
+          <p className="text-sm text-c-text-secondary">
+            {t('myWork.ideaInspector.noSession', 'Brak aktywnej sesji warsztatu')}
+          </p>
+        );
+      }
+      return (
+        <dl className="space-y-1 text-sm">
+          <div className="flex justify-between gap-2">
+            <dt className="text-c-text-secondary">
+              {t('myWork.ideaInspector.sessionRole', 'Rola')}
+            </dt>
+            <dd>{whiteboardSession.role || '—'}</dd>
+          </div>
+          <div className="flex justify-between gap-2">
+            <dt className="text-c-text-secondary">
+              {t('myWork.ideaInspector.sessionPhase', 'Faza')}
+            </dt>
+            <dd>{whiteboardSession.phase || '—'}</dd>
+          </div>
+          <div className="flex justify-between gap-2">
+            <dt className="text-c-text-secondary">
+              {t('myWork.ideaInspector.sessionParticipants', 'Uczestnicy')}
+            </dt>
+            <dd>{whiteboardSession.participantCount ?? '—'}</dd>
+          </div>
+          <div className="flex justify-between gap-2">
+            <dt className="text-c-text-secondary">
+              {t('myWork.ideaInspector.sessionTimer', 'Stoper')}
+            </dt>
+            <dd>
+              {whiteboardSession.timerActive
+                ? t('myWork.ideaInspector.sessionActive', 'aktywny')
+                : t('myWork.ideaInspector.sessionInactive', 'nieaktywny')}
+            </dd>
+          </div>
+        </dl>
+      );
+    }
+    if (activeTool === 'table') {
+      const cols = meta?.columns || [];
+      if (!cols.length) return undefined;
+      return (
+        <ul className="space-y-1 text-sm">
+          {cols.map((col) => (
+            <li key={col.key} className="flex justify-between gap-2">
+              <span className="text-c-text-secondary">{col.label}</span>
+              <span className="truncate">
+                {col.value == null || col.value === '' ? '—' : String(col.value)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      );
+    }
+    return undefined;
+  }, [activeTool, selection.meta, selection.primaryId, whiteboardSession, handleNodeDataChange, t]);
+
   // ── Drill-down (sub-idea navigation) ────────────────────────────────────────
   useEffect(() => {
     const handler = (e: Event) => {
@@ -4173,6 +4303,13 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                   tool={
                     (activeTool === 'process_flow' ? 'process' : activeTool) as IdeaInspectorTool
                   }
+                  toolSection={inspectorToolSection}
+                  recentItems={recentInspectorItems}
+                  onOpenRecent={(id) => {
+                    window.dispatchEvent(
+                      new CustomEvent('idea-node-open-detail', { detail: { nodeId: id } })
+                    );
+                  }}
                   nativeStates={
                     activeTool === 'table'
                       ? ['todo', 'in_progress', 'done', 'blocked']
