@@ -76,3 +76,10 @@ TRI-MUST-06 (lokalizacja). TRI-MUST-05 blokuje fazę 3, nie odbiór modułów.
 | TRI-OBS-09 | Zmiana planu (PUT /api/admin/billing/plan) nie zapisuje subscription_history (jedyny writer: dunningService.ts:502) — ekran „Plan history" pokaże pustkę mimo zmian. | macierz przepływów | WAŻNE — dołączyć do fali Billing |
 | TRI-OBS-10 | „Configuration Versions" wersjonuje Prompt OS, nie politykę ai-settings/ai-governance — dwa rozłączne systemy. | macierz przepływów | WAŻNE — decyzja przy fali AI |
 | TRI-MUST-11 | GET /api/access-control/requests: superadmin-only i bez filtra organizacji (access-control.routes.ts:89) — ekran „Access requests" NIE może go wołać; wymagany endpoint tenant-scoped. | access-control.routes.ts:89 | MUST — reguła weryfikacji nocnej (jak TRI-MUST-07) |
+
+## Uzupełnienie — odbiór przepływów nocy (2026-08-25, podpis: Fable)
+
+| ID | Problem | Dowód | Klasyfikacja |
+|---|---|---|---|
+| TRI-MUST-13 | **ADMIN ma efektywny dostęp `'*'`** (effectiveAccessService, commit 2026-05-17) — przechodzi KAŻDĄ kontrolę capability, w tym `admin.project_roles.manage`; żywy dowód: ADMIN utworzył rolę (200, pełny formularz), wbrew zamierzonemu modelowi DEC-17 (OWNER-only). Zasięg: cały system uprawnień admina. | FLOW_VERDICTS.md (8e6931a367) | **MUST przed demo** — naprawa in-house (model uprawnień), nie w zadaniu Codexa |
+| TRI-OBS-14 | `billing_alerts` nie istnieje na żadnej czysto zmigrowanej bazie Postgres (migracja sklasyfikowana jako SQLite-only przez filtr). Kod fail-closed z uczciwym komunikatem, ale funkcja martwa wszędzie. | FLOW_VERDICTS.md | dołączyć do TRI-MUST-05 (bramka migracyjna fazy 3) |
