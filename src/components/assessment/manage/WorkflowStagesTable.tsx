@@ -221,18 +221,26 @@ const GATE_CONFIG: Record<
     actionLabel: string;
   }
 > = {
+  // 2026-08-26 night-fixes-a (NIGHT_SWEEP_A_REPORT_20260826.md — Assessment
+  // FIX-KANON, CLAUDE.md pułapka nr 1: kanon dopuszcza wyłącznie 4 warianty
+  // — zielony/czerwony/bursztyn/neutralny; niebieski i fiolet jako WYPEŁNIENIE
+  // są zakazane). These three badges are TYPE labels ("which gate is this"),
+  // not a status/state — `StatusCell` above already owns state color
+  // (NOT_STARTED/PENDING/APPROVED/REJECTED). A type label has no state to
+  // encode, so it goes neutral, same slate scheme `STATUS_CONFIG.NOT_STARTED`
+  // already uses elsewhere in this file — not a new color, an existing one.
   REQUEST_REVIEW: {
     icon: Send,
-    color: 'text-blue-600 dark:text-blue-400',
-    bgColor: 'bg-blue-50 dark:bg-blue-500/10',
-    borderColor: 'border-blue-200 dark:border-blue-500/30',
+    color: 'text-slate-600 dark:text-slate-300',
+    bgColor: 'bg-slate-100 dark:bg-slate-500/10',
+    borderColor: 'border-slate-200 dark:border-slate-500/30',
     actionLabel: 'Submit for Review',
   },
   APPROVE_REPORT: {
     icon: FileCheck,
-    color: 'text-violet-600 dark:text-violet-400',
-    bgColor: 'bg-violet-50 dark:bg-violet-500/10',
-    borderColor: 'border-violet-200 dark:border-violet-500/30',
+    color: 'text-slate-600 dark:text-slate-300',
+    bgColor: 'bg-slate-100 dark:bg-slate-500/10',
+    borderColor: 'border-slate-200 dark:border-slate-500/30',
     actionLabel: 'Approve Report',
   },
   APPROVE_ASSESSMENT: {
@@ -244,9 +252,9 @@ const GATE_CONFIG: Record<
   },
   GENERATE_REPORT: {
     icon: FileText,
-    color: 'text-blue-600 dark:text-blue-400',
-    bgColor: 'bg-blue-50 dark:bg-blue-500/10',
-    borderColor: 'border-blue-200 dark:border-blue-500/30',
+    color: 'text-slate-600 dark:text-slate-300',
+    bgColor: 'bg-slate-100 dark:bg-slate-500/10',
+    borderColor: 'border-slate-200 dark:border-slate-500/30',
     actionLabel: 'Generate Report',
   },
   GENERATE_INITIATIVES: {
@@ -707,7 +715,7 @@ const ActionsCell: FC<{
         type="button"
         onClick={() => handleAction('request')}
         disabled={actionBusy}
-        className={`px-3 py-1.5 rounded-lg bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white text-xs font-semibold transition-colors ${FOCUS_RING}`}
+        className={`px-3 py-1.5 rounded-lg bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] disabled:bg-navy-900/40 dark:disabled:bg-[#F4F7FB]/50 text-white dark:text-navy-950 text-xs font-semibold transition-colors ${FOCUS_RING}`}
       >
         {actionBusy ? <Loader2 size={12} className="animate-spin" /> : 'Generate Report'}
       </button>
@@ -763,7 +771,7 @@ const ActionsCell: FC<{
             <button
               type="button"
               title="Send Reminder"
-              className={`p-1.5 rounded-lg bg-blue-500/20 text-blue-600 dark:text-blue-400 hover:bg-blue-500/30 transition-colors ${FOCUS_RING}`}
+              className={`p-1.5 rounded-lg bg-slate-500/10 text-slate-600 dark:text-slate-300 hover:bg-slate-500/20 transition-colors ${FOCUS_RING}`}
             >
               <Bell size={14} />
             </button>
