@@ -292,7 +292,7 @@ function getBasePath(type: ArtifactType, id: string): string {
     case 'sheet':
       return `/tabele?artifactId=${id}`;
     case 'meeting':
-      return '/meeting';
+      return `/meeting?meetingId=${encodeURIComponent(id)}`;
     // V5-IDEA-34: Finance artifact parity
     case 'financial_model':
       return `/economics?tab=models&open=${id}`;
