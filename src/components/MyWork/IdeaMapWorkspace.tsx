@@ -38,6 +38,7 @@ import { useConversationStore } from '@/store/useConversationStore';
 import { buildIdeaWorkspacePath } from '@/routes/ideaWorkspaceNavigation';
 import { isEvidencePanelEnabled } from '@/utils/evidencePanelFlag';
 import { isIdeaDetailsInPanelEnabled } from '@/utils/ideaDetailsInPanelFlag';
+import { isIdeaInspectorRightRailEnabled } from '@/utils/ideaInspectorRightRailFlag';
 import { IDEA_TOP_BAR_SLOT_ID, isIdeaTopBarOneLineEnabled } from '@/utils/ideaTopBarOneLineFlag';
 import { isVf1CanvasSpecAEnabled } from '@/utils/vf1CanvasSpecAFlag';
 
@@ -65,10 +66,8 @@ import { IdeaCanvasMelsView } from './IdeaCanvasMelsView';
 import { IdeaSaveIndicator, IdeaStageChip, IdeaToolIcon } from './IdeaCanvasMenu1Bits';
 import { IdeaCanvasSecondBar } from './IdeaCanvasSecondBar';
 import { IdeaContextPanel } from './IdeaContextPanel';
-import {
-  ConversionPreviewDialog,
-  type ConversionPreviewData,
-} from './ConversionPreviewDialog';
+import { IdeaElementInspector, type IdeaInspectorTool } from './panel/IdeaElementInspector';
+import { ConversionPreviewDialog, type ConversionPreviewData } from './ConversionPreviewDialog';
 import { IdeaConvertMenu } from './IdeaConvertMenu';
 import {
   getConvertTargetMeta,
@@ -2399,8 +2398,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   // and shows a preview; the actual server call moved to `performConvert`,
   // invoked solely from the dialog's confirm button.
   const [conversionPreviewOpen, setConversionPreviewOpen] = useState(false);
-  const [conversionPreviewData, setConversionPreviewData] =
-    useState<ConversionPreviewData | null>(null);
+  const [conversionPreviewData, setConversionPreviewData] = useState<ConversionPreviewData | null>(
+    null
+  );
   const [conversionSubmitting, setConversionSubmitting] = useState(false);
   const conversionPendingRef = useRef<{
     target: IdeaConvertTarget;
@@ -2582,9 +2582,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               ? `Uwzględnione elementy (${elementLabels.length})`
               : 'Kolejne kroki (next steps)',
           sourceEn:
-            elementLabels.length > 0
-              ? `Included elements (${elementLabels.length})`
-              : 'Next steps',
+            elementLabels.length > 0 ? `Included elements (${elementLabels.length})` : 'Next steps',
           targetPl: 'Po jednym zadaniu na element',
           targetEn: 'One task per element',
         });
@@ -2598,10 +2596,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         });
       }
 
-      const scopeLabelByKind: Record<
-        string,
-        { pl: string; en: string }
-      > = {
+      const scopeLabelByKind: Record<string, { pl: string; en: string }> = {
         workspace: { pl: 'Cała Idea', en: 'Whole Idea' },
         selected_items: {
           pl: `Zaznaczenie (${nodeIds.length})`,
@@ -2633,8 +2628,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       return {
         targetLabelPl: meta ? meta.labelPl : target,
         targetLabelEn: meta ? meta.labelEn : target,
-        targetArtifactName:
-          title || safeTitleFromSeed(seedText, isPolish) || t('mindmap.untitled'),
+        targetArtifactName: title || safeTitleFromSeed(seedText, isPolish) || t('mindmap.untitled'),
         scope: {
           kind:
             scopeKind === 'workspace'
@@ -3421,7 +3415,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const handlePreviewProcessFlowCandidate = useCallback(async () => {
     if (!realId || candidateHandoffBusy) return;
     if (['offline', 'conflict'].includes(graphRuntime.syncState)) {
-      toast.error(isPolish ? 'Najpierw zapisz bieżący Process Flow' : 'Save the current Process Flow first');
+      toast.error(
+        isPolish ? 'Najpierw zapisz bieżący Process Flow' : 'Save the current Process Flow first'
+      );
       return;
     }
     setCandidateHandoffBusy(true);
@@ -3438,7 +3434,10 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       const preview = await Api.previewIdeaProcessFlowCandidate(realId);
       setCandidatePreview(preview);
     } catch (error: any) {
-      toast.error(error?.message || (isPolish ? 'Nie udało się przygotować podglądu' : 'Failed to prepare preview'));
+      toast.error(
+        error?.message ||
+          (isPolish ? 'Nie udało się przygotować podglądu' : 'Failed to prepare preview')
+      );
     } finally {
       setCandidateHandoffBusy(false);
     }
@@ -3464,7 +3463,10 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             : 'Initiative candidate already exists'
       );
     } catch (error: any) {
-      toast.error(error?.message || (isPolish ? 'Nie udało się utworzyć kandydata' : 'Failed to create candidate'));
+      toast.error(
+        error?.message ||
+          (isPolish ? 'Nie udało się utworzyć kandydata' : 'Failed to create candidate')
+      );
     } finally {
       setCandidateHandoffBusy(false);
     }
@@ -3507,7 +3509,10 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
    * `null` = zwinięty panel (kontrakt powłoki), więc stan startowy zachowuje
    * dotychczasowe zachowanie: nic nie otwiera się samo.
    */
-  const detaleWPanelu = isIdeaDetailsInPanelEnabled();
+  const ideaInspectorRightRail = isIdeaInspectorRightRailEnabled();
+  // DEC-27 guard: the new right inspector wins, so the legacy left portal is
+  // never active at the same time even when both operator flags are ON.
+  const detaleWPanelu = isIdeaDetailsInPanelEnabled() && !ideaInspectorRightRail;
   const [sekcjaPrawegoPaska, setSekcjaPrawegoPaska] = useState<string | null>(null);
 
   useEffect(() => {
@@ -3684,8 +3689,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     // Układ SZEŚCIU sekcji (flaga `ff_ideaPanel6Sections`, default OFF) ma
     // własny, niezależny budowniczy paska — patrz `panel/ideaPanel6Sections.ts`.
     // Przy fladze OFF nie zmienia się nic: leci stary builder pięciu ikon.
-    if (panel6Enabled)
-      return buildIdeaPanel6RailTools({ isPolish: Boolean(isPolish), activeTool });
+    if (panel6Enabled) return buildIdeaPanel6RailTools({ isPolish: Boolean(isPolish), activeTool });
     const inspektorJest =
       activeTool === 'mindmap' || activeTool === 'whiteboard' || activeTool === 'process_flow';
     const kondycjaJest = activeTool === 'mindmap' || activeTool === 'process_flow';
@@ -4058,14 +4062,15 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   // dziala w obu sciezkach renderu (mels i legacy). OFF => null.
   // MELS always exposes the four representations in the canonical bottom bar.
   // The legacy path still honours its reversible feature flag.
-  const viewSwitcherNode = melsCanvasEnabled || switcherBottomRight ? (
-    <IdeaViewSwitcher
-      activeTool={activeTool}
-      onToolChange={setActiveTool}
-      isPl={isPolish}
-      familyCounts={familyCounts}
-    />
-  ) : null;
+  const viewSwitcherNode =
+    melsCanvasEnabled || switcherBottomRight ? (
+      <IdeaViewSwitcher
+        activeTool={activeTool}
+        onToolChange={setActiveTool}
+        isPl={isPolish}
+        familyCounts={familyCounts}
+      />
+    ) : null;
   const workspaceSiblingsNode = renderWorkspaceSiblings();
 
   if (melsCanvasEnabled) {
@@ -4116,6 +4121,48 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             activeRightRailToolId={detaleWPanelu && panel6Enabled ? sekcjaPrawegoPaska : undefined}
             onActiveRightRailToolChange={setSekcjaPrawegoPaska}
             renderRightRailPanel={renderMelsCanvasRightRailPanel}
+            elementInspectorRail={
+              ideaInspectorRightRail ? (
+                <IdeaElementInspector
+                  element={
+                    selection.type === 'none' || !selection.primaryId
+                      ? null
+                      : {
+                          id: selection.primaryId,
+                          label: selection.meta?.label || selection.primaryId,
+                          state: selection.meta?.status,
+                          owner: selection.meta?.owner,
+                          semanticType: selection.meta?.semanticType || selection.meta?.nodeType,
+                          description: selection.meta?.description,
+                          tags: selection.meta?.tags,
+                          branch: activeToolLabel,
+                          lineage: `${isPolish ? 'Rodowód' : 'Lineage'}: ${activeToolLabel} · v${graphRuntime.graph.version}`,
+                          savedAt: graphRuntime.lastSavedAt,
+                        }
+                  }
+                  tool={
+                    (activeTool === 'process_flow' ? 'process' : activeTool) as IdeaInspectorTool
+                  }
+                  nativeStates={
+                    activeTool === 'table'
+                      ? ['todo', 'in_progress', 'done', 'blocked']
+                      : activeTool === 'process_flow'
+                        ? []
+                        : [
+                            'idea',
+                            'exploring',
+                            'validated',
+                            'ready_to_convert',
+                            'converted',
+                            'ready',
+                            'rejected',
+                          ]
+                  }
+                  language={isPolish ? 'pl' : 'en'}
+                  onReturnToCanvas={() => canvasContainerRef.current?.focus()}
+                />
+              ) : undefined
+            }
             // Układ 6 sekcji: pasek ikon zawsze widoczny (decyzja właściciela).
             rightRailCollapsible={!panel6Enabled}
             canvas={
@@ -4180,8 +4227,14 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               </button>
             ) : null}
             {candidatePreview ? (
-              <div data-testid="process-flow-candidate-preview" className="max-w-xs text-xs text-c-text-secondary">
-                <div>{candidatePreview.nodeCount} nodes · {candidatePreview.edgeCount} edges · v{candidatePreview.mapVersion}</div>
+              <div
+                data-testid="process-flow-candidate-preview"
+                className="max-w-xs text-xs text-c-text-secondary"
+              >
+                <div>
+                  {candidatePreview.nodeCount} nodes · {candidatePreview.edgeCount} edges · v
+                  {candidatePreview.mapVersion}
+                </div>
                 <div>
                   {((candidatePreview.projection?.nodes || []) as any[])
                     .slice(0, 3)
@@ -4197,16 +4250,28 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                     .join(', ')}
                 </div>
                 <code>{String(candidatePreview.projectionHash).slice(0, 12)}…</code>
-                <button type="button" onClick={() => setCandidatePreview(null)} className="ml-2 underline">
+                <button
+                  type="button"
+                  onClick={() => setCandidatePreview(null)}
+                  className="ml-2 underline"
+                >
                   {isPolish ? 'Anuluj' : 'Cancel'}
                 </button>
               </div>
             ) : null}
             <button
               type="button"
-              data-testid={candidatePreview ? 'confirm-process-flow-candidate' : 'approve-process-flow-candidate'}
+              data-testid={
+                candidatePreview
+                  ? 'confirm-process-flow-candidate'
+                  : 'approve-process-flow-candidate'
+              }
               disabled={candidateHandoffBusy || graphRuntime.saving}
-              onClick={candidatePreview ? handleApproveProcessFlowCandidate : handlePreviewProcessFlowCandidate}
+              onClick={
+                candidatePreview
+                  ? handleApproveProcessFlowCandidate
+                  : handlePreviewProcessFlowCandidate
+              }
               className="rounded-lg bg-c-brand-primary px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"
             >
               {candidateHandoffBusy
@@ -4214,8 +4279,12 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                   ? 'Zatwierdzanie…'
                   : 'Approving…'
                 : isPolish
-                  ? candidatePreview ? 'Potwierdź kandydaturę' : 'Przejrzyj kandydaturę'
-                  : candidatePreview ? 'Confirm candidate' : 'Review candidate'}
+                  ? candidatePreview
+                    ? 'Potwierdź kandydaturę'
+                    : 'Przejrzyj kandydaturę'
+                  : candidatePreview
+                    ? 'Confirm candidate'
+                    : 'Review candidate'}
             </button>
           </div>
         )}

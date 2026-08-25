@@ -68,6 +68,8 @@ export interface IdeaCanvasMelsViewProps {
   activeRightToolId?: string | null;
   onSelectRightTool?: (id: string | null) => void;
   renderRightRailPanel?: (activeToolId: string | null) => React.ReactNode;
+  /** DEC-27 additive element inspector, rendered independently on the right. */
+  elementInspectorRail?: React.ReactNode;
   /**
    * Czy pasek ikon prawego panelu wolno schować do 16-pikselowego słupka.
    * Domyślnie TAK (dzisiejsze zachowanie). Idea w układzie 6 sekcji podaje
@@ -131,6 +133,7 @@ export const IdeaCanvasMelsView: React.FC<IdeaCanvasMelsViewProps> = ({
   activeRightToolId,
   onSelectRightTool,
   renderRightRailPanel,
+  elementInspectorRail,
   rightRailCollapsible = true,
   activeRightRailToolId,
   onActiveRightRailToolChange,
@@ -184,6 +187,7 @@ export const IdeaCanvasMelsView: React.FC<IdeaCanvasMelsViewProps> = ({
       leftRailContent={<></>}
       rightRailTools={rightRailTools}
       renderRightRailPanel={rightPanelRenderer}
+      elementInspectorRail={elementInspectorRail}
       rightRailCollapsible={rightRailCollapsible}
       activeRightRailToolId={activeRightRailToolId}
       onActiveRightRailToolChange={onActiveRightRailToolChange}
