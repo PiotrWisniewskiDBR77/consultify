@@ -61,6 +61,23 @@ describe('AdminDomainsPanel', () => {
     expect(await screen.findByText('DNS API offline')).toBeInTheDocument();
   });
 
+  it('shows the TXT record instruction for an existing unverified domain', async () => {
+    render(<AdminDomainsPanel />);
+    await screen.findByText('example.com');
+    fireEvent.click(screen.getByLabelText('Akcje wiersza'));
+    fireEvent.click(await screen.findByText('Pokaż instrukcję TXT'));
+    expect(screen.getByText('_consultify-verification.example.com')).toBeInTheDocument();
+    expect(screen.getByText('consultify-domain-verification=abc')).toBeInTheDocument();
+  });
+
+  it('does not offer the TXT instruction for an already-verified domain', async () => {
+    get.mockResolvedValue([{ ...domain, verified: true, verifiedAt: '2026-08-25T05:00:00.000Z' }]);
+    render(<AdminDomainsPanel />);
+    await screen.findByText('example.com');
+    fireEvent.click(screen.getByLabelText('Akcje wiersza'));
+    expect(screen.queryByText('Pokaż instrukcję TXT')).not.toBeInTheDocument();
+  });
+
   it('shows a precise verification outcome after list readback', async () => {
     verify.mockResolvedValue({
       status: 'no_record',

@@ -19286,7 +19286,9 @@
         "verify": "Zweryfikuj",
         "add": "Dodaj",
         "copy": "Kopiuj wartość",
-        "delete": "Usuń domenę"
+        "delete": "Usuń domenę",
+        "showInstructions": "Pokaż instrukcję TXT",
+        "hideInstructions": "Ukryj instrukcję TXT"
       },
       "form": {
         "domain": "Domena"

@@ -1,4 +1,4 @@
-import { Copy, Globe2, Plus, Trash2 } from 'lucide-react';
+import { Copy, FileText, Globe2, Plus, Trash2 } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -18,6 +18,16 @@ import { StandardTable, type TableColumn, type TableRow } from '../standard/Stan
 
 const control =
   'rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text focus-visible:outline-none focus-visible:ring-2 ring-[color:var(--c-focus)] disabled:opacity-50';
+
+// Same TXT record shape the backend hands back right after POST /admin/domains
+// (see server/src/routes/admin/domains.routes.ts) — GET already returns each
+// row's own verificationToken, so an existing unverified domain can show the
+// identical instruction without re-creating it.
+const buildDnsInstruction = (domain: AdminDomain): DnsInstruction => ({
+  name: `_consultify-verification.${domain.domain}`,
+  type: 'TXT',
+  value: `consultify-domain-verification=${domain.verificationToken}`,
+});
 
 const outcomeKeys: Record<DomainVerificationOutcome['status'], string> = {
   verified: 'verified',
@@ -226,13 +236,32 @@ export const AdminDomainsPanel: React.FC = () => {
           loading={loading}
           error={error}
           onRetry={() => void load()}
-          rowMenu={(row) => ({
-            destructive: {
-              label: t('admin.domains.actions.delete'),
-              icon: Trash2,
-              onClick: () => setDeleteTarget(domains.find((item) => item.id === row.id) ?? null),
-            },
-          })}
+          rowMenu={(row) => {
+            const domain = row as unknown as AdminDomain;
+            const rowInstruction = domain.verified ? null : buildDnsInstruction(domain);
+            const showing = Boolean(
+              rowInstruction && instruction && instruction.name === rowInstruction.name
+            );
+            return {
+              primary: rowInstruction
+                ? [
+                    {
+                      id: 'show-instructions',
+                      label: showing
+                        ? t('admin.domains.actions.hideInstructions')
+                        : t('admin.domains.actions.showInstructions'),
+                      icon: FileText,
+                      onClick: () => setInstruction(showing ? null : rowInstruction),
+                    },
+                  ]
+                : undefined,
+              destructive: {
+                label: t('admin.domains.actions.delete'),
+                icon: Trash2,
+                onClick: () => setDeleteTarget(domains.find((item) => item.id === row.id) ?? null),
+              },
+            };
+          }}
           empty={{
             icon: Globe2,
             title: t('admin.domains.empty.title'),

@@ -18436,7 +18436,9 @@
         "verify": "Verify",
         "add": "Add",
         "copy": "Copy value",
-        "delete": "Remove domain"
+        "delete": "Remove domain",
+        "showInstructions": "Show TXT instructions",
+        "hideInstructions": "Hide TXT instructions"
       },
       "form": {
         "domain": "Domain"
