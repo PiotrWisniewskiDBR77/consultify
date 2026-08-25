@@ -4,6 +4,33 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import enTranslation from '../../../public/locales/en/translation.json';
+import plTranslation from '../../../public/locales/pl/translation.json';
+
+// ProcessFlowContextMenu.tsx's getCanvasContextActions/getNodeContextActions call the REAL
+// i18next singleton directly (`import i18n from '@/i18n'` → `i18n.t(key, default, { lng })`)
+// instead of the react-i18next hook, so the global react-i18next mock in tests/setup.ts does
+// not cover it. The real `@/i18n` module loads its translation bundles over HTTP
+// (i18next-http-backend); tests/setup.ts globally mocks `fetch` to always return `{ data: [] }`,
+// so no locale ever actually loads in tests and `i18n.t(key, default, { lng: 'pl' })` always
+// falls back to the English `default` — the Polish-label assertion could never pass. Mock
+// `@/i18n`'s default export to resolve real copy from the locale JSON per requested `lng`.
+function resolveTranslation(dict: unknown, key: string, fallback: string): string {
+  const value = key
+    .split('.')
+    .reduce<unknown>(
+      (acc, segment) => (acc && typeof acc === 'object' ? (acc as Record<string, unknown>)[segment] : undefined),
+      dict
+    );
+  return typeof value === 'string' ? value : fallback;
+}
+vi.mock('@/i18n', () => ({
+  default: {
+    t: (key: string, fallback: string, options?: { lng?: string }) =>
+      resolveTranslation(options?.lng === 'pl' ? plTranslation : enTranslation, key, fallback),
+  },
+}));
+
 import { ValidationResultsPanel } from '../../../src/components/MyWork/processflow/ValidationResultsPanel';
 import { AIProposalPanel } from '../../../src/components/MyWork/processflow/AIProposalPanel';
 import { ReadbackPanel } from '../../../src/components/MyWork/processflow/ReadbackPanel';
@@ -477,23 +504,40 @@ function baseToolbarProps() {
 }
 
 describe('ProcessFlowToolbar — AI panel triggers', () => {
-  it('renders AI Proposal + Readback buttons and fires callbacks on click', () => {
-    const onAIProposal = vi.fn();
-    const onReadback = vi.fn();
-    render(<ProcessFlowToolbar {...baseToolbarProps()} onAIProposal={onAIProposal} onReadback={onReadback} />);
+  // NOTE: the component's actual props are `onOpenAIProposal` / `onOpenReadback`
+  // (see IdeaProcessFlowTool.tsx, the real caller, which wires exactly those
+  // names) and the triggers are `role="menuitem"` entries inside the "More
+  // actions" overflow menu, not standalone titled buttons. This test
+  // previously used a `onAIProposal`/`onReadback` prop shape and a
+  // getByTitle(/AI Proposal — flow edits/i) selector that never matched
+  // anything the component renders — stale from before the feature's actual
+  // implementation. Updated to the real prop names and DOM shape.
+  it('renders AI Proposal + Readback menu items and fires callbacks on click', () => {
+    const onOpenAIProposal = vi.fn();
+    const onOpenReadback = vi.fn();
+    render(
+      <ProcessFlowToolbar
+        {...baseToolbarProps()}
+        onOpenAIProposal={onOpenAIProposal}
+        onOpenReadback={onOpenReadback}
+      />
+    );
 
-    const aiBtn = screen.getByTitle(/AI Proposal — flow edits/i);
-    const readbackBtn = screen.getByTitle(/Semantic readback/i);
-    fireEvent.click(aiBtn);
-    fireEvent.click(readbackBtn);
+    fireEvent.click(screen.getByTitle(/More actions/i));
+    fireEvent.click(screen.getByRole('menuitem', { name: /AI Proposal/i }));
 
-    expect(onAIProposal).toHaveBeenCalledTimes(1);
-    expect(onReadback).toHaveBeenCalledTimes(1);
+    // The overflow menu closes after a click; reopen it for the second trigger.
+    fireEvent.click(screen.getByTitle(/More actions/i));
+    fireEvent.click(screen.getByRole('menuitem', { name: /Readback/i }));
+
+    expect(onOpenAIProposal).toHaveBeenCalledTimes(1);
+    expect(onOpenReadback).toHaveBeenCalledTimes(1);
   });
 
-  it('hides both buttons when callbacks are not supplied (back-compat)', () => {
+  it('hides both menu items when callbacks are not supplied (back-compat)', () => {
     render(<ProcessFlowToolbar {...baseToolbarProps()} />);
-    expect(screen.queryByTitle(/AI Proposal — flow edits/i)).toBeNull();
-    expect(screen.queryByTitle(/Semantic readback/i)).toBeNull();
+    fireEvent.click(screen.getByTitle(/More actions/i));
+    expect(screen.queryByRole('menuitem', { name: /AI Proposal/i })).toBeNull();
+    expect(screen.queryByRole('menuitem', { name: /Readback/i })).toBeNull();
   });
 });
