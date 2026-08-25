@@ -6,9 +6,14 @@ import SuperAdminController from '../../controllers/SuperAdminController.js';
 import { conditionalOrganizationConfirmation } from '../superadmin.routes.js';
 
 const dbRunPromise = vi.fn();
+const dbGetPromise = vi.fn();
 vi.mock('../../utils/DbPromise.js', async (importOriginal) => {
   const original = await importOriginal<any>();
-  return { ...original, run: (...args: any[]) => dbRunPromise(...args) };
+  return {
+    ...original,
+    run: (...args: any[]) => dbRunPromise(...args),
+    get: (...args: any[]) => dbGetPromise(...args),
+  };
 });
 
 const criticalApp = () => {
@@ -30,6 +35,9 @@ describe('TRI-MUST-12 organization status confirmation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     dbRunPromise.mockResolvedValue({ changes: 1 });
+    // Default: organization is currently active, so any critical-status
+    // submission is a genuine transition unless a test says otherwise.
+    dbGetPromise.mockResolvedValue({ status: 'active' });
   });
 
   it('allows a name-only update without confirmation', async () => {
@@ -37,12 +45,39 @@ describe('TRI-MUST-12 organization status confirmation', () => {
       (await request(criticalApp()).put('/organizations/org-1').send({ name: 'New name' })).status
     ).toBe(200);
     expect(dbRunPromise).not.toHaveBeenCalled();
+    expect(dbGetPromise).not.toHaveBeenCalled();
   });
 
-  it('returns 428 for suspended without confirmation', async () => {
+  it('returns 428 for suspended without confirmation (active -> suspended transition)', async () => {
+    dbGetPromise.mockResolvedValueOnce({ status: 'active' });
     const response = await request(criticalApp())
       .put('/organizations/org-1')
       .send({ status: 'suspended' });
+    expect(response.status).toBe(428);
+    expect(response.body.code).toBe('CONFIRMATION_REQUIRED');
+  });
+
+  it('allows a plan-only edit of an already-suspended organization without confirmation', async () => {
+    // Forms resubmit the org's CURRENT status alongside unrelated field
+    // edits. Gating on presence of a critical value alone would 428 every
+    // edit of an already-suspended/blocked/cancelled org — the gate must
+    // key off an actual TRANSITION (submitted status differs from the
+    // status already in the database).
+    dbGetPromise.mockResolvedValueOnce({ status: 'suspended' });
+    const response = await request(criticalApp())
+      .put('/organizations/org-1')
+      .send({ status: 'suspended', plan: 'enterprise' });
+    expect(response.status).toBe(200);
+    expect(dbGetPromise).toHaveBeenCalledWith('SELECT status FROM organizations WHERE id = $1', [
+      'org-1',
+    ]);
+  });
+
+  it('still requires confirmation for an active -> suspended transition even with other fields changing', async () => {
+    dbGetPromise.mockResolvedValueOnce({ status: 'active' });
+    const response = await request(criticalApp())
+      .put('/organizations/org-1')
+      .send({ status: 'suspended', plan: 'enterprise' });
     expect(response.status).toBe(428);
     expect(response.body.code).toBe('CONFIRMATION_REQUIRED');
   });
