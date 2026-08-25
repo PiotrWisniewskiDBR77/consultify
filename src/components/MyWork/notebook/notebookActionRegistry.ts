@@ -163,7 +163,12 @@ const blockHandoffs = [
   ['save-as-idea', 'server-mutation'],
 ] as const;
 
-const inlineAiActions = [
+// TRI-OBS-17 (2026-08-25): exported (was an inline literal array) so
+// `NotebookInlineAIMenu.tsx` can validate its action ids against the SAME
+// source of truth already used here to build the audit catalogue below,
+// instead of hardcoding a second, drift-prone copy of this list — same
+// convention as `NOTEBOOK_EXPORT_ACTION_IDS` above.
+export const NOTEBOOK_INLINE_AI_ACTION_IDS = [
   'trigger',
   'shorten',
   'expand',
@@ -174,7 +179,9 @@ const inlineAiActions = [
   'reject',
   'retry',
   'close',
-].map((id) =>
+] as const;
+
+const inlineAiActions = NOTEBOOK_INLINE_AI_ACTION_IDS.map((id) =>
   audited(
     `inline-ai:${id}`,
     'inline-ai',

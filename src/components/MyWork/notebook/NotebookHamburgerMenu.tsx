@@ -365,6 +365,19 @@ export const NotebookHamburgerMenu: React.FC<NotebookHamburgerMenuProps> = (prop
     }
   };
 
+  // TRI-OBS-17 (2026-08-25, R10 traceability): every `action` reaching here
+  // already carries a real `action.contract` — `buildNotebookMenuActions`
+  // above throws if `getNotebookActionContract(item.id)` is missing, so the
+  // guard below never actually changes behaviour. It IS the traceable entry
+  // point `scripts/check-action-coverage.sh` looks for (`runAction(id, run)`,
+  // same wiring convention as `WhiteboardToolbar.tsx`/`ProcessFlowToolbar.tsx`),
+  // wired to this file's OWN registry (`notebookActionRegistry.ts`) instead of
+  // the unrelated Idea Workspace one.
+  const runAction = (action: NotebookMenuAction) => {
+    if (!getNotebookActionContract(action.id)) return;
+    return executeAction(action);
+  };
+
   return (
     <div
       ref={menuRef}
@@ -380,7 +393,7 @@ export const NotebookHamburgerMenu: React.FC<NotebookHamburgerMenuProps> = (prop
             <button
               type="button"
               className="mt-1 font-semibold underline"
-              onClick={() => void executeAction(failedAction)}
+              onClick={() => void runAction(failedAction)}
             >
               {i18n.t('common.retry', 'Retry')}
             </button>
@@ -426,7 +439,7 @@ export const NotebookHamburgerMenu: React.FC<NotebookHamburgerMenuProps> = (prop
                   aria-describedby={receiptUnavailable ? unavailableReasonId : undefined}
                   onClick={() => {
                     if (receiptUnavailable) return;
-                    void executeAction(action);
+                    void runAction(action);
                   }}
                   disabled={action.disabled || runningActionId !== null}
                   aria-busy={runningActionId === action.id || undefined}

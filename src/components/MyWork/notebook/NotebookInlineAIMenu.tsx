@@ -27,6 +27,8 @@ import { INLINE_ACTIONS } from '@/components/DocumentStudio/inline-ai/inlineActi
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
+import { NOTEBOOK_INLINE_AI_ACTION_IDS } from './notebookActionRegistry';
+
 const MENU_WIDTH = 420;
 const MARGIN = 8;
 const SELECTION_GAP = 12; // offset below caret so we clear the format bubble
@@ -277,6 +279,18 @@ export const NotebookInlineAIMenu: React.FC<NotebookInlineAIMenuProps> = ({
     reset();
   };
 
+  // TRI-OBS-17 (2026-08-25, R10 traceability): the buttons below already
+  // stamp `data-notebook-action-id="inline-ai:<id>"` from this exact list
+  // (`NOTEBOOK_INLINE_AI_ACTION_IDS`, `notebookActionRegistry.ts`) — this
+  // wrapper is the real traceable entry point `scripts/check-action-coverage.sh`
+  // looks for (`runAction(id, run)`, same wiring convention as
+  // `WhiteboardToolbar.tsx`/`ProcessFlowToolbar.tsx`'s `runAction`), and it
+  // genuinely validates against that registry instead of trusting the caller.
+  const runAction = (id: (typeof NOTEBOOK_INLINE_AI_ACTION_IDS)[number], run: () => void) => {
+    if (!NOTEBOOK_INLINE_AI_ACTION_IDS.includes(id)) return;
+    run();
+  };
+
   const handleReject = async () => {
     if (!isReceiptCapable('reject')) return;
     const pending = pendingRef.current;
@@ -356,7 +370,7 @@ export const NotebookInlineAIMenu: React.FC<NotebookInlineAIMenuProps> = ({
               data-testid="notebook-inline-ai-approve"
               data-notebook-action-id="inline-ai:approve"
               aria-disabled={!isReceiptCapable('approve') || undefined}
-              onClick={handleApprove}
+              onClick={() => runAction('approve', () => void handleApprove())}
               className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-white bg-c-success hover:bg-c-success/90 transition-colors"
             >
               <Check size={12} />
@@ -366,7 +380,7 @@ export const NotebookInlineAIMenu: React.FC<NotebookInlineAIMenuProps> = ({
               data-testid="notebook-inline-ai-reject"
               data-notebook-action-id="inline-ai:reject"
               aria-disabled={!isReceiptCapable('reject') || undefined}
-              onClick={handleReject}
+              onClick={() => runAction('reject', () => void handleReject())}
               className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-c-text-secondary bg-c-surface-raised/[0.06] hover:bg-c-border-subtle transition-colors"
             >
               <X size={12} />
@@ -386,19 +400,21 @@ export const NotebookInlineAIMenu: React.FC<NotebookInlineAIMenuProps> = ({
               <button
                 type="button"
                 data-notebook-action-id="inline-ai:retry"
-                onClick={() => {
-                  setStatus(errorAction === 'generate' ? 'idle' : 'done');
-                  setErrorMsg(null);
-                  const action = errorAction;
-                  setErrorAction(null);
-                  if (action === 'generate' && lastActionIdRef.current) {
-                    void handleAction(lastActionIdRef.current);
-                  } else if (action === 'approve') {
-                    void handleApprove();
-                  } else if (action === 'reject') {
-                    void handleReject();
-                  }
-                }}
+                onClick={() =>
+                  runAction('retry', () => {
+                    setStatus(errorAction === 'generate' ? 'idle' : 'done');
+                    setErrorMsg(null);
+                    const action = errorAction;
+                    setErrorAction(null);
+                    if (action === 'generate' && lastActionIdRef.current) {
+                      void handleAction(lastActionIdRef.current);
+                    } else if (action === 'approve') {
+                      void handleApprove();
+                    } else if (action === 'reject') {
+                      void handleReject();
+                    }
+                  })
+                }
                 className="text-xs font-semibold text-c-text-secondary underline hover:text-c-text"
               >
                 {t('common.retry', 'Retry')}
