@@ -38,10 +38,13 @@ const { apiMock, trackFunnelEventMock } = vi.hoisted(() => ({
   },
 }));
 
+// Keep `t` a stable function identity across renders (react-i18next's real `t` is stable;
+// see tests/setup.ts note on why a per-call arrow can break effect/callback deps).
+const stableT = (key: string, options?: Record<string, unknown>) => resolveTranslation(key, options);
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     i18n: { language: 'en' },
-    t: (key: string, options?: Record<string, unknown>) => resolveTranslation(key, options),
+    t: stableT,
   }),
 }));
 

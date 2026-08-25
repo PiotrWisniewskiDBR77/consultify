@@ -23,13 +23,17 @@ function resolveTranslation(key: string, options?: Record<string, unknown>): str
   );
 }
 
+// Keep `t` a stable function identity across renders (react-i18next's real `t` is stable;
+// see tests/setup.ts note on why a per-call arrow can break effect/callback deps).
+const stableT = (key: string, options?: Record<string, unknown>) => resolveTranslation(key, options);
+
 vi.mock('react-i18next', async (importOriginal) => {
   const actual = await importOriginal<typeof import('react-i18next')>();
   return {
     ...actual,
     useTranslation: () => ({
       i18n: { language: 'en' },
-      t: (key: string, options?: Record<string, unknown>) => resolveTranslation(key, options),
+      t: stableT,
     }),
   };
 });

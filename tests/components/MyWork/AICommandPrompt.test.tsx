@@ -38,8 +38,11 @@ vi.mock('@/services/funnelAnalytics', () => ({
 vi.mock('react-hot-toast', () => ({ default: { success: vi.fn(), error: vi.fn() } }));
 
 const i18nState = vi.hoisted(() => ({ language: 'en' }));
+// Keep `t` a stable function identity across renders (react-i18next's real `t` is stable;
+// see tests/setup.ts note on why a per-call arrow can break effect/callback deps).
+const t = (key: string, options?: Record<string, unknown>) => resolveTranslation(key, options);
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ i18n: i18nState, t: (k: string, opts?: Record<string, unknown>) => resolveTranslation(k, opts) }),
+  useTranslation: () => ({ i18n: i18nState, t }),
 }));
 
 import { AICommandPrompt } from '@/components/MyWork/notebook/AICommandPrompt';
