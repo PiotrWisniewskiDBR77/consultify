@@ -32,13 +32,7 @@ export const AdminBreakGlassPanel: React.FC = () => {
       setData(await getBreakGlass());
       setError(null);
     } catch (e) {
-      setError(
-        e instanceof Error
-          ? e.message
-          : t('admin.security.break-glass.day2Auto.text1', {
-              defaultValue: 'Błąd break-glass',
-            })
-      );
+      setError(e instanceof Error ? e.message : t('admin.security.break-glass.day2Auto.text1'));
     }
   }, []);
   useEffect(() => {
@@ -52,21 +46,15 @@ export const AdminBreakGlassPanel: React.FC = () => {
         },
         {
           id: 'reason',
-          label: t('admin.security.break-glass.day2Auto.text2', {
-            defaultValue: 'Powód',
-          }),
+          label: t('admin.security.break-glass.day2Auto.text2'),
         },
         {
           id: 'approver',
-          label: t('admin.security.break-glass.day2Auto.text3', {
-            defaultValue: 'Zatwierdził',
-          }),
+          label: t('admin.security.break-glass.day2Auto.text3'),
         },
         {
           id: 'expires',
-          label: t('admin.security.break-glass.day2Auto.text4', {
-            defaultValue: 'Wygasa',
-          }),
+          label: t('admin.security.break-glass.day2Auto.text4'),
         },
       ],
       []
@@ -89,13 +77,7 @@ export const AdminBreakGlassPanel: React.FC = () => {
       setReason('');
       setTyped('');
     } catch (e) {
-      setError(
-        e instanceof Error
-          ? e.message
-          : t('admin.security.break-glass.day2Auto.text5', {
-              defaultValue: 'Błąd aktywacji',
-            })
-      );
+      setError(e instanceof Error ? e.message : t('admin.security.break-glass.day2Auto.text5'));
     }
   };
   const doRevoke = async () => {
@@ -104,13 +86,7 @@ export const AdminBreakGlassPanel: React.FC = () => {
       setData(await revokeBreakGlass(revoke.id));
       setRevoke(null);
     } catch (e) {
-      setError(
-        e instanceof Error
-          ? e.message
-          : t('admin.security.break-glass.day2Auto.text6', {
-              defaultValue: 'Błąd wygaszenia',
-            })
-      );
+      setError(e instanceof Error ? e.message : t('admin.security.break-glass.day2Auto.text6'));
     }
   };
   return (
@@ -118,9 +94,7 @@ export const AdminBreakGlassPanel: React.FC = () => {
       <div>
         <h2 className="text-lg font-semibold text-c-text">Break-glass</h2>
         <p className="text-sm text-c-text-secondary">
-          {t('admin.security.break-glass.day2Auto.text7', {
-            defaultValue: 'Awaryjny dostęp na maksymalnie 1 godzinę; widoczny w audycie.',
-          })}
+          {t('admin.security.break-glass.day2Auto.text7')}
         </p>
       </div>
       {error && <div role="alert">{error}</div>}
@@ -128,34 +102,23 @@ export const AdminBreakGlassPanel: React.FC = () => {
         {data.sessions.length
           ? t('admin.security.break-glass.day2Auto.text8', {
               v0: data.sessions.length,
-              defaultValue: 'Aktywne sesje: {{v0}}',
             })
-          : t('admin.security.break-glass.day2Auto.text9', {
-              defaultValue: 'Brak aktywnych sesji break-glass',
-            })}
+          : t('admin.security.break-glass.day2Auto.text9')}
       </div>
       <section className="space-y-3 rounded-xl border border-c-border p-4">
         <label className="block text-sm">
-          {t('admin.security.break-glass.day2Auto.text10', {
-            defaultValue: 'Powód (min. 10 znaków)',
-          })}
+          {t('admin.security.break-glass.day2Auto.text10')}
           <textarea
-            aria-label={t('admin.security.break-glass.day2Auto.text11', {
-              defaultValue: 'Powód break-glass',
-            })}
+            aria-label={t('admin.security.break-glass.day2Auto.text11')}
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             className="mt-1 block w-full rounded border border-c-border bg-c-surface p-2"
           />
         </label>
         <label className="block text-sm">
-          {t('admin.security.break-glass.day2Auto.text12', {
-            defaultValue: 'Zatwierdzający',
-          })}
+          {t('admin.security.break-glass.day2Auto.text12')}
           <select
-            aria-label={t('admin.security.break-glass.day2Auto.text12', {
-              defaultValue: 'Zatwierdzający',
-            })}
+            aria-label={t('admin.security.break-glass.day2Auto.text12')}
             value={approver}
             onChange={(e) => setApprover(e.target.value)}
             className="ml-2 rounded border border-c-border bg-c-surface p-2"
@@ -191,9 +154,7 @@ export const AdminBreakGlassPanel: React.FC = () => {
         </button>
         {!data.policy.breakGlassEnabled && (
           <p className="text-sm text-c-text-secondary">
-            {t('admin.security.break-glass.day2Auto.text13', {
-              defaultValue: 'Funkcja jest wyłączona w polityce IAM organizacji.',
-            })}
+            {t('admin.security.break-glass.day2Auto.text13')}
           </p>
         )}
       </section>
@@ -202,21 +163,15 @@ export const AdminBreakGlassPanel: React.FC = () => {
         data={rows}
         rowMenu={(row) => ({
           destructive: {
-            label: t('admin.security.break-glass.day2Auto.text14', {
-              defaultValue: 'Wygaś sesję',
-            }),
+            label: t('admin.security.break-glass.day2Auto.text14'),
             icon: ShieldAlert,
             onClick: () => setRevoke(data.sessions.find((s) => s.id === row.id) || null),
           },
         })}
         empty={{
           icon: ShieldAlert,
-          title: t('admin.security.break-glass.day2Auto.text15', {
-            defaultValue: 'Brak historii aktywnych sesji',
-          }),
-          description: t('admin.security.break-glass.day2Auto.text16', {
-            defaultValue: 'Nie ma obecnie aktywnego dostępu awaryjnego.',
-          }),
+          title: t('admin.security.break-glass.day2Auto.text15'),
+          description: t('admin.security.break-glass.day2Auto.text16'),
         }}
         persistKey="admin.breakGlass"
       />
@@ -224,13 +179,9 @@ export const AdminBreakGlassPanel: React.FC = () => {
         isOpen={activate}
         onCancel={() => setActivate(false)}
         onConfirm={() => void doActivate()}
-        title={t('admin.security.break-glass.day2Auto.text17', {
-          defaultValue: 'Aktywować dostęp break-glass?',
-        })}
+        title={t('admin.security.break-glass.day2Auto.text17')}
         description={t('admin.security.break-glass.day2Auto.text18', {
           v0: approver,
-          defaultValue:
-            'Zakres: awaryjne uprawnienia administratora na maksymalnie 1h. Zatwierdzający: {{v0}}. Powód i zdarzenie będą widoczne w audycie. Odzyskanie: sesję można natychmiast wygasić.',
         })}
         confirmLabel="Aktywuj break-glass"
         variant="danger"
@@ -239,16 +190,9 @@ export const AdminBreakGlassPanel: React.FC = () => {
         isOpen={!!revoke}
         onCancel={() => setRevoke(null)}
         onConfirm={() => void doRevoke()}
-        title={t('admin.security.break-glass.day2Auto.text19', {
-          defaultValue: 'Wygasić dostęp break-glass?',
-        })}
-        description={t('admin.security.break-glass.day2Auto.text20', {
-          defaultValue:
-            'Dostęp zostanie natychmiast odebrany. Ponowna aktywacja wymaga nowego powodu i zatwierdzenia.',
-        })}
-        confirmLabel={t('admin.security.break-glass.day2Auto.text14', {
-          defaultValue: 'Wygaś sesję',
-        })}
+        title={t('admin.security.break-glass.day2Auto.text19')}
+        description={t('admin.security.break-glass.day2Auto.text20')}
+        confirmLabel={t('admin.security.break-glass.day2Auto.text14')}
         variant="danger"
       />
     </div>

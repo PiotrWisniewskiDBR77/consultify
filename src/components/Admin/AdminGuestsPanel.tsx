@@ -18,9 +18,7 @@ export const AdminGuestsPanel: React.FC = () => {
       () => [
         {
           id: 'guest',
-          label: t('admin.team.guests-external.day2Auto.text1', {
-            defaultValue: 'Gość',
-          }),
+          label: t('admin.team.guests-external.day2Auto.text1'),
         },
         {
           id: 'email',
@@ -28,9 +26,7 @@ export const AdminGuestsPanel: React.FC = () => {
         },
         {
           id: 'scope',
-          label: t('admin.team.guests-external.day2Auto.text15', {
-            defaultValue: 'Zakres',
-          }),
+          label: t('admin.team.guests-external.day2Auto.text15'),
         },
         {
           id: 'granted',
@@ -38,17 +34,11 @@ export const AdminGuestsPanel: React.FC = () => {
         },
         {
           id: 'expires',
-          label: t('admin.team.guests-external.day2Auto.text2', {
-            defaultValue: 'Wygasa',
-          }),
+          label: t('admin.team.guests-external.day2Auto.text2'),
         },
         {
-          id: t('admin.team.guests-external.day2Auto.text3', {
-            defaultValue: 'status',
-          }),
-          label: t('admin.team.guests-external.day2Auto.text4', {
-            defaultValue: 'Status',
-          }),
+          id: t('admin.team.guests-external.day2Auto.text3'),
+          label: t('admin.team.guests-external.day2Auto.text4'),
         },
       ],
       []
@@ -63,16 +53,10 @@ export const AdminGuestsPanel: React.FC = () => {
             email: g.email,
             scope: g.project_id
               ? `Projekt ${g.project_id}`
-              : t('admin.team.guests-external.day2Auto.text5', {
-                  defaultValue: 'Organizacja',
-                }),
+              : t('admin.team.guests-external.day2Auto.text5'),
             granted: new Date(g.granted_at).toLocaleString(),
             expires: g.expires_at ? new Date(g.expires_at).toLocaleString() : 'Bez terminu',
-            status: expired
-              ? t('admin.team.guests-external.day2Auto.text6', {
-                  defaultValue: 'Wygasł',
-                })
-              : g.status,
+            status: expired ? t('admin.team.guests-external.day2Auto.text6') : g.status,
           };
         }),
       [data]
@@ -83,28 +67,17 @@ export const AdminGuestsPanel: React.FC = () => {
       setData(await revokeAdminGuest(target.user_id));
       setTarget(null);
     } catch (e) {
-      setError(
-        e instanceof Error
-          ? e.message
-          : t('admin.team.guests-external.day2Auto.text7', {
-              defaultValue: 'Błąd odebrania',
-            })
-      );
+      setError(e instanceof Error ? e.message : t('admin.team.guests-external.day2Auto.text7'));
     }
   };
   return (
     <div className="space-y-4">
       <div>
         <h2 className="text-lg font-semibold text-c-text">
-          {t('admin.team.guests-external.day2Auto.text8', {
-            defaultValue: 'Goście i dostęp zewnętrzny',
-          })}
+          {t('admin.team.guests-external.day2Auto.text8')}
         </h2>
         <p className="text-sm text-c-text-secondary">
-          {t('admin.team.guests-external.day2Auto.text9', {
-            defaultValue:
-              'Stan faktycznie przyznanych dostępów. Przełącznik polityki gości pozostaje ukryty, ponieważ nie jest jeszcze egzekwowany.',
-          })}
+          {t('admin.team.guests-external.day2Auto.text9')}
         </p>
       </div>
       {error && <div role="alert">{error}</div>}
@@ -113,21 +86,15 @@ export const AdminGuestsPanel: React.FC = () => {
         data={rows}
         rowMenu={(row) => ({
           destructive: {
-            label: t('admin.team.guests-external.day2Auto.text10', {
-              defaultValue: 'Odbierz dostęp',
-            }),
+            label: t('admin.team.guests-external.day2Auto.text10'),
             icon: UserMinus,
             onClick: () => setTarget(data.find((g) => g.user_id === row.id) || null),
           },
         })}
         empty={{
           icon: Users,
-          title: t('admin.team.guests-external.day2Auto.text11', {
-            defaultValue: 'Brak gości',
-          }),
-          description: t('admin.team.guests-external.day2Auto.text12', {
-            defaultValue: 'Organizacja nie ma aktywnych dostępów zewnętrznych.',
-          }),
+          title: t('admin.team.guests-external.day2Auto.text11'),
+          description: t('admin.team.guests-external.day2Auto.text12'),
         }}
         persistKey="admin.guests"
       />
@@ -135,21 +102,15 @@ export const AdminGuestsPanel: React.FC = () => {
         isOpen={!!target}
         onCancel={() => setTarget(null)}
         onConfirm={() => void revoke()}
-        title={t('admin.team.guests-external.day2Auto.text13', {
-          defaultValue: 'Odebrać dostęp gościa?',
-        })}
+        title={t('admin.team.guests-external.day2Auto.text13')}
         description={
           target
             ? t('admin.team.guests-external.day2Auto.text14', {
                 v0: target.email,
-                defaultValue:
-                  '{{v0}} utraci dostęp do organizacji. Ponowne uzyskanie dostępu wymaga nowego zaproszenia.',
               })
             : undefined
         }
-        confirmLabel={t('admin.team.guests-external.day2Auto.text10', {
-          defaultValue: 'Odbierz dostęp',
-        })}
+        confirmLabel={t('admin.team.guests-external.day2Auto.text10')}
         variant="danger"
       />
     </div>

@@ -51,11 +51,7 @@ export const AdminComplianceEvidencePanel: React.FC = () => {
       setFreshness(new Date().toLocaleString());
     } catch (e) {
       setError(
-        e instanceof Error
-          ? e.message
-          : t('admin.audit.compliance-evidence.day2Auto.text1', {
-              defaultValue: 'Nie udało się pobrać dowodów zgodności.',
-            })
+        e instanceof Error ? e.message : t('admin.audit.compliance-evidence.day2Auto.text1')
       );
     } finally {
       setLoading(false);
@@ -74,18 +70,10 @@ export const AdminComplianceEvidencePanel: React.FC = () => {
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-      toast.success(
-        t('admin.audit.compliance-evidence.day2Auto.text2', {
-          defaultValue: 'Eksport audytu gotowy',
-        })
-      );
+      toast.success(t('admin.audit.compliance-evidence.day2Auto.text2'));
     } catch (e) {
       toast.error(
-        e instanceof Error
-          ? e.message
-          : t('admin.audit.compliance-evidence.day2Auto.text3', {
-              defaultValue: 'Eksport nie powiódł się.',
-            })
+        e instanceof Error ? e.message : t('admin.audit.compliance-evidence.day2Auto.text3')
       );
     } finally {
       setExporting(false);
@@ -111,9 +99,7 @@ export const AdminComplianceEvidencePanel: React.FC = () => {
       },
       {
         id: 'risk',
-        label: t('admin.audit.compliance-evidence.day2Auto.text4', {
-          defaultValue: 'Ryzyko',
-        }),
+        label: t('admin.audit.compliance-evidence.day2Auto.text4'),
       },
       {
         id: 'createdAt',
@@ -127,10 +113,7 @@ export const AdminComplianceEvidencePanel: React.FC = () => {
     {
       label: 'Rezydencja danych',
       value:
-        data.residency?.dataResidencyRegion ??
-        t('admin.audit.compliance-evidence.day2Auto.text5', {
-          defaultValue: 'Nie ustawiono',
-        }),
+        data.residency?.dataResidencyRegion ?? t('admin.audit.compliance-evidence.day2Auto.text5'),
       href: '/admin/command/compliance-posture?tab=residency',
       source: '/enterprise-compliance/data-residency',
     },
@@ -138,20 +121,14 @@ export const AdminComplianceEvidencePanel: React.FC = () => {
       label: 'Harmonogramy retencji',
       value: t('admin.audit.compliance-evidence.day2Auto.text6', {
         v0: data.retention.length,
-        defaultValue: '{{v0}} harmonogramów',
       }),
       href: '/admin/command/compliance-posture?tab=retention',
       source: '/enterprise-compliance/retention/schedules',
     },
     {
-      label: t('admin.audit.compliance-evidence.day2Auto.text7', {
-        defaultValue: 'Polityka AI',
-      }),
+      label: t('admin.audit.compliance-evidence.day2Auto.text7'),
       value:
-        data.aiPolicy?.requiredCitationMode ??
-        t('admin.audit.compliance-evidence.day2Auto.text5', {
-          defaultValue: 'Nie ustawiono',
-        }),
+        data.aiPolicy?.requiredCitationMode ?? t('admin.audit.compliance-evidence.day2Auto.text5'),
       href: '/admin/command/compliance-posture?tab=ai-policy',
       source: '/enterprise-compliance/ai-policy',
     },
@@ -162,21 +139,14 @@ export const AdminComplianceEvidencePanel: React.FC = () => {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2 className="text-lg font-semibold text-c-text">
-              {t('admin.audit.compliance-evidence.day2Auto.text8', {
-                defaultValue: 'Dowody zgodności',
-              })}
+              {t('admin.audit.compliance-evidence.day2Auto.text8')}
             </h2>
             <p className="mt-1 text-sm text-c-text-secondary">
-              {t('admin.audit.compliance-evidence.day2Auto.text9', {
-                defaultValue:
-                  'Niezmienialny dla ról klienta, tylko-do-odczytu widok dowodów i eksportów.',
-              })}
+              {t('admin.audit.compliance-evidence.day2Auto.text9')}
             </p>
             {freshness && (
               <p className="mt-1 text-xs text-c-text-muted">
-                {t('admin.audit.compliance-evidence.day2Auto.text10', {
-                  defaultValue: 'Świeżość:',
-                })}
+                {t('admin.audit.compliance-evidence.day2Auto.text10')}
                 {freshness}
               </p>
             )}
@@ -196,32 +166,15 @@ export const AdminComplianceEvidencePanel: React.FC = () => {
       )}
       <div className="grid gap-3 sm:grid-cols-3">
         {[
-          [
-            t('admin.audit.compliance-evidence.day2Auto.text11', {
-              defaultValue: 'Łącznie zdarzeń',
-            }),
-            data.stats?.totalLogs ?? 0,
-          ],
-          [
-            t('admin.audit.compliance-evidence.day2Auto.text12', {
-              defaultValue: 'Nierozwiązane',
-            }),
-            data.stats?.unresolvedCount ?? 0,
-          ],
-          [
-            t('admin.audit.compliance-evidence.day2Auto.text13', {
-              defaultValue: 'Wysokie ryzyko',
-            }),
-            data.stats?.highRiskCount ?? 0,
-          ],
+          [t('admin.audit.compliance-evidence.day2Auto.text11'), data.stats?.totalLogs ?? 0],
+          [t('admin.audit.compliance-evidence.day2Auto.text12'), data.stats?.unresolvedCount ?? 0],
+          [t('admin.audit.compliance-evidence.day2Auto.text13'), data.stats?.highRiskCount ?? 0],
         ].map(([label, value]) => (
           <div key={label} className="rounded-xl border border-c-border bg-c-surface p-4">
             <p className="text-xs text-c-text-secondary">{label}</p>
             <p className="mt-1 text-xl font-semibold text-c-text">{value}</p>
             <p className="mt-2 text-[10px] text-c-text-muted">
-              {t('admin.audit.compliance-evidence.day2Auto.text14', {
-                defaultValue: 'Źródło: GET /api/admin/audit-logs/stats',
-              })}
+              {t('admin.audit.compliance-evidence.day2Auto.text14')}
             </p>
           </div>
         ))}
@@ -235,12 +188,8 @@ export const AdminComplianceEvidencePanel: React.FC = () => {
           onRetry={() => void load()}
           empty={{
             icon: ShieldCheck,
-            title: t('admin.audit.compliance-evidence.day2Auto.text15', {
-              defaultValue: 'Brak zdarzeń audytowych',
-            }),
-            description: t('admin.audit.compliance-evidence.day2Auto.text16', {
-              defaultValue: 'Nie zarejestrowano jeszcze dowodów dla tej organizacji.',
-            }),
+            title: t('admin.audit.compliance-evidence.day2Auto.text15'),
+            description: t('admin.audit.compliance-evidence.day2Auto.text16'),
           }}
           persistKey="admin.complianceEvidence"
         />
@@ -255,9 +204,7 @@ export const AdminComplianceEvidencePanel: React.FC = () => {
             <p className="text-xs text-c-text-secondary">{card.label}</p>
             <p className="mt-1 font-semibold text-c-text">{card.value}</p>
             <p className="mt-2 text-[10px] text-c-text-muted">
-              {t('admin.audit.compliance-evidence.day2Auto.text17', {
-                defaultValue: 'Źródło: GET /api/admin',
-              })}
+              {t('admin.audit.compliance-evidence.day2Auto.text17')}
               {card.source}
             </p>
           </Link>

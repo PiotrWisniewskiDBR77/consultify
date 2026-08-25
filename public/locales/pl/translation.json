@@ -17021,7 +17021,37 @@
       "envDisabled": "Probe'y health są wyłączone w tym środowisku.",
       "empty": "Brak zarejestrowanych probe'ów.",
       "lastRun": "Ostatnie uruchomienie",
-      "rerun": "Uruchom ponownie"
+      "rerun": "Uruchom ponownie",
+      "queues-jobs": {
+        "day2Auto": {
+          "text1": "Nie udało się pobrać zadań",
+          "text2": "Typ zadania",
+          "text3": "status",
+          "text4": "Status",
+          "text5": "Próby",
+          "text6": "Ostatni błąd",
+          "text7": "Dostępne od",
+          "text8": "Kolejki i zadania",
+          "text9": "Tenantowy, tylko-do-odczytu stan zadań administracyjnych.",
+          "text10": "Brak zadań",
+          "text11": "Organizacja nie ma zadań administracyjnych w kolejce."
+        }
+      },
+      "sla-slo": {
+        "day2Auto": {
+          "text1": "Nie udało się pobrać SLO",
+          "text2": "Cele i bieżąca realizacja — tylko odczyt.",
+          "text3": "Ładowanie celów SLA/SLO…",
+          "text4": "Bieżący",
+          "text5": "Nie obliczono",
+          "text6": "Budżet błędu",
+          "text7": "dni",
+          "text8": "Dla tej organizacji nie zdefiniowano celów SLO.",
+          "text9": "Targety AI-SLA są dziś stałe i nie są konfigurowalne w tym ekranie.",
+          "text10": "Stan źródła:",
+          "text11": "brak danych"
+        }
+      }
     },
     "strategicProfile": {
       "industryCode": "Kod branżowy ({{system}})",
@@ -17355,7 +17385,8 @@
           "text15": "Rejestr kampanii przeglądów nie jest jeszcze prowadzony.",
           "text16": "Stan:",
           "text17": "Kadencja:",
-          "text18": "dni"
+          "text18": "dni",
+          "text19": "Kadencja: {{value}} dni"
         }
       }
     },
@@ -18900,7 +18931,8 @@
           "text12": "Sygnały z systemów kanonicznych; działania wykonuje się na ekranach źródłowych.",
           "text13": "Źródło:",
           "text14": "Świeżość:",
-          "text15": "Otwórz ekran kanoniczny"
+          "text15": "Otwórz ekran kanoniczny",
+          "text16": "Źródło: tenant admin API · odczyt bieżący"
         }
       },
       "cost-capacity": {

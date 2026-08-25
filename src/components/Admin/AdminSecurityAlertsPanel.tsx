@@ -16,13 +16,7 @@ export const AdminSecurityAlertsPanel: React.FC = () => {
       setData(await getSecurityAlerts());
       setError(null);
     } catch (e) {
-      setError(
-        e instanceof Error
-          ? e.message
-          : t('admin.security.security-alerts.day2Auto.text1', {
-              defaultValue: 'Błąd alertów',
-            })
-      );
+      setError(e instanceof Error ? e.message : t('admin.security.security-alerts.day2Auto.text1'));
     }
   }, []);
   useEffect(() => {
@@ -36,15 +30,11 @@ export const AdminSecurityAlertsPanel: React.FC = () => {
       },
       {
         id: 'severity',
-        label: t('admin.security.security-alerts.day2Auto.text2', {
-          defaultValue: 'Dotkliwość',
-        }),
+        label: t('admin.security.security-alerts.day2Auto.text2'),
       },
       {
         id: 'user',
-        label: t('admin.security.security-alerts.day2Auto.text3', {
-          defaultValue: 'Użytkownik',
-        }),
+        label: t('admin.security.security-alerts.day2Auto.text3'),
       },
       {
         id: 'ip',
@@ -55,12 +45,8 @@ export const AdminSecurityAlertsPanel: React.FC = () => {
         label: 'Czas',
       },
       {
-        id: t('admin.security.security-alerts.day2Auto.text4', {
-          defaultValue: 'status',
-        }),
-        label: t('admin.security.security-alerts.day2Auto.text5', {
-          defaultValue: 'Status',
-        }),
+        id: t('admin.security.security-alerts.day2Auto.text4'),
+        label: t('admin.security.security-alerts.day2Auto.text5'),
       },
     ],
     []
@@ -74,27 +60,19 @@ export const AdminSecurityAlertsPanel: React.FC = () => {
         user: a.user_email || '—',
         ip: a.ip_address || '—',
         time: new Date(a.created_at).toLocaleString(),
-        status: a.resolved
-          ? t('admin.security.security-alerts.day2Auto.text6', {
-              defaultValue: 'Rozwiązany',
-            })
-          : 'Otwarty',
+        status: a.resolved ? t('admin.security.security-alerts.day2Auto.text6') : 'Otwarty',
       })),
     [data]
   );
   return (
     <div className="space-y-4">
       <h2 className="text-lg font-semibold text-c-text">
-        {t('admin.security.security-alerts.day2Auto.text7', {
-          defaultValue: 'Alerty bezpieczeństwa',
-        })}
+        {t('admin.security.security-alerts.day2Auto.text7')}
       </h2>
       {error && <div role="alert">{error}</div>}
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="rounded-xl border border-c-border p-4">
-          {t('admin.security.security-alerts.day2Auto.text8', {
-            defaultValue: 'Nierozwiązane:',
-          })}
+          {t('admin.security.security-alerts.day2Auto.text8')}
           {data.filter((a) => !a.resolved).length}
         </div>
         <div className="rounded-xl border border-c-border p-4">
@@ -111,9 +89,7 @@ export const AdminSecurityAlertsPanel: React.FC = () => {
                 primary: [
                   {
                     id: 'resolve',
-                    label: t('admin.security.security-alerts.day2Auto.text9', {
-                      defaultValue: 'Oznacz jako rozwiązane',
-                    }),
+                    label: t('admin.security.security-alerts.day2Auto.text9'),
                     icon: ShieldAlert,
                     onClick: () =>
                       void resolveSecurityAlert(a.id)
@@ -126,12 +102,8 @@ export const AdminSecurityAlertsPanel: React.FC = () => {
         }}
         empty={{
           icon: ShieldAlert,
-          title: t('admin.security.security-alerts.day2Auto.text10', {
-            defaultValue: 'Brak alertów',
-          }),
-          description: t('admin.security.security-alerts.day2Auto.text11', {
-            defaultValue: 'Nie wykryto zdarzeń bezpieczeństwa.',
-          }),
+          title: t('admin.security.security-alerts.day2Auto.text10'),
+          description: t('admin.security.security-alerts.day2Auto.text11'),
         }}
         persistKey="admin.securityAlerts"
       />

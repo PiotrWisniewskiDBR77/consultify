@@ -69,9 +69,7 @@ export const AdminOrganizationDefaultsPanel: React.FC<Props> = ({ organizationId
       setProfileMessage(
         error instanceof Error
           ? error.message
-          : t('admin.command.organization-defaults.day2Auto.text1', {
-              defaultValue: 'Nie udało się pobrać profilu.',
-            })
+          : t('admin.command.organization-defaults.day2Auto.text1')
       );
     }
   }, []);
@@ -92,9 +90,7 @@ export const AdminOrganizationDefaultsPanel: React.FC<Props> = ({ organizationId
       setFinanceMessage(
         error instanceof Error
           ? error.message
-          : t('admin.command.organization-defaults.day2Auto.text2', {
-              defaultValue: 'Nie udało się pobrać ustawień finansowych.',
-            })
+          : t('admin.command.organization-defaults.day2Auto.text2')
       );
     }
   }, []);
@@ -120,9 +116,7 @@ export const AdminOrganizationDefaultsPanel: React.FC<Props> = ({ organizationId
       setProfileMessage(
         error instanceof Error
           ? error.message
-          : t('admin.command.organization-defaults.day2Auto.text3', {
-              defaultValue: 'Nie udało się zapisać profilu.',
-            })
+          : t('admin.command.organization-defaults.day2Auto.text3')
       );
     }
   };
@@ -138,11 +132,7 @@ export const AdminOrganizationDefaultsPanel: React.FC<Props> = ({ organizationId
       setFinance(readback);
       setFinanceVersion(version);
       setFinanceState('ready');
-      setFinanceMessage(
-        t('admin.command.organization-defaults.day2Auto.text4', {
-          defaultValue: 'Zapisano; potwierdzono wersją odpowiedzi.',
-        })
-      );
+      setFinanceMessage(t('admin.command.organization-defaults.day2Auto.text4'));
     } catch (error) {
       const conflict =
         (
@@ -153,15 +143,10 @@ export const AdminOrganizationDefaultsPanel: React.FC<Props> = ({ organizationId
       setFinanceState(isV8Disabled(error) ? 'disabled' : 'error');
       setFinanceMessage(
         conflict
-          ? t('admin.command.organization-defaults.day2Auto.text5', {
-              defaultValue:
-                'Ustawienia zmieniły się równolegle (409). Odśwież sekcję przed ponowieniem.',
-            })
+          ? t('admin.command.organization-defaults.day2Auto.text5')
           : error instanceof Error
             ? error.message
-            : t('admin.command.organization-defaults.day2Auto.text6', {
-                defaultValue: 'Nie udało się zapisać ustawień finansowych.',
-              })
+            : t('admin.command.organization-defaults.day2Auto.text6')
       );
     }
   };
@@ -169,14 +154,10 @@ export const AdminOrganizationDefaultsPanel: React.FC<Props> = ({ organizationId
     <div className="space-y-5">
       <div>
         <h2 className="text-lg font-semibold">
-          {t('admin.command.organization-defaults.day2Auto.text7', {
-            defaultValue: 'Ustawienia domyślne organizacji',
-          })}
+          {t('admin.command.organization-defaults.day2Auto.text7')}
         </h2>
         <p className="text-sm text-c-text-secondary">
-          {t('admin.command.organization-defaults.day2Auto.text8', {
-            defaultValue: 'Dwa niezależne źródła danych i dwa niezależne zapisy.',
-          })}
+          {t('admin.command.organization-defaults.day2Auto.text8')}
         </p>
       </div>
       <section className="space-y-3 rounded-xl border border-c-border p-4">
@@ -186,9 +167,7 @@ export const AdminOrganizationDefaultsPanel: React.FC<Props> = ({ organizationId
             role={
               profileState === 'error'
                 ? 'alert'
-                : t('admin.command.organization-defaults.day2Auto.text9', {
-                    defaultValue: 'status',
-                  })
+                : t('admin.command.organization-defaults.day2Auto.text9')
             }
           >
             {profileMessage}
@@ -210,13 +189,9 @@ export const AdminOrganizationDefaultsPanel: React.FC<Props> = ({ organizationId
             />
           </label>
           <label>
-            {t('admin.command.organization-defaults.day2Auto.text10', {
-              defaultValue: 'Język',
-            })}
+            {t('admin.command.organization-defaults.day2Auto.text10')}
             <input
-              aria-label={t('admin.command.organization-defaults.day2Auto.text11', {
-                defaultValue: 'Domyślny język',
-              })}
+              aria-label={t('admin.command.organization-defaults.day2Auto.text11')}
               value={profile.defaultLanguage}
               onChange={(event) =>
                 setProfile({
@@ -247,9 +222,7 @@ export const AdminOrganizationDefaultsPanel: React.FC<Props> = ({ organizationId
             onClick={() => void loadProfile()}
             className="rounded border border-c-border px-3 py-2"
           >
-            {t('admin.command.organization-defaults.day2Auto.text12', {
-              defaultValue: 'Spróbuj ponownie',
-            })}
+            {t('admin.command.organization-defaults.day2Auto.text12')}
           </button>
         )}
         <button
@@ -257,24 +230,15 @@ export const AdminOrganizationDefaultsPanel: React.FC<Props> = ({ organizationId
           onClick={() => void saveProfile()}
           className={buttonClass}
         >
-          {t('admin.command.organization-defaults.day2Auto.text13', {
-            defaultValue: 'Zapisz lokalizację i format',
-          })}
+          {t('admin.command.organization-defaults.day2Auto.text13')}
         </button>
       </section>
       <section className="space-y-3 rounded-xl border border-c-border p-4">
         <h3 className="font-semibold">
-          {t('admin.command.organization-defaults.day2Auto.text14', {
-            defaultValue: 'Domyślne finansowe',
-          })}
+          {t('admin.command.organization-defaults.day2Auto.text14')}
         </h3>
         {financeState === 'disabled' ? (
-          <p role="status">
-            {t('admin.command.organization-defaults.day2Auto.text15', {
-              defaultValue:
-                'Ustawienia finansowe są niedostępne, ponieważ V8 nie jest włączone dla tej organizacji. Sekcja profilu powyżej pozostaje aktywna.',
-            })}
-          </p>
+          <p role="status">{t('admin.command.organization-defaults.day2Auto.text15')}</p>
         ) : (
           <>
             {financeMessage && (
@@ -282,9 +246,7 @@ export const AdminOrganizationDefaultsPanel: React.FC<Props> = ({ organizationId
                 role={
                   financeState === 'error'
                     ? 'alert'
-                    : t('admin.command.organization-defaults.day2Auto.text9', {
-                        defaultValue: 'status',
-                      })
+                    : t('admin.command.organization-defaults.day2Auto.text9')
                 }
               >
                 {financeMessage}
@@ -294,9 +256,7 @@ export const AdminOrganizationDefaultsPanel: React.FC<Props> = ({ organizationId
               <label>
                 Waluta
                 <input
-                  aria-label={t('admin.command.organization-defaults.day2Auto.text16', {
-                    defaultValue: 'Domyślna waluta',
-                  })}
+                  aria-label={t('admin.command.organization-defaults.day2Auto.text16')}
                   value={finance.defaultCurrency}
                   onChange={(event) =>
                     setFinance({
@@ -310,9 +270,7 @@ export const AdminOrganizationDefaultsPanel: React.FC<Props> = ({ organizationId
               <label>
                 WACC
                 <input
-                  aria-label={t('admin.command.organization-defaults.day2Auto.text17', {
-                    defaultValue: 'Domyślny WACC',
-                  })}
+                  aria-label={t('admin.command.organization-defaults.day2Auto.text17')}
                   type="number"
                   value={finance.defaultWacc}
                   onChange={(event) =>
@@ -327,9 +285,7 @@ export const AdminOrganizationDefaultsPanel: React.FC<Props> = ({ organizationId
               <label>
                 Horyzont (lata)
                 <input
-                  aria-label={t('admin.command.organization-defaults.day2Auto.text18', {
-                    defaultValue: 'Domyślny horyzont',
-                  })}
+                  aria-label={t('admin.command.organization-defaults.day2Auto.text18')}
                   type="number"
                   value={finance.defaultHorizonYears}
                   onChange={(event) =>
@@ -347,9 +303,7 @@ export const AdminOrganizationDefaultsPanel: React.FC<Props> = ({ organizationId
                 onClick={() => void loadFinance()}
                 className="rounded border border-c-border px-3 py-2"
               >
-                {t('admin.command.organization-defaults.day2Auto.text12', {
-                  defaultValue: 'Spróbuj ponownie',
-                })}
+                {t('admin.command.organization-defaults.day2Auto.text12')}
               </button>
             )}
             <button
@@ -357,9 +311,7 @@ export const AdminOrganizationDefaultsPanel: React.FC<Props> = ({ organizationId
               onClick={() => void saveFinance()}
               className={buttonClass}
             >
-              {t('admin.command.organization-defaults.day2Auto.text19', {
-                defaultValue: 'Zapisz domyślne finansowe',
-              })}
+              {t('admin.command.organization-defaults.day2Auto.text19')}
             </button>
           </>
         )}

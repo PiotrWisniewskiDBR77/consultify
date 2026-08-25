@@ -60,11 +60,7 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
     } catch (error) {
       setState(errorCode(error) === 'disabled' ? 'disabled' : 'error');
       setMessage(
-        error instanceof Error
-          ? error.message
-          : t('admin.ai.configuration-versions.day2Auto.text1', {
-              defaultValue: 'Nie udało się pobrać konfiguracji Prompt OS.',
-            })
+        error instanceof Error ? error.message : t('admin.ai.configuration-versions.day2Auto.text1')
       );
     }
   }, []);
@@ -84,9 +80,7 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
       setDetailsMessage(
         gateResult.reason instanceof Error
           ? gateResult.reason.message
-          : t('admin.ai.configuration-versions.day2Auto.text2', {
-              defaultValue: 'Nie udało się pobrać bramek ewaluacji.',
-            })
+          : t('admin.ai.configuration-versions.day2Auto.text2')
       );
       return;
     }
@@ -111,9 +105,7 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
       setDetailsMessage(
         canaryResult.reason instanceof Error
           ? canaryResult.reason.message
-          : t('admin.ai.configuration-versions.day2Auto.text3', {
-              defaultValue: 'Nie udało się pobrać konfiguracji canary.',
-            })
+          : t('admin.ai.configuration-versions.day2Auto.text3')
       );
       return;
     }
@@ -130,15 +122,10 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
     } catch (error) {
       setMessage(
         errorCode(error) === 'conflict'
-          ? t('admin.ai.configuration-versions.day2Auto.text4', {
-              defaultValue:
-                'Konfiguracja zmieniła się równolegle (409). Odświeżono dane — sprawdź stan przed ponowieniem.',
-            })
+          ? t('admin.ai.configuration-versions.day2Auto.text4')
           : error instanceof Error
             ? error.message
-            : t('admin.ai.configuration-versions.day2Auto.text5', {
-                defaultValue: 'Operacja nie powiodła się.',
-              })
+            : t('admin.ai.configuration-versions.day2Auto.text5')
       );
       await load(true);
     }
@@ -154,12 +141,8 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
         label: 'Preset',
       },
       {
-        id: t('admin.ai.configuration-versions.day2Auto.text6', {
-          defaultValue: 'status',
-        }),
-        label: t('admin.ai.configuration-versions.day2Auto.text7', {
-          defaultValue: 'Status',
-        }),
+        id: t('admin.ai.configuration-versions.day2Auto.text6'),
+        label: t('admin.ai.configuration-versions.day2Auto.text7'),
       },
       {
         id: 'prompt',
@@ -197,16 +180,9 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
   if (state === 'disabled')
     return (
       <div role="status" className="rounded-xl border border-c-border p-5">
-        <h2 className="font-semibold">
-          {t('admin.ai.configuration-versions.day2Auto.text8', {
-            defaultValue: 'Prompt OS nie jest włączony dla tej organizacji',
-          })}
-        </h2>
+        <h2 className="font-semibold">{t('admin.ai.configuration-versions.day2Auto.text8')}</h2>
         <p className="mt-1 text-sm text-c-text-secondary">
-          {t('admin.ai.configuration-versions.day2Auto.text9', {
-            defaultValue:
-              'Włączenie wymaga operatora platformy lub administratora konfiguracji V8.',
-          })}
+          {t('admin.ai.configuration-versions.day2Auto.text9')}
         </p>
       </div>
     );
@@ -221,9 +197,7 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
           onClick={() => void load()}
           className="mt-3 rounded border border-c-border px-3 py-2"
         >
-          {t('admin.ai.configuration-versions.day2Auto.text10', {
-            defaultValue: 'Spróbuj ponownie',
-          })}
+          {t('admin.ai.configuration-versions.day2Auto.text10')}
         </button>
       </div>
     );
@@ -237,9 +211,7 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
           </p>
         </div>
         <button
-          aria-label={t('admin.ai.configuration-versions.day2Auto.text11', {
-            defaultValue: 'Odśwież',
-          })}
+          aria-label={t('admin.ai.configuration-versions.day2Auto.text11')}
           onClick={() => void load()}
         >
           <RefreshCw className={state === 'loading' ? 'animate-spin' : ''} />
@@ -268,11 +240,7 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
             <dd>{summary.bundleCount}</dd>
           </div>
           <div>
-            <dt>
-              {t('admin.ai.configuration-versions.day2Auto.text12', {
-                defaultValue: 'Aktywne',
-              })}
-            </dt>
+            <dt>{t('admin.ai.configuration-versions.day2Auto.text12')}</dt>
             <dd>{summary.activeBundleCount}</dd>
           </div>
         </dl>
@@ -287,9 +255,7 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
             primary: [
               {
                 id: 'details',
-                label: t('admin.ai.configuration-versions.day2Auto.text13', {
-                  defaultValue: 'Pokaż szczegóły',
-                }),
+                label: t('admin.ai.configuration-versions.day2Auto.text13'),
                 onClick: () => void showDetails(bundle),
               },
               ...(bundle.status !== 'active'
@@ -305,9 +271,7 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
             destructive:
               bundle.status === 'active'
                 ? {
-                    label: t('admin.ai.configuration-versions.day2Auto.text14', {
-                      defaultValue: 'Wycofaj wersję',
-                    }),
+                    label: t('admin.ai.configuration-versions.day2Auto.text14'),
                     onClick: () => setRollbackTarget(bundle),
                   }
                 : undefined,
@@ -315,30 +279,19 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
         }}
         empty={{
           icon: FileClock,
-          title: t('admin.ai.configuration-versions.day2Auto.text15', {
-            defaultValue: 'Brak wersji konfiguracji',
-          }),
-          description: t('admin.ai.configuration-versions.day2Auto.text16', {
-            defaultValue:
-              'Prompt OS jest włączony, ale organizacja nie ma jeszcze bundle konfiguracji.',
-          }),
+          title: t('admin.ai.configuration-versions.day2Auto.text15'),
+          description: t('admin.ai.configuration-versions.day2Auto.text16'),
         }}
         persistKey="admin.configurationVersions"
       />
       {selected && (
         <section className="rounded-xl border border-c-border p-4">
           <h3 className="font-semibold">
-            {t('admin.ai.configuration-versions.day2Auto.text17', {
-              defaultValue: 'Szczegóły',
-            })}
+            {t('admin.ai.configuration-versions.day2Auto.text17')}
             {selected.version}
           </h3>
           {detailsState === 'loading' && (
-            <p role="status">
-              {t('admin.ai.configuration-versions.day2Auto.text18', {
-                defaultValue: 'Ładowanie szczegółów…',
-              })}
-            </p>
+            <p role="status">{t('admin.ai.configuration-versions.day2Auto.text18')}</p>
           )}
           {detailsState === 'error' ? (
             <div
@@ -350,9 +303,7 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
                 onClick={() => void showDetails(selected)}
                 className="mt-2 rounded border border-c-border px-3 py-2"
               >
-                {t('admin.ai.configuration-versions.day2Auto.text10', {
-                  defaultValue: 'Spróbuj ponownie',
-                })}
+                {t('admin.ai.configuration-versions.day2Auto.text10')}
               </button>
             </div>
           ) : (
@@ -362,31 +313,13 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
                   Bramki:{' '}
                   {gates.length
                     ? gates.map((gate) => `${gate.gateType}: ${gate.result}`).join(', ')
-                    : t('admin.ai.configuration-versions.day2Auto.text19', {
-                        defaultValue: 'brak wyników',
-                      })}
+                    : t('admin.ai.configuration-versions.day2Auto.text19')}
                 </p>
                 <p className="text-sm">
                   Canary:{' '}
                   {canary
-                    ? `rollback ${
-                        canary.rollbackEnabled
-                          ? t('admin.ai.configuration-versions.day2Auto.text20', {
-                              defaultValue: 'włączony',
-                            })
-                          : t('admin.ai.configuration-versions.day2Auto.text21', {
-                              defaultValue: 'wyłączony',
-                            })
-                      }, org scope ${
-                        canary.orgScoped
-                          ? 'tak'
-                          : t('admin.ai.configuration-versions.day2Auto.text22', {
-                              defaultValue: 'nie',
-                            })
-                      }`
-                    : t('admin.ai.configuration-versions.day2Auto.text23', {
-                        defaultValue: 'brak konfiguracji',
-                      })}
+                    ? `rollback ${canary.rollbackEnabled ? t('admin.ai.configuration-versions.day2Auto.text20') : t('admin.ai.configuration-versions.day2Auto.text21')}, org scope ${canary.orgScoped ? 'tak' : t('admin.ai.configuration-versions.day2Auto.text22')}`
+                    : t('admin.ai.configuration-versions.day2Auto.text23')}
                 </p>
               </>
             )
@@ -395,13 +328,9 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
       )}
       {rollbackTarget && !confirmOpen && (
         <label className="block rounded-xl border border-c-danger p-4">
-          {t('admin.ai.configuration-versions.day2Auto.text24', {
-            defaultValue: 'Powód wycofania (wymagany)',
-          })}
+          {t('admin.ai.configuration-versions.day2Auto.text24')}
           <textarea
-            aria-label={t('admin.ai.configuration-versions.day2Auto.text25', {
-              defaultValue: 'Powód wycofania',
-            })}
+            aria-label={t('admin.ai.configuration-versions.day2Auto.text25')}
             value={reason}
             onChange={(event) => setReason(event.target.value)}
             className="mt-2 block w-full rounded border border-c-border bg-c-surface p-2"
@@ -411,9 +340,7 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
             onClick={() => setConfirmOpen(true)}
             className="mt-2 rounded bg-c-danger px-3 py-2 text-white disabled:opacity-50"
           >
-            {t('admin.ai.configuration-versions.day2Auto.text26', {
-              defaultValue: 'Przejdź do potwierdzenia',
-            })}
+            {t('admin.ai.configuration-versions.day2Auto.text26')}
           </button>
         </label>
       )}
@@ -425,17 +352,11 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
           setReason('');
         }}
         onConfirm={() => rollbackTarget && void mutate('rollback', rollbackTarget)}
-        title={t('admin.ai.configuration-versions.day2Auto.text27', {
-          defaultValue: 'Wycofać aktywną konfigurację?',
-        })}
+        title={t('admin.ai.configuration-versions.day2Auto.text27')}
         description={t('admin.ai.configuration-versions.day2Auto.text28', {
           v0: reason,
-          defaultValue:
-            'Powód: {{v0}}. Operacja zmieni runtime organizacji i zostanie zapisana w historii Prompt OS.',
         })}
-        confirmLabel={t('admin.ai.configuration-versions.day2Auto.text14', {
-          defaultValue: 'Wycofaj wersję',
-        })}
+        confirmLabel={t('admin.ai.configuration-versions.day2Auto.text14')}
         variant="danger"
       />
     </div>

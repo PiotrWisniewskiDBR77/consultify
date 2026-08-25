@@ -2,7 +2,9 @@ import { ListTodo } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { getAdminJobs, type AdminJob } from '../../services/adminJobsApi';
 import { StandardTable, type TableColumn, type TableRow } from '../standard/StandardTable';
+import { useTranslation } from 'react-i18next';
 export const AdminJobsPanel: React.FC = () => {
+  const { t } = useTranslation();
   const [jobs, setJobs] = useState<AdminJob[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -12,7 +14,7 @@ export const AdminJobsPanel: React.FC = () => {
     try {
       setJobs(await getAdminJobs());
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Nie udało się pobrać zadań');
+      setError(e instanceof Error ? e.message : t('admin.health.queues-jobs.day2Auto.text1'));
     } finally {
       setLoading(false);
     }
@@ -32,12 +34,30 @@ export const AdminJobsPanel: React.FC = () => {
   );
   const columns = useMemo<TableColumn[]>(
     () => [
-      { id: 'type', label: 'Typ zadania' },
-      { id: 'status', label: 'Status' },
-      { id: 'attempts', label: 'Próby' },
-      { id: 'error', label: 'Ostatni błąd' },
-      { id: 'available', label: 'Dostępne od' },
-      { id: 'created', label: 'Utworzono' },
+      {
+        id: 'type',
+        label: t('admin.health.queues-jobs.day2Auto.text2'),
+      },
+      {
+        id: t('admin.health.queues-jobs.day2Auto.text3'),
+        label: t('admin.health.queues-jobs.day2Auto.text4'),
+      },
+      {
+        id: 'attempts',
+        label: t('admin.health.queues-jobs.day2Auto.text5'),
+      },
+      {
+        id: 'error',
+        label: t('admin.health.queues-jobs.day2Auto.text6'),
+      },
+      {
+        id: 'available',
+        label: t('admin.health.queues-jobs.day2Auto.text7'),
+      },
+      {
+        id: 'created',
+        label: 'Utworzono',
+      },
     ],
     []
   );
@@ -57,9 +77,11 @@ export const AdminJobsPanel: React.FC = () => {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-semibold text-c-text">Kolejki i zadania</h2>
+        <h2 className="text-lg font-semibold text-c-text">
+          {t('admin.health.queues-jobs.day2Auto.text8')}
+        </h2>
         <p className="text-sm text-c-text-secondary">
-          Tenantowy, tylko-do-odczytu stan zadań administracyjnych.
+          {t('admin.health.queues-jobs.day2Auto.text9')}
         </p>
       </div>
       {error && (
@@ -89,8 +111,8 @@ export const AdminJobsPanel: React.FC = () => {
           onRetry={() => void load()}
           empty={{
             icon: ListTodo,
-            title: 'Brak zadań',
-            description: 'Organizacja nie ma zadań administracyjnych w kolejce.',
+            title: t('admin.health.queues-jobs.day2Auto.text10'),
+            description: t('admin.health.queues-jobs.day2Auto.text11'),
           }}
           persistKey="admin.jobs"
         />

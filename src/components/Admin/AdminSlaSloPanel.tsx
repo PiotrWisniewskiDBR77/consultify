@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { getAiSlaStatus, getTenantSlos, type Slo } from '../../services/adminSlaSloApi';
+import { useTranslation } from 'react-i18next';
 export const AdminSlaSloPanel: React.FC = () => {
+  const { t } = useTranslation();
   const [slos, setSlos] = useState<Slo[]>([]);
   const [ai, setAi] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
@@ -9,7 +11,10 @@ export const AdminSlaSloPanel: React.FC = () => {
     Promise.allSettled([getTenantSlos(), getAiSlaStatus()])
       .then(([s, a]) => {
         if (s.status === 'fulfilled') setSlos(s.value);
-        else setError(s.reason instanceof Error ? s.reason.message : 'Nie udało się pobrać SLO');
+        else
+          setError(
+            s.reason instanceof Error ? s.reason.message : t('admin.health.sla-slo.day2Auto.text1')
+          );
         if (a.status === 'fulfilled') setAi(a.value);
       })
       .finally(() => setLoading(false));
@@ -18,7 +23,7 @@ export const AdminSlaSloPanel: React.FC = () => {
     <div className="space-y-4">
       <div>
         <h2 className="text-lg font-semibold text-c-text">SLA / SLO</h2>
-        <p className="text-sm text-c-text-secondary">Cele i bieżąca realizacja — tylko odczyt.</p>
+        <p className="text-sm text-c-text-secondary">{t('admin.health.sla-slo.day2Auto.text2')}</p>
       </div>
       {error && (
         <div role="alert" className="rounded-xl border border-c-danger p-3 text-c-danger">
@@ -27,7 +32,7 @@ export const AdminSlaSloPanel: React.FC = () => {
       )}
       {loading ? (
         <div role="status" className="py-8 text-center text-sm text-c-text-muted">
-          Ładowanie celów SLA/SLO…
+          {t('admin.health.sla-slo.day2Auto.text3')}
         </div>
       ) : (
         <>
@@ -41,19 +46,26 @@ export const AdminSlaSloPanel: React.FC = () => {
                     <dd>{s.target_percentage}%</dd>
                   </div>
                   <div>
-                    <dt className="text-c-text-secondary">Bieżący</dt>
+                    <dt className="text-c-text-secondary">
+                      {t('admin.health.sla-slo.day2Auto.text4')}
+                    </dt>
                     <dd>
-                      {s.current_percentage ?? 'Nie obliczono'}
+                      {s.current_percentage ?? t('admin.health.sla-slo.day2Auto.text5')}
                       {s.current_percentage == null ? '' : '%'}
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-c-text-secondary">Budżet błędu</dt>
-                    <dd>{s.budget_remaining ?? 'Nie obliczono'}</dd>
+                    <dt className="text-c-text-secondary">
+                      {t('admin.health.sla-slo.day2Auto.text6')}
+                    </dt>
+                    <dd>{s.budget_remaining ?? t('admin.health.sla-slo.day2Auto.text5')}</dd>
                   </div>
                   <div>
                     <dt className="text-c-text-secondary">Okno</dt>
-                    <dd>{s.window_days} dni</dd>
+                    <dd>
+                      {s.window_days}
+                      {t('admin.health.sla-slo.day2Auto.text7')}
+                    </dd>
                   </div>
                 </dl>
               </article>
@@ -61,16 +73,17 @@ export const AdminSlaSloPanel: React.FC = () => {
           </div>
           {slos.length === 0 && !error && (
             <div className="rounded-xl border border-c-border bg-c-surface p-5">
-              Dla tej organizacji nie zdefiniowano celów SLO.
+              {t('admin.health.sla-slo.day2Auto.text8')}
             </div>
           )}
           <section className="rounded-xl border border-c-border bg-c-surface p-4">
             <h3 className="font-semibold text-c-text">SLA AI</h3>
             <p className="mt-1 text-sm text-c-text-secondary">
-              Targety AI-SLA są dziś stałe i nie są konfigurowalne w tym ekranie.
+              {t('admin.health.sla-slo.day2Auto.text9')}
             </p>
             <p className="mt-2 text-xs text-c-text-muted">
-              Stan źródła: {ai ? 'odczytano' : 'brak danych'}
+              {t('admin.health.sla-slo.day2Auto.text10')}
+              {ai ? 'odczytano' : t('admin.health.sla-slo.day2Auto.text11')}
             </p>
           </section>
         </>

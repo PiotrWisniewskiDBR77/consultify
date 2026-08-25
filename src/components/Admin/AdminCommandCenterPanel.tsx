@@ -100,9 +100,7 @@ const CommandCenterAttentionQueue: React.FC = () => {
       if (risk)
         next.push({
           id: 'risk',
-          title: t('admin.command.attention-queue.day2Auto.text1', {
-            defaultValue: 'Ryzyka wymagające przeglądu',
-          }),
+          title: t('admin.command.attention-queue.day2Auto.text1'),
           source: 'GET /api/admin/risk/summary',
           freshness,
           severity: Number(risk?.highRiskCount ?? 0) > 0 ? 'critical' : 'info',
@@ -112,16 +110,13 @@ const CommandCenterAttentionQueue: React.FC = () => {
       if (audit)
         next.push({
           id: 'audit',
-          title: t('admin.command.attention-queue.day2Auto.text2', {
-            defaultValue: 'Nierozwiązane zdarzenia audytowe',
-          }),
+          title: t('admin.command.attention-queue.day2Auto.text2'),
           source: 'GET /api/admin/audit-logs/stats',
           freshness,
           severity: Number(audit?.unresolvedCount ?? 0) > 0 ? 'warning' : 'info',
           href: '/admin/audit/events',
           detail: t('admin.command.attention-queue.day2Auto.text3', {
             v0: Number(audit?.unresolvedCount ?? 0),
-            defaultValue: '{{v0}} nierozwiązanych',
           }),
         });
       const billingItems = billing
@@ -134,34 +129,26 @@ const CommandCenterAttentionQueue: React.FC = () => {
       if (billingItems)
         next.push({
           id: 'billing',
-          title: t('admin.command.attention-queue.day2Auto.text4', {
-            defaultValue: 'Alerty budżetowe',
-          }),
+          title: t('admin.command.attention-queue.day2Auto.text4'),
           source: 'GET /api/admin/billing/alerts',
           freshness,
           severity: billingItems.length > 0 ? 'warning' : 'info',
           href: '/admin/billing/budgets-alerts',
           detail: t('admin.command.attention-queue.day2Auto.text5', {
             v0: billingItems.length,
-            defaultValue: '{{v0}} aktywnych alertów',
           }),
         });
       if (health)
         next.push({
           id: 'health',
-          title: t('admin.command.attention-queue.day2Auto.text6', {
-            defaultValue: 'Stan usług organizacji',
-          }),
+          title: t('admin.command.attention-queue.day2Auto.text6'),
           source: 'GET /api/admin/health-panel/summary',
           freshness,
           severity:
             Number(health?.summary?.failed ?? health?.failed ?? 0) > 0 ? 'critical' : 'info',
-          href: t('admin.command.attention-queue.day2Auto.text7', {
-            defaultValue: '/admin/health/service-status',
-          }),
+          href: t('admin.command.attention-queue.day2Auto.text7'),
           detail: t('admin.command.attention-queue.day2Auto.text8', {
             v0: Number(health?.summary?.failed ?? health?.failed ?? 0),
-            defaultValue: '{{v0}} testów nieudanych',
           }),
         });
       const rank = {
@@ -170,13 +157,7 @@ const CommandCenterAttentionQueue: React.FC = () => {
         info: 2,
       };
       setSignals(next.sort((a, b) => rank[a.severity] - rank[b.severity]));
-      setError(
-        next.length === 0
-          ? t('admin.command.attention-queue.day2Auto.text9', {
-              defaultValue: 'Nie udało się odczytać żadnego źródła sygnałów.',
-            })
-          : null
-      );
+      setError(next.length === 0 ? t('admin.command.attention-queue.day2Auto.text9') : null);
       setLoading(false);
     })();
     return () => {
@@ -187,9 +168,7 @@ const CommandCenterAttentionQueue: React.FC = () => {
     return (
       <div className="flex items-center gap-2 text-sm text-c-text-secondary">
         <Loader2 className="h-4 w-4 animate-spin" />
-        {t('admin.command.attention-queue.day2Auto.text10', {
-          defaultValue: 'Ładowanie kolejki uwagi…',
-        })}
+        {t('admin.command.attention-queue.day2Auto.text10')}
       </div>
     );
   if (error)
@@ -205,15 +184,10 @@ const CommandCenterAttentionQueue: React.FC = () => {
     <div className="space-y-4">
       <div>
         <h2 className="text-lg font-semibold text-c-text">
-          {t('admin.command.attention-queue.day2Auto.text11', {
-            defaultValue: 'Kolejka uwagi',
-          })}
+          {t('admin.command.attention-queue.day2Auto.text11')}
         </h2>
         <p className="mt-1 text-sm text-c-text-secondary">
-          {t('admin.command.attention-queue.day2Auto.text12', {
-            defaultValue:
-              'Sygnały z systemów kanonicznych; działania wykonuje się na ekranach źródłowych.',
-          })}
+          {t('admin.command.attention-queue.day2Auto.text12')}
         </p>
       </div>
       <div className="grid gap-3 md:grid-cols-2">
@@ -239,25 +213,19 @@ const CommandCenterAttentionQueue: React.FC = () => {
             <dl className="mt-3 space-y-1 text-xs text-c-text-muted">
               <div>
                 <dt className="inline font-medium">
-                  {t('admin.command.attention-queue.day2Auto.text13', {
-                    defaultValue: 'Źródło:',
-                  })}
+                  {t('admin.command.attention-queue.day2Auto.text13')}
                 </dt>
                 <dd className="inline">{signal.source}</dd>
               </div>
               <div>
                 <dt className="inline font-medium">
-                  {t('admin.command.attention-queue.day2Auto.text14', {
-                    defaultValue: 'Świeżość:',
-                  })}
+                  {t('admin.command.attention-queue.day2Auto.text14')}
                 </dt>
                 <dd className="inline">{signal.freshness}</dd>
               </div>
             </dl>
             <span className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-c-text">
-              {t('admin.command.attention-queue.day2Auto.text15', {
-                defaultValue: 'Otwórz ekran kanoniczny',
-              })}
+              {t('admin.command.attention-queue.day2Auto.text15')}
               <ArrowRight className="h-4 w-4" />
             </span>
           </Link>
@@ -307,9 +275,7 @@ const CommandCenterCostCapacity: React.FC = () => {
         loading: false,
         error:
           values.filter(Boolean).length < 4
-            ? t('admin.command.cost-capacity.day2Auto.text1', {
-                defaultValue: 'Część źródeł kosztu lub pojemności jest niedostępna.',
-              })
+            ? t('admin.command.cost-capacity.day2Auto.text1')
             : null,
         billing: values[0],
         usage: values[1],
@@ -337,22 +303,16 @@ const CommandCenterCostCapacity: React.FC = () => {
     () => [
       {
         id: 'userId',
-        label: t('admin.command.cost-capacity.day2Auto.text2', {
-          defaultValue: 'Użytkownik',
-        }),
+        label: t('admin.command.cost-capacity.day2Auto.text2'),
       },
       {
         id: 'cost',
-        label: t('admin.command.cost-capacity.day2Auto.text3', {
-          defaultValue: 'Koszt',
-        }),
+        label: t('admin.command.cost-capacity.day2Auto.text3'),
         render: (row) => Number(row.cost ?? 0).toFixed(2),
       },
       {
         id: 'messageCount',
-        label: t('admin.command.cost-capacity.day2Auto.text4', {
-          defaultValue: 'Wiadomości',
-        }),
+        label: t('admin.command.cost-capacity.day2Auto.text4'),
       },
     ],
     []
@@ -361,9 +321,7 @@ const CommandCenterCostCapacity: React.FC = () => {
     return (
       <div className="flex items-center gap-2 text-sm text-c-text-secondary">
         <Loader2 className="h-4 w-4 animate-spin" />
-        {t('admin.command.cost-capacity.day2Auto.text5', {
-          defaultValue: 'Ładowanie kosztu i pojemności…',
-        })}
+        {t('admin.command.cost-capacity.day2Auto.text5')}
       </div>
     );
   const currentCost = Number(
@@ -376,19 +334,13 @@ const CommandCenterCostCapacity: React.FC = () => {
     <div className="space-y-4">
       <div>
         <h2 className="text-lg font-semibold text-c-text">
-          {t('admin.command.cost-capacity.day2Auto.text6', {
-            defaultValue: 'Koszt i pojemność',
-          })}
+          {t('admin.command.cost-capacity.day2Auto.text6')}
         </h2>
         <p className="mt-1 text-sm text-c-text-secondary">
-          {t('admin.command.cost-capacity.day2Auto.text7', {
-            defaultValue: 'Agregacja tylko do odczytu. Budżety edytuje ekran kanoniczny.',
-          })}
+          {t('admin.command.cost-capacity.day2Auto.text7')}
         </p>
         <p className="mt-1 text-xs text-c-text-muted">
-          {t('admin.command.cost-capacity.day2Auto.text8', {
-            defaultValue: 'Świeżość:',
-          })}
+          {t('admin.command.cost-capacity.day2Auto.text8')}
           {freshness}
         </p>
       </div>
@@ -403,29 +355,19 @@ const CommandCenterCostCapacity: React.FC = () => {
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[
           [
-            t('admin.command.cost-capacity.day2Auto.text9', {
-              defaultValue: 'Koszt bieżący',
-            }),
+            t('admin.command.cost-capacity.day2Auto.text9'),
             currentCost.toFixed(2),
             'billing/summary',
           ],
           ['Prognoza', forecast.toFixed(2), 'billing/summary'],
           ['Wykorzystanie limitu', `${utilization}%`, 'billing/usage-details'],
-          [
-            t('admin.command.cost-capacity.day2Auto.text10', {
-              defaultValue: 'Miejsca zajęte',
-            }),
-            String(seats),
-            'billing/summary',
-          ],
+          [t('admin.command.cost-capacity.day2Auto.text10'), String(seats), 'billing/summary'],
         ].map(([label, value, source]) => (
           <div key={label} className="rounded-xl border border-c-border bg-c-surface p-4">
             <p className="text-xs text-c-text-secondary">{label}</p>
             <p className="mt-1 text-xl font-semibold text-c-text">{value}</p>
             <p className="mt-2 text-[10px] text-c-text-muted">
-              {t('admin.command.cost-capacity.day2Auto.text11', {
-                defaultValue: 'Źródło: GET /api/admin/',
-              })}
+              {t('admin.command.cost-capacity.day2Auto.text11')}
               {source}
             </p>
           </div>
@@ -436,12 +378,8 @@ const CommandCenterCostCapacity: React.FC = () => {
           columns={columns}
           data={rows}
           empty={{
-            title: t('admin.command.cost-capacity.day2Auto.text12', {
-              defaultValue: 'Brak atrybucji kosztów',
-            }),
-            description: t('admin.command.cost-capacity.day2Auto.text13', {
-              defaultValue: 'Brak kosztów przypisanych użytkownikom w wybranym okresie.',
-            }),
+            title: t('admin.command.cost-capacity.day2Auto.text12'),
+            description: t('admin.command.cost-capacity.day2Auto.text13'),
           }}
           persistKey="admin.costCapacity"
         />
@@ -451,27 +389,19 @@ const CommandCenterCostCapacity: React.FC = () => {
           to="/admin/billing/budgets-alerts"
           className="rounded-lg border border-c-border px-3 py-2 text-sm font-medium text-c-text focus-visible:outline-none focus-visible:ring-2 ring-[color:var(--c-focus)]"
         >
-          {t('admin.command.cost-capacity.day2Auto.text14', {
-            defaultValue: 'Alerty budżetowe (',
-          })}
+          {t('admin.command.cost-capacity.day2Auto.text14')}
           {state.alerts.length})
         </Link>
         <Link
           to="/admin/billing/usage-costs"
           className="rounded-lg border border-c-border px-3 py-2 text-sm font-medium text-c-text focus-visible:outline-none focus-visible:ring-2 ring-[color:var(--c-focus)]"
         >
-          {t('admin.command.cost-capacity.day2Auto.text15', {
-            defaultValue: 'Szczegóły wykorzystania',
-          })}
+          {t('admin.command.cost-capacity.day2Auto.text15')}
         </Link>
         <span className="px-3 py-2 text-xs text-c-text-muted">
-          {t('admin.command.cost-capacity.day2Auto.text16', {
-            defaultValue: 'Stan:',
-          })}
+          {t('admin.command.cost-capacity.day2Auto.text16')}
           {Number(state.health?.summary?.failed ?? 0)}
-          {t('admin.command.cost-capacity.day2Auto.text17', {
-            defaultValue: 'nieudanych prób',
-          })}
+          {t('admin.command.cost-capacity.day2Auto.text17')}
         </span>
       </div>
     </div>
@@ -564,29 +494,34 @@ const DataTileShell: React.FC<{
   loading: boolean;
   error: string | null;
   children: React.ReactNode;
-}> = ({ icon: Icon, label, loading, error, children }) => (
-  <div className="rounded-xl border border-c-border bg-c-surface p-4">
-    <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-c-text-secondary">
-      <Icon className="h-3.5 w-3.5" />
-      {label}
+}> = ({ icon: Icon, label, loading, error, children }) => {
+  const { t } = useTranslation();
+  return (
+    <div className="rounded-xl border border-c-border bg-c-surface p-4">
+      <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-c-text-secondary">
+        <Icon className="h-3.5 w-3.5" />
+        {label}
+      </div>
+      <p className="mt-1 text-[10px] text-c-text-muted">
+        {t('admin.command.attention-queue.day2Auto.text16')}
+      </p>
+      <div className="mt-2">
+        {loading ? (
+          <div className="flex items-center gap-2 text-sm text-c-text-secondary">
+            <Loader2 className="h-4 w-4 animate-spin" />
+          </div>
+        ) : error ? (
+          <div className="flex items-center gap-2 text-sm text-c-danger">
+            <AlertTriangle className="h-4 w-4" />
+            <span>{error}</span>
+          </div>
+        ) : (
+          children
+        )}
+      </div>
     </div>
-    <p className="mt-1 text-[10px] text-c-text-muted">Źródło: tenant admin API · odczyt bieżący</p>
-    <div className="mt-2">
-      {loading ? (
-        <div className="flex items-center gap-2 text-sm text-c-text-secondary">
-          <Loader2 className="h-4 w-4 animate-spin" />
-        </div>
-      ) : error ? (
-        <div className="flex items-center gap-2 text-sm text-c-danger">
-          <AlertTriangle className="h-4 w-4" />
-          <span>{error}</span>
-        </div>
-      ) : (
-        children
-      )}
-    </div>
-  </div>
-);
+  );
+};
 const CommandCenterOverviewTab: React.FC<{
   onSectionChange?: (section: AdminSettingsSection) => void;
 }> = ({ onSectionChange }) => {

@@ -48,22 +48,14 @@ export const AdminRolesPermissionsPanel: React.FC = () => {
       setPermissions('');
       setEdit(null);
     } catch (e) {
-      setError(
-        e instanceof Error
-          ? e.message
-          : t('admin.team.roles-permissions.day2Auto.text1', {
-              defaultValue: 'Błąd zapisu',
-            })
-      );
+      setError(e instanceof Error ? e.message : t('admin.team.roles-permissions.day2Auto.text1'));
     }
   };
   const cols = useMemo<TableColumn[]>(
       () => [
         {
           id: 'name',
-          label: t('admin.team.roles-permissions.day2Auto.text2', {
-            defaultValue: 'Rola',
-          }),
+          label: t('admin.team.roles-permissions.day2Auto.text2'),
         },
         {
           id: 'permissions',
@@ -82,10 +74,7 @@ export const AdminRolesPermissionsPanel: React.FC = () => {
           id: r.id,
           name: r.name,
           permissions:
-            (r.permissions || []).join(', ') ||
-            t('admin.team.roles-permissions.day2Auto.text3', {
-              defaultValue: 'Brak',
-            }),
+            (r.permissions || []).join(', ') || t('admin.team.roles-permissions.day2Auto.text3'),
           updated: r.updated_at ? new Date(r.updated_at).toLocaleString() : '—',
         })),
       [data]
@@ -93,18 +82,13 @@ export const AdminRolesPermissionsPanel: React.FC = () => {
   if (ownerOnly)
     return (
       <div role="alert" className="rounded-xl border border-c-border p-5">
-        {t('admin.team.roles-permissions.day2Auto.text4', {
-          defaultValue:
-            'Zarządzanie rolami projektowymi wymaga uprawnienia właściciela organizacji.',
-        })}
+        {t('admin.team.roles-permissions.day2Auto.text4')}
       </div>
     );
   return (
     <div className="space-y-4">
       <h2 className="text-lg font-semibold text-c-text">
-        {t('admin.team.roles-permissions.day2Auto.text5', {
-          defaultValue: 'Role i uprawnienia',
-        })}
+        {t('admin.team.roles-permissions.day2Auto.text5')}
       </h2>
       {error && (
         <div
@@ -116,15 +100,11 @@ export const AdminRolesPermissionsPanel: React.FC = () => {
       )}
       <section className="flex flex-wrap gap-2 rounded-xl border border-c-border p-4">
         <input
-          aria-label={t('admin.team.roles-permissions.day2Auto.text6', {
-            defaultValue: 'Nazwa roli',
-          })}
+          aria-label={t('admin.team.roles-permissions.day2Auto.text6')}
           value={name}
           onChange={(e) => setName(e.target.value)}
           className="rounded border border-c-border bg-c-surface p-2"
-          placeholder={t('admin.team.roles-permissions.day2Auto.text6', {
-            defaultValue: 'Nazwa roli',
-          })}
+          placeholder={t('admin.team.roles-permissions.day2Auto.text6')}
         />
         <input
           aria-label="Uprawnienia"
@@ -135,12 +115,8 @@ export const AdminRolesPermissionsPanel: React.FC = () => {
         />
         <button disabled={!name.trim()} onClick={() => void save()} className={buttonClass}>
           {edit
-            ? t('admin.team.roles-permissions.day2Auto.text7', {
-                defaultValue: 'Zapisz rolę',
-              })
-            : t('admin.team.roles-permissions.day2Auto.text8', {
-                defaultValue: 'Dodaj rolę',
-              })}
+            ? t('admin.team.roles-permissions.day2Auto.text7')
+            : t('admin.team.roles-permissions.day2Auto.text8')}
         </button>
       </section>
       <StandardTable
@@ -162,21 +138,15 @@ export const AdminRolesPermissionsPanel: React.FC = () => {
             },
           ],
           destructive: {
-            label: t('admin.team.roles-permissions.day2Auto.text9', {
-              defaultValue: 'Usuń',
-            }),
+            label: t('admin.team.roles-permissions.day2Auto.text9'),
             icon: Trash2,
             onClick: () => setDel(data.find((x) => x.id === row.id) || null),
           },
         })}
         empty={{
           icon: Shield,
-          title: t('admin.team.roles-permissions.day2Auto.text10', {
-            defaultValue: 'Brak ról niestandardowych',
-          }),
-          description: t('admin.team.roles-permissions.day2Auto.text11', {
-            defaultValue: 'W tej organizacji nie zdefiniowano ról projektowych.',
-          }),
+          title: t('admin.team.roles-permissions.day2Auto.text10'),
+          description: t('admin.team.roles-permissions.day2Auto.text11'),
         }}
         persistKey="admin.roles"
       />
@@ -189,16 +159,9 @@ export const AdminRolesPermissionsPanel: React.FC = () => {
               .then(setData)
               .finally(() => setDel(null));
         }}
-        title={t('admin.team.roles-permissions.day2Auto.text12', {
-          defaultValue: 'Usunąć rolę?',
-        })}
-        description={t('admin.team.roles-permissions.day2Auto.text13', {
-          defaultValue:
-            'Przypisania tej roli przestaną obowiązywać. Odzyskanie wymaga ponownego utworzenia roli.',
-        })}
-        confirmLabel={t('admin.team.roles-permissions.day2Auto.text14', {
-          defaultValue: 'Usuń rolę',
-        })}
+        title={t('admin.team.roles-permissions.day2Auto.text12')}
+        description={t('admin.team.roles-permissions.day2Auto.text13')}
+        confirmLabel={t('admin.team.roles-permissions.day2Auto.text14')}
         variant="danger"
       />
     </div>

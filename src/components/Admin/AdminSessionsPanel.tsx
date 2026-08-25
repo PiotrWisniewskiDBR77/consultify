@@ -18,13 +18,7 @@ export const AdminSessionsPanel: React.FC = () => {
       setData(await getAdminSessions());
       setError(null);
     } catch (e) {
-      setError(
-        e instanceof Error
-          ? e.message
-          : t('admin.security.sessions.day2Auto.text1', {
-              defaultValue: 'Błąd sesji',
-            })
-      );
+      setError(e instanceof Error ? e.message : t('admin.security.sessions.day2Auto.text1'));
     }
   }, []);
   useEffect(() => {
@@ -34,15 +28,11 @@ export const AdminSessionsPanel: React.FC = () => {
     () => [
       {
         id: 'user',
-        label: t('admin.security.sessions.day2Auto.text2', {
-          defaultValue: 'Użytkownik',
-        }),
+        label: t('admin.security.sessions.day2Auto.text2'),
       },
       {
         id: 'device',
-        label: t('admin.security.sessions.day2Auto.text3', {
-          defaultValue: 'Urządzenie / przeglądarka',
-        }),
+        label: t('admin.security.sessions.day2Auto.text3'),
       },
       {
         id: 'ip',
@@ -54,15 +44,11 @@ export const AdminSessionsPanel: React.FC = () => {
       },
       {
         id: 'active',
-        label: t('admin.security.sessions.day2Auto.text4', {
-          defaultValue: 'Ostatnia aktywność',
-        }),
+        label: t('admin.security.sessions.day2Auto.text4'),
       },
       {
         id: 'expires',
-        label: t('admin.security.sessions.day2Auto.text5', {
-          defaultValue: 'Wygaśnięcie',
-        }),
+        label: t('admin.security.sessions.day2Auto.text5'),
       },
     ],
     []
@@ -86,21 +72,13 @@ export const AdminSessionsPanel: React.FC = () => {
       setData(await revokeAdminSession(target.id));
       setTarget(null);
     } catch (e) {
-      setError(
-        e instanceof Error
-          ? e.message
-          : t('admin.security.sessions.day2Auto.text6', {
-              defaultValue: 'Błąd unieważnienia',
-            })
-      );
+      setError(e instanceof Error ? e.message : t('admin.security.sessions.day2Auto.text6'));
     }
   };
   return (
     <div className="space-y-4">
       <h2 className="text-lg font-semibold text-c-text">
-        {t('admin.security.sessions.day2Auto.text7', {
-          defaultValue: 'Sesje organizacji',
-        })}
+        {t('admin.security.sessions.day2Auto.text7')}
       </h2>
       {error && <div role="alert">{error}</div>}
       <StandardTable
@@ -108,21 +86,15 @@ export const AdminSessionsPanel: React.FC = () => {
         data={rows}
         rowMenu={(row) => ({
           destructive: {
-            label: t('admin.security.sessions.day2Auto.text8', {
-              defaultValue: 'Unieważnij sesję',
-            }),
+            label: t('admin.security.sessions.day2Auto.text8'),
             icon: MonitorX,
             onClick: () => setTarget(data.find((s) => s.id === row.id) || null),
           },
         })}
         empty={{
           icon: MonitorX,
-          title: t('admin.security.sessions.day2Auto.text9', {
-            defaultValue: 'Brak aktywnych sesji',
-          }),
-          description: t('admin.security.sessions.day2Auto.text10', {
-            defaultValue: 'Nie znaleziono aktywnych sesji członków organizacji.',
-          }),
+          title: t('admin.security.sessions.day2Auto.text9'),
+          description: t('admin.security.sessions.day2Auto.text10'),
         }}
         persistKey="admin.sessions"
       />
@@ -130,16 +102,9 @@ export const AdminSessionsPanel: React.FC = () => {
         isOpen={!!target}
         onCancel={() => setTarget(null)}
         onConfirm={() => void revoke()}
-        title={t('admin.security.sessions.day2Auto.text11', {
-          defaultValue: 'Unieważnić sesję?',
-        })}
-        description={t('admin.security.sessions.day2Auto.text12', {
-          defaultValue:
-            'Ta sesja natychmiast utraci dostęp. Użytkownik może zalogować się ponownie.',
-        })}
-        confirmLabel={t('admin.security.sessions.day2Auto.text8', {
-          defaultValue: 'Unieważnij sesję',
-        })}
+        title={t('admin.security.sessions.day2Auto.text11')}
+        description={t('admin.security.sessions.day2Auto.text12')}
+        confirmLabel={t('admin.security.sessions.day2Auto.text8')}
         variant="danger"
       />
     </div>

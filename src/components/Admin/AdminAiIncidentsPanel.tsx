@@ -18,9 +18,7 @@ export const AdminAiIncidentsPanel: React.FC = () => {
       () => [
         {
           id: 'start',
-          label: t('admin.ai.ai-incidents.day2Auto.text1', {
-            defaultValue: 'Początek',
-          }),
+          label: t('admin.ai.ai-incidents.day2Auto.text1'),
         },
         {
           id: 'duration',
@@ -28,21 +26,15 @@ export const AdminAiIncidentsPanel: React.FC = () => {
         },
         {
           id: 'samples',
-          label: t('admin.ai.ai-incidents.day2Auto.text2', {
-            defaultValue: 'Próbki',
-          }),
+          label: t('admin.ai.ai-incidents.day2Auto.text2'),
         },
         {
           id: 'error',
-          label: t('admin.ai.ai-incidents.day2Auto.text3', {
-            defaultValue: 'Ostatni błąd',
-          }),
+          label: t('admin.ai.ai-incidents.day2Auto.text3'),
         },
         {
           id: 'source',
-          label: t('admin.ai.ai-incidents.day2Auto.text4', {
-            defaultValue: 'Źródło',
-          }),
+          label: t('admin.ai.ai-incidents.day2Auto.text4'),
         },
       ],
       []
@@ -63,12 +55,7 @@ export const AdminAiIncidentsPanel: React.FC = () => {
     <div className="space-y-4">
       <div>
         <h2 className="text-lg font-semibold text-c-text">Incydenty AI</h2>
-        <p className="text-sm text-c-text-secondary">
-          {t('admin.ai.ai-incidents.day2Auto.text5', {
-            defaultValue:
-              'Incydenty są wyliczane z bieżących pomiarów dostępności; trwały rejestr historyczny nie jest jeszcze prowadzony.',
-          })}
-        </p>
+        <p className="text-sm text-c-text-secondary">{t('admin.ai.ai-incidents.day2Auto.text5')}</p>
       </div>
       {error && (
         <div
@@ -81,9 +68,7 @@ export const AdminAiIncidentsPanel: React.FC = () => {
       {loaded && data.length === 0 && !error && (
         <div className="flex items-center gap-2 rounded-xl border border-c-success p-4">
           <CircleCheck className="h-5 w-5" />
-          {t('admin.ai.ai-incidents.day2Auto.text6', {
-            defaultValue: 'Brak incydentów w bieżącym oknie pomiarowym.',
-          })}
+          {t('admin.ai.ai-incidents.day2Auto.text6')}
         </div>
       )}
       <StandardTable
@@ -92,12 +77,8 @@ export const AdminAiIncidentsPanel: React.FC = () => {
         loading={!loaded}
         empty={{
           icon: TriangleAlert,
-          title: t('admin.ai.ai-incidents.day2Auto.text7', {
-            defaultValue: 'Brak incydentów',
-          }),
-          description: t('admin.ai.ai-incidents.day2Auto.text8', {
-            defaultValue: 'Pomiary nie wykazały degradacji w bieżącym oknie.',
-          }),
+          title: t('admin.ai.ai-incidents.day2Auto.text7'),
+          description: t('admin.ai.ai-incidents.day2Auto.text8'),
         }}
         persistKey="admin.aiIncidents"
       />

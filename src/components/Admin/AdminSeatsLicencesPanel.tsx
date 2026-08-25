@@ -31,11 +31,7 @@ export const AdminSeatsLicencesPanel: React.FC = () => {
       setThreshold(Number(next.auto_add_seats_threshold ?? 80));
     } catch (cause) {
       setError(
-        cause instanceof Error
-          ? cause.message
-          : t('admin.billing.seats-licences.day2Auto.text1', {
-              defaultValue: 'Nie udało się pobrać miejsc',
-            })
+        cause instanceof Error ? cause.message : t('admin.billing.seats-licences.day2Auto.text1')
       );
     } finally {
       setLoading(false);
@@ -54,11 +50,7 @@ export const AdminSeatsLicencesPanel: React.FC = () => {
       setThreshold(Number(readback.auto_add_seats_threshold ?? threshold));
     } catch (cause) {
       setError(
-        cause instanceof Error
-          ? cause.message
-          : t('admin.billing.seats-licences.day2Auto.text2', {
-              defaultValue: 'Nie udało się zapisać',
-            })
+        cause instanceof Error ? cause.message : t('admin.billing.seats-licences.day2Auto.text2')
       );
     } finally {
       setSaving(false);
@@ -82,9 +74,7 @@ export const AdminSeatsLicencesPanel: React.FC = () => {
       },
       {
         id: 'user',
-        label: t('admin.billing.seats-licences.day2Auto.text3', {
-          defaultValue: 'Użytkownik',
-        }),
+        label: t('admin.billing.seats-licences.day2Auto.text3'),
       },
       {
         id: 'amount',
@@ -113,14 +103,10 @@ export const AdminSeatsLicencesPanel: React.FC = () => {
     <div className="space-y-4">
       <div>
         <h2 className="text-lg font-semibold text-c-text">
-          {t('admin.billing.seats-licences.day2Auto.text4', {
-            defaultValue: 'Miejsca i licencje',
-          })}
+          {t('admin.billing.seats-licences.day2Auto.text4')}
         </h2>
         <p className="mt-1 text-sm text-c-text-secondary">
-          {t('admin.billing.seats-licences.day2Auto.text5', {
-            defaultValue: 'Stan puli miejsc dla bieżącej organizacji.',
-          })}
+          {t('admin.billing.seats-licences.day2Auto.text5')}
         </p>
       </div>
       {error && (
@@ -130,18 +116,8 @@ export const AdminSeatsLicencesPanel: React.FC = () => {
       )}
       <div className="grid gap-3 sm:grid-cols-4">
         {[
-          [
-            t('admin.billing.seats-licences.day2Auto.text6', {
-              defaultValue: 'Łącznie',
-            }),
-            config.total_seats_available ?? 0,
-          ],
-          [
-            t('admin.billing.seats-licences.day2Auto.text7', {
-              defaultValue: 'Zajęte',
-            }),
-            config.seats_used ?? 0,
-          ],
+          [t('admin.billing.seats-licences.day2Auto.text6'), config.total_seats_available ?? 0],
+          [t('admin.billing.seats-licences.day2Auto.text7'), config.seats_used ?? 0],
           ['Wolne', config.seats_remaining ?? 0],
           ['Wykorzystanie', `${config.utilization_percent ?? 0}%`],
         ].map(([label, value]) => (
@@ -160,18 +136,12 @@ export const AdminSeatsLicencesPanel: React.FC = () => {
               checked={enabled}
               onChange={(e) => setEnabled(e.target.checked)}
             />{' '}
-            {t('admin.billing.seats-licences.day2Auto.text8', {
-              defaultValue: 'Włączone',
-            })}
+            {t('admin.billing.seats-licences.day2Auto.text8')}
           </label>
           <label className="text-sm">
-            {t('admin.billing.seats-licences.day2Auto.text9', {
-              defaultValue: 'Próg %',
-            })}
+            {t('admin.billing.seats-licences.day2Auto.text9')}
             <input
-              aria-label={t('admin.billing.seats-licences.day2Auto.text10', {
-                defaultValue: 'Próg procentowy',
-              })}
+              aria-label={t('admin.billing.seats-licences.day2Auto.text10')}
               className="ml-2 w-20 rounded border border-c-border bg-c-surface px-2 py-1"
               type="number"
               min={1}
@@ -182,9 +152,7 @@ export const AdminSeatsLicencesPanel: React.FC = () => {
           </label>
           <button disabled={saving} onClick={() => void save()} className={buttonClass}>
             <Save className="h-4 w-4" />
-            {t('admin.billing.seats-licences.day2Auto.text11', {
-              defaultValue: 'Zapisz',
-            })}
+            {t('admin.billing.seats-licences.day2Auto.text11')}
           </button>
         </div>
       </section>
@@ -197,12 +165,8 @@ export const AdminSeatsLicencesPanel: React.FC = () => {
           onRetry={() => void load()}
           empty={{
             icon: Armchair,
-            title: t('admin.billing.seats-licences.day2Auto.text12', {
-              defaultValue: 'Brak historii miejsc',
-            }),
-            description: t('admin.billing.seats-licences.day2Auto.text13', {
-              defaultValue: 'Nie zarejestrowano transakcji miejsc.',
-            }),
+            title: t('admin.billing.seats-licences.day2Auto.text12'),
+            description: t('admin.billing.seats-licences.day2Auto.text13'),
           }}
           persistKey="admin.seats"
         />
@@ -210,17 +174,13 @@ export const AdminSeatsLicencesPanel: React.FC = () => {
       <section className="rounded-xl border border-c-border bg-c-surface p-4">
         <h3 className="font-semibold text-c-text">Zakup miejsc</h3>
         <p className="mt-1 text-sm text-c-text-secondary">
-          {t('admin.billing.seats-licences.day2Auto.text14', {
-            defaultValue: 'Samoobsługowy zakup miejsc niedostępny — skontaktuj się z opiekunem.',
-          })}
+          {t('admin.billing.seats-licences.day2Auto.text14')}
         </p>
         <button
           disabled
           className="mt-3 rounded-lg border border-c-border px-3 py-2 text-sm text-c-text-muted"
         >
-          {t('admin.billing.seats-licences.day2Auto.text15', {
-            defaultValue: 'Kup miejsca',
-          })}
+          {t('admin.billing.seats-licences.day2Auto.text15')}
         </button>
       </section>
     </div>

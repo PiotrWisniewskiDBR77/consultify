@@ -29,9 +29,7 @@ export const AdminAuditExportHistoryPanel: React.FC = () => {
         },
         {
           id: 'kind',
-          label: t('admin.audit.export-history.day2Auto.text1', {
-            defaultValue: 'Eksport',
-          }),
+          label: t('admin.audit.export-history.day2Auto.text1'),
         },
         {
           id: 'rows',
@@ -60,15 +58,10 @@ export const AdminAuditExportHistoryPanel: React.FC = () => {
     <div className="space-y-4">
       <div>
         <h2 className="text-lg font-semibold text-c-text">
-          {t('admin.audit.export-history.day2Auto.text2', {
-            defaultValue: 'Historia eksportów',
-          })}
+          {t('admin.audit.export-history.day2Auto.text2')}
         </h2>
         <p className="text-sm text-c-text-secondary">
-          {t('admin.audit.export-history.day2Auto.text3', {
-            defaultValue:
-              'Paragony eksportów dziennika audytu wykonanych przez administratorów organizacji.',
-          })}
+          {t('admin.audit.export-history.day2Auto.text3')}
         </p>
       </div>
       {error && (
@@ -85,12 +78,8 @@ export const AdminAuditExportHistoryPanel: React.FC = () => {
         loading={loading}
         empty={{
           icon: FileDown,
-          title: t('admin.audit.export-history.day2Auto.text4', {
-            defaultValue: 'Brak eksportów',
-          }),
-          description: t('admin.audit.export-history.day2Auto.text5', {
-            defaultValue: 'Nie zapisano jeszcze paragonu eksportu dziennika audytu.',
-          }),
+          title: t('admin.audit.export-history.day2Auto.text4'),
+          description: t('admin.audit.export-history.day2Auto.text5'),
         }}
         persistKey="admin.auditExports"
       />

@@ -16175,7 +16175,37 @@
       "envDisabled": "Health probes are disabled in this environment.",
       "empty": "No probes registered.",
       "lastRun": "Last run",
-      "rerun": "Re-run"
+      "rerun": "Re-run",
+      "queues-jobs": {
+        "day2Auto": {
+          "text1": "Failed to pobrać zadań",
+          "text2": "Typ Jobs",
+          "text3": "Status",
+          "text4": "Status",
+          "text5": "Próby",
+          "text6": "Ostatni Error",
+          "text7": "Accessne od",
+          "text8": "Kolejki and Jobs",
+          "text9": "Tenantowy, tylko-do-odczytu stan zadań administracyjnych.",
+          "text10": "No zadań",
+          "text11": "Organization nie ma zadań administracyjnych w kolejce."
+        }
+      },
+      "sla-slo": {
+        "day2Auto": {
+          "text1": "Failed to pobrać SLO",
+          "text2": "Cele and bieżąca realizacja — tylko odczyt.",
+          "text3": "Loading celów SLA/SLO…",
+          "text4": "Bieżący",
+          "text5": "Nie obliczono",
+          "text6": "Budżet błędu",
+          "text7": "dni",
+          "text8": "Dla this organization nie zdefiniowano celów SLO.",
+          "text9": "Targety AI-SLA są dziś stałe and nie są konfigurowalne w tym ekranie.",
+          "text10": "Stan źródła:",
+          "text11": "no danych"
+        }
+      }
     },
     "strategicProfile": {
       "industryCode": "Industry Code ({{system}})",
@@ -16509,7 +16539,8 @@
           "text15": "Rejestr kampanii Reviewów nie jest jeszcze prowadzony.",
           "text16": "Stan:",
           "text17": "Kadencja:",
-          "text18": "dni"
+          "text18": "days",
+          "text19": "Cadence: {{value}} days"
         }
       }
     },
@@ -18054,7 +18085,8 @@
           "text12": "Sygnały z systemów kanonicznych; działania wykonuje się na ekranach źródłowych.",
           "text13": "Źródło:",
           "text14": "Świeżość:",
-          "text15": "Otwórz ekran kanoniczny"
+          "text15": "Open canonical screen",
+          "text16": "Source: tenant admin API · current read"
         }
       },
       "cost-capacity": {

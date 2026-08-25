@@ -15,11 +15,7 @@ export const AdminPlanHistoryPanel: React.FC = () => {
       setEntries(await getPlanHistory());
     } catch (caught) {
       setError(
-        caught instanceof Error
-          ? caught.message
-          : t('admin.billing.plan-history.day2Auto.text1', {
-              defaultValue: 'Nie udało się pobrać historii planu.',
-            })
+        caught instanceof Error ? caught.message : t('admin.billing.plan-history.day2Auto.text1')
       );
     } finally {
       setLoading(false);
@@ -49,30 +45,22 @@ export const AdminPlanHistoryPanel: React.FC = () => {
       },
       {
         id: 'from_plan',
-        label: t('admin.billing.plan-history.day2Auto.text2', {
-          defaultValue: 'Plan z',
-        }),
+        label: t('admin.billing.plan-history.day2Auto.text2'),
         render: (row) => row.from_plan || '—',
       },
       {
         id: 'to_plan',
-        label: t('admin.billing.plan-history.day2Auto.text3', {
-          defaultValue: 'Plan na',
-        }),
+        label: t('admin.billing.plan-history.day2Auto.text3'),
         render: (row) => row.to_plan || '—',
       },
       {
         id: 'reason',
-        label: t('admin.billing.plan-history.day2Auto.text4', {
-          defaultValue: 'Powód',
-        }),
+        label: t('admin.billing.plan-history.day2Auto.text4'),
         render: (row) => row.reason || '—',
       },
       {
         id: 'performed_by',
-        label: t('admin.billing.plan-history.day2Auto.text5', {
-          defaultValue: 'Wykonał',
-        }),
+        label: t('admin.billing.plan-history.day2Auto.text5'),
         render: (row) => row.performed_by || 'System',
       },
     ],
@@ -82,15 +70,10 @@ export const AdminPlanHistoryPanel: React.FC = () => {
     <div className="space-y-4">
       <section className="rounded-2xl border border-c-border bg-c-surface p-5">
         <h2 className="text-lg font-semibold text-c-text">
-          {t('admin.billing.plan-history.day2Auto.text6', {
-            defaultValue: 'Historia zmian planu',
-          })}
+          {t('admin.billing.plan-history.day2Auto.text6')}
         </h2>
         <p className="mt-1 text-sm text-c-text-secondary">
-          {t('admin.billing.plan-history.day2Auto.text7', {
-            defaultValue:
-              'Chronologiczny, tylko-do-odczytu zapis zmian subskrypcji tej organizacji.',
-          })}
+          {t('admin.billing.plan-history.day2Auto.text7')}
         </p>
       </section>
       <section className="rounded-2xl border border-c-border bg-c-surface p-2">
@@ -102,12 +85,8 @@ export const AdminPlanHistoryPanel: React.FC = () => {
           onRetry={() => void load()}
           empty={{
             icon: FileClock,
-            title: t('admin.billing.plan-history.day2Auto.text8', {
-              defaultValue: 'Brak historii zmian planu',
-            }),
-            description: t('admin.billing.plan-history.day2Auto.text9', {
-              defaultValue: 'Dla tej organizacji nie zapisano jeszcze zmiany subskrypcji.',
-            }),
+            title: t('admin.billing.plan-history.day2Auto.text8'),
+            description: t('admin.billing.plan-history.day2Auto.text9'),
           }}
           persistKey="admin.planHistory"
         />
