@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { resolveFinanceDetailBranches } from '../FinanceHub';
+import { resolveFinanceDetailBranches, toFinanceResolveInput } from '../FinanceHub';
 import type { FinanceKind, PredictionType } from '../financeTypes';
 
 const on = { baseline: true, prediction: true, analysis: true, valuation: true };
@@ -14,6 +14,28 @@ const validRows = [
 ] as const;
 
 describe('Finance detail identity gate', () => {
+  it.each([
+    [
+      { canonicalArtifactType: 'BASELINE_MODEL', canonicalArtifactId: 'a' },
+      'MISSING_BUSINESS_VERSION_ID',
+    ],
+    [
+      { canonicalArtifactType: 'BASELINE_MODEL', canonicalBusinessVersionId: 'v' },
+      'MISSING_ARTIFACT_ID',
+    ],
+    [{ canonicalArtifactId: 'a', canonicalBusinessVersionId: 'v' }, 'UNKNOWN_ARTIFACT_TYPE'],
+  ] as const)('preserves partial row identity for fail-closed resolution %#', (row, expected) => {
+    const identity = toFinanceResolveInput(row);
+    expect(identity).toBeDefined();
+    expect(resolveFinanceDetailBranches('models', undefined, on, identity).resolutionError).toBe(
+      expected
+    );
+  });
+
+  it('keeps a row with no canonical signal on the legacy path', () => {
+    expect(toFinanceResolveInput({ id: 'legacy-1' })).toBeUndefined();
+  });
+
   it.each(validRows)(
     'permits matching %s / %s identity',
     (kind, predictionType, artifactType, branch) => {

@@ -245,7 +245,7 @@ function CanonicalFinanceDirectWorkspace({
 }: {
   artifactId: string;
   businessVersionId: string;
-  artifactType: FinanceArtifactType;
+  artifactType: string;
   onNavigateBack: () => void;
 }) {
   const [artifact, setArtifact] = useState<FinanceArtifactDetailDto | null>(null);
@@ -307,7 +307,7 @@ function CanonicalFinanceDirectWorkspace({
     <CanonicalFinanceWorkspaceMount
       artifactId={artifactId}
       businessVersionId={businessVersionId}
-      artifactType={artifactType}
+      artifactType={resolution.artifactType}
     >
       {resolution.workspace === 'statementPackV2' ? (
         <FinanceV3StatementPackWorkspace
@@ -481,6 +481,32 @@ export type FinanceDeepLink = {
   tab: ModuleTab;
   entityId: string;
 };
+
+type CanonicalIdentityFields = {
+  canonicalArtifactId?: string | null;
+  canonicalBusinessVersionId?: string | null;
+  canonicalArtifactType?: string | null;
+  id?: string | null;
+};
+
+/** Partial canonical identity is still an identity attempt and must fail closed, never fall back to legacy. */
+export function toFinanceResolveInput(
+  value: CanonicalIdentityFields
+): FinanceResolveInput | undefined {
+  if (
+    !value.canonicalArtifactId &&
+    !value.canonicalBusinessVersionId &&
+    !value.canonicalArtifactType
+  ) {
+    return undefined;
+  }
+  return {
+    artifactId: value.canonicalArtifactId,
+    businessVersionId: value.canonicalBusinessVersionId,
+    artifactType: value.canonicalArtifactType,
+    legacyId: value.id,
+  };
+}
 
 /** Canonical Finance detail URLs, including all five flag-gated workspaces. */
 export function parseFinanceDeepLink(pathname: string): FinanceDeepLink | null {
@@ -1038,11 +1064,18 @@ export const FinanceHub: React.FC = () => {
   // ---- Document management ----
   const handleOpenFull = useCallback(
     (row: FinanceRow) => {
-      if (row.canonicalArtifactId && row.canonicalBusinessVersionId && row.canonicalArtifactType) {
+      const canonicalIdentity = toFinanceResolveInput(row);
+      if (canonicalIdentity) {
         const next = new URLSearchParams(searchParams);
-        next.set('canonicalArtifactType', row.canonicalArtifactType);
-        next.set('canonicalArtifactId', row.canonicalArtifactId);
-        next.set('canonicalBusinessVersionId', row.canonicalBusinessVersionId);
+        if (canonicalIdentity.artifactType) {
+          next.set('canonicalArtifactType', canonicalIdentity.artifactType);
+        }
+        if (canonicalIdentity.artifactId) {
+          next.set('canonicalArtifactId', canonicalIdentity.artifactId);
+        }
+        if (canonicalIdentity.businessVersionId) {
+          next.set('canonicalBusinessVersionId', canonicalIdentity.businessVersionId);
+        }
         setSearchParams(next);
         return;
       }
@@ -3155,19 +3188,21 @@ export const FinanceHub: React.FC = () => {
     const canonicalArtifactType = searchParams.get('canonicalArtifactType');
     const canonicalArtifactId = searchParams.get('canonicalArtifactId');
     const canonicalBusinessVersionId = searchParams.get('canonicalBusinessVersionId');
+    const hasAnyCanonicalQueryIdentity = Boolean(
+      canonicalArtifactType || canonicalArtifactId || canonicalBusinessVersionId
+    );
+    const hasCompleteCanonicalQueryIdentity = Boolean(
+      canonicalArtifactType && canonicalArtifactId && canonicalBusinessVersionId
+    );
+    const canonicalFlagEnabled =
+      (canonicalArtifactType === 'STATEMENT_PACK' && financeV3StatementPackFlag.enabled) ||
+      (canonicalArtifactType === 'BASELINE_MODEL' && financeV3BaselineFlag.enabled) ||
+      (canonicalArtifactType === 'HISTORICAL_ANALYSIS' && financeV3AnalysisFlag.enabled) ||
+      (canonicalArtifactType === 'PREDICTION_SCENARIO' && financeV3PredictionFlag.enabled) ||
+      (canonicalArtifactType === 'VALUATION_CASE' && financeV3ValuationFlag.enabled);
     if (
-      (canonicalArtifactType === 'STATEMENT_PACK' ||
-        canonicalArtifactType === 'BASELINE_MODEL' ||
-        canonicalArtifactType === 'HISTORICAL_ANALYSIS' ||
-        canonicalArtifactType === 'PREDICTION_SCENARIO' ||
-        canonicalArtifactType === 'VALUATION_CASE') &&
-      canonicalArtifactId &&
-      canonicalBusinessVersionId &&
-      ((canonicalArtifactType === 'STATEMENT_PACK' && financeV3StatementPackFlag.enabled) ||
-        (canonicalArtifactType === 'BASELINE_MODEL' && financeV3BaselineFlag.enabled) ||
-        (canonicalArtifactType === 'HISTORICAL_ANALYSIS' && financeV3AnalysisFlag.enabled) ||
-        (canonicalArtifactType === 'PREDICTION_SCENARIO' && financeV3PredictionFlag.enabled) ||
-        (canonicalArtifactType === 'VALUATION_CASE' && financeV3ValuationFlag.enabled))
+      hasAnyCanonicalQueryIdentity &&
+      (!hasCompleteCanonicalQueryIdentity || canonicalFlagEnabled)
     ) {
       const closeCanonical = () => {
         const next = new URLSearchParams(searchParams);
@@ -3180,9 +3215,9 @@ export const FinanceHub: React.FC = () => {
         <div className="p-4 lg:p-6">
           <div className="h-[calc(100vh-120px)] min-h-[620px] overflow-hidden rounded-xl border border-c-border-subtle bg-c-surface">
             <CanonicalFinanceDirectWorkspace
-              artifactId={canonicalArtifactId}
-              businessVersionId={canonicalBusinessVersionId}
-              artifactType={canonicalArtifactType}
+              artifactId={canonicalArtifactId ?? ''}
+              businessVersionId={canonicalBusinessVersionId ?? ''}
+              artifactType={canonicalArtifactType ?? ''}
               onNavigateBack={closeCanonical}
             />
           </div>
@@ -3237,16 +3272,7 @@ export const FinanceHub: React.FC = () => {
         analysis: financeV3AnalysisFlag.enabled,
         valuation: financeV3ValuationFlag.enabled,
       },
-      activeDocument.canonicalArtifactId &&
-        activeDocument.canonicalBusinessVersionId &&
-        activeDocument.canonicalArtifactType
-        ? {
-            artifactId: activeDocument.canonicalArtifactId,
-            businessVersionId: activeDocument.canonicalBusinessVersionId,
-            artifactType: activeDocument.canonicalArtifactType,
-            legacyId: activeDocument.id,
-          }
-        : undefined
+      toFinanceResolveInput(activeDocument)
     );
 
     return (
