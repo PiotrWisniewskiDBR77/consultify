@@ -1,6 +1,8 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import enTranslation from '../../../public/locales/en/translation.json';
+import plTranslation from '../../../public/locales/pl/translation.json';
 
 const v8Get = vi.fn();
 vi.mock('@/services/api/v8/client', () => ({
@@ -8,8 +10,29 @@ vi.mock('@/services/api/v8/client', () => ({
 }));
 
 const i18nState = vi.hoisted(() => ({ language: 'en' }));
+
+// NotebookTodayView.tsx calls t() with real translation keys and NO inline fallback (relies
+// on public/locales/{en,pl}/translation.json). A `t: (k) => k` identity mock returns the raw
+// key, so text assertions against real product copy ("Today", "Dziś", ...) never matched.
+// Resolve real copy for the active test language instead (same pattern as
+// IdeaExportMenu.test.tsx, extended for this file's pl-language test case).
+function resolveTranslation(key: string, options?: Record<string, unknown>): string {
+  const dict = i18nState.language === 'pl' ? plTranslation : enTranslation;
+  const value = key
+    .split('.')
+    .reduce<unknown>(
+      (acc, segment) => (acc && typeof acc === 'object' ? (acc as Record<string, unknown>)[segment] : undefined),
+      dict
+    );
+  const template = typeof value === 'string' ? value : key;
+  if (!options) return template;
+  return template.replace(/\{\{(\w+)\}\}/g, (_match, name) =>
+    Object.prototype.hasOwnProperty.call(options, name) ? String(options[name]) : `{{${name}}}`
+  );
+}
+
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ i18n: i18nState, t: (k: string) => k }),
+  useTranslation: () => ({ i18n: i18nState, t: (k: string, opts?: Record<string, unknown>) => resolveTranslation(k, opts) }),
 }));
 
 import { NotebookTodayView } from '@/components/MyWork/notebook/NotebookTodayView';
