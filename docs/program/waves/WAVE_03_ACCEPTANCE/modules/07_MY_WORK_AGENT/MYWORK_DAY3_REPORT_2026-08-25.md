@@ -212,3 +212,137 @@ CREATE INDEX IF NOT EXISTS idx_calendar_events_related ON calendar_events(organi
 - Mieszany sukces powielania — FIXED; confirmation-before-write i partial-only-error mają testy UI.
 - Brak testów E.3 — FIXED, cztery przypadki w pakiecie 5/5.
 - Brak prototypów, niepełne i18n i macierz widoków — OPEN / STOP E.6.
+
+## Korekta odbiorcza (2026-08-25 — warstwa naprawcza FIX-1..FIX-15)
+
+Wykonano na `codex/day3-fixes-20260825` (worktree `/private/tmp/consultify-day3-fixes`,
+baza `c38eb4aefb`, ta sama gałąź co powyżej). 17 commitów, jeden per FIX,
+`Co-Authored-By: Claude Fable 5`. Push/deploy: 0/0 (worktree lokalny).
+
+### Wykonane FIX-y (przegląd odbiorczy + rozszerzenie warstwy 2)
+
+| FIX | Priorytet | Wynik | Istotne |
+| --- | --- | --- | --- |
+| 1 | P0 | DONE (częściowo — patrz niżej) | i18n IdeaElementInspector, Calendar V2, C.1/C.2 folderów; **znaleziono i naprawiono realny bug**: `myWork.calendar.v2.*` kolidowało z istniejącym kluczem-stringiem `myWork.calendar`="Kalendarz" — i18next nigdy nie mógł zejść w głąb pod liściem-stringiem, więc KAŻDY string V2 (From/To/Deadlines/toast "Event created") zawsze renderował angielski fallback, nawet po polsku. To jest źródłowa przyczyna DWÓCH osobnych zgłoszeń warstwy 2 ("mixed PL/EN" i "DEADLINES vs Terminy") — ten sam bug. Przeniesiono na `myWork.calendarV2.*`, dodano pełny klucz PL+EN. |
+| 2 | P0 | DONE | "Drąż w głąb"/"AI podsumuj" → `disabled` z realnym powodem (wzór "AI porada"), i18n. |
+| 3 | P0 | DONE (z jawnym ograniczeniem) | `toolSection`+`recentItems` podłączone dla wszystkich 4 narzędzi z realnych źródeł (kolor/kształt węzła, tor procesu, żywa sesja whiteboardu, kolumny wiersza tabeli). Naprawiono też realną lukę: pojedynczy klik wiersza w Tabeli nigdy nie raportował selekcji do wspólnego inspektora (tylko "zaznacz wszystko"). Nie zrobiono: edycja krawędzi Process Flow (tylko odczyt toru), edycja sesji whiteboardu (tylko odczyt) — jawnie udokumentowane w commicie, nie ukryte. |
+| 4 | P1 | DONE | `notebookCrossSurfaceActionAudit.test.ts` 104→105 (B.6 zarejestrowało `note:version-history`, licznik nie nadążył). |
+| 5 | P1 | DONE | `process.cwd()`→`__dirname` w 2 plikach; `notebook.expandCapability.failClosed` — asercja "+500 znaków" zamieniona na dopasowanie do faktycznego zamykającego nawiasu obiektu. |
+| 6 | P1 | DONE | Sekcja "Artefakty wyjściowe": tytuł dociągany z realnego API celu (initiative/task/decision), status ≠ scope (był błędnie mapowany), "Otwórz" działa dla każdego rozpoznanego `ArtifactType` przez `artifactLinks.ts` zamiast switcha na 2 przypadki. |
+| 7 | P1 | DONE | Wszystkie 4 miejsca `receiptCapableActionIds` naprawione: 3 z nich hardcodowały `[]`, wyłączając funkcje z realnym, trwałym kwitem serwerowym (AI-proposal create/resolve, create-task/decision/idea, zapis strony) — nie były to przypadki "backend nie potrafi". 4 komunikaty "blankietowe" przeniesione na i18n; NotebookHamburgerMenu dostał per-akcję prawdziwy powód z serwera zamiast jednego zdania dla wszystkich. |
+| 8 | P1 | DONE | RowDetailPanel i ProcessFlowPropertiesPanel warunkowane `!isIdeaInspectorRightRailEnabled()` — usuwa "dwa panele naraz" przy ON. Test kontraktowy źródła (pełny render zbyt kosztowny na tym poziomie). |
+| 9 | P2 | DONE | prettier na plikach dotkniętych tą sesją (7+ plików). |
+| 10 | P2 | DONE | `aria-label="Resize element inspector"` w ExecutiveModuleShell → i18n. |
+| 11 | P2 | DONE | Liczniki "Podstawowe"/"Treść i głębia" już nie są zaszyte 1/5 — realne; `safeText` czyści też slug-i (np. `initiative-1`), nie tylko UUID. |
+| 12 | P2 | DONE (ten rozdział) | — |
+| **13** (od nadzorcy, P0) | P0 | DONE | `GET /calendar/unified` faktycznie miał gałąź `source='event'`, ale `'event'` brakowało w DEFAULT liście źródeł zarówno w serwerze, jak i w `useCalendarData.ts` — dwa niezależne miejsca musiały się zgodzić. Naprawiono oba + 2 nowe testy regresyjne (właściciel i uczestnik-nie-twórca). |
+| **14** (od nadzorcy, P1) | P1 | DONE | Uchwyt bloku (⠿/+) — `group` był na własnym, niewidocznym (opacity-0) divie uchwytu, więc `hover:opacity-100` nigdy nie mógł się odpalić (mysz nie może "najechać" na coś niewidocznego). Przeniesiono `group` na kontener treści. Zakres: uchwyt nadal śledzi pozycję karetki, nie hover per-akapit (pełne śledzenie per-blok to osobne zadanie). |
+| **15** (od nadzorcy, P0) | P0 | DONE | "Rozwiń w dokument" był trwale zablokowany, bo `POST /work-canvas/drafts` nigdy nie zapisywał prawdziwego, niezależnie odczytywalnego kwitu audytowego — klient używał `draftId` jako fałszywego zastępnika. Serwer teraz zapisuje `NOTEBOOK_PAGE_EXPANDED` do `audit_events` (ten sam wzorzec co usuwanie notatki) gdy żądanie ma `provenance.source==='notebook-expand'` i wnioskujący jest właścicielem strony źródłowej; `action-capabilities` zwraca `allowed: isOwner` (realnie, nie zawsze `false`); readback endpoint przyjmuje `?action=`. |
+
+Dodatkowo (poza numeracją, znalezione przy weryfikacji): dwie regresje testowe
+wprowadzone przez FIX-7 (SlashMenu wywołuje teraz `t()`) — jeden test miał
+lokalny mock i18n bez `t` (`t is not a function`), drugi asercję na starym
+angielskim tekście. Obie naprawione, pełny sweep dotkniętych katalogów
+(56 plików / 249 testów) zielony.
+
+### Propozycja odwzorowania słowników stanów (A.4) — DO ZATWIERDZENIA, NIE WDROŻONO
+
+Stan faktyczny: 3 z 4 narzędzi mają WŁASNY, niezgodny enum stanu; Tablica nie
+ma stanu w ogóle (tylko wolny typ semantyczny karty):
+
+| Narzędzie | Enum | Liczba stanów |
+| --- | --- | --- |
+| Tabela | `todo / in_progress / done / blocked` | 4 |
+| Mapa | `idea / exploring / validated / ready_to_convert / converted / ready / rejected` | 7 |
+| Process Flow | brak (`noState` — narzędzie nie prowadzi stanu elementu) | 0 |
+| Tablica | brak enumu — wolny typ semantyczny per karta | 0 |
+
+Propozycja mapowania Tabela(4)↔Mapa(7) (WYŁĄCZNIE do decyzji właściciela —
+nie wdrożono, to jest wyłącznie odczyt/edycja natywnego enumu narzędzia,
+żadna migracja danych nie nastąpiła):
+
+| Tabela | Mapa (kandydaci) | Uwaga |
+| --- | --- | --- |
+| `todo` | `idea` | 1:1 |
+| `in_progress` | `exploring`, `validated`, `ready_to_convert` | 3→1: Mapa ma 3 stany pośrednie, Tabela żaden — który jest "prawdziwym" in_progress? |
+| `done` | `converted`, `ready` | Czy "gotowe" (ready) i "przekonwertowane" (converted) to to samo w Tabeli, czy `converted` powinno być poza cyklem stanu (jak "zamknięte")? |
+| `blocked` | `rejected` | Semantycznie różne: "zablokowane" (czeka) vs "odrzucone" (decyzja). Rekomendacja: NIE mapować 1:1 bez potwierdzenia. |
+
+Process Flow i Tablica nie mają NIC do zmapowania (0 stanów) — pozostają poza
+tą tabelą, chyba że właściciel zdecyduje wprowadzić dla nich enum od zera
+(nowa decyzja produktowa, nie odwzorowanie istniejących danych).
+
+### Sprostowania do oryginalnego raportu
+
+1. **"Notebook 34/34"** — niezweryfikowalne jako podana liczba. Pełny folder
+   `src/components/MyWork/notebook/__tests__/` to dziś **13 plików / 68
+   testów** (wszystkie PASS po tej sesji), nie 34. Jeśli "34/34" odnosiło się
+   do węższego, celowanego podzbioru — raport nie podaje jego dokładnej listy
+   plików, więc liczby nie da się zweryfikować post-hoc. Rekomendacja: przyszłe
+   raporty powinny podawać jawną listę plików obok liczby N/N.
+2. **Zakres "51 dotkniętych plików"** — `git diff --name-only
+   04bfab90142082128aca2cd5f00fc118e4e900c4 c38eb4aefb | wc -l` daje
+   **54**, nie 51. Rozbieżność 3 plików, przyczyna nieustalona (raport nie
+   dokumentuje, które 51 liczono).
+3. **Dwa panele naraz przy ON** — potwierdzony fakt z oryginalnego odbioru,
+   **naprawiony w FIX-8** tej sesji (RowDetailPanel/ProcessFlowPropertiesPanel
+   warunkowane flagą).
+4. **Rozbieżność nazwy flagi** — zweryfikowano `src/utils/
+   ideaInspectorRightRailFlag.ts`: query param `ff_ideaInspectorRightRail`,
+   localStorage `ff.idea_inspector_right_rail`, env
+   `VITE_IDEA_INSPECTOR_RIGHT_RAIL` — trzy różne konwencje nazewnictwa per
+   mechanizm, ale WEWNĘTRZNIE spójne (ten sam wzorzec co
+   `ideaDetailsInPanelFlag.ts`). Nie znaleziono innej, sprzecznej nazwy tej
+   samej flagi w kodzie. Jeśli zgłoszenie dotyczyło konkretnego miejsca w
+   dokumentacji/UI — proszę wskazać dokładną lokalizację, nie zidentyfikowano
+   jej w tym przeglądzie.
+
+### Dodatkowe ustalenia warstwy 2 (bez naprawy albo już naprawione wyżej)
+
+- **Mixed PL/EN w modalach Event/Task, From/To, toast "Event created"** —
+  ten sam root cause co "DEADLINES vs Terminy": kolizja klucza i18n
+  `myWork.calendar.v2.*` (patrz FIX-1). Naprawione.
+- **Brakujące etykiety Właściciel/Typ semantyczny w Podstawowe** — naprawione
+  (commit osobny, poza FIX-3/11, ale w ich zakresie merytorycznym).
+- **Motyw dark-only w My Work** — SPRAWDZONE CZĘŚCIOWO: infrastruktura
+  motywu istnieje w całej aplikacji (`tailwind.config` → `darkMode: 'class'`,
+  przełącznik w `VisualCustomizationSettings.tsx`, montaż w `App.tsx`/
+  `AppProviders.tsx`); nie znaleziono w My Work kodu, który by na sztywno
+  wymuszał `dark`. To NIE jest jednak dowód wizualny — ta sesja nie miała
+  dostępu do przeglądarki/dev-render dla My Work, więc **nie mogę
+  potwierdzić ani zaprzeczyć** realnemu zachowaniu w runtime. Zgodnie z
+  regułą #7 (Piotr nigdy nie jest pierwszym testerem wizualnym) wymaga to
+  osobnego przebiegu z realnym zrzutem przed jakimkolwiek stwierdzeniem.
+
+### Pomiar zasięgu tej sesji
+
+- Plików zmienionych: 32 (własny `git diff --name-only c38eb4aefb HEAD`).
+- Testy uruchomione i zielone (nie cała gałąź — zakres dotkniętych obszarów,
+  zgodnie z zasadą "zastane czerwone zostaje, delta +1 znika"):
+  `src/components/MyWork/{panel,notebook,Calendar,__tests__}`,
+  `src/views/vault`, `src/components/shared/ExecutiveModuleShell`,
+  wybrane `tests/components/MyWork/{Idea*,Calendar*}`,
+  `server/src/routes/{my-work,v8}` — jeden łączny przebieg (deduplikowany,
+  nie suma osobnych przebiegów): **80 plików testowych, 365 testów,
+  wszystkie PASS**. Nie uruchamiano pełnego `tsc`/pełnego `vitest` (zakaz
+  robotnika).
+- `check-list-canon.sh`: pełny skan (staging pusty → fallback --all) znalazł
+  3 pliki z naruszeniem kanonu tabel — **żaden nie jest w moim diffie**
+  (`PlanScenarioSurface.tsx`, `SlashMenu.blockConfiguration.test.tsx`,
+  `LiveMatrix.tsx` — zastany dług sprzed tej sesji). Zero nowych naruszeń
+  wprowadzonych przez FIX-1..FIX-15.
+- Znaleziona i naprawiona regresja WPROWADZONA przez tę sesję (nie zastana):
+  2 testy SlashMenu złamane przez FIX-7's `t()`, naprawione w tym samym
+  przebiegu (patrz commit "fix SlashMenu test regressions").
+
+### STOP-y utrzymane (nie dotknięte tą sesją, celowo)
+
+- A.6 (brak parytetu 6 zakładek starego panelu) — nie w zakresie FIX-1..15.
+- E.6 i18n+macierz day/week/month — częściowo poprawione (kolizja klucza
+  V2 naprawiona), ale pełna macierz happy/error/empty × day/week/month nie
+  była w zakresie tej warstwy naprawczej.
+- Prototypy `scratchpad/mywork-fala3/`, `scratchpad/mywork-kalendarz/` — wciąż
+  nieobecne; `VISUAL_PARITY_NOT_PROVEN` pozostaje w mocy.
+
+Odbiór nadzorcy pozostaje wiążący. Ten rozdział nie zastępuje weryfikacji
+wzrokowej ani odbioru realnego runtime.
