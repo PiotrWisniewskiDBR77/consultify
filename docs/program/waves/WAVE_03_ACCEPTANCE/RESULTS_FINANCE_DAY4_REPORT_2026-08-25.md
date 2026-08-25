@@ -1,11 +1,11 @@
 # Results i Finance dzień 4 — raport dyżuru 2026-08-25
 
-Baza: `codex/m03-admin-20260824 @ ca292730ff2585297a345cec551d8420eb005b21`  
-Marker: `ca292730ff2585297a345cec551d8420eb005b21` — POTWIERDZONY  
-Gałąź robocza: `codex/results-finance-day4-20260825`  
-Worktree: `/private/tmp/consultify-results-finance-day4`  
-Porty użyte: żadne  
-Czas pracy: 2026-08-25 11:27 CEST–w toku
+Baza: `codex/m03-admin-20260824 @ ca292730ff2585297a345cec551d8420eb005b21`
+Marker: `ca292730ff2585297a345cec551d8420eb005b21` — POTWIERDZONY
+Gałąź robocza: `codex/results-finance-day4-20260825`
+Worktree: `/private/tmp/consultify-results-finance-day4`
+Porty użyte: żadne
+Czas pracy: 2026-08-25 11:27–11:57 CEST
 
 ## Warunki wstępne — wynik sprawdzenia
 
@@ -23,16 +23,16 @@ Czas pracy: 2026-08-25 11:27 CEST–w toku
 
 ## Sekcja R — Results (DEC-2026-08-24-04)
 
-| Pozycja                                    | Status           | Commit                      | Testy                    | Uwagi                                                                                                        |
-| ------------------------------------------ | ---------------- | --------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------ |
-| R.1 strażnik `forbiddenCanonicalComponent` | DONE_CURRENT_SHA | `e832c813bf`                | 5/5 PASS + manifest PASS | Generyczna pętla, walidacja pola, przypadek ostatniej trasy, komenda npm                                     |
-| R.2 blokada tylnych drzwi sampleData       | DONE_CURRENT_SHA | `e2ccad0771`                | 8/8 PASS                 | Siedem gałęzi prefiksowych usuniętych, host produkcyjny fail-closed, banner jawny, puste API pozostaje puste |
-| R.3 jawna ścieżka flag + obejścia          | PARTIAL / STOP   | do uzupełnienia po commicie | 22/22 PASS               | Produkcja fail-closed i enumeracja bramek gotowe; istniejący test wymaga bypassu                             |
-| R.4 RES-OWN-002 trzy formuły               | STOP_DEPENDENCY  | —                           | —                        | R.3 jest wymaganym fundamentem DEC-04                                                                        |
-| R.5 RES-OWN-007 karta KPI                  | STOP_DEPENDENCY  | —                           | —                        | jw.                                                                                                          |
-| R.6 RES-OWN-007 karta OKR                  | STOP_DEPENDENCY  | —                           | —                        | jw.                                                                                                          |
-| R.7 RES-OWN-007 karta ROI                  | STOP_DEPENDENCY  | —                           | —                        | jw.                                                                                                          |
-| R.8 testy zbiorcze i i18n                  | PENDING          | —                           | —                        | —                                                                                                            |
+| Pozycja                                    | Status           | Commit         | Testy                    | Uwagi                                                                                                        |
+| ------------------------------------------ | ---------------- | -------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| R.1 strażnik `forbiddenCanonicalComponent` | DONE_CURRENT_SHA | `e832c813bf`   | 5/5 PASS + manifest PASS | Generyczna pętla, walidacja pola, przypadek ostatniej trasy, komenda npm                                     |
+| R.2 blokada tylnych drzwi sampleData       | DONE_CURRENT_SHA | `e2ccad0771`   | 8/8 PASS                 | Siedem gałęzi prefiksowych usuniętych, host produkcyjny fail-closed, banner jawny, puste API pozostaje puste |
+| R.3 jawna ścieżka flag + obejścia          | PARTIAL / STOP   | `d3c429e1a3`   | 22/22 PASS               | Produkcja fail-closed i enumeracja bramek gotowe; istniejący test wymaga bypassu                             |
+| R.4 RES-OWN-002 trzy formuły               | STOP_DEPENDENCY  | —              | —                        | R.3 jest wymaganym fundamentem DEC-04                                                                        |
+| R.5 RES-OWN-007 karta KPI                  | STOP_DEPENDENCY  | —              | —                        | jw.                                                                                                          |
+| R.6 RES-OWN-007 karta OKR                  | STOP_DEPENDENCY  | —              | —                        | jw.                                                                                                          |
+| R.7 RES-OWN-007 karta ROI                  | STOP_DEPENDENCY  | —              | —                        | jw.                                                                                                          |
+| R.8 testy zbiorcze i i18n                  | PARTIAL / STOP   | raport końcowy | 1066 PASS, 5 FAIL        | 99 plików RealPG bez właściwego schematu; 5 zastanych testów unit/UI FAIL                                    |
 
 ### R.1 — dowód działania strażnika
 
@@ -61,16 +61,16 @@ Właściciel poza publiczną produkcją wpisuje `/results?ff_wave3ResultsOwnerRe
 
 ## Sekcja F — Finance (DEC-2026-08-24-05)
 
-| Pozycja                               | Status           | Commit                  | Testy          | Uwagi                                                         |
-| ------------------------------------- | ---------------- | ----------------------- | -------------- | ------------------------------------------------------------- |
-| F.1 inwentarz FIN-REC-001             | DONE_CURRENT_SHA | `4ab7a61403`            | audyt źródłowy | Sześć gałęzi i pięć flag zamrożone poniżej                    |
-| F.2 resolver FIN-REC-002              | DONE_CURRENT_SHA | `5502e8fdb2`            | 81/81 PASS     | 53-case table + OFF regression + stare testy                  |
-| F.3 wspólny shell FIN-REC-003         | PARTIAL / STOP   | `b284ca6e43`            | 10/10 PASS     | Mechaniczne luki zamknięte; cold Back nie utrwala filtrów     |
-| F.4 `financeOwnerSampleData`          | DONE_CURRENT_SHA | `207124e9e9`            | 5/5 PASS       | Host produkcyjny fail-closed, jawny banner, licznik zamrożony |
-| F.5 ochrona danych i ufności          | DONE_CURRENT_SHA | `1cc0724847`            | 4/4 PASS       | Zero migracji, ufność i tenant guards zamrożone               |
-| F.6 stany brzegowe FIN-REC-011        | STOP             | docs commit tej pozycji | audyt 5×8      | Brak jednolitych capability/error contracts                   |
-| F.7 testy FIN-REC-014                 | PENDING          | —                       | —              | —                                                             |
-| F.8 przygotowanie odłączenia Benefits | PENDING          | —                       | —              | —                                                             |
+| Pozycja                               | Status           | Commit       | Testy          | Uwagi                                                         |
+| ------------------------------------- | ---------------- | ------------ | -------------- | ------------------------------------------------------------- |
+| F.1 inwentarz FIN-REC-001             | DONE_CURRENT_SHA | `4ab7a61403` | audyt źródłowy | Sześć gałęzi i pięć flag zamrożone poniżej                    |
+| F.2 resolver FIN-REC-002              | DONE_CURRENT_SHA | `5502e8fdb2` | 81/81 PASS     | 53-case table + OFF regression + stare testy                  |
+| F.3 wspólny shell FIN-REC-003         | PARTIAL / STOP   | `b284ca6e43` | 10/10 PASS     | Mechaniczne luki zamknięte; cold Back nie utrwala filtrów     |
+| F.4 `financeOwnerSampleData`          | DONE_CURRENT_SHA | `207124e9e9` | 5/5 PASS       | Host produkcyjny fail-closed, jawny banner, licznik zamrożony |
+| F.5 ochrona danych i ufności          | DONE_CURRENT_SHA | `1cc0724847` | 4/4 PASS       | Zero migracji, ufność i tenant guards zamrożone               |
+| F.6 stany brzegowe FIN-REC-011        | STOP             | `3a9e2f625f` | audyt 5×8      | Brak jednolitych capability/error contracts                   |
+| F.7 testy FIN-REC-014                 | PARTIAL / STOP   | `e0e97da8d1` | 3/3 PASS       | Statusy udowodnione; RealPG/runtime/E2E niezweryfikowane      |
+| F.8 przygotowanie odłączenia Benefits | DONE_CURRENT_SHA | `fd9fb22245` | 1/1 PASS       | Dokładnie 3 importy; zero zmian importów                      |
 
 ### F.1 — manifest runtime i zamrożenie
 
@@ -165,34 +165,55 @@ Domknięta luka mechaniczna: własne `w-[400px]` zastąpione wspólnym `PREVIEW_
 
 Każdy znaleziony stan ma tekst, nie tylko kolor. Nie dodano Retry dla mutacji bez potwierdzonego klucza idempotencji i nie ujawniono treści odpowiedzi serwera w nowym UI.
 
+### F.7 — siedem punktów dowodowych i poziomy ukończenia
+
+1. Resolver: 53/53 przypadki tabelaryczne PASS; przejścia statusów `DRAFT→DRAFT`, `REVIEW→IN_REVIEW`, `APPROVED→APPROVED`: 3/3 PASS.
+2. Pięć workspace'ów/list/preview/błędów: dowody komponentowe F.2–F.6 istnieją, ale macierz F.6 pozostaje niepełna — `PARTIAL`.
+3. Real PostgreSQL: `STOP / NOT VERIFIED`. Docker działa, lecz żaden zastany kontener nie został utworzony dla tego dyżuru ani potwierdzony jako bezpieczny, rekonstruowalny schemat Finance. Nie użyto SQLite ani cudzej bazy jako substytutu.
+4. Browser E2E pięciu przepływów: `NOT VERIFIED`; E2E odblokowane dopiero po akcepcie flag przez właściciela.
+5. Cold restart/readback bez fixture: `NOT VERIFIED`; wymaga autoryzowanego runtime'u z flagami.
+6. Negatywny tenant/permission: kolejność router guardów udowodniona źródłowo i testem; realny 403 per karta pozostaje `NOT VERIFIED` z powodu braku capability contract.
+7. Console/network: `NOT VERIFIED`; runtime nie został uruchomiony.
+
+Poziom per karta: Statements `CODE_PRESENT`; Baseline `CODE_PRESENT`; Analysis `CODE_PRESENT`; Prediction `CODE_PRESENT`; Valuation `CODE_PRESENT`. Żadna karta nie osiąga `TECHNICAL_PASS`, ponieważ brakuje pełnego F.6, RealPG, cold readback i dowodu runtime. Nie zgłoszono `READY_FOR_OWNER_REVIEW` ani `OWNER_ACCEPTED`.
+
+### F.8 — plan odłączenia Benefits, bez wykonania
+
+- `BudgetWorkspace`: usunąć lazy import i gałąź ternary dopiero po osobnej decyzji produktowej. `isBudgetPrediction` (`prediction` + `budget`) nie ma odpowiednika V3 — samo przełączenie flag nie wystarcza.
+- `FinancialAnalysisWorkspace`: po owner-accepted włączeniu `analysis` usunąć lazy import i wyłącznie gałąź OFF w szczególe Analysis.
+- `ValuationWorkspace`: po owner-accepted włączeniu `valuation` i potwierdzeniu pełnego cutover usunąć lazy import i wyłącznie gałąź OFF w szczególe Valuation.
+- Użycia komponentów `Benefits/*` poza `FinanceHub` z inwentarza F.1 nie są kasowane. Usunięcie dotyczy wyłącznie montażu w `FinanceHub`.
+- Strażnik `financeHubBenefitsImports.contract.test.ts`: 1/1 PASS; dokładnie trzy symbole i denominator 3. Test czerwieni się po dodaniu lub cichym usunięciu importu.
+- Diff importów Benefits względem bazy: pusty. Nie utworzono patcha, `.diff` ani gałęzi-ducha.
+
 ## Pozycje STOP
 
 ### STOP — R.3 `canonicalCutoverMount`
 
-Powód: preferowane usunięcie propa łamie istniejący test `ResultsKpiScorecardsView.visibility.test.tsx`, który literalnie wymaga `canonicalCutoverMount: true`; §0.5 zabrania zmiany istniejącego testu w celu przepuszczenia implementacji.  
-Dowód: `src/components/Results/__tests__/ResultsKpiScorecardsView.visibility.test.tsx:36-46`; test bazowy i po zmianach przechodzi 1/1. Test enumerujący potwierdza, że bypass jest ograniczony do nieroutowanego adaptera historycznego.  
-Co zrobiłbym, gdyby zapadła decyzja o zmianie kontraktu testu: usunąłbym prop z `ResultsKpiRegistryPage`, usunął przekazanie z `ResultsKpiScorecardsView`, a test zmienił na wymaganie respektowania `kpiRegistry`.  
+Powód: preferowane usunięcie propa łamie istniejący test `ResultsKpiScorecardsView.visibility.test.tsx`, który literalnie wymaga `canonicalCutoverMount: true`; §0.5 zabrania zmiany istniejącego testu w celu przepuszczenia implementacji.
+Dowód: `src/components/Results/__tests__/ResultsKpiScorecardsView.visibility.test.tsx:36-46`; test bazowy i po zmianach przechodzi 1/1. Test enumerujący potwierdza, że bypass jest ograniczony do nieroutowanego adaptera historycznego.
+Co zrobiłbym, gdyby zapadła decyzja o zmianie kontraktu testu: usunąłbym prop z `ResultsKpiRegistryPage`, usunął przekazanie z `ResultsKpiScorecardsView`, a test zmienił na wymaganie respektowania `kpiRegistry`.
 Stan: zacommitowano częściowo; odmowa produkcyjna i enumeracja bramek są gotowe.
 
 ### STOP — R.4–R.7
 
-Powód: instrukcja uznaje R.1–R.3 za niepodzielny fundament DEC-04 i zakazuje budowania kart po STOP-ie którejkolwiek z tych pozycji.  
-Dowód: instrukcja §R „Reguła wejścia do sekcji R”.  
-Co zrobiłbym po rozstrzygnięciu R.3: wróciłbym kolejno do R.4, R.5, R.6 i R.7, bez równoległego generowania trzecich implementacji kart.  
+Powód: instrukcja uznaje R.1–R.3 za niepodzielny fundament DEC-04 i zakazuje budowania kart po STOP-ie którejkolwiek z tych pozycji.
+Dowód: instrukcja §R „Reguła wejścia do sekcji R”.
+Co zrobiłbym po rozstrzygnięciu R.3: wróciłbym kolejno do R.4, R.5, R.6 i R.7, bez równoległego generowania trzecich implementacji kart.
 Stan: NIE ZACOMMITOWANO.
 
 ### STOP — F.3 cold Back
 
-Powód: `tab` jest utrwalany w URL, ale wyszukiwanie, filtry, zaznaczenie i scroll istnieją wyłącznie w stanie komponentu; pełny cold reload nie może ich odtworzyć bez nowego kontraktu serializacji URL.  
-Dowód: `FinanceHub.tsx:554-563,1315-1351,1047`; test kontraktowy potwierdza zachowanie in-memory.  
-Co zrobiłbym po decyzji produktowej: zdefiniowałbym stabilny, wersjonowany format query dla search/filter/selection i osobno politykę odtwarzania scrolla.  
+Powód: `tab` jest utrwalany w URL, ale wyszukiwanie, filtry, zaznaczenie i scroll istnieją wyłącznie w stanie komponentu; pełny cold reload nie może ich odtworzyć bez nowego kontraktu serializacji URL.
+Dowód: `FinanceHub.tsx:554-563,1315-1351,1047`; test kontraktowy potwierdza zachowanie in-memory.
+Co zrobiłbym po decyzji produktowej: zdefiniowałbym stabilny, wersjonowany format query dla search/filter/selection i osobno politykę odtwarzania scrolla.
 Stan: zacommitowano częściowo; geometria preview i audyt gotowe.
 
 ### STOP — F.6 rozróżnienie stanów
 
-Powód: brak uprawnień oraz część konfliktów/błędów obliczeń nie mają jednolitego, typowanego kontraktu we wszystkich pięciu workspace'ach; role są dodatkowo zaszyte jako `preparer`.  
-Dowód: macierz 5×8 powyżej oraz `FinanceHub.tsx:332,346,352,3330,3394,3424`.  
-Co zrobiłbym po udostępnieniu realnego checku capability i wspólnej taksonomii błędów: dodałbym osobne stany per workspace i wymagane 15 testów 403/409/compute bez zmiany globalnych mocków.  
+Powód: brak uprawnień oraz część konfliktów/błędów obliczeń nie mają jednolitego, typowanego kontraktu we wszystkich pięciu workspace'ach; role są dodatkowo zaszyte jako `preparer`.
+Dowód: macierz 5×8 powyżej oraz `FinanceHub.tsx:332,346,352,3330,3394,3424`.
+Co zrobiłbym po udostępnieniu realnego checku capability i wspólnej taksonomii błędów: dodałbym osobne stany per workspace i wymagane 15 testów 403/409/compute bez zmiany globalnych mocków.
 Stan: NIE ZACOMMITOWANO w kodzie produkcyjnym; audyt w raporcie.
 
 ## Znaleziska
@@ -212,4 +233,41 @@ Stan: NIE ZACOMMITOWANO w kodzie produkcyjnym; audyt w raporcie.
 
 ## Testy, dowody końcowe, migracje i flagi
 
-Sekcje zostaną domknięte w Bloku 4. Do tego czasu status pozostaje `LOCAL WIP / NO PUSH / NO DEPLOY`.
+### Testy własne i regresyjne
+
+| Zakres                                    | Wynik                                              | Interpretacja                                                                         |
+| ----------------------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Nowe testy R.1–R.3                        | 35/35 PASS                                         | strażnik, sample backdoors, flagi i produkcja fail-closed                             |
+| Nowe testy F.2–F.8                        | PASS                                               | resolver, OFF regression, shell, sample, confidence, status i Benefits                |
+| Pięć testów stanu wyjściowego po zmianach | 15/15 PASS + 6/6 PASS `node:test`                  | identyczny zielony baseline; test release trwał 99,1 s                                |
+| Results — katalogi konsumentów            | 98 plików PASS; 1066 testów PASS, 5 FAIL, 412 SKIP | 99 plików RealPG FAIL na brak schematu; 5 zastanych FAIL w UI persistence/postmortem  |
+| Finance — komponenty                      | 55 plików PASS; 384 testy PASS, 17 FAIL            | 4 order-dependent `useFinanceData`; pozostałe zastane testy/mocks i copy expectations |
+| Finance — unit                            | 62 pliki PASS; 795 testów PASS, 2 FAIL             | znany baseline `financeFallbackGating`, poza zakresem                                 |
+
+Nie zmieniono istniejących czerwonych testów ani globalnych mocków, aby sztucznie uzyskać zielony wynik.
+
+### Pomiar zasięgu (§0.4a)
+
+Deklaracja: **ZASIĘG CZĘŚCIOWY**.
+
+- Dotknięte pliki współdzielone: `package.json`, tłumaczenia PL/EN, `FinanceHub.tsx`, profile owner-review/sample oraz skrypt kanoniczny.
+- Uruchomiono wymagane katalogi Results i Finance oraz dedykowane testy wszystkich nowych kontraktów.
+- Zakres nie jest pełny, ponieważ RealPG nie miał właściwego schematu, runtime/browser były zabronione przez stan flag, a pełne katalogi zawierają zastane czerwone testy.
+- `check-list-canon.sh` wykazał trzy zastane naruszenia poza diffem (`Initiatives`, `MyWork`, `method-workspace`); żaden z tych plików nie jest dotknięty przez kandydata.
+
+### Dowody bezpieczeństwa Bloku 4
+
+- Z18: diff dla `tests/setup`, `tests/helpers`, `tests/__mocks__`, `vitest*config` — pusty.
+- Migracje: diff `server/migrations/` — pusty.
+- Flagi: diff wartości domyślnych hooków Finance i `resultsVNextFeatureFlags.ts` — pusty. Stan pozostaje Results KPI/OKR/ROI OFF; Finance Analysis/Baseline/Prediction/Statement OFF, Valuation ON.
+- Z17: brak plików `MyWork`, `Admin`, `superadmin` i `Benefits`; jedyne pliki poza modułami to dozwolone `package.json`, tłumaczenia, strażnik i raport.
+- Importy Benefits w `FinanceHub.tsx`: diff pusty; denominator nadal 3.
+- `git diff --check`: PASS po formatowaniu raportu.
+- Strażnik canonical-16: PASS, denominator 16, 9 reachable, 7 qualified gaps; bez zmiany owner verdictów.
+- Porty 4280/4281: nieużyte. Runtime, Railway, push, deploy, merge i flag flips: niewykonane.
+
+## Wynik dyżuru
+
+Status końcowy: `PARTIAL / STOP GATES PRESERVED` oraz `LOCAL COMMITS / NO PUSH / NO DEPLOY`.
+
+F.2, priorytet instrukcji, jest zrealizowany i zacommitowany. R.4–R.7, pełny cold Back, jednolity kontrakt stanów Finance, RealPG i owner review pozostają jawnie nieodebrane. Żaden wynik techniczny nie jest przedstawiony jako akceptacja właściciela.
