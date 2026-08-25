@@ -32,7 +32,7 @@ Czas pracy: 2026-08-25 11:27–11:57 CEST
 | R.5 RES-OWN-007 karta KPI                  | STOP_DEPENDENCY  | —              | —                        | jw.                                                                                                          |
 | R.6 RES-OWN-007 karta OKR                  | STOP_DEPENDENCY  | —              | —                        | jw.                                                                                                          |
 | R.7 RES-OWN-007 karta ROI                  | STOP_DEPENDENCY  | —              | —                        | jw.                                                                                                          |
-| R.8 testy zbiorcze i i18n                  | PARTIAL / STOP   | raport końcowy | 1066 PASS, 5 FAIL        | 99 plików RealPG bez właściwego schematu; 5 zastanych testów unit/UI FAIL                                    |
+| R.8 testy zbiorcze i i18n                  | PARTIAL / STOP   | raport końcowy | 1066 PASS, 5 FAIL        | 99 plików RealPG bez właściwego schematu; pochodzenie 5 FAIL `NOT PROVEN`                                    |
 
 ### R.1 — dowód działania strażnika
 
@@ -61,16 +61,16 @@ Właściciel poza publiczną produkcją wpisuje `/results?ff_wave3ResultsOwnerRe
 
 ## Sekcja F — Finance (DEC-2026-08-24-05)
 
-| Pozycja                               | Status           | Commit                | Testy          | Uwagi                                                         |
-| ------------------------------------- | ---------------- | --------------------- | -------------- | ------------------------------------------------------------- |
-| F.1 inwentarz FIN-REC-001             | DONE_CURRENT_SHA | `4ab7a61403`          | audyt źródłowy | Sześć gałęzi i pięć flag zamrożone poniżej                    |
-| F.2 resolver FIN-REC-002              | DONE_CURRENT_SHA | `5502e8fdb2` + 2 fixy | 98/98 PASS     | Blokada także częściowego identity przed legacy               |
-| F.3 wspólny shell FIN-REC-003         | PARTIAL / STOP   | `b284ca6e43`          | 10/10 PASS     | Mechaniczne luki zamknięte; cold Back nie utrwala filtrów     |
-| F.4 `financeOwnerSampleData`          | DONE_CURRENT_SHA | `207124e9e9`          | 5/5 PASS       | Host produkcyjny fail-closed, jawny banner, licznik zamrożony |
-| F.5 ochrona danych i ufności          | PARTIAL / STOP   | `1cc0724847`          | 4/4 PASS       | Brak testu 6 mountów z POST/PUT-throwing mockiem              |
-| F.6 stany brzegowe FIN-REC-011        | STOP             | `3a9e2f625f`          | audyt 5×8      | Brak jednolitych capability/error contracts                   |
-| F.7 testy FIN-REC-014                 | PARTIAL / STOP   | `e0e97da8d1`          | 3/3 PASS       | Statusy udowodnione; RealPG/runtime/E2E niezweryfikowane      |
-| F.8 przygotowanie odłączenia Benefits | DONE_CURRENT_SHA | `fd9fb22245`          | 1/1 PASS       | Dokładnie 3 importy; zero zmian importów                      |
+| Pozycja                               | Status           | Commit                        | Testy          | Uwagi                                                         |
+| ------------------------------------- | ---------------- | ----------------------------- | -------------- | ------------------------------------------------------------- |
+| F.1 inwentarz FIN-REC-001             | DONE_CURRENT_SHA | `4ab7a61403`                  | audyt źródłowy | Sześć gałęzi i pięć flag zamrożone poniżej                    |
+| F.2 resolver FIN-REC-002              | DONE_CURRENT_SHA | `5502e8fdb2` + fixy sceptyków | 103/103 PASS   | Partial/stale/unknown identity fail-closed                    |
+| F.3 wspólny shell FIN-REC-003         | PARTIAL / STOP   | `b284ca6e43`                  | 10/10 PASS     | Mechaniczne luki zamknięte; cold Back nie utrwala filtrów     |
+| F.4 `financeOwnerSampleData`          | DONE_CURRENT_SHA | `207124e9e9`                  | 5/5 PASS       | Host produkcyjny fail-closed, jawny banner, licznik zamrożony |
+| F.5 ochrona danych i ufności          | PARTIAL / STOP   | `1cc0724847`                  | 4/4 PASS       | Brak testu 6 mountów z POST/PUT-throwing mockiem              |
+| F.6 stany brzegowe FIN-REC-011        | STOP             | `3a9e2f625f`                  | audyt 5×8      | Brak jednolitych capability/error contracts                   |
+| F.7 testy FIN-REC-014                 | PARTIAL / STOP   | `e0e97da8d1`                  | 3/3 PASS       | Statusy udowodnione; RealPG/runtime/E2E niezweryfikowane      |
+| F.8 przygotowanie odłączenia Benefits | DONE_CURRENT_SHA | `fd9fb22245`                  | 1/1 PASS       | Dokładnie 3 importy; zero zmian importów                      |
 
 ### F.1 — manifest runtime i zamrożenie
 
@@ -238,14 +238,14 @@ Stan: NIE ZACOMMITOWANO w kodzie produkcyjnym; audyt w raporcie.
 
 ### Testy własne i regresyjne
 
-| Zakres                                    | Wynik                                              | Interpretacja                                                                         |
-| ----------------------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| Zmienione testy Results + canonical guard | 26/26 Vitest + 5/5 `node:test` PASS                | sample backdoors, flagi, produkcja fail-closed i strażnik                             |
-| Nowe testy F.2–F.8                        | PASS                                               | resolver, OFF regression, shell, sample, confidence, status i Benefits                |
-| Pięć testów stanu wyjściowego po zmianach | 15/15 PASS + 6/6 PASS `node:test`                  | identyczny zielony baseline; test release trwał 99,1 s                                |
-| Results — katalogi konsumentów            | 98 plików PASS; 1066 testów PASS, 5 FAIL, 412 SKIP | 99 plików RealPG FAIL na brak schematu; 5 zastanych FAIL w UI persistence/postmortem  |
-| Finance — komponenty                      | 55 plików PASS; 384 testy PASS, 17 FAIL            | 4 order-dependent `useFinanceData`; pozostałe zastane testy/mocks i copy expectations |
-| Finance — unit                            | 62 pliki PASS; 795 testów PASS, 2 FAIL             | znany baseline `financeFallbackGating`, poza zakresem                                 |
+| Zakres                                    | Wynik                                              | Interpretacja                                                           |
+| ----------------------------------------- | -------------------------------------------------- | ----------------------------------------------------------------------- |
+| Zmienione testy Results + canonical guard | 26/26 Vitest + 5/5 `node:test` PASS                | sample backdoors, flagi, produkcja fail-closed i strażnik               |
+| Nowe testy F.2–F.8                        | PASS                                               | resolver, OFF regression, shell, sample, confidence, status i Benefits  |
+| Pięć testów stanu wyjściowego po zmianach | 15/15 PASS + 6/6 PASS `node:test`                  | identyczny zielony baseline; test release trwał 99,1 s                  |
+| Results — katalogi konsumentów            | 98 plików PASS; 1066 testów PASS, 5 FAIL, 412 SKIP | 99 plików RealPG FAIL na brak schematu; pochodzenie 5 FAIL `NOT PROVEN` |
+| Finance — komponenty                      | 55 plików PASS; 384 testy PASS, 17 FAIL            | 4 baseline-known `useFinanceData`; pochodzenie pozostałych `NOT PROVEN` |
+| Finance — unit                            | 62 pliki PASS; 795 testów PASS, 2 FAIL             | znany baseline `financeFallbackGating`, poza zakresem                   |
 
 Nie zmieniono istniejących czerwonych testów ani globalnych mocków, aby sztucznie uzyskać zielony wynik.
 
@@ -255,7 +255,7 @@ Deklaracja: **ZASIĘG CZĘŚCIOWY**.
 
 - Dotknięte pliki współdzielone: `package.json`, tłumaczenia PL/EN, `FinanceHub.tsx`, profile owner-review/sample oraz skrypt kanoniczny.
 - Uruchomiono wymagane katalogi Results i Finance oraz dedykowane testy wszystkich nowych kontraktów.
-- Zakres nie jest pełny, ponieważ RealPG nie miał właściwego schematu, runtime/browser były zabronione przez stan flag, a pełne katalogi zawierają zastane czerwone testy.
+- Zakres nie jest pełny, ponieważ RealPG nie miał właściwego schematu, runtime/browser były zabronione przez stan flag, a pełne katalogi zawierają czerwone testy o pochodzeniu `NOT PROVEN` (poza dwoma zweryfikowanymi baseline'ami).
 - `check-list-canon.sh` wykazał trzy zastane naruszenia poza diffem (`Initiatives`, `MyWork`, `method-workspace`); żaden z tych plików nie jest dotknięty przez kandydata.
 
 ### Dowody bezpieczeństwa Bloku 4
@@ -356,7 +356,7 @@ tests/unit/finance/confidencePolicy.guard.test.ts
 | `npx vitest run tests/components/ResultsVNext tests/unit/results src/components/Results/__tests__ tests/resultsVnext`                           | 1066 PASS, 5 FAIL, 412 SKIP; 99 plików RealPG setup FAIL |
 | `npx vitest run tests/components/Finance tests/components/Economics src/components/Finance/shared/__tests__ src/components/Economics/__tests__` | 384 PASS, 17 FAIL                                        |
 | `npx vitest run tests/unit/finance`                                                                                                             | 795 PASS, 2 FAIL                                         |
-| dedykowane zmienione/nowe testy kandydata                                                                                                       | 120/120 Vitest PASS + 5/5 node guard PASS                |
+| dedykowane zmienione/nowe testy kandydata                                                                                                       | 125/125 Vitest PASS + 5/5 node guard PASS                |
 
 **Czerwone ścieżki z pełnych agregatów:**
 
