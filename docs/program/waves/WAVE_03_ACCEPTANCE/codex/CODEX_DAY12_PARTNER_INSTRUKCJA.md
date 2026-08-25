@@ -86,13 +86,13 @@ w raporcie. Nie ma wyjątków „bo tak było szybciej".
 
    Nadzorca podaje Ci **SHA commitu-markera** przy wklejaniu tej instrukcji.
 
-   **SHA markera: «MARKER_SHA»**
+   **SHA markera: 5f96e936ac**
 
    ```bash
    cd <root-repo>
    git fetch --all --prune
    git log --oneline -25 codex/m03-admin-20260824
-   git merge-base --is-ancestor «MARKER_SHA» codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
+   git merge-base --is-ancestor 5f96e936ac codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
    ```
 
 2. **Jeśli marker nie jest przodkiem tipa albo gałąź nie istnieje — STOP.**
@@ -631,7 +631,7 @@ raportu (sekcja „Blok 0 — weryfikacja mapy"). Minimum:
 
 ```bash
 # 1. Marker i baza (§0.1)
-git merge-base --is-ancestor «MARKER_SHA» codex/m03-admin-20260824 && echo OK || echo BRAK
+git merge-base --is-ancestor 5f96e936ac codex/m03-admin-20260824 && echo OK || echo BRAK
 
 # 2. Bramka legacy — potwierdź linię i endpoint
 grep -n "partners/connection\|isConnected\|renderProgramContent\|programMode" src/views/partner/PartnerPortalView.tsx
@@ -798,6 +798,6 @@ rozstrzygnięcie §2.4 (kanon connection); tabelę retirementu P.3 („gdzie tre
 zasięgu testów (§0.4a); ryzyka (szczególnie migracja legacy→v8 i retirement
 siedmiu podstron); zrzuty (§T.4).
 
-**Marker, którego nadzorca użyje przy wklejeniu tej instrukcji: «MARKER_SHA».**
+**Marker, którego nadzorca użyje przy wklejeniu tej instrukcji: 5f96e936ac.**
 
 Koniec instrukcji.
