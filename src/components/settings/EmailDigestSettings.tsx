@@ -3,7 +3,19 @@
  *
  * Merges EmailNotificationsSettings + NotificationDigestSettings into one card.
  * Section 1: Email Categories (which email types to receive)
- * Section 2: Digest Settings (frequency, content, format)
+ * Section 2: Digest Settings — hidden per N3 (DEC-2026-08-25-21): the digest
+ * cron is a no-op (server/src/cron/DailyDigestCron.js returns zeroed
+ * counts unconditionally, notyfikacje-audyt.md §1F/§2.4/W1), so no control
+ * here has ever changed what gets sent. Rather than ship a toggle that
+ * does nothing, this section — and the "Weekly Digest" category, which is
+ * the same feature under a different label — is replaced by a single
+ * honest "planned" notice, following the ReadOnlyState pattern already
+ * used by NotificationRulesBuilder.tsx for the same kind of gap. The
+ * underlying state/round-trip-verification logic for weeklyDigest and
+ * frequency/content/format is left untouched (still loaded, still
+ * persisted, still part of the save's read-back check) — only the
+ * interactive controls are removed, so re-enabling them later is a pure
+ * UI change once the digest engine actually exists.
  */
 
 import { Mail } from 'lucide-react';
@@ -17,7 +29,7 @@ import { cn } from '../../lib/utils';
 import { Api } from '../../services/api';
 import { User } from '../../types';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
-import { DegradedState } from '../Admin/AdminState';
+import { DegradedState, ReadOnlyState } from '../Admin/AdminState';
 import { SettingsDivider, SettingsSection } from './shared';
 
 interface EmailDigestSettingsProps {
@@ -32,26 +44,19 @@ const EMAIL_CATEGORIES = [
   { key: 'marketing', label: 'Marketing', desc: 'Product updates and tips' },
 ] as const;
 
+// N3: the digest is a no-op end to end, so its category is folded into
+// the single "planned" notice below instead of rendering a toggle that
+// cannot do anything.
+const VISIBLE_EMAIL_CATEGORIES = EMAIL_CATEGORIES.filter((c) => c.key !== 'weeklyDigest');
+
 type DigestFrequency = 'instant' | 'hourly' | 'daily' | 'weekly';
 type DigestContent = 'summary' | 'full';
 type DigestFormat = 'html' | 'plain';
 
-const FREQUENCY_OPTIONS = [
-  { value: 'instant' as const, label: 'Instant', description: 'Receive notifications immediately' },
-  { value: 'hourly' as const, label: 'Hourly', description: 'Receive a summary every hour' },
-  { value: 'daily' as const, label: 'Daily', description: 'Receive a summary once per day' },
-  { value: 'weekly' as const, label: 'Weekly', description: 'Receive a summary once per week' },
-];
-
-const CONTENT_OPTIONS = [
-  { value: 'summary' as const, label: 'Summary', description: 'Brief overview only' },
-  { value: 'full' as const, label: 'Full Details', description: 'Complete notification content' },
-];
-
-const FORMAT_OPTIONS = [
-  { value: 'html' as const, label: 'HTML', description: 'Rich formatting' },
-  { value: 'plain' as const, label: 'Plain Text', description: 'Simple text format' },
-];
+// N3: FREQUENCY_OPTIONS/CONTENT_OPTIONS/FORMAT_OPTIONS previously rendered
+// Section 2's picker buttons, removed above — the frequency/content/format
+// state itself is kept (still loaded, still round-tripped on save; see
+// file header comment) so re-adding the picker later is a pure UI change.
 
 export const EmailDigestSettings: React.FC<EmailDigestSettingsProps> = ({ currentUser }) => {
   const { t } = useTranslation();
@@ -196,14 +201,6 @@ export const EmailDigestSettings: React.FC<EmailDigestSettingsProps> = ({ curren
   const sectionLabel =
     'text-xs font-bold text-c-text-secondary uppercase tracking-wider flex items-center gap-2 mb-4';
 
-  const optionCardCls = (active: boolean) =>
-    cn(
-      'p-3.5 rounded-lg border-2 transition-all text-left cursor-pointer',
-      active
-        ? 'border-c-accent bg-c-accent-soft'
-        : 'border-c-border-subtle hover:border-c-accent bg-c-surface-raised'
-    );
-
   return (
     <SettingsSection
       icon={Mail}
@@ -235,7 +232,7 @@ export const EmailDigestSettings: React.FC<EmailDigestSettingsProps> = ({ curren
               </h4>
 
               <div className="space-y-2">
-                {EMAIL_CATEGORIES.map(({ key, label, desc }) => (
+                {VISIBLE_EMAIL_CATEGORIES.map(({ key, label, desc }) => (
                   <div
                     key={key}
                     className="flex items-center justify-between p-3.5 bg-c-surface-raised border border-c-border-subtle rounded-lg"
@@ -280,98 +277,18 @@ export const EmailDigestSettings: React.FC<EmailDigestSettingsProps> = ({ curren
             <SettingsDivider />
 
             {/* ═══════════════════════════════════════════════ */}
-            {/* SECTION 2: Digest Settings                     */}
+            {/* SECTION 2: Digest — N3 placebo hide                */}
+            {/* Frequency/content/format controls removed: the      */}
+            {/* digest cron is a no-op end to end (see file header  */}
+            {/* comment). One honest notice replaces them.          */}
             {/* ═══════════════════════════════════════════════ */}
-            <div>
-              <h4 className={sectionLabel}>
-                <Mail size={14} className="text-c-accent" />
-                {t('settings.emailDigest.digestSettings', 'Digest Settings')}
-              </h4>
-
-              {/* Frequency */}
-              <div className="mb-5">
-                <label className="text-xs font-medium text-c-text-secondary mb-2 block">
-                  {t('settings.emailDigest.frequency', 'Digest Frequency')}
-                </label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                  {FREQUENCY_OPTIONS.map((opt) => (
-                    <button
-                      key={opt.value}
-                      onClick={() => setFrequency(opt.value)}
-                      className={optionCardCls(frequency === opt.value)}
-                    >
-                      <div
-                        className={cn(
-                          'text-sm font-medium',
-                          frequency === opt.value ? 'text-c-accent' : 'text-c-text-secondary'
-                        )}
-                      >
-                        {t(`settings.emailDigest.freq_${opt.value}`, opt.label)}
-                      </div>
-                      <div className="text-[11px] text-c-text-muted mt-0.5">
-                        {t(`settings.emailDigest.freq_${opt.value}_desc`, opt.description)}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Content */}
-              <div className="mb-5">
-                <label className="text-xs font-medium text-c-text-secondary mb-2 block">
-                  {t('settings.emailDigest.content', 'Digest Content')}
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  {CONTENT_OPTIONS.map((opt) => (
-                    <button
-                      key={opt.value}
-                      onClick={() => setContent(opt.value)}
-                      className={optionCardCls(content === opt.value)}
-                    >
-                      <div
-                        className={cn(
-                          'text-sm font-medium',
-                          content === opt.value ? 'text-c-accent' : 'text-c-text-secondary'
-                        )}
-                      >
-                        {t(`settings.emailDigest.content_${opt.value}`, opt.label)}
-                      </div>
-                      <div className="text-[11px] text-c-text-muted mt-0.5">
-                        {t(`settings.emailDigest.content_${opt.value}_desc`, opt.description)}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Format */}
-              <div>
-                <label className="text-xs font-medium text-c-text-secondary mb-2 block">
-                  {t('settings.emailDigest.format', 'Email Format')}
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  {FORMAT_OPTIONS.map((opt) => (
-                    <button
-                      key={opt.value}
-                      onClick={() => setFormat(opt.value)}
-                      className={optionCardCls(format === opt.value)}
-                    >
-                      <div
-                        className={cn(
-                          'text-sm font-medium',
-                          format === opt.value ? 'text-c-accent' : 'text-c-text-secondary'
-                        )}
-                      >
-                        {t(`settings.emailDigest.format_${opt.value}`, opt.label)}
-                      </div>
-                      <div className="text-[11px] text-c-text-muted mt-0.5">
-                        {t(`settings.emailDigest.format_${opt.value}_desc`, opt.description)}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
+            <ReadOnlyState
+              title={t('settings.emailDigest.plannedTitle', 'Planned — this channel will go live after rollout')}
+              description={t(
+                'settings.emailDigest.plannedDesc',
+                'Digest emails are not sent yet. Individual notifications for the categories above still go out as configured.'
+              )}
+            />
           </>
         )}
       </div>

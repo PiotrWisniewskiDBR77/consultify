@@ -1,5 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import toast from 'react-hot-toast';
+import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DesktopSoundsSettings } from '@/components/settings/DesktopSoundsSettings';
@@ -57,22 +56,28 @@ describe('DesktopSoundsSettings honest UI', () => {
     expect(screen.queryByText('Desktop Notifications')).not.toBeInTheDocument();
   });
 
-  it('does not claim save success when read-back returns stale preferences', async () => {
+  it('N3: hides the desktop-popup and sound controls behind a single planned notice, keeping the honest mobile-push card', async () => {
     vi.mocked(Api.get).mockResolvedValue(prefs);
     vi.mocked(Api.put).mockResolvedValue({ success: true });
 
     render(<DesktopSoundsSettings currentUser={user as any} onUpdateUser={vi.fn()} />);
 
-    await screen.findByText('Desktop Notifications');
-    fireEvent.click(screen.getAllByRole('switch')[0]);
-    fireEvent.click(screen.getByRole('button', { name: /Save Changes/i }));
+    // The already-honest "coming soon" card is untouched.
+    await screen.findByText('Mobile push notifications');
+    expect(screen.getByText('Coming soon')).toBeInTheDocument();
 
-    await waitFor(() => {
-      expect(
-        screen.getByText('Desktop sound settings save was not confirmed by the server')
-      ).toBeInTheDocument();
-    });
+    // No control anywhere in src/ ever consumed these preferences to
+    // actually show a popup or play a sound (notyfikacje-audyt.md §1E/§1F) —
+    // none of their interactive controls should render.
+    expect(screen.queryByText('Desktop Notifications')).not.toBeInTheDocument();
+    expect(screen.queryByText('Sound Alerts')).not.toBeInTheDocument();
+    expect(screen.queryByText('Show desktop notifications')).not.toBeInTheDocument();
+    expect(screen.queryByText('Enable Sounds')).not.toBeInTheDocument();
+    expect(screen.queryAllByRole('switch')).toHaveLength(0);
 
-    expect(toast.success).not.toHaveBeenCalled();
+    // A single honest notice replaces them.
+    expect(
+      screen.getByText('Planned — this channel will go live after rollout')
+    ).toBeInTheDocument();
   });
 });
