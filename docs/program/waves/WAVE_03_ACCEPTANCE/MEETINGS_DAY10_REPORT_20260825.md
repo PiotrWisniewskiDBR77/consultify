@@ -77,6 +77,25 @@ rozróżnia dane, 404/brak oraz błąd 5xx z ponowieniem. Testy behawioralne:
 `MeetingObjectPage.test.tsx` — **9/9 PASS**. i18n `meeting.*`: PL 181 / EN 181,
 parytet pełny. Status pozostaje **CZĘŚCIOWO** do czasu własnych zrzutów light/dark.
 
+## G.1 — jedno źródło statusu modułu
+
+Klient, pilot i serwer czytają teraz `BETA_MENU_STATUS.MODULE_MEETING`.
+`MODULE_MEETING` nadal ma wartość **`closed`** i pozostaje skutecznie
+zablokowany dla pilota. Zastany pakiet bramki przeszedł bez modyfikacji:
+8/8 PASS; konsumenci pilota 4/4 PASS; trasy Meetings 26/26 PASS.
+
+Instrukcja otwarcia dla nadzorcy: w `src/utils/betaAccess.ts` zmienić wyłącznie
+`BETA_MENU_STATUS.MODULE_MEETING` z `closed` na `open`, następnie uruchomić
+`meetingBetaGate.test.ts`, `pilotAccess.test.ts`, pakiet G.2 i golden-flows.
+Otwarcie jest możliwe **jedną zmianą**. Zmiana nie została wykonana.
+
+## G.2 — macierz ról
+
+Status: **CZĘŚCIOWO**. Dzisiejszy stan `closed` ma 8/8 PASS w istniejącym
+pakiecie. `createModuleGate` przyjmuje resolver statusu, więc stan `open` można
+testować bez zmiany domyślnej, ale pełna macierz realnego routera
+`rola × stan × ścieżka × tenant` nie została jeszcze wykonana.
+
 ## Testy stanu wyjściowego
 
 | Pakiet                             | Przed                                       |
