@@ -41,11 +41,17 @@
  * (SPEC-N §2.2), a nie renderowana jako pusty akordeon udający funkcję,
  * której nie ma.
  *
- * Zero nowych akcji zapisu: ekran pozostaje czystym odczytem (primary =
- * świadomy, uzasadniony brak, SPEC-N §2.3) — edycja/usuwanie/AI-notatki
- * zostają na liście (`MeetingHub.tsx`), zgodnie z zakresem DEC-52 („zmienia
- * się tylko warstwa prezentacji").
+ * Header-level `primaryAction` pozostaje świadomym, uzasadnionym brakiem
+ * (SPEC-N §2.3) — edycja spotkania, usuwanie i generowanie notatek AI wciąż
+ * żyją na liście (`MeetingHub.tsx`). ZMIANA D.4/D.5 (2026-08-25, dyżur dnia
+ * 10 UI-wiring): sekcja „Decyzje i działania" PRZESTAŁA być czystym odczytem
+ * — dodawanie/edycja/usuwanie decyzji i dodawanie/zmiana statusu follow-upów
+ * to teraz realne kontrolki zapisu wewnątrz centrum karty, wołające dedykowane
+ * zasoby `/decision-records` i `/follow-up-records` (meeting.routes.ts, dzień
+ * 10 backendu). To NIE jest nowy `primaryAction` powłoki — to zwykłe kontrolki
+ * wewnątrz sekcji, tak jak formularz notatek AI żyje wewnątrz `MeetingHub`.
  *
+
  * Backed by the dedicated `GET /api/meeting/:id` endpoint
  * (`server/src/routes/meeting.routes.ts`) — tenant-scoped from the token,
  * 404 on missing/other-org/non-participant. `error.status === 404` (thrown
@@ -62,11 +68,17 @@ import {
   ClipboardList,
   FileText,
   ListChecks,
+  Loader2,
   MapPin,
+  Pencil,
+  Plus,
   RefreshCw,
+  Trash2,
   Users,
+  X,
 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
+import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
@@ -82,11 +94,33 @@ import {
 } from '@/components/standard/StandardArtifactShell';
 import type { PresentationMode } from '@/hooks/usePresentationMode';
 import { ROUTES } from '@/routes/routeConfig';
-import { Api, type GovernedMeetingNoteDto } from '@/services/api';
+import {
+  Api,
+  type GovernedMeetingNoteDto,
+  type MeetingDecisionRecordDto,
+  type MeetingFollowUpRecordDto,
+  type MeetingOperatorBriefDto,
+} from '@/services/api';
 
 import { deriveMeetingLifecycle, formatDateTime, type MeetingItem } from './MeetingHub';
 
 type Section = 'details' | 'minutes' | 'decisions';
+
+/**
+ * FIX-M-5a (D.4/D.5 owner review): `Api.*` throws a plain `Error` with
+ * `.status` (HTTP status) attached by `handleResponse` (src/services/api.ts,
+ * e.g. line ~1105 `err.status = res.status`) — this names that shape so the
+ * `catch` blocks below can branch on `.status` without `error: any`. Same
+ * convention as `DecisionApiError`
+ * (src/components/MyWork/Decision/decisionWorkspaceApi.ts).
+ */
+interface MeetingApiError extends Error {
+  status?: number;
+}
+
+function isMeetingApiError(error: unknown): error is MeetingApiError {
+  return error instanceof Error;
+}
 
 function ListField({
   icon,
@@ -179,9 +213,33 @@ export const MeetingObjectPage: React.FC = () => {
   const [notesLoading, setNotesLoading] = useState(false);
   const [notesError, setNotesError] = useState<string | null>(null);
 
-  const [operatorBrief, setOperatorBrief] = useState<any>(null);
+  const [operatorBrief, setOperatorBrief] = useState<MeetingOperatorBriefDto | null>(null);
   const [operatorBriefLoading, setOperatorBriefLoading] = useState(false);
   const [operatorBriefError, setOperatorBriefError] = useState(false);
+
+  // D.4/D.5 (day 10 UI wiring): decision-records + follow-up-records section
+  // state ("Decyzje i działania"). Independent load/error/loading per
+  // resource so one 404/failure doesn't blank the other list, same honest-
+  // error discipline as `notes`/`operatorBrief` above.
+  const [decisionRecords, setDecisionRecords] = useState<MeetingDecisionRecordDto[]>([]);
+  const [decisionRecordsLoading, setDecisionRecordsLoading] = useState(false);
+  const [decisionRecordsError, setDecisionRecordsError] = useState<string | null>(null);
+  const [decisionStatement, setDecisionStatement] = useState('');
+  const [decisionRationale, setDecisionRationale] = useState('');
+  const [decisionSaving, setDecisionSaving] = useState(false);
+  const [editingDecisionId, setEditingDecisionId] = useState<string | null>(null);
+  const [editingDecisionStatement, setEditingDecisionStatement] = useState('');
+  const [editingDecisionRationale, setEditingDecisionRationale] = useState('');
+  const [decisionActionId, setDecisionActionId] = useState<string | null>(null);
+
+  const [followUpRecords, setFollowUpRecords] = useState<MeetingFollowUpRecordDto[]>([]);
+  const [followUpRecordsLoading, setFollowUpRecordsLoading] = useState(false);
+  const [followUpRecordsError, setFollowUpRecordsError] = useState<string | null>(null);
+  const [followUpTitle, setFollowUpTitle] = useState('');
+  const [followUpOwner, setFollowUpOwner] = useState('');
+  const [followUpDueAt, setFollowUpDueAt] = useState('');
+  const [followUpSaving, setFollowUpSaving] = useState(false);
+  const [followUpActionId, setFollowUpActionId] = useState<string | null>(null);
 
   const [gestosc, setGestosc] = useState<PresentationMode>('n');
 
@@ -192,13 +250,13 @@ export const MeetingObjectPage: React.FC = () => {
     try {
       const response = await Api.getMeeting(meetingId);
       setMeeting((response?.meeting as MeetingItem) || null);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to load meeting:', error);
       setMeeting(null);
       // 404 is the honest "does not exist / no access" case (server never
       // leaks cross-tenant/non-participant with a different code) — every
       // other status is a real, retryable failure and must say so.
-      if (error?.status === 404) {
+      if (isMeetingApiError(error) && error.status === 404) {
         setNotFound(true);
       } else {
         setLoadError(t('meeting.errors.loadFailed', 'Failed to load meetings'));
@@ -232,9 +290,14 @@ export const MeetingObjectPage: React.FC = () => {
         return;
       }
       const response = await loader(id);
-      setOperatorBrief(response?.brief || response || null);
-    } catch (error: any) {
-      if (error?.status === 404) {
+      // FIX-M-5a: server route (`ai-operator.routes.ts:110`, confirmed)
+      // `res.json(brief)`s the brief object directly — never a `{ brief }`
+      // wrapper — so the old `response?.brief || response` fallback was dead
+      // code for the first branch. Typing the response as
+      // `MeetingOperatorBriefDto` (no `.brief` field) makes that honest.
+      setOperatorBrief(response || null);
+    } catch (error: unknown) {
+      if (isMeetingApiError(error) && error.status === 404) {
         setOperatorBrief(null);
       } else {
         console.error('Failed to load operator brief:', error);
@@ -242,6 +305,175 @@ export const MeetingObjectPage: React.FC = () => {
       }
     } finally {
       setOperatorBriefLoading(false);
+    }
+  };
+
+  // D.4/D.5 (day 10 UI wiring): decision-records + follow-up-records loaders
+  // for the "Decyzje i działania" section. Every write handler below
+  // re-invokes these instead of splicing local state — a real GET readback
+  // proving the write landed, not an optimistic client-side lie.
+  const loadDecisionRecords = async (id: string) => {
+    setDecisionRecordsLoading(true);
+    setDecisionRecordsError(null);
+    try {
+      const response = await Api.listMeetingDecisionRecords(id);
+      setDecisionRecords(Array.isArray(response?.decisions) ? response.decisions : []);
+    } catch (error) {
+      console.error('Failed to load meeting decisions:', error);
+      setDecisionRecordsError(
+        t('meeting.decisionRecords.errors.loadFailed', 'Could not load decisions.')
+      );
+    } finally {
+      setDecisionRecordsLoading(false);
+    }
+  };
+
+  const loadFollowUpRecords = async (id: string) => {
+    setFollowUpRecordsLoading(true);
+    setFollowUpRecordsError(null);
+    try {
+      const response = await Api.listMeetingFollowUpRecords(id);
+      setFollowUpRecords(Array.isArray(response?.followUps) ? response.followUps : []);
+    } catch (error) {
+      console.error('Failed to load meeting follow-ups:', error);
+      setFollowUpRecordsError(
+        t('meeting.followUpRecords.errors.loadFailed', 'Could not load follow-ups.')
+      );
+    } finally {
+      setFollowUpRecordsLoading(false);
+    }
+  };
+
+  const handleCreateDecision = async () => {
+    if (!meeting || !decisionStatement.trim()) return;
+    setDecisionSaving(true);
+    try {
+      await Api.createMeetingDecisionRecord(meeting.id, {
+        statement: decisionStatement.trim(),
+        rationale: decisionRationale.trim(),
+      });
+      setDecisionStatement('');
+      setDecisionRationale('');
+      await loadDecisionRecords(meeting.id);
+      toast.success(t('meeting.decisionRecords.notifications.created', 'Decision recorded'));
+    } catch (error) {
+      console.error('Failed to create meeting decision:', error);
+      toast.error(t('meeting.decisionRecords.errors.createFailed', 'Failed to record decision'));
+    } finally {
+      setDecisionSaving(false);
+    }
+  };
+
+  const startEditDecision = (decision: MeetingDecisionRecordDto) => {
+    setEditingDecisionId(decision.id);
+    setEditingDecisionStatement(decision.statement);
+    setEditingDecisionRationale(decision.rationale);
+  };
+
+  const cancelEditDecision = () => {
+    setEditingDecisionId(null);
+    setEditingDecisionStatement('');
+    setEditingDecisionRationale('');
+  };
+
+  const handleSaveDecisionEdit = async (decisionId: string) => {
+    if (!meeting || !editingDecisionStatement.trim()) return;
+    setDecisionActionId(decisionId);
+    try {
+      await Api.updateMeetingDecisionRecord(meeting.id, decisionId, {
+        statement: editingDecisionStatement.trim(),
+        rationale: editingDecisionRationale.trim(),
+      });
+      cancelEditDecision();
+      await loadDecisionRecords(meeting.id);
+      toast.success(t('meeting.decisionRecords.notifications.updated', 'Decision updated'));
+    } catch (error) {
+      console.error('Failed to update meeting decision:', error);
+      toast.error(t('meeting.decisionRecords.errors.updateFailed', 'Failed to update decision'));
+    } finally {
+      setDecisionActionId(null);
+    }
+  };
+
+  const handleToggleDecisionStatus = async (decision: MeetingDecisionRecordDto) => {
+    if (!meeting) return;
+    const nextStatus = decision.status === 'superseded' ? 'recorded' : 'superseded';
+    setDecisionActionId(decision.id);
+    try {
+      await Api.updateMeetingDecisionRecord(meeting.id, decision.id, { status: nextStatus });
+      await loadDecisionRecords(meeting.id);
+    } catch (error) {
+      console.error('Failed to update meeting decision status:', error);
+      toast.error(t('meeting.decisionRecords.errors.updateFailed', 'Failed to update decision'));
+    } finally {
+      setDecisionActionId(null);
+    }
+  };
+
+  const handleDeleteDecision = async (decisionId: string) => {
+    if (!meeting) return;
+    setDecisionActionId(decisionId);
+    try {
+      await Api.deleteMeetingDecisionRecord(meeting.id, decisionId);
+      await loadDecisionRecords(meeting.id);
+      toast.success(t('meeting.decisionRecords.notifications.deleted', 'Decision deleted'));
+    } catch (error) {
+      console.error('Failed to delete meeting decision:', error);
+      toast.error(t('meeting.decisionRecords.errors.deleteFailed', 'Failed to delete decision'));
+    } finally {
+      setDecisionActionId(null);
+    }
+  };
+
+  const handleCreateFollowUp = async () => {
+    if (!meeting || !followUpTitle.trim()) return;
+    setFollowUpSaving(true);
+    try {
+      await Api.createMeetingFollowUpRecord(meeting.id, {
+        title: followUpTitle.trim(),
+        owner: followUpOwner.trim(),
+        dueAt: followUpDueAt.trim() || null,
+      });
+      setFollowUpTitle('');
+      setFollowUpOwner('');
+      setFollowUpDueAt('');
+      await loadFollowUpRecords(meeting.id);
+      toast.success(t('meeting.followUpRecords.notifications.created', 'Follow-up added'));
+    } catch (error) {
+      console.error('Failed to create meeting follow-up:', error);
+      toast.error(t('meeting.followUpRecords.errors.createFailed', 'Failed to add follow-up'));
+    } finally {
+      setFollowUpSaving(false);
+    }
+  };
+
+  const handleToggleFollowUpStatus = async (followUp: MeetingFollowUpRecordDto) => {
+    if (!meeting) return;
+    const nextStatus = followUp.status === 'done' ? 'open' : 'done';
+    setFollowUpActionId(followUp.id);
+    try {
+      await Api.updateMeetingFollowUpRecord(meeting.id, followUp.id, { status: nextStatus });
+      await loadFollowUpRecords(meeting.id);
+    } catch (error) {
+      console.error('Failed to update meeting follow-up status:', error);
+      toast.error(t('meeting.followUpRecords.errors.updateFailed', 'Failed to update follow-up'));
+    } finally {
+      setFollowUpActionId(null);
+    }
+  };
+
+  const handleDeleteFollowUp = async (followUpId: string) => {
+    if (!meeting) return;
+    setFollowUpActionId(followUpId);
+    try {
+      await Api.deleteMeetingFollowUpRecord(meeting.id, followUpId);
+      await loadFollowUpRecords(meeting.id);
+      toast.success(t('meeting.followUpRecords.notifications.deleted', 'Follow-up deleted'));
+    } catch (error) {
+      console.error('Failed to delete meeting follow-up:', error);
+      toast.error(t('meeting.followUpRecords.errors.deleteFailed', 'Failed to delete follow-up'));
+    } finally {
+      setFollowUpActionId(null);
     }
   };
 
@@ -254,6 +486,8 @@ export const MeetingObjectPage: React.FC = () => {
     if (meeting?.id) {
       void loadNotes(meeting.id);
       void loadOperatorBrief(meeting.id);
+      void loadDecisionRecords(meeting.id);
+      void loadFollowUpRecords(meeting.id);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [meeting?.id]);
@@ -471,41 +705,271 @@ export const MeetingObjectPage: React.FC = () => {
     </div>
   );
 
+  // D.4/D.5 (day 10 UI wiring): real controls backed by the dedicated
+  // `/decision-records` and `/follow-up-records` resources
+  // (meeting.routes.ts), replacing the two former display-only atrapy:
+  //  (1) this section used to read `meeting.decisions` — the legacy
+  //      `decisions_json` array, dead once a meeting note is approved,
+  //  (2) `meeting.followUps` was rendered read-only with no way to add one
+  //      or mark it done from this card.
+  // Both lists below re-fetch from the server after every write (readback),
+  // never splice local state optimistically.
+  const decisionInputClass =
+    'w-full rounded-xl border border-c-border bg-transparent px-3 py-2 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus';
+
   const decisionsContent = (
     <div className="grid gap-4 p-5">
-      <ListField
-        icon={<CheckSquare2 size={14} />}
-        label={t('meeting.decisions2', 'Decisions')}
-        items={meeting.decisions}
-      />
-      <SectionCard icon={<CheckSquare2 size={14} />} title={t('meeting.followUps2', 'Follow-ups')}>
-        {meeting.followUps.length ? (
-          <div className="space-y-2">
-            {meeting.followUps.map((item) => (
-              <div
-                key={item.id}
-                className="w-full rounded-xl border border-c-border-subtle px-3 py-2 text-left"
+      <SectionCard icon={<CheckSquare2 size={14} />} title={t('meeting.decisions2', 'Decisions')}>
+        <div className="space-y-3">
+          <div className="space-y-2 rounded-xl border border-dashed border-c-border-subtle p-3">
+            <input
+              className={decisionInputClass}
+              placeholder={t('meeting.decisionRecords.statementPlaceholder', 'New decision…')}
+              value={decisionStatement}
+              onChange={(e) => setDecisionStatement(e.target.value)}
+            />
+            <textarea
+              className={`${decisionInputClass} min-h-16`}
+              placeholder={t('meeting.decisionRecords.rationalePlaceholder', 'Rationale (optional)')}
+              value={decisionRationale}
+              onChange={(e) => setDecisionRationale(e.target.value)}
+            />
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => void handleCreateDecision()}
+                disabled={!decisionStatement.trim() || decisionSaving}
+                className="inline-flex h-8 items-center gap-1.5 rounded-full bg-c-text px-3 text-xs font-medium text-c-surface hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <div className="flex items-center justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="text-sm font-medium text-c-text truncate">{item.title}</div>
-                    <div className="text-xs text-c-text-muted">{item.owner}</div>
-                  </div>
-                  <StatusChip
-                    tone={item.status === 'done' ? 'success' : 'warning'}
-                    label={
-                      item.status === 'done'
-                        ? t('meeting.done', 'Done')
-                        : t('meeting.open2', 'Open')
-                    }
-                  />
-                </div>
-              </div>
-            ))}
+                {decisionSaving ? (
+                  <Loader2 size={12} className="animate-spin" />
+                ) : (
+                  <Plus size={12} />
+                )}
+                {t('meeting.decisionRecords.add', 'Record decision')}
+              </button>
+            </div>
           </div>
-        ) : (
-          <div className="text-sm text-c-text-muted">—</div>
-        )}
+
+          {decisionRecordsLoading ? (
+            <LoadingState variant="spinner" className="h-16" />
+          ) : decisionRecordsError ? (
+            <ErrorState
+              message={decisionRecordsError}
+              retry={() => void loadDecisionRecords(meeting.id)}
+            />
+          ) : decisionRecords.length ? (
+            <div className="space-y-2">
+              {decisionRecords.map((decision) => {
+                const isEditing = editingDecisionId === decision.id;
+                const busy = decisionActionId === decision.id;
+                return (
+                  <div
+                    key={decision.id}
+                    className="rounded-xl border border-c-border-subtle px-3 py-2"
+                  >
+                    {isEditing ? (
+                      <div className="space-y-2">
+                        <input
+                          className={decisionInputClass}
+                          value={editingDecisionStatement}
+                          onChange={(e) => setEditingDecisionStatement(e.target.value)}
+                        />
+                        <textarea
+                          className={`${decisionInputClass} min-h-16`}
+                          value={editingDecisionRationale}
+                          onChange={(e) => setEditingDecisionRationale(e.target.value)}
+                        />
+                        <div className="flex justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={cancelEditDecision}
+                            className="inline-flex h-8 items-center gap-1 rounded-full border border-c-border px-3 text-xs text-c-text-secondary"
+                          >
+                            <X size={12} />
+                            {t('common.cancel', 'Cancel')}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void handleSaveDecisionEdit(decision.id)}
+                            disabled={!editingDecisionStatement.trim() || busy}
+                            className="inline-flex h-8 items-center gap-1 rounded-full bg-c-text px-3 text-xs font-medium text-c-surface disabled:opacity-50"
+                          >
+                            {busy ? (
+                              <Loader2 size={12} className="animate-spin" />
+                            ) : (
+                              t('common.save', 'Save')
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="text-sm text-c-text-secondary">{decision.statement}</div>
+                          {decision.rationale ? (
+                            <div className="mt-1 text-xs text-c-text-muted">
+                              {decision.rationale}
+                            </div>
+                          ) : null}
+                        </div>
+                        <div className="flex shrink-0 items-center gap-1.5">
+                          <StatusChip
+                            tone={decision.status === 'superseded' ? 'neutral' : 'success'}
+                            label={
+                              decision.status === 'superseded'
+                                ? t('meeting.decisionRecords.superseded', 'Superseded')
+                                : t('meeting.decisionRecords.recorded', 'Recorded')
+                            }
+                          />
+                          <button
+                            type="button"
+                            title={
+                              decision.status === 'superseded'
+                                ? t('meeting.decisionRecords.markRecorded', 'Mark recorded')
+                                : t('meeting.decisionRecords.markSuperseded', 'Mark superseded')
+                            }
+                            onClick={() => void handleToggleDecisionStatus(decision)}
+                            disabled={busy}
+                            className="rounded-lg p-1.5 text-c-text-secondary hover:bg-c-surface-raised disabled:opacity-50"
+                          >
+                            <CheckSquare2 size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            title={t('common.edit', 'Edit')}
+                            onClick={() => startEditDecision(decision)}
+                            disabled={busy}
+                            className="rounded-lg p-1.5 text-c-text-secondary hover:bg-c-surface-raised disabled:opacity-50"
+                          >
+                            <Pencil size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            title={t('common.delete', 'Delete')}
+                            onClick={() => void handleDeleteDecision(decision.id)}
+                            disabled={busy}
+                            className="rounded-lg p-1.5 text-c-text-secondary hover:text-c-danger disabled:opacity-50"
+                          >
+                            {busy ? (
+                              <Loader2 size={14} className="animate-spin" />
+                            ) : (
+                              <Trash2 size={14} />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-sm text-c-text-muted">—</div>
+          )}
+        </div>
+      </SectionCard>
+
+      <SectionCard icon={<CheckSquare2 size={14} />} title={t('meeting.followUps2', 'Follow-ups')}>
+        <div className="space-y-3">
+          <div className="grid gap-2 rounded-xl border border-dashed border-c-border-subtle p-3 sm:grid-cols-3">
+            <input
+              className={`${decisionInputClass} sm:col-span-1`}
+              placeholder={t('meeting.followUpRecords.titlePlaceholder', 'Follow-up…')}
+              value={followUpTitle}
+              onChange={(e) => setFollowUpTitle(e.target.value)}
+            />
+            <input
+              className={`${decisionInputClass} sm:col-span-1`}
+              placeholder={t('meeting.followUpRecords.ownerPlaceholder', 'Owner')}
+              value={followUpOwner}
+              onChange={(e) => setFollowUpOwner(e.target.value)}
+            />
+            <input
+              type="date"
+              className={`${decisionInputClass} sm:col-span-1`}
+              value={followUpDueAt}
+              onChange={(e) => setFollowUpDueAt(e.target.value)}
+            />
+            <div className="flex justify-end sm:col-span-3">
+              <button
+                type="button"
+                onClick={() => void handleCreateFollowUp()}
+                disabled={!followUpTitle.trim() || followUpSaving}
+                className="inline-flex h-8 items-center gap-1.5 rounded-full bg-c-text px-3 text-xs font-medium text-c-surface hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {followUpSaving ? (
+                  <Loader2 size={12} className="animate-spin" />
+                ) : (
+                  <Plus size={12} />
+                )}
+                {t('meeting.followUpRecords.add', 'Add follow-up')}
+              </button>
+            </div>
+          </div>
+
+          {followUpRecordsLoading ? (
+            <LoadingState variant="spinner" className="h-16" />
+          ) : followUpRecordsError ? (
+            <ErrorState
+              message={followUpRecordsError}
+              retry={() => void loadFollowUpRecords(meeting.id)}
+            />
+          ) : followUpRecords.length ? (
+            <div className="space-y-2">
+              {followUpRecords.map((item) => {
+                const busy = followUpActionId === item.id;
+                return (
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between gap-3 rounded-xl border border-c-border-subtle px-3 py-2"
+                  >
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium text-c-text truncate">{item.title}</div>
+                      <div className="text-xs text-c-text-muted">
+                        {[item.owner, item.dueAt ? formatDateTime(item.dueAt, isPolish) : null]
+                          .filter(Boolean)
+                          .join(' · ') || '—'}
+                      </div>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => void handleToggleFollowUpStatus(item)}
+                        disabled={busy}
+                        className="disabled:opacity-50"
+                      >
+                        <StatusChip
+                          tone={item.status === 'done' ? 'success' : 'warning'}
+                          label={
+                            item.status === 'done'
+                              ? t('meeting.done', 'Done')
+                              : t('meeting.open2', 'Open')
+                          }
+                        />
+                      </button>
+                      <button
+                        type="button"
+                        title={t('common.delete', 'Delete')}
+                        onClick={() => void handleDeleteFollowUp(item.id)}
+                        disabled={busy}
+                        className="rounded-lg p-1.5 text-c-text-secondary hover:text-c-danger disabled:opacity-50"
+                      >
+                        {busy ? (
+                          <Loader2 size={14} className="animate-spin" />
+                        ) : (
+                          <Trash2 size={14} />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-sm text-c-text-muted">—</div>
+          )}
+        </div>
       </SectionCard>
     </div>
   );
@@ -549,7 +1013,8 @@ export const MeetingObjectPage: React.FC = () => {
       component: decisionsContent,
       aiContract: {
         none: true,
-        reason: 'Decyzje i follow-upy to realne dane spotkania — model językowy ich tu nie pisze.',
+        reason:
+          'Decyzje i follow-upy to realne dane spotkania, wpisywane ręcznie przez człowieka przez formularze w tej sekcji (D.4/D.5) — model językowy ich tu nie pisze i nie ma czego regenerować.',
       },
     },
   ];
@@ -683,7 +1148,7 @@ export const MeetingObjectPage: React.FC = () => {
         primaryAction={{
           intentionallyNone: true,
           reason:
-            'Ta karta jest dziś czystym odczytem — edycja, usuwanie i generowanie notatek AI żyją w widoku listy (`MeetingHub.tsx`), zgodnie z zakresem DEC-2026-08-25-52. Wyłączony przycisk byłby atrapą, więc primary po prostu nie powstaje (SPEC-N §2.3: brak jest jawny i uzasadniony, nie przemilczany).',
+            'Ta karta nie ma jednego działania nadrzędnego dla całego obiektu: edycja spotkania, usuwanie i generowanie notatek AI żyją w widoku listy (`MeetingHub.tsx`, DEC-2026-08-25-52); dodawanie decyzji/follow-upów (D.4/D.5) to kontrolki WEWNĄTRZ sekcji „Decyzje i działania", nie jedno globalne primary. Wyłączony przycisk byłby atrapą, więc primary po prostu nie powstaje (SPEC-N §2.3: brak jest jawny i uzasadniony, nie przemilczany).',
         }}
         sections={sekcje}
         rightPanel={prawyPanel}
