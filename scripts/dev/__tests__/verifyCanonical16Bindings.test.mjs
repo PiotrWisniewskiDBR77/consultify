@@ -21,6 +21,7 @@ afterEach(() => {
 function runFixture({
   transformManifest = (value) => value,
   transformRoutes = (value) => value,
+  nodeEnv = 'test',
 } = {}) {
   const root = mkdtempSync(path.join(tmpdir(), 'canonical-16-'));
   temporaryRoots.push(root);
@@ -30,14 +31,24 @@ function runFixture({
   const routes = transformRoutes(readFileSync(sourceRoutesPath, 'utf8'));
   writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
   writeFileSync(routesPath, routes);
+  const env = {
+    ...process.env,
+    CANONICAL_16_MANIFEST_PATH: manifestPath,
+    CANONICAL_16_ROUTES_PATH: routesPath,
+  };
+  // Note: `nodeEnv: undefined` would trigger the destructured default
+  // ('test') rather than mean "unset" — JS default params fire on
+  // `undefined`, not just on an absent key. Callers that want NODE_ENV
+  // unset must pass the 'unset' sentinel explicitly.
+  if (nodeEnv === 'unset') {
+    delete env.NODE_ENV;
+  } else {
+    env.NODE_ENV = nodeEnv;
+  }
   return spawnSync(process.execPath, [scriptPath], {
     cwd: repoRoot,
     encoding: 'utf8',
-    env: {
-      ...process.env,
-      CANONICAL_16_MANIFEST_PATH: manifestPath,
-      CANONICAL_16_ROUTES_PATH: routesPath,
-    },
+    env,
   });
 }
 
@@ -93,4 +104,45 @@ test('checks a forbidden component when its canonical route is the last sibling'
     transformRoutes: () => `${withoutOriginalBlock}\n        <Route ${routeBlock}`,
   });
   assert.equal(result.status, 0, result.stderr);
+});
+
+test('reports the resolved manifest/routes paths and override flags in its JSON output', () => {
+  const result = runFixture();
+  assert.equal(result.status, 0, result.stderr);
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.manifestPathOverridden, true);
+  assert.equal(payload.routesPathOverridden, true);
+  assert.match(payload.manifestPath, /canonical-16-.*manifest\.json$/);
+  assert.match(payload.routesPath, /canonical-16-.*AppRoutes\.tsx$/);
+});
+
+test('ignores CANONICAL_16_MANIFEST_PATH/CANONICAL_16_ROUTES_PATH when NODE_ENV is not "test"', () => {
+  // The fixture plants a forbidden <ResultsHub /> in the throwaway routes
+  // file. If the override were honored outside NODE_ENV=test, the guard
+  // would read that fixture and fail on the injected component. Ignoring
+  // the override falls back to the real repo files, which are clean, so
+  // the run must succeed and warn on stderr instead.
+  const result = runFixture({
+    transformRoutes: (routes) =>
+      routes.replace('<ResultsOwnerReviewEntry />', '<ResultsOwnerReviewEntry /><ResultsHub />'),
+    nodeEnv: 'production',
+  });
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stderr, /ignoring CANONICAL_16_MANIFEST_PATH/);
+  assert.match(result.stderr, /ignoring CANONICAL_16_ROUTES_PATH/);
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.manifestPathOverridden, false);
+  assert.equal(payload.routesPathOverridden, false);
+  assert.equal(payload.manifestPath, sourceManifestPath);
+  assert.equal(payload.routesPath, sourceRoutesPath);
+});
+
+test('ignores the overrides when NODE_ENV is unset', () => {
+  const result = runFixture({
+    transformRoutes: (routes) =>
+      routes.replace('<ResultsOwnerReviewEntry />', '<ResultsOwnerReviewEntry /><ResultsHub />'),
+    nodeEnv: 'unset',
+  });
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stderr, /ignoring CANONICAL_16_MANIFEST_PATH/);
 });

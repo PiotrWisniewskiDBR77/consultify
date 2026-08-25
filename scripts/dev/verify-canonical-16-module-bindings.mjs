@@ -5,11 +5,37 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const manifestPath =
-  process.env.CANONICAL_16_MANIFEST_PATH ||
-  path.join(repoRoot, 'docs/program/waves/WAVE_03_ACCEPTANCE/canonical-16-module-bindings.json');
-const routesPath =
-  process.env.CANONICAL_16_ROUTES_PATH || path.join(repoRoot, 'src/routes/AppRoutes.tsx');
+const defaultManifestPath = path.join(
+  repoRoot,
+  'docs/program/waves/WAVE_03_ACCEPTANCE/canonical-16-module-bindings.json'
+);
+const defaultRoutesPath = path.join(repoRoot, 'src/routes/AppRoutes.tsx');
+
+// CANONICAL_16_MANIFEST_PATH / CANONICAL_16_ROUTES_PATH exist so the guard's
+// own test suite (scripts/dev/__tests__/verifyCanonical16Bindings.test.mjs)
+// can point the script at throwaway fixtures instead of the real repo files.
+// They must never be honored outside that harness — a stray/leaked env var
+// in a dev shell or CI job would silently swap in an arbitrary manifest/
+// routes file and make the gate meaningless. Restrict them to NODE_ENV=test
+// and ignore (with a warning, not a silent no-op) otherwise.
+const isTestEnv = process.env.NODE_ENV === 'test';
+
+function resolveOverridablePath(envVarName, defaultPath) {
+  const override = process.env[envVarName];
+  if (!override) return { value: defaultPath, overridden: false };
+  if (!isTestEnv) {
+    console.warn(
+      `verify-canonical-16-module-bindings: ignoring ${envVarName} (only honored when NODE_ENV=test); using ${defaultPath}`
+    );
+    return { value: defaultPath, overridden: false };
+  }
+  return { value: override, overridden: true };
+}
+
+const manifestResolved = resolveOverridablePath('CANONICAL_16_MANIFEST_PATH', defaultManifestPath);
+const routesResolved = resolveOverridablePath('CANONICAL_16_ROUTES_PATH', defaultRoutesPath);
+const manifestPath = manifestResolved.value;
+const routesPath = routesResolved.value;
 const routeConfigPath = path.join(repoRoot, 'src/routes/routeConfig.ts');
 const menuPath = path.join(repoRoot, 'src/components/navigation/Sidebar/menuConfig.ts');
 const verdictsPath = path.join(
@@ -234,6 +260,10 @@ console.log(
       ownerFreeze: manifest.status,
       ownerVerdictsCaptured: verdicts.records.length,
       ownerObservationsCaptured: observations.records.length,
+      manifestPath,
+      routesPath,
+      manifestPathOverridden: manifestResolved.overridden,
+      routesPathOverridden: routesResolved.overridden,
     },
     null,
     2
