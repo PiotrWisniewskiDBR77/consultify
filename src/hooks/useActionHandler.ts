@@ -68,7 +68,9 @@ const MODULE_ROUTE_MAP: Record<string, string> = {
   mywork: '/my-work',
   'my-work': '/my-work',
   notebook: '/my-work?tab=notebook',
-  calendar: '/meeting',
+  // DEC-2026-08-24-07: canonical Meeting list route (every other entry in
+  // this map is already the canonical, non-legacy path).
+  calendar: '/meetings',
   radar: '/my-work',
 };
 
