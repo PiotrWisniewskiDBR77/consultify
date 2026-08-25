@@ -926,7 +926,9 @@ router.put(
     const next = { ...current, ...parsed.data };
     const start = parsed.data.startAt ?? current.start_at;
     const end = parsed.data.endAt ?? current.end_at;
-    if (Date.parse(end) <= Date.parse(start))
+    const startMs = Date.parse(start);
+    const endMs = Date.parse(end);
+    if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs <= startMs)
       return res.status(400).json({ error: 'endAt must be later than startAt' });
     if (parsed.data.attendees?.length) {
       const placeholders = parsed.data.attendees.map(() => '?').join(',');

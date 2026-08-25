@@ -153,7 +153,6 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
           source: 'event',
           visibility,
         } as const;
-        await Api.createMyWorkCalendarEvent(eventInput);
         if (duplicateFourWeeks) {
           const dates = [1, 2, 3, 4].map((week) => {
             const next = new Date(startAt);
@@ -167,9 +166,11 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
             })
           );
           if (!confirmed) {
-            setSaving(false);
             return;
           }
+        }
+        await Api.createMyWorkCalendarEvent(eventInput);
+        if (duplicateFourWeeks) {
           const result = await duplicateCalendarEventFourWeeks(eventInput);
           const summary = t('myWork.calendar.v2.duplicateResult', {
             defaultValue: 'Created {{created}} of 4. Failed: {{failed}}.',
@@ -177,9 +178,14 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
             failed: result.failed.map((item) => item.date).join(', ') || '0',
           });
           setDuplicateResult(summary);
-          result.failed.length ? toast.error(summary) : toast.success(summary);
+          if (result.failed.length) {
+            toast.error(summary);
+          } else {
+            toast.success(summary);
+          }
+        } else {
+          toast.success(t('myWork.calendar.v2.created', 'Event created'));
         }
-        toast.success(t('myWork.calendar.v2.created', 'Event created'));
       } else {
         await Api.createMyWorkCalendarEvent({
           title: title.trim(),
