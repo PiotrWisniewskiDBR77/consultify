@@ -250,6 +250,9 @@ export const EmailDigestSettings: React.FC<EmailDigestSettingsProps> = ({ curren
                     </div>
                     <button
                       onClick={() => toggleEmail(key)}
+                      role="checkbox"
+                      aria-checked={Boolean(emailSettings[key])}
+                      aria-label={t(`settings.emailDigest.cat_${key}`, label)}
                       className={cn(
                         'w-6 h-6 rounded border-2 flex items-center justify-center transition-colors flex-shrink-0',
                         emailSettings[key]

@@ -74,7 +74,13 @@ describe('EmailDigestSettings honest UI', () => {
     render(<EmailDigestSettings currentUser={user as any} onUpdateUser={vi.fn()} />);
 
     await screen.findByText('Email Categories');
-    fireEvent.click(screen.getAllByRole('button')[0]);
+    // Regression (notyfikacje-audyt.md §3): the Save action now renders in
+    // the screen header via a portal, ahead of the card body in DOM order,
+    // so a positional `getAllByRole('button')[0]` silently hits the
+    // (disabled, non-dirty) Save button instead of a category toggle and
+    // this test never actually exercises the read-back-mismatch path.
+    // Select the toggle by its accessible name instead.
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Task Updates' }));
     fireEvent.click(screen.getByRole('button', { name: /Save Changes/i }));
 
     await waitFor(() => {
