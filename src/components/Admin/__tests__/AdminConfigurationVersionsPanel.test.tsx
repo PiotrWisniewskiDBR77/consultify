@@ -1,9 +1,21 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createRealT } from '@/test-utils/realTranslations';
 
 import { V8PromptOsApi } from '../../../services/api/v8/prompt-os';
 import { AdminConfigurationVersionsPanel } from '../AdminConfigurationVersionsPanel';
+
+
+// Opt-in to real PL translation resolution (tests/setup.ts's global
+// react-i18next mock is key-agnostic by repo convention). This panel's
+// own admin day-2 i18n contract (AdminDay2I18n.test.ts) forbids defaultValue
+// fallbacks, so its tests assert literal Polish strings resolved from the
+// real shipped translation.json instead.
+vi.mock('react-i18next', () => {
+  const t = createRealT('pl');
+  return { useTranslation: () => ({ t, i18n: { language: 'pl' } }) };
+});
 
 vi.mock('../../../services/api/v8/prompt-os', () => ({
   V8PromptOsApi: {
@@ -65,7 +77,7 @@ describe('AdminConfigurationVersionsPanel', () => {
     vi.mocked(V8PromptOsApi.rollbackBundle).mockResolvedValue({});
     render(<AdminConfigurationVersionsPanel />);
     await screen.findByText('1.2.3');
-    fireEvent.click(screen.getByLabelText('Row actions'));
+    fireEvent.click(screen.getByLabelText('Akcje wiersza'));
     fireEvent.click(await screen.findByText('Wycofaj wersję'));
     const next = screen.getByText('Przejdź do potwierdzenia');
     expect(next).toBeDisabled();
@@ -86,7 +98,7 @@ describe('AdminConfigurationVersionsPanel', () => {
     vi.mocked(V8PromptOsApi.activateBundle).mockResolvedValue({ ...draft, status: 'active' });
     render(<AdminConfigurationVersionsPanel />);
     await screen.findByText('1.2.3');
-    fireEvent.click(screen.getByLabelText('Row actions'));
+    fireEvent.click(screen.getByLabelText('Akcje wiersza'));
     fireEvent.click(await screen.findByText('Aktywuj'));
     await waitFor(() => expect(V8PromptOsApi.activateBundle).toHaveBeenCalledWith('b1'));
     expect(V8PromptOsApi.getBundles).toHaveBeenCalledTimes(2);
@@ -100,7 +112,7 @@ describe('AdminConfigurationVersionsPanel', () => {
     );
     render(<AdminConfigurationVersionsPanel />);
     await screen.findByText('1.2.3');
-    fireEvent.click(screen.getByLabelText('Row actions'));
+    fireEvent.click(screen.getByLabelText('Akcje wiersza'));
     fireEvent.click(await screen.findByText('Aktywuj'));
     expect(await screen.findByText(/zmieniła się równolegle/)).toBeInTheDocument();
     expect(V8PromptOsApi.getBundles).toHaveBeenCalledTimes(2);
@@ -110,7 +122,7 @@ describe('AdminConfigurationVersionsPanel', () => {
     vi.mocked(V8PromptOsApi.getEvalGates).mockRejectedValue(new Error('gate network failure'));
     render(<AdminConfigurationVersionsPanel />);
     await screen.findByText('1.2.3');
-    fireEvent.click(screen.getByLabelText('Row actions'));
+    fireEvent.click(screen.getByLabelText('Akcje wiersza'));
     fireEvent.click(await screen.findByText('Pokaż szczegóły'));
     expect(await screen.findByText('gate network failure')).toBeInTheDocument();
     expect(screen.queryByText('Bramki: brak wyników')).not.toBeInTheDocument();

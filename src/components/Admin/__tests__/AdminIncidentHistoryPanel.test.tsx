@@ -3,9 +3,16 @@ import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { createRealT } from '@/test-utils/realTranslations';
+
 import { Api } from '../../../services/api';
 import { AdminIncidentHistoryPanel } from '../AdminIncidentHistoryPanel';
 
+// Opt-in to real PL translation resolution — see AdminDomainsPanel.test.tsx.
+vi.mock('react-i18next', () => {
+  const t = createRealT('pl');
+  return { useTranslation: () => ({ t, i18n: { language: 'pl' } }) };
+});
 vi.mock('../../../services/api', () => ({ Api: { getHealthPanelSummary: vi.fn() } }));
 const get = vi.mocked(Api.getHealthPanelSummary);
 const renderPanel = () =>

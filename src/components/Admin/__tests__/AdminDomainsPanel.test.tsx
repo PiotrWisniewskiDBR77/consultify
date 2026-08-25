@@ -2,9 +2,19 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { createRealT } from '@/test-utils/realTranslations';
+
 import { getAdminDomains, verifyAdminDomain } from '../../../services/adminDomainsApi';
 import { AdminDomainsPanel } from '../AdminDomainsPanel';
 
+// Opt-in to real PL translation resolution (tests/setup.ts's global react-i18next
+// mock is key-agnostic by convention — see tests/setup.ts). This panel's own
+// assertions check literal Polish strings, so it resolves against the real
+// shipped translation.json instead.
+vi.mock('react-i18next', () => {
+  const t = createRealT('pl');
+  return { useTranslation: () => ({ t, i18n: { language: 'pl' } }) };
+});
 vi.mock('../../../services/adminDomainsApi', () => ({
   getAdminDomains: vi.fn(),
   createAdminDomain: vi.fn(),

@@ -1,9 +1,17 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
+import { createRealT } from '@/test-utils/realTranslations';
 
 import { AdminAccessRequestsPanel } from '../AdminAccessRequestsPanel';
+
+// Opt-in to real PL translation resolution — see AdminDomainsPanel.test.tsx.
+vi.mock('react-i18next', () => {
+  const t = createRealT('pl');
+  return { useTranslation: () => ({ t, i18n: { language: 'pl' } }) };
+});
 
 const renderPanel = () =>
   render(

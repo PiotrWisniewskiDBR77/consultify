@@ -2,9 +2,16 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { createRealT } from '@/test-utils/realTranslations';
+
 import { getAdminDependencies } from '../../../services/adminDependenciesApi';
 import { AdminDependenciesPanel } from '../AdminDependenciesPanel';
 
+// Opt-in to real PL translation resolution — see AdminDomainsPanel.test.tsx.
+vi.mock('react-i18next', () => {
+  const t = createRealT('pl');
+  return { useTranslation: () => ({ t, i18n: { language: 'pl' } }) };
+});
 vi.mock('../../../services/adminDependenciesApi', () => ({ getAdminDependencies: vi.fn() }));
 const get = vi.mocked(getAdminDependencies);
 

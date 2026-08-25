@@ -2,6 +2,8 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { createRealT } from '@/test-utils/realTranslations';
+
 import {
   getAiQualityAnalytics,
   getAiQualityFeedback,
@@ -11,6 +13,11 @@ import {
 } from '../../../services/adminAiQualityApi';
 import { AdminAiQualityPanel } from '../AdminAiQualityPanel';
 
+// Opt-in to real PL translation resolution — see AdminDomainsPanel.test.tsx.
+vi.mock('react-i18next', () => {
+  const t = createRealT('pl');
+  return { useTranslation: () => ({ t, i18n: { language: 'pl' } }) };
+});
 vi.mock('../../../services/adminAiQualityApi', () => ({
   getAiQualityMetrics: vi.fn(),
   getAiQualityFeedback: vi.fn(),
