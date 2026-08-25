@@ -193,6 +193,7 @@ import {
   useProcessFlowPersistence,
 } from './processflow/useProcessFlowPersistence';
 import { useProcessFlowQuickActions } from './processflow/useProcessFlowQuickActions';
+import { IdeaAINudgeStrip } from './IdeaAINudgeStrip';
 import { useProcessFlowReadback } from './processflow/useProcessFlowReadback';
 import { useProcessFlowUndoRedo } from './processflow/useProcessFlowUndoRedo';
 import { useProcessFlowValidation } from './processflow/useProcessFlowValidation';
@@ -2211,8 +2212,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     // nothing) when asked to delete the only remaining lane. Surface that
     // refusal — same toast.error pattern as selectEdgeFirst/selectDecisionNode
     // above.
-    onLaneDeleteBlocked: () =>
-      toast.error(t('myWorkIdeas.processFlowTool.cannotDeleteLastLane')),
+    onLaneDeleteBlocked: () => toast.error(t('myWorkIdeas.processFlowTool.cannotDeleteLastLane')),
   });
 
   // ── F5a A3: lane collapse / resize (state in lanes[].{collapsed,height}) ──
@@ -2941,8 +2941,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       const currentCondition = String(edgeData.conditionType ?? '');
       const currentConditionEntry =
         EDGE_CONDITIONS.find((c) => c.id === currentCondition) ?? EDGE_CONDITIONS[0];
-      const truncate = (s: string, max: number) =>
-        s.length > max ? `${s.slice(0, max - 1)}…` : s;
+      const truncate = (s: string, max: number) => (s.length > max ? `${s.slice(0, max - 1)}…` : s);
       return {
         title: t('canvasEditBar.titleEdge', 'Połączenie'),
         groups: [
@@ -4369,6 +4368,37 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         </div>
       )}
       {bulkDeleteDialog}
+      {!locked ? (
+        <IdeaAINudgeStrip
+          ideaId={ideaId}
+          userId={currentUser?.id || null}
+          organizationId={currentUser?.organizationId || null}
+          activeTool="process_flow"
+          title={t('myWorkIdeas.processFlowTool.title', 'Process flow')}
+          seedText={nodes
+            .slice(0, 12)
+            .map((node) => String(node.data?.label || ''))
+            .filter(Boolean)
+            .join('\n')}
+          isAccepted={false}
+          graphNodes={nodes}
+          graphEdges={edges}
+          onActionExpand={() => {
+            window.dispatchEvent(
+              new CustomEvent('idea-workspace-quick-action', {
+                detail: { action: 'pf_add_action', ideaId },
+              })
+            );
+            return { status: 'handed_off' as const };
+          }}
+          onActionConvert={() => {
+            onOpenChat?.(
+              t('myWorkIdeas.processFlowTool.summarizeInChat', 'Summarize this process flow')
+            );
+            return { status: 'handed_off' as const };
+          }}
+        />
+      ) : null}
     </div>
   );
 };

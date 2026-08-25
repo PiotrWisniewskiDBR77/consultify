@@ -83,6 +83,7 @@ import {
 } from '@/utils/ideaTableGuidedBarFlag';
 
 import { EmptyStateInline } from '../shared/NModeBlocks/EmptyStateInline';
+import { IdeaAINudgeStrip } from './IdeaAINudgeStrip';
 import { getCanvasEdgeKindLabel } from './canvas/canvasEdgeKindVocabulary';
 import { getCanvasNodeTypeLabel } from './canvas/canvasNodeTypeVocabulary';
 import {
@@ -5275,6 +5276,35 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           </div>
         </div>
       )}
+      {!locked ? (
+        <IdeaAINudgeStrip
+          ideaId={ideaId}
+          userId={currentUserId}
+          organizationId={workspaceId}
+          activeTool="table"
+          title={t('ideas.table.title', 'Table')}
+          seedText={effectiveNodes
+            .slice(0, 12)
+            .map((node) => String(node.data?.label || ''))
+            .filter(Boolean)
+            .join('\n')}
+          isAccepted={false}
+          graphNodes={effectiveNodes}
+          graphEdges={edges}
+          onActionExpand={() => {
+            window.dispatchEvent(
+              new CustomEvent('idea-workspace-quick-action', {
+                detail: { action: 'tbl_add_row', ideaId },
+              })
+            );
+            return { status: 'handed_off' as const };
+          }}
+          onActionConvert={() => {
+            onConvertProp?.('presentation');
+            return { status: 'handed_off' as const };
+          }}
+        />
+      ) : null}
     </div>
   );
 };
