@@ -4,7 +4,7 @@ Gałąź bazowa: `codex/admin55-fixes-20260825` @ `6876f61ac7525e8dbb40adde4cacd
 Gałąź robocza: `codex/admin55-day2-20260825`
 Worktree: `/private/tmp/consultify-admin55-day2`
 Zakres: sekcja A (5 pozycji) + sekcja B (7 commitów i18n / 21 paneli) + sekcja C (2 pozycje Superadmin) + sekcja D (reguły procesowe)
-Start: 06:56 CEST · Koniec: 07:51 CEST
+Start: 06:56 CEST · Koniec: 08:14 CEST
 
 ## Warunki wstępne — wynik sprawdzenia
 
@@ -62,8 +62,7 @@ Brak na moment utworzenia raportu.
 ## Korekty wobec instrukcji
 
 - Tip gałęzi bazowej przesunął się z referencyjnego `da54b632eb` do `6876f61ac7`; użyto najnowszego tipa zgodnie z §0.1.
-- Nie wykonano `git fetch --all --prune`: lokalna gałąź bazowa i jej aktywny, czysty worktree były dostępne, a zakazy Z5–Z6 zabraniają mutowania chronionych checkoutów. To ograniczenie nie zmienia dowodu lokalnej bazy.
-- Korekta po audycie sceptyka: powyższe uzasadnienie nie dowodzi, że lokalny tip był najnowszy względem origin. Historyczna świeżość punktu bazowego ma status `NOT PROVEN`; nie wykonuję retroaktywnego fetchu jako rzekomego dowodu startowego.
+- Nie wykonano nakazanego startowego `git fetch --all --prune`. Lokalny ancestry dowodzi pochodzenia od wskazanego SHA, ale nie dowodzi, że `6876f61ac7` był w chwili startu najnowszym tipem względem origin. Historyczna świeżość punktu bazowego ma status `NOT PROVEN`; nie wykonuję retroaktywnego fetchu jako rzekomego dowodu startowego. Przed integracją wymagana jest read-only kontrola ancestry aktualnego targetu.
 
 ## Obserwacje do naprawy in-house (NIE dotykane przeze mnie)
 
@@ -95,7 +94,9 @@ Brak na moment utworzenia raportu.
 
 ## Odbiór sceptyczny
 
-Pierwszy odbiór zamrożonego `58412bdcd3`: DoD 8,2/10; Security 8,8/10; UX/test 8,4/10; średnia 8,47/10 — `NO-GO`. Wszystkie wskazane P1 zostały naprawione w `03df4655f9`. Finalne oceny po ponownym zamrożeniu: w toku.
+Pierwszy odbiór zamrożonego `58412bdcd3`: DoD 8,2/10; Security 8,8/10; UX/test 8,4/10; średnia 8,47/10 — `NO-GO`. Wszystkie wskazane P1 zostały naprawione w `03df4655f9`.
+
+Finalny re-audyt `b95a8d9ba5`: DoD 9,4/10 `GO`; Security 9,4/10 `GO`; UX/i18n/test 9,4/10 `GO`; **średnia 9,4/10**, P0 = 0, P1 = 0. Nieblokujące granice dowodu: historyczna świeżość origin `NOT PROVEN`; trwały zapis fail-open `logAdminAction` bez RealPG `NOT PROVEN`; runtime `changeLanguage` nie jest symulowany przez gate (zależności `t` w hookach sprawdzone ESLintem); znany redirect SuperAdmin pozostaje `NOT VERIFIED` zgodnie z zakazem naprawy C.3.
 
 ## Migracje
 
