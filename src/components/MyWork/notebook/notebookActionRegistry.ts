@@ -295,6 +295,15 @@ export const NOTEBOOK_ACTION_REGISTRY = {
     'download',
     'single-flight-required'
   ),
+  'version-history': contract(
+    'version-history',
+    'note-menu',
+    'Open note version history',
+    'local-navigation',
+    'page-read',
+    'visible-panel',
+    'n/a'
+  ),
   sources: contract(
     'sources',
     'note-menu',
