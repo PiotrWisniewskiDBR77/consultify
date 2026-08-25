@@ -209,7 +209,7 @@ describe('MeetingObjectPage', () => {
     expect(navigateMock).toHaveBeenCalledWith('/meetings/meeting-1/minutes');
   });
 
-  it('renders the SPEC-A shell — Menu 1 (title + lifecycle status) and the right panel (Akcje/Właściwości) — with real meeting data', async () => {
+  it('renders the SPEC-A shell — Menu 1 (title + lifecycle status) and the right panel (Actions/Properties) — with real meeting data', async () => {
     getMeetingMock.mockResolvedValue({ meeting });
     render(<MeetingObjectPage />);
 
@@ -222,20 +222,24 @@ describe('MeetingObjectPage', () => {
     expect(screen.getByText('Past — needs update')).toBeTruthy();
 
     // Prawy panel (ArtifactRightPanel accordion): section headers always
-    // render regardless of open/closed state.
-    expect(screen.getByText('Akcje')).toBeTruthy();
-    expect(screen.getByText('Właściwości')).toBeTruthy();
+    // render regardless of open/closed state. FIX-M-1c (DEC-58 sceptyk):
+    // these used to be hardcoded Polish literals rendered even under this
+    // test's simulated 'en' locale — now real t() calls, so the mocked `t`
+    // (which returns the literal defaultValue, see the top of this file)
+    // renders the EN default text.
+    expect(screen.getByText('Actions')).toBeTruthy();
+    expect(screen.getByText('Properties')).toBeTruthy();
 
-    // "Akcje" is the only section open by default (SPEC-N §2.2 R3) and has
+    // "Actions" is the only section open by default (SPEC-N §2.2 R3) and has
     // real, wired buttons (reload + back to list) — not placeholder copy.
-    expect(screen.getByText('Wczytaj ponownie')).toBeTruthy();
-    expect(screen.getByText('Wróć do listy')).toBeTruthy();
+    expect(screen.getByText('Reload')).toBeTruthy();
+    expect(screen.getByText('Back to list')).toBeTruthy();
 
-    // "Właściwości" starts collapsed — expand it and assert it carries the
+    // "Properties" starts collapsed — expand it and assert it carries the
     // meeting's REAL location, not invented/placeholder content.
-    screen.getByText('Właściwości').click();
+    screen.getByText('Properties').click();
     expect(await screen.findByText('Zoom')).toBeTruthy();
-    expect(screen.getByText('Właściwość')).toBeTruthy();
-    expect(screen.getByText('Wartość')).toBeTruthy();
+    expect(screen.getByText('Property')).toBeTruthy();
+    expect(screen.getByText('Value')).toBeTruthy();
   });
 });

@@ -25198,7 +25198,8 @@
       "title": "Utwórz spotkanie",
       "editTitle": "Edytuj spotkanie",
       "subtitle": "Agenda + materiały + follow-upy",
-      "note": "Szczegóły spotkania są zapisywane we wspólnej przestrzeni."
+      "note": "Szczegóły spotkania są zapisywane we wspólnej przestrzeni.",
+      "requiredHint": "Tytuł i czas rozpoczęcia są wymagane"
     },
     "decisions": {
       "title": "Dodaj decyzję",
@@ -25325,9 +25326,57 @@
     "scheduled2": "Zaplanowane",
     "noOperatorBrief": "Brak briefingu operatora dla tego spotkania.",
     "notes": {
+      "approvalRequiresAdmin": "Zatwierdzenie wymaga aktywnego właściciela lub administratora organizacji.",
+      "approve": "Zatwierdź i zmaterializuj",
+      "approved": "Notatka ze spotkania zatwierdzona i zmaterializowana",
+      "approvedActions": "Zatwierdzone proponowane działania",
+      "approvedDecisions": "Zatwierdzone proponowane decyzje",
+      "awaitingApproval": "Oczekuje na zatwierdzenie",
+      "backToProposals": "Wróć do propozycji",
+      "captureOff": "Nagrywanie i automatyczna transkrypcja są WYŁĄCZONE.",
+      "decisionReason": "Powód decyzji",
+      "errors": {
+        "decisionFailed": "Nie udało się zaktualizować propozycji.",
+        "generateFailed": "Nie udało się wygenerować notatek",
+        "loadFailed": "Nie udało się załadować propozycji notatek ze spotkania."
+      },
+      "manualSourcePlaceholder": "Wklej tekst spotkania, aby przygotować nadzorowaną propozycję notatki",
+      "manualSourceText": "Tekst źródłowy spotkania",
+      "manualTextOnly": "Przetwarzany jest wyłącznie tekst wklejony ręcznie. Nic nie staje się decyzją ani follow-upem przed zatwierdzeniem przez człowieka.",
+      "materialized": "Zmaterializowana",
+      "noProposals": "Brak jeszcze propozycji notatek ze spotkania.",
       "notifications": {
-        "generated": "Wygenerowana"
-      }
+        "generated": "Wygenerowana",
+        "proposed": "Notatka ze spotkania zgłoszona do zatwierdzenia przez człowieka"
+      },
+      "proposals": "Nadzorowane propozycje notatek",
+      "proposedActions": "Proponowane działania — niezapisane jako follow-upy",
+      "proposedDecisions": "Proponowane decyzje — niezapisane jako decyzje",
+      "receipt": "Potwierdzenie materializacji",
+      "reject": "Odrzuć",
+      "rejected": "Notatka ze spotkania odrzucona",
+      "rejectedState": "Odrzucona",
+      "stale": "Ta propozycja się zmieniła. Ładuję aktualny stan.",
+      "untitled": "Propozycja notatki ze spotkania"
+    },
+    "object": {
+      "sectionDetails": "Szczegóły",
+      "minutes": "Protokół",
+      "sectionDecisions": "Decyzje i działania",
+      "actionItems": "Działania",
+      "propStatus": "Stan",
+      "propLocation": "Lokalizacja",
+      "propNotes": "Notatki (Protokół)",
+      "reload": "Wczytaj ponownie",
+      "properties": "Właściwości",
+      "propertyLabel": "Właściwość",
+      "valueLabel": "Wartość",
+      "lastSavedLabel": "Dane odczytane z serwera",
+      "panelAriaLabel": "Szczegóły spotkania"
+    },
+    "objectNotFound": {
+      "title": "Nie znaleziono spotkania",
+      "description": "To spotkanie nie istnieje albo nie masz do niego dostępu."
     },
     "operatorBriefError": "Nie udało się załadować briefu operatora.",
     "emptyState": {

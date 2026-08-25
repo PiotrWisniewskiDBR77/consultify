@@ -24068,7 +24068,8 @@
       "title": "Create meeting",
       "editTitle": "Edit meeting",
       "subtitle": "Agenda + pre-read + follow-up workspace",
-      "note": "Meeting details are stored in the shared workspace."
+      "note": "Meeting details are stored in the shared workspace.",
+      "requiredHint": "Title and start time are required"
     },
     "decisions": {
       "title": "Add decision",
@@ -24195,9 +24196,57 @@
     "scheduled2": "Scheduled",
     "noOperatorBrief": "No operator brief for this meeting.",
     "notes": {
+      "approvalRequiresAdmin": "Approval requires an active organization owner or administrator.",
+      "approve": "Approve and materialize",
+      "approved": "Meeting note approved and materialized",
+      "approvedActions": "Approved proposed action items",
+      "approvedDecisions": "Approved proposed decisions",
+      "awaitingApproval": "Awaiting approval",
+      "backToProposals": "Back to proposals",
+      "captureOff": "Recording and automatic transcription are OFF.",
+      "decisionReason": "Decision reason",
+      "errors": {
+        "decisionFailed": "Could not update the proposal.",
+        "generateFailed": "Failed to generate notes",
+        "loadFailed": "Could not load meeting note proposals."
+      },
+      "manualSourcePlaceholder": "Paste meeting text to prepare a governed note proposal",
+      "manualSourceText": "Meeting source text",
+      "manualTextOnly": "Only text pasted manually is processed. Nothing becomes a decision or follow-up before human approval.",
+      "materialized": "Materialized",
+      "noProposals": "No meeting note proposals yet.",
       "notifications": {
-        "generated": "Generated"
-      }
+        "generated": "Generated",
+        "proposed": "Meeting note proposed for human approval"
+      },
+      "proposals": "Governed note proposals",
+      "proposedActions": "Proposed action items — not saved as follow-ups",
+      "proposedDecisions": "Proposed decisions — not saved as decisions",
+      "receipt": "Materialization receipt",
+      "reject": "Reject",
+      "rejected": "Meeting note rejected",
+      "rejectedState": "Rejected",
+      "stale": "This proposal changed. Reloading the authoritative state.",
+      "untitled": "Meeting note proposal"
+    },
+    "object": {
+      "sectionDetails": "Details",
+      "minutes": "Minutes",
+      "sectionDecisions": "Decisions & actions",
+      "actionItems": "Actions",
+      "propStatus": "Status",
+      "propLocation": "Location",
+      "propNotes": "Notes (Minutes)",
+      "reload": "Reload",
+      "properties": "Properties",
+      "propertyLabel": "Property",
+      "valueLabel": "Value",
+      "lastSavedLabel": "Data read from server",
+      "panelAriaLabel": "Meeting details"
+    },
+    "objectNotFound": {
+      "title": "Meeting not found",
+      "description": "This meeting does not exist, or you do not have access to it."
     },
     "operatorBriefError": "Could not load the operator brief.",
     "emptyState": {
