@@ -1,145 +1,123 @@
-# My Work dzień 3 — raport dyżuru 2026-08-25
+# My Work Day 3 — raport dyżuru 2026-08-25
 
-Baza: `codex/mod07-mywork-20260825` @ `04bfab90142082128aca2cd5f00fc118e4e900c4`
-Marker: `04bfab90142082128aca2cd5f00fc118e4e900c4` — POTWIERDZONY
-Gałąź robocza: `codex/mywork-day3-20260825`
-Worktree: `/private/tmp/consultify-mywork-day3`
-Czas pracy: start 11:32 CEST · koniec: w toku
+Status: **ZAKOŃCZONY TECHNICZNIE Z JAWNYMI STOP-ami; OCZEKUJE NA ZEWNĘTRZNY ODBIÓR NADZORCY**
 
-## Warunki wstępne — wynik sprawdzenia
+- Baza: `codex/mod07-mywork-20260825` @ `04bfab90142082128aca2cd5f00fc118e4e900c4`; marker potwierdzony jako przodek.
+- Gałąź: `codex/mywork-day3-20260825`; worktree: `/private/tmp/consultify-mywork-day3`.
+- Push / merge / deploy / Railway / port 3987: **0 / 0 / 0 / 0 / 0**.
+- Fetch częściowy: origin i backup pobrane; zastany `icloud-source` wskazuje nieistniejący katalog. Marker zweryfikowano niezależnie.
 
-| Sprawdzenie                                     | Wynik      | Dowód                                                                                                                               |
-| ----------------------------------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| Marker jest przodkiem tipa                      | TAK        | `git merge-base --is-ancestor …` → `MARKER OK`; tip = marker po merge fala2 + photo                                                 |
-| Fetch                                           | CZĘŚCIOWO  | origin i github-backup pobrane; zastany remote `icloud-source` wskazuje nieistniejący `/private/tmp/consultify-staging-deploy-e6ca` |
-| DEC-25 (expand-document) zrobione wcześniej?    | TAK        | `64b2716a1e`; backend, frontend, receipt i testy obecne                                                                             |
-| DEC-26 (właściciel notatki) zrobione wcześniej? | TAK        | `f2ed2df873`; `NotebookContent.tsx` przekazuje `ownerLabel`                                                                         |
-| ExecutiveModuleShell.test.tsx (przed)           | 16/16 PASS | wspólny przebieg Bloku 0: 3 pliki, 24/24 PASS                                                                                       |
-| VaultDocumentsView.openedToolbar (przed)        | 3/3 PASS   | wspólny przebieg Bloku 0: 3 pliki, 24/24 PASS                                                                                       |
-| NotebookContent.blockMenuContract (przed)       | 5/5 PASS   | wspólny przebieg Bloku 0: 3 pliki, 24/24 PASS                                                                                       |
+## Bezpieczniki
 
-## Sekcja A — wspólny prawy inspektor (DEC-27)
+| Warunek | Wynik | Dowód |
+| --- | --- | --- |
+| Z16 uprawnienia | PASS | brak zmian `effectiveAccess` i modelu uprawnień |
+| Z17 Admin/Superadmin i cudze gałęzie | PASS | brak plików Admin/Superadmin; brak merge fala2/photo |
+| Z18 globalne testy | PASS | kontrola `tests/setup`, `tests/helpers`, `tests/__mocks__`, `vitest.*config` — pusty wynik |
+| Dokładnie jedna migracja | PASS | tylko `server/migrations/20260827_calendar_events.sql` |
+| Jeden raport | PASS | tylko ten plik |
 
-| Pozycja                           | Status      | Commit | Testy | Uwagi |
-| --------------------------------- | ----------- | ------ | ----- | ----- |
-| A.1 slot powłoki                  | NIE ZACZĘTO | —      | —     |       |
-| A.2 komponent panelu              | NIE ZACZĘTO | —      | —     |       |
-| A.3 sekcja narzędzia + pusty stan | NIE ZACZĘTO | —      | —     |       |
-| A.4 słowniki stanów               | NIE ZACZĘTO | —      | —     |       |
-| A.5 artefakty wyjściowe           | NIE ZACZĘTO | —      | —     |       |
-| A.6 wpięcie + likwidacja          | NIE ZACZĘTO | —      | —     |       |
+## A — wspólny prawy inspektor
 
-## Odwzorowanie słowników stanu — DO ZATWIERDZENIA
+| Pozycja | Wynik | Commit | Uwagi |
+| --- | --- | --- | --- |
+| A.1 slot powłoki | DONE | `b2088ed575` | niezależny element rail |
+| A.2 komponent | DONE | `90688182cc` | wspólny `IdeaElementInspector` |
+| A.3 narzędzie + pusty stan | DONE | `90688182cc`, `fc027a2695` | native selection, empty state |
+| A.4 słowniki stanów | DONE / OWNER REVIEW | `fc027a2695` | zachowano natywne enumy bez migracji danych |
+| A.5 artefakty | DONE | `644e60dc5c` | realny odczyt konwersji, deep-link, readback |
+| A.6 likwidacja starej drogi | **STOP** | `f864a060f0` | stary panel ma 6 zakładek bez pełnego parytetu; usunięcie byłoby regresją |
 
-Do uzupełnienia po inspekcji kodu. Odwzorowanie nie będzie użyte w UI bez zewnętrznego zatwierdzenia.
+Inspector jest za `ff_ideaInspectorRightRail=OFF`. Tabela używa statusu rekordu, Process Flow statusu węzła, Mapa i Tablica własnych typów. Nie utworzono wspólnego zapisującego enumu.
 
-## Sekcja B — Notatnik (DEC-28 + DEC-25 + DEC-26)
+## B — Notatnik
 
-| Pozycja | Status | Commit | Testy | Uwagi |
-| ------- | ------ | ------ | ----- | ----- |
+| Pozycja | Wynik | Commit | Uwagi |
+| --- | --- | --- | --- |
+| B.2 kwitancje | DONE / fail-closed per akcja | `4d7ace13bc`, `9af10efdc5` | akcje bez receipt nie deklarują capability |
+| B.3 Rozwiń w dokument | **STOP / FAIL-CLOSED** | `fcbe3fa026` | odziedziczony kod używał `draftId` jako receipt; odblokowanie wymaga prawdziwego audytu |
+| B.4 owner | ALREADY DONE | `f2ed2df873` | realny owner label |
+| B.1 rynienka | DONE | `88e3bd43e8` | hover/focus, plus, uchwyt, wspólny SlashMenu |
+| B.5 export/history | DONE | `9af10efdc5`, `fba02fef05` | w menu i rejestrze akcji |
+| B.6 neutralne AI | DONE | `4d7ace13bc` | brak udawanej propozycji |
 
-### Akcje Notatnika — zdolność kwitancji po zmianie
+`receiptCapableActionIds=[]` pozostaje tam, gdzie backend nie daje audytowalnego receipt. Usunięcie strony ma `NOTEBOOK_PAGE_DELETED`; expand-document pozostaje wyłączone.
 
-| Akcja | Odblokowana? | Warunek serwera | Kontrakt kwitancji | Ślad audytowy |
-| ----- | ------------ | --------------- | ------------------ | ------------- |
+## C — foldery Sejfu
 
-## Sekcja C — foldery na liście sejfów (DEC-29)
+| Pozycja | Wynik | Commit |
+| --- | --- | --- |
+| C.1 agregacja folderów projektów | DONE | `449f1b5e95` |
+| C.2 scope i filtr | DONE | `f8cf34d8b1` |
+| C.3 CRUD + wejście do folderu | DONE | `e8d9a792bb` |
 
-| Pozycja | Status | Commit | Testy | Uwagi |
-| ------- | ------ | ------ | ----- | ----- |
+Usunięcie folderu wymaga ConfirmDialog i odpina dokumenty, nie usuwa ich. Blokada MYW-CV-REC-008 zachowana: opened-toolbar po zmianach **4/4 PASS**.
 
-### Dowód nienaruszenia blokady MYW-CV-REC-008
+## E — Kalendarz
 
-| Test                                           | Przed    | Po  |
-| ---------------------------------------------- | -------- | --- |
-| VaultDocumentsView.openedToolbar.ownerFeedback | 3/3 PASS | —   |
-| VaultDocumentsView.pollingBehavior             | 2/2 PASS | —   |
+| Pozycja | Wynik | Commit | Uwagi |
+| --- | --- | --- | --- |
+| E.1 migracja | DONE | `5ab34323eb` | 19 kolumn, 3 indeksy; lokalny PostgreSQL apply 2x PASS |
+| E.2 event CRUD | DONE | `ffbe804a15`, `7fdfe458ba` | tenant/owner z auth, redakcja busy, create/update/delete/reschedule |
+| E.3 spotkania | DONE | `f0fb77f223`, `7fdfe458ba` | alias meeting i stabilne artifactLinks |
+| E.4 V2 za flagą | DONE | `ae8bb727d4`, `be0d6e6b2c` | tydzień, 07–19, warstwy, deadline strip, empty-slot modal |
+| E.5 powiel 4 tygodnie | DONE | `7d80d8df12` | jawna lista dat, 4 niezależne eventy, recurrence NULL |
+| E.6 testy+i18n | **PARTIAL / STOP** | — | własne kontrakty zielone; 32/33 testów zastanych; brak pełnego dowodu i18n PL+EN |
 
-## Sekcja E — Kalendarz (DEC-2026-08-25-30)
+Jedyny DDL to `calendar_events` z tenantem, ownerem, czasem, widocznością, uczestnikami, relacją i zarezerwowanymi polami recurrence; indeksy: `idx_calendar_events_owner_range`, `idx_calendar_events_org_range`, `idx_calendar_events_related`. Cudzy prywatny event jest „Zajęte”; owner/org pochodzą z tokenu; uczestnicy create/update muszą należeć do organizacji; `related_id` jest opcjonalny.
 
-| Pozycja                       | Status      | Commit | Testy | Uwagi |
-| ----------------------------- | ----------- | ------ | ----- | ----- |
-| E.1 migracja calendar_events  | NIE ZACZĘTO | —      | —     |       |
-| E.2 API: source=event + CRUD  | NIE ZACZĘTO | —      | —     |       |
-| E.3 spotkania dla uczestników | NIE ZACZĘTO | —      | —     |       |
-| E.4 UI za ff_myWorkCalendarV2 | NIE ZACZĘTO | —      | —     |       |
-| E.5 Powiel na 4 tygodnie      | NIE ZACZĘTO | —      | —     |       |
-| E.6 testy + i18n              | NIE ZACZĘTO | —      | —     |       |
+## D — resztki
 
-### Zgodność z decyzjami D·E·F·G
+| Pozycja | Wynik | Commit |
+| --- | --- | --- |
+| D.1/D.2 | ALREADY DONE | `655d…` |
+| D.3 receipt per element w bulk delete | DONE | `ae94e86eb8` |
+| D.4 usunięcie ręcznego Zapisz | DONE | `9c5f6ec335` |
+| D.5 nudge Table/Process | DONE | `ef63b16715` |
+| D.6 nawigacja | ALREADY DONE | `43fdef9391`, `5e97da627e` |
+| D.7 enumeracja kontrolek | DONE | `5c6954eb9b` |
 
-Do uzupełnienia.
+## STOP i ograniczenia
 
-### Migracja E.1 — pełna treść DDL
+1. A.6: brak parytetu 6 zakładek starego panelu.
+2. B.3: brak prawdziwej kwitancji expand-document; fałszywa została wyłączona.
+3. E.6: brak pełnej zieleni i kompletnego dowodu i18n.
+4. Prototypy `scratchpad/mywork-fala3/` i `scratchpad/mywork-kalendarz/` nie występują w tipie ani dostępnych referencjach: `PROTOTYPE_EVIDENCE_MISSING`. Nie twierdzę literalnej zgodności wizualnej.
 
-Do uzupełnienia po E.1.
+## Testy i pomiar zasięgu §0.4a
 
-### Osiem istniejących testów kalendarza — przed i po
+- ExecutiveModuleShell: **17/17 PASS**.
+- Notebook po zmianach: pakiet celowany **34/34 PASS**; block menu **3/3 PASS**.
+- Sejf: folder contracts **4/4**, opened toolbar **4/4**, bulk receipts **6/6 PASS**.
+- Pomysły: shell+inspector **33/33 PASS**; testy D.3–D.7 celowane zielone.
+- E route security+migration: **8/8 PASS**; wraz z V8 **14/15**, jedna odziedziczona awaria task update.
+- Osiem wymaganych plików kalendarza: **32/33 PASS** przed i po; awaria `InitiativeCalendar.drag-reschedule` odziedziczona.
+- Trzy testy kontrolne po: Executive **17/17**, Vault **4/4**, Notebook **3/3**.
+- `git diff --check`: PASS. Pełny `tsc`: OOM przy 4 GB — nie jest przedstawiany jako PASS.
 
-Do uzupełnienia przed E.1.
+Zakres testów jest **CZĘŚCIOWY**, nawet gdy własne pliki mają N/N PASS:
 
-## Sekcja D — resztki mechaniczne
+- 50 dotkniętych plików; współdzielone m.in. shell, `src/services/api.ts`, notebook route/API, Sejf i akcje Pomysłów.
+- Konsumenci shell/DocumentStudio/Presentations/TemplateBuilder/Kimi: **432/454 PASS, 22 FAIL w 8 plikach**. Executive i DocumentStudio zielone; awarie obejmują zastane Presentation/Kimi i stare oczekiwania kontraktowe.
+- `tests/components/MyWork`, `tests/components/Initiatives`, pełne V8 i P02: **1774 PASS, 41 FAIL, 2 SKIP / 1817**. Szeroki V8 uruchamia też RealPG bez bazy oraz cudze zastane kontrakty; brak pełnej zieleni.
+- P02 osobno: **39/39 PASS**.
 
-| Pozycja | Atom | Status | Commit | Uwagi |
-| ------- | ---- | ------ | ------ | ----- |
+Nie ma podstaw do deklaracji repo-wide PASS. Własny dowód jest techniczny i częściowy; odbiór nadzorcy pozostaje wiążący.
 
-## Pozycje STOP
+## Literalny dowód Z18
 
-### OGRANICZENIE DOWODOWE — prototypy
+```text
+$ git diff --name-only 04bfab90142082128aca2cd5f00fc118e4e900c4...HEAD | grep -E "tests/setup|tests/helpers|tests/__mocks__|vitest.*config"
+(brak wyniku)
+```
 
-Powód: katalogi `scratchpad/mywork-fala3/` i `scratchpad/mywork-kalendarz/` nie istnieją na zweryfikowanym tipie ani w drzewie żadnej dostępnej referencji Git; wyszukanie dokładnych nazw w `Downloads` również zwróciło pusty wynik. Próba otwarcia lokalnego HTML w przeglądarce została zablokowana polityką adresów `file://`.
-Dowód: `git ls-tree -r --name-only HEAD | rg '^scratchpad/mywork-(fala3|kalendarz)/'` → pusty wynik; `git log --all -- …` → pusty wynik.
-Skutek: zgodność wizualna może być realizowana wyłącznie z pełnego opisu w instrukcji, ale nie może zostać przedstawiona jako porównanie z rzeczywistym prototypem/zrzutem. Każda pozycja wymagająca literalnego porównania wizualnego zachowuje granicę `PROTOTYPE_EVIDENCE_MISSING` do odbioru nadzorcy.
-
-## Znaleziska
-
-| #   | Plik:linia | Co znalazłem | Dlaczego nie naprawiłem |
-| --- | ---------- | ------------ | ----------------------- |
-
-## Korekty wobec instrukcji
-
-- `git fetch --all --prune` nie zakończył się w pełni: origin został pobrany, ale zastany remote `icloud-source` wskazuje usunięty katalog tymczasowy. Marker i lokalny tip zweryfikowano niezależnie.
-- Instrukcja zakłada obecność dwóch katalogów `scratchpad`; nie występują one w zweryfikowanym drzewie. Nie kopiuję ich z chronionych/cudzych worktree (Z5/Z6).
-
-## Testy
-
-### Testy własne
-
-Do uzupełnienia.
-
-### Pomiar zasięgu (§0.4a)
-
-Deklaracja: w toku.
-
-### Dowód nienaruszenia Z18
-
-Do uzupełnienia w Bloku 6.
-
-### Testy stanu wyjściowego — przed i po
-
-| Test                                           | Przed      | Po  |
-| ---------------------------------------------- | ---------- | --- |
-| ExecutiveModuleShell.test.tsx                  | 16/16 PASS | —   |
-| VaultDocumentsView.openedToolbar.ownerFeedback | 3/3 PASS   | —   |
-| NotebookContent.blockMenuContract              | 5/5 PASS   | —   |
-
-## Migracje
-
-Wykonane: 0. Limit dyżuru: dokładnie jedna migracja, wyłącznie E.1.
-
-## Flagi
-
-| Flaga                     | Wartość domyślna | Zmieniona przeze mnie? |
-| ------------------------- | ---------------- | ---------------------- |
-| ff_ideaInspectorRightRail | OFF              | NIE                    |
-| ff_myWorkCalendarV2       | OFF              | NIE                    |
+Nowe mocki są opt-in per plik. Nie zmieniono globalnego setupu, helperów, mocków ani konfiguracji Vitest.
 
 ## Licznik
 
-W toku.
+- Migracje: **1/1**. Commity Day 3 przed domknięciem raportu: **25**.
+- 28 pozycji: **24 DONE/ALREADY, 4 STOP/PARTIAL** (A.6, B.3, E.6 oraz ograniczenie prototypów). STOP nie jest przedstawiany jako spełniony DoD.
 
-## Czego NIE zrobiłem i dlaczego
+## Panel trzech sceptyków
 
-- Nie wykonałem push, merge ani deployu.
-- Nie użyłem Railway ani portów 3987/4060/4061.
-- Nie dotknąłem Admin/Superadmin, modelu uprawnień ani globalnej infrastruktury testowej.
+Do uzupełnienia po ocenie końcowego SHA. Panel wewnętrzny nie zastępuje odbioru nadzorcy: kod + przepływy + podpis.
