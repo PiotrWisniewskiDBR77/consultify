@@ -21,7 +21,7 @@ export const AdminPlanHistoryPanel: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
   React.useEffect(() => void load(), [load]);
   const rows = useMemo<TableRow[]>(
     () =>
@@ -35,13 +35,13 @@ export const AdminPlanHistoryPanel: React.FC = () => {
     () => [
       {
         id: 'created_at',
-        label: 'Data',
+        label: t('admin.billing.plan-history.columns.date'),
         sortable: true,
         render: (row) => new Date(String(row.created_at)).toLocaleString(),
       },
       {
         id: 'action',
-        label: 'Zmiana',
+        label: t('admin.billing.plan-history.columns.action'),
         sortable: true,
       },
       {
@@ -62,10 +62,10 @@ export const AdminPlanHistoryPanel: React.FC = () => {
       {
         id: 'performed_by',
         label: t('admin.billing.plan-history.columns.actor'),
-        render: (row) => row.performed_by || 'System',
+        render: (row) => row.performed_by || t('admin.billing.plan-history.systemActor'),
       },
     ],
-    []
+    [t]
   );
   return (
     <div className="space-y-4">

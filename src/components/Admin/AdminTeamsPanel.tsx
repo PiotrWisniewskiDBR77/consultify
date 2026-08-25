@@ -35,7 +35,7 @@ export const AdminTeamsPanel: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
   React.useEffect(() => {
     void load();
   }, [load]);
@@ -136,7 +136,7 @@ export const AdminTeamsPanel: React.FC = () => {
             ? t('admin.team.teams.inactiveStatus')
             : t('admin.team.teams.activeStatus'),
       })),
-    [teams]
+    [t, teams]
   );
   const columns = useMemo<TableColumn[]>(
     () => [
@@ -167,7 +167,7 @@ export const AdminTeamsPanel: React.FC = () => {
         width: '130px',
       },
     ],
-    []
+    [t]
   );
   return (
     <div className="space-y-6">

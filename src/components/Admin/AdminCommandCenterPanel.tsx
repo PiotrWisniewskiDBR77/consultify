@@ -166,7 +166,7 @@ const CommandCenterAttentionQueue: React.FC = () => {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [t]);
   if (loading)
     return (
       <div className="flex items-center gap-2 text-sm text-c-text-secondary">
@@ -291,7 +291,7 @@ const CommandCenterCostCapacity: React.FC = () => {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [t]);
   const rows = useMemo<TableRow[]>(
     () =>
       (state.attribution?.byUser ?? []).map((item: any) => ({
@@ -318,7 +318,7 @@ const CommandCenterCostCapacity: React.FC = () => {
         label: t('admin.command.cost-capacity.columns.messages'),
       },
     ],
-    []
+    [t]
   );
   if (state.loading)
     return (
@@ -425,9 +425,7 @@ interface LinkTile {
   section: AdminSettingsSection;
   icon: React.ElementType;
   labelKey: string;
-  labelDefault: string;
   descriptionKey: string;
-  descriptionDefault: string;
 }
 const LINK_TILES: LinkTile[] = [
   {
@@ -435,27 +433,21 @@ const LINK_TILES: LinkTile[] = [
     section: 'people',
     icon: Users,
     labelKey: 'commandCenter.overview.tiles.people.label',
-    labelDefault: 'Team & Access',
     descriptionKey: 'commandCenter.overview.tiles.people.description',
-    descriptionDefault: 'Roles, ownership, and permissions for this organization.',
   },
   {
     id: 'security',
     section: 'security',
     icon: ShieldCheck,
     labelKey: 'commandCenter.overview.tiles.security.label',
-    labelDefault: 'SSO & Identity',
     descriptionKey: 'commandCenter.overview.tiles.security.description',
-    descriptionDefault: 'Authentication policy, SCIM lifecycle, and delegated IAM.',
   },
   {
     id: 'audit',
     section: 'audit',
     icon: ScrollText,
     labelKey: 'commandCenter.overview.tiles.audit.label',
-    labelDefault: 'Audit Log',
     descriptionKey: 'commandCenter.overview.tiles.audit.description',
-    descriptionDefault: 'High-risk admin events and compliance evidence.',
   },
 ];
 const LinkTileCard: React.FC<{
@@ -477,16 +469,8 @@ const LinkTileCard: React.FC<{
         <ArrowRight className="h-4 w-4 text-c-text-muted transition group-hover:translate-x-0.5 group-hover:text-c-text-secondary" />
       </div>
       <div>
-        <p className="text-sm font-semibold text-c-text">
-          {t(tile.labelKey, {
-            defaultValue: tile.labelDefault,
-          })}
-        </p>
-        <p className="mt-1 text-xs text-c-text-secondary">
-          {t(tile.descriptionKey, {
-            defaultValue: tile.descriptionDefault,
-          })}
-        </p>
+        <p className="text-sm font-semibold text-c-text">{t(tile.labelKey)}</p>
+        <p className="mt-1 text-xs text-c-text-secondary">{t(tile.descriptionKey)}</p>
       </div>
       <span className="text-xs font-medium text-c-text-secondary group-hover:text-c-text">
         {t('commandCenter.overview.tiles.open')}

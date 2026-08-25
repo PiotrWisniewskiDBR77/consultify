@@ -102,6 +102,15 @@ router.post(
       [id, organizationId, domain, req.body?.autoJoin ? 1 : 0, req.user?.id, verificationToken],
       { fallback: false }
     );
+    await logAdminAction('domain_created', 'approved_domain', {
+      actorType: 'user',
+      actorId: String(req.user?.id),
+      organizationId,
+      resourceId: id,
+      resourceName: domain,
+      newValues: { domain, autoJoin: Boolean(req.body?.autoJoin), verified: false },
+      result: 'success',
+    });
     return res.status(201).json({
       success: true,
       domain: { id, domain, autoJoin: Boolean(req.body?.autoJoin), verified: false },
@@ -119,8 +128,8 @@ router.put(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const organizationId = String(req.user?.organizationId);
     await ensureTable();
-    const found = await dbGet(
-      'SELECT id FROM approved_domains WHERE id = ? AND organization_id = ?',
+    const found = await dbGet<{ id: string; domain: string; auto_join: number }>(
+      'SELECT id, domain, auto_join FROM approved_domains WHERE id = ? AND organization_id = ?',
       [req.params.domainId, organizationId]
     );
     if (!found) return res.status(404).json({ success: false, code: 'DOMAIN_NOT_FOUND' });
@@ -129,6 +138,16 @@ router.put(
       [req.body?.autoJoin ? 1 : 0, req.params.domainId, organizationId],
       { fallback: false }
     );
+    await logAdminAction('domain_auto_join_updated', 'approved_domain', {
+      actorType: 'user',
+      actorId: String(req.user?.id),
+      organizationId,
+      resourceId: found.id,
+      resourceName: found.domain,
+      oldValues: { autoJoin: Boolean(found.auto_join) },
+      newValues: { autoJoin: Boolean(req.body?.autoJoin) },
+      result: 'success',
+    });
     return res.json({ success: true });
   })
 );
@@ -138,8 +157,9 @@ router.delete(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const organizationId = String(req.user?.organizationId);
     await ensureTable();
-    const found = await dbGet(
-      'SELECT id FROM approved_domains WHERE id = ? AND organization_id = ?',
+    const found = await dbGet<{ id: string; domain: string; auto_join: number; verified: number }>(
+      `SELECT id, domain, auto_join, verified FROM approved_domains
+       WHERE id = ? AND organization_id = ?`,
       [req.params.domainId, organizationId]
     );
     if (!found) return res.status(404).json({ success: false, code: 'DOMAIN_NOT_FOUND' });
@@ -148,6 +168,15 @@ router.delete(
       [req.params.domainId, organizationId],
       { fallback: false }
     );
+    await logAdminAction('domain_deleted', 'approved_domain', {
+      actorType: 'user',
+      actorId: String(req.user?.id),
+      organizationId,
+      resourceId: found.id,
+      resourceName: found.domain,
+      oldValues: { autoJoin: Boolean(found.auto_join), verified: Boolean(found.verified) },
+      result: 'success',
+    });
     verificationAttempts.delete(`${organizationId}:${req.params.domainId}`);
     return res.status(204).send();
   })

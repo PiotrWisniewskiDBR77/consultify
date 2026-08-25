@@ -16379,11 +16379,14 @@
       "plan-history": {
         "loadError": "Failed to load plan history.",
         "columns": {
+          "date": "Date",
+          "action": "Change",
           "fromPlan": "Previous plan",
           "toPlan": "New plan",
           "reason": "Reason",
           "actor": "Performed by"
         },
+        "systemActor": "System",
         "title": "Plan change history",
         "description": "A chronological, read-only record of this organization’s subscription changes.",
         "empty": {

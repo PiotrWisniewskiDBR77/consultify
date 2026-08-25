@@ -42,7 +42,7 @@ export const AdminGuestsPanel: React.FC = () => {
           label: t('admin.team.guests-external.columns.status'),
         },
       ],
-      []
+      [t]
     ),
     rows = useMemo<TableRow[]>(
       () =>
@@ -62,7 +62,7 @@ export const AdminGuestsPanel: React.FC = () => {
             status: expired ? t('admin.team.guests-external.status.expired') : g.status,
           };
         }),
-      [data]
+      [data, t]
     );
   const revoke = async () => {
     if (!target) return;

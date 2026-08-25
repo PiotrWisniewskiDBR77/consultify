@@ -106,4 +106,25 @@ describe('PlatformOperationsView', () => {
       await screen.findByText(/TENANT_NAME_MISMATCH: Wpisana nazwa nie zgadza się.*Acme/)
     ).toBeInTheDocument();
   });
+
+  it.each([
+    [428, 'CONFIRMATION_REQUIRED', 'Serwer wymaga jawnego potwierdzenia operacji.'],
+    [422, 'REASON_REQUIRED', 'Serwer wymaga podania powodu operacji.'],
+    [404, 'NOT_FOUND', 'Wybrany cel operacji nie istnieje'],
+    [403, 'FORBIDDEN', 'Nie masz uprawnień do wykonania tej operacji.'],
+  ])(
+    'maps backend status %s and code %s to a distinct operator message',
+    async (status, code, text) => {
+      run.mockRejectedValue(
+        Object.assign(new Error('raw backend message'), { status, data: { code } })
+      );
+      render(<PlatformOperationsView />);
+      const dialog = await openAction('Reaktywuj organizację');
+      fireEvent.change(within(dialog).getByLabelText('Powód'), {
+        target: { value: 'approved operation' },
+      });
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Wykonaj operację' }));
+      expect(await screen.findByText(new RegExp(text))).toBeInTheDocument();
+    }
+  );
 });

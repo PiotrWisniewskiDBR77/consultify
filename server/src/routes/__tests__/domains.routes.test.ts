@@ -70,6 +70,27 @@ describe('admin domains route', () => {
     expect(verify).not.toHaveBeenCalled();
   });
 
+  it.each([
+    ['post', '/api/admin/domains', { domain: 'example.com', autoJoin: true }, 'domain_created'],
+    ['put', '/api/admin/domains/d1', { autoJoin: true }, 'domain_auto_join_updated'],
+    ['delete', '/api/admin/domains/d1', undefined, 'domain_deleted'],
+  ] as const)('audits the successful %s mutation', async (method, path, body, action) => {
+    dbGet.mockReset();
+    dbGet
+      .mockResolvedValueOnce({ role: 'ADMIN', status: 'ACTIVE' })
+      .mockResolvedValueOnce(
+        method === 'post' ? null : { id: 'd1', domain: 'example.com', auto_join: 0, verified: 1 }
+      );
+    const call = request(app())[method](path);
+    const response = body ? await call.send(body) : await call;
+    expect(response.status).toBe(method === 'post' ? 201 : method === 'delete' ? 204 : 200);
+    expect(audit).toHaveBeenCalledWith(
+      action,
+      'approved_domain',
+      expect.objectContaining({ organizationId: 'org-1', result: 'success' })
+    );
+  });
+
   it('persists verification and audits only after a real match', async () => {
     dbGet
       .mockResolvedValueOnce({ role: 'ADMIN', status: 'ACTIVE' })

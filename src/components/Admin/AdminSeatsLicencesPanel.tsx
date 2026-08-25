@@ -37,7 +37,7 @@ export const AdminSeatsLicencesPanel: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
   useEffect(() => {
     void load();
   }, [load]);
@@ -83,7 +83,7 @@ export const AdminSeatsLicencesPanel: React.FC = () => {
         align: 'right',
       },
     ],
-    []
+    [t]
   );
   const rows = useMemo<TableRow[]>(
     () =>
@@ -98,7 +98,7 @@ export const AdminSeatsLicencesPanel: React.FC = () => {
           t('admin.billing.seats-licences.systemActor'),
         amount: item.total_amount == null ? '—' : item.total_amount.toFixed(2),
       })),
-    [history]
+    [history, t]
   );
   return (
     <div className="space-y-4">

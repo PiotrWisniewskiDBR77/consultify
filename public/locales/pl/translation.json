@@ -17225,11 +17225,14 @@
       "plan-history": {
         "loadError": "Nie udało się pobrać historii planu.",
         "columns": {
+          "date": "Data",
+          "action": "Zmiana",
           "fromPlan": "Plan z",
           "toPlan": "Plan na",
           "reason": "Powód",
           "actor": "Wykonał"
         },
+        "systemActor": "System",
         "title": "Historia zmian planu",
         "description": "Chronologiczny, tylko-do-odczytu zapis zmian subskrypcji tej organizacji.",
         "empty": {

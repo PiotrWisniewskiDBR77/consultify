@@ -73,7 +73,7 @@ export const AdminOrganizationDefaultsPanel: React.FC<Props> = ({ organizationId
           : t('admin.command.organization-defaults.profile.loadError')
       );
     }
-  }, []);
+  }, [t]);
   const loadFinance = useCallback(async () => {
     try {
       setFinanceState('loading');
@@ -94,7 +94,7 @@ export const AdminOrganizationDefaultsPanel: React.FC<Props> = ({ organizationId
           : t('admin.command.organization-defaults.finance.loadError')
       );
     }
-  }, []);
+  }, [t]);
   useEffect(() => {
     void loadProfile();
     void loadFinance();

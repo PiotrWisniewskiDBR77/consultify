@@ -48,7 +48,7 @@ export const AdminAccessReviewsPanel: React.FC = () => {
           label: t('admin.team.access-reviews.columns.status'),
         },
       ],
-      []
+      [t]
     ),
     rows = useMemo<TableRow[]>(
       () =>

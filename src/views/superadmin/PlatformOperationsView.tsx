@@ -138,11 +138,18 @@ export const PlatformOperationsView: React.FC = () => {
     } catch (cause: any) {
       const details = cause?.data && typeof cause.data === 'object' ? cause.data : cause;
       const code = String(details?.code || cause?.code || cause?.status || 'ERROR');
-      const message = details?.expectedName
-        ? `Wpisana nazwa nie zgadza się. Oczekiwano: ${details.expectedName}.`
-        : cause instanceof Error
-          ? cause.message
-          : 'Błąd operacji';
+      const message = (() => {
+        if (code === 'CONFIRMATION_REQUIRED' || cause?.status === 428)
+          return 'Serwer wymaga jawnego potwierdzenia operacji.';
+        if (code === 'REASON_REQUIRED') return 'Serwer wymaga podania powodu operacji.';
+        if (code === 'TYPE_TO_CONFIRM_FAILED' || details?.expectedName)
+          return `Wpisana nazwa nie zgadza się. Oczekiwano: ${details?.expectedName || target.name}.`;
+        if (cause?.status === 404 || code === 'NOT_FOUND')
+          return 'Wybrany cel operacji nie istnieje lub nie jest już dostępny.';
+        if (cause?.status === 403 || code === 'FORBIDDEN')
+          return 'Nie masz uprawnień do wykonania tej operacji.';
+        return cause instanceof Error ? cause.message : 'Błąd operacji';
+      })();
       setResults((items) => [
         {
           at: new Date().toISOString(),

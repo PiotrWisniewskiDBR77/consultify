@@ -63,6 +63,7 @@ describe('Admin day-2 i18n contract', () => {
     for (const file of PANELS) {
       const source = fs.readFileSync(path.join(ROOT, file), 'utf8');
       expect(source, file).not.toContain('day2Auto');
+      expect(source, file).not.toContain('defaultValue');
       expect(source, file).not.toMatch(/t\(\s*['"`][^'"`]+['"`]\s*,\s*['"`]/s);
     }
   });

@@ -67,7 +67,7 @@ export const AdminRolesPermissionsPanel: React.FC = () => {
           label: t('admin.team.roles-permissions.columns.updated'),
         },
       ],
-      []
+      [t]
     ),
     rows = useMemo<TableRow[]>(
       () =>
@@ -78,7 +78,7 @@ export const AdminRolesPermissionsPanel: React.FC = () => {
             (r.permissions || []).join(', ') || t('admin.team.roles-permissions.emptyValue'),
           updated: r.updated_at ? new Date(r.updated_at).toLocaleString() : '—',
         })),
-      [data]
+      [data, t]
     );
   if (ownerOnly)
     return (
