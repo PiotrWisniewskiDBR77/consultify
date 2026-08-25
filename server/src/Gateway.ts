@@ -285,6 +285,7 @@ import resultsValueIntelligenceRoutes from './routes/resultsValueIntelligence.ro
 // /api/results* surface above (see kpi.routes.ts's own header comment:
 // "not aliases for new commands", plan §7).
 import resultsVnextKpiRoutes from './routes/resultsVnext/kpi.routes.js';
+import resultsVnextSearchRoutes from './routes/resultsVnext/search.routes.js';
 // KPI-E003 Deviation Closed Loop — mounted at the MORE SPECIFIC
 // `/api/vnext/results/kpi/deviation-cases` prefix and registered BEFORE
 // resultsVnextKpiRoutes below (see kpiDeviation.routes.ts's own "MOUNT-ORDER
@@ -1238,6 +1239,9 @@ export class ApiGateway {
       app.use('/api/results-extended', resultsExtendedRoutes);
       // Results vNext (KPI-E001/E002) — own auth (verifyToken +
       // requireOrgAccess) applied inside the router.
+      // Day 14 S.1 cross-registry read model owns a distinct prefix, so it
+      // cannot be captured by any KPI/OKR/ROI dynamic detail route.
+      app.use('/api/vnext/results/search', resultsVnextSearchRoutes);
       // KPI-E003 deviation-cases router MUST be registered BEFORE the
       // shorter `/api/vnext/results/kpi` mount below — see
       // kpiDeviation.routes.ts's "MOUNT-ORDER NOTE" (Express matches
