@@ -24,12 +24,15 @@ const ALL_SOURCES: CalendarEventSource[] = [
 
 export function useCalendarData(
   dateRange?: { start: string; end: string },
-  refreshTrigger?: number
+  refreshTrigger?: number,
+  additionalSources: CalendarEventSource[] = []
 ): UseCalendarDataReturn {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<CalendarFilter>({ sources: ALL_SOURCES });
+  const [filter, setFilter] = useState<CalendarFilter>({
+    sources: [...ALL_SOURCES, ...additionalSources],
+  });
 
   const fetchEvents = useCallback(async () => {
     setLoading(true);

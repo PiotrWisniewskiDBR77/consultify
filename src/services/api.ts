@@ -12470,11 +12470,18 @@ export const Api = {
   },
   createMyWorkCalendarEvent: async (body: {
     title: string;
-    start: string;
+    start?: string;
     end?: string;
+    startAt?: string;
+    endAt?: string;
     allDay?: boolean;
-    source?: 'task' | 'initiative' | 'decision';
+    source?: 'event' | 'task' | 'initiative' | 'decision';
     description?: string;
+    location?: string;
+    attendees?: string[];
+    visibility?: 'private' | 'busy' | 'org';
+    relatedType?: 'task' | 'initiative' | 'meeting' | null;
+    relatedId?: string | null;
     recurrence?: {
       preset: 'daily' | 'weekly' | 'monthly';
     };

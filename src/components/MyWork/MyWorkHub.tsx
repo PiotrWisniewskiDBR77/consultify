@@ -115,6 +115,7 @@ import {
 } from '@/utils/canvasObjectEditBarFlag';
 import { isClientVaultEnabled } from '@/utils/clientVaultFlag';
 import { IDEA_TOP_BAR_SLOT_ID, isIdeaTopBarOneLineEnabled } from '@/utils/ideaTopBarOneLineFlag';
+import { isMyWorkCalendarV2Enabled } from '@/utils/myWorkCalendarV2Flag';
 import { lazyWithRetry } from '@/utils/lazyWithRetry';
 import {
   dispatchPilotAccessBlocked,
@@ -128,6 +129,7 @@ import {
 } from '@/utils/sheetArtifactOpen';
 
 import { CalendarView } from './Calendar/CalendarView';
+import { CalendarV2 } from './CalendarV2/CalendarV2';
 import { useObjectEditBarSlotHasContent } from './canvas/objectEditBarDock';
 import { type DecisionsBulkBarPayload, DecisionsPanelContent } from './DecisionsPanelContent';
 import type { FocusFilter, FocusItem, FocusSort } from './Focus/FocusView';
@@ -3976,6 +3978,17 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           </React.Suspense>
         );
       case 'calendar':
+        if (isMyWorkCalendarV2Enabled()) {
+          return (
+            <CalendarV2
+              refreshTrigger={refreshTrigger}
+              createRequestId={calendarCreateReqId}
+              onTaskClick={handleTaskClick}
+              onDecisionClick={handleDecisionClick}
+              onInitiativeClick={(initiativeId) => handleInitiativeClick(String(initiativeId))}
+            />
+          );
+        }
         return (
           <React.Suspense fallback={lazyFallback}>
             <CalendarView

@@ -54,6 +54,9 @@ interface CalendarViewProps {
   onTaskClick?: (id: string) => void;
   onDecisionClick?: (id: string) => void;
   onInitiativeClick?: (id: string) => void;
+  /** Calendar V2 wrapper opts into week-first without changing legacy default. */
+  initialViewMode?: CalendarViewMode;
+  includeOwnEvents?: boolean;
 }
 
 export const CalendarView: React.FC<CalendarViewProps> = ({
@@ -62,11 +65,13 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   onTaskClick,
   onDecisionClick,
   onInitiativeClick,
+  initialViewMode = 'month',
+  includeOwnEvents = false,
 }) => {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [viewMode, setViewMode] = useState<CalendarViewMode>('month');
+  const [viewMode, setViewMode] = useState<CalendarViewMode>(initialViewMode);
   const [dateRange, setDateRange] = useState<{ start: string; end: string } | undefined>();
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
@@ -116,7 +121,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
   const { events, loading, error, filter, setFilter, refetch } = useCalendarData(
     dateRange,
-    refreshTrigger
+    refreshTrigger,
+    includeOwnEvents ? ['event'] : []
   );
 
   const buildExternalSourceState = useCallback(
@@ -170,11 +176,16 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             statusLabel: t('myWork.calendarView.statusLabel7', 'Not connected'),
             helper: t('myWork.calendarView.helperComingSoon', {
               providerLabel,
-              defaultValue: '{{providerLabel}} is not connected yet — connect it to bring events here.',
+              defaultValue:
+                '{{providerLabel}} is not connected yet — connect it to bring events here.',
             }),
-            nextStep: t('myWork.calendarView.nextStep6', 'Connect {{providerLabel}} in Integrations.', {
-              providerLabel,
-            }),
+            nextStep: t(
+              'myWork.calendarView.nextStep6',
+              'Connect {{providerLabel}} in Integrations.',
+              {
+                providerLabel,
+              }
+            ),
           };
       }
     },
