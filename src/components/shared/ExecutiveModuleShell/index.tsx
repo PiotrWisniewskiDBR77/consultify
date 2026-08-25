@@ -19,6 +19,7 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { resolveArtifactPanelArbitration } from '@/components/shared/ArtifactStudio/layout';
 
@@ -243,6 +244,7 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
   className,
   testId,
 }) => {
+  const { t } = useTranslation();
   const rail = useRailState({
     moduleKey,
     defaultLeftCollapsed,
@@ -618,7 +620,10 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
             {!elementInspectorCollapsed ? (
               <div
                 role="separator"
-                aria-label="Resize element inspector"
+                aria-label={t(
+                  'shared.executiveModuleShell.resizeElementInspector',
+                  'Resize element inspector'
+                )}
                 aria-orientation="vertical"
                 aria-valuemin={320}
                 aria-valuemax={560}

@@ -36194,5 +36194,10 @@
     "tracking": "Tracking",
     "cancelled": "Cancelled",
     "archived": "Archived"
+  },
+  "shared": {
+    "executiveModuleShell": {
+      "resizeElementInspector": "Resize element inspector"
+    }
   }
 }

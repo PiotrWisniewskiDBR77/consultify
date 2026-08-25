@@ -37357,5 +37357,10 @@
     "tracking": "Monitorowanie",
     "cancelled": "Anulowana",
     "archived": "Zarchiwizowana"
+  },
+  "shared": {
+    "executiveModuleShell": {
+      "resizeElementInspector": "Zmień szerokość panelu inspektora"
+    }
   }
 }
