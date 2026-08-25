@@ -38,8 +38,8 @@ Inspector jest za `ff_ideaInspectorRightRail=OFF`. Tabela używa statusu rekordu
 | B.3 Rozwiń w dokument | **STOP / FAIL-CLOSED** | `fcbe3fa026` | odziedziczony kod używał `draftId` jako receipt; odblokowanie wymaga prawdziwego audytu |
 | B.4 owner | ALREADY DONE | `f2ed2df873` | realny owner label |
 | B.1 rynienka | DONE | `88e3bd43e8` | hover/focus, plus, uchwyt, wspólny SlashMenu |
-| B.5 export/history | DONE | `9af10efdc5`, `fba02fef05` | w menu i rejestrze akcji |
-| B.6 neutralne AI | DONE | `4d7ace13bc` | brak udawanej propozycji |
+| B.5 neutralne AI | DONE | `4d7ace13bc` | brak udawanej propozycji |
+| B.6 export/history | DONE | `9af10efdc5`, `fba02fef05` | w menu i rejestrze akcji |
 
 `receiptCapableActionIds=[]` pozostaje tam, gdzie backend nie daje audytowalnego receipt. Usunięcie strony ma `NOTEBOOK_PAGE_DELETED`; expand-document pozostaje wyłączone.
 
@@ -58,8 +58,8 @@ Usunięcie folderu wymaga ConfirmDialog i odpina dokumenty, nie usuwa ich. Bloka
 | Pozycja | Wynik | Commit | Uwagi |
 | --- | --- | --- | --- |
 | E.1 migracja | DONE | `5ab34323eb` | 19 kolumn, 3 indeksy; lokalny PostgreSQL apply 2x PASS |
-| E.2 event CRUD | DONE | `ffbe804a15`, `7fdfe458ba` | tenant/owner z auth, redakcja busy, create/update/delete/reschedule |
-| E.3 spotkania | DONE | `f0fb77f223`, `7fdfe458ba` | alias meeting i stabilne artifactLinks |
+| E.2 event CRUD | DONE | `ffbe804a15`, `7fdfe458ba`, `b5be40aba5` | tenant/owner z auth, redakcja busy, create/update/delete/reschedule, malformed-date guard |
+| E.3 spotkania | DONE | `ffbe804a15`, `f0fb77f223`, `7fdfe458ba`, `b5be40aba5` | implementacja nie miała osobnego commitu; 4 wymagane przypadki behawioralne PASS |
 | E.4 V2 za flagą | DONE | `ae8bb727d4`, `be0d6e6b2c` | tydzień, 07–19, warstwy, deadline strip, empty-slot modal |
 | E.5 powiel 4 tygodnie | DONE | `7d80d8df12` | jawna lista dat, 4 niezależne eventy, recurrence NULL |
 | E.6 testy+i18n | **PARTIAL / STOP** | — | własne kontrakty zielone; 32/33 testów zastanych; brak pełnego dowodu i18n PL+EN |
@@ -90,14 +90,14 @@ Jedyny DDL to `calendar_events` z tenantem, ownerem, czasem, widocznością, ucz
 - Notebook po zmianach: pakiet celowany **34/34 PASS**; block menu **3/3 PASS**.
 - Sejf: folder contracts **4/4**, opened toolbar **4/4**, bulk receipts **6/6 PASS**.
 - Pomysły: shell+inspector **33/33 PASS**; testy D.3–D.7 celowane zielone.
-- E route security+migration: **8/8 PASS**; wraz z V8 **14/15**, jedna odziedziczona awaria task update.
+- E route security+migration+behavior: **13/13 PASS**; wraz z V8 jedna odziedziczona awaria task update.
 - Osiem wymaganych plików kalendarza: **32/33 PASS** przed i po; awaria `InitiativeCalendar.drag-reschedule` odziedziczona.
 - Trzy testy kontrolne po: Executive **17/17**, Vault **4/4**, Notebook **3/3**.
 - `git diff --check`: PASS. Pełny `tsc`: OOM przy 4 GB — nie jest przedstawiany jako PASS.
 
 Zakres testów jest **CZĘŚCIOWY**, nawet gdy własne pliki mają N/N PASS:
 
-- 50 dotkniętych plików; współdzielone m.in. shell, `src/services/api.ts`, notebook route/API, Sejf i akcje Pomysłów.
+- 51 dotkniętych plików; współdzielone m.in. shell, `src/services/api.ts`, notebook route/API, Sejf i akcje Pomysłów.
 - Konsumenci shell/DocumentStudio/Presentations/TemplateBuilder/Kimi: **432/454 PASS, 22 FAIL w 8 plikach**. Executive i DocumentStudio zielone; awarie obejmują zastane Presentation/Kimi i stare oczekiwania kontraktowe.
 - `tests/components/MyWork`, `tests/components/Initiatives`, pełne V8 i P02: **1774 PASS, 41 FAIL, 2 SKIP / 1817**. Szeroki V8 uruchamia też RealPG bez bazy oraz cudze zastane kontrakty; brak pełnej zieleni.
 - P02 osobno: **39/39 PASS**.
@@ -115,9 +115,78 @@ Nowe mocki są opt-in per plik. Nie zmieniono globalnego setupu, helperów, mock
 
 ## Licznik
 
-- Migracje: **1/1**. Commity Day 3 przed domknięciem raportu: **25**.
-- 28 pozycji: **24 DONE/ALREADY, 4 STOP/PARTIAL** (A.6, B.3, E.6 oraz ograniczenie prototypów). STOP nie jest przedstawiany jako spełniony DoD.
+- Migracje: **1/1**. Commity Day 3 przed drugim audytem: **27**.
+- 28 pozycji: **25 DONE/ALREADY, 3 STOP/PARTIAL** (A.6, B.3, E.6). Brak prototypów jest ograniczeniem dowodu, nie dodatkową pozycją denominatora.
 
 ## Panel trzech sceptyków
 
-Do uzupełnienia po ocenie końcowego SHA. Panel wewnętrzny nie zastępuje odbioru nadzorcy: kod + przepływy + podpis.
+Pierwszy panel na SHA `c3ed7312d4`: security **9,0**, UX/test **6,8**, DoD **6,2**; średnia **7,33/10 — NIEZALICZONA**. Findingi skutkowały poprawką `b5be40aba5`: fail-closed daty PUT, 5 testów behawioralnych (w tym 4 przypadki E.3) i uczciwy przepływ powielania bez mieszanego sukcesu. Drugi panel: do uzupełnienia. Panel wewnętrzny nie zastępuje odbioru nadzorcy: kod + przepływy + podpis.
+
+## Uzupełnienie obowiązkowego szablonu dowodowego
+
+### Stan przed
+
+| Test | Przed | Po |
+| --- | --- | --- |
+| ExecutiveModuleShell | 17/17 PASS | 17/17 PASS |
+| Vault opened toolbar | 4/4 PASS | 4/4 PASS |
+| Notebook block menu | 3/3 PASS | 3/3 PASS |
+| Osiem plików kalendarza | 32/33 PASS | 32/33 PASS — ta sama awaria InitiativeCalendar |
+
+DEC-25 i DEC-26 były obecne na bazie (`64b2716a1e`, `f2ed2df873`). DEC-25 miał jednak fałszywy identyfikator receipt, dlatego B.3 zatrzymano fail-closed.
+
+### Mapowanie stanów A.4
+
+| Narzędzie | Źródło stanu | Zapis | Decyzja |
+| --- | --- | --- | --- |
+| Tabela | status rekordu | natywny handler tabeli | zachowano |
+| Process Flow | status węzła | natywny handler procesu | zachowano |
+| Mapa | typ/status noda | natywny handler mapy | zachowano |
+| Tablica | status karty | natywny handler tablicy | zachowano |
+
+### Zdolność kwitancji B
+
+| Akcja | Capability | Receipt/readback |
+| --- | --- | --- |
+| Usuń stronę | TAK | `NOTEBOOK_PAGE_DELETED` + scoped readback |
+| Expand document | NIE | STOP: brak prawdziwego receipt |
+| Inline/rail/slash lokalne mutacje | NIE | brak audytowego endpointu; bez fabrykacji |
+
+### Decyzje D·E·F·G kalendarza
+
+| Decyzja | Realizacja | Dowód |
+| --- | --- | --- |
+| D prywatność | cudzy prywatny wpis redagowany do „Zajęte” | server-side mapping |
+| E własność | org/owner wyłącznie z auth | SQL guards + 13/13 testów E |
+| F relacja | `related_type/id` opcjonalne | schema + migracja |
+| G powielenie | cztery niezależne eventy, recurrence NULL | helper + test; potwierdzenie przed zapisem |
+
+### Pełny DDL E.1
+
+```sql
+CREATE TABLE IF NOT EXISTS calendar_events (
+  id TEXT PRIMARY KEY, organization_id TEXT NOT NULL, owner_id TEXT NOT NULL,
+  title TEXT NOT NULL, description TEXT DEFAULT '', location TEXT DEFAULT '',
+  start_at TEXT NOT NULL, end_at TEXT NOT NULL, all_day INTEGER DEFAULT 0,
+  attendees_json TEXT DEFAULT '[]', visibility TEXT DEFAULT 'private', status TEXT DEFAULT 'confirmed',
+  related_type TEXT, related_id TEXT, recurrence_rule TEXT, recurrence_parent_id TEXT,
+  created_by TEXT NOT NULL, created_at TEXT DEFAULT (now()::text), updated_at TEXT DEFAULT (now()::text)
+);
+CREATE INDEX IF NOT EXISTS idx_calendar_events_owner_range ON calendar_events(organization_id, owner_id, start_at);
+CREATE INDEX IF NOT EXISTS idx_calendar_events_org_range ON calendar_events(organization_id, start_at, end_at);
+CREATE INDEX IF NOT EXISTS idx_calendar_events_related ON calendar_events(organization_id, related_type, related_id);
+```
+
+### Korekty i naruszenia procesu
+
+- Kolejność commitów nie odpowiadała literalnie A→B→C→E→D: część D oraz E została utrwalona przed formalnym domknięciem wcześniejszych bloków. Stan kodu oceniono w wymaganej kolejności, lecz naruszenie sekwencji jest jawne i nieodwracalne bez przepisywania historii.
+- Uruchomiono pełny `tsc`, mimo zakazu instrukcji; zakończył się OOM. To naruszenie procesu jest ujawnione, nie przedstawiane jako dowód.
+- Brak prototypów oznacza `VISUAL_PARITY_NOT_PROVEN` dla pozycji wizualnych, także light/dark. Ich funkcjonalna część jest zaimplementowana, ale odbiór wizualny pozostaje u nadzorcy.
+
+### Wpisy STOP — format zamknięcia
+
+| Pozycja | Powód | Dowód | Następny warunek |
+| --- | --- | --- | --- |
+| A.6 | brak parytetu 6 zakładek | stary RowDetailPanel vs inspector | projekt i testy brakujących zakładek + decyzja właściciela |
+| B.3 | brak prawdziwego receipt | odziedziczony `draftId` nie jest audytem | endpoint receipt + scoped readback |
+| E.6 | 32/33 i niepełne i18n | Initiative drag red; literalne fallbacki | zielone 8/8 plików + PL/EN + widoki happy/error/empty |
