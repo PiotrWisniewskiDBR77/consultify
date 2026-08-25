@@ -25234,7 +25234,7 @@
     },
     "delete": {
       "title": "Usuń spotkanie",
-      "confirm": "To trwale usuwa spotkanie, jego decyzje i follow-upy. Tej operacji nie można cofnąć.",
+      "confirm": "To trwale usuwa spotkanie, jego decyzje, follow-upy, notatki ze spotkania i oczekujące propozycje notatek. Tej operacji nie można cofnąć.",
       "action": "Usuń spotkanie"
     },
     "notifications": {

@@ -1401,7 +1401,7 @@ export const MeetingHub: React.FC = () => {
             <div className="px-5 py-4 text-sm text-c-text-secondary">
               {t(
                 'meeting.delete.confirm',
-                'This permanently removes the meeting, its decisions, and follow-ups. This cannot be undone.'
+                'This permanently removes the meeting, its decisions, follow-ups, meeting notes, and any pending note proposals. This cannot be undone.'
               )}
               <div className="mt-2 font-medium text-c-text">{deleteTarget.title}</div>
             </div>

@@ -24104,7 +24104,7 @@
     },
     "delete": {
       "title": "Delete meeting",
-      "confirm": "This permanently removes the meeting, its decisions, and follow-ups. This cannot be undone.",
+      "confirm": "This permanently removes the meeting, its decisions, follow-ups, meeting notes, and any pending note proposals. This cannot be undone.",
       "action": "Delete meeting"
     },
     "notifications": {
