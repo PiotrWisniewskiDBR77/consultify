@@ -28,7 +28,7 @@ owner/admin action, stale proposal, duplicate prevention and foreign tenant.
 | G08  | First-impression review                                        | `PARTIAL_SUBMODULE_PASS_WITH_FINDINGS`        | Ideas walkthrough complete. Owner strongly approves the canvas-first direction, especially Mind Map, and requires two shared panel redesigns. Broader My Work remains open. |
 | G09  | Guided CX journey review                                       | `IDEAS_VISUAL_ONLY`                           | New Idea, tools, tabs, candidate flow, left rail, right inspector and Convert reviewed visually. Non-qualified fixture means no functional claim. |
 | G10  | Alternate-state owner review                                   | `PARTIAL_IDEAS_LIGHT_DARK`                    | Right inspector/workspace observed in light and dark. Responsive, keyboard, PL/EN, persistence, permissions and error states remain open. |
-| G11  | Every owner observation/screenshot durably registered          | `PASS_CURRENT_INTAKE`                          | Ideas: 25 SHA-256-bound screenshots. Notebook: `NOTEBOOK_OWNER_REVIEW_2026-08-22.md` plus 10 SHA-256-bound screenshots. Decisions: `MYW-DEC-REC-001` plus 2 SHA-256-bound screenshots in `evidence/decisions-owner-review-2026-08-22/INDEX.md`. |
+| G11  | Every owner observation/screenshot durably registered          | `PASS_CURRENT_INTAKE`                          | Ideas: 25 SHA-256-bound screenshots. Notebook: `NOTEBOOK_OWNER_REVIEW_2026-08-22.md` plus 10 SHA-256-bound screenshots. Decisions: `MYW-DEC-REC-001` plus 2 SHA-256-bound screenshots in `docs/program/waves/WAVE_03_ACCEPTANCE/modules/07_MY_WORK_AGENT/evidence/decisions-owner-review-2026-08-22/INDEX.md`. |
 | G12  | Owner register reconciled and confirmed                        | `PARTIAL_SUBMODULES_RECONCILED`               | Ideas normalized into 15 tasks; Notebook observations consolidated into 2 P0 core tasks and 4 dependent tasks. Decisions finding `MYW-DEC-REC-001` is reconciled into this register and implemented in the working tree; owner retest remains pending. Formal module verdict and remaining My Work review stay pending. |
 | G13  | Solution and impact analysis                                   | `DRAFT_COMPLETE_IDEAS_AND_NOTEBOOK`           | Ideas shared panels and Notebook rail/block/context/search architecture specified; implementation and integrator contract audit not started. |
 | G14  | Remediation with finding-to-commit traceability                | `IN_PROGRESS / ONE_FINDING_IMPLEMENTED`       | `MYW-DEC-REC-001` product change is present in checkpoint commit `4a36e8a745`: the Decisions list mounts `DecisionsPanelContent` directly and no longer mounts the thirteen specialist queues. Dedicated regression lock: `7837e750e0`. Ideas, Notebook and the remaining My Work scope stay open. |
@@ -68,7 +68,7 @@ These are technical observations, not Piotr owner findings.
 Work atoms** across four sources: `IDEAS_OWNER_REVIEW_2026-08-22.md` (15), `NOTEBOOK_OWNER_REVIEW_2026-08-22.md`
 (6), `owner_feedback/RECOVERED_OWNER_FEEDBACK_2026-08-22.md` §"Owner wording index" (23, one of
 which — `MYW-DEC-REC-001` — was already tracked here) and the 2026-08-23 photo gate
-(`evidence/exact-candidate-43730-photo-gate-2026-08-23/MY_WORK_EXPERT_REVIEW_2026-08-23.md`, 11).
+(`../../evidence/exact-candidate-43730-photo-gate-2026-08-23/MY_WORK_EXPERT_REVIEW_2026-08-23.md`, 11).
 Two condensed rows (`MYW-IDEAS-003..015`, `MYW-NBK-003..006`) previously packed 17 atoms into 2
 rows; both are now spelled out below, one row per atom, so `scripts/wave3/verify-acceptance-packages.mjs`
 can enforce the denominator (see Fala 0 point 2 of the closure plan). Every status below is
@@ -152,7 +152,7 @@ acceptance register").
 
 ### Photo gate 2026-08-23 — 11 atoms (`MYW-PHOTO-*`)
 
-Source: `evidence/exact-candidate-43730-photo-gate-2026-08-23/MY_WORK_EXPERT_REVIEW_2026-08-23.md`
+Source: `../../evidence/exact-candidate-43730-photo-gate-2026-08-23/MY_WORK_EXPERT_REVIEW_2026-08-23.md`
 (three-reviewer panel on exact candidate `43730f86f8`, screenshot `02-my-work.png`). Verdict:
 `FAIL_DATA_GATE / VISIBLE_OVERFLOW_DEFECTS / OWNER_REVIEW_NOT_POSSIBLE`. None of these 11 IDs
 previously existed in this register or in `MASTER_STATUS_REGISTER.md`.

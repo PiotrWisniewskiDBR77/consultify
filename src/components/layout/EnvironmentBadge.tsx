@@ -116,8 +116,16 @@ export const EnvironmentBadge: React.FC = () => {
     .join('\n');
 
   return (
+    // M7 (2026-08-25): was `bottom-3 left-3` — a fixed viewport anchor that
+    // does not account for the sidebar's collapsed width, so the pill drifted
+    // over the last row of full-bleed tables (TLS-XPR-005). Bottom-right is
+    // already the established admin-only diagnostic corner (see
+    // `ChatV9FlagsIndicator`, also `fixed bottom-3 right-3`, same
+    // ADMIN/SUPERADMIN audience) and sits clear of the scrollable content
+    // column; stack this pill directly above it instead of inventing a new,
+    // unverified corner.
     <div
-      className="pointer-events-none fixed bottom-3 left-3 z-toast rounded-full border border-white/10 bg-navy-950/80 px-3 py-1.5 text-[11px] font-semibold tracking-wide text-slate-200 backdrop-blur"
+      className="pointer-events-none fixed bottom-14 right-3 z-toast rounded-full border border-white/10 bg-navy-950/80 px-3 py-1.5 text-[11px] font-semibold tracking-wide text-slate-200 backdrop-blur"
       title={tooltip}
       role="status"
       aria-label={`Środowisko ${label}${sha ? `, wersja ${sha}` : ''}`}

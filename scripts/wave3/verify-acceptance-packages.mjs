@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-import { readdirSync, readFileSync, statSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(fileURLToPath(new URL('../..', import.meta.url)));
@@ -90,6 +90,88 @@ export function findUnannotatedRangeRows(text) {
   return offenders;
 }
 
+// FALA 1 hygiene fix (2026-08-25, tools-uwagi-komplet.md §6.7): this verifier
+// previously checked ONLY document structure (headers, gate rows, the MASTER
+// row) — never whether a path a register cites actually exists. That gap let
+// a false "file not found" claim stand unchecked: `SWOT-003-...md` (1020
+// lines) genuinely exists at the exact path a Tools register cited, but a
+// different reconciliation doc claimed it was "not present in this worktree"
+// and zeroed 21 owner recommendations on that false premise — a mechanical
+// existence check on the SAME path would have caught it immediately, no
+// human re-audit required. Also catches the inverse: a stale evidence link
+// left pointing at a moved/deleted file after a later edit.
+//
+// Two citation shapes are recognized, both inside inline-code backtick spans
+// (the only citation style these registries actually use):
+//   1. repo-root-relative, e.g. `src/components/Foo.tsx:1234–1240` — resolved
+//      against the repo root, with an optional trailing `:line` or
+//      `:line–line` (en-dash or hyphen) citation suffix stripped first.
+//   2. `../`-relative markdown links, e.g. `../../evidence/.../INDEX.md` —
+//      resolved against the citing MODULE_ACCEPTANCE.md's own directory,
+//      same as a real Markdown renderer would.
+// Deliberately NOT matched: bare filenames with no directory component
+// (`SWOTBuildPhase.tsx:516`, common in prose and ambiguous across the repo)
+// and non-path backtick tokens (IDs, ratios like `138/143`, CSS classes) —
+// those don't start with a recognized root segment or `../`.
+const REPO_ROOT_PATH_PREFIXES = [
+  'src',
+  'server',
+  'docs',
+  'scripts',
+  'tests',
+  'evidence',
+  'Harvard',
+  'rejestr',
+];
+const CITED_PATH_PATTERN = new RegExp(
+  '`(' +
+    '(?:' +
+    REPO_ROOT_PATH_PREFIXES.join('|') +
+    ')/[^`\\s]+' +
+    '|' +
+    '\\.\\./[^`\\s]+' +
+    ')`',
+  'g'
+);
+// Strips a trailing citation suffix: `:1234`, `:1234-1240`, `:1234–1240`
+// (en-dash), or a comma-separated list of any of those
+// (`:195,219,223,227`, seen in real citations pointing at several lines of
+// one seed script).
+const TRAILING_LINE_REF = /:\d+(?:[-–]\d+)?(?:,\d+(?:[-–]\d+)?)*$/;
+
+/**
+ * Scan a MODULE_ACCEPTANCE.md's text for backtick-quoted file/dir citations
+ * and report every one that does not exist on disk. Exported for unit
+ * testing against synthetic fixtures.
+ *
+ * @param {string} text full MODULE_ACCEPTANCE.md contents
+ * @param {{ rootDir: string, baseDir: string }} dirs rootDir = repo root
+ *   (for `src/...`-style citations); baseDir = the directory containing the
+ *   MODULE_ACCEPTANCE.md being scanned (for `../...`-style citations).
+ * @returns {Array<{ citation: string, resolvedPath: string }>}
+ */
+export function findMissingCitedPaths(text, { rootDir, baseDir }) {
+  const offenders = [];
+  const seen = new Set();
+
+  for (const match of text.matchAll(CITED_PATH_PATTERN)) {
+    const citation = match[1];
+    if (seen.has(citation)) continue;
+    seen.add(citation);
+
+    const withoutLineRef = citation.replace(TRAILING_LINE_REF, '');
+    const resolvedPath = withoutLineRef.startsWith('../')
+      ? resolve(baseDir, withoutLineRef)
+      : join(rootDir, withoutLineRef);
+
+    if (!existsSync(resolvedPath)) {
+      offenders.push({ citation, resolvedPath });
+    }
+  }
+
+  return offenders;
+}
+
 function runVerification() {
   const errors = [];
   const fail = (message) => errors.push(message);
@@ -131,6 +213,17 @@ function runVerification() {
         `${directory}: Owner UI/UX/CX register row \`${offender.id}\` condenses ${offender.count} owner findings ` +
           `into one row without a \`${RANGE_ROW_ACK_TOKEN}\` annotation; spell out each atom as its own row or add ` +
           'the explicit annotation to the row'
+      );
+    }
+
+    for (const offender of findMissingCitedPaths(text, {
+      rootDir: ROOT,
+      baseDir: dirname(packagePath),
+    })) {
+      fail(
+        `${directory}: cited path \`${offender.citation}\` does not exist ` +
+          `(resolved to ${offender.resolvedPath}) — a nonexistent cited path is a validation error, ` +
+          'not a note; fix the citation or the missing file'
       );
     }
   }

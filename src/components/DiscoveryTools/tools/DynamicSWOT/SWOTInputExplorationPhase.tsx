@@ -2,6 +2,7 @@ import { Check, ChevronDown, ChevronRight, Plus, Trash2 } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { ConfirmModal } from '@/components/ui/primitives/Modal';
 import { Api } from '@/services/api';
 import {
   ProposalCardType,
@@ -582,6 +583,11 @@ export function SWOTInputExplorationPhase({
   const [expandedAcceptedById, setExpandedAcceptedById] = React.useState<Record<string, boolean>>(
     {}
   );
+  // M12 (2026-08-25): removing an accepted point was an immediate, unconfirmed
+  // delete (R12/XMOD-MENU-AC-005). Proportional confirmation for a single
+  // inline destructive action — canonical `ConfirmModal`, same pattern as
+  // `RaidCanvas`'s `pendingDeleteItem` (RB-038), not a new bespoke dialog.
+  const [pendingRemoveSignal, setPendingRemoveSignal] = React.useState<SWOTSignal | null>(null);
   const [activeStream, setActiveStream] = React.useState<StreamId>('strengths');
   const [guidanceExpanded, setGuidanceExpanded] = React.useState(false);
   const [manualItem, setManualItem] = React.useState('');
@@ -629,13 +635,14 @@ export function SWOTInputExplorationPhase({
   }, [isPolish, proposalPointerByStream, swotData.inputProposalDrafts]);
 
   const P = 'discoveryToolsTools.dynamicSwot.inputExplorationPhase';
+  // M10 (2026-08-25): `totalAccepted`/`confirmedAreas`/`maxTarget`/
+  // `emptyAccepted`/`attempts` were the label backers for the 4-tile counter
+  // row (R8) and the "no accepted items yet" banner (R10) — both already
+  // removed from the JSX. Dropped here as the last trace of dead code (R8/R10).
   const labels = {
     consultantProposal: t(`${P}.consultantProposal`),
     draft: t(`${P}.draft`),
-    totalAccepted: t(`${P}.totalAccepted`),
-    confirmedAreas: t(`${P}.confirmedAreas`),
     activeDialogue: t(`${P}.activeDialogue`),
-    maxTarget: t(`${P}.maxTarget`),
     aiProposal: t(`${P}.aiProposal`),
     acceptedList: t(`${P}.acceptedList`),
     accept: t(`${P}.accept`),
@@ -647,13 +654,11 @@ export function SWOTInputExplorationPhase({
     confirmSet: t(`${P}.confirmSet`),
     keepGoing: t(`${P}.keepGoing`),
     readyEnough: t(`${P}.readyEnough`),
-    attempts: t(`${P}.attempts`),
     accepted: t(`${P}.accepted`),
     confirmed: t(`${P}.confirmed`),
     confirmedToMatrix: t(`${P}.confirmedToMatrix`),
     confirmedButOpen: t(`${P}.confirmedButOpen`),
     continueAdding: t(`${P}.continueAdding`),
-    emptyAccepted: t(`${P}.emptyAccepted`),
     showExplanation: t(`${P}.showExplanation`),
     hideExplanation: t(`${P}.hideExplanation`),
     remove: t('discoveryToolsTools.common.remove'),
@@ -1006,7 +1011,11 @@ export function SWOTInputExplorationPhase({
                     role="tabpanel"
                     className={`flex flex-col rounded-[26px] border p-5 ${meta.surface}`}
                   >
-                    <div className="flex items-center justify-between gap-3">
+                    {/* M11 (2026-08-25): explicit order-2 (was un-ordered ⇒ implicit
+                        order-0, so this rendered ABOVE the order-1 "Current AI
+                        Proposal" below despite R9 requiring the proposal to lead
+                        the phase). Quadrant identity now follows the proposal. */}
+                    <div className="order-2 flex items-center justify-between gap-3">
                       <div>
                         <div
                           className={`text-[11px] font-semibold uppercase tracking-[0.16em] ${meta.headerTone}`}
@@ -1022,7 +1031,7 @@ export function SWOTInputExplorationPhase({
                       </span>
                     </div>
 
-                    <div className="mt-4 flex flex-wrap items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+                    <div className="order-2 mt-4 flex flex-wrap items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
                       <span className="inline-flex rounded-full border border-white/70 bg-white/70 px-2.5 py-1 font-semibold uppercase tracking-[0.16em] dark:border-white/10 dark:bg-white/[0.04]">
                         {labels.accepted}: {acceptedCount}/5
                       </span>
@@ -1080,7 +1089,7 @@ export function SWOTInputExplorationPhase({
                                   </button>
                                   <button
                                     type="button"
-                                    onClick={() => removeSWOTSignal(signal.id)}
+                                    onClick={() => setPendingRemoveSignal(signal)}
                                     aria-label={labels.remove}
                                     title={labels.remove}
                                     className="inline-flex items-center justify-center rounded-full border border-slate-200/70 bg-white p-2 text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200"
@@ -1441,6 +1450,24 @@ export function SWOTInputExplorationPhase({
           </div>
         </div>
       </div>
+
+      <ConfirmModal
+        open={pendingRemoveSignal != null}
+        onClose={() => setPendingRemoveSignal(null)}
+        onConfirm={() => {
+          if (pendingRemoveSignal) removeSWOTSignal(pendingRemoveSignal.id);
+          setPendingRemoveSignal(null);
+        }}
+        title={isPolish ? 'Usunąć zaakceptowany punkt?' : 'Remove accepted point?'}
+        message={
+          isPolish
+            ? `„${pendingRemoveSignal?.sourceLabel ?? ''}" zniknie z listy zaakceptowanych. Tej operacji nie można cofnąć.`
+            : `"${pendingRemoveSignal?.sourceLabel ?? ''}" will be removed from the accepted list. This cannot be undone.`
+        }
+        confirmText={isPolish ? 'Usuń' : 'Remove'}
+        cancelText={isPolish ? 'Anuluj' : 'Cancel'}
+        confirmVariant="danger"
+      />
     </div>
   );
 }

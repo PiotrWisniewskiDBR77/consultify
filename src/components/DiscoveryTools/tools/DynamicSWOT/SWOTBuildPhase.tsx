@@ -14,7 +14,6 @@ import {
   useToolStore,
 } from '@/store/useToolStore';
 
-import { InlineAssist } from '../../InlineAssist';
 import { EvidenceEditor } from './EvidenceEditor';
 
 type QuadrantId = SWOTItem['quadrant'];
@@ -347,6 +346,7 @@ export function SWOTBuildPhase({ session, isPolish, isGeneratingAI = false }: Bu
           acc[quadrant] = items.filter(
             (item) =>
               item.quadrant === quadrant &&
+              item.proposalStatus !== 'rejected' &&
               (item.status === 'proposed' ||
                 item.proposalStatus === 'ai-proposed' ||
                 item.proposalStatus === 'rethinking')
@@ -499,7 +499,13 @@ export function SWOTBuildPhase({ session, isPolish, isGeneratingAI = false }: Bu
   };
 
   const rejectProposal = (proposalId: string) => {
-    removeSWOTItem(proposalId);
+    // M13 (2026-08-25): a rejected AI proposal is a DECISION, not an erasure —
+    // stamp proposalStatus:'rejected' (schema already supports it, see
+    // ProposalStatus in useToolStore.ts) instead of removeSWOTItem's hard
+    // delete. groupedProposals below excludes proposalStatus:'rejected' so it
+    // still disappears from the active queue; the record survives in
+    // swotData.items for audit/undo instead of vanishing without a trace.
+    updateSWOTItem(proposalId, { proposalStatus: 'rejected' });
     setReplaceTargetByProposalId((current) => {
       const next = { ...current };
       delete next[proposalId];
@@ -513,24 +519,15 @@ export function SWOTBuildPhase({ session, isPolish, isGeneratingAI = false }: Bu
   };
 
   return (
-    <div className="dark space-y-6 rounded-[28px] bg-navy-950 p-4 text-white">
-      <div className="rounded-[28px] border border-c-border bg-c-surface p-5">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-          <div className="max-w-3xl">
-            <div className="text-sm leading-relaxed text-slate-700 dark:text-slate-300">
-              {t('discoveryToolsTools.dynamicSwot.buildPhase.oneMatrixNote')}
-            </div>
-            <InlineAssist hint={t('discoveryToolsTools.dynamicSwot.buildPhase.acceptHint')} />
+    <div className="space-y-6 rounded-[28px] p-4">
+      {isGeneratingAI ? (
+        <div className="rounded-[28px] border border-c-border bg-c-surface p-5">
+          <div className="inline-flex items-center gap-2 rounded-2xl border border-sky-300/50 bg-sky-50 px-4 py-2 text-sm font-medium text-sky-700 dark:border-sky-900/40 dark:bg-sky-950/20 dark:text-sky-300">
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+            {t('discoveryToolsTools.dynamicSwot.buildPhase.aiPreparing')}
           </div>
-
-          {isGeneratingAI ? (
-            <div className="inline-flex items-center gap-2 rounded-2xl border border-sky-300/50 bg-sky-50 px-4 py-2 text-sm font-medium text-sky-700 dark:border-sky-900/40 dark:bg-sky-950/20 dark:text-sky-300">
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-              {t('discoveryToolsTools.dynamicSwot.buildPhase.aiPreparing')}
-            </div>
-          ) : null}
         </div>
-      </div>
+      ) : null}
 
       <nav
         role="tablist"

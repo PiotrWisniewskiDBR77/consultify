@@ -259,7 +259,12 @@ describe('SWOTBuildPhase — AI proposal accept/reject', () => {
     expect(item.proposalStatus).toBe('accepted');
   });
 
-  it('rejecting a proposal removes it entirely', () => {
+  // M13 (2026-08-25): rejecting used to hard-delete the item
+  // (`removeSWOTItem`) — a decision with no trace. It now stamps
+  // `proposalStatus: 'rejected'` (the schema already had this status) so the
+  // record survives for audit while still disappearing from the active
+  // proposal queue — same UI-visible outcome, different persistence.
+  it('rejecting a proposal hides it from the queue but keeps a rejected record', () => {
     useToolStore.getState().addSWOTItem({
       text: 'AI suggested weakness',
       quadrant: 'weaknesses',
@@ -276,7 +281,9 @@ describe('SWOTBuildPhase — AI proposal accept/reject', () => {
 
     expect(screen.queryByText('AI suggested weakness')).not.toBeInTheDocument();
     const items = useToolStore.getState().currentSession?.inputData as any;
-    expect(items.items.find((i: any) => i.text === 'AI suggested weakness')).toBeUndefined();
+    const item = items.items.find((i: any) => i.text === 'AI suggested weakness');
+    expect(item).toBeDefined();
+    expect(item.proposalStatus).toBe('rejected');
   });
 });
 
