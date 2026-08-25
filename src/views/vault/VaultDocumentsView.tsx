@@ -120,6 +120,7 @@ export interface VaultDocumentsViewProps {
   safe: { id: string; name: string; type: VaultScope; projectId: string | null };
   /** Powrót do tabeli sejfów (pierwszy człon breadcrumbu). */
   onBack: () => void;
+  initialFolderId?: string | null;
 }
 
 type StatusChipId = 'all' | 'indexed' | 'processing' | 'failed';
@@ -140,7 +141,11 @@ const SELECT_CLASS =
   'h-9 rounded-full border border-c-border bg-c-surface px-3.5 text-sm text-c-text transition-colors ' +
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus';
 
-export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, onBack }) => {
+export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
+  safe,
+  onBack,
+  initialFolderId = null,
+}) => {
   const { t, i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
   const currentUserId = useAppStore((s) => s.currentUser?.id);
@@ -245,7 +250,7 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
   // nie psuje wcześniej (fail-soft, tak jak `my_idea_folders`).
   const [folders, setFolders] = useState<Array<{ id: string; name: string }>>([]);
   const [foldersAvailable, setFoldersAvailable] = useState(false);
-  const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
+  const [activeFolderId, setActiveFolderId] = useState<string | null>(initialFolderId);
 
   const loadFolders = useCallback(async () => {
     try {

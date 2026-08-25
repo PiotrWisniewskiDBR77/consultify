@@ -97,6 +97,7 @@ export const ClientDocumentsVault: React.FC = () => {
       (prev) => {
         const next = new URLSearchParams(prev);
         next.delete(SAFE_ID_PARAM);
+        next.delete('folderId');
         return next;
       },
       { replace: true }
@@ -217,7 +218,13 @@ export const ClientDocumentsVault: React.FC = () => {
   // tabelę (jej `filterControls` zostaje nadpisany przez wnętrze, dopóki jest
   // zamontowane).
   if (openSafe) {
-    return <VaultDocumentsView safe={openSafe} onBack={handleBackToSafes} />;
+    return (
+      <VaultDocumentsView
+        safe={openSafe}
+        onBack={handleBackToSafes}
+        initialFolderId={searchParams.get('folderId')}
+      />
+    );
   }
 
   // RB-029/RV-010: resolving `?safeId=` from a direct entry/refresh — show a
@@ -264,13 +271,22 @@ export const ClientDocumentsVault: React.FC = () => {
           />
         ) : (
           <VaultFoldersTable
-            onOpenFolder={(folderId) =>
+            onOpenFolder={async (folder) => {
+              const safes = await Api.getVaultSafes();
+              const safe = safes.find(
+                (candidate) =>
+                  candidate.type === folder.scope &&
+                  (folder.scope !== 'project' || candidate.projectId === folder.projectId)
+              );
+              if (!safe) return;
               setSearchParams((prev) => {
                 const next = new URLSearchParams(prev);
-                next.set('folderId', folderId);
+                next.set('folderId', folder.id);
+                next.set(SAFE_ID_PARAM, safe.id);
                 return next;
-              })
-            }
+              });
+              setOpenSafe(safe);
+            }}
           />
         )}
       </div>

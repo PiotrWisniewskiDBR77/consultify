@@ -6,7 +6,14 @@ import {
   FolderCreateDialog,
   type FolderCreateSubmitInput,
 } from '@/components/shared/FolderCreateDialog';
-import { StandardTable, type TableColumn, type TableRow } from '@/components/standard';
+import {
+  type StandardRowMenu,
+  StandardTable,
+  type TableColumn,
+  type TableRow,
+} from '@/components/standard';
+import { ConfirmDialog } from '@/components/MyWork/shared/ConfirmDialog';
+import { Modal } from '@/components/ui/primitives/Modal';
 import { Api } from '@/services/api';
 
 type Scope = 'user' | 'organization' | 'project';
@@ -19,7 +26,7 @@ interface FolderRow extends TableRow {
   updatedAt: string | null;
 }
 
-export const VaultFoldersTable: React.FC<{ onOpenFolder: (folderId: string) => void }> = ({
+export const VaultFoldersTable: React.FC<{ onOpenFolder: (folder: FolderRow) => void }> = ({
   onOpenFolder,
 }) => {
   const { t, i18n } = useTranslation();
@@ -29,19 +36,42 @@ export const VaultFoldersTable: React.FC<{ onOpenFolder: (folderId: string) => v
   const [error, setError] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [projects, setProjects] = useState<Array<{ id: string; name: string }>>([]);
+  const [editing, setEditing] = useState<FolderRow | null>(null);
+  const [editName, setEditName] = useState('');
+  const [deleting, setDeleting] = useState<FolderRow | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const [mine, organization] = await Promise.all([
+      const safes = await Api.getVaultSafes();
+      const projectOptions = safes
+        .filter((safe) => safe.type === 'project' && safe.projectId)
+        .map((safe) => ({ id: safe.projectId!, name: safe.name }));
+      setProjects(projectOptions);
+      const [mine, organization, ...projectFolders] = await Promise.all([
         Api.getVaultFolders({ scope: 'user' }),
         Api.getVaultFolders({ scope: 'organization' }),
+        ...projectOptions.map((project) =>
+          Api.getVaultFolders({ scope: 'project', projectId: project.id })
+        ),
       ]);
+      const documentsByScope = await Promise.all([
+        Api.getKnowledgeDocuments({ scope: 'user' }),
+        Api.getKnowledgeDocuments({ scope: 'organization' }),
+        ...projectOptions.map((project) =>
+          Api.getKnowledgeDocuments({ scope: 'project', projectId: project.id })
+        ),
+      ]);
+      const allFolders = [...mine, ...organization, ...projectFolders.flat()];
+      const allDocuments = documentsByScope.flat();
       setRows(
-        [...mine, ...organization].map((folder: any) => ({
+        allFolders.map((folder: any) => ({
           ...folder,
-          documentCount: Number(folder.documentCount ?? 0),
+          projectName: projectOptions.find((project) => project.id === folder.projectId)?.name,
+          documentCount: allDocuments.filter((document: any) => document.folder_id === folder.id)
+            .length,
           updatedAt: folder.updatedAt ?? null,
         }))
       );
@@ -136,7 +166,28 @@ export const VaultFoldersTable: React.FC<{ onOpenFolder: (folderId: string) => v
         loading={loading}
         error={error}
         onRetry={load}
-        onRowDoubleClick={(row) => onOpenFolder(String(row.id))}
+        onRowDoubleClick={(row) => onOpenFolder(row as FolderRow)}
+        rowMenu={(row): StandardRowMenu => ({
+          primary: [
+            {
+              id: 'open',
+              label: pl ? 'Otwórz' : 'Open',
+              onClick: () => onOpenFolder(row as FolderRow),
+            },
+            {
+              id: 'rename',
+              label: pl ? 'Zmień nazwę' : 'Rename',
+              onClick: () => {
+                setEditing(row as FolderRow);
+                setEditName(String(row.name));
+              },
+            },
+          ],
+          destructive: {
+            label: pl ? 'Usuń' : 'Delete',
+            onClick: () => setDeleting(row as FolderRow),
+          },
+        })}
         empty={{
           icon: FolderKanban,
           title: pl ? 'Brak folderów' : 'No folders',
@@ -152,7 +203,59 @@ export const VaultFoldersTable: React.FC<{ onOpenFolder: (folderId: string) => v
         onClose={() => setCreateOpen(false)}
         onSubmit={create}
         busy={busy}
-        projects={[]}
+        projects={projects}
+      />
+      <Modal
+        open={Boolean(editing)}
+        onClose={() => setEditing(null)}
+        title={pl ? 'Zmień nazwę folderu' : 'Rename folder'}
+        footer={
+          <button
+            type="button"
+            disabled={!editName.trim() || busy}
+            className="rounded-lg bg-c-text px-3 py-2 text-sm text-c-surface disabled:opacity-50"
+            onClick={async () => {
+              if (!editing || !editName.trim()) return;
+              setBusy(true);
+              try {
+                await Api.updateVaultFolder(editing.id, { name: editName.trim() });
+                setEditing(null);
+                await load();
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            {pl ? 'Zapisz' : 'Save'}
+          </button>
+        }
+      >
+        <input
+          aria-label={pl ? 'Nazwa folderu' : 'Folder name'}
+          value={editName}
+          onChange={(event) => setEditName(event.target.value)}
+          className="w-full rounded-lg border border-c-border bg-c-surface p-2 text-c-text"
+        />
+      </Modal>
+      <ConfirmDialog
+        isOpen={Boolean(deleting)}
+        onCancel={() => setDeleting(null)}
+        onConfirm={() => {
+          if (!deleting) return;
+          void Api.deleteVaultFolder(deleting.id).then(async () => {
+            setDeleting(null);
+            await load();
+          });
+        }}
+        title={pl ? 'Usunąć folder?' : 'Delete folder?'}
+        description={
+          pl
+            ? 'Dokumenty pozostaną w sejfie i zostaną odpięte od folderu.'
+            : 'Documents remain in the safe and are detached from the folder.'
+        }
+        confirmLabel={pl ? 'Usuń' : 'Delete'}
+        cancelLabel={pl ? 'Anuluj' : 'Cancel'}
+        variant="danger"
       />
     </div>
   );
