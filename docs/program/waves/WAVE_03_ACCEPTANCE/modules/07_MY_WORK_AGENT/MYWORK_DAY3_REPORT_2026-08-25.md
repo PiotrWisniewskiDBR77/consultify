@@ -346,3 +346,41 @@ tą tabelą, chyba że właściciel zdecyduje wprowadzić dla nich enum od zera
 
 Odbiór nadzorcy pozostaje wiążący. Ten rozdział nie zastępuje weryfikacji
 wzrokowej ani odbioru realnego runtime.
+
+## Podpis nadzorcy — odbiór dnia 3 (2026-08-25)
+
+Werdykt: **ODEBRANE (warstwa kodu i procesu)** — gałąź `codex/day3-fixes-20260825`
+tip `d6bdcbad14`, scalana do linii integracyjnej m03.
+
+Zakres objęty tym podpisem (ponad FIX-1..15 opisane wyżej):
+
+1. **Partia polish (5 commitów `9a838bdec0..fc68fc4a9f`)** — zweryfikowana
+   niezależnym robotnikiem: 5/5 pozycji realnych (nie atrapy), testy 17/17 PASS,
+   i18n PL/EN kompletne z realnymi polskimi tekstami. Kluczowe dowody:
+   picker uczestników woła org-scoped `GET /users/search`
+   (`server/src/routes/users.routes.ts:63-121`, `WHERE organization_id = ?`,
+   walidacja listy uczestników po stronie serwera w `calendar.routes.ts:845-851`) —
+   spot-check nadzorcy wykonany osobiście.
+2. **TRI-OBS-17 rozwiązany** — commit `efa2e9075b`: traceability R10 dla 5 plików
+   (ClosureDecisionQueue, EffectivenessClosureQueue, NotebookExportMenu,
+   NotebookHamburgerMenu, NotebookInlineAIMenu) przez realny rejestr
+   (`notebookActionRegistry` + wzorzec `runAction` z toolbarów Idea). Strażnik
+   `check-action-coverage.sh --all`: 12→0 naruszeń na tych plikach, baseline
+   globalny zmalał dokładnie o 5 (spot-check nadzorcy: naruszeń 180 przy
+   baseline 183, dług nie rośnie). Zero zmian zachowania (32 testy zielone).
+3. **Kanon fokusa** — commit `f6433139ed`: `c-focus` w nowym
+   `CalendarAttendeesField`, likwidacja długu `primary-*` (crimson) na 5 liniach
+   modala wydarzenia; dług fokusa w repo spadł 128→120 plików (hook
+   `check-focus-canon` zielony).
+4. **FIX-21** (portal `ConfirmDialog` — modal powielenia chował się pod modalem
+   wydarzenia, wykryte obowiązkowym dev-renderem) + test `d6bdcbad14`.
+   **Nota atrybucyjna (uczciwość procesu):** kod FIX-21 wszedł do repo w commicie
+   `f6433139ed` razem z poprawkami kanonu — splot dwóch równoległych sesji
+   piszących w jednym worktree; treść zmian zweryfikowana, autorstwo opisane tu.
+
+Otwarte, świadomie POZA tym podpisem: STOP-y A.6 (parytet 6 zakładek) i pełna
+macierz E.6; `VISUAL_PARITY_NOT_PROVEN` dla fal 3; zrzuty 5 pozycji polisha —
+wejdą do pakietu werdyktowego właściciela (dowody 14/14 jasny+ciemny dla FIX-ów:
+gałąź `codex/day3-visual-evidence-20260825`, commit `01df586440`).
+
+— Nadzorca programu (Fable), 2026-08-25
