@@ -270,7 +270,7 @@ export const ClientAccessView: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-c-border border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -315,7 +315,7 @@ export const ClientAccessView: React.FC = () => {
             className={cn(
               'px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors',
               activeTab === 'clients'
-                ? 'text-slate-900 dark:text-white border-primary-500'
+                ? 'text-slate-900 dark:text-white border-c-border'
                 : 'text-slate-500 border-transparent hover:text-slate-900 dark:hover:text-white'
             )}
           >
@@ -326,7 +326,7 @@ export const ClientAccessView: React.FC = () => {
             className={cn(
               'px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors',
               activeTab === 'employees'
-                ? 'text-slate-900 dark:text-white border-primary-500'
+                ? 'text-slate-900 dark:text-white border-c-border'
                 : 'text-slate-500 border-transparent hover:text-slate-900 dark:hover:text-white'
             )}
           >
@@ -349,10 +349,10 @@ export const ClientAccessView: React.FC = () => {
 
       {/* Access Link Display */}
       {accessLink && (
-        <div className="bg-primary-500/10 border border-primary-500/30 rounded-xl p-4">
+        <div className="bg-c-surface-raised border border-c-border rounded-xl p-4">
           <div className="flex items-center justify-between gap-4">
             <div className="flex-1">
-              <p className="text-sm text-primary-300 mb-1">
+              <p className="text-sm text-c-text-secondary mb-1">
                 {t('partner.clientAccess.generatedLink', 'Your access link is ready:')}
               </p>
               <code className="text-sm text-slate-900 dark:text-white bg-slate-50 dark:bg-navy-900/50 px-3 py-1.5 rounded block truncate">
@@ -451,7 +451,7 @@ export const ClientAccessView: React.FC = () => {
                       className={cn(
                         'w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-xs font-bold',
                         employee.status === 'ACTIVE'
-                          ? 'bg-primary-500/20 text-primary-400'
+                          ? 'bg-c-surface-raised text-c-text-secondary'
                           : 'bg-slate-200 dark:bg-slate-700 text-slate-600'
                       )}
                     >
@@ -576,9 +576,9 @@ const ClientRow: React.FC<ClientRowProps> = ({ client }) => {
   };
 
   return (
-    <div className="flex items-center justify-between rounded-xl border border-white/5 bg-slate-50/50 dark:bg-navy-900/30 p-4 transition hover:border-primary-500/30">
+    <div className="flex items-center justify-between rounded-xl border border-white/5 bg-slate-50/50 dark:bg-navy-900/30 p-4 transition hover:border-c-border">
       <div className="flex items-center gap-4">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-500/20 text-sm font-bold text-primary-400">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-c-surface-raised text-sm font-bold text-c-text-secondary">
           {(client.clientName || client.organizationName || 'UN').substring(0, 2).toUpperCase()}
         </div>
         <div>

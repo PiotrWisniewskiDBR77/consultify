@@ -376,8 +376,8 @@ const DashboardSection: React.FC = () => {
         {stats.map((stat, index) => (
           <div key={index} className="bg-c-surface rounded-xl border border-c-border-subtle p-4">
             <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 rounded-lg bg-primary-100 dark:bg-primary-900/30">
-                <stat.icon className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+              <div className="p-2 rounded-lg bg-c-surface-raised dark:bg-c-surface-raised">
+                <stat.icon className="w-5 h-5 text-c-text-secondary dark:text-c-text-secondary" />
               </div>
               <span className="text-sm text-c-text-secondary">{stat.label}</span>
             </div>
@@ -397,7 +397,7 @@ const DashboardSection: React.FC = () => {
       </div>
 
       {isFreshPartner && (
-        <div className="rounded-xl border border-primary-200 bg-primary-50 p-4 text-sm text-primary-800 dark:border-primary-700/50 dark:bg-primary-900/20 dark:text-primary-200">
+        <div className="rounded-xl border border-c-border bg-c-surface-raised p-4 text-sm text-c-text-secondary dark:border-c-border dark:bg-c-surface-hover dark:text-c-text-secondary">
           {t(
             'partner.dashboard.freshHint',
             'Twoje dane pojawią się tutaj po pierwszych poleceniach i transakcjach prowizyjnych.'
@@ -414,10 +414,10 @@ const DashboardSection: React.FC = () => {
           {quickActions.map((action, index) => (
             <button
               key={index}
-              className="flex flex-col items-center gap-2 p-4 rounded-lg bg-c-surface-raised/50 hover:bg-primary-900/20 transition-colors group"
+              className="flex flex-col items-center gap-2 p-4 rounded-lg bg-c-surface-raised/50 hover:bg-c-surface-hover transition-colors group"
             >
-              <action.icon className="w-6 h-6 text-c-text-secondary group-hover:text-primary-600 dark:group-hover:text-primary-400" />
-              <span className="text-sm font-medium text-c-text-secondary group-hover:text-primary-600 dark:group-hover:text-primary-400">
+              <action.icon className="w-6 h-6 text-c-text-secondary group-hover:text-c-text-secondary dark:group-hover:text-c-text-secondary" />
+              <span className="text-sm font-medium text-c-text-secondary group-hover:text-c-text-secondary dark:group-hover:text-c-text-secondary">
                 {action.label}
               </span>
             </button>
@@ -434,7 +434,7 @@ const DashboardSection: React.FC = () => {
               <Clock className="w-5 h-5 text-c-text-muted" />
               {t('partner.dashboard.recentActivity', 'Recent Activity')}
             </h3>
-            <button className="text-sm text-primary-600 dark:text-primary-400 hover:underline">
+            <button className="text-sm text-c-text-secondary dark:text-c-text-secondary hover:underline">
               {t('common.viewAll', 'View All')}
             </button>
           </div>
@@ -467,7 +467,7 @@ const DashboardSection: React.FC = () => {
               <GraduationCap className="w-5 h-5 text-c-text-muted" />
               {t('partner.dashboard.certificationProgress', 'Certification Progress')}
             </h3>
-            <span className="text-sm text-primary-600 dark:text-primary-400 font-medium">
+            <span className="text-sm text-c-text-secondary dark:text-c-text-secondary font-medium">
               {canonicalCertification
                 ? `${certificationCount} ${t('partner.dashboard.complete', 'Complete')}`
                 : t('common.loading', 'Loading…')}
@@ -483,7 +483,7 @@ const DashboardSection: React.FC = () => {
                   {cert.status === 'completed' ? (
                     <CheckCircle2 className="w-5 h-5 text-emerald-500" />
                   ) : cert.status === 'in-progress' ? (
-                    <div className="w-5 h-5 rounded-full border-2 border-primary-500 border-t-transparent animate-spin" />
+                    <div className="w-5 h-5 rounded-full border-2 border-c-border border-t-transparent animate-spin" />
                   ) : (
                     <div className="w-5 h-5 rounded-full border-2 border-c-border" />
                   )}
@@ -491,14 +491,15 @@ const DashboardSection: React.FC = () => {
                     className={cn(
                       'text-sm flex-1',
                       cert.status === 'completed' && 'text-c-text',
-                      cert.status === 'in-progress' && 'text-primary-600 dark:text-primary-400',
+                      cert.status === 'in-progress' &&
+                        'text-c-text-secondary dark:text-c-text-secondary',
                       cert.status === 'locked' && 'text-c-text-muted'
                     )}
                   >
                     {cert.name}
                   </span>
                   {cert.status === 'in-progress' && cert.progress !== undefined && (
-                    <span className="text-xs text-primary-600 dark:text-primary-400">
+                    <span className="text-xs text-c-text-secondary dark:text-c-text-secondary">
                       {cert.progress}%
                     </span>
                   )}
@@ -875,7 +876,7 @@ const MetricsSection: React.FC = () => {
       </div>
 
       {isFreshMetrics && (
-        <div className="rounded-xl border border-primary-200 bg-primary-50 p-4 text-sm text-primary-800 dark:border-primary-700/50 dark:bg-primary-900/20 dark:text-primary-200">
+        <div className="rounded-xl border border-c-border bg-c-surface-raised p-4 text-sm text-c-text-secondary dark:border-c-border dark:bg-c-surface-hover dark:text-c-text-secondary">
           {t(
             'partner.metrics.freshHint',
             'Twoje dane pojawią się tutaj po pierwszych poleceniach i transakcjach prowizyjnych.'
@@ -904,7 +905,7 @@ const MetricsSection: React.FC = () => {
                   cx="80"
                   cy="80"
                   r="70"
-                  className="fill-none stroke-primary-500"
+                  className="fill-none stroke-c-text-secondary"
                   strokeWidth="12"
                   strokeDasharray={`${(metricsData?.performance?.score || 0) * 4.4} 440`}
                   strokeLinecap="round"
@@ -981,7 +982,7 @@ const MetricsSection: React.FC = () => {
               return (
                 <div
                   key={index}
-                  className="flex-1 bg-primary-500 rounded-t transition-all duration-300 hover:bg-primary-600"
+                  className="flex-1 rounded-t bg-c-text-secondary transition-all duration-300 hover:bg-c-text"
                   style={{ height: `${height}%` }}
                   title={`€${value.toLocaleString()}`}
                 />
@@ -1350,14 +1351,14 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
             {projects.map((project) => (
               <div
                 key={project.id}
-                className="bg-c-surface rounded-xl border border-c-border-subtle p-4 hover:border-primary-700 transition-colors"
+                className="bg-c-surface rounded-xl border border-c-border-subtle p-4 hover:border-c-border transition-colors"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div>
                     <h4 className="font-medium text-c-text">{project.name}</h4>
                     <p className="text-sm text-c-text-secondary">{project.clientName}</p>
                   </div>
-                  <span className="px-2 py-1 text-xs font-medium bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded">
+                  <span className="px-2 py-1 text-xs font-medium bg-c-surface-raised dark:bg-c-surface-raised text-c-text-secondary dark:text-c-text-secondary rounded">
                     {project.framework}
                   </span>
                 </div>
@@ -1414,11 +1415,11 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
           {organizations.map((org) => (
             <div
               key={org.id}
-              className="bg-c-surface rounded-xl border border-c-border-subtle p-4 flex items-center justify-between hover:border-primary-700 cursor-pointer transition-colors"
+              className="bg-c-surface rounded-xl border border-c-border-subtle p-4 flex items-center justify-between hover:border-c-border cursor-pointer transition-colors"
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
-                  <Building2 className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                <div className="w-10 h-10 rounded-lg bg-c-surface-raised dark:bg-c-surface-raised flex items-center justify-center">
+                  <Building2 className="w-5 h-5 text-c-text-secondary dark:text-c-text-secondary" />
                 </div>
                 <div>
                   <span className="font-medium text-c-text">{org.name}</span>
@@ -1739,7 +1740,7 @@ const CertificationSection: React.FC<{
                         status === 'completed' &&
                           'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600',
                         status === 'in-progress' &&
-                          'bg-primary-100 dark:bg-primary-900/30 text-primary-600',
+                          'bg-c-surface-raised dark:bg-c-surface-raised text-c-text-secondary',
                         status === 'locked' && 'bg-slate-200 dark:bg-navy-700 text-c-text-muted'
                       )}
                     >
@@ -1754,7 +1755,7 @@ const CertificationSection: React.FC<{
                             status === 'completed' &&
                               'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600',
                             status === 'in-progress' &&
-                              'bg-primary-100 dark:bg-primary-900/30 text-primary-600',
+                              'bg-c-surface-raised dark:bg-c-surface-raised text-c-text-secondary',
                             status === 'locked' && 'bg-slate-200 dark:bg-navy-700 text-c-text-muted'
                           )}
                         >
@@ -1819,7 +1820,7 @@ const CertificationSection: React.FC<{
                         {docHref && (
                           <button
                             onClick={() => navigate(docHref)}
-                            className="px-4 py-2 border border-c-border text-sm font-medium rounded-lg text-c-text-secondary hover:border-primary-500 hover:text-primary-600 transition-colors"
+                            className="px-4 py-2 border border-c-border text-sm font-medium rounded-lg text-c-text-secondary hover:border-c-border hover:text-c-text-secondary transition-colors"
                           >
                             Open guide
                           </button>
@@ -1864,7 +1865,7 @@ const CertificationSection: React.FC<{
                                   {moduleDocHref && (
                                     <button
                                       onClick={() => navigate(moduleDocHref)}
-                                      className="inline-flex items-center gap-1 text-xs text-primary-600 dark:text-primary-400"
+                                      className="inline-flex items-center gap-1 text-xs text-c-text-secondary dark:text-c-text-secondary"
                                     >
                                       <ExternalLink className="w-3 h-3" />
                                       {module.articleLabel || 'Open article'}
@@ -1921,8 +1922,8 @@ const CertificationSection: React.FC<{
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
-                      <FileText className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                    <div className="w-10 h-10 rounded-lg bg-c-surface-raised dark:bg-c-surface-raised flex items-center justify-center">
+                      <FileText className="w-5 h-5 text-c-text-secondary dark:text-c-text-secondary" />
                     </div>
                     <div>
                       <h4 className="font-medium text-c-text">{course.name} Exam</h4>
@@ -2101,7 +2102,7 @@ const CertificationSection: React.FC<{
           {completedWithCerts.map((cert) => (
             <div
               key={cert.id}
-              className="bg-c-surface rounded-xl border border-c-border-subtle p-4 hover:border-primary-700 transition-colors"
+              className="bg-c-surface rounded-xl border border-c-border-subtle p-4 hover:border-c-border transition-colors"
             >
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-xl bg-crimson-600 dark:bg-crimson-700 flex items-center justify-center">
@@ -2133,7 +2134,7 @@ const CertificationSection: React.FC<{
                     }
                     window.open(url, '_blank');
                   }}
-                  className="p-2 text-c-text-muted hover:text-primary-600 dark:hover:text-primary-400"
+                  className="p-2 text-c-text-muted hover:text-c-text-secondary dark:hover:text-c-text-secondary"
                 >
                   <Download className="w-5 h-5" />
                 </button>
@@ -2317,7 +2318,7 @@ const ResourcesSection: React.FC<{
                   <button
                     key={doc.id}
                     onClick={() => navigate(doc.href)}
-                    className="w-full flex items-center justify-between rounded-lg border border-c-border-subtle px-3 py-3 text-left hover:border-primary-500 transition-colors"
+                    className="w-full flex items-center justify-between rounded-lg border border-c-border-subtle px-3 py-3 text-left hover:border-c-border transition-colors"
                   >
                     <span className="text-sm font-medium text-c-text">{doc.title}</span>
                     <ExternalLink className="w-4 h-4 text-c-text-secondary" />
@@ -2351,7 +2352,7 @@ const ResourcesSection: React.FC<{
                       {href && (
                         <button
                           onClick={() => navigate(href)}
-                          className="mt-3 inline-flex items-center gap-1 text-xs text-primary-600 dark:text-primary-400"
+                          className="mt-3 inline-flex items-center gap-1 text-xs text-c-text-secondary dark:text-c-text-secondary"
                         >
                           <ExternalLink className="w-3 h-3" />
                           Open supporting guide
@@ -2413,13 +2414,13 @@ const ResourcesSection: React.FC<{
             <div
               key={item.id}
               onClick={() => handleDownload(item.id, item.title)}
-              className="bg-c-surface rounded-xl border border-c-border-subtle p-4 flex items-center gap-4 hover:border-primary-700 transition-colors cursor-pointer group"
+              className="bg-c-surface rounded-xl border border-c-border-subtle p-4 flex items-center gap-4 hover:border-c-border transition-colors cursor-pointer group"
             >
               <div className="w-12 h-12 rounded-lg bg-slate-200 dark:bg-navy-700 flex items-center justify-center">
                 <FileText className="w-6 h-6 text-c-text-muted" />
               </div>
               <div className="flex-1">
-                <h4 className="font-medium text-c-text group-hover:text-primary-600 dark:group-hover:text-primary-400">
+                <h4 className="font-medium text-c-text group-hover:text-c-text-secondary dark:group-hover:text-c-text-secondary">
                   {item.title}
                 </h4>
                 <p className="text-sm text-c-text-secondary">
@@ -2427,9 +2428,9 @@ const ResourcesSection: React.FC<{
                 </p>
               </div>
               {downloading === item.id ? (
-                <RefreshCw className="w-5 h-5 text-primary-600 animate-spin" />
+                <RefreshCw className="w-5 h-5 text-c-text-secondary animate-spin" />
               ) : (
-                <Download className="w-5 h-5 text-c-text-muted group-hover:text-primary-600 dark:group-hover:text-primary-400" />
+                <Download className="w-5 h-5 text-c-text-muted group-hover:text-c-text-secondary dark:group-hover:text-c-text-secondary" />
               )}
             </div>
           ))}
@@ -2716,7 +2717,7 @@ const ProfileSection: React.FC<{
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-                className="w-full px-4 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-c-text focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="w-full px-4 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-c-text focus:ring-2 focus-visible:ring-[color:var(--c-focus)] focus:border-c-border"
               />
             </div>
             <div>
@@ -2727,7 +2728,7 @@ const ProfileSection: React.FC<{
                 type="text"
                 value={formData.taxId}
                 onChange={(e) => setFormData((prev) => ({ ...prev, taxId: e.target.value }))}
-                className="w-full px-4 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-c-text focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="w-full px-4 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-c-text focus:ring-2 focus-visible:ring-[color:var(--c-focus)] focus:border-c-border"
               />
             </div>
             <div>
@@ -2738,7 +2739,7 @@ const ProfileSection: React.FC<{
                 type="email"
                 value={formData.contactEmail}
                 onChange={(e) => setFormData((prev) => ({ ...prev, contactEmail: e.target.value }))}
-                className="w-full px-4 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-c-text focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="w-full px-4 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-c-text focus:ring-2 focus-visible:ring-[color:var(--c-focus)] focus:border-c-border"
               />
             </div>
             <div>
@@ -2747,7 +2748,7 @@ const ProfileSection: React.FC<{
                 type="tel"
                 value={formData.contactPhone}
                 onChange={(e) => setFormData((prev) => ({ ...prev, contactPhone: e.target.value }))}
-                className="w-full px-4 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-c-text focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="w-full px-4 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-c-text focus:ring-2 focus-visible:ring-[color:var(--c-focus)] focus:border-c-border"
               />
             </div>
             <div className="md:col-span-2">
@@ -2759,7 +2760,7 @@ const ProfileSection: React.FC<{
                 value={formData.website}
                 onChange={(e) => setFormData((prev) => ({ ...prev, website: e.target.value }))}
                 placeholder="https://"
-                className="w-full px-4 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-c-text focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="w-full px-4 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-c-text focus:ring-2 focus-visible:ring-[color:var(--c-focus)] focus:border-c-border"
               />
             </div>
           </div>
@@ -2802,21 +2803,23 @@ const ProfileSection: React.FC<{
                 className={cn(
                   'p-4 rounded-xl border-2 text-center transition-all',
                   selectedSpecializations.includes(fw)
-                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                    : 'border-c-border-subtle hover:border-primary-300'
+                    ? 'border-c-border bg-c-surface-raised dark:bg-c-surface-hover'
+                    : 'border-c-border-subtle hover:border-c-border'
                 )}
               >
                 <Target
                   className={cn(
                     'w-8 h-8 mx-auto mb-2',
-                    selectedSpecializations.includes(fw) ? 'text-primary-600' : 'text-c-text-muted'
+                    selectedSpecializations.includes(fw)
+                      ? 'text-c-text-secondary'
+                      : 'text-c-text-muted'
                   )}
                 />
                 <span
                   className={cn(
                     'font-medium',
                     selectedSpecializations.includes(fw)
-                      ? 'text-primary-600'
+                      ? 'text-c-text-secondary'
                       : 'text-c-text-secondary'
                   )}
                 >
@@ -2863,7 +2866,7 @@ const ProfileSection: React.FC<{
                   type="checkbox"
                   checked={selectedRegions.includes(region)}
                   onChange={() => toggleRegion(region)}
-                  className="rounded text-primary-600 focus:ring-primary-500"
+                  className="rounded text-c-text-secondary focus-visible:ring-[color:var(--c-focus)]"
                 />
                 <span className="text-c-text-secondary">{region}</span>
               </label>
@@ -2929,8 +2932,8 @@ const ProfileSection: React.FC<{
           <h4 className="font-medium text-c-text mb-4">Preview</h4>
           <div className="bg-c-surface-raised/50 dark:bg-navy-700/30 rounded-xl p-4">
             <div className="flex items-start gap-4">
-              <div className="w-16 h-16 rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
-                <Building2 className="w-8 h-8 text-primary-600" />
+              <div className="w-16 h-16 rounded-xl bg-c-surface-raised dark:bg-c-surface-raised flex items-center justify-center">
+                <Building2 className="w-8 h-8 text-c-text-secondary" />
               </div>
               <div>
                 <h5 className="font-semibold text-c-text">
@@ -2945,7 +2948,7 @@ const ProfileSection: React.FC<{
                     selectedSpecializations.map((spec) => (
                       <span
                         key={spec}
-                        className="px-2 py-0.5 text-xs bg-primary-100 dark:bg-primary-900/30 text-primary-600 rounded"
+                        className="px-2 py-0.5 text-xs bg-c-surface-raised dark:bg-c-surface-raised text-c-text-secondary rounded"
                       >
                         {spec}
                       </span>
