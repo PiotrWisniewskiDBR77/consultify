@@ -57,21 +57,21 @@ Nie wykonałem żadnego deployu, żadnej operacji Railway, żadnej zdalnej migra
 
 ## Pozycje — tabela zbiorcza
 
-| Pozycja      | Commit SHA     | Status      | Dowód                                                                                                           |
-| ------------ | -------------- | ----------- | --------------------------------------------------------------------------------------------------------------- |
-| S.0          | `17c5edb60e`   | DONE        | flaga default OFF, realny czytnik, 14/14 testów flagi i OFF                                                     |
-| S.1          | `2b2fa546aa`   | DONE        | jeden token 1040×840; opt-in; legacy 720×560/1080×640 zachowane; 22/22 testy                                    |
-| S.2          | `c9f946db24`   | CZĘŚCIOWA   | 5 stref, szkło 4 pasów, opaque fallback i adopcja przez Wniosek; 18/18 testów; zrzuty/kontrast oczekują T.5/R.2 |
-| S.3          | `40b0df3e5c`   | DONE        | jednoliniowy pas w każdym kroku, wartości z realnego stanu, rozwijanie i reset na zmianie kroku; 20/20 testów   |
-| S.4          | `72d2cf2eef`   | CZĘŚCIOWA   | nazwy działań i przypisy 1:1; krok 2 ma `Uruchom teraz`; brak widocznego powodu blokady CTA                     |
-| S.5–S.7      | —              | NIE ZACZĘTA | —                                                                                                               |
-| K.1          | —              | STOP        | kod ma 12 typów (6+6), prototyp/instrukcja wymaga 13 (6+7); brakującego typu nie zgaduję                        |
-| K.2–K.3      | —              | NIE ZACZĘTA | —                                                                                                               |
-| W.1–W.2      | —              | NIE ZACZĘTA | —                                                                                                               |
-| T.5          | `aaad789d2d`   | CZĘŚCIOWA   | realny komponent, lokalne mocki, jawne ON/OFF; 4 zrzuty; brak pełnych scen/fixture stresowego                   |
-| T.1–T.4, T.6 | —              | NIE ZACZĘTA | —                                                                                                               |
-| R.1          | bieżący commit | DONE        | rejestr opisuje stan częściowy bez zmiany `PENDING` i bez skasowania `STEPS_3_5_EVIDENCE_MISSING`               |
-| R.2          | `aaad789d2d`   | CZĘŚCIOWA   | krok 1 light/dark + OFF light/dark; tabela parytetu; brak kroków 2–3 i pozostałych scen                         |
+| Pozycja      | Commit SHA   | Status      | Dowód                                                                                                           |
+| ------------ | ------------ | ----------- | --------------------------------------------------------------------------------------------------------------- |
+| S.0          | `17c5edb60e` | DONE        | flaga default OFF, realny czytnik, 14/14 testów flagi i OFF                                                     |
+| S.1          | `2b2fa546aa` | DONE        | jeden token 1040×840; opt-in; legacy 720×560/1080×640 zachowane; 22/22 testy                                    |
+| S.2          | `c9f946db24` | CZĘŚCIOWA   | 5 stref, szkło 4 pasów, opaque fallback i adopcja przez Wniosek; 18/18 testów; zrzuty/kontrast oczekują T.5/R.2 |
+| S.3          | `40b0df3e5c` | DONE        | jednoliniowy pas w każdym kroku, wartości z realnego stanu, rozwijanie i reset na zmianie kroku; 20/20 testów   |
+| S.4          | `72d2cf2eef` | CZĘŚCIOWA   | nazwy działań i przypisy 1:1; krok 2 ma `Uruchom teraz`; brak widocznego powodu blokady CTA                     |
+| S.5–S.7      | —            | NIE ZACZĘTA | —                                                                                                               |
+| K.1          | —            | STOP        | kod ma 12 typów (6+6), prototyp/instrukcja wymaga 13 (6+7); brakującego typu nie zgaduję                        |
+| K.2–K.3      | —            | NIE ZACZĘTA | —                                                                                                               |
+| W.1–W.2      | —            | NIE ZACZĘTA | —                                                                                                               |
+| T.5          | `aaad789d2d` | CZĘŚCIOWA   | realny komponent, lokalne mocki, jawne ON/OFF; 4 zrzuty; brak pełnych scen/fixture stresowego                   |
+| T.1–T.4, T.6 | —            | NIE ZACZĘTA | —                                                                                                               |
+| R.1          | `e6eedf29d4` | DONE        | rejestr opisuje stan częściowy bez zmiany `PENDING` i bez skasowania `STEPS_3_5_EVIDENCE_MISSING`               |
+| R.2          | `aaad789d2d` | CZĘŚCIOWA   | krok 1 light/dark + OFF light/dark; tabela parytetu; brak kroków 2–3 i pozostałych scen                         |
 
 ## ★ Parytet wizualny z prototypem (produkt R.2)
 
