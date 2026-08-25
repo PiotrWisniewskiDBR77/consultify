@@ -41,6 +41,29 @@ import {
 } from './deriveStatementTable';
 import type { StatementLineDto } from '@/services/api/financeV2.types';
 
+/**
+ * 2026-08-26 night-fixes-a (NIGHT_SWEEP_A_REPORT_20260826.md #10, Finance
+ * FIX-2026): an unmapped line's raw source `lineCode` (e.g.
+ * `MISC_UNMAPPED_90_ACCT`) rendered verbatim as the row's ONLY label —
+ * `resolveLineLabel`'s real production implementation
+ * (`lineCode ?? canonicalLineId ?? rowKey`, `FinanceHub.tsx`) has no
+ * canonical->PL name dictionary to fall back on, so this table — the one
+ * place that actually knows a row `usesLineCodeFallback` — is the right
+ * layer to soften the presentation. Formats the raw code into readable
+ * words (same "never a bare code" humanizer pattern already used for
+ * Finance lineage edge types and ROI next-action types); the FULL raw code
+ * stays in the `title` tooltip and next to the "nieprzypisana" badge for
+ * traceability — nothing is hidden, just made readable at a glance.
+ */
+function humanizeFallbackLineCode(code: string): string {
+  return code
+    .toLowerCase()
+    .split(/[_\s]+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
 export interface CanonicalStatementCellSelection {
   rowKey: string;
   periodId: string;
@@ -125,7 +148,9 @@ export function CanonicalStatementTableV2(props: CanonicalStatementTableV2Props)
 
           {/* Wiersze */}
           {table.rows.map((row, rowIdx) => {
-            const label = resolveLineLabel(row.rowKey, row.canonicalLineId, row.lineCode);
+            const rawLabel = resolveLineLabel(row.rowKey, row.canonicalLineId, row.lineCode);
+            const label =
+              row.usesLineCodeFallback && rawLabel ? humanizeFallbackLineCode(rawLabel) : rawLabel;
             const isEven = rowIdx % 2 === 0;
             return (
               <React.Fragment key={row.rowKey}>
@@ -133,7 +158,7 @@ export function CanonicalStatementTableV2(props: CanonicalStatementTableV2Props)
                   className={`sticky left-0 z-10 flex items-center border-r border-b border-c-border-subtle px-3 py-1.5 text-[12.5px] font-medium text-c-text ${
                     isEven ? 'bg-c-surface' : 'bg-c-surface-raised/40'
                   }`}
-                  title={label}
+                  title={row.usesLineCodeFallback ? `${label} (${rawLabel})` : label}
                 >
                   <span className="truncate">{label}</span>
                   {row.usesLineCodeFallback && (

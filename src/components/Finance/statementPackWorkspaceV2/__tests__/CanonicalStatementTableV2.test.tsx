@@ -268,4 +268,46 @@ describe('CanonicalStatementTableV2', () => {
       screen.getByTestId('canonical-statement-cell-canon-revenue::period-1')
     ).toHaveTextContent('42');
   });
+
+  // 2026-08-26 night-fixes-a (NIGHT_SWEEP_A_REPORT_20260826.md #10): an
+  // unmapped line's raw source lineCode used to render VERBATIM as the
+  // row's only label. Proves the humanized label now shows instead, while
+  // the raw code stays reachable in the tooltip (nothing hidden).
+  it('humanizes an unmapped line\'s raw lineCode into a readable label, keeping the raw code in the tooltip', () => {
+    render(
+      <CanonicalStatementTableV2
+        lines={[
+          line({
+            stmtLineId: 'l-unmapped',
+            canonicalLineId: null,
+            lineCode: 'MISC_UNMAPPED_90_ACCT',
+          }),
+        ]}
+        resolveLineLabel={resolveLineLabel}
+        selectedCellKey={null}
+        onSelectCell={() => {}}
+        emptyLabel="—"
+      />
+    );
+
+    expect(screen.getByText('Misc Unmapped 90 Acct')).toBeInTheDocument();
+    expect(screen.queryByText('MISC_UNMAPPED_90_ACCT')).not.toBeInTheDocument();
+    expect(screen.getByTitle(/Misc Unmapped 90 Acct \(MISC_UNMAPPED_90_ACCT\)/)).toBeInTheDocument();
+    expect(screen.getByText('nieprzypisana')).toBeInTheDocument();
+  });
+
+  it('leaves a properly mapped canonical line label untouched (only the fallback path is humanized)', () => {
+    render(
+      <CanonicalStatementTableV2
+        lines={[line({ stmtLineId: 'l1' })]}
+        resolveLineLabel={resolveLineLabel}
+        selectedCellKey={null}
+        onSelectCell={() => {}}
+        emptyLabel="—"
+      />
+    );
+
+    expect(screen.getByText('REVENUE')).toBeInTheDocument();
+    expect(screen.queryByText('Revenue')).not.toBeInTheDocument();
+  });
 });
