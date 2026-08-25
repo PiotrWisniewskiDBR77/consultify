@@ -1,1 +1,41 @@
-import{Scale}from'lucide-react';import React,{useEffect,useState}from'react';import{getLegalHold,type LegalHoldState}from'../../services/adminLegalHoldApi';export const AdminLegalHoldPanel:React.FC=()=>{const[data,setData]=useState<LegalHoldState|null>(null),[error,setError]=useState<string|null>(null);useEffect(()=>{getLegalHold().then(setData).catch(e=>setError(e.message))},[]);return <div className="space-y-4"><div><h2 className="text-lg font-semibold text-c-text">Legal hold</h2><p className="text-sm text-c-text-secondary">Stan faktycznego wstrzymania dla całej organizacji — tylko odczyt.</p></div>{error&&<div role="alert">{error}</div>}<section className="rounded-xl border border-c-border p-5"><div className="flex items-center gap-2"><Scale className="h-5 w-5"/><strong>{data?.legalHoldEnabled?'Wstrzymanie aktywne':'Wstrzymanie nieaktywne'}</strong></div><p className="mt-2 text-sm text-c-text-secondary">Gdy aktywne, blokowane są: eksport danych oraz usunięcie organizacji.</p></section><section className="rounded-xl border border-c-border p-5"><h3 className="font-semibold text-c-text">Sprawy objęte wstrzymaniem</h3><p className="mt-2 text-sm text-c-text-secondary">Rejestr spraw nie jest jeszcze prowadzony; wstrzymanie działa dziś na poziomie całej organizacji.</p></section></div>};
+import { Scale } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { getLegalHold, type LegalHoldState } from '../../services/adminLegalHoldApi';
+export const AdminLegalHoldPanel: React.FC = () => {
+  const [data, setData] = useState<LegalHoldState | null>(null),
+    [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    getLegalHold()
+      .then(setData)
+      .catch((e) => setError(e.message));
+  }, []);
+  return (
+    <div className="space-y-4">
+      <div>
+        <h2 className="text-lg font-semibold text-c-text">Legal hold</h2>
+        <p className="text-sm text-c-text-secondary">
+          Stan faktycznego wstrzymania dla całej organizacji — tylko odczyt.
+        </p>
+      </div>
+      {error && <div role="alert">{error}</div>}
+      <section className="rounded-xl border border-c-border p-5">
+        <div className="flex items-center gap-2">
+          <Scale className="h-5 w-5" />
+          <strong>
+            {data?.legalHoldEnabled ? 'Wstrzymanie aktywne' : 'Wstrzymanie nieaktywne'}
+          </strong>
+        </div>
+        <p className="mt-2 text-sm text-c-text-secondary">
+          Gdy aktywne, blokowane są: eksport danych oraz usunięcie organizacji.
+        </p>
+      </section>
+      <section className="rounded-xl border border-c-border p-5">
+        <h3 className="font-semibold text-c-text">Sprawy objęte wstrzymaniem</h3>
+        <p className="mt-2 text-sm text-c-text-secondary">
+          Rejestr spraw nie jest jeszcze prowadzony; wstrzymanie działa dziś na poziomie całej
+          organizacji.
+        </p>
+      </section>
+    </div>
+  );
+};

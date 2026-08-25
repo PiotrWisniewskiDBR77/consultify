@@ -92,42 +92,282 @@ const CommandCenterAttentionQueue: React.FC = () => {
     void (async () => {
       const freshness = new Date().toLocaleString();
       const results = await Promise.allSettled([
-        Api.getAdminRiskSummary(), Api.getTenantAdminAuditStats(),
-        Api.getAdminBillingAlerts(), Api.getHealthPanelSummary(),
+        Api.getAdminRiskSummary(),
+        Api.getTenantAdminAuditStats(),
+        Api.getAdminBillingAlerts(),
+        Api.getHealthPanelSummary(),
       ]);
       if (!alive) return;
-      const [risk, audit, billing, health] = results.map((item) => item.status === 'fulfilled' ? item.value : null);
+      const [risk, audit, billing, health] = results.map((item) =>
+        item.status === 'fulfilled' ? item.value : null
+      );
       const next: AttentionSignal[] = [];
-      if (risk) next.push({ id: 'risk', title: 'Ryzyka wymagające przeglądu', source: 'GET /api/admin/risk/summary', freshness, severity: Number(risk?.highRiskCount ?? 0) > 0 ? 'critical' : 'info', href: '/admin/security/risk-summary', detail: `${Number(risk?.highRiskCount ?? 0)} wysokiego ryzyka` });
-      if (audit) next.push({ id: 'audit', title: 'Nierozwiązane zdarzenia audytowe', source: 'GET /api/admin/audit-logs/stats', freshness, severity: Number(audit?.unresolvedCount ?? 0) > 0 ? 'warning' : 'info', href: '/admin/audit/events', detail: `${Number(audit?.unresolvedCount ?? 0)} nierozwiązanych` });
-      const billingItems = billing ? (Array.isArray(billing?.alerts) ? billing.alerts : Array.isArray(billing) ? billing : []) : null;
-      if (billingItems) next.push({ id: 'billing', title: 'Alerty budżetowe', source: 'GET /api/admin/billing/alerts', freshness, severity: billingItems.length > 0 ? 'warning' : 'info', href: '/admin/billing/budgets-alerts', detail: `${billingItems.length} aktywnych alertów` });
-      if (health) next.push({ id: 'health', title: 'Stan usług organizacji', source: 'GET /api/admin/health-panel/summary', freshness, severity: Number(health?.summary?.failed ?? health?.failed ?? 0) > 0 ? 'critical' : 'info', href: '/admin/health/service-status', detail: `${Number(health?.summary?.failed ?? health?.failed ?? 0)} testów nieudanych` });
+      if (risk)
+        next.push({
+          id: 'risk',
+          title: 'Ryzyka wymagające przeglądu',
+          source: 'GET /api/admin/risk/summary',
+          freshness,
+          severity: Number(risk?.highRiskCount ?? 0) > 0 ? 'critical' : 'info',
+          href: '/admin/security/risk-summary',
+          detail: `${Number(risk?.highRiskCount ?? 0)} wysokiego ryzyka`,
+        });
+      if (audit)
+        next.push({
+          id: 'audit',
+          title: 'Nierozwiązane zdarzenia audytowe',
+          source: 'GET /api/admin/audit-logs/stats',
+          freshness,
+          severity: Number(audit?.unresolvedCount ?? 0) > 0 ? 'warning' : 'info',
+          href: '/admin/audit/events',
+          detail: `${Number(audit?.unresolvedCount ?? 0)} nierozwiązanych`,
+        });
+      const billingItems = billing
+        ? Array.isArray(billing?.alerts)
+          ? billing.alerts
+          : Array.isArray(billing)
+            ? billing
+            : []
+        : null;
+      if (billingItems)
+        next.push({
+          id: 'billing',
+          title: 'Alerty budżetowe',
+          source: 'GET /api/admin/billing/alerts',
+          freshness,
+          severity: billingItems.length > 0 ? 'warning' : 'info',
+          href: '/admin/billing/budgets-alerts',
+          detail: `${billingItems.length} aktywnych alertów`,
+        });
+      if (health)
+        next.push({
+          id: 'health',
+          title: 'Stan usług organizacji',
+          source: 'GET /api/admin/health-panel/summary',
+          freshness,
+          severity:
+            Number(health?.summary?.failed ?? health?.failed ?? 0) > 0 ? 'critical' : 'info',
+          href: '/admin/health/service-status',
+          detail: `${Number(health?.summary?.failed ?? health?.failed ?? 0)} testów nieudanych`,
+        });
       const rank = { critical: 0, warning: 1, info: 2 };
       setSignals(next.sort((a, b) => rank[a.severity] - rank[b.severity]));
       setError(next.length === 0 ? 'Nie udało się odczytać żadnego źródła sygnałów.' : null);
       setLoading(false);
     })();
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, []);
 
-  if (loading) return <div className="flex items-center gap-2 text-sm text-c-text-secondary"><Loader2 className="h-4 w-4 animate-spin" /> Ładowanie kolejki uwagi…</div>;
-  if (error) return <div role="alert" className="rounded-xl border border-c-danger bg-c-surface p-4 text-sm text-c-danger">{error}</div>;
-  return <div className="space-y-4"><div><h2 className="text-lg font-semibold text-c-text">Kolejka uwagi</h2><p className="mt-1 text-sm text-c-text-secondary">Sygnały z systemów kanonicznych; działania wykonuje się na ekranach źródłowych.</p></div><div className="grid gap-3 md:grid-cols-2">{signals.map((signal) => <a key={signal.id} href={signal.href} className="rounded-xl border border-c-border bg-c-surface p-4 hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 ring-[color:var(--c-focus)]"><div className="flex items-center justify-between gap-3"><h3 className="font-semibold text-c-text">{signal.title}</h3><span className={signal.severity === 'critical' ? 'text-xs font-medium text-c-danger' : 'text-xs font-medium text-c-text-secondary'}>{signal.severity}</span></div><p className="mt-2 text-sm text-c-text-secondary">{signal.detail}</p><dl className="mt-3 space-y-1 text-xs text-c-text-muted"><div><dt className="inline font-medium">Źródło: </dt><dd className="inline">{signal.source}</dd></div><div><dt className="inline font-medium">Świeżość: </dt><dd className="inline">{signal.freshness}</dd></div></dl><span className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-c-text">Otwórz ekran kanoniczny <ArrowRight className="h-4 w-4" /></span></a>)}</div></div>;
+  if (loading)
+    return (
+      <div className="flex items-center gap-2 text-sm text-c-text-secondary">
+        <Loader2 className="h-4 w-4 animate-spin" /> Ładowanie kolejki uwagi…
+      </div>
+    );
+  if (error)
+    return (
+      <div
+        role="alert"
+        className="rounded-xl border border-c-danger bg-c-surface p-4 text-sm text-c-danger"
+      >
+        {error}
+      </div>
+    );
+  return (
+    <div className="space-y-4">
+      <div>
+        <h2 className="text-lg font-semibold text-c-text">Kolejka uwagi</h2>
+        <p className="mt-1 text-sm text-c-text-secondary">
+          Sygnały z systemów kanonicznych; działania wykonuje się na ekranach źródłowych.
+        </p>
+      </div>
+      <div className="grid gap-3 md:grid-cols-2">
+        {signals.map((signal) => (
+          <a
+            key={signal.id}
+            href={signal.href}
+            className="rounded-xl border border-c-border bg-c-surface p-4 hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 ring-[color:var(--c-focus)]"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="font-semibold text-c-text">{signal.title}</h3>
+              <span
+                className={
+                  signal.severity === 'critical'
+                    ? 'text-xs font-medium text-c-danger'
+                    : 'text-xs font-medium text-c-text-secondary'
+                }
+              >
+                {signal.severity}
+              </span>
+            </div>
+            <p className="mt-2 text-sm text-c-text-secondary">{signal.detail}</p>
+            <dl className="mt-3 space-y-1 text-xs text-c-text-muted">
+              <div>
+                <dt className="inline font-medium">Źródło: </dt>
+                <dd className="inline">{signal.source}</dd>
+              </div>
+              <div>
+                <dt className="inline font-medium">Świeżość: </dt>
+                <dd className="inline">{signal.freshness}</dd>
+              </div>
+            </dl>
+            <span className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-c-text">
+              Otwórz ekran kanoniczny <ArrowRight className="h-4 w-4" />
+            </span>
+          </a>
+        ))}
+      </div>
+    </div>
+  );
 };
 
 const CommandCenterCostCapacity: React.FC = () => {
-  const [state, setState] = useState<{ loading: boolean; error: string | null; billing: any; usage: any; alerts: any[]; health: any; attribution: any }>({ loading: true, error: null, billing: null, usage: null, alerts: [], health: null, attribution: null });
+  const [state, setState] = useState<{
+    loading: boolean;
+    error: string | null;
+    billing: any;
+    usage: any;
+    alerts: any[];
+    health: any;
+    attribution: any;
+  }>({
+    loading: true,
+    error: null,
+    billing: null,
+    usage: null,
+    alerts: [],
+    health: null,
+    attribution: null,
+  });
   const [freshness, setFreshness] = useState('');
-  useEffect(() => { let alive = true; void (async () => { const result = await Promise.allSettled([Api.getAdminBillingSummary(), Api.getAdminBillingUsageDetails(), Api.getAdminBillingAlerts(), Api.getHealthPanelSummary(), getComplianceCostAttribution()]); if (!alive) return; const values = result.map((item) => item.status === 'fulfilled' ? item.value : null); const alerts = Array.isArray(values[2]?.alerts) ? values[2].alerts : Array.isArray(values[2]) ? values[2] : []; setState({ loading: false, error: values.filter(Boolean).length < 4 ? 'Część źródeł kosztu lub pojemności jest niedostępna.' : null, billing: values[0], usage: values[1], alerts, health: values[3], attribution: values[4] }); setFreshness(new Date().toLocaleString()); })(); return () => { alive = false; }; }, []);
-  const rows = useMemo<TableRow[]>(() => (state.attribution?.byUser ?? []).map((item: any) => ({ id: item.userId, userId: item.userId, cost: item.cost, messageCount: item.messageCount })), [state.attribution]);
-  const columns = useMemo<TableColumn[]>(() => [{ id: 'userId', label: 'Użytkownik' }, { id: 'cost', label: 'Koszt', render: (row) => Number(row.cost ?? 0).toFixed(2) }, { id: 'messageCount', label: 'Wiadomości' }], []);
-  if (state.loading) return <div className="flex items-center gap-2 text-sm text-c-text-secondary"><Loader2 className="h-4 w-4 animate-spin" /> Ładowanie kosztu i pojemności…</div>;
-  const currentCost = Number(state.billing?.currentCost ?? state.billing?.totalCost ?? state.attribution?.totalCost ?? 0);
+  useEffect(() => {
+    let alive = true;
+    void (async () => {
+      const result = await Promise.allSettled([
+        Api.getAdminBillingSummary(),
+        Api.getAdminBillingUsageDetails(),
+        Api.getAdminBillingAlerts(),
+        Api.getHealthPanelSummary(),
+        getComplianceCostAttribution(),
+      ]);
+      if (!alive) return;
+      const values = result.map((item) => (item.status === 'fulfilled' ? item.value : null));
+      const alerts = Array.isArray(values[2]?.alerts)
+        ? values[2].alerts
+        : Array.isArray(values[2])
+          ? values[2]
+          : [];
+      setState({
+        loading: false,
+        error:
+          values.filter(Boolean).length < 4
+            ? 'Część źródeł kosztu lub pojemności jest niedostępna.'
+            : null,
+        billing: values[0],
+        usage: values[1],
+        alerts,
+        health: values[3],
+        attribution: values[4],
+      });
+      setFreshness(new Date().toLocaleString());
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+  const rows = useMemo<TableRow[]>(
+    () =>
+      (state.attribution?.byUser ?? []).map((item: any) => ({
+        id: item.userId,
+        userId: item.userId,
+        cost: item.cost,
+        messageCount: item.messageCount,
+      })),
+    [state.attribution]
+  );
+  const columns = useMemo<TableColumn[]>(
+    () => [
+      { id: 'userId', label: 'Użytkownik' },
+      { id: 'cost', label: 'Koszt', render: (row) => Number(row.cost ?? 0).toFixed(2) },
+      { id: 'messageCount', label: 'Wiadomości' },
+    ],
+    []
+  );
+  if (state.loading)
+    return (
+      <div className="flex items-center gap-2 text-sm text-c-text-secondary">
+        <Loader2 className="h-4 w-4 animate-spin" /> Ładowanie kosztu i pojemności…
+      </div>
+    );
+  const currentCost = Number(
+    state.billing?.currentCost ?? state.billing?.totalCost ?? state.attribution?.totalCost ?? 0
+  );
   const forecast = Number(state.billing?.forecast ?? state.billing?.projectedCost ?? 0);
   const utilization = Number(state.usage?.utilizationPercent ?? state.usage?.utilization ?? 0);
   const seats = Number(state.billing?.seatsUsed ?? state.usage?.seatsUsed ?? 0);
-  return <div className="space-y-4"><div><h2 className="text-lg font-semibold text-c-text">Koszt i pojemność</h2><p className="mt-1 text-sm text-c-text-secondary">Agregacja tylko do odczytu. Budżety edytuje ekran kanoniczny.</p><p className="mt-1 text-xs text-c-text-muted">Świeżość: {freshness}</p></div>{state.error && <div role="alert" className="rounded-xl border border-c-info bg-c-surface p-3 text-sm text-c-text-secondary">{state.error}</div>}<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{[['Koszt bieżący', currentCost.toFixed(2), 'billing/summary'], ['Prognoza', forecast.toFixed(2), 'billing/summary'], ['Wykorzystanie limitu', `${utilization}%`, 'billing/usage-details'], ['Miejsca zajęte', String(seats), 'billing/summary']].map(([label, value, source]) => <div key={label} className="rounded-xl border border-c-border bg-c-surface p-4"><p className="text-xs text-c-text-secondary">{label}</p><p className="mt-1 text-xl font-semibold text-c-text">{value}</p><p className="mt-2 text-[10px] text-c-text-muted">Źródło: GET /api/admin/{source}</p></div>)}</div><div className="rounded-2xl border border-c-border bg-c-surface p-2"><StandardTable columns={columns} data={rows} empty={{ title: 'Brak atrybucji kosztów', description: 'Brak kosztów przypisanych użytkownikom w wybranym okresie.' }} persistKey="admin.costCapacity" /></div><div className="flex flex-wrap gap-2"><a href="/admin/billing/budgets-alerts" className="rounded-lg border border-c-border px-3 py-2 text-sm font-medium text-c-text focus-visible:outline-none focus-visible:ring-2 ring-[color:var(--c-focus)]">Alerty budżetowe ({state.alerts.length})</a><a href="/admin/billing/usage-costs" className="rounded-lg border border-c-border px-3 py-2 text-sm font-medium text-c-text focus-visible:outline-none focus-visible:ring-2 ring-[color:var(--c-focus)]">Szczegóły wykorzystania</a><span className="px-3 py-2 text-xs text-c-text-muted">Stan: {Number(state.health?.summary?.failed ?? 0)} nieudanych prób</span></div></div>;
+  return (
+    <div className="space-y-4">
+      <div>
+        <h2 className="text-lg font-semibold text-c-text">Koszt i pojemność</h2>
+        <p className="mt-1 text-sm text-c-text-secondary">
+          Agregacja tylko do odczytu. Budżety edytuje ekran kanoniczny.
+        </p>
+        <p className="mt-1 text-xs text-c-text-muted">Świeżość: {freshness}</p>
+      </div>
+      {state.error && (
+        <div
+          role="alert"
+          className="rounded-xl border border-c-info bg-c-surface p-3 text-sm text-c-text-secondary"
+        >
+          {state.error}
+        </div>
+      )}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {[
+          ['Koszt bieżący', currentCost.toFixed(2), 'billing/summary'],
+          ['Prognoza', forecast.toFixed(2), 'billing/summary'],
+          ['Wykorzystanie limitu', `${utilization}%`, 'billing/usage-details'],
+          ['Miejsca zajęte', String(seats), 'billing/summary'],
+        ].map(([label, value, source]) => (
+          <div key={label} className="rounded-xl border border-c-border bg-c-surface p-4">
+            <p className="text-xs text-c-text-secondary">{label}</p>
+            <p className="mt-1 text-xl font-semibold text-c-text">{value}</p>
+            <p className="mt-2 text-[10px] text-c-text-muted">Źródło: GET /api/admin/{source}</p>
+          </div>
+        ))}
+      </div>
+      <div className="rounded-2xl border border-c-border bg-c-surface p-2">
+        <StandardTable
+          columns={columns}
+          data={rows}
+          empty={{
+            title: 'Brak atrybucji kosztów',
+            description: 'Brak kosztów przypisanych użytkownikom w wybranym okresie.',
+          }}
+          persistKey="admin.costCapacity"
+        />
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <a
+          href="/admin/billing/budgets-alerts"
+          className="rounded-lg border border-c-border px-3 py-2 text-sm font-medium text-c-text focus-visible:outline-none focus-visible:ring-2 ring-[color:var(--c-focus)]"
+        >
+          Alerty budżetowe ({state.alerts.length})
+        </a>
+        <a
+          href="/admin/billing/usage-costs"
+          className="rounded-lg border border-c-border px-3 py-2 text-sm font-medium text-c-text focus-visible:outline-none focus-visible:ring-2 ring-[color:var(--c-focus)]"
+        >
+          Szczegóły wykorzystania
+        </a>
+        <span className="px-3 py-2 text-xs text-c-text-muted">
+          Stan: {Number(state.health?.summary?.failed ?? 0)} nieudanych prób
+        </span>
+      </div>
+    </div>
+  );
 };
 
 interface LinkTile {

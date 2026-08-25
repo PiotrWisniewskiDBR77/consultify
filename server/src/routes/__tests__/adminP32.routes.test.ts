@@ -288,14 +288,20 @@ describe('adminP32Routes', () => {
     expect(stats.body).toEqual({ totalLogs: 2, unresolvedCount: 2, highRiskCount: 1 });
     expect(exported.status).toBe(200);
     expect(exported.text).toContain('"iam-audit-1","user-1","role_change"');
-    expect(exported.text).toContain(
-      '"legacy-audit-1","user-1","update_security_policy"'
-    );
+    expect(exported.text).toContain('"legacy-audit-1","user-1","update_security_policy"');
   });
 
   it('keeps a successful CSV export available when receipt persistence fails', async () => {
     dbGet.mockResolvedValue({ role: 'OWNER', status: 'ACTIVE' });
-    getLogs.mockResolvedValue([{ id: 'a1', organization_id: 'org-1', admin_id: 'user-1', action_type: 'read', created_at: '2026-08-24T00:00:00Z' }]);
+    getLogs.mockResolvedValue([
+      {
+        id: 'a1',
+        organization_id: 'org-1',
+        admin_id: 'user-1',
+        action_type: 'read',
+        created_at: '2026-08-24T00:00:00Z',
+      },
+    ]);
     dbAll.mockResolvedValue([]);
     dbRun.mockRejectedValueOnce(new Error('receipt unavailable'));
     const exported = await request(createApp()).get('/api/admin/audit-logs/export');

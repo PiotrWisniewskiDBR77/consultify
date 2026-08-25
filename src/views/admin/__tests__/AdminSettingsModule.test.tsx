@@ -26,22 +26,58 @@ vi.mock('../../../components/Admin/AdminPlanHistoryPanel', () => ({
 vi.mock('../../../components/Admin/AdminSeatsLicencesPanel', () => ({
   AdminSeatsLicencesPanel: () => <div data-testid="panel-seats">seats</div>,
 }));
-vi.mock('../../../components/Admin/AdminJobsPanel', () => ({ AdminJobsPanel: () => <div data-testid="panel-jobs">jobs</div> }));
-vi.mock('../../../components/Admin/AdminSlaSloPanel', () => ({ AdminSlaSloPanel: () => <div data-testid="panel-sla">sla</div> }));
-vi.mock('../../../components/Admin/AdminServiceAccountsPanel', () => ({ AdminServiceAccountsPanel: () => <div data-testid="panel-service-accounts">service accounts</div> }));
-vi.mock('../../../components/Admin/AdminSecurityAlertsPanel', () => ({ AdminSecurityAlertsPanel: () => <div data-testid="panel-security-alerts">alerts</div> }));
-vi.mock('../../../components/Admin/AdminSessionsPanel', () => ({ AdminSessionsPanel: () => <div data-testid="panel-sessions">sessions</div> }));
-vi.mock('../../../components/Admin/AdminBreakGlassPanel', () => ({ AdminBreakGlassPanel: () => <div data-testid="panel-break-glass">break glass</div> }));
-vi.mock('../../../components/Admin/AdminGuestsPanel', () => ({ AdminGuestsPanel: () => <div data-testid="panel-guests">guests</div> }));
-vi.mock('../../../components/Admin/AdminAccessReviewsPanel', () => ({ AdminAccessReviewsPanel: () => <div data-testid="panel-access-reviews">reviews</div> }));
-vi.mock('../../../components/Admin/AdminRolesPermissionsPanel', () => ({ AdminRolesPermissionsPanel: () => <div data-testid="panel-roles">roles</div> }));
-vi.mock('../../../components/Admin/AdminLegalHoldPanel', () => ({ AdminLegalHoldPanel: () => <div data-testid="panel-legal-hold">legal hold</div> }));
-vi.mock('../../../components/Admin/AdminAuditExportHistoryPanel', () => ({ AdminAuditExportHistoryPanel: () => <div data-testid="panel-export-history">exports</div> }));
-vi.mock('../../../components/Admin/AdminAuditIntegrityPanel', () => ({ AdminAuditIntegrityPanel: () => <div data-testid="panel-integrity">integrity</div> }));
-vi.mock('../../../components/Admin/AI/PersonasPanel', () => ({ PersonasPanel: () => <div data-testid="panel-personas">personas</div> }));
-vi.mock('../../../components/Admin/AdminAiIncidentsPanel', () => ({ AdminAiIncidentsPanel: () => <div data-testid="panel-ai-incidents">incidents</div> }));
-vi.mock('../../../components/Admin/AdminConfigurationVersionsPanel', () => ({ AdminConfigurationVersionsPanel: () => <div data-testid="panel-configuration-versions">versions</div> }));
-vi.mock('../../../components/Admin/AdminOrganizationDefaultsPanel', () => ({ AdminOrganizationDefaultsPanel: () => <div data-testid="panel-organization-defaults">defaults</div> }));
+vi.mock('../../../components/Admin/AdminJobsPanel', () => ({
+  AdminJobsPanel: () => <div data-testid="panel-jobs">jobs</div>,
+}));
+vi.mock('../../../components/Admin/AdminSlaSloPanel', () => ({
+  AdminSlaSloPanel: () => <div data-testid="panel-sla">sla</div>,
+}));
+vi.mock('../../../components/Admin/AdminServiceAccountsPanel', () => ({
+  AdminServiceAccountsPanel: () => <div data-testid="panel-service-accounts">service accounts</div>,
+}));
+vi.mock('../../../components/Admin/AdminSecurityAlertsPanel', () => ({
+  AdminSecurityAlertsPanel: () => <div data-testid="panel-security-alerts">alerts</div>,
+}));
+vi.mock('../../../components/Admin/AdminSessionsPanel', () => ({
+  AdminSessionsPanel: () => <div data-testid="panel-sessions">sessions</div>,
+}));
+vi.mock('../../../components/Admin/AdminBreakGlassPanel', () => ({
+  AdminBreakGlassPanel: () => <div data-testid="panel-break-glass">break glass</div>,
+}));
+vi.mock('../../../components/Admin/AdminGuestsPanel', () => ({
+  AdminGuestsPanel: () => <div data-testid="panel-guests">guests</div>,
+}));
+vi.mock('../../../components/Admin/AdminAccessReviewsPanel', () => ({
+  AdminAccessReviewsPanel: () => <div data-testid="panel-access-reviews">reviews</div>,
+}));
+vi.mock('../../../components/Admin/AdminRolesPermissionsPanel', () => ({
+  AdminRolesPermissionsPanel: () => <div data-testid="panel-roles">roles</div>,
+}));
+vi.mock('../../../components/Admin/AdminLegalHoldPanel', () => ({
+  AdminLegalHoldPanel: () => <div data-testid="panel-legal-hold">legal hold</div>,
+}));
+vi.mock('../../../components/Admin/AdminAuditExportHistoryPanel', () => ({
+  AdminAuditExportHistoryPanel: () => <div data-testid="panel-export-history">exports</div>,
+}));
+vi.mock('../../../components/Admin/AdminAuditIntegrityPanel', () => ({
+  AdminAuditIntegrityPanel: () => <div data-testid="panel-integrity">integrity</div>,
+}));
+vi.mock('../../../components/Admin/AI/PersonasPanel', () => ({
+  PersonasPanel: () => <div data-testid="panel-personas">personas</div>,
+}));
+vi.mock('../../../components/Admin/AdminAiIncidentsPanel', () => ({
+  AdminAiIncidentsPanel: () => <div data-testid="panel-ai-incidents">incidents</div>,
+}));
+vi.mock('../../../components/Admin/AdminConfigurationVersionsPanel', () => ({
+  AdminConfigurationVersionsPanel: () => (
+    <div data-testid="panel-configuration-versions">versions</div>
+  ),
+}));
+vi.mock('../../../components/Admin/AdminOrganizationDefaultsPanel', () => ({
+  AdminOrganizationDefaultsPanel: () => (
+    <div data-testid="panel-organization-defaults">defaults</div>
+  ),
+}));
 vi.mock('../../../components/Admin/AdminBillingFinOpsPanel', () => ({
   AdminBillingFinOpsPanel: ({ screen }: { screen?: string }) => (
     <div data-testid="panel-billing" data-screen={screen}>
@@ -66,13 +102,25 @@ vi.mock('../../../components/Admin/AdminSecurityIdentityPanel', () => ({
 vi.mock('../../../components/Admin/AdminAuditLogPanel', () => ({
   AdminAuditLogPanel: () => <div data-testid="panel-audit">audit</div>,
 }));
-vi.mock('../../../components/Admin/AdminComplianceEvidencePanel', () => ({ AdminComplianceEvidencePanel: () => <div data-testid="panel-compliance-evidence">evidence</div> }));
+vi.mock('../../../components/Admin/AdminComplianceEvidencePanel', () => ({
+  AdminComplianceEvidencePanel: () => <div data-testid="panel-compliance-evidence">evidence</div>,
+}));
 vi.mock('../../../components/Admin/AdminHealthPanel', () => ({
   AdminHealthPanel: () => <div data-testid="panel-health">health</div>,
 }));
 vi.mock('../../../components/Admin/AdminCommandCenterPanel', () => ({
-  AdminCommandCenterPanel: ({ aggregationOnly, screen: commandScreen }: { aggregationOnly?: boolean; screen?: string }) => (
-    <div data-testid="panel-command" data-aggregation-only={String(Boolean(aggregationOnly))} data-screen={commandScreen}>
+  AdminCommandCenterPanel: ({
+    aggregationOnly,
+    screen: commandScreen,
+  }: {
+    aggregationOnly?: boolean;
+    screen?: string;
+  }) => (
+    <div
+      data-testid="panel-command"
+      data-aggregation-only={String(Boolean(aggregationOnly))}
+      data-screen={commandScreen}
+    >
       command
     </div>
   ),
@@ -101,9 +149,18 @@ describe('AdminSettingsModule section routing', () => {
     expect(screen.getByTestId('panel-teams')).toBeInTheDocument();
     expect(screen.queryByTestId('panel-people')).not.toBeInTheDocument();
   });
-  it('wires team/guests-external safely', () => { renderAt('/admin/team/guests-external'); expect(screen.getByTestId('panel-guests')).toBeInTheDocument(); });
-  it('wires team/access-reviews read-only', () => { renderAt('/admin/team/access-reviews'); expect(screen.getByTestId('panel-access-reviews')).toBeInTheDocument(); });
-  it('wires team/roles-permissions', () => { renderAt('/admin/team/roles-permissions'); expect(screen.getByTestId('panel-roles')).toBeInTheDocument(); });
+  it('wires team/guests-external safely', () => {
+    renderAt('/admin/team/guests-external');
+    expect(screen.getByTestId('panel-guests')).toBeInTheDocument();
+  });
+  it('wires team/access-reviews read-only', () => {
+    renderAt('/admin/team/access-reviews');
+    expect(screen.getByTestId('panel-access-reviews')).toBeInTheDocument();
+  });
+  it('wires team/roles-permissions', () => {
+    renderAt('/admin/team/roles-permissions');
+    expect(screen.getByTestId('panel-roles')).toBeInTheDocument();
+  });
 
   it('wires billing/plan-history to the read-only history panel', () => {
     renderAt('/admin/billing/plan-history');
@@ -113,12 +170,30 @@ describe('AdminSettingsModule section routing', () => {
     renderAt('/admin/billing/seats-licences');
     expect(screen.getByTestId('panel-seats')).toBeInTheDocument();
   });
-  it('wires health/queues-jobs to tenant jobs', () => { renderAt('/admin/health/queues-jobs'); expect(screen.getByTestId('panel-jobs')).toBeInTheDocument(); });
-  it('wires health/sla-slo to tenant SLOs', () => { renderAt('/admin/health/sla-slo'); expect(screen.getByTestId('panel-sla')).toBeInTheDocument(); });
-  it('wires security/service-accounts to the service accounts panel', () => { renderAt('/admin/security/service-accounts'); expect(screen.getByTestId('panel-service-accounts')).toBeInTheDocument(); });
-  it('wires security/security-alerts safely', () => { renderAt('/admin/security/security-alerts'); expect(screen.getByTestId('panel-security-alerts')).toBeInTheDocument(); });
-  it('wires security/sessions safely', () => { renderAt('/admin/security/sessions'); expect(screen.getByTestId('panel-sessions')).toBeInTheDocument(); });
-  it('wires security/break-glass safely', () => { renderAt('/admin/security/break-glass'); expect(screen.getByTestId('panel-break-glass')).toBeInTheDocument(); });
+  it('wires health/queues-jobs to tenant jobs', () => {
+    renderAt('/admin/health/queues-jobs');
+    expect(screen.getByTestId('panel-jobs')).toBeInTheDocument();
+  });
+  it('wires health/sla-slo to tenant SLOs', () => {
+    renderAt('/admin/health/sla-slo');
+    expect(screen.getByTestId('panel-sla')).toBeInTheDocument();
+  });
+  it('wires security/service-accounts to the service accounts panel', () => {
+    renderAt('/admin/security/service-accounts');
+    expect(screen.getByTestId('panel-service-accounts')).toBeInTheDocument();
+  });
+  it('wires security/security-alerts safely', () => {
+    renderAt('/admin/security/security-alerts');
+    expect(screen.getByTestId('panel-security-alerts')).toBeInTheDocument();
+  });
+  it('wires security/sessions safely', () => {
+    renderAt('/admin/security/sessions');
+    expect(screen.getByTestId('panel-sessions')).toBeInTheDocument();
+  });
+  it('wires security/break-glass safely', () => {
+    renderAt('/admin/security/break-glass');
+    expect(screen.getByTestId('panel-break-glass')).toBeInTheDocument();
+  });
   it('renders the people panel at /admin/people', () => {
     renderAt('/admin/people');
     expect(screen.getByTestId('panel-people')).toBeInTheDocument();
@@ -150,14 +225,38 @@ describe('AdminSettingsModule section routing', () => {
     renderAt('/admin/audit');
     expect(screen.getByTestId('panel-audit')).toBeInTheDocument();
   });
-  it('wires audit/compliance-evidence to the evidence panel', () => { renderAt('/admin/audit/compliance-evidence'); expect(screen.getByTestId('panel-compliance-evidence')).toBeInTheDocument(); });
-  it('wires audit/legal-hold read-only', () => { renderAt('/admin/audit/legal-hold'); expect(screen.getByTestId('panel-legal-hold')).toBeInTheDocument(); });
-  it('wires audit/export-history', () => { renderAt('/admin/audit/export-history'); expect(screen.getByTestId('panel-export-history')).toBeInTheDocument(); });
-  it('wires audit/integrity honestly', () => { renderAt('/admin/audit/integrity'); expect(screen.getByTestId('panel-integrity')).toBeInTheDocument(); });
-  it('wires ai/personas to the shared personas implementation', () => { renderAt('/admin/ai/personas'); expect(screen.getByTestId('panel-personas')).toBeInTheDocument(); });
-  it('wires ai/ai-incidents', () => { renderAt('/admin/ai/ai-incidents'); expect(screen.getByTestId('panel-ai-incidents')).toBeInTheDocument(); });
-  it('wires ai/configuration-versions', () => { renderAt('/admin/ai/configuration-versions'); expect(screen.getByTestId('panel-configuration-versions')).toBeInTheDocument(); });
-  it('wires command/organization-defaults', () => { renderAt('/admin/command/organization-defaults'); expect(screen.getByTestId('panel-organization-defaults')).toBeInTheDocument(); });
+  it('wires audit/compliance-evidence to the evidence panel', () => {
+    renderAt('/admin/audit/compliance-evidence');
+    expect(screen.getByTestId('panel-compliance-evidence')).toBeInTheDocument();
+  });
+  it('wires audit/legal-hold read-only', () => {
+    renderAt('/admin/audit/legal-hold');
+    expect(screen.getByTestId('panel-legal-hold')).toBeInTheDocument();
+  });
+  it('wires audit/export-history', () => {
+    renderAt('/admin/audit/export-history');
+    expect(screen.getByTestId('panel-export-history')).toBeInTheDocument();
+  });
+  it('wires audit/integrity honestly', () => {
+    renderAt('/admin/audit/integrity');
+    expect(screen.getByTestId('panel-integrity')).toBeInTheDocument();
+  });
+  it('wires ai/personas to the shared personas implementation', () => {
+    renderAt('/admin/ai/personas');
+    expect(screen.getByTestId('panel-personas')).toBeInTheDocument();
+  });
+  it('wires ai/ai-incidents', () => {
+    renderAt('/admin/ai/ai-incidents');
+    expect(screen.getByTestId('panel-ai-incidents')).toBeInTheDocument();
+  });
+  it('wires ai/configuration-versions', () => {
+    renderAt('/admin/ai/configuration-versions');
+    expect(screen.getByTestId('panel-configuration-versions')).toBeInTheDocument();
+  });
+  it('wires command/organization-defaults', () => {
+    renderAt('/admin/command/organization-defaults');
+    expect(screen.getByTestId('panel-organization-defaults')).toBeInTheDocument();
+  });
 
   it('resolves the iam alias to the security panel', () => {
     renderAt('/admin/iam');

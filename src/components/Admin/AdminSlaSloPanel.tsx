@@ -1,2 +1,69 @@
-import React,{useEffect,useState} from 'react'; import {getAiSlaStatus,getTenantSlos,type Slo} from '../../services/adminSlaSloApi';
-export const AdminSlaSloPanel:React.FC=()=>{const[slos,setSlos]=useState<Slo[]>([]);const[ai,setAi]=useState<Record<string,unknown>|null>(null);const[error,setError]=useState<string|null>(null);useEffect(()=>{Promise.allSettled([getTenantSlos(),getAiSlaStatus()]).then(([s,a])=>{if(s.status==='fulfilled')setSlos(s.value);else setError(s.reason instanceof Error?s.reason.message:'Nie udało się pobrać SLO');if(a.status==='fulfilled')setAi(a.value);});},[]);return <div className="space-y-4"><div><h2 className="text-lg font-semibold text-c-text">SLA / SLO</h2><p className="text-sm text-c-text-secondary">Cele i bieżąca realizacja — tylko odczyt.</p></div>{error&&<div role="alert" className="rounded-xl border border-c-danger p-3 text-c-danger">{error}</div>}<div className="grid gap-3 sm:grid-cols-2">{slos.map(s=><article key={s.id} className="rounded-xl border border-c-border bg-c-surface p-4"><h3 className="font-semibold text-c-text">{s.slo_name}</h3><dl className="mt-3 grid grid-cols-2 gap-2 text-sm"><div><dt className="text-c-text-secondary">Cel</dt><dd>{s.target_percentage}%</dd></div><div><dt className="text-c-text-secondary">Bieżący</dt><dd>{s.current_percentage??'Nie obliczono'}{s.current_percentage==null?'':'%'}</dd></div><div><dt className="text-c-text-secondary">Budżet błędu</dt><dd>{s.budget_remaining??'Nie obliczono'}</dd></div><div><dt className="text-c-text-secondary">Okno</dt><dd>{s.window_days} dni</dd></div></dl></article>)}</div>{slos.length===0&&!error&&<div className="rounded-xl border border-c-border bg-c-surface p-5">Dla tej organizacji nie zdefiniowano celów SLO.</div>}<section className="rounded-xl border border-c-border bg-c-surface p-4"><h3 className="font-semibold text-c-text">SLA AI</h3><p className="mt-1 text-sm text-c-text-secondary">Targety AI-SLA są dziś stałe i nie są konfigurowalne w tym ekranie.</p><p className="mt-2 text-xs text-c-text-muted">Stan źródła: {ai?'odczytano':'brak danych'}</p></section></div>;};
+import React, { useEffect, useState } from 'react';
+import { getAiSlaStatus, getTenantSlos, type Slo } from '../../services/adminSlaSloApi';
+export const AdminSlaSloPanel: React.FC = () => {
+  const [slos, setSlos] = useState<Slo[]>([]);
+  const [ai, setAi] = useState<Record<string, unknown> | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    Promise.allSettled([getTenantSlos(), getAiSlaStatus()]).then(([s, a]) => {
+      if (s.status === 'fulfilled') setSlos(s.value);
+      else setError(s.reason instanceof Error ? s.reason.message : 'Nie udało się pobrać SLO');
+      if (a.status === 'fulfilled') setAi(a.value);
+    });
+  }, []);
+  return (
+    <div className="space-y-4">
+      <div>
+        <h2 className="text-lg font-semibold text-c-text">SLA / SLO</h2>
+        <p className="text-sm text-c-text-secondary">Cele i bieżąca realizacja — tylko odczyt.</p>
+      </div>
+      {error && (
+        <div role="alert" className="rounded-xl border border-c-danger p-3 text-c-danger">
+          {error}
+        </div>
+      )}
+      <div className="grid gap-3 sm:grid-cols-2">
+        {slos.map((s) => (
+          <article key={s.id} className="rounded-xl border border-c-border bg-c-surface p-4">
+            <h3 className="font-semibold text-c-text">{s.slo_name}</h3>
+            <dl className="mt-3 grid grid-cols-2 gap-2 text-sm">
+              <div>
+                <dt className="text-c-text-secondary">Cel</dt>
+                <dd>{s.target_percentage}%</dd>
+              </div>
+              <div>
+                <dt className="text-c-text-secondary">Bieżący</dt>
+                <dd>
+                  {s.current_percentage ?? 'Nie obliczono'}
+                  {s.current_percentage == null ? '' : '%'}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-c-text-secondary">Budżet błędu</dt>
+                <dd>{s.budget_remaining ?? 'Nie obliczono'}</dd>
+              </div>
+              <div>
+                <dt className="text-c-text-secondary">Okno</dt>
+                <dd>{s.window_days} dni</dd>
+              </div>
+            </dl>
+          </article>
+        ))}
+      </div>
+      {slos.length === 0 && !error && (
+        <div className="rounded-xl border border-c-border bg-c-surface p-5">
+          Dla tej organizacji nie zdefiniowano celów SLO.
+        </div>
+      )}
+      <section className="rounded-xl border border-c-border bg-c-surface p-4">
+        <h3 className="font-semibold text-c-text">SLA AI</h3>
+        <p className="mt-1 text-sm text-c-text-secondary">
+          Targety AI-SLA są dziś stałe i nie są konfigurowalne w tym ekranie.
+        </p>
+        <p className="mt-2 text-xs text-c-text-muted">
+          Stan źródła: {ai ? 'odczytano' : 'brak danych'}
+        </p>
+      </section>
+    </div>
+  );
+};

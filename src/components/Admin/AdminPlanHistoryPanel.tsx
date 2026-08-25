@@ -23,10 +23,18 @@ export const AdminPlanHistoryPanel: React.FC = () => {
 
   React.useEffect(() => void load(), [load]);
 
-  const rows = useMemo<TableRow[]>(() => entries.map((entry) => ({ ...entry, id: entry.id })), [entries]);
+  const rows = useMemo<TableRow[]>(
+    () => entries.map((entry) => ({ ...entry, id: entry.id })),
+    [entries]
+  );
   const columns = useMemo<TableColumn[]>(
     () => [
-      { id: 'created_at', label: 'Data', sortable: true, render: (row) => new Date(String(row.created_at)).toLocaleString() },
+      {
+        id: 'created_at',
+        label: 'Data',
+        sortable: true,
+        render: (row) => new Date(String(row.created_at)).toLocaleString(),
+      },
       { id: 'action', label: 'Zmiana', sortable: true },
       { id: 'from_plan', label: 'Plan z', render: (row) => row.from_plan || '—' },
       { id: 'to_plan', label: 'Plan na', render: (row) => row.to_plan || '—' },
@@ -40,10 +48,24 @@ export const AdminPlanHistoryPanel: React.FC = () => {
     <div className="space-y-4">
       <section className="rounded-2xl border border-c-border bg-c-surface p-5">
         <h2 className="text-lg font-semibold text-c-text">Historia zmian planu</h2>
-        <p className="mt-1 text-sm text-c-text-secondary">Chronologiczny, tylko-do-odczytu zapis zmian subskrypcji tej organizacji.</p>
+        <p className="mt-1 text-sm text-c-text-secondary">
+          Chronologiczny, tylko-do-odczytu zapis zmian subskrypcji tej organizacji.
+        </p>
       </section>
       <section className="rounded-2xl border border-c-border bg-c-surface p-2">
-        <StandardTable columns={columns} data={rows} loading={loading} error={error} onRetry={() => void load()} empty={{ icon: FileClock, title: 'Brak historii zmian planu', description: 'Dla tej organizacji nie zapisano jeszcze zmiany subskrypcji.' }} persistKey="admin.planHistory" />
+        <StandardTable
+          columns={columns}
+          data={rows}
+          loading={loading}
+          error={error}
+          onRetry={() => void load()}
+          empty={{
+            icon: FileClock,
+            title: 'Brak historii zmian planu',
+            description: 'Dla tej organizacji nie zapisano jeszcze zmiany subskrypcji.',
+          }}
+          persistKey="admin.planHistory"
+        />
       </section>
     </div>
   );

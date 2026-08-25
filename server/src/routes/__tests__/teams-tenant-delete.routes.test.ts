@@ -6,20 +6,44 @@ import routes from '../organization/teams.routes.js';
 
 const get = vi.fn();
 const run = vi.fn();
-vi.mock('../../utils/DbPromise.js', () => ({ get: (...args: unknown[]) => get(...args), all: vi.fn(), run: (...args: unknown[]) => run(...args) }));
-vi.mock('../../middleware/auth.middleware.js', () => ({ verifyToken: (req: any, _res: any, next: any) => { req.user = { id: 'u1', organizationId: 'org-1', role: 'ADMIN' }; next(); } }));
-vi.mock('../../middleware/admin.middleware.js', () => ({ verifyAdmin: (_req: any, _res: any, next: any) => next() }));
-vi.mock('../../middleware/rateLimiting.middleware.js', () => ({ apiAuthRateLimiter: (_req: any, _res: any, next: any) => next() }));
+vi.mock('../../utils/DbPromise.js', () => ({
+  get: (...args: unknown[]) => get(...args),
+  all: vi.fn(),
+  run: (...args: unknown[]) => run(...args),
+}));
+vi.mock('../../middleware/auth.middleware.js', () => ({
+  verifyToken: (req: any, _res: any, next: any) => {
+    req.user = { id: 'u1', organizationId: 'org-1', role: 'ADMIN' };
+    next();
+  },
+}));
+vi.mock('../../middleware/admin.middleware.js', () => ({
+  verifyAdmin: (_req: any, _res: any, next: any) => next(),
+}));
+vi.mock('../../middleware/rateLimiting.middleware.js', () => ({
+  apiAuthRateLimiter: (_req: any, _res: any, next: any) => next(),
+}));
 
-const app = () => { const value = express(); value.use(express.json()); value.use('/api/teams', routes); return value; };
+const app = () => {
+  const value = express();
+  value.use(express.json());
+  value.use('/api/teams', routes);
+  return value;
+};
 
 describe('team deletion tenant boundary', () => {
-  beforeEach(() => { vi.clearAllMocks(); run.mockResolvedValue({ success: true, changes: 1 }); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+    run.mockResolvedValue({ success: true, changes: 1 });
+  });
 
   it('returns 404 without deleting memberships for a foreign team id', async () => {
     get.mockResolvedValue(undefined);
     expect((await request(app()).delete('/api/teams/foreign-team')).status).toBe(404);
-    expect(get).toHaveBeenCalledWith(expect.stringContaining('organization_id = ?'), ['foreign-team', 'org-1']);
+    expect(get).toHaveBeenCalledWith(expect.stringContaining('organization_id = ?'), [
+      'foreign-team',
+      'org-1',
+    ]);
     expect(run).not.toHaveBeenCalled();
   });
 
@@ -32,11 +56,16 @@ describe('team deletion tenant boundary', () => {
 
   it('rejects a foreign lead before create or update mutations', async () => {
     get.mockResolvedValue(undefined);
-    const created = await request(app()).post('/api/teams').send({ name: 'Team', leadId: 'foreign-user' });
+    const created = await request(app())
+      .post('/api/teams')
+      .send({ name: 'Team', leadId: 'foreign-user' });
     const updated = await request(app()).put('/api/teams/team-1').send({ leadId: 'foreign-user' });
     expect(created.status).toBe(404);
     expect(updated.status).toBe(404);
-    expect(get).toHaveBeenCalledWith(expect.stringContaining('users WHERE id = ? AND organization_id = ?'), ['foreign-user', 'org-1']);
+    expect(get).toHaveBeenCalledWith(
+      expect.stringContaining('users WHERE id = ? AND organization_id = ?'),
+      ['foreign-user', 'org-1']
+    );
     expect(run).not.toHaveBeenCalled();
   });
 });

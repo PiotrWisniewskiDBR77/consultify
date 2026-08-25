@@ -248,7 +248,10 @@ export function resolveAdminLocation(
   return { domain, screen: ADMIN_DEFAULTS[domain] };
 }
 
-export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initialTab, currentUser }) => {
+export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
+  initialTab,
+  currentUser,
+}) => {
   const [headerActionsTarget, setHeaderActionsTarget] = useState<HTMLDivElement | null>(null);
   const { t, i18n } = useTranslation();
   const { setCurrentView } = useAppStore();
@@ -321,7 +324,15 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
     const connected =
       resolvedLocation.screen === ADMIN_DEFAULTS[resolvedLocation.domain] ||
       (resolvedLocation.domain === 'team' &&
-        ['members', 'invitations', 'ownership', 'teams', 'guests-external', 'access-reviews', 'roles-permissions'].includes(resolvedLocation.screen)) ||
+        [
+          'members',
+          'invitations',
+          'ownership',
+          'teams',
+          'guests-external',
+          'access-reviews',
+          'roles-permissions',
+        ].includes(resolvedLocation.screen)) ||
       (resolvedLocation.domain === 'billing' &&
         [
           'plan-limits',
@@ -341,7 +352,8 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
       (resolvedLocation.domain === 'command' && resolvedLocation.screen === 'compliance-posture') ||
       (resolvedLocation.domain === 'command' && resolvedLocation.screen === 'attention-queue') ||
       (resolvedLocation.domain === 'command' && resolvedLocation.screen === 'cost-capacity') ||
-      (resolvedLocation.domain === 'command' && resolvedLocation.screen === 'organization-defaults') ||
+      (resolvedLocation.domain === 'command' &&
+        resolvedLocation.screen === 'organization-defaults') ||
       // Fala 1 (Admin komplet 55): high-risk-changes and retention-export have
       // no dedicated sub-view — AdminAuditLogPanel (already the `events`
       // default) already renders the high-risk count and the
@@ -374,7 +386,8 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
       // AI_MODULE_TAB_BY_SCREEN below.
       (resolvedLocation.domain === 'ai' &&
         Object.prototype.hasOwnProperty.call(AI_MODULE_TAB_BY_SCREEN, resolvedLocation.screen)) ||
-      (resolvedLocation.domain === 'ai' && ['personas', 'ai-incidents', 'configuration-versions'].includes(resolvedLocation.screen));
+      (resolvedLocation.domain === 'ai' &&
+        ['personas', 'ai-incidents', 'configuration-versions'].includes(resolvedLocation.screen));
     if (!connected) {
       return (
         <AdminCapabilityState
@@ -430,7 +443,8 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
       case 'ai':
         if (resolvedLocation.screen === 'personas') return <PersonasPanel />;
         if (resolvedLocation.screen === 'ai-incidents') return <AdminAiIncidentsPanel />;
-        if (resolvedLocation.screen === 'configuration-versions') return <AdminConfigurationVersionsPanel />;
+        if (resolvedLocation.screen === 'configuration-versions')
+          return <AdminConfigurationVersionsPanel />;
         return (
           <AdminAIControlCenterPanel
             initialAiModuleTab={AI_MODULE_TAB_BY_SCREEN[resolvedLocation.screen]}
@@ -447,16 +461,23 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
           />
         );
       case 'audit':
-        if (resolvedLocation.screen === 'compliance-evidence') return <AdminComplianceEvidencePanel />;
+        if (resolvedLocation.screen === 'compliance-evidence')
+          return <AdminComplianceEvidencePanel />;
         if (resolvedLocation.screen === 'legal-hold') return <AdminLegalHoldPanel />;
         if (resolvedLocation.screen === 'export-history') return <AdminAuditExportHistoryPanel />;
         if (resolvedLocation.screen === 'integrity') return <AdminAuditIntegrityPanel />;
         return <AdminAuditLogPanel />;
       case 'command':
-        if (resolvedLocation.screen === 'organization-defaults') return <AdminOrganizationDefaultsPanel organizationId={currentUser.organizationId} />;
+        if (resolvedLocation.screen === 'organization-defaults')
+          return <AdminOrganizationDefaultsPanel organizationId={currentUser.organizationId} />;
         return (
           <AdminCommandCenterPanel
-            screen={resolvedLocation.screen === 'attention-queue' || resolvedLocation.screen === 'cost-capacity' ? resolvedLocation.screen : undefined}
+            screen={
+              resolvedLocation.screen === 'attention-queue' ||
+              resolvedLocation.screen === 'cost-capacity'
+                ? resolvedLocation.screen
+                : undefined
+            }
             // Only the Overview screen aggregates signals read-only (per
             // FINAL_IMPLEMENTATION_SPEC.md, Command "aggregates signals
             // only"). Every other Command Center screen (currently just

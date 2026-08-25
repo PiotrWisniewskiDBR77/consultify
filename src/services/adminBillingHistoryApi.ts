@@ -17,6 +17,8 @@ interface PlanHistoryEnvelope {
 }
 
 export async function getPlanHistory(limit = 50, offset = 0): Promise<PlanHistoryEntry[]> {
-  const response = await apiGet<PlanHistoryEnvelope>(`/admin/billing-history?limit=${limit}&offset=${offset}`);
+  const response = await apiGet<PlanHistoryEnvelope>(
+    `/admin/billing-history?limit=${limit}&offset=${offset}`
+  );
   return response.data ?? [];
 }

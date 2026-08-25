@@ -21,7 +21,9 @@ vi.mock('../../middleware/auth.middleware.js', () => ({
 }));
 vi.mock('../../middleware/admin.middleware.js', () => ({
   default: (req: any, res: any, next: any) =>
-    ['admin', 'owner'].includes(req.user?.role) ? next() : res.status(403).json({ error: 'Admin access required' }),
+    ['admin', 'owner'].includes(req.user?.role)
+      ? next()
+      : res.status(403).json({ error: 'Admin access required' }),
 }));
 
 const app = () => {
@@ -53,7 +55,11 @@ describe('billing history admin routes', () => {
   it('scopes every history read to the token organization', async () => {
     const response = await request(app()).get('/api/admin/billing-history?limit=500&offset=2');
     expect(response.status).toBe(200);
-    expect(dbAll).toHaveBeenCalledWith(expect.stringContaining('WHERE organization_id = ?'), ['org-1', 200, 2], { fallback: false });
+    expect(dbAll).toHaveBeenCalledWith(
+      expect.stringContaining('WHERE organization_id = ?'),
+      ['org-1', 200, 2],
+      { fallback: false }
+    );
     expect(response.body.pagination).toEqual({ limit: 200, offset: 2 });
   });
 

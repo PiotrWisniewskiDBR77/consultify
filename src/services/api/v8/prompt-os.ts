@@ -44,8 +44,7 @@ export const V8PromptOsApi = {
   getBundles: () => v8Get<V8PromptOsBundle[]>('/prompt-os/bundles'),
   getEvalGates: (bundleId: string) =>
     v8Get<V8PromptOsEvalGate[]>(`/prompt-os/bundles/${bundleId}/eval-gates`),
-  getCanary: (bundleId: string) =>
-    v8Get<V8PromptOsCanary>(`/prompt-os/bundles/${bundleId}/canary`),
+  getCanary: (bundleId: string) => v8Get<V8PromptOsCanary>(`/prompt-os/bundles/${bundleId}/canary`),
   activateBundle: (bundleId: string) =>
     v8Post<V8PromptOsBundle>(`/prompt-os/bundles/${bundleId}/activate`),
   rollbackBundle: (bundleId: string, reason: string) =>

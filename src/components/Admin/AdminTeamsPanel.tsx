@@ -160,13 +160,26 @@ export const AdminTeamsPanel: React.FC = () => {
         <form className="mt-4 grid gap-3 md:grid-cols-[1fr_2fr_auto]" onSubmit={createTeam}>
           <label className="text-sm text-c-text-secondary">
             Nazwa zespołu
-            <input className={`${inputClass} mt-1`} value={name} onChange={(event) => setName(event.target.value)} required />
+            <input
+              className={`${inputClass} mt-1`}
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              required
+            />
           </label>
           <label className="text-sm text-c-text-secondary">
             Opis
-            <input className={`${inputClass} mt-1`} value={description} onChange={(event) => setDescription(event.target.value)} />
+            <input
+              className={`${inputClass} mt-1`}
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+            />
           </label>
-          <button className={`${buttonClass} self-end`} type="submit" disabled={busy || !name.trim()}>
+          <button
+            className={`${buttonClass} self-end`}
+            type="submit"
+            disabled={busy || !name.trim()}
+          >
             <Plus className="h-4 w-4" /> Utwórz
           </button>
         </form>
@@ -182,14 +195,20 @@ export const AdminTeamsPanel: React.FC = () => {
           selectedRowId={selectedId}
           onRowClick={(row) => setSelectedId(String(row.id))}
           rowMenu={(row) => ({
-            primary: [{ id: 'open', label: 'Pokaż skład', onClick: () => setSelectedId(String(row.id)) }],
+            primary: [
+              { id: 'open', label: 'Pokaż skład', onClick: () => setSelectedId(String(row.id)) },
+            ],
             destructive: {
               label: 'Usuń zespół',
               icon: Trash2,
               onClick: () => setDeleteTarget(teams.find((team) => team.id === row.id) || null),
             },
           })}
-          empty={{ icon: Users, title: 'Brak zespołów', description: 'Utwórz pierwszy zespół powyżej.' }}
+          empty={{
+            icon: Users,
+            title: 'Brak zespołów',
+            description: 'Utwórz pierwszy zespół powyżej.',
+          }}
           persistKey="admin.teams"
         />
       </section>
@@ -199,32 +218,59 @@ export const AdminTeamsPanel: React.FC = () => {
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 className="font-semibold text-c-text">Skład: {selected.name}</h3>
-              <p className="mt-1 text-sm text-c-text-secondary">Identyfikator użytkownika musi należeć do tej organizacji.</p>
+              <p className="mt-1 text-sm text-c-text-secondary">
+                Identyfikator użytkownika musi należeć do tej organizacji.
+              </p>
             </div>
-            <button className={buttonClass} type="button" onClick={() => void load()} disabled={busy}>
+            <button
+              className={buttonClass}
+              type="button"
+              onClick={() => void load()}
+              disabled={busy}
+            >
               <RefreshCw className="h-4 w-4" /> Odśwież
             </button>
           </div>
           <form className="mt-4 flex flex-col gap-2 sm:flex-row" onSubmit={addMember}>
             <label className="flex-1 text-sm text-c-text-secondary">
               ID użytkownika
-              <input className={`${inputClass} mt-1`} value={memberUserId} onChange={(event) => setMemberUserId(event.target.value)} required />
+              <input
+                className={`${inputClass} mt-1`}
+                value={memberUserId}
+                onChange={(event) => setMemberUserId(event.target.value)}
+                required
+              />
             </label>
-            <button className={`${buttonClass} self-end`} type="submit" disabled={busy || !memberUserId.trim()}>
+            <button
+              className={`${buttonClass} self-end`}
+              type="submit"
+              disabled={busy || !memberUserId.trim()}
+            >
               <UserPlus className="h-4 w-4" /> Dodaj członka
             </button>
           </form>
           {selected.members.length === 0 ? (
-            <p className="mt-4 rounded-xl border border-c-border-subtle bg-c-surface-raised p-4 text-sm text-c-text-secondary">Ten zespół nie ma jeszcze członków.</p>
+            <p className="mt-4 rounded-xl border border-c-border-subtle bg-c-surface-raised p-4 text-sm text-c-text-secondary">
+              Ten zespół nie ma jeszcze członków.
+            </p>
           ) : (
             <ul className="mt-4 divide-y divide-c-border-subtle" aria-label="Członkowie zespołu">
               {selected.members.map((member) => (
                 <li key={member.userId} className="flex items-center justify-between gap-3 py-3">
                   <div>
-                    <p className="text-sm font-medium text-c-text">{[member.user?.firstName, member.user?.lastName].filter(Boolean).join(' ') || member.userId}</p>
-                    <p className="text-xs text-c-text-secondary">{member.user?.email || member.role}</p>
+                    <p className="text-sm font-medium text-c-text">
+                      {[member.user?.firstName, member.user?.lastName].filter(Boolean).join(' ') ||
+                        member.userId}
+                    </p>
+                    <p className="text-xs text-c-text-secondary">
+                      {member.user?.email || member.role}
+                    </p>
                   </div>
-                  <button className={buttonClass} type="button" onClick={() => setRemoveTarget({ team: selected, userId: member.userId })}>
+                  <button
+                    className={buttonClass}
+                    type="button"
+                    onClick={() => setRemoveTarget({ team: selected, userId: member.userId })}
+                  >
                     <UserMinus className="h-4 w-4 text-c-danger" /> Usuń
                   </button>
                 </li>
@@ -234,8 +280,28 @@ export const AdminTeamsPanel: React.FC = () => {
         </section>
       )}
 
-      <ConfirmDialog isOpen={Boolean(deleteTarget)} onCancel={() => setDeleteTarget(null)} onConfirm={() => void deleteTeam()} title="Usunąć zespół?" description={deleteTarget ? `Zespół „${deleteTarget.name}” i jego przypisania członków zostaną usunięte.` : undefined} confirmLabel="Usuń zespół" variant="danger" />
-      <ConfirmDialog isOpen={Boolean(removeTarget)} onCancel={() => setRemoveTarget(null)} onConfirm={() => void removeMember()} title="Usunąć członka z zespołu?" description="Użytkownik pozostanie członkiem organizacji, ale straci przypisanie do tego zespołu." confirmLabel="Usuń członka" variant="danger" />
+      <ConfirmDialog
+        isOpen={Boolean(deleteTarget)}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={() => void deleteTeam()}
+        title="Usunąć zespół?"
+        description={
+          deleteTarget
+            ? `Zespół „${deleteTarget.name}” i jego przypisania członków zostaną usunięte.`
+            : undefined
+        }
+        confirmLabel="Usuń zespół"
+        variant="danger"
+      />
+      <ConfirmDialog
+        isOpen={Boolean(removeTarget)}
+        onCancel={() => setRemoveTarget(null)}
+        onConfirm={() => void removeMember()}
+        title="Usunąć członka z zespołu?"
+        description="Użytkownik pozostanie członkiem organizacji, ale straci przypisanie do tego zespołu."
+        confirmLabel="Usuń członka"
+        variant="danger"
+      />
     </div>
   );
 };

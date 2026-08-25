@@ -61,7 +61,12 @@ describe('AdminTeamsPanel', () => {
     await screen.findByText('Brak zespołów');
     fireEvent.change(screen.getByLabelText('Nazwa zespołu'), { target: { value: 'Delivery' } });
     fireEvent.click(screen.getByRole('button', { name: 'Utwórz' }));
-    await waitFor(() => expect(mockedApi.createTeam).toHaveBeenCalledWith({ name: 'Delivery', description: undefined }));
+    await waitFor(() =>
+      expect(mockedApi.createTeam).toHaveBeenCalledWith({
+        name: 'Delivery',
+        description: undefined,
+      })
+    );
     expect(await screen.findByText('Delivery')).toBeInTheDocument();
   });
 });

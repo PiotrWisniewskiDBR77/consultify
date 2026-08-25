@@ -1,1 +1,73 @@
-import express from'express';import request from'supertest';import{beforeEach,describe,expect,it,vi}from'vitest';import routes from'../admin/sessions.routes.js';const get=vi.fn(),all=vi.fn(),run=vi.fn(),columns=vi.fn();let user:any={id:'u1',organizationId:'org1',role:'admin'};vi.mock('../../utils/DbPromise.js',()=>({get:(...a:any[])=>get(...a),all:(...a:any[])=>all(...a),run:(...a:any[])=>run(...a)}));vi.mock('../../utils/dbSchema.js',()=>({getTableColumns:(...a:any[])=>columns(...a)}));vi.mock('../../middleware/auth.middleware.js',()=>({verifyToken:(q:any,s:any,n:any)=>{if(!user)return s.status(401).end();q.user=user;n()}}));vi.mock('../../middleware/admin.middleware.js',()=>({default:(_q:any,_s:any,n:any)=>n()}));const app=()=>{const a=express();a.use('/api/admin/sessions',routes);return a};describe('admin sessions route',()=>{beforeEach(()=>{vi.clearAllMocks();user={id:'u1',organizationId:'org1',role:'admin'};get.mockResolvedValue({role:'ADMIN',status:'ACTIVE'});all.mockResolvedValue([]);columns.mockResolvedValue(new Set(['organization_id','is_active','last_activity_at','expires_at','ip_address']))});it('requires auth and role',async()=>{user=null;expect((await request(app()).get('/api/admin/sessions')).status).toBe(401);user={id:'u1',organizationId:'org1',role:'admin'};get.mockResolvedValue({role:'MEMBER',status:'ACTIVE'});expect((await request(app()).get('/api/admin/sessions')).status).toBe(403)});it('scopes list twice when session org exists',async()=>{await request(app()).get('/api/admin/sessions?limit=999&userId=u2');expect(all).toHaveBeenCalledWith(expect.stringContaining('u.organization_id = ?'),['org1','org1','u2',200,0],{fallback:false})});it('returns 404 for a cross-tenant session',async()=>{get.mockResolvedValueOnce({role:'ADMIN',status:'ACTIVE'}).mockResolvedValueOnce(undefined);expect((await request(app()).delete('/api/admin/sessions/foreign')).status).toBe(404);expect(run).not.toHaveBeenCalled()});it('revokes an owned enhanced session',async()=>{get.mockResolvedValueOnce({role:'ADMIN',status:'ACTIVE'}).mockResolvedValueOnce({id:'own'});columns.mockResolvedValue(new Set(['revoked_at','is_active','revoke_reason']));expect((await request(app()).delete('/api/admin/sessions/own')).status).toBe(200);expect(run).toHaveBeenCalledWith(expect.stringContaining('revoked_at=CURRENT_TIMESTAMP'),['own'],{fallback:false})});});
+import express from 'express';
+import request from 'supertest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import routes from '../admin/sessions.routes.js';
+const get = vi.fn(),
+  all = vi.fn(),
+  run = vi.fn(),
+  columns = vi.fn();
+let user: any = { id: 'u1', organizationId: 'org1', role: 'admin' };
+vi.mock('../../utils/DbPromise.js', () => ({
+  get: (...a: any[]) => get(...a),
+  all: (...a: any[]) => all(...a),
+  run: (...a: any[]) => run(...a),
+}));
+vi.mock('../../utils/dbSchema.js', () => ({ getTableColumns: (...a: any[]) => columns(...a) }));
+vi.mock('../../middleware/auth.middleware.js', () => ({
+  verifyToken: (q: any, s: any, n: any) => {
+    if (!user) return s.status(401).end();
+    q.user = user;
+    n();
+  },
+}));
+vi.mock('../../middleware/admin.middleware.js', () => ({
+  default: (_q: any, _s: any, n: any) => n(),
+}));
+const app = () => {
+  const a = express();
+  a.use('/api/admin/sessions', routes);
+  return a;
+};
+describe('admin sessions route', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    user = { id: 'u1', organizationId: 'org1', role: 'admin' };
+    get.mockResolvedValue({ role: 'ADMIN', status: 'ACTIVE' });
+    all.mockResolvedValue([]);
+    columns.mockResolvedValue(
+      new Set(['organization_id', 'is_active', 'last_activity_at', 'expires_at', 'ip_address'])
+    );
+  });
+  it('requires auth and role', async () => {
+    user = null;
+    expect((await request(app()).get('/api/admin/sessions')).status).toBe(401);
+    user = { id: 'u1', organizationId: 'org1', role: 'admin' };
+    get.mockResolvedValue({ role: 'MEMBER', status: 'ACTIVE' });
+    expect((await request(app()).get('/api/admin/sessions')).status).toBe(403);
+  });
+  it('scopes list twice when session org exists', async () => {
+    await request(app()).get('/api/admin/sessions?limit=999&userId=u2');
+    expect(all).toHaveBeenCalledWith(
+      expect.stringContaining('u.organization_id = ?'),
+      ['org1', 'org1', 'u2', 200, 0],
+      { fallback: false }
+    );
+  });
+  it('returns 404 for a cross-tenant session', async () => {
+    get.mockResolvedValueOnce({ role: 'ADMIN', status: 'ACTIVE' }).mockResolvedValueOnce(undefined);
+    expect((await request(app()).delete('/api/admin/sessions/foreign')).status).toBe(404);
+    expect(run).not.toHaveBeenCalled();
+  });
+  it('revokes an owned enhanced session', async () => {
+    get
+      .mockResolvedValueOnce({ role: 'ADMIN', status: 'ACTIVE' })
+      .mockResolvedValueOnce({ id: 'own' });
+    columns.mockResolvedValue(new Set(['revoked_at', 'is_active', 'revoke_reason']));
+    expect((await request(app()).delete('/api/admin/sessions/own')).status).toBe(200);
+    expect(run).toHaveBeenCalledWith(
+      expect.stringContaining('revoked_at=CURRENT_TIMESTAMP'),
+      ['own'],
+      { fallback: false }
+    );
+  });
+});

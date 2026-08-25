@@ -12,7 +12,18 @@ describe('AdminPlanHistoryPanel', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('renders server history', async () => {
-    mockedGetPlanHistory.mockResolvedValue([{ id: 'h1', action: 'upgrade', from_plan: 'Starter', to_plan: 'Pro', reason: 'Growth', performed_by: 'owner-1', metadata: null, created_at: '2026-08-24T20:00:00.000Z' }]);
+    mockedGetPlanHistory.mockResolvedValue([
+      {
+        id: 'h1',
+        action: 'upgrade',
+        from_plan: 'Starter',
+        to_plan: 'Pro',
+        reason: 'Growth',
+        performed_by: 'owner-1',
+        metadata: null,
+        created_at: '2026-08-24T20:00:00.000Z',
+      },
+    ]);
     render(<AdminPlanHistoryPanel />);
     expect(await screen.findByText('Starter')).toBeInTheDocument();
     expect(screen.getByText('Pro')).toBeInTheDocument();
