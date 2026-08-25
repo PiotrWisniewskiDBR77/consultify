@@ -2606,6 +2606,12 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
             modes: selectedAnalysisModes.length,
             topics: selectedTopicFocus.length,
           });
+  const creatorFooterNote =
+    currentStep === 0
+      ? t('interview.creator.footer.defineNote')
+      : currentStep === 1
+        ? t('interview.creator.footer.materialNote')
+        : t('interview.creator.footer.refineNote');
 
   if (!isOpen) return null;
 
@@ -2642,20 +2648,31 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
             data-creator-band="footer"
             className="creator-glass-band flex h-[70px] shrink-0 items-center gap-3 border-t px-6"
           >
+            <p className="max-w-[360px] text-[11.5px] leading-4 text-c-text-muted">
+              {creatorFooterNote}
+            </p>
+            <div className="flex-1" />
             <Button type="button" variant="ghost" onClick={onClose} disabled={isGenerating}>
               {t('interview.insightCreatorModal.cancel')}
             </Button>
-            <div className="flex-1" />
-            {currentStep > 0 && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={goToPreviousStep}
+              disabled={currentStep === 0 || isGenerating}
+            >
+              {t('interview.insightCreatorModal.back')}
+            </Button>
+            {currentStep === 1 ? (
               <Button
                 type="button"
                 variant="outline"
-                onClick={goToPreviousStep}
-                disabled={isGenerating}
+                onClick={submitInsight}
+                disabled={!canGenerate}
               >
-                {t('interview.insightCreatorModal.back')}
+                {t('interview.creator.footer.runNow')}
               </Button>
-            )}
+            ) : null}
             {!isLastStep ? (
               <Button
                 type="button"
@@ -2664,7 +2681,9 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
                 disabled={isGenerating}
                 className="min-w-[180px] bg-c-cta-bg text-c-cta-text"
               >
-                {t('interview.insightCreatorModal.next')}
+                {currentStep === 0
+                  ? t('interview.creator.footer.nextMaterial')
+                  : t('interview.creator.footer.nextRefine')}
               </Button>
             ) : (
               <Button
@@ -2678,7 +2697,9 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
               >
                 {isGenerating
                   ? t('interview.insightCreatorModal.running')
-                  : t('interview.insightCreatorModal.run')}
+                  : t('interview.creator.footer.runSessions', {
+                      count: selectedSessions.length,
+                    })}
               </Button>
             )}
           </div>

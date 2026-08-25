@@ -116,6 +116,21 @@ describe('InsightCreatorModal — dialog accessible contract (EN)', () => {
     expect(screen.getByText(/Insight “Warehouse ownership”/)).toBeInTheDocument();
   });
 
+  it('names the step 1 and step 2 footer actions by their result', async () => {
+    window.localStorage.setItem(INTERVIEW_CREATOR_SHELL_FLAG_KEYS.localStorage, '1');
+    await mountAndOpen('en');
+
+    expect(screen.getByRole('button', { name: 'Next: Material' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Back' })).toBeDisabled();
+    fireEvent.change(screen.getByLabelText(/^Insight Title \*$/), {
+      target: { value: 'Warehouse ownership' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Next: Material' }));
+
+    expect(await screen.findByRole('button', { name: 'Run now' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Next: Refine' })).toBeInTheDocument();
+  });
+
   it('exposes a dialog named "AI Insight Creator"', async () => {
     await mountAndOpen('en');
 

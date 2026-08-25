@@ -62,9 +62,11 @@ Nie wykonałem żadnego deployu, żadnej operacji Railway, żadnej zdalnej migra
 | S.0     | `17c5edb60e`   | DONE        | flaga default OFF, realny czytnik, 14/14 testów flagi i OFF                                                     |
 | S.1     | `2b2fa546aa`   | DONE        | jeden token 1040×840; opt-in; legacy 720×560/1080×640 zachowane; 22/22 testy                                    |
 | S.2     | `c9f946db24`   | CZĘŚCIOWA   | 5 stref, szkło 4 pasów, opaque fallback i adopcja przez Wniosek; 18/18 testów; zrzuty/kontrast oczekują T.5/R.2 |
-| S.3     | bieżący commit | DONE        | jednoliniowy pas w każdym kroku, wartości z realnego stanu, rozwijanie i reset na zmianie kroku; 20/20 testów   |
-| S.4–S.7 | —              | NIE ZACZĘTA | —                                                                                                               |
-| K.1–K.3 | —              | NIE ZACZĘTA | —                                                                                                               |
+| S.3     | `40b0df3e5c`   | DONE        | jednoliniowy pas w każdym kroku, wartości z realnego stanu, rozwijanie i reset na zmianie kroku; 20/20 testów   |
+| S.4     | bieżący commit | CZĘŚCIOWA   | nazwy działań i przypisy 1:1; krok 2 ma `Uruchom teraz`; brak widocznego powodu blokady CTA                     |
+| S.5–S.7 | —              | NIE ZACZĘTA | —                                                                                                               |
+| K.1     | —              | STOP        | kod ma 12 typów (6+6), prototyp/instrukcja wymaga 13 (6+7); brakującego typu nie zgaduję                        |
+| K.2–K.3 | —              | NIE ZACZĘTA | —                                                                                                               |
 | W.1–W.2 | —              | NIE ZACZĘTA | —                                                                                                               |
 | T.1–T.6 | —              | NIE ZACZĘTA | —                                                                                                               |
 | R.1–R.2 | —              | NIE ZACZĘTA | —                                                                                                               |
@@ -108,6 +110,13 @@ Stan: NIE ZACOMMITOWANO; nie będą modyfikowane.
 
 Powód: brak zaakceptowanego prototypu wariantu kompaktowego.  
 Stan: NIE ZACOMMITOWANO; powstanie wyłącznie miejsce w typie geometrii.
+
+### STOP — K.1 brak trzynastego typu wyniku
+
+Powód: zaakceptowany prototyp wymaga 13 typów (6 podstawowych + 7 zwiniętych), natomiast stan produkcyjny definiuje dokładnie 12 typów: 6 podstawowych i 6 pozostałych. Dodanie brakującego typu zmieniłoby mechanikę biznesową i wymagałoby zgadnięcia jego kontraktu.  
+Dowód: `InsightCreatorModal.tsx:275-400` — identyfikatory `summary`, `general_analysis`, `trends`, `problems`, `recommendations`, `comparison`, `gaps`, `risk_assessment`, `opportunity_scan`, `maturity`, `stakeholder_map`, `between_the_lines`.  
+Co zrobiłbym po decyzji: dodałbym zatwierdzony trzynasty typ wraz z kontraktem backendu i tłumaczeniami, a następnie układ 6+7 dokładnie wg prototypu.  
+Stan: NIE ZACOMMITOWANO; K.1 nie jest sztucznie oznaczony jako DONE.
 
 ## Znaleziska (problemy w istniejącym kodzie — NIE naprawiane przeze mnie)
 

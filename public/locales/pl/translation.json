@@ -4626,6 +4626,15 @@
         "scopeMaterial": "Wniosek „{{title}}” · {{types}} typów wyniku · {{sessions}} zatwierdzonych sesji · {{people}} osób",
         "scopeRefine": "Wniosek „{{title}}” · {{types}} typów wyniku · {{sessions}} sesji · {{documents}} dokumentów · {{modes}} trybów analizy · {{topics}} wątków",
         "scopeDetails": "Podsumowanie jest liczone z bieżących wyborów w kreatorze."
+      },
+      "footer": {
+        "nextMaterial": "Dalej: Materiał",
+        "nextRefine": "Dalej: Dostrojenie",
+        "runNow": "Uruchom teraz",
+        "runSessions": "Uruchom analizę · {{count}} sesji",
+        "defineNote": "Szkic zapisuje się automatycznie — zamknięcie kreatora nie kasuje wyborów.",
+        "materialNote": "Krok 3 jest opcjonalny — możesz uruchomić analizę już teraz na ustawieniach domyślnych.",
+        "refineNote": "Wynik pojawi się jako wniosek w stanie »Do przeglądu« — dopiero Twoja akceptacja czyni go materiałem dla inicjatyw."
       }
     },
     "title": "Wywiad Discovery",
