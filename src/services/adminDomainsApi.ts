@@ -6,7 +6,8 @@ export type DomainVerificationStatus =
   | 'no_record'
   | 'domain_not_found'
   | 'timeout'
-  | 'dns_error';
+  | 'dns_error'
+  | 'invalid_token';
 
 export interface AdminDomain {
   id: string;

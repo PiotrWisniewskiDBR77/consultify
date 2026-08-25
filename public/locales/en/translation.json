@@ -18455,7 +18455,8 @@
         "noRecord": "No TXT record was found. DNS changes can take up to 24 hours to propagate.",
         "domainNotFound": "The domain does not exist in DNS or did not respond.",
         "timeout": "The DNS request timed out. Try again.",
-        "dnsError": "The DNS request failed."
+        "dnsError": "The DNS request failed.",
+        "invalidToken": "This domain has no valid verification token. Remove it and add it again."
       },
       "empty": {
         "title": "No approved domains",

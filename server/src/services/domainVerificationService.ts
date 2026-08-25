@@ -6,7 +6,8 @@ export type DomainVerificationStatus =
   | 'no_record'
   | 'domain_not_found'
   | 'timeout'
-  | 'dns_error';
+  | 'dns_error'
+  | 'invalid_token';
 
 export interface DomainVerificationOutcome {
   status: DomainVerificationStatus;
@@ -49,8 +50,24 @@ export async function verifyDomainTxt(
 ): Promise<DomainVerificationOutcome> {
   const normalizedDomain = domain.trim().toLowerCase();
   const checkedNames = [`_consultify-verification.${normalizedDomain}`, normalizedDomain];
-  const expected = `consultify-domain-verification=${token.trim()}`;
   const checkedAt = new Date().toISOString();
+
+  // Guard against a NULL/empty verification_token (e.g. a data-integrity gap
+  // upstream). Without this, `token.trim()` throws on null/undefined — an
+  // unhandled exception that surfaces as a 500 — and an empty string builds
+  // an `expected` value of exactly "consultify-domain-verification=", which
+  // would falsely verify against any TXT record that happens to carry that
+  // same empty-value string. Refuse with an explicit, honest status instead.
+  if (typeof token !== 'string' || !token.trim()) {
+    return {
+      status: 'invalid_token',
+      checkedNames,
+      foundRecordCount: 0,
+      checkedAt,
+    };
+  }
+
+  const expected = `consultify-domain-verification=${token.trim()}`;
   const deadline = Date.now() + (options.timeoutMs ?? 5_000);
   const resolveTxt = options.resolveTxt ?? dns.resolveTxt;
   const values: string[] = [];

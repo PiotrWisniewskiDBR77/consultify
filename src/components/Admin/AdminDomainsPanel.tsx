@@ -36,6 +36,7 @@ const outcomeKeys: Record<DomainVerificationOutcome['status'], string> = {
   domain_not_found: 'domainNotFound',
   timeout: 'timeout',
   dns_error: 'dnsError',
+  invalid_token: 'invalidToken',
 };
 export const AdminDomainsPanel: React.FC = () => {
   const { t } = useTranslation();

@@ -49,4 +49,31 @@ describe('verifyDomainTxt', () => {
     expect(result.status).toBe('timeout');
     expect(Date.now() - started).toBeLessThan(250);
   });
+
+  it('refuses to verify with an empty string token instead of matching an empty TXT value', async () => {
+    const resolver = vi.fn().mockResolvedValue([['consultify-domain-verification=']]);
+    const result = await verifyDomainTxt('example.com', '', { resolveTxt: resolver });
+    expect(result.status).toBe('invalid_token');
+    expect(result.foundRecordCount).toBe(0);
+    // Never even issues a DNS lookup for a token we already know is invalid.
+    expect(resolver).not.toHaveBeenCalled();
+  });
+
+  it('refuses to verify with a whitespace-only token', async () => {
+    const result = await verifyDomainTxt('example.com', '   ', {
+      resolveTxt: vi.fn(),
+    });
+    expect(result.status).toBe('invalid_token');
+  });
+
+  it('refuses a null/undefined token without throwing (would otherwise 500 on token.trim())', async () => {
+    const resolver = vi.fn();
+    const result = await verifyDomainTxt(
+      'example.com',
+      null as unknown as string,
+      { resolveTxt: resolver }
+    );
+    expect(result.status).toBe('invalid_token');
+    expect(resolver).not.toHaveBeenCalled();
+  });
 });

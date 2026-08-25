@@ -19305,7 +19305,8 @@
         "noRecord": "Nie znaleziono rekordu TXT. Zmiany w DNS mogą propagować się do 24 godzin.",
         "domainNotFound": "Domena nie istnieje w DNS lub nie odpowiada.",
         "timeout": "Przekroczono czas oczekiwania na odpowiedź DNS. Spróbuj ponownie.",
-        "dnsError": "Błąd zapytania DNS."
+        "dnsError": "Błąd zapytania DNS.",
+        "invalidToken": "Ta domena nie ma poprawnego tokenu weryfikacyjnego. Usuń domenę i dodaj ją ponownie."
       },
       "empty": {
         "title": "Brak zatwierdzonych domen",
