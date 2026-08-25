@@ -138,3 +138,9 @@ nigdzie — .husky/pre-commit (w tym check-list-canon) NIGDY nie odpalał się
 przy realnych commitach. Naprawione: hooksPath ustawiony we wspólnej
 konfiguracji repo (obowiązuje wszystkie worktree'y). Konsekwencja: historyczna
 „ochrona pre-commit" była iluzją — strażniki działały tylko wywoływane ręcznie.
+
+## Uzupełnienie — dług ujawniony aktywacją hooków (2026-08-25)
+
+| ID | Problem | Dowód | Klasyfikacja |
+|---|---|---|---|
+| TRI-OBS-17 | Aktywacja hooksPath (TRI-MUST-16) odsłoniła zastały dług rejestru akcji: 5 plików `src/components/MyWork/` (ClosureDecisionQueue.tsx, EffectivenessClosureQueue.tsx, notebook/NotebookExportMenu.tsx, notebook/NotebookHamburgerMenu.tsx, notebook/NotebookInlineAIMenu.tsx) mają akcjopodobne `onClick`/handlery bez traceability do `IDEA_ACTION_REGISTRY` (R10, `scripts/check-action-coverage.sh`) — potwierdzone realnym `--all` skanem, nie artefaktem błędu strażnika. Przy okazji naprawiono osobny defekt: `check-actions.sh` w trybie pre-commit wołał R10 bez argumentów, co przy stage'u WYŁĄCZNIE pliku `__tests__/*.tsx` trafiało w fallback „pusty staging → pełny skan repo" i blokowało commity nietykające tego długu (naprawa: commit `57ceb1101d`, staged-only scope + `--full` dla CI/audytów, żadna reguła nie osłabiona). | `scripts/check-action-coverage.baseline.txt`, live run `bash scripts/check-action-coverage.sh --all` (2026-08-25), commit 57ceb1101d | do rozwiązania przy scaleniu dnia 3 (dodać wpisy do `ideaActionRegistry.ts` albo przepiąć handlery przez `runIdeaAction`) |
