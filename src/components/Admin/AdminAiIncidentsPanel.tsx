@@ -43,7 +43,14 @@ export const AdminAiIncidentsPanel: React.FC = () => {
           jest jeszcze prowadzony.
         </p>
       </div>
-      {error && <div role="alert">{error}</div>}
+      {error && (
+        <div
+          role="alert"
+          className="rounded-xl border border-c-danger bg-c-surface p-4 text-sm text-c-danger"
+        >
+          {error}
+        </div>
+      )}
       {loaded && data.length === 0 && !error && (
         <div className="flex items-center gap-2 rounded-xl border border-c-success p-4">
           <CircleCheck className="h-5 w-5" />

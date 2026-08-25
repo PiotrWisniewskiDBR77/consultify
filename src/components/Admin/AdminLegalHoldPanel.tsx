@@ -17,7 +17,14 @@ export const AdminLegalHoldPanel: React.FC = () => {
           Stan faktycznego wstrzymania dla całej organizacji — tylko odczyt.
         </p>
       </div>
-      {error && <div role="alert">{error}</div>}
+      {error && (
+        <div
+          role="alert"
+          className="rounded-xl border border-c-danger bg-c-surface p-4 text-sm text-c-danger"
+        >
+          {error}
+        </div>
+      )}
       <section className="rounded-xl border border-c-border p-5">
         <div className="flex items-center gap-2">
           <Scale className="h-5 w-5" />

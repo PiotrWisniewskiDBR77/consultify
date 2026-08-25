@@ -51,7 +51,14 @@ export const AdminAccessReviewsPanel: React.FC = () => {
           Odczyt konfiguracji i kont uprzywilejowanych; edycja pozostaje w polityce IAM.
         </p>
       </div>
-      {error && <div role="alert">{error}</div>}
+      {error && (
+        <div
+          role="alert"
+          className="rounded-xl border border-c-danger bg-c-surface p-4 text-sm text-c-danger"
+        >
+          {error}
+        </div>
+      )}
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="rounded-xl border border-c-border p-4">
           Stan: {policy?.accessReviewsEnabled ? 'Włączone' : 'Wyłączone'}

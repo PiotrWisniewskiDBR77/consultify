@@ -78,7 +78,14 @@ export const AdminRolesPermissionsPanel: React.FC = () => {
   return (
     <div className="space-y-4">
       <h2 className="text-lg font-semibold text-c-text">Role i uprawnienia</h2>
-      {error && <div role="alert">{error}</div>}
+      {error && (
+        <div
+          role="alert"
+          className="rounded-xl border border-c-danger bg-c-surface p-4 text-sm text-c-danger"
+        >
+          {error}
+        </div>
+      )}
       <section className="flex flex-wrap gap-2 rounded-xl border border-c-border p-4">
         <input
           aria-label="Nazwa roli"
@@ -94,11 +101,7 @@ export const AdminRolesPermissionsPanel: React.FC = () => {
           className="min-w-64 rounded border border-c-border bg-c-surface p-2"
           placeholder="permissions, po przecinku"
         />
-        <button
-          disabled={!name.trim()}
-          onClick={() => void save()}
-          className={buttonClass}
-        >
+        <button disabled={!name.trim()} onClick={() => void save()} className={buttonClass}>
           {edit ? 'Zapisz rolę' : 'Dodaj rolę'}
         </button>
       </section>

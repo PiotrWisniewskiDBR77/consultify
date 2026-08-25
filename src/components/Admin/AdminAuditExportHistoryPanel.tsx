@@ -43,7 +43,14 @@ export const AdminAuditExportHistoryPanel: React.FC = () => {
           Paragony eksportów dziennika audytu wykonanych przez administratorów organizacji.
         </p>
       </div>
-      {error && <div role="alert">{error}</div>}
+      {error && (
+        <div
+          role="alert"
+          className="rounded-xl border border-c-danger bg-c-surface p-4 text-sm text-c-danger"
+        >
+          {error}
+        </div>
+      )}
       <StandardTable
         columns={cols}
         data={rows}

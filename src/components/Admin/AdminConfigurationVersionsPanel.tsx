@@ -165,7 +165,10 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
     );
   if (state === 'error')
     return (
-      <div role="alert" className="rounded-xl border border-c-danger p-5">
+      <div
+        role="alert"
+        className="rounded-xl border border-c-danger bg-c-surface p-4 text-sm text-c-danger"
+      >
         <p>{message}</p>
         <button
           onClick={() => void load()}
@@ -189,7 +192,14 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
           <RefreshCw className={state === 'loading' ? 'animate-spin' : ''} />
         </button>
       </div>
-      {message && <div role="alert">{message}</div>}
+      {message && (
+        <div
+          role="alert"
+          className="rounded-xl border border-c-danger bg-c-surface p-4 text-sm text-c-danger"
+        >
+          {message}
+        </div>
+      )}
       {summary && (
         <dl className="grid gap-3 rounded-xl border border-c-border p-4 sm:grid-cols-4">
           <div>
@@ -248,7 +258,10 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
           <h3 className="font-semibold">Szczegóły {selected.version}</h3>
           {detailsState === 'loading' && <p role="status">Ładowanie szczegółów…</p>}
           {detailsState === 'error' ? (
-            <div role="alert">
+            <div
+              role="alert"
+              className="rounded-xl border border-c-danger bg-c-surface p-4 text-sm text-c-danger"
+            >
               <p>{detailsMessage}</p>
               <button
                 onClick={() => void showDetails(selected)}

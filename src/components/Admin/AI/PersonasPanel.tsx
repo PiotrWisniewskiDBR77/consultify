@@ -54,7 +54,14 @@ export const PersonasPanel: React.FC = () => {
   ];
   return (
     <div className="space-y-4">
-      {error && <div role="alert">{error}</div>}
+      {error && (
+        <div
+          role="alert"
+          className="rounded-xl border border-c-danger bg-c-surface p-4 text-sm text-c-danger"
+        >
+          {error}
+        </div>
+      )}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <div className="space-y-4">
           <h3 className="text-sm font-medium uppercase tracking-wider text-c-text-secondary">
@@ -125,10 +132,7 @@ export const PersonasPanel: React.FC = () => {
                   })}
                 </div>
               </fieldset>
-              <button
-                type="submit"
-                className={buttonClass}
-              >
+              <button type="submit" className={buttonClass}>
                 <Save className="h-4 w-4" />
                 Save Persona
               </button>
