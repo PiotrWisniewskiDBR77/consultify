@@ -1045,6 +1045,24 @@ describe('settings preferences and advanced flows', () => {
     );
   });
 
+  it('PUT /api/settings/preferences/notifications persists under settings:notifications, distinct from the admin key', async () => {
+    const app = express();
+    app.use(express.json());
+    app.use('/api/settings', settingsRoutes);
+
+    const res = await request(app)
+      .put('/api/settings/preferences/notifications')
+      .send({ preferences: { taskAssignment: { email: true, inApp: true } } });
+
+    expect(res.status).toBe(200);
+    expect(
+      mockDbRun.mock.calls.some(
+        (call) =>
+          Array.isArray(call[1]) && (call[1] as unknown[])[1] === 'settings:notifications'
+      )
+    ).toBe(true);
+  });
+
   it('PUT /api/settings/notifications/email persists email category preferences', async () => {
     const app = express();
     app.use(express.json());
@@ -1385,6 +1403,24 @@ describe('POST /api/settings/notifications tenant authorization', () => {
 
     expect(res.status).toBe(200);
     expect(mockDbRun).toHaveBeenCalledTimes(1);
+    // N1.3 regression: this admin-on-behalf-of write must NOT land under
+    // the same user_preferences key as the self-service
+    // PUT /api/settings/preferences/notifications endpoint (both used to
+    // write `settings:notifications`, so whichever saved last silently
+    // clobbered the other's data — notyfikacje-audyt.md §2.3).
+    expect(
+      mockDbRun.mock.calls.some(
+        (call) =>
+          Array.isArray(call[1]) && (call[1] as unknown[])[1] === 'settings:notifications'
+      )
+    ).toBe(false);
+    expect(
+      mockDbRun.mock.calls.some(
+        (call) =>
+          Array.isArray(call[1]) &&
+          (call[1] as unknown[])[1] === 'settings:notifications-channel-admin'
+      )
+    ).toBe(true);
   });
 
   it('does not trust an admin role claim when the durable actor role is MEMBER', async () => {

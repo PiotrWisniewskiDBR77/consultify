@@ -1024,6 +1024,18 @@ const defaultEmailNotificationPreferences = {
   marketing: false,
 };
 
+// N1.3 fix: this admin-on-behalf-of-a-user pair used to share the key
+// `settings:notifications` with the self-service
+// GET/PUT /api/settings/preferences/notifications pair above (used by
+// NotificationSettings.tsx). Same key, two independently-shaped and
+// unvalidated writers → whichever endpoint saved last silently clobbered
+// the other's data in full (notyfikacje-audyt.md §2.3, "Kolizja klucza").
+// This admin path has no live frontend caller today (grep confirms only
+// its own test exercises it), so giving it a dedicated key is the
+// smaller, safer fix — it changes no request/response contract on
+// either endpoint, only where this one's data lives.
+const ADMIN_NOTIFICATIONS_PREFERENCES_KEY = preferencesKey('notifications-channel-admin');
+
 /**
  * GET /api/settings/notifications
  * Get notification channel preferences
@@ -1043,7 +1055,7 @@ router.get(
 
       const prefs = await dbGet<{ preferences_data: string }>(
         `SELECT value AS preferences_data FROM user_preferences WHERE user_id = ? AND key = ?`,
-        [userId, preferencesKey('notifications')],
+        [userId, ADMIN_NOTIFICATIONS_PREFERENCES_KEY],
         { fallback: false }
       );
 
@@ -1115,7 +1127,11 @@ router.post(
       }
 
       const data = JSON.stringify(preferences);
-      const result = await upsertUserPreferenceValue(userId, preferencesKey('notifications'), data);
+      const result = await upsertUserPreferenceValue(
+        userId,
+        ADMIN_NOTIFICATIONS_PREFERENCES_KEY,
+        data
+      );
       if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
       logger.info(`[settings] Notification preferences updated for user ${userId}`);
