@@ -97,13 +97,13 @@ w raporcie. Nie ma wyjątków „bo tak było szybciej".
 
    Nadzorca podaje Ci **SHA commitu-markera** przy wklejaniu tej instrukcji.
 
-   **SHA markera: «MARKER_SHA»**
+   **SHA markera: dfd259af47**
 
    ```bash
    cd <root-repo>
    git fetch --all --prune
    git log --oneline -25 codex/m03-admin-20260824
-   git merge-base --is-ancestor «MARKER_SHA» codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
+   git merge-base --is-ancestor dfd259af47 codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
    ```
 
 2. **Jeśli marker nie jest przodkiem tipa albo gałąź nie istnieje — STOP.**
@@ -1835,7 +1835,7 @@ Nie tworzysz drugiego pliku nigdzie indziej (Z13).
 # Interview dzień 13 — Creator Shell — raport dyżuru <data>
 
 Baza: codex/m03-admin-20260824 @ <tip SHA>
-Marker: «MARKER_SHA» — POTWIERDZONY / BRAK
+Marker: dfd259af47 — POTWIERDZONY / BRAK
 Gałąź robocza: codex/interview-creator-day13-<data>
 Worktree: /private/tmp/consultify-interview-creator-day13
 Porty użyte: 4324/4325 · harness dev-render 3356   ·   Baza: ŻADNA   ·   Migracje: ZERO
@@ -2084,6 +2084,6 @@ Powodzenia. Prototyp otwarty obok kodu przez cały dyżur, raport na bieżąco,
 inwentarz przed każdą pozycją, STOP bez wahania zamiast zgadywania,
 prettier tylko na plikach commita, Blok 6 zawsze.
 
-**Marker, którego nadzorca użyje przy wklejeniu tej instrukcji: «MARKER_SHA».**
+**Marker, którego nadzorca użyje przy wklejeniu tej instrukcji: dfd259af47.**
 
 Koniec instrukcji.
