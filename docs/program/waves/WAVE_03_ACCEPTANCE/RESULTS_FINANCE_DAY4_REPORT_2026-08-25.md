@@ -61,16 +61,16 @@ Właściciel poza publiczną produkcją wpisuje `/results?ff_wave3ResultsOwnerRe
 
 ## Sekcja F — Finance (DEC-2026-08-24-05)
 
-| Pozycja                               | Status           | Commit                      | Testy          | Uwagi                                        |
-| ------------------------------------- | ---------------- | --------------------------- | -------------- | -------------------------------------------- |
-| F.1 inwentarz FIN-REC-001             | DONE_CURRENT_SHA | `4ab7a61403`                | audyt źródłowy | Sześć gałęzi i pięć flag zamrożone poniżej   |
-| F.2 resolver FIN-REC-002              | DONE_CURRENT_SHA | do uzupełnienia po commicie | 81/81 PASS     | 53-case table + OFF regression + stare testy |
-| F.3 wspólny shell FIN-REC-003         | PENDING          | —                           | —              | —                                            |
-| F.4 `financeOwnerSampleData`          | PENDING          | —                           | —              | —                                            |
-| F.5 ochrona danych i ufności          | PENDING          | —                           | —              | —                                            |
-| F.6 stany brzegowe FIN-REC-011        | PENDING          | —                           | —              | —                                            |
-| F.7 testy FIN-REC-014                 | PENDING          | —                           | —              | —                                            |
-| F.8 przygotowanie odłączenia Benefits | PENDING          | —                           | —              | —                                            |
+| Pozycja                               | Status           | Commit                      | Testy          | Uwagi                                                     |
+| ------------------------------------- | ---------------- | --------------------------- | -------------- | --------------------------------------------------------- |
+| F.1 inwentarz FIN-REC-001             | DONE_CURRENT_SHA | `4ab7a61403`                | audyt źródłowy | Sześć gałęzi i pięć flag zamrożone poniżej                |
+| F.2 resolver FIN-REC-002              | DONE_CURRENT_SHA | `5502e8fdb2`                | 81/81 PASS     | 53-case table + OFF regression + stare testy              |
+| F.3 wspólny shell FIN-REC-003         | PARTIAL / STOP   | do uzupełnienia po commicie | 10/10 PASS     | Mechaniczne luki zamknięte; cold Back nie utrwala filtrów |
+| F.4 `financeOwnerSampleData`          | PENDING          | —                           | —              | —                                                         |
+| F.5 ochrona danych i ufności          | PENDING          | —                           | —              | —                                                         |
+| F.6 stany brzegowe FIN-REC-011        | PENDING          | —                           | —              | —                                                         |
+| F.7 testy FIN-REC-014                 | PENDING          | —                           | —              | —                                                         |
+| F.8 przygotowanie odłączenia Benefits | PENDING          | —                           | —              | —                                                         |
 
 ### F.1 — manifest runtime i zamrożenie
 
@@ -122,6 +122,18 @@ Komponenty Benefits nie są kasowane ani odłączane w tym dyżurze.
 | Valuation V3        | brak mutacji w ścieżce otwarcia                                                                                                                               |
 | Legacy OFF branches | jedyny znaleziony `Api.put` w `Benefits/FinancialAnalysisWorkspace.tsx:74` należy do jawnej funkcji `updateModelAssumptionsForBridge`, nie do efektu otwarcia |
 
+### F.3 — audyt wspólnego shella (5 zakładek × 6 pytań)
+
+| Zakładka             | 1 Menu2      | 2 Menu3/CTA  | 3 Menu3 karty                | 4 tabela pierwsza            | 5 preview pełny         | 6 Back                           |
+| -------------------- | ------------ | ------------ | ---------------------------- | ---------------------------- | ----------------------- | -------------------------------- |
+| Statements           | JEST `:1368` | JEST `:1822` | JEST_CZĘŚCIOWO, osobna karta | JEST `StandardTable`         | JEST po korekcie tokenu | JEST w pamięci; cold URL PARTIAL |
+| Analysis             | JEST `:1374` | JEST `:1822` | JEST workspace               | JEST wspólny `StandardTable` | JEST po korekcie tokenu | jw.                              |
+| Models               | JEST `:1380` | JEST `:1822` | JEST workspace               | JEST wspólny `StandardTable` | JEST po korekcie tokenu | jw.                              |
+| Prediction           | JEST `:1386` | JEST `:1822` | JEST workspace               | JEST wspólny `StandardTable` | JEST po korekcie tokenu | jw.                              |
+| Enterprise valuation | JEST `:1392` | JEST `:1822` | JEST workspace               | JEST wspólny `StandardTable` | JEST po korekcie tokenu | jw.                              |
+
+Domknięta luka mechaniczna: własne `w-[400px]` zastąpione wspólnym `PREVIEW_PANE_WIDTH`, a panel dostał `h-full`. Test kontraktowy 4/4 PASS. `check-list-canon.sh` nie wykazał nowych naruszeń.
+
 ## Pozycje STOP
 
 ### STOP — R.3 `canonicalCutoverMount`
@@ -137,6 +149,13 @@ Powód: instrukcja uznaje R.1–R.3 za niepodzielny fundament DEC-04 i zakazuje 
 Dowód: instrukcja §R „Reguła wejścia do sekcji R”.  
 Co zrobiłbym po rozstrzygnięciu R.3: wróciłbym kolejno do R.4, R.5, R.6 i R.7, bez równoległego generowania trzecich implementacji kart.  
 Stan: NIE ZACOMMITOWANO.
+
+### STOP — F.3 cold Back
+
+Powód: `tab` jest utrwalany w URL, ale wyszukiwanie, filtry, zaznaczenie i scroll istnieją wyłącznie w stanie komponentu; pełny cold reload nie może ich odtworzyć bez nowego kontraktu serializacji URL.  
+Dowód: `FinanceHub.tsx:554-563,1315-1351,1047`; test kontraktowy potwierdza zachowanie in-memory.  
+Co zrobiłbym po decyzji produktowej: zdefiniowałbym stabilny, wersjonowany format query dla search/filter/selection i osobno politykę odtwarzania scrolla.  
+Stan: zacommitowano częściowo; geometria preview i audyt gotowe.
 
 ## Znaleziska
 

@@ -46,6 +46,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { EmptyState, LoadingState } from '@/components/shared/states';
+import { PREVIEW_PANE_WIDTH } from '@/components/shared/PreviewPane/previewGeometry';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import {
   StandardPreview,
@@ -3056,7 +3057,10 @@ export const FinanceHub: React.FC = () => {
         </div>
 
         {selectedFinanceRow ? (
-          <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+          <aside
+            className="h-full shrink-0 overflow-hidden bg-slate-50 p-3 dark:bg-navy-950"
+            style={{ width: PREVIEW_PANE_WIDTH }}
+          >
             {/*
               Header (block 1) comes from StandardPreview (title/pin/Open/×,
               canon A7.1). Blocks 2-3 (meta card + Details) and 4-6 (AI hints /
