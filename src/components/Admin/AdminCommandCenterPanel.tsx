@@ -29,9 +29,7 @@ import {
   Users,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router-dom';
-
 import { Api } from '../../services/api';
 import {
   type AuditExportResult,
@@ -55,7 +53,7 @@ import { CommandCenterBenchmarkTab } from './commandCenter/CommandCenterBenchmar
 import { CommandCenterDlpTab } from './commandCenter/CommandCenterDlpTab';
 import { CommandCenterResidencyTab } from './commandCenter/CommandCenterResidencyTab';
 import { CommandCenterRetentionTab } from './commandCenter/CommandCenterRetentionTab';
-
+import { useTranslation } from 'react-i18next';
 type TabId =
   | 'overview'
   | 'agent-trace'
@@ -65,13 +63,11 @@ type TabId =
   | 'retention'
   | 'ai-policy'
   | 'benchmark';
-
 interface AdminCommandCenterPanelProps {
   onSectionChange?: (section: AdminSettingsSection) => void;
   aggregationOnly?: boolean;
   screen?: 'attention-queue' | 'cost-capacity';
 }
-
 interface AttentionSignal {
   id: string;
   title: string;
@@ -81,12 +77,11 @@ interface AttentionSignal {
   href: string;
   detail: string;
 }
-
 const CommandCenterAttentionQueue: React.FC = () => {
+  const { t } = useTranslation();
   const [signals, setSignals] = useState<AttentionSignal[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   useEffect(() => {
     let alive = true;
     void (async () => {
@@ -105,7 +100,9 @@ const CommandCenterAttentionQueue: React.FC = () => {
       if (risk)
         next.push({
           id: 'risk',
-          title: 'Ryzyka wymagające przeglądu',
+          title: t('admin.command.attention-queue.day2Auto.text1', {
+            defaultValue: 'Ryzyka wymagające przeglądu',
+          }),
           source: 'GET /api/admin/risk/summary',
           freshness,
           severity: Number(risk?.highRiskCount ?? 0) > 0 ? 'critical' : 'info',
@@ -115,12 +112,17 @@ const CommandCenterAttentionQueue: React.FC = () => {
       if (audit)
         next.push({
           id: 'audit',
-          title: 'Nierozwiązane zdarzenia audytowe',
+          title: t('admin.command.attention-queue.day2Auto.text2', {
+            defaultValue: 'Nierozwiązane zdarzenia audytowe',
+          }),
           source: 'GET /api/admin/audit-logs/stats',
           freshness,
           severity: Number(audit?.unresolvedCount ?? 0) > 0 ? 'warning' : 'info',
           href: '/admin/audit/events',
-          detail: `${Number(audit?.unresolvedCount ?? 0)} nierozwiązanych`,
+          detail: t('admin.command.attention-queue.day2Auto.text3', {
+            v0: Number(audit?.unresolvedCount ?? 0),
+            defaultValue: '{{v0}} nierozwiązanych',
+          }),
         });
       const billingItems = billing
         ? Array.isArray(billing?.alerts)
@@ -132,38 +134,62 @@ const CommandCenterAttentionQueue: React.FC = () => {
       if (billingItems)
         next.push({
           id: 'billing',
-          title: 'Alerty budżetowe',
+          title: t('admin.command.attention-queue.day2Auto.text4', {
+            defaultValue: 'Alerty budżetowe',
+          }),
           source: 'GET /api/admin/billing/alerts',
           freshness,
           severity: billingItems.length > 0 ? 'warning' : 'info',
           href: '/admin/billing/budgets-alerts',
-          detail: `${billingItems.length} aktywnych alertów`,
+          detail: t('admin.command.attention-queue.day2Auto.text5', {
+            v0: billingItems.length,
+            defaultValue: '{{v0}} aktywnych alertów',
+          }),
         });
       if (health)
         next.push({
           id: 'health',
-          title: 'Stan usług organizacji',
+          title: t('admin.command.attention-queue.day2Auto.text6', {
+            defaultValue: 'Stan usług organizacji',
+          }),
           source: 'GET /api/admin/health-panel/summary',
           freshness,
           severity:
             Number(health?.summary?.failed ?? health?.failed ?? 0) > 0 ? 'critical' : 'info',
-          href: '/admin/health/service-status',
-          detail: `${Number(health?.summary?.failed ?? health?.failed ?? 0)} testów nieudanych`,
+          href: t('admin.command.attention-queue.day2Auto.text7', {
+            defaultValue: '/admin/health/service-status',
+          }),
+          detail: t('admin.command.attention-queue.day2Auto.text8', {
+            v0: Number(health?.summary?.failed ?? health?.failed ?? 0),
+            defaultValue: '{{v0}} testów nieudanych',
+          }),
         });
-      const rank = { critical: 0, warning: 1, info: 2 };
+      const rank = {
+        critical: 0,
+        warning: 1,
+        info: 2,
+      };
       setSignals(next.sort((a, b) => rank[a.severity] - rank[b.severity]));
-      setError(next.length === 0 ? 'Nie udało się odczytać żadnego źródła sygnałów.' : null);
+      setError(
+        next.length === 0
+          ? t('admin.command.attention-queue.day2Auto.text9', {
+              defaultValue: 'Nie udało się odczytać żadnego źródła sygnałów.',
+            })
+          : null
+      );
       setLoading(false);
     })();
     return () => {
       alive = false;
     };
   }, []);
-
   if (loading)
     return (
       <div className="flex items-center gap-2 text-sm text-c-text-secondary">
-        <Loader2 className="h-4 w-4 animate-spin" /> Ładowanie kolejki uwagi…
+        <Loader2 className="h-4 w-4 animate-spin" />
+        {t('admin.command.attention-queue.day2Auto.text10', {
+          defaultValue: 'Ładowanie kolejki uwagi…',
+        })}
       </div>
     );
   if (error)
@@ -178,9 +204,16 @@ const CommandCenterAttentionQueue: React.FC = () => {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-semibold text-c-text">Kolejka uwagi</h2>
+        <h2 className="text-lg font-semibold text-c-text">
+          {t('admin.command.attention-queue.day2Auto.text11', {
+            defaultValue: 'Kolejka uwagi',
+          })}
+        </h2>
         <p className="mt-1 text-sm text-c-text-secondary">
-          Sygnały z systemów kanonicznych; działania wykonuje się na ekranach źródłowych.
+          {t('admin.command.attention-queue.day2Auto.text12', {
+            defaultValue:
+              'Sygnały z systemów kanonicznych; działania wykonuje się na ekranach źródłowych.',
+          })}
         </p>
       </div>
       <div className="grid gap-3 md:grid-cols-2">
@@ -205,16 +238,27 @@ const CommandCenterAttentionQueue: React.FC = () => {
             <p className="mt-2 text-sm text-c-text-secondary">{signal.detail}</p>
             <dl className="mt-3 space-y-1 text-xs text-c-text-muted">
               <div>
-                <dt className="inline font-medium">Źródło: </dt>
+                <dt className="inline font-medium">
+                  {t('admin.command.attention-queue.day2Auto.text13', {
+                    defaultValue: 'Źródło:',
+                  })}
+                </dt>
                 <dd className="inline">{signal.source}</dd>
               </div>
               <div>
-                <dt className="inline font-medium">Świeżość: </dt>
+                <dt className="inline font-medium">
+                  {t('admin.command.attention-queue.day2Auto.text14', {
+                    defaultValue: 'Świeżość:',
+                  })}
+                </dt>
                 <dd className="inline">{signal.freshness}</dd>
               </div>
             </dl>
             <span className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-c-text">
-              Otwórz ekran kanoniczny <ArrowRight className="h-4 w-4" />
+              {t('admin.command.attention-queue.day2Auto.text15', {
+                defaultValue: 'Otwórz ekran kanoniczny',
+              })}
+              <ArrowRight className="h-4 w-4" />
             </span>
           </Link>
         ))}
@@ -222,8 +266,8 @@ const CommandCenterAttentionQueue: React.FC = () => {
     </div>
   );
 };
-
 const CommandCenterCostCapacity: React.FC = () => {
+  const { t } = useTranslation();
   const [state, setState] = useState<{
     loading: boolean;
     error: string | null;
@@ -263,7 +307,9 @@ const CommandCenterCostCapacity: React.FC = () => {
         loading: false,
         error:
           values.filter(Boolean).length < 4
-            ? 'Część źródeł kosztu lub pojemności jest niedostępna.'
+            ? t('admin.command.cost-capacity.day2Auto.text1', {
+                defaultValue: 'Część źródeł kosztu lub pojemności jest niedostępna.',
+              })
             : null,
         billing: values[0],
         usage: values[1],
@@ -289,16 +335,35 @@ const CommandCenterCostCapacity: React.FC = () => {
   );
   const columns = useMemo<TableColumn[]>(
     () => [
-      { id: 'userId', label: 'Użytkownik' },
-      { id: 'cost', label: 'Koszt', render: (row) => Number(row.cost ?? 0).toFixed(2) },
-      { id: 'messageCount', label: 'Wiadomości' },
+      {
+        id: 'userId',
+        label: t('admin.command.cost-capacity.day2Auto.text2', {
+          defaultValue: 'Użytkownik',
+        }),
+      },
+      {
+        id: 'cost',
+        label: t('admin.command.cost-capacity.day2Auto.text3', {
+          defaultValue: 'Koszt',
+        }),
+        render: (row) => Number(row.cost ?? 0).toFixed(2),
+      },
+      {
+        id: 'messageCount',
+        label: t('admin.command.cost-capacity.day2Auto.text4', {
+          defaultValue: 'Wiadomości',
+        }),
+      },
     ],
     []
   );
   if (state.loading)
     return (
       <div className="flex items-center gap-2 text-sm text-c-text-secondary">
-        <Loader2 className="h-4 w-4 animate-spin" /> Ładowanie kosztu i pojemności…
+        <Loader2 className="h-4 w-4 animate-spin" />
+        {t('admin.command.cost-capacity.day2Auto.text5', {
+          defaultValue: 'Ładowanie kosztu i pojemności…',
+        })}
       </div>
     );
   const currentCost = Number(
@@ -310,11 +375,22 @@ const CommandCenterCostCapacity: React.FC = () => {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-semibold text-c-text">Koszt i pojemność</h2>
+        <h2 className="text-lg font-semibold text-c-text">
+          {t('admin.command.cost-capacity.day2Auto.text6', {
+            defaultValue: 'Koszt i pojemność',
+          })}
+        </h2>
         <p className="mt-1 text-sm text-c-text-secondary">
-          Agregacja tylko do odczytu. Budżety edytuje ekran kanoniczny.
+          {t('admin.command.cost-capacity.day2Auto.text7', {
+            defaultValue: 'Agregacja tylko do odczytu. Budżety edytuje ekran kanoniczny.',
+          })}
         </p>
-        <p className="mt-1 text-xs text-c-text-muted">Świeżość: {freshness}</p>
+        <p className="mt-1 text-xs text-c-text-muted">
+          {t('admin.command.cost-capacity.day2Auto.text8', {
+            defaultValue: 'Świeżość:',
+          })}
+          {freshness}
+        </p>
       </div>
       {state.error && (
         <div
@@ -326,15 +402,32 @@ const CommandCenterCostCapacity: React.FC = () => {
       )}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[
-          ['Koszt bieżący', currentCost.toFixed(2), 'billing/summary'],
+          [
+            t('admin.command.cost-capacity.day2Auto.text9', {
+              defaultValue: 'Koszt bieżący',
+            }),
+            currentCost.toFixed(2),
+            'billing/summary',
+          ],
           ['Prognoza', forecast.toFixed(2), 'billing/summary'],
           ['Wykorzystanie limitu', `${utilization}%`, 'billing/usage-details'],
-          ['Miejsca zajęte', String(seats), 'billing/summary'],
+          [
+            t('admin.command.cost-capacity.day2Auto.text10', {
+              defaultValue: 'Miejsca zajęte',
+            }),
+            String(seats),
+            'billing/summary',
+          ],
         ].map(([label, value, source]) => (
           <div key={label} className="rounded-xl border border-c-border bg-c-surface p-4">
             <p className="text-xs text-c-text-secondary">{label}</p>
             <p className="mt-1 text-xl font-semibold text-c-text">{value}</p>
-            <p className="mt-2 text-[10px] text-c-text-muted">Źródło: GET /api/admin/{source}</p>
+            <p className="mt-2 text-[10px] text-c-text-muted">
+              {t('admin.command.cost-capacity.day2Auto.text11', {
+                defaultValue: 'Źródło: GET /api/admin/',
+              })}
+              {source}
+            </p>
           </div>
         ))}
       </div>
@@ -343,8 +436,12 @@ const CommandCenterCostCapacity: React.FC = () => {
           columns={columns}
           data={rows}
           empty={{
-            title: 'Brak atrybucji kosztów',
-            description: 'Brak kosztów przypisanych użytkownikom w wybranym okresie.',
+            title: t('admin.command.cost-capacity.day2Auto.text12', {
+              defaultValue: 'Brak atrybucji kosztów',
+            }),
+            description: t('admin.command.cost-capacity.day2Auto.text13', {
+              defaultValue: 'Brak kosztów przypisanych użytkownikom w wybranym okresie.',
+            }),
           }}
           persistKey="admin.costCapacity"
         />
@@ -354,22 +451,32 @@ const CommandCenterCostCapacity: React.FC = () => {
           to="/admin/billing/budgets-alerts"
           className="rounded-lg border border-c-border px-3 py-2 text-sm font-medium text-c-text focus-visible:outline-none focus-visible:ring-2 ring-[color:var(--c-focus)]"
         >
-          Alerty budżetowe ({state.alerts.length})
+          {t('admin.command.cost-capacity.day2Auto.text14', {
+            defaultValue: 'Alerty budżetowe (',
+          })}
+          {state.alerts.length})
         </Link>
         <Link
           to="/admin/billing/usage-costs"
           className="rounded-lg border border-c-border px-3 py-2 text-sm font-medium text-c-text focus-visible:outline-none focus-visible:ring-2 ring-[color:var(--c-focus)]"
         >
-          Szczegóły wykorzystania
+          {t('admin.command.cost-capacity.day2Auto.text15', {
+            defaultValue: 'Szczegóły wykorzystania',
+          })}
         </Link>
         <span className="px-3 py-2 text-xs text-c-text-muted">
-          Stan: {Number(state.health?.summary?.failed ?? 0)} nieudanych prób
+          {t('admin.command.cost-capacity.day2Auto.text16', {
+            defaultValue: 'Stan:',
+          })}
+          {Number(state.health?.summary?.failed ?? 0)}
+          {t('admin.command.cost-capacity.day2Auto.text17', {
+            defaultValue: 'nieudanych prób',
+          })}
         </span>
       </div>
     </div>
   );
 };
-
 interface LinkTile {
   id: string;
   section: AdminSettingsSection;
@@ -379,7 +486,6 @@ interface LinkTile {
   descriptionKey: string;
   descriptionDefault: string;
 }
-
 const LINK_TILES: LinkTile[] = [
   {
     id: 'people',
@@ -409,7 +515,6 @@ const LINK_TILES: LinkTile[] = [
     descriptionDefault: 'High-risk admin events and compliance evidence.',
   },
 ];
-
 const LinkTileCard: React.FC<{
   tile: LinkTile;
   onOpen?: (section: AdminSettingsSection) => void;
@@ -430,25 +535,29 @@ const LinkTileCard: React.FC<{
       </div>
       <div>
         <p className="text-sm font-semibold text-c-text">
-          {t(tile.labelKey, { defaultValue: tile.labelDefault })}
+          {t(tile.labelKey, {
+            defaultValue: tile.labelDefault,
+          })}
         </p>
         <p className="mt-1 text-xs text-c-text-secondary">
-          {t(tile.descriptionKey, { defaultValue: tile.descriptionDefault })}
+          {t(tile.descriptionKey, {
+            defaultValue: tile.descriptionDefault,
+          })}
         </p>
       </div>
       <span className="text-xs font-medium text-c-text-secondary group-hover:text-c-text">
-        {t('commandCenter.overview.tiles.open', { defaultValue: 'Open' })}
+        {t('commandCenter.overview.tiles.open', {
+          defaultValue: 'Open',
+        })}
       </span>
     </button>
   );
 };
-
 interface DataTileState<T> {
   loading: boolean;
   error: string | null;
   value: T | null;
 }
-
 const DataTileShell: React.FC<{
   icon: React.ElementType;
   label: string;
@@ -478,7 +587,6 @@ const DataTileShell: React.FC<{
     </div>
   </div>
 );
-
 const CommandCenterOverviewTab: React.FC<{
   onSectionChange?: (section: AdminSettingsSection) => void;
 }> = ({ onSectionChange }) => {
@@ -493,13 +601,21 @@ const CommandCenterOverviewTab: React.FC<{
     error: null,
     value: null,
   });
-  const [dlp, setDlp] = useState<DataTileState<{ active: number; total: number }>>({
+  const [dlp, setDlp] = useState<
+    DataTileState<{
+      active: number;
+      total: number;
+    }>
+  >({
     loading: true,
     error: null,
     value: null,
   });
   const [retention, setRetention] = useState<
-    DataTileState<{ count: number; nextCleanupAt: string | null }>
+    DataTileState<{
+      count: number;
+      nextCleanupAt: string | null;
+    }>
   >({
     loading: true,
     error: null,
@@ -510,12 +626,19 @@ const CommandCenterOverviewTab: React.FC<{
     error: null,
     value: null,
   });
-
   const loadResidency = useCallback(async () => {
-    setResidency((prev) => ({ ...prev, loading: true, error: null }));
+    setResidency((prev) => ({
+      ...prev,
+      loading: true,
+      error: null,
+    }));
     try {
       const value = await getDataResidency();
-      setResidency({ loading: false, error: null, value });
+      setResidency({
+        loading: false,
+        error: null,
+        value,
+      });
     } catch (error: any) {
       setResidency({
         loading: false,
@@ -526,12 +649,19 @@ const CommandCenterOverviewTab: React.FC<{
       });
     }
   }, [t]);
-
   const loadAiPolicy = useCallback(async () => {
-    setAiPolicy((prev) => ({ ...prev, loading: true, error: null }));
+    setAiPolicy((prev) => ({
+      ...prev,
+      loading: true,
+      error: null,
+    }));
     try {
       const value = await getAiPolicy();
-      setAiPolicy({ loading: false, error: null, value });
+      setAiPolicy({
+        loading: false,
+        error: null,
+        value,
+      });
     } catch (error: any) {
       setAiPolicy({
         loading: false,
@@ -542,15 +672,21 @@ const CommandCenterOverviewTab: React.FC<{
       });
     }
   }, [t]);
-
   const loadDlp = useCallback(async () => {
-    setDlp((prev) => ({ ...prev, loading: true, error: null }));
+    setDlp((prev) => ({
+      ...prev,
+      loading: true,
+      error: null,
+    }));
     try {
       const rules = await getDlpRules();
       setDlp({
         loading: false,
         error: null,
-        value: { active: rules.filter((r) => r.isActive).length, total: rules.length },
+        value: {
+          active: rules.filter((r) => r.isActive).length,
+          total: rules.length,
+        },
       });
     } catch (error: any) {
       setDlp({
@@ -561,9 +697,12 @@ const CommandCenterOverviewTab: React.FC<{
       });
     }
   }, [t]);
-
   const loadRetention = useCallback(async () => {
-    setRetention((prev) => ({ ...prev, loading: true, error: null }));
+    setRetention((prev) => ({
+      ...prev,
+      loading: true,
+      error: null,
+    }));
     try {
       const schedules = await getRetentionSchedules();
       const upcoming = schedules
@@ -573,7 +712,10 @@ const CommandCenterOverviewTab: React.FC<{
       setRetention({
         loading: false,
         error: null,
-        value: { count: schedules.length, nextCleanupAt: upcoming[0] || null },
+        value: {
+          count: schedules.length,
+          nextCleanupAt: upcoming[0] || null,
+        },
       });
     } catch (error: any) {
       setRetention({
@@ -585,12 +727,19 @@ const CommandCenterOverviewTab: React.FC<{
       });
     }
   }, [t]);
-
   const loadAuditExport = useCallback(async () => {
-    setAuditExport((prev) => ({ ...prev, loading: true, error: null }));
+    setAuditExport((prev) => ({
+      ...prev,
+      loading: true,
+      error: null,
+    }));
     try {
       const value = await getComplianceAuditExport({});
-      setAuditExport({ loading: false, error: null, value });
+      setAuditExport({
+        loading: false,
+        error: null,
+        value,
+      });
     } catch (error: any) {
       setAuditExport({
         loading: false,
@@ -601,7 +750,6 @@ const CommandCenterOverviewTab: React.FC<{
       });
     }
   }, [t]);
-
   useEffect(() => {
     void loadResidency();
     void loadAiPolicy();
@@ -609,7 +757,6 @@ const CommandCenterOverviewTab: React.FC<{
     void loadRetention();
     void loadAuditExport();
   }, [loadResidency, loadAiPolicy, loadDlp, loadRetention, loadAuditExport]);
-
   return (
     <div className="space-y-6">
       <div>
@@ -781,14 +928,17 @@ const CommandCenterOverviewTab: React.FC<{
     </div>
   );
 };
-
 export const AdminCommandCenterPanel: React.FC<AdminCommandCenterPanelProps> = ({
   onSectionChange,
   aggregationOnly = false,
   screen,
 }) => {
   const { t } = useTranslation();
-  const tabs: Array<{ id: TabId; label: string; icon: React.ElementType }> = useMemo(
+  const tabs: Array<{
+    id: TabId;
+    label: string;
+    icon: React.ElementType;
+  }> = useMemo(
     () => [
       {
         id: 'overview',
@@ -833,28 +983,25 @@ export const AdminCommandCenterPanel: React.FC<AdminCommandCenterPanelProps> = (
     ],
     [t]
   );
-
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedTab = useMemo(() => {
     const raw = searchParams.get('tab');
     return tabs.some((tab) => tab.id === raw) ? (raw as TabId) : 'overview';
   }, [searchParams, tabs]);
   const [activeTab, setActiveTab] = useState<TabId>(requestedTab);
-
   useEffect(() => {
     setActiveTab(requestedTab);
   }, [requestedTab]);
-
   const handleTabChange = (tab: TabId) => {
     setActiveTab(tab);
     const nextParams = new URLSearchParams(searchParams);
     nextParams.set('tab', tab);
-    setSearchParams(nextParams, { replace: true });
+    setSearchParams(nextParams, {
+      replace: true,
+    });
   };
-
   if (screen === 'attention-queue') return <CommandCenterAttentionQueue />;
   if (screen === 'cost-capacity') return <CommandCenterCostCapacity />;
-
   return (
     <div className="space-y-6">
       <div className="rounded-2xl border border-c-border bg-c-surface p-5">
@@ -907,5 +1054,4 @@ export const AdminCommandCenterPanel: React.FC<AdminCommandCenterPanelProps> = (
     </div>
   );
 };
-
 export default AdminCommandCenterPanel;

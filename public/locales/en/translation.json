@@ -18036,6 +18036,71 @@
           "text6": "Rejestr spraw nie jest jeszcze prowadzony; wstrzymanie działa dziś na poziomie całej organization."
         }
       }
+    },
+    "command": {
+      "attention-queue": {
+        "day2Auto": {
+          "text1": "Ryzyka wymagające Reviewu",
+          "text2": "Nierozwiązane Events audytowe",
+          "text3": "{{v0}} nierozwiązanych",
+          "text4": "Alerts budżetowe",
+          "text5": "{{v0}} Activech alertów",
+          "text6": "Stan usług organization",
+          "text7": "/admin/health/service-Status",
+          "text8": "{{v0}} testów nieudanych",
+          "text9": "Failed to odczytać żadnego źródła sygnałów.",
+          "text10": "Loading kolejki uwagi…",
+          "text11": "Queue uwagi",
+          "text12": "Sygnały z systemów kanonicznych; działania wykonuje się na ekranach źródłowych.",
+          "text13": "Źródło:",
+          "text14": "Świeżość:",
+          "text15": "Otwórz ekran kanoniczny"
+        }
+      },
+      "cost-capacity": {
+        "day2Auto": {
+          "text1": "Część źródeł Costu or pojemności jest nieAccessna.",
+          "text2": "User",
+          "text3": "Cost",
+          "text4": "Wiadomości",
+          "text5": "Loading Costu and pojemności…",
+          "text6": "Cost and Capacity",
+          "text7": "Agregacja tylko do odczytu. Budżety edytuje ekran kanoniczny.",
+          "text8": "Świeżość:",
+          "text9": "Cost bieżący",
+          "text10": "Seats zajęte",
+          "text11": "Źródło: GET /api/admin/",
+          "text12": "No atrybucji Costów",
+          "text13": "No Costów przypisanych Userom w wybranym okresie.",
+          "text14": "Alerts budżetowe (",
+          "text15": "Details wykorzystania",
+          "text16": "Stan:",
+          "text17": "nieudanych prób"
+        }
+      },
+      "organization-defaults": {
+        "day2Auto": {
+          "text1": "Failed to pobrać profilu.",
+          "text2": "Failed to pobrać ustawień finansowych.",
+          "text3": "Failed to zapisać profilu.",
+          "text4": "Zapisano; potwierdzono wersją odpowiedzi.",
+          "text5": "Settings zmieniły się równolegle (409). Odśwież sekcję przed ponowieniem.",
+          "text6": "Failed to zapisać ustawień finansowych.",
+          "text7": "Settings defaults organization",
+          "text8": "Dwa niezależne źródła danych and dwa niezależne zapisy.",
+          "text9": "Status",
+          "text10": "Język",
+          "text11": "Domyślny język",
+          "text12": "Try again",
+          "text13": "Save lokalizację and format",
+          "text14": "defaults finansowe",
+          "text15": "Settings finansowe są nieAccessne, ponieważ V8 nie jest włączone for this organization. Sekcja profilu powyżej pozostaje aktywna.",
+          "text16": "Domyślna waluta",
+          "text17": "Domyślny WACC",
+          "text18": "Domyślny horyzont",
+          "text19": "Save defaults finansowe"
+        }
+      }
     }
   },
   "access": {
