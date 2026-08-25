@@ -552,12 +552,40 @@ export function isRoiTransitionAllowedFromStatus(
   return ROI_TRANSITIONS[transitionId].fromStatuses.includes(status);
 }
 
-/** Humanizes a free-form `next_action_type` slug (e.g. `conduct_post_investment_review`
- * → "Conduct post investment review") — no exhaustive translation table exists
- * server-side for this field (it's a status-machine side-effect string, not a
- * closed enum), so a generic humanizer is the honest choice over guessing PL
- * copy for values that may grow over time. */
-export function humanizeActionType(value: string): string {
+/**
+ * 2026-08-26 night-fixes-a (NIGHT_SWEEP_A_REPORT_20260826.md #5, Results
+ * FIX-ATOM): the raw `next_action_type` slug used to render as Title-Case
+ * ENGLISH inside an otherwise-Polish interface ("Complete Economic Model")
+ * — a mixed-language mismatch. Grep-verified against every
+ * `next_action_type = '...'` assignment in `server/src/services/
+ * resultsVnext/roi/` (the only place this field is ever written): the real
+ * server emits exactly THREE values today, all post-investment-review
+ * side effects (`conduct_post_investment_review`,
+ * `finalize_post_investment_review`, `post_investment_review`) — a small,
+ * verified set, not the open-ended field the old comment assumed.
+ * Known values get a real Polish sentence; anything else (a future value
+ * this lookup hasn't seen yet) still gets the honest humanized fallback —
+ * same "nothing renders as a bare code, known or not" contract
+ * `financeLineageTransformationKindLabel` uses in Finance.
+ */
+const KNOWN_ROI_NEXT_ACTION_LABELS: Record<string, { pl: string; en: string }> = {
+  conduct_post_investment_review: {
+    pl: 'Przeprowadź przegląd poinwestycyjny',
+    en: 'Conduct post-investment review',
+  },
+  finalize_post_investment_review: {
+    pl: 'Sfinalizuj przegląd poinwestycyjny',
+    en: 'Finalize post-investment review',
+  },
+  post_investment_review: {
+    pl: 'Przegląd poinwestycyjny',
+    en: 'Post-investment review',
+  },
+};
+
+export function humanizeActionType(value: string, isPolish = true): string {
+  const known = KNOWN_ROI_NEXT_ACTION_LABELS[value];
+  if (known) return isPolish ? known.pl : known.en;
   return value
     .replace(/_/g, ' ')
     .replace(/\b\w/g, (c) => c.toUpperCase());

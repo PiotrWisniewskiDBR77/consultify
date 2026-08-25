@@ -96,7 +96,20 @@ import { ResultsRoiRegistryPage } from '../../src/components/ResultsVNext/Result
 import { RoiCaseToolPage } from '../../src/components/ResultsVNext/roi/RoiCaseToolPage';
 import { ROUTES } from '../../src/routes/routeConfig';
 import { API_URL } from '../../src/services/api';
+import { OrganizationApi } from '../../src/services/api/organizations.api';
+import { useAppStore } from '../../src/store/useAppStore';
 import type { RoiCaseListItem, RoiCaseStatus, RoiCalculationRunSummary, RoiOrgBenefitsRealizationRow } from '../../src/components/ResultsVNext/roi/roiApi';
+
+// night-fixes-a P0 #6 (2026-08-26, NIGHT_SWEEP_A_REPORT_20260826.md): the
+// Owner column now resolves via `OrganizationApi.getOrganizationMembers(
+// currentOrganization.id)` — stub both so the harness renders the REAL
+// resolution instead of a silent "fetch fails, falls back to raw id".
+useAppStore.setState({ currentOrganization: { id: 'org-demo', name: 'Firma Demo Sp. z o.o.' } });
+OrganizationApi.getOrganizationMembers = (async () => [
+  { userId: 'user-anna-kowalska', email: 'anna.kowalska@firma-demo.pl', name: 'Anna Kowalska', role: 'member', status: 'active' },
+  { userId: 'user-tomasz-nowak', email: 'tomasz.nowak@firma-demo.pl', name: 'Tomasz Nowak', role: 'member', status: 'active' },
+  { userId: 'user-piotr-wisniewski', email: 'piotr@firma-demo.pl', name: 'Piotr Wiśniewski', role: 'owner', status: 'active' },
+]) as typeof OrganizationApi.getOrganizationMembers;
 
 const harnessParams = new URLSearchParams(window.location.search);
 const registryState = harnessParams.get('state') || 'ready';
