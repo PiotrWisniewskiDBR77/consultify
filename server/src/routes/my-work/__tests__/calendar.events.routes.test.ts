@@ -2,10 +2,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-const source = fs.readFileSync(
-  path.resolve(process.cwd(), 'server/src/routes/my-work/calendar.routes.ts'),
-  'utf8'
-);
+// FIX-5 (Day 3 acceptance): process.cwd() ties this test to whatever directory the
+// runner was invoked from — it breaks when vitest runs from a worktree root that
+// differs from the repo checkout layout. __dirname is stable regardless of cwd.
+const source = fs.readFileSync(path.resolve(__dirname, '../calendar.routes.ts'), 'utf8');
 
 describe('calendar event route security contract', () => {
   it('scopes event reads by tenant and overlap, and redacts foreign busy titles server-side', () => {

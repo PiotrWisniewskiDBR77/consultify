@@ -2,8 +2,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
+// FIX-5 (Day 3 acceptance): process.cwd() ties this test to whatever directory the
+// runner was invoked from — it breaks when vitest runs from a worktree root that
+// differs from the repo checkout layout. __dirname is stable regardless of cwd.
 const source = fs.readFileSync(
-  path.resolve(process.cwd(), 'server/migrations/20260827_calendar_events.sql'),
+  path.resolve(__dirname, '../../../../migrations/20260827_calendar_events.sql'),
   'utf8'
 );
 
