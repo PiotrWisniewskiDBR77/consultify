@@ -2446,7 +2446,7 @@ export function KnownToolDetailView(props: {
               <Menu2HowToButton
                 variant="knowledge"
                 isPolish={isPolish}
-                label={isPolish ? 'How to / Baza wiedzy' : 'How to / Knowledge base'}
+                label={isPolish ? 'Baza wiedzy' : 'Knowledge base'}
                 onClick={openKb}
                 disabled={!tool}
               />
@@ -2458,7 +2458,7 @@ export function KnownToolDetailView(props: {
                 className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 text-xs font-semibold text-c-text-secondary transition hover:bg-c-surface disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <Sparkles size={13} />
-                {isPolish ? 'Analizuj z AI' : 'Analyze with AI'}
+                {isPolish ? 'Analizuj' : 'Analyze'}
               </button>
               <button
                 type="button"
@@ -2467,7 +2467,7 @@ export function KnownToolDetailView(props: {
                 className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/70 bg-white px-3 text-xs font-semibold text-navy-950 shadow-sm transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-white dark:text-navy-950"
               >
                 <ArrowRight size={13} />
-                Start
+                {isPolish ? 'Rozpocznij sesję' : 'Start session'}
               </button>
             </div>
           ),
