@@ -1,150 +1,65 @@
 # Partner — raport dyżuru dnia 12 (2026-08-25)
 
-Status dyżuru: `STOP_W_BLOKU_0 / NIE ZMIENIONO RUNTIME / OWNER_PENDING / ECONOMICS_OFF`
+Status: `P.1–P.4 TECHNICAL_PASS / P.5 PARTIAL / P.6 POZA_ZAKRESEM / OWNER_PENDING / NO_RELEASE`
 
-Gałąź: `codex/partner-day12-20260825`
+Gałąź `codex/partner-day12-20260825`; worktree `/private/tmp/consultify-partner-day12`; baza `659a57baed` (marker `5f96e936ac` jest przodkiem). Zero fetch, push, merge, deploy i zmian w głównym checkoutcie.
 
-Tip startowy: `659a57baedacc71912e2f5c407c1de419bbff05e`
+## Decyzje wiążące
 
-Marker: `5f96e936ac` — `git merge-base --is-ancestor 5f96e936ac codex/m03-admin-20260824` zakończone kodem `0` (`MARKER OK`).
+D8: `/partner` jest wyłącznie pulpitem operacyjnym; niepodłączony, onboarding, stan nieznany i błąd nigdy nie widzą marketingu. `connection` wybiera stan podłączenia, a `lifecyclePhase` tylko zawartość podłączonego pulpitu.
 
-Worktree: `/private/tmp/consultify-partner-day12`
+DEC-2026-08-25-64: connection = `STRICT EXACT-TENANT`, read-only, dokładne `owner_organization_id`, bez self-heal. Historyczne rekordy wymagają jawnego idempotentnego backfillu i zgodności liczby podłączonych przed/po; niejednoznaczne rekordy są wyjątkami do decyzji właściciela. Legacy `/api/partners/connection` pozostaje. Ekonomia pozostaje wyłączona przez `AMD-PRT-ECONOMICS-002`.
 
-## Decyzja wiążąca D8
+## Wyniki P.1–P.6
 
-> `/partner` = wyłącznie pulpit operacyjny podłączonego partnera (domyślnie
-> „Pulpit"). Ekran pierwszego podłączenia = osobny, jednoekranowy stan. Treści
-> programowe/marketingowe wyłącznie na publicznych `/become-partner`,
-> `/partner/apply`, `/partner/pricing`; siedem wewnętrznych podstron
-> marketingowych wycofane z `/partner` z zapisem, gdzie treść żyje dalej.
-> Bramki: `connection` decyduje podłączony/nie; `lifecyclePhase` tylko
-> o zawartości pulpitu; stan nieznany/błąd nigdy nie pokazuje rejestracji.
-> Ekonomia partnerska pozostaje wyłączona polityką AMD-PRT-ECONOMICS-002 —
-> poza zakresem tej decyzji.
+| Pozycja | Commit       | Status                                   | Dowód / ograniczenie                                                                                                                                                           |
+| ------- | ------------ | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| P.1     | `21ffba1543` | `TECHNICAL_PASS / DATA_READBACK_NOT_RUN` | Read-only resolver i GET `/api/v8/partner/connection`; exact-tenant, brak writera/self-heal; UI na V8; kontrolowany backfill z parytetem i wyjątkami.                          |
+| P.2     | `14304b897e` | `TECHNICAL_PASS`                         | Onboarding jest jednoekranowym stanem operacyjnym bez treści akwizycyjnej.                                                                                                     |
+| P.3     | `626842bf9f` | `TECHNICAL_PASS`                         | Siedem historycznych kart nie jest osiągalnych z `/partner`; mapa retirementu jest w kodzie.                                                                                   |
+| P.4     | `fef87d9394` | `TECHNICAL_PASS`                         | Testy stanów bramki potwierdzają brak marketingu.                                                                                                                              |
+| P.5     | `f7ea24314e` | `PARTIAL / STOP_I18N_TEST_CONTRACT`      | Usunięto dekoracyjny crimson. Usunięcie fallbacków i18n łamie zastany kontrakt `ClientAccessView.v8-clients.test.tsx`; cofnięto je zamiast rozszerzać dozwolony zakres testów. |
+| P.6     | —            | `POZA_ZAKRESEM`                          | Potwierdzone przez właściciela; lista klientów nieprzebudowana.                                                                                                                |
 
-Źródło: `OWNER_DECISION_LEDGER_2026-08-24.md:30`, `DEC-2026-08-24-08`,
-`OWNER_ACCEPT`.
+## P.1 — kontrakt i backfill
 
-## Blok 0 — weryfikacja mapy
+- Resolver connection jest wyłącznie odczytem strict V8.
+- GET V8 wymaga aktywnego członkostwa w tenantcie, lecz jest przed bramką wymagającą podłączonego partnera.
+- Błąd odczytu daje 503, więc UI nie może przejść do marketingu.
+- Legacy route pozostała bez zmiany.
+- Skrypt bindingu zachowuje podpisany manifest, idempotencję, atomowość i receipt. Przed APPLY wylicza legacy-connected users, wymaga jawnego mapowania i aktywnego membershipu w owner tenantcie; po APPLY wymaga równości strict-connected z legacy-connected.
 
-| Kontrola                | Wynik                      | Dowód                                                                                                                                               |
-| ----------------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Marker i baza           | `PASS`                     | marker jest przodkiem `codex/m03-admin-20260824`; tip instrukcji zawiera marker                                                                     |
-| Materiały wiążące       | `PASS`                     | D8: ledger `:30`; `PAR-Q-001`: register `:158`; `getProgramStatus`: klient `:413`; legacy connection: portal `:3046`; `MODULE_ACCEPTANCE.md` obecny |
-| Hooki                   | `PASS`                     | `core.hooksPath=.husky`; wykonywalne `pre-commit`, `commit-msg`, `pre-push`                                                                         |
-| Zależności              | `PASS`                     | `node_modules` podlinkowany do checkoutu integracyjnego zgodnie z §0.3                                                                              |
-| Legacy bramka           | `POTWIERDZONE`             | `PartnerPortalView.tsx:3046` wywołuje `/api/partners/connection`; `:3315–3324` kieruje niepodłączonego do `renderProgramContent()`                  |
-| Wyciek A                | `POTWIERDZONE`             | `PartnerPortalView.tsx:3272–3300` mapuje siedem sekcji programu na komponenty marketingowe                                                          |
-| Wyciek B                | `POTWIERDZONE`             | `PartnerPortalView.tsx:3223` przekazuje `ProviderHomeView`; `PartnerStartRouter.tsx:152–153` renderuje go dla onboardingu                           |
-| Test starego zachowania | `POTWIERDZONE`             | `PartnerPortalView.route-alignment.test.tsx:102–131` oczekuje `Program overview` i `Models and commercial terms` dla `connected:false`              |
-| Trasy publiczne         | `POTWIERDZONE`             | faktyczny formularz: `/become-partner/apply`, nie literalne `/partner/apply`; gramatyki tras nie zmieniono                                          |
-| i18n                    | `POTWIERDZONE WG ŹRÓDŁA`   | istniejące klucze PL są obecne; bez zmiany renderu nie wykonywano runtime replay                                                                    |
-| Crimson                 | `DŁUG ZASTANY`             | grep: `PartnerPortalView.tsx` 49, `ClientAccessView.tsx` 8 wystąpień `primary-[0-9]`                                                                |
-| P.6 StandardTable       | `POZA_ZAKRESEM_DO_DECYZJI` | marker/instrukcja nie potwierdza wejścia Partnera w falę triady; domyślne rozstrzygnięcie §3 = NIE                                                  |
+### Wyjątki backfillu
 
-## Rozstrzygnięcie §2.4 — `STOP`, nie Wariant 1/2
+`NOT_EVALUATED_NO_AUTHORIZED_DISPOSABLE_DATASET`.
 
-`program/status` nie jest bezpiecznym substytutem connection (Wariant 2): router
-V8 przed handlerem wymaga `requireActiveMembership` i
-`requireBoundPartnerTenant`, a sam status dodatkowo podlega bramce odczytu
-ekonomii. Brak połączenia nie daje więc jednoznacznego `connected:false`.
+Nie wykonano backfillu ani odczytu realnej bazy. RealPG wymaga jawnego `PRT_OWNER_BINDING_DB_PREFIX` dla disposable DB; warunek nie był spełniony. Lista konkretnych rekordów i rzeczywiste liczniki przed/po pozostają `EVIDENCE_MISSING`, nie pustą listą. Implementowany wyjątek to `ACTIVE_OWNER_MEMBERSHIP_MISSING`; APPLY blokuje się przed zapisem przy wyjątku lub rozjeździe parytetu.
 
-Wariant 1 również nie jest implementowalny literą instrukcji bez nowej decyzji:
-`partnerConnectionService.ts` eksportuje wyłącznie writer
-`connectPartnerOrganization`; nie eksportuje read-only connection. Wywołanie
-writera jako odczytu byłoby niebezpieczne i semantycznie nieuczciwe.
+## P.3 — mapa retirementu
 
-Co ważniejsze, zastane resolvery dają potencjalnie niespójne wyniki:
+| Dawna karta   | Cel                                  |
+| ------------- | ------------------------------------ |
+| dashboard     | `/become-partner`                    |
+| metrics       | brak publicznego celu; kod zachowany |
+| earnings      | `/partner/pricing`                   |
+| company-info  | `/become-partner/apply`              |
+| learning-path | brak publicznego celu; kod zachowany |
+| documentation | `/become-partner`                    |
+| templates     | `/become-partner`                    |
 
-- legacy `getActivePartnerOrgIdForUser(userId)` jest user-scoped, ma fallback
-  `created_by`, dziedziczenie po współpracowniku i zapisujący self-heal;
-- V8 `getActivePartnerOrgIdForTenantUser(organizationId, userId)` jest
-  read-only i wymaga aktywnego linku oraz dokładnego
-  `owner_organization_id = organizationId`.
+Nie zmieniono gramatyki tras i nie usunięto treści bez zatwierdzonego celu.
 
-Zatem historyczny/unbound rekord może być `connected:true` w legacy i
-`connected:false`/`PARTNER_ORG_REQUIRED` w V8. To jest dokładnie rozjazd opisany
-w §2.4 jako obowiązkowy STOP. Nie zmieniono semantyki
-`partnerConnectionService`, legacy route ani bramki UI.
+## Testy i dowody
 
-### STOP — P.1
+Pakiet Day 12: `8 files / 22 tests PASS` — service, handler, klient API, foreign tenant, brak self-heal, parytet, retirement i stany UI.
 
-Powód: nie istnieje kanoniczny read-only GET o semantyce zgodnej z legacy, a
-dostępne resolvery różnią się tenant bindingiem i self-healem.
+Szeroki replay Partner: `37 files PASS / 14 FAIL / 5 SKIPPED; 260 tests PASS / 66 FAIL / 94 SKIPPED`. Failingi obejmują zastane kontrakty legacy/economics, niedopasowane mocki po nowej bramce i RealPG z niezgodnym schematem. Nie są zielonym dowodem Day 12 i nie były naprawiane poza zakresem. Backfill Day 12 nie został wykonany.
 
-Dowód: `partnerConnectionService.ts:70` eksportuje tylko connect;
-`partnerOrgResolution.ts:11–104` (legacy self-heal) kontra `:107–130` (V8 exact
-tenant, read-only); `v8/partner.routes.ts:156–157` blokuje niepodłączonego przed
-handlerami innymi niż connect.
+Dowody 4 stany × light/dark PL: `NOT_PROVEN`. Brak bezpiecznej autoryzowanej persony lub fixture runtime; screenshotów nie sfabrykowano z testowego DOM. Akceptacja wizualna pozostaje `OWNER_PENDING`.
 
-Co zrobiłbym, gdyby zapadła decyzja X: po zatwierdzeniu, że kanoniczna semantyka
-ma być strict exact-tenant, dodałbym addytywny read-only resolver/kontrakt
-connection, jawnie rozstrzygnął los historycznych unbound rekordów i dopiero
-potem przepiął UI wraz z testem foreign-tenant.
+## Otwarte bramki
 
-Stan: `NIE ZACOMMITOWANO` kodu runtime.
-
-## Pozycje P.1–P.6
-
-| Pozycja | Commit SHA | Status                       | Dowód                                                                           |
-| ------- | ---------- | ---------------------------- | ------------------------------------------------------------------------------- |
-| P.1     | —          | `STOP_SEMANTYKA_CONNECTION`  | rozstrzygnięcie §2.4 powyżej                                                    |
-| P.2     | —          | `NIE_ROZPOCZĘTO_PO_STOP_P.1` | zmiana renderu bez wiarygodnej bramki narusza DoD realnych danych               |
-| P.3     | —          | `NIE_ROZPOCZĘTO_PO_STOP_P.1` | wykonano wyłącznie read-only mapę retirementu poniżej                           |
-| P.4     | —          | `NIE_ROZPOCZĘTO_PO_STOP_P.1` | nie przepisano istniejącej asercji bez implementacji runtime                    |
-| P.5     | —          | `NIE_ROZPOCZĘTO_PO_STOP_P.1` | brak dotkniętych powierzchni runtime; długu nie przedstawiono jako naprawionego |
-| P.6     | —          | `POZA_ZAKRESEM_DO_DECYZJI`   | brak jawnej zgody na falę triady                                                |
-
-## P.3 — mapa retirementu (read-only, bez usuwania)
-
-| Wewnętrzna sekcja `/partner`          | Publiczny cel zastany                                                                 | Stan                                         |
-| ------------------------------------- | ------------------------------------------------------------------------------------- | -------------------------------------------- |
-| Program overview / `ProviderHomeView` | `/become-partner`                                                                     | `CEL_ISTNIEJE`                               |
-| Benefits / `ValueCardsSection`        | `/become-partner` (komponent użyty wprost)                                            | `CEL_ISTNIEJE`                               |
-| Stories / `BetaSuccessStories`        | —                                                                                     | `BRAK_CELU_RETIREMENTU`                      |
-| Tiers + calculator                    | `/become-partner`; `/partner/pricing` przekierowuje do `#commercial-framework`        | `CEL_ISTNIEJE_Z_OGRANICZENIEM_ECONOMICS_OFF` |
-| Onboarding + contact                  | `/become-partner/apply` tylko dla aplikacji; brak publicznego odpowiednika obu sekcji | `BRAK_CELU_RETIREMENTU_CZĘŚCIOWY`            |
-| Academy                               | —                                                                                     | `BRAK_CELU_RETIREMENTU`                      |
-| Resources                             | `/become-partner` (`FooterResourcesSection`)                                          | `CEL_ISTNIEJE`                               |
-| FAQ                                   | `/become-partner` (`FAQSection`)                                                      | `CEL_ISTNIEJE`                               |
-
-Komponentów nie usunięto. `BecomePartnerView.tsx` importuje publikowalne sekcje
-z `ProviderHomeView.tsx`; formularz faktycznie żyje na
-`/become-partner/apply`. Rozjazdu D8 `/partner/apply` nie skorygowano, ponieważ
-Z11 zabrania zmiany gramatyki tras.
-
-## STOP-y komercyjne i zakresowe
-
-- `PAR-Q-001` — finalny harmonogram komercyjny: `OPEN_UNRECONCILED`.
-- `PAR-Q-002` — publikowalne referencje: `OPEN_UNRECONCILED`.
-- `PAR-Q-003` — granica żywych capability: `OPEN_UNRECONCILED`.
-- `PAR-Q-005` — finalna hierarchia informacji: `OPEN_UNRECONCILED`.
-- P.3: brak publicznego celu dla Stories, Academy oraz pełnej treści
-  Onboarding/Contact; zgodnie z instrukcją nie kasowano treści bez adresu.
-- P.6: `POZA_ZAKRESEM_DO_DECYZJI`; nie przebudowano listy klientów.
-
-`PAR-Q-004` uznano za nadpisane przez późniejsze D8; nie jest STOP-em.
-
-## Testy, zasięg i dowody wizualne
-
-ZASIĘG: `NIE DOTYCZY DLA RUNTIME / RAPORT-ONLY`.
-
-Nie zmieniono kodu, testów, tłumaczeń ani handlerów, dlatego nie uruchamiano
-testów deklarowanych jako dowód implementacji i nie wytwarzano zrzutów
-„after”. Uruchomienie testów nie mogłoby zmienić faktu, że P.1 jest zablokowane
-na poziomie kontraktu. Brak zrzutów jest jawny: cztery wymagane stany pozostają
-`NIE_WYKONANO_PO_STOP`, a pozycje wizualne nie są przedstawiane jako ukończone.
-
-## Ryzyka i następne zamknięcie
-
-1. Przepięcie na strict V8 bez decyzji o migracji historycznych unbound rekordów
-   może wyrzucić realnie podłączonych użytkowników z pulpitu.
-2. Użycie `program/status` jako connection splata dwie role sygnałów zakazane
-   przez D8 i dodatkowo wiąże bramkę z polityką ekonomii.
-3. Użycie connect-writera do odczytu grozi mutacją oraz nie daje uczciwego
-   `connected:false` przy wyłączonym self-connect.
-4. Retirement jest niepełny bez decyzji o publicznym celu dla Stories, Academy
-   i części Onboarding/Contact.
-5. Po decyzji technicznej nadal wymagane są: cztery testy zachowania, negatyw
-   tenanta, light/dark PL dla czterech stanów, pomiar konsumentów i odbiór
-   wizualny nadzorcy. Bramka pozostaje `OWNER_PENDING`; brak release authority.
+1. DRY-RUN backfillu na jawnie autoryzowanej disposable DB: liczniki legacy/strict i pełna lista wyjątków; APPLY wymaga osobnej zgody.
+2. Decyzja, czy wolno zmienić kontrakt testów i18n, aby domknąć P.5.
+3. Bezpieczna persona/fixture runtime i dowody 4 stany × light/dark PL.
+4. Naprawa zastanego szerokiego suite wymaga osobnego zakresu; brak release authority.
