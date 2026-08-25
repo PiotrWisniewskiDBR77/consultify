@@ -121,3 +121,20 @@ Stan programu Admin: 56/56 ekranów rozstrzygniętych (51 podłączonych
 funkcjonalnie + 2 uczciwe szkielety wg DEC-19 + 3 dostarczone w dniu 2);
 pozostaje odbiór wizualny modułu przez właściciela (bramka wyglądu) oraz
 otwarte MUST-05/07/08/11 przed fazą 3.
+
+## Odbiór dnia 4 Codexa — PODPIS warstwy 3 (2026-08-25, Fable)
+
+Werdykt: **PRZYJĘTE W CAŁOŚCI po naprawach — najczystszy dyżur programu.**
+Warstwa 1: ACCEPT (zero naruszeń Z1–Z18; zero regresji udowodnione HEAD↔BASE).
+Warstwa 2: 6/6 przepływów OK (strażnik realnie blokuje wstrzyknięty ResultsHub;
+stale-query czyste; cold readback Results+Finance; niemutowalność APPROVED;
+tenant 404 na warstwie sieci). FIX-1..6 wykonane (strażnik wpięty w pre-commit
++ CI z dowodem blokady commita; override'y tylko NODE_ENV=test; baner próbki na
+karcie ROI; deep-link clear-stale; importy; FIX-6a — kontrakt widoczności
+przepisany, R.4–R.7 odblokowane → pakiet dzień 8). Gałęzie day4+fixes scalone.
+
+ZNALEZISKO SYSTEMOWE (TRI-MUST-16): core.hooksPath nie był skonfigurowany
+nigdzie — .husky/pre-commit (w tym check-list-canon) NIGDY nie odpalał się
+przy realnych commitach. Naprawione: hooksPath ustawiony we wspólnej
+konfiguracji repo (obowiązuje wszystkie worktree'y). Konsekwencja: historyczna
+„ochrona pre-commit" była iluzją — strażniki działały tylko wywoływane ręcznie.
