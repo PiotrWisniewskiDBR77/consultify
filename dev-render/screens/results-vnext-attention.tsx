@@ -30,6 +30,19 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
 import { ResultsAttentionPage } from '../../src/components/ResultsVNext/attention/ResultsAttentionPage';
 import { Api } from '../../src/services/api';
+import { OrganizationApi } from '../../src/services/api/organizations.api';
+import { useAppStore } from '../../src/store/useAppStore';
+
+// night-fixes-a P0 #4 (2026-08-26, NIGHT_SWEEP_A_REPORT_20260826.md): the
+// page now resolves every `*UserId` to a real member name via
+// `OrganizationApi.getOrganizationMembers(currentOrganization.id)` — stub
+// both so the harness renders the REAL id->name resolution, not a
+// same-as-before "fetch fails, falls back to short id" no-op.
+useAppStore.setState({ currentOrganization: { id: 'org-demo', name: 'Firma Demo Sp. z o.o.' } });
+OrganizationApi.getOrganizationMembers = (async () => [
+  { userId: 'user-anna', email: 'anna.kowalska@firma-demo.pl', name: 'Anna Kowalska', role: 'member', status: 'active' },
+  { userId: 'user-marek', email: 'marek.nowak@firma-demo.pl', name: 'Marek Nowak', role: 'member', status: 'active' },
+]) as typeof OrganizationApi.getOrganizationMembers;
 
 const params = new URLSearchParams(window.location.search);
 const flagOff = params.get('ff') === 'off';

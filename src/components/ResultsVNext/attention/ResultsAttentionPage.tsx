@@ -49,6 +49,8 @@ import {
 } from '@/components/standard';
 import { PREVIEW_PANE_WIDTH } from '@/components/shared/PreviewPane/previewGeometry';
 import { ROUTES } from '@/routes/routeConfig';
+import { OrganizationApi } from '@/services/api/organizations.api';
+import { useAppStore } from '@/store/useAppStore';
 
 import { isResultsVNextFlagEnabled } from '../resultsVNextFeatureFlags';
 import {
@@ -78,6 +80,40 @@ export const ResultsAttentionPage: React.FC = () => {
 
   const enabled = isResultsVNextFlagEnabled('kpiRegistry') && isResultsVNextFlagEnabled('okrRegistry');
 
+  // 2026-08-26 night-fixes-a P0 (NIGHT_SWEEP_A_REPORT_20260826.md #4): every
+  // `*UserId` field in the KPI/OKR attention read-models is a raw id — this
+  // resolves it to the org member's real name, same id->name convention
+  // `useMentionAutocomplete` already uses (real, already-existing
+  // `/organizations/:id/members` endpoint — no server change, no invented
+  // data; unresolved ids — e.g. a deactivated account — still fall back to
+  // the short id honestly).
+  const currentOrganization = useAppStore((s) => s.currentOrganization);
+  const [memberNameById, setMemberNameById] = useState<Record<string, string>>({});
+  useEffect(() => {
+    if (!currentOrganization?.id) return;
+    let cancelled = false;
+    OrganizationApi.getOrganizationMembers(currentOrganization.id)
+      .then((members) => {
+        if (cancelled) return;
+        const map: Record<string, string> = {};
+        members.forEach((m) => {
+          const label = (m.name && m.name.trim()) || m.email || m.userId;
+          if (label) map[m.userId] = label;
+        });
+        setMemberNameById(map);
+      })
+      .catch(() => {
+        if (!cancelled) setMemberNameById({});
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [currentOrganization?.id]);
+  const resolveMemberName = useCallback(
+    (userId: string) => memberNameById[userId] || null,
+    [memberNameById]
+  );
+
   const [source, setSource] = useState<SourceTab>('kpi');
 
   const [kpiDto, setKpiDto] = useState<OrganizationKpiAttentionDto | null>(null);
@@ -92,8 +128,14 @@ export const ResultsAttentionPage: React.FC = () => {
   const [teamHealthLoading, setTeamHealthLoading] = useState(false);
   const [teamHealthError, setTeamHealthError] = useState<string | null>(null);
 
-  const kpiBuckets = useMemo(() => buildKpiAttentionBuckets(isPolish), [isPolish]);
-  const okrBuckets = useMemo(() => buildOkrAttentionBuckets(isPolish), [isPolish]);
+  const kpiBuckets = useMemo(
+    () => buildKpiAttentionBuckets(isPolish, resolveMemberName),
+    [isPolish, resolveMemberName]
+  );
+  const okrBuckets = useMemo(
+    () => buildOkrAttentionBuckets(isPolish, resolveMemberName),
+    [isPolish, resolveMemberName]
+  );
 
   const [kpiBucketId, setKpiBucketId] = useState<string>(kpiBuckets[0]?.id ?? '');
   const [okrBucketId, setOkrBucketId] = useState<string>(okrBuckets[0]?.id ?? '');
@@ -252,6 +294,7 @@ export const ResultsAttentionPage: React.FC = () => {
                   onClose: () => setSelectedRowId(null),
                   onOpenKpi,
                   onOpenOkrSet,
+                  resolveMemberName,
                 })}
               />
             </aside>

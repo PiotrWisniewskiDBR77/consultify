@@ -76,6 +76,43 @@ function shortIdCol(id: string, label: string, width: string): TableColumn {
   };
 }
 
+/**
+ * 2026-08-26 night-fixes-a P0 (NIGHT_SWEEP_A_REPORT_20260826.md #4): every
+ * `*UserId` field in these read-models is a raw id (`user-anna-kowals…`) —
+ * the SAME "surowe id zamiast nazwy" gap the report flags across Results.
+ * `resolveMemberName` is the SAME id->displayName map
+ * `ResultsAttentionPage.tsx` already loads from the org's REAL member list
+ * (`OrganizationApi.getOrganizationMembers`, already-fetched data — no new
+ * server endpoint), following the app's existing id->label resolver
+ * convention (`useMentionAutocomplete`'s member pool). Falls back to the
+ * short id, honestly, when a member isn't found (e.g. deactivated account)
+ * instead of inventing a name.
+ */
+export type MemberNameResolver = (userId: string) => string | null;
+
+function userCol(
+  id: string,
+  label: string,
+  width: string,
+  resolveMemberName: MemberNameResolver
+): TableColumn {
+  return {
+    id,
+    label,
+    width,
+    render: (row: Record<string, unknown>) => {
+      const userId = row[id] as string | null | undefined;
+      if (!userId) return <span className="text-sm text-c-text">—</span>;
+      const name = resolveMemberName(userId);
+      return (
+        <span className="text-sm text-c-text" title={userId}>
+          {name || shortId(userId)}
+        </span>
+      );
+    },
+  };
+}
+
 function boolCol(id: string, label: string, width: string, isPolish: boolean): TableColumn {
   return {
     id,
@@ -144,25 +181,49 @@ export const OKR_ATTENTION_BUCKETS: readonly AttentionBucketDef[] = [
  * (`id`/`labelPl`/`labelEn`/`openKind`/`openIdField`) — `columns` is always
  * `[]` there and rebuilt per language through `rebuildColumns` below, the
  * ONE place every bucket's real column list is defined. */
-export function buildKpiAttentionBuckets(isPolish: boolean): AttentionBucketDef[] {
-  return KPI_ATTENTION_BUCKETS.map((b) => ({ ...b, columns: rebuildColumns(b.id, 'kpi', isPolish) }));
+export function buildKpiAttentionBuckets(
+  isPolish: boolean,
+  resolveMemberName: MemberNameResolver
+): AttentionBucketDef[] {
+  return KPI_ATTENTION_BUCKETS.map((b) => ({
+    ...b,
+    columns: rebuildColumns(b.id, 'kpi', isPolish, resolveMemberName),
+  }));
 }
 
-export function buildOkrAttentionBuckets(isPolish: boolean): AttentionBucketDef[] {
-  return OKR_ATTENTION_BUCKETS.map((b) => ({ ...b, columns: rebuildColumns(b.id, 'okr', isPolish) }));
+export function buildOkrAttentionBuckets(
+  isPolish: boolean,
+  resolveMemberName: MemberNameResolver
+): AttentionBucketDef[] {
+  return OKR_ATTENTION_BUCKETS.map((b) => ({
+    ...b,
+    columns: rebuildColumns(b.id, 'okr', isPolish, resolveMemberName),
+  }));
 }
 
-function rebuildColumns(bucketId: string, source: AttentionSourceDomain, isPolish: boolean): TableColumn[] {
+function rebuildColumns(
+  bucketId: string,
+  source: AttentionSourceDomain,
+  isPolish: boolean,
+  resolveMemberName: MemberNameResolver
+): TableColumn[] {
   const t = (pl: string, en: string) => (isPolish ? pl : en);
   if (source === 'kpi') {
     switch (bucketId) {
       case 'missingOwnership':
-        return [shortIdCol('kpiId', 'KPI ID', '180px'), textCol('kpiCode', t('Kod KPI', 'KPI code'), '200px')];
+        // 2026-08-26 night-fixes-a P0 #4: the server read-model
+        // (`KpiAttentionMissingOwnershipRow`) truly has only `kpiId`/
+        // `kpiCode` — no title, owner, trend or severity field exists to
+        // show (this bucket's whole point is "no owner assigned", so there
+        // is no owner to resolve either). The raw `kpiId` duplicated the
+        // already-readable `kpiCode` identifying the SAME KPI — dropped so
+        // the default Attention view isn't fronted by a bare id column.
+        return [textCol('kpiCode', t('Kod KPI', 'KPI code'), '220px')];
       case 'overdueObligations':
         return [
           shortIdCol('obligationId', t('ID obowiązku', 'Obligation ID'), '150px'),
           shortIdCol('kpiId', 'KPI ID', '150px'),
-          shortIdCol('assigneeUserId', t('Przypisano', 'Assignee'), '150px'),
+          userCol('assigneeUserId', t('Przypisano', 'Assignee'), '170px', resolveMemberName),
           textCol('obligationType', t('Typ', 'Type'), '150px'),
           textCol('dueAt', t('Termin', 'Due'), '170px'),
         ];
@@ -182,7 +243,7 @@ function rebuildColumns(bucketId: string, source: AttentionSourceDomain, isPolis
         ];
       case 'ownerLoad':
         return [
-          shortIdCol('ownerUserId', t('Właściciel', 'Owner'), '180px'),
+          userCol('ownerUserId', t('Właściciel', 'Owner'), '200px', resolveMemberName),
           numberCol('activeKpiCount', t('Aktywne KPI', 'Active KPIs'), '140px'),
           numberCol('openDeviationCaseCount', t('Otwarte odchylenia', 'Open deviation cases'), '170px'),
         ];
@@ -221,7 +282,7 @@ function rebuildColumns(bucketId: string, source: AttentionSourceDomain, isPolis
       return [
         shortIdCol('requestId', t('ID prośby', 'Request ID'), '150px'),
         shortIdCol('objectiveId', t('ID celu', 'Objective ID'), '150px'),
-        shortIdCol('assignedToUserId', t('Przypisano', 'Assigned to'), '150px'),
+        userCol('assignedToUserId', t('Przypisano', 'Assigned to'), '170px', resolveMemberName),
         textCol('status', 'Status', '130px'),
       ];
     case 'openBlockers':
@@ -344,6 +405,11 @@ export interface AttentionRowPreviewCtx {
   onClose: () => void;
   onOpenKpi: (kpiId: string) => void;
   onOpenOkrSet: (setId: string) => void;
+  /** Same resolver as `userCol` — the preview's property list reads raw row
+   * values directly (bypassing each column's own `render`), so `*UserId`
+   * fields need the SAME id->name resolution here or the panel would
+   * re-expose the raw id the table column just hid. */
+  resolveMemberName: MemberNameResolver;
 }
 
 export function buildAttentionRowPreview(
@@ -362,7 +428,11 @@ export function buildAttentionRowPreview(
       properties: ctx.columns.map((col) => ({
         id: col.id,
         label: col.label,
-        value: formatPreviewValue(row[col.id]),
+        value: col.id.endsWith('UserId')
+          ? formatPreviewValue(
+              row[col.id] ? ctx.resolveMemberName(String(row[col.id])) || row[col.id] : row[col.id]
+            )
+          : formatPreviewValue(row[col.id]),
       })),
     },
     ai: { hints: [], disabled: true, disabledTooltip: t('Wkrótce', 'Coming soon') },
