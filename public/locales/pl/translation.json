@@ -37380,5 +37380,55 @@
     "executiveModuleShell": {
       "resizeElementInspector": "Zmień szerokość panelu inspektora"
     }
+  },
+  "vault": {
+    "safes": {
+      "loadError": "Nie udało się załadować sejfów",
+      "name": "Nazwa",
+      "scope": "Zakres",
+      "documents": "Dokumenty",
+      "size": "Rozmiar",
+      "inAiKnowledge": "W wiedzy AI",
+      "indexingErrors": "Błędy indeksowania",
+      "indexingErrorsCount": "{{count}} błąd(y)",
+      "lastModified": "Ostatnia zmiana",
+      "emptyTitle": "Brak sejfów",
+      "rowOpen": "Otwórz"
+    },
+    "folders": {
+      "loadFailed": "Nie udało się pobrać folderów",
+      "newFolder": "Nowy folder",
+      "scope": {
+        "mine": "Mój",
+        "organization": "Organizacji",
+        "project": "Projektu"
+      },
+      "columns": {
+        "name": "Nazwa",
+        "scope": "Zakres",
+        "documents": "Dokumenty",
+        "updatedAt": "Ostatnia zmiana"
+      },
+      "menu": {
+        "open": "Otwórz",
+        "rename": "Zmień nazwę",
+        "delete": "Usuń"
+      },
+      "empty": {
+        "title": "Brak folderów",
+        "description": "Foldery porządkują dokumenty przed otwarciem sejfu."
+      },
+      "rename": {
+        "title": "Zmień nazwę folderu",
+        "save": "Zapisz",
+        "fieldLabel": "Nazwa folderu"
+      },
+      "deleteConfirm": {
+        "title": "Usunąć folder?",
+        "description": "Dokumenty pozostaną w sejfie i zostaną odpięte od folderu.",
+        "confirm": "Usuń",
+        "cancel": "Anuluj"
+      }
+    }
   }
 }

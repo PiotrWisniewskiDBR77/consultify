@@ -79,51 +79,47 @@ export const VaultFoldersTable: React.FC<{ onOpenFolder: (folder: FolderRow) => 
       setError(
         cause instanceof Error
           ? cause.message
-          : pl
-            ? 'Nie udało się pobrać folderów'
-            : 'Failed to load folders'
+          : t('vault.folders.loadFailed', 'Nie udało się pobrać folderów')
       );
     } finally {
       setLoading(false);
     }
-  }, [pl]);
+  }, [t]);
   useEffect(() => {
     void load();
   }, [load]);
 
   const scopeLabel = (row: FolderRow) =>
     row.scope === 'user'
-      ? pl
-        ? 'Mój'
-        : 'Mine'
+      ? t('vault.folders.scope.mine', 'Mój')
       : row.scope === 'organization'
-        ? pl
-          ? 'Organizacji'
-          : 'Organization'
-        : `${pl ? 'Projektu' : 'Project'}${row.projectName ? ` · ${row.projectName}` : ''}`;
+        ? t('vault.folders.scope.organization', 'Organizacji')
+        : `${t('vault.folders.scope.project', 'Projektu')}${row.projectName ? ` · ${row.projectName}` : ''}`;
   const columns = useMemo<TableColumn[]>(
     () => [
-      { id: 'name', label: pl ? 'Nazwa' : 'Name', sortable: true },
+      { id: 'name', label: t('vault.folders.columns.name', 'Nazwa'), sortable: true },
       {
         id: 'scope',
-        label: pl ? 'Zakres' : 'Scope',
+        label: t('vault.folders.columns.scope', 'Zakres'),
         sortable: true,
         sortAccessor: (row) => scopeLabel(row as FolderRow),
         render: (row) => <span>{scopeLabel(row as FolderRow)}</span>,
       },
       {
         id: 'documentCount',
-        label: pl ? 'Dokumenty' : 'Documents',
+        label: t('vault.folders.columns.documents', 'Dokumenty'),
         sortable: true,
         render: (row) => (
-          <span aria-label={`${pl ? 'Dokumenty' : 'Documents'}: ${Number(row.documentCount) || 0}`}>
+          <span
+            aria-label={`${t('vault.folders.columns.documents', 'Dokumenty')}: ${Number(row.documentCount) || 0}`}
+          >
             {Number(row.documentCount) || 0}
           </span>
         ),
       },
       {
         id: 'updatedAt',
-        label: pl ? 'Ostatnia zmiana' : 'Last modified',
+        label: t('vault.folders.columns.updatedAt', 'Ostatnia zmiana'),
         sortable: true,
         render: (row) => (
           <span>
@@ -134,7 +130,7 @@ export const VaultFoldersTable: React.FC<{ onOpenFolder: (folder: FolderRow) => 
         ),
       },
     ],
-    [pl]
+    [t, pl]
   );
 
   const create = async (input: FolderCreateSubmitInput) => {
@@ -157,7 +153,7 @@ export const VaultFoldersTable: React.FC<{ onOpenFolder: (folder: FolderRow) => 
           className="inline-flex items-center gap-2 rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text"
         >
           <Plus size={14} />
-          {pl ? 'Nowy folder' : 'New folder'}
+          {t('vault.folders.newFolder', 'Nowy folder')}
         </button>
       </div>
       <StandardTable
@@ -171,12 +167,12 @@ export const VaultFoldersTable: React.FC<{ onOpenFolder: (folder: FolderRow) => 
           primary: [
             {
               id: 'open',
-              label: pl ? 'Otwórz' : 'Open',
+              label: t('vault.folders.menu.open', 'Otwórz'),
               onClick: () => onOpenFolder(row as FolderRow),
             },
             {
               id: 'rename',
-              label: pl ? 'Zmień nazwę' : 'Rename',
+              label: t('vault.folders.menu.rename', 'Zmień nazwę'),
               onClick: () => {
                 setEditing(row as FolderRow);
                 setEditName(String(row.name));
@@ -184,16 +180,17 @@ export const VaultFoldersTable: React.FC<{ onOpenFolder: (folder: FolderRow) => 
             },
           ],
           destructive: {
-            label: pl ? 'Usuń' : 'Delete',
+            label: t('vault.folders.menu.delete', 'Usuń'),
             onClick: () => setDeleting(row as FolderRow),
           },
         })}
         empty={{
           icon: FolderKanban,
-          title: pl ? 'Brak folderów' : 'No folders',
-          description: pl
-            ? 'Foldery porządkują dokumenty przed otwarciem sejfu.'
-            : 'Folders organize documents before opening a safe.',
+          title: t('vault.folders.empty.title', 'Brak folderów'),
+          description: t(
+            'vault.folders.empty.description',
+            'Foldery porządkują dokumenty przed otwarciem sejfu.'
+          ),
         }}
         defaultSort={{ columnId: 'name', direction: 'asc' }}
         persistKey="vault.folders.list"
@@ -208,7 +205,7 @@ export const VaultFoldersTable: React.FC<{ onOpenFolder: (folder: FolderRow) => 
       <Modal
         open={Boolean(editing)}
         onClose={() => setEditing(null)}
-        title={pl ? 'Zmień nazwę folderu' : 'Rename folder'}
+        title={t('vault.folders.rename.title', 'Zmień nazwę folderu')}
         footer={
           <button
             type="button"
@@ -226,12 +223,12 @@ export const VaultFoldersTable: React.FC<{ onOpenFolder: (folder: FolderRow) => 
               }
             }}
           >
-            {pl ? 'Zapisz' : 'Save'}
+            {t('vault.folders.rename.save', 'Zapisz')}
           </button>
         }
       >
         <input
-          aria-label={pl ? 'Nazwa folderu' : 'Folder name'}
+          aria-label={t('vault.folders.rename.fieldLabel', 'Nazwa folderu')}
           value={editName}
           onChange={(event) => setEditName(event.target.value)}
           className="w-full rounded-lg border border-c-border bg-c-surface p-2 text-c-text"
@@ -247,14 +244,13 @@ export const VaultFoldersTable: React.FC<{ onOpenFolder: (folder: FolderRow) => 
             await load();
           });
         }}
-        title={pl ? 'Usunąć folder?' : 'Delete folder?'}
-        description={
-          pl
-            ? 'Dokumenty pozostaną w sejfie i zostaną odpięte od folderu.'
-            : 'Documents remain in the safe and are detached from the folder.'
-        }
-        confirmLabel={pl ? 'Usuń' : 'Delete'}
-        cancelLabel={pl ? 'Anuluj' : 'Cancel'}
+        title={t('vault.folders.deleteConfirm.title', 'Usunąć folder?')}
+        description={t(
+          'vault.folders.deleteConfirm.description',
+          'Dokumenty pozostaną w sejfie i zostaną odpięte od folderu.'
+        )}
+        confirmLabel={t('vault.folders.deleteConfirm.confirm', 'Usuń')}
+        cancelLabel={t('vault.folders.deleteConfirm.cancel', 'Anuluj')}
         variant="danger"
       />
     </div>

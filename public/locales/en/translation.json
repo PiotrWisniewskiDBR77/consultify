@@ -36217,5 +36217,55 @@
     "executiveModuleShell": {
       "resizeElementInspector": "Resize element inspector"
     }
+  },
+  "vault": {
+    "safes": {
+      "loadError": "Failed to load vault safes",
+      "name": "Name",
+      "scope": "Scope",
+      "documents": "Documents",
+      "size": "Size",
+      "inAiKnowledge": "In AI knowledge",
+      "indexingErrors": "Indexing errors",
+      "indexingErrorsCount": "{{count}} error(s)",
+      "lastModified": "Last modified",
+      "emptyTitle": "No safes yet",
+      "rowOpen": "Open"
+    },
+    "folders": {
+      "loadFailed": "Failed to load folders",
+      "newFolder": "New folder",
+      "scope": {
+        "mine": "Mine",
+        "organization": "Organization",
+        "project": "Project"
+      },
+      "columns": {
+        "name": "Name",
+        "scope": "Scope",
+        "documents": "Documents",
+        "updatedAt": "Last modified"
+      },
+      "menu": {
+        "open": "Open",
+        "rename": "Rename",
+        "delete": "Delete"
+      },
+      "empty": {
+        "title": "No folders",
+        "description": "Folders organize documents before opening a safe."
+      },
+      "rename": {
+        "title": "Rename folder",
+        "save": "Save",
+        "fieldLabel": "Folder name"
+      },
+      "deleteConfirm": {
+        "title": "Delete folder?",
+        "description": "Documents remain in the safe and are detached from the folder.",
+        "confirm": "Delete",
+        "cancel": "Cancel"
+      }
+    }
   }
 }
