@@ -15,14 +15,19 @@
  */
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { InterviewHub } from '@/components/Interview/InterviewHub';
 import { SplitLayout } from '@/components/layout/SplitLayout';
 import { AppView } from '@/types';
 
 export const InterviewView: React.FC = () => {
+  const { t } = useTranslation();
   return (
-    <SplitLayout title="Discovery Interview" currentView={AppView.DISCOVERY_CONSULTANT}>
+    <SplitLayout
+      title={t('interview.title', 'Discovery Interview')}
+      currentView={AppView.DISCOVERY_CONSULTANT}
+    >
       <InterviewHub />
     </SplitLayout>
   );

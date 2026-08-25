@@ -5883,7 +5883,13 @@
       "theUserFallback": "the user",
       "linkedSession": "Linked session",
       "sourceUnavailable": "Source unavailable",
-      "sourceUnavailableHint": "This draft stores a source reference ({{id}}), but the source insight can no longer be opened."
+      "sourceUnavailableHint": "This draft stores a source reference ({{id}}), but the source insight can no longer be opened.",
+      "inbox": "Inbox",
+      "reassignOnlyBeforeStart": "Reassignment is available only before the interview starts.",
+      "sessionCreateMissingId": "Interview session create response did not include an id",
+      "sessionCreateNotInList": "Created interview session was not returned by the canonical sessions list",
+      "sessionNotFound": "Session not found",
+      "failedToLoadSessionGeneric": "Failed to load session"
     },
     "insightViewer": {
       "panelResults": "Results",
@@ -6609,7 +6615,8 @@
       "runtimeModeLabel": {
         "one_question_per_screen": "One question per screen",
         "task_list": "Question list"
-      }
+      },
+      "upload": "Upload"
     },
     "workspace": {
       "clarifyKeyAnswers": "Clarify key answers",
@@ -6765,7 +6772,10 @@
       "decisionRecordId": "Decision record ID",
       "returnReason": "Reason",
       "property": "Property",
-      "value": "Value"
+      "value": "Value",
+      "approved": "Approved",
+      "sentBack": "Sent back",
+      "dedicatedQuestionWorkspace": "Question workspace"
     },
     "categorySidebar": {
       "completed": "Completed",
@@ -7079,7 +7089,8 @@
       "linkedColon": "Linked: {{title}}",
       "transcriptAdded": "Transcript added.",
       "requiredQuestionsUnanswered": "{{count}} required questions unanswered",
-      "previousVersionCount": "Previous version ({{count}})"
+      "previousVersionCount": "Previous version ({{count}})",
+      "link": "Link"
     },
     "questionsList": {
       "failedToSavePleaseTry": "Failed to save. Please try again.",
@@ -7200,7 +7211,12 @@
       "openTemplate": "Open template",
       "publishedVersionChanged": "This template version changed. Availability was refreshed; review the pinned version and retry.",
       "assignmentChangedOnRetry": "This assignment changed while it was being retried. Review the form and retry.",
-      "selectedTemplateNoLongerAvailable": "The previously selected template is no longer assignable. Select another published version; the rest of your form is preserved."
+      "selectedTemplateNoLongerAvailable": "The previously selected template is no longer assignable. Select another published version; the rest of your form is preserved.",
+      "selectOneUserForReassignment": "Select one new assignee",
+      "reassigned": "Interview reassigned",
+      "reassignInterview": "Reassign interview",
+      "selectNewAssignee": "Select one new assignee and preserve this assignment.",
+      "templateHasNoPublishedVersion": "The selected template has no published version. Publish it before assigning."
     },
     "newSessionModal": {
       "pleaseSelectATemplate": "Please select a template",
@@ -7393,7 +7409,8 @@
       "expand": "Expand",
       "collapse": "Collapse",
       "copyDetails": "Copy details"
-    }
+    },
+    "defaultSessionName": "Interview Session"
   },
   "assessment": {
     "hub": {

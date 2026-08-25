@@ -2175,7 +2175,7 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
                 <StyledCheck checked={isSelected} />
                 <div className="flex-1 min-w-0">
                   <div className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
-                    {session.name || 'Interview Session'}
+                    {session.name || t('interview.defaultSessionName', 'Interview Session')}
                     <span className="ml-2 font-normal text-slate-500">
                       {session.answeredQuestions}/{session.totalQuestions}{' '}
                       {t('interview.insightCreatorModal.questions')}

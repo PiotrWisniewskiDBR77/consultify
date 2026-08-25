@@ -1396,7 +1396,8 @@
     "superAdmin": "SuperAdmin",
     "portfolioRoadmap": "Portfolio i Roadmapa",
     "mcpIris": "MCP IRIS",
-    "mcpMarketplace": "MCP Marketplace"
+    "mcpMarketplace": "MCP Marketplace",
+    "agentPlan": "Uruchom agenta"
   },
   "widgets": {
     "help": {
@@ -2490,7 +2491,9 @@
       "lineageOrganization": "Organizacja",
       "lineageUpdated": "Zaktualizowano",
       "lineageSourceStatus": "Status źródła",
-      "lineageInitiative": "Inicjatywa"
+      "lineageInitiative": "Inicjatywa",
+      "possibleDuplicate": "Możliwy duplikat ({{count}})",
+      "possibleDuplicateHint": "Istnieje inny element o tym samym tytule, sekcji i źródle — sprawdź, czy to nie duplikat."
     },
     "notificationDetail": {
       "toastError": "Nie znaleziono powiadomienia",
@@ -3261,7 +3264,8 @@
       "sourcesAndAssumptions": "Źródła i założenia",
       "sourceArtifact": "Artefakt źródłowy",
       "sourceDocuments": "Dokumenty źródłowe",
-      "sessionsAndNotes": "Sesje, notatki i wnioski"
+      "sessionsAndNotes": "Sesje, notatki i wnioski",
+      "moreActions": "Więcej akcji"
     },
     "taskDetail": {
       "label": "Powiadomienie tylko",
@@ -4780,8 +4784,8 @@
       "failedToRestoreTemplates": "Nie udało się przywrócić",
       "fromSessions": "Z sesji",
       "noSource": "bez źródła",
-      "tools": "Tools",
-      "assessment": "Assessment",
+      "tools": "Narzędzia",
+      "assessment": "Ocena",
       "notExported": "Nigdzie",
       "topInsights": "Najważniejsze insighty",
       "insights2": "Insightów",
@@ -4882,7 +4886,7 @@
       "archiveFirst": "Archiwizuj najpierw",
       "openPreview": "Otwórz podgląd",
       "edit": "Edytuj",
-      "due2": "Due",
+      "due2": "Termin",
       "aiInsight": "Insight AI",
       "exportedToTools": "Wyeksportowano do Tools",
       "failedToExport": "Nie udało się wyeksportować",
@@ -4951,7 +4955,7 @@
       "noAssignments": "Brak przydziałów",
       "couldNotLoadYourInterviews": "Nie udało się załadować wywiadów",
       "degradedMode": "Tryb ograniczony",
-      "assignee3": "Assignee",
+      "assignee3": "Przypisany",
       "project": "Projekt",
       "org": "Organizacja",
       "general": "Ogólne",
@@ -4986,7 +4990,7 @@
       "aiUnavailable": "AI niedostępne",
       "noInsightsPendingReview": "Brak wniosków do przeglądu",
       "findings": "wyników",
-      "crossRole": "cross-role",
+      "crossRole": "różnych ról",
       "divergences": "rozjazdów",
       "inReview2": "Do przeglądu",
       "questionArea": "Obszar pytań",
@@ -5033,14 +5037,14 @@
       "overdue2": "Przeterminowane",
       "completed2": "Ukończone",
       "templateUsage": "Użycie szablonów",
-      "failedToLoadSessionsTry": "Nie udalo sie pobrac sesji. Sprobuj odswiezyc.",
-      "failedToLoadInsightsTry": "Nie udalo sie pobrac wnioskow. Sprobuj odswiezyc.",
-      "failedToLoadInterviewInitiatives": "Nie udalo sie pobrac inicjatyw z wywiadu. Sprobuj odswiezyc.",
+      "failedToLoadSessionsTry": "Nie udało się pobrać sesji. Spróbuj odświeżyć.",
+      "failedToLoadInsightsTry": "Nie udało się pobrać wniosków. Spróbuj odświeżyć.",
+      "failedToLoadInterviewInitiatives": "Nie udało się pobrać inicjatyw z wywiadu. Spróbuj odświeżyć.",
       "noSubmittedAssignmentsToApprove": "Brak przesłanych przydziałów do zatwierdzenia",
       "noSubmittedAssignmentsToSend": "Brak przesłanych przydziałów do zwrotu",
       "assignmentArchived": "Przydział zarchiwizowany",
       "assignmentRestored": "Przydział przywrócony",
-      "failedToLoadInterviewAssignments": "Nie udalo sie pobrac przydzialow wywiadu. Sprobuj odswiezyc.",
+      "failedToLoadInterviewAssignments": "Nie udało się pobrać przydziałów wywiadu. Spróbuj odświeżyć.",
       "createTransformationInitiativesFromInterview": "Stwórz inicjatywy transformacyjne na podstawie materiału z modułu Wywiad. Zachowaj dowody, pewność, ograniczenia oraz governance: propozycja → akceptacja → realizacja → audyt.",
       "startedFromInterviewModuleTransform": "Start z modułu Wywiad: przekształć insighty i obserwacje w zarządzalną listę inicjatyw transformacyjnych.",
       "selectAProjectBeforeCreating": "Wybierz projekt przed utworzeniem sesji",
@@ -5090,7 +5094,7 @@
       "youHaveNoInterviewAssignments": "Nie masz jeszcze żadnych przydzielonych wywiadów.",
       "allInsightsHaveBeenReviewed": "Wszystkie wnioski zostały przejrzane.",
       "areaAll": "Obszar: wszystkie",
-      "runInitiativeWizardWithInterview": "Uruchom kreator inicjatyw z evidence z wywiadow",
+      "runInitiativeWizardWithInterview": "Uruchom kreator inicjatyw z evidence z wywiadów",
       "noPermissionRequestInitiativeCreate": "Brak uprawnien: poproś admina o capability initiative.create lub interview.insight.create.",
       "noDueDate": "Brak terminu",
       "thisCannotBeUndoneThe": "Tej operacji nie można cofnąć. Sesja oraz jej pytania, notatki i dowody zostaną trwale usunięte.",
@@ -5206,7 +5210,13 @@
       "theUserFallback": "użytkownika",
       "linkedSession": "Powiązana sesja",
       "sourceUnavailable": "Źródło niedostępne",
-      "sourceUnavailableHint": "Ten szkic ma zapisane odwołanie do źródła ({{id}}), ale tego insightu nie da się już otworzyć."
+      "sourceUnavailableHint": "Ten szkic ma zapisane odwołanie do źródła ({{id}}), ale tego insightu nie da się już otworzyć.",
+      "inbox": "Skrzynka",
+      "reassignOnlyBeforeStart": "Ponowne przypisanie jest możliwe tylko przed rozpoczęciem wywiadu.",
+      "sessionCreateMissingId": "Odpowiedź z utworzeniem sesji wywiadu nie zawierała identyfikatora",
+      "sessionCreateNotInList": "Utworzona sesja wywiadu nie pojawiła się na liście sesji (źródło prawdy)",
+      "sessionNotFound": "Nie znaleziono sesji",
+      "failedToLoadSessionGeneric": "Nie udało się wczytać sesji"
     },
     "insightViewer": {
       "panelResults": "Rezultaty",
@@ -5307,7 +5317,7 @@
       "ev": "dow.",
       "noFindingsWithActiveEvidence": "Brak findingów z aktywną evidencją.",
       "publishHandoffBlockers": "Blokery publish/handoff",
-      "triage": "Triage",
+      "triage": "Przegląd",
       "noEvidenceReadbackBlockersFor": "Brak blokad w evidence/readback dla persisted findings.",
       "contradictions": "Sprzeczności",
       "signals": "Sygnały",
@@ -5386,7 +5396,7 @@
       "activeEvidence": "Aktywne dowody",
       "state": "Stan",
       "auditable": "Audytowalny",
-      "readbackOk": "Readback OK",
+      "readbackOk": "Potwierdzone",
       "challenged": "Zakwestionowane",
       "needsEvidence": "Potrzeba dowodów",
       "unresolved": "Niepotwierdzone",
@@ -5818,17 +5828,17 @@
       "aiBelievesTheSurveyAlready": "AI uznało, że ankieta wygląda już bardzo dobrze",
       "failedToPrepareAiSuggestions": "Nie udało się przygotować sugestii AI",
       "appliedAiSuggestions": "Zastosowano sugestie AI",
-      "draft": "Draft",
-      "published": "Published",
-      "topic": "Topic",
+      "draft": "Szkic",
+      "published": "Opublikowany",
+      "topic": "Temat",
       "eGDigitalMaturityIn": "np. Digital maturity w produkcji",
       "description": "Opis",
       "describeTheSurveyGoalBusiness": "Opisz cel ankiety, kontekst biznesowy, dokładność odpowiedzi i czego AI ma pilnować przy budowie pytań...",
       "thisIsASystemTemplate": "To jest szablon systemowy (tylko do odczytu). Sklonuj go, aby edytować własną kopię.",
       "cloneToEdit": "Klonuj do edycji",
       "library": "Biblioteka",
-      "personal": "Personal",
-      "organization": "Organization",
+      "personal": "Osobista",
+      "organization": "Organizacja",
       "availableAnswerTypes": "Dostępne formy odpowiedzi",
       "areaTags": "Obszary",
       "questionCount": "Liczba pytań",
@@ -5932,7 +5942,8 @@
       "runtimeModeLabel": {
         "one_question_per_screen": "Jedno pytanie na ekran",
         "task_list": "Lista pytań"
-      }
+      },
+      "upload": "Prześlij"
     },
     "workspace": {
       "clarifyKeyAnswers": "Doprecyzuj kluczowe odpowiedzi",
@@ -6088,7 +6099,10 @@
       "decisionRecordId": "ID zapisu decyzji",
       "returnReason": "Powód",
       "property": "Właściwość",
-      "value": "Wartość"
+      "value": "Wartość",
+      "approved": "Zatwierdzono",
+      "sentBack": "Odesłano do poprawek",
+      "dedicatedQuestionWorkspace": "Obszar roboczy pytania"
     },
     "categorySidebar": {
       "completed": "Zakończona",
@@ -6402,7 +6416,8 @@
       "linkedColon": "Powiązano: {{title}}",
       "transcriptAdded": "Transkrypcja dodana.",
       "requiredQuestionsUnanswered": "{{count}} wymaganych pytań bez odpowiedzi",
-      "previousVersionCount": "Poprzednia wersja ({{count}})"
+      "previousVersionCount": "Poprzednia wersja ({{count}})",
+      "link": "Link"
     },
     "questionsList": {
       "failedToSavePleaseTry": "Nie udało się zapisać. Spróbuj ponownie.",
@@ -6523,7 +6538,12 @@
       "openTemplate": "Otwórz szablon",
       "publishedVersionChanged": "Wersja szablonu uległa zmianie. Dostępność została odświeżona; sprawdź przypinaną wersję i spróbuj ponownie.",
       "assignmentChangedOnRetry": "Przydział zmienił się podczas ponawiania. Sprawdź formularz i spróbuj ponownie.",
-      "selectedTemplateNoLongerAvailable": "Poprzednio wybranego szablonu nie można już przydzielić. Wybierz inną opublikowaną wersję; pozostałe dane formularza zostały zachowane."
+      "selectedTemplateNoLongerAvailable": "Poprzednio wybranego szablonu nie można już przydzielić. Wybierz inną opublikowaną wersję; pozostałe dane formularza zostały zachowane.",
+      "selectOneUserForReassignment": "Wybierz jedną nową osobę do przypisania",
+      "reassigned": "Wywiad przypisano ponownie",
+      "reassignInterview": "Przypisz wywiad ponownie",
+      "selectNewAssignee": "Wybierz jedną nową osobę — reszta przydziału zostanie zachowana.",
+      "templateHasNoPublishedVersion": "Wybrany szablon nie ma opublikowanej wersji. Opublikuj go przed przydzieleniem."
     },
     "newSessionModal": {
       "pleaseSelectATemplate": "Wybierz szablon",
@@ -6687,7 +6707,7 @@
       "answers": "Odpowiedzi",
       "started": "Start",
       "lastActivity": "Aktywność",
-      "owner": "Owner",
+      "owner": "Właściciel",
       "collapse": "Zwiń",
       "expand": "Rozwiń",
       "copyStats": "Kopiuj metryki",
@@ -6716,7 +6736,8 @@
       "expand": "Rozwiń",
       "collapse": "Zwiń",
       "copyDetails": "Kopiuj szczegóły"
-    }
+    },
+    "defaultSessionName": "Sesja wywiadu"
   },
   "assessment": {
     "hub": {
@@ -27139,7 +27160,8 @@
       },
       "field": {
         "backToAutoFit": "Wróć do auto-dopasowania"
-      }
+      },
+      "legacyLocalOnlyNotice": "Widok starszego typu: komentarze, alternatywy, ryzyka i notatki na tym ekranie zapisują się wyłącznie w tej przeglądarce — nie na serwerze i nie są udostępniane zespołowi."
     }
   },
   "discovery": {
@@ -30566,7 +30588,8 @@
       "conflictBanner": "Ta strona została zmieniona gdzie indziej. Twoje zmiany nie zostały nadpisane.",
       "conflictReload": "Odśwież",
       "conflictRetry": "Zapisz mimo to",
-      "backToList": "Wszystkie notatki"
+      "backToList": "Wszystkie notatki",
+      "insertBlock": "Wstaw blok"
     },
     "mentionMenu": {
       "ariaLabel": "Wzmiankuj encję",
@@ -30666,7 +30689,51 @@
       "context": "Kontekst",
       "closePanel": "Zamknij panel",
       "ownerYou": "Ty",
-      "receiptUnavailable": "Kontrolki edycji są niedostępne, dopóki serwer nie zwróci trwałego potwierdzenia akcji."
+      "receiptUnavailable": "Kontrolki edycji są niedostępne, dopóki serwer nie zwróci trwałego potwierdzenia akcji.",
+      "label": "Szczegóły i kontekst dokumentu",
+      "views": "Widoki panelu dokumentu",
+      "documentRecord": "Karta dokumentu",
+      "documentRecordDescription": "Właściciel, zarządzanie i informacje o przeglądzie dla tej notatki.",
+      "saveStatus": "Status zapisu",
+      "saving": "Zapisywanie…",
+      "saved": "Zapisano",
+      "offlineQueued": "Offline — zmiany oczekują w kolejce",
+      "conflict": "Zmieniono w innym miejscu — Twoje zmiany pozostają lokalnie",
+      "saveFailed": "Zapis nieudany — zmiany pozostają lokalnie",
+      "noPendingChanges": "Brak oczekujących zmian",
+      "loadTheirs": "Wczytaj ich wersję",
+      "keepMine": "Zachowaj moją wersję",
+      "owner": "Właściciel",
+      "ownerUnavailable": "Tożsamość właściciela niedostępna",
+      "ownerMissing": "Właściciel nieprzypisany",
+      "visibility": "Widoczność",
+      "private": "Prywatne",
+      "project": "Projekt",
+      "verification": "Weryfikacja",
+      "unverified": "Niezweryfikowany",
+      "verified": "Zweryfikowany",
+      "disputed": "Sporny",
+      "review": "Przegląd",
+      "reviewCadence": "Cykliczność przeglądu",
+      "weekly": "Co tydzień",
+      "monthly": "Co miesiąc",
+      "quarterly": "Co kwartał",
+      "neverCadence": "Nigdy",
+      "tagsAndStatus": "Tagi i status",
+      "modified": "Zmodyfikowano",
+      "wordCount": "Liczba słów",
+      "lastReviewed": "Ostatnio sprawdzono",
+      "never": "Nigdy",
+      "markReviewed": "Oznacz jako sprawdzone",
+      "sourceAndNextAction": "Źródło i następny krok",
+      "source": "Źródło",
+      "sourceNotRecorded": "Nie odnotowano",
+      "nextAction": "Następny krok",
+      "verifyDocument": "Zweryfikuj treść dokumentu",
+      "reviewStaleDocument": "Sprawdź nieaktualny dokument",
+      "keepCurrent": "Zachowaj bez zmian do następnego przeglądu",
+      "technicalLineage": "Pochodzenie techniczne",
+      "openTeresa": "Otwórz Teresę"
     },
     "slashMenu": {
       "receiptUnavailable": "Niedostępne, dopóki serwer nie zwróci trwałego potwierdzenia"
@@ -30680,7 +30747,9 @@
       "askAi": "Zapytaj AI",
       "deleteNote": "Usuń notatkę",
       "receiptUnavailable": "Niedostępne, dopóki serwer nie zwróci trwałego potwierdzenia akcji",
-      "convertTo": "Konwertuj na"
+      "convertTo": "Konwertuj na",
+      "versionHistory": "Historia wersji",
+      "connectionGraph": "Graf powiązań"
     },
     "presenceStack": {
       "viewingNow": "{{count}} {{unit}} tu teraz"
@@ -38337,7 +38406,9 @@
   },
   "shared": {
     "executiveModuleShell": {
-      "resizeElementInspector": "Zmień szerokość panelu inspektora"
+      "resizeElementInspector": "Zmień szerokość panelu inspektora",
+      "expandElementInspector": "Rozwiń panel inspektora",
+      "collapseElementInspector": "Zwiń panel inspektora"
     }
   },
   "vault": {

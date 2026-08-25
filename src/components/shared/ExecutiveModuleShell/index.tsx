@@ -645,8 +645,14 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
                 type="button"
                 aria-label={
                   elementInspectorCollapsed
-                    ? 'Expand element inspector'
-                    : 'Collapse element inspector'
+                    ? t(
+                        'shared.executiveModuleShell.expandElementInspector',
+                        'Expand element inspector'
+                      )
+                    : t(
+                        'shared.executiveModuleShell.collapseElementInspector',
+                        'Collapse element inspector'
+                      )
                 }
                 onClick={onElementInspectorToggle}
                 className="absolute right-1 top-1 rounded border border-c-border bg-c-surface-raised px-2 py-1 text-c-text focus-visible:outline-none focus-visible:ring-2 ring-[color:var(--c-focus)]"

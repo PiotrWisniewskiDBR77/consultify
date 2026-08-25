@@ -2581,7 +2581,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                         }`}
                       >
                         <Link2 size={11} />
-                        Link
+                        {t('interview.singleQuestionRuntime.link', 'Link')}
                       </button>
 
                       <button
@@ -2656,7 +2656,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                                   item,
                                   isArtifact
                                     ? t('interview.singleQuestionRuntime.artifact')
-                                    : 'Link'
+                                    : t('interview.singleQuestionRuntime.link', 'Link')
                                 )}
                               </span>
                             </span>
