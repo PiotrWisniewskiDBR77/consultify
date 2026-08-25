@@ -231,20 +231,28 @@ router.post(
       const { id } = req.params;
       const { actionTaken, notes } = req.body;
       const reviewerId = req.user?.id;
+      const organizationId = req.user?.organizationId;
 
       if (!reviewerId) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
+      if (!organizationId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
 
-      await dbRun(
-        `UPDATE ai_feedback SET 
+      const result = await dbRun(
+        `UPDATE ai_feedback SET
           reviewed_by = ?,
           reviewed_at = datetime('now'),
           action_taken = ?,
           review_notes = ?
-        WHERE id = ?`,
-        [reviewerId, actionTaken || null, notes || null, id]
+        WHERE id = ? AND organization_id = ?`,
+        [reviewerId, actionTaken || null, notes || null, id, organizationId]
       );
+
+      if (!result.changes) {
+        return res.status(404).json({ error: 'Feedback not found' });
+      }
 
       res.json({
         success: true,
@@ -330,19 +338,27 @@ router.post(
     try {
       const { id } = req.params;
       const { status } = req.body;
+      const organizationId = req.user?.organizationId;
 
+      if (!organizationId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
       if (!['active', 'applied', 'rejected', 'expired'].includes(status)) {
         return res.status(400).json({ error: 'Invalid status' });
       }
 
-      await dbRun(
-        `UPDATE ai_style_learning_patterns SET 
+      const result = await dbRun(
+        `UPDATE ai_style_learning_patterns SET
           status = ?,
           applied_at = CASE WHEN ? = 'applied' THEN datetime('now') ELSE applied_at END,
           updated_at = datetime('now')
-        WHERE id = ?`,
-        [status, status, id]
+        WHERE id = ? AND organization_id = ?`,
+        [status, status, id, organizationId]
       );
+
+      if (!result.changes) {
+        return res.status(404).json({ error: 'Pattern not found' });
+      }
 
       res.json({
         success: true,

@@ -1,0 +1,25 @@
+import { apiGet } from './api/baseClient';
+export interface AccessReviewPolicy {
+  accessReviewsEnabled: boolean;
+  accessReviewCadenceDays: number;
+}
+export interface PrivilegedMember {
+  userId: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  role: string;
+  status: string;
+}
+export async function getAccessReviewData() {
+  const [p, m] = await Promise.all([
+    apiGet<{ policy: AccessReviewPolicy }>('/admin/iam/policy'),
+    apiGet<{ members: PrivilegedMember[] }>('/admin/people'),
+  ]);
+  return {
+    policy: p.policy,
+    members: (m.members ?? []).filter((x) =>
+      ['OWNER', 'ADMIN'].includes(String(x.role).toUpperCase())
+    ),
+  };
+}

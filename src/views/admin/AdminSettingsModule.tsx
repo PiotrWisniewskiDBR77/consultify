@@ -8,8 +8,28 @@ import { AdminAuditLogPanel } from '../../components/Admin/AdminAuditLogPanel';
 import { AdminBillingFinOpsPanel } from '../../components/Admin/AdminBillingFinOpsPanel';
 import { AdminCapabilityState } from '../../components/Admin/AdminCapabilityState';
 import { AdminCommandCenterPanel } from '../../components/Admin/AdminCommandCenterPanel';
+import { AdminComplianceEvidencePanel } from '../../components/Admin/AdminComplianceEvidencePanel';
 import { AdminHealthPanel } from '../../components/Admin/AdminHealthPanel';
+import { AdminJobsPanel } from '../../components/Admin/AdminJobsPanel';
+import { AdminSlaSloPanel } from '../../components/Admin/AdminSlaSloPanel';
 import { AdminMembersRolesPanel } from '../../components/Admin/AdminMembersRolesPanel';
+import { AdminPlanHistoryPanel } from '../../components/Admin/AdminPlanHistoryPanel';
+import { AdminServiceAccountsPanel } from '../../components/Admin/AdminServiceAccountsPanel';
+import { AdminSecurityAlertsPanel } from '../../components/Admin/AdminSecurityAlertsPanel';
+import { AdminSessionsPanel } from '../../components/Admin/AdminSessionsPanel';
+import { AdminBreakGlassPanel } from '../../components/Admin/AdminBreakGlassPanel';
+import { AdminGuestsPanel } from '../../components/Admin/AdminGuestsPanel';
+import { AdminAccessReviewsPanel } from '../../components/Admin/AdminAccessReviewsPanel';
+import { AdminRolesPermissionsPanel } from '../../components/Admin/AdminRolesPermissionsPanel';
+import { AdminLegalHoldPanel } from '../../components/Admin/AdminLegalHoldPanel';
+import { AdminAuditExportHistoryPanel } from '../../components/Admin/AdminAuditExportHistoryPanel';
+import { AdminAuditIntegrityPanel } from '../../components/Admin/AdminAuditIntegrityPanel';
+import { PersonasPanel } from '../../components/Admin/AI/PersonasPanel';
+import { AdminAiIncidentsPanel } from '../../components/Admin/AdminAiIncidentsPanel';
+import { AdminConfigurationVersionsPanel } from '../../components/Admin/AdminConfigurationVersionsPanel';
+import { AdminOrganizationDefaultsPanel } from '../../components/Admin/AdminOrganizationDefaultsPanel';
+import { AdminSeatsLicencesPanel } from '../../components/Admin/AdminSeatsLicencesPanel';
+import { AdminTeamsPanel } from '../../components/Admin/AdminTeamsPanel';
 import {
   ADMIN_DEFAULTS,
   ADMIN_DOMAINS,
@@ -228,7 +248,10 @@ export function resolveAdminLocation(
   return { domain, screen: ADMIN_DEFAULTS[domain] };
 }
 
-export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initialTab }) => {
+export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
+  initialTab,
+  currentUser,
+}) => {
   const [headerActionsTarget, setHeaderActionsTarget] = useState<HTMLDivElement | null>(null);
   const { t, i18n } = useTranslation();
   const { setCurrentView } = useAppStore();
@@ -301,7 +324,15 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
     const connected =
       resolvedLocation.screen === ADMIN_DEFAULTS[resolvedLocation.domain] ||
       (resolvedLocation.domain === 'team' &&
-        ['members', 'invitations', 'ownership'].includes(resolvedLocation.screen)) ||
+        [
+          'members',
+          'invitations',
+          'ownership',
+          'teams',
+          'guests-external',
+          'access-reviews',
+          'roles-permissions',
+        ].includes(resolvedLocation.screen)) ||
       (resolvedLocation.domain === 'billing' &&
         [
           'plan-limits',
@@ -310,6 +341,8 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
           'invoices',
           'budgets-alerts',
           'billing-details',
+          'plan-history',
+          'seats-licences',
         ].includes(resolvedLocation.screen)) ||
       // Fala 0 (Admin komplet 55): the Command Center's 7 enterprise-compliance
       // tabs (SOC2 audit, DLP, residency, retention, org AI policy, agent
@@ -317,6 +350,10 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
       // — only the "Postawa zgodności" nav slot was missing. Overview stays
       // aggregation-only per FINAL_IMPLEMENTATION_SPEC.md.
       (resolvedLocation.domain === 'command' && resolvedLocation.screen === 'compliance-posture') ||
+      (resolvedLocation.domain === 'command' && resolvedLocation.screen === 'attention-queue') ||
+      (resolvedLocation.domain === 'command' && resolvedLocation.screen === 'cost-capacity') ||
+      (resolvedLocation.domain === 'command' &&
+        resolvedLocation.screen === 'organization-defaults') ||
       // Fala 1 (Admin komplet 55): high-risk-changes and retention-export have
       // no dedicated sub-view — AdminAuditLogPanel (already the `events`
       // default) already renders the high-risk count and the
@@ -324,21 +361,33 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
       // need to stop falling through to AdminCapabilityState.
       (resolvedLocation.domain === 'audit' &&
         ['high-risk-changes', 'retention-export'].includes(resolvedLocation.screen)) ||
+      (resolvedLocation.domain === 'audit' && resolvedLocation.screen === 'compliance-evidence') ||
+      (resolvedLocation.domain === 'audit' && resolvedLocation.screen === 'legal-hold') ||
+      (resolvedLocation.domain === 'audit' && resolvedLocation.screen === 'export-history') ||
+      (resolvedLocation.domain === 'audit' && resolvedLocation.screen === 'integrity') ||
       // Fala 1 (Admin komplet 55): Diagnostics is the same probe UI as the
       // connected `service-status` default (AdminHealthPanel renders both
       // unconditionally) — just missing its own nav slot.
       (resolvedLocation.domain === 'health' && resolvedLocation.screen === 'diagnostics') ||
+      (resolvedLocation.domain === 'health' && resolvedLocation.screen === 'queues-jobs') ||
+      (resolvedLocation.domain === 'health' && resolvedLocation.screen === 'sla-slo') ||
       // Fala 1 (Admin komplet 55): sso/scim-lifecycle/api-access/risk-summary
       // already have working tabs inside AdminSecurityIdentityPanel — see
       // SECURITY_TAB_BY_SCREEN below.
       (resolvedLocation.domain === 'security' &&
         Object.prototype.hasOwnProperty.call(SECURITY_TAB_BY_SCREEN, resolvedLocation.screen)) ||
+      (resolvedLocation.domain === 'security' && resolvedLocation.screen === 'service-accounts') ||
+      (resolvedLocation.domain === 'security' && resolvedLocation.screen === 'security-alerts') ||
+      (resolvedLocation.domain === 'security' && resolvedLocation.screen === 'sessions') ||
+      (resolvedLocation.domain === 'security' && resolvedLocation.screen === 'break-glass') ||
       // Fala 1 (Admin komplet 55): models-providers/ai-limits-budgets/
       // data-privacy/ai-operations/ai-audit already have working tabs inside
       // AIModule (nested under AdminAIControlCenterPanel) — see
       // AI_MODULE_TAB_BY_SCREEN below.
       (resolvedLocation.domain === 'ai' &&
-        Object.prototype.hasOwnProperty.call(AI_MODULE_TAB_BY_SCREEN, resolvedLocation.screen));
+        Object.prototype.hasOwnProperty.call(AI_MODULE_TAB_BY_SCREEN, resolvedLocation.screen)) ||
+      (resolvedLocation.domain === 'ai' &&
+        ['personas', 'ai-incidents', 'configuration-versions'].includes(resolvedLocation.screen));
     if (!connected) {
       return (
         <AdminCapabilityState
@@ -349,12 +398,18 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
     }
     switch (resolvedLocation.domain) {
       case 'team':
+        if (resolvedLocation.screen === 'teams') return <AdminTeamsPanel />;
+        if (resolvedLocation.screen === 'guests-external') return <AdminGuestsPanel />;
+        if (resolvedLocation.screen === 'access-reviews') return <AdminAccessReviewsPanel />;
+        if (resolvedLocation.screen === 'roles-permissions') return <AdminRolesPermissionsPanel />;
         return (
           <AdminMembersRolesPanel
             screen={resolvedLocation.screen as 'members' | 'invitations' | 'ownership'}
           />
         );
       case 'billing':
+        if (resolvedLocation.screen === 'plan-history') return <AdminPlanHistoryPanel />;
+        if (resolvedLocation.screen === 'seats-licences') return <AdminSeatsLicencesPanel />;
         return (
           <AdminBillingFinOpsPanel
             screen={
@@ -386,22 +441,43 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
           />
         );
       case 'ai':
+        if (resolvedLocation.screen === 'personas') return <PersonasPanel />;
+        if (resolvedLocation.screen === 'ai-incidents') return <AdminAiIncidentsPanel />;
+        if (resolvedLocation.screen === 'configuration-versions')
+          return <AdminConfigurationVersionsPanel />;
         return (
           <AdminAIControlCenterPanel
             initialAiModuleTab={AI_MODULE_TAB_BY_SCREEN[resolvedLocation.screen]}
           />
         );
       case 'security':
+        if (resolvedLocation.screen === 'service-accounts') return <AdminServiceAccountsPanel />;
+        if (resolvedLocation.screen === 'security-alerts') return <AdminSecurityAlertsPanel />;
+        if (resolvedLocation.screen === 'sessions') return <AdminSessionsPanel />;
+        if (resolvedLocation.screen === 'break-glass') return <AdminBreakGlassPanel />;
         return (
           <AdminSecurityIdentityPanel
             initialTab={SECURITY_TAB_BY_SCREEN[resolvedLocation.screen]}
           />
         );
       case 'audit':
+        if (resolvedLocation.screen === 'compliance-evidence')
+          return <AdminComplianceEvidencePanel />;
+        if (resolvedLocation.screen === 'legal-hold') return <AdminLegalHoldPanel />;
+        if (resolvedLocation.screen === 'export-history') return <AdminAuditExportHistoryPanel />;
+        if (resolvedLocation.screen === 'integrity') return <AdminAuditIntegrityPanel />;
         return <AdminAuditLogPanel />;
       case 'command':
+        if (resolvedLocation.screen === 'organization-defaults')
+          return <AdminOrganizationDefaultsPanel organizationId={currentUser.organizationId} />;
         return (
           <AdminCommandCenterPanel
+            screen={
+              resolvedLocation.screen === 'attention-queue' ||
+              resolvedLocation.screen === 'cost-capacity'
+                ? resolvedLocation.screen
+                : undefined
+            }
             // Only the Overview screen aggregates signals read-only (per
             // FINAL_IMPLEMENTATION_SPEC.md, Command "aggregates signals
             // only"). Every other Command Center screen (currently just
@@ -417,6 +493,8 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
           />
         );
       case 'health':
+        if (resolvedLocation.screen === 'queues-jobs') return <AdminJobsPanel />;
+        if (resolvedLocation.screen === 'sla-slo') return <AdminSlaSloPanel />;
         return <AdminHealthPanel canRunDiagnostics={CAN_ACCESS_PLATFORM_OPERATIONS} />;
       default:
         return <AdminMembersRolesPanel />;
@@ -424,6 +502,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
   }, [
     resolvedLocation.domain,
     resolvedLocation.screen,
+    currentUser.organizationId,
     handleLocationChange,
     i18n?.language,
     i18n?.resolvedLanguage,

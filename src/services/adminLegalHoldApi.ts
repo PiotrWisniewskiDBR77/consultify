@@ -1,0 +1,7 @@
+import { apiGet } from './api/baseClient';
+export interface LegalHoldState {
+  legalHoldEnabled: boolean;
+  blockedOperations: string[];
+  matterRegistryAvailable: boolean;
+}
+export const getLegalHold = () => apiGet<LegalHoldState>('/admin/legal-hold');

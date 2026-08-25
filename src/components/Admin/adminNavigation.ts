@@ -70,6 +70,7 @@ export type AdminScreen =
   | 'attention-queue'
   | 'compliance-posture'
   | 'cost-capacity'
+  | 'organization-defaults'
   | 'service-status'
   | 'dependencies'
   | 'diagnostics'
@@ -168,6 +169,7 @@ export const ADMIN_DOMAINS: DomainNavigationModule<AdminDomain, AdminScreen>[] =
       c('attention-queue', 'Kolejka uwagi', AlertTriangle),
       c('compliance-posture', 'Postawa zgodności', ShieldCheck),
       c('cost-capacity', 'Koszt i pojemność', Activity),
+      c('organization-defaults', 'Ustawienia domyślne organizacji', SlidersHorizontal),
     ],
   },
   {
@@ -231,6 +233,7 @@ const ADMIN_SCREEN_EN: Partial<Record<AdminScreen, string>> = {
   'quality-evaluations': 'Quality Evaluations',
   'ai-incidents': 'AI Incidents',
   'configuration-versions': 'Configuration Versions',
+  'organization-defaults': 'Organization Defaults',
   'ai-operations': 'AI Operations',
   'ai-audit': 'AI Audit',
   'security-policy': 'Security Policy',

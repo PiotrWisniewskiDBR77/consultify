@@ -186,6 +186,14 @@ router.post(
       return res.status(400).json({ error: 'Team name is required' });
     }
 
+    if (leadId) {
+      const lead = await dbGet<{ id: string }>(
+        'SELECT id FROM users WHERE id = ? AND organization_id = ?',
+        [leadId, orgId]
+      );
+      if (!lead) return res.status(404).json({ error: 'Team lead not found in organization' });
+    }
+
     const id = uuidv4();
     const now = new Date().toISOString();
 
@@ -246,6 +254,14 @@ router.put(
 
     const { name, description, leadId } = req.body;
 
+    if (leadId) {
+      const lead = await dbGet<{ id: string }>(
+        'SELECT id FROM users WHERE id = ? AND organization_id = ?',
+        [leadId, orgId]
+      );
+      if (!lead) return res.status(404).json({ error: 'Team lead not found in organization' });
+    }
+
     const sql = `
         UPDATE teams SET
             name = COALESCE(?, name),
@@ -279,6 +295,15 @@ router.delete(
     const orgId = req.user?.organizationId;
     if (!orgId) {
       return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Prove tenant ownership before touching child rows.
+    const team = await dbGet<{ id: string }>(
+      'SELECT id FROM teams WHERE id = ? AND organization_id = ?',
+      [id, orgId]
+    );
+    if (!team) {
+      return res.status(404).json({ error: 'Team not found' });
     }
 
     // Delete team members first

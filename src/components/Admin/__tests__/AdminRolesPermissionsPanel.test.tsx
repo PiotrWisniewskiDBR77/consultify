@@ -1,0 +1,35 @@
+import { render, screen } from '@testing-library/react';
+import React from 'react';
+import { describe, expect, it, vi } from 'vitest';
+import { getSecurityRoles } from '../../../services/adminRolesApi';
+import { AdminRolesPermissionsPanel } from '../AdminRolesPermissionsPanel';
+vi.mock('../../../services/adminRolesApi', () => ({
+  getSecurityRoles: vi.fn(),
+  createSecurityRole: vi.fn(),
+  updateSecurityRole: vi.fn(),
+  deleteSecurityRole: vi.fn(),
+}));
+describe('AdminRolesPermissionsPanel', () => {
+  it('loads roles', async () => {
+    vi.mocked(getSecurityRoles).mockResolvedValue([
+      { id: 'r1', name: 'Reviewer', permissions: ['read'] },
+    ]);
+    render(<AdminRolesPermissionsPanel />);
+    expect(await screen.findByText('Reviewer')).toBeInTheDocument();
+  });
+  it('shows honest empty state', async () => {
+    vi.mocked(getSecurityRoles).mockResolvedValue([]);
+    render(<AdminRolesPermissionsPanel />);
+    expect(await screen.findByText('Brak ról niestandardowych')).toBeInTheDocument();
+  });
+  it('fails closed for ADMIN 403', async () => {
+    vi.mocked(getSecurityRoles).mockRejectedValue(
+      Object.assign(new Error('PROJECT_ROLES_MANAGE_REQUIRED'), {
+        code: 'PROJECT_ROLES_MANAGE_REQUIRED',
+      })
+    );
+    render(<AdminRolesPermissionsPanel />);
+    expect(await screen.findByText(/wymaga uprawnienia właściciela/)).toBeInTheDocument();
+    expect(screen.queryByLabelText('Nazwa roli')).not.toBeInTheDocument();
+  });
+});

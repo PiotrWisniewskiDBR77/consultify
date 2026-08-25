@@ -145,6 +145,87 @@ describe('resolveEffectiveAccess — org level (no projectId)', () => {
     expect(access.applicationRole).toBe('ADMIN');
   });
 
+  /**
+   * DEC-2026-08-25-17 regression guard. The test above only checks the raw
+   * `capabilities` array — it does NOT prove the actual authorization
+   * decision, and it kept passing throughout the bug's lifetime because the
+   * array never literally contained the string 'admin.project_roles.manage'.
+   * The real vulnerability was ADMIN holding the bare '*' wildcard, which
+   * `hasEffectiveCapability` treats as "allow anything" regardless of what
+   * capability string is checked. This is the test that would actually have
+   * caught it: call the real authorization function, the same one
+   * access.routes.ts and security/roles.routes.ts call before mutating
+   * project role templates.
+   */
+  it('DEC-2026-08-25-17: hasEffectiveCapability denies ADMIN admin.project_roles.manage, allows OWNER', async () => {
+    mockQueryOne.mockResolvedValue(activeMembership('ADMIN'));
+    const adminAccess = await resolveEffectiveAccess({
+      userId: 'u-admin',
+      organizationId: 'org1',
+      applicationRole: 'ADMIN',
+    });
+    expect(hasEffectiveCapability(adminAccess, 'admin.project_roles.manage')).toBe(false);
+    // The wildcard itself must be gone — not just the one named capability.
+    expect(adminAccess.capabilities).not.toContain('*');
+
+    mockQueryOne.mockResolvedValue(activeMembership('OWNER'));
+    const ownerAccess = await resolveEffectiveAccess({
+      userId: 'u-owner',
+      organizationId: 'org1',
+      applicationRole: 'OWNER',
+    });
+    expect(hasEffectiveCapability(ownerAccess, 'admin.project_roles.manage')).toBe(true);
+  });
+
+  /**
+   * Fail-safe check: narrowing ADMIN must be exact, not collateral. Every
+   * other capability ADMIN held via '*' must still resolve true, including
+   * capability families ADMIN never explicitly lists (project/task/initiative/
+   * interview/canvas/decision/... — anything project-role templates or other
+   * subsystems check), so this fix cannot silently 403 ADMIN on unrelated
+   * operations no one asked to restrict.
+   */
+  it('DEC-2026-08-25-17: ADMIN keeps every other capability it held via the old wildcard', async () => {
+    mockQueryOne.mockResolvedValue(activeMembership('ADMIN'));
+    const access = await resolveEffectiveAccess({
+      userId: 'u-admin',
+      organizationId: 'org1',
+      applicationRole: 'ADMIN',
+    });
+    expect(hasEffectiveCapability(access, 'admin.access')).toBe(true);
+    expect(hasEffectiveCapability(access, 'admin.people.manage')).toBe(true);
+    // Spot-check a wide, unrelated spread of capability families ADMIN never
+    // explicitly lists but previously got via '*' — none of these are
+    // owner-only, so none of them should have been narrowed.
+    const unrestrictedSpotChecks = [
+      'project.view',
+      'project.team.manage',
+      'task.create',
+      'initiative.approve',
+      'initiative.delete',
+      'interview.assignment.create',
+      'decision.approve',
+      'stakeholder.registry.manage',
+      'users.invite',
+      'canvas.share',
+      'okr.objective.create',
+      'gate.approve',
+      'some.capability.nobody.has.enumerated.yet',
+    ];
+    for (const capability of unrestrictedSpotChecks) {
+      expect(hasEffectiveCapability(access, capability)).toBe(true);
+    }
+  });
+
+  it('DEC-2026-08-25-17: SUPERADMIN is unaffected — still passes admin.project_roles.manage', async () => {
+    const access = await resolveEffectiveAccess({
+      userId: 'u-sa',
+      organizationId: 'org1',
+      applicationRole: 'SUPERADMIN',
+    });
+    expect(hasEffectiveCapability(access, 'admin.project_roles.manage')).toBe(true);
+  });
+
   it('USER gets no admin capabilities at org level', async () => {
     mockQueryOne.mockResolvedValue(activeMembership('USER'));
     const access = await resolveEffectiveAccess({

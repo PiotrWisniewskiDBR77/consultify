@@ -21,6 +21,16 @@ import aiObservabilityAdminRoutes from './routes/admin/ai-observability.routes.j
 import adminAIQualityRoutes from './routes/admin/ai-quality.routes.js';
 import adminBackupRoutes from './routes/admin/backup.routes.js';
 import enterpriseComplianceAdminRoutes from './routes/admin/enterprise-compliance.routes.js';
+import billingHistoryAdminRoutes from './routes/admin/billing-history.routes.js';
+import seatsAdminRoutes from './routes/admin/seats.routes.js';
+import securityAlertsAdminRoutes from './routes/admin/security-alerts.routes.js';
+import sessionsAdminRoutes from './routes/admin/sessions.routes.js';
+import breakGlassAdminRoutes from './routes/admin/break-glass.routes.js';
+import guestsAdminRoutes from './routes/admin/guests.routes.js';
+import legalHoldAdminRoutes from './routes/admin/legal-hold.routes.js';
+import auditExportHistoryAdminRoutes from './routes/admin/audit-export-history.routes.js';
+import serviceAccountsAdminRoutes from './routes/admin/service-accounts.routes.js';
+import organizationProfileAdminRoutes from './routes/admin/organization-profile.routes.js';
 import healthPanelAdminRoutes from './routes/admin/health-panel.routes.js';
 import adminBulkRoutes from './routes/admin-bulk.routes.js';
 import adminDataRoutes from './routes/admin-data.routes.js';
@@ -770,6 +780,16 @@ export class ApiGateway {
       app.use('/api/superadmin', resourceManagementRoutes);
       app.use('/api/admin/ai-observability', aiObservabilityAdminRoutes);
       app.use('/api/admin/health-panel', healthPanelAdminRoutes);
+      app.use('/api/admin/billing-history', billingHistoryAdminRoutes);
+      app.use('/api/admin/seats', seatsAdminRoutes);
+      app.use('/api/admin/security-alerts', securityAlertsAdminRoutes);
+      app.use('/api/admin/sessions', sessionsAdminRoutes);
+      app.use('/api/admin/break-glass', breakGlassAdminRoutes);
+      app.use('/api/admin/guests', guestsAdminRoutes);
+      app.use('/api/admin/legal-hold', legalHoldAdminRoutes);
+      app.use('/api/admin/audit-export-history', auditExportHistoryAdminRoutes);
+      app.use('/api/admin/service-accounts', serviceAccountsAdminRoutes);
+      app.use('/api/admin/organization-profile', organizationProfileAdminRoutes);
       // Wiring (2026-07-15): route was defined but never mounted (0 Gateway refs).
       // Own auth (verifyToken + admin-role check) is applied inside the router —
       // matches ai-quality.routes.ts pattern. Distinct from '/api/compliance'

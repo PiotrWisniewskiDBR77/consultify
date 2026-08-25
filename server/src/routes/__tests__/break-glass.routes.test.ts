@@ -1,0 +1,95 @@
+import express from 'express';
+import request from 'supertest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import routes from '../admin/break-glass.routes.js';
+const get = vi.fn(),
+  all = vi.fn(),
+  active = vi.fn(),
+  create = vi.fn(),
+  revoke = vi.fn();
+let user: any = { id: 'u1', organizationId: 'org1', role: 'admin' };
+vi.mock('../../utils/DbPromise.js', () => ({
+  get: (...a: any[]) => get(...a),
+  all: (...a: any[]) => all(...a),
+}));
+vi.mock('../../services/adminSessionService.js', () => ({
+  default: {
+    getActiveSessions: (...a: any[]) => active(...a),
+    createSession: (...a: any[]) => create(...a),
+    revokeSession: (...a: any[]) => revoke(...a),
+  },
+}));
+vi.mock('../../middleware/auth.middleware.js', () => ({
+  verifyToken: (q: any, s: any, n: any) => {
+    if (!user) return s.status(401).end();
+    q.user = user;
+    n();
+  },
+}));
+vi.mock('../../middleware/admin.middleware.js', () => ({
+  default: (_q: any, _s: any, n: any) => n(),
+}));
+const app = () => {
+  const a = express();
+  a.use(express.json());
+  a.use('/api/admin/break-glass', routes);
+  return a;
+};
+describe('break-glass routes', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    user = { id: 'u1', organizationId: 'org1', role: 'admin' };
+    get.mockResolvedValue({ role: 'ADMIN', status: 'ACTIVE' });
+    active.mockResolvedValue([]);
+    all.mockResolvedValue([]);
+  });
+  it('rejects missing reason', async () => {
+    expect(
+      (await request(app()).post('/api/admin/break-glass/sessions').send({ approvedBy: 'u2' }))
+        .status
+    ).toBe(400);
+  });
+  it('rejects approver outside tenant', async () => {
+    get.mockResolvedValueOnce({ role: 'ADMIN', status: 'ACTIVE' }).mockResolvedValueOnce(undefined);
+    expect(
+      (
+        await request(app())
+          .post('/api/admin/break-glass/sessions')
+          .send({ approvedBy: 'u2', breakGlassReason: 'Emergency reason' })
+      ).status
+    ).toBe(400);
+  });
+  it('creates tenant-scoped 1h session after valid approval', async () => {
+    get
+      .mockResolvedValueOnce({ role: 'ADMIN', status: 'ACTIVE' })
+      .mockResolvedValueOnce({ ok: 1 })
+      .mockResolvedValueOnce({
+        setting_value: '{"breakGlassEnabled":true,"breakGlassApprovers":["u2"]}',
+      })
+      .mockResolvedValueOnce({
+        setting_value: '{"breakGlassEnabled":true,"breakGlassApprovers":["u2"]}',
+      });
+    expect(
+      (
+        await request(app())
+          .post('/api/admin/break-glass/sessions')
+          .send({ approvedBy: 'u2', breakGlassReason: 'Emergency reason' })
+      ).status
+    ).toBe(201);
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        organizationId: 'org1',
+        sessionType: 'break_glass',
+        expiresInHours: 1,
+        approvedBy: 'u2',
+      })
+    );
+  });
+  it('hides cross-tenant session as 404', async () => {
+    get.mockResolvedValueOnce({ role: 'ADMIN', status: 'ACTIVE' }).mockResolvedValueOnce(undefined);
+    expect((await request(app()).delete('/api/admin/break-glass/sessions/foreign')).status).toBe(
+      404
+    );
+    expect(revoke).not.toHaveBeenCalled();
+  });
+});

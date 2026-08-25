@@ -1,0 +1,58 @@
+import { type NextFunction, type Response, Router } from 'express';
+import verifyAdmin from '../../middleware/admin.middleware.js';
+import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
+import { asyncHandler } from '../../utils/asyncHandler.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
+const router = Router();
+router.use(verifyToken);
+router.use(
+  asyncHandler(async (req: AuthRequest, res: Response, next: NextFunction) => {
+    const o = String(req.user?.organizationId || ''),
+      u = String(req.user?.id || '');
+    if (!o || !u) return res.status(401).json({ error: 'Unauthorized' });
+    const m = await dbGet<{ role?: string; status?: string }>(
+      'SELECT role,status FROM organization_members WHERE organization_id=? AND user_id=? LIMIT 1',
+      [o, u],
+      { fallback: false }
+    );
+    if (!m || String(m.status).toUpperCase() !== 'ACTIVE')
+      return res.status(403).json({ code: 'ADMIN_MEMBERSHIP_REQUIRED' });
+    if (!['OWNER', 'ADMIN'].includes(String(m.role).toUpperCase()))
+      return res.status(403).json({ code: 'ADMIN_ACCESS_REQUIRED' });
+    next();
+  })
+);
+router.use(verifyAdmin);
+async function list(o: string) {
+  return dbAll(
+    `SELECT m.user_id,u.email,u.first_name,u.last_name,m.created_at AS granted_at,m.status,COALESCE(i.invitation_type,'ORG') AS scope_type,i.project_id,i.expires_at FROM organization_members m JOIN users u ON u.id=m.user_id LEFT JOIN invitations i ON i.organization_id=m.organization_id AND (i.accepted_by_user_id=m.user_id OR LOWER(i.email)=LOWER(u.email)) WHERE m.organization_id=? AND UPPER(m.role)='GUEST' ORDER BY m.created_at DESC`,
+    [o],
+    { fallback: false }
+  );
+}
+router.get(
+  '/',
+  asyncHandler(async (req: AuthRequest, res: Response) =>
+    res.json({ success: true, guests: await list(String(req.user?.organizationId)) })
+  )
+);
+router.delete(
+  '/:userId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const o = String(req.user?.organizationId),
+      u = String(req.params.userId);
+    const found = await dbGet(
+      `SELECT user_id FROM organization_members WHERE organization_id=? AND user_id=? AND UPPER(role)='GUEST'`,
+      [o, u],
+      { fallback: false }
+    );
+    if (!found) return res.status(404).json({ error: 'Not found' });
+    await dbRun(
+      `DELETE FROM organization_members WHERE organization_id=? AND user_id=? AND UPPER(role)='GUEST'`,
+      [o, u],
+      { fallback: false }
+    );
+    res.json({ success: true, guests: await list(o) });
+  })
+);
+export default router;

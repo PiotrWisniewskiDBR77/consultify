@@ -1,0 +1,25 @@
+import { Api } from './api';
+import { apiGet } from './api/baseClient';
+export interface AiIncident {
+  start: string;
+  end?: string | null;
+  durationMs?: number;
+  samples?: number;
+  lastError?: string | null;
+  provider?: string;
+  source: string;
+}
+export async function getAiIncidents(): Promise<AiIncident[]> {
+  const [a, b] = await Promise.allSettled([
+    apiGet<any>('/llm/incidents'),
+    Api.getAIOperationsLLMObservatory('24h'),
+  ]);
+  if (a.status === 'rejected' && b.status === 'rejected') throw a.reason;
+  const first = a.status === 'fulfilled' ? (a.value?.incidents ?? []) : [];
+  const second =
+    b.status === 'fulfilled' ? (b.value?.incidents ?? b.value?.data?.incidents ?? []) : [];
+  return [
+    ...first.map((x: any) => ({ ...x, source: 'llm_health_events' })),
+    ...second.map((x: any) => ({ ...x, source: 'llm_observatory' })),
+  ];
+}

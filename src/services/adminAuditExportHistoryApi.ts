@@ -1,0 +1,15 @@
+import { apiGet } from './api/baseClient';
+export interface AuditExportReceipt {
+  id: string;
+  requested_by: string;
+  export_kind: string;
+  filters_json?: string | null;
+  row_count?: number | null;
+  output_format?: string | null;
+  created_at: string;
+}
+export async function getAuditExportHistory() {
+  return (
+    (await apiGet<{ receipts: AuditExportReceipt[] }>('/admin/audit-export-history')).receipts ?? []
+  );
+}

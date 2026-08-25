@@ -21,7 +21,11 @@ describe('Settings administrative route redirects (DEC-...-10)', () => {
   it.each([
     ['billing/*', 'ROUTES.SETTINGS.BILLING', 'ROUTES.ADMIN.BILLING'],
     ['organization/*', 'ROUTES.SETTINGS.ORGANIZATION', 'ROUTES.ADMIN.COMMAND'],
-    ['tenant-defaults/*', 'ROUTES.SETTINGS.TENANT_DEFAULTS', 'ROUTES.ADMIN.COMMAND'],
+    [
+      'tenant-defaults/*',
+      'ROUTES.SETTINGS.TENANT_DEFAULTS',
+      '`${ROUTES.ADMIN.COMMAND}/organization-defaults`',
+    ],
   ])('redirects settings %s to the canonical Admin screen', (path, from, to) => {
     const routeIndex = settingsBlock.indexOf(`path="${path}"`);
     expect(routeIndex).toBeGreaterThan(-1);
