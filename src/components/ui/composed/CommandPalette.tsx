@@ -214,13 +214,17 @@ const getDefaultCommands = (onNavigate: (view: AppView) => void): CommandItem[] 
       onSelect: () => onNavigate(AppView.MY_WORK),
     },
     {
+      // DEC-2026-08-24-01: /project-intelligence is now a legacy alias that
+      // redirects to /interview (AppRoutes.tsx); this entry keeps the old
+      // search terms working as an alias into the canonical Interview view
+      // instead of navigating to a route that immediately bounces away.
       id: 'nav-project-intelligence',
-      label: 'Project Intelligence',
-      description: 'AI-powered project insights',
+      label: 'Interview',
+      description: 'AI-powered project insights (formerly Project Intelligence)',
       icon: <Brain size={18} />,
       category: 'navigation',
-      keywords: ['project', 'intelligence', 'insights', 'ai'],
-      onSelect: () => onNavigate(AppView.PROJECT_INTELLIGENCE),
+      keywords: ['project', 'intelligence', 'insights', 'ai', 'interview'],
+      onSelect: () => onNavigate(AppView.INTERVIEW),
     },
     {
       id: 'nav-assessment',
