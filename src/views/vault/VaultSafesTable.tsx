@@ -79,6 +79,7 @@ export interface VaultSafesTableProps {
   onOpenSafe: (safe: VaultSafe) => void;
   /** Lupa Menu 2 (ClientDocumentsVault) — filtruje sejfy po nazwie. */
   searchQuery?: string;
+  scopeFilter?: VaultSafe['type'] | 'all';
 }
 
 interface RecentDoc {
@@ -135,7 +136,11 @@ const safeDisplayName = (safe: VaultSafe, isPolish: boolean): string => {
   return isSystem ? safeLevelLabel(safe.type, isPolish) : safe.name;
 };
 
-export const VaultSafesTable: React.FC<VaultSafesTableProps> = ({ onOpenSafe, searchQuery }) => {
+export const VaultSafesTable: React.FC<VaultSafesTableProps> = ({
+  onOpenSafe,
+  searchQuery,
+  scopeFilter = 'all',
+}) => {
   const { t, i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
   const [safes, setSafes] = useState<VaultSafe[]>([]);
@@ -170,16 +175,17 @@ export const VaultSafesTable: React.FC<VaultSafesTableProps> = ({ onOpenSafe, se
 
   const filteredSafes = useMemo(() => {
     const q = (searchQuery ?? '').trim().toLowerCase();
-    if (!q) return safes;
+    if (!q && scopeFilter === 'all') return safes;
     // Search what the user can actually read on screen (localized label for
     // system safes), not the server's neutral fallback — otherwise typing
     // "sejf" in a Polish UI would match nothing. Keep the raw name in the
     // haystack too, so a project safe still matches its own name.
     return safes.filter(
       (s) =>
-        safeDisplayName(s, isPolish).toLowerCase().includes(q) || s.name.toLowerCase().includes(q)
+        (scopeFilter === 'all' || s.type === scopeFilter) &&
+        (safeDisplayName(s, isPolish).toLowerCase().includes(q) || s.name.toLowerCase().includes(q))
     );
-  }, [safes, searchQuery, isPolish]);
+  }, [safes, searchQuery, isPolish, scopeFilter]);
 
   const previewSafe = useMemo(
     () => filteredSafes.find((s) => s.id === previewSafeId) ?? null,
@@ -229,6 +235,21 @@ export const VaultSafesTable: React.FC<VaultSafesTableProps> = ({ onOpenSafe, se
           <span className="inline-flex items-center gap-2 text-sm font-medium text-c-text">
             <Icon size={14} className="text-c-text-muted shrink-0" />
             {safeDisplayName(safe, isPolish)}
+          </span>
+        );
+      },
+    },
+    {
+      id: 'scope',
+      label: t('vault.safes.scope', isPolish ? 'Zakres' : 'Scope'),
+      sortable: true,
+      sortAccessor: (row: TableRow) => safeLevelLabel((row as unknown as VaultSafe).type, isPolish),
+      render: (row: TableRow) => {
+        const safe = row as unknown as VaultSafe;
+        return (
+          <span className="text-sm text-c-text-secondary">
+            {safeLevelLabel(safe.type, isPolish)}
+            {safe.type === 'project' ? ` · ${safe.name}` : ''}
           </span>
         );
       },
