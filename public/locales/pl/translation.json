@@ -18696,6 +18696,55 @@
         "title": "Zarządzanie AI i operacje AI",
         "description": "Polityka AI organizacji, kontrola ryzyka, postawa modelu i narzędzia operacyjne AI działają teraz w głównej powłoce administracyjnej."
       }
+    },
+    "ai": {
+      "personas": {
+        "day2Auto": {}
+      },
+      "ai-incidents": {
+        "day2Auto": {
+          "text1": "Początek",
+          "text2": "Próbki",
+          "text3": "Ostatni błąd",
+          "text4": "Źródło",
+          "text5": "Incydenty są wyliczane z bieżących pomiarów dostępności; trwały rejestr historyczny nie jest jeszcze prowadzony.",
+          "text6": "Brak incydentów w bieżącym oknie pomiarowym.",
+          "text7": "Brak incydentów",
+          "text8": "Pomiary nie wykazały degradacji w bieżącym oknie."
+        }
+      },
+      "configuration-versions": {
+        "day2Auto": {
+          "text1": "Nie udało się pobrać konfiguracji Prompt OS.",
+          "text2": "Nie udało się pobrać bramek ewaluacji.",
+          "text3": "Nie udało się pobrać konfiguracji canary.",
+          "text4": "Konfiguracja zmieniła się równolegle (409). Odświeżono dane — sprawdź stan przed ponowieniem.",
+          "text5": "Operacja nie powiodła się.",
+          "text6": "status",
+          "text7": "Status",
+          "text8": "Prompt OS nie jest włączony dla tej organizacji",
+          "text9": "Włączenie wymaga operatora platformy lub administratora konfiguracji V8.",
+          "text10": "Spróbuj ponownie",
+          "text11": "Odśwież",
+          "text12": "Aktywne",
+          "text13": "Pokaż szczegóły",
+          "text14": "Wycofaj wersję",
+          "text15": "Brak wersji konfiguracji",
+          "text16": "Prompt OS jest włączony, ale organizacja nie ma jeszcze bundle konfiguracji.",
+          "text17": "Szczegóły",
+          "text18": "Ładowanie szczegółów…",
+          "text19": "brak wyników",
+          "text20": "włączony",
+          "text21": "wyłączony",
+          "text22": "nie",
+          "text23": "brak konfiguracji",
+          "text24": "Powód wycofania (wymagany)",
+          "text25": "Powód wycofania",
+          "text26": "Przejdź do potwierdzenia",
+          "text27": "Wycofać aktywną konfigurację?",
+          "text28": "Powód: {{v0}}. Operacja zmieni runtime organizacji i zostanie zapisana w historii Prompt OS."
+        }
+      }
     }
   },
   "access": {

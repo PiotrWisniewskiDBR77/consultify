@@ -4,10 +4,8 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { Api } from '../../../services/api';
 import type { SystemPrompt, SystemPromptContextConfig } from '../../../types/domain/ai';
-
 const buttonClass =
   'inline-flex items-center justify-center gap-2 rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm font-medium text-c-text hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 ring-[color:var(--c-focus)]';
-
 export const PersonasPanel: React.FC = () => {
   const { t } = useTranslation(),
     [prompts, setPrompts] = useState<SystemPrompt[]>([]),
@@ -90,7 +88,12 @@ export const PersonasPanel: React.FC = () => {
                 <input
                   aria-label="Persona description"
                   value={editing.description || ''}
-                  onChange={(e) => setEditing({ ...editing, description: e.target.value })}
+                  onChange={(e) =>
+                    setEditing({
+                      ...editing,
+                      description: e.target.value,
+                    })
+                  }
                   className="mt-1 block w-full rounded border border-c-border bg-c-surface p-2"
                 />
               </label>
@@ -99,7 +102,12 @@ export const PersonasPanel: React.FC = () => {
                 <textarea
                   aria-label="System Prompt"
                   value={editing.content}
-                  onChange={(e) => setEditing({ ...editing, content: e.target.value })}
+                  onChange={(e) =>
+                    setEditing({
+                      ...editing,
+                      content: e.target.value,
+                    })
+                  }
                   className="mt-1 h-64 w-full rounded border border-c-border bg-c-surface p-3 font-mono"
                 />
               </label>
@@ -122,7 +130,10 @@ export const PersonasPanel: React.FC = () => {
                           onChange={(e) =>
                             setEditing({
                               ...editing,
-                              context_config: { ...cfg, [id]: e.target.checked },
+                              context_config: {
+                                ...cfg,
+                                [id]: e.target.checked,
+                              },
                             })
                           }
                         />{' '}

@@ -1,6 +1,5 @@
 import { FileClock, RefreshCw } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-
 import {
   V8PromptOsApi,
   type V8PromptOsBundle,
@@ -10,13 +9,15 @@ import {
 } from '../../services/api/v8/prompt-os';
 import { ConfirmDialog } from '../MyWork/shared/ConfirmDialog';
 import { StandardTable, type TableColumn, type TableRow } from '../standard/StandardTable';
-
+import { useTranslation } from 'react-i18next';
 const errorCode = (error: unknown) => {
   const value = error as {
     code?: string;
     status?: number;
     message?: string;
-    data?: { code?: string };
+    data?: {
+      code?: string;
+    };
   };
   const text = `${value?.code || ''} ${value?.data?.code || ''} ${value?.message || ''}`;
   return text.includes('V8_DISABLED') || text.includes('V8_MISSING_ORG_CONTEXT')
@@ -28,8 +29,8 @@ const errorCode = (error: unknown) => {
       ? 'conflict'
       : 'error';
 };
-
 export const AdminConfigurationVersionsPanel: React.FC = () => {
+  const { t } = useTranslation();
   const [summary, setSummary] = useState<V8PromptOsRuntimeSummary | null>(null);
   const [bundles, setBundles] = useState<V8PromptOsBundle[]>([]);
   const [selected, setSelected] = useState<V8PromptOsBundle | null>(null);
@@ -42,7 +43,6 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
   const [rollbackTarget, setRollbackTarget] = useState<V8PromptOsBundle | null>(null);
   const [reason, setReason] = useState('');
   const [confirmOpen, setConfirmOpen] = useState(false);
-
   const load = useCallback(async (preserveMessage = false) => {
     setState('loading');
     if (!preserveMessage) setMessage('');
@@ -60,13 +60,15 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
     } catch (error) {
       setState(errorCode(error) === 'disabled' ? 'disabled' : 'error');
       setMessage(
-        error instanceof Error ? error.message : 'Nie udało się pobrać konfiguracji Prompt OS.'
+        error instanceof Error
+          ? error.message
+          : t('admin.ai.configuration-versions.day2Auto.text1', {
+              defaultValue: 'Nie udało się pobrać konfiguracji Prompt OS.',
+            })
       );
     }
   }, []);
-
   useEffect(() => void load(), [load]);
-
   const showDetails = async (bundle: V8PromptOsBundle) => {
     setSelected(bundle);
     setDetailsState('loading');
@@ -82,16 +84,25 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
       setDetailsMessage(
         gateResult.reason instanceof Error
           ? gateResult.reason.message
-          : 'Nie udało się pobrać bramek ewaluacji.'
+          : t('admin.ai.configuration-versions.day2Auto.text2', {
+              defaultValue: 'Nie udało się pobrać bramek ewaluacji.',
+            })
       );
       return;
     }
     setGates(gateResult.value);
     if (canaryResult.status === 'fulfilled') setCanary(canaryResult.value);
     else if (
-      `${(canaryResult.reason as { data?: { code?: string }; message?: string })?.data?.code || ''} ${(canaryResult.reason as Error)?.message || ''}`.includes(
-        'CANARY_NOT_FOUND'
-      )
+      `${
+        (
+          canaryResult.reason as {
+            data?: {
+              code?: string;
+            };
+            message?: string;
+          }
+        )?.data?.code || ''
+      } ${(canaryResult.reason as Error)?.message || ''}`.includes('CANARY_NOT_FOUND')
     )
       setCanary(null);
     else {
@@ -100,13 +111,14 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
       setDetailsMessage(
         canaryResult.reason instanceof Error
           ? canaryResult.reason.message
-          : 'Nie udało się pobrać konfiguracji canary.'
+          : t('admin.ai.configuration-versions.day2Auto.text3', {
+              defaultValue: 'Nie udało się pobrać konfiguracji canary.',
+            })
       );
       return;
     }
     setDetailsState('ready');
   };
-
   const mutate = async (kind: 'activate' | 'rollback', bundle: V8PromptOsBundle) => {
     try {
       if (kind === 'activate') await V8PromptOsApi.activateBundle(bundle.bundleId);
@@ -118,24 +130,53 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
     } catch (error) {
       setMessage(
         errorCode(error) === 'conflict'
-          ? 'Konfiguracja zmieniła się równolegle (409). Odświeżono dane — sprawdź stan przed ponowieniem.'
+          ? t('admin.ai.configuration-versions.day2Auto.text4', {
+              defaultValue:
+                'Konfiguracja zmieniła się równolegle (409). Odświeżono dane — sprawdź stan przed ponowieniem.',
+            })
           : error instanceof Error
             ? error.message
-            : 'Operacja nie powiodła się.'
+            : t('admin.ai.configuration-versions.day2Auto.text5', {
+                defaultValue: 'Operacja nie powiodła się.',
+              })
       );
       await load(true);
     }
   };
-
   const columns = useMemo<TableColumn[]>(
     () => [
-      { id: 'version', label: 'Wersja' },
-      { id: 'preset', label: 'Preset' },
-      { id: 'status', label: 'Status' },
-      { id: 'prompt', label: 'Prompt' },
-      { id: 'model', label: 'Model' },
-      { id: 'policy', label: 'Policy' },
-      { id: 'runtime', label: 'Runtime' },
+      {
+        id: 'version',
+        label: 'Wersja',
+      },
+      {
+        id: 'preset',
+        label: 'Preset',
+      },
+      {
+        id: t('admin.ai.configuration-versions.day2Auto.text6', {
+          defaultValue: 'status',
+        }),
+        label: t('admin.ai.configuration-versions.day2Auto.text7', {
+          defaultValue: 'Status',
+        }),
+      },
+      {
+        id: 'prompt',
+        label: 'Prompt',
+      },
+      {
+        id: 'model',
+        label: 'Model',
+      },
+      {
+        id: 'policy',
+        label: 'Policy',
+      },
+      {
+        id: 'runtime',
+        label: 'Runtime',
+      },
     ],
     []
   );
@@ -153,13 +194,19 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
       })),
     [bundles]
   );
-
   if (state === 'disabled')
     return (
       <div role="status" className="rounded-xl border border-c-border p-5">
-        <h2 className="font-semibold">Prompt OS nie jest włączony dla tej organizacji</h2>
+        <h2 className="font-semibold">
+          {t('admin.ai.configuration-versions.day2Auto.text8', {
+            defaultValue: 'Prompt OS nie jest włączony dla tej organizacji',
+          })}
+        </h2>
         <p className="mt-1 text-sm text-c-text-secondary">
-          Włączenie wymaga operatora platformy lub administratora konfiguracji V8.
+          {t('admin.ai.configuration-versions.day2Auto.text9', {
+            defaultValue:
+              'Włączenie wymaga operatora platformy lub administratora konfiguracji V8.',
+          })}
         </p>
       </div>
     );
@@ -174,11 +221,12 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
           onClick={() => void load()}
           className="mt-3 rounded border border-c-border px-3 py-2"
         >
-          Spróbuj ponownie
+          {t('admin.ai.configuration-versions.day2Auto.text10', {
+            defaultValue: 'Spróbuj ponownie',
+          })}
         </button>
       </div>
     );
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -188,7 +236,12 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
             Tenantowy runtime Prompt OS, bramki ewaluacji i canary.
           </p>
         </div>
-        <button aria-label="Odśwież" onClick={() => void load()}>
+        <button
+          aria-label={t('admin.ai.configuration-versions.day2Auto.text11', {
+            defaultValue: 'Odśwież',
+          })}
+          onClick={() => void load()}
+        >
           <RefreshCw className={state === 'loading' ? 'animate-spin' : ''} />
         </button>
       </div>
@@ -215,7 +268,11 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
             <dd>{summary.bundleCount}</dd>
           </div>
           <div>
-            <dt>Aktywne</dt>
+            <dt>
+              {t('admin.ai.configuration-versions.day2Auto.text12', {
+                defaultValue: 'Aktywne',
+              })}
+            </dt>
             <dd>{summary.activeBundleCount}</dd>
           </div>
         </dl>
@@ -228,7 +285,13 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
           const bundle = bundles.find((item) => item.bundleId === row.id)!;
           return {
             primary: [
-              { id: 'details', label: 'Pokaż szczegóły', onClick: () => void showDetails(bundle) },
+              {
+                id: 'details',
+                label: t('admin.ai.configuration-versions.day2Auto.text13', {
+                  defaultValue: 'Pokaż szczegóły',
+                }),
+                onClick: () => void showDetails(bundle),
+              },
               ...(bundle.status !== 'active'
                 ? [
                     {
@@ -241,22 +304,42 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
             ],
             destructive:
               bundle.status === 'active'
-                ? { label: 'Wycofaj wersję', onClick: () => setRollbackTarget(bundle) }
+                ? {
+                    label: t('admin.ai.configuration-versions.day2Auto.text14', {
+                      defaultValue: 'Wycofaj wersję',
+                    }),
+                    onClick: () => setRollbackTarget(bundle),
+                  }
                 : undefined,
           };
         }}
         empty={{
           icon: FileClock,
-          title: 'Brak wersji konfiguracji',
-          description:
-            'Prompt OS jest włączony, ale organizacja nie ma jeszcze bundle konfiguracji.',
+          title: t('admin.ai.configuration-versions.day2Auto.text15', {
+            defaultValue: 'Brak wersji konfiguracji',
+          }),
+          description: t('admin.ai.configuration-versions.day2Auto.text16', {
+            defaultValue:
+              'Prompt OS jest włączony, ale organizacja nie ma jeszcze bundle konfiguracji.',
+          }),
         }}
         persistKey="admin.configurationVersions"
       />
       {selected && (
         <section className="rounded-xl border border-c-border p-4">
-          <h3 className="font-semibold">Szczegóły {selected.version}</h3>
-          {detailsState === 'loading' && <p role="status">Ładowanie szczegółów…</p>}
+          <h3 className="font-semibold">
+            {t('admin.ai.configuration-versions.day2Auto.text17', {
+              defaultValue: 'Szczegóły',
+            })}
+            {selected.version}
+          </h3>
+          {detailsState === 'loading' && (
+            <p role="status">
+              {t('admin.ai.configuration-versions.day2Auto.text18', {
+                defaultValue: 'Ładowanie szczegółów…',
+              })}
+            </p>
+          )}
           {detailsState === 'error' ? (
             <div
               role="alert"
@@ -267,7 +350,9 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
                 onClick={() => void showDetails(selected)}
                 className="mt-2 rounded border border-c-border px-3 py-2"
               >
-                Spróbuj ponownie
+                {t('admin.ai.configuration-versions.day2Auto.text10', {
+                  defaultValue: 'Spróbuj ponownie',
+                })}
               </button>
             </div>
           ) : (
@@ -277,13 +362,31 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
                   Bramki:{' '}
                   {gates.length
                     ? gates.map((gate) => `${gate.gateType}: ${gate.result}`).join(', ')
-                    : 'brak wyników'}
+                    : t('admin.ai.configuration-versions.day2Auto.text19', {
+                        defaultValue: 'brak wyników',
+                      })}
                 </p>
                 <p className="text-sm">
                   Canary:{' '}
                   {canary
-                    ? `rollback ${canary.rollbackEnabled ? 'włączony' : 'wyłączony'}, org scope ${canary.orgScoped ? 'tak' : 'nie'}`
-                    : 'brak konfiguracji'}
+                    ? `rollback ${
+                        canary.rollbackEnabled
+                          ? t('admin.ai.configuration-versions.day2Auto.text20', {
+                              defaultValue: 'włączony',
+                            })
+                          : t('admin.ai.configuration-versions.day2Auto.text21', {
+                              defaultValue: 'wyłączony',
+                            })
+                      }, org scope ${
+                        canary.orgScoped
+                          ? 'tak'
+                          : t('admin.ai.configuration-versions.day2Auto.text22', {
+                              defaultValue: 'nie',
+                            })
+                      }`
+                    : t('admin.ai.configuration-versions.day2Auto.text23', {
+                        defaultValue: 'brak konfiguracji',
+                      })}
                 </p>
               </>
             )
@@ -292,9 +395,13 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
       )}
       {rollbackTarget && !confirmOpen && (
         <label className="block rounded-xl border border-c-danger p-4">
-          Powód wycofania (wymagany)
+          {t('admin.ai.configuration-versions.day2Auto.text24', {
+            defaultValue: 'Powód wycofania (wymagany)',
+          })}
           <textarea
-            aria-label="Powód wycofania"
+            aria-label={t('admin.ai.configuration-versions.day2Auto.text25', {
+              defaultValue: 'Powód wycofania',
+            })}
             value={reason}
             onChange={(event) => setReason(event.target.value)}
             className="mt-2 block w-full rounded border border-c-border bg-c-surface p-2"
@@ -304,7 +411,9 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
             onClick={() => setConfirmOpen(true)}
             className="mt-2 rounded bg-c-danger px-3 py-2 text-white disabled:opacity-50"
           >
-            Przejdź do potwierdzenia
+            {t('admin.ai.configuration-versions.day2Auto.text26', {
+              defaultValue: 'Przejdź do potwierdzenia',
+            })}
           </button>
         </label>
       )}
@@ -316,9 +425,17 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
           setReason('');
         }}
         onConfirm={() => rollbackTarget && void mutate('rollback', rollbackTarget)}
-        title="Wycofać aktywną konfigurację?"
-        description={`Powód: ${reason}. Operacja zmieni runtime organizacji i zostanie zapisana w historii Prompt OS.`}
-        confirmLabel="Wycofaj wersję"
+        title={t('admin.ai.configuration-versions.day2Auto.text27', {
+          defaultValue: 'Wycofać aktywną konfigurację?',
+        })}
+        description={t('admin.ai.configuration-versions.day2Auto.text28', {
+          v0: reason,
+          defaultValue:
+            'Powód: {{v0}}. Operacja zmieni runtime organizacji i zostanie zapisana w historii Prompt OS.',
+        })}
+        confirmLabel={t('admin.ai.configuration-versions.day2Auto.text14', {
+          defaultValue: 'Wycofaj wersję',
+        })}
         variant="danger"
       />
     </div>

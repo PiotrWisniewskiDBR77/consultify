@@ -2,7 +2,9 @@ import { CircleCheck, TriangleAlert } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { getAiIncidents, type AiIncident } from '../../services/adminAiIncidentsApi';
 import { StandardTable, type TableColumn, type TableRow } from '../standard/StandardTable';
+import { useTranslation } from 'react-i18next';
 export const AdminAiIncidentsPanel: React.FC = () => {
+  const { t } = useTranslation();
   const [data, setData] = useState<AiIncident[]>([]),
     [loaded, setLoaded] = useState(false),
     [error, setError] = useState<string | null>(null);
@@ -14,11 +16,34 @@ export const AdminAiIncidentsPanel: React.FC = () => {
   }, []);
   const cols = useMemo<TableColumn[]>(
       () => [
-        { id: 'start', label: 'Początek' },
-        { id: 'duration', label: 'Czas trwania' },
-        { id: 'samples', label: 'Próbki' },
-        { id: 'error', label: 'Ostatni błąd' },
-        { id: 'source', label: 'Źródło' },
+        {
+          id: 'start',
+          label: t('admin.ai.ai-incidents.day2Auto.text1', {
+            defaultValue: 'Początek',
+          }),
+        },
+        {
+          id: 'duration',
+          label: 'Czas trwania',
+        },
+        {
+          id: 'samples',
+          label: t('admin.ai.ai-incidents.day2Auto.text2', {
+            defaultValue: 'Próbki',
+          }),
+        },
+        {
+          id: 'error',
+          label: t('admin.ai.ai-incidents.day2Auto.text3', {
+            defaultValue: 'Ostatni błąd',
+          }),
+        },
+        {
+          id: 'source',
+          label: t('admin.ai.ai-incidents.day2Auto.text4', {
+            defaultValue: 'Źródło',
+          }),
+        },
       ],
       []
     ),
@@ -39,8 +64,10 @@ export const AdminAiIncidentsPanel: React.FC = () => {
       <div>
         <h2 className="text-lg font-semibold text-c-text">Incydenty AI</h2>
         <p className="text-sm text-c-text-secondary">
-          Incydenty są wyliczane z bieżących pomiarów dostępności; trwały rejestr historyczny nie
-          jest jeszcze prowadzony.
+          {t('admin.ai.ai-incidents.day2Auto.text5', {
+            defaultValue:
+              'Incydenty są wyliczane z bieżących pomiarów dostępności; trwały rejestr historyczny nie jest jeszcze prowadzony.',
+          })}
         </p>
       </div>
       {error && (
@@ -54,7 +81,9 @@ export const AdminAiIncidentsPanel: React.FC = () => {
       {loaded && data.length === 0 && !error && (
         <div className="flex items-center gap-2 rounded-xl border border-c-success p-4">
           <CircleCheck className="h-5 w-5" />
-          Brak incydentów w bieżącym oknie pomiarowym.
+          {t('admin.ai.ai-incidents.day2Auto.text6', {
+            defaultValue: 'Brak incydentów w bieżącym oknie pomiarowym.',
+          })}
         </div>
       )}
       <StandardTable
@@ -63,8 +92,12 @@ export const AdminAiIncidentsPanel: React.FC = () => {
         loading={!loaded}
         empty={{
           icon: TriangleAlert,
-          title: 'Brak incydentów',
-          description: 'Pomiary nie wykazały degradacji w bieżącym oknie.',
+          title: t('admin.ai.ai-incidents.day2Auto.text7', {
+            defaultValue: 'Brak incydentów',
+          }),
+          description: t('admin.ai.ai-incidents.day2Auto.text8', {
+            defaultValue: 'Pomiary nie wykazały degradacji w bieżącym oknie.',
+          }),
         }}
         persistKey="admin.aiIncidents"
       />
