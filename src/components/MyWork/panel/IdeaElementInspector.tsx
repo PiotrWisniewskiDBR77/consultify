@@ -31,7 +31,7 @@ export interface IdeaInspectorElement {
   outputs?: IdeaInspectorItem[];
   branch?: string;
   lineage?: string;
-  savedAt?: string | Date | null;
+  savedAt?: string | number | Date | null;
 }
 
 export interface IdeaElementInspectorProps {
