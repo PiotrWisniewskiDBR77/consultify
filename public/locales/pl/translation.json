@@ -4532,6 +4532,52 @@
     },
     "shared": {
       "dragHandleTitle": "Przeciągnij, aby zmienić kolejność"
+    },
+    "ideaInspector": {
+      "empty": "Zaznacz element, aby zobaczyć właściwości",
+      "emptyHint": "Kliknij węzeł, wiersz, kartkę albo krawędź",
+      "recent": "Ostatnio otwarte",
+      "saved": "Zapisano",
+      "advice": "AI porada",
+      "adviceReason": "Akcja czeka na definicję zakresu",
+      "drill": "Drąż w głąb",
+      "drillReason": "Akcja czeka na definicję zakresu",
+      "summarize": "AI podsumuj",
+      "summarizeReason": "Akcja czeka na definicję zakresu",
+      "noState": "To narzędzie nie prowadzi stanu elementu",
+      "saveFailed": "Nie udało się zapisać zmian",
+      "ariaElementProperties": "Właściwości elementu",
+      "labelField": "Etykieta",
+      "stateField": "Stan",
+      "priorityField": "Priorytet",
+      "openButton": "Otwórz",
+      "sections": {
+        "basics": "Podstawowe",
+        "contentDepth": "Treść i głębia",
+        "classification": "Klasyfikacja",
+        "evidence": "Dowody i źródła",
+        "relations": "Powiązania",
+        "outputs": "Artefakty wyjściowe"
+      },
+      "tool": {
+        "mindmap": "Wygląd węzła",
+        "process": "Krawędź i tor",
+        "whiteboard": "Sesja warsztatu",
+        "table": "Kolumna"
+      },
+      "nodeColor": "Kolor gałęzi",
+      "nodeShape": "Kształt",
+      "nodeShapeDefault": "domyślny",
+      "lane": "Tor",
+      "laneNone": "Brak toru",
+      "edgeHint": "Kierunek i styl krawędzi edytujesz na kanwie po kliknięciu strzałki.",
+      "noSession": "Brak aktywnej sesji warsztatu",
+      "sessionRole": "Rola",
+      "sessionPhase": "Faza",
+      "sessionParticipants": "Uczestnicy",
+      "sessionTimer": "Stoper",
+      "sessionActive": "aktywny",
+      "sessionInactive": "nieaktywny"
     }
   },
   "step1": {

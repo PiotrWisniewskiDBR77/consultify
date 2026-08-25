@@ -37,7 +37,11 @@ describe('IdeaElementInspector behavior', () => {
     );
     const headings = screen.getAllByRole('heading', { level: 3 }).map((node) => node.textContent);
     expect(headings).toEqual([
-      'Podstawowe 1',
+      // FIX-11 (Day 3 acceptance): "Podstawowe" no longer reports a hardcoded 1 —
+      // it counts the fields that actually rendered (label + owner + semanticType
+      // for this fixture = 3). "Treść i głębia" was already accidentally correct
+      // at 5 for this fixture (all five fields populated); it is now a real count too.
+      'Podstawowe 3',
       'Treść i głębia 5',
       'Klasyfikacja 2',
       'Dowody i źródła 1',

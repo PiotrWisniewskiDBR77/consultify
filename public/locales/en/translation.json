@@ -5209,6 +5209,52 @@
     },
     "shared": {
       "dragHandleTitle": "Drag to reorder"
+    },
+    "ideaInspector": {
+      "empty": "Select an element to see its properties",
+      "emptyHint": "Click a node, row, card, or edge",
+      "recent": "Recently opened",
+      "saved": "Saved",
+      "advice": "AI advice",
+      "adviceReason": "This action is waiting for its scope to be defined",
+      "drill": "Drill down",
+      "drillReason": "This action is waiting for its scope to be defined",
+      "summarize": "AI summary",
+      "summarizeReason": "This action is waiting for its scope to be defined",
+      "noState": "This tool does not track element state",
+      "saveFailed": "Changes could not be saved",
+      "ariaElementProperties": "Element properties",
+      "labelField": "Label",
+      "stateField": "State",
+      "priorityField": "Priority",
+      "openButton": "Open",
+      "sections": {
+        "basics": "Basics",
+        "contentDepth": "Content and depth",
+        "classification": "Classification",
+        "evidence": "Evidence and sources",
+        "relations": "Relations",
+        "outputs": "Output artifacts"
+      },
+      "tool": {
+        "mindmap": "Node appearance",
+        "process": "Edge and lane",
+        "whiteboard": "Workshop session",
+        "table": "Column"
+      },
+      "nodeColor": "Branch color",
+      "nodeShape": "Shape",
+      "nodeShapeDefault": "default",
+      "lane": "Lane",
+      "laneNone": "No lane",
+      "edgeHint": "Edit edge direction and style on the canvas by clicking the arrow.",
+      "noSession": "No active workshop session",
+      "sessionRole": "Role",
+      "sessionPhase": "Phase",
+      "sessionParticipants": "Participants",
+      "sessionTimer": "Timer",
+      "sessionActive": "active",
+      "sessionInactive": "inactive"
     }
   },
   "step1": {

@@ -1,4 +1,5 @@
 import React, { useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export type IdeaInspectorTool = 'mindmap' | 'process' | 'whiteboard' | 'table';
 
@@ -48,60 +49,11 @@ export interface IdeaElementInspectorProps {
 }
 
 const UUID = /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/gi;
-const safeText = (value?: string) => (value ?? '').replace(UUID, '').trim();
-
-const COPY = {
-  pl: {
-    sections: [
-      'Podstawowe',
-      'Treść i głębia',
-      'Klasyfikacja',
-      'Dowody i źródła',
-      'Powiązania',
-      'Artefakty wyjściowe',
-    ],
-    empty: 'Zaznacz element, aby zobaczyć właściwości',
-    emptyHint: 'Kliknij węzeł, wiersz, kartkę albo krawędź',
-    recent: 'Ostatnio otwarte',
-    saved: 'Zapisano',
-    advice: 'AI porada',
-    adviceReason: 'Akcja czeka na definicję zakresu',
-    drill: 'Drąż w głąb',
-    summarize: 'AI podsumuj',
-    noState: 'To narzędzie nie prowadzi stanu elementu',
-    tool: {
-      mindmap: 'Wygląd węzła',
-      process: 'Krawędź i tor',
-      whiteboard: 'Sesja warsztatu',
-      table: 'Kolumna',
-    },
-  },
-  en: {
-    sections: [
-      'Basics',
-      'Content and depth',
-      'Classification',
-      'Evidence and sources',
-      'Relations',
-      'Output artifacts',
-    ],
-    empty: 'Select an element to see its properties',
-    emptyHint: 'Click a node, row, card, or edge',
-    recent: 'Recently opened',
-    saved: 'Saved',
-    advice: 'AI advice',
-    adviceReason: 'This action is waiting for its scope to be defined',
-    drill: 'Drill down',
-    summarize: 'AI summary',
-    noState: 'This tool does not track element state',
-    tool: {
-      mindmap: 'Node appearance',
-      process: 'Edge and lane',
-      whiteboard: 'Workshop session',
-      table: 'Column',
-    },
-  },
-} as const;
+// FIX-11 (Day 3 acceptance): strip internal id-slugs too (e.g. "initiative-1",
+// "node-1699999999-ab12cd") — not just full UUIDs — so a raw targetId/nodeId
+// that leaks into a text field never renders verbatim in the inspector.
+const SLUG = /\b[a-z]+-\d+(?:-[a-z0-9]+)*\b/gi;
+const safeText = (value?: string) => (value ?? '').replace(UUID, '').replace(SLUG, '').trim();
 
 const CountHeading = ({ title, count }: { title: string; count: number }) => (
   <h3 className="text-xs font-semibold uppercase tracking-wide text-c-text-secondary">
@@ -121,7 +73,7 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
   onReturnToCanvas,
   language = 'pl',
 }) => {
-  const copy = COPY[language];
+  const { t } = useTranslation();
   const [draft, setDraft] = useState(element);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -144,9 +96,7 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
       setDraft(readback);
       setConfirmedAt(new Date());
     } catch {
-      setSaveError(
-        language === 'pl' ? 'Nie udało się zapisać zmian' : 'Changes could not be saved'
-      );
+      setSaveError(t('myWork.ideaInspector.saveFailed', 'Nie udało się zapisać zmian'));
     } finally {
       setSaving(false);
     }
@@ -155,6 +105,11 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
   const sectionClasses = 'space-y-2 border-b border-c-border-subtle p-4';
   const counts = useMemo(
     () => ({
+      // FIX-11: "Podstawowe"/"Treść i głębia" no longer report a hardcoded 1/5 —
+      // count only the fields that actually rendered in each section.
+      basics: draft ? (draft.owner ? 1 : 0) + (draft.semanticType ? 1 : 0) + 1 : 0,
+      content: [draft?.description, draft?.context, draft?.goal, draft?.rationale, draft?.risk]
+        .filter(Boolean).length,
       evidence: draft?.evidence?.length ?? 0,
       relations: draft?.relations?.length ?? 0,
       outputs: draft?.outputs?.length ?? 0,
@@ -162,19 +117,32 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
     [draft]
   );
 
+  const toolTitle = t(
+    `myWork.ideaInspector.tool.${tool}`,
+    {
+      mindmap: 'Wygląd węzła',
+      process: 'Krawędź i tor',
+      whiteboard: 'Sesja warsztatu',
+      table: 'Kolumna',
+    }[tool]
+  );
+
   if (!draft) {
+    const emptyText = t('myWork.ideaInspector.empty', 'Zaznacz element, aby zobaczyć właściwości');
     return (
-      <aside className="flex h-full flex-col bg-c-surface" aria-label={copy.empty}>
+      <aside className="flex h-full flex-col bg-c-surface" aria-label={emptyText}>
         <div className="m-auto max-w-xs p-6 text-center">
-          <p className="font-medium text-c-text">{copy.empty}</p>
-          <p className="mt-1 text-sm text-c-text-secondary">{copy.emptyHint}</p>
+          <p className="font-medium text-c-text">{emptyText}</p>
+          <p className="mt-1 text-sm text-c-text-secondary">
+            {t('myWork.ideaInspector.emptyHint', 'Kliknij węzeł, wiersz, kartkę albo krawędź')}
+          </p>
           {recentItems?.length ? (
             <section className="mt-6 text-left" aria-labelledby="idea-recent-title">
               <h3
                 id="idea-recent-title"
                 className="text-xs font-semibold uppercase text-c-text-secondary"
               >
-                {copy.recent}
+                {t('myWork.ideaInspector.recent', 'Ostatnio otwarte')}
               </h3>
               <ul className="mt-2 space-y-1">
                 {recentItems.slice(0, 3).map((item) => (
@@ -202,7 +170,7 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
     <aside
       ref={rootRef}
       className="flex h-full flex-col bg-c-surface text-c-text"
-      aria-label={language === 'pl' ? 'Właściwości elementu' : 'Element properties'}
+      aria-label={t('myWork.ideaInspector.ariaElementProperties', 'Właściwości elementu')}
       onKeyDown={(event) => {
         if (event.key === 'Escape') onReturnToCanvas?.();
       }}
@@ -220,25 +188,39 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
               className="shrink-0 text-xs text-c-text-secondary"
               dateTime={confirmedAt.toISOString()}
             >
-              {copy.saved}{' '}
+              {t('myWork.ideaInspector.saved', 'Zapisano')}{' '}
               {confirmedAt.toLocaleTimeString(language, { hour: '2-digit', minute: '2-digit' })}
             </time>
           ) : null}
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
-          <button type="button" className="rounded border border-c-border px-2 py-1 text-xs">
-            {copy.drill}
-          </button>
-          <button type="button" className="rounded border border-c-border px-2 py-1 text-xs">
-            {copy.summarize}
+          {/* FIX-2 (Day 3 acceptance): these two actions have no implementation yet
+              (drill-down-in-place and AI summary are out of scope here — module 17
+              owns the AI surface). Disable with a real reason instead of a dead
+              onClick, matching the "AI porada" pattern already used below. */}
+          <button
+            type="button"
+            disabled
+            title={t('myWork.ideaInspector.drillReason', 'Akcja czeka na definicję zakresu')}
+            className="rounded border border-c-border px-2 py-1 text-xs disabled:opacity-50"
+          >
+            {t('myWork.ideaInspector.drill', 'Drąż w głąb')}
           </button>
           <button
             type="button"
             disabled
-            title={copy.adviceReason}
+            title={t('myWork.ideaInspector.summarizeReason', 'Akcja czeka na definicję zakresu')}
             className="rounded border border-c-border px-2 py-1 text-xs disabled:opacity-50"
           >
-            {copy.advice}
+            {t('myWork.ideaInspector.summarize', 'AI podsumuj')}
+          </button>
+          <button
+            type="button"
+            disabled
+            title={t('myWork.ideaInspector.adviceReason', 'Akcja czeka na definicję zakresu')}
+            className="rounded border border-c-border px-2 py-1 text-xs disabled:opacity-50"
+          >
+            {t('myWork.ideaInspector.advice', 'AI porada')}
           </button>
         </div>
         {saving ? (
@@ -255,11 +237,14 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         <section className={sectionClasses}>
-          <CountHeading title={copy.sections[0]} count={1} />
+          <CountHeading
+            title={t('myWork.ideaInspector.sections.basics', 'Podstawowe')}
+            count={counts.basics}
+          />
           <label className="block text-xs">
-            {language === 'pl' ? 'Etykieta' : 'Label'}
+            {t('myWork.ideaInspector.labelField', 'Etykieta')}
             <input
-              aria-label={language === 'pl' ? 'Etykieta' : 'Label'}
+              aria-label={t('myWork.ideaInspector.labelField', 'Etykieta')}
               value={draft.label}
               onChange={(e) => setDraft({ ...draft, label: e.target.value })}
               onBlur={() => void commit({ label: draft.label })}
@@ -267,10 +252,12 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
             />
           </label>
           {tool === 'process' ? (
-            <p className="text-sm text-c-text-secondary">{copy.noState}</p>
+            <p className="text-sm text-c-text-secondary">
+              {t('myWork.ideaInspector.noState', 'To narzędzie nie prowadzi stanu elementu')}
+            </p>
           ) : (
             <select
-              aria-label={language === 'pl' ? 'Stan' : 'State'}
+              aria-label={t('myWork.ideaInspector.stateField', 'Stan')}
               value={draft.state ?? ''}
               onChange={(e) => void commit({ state: e.target.value })}
               className="w-full rounded border border-c-border bg-c-surface px-2 py-1"
@@ -286,7 +273,7 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
             </select>
           )}
           <input
-            aria-label={language === 'pl' ? 'Priorytet' : 'Priority'}
+            aria-label={t('myWork.ideaInspector.priorityField', 'Priorytet')}
             type="range"
             min={0}
             max={100}
@@ -298,7 +285,10 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
           <p className="text-sm">{safeText(draft.semanticType)}</p>
         </section>
         <section className={sectionClasses}>
-          <CountHeading title={copy.sections[1]} count={5} />
+          <CountHeading
+            title={t('myWork.ideaInspector.sections.contentDepth', 'Treść i głębia')}
+            count={counts.content}
+          />
           {[draft.description, draft.context, draft.goal, draft.rationale, draft.risk]
             .filter(Boolean)
             .map((text, index) => (
@@ -308,7 +298,10 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
             ))}
         </section>
         <section className={sectionClasses}>
-          <CountHeading title={copy.sections[2]} count={draft.tags?.length ?? 0} />
+          <CountHeading
+            title={t('myWork.ideaInspector.sections.classification', 'Klasyfikacja')}
+            count={draft.tags?.length ?? 0}
+          />
           <div className="flex flex-wrap gap-1">
             {draft.tags?.map((tag) => (
               <span key={tag} className="rounded bg-c-surface-raised px-2 py-1 text-xs">
@@ -318,7 +311,10 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
           </div>
         </section>
         <section className={sectionClasses}>
-          <CountHeading title={copy.sections[3]} count={counts.evidence} />
+          <CountHeading
+            title={t('myWork.ideaInspector.sections.evidence', 'Dowody i źródła')}
+            count={counts.evidence}
+          />
           {draft.evidence?.map((item) => (
             <p key={item.id ?? item.title} className="text-sm">
               {safeText(item.title)} · {safeText(item.type)} · {safeText(item.source)} ·{' '}
@@ -327,7 +323,10 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
           ))}
         </section>
         <section className={sectionClasses}>
-          <CountHeading title={copy.sections[4]} count={counts.relations} />
+          <CountHeading
+            title={t('myWork.ideaInspector.sections.relations', 'Powiązania')}
+            count={counts.relations}
+          />
           {draft.relations?.map((item) => (
             <p key={item.id ?? item.title} className="text-sm">
               {safeText(item.title)} · {safeText(item.type)} · {safeText(item.branch)}
@@ -335,7 +334,10 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
           ))}
         </section>
         <section className={sectionClasses}>
-          <CountHeading title={copy.sections[5]} count={counts.outputs} />
+          <CountHeading
+            title={t('myWork.ideaInspector.sections.outputs', 'Artefakty wyjściowe')}
+            count={counts.outputs}
+          />
           {draft.outputs?.map((item) => (
             <div
               key={item.id ?? item.title}
@@ -350,14 +352,14 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
                   onClick={() => onOpenOutput?.(item.targetId!)}
                   className="rounded border border-c-border px-2 py-1 text-xs"
                 >
-                  {language === 'pl' ? 'Otwórz' : 'Open'}
+                  {t('myWork.ideaInspector.openButton', 'Otwórz')}
                 </button>
               ) : null}
             </div>
           ))}
         </section>
         <section className={sectionClasses}>
-          <CountHeading title={copy.tool[tool]} count={toolSection ? 1 : 0} />
+          <CountHeading title={toolTitle} count={toolSection ? 1 : 0} />
           {toolSection}
         </section>
       </div>
