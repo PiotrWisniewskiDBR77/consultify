@@ -1,3 +1,5 @@
+import { isPublicProductionHost } from './publicProduction';
+
 const QUERY_KEY = 'ff_wave3FinanceOwnerReview';
 const STORAGE_KEY = 'ff.wave3_finance_owner_review';
 const ENV_KEY = 'VITE_WAVE3_FINANCE_OWNER_REVIEW';
@@ -39,4 +41,3 @@ export const FINANCE_OWNER_REVIEW_FLAG = {
   localStorage: STORAGE_KEY,
   env: ENV_KEY,
 } as const;
-import { isPublicProductionHost } from './publicProduction';
