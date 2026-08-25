@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { resolveFinanceDetailBranches, toFinanceResolveInput } from '../FinanceHub';
+import {
+  buildCanonicalFinanceSearchParams,
+  hasAnyCanonicalFinanceQuery,
+  resolveFinanceDetailBranches,
+  toFinanceResolveInput,
+} from '../FinanceHub';
 import type { FinanceKind, PredictionType } from '../financeTypes';
 
 const on = { baseline: true, prediction: true, analysis: true, valuation: true };
@@ -34,6 +39,27 @@ describe('Finance detail identity gate', () => {
 
   it('keeps a row with no canonical signal on the legacy path', () => {
     expect(toFinanceResolveInput({ id: 'legacy-1' })).toBeUndefined();
+  });
+
+  it('clears stale canonical query keys before composing a partial row identity', () => {
+    const stale = new URLSearchParams(
+      'canonicalArtifactType=VALUATION_CASE&canonicalArtifactId=old-a&canonicalBusinessVersionId=old-v'
+    );
+    const next = buildCanonicalFinanceSearchParams(stale, {
+      artifactType: 'BASELINE_MODEL',
+      artifactId: 'new-a',
+      businessVersionId: undefined,
+    });
+    expect(next.toString()).toBe('canonicalArtifactType=BASELINE_MODEL&canonicalArtifactId=new-a');
+  });
+
+  it.each([
+    'canonicalArtifactType=BASELINE_MODEL&canonicalArtifactId=a',
+    'canonicalArtifactType=BASELINE_MODEL&canonicalBusinessVersionId=v',
+    'canonicalArtifactId=a&canonicalBusinessVersionId=v',
+    'canonicalArtifactType=ALIEN&canonicalArtifactId=a&canonicalBusinessVersionId=v',
+  ])('selects the fail-closed full view for any canonical query signal: %s', (query) => {
+    expect(hasAnyCanonicalFinanceQuery(new URLSearchParams(query))).toBe(true);
   });
 
   it.each(validRows)(

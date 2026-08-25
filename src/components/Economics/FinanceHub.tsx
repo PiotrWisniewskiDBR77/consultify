@@ -508,6 +508,39 @@ export function toFinanceResolveInput(
   };
 }
 
+const CANONICAL_FINANCE_ARTIFACT_TYPES = new Set([
+  'STATEMENT_PACK',
+  'BASELINE_MODEL',
+  'HISTORICAL_ANALYSIS',
+  'PREDICTION_SCENARIO',
+  'VALUATION_CASE',
+]);
+
+export function hasAnyCanonicalFinanceQuery(params: URLSearchParams): boolean {
+  return Boolean(
+    params.get('canonicalArtifactType') ||
+    params.get('canonicalArtifactId') ||
+    params.get('canonicalBusinessVersionId')
+  );
+}
+
+/** Clears stale canonical keys before composing the next row identity. */
+export function buildCanonicalFinanceSearchParams(
+  current: URLSearchParams,
+  identity: FinanceResolveInput
+): URLSearchParams {
+  const next = new URLSearchParams(current);
+  next.delete('canonicalArtifactType');
+  next.delete('canonicalArtifactId');
+  next.delete('canonicalBusinessVersionId');
+  if (identity.artifactType) next.set('canonicalArtifactType', identity.artifactType);
+  if (identity.artifactId) next.set('canonicalArtifactId', identity.artifactId);
+  if (identity.businessVersionId) {
+    next.set('canonicalBusinessVersionId', identity.businessVersionId);
+  }
+  return next;
+}
+
 /** Canonical Finance detail URLs, including all five flag-gated workspaces. */
 export function parseFinanceDeepLink(pathname: string): FinanceDeepLink | null {
   const match = pathname.match(
@@ -1066,17 +1099,7 @@ export const FinanceHub: React.FC = () => {
     (row: FinanceRow) => {
       const canonicalIdentity = toFinanceResolveInput(row);
       if (canonicalIdentity) {
-        const next = new URLSearchParams(searchParams);
-        if (canonicalIdentity.artifactType) {
-          next.set('canonicalArtifactType', canonicalIdentity.artifactType);
-        }
-        if (canonicalIdentity.artifactId) {
-          next.set('canonicalArtifactId', canonicalIdentity.artifactId);
-        }
-        if (canonicalIdentity.businessVersionId) {
-          next.set('canonicalBusinessVersionId', canonicalIdentity.businessVersionId);
-        }
-        setSearchParams(next);
+        setSearchParams(buildCanonicalFinanceSearchParams(searchParams, canonicalIdentity));
         return;
       }
       const doc: OpenDocument = {
@@ -3188,9 +3211,7 @@ export const FinanceHub: React.FC = () => {
     const canonicalArtifactType = searchParams.get('canonicalArtifactType');
     const canonicalArtifactId = searchParams.get('canonicalArtifactId');
     const canonicalBusinessVersionId = searchParams.get('canonicalBusinessVersionId');
-    const hasAnyCanonicalQueryIdentity = Boolean(
-      canonicalArtifactType || canonicalArtifactId || canonicalBusinessVersionId
-    );
+    const hasAnyCanonicalQueryIdentity = hasAnyCanonicalFinanceQuery(searchParams);
     const hasCompleteCanonicalQueryIdentity = Boolean(
       canonicalArtifactType && canonicalArtifactId && canonicalBusinessVersionId
     );
@@ -3200,9 +3221,12 @@ export const FinanceHub: React.FC = () => {
       (canonicalArtifactType === 'HISTORICAL_ANALYSIS' && financeV3AnalysisFlag.enabled) ||
       (canonicalArtifactType === 'PREDICTION_SCENARIO' && financeV3PredictionFlag.enabled) ||
       (canonicalArtifactType === 'VALUATION_CASE' && financeV3ValuationFlag.enabled);
+    const hasRecognizedCanonicalType = Boolean(
+      canonicalArtifactType && CANONICAL_FINANCE_ARTIFACT_TYPES.has(canonicalArtifactType)
+    );
     if (
       hasAnyCanonicalQueryIdentity &&
-      (!hasCompleteCanonicalQueryIdentity || canonicalFlagEnabled)
+      (!hasCompleteCanonicalQueryIdentity || !hasRecognizedCanonicalType || canonicalFlagEnabled)
     ) {
       const closeCanonical = () => {
         const next = new URLSearchParams(searchParams);
@@ -3807,16 +3831,7 @@ export const FinanceHub: React.FC = () => {
           </div>
         </>
       );
-    if (
-      (activeDocumentId && activeDocument) ||
-      ((searchParams.get('canonicalArtifactType') === 'STATEMENT_PACK' ||
-        searchParams.get('canonicalArtifactType') === 'BASELINE_MODEL' ||
-        searchParams.get('canonicalArtifactType') === 'HISTORICAL_ANALYSIS' ||
-        searchParams.get('canonicalArtifactType') === 'PREDICTION_SCENARIO' ||
-        searchParams.get('canonicalArtifactType') === 'VALUATION_CASE') &&
-        searchParams.get('canonicalArtifactId') &&
-        searchParams.get('canonicalBusinessVersionId'))
-    )
+    if ((activeDocumentId && activeDocument) || hasAnyCanonicalFinanceQuery(searchParams))
       return fullView;
     // Finance tabs are list surfaces. Analysis tools, planners and charts belong
     // to the record workspace opened from a row, never below the list itself.
