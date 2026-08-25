@@ -50,7 +50,7 @@ import {
 } from '../../components/standard';
 import { StatusChip } from '../../components/ui/primitives';
 import { Api } from '../../services/api';
-import { formatBytes } from './vaultDocuments';
+import { formatBytes, safeDisplayName, safeLevelLabel } from './vaultDocuments';
 
 export interface VaultSafe {
   id: string;
@@ -105,36 +105,13 @@ const formatDate = (value: unknown, isPolish: boolean): string => {
   });
 };
 
-const safeLevelLabel = (type: VaultSafe['type'], isPolish: boolean): string => {
-  const pl: Record<VaultSafe['type'], string> = {
-    user: 'Mój sejf',
-    organization: 'Sejf organizacji',
-    project: 'Sejf projektu',
-  };
-  const en: Record<VaultSafe['type'], string> = {
-    user: 'My safe',
-    organization: 'Organization safe',
-    project: 'Project safe',
-  };
-  return (isPolish ? pl : en)[type];
-};
-
-/**
- * M02-016 — what the user reads in the NAME column.
- *
- * System safes (`user`, `organization`) are platform concepts, so their label
- * follows the UI locale. Project safes carry `projects.name`, which is user
- * data and is never translated. Before this split the server sent Polish
- * strings for the system safes, so an English account saw "Mój sejf" next to
- * an otherwise English screen, and `safeLevelLabel()`'s EN branch was dead.
- *
- * `isSystem` is preferred; the `type` check keeps older payloads (which do not
- * carry the flag yet) rendering correctly.
- */
-const safeDisplayName = (safe: VaultSafe, isPolish: boolean): string => {
-  const isSystem = safe.isSystem ?? safe.type !== 'project';
-  return isSystem ? safeLevelLabel(safe.type, isPolish) : safe.name;
-};
+// FIX-19 (Day 3 layer-2 acceptance): `safeLevelLabel`/`safeDisplayName` moved
+// to `vaultDocuments.ts` (shared with `VaultDocumentsView.tsx`/
+// `VaultDocumentPanel.tsx`, which were still rendering the server's raw,
+// deliberately-English `safe.name` fallback once a safe was opened — "Mój
+// sejf" in this table next to literal "My safe" in the breadcrumb/panel for
+// the very same safe) and now go through real i18n keys instead of a bare
+// PL/EN record with no translation entry.
 
 export const VaultSafesTable: React.FC<VaultSafesTableProps> = ({
   onOpenSafe,
@@ -183,7 +160,8 @@ export const VaultSafesTable: React.FC<VaultSafesTableProps> = ({
     return safes.filter(
       (s) =>
         (scopeFilter === 'all' || s.type === scopeFilter) &&
-        (safeDisplayName(s, isPolish).toLowerCase().includes(q) || s.name.toLowerCase().includes(q))
+        (safeDisplayName(s, isPolish, t).toLowerCase().includes(q) ||
+          s.name.toLowerCase().includes(q))
     );
   }, [safes, searchQuery, isPolish, scopeFilter]);
 
@@ -234,7 +212,7 @@ export const VaultSafesTable: React.FC<VaultSafesTableProps> = ({
         return (
           <span className="inline-flex items-center gap-2 text-sm font-medium text-c-text">
             <Icon size={14} className="text-c-text-muted shrink-0" />
-            {safeDisplayName(safe, isPolish)}
+            {safeDisplayName(safe, isPolish, t)}
           </span>
         );
       },
@@ -243,12 +221,13 @@ export const VaultSafesTable: React.FC<VaultSafesTableProps> = ({
       id: 'scope',
       label: t('vault.safes.scope', isPolish ? 'Zakres' : 'Scope'),
       sortable: true,
-      sortAccessor: (row: TableRow) => safeLevelLabel((row as unknown as VaultSafe).type, isPolish),
+      sortAccessor: (row: TableRow) =>
+        safeLevelLabel((row as unknown as VaultSafe).type, isPolish, t),
       render: (row: TableRow) => {
         const safe = row as unknown as VaultSafe;
         return (
           <span className="text-sm text-c-text-secondary">
-            {safeLevelLabel(safe.type, isPolish)}
+            {safeLevelLabel(safe.type, isPolish, t)}
             {safe.type === 'project' ? ` · ${safe.name}` : ''}
           </span>
         );
@@ -378,7 +357,9 @@ export const VaultSafesTable: React.FC<VaultSafesTableProps> = ({
     <TableWithPreviewLayout<{ id: string; title: string }>
       selectedId={previewSafeId}
       selectedItem={
-        previewSafe ? { id: previewSafe.id, title: safeDisplayName(previewSafe, isPolish) } : null
+        previewSafe
+          ? { id: previewSafe.id, title: safeDisplayName(previewSafe, isPolish, t) }
+          : null
       }
       onSelect={setPreviewSafeId}
       onOpenFull={(id) => {
@@ -398,7 +379,7 @@ export const VaultSafesTable: React.FC<VaultSafesTableProps> = ({
               pills={[
                 {
                   label: isPolish ? 'Poziom' : 'Level',
-                  value: safeLevelLabel(previewSafe.type, isPolish),
+                  value: safeLevelLabel(previewSafe.type, isPolish, t),
                 },
                 {
                   label: t('vault.safes.documents', isPolish ? 'Dokumenty' : 'Documents'),

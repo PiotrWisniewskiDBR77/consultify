@@ -36239,7 +36239,10 @@
       "indexingErrorsCount": "{{count}} error(s)",
       "lastModified": "Last modified",
       "emptyTitle": "No safes yet",
-      "rowOpen": "Open"
+      "rowOpen": "Open",
+      "levelUser": "My safe",
+      "levelOrganization": "Organization safe",
+      "levelProject": "Project safe"
     },
     "folders": {
       "loadFailed": "Failed to load folders",

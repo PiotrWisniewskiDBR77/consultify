@@ -107,6 +107,7 @@ import {
   indexStatusTone,
   normalizeVaultDocuments,
   normalizeVaultProjects,
+  safeDisplayName,
   scopeLabel,
   scopeMeta,
   type VaultDocument,
@@ -149,6 +150,12 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
   const { t, i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
   const currentUserId = useAppStore((s) => s.currentUser?.id);
+
+  // FIX-19 (Day 3 layer-2 acceptance): system safes (`user`/`organization`)
+  // ship a neutral English `name` from the server on purpose — this screen
+  // must localize it the same way `VaultSafesTable` already does, or the
+  // breadcrumb card / "Sejf: …" line show literal "My safe" in a Polish UI.
+  const displaySafeName = safeDisplayName(safe, isPolish, t);
 
   const [documents, setDocuments] = useState<VaultDocument[]>([]);
   const [projects, setProjects] = useState<VaultProject[]>([]);
@@ -767,8 +774,10 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
   // no-opem; `onCloseItem` (×) i `onShowList` ("Lista") oba wracają do
   // tabeli sejfów — jedyne dostępne "zamknięcie" tego ekranu.
   const openItems: OpenDocument[] = useMemo(
-    () => [{ id: safe.id, type: 'tool', subType: 'vault-safe', name: safe.name, status: 'DONE' }],
-    [safe.id, safe.name]
+    () => [
+      { id: safe.id, type: 'tool', subType: 'vault-safe', name: displaySafeName, status: 'DONE' },
+    ],
+    [safe.id, displaySafeName]
   );
   const handleSelectItem = useCallback(() => undefined, []);
 
@@ -1161,7 +1170,7 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
       <VaultDocumentPanel
         open={panelMode !== null}
         mode={panelMode ?? 'add'}
-        safeName={safe.name}
+        safeName={displaySafeName}
         safeScope={safe.type}
         safeProjectId={safe.projectId}
         document={editedDocument}

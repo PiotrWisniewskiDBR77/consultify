@@ -37402,7 +37402,10 @@
       "indexingErrorsCount": "{{count}} błąd(y)",
       "lastModified": "Ostatnia zmiana",
       "emptyTitle": "Brak sejfów",
-      "rowOpen": "Otwórz"
+      "rowOpen": "Otwórz",
+      "levelUser": "Mój sejf",
+      "levelOrganization": "Sejf organizacji",
+      "levelProject": "Sejf projektu"
     },
     "folders": {
       "loadFailed": "Nie udało się pobrać folderów",
