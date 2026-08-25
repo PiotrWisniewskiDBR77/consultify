@@ -108,8 +108,13 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
       // FIX-11: "Podstawowe"/"Treść i głębia" no longer report a hardcoded 1/5 —
       // count only the fields that actually rendered in each section.
       basics: draft ? (draft.owner ? 1 : 0) + (draft.semanticType ? 1 : 0) + 1 : 0,
-      content: [draft?.description, draft?.context, draft?.goal, draft?.rationale, draft?.risk]
-        .filter(Boolean).length,
+      content: [
+        draft?.description,
+        draft?.context,
+        draft?.goal,
+        draft?.rationale,
+        draft?.risk,
+      ].filter(Boolean).length,
       evidence: draft?.evidence?.length ?? 0,
       relations: draft?.relations?.length ?? 0,
       outputs: draft?.outputs?.length ?? 0,

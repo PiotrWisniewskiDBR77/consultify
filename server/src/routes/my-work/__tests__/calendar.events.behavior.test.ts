@@ -60,13 +60,15 @@ describe('calendar event and meeting behavior', () => {
       expect(sql).toContain('m.organization_id = ?');
       expect(sql).toContain('(m.created_by = ? OR m.attendees_json LIKE ?)');
       expect(params.slice(0, 3)).toEqual([ORG, USER, `%"${USER}"%`]);
-      return [{
-        ...row,
-        title: 'Allowed',
-        start_at: '2026-08-25T09:00:00Z',
-        end_at: '2026-08-25T10:00:00Z',
-        agenda_json: JSON.stringify({ calendarSource: 'consultify' }),
-      }];
+      return [
+        {
+          ...row,
+          title: 'Allowed',
+          start_at: '2026-08-25T09:00:00Z',
+          end_at: '2026-08-25T10:00:00Z',
+          agenda_json: JSON.stringify({ calendarSource: 'consultify' }),
+        },
+      ];
     });
     const res = await request(createApp()).get('/api/my-work/calendar/unified').query({
       start: '2026-08-25',
@@ -76,7 +78,10 @@ describe('calendar event and meeting behavior', () => {
     expect(res.status).toBe(200);
     expect(res.body.events).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ source: 'consultify', title: expect.stringContaining('Allowed') }),
+        expect.objectContaining({
+          source: 'consultify',
+          title: expect.stringContaining('Allowed'),
+        }),
       ])
     );
   });
@@ -84,7 +89,9 @@ describe('calendar event and meeting behavior', () => {
   it('does not return a meeting when the caller is neither creator nor attendee', async () => {
     mockQueryAll.mockResolvedValue([]);
     const res = await request(createApp()).get('/api/my-work/calendar/unified').query({
-      start: '2026-08-25', end: '2026-08-26', sources: 'meeting',
+      start: '2026-08-25',
+      end: '2026-08-26',
+      sources: 'meeting',
     });
     expect(res.status).toBe(200);
     expect(res.body.events).toEqual([]);
@@ -99,7 +106,9 @@ describe('calendar event and meeting behavior', () => {
       return [];
     });
     const res = await request(createApp()).get('/api/my-work/calendar/unified').query({
-      start: '2026-08-25', end: '2026-08-26', sources: 'meeting',
+      start: '2026-08-25',
+      end: '2026-08-26',
+      sources: 'meeting',
     });
     expect(res.status).toBe(200);
     expect(res.body.events).toEqual([]);
@@ -118,7 +127,12 @@ describe('calendar event and meeting behavior', () => {
     ['owner', { id: 'event-1', owner_id: USER, attendees_json: '[]', visibility: 'private' }],
     [
       'attendee (not creator)',
-      { id: 'event-2', owner_id: 'other-user', attendees_json: `["${USER}"]`, visibility: 'private' },
+      {
+        id: 'event-2',
+        owner_id: 'other-user',
+        attendees_json: `["${USER}"]`,
+        visibility: 'private',
+      },
     ],
   ])(
     'includes a real calendar_events row for its %s with no `sources` query param at all',
@@ -155,8 +169,11 @@ describe('calendar event and meeting behavior', () => {
 
   it('rejects malformed timestamps on owner update without writing', async () => {
     mockQueryOne.mockResolvedValue({
-      id: 'event-1', owner_id: USER, start_at: '2026-08-25T09:00:00Z',
-      end_at: '2026-08-25T10:00:00Z', attendees_json: '[]',
+      id: 'event-1',
+      owner_id: USER,
+      start_at: '2026-08-25T09:00:00Z',
+      end_at: '2026-08-25T10:00:00Z',
+      attendees_json: '[]',
     });
     const res = await request(createApp())
       .put('/api/my-work/calendar/events/event-1')

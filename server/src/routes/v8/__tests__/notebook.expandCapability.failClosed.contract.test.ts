@@ -32,18 +32,20 @@ describe('notebook expand capability contract (was: fail-closed)', () => {
     expect(closeMatch).not.toBeNull();
     const block = route.slice(start, start + (closeMatch!.index as number));
     expect(block).toContain('allowed: isOwner');
-    expect(block).toContain("receiptContract: isOwner ? 'notebook_expand_document_receipt_v1' : null");
+    expect(block).toContain(
+      "receiptContract: isOwner ? 'notebook_expand_document_receipt_v1' : null"
+    );
     // Still explicitly fail-closed for anyone but the owner.
     expect(block).toContain('Only the note owner can create a document draft from this page.');
   });
 
   it('writes a real, owner-scoped NOTEBOOK_PAGE_EXPANDED audit receipt when a draft is created from a notebook page', () => {
-    expect(canvasDrafts).toContain("action, resource_type, resource_id");
+    expect(canvasDrafts).toContain('action, resource_type, resource_id');
     expect(canvasDrafts).toContain("'NOTEBOOK_PAGE_EXPANDED'");
     expect(canvasDrafts).toContain("provenanceSource?.source === 'notebook-expand'");
     // Owner check before writing the receipt — mirrors notebook delete's own
     // owner-only gate, not a blanket "any draft creation counts" shortcut.
-    expect(canvasDrafts).toContain('String(sourcePage.owner_user_id || \'\') === String(userId)');
+    expect(canvasDrafts).toContain("String(sourcePage.owner_user_id || '') === String(userId)");
   });
 
   it('the readback endpoint accepts NOTEBOOK_PAGE_EXPANDED, not only the delete action', () => {

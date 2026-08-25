@@ -1820,7 +1820,9 @@ router.get(
           // only). The capability now mirrors delete's shape exactly.
           expandDocument: {
             allowed: isOwner,
-            reason: isOwner ? null : 'Only the note owner can create a document draft from this page.',
+            reason: isOwner
+              ? null
+              : 'Only the note owner can create a document draft from this page.',
             receiptContract: isOwner ? 'notebook_expand_document_receipt_v1' : null,
           },
         },
@@ -1836,7 +1838,10 @@ router.get(
 // /api/work-canvas/drafts' notebook-expand branch) — an explicit allowlist
 // keeps this endpoint from becoming a generic "read any audit_events row by
 // id" probe as new actions are added.
-const NOTEBOOK_ACTION_RECEIPT_ACTIONS = ['NOTEBOOK_PAGE_DELETED', 'NOTEBOOK_PAGE_EXPANDED'] as const;
+const NOTEBOOK_ACTION_RECEIPT_ACTIONS = [
+  'NOTEBOOK_PAGE_DELETED',
+  'NOTEBOOK_PAGE_EXPANDED',
+] as const;
 
 router.get(
   '/notebook/action-receipts/:receiptId',
@@ -1845,7 +1850,9 @@ router.get(
     const receiptId = String(req.params.receiptId || '').trim();
     const requestedAction = String(req.query.action || 'NOTEBOOK_PAGE_DELETED').trim();
     if (!(NOTEBOOK_ACTION_RECEIPT_ACTIONS as readonly string[]).includes(requestedAction)) {
-      return res.status(400).json({ error: 'Unknown receipt action', code: 'NOTEBOOK_RECEIPT_UNKNOWN_ACTION' });
+      return res
+        .status(400)
+        .json({ error: 'Unknown receipt action', code: 'NOTEBOOK_RECEIPT_UNKNOWN_ACTION' });
     }
     const event = await queryHelpers.queryOne<any>(
       `SELECT id, ts, action, resource_type, resource_id, before_json, after_json, metadata_json

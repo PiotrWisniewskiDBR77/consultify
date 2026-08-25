@@ -152,9 +152,7 @@ describe('Notebook cross-surface action audit', () => {
     // server-receipt-required — see notebookActionRegistry.ts), backed by the
     // same real capability fetch instead of a single-action ternary.
     expect(content).toContain("...(isDeleteReceiptCapable ? ['delete'] : [])");
-    expect(content).toContain(
-      "...(isExpandDocumentReceiptCapable ? ['expand-document'] : [])"
-    );
+    expect(content).toContain("...(isExpandDocumentReceiptCapable ? ['expand-document'] : [])");
   });
 
   it('keeps every governed menu conversion and rail mutation receipt-bound', () => {

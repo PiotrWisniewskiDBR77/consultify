@@ -3682,12 +3682,7 @@ router.put('/drafts/:draftId', async (req: AuthRequest, res) => {
       [draft.id, draft.organizationId],
       { fallback: false }
     );
-    return sendDraftConflict(
-      res,
-      raceRow ? toDraft(raceRow) : draft,
-      baseUpdatedAt,
-      'save_draft'
-    );
+    return sendDraftConflict(res, raceRow ? toDraft(raceRow) : draft, baseUpdatedAt, 'save_draft');
   }
 
   // C1.1 — autosave now snapshots a version on a sensible cadence. Without this,

@@ -68,10 +68,7 @@ import {
 
 import TeresaMark from '../shared/TeresaMark';
 import { getCanvasBg } from './canvas/canvasBackground';
-import {
-  isCanvasKeyboardScope,
-  resolveMindMapGrammarAction,
-} from './canvas/mindmapKeyboardScope';
+import { isCanvasKeyboardScope, resolveMindMapGrammarAction } from './canvas/mindmapKeyboardScope';
 import {
   canvasObjectSurfaceStyle,
   canvasObjectTextStyle,
@@ -1791,10 +1788,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                   // depth3 / 13.01:1 at depth2; dark: 11.48:1 at depth3 / 14.43:1 at
                   // depth2 — computed via scripts/contrast-ratio.mjs), so it never
                   // regresses if the opacity ladder changes again later.
-                  <div
-                    className="text-[8px] text-c-text ml-auto"
-                    title={`Depth ${depth}`}
-                  >
+                  <div className="text-[8px] text-c-text ml-auto" title={`Depth ${depth}`}>
                     L{depth}
                   </div>
                 )}
@@ -4579,7 +4573,8 @@ function MindMapInner({
       detachBranch: (nodeId?: string) => detachBranchRef.current?.(nodeId),
       duplicateBranch: (nodeId?: string) => duplicateBranchRef.current?.(nodeId),
       // N5 trzecia fala (2026-08-09) — `idea.node.mm_convert_branch_*`.
-      convertBranch: (target: string, nodeId?: string) => convertBranchRef.current?.(target, nodeId),
+      convertBranch: (target: string, nodeId?: string) =>
+        convertBranchRef.current?.(target, nodeId),
       // E11 fix (2026-08-10) — `idea.node.mm_convert_initiative`/`_decision`/
       // `_tasks` (single_item, no cascade).
       convertSingleNode: (target: string, nodeId?: string) =>
