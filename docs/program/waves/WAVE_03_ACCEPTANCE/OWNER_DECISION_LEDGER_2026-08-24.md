@@ -94,3 +94,7 @@ demo (reguła „dane demo = twarz produktu").
 | DEC-2026-08-25-42 | Szablony — rejestr szablonów Excela | **OWNER_ACCEPT** | Budujemy właściwy rejestr szablonów użytkownika dla Excela (praca L); koniec zapisu do tp_base_templates wbrew D5. |
 | DEC-2026-08-25-43 | Szablony — los atrap | **OWNER_ACCEPT** | Trzy kubełki: kasacja martwego kodu i stubów; 24 wbudowane → „szybkie starty"; 40 konsultingowych → prawdziwy rejestr DB. |
 | DEC-2026-08-25-44 | Tools — biblioteka frameworków na MVP | **OWNER_ACCEPT** | 8–12 frameworków z pełnym blueprintem (opis/kroki/pytania/wyjścia) zamiast 60 pustych kafli; rozszerzanie po MVP wg użycia. |
+| DEC-2026-08-25-45 | Assessment — prototypy DRD | **OWNER_ACCEPT** | Trzy widoki (Interview/Matrix/Report + Settings 5 kart) zaakceptowane jako wzór budowy; instrukcja dnia 7; budowa za flagą OFF; mechanika z dawcy wg mapowania 1:1 z prototypu. |
+| DEC-2026-08-25-46 | Assessment — struktura raportu | **OWNER_ACCEPT** | 7 osi wszędzie (raport/eksport/opis produktu); stary spec 8 wymiarów i preview „5 osi" do poprawy. |
+| DEC-2026-08-25-47 | Assessment — tożsamość Raportu | **OWNER_ACCEPT** | Report = jeden obiekt przy sesji z historią wersji; eksport do Materiałów jako migawka. |
+| DEC-2026-08-25-48 | Meetings — Agenda/Szablony | **OWNER_DECISION: BUILD_NOW** | Szablony agendy spotkań wchodzą do pakietu dnia 6 (Szablony): CRUD szablonów agendy + zastosowanie przy tworzeniu/karcie spotkania (agenda istnieje w modelu MeetingItem); kanon list; etykieta słownika zostaje. |
