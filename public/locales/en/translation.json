@@ -7384,12 +7384,15 @@
       "sendToReview": "Send to review",
       "approveAndMoveForward": "Approve and move forward",
       "backToDraft": "Back to draft",
-      "openInitiativeDocument": "Open initiative document",
+      "openInitiativeDocument": "Open document",
       "copyId": "Copy ID",
       "aiForInitiativesComingSoon": "AI for initiatives — coming soon",
       "summarize": "Summarize",
       "risks": "Risks",
-      "nextSteps": "Next steps"
+      "nextSteps": "Next steps",
+      "expand": "Expand",
+      "collapse": "Collapse",
+      "copyDetails": "Copy details"
     }
   },
   "assessment": {

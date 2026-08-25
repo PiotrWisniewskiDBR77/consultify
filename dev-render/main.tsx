@@ -214,6 +214,7 @@ const KartaToolScreen = React.lazy(() => import('./screens/karta-tool'));
 const KartaInitiativeScreen = React.lazy(() => import('./screens/karta-initiative'));
 const KartaInsightScreen = React.lazy(() => import('./screens/karta-insight'));
 const KartaInterviewScreen = React.lazy(() => import('./screens/karta-interview'));
+const InterviewPreviewCanonScreen = React.lazy(() => import('./screens/interview-preview-canon'));
 const KartaDecisionScreen = React.lazy(() => import('./screens/karta-decision'));
 const KartaNotificationScreen = React.lazy(() => import('./screens/karta-notification'));
 const KartaTaskScreen = React.lazy(() => import('./screens/karta-task'));
@@ -675,6 +676,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'karta-interview': {
     label: 'KARTY N — Interview Session (harness odbioru 2026-07-21)',
     render: () => <KartaInterviewScreen />,
+  },
+  'interview-preview-canon': {
+    label:
+      'DEC-2026-08-25-53 — Interview Sesje/Inicjatywy PREVIEW rebuilt onto TABLE_AND_PREVIEW_CANON §7 (REALNE TableWithPreviewLayout + Interview{Session,Initiative}PreviewBody/Footer). &variant=session|initiative &kebab=1 (otwiera kebab Details na starcie)',
+    render: () => <InterviewPreviewCanonScreen />,
   },
   'karta-decision': {
     label: 'KARTY N — Decision (harness odbioru 2026-07-21)',

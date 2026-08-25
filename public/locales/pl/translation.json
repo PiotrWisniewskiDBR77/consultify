@@ -6707,12 +6707,15 @@
       "sendToReview": "Wyślij do przeglądu",
       "approveAndMoveForward": "Zatwierdź i przekaż dalej",
       "backToDraft": "Wróć do szkicu",
-      "openInitiativeDocument": "Otwórz dokument inicjatywy",
+      "openInitiativeDocument": "Otwórz dokument",
       "copyId": "Kopiuj ID",
       "aiForInitiativesComingSoon": "AI dla inicjatyw — wkrótce",
       "summarize": "Podsumuj",
       "risks": "Ryzyka",
-      "nextSteps": "Następne kroki"
+      "nextSteps": "Następne kroki",
+      "expand": "Rozwiń",
+      "collapse": "Zwiń",
+      "copyDetails": "Kopiuj szczegóły"
     }
   },
   "assessment": {
