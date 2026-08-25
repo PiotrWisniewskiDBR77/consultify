@@ -96,6 +96,13 @@ export interface NotebookHamburgerMenuProps {
   deleteDisabled?: boolean;
   /** Durable actions stay disabled unless their backend receipt contract is proven. */
   receiptCapableActionIds?: string[];
+  /**
+   * FIX-7 (Day 3 acceptance): per-action id → real reason the action is
+   * unavailable (e.g. the server's actual action-capabilities `reason`
+   * field, PL/EN per `isPolish`). Falls back to a generic, still-localized
+   * message for any action id not present here.
+   */
+  receiptUnavailableReasons?: Record<string, string>;
 }
 
 const ALL_CONVERT_TARGETS: NotebookConvertTarget[] = [
@@ -260,7 +267,14 @@ function convertHeading(_pl: boolean): string {
  * Closes on Escape, outside-click, and after any action fires.
  */
 export const NotebookHamburgerMenu: React.FC<NotebookHamburgerMenuProps> = (props) => {
-  const { x, y, onClose, isPolish, receiptCapableActionIds = [] } = props;
+  const {
+    x,
+    y,
+    onClose,
+    isPolish,
+    receiptCapableActionIds = [],
+    receiptUnavailableReasons = {},
+  } = props;
   const menuRef = useRef<HTMLDivElement>(null);
   const executionLockRef = useRef(false);
   const [runningActionId, setRunningActionId] = useState<string | null>(null);
@@ -386,10 +400,18 @@ export const NotebookHamburgerMenu: React.FC<NotebookHamburgerMenuProps> = (prop
               action.contract.outcome === 'server-receipt-required' &&
               !receiptCapableActionIds.includes(action.id);
             const unavailableReasonId = `notebook-action-${action.id}-unavailable`;
-            const unavailableReason = i18n.t(
-              'notebook.hamburgerMenu.receiptUnavailable',
-              'Unavailable until the server can return a durable action receipt'
-            );
+            // FIX-7 (Day 3 acceptance): prefer the real, per-action reason
+            // (typically the server's own action-capabilities `reason`,
+            // e.g. "Only the note owner can delete this page.") over a
+            // one-size-fits-all sentence — different actions are blocked
+            // for different real causes (ownership vs. missing receipt
+            // support), and a blanket message obscures that.
+            const unavailableReason =
+              receiptUnavailableReasons[action.id] ||
+              i18n.t(
+                'notebook.hamburgerMenu.receiptUnavailable',
+                'Unavailable until the server can return a durable action receipt'
+              );
             return (
               <div className={receiptUnavailable ? 'py-1' : undefined}>
                 <button

@@ -1807,12 +1807,21 @@ router.get(
           // owner-only write gate (PUT /notebook/pages/:id above enforces the
           // identical NOTEBOOK_PAGE_OWNER_ONLY rule for page-write), so the
           // capability check mirrors it rather than inventing a new rule.
+          //
+          // FIX-15 (Day 3 layer-2 acceptance): was unconditionally
+          // `allowed: false` because POST /api/work-canvas/drafts never wrote
+          // a real, durable, independently-readable audit receipt for a
+          // notebook-page expand. That endpoint now writes an
+          // 'NOTEBOOK_PAGE_EXPANDED' audit_events row (owner-gated, same as
+          // here) whenever the request's provenance names this page as the
+          // expand source, and this receipt is readable back via
+          // GET /notebook/action-receipts/:receiptId?action=NOTEBOOK_PAGE_EXPANDED
+          // (generalized below, previously hardcoded to the delete action
+          // only). The capability now mirrors delete's shape exactly.
           expandDocument: {
-            allowed: false,
-            reason: isOwner
-              ? 'Document expansion stays disabled until Canvas draft creation writes an audit receipt with readback.'
-              : 'Only the note owner can create a document draft from this page.',
-            receiptContract: null,
+            allowed: isOwner,
+            reason: isOwner ? null : 'Only the note owner can create a document draft from this page.',
+            receiptContract: isOwner ? 'notebook_expand_document_receipt_v1' : null,
           },
         },
       },
@@ -1821,17 +1830,29 @@ router.get(
   })
 );
 
+// FIX-15 (Day 3 layer-2 acceptance): readback for the two notebook actions
+// with a real audit receipt today. Both are owner-scoped writes to the same
+// audit_events table (see PUT /notebook/pages/:id above and POST
+// /api/work-canvas/drafts' notebook-expand branch) — an explicit allowlist
+// keeps this endpoint from becoming a generic "read any audit_events row by
+// id" probe as new actions are added.
+const NOTEBOOK_ACTION_RECEIPT_ACTIONS = ['NOTEBOOK_PAGE_DELETED', 'NOTEBOOK_PAGE_EXPANDED'] as const;
+
 router.get(
   '/notebook/action-receipts/:receiptId',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
     const receiptId = String(req.params.receiptId || '').trim();
+    const requestedAction = String(req.query.action || 'NOTEBOOK_PAGE_DELETED').trim();
+    if (!(NOTEBOOK_ACTION_RECEIPT_ACTIONS as readonly string[]).includes(requestedAction)) {
+      return res.status(400).json({ error: 'Unknown receipt action', code: 'NOTEBOOK_RECEIPT_UNKNOWN_ACTION' });
+    }
     const event = await queryHelpers.queryOne<any>(
       `SELECT id, ts, action, resource_type, resource_id, before_json, after_json, metadata_json
        FROM audit_events
-       WHERE id = ? AND org_id = ? AND actor_id = ? AND action = 'NOTEBOOK_PAGE_DELETED'
+       WHERE id = ? AND org_id = ? AND actor_id = ? AND action = ?
        LIMIT 1`,
-      [receiptId, organizationId, userId]
+      [receiptId, organizationId, userId, requestedAction]
     );
     if (!event) {
       return res

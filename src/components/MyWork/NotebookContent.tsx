@@ -787,8 +787,12 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     pageVersion: string | null;
     actorUserId: string;
     organizationId: string;
-    delete: { allowed: boolean; receiptContract: string | null };
-    expandDocument: { allowed: boolean; receiptContract: string | null };
+    // FIX-7 (Day 3 acceptance): the server always returned a real, per-action
+    // `reason` (e.g. "Only the note owner can delete this page.") — this
+    // client type just never captured it, so NotebookHamburgerMenu fell back
+    // to one blanket sentence for every unavailable action regardless of why.
+    delete: { allowed: boolean; reason: string | null; receiptContract: string | null };
+    expandDocument: { allowed: boolean; reason: string | null; receiptContract: string | null };
   } | null>(null);
   const isCapabilityCurrent = useMemo(
     () =>
@@ -856,10 +860,12 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           organizationId: result.organizationId,
           delete: {
             allowed: result.actions.delete.allowed,
+            reason: result.actions.delete.reason ?? null,
             receiptContract: result.actions.delete.receiptContract,
           },
           expandDocument: {
             allowed: result.actions.expandDocument.allowed,
+            reason: result.actions.expandDocument.reason ?? null,
             receiptContract: result.actions.expandDocument.receiptContract,
           },
         });
@@ -3454,6 +3460,15 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                       ...(isDeleteReceiptCapable ? ['delete'] : []),
                       ...(isExpandDocumentReceiptCapable ? ['expand-document'] : []),
                     ]}
+                    receiptUnavailableReasons={{
+                      ...(!isDeleteReceiptCapable && actionCapabilities?.delete.reason
+                        ? { delete: actionCapabilities.delete.reason }
+                        : {}),
+                      ...(!isExpandDocumentReceiptCapable &&
+                      actionCapabilities?.expandDocument.reason
+                        ? { 'expand-document': actionCapabilities.expandDocument.reason }
+                        : {}),
+                    }}
                   />
                 )}
 
@@ -4042,7 +4057,27 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                       <NotebookInlineAIMenu
                         editor={editor}
                         pageId={activePage.id}
-                        receiptCapableActionIds={[]}
+                        // FIX-7 (Day 3 acceptance): was hardcoded `[]`, which
+                        // disabled every inline-AI action (isReceiptCapable()
+                        // gates handleAction/handleApprove/handleReject on
+                        // this list). These 7 ids ARE genuinely receipt-backed
+                        // — the 5 rewrite actions create a durable
+                        // notebook_ai_proposals row (Api.notebookCreateAIProposal,
+                        // proposal.id is the receipt), and approve/reject
+                        // mutate that same row's status (Api.notebookResolveAIProposal,
+                        // readback via GET .../ai-proposals) — unlike
+                        // expand-document, this durability does not depend on
+                        // page ownership, so it is not gated by the
+                        // action-capabilities endpoint.
+                        receiptCapableActionIds={[
+                          'shorten',
+                          'expand',
+                          'improve',
+                          'formal',
+                          'explain',
+                          'approve',
+                          'reject',
+                        ]}
                         onApplied={() => {
                           void Promise.all([fetchPages(), refreshAIProposals(activePage.id)]);
                         }}
@@ -4129,7 +4164,17 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                       state={slashState}
                       onClose={() => setSlashState(INITIAL_SLASH_STATE)}
                       containerRef={editorContainerRef}
-                      receiptCapableActionIds={[]}
+                      // FIX-7 (Day 3 acceptance): was hardcoded `[]`, which
+                      // disabled the 3 slash create-* commands entirely
+                      // (SlashMenu disables any command in
+                      // ['create-task','create-decision','save-as-idea'] not
+                      // in this list). All 3 dispatch a window event this
+                      // same component listens for (handleCreateTask/
+                      // handleCreateDecision/handleCreateIdea below) — each
+                      // is a real, durable server write (Api.createPersonalTask/
+                      // createDecision/createMyIdea) whose returned id is
+                      // independently readable back in My Tasks/Decisions/Ideas.
+                      receiptCapableActionIds={['create-task', 'create-decision', 'save-as-idea']}
                       onAICommand={(cmd) => setAiCommand(cmd)}
                     />
                   )}
@@ -4286,7 +4331,24 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                 }
               }}
               saveState={saveState}
-              receiptCapableActionIds={[]}
+              // FIX-7 (Day 3 acceptance): was hardcoded `[]`, which disabled
+              // every rail editing control (isReceiptCapable() gates all 8
+              // — see NotebookRightRail.tsx). All 8 route through
+              // scheduleSave()/persistNotebookDraft() above, the SAME real
+              // PUT /notebook/pages/:id used everywhere else in this
+              // component, with genuine server-confirmed error/conflict
+              // handling (saveState reflects the real HTTP outcome, not an
+              // optimistic guess) — durable and receipt-capable.
+              receiptCapableActionIds={[
+                'retry-save',
+                'load-theirs',
+                'keep-mine',
+                'visibility-private',
+                'visibility-project',
+                'verification-status',
+                'review-cadence',
+                'mark-reviewed',
+              ]}
               onRetrySave={handleRetrySave}
               onReloadConflict={handleReloadFromConflict}
               onKeepMineConflict={handleRetryAfterConflict}

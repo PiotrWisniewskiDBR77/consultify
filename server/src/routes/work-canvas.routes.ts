@@ -2886,7 +2886,78 @@ router.post('/drafts', async (req: AuthRequest, res) => {
     ],
     { fallback: false }
   );
-  res.status(201).json(envelope(draft, { auditEventId: `ae-${randomUUID()}` }));
+
+  // FIX-15 / FIX-7 (Day 3 acceptance): "Rozwiń w dokument" was permanently
+  // disabled client-side because this endpoint never wrote a real, durable,
+  // independently-readable audit receipt for a notebook-page expand — the
+  // client fell back to using the draft id itself as a fake "receiptId"
+  // (see notebookExpandToDocument.ts's prior comment). The client already
+  // sends `provenance.source === 'notebook-expand'` + `provenance.sourceId`
+  // (the notebook page id) on every expand request (buildNotebookExpandDraftBody
+  // in notebookExpandToDocument.ts) — when present, and only when the actor
+  // owns that notebook page (same owner-only gate as notebook delete/write),
+  // write a real audit_events row and return its id as `receiptId`, readable
+  // back via GET /api/v8/my-work/notebook/action-receipts/:receiptId
+  // (generalized in my-work.routes.ts to accept this action too).
+  let expandReceiptId: string | null = null;
+  const provenanceSource =
+    draft.provenance && typeof draft.provenance === 'object'
+      ? (draft.provenance as Record<string, unknown>)
+      : null;
+  if (
+    provenanceSource?.source === 'notebook-expand' &&
+    typeof provenanceSource.sourceId === 'string' &&
+    provenanceSource.sourceId
+  ) {
+    const sourcePageId = provenanceSource.sourceId;
+    try {
+      const sourcePage = await dbGet<{ owner_user_id?: string; organization_id?: string }>(
+        `SELECT owner_user_id, organization_id FROM notebook_pages WHERE id = ? LIMIT 1`,
+        [sourcePageId]
+      );
+      if (
+        sourcePage &&
+        String(sourcePage.organization_id || '') === String(organizationId) &&
+        String(sourcePage.owner_user_id || '') === String(userId)
+      ) {
+        expandReceiptId = `ae-${randomUUID()}`;
+        await dbRun(
+          `INSERT INTO audit_events (
+            id, ts, actor_id, actor_type, org_id, action, resource_type, resource_id,
+            before_json, after_json, metadata_json
+          ) VALUES (?, ?, ?, 'USER', ?, 'NOTEBOOK_PAGE_EXPANDED', 'notebook_page', ?, ?, ?, ?)`,
+          [
+            expandReceiptId,
+            now,
+            userId,
+            organizationId,
+            sourcePageId,
+            JSON.stringify({ id: sourcePageId }),
+            JSON.stringify({ expandedToDraftId: draft.id }),
+            JSON.stringify({
+              draftId: draft.id,
+              contract: 'notebook_expand_document_receipt_v1',
+            }),
+          ]
+        );
+      }
+      // Not owner-scoped, or the source page no longer exists: skip the
+      // receipt silently. The draft itself is still created — creating a
+      // Canvas draft is not owner-gated on its own; only the *audited
+      // expand-from-notebook* claim requires ownership of the source page.
+    } catch (err) {
+      logger.warn('[work-canvas] failed to write notebook-expand audit receipt', {
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+
+  res.status(201).json(
+    envelope(draft, {
+      auditEventId: `ae-${randomUUID()}`,
+      ...(expandReceiptId ? { receiptId: expandReceiptId } : {}),
+    })
+  );
 });
 
 router.get('/drafts/:draftId', async (req: AuthRequest, res) => {

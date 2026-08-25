@@ -28550,7 +28550,11 @@
       "work": "Work",
       "context": "Context",
       "closePanel": "Close panel",
-      "ownerYou": "You"
+      "ownerYou": "You",
+      "receiptUnavailable": "Editing controls are unavailable until the server can return a durable action receipt."
+    },
+    "slashMenu": {
+      "receiptUnavailable": "Unavailable until the server can return a durable action receipt"
     },
     "hamburgerMenu": {
       "export": "Export",
@@ -28560,6 +28564,7 @@
       "expandDocument": "Expand into document",
       "askAi": "Ask AI",
       "deleteNote": "Delete note",
+      "receiptUnavailable": "Unavailable until the server can return a durable action receipt",
       "convertTo": "Convert to"
     },
     "presenceStack": {
@@ -30957,7 +30962,8 @@
       "empty": "AI returned no content. Please try again.",
       "proposalFailed": "Failed to create AI proposal.",
       "executeFailed": "AI error. Please try again.",
-      "approveFailed": "Failed to approve."
+      "approveFailed": "Failed to approve.",
+      "receiptUnavailable": "Unavailable until the server can return a durable action receipt"
     }
   },
   "myWorkMindmap": {

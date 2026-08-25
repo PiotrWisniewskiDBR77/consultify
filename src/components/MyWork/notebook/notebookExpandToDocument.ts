@@ -24,11 +24,23 @@ export interface NotebookExpandResult {
   /**
    * DEC-25: the durable action receipt NotebookHamburgerMenu's executeAction()
    * requires for every 'server-receipt-required' contract (see
-   * notebookActionRegistry.ts 'expand-document'). There is no separate audit
-   * receipt endpoint for canvas-draft creation the way notebook delete has
-   * (/notebook/action-receipts/:receiptId) — the created draft itself is the
-   * durable evidence, retrievable via GET /api/work-canvas/drafts/:draftId, so
-   * the draft id doubles as the receipt id.
+   * notebookActionRegistry.ts 'expand-document').
+   *
+   * FIX-15 (Day 3 layer-2 acceptance): this used to be `draftId` itself —
+   * not a real audit receipt, just the id of whatever draft got created,
+   * which does not prove an *audited notebook-page expand* happened (any
+   * draft creation would have "worked" the same way). POST
+   * /api/work-canvas/drafts now writes a real 'NOTEBOOK_PAGE_EXPANDED'
+   * audit_events row whenever the request's provenance names this page as
+   * the expand source and the actor owns it, and returns its id as
+   * `receiptId` (top-level, sibling of `data` in the envelope) —
+   * independently readable via GET
+   * /api/v8/my-work/notebook/action-receipts/:receiptId?action=NOTEBOOK_PAGE_EXPANDED.
+   * Falls back to draftId only if the server didn't return one (e.g. the
+   * caller is not the source page's owner) so draft creation itself never
+   * breaks — but the client's isExpandDocumentReceiptCapable gate already
+   * keeps the whole action disabled for non-owners, so that fallback path
+   * should not be reachable in practice.
    */
   receiptId: string;
 }
@@ -260,5 +272,10 @@ export async function expandNotebookPageToCanvasDraft(
   if (!draftId) {
     throw new Error('Canvas draft was created but no draft id was returned');
   }
-  return { draftId, chatUrl: buildExpandChatUrl(draftId), receiptId: draftId };
+  const realReceiptId = String(json?.receiptId || '').trim();
+  return {
+    draftId,
+    chatUrl: buildExpandChatUrl(draftId),
+    receiptId: realReceiptId || draftId,
+  };
 }

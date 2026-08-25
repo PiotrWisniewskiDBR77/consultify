@@ -846,11 +846,14 @@ describe('V8 My Work notebook routes', () => {
           reason: null,
           receiptContract: 'notebook_delete_receipt_v1',
         },
+        // FIX-15 (Day 3 layer-2 acceptance): expandDocument is now
+        // capability-gated the same way delete is — allowed for the owner,
+        // backed by a real audit_events receipt written by POST
+        // /api/work-canvas/drafts (see work-canvas.routes.ts).
         expandDocument: {
-          allowed: false,
-          reason:
-            'Document expansion stays disabled until Canvas draft creation writes an audit receipt with readback.',
-          receiptContract: null,
+          allowed: true,
+          reason: null,
+          receiptContract: 'notebook_expand_document_receipt_v1',
         },
       },
     });
@@ -1004,10 +1007,13 @@ describe('V8 My Work notebook routes', () => {
       resourceId: 'note-5',
       after: { deleted: true, id: 'note-5' },
     });
+    // FIX-15: readback now also takes an `action` param (defaults to the
+    // delete action for backward compatibility with existing callers).
     expect(mockQueryOne).toHaveBeenCalledWith(expect.stringContaining('org_id = ?'), [
       'ae-existing',
       ORG,
       USER_ID,
+      'NOTEBOOK_PAGE_DELETED',
     ]);
   });
 });

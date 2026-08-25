@@ -29688,7 +29688,11 @@
       "work": "Praca",
       "context": "Kontekst",
       "closePanel": "Zamknij panel",
-      "ownerYou": "Ty"
+      "ownerYou": "Ty",
+      "receiptUnavailable": "Kontrolki edycji są niedostępne, dopóki serwer nie zwróci trwałego potwierdzenia akcji."
+    },
+    "slashMenu": {
+      "receiptUnavailable": "Niedostępne, dopóki serwer nie zwróci trwałego potwierdzenia"
     },
     "hamburgerMenu": {
       "export": "Eksportuj",
@@ -29698,6 +29702,7 @@
       "expandDocument": "Rozwiń do dokumentu",
       "askAi": "Zapytaj AI",
       "deleteNote": "Usuń notatkę",
+      "receiptUnavailable": "Niedostępne, dopóki serwer nie zwróci trwałego potwierdzenia akcji",
       "convertTo": "Konwertuj na"
     },
     "presenceStack": {
@@ -32108,6 +32113,7 @@
       "error": "Błąd AI. Spróbuj ponownie.",
       "empty": "AI nie zwróciło treści. Spróbuj ponownie.",
       "proposalFailed": "Nie udało się utworzyć propozycji AI.",
+      "receiptUnavailable": "Niedostępne, dopóki serwer nie zwróci trwałego potwierdzenia akcji",
       "executeFailed": "Błąd AI. Spróbuj ponownie.",
       "approveFailed": "Nie udało się zatwierdzić."
     }
