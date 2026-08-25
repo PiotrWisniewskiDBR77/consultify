@@ -66,8 +66,8 @@ Właściciel poza publiczną produkcją wpisuje `/results?ff_wave3ResultsOwnerRe
 | F.1 inwentarz FIN-REC-001             | DONE_CURRENT_SHA | `4ab7a61403`                | audyt źródłowy | Sześć gałęzi i pięć flag zamrożone poniżej                    |
 | F.2 resolver FIN-REC-002              | DONE_CURRENT_SHA | `5502e8fdb2`                | 81/81 PASS     | 53-case table + OFF regression + stare testy                  |
 | F.3 wspólny shell FIN-REC-003         | PARTIAL / STOP   | `b284ca6e43`                | 10/10 PASS     | Mechaniczne luki zamknięte; cold Back nie utrwala filtrów     |
-| F.4 `financeOwnerSampleData`          | DONE_CURRENT_SHA | do uzupełnienia po commicie | 5/5 PASS       | Host produkcyjny fail-closed, jawny banner, licznik zamrożony |
-| F.5 ochrona danych i ufności          | PENDING          | —                           | —              | —                                                             |
+| F.4 `financeOwnerSampleData`          | DONE_CURRENT_SHA | `207124e9e9`                | 5/5 PASS       | Host produkcyjny fail-closed, jawny banner, licznik zamrożony |
+| F.5 ochrona danych i ufności          | DONE_CURRENT_SHA | do uzupełnienia po commicie | 4/4 PASS       | Zero migracji, ufność i tenant guards zamrożone               |
 | F.6 stany brzegowe FIN-REC-011        | PENDING          | —                           | —              | —                                                             |
 | F.7 testy FIN-REC-014                 | PENDING          | —                           | —              | —                                                             |
 | F.8 przygotowanie odłączenia Benefits | PENDING          | —                           | —              | —                                                             |
@@ -142,6 +142,16 @@ Domknięta luka mechaniczna: własne `w-[400px]` zastąpione wspólnym `PREVIEW_
 - Wspólny, informacyjny banner ma `data-testid="finance-sample-data-banner"` i renderuje się wyłącznie dla jawnego trybu próbki.
 - `financeOwnerSampleData.contract.test.tsx`: 5/5 PASS, w tym zamrożony denominator. Nie dodano ani nie zmieniono żadnego rekordu próbki.
 - Budżety nie mają próbki i pozostają niespójnością zastaną; nie rozszerzono mechanizmu.
+
+### F.5 — ochrona danych, ufności i tenanta
+
+- `confidencePolicy.guard.test.ts`: 4/4 PASS.
+- Diff migracji jest pusty; historyczne `overall_confidence` i `mapping_confidence` nie są dotykane.
+- Fallback ufności pozostaje dokładnie `mapping_confidence ?? confidence ?? (isDerived ? 1 : 0)`.
+- Dwa progi `0.85` w `FinancialStatementMappingEditor.tsx` pozostają niezmienione.
+- `financeV2Router.use(requireActiveMembership)` i `requireCanonicalFinanceMutation` występują przed pierwszym podrouterem.
+- Odczyt bez automatycznego zapisu rozliczono per gałąź w F.2.
+- Role `preparer` są zaszyte w sześciu miejscach `FinanceHub.tsx:332,346,352,3330,3394,3424`; nie zmieniono ich bez realnego checku capability.
 
 ## Pozycje STOP
 
