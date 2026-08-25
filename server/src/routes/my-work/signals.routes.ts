@@ -132,6 +132,11 @@ router.get(
         ? 'projectName as "projectName"'
         : 'NULL as "projectName"';
     const notifSeveritySelect = notifCols.has('severity') ? 'severity' : `'INFO' as severity`;
+    // Isolation: notifications carries organization_id (migrations-v2/001_baseline).
+    // A user who belongs to multiple orgs must only see signals for the org
+    // active in their token — never notifications generated in another org.
+    const notifHasOrgId = notifCols.has('organization_id');
+    const notifOrgFilter = notifHasOrgId ? 'AND organization_id = ?' : '';
 
     const rows =
       (await queryHelpers.queryAll<any>(
@@ -150,10 +155,11 @@ router.get(
         FROM notifications
         WHERE user_id = ?
           AND ${notifReadExpr} = 0
+          ${notifOrgFilter}
         ORDER BY created_at DESC
         LIMIT 200
       `,
-        [userId]
+        notifHasOrgId ? [userId, orgId] : [userId]
       )) || [];
 
     // Aggregate + filter
@@ -287,16 +293,47 @@ router.post(
   })
 );
 
+/**
+ * A signal key of the form `notification:<id>` is backed by a real row in
+ * `notifications`. Before letting a mutation (snooze/dismiss) touch it,
+ * confirm the row belongs to this user AND to their currently active
+ * organization — otherwise a user who is a member of multiple orgs could
+ * snooze/dismiss (and, via dismiss, mark-as-read) another org's record by
+ * guessing/replaying its id. Non-notification keys (predictions, etc.) are
+ * pure per-user preference rows and are not subject to this check.
+ */
+const verifyNotificationOwnership = async (
+  key: string,
+  userId: string,
+  orgId: string
+): Promise<boolean> => {
+  if (!key.startsWith('notification:')) return true;
+  const notifId = key.replace(/^notification:/, '');
+  if (!notifId) return false;
+  const notifCols = await getTableColumns('notifications');
+  const notifHasOrgId = notifCols.has('organization_id');
+  const row = await queryHelpers.queryOne<{ id: string }>(
+    `SELECT id FROM notifications WHERE id = ? AND user_id = ? ${
+      notifHasOrgId ? 'AND organization_id = ?' : ''
+    } LIMIT 1`,
+    notifHasOrgId ? [notifId, userId, orgId] : [notifId, userId]
+  );
+  return Boolean(row);
+};
+
 router.post(
   '/signals/:key/snooze',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
-    const { userId } = identity;
+    const { userId, orgId } = identity;
     if (!(await requireTables(res, ['my_work_signal_snoozes']))) return;
 
     const key = String(req.params.key || '').trim();
     if (!key) return res.status(400).json({ error: 'key is required' });
+    if (!(await verifyNotificationOwnership(key, userId, orgId))) {
+      return res.status(404).json({ error: 'Not found' });
+    }
 
     const until =
       typeof req.body?.until === 'string' && req.body.until.trim()
@@ -317,11 +354,14 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
-    const { userId } = identity;
+    const { userId, orgId } = identity;
     if (!(await requireTables(res, ['my_work_signal_dismissals']))) return;
 
     const key = String(req.params.key || '').trim();
     if (!key) return res.status(400).json({ error: 'key is required' });
+    if (!(await verifyNotificationOwnership(key, userId, orgId))) {
+      return res.status(404).json({ error: 'Not found' });
+    }
 
     const dismissedAt = new Date().toISOString();
     await queryHelpers.queryRun(
