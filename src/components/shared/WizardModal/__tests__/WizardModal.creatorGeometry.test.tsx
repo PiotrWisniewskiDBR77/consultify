@@ -2,7 +2,7 @@
 
 import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CREATOR_SHELL_GEOMETRY, WizardModal, type WizardStep } from '..';
 
@@ -26,6 +26,20 @@ const baseProps = {
   onStepChange: vi.fn(),
   onComplete: vi.fn(),
 };
+
+function setReducedTransparency(matches: boolean) {
+  Object.defineProperty(window, 'matchMedia', {
+    configurable: true,
+    value: vi.fn(() => ({
+      matches,
+      media: '(prefers-reduced-transparency: reduce)',
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    })),
+  });
+}
+
+beforeEach(() => setReducedTransparency(false));
 
 describe('WizardModal creator geometry', () => {
   it('exports the accepted stepped, compact placeholder and legacy dimensions', () => {
@@ -55,5 +69,45 @@ describe('WizardModal creator geometry', () => {
 
     rerender(<WizardModal {...baseProps} activeStepIndex={2} geometry="creator" />);
     expect(screen.getByRole('dialog').className).toBe(initialClasses);
+  });
+
+  it('renders the four fixed creator bands at the accepted heights', () => {
+    render(
+      <WizardModal
+        {...baseProps}
+        activeStepIndex={0}
+        geometry="creator"
+        creatorScopeSummary="Scope"
+      />
+    );
+
+    expect(document.querySelector('[data-creator-band="header"]')).toHaveClass('h-[60px]');
+    expect(document.querySelector('[data-creator-band="steps"]')).toHaveClass('h-[70px]');
+    expect(document.querySelector('[data-creator-band="scope"]')).toHaveClass('h-[36px]');
+    expect(document.querySelector('[data-creator-band="footer"]')).toHaveClass('h-[70px]');
+  });
+
+  it('keeps the creator content crystalline and delegates scrolling to its body', () => {
+    render(<WizardModal {...baseProps} activeStepIndex={0} geometry="creator" />);
+    expect(document.querySelector('[data-creator-scroll="content"]')).toHaveClass(
+      'overflow-hidden',
+      'bg-c-surface'
+    );
+    expect(document.querySelector('[data-creator-scroll="content"]')).not.toHaveClass(
+      'creator-glass-band'
+    );
+  });
+
+  it('switches every glass band to opaque fallback for reduced transparency', () => {
+    setReducedTransparency(true);
+    render(<WizardModal {...baseProps} activeStepIndex={0} geometry="creator" />);
+    const bands = document.querySelectorAll('[data-creator-band]');
+    expect(bands).toHaveLength(4);
+    bands.forEach((band) => expect(band).toHaveAttribute('data-transparency', 'opaque'));
+  });
+
+  it('does not add creator bands to the legacy variant', () => {
+    render(<WizardModal {...baseProps} activeStepIndex={0} />);
+    expect(document.querySelector('[data-creator-band]')).toBeNull();
   });
 });

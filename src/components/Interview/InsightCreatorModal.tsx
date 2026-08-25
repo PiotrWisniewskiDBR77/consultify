@@ -39,6 +39,7 @@ import { TeresaMark } from '@/components/shared/TeresaMark';
 import {
   CREATOR_SHELL_GEOMETRY,
   type WizardStep,
+  WizardModal,
   WizardStepper,
 } from '@/components/shared/WizardModal';
 import { Button, LoadingState } from '@/components/ui/primitives';
@@ -551,7 +552,7 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
   const dialogContainerRef = useRef<HTMLDivElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
   useDialogA11y({
-    open: isOpen,
+    open: isOpen && !creatorShellEnabled,
     onClose,
     containerRef: dialogContainerRef,
     initialFocusRef: titleInputRef,
@@ -2584,6 +2585,91 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
   };
 
   if (!isOpen) return null;
+
+  if (creatorShellEnabled) {
+    return (
+      <WizardModal
+        open={isOpen}
+        onClose={onClose}
+        title={{
+          en: t('interview.insightCreatorModal.aiInsightCreator'),
+          pl: t('interview.insightCreatorModal.aiInsightCreator'),
+        }}
+        steps={wizardSteps}
+        activeStepIndex={currentStep}
+        onStepChange={handleStepChange}
+        onComplete={submitInsight}
+        completing={isGenerating}
+        geometry="creator"
+        isPolish={isPolish}
+        creatorSubtitle={t('interview.creator.shell.subtitle')}
+        creatorScopeSummary={
+          <>
+            <span className="font-semibold uppercase tracking-[0.14em] text-c-text-muted">
+              {t('interview.creator.shell.scopeLabel')}
+            </span>
+            <span className="truncate text-c-text-secondary">
+              {title || t('interview.creator.shell.untitled')}
+            </span>
+          </>
+        }
+        footer={
+          <div
+            data-creator-band="footer"
+            className="creator-glass-band flex h-[70px] shrink-0 items-center gap-3 border-t px-6"
+          >
+            <Button type="button" variant="ghost" onClick={onClose} disabled={isGenerating}>
+              {t('interview.insightCreatorModal.cancel')}
+            </Button>
+            <div className="flex-1" />
+            {currentStep > 0 && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={goToPreviousStep}
+                disabled={isGenerating}
+              >
+                {t('interview.insightCreatorModal.back')}
+              </Button>
+            )}
+            {!isLastStep ? (
+              <Button
+                type="button"
+                variant="primary"
+                onClick={goToNextStep}
+                disabled={isGenerating}
+                className="min-w-[180px] bg-c-cta-bg text-c-cta-text"
+              >
+                {t('interview.insightCreatorModal.next')}
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                variant="primary"
+                onClick={submitInsight}
+                disabled={!canGenerate}
+                loading={isGenerating}
+                icon={isGenerating ? undefined : <Sparkles size={16} />}
+                className="min-w-[180px] bg-c-cta-bg text-c-cta-text"
+              >
+                {isGenerating
+                  ? t('interview.insightCreatorModal.running')
+                  : t('interview.insightCreatorModal.run')}
+              </Button>
+            )}
+          </div>
+        }
+      >
+        <form
+          onSubmit={handleFormSubmit}
+          className="mx-auto h-full w-full max-w-[880px] overflow-y-auto overflow-x-hidden px-6 py-6 pb-[84px]"
+        >
+          {renderGlobalLoadError()}
+          {renderCurrentStep()}
+        </form>
+      </WizardModal>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 backdrop-blur-sm">

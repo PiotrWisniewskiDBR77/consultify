@@ -98,7 +98,7 @@ describe('InsightCreatorModal — dialog accessible contract (EN)', () => {
     await mountAndOpen('en');
 
     const dialog = screen.getByRole('dialog');
-    expect(dialog).toHaveAttribute('data-creator-shell', 'enabled');
+    expect(dialog).toHaveClass('creator-shell');
     expect(dialog).toHaveClass(
       'h-[min(840px,calc(100vh-48px))]',
       'w-[min(1040px,calc(100vw-64px))]'

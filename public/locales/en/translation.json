@@ -5288,6 +5288,13 @@
     "months": "months"
   },
   "interview": {
+    "creator": {
+      "shell": {
+        "subtitle": "Interview › Insights · approved interview sessions",
+        "scopeLabel": "What will be created",
+        "untitled": "Untitled insight"
+      }
+    },
     "title": "Discovery Interview",
     "newSession": "New Session",
     "history": "History",

@@ -4615,6 +4615,13 @@
     "months": "miesięcy"
   },
   "interview": {
+    "creator": {
+      "shell": {
+        "subtitle": "Wywiad › Wnioski · zatwierdzone sesje wywiadu",
+        "scopeLabel": "Co powstanie",
+        "untitled": "Wniosek bez tytułu"
+      }
+    },
     "title": "Wywiad Discovery",
     "newSession": "Nowa Sesja",
     "history": "Historia",

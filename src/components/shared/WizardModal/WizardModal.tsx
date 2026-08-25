@@ -41,6 +41,7 @@ import { useTranslation } from 'react-i18next';
 import type { WizardModalProps } from './types';
 import { CREATOR_SHELL_GEOMETRY } from './geometry';
 import { WizardStepper } from './WizardStepper';
+import './creatorShell.css';
 
 /** Default accent: the app primary token (matches the existing wizards). */
 const DEFAULT_ACCENT = 'rgb(var(--color-primary-600, 79 70 229))';
@@ -60,6 +61,9 @@ const COPY = {
 
 export const WizardModal: React.FC<WizardModalProps> = ({
   geometry = 'legacy',
+  creatorSubtitle,
+  creatorHeaderStatus,
+  creatorScopeSummary,
   open,
   onClose,
   title,
@@ -83,6 +87,16 @@ export const WizardModal: React.FC<WizardModalProps> = ({
       : CREATOR_SHELL_GEOMETRY.legacy.panelClassName;
 
   const panelRef = useRef<HTMLDivElement | null>(null);
+  const [reducedTransparency, setReducedTransparency] = React.useState(false);
+
+  useEffect(() => {
+    if (geometry !== 'creator' || typeof window === 'undefined' || !window.matchMedia) return;
+    const media = window.matchMedia('(prefers-reduced-transparency: reduce)');
+    const sync = () => setReducedTransparency(media.matches);
+    sync();
+    media.addEventListener?.('change', sync);
+    return () => media.removeEventListener?.('change', sync);
+  }, [geometry]);
 
   const total = steps.length;
   const safeIndex = Math.min(Math.max(activeStepIndex, 0), Math.max(total - 1, 0));
@@ -142,7 +156,7 @@ export const WizardModal: React.FC<WizardModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-overlay flex items-center justify-center bg-slate-950/55 backdrop-blur-sm"
+      className={`fixed inset-0 z-overlay flex items-center justify-center ${geometry === 'creator' ? 'bg-[var(--creator-scrim)]' : 'bg-slate-950/55 backdrop-blur-sm'}`}
       onMouseDown={(event) => {
         // Overlay click (outside the panel) closes.
         if (event.target === event.currentTarget) onClose();
@@ -154,10 +168,14 @@ export const WizardModal: React.FC<WizardModalProps> = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby={headingId}
-        className={`mx-4 flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/20 outline-none dark:border-white/[0.08] dark:bg-navy-900 ${geometryClassName}`}
+        className={`mx-4 flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/20 outline-none dark:border-white/[0.08] dark:bg-navy-900 ${geometry === 'creator' ? 'creator-shell' : ''} ${geometryClassName}`}
       >
         {/* Header */}
-        <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-white/[0.08]">
+        <div
+          data-creator-band={geometry === 'creator' ? 'header' : undefined}
+          data-transparency={geometry === 'creator' && reducedTransparency ? 'opaque' : undefined}
+          className={`flex shrink-0 items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-white/[0.08] ${geometry === 'creator' ? 'creator-glass-band h-[60px]' : ''}`}
+        >
           <h2
             id={headingId}
             className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-slate-100"
@@ -167,8 +185,18 @@ export const WizardModal: React.FC<WizardModalProps> = ({
               className="inline-block h-5 w-1.5 rounded-full"
               style={{ backgroundColor: accentColor }}
             />
-            {tr(title)}
+            <span className="min-w-0">
+              <span className="block">{tr(title)}</span>
+              {geometry === 'creator' && creatorSubtitle ? (
+                <span className="block truncate text-xs font-normal text-c-text-muted">
+                  {creatorSubtitle}
+                </span>
+              ) : null}
+            </span>
           </h2>
+          {geometry === 'creator' && creatorHeaderStatus ? (
+            <div className="ml-auto mr-2">{creatorHeaderStatus}</div>
+          ) : null}
           <button
             type="button"
             onClick={onClose}
@@ -192,17 +220,40 @@ export const WizardModal: React.FC<WizardModalProps> = ({
         </div>
 
         {/* §5b — progress bar + clickable step pills */}
-        <WizardStepper
-          steps={steps}
-          activeStepIndex={safeIndex}
-          maxReachableIndex={maxReachableIndex}
-          onStepChange={onStepChange}
-          isPolish={isPolish}
-          accentColor={accentColor}
-        />
+        <div
+          data-creator-band={geometry === 'creator' ? 'steps' : undefined}
+          data-transparency={geometry === 'creator' && reducedTransparency ? 'opaque' : undefined}
+          className={geometry === 'creator' ? 'creator-glass-band h-[70px] shrink-0' : ''}
+        >
+          <WizardStepper
+            steps={steps}
+            activeStepIndex={safeIndex}
+            maxReachableIndex={maxReachableIndex}
+            onStepChange={onStepChange}
+            isPolish={isPolish}
+            accentColor={geometry === 'creator' ? 'var(--c-cta-bg)' : accentColor}
+          />
+        </div>
+
+        {geometry === 'creator' ? (
+          <div
+            data-creator-band="scope"
+            data-transparency={reducedTransparency ? 'opaque' : undefined}
+            className="creator-glass-band flex h-[36px] shrink-0 items-center gap-2 border-b px-5 text-xs text-c-text-secondary"
+          >
+            {creatorScopeSummary}
+          </div>
+        ) : null}
 
         {/* Body — the active step's content (or the canonical empty placeholder) */}
-        <div className="flex-1 space-y-4 overflow-auto p-3">
+        <div
+          data-creator-scroll={geometry === 'creator' ? 'content' : undefined}
+          className={
+            geometry === 'creator'
+              ? 'min-h-0 flex-1 overflow-hidden bg-c-surface'
+              : 'flex-1 space-y-4 overflow-auto p-3'
+          }
+        >
           {showEmptyPlaceholder ? (
             <div className="flex h-full min-h-[280px] flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50/60 px-6 py-10 text-center dark:border-white/[0.12] dark:bg-navy-900/40">
               <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
@@ -221,7 +272,11 @@ export const WizardModal: React.FC<WizardModalProps> = ({
 
         {/* Footer */}
         {footer ?? (
-          <div className="flex shrink-0 items-center gap-3 border-t border-slate-200 p-3 dark:border-white/[0.08]">
+          <div
+            data-creator-band={geometry === 'creator' ? 'footer' : undefined}
+            data-transparency={geometry === 'creator' && reducedTransparency ? 'opaque' : undefined}
+            className={`flex shrink-0 items-center gap-3 border-t border-slate-200 p-3 dark:border-white/[0.08] ${geometry === 'creator' ? 'creator-glass-band h-[70px]' : ''}`}
+          >
             <button
               type="button"
               onClick={onClose}

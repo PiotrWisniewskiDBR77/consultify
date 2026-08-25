@@ -49,6 +49,12 @@ export interface WizardStep {
 export interface WizardModalProps {
   /** Additive geometry variant; legacy remains the default for existing consumers. */
   geometry?: WizardGeometry;
+  /** Creator-only context line below the title. */
+  creatorSubtitle?: React.ReactNode;
+  /** Creator-only draft/save status rendered in the fixed header band. */
+  creatorHeaderStatus?: React.ReactNode;
+  /** Creator-only one-line outcome summary rendered below the steps. */
+  creatorScopeSummary?: React.ReactNode;
   /** Whether the modal is mounted/visible. When false, nothing renders. */
   open: boolean;
   /** Close request (overlay click, Esc, X button, Cancel). */
