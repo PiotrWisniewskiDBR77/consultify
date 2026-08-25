@@ -13,6 +13,7 @@ import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createRealT } from '@/test-utils/realTranslations';
+import { INTERVIEW_CREATOR_SHELL_FLAG_KEYS } from '@/utils/interviewCreatorShellFlag';
 
 function mockI18n(lang: 'en' | 'pl') {
   const t = createRealT(lang);
@@ -75,9 +76,23 @@ const mountAndOpen = async (lang: 'en' | 'pl', onCloseSpy: () => void = vi.fn())
 
 beforeEach(() => {
   vi.resetModules();
+  window.localStorage.removeItem(INTERVIEW_CREATOR_SHELL_FLAG_KEYS.localStorage);
 });
 
 describe('InsightCreatorModal — dialog accessible contract (EN)', () => {
+  it('keeps the legacy chrome and performs no generation request when Creator Shell is OFF', async () => {
+    await mountAndOpen('en');
+
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toHaveClass('h-[560px]', 'w-[720px]');
+    expect(dialog).not.toHaveAttribute('data-creator-shell');
+
+    const { Api } = await import('@/services/api');
+    const { V8InterviewApi } = await import('@/services/api/v8/interview');
+    expect(Api.post).not.toHaveBeenCalled();
+    expect(V8InterviewApi.createInsight).not.toHaveBeenCalled();
+  });
+
   it('exposes a dialog named "AI Insight Creator"', async () => {
     await mountAndOpen('en');
 

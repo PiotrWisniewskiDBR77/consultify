@@ -41,6 +41,7 @@ import { Button, LoadingState } from '@/components/ui/primitives';
 import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 import { Api } from '@/services/api';
 import { type V8ContextDocument, V8InterviewApi } from '@/services/api/v8/interview';
+import { isInterviewCreatorShellEnabled } from '@/utils/interviewCreatorShellFlag';
 
 // ==========================================
 // TYPES
@@ -70,7 +71,8 @@ type InsightAnalysisMode =
   | 'between_the_lines';
 
 type InsightContextMode =
-  'selected_interview_material_only' | 'selected_material_plus_approved_org_knowledge';
+  | 'selected_interview_material_only'
+  | 'selected_material_plus_approved_org_knowledge';
 type CreatorStepId = 'define' | 'material' | 'refine';
 
 interface CompletedSession {
@@ -538,6 +540,7 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
+  const creatorShellEnabled = isInterviewCreatorShellEnabled();
   const dialogContainerRef = useRef<HTMLDivElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
   useDialogA11y({
@@ -970,7 +973,9 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
 
         if (sessionsResult.status === 'rejected') {
           const reason = sessionsResult.reason as
-            { status?: number; message?: string } | Error | undefined;
+            | { status?: number; message?: string }
+            | Error
+            | undefined;
           const status = (reason as { status?: number } | undefined)?.status;
           setLoadError(t('interview.insightCreatorModal.insightGeneratorUnavailable'));
         }
@@ -2580,6 +2585,7 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby="insight-creator-heading"
+        data-creator-shell={creatorShellEnabled ? 'enabled' : undefined}
         tabIndex={-1}
         className="mx-4 flex h-[560px] w-[720px] max-h-[calc(100vh-2rem)] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/20 dark:border-white/[0.08] dark:bg-navy-900 outline-none"
       >
