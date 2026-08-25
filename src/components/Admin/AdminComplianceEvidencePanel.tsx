@@ -1,6 +1,7 @@
 import { Download, ShieldCheck } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { Link } from 'react-router-dom';
 import { Api } from '../../services/api';
 import {
   getAiPolicy,
@@ -160,9 +161,9 @@ export const AdminComplianceEvidencePanel: React.FC = () => {
       </section>
       <div className="grid gap-3 sm:grid-cols-3">
         {cards.map((card) => (
-          <a
+          <Link
             key={card.label}
-            href={card.href}
+            to={card.href}
             className="rounded-xl border border-c-border bg-c-surface p-4 focus-visible:outline-none focus-visible:ring-2 ring-[color:var(--c-focus)]"
           >
             <p className="text-xs text-c-text-secondary">{card.label}</p>
@@ -170,7 +171,7 @@ export const AdminComplianceEvidencePanel: React.FC = () => {
             <p className="mt-2 text-[10px] text-c-text-muted">
               Źródło: GET /api/admin{card.source}
             </p>
-          </a>
+          </Link>
         ))}
       </div>
     </div>

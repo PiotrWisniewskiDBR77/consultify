@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import { getAccessReviewData } from '../../../services/adminAccessReviewsApi';
 import { AdminAccessReviewsPanel } from '../AdminAccessReviewsPanel';
@@ -10,7 +11,11 @@ describe('AdminAccessReviewsPanel', () => {
       policy: { accessReviewsEnabled: true, accessReviewCadenceDays: 90 },
       members: [{ userId: 'u1', email: 'owner@example.com', role: 'OWNER', status: 'ACTIVE' }],
     });
-    render(<AdminAccessReviewsPanel />);
+    render(
+      <MemoryRouter>
+        <AdminAccessReviewsPanel />
+      </MemoryRouter>
+    );
     expect((await screen.findAllByText('owner@example.com')).length).toBeGreaterThan(0);
     expect(screen.getByText('Kadencja: 90 dni')).toBeInTheDocument();
     expect(
@@ -24,13 +29,21 @@ describe('AdminAccessReviewsPanel', () => {
       policy: { accessReviewsEnabled: false, accessReviewCadenceDays: 90 },
       members: [],
     });
-    render(<AdminAccessReviewsPanel />);
+    render(
+      <MemoryRouter>
+        <AdminAccessReviewsPanel />
+      </MemoryRouter>
+    );
     expect(await screen.findByText('Brak kont uprzywilejowanych')).toBeInTheDocument();
   });
 
   it('renders an API error', async () => {
     vi.mocked(getAccessReviewData).mockRejectedValue(new Error('access review service down'));
-    render(<AdminAccessReviewsPanel />);
+    render(
+      <MemoryRouter>
+        <AdminAccessReviewsPanel />
+      </MemoryRouter>
+    );
     expect(await screen.findByText('access review service down')).toBeInTheDocument();
   });
 });

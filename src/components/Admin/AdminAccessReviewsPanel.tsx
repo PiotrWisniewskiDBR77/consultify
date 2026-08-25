@@ -1,5 +1,6 @@
 import { CalendarCheck, Users } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   getAccessReviewData,
   type AccessReviewPolicy,
@@ -76,9 +77,9 @@ export const AdminAccessReviewsPanel: React.FC = () => {
           <div className="rounded-xl border border-c-border p-4">Następny przegląd: {next}</div>
         </div>
       )}
-      <a href="/admin/team/roles-permissions" className="text-sm text-c-text underline">
+      <Link to="/admin/team/roles-permissions" className="text-sm text-c-text underline">
         Otwórz kanoniczną politykę IAM
-      </a>
+      </Link>
       <StandardTable
         columns={cols}
         data={rows}

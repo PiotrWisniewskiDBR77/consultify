@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Api } from '../../../services/api';
 import {
@@ -43,7 +44,11 @@ describe('AdminComplianceEvidencePanel', () => {
     ai.mockResolvedValue({ requiredCitationMode: 'required' } as any);
   });
   it('loads audit evidence and canonical policy sources', async () => {
-    render(<AdminComplianceEvidencePanel />);
+    render(
+      <MemoryRouter>
+        <AdminComplianceEvidencePanel />
+      </MemoryRouter>
+    );
     expect(await screen.findByText('LOGIN')).toBeInTheDocument();
     expect(screen.getByText('EU')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Rezydencja danych/ })).toHaveAttribute(
@@ -53,7 +58,11 @@ describe('AdminComplianceEvidencePanel', () => {
   });
   it('shows the backend error honestly', async () => {
     api.getTenantAdminAuditLogs.mockRejectedValue(new Error('evidence down'));
-    render(<AdminComplianceEvidencePanel />);
+    render(
+      <MemoryRouter>
+        <AdminComplianceEvidencePanel />
+      </MemoryRouter>
+    );
     expect(
       (await screen.findAllByRole('alert')).some((node) =>
         node.textContent?.includes('evidence down')

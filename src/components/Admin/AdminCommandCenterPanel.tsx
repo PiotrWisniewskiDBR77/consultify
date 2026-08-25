@@ -30,7 +30,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
 import { Api } from '../../services/api';
 import {
@@ -185,9 +185,9 @@ const CommandCenterAttentionQueue: React.FC = () => {
       </div>
       <div className="grid gap-3 md:grid-cols-2">
         {signals.map((signal) => (
-          <a
+          <Link
             key={signal.id}
-            href={signal.href}
+            to={signal.href}
             className="rounded-xl border border-c-border bg-c-surface p-4 hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 ring-[color:var(--c-focus)]"
           >
             <div className="flex items-center justify-between gap-3">
@@ -216,7 +216,7 @@ const CommandCenterAttentionQueue: React.FC = () => {
             <span className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-c-text">
               Otwórz ekran kanoniczny <ArrowRight className="h-4 w-4" />
             </span>
-          </a>
+          </Link>
         ))}
       </div>
     </div>
@@ -350,18 +350,18 @@ const CommandCenterCostCapacity: React.FC = () => {
         />
       </div>
       <div className="flex flex-wrap gap-2">
-        <a
-          href="/admin/billing/budgets-alerts"
+        <Link
+          to="/admin/billing/budgets-alerts"
           className="rounded-lg border border-c-border px-3 py-2 text-sm font-medium text-c-text focus-visible:outline-none focus-visible:ring-2 ring-[color:var(--c-focus)]"
         >
           Alerty budżetowe ({state.alerts.length})
-        </a>
-        <a
-          href="/admin/billing/usage-costs"
+        </Link>
+        <Link
+          to="/admin/billing/usage-costs"
           className="rounded-lg border border-c-border px-3 py-2 text-sm font-medium text-c-text focus-visible:outline-none focus-visible:ring-2 ring-[color:var(--c-focus)]"
         >
           Szczegóły wykorzystania
-        </a>
+        </Link>
         <span className="px-3 py-2 text-xs text-c-text-muted">
           Stan: {Number(state.health?.summary?.failed ?? 0)} nieudanych prób
         </span>
