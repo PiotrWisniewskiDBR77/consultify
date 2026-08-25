@@ -117,6 +117,9 @@ vi.mock('../../../components/Admin/AdminHealthPanel', () => ({
 vi.mock('../../../components/Admin/AdminDependenciesPanel', () => ({
   AdminDependenciesPanel: () => <div data-testid="panel-dependencies">dependencies</div>,
 }));
+vi.mock('../../../components/Admin/AdminIncidentHistoryPanel', () => ({
+  AdminIncidentHistoryPanel: () => <div data-testid="panel-incident-history">incident history</div>,
+}));
 vi.mock('../../../components/Admin/AdminCommandCenterPanel', () => ({
   AdminCommandCenterPanel: ({
     aggregationOnly,
@@ -190,6 +193,10 @@ describe('AdminSettingsModule section routing', () => {
   it('wires health/dependencies to the cached dependency map', () => {
     renderAt('/admin/health/dependencies');
     expect(screen.getByTestId('panel-dependencies')).toBeInTheDocument();
+  });
+  it('wires health/incident-history to the honest tenant skeleton', () => {
+    renderAt('/admin/health/incident-history');
+    expect(screen.getByTestId('panel-incident-history')).toBeInTheDocument();
   });
   it('wires security/domains to real DNS management', () => {
     renderAt('/admin/security/domains');
