@@ -3518,9 +3518,17 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                   </div>
                 )}
 
-                {/* Editor area — drop zone for AI block */}
+                {/* Editor area — drop zone for AI block.
+                    FIX-14 (Day 3 acceptance): `group` belongs HERE — the
+                    content wrapper the user actually hovers — not on the
+                    gutter itself. It was on the tiny absolutely-positioned
+                    gutter div below, whose own `hover:opacity-100` requires
+                    the mouse to already be over a 0-opacity (invisible,
+                    undiscoverable) element — a hover trigger that can never
+                    fire. Runtime evidence: hovering the note text revealed
+                    nothing. */}
                 <div
-                  className="flex-1 overflow-y-auto nb-scroll relative"
+                  className="group flex-1 overflow-y-auto nb-scroll relative"
                   ref={editorContainerRef}
                   onDragOver={(e) => {
                     if (e.dataTransfer.types.includes(AI_BLOCK_MIME)) {
@@ -3542,7 +3550,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                   {editor ? (
                     <div
                       data-testid="notebook-block-gutter"
-                      className="group absolute left-1 z-20 flex -translate-y-1/2 gap-0.5 opacity-0 transition-opacity hover:opacity-100 focus-within:opacity-100"
+                      className="absolute left-1 z-20 flex -translate-y-1/2 gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 hover:opacity-100 focus-within:opacity-100"
                       style={{ top: blockGutterTop }}
                     >
                       <button
