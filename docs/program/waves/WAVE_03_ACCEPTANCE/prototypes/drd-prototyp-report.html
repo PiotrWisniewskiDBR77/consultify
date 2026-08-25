@@ -1,0 +1,636 @@
+<meta charset="utf-8">
+<title>Prototyp — Ocena › DRD › Report (7 rozdziałów z limitami)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   DRD PROTOTYP — tokeny 1:1 z src/index.css (SSOT) i TRIADA_KANON §C1.
+   Crimson (--c-accent #85182F) NIE występuje ani razu.
+   Fokus = niebieski --c-focus. Czerwień tylko semantyka krytyczna.
+   Ten plik jest współdzielony przez trzy prototypy (Interview/Matrix/Report).
+   ============================================================ */
+:root{
+  --c-bg:#fafaf9; --c-surface:#ffffff; --c-surface-raised:#f8fafc;
+  --c-border-subtle:#e6e9ed; --c-border:#cbd2da; --c-border-strong:#9aa6b5;
+  --c-text:#0f172a; --c-text-secondary:#475569; --c-text-muted:#64748b;
+  --c-focus:rgba(37,99,235,.4); --c-focus-solid:#2563eb;
+  --c-success:#026833; --c-warning:#ae6429; --c-danger:#e80538; --c-info:#3b2883;
+  --c-active-bg:rgba(15,23,42,.07); --c-active-border:#cbd2da; --c-active-text:#0f172a;
+  --c-cta-bg:#0f172a; --c-cta-text:#ffffff;
+  --r-xs:6px; --r-sm:8px; --r-md:12px; --r-lg:16px; --r-pill:9999px;
+  --shadow-card:0 1px 2px rgba(15,23,42,.04);
+  --shadow-pop:0 12px 32px rgba(15,23,42,.14);
+  /* RAMPA DOJRZAŁOŚCI — jeden odcień, 7 jasności. Czytelna w skali szarości. */
+  --m1:#dde5ee; --m2:#c2d0e0; --m3:#a3b6cd; --m4:#7f97b6; --m5:#5c7799; --m6:#3e587e; --m7:#243c60;
+  --m1t:#0f172a; --m2t:#0f172a; --m3t:#0f172a; --m4t:#ffffff; --m5t:#ffffff; --m6t:#ffffff; --m7t:#ffffff;
+  --tobe:#2563eb;              /* CEL / TO-BE — obwódka, nigdy wypełnienie */
+  --gapc:var(--c-warning);     /* luka / nieciągłość */
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --c-bg:#0a0f1e; --c-surface:#0f172a; --c-surface-raised:#15213b;
+    --c-border-subtle:rgba(148,163,184,.12); --c-border:rgba(148,163,184,.22);
+    --c-border-strong:rgba(148,163,184,.36);
+    --c-text:#f4f7fb; --c-text-secondary:#b8c4d6; --c-text-muted:#8a99b0;
+    --c-focus:rgba(91,141,239,.45); --c-focus-solid:#5b8def;
+    --c-success:#3fb950; --c-warning:#e8a33d; --c-danger:#ed5565; --c-info:#58a6ff;
+    --c-active-bg:rgba(255,255,255,.10); --c-active-border:rgba(255,255,255,.25); --c-active-text:#f4f7fb;
+    --c-cta-bg:#f4f7fb; --c-cta-text:#0f172a;
+    --shadow-card:0 1px 2px rgba(0,0,0,.35);
+    --shadow-pop:0 12px 32px rgba(0,0,0,.55);
+    --m1:#232d44; --m2:#2f3c58; --m3:#3f5075; --m4:#546a94; --m5:#6e86ac; --m6:#8ea4c4; --m7:#b0c2dc;
+    --m1t:#f4f7fb; --m2t:#f4f7fb; --m3t:#f4f7fb; --m4t:#ffffff; --m5t:#0a0f1e; --m6t:#0a0f1e; --m7t:#0a0f1e;
+    --tobe:#5b8def;
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--c-bg);color:var(--c-text);
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  font-size:13px;line-height:1.6;-webkit-font-smoothing:antialiased}
+:focus-visible{outline:none;box-shadow:0 0 0 3px var(--c-focus);border-radius:var(--r-sm)}
+svg{flex:none;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+button{font:inherit;cursor:pointer;color:inherit}
+
+.l1{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.16em;color:var(--c-text-muted)}
+.l2{font-size:13px;font-weight:600}
+.l3{font-size:12px;font-weight:600;color:var(--c-text)}
+.l4{font-size:12px;color:var(--c-text-secondary)}
+.l5{font-size:11px;color:var(--c-text-muted)}
+.mono{font-variant-numeric:tabular-nums}
+.kbd{font-size:10px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;border:1px solid var(--c-border-subtle);
+  background:var(--c-surface-raised);border-radius:4px;padding:1px 4px;color:var(--c-text-secondary);white-space:nowrap}
+
+/* ===== GLOBALNE MENU APLIKACJI (Level 1) ===== */
+.app{display:flex;min-height:100vh}
+.appmain{flex:1;min-width:0;display:flex;flex-direction:column}
+.gmenu{width:210px;flex:none;display:flex;flex-direction:column;background:var(--c-surface-raised);
+  border-right:1px solid var(--c-border-subtle);padding:14px 0}
+.gmenu-brand{display:flex;align-items:center;gap:9px;padding:0 16px 14px;margin-bottom:6px;border-bottom:1px solid var(--c-border-subtle)}
+.gmark{width:26px;height:26px;border-radius:var(--r-xs);flex:none;background:var(--c-cta-bg);color:var(--c-cta-text);
+  display:grid;place-items:center;font-size:12px;font-weight:700;letter-spacing:-.02em}
+.gword{font-size:14px;font-weight:600;letter-spacing:-.01em;white-space:nowrap}
+.gmenu-main{flex:1;min-height:0;padding:6px 8px;display:flex;flex-direction:column;gap:2px}
+.gmenu-foot{flex:none;padding:6px 8px 0;display:flex;flex-direction:column;gap:2px}
+.gsep{height:1px;background:var(--c-border-subtle);margin:8px 4px}
+.gitem{display:flex;align-items:center;gap:10px;height:34px;padding:0 10px;border-radius:var(--r-sm);
+  color:var(--c-text-secondary);text-decoration:none;font-size:13px;white-space:nowrap}
+.gitem svg{width:17px;height:17px}
+.gitem .glabel{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.gitem .gbadge{flex:none;font-size:10px;font-weight:600;padding:1px 7px;border-radius:var(--r-pill);
+  background:var(--c-border-subtle);color:var(--c-text-muted)}
+.gitem[aria-current="page"]{background:var(--c-active-bg);color:var(--c-active-text);font-weight:600;
+  box-shadow:inset 3px 0 0 var(--c-focus-solid)}
+
+/* ===== LEVEL 2 — stały pasek narzędzia ===== */
+.lvl2{height:54px;flex:none;display:flex;align-items:center;gap:12px;padding:0 16px;
+  background:var(--c-surface);border-bottom:1px solid var(--c-border)}
+.exitbtn{height:32px;padding:0 12px;border-radius:var(--r-sm);border:1px solid var(--c-border);background:transparent;
+  color:var(--c-text-secondary);font-size:12px;font-weight:500;display:inline-flex;align-items:center;gap:7px}
+.exitbtn:hover{border-color:var(--c-border-strong);color:var(--c-text)}
+.sessname{min-width:0;display:flex;flex-direction:column;justify-content:center}
+.sessname .t{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sessname .s{font-size:11px;color:var(--c-text-muted);white-space:nowrap}
+.lvl2 .right{margin-left:auto;display:flex;align-items:center;gap:0}
+.modes{display:inline-flex;border:1px solid var(--c-border);border-radius:var(--r-pill);overflow:hidden;height:34px}
+.modes button{height:100%;padding:0 16px;border:0;background:transparent;color:var(--c-text-secondary);
+  font-size:13px;font-weight:500;display:inline-flex;align-items:center;gap:7px}
+.modes button+button{border-left:1px solid var(--c-border)}
+.modes button[aria-pressed="true"]{background:var(--c-active-bg);color:var(--c-active-text);font-weight:600}
+.modesep{width:1px;height:24px;background:var(--c-border);margin:0 14px}
+.setbtn{height:34px;padding:0 13px;border-radius:var(--r-sm);border:1px solid var(--c-border);background:transparent;
+  color:var(--c-text-secondary);font-size:12px;font-weight:500;display:inline-flex;align-items:center;gap:7px}
+.setbtn:hover{border-color:var(--c-border-strong);color:var(--c-text)}
+
+/* ===== LEVEL 3 — kontekstowa linia trybu (świadomy odstęp od Level 2) ===== */
+.lvl3{margin-top:10px;flex:none;display:flex;align-items:center;gap:8px;padding:0 16px 10px}
+.ctl{height:30px;padding:0 11px;border-radius:var(--r-pill);border:1px solid var(--c-border);background:transparent;
+  color:var(--c-text-secondary);font-size:12px;display:inline-flex;align-items:center;gap:7px}
+.ctl:hover{border-color:var(--c-border-strong);color:var(--c-text)}
+.ctl[aria-pressed="true"]{background:var(--c-active-bg);border-color:var(--c-active-border);color:var(--c-active-text);font-weight:600}
+.ctl.icon{padding:0 8px}
+.lvl3 .right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.savestate{display:inline-flex;align-items:center;gap:7px;font-size:11px;color:var(--c-text-muted);
+  padding:0 10px;height:30px;border-radius:var(--r-pill);background:var(--c-surface-raised);border:1px solid var(--c-border-subtle)}
+.dot{width:6px;height:6px;border-radius:var(--r-pill);display:inline-block;flex:none;background:var(--c-border-strong)}
+.ctl.cta{background:var(--c-cta-bg);border-color:var(--c-cta-bg);color:var(--c-cta-text);font-weight:600}
+
+/* ===== SCENA ===== */
+.stage{flex:1;min-height:0;padding:0 16px 16px}
+.panel{background:var(--c-surface);border:1px solid var(--c-border-subtle);border-radius:var(--r-md);
+  box-shadow:var(--shadow-card);overflow:hidden}
+
+/* ===== BADGE / STATUS ===== */
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:600;padding:2px 8px;
+  border-radius:var(--r-pill);border:1px solid var(--c-border-subtle);background:var(--c-surface-raised);
+  color:var(--c-text-secondary);white-space:nowrap}
+.badge .sq{width:8px;height:8px;border-radius:2px;flex:none}
+.badge.ok{border-color:color-mix(in srgb,var(--c-success) 40%,transparent);color:var(--c-success)}
+.badge.no{border-color:var(--c-border);color:var(--c-text-muted)}
+.badge.part{border-color:color-mix(in srgb,var(--c-warning) 45%,transparent);color:var(--c-warning)}
+.badge.warn{border-color:color-mix(in srgb,var(--c-warning) 45%,transparent);color:var(--c-warning);
+  background:color-mix(in srgb,var(--c-warning) 9%,transparent)}
+.badge.skip{border-style:dashed;border-color:var(--c-border-strong);color:var(--c-text-muted)}
+.badge.none{border-style:dotted;color:var(--c-text-muted)}
+.badge.tobe{border-color:var(--tobe);color:var(--tobe)}
+.badge.bad{border-color:color-mix(in srgb,var(--c-danger) 45%,transparent);color:var(--c-danger)}
+
+/* ===== PASMO SEKCJI DECYZYJNYCH (pod ekranem) ===== */
+.states{padding:0 16px 34px}
+.stateshead{display:flex;align-items:baseline;gap:10px;padding:20px 0 10px}
+.sgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:start}
+.scard{background:var(--c-surface);border:1px solid var(--c-border-subtle);border-radius:var(--r-md);
+  box-shadow:var(--shadow-card);overflow:hidden}
+.scard > header{padding:10px 12px;border-bottom:1px solid var(--c-border-subtle)}
+.scard > .b{padding:12px}
+.note{border:1px dashed var(--c-border);border-radius:var(--r-sm);padding:8px 10px;margin-top:10px;
+  color:var(--c-text-secondary);font-size:11px}
+.item{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid var(--c-border-subtle)}
+.item:last-of-type{border-bottom:0}
+.item .grow{flex:1;min-width:0}
+.item .grow .l2{display:block;font-size:12px}
+.item .grow .l5{display:block;font-size:11px}
+.status{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--c-text-secondary);white-space:nowrap}
+.status.warn{color:var(--c-warning)} .status.warn .dot{background:var(--c-warning)}
+.status.ok{color:var(--c-success)} .status.ok .dot{background:var(--c-success)}
+.status.info{color:var(--c-info)} .status.info .dot{background:var(--c-info)}
+.status.bad{color:var(--c-danger)} .status.bad .dot{background:var(--c-danger)}
+.opt{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px}
+.radio{width:13px;height:13px;border-radius:50%;border:1.5px solid var(--c-border-strong);flex:none;position:relative;margin-top:4px}
+.radio.on{border-color:var(--c-cta-bg)}
+.radio.on::after{content:"";position:absolute;inset:2.5px;border-radius:50%;background:var(--c-cta-bg)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;align-items:center;padding:10px 12px;border:1px solid var(--c-border-subtle);
+  border-radius:var(--r-md);margin-top:12px;background:var(--c-surface)}
+.fake{border:1px solid var(--c-border-subtle);border-radius:var(--r-sm);padding:8px 10px;margin-bottom:8px;background:var(--c-surface-raised)}
+.fake:last-child{margin-bottom:0}
+.fake .l1{margin-bottom:4px;display:block}
+.fake.pick{border-color:var(--c-border-strong);background:var(--c-surface);box-shadow:inset 3px 0 0 var(--c-focus-solid)}
+@media (max-width:1400px){.sgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:900px){.sgrid{grid-template-columns:minmax(0,1fr)}}
+</style>
+<style>
+/* ===== REPORT ===== */
+.rp{display:grid;grid-template-columns:262px minmax(0,1fr);gap:12px;align-items:start}
+.toc .h{padding:9px 12px;border-bottom:1px solid var(--c-border-subtle);display:flex;align-items:center;gap:8px}
+.tocrow{width:100%;display:flex;align-items:flex-start;gap:9px;padding:9px 12px;border:0;background:transparent;text-align:left;
+  border-bottom:1px solid var(--c-border-subtle);color:var(--c-text-secondary)}
+.tocrow:last-of-type{border-bottom:0}
+.tocrow:hover{background:var(--c-surface-raised)}
+.tocrow[aria-current="true"]{background:var(--c-active-bg);color:var(--c-active-text);box-shadow:inset 3px 0 0 var(--c-focus-solid)}
+.tocn{width:20px;height:20px;flex:none;border-radius:var(--r-xs);border:1px solid var(--c-border);display:grid;place-items:center;
+  font-size:10.5px;font-weight:700;margin-top:1px}
+.tocb{flex:1;min-width:0}
+.tocb b{display:block;font-size:12px;font-weight:600;color:var(--c-text)}
+.tocb span{display:block;font-size:10.5px;color:var(--c-text-muted);line-height:1.45}
+
+/* dokument */
+.doc{position:relative;overflow:hidden}
+.doc::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+  background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="460" height="300"><text x="20" y="180" transform="rotate(-24 20 180)" font-family="Inter,Arial,sans-serif" font-size="34" font-weight="700" letter-spacing="4" fill="rgba(15,23,42,0.055)">SZKIC %E2%80%94 NIEZATWIERDZONY</text></svg>');
+  background-repeat:repeat}
+@media (prefers-color-scheme:dark){
+  .doc::before{background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="460" height="300"><text x="20" y="180" transform="rotate(-24 20 180)" font-family="Inter,Arial,sans-serif" font-size="34" font-weight="700" letter-spacing="4" fill="rgba(244,247,251,0.07)">SZKIC %E2%80%94 NIEZATWIERDZONY</text></svg>')}
+}
+.docinner{position:relative;z-index:1;padding:0 0 20px}
+.dochead{padding:14px 26px;border-bottom:1px solid var(--c-border-subtle);display:flex;align-items:center;gap:11px;flex-wrap:wrap}
+.dochead h1{font-size:17px;font-weight:600;letter-spacing:-.01em}
+.page{max-width:980px;margin:0 auto;padding:20px 26px 0}
+.sec{margin-bottom:22px}
+.sech{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.sech .l1{flex:none}
+.lim{font-size:10px;font-weight:600;font-variant-numeric:tabular-nums;padding:1px 8px;border-radius:var(--r-pill);
+  border:1px solid color-mix(in srgb,var(--c-success) 40%,transparent);color:var(--c-success);white-space:nowrap}
+.lim.over{border-color:color-mix(in srgb,var(--c-warning) 50%,transparent);color:var(--c-warning)}
+.lim.short{border-color:var(--c-border);color:var(--c-text-muted)}
+.prose{font-size:13.5px;line-height:1.75;color:var(--c-text-secondary)}
+.prose b{color:var(--c-text)}
+.verdict{border:1px solid var(--c-border-strong);border-left:3px solid var(--c-text);border-radius:var(--r-sm);
+  padding:11px 14px;background:var(--c-surface-raised)}
+.verdict p{font-size:14.5px;font-weight:600;color:var(--c-text);line-height:1.55}
+
+/* figura macierzy w raporcie */
+.fig{border:1px solid var(--c-border-subtle);border-radius:var(--r-md);background:var(--c-surface-raised);padding:14px 16px}
+.figtitle{font-size:13.5px;font-weight:600;color:var(--c-text);line-height:1.5;margin-bottom:10px}
+.fgrid{display:grid;grid-template-columns:136px repeat(9,minmax(0,1fr));gap:3px;align-items:center}
+.fgrid .fh{font-size:9.5px;font-weight:700;color:var(--c-text-secondary);text-align:center;line-height:1.25}
+.fgrid .fh span{display:block;font-weight:400;color:var(--c-text-muted);font-size:8.5px}
+.fgrid .fr{font-size:10px;color:var(--c-text-secondary);text-align:right;padding-right:6px;font-weight:600}
+.fc{height:22px;border-radius:3px;display:grid;place-items:center;font-size:9px;font-weight:700}
+.fc.none{border:1px dotted var(--c-border)}
+.fc.miss{box-shadow:inset 0 0 0 1px var(--c-border-strong);color:var(--c-text-muted)}
+.fc.part{background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--c-warning) 28%,transparent) 0 4px,transparent 4px 8px);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c-warning) 60%,transparent);color:var(--c-warning)}
+.fc.skipd{border:1px dashed var(--c-border-strong);color:var(--c-text-muted)}
+.fc.na{background:var(--c-surface);color:var(--c-text-muted);font-size:8px;font-weight:600}
+.fc.tobe{box-shadow:inset 0 0 0 2px var(--tobe);color:var(--tobe)}
+.figcap{font-size:11.5px;color:var(--c-text-muted);line-height:1.6;margin-top:10px;border-top:1px solid var(--c-border-subtle);padding-top:9px}
+
+/* komentarz obszaru */
+.acom{border:1px solid var(--c-border-subtle);border-radius:var(--r-md);overflow:hidden;margin-bottom:9px;background:var(--c-surface)}
+.acomh{display:flex;align-items:center;gap:9px;padding:9px 13px;border-bottom:1px solid var(--c-border-subtle);background:var(--c-surface-raised)}
+.acomh b{font-size:12.5px;font-weight:600}
+.acomb{padding:11px 13px}
+.mstep{display:flex;gap:11px;padding:6px 0;border-bottom:1px solid var(--c-border-subtle)}
+.mstep:last-child{border-bottom:0}
+.mstep .mk{width:158px;flex:none}
+.mstep .mk b{display:block;font-size:11.5px;font-weight:600;color:var(--c-text)}
+.mstep .mk span{display:block;font-size:10px;color:var(--c-text-muted)}
+.mstep .mv{flex:1;min-width:0;font-size:12.5px;color:var(--c-text-secondary);line-height:1.65}
+.collapsed{display:flex;align-items:center;gap:9px;padding:8px 13px;border:1px solid var(--c-border-subtle);
+  border-radius:var(--r-sm);margin-bottom:6px;background:var(--c-surface)}
+.collapsed b{font-size:12px;font-weight:600}
+
+/* linia decyzyjna */
+.dec{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--c-border-strong);border-radius:var(--r-md);overflow:hidden}
+.dec > div{padding:11px 13px;border-right:1px solid var(--c-border-subtle)}
+.dec > div:last-child{border-right:0}
+.dec .l1{display:block;margin-bottom:5px}
+.dec p{font-size:12.5px;color:var(--c-text);font-weight:600;line-height:1.5}
+.exp{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:20px;padding-top:14px;border-top:1px solid var(--c-border-subtle)}
+.abtn{height:32px;padding:0 13px;border-radius:var(--r-sm);border:1px solid var(--c-border);background:var(--c-surface);
+  color:var(--c-text-secondary);font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:7px}
+.abtn.cta{background:var(--c-cta-bg);border-color:var(--c-cta-bg);color:var(--c-cta-text)}
+.note{border:1px dashed var(--c-border);border-radius:var(--r-sm);padding:9px 11px;color:var(--c-text-secondary);font-size:11.5px}
+@media (max-width:1280px){.gmenu{width:58px}.gmenu-brand{padding:0 0 14px;justify-content:center}.gword{display:none}
+  .gitem{justify-content:center;padding:0}.gitem .glabel,.gitem .gbadge{display:none}
+  .gitem[aria-current="page"]{box-shadow:none}}
+</style>
+
+<div class="app">
+
+<!-- ========== LEVEL 1 ========== -->
+<nav class="gmenu" aria-label="Menu główne aplikacji">
+  <div class="gmenu-brand"><span class="gmark" aria-hidden="true">C</span><span class="gword">Consultify</span></div>
+  <div class="gmenu-main">
+    <a class="gitem" href="#"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z"/></svg><span class="glabel">Czat</span></a>
+    <a class="gitem" href="#"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><path d="M2 13h20"/></svg><span class="glabel">Moja Praca</span></a>
+    <a class="gitem" href="#"><svg viewBox="0 0 24 24"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M9 11h6"/><path d="M9 15h6"/></svg><span class="glabel">Wywiad</span></a>
+    <a class="gitem" href="#"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17l3 3 5.3-5.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2-2z"/></svg><span class="glabel">Narzędzia</span></a>
+    <a class="gitem" href="#" aria-current="page"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.2 2.2 4.8-4.8"/></svg><span class="glabel">Ocena</span></a>
+    <a class="gitem" href="#"><svg viewBox="0 0 24 24"><path d="M9.5 18h5"/><path d="M10.3 21.5h3.4"/><path d="M12 2.5a6.7 6.7 0 0 0-3.8 12.2c.7.5 1.2 1.5 1.2 2.3h5.2c0-.8.5-1.8 1.2-2.3A6.7 6.7 0 0 0 12 2.5z"/></svg><span class="glabel">Inicjatywy</span></a>
+    <a class="gitem" href="#"><svg viewBox="0 0 24 24"><path d="M12 2.5c2.3 2 3.7 5.3 3.7 8.7 0 2-1 3.8-2 4.8l-1.7 1.7-1.7-1.7c-1-1-2-2.8-2-4.8 0-3.4 1.4-6.7 3.7-8.7z"/><circle cx="12" cy="10.5" r="1.4"/></svg><span class="glabel">Realizacja</span></a>
+    <a class="gitem" href="#"><svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M17 7h4v4"/></svg><span class="glabel">Rezultaty</span><span class="gbadge">beta</span></a>
+    <a class="gitem" href="#"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 6h6"/><path d="M8 11h.01M12 11h.01M16 11h.01"/></svg><span class="glabel">Finanse</span><span class="gbadge">beta</span></a>
+    <a class="gitem" href="#"><svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M12 17v-6"/><path d="M9.3 13.7L12 11l2.7 2.7"/></svg><span class="glabel">Materiały</span><span class="gbadge">beta</span></a>
+    <a class="gitem" href="#"><svg viewBox="0 0 24 24"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 13.5l2 2 4-4.5"/></svg><span class="glabel">Audyty</span><span class="gbadge">beta</span></a>
+    <a class="gitem" href="#"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M2.5 20c0-3 2.9-5 6.5-5s6.5 2 6.5 5"/><path d="M16 6.2a3 3 0 0 1 0 5.8"/></svg><span class="glabel">Spotkania</span><span class="gbadge">beta</span></a>
+  </div>
+  <div class="gmenu-foot">
+    <div class="gsep"></div>
+    <a class="gitem" href="#"><svg viewBox="0 0 24 24"><path d="M3 21V10l4.7 3.3V10l4.7 3.3V10l4.7 3.3V6.5h2V21z"/><path d="M3 21h18"/></svg><span class="glabel">Organizacja</span></a>
+    <a class="gitem" href="#"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M3 12h3M18 12h3M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1"/></svg><span class="glabel">Ustawienia</span></a>
+  </div>
+</nav>
+
+<div class="appmain">
+
+  <!-- ========== LEVEL 2 ========== -->
+  <div class="lvl2">
+    <button class="exitbtn"><svg width="13" height="13" viewBox="0 0 24 24"><path d="M15 12H3"/><path d="M7 8l-4 4 4 4"/><path d="M11 4h6a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6"/></svg>Wyjdź</button>
+    <span class="sessname">
+      <span class="t">DRD · Metalpol Sp. z o.o. — diagnoza wyjściowa 2026</span>
+      <span class="s">Method Pack DRD 2.0.0 · rewizja 7 · ID <span class="kbd">sess_9f4c21ab-7e30-44d1</span></span>
+    </span>
+    <span class="right">
+      <div class="modes" role="group" aria-label="Tryb narzędzia">
+        <button><svg width="13" height="13" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z"/></svg>Interview</button>
+        <button><svg width="13" height="13" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Matrix</button>
+        <button aria-pressed="true"><svg width="13" height="13" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>Report</button>
+      </div>
+      <span class="modesep" aria-hidden="true"></span>
+      <button class="setbtn"><svg width="13" height="13" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M3 12h3M18 12h3M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1"/></svg>Settings</button>
+    </span>
+  </div>
+
+  <!-- ========== LEVEL 3 — linia kontekstowa trybu Report ========== -->
+  <div class="lvl3">
+    <span class="l5">Rozdział</span>
+    <button class="ctl" aria-pressed="true">1</button>
+    <button class="ctl">2</button><button class="ctl">3</button><button class="ctl">4</button>
+    <button class="ctl">5</button><button class="ctl">6</button><button class="ctl">7</button>
+    <span style="width:8px"></span>
+    <button class="ctl"><svg width="12" height="12" viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M8 11l4 4 4-4"/><path d="M4 21h16"/></svg>Eksportuj PDF rozdziału</button>
+    <button class="ctl">Eksportuj wszystko (7 rozdziałów)</button>
+    <span class="right">
+      <button class="ctl"><svg width="13" height="13" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M3 12h3M18 12h3M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg>AI Analysis <span class="badge warn" style="margin-left:2px">6 uwag</span></button>
+      <button class="ctl cta">Zapisz</button>
+      <span class="savestate"><span class="dot" style="background:var(--c-warning)"></span>Szkic · zapisano 10:12</span>
+    </span>
+  </div>
+
+  <!-- ========== SCENA ========== -->
+  <div class="stage">
+    <div class="rp">
+
+      <!-- SPIS ROZDZIAŁÓW -->
+      <nav class="panel toc" aria-label="Rozdziały raportu">
+        <div class="h"><span class="l1">7 osi → 7 rozdziałów</span></div>
+        <button class="tocrow" aria-current="true">
+          <span class="tocn">1</span><span class="tocb"><b>Procesy Cyfrowe</b><span>6/9 obszarów · pełny rozdział</span></span>
+          <span class="badge ok">szkic gotowy</span>
+        </button>
+        <button class="tocrow">
+          <span class="tocn">2</span><span class="tocb"><b>Produkty Cyfrowe</b><span>0/5 obszarów ocenionych</span></span>
+          <span class="badge none">brak danych</span>
+        </button>
+        <button class="tocrow">
+          <span class="tocn">3</span><span class="tocb"><b>Cyfrowe Modele Biznesowe</b><span>0/5 obszarów ocenionych</span></span>
+          <span class="badge none">brak danych</span>
+        </button>
+        <button class="tocrow">
+          <span class="tocn">4</span><span class="tocb"><b>Zarządzanie Danymi</b><span>2/5 · rozdział skrócony</span></span>
+          <span class="badge part">częściowy</span>
+        </button>
+        <button class="tocrow">
+          <span class="tocn">5</span><span class="tocb"><b>Kultura Transformacji</b><span>5/5 obszarów · pełny rozdział</span></span>
+          <span class="badge ok">szkic gotowy</span>
+        </button>
+        <button class="tocrow">
+          <span class="tocn">6</span><span class="tocb"><b>Cyberbezpieczeństwo</b><span>1/5 · rozdział skrócony</span></span>
+          <span class="badge part">częściowy</span>
+        </button>
+        <button class="tocrow">
+          <span class="tocn">7</span><span class="tocb"><b>Dojrzałość AI</b><span>0/5 obszarów ocenionych</span></span>
+          <span class="badge none">brak danych</span>
+        </button>
+        <div class="h" style="border-top:1px solid var(--c-border-subtle);border-bottom:0;display:block">
+          <span class="l1">Skąd bierze się treść</span>
+          <p class="l5" style="margin-top:6px;line-height:1.6">Rozdział czyta <b>wyłącznie zatwierdzony stan</b> Interview i Matrix.
+            Liczby (poziom obecny, cel, luka, pokrycie dowodowe) pochodzą z silnika — model ich nie wylicza i nie zgaduje.</p>
+          <p class="l5" style="margin-top:8px;line-height:1.6"><b>Szkic ma znak wodny</b> dopóki nie przejdzie bramki
+            „raport przejrzany i zatwierdzony”.</p>
+        </div>
+      </nav>
+
+      <!-- DOKUMENT -->
+      <main class="panel doc">
+        <div class="docinner">
+          <div class="dochead">
+            <h1>Rozdział 1 z 7 · Oś 1 · Procesy Cyfrowe</h1>
+            <span class="badge">rewizja 7</span>
+            <span class="badge warn">szkic — niezatwierdzony</span>
+            <span class="badge">6 z 9 obszarów ocenionych</span>
+            <span class="l5" style="margin-left:auto">Metalpol Sp. z o.o. · 25.08.2026 · DRD 2.0.0</span>
+          </div>
+
+          <div class="page">
+
+            <!-- WERDYKT -->
+            <section class="sec">
+              <div class="sech"><span class="l1">Werdykt osi</span><span class="lim">20 / ≤ 25 sł.</span></div>
+              <div class="verdict">
+                <p>Metalpol steruje procesami na poziomie stanowiska; sprzedaż wyprzedza resztę,
+                   a logistyka ma wyspę technologiczną nad nieopanowanym sterowaniem procesem.</p>
+              </div>
+            </section>
+
+            <!-- WSTĘP OSI -->
+            <section class="sec">
+              <div class="sech"><span class="l1">Wstęp osi</span><span class="lim">147 / 120–180 sł.</span>
+                <span class="l5" style="margin-left:auto">sekwencja: co ustalono → co to znaczy dla firmy → gdzie napięcie</span></div>
+              <div class="prose">
+                <p>Oś Procesy Cyfrowe obejmuje dziewięć obszarów operacyjnych; sześć z nich zostało ocenione w tej rewizji,
+                  trzy pozostają nieocenione i są tak opisane w całym rozdziale. Rejestracja danych jest domknięta wszędzie
+                  tam, gdzie prowadziliśmy wywiad — każdy oceniony obszar osiągnął poziom pierwszy z potwierdzonym dowodem.
+                  Kontrola stanowiska działa w pięciu obszarach na sześć; wyłamują się procesy jakości, gdzie kontrola nadal
+                  opiera się na arkuszu prowadzonym przez jedną osobę. Powyżej drugiego poziomu obraz przestaje być jednorodny:
+                  sprzedaż domknęła automatyzację, zakupy i produkcja zatrzymały się na sterowaniu procesem, a logistyka pokazuje
+                  wzorzec w tej metodzie najbardziej kosztowny — wdrożone rozwiązania piątego poziomu przy nieopanowanym trzecim.
+                  <b>Dla przedsiębiorstwa oznacza to, że kolejne inwestycje w narzędzia nie przełożą się na wynik, dopóki nie
+                  zostanie domknięta wymiana dokumentów z partnerami.</b> Napięcie leży nie w technologii, lecz w kolejności.</p>
+              </div>
+            </section>
+
+            <!-- MACIERZ OSI -->
+            <section class="sec">
+              <div class="sech"><span class="l1">Macierz osi</span>
+                <span class="l5" style="margin-left:auto">tytuł figury = wniosek, nie „Matrix osi 1”</span></div>
+              <figure class="fig">
+                <figcaption class="figtitle">Dojrzałość rośnie w sprzedaży, zatrzymuje się na sterowaniu procesem,
+                  a w logistyce przeskakuje ponad luką</figcaption>
+                <div class="fgrid">
+                  <span></span>
+                  <span class="fh">1A<span>Sprzedaż</span></span><span class="fh">1B<span>Marketing</span></span>
+                  <span class="fh">1C<span>R&amp;D</span></span><span class="fh">1D<span>Zakupy</span></span>
+                  <span class="fh">1E<span>Logistyka</span></span><span class="fh">1F<span>Produkcja</span></span>
+                  <span class="fh">1G<span>Jakość</span></span><span class="fh">1H<span>Finanse</span></span>
+                  <span class="fh">1I<span>HR</span></span>
+
+                  <span class="fr">7 · AI</span>
+                  <span class="fc none"></span><span class="fc none"></span><span class="fc none"></span><span class="fc none"></span>
+                  <span class="fc none"></span><span class="fc none"></span><span class="fc none"></span><span class="fc none"></span><span class="fc none"></span>
+
+                  <span class="fr">6 · ERP</span>
+                  <span class="fc none tobe">◎</span><span class="fc none"></span><span class="fc none"></span><span class="fc none tobe">◎</span>
+                  <span class="fc none tobe">◎</span><span class="fc none"></span><span class="fc none"></span><span class="fc none"></span><span class="fc none"></span>
+
+                  <span class="fr">5 · MES</span>
+                  <span class="fc none"></span><span class="fc na">n/d</span><span class="fc none"></span><span class="fc na">n/d</span>
+                  <span class="fc" style="background:var(--m5);color:var(--m5t)">✓</span><span class="fc none tobe">◎</span>
+                  <span class="fc none"></span><span class="fc none"></span><span class="fc none"></span>
+
+                  <span class="fr">4 · Automatyzacja</span>
+                  <span class="fc" style="background:var(--m4);color:var(--m4t)">✓</span><span class="fc none tobe">◎</span>
+                  <span class="fc none"></span><span class="fc none"></span><span class="fc skipd">–</span><span class="fc miss">✕</span>
+                  <span class="fc none"></span><span class="fc none"></span><span class="fc none"></span>
+
+                  <span class="fr">3 · Kontrola procesu</span>
+                  <span class="fc" style="background:var(--m3);color:var(--m3t)">✓</span><span class="fc miss">✕</span>
+                  <span class="fc none"></span><span class="fc" style="background:var(--m3);color:var(--m3t)">✓</span>
+                  <span class="fc part">½</span><span class="fc" style="background:var(--m3);color:var(--m3t)">✓</span>
+                  <span class="fc none"></span><span class="fc none"></span><span class="fc none"></span>
+
+                  <span class="fr">2 · Kontrola stanowiska</span>
+                  <span class="fc" style="background:var(--m2);color:var(--m2t)">✓</span><span class="fc" style="background:var(--m2);color:var(--m2t)">✓</span>
+                  <span class="fc none"></span><span class="fc" style="background:var(--m2);color:var(--m2t)">✓</span>
+                  <span class="fc" style="background:var(--m2);color:var(--m2t)">✓</span><span class="fc" style="background:var(--m2);color:var(--m2t)">✓</span>
+                  <span class="fc miss">✕</span><span class="fc none"></span><span class="fc none"></span>
+
+                  <span class="fr">1 · Rejestracja danych</span>
+                  <span class="fc" style="background:var(--m1);color:var(--m1t)">✓</span><span class="fc" style="background:var(--m1);color:var(--m1t)">✓</span>
+                  <span class="fc none"></span><span class="fc" style="background:var(--m1);color:var(--m1t)">✓</span>
+                  <span class="fc" style="background:var(--m1);color:var(--m1t)">✓</span><span class="fc" style="background:var(--m1);color:var(--m1t)">✓</span>
+                  <span class="fc" style="background:var(--m1);color:var(--m1t)">✓</span><span class="fc none"></span><span class="fc none"></span>
+
+                  <span class="fr" style="padding-top:6px">Obecny → Cel</span>
+                  <span class="fh" style="padding-top:6px">4 → <b style="color:var(--tobe)">6</b></span>
+                  <span class="fh" style="padding-top:6px">2 → <b style="color:var(--tobe)">4</b></span>
+                  <span class="fh" style="padding-top:6px">—</span>
+                  <span class="fh" style="padding-top:6px">3 → <b style="color:var(--tobe)">6</b></span>
+                  <span class="fh" style="padding-top:6px">2 → <b style="color:var(--tobe)">6</b></span>
+                  <span class="fh" style="padding-top:6px">3 → <b style="color:var(--tobe)">5</b></span>
+                  <span class="fh" style="padding-top:6px">1 → —</span>
+                  <span class="fh" style="padding-top:6px">—</span>
+                  <span class="fh" style="padding-top:6px">—</span>
+                </div>
+                <p class="figcap"><b>Podpis (42 sł.):</b> Sześć ocenionych obszarów osi 1. Wypełnienie oznacza poziom osiągnięty,
+                  obwódka — cel uzgodniony z zarządem. Puste kratki w kolumnach 1C, 1H i 1I to obszary <b>nieocenione, nie zera</b>.
+                  Kolumna 1E pokazuje poziom piąty nad nierozstrzygniętym trzecim i świadomie pominiętym czwartym.</p>
+              </figure>
+            </section>
+
+            <!-- KOMENTARZE OBSZARÓW -->
+            <section class="sec">
+              <div class="sech"><span class="l1">Komentarz per obszar</span>
+                <span class="l5" style="margin-left:auto">pięcioczęściowa mikrostruktura · 110–170 sł. na obszar</span></div>
+
+              <div class="acom">
+                <div class="acomh"><b>1E · Procesy Logistyczne</b>
+                  <span class="badge">poziom obecny 2</span><span class="badge tobe">cel 6</span>
+                  <span class="badge warn">luka 3–4</span>
+                  <span class="lim" style="margin-left:auto">163 / 110–170 sł.</span></div>
+                <div class="acomb">
+                  <div class="mstep"><span class="mk"><b>1 · Stan faktyczny</b><span>co ustalono</span></span>
+                    <span class="mv">Wszystkie ruchy magazynowe są skanowane, terminale mobilne pokazują lokalizację w czasie
+                      rzeczywistym, a Milkrun z Kanbanem jest spięty z MES. Równocześnie EDI obejmuje jednego odbiorcę i jeden typ
+                      dokumentu; zamówienia i faktury sześciu pozostałych partnerów dyspozytor przepisuje ręcznie — około czterdziestu
+                      dokumentów dziennie.</span></div>
+                  <div class="mstep"><span class="mk"><b>2 · Ocena i wiarygodność</b><span>evidenced / declared / conflicting</span></span>
+                    <span class="mv">Poziomy 1 i 5 mają dowód zweryfikowany, poziom 2 jest zadeklarowany bez weryfikacji,
+                      poziom 3 oceniono jako częściowy przy <b>dowodzie sprzecznym</b> (raport WMS pokazuje trzy statusy zlecenia,
+                      procedura opisuje pięć). Poziom 4 jest świadomie pominięty decyzją zarządu, nie brakiem danych.</span></div>
+                  <div class="mstep"><span class="mk"><b>3 · Znaczenie dla przedsiębiorstwa</b><span>co to daje lub kosztuje</span></span>
+                    <span class="mv">Ręczne przepisywanie dokumentów jest jedynym miejscem w łańcuchu, gdzie błąd wchodzi do
+                      systemu bez śladu. Skutki widać dalej: reklamacje terminowe i korekty faktur obciążają dział obsługi,
+                      choć ich źródło leży w logistyce.</span></div>
+                  <div class="mstep"><span class="mk"><b>4 · Luka i sens targetu</b><span>czy wyżej naprawdę znaczy lepiej</span></span>
+                    <span class="mv">Cel 6 (ERP) jest uzasadniony, ale <b>nie jako następny krok</b>. Wdrożenie ERP nad
+                      niedomkniętym poziomem 3 odtworzy ręczne przepisywanie wewnątrz nowego systemu. Poziom 4 słusznie pozostaje
+                      poza zakresem — automatyzacja transportu wewnętrznego nie jest wąskim gardłem tej firmy.</span></div>
+                  <div class="mstep"><span class="mk"><b>5 · Najbliższy krok</b><span>konkret + rola + horyzont</span></span>
+                    <span class="mv">Podłączyć EDI dla trzech największych partnerów (zamówienie, awizo, faktura) — kierownik IT,
+                      do końca I kwartału 2027. Warunek wstępny: zamknąć rozbieżność statusów zlecenia w WMS.</span></div>
+                </div>
+              </div>
+
+              <!-- obszar bez dowodu — krótszy uczciwy blok -->
+              <div class="acom">
+                <div class="acomh"><b>1C · Technologia Procesowa i R&amp;D</b>
+                  <span class="badge none">nieoceniony</span>
+                  <span class="lim short" style="margin-left:auto">34 sł. — blok skrócony świadomie</span></div>
+                <div class="acomb">
+                  <div class="prose" style="font-size:12.5px">
+                    <p>Obszar nie był przedmiotem wywiadu w tej rewizji. Nie mamy odpowiedzi ani dowodów, więc nie formułujemy
+                      oceny, luki ani rekomendacji. <b>Do uzupełnienia w kolejnej sesji</b> — respondent: dyrektor techniczny.</p>
+                  </div>
+                  <div class="note" style="margin-top:9px">Zamiast wypełniacza — krótki uczciwy blok. Brak dowodu nigdy nie
+                    zamienia się w ogólnikowy akapit „warto rozważyć rozwój obszaru”.</div>
+                </div>
+              </div>
+
+              <div class="collapsed"><b>1A · Procesy Sprzedaży</b><span class="badge">poziom 4</span><span class="badge tobe">cel 6</span><span class="lim" style="margin-left:auto">141 / 110–170 sł.</span></div>
+              <div class="collapsed"><b>1B · Procesy Marketingowe</b><span class="badge">poziom 2</span><span class="badge tobe">cel 4</span><span class="lim" style="margin-left:auto">128 / 110–170 sł.</span></div>
+              <div class="collapsed"><b>1D · Procesy Zakupowe</b><span class="badge">poziom 3</span><span class="badge tobe">cel 6</span><span class="lim" style="margin-left:auto">155 / 110–170 sł.</span></div>
+              <div class="collapsed"><b>1F · Procesy Produkcyjne</b><span class="badge">poziom 3</span><span class="badge tobe">cel 5</span><span class="lim over" style="margin-left:auto">181 / 110–170 sł. — skróć</span></div>
+              <div class="collapsed"><b>1G · Procesy Jakości</b><span class="badge">poziom 1</span><span class="badge none">cel nieustalony</span><span class="lim" style="margin-left:auto">119 / 110–170 sł.</span></div>
+              <div class="collapsed"><b>1H · Zarządzanie Finansami</b><span class="badge none">nieoceniony</span><span class="lim short" style="margin-left:auto">31 sł. — blok skrócony</span></div>
+              <div class="collapsed"><b>1I · Procesy HR</b><span class="badge none">nieoceniony</span><span class="lim short" style="margin-left:auto">29 sł. — blok skrócony</span></div>
+            </section>
+
+            <!-- WNIOSKI OSI -->
+            <section class="sec">
+              <div class="sech"><span class="l1">Wnioski osi</span><span class="lim">214 / 180–260 sł.</span></div>
+              <div class="prose">
+                <p>Metalpol ma solidny fundament rejestracji danych i realną kontrolę stanowisk — to nie jest firma,
+                  która „nie zaczęła”. Problem leży wyżej: sterowanie procesem, czyli poziom trzeci, jest domknięte tylko
+                  w trzech obszarach na sześć ocenionych, a tam gdzie go brakuje, wyższe wdrożenia nie mają na czym stanąć.
+                  Najostrzej widać to w logistyce, gdzie zintegrowany MES z Milkrunem pracuje nad procesem, w którym
+                  dokumenty partnerów nadal przechodzą przez skrzynkę e-mail.</p>
+                <p style="margin-top:10px">Z perspektywy przedsiębiorstwa oznacza to konkretną kolejność, a nie listę życzeń.
+                  Najpierw domknięcie wymiany dokumentów z partnerami w zakupach i logistyce, potem dopiero rozmowa o ERP.
+                  Odwrotna kolejność jest możliwa technicznie i kosztowna organizacyjnie: ERP wdrożony nad ręcznym przepisywaniem
+                  utrwala ten proces na kolejne lata, bo integracja staje się wtedy projektem „po wdrożeniu”, którego nikt
+                  już nie finansuje.</p>
+                <p style="margin-top:10px">Sprzedaż jest wyjątkiem w drugą stronę — osiągnęła automatyzację i jej cel na
+                  poziomie szóstym jest uzasadniony horyzontem dwóch lat. Procesy jakości wymagają decyzji odrębnej:
+                  poziom pierwszy przy nieosiągniętym drugim to nie luka technologiczna, tylko brak właściciela procesu.
+                  Trzy obszary — technologia i R&amp;D, finanse, HR — nie były badane i nie wchodzą do żadnej z powyższych
+                  rekomendacji.</p>
+              </div>
+            </section>
+
+            <!-- LINIA DECYZYJNA -->
+            <section class="sec">
+              <div class="sech"><span class="l1">Linia decyzyjna rozdziału</span></div>
+              <div class="dec">
+                <div><span class="l1">Rekomendowany kierunek</span>
+                  <p>Domknąć sterowanie procesem (poziom 3) w zakupach i logistyce przed rozmową o ERP</p></div>
+                <div><span class="l1">Priorytet</span>
+                  <p>Wysoki — warunek wstępny dla trzech z sześciu celów tej osi</p></div>
+                <div><span class="l1">Horyzont</span>
+                  <p>I–III kwartał 2027</p></div>
+                <div><span class="l1">Warunek powodzenia</span>
+                  <p>Właściciel procesu wymiany dokumentów po stronie klienta + zamknięta rozbieżność statusów w WMS</p></div>
+              </div>
+            </section>
+
+            <div class="exp">
+              <button class="abtn cta"><svg width="13" height="13" viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M8 11l4 4 4-4"/><path d="M4 21h16"/></svg>Eksportuj ten rozdział (PDF)</button>
+              <button class="abtn">Eksportuj wszystko — 7 rozdziałów</button>
+              <span class="badge warn">eksport szkicu zawsze ze znakiem wodnym</span>
+              <span class="l5" style="margin-left:auto;max-width:420px;text-align:right">Eksport całości: spis treści, kanoniczna kolejność osi,
+                ciągła paginacja, granice rozdziałów, metadane (organizacja, dokument, rewizja, czas, wersja metody, stan zatwierdzenia).</span>
+            </div>
+
+            <div class="note" style="margin-top:14px">
+              <b>Granica silnika i modelu.</b> Wszystkie liczby w tym rozdziale — poziom obecny, cel, luka, liczba kroków,
+              pokrycie dowodowe — pochodzą z deterministycznego silnika i z zatwierdzonych decyzji konsultanta.
+              Model redaguje wyłącznie prozę i nie ma prawa policzyć ani zaokrąglić żadnej z tych wartości.
+              Każde zdanie oparte na wnioskowaniu, a nie na dowodzie, jest oznaczone w widoku recenzji.
+            </div>
+
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- ================= SEKCJA DECYZYJNA — CO ZOSTAJE DLA WŁAŚCICIELA ================= -->
+  <div class="states">
+    <div class="stateshead">
+      <span class="l1">Zostają trzy decyzje właściciela</span>
+      <span class="l5">Kształt trzech trybów jest rozstrzygnięty (DEC-02, DEC-37, DEC-38, DEC-39). To, co niżej, blokuje wyłącznie Report i dowód końcowy.</span>
+    </div>
+    <div class="sgrid">
+
+      <section class="scard">
+        <header><p class="l2">1 · Siedem osi czy osiem wymiarów?</p><p class="l5">Sprzeczność #2 z §4.7 — <b>blokuje Report</b></p></header>
+        <div class="b">
+          <div class="fake pick"><p class="l1">Wariant A — rekomendacja</p><p class="l5">Kanonem jest <b>7 osi = 7 rozdziałów</b>, tak jak w runtime (<span class="kbd">drdStructure.ts</span>: 7 osi, 39 obszarów). Dokument <span class="kbd">docs/product/DRD_REPORT_SPEC.md</span> dostaje wersjonowaną poprawkę, a mapowanie na 8 wymiarów zostaje zapisane jako historyczne — <b>nie kasujemy go po cichu</b>.</p></div>
+          <div class="fake"><p class="l1">Wariant B</p><p class="l5">Zostaje 8 wymiarów w raporcie. Wtedy trzeba zdefiniować, skąd bierze się ósmy rozdział, skoro nie odpowiada mu żadna oś w danych — i co pokazuje jego macierz.</p></div>
+          <div class="note">Bez tej decyzji nie da się zrobić eksportu „wszystko” — spis treści i paginacja muszą znać liczbę rozdziałów.</div>
+        </div>
+      </section>
+
+      <section class="scard">
+        <header><p class="l2">2 · Jedna tożsamość raportu</p><p class="l5">Sprzeczność #5 z §4.7 — <b>blokuje eksport i rejestr</b></p></header>
+        <div class="b">
+          <div class="fake pick"><p class="l1">Wariant A — rekomendacja</p><p class="l5"><b>Jeden obiekt Report na rewizję sesji.</b> Tryb Report jest jego widokiem, rejestr „Raporty” tylko go listuje, a stary zamrożony „Output” zostaje oznaczony jako historyczny. Eksport PDF jest plikiem wygenerowanym z rewizji, nie osobnym bytem.</p></div>
+          <div class="fake"><p class="l1">Wariant B</p><p class="l5">Report jako osobny dokument, który można edytować niezależnie od sesji. Wtedy potrzebna jest odpowiedź, co się dzieje, gdy ktoś zmieni ocenę w Interview po wygenerowaniu raportu.</p></div>
+          <div class="note">Wariant A wymusza regułę: zmiana zatwierdzonego stanu wyżej <b>unieważnia</b> raport, zamiast zostawiać nieaktualny dokument wyglądający na aktualny.</div>
+        </div>
+      </section>
+
+      <section class="scard">
+        <header><p class="l2">3 · Na czym pokazujemy dowód końcowy</p><p class="l5">Sprzeczność #10 z §4.7 — <b>blokuje odbiór, nie kod</b></p></header>
+        <div class="b">
+          <div class="fake pick"><p class="l1">Wariant A — rekomendacja</p><p class="l5"><b>Fixture wyłącznie na czas odbioru</b>, w osobnej organizacji demonstracyjnej, jawnie oznaczonej i kasowanej po akcepcie. Reguła <span class="kbd">DO_NOT_SEED_BY_DEFAULT</span> zostaje nietknięta dla danych demo.</p></div>
+          <div class="fake"><p class="l1">Wariant B</p><p class="l5">Zero danych testowych. Wtedy Report i Matrix zobaczysz puste — czyli nie zobaczysz nic, co dałoby się ocenić, dopóki ktoś nie przeprowadzi pełnego wywiadu ręcznie.</p></div>
+          <div class="note">Treść w tym prototypie (Metalpol, 6 z 9 obszarów, luka 3–4) to <b>przykład realistycznej firmy</b>, nie dane z bazy.
+            Nic nie zostało zapisane w żadnej bazie ani wysłane na demo.</div>
+        </div>
+      </section>
+
+    </div>
+
+    <div class="legend">
+      <span class="status ok"><span class="dot"></span>rozstrzygnięte decyzją właściciela</span>
+      <span class="status warn"><span class="dot"></span>wymaga decyzji</span>
+      <span class="status info"><span class="dot"></span>propozycja</span>
+      <span class="l5" style="margin-left:auto">Prototyp = makieta statyczna. Nic z tego nie jest wdrożone — <b>kod powstaje dopiero po akcepcie</b> (reguła 7).</span>
+    </div>
+  </div>
+
+</div>
+</div>

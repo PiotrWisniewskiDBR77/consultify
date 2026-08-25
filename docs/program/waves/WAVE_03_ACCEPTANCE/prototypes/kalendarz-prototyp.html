@@ -1,0 +1,792 @@
+<title>Prototyp — Moja Praca › Kalendarz › Prawdziwy kalendarz (tydzień, 3 warstwy)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   TOKENY — 1:1 z src/index.css (SSOT) i TRIADA_KANON §C1.
+   Crimson (--c-accent #85182F) NIE występuje ani razu — także tam,
+   gdzie występuje dziś (SOURCE_COLORS.initiative = '#A51C30',
+   SOURCE_COLORS.consultify = '#D42B3D' w calendarTypes.ts).
+   ============================================================ */
+:root{
+  --c-bg:#fafaf9; --c-surface:#ffffff; --c-surface-raised:#f8fafc;
+  --c-border-subtle:#e6e9ed; --c-border:#cbd2da; --c-border-strong:#9aa6b5;
+  --c-text:#0f172a; --c-text-secondary:#475569; --c-text-muted:#64748b;
+  --c-focus:rgba(37,99,235,.4); --c-focus-solid:#2563eb;
+  --c-success:#026833; --c-warning:#ae6429; --c-danger:#e80538; --c-info:#3b2883;
+  --c-active-bg:rgba(15,23,42,.07); --c-active-border:#cbd2da; --c-active-text:#0f172a;
+  --c-cta-bg:#0f172a; --c-cta-text:#ffffff;
+  --r-xs:6px; --r-sm:8px; --r-md:12px; --r-lg:16px; --r-pill:9999px;
+  --shadow-card:0 1px 2px rgba(15,23,42,.04);
+  --shadow-pop:0 12px 32px rgba(15,23,42,.14);
+  --cal-line:rgba(15,23,42,.07);
+  --cal-line-half:rgba(15,23,42,.035);
+  /* WARSTWY KALENDARZA — trzy semantyki, zero crimsonu (patrz sekcja B) */
+  --lay-meet:var(--c-info);        /* spotkanie — moduł Spotkania */
+  --lay-task:var(--c-warning);     /* zadanie z terminem — moduł Zadania */
+  --lay-event:var(--c-text-secondary); /* wydarzenie własne — kalendarz */
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --c-bg:#0a0f1e; --c-surface:#0f172a; --c-surface-raised:#15213b;
+    --c-border-subtle:rgba(148,163,184,.12); --c-border:rgba(148,163,184,.22);
+    --c-border-strong:rgba(148,163,184,.36);
+    --c-text:#f4f7fb; --c-text-secondary:#b8c4d6; --c-text-muted:#8a99b0;
+    --c-focus:rgba(91,141,239,.45); --c-focus-solid:#5b8def;
+    --c-success:#3fb950; --c-warning:#e8a33d; --c-danger:#ed5565; --c-info:#58a6ff;
+    --c-active-bg:rgba(255,255,255,.10); --c-active-border:rgba(255,255,255,.25); --c-active-text:#f4f7fb;
+    --c-cta-bg:#f4f7fb; --c-cta-text:#0f172a;
+    --shadow-card:0 1px 2px rgba(0,0,0,.35);
+    --shadow-pop:0 12px 32px rgba(0,0,0,.55);
+    --cal-line:rgba(148,163,184,.12);
+    --cal-line-half:rgba(148,163,184,.06);
+    --lay-event:var(--c-text-secondary);
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--c-bg);color:var(--c-text);
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  font-size:13px;line-height:1.6;-webkit-font-smoothing:antialiased}
+:focus-visible{outline:none;box-shadow:0 0 0 3px var(--c-focus);border-radius:var(--r-sm)}
+svg{flex:none;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+
+.l1{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.16em;color:var(--c-text-muted)}
+.l2{font-size:13px;font-weight:600}
+.l4{font-size:12px;color:var(--c-text-secondary)}
+.l5{font-size:11px;color:var(--c-text-muted)}
+.mono{font-variant-numeric:tabular-nums}
+
+/* ===== GLOBALNE MENU (Sidebar.tsx / menuConfig.ts, locale pl) ===== */
+.app{display:flex;min-height:100vh}
+.appmain{flex:1;min-width:0;display:flex;flex-direction:column}
+.gmenu{width:216px;flex:none;display:flex;flex-direction:column;background:var(--c-surface-raised);
+  border-right:1px solid var(--c-border-subtle);padding:14px 0;position:sticky;top:0;height:100vh;overflow:hidden}
+.gmenu-brand{display:flex;align-items:center;gap:9px;padding:0 16px 14px;margin-bottom:6px;border-bottom:1px solid var(--c-border-subtle)}
+.gmark{width:26px;height:26px;border-radius:var(--r-xs);flex:none;background:var(--c-cta-bg);color:var(--c-cta-text);
+  display:grid;place-items:center;font-size:12px;font-weight:700;letter-spacing:-.02em}
+.gword{font-size:14px;font-weight:600;letter-spacing:-.01em;white-space:nowrap;overflow:hidden}
+.gmenu-main{flex:1;min-height:0;overflow-y:auto;padding:6px 8px;display:flex;flex-direction:column;gap:2px}
+.gmenu-foot{flex:none;padding:6px 8px 0;display:flex;flex-direction:column;gap:2px}
+.gsep{height:1px;background:var(--c-border-subtle);margin:8px 4px}
+.gitem{display:flex;align-items:center;gap:10px;height:36px;padding:0 10px;border-radius:var(--r-sm);
+  color:var(--c-text-secondary);text-decoration:none;font-size:13px;white-space:nowrap}
+.gitem:hover{background:var(--c-surface);color:var(--c-text)}
+.gitem svg{width:18px;height:18px}
+.gitem .glabel{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.gitem .gbadge{flex:none;font-size:10px;font-weight:600;padding:1px 7px;border-radius:var(--r-pill);
+  background:var(--c-border-subtle);color:var(--c-text-muted)}
+.gitem[aria-current="page"]{background:var(--c-active-bg);color:var(--c-active-text);font-weight:600;
+  box-shadow:inset 3px 0 0 var(--c-focus-solid)}
+
+/* ===== MENU 1 / 2 / 3 ===== */
+.menu1{height:48px;display:flex;align-items:center;gap:12px;padding:0 16px;background:var(--c-surface);
+  border-bottom:1px solid var(--c-border-subtle)}
+.crumbs{display:flex;align-items:center;gap:8px;color:var(--c-text-muted);font-size:12px;min-width:0}
+.crumbs b{color:var(--c-text);font-weight:600;white-space:nowrap}
+.menu1 .right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.sysbtn{height:28px;padding:0 10px;border:1px solid var(--c-border);border-radius:var(--r-pill);background:transparent;
+  color:var(--c-text-secondary);font:inherit;font-size:12px;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.dot{width:6px;height:6px;border-radius:var(--r-pill);display:inline-block;flex:none;background:var(--c-border-strong)}
+.avatar{width:28px;height:28px;border-radius:var(--r-pill);border:1px solid var(--c-border);display:grid;place-items:center;
+  font-size:11px;font-weight:600;color:var(--c-text-secondary)}
+
+.menu2{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 16px 0}
+.pill{height:36px;padding:0 12px;border-radius:var(--r-pill);border:1px solid var(--c-border);background:transparent;
+  color:var(--c-text-secondary);font:inherit;font-size:13px;font-weight:500;display:inline-flex;align-items:center;gap:8px;cursor:pointer}
+.pill:hover{border-color:var(--c-border-strong);color:var(--c-text)}
+.pill[aria-selected="true"]{background:var(--c-active-bg);border-color:var(--c-active-border);color:var(--c-active-text);font-weight:600}
+.pill.cta{background:var(--c-cta-bg);border-color:var(--c-cta-bg);color:var(--c-cta-text);font-weight:600}
+.menu2 .right{margin-left:auto;display:flex;align-items:center;gap:8px}
+
+.menu3{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 16px}
+.chip{height:28px;padding:0 10px;border-radius:var(--r-pill);border:1px solid var(--c-border-subtle);background:transparent;
+  color:var(--c-text-muted);font:inherit;font-size:11px;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.chip:hover{border-color:var(--c-border);color:var(--c-text-secondary)}
+.chip[aria-pressed="true"]{background:var(--c-active-bg);border-color:var(--c-active-border);color:var(--c-active-text);font-weight:500}
+.chip .cnt{font-variant-numeric:tabular-nums;font-weight:600;color:var(--c-text-secondary)}
+.chip[aria-pressed="true"] .cnt{color:var(--c-active-text)}
+.chip .sq{width:8px;height:8px;border-radius:2px;flex:none}
+.menu3 .ai{margin-left:auto}
+
+/* segment przełącznika widoku */
+.seg{display:inline-flex;border:1px solid var(--c-border);border-radius:var(--r-pill);overflow:hidden;height:36px}
+.seg button{height:100%;padding:0 14px;border:0;background:transparent;color:var(--c-text-secondary);
+  font:inherit;font-size:13px;font-weight:500;cursor:pointer}
+.seg button+button{border-left:1px solid var(--c-border)}
+.seg button[aria-pressed="true"]{background:var(--c-active-bg);color:var(--c-active-text);font-weight:600}
+
+/* ===== SCENA: lewa szyna kalendarza · siatka tygodnia ===== */
+.stage{display:grid;grid-template-columns:236px minmax(0,1fr);align-items:stretch;border-top:1px solid var(--c-border-subtle)}
+
+.rail{border-right:1px solid var(--c-border-subtle);background:var(--c-surface);padding:12px;display:flex;flex-direction:column;gap:14px}
+.railsec > .l1{margin-bottom:8px}
+
+/* mini-miesiąc */
+.mini{border:1px solid var(--c-border-subtle);border-radius:var(--r-sm);padding:8px;background:var(--c-surface-raised)}
+.minihead{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.minihead .l2{flex:1;font-size:12px}
+.minibtn{width:22px;height:22px;border-radius:var(--r-xs);border:1px solid var(--c-border-subtle);background:transparent;
+  color:var(--c-text-muted);display:grid;place-items:center;cursor:pointer}
+.mgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;font-variant-numeric:tabular-nums}
+.mgrid span{height:22px;display:grid;place-items:center;font-size:11px;color:var(--c-text-secondary);border-radius:var(--r-xs)}
+.mgrid .hd{font-size:10px;color:var(--c-text-muted);font-weight:600}
+.mgrid .out{color:var(--c-text-muted);opacity:.45}
+.mgrid .inweek{background:var(--c-active-bg)}
+.mgrid .today{background:var(--c-cta-bg);color:var(--c-cta-text);font-weight:700}
+.mgrid .hasdot{position:relative}
+.mgrid .hasdot::after{content:"";position:absolute;bottom:2px;width:3px;height:3px;border-radius:50%;background:var(--c-border-strong)}
+
+/* warstwy */
+.lay{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--c-border-subtle);cursor:pointer}
+.lay:last-child{border-bottom:0}
+.lay .swatch{width:10px;height:10px;border-radius:3px;flex:none}
+.lay .grow{flex:1;min-width:0}
+.lay .grow .l2,.lay .grow .l5{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lay .cnt{font-size:11px;font-variant-numeric:tabular-nums;color:var(--c-text-muted)}
+.sw{width:34px;height:18px;border-radius:var(--r-pill);border:1px solid var(--c-border);background:var(--c-border-subtle);position:relative;flex:none}
+.sw::after{content:"";position:absolute;top:1px;left:1px;width:14px;height:14px;border-radius:50%;background:var(--c-surface);box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.sw[aria-checked="true"]{background:var(--c-cta-bg);border-color:var(--c-cta-bg)}
+.sw[aria-checked="true"]::after{left:17px;background:var(--c-cta-text)}
+
+.act{width:100%;height:34px;border-radius:var(--r-pill);border:1px solid var(--c-border);background:transparent;color:var(--c-text);
+  font:inherit;font-size:12px;font-weight:500;display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer}
+.act:hover{border-color:var(--c-border-strong)}
+
+/* ===== SIATKA TYGODNIA ===== */
+.cal{min-width:0;display:flex;flex-direction:column;background:var(--c-surface)}
+.calhead{display:grid;grid-template-columns:56px repeat(7,minmax(0,1fr));border-bottom:1px solid var(--c-border-subtle)}
+.calhead .gut{border-right:1px solid var(--c-border-subtle)}
+.dh{padding:8px 6px;text-align:center;border-right:1px solid var(--c-border-subtle);min-width:0}
+.dh:last-child{border-right:0}
+.dh .dow{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.14em;color:var(--c-text-muted)}
+.dh .dnum{font-size:19px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.02em;line-height:1.3}
+.dh.today .dnum{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;
+  background:var(--c-cta-bg);color:var(--c-cta-text);line-height:1}
+.dh.today .dow{color:var(--c-text)}
+.dh.we{background:var(--c-surface-raised)}
+
+/* pas „Terminy" — zadania z terminem (all-day) */
+.allday{display:grid;grid-template-columns:56px repeat(7,minmax(0,1fr));border-bottom:1px solid var(--c-border-subtle);
+  background:var(--c-surface-raised)}
+.allday .gut{border-right:1px solid var(--c-border-subtle);display:flex;align-items:flex-start;justify-content:flex-end;
+  padding:7px 6px 0 0}
+.adcell{border-right:1px solid var(--c-border-subtle);padding:6px 4px;min-height:44px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.adcell:last-child{border-right:0}
+
+.tpill{display:flex;align-items:center;gap:5px;height:22px;padding:0 7px;border-radius:var(--r-xs);
+  border:1px solid color-mix(in srgb,var(--lay-task) 42%,transparent);
+  background:color-mix(in srgb,var(--lay-task) 12%,var(--c-surface));
+  color:var(--c-text);font-size:11px;min-width:0;cursor:pointer}
+.tpill .sq{width:7px;height:7px;border-radius:1px;background:var(--lay-task);flex:none}
+.tpill .tx{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tpill.done{opacity:.55;text-decoration:line-through}
+
+/* ciało siatki */
+.calbody{position:relative;display:grid;grid-template-columns:56px repeat(7,minmax(0,1fr));height:624px}
+.gutter{border-right:1px solid var(--c-border-subtle);position:relative}
+.gutter .hr{position:absolute;right:6px;font-size:10px;color:var(--c-text-muted);font-variant-numeric:tabular-nums;
+  transform:translateY(-50%)}
+.day{position:relative;border-right:1px solid var(--c-border-subtle);min-width:0;
+  background-image:repeating-linear-gradient(to bottom,var(--cal-line) 0 1px,transparent 1px 48px),
+                   repeating-linear-gradient(to bottom,transparent 0 24px,var(--cal-line-half) 24px 25px,transparent 25px 48px)}
+.day:last-child{border-right:0}
+.day.we{background-color:var(--c-surface-raised)}
+.day.today{background-color:color-mix(in srgb,var(--c-focus-solid) 4%,transparent)}
+
+/* blok wydarzenia */
+.ev{position:absolute;left:3px;right:3px;border-radius:var(--r-xs);padding:3px 6px 3px 8px;overflow:hidden;cursor:pointer;
+  border:1px solid transparent;font-size:11px;line-height:1.35;min-width:0}
+.ev .t{font-weight:600;font-size:11px;color:var(--c-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev .m{font-size:10px;color:var(--c-text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  display:flex;align-items:center;gap:4px}
+.ev svg{width:10px;height:10px}
+.ev::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:2px 0 0 2px}
+.ev.short{padding-top:1px}
+.ev.short .t{font-size:10px}
+
+.ev.meet{background:color-mix(in srgb,var(--lay-meet) 11%,var(--c-surface));
+  border-color:color-mix(in srgb,var(--lay-meet) 34%,transparent)}
+.ev.meet::before{background:var(--lay-meet)}
+.ev.event{background:color-mix(in srgb,var(--lay-event) 10%,var(--c-surface));
+  border-color:color-mix(in srgb,var(--lay-event) 30%,transparent)}
+.ev.event::before{background:var(--lay-event)}
+
+/* dziś-linia */
+.nowline{position:absolute;left:0;right:0;height:0;z-index:6;pointer-events:none}
+.nowline i{display:block;height:2px;background:var(--c-focus-solid);opacity:.85}
+.nowline b{position:absolute;left:4px;top:-9px;font-size:10px;font-weight:600;font-variant-numeric:tabular-nums;
+  color:var(--c-cta-text);background:var(--c-focus-solid);border-radius:var(--r-pill);padding:1px 6px;z-index:1}
+.nowline u{position:absolute;right:-4px;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--c-focus-solid)}
+
+/* zaznaczony pusty slot + popover szybkiego tworzenia */
+.slot{position:absolute;left:3px;right:3px;border-radius:var(--r-xs);border:1.5px dashed var(--c-focus-solid);
+  background:color-mix(in srgb,var(--c-focus-solid) 8%,transparent);z-index:5}
+.pop{position:absolute;z-index:30;width:320px;background:var(--c-surface);border:1px solid var(--c-border);
+  border-radius:var(--r-md);box-shadow:var(--shadow-pop);overflow:hidden}
+.pop > header{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--c-border-subtle)}
+.pop > header .l1{flex:1}
+.pop .b{padding:12px;display:flex;flex-direction:column;gap:10px}
+.choice{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.chbtn{border:1px solid var(--c-border);border-radius:var(--r-sm);background:transparent;padding:8px 9px;cursor:pointer;
+  text-align:left;color:var(--c-text-secondary);font:inherit;display:flex;flex-direction:column;gap:2px}
+.chbtn .hd{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--c-text)}
+.chbtn .hd .sq{width:8px;height:8px;border-radius:2px;flex:none}
+.chbtn .l5{font-size:10px}
+.chbtn[aria-pressed="true"]{background:var(--c-active-bg);border-color:var(--c-border-strong)}
+.fld{display:flex;flex-direction:column;gap:3px}
+.inp{height:32px;border:1px solid var(--c-border);border-radius:var(--r-sm);background:var(--c-surface);
+  padding:0 9px;font:inherit;font-size:12px;color:var(--c-text);display:flex;align-items:center}
+.inp.ph{color:var(--c-text-muted)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.popfoot{display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:10px 12px;
+  border-top:1px solid var(--c-border-subtle);background:var(--c-surface-raised)}
+.popnote{padding:8px 12px 0;background:var(--c-surface-raised)}
+.mini2{height:28px;padding:0 10px;border-radius:var(--r-pill);border:1px solid var(--c-border);background:transparent;
+  color:var(--c-text);font:inherit;font-size:12px;cursor:pointer}
+.mini2.primary{background:var(--c-cta-bg);border-color:var(--c-cta-bg);color:var(--c-cta-text);font-weight:600}
+
+/* legenda pod siatką */
+.callegend{display:flex;align-items:center;gap:18px;flex-wrap:wrap;padding:9px 16px;border-top:1px solid var(--c-border-subtle)}
+.lg{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--c-text-secondary)}
+.lg .swatch{width:10px;height:10px;border-radius:3px;flex:none}
+.lg .kbd{margin-left:2px}
+
+/* ===== PASMO SEKCJI DECYZYJNYCH ===== */
+.states{padding:0 16px 34px}
+.stateshead{display:flex;align-items:baseline;gap:10px;padding:18px 0 10px}
+.sgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:start}
+.scard{background:var(--c-surface);border:1px solid var(--c-border-subtle);border-radius:var(--r-md);
+  box-shadow:var(--shadow-card);overflow:hidden}
+.scard > header{padding:10px 12px;border-bottom:1px solid var(--c-border-subtle)}
+.scard > .b{padding:12px}
+.fake{border:1px solid var(--c-border-subtle);border-radius:var(--r-sm);padding:8px 10px;margin-bottom:8px;background:var(--c-surface-raised)}
+.fake:last-child{margin-bottom:0}
+.fake .l1{margin-bottom:4px}
+.fake.pick{border-color:var(--c-border-strong);background:var(--c-surface)}
+.note{border:1px dashed var(--c-border);border-radius:var(--r-sm);padding:8px 10px;margin-top:10px;color:var(--c-text-secondary);font-size:11px}
+.kbd{font-size:10px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;border:1px solid var(--c-border-subtle);
+  background:var(--c-surface-raised);border-radius:4px;padding:1px 4px;color:var(--c-text-secondary);white-space:nowrap}
+.item{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid var(--c-border-subtle)}
+.item:last-of-type{border-bottom:0}
+.item .grow{flex:1;min-width:0}
+.item .grow .l2{display:block;font-size:12px}
+.item .grow .l5{display:block;font-size:11px}
+.status{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--c-text-secondary);white-space:nowrap}
+.status.warn{color:var(--c-warning)} .status.warn .dot{background:var(--c-warning)}
+.status.ok{color:var(--c-success)} .status.ok .dot{background:var(--c-success)}
+.status.info{color:var(--c-info)} .status.info .dot{background:var(--c-info)}
+.status.bad{color:var(--c-danger)} .status.bad .dot{background:var(--c-danger)}
+.opt{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.radio{width:13px;height:13px;border-radius:50%;border:1.5px solid var(--c-border-strong);flex:none;position:relative}
+.radio.on{border-color:var(--c-cta-bg)}
+.radio.on::after{content:"";position:absolute;inset:2.5px;border-radius:50%;background:var(--c-cta-bg)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;align-items:center;padding:10px 12px;border:1px solid var(--c-border-subtle);
+  border-radius:var(--r-md);margin-top:12px;background:var(--c-surface)}
+table.sch{width:100%;border-collapse:collapse;font-size:11px}
+table.sch th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--c-text-muted);
+  font-weight:600;padding:4px 6px;border-bottom:1px solid var(--c-border-subtle)}
+table.sch td{padding:4px 6px;border-bottom:1px solid var(--c-border-subtle);color:var(--c-text-secondary);vertical-align:top}
+table.sch td:first-child{color:var(--c-text);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;white-space:nowrap}
+table.sch tr:last-child td{border-bottom:0}
+
+@media (max-width:1400px){.sgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:1280px){
+  .gmenu{width:60px}.gmenu-brand{padding:0 0 14px;justify-content:center}.gword{display:none}
+  .gitem{justify-content:center;padding:0}.gitem .glabel,.gitem .gbadge{display:none}
+  .gitem[aria-current="page"]{box-shadow:none;background:var(--c-active-bg)}
+}
+@media (max-width:1080px){.stage{grid-template-columns:minmax(0,1fr)}.rail{display:none}}
+@media (max-width:820px){.sgrid{grid-template-columns:minmax(0,1fr)}}
+</style>
+
+<div class="app">
+
+  <!-- ========== GLOBALNE MENU APLIKACJI (Sidebar.tsx / menuConfig.ts, locale pl) ========== -->
+  <nav class="gmenu" aria-label="Menu główne aplikacji">
+    <div class="gmenu-brand"><span class="gmark" aria-hidden="true">C</span><span class="gword">Consultify</span></div>
+    <div class="gmenu-main">
+      <a class="gitem" href="#" title="Czat"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z"/></svg><span class="glabel">Czat</span></a>
+      <a class="gitem" href="#" aria-current="page" title="Moja Praca"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><path d="M2 13h20"/></svg><span class="glabel">Moja Praca</span></a>
+      <a class="gitem" href="#" title="Wywiad"><svg viewBox="0 0 24 24"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M9 11h6"/><path d="M9 15h6"/><path d="M9 19h3"/></svg><span class="glabel">Wywiad</span></a>
+      <a class="gitem" href="#" title="Narzędzia"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17l3 3 5.3-5.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2-2z"/></svg><span class="glabel">Narzędzia</span></a>
+      <a class="gitem" href="#" title="Ocena"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.2 2.2 4.8-4.8"/></svg><span class="glabel">Ocena</span></a>
+      <a class="gitem" href="#" title="Inicjatywy"><svg viewBox="0 0 24 24"><path d="M9.5 18h5"/><path d="M10.3 21.5h3.4"/><path d="M12 2.5a6.7 6.7 0 0 0-3.8 12.2c.7.5 1.2 1.5 1.2 2.3h5.2c0-.8.5-1.8 1.2-2.3A6.7 6.7 0 0 0 12 2.5z"/></svg><span class="glabel">Inicjatywy</span></a>
+      <a class="gitem" href="#" title="Realizacja"><svg viewBox="0 0 24 24"><path d="M12 2.5c2.3 2 3.7 5.3 3.7 8.7 0 2-1 3.8-2 4.8l-1.7 1.7-1.7-1.7c-1-1-2-2.8-2-4.8 0-3.4 1.4-6.7 3.7-8.7z"/><circle cx="12" cy="10.5" r="1.4"/><path d="M9 16.5l-1.8 3.8 3.6-1"/><path d="M15 16.5l1.8 3.8-3.6-1"/></svg><span class="glabel">Realizacja</span></a>
+      <a class="gitem" href="#" title="Resultaty"><svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M17 7h4v4"/></svg><span class="glabel">Resultaty</span><span class="gbadge">beta</span></a>
+      <a class="gitem" href="#" title="Finanse"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 6h6"/><path d="M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01"/></svg><span class="glabel">Finanse</span><span class="gbadge">beta</span></a>
+      <a class="gitem" href="#" title="Materiały"><svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M12 17v-6"/><path d="M9.3 13.7L12 11l2.7 2.7"/></svg><span class="glabel">Materiały</span><span class="gbadge">beta</span></a>
+      <a class="gitem" href="#" title="Audyty"><svg viewBox="0 0 24 24"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M9 13.5l2 2 4-4.5"/></svg><span class="glabel">Audyty</span><span class="gbadge">beta</span></a>
+      <a class="gitem" href="#" title="Spotkania"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M2.5 20c0-3 2.9-5 6.5-5s6.5 2 6.5 5"/><path d="M16 6.2a3 3 0 0 1 0 5.8"/><path d="M21.5 20c0-2.4-1.9-4-3.8-4.6"/></svg><span class="glabel">Spotkania</span><span class="gbadge">beta</span></a>
+    </div>
+    <div class="gmenu-foot">
+      <div class="gsep"></div>
+      <a class="gitem" href="#" title="Organizacja"><svg viewBox="0 0 24 24"><path d="M3 21V10l4.7 3.3V10l4.7 3.3V10l4.7 3.3V6.5h2V21z"/><path d="M3 21h18"/></svg><span class="glabel">Organizacja</span></a>
+      <a class="gitem" href="#" title="Ustawienia"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M3 12h3M18 12h3M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1"/></svg><span class="glabel">Ustawienia</span></a>
+    </div>
+  </nav>
+
+  <div class="appmain">
+
+    <!-- ===== MENU 1 ===== -->
+    <div class="menu1">
+      <span class="crumbs">Moja Praca <span>›</span> <b>Kalendarz</b></span>
+      <span class="right">
+        <button class="sysbtn"><svg width="13" height="13" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.4-3.4"/></svg>Szukaj</button>
+        <button class="sysbtn"><svg width="13" height="13" viewBox="0 0 24 24"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>3</button>
+        <span class="avatar">PW</span>
+      </span>
+    </div>
+
+    <!-- ===== MENU 2 — zakładki modułu Moja Praca ===== -->
+    <div class="menu2">
+      <button class="pill">Skrzynka <span class="l5 mono">12</span></button>
+      <button class="pill">Zadania <span class="l5 mono">28</span></button>
+      <button class="pill">Decyzje <span class="l5 mono">4</span></button>
+      <button class="pill" aria-selected="true">Kalendarz</button>
+      <button class="pill">Pomysły</button>
+      <button class="pill">Notatnik</button>
+      <span class="right">
+        <div class="seg" role="group" aria-label="Zakres widoku">
+          <button>Dzień</button>
+          <button aria-pressed="true">Tydzień</button>
+          <button>Miesiąc</button>
+        </div>
+        <button class="pill cta"><svg width="14" height="14" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Nowe</button>
+      </span>
+    </div>
+
+    <!-- ===== MENU 3 — warstwy + nawigacja tygodnia ===== -->
+    <div class="menu3">
+      <button class="chip"><svg width="12" height="12" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
+      <button class="chip" aria-pressed="true">Dziś</button>
+      <button class="chip"><svg width="12" height="12" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+      <span class="l2" style="margin:0 8px 0 4px">24–30 sierpnia 2026</span>
+      <button class="chip" aria-pressed="true"><span class="sq" style="background:var(--lay-meet)"></span>Spotkania <span class="cnt">7</span></button>
+      <button class="chip" aria-pressed="true"><span class="sq" style="background:var(--lay-task)"></span>Zadania z terminem <span class="cnt">5</span></button>
+      <button class="chip" aria-pressed="true"><span class="sq" style="background:var(--lay-event)"></span>Wydarzenia własne <span class="cnt">4</span></button>
+      <button class="chip">Weekend <span class="cnt">0</span></button>
+      <button class="chip">Zakończone <span class="cnt">3</span></button>
+      <button class="chip ai"><svg width="12" height="12" viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M3 12h3M18 12h3M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/><circle cx="12" cy="12" r="3"/></svg>Teresa: znajdź wolne 90 min</button>
+    </div>
+
+    <!-- ===== SCENA ===== -->
+    <div class="stage">
+
+      <!-- LEWA SZYNA -->
+      <aside class="rail" aria-label="Nawigacja kalendarza">
+        <div class="railsec">
+          <div class="mini">
+            <div class="minihead">
+              <button class="minibtn"><svg width="11" height="11" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
+              <span class="l2" style="text-align:center">sierpień 2026</span>
+              <button class="minibtn"><svg width="11" height="11" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+            </div>
+            <div class="mgrid">
+              <span class="hd">P</span><span class="hd">W</span><span class="hd">Ś</span><span class="hd">C</span><span class="hd">P</span><span class="hd">S</span><span class="hd">N</span>
+              <span class="out">27</span><span class="out">28</span><span class="out">29</span><span class="out">30</span><span class="out">31</span><span class="hasdot">1</span><span>2</span>
+              <span class="hasdot">3</span><span>4</span><span class="hasdot">5</span><span>6</span><span class="hasdot">7</span><span>8</span><span>9</span>
+              <span>10</span><span class="hasdot">11</span><span>12</span><span class="hasdot">13</span><span>14</span><span>15</span><span>16</span>
+              <span class="hasdot">17</span><span>18</span><span class="hasdot">19</span><span class="hasdot">20</span><span>21</span><span>22</span><span>23</span>
+              <span class="inweek hasdot">24</span><span class="today">25</span><span class="inweek hasdot">26</span><span class="inweek hasdot">27</span><span class="inweek hasdot">28</span><span class="inweek">29</span><span class="inweek">30</span>
+              <span class="hasdot">31</span><span class="out">1</span><span class="out">2</span><span class="out">3</span><span class="out">4</span><span class="out">5</span><span class="out">6</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="railsec">
+          <p class="l1">Warstwy</p>
+          <div class="lay"><span class="swatch" style="background:var(--lay-meet)"></span>
+            <span class="grow"><span class="l2" style="font-size:12px">Spotkania</span><span class="l5">Moduł Spotkania · tylko podgląd</span></span>
+            <span class="cnt">7</span><span class="sw" role="switch" aria-checked="true"></span></div>
+          <div class="lay"><span class="swatch" style="background:var(--lay-task)"></span>
+            <span class="grow"><span class="l2" style="font-size:12px">Zadania z terminem</span><span class="l5">Moduł Zadania · pas „Terminy"</span></span>
+            <span class="cnt">5</span><span class="sw" role="switch" aria-checked="true"></span></div>
+          <div class="lay"><span class="swatch" style="background:var(--lay-event)"></span>
+            <span class="grow"><span class="l2" style="font-size:12px">Wydarzenia własne</span><span class="l5">Kalendarz · pełna edycja</span></span>
+            <span class="cnt">4</span><span class="sw" role="switch" aria-checked="true"></span></div>
+        </div>
+
+        <div class="railsec">
+          <p class="l1">Kalendarze zewnętrzne</p>
+          <div class="lay"><span class="swatch" style="background:var(--c-border-strong)"></span>
+            <span class="grow"><span class="l2" style="font-size:12px">Google Calendar</span><span class="l5">Niepodłączony</span></span>
+            <span class="sw" role="switch" aria-checked="false"></span></div>
+          <div class="lay"><span class="swatch" style="background:var(--c-border-strong)"></span>
+            <span class="grow"><span class="l2" style="font-size:12px">Outlook</span><span class="l5">Niepodłączony</span></span>
+            <span class="sw" role="switch" aria-checked="false"></span></div>
+          <p class="l5" style="margin-top:6px">Poza MVP — patrz sekcja F.</p>
+        </div>
+
+        <div class="railsec" style="margin-top:auto">
+          <p class="l1">Obciążenie dnia · wt. 25</p>
+          <div class="item"><span class="grow"><span class="l2">2 spotkania · 1,5 h</span><span class="l5">1 zadanie z terminem · 1 blok własny</span></span></div>
+          <button class="act" style="margin-top:8px"><svg width="13" height="13" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 11h18"/></svg>Przejdź do dnia</button>
+        </div>
+      </aside>
+
+      <!-- SIATKA TYGODNIA -->
+      <div class="cal">
+
+        <div class="calhead">
+          <div class="gut"></div>
+          <div class="dh"><div class="dow">Pon</div><div class="dnum">24</div></div>
+          <div class="dh today"><div class="dow">Wt</div><div class="dnum">25</div></div>
+          <div class="dh"><div class="dow">Śr</div><div class="dnum">26</div></div>
+          <div class="dh"><div class="dow">Czw</div><div class="dnum">27</div></div>
+          <div class="dh"><div class="dow">Pt</div><div class="dnum">28</div></div>
+          <div class="dh we"><div class="dow">Sob</div><div class="dnum">29</div></div>
+          <div class="dh we"><div class="dow">Nd</div><div class="dnum">30</div></div>
+        </div>
+
+        <!-- PAS „TERMINY" — zadania z terminem, zawsze całodniowe -->
+        <div class="allday">
+          <div class="gut"><span class="l5">Terminy</span></div>
+          <div class="adcell">
+            <span class="tpill"><span class="sq"></span><span class="tx">Lista pytań do CFO</span></span>
+          </div>
+          <div class="adcell">
+            <span class="tpill"><span class="sq"></span><span class="tx">Dry-run migracji — próbka 5%</span></span>
+          </div>
+          <div class="adcell">
+            <span class="tpill"><span class="sq"></span><span class="tx">Karta inicjatywy: podpis sponsora</span></span>
+          </div>
+          <div class="adcell">
+            <span class="tpill"><span class="sq"></span><span class="tx">Raport z wywiadu — do przeglądu</span></span>
+          </div>
+          <div class="adcell">
+            <span class="tpill"><span class="sq"></span><span class="tx">Budżet fazy 2 — korekta</span></span>
+          </div>
+          <div class="adcell we"></div>
+          <div class="adcell we"></div>
+        </div>
+
+        <!-- CIAŁO SIATKI 07:00–20:00, 1 h = 48 px -->
+        <div class="calbody">
+
+          <div class="gutter">
+            <span class="hr" style="top:0px">07:00</span>
+            <span class="hr" style="top:48px">08:00</span>
+            <span class="hr" style="top:96px">09:00</span>
+            <span class="hr" style="top:144px">10:00</span>
+            <span class="hr" style="top:192px">11:00</span>
+            <span class="hr" style="top:240px">12:00</span>
+            <span class="hr" style="top:288px">13:00</span>
+            <span class="hr" style="top:336px">14:00</span>
+            <span class="hr" style="top:384px">15:00</span>
+            <span class="hr" style="top:432px">16:00</span>
+            <span class="hr" style="top:480px">17:00</span>
+            <span class="hr" style="top:528px">18:00</span>
+            <span class="hr" style="top:576px">19:00</span>
+          </div>
+
+          <!-- PON 24 -->
+          <div class="day">
+            <div class="ev meet" style="top:96px;height:47px">
+              <div class="t">Kick-off: Wdrożenie ERP — faza 1</div>
+              <div class="m"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M2.5 19c0-2.7 2.7-4.5 6.5-4.5s6.5 1.8 6.5 4.5"/><path d="M16 6.2a3 3 0 0 1 0 5.8"/></svg>09:00–10:00 · 5 os. · sala Kraków</div>
+            </div>
+            <div class="ev meet" style="top:336px;height:71px">
+              <div class="t">Warsztat procesowy: zamknięcie miesiąca</div>
+              <div class="m"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M2.5 19c0-2.7 2.7-4.5 6.5-4.5s6.5 1.8 6.5 4.5"/><path d="M16 6.2a3 3 0 0 1 0 5.8"/></svg>14:00–15:30 · 6 os. · Teams</div>
+            </div>
+          </div>
+
+          <!-- WT 25 — DZIŚ -->
+          <div class="day today">
+            <div class="ev event" style="top:48px;height:47px">
+              <div class="t">Przygotowanie do Komitetu</div>
+              <div class="m"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg>08:00–09:00 · blok własny</div>
+            </div>
+            <div class="ev meet short" style="top:96px;height:23px">
+              <div class="t">Stand-up zespołu · 09:00–09:30</div>
+            </div>
+            <div class="ev meet" style="top:288px;height:47px">
+              <div class="t">Komitet Sterujący — bramka Q3</div>
+              <div class="m"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M2.5 19c0-2.7 2.7-4.5 6.5-4.5s6.5 1.8 6.5 4.5"/><path d="M16 6.2a3 3 0 0 1 0 5.8"/></svg>13:00–14:00 · 8 os. · sala Zarządu</div>
+            </div>
+            <!-- DZIŚ-LINIA: 10:42 -->
+            <div class="nowline" style="top:177.6px"><b>10:42</b><u></u><i></i></div>
+          </div>
+
+          <!-- ŚR 26 -->
+          <div class="day">
+            <div class="ev event" style="top:72px;height:95px">
+              <div class="t">Praca skupiona: model finansowy</div>
+              <div class="m"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg>08:30–10:30 · blok własny</div>
+            </div>
+            <div class="ev meet" style="top:192px;height:47px">
+              <div class="t">Wywiad: Dyrektor Finansowy (AGD Nord)</div>
+              <div class="m"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M2.5 19c0-2.7 2.7-4.5 6.5-4.5s6.5 1.8 6.5 4.5"/><path d="M16 6.2a3 3 0 0 1 0 5.8"/></svg>11:00–12:00 · 3 os. · online</div>
+            </div>
+          </div>
+
+          <!-- CZW 27 -->
+          <div class="day">
+            <div class="ev meet" style="top:144px;height:71px">
+              <div class="t">Przegląd wyników — pilot 5%</div>
+              <div class="m"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M2.5 19c0-2.7 2.7-4.5 6.5-4.5s6.5 1.8 6.5 4.5"/><path d="M16 6.2a3 3 0 0 1 0 5.8"/></svg>10:00–11:30 · 4 os. · Teams</div>
+            </div>
+            <div class="ev event" style="top:288px;height:47px">
+              <div class="t">1:1 — Anna Kowalczyk</div>
+              <div class="m"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg>13:00–14:00 · 1 uczestnik</div>
+            </div>
+          </div>
+
+          <!-- PT 28 — wybrany pusty slot + popover szybkiego tworzenia -->
+          <div class="day">
+            <div class="ev event" style="top:96px;height:47px">
+              <div class="t">Dojazd do klienta (AGD Nord)</div>
+              <div class="m"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg>09:00–10:00 · blok własny</div>
+            </div>
+            <div class="ev meet" style="top:384px;height:47px">
+              <div class="t">Retrospektywa fazy 1</div>
+              <div class="m"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M2.5 19c0-2.7 2.7-4.5 6.5-4.5s6.5 1.8 6.5 4.5"/><path d="M16 6.2a3 3 0 0 1 0 5.8"/></svg>15:00–16:00 · 6 os. · Teams</div>
+            </div>
+
+            <!-- klik w pusty slot 11:00–12:00 -->
+            <div class="slot" style="top:192px;height:47px"></div>
+
+            <div class="pop" style="top:96px;left:calc(100% + 8px)">
+              <header>
+                <span class="l1">Nowy wpis · pt. 28 sie</span>
+                <button class="minibtn"><svg width="11" height="11" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+              </header>
+              <div class="b">
+                <div class="choice">
+                  <button class="chbtn" aria-pressed="true">
+                    <span class="hd"><span class="sq" style="background:var(--lay-event)"></span>Wydarzenie</span>
+                    <span class="l5">Blok czasu w moim kalendarzu</span>
+                  </button>
+                  <button class="chbtn">
+                    <span class="hd"><span class="sq" style="background:var(--lay-task)"></span>Zadanie</span>
+                    <span class="l5">Termin na liście zadań</span>
+                  </button>
+                </div>
+                <div class="fld">
+                  <span class="l5">Tytuł</span>
+                  <span class="inp ph">np. Przegląd modelu z Anną</span>
+                </div>
+                <div class="two">
+                  <div class="fld"><span class="l5">Od</span><span class="inp mono">11:00</span></div>
+                  <div class="fld"><span class="l5">Do</span><span class="inp mono">12:00</span></div>
+                </div>
+                <div class="fld">
+                  <span class="l5">Uczestnicy <span style="text-transform:none;letter-spacing:0">(opcjonalnie, tylko z organizacji)</span></span>
+                  <span class="inp ph">Dodaj osobę…</span>
+                </div>
+                <div class="fld">
+                  <span class="l5">Opis</span>
+                  <span class="inp ph" style="height:44px;align-items:flex-start;padding-top:7px">Krótka notatka…</span>
+                </div>
+              </div>
+              <div class="popnote">
+                <span class="l5">Zapis: <span class="kbd">POST /my-work/calendar/events</span> — realny wpis, nie zadanie</span>
+              </div>
+              <div class="popfoot">
+                <button class="mini2">Anuluj</button>
+                <button class="mini2 primary">Utwórz</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="day we"></div>
+          <div class="day we"></div>
+        </div>
+
+        <div class="callegend">
+          <span class="lg"><span class="swatch" style="background:var(--lay-meet)"></span>Spotkanie — klik otwiera <span class="kbd">/meeting?meetingId=…</span></span>
+          <span class="lg"><span class="swatch" style="background:var(--lay-task)"></span>Zadanie z terminem — klik otwiera zadanie w Moja&nbsp;Praca</span>
+          <span class="lg"><span class="swatch" style="background:var(--lay-event)"></span>Wydarzenie własne — edycja na miejscu</span>
+          <span class="lg"><span class="swatch" style="background:var(--c-focus-solid);border-radius:1px;height:3px;width:14px"></span>Dziś-linia (aktualna godzina)</span>
+          <span class="l5" style="margin-left:auto">Crimson (#85182F) nie występuje ani razu. Fokus = niebieski <span class="kbd">--c-focus</span>.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= SEKCJE DECYZYJNE ================= -->
+    <div class="states">
+      <div class="stateshead">
+        <span class="l1">Stany, dowody i decyzje</span>
+        <span class="l5">A–B = co jest dziś i co proponujemy · C = model danych · D–G = decyzje właściciela</span>
+      </div>
+      <div class="sgrid">
+
+        <!-- A -->
+        <section class="scard">
+          <header>
+            <p class="l2">A · Co jest dziś (runtime, nie dokumentacja)</p>
+            <p class="l5">Odczyt z gałęzi roboczej, 25.08.2026</p>
+          </header>
+          <div class="b">
+            <div class="item"><span class="status bad"><span class="dot"></span></span>
+              <span class="grow"><span class="l2">„Wydarzenie" = zadanie</span>
+              <span class="l5"><span class="kbd">POST /my-work/calendar/events</span> przyjmuje wyłącznie <span class="kbd">source: 'task'</span> i robi <span class="kbd">INSERT INTO tasks</span>. Dla <span class="kbd">initiative</span>/<span class="kbd">decision</span> zwraca <b>501</b>.</span></span></div>
+            <div class="item"><span class="status bad"><span class="dot"></span></span>
+              <span class="grow"><span class="l2">Modal mówi to wprost</span>
+              <span class="l5">„In V1, calendar creation produces a personal task with a due date" · „Artifact type: Task".</span></span></div>
+            <div class="item"><span class="status warn"><span class="dot"></span></span>
+              <span class="grow"><span class="l2">Brak tabeli wydarzeń</span>
+              <span class="l5">W migracjach nie ma <span class="kbd">calendar_events</span>. Jest tylko <span class="kbd">v8_calendar_items</span> — lustro zewnętrznego sync-u (klucz obcy do <span class="kbd">v8_calendar_sources</span>), nie miejsce na własny wpis.</span></span></div>
+            <div class="item"><span class="status warn"><span class="dot"></span></span>
+              <span class="grow"><span class="l2">Zadania zawsze całodniowe</span>
+              <span class="l5"><span class="kbd">/calendar/unified</span> ustawia zadaniom <span class="kbd">allDay: true</span> i tnie datę do <span class="kbd">YYYY-MM-DD</span> — godzina zadania nie istnieje.</span></span></div>
+            <div class="item"><span class="status warn"><span class="dot"></span></span>
+              <span class="grow"><span class="l2">Klik w spotkanie gubi tożsamość</span>
+              <span class="l5"><span class="kbd">artifactLinks.ts</span> dla typu <span class="kbd">meeting</span> zwraca gołe <span class="kbd">/meeting</span> — bez id. Hub czyta <span class="kbd">?meetingId=</span>, więc naprawa to jedna linia.</span></span></div>
+            <div class="note">Wniosek: dzisiejszy ekran to <b>widok terminów</b>, nie kalendarz. Nie da się zapisać „spotkanie 14:00–15:00", bo nie ma gdzie.</div>
+          </div>
+        </section>
+
+        <!-- B -->
+        <section class="scard">
+          <header>
+            <p class="l2">B · Trzy warstwy, trzy semantyki</p>
+            <p class="l5">Rozróżnialne bez crimsonu i bez samego koloru</p>
+          </header>
+          <div class="b">
+            <div class="fake">
+              <p class="l1">Zasada</p>
+              <p class="l4">Kalendarz <b>agreguje</b>, nie kopiuje. Spotkania zostają w <span class="kbd">meetings</span>, zadania w <span class="kbd">tasks</span>, a kalendarz ma tylko własne wydarzenia.</p>
+            </div>
+            <div class="item"><span class="swatch" style="width:10px;height:10px;border-radius:3px;background:var(--lay-meet);margin-top:5px"></span>
+              <span class="grow"><span class="l2">Spotkanie · <span class="kbd">--c-info</span></span>
+              <span class="l5">Blok na siatce + ikona osób. Tylko podgląd — edycja w module Spotkania.</span></span></div>
+            <div class="item"><span class="swatch" style="width:10px;height:10px;border-radius:3px;background:var(--lay-task);margin-top:5px"></span>
+              <span class="grow"><span class="l2">Zadanie z terminem · <span class="kbd">--c-warning</span></span>
+              <span class="l5">Pigułka w pasie „Terminy", kwadratowy znacznik. Termin to punkt, nie blok czasu.</span></span></div>
+            <div class="item"><span class="swatch" style="width:10px;height:10px;border-radius:3px;background:var(--lay-event);margin-top:5px"></span>
+              <span class="grow"><span class="l2">Wydarzenie własne · grafit neutralny</span>
+              <span class="l5">Blok z ikoną zegara. Pełna edycja na miejscu. Neutralny = „mój czas", nie stan.</span></span></div>
+            <div class="note">Kolor nigdy nie jest jedynym nośnikiem: różnią się także <b>kształt</b> (pigułka vs blok), <b>miejsce</b> (pas terminów vs siatka) i <b>ikona</b>. Działa w skali szarości i przy daltonizmie. Czerwień zostaje wyłącznie dla stanu krytycznego (np. termin przekroczony).</div>
+          </div>
+        </section>
+
+        <!-- C -->
+        <section class="scard">
+          <header>
+            <p class="l2">C · Model danych — <span class="kbd">calendar_events</span></p>
+            <p class="l5">Addytywnie, jedna nowa tabela. Pełna specyfikacja: <span class="kbd">kalendarz-model-danych.md</span></p>
+          </header>
+          <div class="b">
+            <table class="sch">
+              <tr><th>Kolumna</th><th>Rola</th></tr>
+              <tr><td>id</td><td>TEXT PK (uuid)</td></tr>
+              <tr><td>organization_id</td><td>NOT NULL — dzierżawca, w każdym WHERE</td></tr>
+              <tr><td>owner_id</td><td>NOT NULL — właściciel wpisu (user)</td></tr>
+              <tr><td>title / description</td><td>treść</td></tr>
+              <tr><td>start_at / end_at</td><td>NOT NULL, UTC ISO; end &gt; start</td></tr>
+              <tr><td>all_day</td><td>0/1 — wpis całodniowy</td></tr>
+              <tr><td>location</td><td>tekst wolny (bez rezerwacji sal)</td></tr>
+              <tr><td>attendees_json</td><td>lista user_id z organizacji — jak w <span class="kbd">meetings</span></td></tr>
+              <tr><td>visibility</td><td>private · busy · org (sekcja F)</td></tr>
+              <tr><td>related_type / related_id</td><td>opcjonalny odnośnik (initiative/task/meeting) — <b>bez</b> klucza obcego</td></tr>
+              <tr><td>status</td><td>confirmed · cancelled</td></tr>
+              <tr><td>created_by / created_at / updated_at</td><td>ślad</td></tr>
+            </table>
+            <div class="note">
+              Indeksy: <span class="kbd">(organization_id, owner_id, start_at)</span> — główny odczyt zakresu;
+              <span class="kbd">(organization_id, start_at, end_at)</span> — widok zespołu.
+              Zero migracji danych: nic nie przenosimy z <span class="kbd">tasks</span>.
+            </div>
+          </div>
+        </section>
+
+        <!-- D -->
+        <section class="scard">
+          <header>
+            <p class="l2">D · DECYZJA 1 — powtarzalność w MVP?</p>
+            <p class="l5">„Co poniedziałek 9:00" — najdroższa pojedyncza funkcja kalendarza</p>
+          </header>
+          <div class="b">
+            <div class="fake pick">
+              <div class="opt"><span class="radio on"></span><span class="l2">D1 · NIE w MVP — rekomendacja</span></div>
+              <p class="l4">Zamiast reguły: przycisk <b>„Powiel na kolejne 4 tygodnie"</b> — tworzy 4 osobne wpisy, każdy edytowalny osobno.</p>
+              <p class="l5" style="margin-top:4px">Zysk: brak RRULE, brak wyjątków serii, brak „edytuj to / wszystkie / przyszłe". Koszt: przy zmianie godziny trzeba poprawić kilka wpisów.</p>
+            </div>
+            <div class="fake">
+              <div class="opt"><span class="radio"></span><span class="l2">D2 · TAK, pełne RRULE</span></div>
+              <p class="l4">Reguła iCal + tabela wyjątków + rozwijanie serii przy odczycie zakresu.</p>
+              <p class="l5" style="margin-top:4px">To nie jest jedna kolumna — to osobny podsystem (edycja pojedynczego wystąpienia, przesunięcia, kasowanie ogona). Realnie odsuwa kalendarz o tygodnie.</p>
+            </div>
+            <div class="note">Kolumny <span class="kbd">recurrence_rule</span> i <span class="kbd">recurrence_parent_id</span> zostawiamy <b>puste w schemacie</b> od pierwszego dnia — późniejsze włączenie serii nie wymaga wtedy migracji.</div>
+          </div>
+        </section>
+
+        <!-- E -->
+        <section class="scard">
+          <header>
+            <p class="l2">E · DECYZJA 2 — widok miesiąca w MVP?</p>
+            <p class="l5">Dzień i tydzień są pewne; miesiąc jest do rozstrzygnięcia</p>
+          </header>
+          <div class="b">
+            <div class="fake pick">
+              <div class="opt"><span class="radio on"></span><span class="l2">E1 · Miesiąc TAK, ale jako „gęstość" — rekomendacja</span></div>
+              <p class="l4">Komórka dnia pokazuje maks. 3 wpisy + „+4 więcej”, bez godzin. Klik w dzień przełącza na widok dnia.</p>
+              <p class="l5" style="margin-top:4px">Ten sam odczyt API, inny rysunek. Miesiąc jest dziś jedynym widokiem, który właściciel realnie ogląda przy planowaniu wyjazdów.</p>
+            </div>
+            <div class="fake">
+              <div class="opt"><span class="radio"></span><span class="l2">E2 · Tylko dzień + tydzień</span></div>
+              <p class="l4">Miesiąc odpada do kolejnej fazy; mini-miesiąc w lewej szynie zostaje jako nawigacja.</p>
+              <p class="l5" style="margin-top:4px">Mniej pracy o ~1 ekran, ale plan miesięczny trzeba wtedy czytać z listy zadań.</p>
+            </div>
+            <div class="note">W obu wariantach <b>tydzień jest widokiem domyślnym</b> (dziś domyślny jest miesiąc — <span class="kbd">useState&lt;CalendarViewMode&gt;('month')</span>).</div>
+          </div>
+        </section>
+
+        <!-- F -->
+        <section class="scard">
+          <header>
+            <p class="l2">F · DECYZJA 3 — kto widzi czyje wydarzenia?</p>
+            <p class="l5">Domyślna widoczność decyduje o zaufaniu do kalendarza</p>
+          </header>
+          <div class="b">
+            <div class="fake pick">
+              <div class="opt"><span class="radio on"></span><span class="l2">F1 · Prywatne domyślnie, „zajęte" na żądanie — rekomendacja</span></div>
+              <p class="l4">Wpis widzi tylko właściciel i dopisani uczestnicy. Przełącznik podnosi go do <b>zajęte</b> (inni widzą blok bez tytułu) albo <b>organizacja</b> (pełna treść).</p>
+              <p class="l5" style="margin-top:4px">Kolumna <span class="kbd">visibility</span> od pierwszego dnia; jeśli ekran zespołu powstanie później, dane już są gotowe.</p>
+            </div>
+            <div class="fake">
+              <div class="opt"><span class="radio"></span><span class="l2">F2 · Wyłącznie prywatne (bez kolumny)</span></div>
+              <p class="l4">MVP nie zna pojęcia cudzego kalendarza. Uczestnik dostaje wpis tylko przez zaproszenie wewnętrzne.</p>
+              <p class="l5" style="margin-top:4px">Najprostsze, ale dodanie widoku zespołu wymaga potem migracji i decyzji wstecz o istniejących wpisach.</p>
+            </div>
+            <div class="note">Spotkania mają dziś <b>inną</b> regułę: <span class="kbd">/calendar/unified</span> filtruje je po <span class="kbd">m.created_by = userId</span> — czyli widać tylko spotkania, które sam założyłeś, nawet jeśli jesteś na liście uczestników. To osobna, istniejąca dziura do domknięcia przy okazji.</div>
+          </div>
+        </section>
+
+        <!-- G -->
+        <section class="scard">
+          <header>
+            <p class="l2">G · DECYZJA 4 — czy zadanie ma godzinę?</p>
+            <p class="l5">Rozstrzyga, czy pas „Terminy" zostaje na zawsze</p>
+          </header>
+          <div class="b">
+            <div class="fake pick">
+              <div class="opt"><span class="radio on"></span><span class="l2">G1 · Termin = punkt w dniu — rekomendacja</span></div>
+              <p class="l4">Zadanie zostaje całodniowe i mieszka w pasie „Terminy". Chcesz zarezerwować czas na zadanie? Tworzysz obok <b>wydarzenie</b> i podpinasz je przez <span class="kbd">related_id</span>.</p>
+              <p class="l5" style="margin-top:4px">Zero zmian w <span class="kbd">tasks</span>. Rozdziela dwie różne rzeczy: „do kiedy" i „kiedy to robię".</p>
+            </div>
+            <div class="fake">
+              <div class="opt"><span class="radio"></span><span class="l2">G2 · Zadanie z godziną na siatce</span></div>
+              <p class="l4">Wymaga uszanowania czasu w <span class="kbd">due_date</span> i wycofania twardego <span class="kbd">allDay: true</span>.</p>
+              <p class="l5" style="margin-top:4px">Ryzyko: te same zadania są dziś rysowane w 3 innych widokach (lista, kanban, postęp), które zakładają datę bez godziny.</p>
+            </div>
+            <div class="note"><b>Świadomie poza MVP:</b> zaproszenia dla osób spoza organizacji (e-mail, ICS, RSVP), dwukierunkowy sync Google/Outlook, rezerwacja sal, strefy czasowe inne niż strefa użytkownika, przeciąganie bloków myszą. Dyspozycja: sync zewnętrzny wraca dopiero po podłączeniu integracji w Ustawieniach — do tego czasu warstwy Google/Outlook zostają w szynie jako wyłączone i uczciwie opisane „Niepodłączony".</div>
+          </div>
+        </section>
+
+      </div>
+
+      <div class="legend">
+        <span class="status ok"><span class="dot"></span>gotowe / potwierdzone w kodzie</span>
+        <span class="status warn"><span class="dot"></span>wymaga decyzji</span>
+        <span class="status info"><span class="dot"></span>propozycja</span>
+        <span class="status bad"><span class="dot"></span>fasada do usunięcia</span>
+        <span class="l5">Prototyp = makieta statyczna. Nic z tego nie jest wdrożone — <b>kod powstaje dopiero po akcepcie</b> (reguła 7).</span>
+      </div>
+    </div>
+
+  </div>
+</div>

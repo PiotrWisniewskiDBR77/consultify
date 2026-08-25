@@ -1,0 +1,743 @@
+<title>Prototyp — Moja Praca › Pomysły › Wspólny prawy inspektor elementu (4 narzędzia)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   TOKENY — 1:1 z src/index.css (SSOT) i TRIADA_KANON §C1.
+   Crimson (--c-accent #85182F) NIE występuje ani razu — także tam,
+   gdzie występuje dziś (pigułka etapu „ISKRA" w panelu, p24-panel/on-light.png).
+   ============================================================ */
+:root{
+  --c-bg:#fafaf9; --c-surface:#ffffff; --c-surface-raised:#f8fafc;
+  --c-border-subtle:#e6e9ed; --c-border:#cbd2da; --c-border-strong:#9aa6b5;
+  --c-text:#0f172a; --c-text-secondary:#475569; --c-text-muted:#64748b;
+  --c-focus:rgba(37,99,235,.4); --c-focus-solid:#2563eb;
+  --c-success:#026833; --c-warning:#ae6429; --c-danger:#e80538; --c-info:#3b2883;
+  --c-active-bg:rgba(15,23,42,.07); --c-active-border:#cbd2da; --c-active-text:#0f172a;
+  --c-cta-bg:#0f172a; --c-cta-text:#ffffff;
+  --r-xs:6px; --r-sm:8px; --r-md:12px; --r-lg:16px; --r-pill:9999px;
+  --shadow-card:0 1px 2px rgba(15,23,42,.04);
+  --canvas-grid:rgba(15,23,42,.05);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --c-bg:#0a0f1e; --c-surface:#0f172a; --c-surface-raised:#15213b;
+    --c-border-subtle:rgba(148,163,184,.12); --c-border:rgba(148,163,184,.22);
+    --c-border-strong:rgba(148,163,184,.36);
+    --c-text:#f4f7fb; --c-text-secondary:#b8c4d6; --c-text-muted:#8a99b0;
+    --c-focus:rgba(91,141,239,.45); --c-focus-solid:#5b8def;
+    --c-success:#3fb950; --c-warning:#e8a33d; --c-danger:#ed5565; --c-info:#58a6ff;
+    --c-active-bg:rgba(255,255,255,.10); --c-active-border:rgba(255,255,255,.25); --c-active-text:#f4f7fb;
+    --c-cta-bg:#f4f7fb; --c-cta-text:#0f172a;
+    --shadow-card:0 1px 2px rgba(0,0,0,.35);
+    --canvas-grid:rgba(148,163,184,.07);
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--c-bg);color:var(--c-text);
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  font-size:13px;line-height:1.6;-webkit-font-smoothing:antialiased}
+:focus-visible{outline:none;box-shadow:0 0 0 3px var(--c-focus);border-radius:var(--r-sm)}
+svg{flex:none;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+
+.l1{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.16em;color:var(--c-text-muted)}
+.l2{font-size:13px;font-weight:600}
+.l4{font-size:12px;color:var(--c-text-secondary)}
+.l5{font-size:11px;color:var(--c-text-muted)}
+.mono{font-variant-numeric:tabular-nums}
+
+/* ===== GLOBALNE MENU (Sidebar.tsx / menuConfig.ts, locale pl) ===== */
+.app{display:flex;min-height:100vh}
+.appmain{flex:1;min-width:0;display:flex;flex-direction:column}
+.gmenu{width:216px;flex:none;display:flex;flex-direction:column;background:var(--c-surface-raised);
+  border-right:1px solid var(--c-border-subtle);padding:14px 0;position:sticky;top:0;height:100vh;overflow:hidden}
+.gmenu-brand{display:flex;align-items:center;gap:9px;padding:0 16px 14px;margin-bottom:6px;border-bottom:1px solid var(--c-border-subtle)}
+.gmark{width:26px;height:26px;border-radius:var(--r-xs);flex:none;background:var(--c-cta-bg);color:var(--c-cta-text);
+  display:grid;place-items:center;font-size:12px;font-weight:700;letter-spacing:-.02em}
+.gword{font-size:14px;font-weight:600;letter-spacing:-.01em;white-space:nowrap;overflow:hidden}
+.gmenu-main{flex:1;min-height:0;overflow-y:auto;padding:6px 8px;display:flex;flex-direction:column;gap:2px}
+.gmenu-foot{flex:none;padding:6px 8px 0;display:flex;flex-direction:column;gap:2px}
+.gsep{height:1px;background:var(--c-border-subtle);margin:8px 4px}
+.gitem{display:flex;align-items:center;gap:10px;height:36px;padding:0 10px;border-radius:var(--r-sm);
+  color:var(--c-text-secondary);text-decoration:none;font-size:13px;white-space:nowrap}
+.gitem:hover{background:var(--c-surface);color:var(--c-text)}
+.gitem svg{width:18px;height:18px}
+.gitem .glabel{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.gitem .gbadge{flex:none;font-size:10px;font-weight:600;padding:1px 7px;border-radius:var(--r-pill);
+  background:var(--c-border-subtle);color:var(--c-text-muted)}
+.gitem[aria-current="page"]{background:var(--c-active-bg);color:var(--c-active-text);font-weight:600;
+  box-shadow:inset 3px 0 0 var(--c-focus-solid)}
+@media (max-width:1280px){
+  .gmenu{width:60px}.gmenu-brand{padding:0 0 14px;justify-content:center}.gword{display:none}
+  .gitem{justify-content:center;padding:0}.gitem .glabel,.gitem .gbadge{display:none}
+  .gitem[aria-current="page"]{box-shadow:none;background:var(--c-active-bg)}
+}
+
+/* ===== MENU 1 / 2 / 3 ===== */
+.menu1{height:48px;display:flex;align-items:center;gap:12px;padding:0 16px;background:var(--c-surface);
+  border-bottom:1px solid var(--c-border-subtle);position:sticky;top:0;z-index:20}
+.brand{font-size:13px;font-weight:600;letter-spacing:-.01em}
+.crumbs{display:flex;align-items:center;gap:8px;color:var(--c-text-muted);font-size:12px;min-width:0}
+.crumbs b{color:var(--c-text);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.menu1 .right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.sysbtn{height:28px;padding:0 10px;border:1px solid var(--c-border);border-radius:var(--r-pill);background:transparent;
+  color:var(--c-text-secondary);font:inherit;font-size:12px;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.dot{width:6px;height:6px;border-radius:var(--r-pill);display:inline-block;flex:none;background:var(--c-border-strong)}
+.avatar{width:28px;height:28px;border-radius:var(--r-pill);border:1px solid var(--c-border);display:grid;place-items:center;
+  font-size:11px;font-weight:600;color:var(--c-text-secondary)}
+
+.menu2{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 16px 0}
+.pill{height:36px;padding:0 12px;border-radius:var(--r-pill);border:1px solid var(--c-border);background:transparent;
+  color:var(--c-text-secondary);font:inherit;font-size:13px;font-weight:500;display:inline-flex;align-items:center;gap:8px;cursor:pointer}
+.pill:hover{border-color:var(--c-border-strong);color:var(--c-text)}
+.pill[aria-selected="true"]{background:var(--c-active-bg);border-color:var(--c-active-border);color:var(--c-active-text);font-weight:600}
+.pill.cta{margin-left:auto;background:var(--c-cta-bg);border-color:var(--c-cta-bg);color:var(--c-cta-text);font-weight:600}
+
+.menu3{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 16px}
+.chip{height:28px;padding:0 10px;border-radius:var(--r-pill);border:1px solid var(--c-border-subtle);background:transparent;
+  color:var(--c-text-muted);font:inherit;font-size:11px;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.chip:hover{border-color:var(--c-border);color:var(--c-text-secondary)}
+.chip[aria-pressed="true"]{background:var(--c-active-bg);border-color:var(--c-active-border);color:var(--c-active-text);font-weight:500}
+.chip .cnt{font-variant-numeric:tabular-nums;font-weight:600;color:var(--c-text-secondary)}
+.chip .x{color:var(--c-text-muted);margin-left:2px}
+.menu3 .ai{margin-left:auto}
+
+/* ===== PASEK TOŻSAMOŚCI ARTEFAKTU (SPEC-A) ===== */
+.idbar{display:flex;align-items:center;gap:10px;padding:8px 16px;border-top:1px solid var(--c-border-subtle);
+  border-bottom:1px solid var(--c-border-subtle);background:var(--c-surface)}
+.idbar .title{font-size:14px;font-weight:600;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.idbar .right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.toolbar{display:flex;align-items:center;gap:6px;padding:8px 16px;border-bottom:1px solid var(--c-border-subtle)}
+.tb{height:30px;padding:0 10px;border-radius:var(--r-pill);border:1px solid transparent;background:transparent;
+  color:var(--c-text-secondary);font:inherit;font-size:12px;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.tb:hover{background:var(--c-surface-raised);color:var(--c-text)}
+.toolbar .right{margin-left:auto;display:flex;gap:6px}
+
+/* ===== SIATKA: lewa szyna 6 sekcji · kanwa · PRAWY INSPEKTOR ELEMENTU ===== */
+.stage{display:grid;grid-template-columns:288px minmax(0,1fr) 4px 424px;align-items:stretch;height:764px;overflow:hidden}
+@media (max-width:1440px){.stage{grid-template-columns:56px minmax(0,1fr) 4px 424px}.railpanel{display:none}}
+@media (max-width:1080px){.stage{grid-template-columns:56px minmax(0,1fr)}.grip,.inspector{display:none}}
+
+/* Szyna: pasek ikon 56 px (ICON_STRIP_WIDTH, nigdy się nie zwija) + panel */
+.rail{display:flex;border-right:1px solid var(--c-border-subtle);background:var(--c-surface);min-height:0;overflow:hidden}
+.strip{width:56px;flex:none;display:flex;flex-direction:column;align-items:center;padding:8px 0;gap:4px;border-right:1px solid var(--c-border-subtle)}
+.sbtn{width:44px;height:44px;border-radius:var(--r-sm);border:0;background:transparent;color:var(--c-text-muted);
+  display:grid;place-items:center;cursor:pointer;position:relative}
+.sbtn:hover{background:var(--c-surface-raised);color:var(--c-text)}
+.sbtn[aria-pressed="true"]{background:color-mix(in srgb,var(--c-focus-solid) 10%,transparent);color:var(--c-focus-solid)}
+.sbtn .cbadge{position:absolute;top:4px;right:4px;min-width:16px;height:16px;padding:0 4px;border-radius:var(--r-pill);
+  font-size:10px;line-height:16px;font-weight:600;background:var(--c-border-subtle);color:var(--c-text-muted)}
+.railpanel{flex:1;min-width:0;padding:12px;overflow-y:auto}
+
+/* Kanwa */
+.canvas{position:relative;background:
+  linear-gradient(var(--canvas-grid) 1px,transparent 1px) 0 0/20px 20px,
+  linear-gradient(90deg,var(--canvas-grid) 1px,transparent 1px) 0 0/20px 20px, var(--c-bg);
+  overflow:hidden;border-right:1px solid var(--c-border-subtle)}
+.node{position:absolute;border:1px solid var(--c-border);border-radius:var(--r-sm);background:var(--c-surface);
+  padding:5px 8px;font-size:11px;line-height:1.35;box-shadow:var(--shadow-card)}
+.node.center{border-color:var(--c-border-strong);background:var(--c-surface-raised);font-weight:600;font-size:12px;padding:8px 10px}
+.node.branch{font-weight:600}
+.node.sel{border-color:var(--c-focus-solid);box-shadow:0 0 0 3px var(--c-focus)}
+.node .k{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--c-text-muted);margin-bottom:1px}
+.zoom{position:absolute;left:50%;transform:translateX(-50%);bottom:12px;display:flex;align-items:center;gap:4px;
+  border:1px solid var(--c-border);border-radius:var(--r-pill);background:var(--c-surface);padding:3px 6px;box-shadow:var(--shadow-card)}
+.zbtn{width:24px;height:24px;border:0;background:transparent;color:var(--c-text-secondary);border-radius:var(--r-pill);
+  display:grid;place-items:center;cursor:pointer;font:inherit}
+.floatrail{position:absolute;left:12px;top:12px;display:flex;flex-direction:column;gap:2px;padding:4px;
+  border:1px solid var(--c-border-subtle);border-radius:var(--r-md);background:var(--c-surface);box-shadow:var(--shadow-card)}
+.fbtn{width:30px;height:30px;border:0;background:transparent;border-radius:var(--r-xs);color:var(--c-text-muted);
+  display:grid;place-items:center;cursor:pointer}
+.fbtn:hover{background:var(--c-surface-raised);color:var(--c-text)}
+
+/* ===== PRAWY INSPEKTOR ELEMENTU — wspólny dla 4 narzędzi ===== */
+.inspector{display:flex;flex-direction:column;background:var(--c-surface);border-left:1px solid var(--c-border-subtle);min-width:0;min-height:0;overflow:hidden}
+.grip{width:4px;flex:none;cursor:col-resize;background:transparent}
+.insphead{padding:12px 14px;border-bottom:1px solid var(--c-border-subtle)}
+.insphead .top{display:flex;align-items:flex-start;gap:8px}
+.insphead h3{font-size:14px;font-weight:600;letter-spacing:-.01em;flex:1;min-width:0}
+.metarow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:6px}
+.qa{display:flex;gap:6px;padding:8px 14px;border-bottom:1px solid var(--c-border-subtle)}
+.qbtn{height:28px;padding:0 10px;border-radius:var(--r-pill);border:1px solid var(--c-border);background:transparent;
+  color:var(--c-text-secondary);font:inherit;font-size:11px;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.qbtn:hover{border-color:var(--c-border-strong);color:var(--c-text)}
+.inspbody{flex:1;min-height:0;overflow-y:auto;padding:10px 14px}
+.acc{border:1px solid var(--c-border-subtle);border-radius:var(--r-sm);margin-bottom:8px;background:var(--c-surface)}
+.acc > .h{display:flex;align-items:center;gap:8px;width:100%;padding:9px 11px;border:0;background:transparent;
+  color:inherit;font:inherit;text-align:left;cursor:pointer}
+.acc > .h .n{flex:1;font-size:12px;font-weight:600}
+.acc > .h .cbadge{font-size:10px;font-weight:600;padding:1px 7px;border-radius:var(--r-xs);border:1px solid var(--c-border-subtle);
+  color:var(--c-text-muted);font-variant-numeric:tabular-nums}
+.acc > .b{padding:0 11px 11px}
+.acc.closed > .b{display:none}
+.chev{color:var(--c-text-muted)}
+.acc.closed .chev{transform:rotate(-90deg)}
+
+.f{padding:6px 0;border-bottom:1px solid var(--c-border-subtle)}
+.f:last-child{border-bottom:0}
+.f > .k{display:block;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.15em;color:var(--c-text-secondary);margin-bottom:4px}
+.f > .v{display:block;font-size:12px}
+.f > .v.empty{color:var(--c-text-muted)}
+.inp{width:100%;height:28px;border-radius:var(--r-sm);border:1px solid var(--c-border);background:var(--c-surface);
+  color:var(--c-text);font:inherit;font-size:12px;padding:0 8px}
+.ta{width:100%;border-radius:var(--r-sm);border:1px solid var(--c-border);background:var(--c-surface);color:var(--c-text);
+  font:inherit;font-size:12px;padding:6px 8px;resize:none}
+.sel2{width:100%;height:28px;border-radius:var(--r-sm);border:1px solid var(--c-border);background:var(--c-surface);
+  color:var(--c-text);font:inherit;font-size:12px;padding:0 6px}
+
+/* Przepływ stanu — pigułki połączone łącznikiem (§A4: bez wypełnionych pigułek) */
+.flow{display:flex;align-items:center;gap:0;flex-wrap:wrap}
+.fp{height:24px;padding:0 8px;border-radius:var(--r-pill);border:1px solid var(--c-border-subtle);background:transparent;
+  color:var(--c-text-muted);font:inherit;font-size:10px;font-weight:600;display:inline-flex;align-items:center;gap:4px;cursor:pointer}
+.fp[aria-pressed="true"]{border-color:var(--c-active-border);background:var(--c-active-bg);color:var(--c-active-text)}
+.fl{width:10px;height:1px;background:var(--c-border);flex:none}
+
+.range{display:block;width:100%;height:4px;border-radius:var(--r-pill);background:var(--c-border-subtle);position:relative;margin:8px 0 2px}
+.range > i{display:block;height:100%;border-radius:var(--r-pill);background:var(--c-text-secondary)}
+.range > b{position:absolute;top:-4px;width:12px;height:12px;border-radius:var(--r-pill);background:var(--c-surface);
+  border:1px solid var(--c-border-strong)}
+
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{height:22px;padding:0 8px;border-radius:var(--r-pill);border:1px solid var(--c-border-subtle);background:var(--c-surface-raised);
+  color:var(--c-text-secondary);font-size:11px;display:inline-flex;align-items:center;gap:5px}
+.tag button{border:0;background:transparent;color:var(--c-text-muted);cursor:pointer;display:grid;place-items:center;padding:0}
+
+.status{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--c-text-secondary);white-space:nowrap}
+.status.warn{color:var(--c-warning)} .status.warn .dot{background:var(--c-warning)}
+.status.ok{color:var(--c-success)} .status.ok .dot{background:var(--c-success)}
+.status.info{color:var(--c-info)} .status.info .dot{background:var(--c-info)}
+.status.bad{color:var(--c-danger)} .status.bad .dot{background:var(--c-danger)}
+
+.item{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--c-border-subtle)}
+.item:last-of-type{border-bottom:0}
+.item .grow{flex:1;min-width:0}
+.item .grow .l2,.item .grow .l5{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px}
+.item .grow .l5{font-size:11px}
+.mini{height:24px;padding:0 8px;border-radius:var(--r-pill);border:1px solid var(--c-border);background:transparent;color:var(--c-text);
+  font:inherit;font-size:11px;display:inline-flex;align-items:center;gap:5px;cursor:pointer;flex:none}
+.mini:hover{border-color:var(--c-border-strong)}
+.addrow{margin-top:8px}
+
+.inspfoot{padding:10px 14px;border-top:1px solid var(--c-border-subtle);display:flex;align-items:center;gap:8px}
+.cta2{margin-left:auto;height:30px;padding:0 12px;border-radius:var(--r-pill);border:1px solid var(--c-cta-bg);background:var(--c-cta-bg);
+  color:var(--c-cta-text);font:inherit;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+
+/* ===== PASMO STANÓW ===== */
+.states{padding:0 16px 32px}
+.stateshead{display:flex;align-items:baseline;gap:10px;padding:16px 0 10px}
+.sgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:start}
+@media (max-width:1400px){.sgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:820px){.sgrid{grid-template-columns:minmax(0,1fr)}}
+.scard{background:var(--c-surface);border:1px solid var(--c-border-subtle);border-radius:var(--r-md);box-shadow:var(--shadow-card);overflow:hidden}
+.scard > header{padding:10px 12px;border-bottom:1px solid var(--c-border-subtle)}
+.scard > .b{padding:12px}
+.fake{border:1px solid var(--c-border-subtle);border-radius:var(--r-sm);padding:8px 10px;margin-bottom:8px;background:var(--c-surface-raised)}
+.fake:last-child{margin-bottom:0}
+.fake .l1{margin-bottom:4px}
+.note{border:1px dashed var(--c-border);border-radius:var(--r-sm);padding:8px 10px;margin-top:10px;color:var(--c-text-secondary);font-size:11px}
+.kbd{font-size:10px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;border:1px solid var(--c-border-subtle);
+  border-radius:4px;padding:0 4px;color:var(--c-text-muted);background:var(--c-surface-raised)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;align-items:center;padding:10px 12px;border:1px solid var(--c-border-subtle);
+  border-radius:var(--r-md);background:var(--c-surface);margin-top:12px}
+.empty{display:grid;place-items:center;gap:6px;padding:18px 10px;text-align:center;color:var(--c-text-muted)}
+</style>
+
+<div class="app">
+
+  <!-- ===== GLOBALNE MENU APLIKACJI ===== -->
+  <nav class="gmenu" aria-label="Menu główne aplikacji">
+    <div class="gmenu-brand"><span class="gmark" aria-hidden="true">C</span><span class="gword">Consultify</span></div>
+    <div class="gmenu-main">
+      <a class="gitem" href="#" title="Czat"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z"/></svg><span class="glabel">Czat</span></a>
+      <a class="gitem" href="#" aria-current="page" title="Moja Praca"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><path d="M2 13h20"/></svg><span class="glabel">Moja Praca</span></a>
+      <a class="gitem" href="#" title="Wywiad"><svg viewBox="0 0 24 24"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M9 11h6"/><path d="M9 15h6"/><path d="M9 19h3"/></svg><span class="glabel">Wywiad</span></a>
+      <a class="gitem" href="#" title="Narzędzia"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17l3 3 5.3-5.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2-2z"/></svg><span class="glabel">Narzędzia</span></a>
+      <a class="gitem" href="#" title="Ocena"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.2 2.2 4.8-4.8"/></svg><span class="glabel">Ocena</span></a>
+      <a class="gitem" href="#" title="Inicjatywy"><svg viewBox="0 0 24 24"><path d="M9.5 18h5"/><path d="M10.3 21.5h3.4"/><path d="M12 2.5a6.7 6.7 0 0 0-3.8 12.2c.7.5 1.2 1.5 1.2 2.3h5.2c0-.8.5-1.8 1.2-2.3A6.7 6.7 0 0 0 12 2.5z"/></svg><span class="glabel">Inicjatywy</span></a>
+      <a class="gitem" href="#" title="Realizacja"><svg viewBox="0 0 24 24"><path d="M12 2.5c2.3 2 3.7 5.3 3.7 8.7 0 2-1 3.8-2 4.8l-1.7 1.7-1.7-1.7c-1-1-2-2.8-2-4.8 0-3.4 1.4-6.7 3.7-8.7z"/><circle cx="12" cy="10.5" r="1.4"/><path d="M9 16.5l-1.8 3.8 3.6-1"/><path d="M15 16.5l1.8 3.8-3.6-1"/></svg><span class="glabel">Realizacja</span></a>
+      <a class="gitem" href="#" title="Resultaty"><svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M17 7h4v4"/></svg><span class="glabel">Resultaty</span><span class="gbadge">beta</span></a>
+      <a class="gitem" href="#" title="Finanse"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 6h6"/><path d="M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01"/></svg><span class="glabel">Finanse</span><span class="gbadge">beta</span></a>
+      <a class="gitem" href="#" title="Materiały"><svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M12 17v-6"/><path d="M9.3 13.7L12 11l2.7 2.7"/></svg><span class="glabel">Materiały</span><span class="gbadge">beta</span></a>
+      <a class="gitem" href="#" title="Audyty"><svg viewBox="0 0 24 24"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M9 13.5l2 2 4-4.5"/></svg><span class="glabel">Audyty</span><span class="gbadge">beta</span></a>
+      <a class="gitem" href="#" title="Spotkania"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M2.5 20c0-3 2.9-5 6.5-5s6.5 2 6.5 5"/><path d="M16 6.2a3 3 0 0 1 0 5.8"/><path d="M21.5 20c0-2.4-1.9-4-3.8-4.6"/></svg><span class="glabel">Spotkania</span><span class="gbadge">beta</span></a>
+    </div>
+    <div class="gmenu-foot">
+      <div class="gsep"></div>
+      <a class="gitem" href="#" title="Organizacja"><svg viewBox="0 0 24 24"><path d="M3 21V10l4.7 3.3V10l4.7 3.3V10l4.7 3.3V6.5h2V21z"/><path d="M3 21h18"/></svg><span class="glabel">Organizacja</span></a>
+      <a class="gitem" href="#" title="Ustawienia"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M3 12h3M18 12h3M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1"/></svg><span class="glabel">Ustawienia</span></a>
+    </div>
+  </nav>
+
+  <div class="appmain">
+
+    <!-- ===== MENU 1 ===== -->
+    <div class="menu1">
+      <span class="brand">Consultify</span>
+      <nav class="crumbs" aria-label="Ścieżka">
+        <span>Moja Praca</span><span>›</span><span>Pomysły</span><span>›</span><b>Wdrożenie ERP (end-to-end)</b>
+      </nav>
+      <div class="right">
+        <button class="sysbtn"><span class="dot" style="background:var(--c-success)"></span>Dane</button>
+        <button class="sysbtn"><span class="dot"></span>Model</button>
+        <span class="l5">DBR77</span>
+        <span class="avatar">PW</span>
+      </div>
+    </div>
+
+    <!-- ===== MENU 2 ===== -->
+    <div class="menu2" role="tablist" aria-label="Zakładki Mojej Pracy">
+      <button class="pill" aria-label="Szukaj w pomysłach"><svg width="16" height="16" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></button>
+      <button class="pill" role="tab" aria-selected="true"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M9.5 18h5"/><path d="M10.3 21.5h3.4"/><path d="M12 2.5a6.7 6.7 0 0 0-3.8 12.2c.7.5 1.2 1.5 1.2 2.3h5.2c0-.8.5-1.8 1.2-2.3A6.7 6.7 0 0 0 12 2.5z"/></svg>Pomysły</button>
+      <button class="pill" role="tab" aria-selected="false">Notatnik</button>
+      <button class="pill" role="tab" aria-selected="false">Inbox</button>
+      <button class="pill" role="tab" aria-selected="false">Kalendarz</button>
+      <button class="pill" role="tab" aria-selected="false">Zadania</button>
+      <button class="pill" role="tab" aria-selected="false">Decyzje</button>
+      <button class="pill" role="tab" aria-selected="false">Sejf klienta</button>
+      <button class="pill" role="tab" aria-selected="false">Manager</button>
+      <button class="pill cta"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg>Nowy pomysł</button>
+    </div>
+
+    <!-- ===== MENU 3 — tryb ③: karty otwartych pozycji (tab + ×) ===== -->
+    <div class="menu3" aria-label="Otwarte pomysły">
+      <button class="chip" aria-pressed="false"><svg width="12" height="12" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></svg>Lista</button>
+      <button class="chip" aria-pressed="true">Wdrożenie ERP (end-to-end)<span class="x">×</span></button>
+      <button class="chip" aria-pressed="false">Automatyzacja back-office<span class="x">×</span></button>
+      <button class="chip" aria-pressed="false">AI monitoring jakości<span class="x">×</span></button>
+      <button class="chip ai"><svg width="12" height="12" viewBox="0 0 24 24"><path d="M12 3l1.9 4.6L18.5 9l-4.6 1.4L12 15l-1.9-4.6L5.5 9l4.6-1.4z"/></svg>Teresa</button>
+    </div>
+
+    <!-- ===== PASEK TOŻSAMOŚCI ARTEFAKTU ===== -->
+    <div class="idbar">
+      <button class="tb" aria-label="Wróć do listy"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg></button>
+      <span class="l5">Idee ›</span>
+      <span class="title">Wdrożenie ERP (end-to-end)</span>
+      <span class="l5">· Mapa myśli</span>
+      <div class="right">
+        <span class="status info"><span class="dot"></span>Etap: Iskra</span>
+        <span class="status ok"><span class="dot"></span>Zapisano 14:32</span>
+        <button class="tb"><svg width="15" height="15" viewBox="0 0 24 24"><path d="M12 3l1.9 4.6L18.5 9l-4.6 1.4L12 15l-1.9-4.6L5.5 9l4.6-1.4z"/></svg>Teresa</button>
+        <button class="tb" aria-label="Więcej"><svg width="16" height="16" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button>
+        <button class="cta2">Konwertuj <svg width="14" height="14" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <button class="tb"><svg width="15" height="15" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg>Dodaj węzeł</button>
+      <button class="tb"><svg width="15" height="15" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Auto-układ</button>
+      <button class="tb"><svg width="15" height="15" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 9v12"/></svg>Szablony</button>
+      <div class="right">
+        <button class="tb"><svg width="15" height="15" viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M8 11l4 4 4-4"/><path d="M4 19h16"/></svg>Eksport</button>
+        <button class="tb"><svg width="15" height="15" viewBox="0 0 24 24"><path d="M6 3v12a3 3 0 0 0 3 3h9"/><path d="M15 15l3 3-3 3"/></svg>Utwórz z mapy</button>
+      </div>
+    </div>
+
+    <!-- ================= SCENA ================= -->
+    <div class="stage">
+
+      <!-- ===== LEWA SZYNA — 6 sekcji (MYW-IDEAS-CORE-001, JUŻ zunifikowana; nie zmieniamy) ===== -->
+      <aside class="rail" aria-label="Panel pomysłu">
+        <div class="strip" role="tablist" aria-label="Sekcje panelu pomysłu">
+          <button class="sbtn" aria-pressed="true" title="Przegląd" aria-label="Przegląd"><svg width="17" height="17" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></button>
+          <button class="sbtn" title="Właściwości" aria-label="Właściwości"><svg width="17" height="17" viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h10M18 18h2"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="16" cy="18" r="2"/></svg></button>
+          <button class="sbtn" title="Powiązania" aria-label="Powiązania"><span class="cbadge">7</span><svg width="17" height="17" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.5.6l2-2A5 5 0 0 0 12.4 4.5l-1.1 1.1"/><path d="M14 11a5 5 0 0 0-7.5-.6l-2 2A5 5 0 0 0 11.6 19.5l1.1-1.1"/></svg></button>
+          <button class="sbtn" title="AI" aria-label="AI"><svg width="17" height="17" viewBox="0 0 24 24"><path d="M12 3l1.9 4.6L18.5 9l-4.6 1.4L12 15l-1.9-4.6L5.5 9l4.6-1.4z"/><path d="M18 16l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/></svg></button>
+          <button class="sbtn" title="Aktywność" aria-label="Aktywność"><svg width="17" height="17" viewBox="0 0 24 24"><path d="M3.5 12a8.5 8.5 0 1 0 2.5-6"/><path d="M3.5 4v5h5"/><path d="M12 8v4.5l3 1.8"/></svg></button>
+          <button class="sbtn" title="Wygląd" aria-label="Wygląd"><svg width="17" height="17" viewBox="0 0 24 24"><path d="M12 2.5l9 5-9 5-9-5z"/><path d="M3 12l9 5 9-5"/><path d="M3 16.5l9 5 9-5"/></svg></button>
+        </div>
+        <div class="railpanel">
+          <p class="l1" style="margin-bottom:8px">Przegląd</p>
+
+          <div class="acc" style="margin-bottom:10px">
+            <div class="h"><span class="n">Etap pomysłu</span><span class="cbadge">4 / 7</span></div>
+            <div class="b">
+              <div class="flow" style="margin-bottom:8px">
+                <button class="fp" aria-pressed="true">Iskra</button><span class="fl"></span>
+                <button class="fp">Ramowanie</button><span class="fl"></span>
+                <button class="fp">Eksploracja</button>
+              </div>
+              <p class="l5">Następny etap: <b style="color:var(--c-text)">Ramowanie</b> — brakuje 2 dowodów.</p>
+            </div>
+          </div>
+
+          <div class="acc">
+            <div class="h"><span class="n">Kompletność pomysłu</span><span class="cbadge">100%</span></div>
+            <div class="b">
+              <div class="range" style="margin-top:2px"><i style="width:100%"></i></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+                <div><p class="l5">Węzły</p><p class="l2 mono">19</p></div>
+                <div><p class="l5">Połączenia</p><p class="l2 mono">18</p></div>
+                <div><p class="l5">Gałęzie</p><p class="l2 mono">6</p></div>
+                <div><p class="l5">Bez dowodu</p><p class="l2 mono" style="color:var(--c-warning)">4</p></div>
+              </div>
+              <p class="l5" style="margin-top:10px;display:flex;gap:6px;align-items:center">
+                <span class="dot" style="background:var(--c-success)"></span>Pomysł gotowy do konwersji na inicjatywę
+              </p>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- ===== KANWA — realne węzły z seed-mywork-demo.ts (idea „erp") ===== -->
+      <div class="canvas">
+        <div class="floatrail" aria-label="Narzędzia kanwy">
+          <button class="fbtn" title="Zaznaczanie"><svg width="15" height="15" viewBox="0 0 24 24"><path d="M5 3l14 8-6 1.5L10 19z"/></svg></button>
+          <button class="fbtn" title="Węzeł"><svg width="15" height="15" viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="10" rx="2"/></svg></button>
+          <button class="fbtn" title="Połączenie"><svg width="15" height="15" viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8 8l8 8"/></svg></button>
+          <button class="fbtn" title="Notatka"><svg width="15" height="15" viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h8l6 6v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M14 3v6h6"/></svg></button>
+          <button class="fbtn" title="Ramka"><svg width="15" height="15" viewBox="0 0 24 24"><path d="M4 8h16M4 16h16M8 4v16M16 4v16"/></svg></button>
+        </div>
+
+        <svg style="position:absolute;inset:0;width:100%;height:100%;stroke:var(--c-border-strong);stroke-width:1;stroke-dasharray:3 3" aria-hidden="true">
+          <path d="M188 300 C 230 300, 230 60, 268 60"/>
+          <path d="M188 300 C 230 300, 230 138, 268 138"/>
+          <path d="M188 300 C 230 300, 230 216, 268 216"/>
+          <path d="M188 300 C 230 300, 230 300, 268 300"/>
+          <path d="M188 300 C 230 300, 230 396, 268 396"/>
+          <path d="M188 300 C 230 300, 230 490, 268 490"/>
+          <path d="M400 396 C 428 396, 428 356, 452 356" stroke-dasharray="0"/>
+          <path d="M400 396 C 428 396, 428 442, 452 442" stroke-dasharray="0"/>
+        </svg>
+
+        <div class="node center" style="left:24px;top:282px;width:164px">Wdrożenie ERP<br>(end-to-end)</div>
+
+        <div class="node branch" style="left:268px;top:44px;width:132px"><span class="k">Gałąź</span>Problem</div>
+        <div class="node branch" style="left:268px;top:122px;width:132px"><span class="k">Gałąź</span>Cel / KPI</div>
+        <div class="node branch" style="left:268px;top:200px;width:132px"><span class="k">Gałąź</span>Opcje</div>
+        <div class="node branch" style="left:268px;top:284px;width:132px"><span class="k">Gałąź</span>Dowody</div>
+        <div class="node branch" style="left:268px;top:380px;width:132px"><span class="k">Gałąź</span>Ryzyka</div>
+        <div class="node branch" style="left:268px;top:474px;width:132px"><span class="k">Gałąź</span>Eksperymenty</div>
+
+        <div class="node" style="left:452px;top:334px;width:196px">Adopcja: opór użytkowników i shadow IT</div>
+        <div class="node sel" style="left:452px;top:420px;width:196px"><span class="k">Ryzyko · priorytet 70</span>Migracja danych: braki i duplikaty</div>
+
+        <div class="zoom">
+          <button class="zbtn" aria-label="Pomniejsz">−</button>
+          <span class="l5 mono" style="padding:0 4px">100%</span>
+          <button class="zbtn" aria-label="Powiększ">+</button>
+          <button class="zbtn" aria-label="Dopasuj"><svg width="13" height="13" viewBox="0 0 24 24"><path d="M4 9V4h5M20 15v5h-5M20 9V4h-5M4 15v5h5"/></svg></button>
+          <button class="zbtn" aria-label="Mini mapa"><svg width="13" height="13" viewBox="0 0 24 24"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/></svg></button>
+        </div>
+      </div>
+
+      <!-- ===== PRAWY INSPEKTOR ELEMENTU — TEN SAM dla Tabeli, Process Flow, Tablicy i Mapy ===== -->
+      <div class="grip" role="separator" aria-orientation="vertical" aria-label="Zmień szerokość inspektora"
+           aria-valuemin="320" aria-valuemax="560" aria-valuenow="424" tabindex="0"></div>
+      <aside class="inspector" aria-label="Inspektor elementu">
+
+        <div class="insphead">
+          <div class="top">
+            <svg width="16" height="16" viewBox="0 0 24 24" style="color:var(--c-warning);margin-top:2px"><path d="M12 3l9.5 16.5H2.5z"/><path d="M12 10v4"/><path d="M12 17h.01"/></svg>
+            <h3>Migracja danych: braki i duplikaty</h3>
+            <button class="tb" style="padding:0;width:24px;height:24px" aria-label="Zamknij inspektor"><svg width="15" height="15" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+          </div>
+          <div class="metarow">
+            <span class="status warn"><span class="dot"></span>Eksploracja</span>
+            <span class="l5">Gałąź: Ryzyka</span>
+            <span class="l5">Typ: Ryzyko</span>
+          </div>
+        </div>
+
+        <div class="qa">
+          <button class="qbtn"><svg width="13" height="13" viewBox="0 0 24 24"><path d="M6 3v12a3 3 0 0 0 3 3h9"/><path d="M15 15l3 3-3 3"/></svg>Drąż w głąb</button>
+          <button class="qbtn"><svg width="13" height="13" viewBox="0 0 24 24"><path d="M12 3l1.9 4.6L18.5 9l-4.6 1.4L12 15l-1.9-4.6L5.5 9l4.6-1.4z"/></svg>AI podsumuj</button>
+          <button class="qbtn"><svg width="13" height="13" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.6 2.6 0 1 1 3.4 2.5c-.6.2-.9.7-.9 1.3v.4"/><path d="M12 17h.01"/></svg>AI porada</button>
+        </div>
+
+        <div class="inspbody">
+
+          <!-- 1 -->
+          <section class="acc">
+            <div class="h"><svg width="14" height="14" viewBox="0 0 24 24" class="chev"><path d="M6 9l6 6 6-6"/></svg><span class="n">Podstawowe</span></div>
+            <div class="b">
+              <div class="f">
+                <span class="k">Etykieta</span>
+                <span class="v"><input class="inp" value="Migracja danych: braki i duplikaty" aria-label="Etykieta"></span>
+              </div>
+              <div class="f">
+                <span class="k">Stan</span>
+                <span class="v"><span class="flow">
+                  <button class="fp">Pomysł</button><span class="fl"></span>
+                  <button class="fp" aria-pressed="true">Eksploracja</button><span class="fl"></span>
+                  <button class="fp">Zwalidowany</button><span class="fl"></span>
+                  <button class="fp">Gotowy</button>
+                </span></span>
+              </div>
+              <div class="f">
+                <span class="k">Priorytet — 70</span>
+                <span class="v"><span class="range"><i style="width:70%"></i><b style="left:calc(70% - 6px)"></b></span></span>
+              </div>
+              <div class="f">
+                <span class="k">Właściciel</span>
+                <span class="v"><input class="inp" value="Anna Kowalska" aria-label="Właściciel"></span>
+              </div>
+              <div class="f">
+                <span class="k">Typ semantyczny</span>
+                <span class="v"><select class="sel2" aria-label="Typ semantyczny"><option>Hipoteza</option><option selected>Ryzyko</option><option>Szansa</option><option>Decyzja</option><option>Działanie</option><option>Dowód</option><option>Insight</option><option>Klient</option><option>Blocker</option></select></span>
+              </div>
+            </div>
+          </section>
+
+          <!-- 2 -->
+          <section class="acc">
+            <div class="h"><svg width="14" height="14" viewBox="0 0 24 24" class="chev"><path d="M6 9l6 6 6-6"/></svg><span class="n">Treść i głębia</span></div>
+            <div class="b">
+              <div class="f">
+                <span class="k">Opis</span>
+                <span class="v"><textarea class="ta" rows="3" aria-label="Opis">Dane z 3 systemów źródłowych nie mają wspólnego klucza klienta. Bez czyszczenia migracja przeniesie duplikaty do ERP.</textarea></span>
+              </div>
+              <div class="f"><span class="k">Kontekst</span><span class="v">Zamknięcie miesiąca trwa 11 dni roboczych; korekty ręczne po każdej migracji częściowej.</span></div>
+              <div class="f"><span class="k">Cel</span><span class="v">Wejść w cutover z ≤ 2% rekordów wymagających korekty ręcznej.</span></div>
+              <div class="f"><span class="k">Uzasadnienie</span><span class="v empty">— <button class="mini" style="margin-left:6px">+ Uzasadnienie</button></span></div>
+              <div class="f"><span class="k">Ryzyko</span><span class="v">Dry-run pokazał 12% odrzuceń walidacji.</span></div>
+            </div>
+          </section>
+
+          <!-- 3 -->
+          <section class="acc">
+            <div class="h"><svg width="14" height="14" viewBox="0 0 24 24" class="chev"><path d="M6 9l6 6 6-6"/></svg><span class="n">Klasyfikacja</span><span class="cbadge">4</span></div>
+            <div class="b">
+              <div class="tags">
+                <span class="tag">erp<button aria-label="Usuń tag erp"><svg width="10" height="10" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span>
+                <span class="tag">migracja<button aria-label="Usuń tag migracja"><svg width="10" height="10" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span>
+                <span class="tag">dane<button aria-label="Usuń tag dane"><svg width="10" height="10" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span>
+                <span class="tag">governance<button aria-label="Usuń tag governance"><svg width="10" height="10" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span>
+              </div>
+              <div class="addrow"><input class="inp" placeholder="Dodaj tag…" aria-label="Dodaj tag"></div>
+            </div>
+          </section>
+
+          <!-- 4 -->
+          <section class="acc">
+            <div class="h"><svg width="14" height="14" viewBox="0 0 24 24" class="chev"><path d="M6 9l6 6 6-6"/></svg><span class="n">Dowody i źródła</span><span class="cbadge">2</span></div>
+            <div class="b">
+              <div class="item">
+                <svg width="14" height="14" viewBox="0 0 24 24" style="color:var(--c-text-muted)"><path d="M4 5a2 2 0 0 1 2-2h8l6 6v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M14 3v6h6"/></svg>
+                <span class="grow"><span class="l2">Audyt danych (quality + lineage)</span><span class="l5">Dokument · Sejf klienta · 08.08</span></span>
+                <button class="mini" aria-label="Otwórz"><svg width="11" height="11" viewBox="0 0 24 24"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></button>
+              </div>
+              <div class="item">
+                <svg width="14" height="14" viewBox="0 0 24 24" style="color:var(--c-text-muted)"><path d="M10 13a5 5 0 0 0 7.5.6l2-2A5 5 0 0 0 12.4 4.5l-1.1 1.1"/><path d="M14 11a5 5 0 0 0-7.5-.6l-2 2A5 5 0 0 0 11.6 19.5l1.1-1.1"/></svg>
+                <span class="grow"><span class="l2">Mapa procesów + KPI baseline</span><span class="l5">Wywiad · sesja 3 · 30.07</span></span>
+                <button class="mini" aria-label="Otwórz"><svg width="11" height="11" viewBox="0 0 24 24"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></button>
+              </div>
+              <div class="addrow"><button class="mini">+ Dodaj dowód</button></div>
+            </div>
+          </section>
+
+          <!-- 5 -->
+          <section class="acc">
+            <div class="h"><svg width="14" height="14" viewBox="0 0 24 24" class="chev"><path d="M6 9l6 6 6-6"/></svg><span class="n">Powiązania</span><span class="cbadge">3</span></div>
+            <div class="b">
+              <div class="item">
+                <span class="dot" style="background:var(--c-info)"></span>
+                <span class="grow"><span class="l2">Zamknięcie miesiąca: -40%</span><span class="l5">KPI · gałąź Cel / KPI</span></span>
+                <button class="mini">Pokaż</button>
+              </div>
+              <div class="item">
+                <span class="dot" style="background:var(--c-info)"></span>
+                <span class="grow"><span class="l2">Dry-run migracji na próbce danych</span><span class="l5">Eksperyment · gałąź Eksperymenty</span></span>
+                <button class="mini">Pokaż</button>
+              </div>
+              <div class="item">
+                <span class="dot" style="background:var(--c-info)"></span>
+                <span class="grow"><span class="l2">Rozproszone źródła danych i niespójne raportowanie</span><span class="l5">Problem · gałąź Problem</span></span>
+                <button class="mini">Pokaż</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- 6 — tu mieszka MYW-IDEAS-009 (liczniki wyjść) -->
+          <section class="acc">
+            <div class="h"><svg width="14" height="14" viewBox="0 0 24 24" class="chev"><path d="M6 9l6 6 6-6"/></svg><span class="n">Artefakty wyjściowe</span><span class="cbadge">2</span></div>
+            <div class="b">
+              <div class="item">
+                <svg width="14" height="14" viewBox="0 0 24 24" style="color:var(--c-success)"><path d="M12 2.5a6.7 6.7 0 0 0-3.8 12.2c.7.5 1.2 1.5 1.2 2.3h5.2c0-.8.5-1.8 1.2-2.3A6.7 6.7 0 0 0 12 2.5z"/><path d="M9.5 18h5"/></svg>
+                <span class="grow"><span class="l2">Wdrożenie ERP — faza 1 (Finanse)</span><span class="l5">Inicjatywa · w realizacji · następna akcja: bramka Q3</span></span>
+                <button class="mini">Otwórz</button>
+              </div>
+              <div class="item">
+                <svg width="14" height="14" viewBox="0 0 24 24" style="color:var(--c-warning)"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                <span class="grow"><span class="l2">Dry-run migracji — próbka 5%</span><span class="l5">Zadanie · zablokowane · następna akcja: odblokuj dostęp do MDM</span></span>
+                <button class="mini">Otwórz</button>
+              </div>
+              <p class="l5" style="margin-top:8px">Rodowód: mapa w wersji 41 · odcisk projekcji <span class="kbd">pf-41-a7c2</span> · bez duplikatów.</p>
+            </div>
+          </section>
+
+          <!-- 7 — JEDYNA sekcja zależna od narzędzia -->
+          <section class="acc closed">
+            <div class="h"><svg width="14" height="14" viewBox="0 0 24 24" class="chev"><path d="M6 9l6 6 6-6"/></svg><span class="n">Wygląd węzła</span><span class="cbadge">Mapa myśli</span></div>
+            <div class="b"></div>
+          </section>
+
+          <section class="acc closed">
+            <div class="h"><svg width="14" height="14" viewBox="0 0 24 24" class="chev"><path d="M6 9l6 6 6-6"/></svg><span class="n">Historia AI</span><span class="cbadge">1</span></div>
+            <div class="b"></div>
+          </section>
+
+        </div>
+
+        <div class="inspfoot">
+          <span class="status ok"><span class="dot"></span>Zapisano 14:32</span>
+          <button class="cta2">Konwertuj <svg width="14" height="14" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+        </div>
+      </aside>
+
+    </div>
+
+    <!-- ================= PASMO STANÓW ================= -->
+    <div class="states">
+      <div class="stateshead">
+        <span class="l1">Stany i dowody</span>
+        <span class="l5">A = co jest dziś · B–D = decyzje do podjęcia przy akcepcie</span>
+      </div>
+      <div class="sgrid">
+
+        <!-- A -->
+        <section class="scard">
+          <header>
+            <p class="l2">A · Cztery dzisiejsze inspektory</p>
+            <p class="l5">Zrzuty QA z 23.07.2026, ten sam pomysł, cztery narzędzia</p>
+          </header>
+          <div class="b">
+            <div class="fake">
+              <p class="l1">Mapa myśli</p>
+              <p class="l4">„INSPEKTOR MAPY" · segment Styl / Układ / Motyw</p>
+              <p class="l5">Pusty stan: „Zaznacz węzeł, aby edytować styl"</p>
+            </div>
+            <div class="fake">
+              <p class="l1">Process Flow</p>
+              <p class="l4">„INSPEKTOR PROCESU" · 320 px, płaskie sekcje</p>
+              <p class="l5">Pusty stan: „Zaznacz węzeł lub krawędź, aby zobaczyć właściwości"</p>
+            </div>
+            <div class="fake">
+              <p class="l1">Tablica</p>
+              <p class="l4">„INSPEKTOR TABLICY" · jedna pozycja „Sesja"</p>
+            </div>
+            <div class="fake">
+              <p class="l1">Tabela</p>
+              <p class="l4">Brak inspektora w szynie — szczegóły otwiera <b>modal 480 px na całym ekranie</b> z zaciemnieniem, 6 zakładek</p>
+            </div>
+            <div class="note">Cztery narzędzia = trzy różne nagłówki, trzy różne stany puste, jedna dziura i jeden modal. Prototyp zastępuje to jednym panelem.</div>
+          </div>
+        </section>
+
+        <!-- B -->
+        <section class="scard">
+          <header>
+            <p class="l2">B · Jeden stan pusty</p>
+            <p class="l5">Ten sam we wszystkich czterech narzędziach</p>
+          </header>
+          <div class="b">
+            <div class="fake" style="background:var(--c-surface)">
+              <div class="empty">
+                <svg width="20" height="20" viewBox="0 0 24 24" style="color:var(--c-text-muted)"><path d="M5 3l14 8-6 1.5L10 19z"/></svg>
+                <p class="l4">Zaznacz element, aby zobaczyć właściwości</p>
+                <p class="l5">Kliknij węzeł, wiersz, kartkę albo krawędź</p>
+              </div>
+              <p class="l1" style="margin:10px 0 6px">Ostatnio otwarte</p>
+              <div class="item"><span class="dot" style="background:var(--c-warning)"></span><span class="grow"><span class="l2">Adopcja: opór użytkowników</span><span class="l5">Ryzyko · 14:28</span></span></div>
+              <div class="item"><span class="dot" style="background:var(--c-info)"></span><span class="grow"><span class="l2">Zamknięcie miesiąca: -40%</span><span class="l5">KPI · 14:19</span></span></div>
+              <div class="item"><span class="dot" style="background:var(--c-info)"></span><span class="grow"><span class="l2">Integracje: API-first + ESB</span><span class="l5">Opcja · 13:55</span></span></div>
+            </div>
+            <div class="note">Dziś pusty panel nie proponuje niczego. Trzy ostatnio otwarte elementy kosztują zero danych — to już jest w stanie edytora.</div>
+          </div>
+        </section>
+
+        <!-- C -->
+        <section class="scard">
+          <header>
+            <p class="l2">C · Sekcja zależna od narzędzia</p>
+            <p class="l5">Zmienia się tylko sekcja 7 — reszta jest identyczna</p>
+          </header>
+          <div class="b">
+            <div class="item"><span class="grow"><span class="l2">Mapa myśli</span><span class="l5">Wygląd węzła — kształt, kolor gałęzi, układ</span></span></div>
+            <div class="item"><span class="grow"><span class="l2">Process Flow</span><span class="l5">Krawędź i tor — typ, warunek, routing, lane, metryki (czas, koszt, FTE)</span></span></div>
+            <div class="item"><span class="grow"><span class="l2">Tablica</span><span class="l5">Sesja warsztatu — faza, głosowanie, follow-me</span></span></div>
+            <div class="item"><span class="grow"><span class="l2">Tabela</span><span class="l5">Kolumna — typ pola, opcje, formuła</span></span></div>
+            <div class="note">
+              <b>Uwaga twarda:</b> stan elementu to dziś <b>trzy różne słowniki</b> — 7 wartości w Mapie/Tablicy,
+              4 w Tabeli (<span class="kbd">todo · in_progress · done · blocked</span>), zero w Process Flow.
+              Prototyp pokazuje jeden wspólny przepływ. <b>Odwzorowanie słowników to decyzja właściciela.</b>
+            </div>
+          </div>
+        </section>
+
+        <!-- D -->
+        <section class="scard">
+          <header>
+            <p class="l2">D · Gdzie panel ma mieszkać</p>
+            <p class="l5">Najważniejsza decyzja tego akceptu</p>
+          </header>
+          <div class="b">
+            <div class="fake" style="border-color:var(--c-border-strong);background:var(--c-surface)">
+              <p class="l1">Wariant 1 — rekomendowany (na prototypie)</p>
+              <p class="l4">Osobna <b>prawa</b> szyna elementu. Lewa szyna zostaje przy pomyśle jako całości, prawa mówi o zaznaczonym elemencie.</p>
+              <p class="l5" style="margin-top:4px">Dosłownie to, o co prosił właściciel. Koszt: nowy slot w powłoce + pływający pasek kanwy wraca na lewo.</p>
+            </div>
+            <div class="fake">
+              <p class="l1">Wariant 2 — dzisiejszy kod za flagą</p>
+              <p class="l4">Szczegóły elementu wjeżdżają do <b>lewej</b> szyny, w sekcję „Właściwości".</p>
+              <p class="l5" style="margin-top:4px">Tańsze — kod już istnieje. Ale „prawy inspektor" przestaje być prawy, a jedna szyna miesza pomysł z elementem.</p>
+            </div>
+            <div class="note">
+              Flaga <span class="kbd">ff_ideaDetailsInPanel</span> jest domyślnie <b>WYŁĄCZONA</b>. Włączamy ją
+              <b>dopiero po akcepcie na zrzucie</b>, potem re-tag punktu bezpiecznego (reguła 7 + reguła 9).
+              Szerokość panelu: 320–560 px (dziś suwak ogłasza czytnikowi 0–2000 — do poprawy przy okazji).
+            </div>
+          </div>
+        </section>
+
+        <!-- E -->
+        <section class="scard">
+          <header>
+            <p class="l2">E · Dół panelu (po przewinięciu)</p>
+            <p class="l5">Sekcje 6–8 i stopka — tu mieszka <span class="kbd">MYW-IDEAS-009</span></p>
+          </header>
+          <div class="b">
+            <div class="fake" style="background:var(--c-surface)">
+              <p class="l1" style="margin-bottom:6px">Artefakty wyjściowe · 2</p>
+              <div class="item">
+                <svg width="14" height="14" viewBox="0 0 24 24" style="color:var(--c-success)"><path d="M12 2.5a6.7 6.7 0 0 0-3.8 12.2c.7.5 1.2 1.5 1.2 2.3h5.2c0-.8.5-1.8 1.2-2.3A6.7 6.7 0 0 0 12 2.5z"/><path d="M9.5 18h5"/></svg>
+                <span class="grow"><span class="l2">Wdrożenie ERP — faza 1 (Finanse)</span><span class="l5">Inicjatywa · w realizacji · następna akcja: bramka Q3</span></span>
+                <button class="mini">Otwórz</button>
+              </div>
+              <div class="item">
+                <svg width="14" height="14" viewBox="0 0 24 24" style="color:var(--c-warning)"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                <span class="grow"><span class="l2">Dry-run migracji — próbka 5%</span><span class="l5">Zadanie · zablokowane · odblokuj dostęp do MDM</span></span>
+                <button class="mini">Otwórz</button>
+              </div>
+              <p class="l5" style="margin-top:6px">Rodowód: mapa w wersji 41 · odcisk <span class="kbd">pf-41-a7c2</span> · bez duplikatów.</p>
+            </div>
+            <div class="fake">
+              <p class="l4">▸ Wygląd węzła <span class="l5">— jedyna sekcja zależna od narzędzia</span></p>
+              <p class="l4" style="margin-top:4px">▸ Historia AI <span class="l5">— 1 wpis</span></p>
+            </div>
+            <div class="fake" style="display:flex;align-items:center;gap:8px">
+              <span class="status ok"><span class="dot"></span>Zapisano 14:32</span>
+              <span class="l5" style="margin-left:auto">[ Konwertuj ▾ ]</span>
+            </div>
+            <div class="note">
+              Dziś liczniki wyjść nie istnieją nigdzie w UI — <span class="kbd">Api.getMyIdeaConversions</span>
+              ma jednego konsumenta i tylko dla liczby w dialogu. Dane (cel, zakres, rodowód, data, autor) już wracają.
+              Brakuje jedynie <b>kanonicznego źródła „następnej akcji"</b> — to jest do rozstrzygnięcia.
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+      <div class="legend">
+        <span class="status ok"><span class="dot"></span>zapisane / gotowe</span>
+        <span class="status warn"><span class="dot"></span>wymaga uwagi</span>
+        <span class="status info"><span class="dot"></span>w toku</span>
+        <span class="status bad"><span class="dot"></span>zablokowane / błąd</span>
+        <span class="l5">Crimson (#85182F) nie występuje ani razu — także na pigułce etapu, gdzie występuje dziś. Fokus = niebieski <span class="kbd">--c-focus</span>.</span>
+      </div>
+    </div>
+
+  </div>
+</div>

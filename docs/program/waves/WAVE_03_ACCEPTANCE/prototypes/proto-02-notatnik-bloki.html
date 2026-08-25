@@ -1,0 +1,743 @@
+<title>Prototyp — Moja Praca › Notatnik › Prawa szyna i natywne wstawianie bloków</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   TOKENY — 1:1 z src/index.css (SSOT) i TRIADA_KANON §C1.
+   Crimson (--c-accent #85182F) NIE występuje na tym ekranie ani razu
+   — także tam, gdzie dziś występuje w kodzie (ramka edytora, podświetlenie
+   pozycji slash-menu, panel „Proposed" w NotebookInlineAIMenu). §A10.
+   ============================================================ */
+:root{
+  --c-bg:#fafaf9; --c-surface:#ffffff; --c-surface-raised:#f8fafc;
+  --c-border-subtle:#e6e9ed; --c-border:#cbd2da; --c-border-strong:#9aa6b5;
+  --c-text:#0f172a; --c-text-secondary:#475569; --c-text-muted:#64748b;
+  --c-focus:rgba(37,99,235,.4); --c-focus-solid:#2563eb;
+  --c-success:#026833; --c-warning:#ae6429; --c-danger:#e80538; --c-info:#3b2883;
+  --c-active-bg:rgba(15,23,42,.07); --c-active-border:#cbd2da; --c-active-text:#0f172a;
+  --c-cta-bg:#0f172a; --c-cta-text:#ffffff;
+  --r-xs:6px; --r-sm:8px; --r-md:12px; --r-lg:16px; --r-pill:9999px;
+  --shadow-card:0 1px 2px rgba(15,23,42,.04);
+  --shadow-pop:0 8px 24px rgba(15,23,42,.12);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --c-bg:#0a0f1e; --c-surface:#0f172a; --c-surface-raised:#15213b;
+    --c-border-subtle:rgba(148,163,184,.12); --c-border:rgba(148,163,184,.22);
+    --c-border-strong:rgba(148,163,184,.36);
+    --c-text:#f4f7fb; --c-text-secondary:#b8c4d6; --c-text-muted:#8a99b0;
+    --c-focus:rgba(91,141,239,.45); --c-focus-solid:#5b8def;
+    --c-success:#3fb950; --c-warning:#e8a33d; --c-danger:#ed5565; --c-info:#58a6ff;
+    --c-active-bg:rgba(255,255,255,.10); --c-active-border:rgba(255,255,255,.25); --c-active-text:#f4f7fb;
+    --c-cta-bg:#f4f7fb; --c-cta-text:#0f172a;
+    --shadow-card:0 1px 2px rgba(0,0,0,.35);
+    --shadow-pop:0 8px 24px rgba(0,0,0,.5);
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--c-bg); color:var(--c-text);
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  font-size:13px; line-height:1.6; -webkit-font-smoothing:antialiased;
+}
+:focus-visible{outline:none; box-shadow:0 0 0 3px var(--c-focus); border-radius:var(--r-sm)}
+svg{flex:none;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+
+/* Typografia — TRIADA §C7 */
+.l1{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.16em;color:var(--c-text-muted)}
+.l2{font-size:13px;font-weight:600}
+.l4{font-size:12px;color:var(--c-text-secondary)}
+.l5{font-size:11px;color:var(--c-text-muted)}
+
+/* ===== GLOBALNE MENU APLIKACJI — 1:1 z Sidebar.tsx / menuConfig.ts (locale pl) ===== */
+.app{display:flex;min-height:100vh}
+.appmain{flex:1;min-width:0;display:flex;flex-direction:column}
+.gmenu{width:216px;flex:none;display:flex;flex-direction:column;background:var(--c-surface-raised);
+  border-right:1px solid var(--c-border-subtle);padding:14px 0;position:sticky;top:0;height:100vh;overflow:hidden}
+.gmenu-brand{display:flex;align-items:center;gap:9px;padding:0 16px 14px;margin-bottom:6px;border-bottom:1px solid var(--c-border-subtle)}
+.gmark{width:26px;height:26px;border-radius:var(--r-xs);flex:none;background:var(--c-cta-bg);color:var(--c-cta-text);
+  display:grid;place-items:center;font-size:12px;font-weight:700;letter-spacing:-.02em}
+.gword{font-size:14px;font-weight:600;letter-spacing:-.01em;white-space:nowrap;overflow:hidden}
+.gmenu-main{flex:1;min-height:0;overflow-y:auto;padding:6px 8px;display:flex;flex-direction:column;gap:2px}
+.gmenu-foot{flex:none;padding:6px 8px 0;display:flex;flex-direction:column;gap:2px}
+.gsep{height:1px;background:var(--c-border-subtle);margin:8px 4px}
+.gitem{position:relative;display:flex;align-items:center;gap:10px;height:36px;padding:0 10px;border-radius:var(--r-sm);
+  color:var(--c-text-secondary);text-decoration:none;font-size:13px;white-space:nowrap}
+.gitem:hover{background:var(--c-surface);color:var(--c-text)}
+.gitem svg{width:18px;height:18px}
+.gitem .glabel{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.gitem .gbadge{flex:none;font-size:10px;font-weight:600;padding:1px 7px;border-radius:var(--r-pill);
+  background:var(--c-border-subtle);color:var(--c-text-muted)}
+.gitem[aria-current="page"]{background:var(--c-active-bg);color:var(--c-active-text);font-weight:600;
+  box-shadow:inset 3px 0 0 var(--c-focus-solid)}
+@media (max-width:1280px){
+  .gmenu{width:60px}.gmenu-brand{padding:0 0 14px;justify-content:center}.gword{display:none}
+  .gitem{justify-content:center;padding:0}.gitem .glabel,.gitem .gbadge{display:none}
+  .gitem[aria-current="page"]{box-shadow:none;background:var(--c-active-bg)}
+}
+
+/* ===== MENU 1 ===== */
+.menu1{height:48px;display:flex;align-items:center;gap:12px;padding:0 16px;background:var(--c-surface);
+  border-bottom:1px solid var(--c-border-subtle);position:sticky;top:0;z-index:20}
+.brand{font-size:13px;font-weight:600;letter-spacing:-.01em}
+.crumbs{display:flex;align-items:center;gap:8px;color:var(--c-text-muted);font-size:12px;min-width:0}
+.crumbs b{color:var(--c-text);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.menu1 .right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.sysbtn{height:28px;padding:0 10px;border:1px solid var(--c-border);border-radius:var(--r-pill);background:transparent;
+  color:var(--c-text-secondary);font:inherit;font-size:12px;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.dot{width:6px;height:6px;border-radius:var(--r-pill);display:inline-block;flex:none;background:var(--c-border-strong)}
+.avatar{width:28px;height:28px;border-radius:var(--r-pill);border:1px solid var(--c-border);display:grid;place-items:center;
+  font-size:11px;font-weight:600;color:var(--c-text-secondary)}
+
+/* ===== MENU 2 — pigułki (§A2/§C4: h-9, rounded-full, ramka, aktywna NEUTRALNA) ===== */
+.menu2{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 16px 0}
+.pill{height:36px;padding:0 12px;border-radius:var(--r-pill);border:1px solid var(--c-border);background:transparent;
+  color:var(--c-text-secondary);font:inherit;font-size:13px;font-weight:500;display:inline-flex;align-items:center;gap:8px;
+  cursor:pointer;transition:background .15s cubic-bezier(.4,0,.2,1),border-color .15s cubic-bezier(.4,0,.2,1)}
+.pill:hover{border-color:var(--c-border-strong);color:var(--c-text)}
+.pill[aria-selected="true"]{background:var(--c-active-bg);border-color:var(--c-active-border);color:var(--c-active-text);font-weight:600}
+.pill.cta{margin-left:auto;background:var(--c-cta-bg);border-color:var(--c-cta-bg);color:var(--c-cta-text);font-weight:600}
+
+/* ===== MENU 3 — chipy (§A3/§C5: h-7, 11px, licznik ZAWSZE, także „0") ===== */
+.menu3{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 16px;margin-bottom:8px}
+.chip{height:28px;padding:0 10px;border-radius:var(--r-pill);border:1px solid var(--c-border-subtle);background:transparent;
+  color:var(--c-text-muted);font:inherit;font-size:11px;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.chip:hover{border-color:var(--c-border);color:var(--c-text-secondary)}
+.chip[aria-pressed="true"]{background:var(--c-active-bg);border-color:var(--c-active-border);color:var(--c-active-text);font-weight:500}
+.chip .cnt{font-variant-numeric:tabular-nums;font-weight:600;color:var(--c-text-secondary)}
+.chip[aria-pressed="true"] .cnt{color:var(--c-active-text)}
+.menu3 .ai{margin-left:auto}
+
+/* ===== SIATKA EKRANU: lista notatek · edytor · prawa szyna ===== */
+.shell{display:grid;grid-template-columns:264px minmax(0,1fr) 352px;gap:12px;padding:0 16px 16px;align-items:start}
+@media (max-width:1340px){.shell{grid-template-columns:minmax(0,1fr) 352px}.notes{display:none}}
+@media (max-width:960px){.shell{grid-template-columns:minmax(0,1fr)}.rail{display:none}}
+
+.card{background:var(--c-surface);border:1px solid var(--c-border-subtle);border-radius:var(--r-md);box-shadow:var(--shadow-card)}
+.card > header{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--c-border-subtle)}
+.card > header .l1{flex:1}
+
+/* --- Lista notatek --- */
+.notes{position:sticky;top:60px}
+.nrow{display:block;width:100%;text-align:left;padding:10px 12px;border:0;border-bottom:1px solid var(--c-border-subtle);
+  background:transparent;color:inherit;font:inherit;cursor:pointer}
+.nrow:last-child{border-bottom:0}
+.nrow:hover{background:var(--c-surface-raised)}
+.nrow[aria-current="true"]{background:var(--c-active-bg);box-shadow:inset 2px 0 0 var(--c-border-strong)}
+.nrow .t{display:flex;align-items:baseline;gap:8px}
+.nrow .t .l2{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nrow .sub{margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qchips{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+
+/* Cichy chip statusu — kropka + tonowany tekst (§A4: zero wypełnionych pigułek) */
+.status{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--c-text-secondary);white-space:nowrap}
+.status.warn{color:var(--c-warning)} .status.warn .dot{background:var(--c-warning)}
+.status.ok{color:var(--c-success)} .status.ok .dot{background:var(--c-success)}
+.status.info{color:var(--c-info)} .status.info .dot{background:var(--c-info)}
+.status.bad{color:var(--c-danger)} .status.bad .dot{background:var(--c-danger)}
+.tag{height:20px;padding:0 8px;border-radius:var(--r-pill);border:1px solid var(--c-border-subtle);
+  background:var(--c-surface-raised);color:var(--c-text-secondary);font-size:11px;display:inline-flex;align-items:center;gap:5px}
+
+/* --- Edytor --- */
+.edtoolbar{display:flex;align-items:center;gap:2px;padding:6px 8px;border-bottom:1px solid var(--c-border-subtle);flex-wrap:wrap}
+.tbtn{width:28px;height:28px;border-radius:var(--r-xs);border:1px solid transparent;background:transparent;color:var(--c-text-secondary);
+  display:grid;place-items:center;cursor:pointer;font:inherit;font-size:11px;font-weight:600}
+.tbtn:hover{background:var(--c-surface-raised);color:var(--c-text)}
+.tbtn.w{width:auto;padding:0 8px;gap:6px;display:inline-flex;align-items:center}
+.tsep{width:1px;height:18px;background:var(--c-border-subtle);margin:0 4px}
+.tright{margin-left:auto;display:flex;align-items:center;gap:6px}
+.iconbtn{height:28px;padding:0 8px;border-radius:var(--r-pill);border:1px solid var(--c-border);background:transparent;
+  color:var(--c-text-secondary);font:inherit;font-size:11px;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.iconbtn:hover{border-color:var(--c-border-strong);color:var(--c-text)}
+.iconbtn[aria-pressed="true"]{background:var(--c-active-bg);border-color:var(--c-active-border);color:var(--c-active-text)}
+
+.docbody{padding:20px 24px 24px;position:relative}
+.doctitle{font-size:22px;font-weight:600;letter-spacing:-.015em;line-height:1.3}
+.tagrow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:10px}
+.addtag{height:20px;padding:0 8px;border-radius:var(--r-pill);border:1px dashed var(--c-border);background:transparent;
+  color:var(--c-text-muted);font:inherit;font-size:11px;cursor:pointer}
+.docmeta{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--c-border-subtle)}
+
+/* Blok z rynienką: uchwyt ⠿ + „+" pojawiają się przy hover/fokusie bloku.
+   To jest brakująca AFORDANCJA — PPM działa dziś, ale nic o tym nie mówi. */
+.blk{position:relative;padding:3px 0 3px 0;margin-left:-44px;padding-left:44px;border-radius:var(--r-sm)}
+.gutter{position:absolute;left:6px;top:2px;display:flex;gap:2px;opacity:0}
+.blk:hover .gutter,.blk.on .gutter{opacity:1}
+.gbtn{width:18px;height:22px;border-radius:var(--r-xs);border:0;background:transparent;color:var(--c-text-muted);
+  display:grid;place-items:center;cursor:pointer;font:inherit}
+.gbtn:hover{background:var(--c-surface-raised);color:var(--c-text)}
+.blk.on{background:var(--c-surface-raised);box-shadow:inset 2px 0 0 var(--c-focus-solid)}
+.blk p{font-size:13px;line-height:1.7}
+.blk h3{font-size:15px;font-weight:600;margin:10px 0 2px}
+.mono{font-variant-numeric:tabular-nums}
+
+/* Callout — blok natywny (nb-callout), tonowany, nigdy crimson */
+.callout{border:1px solid var(--c-border-subtle);border-left:3px solid var(--c-warning);border-radius:var(--r-sm);
+  background:var(--c-surface-raised);padding:10px 12px;display:flex;gap:10px;align-items:flex-start}
+.callout .l5{color:var(--c-warning);font-weight:600;text-transform:uppercase;letter-spacing:.12em}
+
+/* --- Picker bloków (menu kontekstowe = ten sam rejestr co „/" i co kebab bloku) --- */
+.picker{position:absolute;width:296px;max-height:588px;overflow:auto;border:1px solid var(--c-border);
+  border-radius:var(--r-md);background:var(--c-surface);box-shadow:var(--shadow-pop);padding:4px 0;z-index:30}
+.pgrp{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.14em;color:var(--c-text-muted);padding:8px 12px 4px}
+.pitem{display:flex;align-items:center;gap:10px;width:100%;padding:6px 12px;border:0;background:transparent;color:inherit;
+  font:inherit;text-align:left;cursor:pointer}
+.pitem:hover{background:var(--c-surface-raised)}
+.pitem[aria-selected="true"]{background:var(--c-active-bg);box-shadow:inset 2px 0 0 var(--c-focus-solid)}
+.ptile{width:28px;height:28px;border-radius:var(--r-xs);border:1px solid var(--c-border-subtle);display:grid;place-items:center;
+  color:var(--c-text-secondary);flex:none;font-size:11px;font-weight:600}
+.pbody{flex:1;min-width:0}
+.pbody .n{display:block;font-size:13px;font-weight:500;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pbody .d{display:block;font-size:11px;line-height:1.35;color:var(--c-text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pbadge{flex:none;font-size:10px;font-weight:600;padding:1px 6px;border-radius:var(--r-pill);
+  border:1px solid var(--c-border-subtle);color:var(--c-text-muted)}
+.pitem[aria-disabled="true"]{opacity:.55}
+.pitem[aria-disabled="true"] .d{color:var(--c-text-muted)}
+.psep{height:1px;background:var(--c-border-subtle);margin:4px 0}
+.pfoot{padding:6px 12px 4px;border-top:1px solid var(--c-border-subtle);display:flex;align-items:center;gap:6px}
+.kbd{font-size:10px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;border:1px solid var(--c-border-subtle);
+  border-radius:4px;padding:0 4px;color:var(--c-text-muted);background:var(--c-surface-raised)}
+
+/* --- Prawa szyna --- */
+.rail{position:sticky;top:60px;display:flex;flex-direction:column;gap:0}
+.railtabs{display:flex;align-items:center;gap:6px;padding:8px 10px;border-bottom:1px solid var(--c-border-subtle)}
+.rtab{height:28px;padding:0 12px;border-radius:var(--r-pill);border:1px solid var(--c-border-subtle);background:transparent;
+  color:var(--c-text-muted);font:inherit;font-size:11px;font-weight:500;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.rtab[aria-selected="true"]{background:var(--c-active-bg);border-color:var(--c-active-border);color:var(--c-active-text);font-weight:600}
+.railbody{padding:12px}
+.sect{border:1px solid var(--c-border-subtle);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:8px}
+.sect:last-child{margin-bottom:0}
+.sect > .l1{margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.field{display:flex;align-items:baseline;gap:10px;padding:5px 0;border-bottom:1px solid var(--c-border-subtle)}
+.field:last-child{border-bottom:0}
+.field .k{flex:none;width:112px;font-size:11px;color:var(--c-text-muted)}
+.field .v{flex:1;min-width:0;font-size:13px}
+.field .v.empty{color:var(--c-text-muted)}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.segb{height:28px;border-radius:var(--r-pill);border:1px solid var(--c-border);background:transparent;color:var(--c-text-secondary);
+  font:inherit;font-size:11px;display:inline-flex;align-items:center;justify-content:center;gap:6px;cursor:pointer}
+.segb[aria-pressed="true"]{background:var(--c-active-bg);border-color:var(--c-active-border);color:var(--c-active-text);font-weight:600}
+.sel{height:28px;border-radius:var(--r-sm);border:1px solid var(--c-border);background:var(--c-surface);color:var(--c-text);
+  font:inherit;font-size:12px;padding:0 6px;width:100%}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.act{width:100%;height:32px;border-radius:var(--r-pill);border:1px solid var(--c-border);background:transparent;color:var(--c-text);
+  font:inherit;font-size:12px;font-weight:500;display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer}
+.act:hover{border-color:var(--c-border-strong)}
+.act.sm{height:26px;font-size:11px;width:auto;padding:0 10px}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+
+/* Wiersz relacji w zakładce Kontekst */
+.rel{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--c-border-subtle)}
+.rel:last-child{border-bottom:0}
+.rel .grow{flex:1;min-width:0}
+.rel .grow .l2,.rel .grow .l5{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ===== PASMO STANÓW (pod ekranem) ===== */
+.states{padding:0 16px 32px}
+.stateshead{display:flex;align-items:baseline;gap:10px;padding:16px 0 10px;border-top:1px solid var(--c-border-subtle)}
+.sgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:start}
+@media (max-width:1180px){.sgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:820px){.sgrid{grid-template-columns:minmax(0,1fr)}}
+.scard{background:var(--c-surface);border:1px solid var(--c-border-subtle);border-radius:var(--r-md);box-shadow:var(--shadow-card);overflow:hidden}
+.scard > header{padding:10px 12px;border-bottom:1px solid var(--c-border-subtle)}
+.scard > .b{padding:12px}
+.diff{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.dpane{border:1px solid var(--c-border-subtle);border-radius:var(--r-sm);padding:8px 10px;background:var(--c-surface-raised)}
+.dpane.new{border-color:var(--c-border-strong);background:var(--c-surface)}
+.dpane .l1{margin-bottom:4px}
+.dpane p{font-size:12px;line-height:1.6}
+.arow{display:flex;gap:8px;margin-top:10px}
+.abtn{height:32px;flex:1;border-radius:var(--r-pill);border:1px solid var(--c-border);background:transparent;color:var(--c-text);
+  font:inherit;font-size:12px;font-weight:500;display:inline-flex;align-items:center;justify-content:center;gap:6px;cursor:pointer}
+.abtn.pos{border-color:color-mix(in srgb, var(--c-success) 45%, transparent);color:var(--c-success)}
+.abtn.neg{border-color:color-mix(in srgb, var(--c-danger) 40%, transparent);color:var(--c-danger)}
+.note{border:1px dashed var(--c-border);border-radius:var(--r-sm);padding:8px 10px;margin-top:10px;color:var(--c-text-secondary);font-size:11px}
+.badrow{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--c-border-subtle);border-radius:var(--r-sm);
+  background:var(--c-surface-raised);opacity:.55}
+.goodrow{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--c-border);border-radius:var(--r-sm)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--c-border-subtle);border-radius:var(--r-md);
+  background:var(--c-surface);margin-top:12px}
+</style>
+
+<div class="app">
+
+  <!-- ========== GLOBALNE MENU APLIKACJI (Sidebar.tsx + menuConfig.ts, locale pl) ========== -->
+  <nav class="gmenu" aria-label="Menu główne aplikacji">
+    <div class="gmenu-brand"><span class="gmark" aria-hidden="true">C</span><span class="gword">Consultify</span></div>
+    <div class="gmenu-main">
+      <a class="gitem" href="#" title="Czat"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z"/></svg><span class="glabel">Czat</span></a>
+      <a class="gitem" href="#" aria-current="page" title="Moja Praca"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><path d="M2 13h20"/></svg><span class="glabel">Moja Praca</span></a>
+      <a class="gitem" href="#" title="Wywiad"><svg viewBox="0 0 24 24"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M9 11h6"/><path d="M9 15h6"/><path d="M9 19h3"/></svg><span class="glabel">Wywiad</span></a>
+      <a class="gitem" href="#" title="Narzędzia"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17l3 3 5.3-5.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2-2z"/></svg><span class="glabel">Narzędzia</span></a>
+      <a class="gitem" href="#" title="Ocena"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.2 2.2 4.8-4.8"/></svg><span class="glabel">Ocena</span></a>
+      <a class="gitem" href="#" title="Inicjatywy"><svg viewBox="0 0 24 24"><path d="M9.5 18h5"/><path d="M10.3 21.5h3.4"/><path d="M12 2.5a6.7 6.7 0 0 0-3.8 12.2c.7.5 1.2 1.5 1.2 2.3h5.2c0-.8.5-1.8 1.2-2.3A6.7 6.7 0 0 0 12 2.5z"/></svg><span class="glabel">Inicjatywy</span></a>
+      <a class="gitem" href="#" title="Realizacja"><svg viewBox="0 0 24 24"><path d="M12 2.5c2.3 2 3.7 5.3 3.7 8.7 0 2-1 3.8-2 4.8l-1.7 1.7-1.7-1.7c-1-1-2-2.8-2-4.8 0-3.4 1.4-6.7 3.7-8.7z"/><circle cx="12" cy="10.5" r="1.4"/><path d="M9 16.5l-1.8 3.8 3.6-1"/><path d="M15 16.5l1.8 3.8-3.6-1"/></svg><span class="glabel">Realizacja</span></a>
+      <a class="gitem" href="#" title="Resultaty"><svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M17 7h4v4"/></svg><span class="glabel">Resultaty</span><span class="gbadge">beta</span></a>
+      <a class="gitem" href="#" title="Finanse"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 6h6"/><path d="M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01"/></svg><span class="glabel">Finanse</span><span class="gbadge">beta</span></a>
+      <a class="gitem" href="#" title="Materiały"><svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M12 17v-6"/><path d="M9.3 13.7L12 11l2.7 2.7"/></svg><span class="glabel">Materiały</span><span class="gbadge">beta</span></a>
+      <a class="gitem" href="#" title="Audyty"><svg viewBox="0 0 24 24"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M9 13.5l2 2 4-4.5"/></svg><span class="glabel">Audyty</span><span class="gbadge">beta</span></a>
+      <a class="gitem" href="#" title="Spotkania"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M2.5 20c0-3 2.9-5 6.5-5s6.5 2 6.5 5"/><path d="M16 6.2a3 3 0 0 1 0 5.8"/><path d="M21.5 20c0-2.4-1.9-4-3.8-4.6"/></svg><span class="glabel">Spotkania</span><span class="gbadge">beta</span></a>
+    </div>
+    <div class="gmenu-foot">
+      <div class="gsep"></div>
+      <a class="gitem" href="#" title="Organizacja"><svg viewBox="0 0 24 24"><path d="M3 21V10l4.7 3.3V10l4.7 3.3V10l4.7 3.3V6.5h2V21z"/><path d="M3 21h18"/></svg><span class="glabel">Organizacja</span></a>
+      <a class="gitem" href="#" title="Ustawienia"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M3 12h3M18 12h3M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1"/></svg><span class="glabel">Ustawienia</span></a>
+    </div>
+  </nav>
+
+  <div class="appmain">
+
+    <!-- ========== MENU 1 ========== -->
+    <div class="menu1">
+      <span class="brand">Consultify</span>
+      <nav class="crumbs" aria-label="Ścieżka">
+        <span>Moja Praca</span><span>›</span><span>Notatnik</span><span>›</span>
+        <b>Risk register — Transformation program blockers</b>
+      </nav>
+      <div class="right">
+        <button class="sysbtn"><span class="dot" style="background:var(--c-success)"></span>Dane</button>
+        <button class="sysbtn"><span class="dot"></span>Model</button>
+        <span class="l5">DBR77</span>
+        <span class="avatar">PW</span>
+      </div>
+    </div>
+
+    <!-- ========== MENU 2 — pigułki modułu + CTA od prawej (§A2) ========== -->
+    <div class="menu2" role="tablist" aria-label="Zakładki Mojej Pracy">
+      <button class="pill" aria-label="Szukaj w notatniku"><svg width="16" height="16" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></button>
+      <button class="pill" role="tab" aria-selected="false">Pomysły</button>
+      <button class="pill" role="tab" aria-selected="true"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 8h7M8 12h7M8 16h4"/></svg>Notatnik</button>
+      <button class="pill" role="tab" aria-selected="false">Inbox</button>
+      <button class="pill" role="tab" aria-selected="false">Kalendarz</button>
+      <button class="pill" role="tab" aria-selected="false">Zadania</button>
+      <button class="pill" role="tab" aria-selected="false">Decyzje</button>
+      <button class="pill" role="tab" aria-selected="false">Sejf klienta</button>
+      <button class="pill" role="tab" aria-selected="false">Manager</button>
+      <button class="pill cta"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg>Nowa notatka</button>
+    </div>
+
+    <!-- ========== MENU 3 — chipy z licznikami (licznik zawsze, także „0") ========== -->
+    <div class="menu3" aria-label="Filtry notatnika">
+      <button class="chip" aria-pressed="true">Wszystkie <span class="cnt">20</span></button>
+      <button class="chip" aria-pressed="false">Inbox <span class="cnt">1</span></button>
+      <button class="chip" aria-pressed="false">Aktywne <span class="cnt">17</span></button>
+      <button class="chip" aria-pressed="false">Przypięte <span class="cnt">2</span></button>
+      <button class="chip" aria-pressed="false">Do przeglądu <span class="cnt">3</span></button>
+      <button class="chip" aria-pressed="false">Sporne <span class="cnt">1</span></button>
+      <button class="chip" aria-pressed="false">Zarchiwizowane <span class="cnt">0</span></button>
+      <button class="chip ai"><svg width="12" height="12" viewBox="0 0 24 24"><path d="M12 3l1.9 4.6L18.5 9l-4.6 1.4L12 15l-1.9-4.6L5.5 9l4.6-1.4z"/></svg>Teresa</button>
+    </div>
+
+    <div class="shell">
+
+      <!-- ========== LISTA NOTATEK (dane: server/scripts/seed-mywork-demo.ts:1080–1259) ========== -->
+      <aside class="card notes" aria-label="Lista notatek">
+        <header>
+          <span class="l1">Notatnik · 20 stron</span>
+          <button class="tbtn" aria-label="Nowa notatka"><svg width="15" height="15" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg></button>
+        </header>
+        <button class="nrow" aria-current="true">
+          <span class="t"><span class="l2">Risk register — Transformation program blockers</span><span class="l5">2 dni</span></span>
+          <span class="sub l5">R1 (HIGH): Data migration quality — 12% records failed…</span>
+          <span class="qchips">
+            <span class="status warn"><span class="dot"></span>Do działania</span>
+            <span class="status bad"><span class="dot"></span>Sporna</span>
+            <span class="tag">Projekt</span>
+          </span>
+        </button>
+        <button class="nrow">
+          <span class="t"><span class="l2">Weekly priorities — Sprint 14 focus areas</span><span class="l5">1 dzień</span></span>
+          <span class="sub l5">MUST: Finalize API rate-limiting policy before public launch</span>
+          <span class="qchips">
+            <span class="status ok"><span class="dot"></span>Zweryfikowana</span>
+            <span class="tag">Prywatna</span>
+          </span>
+        </button>
+        <button class="nrow">
+          <span class="t"><span class="l2">Our latest investment in open source security…</span><span class="l5">3 dni</span></span>
+          <span class="sub l5">Selected SLSA + Sigstore as the baseline for artifact signing</span>
+          <span class="qchips">
+            <span class="status ok"><span class="dot"></span>Zweryfikowana</span>
+            <span class="tag">Przypięta</span>
+            <span class="tag">Projekt</span>
+          </span>
+        </button>
+        <button class="nrow">
+          <span class="t"><span class="l2">Meeting notes — Team sync on Q2 roadmap</span><span class="l5">5 dni</span></span>
+          <span class="sub l5">Attendees: PM, Engineering Lead, Design, QA</span>
+          <span class="qchips">
+            <span class="status muted"><span class="dot"></span>Niezweryfikowana</span>
+            <span class="tag">Projekt</span>
+          </span>
+        </button>
+        <button class="nrow">
+          <span class="t"><span class="l2">Google is making new investments in AI infrastructure</span><span class="l5">7 dni</span></span>
+          <span class="sub l5">$4B committed to custom TPU v6 fabrication</span>
+          <span class="qchips">
+            <span class="status muted"><span class="dot"></span>Niezweryfikowana</span>
+            <span class="tag">Prywatna</span>
+          </span>
+        </button>
+        <button class="nrow">
+          <span class="t"><span class="l2">Untitled draft</span><span class="l5">teraz</span></span>
+          <span class="sub l5">—</span>
+          <span class="qchips">
+            <span class="status info"><span class="dot"></span>Inbox</span>
+            <span class="tag">1 słowo</span>
+          </span>
+        </button>
+      </aside>
+
+      <!-- ========== EDYTOR ========== -->
+      <main class="card">
+        <!-- Pasek formatowania — 21 pozycji z NotebookToolbar (aria-label „Formatowanie notatki") -->
+        <div class="edtoolbar" role="toolbar" aria-label="Formatowanie notatki">
+          <button class="tbtn" title="Cofnij"><svg width="15" height="15" viewBox="0 0 24 24"><path d="M3 7v6h6"/><path d="M3 13a9 9 0 1 0 3-7.7L3 8"/></svg></button>
+          <button class="tbtn" title="Ponów"><svg width="15" height="15" viewBox="0 0 24 24"><path d="M21 7v6h-6"/><path d="M21 13a9 9 0 1 1-3-7.7L21 8"/></svg></button>
+          <span class="tsep"></span>
+          <button class="tbtn" title="Pogrubienie (Ctrl+B)" style="font-weight:700">B</button>
+          <button class="tbtn" title="Kursywa (Ctrl+I)" style="font-style:italic">I</button>
+          <button class="tbtn" title="Podkreślenie (Ctrl+U)" style="text-decoration:underline">U</button>
+          <button class="tbtn" title="Przekreślenie" style="text-decoration:line-through">S</button>
+          <button class="tbtn" title="Wyróżnienie"><svg width="15" height="15" viewBox="0 0 24 24"><path d="M4 20h16"/><path d="M8.5 16L15 9.5l-3-3L5.5 13z"/><path d="M13.5 5.5l3 3"/></svg></button>
+          <button class="tbtn" title="Kod w linii"><svg width="15" height="15" viewBox="0 0 24 24"><path d="M9 17l-5-5 5-5"/><path d="M15 7l5 5-5 5"/></svg></button>
+          <button class="tbtn" title="Link (Ctrl+K)"><svg width="15" height="15" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.5.6l2-2A5 5 0 0 0 12.4 4.5l-1.1 1.1"/><path d="M14 11a5 5 0 0 0-7.5-.6l-2 2A5 5 0 0 0 11.6 19.5l1.1-1.1"/></svg></button>
+          <span class="tsep"></span>
+          <button class="tbtn" title="Nagłówek 1">H1</button>
+          <button class="tbtn" title="Nagłówek 2">H2</button>
+          <button class="tbtn" title="Nagłówek 3">H3</button>
+          <button class="tbtn" title="Lista punktowana"><svg width="15" height="15" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></svg></button>
+          <button class="tbtn" title="Lista numerowana"><svg width="15" height="15" viewBox="0 0 24 24"><path d="M10 6h10M10 12h10M10 18h10"/><path d="M4 6h1v4"/><path d="M4 16.5A1.5 1.5 0 1 1 6 18l-2 2h2.5"/></svg></button>
+          <button class="tbtn" title="Checklista"><svg width="15" height="15" viewBox="0 0 24 24"><path d="M10 6h10M10 12h10M10 18h10"/><path d="M3 6.5l1.5 1.5L7 5.5"/><path d="M3 17.5L4.5 19 7 16.5"/></svg></button>
+          <button class="tbtn" title="Cytat"><svg width="15" height="15" viewBox="0 0 24 24"><path d="M7 15a3 3 0 1 1 0-6c0-3 2-5 4-5.5"/><path d="M17 15a3 3 0 1 1 0-6c0-3 2-5 4-5.5"/></svg></button>
+          <button class="tbtn" title="Wyczyść formatowanie"><svg width="15" height="15" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+
+          <span class="tright">
+            <!-- §MYW-NBK-006: w grupie prawej-górnej TYLKO przełącznik szyny + kebab.
+                 „Eksport" i „Historia wersji" wchodzą do kebaba (dziś siedzą obok grupy). -->
+            <button class="iconbtn" aria-pressed="true" title="Zamknij panel boczny">
+              <svg width="14" height="14" viewBox="0 0 24 24"><path d="M12 2.5l9 5-9 5-9-5z"/><path d="M3 12l9 5 9-5"/><path d="M3 16.5l9 5 9-5"/></svg>
+              Panel
+            </button>
+            <button class="tbtn" title="Menu notatki" aria-label="Menu notatki"><svg width="16" height="16" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button>
+          </span>
+        </div>
+
+        <div class="docbody">
+          <h1 class="doctitle">Risk register — Transformation program blockers</h1>
+          <div class="tagrow">
+            <span class="tag">risk</span><span class="tag">transformation</span>
+            <span class="tag">blockers</span><span class="tag">governance</span>
+            <button class="addtag">+ tag</button>
+          </div>
+          <div class="docmeta">
+            <span class="status bad"><span class="dot"></span>Weryfikacja: sporna</span>
+            <span class="status warn"><span class="dot"></span>Przegląd: tygodniowo · zaległy 1 dzień</span>
+            <span class="l5">93 słowa</span>
+            <span class="l5">Zmodyfikowano 2 dni temu</span>
+          </div>
+
+          <div style="margin-top:16px">
+
+            <div class="blk">
+              <span class="gutter">
+                <button class="gbtn" title="Wstaw blok poniżej" aria-label="Wstaw blok poniżej"><svg width="13" height="13" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg></button>
+                <button class="gbtn" title="Uchwyt bloku — przeciągnij lub kliknij po menu" aria-label="Menu bloku"><svg width="13" height="13" viewBox="0 0 24 24"><circle cx="9" cy="6" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/></svg></button>
+              </span>
+              <h3>Rejestr ryzyk — program transformacji</h3>
+            </div>
+
+            <div class="blk">
+              <span class="gutter">
+                <button class="gbtn" title="Wstaw blok poniżej" aria-label="Wstaw blok poniżej"><svg width="13" height="13" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg></button>
+                <button class="gbtn" title="Menu bloku" aria-label="Menu bloku"><svg width="13" height="13" viewBox="0 0 24 24"><circle cx="9" cy="6" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/></svg></button>
+              </span>
+              <p><b>R1 (HIGH):</b> Data migration quality — 12% records failed validation in dry-run<br>
+              <span style="color:var(--c-text-secondary)">→ Mitigation: dedicated cleanup sprint before cutover</span></p>
+            </div>
+
+            <!-- Blok aktywny: PPM otworzyło picker DOKŁADNIE w tym miejscu -->
+            <div class="blk on" style="position:relative;padding-bottom:596px">
+              <span class="gutter" style="opacity:1">
+                <button class="gbtn" title="Wstaw blok poniżej" aria-label="Wstaw blok poniżej"><svg width="13" height="13" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg></button>
+                <button class="gbtn" title="Menu bloku" aria-label="Menu bloku" style="background:var(--c-surface-raised);color:var(--c-text)"><svg width="13" height="13" viewBox="0 0 24 24"><circle cx="9" cy="6" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/></svg></button>
+              </span>
+              <p><b>R2 (MEDIUM):</b> Vendor lock-in on AI model provider</p>
+
+              <!-- ===== PICKER BLOKÓW — tryb „kontekst" (PPM / klawisz Menu / Shift+F10).
+                   Ten sam rejestr, ta sama kolejność i te same etykiety co menu „/" i kebab bloku. ===== -->
+              <div class="picker" role="menu" aria-label="Polecenia notatnika" style="top:32px;left:96px">
+                <p class="pgrp">Bieżący blok</p>
+                <button class="pitem" role="menuitem" aria-selected="true">
+                  <span class="ptile"><svg width="14" height="14" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg></span>
+                  <span class="pbody"><span class="n">Duplikuj blok</span><span class="d">Utwórz edytowalną kopię poniżej</span></span>
+                </button>
+                <button class="pitem" role="menuitem">
+                  <span class="ptile"><svg width="14" height="14" viewBox="0 0 24 24"><path d="M12 19V5"/><path d="M6 11l6-6 6 6"/></svg></span>
+                  <span class="pbody"><span class="n">Przenieś blok wyżej</span><span class="d">Przed poprzedni blok</span></span>
+                </button>
+                <button class="pitem" role="menuitem">
+                  <span class="ptile"><svg width="14" height="14" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M6 13l6 6 6-6"/></svg></span>
+                  <span class="pbody"><span class="n">Przenieś blok niżej</span><span class="d">Za następny blok</span></span>
+                </button>
+                <button class="pitem" role="menuitem">
+                  <span class="ptile" style="color:var(--c-danger)"><svg width="14" height="14" viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M9 7V5h6v2"/><path d="M6.5 7l1 13h9l1-13"/></svg></span>
+                  <span class="pbody"><span class="n" style="color:var(--c-danger)">Usuń blok</span><span class="d">Cofnięcie pozostaje dostępne</span></span>
+                </button>
+                <div class="psep"></div>
+                <p class="pgrp">Podstawowe</p>
+                <button class="pitem" role="menuitem">
+                  <span class="ptile">H1</span>
+                  <span class="pbody"><span class="n">Nagłówek 1</span><span class="d">Duży nagłówek sekcji</span></span>
+                </button>
+                <button class="pitem" role="menuitem">
+                  <span class="ptile"><svg width="14" height="14" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></svg></span>
+                  <span class="pbody"><span class="n">Lista punktowana</span><span class="d">Lista bez numeracji</span></span>
+                </button>
+                <button class="pitem" role="menuitem">
+                  <span class="ptile"><svg width="14" height="14" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><path d="M12 16h.01"/></svg></span>
+                  <span class="pbody"><span class="n">Wyróżnienie</span><span class="d">Blok z wyróżnioną informacją</span></span>
+                </button>
+                <button class="pitem" role="menuitem">
+                  <span class="ptile"><svg width="14" height="14" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M9 10v9M15 10v9"/></svg></span>
+                  <span class="pbody"><span class="n">Tabela</span><span class="d">Prosta tabela 3×3</span></span>
+                </button>
+                <div class="psep"></div>
+                <p class="pgrp">Utwórz</p>
+                <button class="pitem" role="menuitem" aria-disabled="true" aria-describedby="pk-why">
+                  <span class="ptile" style="color:var(--c-success)"><svg width="14" height="14" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>
+                  <span class="pbody"><span class="n">Utwórz zadanie</span><span class="d" id="pk-why">Wymaga pokwitowania</span></span>
+                  <span class="pbadge">bez zapisu</span>
+                </button>
+                <div class="pfoot">
+                  <span class="l5">Ten sam rejestr: PPM · <span class="kbd">Menu</span> · <span class="kbd">Shift+F10</span> · <span class="kbd">/</span> · „Wstaw blok"</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="blk">
+              <span class="gutter">
+                <button class="gbtn" title="Wstaw blok poniżej" aria-label="Wstaw blok poniżej"><svg width="13" height="13" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg></button>
+                <button class="gbtn" title="Menu bloku" aria-label="Menu bloku"><svg width="13" height="13" viewBox="0 0 24 24"><circle cx="9" cy="6" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/></svg></button>
+              </span>
+              <p><b>R3 (LOW):</b> User adoption resistance in finance team</p>
+            </div>
+
+            <div class="blk">
+              <span class="gutter">
+                <button class="gbtn" title="Wstaw blok poniżej" aria-label="Wstaw blok poniżej"><svg width="13" height="13" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg></button>
+                <button class="gbtn" title="Menu bloku" aria-label="Menu bloku"><svg width="13" height="13" viewBox="0 0 24 24"><circle cx="9" cy="6" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/></svg></button>
+              </span>
+              <div class="callout">
+                <svg width="15" height="15" viewBox="0 0 24 24" style="color:var(--c-warning);margin-top:2px"><path d="M12 3l9.5 16.5H2.5z"/><path d="M12 10v4"/><path d="M12 17h.01"/></svg>
+                <span>
+                  <span class="l5">Ostrzeżenie</span><br>
+                  <b>R4 (HIGH):</b> Budget overrun on infrastructure costs — próg 15% przekroczony w lipcu.
+                </span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </main>
+
+      <!-- ========== PRAWA SZYNA — dwa celowe widoki (MYW-NBK-CORE-001) ========== -->
+      <aside class="card rail" aria-label="Rekord dokumentu i kontekst">
+        <div class="railtabs" role="tablist" aria-label="Widoki panelu dokumentu">
+          <button class="rtab" role="tab" aria-selected="true">
+            <svg width="12" height="12" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17l3 3 5.3-5.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2-2z"/></svg>Praca
+          </button>
+          <button class="rtab" role="tab" aria-selected="false">
+            <svg width="12" height="12" viewBox="0 0 24 24"><path d="M12 2.5l9 5-9 5-9-5z"/><path d="M3 12l9 5 9-5"/></svg>Kontekst
+          </button>
+          <button class="tbtn" style="margin-left:auto" aria-label="Zamknij panel" title="Zamknij panel">
+            <svg width="14" height="14" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </div>
+
+        <div class="railbody">
+
+          <div class="sect">
+            <p class="l1"><svg width="12" height="12" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Stan zapisu</p>
+            <div class="field">
+              <span class="k">Zapisano</span>
+              <span class="v"><span class="status ok"><span class="dot"></span>Dziś 14:32 · wersja 41</span></span>
+            </div>
+            <div class="field">
+              <span class="k">Ostatnia zmiana</span>
+              <span class="v">Piotr Wiśniewski · blok „R4"</span>
+            </div>
+          </div>
+
+          <div class="sect">
+            <p class="l1"><svg width="12" height="12" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M4.5 20c0-3.6 3.4-6 7.5-6s7.5 2.4 7.5 6"/></svg>Rekord dokumentu</p>
+            <div class="field"><span class="k">Właściciel</span><span class="v">Piotr Wiśniewski <span class="l5">· OWNER</span></span></div>
+            <div class="field" style="align-items:center">
+              <span class="k">Widoczność</span>
+              <span class="v">
+                <span class="seg">
+                  <button class="segb" aria-pressed="false">Prywatna</button>
+                  <button class="segb" aria-pressed="true">Projekt</button>
+                </span>
+              </span>
+            </div>
+            <div class="field"><span class="k">Projekt</span><span class="v">Program transformacji · DBR77</span></div>
+            <div class="field" style="align-items:center">
+              <span class="k">Weryfikacja</span>
+              <span class="v"><select class="sel" aria-label="Weryfikacja"><option>Niezweryfikowana</option><option>Zweryfikowana</option><option selected>Sporna</option></select></span>
+            </div>
+            <div class="field" style="align-items:center">
+              <span class="k">Przegląd</span>
+              <span class="v"><select class="sel" aria-label="Kadencja przeglądu"><option selected>Tygodniowo</option><option>Miesięcznie</option><option>Kwartalnie</option><option>Nigdy</option></select></span>
+            </div>
+            <div class="field"><span class="k">Dojrzałość</span><span class="v"><span class="status warn"><span class="dot"></span>Do działania</span></span></div>
+            <div class="field"><span class="k">Stan</span><span class="v"><span class="status info"><span class="dot"></span>Aktywna</span></span></div>
+            <div class="field" style="align-items:flex-start">
+              <span class="k">Tagi</span>
+              <span class="v"><span class="tags"><span class="tag">risk</span><span class="tag">transformation</span><span class="tag">blockers</span><span class="tag">governance</span></span></span>
+            </div>
+          </div>
+
+          <div class="sect">
+            <p class="l1"><svg width="12" height="12" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Przegląd i objętość</p>
+            <div class="grid2" style="margin-bottom:8px">
+              <div><p class="l5">Zmodyfikowano</p><p class="l2 mono">2 dni temu</p></div>
+              <div><p class="l5">Słowa</p><p class="l2 mono">93</p></div>
+              <div><p class="l5">Ostatni przegląd</p><p class="l2 mono">6 dni temu</p></div>
+              <div><p class="l5">Termin przeglądu</p><p class="l2 mono" style="color:var(--c-warning)">zaległy 1 dzień</p></div>
+            </div>
+            <button class="act"><svg width="14" height="14" viewBox="0 0 24 24"><path d="M20.5 12a8.5 8.5 0 1 1-2.5-6"/><path d="M20.5 4v5h-5"/></svg>Oznacz jako przejrzane</button>
+          </div>
+
+          <div class="sect">
+            <p class="l1"><svg width="12" height="12" viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h8l6 6v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M14 3v6h6"/></svg>Źródło i następna akcja</p>
+            <div class="field"><span class="k">Źródło</span><span class="v">Spotkanie · „Przegląd programu", 12.08</span></div>
+            <div class="field"><span class="k">Następna akcja</span><span class="v">Rozstrzygnij spór o dowody R1</span></div>
+            <div class="field"><span class="k">Identyfikator</span>
+              <span class="v"><button class="act sm"><svg width="12" height="12" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg>Kopiuj</button></span>
+            </div>
+          </div>
+
+          <button class="act"><svg width="14" height="14" viewBox="0 0 24 24"><path d="M12 3l1.9 4.6L18.5 9l-4.6 1.4L12 15l-1.9-4.6L5.5 9l4.6-1.4z"/></svg>Otwórz Teresę</button>
+        </div>
+      </aside>
+
+    </div>
+
+    <!-- ================= PASMO STANÓW ================= -->
+    <div class="states">
+      <div class="stateshead">
+        <span class="l1">Stany tego samego ekranu</span>
+        <span class="l5">Do rozstrzygnięcia przy akcepcie — układ, nie kolorystyka</span>
+      </div>
+      <div class="sgrid">
+
+        <!-- S1 — druga zakładka tej samej szyny -->
+        <section class="scard">
+          <header>
+            <p class="l2">A · Zakładka „Kontekst"</p>
+            <p class="l5">Ta sama szyna, drugi widok — żywe relacje</p>
+          </header>
+          <div class="b">
+            <p class="l1" style="margin-bottom:6px">Używana w <span class="cnt" style="color:var(--c-text-secondary)">2</span></p>
+            <div class="rel">
+              <span class="grow"><span class="l2">Cutover — plan przejścia</span><br><span class="l5">Inicjatywa · w realizacji · Anna Kowalska</span></span>
+              <button class="act sm">Otwórz</button>
+            </div>
+            <div class="rel">
+              <span class="grow"><span class="l2">Sprzątanie danych przed cutover</span><br><span class="l5">Zadanie · zablokowane · Bartek Nowak</span></span>
+              <button class="act sm">Otwórz</button>
+            </div>
+            <p class="l1" style="margin:12px 0 6px">Wytworzone z tej notatki <span class="cnt" style="color:var(--c-text-secondary)">2</span></p>
+            <div class="rel">
+              <span class="grow"><span class="l2">Rejestr ryzyk — raport dla zarządu</span><br><span class="l5">Raport · szkic · projekt</span></span>
+              <button class="act sm">Otwórz</button>
+            </div>
+            <div class="rel">
+              <span class="grow"><span class="l2">Decyzja: przesunąć cutover o 2 tygodnie</span><br><span class="l5">Decyzja · oczekuje · Piotr Wiśniewski</span></span>
+              <button class="act sm">Otwórz</button>
+            </div>
+            <div class="note">
+              Dziś ten sam wiersz drukuje surowy identyfikator: <span class="kbd">report · 1d9cfdc3-597c-4024-a78…</span>
+              i surowe slugi <span class="kbd">document · draft · private</span>. Zmiana: tytuł + stan po ludzku,
+              identyfikator wyłącznie pod „Kopiuj".
+            </div>
+          </div>
+        </section>
+
+        <!-- S2 — AI z podglądem -->
+        <section class="scard">
+          <header>
+            <p class="l2">B · Propozycja AI z podglądem</p>
+            <p class="l5">Zaznacz tekst → propozycja → jawne Zastosuj / Odrzuć</p>
+          </header>
+          <div class="b">
+            <p class="l5" style="margin-bottom:8px">Źródło: Teresa · akcja „Skróć" · 14:36</p>
+            <div class="diff">
+              <div class="dpane">
+                <p class="l1">Przed</p>
+                <p>R3 (LOW): User adoption resistance in finance team — zespół finansów sygnalizuje obawy o czas potrzebny na przyswojenie nowego procesu.</p>
+              </div>
+              <div class="dpane new">
+                <p class="l1">Proponowane</p>
+                <p>R3 (LOW): opór wdrożeniowy w zespole finansów — obawy o czas przyswojenia procesu.</p>
+              </div>
+            </div>
+            <div class="arow">
+              <button class="abtn pos"><svg width="14" height="14" viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5"/></svg>Zastosuj</button>
+              <button class="abtn neg"><svg width="14" height="14" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>Odrzuć</button>
+              <button class="abtn"><svg width="14" height="14" viewBox="0 0 24 24"><path d="M20.5 12a8.5 8.5 0 1 1-2.5-6"/><path d="M20.5 4v5h-5"/></svg></button>
+            </div>
+            <div class="note">
+              Przepływ już istnieje w kodzie (propozycja → podgląd → zatwierdź/odrzuć, bez cichego zapisu).
+              Zmiana jest wizualna: panel „Proponowane" jest dziś w <b>crimsonie</b> (<span class="kbd">bg-c-accent-soft</span>),
+              a etykieta brzmi „Popraw z Teresą" zamiast obiecanego „Edit with AI". Do decyzji: która nazwa zostaje.
+            </div>
+          </div>
+        </section>
+
+        <!-- S3 — kontrolka bez pokwitowania -->
+        <section class="scard">
+          <header>
+            <p class="l2">C · Kontrolka bez pokwitowania serwera</p>
+            <p class="l5">„Włączona kontrolka bez działania = defekt"</p>
+          </header>
+          <div class="b">
+            <p class="l1" style="margin-bottom:6px">Dziś</p>
+            <div class="badrow">
+              <svg width="15" height="15" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+              <span class="l2" style="flex:1">Utwórz zadanie</span>
+            </div>
+            <p class="l5" style="margin-top:6px">„Editing controls are unavailable until the server can return a durable action receipt."</p>
+            <p class="l5" style="margin-top:4px;color:var(--c-danger)">Ten sam komunikat pokrywa <b>11 z 12</b> kontrolek szyny, 3 pozycje „Utwórz" i całe inline AI.</p>
+
+            <p class="l1" style="margin:14px 0 6px">Proponowane</p>
+            <div class="goodrow">
+              <svg width="15" height="15" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+              <span class="l2" style="flex:1">Utwórz zadanie</span>
+              <span class="pbadge">bez zapisu</span>
+            </div>
+            <p class="l5" style="margin-top:6px">Powstanie szkic zadania w tej notatce. Zapis na serwerze włączymy, gdy zwróci pokwitowanie.</p>
+            <div class="note">
+              Trzy warianty do wyboru: (1) zostaje widoczne z powodem — jak wyżej; (2) znika do czasu włączenia
+              (kanon §C3: atrapy nie pokazujemy w kebabie); (3) działa lokalnie z jawnym „szkic, niezapisane".
+              <b>To jest decyzja właściciela, nie projektanta.</b>
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+      <div class="legend">
+        <span class="status ok"><span class="dot"></span>zweryfikowane / zapisane</span>
+        <span class="status warn"><span class="dot"></span>wymaga uwagi / zaległe</span>
+        <span class="status bad"><span class="dot"></span>sporne / błąd</span>
+        <span class="status info"><span class="dot"></span>w toku / aktywne</span>
+        <span class="l5">Crimson (#85182F) nie występuje na tym ekranie ani razu. Fokus = niebieski <span class="kbd">--c-focus</span>.</span>
+      </div>
+    </div>
+
+  </div>
+</div>
