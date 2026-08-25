@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildCanonicalFinanceSearchParams,
   hasAnyCanonicalFinanceQuery,
+  isCanonicalFinanceTypeEnabled,
   resolveFinanceDetailBranches,
   toFinanceResolveInput,
 } from '../FinanceHub';
@@ -19,6 +20,24 @@ const validRows = [
 ] as const;
 
 describe('Finance detail identity gate', () => {
+  it.each([
+    ['STATEMENT_PACK', 'statementPack'],
+    ['BASELINE_MODEL', 'baseline'],
+    ['HISTORICAL_ANALYSIS', 'analysis'],
+    ['PREDICTION_SCENARIO', 'prediction'],
+    ['VALUATION_CASE', 'valuation'],
+  ] as const)('routes complete %s identity by its own cutover flag', (artifactType, flag) => {
+    const off = {
+      statementPack: false,
+      baseline: false,
+      analysis: false,
+      prediction: false,
+      valuation: false,
+    };
+    expect(isCanonicalFinanceTypeEnabled(artifactType, off)).toBe(false);
+    expect(isCanonicalFinanceTypeEnabled(artifactType, { ...off, [flag]: true })).toBe(true);
+  });
+
   it.each([
     [
       { canonicalArtifactType: 'BASELINE_MODEL', canonicalArtifactId: 'a' },

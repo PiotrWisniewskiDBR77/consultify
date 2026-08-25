@@ -516,6 +516,28 @@ const CANONICAL_FINANCE_ARTIFACT_TYPES = new Set([
   'VALUATION_CASE',
 ]);
 
+type CanonicalFinanceFlags = FinanceDetailBranchFlags & { statementPack: boolean };
+
+export function isCanonicalFinanceTypeEnabled(
+  artifactType: string | null | undefined,
+  flags: CanonicalFinanceFlags
+): boolean {
+  switch (artifactType) {
+    case 'STATEMENT_PACK':
+      return flags.statementPack;
+    case 'BASELINE_MODEL':
+      return flags.baseline;
+    case 'HISTORICAL_ANALYSIS':
+      return flags.analysis;
+    case 'PREDICTION_SCENARIO':
+      return flags.prediction;
+    case 'VALUATION_CASE':
+      return flags.valuation;
+    default:
+      return false;
+  }
+}
+
 export function hasAnyCanonicalFinanceQuery(params: URLSearchParams): boolean {
   return Boolean(
     params.get('canonicalArtifactType') ||
@@ -1099,8 +1121,26 @@ export const FinanceHub: React.FC = () => {
     (row: FinanceRow) => {
       const canonicalIdentity = toFinanceResolveInput(row);
       if (canonicalIdentity) {
-        setSearchParams(buildCanonicalFinanceSearchParams(searchParams, canonicalIdentity));
-        return;
+        const isComplete = Boolean(
+          canonicalIdentity.artifactType &&
+          canonicalIdentity.artifactId &&
+          canonicalIdentity.businessVersionId
+        );
+        const isRecognized = Boolean(
+          canonicalIdentity.artifactType &&
+          CANONICAL_FINANCE_ARTIFACT_TYPES.has(canonicalIdentity.artifactType)
+        );
+        const isEnabled = isCanonicalFinanceTypeEnabled(canonicalIdentity.artifactType, {
+          statementPack: financeV3StatementPackFlag.enabled,
+          baseline: financeV3BaselineFlag.enabled,
+          analysis: financeV3AnalysisFlag.enabled,
+          prediction: financeV3PredictionFlag.enabled,
+          valuation: financeV3ValuationFlag.enabled,
+        });
+        if (!isComplete || !isRecognized || isEnabled) {
+          setSearchParams(buildCanonicalFinanceSearchParams(searchParams, canonicalIdentity));
+          return;
+        }
       }
       const doc: OpenDocument = {
         id: row.id,
@@ -1113,7 +1153,15 @@ export const FinanceHub: React.FC = () => {
       setActiveDocumentId(row.id);
       setActiveDocument(row);
     },
-    [searchParams, setSearchParams]
+    [
+      financeV3AnalysisFlag.enabled,
+      financeV3BaselineFlag.enabled,
+      financeV3PredictionFlag.enabled,
+      financeV3StatementPackFlag.enabled,
+      financeV3ValuationFlag.enabled,
+      searchParams,
+      setSearchParams,
+    ]
   );
 
   const handleCloseDocument = useCallback(
@@ -3215,12 +3263,13 @@ export const FinanceHub: React.FC = () => {
     const hasCompleteCanonicalQueryIdentity = Boolean(
       canonicalArtifactType && canonicalArtifactId && canonicalBusinessVersionId
     );
-    const canonicalFlagEnabled =
-      (canonicalArtifactType === 'STATEMENT_PACK' && financeV3StatementPackFlag.enabled) ||
-      (canonicalArtifactType === 'BASELINE_MODEL' && financeV3BaselineFlag.enabled) ||
-      (canonicalArtifactType === 'HISTORICAL_ANALYSIS' && financeV3AnalysisFlag.enabled) ||
-      (canonicalArtifactType === 'PREDICTION_SCENARIO' && financeV3PredictionFlag.enabled) ||
-      (canonicalArtifactType === 'VALUATION_CASE' && financeV3ValuationFlag.enabled);
+    const canonicalFlagEnabled = isCanonicalFinanceTypeEnabled(canonicalArtifactType, {
+      statementPack: financeV3StatementPackFlag.enabled,
+      baseline: financeV3BaselineFlag.enabled,
+      analysis: financeV3AnalysisFlag.enabled,
+      prediction: financeV3PredictionFlag.enabled,
+      valuation: financeV3ValuationFlag.enabled,
+    });
     const hasRecognizedCanonicalType = Boolean(
       canonicalArtifactType && CANONICAL_FINANCE_ARTIFACT_TYPES.has(canonicalArtifactType)
     );
