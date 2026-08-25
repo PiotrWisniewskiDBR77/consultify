@@ -10,6 +10,9 @@ import {
 } from '../../services/adminSeatsApi';
 import { StandardTable, type TableColumn, type TableRow } from '../standard/StandardTable';
 
+const buttonClass =
+  'inline-flex items-center justify-center gap-2 rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm font-medium text-c-text hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 ring-[color:var(--c-focus)]';
+
 export const AdminSeatsLicencesPanel: React.FC = () => {
   const [config, setConfig] = useState<SeatConfiguration>({});
   const [history, setHistory] = useState<SeatTransaction[]>([]);
@@ -127,7 +130,7 @@ export const AdminSeatsLicencesPanel: React.FC = () => {
           <button
             disabled={saving}
             onClick={() => void save()}
-            className="inline-flex items-center gap-2 rounded-lg bg-c-accent px-3 py-2 text-sm text-white"
+            className={buttonClass}
           >
             <Save className="h-4 w-4" />
             Zapisz

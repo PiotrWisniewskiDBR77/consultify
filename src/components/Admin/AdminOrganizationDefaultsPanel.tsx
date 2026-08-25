@@ -27,6 +27,9 @@ const INITIAL_FINANCE: FinanceDefaults = {
   defaultWacc: 0,
   defaultHorizonYears: 0,
 };
+const buttonClass =
+  'inline-flex items-center justify-center gap-2 rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm font-medium text-c-text hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 ring-[color:var(--c-focus)]';
+
 const isV8Disabled = (error: unknown) => {
   const value = error as { data?: { code?: string }; message?: string };
   return (
@@ -195,7 +198,7 @@ export const AdminOrganizationDefaultsPanel: React.FC<Props> = ({ organizationId
         <button
           disabled={profileState !== 'ready' || !organizationId}
           onClick={() => void saveProfile()}
-          className="rounded bg-c-accent px-3 py-2 text-white disabled:opacity-50"
+          className={buttonClass}
         >
           Zapisz lokalizację i format
         </button>
@@ -260,7 +263,7 @@ export const AdminOrganizationDefaultsPanel: React.FC<Props> = ({ organizationId
             <button
               disabled={financeState !== 'ready'}
               onClick={() => void saveFinance()}
-              className="rounded bg-c-accent px-3 py-2 text-white disabled:opacity-50"
+              className={buttonClass}
             >
               Zapisz domyślne finansowe
             </button>

@@ -4,6 +4,10 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { Api } from '../../../services/api';
 import type { SystemPrompt, SystemPromptContextConfig } from '../../../types/domain/ai';
+
+const buttonClass =
+  'inline-flex items-center justify-center gap-2 rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm font-medium text-c-text hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 ring-[color:var(--c-focus)]';
+
 export const PersonasPanel: React.FC = () => {
   const { t } = useTranslation(),
     [prompts, setPrompts] = useState<SystemPrompt[]>([]),
@@ -123,7 +127,7 @@ export const PersonasPanel: React.FC = () => {
               </fieldset>
               <button
                 type="submit"
-                className="inline-flex items-center gap-2 rounded bg-c-accent px-3 py-2 text-white"
+                className={buttonClass}
               >
                 <Save className="h-4 w-4" />
                 Save Persona

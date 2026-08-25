@@ -61,7 +61,7 @@ export const AdminAccessReviewsPanel: React.FC = () => {
         </div>
         <div className="rounded-xl border border-c-border p-4">Następny przegląd: {next}</div>
       </div>
-      <a href="/admin/team/roles-permissions" className="text-sm text-c-accent underline">
+      <a href="/admin/team/roles-permissions" className="text-sm text-c-text underline">
         Otwórz kanoniczną politykę IAM
       </a>
       <StandardTable
