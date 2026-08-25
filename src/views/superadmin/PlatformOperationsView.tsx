@@ -136,9 +136,10 @@ export const PlatformOperationsView: React.FC = () => {
         ...items,
       ]);
     } catch (cause: any) {
-      const code = String(cause?.code || cause?.status || 'ERROR');
-      const message = cause?.expectedName
-        ? `Wpisana nazwa nie zgadza się. Oczekiwano: ${cause.expectedName}.`
+      const details = cause?.data && typeof cause.data === 'object' ? cause.data : cause;
+      const code = String(details?.code || cause?.code || cause?.status || 'ERROR');
+      const message = details?.expectedName
+        ? `Wpisana nazwa nie zgadza się. Oczekiwano: ${details.expectedName}.`
         : cause instanceof Error
           ? cause.message
           : 'Błąd operacji';

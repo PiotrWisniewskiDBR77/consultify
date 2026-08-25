@@ -86,4 +86,24 @@ describe('PlatformOperationsView', () => {
       screen.queryByText(/Wymuś reset MFA · ada@example.com · Sukces/)
     ).not.toBeInTheDocument();
   });
+
+  it('surfaces structured backend error codes and expected tenant names', async () => {
+    const error = Object.assign(new Error('Confirmation mismatch'), {
+      status: 400,
+      data: { code: 'TENANT_NAME_MISMATCH', expectedName: 'Acme' },
+    });
+    run.mockRejectedValue(error);
+    render(<PlatformOperationsView />);
+    const dialog = await openAction('Zaplanuj trwałe usunięcie danych');
+    fireEvent.change(within(dialog).getByLabelText('Powód'), {
+      target: { value: 'approved cleanup' },
+    });
+    fireEvent.change(within(dialog).getByLabelText(/Przepisz dokładnie/), {
+      target: { value: 'Acme' },
+    });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Wykonaj operację' }));
+    expect(
+      await screen.findByText(/TENANT_NAME_MISMATCH: Wpisana nazwa nie zgadza się.*Acme/)
+    ).toBeInTheDocument();
+  });
 });
