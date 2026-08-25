@@ -266,7 +266,11 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
                   <strong className="mt-2 block">UNKNOWN</strong>
                 ) : (
                   <>
-                    <strong className="mt-2 block text-2xl">{metric.value.value}</strong>
+                    <strong className="mt-2 block text-2xl">
+                      {metric.id === 'dataCompleteness'
+                        ? `${metric.value.value}%`
+                        : metric.value.value}
+                    </strong>
                     <span className="text-xs text-c-text-muted">
                       {metric.value.numerator}/{metric.value.denominator} · CALCULATED ·{' '}
                       {model.calculatedAt}
@@ -346,9 +350,22 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
           </p>
         </section>
         <section data-section-order={sections[8]} aria-labelledby="work-register-title">
-          <h2 id="work-register-title" className="font-semibold">
-            {t('execution.reports.intelligence.sections.register', 'Auditable register')}
-          </h2>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 id="work-register-title" className="font-semibold">
+              {t('execution.reports.intelligence.sections.register', 'Auditable register')}
+            </h2>
+            {selectedMetric ? (
+              <button
+                type="button"
+                onClick={() => setDrilldownId(null)}
+                className="rounded-lg border border-c-border px-3 py-1 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+              >
+                {t('execution.reports.intelligence.showAllRecords', 'Show all records')} (
+                {t(`execution.reports.intelligence.metrics.${selectedMetric.id}`, selectedMetric.id)}{' '}
+                → {model.items.length})
+              </button>
+            ) : null}
+          </div>
           {state.items.length === 0 ? (
             <p className="mt-2 text-sm text-c-text-muted">
               {t(
