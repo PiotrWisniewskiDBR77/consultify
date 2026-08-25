@@ -55,7 +55,7 @@ export interface ConnectionParityException {
   partnerOrganizationId: string;
   ownerOrganizationId: string;
   userId: string;
-  reason: 'ACTIVE_OWNER_MEMBERSHIP_MISSING';
+  reason: 'ACTIVE_OWNER_MEMBERSHIP_MISSING' | 'COLLEAGUE_INHERITED';
 }
 
 export interface ConnectionParity {
@@ -69,10 +69,24 @@ export interface ConnectionParity {
  * Mapping-scoped cut-over control for DEC-2026-08-25-64.
  *
  * `legacyConnectedUsers` is the non-mutating projection of users that the
- * legacy resolver can resolve directly (active `partner_users` link or the
- * `created_by` fallback). `strictEligibleUsers` additionally requires an
- * ACTIVE membership in the explicitly mapped owner tenant. After APPLY,
- * `strictConnectedUsers` also requires the persisted exact tenant binding.
+ * legacy resolver (`server/src/services/partnerOrgResolution.ts:11-98`,
+ * `getActivePartnerOrgIdForUser`) can resolve, across all three of its
+ * branches:
+ *   1. an active `partner_users` link (direct);
+ *   2. the `partner_organizations.created_by` fallback;
+ *   3. "colleague inheritance" (`partnerOrgResolution.ts:44-79`): a user with
+ *      NEITHER of the above, but who shares an ACTIVE/ACCEPTED membership in
+ *      the mapped owner tenant with another user who has a direct link — the
+ *      legacy resolver self-heals a `partner_users` row for them at read
+ *      time and silently connects them.
+ *
+ * `strictEligibleUsers` additionally requires an ACTIVE membership in the
+ * explicitly mapped owner tenant — but colleague-inherited users are never
+ * eligible here. They are counted (so they never silently disappear from the
+ * parity comparison) and always surface as a `COLLEAGUE_INHERITED` exception,
+ * deferred to an explicit cut-over decision rather than auto-connected.
+ * After APPLY, `strictConnectedUsers` also requires the persisted exact
+ * tenant binding.
  */
 export async function readConnectionParity(
   queryable: Queryable,
@@ -88,25 +102,62 @@ export async function readConnectionParity(
   }>(
     `WITH mappings AS (
        SELECT * FROM unnest($1::uuid[], $2::text[]) AS m(partner_id, owner_id)
-     ), legacy_users AS (
+     ), direct_users AS (
        SELECT DISTINCT m.partner_id,m.owner_id,pu.user_id::text AS user_id
          FROM mappings m
          JOIN partner_organizations po ON po.id=m.partner_id
          JOIN partner_users pu ON pu.partner_org_id=po.id
         WHERE lower(coalesce(po.status,'active'))='active'
           AND lower(coalesce(pu.status,'active'))='active'
-       UNION
+     ), created_by_users AS (
        SELECT DISTINCT m.partner_id,m.owner_id,po.created_by::text AS user_id
          FROM mappings m
          JOIN partner_organizations po ON po.id=m.partner_id
         WHERE lower(coalesce(po.status,'active'))='active'
           AND po.created_by IS NOT NULL
+     ), colleague_users AS (
+       -- Reproduces partnerOrgResolution.ts:44-58: a user with no direct
+       -- partner_users row who shares an ACTIVE/ACCEPTED membership in the
+       -- mapped owner tenant with someone who does have a direct link.
+       SELECT DISTINCT m.partner_id,m.owner_id,candidate_member.user_id::text AS user_id
+         FROM mappings m
+         JOIN partner_organizations po ON po.id=m.partner_id
+         JOIN partner_users pu ON pu.partner_org_id=po.id
+          AND lower(coalesce(pu.status,'active'))='active'
+         JOIN organization_members owner_member
+           ON owner_member.user_id=pu.user_id::text
+          AND owner_member.organization_id=m.owner_id
+          AND upper(coalesce(owner_member.status,'ACTIVE')) IN ('ACTIVE','ACCEPTED')
+         JOIN organization_members candidate_member
+           ON candidate_member.organization_id=owner_member.organization_id
+          AND upper(coalesce(candidate_member.status,'ACTIVE')) IN ('ACTIVE','ACCEPTED')
+          AND candidate_member.user_id<>owner_member.user_id
+        WHERE lower(coalesce(po.status,'active'))='active'
+          AND NOT EXISTS (
+            SELECT 1 FROM partner_users pu2
+             WHERE pu2.partner_org_id=po.id
+               AND pu2.user_id::text=candidate_member.user_id
+               AND lower(coalesce(pu2.status,'active'))='active'
+          )
+          AND candidate_member.user_id<>coalesce(po.created_by::text,'')
+     ), legacy_users AS (
+       SELECT * FROM direct_users
+       UNION
+       SELECT * FROM created_by_users
+       UNION
+       SELECT * FROM colleague_users
      ), eligible AS (
        SELECT DISTINCT lu.partner_id,lu.owner_id,lu.user_id
          FROM legacy_users lu
          JOIN organization_members om
            ON om.organization_id=lu.owner_id AND om.user_id::text=lu.user_id
         WHERE upper(coalesce(om.status,'ACTIVE'))='ACTIVE'
+          AND NOT EXISTS (
+            SELECT 1 FROM colleague_users cu
+             WHERE cu.partner_id=lu.partner_id
+               AND cu.owner_id=lu.owner_id
+               AND cu.user_id=lu.user_id
+          )
      ), strict_connected AS (
        SELECT DISTINCT e.partner_id,e.owner_id,e.user_id
          FROM eligible e
@@ -122,9 +173,15 @@ export async function readConnectionParity(
            'partnerOrganizationId',lu.partner_id::text,
            'ownerOrganizationId',lu.owner_id,
            'userId',lu.user_id,
-           'reason','ACTIVE_OWNER_MEMBERSHIP_MISSING'
+           'reason', CASE WHEN cu.user_id IS NOT NULL
+                          THEN 'COLLEAGUE_INHERITED'
+                          ELSE 'ACTIVE_OWNER_MEMBERSHIP_MISSING' END
          ) ORDER BY lu.partner_id,lu.user_id)
            FROM legacy_users lu
+           LEFT JOIN colleague_users cu
+             ON cu.partner_id=lu.partner_id
+            AND cu.owner_id=lu.owner_id
+            AND cu.user_id=lu.user_id
           WHERE NOT EXISTS (
             SELECT 1 FROM eligible e
              WHERE e.partner_id=lu.partner_id
