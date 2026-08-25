@@ -1064,6 +1064,36 @@ export const interviewPublicAnswerRateLimiter = createLimiter({
   sharedStore: true,
 });
 
+/**
+ * Public interview invite LOOKUP (`GET /api/interview-v4/public/distributions/:token`).
+ *
+ * This is the unauthenticated READ half of the invite flow and it was the only
+ * public route in the router with no brake at all — the two public writes below
+ * it already carry `interviewPublicAnswerRateLimiter`. Unthrottled, the lookup
+ * is a free token oracle: it answers 404/410/200 per guess and, on a hit, hands
+ * back the full question snapshot of someone else's interview session.
+ *
+ * Deliberately keyed by NETWORK identity, not by the token. The token-keyed
+ * scheme used for the writes is correct there (one known-good token, many
+ * legitimate requests) but is exactly wrong here: an enumerating caller submits
+ * a DIFFERENT token every attempt, so each guess would land in its own bucket
+ * and the limiter would never fire. `networkOnlyRateLimitKey` also refuses the
+ * default token-derived key, which an anonymous caller could choose freely.
+ *
+ * The ceiling is higher than `invitePublicRateLimiter`'s 15/15min: several
+ * respondents legitimately share one corporate NAT egress address, and each of
+ * them reloads the invite page a few times. 60/15min still cuts an enumeration
+ * run down to a rate at which a 256-bit token space is unreachable.
+ */
+export const interviewPublicDistributionLookupRateLimiter = createLimiter({
+  windowMs: 15 * 60_000,
+  max: isProd ? 60 : 1000,
+  prefix: 'interview-public-distribution',
+  message: 'Too many invitation lookups. Please try again later.',
+  keyResolver: networkOnlyRateLimitKey,
+  sharedStore: true,
+});
+
 /** Default API: 300 req / 15 min (prod) */
 export const defaultRateLimiter = createLimiter({
   windowMs: 15 * 60_000,

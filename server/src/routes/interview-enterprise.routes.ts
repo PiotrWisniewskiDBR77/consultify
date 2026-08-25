@@ -12,14 +12,19 @@ import { z } from 'zod';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
-import { interviewPublicAnswerRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import {
+  apiAuthRateLimiter,
+  interviewPublicAnswerRateLimiter,
+  interviewPublicDistributionLookupRateLimiter,
+} from '../middleware/rateLimiting.middleware.js';
+import { requireOrgAccess } from '../middleware/rbac.middleware.js';
 import {
   InterviewDistributionError,
   interviewEnterpriseService,
 } from '../services/interviewEnterpriseService.js';
 import {
-  PUBLIC_ANSWER_STATUS,
   completeDistributionByToken,
+  PUBLIC_ANSWER_STATUS,
   readPublicQuestionSnapshot,
   savePublicAnswer,
 } from '../services/interviewPublicAnswerService.js';
@@ -29,6 +34,10 @@ const router = Router();
 
 router.get(
   '/public/distributions/:token',
+  // Anti-enumeration brake — see `interviewPublicDistributionLookupRateLimiter`.
+  // Unthrottled this route is a token oracle that returns another tenant's
+  // question snapshot on a hit.
+  interviewPublicDistributionLookupRateLimiter,
   asyncHandler(async (req, res) => {
     try {
       const invite = await interviewEnterpriseService.resolveActiveDistributionByToken(
@@ -145,16 +154,48 @@ router.post(
   })
 );
 
+// ---------------------------------------------------------------------------
+// Authenticated half of the router.
+//
+// Everything BELOW this line is gated centrally, the same way `routes/audits/
+// index.ts` gates its sub-routers: one `router.use` chain rather than a
+// per-handler opt-in, so a route added later cannot forget the guard and ship
+// unprotected. The three public token routes above are the deliberate exception
+// and sit before the chain on purpose — the respondent has no account, and
+// their tenancy is derived server-side from the invite token.
+//
+// `requireOrgAccess()` is the deny-first gate: a token with no resolvable
+// ACTIVE org is refused here with 403, before any handler runs, instead of each
+// handler independently deciding what to do with an empty org.
+// ---------------------------------------------------------------------------
+router.use(apiAuthRateLimiter);
 router.use(verifyToken);
+router.use(requireOrgAccess());
 router.use(demoContextMiddleware);
 
 const requireUser = (req: AuthRequest, res: Response): { userId: string; orgId: string } | null => {
   const userId = req.user?.id || req.userId;
-  const orgId =
-    req.user?.organizationId ||
-    req.organizationId ||
-    (req.headers['x-organization-id'] as string) ||
-    (req.query.organizationId as string);
+  // SECURITY (cross-org tenant fix — M03 Interview V4): the org MUST come ONLY
+  // from the auth-middleware-VALIDATED context (req.user.organizationId /
+  // req.organizationId). This previously fell back to the raw `x-organization-id`
+  // header and the `?organizationId` query param — both attacker-chosen values.
+  // verifyToken admits a token with no resolvable ACTIVE org (req.organizationId
+  // === ''), and at that point a caller could assert ANY org id and
+  // interviewEnterpriseService would faithfully scope every read and write to
+  // that victim org: reading its interview findings and evidence access logs,
+  // minting and revoking invite tokens for its sessions, promoting its findings
+  // onto initiatives and signing off its company-context versions. Service-layer
+  // `WHERE organization_id = ?` re-filtering does NOT help when the filter value
+  // is the attacker's own input.
+  //
+  // The legitimate org-switch path is unaffected: auth.middleware already
+  // promotes a UI-selected `x-org-context` / `x-organization-id` into
+  // req.organizationId *after* probing `organization_members` for an ACTIVE
+  // membership (auth.middleware.ts, "Respect the UI-selected organization when
+  // the user is a valid active member"). The frontend sends `x-org-context`
+  // (src/services/api.ts getHeaders) and never `x-organization-id`, so no caller
+  // depended on the removed fallback.
+  const orgId = req.user?.organizationId || req.organizationId;
   if (!userId || !orgId) {
     res.status(401).json({ error: 'Authentication required' });
     return null;
