@@ -57,28 +57,48 @@ Nie wykonałem żadnego deployu, żadnej operacji Railway, żadnej zdalnej migra
 
 ## Pozycje — tabela zbiorcza
 
-| Pozycja | Commit SHA     | Status      | Dowód                                                                                                           |
-| ------- | -------------- | ----------- | --------------------------------------------------------------------------------------------------------------- |
-| S.0     | `17c5edb60e`   | DONE        | flaga default OFF, realny czytnik, 14/14 testów flagi i OFF                                                     |
-| S.1     | `2b2fa546aa`   | DONE        | jeden token 1040×840; opt-in; legacy 720×560/1080×640 zachowane; 22/22 testy                                    |
-| S.2     | `c9f946db24`   | CZĘŚCIOWA   | 5 stref, szkło 4 pasów, opaque fallback i adopcja przez Wniosek; 18/18 testów; zrzuty/kontrast oczekują T.5/R.2 |
-| S.3     | `40b0df3e5c`   | DONE        | jednoliniowy pas w każdym kroku, wartości z realnego stanu, rozwijanie i reset na zmianie kroku; 20/20 testów   |
-| S.4     | bieżący commit | CZĘŚCIOWA   | nazwy działań i przypisy 1:1; krok 2 ma `Uruchom teraz`; brak widocznego powodu blokady CTA                     |
-| S.5–S.7 | —              | NIE ZACZĘTA | —                                                                                                               |
-| K.1     | —              | STOP        | kod ma 12 typów (6+6), prototyp/instrukcja wymaga 13 (6+7); brakującego typu nie zgaduję                        |
-| K.2–K.3 | —              | NIE ZACZĘTA | —                                                                                                               |
-| W.1–W.2 | —              | NIE ZACZĘTA | —                                                                                                               |
-| T.1–T.6 | —              | NIE ZACZĘTA | —                                                                                                               |
-| R.1–R.2 | —              | NIE ZACZĘTA | —                                                                                                               |
+| Pozycja      | Commit SHA     | Status      | Dowód                                                                                                           |
+| ------------ | -------------- | ----------- | --------------------------------------------------------------------------------------------------------------- |
+| S.0          | `17c5edb60e`   | DONE        | flaga default OFF, realny czytnik, 14/14 testów flagi i OFF                                                     |
+| S.1          | `2b2fa546aa`   | DONE        | jeden token 1040×840; opt-in; legacy 720×560/1080×640 zachowane; 22/22 testy                                    |
+| S.2          | `c9f946db24`   | CZĘŚCIOWA   | 5 stref, szkło 4 pasów, opaque fallback i adopcja przez Wniosek; 18/18 testów; zrzuty/kontrast oczekują T.5/R.2 |
+| S.3          | `40b0df3e5c`   | DONE        | jednoliniowy pas w każdym kroku, wartości z realnego stanu, rozwijanie i reset na zmianie kroku; 20/20 testów   |
+| S.4          | `72d2cf2eef`   | CZĘŚCIOWA   | nazwy działań i przypisy 1:1; krok 2 ma `Uruchom teraz`; brak widocznego powodu blokady CTA                     |
+| S.5–S.7      | —              | NIE ZACZĘTA | —                                                                                                               |
+| K.1          | —              | STOP        | kod ma 12 typów (6+6), prototyp/instrukcja wymaga 13 (6+7); brakującego typu nie zgaduję                        |
+| K.2–K.3      | —              | NIE ZACZĘTA | —                                                                                                               |
+| W.1–W.2      | —              | NIE ZACZĘTA | —                                                                                                               |
+| T.5          | bieżący commit | CZĘŚCIOWA   | realny komponent, lokalne mocki, jawne ON/OFF; 4 zrzuty; brak pełnych scen/fixture stresowego                   |
+| T.1–T.4, T.6 | —              | NIE ZACZĘTA | —                                                                                                               |
+| R.1–R.2      | —              | NIE ZACZĘTA | —                                                                                                               |
 
 ## ★ Parytet wizualny z prototypem (produkt R.2)
 
-Do uzupełnienia po renderach realnego komponentu.
+### Krok 1 — Definicja
+
+| Element                            | Prototyp          | Mój zrzut         | Zgodne?                                                                                        |
+| ---------------------------------- | ----------------- | ----------------- | ---------------------------------------------------------------------------------------------- |
+| wysokość nagłówka                  | 60 px             | 60 px             | TAK                                                                                            |
+| wysokość pasa kroków               | 70 px             | 70 px             | TAK                                                                                            |
+| wysokość pasa zakresu              | 36 px             | 36 px             | TAK                                                                                            |
+| wysokość stopki                    | 70 px             | 70 px             | TAK                                                                                            |
+| szerokość treści                   | 880 px            | 880 px            | TAK                                                                                            |
+| liczba kart typu wyniku widocznych | 6                 | 4                 | NIE — stan biznesowy ma 12 typów zamiast wymaganych 13; K.1 zatrzymany zamiast wymyślenia typu |
+| etykieta CTA                       | „Dalej: Materiał” | „Dalej: Materiał” | TAK                                                                                            |
+| plakietka „Niżej…”                 | jest              | brak              | NIE — S.7 nie rozpoczęto                                                                       |
+
+### Krok 2 — Materiał
+
+Brak zrzutu — R.2 CZĘŚCIOWA.
+
+### Krok 3 — Dostrojenie
+
+Brak zrzutu — R.2 CZĘŚCIOWA.
 
 ## Flaga i dowód OFF
 
 Nazwa: `interviewCreatorShell` · klucze: `ff_interviewCreatorShell` / `ff.interview_creator_shell` / `VITE_INTERVIEW_CREATOR_SHELL`.  
-Wartość domyślna: do wdrożenia w S.0 — OFF wszędzie.
+Wartość domyślna: OFF wszędzie — `interviewCreatorShellFlag.ts`, test 5/5 PASS. Dowód OFF behawioralny w `InsightCreatorModal.a11y.test.tsx`; dowód wizualny `DAY13-04_FLAG_OFF_{LIGHT,DARK}.png`.
 
 ## BRAK_API — czego nie zbudowałem, bo nie ma czym
 
@@ -153,9 +173,13 @@ Do wykonania.
 
 ## Zrzuty (R.2)
 
-| Plik                    | Scena                                    | KONSOLA-BLEDY                        | SIEC-4XX5XX                          |
-| ----------------------- | ---------------------------------------- | ------------------------------------ | ------------------------------------ |
-| `/tmp/day13-before.png` | bazowy harness `interview-preview-canon` | NIE WYDRUKOWANO przez zastany skrypt | NIE WYDRUKOWANO przez zastany skrypt |
+| Plik                           | Scena                                    | KONSOLA-BLEDY                        | SIEC-4XX5XX                          |
+| ------------------------------ | ---------------------------------------- | ------------------------------------ | ------------------------------------ |
+| `/tmp/day13-before.png`        | bazowy harness `interview-preview-canon` | NIE WYDRUKOWANO przez zastany skrypt | NIE WYDRUKOWANO przez zastany skrypt |
+| `DAY13-01_DEFINICJA_LIGHT.png` | krok 1 ON, light                         | NIE WYDRUKOWANO przez zastany skrypt | NIE WYDRUKOWANO przez zastany skrypt |
+| `DAY13-01_DEFINICJA_DARK.png`  | krok 1 ON, dark                          | NIE WYDRUKOWANO przez zastany skrypt | NIE WYDRUKOWANO przez zastany skrypt |
+| `DAY13-04_FLAG_OFF_LIGHT.png`  | flaga OFF, light                         | NIE WYDRUKOWANO przez zastany skrypt | NIE WYDRUKOWANO przez zastany skrypt |
+| `DAY13-04_FLAG_OFF_DARK.png`   | flaga OFF, dark                          | NIE WYDRUKOWANO przez zastany skrypt | NIE WYDRUKOWANO przez zastany skrypt |
 
 ## Licznik
 
