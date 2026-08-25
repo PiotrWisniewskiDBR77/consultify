@@ -122,6 +122,7 @@ import { ExecutionControlSurface } from './ExecutionControlSurface';
 import { isExecutionFlagEnabled } from './executionFeatureFlags';
 import { ExecutionManagementView } from './ExecutionManagementView';
 import { normalizeExecutionArrayEnvelope } from './executionPayloadGuards';
+import { ControlLoopReport } from './reports-intelligence/ControlLoopReport';
 import { ResourcesCapacityReport } from './reports-intelligence/ResourcesCapacityReport';
 import { WorkIntelligenceReport } from './reports-intelligence/WorkIntelligenceReport';
 import {
@@ -2063,6 +2064,22 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       type: 'report',
       subType: 'resources-intelligence',
       name: t('execution.reports.intelligence.resources.tab', 'Resources report'),
+      status: 'DRAFT',
+    };
+    setOpenDocuments((current) =>
+      current.some((item) => item.id === docId) ? current : [...current, doc]
+    );
+    setActiveDocumentId(docId);
+  }, [execReportsIntelligenceEnabled, t]);
+
+  const openControlIntelligenceReport = useCallback(() => {
+    if (!execReportsIntelligenceEnabled) return;
+    const docId = 'execution-intelligence:control';
+    const doc: OpenDocument = {
+      id: docId,
+      type: 'report',
+      subType: 'control-intelligence',
+      name: t('execution.reports.intelligence.control.tab', 'Control report'),
       status: 'DRAFT',
     };
     setOpenDocuments((current) =>
@@ -5311,6 +5328,9 @@ Please return:
       ) {
         return <ResourcesCapacityReport />;
       }
+      if (execReportsIntelligenceEnabled && activeDocumentId === 'execution-intelligence:control') {
+        return <ControlLoopReport />;
+      }
       if (activeDocumentId.startsWith('report:')) {
         const reportId = activeDocumentId.replace('report:', '');
         const report = enrichedReportCatalog.find((r) => r.id === reportId);
@@ -5731,6 +5751,14 @@ Please return:
                       },
                     ]
                   : []),
+                ...(execReportsIntelligenceEnabled && activeTab === 'control'
+                  ? [
+                      {
+                        id: 'control-intelligence-report',
+                        label: t('execution.reports.intelligence.control.tab', 'Control report'),
+                      },
+                    ]
+                  : []),
               ]
         }
         activeChip={activeTab === 'list' ? null : (canonicalMenu3Preset[activeTab] ?? null)}
@@ -5741,6 +5769,10 @@ Please return:
           }
           if (id === 'resources-intelligence-report') {
             openResourcesIntelligenceReport();
+            return;
+          }
+          if (id === 'control-intelligence-report') {
+            openControlIntelligenceReport();
             return;
           }
           setCanonicalMenu3Preset((current) => ({ ...current, [activeTab]: id }));

@@ -10326,6 +10326,30 @@
           "registers": "Rejestry konfliktów i braków danych",
           "recommendations": "Rekomendacje",
           "noRecommendation": "Nie wydano propozycji równoważenia, gdy zdolność lub progi są UNKNOWN."
+        },
+        "control": {
+          "tab": "Raport sterowania",
+          "title": "Pętla sterowania zarządczego",
+          "loading": "Wczytywanie raportu sterowania…",
+          "error": "Raport sterowania jest niedostępny",
+          "register": "Zunifikowany rejestr sygnałów i interwencji",
+          "empty": "Brak rekordów sterowania",
+          "lineage": "Przyczynowość i dwukierunkowy rodowód",
+          "scenarios": "Scenariusze forward",
+          "summary": "Podsumowanie zarządcze i aneks dowodowy",
+          "noRecommendation": "Bez zatwierdzonej taksonomii severity, reaction SLA i zweryfikowanych dowodów interwencja nie jest rekomendowana.",
+          "kind": "Typ",
+          "record": "Sygnał / interwencja",
+          "status": "Status",
+          "severity": "Severity",
+          "owner": "Właściciel",
+          "verification": "Weryfikacja",
+          "metrics": {
+            "signals": "Sygnały",
+            "decisions": "Powiązane decyzje",
+            "interventions": "Interwencje",
+            "notVerified": "NOT_VERIFIED"
+          }
         }
       }
     },
