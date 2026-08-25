@@ -69,7 +69,9 @@ const MenuCanonSidebarCheckScreen = React.lazy(() => import('./screens/menu-cano
 const AssessmentQualityReviewPanelScreen = React.lazy(
   () => import('./screens/assessment-quality-review-panel')
 );
-const AssessmentPresentationViewScreen = React.lazy(() => import('./screens/assessment-presentation-view'));
+const AssessmentPresentationViewScreen = React.lazy(
+  () => import('./screens/assessment-presentation-view')
+);
 
 // TEST-ONLY: must import before `../src/i18n` — see file header. Opt-in via
 // `?slowLocale=<ms>`; no effect otherwise.
@@ -141,6 +143,7 @@ const DocumentStudioNowyDokumentMartweprzyciskiScreen = React.lazy(
 );
 const EvFootballFieldScreen = React.lazy(() => import('./screens/ev-football-field'));
 const ExecutionChangeSignalsScreen = React.lazy(() => import('./screens/execution-change-signals'));
+const ExecutionReportDay11Screen = React.lazy(() => import('./screens/execution-report-day11'));
 const ExecutionExportPrezentacjaScreen = React.lazy(
   () => import('./screens/execution-export-prezentacja')
 );
@@ -148,17 +151,33 @@ const FinanceValuePanelsScreen = React.lazy(() => import('./screens/finance-valu
 const FinanceModelWorkspaceScreen = React.lazy(() => import('./screens/finance-model-workspace'));
 const FinanceWorkspaceBarScreen = React.lazy(() => import('./screens/finance-workspace-bar'));
 const FinanceFocusModeScreen = React.lazy(() => import('./screens/finance-focus-mode'));
-const FinanceStatementPackWorkspaceV2Screen = React.lazy(() => import('./screens/finance-statement-pack-workspace-v2'));
-const FinanceBaselineWorkspaceScreen = React.lazy(() => import('./screens/finance-baseline-workspace'));
-const FinancePredictionWorkspaceScreen = React.lazy(() => import('./screens/finance-prediction-workspace'));
+const FinanceStatementPackWorkspaceV2Screen = React.lazy(
+  () => import('./screens/finance-statement-pack-workspace-v2')
+);
+const FinanceBaselineWorkspaceScreen = React.lazy(
+  () => import('./screens/finance-baseline-workspace')
+);
+const FinancePredictionWorkspaceScreen = React.lazy(
+  () => import('./screens/finance-prediction-workspace')
+);
 const FinanceIdBridgeScreen = React.lazy(() => import('./screens/finance-id-bridge'));
-const FinanceAnalysisWorkspaceScreen = React.lazy(() => import('./screens/finance-analysis-workspace'));
-const FinanceValuationWorkspaceScreen = React.lazy(() => import('./screens/finance-valuation-workspace'));
-const FinanceLineageNavigatorScreen = React.lazy(() => import('./screens/finance-lineage-navigator'));
+const FinanceAnalysisWorkspaceScreen = React.lazy(
+  () => import('./screens/finance-analysis-workspace')
+);
+const FinanceValuationWorkspaceScreen = React.lazy(
+  () => import('./screens/finance-valuation-workspace')
+);
+const FinanceLineageNavigatorScreen = React.lazy(
+  () => import('./screens/finance-lineage-navigator')
+);
 const FinanceComparePanelScreen = React.lazy(() => import('./screens/finance-compare-panel'));
 const FinanceCommentsPanelScreen = React.lazy(() => import('./screens/finance-comments-panel'));
-const FinanceSavedViewsPanelScreen = React.lazy(() => import('./screens/finance-saved-views-panel'));
-const FinanceExportImportPanelScreen = React.lazy(() => import('./screens/finance-export-import-panel'));
+const FinanceSavedViewsPanelScreen = React.lazy(
+  () => import('./screens/finance-saved-views-panel')
+);
+const FinanceExportImportPanelScreen = React.lazy(
+  () => import('./screens/finance-export-import-panel')
+);
 const GenDeckContentHintsScreen = React.lazy(() => import('./screens/gen-deck-content-hints'));
 const GenExcelTemplatesTabScreen = React.lazy(() => import('./screens/gen-excel-templates-tab'));
 const GenWordContentHintsScreen = React.lazy(() => import('./screens/gen-word-content-hints'));
@@ -301,9 +320,7 @@ const ResultsVNextKpiRegistryScreen = React.lazy(
 const ResultsVNextRoiRegistryScreen = React.lazy(
   () => import('./screens/results-vnext-roi-registry')
 );
-const ResultsVNextRoiModelScreen = React.lazy(
-  () => import('./screens/results-vnext-roi-model')
-);
+const ResultsVNextRoiModelScreen = React.lazy(() => import('./screens/results-vnext-roi-model'));
 const ResultsVNextRoiFullToolScreen = React.lazy(
   () => import('./screens/results-vnext-roi-full-tool')
 );
@@ -316,15 +333,11 @@ const ResultsVNextOkrObjectivesScreen = React.lazy(
 const ResultsVNextOkrWorkspaceScreen = React.lazy(
   () => import('./screens/results-vnext-okr-workspace')
 );
-const ResultsVNextOkrAdminScreen = React.lazy(
-  () => import('./screens/results-vnext-okr-admin')
-);
+const ResultsVNextOkrAdminScreen = React.lazy(() => import('./screens/results-vnext-okr-admin'));
 const ResultsVNextKpiScorecardsScreen = React.lazy(
   () => import('./screens/results-vnext-kpi-scorecards')
 );
-const ResultsVNextKpiToolScreen = React.lazy(
-  () => import('./screens/results-vnext-kpi-tool')
-);
+const ResultsVNextKpiToolScreen = React.lazy(() => import('./screens/results-vnext-kpi-tool'));
 const ResultsVNextLegacyArchiveScreen = React.lazy(
   () => import('./screens/results-vnext-legacy-archive')
 );
@@ -332,7 +345,9 @@ const ResultsVNextAttentionScreen = React.lazy(() => import('./screens/results-v
 const ResultsVNextRoiPirOutcomesScreen = React.lazy(
   () => import('./screens/results-vnext-roi-pir-outcomes')
 );
-const RnG3ClassLRecordShellScreen = React.lazy(() => import('./screens/rn-g3-class-l-record-shell'));
+const RnG3ClassLRecordShellScreen = React.lazy(
+  () => import('./screens/rn-g3-class-l-record-shell')
+);
 const ResultsVNextTeresaKpiDeviationScreen = React.lazy(
   () => import('./screens/results-vnext-teresa-kpi-deviation')
 );
@@ -826,24 +841,64 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
       'Section B — M16 ValueOffice + DriverPlanner: real-data wiring, POPULATED vs EMPTY (&panel=value|driver &state=populated|empty)',
     render: () => <FinanceValuePanelsScreen />,
   },
-  'finance-model-workspace': { label: 'Finance model workspace', render: () => <FinanceModelWorkspaceScreen /> },
-  'finance-workspace-bar': { label: 'Finance workspace bar', render: () => <FinanceWorkspaceBarScreen /> },
+  'finance-model-workspace': {
+    label: 'Finance model workspace',
+    render: () => <FinanceModelWorkspaceScreen />,
+  },
+  'finance-workspace-bar': {
+    label: 'Finance workspace bar',
+    render: () => <FinanceWorkspaceBarScreen />,
+  },
   'finance-focus-mode': { label: 'Finance focus mode', render: () => <FinanceFocusModeScreen /> },
-  'finance-statement-pack-workspace-v2': { label: 'Finance statement pack workspace', render: () => <FinanceStatementPackWorkspaceV2Screen /> },
-  'finance-baseline-workspace': { label: 'Finance baseline workspace', render: () => <FinanceBaselineWorkspaceScreen /> },
-  'finance-prediction-workspace': { label: 'Finance prediction workspace', render: () => <FinancePredictionWorkspaceScreen /> },
+  'finance-statement-pack-workspace-v2': {
+    label: 'Finance statement pack workspace',
+    render: () => <FinanceStatementPackWorkspaceV2Screen />,
+  },
+  'finance-baseline-workspace': {
+    label: 'Finance baseline workspace',
+    render: () => <FinanceBaselineWorkspaceScreen />,
+  },
+  'finance-prediction-workspace': {
+    label: 'Finance prediction workspace',
+    render: () => <FinancePredictionWorkspaceScreen />,
+  },
   'finance-id-bridge': { label: 'Finance ID bridge', render: () => <FinanceIdBridgeScreen /> },
-  'finance-analysis-workspace': { label: 'Finance analysis workspace', render: () => <FinanceAnalysisWorkspaceScreen /> },
-  'finance-valuation-workspace': { label: 'Finance valuation workspace', render: () => <FinanceValuationWorkspaceScreen /> },
-  'finance-lineage-navigator': { label: 'Finance lineage navigator', render: () => <FinanceLineageNavigatorScreen /> },
-  'finance-compare-panel': { label: 'Finance compare panel', render: () => <FinanceComparePanelScreen /> },
-  'finance-comments-panel': { label: 'Finance comments panel', render: () => <FinanceCommentsPanelScreen /> },
-  'finance-saved-views-panel': { label: 'Finance saved views panel', render: () => <FinanceSavedViewsPanelScreen /> },
-  'finance-export-import-panel': { label: 'Finance export import panel', render: () => <FinanceExportImportPanelScreen /> },
+  'finance-analysis-workspace': {
+    label: 'Finance analysis workspace',
+    render: () => <FinanceAnalysisWorkspaceScreen />,
+  },
+  'finance-valuation-workspace': {
+    label: 'Finance valuation workspace',
+    render: () => <FinanceValuationWorkspaceScreen />,
+  },
+  'finance-lineage-navigator': {
+    label: 'Finance lineage navigator',
+    render: () => <FinanceLineageNavigatorScreen />,
+  },
+  'finance-compare-panel': {
+    label: 'Finance compare panel',
+    render: () => <FinanceComparePanelScreen />,
+  },
+  'finance-comments-panel': {
+    label: 'Finance comments panel',
+    render: () => <FinanceCommentsPanelScreen />,
+  },
+  'finance-saved-views-panel': {
+    label: 'Finance saved views panel',
+    render: () => <FinanceSavedViewsPanelScreen />,
+  },
+  'finance-export-import-panel': {
+    label: 'Finance export import panel',
+    render: () => <FinanceExportImportPanelScreen />,
+  },
   'execution-change-signals': {
     label:
       'M14-wire — ExecutionChangeSignalsPanel (capacity signals · ADKAR readiness · champions), flaga changeSignals default OFF',
     render: () => <ExecutionChangeSignalsScreen />,
+  },
+  'execution-report-day11': {
+    label: 'Execution Day 11 — reports intelligence and governed generator',
+    render: () => <ExecutionReportDay11Screen />,
   },
   'execution-export-prezentacja': {
     label:
@@ -954,7 +1009,8 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     render: () => <MindmapI18nSmokeScreen />,
   },
   'mm-ppm-measure': {
-    label: 'MM-P2 (2026-08-10) — pomiar wysokości PPM węzła Mind Map (1280×800, do-usuniecia po odbiorze)',
+    label:
+      'MM-P2 (2026-08-10) — pomiar wysokości PPM węzła Mind Map (1280×800, do-usuniecia po odbiorze)',
     render: () => <MmPpmMeasureScreen />,
   },
   'navdeclutter-sidebar': {

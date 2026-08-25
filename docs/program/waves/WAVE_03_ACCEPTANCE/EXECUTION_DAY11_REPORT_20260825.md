@@ -95,15 +95,15 @@ kontrakt modułu, rejestr decyzji, instrukcja oraz kod w izolowanym worktree.
 
 ## Pozycje — tabela zbiorcza
 
-| Pozycja  | Zakres                         | Status               | Commit             | Testy                                          | Dowód OFF                                                 | Zrzut             | Uwagi                                                                                                                    |
-| -------- | ------------------------------ | -------------------- | ------------------ | ---------------------------------------------- | --------------------------------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| E.0      | flaga + mapa delty + dowód OFF | ZROBIONE_WG_DoD      | bieżący commit E.0 | własne 4/4 + zastane 11/11 PASS                | PASS: obecny rejestr, brak nowej powierzchni, 0 requestów | kontrolny harness | Jedna flaga, default OFF także demo; realny czytnik runtime-v1 przy ON.                                                  |
-| E.1      | Work Intelligence Report       | CZĘŚCIOWO / BRAK_API | bieżący commit E.1 | własne 6/6 + T.2 5/5 PASS                      | wspólny T.2 PASS                                          | Blok 5            | 9 sekcji, 8 KPI, drill-down i partial failure; historia/BSC/wagi pozostają BRAK_API/STOP.                                |
-| E.2      | Resources Capacity Report      | CZĘŚCIOWO / BRAK_API | bieżący commit E.2 | własne 4/4 + T.2 5/5 PASS                      | wspólny T.2 PASS                                          | Blok 5            | Realne allocations, heatmapa, Osoby/Projekt/rejestry; brak pełnego availability/progów E-O5.                             |
-| E.3      | Control Loop Report            | CZĘŚCIOWO / BRAK_API | bieżący commit E.3 | własne 4/4 + T.2 5/5 PASS                      | wspólny T.2 PASS                                          | Blok 5            | Sygnały/interwencje, KPI, lineage i NOT_VERIFIED; scenariusze oraz severity/SLA pozostają BRAK_API/STOP.                 |
-| E.4      | unijny generator               | CZĘŚCIOWO / BRAK_API | bieżący commit E.4 | własne 5/5 + strażnik listy 5/5 + T.2 5/5 PASS | wspólny T.2 PASS                                          | Blok 5            | Realny DRAFT runtime-v1, exact published definition, rozdział dat i wiele kart; pełny lifecycle/XLSX pozostają BRAK_API. |
-| T.1..T.6 | testy przekrojowe              | CZĘŚCIOWO            | bieżący commit E.0 | T.1 przed 11/11; T.2 4/4 PASS                  | PASS                                                      | —                 | T.3–T.6 pozostają do wykonania.                                                                                          |
-| R.1..R.2 | rejestr/dowody                 | CZĘŚCIOWO            | —                  | —                                              | —                                                         | kontrolny         | R.1 wykonane; R.2 ograniczone do stanu STOP.                                                                             |
+| Pozycja  | Zakres                         | Status               | Commit         | Testy                                          | Dowód OFF                                                 | Zrzut     | Uwagi                                                                                                                    |
+| -------- | ------------------------------ | -------------------- | -------------- | ---------------------------------------------- | --------------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------ |
+| E.0      | flaga + mapa delty + dowód OFF | ZROBIONE_WG_DoD      | `481108c8ce`   | własne 5/5 + zastane 11/11 PASS                | PASS: obecny rejestr, brak nowej powierzchni, 0 requestów | `08`      | Jedna flaga, default OFF także demo; realny czytnik runtime-v1 przy ON.                                                  |
+| E.1      | Work Intelligence Report       | CZĘŚCIOWO / BRAK_API | `c93dc2c36b`   | własne 7/7 + T.2 5/5 PASS                      | wspólny T.2 PASS                                          | `01`–`04` | 9 sekcji, 8 KPI, drill-down i partial failure; historia/BSC/wagi pozostają BRAK_API/STOP.                                |
+| E.2      | Resources Capacity Report      | CZĘŚCIOWO / BRAK_API | `07135995b3`   | własne 4/4 + T.2 5/5 PASS                      | wspólny T.2 PASS                                          | `05`      | Realne allocations, heatmapa, Osoby/Projekt/rejestry; brak pełnego availability/progów E-O5.                             |
+| E.3      | Control Loop Report            | CZĘŚCIOWO / BRAK_API | `44d3a7607b`   | własne 4/4 + T.2 5/5 PASS                      | wspólny T.2 PASS                                          | `06`      | Sygnały/interwencje, KPI, lineage i NOT_VERIFIED; scenariusze oraz severity/SLA pozostają BRAK_API/STOP.                 |
+| E.4      | unijny generator               | CZĘŚCIOWO / BRAK_API | `b470536a91`   | własne 5/5 + strażnik listy 5/5 + T.2 5/5 PASS | wspólny T.2 PASS                                          | `07`      | Realny DRAFT runtime-v1, exact published definition, rozdział dat i wiele kart; pełny lifecycle/XLSX pozostają BRAK_API. |
+| T.1..T.6 | testy przekrojowe              | ZROBIONE             | commit końcowy | własne 25/25; strażniki 11/11                  | T.2 PASS                                                  | `01`–`08` | Daty, rekoncyliacja, epistemika, OFF/ON/error/empty i semantyka 0≠RED pokryte behawioralnie.                             |
+| R.1..R.2 | rejestr/dowody                 | ZROBIONE             | commit końcowy | kanon 404/baseline 404                         | PASS                                                      | `01`–`08` | Raport, zakres, testy i osiem docelowych zrzutów zapisane.                                                               |
 
 ## E.1 — tabele werdyktów
 
@@ -195,7 +195,7 @@ Dowód: `reportRun.ts:29-42,183-243`; `managementReports.routes.ts:36-453`.
 Co zrobiłbym, gdyby zapadła decyzja: rekomenduję runtime-v1 jako SSOT
 niezmiennej publikacji oraz management-reports jako kontrolowany pipeline
 eksportowy, ale implementacja wymaga wiążącego mapowania lifecycle.  
-Stan: **NIE ZACOMMITOWANO**.
+Stan: **ZREALIZOWANO w dozwolonym zakresie**; brakujące mapowanie lifecycle/export pozostaje `BRAK_API`.
 
 ### STOP — E-O2 zgoda i granulacja flagi
 
@@ -208,7 +208,7 @@ Dowód: instrukcja §krytyczne ograniczenie pkt 1, §1.7 E-O2 i §E.0 pkt 1.
 Co zrobiłbym po zgodzie: dodałbym dokładnie jedną umbrella flagę
 `execReportsIntelligence`, kopiując fail-closed special-case `changeSignals`,
 a następnie behawioralny test OFF z zerem wywołań nowych endpointów.  
-Stan: **NIE ZACOMMITOWANO**.
+Stan: **ZREALIZOWANO** w `481108c8ce`, wraz z rzeczywistym czytnikiem i dowodem OFF.
 
 ### STOP — E-O3 mapowania BSC
 
@@ -264,8 +264,11 @@ FACT/INFERENCE/RECOMMENDATION. Silnika AI nie wolno budować (Z14). Stan:
 
 ### Testy własne
 
-Brak — z powodu STOP E-O2 nie powstała flaga ani nowa powierzchnia, więc test
-OFF nie może uczciwie istnieć.
+`npx vitest run src/components/Execution/reports-intelligence/__tests__`:
+**5 plików, 25/25 PASS**. Obejmuje flagę OFF/ON/error, zero requestów przy OFF,
+daty i okresy, KPI↔drill-down, dane bez terminu, osobę bez taska, partial failure,
+`UNKNOWN/BRAK_API`, `NOT_VERIFIED`, niezmienny published snapshot oraz regułę
+semantyczną `0 ≠ RED/AMBER`.
 
 ### Testy istniejące
 
@@ -277,34 +280,52 @@ OFF nie może uczciwie istnieć.
 
 ### Zasięg
 
-**ZASIĘG CZĘŚCIOWY** — uruchomiono trzy obowiązkowe strażniki Bloku 0 i pełny
-skan kanonu. Nie uruchomiono katalogów konsumentów, testów realdb ani testów
-nowych raportów, ponieważ praca implementacyjna zatrzymała się na E-O2.
+**ZASIĘG PEŁNY DLA DOZWOLONEGO FRONTENDU; KONSUMENCI Z ZASTANYMI AWARIAMI.**
+Własne testy 25/25, trzy strażniki 11/11 oraz komponenty Execution 18/18 i
+dwa panele 10/10 przeszły. Pełne katalogi konsumentów ujawniły niezwiązane
+awarie: `tests/unit/initiatives-execution` — oczekiwano jednego wywołania
+`['execution-case-1']`, otrzymano dodatkowo zastane `initiative-card-ui`;
+`tests/unit/execution` — 242 PASS / 4 FAIL w
+`benefitsRegisterService.test.ts` z literalnym `Unhandled dbRun SQL: INSERT
+INTO initiative_benefits (...)`. Nie zmieniano tych obszarów. Testów RealPG nie
+uruchomiono: implementacja nie zmienia serwera ani bazy i nie stawiano PG.
 
 ## Dowody zakresu i higieny
 
 - Nie zmieniono globalnej infrastruktury testowej.
 - Nie zmieniono `server/**`.
-- Nie dodano ani nie zmieniono żadnej flagi.
+- Dodano dokładnie jedną zatwierdzoną flagę `execReportsIntelligence`; czytnik
+  produkcyjny występuje w Hubie, a default jest fail-closed także dla demo.
 - Nie zmieniono `ExecutionReportsSurface.tsx` ani rejestrów pięciu powierzchni.
 - Nie zmieniono baseline kanonu.
 - Nie uruchamiano kontenera PG; listing kontenerów dnia 11 był pusty.
 - Listing dangling volumes nie był pusty (14 zastanych identyfikatorów); nie
   usunięto ich, ponieważ nie należą do tego dyżuru.
-- `df -h /`: `/dev/disk3s1s1`, 1.8 TiB, 12 GiB użyte, 11 GiB dostępne, 52%.
+- `df -h /`: `/dev/disk3s1s1`, 1.8 TiB, 12 GiB użyte, 13 GiB dostępne, 47%.
+- Addytywne wpisy `dev-render/main.tsx` i ekran fixture są wyłącznie
+  dozwolonym przez §2.11 harness-em dowodowym; nie są ścieżką produkcyjną.
 
 ## Zrzuty
 
-| #   | Ekran                                        | Motyw    | Ścieżka                                       | KONSOLA-BLEDY                                                     | SIEC-4XX5XX          |
-| --- | -------------------------------------------- | -------- | --------------------------------------------- | ----------------------------------------------------------------- | -------------------- |
-| 1   | kontrolny zastany `execution-change-signals` | domyślny | `evidence/execution-day11/block0-control.png` | harness zwrócił `OK`; Vite zgłosił zastane warningi opisane wyżej | harness zwrócił `OK` |
+| #   | Ekran                           | Motyw/stan | Ścieżka                                                | Wynik harnessu |
+| --- | ------------------------------- | ---------- | ------------------------------------------------------ | -------------- |
+| 01  | Work Intelligence               | light      | `evidence/execution-day11/01-work-light.png`           | OK             |
+| 02  | Work Intelligence               | dark       | `evidence/execution-day11/02-work-dark.png`            | OK             |
+| 03  | Work Intelligence               | empty      | `evidence/execution-day11/03-work-empty.png`           | OK             |
+| 04  | Work Intelligence               | error      | `evidence/execution-day11/04-work-error.png`           | OK             |
+| 05  | Resources Capacity              | light      | `evidence/execution-day11/05-resources.png`            | OK             |
+| 06  | Management Control Loop         | light      | `evidence/execution-day11/06-control.png`              | OK             |
+| 07  | Unified generator               | light      | `evidence/execution-day11/07-generator.png`            | OK             |
+| 08  | zastany rejestr przy fladze OFF | light      | `evidence/execution-day11/08-reports-registry-off.png` | OK             |
 
-Osiem docelowych zrzutów raportów pozostaje do wykonania po implementacji
-E.1–E.4.
+Inspekcja wizualna wykryła i usunęła semantyczny błąd zerowych KPI oznaczonych
+RED/AMBER; zrzuty `01`–`03` wygenerowano ponownie po korekcie. Wszystkie osiem
+przebiegów zakończyło się `OK`, bez wpisów `KONSOLA-BLEDY` i `SIEC-4XX5XX`.
 
 ## Gotowość
 
-Gotowe do zrzutu przez nadzorcę: **NIE**.  
-Gotowe do decyzji nadzorcy: **E-O1 i E-O2 ROZSTRZYGNIĘTE w DEC-2026-08-25-63**.
+Gotowe do zrzutu przez nadzorcę: **TAK — E.1, E.2, E.3 i E.4 w zakresie
+zaimplementowanym; flaga pozostaje domyślnie OFF.**
+E-O1 i E-O2: **ROZSTRZYGNIĘTE w DEC-2026-08-25-63**.
 Status E.0: **ZROBIONE_WG_DoD** — mapa delty, jedna flaga fail-closed, realny
 czytnik runtime-v1, behawioralny OFF/ON/error i zero requestów przy OFF.

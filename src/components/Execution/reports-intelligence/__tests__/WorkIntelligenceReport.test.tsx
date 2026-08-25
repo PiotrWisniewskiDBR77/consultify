@@ -78,9 +78,20 @@ describe('Work Intelligence report', () => {
     const undated = model.metrics.find((candidate) => candidate.id === 'undatedRisk');
 
     expect(overdue?.drilldown).toHaveLength(0);
+    expect(overdue?.severity).toBe('neutral');
     expect(undated?.drilldown).toHaveLength(1);
     expect(undated?.severity).toBe('amber');
     expect(undated?.severity).not.toBe('neutral');
+  });
+
+  it('does not label zero overdue or approaching populations as red or amber', () => {
+    const model = buildWorkReportModel([], stateDate);
+
+    expect(
+      model.metrics
+        .filter((metric) => ['overdueTasks', 'overdueDecisions', 'due7'].includes(metric.id))
+        .map((metric) => metric.severity)
+    ).toEqual(['neutral', 'neutral', 'neutral']);
   });
 
   it('renders all nine management sections in contract order from real runtime reads', async () => {

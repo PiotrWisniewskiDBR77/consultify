@@ -106,16 +106,16 @@ export function buildWorkReportModel(
         'overdueTasks',
         overdue.filter((item) => item.kind === 'TASK'),
         openItems.length,
-        'red'
+        overdue.some((item) => item.kind === 'TASK') ? 'red' : 'neutral'
       ),
       calculated(
         'overdueDecisions',
         overdue.filter((item) => item.kind === 'DECISION'),
         openItems.length,
-        'red'
+        overdue.some((item) => item.kind === 'DECISION') ? 'red' : 'neutral'
       ),
       calculated('dueToday', dueToday, openItems.length, dueToday.length ? 'amber' : 'neutral'),
-      calculated('due7', dueIn(1, 7), openItems.length, 'amber'),
+      calculated('due7', dueIn(1, 7), openItems.length, dueIn(1, 7).length ? 'amber' : 'neutral'),
       calculated('activeBlocks', blocked, openItems.length, blocked.length ? 'red' : 'neutral'),
       calculated('undatedRisk', undated, openItems.length, undated.length ? 'amber' : 'neutral'),
       {
