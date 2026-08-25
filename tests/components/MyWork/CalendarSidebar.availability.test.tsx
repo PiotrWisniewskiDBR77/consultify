@@ -77,12 +77,14 @@ describe('CalendarSidebar external source availability', () => {
         externalSourceStatus={{
           google: {
             available: false,
+            statusKey: 'pending',
             statusLabel: 'Setup in progress',
             helper: 'Google Calendar is on the governed path, but configuration or authorization is not complete yet.',
             nextStep: 'Finish configuration or authorization in Integrations.',
           },
           outlook: {
             available: false,
+            statusKey: 'reauth',
             statusLabel: 'Reauth required',
             helper: 'Outlook needs reauthorization before it returns to a trustworthy sync state.',
             nextStep: 'Start reauthorization in Integrations.',
@@ -118,11 +120,13 @@ describe('CalendarSidebar external source availability', () => {
         externalSourceStatus={{
           google: {
             available: true,
+            statusKey: 'connected',
             statusLabel: 'Active',
             helper: 'Google Calendar is ready for calendar filtering.',
           },
           outlook: {
             available: false,
+            statusKey: 'disconnected',
             statusLabel: 'Not connected',
             helper: 'Outlook does not have an active connection yet.',
             nextStep: 'Connect the source in Integrations.',
@@ -184,5 +188,60 @@ describe('CalendarSidebar external source availability', () => {
     expect(
       screen.getByText('You already have 4 items here. Consider a reschedule or a planning adjustment.')
     ).toBeInTheDocument();
+  });
+
+  // SET-INT-REC-001: the owner explicitly rejected "coming soon" copy for a
+  // not-yet-connected calendar source — it must read as an invitation to
+  // connect and offer a real "Connect" action, not a dead end.
+  it('offers a real Connect action for a disconnected source and never says "coming soon"', () => {
+    navigateMock.mockClear();
+    renderSidebar(
+      <CalendarSidebar
+        filter={{ sources: ['task'] }}
+        onFilterChange={vi.fn()}
+        currentDate={new Date('2026-03-28T00:00:00Z')}
+        onDateChange={vi.fn()}
+        externalSourceStatus={{
+          google: {
+            available: false,
+            statusKey: 'disconnected',
+            statusLabel: 'Not connected',
+            helper: 'Google Calendar is not connected yet — connect it to bring events here.',
+            nextStep: 'Connect Google Calendar in Integrations.',
+          },
+        }}
+      />
+    );
+
+    expect(screen.queryByText(/coming soon/i)).not.toBeInTheDocument();
+
+    const connectButton = screen.getByRole('button', { name: 'Connect' });
+    expect(connectButton).toBeInTheDocument();
+
+    fireEvent.click(connectButton);
+    expect(navigateMock).toHaveBeenCalledWith('/settings/integrations');
+  });
+
+  it('does not offer the Connect action for a pending/reauth/error source (it already went through a connection attempt)', () => {
+    renderSidebar(
+      <CalendarSidebar
+        filter={{ sources: ['task'] }}
+        onFilterChange={vi.fn()}
+        currentDate={new Date('2026-03-28T00:00:00Z')}
+        onDateChange={vi.fn()}
+        externalSourceStatus={{
+          google: {
+            available: false,
+            statusKey: 'reauth',
+            statusLabel: 'Reauth required',
+            helper: 'Google Calendar needs reauthorization before it returns to a trustworthy sync state.',
+            nextStep: 'Start reauthorization in Integrations.',
+          },
+        }}
+      />
+    );
+
+    expect(screen.queryByRole('button', { name: 'Connect' })).not.toBeInTheDocument();
+    expect(screen.getByText('Start reauthorization in Integrations.')).toBeInTheDocument();
   });
 });

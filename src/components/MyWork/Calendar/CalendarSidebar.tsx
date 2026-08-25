@@ -18,6 +18,13 @@ interface ExternalCalendarSourceState {
   helper: string;
   nextStep?: string | null;
   lifecycleState?: SourceLifecycleState;
+  /**
+   * Raw connection status ('connected'|'pending'|'reauth'|'error'|'disconnected'),
+   * threaded through from CalendarView.buildExternalSourceState. lifecycleState
+   * above is never actually populated by CalendarView, so this is the only
+   * reliable signal for "this source has never been connected" (SET-INT-REC-001).
+   */
+  statusKey?: 'connected' | 'pending' | 'reauth' | 'error' | 'disconnected';
 }
 
 interface CalendarWorkloadSummary {
@@ -224,16 +231,33 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
                     : lifecycleInfo.variant
                 : 'info';
 
+              // SET-INT-REC-001: the disconnected/not-yet-connected state must
+              // offer a real "Connect" action, not just copy suggesting one.
+              // Pending/reauth/error already went through a connection attempt
+              // and need a different next step, so only 'disconnected' (or an
+              // unrecognized/missing status, defensively) gets the CTA.
+              const isDisconnected = !state.statusKey || state.statusKey === 'disconnected';
+
               return (
                 <Callout
                   key={source}
                   variant={variant as 'info' | 'warning' | 'critical' | 'success'}
                   compact
                   title={`${isPolish ? SOURCE_LABELS[source].pl : SOURCE_LABELS[source].en}: ${lifecycleInfo ? lifecycleInfo.label : state.statusLabel}`}
+                  action={
+                    isDisconnected
+                      ? {
+                          label: t('myWork.calendarView.connectCta', 'Connect'),
+                          onClick: () => navigate('/settings/integrations'),
+                        }
+                      : undefined
+                  }
                 >
                   <div>{state.helper}</div>
                   {recoveryHint ? <div className="mt-1 text-[10px]">{recoveryHint}</div> : null}
-                  {state.nextStep ? <div className="mt-1">{state.nextStep}</div> : null}
+                  {!isDisconnected && state.nextStep ? (
+                    <div className="mt-1">{state.nextStep}</div>
+                  ) : null}
                 </Callout>
               );
             })}
