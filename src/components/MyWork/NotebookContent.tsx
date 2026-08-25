@@ -1002,6 +1002,8 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   // Bumped whenever this note's link graph changes, to refresh the backlinks bar.
   const [backlinksRefresh, setBacklinksRefresh] = useState(0);
   const editorContainerRef = useRef<HTMLDivElement>(null);
+  const [blockGutterTop, setBlockGutterTop] = useState(0);
+
   const notebookRailToggleRef = useRef<HTMLButtonElement>(null);
 
   // Inline-image upload bridge — set after the upload helper is defined so the
@@ -1245,6 +1247,24 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       }
     },
   });
+
+  useEffect(() => {
+    if (!editor) return;
+    const update = () => {
+      const container = editorContainerRef.current;
+      if (!container) return;
+      const caret = editor.view.coordsAtPos(editor.state.selection.from);
+      const bounds = container.getBoundingClientRect();
+      setBlockGutterTop(Math.max(8, caret.top - bounds.top + container.scrollTop));
+    };
+    update();
+    editor.on('selectionUpdate', update);
+    editor.on('focus', update);
+    return () => {
+      editor.off('selectionUpdate', update);
+      editor.off('focus', update);
+    };
+  }, [editor]);
 
   // Sync editor when switching pages or when the same page gets fresher server content.
   useEffect(() => {
@@ -3504,6 +3524,52 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                     }
                   }}
                 >
+                  {editor ? (
+                    <div
+                      data-testid="notebook-block-gutter"
+                      className="group absolute left-1 z-20 flex -translate-y-1/2 gap-0.5 opacity-0 transition-opacity hover:opacity-100 focus-within:opacity-100"
+                      style={{ top: blockGutterTop }}
+                    >
+                      <button
+                        type="button"
+                        aria-label={t('notebook.blockGutter.actions', 'Block actions')}
+                        className="rounded border border-c-border-subtle bg-c-surface p-1 text-c-text-secondary hover:bg-c-surface-raised focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                        onClick={(event) => {
+                          const rect = event.currentTarget.getBoundingClientRect();
+                          setSlashState({
+                            open: true,
+                            query: '',
+                            triggerPos: editor.state.selection.from,
+                            coords: { top: rect.bottom + 4, left: rect.left },
+                            mode: 'context',
+                          });
+                        }}
+                      >
+                        ⠿
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={t('notebook.blockGutter.insertBelow', 'Insert block below')}
+                        className="rounded border border-c-border-subtle bg-c-surface p-1 text-c-text-secondary hover:bg-c-surface-raised focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                        onClick={(event) => {
+                          const rect = event.currentTarget.getBoundingClientRect();
+                          const $from = editor.state.selection.$from;
+                          const insertPos =
+                            $from.depth > 0 ? $from.after(1) : editor.state.doc.content.size;
+                          editor.commands.setTextSelection(insertPos);
+                          setSlashState({
+                            open: true,
+                            query: '',
+                            triggerPos: insertPos,
+                            coords: { top: rect.bottom + 4, left: rect.left },
+                            mode: 'insert',
+                          });
+                        }}
+                      >
+                        +
+                      </button>
+                    </div>
+                  ) : null}
                   <div className="mx-auto max-w-3xl px-6 py-8">
                     {/* Hidden file input for the cover image. */}
                     <input
