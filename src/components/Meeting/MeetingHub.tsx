@@ -38,6 +38,7 @@ import {
 import { StandardModuleBar } from '@/components/standard/StandardModuleBar';
 import { ErrorState, LoadingState } from '@/components/ui/primitives';
 import { StatusChip } from '@/components/ui/primitives/chips';
+import { ROUTES } from '@/routes/routeConfig';
 import { Api, type GovernedMeetingNoteDto } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -69,7 +70,7 @@ export interface MeetingItem {
 export const MeetingHub: React.FC = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const isPolish = i18n.language?.startsWith('pl');
   const currentUser = useAppStore((state) => state.currentUser);
   const canApproveMeetingNotes = ['OWNER', 'ADMIN', 'SUPERADMIN'].includes(
@@ -257,28 +258,29 @@ export const MeetingHub: React.FC = () => {
     };
   }, [briefingMeeting?.id, operatorBriefReloadKey]);
 
+  /**
+   * DEC-2026-08-24-07 (OWNER_DECISION_LEDGER): "opening" a meeting now
+   * navigates to the canonical object route (`/meetings/:meetingId` —
+   * `MeetingObjectPage.tsx`) instead of appending `?meetingId=` and
+   * expanding an inline document view in place. The `openDocuments` /
+   * `activeDocumentId` document-tab state (and the `activeMeeting ?
+   * <MeetingDetailView .../>` branch below) is intentionally left wired for
+   * now — it no longer gets populated by this function, so that branch is
+   * dormant, not deleted, pending the stage-2 artifact pass.
+   */
   const openMeetingDocument = (row: MeetingItem) => {
-    setSelectedId(row.id);
-    const doc = {
-      id: row.id,
-      type: 'report' as const,
-      subType: 'meeting',
-      name: row.title,
-      status: 'DRAFT' as const,
-    };
-    setOpenDocuments((prev) => (prev.some((item) => item.id === row.id) ? prev : [...prev, doc]));
-    setActiveDocumentId(row.id);
-    const next = new URLSearchParams(searchParams);
-    next.set('meetingId', row.id);
-    setSearchParams(next, { replace: true });
+    navigate(`${ROUTES.MEETINGS.ROOT}/${encodeURIComponent(row.id)}`);
   };
 
+  // Backward compatibility (DEC-2026-08-24-07): `/meeting?meetingId=X` is
+  // rewritten by AppRoutes to `/meetings/:meetingId` before it ever reaches
+  // this component, but a bookmark/integration hitting `/meetings?meetingId=X`
+  // directly still lands here — forward it to the canonical object route too.
   const deepLinkMeetingId = searchParams.get('meetingId');
   useEffect(() => {
-    if (!deepLinkMeetingId || activeDocumentId === deepLinkMeetingId) return;
-    const meeting = meetings.find((item) => item.id === deepLinkMeetingId);
-    if (meeting) openMeetingDocument(meeting);
-  }, [activeDocumentId, deepLinkMeetingId, meetings]);
+    if (!deepLinkMeetingId) return;
+    navigate(`${ROUTES.MEETINGS.ROOT}/${encodeURIComponent(deepLinkMeetingId)}`, { replace: true });
+  }, [deepLinkMeetingId, navigate]);
 
   const tabs = useMemo(
     () => [
@@ -1902,7 +1904,7 @@ function splitLines(value: string): string[] {
     .filter(Boolean);
 }
 
-function formatDateTime(value: string, isPolish: boolean): string {
+export function formatDateTime(value: string, isPolish: boolean): string {
   if (!value) return '—';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
