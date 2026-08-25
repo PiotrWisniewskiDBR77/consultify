@@ -105,6 +105,54 @@ describe('calendar event and meeting behavior', () => {
     expect(res.body.events).toEqual([]);
   });
 
+  // FIX-13 (Day 3 layer-2 acceptance, P0): a live-runtime pass found that
+  // POST-created calendar_events never reappeared after a reload — the
+  // unified GET route had an `if (requestedSources.includes('event'))`
+  // branch, but 'event' was missing from the DEFAULT source list used
+  // whenever the client omits `?sources=` (the common real-world path, see
+  // src/services/api.ts getMyWorkCalendarUnified()'s V8-detour fallback and
+  // src/components/MyWork/Calendar/useCalendarData.ts's ALL_SOURCES — both
+  // fixed alongside this route). These two cases prove the regression is
+  // closed for both the row owner and a non-creator attendee.
+  it.each([
+    ['owner', { id: 'event-1', owner_id: USER, attendees_json: '[]', visibility: 'private' }],
+    [
+      'attendee (not creator)',
+      { id: 'event-2', owner_id: 'other-user', attendees_json: `["${USER}"]`, visibility: 'private' },
+    ],
+  ])(
+    'includes a real calendar_events row for its %s with no `sources` query param at all',
+    async (_label, row) => {
+      mockQueryAll.mockImplementation(async (sql: string, params: unknown[]) => {
+        if (!sql.includes('FROM calendar_events')) return [];
+        expect(sql).toContain('e.organization_id = ?');
+        expect(sql).toContain("e.owner_id = ? OR e.attendees_json LIKE ? OR e.visibility = 'org'");
+        expect(params.slice(0, 3)).toEqual([ORG, USER, `%"${USER}"%`]);
+        return [
+          {
+            ...row,
+            title: 'Client kickoff',
+            start_at: '2026-08-25T09:00:00Z',
+            end_at: '2026-08-25T10:00:00Z',
+            all_day: 0,
+            status: 'confirmed',
+          },
+        ];
+      });
+      const res = await request(createApp())
+        .get('/api/my-work/calendar/unified')
+        // Deliberately no `sources` param — this is the path the frontend
+        // actually takes when nothing is filtered out.
+        .query({ start: '2026-08-25', end: '2026-08-26' });
+      expect(res.status).toBe(200);
+      expect(res.body.events).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ source: 'event', title: 'Client kickoff' }),
+        ])
+      );
+    }
+  );
+
   it('rejects malformed timestamps on owner update without writing', async () => {
     mockQueryOne.mockResolvedValue({
       id: 'event-1', owner_id: USER, start_at: '2026-08-25T09:00:00Z',

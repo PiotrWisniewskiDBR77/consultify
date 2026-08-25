@@ -13,7 +13,14 @@ interface UseCalendarDataReturn {
   refetch: () => void;
 }
 
+// FIX-13 (Day 3 layer-2 acceptance, P0): 'event' (own calendar_events, via
+// POST /api/my-work/calendar/events) was never in the default source list, so
+// the unfiltered read never asked the server for it and no own event survived
+// a reload. Server-side default fixed too (server/src/routes/my-work/
+// calendar.routes.ts) — both defaults must agree since Api.getMyWorkCalendarUnified
+// omits the `sources` query param entirely when nothing is filtered out.
 const ALL_SOURCES: CalendarEventSource[] = [
+  'event',
   'task',
   'initiative',
   'decision',

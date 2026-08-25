@@ -138,7 +138,14 @@ router.get(
           .split(',')
           .map((s) => s.trim().toLowerCase())
           .filter(Boolean)
-      : ['task', 'initiative', 'decision', 'outlook', 'google', 'consultify'];
+      : // FIX-13 (Day 3 layer-2 acceptance, P0): 'event' was missing from the default
+        // source list. POST writes to `calendar_events` (confirmed in Postgres) but a
+        // caller that omits `sources` — the common case, see src/services/api.ts
+        // getMyWorkCalendarUnified()'s V8-detour fallback — got tasks/initiatives/
+        // decisions only; a full reload silently dropped every own-calendar event and
+        // layer counters read 0. The 'event' branch below already existed; it just
+        // never ran by default.
+        ['task', 'initiative', 'decision', 'event', 'outlook', 'google', 'consultify'];
 
     const projectId = req.query.projectId ? String(req.query.projectId).trim() : '';
 
