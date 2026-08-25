@@ -118,6 +118,17 @@ const stableAppStoreReturn = {
   // NotebookContent.tsx. The sibling manual-gate mock omits this field
   // entirely (it doesn't need it); this suite does.
   currentUser: stableCurrentUser,
+  // L-03 (Consolidated right rail, see NotebookRightRail.ownerContract.test.ts):
+  // save-status, owner, and visibility — asserted by this suite via
+  // getByTestId('notebook-save-state') — moved off the old inline strip and
+  // into NotebookRightRail's "Work" tab. NotebookRightRail early-returns null
+  // unless `open` is true, so the mock previously omitting these store fields
+  // (all undefined/falsy) meant the rail — and everything this suite checks —
+  // never rendered at all. Default it open on the Work tab.
+  notebookRailOpen: true,
+  notebookRailTab: 'work' as const,
+  setNotebookRailOpen: vi.fn(),
+  setNotebookRailTab: vi.fn(),
 };
 vi.mock('@/store/useAppStore', () => ({
   useAppStore: () => stableAppStoreReturn,
@@ -424,7 +435,7 @@ describe('NotebookContent — MW-08 UX acceptance', () => {
         content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Edited body' }] }],
       });
 
-      const { getByTestId, getByRole } = renderWithRouter(<NotebookContent searchQuery="" />);
+      const { getByTestId, queryByText } = renderWithRouter(<NotebookContent searchQuery="" />);
 
       await vi.waitFor(() => {
         expect(apiMock.getNotebookPages).toHaveBeenCalled();
@@ -444,9 +455,20 @@ describe('NotebookContent — MW-08 UX acceptance', () => {
       const saveStateEl = getByTestId('notebook-save-state');
       expect(saveStateEl.textContent).toContain('Save failed');
       expect(saveStateEl.textContent).not.toContain('Saved');
-      // A generic error must never be confused with a conflict — no banner,
-      // no Reload/Save-mine-anyway (those are conflict-only recovery actions).
-      expect(() => getByRole('alert')).toThrow();
+      // A generic error must never be confused with a conflict — no
+      // Reload/Save-mine-anyway (those are conflict-only recovery actions).
+      // NOTE: this used to also assert `getByRole('alert')` throws (no alert
+      // role anywhere), which held back when the conflict banner was the
+      // only thing that could ever set role="alert". NotebookRightRail.tsx
+      // now legitimately gives the save-status element itself
+      // `role="alert"` on saveState === 'error' too (a11y: a real save
+      // failure is announce-worthy) — a second, correct use of the role,
+      // not a regression — so a blanket "no alert" check would now fail on
+      // the very save-failed banner this test is asserting exists. Scoped
+      // the check to what actually distinguishes "conflict" from "generic
+      // error": the conflict-only recovery actions.
+      expect(queryByText('Reload')).toBeNull();
+      expect(queryByText('Save mine anyway')).toBeNull();
 
       // Retry: the next successful save must clear the error state, proving
       // 'error' isn't a sticky dead-end the user can't recover from.
@@ -623,6 +645,24 @@ describe('NotebookContent — MW-08 UX acceptance', () => {
     }
   });
 
+  // PRODUCT_DO_DECYZJA (left RED, documented — see FAZA 2 report): this
+  // test's premise (owner shown as an honest "You" / "Another user" pair)
+  // does not match current NotebookRightRail.tsx behavior. ownerLabel is
+  // only ever populated by NotebookContent.tsx for the CURRENT user's own
+  // pages (`activePage?.ownerUserId === currentUserId ? currentUser?.displayName
+  // ... : undefined`); for a foreign page it is always undefined, and the
+  // rail falls back to a generic "Owner identity unavailable" /
+  // "Owner not assigned" message that never signals "someone else owns
+  // this". The two real states (no owner data at all vs. a different real
+  // owner) collapse into the same generic copy. Confirmed by querying the
+  // real element (added `data-testid="notebook-owner-state"` to
+  // NotebookRightRail.tsx for this) — it never contains "Another user".
+  // Needs an owner call: either surface a real distinguishing signal (which
+  // may mean exposing another user's display name — a scope/privacy
+  // question) or accept the generic copy and update this test's intent.
+  // Only the target testid was corrected (was pointed at the wrong element,
+  // 'notebook-save-state', reused from a since-consolidated single strip);
+  // the assertions are intentionally left as the product's original bar.
   it('shows the owner as You for your own page and Another user for someone else\'s', async () => {
     apiMock.getNotebookPages.mockResolvedValue([
       makePage({ id: 'note-mine', title: 'Mine', ownerUserId: 'user-1' }),
@@ -639,7 +679,7 @@ describe('NotebookContent — MW-08 UX acceptance', () => {
     // which matches the mocked currentUser.id) — NotebookContent.tsx
     // fetchPages: setActiveId((prev) => prev || arr?.[0]?.id || null).
     await waitFor(() => {
-      expect(getByTestId('notebook-save-state').textContent).toContain('You');
+      expect(getByTestId('notebook-owner-state').textContent).toContain('You');
     });
 
     await act(async () => {
@@ -647,17 +687,30 @@ describe('NotebookContent — MW-08 UX acceptance', () => {
     });
 
     await waitFor(() => {
-      expect(getByTestId('notebook-save-state').textContent).toContain('Another user');
+      expect(getByTestId('notebook-owner-state').textContent).toContain('Another user');
     });
   });
 
-  it('shows Private vs Shared with project visibility honestly', async () => {
+  // L-03 (Consolidated right rail): the old inline status strip showed one
+  // dynamic prose string ("Private" / "Shared with project"). The current,
+  // accepted rail design (NotebookRightRail.ownerContract.test.ts locks in
+  // its structure) instead renders a Private/Project TOGGLE BUTTON PAIR —
+  // both labels ("Private", "Project") are always present in the DOM; only
+  // aria-pressed changes with the active page's visibility. A textContent
+  // substring check against a container can never distinguish that (both
+  // words are always there), so this test's original assertion technique
+  // was structurally incompatible with the new UI, not just using stale
+  // copy. Rewritten to assert the real signal: which button carries
+  // aria-pressed="true" for the active page. The underlying capability
+  // (visibility read + toggle) is unchanged and still verified elsewhere by
+  // 'toggles visibility' (M04) style tests.
+  it('shows Private vs Project visibility honestly via aria-pressed', async () => {
     apiMock.getNotebookPages.mockResolvedValue([
       makePage({ id: 'note-private', title: 'Private note', visibility: 'private' }),
-      makePage({ id: 'note-shared', title: 'Shared note', visibility: 'project' }),
+      makePage({ id: 'note-shared', title: 'Shared note', visibility: 'project', projectId: 'proj-1' }),
     ]);
 
-    const { getByTestId, getByText } = renderWithRouter(<NotebookContent searchQuery="" />);
+    const { getByRole, getByText } = renderWithRouter(<NotebookContent searchQuery="" />);
 
     await waitFor(() => {
       expect(apiMock.getNotebookPages).toHaveBeenCalled();
@@ -665,7 +718,8 @@ describe('NotebookContent — MW-08 UX acceptance', () => {
 
     // Auto-select lands on 'note-private' first.
     await waitFor(() => {
-      expect(getByTestId('notebook-save-state').textContent).toContain('Private');
+      expect(getByRole('button', { name: 'Private' })).toHaveAttribute('aria-pressed', 'true');
+      expect(getByRole('button', { name: 'Project' })).toHaveAttribute('aria-pressed', 'false');
     });
 
     await act(async () => {
@@ -673,7 +727,8 @@ describe('NotebookContent — MW-08 UX acceptance', () => {
     });
 
     await waitFor(() => {
-      expect(getByTestId('notebook-save-state').textContent).toContain('Shared with project');
+      expect(getByRole('button', { name: 'Private' })).toHaveAttribute('aria-pressed', 'false');
+      expect(getByRole('button', { name: 'Project' })).toHaveAttribute('aria-pressed', 'true');
     });
   });
 

@@ -209,7 +209,7 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
                 {t('notebook.rightRail.saveStatus', 'Save status')}
               </dt>
               <dd className="mt-2 flex items-center justify-between gap-3 text-c-text">
-                <span role={saveState === 'error' ? 'alert' : 'status'}>
+                <span data-testid="notebook-save-state" role={saveState === 'error' ? 'alert' : 'status'}>
                   {saveState === 'saving' && (
                     <span className="inline-flex items-center gap-1.5">
                       <Loader2 size={12} className="animate-spin" aria-hidden="true" />
@@ -293,7 +293,7 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
                 <UserRound size={13} aria-hidden="true" />
                 {t('notebook.rightRail.owner', 'Owner')}
               </dt>
-              <dd className="mt-1 text-c-text">
+              <dd data-testid="notebook-owner-state" className="mt-1 text-c-text">
                 {ownerLabel ||
                   (activePage.ownerUserId
                     ? t('notebook.rightRail.ownerUnavailable', 'Owner identity unavailable')
