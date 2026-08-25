@@ -84,7 +84,13 @@ export interface Distribution {
 export class InterviewDistributionError extends Error {
   constructor(
     message: string,
-    public readonly code: 'INVITE_NOT_FOUND' | 'INVITE_EXPIRED' | 'INVITE_REVOKED' | 'INVALID_EXPIRY',
+    public readonly code:
+      | 'INVITE_NOT_FOUND'
+      | 'INVITE_EXPIRED'
+      | 'INVITE_REVOKED'
+      | 'INVALID_EXPIRY'
+      | 'SESSION_NOT_FOUND'
+      | 'INITIATIVE_NOT_FOUND',
     public readonly statusCode: number
   ) {
     super(message);
@@ -140,6 +146,34 @@ class InterviewEnterpriseService {
     return this.db;
   }
 
+  /**
+   * SECURITY (cross-org tenant fix — M03 Interview V4): bind a caller-supplied
+   * `sessionId` to the caller's org BEFORE writing anything that references it.
+   *
+   * The child-row INSERTs below all stamp the caller's own `organization_id`, so
+   * they look tenant-safe at a glance — but `session_id` came straight off the
+   * URL and was never checked. A caller could therefore graft segments, quotas,
+   * reminder schedules, diagnostics snapshots and findings onto ANOTHER tenant's
+   * interview session. The rows are then invisible to their real owner (every
+   * read filters by organization_id) while still counting in that session's
+   * quota/reminder machinery — silent cross-tenant corruption plus confirmation
+   * that a probed session id exists.
+   *
+   * `createDistribution` already did this check inline; this is the same check,
+   * named, so every session-scoped write shares it. 404 (not 403) on purpose:
+   * "not found in your org" must be indistinguishable from "does not exist", or
+   * the error code itself becomes the enumeration oracle.
+   */
+  private async assertSessionInOrg(orgId: string, sessionId: string): Promise<void> {
+    const session = await queryHelpers.queryOne<{ id: string }>(
+      `SELECT id FROM interview_sessions WHERE id = ? AND organization_id = ?`,
+      [sessionId, orgId]
+    );
+    if (!session) {
+      throw new InterviewDistributionError('Interview session not found', 'SESSION_NOT_FOUND', 404);
+    }
+  }
+
   // ──────────────────────────────────────────────
   // V4-INTV-01: Segments + Quotas
   // ──────────────────────────────────────────────
@@ -149,6 +183,7 @@ class InterviewEnterpriseService {
     sessionId: string,
     data: { segmentName: string; criteria: Record<string, unknown> }
   ): Promise<RespondentSegment> {
+    await this.assertSessionInOrg(orgId, sessionId);
     const id = uuidv4();
     await queryHelpers.queryRun(
       `INSERT INTO interview_respondent_segments (id, organization_id, session_id, segment_name, criteria)
@@ -184,6 +219,22 @@ class InterviewEnterpriseService {
     sessionId: string,
     data: { segmentId?: string; targetCount: number }
   ): Promise<{ id: string; targetCount: number; currentCount: number; status: string }> {
+    await this.assertSessionInOrg(orgId, sessionId);
+    if (data.segmentId) {
+      // A quota may point at a segment; that segment must also be ours, else the
+      // quota silently references another tenant's cohort.
+      const segment = await queryHelpers.queryOne<{ id: string }>(
+        `SELECT id FROM interview_respondent_segments WHERE id = ? AND organization_id = ? AND session_id = ?`,
+        [data.segmentId, orgId, sessionId]
+      );
+      if (!segment) {
+        throw new InterviewDistributionError(
+          'Respondent segment not found',
+          'SESSION_NOT_FOUND',
+          404
+        );
+      }
+    }
     const id = uuidv4();
     await queryHelpers.queryRun(
       `INSERT INTO interview_quotas (id, organization_id, session_id, segment_id, target_count)
@@ -367,6 +418,7 @@ class InterviewEnterpriseService {
     sessionId: string,
     data: { reminderType?: string; sendAfterHours?: number; maxReminders?: number }
   ): Promise<{ id: string }> {
+    await this.assertSessionInOrg(orgId, sessionId);
     const id = uuidv4();
     await queryHelpers.queryRun(
       `INSERT INTO interview_reminder_schedules (id, organization_id, session_id, reminder_type, send_after_hours, max_reminders)
@@ -453,6 +505,7 @@ class InterviewEnterpriseService {
       generatedBy?: string;
     }
   ): Promise<DiagnosticsSnapshot> {
+    await this.assertSessionInOrg(orgId, sessionId);
     const id = uuidv4();
     const now = new Date().toISOString();
     await queryHelpers.queryRun(
@@ -520,6 +573,7 @@ class InterviewEnterpriseService {
       evidenceRefs?: string[];
     }
   ): Promise<Finding> {
+    await this.assertSessionInOrg(orgId, sessionId);
     const id = uuidv4();
     const now = new Date().toISOString();
     await queryHelpers.queryRun(
@@ -575,6 +629,22 @@ class InterviewEnterpriseService {
     findingId: string,
     initiativeId: string
   ): Promise<boolean> {
+    // SECURITY (cross-org tenant fix — M03 Interview V4): `initiativeId` arrives
+    // from the request body and used to be written into `interview_findings`
+    // unverified. The UPDATE itself is org-scoped, so no foreign ROW is written —
+    // but the value stored is not. A caller could bind their own finding to a
+    // FOREIGN org's initiative id, which (a) is a probe: 200 vs 404 tells them
+    // whether that id exists, and (b) plants a cross-tenant pointer that every
+    // downstream traceability read (finding → initiative) then follows out of
+    // the tenant. Same doctrine as `interview-insights.routes.ts`, which already
+    // pre-checks `target_initiative_id` against `initiatives.organization_id`.
+    const initiative = await queryHelpers.queryOne<{ id: string }>(
+      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+      [initiativeId, orgId]
+    );
+    if (!initiative) {
+      throw new InterviewDistributionError('Initiative not found', 'INITIATIVE_NOT_FOUND', 404);
+    }
     const result = await queryHelpers.queryRun(
       `UPDATE interview_findings SET status = 'initiative_created', initiative_id = ?, updated_at = ? WHERE id = ? AND organization_id = ?`,
       [initiativeId, new Date().toISOString(), findingId, orgId]
