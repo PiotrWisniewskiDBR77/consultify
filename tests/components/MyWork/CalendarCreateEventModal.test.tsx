@@ -86,6 +86,16 @@ vi.mock('../../../src/services/api', () => ({
   },
 }));
 
+// DEC-2026-08-25-50 flipped ff_myWorkCalendarV2 to default ON, but this
+// suite specifically exercises the pre-V2 task-backed creation flow
+// (implicit entryType, no attendees/time fields) — coverage the V2-specific
+// suites (CalendarCreateEventModal.v2.test.tsx, .attendees.test.tsx) don't
+// duplicate. Pin it to the legacy path explicitly rather than letting it
+// silently ride the new default.
+vi.mock('../../../src/utils/myWorkCalendarV2Flag', () => ({
+  isMyWorkCalendarV2Enabled: () => false,
+}));
+
 import { CalendarCreateEventModal } from '../../../src/components/MyWork/Calendar/CalendarCreateEventModal';
 
 describe('CalendarCreateEventModal', () => {
