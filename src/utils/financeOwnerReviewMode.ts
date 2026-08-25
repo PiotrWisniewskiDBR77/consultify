@@ -13,6 +13,7 @@ function enabled(value: string | null | undefined): boolean | null {
 /** Explicit, never hostname-derived, canonical-only Finance review profile. */
 export function isFinanceOwnerReviewModeEnabled(): boolean {
   if (typeof window !== 'undefined') {
+    if (isPublicProductionHost(window.location?.hostname ?? '')) return false;
     try {
       const query = enabled(new URLSearchParams(window.location.search).get(QUERY_KEY));
       if (query !== null) {
@@ -38,3 +39,4 @@ export const FINANCE_OWNER_REVIEW_FLAG = {
   localStorage: STORAGE_KEY,
   env: ENV_KEY,
 } as const;
+import { isPublicProductionHost } from './publicProduction';

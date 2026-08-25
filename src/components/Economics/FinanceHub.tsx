@@ -124,9 +124,11 @@ import {
 import { EmptyStateInline } from '../shared/NModeBlocks/EmptyStateInline';
 import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { FinanceDegradedBanner } from './FinanceDegradedBanner';
+import { isFinanceOwnerSampleDataEnabled } from './financeOwnerSampleData';
 import { getFinanceErrorMessage } from './financeErrorMap';
 import { FinanceLanePanel } from './FinanceLanePanel';
 import { FinanceLaneStrip } from './FinanceLaneStrip';
+import { FinanceSampleDataBanner } from './FinanceSampleDataBanner';
 import { buildFinanceTeresaPrompt } from './financeModelLabels';
 import { useFinancePreview } from './FinancePreviewPanel';
 import {
@@ -3840,6 +3842,7 @@ export const FinanceHub: React.FC = () => {
           statementsBulkCommandRowContent ?? financeBulkCommandRowContent ?? commandRowContent
         }
       >
+        <FinanceSampleDataBanner enabled={isFinanceOwnerSampleDataEnabled()} />
         {isFinanceRuntimeV8 && (
           <FinanceDegradedBanner
             degradedAlerts={lane.degradedAlerts}

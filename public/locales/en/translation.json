@@ -19412,6 +19412,9 @@
     "deckDiffSkippedLocked": "· skipped {{count}} locked slide(s): {{numbers}}"
   },
   "finance": {
+    "sampleData": {
+      "banner": "Sample data — not from the database"
+    },
     "resolver": {
       "backToList": "Back to list",
       "errors": {

@@ -19941,6 +19941,9 @@
     }
   },
   "finance": {
+    "sampleData": {
+      "banner": "Dane przykładowe — nie z bazy"
+    },
     "resolver": {
       "backToList": "Wróć do listy",
       "errors": {

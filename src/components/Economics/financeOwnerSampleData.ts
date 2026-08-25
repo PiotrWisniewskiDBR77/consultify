@@ -2,6 +2,7 @@
  * Deterministic, explicitly requested owner-review data for the Finance registries.
  * It is enabled only by `sampleData=finance-vnext` and never impersonates DB readback.
  */
+import { isPublicProductionHost } from '@/utils/publicProduction';
 
 export const FINANCE_OWNER_SAMPLE_STATEMENTS = [
   {
@@ -23,9 +24,42 @@ export const FINANCE_OWNER_SAMPLE_STATEMENTS = [
     source_statement_count: 3,
     updated_at: '2026-08-23T08:00:00.000Z',
     statements: [
-      { id: 'sample-pl', statement_type: 'P&L', status: 'approved', readiness_status: 'ready', readiness_score: 100, validation_status: 'approved', mapped_line_count: 124, total_line_count: 124, unmapped_line_count: 0, source_file_name: 'CDP-FY2025.pdf' },
-      { id: 'sample-bs', statement_type: 'BS', status: 'approved', readiness_status: 'ready', readiness_score: 100, validation_status: 'approved', mapped_line_count: 132, total_line_count: 132, unmapped_line_count: 0, source_file_name: 'CDP-FY2025.pdf' },
-      { id: 'sample-cf', statement_type: 'CF', status: 'approved', readiness_status: 'ready', readiness_score: 100, validation_status: 'approved', mapped_line_count: 116, total_line_count: 116, unmapped_line_count: 0, source_file_name: 'CDP-FY2025.pdf' },
+      {
+        id: 'sample-pl',
+        statement_type: 'P&L',
+        status: 'approved',
+        readiness_status: 'ready',
+        readiness_score: 100,
+        validation_status: 'approved',
+        mapped_line_count: 124,
+        total_line_count: 124,
+        unmapped_line_count: 0,
+        source_file_name: 'CDP-FY2025.pdf',
+      },
+      {
+        id: 'sample-bs',
+        statement_type: 'BS',
+        status: 'approved',
+        readiness_status: 'ready',
+        readiness_score: 100,
+        validation_status: 'approved',
+        mapped_line_count: 132,
+        total_line_count: 132,
+        unmapped_line_count: 0,
+        source_file_name: 'CDP-FY2025.pdf',
+      },
+      {
+        id: 'sample-cf',
+        statement_type: 'CF',
+        status: 'approved',
+        readiness_status: 'ready',
+        readiness_score: 100,
+        validation_status: 'approved',
+        mapped_line_count: 116,
+        total_line_count: 116,
+        unmapped_line_count: 0,
+        source_file_name: 'CDP-FY2025.pdf',
+      },
     ],
   },
 ];
@@ -96,7 +130,11 @@ export const FINANCE_OWNER_SAMPLE_VALUATIONS = [
   },
 ];
 
-export function isFinanceOwnerSampleDataEnabled(): boolean {
-  if (typeof window === 'undefined') return false;
-  return new URLSearchParams(window.location.search).get('sampleData') === 'finance-vnext';
+export function isFinanceOwnerSampleDataEnabled(
+  source: { search: string; hostname: string } | undefined = typeof window === 'undefined'
+    ? undefined
+    : { search: window.location.search, hostname: window.location?.hostname ?? '' }
+): boolean {
+  if (!source || isPublicProductionHost(source.hostname)) return false;
+  return new URLSearchParams(source.search).get('sampleData') === 'finance-vnext';
 }

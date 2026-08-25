@@ -61,16 +61,16 @@ Właściciel poza publiczną produkcją wpisuje `/results?ff_wave3ResultsOwnerRe
 
 ## Sekcja F — Finance (DEC-2026-08-24-05)
 
-| Pozycja                               | Status           | Commit                      | Testy          | Uwagi                                                     |
-| ------------------------------------- | ---------------- | --------------------------- | -------------- | --------------------------------------------------------- |
-| F.1 inwentarz FIN-REC-001             | DONE_CURRENT_SHA | `4ab7a61403`                | audyt źródłowy | Sześć gałęzi i pięć flag zamrożone poniżej                |
-| F.2 resolver FIN-REC-002              | DONE_CURRENT_SHA | `5502e8fdb2`                | 81/81 PASS     | 53-case table + OFF regression + stare testy              |
-| F.3 wspólny shell FIN-REC-003         | PARTIAL / STOP   | do uzupełnienia po commicie | 10/10 PASS     | Mechaniczne luki zamknięte; cold Back nie utrwala filtrów |
-| F.4 `financeOwnerSampleData`          | PENDING          | —                           | —              | —                                                         |
-| F.5 ochrona danych i ufności          | PENDING          | —                           | —              | —                                                         |
-| F.6 stany brzegowe FIN-REC-011        | PENDING          | —                           | —              | —                                                         |
-| F.7 testy FIN-REC-014                 | PENDING          | —                           | —              | —                                                         |
-| F.8 przygotowanie odłączenia Benefits | PENDING          | —                           | —              | —                                                         |
+| Pozycja                               | Status           | Commit                      | Testy          | Uwagi                                                         |
+| ------------------------------------- | ---------------- | --------------------------- | -------------- | ------------------------------------------------------------- |
+| F.1 inwentarz FIN-REC-001             | DONE_CURRENT_SHA | `4ab7a61403`                | audyt źródłowy | Sześć gałęzi i pięć flag zamrożone poniżej                    |
+| F.2 resolver FIN-REC-002              | DONE_CURRENT_SHA | `5502e8fdb2`                | 81/81 PASS     | 53-case table + OFF regression + stare testy                  |
+| F.3 wspólny shell FIN-REC-003         | PARTIAL / STOP   | `b284ca6e43`                | 10/10 PASS     | Mechaniczne luki zamknięte; cold Back nie utrwala filtrów     |
+| F.4 `financeOwnerSampleData`          | DONE_CURRENT_SHA | do uzupełnienia po commicie | 5/5 PASS       | Host produkcyjny fail-closed, jawny banner, licznik zamrożony |
+| F.5 ochrona danych i ufności          | PENDING          | —                           | —              | —                                                             |
+| F.6 stany brzegowe FIN-REC-011        | PENDING          | —                           | —              | —                                                             |
+| F.7 testy FIN-REC-014                 | PENDING          | —                           | —              | —                                                             |
+| F.8 przygotowanie odłączenia Benefits | PENDING          | —                           | —              | —                                                             |
 
 ### F.1 — manifest runtime i zamrożenie
 
@@ -134,6 +134,15 @@ Komponenty Benefits nie są kasowane ani odłączane w tym dyżurze.
 
 Domknięta luka mechaniczna: własne `w-[400px]` zastąpione wspólnym `PREVIEW_PANE_WIDTH`, a panel dostał `h-full`. Test kontraktowy 4/4 PASS. `check-list-canon.sh` nie wykazał nowych naruszeń.
 
+### F.4 — uczciwość owner sample data
+
+- Potwierdzone cztery tablice: statements 1, models 2, analyses 2, valuations 1; wartości, w tym `overall_confidence: 0.98`, nietknięte.
+- Potwierdzone cztery wcześniejsze wyjścia i zerowanie `loadError` w `useFinanceData.ts:123-243`.
+- `isFinanceOwnerSampleDataEnabled` i zbiorczy `isFinanceOwnerReviewModeEnabled` odmawiają na `consultify.ai` / `www.consultify.ai`.
+- Wspólny, informacyjny banner ma `data-testid="finance-sample-data-banner"` i renderuje się wyłącznie dla jawnego trybu próbki.
+- `financeOwnerSampleData.contract.test.tsx`: 5/5 PASS, w tym zamrożony denominator. Nie dodano ani nie zmieniono żadnego rekordu próbki.
+- Budżety nie mają próbki i pozostają niespójnością zastaną; nie rozszerzono mechanizmu.
+
 ## Pozycje STOP
 
 ### STOP — R.3 `canonicalCutoverMount`
@@ -159,11 +168,13 @@ Stan: zacommitowano częściowo; geometria preview i audyt gotowe.
 
 ## Znaleziska
 
-| #   | Plik:linia                                         | Co znalazłem                                                                                                  | Dlaczego nie naprawiłem                                                                                              |
-| --- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| 1   | konfiguracja Git remote `icloud-source`            | Remote wskazuje na usunięty lokalny worktree i powoduje częściowy błąd `git fetch --all --prune`.             | Naprawa konfiguracji remote jest poza Results/Finance i nie jest potrzebna do pracy na potwierdzonym lokalnym tipie. |
-| 2   | `src/components/Results/resultsOwnerReviewMode.ts` | Żywy profil odbiorowy ResultsVNext mieszka w katalogu generacji HISTORICAL.                                   | R.3 pozwala wyłącznie dodać bezpiecznik produkcyjny; relokacja wymagałaby szerszej zmiany importów.                  |
-| 3   | `tests/unit/finance/financeFallbackGating.test.ts` | Baseline katalogu Finance ma 2 czerwone testy: oczekuje `MODULE_ECONOMICS=open`, zastany kod zwraca `closed`. | Test i gating należą do globalnej nawigacji; §0.5 i Z17 zabraniają naprawy w tym dyżurze.                            |
+| #   | Plik:linia                                                       | Co znalazłem                                                                                                                       | Dlaczego nie naprawiłem                                                                                              |
+| --- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| 1   | konfiguracja Git remote `icloud-source`                          | Remote wskazuje na usunięty lokalny worktree i powoduje częściowy błąd `git fetch --all --prune`.                                  | Naprawa konfiguracji remote jest poza Results/Finance i nie jest potrzebna do pracy na potwierdzonym lokalnym tipie. |
+| 2   | `src/components/Results/resultsOwnerReviewMode.ts`               | Żywy profil odbiorowy ResultsVNext mieszka w katalogu generacji HISTORICAL.                                                        | R.3 pozwala wyłącznie dodać bezpiecznik produkcyjny; relokacja wymagałaby szerszej zmiany importów.                  |
+| 3   | `tests/unit/finance/financeFallbackGating.test.ts`               | Baseline katalogu Finance ma 2 czerwone testy: oczekuje `MODULE_ECONOMICS=open`, zastany kod zwraca `closed`.                      | Test i gating należą do globalnej nawigacji; §0.5 i Z17 zabraniają naprawy w tym dyżurze.                            |
+| 4   | `src/components/Economics/hooks/useFinanceData.ts:118`           | Budżety nie są objęte sample mode, podczas gdy cztery pozostałe listy są podmieniane.                                              | F.4 jawnie zakazuje dodania piątej tablicy próbek.                                                                   |
+| 5   | `tests/components/Economics/useFinanceData.v8-analyses.test.tsx` | Cały plik ma 4 order-dependent czerwone przypadki valuation/budget po sześciu zielonych; mocki są czyszczone, lecz nie resetowane. | §0.5 zabrania zmiany istniejącego testu lub globalnych mocków; nowy kontrakt F.4 przechodzi 5/5 samodzielnie.        |
 
 ## Korekty wobec instrukcji
 
