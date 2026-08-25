@@ -64,11 +64,6 @@ vi.mock('@/services/api', () => ({
     // every tool, including this test's Table scenario — so the mock must
     // cover it even though this suite never opens Process Flow.
     getIdeaProcessFlowCandidate: vi.fn().mockResolvedValue(null),
-    // DEC-2026-08-25-50: ff_ideaInspectorRightRail now defaults ON, so the
-    // rail's conversions-lineage effect (IdeaMapWorkspace.tsx ~L3687) runs
-    // unconditionally in this suite too — mock its real return shape
-    // ({ conversions: [] }) instead of leaving it undefined.
-    getMyIdeaConversions: vi.fn().mockResolvedValue({ conversions: [] }),
   },
   getMapVersionFromPayload: () => null,
 }));
