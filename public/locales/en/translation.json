@@ -9381,7 +9381,14 @@
       "auditReadout": "Audit readout",
       "source": "Source",
       "interviewInsight": "Interview Insight",
-      "insight": "Insight"
+      "insight": "Insight",
+      "task": "Task",
+      "decision": "Decision",
+      "notebook": "Notebook",
+      "initiativeLabel": "Initiative",
+      "report": "Report",
+      "presentation": "Presentation",
+      "teamChat": "Task list"
     },
     "financialNarrativeBlocks": {
       "financialAnalysisSizingRoi": "Financial analysis (sizing + ROI)",

@@ -8704,7 +8704,14 @@
       "auditReadout": "Readout audytu",
       "source": "Źródło",
       "interviewInsight": "Insight z wywiadu",
-      "insight": "Insight"
+      "insight": "Insight",
+      "task": "Zadanie",
+      "decision": "Decyzja",
+      "notebook": "Notatnik",
+      "initiativeLabel": "Inicjatywa",
+      "report": "Raport",
+      "presentation": "Prezentacja",
+      "teamChat": "Lista zadań"
     },
     "financialNarrativeBlocks": {
       "financialAnalysisSizingRoi": "Analiza finansowa (sizing + ROI)",

@@ -28,6 +28,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { getSourceDisplayLabel } from '@/components/Initiatives/InitiativeSourceLink';
 import { EmbeddedView } from '@/components/shared/NModeBlocks';
 import { ToolsPanelShell } from '@/components/shared/WorkspaceTools';
 import { Api } from '@/services/api';
@@ -855,11 +856,15 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
                 >
                   <div className="min-w-0">
                     <div className="text-[11px] font-medium text-slate-800 dark:text-slate-200 truncate">
-                      {bl.sourceType}
+                      {getSourceDisplayLabel(bl.sourceType, isPl)}
                     </div>
-                    <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
-                      {bl.sourceId}
-                    </div>
+                    {/* MYW-IDEAS-CORE-001: never print the raw source UUID to the
+                        owner — show when the link was created instead. */}
+                    {bl.createdAt && (
+                      <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
+                        {new Date(bl.createdAt).toLocaleDateString()}
+                      </div>
+                    )}
                   </div>
                   <button
                     onClick={() => openItem(bl.sourceType, bl.sourceId)}

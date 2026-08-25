@@ -23,7 +23,24 @@ export function getSourceDisplayLabel(sourceType: string, _isPolish = false): st
   }
   if (t === 'conclusion') return i18n.t('initiatives.initiativeSourceLink.insight');
   if (t === 'conclusion_readout') return i18n.t('initiatives.initiativeSourceLink.auditReadout');
-  return sourceType || '';
+  if (t === 'task' || t === 'task_set') return i18n.t('initiatives.initiativeSourceLink.task');
+  if (t === 'decision') return i18n.t('initiatives.initiativeSourceLink.decision');
+  if (t === 'notebook' || t === 'notebook_page') {
+    return i18n.t('initiatives.initiativeSourceLink.notebook');
+  }
+  if (t === 'initiative') return i18n.t('initiatives.initiativeSourceLink.initiativeLabel');
+  if (t === 'report') return i18n.t('initiatives.initiativeSourceLink.report');
+  if (t === 'presentation') return i18n.t('initiatives.initiativeSourceLink.presentation');
+  if (t === 'team_chat') return i18n.t('initiatives.initiativeSourceLink.teamChat');
+  // MYW-IDEAS-CORE-001: never surface a raw, unmapped source-type slug to the
+  // owner (e.g. "process_flow_candidate") — fall back to a Title Case label
+  // instead of the lowercase/underscored technical value.
+  if (!t) return '';
+  return t
+    .split(/[_\s-]+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 }
 import React from 'react';
 import { useTranslation } from 'react-i18next';
