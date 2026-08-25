@@ -1,35 +1,35 @@
 /**
- * `/meetings/:meetingId` — Meeting object card (stage 1, DEC-2026-08-24-07,
+ * `/meetings/:meetingId` — Meeting object card (DEC-2026-08-24-07,
  * OWNER_DECISION_LEDGER). Route grammar per that decision: `/meetings`
- * (list, `MeetingHub`) + `/meetings/:meetingId` (this page) +
- * `/meetings/:meetingId/minutes|decisions|notes/:noteId` (mounted onto this
- * SAME page for now — see `routeConfig.ts` `ROUTES.MEETINGS` doc comment;
- * splitting those into distinct in-page views/deep-linked tabs is stage 2's
- * job once the full artifact ships).
+ * (list, `MeetingHub`) + `/meetings/:meetingId` (this page, "Szczegóły") +
+ * `/meetings/:meetingId/minutes` ("Protokół") +
+ * `/meetings/:meetingId/decisions` ("Decyzje i działania") +
+ * `/meetings/:meetingId/notes/:noteId` (also "Protokół", scrolled/highlighted
+ * to that one note) — all four mount this SAME page, which reads the active
+ * section straight off `location.pathname` and re-navigates on tab click.
  *
  * Deliberately NOT a SPEC-A artifact shell (no `ArtifactRightPanel`, no
- * kebab, no Menu 1) — stage 1 scope is "trasy + karta obiektu": a simple,
- * honest read view over REAL meeting data so the object address is never a
- * blank page. Write actions (edit / delete / toggle status / generate AI
- * notes / approve-reject a note) and the "Operator brief" panel that
- * `MeetingHub`'s inline document view also renders stay on the list route
- * for now — carrying them over here is stage 2's job once the full artifact
- * shell lands (`docs/ui-standards/TRIADA_KANON.md` / `ARTIFACT_ANATOMY_STANDARD.md`).
+ * kebab, no Menu 1) — this is a simple, honest read view over REAL meeting
+ * data so the object address is never a blank page. There are no write
+ * actions here (edit / delete / toggle status / generate AI notes /
+ * approve-reject a note) — that is a deliberate, explicit scope cut, not an
+ * oversight: those stay on the list route's preview pane (`MeetingHub.tsx`)
+ * for now, pending the full artifact shell
+ * (`docs/ui-standards/TRIADA_KANON.md` / `ARTIFACT_ANATOMY_STANDARD.md`).
  *
- * There is no dedicated `GET /api/meeting/:id` endpoint on the backend
- * (`server/src/routes/meeting.routes.ts` only has `GET /` (list, org-scoped)
- * and `GET /:id/notes`) — this mirrors exactly what `MeetingHub` itself
- * already does to resolve a single meeting: fetch the org's full list and
- * find by id client-side. Flagged for stage 2 / nadzorca: a dedicated
- * single-meeting GET would be more efficient and would let this page return
- * a real "not found vs. no access" distinction instead of collapsing both
- * into the same honest-empty state.
+ * Backed by the dedicated `GET /api/meeting/:id` endpoint
+ * (`server/src/routes/meeting.routes.ts`) — tenant-scoped from the token,
+ * 404 on missing/other-org/non-participant. `error.status === 404` (thrown
+ * by `Api.getMeeting`, see `src/services/api.ts` `handleResponse`) drives the
+ * honest "not found" empty state below; any other failure is a retryable
+ * error, never silently collapsed into the same empty state.
  */
 import { CalendarDays, CheckSquare2, ClipboardList, FileText, MapPin, Users } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
+import { Menu3Chip } from '@/components/shared/ModuleMenu3';
 import { EmptyState } from '@/components/shared/states';
 import { ErrorState, LoadingState } from '@/components/ui/primitives';
 import { StatusChip } from '@/components/ui/primitives/chips';
@@ -37,6 +37,8 @@ import { ROUTES } from '@/routes/routeConfig';
 import { Api, type GovernedMeetingNoteDto } from '@/services/api';
 
 import { deriveMeetingLifecycle, formatDateTime, type MeetingItem } from './MeetingHub';
+
+type Section = 'details' | 'minutes' | 'decisions';
 
 function ListField({
   icon,
@@ -75,11 +77,48 @@ function noteStatusTone(status: GovernedMeetingNoteDto['status']): 'success' | '
   return 'warning';
 }
 
+/** `decisions`/`actionItems` on a governed note are `Array<{decision?}|string>`
+ * / `Array<{task?, owner?}|string>` (see `GovernedMeetingNoteDto`). Render
+ * both shapes honestly instead of assuming the object form. */
+function noteDecisionLabel(entry: GovernedMeetingNoteDto['decisions'][number]): string {
+  if (typeof entry === 'string') return entry;
+  return entry?.decision || '';
+}
+
+function noteActionLabel(entry: GovernedMeetingNoteDto['actionItems'][number]): {
+  task: string;
+  owner: string;
+} {
+  if (typeof entry === 'string') return { task: entry, owner: '' };
+  return { task: entry?.task || '', owner: entry?.owner || '' };
+}
+
+function SectionCard({
+  icon,
+  title,
+  children,
+}: {
+  icon: React.ReactNode;
+  title: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3">
+      <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-c-text-muted">
+        {icon}
+        <span>{title}</span>
+      </div>
+      {children}
+    </div>
+  );
+}
+
 export const MeetingObjectPage: React.FC = () => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
   const navigate = useNavigate();
-  const { meetingId = '' } = useParams<{ meetingId: string }>();
+  const location = useLocation();
+  const { meetingId = '', noteId = '' } = useParams<{ meetingId: string; noteId: string }>();
 
   const [meeting, setMeeting] = useState<MeetingItem | null>(null);
   const [loading, setLoading] = useState(true);
@@ -95,15 +134,19 @@ export const MeetingObjectPage: React.FC = () => {
     setLoadError(null);
     setNotFound(false);
     try {
-      const data = await (Api as any).getMeetings?.();
-      const rows: MeetingItem[] = Array.isArray(data) ? data : data?.meetings || [];
-      const found = rows.find((item) => item.id === meetingId) || null;
-      setMeeting(found);
-      setNotFound(!found);
-    } catch (error) {
+      const response = await Api.getMeeting(meetingId);
+      setMeeting((response?.meeting as MeetingItem) || null);
+    } catch (error: any) {
       console.error('Failed to load meeting:', error);
       setMeeting(null);
-      setLoadError(t('meeting.errors.loadFailed', 'Failed to load meetings'));
+      // 404 is the honest "does not exist / no access" case (server never
+      // leaks cross-tenant/non-participant with a different code) — every
+      // other status is a real, retryable failure and must say so.
+      if (error?.status === 404) {
+        setNotFound(true);
+      } else {
+        setLoadError(t('meeting.errors.loadFailed', 'Failed to load meetings'));
+      }
     } finally {
       setLoading(false);
     }
@@ -136,6 +179,24 @@ export const MeetingObjectPage: React.FC = () => {
   const goToList = () => navigate(ROUTES.MEETINGS.ROOT);
 
   const lifecycle = meeting ? deriveMeetingLifecycle(meeting) : null;
+
+  // The active section is derived straight from the URL, never local state,
+  // so it can never drift from what the address bar/back-button say —
+  // `/minutes` and `/notes/:noteId` both land on "Protokół", `/decisions` on
+  // "Decyzje i działania", anything else (the bare object route) on
+  // "Szczegóły".
+  const activeSection: Section = useMemo(() => {
+    if (location.pathname.endsWith('/minutes') || /\/notes\//.test(location.pathname)) {
+      return 'minutes';
+    }
+    if (location.pathname.endsWith('/decisions')) return 'decisions';
+    return 'details';
+  }, [location.pathname]);
+
+  const goToSection = (section: Section) => {
+    const base = `${ROUTES.MEETINGS.ROOT}/${encodeURIComponent(meetingId)}`;
+    navigate(section === 'details' ? base : `${base}/${section}`);
+  };
 
   return (
     <div className="p-4 lg:p-6" data-testid="meeting-object-page">
@@ -198,77 +259,152 @@ export const MeetingObjectPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid gap-4 p-5 lg:grid-cols-2">
-            <ListField
-              icon={<Users size={14} />}
-              label={t('meeting.attendees2', 'Attendees')}
-              items={meeting.attendees}
-            />
-            <ListField icon={<FileText size={14} />} label="Pre-read" items={meeting.preRead} />
-            <ListField icon={<ClipboardList size={14} />} label="Agenda" items={meeting.agenda} />
-            <ListField
-              icon={<CheckSquare2 size={14} />}
-              label={t('meeting.decisions2', 'Decisions')}
-              items={meeting.decisions}
-            />
-
-            <div className="lg:col-span-2 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3">
-              <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-c-text-muted">
-                <FileText size={14} />
-                <span>{t('meeting.object.minutes', 'Minutes')}</span>
-              </div>
-              {notesLoading ? (
-                <LoadingState variant="spinner" className="h-24" />
-              ) : notesError ? (
-                <ErrorState message={notesError} retry={() => void loadNotes(meeting.id)} />
-              ) : notes.length ? (
-                <div className="space-y-2">
-                  {notes.map((note) => (
-                    <div key={note.id} className="rounded-lg border border-c-border-subtle px-3 py-2">
-                      <div className="flex items-center justify-between gap-2">
-                        <StatusChip tone={noteStatusTone(note.status)} label={note.status} />
-                        {note.createdAt ? (
-                          <span className="text-xs text-c-text-muted">
-                            {formatDateTime(note.createdAt, isPolish)}
-                          </span>
-                        ) : null}
-                      </div>
-                      <div className="mt-1 text-sm text-c-text-secondary">{note.summary || '—'}</div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-sm text-c-text-muted">—</div>
-              )}
-            </div>
-
-            <div className="lg:col-span-2 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3">
-              <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-c-text-muted">
-                <CheckSquare2 size={14} />
-                <span>{t('meeting.followUps2', 'Follow-ups')}</span>
-              </div>
-              {meeting.followUps.length ? (
-                <div className="space-y-2">
-                  {meeting.followUps.map((item) => (
-                    <div key={item.id} className="w-full rounded-xl border border-c-border-subtle px-3 py-2 text-left">
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="text-sm font-medium text-c-text truncate">{item.title}</div>
-                          <div className="text-xs text-c-text-muted">{item.owner}</div>
-                        </div>
-                        <StatusChip
-                          tone={item.status === 'done' ? 'success' : 'warning'}
-                          label={item.status === 'done' ? t('meeting.done', 'Done') : t('meeting.open2', 'Open')}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-sm text-c-text-muted">—</div>
-              )}
-            </div>
+          <div className="flex items-center gap-1.5 px-5 py-2.5 border-b border-c-border-subtle overflow-x-auto no-scrollbar">
+            <Menu3Chip active={activeSection === 'details'} onClick={() => goToSection('details')}>
+              {t('meeting.object.sectionDetails', 'Szczegóły')}
+            </Menu3Chip>
+            <Menu3Chip active={activeSection === 'minutes'} onClick={() => goToSection('minutes')}>
+              {t('meeting.object.minutes', 'Protokół')}
+            </Menu3Chip>
+            <Menu3Chip active={activeSection === 'decisions'} onClick={() => goToSection('decisions')}>
+              {t('meeting.object.sectionDecisions', 'Decyzje i działania')}
+            </Menu3Chip>
           </div>
+
+          {activeSection === 'details' ? (
+            <div className="grid gap-4 p-5 lg:grid-cols-2">
+              <ListField
+                icon={<Users size={14} />}
+                label={t('meeting.attendees2', 'Attendees')}
+                items={meeting.attendees}
+              />
+              <ListField icon={<FileText size={14} />} label="Pre-read" items={meeting.preRead} />
+              <ListField
+                icon={<ClipboardList size={14} />}
+                label="Agenda"
+                items={meeting.agenda}
+              />
+            </div>
+          ) : null}
+
+          {activeSection === 'minutes' ? (
+            <div className="p-5">
+              <SectionCard icon={<FileText size={14} />} title={t('meeting.object.minutes', 'Protokół')}>
+                {notesLoading ? (
+                  <LoadingState variant="spinner" className="h-24" />
+                ) : notesError ? (
+                  <ErrorState message={notesError} retry={() => void loadNotes(meeting.id)} />
+                ) : notes.length ? (
+                  <div className="space-y-3">
+                    {notes.map((note) => {
+                      const decisions = (note.decisions || []).map(noteDecisionLabel).filter(Boolean);
+                      const actions = (note.actionItems || [])
+                        .map(noteActionLabel)
+                        .filter((item) => item.task);
+                      return (
+                        <div
+                          key={note.id}
+                          className={`rounded-lg border px-3 py-2 ${
+                            noteId && note.id === noteId
+                              ? 'border-c-focus ring-1 ring-c-focus'
+                              : 'border-c-border-subtle'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <StatusChip tone={noteStatusTone(note.status)} label={note.status} />
+                            {note.createdAt ? (
+                              <span className="text-xs text-c-text-muted">
+                                {formatDateTime(note.createdAt, isPolish)}
+                              </span>
+                            ) : null}
+                          </div>
+                          <div className="mt-1 text-sm text-c-text-secondary">{note.summary || '—'}</div>
+
+                          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                            <div>
+                              <div className="mb-1 text-[11px] uppercase tracking-wide text-c-text-muted">
+                                {t('meeting.decisions2', 'Decisions')}
+                              </div>
+                              {decisions.length ? (
+                                <ul className="space-y-1">
+                                  {decisions.map((d, idx) => (
+                                    <li key={idx} className="text-xs text-c-text-secondary">
+                                      {d}
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <div className="text-xs text-c-text-muted">—</div>
+                              )}
+                            </div>
+                            <div>
+                              <div className="mb-1 text-[11px] uppercase tracking-wide text-c-text-muted">
+                                {t('meeting.object.actionItems', 'Action items')}
+                              </div>
+                              {actions.length ? (
+                                <ul className="space-y-1">
+                                  {actions.map((a, idx) => (
+                                    <li key={idx} className="text-xs text-c-text-secondary">
+                                      {a.task}
+                                      {a.owner ? (
+                                        <span className="text-c-text-muted"> — {a.owner}</span>
+                                      ) : null}
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <div className="text-xs text-c-text-muted">—</div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-sm text-c-text-muted">—</div>
+                )}
+              </SectionCard>
+            </div>
+          ) : null}
+
+          {activeSection === 'decisions' ? (
+            <div className="grid gap-4 p-5">
+              <ListField
+                icon={<CheckSquare2 size={14} />}
+                label={t('meeting.decisions2', 'Decisions')}
+                items={meeting.decisions}
+              />
+              <SectionCard
+                icon={<CheckSquare2 size={14} />}
+                title={t('meeting.followUps2', 'Follow-ups')}
+              >
+                {meeting.followUps.length ? (
+                  <div className="space-y-2">
+                    {meeting.followUps.map((item) => (
+                      <div
+                        key={item.id}
+                        className="w-full rounded-xl border border-c-border-subtle px-3 py-2 text-left"
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="text-sm font-medium text-c-text truncate">{item.title}</div>
+                            <div className="text-xs text-c-text-muted">{item.owner}</div>
+                          </div>
+                          <StatusChip
+                            tone={item.status === 'done' ? 'success' : 'warning'}
+                            label={item.status === 'done' ? t('meeting.done', 'Done') : t('meeting.open2', 'Open')}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-sm text-c-text-muted">—</div>
+                )}
+              </SectionCard>
+            </div>
+          ) : null}
         </div>
       )}
     </div>

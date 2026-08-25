@@ -3463,6 +3463,16 @@ export const Api = {
     return handleResponse(res, 'Failed to fetch meetings');
   },
 
+  // Dedicated single-meeting GET (stage 2, DEC-2026-08-24-07): backs
+  // MeetingObjectPage.tsx. Tenant-scoped server-side from the token; 404 on
+  // missing/other-org/non-participant (never a leaking 403) — `error.status`
+  // on the thrown error is how callers distinguish "not found" from other
+  // failures.
+  getMeeting: async (meetingId: string): Promise<{ meeting: any }> => {
+    const res = await fetch(`${API_URL}/meeting/${meetingId}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch meeting');
+  },
+
   createMeeting: async (data: any): Promise<any> => {
     const res = await fetchWithRetry(`${API_URL}/meeting`, {
       method: 'POST',
