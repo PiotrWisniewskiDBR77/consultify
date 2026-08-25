@@ -11,9 +11,10 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { searchParamsMock, setSearchParamsMock } = vi.hoisted(() => ({
+const { searchParamsMock, setSearchParamsMock, navigateMock } = vi.hoisted(() => ({
   searchParamsMock: new URLSearchParams(),
   setSearchParamsMock: vi.fn(),
+  navigateMock: vi.fn(),
 }));
 
 vi.mock('react-i18next', () => ({
@@ -25,7 +26,7 @@ vi.mock('react-i18next', () => ({
 }));
 
 vi.mock('react-router-dom', () => ({
-  useNavigate: () => vi.fn(),
+  useNavigate: () => navigateMock,
   useSearchParams: () => [searchParamsMock, setSearchParamsMock],
 }));
 
@@ -80,6 +81,7 @@ describe('MeetingHub (smoke)', () => {
     decideNoteMock.mockReset();
     searchParamsMock.delete('meetingId');
     setSearchParamsMock.mockReset();
+    navigateMock.mockReset();
   });
 
   it('loads and renders meetings from the API', async () => {
@@ -111,6 +113,10 @@ describe('MeetingHub (smoke)', () => {
 
   // M21 — operator brief must degrade honestly: a real fetch failure (non-404)
   // surfaces a retryable error, NOT the same "no brief" message as a legit empty.
+  // Retry lives behind the AI hint strip's kebab ("Regenerate"), not a bare
+  // "Retry" label — that literal button belonged to the now-deleted inline
+  // MeetingDetailView, dead since the object route took over "opening" a
+  // meeting; the live retry path is StandardPreview's `ai.onRegenerate`.
   it('shows an honest error + retry when the operator brief fetch fails (500)', async () => {
     getMeetingsMock.mockResolvedValue({ meetings: [meeting] });
     const err: any = new Error('boom');
@@ -118,15 +124,21 @@ describe('MeetingHub (smoke)', () => {
     getBriefMock.mockRejectedValue(err);
     render(<MeetingHub />);
 
-    fireEvent.dblClick(await screen.findByText('Quarterly Review'));
+    fireEvent.click(await screen.findByText('Quarterly Review'));
 
     expect(await screen.findByText('Could not load the operator brief.')).toBeTruthy();
-    const retry = await screen.findByText('Retry');
-    expect(retry).toBeTruthy();
+    // Scope to the AI hint strip specifically — the preview pane also has a
+    // Details-section kebab (Copy/Export) and the table rows have their own,
+    // so an unscoped `.lucide-ellipsis-vertical` query is ambiguous.
+    const aiBlock = screen.getByText('AI', { selector: 'span' }).closest('.py-1') as HTMLElement;
+    const kebab = aiBlock.querySelector('.lucide-ellipsis-vertical')?.closest('button');
+    expect(kebab).toBeTruthy();
+    fireEvent.click(kebab as HTMLElement);
+    const regenerate = await screen.findByText('sharedComponents.previewAIHintStrip.regenerate');
 
     // Retry re-issues the request (recovers to a real brief).
     getBriefMock.mockResolvedValueOnce({ meetingId: 'meeting-1', prepSummary: 'Focus.' });
-    fireEvent.click(retry);
+    fireEvent.click(regenerate);
     await waitFor(() => expect(screen.getByText('Focus.')).toBeTruthy());
   });
 
@@ -148,10 +160,16 @@ describe('MeetingHub (smoke)', () => {
     getBriefMock.mockRejectedValue(err);
     render(<MeetingHub />);
 
-    fireEvent.dblClick(await screen.findByText('Quarterly Review'));
+    fireEvent.click(await screen.findByText('Quarterly Review'));
 
     expect(await screen.findByText('Could not load the operator brief.')).toBeTruthy();
-    expect(await screen.findByText('Retry')).toBeTruthy();
+    const aiBlock = screen.getByText('AI', { selector: 'span' }).closest('.py-1') as HTMLElement;
+    const kebab = aiBlock.querySelector('.lucide-ellipsis-vertical')?.closest('button');
+    expect(kebab).toBeTruthy();
+    fireEvent.click(kebab as HTMLElement);
+    expect(
+      await screen.findByText('sharedComponents.previewAIHintStrip.regenerate')
+    ).toBeTruthy();
     expect(screen.queryByText('meeting.noOperatorBrief')).toBeNull();
   });
 
@@ -173,7 +191,7 @@ describe('MeetingHub (smoke)', () => {
       ],
     });
     render(<MeetingHub />);
-    fireEvent.dblClick(await screen.findByText('Quarterly Review'));
+    fireEvent.click(await screen.findByText('Quarterly Review'));
     fireEvent.click(await screen.findByRole('button', { name: /meeting\.aiNotes|AI Notes/i }));
 
     expect(await screen.findByText(/Recording and automatic transcription are OFF/i)).toBeTruthy();
@@ -192,7 +210,7 @@ describe('MeetingHub (smoke)', () => {
       proposal: null,
     });
     render(<MeetingHub />);
-    fireEvent.dblClick(await screen.findByText('Quarterly Review'));
+    fireEvent.click(await screen.findByText('Quarterly Review'));
     fireEvent.click(await screen.findByRole('button', { name: /meeting\.aiNotes|AI Notes/i }));
     fireEvent.change(await screen.findByLabelText(/Meeting source text/i), {
       target: { value: 'Manual meeting text' },
@@ -236,7 +254,7 @@ describe('MeetingHub (smoke)', () => {
       receipt: { receiptId: 'receipt-1' },
     });
     render(<MeetingHub />);
-    fireEvent.dblClick(await screen.findByText('Quarterly Review'));
+    fireEvent.click(await screen.findByText('Quarterly Review'));
     fireEvent.click(await screen.findByRole('button', { name: /meeting\.aiNotes|AI Notes/i }));
     fireEvent.click(await screen.findByRole('button', { name: /Approve and materialize/i }));
 
@@ -267,7 +285,7 @@ describe('MeetingHub (smoke)', () => {
       ],
     });
     render(<MeetingHub />);
-    fireEvent.dblClick(await screen.findByText('Quarterly Review'));
+    fireEvent.click(await screen.findByText('Quarterly Review'));
     fireEvent.click(await screen.findByRole('button', { name: /meeting\.aiNotes|AI Notes/i }));
     expect(await screen.findByText(/receipt-cold-exact/)).toBeTruthy();
   });
@@ -288,7 +306,7 @@ describe('MeetingHub (smoke)', () => {
       status: 'rejected', proposalId: 'proposal-rejected', decisionReason: 'Readiness evidence is absent',
     }] });
     render(<MeetingHub />);
-    fireEvent.dblClick(await screen.findByText('Quarterly Review'));
+    fireEvent.click(await screen.findByText('Quarterly Review'));
     fireEvent.click(await screen.findByRole('button', { name: /meeting\.aiNotes|AI Notes/i }));
     expect(await screen.findByText(/Readiness evidence is absent/)).toBeTruthy();
   });
@@ -312,11 +330,25 @@ describe('MeetingHub (smoke)', () => {
     conflict.status = 409;
     decideNoteMock.mockRejectedValue(conflict);
     render(<MeetingHub />);
-    fireEvent.dblClick(await screen.findByText('Quarterly Review'));
+    fireEvent.click(await screen.findByText('Quarterly Review'));
     fireEvent.click(await screen.findByRole('button', { name: /meeting\.aiNotes|AI Notes/i }));
     fireEvent.click(await screen.findByRole('button', { name: /Approve and materialize/i }));
 
     await waitFor(() => expect(listNotesMock).toHaveBeenCalledTimes(2));
     expect(await screen.findByText('Materialized')).toBeTruthy();
+  });
+
+  // Stage 2 cleanup: the dead openDocuments/activeDocumentId document-tab
+  // state and the MeetingDetailView branch it fed are gone. This guards the
+  // one behavior that state used to gate — double-clicking a row still opens
+  // the meeting, now straight to the canonical object route (no inline view,
+  // no dependency on selection state).
+  it('double-clicking a meeting row navigates to the object route (no regression from the dead-state cleanup)', async () => {
+    getMeetingsMock.mockResolvedValue({ meetings: [meeting] });
+    render(<MeetingHub />);
+
+    fireEvent.dblClick(await screen.findByText('Quarterly Review'));
+
+    expect(navigateMock).toHaveBeenCalledWith('/meetings/meeting-1');
   });
 });
