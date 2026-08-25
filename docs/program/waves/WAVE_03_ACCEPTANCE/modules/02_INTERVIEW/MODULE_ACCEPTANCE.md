@@ -30,7 +30,7 @@ organization navigation, insufficient manager role and duplicate submission.
 | G08 | First-impression review | `PARTIAL_TABLE_SURFACES_APPROVED` | Owner reviewed the six Interview list surfaces and approved the shared table shape and upper menus. Context menus, kebab menus and correctness remain open. |
 | G09 | Guided CX journey review | `OWNER_INTAKE_COMPLETE_WITH_FINDINGS` | Owner completed the current Interview review and concluded that Interview is one of the better modules. Business substance is preserved; remaining recommendations are consolidated in `INTERVIEW_RECOMMENDATION_REGISTER.md`. |
 | G10 | Alternate-state owner review | `NOT_STARTED` | — |
-| G11 | Every owner observation/screenshot durably registered | `PASS_CURRENT_INTAKE` | Owner observations are registered continuously; supplied screenshots are SHA-256-bound in `evidence/tables-owner-review-2026-08-22/INDEX.md`. |
+| G11 | Every owner observation/screenshot durably registered | `PASS_CURRENT_INTAKE` | Owner observations are registered continuously; supplied screenshots are SHA-256-bound in `docs/program/waves/WAVE_03_ACCEPTANCE/modules/02_INTERVIEW/evidence/tables-owner-review-2026-08-22/INDEX.md`. |
 | G12 | Owner register reconciled and confirmed | `PASS_FOR_CURRENT_INTAKE` | Current owner feedback and screenshot evidence are registered. This closes intake, not implementation or module acceptance. |
 | G13 | Solution and impact analysis | `READY_FOR_PROTOTYPE_SPEC / NOT_READY_FOR_IMPLEMENTATION` | The initial three-expert brief was challenged by two independent sceptics. `CREATOR_SKEPTICAL_REVIEW.md` records the objections and SSOT resolution; `CONSULTING_CREATOR_GUIDELINES.md` now contains the revised acceptance-v1 contract. All owner findings remain mapped to `REC-INT-001..009`. Direct implementation and reuse outside Interview are blocked until the full clickable-prototype gate passes; live DB/API evidence remains explicitly pending where required. |
 | G14 | Remediation with finding-to-commit traceability | `NOT_STARTED` | — |
@@ -109,7 +109,7 @@ Preview action-footers are governed by `INT-PREV-OWN-001`. Normative sources:
 ordering, anti-duplication and button variants. Implementation SSOT:
 `StandardPreview`, `PreviewActionBar`, `actionPillClass()` and
 `src/contracts/tableSurface/canon.ts`. No Interview-specific descriptor exists
-yet under `docs/ui-standards/03-modules/table-descriptors/`; creating the six
+yet under `[CYTOWANY PLIK NIEODNALEZIONY — docs/ui-standards/03-modules/table-descriptors/ — do wyjaśnienia przy odbiorze modułu]`; creating the six
 object-specific mappings is part of the required closure artifact.
 
 ### Expert-consensus Creator Shell contract (`INT-CREATOR-OWN-001`)

@@ -28,7 +28,7 @@ stale/replayed approval, foreign tenant and no false citation or success.
 | G08 | First-impression review | `PASS_WITH_FINDINGS` | Piotr judged Chat understandable, readable and generally very strong; the accepted direction is preserved by the remediation contract. |
 | G09 | Guided CX journey review | `PASS_WITH_FINDINGS` | Piotr completed `Approve -> Create document -> Document created`; visual/navigation findings and integration gaps are registered as `CHAT-OWN-001`–`017`. |
 | G10 | Alternate-state owner review | `PARTIAL` | Provider-off failure was observed honestly. Rejection, permission, stale/conflict, live-provider, Canvas and voice states remain integrator/retest obligations. |
-| G11 | Every owner observation/screenshot durably registered | `PASS_INTAKE` | `25/25` screenshots copied and SHA-256 indexed under `evidence/owner-review-2026-08-22/`; all observations mapped in `OWNER_REVIEW_2026-08-22.md`. |
+| G11 | Every owner observation/screenshot durably registered | `PASS_INTAKE` | `25/25` screenshots copied and SHA-256 indexed under `docs/program/waves/WAVE_03_ACCEPTANCE/modules/13_CHAT/evidence/owner-review-2026-08-22/`; all observations mapped in `OWNER_REVIEW_2026-08-22.md`. |
 | G12 | Owner register reconciled and confirmed | `READY_FOR_OWNER_CONFIRMATION` | Detailed correction tasks and owner-positive constraints are reconciled; Piotr has not yet confirmed the written report or issued a formal verdict. |
 | G13 | Solution and impact analysis | `DRAFT_COMPLETE` | Seventeen prioritized tasks with acceptance criteria separate UI remediation from integrator-owned Canvas/API/provider/RBAC/voice qualification. |
 | G14 | Remediation with finding-to-commit traceability | `IN_PROGRESS / STATIC_IMPLEMENTATION` | `005`: `93eb6c8040`; `006`: `166fd1a224`; `007`: `5542c36e33`; `008`: `8ce3e36aaf`; `009`: `0f09ae3558`; `010`: `09cabb1529`; `011`: `61005a0550`; `012`: `694bc35c18`. `CHAT-OWN-014` bounded topic-starter slice: `3a5b76ebf8` replaces immediate send with an editable/focused composer prefill, preserves existing user text and registers `chat_start_control_selected` telemetry. Output-type and canonical capability destination contracts remain open. Runtime qualification remains open. |
@@ -84,4 +84,4 @@ Decision: `OWNER_VISUAL_NAVIGATION_REVIEW_COMPLETE / REMEDIATION_REQUIRED / FORM
 Accepted SHA: —
 Date: —
 Accepted-out/deferred: —
-Evidence manifest: `OWNER_REVIEW_2026-08-22.md`; `evidence/owner-review-2026-08-22/EVIDENCE_INDEX.md`
+Evidence manifest: `OWNER_REVIEW_2026-08-22.md`; `docs/program/waves/WAVE_03_ACCEPTANCE/modules/13_CHAT/evidence/owner-review-2026-08-22/EVIDENCE_INDEX.md`

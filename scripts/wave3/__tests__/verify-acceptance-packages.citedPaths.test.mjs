@@ -117,6 +117,24 @@ test('a non-path backtick token (finding ID, ratio) is not flagged', () => {
   assert.deepEqual(offenders, []);
 });
 
+test('an explicit "cited path not found" annotation is not flagged, even though it wraps a repo-root-style path (FALA 1 hygiene fix, 02_INTERVIEW)', () => {
+  // 02_INTERVIEW/MODULE_ACCEPTANCE.md documents that no Interview-specific
+  // table descriptor exists yet under docs/ui-standards/03-modules/table-descriptors/
+  // — genuinely future work, not a stale citation (confirmed against the
+  // preserved branch 7c3b559ca8 too: the directory never existed). Per the
+  // FALA 1 remediation playbook, an unresolvable citation with no real target
+  // anywhere is rewritten as this explicit annotation instead of being
+  // silently dropped or invented. The annotation itself must never trip
+  // findMissingCitedPaths again, even though the old path text still appears
+  // inside it — the bracket prefix keeps it from matching CITED_PATH_PATTERN.
+  const text =
+    'No Interview-specific descriptor exists yet under ' +
+    '`[CYTOWANY PLIK NIEODNALEZIONY — docs/ui-standards/03-modules/table-descriptors/ — do wyjaśnienia przy odbiorze modułu]`; ' +
+    'creating the six object-specific mappings is part of the required closure artifact.';
+  const offenders = findMissingCitedPaths(text, { rootDir: root, baseDir: root });
+  assert.deepEqual(offenders, []);
+});
+
 test('the same citation appearing twice is only reported once', () => {
   const text = [
     'First: `docs/this-file-does-not-exist-fala1-fixture.md`.',
