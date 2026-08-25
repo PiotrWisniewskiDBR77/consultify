@@ -36,7 +36,7 @@ describe('AdminOrganizationDefaultsPanel', () => {
     fireEvent.click(screen.getByText('Zapisz lokalizację i format'));
     await waitFor(() =>
       expect(Api.put).toHaveBeenCalledWith(
-        '/organization-profiles/org-1',
+        '/admin/organization-profile',
         expect.objectContaining({ defaultTimezone: 'UTC' })
       )
     );

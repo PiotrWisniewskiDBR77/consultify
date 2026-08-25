@@ -52,14 +52,9 @@ export const AdminOrganizationDefaultsPanel: React.FC<Props> = ({ organizationId
   const [financeMessage, setFinanceMessage] = useState('');
 
   const loadProfile = useCallback(async () => {
-    if (!organizationId) {
-      setProfileState('error');
-      setProfileMessage('Brak kontekstu organizacji w sesji.');
-      return;
-    }
     try {
       setProfileState('loading');
-      const response = await Api.get(`/organization-profiles/${organizationId}`);
+      const response = await Api.get('/admin/organization-profile');
       const value = response?.profile || {};
       setProfile({
         defaultTimezone: value.defaultTimezone || '',
@@ -72,7 +67,7 @@ export const AdminOrganizationDefaultsPanel: React.FC<Props> = ({ organizationId
       setProfileState('error');
       setProfileMessage(error instanceof Error ? error.message : 'Nie udało się pobrać profilu.');
     }
-  }, [organizationId]);
+  }, []);
 
   const loadFinance = useCallback(async () => {
     try {
@@ -100,11 +95,10 @@ export const AdminOrganizationDefaultsPanel: React.FC<Props> = ({ organizationId
   }, [loadFinance, loadProfile]);
 
   const saveProfile = async () => {
-    if (!organizationId) return;
     try {
       setProfileState('saving');
-      await Api.put(`/organization-profiles/${organizationId}`, profile);
-      const readback = await Api.get(`/organization-profiles/${organizationId}`);
+      await Api.put('/admin/organization-profile', profile);
+      const readback = await Api.get('/admin/organization-profile');
       const value = readback?.profile || {};
       setProfile({
         defaultTimezone: value.defaultTimezone || '',
