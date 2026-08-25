@@ -1,4 +1,4 @@
-import { BookOpen, ChevronLeft, Plus } from 'lucide-react';
+import { BookOpen, ChevronLeft, Plus, Search } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -8,6 +8,11 @@ export interface NotebookHeaderActionsProps {
   /** Present only when the notebook was opened from the library list. */
   onBack?: () => void;
   onNewPage: () => void;
+  /**
+   * MYW-NBK-004 — opens the cross-notebook semantic search dialog. Optional
+   * so existing callers/tests that don't need it keep working unchanged.
+   */
+  onSearchAllNotebooks?: () => void;
 }
 
 /**
@@ -19,6 +24,7 @@ export interface NotebookHeaderActionsProps {
 export const NotebookHeaderActions: React.FC<NotebookHeaderActionsProps> = ({
   onBack,
   onNewPage,
+  onSearchAllNotebooks,
 }) => {
   const { t } = useTranslation();
 
@@ -58,6 +64,24 @@ export const NotebookHeaderActions: React.FC<NotebookHeaderActionsProps> = ({
         </TooltipTrigger>
         <TooltipContent>{t('myWork.notebook.new', 'New page')}</TooltipContent>
       </Tooltip>
+      {onSearchAllNotebooks ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              onClick={onSearchAllNotebooks}
+              data-testid="notebook-search-all-button"
+              aria-label={t('notebook.notebookContent.searchAllNotebooks', 'Search all notebooks')}
+              className="p-1.5 rounded-lg bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised hover:brightness-110 transition-colors"
+            >
+              <Search size={16} aria-hidden="true" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>
+            {t('notebook.notebookContent.searchAllNotebooks', 'Search all notebooks')}
+          </TooltipContent>
+        </Tooltip>
+      ) : null}
     </>
   );
 };

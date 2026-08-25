@@ -119,6 +119,7 @@ import {
   SlashMenu,
   type SlashMenuState,
 } from './notebook/SlashMenu';
+import { NotebookSearchDialog } from './notebook/NotebookSearchDialog';
 import { useNotebookPresence } from './notebook/useNotebookPresence';
 import { NotebookHeaderActions } from './NotebookHeaderActions';
 import { buildAskAIMessage } from './shared/askAiHelper';
@@ -774,6 +775,8 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   const [hasMore, setHasMore] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
   const activePage = useMemo(() => pages.find((p) => p.id === activeId) || null, [pages, activeId]);
+  // MYW-NBK-004 — cross-notebook search dialog (Api.notebookSemanticSearch).
+  const [notebookSearchDialogOpen, setNotebookSearchDialogOpen] = useState(false);
   const [deleteCapability, setDeleteCapability] = useState<{
     pageId: string;
     pageVersion: string | null;
@@ -1830,6 +1833,26 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   };
   const aiCommandPromptInputRef = useRef<HTMLInputElement | null>(null);
 
+  // MYW-NBK-004 — open a page found via cross-notebook search. Mirrors the
+  // `openPageId` prop's own fetch-if-missing effect above: a search hit can
+  // live in a different notebook/project than the one currently scoped here,
+  // so it may not already be in `pages`. Api.getNotebookPage(id) resolves it
+  // by id regardless of the current notebookId/projectId filter.
+  const handleOpenSearchResult = useCallback(
+    async (pageId: string) => {
+      setActiveId(pageId);
+      if (pagesRef.current.some((p) => p.id === pageId)) return;
+      try {
+        const page = (await Api.getNotebookPage(pageId)) as any;
+        if (!page?.id) return;
+        setPages((prev) => (prev.some((p) => p.id === page.id) ? prev : [page as NotebookPage, ...prev]));
+      } catch {
+        toast.error(t('notebook.notebookContent.toastError', 'Failed to open the requested note'));
+      }
+    },
+    [t]
+  );
+
   const handleNewPage = useCallback(
     async (template?: PageTemplate) => {
       try {
@@ -2766,6 +2789,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                 <NotebookHeaderActions
                   onBack={onBackToLibrary}
                   onNewPage={() => setTemplateModalOpen(true)}
+                  onSearchAllNotebooks={() => setNotebookSearchDialogOpen(true)}
                 />
                 <div className="min-w-0">
                   <div className="text-sm font-semibold text-c-text truncate">
@@ -4191,6 +4215,12 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
             t('notebook.notebookContent.toastSuccess12', 'File uploaded, note created')
           );
         }}
+      />
+
+      <NotebookSearchDialog
+        open={notebookSearchDialogOpen}
+        onClose={() => setNotebookSearchDialogOpen(false)}
+        onOpenPage={(pageId) => void handleOpenSearchResult(pageId)}
       />
 
       {activePage && (

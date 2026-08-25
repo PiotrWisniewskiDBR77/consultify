@@ -28242,6 +28242,11 @@
   },
   "notebook": {
     "notebookContent": {
+      "searchAllNotebooks": "Search all notebooks",
+      "searchAllNotebooksPlaceholder": "Search title, content, tags…",
+      "searchAllNotebooksEmpty": "No matching pages",
+      "searchAllNotebooksPrompt": "Type to search across every notebook",
+      "searchAllNotebooksFailed": "Search failed",
       "label": "Refine the note first: add more content or a clearer outline before converting it into a deliverable.",
       "toastError": "Failed to open the requested note",
       "label2": "Start writing… Type / to insert a block",

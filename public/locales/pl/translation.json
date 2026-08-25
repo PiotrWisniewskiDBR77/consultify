@@ -29380,6 +29380,11 @@
   },
   "notebook": {
     "notebookContent": {
+      "searchAllNotebooks": "Szukaj we wszystkich notatnikach",
+      "searchAllNotebooksPlaceholder": "Szukaj po tytule, treści, tagach…",
+      "searchAllNotebooksEmpty": "Brak pasujących stron",
+      "searchAllNotebooksPrompt": "Wpisz frazę, aby przeszukać wszystkie notatniki",
+      "searchAllNotebooksFailed": "Wyszukiwanie nie powiodło się",
       "label": "Najpierw dopracuj notatkę: dodaj więcej treści albo czytelny outline, zanim przekonwertujesz ją do deliverable.",
       "toastError": "Nie udało się otworzyć wskazanej notatki",
       "label2": "Zacznij pisać… Wpisz / aby wstawić blok",
