@@ -34285,6 +34285,20 @@
           "badge": "Output management",
           "description": "Turn analysis results into concrete deliverables: initiatives for execution, reports, presentations, and ideas for further exploration."
         },
+        "resultsReadiness": {
+          "title": "Results & Readiness",
+          "badge": "Result readiness assessment",
+          "description": "Check whether the work done in this session is complete and reliable enough to finish the session and hand its result to downstream processes.",
+          "overall": {
+            "readyForApproval": "Ready for consultant approval",
+            "readyWithReservations": "Ready with reservations",
+            "notReady": "Not ready"
+          },
+          "completion": "Completion",
+          "openBlockers": "Open blockers",
+          "finalSummary": "Final result summary",
+          "finalSummaryEmpty": "This session does not have a final summary recorded yet."
+        },
         "analysisReadiness": "Analysis readiness",
         "metricPills": {
           "factors": "Factors",

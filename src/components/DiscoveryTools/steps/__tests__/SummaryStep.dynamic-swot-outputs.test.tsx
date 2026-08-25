@@ -1,15 +1,21 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { Api } from '@/services/api';
 import { useToolStore } from '@/store/useToolStore';
 
 import { SummaryStep } from '../SummaryStep';
 
-let getKnowledgeDocuments: ReturnType<typeof vi.spyOn>;
-let uploadKnowledgeDocument: ReturnType<typeof vi.spyOn>;
+// 2026-08-26 night-fixes-a P0 (NIGHT_SWEEP_A_REPORT_20260826.md #3, spec
+// SWOT-003 §6.16/R19 "Results & Readiness"): this suite used to cover the
+// Vault attach/list widget and the "Open Report Generator"/"Open Candidate
+// Inbox" launcher buttons that lived on this step. The owner explicitly
+// rejected those (they duplicate each object's own dedicated generator) and
+// they were removed — see `SummaryStep.tsx`'s `dedicatedOutputs` branch.
+// Rewritten to cover what the step does now: a read-only Results & Readiness
+// assessment built only from data already loaded into the session (no Vault
+// fetch, no navigation launchers).
 const navigateMock = vi.hoisted(() => vi.fn());
 
 vi.mock('react-router-dom', async () => ({
@@ -17,75 +23,14 @@ vi.mock('react-router-dom', async () => ({
   useNavigate: () => navigateMock,
 }));
 
-describe('SummaryStep Dynamic SWOT dedicated outputs', () => {
+describe('SummaryStep Dynamic SWOT — Results & Readiness', () => {
   beforeEach(() => {
-    getKnowledgeDocuments = vi.spyOn(Api, 'getKnowledgeDocuments').mockResolvedValue([]);
-    uploadKnowledgeDocument = vi
-      .spyOn(Api, 'uploadKnowledgeDocument')
-      .mockResolvedValue({ id: 'doc-uploaded' } as any);
     navigateMock.mockReset();
     useToolStore.setState({ currentSession: null, currentStep: 1, savedSessions: [] });
     useToolStore.getState().createSession('dynamic-swot');
   });
 
-  it('uploads through the Vault owner and refreshes the persisted session-tagged list', async () => {
-    const session = useToolStore.getState().currentSession!;
-    getKnowledgeDocuments.mockResolvedValueOnce([]).mockResolvedValueOnce([
-      {
-        id: 'doc-uploaded',
-        filename: 'source.txt',
-        category: 'tool-output-attachment',
-        tags: ['dynamic-swot', session.id],
-      },
-    ] as any);
-    render(
-      <MemoryRouter>
-        <SummaryStep toolType="dynamic-swot" session={session} isPolish={false} />
-      </MemoryRouter>
-    );
-
-    const file = new File(['source evidence'], 'source.txt', { type: 'text/plain' });
-    fireEvent.change(screen.getByLabelText('Attach file'), { target: { files: [file] } });
-
-    await waitFor(() => expect(uploadKnowledgeDocument).toHaveBeenCalledTimes(1));
-    expect(await screen.findByText('source.txt')).toBeInTheDocument();
-  });
-
-  it('cold-loads a session-tagged Vault document and exposes its download action', async () => {
-    const session = useToolStore.getState().currentSession!;
-    getKnowledgeDocuments.mockResolvedValue([
-      {
-        id: 'doc-1',
-        filename: 'evidence.pdf',
-        category: 'tool-output-attachment',
-        tags: JSON.stringify(['dynamic-swot', session.id]),
-      },
-    ] as any);
-
-    render(
-      <MemoryRouter>
-        <SummaryStep toolType="dynamic-swot" session={session} isPolish={false} />
-      </MemoryRouter>
-    );
-
-    expect(await screen.findByText('evidence.pdf')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Download' })).toBeInTheDocument();
-  });
-
-  it('shows a read error instead of presenting a failed Vault request as an empty list', async () => {
-    const session = useToolStore.getState().currentSession!;
-    getKnowledgeDocuments.mockRejectedValue(new Error('offline'));
-
-    render(
-      <MemoryRouter>
-        <SummaryStep toolType="dynamic-swot" session={session} isPolish={false} />
-      </MemoryRouter>
-    );
-
-    expect(await screen.findByRole('alert')).toHaveTextContent('Could not load files from Vault.');
-  });
-
-  it('shows one readiness surface and only truthful transitions to dedicated owners', async () => {
+  it('renders exactly one Results & Readiness surface with no deliverable launchers or Vault widget', async () => {
     const session = useToolStore.getState().currentSession!;
     render(
       <MemoryRouter>
@@ -93,21 +38,79 @@ describe('SummaryStep Dynamic SWOT dedicated outputs', () => {
       </MemoryRouter>
     );
 
+    // The repo's global `react-i18next` test mock (tests/setup.ts) returns the
+    // raw translation KEY, not the resolved PL/EN string — so assertions here
+    // target the key, same convention every other test in this suite uses.
     expect(screen.getAllByTestId('swot-dedicated-outputs')).toHaveLength(1);
-    expect(screen.getByRole('button', { name: /Open Report Generator/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Open Candidate Inbox/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Vault/ })).toBeInTheDocument();
-    expect(screen.queryByText(/AI Collaboration Panel/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/Generate report/i)).not.toBeInTheDocument();
-    expect(await screen.findByText('0/5')).toBeInTheDocument();
+    expect(
+      screen.getByText('discoveryToolsSteps.summaryStep.dynamicSwot.resultsReadiness.title')
+    ).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: /Open Report Generator/ }));
-    expect(navigateMock).toHaveBeenCalledWith(
-      `/reports/builder?new=true&sourceType=TOOL&sourceId=${session.id}`
+    // Removed per spec SWOT-003 §6.16 "Usuwane elementy" — these must never
+    // reappear on this step (their own dedicated generators own them now).
+    expect(screen.queryByRole('button', { name: /Open Report Generator/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Open Candidate Inbox/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Vault$/ })).not.toBeInTheDocument();
+    expect(screen.queryByText(/Source files in Vault/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/Attach file/i)).not.toBeInTheDocument();
+
+    expect(navigateMock).not.toHaveBeenCalled();
+  });
+
+  it('scores completion from only 4 checklist items — "Initiatives defined" is no longer a completion condition', async () => {
+    const session = useToolStore.getState().currentSession!;
+    render(
+      <MemoryRouter>
+        <SummaryStep toolType="dynamic-swot" session={session} isPolish={false} />
+      </MemoryRouter>
     );
-    fireEvent.click(screen.getByRole('button', { name: /Open Candidate Inbox/ }));
-    expect(navigateMock).toHaveBeenCalledWith(
-      '/initiatives?tab=candidates&candidateInbox=discovery'
+
+    // Freshly created session: no mission goal/scope, no SWOT items, no
+    // insights, no recommendations yet — 0 of 4 done.
+    expect(await screen.findByText('0/4')).toBeInTheDocument();
+    expect(
+      screen.queryByText('discoveryToolsSteps.summaryStep.dynamicSwot.readiness.initiativesDefined')
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'discoveryToolsSteps.summaryStep.dynamicSwot.resultsReadiness.overall.notReady'
+      )
+    ).toBeInTheDocument();
+  });
+
+  it('lists every unmet checklist item under Open blockers, and shows an honest empty state for the final summary', async () => {
+    const session = useToolStore.getState().currentSession!;
+    render(
+      <MemoryRouter>
+        <SummaryStep toolType="dynamic-swot" session={session} isPolish={false} />
+      </MemoryRouter>
     );
+
+    expect(
+      screen.getByText('discoveryToolsSteps.summaryStep.dynamicSwot.resultsReadiness.openBlockers')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('• discoveryToolsSteps.summaryStep.dynamicSwot.readiness.missionBrief')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('• discoveryToolsSteps.summaryStep.dynamicSwot.readiness.swotFactors')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('• discoveryToolsSteps.summaryStep.dynamicSwot.readiness.strategicInsights')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        '• discoveryToolsSteps.summaryStep.dynamicSwot.readiness.recommendationsOrMoves'
+      )
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByText('discoveryToolsSteps.summaryStep.dynamicSwot.resultsReadiness.finalSummary')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'discoveryToolsSteps.summaryStep.dynamicSwot.resultsReadiness.finalSummaryEmpty'
+      )
+    ).toBeInTheDocument();
   });
 });

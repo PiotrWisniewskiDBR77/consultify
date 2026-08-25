@@ -35503,6 +35503,20 @@
           "badge": "Zarządzanie wynikami",
           "description": "Zamień wyniki analizy w konkretne deliverables: inicjatywy do realizacji, raporty, prezentacje i idee do dalszej eksploracji."
         },
+        "resultsReadiness": {
+          "title": "Wyniki i gotowość",
+          "badge": "Ocena gotowości wyniku",
+          "description": "Sprawdź, czy praca wykonana w tej sesji jest wystarczająco kompletna i wiarygodna, aby zakończyć sesję i udostępnić jej wynik dalszym procesom.",
+          "overall": {
+            "readyForApproval": "Gotowe do akceptacji konsultanta",
+            "readyWithReservations": "Gotowe z zastrzeżeniami",
+            "notReady": "Niegotowe"
+          },
+          "completion": "Kompletność",
+          "openBlockers": "Otwarte blokery",
+          "finalSummary": "Podsumowanie wyniku",
+          "finalSummaryEmpty": "Ta sesja nie ma jeszcze zapisanego podsumowania końcowego."
+        },
         "analysisReadiness": "Gotowość analizy",
         "metricPills": {
           "factors": "Czynniki",

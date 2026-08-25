@@ -18,7 +18,7 @@ import {
   TrendingUp,
   Wrench,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -230,67 +230,12 @@ function DynamicSwotOutputs({
   const [reportId, setReportId] = useState<string | null>(null);
   const [reportCreating, setReportCreating] = useState(false);
   const [presCreated, setPresCreated] = useState(false);
-  const [attachmentBusy, setAttachmentBusy] = useState(false);
-  const [attachedDocuments, setAttachedDocuments] = useState<Array<{ id: string; name: string }>>(
-    []
-  );
-  const [vaultFilesLoading, setVaultFilesLoading] = useState(true);
-  const [vaultFilesError, setVaultFilesError] = useState<string | null>(null);
-
-  const refreshVaultDocuments = useCallback(async () => {
-    setVaultFilesLoading(true);
-    setVaultFilesError(null);
-    try {
-      const response = await Api.getKnowledgeDocuments({ scope: 'organization' });
-      const documents = Array.isArray(response) ? response : [];
-      setAttachedDocuments(
-        documents
-          .filter((document: any) => {
-            let tags = document?.tags;
-            if (typeof tags === 'string') {
-              try {
-                tags = JSON.parse(tags);
-              } catch {
-                tags = tags.split(',').map((tag: string) => tag.trim());
-              }
-            }
-            return (
-              document?.category === 'tool-output-attachment' &&
-              Array.isArray(tags) &&
-              tags.includes(session.id)
-            );
-          })
-          .map((document: any) => ({
-            id: String(document.id),
-            name: String(document.filename || document.name || document.title || 'Document'),
-          }))
-      );
-    } catch {
-      setVaultFilesError(
-        isPolish ? 'Nie udało się odczytać plików z Vault.' : 'Could not load files from Vault.'
-      );
-    } finally {
-      setVaultFilesLoading(false);
-    }
-  }, [isPolish, session.id]);
-
-  const downloadVaultDocument = async (document: { id: string; name: string }) => {
-    try {
-      const blob = await Api.downloadDocument(document.id);
-      const url = URL.createObjectURL(blob);
-      const anchor = window.document.createElement('a');
-      anchor.href = url;
-      anchor.download = document.name;
-      anchor.click();
-      URL.revokeObjectURL(url);
-    } catch {
-      toast.error(isPolish ? 'Nie udało się pobrać pliku.' : 'Could not download the file.');
-    }
-  };
-
-  useEffect(() => {
-    void refreshVaultDocuments();
-  }, [refreshVaultDocuments]);
+  // 2026-08-26 night-fixes-a P0 (NIGHT_SWEEP_A_REPORT_20260826.md #3): the
+  // Vault attach/list state + `refreshVaultDocuments`/`downloadVaultDocument`
+  // that used to live here were dropped along with the "Pliki źródłowe w
+  // Vault" section they only fed — see the `dedicatedOutputs` branch below
+  // (spec SWOT-003 §6.16 explicitly removes Vault attach from this step; a
+  // session's files remain reachable from Vault itself, not duplicated here).
 
   const toggleReportSection = (id: string) => {
     setReportSections((prev) => {
@@ -473,34 +418,13 @@ function DynamicSwotOutputs({
       label: t('discoveryToolsSteps.summaryStep.dynamicSwot.readiness.recommendationsOrMoves'),
       done: moves.length > 0 || allInitiatives.length > 0,
     },
-    {
-      label: t('discoveryToolsSteps.summaryStep.dynamicSwot.readiness.initiativesDefined'),
-      done: allInitiatives.length > 0,
-    },
+    // 2026-08-26 night-fixes-a P0 (NIGHT_SWEEP_A_REPORT_20260826.md #3, spec
+    // SWOT-003 §6.16 "Usuwane elementy"): "Initiatives defined" removed —
+    // an initiative is not part of finishing a SWOT session, so it cannot be
+    // a completion condition for it.
   ];
   const readinessScore = readinessChecklist.filter((c) => c.done).length;
   const readinessTotal = readinessChecklist.length;
-
-  const attachToVault = async (file: File | undefined) => {
-    if (!file) return;
-    setAttachmentBusy(true);
-    try {
-      await Api.uploadKnowledgeDocument(
-        file,
-        'tool-output-attachment',
-        ['dynamic-swot', session.id],
-        'organization'
-      );
-      await refreshVaultDocuments();
-      toast.success(isPolish ? 'Plik zapisano w Vault' : 'File saved in Vault');
-    } catch (error) {
-      toast.error(
-        isPolish ? 'Nie udało się zapisać pliku w Vault' : 'Could not save the file in Vault'
-      );
-    } finally {
-      setAttachmentBusy(false);
-    }
-  };
 
   const developCount = Object.values(initiativeActions).filter((a) => a === 'develop').length;
   const deferCount = Object.values(initiativeActions).filter((a) => a === 'defer').length;
@@ -508,139 +432,116 @@ function DynamicSwotOutputs({
 
   const dedicatedOutputs = session.toolType === 'dynamic-swot';
   if (dedicatedOutputs) {
+    // 2026-08-26 night-fixes-a P0 (NIGHT_SWEEP_A_REPORT_20260826.md #3, spec
+    // SWOT-003 §6.16/R19 "Results & Readiness"): this used to be a deliverable
+    // launcher (Report Generator / Candidate Inbox / Vault attach-file), which
+    // the owner explicitly rejected — those live in their own dedicated
+    // generators and should not be duplicated inside a tool session's last
+    // step. The step now answers ONE question: is this session's own work
+    // complete and reliable enough to finish?
+    //
+    // Honest scope note: the full §6.16 content list also names `AI quality
+    // estimate`, `Evidence coverage`, `Logical consistency`, `Method quality`
+    // and `Decision usefulness` — each needs a real scoring computation this
+    // session has no data source for today (no evidence-tracking, no rule
+    // engine, no AI quality pass wired into Dynamic SWOT). Building those
+    // would be new functionality, not a night-fix, so this pass ships the
+    // three sub-sections answerable from data ALREADY loaded here — Overall
+    // readiness (derived from the same checklist as the progress bar), Open
+    // blockers (the checklist's own unmet items) and Final result summary
+    // (the session's own `summary.verdict`/`executiveSummary`) — and leaves
+    // the rest for a dedicated follow-up once that scoring exists.
+    const openBlockers = readinessChecklist.filter((item) => !item.done);
+    const overallReadiness: { key: string; tone: string } =
+      readinessScore === readinessTotal
+        ? { key: 'readyForApproval', tone: 'text-emerald-600 dark:text-emerald-400' }
+        : readinessScore >= readinessTotal - 1
+          ? { key: 'readyWithReservations', tone: 'text-amber-600 dark:text-amber-400' }
+          : { key: 'notReady', tone: 'text-danger-600 dark:text-danger-400' };
+    const finalSummaryText = summary?.verdict || summary?.executiveSummary || null;
+
     return (
       <div className="space-y-5" data-testid="swot-dedicated-outputs">
         <section className="rounded-[28px] border border-slate-200/70 bg-white dark:border-navy-700/70 dark:bg-navy-900/40">
           <SectionHeader
-            title={t('discoveryToolsSteps.summaryStep.dynamicSwot.outputsActions.title')}
-            badge={t('discoveryToolsSteps.summaryStep.dynamicSwot.outputsActions.badge')}
+            title={t('discoveryToolsSteps.summaryStep.dynamicSwot.resultsReadiness.title')}
+            badge={t('discoveryToolsSteps.summaryStep.dynamicSwot.resultsReadiness.badge')}
             description={t(
-              'discoveryToolsSteps.summaryStep.dynamicSwot.outputsActions.description'
+              'discoveryToolsSteps.summaryStep.dynamicSwot.resultsReadiness.description'
             )}
           />
-          <div className="p-5">
-            <div className="flex items-center justify-between text-sm">
-              <span className="font-medium text-slate-700 dark:text-slate-300">
-                {t('discoveryToolsSteps.summaryStep.dynamicSwot.analysisReadiness')}
-              </span>
-              <strong>
-                {readinessScore}/{readinessTotal}
-              </strong>
-            </div>
-            <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-navy-800">
-              <div
-                className="h-full rounded-full bg-emerald-500"
-                style={{ width: `${(readinessScore / readinessTotal) * 100}%` }}
-              />
-            </div>
-            <div className="mt-4 grid gap-2 sm:grid-cols-2">
-              {readinessChecklist.map((item) => (
-                <div
-                  key={item.label}
-                  className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300"
-                >
-                  <Check className={item.done ? 'text-emerald-500' : 'text-slate-400'} size={14} />
-                  {item.label}
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="grid gap-3 md:grid-cols-3">
-          <button
-            type="button"
-            onClick={() =>
-              navigate(
-                `/reports/builder?new=true&sourceType=TOOL&sourceId=${encodeURIComponent(session.id)}`
-              )
-            }
-            className="rounded-2xl border border-c-border bg-c-surface p-4 text-left"
-          >
-            <FileText className="mb-3" size={20} />
-            <strong>{isPolish ? 'Otwórz generator raportu' : 'Open Report Generator'}</strong>
-            <p className="mt-1 text-xs text-c-text-muted">
-              {isPolish
-                ? 'Kontynuuj w dedykowanym narzędziu.'
-                : 'Continue in the dedicated generator.'}
-            </p>
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate('/initiatives?tab=candidates&candidateInbox=discovery')}
-            className="rounded-2xl border border-c-border bg-c-surface p-4 text-left"
-          >
-            <Rocket className="mb-3" size={20} />
-            <strong>{isPolish ? 'Otwórz kandydatów' : 'Open Candidate Inbox'}</strong>
-            <p className="mt-1 text-xs text-c-text-muted">
-              {isPolish ? 'Przejdź do skrzynki kandydatów.' : 'Continue in the candidate inbox.'}
-            </p>
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate('/my-work?tab=vault')}
-            className="rounded-2xl border border-c-border bg-c-surface p-4 text-left"
-          >
-            <BookOpen className="mb-3" size={20} />
-            <strong>Vault</strong>
-            <p className="mt-1 text-xs text-c-text-muted">
-              {isPolish ? 'Otwórz pliki źródłowe.' : 'Open supporting files.'}
-            </p>
-          </button>
-        </section>
-
-        <section className="rounded-2xl border border-c-border bg-c-surface p-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="p-5 space-y-5">
+            {/* Overall readiness */}
             <div>
-              <h3 className="font-semibold text-c-text">
-                {isPolish ? 'Pliki źródłowe w Vault' : 'Source files in Vault'}
-              </h3>
-              <p className="text-xs text-c-text-muted">
-                {isPolish
-                  ? 'Pliki są indeksowane i przechowywane w Vault.'
-                  : 'Files are indexed and persisted in Vault.'}
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-medium text-slate-700 dark:text-slate-300">
+                  {t('discoveryToolsSteps.summaryStep.dynamicSwot.analysisReadiness')}
+                </span>
+                <strong>
+                  {readinessScore}/{readinessTotal}
+                </strong>
+              </div>
+              <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-navy-800">
+                <div
+                  className="h-full rounded-full bg-emerald-500"
+                  style={{ width: `${(readinessScore / readinessTotal) * 100}%` }}
+                />
+              </div>
+              <p className={`mt-2 text-sm font-semibold ${overallReadiness.tone}`}>
+                {t(
+                  `discoveryToolsSteps.summaryStep.dynamicSwot.resultsReadiness.overall.${overallReadiness.key}`
+                )}
               </p>
             </div>
-            <label className="cursor-pointer rounded-xl border border-c-border px-4 py-2 text-sm font-semibold text-c-text">
-              <input
-                type="file"
-                className="sr-only"
-                disabled={attachmentBusy}
-                onChange={(event) => void attachToVault(event.target.files?.[0])}
-              />
-              {attachmentBusy
-                ? isPolish
-                  ? 'Zapisywanie…'
-                  : 'Saving…'
-                : isPolish
-                  ? 'Dodaj plik'
-                  : 'Attach file'}
-            </label>
-          </div>
-          {vaultFilesLoading ? (
-            <div className="mt-3 text-sm text-c-text-muted" role="status">
-              {isPolish ? 'Wczytywanie plików…' : 'Loading files…'}
-            </div>
-          ) : vaultFilesError ? (
-            <div className="mt-3 text-sm text-danger-600" role="alert">
-              {vaultFilesError}
-            </div>
-          ) : attachedDocuments.length > 0 ? (
-            <ul className="mt-3 space-y-1 text-sm text-emerald-600" data-testid="vault-files">
-              {attachedDocuments.map((document) => (
-                <li key={document.id} className="flex items-center justify-between gap-3">
-                  <span>{document.name}</span>
-                  <button
-                    type="button"
-                    onClick={() => void downloadVaultDocument(document)}
-                    className="rounded-lg border border-c-border px-2 py-1 text-xs font-semibold text-c-text"
+
+            {/* Completion */}
+            <div>
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                {t('discoveryToolsSteps.summaryStep.dynamicSwot.resultsReadiness.completion')}
+              </h3>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {readinessChecklist.map((item) => (
+                  <div
+                    key={item.label}
+                    className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300"
                   >
-                    {isPolish ? 'Pobierz' : 'Download'}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : null}
+                    <Check
+                      className={item.done ? 'text-emerald-500' : 'text-slate-400'}
+                      size={14}
+                    />
+                    {item.label}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Open blockers — only the checklist's own unmet items; nothing invented. */}
+            {openBlockers.length > 0 && (
+              <div>
+                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  {t('discoveryToolsSteps.summaryStep.dynamicSwot.resultsReadiness.openBlockers')}
+                </h3>
+                <ul className="space-y-1 text-sm text-slate-600 dark:text-slate-300">
+                  {openBlockers.map((item) => (
+                    <li key={item.label}>• {item.label}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Final result summary — the session's own verdict/executive summary, or an honest "not written yet". */}
+            <div>
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                {t('discoveryToolsSteps.summaryStep.dynamicSwot.resultsReadiness.finalSummary')}
+              </h3>
+              <p className="text-sm text-slate-600 dark:text-slate-300">
+                {finalSummaryText ||
+                  t(
+                    'discoveryToolsSteps.summaryStep.dynamicSwot.resultsReadiness.finalSummaryEmpty'
+                  )}
+              </p>
+            </div>
+          </div>
         </section>
       </div>
     );
