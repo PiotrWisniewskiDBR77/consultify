@@ -28,6 +28,7 @@
  */
 
 import React, { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { PREVIEW_PANE_WIDTH } from '@/components/shared/PreviewPane/previewGeometry';
 import {
@@ -67,6 +68,8 @@ export interface ResultsVNextRegistryShellProps {
    * NOT affect the Menu 1/2/3 bar, which still orients the user.
    */
   forbidden?: ResultsVNextForbiddenDetail | null;
+  /** Explicit owner-review fixture mode; absent for every real API-backed registry. */
+  sampleData?: boolean;
   onForbiddenBack?: () => void;
   className?: string;
 }
@@ -77,9 +80,11 @@ export const ResultsVNextRegistryShell: React.FC<ResultsVNextRegistryShellProps>
   table,
   preview,
   forbidden,
+  sampleData = false,
   onForbiddenBack,
   className,
 }) => {
+  const { t } = useTranslation();
   /**
    * Punkt zakresu 5 (tor PLATFORMY, 2026-08-11) — „Esc zamyka, focus wraca do
    * rekordu" (TRIADA §B pkt 24/42, `06_ACCEPTANCE_AND_VERIFICATION_HANDBOOK.md`
@@ -127,6 +132,15 @@ export const ResultsVNextRegistryShell: React.FC<ResultsVNextRegistryShellProps>
       data-domain={domain}
     >
       <StandardModuleBar {...moduleBar}>
+        {sampleData ? (
+          <div
+            className="mx-4 mt-3 rounded-token-md border border-[color:var(--c-border-subtle)] bg-[color:var(--c-surface-raised)] px-3 py-2 text-sm text-[color:var(--c-info)]"
+            data-testid="results-vnext-sample-data-banner"
+            role="status"
+          >
+            {t('results.sampleData.banner', 'Sample data — not from the database')}
+          </div>
+        ) : null}
         {forbidden ? (
           <div className="h-full min-h-0 overflow-auto">
             <ResultsVNextForbiddenState forbidden={forbidden} onBack={onForbiddenBack} />

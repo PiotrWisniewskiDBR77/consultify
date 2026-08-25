@@ -80,6 +80,9 @@ jobs:
       - name: Artefakt shell ratchet gate (crimson w powłoce SPEC-A)
         run: npm run check:artefakt
 
+      - name: Canonical-16 module bindings gate (AppRoutes/menuConfig/manifest parity)
+        run: npm run verify:canonical-16
+
       - name: Job duration
         if: always()
         run: |

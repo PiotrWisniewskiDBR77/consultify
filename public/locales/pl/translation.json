@@ -19941,6 +19941,19 @@
     }
   },
   "finance": {
+    "sampleData": {
+      "banner": "Dane przykładowe — nie z bazy"
+    },
+    "resolver": {
+      "backToList": "Wróć do listy",
+      "errors": {
+        "MISSING_ARTIFACT_ID": "Brakuje identyfikatora artefaktu Finance.",
+        "MISSING_BUSINESS_VERSION_ID": "Brakuje identyfikatora wersji biznesowej Finance.",
+        "UNKNOWN_ARTIFACT_TYPE": "Ten typ artefaktu Finance nie jest obsługiwany.",
+        "ID_COLLISION": "Identyfikatory artefaktu i wersji biznesowej muszą być różne.",
+        "IDENTITY_MISMATCH": "Rekord Finance nie odpowiada swojej bieżącej wersji."
+      }
+    },
     "export": {
       "title": "Eksport analizy finansowej",
       "report": "Raport",
@@ -22659,6 +22672,9 @@
     }
   },
   "results": {
+    "sampleData": {
+      "banner": "Dane przykładowe — nie z bazy"
+    },
     "moduleName": "Rezultaty",
     "hub": {
       "failedToLoadKpis": "Nie udało się załadować katalogu KPI.",

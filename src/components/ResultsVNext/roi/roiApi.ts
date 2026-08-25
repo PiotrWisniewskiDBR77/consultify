@@ -300,7 +300,7 @@ export async function listRoiCases(params: ListRoiCasesParams = {}): Promise<Roi
 export async function getRoiCase(caseId: string): Promise<RoiCaseListItem | null> {
   const { RESULTS_VNEXT_SAMPLE_ROI_CASES, shouldUseResultsVNextOwnerSampleData } =
     await import('../resultsVNextOwnerSampleData');
-  if (shouldUseResultsVNextOwnerSampleData() || caseId.startsWith('sample-roi-')) {
+  if (shouldUseResultsVNextOwnerSampleData()) {
     return RESULTS_VNEXT_SAMPLE_ROI_CASES.find((roiCase) => roiCase.caseId === caseId) ?? null;
   }
   try {

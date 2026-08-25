@@ -270,7 +270,7 @@ export async function listCompanyOkrSets(
 export async function getOkrSet(setId: string): Promise<OkrSetDto | null> {
   const { RESULTS_VNEXT_SAMPLE_OKR_SETS, shouldUseResultsVNextOwnerSampleData } =
     await import('../resultsVNextOwnerSampleData');
-  if (shouldUseResultsVNextOwnerSampleData() || setId.startsWith('sample-okr-')) {
+  if (shouldUseResultsVNextOwnerSampleData()) {
     return RESULTS_VNEXT_SAMPLE_OKR_SETS.find((set) => set.setId === setId) ?? null;
   }
   try {

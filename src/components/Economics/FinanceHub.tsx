@@ -46,6 +46,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { EmptyState, LoadingState } from '@/components/shared/states';
+import { PREVIEW_PANE_WIDTH } from '@/components/shared/PreviewPane/previewGeometry';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import {
   StandardPreview,
@@ -91,6 +92,11 @@ import { formatListDate } from '@/utils/listDateFormat';
 // `{artifactId, businessVersionId}` resolution gate, used by all four v3
 // mount branches below (openV3Baseline/Prediction/Analysis/Valuation).
 import { FinanceLegacyBridgeGate } from '../Finance/shared/FinanceLegacyBridgeGate';
+import {
+  resolveFinanceWorkspace,
+  type FinanceResolveErrorReason,
+  type FinanceResolveInput,
+} from '../Finance/shared/financeWorkspaceResolver';
 import { Menu3DropdownChip } from '../shared/Menu3DropdownChip';
 import {
   FilterChip,
@@ -118,9 +124,11 @@ import {
 import { EmptyStateInline } from '../shared/NModeBlocks/EmptyStateInline';
 import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { FinanceDegradedBanner } from './FinanceDegradedBanner';
+import { isFinanceOwnerSampleDataEnabled } from './financeOwnerSampleData';
 import { getFinanceErrorMessage } from './financeErrorMap';
 import { FinanceLanePanel } from './FinanceLanePanel';
 import { FinanceLaneStrip } from './FinanceLaneStrip';
+import { FinanceSampleDataBanner } from './FinanceSampleDataBanner';
 import { buildFinanceTeresaPrompt } from './financeModelLabels';
 import { useFinancePreview } from './FinancePreviewPanel';
 import {
@@ -237,16 +245,19 @@ function CanonicalFinanceDirectWorkspace({
 }: {
   artifactId: string;
   businessVersionId: string;
-  artifactType: FinanceArtifactType;
+  artifactType: string;
   onNavigateBack: () => void;
 }) {
   const [artifact, setArtifact] = useState<FinanceArtifactDetailDto | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<FinanceResolveErrorReason | null>(null);
+  const { t } = useTranslation();
+  const resolution = resolveFinanceWorkspace({ artifactId, businessVersionId, artifactType });
 
   useEffect(() => {
     let cancelled = false;
     setArtifact(null);
-    setError(null);
+    setError(resolution.kind === 'error' ? resolution.reason : null);
+    if (resolution.kind === 'error') return () => undefined;
     getFinanceArtifact(artifactId)
       .then((result) => {
         const current = result.currentBusinessVersion;
@@ -255,27 +266,35 @@ function CanonicalFinanceDirectWorkspace({
           !current ||
           current.businessVersionId !== businessVersionId
         ) {
-          throw new Error('Canonical Finance identity does not match the current version.');
+          if (!cancelled) {
+            setError(current ? 'IDENTITY_MISMATCH' : 'MISSING_BUSINESS_VERSION_ID');
+          }
+          return;
         }
         if (!cancelled) setArtifact(result);
       })
       .catch((reason: unknown) => {
         if (!cancelled) {
-          setError(reason instanceof Error ? reason.message : 'Canonical Finance artifact failed.');
+          setError('IDENTITY_MISMATCH');
         }
       });
     return () => {
       cancelled = true;
     };
-  }, [artifactId, artifactType, businessVersionId]);
+  }, [artifactId, artifactType, businessVersionId, resolution.kind]);
 
   if (error) {
     return (
       <div className="flex h-full items-center justify-center p-6">
         <EmptyStateInline
           icon={AlertTriangle}
-          message={error}
-          action={{ label: 'Wróć do listy', onClick: onNavigateBack }}
+          message={t(`finance.resolver.errors.${error}`, 'This Finance record cannot be opened.')}
+          action={{
+            label: t('finance.resolver.backToList', 'Back to list'),
+            onClick: onNavigateBack,
+            showPrefix: false,
+            neutralAccent: true,
+          }}
         />
       </div>
     );
@@ -283,13 +302,28 @@ function CanonicalFinanceDirectWorkspace({
   if (!artifact?.currentBusinessVersion) return <LoadingState template="panel" />;
 
   const current = artifact.currentBusinessVersion;
+  if (resolution.kind === 'error') return null;
   return (
     <CanonicalFinanceWorkspaceMount
       artifactId={artifactId}
       businessVersionId={businessVersionId}
-      artifactType={artifactType}
+      artifactType={resolution.artifactType}
     >
-      {artifactType === 'BASELINE_MODEL' ? (
+      {resolution.workspace === 'statementPackV2' ? (
+        <FinanceV3StatementPackWorkspace
+          businessVersionId={businessVersionId}
+          displayName={
+            artifact.naturalKey || t('finance.statementPack.title', 'Financial statement')
+          }
+          resolveLineLabel={(rowKey, canonicalLineId, lineCode) =>
+            lineCode ?? canonicalLineId ?? rowKey
+          }
+          onOpenArtifact={() => undefined}
+          onCreateNew={() => undefined}
+          onOpenReportResult={() => undefined}
+          onNavigateBack={onNavigateBack}
+        />
+      ) : resolution.workspace === 'baseline' ? (
         <FinanceV3BaselineWorkspace
           artifactId={artifactId}
           businessVersionId={businessVersionId}
@@ -301,20 +335,20 @@ function CanonicalFinanceDirectWorkspace({
           contextValues={{ type: 'Model bazowy (Baseline)' }}
           onNavigateBack={onNavigateBack}
         />
-      ) : artifactType === 'PREDICTION_SCENARIO' ? (
+      ) : resolution.workspace === 'prediction' ? (
         <FinanceV3PredictionWorkspace
           artifactId={artifactId}
           businessVersionId={businessVersionId}
           onNavigateBack={onNavigateBack}
         />
-      ) : artifactType === 'HISTORICAL_ANALYSIS' ? (
+      ) : resolution.workspace === 'analysis' ? (
         <FinanceV3AnalysisWorkspace
           artifactId={artifactId}
           businessVersionId={businessVersionId}
           role="preparer"
           onNavigateBack={onNavigateBack}
         />
-      ) : artifactType === 'VALUATION_CASE' ? (
+      ) : resolution.workspace === 'valuation' ? (
         <FinanceV3ValuationWorkspace
           businessVersionId={businessVersionId}
           role="preparer"
@@ -397,7 +431,7 @@ function buildFilterOptions(
 // than silently coerced — 'REVIEW' -> 'IN_REVIEW' is a judgment call (the old
 // system doesn't distinguish "submitted, not yet started" from "actively
 // being reviewed").
-function mapLegacyFinanceStatusToV3(status: FinanceStatus): BusinessVersionStatus {
+export function mapLegacyFinanceStatusToV3(status: FinanceStatus): BusinessVersionStatus {
   switch (status) {
     case 'DRAFT':
       return 'DRAFT';
@@ -423,6 +457,8 @@ export interface FinanceDetailBranchFlags {
 }
 
 export interface FinanceDetailBranches {
+  /** Blocks canonical and legacy mounts when supplied identity is invalid or belongs to another row kind. */
+  resolutionError: FinanceResolveErrorReason | null;
   isBudgetPrediction: boolean;
   openStatement: boolean;
   isModelWorkspace: boolean;
@@ -446,6 +482,140 @@ export type FinanceDeepLink = {
   entityId: string;
 };
 
+type CanonicalIdentityFields = {
+  canonicalArtifactId?: string | null;
+  canonicalBusinessVersionId?: string | null;
+  canonicalArtifactType?: string | null;
+  id?: string | null;
+};
+
+/** Partial canonical identity is still an identity attempt and must fail closed, never fall back to legacy. */
+export function toFinanceResolveInput(
+  value: CanonicalIdentityFields
+): FinanceResolveInput | undefined {
+  if (
+    !value.canonicalArtifactId &&
+    !value.canonicalBusinessVersionId &&
+    !value.canonicalArtifactType
+  ) {
+    return undefined;
+  }
+  return {
+    artifactId: value.canonicalArtifactId,
+    businessVersionId: value.canonicalBusinessVersionId,
+    artifactType: value.canonicalArtifactType,
+    legacyId: value.id,
+  };
+}
+
+const CANONICAL_FINANCE_ARTIFACT_TYPES = new Set([
+  'STATEMENT_PACK',
+  'BASELINE_MODEL',
+  'HISTORICAL_ANALYSIS',
+  'PREDICTION_SCENARIO',
+  'VALUATION_CASE',
+]);
+
+type CanonicalFinanceFlags = FinanceDetailBranchFlags & { statementPack: boolean };
+
+export function isCanonicalFinanceTypeEnabled(
+  artifactType: string | null | undefined,
+  flags: CanonicalFinanceFlags
+): boolean {
+  switch (artifactType) {
+    case 'STATEMENT_PACK':
+      return flags.statementPack;
+    case 'BASELINE_MODEL':
+      return flags.baseline;
+    case 'HISTORICAL_ANALYSIS':
+      return flags.analysis;
+    case 'PREDICTION_SCENARIO':
+      return flags.prediction;
+    case 'VALUATION_CASE':
+      return flags.valuation;
+    default:
+      return false;
+  }
+}
+
+export function hasAnyCanonicalFinanceQuery(params: URLSearchParams): boolean {
+  return Boolean(
+    params.get('canonicalArtifactType') ||
+    params.get('canonicalArtifactId') ||
+    params.get('canonicalBusinessVersionId')
+  );
+}
+
+/** Clears stale canonical keys before composing the next row identity. */
+export function buildCanonicalFinanceSearchParams(
+  current: URLSearchParams,
+  identity: FinanceResolveInput
+): URLSearchParams {
+  const next = clearCanonicalFinanceSearchParams(current);
+  if (identity.artifactType) next.set('canonicalArtifactType', identity.artifactType);
+  if (identity.artifactId) next.set('canonicalArtifactId', identity.artifactId);
+  if (identity.businessVersionId) {
+    next.set('canonicalBusinessVersionId', identity.businessVersionId);
+  }
+  return next;
+}
+
+export function clearCanonicalFinanceSearchParams(current: URLSearchParams): URLSearchParams {
+  const next = new URLSearchParams(current);
+  next.delete('canonicalArtifactType');
+  next.delete('canonicalArtifactId');
+  next.delete('canonicalBusinessVersionId');
+  return next;
+}
+
+export type CanonicalFinanceQueryOutcome =
+  | { kind: 'none' }
+  | { kind: 'direct-workspace'; artifactId: string; businessVersionId: string; artifactType: string }
+  | { kind: 'clear-stale' };
+
+/**
+ * FIX-4 (2026-08-25 odbiór dnia 4): decides what a `canonical*` deep-link
+ * query should render, extracted out of the `fullView` useMemo so it's
+ * unit-testable without mounting the whole hub. Three outcomes:
+ *  - `none` — no canonical query present, caller falls through to its
+ *    normal activeDocument/list logic.
+ *  - `direct-workspace` — incomplete params, an unrecognized artifact type,
+ *    or a RECOGNIZED type whose v3 flag is ON: render
+ *    `CanonicalFinanceDirectWorkspace`, which owns its own honest
+ *    empty/error states for the incomplete/unrecognized cases.
+ *  - `clear-stale` — complete params, a recognized type, but that type's v3
+ *    flag is OFF: the workspace this link points at is disabled, so
+ *    rendering it would previously fall through to `if (!activeDocumentId ||
+ *    !activeDocument) return null`, i.e. a blank screen (no legacy document
+ *    was ever opened for a canonical-only deep link). The caller must clear
+ *    the stale query and show the list instead of rendering nothing.
+ */
+export function resolveCanonicalFinanceQueryOutcome(
+  params: URLSearchParams,
+  flags: CanonicalFinanceFlags
+): CanonicalFinanceQueryOutcome {
+  if (!hasAnyCanonicalFinanceQuery(params)) return { kind: 'none' };
+  const canonicalArtifactType = params.get('canonicalArtifactType');
+  const canonicalArtifactId = params.get('canonicalArtifactId');
+  const canonicalBusinessVersionId = params.get('canonicalBusinessVersionId');
+  const hasCompleteCanonicalQueryIdentity = Boolean(
+    canonicalArtifactType && canonicalArtifactId && canonicalBusinessVersionId
+  );
+  const hasRecognizedCanonicalType = Boolean(
+    canonicalArtifactType && CANONICAL_FINANCE_ARTIFACT_TYPES.has(canonicalArtifactType)
+  );
+  const canonicalFlagEnabled = isCanonicalFinanceTypeEnabled(canonicalArtifactType, flags);
+  if (!hasCompleteCanonicalQueryIdentity || !hasRecognizedCanonicalType || canonicalFlagEnabled) {
+    return {
+      kind: 'direct-workspace',
+      artifactId: canonicalArtifactId ?? '',
+      businessVersionId: canonicalBusinessVersionId ?? '',
+      artifactType: canonicalArtifactType ?? '',
+    };
+  }
+  return { kind: 'clear-stale' };
+}
+
 /** Canonical Finance detail URLs, including all five flag-gated workspaces. */
 export function parseFinanceDeepLink(pathname: string): FinanceDeepLink | null {
   const match = pathname.match(
@@ -466,7 +636,8 @@ export function parseFinanceDeepLink(pathname: string): FinanceDeepLink | null {
 export function resolveFinanceDetailBranches(
   kind: FinanceKind,
   predictionType: PredictionType | undefined,
-  flags: FinanceDetailBranchFlags
+  flags: FinanceDetailBranchFlags,
+  identity?: FinanceResolveInput
 ): FinanceDetailBranches {
   const isBudgetPrediction = kind === 'prediction' && predictionType === 'budget';
   const openStatement = kind === 'statements';
@@ -474,14 +645,41 @@ export function resolveFinanceDetailBranches(
     kind === 'models' || (kind === 'prediction' && predictionType === 'model');
   const openAnalysis = kind === 'analysis' || kind === 'investment';
   const openValuation = kind === 'valuation';
-  const openV3Baseline = kind === 'models' && flags.baseline;
-  const openV3Prediction = kind === 'prediction' && predictionType === 'model' && flags.prediction;
-  const openV3Analysis = openAnalysis && flags.analysis;
-  const openV3Valuation = openValuation && flags.valuation;
+  const resolution = identity ? resolveFinanceWorkspace(identity) : null;
+  const workspace = resolution?.kind === 'workspace' ? resolution.workspace : null;
+  const expectedWorkspace =
+    kind === 'statements'
+      ? 'statementPackV2'
+      : kind === 'models'
+        ? 'baseline'
+        : kind === 'prediction' && predictionType === 'model'
+          ? 'prediction'
+          : openAnalysis
+            ? 'analysis'
+            : openValuation
+              ? 'valuation'
+              : null;
+  const resolutionError =
+    resolution?.kind === 'error'
+      ? resolution.reason
+      : resolution?.kind === 'workspace' && resolution.workspace !== expectedWorkspace
+        ? 'IDENTITY_MISMATCH'
+        : null;
+  const permits = (candidate: string) =>
+    resolutionError === null && (resolution === null || workspace === candidate);
+  const openV3Baseline = kind === 'models' && flags.baseline && permits('baseline');
+  const openV3Prediction =
+    kind === 'prediction' &&
+    predictionType === 'model' &&
+    flags.prediction &&
+    permits('prediction');
+  const openV3Analysis = openAnalysis && flags.analysis && permits('analysis');
+  const openV3Valuation = openValuation && flags.valuation && permits('valuation');
   const openFinanceV3 = openV3Baseline || openV3Prediction || openV3Analysis || openV3Valuation;
   const needsFullHeight =
     openStatement || isModelWorkspace || openAnalysis || isBudgetPrediction || openValuation;
   return {
+    resolutionError,
     isBudgetPrediction,
     openStatement,
     isModelWorkspace,
@@ -974,13 +1172,29 @@ export const FinanceHub: React.FC = () => {
   // ---- Document management ----
   const handleOpenFull = useCallback(
     (row: FinanceRow) => {
-      if (row.canonicalArtifactId && row.canonicalBusinessVersionId && row.canonicalArtifactType) {
-        const next = new URLSearchParams(searchParams);
-        next.set('canonicalArtifactType', row.canonicalArtifactType);
-        next.set('canonicalArtifactId', row.canonicalArtifactId);
-        next.set('canonicalBusinessVersionId', row.canonicalBusinessVersionId);
-        setSearchParams(next);
-        return;
+      const canonicalIdentity = toFinanceResolveInput(row);
+      if (canonicalIdentity) {
+        const isComplete = Boolean(
+          canonicalIdentity.artifactType &&
+          canonicalIdentity.artifactId &&
+          canonicalIdentity.businessVersionId
+        );
+        const isRecognized = Boolean(
+          canonicalIdentity.artifactType &&
+          CANONICAL_FINANCE_ARTIFACT_TYPES.has(canonicalIdentity.artifactType)
+        );
+        const isEnabled = isCanonicalFinanceTypeEnabled(canonicalIdentity.artifactType, {
+          statementPack: financeV3StatementPackFlag.enabled,
+          baseline: financeV3BaselineFlag.enabled,
+          analysis: financeV3AnalysisFlag.enabled,
+          prediction: financeV3PredictionFlag.enabled,
+          valuation: financeV3ValuationFlag.enabled,
+        });
+        if (!isComplete || !isRecognized || isEnabled) {
+          setSearchParams(buildCanonicalFinanceSearchParams(searchParams, canonicalIdentity));
+          return;
+        }
+        setSearchParams(clearCanonicalFinanceSearchParams(searchParams));
       }
       const doc: OpenDocument = {
         id: row.id,
@@ -993,7 +1207,15 @@ export const FinanceHub: React.FC = () => {
       setActiveDocumentId(row.id);
       setActiveDocument(row);
     },
-    [searchParams, setSearchParams]
+    [
+      financeV3AnalysisFlag.enabled,
+      financeV3BaselineFlag.enabled,
+      financeV3PredictionFlag.enabled,
+      financeV3StatementPackFlag.enabled,
+      financeV3ValuationFlag.enabled,
+      searchParams,
+      setSearchParams,
+    ]
   );
 
   const handleCloseDocument = useCallback(
@@ -3019,7 +3241,10 @@ export const FinanceHub: React.FC = () => {
         </div>
 
         {selectedFinanceRow ? (
-          <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+          <aside
+            className="h-full shrink-0 overflow-hidden bg-slate-50 p-3 dark:bg-navy-950"
+            style={{ width: PREVIEW_PANE_WIDTH }}
+          >
             {/*
               Header (block 1) comes from StandardPreview (title/pin/Open/×,
               canon A7.1). Blocks 2-3 (meta card + Details) and 4-6 (AI hints /
@@ -3084,36 +3309,56 @@ export const FinanceHub: React.FC = () => {
   );
 
   // ---- Full view ----
+  // FIX-4 (2026-08-25 odbiór dnia 4): resolved once here and reused both by
+  // `fullView` below and by the render-branch decision further down, plus
+  // the stale-query cleanup effect right after — one source of truth for
+  // what a `canonical*` deep link should do instead of three copies of the
+  // same flag/completeness checks drifting apart.
+  const canonicalFinanceQueryOutcome = useMemo(
+    () =>
+      resolveCanonicalFinanceQueryOutcome(searchParams, {
+        statementPack: financeV3StatementPackFlag.enabled,
+        baseline: financeV3BaselineFlag.enabled,
+        analysis: financeV3AnalysisFlag.enabled,
+        prediction: financeV3PredictionFlag.enabled,
+        valuation: financeV3ValuationFlag.enabled,
+      }),
+    [
+      searchParams,
+      financeV3StatementPackFlag.enabled,
+      financeV3BaselineFlag.enabled,
+      financeV3AnalysisFlag.enabled,
+      financeV3PredictionFlag.enabled,
+      financeV3ValuationFlag.enabled,
+    ]
+  );
+
+  // A deep link with a COMPLETE, recognized canonical* identity whose v3
+  // flag is OFF used to fall all the way through `fullView` to `if
+  // (!activeDocumentId || !activeDocument) return null` — a blank screen,
+  // since a canonical-only deep link never had a legacy `activeDocument` to
+  // begin with. Clear the stale query so the next render's
+  // `canonicalFinanceQueryOutcome` is `none` and the table/grid list shows
+  // instead (see the render-branch change below, which also skips
+  // rendering `fullView` on THIS render already, so there's no blank
+  // flash while this effect is in flight).
+  useEffect(() => {
+    if (canonicalFinanceQueryOutcome.kind !== 'clear-stale') return;
+    setSearchParams(clearCanonicalFinanceSearchParams(searchParams));
+  }, [canonicalFinanceQueryOutcome, searchParams, setSearchParams]);
+
   const fullView = useMemo(() => {
-    const canonicalArtifactType = searchParams.get('canonicalArtifactType');
-    const canonicalArtifactId = searchParams.get('canonicalArtifactId');
-    const canonicalBusinessVersionId = searchParams.get('canonicalBusinessVersionId');
-    if (
-      (canonicalArtifactType === 'BASELINE_MODEL' ||
-        canonicalArtifactType === 'HISTORICAL_ANALYSIS' ||
-        canonicalArtifactType === 'PREDICTION_SCENARIO' ||
-        canonicalArtifactType === 'VALUATION_CASE') &&
-      canonicalArtifactId &&
-      canonicalBusinessVersionId &&
-      ((canonicalArtifactType === 'BASELINE_MODEL' && financeV3BaselineFlag.enabled) ||
-        (canonicalArtifactType === 'HISTORICAL_ANALYSIS' && financeV3AnalysisFlag.enabled) ||
-        (canonicalArtifactType === 'PREDICTION_SCENARIO' && financeV3PredictionFlag.enabled) ||
-        (canonicalArtifactType === 'VALUATION_CASE' && financeV3ValuationFlag.enabled))
-    ) {
+    if (canonicalFinanceQueryOutcome.kind === 'direct-workspace') {
       const closeCanonical = () => {
-        const next = new URLSearchParams(searchParams);
-        next.delete('canonicalArtifactType');
-        next.delete('canonicalArtifactId');
-        next.delete('canonicalBusinessVersionId');
-        setSearchParams(next);
+        setSearchParams(clearCanonicalFinanceSearchParams(searchParams));
       };
       return (
         <div className="p-4 lg:p-6">
           <div className="h-[calc(100vh-120px)] min-h-[620px] overflow-hidden rounded-xl border border-c-border-subtle bg-c-surface">
             <CanonicalFinanceDirectWorkspace
-              artifactId={canonicalArtifactId}
-              businessVersionId={canonicalBusinessVersionId}
-              artifactType={canonicalArtifactType}
+              artifactId={canonicalFinanceQueryOutcome.artifactId}
+              businessVersionId={canonicalFinanceQueryOutcome.businessVersionId}
+              artifactType={canonicalFinanceQueryOutcome.artifactType}
               onNavigateBack={closeCanonical}
             />
           </div>
@@ -3158,12 +3403,18 @@ export const FinanceHub: React.FC = () => {
       openV3Valuation,
       openFinanceV3,
       needsFullHeight,
-    } = resolveFinanceDetailBranches(activeDocument.kind, activeModelRow.predictionType, {
-      baseline: financeV3BaselineFlag.enabled,
-      prediction: financeV3PredictionFlag.enabled,
-      analysis: financeV3AnalysisFlag.enabled,
-      valuation: financeV3ValuationFlag.enabled,
-    });
+      resolutionError,
+    } = resolveFinanceDetailBranches(
+      activeDocument.kind,
+      activeModelRow.predictionType,
+      {
+        baseline: financeV3BaselineFlag.enabled,
+        prediction: financeV3PredictionFlag.enabled,
+        analysis: financeV3AnalysisFlag.enabled,
+        valuation: financeV3ValuationFlag.enabled,
+      },
+      toFinanceResolveInput(activeDocument)
+    );
 
     return (
       <div className="p-4 lg:p-6">
@@ -3201,7 +3452,23 @@ export const FinanceHub: React.FC = () => {
                 </div>
               }
             >
-              {isBudgetPrediction ? (
+              {resolutionError ? (
+                <div className="flex h-full items-center justify-center p-6">
+                  <EmptyStateInline
+                    icon={AlertTriangle}
+                    message={t(
+                      `finance.resolver.errors.${resolutionError}`,
+                      'This Finance record cannot be opened.'
+                    )}
+                    action={{
+                      label: t('finance.resolver.backToList', 'Back to list'),
+                      onClick: handleShowList,
+                      showPrefix: false,
+                      neutralAccent: true,
+                    }}
+                  />
+                </div>
+              ) : isBudgetPrediction ? (
                 <BudgetWorkspace
                   initialBudgetId={getBudgetRawId(activeDocument.id)}
                   hideSidebar
@@ -3402,6 +3669,7 @@ export const FinanceHub: React.FC = () => {
       </div>
     );
   }, [
+    canonicalFinanceQueryOutcome,
     activeDocumentId,
     activeDocument,
     financeV3AnalysisFlag.enabled,
@@ -3681,14 +3949,18 @@ export const FinanceHub: React.FC = () => {
           </div>
         </>
       );
+    // FIX-4 (2026-08-25 odbiór dnia 4): only route to `fullView` when it will
+    // actually render something — a legacy activeDocument, or the canonical
+    // direct workspace. The old `hasAnyCanonicalFinanceQuery(searchParams)`
+    // check here also matched the `clear-stale` case (complete + recognized
+    // canonical* identity whose v3 flag is OFF), which made `fullView`
+    // return null and this branch render a blank screen instead of falling
+    // through to the list below — even before the cleanup effect (declared
+    // next to `canonicalFinanceQueryOutcome` above) has a chance to strip
+    // the stale query from the URL.
     if (
       (activeDocumentId && activeDocument) ||
-      ((searchParams.get('canonicalArtifactType') === 'BASELINE_MODEL' ||
-        searchParams.get('canonicalArtifactType') === 'HISTORICAL_ANALYSIS' ||
-        searchParams.get('canonicalArtifactType') === 'PREDICTION_SCENARIO' ||
-        searchParams.get('canonicalArtifactType') === 'VALUATION_CASE') &&
-        searchParams.get('canonicalArtifactId') &&
-        searchParams.get('canonicalBusinessVersionId'))
+      canonicalFinanceQueryOutcome.kind === 'direct-workspace'
     )
       return fullView;
     // Finance tabs are list surfaces. Analysis tools, planners and charts belong
@@ -3711,6 +3983,7 @@ export const FinanceHub: React.FC = () => {
     activeDocumentId,
     activeDocument,
     fullView,
+    canonicalFinanceQueryOutcome,
     searchParams,
     viewMode,
     gridView,
@@ -3782,6 +4055,7 @@ export const FinanceHub: React.FC = () => {
           statementsBulkCommandRowContent ?? financeBulkCommandRowContent ?? commandRowContent
         }
       >
+        <FinanceSampleDataBanner enabled={isFinanceOwnerSampleDataEnabled()} />
         {isFinanceRuntimeV8 && (
           <FinanceDegradedBanner
             degradedAlerts={lane.degradedAlerts}

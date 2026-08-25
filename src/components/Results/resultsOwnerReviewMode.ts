@@ -1,3 +1,5 @@
+import { isPublicProductionHost } from '@/utils/publicProduction';
+
 const QUERY_KEY = 'ff_wave3ResultsOwnerReview';
 const STORAGE_KEY = 'ff.wave3_results_owner_review';
 const ENV_KEY = 'VITE_WAVE3_RESULTS_OWNER_REVIEW';
@@ -17,6 +19,7 @@ function parseEnabled(value: string | null | undefined): boolean | null {
  */
 export function isResultsOwnerReviewModeEnabled(): boolean {
   if (typeof window !== 'undefined') {
+    if (isPublicProductionHost(window.location?.hostname ?? '')) return false;
     try {
       const query = parseEnabled(new URLSearchParams(window.location.search).get(QUERY_KEY));
       if (query !== null) {

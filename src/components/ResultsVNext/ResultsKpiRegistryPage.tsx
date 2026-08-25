@@ -9,9 +9,9 @@
  * `GET /api/vnext/results/kpi*` data (`./kpiApi.ts`). Every state is wired to
  * real API behaviour — see the four state-management effects below (list
  * fetch, deep-link resolve, lazy measurement fetch, lifecycle mutations) —
- * none of it is mocked or hand-waved; the ONLY mock data anywhere is in the
- * dev-render harness screen, which stubs `Api.get`/`Api.post`, never this
- * component's logic.
+ * Owner-review sample data is available only through the explicit,
+ * production-denied `?sampleData=results-vnext` gate and is visibly labelled
+ * by the shared registry shell. Empty API responses remain empty.
  *
  * -- HONEST-DATA CAVEAT (see kpiApi.ts header for the full backend-gap
  * writeup): `GET /kpi` returns `KpiDefinition` rows only — no KPI *name*, no
@@ -150,6 +150,7 @@ import {
   ResultsVNextRegistryShell,
   type ResultsVNextTableProps,
 } from './ResultsVNextRegistryShell';
+import { shouldUseResultsVNextOwnerSampleData } from './resultsVNextOwnerSampleData';
 import { toUserFacingErrorMessage } from './shared/errorMessage';
 import type { ResultsVNextForbiddenDetail } from './types';
 
@@ -779,19 +780,30 @@ export interface ResultsKpiRegistryPageProps {
   initialTab?: 'my' | 'org' | 'scorecards';
   /** Existing Results hub create action; a changed non-zero nonce opens the canonical modal. */
   createNonce?: number;
-  /** Scorecards legacy cutover is already enforced server-side; do not strand this mounted successor behind the rollout flag. */
-  canonicalCutoverMount?: boolean;
 }
 
 export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
   initialTab,
   createNonce,
-  canonicalCutoverMount = false,
 }) => {
   const { i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
   const currentUser = useAppStore((s) => s.currentUser);
-  const enabled = canonicalCutoverMount || isResultsVNextFlagEnabled('kpiRegistry');
+  // FIX-6 (2026-08-25 odbiór dnia 4, nadzorca wariant a): replaces the old
+  // dedicated cutover-bypass PROP (retired; see `tests/resultsVnext/
+  // flagGateEnumeration.test.ts`, "keeps the historical scorecards bypass
+  // mechanism isolated, unrouted, and prop-free") with an equivalent
+  // mechanic keyed off `initialTab` itself. The only real caller that ever
+  // set that retired prop was `ResultsKpiScorecardsView.tsx`
+  // (the historical hub's scorecards adapter), and it ALWAYS paired it
+  // with `initialTab="scorecards"` — so `initialTab === 'scorecards'` is
+  // exactly the same signal, one prop instead of two, same edge cases
+  // (still a mount-time-fixed bypass, unaffected by later in-component tab
+  // switches, since `initialTab` is never reassigned after mount — same as
+  // the old prop). Scorecards' legacy cutover is already enforced
+  // server-side, so this mounted successor must not be strandable behind
+  // the `kpiRegistry` rollout flag.
+  const enabled = initialTab === 'scorecards' || isResultsVNextFlagEnabled('kpiRegistry');
 
   const navigate = useNavigate();
   const [rows, setRows] = useState<KpiDefinitionDto[]>([]);
@@ -808,9 +820,7 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
   // the my/org KPI-filtering meaning it always had — renamed nowhere, kept
   // separate from `tab` so the scorecards branch never touches KPI-scope
   // logic.
-  const [tab, setTab] = useState<'my' | 'org' | 'scorecards'>(
-    initialTab ?? 'org'
-  );
+  const [tab, setTab] = useState<'my' | 'org' | 'scorecards'>(initialTab ?? 'org');
   const scope: 'my' | 'org' = tab === 'org' ? 'org' : 'my';
   const [statusFilter, setStatusFilter] = useState<KpiStatus | null>(
     restoredUiState.statusFilter ?? null
@@ -1395,6 +1405,7 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
       <div className="h-full" data-testid="results-vnext-kpi-registry-page">
         <ResultsVNextRegistryShell
           domain="kpi"
+          sampleData={shouldUseResultsVNextOwnerSampleData()}
           moduleBar={{
             tabs: RESULTS_DOMAIN_TABS,
             activeTab: 'kpi',
@@ -1524,6 +1535,7 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
       <div className="h-full" data-testid="results-vnext-kpi-registry-page">
         <ResultsVNextRegistryShell
           domain="kpi"
+          sampleData={shouldUseResultsVNextOwnerSampleData()}
           moduleBar={{
             tabs: RESULTS_DOMAIN_TABS,
             activeTab: 'kpi',

@@ -9,6 +9,7 @@
     "apps/*/backend"
   ],
   "scripts": {
+    "verify:canonical-16": "node scripts/dev/verify-canonical-16-module-bindings.mjs",
     "dev": "npm run dev:staging",
     "dev:stop": "node scripts/dev/stop-dev-ports.mjs",
     "dev:railway": "node scripts/dev/preflight-ports.mjs && VITE_STABLE_DEV=1 npx concurrently --restart-tries -1 --restart-after 2000 \"npm run dev:backend:railway\" \"npm run dev:frontend:local\" --names \"BACKEND,FRONTEND\" --prefix-colors \"blue,green\"",

@@ -19412,6 +19412,19 @@
     "deckDiffSkippedLocked": "· skipped {{count}} locked slide(s): {{numbers}}"
   },
   "finance": {
+    "sampleData": {
+      "banner": "Sample data — not from the database"
+    },
+    "resolver": {
+      "backToList": "Back to list",
+      "errors": {
+        "MISSING_ARTIFACT_ID": "The Finance artifact ID is missing.",
+        "MISSING_BUSINESS_VERSION_ID": "The Finance business version ID is missing.",
+        "UNKNOWN_ARTIFACT_TYPE": "This Finance artifact type is not supported.",
+        "ID_COLLISION": "The artifact and business version IDs must be different.",
+        "IDENTITY_MISMATCH": "The Finance record does not match its current version."
+      }
+    },
     "export": {
       "title": "Export Financial Analysis",
       "report": "Report",
@@ -22012,6 +22025,9 @@
     }
   },
   "results": {
+    "sampleData": {
+      "banner": "Sample data — not from the database"
+    },
     "moduleName": "Results",
     "hub": {
       "failedToLoadKpis": "Failed to load KPI catalog.",

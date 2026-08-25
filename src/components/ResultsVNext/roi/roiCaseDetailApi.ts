@@ -27,6 +27,7 @@
  *    paths/methods/response envelopes for every endpoint below)
  */
 import { getJson, mutateJson, newRoiIdempotencyKey, RoiApiError } from './roiApi';
+import { shouldUseResultsVNextOwnerSampleData } from '../resultsVNextOwnerSampleData';
 
 export { newRoiIdempotencyKey, RoiApiError };
 
@@ -200,7 +201,7 @@ interface WriteTrailer {
 // ==========================================
 
 export async function getRoiBaseline(caseId: string): Promise<RoiBaseline | null> {
-  if (caseId.startsWith('sample-roi-')) {
+  if (shouldUseResultsVNextOwnerSampleData()) {
     return {
       baselineId: `${caseId}-baseline`,
       caseId,
@@ -282,7 +283,7 @@ export async function putRoiBaseline(
 export async function getRoiCalculationPolicy(
   caseId: string
 ): Promise<RoiCalculationPolicy | null> {
-  if (caseId.startsWith('sample-roi-')) {
+  if (shouldUseResultsVNextOwnerSampleData()) {
     return {
       policyRowId: `${caseId}-policy`,
       caseId,

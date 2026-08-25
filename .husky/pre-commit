@@ -117,4 +117,22 @@ if [ -n "$STAGED_FOCUS" ]; then
   fi
 fi
 
+# 9) Kanoniczne bindowanie 16 modułów (docs/program/waves/WAVE_03_ACCEPTANCE/
+#    canonical-16-module-bindings.json) — strażnik `npm run verify:canonical-16`
+#    istniał, ale nie był podpięty nigdzie (2026-08-25 audyt odbioru dnia 4:
+#    czysty teatr zgodności, tak jak check-focus-canon.sh przed 2026-08-02).
+#    Skrypt czyta statyczne pliki JSON/TSX z repo (bez zależności od
+#    node_modules poza wbudowanym node:assert), więc jest tani (<2s) i odpala
+#    się zawsze, żeby złapać rozjazd AppRoutes/menuConfig/manifest natychmiast.
+CANONICAL16_OUT=$(npm run --silent verify:canonical-16 2>&1)
+CANONICAL16_STATUS=$?
+if [ "$CANONICAL16_STATUS" -ne 0 ]; then
+  echo "" >&2
+  echo "  ⛔ Commit zablokowany: kanoniczne bindowanie 16 modułów jest niespójne." >&2
+  echo "     AppRoutes/routeConfig/menuConfig/manifest muszą się zgadzać (denominator=16)." >&2
+  echo "$CANONICAL16_OUT" >&2
+  echo "     Uruchom: npm run verify:canonical-16 — i napraw rozjazd przed commitem." >&2
+  exit 1
+fi
+
 exit 0

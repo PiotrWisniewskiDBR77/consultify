@@ -1,3 +1,5 @@
+import { isPublicProductionHost } from './publicProduction';
+
 const QUERY_KEY = 'ff_wave3FinanceOwnerReview';
 const STORAGE_KEY = 'ff.wave3_finance_owner_review';
 const ENV_KEY = 'VITE_WAVE3_FINANCE_OWNER_REVIEW';
@@ -13,6 +15,7 @@ function enabled(value: string | null | undefined): boolean | null {
 /** Explicit, never hostname-derived, canonical-only Finance review profile. */
 export function isFinanceOwnerReviewModeEnabled(): boolean {
   if (typeof window !== 'undefined') {
+    if (isPublicProductionHost(window.location?.hostname ?? '')) return false;
     try {
       const query = enabled(new URLSearchParams(window.location.search).get(QUERY_KEY));
       if (query !== null) {
