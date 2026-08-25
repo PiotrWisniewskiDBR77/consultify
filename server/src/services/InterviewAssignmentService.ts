@@ -1113,29 +1113,17 @@ class InterviewAssignmentService {
             priority: 'high',
           });
 
-          // Send email
-          await this.sendEscalationEmail(row.escalation_email, {
-            templateName: row.template_name,
-            assigneeName: row.assignee_name,
-            overdueDays,
-            assignmentId: row.id,
-          });
-
-          // Record in interview_notifications
-          await db.run(
-            `INSERT INTO interview_notifications (id, assignment_id, user_id, type, channel, title, body, sent_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-              `in_${uuidv4()}`,
-              row.id,
-              row.escalation_user_id,
-              'escalation',
-              'email',
-              'Interview Assignment Overdue',
-              `Overdue by ${overdueDays} day(s)`,
-              now.toISOString(),
-            ]
-          );
+          // N2 (DEC-2026-08-25-21): the manual sendEscalationEmail() call
+          // and its interview_notifications 'email' log row that used to
+          // live here were a DUPLICATE, preference-blind send:
+          // `interview_escalation` is already registered
+          // (server/migrations/303_interview_assignments_extended.sql:89-98)
+          // with default_channels ["in_app","email"], so the
+          // notificationService.send() call above already emails the
+          // escalation target once, respecting their preferences.
+          // Removing the second, unconditional send fixes both the
+          // double-email bug and the audit's §1C bypass finding for this
+          // call site in the same change.
 
           // Update assignment
           await db.run(
@@ -1249,51 +1237,32 @@ class InterviewAssignmentService {
           ]
         );
 
-        // Email (skip for 2h reminder - too late for email)
-        if (reminderType !== 'reminder_2h') {
-          // I2 — first_name/last_name, not the non-existent `name` column.
-          // Previously this threw on Postgres and the reminder dispatch
-          // aborted in the outer catch (reinforcing the dormant-reminder bug),
-          // or greeted recipients "Hi undefined".
-          const user = await db.get<{
-            email: string;
-            first_name: string;
-            last_name: string;
-          }>(`SELECT email, first_name, last_name FROM users WHERE id = ?`, [userId]);
-
-          if (user?.email) {
-            const userName =
-              `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email;
-            await this.sendReminderEmail(user.email, {
-              userName,
-              templateName,
-              reminderType,
-              dueAt: assignment.dueAt,
-              assignmentId: assignment.id,
-            });
-
-            await db.run(
-              `INSERT INTO interview_notifications (id, assignment_id, user_id, type, channel, title, body, sent_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-              [
-                `in_${uuidv4()}`,
-                assignment.id,
-                userId,
-                reminderType,
-                'email',
-                titleMap[reminderType],
-                bodyMap[reminderType],
-                now,
-              ]
-            );
-          }
-        }
+        // N2 (DEC-2026-08-25-21): the manual email send that used to live
+        // here (sendReminderEmail(), a direct emailService.send() call
+        // with its own interview_notifications 'email' log row) was a
+        // DUPLICATE, preference-blind send: `interview_${reminderType}` is
+        // already registered (server/migrations/303_interview_assignments_extended.sql:89-98)
+        // with default_channels including "email" for 48h/24h (and
+        // correctly excluding it for 2h — too late for email, same as
+        // this comment always said), so the notificationService.send()
+        // call above already emails the recipient once, respecting their
+        // preferences. Removing the second, unconditional send fixes both
+        // the double-email bug and the audit's §1C bypass finding for
+        // this call site in the same change — there is nothing left here
+        // that needs a separate, unguarded email path.
       } catch (err) {
         logger.error(`[InterviewAssignmentService] Failed to send reminder to ${userId}:`, err);
       }
     }
   }
 
+  /**
+   * N2 (DEC-2026-08-25-21): no longer called — dispatchReminder() used to
+   * call this in addition to notificationService.send(), sending every
+   * 48h/24h reminder email twice and bypassing preferences on the second
+   * send. Left in place (unused) rather than deleted, since removing it
+   * is out of this ticket's scope.
+   */
   private async sendReminderEmail(
     to: string,
     data: {
@@ -1320,6 +1289,13 @@ class InterviewAssignmentService {
     });
   }
 
+  /**
+   * N2 (DEC-2026-08-25-21): no longer called — checkAndEscalate() used to
+   * call this in addition to notificationService.send(), sending every
+   * escalation email twice and bypassing preferences on the second send.
+   * Left in place (unused) rather than deleted, since removing it is out
+   * of this ticket's scope.
+   */
   private async sendEscalationEmail(
     to: string,
     data: {

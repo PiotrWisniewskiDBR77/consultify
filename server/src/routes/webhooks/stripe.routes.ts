@@ -11,6 +11,7 @@ import type { Stripe as StripeTypes } from 'stripe';
 import Stripe from 'stripe';
 import { v4 as uuidv4 } from 'uuid';
 
+import { send as sendNotification } from '../../services/notificationService.js';
 import * as PartnerCommissionService from '../../services/partnerCommissionService.js';
 // Partner services for commission tracking
 import * as PartnerReferralService from '../../services/partnerReferralService.js';
@@ -372,8 +373,9 @@ async function handleSubscriptionCreated(
 
   logger.info(`Subscription created for org ${orgId}`);
 
-  // Create notification for admin
-  await createNotification(
+  // N2 (DEC-2026-08-25-21): routed through the notification engine instead
+  // of the direct-SQL createNotification() helper (notyfikacje-audyt.md §1B).
+  await notifyOrgAdmins(
     orgId,
     'subscription_created',
     'Subscription Activated',
@@ -448,7 +450,9 @@ async function handleSubscriptionDeleted(
 
   logger.info(`Subscription canceled for org ${orgId}`);
 
-  await createNotification(
+  // N2 (DEC-2026-08-25-21): routed through the notification engine instead
+  // of the direct-SQL createNotification() helper (notyfikacje-audyt.md §1B).
+  await notifyOrgAdmins(
     orgId,
     'subscription_canceled',
     'Subscription Canceled',
@@ -619,7 +623,9 @@ async function handleInvoicePaid(invoice: StripeTypes.Invoice): Promise<string |
     );
   }
 
-  await createNotification(
+  // N2 (DEC-2026-08-25-21): routed through the notification engine instead
+  // of the direct-SQL createNotification() helper (notyfikacje-audyt.md §1B).
+  await notifyOrgAdmins(
     orgId,
     'invoice_paid',
     'Payment Successful',
@@ -672,12 +678,12 @@ async function handleInvoicePaymentFailed(invoice: StripeTypes.Invoice): Promise
     logger.error('[Stripe Webhook] Dunning service error:', dunningErr);
   }
 
-  await createNotification(
+  // N1.2: routed through the notification engine (see notifyPaymentFailedAdmins
+  // below) instead of the direct-SQL createNotification() helper, so this
+  // critical, registry-seeded-for-email type actually sends email.
+  await notifyPaymentFailedAdmins(
     orgId,
-    'payment_failed',
-    'Payment Failed',
-    'Your payment could not be processed. Please update your payment method to avoid service interruption.',
-    'high'
+    'Your payment could not be processed. Please update your payment method to avoid service interruption.'
   );
   return orgId;
 }
@@ -725,9 +731,10 @@ async function handleInvoiceFinalized(invoice: StripeTypes.Invoice): Promise<str
 
   logger.info(`Invoice finalized for org ${orgId}: ${invoice.id}`);
 
-  // Create notification for upcoming payment
+  // N2 (DEC-2026-08-25-21): routed through the notification engine instead
+  // of the direct-SQL createNotification() helper (notyfikacje-audyt.md §1B).
   if (invoice.amount_due && invoice.amount_due > 0) {
-    await createNotification(
+    await notifyOrgAdmins(
       orgId,
       'invoice_finalized',
       'Invoice Ready',
@@ -794,7 +801,15 @@ async function getOrgIdFromCustomer(customerId: string): Promise<string | null> 
 }
 
 /**
- * Helper: Create notification for organization admins
+ * Helper: Create notification for organization admins via a direct
+ * `INSERT INTO notifications` — bypasses the notification engine entirely
+ * (preferences, dedup, every channel but in-app).
+ *
+ * N2 (DEC-2026-08-25-21): no longer called from this file — all five prior
+ * call sites (payment_failed, subscription_created/canceled, invoice_paid,
+ * invoice_finalized) now go through notifyOrgAdmins()/send() instead. Left
+ * in place (exported, unused here) rather than deleted, since deleting it
+ * is out of this ticket's scope and it may still be imported by tests.
  */
 export async function createNotification(
   orgId: string,
@@ -823,6 +838,60 @@ export async function createNotification(
     logger.error('[Stripe Webhook] Error creating notifications:', err);
     // Don't throw - notification failure shouldn't break webhook processing
   }
+}
+
+/**
+ * Helper: notify organization admins of a billing lifecycle event through
+ * the notification engine (notificationService.send), instead of the
+ * direct `INSERT INTO notifications` used by createNotification() above.
+ *
+ * N1.2/N2 (DEC-2026-08-25-21): routing through send() gives each type the
+ * registry's preference/channel handling instead of the direct-SQL path's
+ * hardcoded in-app-only behavior (notyfikacje-audyt.md §1B). No explicit
+ * `channels` is passed — the registry's `default_channels` for the type
+ * decides, same as every other emitter that already goes through send().
+ */
+export async function notifyOrgAdmins(
+  orgId: string,
+  type: string,
+  title: string,
+  message: string,
+  priority: 'low' | 'normal' | 'high' | 'urgent' | 'critical' = 'normal'
+): Promise<void> {
+  try {
+    const users = await dbAll<{ id: string }>(
+      'SELECT id FROM users WHERE organization_id = ? AND role IN (?, ?)',
+      [orgId, 'ADMIN', 'SUPERADMIN']
+    );
+
+    for (const user of users || []) {
+      await sendNotification({
+        userId: user.id,
+        organizationId: orgId,
+        type,
+        title,
+        body: message,
+        priority,
+        entityType: 'billing',
+      });
+    }
+  } catch (err) {
+    logger.error(`[Stripe Webhook] Error sending ${type} notification:`, err);
+    // Don't throw - notification failure shouldn't break webhook processing
+  }
+}
+
+/**
+ * N1.2 (DEC-2026-08-25-21): `payment_failed` is seeded in the
+ * notification_types registry as is_critical with default channels
+ * ["in_app","email"] (server/migrations/257_notification_system.sql:60),
+ * but the direct-SQL path never sent email — a failed payment only
+ * surfaced if the admin happened to open the app
+ * (notyfikacje-audyt.md §1B). Kept as a thin, separately-tested wrapper
+ * around notifyOrgAdmins for call-site and test-suite stability.
+ */
+export async function notifyPaymentFailedAdmins(orgId: string, message: string): Promise<void> {
+  return notifyOrgAdmins(orgId, 'payment_failed', 'Payment Failed', message, 'high');
 }
 
 export default router;

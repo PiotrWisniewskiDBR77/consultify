@@ -2,23 +2,37 @@
  * DesktopSoundsSettings - Consolidated Push + Sound notifications
  *
  * Merges PushNotificationsSettings + SoundNotificationsSettings into one card.
- * Section 1: Desktop Notifications (enable push + position + duration)
- * Section 2: Sound Alerts (enable sounds + sound per type)
+ *
+ * N3 (DEC-2026-08-25-21): every control this screen ever offered was
+ * placebo — confirmed by notyfikacje-audyt.md §1E/§1F/§2.4: no code
+ * anywhere reads desktopEnabled/pushEnabled/position/duration to decide
+ * whether to show a browser popup (grep across src/ for consumers of
+ * these preferences finds none but this component's own state and two
+ * other unmounted legacy panels), there is no server-side push
+ * infrastructure at all (0 hits for web-push/firebase-admin/
+ * push_subscriptions in server/src), the "push" channel doesn't exist in
+ * notificationService's dispatchToChannels, and no notification sound is
+ * ever played anywhere in src/ (only TTS/voice `new Audio` calls exist).
+ * Interactive controls for both sections are hidden behind a single
+ * honest notice; the already-correct "Mobile push — coming soon" card
+ * is untouched. Preference state/load/save round-trip logic is left
+ * intact (still loaded, still persisted unmodified on save) so
+ * re-enabling this is a pure UI change once a real delivery backend
+ * exists.
  */
 
-import { Bell, Monitor, Volume2, VolumeX } from 'lucide-react';
+import { Bell, Monitor } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Banner } from '@/components/shared/Banner';
 
-import { cn } from '../../lib/utils';
 import { Api } from '../../services/api';
 import { User } from '../../types';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
-import { DegradedState } from '../Admin/AdminState';
-import { SettingsDivider, SettingsSection, SettingsToggle } from './shared';
+import { DegradedState, ReadOnlyState } from '../Admin/AdminState';
+import { SettingsSection } from './shared';
 
 interface DesktopSoundsSettingsProps {
   currentUser: User;
@@ -36,27 +50,10 @@ interface CombinedPreferences {
   desktopDuration: number;
 }
 
-const SOUND_OPTIONS = [
-  { value: 'default', label: 'Default' },
-  { value: 'chime', label: 'Chime' },
-  { value: 'bell', label: 'Bell' },
-  { value: 'pop', label: 'Pop' },
-  { value: 'none', label: 'None' },
-] as const;
-
-const POSITION_OPTIONS = [
-  { value: 'top-right' as const, label: 'Top Right' },
-  { value: 'top-left' as const, label: 'Top Left' },
-  { value: 'bottom-right' as const, label: 'Bottom Right' },
-  { value: 'bottom-left' as const, label: 'Bottom Left' },
-];
-
-const NOTIFICATION_TYPES = [
-  { id: 'task_assigned', label: 'Task Assigned' },
-  { id: 'task_updated', label: 'Task Updated' },
-  { id: 'mention', label: 'Mentions' },
-  { id: 'milestone', label: 'Milestones' },
-] as const;
+// N3: SOUND_OPTIONS/POSITION_OPTIONS/NOTIFICATION_TYPES previously
+// rendered the per-type sound picker and position/duration controls,
+// removed below (see file header comment). The underlying prefs fields
+// are kept so re-adding the pickers later is a pure UI change.
 
 const defaultPrefs: CombinedPreferences = {
   pushEnabled: false,
@@ -155,21 +152,6 @@ export const DesktopSoundsSettings: React.FC<DesktopSoundsSettingsProps> = ({ cu
     }
   }, [prefs, t]);
 
-  const requestPushPermission = async () => {
-    if ('Notification' in window) {
-      const permission = await Notification.requestPermission();
-      if (permission === 'granted') {
-        setPrefs((prev) => ({ ...prev, pushEnabled: true }));
-        toast.success(t('settings.desktopSounds.pushEnabled', 'Push notifications enabled'));
-      } else {
-        toast.error(t('settings.desktopSounds.pushDenied', 'Permission denied by browser'));
-      }
-    }
-  };
-
-  const sectionLabel =
-    'text-xs font-bold text-c-text-secondary uppercase tracking-wider flex items-center gap-2 mb-4';
-
   return (
     <SettingsSection
       icon={Monitor}
@@ -193,214 +175,40 @@ export const DesktopSoundsSettings: React.FC<DesktopSoundsSettingsProps> = ({ cu
 
         {!loadError && (
           <>
-            {/* ═══════════════════════════════════════════════ */}
-            {/* SECTION 1: Desktop Notifications               */}
-            {/* ═══════════════════════════════════════════════ */}
-            <div>
-              <h4 className={sectionLabel}>
-                <Bell size={14} className="text-c-accent" />
-                {t('settings.desktopSounds.desktopNotifications', 'Desktop Notifications')}
-              </h4>
-
-              <div className="space-y-4">
-                <SettingsToggle
-                  checked={prefs.desktopEnabled}
-                  onChange={(val) => setPrefs((prev) => ({ ...prev, desktopEnabled: val }))}
-                  label={t('settings.desktopSounds.showDesktop', 'Show desktop notifications')}
-                  description={t(
-                    'settings.desktopSounds.showDesktopDesc',
-                    'Display notifications in your browser'
-                  )}
-                />
-
-                {!prefs.pushEnabled &&
-                  'Notification' in window &&
-                  Notification.permission !== 'granted' && (
-                    <button
-                      onClick={requestPushPermission}
-                      className="flex items-center gap-2 px-4 py-2 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg hover:bg-navy-800 transition-colors text-sm"
-                    >
-                      <Bell size={14} />
-                      {t(
-                        'settings.desktopSounds.enableBrowserAlerts',
-                        'Allow browser notifications'
-                      )}
-                    </button>
-                  )}
-
-                {'Notification' in window && Notification.permission === 'denied' && (
-                  <p className="text-xs text-amber-300/90">
+            {/* Mobile push has no delivery backend yet — surfaced as gated
+                rather than offering a toggle that records a no-op flag.
+                Already honest before N3; left as-is. */}
+            <div className="flex items-start justify-between gap-4 p-3.5 bg-c-surface-raised border border-c-border-subtle rounded-lg">
+              <div className="flex items-start gap-3">
+                <Bell size={16} className="text-c-text-muted mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-c-text">
+                    {t('settings.desktopSounds.mobilePush', 'Mobile push notifications')}
+                  </p>
+                  <p className="text-xs text-c-text-muted">
                     {t(
-                      'settings.desktopSounds.permissionBlocked',
-                      'Notifications are blocked in your browser. Enable them in your browser settings to receive desktop alerts.'
+                      'settings.desktopSounds.mobilePushDesc',
+                      'Requires the Consultify mobile app, which is coming soon.'
                     )}
                   </p>
-                )}
-
-                {/* Mobile push has no delivery backend yet — surface it as gated
-                    rather than offering a toggle that records a no-op flag. */}
-                <div className="flex items-start justify-between gap-4 p-3.5 bg-c-surface-raised border border-c-border-subtle rounded-lg">
-                  <div className="flex items-start gap-3">
-                    <Bell size={16} className="text-c-text-muted mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium text-c-text">
-                        {t('settings.desktopSounds.mobilePush', 'Mobile push notifications')}
-                      </p>
-                      <p className="text-xs text-c-text-muted">
-                        {t(
-                          'settings.desktopSounds.mobilePushDesc',
-                          'Requires the Consultify mobile app, which is coming soon.'
-                        )}
-                      </p>
-                    </div>
-                  </div>
-                  <span className="inline-flex items-center rounded-full bg-c-surface-raised px-2.5 py-1 text-xs font-medium text-c-text-secondary flex-shrink-0">
-                    {t('common.comingSoon', 'Coming soon')}
-                  </span>
                 </div>
-
-                {prefs.desktopEnabled && (
-                  <>
-                    {/* Position */}
-                    <div>
-                      <label className="text-xs font-medium text-c-text-secondary flex items-center gap-1.5 mb-2">
-                        <Monitor size={12} />
-                        {t('settings.desktopSounds.position', 'Notification Position')}
-                      </label>
-                      <div className="grid grid-cols-2 gap-2">
-                        {POSITION_OPTIONS.map((opt) => (
-                          <button
-                            key={opt.value}
-                            onClick={() =>
-                              setPrefs((prev) => ({ ...prev, desktopPosition: opt.value }))
-                            }
-                            className={cn(
-                              'px-3 py-2 rounded-lg border-2 transition-all text-sm',
-                              prefs.desktopPosition === opt.value
-                                ? 'border-c-accent bg-c-accent-soft text-c-accent'
-                                : 'border-white/5 text-c-text-secondary hover:border-c-accent'
-                            )}
-                          >
-                            {t(`settings.desktopSounds.pos_${opt.value}`, opt.label)}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Duration */}
-                    <div>
-                      <label className="text-xs font-medium text-c-text-secondary mb-2 block">
-                        {t('settings.desktopSounds.duration', 'Notification Duration')}
-                      </label>
-                      <div className="flex items-center gap-4">
-                        <input
-                          type="range"
-                          min="1000"
-                          max="10000"
-                          step="500"
-                          value={prefs.desktopDuration}
-                          onChange={(e) =>
-                            setPrefs((prev) => ({
-                              ...prev,
-                              desktopDuration: Number(e.target.value),
-                            }))
-                          }
-                          className="flex-1 accent-c-accent"
-                        />
-                        <span className="text-sm text-c-text-secondary w-12 text-right tabular-nums">
-                          {prefs.desktopDuration / 1000}s
-                        </span>
-                      </div>
-                    </div>
-                  </>
-                )}
               </div>
+              <span className="inline-flex items-center rounded-full bg-c-surface-raised px-2.5 py-1 text-xs font-medium text-c-text-secondary flex-shrink-0">
+                {t('common.comingSoon', 'Coming soon')}
+              </span>
             </div>
 
-            <SettingsDivider />
-
-            {/* ═══════════════════════════════════════════════ */}
-            {/* SECTION 2: Sound Alerts                        */}
-            {/* ═══════════════════════════════════════════════ */}
-            <div>
-              <h4 className={sectionLabel}>
-                <Volume2 size={14} className="text-c-accent" />
-                {t('settings.desktopSounds.soundAlerts', 'Sound Alerts')}
-              </h4>
-
-              <div className="space-y-4">
-                {/* Master toggle */}
-                <div className="flex items-center justify-between p-3.5 bg-c-surface-raised border border-c-border-subtle rounded-lg">
-                  <div className="flex items-center gap-3">
-                    {prefs.soundEnabled ? (
-                      <Volume2 size={18} className="text-c-accent" />
-                    ) : (
-                      <VolumeX size={18} className="text-c-text-muted" />
-                    )}
-                    <div>
-                      <p className="text-sm font-medium text-c-text">
-                        {t('settings.desktopSounds.enableSounds', 'Enable Sounds')}
-                      </p>
-                      <p className="text-xs text-c-text-muted">
-                        {t(
-                          'settings.desktopSounds.enableSoundsDesc',
-                          'Play sound alerts for notifications'
-                        )}
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() =>
-                      setPrefs((prev) => ({ ...prev, soundEnabled: !prev.soundEnabled }))
-                    }
-                    className={cn(
-                      'relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200',
-                      'focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:ring-offset-2 focus:ring-offset-navy-900',
-                      prefs.soundEnabled ? 'bg-navy-900' : 'bg-c-surface-raised'
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        'inline-block h-4 w-4 transform rounded-full bg-c-surface transition-transform duration-200',
-                        prefs.soundEnabled ? 'translate-x-6' : 'translate-x-1'
-                      )}
-                    />
-                  </button>
-                </div>
-
-                {/* Per-type sounds */}
-                {prefs.soundEnabled && (
-                  <div className="space-y-3">
-                    <label className="text-xs font-medium text-c-text-secondary block">
-                      {t('settings.desktopSounds.soundPerType', 'Sound per Notification Type')}
-                    </label>
-                    {NOTIFICATION_TYPES.map((type) => (
-                      <div key={type.id} className="flex items-center justify-between">
-                        <span className="text-sm text-c-text-secondary">
-                          {t(`settings.desktopSounds.type_${type.id}`, type.label)}
-                        </span>
-                        <select
-                          value={prefs.soundPerType[type.id] || 'default'}
-                          onChange={(e) =>
-                            setPrefs((prev) => ({
-                              ...prev,
-                              soundPerType: { ...prev.soundPerType, [type.id]: e.target.value },
-                            }))
-                          }
-                          className="px-3 py-1.5 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg text-sm text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
-                        >
-                          {SOUND_OPTIONS.map((opt) => (
-                            <option key={opt.value} value={opt.value}>
-                              {t(`settings.desktopSounds.sound_${opt.value}`, opt.label)}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
+            {/* N3 placebo hide (DEC-2026-08-25-21): desktop-popup controls
+                (show/position/duration/permission) and sound controls
+                (enable/per-type) removed — see file header comment for why.
+                One honest notice replaces both, per "jedna notatka". */}
+            <ReadOnlyState
+              title={t('settings.desktopSounds.plannedTitle', 'Planned — this channel will go live after rollout')}
+              description={t(
+                'settings.desktopSounds.plannedDesc',
+                'Desktop pop-ups and sound alerts are not implemented yet.'
+              )}
+            />
           </>
         )}
       </div>

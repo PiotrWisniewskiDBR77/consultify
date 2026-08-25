@@ -146,6 +146,15 @@ async function markSent(orgId: string, threshold: Threshold, periodStart: string
   }
 }
 
+/**
+ * N2 (DEC-2026-08-25-21): routed through the notification engine instead of
+ * a direct EmailService.send() call (notyfikacje-audyt.md §1C). `ai_cost_budget_alert`
+ * did not exist in the notification_types registry, so migration 960 adds
+ * it with `default_channels: ["email"]` — matching this function's exact
+ * prior behavior (admin email only, no in-app row) so the migration itself
+ * changes nothing observable; only the redirect below makes preferences
+ * start being respected.
+ */
 async function sendEmailToOrgAdmins(params: {
   orgId: string;
   threshold: Threshold;
@@ -153,8 +162,8 @@ async function sendEmailToOrgAdmins(params: {
   capUsd: number;
 }): Promise<void> {
   try {
-    const admins = await dbAll<{ email: string; first_name: string }>(
-      `SELECT email, first_name FROM users WHERE organization_id = ? AND role IN ('ADMIN', 'SUPERADMIN')`,
+    const admins = await dbAll<{ id: string; email: string; first_name: string }>(
+      `SELECT id, email, first_name FROM users WHERE organization_id = ? AND role IN ('ADMIN', 'SUPERADMIN')`,
       [params.orgId],
       { fallback: true } as any
     );
@@ -165,33 +174,25 @@ async function sendEmailToOrgAdmins(params: {
       { fallback: true } as any
     );
 
-    const EmailService = (await import('../emailService.js')).default;
-    const subject = `⚠️ AI cost budget: ${params.threshold}% reached`;
-    const html = `
-      <div style="font-family: ui-sans-serif, system-ui, -apple-system; line-height: 1.4">
-        <h2>AI Cost Budget Alert</h2>
-        <p><b>${org?.name || 'Organization'}</b> reached <b>${params.threshold}%</b> of the monthly AI cost budget.</p>
-        <ul>
-          <li>Used: <b>$${params.usedUsd.toFixed(2)}</b></li>
-          <li>Budget: <b>$${params.capUsd.toFixed(2)}</b></li>
-        </ul>
-        <p>Recommended actions:</p>
-        <ul>
-          <li>Review high-spend purposes in SuperAdmin → AI → Analytics → Cost</li>
-          <li>Enable cheaper routing for non-critical purposes (soft cap)</li>
-        </ul>
-      </div>
-    `;
+    const { send: sendNotification } = await import('../notificationService.js');
+    const title = `⚠️ AI cost budget: ${params.threshold}% reached`;
+    const body = `${org?.name || 'Organization'} reached ${params.threshold}% of the monthly AI cost budget (used $${params.usedUsd.toFixed(2)} of $${params.capUsd.toFixed(2)}).`;
 
     for (const a of admins) {
-      await EmailService.send({
-        to: a.email,
-        subject,
-        html,
+      await sendNotification({
+        userId: a.id,
+        organizationId: params.orgId,
+        type: 'ai_cost_budget_alert',
+        title,
+        body,
+        priority: params.threshold >= 100 ? 'critical' : params.threshold >= 90 ? 'urgent' : 'high',
+        entityType: 'ai_budget',
+        dedupe: false,
+        data: { threshold: params.threshold, usedUsd: params.usedUsd, capUsd: params.capUsd },
       });
     }
   } catch (e: any) {
-    logger.warn('[AICostAlerts] email send failed', { error: e?.message || e });
+    logger.warn('[AICostAlerts] notification send failed', { error: e?.message || e });
   }
 }
 

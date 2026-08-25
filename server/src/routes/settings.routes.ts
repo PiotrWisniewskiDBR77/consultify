@@ -23,6 +23,11 @@ import {
 } from '../services/v8/pmSyncExternalAuthMaterializationService.js';
 import { listGovernedIntegrations } from '../services/v8/pmSyncInventoryService.js';
 import { setConnectorAuthState } from '../services/v8/pmSyncTruthService.js';
+import {
+  syncChannelCategoryPreferences,
+  syncEmailOnlyCategoryPreferences,
+  syncQuietHoursPreferences,
+} from '../services/settingsNotificationEngineSync.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import { getTableColumns } from '../utils/dbSchema.js';
@@ -492,7 +497,15 @@ router.get(
       );
 
       if (prefs?.preferences_data) {
-        return res.json({ preferences: JSON.parse(prefs.preferences_data) });
+        const parsed = JSON.parse(prefs.preferences_data);
+        // N1 migration-on-read: mirror the categories the engine can act on
+        // into notification_preferences so pre-existing choices are honored
+        // without requiring the user to open Settings and click Save again.
+        await syncChannelCategoryPreferences(userId, {
+          taskAssignment: parsed?.taskAssignment,
+          taskUpdates: parsed?.taskUpdates,
+        });
+        return res.json({ preferences: parsed });
       }
 
       // Return defaults
@@ -552,6 +565,14 @@ router.put(
       );
       if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
+      // N1: mirror into notification_preferences — the table the delivery
+      // engine actually reads (notificationService.getPreferences) — so
+      // this save is what gets enforced, not just what gets displayed.
+      await syncChannelCategoryPreferences(userId, {
+        taskAssignment: preferences?.taskAssignment,
+        taskUpdates: preferences?.taskUpdates,
+      });
+
       await logSettingsChange(userId, 'notifications', 'preferences', 'updated', null, preferences);
       logger.info(`[settings] Notification preferences updated for user ${userId}`);
 
@@ -598,7 +619,16 @@ router.get(
       );
 
       if (prefs?.preferences_data) {
-        return res.json({ preferences: JSON.parse(prefs.preferences_data) });
+        const parsed = JSON.parse(prefs.preferences_data);
+        // N1 migration-on-read: mirror enabled/start/end into
+        // notification_preferences — the only fields the engine's quiet
+        // hours check actually reads (notificationService.ts:1518-1531).
+        await syncQuietHoursPreferences(userId, {
+          enabled: parsed?.enabled,
+          startTime: parsed?.startTime,
+          endTime: parsed?.endTime,
+        });
+        return res.json({ preferences: parsed });
       }
 
       // Return defaults
@@ -662,6 +692,14 @@ router.put(
         JSON.stringify(preferences)
       );
       if (!result.success) throw new Error(result.error || 'Failed to save preference');
+
+      // N1: mirror into notification_preferences.quiet_hours_* — the
+      // columns the delivery engine's quiet-hours check reads.
+      await syncQuietHoursPreferences(userId, {
+        enabled: preferences?.enabled,
+        startTime: preferences?.startTime,
+        endTime: preferences?.endTime,
+      });
 
       logger.info(`[settings] Quiet hours updated for user ${userId}`);
 
@@ -986,6 +1024,18 @@ const defaultEmailNotificationPreferences = {
   marketing: false,
 };
 
+// N1.3 fix: this admin-on-behalf-of-a-user pair used to share the key
+// `settings:notifications` with the self-service
+// GET/PUT /api/settings/preferences/notifications pair above (used by
+// NotificationSettings.tsx). Same key, two independently-shaped and
+// unvalidated writers → whichever endpoint saved last silently clobbered
+// the other's data in full (notyfikacje-audyt.md §2.3, "Kolizja klucza").
+// This admin path has no live frontend caller today (grep confirms only
+// its own test exercises it), so giving it a dedicated key is the
+// smaller, safer fix — it changes no request/response contract on
+// either endpoint, only where this one's data lives.
+const ADMIN_NOTIFICATIONS_PREFERENCES_KEY = preferencesKey('notifications-channel-admin');
+
 /**
  * GET /api/settings/notifications
  * Get notification channel preferences
@@ -1005,7 +1055,7 @@ router.get(
 
       const prefs = await dbGet<{ preferences_data: string }>(
         `SELECT value AS preferences_data FROM user_preferences WHERE user_id = ? AND key = ?`,
-        [userId, preferencesKey('notifications')],
+        [userId, ADMIN_NOTIFICATIONS_PREFERENCES_KEY],
         { fallback: false }
       );
 
@@ -1077,7 +1127,11 @@ router.post(
       }
 
       const data = JSON.stringify(preferences);
-      const result = await upsertUserPreferenceValue(userId, preferencesKey('notifications'), data);
+      const result = await upsertUserPreferenceValue(
+        userId,
+        ADMIN_NOTIFICATIONS_PREFERENCES_KEY,
+        data
+      );
       if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
       logger.info(`[settings] Notification preferences updated for user ${userId}`);
@@ -1119,10 +1173,17 @@ router.get(
       );
 
       if (prefs?.preferences_data) {
-        return res.json({
+        const parsed = {
           ...defaultEmailNotificationPreferences,
           ...JSON.parse(prefs.preferences_data),
+        };
+        // N1 migration-on-read: mirror the email-only categories the
+        // engine can act on into notification_preferences.
+        await syncEmailOnlyCategoryPreferences(userId, {
+          taskUpdates: parsed?.taskUpdates,
+          projectAlerts: parsed?.projectAlerts,
         });
+        return res.json(parsed);
       }
 
       return res.json(defaultEmailNotificationPreferences);
@@ -1163,6 +1224,15 @@ router.put(
         JSON.stringify(preferences)
       );
       if (!result.success) throw new Error(result.error || 'Failed to save preference');
+
+      // N1: mirror into notification_preferences.type_settings — the
+      // table the delivery engine reads. Merges rather than overwrites,
+      // preserving whatever in-app channel state the Channels &
+      // Categories screen already set for the same types.
+      await syncEmailOnlyCategoryPreferences(userId, {
+        taskUpdates: preferences?.taskUpdates,
+        projectAlerts: preferences?.projectAlerts,
+      });
 
       logger.info(`[settings] Email notification preferences updated for user ${userId}`);
       return res.json({ success: true, preferences });

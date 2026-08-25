@@ -270,8 +270,8 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
       <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-emerald-100 dark:bg-emerald-500/20 rounded-lg">
-              <Download size={20} className="text-emerald-600 dark:text-emerald-400" />
+            <div className="p-2 bg-blue-100 dark:bg-blue-500/20 rounded-lg">
+              <Download size={20} className="text-blue-600 dark:text-blue-400" />
             </div>
             <div>
               <h3 className="font-semibold text-c-text">
@@ -285,7 +285,7 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
           <button
             onClick={handleExport}
             disabled={exporting}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 text-white dark:text-navy-950 bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] rounded-lg disabled:opacity-50 transition-colors"
           >
             {exporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
             {t('settings.importExport.exportSelected', 'Export Selected')}
@@ -448,7 +448,7 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
             <button
               onClick={handleImport}
               disabled={importing || !importValidation.valid}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 text-white dark:text-navy-950 bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] rounded-lg disabled:opacity-50 transition-colors"
             >
               {importing ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
               {t('settings.importExport.importButton', 'Import Settings')}

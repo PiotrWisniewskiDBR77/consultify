@@ -301,14 +301,14 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
                     <div className="flex items-center gap-3">
                       <Icon
                         size={20}
-                        className={isEnabled ? 'text-green-500' : 'text-c-text-secondary'}
+                        className={isEnabled ? 'text-navy-900 dark:text-white' : 'text-c-text-secondary'}
                       />
                       <span className="font-medium text-c-text-secondary">{option.label}</span>
                     </div>
                     <button
                       onClick={() => toggleWidget(option.key)}
                       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                        isEnabled ? 'bg-green-600' : 'bg-c-surface-raised'
+                        isEnabled ? 'bg-navy-900' : 'bg-c-surface-raised'
                       }`}
                     >
                       <span

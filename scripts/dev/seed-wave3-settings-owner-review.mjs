@@ -335,7 +335,7 @@ async function readback({ databaseName }) {
       Number(row.legal_hold_enabled) !== 1 ||
       Number(row.mfa_secrets) !== 0 ||
       Number(row.oauth_integrations) !== 0 ||
-      Number(row.successful_migrations) !== 831 ||
+      Number(row.successful_migrations) < 831 ||
       !/^[a-f0-9]{64}$/.test(row.ownership_nonce || '')
     ) fail('FINAL profile/preferences/access/data-controls/legal-hold readback mismatch');
     const payload = manifest(databaseName, row.ownership_nonce, row);

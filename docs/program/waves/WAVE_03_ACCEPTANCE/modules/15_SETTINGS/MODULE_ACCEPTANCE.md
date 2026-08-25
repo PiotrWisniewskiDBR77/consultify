@@ -97,3 +97,14 @@ Accepted SHA: —
 Date: 2026-08-21
 Accepted-out/deferred: Destructive deletion and external OAuth activation remain OFF pending later policy/release authorization. MFA enrollment UI is deferred; backend capability is not represented as an owner-complete flow.
 Evidence manifest: —
+
+## CLOSED_FINAL — 2026-08-25
+
+Status: `CLOSED_FINAL` · Werdykt właściciela: DEC-2026-08-25-16 (ACCEPT na
+komplecie 21 zrzutów). Final SHA: `d5a1b6a99e` · Tag: `final-02-settings`.
+Zakres: rozplątanie D10 na trasach (billing/organization/tenant-defaults →
+Admin), naprawy TRI-MUST-01/04, kanon graficzny, realny OAuth + naprawiony
+powrót z parametrami, PL etykiety, rozmiar czcionki. Backlog po-MVP (nowe ID):
+mieszany PL/EN w treściach ekranów; aplikacja koloru akcentu na boot; tokeny
+c-success/warning/info w status-boxach; strona startowa (User.startPage) —
+wymaga realnego routingu po loginie. Zamknięte znaczy zamknięte.
