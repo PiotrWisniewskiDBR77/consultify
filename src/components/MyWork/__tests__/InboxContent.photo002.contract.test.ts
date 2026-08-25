@@ -18,10 +18,7 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-const inboxSource = fs.readFileSync(
-  path.resolve(__dirname, '../InboxContent.tsx'),
-  'utf8'
-);
+const inboxSource = fs.readFileSync(path.resolve(__dirname, '../InboxContent.tsx'), 'utf8');
 
 describe('MYW-PHOTO-002 — Inbox empty state no longer claims false success', () => {
   it('drops the self-congratulatory "zero backlog / Great job" copy and its old keys', () => {
@@ -36,6 +33,8 @@ describe('MYW-PHOTO-002 — Inbox empty state no longer claims false success', (
 
   it('keeps the existing loading and error states untouched (already honest)', () => {
     expect(inboxSource).toContain('<SharedLoadingState template="list" rows={6} />');
-    expect(inboxSource).toContain('<ErrorState message={loadError} retry={() => void fetchInbox()} />');
+    expect(inboxSource).toContain(
+      '<ErrorState message={loadError} retry={() => void fetchInbox()} />'
+    );
   });
 });
