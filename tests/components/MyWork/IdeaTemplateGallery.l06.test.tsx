@@ -144,8 +144,15 @@ describe('M05 L-06 — confirm gate before a template overwrites an existing gra
     clickFirstUseTemplate();
     await screen.findByText(/Replace existing elements\?/i);
 
-    // Decline via the cancel button ("Cancel").
-    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    // Decline via the cancel button ("Cancel"). ConfirmDialog (shared/ConfirmDialog.tsx)
+    // renders TWO controls both accessibly named "Cancel" — the header X icon button
+    // (aria-label={cancelLabel}) and the footer text button (visible text = cancelLabel)
+    // — both wired to the identical onCancel handler, so either is behaviorally correct
+    // to click. getByRole throws on the ambiguous match; disambiguate by picking the one
+    // with visible "Cancel" text (the footer button), not the icon-only one.
+    fireEvent.click(
+      screen.getAllByRole('button', { name: 'Cancel' }).find((btn) => btn.textContent === 'Cancel')!
+    );
 
     // Dialog dismissed and the overwrite never happened.
     await waitFor(() =>
