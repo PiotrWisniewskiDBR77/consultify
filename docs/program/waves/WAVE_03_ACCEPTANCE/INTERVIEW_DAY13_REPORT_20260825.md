@@ -1,15 +1,15 @@
 # Interview dzień 13 — Creator Shell — raport dyżuru 2026-08-25
 
-Baza: `codex/day13-instrukcja-20260825` @ `8d5c30fa495ad8fdf6a5f88481a3a8999f6e86a4`  
-Marker: `dfd259af47` — POTWIERDZONY  
-Gałąź robocza: `codex/creator-day13-20260825`  
-Worktree: `/private/tmp/consultify-creator-day13`  
-Porty użyte: harness dev-render `3356` · Baza: ŻADNA · Migracje: ZERO  
+Baza: `codex/day13-instrukcja-20260825` @ `8d5c30fa495ad8fdf6a5f88481a3a8999f6e86a4`
+Marker: `dfd259af47` — POTWIERDZONY
+Gałąź robocza: `codex/creator-day13-20260825`
+Worktree: `/private/tmp/consultify-creator-day13`
+Porty użyte: harness dev-render `3356` · Baza: ŻADNA · Migracje: ZERO
 Czas pracy: 2026-08-25 22:27–22:48 CEST
 
 ## Oświadczenie o chronionym WIP (Z4/Z5) i o prototypie (Z14)
 
-Nie otwierałem, nie czytałem i nie kopiowałem katalogu `/Users/piotrwisniewski/Developer/Consultify` — ani plików, ani diffów, ani gita: TAK.  
+Nie otwierałem, nie czytałem i nie kopiowałem katalogu `/Users/piotrwisniewski/Developer/Consultify` — ani plików, ani diffów, ani gita: TAK.
 Nie zmieniłem ani jednego pliku w `docs/program/waves/WAVE_03_ACCEPTANCE/prototypes/`: TAK (dowód końcowy w Bloku 6).
 
 ## Oświadczenie o freeze (DEC-2026-08-25-65, Z8/Z9/Z10)
@@ -98,7 +98,7 @@ Brak zrzutu — R.2 CZĘŚCIOWA.
 
 ## Flaga i dowód OFF
 
-Nazwa: `interviewCreatorShell` · klucze: `ff_interviewCreatorShell` / `ff.interview_creator_shell` / `VITE_INTERVIEW_CREATOR_SHELL`.  
+Nazwa: `interviewCreatorShell` · klucze: `ff_interviewCreatorShell` / `ff.interview_creator_shell` / `VITE_INTERVIEW_CREATOR_SHELL`.
 Wartość domyślna: OFF wszędzie — `interviewCreatorShellFlag.ts`, test 5/5 PASS. Dowód OFF behawioralny w `InsightCreatorModal.a11y.test.tsx`; dowód wizualny `DAY13-04_FLAG_OFF_{LIGHT,DARK}.png`.
 
 ## BRAK_API — czego nie zbudowałem, bo nie ma czym
@@ -109,40 +109,40 @@ Inwentarz w toku.
 
 ### STOP — C-O1 trwałość szkicu (localStorage vs serwer)
 
-Powód: instrukcja dopuszcza lokalny szkic v1, ale trwałość między urządzeniami wymaga endpointu poza zakresem.  
-Dowód: §1.7 i §S.5 instrukcji.  
-Co zrobiłbym, gdyby zapadła decyzja o serwerowym szkicu: przygotowałbym osobny kontrakt endpointu i migracji po zakończeniu freeze; nie w tym dyżurze.  
+Powód: instrukcja dopuszcza lokalny szkic v1, ale trwałość między urządzeniami wymaga endpointu poza zakresem.
+Dowód: §1.7 i §S.5 instrukcji.
+Co zrobiłbym, gdyby zapadła decyzja o serwerowym szkicu: przygotowałbym osobny kontrakt endpointu i migracji po zakończeniu freeze; nie w tym dyżurze.
 Stan: NIE ZACOMMITOWANO.
 
 ### STOP — C-O2 API listy wykluczonych sesji
 
-Powód: kreator pobiera wyłącznie `/interview/sessions/completed`; odpowiedź nie niesie listy sesji odrzuconych/oczekujących wraz z powodem i datą.  
-Dowód: `InsightCreatorModal.tsx:953` oraz typ `CompletedSession`; brak wywołania endpointu exclusions.  
-Co zrobiłbym po kontrakcie API: wyrenderowałbym licznik i pełną listę z serwerowych rekordów, bez rekonstruowania powodów po stronie klienta.  
+Powód: kreator pobiera wyłącznie `/interview/sessions/completed`; odpowiedź nie niesie listy sesji odrzuconych/oczekujących wraz z powodem i datą.
+Dowód: `InsightCreatorModal.tsx:953` oraz typ `CompletedSession`; brak wywołania endpointu exclusions.
+Co zrobiłbym po kontrakcie API: wyrenderowałbym licznik i pełną listę z serwerowych rekordów, bez rekonstruowania powodów po stronie klienta.
 Stan: BRAK_API / kontrolka `Pokaż wykluczone` NIE POWSTAŁA.
 
 ### STOP — C-O3 typowany błąd AI (cztery przyczyny)
 
-Powód: istniejący catch rozróżnia 401/403, heurystyczne 502/503/504 lub słowa `llm/model/timeout`, a całą resztę składa do jednego błędu. Nie ma typowanego kontraktu walidacja/pole, sukcesu częściowego ani identyfikatora retry fragmentu.  
-Dowód: `InsightCreatorModal.tsx:1380-1405`.  
-Co zrobiłbym po kontrakcie API: mapowałbym jawny enum przyczyny i identyfikatory części operacji, zachowując stan formularza i retry tylko nieudanej części.  
+Powód: istniejący catch rozróżnia 401/403, heurystyczne 502/503/504 lub słowa `llm/model/timeout`, a całą resztę składa do jednego błędu. Nie ma typowanego kontraktu walidacja/pole, sukcesu częściowego ani identyfikatora retry fragmentu.
+Dowód: `InsightCreatorModal.tsx:1380-1405`.
+Co zrobiłbym po kontrakcie API: mapowałbym jawny enum przyczyny i identyfikatory części operacji, zachowując stan formularza i retry tylko nieudanej części.
 Stan: BRAK_API / cztery nowe stany NIE POWSTAŁY.
 
 ### STOP — C-O4 adopcja powłoki przez trzech pozostałych konsumentów
 
-Powód: Reports, Charter i Audit są poza kolejnością pilotażu.  
+Powód: Reports, Charter i Audit są poza kolejnością pilotażu.
 Stan: NIE ZACOMMITOWANO; nie będą modyfikowane.
 
 ### STOP — C-O5 wariant kompaktowy Przypisania
 
-Powód: brak zaakceptowanego prototypu wariantu kompaktowego.  
+Powód: brak zaakceptowanego prototypu wariantu kompaktowego.
 Stan: NIE ZACOMMITOWANO; powstanie wyłącznie miejsce w typie geometrii.
 
 ### STOP — K.1 brak trzynastego typu wyniku
 
-Powód: zaakceptowany prototyp wymaga 13 typów (6 podstawowych + 7 zwiniętych), natomiast stan produkcyjny definiuje dokładnie 12 typów: 6 podstawowych i 6 pozostałych. Dodanie brakującego typu zmieniłoby mechanikę biznesową i wymagałoby zgadnięcia jego kontraktu.  
-Dowód: `InsightCreatorModal.tsx:275-400` — identyfikatory `summary`, `general_analysis`, `trends`, `problems`, `recommendations`, `comparison`, `gaps`, `risk_assessment`, `opportunity_scan`, `maturity`, `stakeholder_map`, `between_the_lines`.  
-Co zrobiłbym po decyzji: dodałbym zatwierdzony trzynasty typ wraz z kontraktem backendu i tłumaczeniami, a następnie układ 6+7 dokładnie wg prototypu.  
+Powód: zaakceptowany prototyp wymaga 13 typów (6 podstawowych + 7 zwiniętych), natomiast stan produkcyjny definiuje dokładnie 12 typów: 6 podstawowych i 6 pozostałych. Dodanie brakującego typu zmieniłoby mechanikę biznesową i wymagałoby zgadnięcia jego kontraktu.
+Dowód: `InsightCreatorModal.tsx:275-400` — identyfikatory `summary`, `general_analysis`, `trends`, `problems`, `recommendations`, `comparison`, `gaps`, `risk_assessment`, `opportunity_scan`, `maturity`, `stakeholder_map`, `between_the_lines`.
+Co zrobiłbym po decyzji: dodałbym zatwierdzony trzynasty typ wraz z kontraktem backendu i tłumaczeniami, a następnie układ 6+7 dokładnie wg prototypu.
 Stan: NIE ZACOMMITOWANO; K.1 nie jest sztucznie oznaczony jako DONE.
 
 ## Znaleziska (problemy w istniejącym kodzie — NIE naprawiane przeze mnie)
