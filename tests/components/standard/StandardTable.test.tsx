@@ -7,6 +7,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  rowMenuToSections,
   StandardTable,
   type StandardRowMenu,
   type TableColumn,
@@ -202,5 +203,87 @@ describe('StandardTable', () => {
     await user.keyboard('{Shift>}{F10}{/Shift}');
     expect(screen.getByText('Open workspace')).toBeInTheDocument();
     expect(screen.getByText('Open preview')).toBeInTheDocument();
+  });
+
+  // REC-INT-005 / INT-MENU-OWN-001 — `rowMenuToSections` is the exported SSOT
+  // seam that own-card kebabs (Interview Sessions/Initiatives grid views) must
+  // reuse instead of hand-duplicating sections, so that a table's kebab/
+  // right-click menu and a card's kebab built from the SAME `buildXRowMenu`
+  // function always render identical zones/order.
+  describe('rowMenuToSections (exported SSOT for non-table kebabs, e.g. card grids)', () => {
+    const t = (_key: string, fallback?: string) => fallback ?? _key;
+
+    it('folds primary + statusTransitions into one context zone, in that order', () => {
+      const sections = rowMenuToSections(
+        {
+          primary: [{ id: 'approve', label: 'Approve', onClick: vi.fn() }],
+          statusTransitions: [{ id: 'send-back', label: 'Send back', onClick: vi.fn() }],
+        },
+        t,
+        false
+      );
+      const context = sections.find((s) => s.id === 'context');
+      expect(context?.actions.map((a) => a.id)).toEqual(['approve', 'send-back']);
+    });
+
+    it('builds the manage zone from universalHandlers + timeActions + convertActions, in order', () => {
+      const sections = rowMenuToSections(
+        {
+          universalHandlers: { preview: vi.fn(), edit: vi.fn(), archive: vi.fn() },
+          timeActions: [{ id: 'delay', label: 'Delay', submenu: [] }],
+          convertActions: [{ id: 'export-tools', label: 'Tools', onClick: vi.fn() }],
+        },
+        t,
+        false
+      );
+      const manage = sections.find((s) => s.id === 'manage');
+      expect(manage?.actions.map((a) => a.id)).toEqual([
+        'open-preview',
+        'edit',
+        'archive',
+        'delay',
+        'export-tools',
+      ]);
+    });
+
+    it('renders a truthfully-disabled manage action with its note when only *Note is given (no atrapa without a reason)', () => {
+      const sections = rowMenuToSections(
+        { universalHandlers: { editNote: 'Coming soon (backend)' } },
+        t,
+        false
+      );
+      const edit = sections.find((s) => s.id === 'manage')?.actions.find((a) => a.id === 'edit');
+      expect(edit?.disabled).toBe(true);
+      expect(edit?.description).toBe('Coming soon (backend)');
+    });
+
+    it('omits empty zones entirely (no context/manage/danger when nothing declared)', () => {
+      expect(rowMenuToSections({}, t, false)).toEqual([]);
+    });
+
+    it('produces a disabled destructive action with a note when destructive has no onClick', () => {
+      const sections = rowMenuToSections({ destructive: { note: 'Archive first' } }, t, false);
+      const destructive = sections.find((s) => s.id === 'danger')?.actions[0];
+      expect(destructive?.disabled).toBe(true);
+      expect(destructive?.description).toBe('Archive first');
+    });
+
+    it('is exactly what StandardTable itself uses, so a card kebab built from the same StandardRowMenu never drifts from the table kebab', () => {
+      const menu: StandardRowMenu = {
+        primary: [{ id: 'open', label: 'Open workspace', onClick: vi.fn() }],
+        universalHandlers: { preview: vi.fn() },
+      };
+      const fromExport = rowMenuToSections(menu, t, false);
+
+      // Same contract the table renders internally via `rowMenu` (see the
+      // "uses the same row action contract" test above): context zone has
+      // exactly the primary action, manage zone has Open preview.
+      expect(fromExport.find((s) => s.id === 'context')?.actions.map((a) => a.label)).toEqual([
+        'Open workspace',
+      ]);
+      expect(fromExport.find((s) => s.id === 'manage')?.actions.map((a) => a.label)).toEqual([
+        'Open preview',
+      ]);
+    });
   });
 });

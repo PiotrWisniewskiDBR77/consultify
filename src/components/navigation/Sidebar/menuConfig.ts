@@ -65,11 +65,13 @@ export function getMenuStructure(t: TranslationFn, _journeyState?: string): Menu
     // (/vault, /agent-plan) przekierowują na `#my-work?tab=...` — patrz
     // AppRoutes.tsx. Sama relokacja, funkcjonalność bez zmian.
     // 3. Wywiad - ustrukturyzowana rozmowa z AI konsultantem (Discovery Consultant)
+    // DEC-2026-08-24-01: viewId prowadzi na kanoniczne /interview — /discovery
+    // jest teraz tylko redirectem (AppRoutes.tsx), nie ekranem docelowym.
     {
       id: 'INTERVIEW',
       label: t('sidebar.interview', 'Interview'),
       icon: React.createElement(ClipboardList, { size: 20 }),
-      viewId: AppView.DISCOVERY_CONSULTANT,
+      viewId: AppView.INTERVIEW,
     },
     // 3. Narzędzia (DECYZJA-D2): Tools i Assessment jako DWA równorzędne
     // top-level wpisy sidebara (nie flyout submenu pod „Tools"). Routing

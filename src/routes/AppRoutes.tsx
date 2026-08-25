@@ -1862,15 +1862,18 @@ export const AppRoutes: React.FC = () => {
           }
         />
 
-        {/* Discovery Consultant - Redirects to Interview Hub */}
+        {/* Discovery Consultant — legacy alias. DEC-2026-08-24-01: /interview is
+            the sole mounted Interview address; /discovery now redirects instead
+            of mounting InterviewHub a second time under a second identity. */}
         <Route
           path={ROUTES.DISCOVERY_CONSULTANT}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Interview']} noPadding>
-              <RouteErrorBoundary>
-                <InterviewHub />
-              </RouteErrorBoundary>
-            </MainLayout>
+            <RedirectWithTracking
+              from={ROUTES.DISCOVERY_CONSULTANT}
+              to={ROUTES.INTERVIEW}
+              superadminTo={ROUTES.INTERVIEW}
+              reason="discovery_alias_to_interview"
+            />
           }
         />
 
@@ -1913,15 +1916,18 @@ export const AppRoutes: React.FC = () => {
             </MainLayout>
           }
         />
-        {/* Project Intelligence (legacy - redirects to Interview) */}
+        {/* Project Intelligence — legacy alias. DEC-2026-08-24-01: redirects to
+            the sole canonical /interview address instead of mounting
+            InterviewHub under a second identity. */}
         <Route
           path={ROUTES.PROJECT_INTELLIGENCE}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Interview']} noPadding>
-              <RouteErrorBoundary>
-                <InterviewHub />
-              </RouteErrorBoundary>
-            </MainLayout>
+            <RedirectWithTracking
+              from={ROUTES.PROJECT_INTELLIGENCE}
+              to={ROUTES.INTERVIEW}
+              superadminTo={ROUTES.INTERVIEW}
+              reason="project_intelligence_alias_to_interview"
+            />
           }
         />
 
