@@ -16177,33 +16177,52 @@
       "lastRun": "Last run",
       "rerun": "Re-run",
       "queues-jobs": {
-        "day2Auto": {
-          "text1": "Failed to pobrać zadań",
-          "text2": "Typ Jobs",
-          "text3": "Status",
-          "text4": "Status",
-          "text5": "Próby",
-          "text6": "Ostatni Error",
-          "text7": "Accessne od",
-          "text8": "Kolejki and Jobs",
-          "text9": "Tenantowy, tylko-do-odczytu stan zadań administracyjnych.",
-          "text10": "No zadań",
-          "text11": "Organization nie ma zadań administracyjnych w kolejce."
+        "title": "Queues and jobs",
+        "description": "Read-only status of the organization's administrative jobs.",
+        "errors": {
+          "load": "Could not load jobs."
+        },
+        "columns": {
+          "type": "Job type",
+          "status": "Status",
+          "attempts": "Attempts",
+          "lastError": "Last error",
+          "availableAt": "Available from",
+          "createdAt": "Created"
+        },
+        "status": {
+          "queued": "Queued",
+          "running": "Running",
+          "succeeded": "Succeeded",
+          "failed": "Failed"
+        },
+        "empty": {
+          "title": "No jobs",
+          "description": "This organization has no queued administrative jobs."
         }
       },
       "sla-slo": {
-        "day2Auto": {
-          "text1": "Failed to pobrać SLO",
-          "text2": "Cele and bieżąca realizacja — tylko odczyt.",
-          "text3": "Loading celów SLA/SLO…",
-          "text4": "Bieżący",
-          "text5": "Nie obliczono",
-          "text6": "Budżet błędu",
-          "text7": "dni",
-          "text8": "Dla this organization nie zdefiniowano celów SLO.",
-          "text9": "Targety AI-SLA są dziś stałe and nie są konfigurowalne w tym ekranie.",
-          "text10": "Stan źródła:",
-          "text11": "no danych"
+        "title": "SLA / SLO",
+        "description": "Read-only objectives and their current attainment.",
+        "loading": "Loading SLA/SLO objectives…",
+        "errors": {
+          "load": "Could not load SLO objectives."
+        },
+        "labels": {
+          "target": "Target",
+          "current": "Current",
+          "errorBudget": "Error budget",
+          "window": "Window"
+        },
+        "notCalculated": "Not calculated",
+        "daysSuffix": " days",
+        "empty": "No SLO objectives are defined for this organization.",
+        "ai": {
+          "title": "AI SLA",
+          "description": "AI SLA targets are currently fixed and cannot be configured on this screen.",
+          "sourceState": "Source status: {{state}}",
+          "loaded": "loaded",
+          "noData": "no data"
         }
       }
     },
@@ -16320,35 +16339,56 @@
       },
       "code": "code",
       "seats-licences": {
-        "day2Auto": {
-          "text1": "Failed to pobrać miejsc",
-          "text2": "Failed to zapisać",
-          "text3": "User",
-          "text4": "Seats and Licenses",
-          "text5": "Stan puli miejsc for bieżącej organization.",
-          "text6": "Łącznie",
-          "text7": "Zajęte",
-          "text8": "Włączone",
-          "text9": "Próg %",
-          "text10": "Próg procentowy",
-          "text11": "Save",
-          "text12": "No historii miejsc",
-          "text13": "Nie zarejestrowano transakcji miejsc.",
-          "text14": "Samoobsługowy zakup miejsc nieAccessny — sAccountsktuj się z opiekunem.",
-          "text15": "Kup Seats"
+        "loadError": "Failed to load seats",
+        "saveError": "Failed to save",
+        "columns": {
+          "user": "User",
+          "date": "Date",
+          "type": "Type",
+          "count": "Count",
+          "amount": "Amount"
+        },
+        "title": "Seats and licences",
+        "description": "Seat pool status for the current organization.",
+        "summary": {
+          "total": "Total",
+          "used": "Used",
+          "remaining": "Available",
+          "utilization": "Utilization"
+        },
+        "autoAdd": {
+          "enabled": "Enabled",
+          "threshold": "Threshold %",
+          "thresholdAria": "Percentage threshold",
+          "title": "Automatic seat allocation"
+        },
+        "actions": {
+          "save": "Save",
+          "purchase": "Buy seats"
+        },
+        "history": {
+          "emptyTitle": "No seat history",
+          "emptyDescription": "No seat transactions have been recorded."
+        },
+        "purchaseUnavailable": "Self-service seat purchases are unavailable — contact your account manager.",
+        "systemActor": "System",
+        "purchase": {
+          "title": "Seat purchase"
         }
       },
       "plan-history": {
-        "day2Auto": {
-          "text1": "Failed to pobrać historii planu.",
-          "text2": "Plan z",
-          "text3": "Plan na",
-          "text4": "Reason",
-          "text5": "Wykonał",
-          "text6": "History zmian planu",
-          "text7": "Chronologiczny, tylko-do-odczytu zapis zmian subskrypcji this organization.",
-          "text8": "No historii zmian planu",
-          "text9": "Dla this organization nie zapisano jeszcze zmiany subskrypcji."
+        "loadError": "Failed to load plan history.",
+        "columns": {
+          "fromPlan": "Previous plan",
+          "toPlan": "New plan",
+          "reason": "Reason",
+          "actor": "Performed by"
+        },
+        "title": "Plan change history",
+        "description": "A chronological, read-only record of this organization’s subscription changes.",
+        "empty": {
+          "title": "No plan change history",
+          "description": "No subscription changes have been recorded for this organization yet."
         }
       }
     },
@@ -16441,107 +16481,157 @@
         "delete": "Delete"
       },
       "teams": {
-        "day2Auto": {
-          "text1": "Failed to pobrać zespołów.",
-          "text2": "Team nie został potwierdzony przez odczyt z serwera.",
-          "text3": "Team utworzony",
-          "text4": "Failed to utworzyć zespołu.",
-          "text5": "Member nie został potwierdzony przez odczyt z serwera.",
-          "text6": "Member dodany",
-          "text7": "Failed to dodać członka.",
-          "text8": "Usunięcie członka nie zostało potwierdzone przez serwer.",
-          "text9": "Member usunięty",
-          "text10": "Failed to Delete członka.",
-          "text11": "Usunięcie zespołu nie zostało potwierdzone przez serwer.",
-          "text12": "Team usunięty",
-          "text13": "Failed to Delete zespołu.",
-          "text14": "Active",
-          "text15": "Name",
-          "text16": "Members",
-          "text17": "Status",
-          "text18": "Teams",
-          "text19": "Twórz Teams and zarządzaj ich rzeczywistym składem w organization.",
-          "text20": "Name zespołu",
-          "text21": "Create",
-          "text22": "Pokaż skład",
-          "text23": "Delete Team",
-          "text24": "No zespołów",
-          "text25": "Create pierwszy Team powyżej.",
-          "text26": "Skład:",
-          "text27": "Identyfikator Usera musi należeć do this organization.",
-          "text28": "Odśwież",
-          "text29": "ID Usera",
-          "text30": "Dodaj członka",
-          "text31": "Ten Team nie ma jeszcze członków.",
-          "text32": "Delete",
-          "text33": "Delete Team?",
-          "text34": "Team „{{v0}}” and jego przypisania członków zostaną usunięte.",
-          "text35": "Delete członka z zespołu?",
-          "text36": "User pozostanie członkiem organization, ale straci przypisanie do this zespołu.",
-          "text37": "Delete członka",
-          "text38": "Opis",
-          "text39": "Members zespołu"
-        }
+        "loadError": "Failed to load teams.",
+        "createReadbackError": "The server readback did not confirm the team.",
+        "createSuccess": "Team created",
+        "createError": "Failed to create the team.",
+        "addMemberReadbackError": "The server readback did not confirm the member.",
+        "addMemberSuccess": "Member added",
+        "addMemberError": "Failed to add the member.",
+        "removeMemberReadbackError": "The server did not confirm that the member was removed.",
+        "removeMemberSuccess": "Member removed",
+        "removeMemberError": "Failed to remove the member.",
+        "deleteReadbackError": "The server did not confirm that the team was deleted.",
+        "deleteSuccess": "Team deleted",
+        "deleteError": "Failed to delete the team.",
+        "activeStatus": "Active",
+        "columns": {
+          "name": "Name",
+          "members": "Members",
+          "status": "Status",
+          "lead": "Lead",
+          "type": "Type"
+        },
+        "title": "Teams",
+        "description": "Create teams and manage their actual membership in the organization.",
+        "fields": {
+          "name": "Team name",
+          "userId": "User ID",
+          "description": "Description"
+        },
+        "actions": {
+          "create": "Create",
+          "showMembers": "Show members",
+          "deleteTeam": "Delete team",
+          "refresh": "Refresh",
+          "addMember": "Add member",
+          "remove": "Remove"
+        },
+        "empty": {
+          "title": "No teams",
+          "description": "Create the first team above."
+        },
+        "members": {
+          "heading": "Members: {{name}}",
+          "orgHint": "The user ID must belong to this organization.",
+          "empty": "This team has no members yet.",
+          "ariaLabel": "Team members"
+        },
+        "deleteDialog": {
+          "title": "Delete team?",
+          "description": "Team “{{v0}}” and its member assignments will be deleted."
+        },
+        "removeDialog": {
+          "title": "Remove member from team?",
+          "description": "The user will remain a member of the organization but will lose their assignment to this team.",
+          "confirm": "Remove member"
+        },
+        "inactiveStatus": "Inactive"
       },
       "roles-permissions": {
-        "day2Auto": {
-          "text1": "Error zapisu",
-          "text2": "Role",
-          "text3": "Brak",
-          "text4": "Zarządzanie Rolemi projektowymi wymaga uprawnienia Ownera organization.",
-          "text5": "Roles and uprawnienia",
-          "text6": "Name roli",
-          "text7": "Save rolę",
-          "text8": "Dodaj rolę",
-          "text9": "Delete",
-          "text10": "No ról niestandardowych",
-          "text11": "W this organization nie zdefiniowano ról projektowych.",
-          "text12": "Delete rolę?",
-          "text13": "Przypisania this roli przestaną obowiązywać. Odzyskanie wymaga ponownego utworzenia roli.",
-          "text14": "Delete rolę"
+        "saveError": "Failed to save",
+        "columns": {
+          "role": "Role",
+          "permissions": "Permissions",
+          "updated": "Updated"
+        },
+        "emptyValue": "None",
+        "ownerOnly": "Managing project roles requires organization owner permission.",
+        "title": "Roles and permissions",
+        "fields": {
+          "name": "Role name",
+          "permissions": "Permissions",
+          "permissionsPlaceholder": "permissions, comma-separated"
+        },
+        "actions": {
+          "save": "Save role",
+          "create": "Add role",
+          "delete": "Delete",
+          "edit": "Edit"
+        },
+        "empty": {
+          "title": "No custom roles",
+          "description": "No project roles have been defined for this organization."
+        },
+        "deleteDialog": {
+          "title": "Delete role?",
+          "description": "Assignments for this role will stop applying. Restoring it requires creating the role again.",
+          "confirm": "Delete role"
         }
       },
       "guests-external": {
-        "day2Auto": {
-          "text1": "Gość",
-          "text2": "Expires",
-          "text3": "Status",
-          "text4": "Status",
-          "text5": "Organization",
-          "text6": "Wygasł",
-          "text7": "Error odebrania",
-          "text8": "Goście and Access zewnętrzny",
-          "text9": "Stan faktycznie przyznanych Accessów. Przełącznik polityki gości pozostaje ukryty, ponieważ nie jest jeszcze egzekwowany.",
-          "text10": "Odbierz Access",
-          "text11": "No gości",
-          "text12": "Organization nie ma Activech Accessów zewnętrznych.",
-          "text13": "Odebrać Access gościa?",
-          "text14": "{{v0}} utraci Access do organization. Ponowne uzyskanie Accessu wymaga nowego zaproszenia.",
-          "text15": "Zakres"
-        }
+        "columns": {
+          "guest": "Guest",
+          "expires": "Expires",
+          "status": "Status",
+          "scope": "Scope",
+          "email": "Email",
+          "granted": "Granted"
+        },
+        "scope": {
+          "organization": "Organization",
+          "project": "Project {{projectId}}"
+        },
+        "status": {
+          "expired": "Expired"
+        },
+        "revokeError": "Failed to revoke access",
+        "title": "Guests and external access",
+        "description": "Actual granted access. The guest policy switch remains hidden because it is not yet enforced.",
+        "actions": {
+          "revoke": "Revoke access"
+        },
+        "empty": {
+          "title": "No guests",
+          "description": "The organization has no active external access."
+        },
+        "revokeDialog": {
+          "title": "Revoke guest access?",
+          "description": "{{v0}} will lose access to the organization. Regaining access requires a new invitation."
+        },
+        "noExpiry": "No expiry"
       },
       "access-reviews": {
-        "day2Auto": {
-          "text1": "Osoba",
-          "text2": "Roles",
-          "text3": "Role",
-          "text4": "Status",
-          "text5": "Status",
-          "text6": "Reviewy Accessów",
-          "text7": "Loading polityki Reviewów…",
-          "text8": "Włączone",
-          "text9": "Wyłączone",
-          "text10": "Następny Review:",
-          "text11": "Otwórz kanoniczną politykę IAM",
-          "text12": "No kont uprzywilejowanych",
-          "text13": "Nie znaleziono Activech Owneri ani administratorów.",
-          "text14": "History Reviewów",
-          "text15": "Rejestr kampanii Reviewów nie jest jeszcze prowadzony.",
-          "text16": "Stan:",
-          "text17": "Kadencja:",
-          "text18": "days",
-          "text19": "Cadence: {{value}} days"
-        }
+        "columns": {
+          "person": "Person",
+          "role": "Role",
+          "status": "Status",
+          "email": "Email"
+        },
+        "title": "Access reviews",
+        "loading": "Loading review policy…",
+        "policy": {
+          "enabled": "Enabled",
+          "disabled": "Disabled",
+          "statusLabel": "Status:",
+          "cadenceLabel": "Cadence:",
+          "cadenceDays": "Cadence: {{value}} days"
+        },
+        "nextReviewLabel": "Next review:",
+        "actions": {
+          "openIamPolicy": "Open canonical IAM policy"
+        },
+        "privileged": {
+          "emptyTitle": "No privileged accounts",
+          "emptyDescription": "No active owners or administrators were found."
+        },
+        "history": {
+          "title": "Review history",
+          "empty": "Review campaigns are not recorded yet."
+        },
+        "daysUnit": "days",
+        "description": "Read-only view of configuration and privileged accounts; editing remains in the IAM policy.",
+        "nextReview": "Next review: {{date}}"
       }
     },
     "features": {
@@ -16829,84 +16919,152 @@
         }
       },
       "sessions": {
-        "day2Auto": {
-          "text1": "Error sesji",
-          "text2": "User",
-          "text3": "Urządzenie / Reviewarka",
-          "text4": "Ostatnia aktywność",
-          "text5": "Wygaśnięcie",
-          "text6": "Error unieważnienia",
-          "text7": "Sessions organization",
-          "text8": "Unieważnij sesję",
-          "text9": "No Activech sesji",
-          "text10": "Nie znaleziono Activech sesji członków organization.",
-          "text11": "Unieważnić sesję?",
-          "text12": "Ta Session natychmiast utraci Access. User może zalogować się ponownie."
+        "title": "Organization sessions",
+        "columns": {
+          "user": "User",
+          "device": "Device / browser",
+          "ip": "IP",
+          "location": "Location",
+          "lastActivity": "Last activity",
+          "expiresAt": "Expiration"
+        },
+        "values": {
+          "unknown": "Unknown",
+          "unknownLocation": "Unknown"
+        },
+        "actions": {
+          "revoke": "Revoke session"
+        },
+        "errors": {
+          "load": "Failed to load sessions.",
+          "revoke": "Failed to revoke the session."
+        },
+        "empty": {
+          "title": "No active sessions",
+          "description": "No active sessions were found for organization members."
+        },
+        "confirmRevoke": {
+          "title": "Revoke this session?",
+          "description": "This session will immediately lose access. The user can sign in again."
         }
       },
       "service-accounts": {
-        "day2Auto": {
-          "text1": "Failed to pobrać kont usługowych.",
-          "text2": "Account nie zostało potwierdzone przez serwer.",
-          "text3": "Account usługowe utworzone",
-          "text4": "Failed to utworzyć Accounts.",
-          "text5": "Odwołanie nie zostało potwierdzone.",
-          "text6": "Account usługowe odwołane",
-          "text7": "Failed to odwołać Accounts.",
-          "text8": "Name",
-          "text9": "Latest użycie",
-          "text10": "Never",
-          "text11": "Expires",
-          "text12": "Accounts usługowe",
-          "text13": "Poświadczenia maszynowe organization. Pełny sekret jest wyświetlany tylko raz.",
-          "text14": "Create",
-          "text15": "Skopiuj sekret teraz — nie będzie pokazany ponownie",
-          "text16": "Zapisałem sekret",
-          "text17": "Odwołaj Account",
-          "text18": "No kont usługowych",
-          "text19": "Nie Created jeszcze poświadczeń maszynowych.",
-          "text20": "Odwołać Account usługowe?",
-          "text21": "Token natychmiast przestanie działać. Tej operacji nie można cofnąć.",
-          "text22": "Odwołaj"
+        "title": "Service accounts",
+        "description": "Machine credentials for the organization. The full secret is displayed only once.",
+        "fields": {
+          "name": "Name"
+        },
+        "columns": {
+          "tokenPrefix": "Token prefix",
+          "scopes": "Scopes",
+          "lastUsedAt": "Last used",
+          "expiresAt": "Expires"
+        },
+        "values": {
+          "never": "Never",
+          "noExpiry": "No expiration"
+        },
+        "actions": {
+          "create": "Create",
+          "revoke": "Revoke account"
+        },
+        "secret": {
+          "title": "Copy the secret now — it will not be shown again",
+          "acknowledge": "I saved the secret"
+        },
+        "errors": {
+          "load": "Failed to load service accounts.",
+          "createReadback": "The server did not confirm the account.",
+          "create": "Failed to create the account.",
+          "revokeReadback": "The server did not confirm the revocation.",
+          "revoke": "Failed to revoke the account."
+        },
+        "notifications": {
+          "created": "Service account created",
+          "revoked": "Service account revoked"
+        },
+        "empty": {
+          "title": "No service accounts",
+          "description": "No machine credentials have been created yet."
+        },
+        "confirmRevoke": {
+          "title": "Revoke this service account?",
+          "description": "The token will stop working immediately. This action cannot be undone.",
+          "confirm": "Revoke"
         }
       },
       "security-alerts": {
-        "day2Auto": {
-          "text1": "Error alertów",
-          "text2": "Dotkliwość",
-          "text3": "User",
-          "text4": "Status",
-          "text5": "Status",
-          "text6": "Rozwiązany",
-          "text7": "Alerts bezpieczeństwa",
-          "text8": "Nierozwiązane:",
-          "text9": "Oznacz jako rozwiązane",
-          "text10": "No alertów",
-          "text11": "Nie wykryto zdarzeń bezpieczeństwa."
+        "title": "Security alerts",
+        "columns": {
+          "type": "Type",
+          "severity": "Severity",
+          "user": "User",
+          "ip": "IP",
+          "time": "Time",
+          "status": "Status"
+        },
+        "status": {
+          "resolved": "Resolved",
+          "open": "Open"
+        },
+        "metrics": {
+          "unresolved": "Unresolved: {{count}}",
+          "highRisk": "High risk: {{count}}"
+        },
+        "actions": {
+          "resolve": "Mark as resolved"
+        },
+        "errors": {
+          "load": "Failed to load security alerts."
+        },
+        "empty": {
+          "title": "No alerts",
+          "description": "No security events were detected."
         }
       },
       "break-glass": {
-        "day2Auto": {
-          "text1": "Error break-glass",
-          "text2": "Reason",
-          "text3": "Zatwierdził",
-          "text4": "Expires",
-          "text5": "Error aktywacji",
-          "text6": "Error wygaszenia",
-          "text7": "Awaryjny Access na maksymalnie 1 godzinę; widoczny w audycie.",
-          "text8": "Active Sessions: {{v0}}",
-          "text9": "No Activech sesji break-glass",
-          "text10": "Reason (min. 10 znaków)",
-          "text11": "Reason break-glass",
-          "text12": "Zatwierdzający",
-          "text13": "Funkcja jest wyłączona w polityce IAM organization.",
-          "text14": "Wygaś sesję",
-          "text15": "No historii Activech sesji",
-          "text16": "Nie ma obecnie Activego Accessu awaryjnego.",
-          "text17": "Aktywować Access break-glass?",
-          "text18": "Zakres: awaryjne uprawnienia administratora na maksymalnie 1h. Zatwierdzający: {{v0}}. Reason and zdarzenie będą widoczne w audycie. Odzyskanie: sesję można natychmiast wygasić.",
-          "text19": "Wygasić Access break-glass?",
-          "text20": "Access zostanie natychmiast odebrany. Ponowna aktywacja wymaga nowego powodu and zatwierdzenia."
+        "title": "Break-glass",
+        "description": "Emergency access for up to 1 hour; visible in the audit log.",
+        "columns": {
+          "administrator": "Administrator",
+          "reason": "Reason",
+          "approvedBy": "Approved by",
+          "expiresAt": "Expires"
+        },
+        "activeSessions": "Active sessions: {{count}}",
+        "activeSessions_one": "Active session: {{count}}",
+        "activeSessions_other": "Active sessions: {{count}}",
+        "noActiveSessions": "No active break-glass sessions",
+        "fields": {
+          "reasonLabel": "Reason (at least 10 characters)",
+          "reasonAriaLabel": "Break-glass reason",
+          "approver": "Approver",
+          "selectApprover": "Select",
+          "typedConfirmationLabel": "Type BREAK-GLASS",
+          "typedConfirmationAriaLabel": "Target confirmation"
+        },
+        "actions": {
+          "activate": "Activate for 1h",
+          "expire": "Expire session"
+        },
+        "policyDisabled": "This feature is disabled by the organization's IAM policy.",
+        "errors": {
+          "load": "Failed to load break-glass status.",
+          "activate": "Failed to activate break-glass access.",
+          "revoke": "Failed to expire break-glass access."
+        },
+        "empty": {
+          "title": "No active-session history",
+          "description": "There is currently no active emergency access."
+        },
+        "confirmActivate": {
+          "title": "Activate break-glass access?",
+          "description": "Scope: emergency administrator permissions for up to 1h. Approver: {{approver}}. The reason and event will be visible in the audit log. Recovery: the session can be expired immediately.",
+          "confirm": "Activate break-glass"
+        },
+        "confirmExpire": {
+          "title": "Expire break-glass access?",
+          "description": "Access will be removed immediately. Reactivation requires a new reason and approval."
         }
       }
     },
@@ -17965,173 +18123,445 @@
     },
     "ai": {
       "personas": {
-        "day2Auto": {}
+        "available": "Available personas",
+        "empty": "No personas have been configured.",
+        "editTitle": "Edit: {{name}}",
+        "selectPrompt": "Select a persona to edit",
+        "fields": {
+          "description": "Description",
+          "descriptionAria": "Persona description",
+          "systemPrompt": "System prompt"
+        },
+        "context": {
+          "title": "Included context",
+          "project": "Project context",
+          "userProfile": "User profile",
+          "assessment": "Assessment data",
+          "knowledgeBase": "Knowledge base",
+          "taskHistory": "Task history"
+        },
+        "actions": {
+          "save": "Save persona"
+        },
+        "messages": {
+          "updated": "The system prompt was updated."
+        },
+        "errors": {
+          "load": "Could not load personas.",
+          "update": "Could not update the prompt."
+        }
       },
       "ai-incidents": {
-        "day2Auto": {
-          "text1": "Początek",
-          "text2": "Próbki",
-          "text3": "Ostatni Error",
-          "text4": "Źródło",
-          "text5": "Incydenty są wyliczane z bieżących pomiarów Accessności; trwały rejestr historyczny nie jest jeszcze prowadzony.",
-          "text6": "No incydentów w bieżącym oknie pomiarowym.",
-          "text7": "No incydentów",
-          "text8": "Pomiary nie wykazały degradacji w bieżącym oknie."
+        "title": "AI incidents",
+        "description": "Incidents are calculated from current availability measurements; a persistent incident history is not yet maintained.",
+        "columns": {
+          "startedAt": "Started",
+          "duration": "Duration",
+          "samples": "Samples",
+          "lastError": "Last error",
+          "source": "Source"
+        },
+        "noIncidentsInWindow": "No incidents in the current measurement window.",
+        "empty": {
+          "title": "No incidents",
+          "description": "Measurements show no degradation in the current window."
         }
       },
       "configuration-versions": {
-        "day2Auto": {
-          "text1": "Failed to pobrać konfiguracji Prompt OS.",
-          "text2": "Failed to pobrać bramek ewaluacji.",
-          "text3": "Failed to pobrać konfiguracji canary.",
-          "text4": "Konfiguracja zmieniła się równolegle (409). Odświeżono dane — sprawdź stan przed ponowieniem.",
-          "text5": "Operacja nie powiodła się.",
-          "text6": "Status",
-          "text7": "Status",
-          "text8": "Prompt OS nie jest Enabled for this organization",
-          "text9": "Włączenie wymaga operatora platformy or administratora konfiguracji V8.",
-          "text10": "Try again",
-          "text11": "Odśwież",
-          "text12": "Active",
-          "text13": "Pokaż Details",
-          "text14": "Wycofaj wersję",
-          "text15": "No wersji konfiguracji",
-          "text16": "Prompt OS jest Enabled, ale Organization nie ma jeszcze bundle konfiguracji.",
-          "text17": "Details",
-          "text18": "Loading szczegółów…",
-          "text19": "no wyników",
-          "text20": "Enabled",
-          "text21": "Disabled",
-          "text22": "nie",
-          "text23": "no konfiguracji",
-          "text24": "Reason wycofania (wymagany)",
-          "text25": "Reason wycofania",
-          "text26": "Przejdź do potwierdzenia",
-          "text27": "Wycofać aktywną konfigurację?",
-          "text28": "Reason: {{v0}}. Operacja zmieni runtime organization and zostanie zapisana w historii Prompt OS."
+        "title": "AI configuration versions",
+        "description": "The organization's Prompt OS configuration, evaluation gates, and canary rollout.",
+        "errors": {
+          "load": "Could not load the Prompt OS configuration.",
+          "evalGates": "Could not load evaluation gates.",
+          "canary": "Could not load the canary configuration.",
+          "conflict": "The configuration changed concurrently (409). Data has been refreshed; review the current state before trying again.",
+          "operation": "The operation failed."
+        },
+        "columns": {
+          "version": "Version",
+          "preset": "Preset",
+          "status": "Status",
+          "prompt": "Prompt",
+          "model": "Model",
+          "policy": "Policy",
+          "runtime": "Runtime"
+        },
+        "disabled": {
+          "title": "Prompt OS is not enabled for this organization",
+          "description": "A platform operator or V8 configuration administrator must enable it."
+        },
+        "actions": {
+          "retry": "Try again",
+          "refresh": "Refresh",
+          "details": "Show details",
+          "activate": "Activate",
+          "rollback": "Roll back version"
+        },
+        "summary": {
+          "contract": "Contract",
+          "presets": "Presets",
+          "bundles": "Bundles",
+          "active": "Active"
+        },
+        "empty": {
+          "title": "No configuration versions",
+          "description": "Prompt OS is enabled, but this organization does not have a configuration bundle yet."
+        },
+        "details": {
+          "title": "Details for {{version}}",
+          "loading": "Loading details…",
+          "evalGates": "Gates: {{value}}",
+          "noGateResults": "no results",
+          "canary": "Canary: rollback {{rollback}}, organization scope {{orgScoped}}",
+          "noCanary": "Canary: not configured"
+        },
+        "rollback": {
+          "reasonLabel": "Rollback reason (required)",
+          "reasonAria": "Rollback reason",
+          "continue": "Continue to confirmation",
+          "confirmTitle": "Roll back the active configuration?",
+          "confirmDescription": "Reason: {{reason}}. This operation will change the organization's runtime and be recorded in Prompt OS history."
         }
       }
     },
     "audit": {
       "export-history": {
-        "day2Auto": {
-          "text1": "Export",
-          "text2": "History Exportów",
-          "text3": "Paragony Exportów dziennika audytu wykonanych przez administratorów organization.",
-          "text4": "No Exportów",
-          "text5": "Nie zapisano jeszcze paragonu Exportu dziennika audytu."
+        "title": "Export history",
+        "description": "Receipts for audit-log exports performed by organization administrators.",
+        "columns": {
+          "time": "When",
+          "requestedBy": "Requested by",
+          "exportKind": "Export",
+          "rows": "Rows",
+          "format": "Format"
+        },
+        "empty": {
+          "title": "No exports",
+          "description": "No audit-log export receipt has been recorded yet."
         }
       },
       "integrity": {
-        "day2Auto": {
-          "text1": "Integrity dziennika audytu",
-          "text2": "Evidence Accessne obecnie — bez deklarowania nieistniejącej kryptografii.",
-          "text3": "Loading statystyk audytu…",
-          "text4": "Events: {{value}}",
-          "text5": "Unresolved: {{value}}",
-          "text6": "High risk: {{value}}",
-          "text7": "Niezmienność for ról klienta",
-          "text8": "Interfejs administracji klienta uAccessnia odczyt and Export dziennika; nie uAccessnia endpointu modyfikowania ani usuwania zdarzeń audytowych.",
-          "text9": "A hash chain is not currently maintained. Integrity presently relies on access controls (client roles have no write path), not on cryptographic proof.",
-          "text10": "Cryptographic verification"
+        "title": "Audit-log integrity",
+        "description": "Evidence currently available, without claiming nonexistent cryptography.",
+        "loading": "Loading audit statistics…",
+        "metrics": {
+          "totalEvents": "Events: {{value}}",
+          "unresolved": "Unresolved: {{value}}",
+          "highRisk": "High risk: {{value}}"
+        },
+        "accessControl": {
+          "title": "Immutability for customer roles",
+          "description": "The customer administration interface provides audit-log read and export access; it exposes no endpoint for modifying or deleting audit events."
+        },
+        "cryptographicVerification": {
+          "title": "Cryptographic verification",
+          "description": "A hash chain is not currently maintained. Integrity presently relies on access controls (customer roles have no write path), not on cryptographic proof."
         }
       },
       "compliance-evidence": {
-        "day2Auto": {
-          "text1": "Failed to pobrać dowodów zgodności.",
-          "text2": "Export audytu gotowy",
-          "text3": "Export nie powiódł się.",
-          "text4": "Risk",
-          "text5": "Nie ustawiono",
-          "text6": "{{v0}} harmonogramów",
-          "text7": "Polityka AI",
-          "text8": "Evidence zgodności",
-          "text9": "Niezmienialny for ról klienta, tylko-do-odczytu widok dowodów and Exportów.",
-          "text10": "Świeżość:",
-          "text11": "Łącznie zdarzeń",
-          "text12": "Nierozwiązane",
-          "text13": "Wysokie Risk",
-          "text14": "Źródło: GET /api/admin/audit-logs/stats",
-          "text15": "No zdarzeń audytowych",
-          "text16": "Nie zarejestrowano jeszcze dowodów for this organization.",
-          "text17": "Źródło: GET /api/admin"
+        "title": "Compliance evidence",
+        "description": "An immutable, read-only view of evidence and exports for customer roles.",
+        "freshness": "Freshness: {{value}}",
+        "columns": {
+          "event": "Event",
+          "actor": "Actor",
+          "risk": "Risk",
+          "time": "Time"
+        },
+        "cards": {
+          "dataResidency": "Data residency",
+          "retentionSchedules": "Retention schedules",
+          "retentionScheduleCount": "{{count}} schedules",
+          "retentionScheduleCount_one": "{{count}} schedule",
+          "retentionScheduleCount_other": "{{count}} schedules",
+          "aiPolicy": "AI policy"
+        },
+        "values": {
+          "notSet": "Not set"
+        },
+        "actions": {
+          "exportCsv": "Export CSV"
+        },
+        "metrics": {
+          "totalEvents": "Total events",
+          "unresolved": "Unresolved",
+          "highRisk": "High risk"
+        },
+        "sources": {
+          "auditStats": "Source: GET /api/admin/audit-logs/stats"
+        },
+        "source": "Source: GET /api/admin{{path}}",
+        "errors": {
+          "load": "Failed to load compliance evidence.",
+          "export": "Export failed."
+        },
+        "notifications": {
+          "exportReady": "Audit export is ready"
+        },
+        "empty": {
+          "title": "No audit events",
+          "description": "No evidence has been recorded for this organization yet."
         }
       },
       "legal-hold": {
-        "day2Auto": {
-          "text1": "Stan faktycznego wstrzymania for całej organization — tylko odczyt.",
-          "text2": "Loading stanu legal hold…",
-          "text3": "Wstrzymanie Active",
-          "text4": "Gdy Active, blokowane są: Export danych oraz usunięcie organization.",
-          "text5": "Sprawy objęte wstrzymaniem",
-          "text6": "Rejestr spraw nie jest jeszcze prowadzony; wstrzymanie działa dziś na poziomie całej organization."
+        "title": "Legal hold",
+        "description": "The actual organization-wide hold status — read-only.",
+        "loading": "Loading legal-hold status…",
+        "status": {
+          "active": "Hold active",
+          "inactive": "Hold inactive"
+        },
+        "blockedOperations": "When active, data export and organization deletion are blocked.",
+        "matters": {
+          "title": "Matters under hold",
+          "description": "A matter registry is not maintained yet; today the hold applies to the entire organization."
         }
       }
     },
     "command": {
       "attention-queue": {
-        "day2Auto": {
-          "text1": "Ryzyka wymagające Reviewu",
-          "text2": "Nierozwiązane Events audytowe",
-          "text3": "{{v0}} nierozwiązanych",
-          "text4": "Alerts budżetowe",
-          "text5": "{{v0}} Activech alertów",
-          "text6": "Stan usług organization",
-          "text7": "/admin/health/service-Status",
-          "text8": "{{v0}} testów nieudanych",
-          "text9": "Failed to odczytać żadnego źródła sygnałów.",
-          "text10": "Loading kolejki uwagi…",
-          "text11": "Queue uwagi",
-          "text12": "Sygnały z systemów kanonicznych; działania wykonuje się na ekranach źródłowych.",
-          "text13": "Źródło:",
-          "text14": "Świeżość:",
-          "text15": "Open canonical screen",
-          "text16": "Source: tenant admin API · current read"
-        }
+        "signals": {
+          "riskTitle": "Risks requiring review",
+          "auditTitle": "Unresolved audit events",
+          "auditDetail": "{{v0}} unresolved",
+          "billingTitle": "Budget alerts",
+          "billingDetail": "{{v0}} active alerts",
+          "healthTitle": "Organization service status",
+          "healthDetail": "{{v0}} failed checks",
+          "riskDetail": "{{count}} high-risk"
+        },
+        "allSourcesError": "None of the signal sources could be read.",
+        "loading": "Loading attention queue…",
+        "title": "Attention queue",
+        "description": "Signals from canonical systems; actions are performed on the source screens.",
+        "sourceLabel": "Source:",
+        "freshnessLabel": "Freshness:",
+        "actions": {
+          "openCanonical": "Open canonical screen"
+        },
+        "currentSource": "Source: tenant admin API · current read"
       },
       "cost-capacity": {
-        "day2Auto": {
-          "text1": "Część źródeł Costu or pojemności jest nieAccessna.",
-          "text2": "User",
-          "text3": "Cost",
-          "text4": "Wiadomości",
-          "text5": "Loading Costu and pojemności…",
-          "text6": "Cost and Capacity",
-          "text7": "Agregacja tylko do odczytu. Budżety edytuje ekran kanoniczny.",
-          "text8": "Świeżość:",
-          "text9": "Cost bieżący",
-          "text10": "Seats zajęte",
-          "text11": "Źródło: GET /api/admin/",
-          "text12": "No atrybucji Costów",
-          "text13": "No Costów przypisanych Userom w wybranym okresie.",
-          "text14": "Alerts budżetowe (",
-          "text15": "Details wykorzystania",
-          "text16": "Stan:",
-          "text17": "nieudanych prób"
-        }
+        "partialSourcesWarning": "Some cost or capacity sources are unavailable.",
+        "columns": {
+          "user": "User",
+          "cost": "Cost",
+          "messages": "Messages"
+        },
+        "loading": "Loading cost and capacity…",
+        "title": "Cost and capacity",
+        "description": "Read-only aggregation. Budgets are edited on the canonical screen.",
+        "freshnessLabel": "Freshness:",
+        "metrics": {
+          "currentCost": "Current cost",
+          "usedSeats": "Seats used",
+          "forecast": "Forecast",
+          "utilization": "Limit utilization"
+        },
+        "empty": {
+          "title": "No cost attribution",
+          "description": "No costs were attributed to users in the selected period."
+        },
+        "actions": {
+          "usageDetails": "Usage details"
+        },
+        "source": "Source: GET /api/admin/{{source}}",
+        "budgetAlerts": "Budget alerts ({{count}})",
+        "healthStatus": "Status: {{count}} failed checks"
       },
       "organization-defaults": {
-        "day2Auto": {
-          "text1": "Failed to pobrać profilu.",
-          "text2": "Failed to pobrać ustawień finansowych.",
-          "text3": "Failed to zapisać profilu.",
-          "text4": "Zapisano; potwierdzono wersją odpowiedzi.",
-          "text5": "Settings zmieniły się równolegle (409). Odśwież sekcję przed ponowieniem.",
-          "text6": "Failed to zapisać ustawień finansowych.",
-          "text7": "Settings defaults organization",
-          "text8": "Dwa niezależne źródła danych and dwa niezależne zapisy.",
-          "text9": "Status",
-          "text10": "Język",
-          "text11": "Domyślny język",
-          "text12": "Try again",
-          "text13": "Save lokalizację and format",
-          "text14": "defaults finansowe",
-          "text15": "Settings finansowe są nieAccessne, ponieważ V8 nie jest włączone for this organization. Sekcja profilu powyżej pozostaje aktywna.",
-          "text16": "Domyślna waluta",
-          "text17": "Domyślny WACC",
-          "text18": "Domyślny horyzont",
-          "text19": "Save defaults finansowe"
+        "profile": {
+          "loadError": "Failed to load the profile.",
+          "saveError": "Failed to save the profile.",
+          "languageLabel": "Language",
+          "languageAria": "Default language",
+          "saveAction": "Save locale and format",
+          "title": "Locale and format",
+          "timezoneLabel": "Time zone",
+          "timezoneAria": "Time zone",
+          "dateFormatLabel": "Date format",
+          "dateFormatAria": "Date format"
+        },
+        "finance": {
+          "loadError": "Failed to load financial settings.",
+          "saveSuccess": "Saved and confirmed by the response version.",
+          "conflict": "Settings changed concurrently (409). Refresh the section before retrying.",
+          "saveError": "Failed to save financial settings.",
+          "title": "Financial defaults",
+          "disabled": "Financial settings are unavailable because V8 is not enabled for this organization. The profile section above remains active.",
+          "currencyAria": "Default currency",
+          "waccAria": "Default WACC",
+          "horizonAria": "Default horizon",
+          "saveAction": "Save financial defaults",
+          "currencyLabel": "Currency",
+          "waccLabel": "WACC",
+          "horizonLabel": "Horizon (years)"
+        },
+        "title": "Organization defaults",
+        "description": "Two independent data sources and two independent save operations.",
+        "actions": {
+          "retry": "Try again"
         }
+      }
+    },
+    "domains": {
+      "title": "Approved domains",
+      "description": "Verify domain ownership with an actual DNS TXT record.",
+      "created": "Domain added.",
+      "errors": {
+        "load": "Could not load domains.",
+        "createReadback": "The server did not confirm the domain.",
+        "create": "Could not add the domain.",
+        "verify": "Could not verify the domain.",
+        "update": "Could not update the domain setting.",
+        "deleteReadback": "The server did not confirm domain removal.",
+        "delete": "Could not remove the domain."
+      },
+      "columns": {
+        "domain": "Domain",
+        "autoJoin": "Automatic joining",
+        "status": "Verification status",
+        "verifiedAt": "Verified at",
+        "actions": "Actions"
+      },
+      "status": {
+        "verified": "Verified",
+        "pending": "Pending"
+      },
+      "actions": {
+        "reverify": "Verify again",
+        "verify": "Verify",
+        "add": "Add",
+        "copy": "Copy value",
+        "delete": "Remove domain"
+      },
+      "form": {
+        "domain": "Domain"
+      },
+      "dns": {
+        "title": "Add a DNS TXT record",
+        "name": "Name",
+        "type": "Type",
+        "value": "Value"
+      },
+      "outcomes": {
+        "verified": "Domain verified.",
+        "tokenMismatch": "TXT records were found, but none contains your token. Check that you copied the entire value.",
+        "noRecord": "No TXT record was found. DNS changes can take up to 24 hours to propagate.",
+        "domainNotFound": "The domain does not exist in DNS or did not respond.",
+        "timeout": "The DNS request timed out. Try again.",
+        "dnsError": "The DNS request failed."
+      },
+      "empty": {
+        "title": "No approved domains",
+        "description": "Add a domain to begin DNS verification."
+      },
+      "delete": {
+        "title": "Remove this domain?",
+        "description": "The domain will no longer be approved for this organization."
+      }
+    },
+    "aiQuality": {
+      "title": "AI quality evaluations",
+      "description": "Real feedback, learning patterns, and organization analytics.",
+      "errors": {
+        "load": "Could not load AI quality data.",
+        "reviewReadback": "The server did not confirm the review.",
+        "review": "Could not mark the feedback as reviewed.",
+        "patternReadback": "The server did not confirm the pattern status.",
+        "pattern": "Could not change the pattern status."
+      },
+      "metrics": {
+        "satisfaction": "Satisfaction",
+        "total": "Feedback",
+        "patterns": "Active patterns",
+        "profiles": "Style profiles"
+      },
+      "feedback": {
+        "title": "Feedback",
+        "user": "User",
+        "context": "Context",
+        "type": "Rating",
+        "review": "Review",
+        "reviewed": "Reviewed",
+        "markReviewed": "Mark as reviewed",
+        "empty": "No feedback",
+        "emptyDescription": "No AI response ratings have been collected yet."
+      },
+      "pattern": {
+        "title": "Learning patterns",
+        "type": "Type",
+        "value": "Pattern",
+        "confidence": "Confidence",
+        "status": "Status",
+        "actions": "Actions",
+        "apply": "Apply",
+        "reject": "Reject",
+        "empty": "No patterns",
+        "emptyDescription": "No learning patterns have been detected yet."
+      },
+      "analytics": {
+        "title": "Analytics",
+        "contexts": "Contexts",
+        "formats": "Formats",
+        "issues": "Issues"
+      }
+    },
+    "dependencies": {
+      "title": "Organization service dependencies",
+      "description": "Status is calculated only from the latest stored probe results. This screen does not run diagnostics.",
+      "errors": {
+        "load": "Could not load dependencies."
+      },
+      "neverChecked": "never checked",
+      "probeCount_one": "{{count}} probe",
+      "probeCount_other": "{{count}} probes",
+      "status": {
+        "healthy": "Healthy",
+        "degraded": "Partial data",
+        "failing": "Failing",
+        "unknown": "No result"
+      },
+      "empty": {
+        "title": "No declared dependencies",
+        "description": "The dependency map contains no entries."
+      },
+      "undeclared": {
+        "title": "Probes without a declared dependency",
+        "description": "The map is a manual, verifiable declaration. Unlisted dependencies remain pending until supported by code evidence.",
+        "none": "Every registered probe has a declaration."
+      }
+    },
+    "incidentHistory": {
+      "title": "Incident history",
+      "truth": "A tenant-scoped operational incident register is not maintained yet. The current register operates at platform level and does not separate events by organization. An incident view for your organization is being developed as part of the platform layer.",
+      "errors": {
+        "load": "Could not load the current system status."
+      },
+      "current": {
+        "title": "Current status, not history",
+        "total": "Probes",
+        "passed": "Passing",
+        "failed": "Failures",
+        "unknown": "No result",
+        "link": "Open health overview"
+      }
+    },
+    "accessRequests": {
+      "title": "Access requests",
+      "truth": "Access requests for this organization are not supported yet. The existing platform-level register is used to create new organizations, not to join an existing one, so it is not shown here.",
+      "plan": {
+        "title": "Planned flow",
+        "submit": "1. A user outside the organization submits a request, with or without an address in an approved domain.",
+        "queue": "2. The request enters this organization's queue, visible only to OWNER and ADMIN roles.",
+        "decide": "3. An OWNER or ADMIN approves the requested role or rejects the request with a reason.",
+        "member": "4. Approval creates an active membership in the existing organization; it never creates a new organization.",
+        "audit": "5. The audit records the decision maker, time, decision, role, and reason."
+      },
+      "today": {
+        "title": "Available today",
+        "invitations": "Send an invitation",
+        "domains": "Manage verified domains"
       }
     }
   },

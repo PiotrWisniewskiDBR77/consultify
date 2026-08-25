@@ -4,15 +4,15 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import {
+  type AiFeedback,
+  type AiLearningPattern,
+  type AiQualityMetrics,
   getAiQualityAnalytics,
   getAiQualityFeedback,
   getAiQualityMetrics,
   getAiQualityPatterns,
   reviewAiQualityFeedback,
   updateAiQualityPatternStatus,
-  type AiFeedback,
-  type AiLearningPattern,
-  type AiQualityMetrics,
 } from '../../services/adminAiQualityApi';
 import { StandardTable, type TableColumn, type TableRow } from '../standard/StandardTable';
 
@@ -61,10 +61,7 @@ export const AdminAiQualityPanel: React.FC = () => {
       await reviewAiQualityFeedback(item.id);
       const readback = await getAiQualityFeedback();
       const confirmed = readback.find((candidate) => candidate.id === item.id);
-      if (!confirmed?.reviewed_at)
-        throw new Error(
-          t('admin.aiQuality.errors.reviewReadback', 'Serwer nie potwierdził przeglądu.')
-        );
+      if (!confirmed?.reviewed_at) throw new Error(t('admin.aiQuality.errors.reviewReadback'));
       setFeedback(readback);
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : t('admin.aiQuality.errors.review'));
@@ -79,9 +76,7 @@ export const AdminAiQualityPanel: React.FC = () => {
       await updateAiQualityPatternStatus(item.id, status);
       const readback = await getAiQualityPatterns();
       if (readback.find((candidate) => candidate.id === item.id)?.status !== status)
-        throw new Error(
-          t('admin.aiQuality.errors.patternReadback', 'Serwer nie potwierdził statusu.')
-        );
+        throw new Error(t('admin.aiQuality.errors.patternReadback'));
       setPatterns(readback);
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : t('admin.aiQuality.errors.pattern'));
@@ -92,22 +87,22 @@ export const AdminAiQualityPanel: React.FC = () => {
 
   const feedbackColumns = useMemo<TableColumn[]>(
     () => [
-      { id: 'user_name', label: t('admin.aiQuality.feedback.user', 'Użytkownik') },
-      { id: 'screen_context', label: t('admin.aiQuality.feedback.context', 'Kontekst') },
-      { id: 'feedback_type', label: t('admin.aiQuality.feedback.type', 'Ocena') },
+      { id: 'user_name', label: t('admin.aiQuality.feedback.user') },
+      { id: 'screen_context', label: t('admin.aiQuality.feedback.context') },
+      { id: 'feedback_type', label: t('admin.aiQuality.feedback.type') },
       {
         id: 'reviewed_at',
-        label: t('admin.aiQuality.feedback.review', 'Przegląd'),
+        label: t('admin.aiQuality.feedback.review'),
         render: (row) =>
           row.reviewed_at ? (
-            t('admin.aiQuality.feedback.reviewed', 'Przejrzane')
+            t('admin.aiQuality.feedback.reviewed')
           ) : (
             <button
               className={actionClass}
               disabled={busy === row.id}
               onClick={() => void review(row as unknown as AiFeedback)}
             >
-              {t('admin.aiQuality.feedback.markReviewed', 'Oznacz jako przejrzane')}
+              {t('admin.aiQuality.feedback.markReviewed')}
             </button>
           ),
       },
@@ -116,13 +111,13 @@ export const AdminAiQualityPanel: React.FC = () => {
   );
   const patternColumns = useMemo<TableColumn[]>(
     () => [
-      { id: 'pattern_type', label: t('admin.aiQuality.pattern.type', 'Typ') },
-      { id: 'pattern_value', label: t('admin.aiQuality.pattern.value', 'Wzorzec') },
-      { id: 'confidence_score', label: t('admin.aiQuality.pattern.confidence', 'Pewność') },
-      { id: 'status', label: t('admin.aiQuality.pattern.status', 'Status') },
+      { id: 'pattern_type', label: t('admin.aiQuality.pattern.type') },
+      { id: 'pattern_value', label: t('admin.aiQuality.pattern.value') },
+      { id: 'confidence_score', label: t('admin.aiQuality.pattern.confidence') },
+      { id: 'status', label: t('admin.aiQuality.pattern.status') },
       {
         id: 'actions',
-        label: t('admin.aiQuality.pattern.actions', 'Akcje'),
+        label: t('admin.aiQuality.pattern.actions'),
         render: (row) => (
           <span className="flex gap-2">
             <button
@@ -130,14 +125,14 @@ export const AdminAiQualityPanel: React.FC = () => {
               disabled={busy === row.id}
               onClick={() => void updatePattern(row as unknown as AiLearningPattern, 'applied')}
             >
-              {t('admin.aiQuality.pattern.apply', 'Zastosuj')}
+              {t('admin.aiQuality.pattern.apply')}
             </button>
             <button
               className={actionClass}
               disabled={busy === row.id}
               onClick={() => void updatePattern(row as unknown as AiLearningPattern, 'rejected')}
             >
-              {t('admin.aiQuality.pattern.reject', 'Odrzuć')}
+              {t('admin.aiQuality.pattern.reject')}
             </button>
           </span>
         ),
@@ -154,7 +149,7 @@ export const AdminAiQualityPanel: React.FC = () => {
       >
         <p>{error}</p>
         <button className={`${actionClass} mt-3`} onClick={() => void load()}>
-          {t('common.retry', 'Spróbuj ponownie')}
+          {t('common.retry')}
         </button>
       </section>
     );
@@ -162,34 +157,19 @@ export const AdminAiQualityPanel: React.FC = () => {
   return (
     <div className="space-y-4">
       <header>
-        <h2 className="text-lg font-semibold text-c-text">
-          {t('admin.aiQuality.title', 'Ewaluacje jakości AI')}
-        </h2>
-        <p className="mt-1 text-sm text-c-text-secondary">
-          {t(
-            'admin.aiQuality.description',
-            'Rzeczywisty feedback, wzorce uczenia i analityka organizacji.'
-          )}
-        </p>
+        <h2 className="text-lg font-semibold text-c-text">{t('admin.aiQuality.title')}</h2>
+        <p className="mt-1 text-sm text-c-text-secondary">{t('admin.aiQuality.description')}</p>
       </header>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[
           [
             'satisfaction',
-            t('admin.aiQuality.metrics.satisfaction', 'Satysfakcja'),
+            t('admin.aiQuality.metrics.satisfaction'),
             metrics?.satisfactionRate == null ? '—' : `${metrics.satisfactionRate}%`,
           ],
-          ['total', t('admin.aiQuality.metrics.total', 'Feedback'), metrics?.totalFeedback ?? 0],
-          [
-            'patterns',
-            t('admin.aiQuality.metrics.patterns', 'Aktywne wzorce'),
-            metrics?.activePatternsCount ?? 0,
-          ],
-          [
-            'profiles',
-            t('admin.aiQuality.metrics.profiles', 'Profile stylu'),
-            metrics?.userProfilesCount ?? 0,
-          ],
+          ['total', t('admin.aiQuality.metrics.total'), metrics?.totalFeedback ?? 0],
+          ['patterns', t('admin.aiQuality.metrics.patterns'), metrics?.activePatternsCount ?? 0],
+          ['profiles', t('admin.aiQuality.metrics.profiles'), metrics?.userProfilesCount ?? 0],
         ].map(([id, label, value]) => (
           <section key={String(id)} className="rounded-2xl border border-c-border bg-c-surface p-4">
             <p className="text-xs text-c-text-muted">{label}</p>
@@ -200,7 +180,7 @@ export const AdminAiQualityPanel: React.FC = () => {
       <section className="rounded-2xl border border-c-border bg-c-surface p-2">
         <h3 className="p-3 font-semibold text-c-text">
           <MessageSquareText className="mr-2 inline h-4 w-4" />
-          {t('admin.aiQuality.feedback.title', 'Feedback')}
+          {t('admin.aiQuality.feedback.title')}
         </h3>
         <StandardTable
           columns={feedbackColumns}
@@ -209,11 +189,8 @@ export const AdminAiQualityPanel: React.FC = () => {
           error={null}
           empty={{
             icon: MessageSquareText,
-            title: t('admin.aiQuality.feedback.empty', 'Brak feedbacku'),
-            description: t(
-              'admin.aiQuality.feedback.emptyDescription',
-              'Nie zebrano jeszcze ocen odpowiedzi AI.'
-            ),
+            title: t('admin.aiQuality.feedback.empty'),
+            description: t('admin.aiQuality.feedback.emptyDescription'),
           }}
           persistKey="admin.aiQuality.feedback"
         />
@@ -221,7 +198,7 @@ export const AdminAiQualityPanel: React.FC = () => {
       <section className="rounded-2xl border border-c-border bg-c-surface p-2">
         <h3 className="p-3 font-semibold text-c-text">
           <Sparkles className="mr-2 inline h-4 w-4" />
-          {t('admin.aiQuality.pattern.title', 'Wzorce uczenia')}
+          {t('admin.aiQuality.pattern.title')}
         </h3>
         <StandardTable
           columns={patternColumns}
@@ -230,11 +207,8 @@ export const AdminAiQualityPanel: React.FC = () => {
           error={null}
           empty={{
             icon: Sparkles,
-            title: t('admin.aiQuality.pattern.empty', 'Brak wzorców'),
-            description: t(
-              'admin.aiQuality.pattern.emptyDescription',
-              'Nie wykryto jeszcze wzorców uczenia.'
-            ),
+            title: t('admin.aiQuality.pattern.empty'),
+            description: t('admin.aiQuality.pattern.emptyDescription'),
           }}
           persistKey="admin.aiQuality.patterns"
         />
@@ -242,25 +216,19 @@ export const AdminAiQualityPanel: React.FC = () => {
       <section className="rounded-2xl border border-c-border bg-c-surface p-5">
         <h3 className="font-semibold text-c-text">
           <Activity className="mr-2 inline h-4 w-4" />
-          {t('admin.aiQuality.analytics.title', 'Analityka')}
+          {t('admin.aiQuality.analytics.title')}
         </h3>
         <dl className="mt-3 grid gap-3 sm:grid-cols-3">
           <div>
-            <dt className="text-xs text-c-text-muted">
-              {t('admin.aiQuality.analytics.contexts', 'Konteksty')}
-            </dt>
+            <dt className="text-xs text-c-text-muted">{t('admin.aiQuality.analytics.contexts')}</dt>
             <dd className="text-xl text-c-text">{analytics.contexts}</dd>
           </div>
           <div>
-            <dt className="text-xs text-c-text-muted">
-              {t('admin.aiQuality.analytics.formats', 'Formaty')}
-            </dt>
+            <dt className="text-xs text-c-text-muted">{t('admin.aiQuality.analytics.formats')}</dt>
             <dd className="text-xl text-c-text">{analytics.formats}</dd>
           </div>
           <div>
-            <dt className="text-xs text-c-text-muted">
-              {t('admin.aiQuality.analytics.issues', 'Problemy')}
-            </dt>
+            <dt className="text-xs text-c-text-muted">{t('admin.aiQuality.analytics.issues')}</dt>
             <dd className="text-xl text-c-text">{analytics.issues}</dd>
           </div>
         </dl>

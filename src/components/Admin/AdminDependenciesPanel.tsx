@@ -3,17 +3,11 @@ import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
-  getAdminDependencies,
   type AdminDependenciesResponse,
   type DependencyStatus,
+  getAdminDependencies,
 } from '../../services/adminDependenciesApi';
 
-const statusDefaults: Record<DependencyStatus, string> = {
-  healthy: 'Działa',
-  degraded: 'Częściowe dane',
-  failing: 'Awaria',
-  unknown: 'Brak wyniku',
-};
 const statusColors: Record<DependencyStatus, string> = {
   healthy: 'var(--c-success)',
   degraded: 'var(--c-info)',
@@ -39,8 +33,7 @@ export const AdminDependenciesPanel: React.FC = () => {
   }, [t]);
   React.useEffect(() => void load(), [load]);
 
-  if (loading)
-    return <p className="text-sm text-c-text-muted">{t('common.loading', 'Ładowanie…')}</p>;
+  if (loading) return <p className="text-sm text-c-text-muted">{t('common.loading')}</p>;
   if (error)
     return (
       <section role="alert" className="rounded-2xl border border-c-danger bg-c-surface p-5">
@@ -50,7 +43,7 @@ export const AdminDependenciesPanel: React.FC = () => {
           onClick={() => void load()}
           className="mt-3 rounded-lg border border-c-border px-3 py-2 text-sm text-c-text focus-visible:outline-none focus-visible:ring-2 ring-[color:var(--c-focus)]"
         >
-          {t('common.retry', 'Spróbuj ponownie')}
+          {t('common.retry')}
         </button>
       </section>
     );
@@ -59,24 +52,15 @@ export const AdminDependenciesPanel: React.FC = () => {
   return (
     <div className="space-y-4">
       <header>
-        <h2 className="text-lg font-semibold text-c-text">
-          {t('admin.dependencies.title', 'Zależności usług organizacji')}
-        </h2>
-        <p className="mt-1 text-sm text-c-text-secondary">
-          {t(
-            'admin.dependencies.description',
-            'Status jest wyliczany wyłącznie z ostatnich zapisanych wyników probe’ów. Ten ekran nie uruchamia diagnostyki.'
-          )}
-        </p>
+        <h2 className="text-lg font-semibold text-c-text">{t('admin.dependencies.title')}</h2>
+        <p className="mt-1 text-sm text-c-text-secondary">{t('admin.dependencies.description')}</p>
       </header>
       {dependencies.length === 0 ? (
         <section className="rounded-2xl border border-c-border bg-c-surface p-5 text-center">
           <Boxes className="mx-auto h-8 w-8 text-c-text-muted" />
-          <h3 className="mt-2 font-medium text-c-text">
-            {t('admin.dependencies.empty.title', 'Brak zadeklarowanych zależności')}
-          </h3>
+          <h3 className="mt-2 font-medium text-c-text">{t('admin.dependencies.empty.title')}</h3>
           <p className="mt-1 text-sm text-c-text-secondary">
-            {t('admin.dependencies.empty.description', 'Mapa zależności nie zawiera pozycji.')}
+            {t('admin.dependencies.empty.description')}
           </p>
         </section>
       ) : (
@@ -96,17 +80,14 @@ export const AdminDependenciesPanel: React.FC = () => {
                     className="text-sm font-medium"
                     style={{ color: statusColors[dependency.status] }}
                   >
-                    {t(
-                      `admin.dependencies.status.${dependency.status}`,
-                      statusDefaults[dependency.status]
-                    )}
+                    {t(`admin.dependencies.status.${dependency.status}`)}
                   </span>
                 </div>
                 <p className="mt-3 text-sm text-c-text-secondary">
-                  {dependency.probeIds.length} probe ·{' '}
+                  {t('admin.dependencies.probeCount', { count: dependency.probeIds.length })} ·{' '}
                   {dependency.lastCheckedAt
                     ? new Date(dependency.lastCheckedAt).toLocaleString()
-                    : t('admin.dependencies.neverChecked', 'nigdy nie sprawdzono')}
+                    : t('admin.dependencies.neverChecked')}
                 </p>
               </summary>
               <ul className="mt-3 space-y-1 border-t border-c-border-subtle pt-3 text-xs text-c-text-secondary">
@@ -127,13 +108,10 @@ export const AdminDependenciesPanel: React.FC = () => {
           )}
           <div>
             <h3 className="font-semibold text-c-text">
-              {t('admin.dependencies.undeclared.title', 'Probe’y bez zadeklarowanej zależności')}
+              {t('admin.dependencies.undeclared.title')}
             </h3>
             <p className="mt-1 text-sm text-c-text-secondary">
-              {t(
-                'admin.dependencies.undeclared.description',
-                'Mapa jest ręczną, weryfikowalną deklaracją. Niewymienione zależności czekają na dowód w kodzie.'
-              )}
+              {t('admin.dependencies.undeclared.description')}
             </p>
             {data?.undeclaredProbes.length ? (
               <ul className="mt-3 space-y-1 text-sm text-c-text">
@@ -143,10 +121,7 @@ export const AdminDependenciesPanel: React.FC = () => {
               </ul>
             ) : (
               <p className="mt-3 text-sm text-c-text-muted">
-                {t(
-                  'admin.dependencies.undeclared.none',
-                  'Wszystkie zarejestrowane probe’y mają deklarację.'
-                )}
+                {t('admin.dependencies.undeclared.none')}
               </p>
             )}
           </div>

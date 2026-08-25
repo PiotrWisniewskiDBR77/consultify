@@ -1,8 +1,9 @@
 import { ListTodo } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { getAdminJobs, type AdminJob } from '../../services/adminJobsApi';
-import { StandardTable, type TableColumn, type TableRow } from '../standard/StandardTable';
 import { useTranslation } from 'react-i18next';
+
+import { type AdminJob, getAdminJobs } from '../../services/adminJobsApi';
+import { StandardTable, type TableColumn, type TableRow } from '../standard/StandardTable';
 export const AdminJobsPanel: React.FC = () => {
   const { t } = useTranslation();
   const [jobs, setJobs] = useState<AdminJob[]>([]);
@@ -14,11 +15,11 @@ export const AdminJobsPanel: React.FC = () => {
     try {
       setJobs(await getAdminJobs());
     } catch (e) {
-      setError(e instanceof Error ? e.message : t('admin.health.queues-jobs.day2Auto.text1'));
+      setError(e instanceof Error ? e.message : t('admin.health.queues-jobs.errors.load'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
   useEffect(() => {
     void load();
   }, [load]);
@@ -36,30 +37,30 @@ export const AdminJobsPanel: React.FC = () => {
     () => [
       {
         id: 'type',
-        label: t('admin.health.queues-jobs.day2Auto.text2'),
+        label: t('admin.health.queues-jobs.columns.type'),
       },
       {
-        id: t('admin.health.queues-jobs.day2Auto.text3'),
-        label: t('admin.health.queues-jobs.day2Auto.text4'),
+        id: 'status',
+        label: t('admin.health.queues-jobs.columns.status'),
       },
       {
         id: 'attempts',
-        label: t('admin.health.queues-jobs.day2Auto.text5'),
+        label: t('admin.health.queues-jobs.columns.attempts'),
       },
       {
         id: 'error',
-        label: t('admin.health.queues-jobs.day2Auto.text6'),
+        label: t('admin.health.queues-jobs.columns.lastError'),
       },
       {
         id: 'available',
-        label: t('admin.health.queues-jobs.day2Auto.text7'),
+        label: t('admin.health.queues-jobs.columns.availableAt'),
       },
       {
         id: 'created',
-        label: 'Utworzono',
+        label: t('admin.health.queues-jobs.columns.createdAt'),
       },
     ],
-    []
+    [t]
   );
   const rows = useMemo<TableRow[]>(
     () =>
@@ -77,12 +78,8 @@ export const AdminJobsPanel: React.FC = () => {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-semibold text-c-text">
-          {t('admin.health.queues-jobs.day2Auto.text8')}
-        </h2>
-        <p className="text-sm text-c-text-secondary">
-          {t('admin.health.queues-jobs.day2Auto.text9')}
-        </p>
+        <h2 className="text-lg font-semibold text-c-text">{t('admin.health.queues-jobs.title')}</h2>
+        <p className="text-sm text-c-text-secondary">{t('admin.health.queues-jobs.description')}</p>
       </div>
       {error && (
         <div role="alert" className="rounded-xl border border-c-danger p-3 text-c-danger">
@@ -91,10 +88,10 @@ export const AdminJobsPanel: React.FC = () => {
       )}
       <div className="grid gap-3 sm:grid-cols-4">
         {[
-          ['W kolejce', counts.queued],
-          ['W trakcie', counts.running],
-          ['Udane', counts.succeeded],
-          ['Nieudane', counts.failed],
+          [t('admin.health.queues-jobs.status.queued'), counts.queued],
+          [t('admin.health.queues-jobs.status.running'), counts.running],
+          [t('admin.health.queues-jobs.status.succeeded'), counts.succeeded],
+          [t('admin.health.queues-jobs.status.failed'), counts.failed],
         ].map(([l, v]) => (
           <div key={l} className="rounded-xl border border-c-border bg-c-surface p-4">
             <p className="text-xs text-c-text-secondary">{l}</p>
@@ -111,8 +108,8 @@ export const AdminJobsPanel: React.FC = () => {
           onRetry={() => void load()}
           empty={{
             icon: ListTodo,
-            title: t('admin.health.queues-jobs.day2Auto.text10'),
-            description: t('admin.health.queues-jobs.day2Auto.text11'),
+            title: t('admin.health.queues-jobs.empty.title'),
+            description: t('admin.health.queues-jobs.empty.description'),
           }}
           persistKey="admin.jobs"
         />

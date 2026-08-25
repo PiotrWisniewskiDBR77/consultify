@@ -49,11 +49,11 @@ import {
   readDashboardDeepLinkFromLocation,
 } from '../../services/presentationGovernanceDeepLinks';
 import { APIManagementView } from './APIManagementView';
+import PlatformOperationsView from './PlatformOperationsView';
 import PresentationBenchmarkTrendView from './PresentationBenchmarkTrendView';
 import PresentationGovernanceAlertSubscriptionsView from './PresentationGovernanceAlertSubscriptionsView';
 import PresentationGovernanceWatchlistView from './PresentationGovernanceWatchlistView';
 import PresentationOperationsHealthView from './PresentationOperationsHealthView';
-import PlatformOperationsView from './PlatformOperationsView';
 import PresentationTemplateGovernanceView from './PresentationTemplateGovernanceView';
 
 interface SystemModuleProps {

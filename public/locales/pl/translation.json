@@ -17023,33 +17023,52 @@
       "lastRun": "Ostatnie uruchomienie",
       "rerun": "Uruchom ponownie",
       "queues-jobs": {
-        "day2Auto": {
-          "text1": "Nie udało się pobrać zadań",
-          "text2": "Typ zadania",
-          "text3": "status",
-          "text4": "Status",
-          "text5": "Próby",
-          "text6": "Ostatni błąd",
-          "text7": "Dostępne od",
-          "text8": "Kolejki i zadania",
-          "text9": "Tenantowy, tylko-do-odczytu stan zadań administracyjnych.",
-          "text10": "Brak zadań",
-          "text11": "Organizacja nie ma zadań administracyjnych w kolejce."
+        "title": "Kolejki i zadania",
+        "description": "Stan zadań administracyjnych organizacji — tylko do odczytu.",
+        "errors": {
+          "load": "Nie udało się pobrać zadań."
+        },
+        "columns": {
+          "type": "Typ zadania",
+          "status": "Status",
+          "attempts": "Próby",
+          "lastError": "Ostatni błąd",
+          "availableAt": "Dostępne od",
+          "createdAt": "Utworzono"
+        },
+        "status": {
+          "queued": "W kolejce",
+          "running": "W trakcie",
+          "succeeded": "Udane",
+          "failed": "Nieudane"
+        },
+        "empty": {
+          "title": "Brak zadań",
+          "description": "Organizacja nie ma zadań administracyjnych w kolejce."
         }
       },
       "sla-slo": {
-        "day2Auto": {
-          "text1": "Nie udało się pobrać SLO",
-          "text2": "Cele i bieżąca realizacja — tylko odczyt.",
-          "text3": "Ładowanie celów SLA/SLO…",
-          "text4": "Bieżący",
-          "text5": "Nie obliczono",
-          "text6": "Budżet błędu",
-          "text7": "dni",
-          "text8": "Dla tej organizacji nie zdefiniowano celów SLO.",
-          "text9": "Targety AI-SLA są dziś stałe i nie są konfigurowalne w tym ekranie.",
-          "text10": "Stan źródła:",
-          "text11": "brak danych"
+        "title": "SLA / SLO",
+        "description": "Cele i bieżący poziom realizacji — tylko do odczytu.",
+        "loading": "Ładowanie celów SLA/SLO…",
+        "errors": {
+          "load": "Nie udało się pobrać celów SLO."
+        },
+        "labels": {
+          "target": "Cel",
+          "current": "Bieżący",
+          "errorBudget": "Budżet błędu",
+          "window": "Okno"
+        },
+        "notCalculated": "Nie obliczono",
+        "daysSuffix": " dni",
+        "empty": "Dla tej organizacji nie zdefiniowano celów SLO.",
+        "ai": {
+          "title": "SLA AI",
+          "description": "Cele AI-SLA są obecnie stałe i nie można ich konfigurować na tym ekranie.",
+          "sourceState": "Stan źródła: {{state}}",
+          "loaded": "odczytano",
+          "noData": "brak danych"
         }
       }
     },
@@ -17166,35 +17185,56 @@
       },
       "code": "kod",
       "seats-licences": {
-        "day2Auto": {
-          "text1": "Nie udało się pobrać miejsc",
-          "text2": "Nie udało się zapisać",
-          "text3": "Użytkownik",
-          "text4": "Miejsca i licencje",
-          "text5": "Stan puli miejsc dla bieżącej organizacji.",
-          "text6": "Łącznie",
-          "text7": "Zajęte",
-          "text8": "Włączone",
-          "text9": "Próg %",
-          "text10": "Próg procentowy",
-          "text11": "Zapisz",
-          "text12": "Brak historii miejsc",
-          "text13": "Nie zarejestrowano transakcji miejsc.",
-          "text14": "Samoobsługowy zakup miejsc niedostępny — skontaktuj się z opiekunem.",
-          "text15": "Kup miejsca"
+        "loadError": "Nie udało się pobrać miejsc",
+        "saveError": "Nie udało się zapisać",
+        "columns": {
+          "user": "Użytkownik",
+          "date": "Data",
+          "type": "Typ",
+          "count": "Liczba",
+          "amount": "Kwota"
+        },
+        "title": "Miejsca i licencje",
+        "description": "Stan puli miejsc dla bieżącej organizacji.",
+        "summary": {
+          "total": "Łącznie",
+          "used": "Zajęte",
+          "remaining": "Wolne",
+          "utilization": "Wykorzystanie"
+        },
+        "autoAdd": {
+          "enabled": "Włączone",
+          "threshold": "Próg %",
+          "thresholdAria": "Próg procentowy",
+          "title": "Automatyczne dodawanie miejsc"
+        },
+        "actions": {
+          "save": "Zapisz",
+          "purchase": "Kup miejsca"
+        },
+        "history": {
+          "emptyTitle": "Brak historii miejsc",
+          "emptyDescription": "Nie zarejestrowano transakcji miejsc."
+        },
+        "purchaseUnavailable": "Samoobsługowy zakup miejsc niedostępny — skontaktuj się z opiekunem.",
+        "systemActor": "System",
+        "purchase": {
+          "title": "Zakup miejsc"
         }
       },
       "plan-history": {
-        "day2Auto": {
-          "text1": "Nie udało się pobrać historii planu.",
-          "text2": "Plan z",
-          "text3": "Plan na",
-          "text4": "Powód",
-          "text5": "Wykonał",
-          "text6": "Historia zmian planu",
-          "text7": "Chronologiczny, tylko-do-odczytu zapis zmian subskrypcji tej organizacji.",
-          "text8": "Brak historii zmian planu",
-          "text9": "Dla tej organizacji nie zapisano jeszcze zmiany subskrypcji."
+        "loadError": "Nie udało się pobrać historii planu.",
+        "columns": {
+          "fromPlan": "Plan z",
+          "toPlan": "Plan na",
+          "reason": "Powód",
+          "actor": "Wykonał"
+        },
+        "title": "Historia zmian planu",
+        "description": "Chronologiczny, tylko-do-odczytu zapis zmian subskrypcji tej organizacji.",
+        "empty": {
+          "title": "Brak historii zmian planu",
+          "description": "Dla tej organizacji nie zapisano jeszcze zmiany subskrypcji."
         }
       }
     },
@@ -17287,107 +17327,157 @@
         "delete": "Usuń"
       },
       "teams": {
-        "day2Auto": {
-          "text1": "Nie udało się pobrać zespołów.",
-          "text2": "Zespół nie został potwierdzony przez odczyt z serwera.",
-          "text3": "Zespół utworzony",
-          "text4": "Nie udało się utworzyć zespołu.",
-          "text5": "Członek nie został potwierdzony przez odczyt z serwera.",
-          "text6": "Członek dodany",
-          "text7": "Nie udało się dodać członka.",
-          "text8": "Usunięcie członka nie zostało potwierdzone przez serwer.",
-          "text9": "Członek usunięty",
-          "text10": "Nie udało się usunąć członka.",
-          "text11": "Usunięcie zespołu nie zostało potwierdzone przez serwer.",
-          "text12": "Zespół usunięty",
-          "text13": "Nie udało się usunąć zespołu.",
-          "text14": "Aktywny",
-          "text15": "Nazwa",
-          "text16": "Członkowie",
-          "text17": "Status",
-          "text18": "Zespoły",
-          "text19": "Twórz zespoły i zarządzaj ich rzeczywistym składem w organizacji.",
-          "text20": "Nazwa zespołu",
-          "text21": "Utwórz",
-          "text22": "Pokaż skład",
-          "text23": "Usuń zespół",
-          "text24": "Brak zespołów",
-          "text25": "Utwórz pierwszy zespół powyżej.",
-          "text26": "Skład:",
-          "text27": "Identyfikator użytkownika musi należeć do tej organizacji.",
-          "text28": "Odśwież",
-          "text29": "ID użytkownika",
-          "text30": "Dodaj członka",
-          "text31": "Ten zespół nie ma jeszcze członków.",
-          "text32": "Usuń",
-          "text33": "Usunąć zespół?",
-          "text34": "Zespół „{{v0}}” i jego przypisania członków zostaną usunięte.",
-          "text35": "Usunąć członka z zespołu?",
-          "text36": "Użytkownik pozostanie członkiem organizacji, ale straci przypisanie do tego zespołu.",
-          "text37": "Usuń członka",
-          "text38": "Opis",
-          "text39": "Członkowie zespołu"
-        }
+        "loadError": "Nie udało się pobrać zespołów.",
+        "createReadbackError": "Zespół nie został potwierdzony przez odczyt z serwera.",
+        "createSuccess": "Zespół utworzony",
+        "createError": "Nie udało się utworzyć zespołu.",
+        "addMemberReadbackError": "Członek nie został potwierdzony przez odczyt z serwera.",
+        "addMemberSuccess": "Członek dodany",
+        "addMemberError": "Nie udało się dodać członka.",
+        "removeMemberReadbackError": "Usunięcie członka nie zostało potwierdzone przez serwer.",
+        "removeMemberSuccess": "Członek usunięty",
+        "removeMemberError": "Nie udało się usunąć członka.",
+        "deleteReadbackError": "Usunięcie zespołu nie zostało potwierdzone przez serwer.",
+        "deleteSuccess": "Zespół usunięty",
+        "deleteError": "Nie udało się usunąć zespołu.",
+        "activeStatus": "Aktywny",
+        "columns": {
+          "name": "Nazwa",
+          "members": "Członkowie",
+          "status": "Status",
+          "lead": "Lider",
+          "type": "Typ"
+        },
+        "title": "Zespoły",
+        "description": "Twórz zespoły i zarządzaj ich rzeczywistym składem w organizacji.",
+        "fields": {
+          "name": "Nazwa zespołu",
+          "userId": "ID użytkownika",
+          "description": "Opis"
+        },
+        "actions": {
+          "create": "Utwórz",
+          "showMembers": "Pokaż skład",
+          "deleteTeam": "Usuń zespół",
+          "refresh": "Odśwież",
+          "addMember": "Dodaj członka",
+          "remove": "Usuń"
+        },
+        "empty": {
+          "title": "Brak zespołów",
+          "description": "Utwórz pierwszy zespół powyżej."
+        },
+        "members": {
+          "heading": "Skład: {{name}}",
+          "orgHint": "Identyfikator użytkownika musi należeć do tej organizacji.",
+          "empty": "Ten zespół nie ma jeszcze członków.",
+          "ariaLabel": "Członkowie zespołu"
+        },
+        "deleteDialog": {
+          "title": "Usunąć zespół?",
+          "description": "Zespół „{{v0}}” i jego przypisania członków zostaną usunięte."
+        },
+        "removeDialog": {
+          "title": "Usunąć członka z zespołu?",
+          "description": "Użytkownik pozostanie członkiem organizacji, ale straci przypisanie do tego zespołu.",
+          "confirm": "Usuń członka"
+        },
+        "inactiveStatus": "Nieaktywny"
       },
       "roles-permissions": {
-        "day2Auto": {
-          "text1": "Błąd zapisu",
-          "text2": "Rola",
-          "text3": "Brak",
-          "text4": "Zarządzanie rolami projektowymi wymaga uprawnienia właściciela organizacji.",
-          "text5": "Role i uprawnienia",
-          "text6": "Nazwa roli",
-          "text7": "Zapisz rolę",
-          "text8": "Dodaj rolę",
-          "text9": "Usuń",
-          "text10": "Brak ról niestandardowych",
-          "text11": "W tej organizacji nie zdefiniowano ról projektowych.",
-          "text12": "Usunąć rolę?",
-          "text13": "Przypisania tej roli przestaną obowiązywać. Odzyskanie wymaga ponownego utworzenia roli.",
-          "text14": "Usuń rolę"
+        "saveError": "Błąd zapisu",
+        "columns": {
+          "role": "Rola",
+          "permissions": "Uprawnienia",
+          "updated": "Aktualizacja"
+        },
+        "emptyValue": "Brak",
+        "ownerOnly": "Zarządzanie rolami projektowymi wymaga uprawnienia właściciela organizacji.",
+        "title": "Role i uprawnienia",
+        "fields": {
+          "name": "Nazwa roli",
+          "permissions": "Uprawnienia",
+          "permissionsPlaceholder": "uprawnienia, po przecinku"
+        },
+        "actions": {
+          "save": "Zapisz rolę",
+          "create": "Dodaj rolę",
+          "delete": "Usuń",
+          "edit": "Edytuj"
+        },
+        "empty": {
+          "title": "Brak ról niestandardowych",
+          "description": "W tej organizacji nie zdefiniowano ról projektowych."
+        },
+        "deleteDialog": {
+          "title": "Usunąć rolę?",
+          "description": "Przypisania tej roli przestaną obowiązywać. Odzyskanie wymaga ponownego utworzenia roli.",
+          "confirm": "Usuń rolę"
         }
       },
       "guests-external": {
-        "day2Auto": {
-          "text1": "Gość",
-          "text2": "Wygasa",
-          "text3": "status",
-          "text4": "Status",
-          "text5": "Organizacja",
-          "text6": "Wygasł",
-          "text7": "Błąd odebrania",
-          "text8": "Goście i dostęp zewnętrzny",
-          "text9": "Stan faktycznie przyznanych dostępów. Przełącznik polityki gości pozostaje ukryty, ponieważ nie jest jeszcze egzekwowany.",
-          "text10": "Odbierz dostęp",
-          "text11": "Brak gości",
-          "text12": "Organizacja nie ma aktywnych dostępów zewnętrznych.",
-          "text13": "Odebrać dostęp gościa?",
-          "text14": "{{v0}} utraci dostęp do organizacji. Ponowne uzyskanie dostępu wymaga nowego zaproszenia.",
-          "text15": "Zakres"
-        }
+        "columns": {
+          "guest": "Gość",
+          "expires": "Wygasa",
+          "status": "Status",
+          "scope": "Zakres",
+          "email": "E-mail",
+          "granted": "Przyznano"
+        },
+        "scope": {
+          "organization": "Organizacja",
+          "project": "Projekt {{projectId}}"
+        },
+        "status": {
+          "expired": "Wygasł"
+        },
+        "revokeError": "Błąd odebrania",
+        "title": "Goście i dostęp zewnętrzny",
+        "description": "Stan faktycznie przyznanych dostępów. Przełącznik polityki gości pozostaje ukryty, ponieważ nie jest jeszcze egzekwowany.",
+        "actions": {
+          "revoke": "Odbierz dostęp"
+        },
+        "empty": {
+          "title": "Brak gości",
+          "description": "Organizacja nie ma aktywnych dostępów zewnętrznych."
+        },
+        "revokeDialog": {
+          "title": "Odebrać dostęp gościa?",
+          "description": "{{v0}} utraci dostęp do organizacji. Ponowne uzyskanie dostępu wymaga nowego zaproszenia."
+        },
+        "noExpiry": "Bez terminu"
       },
       "access-reviews": {
-        "day2Auto": {
-          "text1": "Osoba",
-          "text2": "role",
-          "text3": "Rola",
-          "text4": "status",
-          "text5": "Status",
-          "text6": "Przeglądy dostępów",
-          "text7": "Ładowanie polityki przeglądów…",
-          "text8": "Włączone",
-          "text9": "Wyłączone",
-          "text10": "Następny przegląd:",
-          "text11": "Otwórz kanoniczną politykę IAM",
-          "text12": "Brak kont uprzywilejowanych",
-          "text13": "Nie znaleziono aktywnych właścicieli ani administratorów.",
-          "text14": "Historia przeglądów",
-          "text15": "Rejestr kampanii przeglądów nie jest jeszcze prowadzony.",
-          "text16": "Stan:",
-          "text17": "Kadencja:",
-          "text18": "dni",
-          "text19": "Kadencja: {{value}} dni"
-        }
+        "columns": {
+          "person": "Osoba",
+          "role": "Rola",
+          "status": "Status",
+          "email": "E-mail"
+        },
+        "title": "Przeglądy dostępów",
+        "loading": "Ładowanie polityki przeglądów…",
+        "policy": {
+          "enabled": "Włączone",
+          "disabled": "Wyłączone",
+          "statusLabel": "Stan:",
+          "cadenceLabel": "Kadencja:",
+          "cadenceDays": "Kadencja: {{value}} dni"
+        },
+        "nextReviewLabel": "Następny przegląd:",
+        "actions": {
+          "openIamPolicy": "Otwórz kanoniczną politykę IAM"
+        },
+        "privileged": {
+          "emptyTitle": "Brak kont uprzywilejowanych",
+          "emptyDescription": "Nie znaleziono aktywnych właścicieli ani administratorów."
+        },
+        "history": {
+          "title": "Historia przeglądów",
+          "empty": "Rejestr kampanii przeglądów nie jest jeszcze prowadzony."
+        },
+        "daysUnit": "dni",
+        "description": "Odczyt konfiguracji i kont uprzywilejowanych; edycja pozostaje w polityce IAM.",
+        "nextReview": "Następny przegląd: {{date}}"
       }
     },
     "features": {
@@ -17675,84 +17765,154 @@
         }
       },
       "sessions": {
-        "day2Auto": {
-          "text1": "Błąd sesji",
-          "text2": "Użytkownik",
-          "text3": "Urządzenie / przeglądarka",
-          "text4": "Ostatnia aktywność",
-          "text5": "Wygaśnięcie",
-          "text6": "Błąd unieważnienia",
-          "text7": "Sesje organizacji",
-          "text8": "Unieważnij sesję",
-          "text9": "Brak aktywnych sesji",
-          "text10": "Nie znaleziono aktywnych sesji członków organizacji.",
-          "text11": "Unieważnić sesję?",
-          "text12": "Ta sesja natychmiast utraci dostęp. Użytkownik może zalogować się ponownie."
+        "title": "Sesje organizacji",
+        "columns": {
+          "user": "Użytkownik",
+          "device": "Urządzenie / przeglądarka",
+          "ip": "IP",
+          "location": "Lokalizacja",
+          "lastActivity": "Ostatnia aktywność",
+          "expiresAt": "Wygaśnięcie"
+        },
+        "values": {
+          "unknown": "Nieznane",
+          "unknownLocation": "Nieznana"
+        },
+        "actions": {
+          "revoke": "Unieważnij sesję"
+        },
+        "errors": {
+          "load": "Nie udało się pobrać sesji.",
+          "revoke": "Nie udało się unieważnić sesji."
+        },
+        "empty": {
+          "title": "Brak aktywnych sesji",
+          "description": "Nie znaleziono aktywnych sesji członków organizacji."
+        },
+        "confirmRevoke": {
+          "title": "Unieważnić sesję?",
+          "description": "Ta sesja natychmiast utraci dostęp. Użytkownik może zalogować się ponownie."
         }
       },
       "service-accounts": {
-        "day2Auto": {
-          "text1": "Nie udało się pobrać kont usługowych.",
-          "text2": "Konto nie zostało potwierdzone przez serwer.",
-          "text3": "Konto usługowe utworzone",
-          "text4": "Nie udało się utworzyć konta.",
-          "text5": "Odwołanie nie zostało potwierdzone.",
-          "text6": "Konto usługowe odwołane",
-          "text7": "Nie udało się odwołać konta.",
-          "text8": "Nazwa",
-          "text9": "Ostatnie użycie",
-          "text10": "Nigdy",
-          "text11": "Wygasa",
-          "text12": "Konta usługowe",
-          "text13": "Poświadczenia maszynowe organizacji. Pełny sekret jest wyświetlany tylko raz.",
-          "text14": "Utwórz",
-          "text15": "Skopiuj sekret teraz — nie będzie pokazany ponownie",
-          "text16": "Zapisałem sekret",
-          "text17": "Odwołaj konto",
-          "text18": "Brak kont usługowych",
-          "text19": "Nie utworzono jeszcze poświadczeń maszynowych.",
-          "text20": "Odwołać konto usługowe?",
-          "text21": "Token natychmiast przestanie działać. Tej operacji nie można cofnąć.",
-          "text22": "Odwołaj"
+        "title": "Konta usługowe",
+        "description": "Poświadczenia maszynowe organizacji. Pełny sekret jest wyświetlany tylko raz.",
+        "fields": {
+          "name": "Nazwa"
+        },
+        "columns": {
+          "tokenPrefix": "Prefiks tokenu",
+          "scopes": "Zakresy",
+          "lastUsedAt": "Ostatnie użycie",
+          "expiresAt": "Wygasa"
+        },
+        "values": {
+          "never": "Nigdy",
+          "noExpiry": "Bez terminu"
+        },
+        "actions": {
+          "create": "Utwórz",
+          "revoke": "Odwołaj konto"
+        },
+        "secret": {
+          "title": "Skopiuj sekret teraz — nie będzie pokazany ponownie",
+          "acknowledge": "Zapisałem sekret"
+        },
+        "errors": {
+          "load": "Nie udało się pobrać kont usługowych.",
+          "createReadback": "Konto nie zostało potwierdzone przez serwer.",
+          "create": "Nie udało się utworzyć konta.",
+          "revokeReadback": "Odwołanie nie zostało potwierdzone przez serwer.",
+          "revoke": "Nie udało się odwołać konta."
+        },
+        "notifications": {
+          "created": "Konto usługowe utworzone",
+          "revoked": "Konto usługowe odwołane"
+        },
+        "empty": {
+          "title": "Brak kont usługowych",
+          "description": "Nie utworzono jeszcze poświadczeń maszynowych."
+        },
+        "confirmRevoke": {
+          "title": "Odwołać konto usługowe?",
+          "description": "Token natychmiast przestanie działać. Tej operacji nie można cofnąć.",
+          "confirm": "Odwołaj"
         }
       },
       "security-alerts": {
-        "day2Auto": {
-          "text1": "Błąd alertów",
-          "text2": "Dotkliwość",
-          "text3": "Użytkownik",
-          "text4": "status",
-          "text5": "Status",
-          "text6": "Rozwiązany",
-          "text7": "Alerty bezpieczeństwa",
-          "text8": "Nierozwiązane:",
-          "text9": "Oznacz jako rozwiązane",
-          "text10": "Brak alertów",
-          "text11": "Nie wykryto zdarzeń bezpieczeństwa."
+        "title": "Alerty bezpieczeństwa",
+        "columns": {
+          "type": "Typ",
+          "severity": "Dotkliwość",
+          "user": "Użytkownik",
+          "ip": "IP",
+          "time": "Czas",
+          "status": "Status"
+        },
+        "status": {
+          "resolved": "Rozwiązany",
+          "open": "Otwarty"
+        },
+        "metrics": {
+          "unresolved": "Nierozwiązane: {{count}}",
+          "highRisk": "Wysokiego ryzyka: {{count}}"
+        },
+        "actions": {
+          "resolve": "Oznacz jako rozwiązane"
+        },
+        "errors": {
+          "load": "Nie udało się pobrać alertów bezpieczeństwa."
+        },
+        "empty": {
+          "title": "Brak alertów",
+          "description": "Nie wykryto zdarzeń bezpieczeństwa."
         }
       },
       "break-glass": {
-        "day2Auto": {
-          "text1": "Błąd break-glass",
-          "text2": "Powód",
-          "text3": "Zatwierdził",
-          "text4": "Wygasa",
-          "text5": "Błąd aktywacji",
-          "text6": "Błąd wygaszenia",
-          "text7": "Awaryjny dostęp na maksymalnie 1 godzinę; widoczny w audycie.",
-          "text8": "Aktywne sesje: {{v0}}",
-          "text9": "Brak aktywnych sesji break-glass",
-          "text10": "Powód (min. 10 znaków)",
-          "text11": "Powód break-glass",
-          "text12": "Zatwierdzający",
-          "text13": "Funkcja jest wyłączona w polityce IAM organizacji.",
-          "text14": "Wygaś sesję",
-          "text15": "Brak historii aktywnych sesji",
-          "text16": "Nie ma obecnie aktywnego dostępu awaryjnego.",
-          "text17": "Aktywować dostęp break-glass?",
-          "text18": "Zakres: awaryjne uprawnienia administratora na maksymalnie 1h. Zatwierdzający: {{v0}}. Powód i zdarzenie będą widoczne w audycie. Odzyskanie: sesję można natychmiast wygasić.",
-          "text19": "Wygasić dostęp break-glass?",
-          "text20": "Dostęp zostanie natychmiast odebrany. Ponowna aktywacja wymaga nowego powodu i zatwierdzenia."
+        "title": "Break-glass",
+        "description": "Awaryjny dostęp na maksymalnie 1 godzinę; widoczny w audycie.",
+        "columns": {
+          "administrator": "Administrator",
+          "reason": "Powód",
+          "approvedBy": "Zatwierdził",
+          "expiresAt": "Wygasa"
+        },
+        "activeSessions": "Aktywne sesje: {{count}}",
+        "activeSessions_one": "Aktywna sesja: {{count}}",
+        "activeSessions_few": "Aktywne sesje: {{count}}",
+        "activeSessions_many": "Aktywnych sesji: {{count}}",
+        "activeSessions_other": "Aktywne sesje: {{count}}",
+        "noActiveSessions": "Brak aktywnych sesji break-glass",
+        "fields": {
+          "reasonLabel": "Powód (min. 10 znaków)",
+          "reasonAriaLabel": "Powód break-glass",
+          "approver": "Zatwierdzający",
+          "selectApprover": "Wybierz",
+          "typedConfirmationLabel": "Wpisz BREAK-GLASS",
+          "typedConfirmationAriaLabel": "Potwierdzenie celu"
+        },
+        "actions": {
+          "activate": "Aktywuj na 1h",
+          "expire": "Wygaś sesję"
+        },
+        "policyDisabled": "Funkcja jest wyłączona w polityce IAM organizacji.",
+        "errors": {
+          "load": "Nie udało się pobrać stanu break-glass.",
+          "activate": "Nie udało się aktywować dostępu break-glass.",
+          "revoke": "Nie udało się wygasić dostępu break-glass."
+        },
+        "empty": {
+          "title": "Brak historii aktywnych sesji",
+          "description": "Nie ma obecnie aktywnego dostępu awaryjnego."
+        },
+        "confirmActivate": {
+          "title": "Aktywować dostęp break-glass?",
+          "description": "Zakres: awaryjne uprawnienia administratora na maksymalnie 1h. Zatwierdzający: {{approver}}. Powód i zdarzenie będą widoczne w audycie. Odzyskanie: sesję można natychmiast wygasić.",
+          "confirm": "Aktywuj break-glass"
+        },
+        "confirmExpire": {
+          "title": "Wygasić dostęp break-glass?",
+          "description": "Dostęp zostanie natychmiast odebrany. Ponowna aktywacja wymaga nowego powodu i zatwierdzenia."
         }
       }
     },
@@ -18811,173 +18971,449 @@
     },
     "ai": {
       "personas": {
-        "day2Auto": {}
+        "available": "Dostępne persony",
+        "empty": "Nie skonfigurowano żadnych person.",
+        "editTitle": "Edycja: {{name}}",
+        "selectPrompt": "Wybierz personę do edycji",
+        "fields": {
+          "description": "Opis",
+          "descriptionAria": "Opis persony",
+          "systemPrompt": "Prompt systemowy"
+        },
+        "context": {
+          "title": "Dołączany kontekst",
+          "project": "Kontekst projektu",
+          "userProfile": "Profil użytkownika",
+          "assessment": "Dane assessmentu",
+          "knowledgeBase": "Baza wiedzy",
+          "taskHistory": "Historia zadań"
+        },
+        "actions": {
+          "save": "Zapisz personę"
+        },
+        "messages": {
+          "updated": "Prompt systemowy został zaktualizowany."
+        },
+        "errors": {
+          "load": "Nie udało się pobrać person.",
+          "update": "Nie udało się zaktualizować promptu."
+        }
       },
       "ai-incidents": {
-        "day2Auto": {
-          "text1": "Początek",
-          "text2": "Próbki",
-          "text3": "Ostatni błąd",
-          "text4": "Źródło",
-          "text5": "Incydenty są wyliczane z bieżących pomiarów dostępności; trwały rejestr historyczny nie jest jeszcze prowadzony.",
-          "text6": "Brak incydentów w bieżącym oknie pomiarowym.",
-          "text7": "Brak incydentów",
-          "text8": "Pomiary nie wykazały degradacji w bieżącym oknie."
+        "title": "Incydenty AI",
+        "description": "Incydenty są wyliczane z bieżących pomiarów dostępności; trwały rejestr historyczny nie jest jeszcze prowadzony.",
+        "columns": {
+          "startedAt": "Początek",
+          "duration": "Czas trwania",
+          "samples": "Próbki",
+          "lastError": "Ostatni błąd",
+          "source": "Źródło"
+        },
+        "noIncidentsInWindow": "Brak incydentów w bieżącym oknie pomiarowym.",
+        "empty": {
+          "title": "Brak incydentów",
+          "description": "Pomiary nie wykazały degradacji w bieżącym oknie."
         }
       },
       "configuration-versions": {
-        "day2Auto": {
-          "text1": "Nie udało się pobrać konfiguracji Prompt OS.",
-          "text2": "Nie udało się pobrać bramek ewaluacji.",
-          "text3": "Nie udało się pobrać konfiguracji canary.",
-          "text4": "Konfiguracja zmieniła się równolegle (409). Odświeżono dane — sprawdź stan przed ponowieniem.",
-          "text5": "Operacja nie powiodła się.",
-          "text6": "status",
-          "text7": "Status",
-          "text8": "Prompt OS nie jest włączony dla tej organizacji",
-          "text9": "Włączenie wymaga operatora platformy lub administratora konfiguracji V8.",
-          "text10": "Spróbuj ponownie",
-          "text11": "Odśwież",
-          "text12": "Aktywne",
-          "text13": "Pokaż szczegóły",
-          "text14": "Wycofaj wersję",
-          "text15": "Brak wersji konfiguracji",
-          "text16": "Prompt OS jest włączony, ale organizacja nie ma jeszcze bundle konfiguracji.",
-          "text17": "Szczegóły",
-          "text18": "Ładowanie szczegółów…",
-          "text19": "brak wyników",
-          "text20": "włączony",
-          "text21": "wyłączony",
-          "text22": "nie",
-          "text23": "brak konfiguracji",
-          "text24": "Powód wycofania (wymagany)",
-          "text25": "Powód wycofania",
-          "text26": "Przejdź do potwierdzenia",
-          "text27": "Wycofać aktywną konfigurację?",
-          "text28": "Powód: {{v0}}. Operacja zmieni runtime organizacji i zostanie zapisana w historii Prompt OS."
+        "title": "Wersje konfiguracji AI",
+        "description": "Konfiguracja Prompt OS organizacji, bramki ewaluacji i wdrożenie canary.",
+        "errors": {
+          "load": "Nie udało się pobrać konfiguracji Prompt OS.",
+          "evalGates": "Nie udało się pobrać bramek ewaluacji.",
+          "canary": "Nie udało się pobrać konfiguracji canary.",
+          "conflict": "Konfiguracja zmieniła się równolegle (409). Odświeżono dane — sprawdź stan przed ponowieniem.",
+          "operation": "Operacja nie powiodła się."
+        },
+        "columns": {
+          "version": "Wersja",
+          "preset": "Preset",
+          "status": "Status",
+          "prompt": "Prompt",
+          "model": "Model",
+          "policy": "Polityka",
+          "runtime": "Runtime"
+        },
+        "disabled": {
+          "title": "Prompt OS nie jest włączony dla tej organizacji",
+          "description": "Włączenie wymaga operatora platformy lub administratora konfiguracji V8."
+        },
+        "actions": {
+          "retry": "Spróbuj ponownie",
+          "refresh": "Odśwież",
+          "details": "Pokaż szczegóły",
+          "activate": "Aktywuj",
+          "rollback": "Wycofaj wersję"
+        },
+        "summary": {
+          "contract": "Kontrakt",
+          "presets": "Presety",
+          "bundles": "Pakiety",
+          "active": "Aktywne"
+        },
+        "empty": {
+          "title": "Brak wersji konfiguracji",
+          "description": "Prompt OS jest włączony, ale organizacja nie ma jeszcze pakietu konfiguracji."
+        },
+        "details": {
+          "title": "Szczegóły {{version}}",
+          "loading": "Ładowanie szczegółów…",
+          "evalGates": "Bramki: {{value}}",
+          "noGateResults": "brak wyników",
+          "canary": "Canary: wycofanie {{rollback}}, zakres organizacji {{orgScoped}}",
+          "noCanary": "Canary: brak konfiguracji"
+        },
+        "rollback": {
+          "reasonLabel": "Powód wycofania (wymagany)",
+          "reasonAria": "Powód wycofania",
+          "continue": "Przejdź do potwierdzenia",
+          "confirmTitle": "Wycofać aktywną konfigurację?",
+          "confirmDescription": "Powód: {{reason}}. Operacja zmieni runtime organizacji i zostanie zapisana w historii Prompt OS."
         }
       }
     },
     "audit": {
       "export-history": {
-        "day2Auto": {
-          "text1": "Eksport",
-          "text2": "Historia eksportów",
-          "text3": "Paragony eksportów dziennika audytu wykonanych przez administratorów organizacji.",
-          "text4": "Brak eksportów",
-          "text5": "Nie zapisano jeszcze paragonu eksportu dziennika audytu."
+        "title": "Historia eksportów",
+        "description": "Paragony eksportów dziennika audytu wykonanych przez administratorów organizacji.",
+        "columns": {
+          "time": "Kiedy",
+          "requestedBy": "Kto",
+          "exportKind": "Eksport",
+          "rows": "Wiersze",
+          "format": "Format"
+        },
+        "empty": {
+          "title": "Brak eksportów",
+          "description": "Nie zapisano jeszcze paragonu eksportu dziennika audytu."
         }
       },
       "integrity": {
-        "day2Auto": {
-          "text1": "Integralność dziennika audytu",
-          "text2": "Dowody dostępne obecnie — bez deklarowania nieistniejącej kryptografii.",
-          "text3": "Ładowanie statystyk audytu…",
-          "text4": "Zdarzenia: {{value}}",
-          "text5": "Nierozwiązane: {{value}}",
-          "text6": "Wysokie ryzyko: {{value}}",
-          "text7": "Niezmienność dla ról klienta",
-          "text8": "Interfejs administracji klienta udostępnia odczyt i eksport dziennika; nie udostępnia endpointu modyfikowania ani usuwania zdarzeń audytowych.",
-          "text9": "Łańcuch haszy nie jest jeszcze prowadzony. Integralność opiera się dziś na kontroli dostępu (brak ścieżki zapisu dla ról klienta), nie na dowodzie kryptograficznym.",
-          "text10": "Weryfikacja kryptograficzna"
+        "title": "Integralność dziennika audytu",
+        "description": "Dowody dostępne obecnie — bez deklarowania nieistniejącej kryptografii.",
+        "loading": "Ładowanie statystyk audytu…",
+        "metrics": {
+          "totalEvents": "Zdarzenia: {{value}}",
+          "unresolved": "Nierozwiązane: {{value}}",
+          "highRisk": "Wysokie ryzyko: {{value}}"
+        },
+        "accessControl": {
+          "title": "Niezmienność dla ról klienta",
+          "description": "Interfejs administracji klienta udostępnia odczyt i eksport dziennika; nie udostępnia endpointu modyfikowania ani usuwania zdarzeń audytowych."
+        },
+        "cryptographicVerification": {
+          "title": "Weryfikacja kryptograficzna",
+          "description": "Łańcuch haszy nie jest jeszcze prowadzony. Integralność opiera się dziś na kontroli dostępu (brak ścieżki zapisu dla ról klienta), nie na dowodzie kryptograficznym."
         }
       },
       "compliance-evidence": {
-        "day2Auto": {
-          "text1": "Nie udało się pobrać dowodów zgodności.",
-          "text2": "Eksport audytu gotowy",
-          "text3": "Eksport nie powiódł się.",
-          "text4": "Ryzyko",
-          "text5": "Nie ustawiono",
-          "text6": "{{v0}} harmonogramów",
-          "text7": "Polityka AI",
-          "text8": "Dowody zgodności",
-          "text9": "Niezmienialny dla ról klienta, tylko-do-odczytu widok dowodów i eksportów.",
-          "text10": "Świeżość:",
-          "text11": "Łącznie zdarzeń",
-          "text12": "Nierozwiązane",
-          "text13": "Wysokie ryzyko",
-          "text14": "Źródło: GET /api/admin/audit-logs/stats",
-          "text15": "Brak zdarzeń audytowych",
-          "text16": "Nie zarejestrowano jeszcze dowodów dla tej organizacji.",
-          "text17": "Źródło: GET /api/admin"
+        "title": "Dowody zgodności",
+        "description": "Niezmienialny dla ról klienta, tylko-do-odczytu widok dowodów i eksportów.",
+        "freshness": "Świeżość: {{value}}",
+        "columns": {
+          "event": "Zdarzenie",
+          "actor": "Aktor",
+          "risk": "Ryzyko",
+          "time": "Czas"
+        },
+        "cards": {
+          "dataResidency": "Rezydencja danych",
+          "retentionSchedules": "Harmonogramy retencji",
+          "retentionScheduleCount": "{{count}} harmonogramów",
+          "retentionScheduleCount_one": "{{count}} harmonogram",
+          "retentionScheduleCount_few": "{{count}} harmonogramy",
+          "retentionScheduleCount_many": "{{count}} harmonogramów",
+          "retentionScheduleCount_other": "{{count}} harmonogramu",
+          "aiPolicy": "Polityka AI"
+        },
+        "values": {
+          "notSet": "Nie ustawiono"
+        },
+        "actions": {
+          "exportCsv": "Eksportuj CSV"
+        },
+        "metrics": {
+          "totalEvents": "Łącznie zdarzeń",
+          "unresolved": "Nierozwiązane",
+          "highRisk": "Wysokie ryzyko"
+        },
+        "sources": {
+          "auditStats": "Źródło: GET /api/admin/audit-logs/stats"
+        },
+        "source": "Źródło: GET /api/admin{{path}}",
+        "errors": {
+          "load": "Nie udało się pobrać dowodów zgodności.",
+          "export": "Eksport nie powiódł się."
+        },
+        "notifications": {
+          "exportReady": "Eksport audytu gotowy"
+        },
+        "empty": {
+          "title": "Brak zdarzeń audytowych",
+          "description": "Nie zarejestrowano jeszcze dowodów dla tej organizacji."
         }
       },
       "legal-hold": {
-        "day2Auto": {
-          "text1": "Stan faktycznego wstrzymania dla całej organizacji — tylko odczyt.",
-          "text2": "Ładowanie stanu legal hold…",
-          "text3": "Wstrzymanie aktywne",
-          "text4": "Gdy aktywne, blokowane są: eksport danych oraz usunięcie organizacji.",
-          "text5": "Sprawy objęte wstrzymaniem",
-          "text6": "Rejestr spraw nie jest jeszcze prowadzony; wstrzymanie działa dziś na poziomie całej organizacji."
+        "title": "Legal hold",
+        "description": "Stan faktycznego wstrzymania dla całej organizacji — tylko odczyt.",
+        "loading": "Ładowanie stanu legal hold…",
+        "status": {
+          "active": "Wstrzymanie aktywne",
+          "inactive": "Wstrzymanie nieaktywne"
+        },
+        "blockedOperations": "Gdy aktywne, blokowane są: eksport danych oraz usunięcie organizacji.",
+        "matters": {
+          "title": "Sprawy objęte wstrzymaniem",
+          "description": "Rejestr spraw nie jest jeszcze prowadzony; wstrzymanie działa dziś na poziomie całej organizacji."
         }
       }
     },
     "command": {
       "attention-queue": {
-        "day2Auto": {
-          "text1": "Ryzyka wymagające przeglądu",
-          "text2": "Nierozwiązane zdarzenia audytowe",
-          "text3": "{{v0}} nierozwiązanych",
-          "text4": "Alerty budżetowe",
-          "text5": "{{v0}} aktywnych alertów",
-          "text6": "Stan usług organizacji",
-          "text7": "/admin/health/service-status",
-          "text8": "{{v0}} testów nieudanych",
-          "text9": "Nie udało się odczytać żadnego źródła sygnałów.",
-          "text10": "Ładowanie kolejki uwagi…",
-          "text11": "Kolejka uwagi",
-          "text12": "Sygnały z systemów kanonicznych; działania wykonuje się na ekranach źródłowych.",
-          "text13": "Źródło:",
-          "text14": "Świeżość:",
-          "text15": "Otwórz ekran kanoniczny",
-          "text16": "Źródło: tenant admin API · odczyt bieżący"
-        }
+        "signals": {
+          "riskTitle": "Ryzyka wymagające przeglądu",
+          "auditTitle": "Nierozwiązane zdarzenia audytowe",
+          "auditDetail": "{{v0}} nierozwiązanych",
+          "billingTitle": "Alerty budżetowe",
+          "billingDetail": "{{v0}} aktywnych alertów",
+          "healthTitle": "Stan usług organizacji",
+          "healthDetail": "{{v0}} testów nieudanych",
+          "riskDetail": "{{count}} wysokiego ryzyka"
+        },
+        "allSourcesError": "Nie udało się odczytać żadnego źródła sygnałów.",
+        "loading": "Ładowanie kolejki uwagi…",
+        "title": "Kolejka uwagi",
+        "description": "Sygnały z systemów kanonicznych; działania wykonuje się na ekranach źródłowych.",
+        "sourceLabel": "Źródło:",
+        "freshnessLabel": "Świeżość:",
+        "actions": {
+          "openCanonical": "Otwórz ekran kanoniczny"
+        },
+        "currentSource": "Źródło: tenant admin API · odczyt bieżący"
       },
       "cost-capacity": {
-        "day2Auto": {
-          "text1": "Część źródeł kosztu lub pojemności jest niedostępna.",
-          "text2": "Użytkownik",
-          "text3": "Koszt",
-          "text4": "Wiadomości",
-          "text5": "Ładowanie kosztu i pojemności…",
-          "text6": "Koszt i pojemność",
-          "text7": "Agregacja tylko do odczytu. Budżety edytuje ekran kanoniczny.",
-          "text8": "Świeżość:",
-          "text9": "Koszt bieżący",
-          "text10": "Miejsca zajęte",
-          "text11": "Źródło: GET /api/admin/",
-          "text12": "Brak atrybucji kosztów",
-          "text13": "Brak kosztów przypisanych użytkownikom w wybranym okresie.",
-          "text14": "Alerty budżetowe (",
-          "text15": "Szczegóły wykorzystania",
-          "text16": "Stan:",
-          "text17": "nieudanych prób"
-        }
+        "partialSourcesWarning": "Część źródeł kosztu lub pojemności jest niedostępna.",
+        "columns": {
+          "user": "Użytkownik",
+          "cost": "Koszt",
+          "messages": "Wiadomości"
+        },
+        "loading": "Ładowanie kosztu i pojemności…",
+        "title": "Koszt i pojemność",
+        "description": "Agregacja tylko do odczytu. Budżety edytuje ekran kanoniczny.",
+        "freshnessLabel": "Świeżość:",
+        "metrics": {
+          "currentCost": "Koszt bieżący",
+          "usedSeats": "Miejsca zajęte",
+          "forecast": "Prognoza",
+          "utilization": "Wykorzystanie limitu"
+        },
+        "empty": {
+          "title": "Brak atrybucji kosztów",
+          "description": "Brak kosztów przypisanych użytkownikom w wybranym okresie."
+        },
+        "actions": {
+          "usageDetails": "Szczegóły wykorzystania"
+        },
+        "source": "Źródło: GET /api/admin/{{source}}",
+        "budgetAlerts": "Alerty budżetowe ({{count}})",
+        "healthStatus": "Stan: {{count}} nieudanych prób"
       },
       "organization-defaults": {
-        "day2Auto": {
-          "text1": "Nie udało się pobrać profilu.",
-          "text2": "Nie udało się pobrać ustawień finansowych.",
-          "text3": "Nie udało się zapisać profilu.",
-          "text4": "Zapisano; potwierdzono wersją odpowiedzi.",
-          "text5": "Ustawienia zmieniły się równolegle (409). Odśwież sekcję przed ponowieniem.",
-          "text6": "Nie udało się zapisać ustawień finansowych.",
-          "text7": "Ustawienia domyślne organizacji",
-          "text8": "Dwa niezależne źródła danych i dwa niezależne zapisy.",
-          "text9": "status",
-          "text10": "Język",
-          "text11": "Domyślny język",
-          "text12": "Spróbuj ponownie",
-          "text13": "Zapisz lokalizację i format",
-          "text14": "Domyślne finansowe",
-          "text15": "Ustawienia finansowe są niedostępne, ponieważ V8 nie jest włączone dla tej organizacji. Sekcja profilu powyżej pozostaje aktywna.",
-          "text16": "Domyślna waluta",
-          "text17": "Domyślny WACC",
-          "text18": "Domyślny horyzont",
-          "text19": "Zapisz domyślne finansowe"
+        "profile": {
+          "loadError": "Nie udało się pobrać profilu.",
+          "saveError": "Nie udało się zapisać profilu.",
+          "languageLabel": "Język",
+          "languageAria": "Domyślny język",
+          "saveAction": "Zapisz lokalizację i format",
+          "title": "Lokalizacja i format",
+          "timezoneLabel": "Strefa czasowa",
+          "timezoneAria": "Strefa czasowa",
+          "dateFormatLabel": "Format daty",
+          "dateFormatAria": "Format daty"
+        },
+        "finance": {
+          "loadError": "Nie udało się pobrać ustawień finansowych.",
+          "saveSuccess": "Zapisano; potwierdzono wersją odpowiedzi.",
+          "conflict": "Ustawienia zmieniły się równolegle (409). Odśwież sekcję przed ponowieniem.",
+          "saveError": "Nie udało się zapisać ustawień finansowych.",
+          "title": "Domyślne finansowe",
+          "disabled": "Ustawienia finansowe są niedostępne, ponieważ V8 nie jest włączone dla tej organizacji. Sekcja profilu powyżej pozostaje aktywna.",
+          "currencyAria": "Domyślna waluta",
+          "waccAria": "Domyślny WACC",
+          "horizonAria": "Domyślny horyzont",
+          "saveAction": "Zapisz domyślne finansowe",
+          "currencyLabel": "Waluta",
+          "waccLabel": "WACC",
+          "horizonLabel": "Horyzont (lata)"
+        },
+        "title": "Ustawienia domyślne organizacji",
+        "description": "Dwa niezależne źródła danych i dwa niezależne zapisy.",
+        "actions": {
+          "retry": "Spróbuj ponownie"
         }
+      }
+    },
+    "domains": {
+      "title": "Zatwierdzone domeny",
+      "description": "Zweryfikuj własność domeny za pomocą rzeczywistego rekordu DNS TXT.",
+      "created": "Domena została dodana.",
+      "errors": {
+        "load": "Nie udało się pobrać domen.",
+        "createReadback": "Serwer nie potwierdził domeny.",
+        "create": "Nie udało się dodać domeny.",
+        "verify": "Nie udało się sprawdzić domeny.",
+        "update": "Nie udało się zmienić ustawienia domeny.",
+        "deleteReadback": "Serwer nie potwierdził usunięcia domeny.",
+        "delete": "Nie udało się usunąć domeny."
+      },
+      "columns": {
+        "domain": "Domena",
+        "autoJoin": "Automatyczne dołączanie",
+        "status": "Status weryfikacji",
+        "verifiedAt": "Data weryfikacji",
+        "actions": "Akcje"
+      },
+      "status": {
+        "verified": "Zweryfikowana",
+        "pending": "Oczekuje"
+      },
+      "actions": {
+        "reverify": "Zweryfikuj ponownie",
+        "verify": "Zweryfikuj",
+        "add": "Dodaj",
+        "copy": "Kopiuj wartość",
+        "delete": "Usuń domenę"
+      },
+      "form": {
+        "domain": "Domena"
+      },
+      "dns": {
+        "title": "Dodaj rekord DNS TXT",
+        "name": "Nazwa",
+        "type": "Typ",
+        "value": "Wartość"
+      },
+      "outcomes": {
+        "verified": "Domena została zweryfikowana.",
+        "tokenMismatch": "Znaleziono rekordy TXT, ale żaden nie zawiera Twojego tokenu. Sprawdź, czy skopiowano całą wartość.",
+        "noRecord": "Nie znaleziono rekordu TXT. Zmiany w DNS mogą propagować się do 24 godzin.",
+        "domainNotFound": "Domena nie istnieje w DNS lub nie odpowiada.",
+        "timeout": "Przekroczono czas oczekiwania na odpowiedź DNS. Spróbuj ponownie.",
+        "dnsError": "Błąd zapytania DNS."
+      },
+      "empty": {
+        "title": "Brak zatwierdzonych domen",
+        "description": "Dodaj domenę, aby rozpocząć weryfikację DNS."
+      },
+      "delete": {
+        "title": "Usunąć domenę?",
+        "description": "Domena przestanie być zatwierdzona dla organizacji."
+      }
+    },
+    "aiQuality": {
+      "title": "Ewaluacje jakości AI",
+      "description": "Rzeczywisty feedback, wzorce uczenia i analityka organizacji.",
+      "errors": {
+        "load": "Nie udało się pobrać danych jakości AI.",
+        "reviewReadback": "Serwer nie potwierdził przeglądu.",
+        "review": "Nie udało się oznaczyć feedbacku jako przejrzanego.",
+        "patternReadback": "Serwer nie potwierdził statusu wzorca.",
+        "pattern": "Nie udało się zmienić statusu wzorca."
+      },
+      "metrics": {
+        "satisfaction": "Satysfakcja",
+        "total": "Feedback",
+        "patterns": "Aktywne wzorce",
+        "profiles": "Profile stylu"
+      },
+      "feedback": {
+        "title": "Feedback",
+        "user": "Użytkownik",
+        "context": "Kontekst",
+        "type": "Ocena",
+        "review": "Przegląd",
+        "reviewed": "Przejrzane",
+        "markReviewed": "Oznacz jako przejrzane",
+        "empty": "Brak feedbacku",
+        "emptyDescription": "Nie zebrano jeszcze ocen odpowiedzi AI."
+      },
+      "pattern": {
+        "title": "Wzorce uczenia",
+        "type": "Typ",
+        "value": "Wzorzec",
+        "confidence": "Pewność",
+        "status": "Status",
+        "actions": "Akcje",
+        "apply": "Zastosuj",
+        "reject": "Odrzuć",
+        "empty": "Brak wzorców",
+        "emptyDescription": "Nie wykryto jeszcze wzorców uczenia."
+      },
+      "analytics": {
+        "title": "Analityka",
+        "contexts": "Konteksty",
+        "formats": "Formaty",
+        "issues": "Problemy"
+      }
+    },
+    "dependencies": {
+      "title": "Zależności usług organizacji",
+      "description": "Status jest wyliczany wyłącznie z ostatnich zapisanych wyników probe’ów. Ten ekran nie uruchamia diagnostyki.",
+      "errors": {
+        "load": "Nie udało się pobrać zależności."
+      },
+      "neverChecked": "nigdy nie sprawdzono",
+      "probeCount_one": "{{count}} probe",
+      "probeCount_few": "{{count}} probe’y",
+      "probeCount_many": "{{count}} probe’ów",
+      "probeCount_other": "{{count}} probe’a",
+      "status": {
+        "healthy": "Działa",
+        "degraded": "Częściowe dane",
+        "failing": "Awaria",
+        "unknown": "Brak wyniku"
+      },
+      "empty": {
+        "title": "Brak zadeklarowanych zależności",
+        "description": "Mapa zależności nie zawiera pozycji."
+      },
+      "undeclared": {
+        "title": "Probe’y bez zadeklarowanej zależności",
+        "description": "Mapa jest ręczną, weryfikowalną deklaracją. Niewymienione zależności czekają na dowód w kodzie.",
+        "none": "Wszystkie zarejestrowane probe’y mają deklarację."
+      }
+    },
+    "incidentHistory": {
+      "title": "Historia incydentów",
+      "truth": "Tenantowy rejestr incydentów operacyjnych nie jest jeszcze prowadzony. Obecny rejestr działa na poziomie platformy i nie rozdziela zdarzeń według organizacji. Widok incydentów dla Twojej organizacji powstaje w ramach prac nad warstwą platformową.",
+      "errors": {
+        "load": "Nie udało się pobrać bieżącego stanu systemu."
+      },
+      "current": {
+        "title": "Stan bieżący, nie historia",
+        "total": "Probe’y",
+        "passed": "Działa",
+        "failed": "Błędy",
+        "unknown": "Brak wyniku",
+        "link": "Przejdź do przeglądu zdrowia"
+      }
+    },
+    "accessRequests": {
+      "title": "Wnioski o dostęp",
+      "truth": "Wnioski o dostęp do tej organizacji nie są jeszcze obsługiwane. Istniejący rejestr działa na poziomie platformy i dotyczy zakładania nowych organizacji, a nie dołączania do istniejącej — dlatego nie jest tutaj pokazywany.",
+      "plan": {
+        "title": "Planowany przepływ",
+        "submit": "1. Użytkownik spoza organizacji składa wniosek — z adresem w zatwierdzonej domenie lub bez niego.",
+        "queue": "2. Wniosek trafia do kolejki tej organizacji, widocznej wyłącznie dla OWNER/ADMIN.",
+        "decide": "3. OWNER/ADMIN zatwierdza wniosek ze wskazaną rolą albo odrzuca go z powodem.",
+        "member": "4. Zatwierdzenie tworzy aktywne członkostwo w istniejącej organizacji — nigdy nową organizację.",
+        "audit": "5. Audyt zapisuje osobę decydującą, czas, decyzję, rolę i powód."
+      },
+      "today": {
+        "title": "Dostępne dzisiaj",
+        "invitations": "Wyślij zaproszenie",
+        "domains": "Zarządzaj zweryfikowanymi domenami"
       }
     }
   },

@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { Api } from '../../services/api';
 import { V8FinanceApi } from '../../services/api/v8/finance';
-import { useTranslation } from 'react-i18next';
 interface Props {
   organizationId?: string;
 }
@@ -69,7 +70,7 @@ export const AdminOrganizationDefaultsPanel: React.FC<Props> = ({ organizationId
       setProfileMessage(
         error instanceof Error
           ? error.message
-          : t('admin.command.organization-defaults.day2Auto.text1')
+          : t('admin.command.organization-defaults.profile.loadError')
       );
     }
   }, []);
@@ -90,7 +91,7 @@ export const AdminOrganizationDefaultsPanel: React.FC<Props> = ({ organizationId
       setFinanceMessage(
         error instanceof Error
           ? error.message
-          : t('admin.command.organization-defaults.day2Auto.text2')
+          : t('admin.command.organization-defaults.finance.loadError')
       );
     }
   }, []);
@@ -116,7 +117,7 @@ export const AdminOrganizationDefaultsPanel: React.FC<Props> = ({ organizationId
       setProfileMessage(
         error instanceof Error
           ? error.message
-          : t('admin.command.organization-defaults.day2Auto.text3')
+          : t('admin.command.organization-defaults.profile.saveError')
       );
     }
   };
@@ -132,7 +133,7 @@ export const AdminOrganizationDefaultsPanel: React.FC<Props> = ({ organizationId
       setFinance(readback);
       setFinanceVersion(version);
       setFinanceState('ready');
-      setFinanceMessage(t('admin.command.organization-defaults.day2Auto.text4'));
+      setFinanceMessage(t('admin.command.organization-defaults.finance.saveSuccess'));
     } catch (error) {
       const conflict =
         (
@@ -143,41 +144,31 @@ export const AdminOrganizationDefaultsPanel: React.FC<Props> = ({ organizationId
       setFinanceState(isV8Disabled(error) ? 'disabled' : 'error');
       setFinanceMessage(
         conflict
-          ? t('admin.command.organization-defaults.day2Auto.text5')
+          ? t('admin.command.organization-defaults.finance.conflict')
           : error instanceof Error
             ? error.message
-            : t('admin.command.organization-defaults.day2Auto.text6')
+            : t('admin.command.organization-defaults.finance.saveError')
       );
     }
   };
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-lg font-semibold">
-          {t('admin.command.organization-defaults.day2Auto.text7')}
-        </h2>
+        <h2 className="text-lg font-semibold">{t('admin.command.organization-defaults.title')}</h2>
         <p className="text-sm text-c-text-secondary">
-          {t('admin.command.organization-defaults.day2Auto.text8')}
+          {t('admin.command.organization-defaults.description')}
         </p>
       </div>
       <section className="space-y-3 rounded-xl border border-c-border p-4">
-        <h3 className="font-semibold">Lokalizacja i format</h3>
+        <h3 className="font-semibold">{t('admin.command.organization-defaults.profile.title')}</h3>
         {profileMessage && (
-          <p
-            role={
-              profileState === 'error'
-                ? 'alert'
-                : t('admin.command.organization-defaults.day2Auto.text9')
-            }
-          >
-            {profileMessage}
-          </p>
+          <p role={profileState === 'error' ? 'alert' : 'status'}>{profileMessage}</p>
         )}
         <div className="grid gap-3 md:grid-cols-3">
           <label>
-            Strefa czasowa
+            {t('admin.command.organization-defaults.profile.timezoneLabel')}
             <input
-              aria-label="Strefa czasowa"
+              aria-label={t('admin.command.organization-defaults.profile.timezoneAria')}
               value={profile.defaultTimezone}
               onChange={(event) =>
                 setProfile({
@@ -189,9 +180,9 @@ export const AdminOrganizationDefaultsPanel: React.FC<Props> = ({ organizationId
             />
           </label>
           <label>
-            {t('admin.command.organization-defaults.day2Auto.text10')}
+            {t('admin.command.organization-defaults.profile.languageLabel')}
             <input
-              aria-label={t('admin.command.organization-defaults.day2Auto.text11')}
+              aria-label={t('admin.command.organization-defaults.profile.languageAria')}
               value={profile.defaultLanguage}
               onChange={(event) =>
                 setProfile({
@@ -203,9 +194,9 @@ export const AdminOrganizationDefaultsPanel: React.FC<Props> = ({ organizationId
             />
           </label>
           <label>
-            Format daty
+            {t('admin.command.organization-defaults.profile.dateFormatLabel')}
             <input
-              aria-label="Format daty"
+              aria-label={t('admin.command.organization-defaults.profile.dateFormatAria')}
               value={profile.dateFormat}
               onChange={(event) =>
                 setProfile({
@@ -222,7 +213,7 @@ export const AdminOrganizationDefaultsPanel: React.FC<Props> = ({ organizationId
             onClick={() => void loadProfile()}
             className="rounded border border-c-border px-3 py-2"
           >
-            {t('admin.command.organization-defaults.day2Auto.text12')}
+            {t('admin.command.organization-defaults.actions.retry')}
           </button>
         )}
         <button
@@ -230,33 +221,23 @@ export const AdminOrganizationDefaultsPanel: React.FC<Props> = ({ organizationId
           onClick={() => void saveProfile()}
           className={buttonClass}
         >
-          {t('admin.command.organization-defaults.day2Auto.text13')}
+          {t('admin.command.organization-defaults.profile.saveAction')}
         </button>
       </section>
       <section className="space-y-3 rounded-xl border border-c-border p-4">
-        <h3 className="font-semibold">
-          {t('admin.command.organization-defaults.day2Auto.text14')}
-        </h3>
+        <h3 className="font-semibold">{t('admin.command.organization-defaults.finance.title')}</h3>
         {financeState === 'disabled' ? (
-          <p role="status">{t('admin.command.organization-defaults.day2Auto.text15')}</p>
+          <p role="status">{t('admin.command.organization-defaults.finance.disabled')}</p>
         ) : (
           <>
             {financeMessage && (
-              <p
-                role={
-                  financeState === 'error'
-                    ? 'alert'
-                    : t('admin.command.organization-defaults.day2Auto.text9')
-                }
-              >
-                {financeMessage}
-              </p>
+              <p role={financeState === 'error' ? 'alert' : 'status'}>{financeMessage}</p>
             )}
             <div className="grid gap-3 md:grid-cols-3">
               <label>
-                Waluta
+                {t('admin.command.organization-defaults.finance.currencyLabel')}
                 <input
-                  aria-label={t('admin.command.organization-defaults.day2Auto.text16')}
+                  aria-label={t('admin.command.organization-defaults.finance.currencyAria')}
                   value={finance.defaultCurrency}
                   onChange={(event) =>
                     setFinance({
@@ -268,9 +249,9 @@ export const AdminOrganizationDefaultsPanel: React.FC<Props> = ({ organizationId
                 />
               </label>
               <label>
-                WACC
+                {t('admin.command.organization-defaults.finance.waccLabel')}
                 <input
-                  aria-label={t('admin.command.organization-defaults.day2Auto.text17')}
+                  aria-label={t('admin.command.organization-defaults.finance.waccAria')}
                   type="number"
                   value={finance.defaultWacc}
                   onChange={(event) =>
@@ -283,9 +264,9 @@ export const AdminOrganizationDefaultsPanel: React.FC<Props> = ({ organizationId
                 />
               </label>
               <label>
-                Horyzont (lata)
+                {t('admin.command.organization-defaults.finance.horizonLabel')}
                 <input
-                  aria-label={t('admin.command.organization-defaults.day2Auto.text18')}
+                  aria-label={t('admin.command.organization-defaults.finance.horizonAria')}
                   type="number"
                   value={finance.defaultHorizonYears}
                   onChange={(event) =>
@@ -303,7 +284,7 @@ export const AdminOrganizationDefaultsPanel: React.FC<Props> = ({ organizationId
                 onClick={() => void loadFinance()}
                 className="rounded border border-c-border px-3 py-2"
               >
-                {t('admin.command.organization-defaults.day2Auto.text12')}
+                {t('admin.command.organization-defaults.actions.retry')}
               </button>
             )}
             <button
@@ -311,7 +292,7 @@ export const AdminOrganizationDefaultsPanel: React.FC<Props> = ({ organizationId
               onClick={() => void saveFinance()}
               className={buttonClass}
             >
-              {t('admin.command.organization-defaults.day2Auto.text19')}
+              {t('admin.command.organization-defaults.finance.saveAction')}
             </button>
           </>
         )}

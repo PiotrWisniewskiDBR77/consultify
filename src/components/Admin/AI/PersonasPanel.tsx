@@ -1,7 +1,8 @@
 import { Brain, Save, Shield } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+
 import { Api } from '../../../services/api';
 import type { SystemPrompt, SystemPromptContextConfig } from '../../../types/domain/ai';
 const buttonClass =
@@ -11,17 +12,17 @@ export const PersonasPanel: React.FC = () => {
     [prompts, setPrompts] = useState<SystemPrompt[]>([]),
     [editing, setEditing] = useState<SystemPrompt | null>(null),
     [error, setError] = useState<string | null>(null);
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       setPrompts(await Api.aiGetSystemPrompts());
       setError(null);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load personas');
+      setError(e instanceof Error ? e.message : t('admin.ai.personas.errors.load'));
     }
-  };
+  }, [t]);
   useEffect(() => {
     void load();
-  }, []);
+  }, [load]);
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editing) return;
@@ -34,21 +35,17 @@ export const PersonasPanel: React.FC = () => {
       });
       await load();
       setEditing(null);
-      toast.success(
-        t('admin.aiControlCenter.featuresPrivacy.toasts.promptUpdated', 'System Prompt Updated')
-      );
+      toast.success(t('admin.ai.personas.messages.updated'));
     } catch {
-      toast.error(
-        t('admin.aiControlCenter.featuresPrivacy.errors.updatePrompt', 'Failed to update prompt')
-      );
+      toast.error(t('admin.ai.personas.errors.update'));
     }
   };
   const options = [
-    ['include_project_context', 'Project Context'],
-    ['include_user_profile', 'User Profile'],
-    ['include_assessment_data', 'Assessment Data'],
-    ['include_kb_articles', 'Knowledge Base'],
-    ['include_task_history', 'Task History'],
+    ['include_project_context', 'admin.ai.personas.context.project'],
+    ['include_user_profile', 'admin.ai.personas.context.userProfile'],
+    ['include_assessment_data', 'admin.ai.personas.context.assessment'],
+    ['include_kb_articles', 'admin.ai.personas.context.knowledgeBase'],
+    ['include_task_history', 'admin.ai.personas.context.taskHistory'],
   ];
   return (
     <div className="space-y-4">
@@ -63,7 +60,7 @@ export const PersonasPanel: React.FC = () => {
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <div className="space-y-4">
           <h3 className="text-sm font-medium uppercase tracking-wider text-c-text-secondary">
-            Available Personas
+            {t('admin.ai.personas.available')}
           </h3>
           {prompts.map((p) => (
             <button
@@ -76,17 +73,19 @@ export const PersonasPanel: React.FC = () => {
             </button>
           ))}
           {prompts.length === 0 && !error && (
-            <p className="rounded-xl border border-c-border p-4">No personas configured.</p>
+            <p className="rounded-xl border border-c-border p-4">{t('admin.ai.personas.empty')}</p>
           )}
         </div>
         <div className="h-fit rounded-xl border border-c-border bg-c-surface p-6">
           {editing ? (
             <form onSubmit={save} className="space-y-4">
-              <h3 className="font-semibold">Edit: {editing.key}</h3>
+              <h3 className="font-semibold">
+                {t('admin.ai.personas.editTitle', { name: editing.key })}
+              </h3>
               <label className="block text-sm">
-                Description
+                {t('admin.ai.personas.fields.description')}
                 <input
-                  aria-label="Persona description"
+                  aria-label={t('admin.ai.personas.fields.descriptionAria')}
                   value={editing.description || ''}
                   onChange={(e) =>
                     setEditing({
@@ -98,9 +97,9 @@ export const PersonasPanel: React.FC = () => {
                 />
               </label>
               <label className="block text-sm">
-                System Prompt
+                {t('admin.ai.personas.fields.systemPrompt')}
                 <textarea
-                  aria-label="System Prompt"
+                  aria-label={t('admin.ai.personas.fields.systemPrompt')}
                   value={editing.content}
                   onChange={(e) =>
                     setEditing({
@@ -114,7 +113,7 @@ export const PersonasPanel: React.FC = () => {
               <fieldset className="rounded border border-c-border p-3">
                 <legend className="flex items-center gap-2 text-sm">
                   <Shield className="h-4 w-4" />
-                  Context Injection
+                  {t('admin.ai.personas.context.title')}
                 </legend>
                 <div className="mt-2 grid grid-cols-2 gap-2">
                   {options.map(([id, label]) => {
@@ -137,7 +136,7 @@ export const PersonasPanel: React.FC = () => {
                             })
                           }
                         />{' '}
-                        {label}
+                        {t(label)}
                       </label>
                     );
                   })}
@@ -145,13 +144,13 @@ export const PersonasPanel: React.FC = () => {
               </fieldset>
               <button type="submit" className={buttonClass}>
                 <Save className="h-4 w-4" />
-                Save Persona
+                {t('admin.ai.personas.actions.save')}
               </button>
             </form>
           ) : (
             <div className="flex h-64 items-center justify-center text-c-text-secondary">
               <Brain className="mr-2 h-6 w-6" />
-              Select a persona to edit
+              {t('admin.ai.personas.selectPrompt')}
             </div>
           )}
         </div>

@@ -29,7 +29,9 @@ import {
   Users,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router-dom';
+
 import { Api } from '../../services/api';
 import {
   type AuditExportResult,
@@ -53,7 +55,6 @@ import { CommandCenterBenchmarkTab } from './commandCenter/CommandCenterBenchmar
 import { CommandCenterDlpTab } from './commandCenter/CommandCenterDlpTab';
 import { CommandCenterResidencyTab } from './commandCenter/CommandCenterResidencyTab';
 import { CommandCenterRetentionTab } from './commandCenter/CommandCenterRetentionTab';
-import { useTranslation } from 'react-i18next';
 type TabId =
   | 'overview'
   | 'agent-trace'
@@ -100,22 +101,24 @@ const CommandCenterAttentionQueue: React.FC = () => {
       if (risk)
         next.push({
           id: 'risk',
-          title: t('admin.command.attention-queue.day2Auto.text1'),
+          title: t('admin.command.attention-queue.signals.riskTitle'),
           source: 'GET /api/admin/risk/summary',
           freshness,
           severity: Number(risk?.highRiskCount ?? 0) > 0 ? 'critical' : 'info',
           href: '/admin/security/risk-summary',
-          detail: `${Number(risk?.highRiskCount ?? 0)} wysokiego ryzyka`,
+          detail: t('admin.command.attention-queue.signals.riskDetail', {
+            count: Number(risk?.highRiskCount ?? 0),
+          }),
         });
       if (audit)
         next.push({
           id: 'audit',
-          title: t('admin.command.attention-queue.day2Auto.text2'),
+          title: t('admin.command.attention-queue.signals.auditTitle'),
           source: 'GET /api/admin/audit-logs/stats',
           freshness,
           severity: Number(audit?.unresolvedCount ?? 0) > 0 ? 'warning' : 'info',
           href: '/admin/audit/events',
-          detail: t('admin.command.attention-queue.day2Auto.text3', {
+          detail: t('admin.command.attention-queue.signals.auditDetail', {
             v0: Number(audit?.unresolvedCount ?? 0),
           }),
         });
@@ -129,25 +132,25 @@ const CommandCenterAttentionQueue: React.FC = () => {
       if (billingItems)
         next.push({
           id: 'billing',
-          title: t('admin.command.attention-queue.day2Auto.text4'),
+          title: t('admin.command.attention-queue.signals.billingTitle'),
           source: 'GET /api/admin/billing/alerts',
           freshness,
           severity: billingItems.length > 0 ? 'warning' : 'info',
           href: '/admin/billing/budgets-alerts',
-          detail: t('admin.command.attention-queue.day2Auto.text5', {
+          detail: t('admin.command.attention-queue.signals.billingDetail', {
             v0: billingItems.length,
           }),
         });
       if (health)
         next.push({
           id: 'health',
-          title: t('admin.command.attention-queue.day2Auto.text6'),
+          title: t('admin.command.attention-queue.signals.healthTitle'),
           source: 'GET /api/admin/health-panel/summary',
           freshness,
           severity:
             Number(health?.summary?.failed ?? health?.failed ?? 0) > 0 ? 'critical' : 'info',
-          href: t('admin.command.attention-queue.day2Auto.text7'),
-          detail: t('admin.command.attention-queue.day2Auto.text8', {
+          href: '/admin/health/service-status',
+          detail: t('admin.command.attention-queue.signals.healthDetail', {
             v0: Number(health?.summary?.failed ?? health?.failed ?? 0),
           }),
         });
@@ -157,7 +160,7 @@ const CommandCenterAttentionQueue: React.FC = () => {
         info: 2,
       };
       setSignals(next.sort((a, b) => rank[a.severity] - rank[b.severity]));
-      setError(next.length === 0 ? t('admin.command.attention-queue.day2Auto.text9') : null);
+      setError(next.length === 0 ? t('admin.command.attention-queue.allSourcesError') : null);
       setLoading(false);
     })();
     return () => {
@@ -168,7 +171,7 @@ const CommandCenterAttentionQueue: React.FC = () => {
     return (
       <div className="flex items-center gap-2 text-sm text-c-text-secondary">
         <Loader2 className="h-4 w-4 animate-spin" />
-        {t('admin.command.attention-queue.day2Auto.text10')}
+        {t('admin.command.attention-queue.loading')}
       </div>
     );
   if (error)
@@ -184,10 +187,10 @@ const CommandCenterAttentionQueue: React.FC = () => {
     <div className="space-y-4">
       <div>
         <h2 className="text-lg font-semibold text-c-text">
-          {t('admin.command.attention-queue.day2Auto.text11')}
+          {t('admin.command.attention-queue.title')}
         </h2>
         <p className="mt-1 text-sm text-c-text-secondary">
-          {t('admin.command.attention-queue.day2Auto.text12')}
+          {t('admin.command.attention-queue.description')}
         </p>
       </div>
       <div className="grid gap-3 md:grid-cols-2">
@@ -213,19 +216,19 @@ const CommandCenterAttentionQueue: React.FC = () => {
             <dl className="mt-3 space-y-1 text-xs text-c-text-muted">
               <div>
                 <dt className="inline font-medium">
-                  {t('admin.command.attention-queue.day2Auto.text13')}
+                  {t('admin.command.attention-queue.sourceLabel')}
                 </dt>
                 <dd className="inline">{signal.source}</dd>
               </div>
               <div>
                 <dt className="inline font-medium">
-                  {t('admin.command.attention-queue.day2Auto.text14')}
+                  {t('admin.command.attention-queue.freshnessLabel')}
                 </dt>
                 <dd className="inline">{signal.freshness}</dd>
               </div>
             </dl>
             <span className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-c-text">
-              {t('admin.command.attention-queue.day2Auto.text15')}
+              {t('admin.command.attention-queue.actions.openCanonical')}
               <ArrowRight className="h-4 w-4" />
             </span>
           </Link>
@@ -275,7 +278,7 @@ const CommandCenterCostCapacity: React.FC = () => {
         loading: false,
         error:
           values.filter(Boolean).length < 4
-            ? t('admin.command.cost-capacity.day2Auto.text1')
+            ? t('admin.command.cost-capacity.partialSourcesWarning')
             : null,
         billing: values[0],
         usage: values[1],
@@ -303,16 +306,16 @@ const CommandCenterCostCapacity: React.FC = () => {
     () => [
       {
         id: 'userId',
-        label: t('admin.command.cost-capacity.day2Auto.text2'),
+        label: t('admin.command.cost-capacity.columns.user'),
       },
       {
         id: 'cost',
-        label: t('admin.command.cost-capacity.day2Auto.text3'),
+        label: t('admin.command.cost-capacity.columns.cost'),
         render: (row) => Number(row.cost ?? 0).toFixed(2),
       },
       {
         id: 'messageCount',
-        label: t('admin.command.cost-capacity.day2Auto.text4'),
+        label: t('admin.command.cost-capacity.columns.messages'),
       },
     ],
     []
@@ -321,7 +324,7 @@ const CommandCenterCostCapacity: React.FC = () => {
     return (
       <div className="flex items-center gap-2 text-sm text-c-text-secondary">
         <Loader2 className="h-4 w-4 animate-spin" />
-        {t('admin.command.cost-capacity.day2Auto.text5')}
+        {t('admin.command.cost-capacity.loading')}
       </div>
     );
   const currentCost = Number(
@@ -334,13 +337,13 @@ const CommandCenterCostCapacity: React.FC = () => {
     <div className="space-y-4">
       <div>
         <h2 className="text-lg font-semibold text-c-text">
-          {t('admin.command.cost-capacity.day2Auto.text6')}
+          {t('admin.command.cost-capacity.title')}
         </h2>
         <p className="mt-1 text-sm text-c-text-secondary">
-          {t('admin.command.cost-capacity.day2Auto.text7')}
+          {t('admin.command.cost-capacity.description')}
         </p>
         <p className="mt-1 text-xs text-c-text-muted">
-          {t('admin.command.cost-capacity.day2Auto.text8')}
+          {t('admin.command.cost-capacity.freshnessLabel')}
           {freshness}
         </p>
       </div>
@@ -355,20 +358,29 @@ const CommandCenterCostCapacity: React.FC = () => {
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[
           [
-            t('admin.command.cost-capacity.day2Auto.text9'),
+            t('admin.command.cost-capacity.metrics.currentCost'),
             currentCost.toFixed(2),
             'billing/summary',
           ],
-          ['Prognoza', forecast.toFixed(2), 'billing/summary'],
-          ['Wykorzystanie limitu', `${utilization}%`, 'billing/usage-details'],
-          [t('admin.command.cost-capacity.day2Auto.text10'), String(seats), 'billing/summary'],
+          [
+            t('admin.command.cost-capacity.metrics.forecast'),
+            forecast.toFixed(2),
+            'billing/summary',
+          ],
+          [
+            t('admin.command.cost-capacity.metrics.utilization'),
+            `${utilization}%`,
+            'billing/usage-details',
+          ],
+          [t('admin.command.cost-capacity.metrics.usedSeats'), String(seats), 'billing/summary'],
         ].map(([label, value, source]) => (
           <div key={label} className="rounded-xl border border-c-border bg-c-surface p-4">
             <p className="text-xs text-c-text-secondary">{label}</p>
             <p className="mt-1 text-xl font-semibold text-c-text">{value}</p>
             <p className="mt-2 text-[10px] text-c-text-muted">
-              {t('admin.command.cost-capacity.day2Auto.text11')}
-              {source}
+              {t('admin.command.cost-capacity.source', {
+                source,
+              })}
             </p>
           </div>
         ))}
@@ -378,8 +390,8 @@ const CommandCenterCostCapacity: React.FC = () => {
           columns={columns}
           data={rows}
           empty={{
-            title: t('admin.command.cost-capacity.day2Auto.text12'),
-            description: t('admin.command.cost-capacity.day2Auto.text13'),
+            title: t('admin.command.cost-capacity.empty.title'),
+            description: t('admin.command.cost-capacity.empty.description'),
           }}
           persistKey="admin.costCapacity"
         />
@@ -389,19 +401,20 @@ const CommandCenterCostCapacity: React.FC = () => {
           to="/admin/billing/budgets-alerts"
           className="rounded-lg border border-c-border px-3 py-2 text-sm font-medium text-c-text focus-visible:outline-none focus-visible:ring-2 ring-[color:var(--c-focus)]"
         >
-          {t('admin.command.cost-capacity.day2Auto.text14')}
-          {state.alerts.length})
+          {t('admin.command.cost-capacity.budgetAlerts', {
+            count: state.alerts.length,
+          })}
         </Link>
         <Link
           to="/admin/billing/usage-costs"
           className="rounded-lg border border-c-border px-3 py-2 text-sm font-medium text-c-text focus-visible:outline-none focus-visible:ring-2 ring-[color:var(--c-focus)]"
         >
-          {t('admin.command.cost-capacity.day2Auto.text15')}
+          {t('admin.command.cost-capacity.actions.usageDetails')}
         </Link>
         <span className="px-3 py-2 text-xs text-c-text-muted">
-          {t('admin.command.cost-capacity.day2Auto.text16')}
-          {Number(state.health?.summary?.failed ?? 0)}
-          {t('admin.command.cost-capacity.day2Auto.text17')}
+          {t('admin.command.cost-capacity.healthStatus', {
+            count: Number(state.health?.summary?.failed ?? 0),
+          })}
         </span>
       </div>
     </div>
@@ -476,9 +489,7 @@ const LinkTileCard: React.FC<{
         </p>
       </div>
       <span className="text-xs font-medium text-c-text-secondary group-hover:text-c-text">
-        {t('commandCenter.overview.tiles.open', {
-          defaultValue: 'Open',
-        })}
+        {t('commandCenter.overview.tiles.open')}
       </span>
     </button>
   );
@@ -503,7 +514,7 @@ const DataTileShell: React.FC<{
         {label}
       </div>
       <p className="mt-1 text-[10px] text-c-text-muted">
-        {t('admin.command.attention-queue.day2Auto.text16')}
+        {t('admin.command.attention-queue.currentSource')}
       </p>
       <div className="mt-2">
         {loading ? (
@@ -577,9 +588,7 @@ const CommandCenterOverviewTab: React.FC<{
     } catch (error: any) {
       setResidency({
         loading: false,
-        error:
-          error?.message ||
-          t('commandCenter.overview.tiles.residency.error', 'Failed to load data residency policy'),
+        error: error?.message || t('commandCenter.overview.tiles.residency.error'),
         value: null,
       });
     }
@@ -600,9 +609,7 @@ const CommandCenterOverviewTab: React.FC<{
     } catch (error: any) {
       setAiPolicy({
         loading: false,
-        error:
-          error?.message ||
-          t('commandCenter.overview.tiles.aiPolicy.error', 'Failed to load AI policy'),
+        error: error?.message || t('commandCenter.overview.tiles.aiPolicy.error'),
         value: null,
       });
     }
@@ -626,8 +633,7 @@ const CommandCenterOverviewTab: React.FC<{
     } catch (error: any) {
       setDlp({
         loading: false,
-        error:
-          error?.message || t('commandCenter.overview.tiles.dlp.error', 'Failed to load DLP rules'),
+        error: error?.message || t('commandCenter.overview.tiles.dlp.error'),
         value: null,
       });
     }
@@ -655,9 +661,7 @@ const CommandCenterOverviewTab: React.FC<{
     } catch (error: any) {
       setRetention({
         loading: false,
-        error:
-          error?.message ||
-          t('commandCenter.overview.tiles.retention.error', 'Failed to load retention schedules'),
+        error: error?.message || t('commandCenter.overview.tiles.retention.error'),
         value: null,
       });
     }
@@ -678,9 +682,7 @@ const CommandCenterOverviewTab: React.FC<{
     } catch (error: any) {
       setAuditExport({
         loading: false,
-        error:
-          error?.message ||
-          t('commandCenter.overview.tiles.auditExport.error', 'Failed to load audit export'),
+        error: error?.message || t('commandCenter.overview.tiles.auditExport.error'),
         value: null,
       });
     }
@@ -696,13 +698,10 @@ const CommandCenterOverviewTab: React.FC<{
     <div className="space-y-6">
       <div>
         <h4 className="text-sm font-semibold text-c-text">
-          {t('commandCenter.overview.linksTitle', 'Trust surfaces')}
+          {t('commandCenter.overview.linksTitle')}
         </h4>
         <p className="mt-1 text-xs text-c-text-secondary">
-          {t(
-            'commandCenter.overview.linksSubtitle',
-            'These live in their own sections — Command Center only links to them.'
-          )}
+          {t('commandCenter.overview.linksSubtitle')}
         </p>
         <div className="mt-3 grid gap-3 md:grid-cols-3">
           {LINK_TILES.map((tile) => (
@@ -713,18 +712,15 @@ const CommandCenterOverviewTab: React.FC<{
 
       <div>
         <h4 className="text-sm font-semibold text-c-text">
-          {t('commandCenter.overview.complianceTitle', 'Compliance posture')}
+          {t('commandCenter.overview.complianceTitle')}
         </h4>
         <p className="mt-1 text-xs text-c-text-secondary">
-          {t(
-            'commandCenter.overview.complianceSubtitle',
-            'Live from /api/admin/enterprise-compliance — org-scoped by token.'
-          )}
+          {t('commandCenter.overview.complianceSubtitle')}
         </p>
         <div className="mt-3 grid gap-3 md:grid-cols-2">
           <DataTileShell
             icon={Globe}
-            label={t('commandCenter.overview.tiles.residency.label', 'Data residency')}
+            label={t('commandCenter.overview.tiles.residency.label')}
             loading={residency.loading}
             error={residency.error}
           >
@@ -732,15 +728,12 @@ const CommandCenterOverviewTab: React.FC<{
               <div>
                 <p className="text-lg font-semibold text-c-text">
                   {residency.value.dataResidencyRegion ||
-                    t('commandCenter.overview.tiles.residency.notSet', 'Not set')}
+                    t('commandCenter.overview.tiles.residency.notSet')}
                 </p>
                 <p className="mt-1 text-xs text-c-text-secondary">
                   {residency.value.enforceEuOnly
-                    ? t('commandCenter.overview.tiles.residency.euEnforced', 'EU-only enforced')
-                    : t(
-                        'commandCenter.overview.tiles.residency.euNotEnforced',
-                        'EU-only not enforced'
-                      )}
+                    ? t('commandCenter.overview.tiles.residency.euEnforced')
+                    : t('commandCenter.overview.tiles.residency.euNotEnforced')}
                 </p>
               </div>
             )}
@@ -748,7 +741,7 @@ const CommandCenterOverviewTab: React.FC<{
 
           <DataTileShell
             icon={Sparkles}
-            label={t('commandCenter.overview.tiles.aiPolicy.label', 'Org AI policy')}
+            label={t('commandCenter.overview.tiles.aiPolicy.label')}
             loading={aiPolicy.loading}
             error={aiPolicy.error}
           >
@@ -756,13 +749,11 @@ const CommandCenterOverviewTab: React.FC<{
               <div>
                 <p className="text-lg font-semibold text-c-text">
                   {t('commandCenter.overview.tiles.aiPolicy.citationMode', {
-                    defaultValue: 'Citations: {{mode}}',
                     mode: aiPolicy.value.requiredCitationMode,
                   })}
                 </p>
                 <p className="mt-1 text-xs text-c-text-secondary">
                   {t('commandCenter.overview.tiles.aiPolicy.maxTokens', {
-                    defaultValue: 'Max {{tokens}} tokens / message',
                     tokens: aiPolicy.value.maxTokensPerMessage,
                   })}
                 </p>
@@ -775,63 +766,48 @@ const CommandCenterOverviewTab: React.FC<{
       <div className="grid gap-3 md:grid-cols-3">
         <DataTileShell
           icon={Lock}
-          label={t('commandCenter.overview.tiles.dlp.label', 'DLP rules')}
+          label={t('commandCenter.overview.tiles.dlp.label')}
           loading={dlp.loading}
           error={dlp.error}
         >
           {dlp.value &&
             (dlp.value.total === 0 ? (
               <p className="text-sm text-c-text-secondary">
-                {t('commandCenter.overview.tiles.dlp.empty', 'No DLP rules configured')}
+                {t('commandCenter.overview.tiles.dlp.empty')}
               </p>
             ) : (
               <p className="text-lg font-semibold text-c-text">
-                {t(
-                  'commandCenter.overview.tiles.dlp.activeCount',
-                  '{{active}} active / {{total}} total',
-                  {
-                    active: dlp.value.active,
-                    total: dlp.value.total,
-                  }
-                )}
+                {t('commandCenter.overview.tiles.dlp.activeCount', {
+                  active: dlp.value.active,
+                  total: dlp.value.total,
+                })}
               </p>
             ))}
         </DataTileShell>
 
         <DataTileShell
           icon={Clock}
-          label={t('commandCenter.overview.tiles.retention.label', 'Retention')}
+          label={t('commandCenter.overview.tiles.retention.label')}
           loading={retention.loading}
           error={retention.error}
         >
           {retention.value &&
             (retention.value.count === 0 ? (
               <p className="text-sm text-c-text-secondary">
-                {t(
-                  'commandCenter.overview.tiles.retention.empty',
-                  'No retention schedules configured'
-                )}
+                {t('commandCenter.overview.tiles.retention.empty')}
               </p>
             ) : (
               <div>
                 <p className="text-lg font-semibold text-c-text">
-                  {t(
-                    'commandCenter.overview.tiles.retention.scheduleCount',
-                    '{{count}} schedule(s)',
-                    {
-                      count: retention.value.count,
-                    }
-                  )}
+                  {t('commandCenter.overview.tiles.retention.scheduleCount', {
+                    count: retention.value.count,
+                  })}
                 </p>
                 {retention.value.nextCleanupAt && (
                   <p className="mt-1 text-xs text-c-text-secondary">
-                    {t(
-                      'commandCenter.overview.tiles.retention.nextCleanup',
-                      'Next cleanup {{date}}',
-                      {
-                        date: new Date(retention.value.nextCleanupAt).toLocaleDateString(),
-                      }
-                    )}
+                    {t('commandCenter.overview.tiles.retention.nextCleanup', {
+                      date: new Date(retention.value.nextCleanupAt).toLocaleDateString(),
+                    })}
                   </p>
                 )}
               </div>
@@ -840,19 +816,19 @@ const CommandCenterOverviewTab: React.FC<{
 
         <DataTileShell
           icon={ScrollText}
-          label={t('commandCenter.overview.tiles.auditExport.label', 'Last SOC2 export')}
+          label={t('commandCenter.overview.tiles.auditExport.label')}
           loading={auditExport.loading}
           error={auditExport.error}
         >
           {auditExport.value && (
             <div>
               <p className="text-lg font-semibold text-c-text">
-                {t('commandCenter.overview.tiles.auditExport.entries', '{{count}} entries (30d)', {
+                {t('commandCenter.overview.tiles.auditExport.entries', {
                   count: auditExport.value.totalCount,
                 })}
               </p>
               <p className="mt-1 text-xs text-c-text-secondary">
-                {t('commandCenter.overview.tiles.auditExport.generatedAt', 'as of {{time}}', {
+                {t('commandCenter.overview.tiles.auditExport.generatedAt', {
                   time: new Date(auditExport.value.exportedAt).toLocaleString(),
                 })}
               </p>
@@ -877,42 +853,42 @@ export const AdminCommandCenterPanel: React.FC<AdminCommandCenterPanelProps> = (
     () => [
       {
         id: 'overview',
-        label: t('commandCenter.tabs.overview', 'Overview'),
+        label: t('commandCenter.tabs.overview'),
         icon: ShieldCheck,
       },
       {
         id: 'agent-trace',
-        label: t('commandCenter.tabs.agentTrace', 'Agent trace'),
+        label: t('commandCenter.tabs.agentTrace'),
         icon: Bot,
       },
       {
         id: 'audit',
-        label: t('commandCenter.tabs.audit', 'SOC2 audit'),
+        label: t('commandCenter.tabs.audit'),
         icon: ScrollText,
       },
       {
         id: 'dlp',
-        label: t('commandCenter.tabs.dlp', 'DLP'),
+        label: t('commandCenter.tabs.dlp'),
         icon: Lock,
       },
       {
         id: 'residency',
-        label: t('commandCenter.tabs.residency', 'Data residency'),
+        label: t('commandCenter.tabs.residency'),
         icon: Globe,
       },
       {
         id: 'retention',
-        label: t('commandCenter.tabs.retention', 'Retention'),
+        label: t('commandCenter.tabs.retention'),
         icon: Clock,
       },
       {
         id: 'ai-policy',
-        label: t('commandCenter.tabs.aiPolicy', 'AI policy'),
+        label: t('commandCenter.tabs.aiPolicy'),
         icon: Sparkles,
       },
       {
         id: 'benchmark',
-        label: t('commandCenter.tabs.benchmark', 'Consulting Bench'),
+        label: t('commandCenter.tabs.benchmark'),
         icon: ClipboardCheck,
       },
     ],
@@ -940,15 +916,8 @@ export const AdminCommandCenterPanel: React.FC<AdminCommandCenterPanelProps> = (
   return (
     <div className="space-y-6">
       <div className="rounded-2xl border border-c-border bg-c-surface p-5">
-        <h3 className="text-lg font-semibold text-c-text">
-          {t('commandCenter.title', 'Command Center')}
-        </h3>
-        <p className="mt-1 text-sm text-c-text-secondary">
-          {t(
-            'commandCenter.description',
-            'One trust & control surface — SOC2 audit export, DLP, data residency, retention, and org AI policy. Roles, SSO, and the audit log live in their own sections and are only linked from here.'
-          )}
-        </p>
+        <h3 className="text-lg font-semibold text-c-text">{t('commandCenter.title')}</h3>
+        <p className="mt-1 text-sm text-c-text-secondary">{t('commandCenter.description')}</p>
       </div>
 
       {!aggregationOnly && (

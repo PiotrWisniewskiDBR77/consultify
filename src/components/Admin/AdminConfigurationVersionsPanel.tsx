@@ -1,5 +1,7 @@
 import { FileClock, RefreshCw } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import {
   V8PromptOsApi,
   type V8PromptOsBundle,
@@ -9,7 +11,6 @@ import {
 } from '../../services/api/v8/prompt-os';
 import { ConfirmDialog } from '../MyWork/shared/ConfirmDialog';
 import { StandardTable, type TableColumn, type TableRow } from '../standard/StandardTable';
-import { useTranslation } from 'react-i18next';
 const errorCode = (error: unknown) => {
   const value = error as {
     code?: string;
@@ -43,27 +44,30 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
   const [rollbackTarget, setRollbackTarget] = useState<V8PromptOsBundle | null>(null);
   const [reason, setReason] = useState('');
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const load = useCallback(async (preserveMessage = false) => {
-    setState('loading');
-    if (!preserveMessage) setMessage('');
-    try {
-      const [nextSummary, nextBundles] = await Promise.all([
-        V8PromptOsApi.getRuntimeSummary(),
-        V8PromptOsApi.getBundles(),
-      ]);
-      setSummary(nextSummary);
-      setBundles(nextBundles);
-      setSelected(
-        (current) => nextBundles.find((item) => item.bundleId === current?.bundleId) || null
-      );
-      setState('ready');
-    } catch (error) {
-      setState(errorCode(error) === 'disabled' ? 'disabled' : 'error');
-      setMessage(
-        error instanceof Error ? error.message : t('admin.ai.configuration-versions.day2Auto.text1')
-      );
-    }
-  }, []);
+  const load = useCallback(
+    async (preserveMessage = false) => {
+      setState('loading');
+      if (!preserveMessage) setMessage('');
+      try {
+        const [nextSummary, nextBundles] = await Promise.all([
+          V8PromptOsApi.getRuntimeSummary(),
+          V8PromptOsApi.getBundles(),
+        ]);
+        setSummary(nextSummary);
+        setBundles(nextBundles);
+        setSelected(
+          (current) => nextBundles.find((item) => item.bundleId === current?.bundleId) || null
+        );
+        setState('ready');
+      } catch (error) {
+        setState(errorCode(error) === 'disabled' ? 'disabled' : 'error');
+        setMessage(
+          error instanceof Error ? error.message : t('admin.ai.configuration-versions.errors.load')
+        );
+      }
+    },
+    [t]
+  );
   useEffect(() => void load(), [load]);
   const showDetails = async (bundle: V8PromptOsBundle) => {
     setSelected(bundle);
@@ -80,7 +84,7 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
       setDetailsMessage(
         gateResult.reason instanceof Error
           ? gateResult.reason.message
-          : t('admin.ai.configuration-versions.day2Auto.text2')
+          : t('admin.ai.configuration-versions.errors.evalGates')
       );
       return;
     }
@@ -105,7 +109,7 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
       setDetailsMessage(
         canaryResult.reason instanceof Error
           ? canaryResult.reason.message
-          : t('admin.ai.configuration-versions.day2Auto.text3')
+          : t('admin.ai.configuration-versions.errors.canary')
       );
       return;
     }
@@ -122,10 +126,10 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
     } catch (error) {
       setMessage(
         errorCode(error) === 'conflict'
-          ? t('admin.ai.configuration-versions.day2Auto.text4')
+          ? t('admin.ai.configuration-versions.errors.conflict')
           : error instanceof Error
             ? error.message
-            : t('admin.ai.configuration-versions.day2Auto.text5')
+            : t('admin.ai.configuration-versions.errors.operation')
       );
       await load(true);
     }
@@ -134,34 +138,34 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
     () => [
       {
         id: 'version',
-        label: 'Wersja',
+        label: t('admin.ai.configuration-versions.columns.version'),
       },
       {
         id: 'preset',
-        label: 'Preset',
+        label: t('admin.ai.configuration-versions.columns.preset'),
       },
       {
-        id: t('admin.ai.configuration-versions.day2Auto.text6'),
-        label: t('admin.ai.configuration-versions.day2Auto.text7'),
+        id: 'status',
+        label: t('admin.ai.configuration-versions.columns.status'),
       },
       {
         id: 'prompt',
-        label: 'Prompt',
+        label: t('admin.ai.configuration-versions.columns.prompt'),
       },
       {
         id: 'model',
-        label: 'Model',
+        label: t('admin.ai.configuration-versions.columns.model'),
       },
       {
         id: 'policy',
-        label: 'Policy',
+        label: t('admin.ai.configuration-versions.columns.policy'),
       },
       {
         id: 'runtime',
-        label: 'Runtime',
+        label: t('admin.ai.configuration-versions.columns.runtime'),
       },
     ],
-    []
+    [t]
   );
   const rows = useMemo<TableRow[]>(
     () =>
@@ -180,9 +184,9 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
   if (state === 'disabled')
     return (
       <div role="status" className="rounded-xl border border-c-border p-5">
-        <h2 className="font-semibold">{t('admin.ai.configuration-versions.day2Auto.text8')}</h2>
+        <h2 className="font-semibold">{t('admin.ai.configuration-versions.disabled.title')}</h2>
         <p className="mt-1 text-sm text-c-text-secondary">
-          {t('admin.ai.configuration-versions.day2Auto.text9')}
+          {t('admin.ai.configuration-versions.disabled.description')}
         </p>
       </div>
     );
@@ -197,7 +201,7 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
           onClick={() => void load()}
           className="mt-3 rounded border border-c-border px-3 py-2"
         >
-          {t('admin.ai.configuration-versions.day2Auto.text10')}
+          {t('admin.ai.configuration-versions.actions.retry')}
         </button>
       </div>
     );
@@ -205,13 +209,13 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold">Wersje konfiguracji AI</h2>
+          <h2 className="text-lg font-semibold">{t('admin.ai.configuration-versions.title')}</h2>
           <p className="text-sm text-c-text-secondary">
-            Tenantowy runtime Prompt OS, bramki ewaluacji i canary.
+            {t('admin.ai.configuration-versions.description')}
           </p>
         </div>
         <button
-          aria-label={t('admin.ai.configuration-versions.day2Auto.text11')}
+          aria-label={t('admin.ai.configuration-versions.actions.refresh')}
           onClick={() => void load()}
         >
           <RefreshCw className={state === 'loading' ? 'animate-spin' : ''} />
@@ -228,19 +232,19 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
       {summary && (
         <dl className="grid gap-3 rounded-xl border border-c-border p-4 sm:grid-cols-4">
           <div>
-            <dt>Kontrakt</dt>
+            <dt>{t('admin.ai.configuration-versions.summary.contract')}</dt>
             <dd>{summary.contract}</dd>
           </div>
           <div>
-            <dt>Presety</dt>
+            <dt>{t('admin.ai.configuration-versions.summary.presets')}</dt>
             <dd>{summary.presetCount}</dd>
           </div>
           <div>
-            <dt>Bundle</dt>
+            <dt>{t('admin.ai.configuration-versions.summary.bundles')}</dt>
             <dd>{summary.bundleCount}</dd>
           </div>
           <div>
-            <dt>{t('admin.ai.configuration-versions.day2Auto.text12')}</dt>
+            <dt>{t('admin.ai.configuration-versions.summary.active')}</dt>
             <dd>{summary.activeBundleCount}</dd>
           </div>
         </dl>
@@ -255,14 +259,14 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
             primary: [
               {
                 id: 'details',
-                label: t('admin.ai.configuration-versions.day2Auto.text13'),
+                label: t('admin.ai.configuration-versions.actions.details'),
                 onClick: () => void showDetails(bundle),
               },
               ...(bundle.status !== 'active'
                 ? [
                     {
                       id: 'activate',
-                      label: 'Aktywuj',
+                      label: t('admin.ai.configuration-versions.actions.activate'),
                       onClick: () => void mutate('activate', bundle),
                     },
                   ]
@@ -271,7 +275,7 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
             destructive:
               bundle.status === 'active'
                 ? {
-                    label: t('admin.ai.configuration-versions.day2Auto.text14'),
+                    label: t('admin.ai.configuration-versions.actions.rollback'),
                     onClick: () => setRollbackTarget(bundle),
                   }
                 : undefined,
@@ -279,19 +283,18 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
         }}
         empty={{
           icon: FileClock,
-          title: t('admin.ai.configuration-versions.day2Auto.text15'),
-          description: t('admin.ai.configuration-versions.day2Auto.text16'),
+          title: t('admin.ai.configuration-versions.empty.title'),
+          description: t('admin.ai.configuration-versions.empty.description'),
         }}
         persistKey="admin.configurationVersions"
       />
       {selected && (
         <section className="rounded-xl border border-c-border p-4">
           <h3 className="font-semibold">
-            {t('admin.ai.configuration-versions.day2Auto.text17')}
-            {selected.version}
+            {t('admin.ai.configuration-versions.details.title', { version: selected.version })}
           </h3>
           {detailsState === 'loading' && (
-            <p role="status">{t('admin.ai.configuration-versions.day2Auto.text18')}</p>
+            <p role="status">{t('admin.ai.configuration-versions.details.loading')}</p>
           )}
           {detailsState === 'error' ? (
             <div
@@ -303,23 +306,28 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
                 onClick={() => void showDetails(selected)}
                 className="mt-2 rounded border border-c-border px-3 py-2"
               >
-                {t('admin.ai.configuration-versions.day2Auto.text10')}
+                {t('admin.ai.configuration-versions.actions.retry')}
               </button>
             </div>
           ) : (
             detailsState === 'ready' && (
               <>
                 <p className="mt-2 text-sm">
-                  Bramki:{' '}
-                  {gates.length
-                    ? gates.map((gate) => `${gate.gateType}: ${gate.result}`).join(', ')
-                    : t('admin.ai.configuration-versions.day2Auto.text19')}
+                  {t('admin.ai.configuration-versions.details.evalGates', {
+                    value: gates.length
+                      ? gates.map((gate) => `${gate.gateType}: ${gate.result}`).join(', ')
+                      : t('admin.ai.configuration-versions.details.noGateResults'),
+                  })}
                 </p>
                 <p className="text-sm">
-                  Canary:{' '}
                   {canary
-                    ? `rollback ${canary.rollbackEnabled ? t('admin.ai.configuration-versions.day2Auto.text20') : t('admin.ai.configuration-versions.day2Auto.text21')}, org scope ${canary.orgScoped ? 'tak' : t('admin.ai.configuration-versions.day2Auto.text22')}`
-                    : t('admin.ai.configuration-versions.day2Auto.text23')}
+                    ? t('admin.ai.configuration-versions.details.canary', {
+                        rollback: canary.rollbackEnabled
+                          ? t('common.enabled')
+                          : t('common.disabled'),
+                        orgScoped: canary.orgScoped ? t('common.yes') : t('common.no'),
+                      })
+                    : t('admin.ai.configuration-versions.details.noCanary')}
                 </p>
               </>
             )
@@ -328,9 +336,9 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
       )}
       {rollbackTarget && !confirmOpen && (
         <label className="block rounded-xl border border-c-danger p-4">
-          {t('admin.ai.configuration-versions.day2Auto.text24')}
+          {t('admin.ai.configuration-versions.rollback.reasonLabel')}
           <textarea
-            aria-label={t('admin.ai.configuration-versions.day2Auto.text25')}
+            aria-label={t('admin.ai.configuration-versions.rollback.reasonAria')}
             value={reason}
             onChange={(event) => setReason(event.target.value)}
             className="mt-2 block w-full rounded border border-c-border bg-c-surface p-2"
@@ -340,7 +348,7 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
             onClick={() => setConfirmOpen(true)}
             className="mt-2 rounded bg-c-danger px-3 py-2 text-white disabled:opacity-50"
           >
-            {t('admin.ai.configuration-versions.day2Auto.text26')}
+            {t('admin.ai.configuration-versions.rollback.continue')}
           </button>
         </label>
       )}
@@ -352,11 +360,11 @@ export const AdminConfigurationVersionsPanel: React.FC = () => {
           setReason('');
         }}
         onConfirm={() => rollbackTarget && void mutate('rollback', rollbackTarget)}
-        title={t('admin.ai.configuration-versions.day2Auto.text27')}
-        description={t('admin.ai.configuration-versions.day2Auto.text28', {
-          v0: reason,
+        title={t('admin.ai.configuration-versions.rollback.confirmTitle')}
+        description={t('admin.ai.configuration-versions.rollback.confirmDescription', {
+          reason,
         })}
-        confirmLabel={t('admin.ai.configuration-versions.day2Auto.text14')}
+        confirmLabel={t('admin.ai.configuration-versions.actions.rollback')}
         variant="danger"
       />
     </div>

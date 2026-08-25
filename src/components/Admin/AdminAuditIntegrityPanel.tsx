@@ -1,7 +1,8 @@
 import { ShieldCheck } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { Api } from '../../services/api';
 import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
 export const AdminAuditIntegrityPanel: React.FC = () => {
   const { t } = useTranslation();
   const [stats, setStats] = useState<any>(null),
@@ -16,10 +17,8 @@ export const AdminAuditIntegrityPanel: React.FC = () => {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-semibold text-c-text">
-          {t('admin.audit.integrity.day2Auto.text1')}
-        </h2>
-        <p className="text-sm text-c-text-secondary">{t('admin.audit.integrity.day2Auto.text2')}</p>
+        <h2 className="text-lg font-semibold text-c-text">{t('admin.audit.integrity.title')}</h2>
+        <p className="text-sm text-c-text-secondary">{t('admin.audit.integrity.description')}</p>
       </div>
       {error && (
         <div
@@ -31,22 +30,22 @@ export const AdminAuditIntegrityPanel: React.FC = () => {
       )}
       {loading ? (
         <div role="status" className="py-8 text-center text-sm text-c-text-muted">
-          {t('admin.audit.integrity.day2Auto.text3')}
+          {t('admin.audit.integrity.loading')}
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-3">
           <div className="rounded-xl border border-c-border p-4">
-            {t('admin.audit.integrity.day2Auto.text4', {
+            {t('admin.audit.integrity.metrics.totalEvents', {
               value: stats?.totalLogs ?? '—',
             })}
           </div>
           <div className="rounded-xl border border-c-border p-4">
-            {t('admin.audit.integrity.day2Auto.text5', {
+            {t('admin.audit.integrity.metrics.unresolved', {
               value: stats?.unresolvedCount ?? '—',
             })}
           </div>
           <div className="rounded-xl border border-c-border p-4">
-            {t('admin.audit.integrity.day2Auto.text6', {
+            {t('admin.audit.integrity.metrics.highRisk', {
               value: stats?.highRiskCount ?? '—',
             })}
           </div>
@@ -55,16 +54,20 @@ export const AdminAuditIntegrityPanel: React.FC = () => {
       <section className="rounded-xl border border-c-border p-5">
         <div className="flex items-center gap-2">
           <ShieldCheck className="h-5 w-5" />
-          <h3 className="font-semibold text-c-text">{t('admin.audit.integrity.day2Auto.text7')}</h3>
+          <h3 className="font-semibold text-c-text">
+            {t('admin.audit.integrity.accessControl.title')}
+          </h3>
         </div>
         <p className="mt-2 text-sm text-c-text-secondary">
-          {t('admin.audit.integrity.day2Auto.text8')}
+          {t('admin.audit.integrity.accessControl.description')}
         </p>
       </section>
       <section className="rounded-xl border border-c-border p-5">
-        <h3 className="font-semibold text-c-text">{t('admin.audit.integrity.day2Auto.text10')}</h3>
+        <h3 className="font-semibold text-c-text">
+          {t('admin.audit.integrity.cryptographicVerification.title')}
+        </h3>
         <p className="mt-2 text-sm text-c-text-secondary">
-          {t('admin.audit.integrity.day2Auto.text9')}
+          {t('admin.audit.integrity.cryptographicVerification.description')}
         </p>
       </section>
     </div>

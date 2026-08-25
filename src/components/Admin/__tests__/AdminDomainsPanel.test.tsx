@@ -62,7 +62,7 @@ describe('AdminDomainsPanel', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Zweryfikuj' }));
     await waitFor(() => expect(get).toHaveBeenCalledTimes(2));
     expect(screen.getByRole('status')).toHaveTextContent(
-      'Nie znaleziono rekordu TXT. Zmiany w DNS mogą propagować się do 24 h.'
+      'Nie znaleziono rekordu TXT. Zmiany w DNS mogą propagować się do 24 godzin.'
     );
   });
 });

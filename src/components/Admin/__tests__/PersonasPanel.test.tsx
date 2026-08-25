@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
+
 import { Api } from '../../../services/api';
 import { PersonasPanel } from '../AI/PersonasPanel';
 vi.mock('../../../services/api', () => ({
@@ -14,8 +15,8 @@ describe('PersonasPanel', () => {
     vi.mocked(Api.aiUpdateSystemPrompt).mockResolvedValue(undefined);
     render(<PersonasPanel />);
     fireEvent.click(await screen.findByText('advisor'));
-    fireEvent.change(screen.getByLabelText('Persona description'), { target: { value: 'New' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Save Persona' }));
+    fireEvent.change(screen.getByLabelText('Opis persony'), { target: { value: 'New' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Zapisz personę' }));
     expect(Api.aiUpdateSystemPrompt).toHaveBeenCalledWith(
       'advisor',
       expect.objectContaining({ description: 'New' })
@@ -26,7 +27,7 @@ describe('PersonasPanel', () => {
   it('renders an honest empty state when there are no personas', async () => {
     vi.mocked(Api.aiGetSystemPrompts).mockResolvedValue([]);
     render(<PersonasPanel />);
-    expect(await screen.findByText('No personas configured.')).toBeInTheDocument();
+    expect(await screen.findByText('Nie skonfigurowano żadnych person.')).toBeInTheDocument();
   });
 
   it('renders an API error', async () => {

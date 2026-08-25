@@ -1,11 +1,12 @@
 import { FileDown } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import {
-  getAuditExportHistory,
   type AuditExportReceipt,
+  getAuditExportHistory,
 } from '../../services/adminAuditExportHistoryApi';
 import { StandardTable, type TableColumn, type TableRow } from '../standard/StandardTable';
-import { useTranslation } from 'react-i18next';
 export const AdminAuditExportHistoryPanel: React.FC = () => {
   const { t } = useTranslation();
   const [data, setData] = useState<AuditExportReceipt[]>([]),
@@ -21,26 +22,26 @@ export const AdminAuditExportHistoryPanel: React.FC = () => {
       () => [
         {
           id: 'time',
-          label: 'Kiedy',
+          label: t('admin.audit.export-history.columns.time'),
         },
         {
           id: 'who',
-          label: 'Kto',
+          label: t('admin.audit.export-history.columns.requestedBy'),
         },
         {
           id: 'kind',
-          label: t('admin.audit.export-history.day2Auto.text1'),
+          label: t('admin.audit.export-history.columns.exportKind'),
         },
         {
           id: 'rows',
-          label: 'Wiersze',
+          label: t('admin.audit.export-history.columns.rows'),
         },
         {
           id: 'format',
-          label: 'Format',
+          label: t('admin.audit.export-history.columns.format'),
         },
       ],
-      []
+      [t]
     ),
     rows = useMemo<TableRow[]>(
       () =>
@@ -58,10 +59,10 @@ export const AdminAuditExportHistoryPanel: React.FC = () => {
     <div className="space-y-4">
       <div>
         <h2 className="text-lg font-semibold text-c-text">
-          {t('admin.audit.export-history.day2Auto.text2')}
+          {t('admin.audit.export-history.title')}
         </h2>
         <p className="text-sm text-c-text-secondary">
-          {t('admin.audit.export-history.day2Auto.text3')}
+          {t('admin.audit.export-history.description')}
         </p>
       </div>
       {error && (
@@ -78,8 +79,8 @@ export const AdminAuditExportHistoryPanel: React.FC = () => {
         loading={loading}
         empty={{
           icon: FileDown,
-          title: t('admin.audit.export-history.day2Auto.text4'),
-          description: t('admin.audit.export-history.day2Auto.text5'),
+          title: t('admin.audit.export-history.empty.title'),
+          description: t('admin.audit.export-history.empty.description'),
         }}
         persistKey="admin.auditExports"
       />

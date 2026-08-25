@@ -1,7 +1,8 @@
 import { Scale } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { getLegalHold, type LegalHoldState } from '../../services/adminLegalHoldApi';
 import { useTranslation } from 'react-i18next';
+
+import { getLegalHold, type LegalHoldState } from '../../services/adminLegalHoldApi';
 export const AdminLegalHoldPanel: React.FC = () => {
   const { t } = useTranslation();
   const [data, setData] = useState<LegalHoldState | null>(null),
@@ -16,10 +17,8 @@ export const AdminLegalHoldPanel: React.FC = () => {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-semibold text-c-text">Legal hold</h2>
-        <p className="text-sm text-c-text-secondary">
-          {t('admin.audit.legal-hold.day2Auto.text1')}
-        </p>
+        <h2 className="text-lg font-semibold text-c-text">{t('admin.audit.legal-hold.title')}</h2>
+        <p className="text-sm text-c-text-secondary">{t('admin.audit.legal-hold.description')}</p>
       </div>
       {error && (
         <div
@@ -31,7 +30,7 @@ export const AdminLegalHoldPanel: React.FC = () => {
       )}
       {loading ? (
         <div role="status" className="py-8 text-center text-sm text-c-text-muted">
-          {t('admin.audit.legal-hold.day2Auto.text2')}
+          {t('admin.audit.legal-hold.loading')}
         </div>
       ) : (
         <section className="rounded-xl border border-c-border p-5">
@@ -39,19 +38,19 @@ export const AdminLegalHoldPanel: React.FC = () => {
             <Scale className="h-5 w-5" />
             <strong>
               {data?.legalHoldEnabled
-                ? t('admin.audit.legal-hold.day2Auto.text3')
-                : 'Wstrzymanie nieaktywne'}
+                ? t('admin.audit.legal-hold.status.active')
+                : t('admin.audit.legal-hold.status.inactive')}
             </strong>
           </div>
           <p className="mt-2 text-sm text-c-text-secondary">
-            {t('admin.audit.legal-hold.day2Auto.text4')}
+            {t('admin.audit.legal-hold.blockedOperations')}
           </p>
         </section>
       )}
       <section className="rounded-xl border border-c-border p-5">
-        <h3 className="font-semibold text-c-text">{t('admin.audit.legal-hold.day2Auto.text5')}</h3>
+        <h3 className="font-semibold text-c-text">{t('admin.audit.legal-hold.matters.title')}</h3>
         <p className="mt-2 text-sm text-c-text-secondary">
-          {t('admin.audit.legal-hold.day2Auto.text6')}
+          {t('admin.audit.legal-hold.matters.description')}
         </p>
       </section>
     </div>

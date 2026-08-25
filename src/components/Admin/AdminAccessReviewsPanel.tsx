@@ -1,13 +1,14 @@
 import { CalendarCheck, Users } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
+
 import {
-  getAccessReviewData,
   type AccessReviewPolicy,
+  getAccessReviewData,
   type PrivilegedMember,
 } from '../../services/adminAccessReviewsApi';
 import { StandardTable, type TableColumn, type TableRow } from '../standard/StandardTable';
-import { useTranslation } from 'react-i18next';
 export const AdminAccessReviewsPanel: React.FC = () => {
   const { t } = useTranslation();
   const [policy, setPolicy] = useState<AccessReviewPolicy | null>(null),
@@ -32,19 +33,19 @@ export const AdminAccessReviewsPanel: React.FC = () => {
       () => [
         {
           id: 'person',
-          label: t('admin.team.access-reviews.day2Auto.text1'),
+          label: t('admin.team.access-reviews.columns.person'),
         },
         {
           id: 'email',
-          label: 'E-mail',
+          label: t('admin.team.access-reviews.columns.email'),
         },
         {
-          id: t('admin.team.access-reviews.day2Auto.text2'),
-          label: t('admin.team.access-reviews.day2Auto.text3'),
+          id: 'role',
+          label: t('admin.team.access-reviews.columns.role'),
         },
         {
-          id: t('admin.team.access-reviews.day2Auto.text4'),
-          label: t('admin.team.access-reviews.day2Auto.text5'),
+          id: 'status',
+          label: t('admin.team.access-reviews.columns.status'),
         },
       ],
       []
@@ -64,10 +65,10 @@ export const AdminAccessReviewsPanel: React.FC = () => {
     <div className="space-y-4">
       <div>
         <h2 className="text-lg font-semibold text-c-text">
-          {t('admin.team.access-reviews.day2Auto.text6')}
+          {t('admin.team.access-reviews.title')}
         </h2>
         <p className="text-sm text-c-text-secondary">
-          Odczyt konfiguracji i kont uprzywilejowanych; edycja pozostaje w polityce IAM.
+          {t('admin.team.access-reviews.description')}
         </p>
       </div>
       {error && (
@@ -80,29 +81,28 @@ export const AdminAccessReviewsPanel: React.FC = () => {
       )}
       {loading ? (
         <div role="status" className="py-8 text-center text-sm text-c-text-muted">
-          {t('admin.team.access-reviews.day2Auto.text7')}
+          {t('admin.team.access-reviews.loading')}
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-3">
           <div className="rounded-xl border border-c-border p-4">
-            {t('admin.team.access-reviews.day2Auto.text16')}{' '}
+            {t('admin.team.access-reviews.policy.statusLabel')}{' '}
             {policy?.accessReviewsEnabled
-              ? t('admin.team.access-reviews.day2Auto.text8')
-              : t('admin.team.access-reviews.day2Auto.text9')}
+              ? t('admin.team.access-reviews.policy.enabled')
+              : t('admin.team.access-reviews.policy.disabled')}
           </div>
           <div className="rounded-xl border border-c-border p-4">
-            {t('admin.team.access-reviews.day2Auto.text19', {
+            {t('admin.team.access-reviews.policy.cadenceDays', {
               value: policy?.accessReviewCadenceDays ?? '—',
             })}
           </div>
           <div className="rounded-xl border border-c-border p-4">
-            {t('admin.team.access-reviews.day2Auto.text10')}
-            {next}
+            {t('admin.team.access-reviews.nextReview', { date: next })}
           </div>
         </div>
       )}
       <Link to="/admin/team/roles-permissions" className="text-sm text-c-text underline">
-        {t('admin.team.access-reviews.day2Auto.text11')}
+        {t('admin.team.access-reviews.actions.openIamPolicy')}
       </Link>
       <StandardTable
         columns={cols}
@@ -110,17 +110,17 @@ export const AdminAccessReviewsPanel: React.FC = () => {
         loading={loading}
         empty={{
           icon: Users,
-          title: t('admin.team.access-reviews.day2Auto.text12'),
-          description: t('admin.team.access-reviews.day2Auto.text13'),
+          title: t('admin.team.access-reviews.privileged.emptyTitle'),
+          description: t('admin.team.access-reviews.privileged.emptyDescription'),
         }}
         persistKey="admin.accessReviews"
       />
       <section className="rounded-xl border border-c-border p-4">
         <h3 className="font-semibold text-c-text">
-          {t('admin.team.access-reviews.day2Auto.text14')}
+          {t('admin.team.access-reviews.history.title')}
         </h3>
         <p className="mt-1 text-sm text-c-text-secondary">
-          {t('admin.team.access-reviews.day2Auto.text15')}
+          {t('admin.team.access-reviews.history.empty')}
         </p>
       </section>
     </div>

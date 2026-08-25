@@ -1,15 +1,16 @@
 import { ShieldAlert } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import {
+  type BreakGlassData,
+  type BreakGlassSession,
   createBreakGlass,
   getBreakGlass,
   revokeBreakGlass,
-  type BreakGlassData,
-  type BreakGlassSession,
 } from '../../services/adminBreakGlassApi';
 import { ConfirmDialog } from '../MyWork/shared/ConfirmDialog';
 import { StandardTable, type TableColumn, type TableRow } from '../standard/StandardTable';
-import { useTranslation } from 'react-i18next';
 const EMPTY: BreakGlassData = {
   sessions: [],
   policy: {
@@ -32,9 +33,9 @@ export const AdminBreakGlassPanel: React.FC = () => {
       setData(await getBreakGlass());
       setError(null);
     } catch (e) {
-      setError(e instanceof Error ? e.message : t('admin.security.break-glass.day2Auto.text1'));
+      setError(e instanceof Error ? e.message : t('admin.security.break-glass.errors.load'));
     }
-  }, []);
+  }, [t]);
   useEffect(() => {
     void load();
   }, [load]);
@@ -42,22 +43,22 @@ export const AdminBreakGlassPanel: React.FC = () => {
       () => [
         {
           id: 'admin',
-          label: 'Administrator',
+          label: t('admin.security.break-glass.columns.administrator'),
         },
         {
           id: 'reason',
-          label: t('admin.security.break-glass.day2Auto.text2'),
+          label: t('admin.security.break-glass.columns.reason'),
         },
         {
           id: 'approver',
-          label: t('admin.security.break-glass.day2Auto.text3'),
+          label: t('admin.security.break-glass.columns.approvedBy'),
         },
         {
           id: 'expires',
-          label: t('admin.security.break-glass.day2Auto.text4'),
+          label: t('admin.security.break-glass.columns.expiresAt'),
         },
       ],
-      []
+      [t]
     ),
     rows = useMemo<TableRow[]>(
       () =>
@@ -77,7 +78,7 @@ export const AdminBreakGlassPanel: React.FC = () => {
       setReason('');
       setTyped('');
     } catch (e) {
-      setError(e instanceof Error ? e.message : t('admin.security.break-glass.day2Auto.text5'));
+      setError(e instanceof Error ? e.message : t('admin.security.break-glass.errors.activate'));
     }
   };
   const doRevoke = async () => {
@@ -86,44 +87,46 @@ export const AdminBreakGlassPanel: React.FC = () => {
       setData(await revokeBreakGlass(revoke.id));
       setRevoke(null);
     } catch (e) {
-      setError(e instanceof Error ? e.message : t('admin.security.break-glass.day2Auto.text6'));
+      setError(e instanceof Error ? e.message : t('admin.security.break-glass.errors.revoke'));
     }
   };
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-semibold text-c-text">Break-glass</h2>
+        <h2 className="text-lg font-semibold text-c-text">
+          {t('admin.security.break-glass.title')}
+        </h2>
         <p className="text-sm text-c-text-secondary">
-          {t('admin.security.break-glass.day2Auto.text7')}
+          {t('admin.security.break-glass.description')}
         </p>
       </div>
       {error && <div role="alert">{error}</div>}
       <div className="rounded-xl border border-c-border p-4">
         {data.sessions.length
-          ? t('admin.security.break-glass.day2Auto.text8', {
-              v0: data.sessions.length,
+          ? t('admin.security.break-glass.activeSessions', {
+              count: data.sessions.length,
             })
-          : t('admin.security.break-glass.day2Auto.text9')}
+          : t('admin.security.break-glass.noActiveSessions')}
       </div>
       <section className="space-y-3 rounded-xl border border-c-border p-4">
         <label className="block text-sm">
-          {t('admin.security.break-glass.day2Auto.text10')}
+          {t('admin.security.break-glass.fields.reasonLabel')}
           <textarea
-            aria-label={t('admin.security.break-glass.day2Auto.text11')}
+            aria-label={t('admin.security.break-glass.fields.reasonAriaLabel')}
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             className="mt-1 block w-full rounded border border-c-border bg-c-surface p-2"
           />
         </label>
         <label className="block text-sm">
-          {t('admin.security.break-glass.day2Auto.text12')}
+          {t('admin.security.break-glass.fields.approver')}
           <select
-            aria-label={t('admin.security.break-glass.day2Auto.text12')}
+            aria-label={t('admin.security.break-glass.fields.approver')}
             value={approver}
             onChange={(e) => setApprover(e.target.value)}
             className="ml-2 rounded border border-c-border bg-c-surface p-2"
           >
-            <option value="">Wybierz</option>
+            <option value="">{t('admin.security.break-glass.fields.selectApprover')}</option>
             {data.approvers.map((a) => (
               <option key={a.id} value={a.id}>
                 {[a.first_name, a.last_name].filter(Boolean).join(' ') || a.email}
@@ -132,9 +135,9 @@ export const AdminBreakGlassPanel: React.FC = () => {
           </select>
         </label>
         <label className="block text-sm">
-          Wpisz BREAK-GLASS
+          {t('admin.security.break-glass.fields.typedConfirmationLabel')}
           <input
-            aria-label="Potwierdzenie celu"
+            aria-label={t('admin.security.break-glass.fields.typedConfirmationAriaLabel')}
             value={typed}
             onChange={(e) => setTyped(e.target.value)}
             className="ml-2 rounded border border-c-border bg-c-surface p-2"
@@ -150,11 +153,11 @@ export const AdminBreakGlassPanel: React.FC = () => {
           onClick={() => setActivate(true)}
           className="rounded bg-c-danger px-3 py-2 text-sm text-white disabled:opacity-50"
         >
-          Aktywuj na 1h
+          {t('admin.security.break-glass.actions.activate')}
         </button>
         {!data.policy.breakGlassEnabled && (
           <p className="text-sm text-c-text-secondary">
-            {t('admin.security.break-glass.day2Auto.text13')}
+            {t('admin.security.break-glass.policyDisabled')}
           </p>
         )}
       </section>
@@ -163,15 +166,15 @@ export const AdminBreakGlassPanel: React.FC = () => {
         data={rows}
         rowMenu={(row) => ({
           destructive: {
-            label: t('admin.security.break-glass.day2Auto.text14'),
+            label: t('admin.security.break-glass.actions.expire'),
             icon: ShieldAlert,
             onClick: () => setRevoke(data.sessions.find((s) => s.id === row.id) || null),
           },
         })}
         empty={{
           icon: ShieldAlert,
-          title: t('admin.security.break-glass.day2Auto.text15'),
-          description: t('admin.security.break-glass.day2Auto.text16'),
+          title: t('admin.security.break-glass.empty.title'),
+          description: t('admin.security.break-glass.empty.description'),
         }}
         persistKey="admin.breakGlass"
       />
@@ -179,20 +182,20 @@ export const AdminBreakGlassPanel: React.FC = () => {
         isOpen={activate}
         onCancel={() => setActivate(false)}
         onConfirm={() => void doActivate()}
-        title={t('admin.security.break-glass.day2Auto.text17')}
-        description={t('admin.security.break-glass.day2Auto.text18', {
-          v0: approver,
+        title={t('admin.security.break-glass.confirmActivate.title')}
+        description={t('admin.security.break-glass.confirmActivate.description', {
+          approver,
         })}
-        confirmLabel="Aktywuj break-glass"
+        confirmLabel={t('admin.security.break-glass.confirmActivate.confirm')}
         variant="danger"
       />
       <ConfirmDialog
         isOpen={!!revoke}
         onCancel={() => setRevoke(null)}
         onConfirm={() => void doRevoke()}
-        title={t('admin.security.break-glass.day2Auto.text19')}
-        description={t('admin.security.break-glass.day2Auto.text20')}
-        confirmLabel={t('admin.security.break-glass.day2Auto.text14')}
+        title={t('admin.security.break-glass.confirmExpire.title')}
+        description={t('admin.security.break-glass.confirmExpire.description')}
+        confirmLabel={t('admin.security.break-glass.actions.expire')}
         variant="danger"
       />
     </div>

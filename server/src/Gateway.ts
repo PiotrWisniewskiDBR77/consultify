@@ -1,8 +1,8 @@
 import type { Express, RequestHandler } from 'express';
 
 import apiLoggingMiddleware from './middleware/apiLogging.middleware.js';
-import verifyToken, { validateOrgMembership } from './middleware/auth.middleware.js';
 import { requireActiveAuditsMembership } from './middleware/auditsStrictMembership.middleware.js';
+import verifyToken, { validateOrgMembership } from './middleware/auth.middleware.js';
 import { betaGate, createBetaGate } from './middleware/betaGate.middleware.js';
 import { demoContextMiddleware, demoWriteProtection } from './middleware/demoGuard.middleware.js';
 import { deprecationHeader } from './middleware/deprecationHeader.middleware.js';
@@ -19,20 +19,20 @@ import accessControlRoutes from './routes/access-control.routes.js';
 import accessCodeRoutes from './routes/accessCodes.routes.js';
 import aiObservabilityAdminRoutes from './routes/admin/ai-observability.routes.js';
 import adminAIQualityRoutes from './routes/admin/ai-quality.routes.js';
+import auditExportHistoryAdminRoutes from './routes/admin/audit-export-history.routes.js';
 import adminBackupRoutes from './routes/admin/backup.routes.js';
-import enterpriseComplianceAdminRoutes from './routes/admin/enterprise-compliance.routes.js';
 import billingHistoryAdminRoutes from './routes/admin/billing-history.routes.js';
+import breakGlassAdminRoutes from './routes/admin/break-glass.routes.js';
+import adminDomainsRoutes from './routes/admin/domains.routes.js';
+import enterpriseComplianceAdminRoutes from './routes/admin/enterprise-compliance.routes.js';
+import guestsAdminRoutes from './routes/admin/guests.routes.js';
+import healthPanelAdminRoutes from './routes/admin/health-panel.routes.js';
+import legalHoldAdminRoutes from './routes/admin/legal-hold.routes.js';
+import organizationProfileAdminRoutes from './routes/admin/organization-profile.routes.js';
 import seatsAdminRoutes from './routes/admin/seats.routes.js';
 import securityAlertsAdminRoutes from './routes/admin/security-alerts.routes.js';
-import sessionsAdminRoutes from './routes/admin/sessions.routes.js';
-import breakGlassAdminRoutes from './routes/admin/break-glass.routes.js';
-import guestsAdminRoutes from './routes/admin/guests.routes.js';
-import legalHoldAdminRoutes from './routes/admin/legal-hold.routes.js';
-import auditExportHistoryAdminRoutes from './routes/admin/audit-export-history.routes.js';
 import serviceAccountsAdminRoutes from './routes/admin/service-accounts.routes.js';
-import adminDomainsRoutes from './routes/admin/domains.routes.js';
-import organizationProfileAdminRoutes from './routes/admin/organization-profile.routes.js';
-import healthPanelAdminRoutes from './routes/admin/health-panel.routes.js';
+import sessionsAdminRoutes from './routes/admin/sessions.routes.js';
 import adminBulkRoutes from './routes/admin-bulk.routes.js';
 import adminDataRoutes from './routes/admin-data.routes.js';
 import adminPromptsRoutes from './routes/admin-prompts.routes.js';
@@ -81,8 +81,8 @@ import assessmentEvidenceRoutes from './routes/assessmentEvidence.routes.js';
 import auditRoutes from './routes/audit.routes.js';
 import auditEventsRoutes from './routes/audit-events.routes.js';
 import auditProgramsRouter from './routes/audit-programs.routes.js';
-import auditsMethodRouter from './routes/audits/index.js';
 import auditLogRoutes from './routes/auditLog.routes.js';
+import auditsMethodRouter from './routes/audits/index.js';
 // Route Imports
 import authRoutes from './routes/auth.routes.js';
 import backupRoutes from './routes/backup.routes.js';
@@ -100,6 +100,7 @@ import budgetRoutes from './routes/budget.routes.js';
 import budgetsRoutes from './routes/budgets.routes.js';
 import capabilityRoutes from './routes/capability.routes.js';
 import capabilityEffectiveRoutes from './routes/capabilityEffective.routes.js';
+import caseWorkspaceEventInboxRoutes from './routes/caseWorkspace/eventInbox.routes.js';
 import changeSentimentRoutes from './routes/change-sentiment.routes.js';
 import chatProjectsRoutes from './routes/chat-projects.routes.js';
 import clientErrorRoutes from './routes/client-errors.routes.js';
@@ -291,12 +292,16 @@ import resultsVnextKpiRoutes from './routes/resultsVnext/kpi.routes.js';
 // `/api/vnext/results/kpi` prefix, which would otherwise shadow this
 // router's `GET /` for the literal path segment "deviation-cases").
 import resultsVnextKpiDeviationRoutes from './routes/resultsVnext/kpiDeviation.routes.js';
-import resultsVnextKpiRecoveryChildrenRoutes from './routes/resultsVnext/kpiRecoveryChildren.routes.js';
-// KPI-E004 Scorecards — same MORE-SPECIFIC-prefix-registered-first rule as
-// resultsVnextKpiDeviationRoutes above (see kpiScorecard.routes.ts's own
-// "MOUNT-ORDER NOTE": resultsVnextKpiRoutes' `GET /:kpiId` would otherwise
-// shadow this router's `GET /` for the literal path segment "scorecards").
-import resultsVnextKpiScorecardRoutes from './routes/resultsVnext/kpiScorecard.routes.js';
+// KPI-E007 Legacy Archive / Ops Exclusion — mounted at the MORE SPECIFIC
+// `/api/vnext/results/kpi/legacy` prefix, registered BEFORE the generic
+// `/api/vnext/results/kpi` mount below for consistency with every other
+// sub-router in this domain (same "more-specific-prefix-first" rule as
+// resultsVnextKpiDeviationRoutes/resultsVnextKpiScorecardRoutes above — see
+// KPI_E007_DESIGN.md §8). `/legacy` is a literal path segment, not a param,
+// so Express would match it correctly regardless of order in this specific
+// case, but mounting order-independent behaviour is not a reason to skip
+// the repo's established convention.
+import resultsVnextKpiLegacyArchiveRoutes from './routes/resultsVnext/kpiLegacyArchive.routes.js';
 // KPI-E005 Perspectives & Links — `router` (default export) owns
 // `/my`/`/attention`/`/initiative-impacts/*`/`/:kpiId/initiative-impacts` as
 // DIRECT children of the SAME generic `/api/vnext/results/kpi` prefix
@@ -310,37 +315,12 @@ import resultsVnextKpiScorecardRoutes from './routes/resultsVnext/kpiScorecard.r
 import resultsVnextKpiPerspectivesRoutes, {
   initiativesKpiImpactsRouter as resultsVnextInitiativesKpiImpactsRoutes,
 } from './routes/resultsVnext/kpiPerspectives.routes.js';
-// KPI-E007 Legacy Archive / Ops Exclusion — mounted at the MORE SPECIFIC
-// `/api/vnext/results/kpi/legacy` prefix, registered BEFORE the generic
-// `/api/vnext/results/kpi` mount below for consistency with every other
-// sub-router in this domain (same "more-specific-prefix-first" rule as
-// resultsVnextKpiDeviationRoutes/resultsVnextKpiScorecardRoutes above — see
-// KPI_E007_DESIGN.md §8). `/legacy` is a literal path segment, not a param,
-// so Express would match it correctly regardless of order in this specific
-// case, but mounting order-independent behaviour is not a reason to skip
-// the repo's established convention.
-import resultsVnextKpiLegacyArchiveRoutes from './routes/resultsVnext/kpiLegacyArchive.routes.js';
-// ROI-E001 Case & Baseline — first ROI vNext router, own prefix
-// `/api/vnext/results/roi` (no ordering interaction with the KPI mounts
-// above — separate path namespace entirely). See roi.routes.ts's own
-// "MOUNT-ORDER NOTE" for the rule the NEXT ROI router must follow.
-import resultsVnextRoiRoutes from './routes/resultsVnext/roi.routes.js';
-// ROI-E005 Benefits Realization — Organization perspective. SAME prefix as
-// resultsVnextRoiRoutes (`/api/vnext/results/roi`), owning `/org/
-// benefits-realization` as a direct child of it. Verified (roiPerspectives
-// .routes.ts's own header): roi.routes.ts owns zero bare top-level dynamic
-// segments (every one of its routes starts with the literal `/cases`
-// segment), so `/org/...` cannot collide with it regardless of registration
-// order — mounted before resultsVnextRoiRoutes anyway, for consistency with
-// the KPI-E005 precedent's ordering convention above, not because
-// correctness depends on it here.
-import resultsVnextRoiPerspectivesRoutes from './routes/resultsVnext/roiPerspectives.routes.js';
-// ROI-E008 Legacy Archive / Ops Exclusion — mounted at the MORE SPECIFIC
-// `/api/vnext/results/roi/legacy` prefix, registered BEFORE the generic
-// `/api/vnext/results/roi` mounts below, same "more-specific-prefix-first"
-// convention as resultsVnextKpiLegacyArchiveRoutes above (see
-// ROI_E008_DESIGN.md §3/B1 and roiLegacyArchive.routes.ts's own header).
-import resultsVnextRoiLegacyArchiveRoutes from './routes/resultsVnext/roiLegacyArchive.routes.js';
+import resultsVnextKpiRecoveryChildrenRoutes from './routes/resultsVnext/kpiRecoveryChildren.routes.js';
+// KPI-E004 Scorecards — same MORE-SPECIFIC-prefix-registered-first rule as
+// resultsVnextKpiDeviationRoutes above (see kpiScorecard.routes.ts's own
+// "MOUNT-ORDER NOTE": resultsVnextKpiRoutes' `GET /:kpiId` would otherwise
+// shadow this router's `GET /` for the literal path segment "scorecards").
+import resultsVnextKpiScorecardRoutes from './routes/resultsVnext/kpiScorecard.routes.js';
 // OKR-E001 Program & Cycle — first OKR vNext router, own prefix
 // `/api/vnext/results/okr` (no ordering interaction with the KPI/ROI mounts
 // above — separate path namespace entirely). See okr.routes.ts's own
@@ -354,6 +334,27 @@ import resultsVnextOkrRoutes from './routes/resultsVnext/okr.routes.js';
 // resultsVnextRoiLegacyArchiveRoutes above (see OKR_E008_DESIGN.md §5.7 and
 // okrLegacyArchive.routes.ts's own header).
 import resultsVnextOkrLegacyArchiveRoutes from './routes/resultsVnext/okrLegacyArchive.routes.js';
+// ROI-E001 Case & Baseline — first ROI vNext router, own prefix
+// `/api/vnext/results/roi` (no ordering interaction with the KPI mounts
+// above — separate path namespace entirely). See roi.routes.ts's own
+// "MOUNT-ORDER NOTE" for the rule the NEXT ROI router must follow.
+import resultsVnextRoiRoutes from './routes/resultsVnext/roi.routes.js';
+// ROI-E008 Legacy Archive / Ops Exclusion — mounted at the MORE SPECIFIC
+// `/api/vnext/results/roi/legacy` prefix, registered BEFORE the generic
+// `/api/vnext/results/roi` mounts below, same "more-specific-prefix-first"
+// convention as resultsVnextKpiLegacyArchiveRoutes above (see
+// ROI_E008_DESIGN.md §3/B1 and roiLegacyArchive.routes.ts's own header).
+import resultsVnextRoiLegacyArchiveRoutes from './routes/resultsVnext/roiLegacyArchive.routes.js';
+// ROI-E005 Benefits Realization — Organization perspective. SAME prefix as
+// resultsVnextRoiRoutes (`/api/vnext/results/roi`), owning `/org/
+// benefits-realization` as a direct child of it. Verified (roiPerspectives
+// .routes.ts's own header): roi.routes.ts owns zero bare top-level dynamic
+// segments (every one of its routes starts with the literal `/cases`
+// segment), so `/org/...` cannot collide with it regardless of registration
+// order — mounted before resultsVnextRoiRoutes anyway, for consistency with
+// the KPI-E005 precedent's ordering convention above, not because
+// correctness depends on it here.
+import resultsVnextRoiPerspectivesRoutes from './routes/resultsVnext/roiPerspectives.routes.js';
 import revenueRoutes from './routes/revenue.routes.js';
 import rolloutRoutes from './routes/rollout.routes.js';
 // M14 wiring — service route surfaces (mounted below)
@@ -391,8 +392,8 @@ import taskAdvisorRoutes from './routes/task-advisor.routes.js';
 import testSupportRoutes from './routes/testSupport.routes.js';
 import toolEnterpriseRoutes from './routes/tool-enterprise.routes.js';
 import toolAssetsRoutes from './routes/toolAssets.routes.js';
-import toolsRoutes from './routes/tools.routes.js';
 import toolOutputsRoutes from './routes/toolOutputs.routes.js';
+import toolsRoutes from './routes/tools.routes.js';
 import transactionReadinessRoutes from './routes/transactionReadiness.routes.js';
 import trialRoutes from './routes/trial.routes.js';
 import loginHistoryRoutes from './routes/user/loginHistory.routes.js';
@@ -410,8 +411,8 @@ import userGoalsRoutes from './routes/user/userGoals.routes.js';
 import userOrgsRoutes from './routes/user/userOrgs.routes.js';
 import userRoutes from './routes/user/users.routes.js';
 import { managerRouter as v8ExecutionControlManagerRouter } from './routes/v8/execution-control.routes.js';
-import { isStatelessComputeDemoRoute } from './routes/v8/financeValueDemoAllowlist.js';
 import { mountedFinanceStatementRouter } from './routes/v8/financeStatementMountedSurface.js';
+import { isStatelessComputeDemoRoute } from './routes/v8/financeValueDemoAllowlist.js';
 import v8Router from './routes/v8/index.js';
 import { publicKnowledgeBaseRoutes as publicV8KnowledgeBaseRoutes } from './routes/v8/knowledge-base.routes.js';
 import v10TeresaRoutes from './routes/v10/teresa.routes.js';
@@ -426,17 +427,16 @@ import wave9OutcomesRoutes from './routes/wave9-outcomes.routes.js';
 import webauthnRoutes from './routes/webauthn.routes.js';
 import sellixInboundWebhookRoutes from './routes/webhooks/sellix.routes.js';
 import v8SyncInboundWebhookRoutes from './routes/webhooks/v8-sync-inbound.routes.js';
-import caseWorkspaceEventInboxRoutes from './routes/caseWorkspace/eventInbox.routes.js';
 import workCanvasRoutes from './routes/work-canvas.routes.js';
 import workbookRoutes from './routes/workbook.routes.js';
 import workModeRoutes from './routes/workMode.routes.js';
 import workqueueRoutes from './routes/workqueue.routes.js';
 import workspaceDefaultsRoutes from './routes/workspace-defaults.routes.js';
-import { initializeLayoutCapacityPersistence } from './services/presentationStudioLayoutCapacityPersistenceService.js';
 import {
   requireActiveMembership,
   requireFinanceEditorMembership,
 } from './services/legacyCutover/requireActiveMembership.js';
+import { initializeLayoutCapacityPersistence } from './services/presentationStudioLayoutCapacityPersistenceService.js';
 import { getV8Flags } from './services/v8/featureFlagService.js';
 import { asyncHandler } from './utils/asyncHandler.js';
 import logger from './utils/Logger.js';

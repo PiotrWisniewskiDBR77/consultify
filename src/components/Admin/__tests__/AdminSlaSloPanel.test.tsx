@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
+
 import { getAiSlaStatus, getTenantSlos } from '../../../services/adminSlaSloApi';
 import { AdminSlaSloPanel } from '../AdminSlaSloPanel';
 vi.mock('../../../services/adminSlaSloApi', () => ({
@@ -22,7 +23,9 @@ describe('AdminSlaSloPanel', () => {
     vi.mocked(getAiSlaStatus).mockResolvedValue({ status: 'ok' });
     render(<AdminSlaSloPanel />);
     expect(await screen.findByText('Availability')).toBeInTheDocument();
-    expect(screen.getByText(/Targety AI-SLA są dziś stałe/)).toBeInTheDocument();
+    expect(
+      screen.getByText('Cele AI-SLA są obecnie stałe i nie można ich konfigurować na tym ekranie.')
+    ).toBeInTheDocument();
   });
 
   it('renders an honest empty state when no SLOs are defined', async () => {

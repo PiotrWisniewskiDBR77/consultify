@@ -4,8 +4,8 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { ConfirmDialog } from '../../components/MyWork/shared/ConfirmDialog';
 import {
   getPlatformOperationTargets,
-  runPlatformOperation,
   type PlatformTarget,
+  runPlatformOperation,
 } from '../../services/superadminPlatformOperationsApi';
 
 type ActionId = 'suspend' | 'reactivate' | 'purge' | 'lockdown' | 'reset_mfa';

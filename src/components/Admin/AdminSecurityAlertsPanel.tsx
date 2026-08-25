@@ -1,12 +1,13 @@
 import { ShieldAlert } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import {
   getSecurityAlerts,
   resolveSecurityAlert,
   type SecurityAlert,
 } from '../../services/adminSecurityAlertsApi';
 import { StandardTable, type TableColumn, type TableRow } from '../standard/StandardTable';
-import { useTranslation } from 'react-i18next';
 export const AdminSecurityAlertsPanel: React.FC = () => {
   const { t } = useTranslation();
   const [data, setData] = useState<SecurityAlert[]>([]),
@@ -16,9 +17,9 @@ export const AdminSecurityAlertsPanel: React.FC = () => {
       setData(await getSecurityAlerts());
       setError(null);
     } catch (e) {
-      setError(e instanceof Error ? e.message : t('admin.security.security-alerts.day2Auto.text1'));
+      setError(e instanceof Error ? e.message : t('admin.security.security-alerts.errors.load'));
     }
-  }, []);
+  }, [t]);
   useEffect(() => {
     void load();
   }, [load]);
@@ -26,30 +27,30 @@ export const AdminSecurityAlertsPanel: React.FC = () => {
     () => [
       {
         id: 'type',
-        label: 'Typ',
+        label: t('admin.security.security-alerts.columns.type'),
       },
       {
         id: 'severity',
-        label: t('admin.security.security-alerts.day2Auto.text2'),
+        label: t('admin.security.security-alerts.columns.severity'),
       },
       {
         id: 'user',
-        label: t('admin.security.security-alerts.day2Auto.text3'),
+        label: t('admin.security.security-alerts.columns.user'),
       },
       {
         id: 'ip',
-        label: 'IP',
+        label: t('admin.security.security-alerts.columns.ip'),
       },
       {
         id: 'time',
-        label: 'Czas',
+        label: t('admin.security.security-alerts.columns.time'),
       },
       {
-        id: t('admin.security.security-alerts.day2Auto.text4'),
-        label: t('admin.security.security-alerts.day2Auto.text5'),
+        id: 'status',
+        label: t('admin.security.security-alerts.columns.status'),
       },
     ],
-    []
+    [t]
   );
   const rows = useMemo<TableRow[]>(
     () =>
@@ -60,23 +61,28 @@ export const AdminSecurityAlertsPanel: React.FC = () => {
         user: a.user_email || '—',
         ip: a.ip_address || '—',
         time: new Date(a.created_at).toLocaleString(),
-        status: a.resolved ? t('admin.security.security-alerts.day2Auto.text6') : 'Otwarty',
+        status: a.resolved
+          ? t('admin.security.security-alerts.status.resolved')
+          : t('admin.security.security-alerts.status.open'),
       })),
-    [data]
+    [data, t]
   );
   return (
     <div className="space-y-4">
       <h2 className="text-lg font-semibold text-c-text">
-        {t('admin.security.security-alerts.day2Auto.text7')}
+        {t('admin.security.security-alerts.title')}
       </h2>
       {error && <div role="alert">{error}</div>}
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="rounded-xl border border-c-border p-4">
-          {t('admin.security.security-alerts.day2Auto.text8')}
-          {data.filter((a) => !a.resolved).length}
+          {t('admin.security.security-alerts.metrics.unresolved', {
+            count: data.filter((a) => !a.resolved).length,
+          })}
         </div>
         <div className="rounded-xl border border-c-border p-4">
-          Wysokiego ryzyka: {data.filter((a) => ['critical', 'high'].includes(a.severity)).length}
+          {t('admin.security.security-alerts.metrics.highRisk', {
+            count: data.filter((a) => ['critical', 'high'].includes(a.severity)).length,
+          })}
         </div>
       </div>
       <StandardTable
@@ -89,7 +95,7 @@ export const AdminSecurityAlertsPanel: React.FC = () => {
                 primary: [
                   {
                     id: 'resolve',
-                    label: t('admin.security.security-alerts.day2Auto.text9'),
+                    label: t('admin.security.security-alerts.actions.resolve'),
                     icon: ShieldAlert,
                     onClick: () =>
                       void resolveSecurityAlert(a.id)
@@ -102,8 +108,8 @@ export const AdminSecurityAlertsPanel: React.FC = () => {
         }}
         empty={{
           icon: ShieldAlert,
-          title: t('admin.security.security-alerts.day2Auto.text10'),
-          description: t('admin.security.security-alerts.day2Auto.text11'),
+          title: t('admin.security.security-alerts.empty.title'),
+          description: t('admin.security.security-alerts.empty.description'),
         }}
         persistKey="admin.securityAlerts"
       />

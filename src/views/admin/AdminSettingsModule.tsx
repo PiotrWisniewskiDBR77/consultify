@@ -3,38 +3,28 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+import { AdminAccessRequestsPanel } from '../../components/Admin/AdminAccessRequestsPanel';
+import { AdminAccessReviewsPanel } from '../../components/Admin/AdminAccessReviewsPanel';
 import { AdminAIControlCenterPanel } from '../../components/Admin/AdminAIControlCenterPanel';
+import { AdminAiIncidentsPanel } from '../../components/Admin/AdminAiIncidentsPanel';
 import { AdminAiQualityPanel } from '../../components/Admin/AdminAiQualityPanel';
+import { AdminAuditExportHistoryPanel } from '../../components/Admin/AdminAuditExportHistoryPanel';
+import { AdminAuditIntegrityPanel } from '../../components/Admin/AdminAuditIntegrityPanel';
 import { AdminAuditLogPanel } from '../../components/Admin/AdminAuditLogPanel';
 import { AdminBillingFinOpsPanel } from '../../components/Admin/AdminBillingFinOpsPanel';
+import { AdminBreakGlassPanel } from '../../components/Admin/AdminBreakGlassPanel';
 import { AdminCapabilityState } from '../../components/Admin/AdminCapabilityState';
 import { AdminCommandCenterPanel } from '../../components/Admin/AdminCommandCenterPanel';
 import { AdminComplianceEvidencePanel } from '../../components/Admin/AdminComplianceEvidencePanel';
+import { AdminConfigurationVersionsPanel } from '../../components/Admin/AdminConfigurationVersionsPanel';
+import { AdminDependenciesPanel } from '../../components/Admin/AdminDependenciesPanel';
+import { AdminDomainsPanel } from '../../components/Admin/AdminDomainsPanel';
+import { AdminGuestsPanel } from '../../components/Admin/AdminGuestsPanel';
 import { AdminHealthPanel } from '../../components/Admin/AdminHealthPanel';
 import { AdminIncidentHistoryPanel } from '../../components/Admin/AdminIncidentHistoryPanel';
-import { AdminDependenciesPanel } from '../../components/Admin/AdminDependenciesPanel';
 import { AdminJobsPanel } from '../../components/Admin/AdminJobsPanel';
-import { AdminSlaSloPanel } from '../../components/Admin/AdminSlaSloPanel';
-import { AdminMembersRolesPanel } from '../../components/Admin/AdminMembersRolesPanel';
-import { AdminPlanHistoryPanel } from '../../components/Admin/AdminPlanHistoryPanel';
-import { AdminServiceAccountsPanel } from '../../components/Admin/AdminServiceAccountsPanel';
-import { AdminDomainsPanel } from '../../components/Admin/AdminDomainsPanel';
-import { AdminSecurityAlertsPanel } from '../../components/Admin/AdminSecurityAlertsPanel';
-import { AdminSessionsPanel } from '../../components/Admin/AdminSessionsPanel';
-import { AdminBreakGlassPanel } from '../../components/Admin/AdminBreakGlassPanel';
-import { AdminGuestsPanel } from '../../components/Admin/AdminGuestsPanel';
-import { AdminAccessReviewsPanel } from '../../components/Admin/AdminAccessReviewsPanel';
-import { AdminAccessRequestsPanel } from '../../components/Admin/AdminAccessRequestsPanel';
-import { AdminRolesPermissionsPanel } from '../../components/Admin/AdminRolesPermissionsPanel';
 import { AdminLegalHoldPanel } from '../../components/Admin/AdminLegalHoldPanel';
-import { AdminAuditExportHistoryPanel } from '../../components/Admin/AdminAuditExportHistoryPanel';
-import { AdminAuditIntegrityPanel } from '../../components/Admin/AdminAuditIntegrityPanel';
-import { PersonasPanel } from '../../components/Admin/AI/PersonasPanel';
-import { AdminAiIncidentsPanel } from '../../components/Admin/AdminAiIncidentsPanel';
-import { AdminConfigurationVersionsPanel } from '../../components/Admin/AdminConfigurationVersionsPanel';
-import { AdminOrganizationDefaultsPanel } from '../../components/Admin/AdminOrganizationDefaultsPanel';
-import { AdminSeatsLicencesPanel } from '../../components/Admin/AdminSeatsLicencesPanel';
-import { AdminTeamsPanel } from '../../components/Admin/AdminTeamsPanel';
+import { AdminMembersRolesPanel } from '../../components/Admin/AdminMembersRolesPanel';
 import {
   ADMIN_DEFAULTS,
   ADMIN_DOMAINS,
@@ -42,15 +32,25 @@ import {
   type AdminScreen,
   getAdminDomains,
 } from '../../components/Admin/adminNavigation';
+import { AdminOrganizationDefaultsPanel } from '../../components/Admin/AdminOrganizationDefaultsPanel';
+import { AdminPlanHistoryPanel } from '../../components/Admin/AdminPlanHistoryPanel';
+import { AdminRolesPermissionsPanel } from '../../components/Admin/AdminRolesPermissionsPanel';
+import { AdminSeatsLicencesPanel } from '../../components/Admin/AdminSeatsLicencesPanel';
+import { AdminSecurityAlertsPanel } from '../../components/Admin/AdminSecurityAlertsPanel';
 import {
   AdminSecurityIdentityPanel,
   type AdminSecurityIdentityTabId,
 } from '../../components/Admin/AdminSecurityIdentityPanel';
+import { AdminServiceAccountsPanel } from '../../components/Admin/AdminServiceAccountsPanel';
+import { AdminSessionsPanel } from '../../components/Admin/AdminSessionsPanel';
 import {
   type AdminLocation,
   AdminSettingsSection,
   AdminSettingsSidebar,
 } from '../../components/Admin/AdminSettingsSidebar';
+import { AdminSlaSloPanel } from '../../components/Admin/AdminSlaSloPanel';
+import { AdminTeamsPanel } from '../../components/Admin/AdminTeamsPanel';
+import { PersonasPanel } from '../../components/Admin/AI/PersonasPanel';
 import { SettingsHeaderActionsProvider } from '../../components/settings/SettingsHeaderActions';
 import DomainScreenHeader from '../../components/settings/shared/DomainScreenHeader';
 import { Button } from '../../components/ui/primitives/Button';
