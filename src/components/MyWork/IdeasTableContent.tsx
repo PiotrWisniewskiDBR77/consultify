@@ -338,6 +338,18 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
   onRefresh,
 }) => {
   const [previewIdeaId, setPreviewIdeaId] = useState<string | null>(null);
+  // MYW-IDEA-REC-001 — PPM-mirror (ANEKS #3b, same contract as
+  // FilterableTable.tsx:613/1237-1268): right-click on a row opens the SAME
+  // RowActionsMenu popover the row's kebab already renders, anchored at the
+  // cursor instead of the button. One row can have an active context-menu
+  // point at a time. This table predates FilterableTable (self-documented a
+  // few lines below, on the table element itself: "migration to
+  // FilterableTable... deliberately not rewritten"), so the mirror is wired
+  // directly rather than inherited.
+  const [contextMenuRow, setContextMenuRow] = useState<{
+    ideaId: string;
+    point: { x: number; y: number };
+  } | null>(null);
   const [openFilterId, setOpenFilterId] = useState<string | null>(null);
   // Column settings (canon §16): SSOT TableSettingsPopover handles its own portal/anchor.
   const [hiddenColumns, setHiddenColumns] =
@@ -1359,6 +1371,18 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                       onFocusIndexChange(index);
                     }}
                     onDoubleClick={() => onOpenIdea(idea)}
+                    onContextMenu={(e) => {
+                      // MYW-IDEA-REC-001 — PPM-mirror: don't swallow the
+                      // native browser menu for a row whose kebab would be
+                      // empty anyway (mirrors FilterableTable.tsx's
+                      // `hasMenu` guard for the same reason).
+                      if (rowActionSections.every((section) => section.actions.length === 0)) {
+                        return;
+                      }
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setContextMenuRow({ ideaId: idea.id, point: { x: e.clientX, y: e.clientY } });
+                    }}
                     className={`group cursor-pointer border-b border-slate-200/50 dark:border-white/[0.03] transition-colors ${
                       isPreviewSelected
                         ? SELECTED_ROW_CLASS
@@ -1499,6 +1523,13 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                         // §8) while keeping the hover reveal (opacity-100) visibly
                         // stronger, preserving the "reveal on row hover" pattern.
                         className="opacity-90 transition-opacity group-hover:opacity-100"
+                        // MYW-IDEA-REC-001 — same popover the kebab above
+                        // opens, anchored at the cursor when the last
+                        // right-click landed on THIS row.
+                        contextMenuAnchor={
+                          contextMenuRow?.ideaId === idea.id ? contextMenuRow.point : null
+                        }
+                        onContextMenuClose={() => setContextMenuRow(null)}
                       />
                     </td>
                   </tr>

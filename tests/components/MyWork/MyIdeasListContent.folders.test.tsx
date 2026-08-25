@@ -33,6 +33,7 @@ vi.mock('react-hot-toast', () => ({
 const setIdeaFolderMock = vi.fn().mockResolvedValue(undefined);
 const getMyIdeaFoldersMock = vi.fn();
 const getMyIdeasMock = vi.fn();
+const createMyIdeaFolderMock = vi.fn();
 
 vi.mock('@/services/api', () => ({
   Api: {
@@ -40,7 +41,7 @@ vi.mock('@/services/api', () => ({
     getMyIdeaFolders: (...a: unknown[]) => getMyIdeaFoldersMock(...a),
     getMyIdeaMapMetrics: vi.fn().mockResolvedValue({ metrics: {} }),
     setIdeaFolder: (...a: unknown[]) => setIdeaFolderMock(...a),
-    createMyIdeaFolder: vi.fn(),
+    createMyIdeaFolder: (...a: unknown[]) => createMyIdeaFolderMock(...a),
     deleteMyIdeaFolder: vi.fn(),
     updateMyIdea: vi.fn(),
     deleteMyIdea: vi.fn(),
@@ -133,6 +134,7 @@ describe('MyIdeasListContent — folders (H2.1 / H2.2)', () => {
     vi.clearAllMocks();
     setIdeaFolderMock.mockResolvedValue(undefined);
     getMyIdeaFoldersMock.mockResolvedValue([FOLDER]);
+    createMyIdeaFolderMock.mockResolvedValue({ id: 'fold-new', name: 'Q3 launches' });
   });
 
   it('BUG 1: assigning an idea to a folder calls Api.setIdeaFolder(id, folderId)', async () => {
@@ -187,5 +189,101 @@ describe('MyIdeasListContent — folders (H2.1 / H2.2)', () => {
     const backBtn = screen.getByTestId('ideas-folder-empty-back');
     fireEvent.click(backBtn);
     await waitFor(() => expect(screen.queryByTestId('ideas-folder-empty')).toBeNull());
+  });
+});
+
+describe('MyIdeasListContent — "New folder…" dialog (MYW-IDEA-REC-002)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getMyIdeasMock.mockResolvedValue(makeIdeas(1, null));
+    getMyIdeaFoldersMock.mockResolvedValue([FOLDER]);
+    createMyIdeaFolderMock.mockResolvedValue({ id: 'fold-new', name: 'Q3 launches' });
+  });
+
+  it('createFolder() opens the canon FolderCreateDialog instead of window.prompt', async () => {
+    const promptSpy = vi.spyOn(window, 'prompt').mockReturnValue('should not be used');
+    let shell: import('../../../src/components/MyWork/myIdeasTypes').IdeasHomeShellPayload | null =
+      null;
+    render(
+      <MyIdeasListContent
+        viewMode="table"
+        searchQuery=""
+        stageFilter="all"
+        onIdeaClick={vi.fn()}
+        onCreateIdea={vi.fn()}
+        onCountsChange={vi.fn()}
+        onHomeShellChange={(p) => {
+          shell = p;
+        }}
+      />
+    );
+
+    await waitFor(() => expect(shell?.foldersAvailable).toBe(true));
+    expect(screen.queryByRole('dialog')).toBeNull();
+
+    act(() => shell!.createFolder());
+
+    expect(await screen.findByRole('dialog')).toBeTruthy();
+    expect(promptSpy).not.toHaveBeenCalled();
+    promptSpy.mockRestore();
+  });
+
+  it('submitting a name creates the folder via Api.createMyIdeaFolder and closes the dialog', async () => {
+    let shell: import('../../../src/components/MyWork/myIdeasTypes').IdeasHomeShellPayload | null =
+      null;
+    render(
+      <MyIdeasListContent
+        viewMode="table"
+        searchQuery=""
+        stageFilter="all"
+        onIdeaClick={vi.fn()}
+        onCreateIdea={vi.fn()}
+        onCountsChange={vi.fn()}
+        onHomeShellChange={(p) => {
+          shell = p;
+        }}
+      />
+    );
+
+    await waitFor(() => expect(shell?.foldersAvailable).toBe(true));
+    act(() => shell!.createFolder());
+    await screen.findByRole('dialog');
+
+    fireEvent.change(screen.getByTestId('folder-create-name'), {
+      target: { value: 'Q3 launches' },
+    });
+    fireEvent.click(screen.getByTestId('folder-create-submit'));
+
+    await waitFor(() =>
+      expect(createMyIdeaFolderMock).toHaveBeenCalledWith({ name: 'Q3 launches' })
+    );
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+  });
+
+  it('an empty name never reaches the API (dialog validation, not a silent no-op)', async () => {
+    let shell: import('../../../src/components/MyWork/myIdeasTypes').IdeasHomeShellPayload | null =
+      null;
+    render(
+      <MyIdeasListContent
+        viewMode="table"
+        searchQuery=""
+        stageFilter="all"
+        onIdeaClick={vi.fn()}
+        onCreateIdea={vi.fn()}
+        onCountsChange={vi.fn()}
+        onHomeShellChange={(p) => {
+          shell = p;
+        }}
+      />
+    );
+
+    await waitFor(() => expect(shell?.foldersAvailable).toBe(true));
+    act(() => shell!.createFolder());
+    await screen.findByRole('dialog');
+
+    fireEvent.click(screen.getByTestId('folder-create-submit'));
+
+    expect(createMyIdeaFolderMock).not.toHaveBeenCalled();
+    expect(screen.getByRole('dialog')).toBeTruthy();
   });
 });
