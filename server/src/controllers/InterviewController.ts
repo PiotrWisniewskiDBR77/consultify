@@ -3913,6 +3913,28 @@ export const InterviewController = {
       return;
     }
 
+    // SECURITY (cross-org tenant fix — M03 Interview V4): `projectId` arrives
+    // from the request body and was never bound to the caller's org. The
+    // project-role branch below happens to catch it for ordinary users (a
+    // foreign project has no `project_members` row for them, so they 403), but
+    // the org-level branch — SUPERADMIN / ADMIN / PROJECT_MANAGER — skips that
+    // check entirely on the reasoning "can assign to anyone in org". It then
+    // stamped the assignment with whatever projectId was supplied, writing a
+    // row that points into ANOTHER tenant's project and surfaces under that
+    // project's assignment filter (`GET ...?projectId=`). Verify ownership
+    // once, up front, for every branch. 404 not 403: "not in your org" must not
+    // be distinguishable from "does not exist".
+    if (projectId) {
+      const ownedProject = await queryHelpers.queryOne(
+        `SELECT id FROM projects WHERE id = ? AND organization_id = ?`,
+        [projectId, admin.organizationId]
+      );
+      if (!ownedProject) {
+        res.status(404).json({ error: 'Project not found' });
+        return;
+      }
+    }
+
     // ==========================================
     // SCOPE VALIDATION - Check if user can assign to these users
     // ==========================================

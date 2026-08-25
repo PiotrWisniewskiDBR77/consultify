@@ -967,11 +967,34 @@ router.post(
       ]
         .filter(Boolean)
         .join('');
-      const validProjectId =
-        bodyProjectId &&
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(bodyProjectId)
-          ? bodyProjectId
-          : null;
+      // SECURITY (cross-org tenant fix — M03 Interview V4): `project_id` comes
+      // from the request body and was only shape-checked against a UUID regex.
+      // A well-formed UUID says nothing about ownership. The value then reached
+      // `decisionService.createDecision` (which stamps the caller's org but
+      // trusts projectId as given) and, worse, `TaskService.createTask`, which
+      // takes NO organizationId at all — so the created task was tenanted purely
+      // by its projectId. A caller passing another org's project id therefore
+      // planted a real task inside the victim tenant's project, visible on the
+      // victim's board. Verify ownership the same way `target_initiative_id` is
+      // verified a few lines above, and the same way DecisionController's
+      // `validateCrossEntityRefs` does it.
+      const projectIdShapeOk =
+        !!bodyProjectId &&
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(bodyProjectId);
+      if (projectIdShapeOk) {
+        const ownedProject = await queryHelpers.queryOne(
+          `SELECT id FROM projects WHERE id = ? AND organization_id = ?`,
+          [bodyProjectId, organizationId]
+        );
+        if (!ownedProject) {
+          // 404, not 403: "not yours" must be indistinguishable from "not there".
+          return res.status(404).json({
+            error: 'Target project not found',
+            code: 'P10_TARGET_PROJECT_NOT_FOUND',
+          });
+        }
+      }
+      const validProjectId = projectIdShapeOk ? bodyProjectId : null;
 
       try {
         if (targetType === 'decision') {
