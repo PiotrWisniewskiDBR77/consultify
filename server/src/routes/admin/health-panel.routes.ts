@@ -27,6 +27,10 @@ import {
   runProbe,
   summarizeResults,
 } from '../../services/health/healthProbeService.js';
+import {
+  buildDependencyHealth,
+  UNDECLARED_PROBES,
+} from '../../services/health/probeDependencyMap.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet } from '../../utils/DbPromise.js';
 
@@ -197,6 +201,21 @@ router.get(
         durationMs: r.durationMs,
         ranAt: r.ranAt,
       })),
+    });
+  })
+);
+
+router.get(
+  '/dependencies',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const ctx = getContext(req);
+    if (!ctx) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const results = await getCachedResults(ctx.organizationId);
+    return res.json({
+      success: true,
+      dependencies: buildDependencyHealth(results),
+      undeclaredProbes: UNDECLARED_PROBES,
+      generatedAt: new Date().toISOString(),
     });
   })
 );

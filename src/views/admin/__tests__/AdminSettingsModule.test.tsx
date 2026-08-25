@@ -111,6 +111,9 @@ vi.mock('../../../components/Admin/AdminComplianceEvidencePanel', () => ({
 vi.mock('../../../components/Admin/AdminHealthPanel', () => ({
   AdminHealthPanel: () => <div data-testid="panel-health">health</div>,
 }));
+vi.mock('../../../components/Admin/AdminDependenciesPanel', () => ({
+  AdminDependenciesPanel: () => <div data-testid="panel-dependencies">dependencies</div>,
+}));
 vi.mock('../../../components/Admin/AdminCommandCenterPanel', () => ({
   AdminCommandCenterPanel: ({
     aggregationOnly,
@@ -180,6 +183,10 @@ describe('AdminSettingsModule section routing', () => {
   it('wires health/sla-slo to tenant SLOs', () => {
     renderAt('/admin/health/sla-slo');
     expect(screen.getByTestId('panel-sla')).toBeInTheDocument();
+  });
+  it('wires health/dependencies to the cached dependency map', () => {
+    renderAt('/admin/health/dependencies');
+    expect(screen.getByTestId('panel-dependencies')).toBeInTheDocument();
   });
   it('wires security/domains to real DNS management', () => {
     renderAt('/admin/security/domains');
