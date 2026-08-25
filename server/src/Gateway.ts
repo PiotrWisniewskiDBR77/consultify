@@ -30,6 +30,7 @@ import guestsAdminRoutes from './routes/admin/guests.routes.js';
 import legalHoldAdminRoutes from './routes/admin/legal-hold.routes.js';
 import auditExportHistoryAdminRoutes from './routes/admin/audit-export-history.routes.js';
 import serviceAccountsAdminRoutes from './routes/admin/service-accounts.routes.js';
+import adminDomainsRoutes from './routes/admin/domains.routes.js';
 import organizationProfileAdminRoutes from './routes/admin/organization-profile.routes.js';
 import healthPanelAdminRoutes from './routes/admin/health-panel.routes.js';
 import adminBulkRoutes from './routes/admin-bulk.routes.js';
@@ -789,6 +790,7 @@ export class ApiGateway {
       app.use('/api/admin/legal-hold', legalHoldAdminRoutes);
       app.use('/api/admin/audit-export-history', auditExportHistoryAdminRoutes);
       app.use('/api/admin/service-accounts', serviceAccountsAdminRoutes);
+      app.use('/api/admin/domains', adminDomainsRoutes);
       app.use('/api/admin/organization-profile', organizationProfileAdminRoutes);
       // Wiring (2026-07-15): route was defined but never mounted (0 Gateway refs).
       // Own auth (verifyToken + admin-role check) is applied inside the router —

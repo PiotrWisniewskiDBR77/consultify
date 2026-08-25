@@ -15,6 +15,7 @@ import { AdminSlaSloPanel } from '../../components/Admin/AdminSlaSloPanel';
 import { AdminMembersRolesPanel } from '../../components/Admin/AdminMembersRolesPanel';
 import { AdminPlanHistoryPanel } from '../../components/Admin/AdminPlanHistoryPanel';
 import { AdminServiceAccountsPanel } from '../../components/Admin/AdminServiceAccountsPanel';
+import { AdminDomainsPanel } from '../../components/Admin/AdminDomainsPanel';
 import { AdminSecurityAlertsPanel } from '../../components/Admin/AdminSecurityAlertsPanel';
 import { AdminSessionsPanel } from '../../components/Admin/AdminSessionsPanel';
 import { AdminBreakGlassPanel } from '../../components/Admin/AdminBreakGlassPanel';
@@ -377,6 +378,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
       (resolvedLocation.domain === 'security' &&
         Object.prototype.hasOwnProperty.call(SECURITY_TAB_BY_SCREEN, resolvedLocation.screen)) ||
       (resolvedLocation.domain === 'security' && resolvedLocation.screen === 'service-accounts') ||
+      (resolvedLocation.domain === 'security' && resolvedLocation.screen === 'domains') ||
       (resolvedLocation.domain === 'security' && resolvedLocation.screen === 'security-alerts') ||
       (resolvedLocation.domain === 'security' && resolvedLocation.screen === 'sessions') ||
       (resolvedLocation.domain === 'security' && resolvedLocation.screen === 'break-glass') ||
@@ -451,6 +453,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
           />
         );
       case 'security':
+        if (resolvedLocation.screen === 'domains') return <AdminDomainsPanel />;
         if (resolvedLocation.screen === 'service-accounts') return <AdminServiceAccountsPanel />;
         if (resolvedLocation.screen === 'security-alerts') return <AdminSecurityAlertsPanel />;
         if (resolvedLocation.screen === 'sessions') return <AdminSessionsPanel />;

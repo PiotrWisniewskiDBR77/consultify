@@ -35,6 +35,9 @@ vi.mock('../../../components/Admin/AdminSlaSloPanel', () => ({
 vi.mock('../../../components/Admin/AdminServiceAccountsPanel', () => ({
   AdminServiceAccountsPanel: () => <div data-testid="panel-service-accounts">service accounts</div>,
 }));
+vi.mock('../../../components/Admin/AdminDomainsPanel', () => ({
+  AdminDomainsPanel: () => <div data-testid="panel-domains">domains</div>,
+}));
 vi.mock('../../../components/Admin/AdminSecurityAlertsPanel', () => ({
   AdminSecurityAlertsPanel: () => <div data-testid="panel-security-alerts">alerts</div>,
 }));
@@ -177,6 +180,10 @@ describe('AdminSettingsModule section routing', () => {
   it('wires health/sla-slo to tenant SLOs', () => {
     renderAt('/admin/health/sla-slo');
     expect(screen.getByTestId('panel-sla')).toBeInTheDocument();
+  });
+  it('wires security/domains to real DNS management', () => {
+    renderAt('/admin/security/domains');
+    expect(screen.getByTestId('panel-domains')).toBeInTheDocument();
   });
   it('wires security/service-accounts to the service accounts panel', () => {
     renderAt('/admin/security/service-accounts');
