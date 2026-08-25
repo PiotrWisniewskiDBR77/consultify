@@ -807,6 +807,37 @@ async function readTemplateCapabilities(params: {
     : capabilitiesForRole(params.roleKey);
 }
 
+/**
+ * Capability strings the org ADMIN role does NOT get, even though ADMIN
+ * otherwise holds every capability an ADMIN previously received via the bare
+ * '*' wildcard (see ADMIN_UNRESTRICTED_SENTINEL below).
+ *
+ * DEC-2026-08-25-17: project role management is OWNER-only. Live-verified
+ * 2026-08-25 — with ADMIN holding the bare '*' wildcard, an ADMIN could call
+ * the admin.project_roles.manage-gated endpoints (access.routes.ts,
+ * security/roles.routes.ts) and get 200 instead of 403. The code already
+ * intended this: the OWNER branch below lists 'admin.project_roles.manage'
+ * explicitly even though '*' already made that listing redundant for
+ * OWNER — the ADMIN branch just never carried the same exclusion, because
+ * '*' silently overrode it.
+ *
+ * This set must only grow from an explicit, documented decision — never from
+ * guessing which capability "sounds like" it should be owner-only. Ownership
+ * transfer is NOT listed here because it is not gated through this
+ * capability system at all: organization/ownership.routes.ts checks
+ * `role === 'OWNER'` directly against the membership row.
+ */
+const OWNER_ONLY_CAPABILITIES = new Set<string>(['admin.project_roles.manage']);
+
+/**
+ * Sentinel meaning "every capability ADMIN would have received via the bare
+ * '*' wildcard, except OWNER_ONLY_CAPABILITIES". This is NOT '*' — '*'
+ * remains an unconditional bypass (OWNER, SUPERADMIN) with no exceptions.
+ * ADMIN must never hold literal '*' again, or this whole mechanism is
+ * silently defeated the same way the original bug worked.
+ */
+const ADMIN_UNRESTRICTED_SENTINEL = 'admin.*.except-owner-only';
+
 export async function resolveEffectiveAccess(params: {
   userId: string;
   organizationId: string;
@@ -828,7 +859,9 @@ export async function resolveEffectiveAccess(params: {
     ? null
     : await readApplicationRole(params.userId, params.organizationId);
   const hasAuthority = platformRole !== null || membershipRole !== null;
-  const applicationRole: ApplicationRoleValue = platformRole ? 'OWNER' : (membershipRole ?? 'GUEST');
+  const applicationRole: ApplicationRoleValue = platformRole
+    ? 'OWNER'
+    : (membershipRole ?? 'GUEST');
   const warnings: string[] = [];
 
   /*
@@ -909,7 +942,12 @@ export async function resolveEffectiveAccess(params: {
     ]);
   }
   if (applicationRole === 'ADMIN') {
-    capabilities = dedupe([...capabilities, '*', 'admin.access', 'admin.people.manage']);
+    capabilities = dedupe([
+      ...capabilities,
+      ADMIN_UNRESTRICTED_SENTINEL,
+      'admin.access',
+      'admin.people.manage',
+    ]);
   }
 
   return {
@@ -941,6 +979,8 @@ export function hasEffectiveCapability(
   if (access.platformRole === 'SUPERADMIN') return true;
   const capabilities = new Set(access.capabilities);
   if (capabilities.has('*') || capabilities.has(capability)) return true;
+  if (capabilities.has(ADMIN_UNRESTRICTED_SENTINEL) && !OWNER_ONLY_CAPABILITIES.has(capability))
+    return true;
   return ['.scoped', '.own', '.assigned', '.delegated'].some((suffix) =>
     capabilities.has(`${capability}${suffix}`)
   );
