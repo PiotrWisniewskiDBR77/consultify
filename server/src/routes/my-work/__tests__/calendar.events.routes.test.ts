@@ -11,7 +11,11 @@ describe('calendar event route security contract', () => {
   it('scopes event reads by tenant and overlap, and redacts foreign busy titles server-side', () => {
     expect(source).toContain('e.organization_id = ?');
     expect(source).toContain('e.start_at < ? AND e.end_at >= ?');
-    expect(source).toContain("foreignBusy ? 'Zajęte' : row.title");
+    // FIX-1 (Day 3 acceptance): the inline 'Zajęte' literal is now a
+    // documented constant (server has no i18n mechanism — see the comment
+    // above FOREIGN_BUSY_EVENT_TITLE in calendar.routes.ts).
+    expect(source).toContain('const FOREIGN_BUSY_EVENT_TITLE = ');
+    expect(source).toContain('foreignBusy ? FOREIGN_BUSY_EVENT_TITLE : row.title');
   });
 
   it('takes owner and organization from authenticated context, never the request body', () => {

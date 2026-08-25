@@ -22,6 +22,18 @@ void requireTables;
 
 const router = Router();
 
+// FIX-1 (Day 3 acceptance, i18n audit): the server has no i18n mechanism — no
+// Accept-Language handling, no locale-aware string tables, nothing — so this
+// title CANNOT actually be translated per-request today. Named as a constant
+// (rather than left as an inline literal) so it is at least a single,
+// documented, searchable choice instead of a magic string, and so it is
+// obvious this is Polish-only by deliberate omission, not an oversight. A
+// real fix needs the client to redact per-locale from a stable status code
+// (e.g. `status: 'busy_redacted'`) instead of receiving pre-localized text —
+// tracked as follow-up, not done here to avoid changing the wire contract
+// client code already depends on (row.title).
+const FOREIGN_BUSY_EVENT_TITLE = 'Zajęte';
+
 const isPostgres = process.env.DB_TYPE === 'postgres';
 const nowSql = () => (isPostgres ? 'CURRENT_TIMESTAMP' : "datetime('now')");
 
@@ -301,7 +313,7 @@ router.get(
           const foreignBusy = row.visibility === 'busy' && String(row.owner_id) !== String(userId);
           events.push({
             id: `event-${row.id}`,
-            title: foreignBusy ? 'Zajęte' : row.title,
+            title: foreignBusy ? FOREIGN_BUSY_EVENT_TITLE : row.title,
             start: row.start_at,
             end: row.end_at,
             allDay: Boolean(row.all_day),
