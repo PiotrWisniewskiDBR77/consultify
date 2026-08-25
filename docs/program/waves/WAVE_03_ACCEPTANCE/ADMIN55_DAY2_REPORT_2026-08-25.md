@@ -18,13 +18,13 @@ Aktualny tip jest nowszym potomkiem referencyjnego `da54b632eb` z instrukcji; `g
 
 ## Sekcja A — STOP-y wg DEC-2026-08-25-19
 
-| #   | Pozycja                    | Commit       | Status | Uwagi                                                                                     |
-| --- | -------------------------- | ------------ | ------ | ----------------------------------------------------------------------------------------- |
-| A.1 | security/domains (DNS TXT) | `25efc3521a` | DONE   | tenant-safe; realny DNS TXT; zapis i audyt tylko po `verified`; rate-limit 30 s; readback |
-| A.2 | ai/quality-evaluations     | `37c12c5b23` | DONE   | FIX-11 potwierdzony w obu mutacjach; 3 główne odczyty, obie mutacje z readbackiem         |
-| A.3 | health/dependencies        | `a53455b455` | DONE   | 20/20 probe’ów zadeklarowanych; wyłącznie cache; brak wyniku = `unknown`                  |
-| A.4 | health/incident-history    | `32f75e296e` | DONE   | uczciwy szkielet; tenant-safe stan bieżący jawnie oddzielony od historii; bez ledgera     |
-| A.5 | team/access-requests       | `93051b3f9d` | DONE   | uczciwy plan; zero wywołań zakazanego API; Link do zaproszeń i zweryfikowanych domen      |
+| #   | Pozycja                    | Commit                      | Status | Uwagi                                                                                                   |
+| --- | -------------------------- | --------------------------- | ------ | ------------------------------------------------------------------------------------------------------- |
+| A.1 | security/domains (DNS TXT) | `25efc3521a` + `03df4655f9` | DONE   | tenant-safe; realny DNS TXT; audyt create/update/delete i udanej weryfikacji; rate-limit 30 s; readback |
+| A.2 | ai/quality-evaluations     | `37c12c5b23`                | DONE   | FIX-11 potwierdzony w obu mutacjach; 3 główne odczyty, obie mutacje z readbackiem                       |
+| A.3 | health/dependencies        | `a53455b455`                | DONE   | 20/20 probe’ów zadeklarowanych; wyłącznie cache; brak wyniku = `unknown`                                |
+| A.4 | health/incident-history    | `32f75e296e`                | DONE   | uczciwy szkielet; tenant-safe stan bieżący jawnie oddzielony od historii; bez ledgera                   |
+| A.5 | team/access-requests       | `93051b3f9d`                | DONE   | uczciwy plan; zero wywołań zakazanego API; Link do zaproszeń i zweryfikowanych domen                    |
 
 ## Sekcja B — i18n
 
@@ -63,6 +63,7 @@ Brak na moment utworzenia raportu.
 
 - Tip gałęzi bazowej przesunął się z referencyjnego `da54b632eb` do `6876f61ac7`; użyto najnowszego tipa zgodnie z §0.1.
 - Nie wykonano `git fetch --all --prune`: lokalna gałąź bazowa i jej aktywny, czysty worktree były dostępne, a zakazy Z5–Z6 zabraniają mutowania chronionych checkoutów. To ograniczenie nie zmienia dowodu lokalnej bazy.
+- Korekta po audycie sceptyka: powyższe uzasadnienie nie dowodzi, że lokalny tip był najnowszy względem origin. Historyczna świeżość punktu bazowego ma status `NOT PROVEN`; nie wykonuję retroaktywnego fetchu jako rzekomego dowodu startowego.
 
 ## Obserwacje do naprawy in-house (NIE dotykane przeze mnie)
 
@@ -90,6 +91,11 @@ Brak na moment utworzenia raportu.
 - Targeted ESLint wszystkich zmienionych plików TS/TSX: PASS po uporządkowaniu importów; `git diff --check`: PASS; oba JSON-y locale parsują się.
 - `npm run type-check`: FAIL wyłącznie na zastanych błędach Initiatives wskazanych jako Z2; brak błędów Day2.
 - `npm run build:backend`: FAIL wyłącznie na zastanym `SourceProposalSnapshot.priority` wskazanym jako Z3; kontrola 9 runtime mirrors PASS.
+- Po pierwszym odbiorze sceptyków `03df4655f9`: audyt wszystkich czterech mutacji domen; tenant-scope agregatu `activePatternsCount`; jawne komunikaty C.1 dla 428, obu 422, 404 i 403; strukturalny test osiągalności `SystemModule → platform-operations`; usunięte dynamiczne fallbacki Command Center; uzupełnione zależności `t` w hookach i zaostrzony gate `defaultValue`. Zbiorczy przebieg: 37/37 plików, 185/185 testów PASS.
+
+## Odbiór sceptyczny
+
+Pierwszy odbiór zamrożonego `58412bdcd3`: DoD 8,2/10; Security 8,8/10; UX/test 8,4/10; średnia 8,47/10 — `NO-GO`. Wszystkie wskazane P1 zostały naprawione w `03df4655f9`. Finalne oceny po ponownym zamrożeniu: w toku.
 
 ## Migracje
 
