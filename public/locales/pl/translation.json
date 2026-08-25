@@ -25162,13 +25162,15 @@
     },
     "status": {
       "scheduled": "Zaplanowane",
-      "completed": "Zakończone"
+      "completed": "Zakończone",
+      "pastNeedsUpdate": "Po terminie — wymaga aktualizacji"
     },
     "counters": {
       "all": "Wszystkie",
       "upcoming": "Nadchodzące",
       "followUp": "Wymaga follow-upu",
-      "completed": "Zakończone"
+      "completed": "Zakończone",
+      "pastNeedsUpdate": "Po terminie — wymaga aktualizacji"
     },
     "sync": {
       "loading": "Ładowanie przestrzeni",
