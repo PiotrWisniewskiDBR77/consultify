@@ -339,7 +339,7 @@ export const MeetingObjectPage: React.FC = () => {
                             </div>
                             <div>
                               <div className="mb-1 text-[11px] uppercase tracking-wide text-c-text-muted">
-                                {t('meeting.object.actionItems', 'Action items')}
+                                {t('meeting.object.actionItems', 'Działania')}
                               </div>
                               {actions.length ? (
                                 <ul className="space-y-1">

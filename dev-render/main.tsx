@@ -171,6 +171,7 @@ const IdeaConfidentialityControlScreen = React.lazy(
 const IdeaTemplatesCatalogScreen = React.lazy(() => import('./screens/idea-templates-catalog'));
 const IdeasTeresaPanelScreen = React.lazy(() => import('./screens/ideas-teresa-panel'));
 const MelsCanvasWorkspaceScreen = React.lazy(() => import('./screens/melscanvas-workspace'));
+const MeetingsModuleScreen = React.lazy(() => import('./screens/meetings-module'));
 const ProcessFlowCanvasScreen = React.lazy(() => import('./screens/processflow-canvas'));
 const WhiteboardCanvasScreen = React.lazy(() => import('./screens/whiteboard-canvas'));
 const IdeaTableTimelineStuckScreen = React.lazy(
@@ -341,6 +342,11 @@ const ResultsVNextTeresaOkrReflectionScreen = React.lazy(
 const ToolsSwotReportScreen = React.lazy(() => import('./screens/tools-swot-report'));
 
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'meetings-module': {
+    label:
+      'MOD06 Meetings etap 2 — REALNY <MeetingHub> (lista) + <MeetingObjectPage> (Szczegóły/Protokół/Decyzje). &view=list|object &tab=details|minutes|decisions',
+    render: () => <MeetingsModuleScreen />,
+  },
   'audyty-piec-powierzchni': {
     label:
       'U8 — REALNY <AuditsMethodHub> (Library·Processes·Outputs·Reports·Initiatives), auditsFiveSurfacesV1. &tab=library|processes|outputs|reports|initiatives, &state=default|empty|loading|error',
