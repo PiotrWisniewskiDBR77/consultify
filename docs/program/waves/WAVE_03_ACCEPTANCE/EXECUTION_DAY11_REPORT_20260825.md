@@ -1,12 +1,12 @@
 # Execution dzień 11 — raport dyżuru 2026-08-25
 
-Baza: `codex/day11-instrukcja-20260825 @ 45f6f08d2436515655bd4d9594e78f12975dbb7a` (jawne polecenie nadzorcy zastępuje nominalną bazę z §0.1 instrukcji)  
-Marker: `5f96e936ac` — POTWIERDZONY jako przodek HEAD  
-Gałąź robocza: `codex/execution-day11-20260825`  
-Worktree: `/private/tmp/consultify-execution-day11`  
+Baza: `codex/day11-instrukcja-20260825 @ 45f6f08d2436515655bd4d9594e78f12975dbb7a` (jawne polecenie nadzorcy zastępuje nominalną bazę z §0.1 instrukcji)
+Marker: `5f96e936ac` — POTWIERDZONY jako przodek HEAD
+Gałąź robocza: `codex/execution-day11-20260825`
+Worktree: `/private/tmp/consultify-execution-day11`
 Zgoda na flagę `execReportsIntelligence`: **NADANA IMIENNIE — DEC-2026-08-25-63**
-Porty użyte: `3357` (dev-render); portu PG nie użyto  
-Kontener PG: nie stawiałem  
+Porty użyte: `3357` (dev-render); portu PG nie użyto
+Kontener PG: nie stawiałem
 Czas pracy: 2026-08-25 19:24–19:28 CEST; wznowienie od 20:35 CEST
 
 ## Oświadczenie o chronionym WIP (Z4/Z5)
@@ -190,11 +190,11 @@ niezmiennej publikacji; management-reports jest pipeline'em eksportowym.
 
 Powód: runtime-v1 daje frozen snapshot/hash i publikację JSON, a
 `/api/management-reports` daje generate/versioning/PDF/PPTX; kontraktowy cykl
-życia nie pasuje dokładnie do żadnego.  
-Dowód: `reportRun.ts:29-42,183-243`; `managementReports.routes.ts:36-453`.  
+życia nie pasuje dokładnie do żadnego.
+Dowód: `reportRun.ts:29-42,183-243`; `managementReports.routes.ts:36-453`.
 Co zrobiłbym, gdyby zapadła decyzja: rekomenduję runtime-v1 jako SSOT
 niezmiennej publikacji oraz management-reports jako kontrolowany pipeline
-eksportowy, ale implementacja wymaga wiążącego mapowania lifecycle.  
+eksportowy, ale implementacja wymaga wiążącego mapowania lifecycle.
 Stan: **ZREALIZOWANO w dozwolonym zakresie**; brakujące mapowanie lifecycle/export pozostaje `BRAK_API`.
 
 ### STOP — E-O2 zgoda i granulacja flagi
@@ -203,11 +203,11 @@ Stan: **ZREALIZOWANO w dozwolonym zakresie**; brakujące mapowanie lifecycle/exp
 umbrella flagę `execReportsIntelligence`, default OFF wszędzie, w tym demo.
 
 Powód: instrukcja wymaga imiennej zgody nadzorcy; przekazane polecenie nakazuje
-zacząć od E.0, ale nie zawiera sformułowania udzielającego zgody na flagę.  
-Dowód: instrukcja §krytyczne ograniczenie pkt 1, §1.7 E-O2 i §E.0 pkt 1.  
+zacząć od E.0, ale nie zawiera sformułowania udzielającego zgody na flagę.
+Dowód: instrukcja §krytyczne ograniczenie pkt 1, §1.7 E-O2 i §E.0 pkt 1.
 Co zrobiłbym po zgodzie: dodałbym dokładnie jedną umbrella flagę
 `execReportsIntelligence`, kopiując fail-closed special-case `changeSignals`,
-a następnie behawioralny test OFF z zerem wywołań nowych endpointów.  
+a następnie behawioralny test OFF z zerem wywołań nowych endpointów.
 Stan: **ZREALIZOWANO** w `481108c8ce`, wraz z rzeczywistym czytnikiem i dowodem OFF.
 
 ### STOP — E-O3 mapowania BSC
