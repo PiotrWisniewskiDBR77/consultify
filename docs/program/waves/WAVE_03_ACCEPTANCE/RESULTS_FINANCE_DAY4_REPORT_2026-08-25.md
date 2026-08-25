@@ -61,16 +61,16 @@ Właściciel poza publiczną produkcją wpisuje `/results?ff_wave3ResultsOwnerRe
 
 ## Sekcja F — Finance (DEC-2026-08-24-05)
 
-| Pozycja                               | Status           | Commit       | Testy          | Uwagi                                                         |
-| ------------------------------------- | ---------------- | ------------ | -------------- | ------------------------------------------------------------- |
-| F.1 inwentarz FIN-REC-001             | DONE_CURRENT_SHA | `4ab7a61403` | audyt źródłowy | Sześć gałęzi i pięć flag zamrożone poniżej                    |
-| F.2 resolver FIN-REC-002              | DONE_CURRENT_SHA | `5502e8fdb2` | 81/81 PASS     | 53-case table + OFF regression + stare testy                  |
-| F.3 wspólny shell FIN-REC-003         | PARTIAL / STOP   | `b284ca6e43` | 10/10 PASS     | Mechaniczne luki zamknięte; cold Back nie utrwala filtrów     |
-| F.4 `financeOwnerSampleData`          | DONE_CURRENT_SHA | `207124e9e9` | 5/5 PASS       | Host produkcyjny fail-closed, jawny banner, licznik zamrożony |
-| F.5 ochrona danych i ufności          | DONE_CURRENT_SHA | `1cc0724847` | 4/4 PASS       | Zero migracji, ufność i tenant guards zamrożone               |
-| F.6 stany brzegowe FIN-REC-011        | STOP             | `3a9e2f625f` | audyt 5×8      | Brak jednolitych capability/error contracts                   |
-| F.7 testy FIN-REC-014                 | PARTIAL / STOP   | `e0e97da8d1` | 3/3 PASS       | Statusy udowodnione; RealPG/runtime/E2E niezweryfikowane      |
-| F.8 przygotowanie odłączenia Benefits | DONE_CURRENT_SHA | `fd9fb22245` | 1/1 PASS       | Dokładnie 3 importy; zero zmian importów                      |
+| Pozycja                               | Status           | Commit                     | Testy          | Uwagi                                                         |
+| ------------------------------------- | ---------------- | -------------------------- | -------------- | ------------------------------------------------------------- |
+| F.1 inwentarz FIN-REC-001             | DONE_CURRENT_SHA | `4ab7a61403`               | audyt źródłowy | Sześć gałęzi i pięć flag zamrożone poniżej                    |
+| F.2 resolver FIN-REC-002              | DONE_CURRENT_SHA | `5502e8fdb2`, `1970fa02f1` | 94/94 PASS     | Resolver + blokada błędu/mismatch przed V3 i legacy           |
+| F.3 wspólny shell FIN-REC-003         | PARTIAL / STOP   | `b284ca6e43`               | 10/10 PASS     | Mechaniczne luki zamknięte; cold Back nie utrwala filtrów     |
+| F.4 `financeOwnerSampleData`          | DONE_CURRENT_SHA | `207124e9e9`               | 5/5 PASS       | Host produkcyjny fail-closed, jawny banner, licznik zamrożony |
+| F.5 ochrona danych i ufności          | PARTIAL / STOP   | `1cc0724847`               | 4/4 PASS       | Brak testu 6 mountów z POST/PUT-throwing mockiem              |
+| F.6 stany brzegowe FIN-REC-011        | STOP             | `3a9e2f625f`               | audyt 5×8      | Brak jednolitych capability/error contracts                   |
+| F.7 testy FIN-REC-014                 | PARTIAL / STOP   | `e0e97da8d1`               | 3/3 PASS       | Statusy udowodnione; RealPG/runtime/E2E niezweryfikowane      |
+| F.8 przygotowanie odłączenia Benefits | DONE_CURRENT_SHA | `fd9fb22245`               | 1/1 PASS       | Dokładnie 3 importy; zero zmian importów                      |
 
 ### F.1 — manifest runtime i zamrożenie
 
@@ -110,6 +110,7 @@ Komponenty Benefits nie są kasowane ani odłączane w tym dyżurze.
 - `resolveFinanceDetailBranches.test.ts`: istniejące 21/21 PASS.
 - Resolver jest czysty, nie importuje Benefits i nie ma operacji sieciowych ani mutacji.
 - Bezpośrednia ścieżka kanoniczna obsługuje teraz także `STATEMENT_PACK`; niezgodne ID/type renderują stan błędu z bezpiecznym powrotem do listy.
+- Integracja gałęzi odróżnia brak identity od błędu resolvera. Błąd i mismatch `kind↔artifactType` blokują zarówno V3, jak i legacy; 13/13 kontrprzypadków PASS. Asynchroniczny błąd direct path nie aktualizuje stanu po unmount.
 
 ### F.2 — odczyt nie tworzy rekordu
 
@@ -152,6 +153,7 @@ Domknięta luka mechaniczna: własne `w-[400px]` zastąpione wspólnym `PREVIEW_
 - `financeV2Router.use(requireActiveMembership)` i `requireCanonicalFinanceMutation` występują przed pierwszym podrouterem.
 - Odczyt bez automatycznego zapisu rozliczono per gałąź w F.2.
 - Role `preparer` są zaszyte w sześciu miejscach `FinanceHub.tsx:332,346,352,3330,3394,3424`; nie zmieniono ich bez realnego checku capability.
+- `STOP`: §F.5 pkt 2 wymaga komponentowego testu sześciu gałęzi z mockiem rzucającym przy POST/PUT. Kandydat ma audyt źródłowy, ale nie ten dowód montażowy, dlatego F.5 nie jest `DONE`.
 
 ### F.6 — macierz stanów brzegowych (5 kart × 8 stanów)
 
@@ -260,13 +262,124 @@ Deklaracja: **ZASIĘG CZĘŚCIOWY**.
 - Z18: diff dla `tests/setup`, `tests/helpers`, `tests/__mocks__`, `vitest*config` — pusty.
 - Migracje: diff `server/migrations/` — pusty.
 - Flagi: diff wartości domyślnych hooków Finance i `resultsVNextFeatureFlags.ts` — pusty. Stan pozostaje Results KPI/OKR/ROI OFF; Finance Analysis/Baseline/Prediction/Statement OFF, Valuation ON.
-- Z17: brak plików `MyWork`, `Admin`, `superadmin` i `Benefits`; jedyne pliki poza modułami to dozwolone `package.json`, tłumaczenia, strażnik i raport.
+- Z17: brak plików `MyWork`, `Admin`, `superadmin` i `Benefits`; jedyny wynik literalnego filtra to test jednostkowy do dozwolonego strażnika, uzasadniony poniżej.
 - Importy Benefits w `FinanceHub.tsx`: diff pusty; denominator nadal 3.
 - `git diff --check`: PASS po formatowaniu raportu.
 - Strażnik canonical-16: PASS, denominator 16, 9 reachable, 7 qualified gaps; bez zmiany owner verdictów.
 - Porty 4280/4281: nieużyte. Runtime, Railway, push, deploy, merge i flag flips: niewykonane.
 
 ## Wynik dyżuru
+
+### Appendix audytowy — literalne denominatory i komendy
+
+**Licznik 16 pozycji:** `DONE_CURRENT_SHA` 6 (R.1, R.2, F.1, F.2, F.4, F.8) + `PARTIAL/STOP` 5 (R.3, R.8, F.3, F.5, F.7) + `STOP` 1 (F.6) + `STOP_DEPENDENCY` 4 (R.4–R.7) = **16/16 rozliczonych**, nie 16 ukończonych.
+
+**Flagi przed i po — bez zmian:**
+
+| Flaga                     | Przed | Po  |
+| ------------------------- | ----- | --- |
+| Results KPI registry      | OFF   | OFF |
+| Results OKR registry      | OFF   | OFF |
+| Results ROI registry      | OFF   | OFF |
+| Finance Analysis          | OFF   | OFF |
+| Finance Baseline          | OFF   | OFF |
+| Finance Prediction        | OFF   | OFF |
+| Finance Statement Pack V2 | OFF   | OFF |
+| Finance Valuation         | ON    | ON  |
+
+**Baseline przed/po:**
+
+| Test                                                           | Przed    | Po       |
+| -------------------------------------------------------------- | -------- | -------- |
+| `resultsOwnerReviewMode.test.ts`                               | 3/3 PASS | 3/3 PASS |
+| `ResultsKpiScorecardsView.visibility.test.tsx`                 | 1/1 PASS | 1/1 PASS |
+| `demoAcceptanceFlags.test.ts`                                  | 4/4 PASS | 4/4 PASS |
+| `resultsVNextFeatureFlags.navigationPersist.test.ts`           | 7/7 PASS | 7/7 PASS |
+| `verify-release-candidate-bundle.test.mjs` przez `node --test` | 6/6 PASS | 6/6 PASS |
+
+**Wszystkie dotknięte pliki (33):**
+
+```text
+docs/program/waves/WAVE_03_ACCEPTANCE/RESULTS_FINANCE_DAY4_REPORT_2026-08-25.md
+package.json
+public/locales/en/translation.json
+public/locales/pl/translation.json
+scripts/dev/__tests__/verifyCanonical16Bindings.test.mjs
+scripts/dev/verify-canonical-16-module-bindings.mjs
+src/components/Economics/FinanceHub.tsx
+src/components/Economics/FinanceSampleDataBanner.tsx
+src/components/Economics/__tests__/financeDetailBranches.flagOff.test.ts
+src/components/Economics/__tests__/financeDetailBranches.identity.test.ts
+src/components/Economics/__tests__/financeHubBenefitsImports.contract.test.ts
+src/components/Economics/__tests__/financeHubShell.contract.test.ts
+src/components/Economics/__tests__/financeOwnerSampleData.contract.test.tsx
+src/components/Economics/__tests__/financeStatusMapping.test.ts
+src/components/Economics/financeOwnerSampleData.ts
+src/components/Finance/shared/__tests__/financeWorkspaceResolver.table.test.ts
+src/components/Finance/shared/financeWorkspaceResolver.ts
+src/components/Results/resultsOwnerReviewMode.ts
+src/components/ResultsVNext/ResultsKpiRegistryPage.tsx
+src/components/ResultsVNext/ResultsVNextRegistryShell.tsx
+src/components/ResultsVNext/kpiApi.ts
+src/components/ResultsVNext/okr/ResultsOkrHub.tsx
+src/components/ResultsVNext/okr/okrApi.ts
+src/components/ResultsVNext/resultsVNextOwnerSampleData.ts
+src/components/ResultsVNext/roi/ResultsRoiHub.tsx
+src/components/ResultsVNext/roi/roiApi.ts
+src/components/ResultsVNext/roi/roiCaseDetailApi.ts
+src/utils/financeOwnerReviewMode.ts
+tests/components/ResultsVNext/registryShell.sampleBanner.test.tsx
+tests/resultsVnext/flagGateEnumeration.test.ts
+tests/resultsVnext/ownerSampleDataBackdoor.test.ts
+tests/resultsVnext/resultsOwnerReviewProductionGate.test.ts
+tests/unit/finance/confidencePolicy.guard.test.ts
+```
+
+**Pliki współdzielone → konsumenci i wykonany test:**
+
+| Plik współdzielony                                        | Główni konsumenci                         | Dowód konsumentów                                               |
+| --------------------------------------------------------- | ----------------------------------------- | --------------------------------------------------------------- |
+| `package.json` + canonical verifier                       | release/dev scripts                       | 5/5 guard + verifier denominator 16                             |
+| tłumaczenia PL/EN                                         | cały frontend                             | dedykowane testy bannerów + Prettier; pełny build poza zakresem |
+| `FinanceHub.tsx`                                          | EconomicsView, list/detail Finance, smoke | katalogi Economics/Finance + 13 identity cases                  |
+| `financeOwnerSampleData.ts` / `financeOwnerReviewMode.ts` | hook i shell Finance                      | 5/5 sample contract + 4/4 security guard                        |
+| Results owner/sample profile i wspólny shell              | KPI, OKR, ROI                             | 26/26 zmienione testy Results                                   |
+
+**Komenda → wynik:**
+
+| Komenda                                                                                                                                         | Wynik                                                    |
+| ----------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| `node scripts/dev/verify-canonical-16-module-bindings.mjs`                                                                                      | PASS, denominator 16                                     |
+| `npx vitest run` czterech bazowych plików Results                                                                                               | 15/15 PASS                                               |
+| `node --test tests/unit/release/verify-release-candidate-bundle.test.mjs`                                                                       | 6/6 PASS, 99,1 s                                         |
+| `npx vitest run tests/components/ResultsVNext tests/unit/results src/components/Results/__tests__ tests/resultsVnext`                           | 1066 PASS, 5 FAIL, 412 SKIP; 99 plików RealPG setup FAIL |
+| `npx vitest run tests/components/Finance tests/components/Economics src/components/Finance/shared/__tests__ src/components/Economics/__tests__` | 384 PASS, 17 FAIL                                        |
+| `npx vitest run tests/unit/finance`                                                                                                             | 795 PASS, 2 FAIL                                         |
+| dedykowane zmienione/nowe testy kandydata                                                                                                       | 116/116 Vitest PASS + 5/5 node guard PASS                |
+
+**Czerwone ścieżki z pełnych agregatów:**
+
+- Results — 2 testy `ResultsKpiRegistryPage.uiStatePersistence.test.tsx`, 3 testy `resultsFinanceReconciliationService.postmortem.test.ts`; dodatkowo RealPG setup FAIL na brak tabel właściwego schematu. Dwa pliki RealPG widoczne bez frazy w tytule: `kpiInitiativeImpactPerspectivesRoutesRealdb.test.ts`, `kpiScorecardRepositoryRoutesRealdb.test.ts`.
+- Finance komponenty — `useFinanceData.v8-analyses.test.tsx` (4), `DriverPlannerPanelM16.test.tsx` (3), `FinancialStatementImportWizard.fin005-csv-reachability.test.tsx` (4), `FinancialStatementWorkspace.v8-read-seam.test.tsx` (3), `ValuationVisualsPanelM16.test.tsx` (3).
+- Finance unit — `financeFallbackGating.test.ts` (2).
+- Te wyniki są zgodne ze sprawdzonym baseline tylko tam, gdzie baseline wykonano identyczną komendą (`financeFallbackGating` i order-dependent `useFinanceData`). Dla pozostałych czerwonych agregatów pochodzenie od konkretnego wcześniejszego commitu jest `NOT PROVEN`; nie są przedstawiane jako udowodnione regresje zastane ani naprawiane poza zakresem.
+
+**Cztery literalne dowody Bloku 4:**
+
+```text
+$ git diff --name-only ca292730...HEAD | grep -E "tests/setup|tests/helpers|tests/__mocks__|vitest.*config"
+<PUSTO>
+$ git diff --name-only ca292730...HEAD | grep -E "^server/migrations/"
+<PUSTO>
+$ git diff ca292730...HEAD -- src/hooks/useFinance*WorkspaceFlag*.ts src/components/ResultsVNext/resultsVNextFeatureFlags.ts | grep -E "^[+-].*defaultValue|^[+-].*return (true|false)"
+<PUSTO>
+$ git diff --name-only ca292730...HEAD | grep -vE "<literalny dozwolony wzór Z17 z instrukcji>"
+scripts/dev/__tests__/verifyCanonical16Bindings.test.mjs
+```
+
+Wynik Z17 jest uzasadniony: to lokalny test dokładnie do `scripts/dev/verify-canonical-16-module-bindings.mjs`; nie dotyka runtime'u ani innego modułu. Nazwa katalogu testowego nie mieści się wyłącznie w literalnym regexie instrukcji.
+
+**Jawnie nieuruchomione / nieudowodnione:** dedykowany Finance RealPG na nowym bezpiecznym schemacie, browser E2E, cold restart/readback, console/network, owner acceptance, staging/Railway, pełny globalny Vitest, pełny TSC/build. F.7 i F.8 zostały uzupełnione w końcowym commicie raportowym, a nie w commitach pozycji; to odstępstwo od „raport na bieżąco” jest jawne i nie zostało przepisane historycznie.
 
 Status końcowy: `PARTIAL / STOP GATES PRESERVED` oraz `LOCAL COMMITS / NO PUSH / NO DEPLOY`.
 
