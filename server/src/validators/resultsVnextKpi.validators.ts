@@ -69,6 +69,16 @@ export const KpiMeasurementParamsSchema = z.object({
   measurementId: z.string().uuid(),
 });
 
+export const KpiTrendQuerySchema = z
+  .object({
+    window: z.coerce.number().int().positive().max(60).optional(),
+    periodStart: isoDateTimeString.optional(),
+    periodEnd: isoDateTimeString.optional(),
+  })
+  .refine((value) => !(value.window !== undefined && (value.periodStart || value.periodEnd)), {
+    message: 'window cannot be combined with periodStart or periodEnd',
+  });
+
 // ==========================================
 // POST /api/vnext/results/kpi — createKpiDraft
 // ==========================================

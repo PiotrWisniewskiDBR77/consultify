@@ -129,6 +129,7 @@ import {
   KpiIdParamsSchema,
   KpiLifecycleActionSchema,
   KpiMeasurementParamsSchema,
+  KpiTrendQuerySchema,
   ListKpisQuerySchema,
   ListMeasurementsQuerySchema,
   RecordMeasurementSchema,
@@ -137,6 +138,7 @@ import {
   SubmitDefinitionSchema,
   VerifyMeasurementSchema,
 } from '../../validators/resultsVnextKpi.validators.js';
+import { buildKpiTrend } from '../../services/resultsVnext/kpi/kpiTrend.js';
 
 const router = Router();
 
@@ -420,6 +422,42 @@ router.get(
       res.status(200).json({ kpis });
     } catch (err) {
       handleKpiRouteError(res, err, 'listKpis');
+    }
+  }
+);
+
+router.get(
+  '/:kpiId/trend',
+  validateParams(KpiIdParamsSchema),
+  validateQuery(KpiTrendQuerySchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const kpiId = req.params.kpiId;
+      const query = req.query as unknown as import('zod').infer<typeof KpiTrendQuerySchema>;
+      const version = await getKpiCurrentDefinitionVersion({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        kpiId,
+      });
+      if (!version) {
+        res.status(404).json({ error: 'KPI not found', code: 'NOT_FOUND' });
+        return;
+      }
+      const measurements = await listMeasurements({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        kpiId,
+        periodStart: query.periodStart,
+        periodEnd: query.periodEnd,
+        includeSuperseded: false,
+        limit: query.window ?? 12,
+        offset: 0,
+      });
+      res.status(200).json(buildKpiTrend({ kpiId, version, measurements }));
+    } catch (err) {
+      handleKpiRouteError(res, err, 'getKpiTrend');
     }
   }
 );
