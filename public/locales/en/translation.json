@@ -5245,6 +5245,8 @@
       "labelField": "Label",
       "stateField": "State",
       "priorityField": "Priority",
+      "ownerField": "Owner",
+      "semanticTypeField": "Semantic type",
       "openButton": "Open",
       "sections": {
         "basics": "Basics",

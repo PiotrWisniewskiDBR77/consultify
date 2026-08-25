@@ -4568,6 +4568,8 @@
       "labelField": "Etykieta",
       "stateField": "Stan",
       "priorityField": "Priorytet",
+      "ownerField": "Właściciel",
+      "semanticTypeField": "Typ semantyczny",
       "openButton": "Otwórz",
       "sections": {
         "basics": "Podstawowe",

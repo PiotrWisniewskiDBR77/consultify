@@ -286,8 +286,22 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
             onChange={(e) => setDraft({ ...draft, priority: Number(e.target.value) })}
             onMouseUp={() => void commit({ priority: draft.priority })}
           />
-          <p className="text-sm">{safeText(draft.owner)}</p>
-          <p className="text-sm">{safeText(draft.semanticType)}</p>
+          {/* FIX-12 addendum (Day 3 layer-2 acceptance): owner/semanticType
+              rendered as two bare, unlabeled <p> tags — a value with no
+              visible field name. Labeled to match every other field in this
+              section (Etykieta/Stan/Priorytet all have a label). */}
+          <p className="text-sm">
+            <span className="text-c-text-secondary">
+              {t('myWork.ideaInspector.ownerField', 'Właściciel')}:
+            </span>{' '}
+            {safeText(draft.owner)}
+          </p>
+          <p className="text-sm">
+            <span className="text-c-text-secondary">
+              {t('myWork.ideaInspector.semanticTypeField', 'Typ semantyczny')}:
+            </span>{' '}
+            {safeText(draft.semanticType)}
+          </p>
         </section>
         <section className={sectionClasses}>
           <CountHeading
