@@ -94,7 +94,9 @@ describe('Notebook block-specific configuration', () => {
         TableHeader,
         TableCell,
       ],
-      content: '<table><tbody><tr><td><p>A</p></td></tr></tbody></table>',
+      // §27-exempt: Tiptap doc-model HTML fixture seeding the notebook's embedded table block
+      // extension (editor content, not an app list screen) — docs/ui-standards/DOKTRYNA_TABELA_NIE_EXCEL.md §2.
+      content: '<table><tbody><tr><td><p>A</p></td></tr></tbody></table>', // §27-exempt
     });
     let textPosition = 1;
     editor.state.doc.descendants((node, pos) => {
