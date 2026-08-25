@@ -27,7 +27,12 @@ describe('Inbox empty state no longer claims an unverifiable success (MYW-PHOTO-
   });
 
   it('uses the real i18n keys for the truly-empty inbox copy, not a hardcoded string', () => {
-    expect(source).toContain("t('myWork.inboxContent.inboxIsEmptyZero'");
-    expect(source).toContain("'myWork.inboxContent.everythingProcessedGreatJob'");
+    // Keys renamed during the codex/mod07-photo-20260825 merge (see
+    // InboxContent.photo002.contract.test.ts) to drop the stale
+    // "everythingProcessedGreatJob" name now that the copy no longer claims
+    // a success — the honest fact-plus-invitation wording lives under
+    // `noItemsInInbox` / `newItemsWillAppearHere` instead.
+    expect(source).toContain("t('myWork.inboxContent.noItemsInInbox'");
+    expect(source).toContain("'myWork.inboxContent.newItemsWillAppearHere'");
   });
 });

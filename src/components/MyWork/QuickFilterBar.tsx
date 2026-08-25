@@ -67,33 +67,50 @@ export const QuickFilterBar: React.FC<QuickFilterBarProps> = ({
         {filters.map((filter) => {
           const isActive = activeFilter === filter.key;
           const Icon = filter.icon;
-          const hasItems = filter.count === undefined || filter.count > 0;
+          // MYW-PHOTO-006 (P2): a filter reporting a zero count is a valid,
+          // clickable state ("available, currently nothing matches") — NOT
+          // the same thing as a locked/disabled control. Before this fix
+          // both were rendered identically (`disabled` + `opacity-50
+          // cursor-not-allowed`), so the owner couldn't tell "nothing here
+          // right now" from "this doesn't work". `isZero` now gets its own
+          // muted-but-interactive treatment instead of borrowing the
+          // disabled look, and the button stays enabled so clicking it still
+          // navigates to that (honestly empty) filtered view.
+          const isZero = filter.count === 0;
 
           return (
             <button
               key={filter.key}
+              type="button"
               onClick={() => onFilterChange(filter.key)}
               aria-pressed={isActive}
-              data-count-state={hasItems ? 'available' : 'available-zero'}
+              data-count-state={isZero ? 'available-zero' : 'available'}
               className={`
                                 flex items-center gap-1 h-7 px-2.5 rounded-full text-[11px] font-medium
-                                transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus
+                                transition-all duration-150
+                                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900
                                 ${
                                   isActive
                                     ? 'bg-slate-700 text-white dark:bg-slate-600 shadow-sm'
-                                    : hasItems
-                                      ? 'bg-white dark:bg-navy-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-white/20'
-                                      : 'bg-white dark:bg-navy-800 text-slate-400 dark:text-slate-600 border border-dashed border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-white/20'
+                                    : isZero
+                                      ? 'bg-white/60 dark:bg-navy-800/40 text-slate-400 dark:text-slate-500 border border-dashed border-slate-200 dark:border-navy-700/70 hover:border-slate-300 dark:hover:border-white/20 hover:text-slate-500 dark:hover:text-slate-400'
+                                      : 'bg-white dark:bg-navy-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-white/20'
                                 }
                             `}
             >
               <Icon size={11} />
               <span>{filter.label}</span>
-              {filter.count !== undefined && filter.count > 0 && (
+              {filter.count !== undefined && (
                 <span
                   className={`
                                     px-1 min-w-[16px] text-center text-[10px] rounded-full
-                                    ${isActive ? 'bg-white/20' : 'bg-slate-100 dark:bg-white/10'}
+                                    ${
+                                      isActive
+                                        ? 'bg-white/20'
+                                        : isZero
+                                          ? 'bg-transparent text-slate-400 dark:text-slate-500'
+                                          : 'bg-slate-100 dark:bg-white/10'
+                                    }
                                 `}
                 >
                   {filter.count}
