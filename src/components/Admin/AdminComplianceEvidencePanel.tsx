@@ -9,10 +9,11 @@ import {
   getRetentionSchedules,
 } from '../../services/enterpriseComplianceApi';
 import { StandardTable, type TableColumn, type TableRow } from '../standard/StandardTable';
-
+import { useTranslation } from 'react-i18next';
 const button =
   'inline-flex items-center gap-2 rounded-lg border border-c-border px-3 py-2 text-sm font-medium text-c-text hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 ring-[color:var(--c-focus)] disabled:opacity-50';
 export const AdminComplianceEvidencePanel: React.FC = () => {
+  const { t } = useTranslation();
   const [data, setData] = useState<any>({
     logs: [],
     stats: null,
@@ -30,7 +31,9 @@ export const AdminComplianceEvidencePanel: React.FC = () => {
     setError(null);
     try {
       const [logs, stats, compliance, residency, retention, aiPolicy] = await Promise.all([
-        Api.getTenantAdminAuditLogs({ limit: 50 }),
+        Api.getTenantAdminAuditLogs({
+          limit: 50,
+        }),
         Api.getTenantAdminAuditStats(),
         Api.getAdminComplianceSummary(),
         getDataResidency(),
@@ -47,7 +50,13 @@ export const AdminComplianceEvidencePanel: React.FC = () => {
       });
       setFreshness(new Date().toLocaleString());
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Nie udało się pobrać dowodów zgodności.');
+      setError(
+        e instanceof Error
+          ? e.message
+          : t('admin.audit.compliance-evidence.day2Auto.text1', {
+              defaultValue: 'Nie udało się pobrać dowodów zgodności.',
+            })
+      );
     } finally {
       setLoading(false);
     }
@@ -65,42 +74,84 @@ export const AdminComplianceEvidencePanel: React.FC = () => {
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-      toast.success('Eksport audytu gotowy');
+      toast.success(
+        t('admin.audit.compliance-evidence.day2Auto.text2', {
+          defaultValue: 'Eksport audytu gotowy',
+        })
+      );
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Eksport nie powiódł się.');
+      toast.error(
+        e instanceof Error
+          ? e.message
+          : t('admin.audit.compliance-evidence.day2Auto.text3', {
+              defaultValue: 'Eksport nie powiódł się.',
+            })
+      );
     } finally {
       setExporting(false);
     }
   };
   const rows = useMemo<TableRow[]>(
-    () => data.logs.map((log: any, index: number) => ({ ...log, id: log.id ?? `log-${index}` })),
+    () =>
+      data.logs.map((log: any, index: number) => ({
+        ...log,
+        id: log.id ?? `log-${index}`,
+      })),
     [data.logs]
   );
   const columns = useMemo<TableColumn[]>(
     () => [
-      { id: 'action', label: 'Zdarzenie' },
-      { id: 'actor', label: 'Aktor' },
-      { id: 'risk', label: 'Ryzyko' },
-      { id: 'createdAt', label: 'Czas', render: (row) => row.createdAt ?? row.created_at ?? '—' },
+      {
+        id: 'action',
+        label: 'Zdarzenie',
+      },
+      {
+        id: 'actor',
+        label: 'Aktor',
+      },
+      {
+        id: 'risk',
+        label: t('admin.audit.compliance-evidence.day2Auto.text4', {
+          defaultValue: 'Ryzyko',
+        }),
+      },
+      {
+        id: 'createdAt',
+        label: 'Czas',
+        render: (row) => row.createdAt ?? row.created_at ?? '—',
+      },
     ],
     []
   );
   const cards = [
     {
       label: 'Rezydencja danych',
-      value: data.residency?.dataResidencyRegion ?? 'Nie ustawiono',
+      value:
+        data.residency?.dataResidencyRegion ??
+        t('admin.audit.compliance-evidence.day2Auto.text5', {
+          defaultValue: 'Nie ustawiono',
+        }),
       href: '/admin/command/compliance-posture?tab=residency',
       source: '/enterprise-compliance/data-residency',
     },
     {
       label: 'Harmonogramy retencji',
-      value: `${data.retention.length} harmonogramów`,
+      value: t('admin.audit.compliance-evidence.day2Auto.text6', {
+        v0: data.retention.length,
+        defaultValue: '{{v0}} harmonogramów',
+      }),
       href: '/admin/command/compliance-posture?tab=retention',
       source: '/enterprise-compliance/retention/schedules',
     },
     {
-      label: 'Polityka AI',
-      value: data.aiPolicy?.requiredCitationMode ?? 'Nie ustawiono',
+      label: t('admin.audit.compliance-evidence.day2Auto.text7', {
+        defaultValue: 'Polityka AI',
+      }),
+      value:
+        data.aiPolicy?.requiredCitationMode ??
+        t('admin.audit.compliance-evidence.day2Auto.text5', {
+          defaultValue: 'Nie ustawiono',
+        }),
       href: '/admin/command/compliance-posture?tab=ai-policy',
       source: '/enterprise-compliance/ai-policy',
     },
@@ -110,11 +161,25 @@ export const AdminComplianceEvidencePanel: React.FC = () => {
       <section className="rounded-2xl border border-c-border bg-c-surface p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold text-c-text">Dowody zgodności</h2>
+            <h2 className="text-lg font-semibold text-c-text">
+              {t('admin.audit.compliance-evidence.day2Auto.text8', {
+                defaultValue: 'Dowody zgodności',
+              })}
+            </h2>
             <p className="mt-1 text-sm text-c-text-secondary">
-              Niezmienialny dla ról klienta, tylko-do-odczytu widok dowodów i eksportów.
+              {t('admin.audit.compliance-evidence.day2Auto.text9', {
+                defaultValue:
+                  'Niezmienialny dla ról klienta, tylko-do-odczytu widok dowodów i eksportów.',
+              })}
             </p>
-            {freshness && <p className="mt-1 text-xs text-c-text-muted">Świeżość: {freshness}</p>}
+            {freshness && (
+              <p className="mt-1 text-xs text-c-text-muted">
+                {t('admin.audit.compliance-evidence.day2Auto.text10', {
+                  defaultValue: 'Świeżość:',
+                })}
+                {freshness}
+              </p>
+            )}
           </div>
           <button className={button} disabled={exporting} onClick={() => void exportCsv()}>
             <Download className="h-4 w-4" /> Eksportuj CSV
@@ -131,15 +196,32 @@ export const AdminComplianceEvidencePanel: React.FC = () => {
       )}
       <div className="grid gap-3 sm:grid-cols-3">
         {[
-          ['Łącznie zdarzeń', data.stats?.totalLogs ?? 0],
-          ['Nierozwiązane', data.stats?.unresolvedCount ?? 0],
-          ['Wysokie ryzyko', data.stats?.highRiskCount ?? 0],
+          [
+            t('admin.audit.compliance-evidence.day2Auto.text11', {
+              defaultValue: 'Łącznie zdarzeń',
+            }),
+            data.stats?.totalLogs ?? 0,
+          ],
+          [
+            t('admin.audit.compliance-evidence.day2Auto.text12', {
+              defaultValue: 'Nierozwiązane',
+            }),
+            data.stats?.unresolvedCount ?? 0,
+          ],
+          [
+            t('admin.audit.compliance-evidence.day2Auto.text13', {
+              defaultValue: 'Wysokie ryzyko',
+            }),
+            data.stats?.highRiskCount ?? 0,
+          ],
         ].map(([label, value]) => (
           <div key={label} className="rounded-xl border border-c-border bg-c-surface p-4">
             <p className="text-xs text-c-text-secondary">{label}</p>
             <p className="mt-1 text-xl font-semibold text-c-text">{value}</p>
             <p className="mt-2 text-[10px] text-c-text-muted">
-              Źródło: GET /api/admin/audit-logs/stats
+              {t('admin.audit.compliance-evidence.day2Auto.text14', {
+                defaultValue: 'Źródło: GET /api/admin/audit-logs/stats',
+              })}
             </p>
           </div>
         ))}
@@ -153,8 +235,12 @@ export const AdminComplianceEvidencePanel: React.FC = () => {
           onRetry={() => void load()}
           empty={{
             icon: ShieldCheck,
-            title: 'Brak zdarzeń audytowych',
-            description: 'Nie zarejestrowano jeszcze dowodów dla tej organizacji.',
+            title: t('admin.audit.compliance-evidence.day2Auto.text15', {
+              defaultValue: 'Brak zdarzeń audytowych',
+            }),
+            description: t('admin.audit.compliance-evidence.day2Auto.text16', {
+              defaultValue: 'Nie zarejestrowano jeszcze dowodów dla tej organizacji.',
+            }),
           }}
           persistKey="admin.complianceEvidence"
         />
@@ -169,7 +255,10 @@ export const AdminComplianceEvidencePanel: React.FC = () => {
             <p className="text-xs text-c-text-secondary">{card.label}</p>
             <p className="mt-1 font-semibold text-c-text">{card.value}</p>
             <p className="mt-2 text-[10px] text-c-text-muted">
-              Źródło: GET /api/admin{card.source}
+              {t('admin.audit.compliance-evidence.day2Auto.text17', {
+                defaultValue: 'Źródło: GET /api/admin',
+              })}
+              {card.source}
             </p>
           </Link>
         ))}

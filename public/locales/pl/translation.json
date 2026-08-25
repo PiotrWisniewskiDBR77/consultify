@@ -18826,6 +18826,62 @@
           "text28": "Powód: {{v0}}. Operacja zmieni runtime organizacji i zostanie zapisana w historii Prompt OS."
         }
       }
+    },
+    "audit": {
+      "export-history": {
+        "day2Auto": {
+          "text1": "Eksport",
+          "text2": "Historia eksportów",
+          "text3": "Paragony eksportów dziennika audytu wykonanych przez administratorów organizacji.",
+          "text4": "Brak eksportów",
+          "text5": "Nie zapisano jeszcze paragonu eksportu dziennika audytu."
+        }
+      },
+      "integrity": {
+        "day2Auto": {
+          "text1": "Integralność dziennika audytu",
+          "text2": "Dowody dostępne obecnie — bez deklarowania nieistniejącej kryptografii.",
+          "text3": "Ładowanie statystyk audytu…",
+          "text4": "Zdarzenia: {{value}}",
+          "text5": "Nierozwiązane: {{value}}",
+          "text6": "Wysokie ryzyko: {{value}}",
+          "text7": "Niezmienność dla ról klienta",
+          "text8": "Interfejs administracji klienta udostępnia odczyt i eksport dziennika; nie udostępnia endpointu modyfikowania ani usuwania zdarzeń audytowych.",
+          "text9": "Łańcuch haszy nie jest jeszcze prowadzony. Integralność opiera się dziś na kontroli dostępu (brak ścieżki zapisu dla ról klienta), nie na dowodzie kryptograficznym.",
+          "text10": "Weryfikacja kryptograficzna"
+        }
+      },
+      "compliance-evidence": {
+        "day2Auto": {
+          "text1": "Nie udało się pobrać dowodów zgodności.",
+          "text2": "Eksport audytu gotowy",
+          "text3": "Eksport nie powiódł się.",
+          "text4": "Ryzyko",
+          "text5": "Nie ustawiono",
+          "text6": "{{v0}} harmonogramów",
+          "text7": "Polityka AI",
+          "text8": "Dowody zgodności",
+          "text9": "Niezmienialny dla ról klienta, tylko-do-odczytu widok dowodów i eksportów.",
+          "text10": "Świeżość:",
+          "text11": "Łącznie zdarzeń",
+          "text12": "Nierozwiązane",
+          "text13": "Wysokie ryzyko",
+          "text14": "Źródło: GET /api/admin/audit-logs/stats",
+          "text15": "Brak zdarzeń audytowych",
+          "text16": "Nie zarejestrowano jeszcze dowodów dla tej organizacji.",
+          "text17": "Źródło: GET /api/admin"
+        }
+      },
+      "legal-hold": {
+        "day2Auto": {
+          "text1": "Stan faktycznego wstrzymania dla całej organizacji — tylko odczyt.",
+          "text2": "Ładowanie stanu legal hold…",
+          "text3": "Wstrzymanie aktywne",
+          "text4": "Gdy aktywne, blokowane są: eksport danych oraz usunięcie organizacji.",
+          "text5": "Sprawy objęte wstrzymaniem",
+          "text6": "Rejestr spraw nie jest jeszcze prowadzony; wstrzymanie działa dziś na poziomie całej organizacji."
+        }
+      }
     }
   },
   "access": {

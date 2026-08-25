@@ -17980,6 +17980,62 @@
           "text28": "Reason: {{v0}}. Operacja zmieni runtime organization and zostanie zapisana w historii Prompt OS."
         }
       }
+    },
+    "audit": {
+      "export-history": {
+        "day2Auto": {
+          "text1": "Export",
+          "text2": "History Exportów",
+          "text3": "Paragony Exportów dziennika audytu wykonanych przez administratorów organization.",
+          "text4": "No Exportów",
+          "text5": "Nie zapisano jeszcze paragonu Exportu dziennika audytu."
+        }
+      },
+      "integrity": {
+        "day2Auto": {
+          "text1": "Integrity dziennika audytu",
+          "text2": "Evidence Accessne obecnie — bez deklarowania nieistniejącej kryptografii.",
+          "text3": "Loading statystyk audytu…",
+          "text4": "Events: {{value}}",
+          "text5": "Unresolved: {{value}}",
+          "text6": "High risk: {{value}}",
+          "text7": "Niezmienność for ról klienta",
+          "text8": "Interfejs administracji klienta uAccessnia odczyt and Export dziennika; nie uAccessnia endpointu modyfikowania ani usuwania zdarzeń audytowych.",
+          "text9": "A hash chain is not currently maintained. Integrity presently relies on access controls (client roles have no write path), not on cryptographic proof.",
+          "text10": "Cryptographic verification"
+        }
+      },
+      "compliance-evidence": {
+        "day2Auto": {
+          "text1": "Failed to pobrać dowodów zgodności.",
+          "text2": "Export audytu gotowy",
+          "text3": "Export nie powiódł się.",
+          "text4": "Risk",
+          "text5": "Nie ustawiono",
+          "text6": "{{v0}} harmonogramów",
+          "text7": "Polityka AI",
+          "text8": "Evidence zgodności",
+          "text9": "Niezmienialny for ról klienta, tylko-do-odczytu widok dowodów and Exportów.",
+          "text10": "Świeżość:",
+          "text11": "Łącznie zdarzeń",
+          "text12": "Nierozwiązane",
+          "text13": "Wysokie Risk",
+          "text14": "Źródło: GET /api/admin/audit-logs/stats",
+          "text15": "No zdarzeń audytowych",
+          "text16": "Nie zarejestrowano jeszcze dowodów for this organization.",
+          "text17": "Źródło: GET /api/admin"
+        }
+      },
+      "legal-hold": {
+        "day2Auto": {
+          "text1": "Stan faktycznego wstrzymania for całej organization — tylko odczyt.",
+          "text2": "Loading stanu legal hold…",
+          "text3": "Wstrzymanie Active",
+          "text4": "Gdy Active, blokowane są: Export danych oraz usunięcie organization.",
+          "text5": "Sprawy objęte wstrzymaniem",
+          "text6": "Rejestr spraw nie jest jeszcze prowadzony; wstrzymanie działa dziś na poziomie całej organization."
+        }
+      }
     }
   },
   "access": {

@@ -1,7 +1,9 @@
 import { Scale } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { getLegalHold, type LegalHoldState } from '../../services/adminLegalHoldApi';
+import { useTranslation } from 'react-i18next';
 export const AdminLegalHoldPanel: React.FC = () => {
+  const { t } = useTranslation();
   const [data, setData] = useState<LegalHoldState | null>(null),
     [loading, setLoading] = useState(true),
     [error, setError] = useState<string | null>(null);
@@ -16,7 +18,9 @@ export const AdminLegalHoldPanel: React.FC = () => {
       <div>
         <h2 className="text-lg font-semibold text-c-text">Legal hold</h2>
         <p className="text-sm text-c-text-secondary">
-          Stan faktycznego wstrzymania dla całej organizacji — tylko odczyt.
+          {t('admin.audit.legal-hold.day2Auto.text1', {
+            defaultValue: 'Stan faktycznego wstrzymania dla całej organizacji — tylko odczyt.',
+          })}
         </p>
       </div>
       {error && (
@@ -29,26 +33,40 @@ export const AdminLegalHoldPanel: React.FC = () => {
       )}
       {loading ? (
         <div role="status" className="py-8 text-center text-sm text-c-text-muted">
-          Ładowanie stanu legal hold…
+          {t('admin.audit.legal-hold.day2Auto.text2', {
+            defaultValue: 'Ładowanie stanu legal hold…',
+          })}
         </div>
       ) : (
         <section className="rounded-xl border border-c-border p-5">
           <div className="flex items-center gap-2">
             <Scale className="h-5 w-5" />
             <strong>
-              {data?.legalHoldEnabled ? 'Wstrzymanie aktywne' : 'Wstrzymanie nieaktywne'}
+              {data?.legalHoldEnabled
+                ? t('admin.audit.legal-hold.day2Auto.text3', {
+                    defaultValue: 'Wstrzymanie aktywne',
+                  })
+                : 'Wstrzymanie nieaktywne'}
             </strong>
           </div>
           <p className="mt-2 text-sm text-c-text-secondary">
-            Gdy aktywne, blokowane są: eksport danych oraz usunięcie organizacji.
+            {t('admin.audit.legal-hold.day2Auto.text4', {
+              defaultValue: 'Gdy aktywne, blokowane są: eksport danych oraz usunięcie organizacji.',
+            })}
           </p>
         </section>
       )}
       <section className="rounded-xl border border-c-border p-5">
-        <h3 className="font-semibold text-c-text">Sprawy objęte wstrzymaniem</h3>
+        <h3 className="font-semibold text-c-text">
+          {t('admin.audit.legal-hold.day2Auto.text5', {
+            defaultValue: 'Sprawy objęte wstrzymaniem',
+          })}
+        </h3>
         <p className="mt-2 text-sm text-c-text-secondary">
-          Rejestr spraw nie jest jeszcze prowadzony; wstrzymanie działa dziś na poziomie całej
-          organizacji.
+          {t('admin.audit.legal-hold.day2Auto.text6', {
+            defaultValue:
+              'Rejestr spraw nie jest jeszcze prowadzony; wstrzymanie działa dziś na poziomie całej organizacji.',
+          })}
         </p>
       </section>
     </div>

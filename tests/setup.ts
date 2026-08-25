@@ -2,6 +2,7 @@ import '@testing-library/jest-dom';
 import { beforeAll, vi, beforeEach } from 'vitest';
 import { mockLLMApi } from './__mocks__/llmApi.js';
 import { setupAutoCleanup } from './helpers/testCleanup';
+import plTranslations from '../public/locales/pl/translation.json';
 
 // Setup automatic cleanup for all tests
 setupAutoCleanup();
@@ -57,6 +58,11 @@ vi.mock('react-i18next', () => {
   // keep memory usage bounded across the entire test run.
   const LANGS = new Set(['en', 'pl', 'de', 'fr', 'es', 'it', 'ja', 'zh']);
   const RETURN_OBJECTS_LEAF = '__i18n__';
+  const resolvePolishTranslation = (key: string): unknown =>
+    key.split('.').reduce<unknown>((value, segment) => {
+      if (!value || typeof value !== 'object') return undefined;
+      return (value as Record<string, unknown>)[segment];
+    }, plTranslations);
 
   const returnObjectsProxy: any = new Proxy(Object.create(null), {
     get(_target, prop: any) {
@@ -88,18 +94,18 @@ vi.mock('react-i18next', () => {
     if (typeof options === 'string') return options;
     if (options?.returnObjects) return returnObjectsProxy;
     if (options && typeof options === 'object') {
-      let result = options.defaultValue || key;
+      let result = resolvePolishTranslation(key) || options.defaultValue || key;
       Object.keys(options).forEach((optKey) => {
         if (optKey !== 'defaultValue' && optKey !== 'returnObjects') {
           result = String(result).replace(
-            new RegExp(`\\{${optKey}\\}`, 'g'),
+            new RegExp(`\\{\\{?${optKey}\\}?\\}`, 'g'),
             String(options[optKey])
           );
         }
       });
       return result;
     }
-    return key;
+    return resolvePolishTranslation(key) || key;
   };
 
   return {
