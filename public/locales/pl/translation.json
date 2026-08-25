@@ -10350,6 +10350,31 @@
             "interventions": "Interwencje",
             "notVerified": "NOT_VERIFIED"
           }
+        },
+        "generator": {
+          "tab": "Zrób raport",
+          "title": "Utwórz raport Execution",
+          "loading": "Wczytywanie generatora raportu…",
+          "error": "Generator raportu jest niedostępny",
+          "context": "Kontekst raportu",
+          "runId": "Identyfikator uruchomienia",
+          "definition": "Opublikowana definicja",
+          "select": "Wybierz",
+          "purpose": "Cel",
+          "audience": "Audytorium",
+          "historyStart": "Początek okresu historycznego",
+          "historyEnd": "Koniec okresu historycznego",
+          "asOf": "Osobny znacznik as-of",
+          "reportWeek": "Tydzień raportowy",
+          "forecast": "Horyzont prognozy (tygodnie)",
+          "scope": "Autoryzowana referencja zakresu",
+          "validation": "Walidacja",
+          "sourcesWarning": "Dowody źródłowe dołącza nadzorowany workflow runtime; pusty zestaw źródeł nie może zostać zwalidowany ani opublikowany. Tydzień raportowy, horyzont prognozy i wybór sekcji są tylko kontekstem preflight, ponieważ runtime-v1 nie ma dla nich pól kontraktowych (BRAK_API).",
+          "createDraft": "Utwórz nadzorowany szkic",
+          "createError": "Nie udało się utworzyć szkicu",
+          "openReports": "Otwarte raporty",
+          "openCount": "Otwarte zakładki raportów",
+          "export": "Eksport"
         }
       }
     },

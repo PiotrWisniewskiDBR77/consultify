@@ -10998,6 +10998,31 @@
             "interventions": "Interventions",
             "notVerified": "NOT_VERIFIED"
           }
+        },
+        "generator": {
+          "tab": "Create report",
+          "title": "Create Execution report",
+          "loading": "Loading report generator…",
+          "error": "Report generator is unavailable",
+          "context": "Report context",
+          "runId": "Report run ID",
+          "definition": "Published definition",
+          "select": "Select",
+          "purpose": "Purpose",
+          "audience": "Audience",
+          "historyStart": "Historical period start",
+          "historyEnd": "Historical period end",
+          "asOf": "Separate as-of timestamp",
+          "reportWeek": "Reporting week",
+          "forecast": "Forecast horizon (weeks)",
+          "scope": "Authorized scope reference",
+          "validation": "Validation",
+          "sourcesWarning": "Source evidence is attached by the governed runtime workflow; an empty source set cannot validate or publish. Reporting week, forecast horizon and section selection are preflight context only because runtime-v1 has no contract fields for them (BRAK_API).",
+          "createDraft": "Create governed draft",
+          "createError": "Draft creation failed",
+          "openReports": "Open reports",
+          "openCount": "Open report tabs",
+          "export": "Export"
         }
       }
     },

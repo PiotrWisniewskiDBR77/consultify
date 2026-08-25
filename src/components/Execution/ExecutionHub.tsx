@@ -124,6 +124,7 @@ import { ExecutionManagementView } from './ExecutionManagementView';
 import { normalizeExecutionArrayEnvelope } from './executionPayloadGuards';
 import { ControlLoopReport } from './reports-intelligence/ControlLoopReport';
 import { ResourcesCapacityReport } from './reports-intelligence/ResourcesCapacityReport';
+import { UnifiedExecutionReportGenerator } from './reports-intelligence/UnifiedExecutionReportGenerator';
 import { WorkIntelligenceReport } from './reports-intelligence/WorkIntelligenceReport';
 import {
   buildReportMarkdown,
@@ -2080,6 +2081,22 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       type: 'report',
       subType: 'control-intelligence',
       name: t('execution.reports.intelligence.control.tab', 'Control report'),
+      status: 'DRAFT',
+    };
+    setOpenDocuments((current) =>
+      current.some((item) => item.id === docId) ? current : [...current, doc]
+    );
+    setActiveDocumentId(docId);
+  }, [execReportsIntelligenceEnabled, t]);
+
+  const openUnifiedExecutionReportGenerator = useCallback(() => {
+    if (!execReportsIntelligenceEnabled) return;
+    const docId = 'execution-intelligence:generator';
+    const doc: OpenDocument = {
+      id: docId,
+      type: 'report',
+      subType: 'unified-generator',
+      name: t('execution.reports.intelligence.generator.tab', 'Create report'),
       status: 'DRAFT',
     };
     setOpenDocuments((current) =>
@@ -5331,6 +5348,12 @@ Please return:
       if (execReportsIntelligenceEnabled && activeDocumentId === 'execution-intelligence:control') {
         return <ControlLoopReport />;
       }
+      if (
+        execReportsIntelligenceEnabled &&
+        activeDocumentId === 'execution-intelligence:generator'
+      ) {
+        return <UnifiedExecutionReportGenerator />;
+      }
       if (activeDocumentId.startsWith('report:')) {
         const reportId = activeDocumentId.replace('report:', '');
         const report = enrichedReportCatalog.find((r) => r.id === reportId);
@@ -5759,6 +5782,14 @@ Please return:
                       },
                     ]
                   : []),
+                ...(execReportsIntelligenceEnabled && activeTab === 'reports'
+                  ? [
+                      {
+                        id: 'unified-execution-report-generator',
+                        label: t('execution.reports.intelligence.generator.tab', 'Create report'),
+                      },
+                    ]
+                  : []),
               ]
         }
         activeChip={activeTab === 'list' ? null : (canonicalMenu3Preset[activeTab] ?? null)}
@@ -5773,6 +5804,10 @@ Please return:
           }
           if (id === 'control-intelligence-report') {
             openControlIntelligenceReport();
+            return;
+          }
+          if (id === 'unified-execution-report-generator') {
+            openUnifiedExecutionReportGenerator();
             return;
           }
           setCanonicalMenu3Preset((current) => ({ ...current, [activeTab]: id }));

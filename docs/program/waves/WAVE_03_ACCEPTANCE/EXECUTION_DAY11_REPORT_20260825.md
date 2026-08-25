@@ -95,15 +95,15 @@ kontrakt modułu, rejestr decyzji, instrukcja oraz kod w izolowanym worktree.
 
 ## Pozycje — tabela zbiorcza
 
-| Pozycja  | Zakres                         | Status               | Commit             | Testy                           | Dowód OFF                                                 | Zrzut             | Uwagi                                                                                                    |
-| -------- | ------------------------------ | -------------------- | ------------------ | ------------------------------- | --------------------------------------------------------- | ----------------- | -------------------------------------------------------------------------------------------------------- |
-| E.0      | flaga + mapa delty + dowód OFF | ZROBIONE_WG_DoD      | bieżący commit E.0 | własne 4/4 + zastane 11/11 PASS | PASS: obecny rejestr, brak nowej powierzchni, 0 requestów | kontrolny harness | Jedna flaga, default OFF także demo; realny czytnik runtime-v1 przy ON.                                  |
-| E.1      | Work Intelligence Report       | CZĘŚCIOWO / BRAK_API | bieżący commit E.1 | własne 6/6 + T.2 5/5 PASS       | wspólny T.2 PASS                                          | Blok 5            | 9 sekcji, 8 KPI, drill-down i partial failure; historia/BSC/wagi pozostają BRAK_API/STOP.                |
-| E.2      | Resources Capacity Report      | CZĘŚCIOWO / BRAK_API | bieżący commit E.2 | własne 4/4 + T.2 5/5 PASS       | wspólny T.2 PASS                                          | Blok 5            | Realne allocations, heatmapa, Osoby/Projekt/rejestry; brak pełnego availability/progów E-O5.             |
-| E.3      | Control Loop Report            | CZĘŚCIOWO / BRAK_API | bieżący commit E.3 | własne 4/4 + T.2 5/5 PASS       | wspólny T.2 PASS                                          | Blok 5            | Sygnały/interwencje, KPI, lineage i NOT_VERIFIED; scenariusze oraz severity/SLA pozostają BRAK_API/STOP. |
-| E.4      | unijny generator               | NIE_ZACZĘTE          | —                  | —                               | wspólny T.2 PASS                                          | —                 | E-O1 rozstrzygnięte w DEC-2026-08-25-63.                                                                 |
-| T.1..T.6 | testy przekrojowe              | CZĘŚCIOWO            | bieżący commit E.0 | T.1 przed 11/11; T.2 4/4 PASS   | PASS                                                      | —                 | T.3–T.6 pozostają do wykonania.                                                                          |
-| R.1..R.2 | rejestr/dowody                 | CZĘŚCIOWO            | —                  | —                               | —                                                         | kontrolny         | R.1 wykonane; R.2 ograniczone do stanu STOP.                                                             |
+| Pozycja  | Zakres                         | Status               | Commit             | Testy                                          | Dowód OFF                                                 | Zrzut             | Uwagi                                                                                                                    |
+| -------- | ------------------------------ | -------------------- | ------------------ | ---------------------------------------------- | --------------------------------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| E.0      | flaga + mapa delty + dowód OFF | ZROBIONE_WG_DoD      | bieżący commit E.0 | własne 4/4 + zastane 11/11 PASS                | PASS: obecny rejestr, brak nowej powierzchni, 0 requestów | kontrolny harness | Jedna flaga, default OFF także demo; realny czytnik runtime-v1 przy ON.                                                  |
+| E.1      | Work Intelligence Report       | CZĘŚCIOWO / BRAK_API | bieżący commit E.1 | własne 6/6 + T.2 5/5 PASS                      | wspólny T.2 PASS                                          | Blok 5            | 9 sekcji, 8 KPI, drill-down i partial failure; historia/BSC/wagi pozostają BRAK_API/STOP.                                |
+| E.2      | Resources Capacity Report      | CZĘŚCIOWO / BRAK_API | bieżący commit E.2 | własne 4/4 + T.2 5/5 PASS                      | wspólny T.2 PASS                                          | Blok 5            | Realne allocations, heatmapa, Osoby/Projekt/rejestry; brak pełnego availability/progów E-O5.                             |
+| E.3      | Control Loop Report            | CZĘŚCIOWO / BRAK_API | bieżący commit E.3 | własne 4/4 + T.2 5/5 PASS                      | wspólny T.2 PASS                                          | Blok 5            | Sygnały/interwencje, KPI, lineage i NOT_VERIFIED; scenariusze oraz severity/SLA pozostają BRAK_API/STOP.                 |
+| E.4      | unijny generator               | CZĘŚCIOWO / BRAK_API | bieżący commit E.4 | własne 5/5 + strażnik listy 5/5 + T.2 5/5 PASS | wspólny T.2 PASS                                          | Blok 5            | Realny DRAFT runtime-v1, exact published definition, rozdział dat i wiele kart; pełny lifecycle/XLSX pozostają BRAK_API. |
+| T.1..T.6 | testy przekrojowe              | CZĘŚCIOWO            | bieżący commit E.0 | T.1 przed 11/11; T.2 4/4 PASS                  | PASS                                                      | —                 | T.3–T.6 pozostają do wykonania.                                                                                          |
+| R.1..R.2 | rejestr/dowody                 | CZĘŚCIOWO            | —                  | —                                              | —                                                         | kontrolny         | R.1 wykonane; R.2 ograniczone do stanu STOP.                                                                             |
 
 ## E.1 — tabele werdyktów
 
@@ -165,6 +165,21 @@ historii lub decyzji konfiguracyjnej pozostają uczciwie niedostępne:
 | Forward scenarios                         | BRAK_API            | base/optimistic/pessimistic jawnie UNKNOWN                  |
 | Severity/reaction SLA                     | STOP decyzji Piotra | nie zaszyto taksonomii ani wartości                         |
 | FACT/INFERENCE/RECOMMENDATION             | JEST                | semantyczne etykiety; rekomendacja wstrzymana bez dowodów   |
+
+## E.4 — tabela werdyktów
+
+| Element                                  | Werdykt           | Dowód                                                                       |
+| ---------------------------------------- | ----------------- | --------------------------------------------------------------------------- |
+| Czystość listy Raporty                   | JEST / NIETKNIĘTA | `ExecutionReportsSurface` bez diffu; strażnik 5/5 PASS                      |
+| Wejście „Zrób raport”                    | JEST              | kontekstowa karta Menu 3 wyłącznie przy fladze ON                           |
+| Exact published definition               | JEST              | generator dopuszcza tylko wersję `PUBLISHED` odczytaną z runtime-v1         |
+| History/as-of/reporting week/forecast    | JEST_CZĘŚCIOWO    | osobne kontrolki; runtime-v1 utrwala period/asOf, pozostałe jawnie BRAK_API |
+| Utworzenie szkicu                        | JEST              | realne `createReportRun`, owner/approver z definicji, autoryzowany scope    |
+| Wiele raportów                           | JEST              | niezależnie otwierane pozycje z licznikiem kart                             |
+| Publikacja niezmienna                    | JEST              | opublikowany run pokazuje contentHash; brak kontroli mutacji snapshotu      |
+| Lifecycle kontraktowy                    | BRAK_API          | runtime-v1 zachowuje własny DRAFT→VALIDATED→FROZEN→APPROVED→PUBLISHED       |
+| Eksport                                  | JEST_CZĘŚCIOWO    | management-reports: PDF/PPTX; runtime-v1 JSON; XLSX BRAK_API                |
+| Resumable section failure / refresh diff | BRAK_API          | brak pól i endpointu w dozwolonym backendzie                                |
 
 ## Pozycje otwarte — STOP-y do zatwierdzenia
 
