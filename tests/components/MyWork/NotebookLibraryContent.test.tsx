@@ -70,7 +70,12 @@ describe('NotebookLibraryContent (App Table)', () => {
     expect(await screen.findByText('Strategy 2026')).toBeInTheDocument();
     expect(screen.getByText('Client Insights')).toBeInTheDocument();
     expect(screen.getByText('Personal')).toBeInTheDocument();
-    expect(screen.getByText('Team')).toBeInTheDocument();
+    // Commit 3d07df868e ("notebook sharing scope label 'Team' -> 'Organization'
+    // (#11)"): Consultify has no sub-team concept below the org, so the
+    // scope='team' badge was deliberately relabeled "Organization" —
+    // the underlying `scope: 'team'` data value is unchanged, display copy
+    // only. This test's expected label had gone stale.
+    expect(screen.getByText('Organization')).toBeInTheDocument();
     expect(screen.getByText('Org context')).toBeInTheDocument();
   });
 
