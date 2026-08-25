@@ -429,7 +429,7 @@ function buildFilterOptions(
 // than silently coerced — 'REVIEW' -> 'IN_REVIEW' is a judgment call (the old
 // system doesn't distinguish "submitted, not yet started" from "actively
 // being reviewed").
-function mapLegacyFinanceStatusToV3(status: FinanceStatus): BusinessVersionStatus {
+export function mapLegacyFinanceStatusToV3(status: FinanceStatus): BusinessVersionStatus {
   switch (status) {
     case 'DRAFT':
       return 'DRAFT';
