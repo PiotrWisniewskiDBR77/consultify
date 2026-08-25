@@ -7,7 +7,9 @@ import {
   type PrivilegedMember,
 } from '../../services/adminAccessReviewsApi';
 import { StandardTable, type TableColumn, type TableRow } from '../standard/StandardTable';
+import { useTranslation } from 'react-i18next';
 export const AdminAccessReviewsPanel: React.FC = () => {
+  const { t } = useTranslation();
   const [policy, setPolicy] = useState<AccessReviewPolicy | null>(null),
     [members, setMembers] = useState<PrivilegedMember[]>([]),
     [loading, setLoading] = useState(true),
@@ -28,10 +30,32 @@ export const AdminAccessReviewsPanel: React.FC = () => {
     : '—';
   const cols = useMemo<TableColumn[]>(
       () => [
-        { id: 'person', label: 'Osoba' },
-        { id: 'email', label: 'E-mail' },
-        { id: 'role', label: 'Rola' },
-        { id: 'status', label: 'Status' },
+        {
+          id: 'person',
+          label: t('admin.team.access-reviews.day2Auto.text1', {
+            defaultValue: 'Osoba',
+          }),
+        },
+        {
+          id: 'email',
+          label: 'E-mail',
+        },
+        {
+          id: t('admin.team.access-reviews.day2Auto.text2', {
+            defaultValue: 'role',
+          }),
+          label: t('admin.team.access-reviews.day2Auto.text3', {
+            defaultValue: 'Rola',
+          }),
+        },
+        {
+          id: t('admin.team.access-reviews.day2Auto.text4', {
+            defaultValue: 'status',
+          }),
+          label: t('admin.team.access-reviews.day2Auto.text5', {
+            defaultValue: 'Status',
+          }),
+        },
       ],
       []
     ),
@@ -49,7 +73,11 @@ export const AdminAccessReviewsPanel: React.FC = () => {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-semibold text-c-text">Przeglądy dostępów</h2>
+        <h2 className="text-lg font-semibold text-c-text">
+          {t('admin.team.access-reviews.day2Auto.text6', {
+            defaultValue: 'Przeglądy dostępów',
+          })}
+        </h2>
         <p className="text-sm text-c-text-secondary">
           Odczyt konfiguracji i kont uprzywilejowanych; edycja pozostaje w polityce IAM.
         </p>
@@ -64,21 +92,45 @@ export const AdminAccessReviewsPanel: React.FC = () => {
       )}
       {loading ? (
         <div role="status" className="py-8 text-center text-sm text-c-text-muted">
-          Ładowanie polityki przeglądów…
+          {t('admin.team.access-reviews.day2Auto.text7', {
+            defaultValue: 'Ładowanie polityki przeglądów…',
+          })}
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-3">
           <div className="rounded-xl border border-c-border p-4">
-            Stan: {policy?.accessReviewsEnabled ? 'Włączone' : 'Wyłączone'}
+            {t('admin.team.access-reviews.day2Auto.text16', {
+              defaultValue: 'Stan:',
+            })}{' '}
+            {policy?.accessReviewsEnabled
+              ? t('admin.team.access-reviews.day2Auto.text8', {
+                  defaultValue: 'Włączone',
+                })
+              : t('admin.team.access-reviews.day2Auto.text9', {
+                  defaultValue: 'Wyłączone',
+                })}
           </div>
           <div className="rounded-xl border border-c-border p-4">
-            Kadencja: {policy?.accessReviewCadenceDays ?? '—'} dni
+            {t('admin.team.access-reviews.day2Auto.text17', {
+              defaultValue: 'Kadencja:',
+            })}
+            {policy?.accessReviewCadenceDays ?? '—'}
+            {t('admin.team.access-reviews.day2Auto.text18', {
+              defaultValue: 'dni',
+            })}
           </div>
-          <div className="rounded-xl border border-c-border p-4">Następny przegląd: {next}</div>
+          <div className="rounded-xl border border-c-border p-4">
+            {t('admin.team.access-reviews.day2Auto.text10', {
+              defaultValue: 'Następny przegląd:',
+            })}
+            {next}
+          </div>
         </div>
       )}
       <Link to="/admin/team/roles-permissions" className="text-sm text-c-text underline">
-        Otwórz kanoniczną politykę IAM
+        {t('admin.team.access-reviews.day2Auto.text11', {
+          defaultValue: 'Otwórz kanoniczną politykę IAM',
+        })}
       </Link>
       <StandardTable
         columns={cols}
@@ -86,15 +138,25 @@ export const AdminAccessReviewsPanel: React.FC = () => {
         loading={loading}
         empty={{
           icon: Users,
-          title: 'Brak kont uprzywilejowanych',
-          description: 'Nie znaleziono aktywnych właścicieli ani administratorów.',
+          title: t('admin.team.access-reviews.day2Auto.text12', {
+            defaultValue: 'Brak kont uprzywilejowanych',
+          }),
+          description: t('admin.team.access-reviews.day2Auto.text13', {
+            defaultValue: 'Nie znaleziono aktywnych właścicieli ani administratorów.',
+          }),
         }}
         persistKey="admin.accessReviews"
       />
       <section className="rounded-xl border border-c-border p-4">
-        <h3 className="font-semibold text-c-text">Historia przeglądów</h3>
+        <h3 className="font-semibold text-c-text">
+          {t('admin.team.access-reviews.day2Auto.text14', {
+            defaultValue: 'Historia przeglądów',
+          })}
+        </h3>
         <p className="mt-1 text-sm text-c-text-secondary">
-          Rejestr kampanii przeglądów nie jest jeszcze prowadzony.
+          {t('admin.team.access-reviews.day2Auto.text15', {
+            defaultValue: 'Rejestr kampanii przeglądów nie jest jeszcze prowadzony.',
+          })}
         </p>
       </section>
     </div>
