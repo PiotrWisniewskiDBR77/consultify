@@ -53,6 +53,9 @@ vi.mock('../../../components/Admin/AdminGuestsPanel', () => ({
 vi.mock('../../../components/Admin/AdminAccessReviewsPanel', () => ({
   AdminAccessReviewsPanel: () => <div data-testid="panel-access-reviews">reviews</div>,
 }));
+vi.mock('../../../components/Admin/AdminAccessRequestsPanel', () => ({
+  AdminAccessRequestsPanel: () => <div data-testid="panel-access-requests">access requests</div>,
+}));
 vi.mock('../../../components/Admin/AdminRolesPermissionsPanel', () => ({
   AdminRolesPermissionsPanel: () => <div data-testid="panel-roles">roles</div>,
 }));
@@ -168,6 +171,10 @@ describe('AdminSettingsModule section routing', () => {
   it('wires team/access-reviews read-only', () => {
     renderAt('/admin/team/access-reviews');
     expect(screen.getByTestId('panel-access-reviews')).toBeInTheDocument();
+  });
+  it('wires team/access-requests to the honest tenant skeleton', () => {
+    renderAt('/admin/team/access-requests');
+    expect(screen.getByTestId('panel-access-requests')).toBeInTheDocument();
   });
   it('wires team/roles-permissions', () => {
     renderAt('/admin/team/roles-permissions');

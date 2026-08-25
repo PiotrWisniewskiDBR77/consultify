@@ -24,6 +24,7 @@ import { AdminSessionsPanel } from '../../components/Admin/AdminSessionsPanel';
 import { AdminBreakGlassPanel } from '../../components/Admin/AdminBreakGlassPanel';
 import { AdminGuestsPanel } from '../../components/Admin/AdminGuestsPanel';
 import { AdminAccessReviewsPanel } from '../../components/Admin/AdminAccessReviewsPanel';
+import { AdminAccessRequestsPanel } from '../../components/Admin/AdminAccessRequestsPanel';
 import { AdminRolesPermissionsPanel } from '../../components/Admin/AdminRolesPermissionsPanel';
 import { AdminLegalHoldPanel } from '../../components/Admin/AdminLegalHoldPanel';
 import { AdminAuditExportHistoryPanel } from '../../components/Admin/AdminAuditExportHistoryPanel';
@@ -335,6 +336,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
           'teams',
           'guests-external',
           'access-reviews',
+          'access-requests',
           'roles-permissions',
         ].includes(resolvedLocation.screen)) ||
       (resolvedLocation.domain === 'billing' &&
@@ -407,6 +409,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
     }
     switch (resolvedLocation.domain) {
       case 'team':
+        if (resolvedLocation.screen === 'access-requests') return <AdminAccessRequestsPanel />;
         if (resolvedLocation.screen === 'teams') return <AdminTeamsPanel />;
         if (resolvedLocation.screen === 'guests-external') return <AdminGuestsPanel />;
         if (resolvedLocation.screen === 'access-reviews') return <AdminAccessReviewsPanel />;
