@@ -1764,6 +1764,27 @@ export const Api = {
     return Array.isArray(data) ? data : data.users || [];
   },
 
+  /**
+   * Org-scoped user typeahead for pickers (any authenticated USER, not just
+   * ADMIN/OWNER — `GET /users` above is role-gated and would 403 for a plain
+   * member). Backend: `server/src/routes/users.routes.ts` `GET /users/search`
+   * — same endpoint TeamManagementPanel's `onSearchUsers` wiring documents as
+   * the canonical picker source.
+   */
+  searchOrgUsers: async (
+    query: string,
+    limit = 8
+  ): Promise<Array<{ id: string; name: string; email: string; avatarUrl?: string | null }>> => {
+    const q = String(query || '').trim();
+    if (q.length < 2) return [];
+    const params = new URLSearchParams({ q, limit: String(limit) });
+    const res = await fetch(`${API_URL}/users/search?${params.toString()}`, {
+      headers: getHeaders(),
+    });
+    const data = await handleResponse(res, 'Failed to search organization users');
+    return Array.isArray(data?.users) ? data.users : [];
+  },
+
   addUser: async (user: any): Promise<User> => {
     const res = await fetch(`${API_URL}/users`, {
       method: 'POST',

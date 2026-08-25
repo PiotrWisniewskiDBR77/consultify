@@ -4166,7 +4166,13 @@
       "private": "Prywatne",
       "busy": "Zajęte",
       "organization": "Organizacja",
-      "duplicateFourWeeks": "Powiel na kolejne 4 tygodnie"
+      "duplicateFourWeeks": "Powiel na kolejne 4 tygodnie",
+      "attendees": "Uczestnicy",
+      "attendeesHint": "(opcjonalnie, tylko z organizacji)",
+      "attendeesSearchPlaceholder": "Dodaj osobę…",
+      "attendeesSearching": "Szukanie…",
+      "attendeesNoResults": "Brak wyników",
+      "attendeesRemove": "Usuń uczestnika {{name}}"
     },
     "calendarSidebar": {
       "currentDateToLocaleDateString": "pl-PL",

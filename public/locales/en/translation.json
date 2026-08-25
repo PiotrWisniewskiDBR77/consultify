@@ -4847,7 +4847,13 @@
       "private": "Private",
       "busy": "Busy",
       "organization": "Organization",
-      "duplicateFourWeeks": "Duplicate for the next 4 weeks"
+      "duplicateFourWeeks": "Duplicate for the next 4 weeks",
+      "attendees": "Attendees",
+      "attendeesHint": "(optional, organization members only)",
+      "attendeesSearchPlaceholder": "Add person…",
+      "attendeesSearching": "Searching…",
+      "attendeesNoResults": "No results",
+      "attendeesRemove": "Remove attendee {{name}}"
     },
     "calendarSidebar": {
       "currentDateToLocaleDateString": "en-US",

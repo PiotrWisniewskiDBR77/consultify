@@ -9,6 +9,7 @@ import Api from '@/services/api';
 import { isMyWorkCalendarV2Enabled } from '@/utils/myWorkCalendarV2Flag';
 
 import { duplicateCalendarEventFourWeeks } from '../CalendarV2/duplicateCalendarEvent';
+import { CalendarAttendeesField, type CalendarAttendeeOption } from './CalendarAttendeesField';
 
 interface CalendarConflictItem {
   id: string;
@@ -59,6 +60,7 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
   const [startTime, setStartTime] = useState('09:00');
   const [endTime, setEndTime] = useState('10:00');
   const [visibility, setVisibility] = useState<'private' | 'busy' | 'org'>('private');
+  const [attendees, setAttendees] = useState<CalendarAttendeeOption[]>([]);
   const [duplicateFourWeeks, setDuplicateFourWeeks] = useState(false);
   const [duplicateResult, setDuplicateResult] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -73,6 +75,7 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
     setDate(toDateInputValue(defaultDate));
     setRecurrencePreset('none');
     setEntryType('event');
+    setAttendees([]);
     setDuplicateFourWeeks(false);
     setDuplicateResult(null);
     setConflicts(null);
@@ -152,6 +155,7 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
           allDay: false,
           source: 'event',
           visibility,
+          attendees: attendees.map((attendee) => attendee.id),
         } as const;
         if (duplicateFourWeeks) {
           const dates = [1, 2, 3, 4].map((week) => {
@@ -321,6 +325,7 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
                 <option value="org">{t('myWork.calendarV2.organization', 'Organization')}</option>
               </select>
             </label>
+            <CalendarAttendeesField selected={attendees} onChange={setAttendees} />
             <label className="col-span-2 flex items-center gap-2 text-sm">
               <input
                 type="checkbox"
