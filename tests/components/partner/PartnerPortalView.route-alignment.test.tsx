@@ -15,6 +15,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 // to satisfy the `i18n` prop shape.
 const i18n: any = { language: 'en', changeLanguage: () => Promise.resolve() };
 const mockNavigate = vi.fn();
+const getConnectionMock = vi.fn();
 
 vi.mock('react-router-dom', async (importOriginal) => {
   const actual = await importOriginal<typeof import('react-router-dom')>();
@@ -35,6 +36,7 @@ vi.mock('../../../src/services/api', () => ({
 
 vi.mock('../../../src/services/api/v8', () => ({
   V8PartnerApi: {
+    getConnection: (...args: unknown[]) => getConnectionMock(...args),
     getReferralAnalytics: vi.fn(),
     getEarningsSummary: vi.fn(),
   },
@@ -52,15 +54,12 @@ describe('PartnerPortalView route alignment', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockNavigate.mockReset();
+    getConnectionMock.mockResolvedValue({
+      connected: true,
+      partnerOrganizationId: 'partner-org-1',
+    });
 
     vi.mocked(Api.get).mockImplementation(async (url: string) => {
-      if (url === '/api/partners/connection') {
-        return {
-          success: true,
-          data: { data: { connected: true, organization: { name: 'Partner Org' } } },
-        } as any;
-      }
-
       if (url === '/api/partners/resources') {
         return {
           success: true,
@@ -99,16 +98,10 @@ describe('PartnerPortalView route alignment', () => {
     });
   });
 
-  it('shows the ready Consultify partner program before profile connection', async () => {
-    vi.mocked(Api.get).mockImplementation(async (url: string) => {
-      if (url === '/api/partners/connection') {
-        return {
-          success: true,
-          data: { data: { connected: false, selfConnectEnabled: false, organization: null } },
-        } as any;
-      }
-
-      throw new Error(`Unexpected GET ${url}`);
+  it('shows orientation and no acquisition content before profile connection', async () => {
+    getConnectionMock.mockResolvedValue({
+      connected: false,
+      partnerOrganizationId: null,
     });
 
     render(
@@ -120,13 +113,14 @@ describe('PartnerPortalView route alignment', () => {
       </MemoryRouter>
     );
 
-    expect(await screen.findByText('Program overview')).toBeInTheDocument();
-    expect(screen.getByText('Models and commercial terms')).toBeInTheDocument();
+    expect(await screen.findByTestId('partner-orientation-unconnected')).toBeInTheDocument();
+    expect(screen.queryByText('Program overview')).not.toBeInTheDocument();
+    expect(screen.queryByText('Models and commercial terms')).not.toBeInTheDocument();
     expect(screen.getByTestId('location')).toHaveTextContent('/partner?tab=documentation');
     expect(Api.get).not.toHaveBeenCalledWith('/api/partners/resources');
-    expect(mockNavigate).not.toHaveBeenCalledWith(
+    expect(mockNavigate).toHaveBeenCalledWith(
       expect.objectContaining({ search: expect.stringContaining('tab=partner-home') }),
-      expect.anything()
+      expect.objectContaining({ replace: true })
     );
   });
 });

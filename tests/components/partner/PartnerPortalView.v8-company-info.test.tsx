@@ -23,6 +23,7 @@ vi.mock('../../../src/services/api', () => ({
 
 vi.mock('../../../src/services/api/v8', () => ({
   V8PartnerApi: {
+    getConnection: vi.fn(),
     updateOrganization: vi.fn(),
   },
   shouldFallbackToLegacyPartner: vi.fn(),
@@ -45,26 +46,15 @@ function renderView() {
       <I18nextProvider i18n={i18n}>
         <PartnerPortalViewNew />
       </I18nextProvider>
-    </MemoryRouter>,
+    </MemoryRouter>
   );
 }
 
 describe('PartnerPortalView company info V8 seam', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(V8PartnerApi.getConnection).mockResolvedValue({ connected: true } as any);
     vi.mocked(Api.get).mockImplementation(async (url: string) => {
-      if (url === '/api/partners/connection') {
-        return {
-          success: true,
-          data: {
-            data: {
-              connected: true,
-              organization: { name: 'Test Partner Co' },
-            },
-          },
-        } as any;
-      }
-
       if (url === '/api/partners/organization') {
         return {
           success: true,

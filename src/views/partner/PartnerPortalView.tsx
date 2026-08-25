@@ -72,7 +72,7 @@ import {
 import { isPartnerLegacyRollbackEnabled } from '../../services/api/v8/partner';
 import { cn } from '../../utils/cn';
 import { getLegacyPartnerSection } from './partnerLegacyRoutes';
-import { PartnerStartRouter } from './PartnerStartRouter';
+import { PartnerOnboardingOrientation, PartnerStartRouter } from './PartnerStartRouter';
 
 const PARTNER_SECTIONS = new Set<PartnerSection>([
   'partner-home',
@@ -102,17 +102,6 @@ const PARTNER_SECTIONS = new Set<PartnerSection>([
   'public-listing',
 ]);
 
-const PARTNER_PROGRAM_SECTIONS = new Set<PartnerSection>([
-  'partner-home',
-  'dashboard',
-  'metrics',
-  'earnings',
-  'company-info',
-  'learning-path',
-  'documentation',
-  'templates',
-]);
-
 const partnerMutationKey = (operation: string) => `${operation}-${globalThis.crypto.randomUUID()}`;
 
 function isPartnerSection(value: string | null): value is PartnerSection {
@@ -122,34 +111,6 @@ function isPartnerSection(value: string | null): value is PartnerSection {
 // Lazy load new sections
 const ReferralToolsSection = React.lazy(() => import('./sections/ReferralToolsSection'));
 const EarningsSection = React.lazy(() => import('./sections/EarningsSection'));
-const ProviderHomeView = React.lazy(() => import('./ProviderHomeView'));
-const ProgramBenefitsView = React.lazy(() =>
-  import('./ProviderHomeView').then((module) => ({ default: module.ValueCardsSection }))
-);
-const ProgramStoriesView = React.lazy(() =>
-  import('./ProviderHomeView').then((module) => ({ default: module.BetaSuccessStories }))
-);
-const ProgramTiersView = React.lazy(() =>
-  import('./ProviderHomeView').then((module) => ({ default: module.TierProgressionSection }))
-);
-const ProgramCalculatorView = React.lazy(() =>
-  import('./ProviderHomeView').then((module) => ({ default: module.CommissionCalculatorSection }))
-);
-const ProgramOnboardingView = React.lazy(() =>
-  import('./ProviderHomeView').then((module) => ({ default: module.OnboardingChecklistSection }))
-);
-const ProgramContactView = React.lazy(() =>
-  import('./ProviderHomeView').then((module) => ({ default: module.ContactPartnerManagerSection }))
-);
-const ProgramAcademyView = React.lazy(() =>
-  import('./ProviderHomeView').then((module) => ({ default: module.AcademyPreviewSection }))
-);
-const ProgramResourcesView = React.lazy(() =>
-  import('./ProviderHomeView').then((module) => ({ default: module.FooterResourcesSection }))
-);
-const ProgramFaqView = React.lazy(() =>
-  import('./ProviderHomeView').then((module) => ({ default: module.FAQSection }))
-);
 const ClientAccessView = React.lazy(() => import('./ClientAccessView'));
 
 // ============================================================================
@@ -415,8 +376,8 @@ const DashboardSection: React.FC = () => {
         {stats.map((stat, index) => (
           <div key={index} className="bg-c-surface rounded-xl border border-c-border-subtle p-4">
             <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 rounded-lg bg-primary-100 dark:bg-primary-900/30">
-                <stat.icon className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+              <div className="p-2 rounded-lg bg-c-surface-raised dark:bg-c-surface-raised">
+                <stat.icon className="w-5 h-5 text-c-text-secondary dark:text-c-text-secondary" />
               </div>
               <span className="text-sm text-c-text-secondary">{stat.label}</span>
             </div>
@@ -436,7 +397,7 @@ const DashboardSection: React.FC = () => {
       </div>
 
       {isFreshPartner && (
-        <div className="rounded-xl border border-primary-200 bg-primary-50 p-4 text-sm text-primary-800 dark:border-primary-700/50 dark:bg-primary-900/20 dark:text-primary-200">
+        <div className="rounded-xl border border-c-border bg-c-surface-raised p-4 text-sm text-c-text-secondary dark:border-c-border dark:bg-c-surface-hover dark:text-c-text-secondary">
           {t(
             'partner.dashboard.freshHint',
             'Twoje dane pojawią się tutaj po pierwszych poleceniach i transakcjach prowizyjnych.'
@@ -453,10 +414,10 @@ const DashboardSection: React.FC = () => {
           {quickActions.map((action, index) => (
             <button
               key={index}
-              className="flex flex-col items-center gap-2 p-4 rounded-lg bg-c-surface-raised/50 hover:bg-primary-900/20 transition-colors group"
+              className="flex flex-col items-center gap-2 p-4 rounded-lg bg-c-surface-raised/50 hover:bg-c-surface-hover transition-colors group"
             >
-              <action.icon className="w-6 h-6 text-c-text-secondary group-hover:text-primary-600 dark:group-hover:text-primary-400" />
-              <span className="text-sm font-medium text-c-text-secondary group-hover:text-primary-600 dark:group-hover:text-primary-400">
+              <action.icon className="w-6 h-6 text-c-text-secondary group-hover:text-c-text-secondary dark:group-hover:text-c-text-secondary" />
+              <span className="text-sm font-medium text-c-text-secondary group-hover:text-c-text-secondary dark:group-hover:text-c-text-secondary">
                 {action.label}
               </span>
             </button>
@@ -473,7 +434,7 @@ const DashboardSection: React.FC = () => {
               <Clock className="w-5 h-5 text-c-text-muted" />
               {t('partner.dashboard.recentActivity', 'Recent Activity')}
             </h3>
-            <button className="text-sm text-primary-600 dark:text-primary-400 hover:underline">
+            <button className="text-sm text-c-text-secondary dark:text-c-text-secondary hover:underline">
               {t('common.viewAll', 'View All')}
             </button>
           </div>
@@ -506,7 +467,7 @@ const DashboardSection: React.FC = () => {
               <GraduationCap className="w-5 h-5 text-c-text-muted" />
               {t('partner.dashboard.certificationProgress', 'Certification Progress')}
             </h3>
-            <span className="text-sm text-primary-600 dark:text-primary-400 font-medium">
+            <span className="text-sm text-c-text-secondary dark:text-c-text-secondary font-medium">
               {canonicalCertification
                 ? `${certificationCount} ${t('partner.dashboard.complete', 'Complete')}`
                 : t('common.loading', 'Loading…')}
@@ -522,7 +483,7 @@ const DashboardSection: React.FC = () => {
                   {cert.status === 'completed' ? (
                     <CheckCircle2 className="w-5 h-5 text-emerald-500" />
                   ) : cert.status === 'in-progress' ? (
-                    <div className="w-5 h-5 rounded-full border-2 border-primary-500 border-t-transparent animate-spin" />
+                    <div className="w-5 h-5 rounded-full border-2 border-c-border border-t-transparent animate-spin" />
                   ) : (
                     <div className="w-5 h-5 rounded-full border-2 border-c-border" />
                   )}
@@ -530,14 +491,15 @@ const DashboardSection: React.FC = () => {
                     className={cn(
                       'text-sm flex-1',
                       cert.status === 'completed' && 'text-c-text',
-                      cert.status === 'in-progress' && 'text-primary-600 dark:text-primary-400',
+                      cert.status === 'in-progress' &&
+                        'text-c-text-secondary dark:text-c-text-secondary',
                       cert.status === 'locked' && 'text-c-text-muted'
                     )}
                   >
                     {cert.name}
                   </span>
                   {cert.status === 'in-progress' && cert.progress !== undefined && (
-                    <span className="text-xs text-primary-600 dark:text-primary-400">
+                    <span className="text-xs text-c-text-secondary dark:text-c-text-secondary">
                       {cert.progress}%
                     </span>
                   )}
@@ -914,7 +876,7 @@ const MetricsSection: React.FC = () => {
       </div>
 
       {isFreshMetrics && (
-        <div className="rounded-xl border border-primary-200 bg-primary-50 p-4 text-sm text-primary-800 dark:border-primary-700/50 dark:bg-primary-900/20 dark:text-primary-200">
+        <div className="rounded-xl border border-c-border bg-c-surface-raised p-4 text-sm text-c-text-secondary dark:border-c-border dark:bg-c-surface-hover dark:text-c-text-secondary">
           {t(
             'partner.metrics.freshHint',
             'Twoje dane pojawią się tutaj po pierwszych poleceniach i transakcjach prowizyjnych.'
@@ -943,7 +905,7 @@ const MetricsSection: React.FC = () => {
                   cx="80"
                   cy="80"
                   r="70"
-                  className="fill-none stroke-primary-500"
+                  className="fill-none stroke-c-text-secondary"
                   strokeWidth="12"
                   strokeDasharray={`${(metricsData?.performance?.score || 0) * 4.4} 440`}
                   strokeLinecap="round"
@@ -1020,7 +982,7 @@ const MetricsSection: React.FC = () => {
               return (
                 <div
                   key={index}
-                  className="flex-1 bg-primary-500 rounded-t transition-all duration-300 hover:bg-primary-600"
+                  className="flex-1 rounded-t bg-c-text-secondary transition-all duration-300 hover:bg-c-text"
                   style={{ height: `${height}%` }}
                   title={`€${value.toLocaleString()}`}
                 />
@@ -1389,14 +1351,14 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
             {projects.map((project) => (
               <div
                 key={project.id}
-                className="bg-c-surface rounded-xl border border-c-border-subtle p-4 hover:border-primary-700 transition-colors"
+                className="bg-c-surface rounded-xl border border-c-border-subtle p-4 hover:border-c-border transition-colors"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div>
                     <h4 className="font-medium text-c-text">{project.name}</h4>
                     <p className="text-sm text-c-text-secondary">{project.clientName}</p>
                   </div>
-                  <span className="px-2 py-1 text-xs font-medium bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded">
+                  <span className="px-2 py-1 text-xs font-medium bg-c-surface-raised dark:bg-c-surface-raised text-c-text-secondary dark:text-c-text-secondary rounded">
                     {project.framework}
                   </span>
                 </div>
@@ -1453,11 +1415,11 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
           {organizations.map((org) => (
             <div
               key={org.id}
-              className="bg-c-surface rounded-xl border border-c-border-subtle p-4 flex items-center justify-between hover:border-primary-700 cursor-pointer transition-colors"
+              className="bg-c-surface rounded-xl border border-c-border-subtle p-4 flex items-center justify-between hover:border-c-border cursor-pointer transition-colors"
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
-                  <Building2 className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                <div className="w-10 h-10 rounded-lg bg-c-surface-raised dark:bg-c-surface-raised flex items-center justify-center">
+                  <Building2 className="w-5 h-5 text-c-text-secondary dark:text-c-text-secondary" />
                 </div>
                 <div>
                   <span className="font-medium text-c-text">{org.name}</span>
@@ -1778,7 +1740,7 @@ const CertificationSection: React.FC<{
                         status === 'completed' &&
                           'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600',
                         status === 'in-progress' &&
-                          'bg-primary-100 dark:bg-primary-900/30 text-primary-600',
+                          'bg-c-surface-raised dark:bg-c-surface-raised text-c-text-secondary',
                         status === 'locked' && 'bg-slate-200 dark:bg-navy-700 text-c-text-muted'
                       )}
                     >
@@ -1793,7 +1755,7 @@ const CertificationSection: React.FC<{
                             status === 'completed' &&
                               'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600',
                             status === 'in-progress' &&
-                              'bg-primary-100 dark:bg-primary-900/30 text-primary-600',
+                              'bg-c-surface-raised dark:bg-c-surface-raised text-c-text-secondary',
                             status === 'locked' && 'bg-slate-200 dark:bg-navy-700 text-c-text-muted'
                           )}
                         >
@@ -1858,7 +1820,7 @@ const CertificationSection: React.FC<{
                         {docHref && (
                           <button
                             onClick={() => navigate(docHref)}
-                            className="px-4 py-2 border border-c-border text-sm font-medium rounded-lg text-c-text-secondary hover:border-primary-500 hover:text-primary-600 transition-colors"
+                            className="px-4 py-2 border border-c-border text-sm font-medium rounded-lg text-c-text-secondary hover:border-c-border hover:text-c-text-secondary transition-colors"
                           >
                             Open guide
                           </button>
@@ -1903,7 +1865,7 @@ const CertificationSection: React.FC<{
                                   {moduleDocHref && (
                                     <button
                                       onClick={() => navigate(moduleDocHref)}
-                                      className="inline-flex items-center gap-1 text-xs text-primary-600 dark:text-primary-400"
+                                      className="inline-flex items-center gap-1 text-xs text-c-text-secondary dark:text-c-text-secondary"
                                     >
                                       <ExternalLink className="w-3 h-3" />
                                       {module.articleLabel || 'Open article'}
@@ -1960,8 +1922,8 @@ const CertificationSection: React.FC<{
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
-                      <FileText className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                    <div className="w-10 h-10 rounded-lg bg-c-surface-raised dark:bg-c-surface-raised flex items-center justify-center">
+                      <FileText className="w-5 h-5 text-c-text-secondary dark:text-c-text-secondary" />
                     </div>
                     <div>
                       <h4 className="font-medium text-c-text">{course.name} Exam</h4>
@@ -2140,7 +2102,7 @@ const CertificationSection: React.FC<{
           {completedWithCerts.map((cert) => (
             <div
               key={cert.id}
-              className="bg-c-surface rounded-xl border border-c-border-subtle p-4 hover:border-primary-700 transition-colors"
+              className="bg-c-surface rounded-xl border border-c-border-subtle p-4 hover:border-c-border transition-colors"
             >
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-xl bg-crimson-600 dark:bg-crimson-700 flex items-center justify-center">
@@ -2172,7 +2134,7 @@ const CertificationSection: React.FC<{
                     }
                     window.open(url, '_blank');
                   }}
-                  className="p-2 text-c-text-muted hover:text-primary-600 dark:hover:text-primary-400"
+                  className="p-2 text-c-text-muted hover:text-c-text-secondary dark:hover:text-c-text-secondary"
                 >
                   <Download className="w-5 h-5" />
                 </button>
@@ -2356,7 +2318,7 @@ const ResourcesSection: React.FC<{
                   <button
                     key={doc.id}
                     onClick={() => navigate(doc.href)}
-                    className="w-full flex items-center justify-between rounded-lg border border-c-border-subtle px-3 py-3 text-left hover:border-primary-500 transition-colors"
+                    className="w-full flex items-center justify-between rounded-lg border border-c-border-subtle px-3 py-3 text-left hover:border-c-border transition-colors"
                   >
                     <span className="text-sm font-medium text-c-text">{doc.title}</span>
                     <ExternalLink className="w-4 h-4 text-c-text-secondary" />
@@ -2390,7 +2352,7 @@ const ResourcesSection: React.FC<{
                       {href && (
                         <button
                           onClick={() => navigate(href)}
-                          className="mt-3 inline-flex items-center gap-1 text-xs text-primary-600 dark:text-primary-400"
+                          className="mt-3 inline-flex items-center gap-1 text-xs text-c-text-secondary dark:text-c-text-secondary"
                         >
                           <ExternalLink className="w-3 h-3" />
                           Open supporting guide
@@ -2452,13 +2414,13 @@ const ResourcesSection: React.FC<{
             <div
               key={item.id}
               onClick={() => handleDownload(item.id, item.title)}
-              className="bg-c-surface rounded-xl border border-c-border-subtle p-4 flex items-center gap-4 hover:border-primary-700 transition-colors cursor-pointer group"
+              className="bg-c-surface rounded-xl border border-c-border-subtle p-4 flex items-center gap-4 hover:border-c-border transition-colors cursor-pointer group"
             >
               <div className="w-12 h-12 rounded-lg bg-slate-200 dark:bg-navy-700 flex items-center justify-center">
                 <FileText className="w-6 h-6 text-c-text-muted" />
               </div>
               <div className="flex-1">
-                <h4 className="font-medium text-c-text group-hover:text-primary-600 dark:group-hover:text-primary-400">
+                <h4 className="font-medium text-c-text group-hover:text-c-text-secondary dark:group-hover:text-c-text-secondary">
                   {item.title}
                 </h4>
                 <p className="text-sm text-c-text-secondary">
@@ -2466,9 +2428,9 @@ const ResourcesSection: React.FC<{
                 </p>
               </div>
               {downloading === item.id ? (
-                <RefreshCw className="w-5 h-5 text-primary-600 animate-spin" />
+                <RefreshCw className="w-5 h-5 text-c-text-secondary animate-spin" />
               ) : (
-                <Download className="w-5 h-5 text-c-text-muted group-hover:text-primary-600 dark:group-hover:text-primary-400" />
+                <Download className="w-5 h-5 text-c-text-muted group-hover:text-c-text-secondary dark:group-hover:text-c-text-secondary" />
               )}
             </div>
           ))}
@@ -2755,7 +2717,7 @@ const ProfileSection: React.FC<{
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-                className="w-full px-4 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-c-text focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="w-full px-4 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-c-text focus:ring-2 focus-visible:ring-[color:var(--c-focus)] focus:border-c-border"
               />
             </div>
             <div>
@@ -2766,7 +2728,7 @@ const ProfileSection: React.FC<{
                 type="text"
                 value={formData.taxId}
                 onChange={(e) => setFormData((prev) => ({ ...prev, taxId: e.target.value }))}
-                className="w-full px-4 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-c-text focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="w-full px-4 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-c-text focus:ring-2 focus-visible:ring-[color:var(--c-focus)] focus:border-c-border"
               />
             </div>
             <div>
@@ -2777,7 +2739,7 @@ const ProfileSection: React.FC<{
                 type="email"
                 value={formData.contactEmail}
                 onChange={(e) => setFormData((prev) => ({ ...prev, contactEmail: e.target.value }))}
-                className="w-full px-4 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-c-text focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="w-full px-4 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-c-text focus:ring-2 focus-visible:ring-[color:var(--c-focus)] focus:border-c-border"
               />
             </div>
             <div>
@@ -2786,7 +2748,7 @@ const ProfileSection: React.FC<{
                 type="tel"
                 value={formData.contactPhone}
                 onChange={(e) => setFormData((prev) => ({ ...prev, contactPhone: e.target.value }))}
-                className="w-full px-4 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-c-text focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="w-full px-4 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-c-text focus:ring-2 focus-visible:ring-[color:var(--c-focus)] focus:border-c-border"
               />
             </div>
             <div className="md:col-span-2">
@@ -2798,7 +2760,7 @@ const ProfileSection: React.FC<{
                 value={formData.website}
                 onChange={(e) => setFormData((prev) => ({ ...prev, website: e.target.value }))}
                 placeholder="https://"
-                className="w-full px-4 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-c-text focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="w-full px-4 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-c-text focus:ring-2 focus-visible:ring-[color:var(--c-focus)] focus:border-c-border"
               />
             </div>
           </div>
@@ -2841,21 +2803,23 @@ const ProfileSection: React.FC<{
                 className={cn(
                   'p-4 rounded-xl border-2 text-center transition-all',
                   selectedSpecializations.includes(fw)
-                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                    : 'border-c-border-subtle hover:border-primary-300'
+                    ? 'border-c-border bg-c-surface-raised dark:bg-c-surface-hover'
+                    : 'border-c-border-subtle hover:border-c-border'
                 )}
               >
                 <Target
                   className={cn(
                     'w-8 h-8 mx-auto mb-2',
-                    selectedSpecializations.includes(fw) ? 'text-primary-600' : 'text-c-text-muted'
+                    selectedSpecializations.includes(fw)
+                      ? 'text-c-text-secondary'
+                      : 'text-c-text-muted'
                   )}
                 />
                 <span
                   className={cn(
                     'font-medium',
                     selectedSpecializations.includes(fw)
-                      ? 'text-primary-600'
+                      ? 'text-c-text-secondary'
                       : 'text-c-text-secondary'
                   )}
                 >
@@ -2902,7 +2866,7 @@ const ProfileSection: React.FC<{
                   type="checkbox"
                   checked={selectedRegions.includes(region)}
                   onChange={() => toggleRegion(region)}
-                  className="rounded text-primary-600 focus:ring-primary-500"
+                  className="rounded text-c-text-secondary focus-visible:ring-[color:var(--c-focus)]"
                 />
                 <span className="text-c-text-secondary">{region}</span>
               </label>
@@ -2968,8 +2932,8 @@ const ProfileSection: React.FC<{
           <h4 className="font-medium text-c-text mb-4">Preview</h4>
           <div className="bg-c-surface-raised/50 dark:bg-navy-700/30 rounded-xl p-4">
             <div className="flex items-start gap-4">
-              <div className="w-16 h-16 rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
-                <Building2 className="w-8 h-8 text-primary-600" />
+              <div className="w-16 h-16 rounded-xl bg-c-surface-raised dark:bg-c-surface-raised flex items-center justify-center">
+                <Building2 className="w-8 h-8 text-c-text-secondary" />
               </div>
               <div>
                 <h5 className="font-semibold text-c-text">
@@ -2984,7 +2948,7 @@ const ProfileSection: React.FC<{
                     selectedSpecializations.map((spec) => (
                       <span
                         key={spec}
-                        className="px-2 py-0.5 text-xs bg-primary-100 dark:bg-primary-900/30 text-primary-600 rounded"
+                        className="px-2 py-0.5 text-xs bg-c-surface-raised dark:bg-c-surface-raised text-c-text-secondary rounded"
                       >
                         {spec}
                       </span>
@@ -3011,50 +2975,71 @@ interface PartnerPortalViewNewProps {
   onNavigate?: (view: string) => void;
 }
 
-class PartnerProspectContentBoundary extends React.Component<
-  React.PropsWithChildren,
-  { failed: boolean }
-> {
-  state = { failed: false };
+type PartnerConnectionState = 'loading' | 'connected' | 'unconnected' | 'error';
 
-  static getDerivedStateFromError() {
-    return { failed: true };
-  }
+const PartnerOrientationPanel: React.FC<{
+  variant: 'unconnected' | 'error';
+  onRetry?: () => void;
+}> = ({ variant, onRetry }) => {
+  const { t } = useTranslation();
+  const isError = variant === 'error';
 
-  render() {
-    if (this.state.failed) {
-      return (
-        <div className="rounded-xl border border-amber-300 bg-c-surface p-6 text-sm text-c-text-secondary dark:border-amber-700/60">
-          Szczegóły programu są chwilowo niedostępne. Możesz nadal poprosić administratora o
-          zaproszenie do programu partnerskiego.
-        </div>
-      );
-    }
-    return this.props.children;
-  }
-}
+  return (
+    <section
+      className="mx-auto max-w-2xl rounded-2xl border border-c-border-subtle bg-c-surface p-8 text-center shadow-sm"
+      data-testid={`partner-orientation-${variant}`}
+    >
+      {isError ? (
+        <AlertTriangle className="mx-auto h-10 w-10 text-c-warning" aria-hidden="true" />
+      ) : (
+        <Building2 className="mx-auto h-10 w-10 text-c-text-secondary" aria-hidden="true" />
+      )}
+      <h1 className="mt-5 text-2xl font-semibold text-c-text">
+        {isError
+          ? t('partner.day12.connectionErrorTitle', 'Nie udało się ustalić statusu połączenia')
+          : t('partner.day12.unconnectedTitle', 'Profil partnera nie jest jeszcze podłączony')}
+      </h1>
+      <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-c-text-secondary">
+        {isError
+          ? t(
+              'partner.day12.connectionErrorDescription',
+              'Nie pokazujemy rejestracji ani treści programu, dopóki nie potwierdzimy statusu z serwera. Spróbuj ponownie.'
+            )
+          : t(
+              'partner.day12.unconnectedDescription',
+              'Ten ekran służy wyłącznie do sprawdzenia połączenia z przestrzenią partnera. Administrator organizacji może potwierdzić dalszy krok poza tym pulpitem.'
+            )}
+      </p>
+      {isError && onRetry ? (
+        <button
+          type="button"
+          onClick={onRetry}
+          className="mt-6 rounded-lg border border-c-border px-4 py-2 text-sm font-medium text-c-text hover:bg-c-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+        >
+          {t('partner.day12.retryConnection', 'Sprawdź ponownie')}
+        </button>
+      ) : null}
+    </section>
+  );
+};
 
 export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const [connectionLoading, setConnectionLoading] = useState(true);
-  const [isConnected, setIsConnected] = useState<boolean>(false);
+  const [connectionState, setConnectionState] = useState<PartnerConnectionState>('loading');
+  const isConnected = connectionState === 'connected';
   const fetchConnection = useCallback(async () => {
     try {
-      setConnectionLoading(true);
-      const response = await Api.get('/api/partners/connection');
-      const payload = response?.data;
-      const data = payload?.data;
-      if (response?.success && data && typeof data.connected === 'boolean') {
-        setIsConnected(Boolean(data.connected));
+      setConnectionState('loading');
+      const connection = await V8PartnerApi.getConnection();
+      if (connection && typeof connection.connected === 'boolean') {
+        setConnectionState(connection.connected ? 'connected' : 'unconnected');
         return;
       }
-      setIsConnected(false);
+      setConnectionState('error');
     } catch {
-      setIsConnected(false);
-    } finally {
-      setConnectionLoading(false);
+      setConnectionState('error');
     }
   }, []);
 
@@ -3067,8 +3052,7 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = () => {
     const section = params.get('tab');
 
     if (isPartnerSection(section)) {
-      if (isConnected || PARTNER_PROGRAM_SECTIONS.has(section)) return section;
-      return 'partner-home';
+      return isConnected ? section : 'partner-home';
     }
 
     const legacySection = getLegacyPartnerSection(location.pathname);
@@ -3076,7 +3060,7 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = () => {
   }, [location.pathname, location.search, isConnected]);
 
   useEffect(() => {
-    if (connectionLoading) return;
+    if (connectionState === 'loading') return;
 
     const legacySection = getLegacyPartnerSection(location.pathname);
     if (!legacySection) return;
@@ -3086,7 +3070,7 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = () => {
 
     params.set('tab', legacySection);
     navigate({ pathname: ROUTES.PARTNER.LANDING, search: params.toString() }, { replace: true });
-  }, [connectionLoading, location.pathname, location.search, navigate]);
+  }, [connectionState, location.pathname, location.search, navigate]);
 
   const handleSectionChange = useCallback(
     (section: PartnerSection) => {
@@ -3098,34 +3082,15 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = () => {
   );
 
   useEffect(() => {
-    if (connectionLoading || isConnected) return;
+    if (connectionState === 'loading' || isConnected) return;
     const params = new URLSearchParams(location.search);
-    const section = params.get('tab');
-    if (isPartnerSection(section) && PARTNER_PROGRAM_SECTIONS.has(section)) return;
+    if (params.get('tab') === 'partner-home') return;
     params.set('tab', 'partner-home');
     navigate({ pathname: ROUTES.PARTNER.LANDING, search: params.toString() }, { replace: true });
-  }, [connectionLoading, isConnected, location.search, navigate]);
+  }, [connectionState, isConnected, location.search, navigate]);
 
   // Get breadcrumbs based on active section
   const breadcrumbs = useMemo((): Breadcrumb[] => {
-    if (!isConnected) {
-      const programLabels: Partial<Record<PartnerSection, string>> = {
-        'partner-home': 'Program overview',
-        dashboard: 'Why become a partner',
-        metrics: 'Partner success stories',
-        earnings: 'Earnings and tiers',
-        'company-info': 'How to join',
-        'learning-path': 'Partner Academy',
-        documentation: 'Program resources',
-        templates: 'FAQ and support',
-      };
-      const crumbs: Breadcrumb[] = [{ label: 'Partner program', section: 'partner-home' }];
-      if (activeSection !== 'partner-home') {
-        crumbs.push({ label: programLabels[activeSection] || 'Program overview' });
-      }
-      return crumbs;
-    }
-
     const sectionLabels: Record<PartnerSection, string> = {
       'partner-home': 'Home',
       dashboard: 'Dashboard',
@@ -3208,19 +3173,16 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = () => {
     }
 
     return crumbs;
-  }, [activeSection, isConnected]);
+  }, [activeSection]);
 
   // Render content based on active section
   const renderContent = useCallback(() => {
     switch (activeSection) {
       // Home
       case 'partner-home':
-        // Owner decision 2026-08-05: an active (earn/payout) partner must not be
-        // shown the acquisition landing. The variant is chosen from the server's
-        // persisted lifecycle phase; unknown/error never falls back to acquisition.
         return (
           <PartnerStartRouter
-            onboardingSurface={<ProviderHomeView />}
+            onboardingSurface={<PartnerOnboardingOrientation />}
             onNavigateSection={handleSectionChange}
           />
         );
@@ -3265,70 +3227,33 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = () => {
       case 'public-listing':
         return <ProfileSection subsection={activeSection} />;
       default:
-        return <ProviderHomeView />;
+        return <PartnerStartRouter onboardingSurface={<PartnerOnboardingOrientation />} />;
     }
   }, [activeSection, handleSectionChange]);
-
-  const renderProgramContent = useCallback(() => {
-    switch (activeSection) {
-      case 'dashboard':
-        return <ProgramBenefitsView />;
-      case 'metrics':
-        return <ProgramStoriesView />;
-      case 'earnings':
-        return (
-          <div className="space-y-10">
-            <ProgramTiersView />
-            <ProgramCalculatorView />
-          </div>
-        );
-      case 'company-info':
-        return (
-          <div className="space-y-10">
-            <ProgramOnboardingView />
-            <ProgramContactView />
-          </div>
-        );
-      case 'learning-path':
-        return <ProgramAcademyView />;
-      case 'documentation':
-        return <ProgramResourcesView />;
-      case 'templates':
-        return <ProgramFaqView />;
-      case 'partner-home':
-      default:
-        return <ProviderHomeView />;
-    }
-  }, [activeSection]);
 
   return (
     <PartnerLayout
       activeSection={activeSection}
       onSectionChange={handleSectionChange}
       breadcrumbs={breadcrumbs}
-      programMode={!isConnected}
+      connected={connectionState === 'connected'}
     >
-      {connectionLoading ? (
-        <div className="flex items-center justify-center h-64">
-          <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
+      {connectionState === 'loading' ? (
+        <div
+          className="flex h-64 items-center justify-center"
+          data-testid="partner-connection-loading"
+        >
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-c-border border-t-c-text-secondary" />
         </div>
-      ) : !isConnected ? (
-        <PartnerProspectContentBoundary>
-          <Suspense
-            fallback={
-              <div className="flex h-64 items-center justify-center">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-600 border-t-transparent" />
-              </div>
-            }
-          >
-            {renderProgramContent()}
-          </Suspense>
-        </PartnerProspectContentBoundary>
+      ) : connectionState === 'unconnected' ? (
+        <PartnerOrientationPanel variant="unconnected" />
+      ) : connectionState === 'error' ? (
+        <PartnerOrientationPanel variant="error" onRetry={() => void fetchConnection()} />
       ) : (
         <Suspense
           fallback={
-            <div className="flex items-center justify-center h-64">
-              <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
+            <div className="flex h-64 items-center justify-center">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-c-border border-t-c-text-secondary" />
             </div>
           }
         >

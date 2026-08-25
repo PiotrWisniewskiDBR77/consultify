@@ -28,6 +28,7 @@ vi.mock('../../../src/services/api', () => ({
 
 vi.mock('../../../src/services/api/v8', () => ({
   V8PartnerApi: {
+    getConnection: vi.fn(),
     getReferralAnalytics: vi.fn(),
     getEarningsSummary: vi.fn(),
     getProgramStatus: vi.fn(),
@@ -112,21 +113,7 @@ describe('PartnerPortalView', () => {
   describe('partner acquisition boundary', () => {
     const connectionResponses = () => {
       let connected = false;
-      vi.mocked(Api.get).mockImplementation(async (url: string) => {
-        if (url === '/api/partners/connection') {
-          return {
-            success: true,
-            data: {
-              data: {
-                connected,
-                selfConnectEnabled: true,
-                organization: connected ? { name: 'Partner One' } : null,
-              },
-            },
-          } as any;
-        }
-        throw new Error(`Unexpected GET ${url}`);
-      });
+      vi.mocked(V8PartnerApi.getConnection).mockImplementation(async () => ({ connected }) as any);
       return () => {
         connected = true;
       };
@@ -141,7 +128,7 @@ describe('PartnerPortalView', () => {
         </TestWrapper>
       );
 
-      await waitFor(() => expect(Api.get).toHaveBeenCalledWith('/api/partners/connection'));
+      await waitFor(() => expect(V8PartnerApi.getConnection).toHaveBeenCalled());
       expect(
         screen.queryByRole('button', {
           name: /Utwórz i połącz profil|Create and connect profile|partner\.connect\.cta/,
@@ -160,7 +147,7 @@ describe('PartnerPortalView', () => {
           <PartnerPortalViewNew />
         </TestWrapper>
       );
-      await waitFor(() => expect(Api.get).toHaveBeenCalledWith('/api/partners/connection'));
+      await waitFor(() => expect(V8PartnerApi.getConnection).toHaveBeenCalled());
       expect(Api.post).not.toHaveBeenCalledWith('/api/partners/connect', expect.anything());
       expect(V8PartnerApi.connect).not.toHaveBeenCalled();
     });
@@ -185,14 +172,8 @@ describe('PartnerPortalView', () => {
     });
 
     it('should fetch and display dashboard data', async () => {
+      vi.mocked(V8PartnerApi.getConnection).mockResolvedValue({ connected: true } as any);
       vi.mocked(Api.get).mockImplementation(async (url: string) => {
-        if (url === '/api/partners/connection') {
-          return {
-            success: true,
-            data: { data: { connected: true, organization: { name: 'Partner Org' } } },
-          } as any;
-        }
-
         if (url === '/api/partners/dashboard') {
           return {
             success: true,
@@ -236,20 +217,14 @@ describe('PartnerPortalView', () => {
 
       // Wait for data to load
       await waitFor(() => {
-        expect(Api.get).toHaveBeenCalledWith('/api/partners/connection');
+        expect(V8PartnerApi.getConnection).toHaveBeenCalled();
         expect(Api.get).toHaveBeenCalledWith('/api/partners/dashboard');
       });
     });
 
     it('renders governed partner runtime summary on the default dashboard', async () => {
+      vi.mocked(V8PartnerApi.getConnection).mockResolvedValue({ connected: true } as any);
       vi.mocked(Api.get).mockImplementation(async (url: string) => {
-        if (url === '/api/partners/connection') {
-          return {
-            success: true,
-            data: { data: { connected: true, organization: { name: 'Partner Org' } } },
-          } as any;
-        }
-
         if (url === '/api/partners/dashboard') {
           return {
             success: true,
@@ -286,13 +261,8 @@ describe('PartnerPortalView', () => {
     });
 
     it('uses the canonical certification reader instead of the dashboard 0/0 placeholder', async () => {
+      vi.mocked(V8PartnerApi.getConnection).mockResolvedValue({ connected: true } as any);
       vi.mocked(Api.get).mockImplementation(async (url: string) => {
-        if (url === '/api/partners/connection') {
-          return {
-            success: true,
-            data: { data: { connected: true, organization: { name: 'Partner Org' } } },
-          } as any;
-        }
         if (url === '/api/partners/dashboard') {
           return {
             success: true,
@@ -327,7 +297,9 @@ describe('PartnerPortalView', () => {
 
       await waitFor(() => expect(screen.getAllByText(/1\/2/).length).toBeGreaterThanOrEqual(2));
       expect(screen.queryByText(/0\/0/)).not.toBeInTheDocument();
-      expect(screen.getByText('Certification details are available in Learning Path')).toBeInTheDocument();
+      expect(
+        screen.getByText('Certification details are available in Learning Path')
+      ).toBeInTheDocument();
     });
 
     it('should handle dashboard API error', async () => {
@@ -354,6 +326,7 @@ describe('PartnerPortalView', () => {
         },
       };
 
+      vi.mocked(V8PartnerApi.getConnection).mockResolvedValue({ connected: true } as any);
       vi.mocked(Api.get).mockResolvedValue({ data: mockData });
 
       render(

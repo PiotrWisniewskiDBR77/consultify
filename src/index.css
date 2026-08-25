@@ -49,6 +49,10 @@
     --c-surface-rgb: 255 255 255;
     --c-surface-raised: #f8fafc; /* popovers / chips — slight tint so a chip reads off a white row (demo/TRIADA approved value; union kept demo per visual doctrine) */
     --c-surface-raised-rgb: 248 250 252;
+    --c-surface-hover: #f1f5f9; /* interactive hover feedback (buttons/rows) — one step more visible than surface-raised */
+    --c-surface-hover-rgb: 241 245 249;
+    --c-surface-subtle: #eef2f6; /* static badge/icon-chip fill — calmer than surface-hover, no interaction implied */
+    --c-surface-subtle-rgb: 238 242 246;
     --c-border-subtle: #e6e9ed; /* hairlines */
     --c-border-subtle-rgb: 230 233 237;
     --c-border: #cbd2da; /* default borders — strengthened so chip outline is visible on white (light mode) */
@@ -267,6 +271,10 @@
     --c-surface-rgb: 15 23 42;
     --c-surface-raised: #15213b; /* navy-800 — popovers / chips */
     --c-surface-raised-rgb: 21 33 59;
+    --c-surface-hover: #1b2947; /* interactive hover feedback — one step lighter than surface-raised */
+    --c-surface-hover-rgb: 27 41 71;
+    --c-surface-subtle: #131f38; /* static badge/icon-chip fill — between surface and surface-raised */
+    --c-surface-subtle-rgb: 19 31 56;
     --c-border-subtle: rgba(148, 163, 184, 0.12); /* hairlines — lifted for visibility */
     --c-border-subtle-rgb: 148 163 184;
     --c-border: rgba(148, 163, 184, 0.22); /* default borders — lifted for visibility */

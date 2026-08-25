@@ -21,7 +21,6 @@ import {
   FileText,
   FolderKanban,
   FolderOpen,
-  GraduationCap,
   Home,
   LayoutDashboard,
   Link2,
@@ -102,7 +101,11 @@ interface PartnerSidebarProps {
   pendingCertifications?: number;
   activeClients?: number;
   onBack?: () => void;
-  programMode?: boolean;
+  /** D8: no partner data/section is reachable before the profile is connected
+   * — grey out the operational nav items instead of promising navigation that
+   * silently no-ops (activeSection is pinned to the orientation content while
+   * unconnected). Orientation (header/branding, "Back to App") stays intact. */
+  connected?: boolean;
 }
 
 export const PartnerSidebar: React.FC<PartnerSidebarProps> = ({
@@ -112,65 +115,13 @@ export const PartnerSidebar: React.FC<PartnerSidebarProps> = ({
   pendingCertifications = 0,
   activeClients = 0,
   onBack,
-  programMode = false,
+  connected = true,
 }) => {
   const { t } = useTranslation();
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['home']));
 
   // Navigation groups configuration
   const navGroups: NavGroup[] = useMemo(() => {
-    if (programMode) {
-      return [
-        {
-          id: 'program',
-          label: t('partner.sidebar.groups.program', 'Partner program'),
-          defaultOpen: true,
-          items: [
-            {
-              id: 'partner-home',
-              label: t('partner.program.overview', 'Program overview'),
-              icon: Home,
-            },
-            {
-              id: 'dashboard',
-              label: t('partner.program.paths', 'Partner paths'),
-              icon: Sparkles,
-            },
-            {
-              id: 'metrics',
-              label: t('partner.program.proof', 'Evidence policy'),
-              icon: TrendingUp,
-            },
-            {
-              id: 'earnings',
-              label: t('partner.program.commercial', 'Models and commercial terms'),
-              icon: DollarSign,
-            },
-            {
-              id: 'company-info',
-              label: t('partner.program.join', 'How to join'),
-              icon: UserCheck,
-            },
-            {
-              id: 'learning-path',
-              label: t('partner.program.enablement', 'Enablement and Academy'),
-              icon: GraduationCap,
-            },
-            {
-              id: 'documentation',
-              label: t('partner.program.resources', 'Program resources'),
-              icon: FileText,
-            },
-            {
-              id: 'templates',
-              label: t('partner.program.faq', 'Safeguards and FAQ'),
-              icon: FolderOpen,
-            },
-          ],
-        },
-      ];
-    }
-
     return [
       {
         id: 'home',
@@ -375,7 +326,7 @@ export const PartnerSidebar: React.FC<PartnerSidebarProps> = ({
         ],
       },
     ];
-  }, [t, activeClients, pendingCertifications, programMode]);
+  }, [t, activeClients, pendingCertifications]);
 
   // Toggle group expansion
   const toggleGroup = useCallback((groupId: string) => {
@@ -428,14 +379,10 @@ export const PartnerSidebar: React.FC<PartnerSidebarProps> = ({
       {/* Header */}
       <div className="px-5 pt-5 pb-4">
         <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-wide">
-          {programMode
-            ? t('partner.program.title', 'Consultify Partner Program')
-            : t('partner.sidebar.title', 'Partner')}
+          {t('partner.sidebar.title', 'Partner')}
         </h1>
         <p className="text-sm text-slate-600 dark:text-slate-400 mt-0.5">
-          {programMode
-            ? t('partner.program.subtitle', 'Grow your business with Consultify')
-            : t('partner.sidebar.subtitle', 'Grow with Consultify')}
+          {t('partner.sidebar.subtitle', 'Grow with Consultify')}
         </p>
       </div>
 
@@ -470,31 +417,40 @@ export const PartnerSidebar: React.FC<PartnerSidebarProps> = ({
                 >
                   <div className="space-y-0.5 pb-2">
                     {group.items.map((item) => {
-                      const isActive = activeSection === item.id;
+                      const isActive = connected && activeSection === item.id;
                       const Icon = item.icon;
 
                       return (
                         <button
                           key={item.id}
-                          onClick={() => onSectionChange(item.id)}
+                          type="button"
+                          disabled={!connected}
+                          aria-disabled={!connected}
+                          onClick={connected ? () => onSectionChange(item.id) : undefined}
                           className={cn(
                             'relative w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-150',
-                            isActive
-                              ? 'bg-slate-100 dark:bg-white/[0.08] text-slate-900 dark:text-white font-medium before:absolute before:left-0 before:top-1/2 before:h-5 before:w-0.5 before:-translate-y-1/2 before:rounded-full before:bg-[var(--c-info)]'
-                              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800/20 hover:text-slate-900 dark:hover:text-white'
+                            !connected
+                              ? 'cursor-not-allowed text-slate-400 opacity-50 dark:text-slate-600'
+                              : isActive
+                                ? 'bg-slate-100 dark:bg-white/[0.08] text-slate-900 dark:text-white font-medium before:absolute before:left-0 before:top-1/2 before:h-5 before:w-0.5 before:-translate-y-1/2 before:rounded-full before:bg-[var(--c-info)]'
+                                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800/20 hover:text-slate-900 dark:hover:text-white'
                           )}
                         >
                           <Icon
                             className={cn(
                               'w-4 h-4 flex-shrink-0',
-                              isActive
-                                ? 'text-[var(--c-info)]'
-                                : 'text-slate-500 dark:text-slate-400'
+                              !connected
+                                ? 'text-slate-400 dark:text-slate-600'
+                                : isActive
+                                  ? 'text-[var(--c-info)]'
+                                  : 'text-slate-500 dark:text-slate-400'
                             )}
                           />
                           <span className="flex-1 text-left">{item.label}</span>
-                          {renderBadge(item)}
-                          {item.external && <ExternalLink className="w-3 h-3 opacity-50" />}
+                          {connected && renderBadge(item)}
+                          {connected && item.external && (
+                            <ExternalLink className="w-3 h-3 opacity-50" />
+                          )}
                         </button>
                       );
                     })}

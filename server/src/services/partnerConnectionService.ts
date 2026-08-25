@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 
 import { withPgTransaction } from '../database/PostgresDatabase.js';
+import { getActivePartnerOrgIdForTenantUser } from './partnerOrgResolution.js';
 
 export const PARTNER_SELF_CONNECT_ENV = 'PARTNER_SELF_CONNECT_ENABLED';
 
@@ -28,6 +29,32 @@ export interface PartnerConnectionResponse {
     referralLinkSlug: string;
     specializations: string[];
     regions: string[];
+  };
+}
+
+export interface PartnerConnectionReadResult {
+  connected: boolean;
+  partnerOrganizationId: string | null;
+}
+
+/**
+ * Canonical connection read for D8 / DEC-2026-08-25-64.
+ *
+ * This is deliberately strict and read-only: the selected Consultify tenant,
+ * active Partner membership and `owner_organization_id` must all match. It
+ * never invokes the connect writer and never performs the legacy self-heal.
+ */
+export async function getPartnerConnectionForTenant(params: {
+  organizationId: string;
+  userId: string;
+}): Promise<PartnerConnectionReadResult> {
+  const partnerOrganizationId = await getActivePartnerOrgIdForTenantUser(
+    params.organizationId,
+    params.userId
+  );
+  return {
+    connected: partnerOrganizationId !== null,
+    partnerOrganizationId,
   };
 }
 

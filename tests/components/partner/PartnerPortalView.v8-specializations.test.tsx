@@ -23,6 +23,7 @@ vi.mock('../../../src/services/api', () => ({
 
 vi.mock('../../../src/services/api/v8', () => ({
   V8PartnerApi: {
+    getConnection: vi.fn(),
     updateOrganizationSpecializations: vi.fn(),
   },
   shouldFallbackToLegacyPartner: vi.fn(),
@@ -45,26 +46,15 @@ function renderView() {
       <I18nextProvider i18n={i18n}>
         <PartnerPortalViewNew />
       </I18nextProvider>
-    </MemoryRouter>,
+    </MemoryRouter>
   );
 }
 
 describe('PartnerPortalView specializations V8 seam', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(V8PartnerApi.getConnection).mockResolvedValue({ connected: true } as any);
     vi.mocked(Api.get).mockImplementation(async (url: string) => {
-      if (url === '/api/partners/connection') {
-        return {
-          success: true,
-          data: {
-            data: {
-              connected: true,
-              organization: { name: 'Test Partner Co' },
-            },
-          },
-        } as any;
-      }
-
       if (url === '/api/partners/organization') {
         return {
           success: true,
@@ -99,14 +89,17 @@ describe('PartnerPortalView specializations V8 seam', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'SIRI' }, { timeout: 10000 }));
     fireEvent.click(screen.getByRole('button', { name: 'Save Specializations' }));
 
-    await waitFor(() => {
-      expect(V8PartnerApi.updateOrganizationSpecializations).toHaveBeenCalledWith({
-        specializations: ['DRD', 'SIRI'],
-      });
-    }, { timeout: 10000 });
+    await waitFor(
+      () => {
+        expect(V8PartnerApi.updateOrganizationSpecializations).toHaveBeenCalledWith({
+          specializations: ['DRD', 'SIRI'],
+        });
+      },
+      { timeout: 10000 }
+    );
     expect(Api.put).not.toHaveBeenCalledWith(
       '/api/partners/organization/specializations',
-      expect.anything(),
+      expect.anything()
     );
     expect(toastSuccess).toHaveBeenCalledWith('Specializations updated');
   });
@@ -123,8 +116,13 @@ describe('PartnerPortalView specializations V8 seam', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'SIRI' }, { timeout: 10000 }));
     fireEvent.click(screen.getByRole('button', { name: 'Save Specializations' }));
 
-    await waitFor(() => expect(toastError).toHaveBeenCalledWith('Failed to save specializations'), { timeout: 10000 });
-    expect(Api.put).not.toHaveBeenCalledWith('/api/partners/organization/specializations', expect.anything());
+    await waitFor(() => expect(toastError).toHaveBeenCalledWith('Failed to save specializations'), {
+      timeout: 10000,
+    });
+    expect(Api.put).not.toHaveBeenCalledWith(
+      '/api/partners/organization/specializations',
+      expect.anything()
+    );
     expect(toastSuccess).not.toHaveBeenCalledWith('Specializations updated');
   });
 });

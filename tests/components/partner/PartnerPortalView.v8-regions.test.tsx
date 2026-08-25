@@ -23,6 +23,7 @@ vi.mock('../../../src/services/api', () => ({
 
 vi.mock('../../../src/services/api/v8', () => ({
   V8PartnerApi: {
+    getConnection: vi.fn(),
     updateOrganizationRegions: vi.fn(),
   },
   shouldFallbackToLegacyPartner: vi.fn(),
@@ -45,26 +46,15 @@ function renderView() {
       <I18nextProvider i18n={i18n}>
         <PartnerPortalViewNew />
       </I18nextProvider>
-    </MemoryRouter>,
+    </MemoryRouter>
   );
 }
 
 describe('PartnerPortalView regions V8 seam', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(V8PartnerApi.getConnection).mockResolvedValue({ connected: true } as any);
     vi.mocked(Api.get).mockImplementation(async (url: string) => {
-      if (url === '/api/partners/connection') {
-        return {
-          success: true,
-          data: {
-            data: {
-              connected: true,
-              organization: { name: 'Test Partner Co' },
-            },
-          },
-        } as any;
-      }
-
       if (url === '/api/partners/organization') {
         return {
           success: true,
@@ -104,7 +94,10 @@ describe('PartnerPortalView regions V8 seam', () => {
         regions: ['DACH', 'CEE'],
       });
     });
-    expect(Api.put).not.toHaveBeenCalledWith('/api/partners/organization/regions', expect.anything());
+    expect(Api.put).not.toHaveBeenCalledWith(
+      '/api/partners/organization/regions',
+      expect.anything()
+    );
     expect(toastSuccess).toHaveBeenCalledWith('Regions updated');
   });
 
@@ -121,7 +114,10 @@ describe('PartnerPortalView regions V8 seam', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save Regions' }));
 
     await waitFor(() => expect(toastError).toHaveBeenCalledWith('Failed to save regions'));
-    expect(Api.put).not.toHaveBeenCalledWith('/api/partners/organization/regions', expect.anything());
+    expect(Api.put).not.toHaveBeenCalledWith(
+      '/api/partners/organization/regions',
+      expect.anything()
+    );
     expect(toastSuccess).not.toHaveBeenCalledWith('Regions updated');
   });
 });

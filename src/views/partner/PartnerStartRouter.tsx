@@ -1,11 +1,11 @@
 /**
- * M16 — Partner Start router (owner decision, 2026-08-05).
+ * M16 — Partner Start router (D8, DEC-2026-08-24-08).
  *
  * The Start surface is chosen by the partner's PERSISTED lifecycle phase, read
  * from the server on every mount:
  *
  *   invited / onboarding (runtime: `onboard`, `activate`)
- *     → acquisition + the correct next onboarding step (`ProviderHomeView`).
+ *     → operational workspace orientation, never acquisition/marketing.
  *   earn / payout
  *     → skip "Be Our Partner" entirely; open on the partner's own numbers,
  *       program data and `program/status.whatNext`.
@@ -65,7 +65,7 @@ const formatMoney = (amount: number, currency: string, locale: string) => {
 };
 
 interface PartnerStartRouterProps {
-  /** Acquisition surface, rendered only for invited/onboarding partners. */
+  /** Operational workspace orientation for invited/onboarding partners. */
   onboardingSurface: React.ReactNode;
   onNavigateSection?: (section: PartnerSection) => void;
 }
@@ -163,9 +163,7 @@ export const PartnerStartRouter: React.FC<PartnerStartRouterProps> = ({
         <p className="font-medium text-c-text">
           {t('partner.start.unknownPhaseTitle', 'Nieznany etap programu partnerskiego')}
         </p>
-        <p className="mt-1 font-mono text-xs text-c-text-muted">
-          {String(status.lifecyclePhase)}
-        </p>
+        <p className="mt-1 font-mono text-xs text-c-text-muted">{String(status.lifecyclePhase)}</p>
       </div>
     );
   }
@@ -287,6 +285,26 @@ export const PartnerStartRouter: React.FC<PartnerStartRouterProps> = ({
         </button>
       </div>
     </div>
+  );
+};
+
+export const PartnerOnboardingOrientation: React.FC = () => {
+  const { t } = useTranslation();
+  return (
+    <section
+      className="mx-auto max-w-2xl rounded-2xl border border-c-border-subtle bg-c-surface p-8 text-center shadow-sm"
+      data-testid="partner-orientation-onboarding"
+    >
+      <h1 className="text-2xl font-semibold text-c-text">
+        {t('partner.day12.onboardingTitle', 'Konfiguracja przestrzeni partnera trwa')}
+      </h1>
+      <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-c-text-secondary">
+        {t(
+          'partner.day12.onboardingDescription',
+          'Połączenie jest aktywne. Dokończ wymagane kroki operacyjne w przestrzeni partnera; ten pulpit nie wyświetla treści rejestracyjnych ani marketingowych.'
+        )}
+      </p>
+    </section>
   );
 };
 

@@ -6,10 +6,57 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 
+// Real key -> real PL runtime value (verbatim from public/locales/pl/translation.json,
+// partner.clientAccess.*), not the source's inline fallback argument. This decouples the
+// test from whether ClientAccessView.tsx happens to pass a `t()` default value — see FIX-5:
+// day 12 removed the English literal fallbacks (P.5 hygiene, the keys already resolve to
+// real PL/EN values at runtime), and the previous version of this mock (`fallback ?? key`)
+// broke the moment a call became `t('key')` with no second argument, because it fell back to
+// returning the raw dotted key instead of real text.
+const CLIENT_ACCESS_PL: Record<string, string> = {
+  'partner.clientAccess.loadError': 'Nie udało się załadować danych',
+  'partner.clientAccess.linkGenerated': 'Link dostępu wygenerowany!',
+  'partner.clientAccess.featureSoon': 'Wkrótce dostępne',
+  'partner.clientAccess.linkFailed': 'Nie udało się wygenerować linku',
+  'partner.clientAccess.title': 'Menedżer dostępu klientów',
+  'partner.clientAccess.subtitle':
+    'Zarządzaj dostępem pracowników do kont klientów w jednym miejscu',
+  'partner.clientAccess.clients': 'Klienci',
+  'partner.clientAccess.employees': 'Pracownicy',
+  'partner.clientAccess.getAccessLink': 'Pobierz link dostępu',
+  'partner.clientAccess.generatedLink': 'Twój link dostępu jest gotowy:',
+  'partner.clientAccess.allRegions': 'Wszystkie regiony',
+  'partner.clientAccess.noClients': 'Nikogo tu nie ma',
+  'partner.clientAccess.noClientsDesc': 'Nie masz dostępu do żadnego klienta.',
+  'partner.clientAccess.employeesDesc':
+    'Zarządzaj dostępem pracowników do kont klientów w jednym miejscu',
+  'partner.clientAccess.employeeName': 'Imię i nazwisko',
+  'partner.clientAccess.statusActive': 'Aktywny',
+  'partner.clientAccess.statusDeactivated': 'Dezaktywowany',
+  'partner.clientAccess.permissionSet': 'Zestaw uprawnień',
+  'partner.clientAccess.totalClients': 'Łączna liczba klientów',
+  'partner.clientAccess.col.status': 'Status',
+  'partner.clientAccess.lastActive': 'Ostatnia aktywność',
+  'partner.clientAccess.noEmployees': 'Brak członków zespołu',
+  'partner.clientAccess.compliance': 'Zgodność',
+  'partner.clientAccess.complianceDesc':
+    'Wszystkie zmiany dostępu są rejestrowane zgodnie z domeną PMO RESOURCE_RESPONSIBILITY i mapowane na grupę przedmiotową zasobów ISO 21500 (klauzula 4.6).',
+  'partner.clientAccess.userCount': '{{count}} użytkowników',
+};
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_key: string, fallback?: any) => (typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key)),
-    i18n: { language: 'en' },
+    t: (key: string, ...rest: any[]) => {
+      const options = rest.find((arg) => arg && typeof arg === 'object');
+      const legacyFallback = rest.find((arg) => typeof arg === 'string');
+      const template = CLIENT_ACCESS_PL[key] ?? legacyFallback ?? key;
+      return options
+        ? template.replace(/\{\{(\w+)\}\}/g, (_match: string, name: string) =>
+            String(options[name] ?? '')
+          )
+        : template;
+    },
+    i18n: { language: 'pl' },
   }),
 }));
 
@@ -81,7 +128,7 @@ describe('ClientAccessView partner clients seam', () => {
     render(
       <MemoryRouter>
         <ClientAccessView />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
     await waitFor(() => {
@@ -124,7 +171,7 @@ describe('ClientAccessView partner clients seam', () => {
     render(
       <MemoryRouter>
         <ClientAccessView />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
     await waitFor(() => {
@@ -153,14 +200,14 @@ describe('ClientAccessView partner clients seam', () => {
     render(
       <MemoryRouter>
         <ClientAccessView />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Employees')).toBeInTheDocument();
+      expect(screen.getByText('Pracownicy')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText('Employees'));
+    fireEvent.click(screen.getByText('Pracownicy'));
 
     await waitFor(() => {
       expect(screen.getByText('Alice Admin')).toBeInTheDocument();
@@ -197,14 +244,14 @@ describe('ClientAccessView partner clients seam', () => {
     render(
       <MemoryRouter>
         <ClientAccessView />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Employees')).toBeInTheDocument();
+      expect(screen.getByText('Pracownicy')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText('Employees'));
+    fireEvent.click(screen.getByText('Pracownicy'));
 
     await waitFor(() => {
       expect(screen.getByText('Fallback Member')).toBeInTheDocument();
@@ -227,14 +274,14 @@ describe('ClientAccessView partner clients seam', () => {
     render(
       <MemoryRouter>
         <ClientAccessView />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Get access link')).toBeInTheDocument();
+      expect(screen.getByText('Pobierz link dostępu')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText('Get access link'));
+    fireEvent.click(screen.getByText('Pobierz link dostępu'));
 
     await waitFor(() => {
       expect(screen.getByText('https://example.com/r/PARTNER-123')).toBeInTheDocument();
@@ -266,14 +313,14 @@ describe('ClientAccessView partner clients seam', () => {
     render(
       <MemoryRouter>
         <ClientAccessView />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Get access link')).toBeInTheDocument();
+      expect(screen.getByText('Pobierz link dostępu')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText('Get access link'));
+    fireEvent.click(screen.getByText('Pobierz link dostępu'));
 
     await waitFor(() => {
       expect(screen.getByText('https://example.com/r/FALLBACK-123')).toBeInTheDocument();

@@ -190,9 +190,7 @@ export const ClientAccessView: React.FC = () => {
         return;
       }
       console.error('Error fetching client access data:', err);
-      setError(
-        err?.response?.data?.error || t('partner.clientAccess.loadError', 'Failed to load data')
-      );
+      setError(err?.response?.data?.error || t('partner.clientAccess.loadError'));
     } finally {
       setLoading(false);
     }
@@ -211,7 +209,7 @@ export const ClientAccessView: React.FC = () => {
         const referralLink = response?.tools?.referralLink;
         if (typeof referralLink === 'string' && referralLink.length > 0) {
           setAccessLink(referralLink);
-          toast.success(t('partner.clientAccess.linkGenerated', 'Access link generated!'));
+          toast.success(t('partner.clientAccess.linkGenerated'));
           return;
         }
       } catch (error) {
@@ -224,13 +222,11 @@ export const ClientAccessView: React.FC = () => {
       const referralLink = response?.data?.referralLink;
       if (response?.success && typeof referralLink === 'string' && referralLink.length > 0) {
         setAccessLink(referralLink);
-        toast.success(t('partner.clientAccess.linkGenerated', 'Access link generated!'));
+        toast.success(t('partner.clientAccess.linkGenerated'));
       } else if (isFeatureNotAvailable(response)) {
         toast(t('partner.clientAccess.featureSoon', 'Wkrótce dostępne'));
       } else {
-        toast.error(
-          response?.error || t('partner.clientAccess.linkFailed', 'Failed to generate link')
-        );
+        toast.error(response?.error || t('partner.clientAccess.linkFailed'));
       }
     } catch (err: any) {
       if (isFeatureNotAvailable(err)) {
@@ -238,10 +234,7 @@ export const ClientAccessView: React.FC = () => {
         return;
       }
       console.error('Error generating access link:', err);
-      toast.error(
-        err?.response?.data?.error ||
-          t('partner.clientAccess.linkFailed', 'Failed to generate link')
-      );
+      toast.error(err?.response?.data?.error || t('partner.clientAccess.linkFailed'));
     } finally {
       setGeneratingLink(false);
     }
@@ -270,7 +263,7 @@ export const ClientAccessView: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-c-border border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -297,14 +290,9 @@ export const ClientAccessView: React.FC = () => {
       {/* Header - HubSpot Style */}
       <div>
         <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-          {t('partner.clientAccess.title', 'Client Access Manager')}
+          {t('partner.clientAccess.title')}
         </h2>
-        <p className="text-slate-500">
-          {t(
-            'partner.clientAccess.subtitle',
-            "Manage your employees' client account access from one place"
-          )}
-        </p>
+        <p className="text-slate-500">{t('partner.clientAccess.subtitle')}</p>
       </div>
 
       {/* Tabs - HubSpot Style */}
@@ -315,22 +303,22 @@ export const ClientAccessView: React.FC = () => {
             className={cn(
               'px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors',
               activeTab === 'clients'
-                ? 'text-slate-900 dark:text-white border-primary-500'
+                ? 'text-slate-900 dark:text-white border-c-border'
                 : 'text-slate-500 border-transparent hover:text-slate-900 dark:hover:text-white'
             )}
           >
-            {t('partner.clientAccess.clients', 'Clients')}
+            {t('partner.clientAccess.clients')}
           </button>
           <button
             onClick={() => setActiveTab('employees')}
             className={cn(
               'px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors',
               activeTab === 'employees'
-                ? 'text-slate-900 dark:text-white border-primary-500'
+                ? 'text-slate-900 dark:text-white border-c-border'
                 : 'text-slate-500 border-transparent hover:text-slate-900 dark:hover:text-white'
             )}
           >
-            {t('partner.clientAccess.employees', 'Employees')}
+            {t('partner.clientAccess.employees')}
           </button>
         </div>
         <button
@@ -343,17 +331,17 @@ export const ClientAccessView: React.FC = () => {
           ) : (
             <Link2 className="w-4 h-4" />
           )}
-          {t('partner.clientAccess.getAccessLink', 'Get access link')}
+          {t('partner.clientAccess.getAccessLink')}
         </button>
       </div>
 
       {/* Access Link Display */}
       {accessLink && (
-        <div className="bg-primary-500/10 border border-primary-500/30 rounded-xl p-4">
+        <div className="bg-c-surface-raised border border-c-border rounded-xl p-4">
           <div className="flex items-center justify-between gap-4">
             <div className="flex-1">
-              <p className="text-sm text-primary-300 mb-1">
-                {t('partner.clientAccess.generatedLink', 'Your access link is ready:')}
+              <p className="text-sm text-c-text-secondary mb-1">
+                {t('partner.clientAccess.generatedLink')}
               </p>
               <code className="text-sm text-slate-900 dark:text-white bg-slate-50 dark:bg-navy-900/50 px-3 py-1.5 rounded block truncate">
                 {accessLink}
@@ -415,11 +403,9 @@ export const ClientAccessView: React.FC = () => {
           ) : (
             <div className="text-center py-12">
               <Users className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-              <p className="text-slate-500 font-medium">
-                {t('partner.clientAccess.noClients', 'Nobody here')}
-              </p>
+              <p className="text-slate-500 font-medium">{t('partner.clientAccess.noClients')}</p>
               <p className="text-sm text-slate-600 mt-1">
-                {t('partner.clientAccess.noClientsDesc', "You don't have any client access.")}
+                {t('partner.clientAccess.noClientsDesc')}
               </p>
             </div>
           )}
@@ -428,12 +414,7 @@ export const ClientAccessView: React.FC = () => {
         /* Employees Tab */
         <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4">
           <div className="flex items-center justify-between mb-4">
-            <p className="text-sm text-slate-500">
-              {t(
-                'partner.clientAccess.employeesDesc',
-                "Manage your employees' client account access from one place"
-              )}
-            </p>
+            <p className="text-sm text-slate-500">{t('partner.clientAccess.employeesDesc')}</p>
             {/* MVP: "Add team member" hidden — POST /api/partners/employees is a 503 stub (fast-follow). */}
           </div>
 
@@ -444,14 +425,14 @@ export const ClientAccessView: React.FC = () => {
             columns={[
               {
                 id: 'employeeName',
-                label: t('partner.clientAccess.employeeName', 'Employee Name'),
+                label: t('partner.clientAccess.employeeName'),
                 render: (employee) => (
                   <div className="flex items-center gap-3 min-w-0">
                     <div
                       className={cn(
                         'w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-xs font-bold',
                         employee.status === 'ACTIVE'
-                          ? 'bg-primary-500/20 text-primary-400'
+                          ? 'bg-c-surface-raised text-c-text-secondary'
                           : 'bg-slate-200 dark:bg-slate-700 text-slate-600'
                       )}
                     >
@@ -479,7 +460,7 @@ export const ClientAccessView: React.FC = () => {
               },
               {
                 id: 'permissionSet',
-                label: t('partner.clientAccess.permissionSet', 'Permission Set'),
+                label: t('partner.clientAccess.permissionSet'),
                 width: '180px',
                 render: (employee) => (
                   <span className="text-sm text-slate-600 dark:text-slate-400">
@@ -489,7 +470,7 @@ export const ClientAccessView: React.FC = () => {
               },
               {
                 id: 'clientCount',
-                label: t('partner.clientAccess.totalClients', 'Total Clients'),
+                label: t('partner.clientAccess.totalClients'),
                 width: '120px',
                 align: 'right',
                 render: (employee) => (
@@ -504,7 +485,7 @@ export const ClientAccessView: React.FC = () => {
               },
               {
                 id: 'status',
-                label: t('partner.clientAccess.col.status', 'Status'),
+                label: t('partner.clientAccess.col.status'),
                 width: '130px',
                 filterable: true,
                 filterOptions: [
@@ -521,7 +502,7 @@ export const ClientAccessView: React.FC = () => {
               },
               {
                 id: 'lastActive',
-                label: t('partner.clientAccess.lastActive', 'Last Active'),
+                label: t('partner.clientAccess.lastActive'),
                 width: '140px',
                 render: (employee) => (
                   <span className="text-sm text-slate-600 dark:text-slate-400">
@@ -534,7 +515,7 @@ export const ClientAccessView: React.FC = () => {
             activeFilters={employeeFilters}
             onFilterChange={setEmployeeFilters}
             hideRowActions
-            emptyMessage={t('partner.clientAccess.noEmployees', 'No team members yet')}
+            emptyMessage={t('partner.clientAccess.noEmployees')}
           />
         </div>
       )}
@@ -544,15 +525,10 @@ export const ClientAccessView: React.FC = () => {
         <div className="flex items-center gap-3 mb-3">
           <Shield className="w-5 h-5 text-amber-400" />
           <h3 className="font-semibold text-slate-900 dark:text-white">
-            {t('partner.clientAccess.compliance', 'Access Control Compliance')}
+            {t('partner.clientAccess.compliance')}
           </h3>
         </div>
-        <p className="text-sm text-slate-500">
-          {t(
-            'partner.clientAccess.complianceDesc',
-            'All access changes are logged according to PMO domain RESOURCE_RESPONSIBILITY and mapped to ISO 21500 Resource Subject Group (Clause 4.6).'
-          )}
-        </p>
+        <p className="text-sm text-slate-500">{t('partner.clientAccess.complianceDesc')}</p>
       </div>
     </div>
   );
@@ -576,9 +552,9 @@ const ClientRow: React.FC<ClientRowProps> = ({ client }) => {
   };
 
   return (
-    <div className="flex items-center justify-between rounded-xl border border-white/5 bg-slate-50/50 dark:bg-navy-900/30 p-4 transition hover:border-primary-500/30">
+    <div className="flex items-center justify-between rounded-xl border border-white/5 bg-slate-50/50 dark:bg-navy-900/30 p-4 transition hover:border-c-border">
       <div className="flex items-center gap-4">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-500/20 text-sm font-bold text-primary-400">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-c-surface-raised text-sm font-bold text-c-text-secondary">
           {(client.clientName || client.organizationName || 'UN').substring(0, 2).toUpperCase()}
         </div>
         <div>

@@ -5,10 +5,13 @@
 // rgb()/alpha branch and tokens with a baked-in alpha in --c-X (like --c-accent-soft, 0.08/0.14)
 // render fully opaque (full crimson) instead of their intended soft tint. The /NN modifier path
 // is unaffected — it still receives a numeric opacityValue and resolves via -rgb.
-const cTok = (name) => ({ opacityValue }) =>
-  opacityValue === undefined || (typeof opacityValue === 'string' && opacityValue.indexOf('var(--tw-') === 0)
-    ? 'var(--c-' + name + ')'
-    : 'rgb(var(--c-' + name + '-rgb) / ' + opacityValue + ')';
+const cTok =
+  (name) =>
+  ({ opacityValue }) =>
+    opacityValue === undefined ||
+    (typeof opacityValue === 'string' && opacityValue.indexOf('var(--tw-') === 0)
+      ? 'var(--c-' + name + ')'
+      : 'rgb(var(--c-' + name + '-rgb) / ' + opacityValue + ')';
 
 /** @type {import('tailwindcss').Config} */
 export default {
@@ -78,6 +81,8 @@ export default {
           bg: cTok('bg'),
           surface: cTok('surface'),
           'surface-raised': cTok('surface-raised'),
+          'surface-hover': cTok('surface-hover'),
+          'surface-subtle': cTok('surface-subtle'),
           'border-subtle': cTok('border-subtle'),
           border: cTok('border'),
           'border-strong': cTok('border-strong'),
