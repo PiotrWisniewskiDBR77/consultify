@@ -122,7 +122,7 @@ import { ExecutionControlSurface } from './ExecutionControlSurface';
 import { isExecutionFlagEnabled } from './executionFeatureFlags';
 import { ExecutionManagementView } from './ExecutionManagementView';
 import { normalizeExecutionArrayEnvelope } from './executionPayloadGuards';
-import { ExecutionReportsIntelligenceEntry } from './reports-intelligence/ExecutionReportsIntelligenceEntry';
+import { WorkIntelligenceReport } from './reports-intelligence/WorkIntelligenceReport';
 import {
   buildReportMarkdown,
   computeRAG,
@@ -5286,7 +5286,7 @@ Please return:
     // while the `list` branch below still masks the document with the table.
     if (activeDocumentId) {
       if (execReportsIntelligenceEnabled && activeDocumentId === 'execution-intelligence:work') {
-        return <ExecutionReportsIntelligenceEntry />;
+        return <WorkIntelligenceReport onOpenDocument={handleOpenWorkDocument} />;
       }
       if (activeDocumentId.startsWith('report:')) {
         const reportId = activeDocumentId.replace('report:', '');

@@ -10257,7 +10257,50 @@
         "loading": "Wczytywanie rejestru raportów…",
         "loadError": "Rejestr raportów jest niedostępny",
         "empty": "Nie znaleziono nadzorowanych uruchomień raportów.",
-        "runCount": "Liczba nadzorowanych uruchomień raportów: {{count}}"
+        "runCount": "Liczba nadzorowanych uruchomień raportów: {{count}}",
+        "operationalLabel": "Raport operacyjnego backlogu",
+        "loadingWork": "Wczytywanie raportu pracy…",
+        "workError": "Raport pracy jest niedostępny",
+        "stateDate": "Data stanu",
+        "lastSync": "Ostatnia synchronizacja",
+        "scope": "Zakres",
+        "allExecutionCases": "Wszystkie dostępne realizacje",
+        "partialCases": "Niedostępne realizacje źródłowe: {{count}}",
+        "operationalOnly": "Mapowania celów są niedostępne; to raport operacyjny, nie strategiczny.",
+        "hurtsBody": "Rekordy zaległe, dzisiejsze, zablokowane i bez terminu wynikają dokładnie z rejestru poniżej.",
+        "whyBody": "Zablokowane rekordy i zadeklarowane zależności są pokazywane bez wnioskowania o niezweryfikowanych przyczynach.",
+        "actionsUnavailable": "Bez zweryfikowanych wag wpływu i dowodów rekomendacja nie jest wydawana.",
+        "workEmpty": "Brak rekordów pracy w wybranym zakresie.",
+        "noContributors": "Brak rekordów składowych",
+        "sections": {
+          "context": "Kontekst i pasek zaufania",
+          "pulse": "Executive Pulse",
+          "hurts": "Co boli dziś",
+          "approaching": "Co się zbliża",
+          "stake": "Co jest zagrożone",
+          "why": "Dlaczego",
+          "trend": "Jak system się zmienia",
+          "actions": "Co zarząd ma zrobić",
+          "register": "Audytowalny rejestr"
+        },
+        "metrics": {
+          "overdueTasks": "Zaległe zadania",
+          "overdueDecisions": "Zaległe decyzje",
+          "dueToday": "Termin dzisiaj",
+          "due7": "Termin 1–7 dni",
+          "activeBlocks": "Aktywne blokady",
+          "undatedRisk": "Ryzyko bez terminu",
+          "decisionLatency": "Czas decyzji",
+          "dataCompleteness": "Kompletność danych"
+        },
+        "columns": {
+          "title": "Rekord",
+          "kind": "Typ",
+          "status": "Status",
+          "owner": "Właściciel",
+          "due": "Termin",
+          "version": "Wersja źródła"
+        }
       }
     },
     "tasks": {

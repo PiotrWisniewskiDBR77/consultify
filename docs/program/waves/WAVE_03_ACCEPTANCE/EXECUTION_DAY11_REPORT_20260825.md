@@ -95,15 +95,50 @@ kontrakt modułu, rejestr decyzji, instrukcja oraz kod w izolowanym worktree.
 
 ## Pozycje — tabela zbiorcza
 
-| Pozycja  | Zakres                         | Status          | Commit             | Testy                           | Dowód OFF                                                 | Zrzut             | Uwagi                                                                   |
-| -------- | ------------------------------ | --------------- | ------------------ | ------------------------------- | --------------------------------------------------------- | ----------------- | ----------------------------------------------------------------------- |
-| E.0      | flaga + mapa delty + dowód OFF | ZROBIONE_WG_DoD | bieżący commit E.0 | własne 4/4 + zastane 11/11 PASS | PASS: obecny rejestr, brak nowej powierzchni, 0 requestów | kontrolny harness | Jedna flaga, default OFF także demo; realny czytnik runtime-v1 przy ON. |
-| E.1      | Work Intelligence Report       | W TOKU          | —                  | —                               | wspólny T.2 PASS                                          | —                 | Odblokowane przez DEC-2026-08-25-63.                                    |
-| E.2      | Resources Capacity Report      | NIE_ZACZĘTE     | —                  | —                               | wspólny T.2 PASS                                          | —                 | Odblokowane przez DEC-2026-08-25-63.                                    |
-| E.3      | Control Loop Report            | NIE_ZACZĘTE     | —                  | —                               | wspólny T.2 PASS                                          | —                 | Odblokowane przez DEC-2026-08-25-63.                                    |
-| E.4      | unijny generator               | NIE_ZACZĘTE     | —                  | —                               | wspólny T.2 PASS                                          | —                 | E-O1 rozstrzygnięte w DEC-2026-08-25-63.                                |
-| T.1..T.6 | testy przekrojowe              | CZĘŚCIOWO       | bieżący commit E.0 | T.1 przed 11/11; T.2 4/4 PASS   | PASS                                                      | —                 | T.3–T.6 pozostają do wykonania.                                         |
-| R.1..R.2 | rejestr/dowody                 | CZĘŚCIOWO       | —                  | —                               | —                                                         | kontrolny         | R.1 wykonane; R.2 ograniczone do stanu STOP.                            |
+| Pozycja  | Zakres                         | Status               | Commit             | Testy                           | Dowód OFF                                                 | Zrzut             | Uwagi                                                                                     |
+| -------- | ------------------------------ | -------------------- | ------------------ | ------------------------------- | --------------------------------------------------------- | ----------------- | ----------------------------------------------------------------------------------------- |
+| E.0      | flaga + mapa delty + dowód OFF | ZROBIONE_WG_DoD      | bieżący commit E.0 | własne 4/4 + zastane 11/11 PASS | PASS: obecny rejestr, brak nowej powierzchni, 0 requestów | kontrolny harness | Jedna flaga, default OFF także demo; realny czytnik runtime-v1 przy ON.                   |
+| E.1      | Work Intelligence Report       | CZĘŚCIOWO / BRAK_API | bieżący commit E.1 | własne 6/6 + T.2 5/5 PASS       | wspólny T.2 PASS                                          | Blok 5            | 9 sekcji, 8 KPI, drill-down i partial failure; historia/BSC/wagi pozostają BRAK_API/STOP. |
+| E.2      | Resources Capacity Report      | NIE_ZACZĘTE          | —                  | —                               | wspólny T.2 PASS                                          | —                 | Odblokowane przez DEC-2026-08-25-63.                                                      |
+| E.3      | Control Loop Report            | NIE_ZACZĘTE          | —                  | —                               | wspólny T.2 PASS                                          | —                 | Odblokowane przez DEC-2026-08-25-63.                                                      |
+| E.4      | unijny generator               | NIE_ZACZĘTE          | —                  | —                               | wspólny T.2 PASS                                          | —                 | E-O1 rozstrzygnięte w DEC-2026-08-25-63.                                                  |
+| T.1..T.6 | testy przekrojowe              | CZĘŚCIOWO            | bieżący commit E.0 | T.1 przed 11/11; T.2 4/4 PASS   | PASS                                                      | —                 | T.3–T.6 pozostają do wykonania.                                                           |
+| R.1..R.2 | rejestr/dowody                 | CZĘŚCIOWO            | —                  | —                               | —                                                         | kontrolny         | R.1 wykonane; R.2 ograniczone do stanu STOP.                                              |
+
+## E.1 — tabele werdyktów
+
+### Executive Pulse — osiem KPI
+
+| KPI               | num/denom   | drill-down              | rodowód                                        | Werdykt                        |
+| ----------------- | ----------- | ----------------------- | ---------------------------------------------- | ------------------------------ |
+| overdue tasks     | TAK         | dokładny zbiór TASK     | runtime-v1 work + sourceVersion + calculatedAt | JEST                           |
+| overdue decisions | TAK         | dokładny zbiór DECISION | runtime-v1 work + sourceVersion + calculatedAt | JEST                           |
+| due today         | TAK         | dokładny zbiór          | runtime-v1 work                                | JEST                           |
+| at-risk 1–7 dni   | TAK         | dokładny zbiór          | runtime-v1 work                                | JEST_CZĘŚCIOWO — bez wagi E-O4 |
+| active blocks     | TAK         | dokładny zbiór BLOCKED  | runtime-v1 work                                | JEST                           |
+| undated risk      | TAK         | dokładny zbiór bez daty | runtime-v1 work                                | JEST; nigdy overdue/green      |
+| decision latency  | nie dotyczy | brak liczby             | `UNKNOWN/BRAK_API_HISTORY`                     | BRAK_API                       |
+| data completeness | TAK         | pełna populacja         | siedem jawnych kryteriów na rekord             | JEST_CZĘŚCIOWO                 |
+
+### Dziewięć sekcji w kolejności kontraktu
+
+| #   | Sekcja                    | Werdykt        | Dowód                                                  |
+| --- | ------------------------- | -------------- | ------------------------------------------------------ |
+| 1   | Kontekst i pasek zaufania | JEST           | state date, sync, scope, partial-source alert          |
+| 2   | Executive Pulse           | JEST_CZĘŚCIOWO | osiem kart, maks. 8, num/denom i drill-down            |
+| 3   | Co boli dziś              | JEST           | FACT z dokładnego rejestru                             |
+| 4   | Co się zbliża             | JEST           | sześć kubełków + NO DUE                                |
+| 5   | Co jest zagrożone         | BRAK_API       | jawnie „operacyjny”, nie BSC                           |
+| 6   | Dlaczego                  | JEST_CZĘŚCIOWO | tylko zadeklarowane blokady/zależności, bez zgadywania |
+| 7   | Jak system się zmienia    | BRAK_API       | `UNKNOWN/BRAK_API_HISTORY`                             |
+| 8   | Co zarząd ma zrobić       | STOP E-O4      | brak rekomendacji bez wag i dowodów                    |
+| 9   | Audytowalny rejestr       | JEST           | StandardTable, sourceVersion, exact task/decision open |
+
+Formuły możliwe z obecnego read-modelu: `formalBackorder`, `slaBackorder`,
+`undatedRisk`, bieżący `agingDays`, `dataCompleteness`. Formuły wymagające
+historii lub decyzji konfiguracyjnej pozostają uczciwie niedostępne:
+`decisionLatency`, `blockedDays`, `throughputRatio`, `netBackorderChange`,
+`impactWeightedBackorder`.
 
 ## Pozycje otwarte — STOP-y do zatwierdzenia
 
