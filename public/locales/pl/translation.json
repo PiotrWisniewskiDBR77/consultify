@@ -2432,8 +2432,8 @@
       "markItemsAsDone": "Oznaczaj elementy jako gotowe (E), żeby tu trafiały.",
       "noSavedItems": "Brak zapisanych elementów",
       "useSaveBTo": "Użyj Zapisz (B) aby odłożyć elementy na później.",
-      "inboxIsEmptyZero": "Inbox jest pusty — zero zaległości!",
-      "everythingProcessedGreatJob": "Wszystko przetworzone. Świetna robota!",
+      "noItemsInInbox": "Brak elementów w skrzynce",
+      "newItemsWillAppearHere": "Nowe elementy pojawią się tutaj, gdy trafią do skrzynki.",
       "urgency": {
         "critical": "Krytyczna",
         "high": "Wysoka",

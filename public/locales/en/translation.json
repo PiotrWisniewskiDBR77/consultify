@@ -3125,8 +3125,8 @@
       "markItemsAsDone": "Mark items as Done (E) and they'll appear here.",
       "noSavedItems": "No saved items",
       "useSaveBTo": "Use Save (B) to bookmark items for later.",
-      "inboxIsEmptyZero": "Inbox is empty — zero backlog!",
-      "everythingProcessedGreatJob": "Everything processed. Great job!",
+      "noItemsInInbox": "No items in your inbox",
+      "newItemsWillAppearHere": "New items will appear here as they come in.",
       "urgency": {
         "critical": "Critical",
         "high": "High",
