@@ -102,7 +102,7 @@ export const CalendarAttendeesField: React.FC<CalendarAttendeesFieldProps> = ({
                   defaultValue: 'Remove attendee {{name}}',
                   name: user.name,
                 })}
-                className="text-c-text-secondary hover:text-c-text"
+                className="rounded-full text-c-text-secondary hover:text-c-text focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
                 <X size={12} />
               </button>
@@ -125,7 +125,7 @@ export const CalendarAttendeesField: React.FC<CalendarAttendeesFieldProps> = ({
           }}
           placeholder={t('myWork.calendarV2.attendeesSearchPlaceholder', 'Add person…')}
           aria-label={t('myWork.calendarV2.attendees', 'Attendees')}
-          className="w-full rounded-lg border border-c-border bg-c-surface p-2"
+          className="w-full rounded-lg border border-c-border bg-c-surface p-2 focus:outline-none focus:ring-2 focus:ring-c-focus"
         />
         {open && query.trim().length >= 2 ? (
           <div className="absolute z-10 mt-1 max-h-48 w-full overflow-auto rounded-lg border border-c-border bg-c-surface-raised shadow-lg">
@@ -140,7 +140,7 @@ export const CalendarAttendeesField: React.FC<CalendarAttendeesFieldProps> = ({
                   type="button"
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => selectAttendee(user)}
-                  className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-c-surface"
+                  className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-c-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-c-focus"
                 >
                   <span className="truncate">{user.name}</span>
                   {user.email ? (

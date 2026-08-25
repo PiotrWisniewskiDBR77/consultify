@@ -1,5 +1,6 @@
 import { AlertTriangle, CalendarDays, CheckSquare, Loader2 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -277,7 +278,7 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
         {!v2 ? (
           <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:bg-navy-950 dark:text-slate-300">
             <div className="flex items-center gap-2 font-medium text-slate-900 dark:text-slate-100">
-              <CheckSquare size={16} className="text-primary-500" />
+              <CheckSquare size={16} className="text-c-info" />
               {t('myWork.calendarCreateEvent.artifactTypeTask', 'Artifact type: Task')}
             </div>
             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
@@ -298,7 +299,7 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
             onChange={(e) => setTitle(e.target.value)}
             autoFocus
             placeholder={t('myWork.calendarCreateEvent.placeholder', 'e.g. Prepare review deck')}
-            className="w-full rounded-lg border border-slate-300/60 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-primary-400 dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
+            className="w-full rounded-lg border border-slate-300/60 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-c-focus-solid dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
           />
         </div>
 
@@ -361,7 +362,7 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
             <select
               value={recurrencePreset}
               onChange={(event) => setRecurrencePreset(event.target.value as RecurrencePreset)}
-              className="w-full rounded-lg border border-slate-300/60 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-primary-400 dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
+              className="w-full rounded-lg border border-slate-300/60 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-c-focus-solid dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
             >
               <option value="none">{t('myWork.calendarCreateEvent.none', 'None')}</option>
               <option value="daily">{t('myWork.calendarCreateEvent.daily', 'Daily')}</option>
@@ -383,7 +384,7 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
               'myWork.calendarCreateEvent.shortContextOrDefinition',
               'Short context or definition of done...'
             )}
-            className="w-full rounded-lg border border-slate-300/60 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-primary-400 dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
+            className="w-full rounded-lg border border-slate-300/60 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-c-focus-solid dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
           />
         </div>
 
@@ -400,7 +401,7 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full rounded-lg border border-slate-300/60 bg-white py-2 pl-10 pr-3 text-sm text-slate-900 outline-none transition focus:border-primary-400 dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
+              className="w-full rounded-lg border border-slate-300/60 bg-white py-2 pl-10 pr-3 text-sm text-slate-900 outline-none transition focus:border-c-focus-solid dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
             />
           </div>
           {helperText && <p className="text-xs text-slate-500 dark:text-slate-400">{helperText}</p>}
@@ -461,7 +462,18 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
         </div>
       </form>
     </Modal>
-    {duplicateConfirmDialog}
+    {/* FIX-21 (Day 3 layer-2 acceptance, caught by the required dev-render
+        pass before showing the owner): <Modal> renders through a React
+        portal straight to document.body (Modal.tsx), but <ConfirmDialog>
+        (useConfirmDialog's `dialog`) does not — both share the same
+        `z-modal` z-index, so with equal stacking the later-appended,
+        already-portaled Modal painted OVER the inline confirm dialog,
+        making "Powiel na kolejne 4 tygodnie"'s confirmation invisible
+        behind the still-open event modal. Portal it too so DOM order (it
+        always mounts after the open Modal) puts it on top, same as native
+        window.confirm() always did. Scoped to this call site — no other
+        screen currently combines an open <Modal> with useConfirmDialog(). */}
+    {createPortal(duplicateConfirmDialog, document.body)}
     </>
   );
 };
