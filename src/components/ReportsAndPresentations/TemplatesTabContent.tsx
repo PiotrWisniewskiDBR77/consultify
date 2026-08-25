@@ -55,7 +55,12 @@ import {
   resolveTemplateUsePath,
 } from './artifactNavigation';
 import { TemplatesGalleryView } from './TemplatesGalleryView';
-import { TEMPLATE_STATUS_META, TEMPLATE_TYPE_META, type TemplateItem } from './types';
+import {
+  TEMPLATE_CATEGORY_META,
+  TEMPLATE_STATUS_META,
+  TEMPLATE_TYPE_META,
+  type TemplateItem,
+} from './types';
 
 interface TemplatesTabContentProps {
   viewMode: ViewMode;
@@ -242,20 +247,55 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
         width: '160px',
         filterable: true,
         filterOptions: [
-          { value: 'R1', label: 'R1 — Weekly', color: 'bg-blue-400' },
-          { value: 'R2', label: 'R2 — Steering', color: 'bg-blue-400' },
-          { value: 'R3', label: 'R3 — Benefits', color: 'bg-emerald-400' },
-          { value: 'R4', label: 'R4 — Portfolio', color: 'bg-amber-400' },
-          { value: 'executive_update', label: 'Executive Update' },
-          { value: 'assessment_results', label: 'Assessment Results' },
-          { value: 'project_kickoff', label: 'Project Kickoff' },
-          { value: 'financial_review', label: 'Financial Review' },
-          { value: 'initiative_review', label: 'Initiative Review' },
-          { value: 'custom', label: 'Custom' },
+          { value: 'R1', label: isPolish ? TEMPLATE_CATEGORY_META.R1.labelPl : TEMPLATE_CATEGORY_META.R1.label, color: 'bg-blue-400' },
+          { value: 'R2', label: isPolish ? TEMPLATE_CATEGORY_META.R2.labelPl : TEMPLATE_CATEGORY_META.R2.label, color: 'bg-blue-400' },
+          { value: 'R3', label: isPolish ? TEMPLATE_CATEGORY_META.R3.labelPl : TEMPLATE_CATEGORY_META.R3.label, color: 'bg-emerald-400' },
+          { value: 'R4', label: isPolish ? TEMPLATE_CATEGORY_META.R4.labelPl : TEMPLATE_CATEGORY_META.R4.label, color: 'bg-amber-400' },
+          {
+            value: 'executive_update',
+            label: isPolish
+              ? TEMPLATE_CATEGORY_META.executive_update.labelPl
+              : TEMPLATE_CATEGORY_META.executive_update.label,
+          },
+          {
+            value: 'assessment_results',
+            label: isPolish
+              ? TEMPLATE_CATEGORY_META.assessment_results.labelPl
+              : TEMPLATE_CATEGORY_META.assessment_results.label,
+          },
+          {
+            value: 'project_kickoff',
+            label: isPolish
+              ? TEMPLATE_CATEGORY_META.project_kickoff.labelPl
+              : TEMPLATE_CATEGORY_META.project_kickoff.label,
+          },
+          {
+            value: 'financial_review',
+            label: isPolish
+              ? TEMPLATE_CATEGORY_META.financial_review.labelPl
+              : TEMPLATE_CATEGORY_META.financial_review.label,
+          },
+          {
+            value: 'initiative_review',
+            label: isPolish
+              ? TEMPLATE_CATEGORY_META.initiative_review.labelPl
+              : TEMPLATE_CATEGORY_META.initiative_review.label,
+          },
+          {
+            value: 'custom',
+            label: isPolish
+              ? TEMPLATE_CATEGORY_META.custom.labelPl
+              : TEMPLATE_CATEGORY_META.custom.label,
+          },
         ],
-        render: (row: TemplateItem) => (
-          <span className="text-sm text-c-text-secondary">{row.category}</span>
-        ),
+        render: (row: TemplateItem) => {
+          const categoryMeta = TEMPLATE_CATEGORY_META[row.category];
+          return (
+            <span className="text-sm text-c-text-secondary">
+              {categoryMeta ? (isPolish ? categoryMeta.labelPl : categoryMeta.label) : row.category}
+            </span>
+          );
+        },
       },
       {
         id: 'scope',
@@ -777,7 +817,13 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
                   ),
                 ]
               : []),
-            `${t('rap.preview.category', 'Kategoria')}: ${selectedItem.category}`,
+            `${t('rap.preview.category', 'Kategoria')}: ${
+              TEMPLATE_CATEGORY_META[selectedItem.category]
+                ? isPolish
+                  ? TEMPLATE_CATEGORY_META[selectedItem.category].labelPl
+                  : TEMPLATE_CATEGORY_META[selectedItem.category].label
+                : selectedItem.category
+            }`,
             ...(selectedItem.sectionCount != null
               ? [`${t('rap.preview.sections', 'Sekcje')}: ${selectedItem.sectionCount}`]
               : []),
@@ -788,8 +834,14 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
             selectedItem.description?.trim() || t('common.noDescription', 'No description'),
           ].join('\n'),
           onCopy: () => {
+            const categoryMeta = TEMPLATE_CATEGORY_META[selectedItem.category];
+            const categoryText = categoryMeta
+              ? isPolish
+                ? categoryMeta.labelPl
+                : categoryMeta.label
+              : selectedItem.category;
             void navigator.clipboard?.writeText(
-              `${selectedItem.title} — ${selectedItem.category} (${selectedItem.status})`
+              `${selectedItem.title} — ${categoryText} (${selectedItem.status})`
             );
           },
         }}
