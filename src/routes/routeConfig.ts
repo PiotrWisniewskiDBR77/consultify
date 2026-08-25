@@ -124,7 +124,22 @@ export const ROUTES = {
   },
   PRESENTATIONS: '/presentations',
   PRESENTATION_STUDIO: '/presentation-studio',
+  // DEC-2026-08-24-07 (OWNER_DECISION_LEDGER): canonical Meeting address
+  // grammar is `/meetings` (list) + `/meetings/:meetingId` (object card) +
+  // `/meetings/:meetingId/{minutes|decisions}` and
+  // `/meetings/:meetingId/notes/:noteId` (governed AI note deep link).
+  // `MEETING` ('/meeting', singular) is now a legacy alias — AppRoutes
+  // redirects it (and `/meeting?meetingId=X`, rewriting the query param onto
+  // the object path) to the canonical address below. It stays defined only
+  // because the redirect route still needs a `from` path constant.
   MEETING: '/meeting',
+  MEETINGS: {
+    ROOT: '/meetings',
+    OBJECT: '/meetings/:meetingId',
+    MINUTES: '/meetings/:meetingId/minutes',
+    DECISIONS: '/meetings/:meetingId/decisions',
+    NOTE: '/meetings/:meetingId/notes/:noteId',
+  },
   KPI_OKR: '/kpi-okr',
   BENEFITS: '/benefits',
   RESULTS: '/results',
@@ -422,7 +437,9 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
   [AppView.REPORTS_MANAGEMENT]: ROUTES.REPORTS.MANAGEMENT,
   [AppView.DRD_AUDIT_REPORT]: ROUTES.REPORTS.BUILDER,
   [AppView.PRESENTATIONS]: ROUTES.PRESENTATIONS,
-  [AppView.MEETING]: ROUTES.MEETING,
+  // DEC-2026-08-24-07: sidebar/breadcrumb resolution now targets the
+  // canonical `/meetings` list, not the legacy `/meeting` alias.
+  [AppView.MEETING]: ROUTES.MEETINGS.ROOT,
   // Document module: the legacy WORDY view now resolves to the canonical
   // Document Studio route (mirrors the EXCELE -> TABELE consolidation).
   [AppView.WORDY]: ROUTES.DOCUMENT_STUDIO,
@@ -859,7 +876,12 @@ export function getAppViewFromPath(path: string): AppView | null {
   if (normalized.startsWith(ROUTES.TABELE)) return AppView.TABELE;
 
   // Meeting & MCP
-  if (normalized.startsWith(ROUTES.MEETING)) return AppView.MEETING;
+  // DEC-2026-08-24-07: `/meetings` (+ nested object/minutes/decisions/notes
+  // paths) is canonical; `/meeting` is the legacy alias AppRoutes redirects
+  // away from, but resolve it defensively here too.
+  if (normalized.startsWith(ROUTES.MEETINGS.ROOT) || normalized === ROUTES.MEETING) {
+    return AppView.MEETING;
+  }
   if (normalized.startsWith(ROUTES.MCP_IRIS)) return AppView.MCP_IRIS_COMING_SOON;
   if (normalized.startsWith(ROUTES.MCP_MARKETPLACE)) return AppView.MCP_MARKETPLACE_COMING_SOON;
 
