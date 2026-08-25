@@ -3513,6 +3513,35 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   // DEC-27 guard: the new right inspector wins, so the legacy left portal is
   // never active at the same time even when both operator flags are ON.
   const detaleWPanelu = isIdeaDetailsInPanelEnabled() && !ideaInspectorRightRail;
+  const [inspectorOutputs, setInspectorOutputs] = useState<
+    Array<{ title: string; type: string; status?: string; targetId?: string }>
+  >([]);
+
+  useEffect(() => {
+    if (!ideaInspectorRightRail || !realId) {
+      setInspectorOutputs([]);
+      return;
+    }
+    let cancelled = false;
+    Api.getMyIdeaConversions(realId)
+      .then((result) => {
+        if (cancelled) return;
+        setInspectorOutputs(
+          (result.conversions || []).map((conversion) => ({
+            title: `${conversion.targetType} · ${new Date(conversion.createdAt).toLocaleDateString()}`,
+            type: conversion.targetType,
+            status: conversion.scope,
+            targetId: conversion.targetId || undefined,
+          }))
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setInspectorOutputs([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [ideaInspectorRightRail, realId]);
   const [sekcjaPrawegoPaska, setSekcjaPrawegoPaska] = useState<string | null>(null);
 
   useEffect(() => {
@@ -4135,6 +4164,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                           semanticType: selection.meta?.semanticType || selection.meta?.nodeType,
                           description: selection.meta?.description,
                           tags: selection.meta?.tags,
+                          outputs: inspectorOutputs,
                           branch: activeToolLabel,
                           lineage: `${isPolish ? 'Rodowód' : 'Lineage'}: ${activeToolLabel} · v${graphRuntime.graph.version}`,
                           savedAt: graphRuntime.lastSavedAt,
@@ -4159,6 +4189,49 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                           ]
                   }
                   language={isPolish ? 'pl' : 'en'}
+                  onOpenOutput={(targetId) => {
+                    const output = inspectorOutputs.find((item) => item.targetId === targetId);
+                    if (!output) return;
+                    if (output.type === 'initiative') {
+                      navigate(`/initiatives?initiativeId=${encodeURIComponent(targetId)}`);
+                    } else if (output.type === 'task') {
+                      navigate(`/my-work/tasks?taskId=${encodeURIComponent(targetId)}`);
+                    }
+                  }}
+                  onSave={async (patch) => {
+                    if (!selection.primaryId) throw new Error('NO_SELECTION');
+                    const nativePatch: Partial<ExtendedNodeData> = {
+                      ...(patch.label !== undefined ? { label: patch.label } : {}),
+                      ...(patch.state !== undefined ? { status: patch.state } : {}),
+                      ...(patch.priority !== undefined ? { priority: patch.priority } : {}),
+                      ...(patch.description !== undefined
+                        ? { description: patch.description }
+                        : {}),
+                    };
+                    await handleNodeDataChange(selection.primaryId, nativePatch);
+                    const readback = await Api.getMyIdeaMap(realId, { language: i18n.language });
+                    const node = (readback?.map?.nodes || []).find(
+                      (candidate: any) => String(candidate?.id) === selection.primaryId
+                    );
+                    if (!node) throw new Error('READBACK_MISSING');
+                    for (const [key, value] of Object.entries(nativePatch)) {
+                      if (node.data?.[key] !== value) throw new Error('READBACK_MISMATCH');
+                    }
+                    return {
+                      id: selection.primaryId,
+                      label: node.data?.label || '',
+                      state: node.data?.status,
+                      priority: node.data?.priority,
+                      owner: node.data?.owner,
+                      semanticType: node.data?.semanticType || node.data?.nodeType,
+                      description: node.data?.description,
+                      tags: node.data?.tags,
+                      outputs: inspectorOutputs,
+                      branch: activeToolLabel,
+                      lineage: `${isPolish ? 'Rodowód' : 'Lineage'}: ${activeToolLabel} · v${readback.map?.version || graphRuntime.graph.version}`,
+                      savedAt: new Date(),
+                    };
+                  }}
                   onReturnToCanvas={() => canvasContainerRef.current?.focus()}
                 />
               ) : undefined
