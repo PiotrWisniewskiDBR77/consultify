@@ -95,3 +95,29 @@ Gałąź codex/admin55-fixes-20260825 (nocna praca + naprawy, 252/252 testów)
 scalona do codex/m03-admin-20260824. Stan programu Admin: ~50/56 ekranów
 podłączonych; pozostałe pozycje w instrukcji dnia 2 (STOP-y wg DEC-19, i18n,
 Superadmin fala 1).
+
+## Odbiór dnia 2 Codexa — PODPIS warstwy 3 (2026-08-25, Fable)
+
+Werdykt: **PRZYJĘTE W CAŁOŚCI po naprawach.** Warstwa 1: PARTIAL → FIX-1..3,5
++ guard tokenu wykonane (kryteria wyjścia zmierzone: MyWork 471/471, Admin
+240/240, regresje Assessment 0/6, pełny przebieg src/components bez nowych
+regresji). Warstwa 2 (żywy runtime): 19/21 OK — negatywny test DNS poprawny
+(token_mismatch, verified=false), audyt zawieszenia potwierdzony wierszem w
+audit_events (TRI-MUST-12 → CLOSED). FIX-4 = świadome ograniczenie (mapa
+zależności jako dwa agregaty; wzbogacenie w programie). Gałęzie
+admin55-day2 + day2-fixes scalone do m03.
+
+Nowe pozycje z odbioru:
+- TRI-MUST-05 (rozszerzenie): mutacje ai-quality niefunkcjonalne na czystym
+  Postgresie (kolumny wycięte przez klasyfikator migracji + niezgodność typów
+  datetime/CASE) — dwa błędy schematu sprzed dnia 2; do naprawy w bramce
+  migracyjnej fazy 3.
+- TRI-OBS-15: billing/budgets-alerts — zaszyty polski tekst przecieka w EN
+  (brak klucza w obu locale; dług z 2026-08-05).
+- Lekcja procesowa: Z18 (zakaz globalnej infrastruktury testowej) + pomiar
+  zasięgu testów — wpisane do instrukcji dnia 3.
+
+Stan programu Admin: 56/56 ekranów rozstrzygniętych (51 podłączonych
+funkcjonalnie + 2 uczciwe szkielety wg DEC-19 + 3 dostarczone w dniu 2);
+pozostaje odbiór wizualny modułu przez właściciela (bramka wyglądu) oraz
+otwarte MUST-05/07/08/11 przed fazą 3.
