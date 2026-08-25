@@ -25,6 +25,7 @@ import {
   useAssessmentOutputsForOrigins,
 } from '@/components/ReportsAndPresentations/useRapData';
 import { EmbeddedView } from '@/components/shared/NModeBlocks';
+import { EntityStatusChip } from '@/components/ui/primitives/chips/EntityStatusChip';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import type { NotebookPage } from '@/types/myWork';
@@ -543,7 +544,15 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
             <div className="mt-0.5 text-[11px] text-c-text-muted line-clamp-2">{subtitle}</div>
           ) : null}
           {badge ? (
-            <div className="mt-1 text-[10px] text-c-text-muted capitalize">{badge}</div>
+            // FIX-18 (Day 3 layer-2 acceptance): plain `capitalize` CSS on a raw
+            // status ("in_progress") only uppercases the FIRST character of the
+            // whole string ("In_progress") — the underscore is not a word
+            // boundary. Route through the app's canonical status dictionary
+            // (statusChip.* — same one every other status pill in the app uses)
+            // instead of fabricating a new humanization rule here.
+            <div className="mt-1">
+              <EntityStatusChip status={badge} size="sm" />
+            </div>
           ) : null}
         </div>
         <button
@@ -634,8 +643,12 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
                                 </div>
                               ) : null}
                               {chip?.status ? (
-                                <div className="mt-1 inline-flex items-center rounded-md bg-c-surface-raised px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-c-text-secondary">
-                                  {chip.status}
+                                // FIX-18 (Day 3 layer-2 acceptance): same fix as the
+                                // Row badge above — route the raw status through the
+                                // canonical statusChip.* dictionary instead of a bare
+                                // uppercase/raw string.
+                                <div className="mt-1">
+                                  <EntityStatusChip status={chip.status} size="sm" />
                                 </div>
                               ) : null}
                             </div>
