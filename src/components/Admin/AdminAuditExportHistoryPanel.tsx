@@ -7,11 +7,13 @@ import {
 import { StandardTable, type TableColumn, type TableRow } from '../standard/StandardTable';
 export const AdminAuditExportHistoryPanel: React.FC = () => {
   const [data, setData] = useState<AuditExportReceipt[]>([]),
+    [loading, setLoading] = useState(true),
     [error, setError] = useState<string | null>(null);
   useEffect(() => {
     getAuditExportHistory()
       .then(setData)
-      .catch((e) => setError(e.message));
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
   }, []);
   const cols = useMemo<TableColumn[]>(
       () => [
@@ -54,6 +56,7 @@ export const AdminAuditExportHistoryPanel: React.FC = () => {
       <StandardTable
         columns={cols}
         data={rows}
+        loading={loading}
         empty={{
           icon: FileDown,
           title: 'Brak eksportów',

@@ -3,11 +3,13 @@ import React, { useEffect, useState } from 'react';
 import { Api } from '../../services/api';
 export const AdminAuditIntegrityPanel: React.FC = () => {
   const [stats, setStats] = useState<any>(null),
+    [loading, setLoading] = useState(true),
     [error, setError] = useState<string | null>(null);
   useEffect(() => {
     Api.getTenantAdminAuditStats()
       .then(setStats)
-      .catch((e: any) => setError(e.message));
+      .catch((e: any) => setError(e.message))
+      .finally(() => setLoading(false));
   }, []);
   return (
     <div className="space-y-4">
@@ -25,17 +27,23 @@ export const AdminAuditIntegrityPanel: React.FC = () => {
           {error}
         </div>
       )}
-      <div className="grid gap-3 sm:grid-cols-3">
-        <div className="rounded-xl border border-c-border p-4">
-          Zdarzenia: {stats?.totalLogs ?? '—'}
+      {loading ? (
+        <div role="status" className="py-8 text-center text-sm text-c-text-muted">
+          Ładowanie statystyk audytu…
         </div>
-        <div className="rounded-xl border border-c-border p-4">
-          Nierozwiązane: {stats?.unresolvedCount ?? '—'}
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div className="rounded-xl border border-c-border p-4">
+            Zdarzenia: {stats?.totalLogs ?? '—'}
+          </div>
+          <div className="rounded-xl border border-c-border p-4">
+            Nierozwiązane: {stats?.unresolvedCount ?? '—'}
+          </div>
+          <div className="rounded-xl border border-c-border p-4">
+            Wysokie ryzyko: {stats?.highRiskCount ?? '—'}
+          </div>
         </div>
-        <div className="rounded-xl border border-c-border p-4">
-          Wysokie ryzyko: {stats?.highRiskCount ?? '—'}
-        </div>
-      </div>
+      )}
       <section className="rounded-xl border border-c-border p-5">
         <div className="flex items-center gap-2">
           <ShieldCheck className="h-5 w-5" />

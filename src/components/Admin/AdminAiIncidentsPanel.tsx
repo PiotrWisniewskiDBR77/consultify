@@ -60,6 +60,7 @@ export const AdminAiIncidentsPanel: React.FC = () => {
       <StandardTable
         columns={cols}
         data={rows}
+        loading={!loaded}
         empty={{
           icon: TriangleAlert,
           title: 'Brak incydentów',

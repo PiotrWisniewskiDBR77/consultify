@@ -9,6 +9,7 @@ import { StandardTable, type TableColumn, type TableRow } from '../standard/Stan
 export const AdminAccessReviewsPanel: React.FC = () => {
   const [policy, setPolicy] = useState<AccessReviewPolicy | null>(null),
     [members, setMembers] = useState<PrivilegedMember[]>([]),
+    [loading, setLoading] = useState(true),
     [error, setError] = useState<string | null>(null);
   useEffect(() => {
     getAccessReviewData()
@@ -16,7 +17,8 @@ export const AdminAccessReviewsPanel: React.FC = () => {
         setPolicy(x.policy);
         setMembers(x.members);
       })
-      .catch((e) => setError(e.message));
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
   }, []);
   const next = policy
     ? new Date(
@@ -59,21 +61,28 @@ export const AdminAccessReviewsPanel: React.FC = () => {
           {error}
         </div>
       )}
-      <div className="grid gap-3 sm:grid-cols-3">
-        <div className="rounded-xl border border-c-border p-4">
-          Stan: {policy?.accessReviewsEnabled ? 'Włączone' : 'Wyłączone'}
+      {loading ? (
+        <div role="status" className="py-8 text-center text-sm text-c-text-muted">
+          Ładowanie polityki przeglądów…
         </div>
-        <div className="rounded-xl border border-c-border p-4">
-          Kadencja: {policy?.accessReviewCadenceDays ?? '—'} dni
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div className="rounded-xl border border-c-border p-4">
+            Stan: {policy?.accessReviewsEnabled ? 'Włączone' : 'Wyłączone'}
+          </div>
+          <div className="rounded-xl border border-c-border p-4">
+            Kadencja: {policy?.accessReviewCadenceDays ?? '—'} dni
+          </div>
+          <div className="rounded-xl border border-c-border p-4">Następny przegląd: {next}</div>
         </div>
-        <div className="rounded-xl border border-c-border p-4">Następny przegląd: {next}</div>
-      </div>
+      )}
       <a href="/admin/team/roles-permissions" className="text-sm text-c-text underline">
         Otwórz kanoniczną politykę IAM
       </a>
       <StandardTable
         columns={cols}
         data={rows}
+        loading={loading}
         empty={{
           icon: Users,
           title: 'Brak kont uprzywilejowanych',
