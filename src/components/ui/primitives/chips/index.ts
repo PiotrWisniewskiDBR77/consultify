@@ -22,7 +22,12 @@ export {
   type ChipTone,
 } from './chipBase';
 export { deriveDueRisk, DueChip, type DueChipProps, type DueRisk } from './DueChip';
-export { EntityStatusChip, type EntityStatusChipProps, statusChipTone } from './EntityStatusChip';
+export {
+  EntityStatusChip,
+  type EntityStatusChipProps,
+  statusChipLabel,
+  statusChipTone,
+} from './EntityStatusChip';
 export { MetaChip, type MetaChipProps } from './MetaChip';
 export { PriorityChip, type PriorityChipProps, type PriorityLevel } from './PriorityChip';
 export { StatusChip, type StatusChipProps, type StatusTone } from './StatusChip';

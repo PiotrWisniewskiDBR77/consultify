@@ -63,4 +63,30 @@ describe('IdeaElementInspector — priority readout and Owner editability', () =
       expect(screen.getByText('Anna Kowalska')).toBeInTheDocument();
     }
   );
+
+  // FIX (Day 3 layer-2 acceptance): the "Stan" <select> rendered raw native
+  // status strings ("in_progress") as its own option text. A native <option>
+  // can't host a <EntityStatusChip> component, so this routes through the
+  // chip's own label-resolution helper (statusChipLabel, exported from
+  // EntityStatusChip.tsx) — the same statusChip.* dictionary NotebookContextPanel
+  // uses (commit 58ff6ac3fe) — instead of a bare raw value.
+  it('humanizes the Stan option labels instead of showing the raw status value', () => {
+    render(
+      <IdeaElementInspector
+        element={{ ...element, state: 'in_progress' }}
+        tool="table"
+        nativeStates={['todo', 'in_progress']}
+      />
+    );
+    const select = screen.getByLabelText('Stan') as HTMLSelectElement;
+    const options = Array.from(select.options).map((option) => option.textContent);
+    expect(options).not.toContain('in_progress');
+    expect(options).not.toContain('todo');
+    // Mechanical fallback humanization (no PL i18n resources loaded in this
+    // unit test env, same as NotebookContextPanel's equivalent test).
+    expect(options).toContain('In progress');
+    expect(options).toContain('Todo');
+    // The underlying value stays the raw string — only the label changed.
+    expect(select.value).toBe('in_progress');
+  });
 });

@@ -12,6 +12,7 @@
  * SIGNAL carried by the dot; the shell stays neutral.
  */
 
+import type { TFunction } from 'i18next';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -113,6 +114,24 @@ function humanize(status: string): string {
  */
 const STATUS_I18N_PREFIX = 'statusChip';
 
+/**
+ * Resolve the same humanized/translated label EntityStatusChip renders,
+ * without the chip's visual shell (dot/pill). Use this where the chip
+ * component doesn't fit the surrounding layout — e.g. a native <option>
+ * inside a <select>, which cannot render a React component as its content.
+ */
+export function statusChipLabel(status: string | null | undefined, t: TFunction): string {
+  if (!status) return '';
+  const normalized = normalize(status);
+  const i18nKey = `${STATUS_I18N_PREFIX}.${normalized}`;
+  const translatedRaw = t(i18nKey, { defaultValue: '' });
+  // Some i18next configurations return the key itself for a missing entry,
+  // even when an empty defaultValue was requested. A raw `statusChip.*` key is
+  // never a user-facing label; treat it as a miss and use the humanized status.
+  const translated = translatedRaw === i18nKey ? '' : translatedRaw;
+  return translated || humanize(status);
+}
+
 export interface EntityStatusChipProps {
   /** Raw status string (any casing/spacing); mapped to a semantic tone. */
   status: string | null | undefined;
@@ -139,17 +158,10 @@ export const EntityStatusChip: React.FC<EntityStatusChipProps> = ({
   title,
 }) => {
   const { t } = useTranslation();
-  const normalized = status ? normalize(status) : '';
   // Translated label when a dictionary entry exists for this normalized
   // status; falls back to the mechanical humanization (never a raw i18n
   // key) so unrecognized/new statuses still render something readable.
-  const i18nKey = `${STATUS_I18N_PREFIX}.${normalized}`;
-  const translatedRaw = normalized ? t(i18nKey, { defaultValue: '' }) : '';
-  // Some i18next configurations return the key itself for a missing entry,
-  // even when an empty defaultValue was requested. A raw `statusChip.*` key is
-  // never a user-facing label; treat it as a miss and use the humanized status.
-  const translated = translatedRaw === i18nKey ? '' : translatedRaw;
-  const resolvedLabel = label ?? (translated || humanize(status ?? ''));
+  const resolvedLabel = label ?? statusChipLabel(status, t);
   return (
     <StatusChip
       tone={statusChipTone(status)}

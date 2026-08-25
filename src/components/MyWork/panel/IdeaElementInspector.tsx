@@ -1,6 +1,8 @@
 import React, { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { statusChipLabel } from '@/components/ui/primitives/chips/EntityStatusChip';
+
 export type IdeaInspectorTool = 'mindmap' | 'process' | 'whiteboard' | 'table';
 
 export interface IdeaInspectorItem {
@@ -271,8 +273,13 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
                 —
               </option>
               {nativeStates.map((state) => (
+                // FIX (Day 3 layer-2 acceptance): a native <option> can only
+                // render text, not a <EntityStatusChip> component, so this
+                // routes through the same statusChip.* label-resolution the
+                // chip uses internally (see NotebookContextPanel,
+                // commit 58ff6ac3fe) instead of the raw "in_progress" string.
                 <option key={state} value={state}>
-                  {state}
+                  {statusChipLabel(state, t)}
                 </option>
               ))}
             </select>
