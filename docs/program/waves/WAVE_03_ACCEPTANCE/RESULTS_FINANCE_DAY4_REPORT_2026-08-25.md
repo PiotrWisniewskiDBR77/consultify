@@ -26,12 +26,12 @@ Czas pracy: 2026-08-25 11:27 CEST–w toku
 | Pozycja                                    | Status           | Commit                      | Testy                    | Uwagi                                                                                                        |
 | ------------------------------------------ | ---------------- | --------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------ |
 | R.1 strażnik `forbiddenCanonicalComponent` | DONE_CURRENT_SHA | `e832c813bf`                | 5/5 PASS + manifest PASS | Generyczna pętla, walidacja pola, przypadek ostatniej trasy, komenda npm                                     |
-| R.2 blokada tylnych drzwi sampleData       | DONE_CURRENT_SHA | do uzupełnienia po commicie | 8/8 PASS                 | Siedem gałęzi prefiksowych usuniętych, host produkcyjny fail-closed, banner jawny, puste API pozostaje puste |
-| R.3 jawna ścieżka flag + obejścia          | PENDING          | —                           | —                        | —                                                                                                            |
-| R.4 RES-OWN-002 trzy formuły               | PENDING          | —                           | —                        | —                                                                                                            |
-| R.5 RES-OWN-007 karta KPI                  | PENDING          | —                           | —                        | —                                                                                                            |
-| R.6 RES-OWN-007 karta OKR                  | PENDING          | —                           | —                        | —                                                                                                            |
-| R.7 RES-OWN-007 karta ROI                  | PENDING          | —                           | —                        | —                                                                                                            |
+| R.2 blokada tylnych drzwi sampleData       | DONE_CURRENT_SHA | `e2ccad0771`                | 8/8 PASS                 | Siedem gałęzi prefiksowych usuniętych, host produkcyjny fail-closed, banner jawny, puste API pozostaje puste |
+| R.3 jawna ścieżka flag + obejścia          | PARTIAL / STOP   | do uzupełnienia po commicie | 22/22 PASS               | Produkcja fail-closed i enumeracja bramek gotowe; istniejący test wymaga bypassu                             |
+| R.4 RES-OWN-002 trzy formuły               | STOP_DEPENDENCY  | —                           | —                        | R.3 jest wymaganym fundamentem DEC-04                                                                        |
+| R.5 RES-OWN-007 karta KPI                  | STOP_DEPENDENCY  | —                           | —                        | jw.                                                                                                          |
+| R.6 RES-OWN-007 karta OKR                  | STOP_DEPENDENCY  | —                           | —                        | jw.                                                                                                          |
+| R.7 RES-OWN-007 karta ROI                  | STOP_DEPENDENCY  | —                           | —                        | jw.                                                                                                          |
 | R.8 testy zbiorcze i i18n                  | PENDING          | —                           | —                        | —                                                                                                            |
 
 ### R.1 — dowód działania strażnika
@@ -49,6 +49,16 @@ Czas pracy: 2026-08-25 11:27 CEST–w toku
 - `{ kpis: [] }` daje `[]`, bez podmiany na fixture.
 - Banner jest opcjonalnym propem wspólnej powłoki i jest przekazywany jawnie przez rejestry KPI/OKR/ROI.
 
+### R.3 — ścieżka włączania flag rejestrów (DO PRZEKAZANIA WŁAŚCICIELOWI)
+
+| Flaga         | Parametr URL           | localStorage                    | env                              | Profil zbiorczy                |
+| ------------- | ---------------------- | ------------------------------- | -------------------------------- | ------------------------------ |
+| `kpiRegistry` | `ff_resultsVNextKpi=1` | `ff.results_vnext_kpi_registry` | `VITE_RESULTS_VNEXT_KPI_ENABLED` | `ff_wave3ResultsOwnerReview=1` |
+| `okrRegistry` | `ff_resultsVNextOkr=1` | `ff.results_vnext_okr_registry` | `VITE_RESULTS_VNEXT_OKR_ENABLED` | `ff_wave3ResultsOwnerReview=1` |
+| `roiRegistry` | `ff_resultsVNextRoi=1` | `ff.results_vnext_roi_registry` | `VITE_RESULTS_VNEXT_ROI_ENABLED` | `ff_wave3ResultsOwnerReview=1` |
+
+Właściciel poza publiczną produkcją wpisuje `/results?ff_wave3ResultsOwnerReview=1`. Profil zbiorczy zapisuje jawny wybór pod `ff.wave3_results_owner_review`. Na `consultify.ai` i `www.consultify.ai` profil zawsze zwraca `false`. Nie włączyłem żadnej flagi ani nie zmieniłem żadnej wartości domyślnej.
+
 ## Sekcja F — Finance (DEC-2026-08-24-05)
 
 | Pozycja                               | Status  | Commit | Testy | Uwagi |
@@ -64,13 +74,26 @@ Czas pracy: 2026-08-25 11:27 CEST–w toku
 
 ## Pozycje STOP
 
-Brak na tym etapie.
+### STOP — R.3 `canonicalCutoverMount`
+
+Powód: preferowane usunięcie propa łamie istniejący test `ResultsKpiScorecardsView.visibility.test.tsx`, który literalnie wymaga `canonicalCutoverMount: true`; §0.5 zabrania zmiany istniejącego testu w celu przepuszczenia implementacji.  
+Dowód: `src/components/Results/__tests__/ResultsKpiScorecardsView.visibility.test.tsx:36-46`; test bazowy i po zmianach przechodzi 1/1. Test enumerujący potwierdza, że bypass jest ograniczony do nieroutowanego adaptera historycznego.  
+Co zrobiłbym, gdyby zapadła decyzja o zmianie kontraktu testu: usunąłbym prop z `ResultsKpiRegistryPage`, usunął przekazanie z `ResultsKpiScorecardsView`, a test zmienił na wymaganie respektowania `kpiRegistry`.  
+Stan: zacommitowano częściowo; odmowa produkcyjna i enumeracja bramek są gotowe.
+
+### STOP — R.4–R.7
+
+Powód: instrukcja uznaje R.1–R.3 za niepodzielny fundament DEC-04 i zakazuje budowania kart po STOP-ie którejkolwiek z tych pozycji.  
+Dowód: instrukcja §R „Reguła wejścia do sekcji R”.  
+Co zrobiłbym po rozstrzygnięciu R.3: wróciłbym kolejno do R.4, R.5, R.6 i R.7, bez równoległego generowania trzecich implementacji kart.  
+Stan: NIE ZACOMMITOWANO.
 
 ## Znaleziska
 
-| #   | Plik:linia                              | Co znalazłem                                                                                      | Dlaczego nie naprawiłem                                                                                              |
-| --- | --------------------------------------- | ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| 1   | konfiguracja Git remote `icloud-source` | Remote wskazuje na usunięty lokalny worktree i powoduje częściowy błąd `git fetch --all --prune`. | Naprawa konfiguracji remote jest poza Results/Finance i nie jest potrzebna do pracy na potwierdzonym lokalnym tipie. |
+| #   | Plik:linia                                         | Co znalazłem                                                                                      | Dlaczego nie naprawiłem                                                                                              |
+| --- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| 1   | konfiguracja Git remote `icloud-source`            | Remote wskazuje na usunięty lokalny worktree i powoduje częściowy błąd `git fetch --all --prune`. | Naprawa konfiguracji remote jest poza Results/Finance i nie jest potrzebna do pracy na potwierdzonym lokalnym tipie. |
+| 2   | `src/components/Results/resultsOwnerReviewMode.ts` | Żywy profil odbiorowy ResultsVNext mieszka w katalogu generacji HISTORICAL.                       | R.3 pozwala wyłącznie dodać bezpiecznik produkcyjny; relokacja wymagałaby szerszej zmiany importów.                  |
 
 ## Korekty wobec instrukcji
 

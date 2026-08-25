@@ -17,6 +17,7 @@ function parseEnabled(value: string | null | undefined): boolean | null {
  */
 export function isResultsOwnerReviewModeEnabled(): boolean {
   if (typeof window !== 'undefined') {
+    if (isPublicProductionHost(window.location?.hostname ?? '')) return false;
     try {
       const query = parseEnabled(new URLSearchParams(window.location.search).get(QUERY_KEY));
       if (query !== null) {
@@ -42,3 +43,4 @@ export const RESULTS_OWNER_REVIEW_FLAG = {
   localStorage: STORAGE_KEY,
   env: ENV_KEY,
 } as const;
+import { isPublicProductionHost } from '@/utils/publicProduction';
