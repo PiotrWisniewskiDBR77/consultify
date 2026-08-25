@@ -260,9 +260,18 @@ export function getMyWorkMainContentClassName({
   activeTab,
   ideasViewMode,
 }: MyWorkMainContentClassNameInput): string {
+  // MYW-PHOTO-005 (P1): `InboxContent` already owns its scrolling — its root
+  // is `overflow-hidden` and only its inner list/preview-pane row scrolls
+  // (own `overflow-y-auto`, own preview column). Before this fix `inbox` was
+  // missing from this list, so the wrapper below ALSO got `overflow-y-auto`
+  // — a second, redundant vertical scroll container nested around the first.
+  // On systems that reserve a track for `overflow: auto` (not overlay
+  // scrollbars), that produced a visible empty scroll gutter even though the
+  // surface itself had nothing to scroll. Same fix shape as `calendar`.
   const workspaceOwnsScroll =
     !!activeDocumentId ||
     activeTab === 'calendar' ||
+    activeTab === 'inbox' ||
     (activeTab === 'ideas' && ideasViewMode === 'table');
   return `flex-1 min-h-0 ${workspaceOwnsScroll ? 'overflow-hidden flex flex-col' : 'overflow-y-auto'}`;
 }
