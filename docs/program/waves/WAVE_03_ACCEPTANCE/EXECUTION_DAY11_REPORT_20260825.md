@@ -410,6 +410,32 @@ Sześć poniższych komórek werdyktu zmieniono w tabelach powyżej (oznaczone
    `BRAK`, nie `JEST_CZĘŚCIOWO` — poprzednia ocena myliła istnienie funkcji
    gdzie indziej w systemie z jej dostępnością tutaj.
 
+### Polish-pass (Faza 4) — wykonane za flagą OFF
+
+Dziesięć punktów polish-pass (jeden wspólny, lokalnie sformatowany
+timestamp; i18n kubełków; kanoniczny badge severity; „Puls zarządczy" +
+nowe klucze PL/EN; wyrównanie karty „Czas decyzji" w gridzie; usunięcie
+duplikatu heatmapy (patrz punkt 1 wyżej — zamiast dociągać ją do
+`JEST_CZĘŚCIOWO`, usunięto ją); stylowanie list `<ul>`; `htmlFor` na
+wszystkich polach generatora + walidacja wypisująca brakujące pola po
+imieniu) wykonano na tej samej gałęzi. Kompletność KPI renderuje się jako
+`%` (punkt 7, spójny z korektą F1). Pełny SPEC-A rebuild powłoki sekcji
+(punkt 5) NIE został wykonany w pełni — zastosowano jedną wspólną klasę
+karty na sekcjach 1–8 jako ograniczony, bezpieczny krok; pełny rebuild
+zgodny z architekturą Dokument-centrum pozostaje osobnym zadaniem.
+
+Osiem nowych zrzutów dev-render (harness `execution-report-day11`, port
+4501, `dev-render/shot.mjs`) — Work/Resources/Control/Generator × light/dark
+— obejrzano samodzielnie przed odbiorem (zero `KONSOLA-BLEDY`, zero
+`SIEC-4XX5XX` na wszystkich ośmiu przebiegach), zgodnie z zasadą #7
+CLAUDE.md. Zapisane w
+`docs/program/waves/WAVE_03_ACCEPTANCE/modules/06_EXECUTION/evidence/day11-polish/`
+(`work-light.png`, `work-dark.png`, `resources-light.png`,
+`resources-dark.png`, `control-light.png`, `control-dark.png`,
+`generator-light.png`, `generator-dark.png`). Flaga `execReportsIntelligence`
+pozostaje domyślnie OFF wszędzie — te zrzuty istnieją wyłącznie do odbioru
+przez Piotra, nie do włączenia na demo.
+
 ### Zakres tej korekty
 
 Ta sekcja nie zmienia werdyktów E-O1…E-O7 (STOP-y pozostają w mocy) ani
