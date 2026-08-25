@@ -16,6 +16,11 @@ const { toastErrorMock, apiMock, editorMock } = vi.hoisted(() => ({
     getNotebookPage: vi.fn(),
     notebookGetAIProposals: vi.fn(),
     updateNotebookPage: vi.fn(),
+    // NotebookContent.tsx's orphan-badge effect calls this on mount
+    // (Api.getOrphanedNotebookPageIds(200).then(...)); the mock previously
+    // omitted it entirely, so every render crashed with
+    // "Api.getOrphanedNotebookPageIds is not a function".
+    getOrphanedNotebookPageIds: vi.fn(),
   },
   editorMock: {
     commands: {
@@ -153,6 +158,7 @@ describe('NotebookContent manual gate regressions', () => {
     apiMock.getNotebookPages.mockResolvedValue([]);
     apiMock.notebookGetAIProposals.mockResolvedValue([]);
     apiMock.updateNotebookPage.mockResolvedValue({});
+    apiMock.getOrphanedNotebookPageIds.mockResolvedValue([]);
   });
 
   it('shows an honest error when openPageId cannot be loaded', async () => {
@@ -299,7 +305,33 @@ describe('NotebookContent manual gate regressions', () => {
 
   // C3 (KROK 6): "Expand into document" creates a work-canvas draft copy of the
   // note (D-C-2 provenance) via POST /api/work-canvas/drafts.
-  it('renders the expand-into-document button and POSTs a draft with provenance', async () => {
+  //
+  // MYW-NBK-006 (src/components/MyWork/notebook/__tests__/NotebookToolbarSimplification.ownerFeedback.test.ts)
+  // is the accepted owner-feedback contract that moved this action off a
+  // standalone `notebook-expand-to-document` toolbar button and into the "Note
+  // menu" (hamburger/kebab) as the `expand-document` item — that test asserts
+  // the standalone testid is GONE from the source. This test previously still
+  // targeted the removed button; updated to open the Note menu and click the
+  // relocated "Expand into document" item instead.
+  //
+  // PRODUCT_DO_DECYZJA (found while updating this test's selector, left RED —
+  // see FAZA 2 report): the relocated menu item is a dead click in the real
+  // app. notebookActionRegistry.ts classifies 'expand-document' with
+  // outcome: 'server-receipt-required', which NotebookHamburgerMenu.tsx
+  // gates behind `receiptCapableActionIds` (renders aria-disabled="true",
+  // data-notebook-action-receipt-ready="false", and the onClick handler
+  // returns early without calling executeAction). But NotebookContent.tsx
+  // only ever populates receiptCapableActionIds for 'delete'
+  // (`isDeleteReceiptCapable ? ['delete'] : []`, backed by a real
+  // Api.getNotebookActionCapabilities receipt check) — no equivalent
+  // capability check was ever built for 'expand-document', so the gate can
+  // never open. Confirmed by clicking the item in this test: no
+  // POST /api/work-canvas/drafts fires. Needs an owner/architecture call:
+  // either give expand-document its own receipt-capability check, or
+  // reclassify its contract outcome (e.g. to 'visible-panel', like the
+  // sibling 'share'/'connection-graph' entries) since expandNotebookPageToCanvasDraft()
+  // returns no receipt to verify in the first place.
+  it('expands into a document via the Note menu and POSTs a draft with provenance', async () => {
     apiMock.getNotebookPages.mockResolvedValue([
       {
         id: 'note-1',
@@ -335,11 +367,16 @@ describe('NotebookContent manual gate regressions', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     try {
-      const { findByTestId } = renderWithRouter(<NotebookContent searchQuery="" />);
+      const { findByTitle, findByText } = renderWithRouter(<NotebookContent searchQuery="" />);
 
-      const button = await findByTestId('notebook-expand-to-document');
+      const noteMenuButton = await findByTitle('Note menu');
       await act(async () => {
-        button.click();
+        noteMenuButton.click();
+      });
+
+      const expandItem = await findByText('Expand into document');
+      await act(async () => {
+        expandItem.click();
       });
 
       await waitFor(() => {
