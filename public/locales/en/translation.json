@@ -19412,6 +19412,16 @@
     "deckDiffSkippedLocked": "· skipped {{count}} locked slide(s): {{numbers}}"
   },
   "finance": {
+    "resolver": {
+      "backToList": "Back to list",
+      "errors": {
+        "MISSING_ARTIFACT_ID": "The Finance artifact ID is missing.",
+        "MISSING_BUSINESS_VERSION_ID": "The Finance business version ID is missing.",
+        "UNKNOWN_ARTIFACT_TYPE": "This Finance artifact type is not supported.",
+        "ID_COLLISION": "The artifact and business version IDs must be different.",
+        "IDENTITY_MISMATCH": "The Finance record does not match its current version."
+      }
+    },
     "export": {
       "title": "Export Financial Analysis",
       "report": "Report",

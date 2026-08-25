@@ -91,6 +91,11 @@ import { formatListDate } from '@/utils/listDateFormat';
 // `{artifactId, businessVersionId}` resolution gate, used by all four v3
 // mount branches below (openV3Baseline/Prediction/Analysis/Valuation).
 import { FinanceLegacyBridgeGate } from '../Finance/shared/FinanceLegacyBridgeGate';
+import {
+  resolveFinanceWorkspace,
+  type FinanceResolveErrorReason,
+  type FinanceResolveInput,
+} from '../Finance/shared/financeWorkspaceResolver';
 import { Menu3DropdownChip } from '../shared/Menu3DropdownChip';
 import {
   FilterChip,
@@ -241,12 +246,15 @@ function CanonicalFinanceDirectWorkspace({
   onNavigateBack: () => void;
 }) {
   const [artifact, setArtifact] = useState<FinanceArtifactDetailDto | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<FinanceResolveErrorReason | null>(null);
+  const { t } = useTranslation();
+  const resolution = resolveFinanceWorkspace({ artifactId, businessVersionId, artifactType });
 
   useEffect(() => {
     let cancelled = false;
     setArtifact(null);
-    setError(null);
+    setError(resolution.kind === 'error' ? resolution.reason : null);
+    if (resolution.kind === 'error') return () => undefined;
     getFinanceArtifact(artifactId)
       .then((result) => {
         const current = result.currentBusinessVersion;
@@ -255,27 +263,33 @@ function CanonicalFinanceDirectWorkspace({
           !current ||
           current.businessVersionId !== businessVersionId
         ) {
-          throw new Error('Canonical Finance identity does not match the current version.');
+          setError(current ? 'IDENTITY_MISMATCH' : 'MISSING_BUSINESS_VERSION_ID');
+          return;
         }
         if (!cancelled) setArtifact(result);
       })
       .catch((reason: unknown) => {
         if (!cancelled) {
-          setError(reason instanceof Error ? reason.message : 'Canonical Finance artifact failed.');
+          setError('IDENTITY_MISMATCH');
         }
       });
     return () => {
       cancelled = true;
     };
-  }, [artifactId, artifactType, businessVersionId]);
+  }, [artifactId, artifactType, businessVersionId, resolution.kind]);
 
   if (error) {
     return (
       <div className="flex h-full items-center justify-center p-6">
         <EmptyStateInline
           icon={AlertTriangle}
-          message={error}
-          action={{ label: 'Wróć do listy', onClick: onNavigateBack }}
+          message={t(`finance.resolver.errors.${error}`, 'This Finance record cannot be opened.')}
+          action={{
+            label: t('finance.resolver.backToList', 'Back to list'),
+            onClick: onNavigateBack,
+            showPrefix: false,
+            neutralAccent: true,
+          }}
         />
       </div>
     );
@@ -283,13 +297,28 @@ function CanonicalFinanceDirectWorkspace({
   if (!artifact?.currentBusinessVersion) return <LoadingState template="panel" />;
 
   const current = artifact.currentBusinessVersion;
+  if (resolution.kind === 'error') return null;
   return (
     <CanonicalFinanceWorkspaceMount
       artifactId={artifactId}
       businessVersionId={businessVersionId}
       artifactType={artifactType}
     >
-      {artifactType === 'BASELINE_MODEL' ? (
+      {resolution.workspace === 'statementPackV2' ? (
+        <FinanceV3StatementPackWorkspace
+          businessVersionId={businessVersionId}
+          displayName={
+            artifact.naturalKey || t('finance.statementPack.title', 'Financial statement')
+          }
+          resolveLineLabel={(rowKey, canonicalLineId, lineCode) =>
+            lineCode ?? canonicalLineId ?? rowKey
+          }
+          onOpenArtifact={() => undefined}
+          onCreateNew={() => undefined}
+          onOpenReportResult={() => undefined}
+          onNavigateBack={onNavigateBack}
+        />
+      ) : resolution.workspace === 'baseline' ? (
         <FinanceV3BaselineWorkspace
           artifactId={artifactId}
           businessVersionId={businessVersionId}
@@ -301,20 +330,20 @@ function CanonicalFinanceDirectWorkspace({
           contextValues={{ type: 'Model bazowy (Baseline)' }}
           onNavigateBack={onNavigateBack}
         />
-      ) : artifactType === 'PREDICTION_SCENARIO' ? (
+      ) : resolution.workspace === 'prediction' ? (
         <FinanceV3PredictionWorkspace
           artifactId={artifactId}
           businessVersionId={businessVersionId}
           onNavigateBack={onNavigateBack}
         />
-      ) : artifactType === 'HISTORICAL_ANALYSIS' ? (
+      ) : resolution.workspace === 'analysis' ? (
         <FinanceV3AnalysisWorkspace
           artifactId={artifactId}
           businessVersionId={businessVersionId}
           role="preparer"
           onNavigateBack={onNavigateBack}
         />
-      ) : artifactType === 'VALUATION_CASE' ? (
+      ) : resolution.workspace === 'valuation' ? (
         <FinanceV3ValuationWorkspace
           businessVersionId={businessVersionId}
           role="preparer"
@@ -466,7 +495,8 @@ export function parseFinanceDeepLink(pathname: string): FinanceDeepLink | null {
 export function resolveFinanceDetailBranches(
   kind: FinanceKind,
   predictionType: PredictionType | undefined,
-  flags: FinanceDetailBranchFlags
+  flags: FinanceDetailBranchFlags,
+  identity?: FinanceResolveInput
 ): FinanceDetailBranches {
   const isBudgetPrediction = kind === 'prediction' && predictionType === 'budget';
   const openStatement = kind === 'statements';
@@ -474,10 +504,17 @@ export function resolveFinanceDetailBranches(
     kind === 'models' || (kind === 'prediction' && predictionType === 'model');
   const openAnalysis = kind === 'analysis' || kind === 'investment';
   const openValuation = kind === 'valuation';
-  const openV3Baseline = kind === 'models' && flags.baseline;
-  const openV3Prediction = kind === 'prediction' && predictionType === 'model' && flags.prediction;
-  const openV3Analysis = openAnalysis && flags.analysis;
-  const openV3Valuation = openValuation && flags.valuation;
+  const resolution = identity ? resolveFinanceWorkspace(identity) : null;
+  const workspace = resolution?.kind === 'workspace' ? resolution.workspace : null;
+  const permits = (candidate: string) => workspace === null || workspace === candidate;
+  const openV3Baseline = kind === 'models' && flags.baseline && permits('baseline');
+  const openV3Prediction =
+    kind === 'prediction' &&
+    predictionType === 'model' &&
+    flags.prediction &&
+    permits('prediction');
+  const openV3Analysis = openAnalysis && flags.analysis && permits('analysis');
+  const openV3Valuation = openValuation && flags.valuation && permits('valuation');
   const openFinanceV3 = openV3Baseline || openV3Prediction || openV3Analysis || openV3Valuation;
   const needsFullHeight =
     openStatement || isModelWorkspace || openAnalysis || isBudgetPrediction || openValuation;
@@ -3089,13 +3126,15 @@ export const FinanceHub: React.FC = () => {
     const canonicalArtifactId = searchParams.get('canonicalArtifactId');
     const canonicalBusinessVersionId = searchParams.get('canonicalBusinessVersionId');
     if (
-      (canonicalArtifactType === 'BASELINE_MODEL' ||
+      (canonicalArtifactType === 'STATEMENT_PACK' ||
+        canonicalArtifactType === 'BASELINE_MODEL' ||
         canonicalArtifactType === 'HISTORICAL_ANALYSIS' ||
         canonicalArtifactType === 'PREDICTION_SCENARIO' ||
         canonicalArtifactType === 'VALUATION_CASE') &&
       canonicalArtifactId &&
       canonicalBusinessVersionId &&
-      ((canonicalArtifactType === 'BASELINE_MODEL' && financeV3BaselineFlag.enabled) ||
+      ((canonicalArtifactType === 'STATEMENT_PACK' && financeV3StatementPackFlag.enabled) ||
+        (canonicalArtifactType === 'BASELINE_MODEL' && financeV3BaselineFlag.enabled) ||
         (canonicalArtifactType === 'HISTORICAL_ANALYSIS' && financeV3AnalysisFlag.enabled) ||
         (canonicalArtifactType === 'PREDICTION_SCENARIO' && financeV3PredictionFlag.enabled) ||
         (canonicalArtifactType === 'VALUATION_CASE' && financeV3ValuationFlag.enabled))
@@ -3158,12 +3197,26 @@ export const FinanceHub: React.FC = () => {
       openV3Valuation,
       openFinanceV3,
       needsFullHeight,
-    } = resolveFinanceDetailBranches(activeDocument.kind, activeModelRow.predictionType, {
-      baseline: financeV3BaselineFlag.enabled,
-      prediction: financeV3PredictionFlag.enabled,
-      analysis: financeV3AnalysisFlag.enabled,
-      valuation: financeV3ValuationFlag.enabled,
-    });
+    } = resolveFinanceDetailBranches(
+      activeDocument.kind,
+      activeModelRow.predictionType,
+      {
+        baseline: financeV3BaselineFlag.enabled,
+        prediction: financeV3PredictionFlag.enabled,
+        analysis: financeV3AnalysisFlag.enabled,
+        valuation: financeV3ValuationFlag.enabled,
+      },
+      activeDocument.canonicalArtifactId &&
+        activeDocument.canonicalBusinessVersionId &&
+        activeDocument.canonicalArtifactType
+        ? {
+            artifactId: activeDocument.canonicalArtifactId,
+            businessVersionId: activeDocument.canonicalBusinessVersionId,
+            artifactType: activeDocument.canonicalArtifactType,
+            legacyId: activeDocument.id,
+          }
+        : undefined
+    );
 
     return (
       <div className="p-4 lg:p-6">
@@ -3683,7 +3736,8 @@ export const FinanceHub: React.FC = () => {
       );
     if (
       (activeDocumentId && activeDocument) ||
-      ((searchParams.get('canonicalArtifactType') === 'BASELINE_MODEL' ||
+      ((searchParams.get('canonicalArtifactType') === 'STATEMENT_PACK' ||
+        searchParams.get('canonicalArtifactType') === 'BASELINE_MODEL' ||
         searchParams.get('canonicalArtifactType') === 'HISTORICAL_ANALYSIS' ||
         searchParams.get('canonicalArtifactType') === 'PREDICTION_SCENARIO' ||
         searchParams.get('canonicalArtifactType') === 'VALUATION_CASE') &&

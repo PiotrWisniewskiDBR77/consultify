@@ -61,16 +61,16 @@ Właściciel poza publiczną produkcją wpisuje `/results?ff_wave3ResultsOwnerRe
 
 ## Sekcja F — Finance (DEC-2026-08-24-05)
 
-| Pozycja                               | Status           | Commit                      | Testy          | Uwagi                                      |
-| ------------------------------------- | ---------------- | --------------------------- | -------------- | ------------------------------------------ |
-| F.1 inwentarz FIN-REC-001             | DONE_CURRENT_SHA | do uzupełnienia po commicie | audyt źródłowy | Sześć gałęzi i pięć flag zamrożone poniżej |
-| F.2 resolver FIN-REC-002              | PENDING          | —                           | —              | —                                          |
-| F.3 wspólny shell FIN-REC-003         | PENDING          | —                           | —              | —                                          |
-| F.4 `financeOwnerSampleData`          | PENDING          | —                           | —              | —                                          |
-| F.5 ochrona danych i ufności          | PENDING          | —                           | —              | —                                          |
-| F.6 stany brzegowe FIN-REC-011        | PENDING          | —                           | —              | —                                          |
-| F.7 testy FIN-REC-014                 | PENDING          | —                           | —              | —                                          |
-| F.8 przygotowanie odłączenia Benefits | PENDING          | —                           | —              | —                                          |
+| Pozycja                               | Status           | Commit                      | Testy          | Uwagi                                        |
+| ------------------------------------- | ---------------- | --------------------------- | -------------- | -------------------------------------------- |
+| F.1 inwentarz FIN-REC-001             | DONE_CURRENT_SHA | `4ab7a61403`                | audyt źródłowy | Sześć gałęzi i pięć flag zamrożone poniżej   |
+| F.2 resolver FIN-REC-002              | DONE_CURRENT_SHA | do uzupełnienia po commicie | 81/81 PASS     | 53-case table + OFF regression + stare testy |
+| F.3 wspólny shell FIN-REC-003         | PENDING          | —                           | —              | —                                            |
+| F.4 `financeOwnerSampleData`          | PENDING          | —                           | —              | —                                            |
+| F.5 ochrona danych i ufności          | PENDING          | —                           | —              | —                                            |
+| F.6 stany brzegowe FIN-REC-011        | PENDING          | —                           | —              | —                                            |
+| F.7 testy FIN-REC-014                 | PENDING          | —                           | —              | —                                            |
+| F.8 przygotowanie odłączenia Benefits | PENDING          | —                           | —              | —                                            |
 
 ### F.1 — manifest runtime i zamrożenie
 
@@ -100,6 +100,27 @@ Pozycje UNKNOWN: budżet nie ma `artifactType` ani workspace'u V3. Nie ukrywam t
 | `ValuationWorkspace`         | testy i kanoniczny, odrębny `Finance/Valuation/ValuationWorkspace`; stary komponent Benefits nie ma innego montażu | pełny `rg` po `src`                    |
 
 Komponenty Benefits nie są kasowane ani odłączane w tym dyżurze.
+
+### F.2 — wynik resolvera i testu tabelarycznego
+
+- Przypadków wymaganych w tabeli: 53; PASS 53; FAIL 0. Dodatkowy test braku Benefits: PASS.
+- Pięć mapowań: `STATEMENT_PACK→statementPackV2`, `BASELINE_MODEL→baseline`, `HISTORICAL_ANALYSIS→analysis`, `PREDICTION_SCENARIO→prediction`, `VALUATION_CASE→valuation`.
+- Powody błędu pokryte: `MISSING_ARTIFACT_ID`, `MISSING_BUSINESS_VERSION_ID`, `UNKNOWN_ARTIFACT_TYPE`, `ID_COLLISION`; stan fetch/readback dodaje `IDENTITY_MISMATCH` bez rzucania stringa.
+- `financeDetailBranches.flagOff.test.ts`: 6/6 PASS; zachowanie przy wszystkich flagach OFF jest literalnie niezmienione.
+- `resolveFinanceDetailBranches.test.ts`: istniejące 21/21 PASS.
+- Resolver jest czysty, nie importuje Benefits i nie ma operacji sieciowych ani mutacji.
+- Bezpośrednia ścieżka kanoniczna obsługuje teraz także `STATEMENT_PACK`; niezgodne ID/type renderują stan błędu z bezpiecznym powrotem do listy.
+
+### F.2 — odczyt nie tworzy rekordu
+
+| Gałąź               | Wynik audytu źródłowego                                                                                                                                       |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Statements V3       | mount wykonuje odczyty przez fetchery; tworzenie jest wyłącznie jawną akcją `onCreateNew`                                                                     |
+| Baseline V3         | brak mutacji w ścieżce otwarcia                                                                                                                               |
+| Analysis V3         | brak mutacji w ścieżce otwarcia                                                                                                                               |
+| Prediction V3       | brak mutacji w ścieżce otwarcia                                                                                                                               |
+| Valuation V3        | brak mutacji w ścieżce otwarcia                                                                                                                               |
+| Legacy OFF branches | jedyny znaleziony `Api.put` w `Benefits/FinancialAnalysisWorkspace.tsx:74` należy do jawnej funkcji `updateModelAssumptionsForBridge`, nie do efektu otwarcia |
 
 ## Pozycje STOP
 
