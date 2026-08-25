@@ -495,11 +495,11 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         )}
         {includeOwnEvents ? (
           <section
-            aria-label={t('myWork.calendar.v2.deadlines', 'Deadlines')}
+            aria-label={t('myWork.calendarV2.deadlines', 'Deadlines')}
             className="flex min-h-12 items-center gap-2 overflow-x-auto border-b border-c-border px-4 py-2"
           >
             <strong className="shrink-0 text-xs uppercase text-c-text-secondary">
-              {t('myWork.calendar.v2.deadlines', 'Deadlines')}
+              {t('myWork.calendarV2.deadlines', 'Deadlines')}
             </strong>
             {events
               .filter((event) => event.source === 'task')
@@ -515,7 +515,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 </button>
               ))}
             <Button variant="secondary" size="sm" onClick={() => setCreateModalOpen(true)}>
-              {t('myWork.calendar.v2.new', 'New')}
+              {t('myWork.calendarV2.new', 'New')}
             </Button>
           </section>
         ) : null}

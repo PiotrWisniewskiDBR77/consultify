@@ -4150,6 +4150,24 @@
       "dayPreviewLimited": "Podgląd dnia jest ograniczony",
       "dayAlreadyBusy": "Dzień jest już dość obciążony"
     },
+    "calendarV2": {
+      "deadlines": "Terminy",
+      "new": "Nowy",
+      "duplicateConfirm": "Utworzyć 4 niezależne kopie na: {{dates}}?",
+      "duplicateResult": "Utworzono {{created}} z 4. Nieudane: {{failed}}.",
+      "created": "Wydarzenie utworzone",
+      "createDescription": "Utwórz wydarzenie lub termin zadania.",
+      "entryType": "Typ wpisu",
+      "event": "Wydarzenie",
+      "task": "Zadanie",
+      "from": "Od",
+      "to": "Do",
+      "visibility": "Widoczność",
+      "private": "Prywatne",
+      "busy": "Zajęte",
+      "organization": "Organizacja",
+      "duplicateFourWeeks": "Powiel na kolejne 4 tygodnie"
+    },
     "calendarSidebar": {
       "currentDateToLocaleDateString": "pl-PL",
       "sources": "Źródła",

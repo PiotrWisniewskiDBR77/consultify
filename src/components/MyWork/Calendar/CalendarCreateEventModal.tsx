@@ -160,7 +160,7 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
             return next.toLocaleDateString();
           });
           const confirmed = window.confirm(
-            t('myWork.calendar.v2.duplicateConfirm', {
+            t('myWork.calendarV2.duplicateConfirm', {
               defaultValue: 'Create 4 independent copies on: {{dates}}?',
               dates: dates.join(', '),
             })
@@ -172,7 +172,7 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
         await Api.createMyWorkCalendarEvent(eventInput);
         if (duplicateFourWeeks) {
           const result = await duplicateCalendarEventFourWeeks(eventInput);
-          const summary = t('myWork.calendar.v2.duplicateResult', {
+          const summary = t('myWork.calendarV2.duplicateResult', {
             defaultValue: 'Created {{created}} of 4. Failed: {{failed}}.',
             created: result.created.length,
             failed: result.failed.map((item) => item.date).join(', ') || '0',
@@ -184,7 +184,7 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
             toast.success(summary);
           }
         } else {
-          toast.success(t('myWork.calendar.v2.created', 'Event created'));
+          toast.success(t('myWork.calendarV2.created', 'Event created'));
         }
       } else {
         await Api.createMyWorkCalendarEvent({
@@ -215,7 +215,7 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
       title={t('myWork.calendarCreateEvent.title', 'Add to calendar')}
       description={
         v2
-          ? t('myWork.calendar.v2.createDescription', 'Create an event or a task deadline.')
+          ? t('myWork.calendarV2.createDescription', 'Create an event or a task deadline.')
           : t(
               'myWork.calendarCreateEvent.inV1CalendarCreation',
               'In V1, calendar creation produces a personal task with a due date, aligned with My Work logic.'
@@ -242,7 +242,7 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
           <div
             className="flex gap-2"
             role="group"
-            aria-label={t('myWork.calendar.v2.entryType', 'Entry type')}
+            aria-label={t('myWork.calendarV2.entryType', 'Entry type')}
           >
             {(['event', 'task'] as const).map((type) => (
               <button
@@ -253,8 +253,8 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
                 className="rounded-lg border border-c-border px-3 py-2 text-sm aria-pressed:bg-c-surface-raised"
               >
                 {type === 'event'
-                  ? t('myWork.calendar.v2.event', 'Event')
-                  : t('myWork.calendar.v2.task', 'Task')}
+                  ? t('myWork.calendarV2.event', 'Event')
+                  : t('myWork.calendarV2.task', 'Task')}
               </button>
             ))}
           </div>
@@ -290,9 +290,9 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
         {v2 && entryType === 'event' ? (
           <div className="grid grid-cols-2 gap-3">
             <label className="text-sm">
-              {t('myWork.calendar.v2.from', 'From')}
+              {t('myWork.calendarV2.from', 'From')}
               <input
-                aria-label={t('myWork.calendar.v2.from', 'From')}
+                aria-label={t('myWork.calendarV2.from', 'From')}
                 type="time"
                 value={startTime}
                 onChange={(event) => setStartTime(event.target.value)}
@@ -300,9 +300,9 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
               />
             </label>
             <label className="text-sm">
-              {t('myWork.calendar.v2.to', 'To')}
+              {t('myWork.calendarV2.to', 'To')}
               <input
-                aria-label={t('myWork.calendar.v2.to', 'To')}
+                aria-label={t('myWork.calendarV2.to', 'To')}
                 type="time"
                 value={endTime}
                 onChange={(event) => setEndTime(event.target.value)}
@@ -310,15 +310,15 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
               />
             </label>
             <label className="col-span-2 text-sm">
-              {t('myWork.calendar.v2.visibility', 'Visibility')}
+              {t('myWork.calendarV2.visibility', 'Visibility')}
               <select
                 value={visibility}
                 onChange={(event) => setVisibility(event.target.value as typeof visibility)}
                 className="mt-1 w-full rounded-lg border border-c-border bg-c-surface p-2"
               >
-                <option value="private">{t('myWork.calendar.v2.private', 'Private')}</option>
-                <option value="busy">{t('myWork.calendar.v2.busy', 'Busy')}</option>
-                <option value="org">{t('myWork.calendar.v2.organization', 'Organization')}</option>
+                <option value="private">{t('myWork.calendarV2.private', 'Private')}</option>
+                <option value="busy">{t('myWork.calendarV2.busy', 'Busy')}</option>
+                <option value="org">{t('myWork.calendarV2.organization', 'Organization')}</option>
               </select>
             </label>
             <label className="col-span-2 flex items-center gap-2 text-sm">
@@ -327,7 +327,7 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
                 checked={duplicateFourWeeks}
                 onChange={(event) => setDuplicateFourWeeks(event.target.checked)}
               />
-              {t('myWork.calendar.v2.duplicateFourWeeks', 'Duplicate for the next 4 weeks')}
+              {t('myWork.calendarV2.duplicateFourWeeks', 'Duplicate for the next 4 weeks')}
             </label>
             {duplicateResult ? (
               <output className="col-span-2 text-sm" aria-live="polite">

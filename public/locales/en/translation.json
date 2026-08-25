@@ -4831,6 +4831,24 @@
       "dayPreviewLimited": "Day preview is limited",
       "dayAlreadyBusy": "This day is already fairly busy"
     },
+    "calendarV2": {
+      "deadlines": "Deadlines",
+      "new": "New",
+      "duplicateConfirm": "Create 4 independent copies on: {{dates}}?",
+      "duplicateResult": "Created {{created}} of 4. Failed: {{failed}}.",
+      "created": "Event created",
+      "createDescription": "Create an event or a task deadline.",
+      "entryType": "Entry type",
+      "event": "Event",
+      "task": "Task",
+      "from": "From",
+      "to": "To",
+      "visibility": "Visibility",
+      "private": "Private",
+      "busy": "Busy",
+      "organization": "Organization",
+      "duplicateFourWeeks": "Duplicate for the next 4 weeks"
+    },
     "calendarSidebar": {
       "currentDateToLocaleDateString": "en-US",
       "sources": "Sources",
