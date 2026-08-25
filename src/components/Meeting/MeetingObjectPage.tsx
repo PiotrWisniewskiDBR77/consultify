@@ -20,9 +20,15 @@
  * wołający `<StandardArtifactShell>`).
  *
  * Co z tego wynika wprost (§10.2/§11.2):
- *  · Menu 1 = powrót · ikona-typ (CalendarDays, z `ARTIFACT_IDENTITY.meeting`)
- *    · tytuł · pigułka statusu (cykl życia spotkania) · wskaźnik zapisu ·
- *    kebab z kodem obiektu i linkiem — wszystko z `NModeHeader`,
+ *  · Menu 1 = powrót · tytuł · pigułka statusu (cykl życia spotkania) ·
+ *    wskaźnik zapisu · kebab z kodem obiektu i linkiem — wszystko z
+ *    `NModeHeader`. UCZCIWIE: `ARTIFACT_IDENTITY.meeting.icon` deklaruje
+ *    `CalendarDays` (`src/utils/artifactLinks.ts`), ale `NModeHeader.tsx`'s
+ *    `TYPE_ICON` (lokalna mapa nazw ikon na komponenty Lucide) nie zna dziś
+ *    tego klucza — Menu 1 renderuje więc bez ikony-typu dla „meeting" (cichy
+ *    fallback `null`, bez błędu). Dopisanie `CalendarDays` do `TYPE_ICON` to
+ *    zmiana wspólnej powłoki (`NModeHeader.tsx`, dzieli ją 7+ artefaktów) —
+ *    poza zakresem tego ekranu,
  *  · Szczegóły · Protokół · Decyzje i działania to KANONICZNA nawigacja
  *    powłoki (`sections`), nie własny pasek zakładek,
  *  · prawy panel to accordion o stałej kolejności Akcje · Właściwości ·
