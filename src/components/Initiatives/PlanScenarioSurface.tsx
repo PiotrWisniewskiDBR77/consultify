@@ -1252,7 +1252,9 @@ export const PlanScenarioSurface: React.FC<Props> = ({
               </div>
             </div>
             <div className="overflow-x-auto">
-              <table className="min-w-max border-collapse text-xs">
+              <table /* §27-exempt: macierz przypisań inicjatywa × okres (interaktywny grid klik-przypisz), nie ekran listowy — kanoniczna lista okien planu renderuje się niżej przez StandardTable; docs/ui-standards/DOKTRYNA_TABELA_NIE_EXCEL.md §3 */
+                className="min-w-max border-collapse text-xs"
+              >
                 <thead>
                   <tr className="border-b border-c-border">
                     <th scope="col" className="min-w-60 p-2 text-left font-medium">

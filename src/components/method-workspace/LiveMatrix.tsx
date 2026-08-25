@@ -198,10 +198,9 @@ export const LiveMatrix: React.FC<LiveMatrixProps> = ({
       </div>
 
       <div className="overflow-x-auto">
-        {/* archetyp Matryca (Graphic Mirror unit×level), nie ekran listowy —
-            docs/ui-standards/DOKTRYNA_TABELA_NIE_EXCEL.md §3 */}
-        {/* §27-exempt */}
-        <table className="border-separate border-spacing-1">
+        <table /* §27-exempt: archetyp Matryca (Graphic Mirror unit×level), nie ekran listowy — docs/ui-standards/DOKTRYNA_TABELA_NIE_EXCEL.md §3 */
+          className="border-separate border-spacing-1"
+        >
           <thead>
             <tr>
               <th className="sticky left-0 bg-c-bg text-left text-[10px] font-medium text-c-text-muted pr-2">
