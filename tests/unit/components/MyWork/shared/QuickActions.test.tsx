@@ -4,10 +4,16 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import QuickActions from '@/components/MyWork/shared/QuickActions';
 
 // Mock i18next
+// QuickActions.tsx calls t(key, 'Mark complete') / t(key, 'More actions') — react-i18next
+// treats a string second argument as the defaultValue (see tests/setup.ts's global mock,
+// which does the same). The previous `t: (key) => key` identity mock dropped that second
+// argument, so the "Mark complete"/"More actions" title assertions never matched the raw
+// key. Resolve the string default instead, with a stable `t` identity.
+const t = (key: string, defaultValue?: string) => (typeof defaultValue === 'string' ? defaultValue : key);
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     i18n: { language: 'en' },
-    t: (key: string) => key,
+    t,
   }),
 }));
 
