@@ -72,13 +72,13 @@ w raporcie. Nie ma wyjątków „bo tak było szybciej".
 1. Punktem wyjścia jest **NAJNOWSZY tip gałęzi `codex/m03-admin-20260824`**.
    Nadzorca podaje Ci **SHA commitu-markera** przy wklejaniu tej instrukcji.
 
-   **SHA markera: «MARKER_SHA»**
+   **SHA markera: 5f96e936ac**
 
    ```bash
    cd <root-repo>
    git fetch --all --prune
    git log --oneline -25 codex/m03-admin-20260824
-   git merge-base --is-ancestor «MARKER_SHA» codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
+   git merge-base --is-ancestor 5f96e936ac codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
    ```
 
 2. **Jeśli marker nie jest przodkiem tipa albo gałąź nie istnieje — STOP.**
@@ -1055,7 +1055,7 @@ zasięgu, oświadczenie o chronionym WIP.
 
 1. `git fetch --all --prune`; weryfikacja markera:
    ```bash
-   git merge-base --is-ancestor «MARKER_SHA» codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
+   git merge-base --is-ancestor 5f96e936ac codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
    ```
    Brak → **STOP i koniec dyżuru**.
 2. Weryfikacja materiałów wiążących (§0.1 pkt 3). Brak → **STOP**.
@@ -1173,7 +1173,7 @@ chroniony — Z13). Zrzuty (`.png`) w `evidence/execution-day11/`, wymieniane
 # Execution dzień 11 — raport dyżuru <data>
 
 Baza: codex/m03-admin-20260824 @ <tip SHA>
-Marker: «MARKER_SHA» — POTWIERDZONY / BRAK
+Marker: 5f96e936ac — POTWIERDZONY / BRAK
 Gałąź robocza: codex/execution-day11-<data>
 Worktree: /private/tmp/consultify-execution-day11
 Zgoda na flagę execReportsIntelligence: NADANA / BRAK (E-O2)
