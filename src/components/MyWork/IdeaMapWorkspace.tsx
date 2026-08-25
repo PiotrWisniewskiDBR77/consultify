@@ -4392,6 +4392,11 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                       ...(patch.description !== undefined
                         ? { description: patch.description }
                         : {}),
+                      // FIX-17 (Day 3 layer-2 acceptance): the inspector only offers an
+                      // editable Owner field for 'table' and 'mindmap' (see
+                      // IdeaElementInspector) — both write the declared `owner` field on
+                      // node data, same as Table's "person" column already does.
+                      ...(patch.owner !== undefined ? { owner: patch.owner } : {}),
                     };
                     await handleNodeDataChange(selection.primaryId, nativePatch);
                     const readback = await Api.getMyIdeaMap(realId, { language: i18n.language });
@@ -4407,7 +4412,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                       label: node.data?.label || '',
                       state: node.data?.status,
                       priority: node.data?.priority,
-                      owner: node.data?.owner,
+                      owner: node.data?.owner ?? node.data?.assignee,
                       semanticType: node.data?.semanticType || node.data?.nodeType,
                       description: node.data?.description,
                       tags: node.data?.tags,

@@ -962,7 +962,10 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             laneName: lanes.find((lane) => lane.id === primary?.data?.laneId)?.label,
             label: primary?.data?.label,
             description: primary?.data?.description,
-            owner: primary?.data?.owner,
+            // FIX-16 (Day 3 layer-2 acceptance): ProcessFlowPropertiesPanel's own
+            // "assignee" field already reads `d.assignee ?? d.owner` — mirror that
+            // fallback here so the shared inspector's Owner reads the same value.
+            owner: primary?.data?.owner ?? primary?.data?.assignee,
             duration: primary?.data?.duration,
             durationUnit: primary?.data?.durationUnit,
             cost: primary?.data?.cost,

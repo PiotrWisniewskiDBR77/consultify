@@ -277,25 +277,53 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
               ))}
             </select>
           )}
-          <input
-            aria-label={t('myWork.ideaInspector.priorityField', 'Priorytet')}
-            type="range"
-            min={0}
-            max={100}
-            value={draft.priority ?? 0}
-            onChange={(e) => setDraft({ ...draft, priority: Number(e.target.value) })}
-            onMouseUp={() => void commit({ priority: draft.priority })}
-          />
+          {/* FIX-17 (Day 3 layer-2 acceptance): the accepted inspector prototype
+              (mywork-fala3/proto-01-ideas-inspektor.html) shows the priority
+              label as "Priorytet — 70" — a numeric readout right beside the
+              slider, not a bare unlabeled range input. */}
+          <label className="block text-xs">
+            {t('myWork.ideaInspector.priorityField', 'Priorytet')} — {draft.priority ?? 0}
+            <input
+              aria-label={t('myWork.ideaInspector.priorityField', 'Priorytet')}
+              type="range"
+              min={0}
+              max={100}
+              value={draft.priority ?? 0}
+              onChange={(e) => setDraft({ ...draft, priority: Number(e.target.value) })}
+              onMouseUp={() => void commit({ priority: draft.priority })}
+              className="mt-1 w-full"
+            />
+          </label>
           {/* FIX-12 addendum (Day 3 layer-2 acceptance): owner/semanticType
               rendered as two bare, unlabeled <p> tags — a value with no
               visible field name. Labeled to match every other field in this
-              section (Etykieta/Stan/Priorytet all have a label). */}
-          <p className="text-sm">
-            <span className="text-c-text-secondary">
-              {t('myWork.ideaInspector.ownerField', 'Właściciel')}:
-            </span>{' '}
-            {safeText(draft.owner)}
-          </p>
+              section (Etykieta/Stan/Priorytet all have a label).
+              FIX-17 extends this: Table's "person" column and Mindmap's
+              "assign person" (AssignPersonModal) are real, functioning edit
+              paths the OLD per-tool panels already had — the prototype shows
+              Owner as an editable input, like Etykieta. Process Flow's own
+              assignee input was never wired to persistence (dead field) and
+              Whiteboard never had an assign feature at all, so both keep the
+              read-only rendering rather than fabricating a new edit surface. */}
+          {tool === 'table' || tool === 'mindmap' ? (
+            <label className="block text-xs">
+              {t('myWork.ideaInspector.ownerField', 'Właściciel')}
+              <input
+                aria-label={t('myWork.ideaInspector.ownerField', 'Właściciel')}
+                value={draft.owner ?? ''}
+                onChange={(e) => setDraft({ ...draft, owner: e.target.value })}
+                onBlur={() => void commit({ owner: draft.owner })}
+                className="mt-1 w-full rounded border border-c-border bg-c-surface px-2 py-1"
+              />
+            </label>
+          ) : (
+            <p className="text-sm">
+              <span className="text-c-text-secondary">
+                {t('myWork.ideaInspector.ownerField', 'Właściciel')}:
+              </span>{' '}
+              {safeText(draft.owner)}
+            </p>
+          )}
           <p className="text-sm">
             <span className="text-c-text-secondary">
               {t('myWork.ideaInspector.semanticTypeField', 'Typ semantyczny')}:

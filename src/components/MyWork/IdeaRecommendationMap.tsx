@@ -2861,7 +2861,13 @@ function MindMapInner({
               color: selected[0]?.data?.color,
               label: selected[0]?.data?.label,
               description: selected[0]?.data?.description,
-              owner: selected[0]?.data?.owner,
+              // FIX-16 (Day 3 layer-2 acceptance): the real, functioning "assign
+              // person" feature (AssignPersonModal, below) persists to
+              // `data.assignee` — the inspector's Owner field was reading only
+              // `data.owner`, which mindmap nodes never populate, so a real
+              // assignment always rendered as empty. Fallback like
+              // ProcessFlowPropertiesPanel already does (`assignee ?? owner`).
+              owner: selected[0]?.data?.owner ?? selected[0]?.data?.assignee,
               semanticType: selected[0]?.data?.semanticType,
               status: selected[0]?.data?.status,
               tags: Array.isArray(selected[0]?.data?.tags) ? selected[0]?.data?.tags : undefined,
