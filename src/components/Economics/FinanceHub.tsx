@@ -266,7 +266,9 @@ function CanonicalFinanceDirectWorkspace({
           !current ||
           current.businessVersionId !== businessVersionId
         ) {
-          setError(current ? 'IDENTITY_MISMATCH' : 'MISSING_BUSINESS_VERSION_ID');
+          if (!cancelled) {
+            setError(current ? 'IDENTITY_MISMATCH' : 'MISSING_BUSINESS_VERSION_ID');
+          }
           return;
         }
         if (!cancelled) setArtifact(result);
@@ -455,6 +457,8 @@ export interface FinanceDetailBranchFlags {
 }
 
 export interface FinanceDetailBranches {
+  /** Blocks canonical and legacy mounts when supplied identity is invalid or belongs to another row kind. */
+  resolutionError: FinanceResolveErrorReason | null;
   isBudgetPrediction: boolean;
   openStatement: boolean;
   isModelWorkspace: boolean;
@@ -509,7 +513,26 @@ export function resolveFinanceDetailBranches(
   const openValuation = kind === 'valuation';
   const resolution = identity ? resolveFinanceWorkspace(identity) : null;
   const workspace = resolution?.kind === 'workspace' ? resolution.workspace : null;
-  const permits = (candidate: string) => workspace === null || workspace === candidate;
+  const expectedWorkspace =
+    kind === 'statements'
+      ? 'statementPackV2'
+      : kind === 'models'
+        ? 'baseline'
+        : kind === 'prediction' && predictionType === 'model'
+          ? 'prediction'
+          : openAnalysis
+            ? 'analysis'
+            : openValuation
+              ? 'valuation'
+              : null;
+  const resolutionError =
+    resolution?.kind === 'error'
+      ? resolution.reason
+      : resolution?.kind === 'workspace' && resolution.workspace !== expectedWorkspace
+        ? 'IDENTITY_MISMATCH'
+        : null;
+  const permits = (candidate: string) =>
+    resolutionError === null && (resolution === null || workspace === candidate);
   const openV3Baseline = kind === 'models' && flags.baseline && permits('baseline');
   const openV3Prediction =
     kind === 'prediction' &&
@@ -522,6 +545,7 @@ export function resolveFinanceDetailBranches(
   const needsFullHeight =
     openStatement || isModelWorkspace || openAnalysis || isBudgetPrediction || openValuation;
   return {
+    resolutionError,
     isBudgetPrediction,
     openStatement,
     isModelWorkspace,
@@ -3203,6 +3227,7 @@ export const FinanceHub: React.FC = () => {
       openV3Valuation,
       openFinanceV3,
       needsFullHeight,
+      resolutionError,
     } = resolveFinanceDetailBranches(
       activeDocument.kind,
       activeModelRow.predictionType,
@@ -3260,7 +3285,23 @@ export const FinanceHub: React.FC = () => {
                 </div>
               }
             >
-              {isBudgetPrediction ? (
+              {resolutionError ? (
+                <div className="flex h-full items-center justify-center p-6">
+                  <EmptyStateInline
+                    icon={AlertTriangle}
+                    message={t(
+                      `finance.resolver.errors.${resolutionError}`,
+                      'This Finance record cannot be opened.'
+                    )}
+                    action={{
+                      label: t('finance.resolver.backToList', 'Back to list'),
+                      onClick: handleShowList,
+                      showPrefix: false,
+                      neutralAccent: true,
+                    }}
+                  />
+                </div>
+              ) : isBudgetPrediction ? (
                 <BudgetWorkspace
                   initialBudgetId={getBudgetRawId(activeDocument.id)}
                   hideSidebar

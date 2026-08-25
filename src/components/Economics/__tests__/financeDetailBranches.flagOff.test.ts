@@ -9,6 +9,7 @@ const rows: [FinanceKind, PredictionType | undefined, object][] = [
     'statements',
     undefined,
     {
+      resolutionError: null,
       isBudgetPrediction: false,
       openStatement: true,
       isModelWorkspace: false,
@@ -26,6 +27,7 @@ const rows: [FinanceKind, PredictionType | undefined, object][] = [
     'models',
     undefined,
     {
+      resolutionError: null,
       isBudgetPrediction: false,
       openStatement: false,
       isModelWorkspace: true,
@@ -43,6 +45,7 @@ const rows: [FinanceKind, PredictionType | undefined, object][] = [
     'analysis',
     undefined,
     {
+      resolutionError: null,
       isBudgetPrediction: false,
       openStatement: false,
       isModelWorkspace: false,
@@ -60,6 +63,7 @@ const rows: [FinanceKind, PredictionType | undefined, object][] = [
     'prediction',
     'model',
     {
+      resolutionError: null,
       isBudgetPrediction: false,
       openStatement: false,
       isModelWorkspace: true,
@@ -77,6 +81,7 @@ const rows: [FinanceKind, PredictionType | undefined, object][] = [
     'prediction',
     'budget',
     {
+      resolutionError: null,
       isBudgetPrediction: true,
       openStatement: false,
       isModelWorkspace: false,
@@ -94,6 +99,7 @@ const rows: [FinanceKind, PredictionType | undefined, object][] = [
     'valuation',
     undefined,
     {
+      resolutionError: null,
       isBudgetPrediction: false,
       openStatement: false,
       isModelWorkspace: false,
