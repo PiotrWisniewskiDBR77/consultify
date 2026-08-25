@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { AdminAIControlCenterPanel } from '../../components/Admin/AdminAIControlCenterPanel';
+import { AdminAiQualityPanel } from '../../components/Admin/AdminAiQualityPanel';
 import { AdminAuditLogPanel } from '../../components/Admin/AdminAuditLogPanel';
 import { AdminBillingFinOpsPanel } from '../../components/Admin/AdminBillingFinOpsPanel';
 import { AdminCapabilityState } from '../../components/Admin/AdminCapabilityState';
@@ -392,7 +393,9 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
         Object.prototype.hasOwnProperty.call(AI_MODULE_TAB_BY_SCREEN, resolvedLocation.screen)) ||
       (resolvedLocation.domain === 'ai' &&
         ['personas', 'ai-incidents', 'configuration-versions'].includes(resolvedLocation.screen));
-    if (!connected) {
+    const isAiQuality =
+      resolvedLocation.domain === 'ai' && resolvedLocation.screen === 'quality-evaluations';
+    if (!connected && !isAiQuality) {
       return (
         <AdminCapabilityState
           title={childConfig?.label || resolvedLocation.screen}
@@ -445,6 +448,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
           />
         );
       case 'ai':
+        if (resolvedLocation.screen === 'quality-evaluations') return <AdminAiQualityPanel />;
         if (resolvedLocation.screen === 'personas') return <PersonasPanel />;
         if (resolvedLocation.screen === 'ai-incidents') return <AdminAiIncidentsPanel />;
         if (resolvedLocation.screen === 'configuration-versions')

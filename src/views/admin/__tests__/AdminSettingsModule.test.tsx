@@ -95,6 +95,9 @@ vi.mock('../../../components/Admin/AdminAIControlCenterPanel', () => ({
     </div>
   ),
 }));
+vi.mock('../../../components/Admin/AdminAiQualityPanel', () => ({
+  AdminAiQualityPanel: () => <div data-testid="panel-ai-quality">ai quality</div>,
+}));
 vi.mock('../../../components/Admin/AdminSecurityIdentityPanel', () => ({
   AdminSecurityIdentityPanel: ({ initialTab }: { initialTab?: string }) => (
     <div data-testid="panel-security" data-initial-tab={initialTab}>
@@ -266,6 +269,10 @@ describe('AdminSettingsModule section routing', () => {
   it('wires ai/configuration-versions', () => {
     renderAt('/admin/ai/configuration-versions');
     expect(screen.getByTestId('panel-configuration-versions')).toBeInTheDocument();
+  });
+  it('wires ai/quality-evaluations after tenant-safe FIX-11', () => {
+    renderAt('/admin/ai/quality-evaluations');
+    expect(screen.getByTestId('panel-ai-quality')).toBeInTheDocument();
   });
   it('wires command/organization-defaults', () => {
     renderAt('/admin/command/organization-defaults');
