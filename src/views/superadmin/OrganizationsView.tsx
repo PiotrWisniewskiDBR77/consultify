@@ -20,6 +20,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { DegradedState } from '../../components/Admin/AdminState';
+import { ConfirmDialog } from '../../components/MyWork/shared/ConfirmDialog';
 import { InfoButton } from '../../components/shared/InfoButton';
 import type {
   StandardRowMenu,
@@ -152,6 +153,8 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
     status: 'active',
     discount_percent: 0,
   });
+  const [criticalStatusOrgId, setCriticalStatusOrgId] = useState<string | null>(null);
+  const [criticalStatusReason, setCriticalStatusReason] = useState('');
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -287,7 +290,10 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
     setEditingOrgId(null);
   };
 
-  const saveInlineEdit = async (orgId: string) => {
+  const persistInlineEdit = async (
+    orgId: string,
+    confirmation?: { confirmation: true; reason: string }
+  ) => {
     setProcessingId(orgId);
     try {
       setActionError(null);
@@ -295,6 +301,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
         plan: editForm.plan,
         status: editForm.status,
         discount_percent: editForm.discount_percent,
+        ...confirmation,
       });
       const refreshedOrganizations = await Api.getOrganizations();
       if (!hasListShape(refreshedOrganizations, ['organizations', 'items'])) {
@@ -321,6 +328,18 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
     } finally {
       setProcessingId(null);
     }
+  };
+
+  const saveInlineEdit = (orgId: string) => {
+    const current = organizations.find((organization) => organization.id === orgId);
+    if (
+      current?.status !== editForm.status &&
+      ['suspended', 'blocked', 'cancelled'].includes(editForm.status)
+    ) {
+      setCriticalStatusOrgId(orgId);
+      return;
+    }
+    void persistInlineEdit(orgId);
   };
 
   // Access Request Actions
@@ -1315,6 +1334,38 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
           </div>
         </div>
       )}
+      <ConfirmDialog
+        isOpen={Boolean(criticalStatusOrgId)}
+        onCancel={() => {
+          setCriticalStatusOrgId(null);
+          setCriticalStatusReason('');
+        }}
+        onConfirm={() => {
+          if (!criticalStatusOrgId || criticalStatusReason.trim().length < 3) return;
+          const orgId = criticalStatusOrgId;
+          setCriticalStatusOrgId(null);
+          void persistInlineEdit(orgId, {
+            confirmation: true,
+            reason: criticalStatusReason.trim(),
+          });
+        }}
+        title="Confirm critical organization status change"
+        description={`Changing status to ${editForm.status} can interrupt tenant access.`}
+        confirmLabel="Confirm status change"
+        variant="danger"
+        confirmDisabled={criticalStatusReason.trim().length < 3}
+      >
+        <label className="mt-4 block text-sm text-slate-600 dark:text-slate-300">
+          Reason
+          <textarea
+            className="mt-1 w-full rounded-lg border border-c-border bg-c-surface p-2 text-c-text focus-visible:outline-none focus-visible:ring-2 ring-[color:var(--c-focus)]"
+            value={criticalStatusReason}
+            onChange={(event) => setCriticalStatusReason(event.target.value)}
+            rows={3}
+            required
+          />
+        </label>
+      </ConfirmDialog>
     </div>
   );
 };

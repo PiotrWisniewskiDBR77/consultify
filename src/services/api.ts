@@ -2975,7 +2975,13 @@ export const Api = {
 
   updateOrganization: async (
     id: string,
-    updates: { plan?: string; status?: string; discount_percent?: number }
+    updates: {
+      plan?: string;
+      status?: string;
+      discount_percent?: number;
+      confirmation?: boolean;
+      reason?: string;
+    }
   ): Promise<void> => {
     const res = await fetchWithRetry(`${API_URL}/superadmin/organizations/${id}`, {
       method: 'PUT',

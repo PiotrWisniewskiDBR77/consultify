@@ -1510,7 +1510,6 @@
     "missing": "missing",
     "today": "Today",
     "unknown": "unknown",
-    "actions": "Actions",
     "custom": "Custom",
     "target": "target",
     "none": "none",
@@ -6605,7 +6604,7 @@
       "score": "Score:",
       "structuredWeakAnswerMap": "Structured weak-answer map:",
       "latestReviewDecision": "Latest review decision:",
-      "aiAlignment": "AI alignment:",
+      "aiAlignment": "AI alignment",
       "aiRecommendations": "AI recommendations:",
       "lastReview": "Last review:",
       "reasonForSendingBack": "Reason for sending back:",
@@ -6689,7 +6688,6 @@
       "decisionTime": "Decision time",
       "reviewerRole": "Reviewer role",
       "reviewerId": "Reviewer ID",
-      "aiAlignment": "AI alignment",
       "decisionRecordId": "Decision record ID",
       "returnReason": "Reason",
       "property": "Property",
@@ -16177,7 +16175,56 @@
       "envDisabled": "Health probes are disabled in this environment.",
       "empty": "No probes registered.",
       "lastRun": "Last run",
-      "rerun": "Re-run"
+      "rerun": "Re-run",
+      "queues-jobs": {
+        "title": "Queues and jobs",
+        "description": "Read-only status of the organization's administrative jobs.",
+        "errors": {
+          "load": "Could not load jobs."
+        },
+        "columns": {
+          "type": "Job type",
+          "status": "Status",
+          "attempts": "Attempts",
+          "lastError": "Last error",
+          "availableAt": "Available from",
+          "createdAt": "Created"
+        },
+        "status": {
+          "queued": "Queued",
+          "running": "Running",
+          "succeeded": "Succeeded",
+          "failed": "Failed"
+        },
+        "empty": {
+          "title": "No jobs",
+          "description": "This organization has no queued administrative jobs."
+        }
+      },
+      "sla-slo": {
+        "title": "SLA / SLO",
+        "description": "Read-only objectives and their current attainment.",
+        "loading": "Loading SLA/SLO objectives…",
+        "errors": {
+          "load": "Could not load SLO objectives."
+        },
+        "labels": {
+          "target": "Target",
+          "current": "Current",
+          "errorBudget": "Error budget",
+          "window": "Window"
+        },
+        "notCalculated": "Not calculated",
+        "daysSuffix": " days",
+        "empty": "No SLO objectives are defined for this organization.",
+        "ai": {
+          "title": "AI SLA",
+          "description": "AI SLA targets are currently fixed and cannot be configured on this screen.",
+          "sourceState": "Source status: {{state}}",
+          "loaded": "loaded",
+          "noData": "no data"
+        }
+      }
     },
     "strategicProfile": {
       "industryCode": "Industry Code ({{system}})",
@@ -16290,7 +16337,63 @@
         "save": "Assign plan & limits",
         "saved": "Plan and limits assigned"
       },
-      "code": "code"
+      "code": "code",
+      "seats-licences": {
+        "loadError": "Failed to load seats",
+        "saveError": "Failed to save",
+        "columns": {
+          "user": "User",
+          "date": "Date",
+          "type": "Type",
+          "count": "Count",
+          "amount": "Amount"
+        },
+        "title": "Seats and licences",
+        "description": "Seat pool status for the current organization.",
+        "summary": {
+          "total": "Total",
+          "used": "Used",
+          "remaining": "Available",
+          "utilization": "Utilization"
+        },
+        "autoAdd": {
+          "enabled": "Enabled",
+          "threshold": "Threshold %",
+          "thresholdAria": "Percentage threshold",
+          "title": "Automatic seat allocation"
+        },
+        "actions": {
+          "save": "Save",
+          "purchase": "Buy seats"
+        },
+        "history": {
+          "emptyTitle": "No seat history",
+          "emptyDescription": "No seat transactions have been recorded."
+        },
+        "purchaseUnavailable": "Self-service seat purchases are unavailable — contact your account manager.",
+        "systemActor": "System",
+        "purchase": {
+          "title": "Seat purchase"
+        }
+      },
+      "plan-history": {
+        "loadError": "Failed to load plan history.",
+        "columns": {
+          "date": "Date",
+          "action": "Change",
+          "fromPlan": "Previous plan",
+          "toPlan": "New plan",
+          "reason": "Reason",
+          "actor": "Performed by"
+        },
+        "systemActor": "System",
+        "title": "Plan change history",
+        "description": "A chronological, read-only record of this organization’s subscription changes.",
+        "empty": {
+          "title": "No plan change history",
+          "description": "No subscription changes have been recorded for this organization yet."
+        }
+      }
     },
     "interviewAssignmentsPanel": {
       "sendBackReason": "Send back reason:",
@@ -16379,6 +16482,159 @@
       "routing": {
         "actions": "Actions",
         "delete": "Delete"
+      },
+      "teams": {
+        "loadError": "Failed to load teams.",
+        "createReadbackError": "The server readback did not confirm the team.",
+        "createSuccess": "Team created",
+        "createError": "Failed to create the team.",
+        "addMemberReadbackError": "The server readback did not confirm the member.",
+        "addMemberSuccess": "Member added",
+        "addMemberError": "Failed to add the member.",
+        "removeMemberReadbackError": "The server did not confirm that the member was removed.",
+        "removeMemberSuccess": "Member removed",
+        "removeMemberError": "Failed to remove the member.",
+        "deleteReadbackError": "The server did not confirm that the team was deleted.",
+        "deleteSuccess": "Team deleted",
+        "deleteError": "Failed to delete the team.",
+        "activeStatus": "Active",
+        "columns": {
+          "name": "Name",
+          "members": "Members",
+          "status": "Status",
+          "lead": "Lead",
+          "type": "Type"
+        },
+        "title": "Teams",
+        "description": "Create teams and manage their actual membership in the organization.",
+        "fields": {
+          "name": "Team name",
+          "userId": "User ID",
+          "description": "Description"
+        },
+        "actions": {
+          "create": "Create",
+          "showMembers": "Show members",
+          "deleteTeam": "Delete team",
+          "refresh": "Refresh",
+          "addMember": "Add member",
+          "remove": "Remove"
+        },
+        "empty": {
+          "title": "No teams",
+          "description": "Create the first team above."
+        },
+        "members": {
+          "heading": "Members: {{name}}",
+          "orgHint": "The user ID must belong to this organization.",
+          "empty": "This team has no members yet.",
+          "ariaLabel": "Team members"
+        },
+        "deleteDialog": {
+          "title": "Delete team?",
+          "description": "Team “{{v0}}” and its member assignments will be deleted."
+        },
+        "removeDialog": {
+          "title": "Remove member from team?",
+          "description": "The user will remain a member of the organization but will lose their assignment to this team.",
+          "confirm": "Remove member"
+        },
+        "inactiveStatus": "Inactive"
+      },
+      "roles-permissions": {
+        "saveError": "Failed to save",
+        "columns": {
+          "role": "Role",
+          "permissions": "Permissions",
+          "updated": "Updated"
+        },
+        "emptyValue": "None",
+        "ownerOnly": "Managing project roles requires organization owner permission.",
+        "title": "Roles and permissions",
+        "fields": {
+          "name": "Role name",
+          "permissions": "Permissions",
+          "permissionsPlaceholder": "permissions, comma-separated"
+        },
+        "actions": {
+          "save": "Save role",
+          "create": "Add role",
+          "delete": "Delete",
+          "edit": "Edit"
+        },
+        "empty": {
+          "title": "No custom roles",
+          "description": "No project roles have been defined for this organization."
+        },
+        "deleteDialog": {
+          "title": "Delete role?",
+          "description": "Assignments for this role will stop applying. Restoring it requires creating the role again.",
+          "confirm": "Delete role"
+        }
+      },
+      "guests-external": {
+        "columns": {
+          "guest": "Guest",
+          "expires": "Expires",
+          "status": "Status",
+          "scope": "Scope",
+          "email": "Email",
+          "granted": "Granted"
+        },
+        "scope": {
+          "organization": "Organization",
+          "project": "Project {{projectId}}"
+        },
+        "status": {
+          "expired": "Expired"
+        },
+        "revokeError": "Failed to revoke access",
+        "title": "Guests and external access",
+        "description": "Actual granted access. The guest policy switch remains hidden because it is not yet enforced.",
+        "actions": {
+          "revoke": "Revoke access"
+        },
+        "empty": {
+          "title": "No guests",
+          "description": "The organization has no active external access."
+        },
+        "revokeDialog": {
+          "title": "Revoke guest access?",
+          "description": "{{v0}} will lose access to the organization. Regaining access requires a new invitation."
+        },
+        "noExpiry": "No expiry"
+      },
+      "access-reviews": {
+        "columns": {
+          "person": "Person",
+          "role": "Role",
+          "status": "Status",
+          "email": "Email"
+        },
+        "title": "Access reviews",
+        "loading": "Loading review policy…",
+        "policy": {
+          "enabled": "Enabled",
+          "disabled": "Disabled",
+          "statusLabel": "Status:",
+          "cadenceLabel": "Cadence:",
+          "cadenceDays": "Cadence: {{value}} days"
+        },
+        "nextReviewLabel": "Next review:",
+        "actions": {
+          "openIamPolicy": "Open canonical IAM policy"
+        },
+        "privileged": {
+          "emptyTitle": "No privileged accounts",
+          "emptyDescription": "No active owners or administrators were found."
+        },
+        "history": {
+          "title": "Review history",
+          "empty": "Review campaigns are not recorded yet."
+        },
+        "daysUnit": "days",
+        "description": "Read-only view of configuration and privileged accounts; editing remains in the IAM policy.",
+        "nextReview": "Next review: {{date}}"
       }
     },
     "features": {
@@ -16663,6 +16919,155 @@
         },
         "actions": {
           "save": "Save security policy"
+        }
+      },
+      "sessions": {
+        "title": "Organization sessions",
+        "columns": {
+          "user": "User",
+          "device": "Device / browser",
+          "ip": "IP",
+          "location": "Location",
+          "lastActivity": "Last activity",
+          "expiresAt": "Expiration"
+        },
+        "values": {
+          "unknown": "Unknown",
+          "unknownLocation": "Unknown"
+        },
+        "actions": {
+          "revoke": "Revoke session"
+        },
+        "errors": {
+          "load": "Failed to load sessions.",
+          "revoke": "Failed to revoke the session."
+        },
+        "empty": {
+          "title": "No active sessions",
+          "description": "No active sessions were found for organization members."
+        },
+        "confirmRevoke": {
+          "title": "Revoke this session?",
+          "description": "This session will immediately lose access. The user can sign in again."
+        }
+      },
+      "service-accounts": {
+        "title": "Service accounts",
+        "description": "Machine credentials for the organization. The full secret is displayed only once.",
+        "fields": {
+          "name": "Name"
+        },
+        "columns": {
+          "tokenPrefix": "Token prefix",
+          "scopes": "Scopes",
+          "lastUsedAt": "Last used",
+          "expiresAt": "Expires"
+        },
+        "values": {
+          "never": "Never",
+          "noExpiry": "No expiration"
+        },
+        "actions": {
+          "create": "Create",
+          "revoke": "Revoke account"
+        },
+        "secret": {
+          "title": "Copy the secret now — it will not be shown again",
+          "acknowledge": "I saved the secret"
+        },
+        "errors": {
+          "load": "Failed to load service accounts.",
+          "createReadback": "The server did not confirm the account.",
+          "create": "Failed to create the account.",
+          "revokeReadback": "The server did not confirm the revocation.",
+          "revoke": "Failed to revoke the account."
+        },
+        "notifications": {
+          "created": "Service account created",
+          "revoked": "Service account revoked"
+        },
+        "empty": {
+          "title": "No service accounts",
+          "description": "No machine credentials have been created yet."
+        },
+        "confirmRevoke": {
+          "title": "Revoke this service account?",
+          "description": "The token will stop working immediately. This action cannot be undone.",
+          "confirm": "Revoke"
+        }
+      },
+      "security-alerts": {
+        "title": "Security alerts",
+        "columns": {
+          "type": "Type",
+          "severity": "Severity",
+          "user": "User",
+          "ip": "IP",
+          "time": "Time",
+          "status": "Status"
+        },
+        "status": {
+          "resolved": "Resolved",
+          "open": "Open"
+        },
+        "metrics": {
+          "unresolved": "Unresolved: {{count}}",
+          "highRisk": "High risk: {{count}}"
+        },
+        "actions": {
+          "resolve": "Mark as resolved"
+        },
+        "errors": {
+          "load": "Failed to load security alerts."
+        },
+        "empty": {
+          "title": "No alerts",
+          "description": "No security events were detected."
+        }
+      },
+      "break-glass": {
+        "title": "Break-glass",
+        "description": "Emergency access for up to 1 hour; visible in the audit log.",
+        "columns": {
+          "administrator": "Administrator",
+          "reason": "Reason",
+          "approvedBy": "Approved by",
+          "expiresAt": "Expires"
+        },
+        "activeSessions": "Active sessions: {{count}}",
+        "activeSessions_one": "Active session: {{count}}",
+        "activeSessions_other": "Active sessions: {{count}}",
+        "noActiveSessions": "No active break-glass sessions",
+        "fields": {
+          "reasonLabel": "Reason (at least 10 characters)",
+          "reasonAriaLabel": "Break-glass reason",
+          "approver": "Approver",
+          "selectApprover": "Select",
+          "typedConfirmationLabel": "Type BREAK-GLASS",
+          "typedConfirmationAriaLabel": "Target confirmation"
+        },
+        "actions": {
+          "activate": "Activate for 1h",
+          "expire": "Expire session"
+        },
+        "policyDisabled": "This feature is disabled by the organization's IAM policy.",
+        "errors": {
+          "load": "Failed to load break-glass status.",
+          "activate": "Failed to activate break-glass access.",
+          "revoke": "Failed to expire break-glass access."
+        },
+        "empty": {
+          "title": "No active-session history",
+          "description": "There is currently no active emergency access."
+        },
+        "confirmActivate": {
+          "title": "Activate break-glass access?",
+          "description": "Scope: emergency administrator permissions for up to 1h. Approver: {{approver}}. The reason and event will be visible in the audit log. Recovery: the session can be expired immediately.",
+          "confirm": "Activate break-glass"
+        },
+        "confirmExpire": {
+          "title": "Expire break-glass access?",
+          "description": "Access will be removed immediately. Reactivation requires a new reason and approval."
         }
       }
     },
@@ -17717,6 +18122,452 @@
         "externalContextRestricted": "External context restricted",
         "title": "AI Governance & AI Operations",
         "description": "Tenant AI policy, risk controls, model posture, and operational AI tooling now live inside the primary Admin shell."
+      }
+    },
+    "ai": {
+      "personas": {
+        "available": "Available personas",
+        "empty": "No personas have been configured.",
+        "editTitle": "Edit: {{name}}",
+        "selectPrompt": "Select a persona to edit",
+        "fields": {
+          "description": "Description",
+          "descriptionAria": "Persona description",
+          "systemPrompt": "System prompt"
+        },
+        "context": {
+          "title": "Included context",
+          "project": "Project context",
+          "userProfile": "User profile",
+          "assessment": "Assessment data",
+          "knowledgeBase": "Knowledge base",
+          "taskHistory": "Task history"
+        },
+        "actions": {
+          "save": "Save persona"
+        },
+        "messages": {
+          "updated": "The system prompt was updated."
+        },
+        "errors": {
+          "load": "Could not load personas.",
+          "update": "Could not update the prompt."
+        }
+      },
+      "ai-incidents": {
+        "title": "AI incidents",
+        "description": "Incidents are calculated from current availability measurements; a persistent incident history is not yet maintained.",
+        "columns": {
+          "startedAt": "Started",
+          "duration": "Duration",
+          "samples": "Samples",
+          "lastError": "Last error",
+          "source": "Source"
+        },
+        "noIncidentsInWindow": "No incidents in the current measurement window.",
+        "empty": {
+          "title": "No incidents",
+          "description": "Measurements show no degradation in the current window."
+        }
+      },
+      "configuration-versions": {
+        "title": "AI configuration versions",
+        "description": "The organization's Prompt OS configuration, evaluation gates, and canary rollout.",
+        "errors": {
+          "load": "Could not load the Prompt OS configuration.",
+          "evalGates": "Could not load evaluation gates.",
+          "canary": "Could not load the canary configuration.",
+          "conflict": "The configuration changed concurrently (409). Data has been refreshed; review the current state before trying again.",
+          "operation": "The operation failed."
+        },
+        "columns": {
+          "version": "Version",
+          "preset": "Preset",
+          "status": "Status",
+          "prompt": "Prompt",
+          "model": "Model",
+          "policy": "Policy",
+          "runtime": "Runtime"
+        },
+        "disabled": {
+          "title": "Prompt OS is not enabled for this organization",
+          "description": "A platform operator or V8 configuration administrator must enable it."
+        },
+        "actions": {
+          "retry": "Try again",
+          "refresh": "Refresh",
+          "details": "Show details",
+          "activate": "Activate",
+          "rollback": "Roll back version"
+        },
+        "summary": {
+          "contract": "Contract",
+          "presets": "Presets",
+          "bundles": "Bundles",
+          "active": "Active"
+        },
+        "empty": {
+          "title": "No configuration versions",
+          "description": "Prompt OS is enabled, but this organization does not have a configuration bundle yet."
+        },
+        "details": {
+          "title": "Details for {{version}}",
+          "loading": "Loading details…",
+          "evalGates": "Gates: {{value}}",
+          "noGateResults": "no results",
+          "canary": "Canary: rollback {{rollback}}, organization scope {{orgScoped}}",
+          "noCanary": "Canary: not configured"
+        },
+        "rollback": {
+          "reasonLabel": "Rollback reason (required)",
+          "reasonAria": "Rollback reason",
+          "continue": "Continue to confirmation",
+          "confirmTitle": "Roll back the active configuration?",
+          "confirmDescription": "Reason: {{reason}}. This operation will change the organization's runtime and be recorded in Prompt OS history."
+        }
+      }
+    },
+    "audit": {
+      "export-history": {
+        "title": "Export history",
+        "description": "Receipts for audit-log exports performed by organization administrators.",
+        "columns": {
+          "time": "When",
+          "requestedBy": "Requested by",
+          "exportKind": "Export",
+          "rows": "Rows",
+          "format": "Format"
+        },
+        "empty": {
+          "title": "No exports",
+          "description": "No audit-log export receipt has been recorded yet."
+        }
+      },
+      "integrity": {
+        "title": "Audit-log integrity",
+        "description": "Evidence currently available, without claiming nonexistent cryptography.",
+        "loading": "Loading audit statistics…",
+        "metrics": {
+          "totalEvents": "Events: {{value}}",
+          "unresolved": "Unresolved: {{value}}",
+          "highRisk": "High risk: {{value}}"
+        },
+        "accessControl": {
+          "title": "Immutability for customer roles",
+          "description": "The customer administration interface provides audit-log read and export access; it exposes no endpoint for modifying or deleting audit events."
+        },
+        "cryptographicVerification": {
+          "title": "Cryptographic verification",
+          "description": "A hash chain is not currently maintained. Integrity presently relies on access controls (customer roles have no write path), not on cryptographic proof."
+        }
+      },
+      "compliance-evidence": {
+        "title": "Compliance evidence",
+        "description": "An immutable, read-only view of evidence and exports for customer roles.",
+        "freshness": "Freshness: {{value}}",
+        "columns": {
+          "event": "Event",
+          "actor": "Actor",
+          "risk": "Risk",
+          "time": "Time"
+        },
+        "cards": {
+          "dataResidency": "Data residency",
+          "retentionSchedules": "Retention schedules",
+          "retentionScheduleCount": "{{count}} schedules",
+          "retentionScheduleCount_one": "{{count}} schedule",
+          "retentionScheduleCount_other": "{{count}} schedules",
+          "aiPolicy": "AI policy"
+        },
+        "values": {
+          "notSet": "Not set"
+        },
+        "actions": {
+          "exportCsv": "Export CSV"
+        },
+        "metrics": {
+          "totalEvents": "Total events",
+          "unresolved": "Unresolved",
+          "highRisk": "High risk"
+        },
+        "sources": {
+          "auditStats": "Source: GET /api/admin/audit-logs/stats"
+        },
+        "source": "Source: GET /api/admin{{path}}",
+        "errors": {
+          "load": "Failed to load compliance evidence.",
+          "export": "Export failed."
+        },
+        "notifications": {
+          "exportReady": "Audit export is ready"
+        },
+        "empty": {
+          "title": "No audit events",
+          "description": "No evidence has been recorded for this organization yet."
+        }
+      },
+      "legal-hold": {
+        "title": "Legal hold",
+        "description": "The actual organization-wide hold status — read-only.",
+        "loading": "Loading legal-hold status…",
+        "status": {
+          "active": "Hold active",
+          "inactive": "Hold inactive"
+        },
+        "blockedOperations": "When active, data export and organization deletion are blocked.",
+        "matters": {
+          "title": "Matters under hold",
+          "description": "A matter registry is not maintained yet; today the hold applies to the entire organization."
+        }
+      }
+    },
+    "command": {
+      "attention-queue": {
+        "signals": {
+          "riskTitle": "Risks requiring review",
+          "auditTitle": "Unresolved audit events",
+          "auditDetail": "{{v0}} unresolved",
+          "billingTitle": "Budget alerts",
+          "billingDetail": "{{v0}} active alerts",
+          "healthTitle": "Organization service status",
+          "healthDetail": "{{v0}} failed checks",
+          "riskDetail": "{{count}} high-risk"
+        },
+        "allSourcesError": "None of the signal sources could be read.",
+        "loading": "Loading attention queue…",
+        "title": "Attention queue",
+        "description": "Signals from canonical systems; actions are performed on the source screens.",
+        "sourceLabel": "Source:",
+        "freshnessLabel": "Freshness:",
+        "actions": {
+          "openCanonical": "Open canonical screen"
+        },
+        "currentSource": "Source: tenant admin API · current read"
+      },
+      "cost-capacity": {
+        "partialSourcesWarning": "Some cost or capacity sources are unavailable.",
+        "columns": {
+          "user": "User",
+          "cost": "Cost",
+          "messages": "Messages"
+        },
+        "loading": "Loading cost and capacity…",
+        "title": "Cost and capacity",
+        "description": "Read-only aggregation. Budgets are edited on the canonical screen.",
+        "freshnessLabel": "Freshness:",
+        "metrics": {
+          "currentCost": "Current cost",
+          "usedSeats": "Seats used",
+          "forecast": "Forecast",
+          "utilization": "Limit utilization"
+        },
+        "empty": {
+          "title": "No cost attribution",
+          "description": "No costs were attributed to users in the selected period."
+        },
+        "actions": {
+          "usageDetails": "Usage details"
+        },
+        "source": "Source: GET /api/admin/{{source}}",
+        "budgetAlerts": "Budget alerts ({{count}})",
+        "healthStatus": "Status: {{count}} failed checks"
+      },
+      "organization-defaults": {
+        "profile": {
+          "loadError": "Failed to load the profile.",
+          "saveError": "Failed to save the profile.",
+          "languageLabel": "Language",
+          "languageAria": "Default language",
+          "saveAction": "Save locale and format",
+          "title": "Locale and format",
+          "timezoneLabel": "Time zone",
+          "timezoneAria": "Time zone",
+          "dateFormatLabel": "Date format",
+          "dateFormatAria": "Date format"
+        },
+        "finance": {
+          "loadError": "Failed to load financial settings.",
+          "saveSuccess": "Saved and confirmed by the response version.",
+          "conflict": "Settings changed concurrently (409). Refresh the section before retrying.",
+          "saveError": "Failed to save financial settings.",
+          "title": "Financial defaults",
+          "disabled": "Financial settings are unavailable because V8 is not enabled for this organization. The profile section above remains active.",
+          "currencyAria": "Default currency",
+          "waccAria": "Default WACC",
+          "horizonAria": "Default horizon",
+          "saveAction": "Save financial defaults",
+          "currencyLabel": "Currency",
+          "waccLabel": "WACC",
+          "horizonLabel": "Horizon (years)"
+        },
+        "title": "Organization defaults",
+        "description": "Two independent data sources and two independent save operations.",
+        "actions": {
+          "retry": "Try again"
+        }
+      }
+    },
+    "domains": {
+      "title": "Approved domains",
+      "description": "Verify domain ownership with an actual DNS TXT record.",
+      "created": "Domain added.",
+      "errors": {
+        "load": "Could not load domains.",
+        "createReadback": "The server did not confirm the domain.",
+        "create": "Could not add the domain.",
+        "verify": "Could not verify the domain.",
+        "update": "Could not update the domain setting.",
+        "deleteReadback": "The server did not confirm domain removal.",
+        "delete": "Could not remove the domain."
+      },
+      "columns": {
+        "domain": "Domain",
+        "autoJoin": "Automatic joining",
+        "status": "Verification status",
+        "verifiedAt": "Verified at",
+        "actions": "Actions"
+      },
+      "status": {
+        "verified": "Verified",
+        "pending": "Pending"
+      },
+      "actions": {
+        "reverify": "Verify again",
+        "verify": "Verify",
+        "add": "Add",
+        "copy": "Copy value",
+        "delete": "Remove domain",
+        "showInstructions": "Show TXT instructions",
+        "hideInstructions": "Hide TXT instructions"
+      },
+      "form": {
+        "domain": "Domain"
+      },
+      "dns": {
+        "title": "Add a DNS TXT record",
+        "name": "Name",
+        "type": "Type",
+        "value": "Value"
+      },
+      "outcomes": {
+        "verified": "Domain verified.",
+        "tokenMismatch": "TXT records were found, but none contains your token. Check that you copied the entire value.",
+        "noRecord": "No TXT record was found. DNS changes can take up to 24 hours to propagate.",
+        "domainNotFound": "The domain does not exist in DNS or did not respond.",
+        "timeout": "The DNS request timed out. Try again.",
+        "dnsError": "The DNS request failed.",
+        "invalidToken": "This domain has no valid verification token. Remove it and add it again."
+      },
+      "empty": {
+        "title": "No approved domains",
+        "description": "Add a domain to begin DNS verification."
+      },
+      "delete": {
+        "title": "Remove this domain?",
+        "description": "The domain will no longer be approved for this organization."
+      }
+    },
+    "aiQuality": {
+      "title": "AI quality evaluations",
+      "description": "Real feedback, learning patterns, and organization analytics.",
+      "errors": {
+        "load": "Could not load AI quality data.",
+        "reviewReadback": "The server did not confirm the review.",
+        "review": "Could not mark the feedback as reviewed.",
+        "patternReadback": "The server did not confirm the pattern status.",
+        "pattern": "Could not change the pattern status."
+      },
+      "metrics": {
+        "satisfaction": "Satisfaction",
+        "total": "Feedback",
+        "patterns": "Active patterns",
+        "profiles": "Style profiles"
+      },
+      "feedback": {
+        "title": "Feedback",
+        "user": "User",
+        "context": "Context",
+        "type": "Rating",
+        "review": "Review",
+        "reviewed": "Reviewed",
+        "markReviewed": "Mark as reviewed",
+        "empty": "No feedback",
+        "emptyDescription": "No AI response ratings have been collected yet."
+      },
+      "pattern": {
+        "title": "Learning patterns",
+        "type": "Type",
+        "value": "Pattern",
+        "confidence": "Confidence",
+        "status": "Status",
+        "actions": "Actions",
+        "apply": "Apply",
+        "reject": "Reject",
+        "empty": "No patterns",
+        "emptyDescription": "No learning patterns have been detected yet."
+      },
+      "analytics": {
+        "title": "Analytics",
+        "contexts": "Contexts",
+        "formats": "Formats",
+        "issues": "Issues"
+      }
+    },
+    "dependencies": {
+      "title": "Organization service dependencies",
+      "description": "Status is calculated only from the latest stored probe results. This screen does not run diagnostics.",
+      "errors": {
+        "load": "Could not load dependencies."
+      },
+      "neverChecked": "never checked",
+      "probeCount_one": "{{count}} probe",
+      "probeCount_other": "{{count}} probes",
+      "status": {
+        "healthy": "Healthy",
+        "degraded": "Partial data",
+        "failing": "Failing",
+        "unknown": "No result"
+      },
+      "empty": {
+        "title": "No declared dependencies",
+        "description": "The dependency map contains no entries."
+      },
+      "undeclared": {
+        "title": "Probes without a declared dependency",
+        "description": "The map is a manual, verifiable declaration. Unlisted dependencies remain pending until supported by code evidence.",
+        "none": "Every registered probe has a declaration."
+      }
+    },
+    "incidentHistory": {
+      "title": "Incident history",
+      "truth": "A tenant-scoped operational incident register is not maintained yet. The current register operates at platform level and does not separate events by organization. An incident view for your organization is being developed as part of the platform layer.",
+      "errors": {
+        "load": "Could not load the current system status."
+      },
+      "current": {
+        "title": "Current status, not history",
+        "total": "Probes",
+        "passed": "Passing",
+        "failed": "Failures",
+        "unknown": "No result",
+        "link": "Open health overview"
+      }
+    },
+    "accessRequests": {
+      "title": "Access requests",
+      "truth": "Access requests for this organization are not supported yet. The existing platform-level register is used to create new organizations, not to join an existing one, so it is not shown here.",
+      "plan": {
+        "title": "Planned flow",
+        "submit": "1. A user outside the organization submits a request, with or without an address in an approved domain.",
+        "queue": "2. The request enters this organization's queue, visible only to OWNER and ADMIN roles.",
+        "decide": "3. An OWNER or ADMIN approves the requested role or rejects the request with a reason.",
+        "member": "4. Approval creates an active membership in the existing organization; it never creates a new organization.",
+        "audit": "5. The audit records the decision maker, time, decision, role, and reason."
+      },
+      "today": {
+        "title": "Available today",
+        "invitations": "Send an invitation",
+        "domains": "Manage verified domains"
       }
     }
   },
@@ -19709,7 +20560,9 @@
       "competencies": "Competency Catalog",
       "contextGovernance": "Context governance"
     },
-    "shell": { "breadcrumb": "Organization" },
+    "shell": {
+      "breadcrumb": "Organization"
+    },
     "profilePresentation": {
       "navigation": "Organization profile sections",
       "hint": "Review each existing profile section in its canonical order. This presentation does not change the profile information architecture.",
@@ -19877,11 +20730,21 @@
         "title": "Module Readiness",
         "needs": "needs:",
         "modules": {
-          "assessment": { "label": "Assessment & Benchmarking" },
-          "research": { "label": "Deep Research" },
-          "reports": { "label": "Reports & Presentations" },
-          "competitive": { "label": "Competitive Intelligence" },
-          "ai_chat": { "label": "AI Chat (Teresa)" }
+          "assessment": {
+            "label": "Assessment & Benchmarking"
+          },
+          "research": {
+            "label": "Deep Research"
+          },
+          "reports": {
+            "label": "Reports & Presentations"
+          },
+          "competitive": {
+            "label": "Competitive Intelligence"
+          },
+          "ai_chat": {
+            "label": "AI Chat (Teresa)"
+          }
         },
         "fields": {
           "industry": "industry",
@@ -19964,7 +20827,10 @@
             "label": "Professional Services",
             "hint": "Consulting, legal, accounting, staffing"
           },
-          "TECHNOLOGY": { "label": "Technology", "hint": "Software, SaaS, hardware, IT services" },
+          "TECHNOLOGY": {
+            "label": "Technology",
+            "hint": "Software, SaaS, hardware, IT services"
+          },
           "PUBLIC_SECTOR": {
             "label": "Public Sector",
             "hint": "Government, education, healthcare"
@@ -19973,7 +20839,10 @@
             "label": "Nonprofit / NGO",
             "hint": "Foundations, associations, social enterprises"
           },
-          "OTHER": { "label": "Other", "hint": "Retail, real estate, energy, transport, etc." }
+          "OTHER": {
+            "label": "Other",
+            "hint": "Retail, real estate, energy, transport, etc."
+          }
         },
         "companySize": {
           "STARTUP": "Startup (< 50)",

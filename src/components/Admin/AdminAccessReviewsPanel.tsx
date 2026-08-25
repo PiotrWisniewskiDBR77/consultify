@@ -1,13 +1,16 @@
 import { CalendarCheck, Users } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
+
 import {
-  getAccessReviewData,
   type AccessReviewPolicy,
+  getAccessReviewData,
   type PrivilegedMember,
 } from '../../services/adminAccessReviewsApi';
 import { StandardTable, type TableColumn, type TableRow } from '../standard/StandardTable';
 export const AdminAccessReviewsPanel: React.FC = () => {
+  const { t } = useTranslation();
   const [policy, setPolicy] = useState<AccessReviewPolicy | null>(null),
     [members, setMembers] = useState<PrivilegedMember[]>([]),
     [loading, setLoading] = useState(true),
@@ -28,12 +31,24 @@ export const AdminAccessReviewsPanel: React.FC = () => {
     : '—';
   const cols = useMemo<TableColumn[]>(
       () => [
-        { id: 'person', label: 'Osoba' },
-        { id: 'email', label: 'E-mail' },
-        { id: 'role', label: 'Rola' },
-        { id: 'status', label: 'Status' },
+        {
+          id: 'person',
+          label: t('admin.team.access-reviews.columns.person'),
+        },
+        {
+          id: 'email',
+          label: t('admin.team.access-reviews.columns.email'),
+        },
+        {
+          id: 'role',
+          label: t('admin.team.access-reviews.columns.role'),
+        },
+        {
+          id: 'status',
+          label: t('admin.team.access-reviews.columns.status'),
+        },
       ],
-      []
+      [t]
     ),
     rows = useMemo<TableRow[]>(
       () =>
@@ -49,9 +64,11 @@ export const AdminAccessReviewsPanel: React.FC = () => {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-semibold text-c-text">Przeglądy dostępów</h2>
+        <h2 className="text-lg font-semibold text-c-text">
+          {t('admin.team.access-reviews.title')}
+        </h2>
         <p className="text-sm text-c-text-secondary">
-          Odczyt konfiguracji i kont uprzywilejowanych; edycja pozostaje w polityce IAM.
+          {t('admin.team.access-reviews.description')}
         </p>
       </div>
       {error && (
@@ -64,21 +81,28 @@ export const AdminAccessReviewsPanel: React.FC = () => {
       )}
       {loading ? (
         <div role="status" className="py-8 text-center text-sm text-c-text-muted">
-          Ładowanie polityki przeglądów…
+          {t('admin.team.access-reviews.loading')}
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-3">
           <div className="rounded-xl border border-c-border p-4">
-            Stan: {policy?.accessReviewsEnabled ? 'Włączone' : 'Wyłączone'}
+            {t('admin.team.access-reviews.policy.statusLabel')}{' '}
+            {policy?.accessReviewsEnabled
+              ? t('admin.team.access-reviews.policy.enabled')
+              : t('admin.team.access-reviews.policy.disabled')}
           </div>
           <div className="rounded-xl border border-c-border p-4">
-            Kadencja: {policy?.accessReviewCadenceDays ?? '—'} dni
+            {t('admin.team.access-reviews.policy.cadenceDays', {
+              value: policy?.accessReviewCadenceDays ?? '—',
+            })}
           </div>
-          <div className="rounded-xl border border-c-border p-4">Następny przegląd: {next}</div>
+          <div className="rounded-xl border border-c-border p-4">
+            {t('admin.team.access-reviews.nextReview', { date: next })}
+          </div>
         </div>
       )}
       <Link to="/admin/team/roles-permissions" className="text-sm text-c-text underline">
-        Otwórz kanoniczną politykę IAM
+        {t('admin.team.access-reviews.actions.openIamPolicy')}
       </Link>
       <StandardTable
         columns={cols}
@@ -86,15 +110,17 @@ export const AdminAccessReviewsPanel: React.FC = () => {
         loading={loading}
         empty={{
           icon: Users,
-          title: 'Brak kont uprzywilejowanych',
-          description: 'Nie znaleziono aktywnych właścicieli ani administratorów.',
+          title: t('admin.team.access-reviews.privileged.emptyTitle'),
+          description: t('admin.team.access-reviews.privileged.emptyDescription'),
         }}
         persistKey="admin.accessReviews"
       />
       <section className="rounded-xl border border-c-border p-4">
-        <h3 className="font-semibold text-c-text">Historia przeglądów</h3>
+        <h3 className="font-semibold text-c-text">
+          {t('admin.team.access-reviews.history.title')}
+        </h3>
         <p className="mt-1 text-sm text-c-text-secondary">
-          Rejestr kampanii przeglądów nie jest jeszcze prowadzony.
+          {t('admin.team.access-reviews.history.empty')}
         </p>
       </section>
     </div>

@@ -359,20 +359,48 @@ const updateOrganization = catchAsync(async (req, res, next) => {
 
   const sql = `UPDATE organizations SET ${updates.join(', ')} WHERE id = ?`;
 
-  deps.db.run(sql, [...params, id], function (err) {
-    if (err) return next(new AppError(err.message, 500));
-    if (this.changes === 0) return next(new AppError('Organization not found', 404));
+  const criticalStatusChange = ['suspended', 'blocked', 'cancelled'].includes(status);
+  const performUpdate = (beforeStatus) => {
+    deps.db.run(sql, [...params, id], async function (err) {
+      if (err) return next(new AppError(err.message, 500));
+      if (this.changes === 0) return next(new AppError('Organization not found', 404));
 
-    deps.ActivityService.log({
-      organizationId: id,
-      userId: req.user?.id,
-      action: 'updated',
-      entityType: 'organization',
-      entityId: id,
-      newValue: { name, plan, status, discount_percent },
+      deps.ActivityService.log({
+        organizationId: id,
+        userId: req.user?.id,
+        action: 'updated',
+        entityType: 'organization',
+        entityId: id,
+        newValue: { name, plan, status, discount_percent },
+      });
+
+      if (criticalStatusChange) {
+        try {
+          await req.emitAuditEvent?.({
+            action: 'organization.status_changed',
+            resourceType: 'organization',
+            resourceId: id,
+            before: { status: beforeStatus },
+            after: { status },
+            metadata: {
+              reason: res.locals.organizationStatusChangeReason || '',
+              via: 'superadmin.update_organization',
+            },
+          });
+        } catch (auditError) {
+          return next(new AppError(`Audit write failed: ${auditError.message}`, 503));
+        }
+      }
+
+      res.json({ message: 'Organization updated' });
     });
+  };
 
-    res.json({ message: 'Organization updated' });
+  if (!criticalStatusChange) return performUpdate(undefined);
+  deps.db.get('SELECT status FROM organizations WHERE id = ?', [id], (err, row) => {
+    if (err) return next(new AppError(err.message, 500));
+    if (!row) return next(new AppError('Organization not found', 404));
+    performUpdate(row.status);
   });
 });
 

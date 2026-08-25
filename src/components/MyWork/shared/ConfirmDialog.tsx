@@ -17,6 +17,8 @@ export interface ConfirmDialogProps {
   cancelLabel?: string;
   variant?: 'danger' | 'warning' | 'default';
   icon?: React.ReactNode;
+  children?: React.ReactNode;
+  confirmDisabled?: boolean;
 }
 
 export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
@@ -29,6 +31,8 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   cancelLabel = 'Cancel',
   variant = 'danger',
   icon,
+  children,
+  confirmDisabled = false,
 }) => {
   const confirmRef = useRef<HTMLButtonElement>(null);
   const titleId = useId();
@@ -109,14 +113,21 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <h3 id={titleId} className="text-base font-semibold text-slate-900 dark:text-white">
+                  <h3
+                    id={titleId}
+                    className="text-base font-semibold text-slate-900 dark:text-white"
+                  >
                     {title}
                   </h3>
                   {description && (
-                    <p id={descriptionId} className="mt-1.5 text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                    <p
+                      id={descriptionId}
+                      className="mt-1.5 text-sm text-slate-500 dark:text-slate-400 leading-relaxed"
+                    >
                       {description}
                     </p>
                   )}
+                  {children}
                 </div>
                 <button
                   type="button"
@@ -140,7 +151,8 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
                 type="button"
                 ref={confirmRef}
                 onClick={onConfirm}
-                className={`h-9 px-4 rounded-lg text-sm font-medium text-white transition-colors focus:outline-none focus:ring-2 ${style.confirmBg}`}
+                disabled={confirmDisabled}
+                className={`h-9 px-4 rounded-lg text-sm font-medium text-white transition-colors focus:outline-none focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed ${style.confirmBg}`}
               >
                 {confirmLabel}
               </button>

@@ -1,9 +1,12 @@
 import { UserMinus, Users } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
-import { getAdminGuests, revokeAdminGuest, type AdminGuest } from '../../services/adminGuestsApi';
+import { useTranslation } from 'react-i18next';
+
+import { type AdminGuest, getAdminGuests, revokeAdminGuest } from '../../services/adminGuestsApi';
 import { ConfirmDialog } from '../MyWork/shared/ConfirmDialog';
 import { StandardTable, type TableColumn, type TableRow } from '../standard/StandardTable';
 export const AdminGuestsPanel: React.FC = () => {
+  const { t } = useTranslation();
   const [data, setData] = useState<AdminGuest[]>([]),
     [target, setTarget] = useState<AdminGuest | null>(null),
     [error, setError] = useState<string | null>(null);
@@ -14,14 +17,32 @@ export const AdminGuestsPanel: React.FC = () => {
   }, []);
   const cols = useMemo<TableColumn[]>(
       () => [
-        { id: 'guest', label: 'Gość' },
-        { id: 'email', label: 'E-mail' },
-        { id: 'scope', label: 'Zakres' },
-        { id: 'granted', label: 'Przyznano' },
-        { id: 'expires', label: 'Wygasa' },
-        { id: 'status', label: 'Status' },
+        {
+          id: 'guest',
+          label: t('admin.team.guests-external.columns.guest'),
+        },
+        {
+          id: 'email',
+          label: t('admin.team.guests-external.columns.email'),
+        },
+        {
+          id: 'scope',
+          label: t('admin.team.guests-external.columns.scope'),
+        },
+        {
+          id: 'granted',
+          label: t('admin.team.guests-external.columns.granted'),
+        },
+        {
+          id: 'expires',
+          label: t('admin.team.guests-external.columns.expires'),
+        },
+        {
+          id: 'status',
+          label: t('admin.team.guests-external.columns.status'),
+        },
       ],
-      []
+      [t]
     ),
     rows = useMemo<TableRow[]>(
       () =>
@@ -31,13 +52,17 @@ export const AdminGuestsPanel: React.FC = () => {
             id: g.user_id,
             guest: [g.first_name, g.last_name].filter(Boolean).join(' ') || g.email,
             email: g.email,
-            scope: g.project_id ? `Projekt ${g.project_id}` : 'Organizacja',
+            scope: g.project_id
+              ? t('admin.team.guests-external.scope.project', { projectId: g.project_id })
+              : t('admin.team.guests-external.scope.organization'),
             granted: new Date(g.granted_at).toLocaleString(),
-            expires: g.expires_at ? new Date(g.expires_at).toLocaleString() : 'Bez terminu',
-            status: expired ? 'Wygasł' : g.status,
+            expires: g.expires_at
+              ? new Date(g.expires_at).toLocaleString()
+              : t('admin.team.guests-external.noExpiry'),
+            status: expired ? t('admin.team.guests-external.status.expired') : g.status,
           };
         }),
-      [data]
+      [data, t]
     );
   const revoke = async () => {
     if (!target) return;
@@ -45,16 +70,17 @@ export const AdminGuestsPanel: React.FC = () => {
       setData(await revokeAdminGuest(target.user_id));
       setTarget(null);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Błąd odebrania');
+      setError(e instanceof Error ? e.message : t('admin.team.guests-external.revokeError'));
     }
   };
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-semibold text-c-text">Goście i dostęp zewnętrzny</h2>
+        <h2 className="text-lg font-semibold text-c-text">
+          {t('admin.team.guests-external.title')}
+        </h2>
         <p className="text-sm text-c-text-secondary">
-          Stan faktycznie przyznanych dostępów. Przełącznik polityki gości pozostaje ukryty,
-          ponieważ nie jest jeszcze egzekwowany.
+          {t('admin.team.guests-external.description')}
         </p>
       </div>
       {error && <div role="alert">{error}</div>}
@@ -63,15 +89,15 @@ export const AdminGuestsPanel: React.FC = () => {
         data={rows}
         rowMenu={(row) => ({
           destructive: {
-            label: 'Odbierz dostęp',
+            label: t('admin.team.guests-external.actions.revoke'),
             icon: UserMinus,
             onClick: () => setTarget(data.find((g) => g.user_id === row.id) || null),
           },
         })}
         empty={{
           icon: Users,
-          title: 'Brak gości',
-          description: 'Organizacja nie ma aktywnych dostępów zewnętrznych.',
+          title: t('admin.team.guests-external.empty.title'),
+          description: t('admin.team.guests-external.empty.description'),
         }}
         persistKey="admin.guests"
       />
@@ -79,13 +105,15 @@ export const AdminGuestsPanel: React.FC = () => {
         isOpen={!!target}
         onCancel={() => setTarget(null)}
         onConfirm={() => void revoke()}
-        title="Odebrać dostęp gościa?"
+        title={t('admin.team.guests-external.revokeDialog.title')}
         description={
           target
-            ? `${target.email} utraci dostęp do organizacji. Ponowne uzyskanie dostępu wymaga nowego zaproszenia.`
+            ? t('admin.team.guests-external.revokeDialog.description', {
+                v0: target.email,
+              })
             : undefined
         }
-        confirmLabel="Odbierz dostęp"
+        confirmLabel={t('admin.team.guests-external.actions.revoke')}
         variant="danger"
       />
     </div>

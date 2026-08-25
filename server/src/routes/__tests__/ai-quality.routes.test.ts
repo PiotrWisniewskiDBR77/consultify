@@ -58,6 +58,26 @@ describe('ai quality admin route — cross-tenant mutation guards', () => {
     });
   });
 
+  describe('GET /metrics', () => {
+    it('scopes every tenant-owned aggregate, including active patterns, to the token organization', async () => {
+      dbGet
+        .mockResolvedValueOnce({ total_feedback: 0, positive_count: 0, negative_count: 0 })
+        .mockResolvedValueOnce({ count: 2 })
+        .mockResolvedValueOnce({ count: 1 });
+      dbAll.mockResolvedValue([]);
+
+      const res = await request(app()).get('/api/admin/ai-quality/metrics');
+
+      expect(res.status).toBe(200);
+      const patternsCall = dbGet.mock.calls.find(([sql]) =>
+        String(sql).includes('ai_style_learning_patterns')
+      );
+      expect(patternsCall?.[0]).toContain("status = 'active' AND organization_id = ?");
+      expect(patternsCall?.[1]).toEqual(['org-1']);
+      expect(res.body.metrics.activePatternsCount).toBe(2);
+    });
+  });
+
   describe('POST /patterns/:id/status', () => {
     it('scopes the update to the token organization', async () => {
       dbRun.mockResolvedValue({ success: true, changes: 1 });

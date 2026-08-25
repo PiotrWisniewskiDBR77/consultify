@@ -366,4 +366,44 @@ describe('OrganizationsView honest UI', () => {
     expect(screen.getByText('Organizations response was not a list')).toBeInTheDocument();
     expect(screen.queryByText('No organizations found')).not.toBeInTheDocument();
   });
+
+  it('keeps the critical status confirmation button visibly disabled until a reason is typed', async () => {
+    vi.mocked(Api.getOrganizations).mockResolvedValue([
+      {
+        id: 'org-1',
+        name: 'Acme',
+        plan: 'pro',
+        status: 'active',
+        user_count: 3,
+        created_at: '2026-01-01T00:00:00.000Z',
+      },
+    ]);
+    vi.mocked(Api.getAccessRequests).mockResolvedValue([]);
+    vi.mocked(Api.getAccessCodes).mockResolvedValue([]);
+
+    render(<OrganizationsView />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Acme')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Quick Edit' }));
+    const [, statusSelect] = screen.getAllByRole('combobox');
+    fireEvent.change(statusSelect, { target: { value: 'blocked' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    const confirmBtn = await screen.findByRole('button', { name: 'Confirm status change' });
+    expect(confirmBtn).toBeDisabled();
+    expect(confirmBtn.className).toMatch(/disabled:opacity-50/);
+
+    fireEvent.change(screen.getByRole('textbox', { name: /Reason/i }), {
+      target: { value: 'ab' },
+    });
+    expect(confirmBtn).toBeDisabled();
+
+    fireEvent.change(screen.getByRole('textbox', { name: /Reason/i }), {
+      target: { value: 'Security incident' },
+    });
+    expect(confirmBtn).not.toBeDisabled();
+  });
 });

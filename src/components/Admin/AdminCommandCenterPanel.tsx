@@ -55,7 +55,6 @@ import { CommandCenterBenchmarkTab } from './commandCenter/CommandCenterBenchmar
 import { CommandCenterDlpTab } from './commandCenter/CommandCenterDlpTab';
 import { CommandCenterResidencyTab } from './commandCenter/CommandCenterResidencyTab';
 import { CommandCenterRetentionTab } from './commandCenter/CommandCenterRetentionTab';
-
 type TabId =
   | 'overview'
   | 'agent-trace'
@@ -65,13 +64,11 @@ type TabId =
   | 'retention'
   | 'ai-policy'
   | 'benchmark';
-
 interface AdminCommandCenterPanelProps {
   onSectionChange?: (section: AdminSettingsSection) => void;
   aggregationOnly?: boolean;
   screen?: 'attention-queue' | 'cost-capacity';
 }
-
 interface AttentionSignal {
   id: string;
   title: string;
@@ -81,12 +78,11 @@ interface AttentionSignal {
   href: string;
   detail: string;
 }
-
 const CommandCenterAttentionQueue: React.FC = () => {
+  const { t } = useTranslation();
   const [signals, setSignals] = useState<AttentionSignal[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   useEffect(() => {
     let alive = true;
     void (async () => {
@@ -105,22 +101,26 @@ const CommandCenterAttentionQueue: React.FC = () => {
       if (risk)
         next.push({
           id: 'risk',
-          title: 'Ryzyka wymagające przeglądu',
+          title: t('admin.command.attention-queue.signals.riskTitle'),
           source: 'GET /api/admin/risk/summary',
           freshness,
           severity: Number(risk?.highRiskCount ?? 0) > 0 ? 'critical' : 'info',
           href: '/admin/security/risk-summary',
-          detail: `${Number(risk?.highRiskCount ?? 0)} wysokiego ryzyka`,
+          detail: t('admin.command.attention-queue.signals.riskDetail', {
+            count: Number(risk?.highRiskCount ?? 0),
+          }),
         });
       if (audit)
         next.push({
           id: 'audit',
-          title: 'Nierozwiązane zdarzenia audytowe',
+          title: t('admin.command.attention-queue.signals.auditTitle'),
           source: 'GET /api/admin/audit-logs/stats',
           freshness,
           severity: Number(audit?.unresolvedCount ?? 0) > 0 ? 'warning' : 'info',
           href: '/admin/audit/events',
-          detail: `${Number(audit?.unresolvedCount ?? 0)} nierozwiązanych`,
+          detail: t('admin.command.attention-queue.signals.auditDetail', {
+            v0: Number(audit?.unresolvedCount ?? 0),
+          }),
         });
       const billingItems = billing
         ? Array.isArray(billing?.alerts)
@@ -132,38 +132,46 @@ const CommandCenterAttentionQueue: React.FC = () => {
       if (billingItems)
         next.push({
           id: 'billing',
-          title: 'Alerty budżetowe',
+          title: t('admin.command.attention-queue.signals.billingTitle'),
           source: 'GET /api/admin/billing/alerts',
           freshness,
           severity: billingItems.length > 0 ? 'warning' : 'info',
           href: '/admin/billing/budgets-alerts',
-          detail: `${billingItems.length} aktywnych alertów`,
+          detail: t('admin.command.attention-queue.signals.billingDetail', {
+            v0: billingItems.length,
+          }),
         });
       if (health)
         next.push({
           id: 'health',
-          title: 'Stan usług organizacji',
+          title: t('admin.command.attention-queue.signals.healthTitle'),
           source: 'GET /api/admin/health-panel/summary',
           freshness,
           severity:
             Number(health?.summary?.failed ?? health?.failed ?? 0) > 0 ? 'critical' : 'info',
           href: '/admin/health/service-status',
-          detail: `${Number(health?.summary?.failed ?? health?.failed ?? 0)} testów nieudanych`,
+          detail: t('admin.command.attention-queue.signals.healthDetail', {
+            v0: Number(health?.summary?.failed ?? health?.failed ?? 0),
+          }),
         });
-      const rank = { critical: 0, warning: 1, info: 2 };
+      const rank = {
+        critical: 0,
+        warning: 1,
+        info: 2,
+      };
       setSignals(next.sort((a, b) => rank[a.severity] - rank[b.severity]));
-      setError(next.length === 0 ? 'Nie udało się odczytać żadnego źródła sygnałów.' : null);
+      setError(next.length === 0 ? t('admin.command.attention-queue.allSourcesError') : null);
       setLoading(false);
     })();
     return () => {
       alive = false;
     };
-  }, []);
-
+  }, [t]);
   if (loading)
     return (
       <div className="flex items-center gap-2 text-sm text-c-text-secondary">
-        <Loader2 className="h-4 w-4 animate-spin" /> Ładowanie kolejki uwagi…
+        <Loader2 className="h-4 w-4 animate-spin" />
+        {t('admin.command.attention-queue.loading')}
       </div>
     );
   if (error)
@@ -178,9 +186,11 @@ const CommandCenterAttentionQueue: React.FC = () => {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-semibold text-c-text">Kolejka uwagi</h2>
+        <h2 className="text-lg font-semibold text-c-text">
+          {t('admin.command.attention-queue.title')}
+        </h2>
         <p className="mt-1 text-sm text-c-text-secondary">
-          Sygnały z systemów kanonicznych; działania wykonuje się na ekranach źródłowych.
+          {t('admin.command.attention-queue.description')}
         </p>
       </div>
       <div className="grid gap-3 md:grid-cols-2">
@@ -205,16 +215,21 @@ const CommandCenterAttentionQueue: React.FC = () => {
             <p className="mt-2 text-sm text-c-text-secondary">{signal.detail}</p>
             <dl className="mt-3 space-y-1 text-xs text-c-text-muted">
               <div>
-                <dt className="inline font-medium">Źródło: </dt>
+                <dt className="inline font-medium">
+                  {t('admin.command.attention-queue.sourceLabel')}
+                </dt>
                 <dd className="inline">{signal.source}</dd>
               </div>
               <div>
-                <dt className="inline font-medium">Świeżość: </dt>
+                <dt className="inline font-medium">
+                  {t('admin.command.attention-queue.freshnessLabel')}
+                </dt>
                 <dd className="inline">{signal.freshness}</dd>
               </div>
             </dl>
             <span className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-c-text">
-              Otwórz ekran kanoniczny <ArrowRight className="h-4 w-4" />
+              {t('admin.command.attention-queue.actions.openCanonical')}
+              <ArrowRight className="h-4 w-4" />
             </span>
           </Link>
         ))}
@@ -222,8 +237,8 @@ const CommandCenterAttentionQueue: React.FC = () => {
     </div>
   );
 };
-
 const CommandCenterCostCapacity: React.FC = () => {
+  const { t } = useTranslation();
   const [state, setState] = useState<{
     loading: boolean;
     error: string | null;
@@ -263,7 +278,7 @@ const CommandCenterCostCapacity: React.FC = () => {
         loading: false,
         error:
           values.filter(Boolean).length < 4
-            ? 'Część źródeł kosztu lub pojemności jest niedostępna.'
+            ? t('admin.command.cost-capacity.partialSourcesWarning')
             : null,
         billing: values[0],
         usage: values[1],
@@ -276,7 +291,7 @@ const CommandCenterCostCapacity: React.FC = () => {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [t]);
   const rows = useMemo<TableRow[]>(
     () =>
       (state.attribution?.byUser ?? []).map((item: any) => ({
@@ -289,16 +304,27 @@ const CommandCenterCostCapacity: React.FC = () => {
   );
   const columns = useMemo<TableColumn[]>(
     () => [
-      { id: 'userId', label: 'Użytkownik' },
-      { id: 'cost', label: 'Koszt', render: (row) => Number(row.cost ?? 0).toFixed(2) },
-      { id: 'messageCount', label: 'Wiadomości' },
+      {
+        id: 'userId',
+        label: t('admin.command.cost-capacity.columns.user'),
+      },
+      {
+        id: 'cost',
+        label: t('admin.command.cost-capacity.columns.cost'),
+        render: (row) => Number(row.cost ?? 0).toFixed(2),
+      },
+      {
+        id: 'messageCount',
+        label: t('admin.command.cost-capacity.columns.messages'),
+      },
     ],
-    []
+    [t]
   );
   if (state.loading)
     return (
       <div className="flex items-center gap-2 text-sm text-c-text-secondary">
-        <Loader2 className="h-4 w-4 animate-spin" /> Ładowanie kosztu i pojemności…
+        <Loader2 className="h-4 w-4 animate-spin" />
+        {t('admin.command.cost-capacity.loading')}
       </div>
     );
   const currentCost = Number(
@@ -310,11 +336,16 @@ const CommandCenterCostCapacity: React.FC = () => {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-semibold text-c-text">Koszt i pojemność</h2>
+        <h2 className="text-lg font-semibold text-c-text">
+          {t('admin.command.cost-capacity.title')}
+        </h2>
         <p className="mt-1 text-sm text-c-text-secondary">
-          Agregacja tylko do odczytu. Budżety edytuje ekran kanoniczny.
+          {t('admin.command.cost-capacity.description')}
         </p>
-        <p className="mt-1 text-xs text-c-text-muted">Świeżość: {freshness}</p>
+        <p className="mt-1 text-xs text-c-text-muted">
+          {t('admin.command.cost-capacity.freshnessLabel')}
+          {freshness}
+        </p>
       </div>
       {state.error && (
         <div
@@ -326,15 +357,31 @@ const CommandCenterCostCapacity: React.FC = () => {
       )}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[
-          ['Koszt bieżący', currentCost.toFixed(2), 'billing/summary'],
-          ['Prognoza', forecast.toFixed(2), 'billing/summary'],
-          ['Wykorzystanie limitu', `${utilization}%`, 'billing/usage-details'],
-          ['Miejsca zajęte', String(seats), 'billing/summary'],
+          [
+            t('admin.command.cost-capacity.metrics.currentCost'),
+            currentCost.toFixed(2),
+            'billing/summary',
+          ],
+          [
+            t('admin.command.cost-capacity.metrics.forecast'),
+            forecast.toFixed(2),
+            'billing/summary',
+          ],
+          [
+            t('admin.command.cost-capacity.metrics.utilization'),
+            `${utilization}%`,
+            'billing/usage-details',
+          ],
+          [t('admin.command.cost-capacity.metrics.usedSeats'), String(seats), 'billing/summary'],
         ].map(([label, value, source]) => (
           <div key={label} className="rounded-xl border border-c-border bg-c-surface p-4">
             <p className="text-xs text-c-text-secondary">{label}</p>
             <p className="mt-1 text-xl font-semibold text-c-text">{value}</p>
-            <p className="mt-2 text-[10px] text-c-text-muted">Źródło: GET /api/admin/{source}</p>
+            <p className="mt-2 text-[10px] text-c-text-muted">
+              {t('admin.command.cost-capacity.source', {
+                source,
+              })}
+            </p>
           </div>
         ))}
       </div>
@@ -343,8 +390,8 @@ const CommandCenterCostCapacity: React.FC = () => {
           columns={columns}
           data={rows}
           empty={{
-            title: 'Brak atrybucji kosztów',
-            description: 'Brak kosztów przypisanych użytkownikom w wybranym okresie.',
+            title: t('admin.command.cost-capacity.empty.title'),
+            description: t('admin.command.cost-capacity.empty.description'),
           }}
           persistKey="admin.costCapacity"
         />
@@ -354,62 +401,55 @@ const CommandCenterCostCapacity: React.FC = () => {
           to="/admin/billing/budgets-alerts"
           className="rounded-lg border border-c-border px-3 py-2 text-sm font-medium text-c-text focus-visible:outline-none focus-visible:ring-2 ring-[color:var(--c-focus)]"
         >
-          Alerty budżetowe ({state.alerts.length})
+          {t('admin.command.cost-capacity.budgetAlerts', {
+            count: state.alerts.length,
+          })}
         </Link>
         <Link
           to="/admin/billing/usage-costs"
           className="rounded-lg border border-c-border px-3 py-2 text-sm font-medium text-c-text focus-visible:outline-none focus-visible:ring-2 ring-[color:var(--c-focus)]"
         >
-          Szczegóły wykorzystania
+          {t('admin.command.cost-capacity.actions.usageDetails')}
         </Link>
         <span className="px-3 py-2 text-xs text-c-text-muted">
-          Stan: {Number(state.health?.summary?.failed ?? 0)} nieudanych prób
+          {t('admin.command.cost-capacity.healthStatus', {
+            count: Number(state.health?.summary?.failed ?? 0),
+          })}
         </span>
       </div>
     </div>
   );
 };
-
 interface LinkTile {
   id: string;
   section: AdminSettingsSection;
   icon: React.ElementType;
   labelKey: string;
-  labelDefault: string;
   descriptionKey: string;
-  descriptionDefault: string;
 }
-
 const LINK_TILES: LinkTile[] = [
   {
     id: 'people',
     section: 'people',
     icon: Users,
     labelKey: 'commandCenter.overview.tiles.people.label',
-    labelDefault: 'Team & Access',
     descriptionKey: 'commandCenter.overview.tiles.people.description',
-    descriptionDefault: 'Roles, ownership, and permissions for this organization.',
   },
   {
     id: 'security',
     section: 'security',
     icon: ShieldCheck,
     labelKey: 'commandCenter.overview.tiles.security.label',
-    labelDefault: 'SSO & Identity',
     descriptionKey: 'commandCenter.overview.tiles.security.description',
-    descriptionDefault: 'Authentication policy, SCIM lifecycle, and delegated IAM.',
   },
   {
     id: 'audit',
     section: 'audit',
     icon: ScrollText,
     labelKey: 'commandCenter.overview.tiles.audit.label',
-    labelDefault: 'Audit Log',
     descriptionKey: 'commandCenter.overview.tiles.audit.description',
-    descriptionDefault: 'High-risk admin events and compliance evidence.',
   },
 ];
-
 const LinkTileCard: React.FC<{
   tile: LinkTile;
   onOpen?: (section: AdminSettingsSection) => void;
@@ -429,56 +469,54 @@ const LinkTileCard: React.FC<{
         <ArrowRight className="h-4 w-4 text-c-text-muted transition group-hover:translate-x-0.5 group-hover:text-c-text-secondary" />
       </div>
       <div>
-        <p className="text-sm font-semibold text-c-text">
-          {t(tile.labelKey, { defaultValue: tile.labelDefault })}
-        </p>
-        <p className="mt-1 text-xs text-c-text-secondary">
-          {t(tile.descriptionKey, { defaultValue: tile.descriptionDefault })}
-        </p>
+        <p className="text-sm font-semibold text-c-text">{t(tile.labelKey)}</p>
+        <p className="mt-1 text-xs text-c-text-secondary">{t(tile.descriptionKey)}</p>
       </div>
       <span className="text-xs font-medium text-c-text-secondary group-hover:text-c-text">
-        {t('commandCenter.overview.tiles.open', { defaultValue: 'Open' })}
+        {t('commandCenter.overview.tiles.open')}
       </span>
     </button>
   );
 };
-
 interface DataTileState<T> {
   loading: boolean;
   error: string | null;
   value: T | null;
 }
-
 const DataTileShell: React.FC<{
   icon: React.ElementType;
   label: string;
   loading: boolean;
   error: string | null;
   children: React.ReactNode;
-}> = ({ icon: Icon, label, loading, error, children }) => (
-  <div className="rounded-xl border border-c-border bg-c-surface p-4">
-    <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-c-text-secondary">
-      <Icon className="h-3.5 w-3.5" />
-      {label}
+}> = ({ icon: Icon, label, loading, error, children }) => {
+  const { t } = useTranslation();
+  return (
+    <div className="rounded-xl border border-c-border bg-c-surface p-4">
+      <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-c-text-secondary">
+        <Icon className="h-3.5 w-3.5" />
+        {label}
+      </div>
+      <p className="mt-1 text-[10px] text-c-text-muted">
+        {t('admin.command.attention-queue.currentSource')}
+      </p>
+      <div className="mt-2">
+        {loading ? (
+          <div className="flex items-center gap-2 text-sm text-c-text-secondary">
+            <Loader2 className="h-4 w-4 animate-spin" />
+          </div>
+        ) : error ? (
+          <div className="flex items-center gap-2 text-sm text-c-danger">
+            <AlertTriangle className="h-4 w-4" />
+            <span>{error}</span>
+          </div>
+        ) : (
+          children
+        )}
+      </div>
     </div>
-    <p className="mt-1 text-[10px] text-c-text-muted">Źródło: tenant admin API · odczyt bieżący</p>
-    <div className="mt-2">
-      {loading ? (
-        <div className="flex items-center gap-2 text-sm text-c-text-secondary">
-          <Loader2 className="h-4 w-4 animate-spin" />
-        </div>
-      ) : error ? (
-        <div className="flex items-center gap-2 text-sm text-c-danger">
-          <AlertTriangle className="h-4 w-4" />
-          <span>{error}</span>
-        </div>
-      ) : (
-        children
-      )}
-    </div>
-  </div>
-);
-
+  );
+};
 const CommandCenterOverviewTab: React.FC<{
   onSectionChange?: (section: AdminSettingsSection) => void;
 }> = ({ onSectionChange }) => {
@@ -493,13 +531,21 @@ const CommandCenterOverviewTab: React.FC<{
     error: null,
     value: null,
   });
-  const [dlp, setDlp] = useState<DataTileState<{ active: number; total: number }>>({
+  const [dlp, setDlp] = useState<
+    DataTileState<{
+      active: number;
+      total: number;
+    }>
+  >({
     loading: true,
     error: null,
     value: null,
   });
   const [retention, setRetention] = useState<
-    DataTileState<{ count: number; nextCleanupAt: string | null }>
+    DataTileState<{
+      count: number;
+      nextCleanupAt: string | null;
+    }>
   >({
     loading: true,
     error: null,
@@ -510,60 +556,78 @@ const CommandCenterOverviewTab: React.FC<{
     error: null,
     value: null,
   });
-
   const loadResidency = useCallback(async () => {
-    setResidency((prev) => ({ ...prev, loading: true, error: null }));
+    setResidency((prev) => ({
+      ...prev,
+      loading: true,
+      error: null,
+    }));
     try {
       const value = await getDataResidency();
-      setResidency({ loading: false, error: null, value });
+      setResidency({
+        loading: false,
+        error: null,
+        value,
+      });
     } catch (error: any) {
       setResidency({
         loading: false,
-        error:
-          error?.message ||
-          t('commandCenter.overview.tiles.residency.error', 'Failed to load data residency policy'),
+        error: error?.message || t('commandCenter.overview.tiles.residency.error'),
         value: null,
       });
     }
   }, [t]);
-
   const loadAiPolicy = useCallback(async () => {
-    setAiPolicy((prev) => ({ ...prev, loading: true, error: null }));
+    setAiPolicy((prev) => ({
+      ...prev,
+      loading: true,
+      error: null,
+    }));
     try {
       const value = await getAiPolicy();
-      setAiPolicy({ loading: false, error: null, value });
+      setAiPolicy({
+        loading: false,
+        error: null,
+        value,
+      });
     } catch (error: any) {
       setAiPolicy({
         loading: false,
-        error:
-          error?.message ||
-          t('commandCenter.overview.tiles.aiPolicy.error', 'Failed to load AI policy'),
+        error: error?.message || t('commandCenter.overview.tiles.aiPolicy.error'),
         value: null,
       });
     }
   }, [t]);
-
   const loadDlp = useCallback(async () => {
-    setDlp((prev) => ({ ...prev, loading: true, error: null }));
+    setDlp((prev) => ({
+      ...prev,
+      loading: true,
+      error: null,
+    }));
     try {
       const rules = await getDlpRules();
       setDlp({
         loading: false,
         error: null,
-        value: { active: rules.filter((r) => r.isActive).length, total: rules.length },
+        value: {
+          active: rules.filter((r) => r.isActive).length,
+          total: rules.length,
+        },
       });
     } catch (error: any) {
       setDlp({
         loading: false,
-        error:
-          error?.message || t('commandCenter.overview.tiles.dlp.error', 'Failed to load DLP rules'),
+        error: error?.message || t('commandCenter.overview.tiles.dlp.error'),
         value: null,
       });
     }
   }, [t]);
-
   const loadRetention = useCallback(async () => {
-    setRetention((prev) => ({ ...prev, loading: true, error: null }));
+    setRetention((prev) => ({
+      ...prev,
+      loading: true,
+      error: null,
+    }));
     try {
       const schedules = await getRetentionSchedules();
       const upcoming = schedules
@@ -573,35 +637,40 @@ const CommandCenterOverviewTab: React.FC<{
       setRetention({
         loading: false,
         error: null,
-        value: { count: schedules.length, nextCleanupAt: upcoming[0] || null },
+        value: {
+          count: schedules.length,
+          nextCleanupAt: upcoming[0] || null,
+        },
       });
     } catch (error: any) {
       setRetention({
         loading: false,
-        error:
-          error?.message ||
-          t('commandCenter.overview.tiles.retention.error', 'Failed to load retention schedules'),
+        error: error?.message || t('commandCenter.overview.tiles.retention.error'),
         value: null,
       });
     }
   }, [t]);
-
   const loadAuditExport = useCallback(async () => {
-    setAuditExport((prev) => ({ ...prev, loading: true, error: null }));
+    setAuditExport((prev) => ({
+      ...prev,
+      loading: true,
+      error: null,
+    }));
     try {
       const value = await getComplianceAuditExport({});
-      setAuditExport({ loading: false, error: null, value });
+      setAuditExport({
+        loading: false,
+        error: null,
+        value,
+      });
     } catch (error: any) {
       setAuditExport({
         loading: false,
-        error:
-          error?.message ||
-          t('commandCenter.overview.tiles.auditExport.error', 'Failed to load audit export'),
+        error: error?.message || t('commandCenter.overview.tiles.auditExport.error'),
         value: null,
       });
     }
   }, [t]);
-
   useEffect(() => {
     void loadResidency();
     void loadAiPolicy();
@@ -609,18 +678,14 @@ const CommandCenterOverviewTab: React.FC<{
     void loadRetention();
     void loadAuditExport();
   }, [loadResidency, loadAiPolicy, loadDlp, loadRetention, loadAuditExport]);
-
   return (
     <div className="space-y-6">
       <div>
         <h4 className="text-sm font-semibold text-c-text">
-          {t('commandCenter.overview.linksTitle', 'Trust surfaces')}
+          {t('commandCenter.overview.linksTitle')}
         </h4>
         <p className="mt-1 text-xs text-c-text-secondary">
-          {t(
-            'commandCenter.overview.linksSubtitle',
-            'These live in their own sections — Command Center only links to them.'
-          )}
+          {t('commandCenter.overview.linksSubtitle')}
         </p>
         <div className="mt-3 grid gap-3 md:grid-cols-3">
           {LINK_TILES.map((tile) => (
@@ -631,18 +696,15 @@ const CommandCenterOverviewTab: React.FC<{
 
       <div>
         <h4 className="text-sm font-semibold text-c-text">
-          {t('commandCenter.overview.complianceTitle', 'Compliance posture')}
+          {t('commandCenter.overview.complianceTitle')}
         </h4>
         <p className="mt-1 text-xs text-c-text-secondary">
-          {t(
-            'commandCenter.overview.complianceSubtitle',
-            'Live from /api/admin/enterprise-compliance — org-scoped by token.'
-          )}
+          {t('commandCenter.overview.complianceSubtitle')}
         </p>
         <div className="mt-3 grid gap-3 md:grid-cols-2">
           <DataTileShell
             icon={Globe}
-            label={t('commandCenter.overview.tiles.residency.label', 'Data residency')}
+            label={t('commandCenter.overview.tiles.residency.label')}
             loading={residency.loading}
             error={residency.error}
           >
@@ -650,15 +712,12 @@ const CommandCenterOverviewTab: React.FC<{
               <div>
                 <p className="text-lg font-semibold text-c-text">
                   {residency.value.dataResidencyRegion ||
-                    t('commandCenter.overview.tiles.residency.notSet', 'Not set')}
+                    t('commandCenter.overview.tiles.residency.notSet')}
                 </p>
                 <p className="mt-1 text-xs text-c-text-secondary">
                   {residency.value.enforceEuOnly
-                    ? t('commandCenter.overview.tiles.residency.euEnforced', 'EU-only enforced')
-                    : t(
-                        'commandCenter.overview.tiles.residency.euNotEnforced',
-                        'EU-only not enforced'
-                      )}
+                    ? t('commandCenter.overview.tiles.residency.euEnforced')
+                    : t('commandCenter.overview.tiles.residency.euNotEnforced')}
                 </p>
               </div>
             )}
@@ -666,7 +725,7 @@ const CommandCenterOverviewTab: React.FC<{
 
           <DataTileShell
             icon={Sparkles}
-            label={t('commandCenter.overview.tiles.aiPolicy.label', 'Org AI policy')}
+            label={t('commandCenter.overview.tiles.aiPolicy.label')}
             loading={aiPolicy.loading}
             error={aiPolicy.error}
           >
@@ -674,13 +733,11 @@ const CommandCenterOverviewTab: React.FC<{
               <div>
                 <p className="text-lg font-semibold text-c-text">
                   {t('commandCenter.overview.tiles.aiPolicy.citationMode', {
-                    defaultValue: 'Citations: {{mode}}',
                     mode: aiPolicy.value.requiredCitationMode,
                   })}
                 </p>
                 <p className="mt-1 text-xs text-c-text-secondary">
                   {t('commandCenter.overview.tiles.aiPolicy.maxTokens', {
-                    defaultValue: 'Max {{tokens}} tokens / message',
                     tokens: aiPolicy.value.maxTokensPerMessage,
                   })}
                 </p>
@@ -693,63 +750,48 @@ const CommandCenterOverviewTab: React.FC<{
       <div className="grid gap-3 md:grid-cols-3">
         <DataTileShell
           icon={Lock}
-          label={t('commandCenter.overview.tiles.dlp.label', 'DLP rules')}
+          label={t('commandCenter.overview.tiles.dlp.label')}
           loading={dlp.loading}
           error={dlp.error}
         >
           {dlp.value &&
             (dlp.value.total === 0 ? (
               <p className="text-sm text-c-text-secondary">
-                {t('commandCenter.overview.tiles.dlp.empty', 'No DLP rules configured')}
+                {t('commandCenter.overview.tiles.dlp.empty')}
               </p>
             ) : (
               <p className="text-lg font-semibold text-c-text">
-                {t(
-                  'commandCenter.overview.tiles.dlp.activeCount',
-                  '{{active}} active / {{total}} total',
-                  {
-                    active: dlp.value.active,
-                    total: dlp.value.total,
-                  }
-                )}
+                {t('commandCenter.overview.tiles.dlp.activeCount', {
+                  active: dlp.value.active,
+                  total: dlp.value.total,
+                })}
               </p>
             ))}
         </DataTileShell>
 
         <DataTileShell
           icon={Clock}
-          label={t('commandCenter.overview.tiles.retention.label', 'Retention')}
+          label={t('commandCenter.overview.tiles.retention.label')}
           loading={retention.loading}
           error={retention.error}
         >
           {retention.value &&
             (retention.value.count === 0 ? (
               <p className="text-sm text-c-text-secondary">
-                {t(
-                  'commandCenter.overview.tiles.retention.empty',
-                  'No retention schedules configured'
-                )}
+                {t('commandCenter.overview.tiles.retention.empty')}
               </p>
             ) : (
               <div>
                 <p className="text-lg font-semibold text-c-text">
-                  {t(
-                    'commandCenter.overview.tiles.retention.scheduleCount',
-                    '{{count}} schedule(s)',
-                    {
-                      count: retention.value.count,
-                    }
-                  )}
+                  {t('commandCenter.overview.tiles.retention.scheduleCount', {
+                    count: retention.value.count,
+                  })}
                 </p>
                 {retention.value.nextCleanupAt && (
                   <p className="mt-1 text-xs text-c-text-secondary">
-                    {t(
-                      'commandCenter.overview.tiles.retention.nextCleanup',
-                      'Next cleanup {{date}}',
-                      {
-                        date: new Date(retention.value.nextCleanupAt).toLocaleDateString(),
-                      }
-                    )}
+                    {t('commandCenter.overview.tiles.retention.nextCleanup', {
+                      date: new Date(retention.value.nextCleanupAt).toLocaleDateString(),
+                    })}
                   </p>
                 )}
               </div>
@@ -758,19 +800,19 @@ const CommandCenterOverviewTab: React.FC<{
 
         <DataTileShell
           icon={ScrollText}
-          label={t('commandCenter.overview.tiles.auditExport.label', 'Last SOC2 export')}
+          label={t('commandCenter.overview.tiles.auditExport.label')}
           loading={auditExport.loading}
           error={auditExport.error}
         >
           {auditExport.value && (
             <div>
               <p className="text-lg font-semibold text-c-text">
-                {t('commandCenter.overview.tiles.auditExport.entries', '{{count}} entries (30d)', {
+                {t('commandCenter.overview.tiles.auditExport.entries', {
                   count: auditExport.value.totalCount,
                 })}
               </p>
               <p className="mt-1 text-xs text-c-text-secondary">
-                {t('commandCenter.overview.tiles.auditExport.generatedAt', 'as of {{time}}', {
+                {t('commandCenter.overview.tiles.auditExport.generatedAt', {
                   time: new Date(auditExport.value.exportedAt).toLocaleString(),
                 })}
               </p>
@@ -781,92 +823,85 @@ const CommandCenterOverviewTab: React.FC<{
     </div>
   );
 };
-
 export const AdminCommandCenterPanel: React.FC<AdminCommandCenterPanelProps> = ({
   onSectionChange,
   aggregationOnly = false,
   screen,
 }) => {
   const { t } = useTranslation();
-  const tabs: Array<{ id: TabId; label: string; icon: React.ElementType }> = useMemo(
+  const tabs: Array<{
+    id: TabId;
+    label: string;
+    icon: React.ElementType;
+  }> = useMemo(
     () => [
       {
         id: 'overview',
-        label: t('commandCenter.tabs.overview', 'Overview'),
+        label: t('commandCenter.tabs.overview'),
         icon: ShieldCheck,
       },
       {
         id: 'agent-trace',
-        label: t('commandCenter.tabs.agentTrace', 'Agent trace'),
+        label: t('commandCenter.tabs.agentTrace'),
         icon: Bot,
       },
       {
         id: 'audit',
-        label: t('commandCenter.tabs.audit', 'SOC2 audit'),
+        label: t('commandCenter.tabs.audit'),
         icon: ScrollText,
       },
       {
         id: 'dlp',
-        label: t('commandCenter.tabs.dlp', 'DLP'),
+        label: t('commandCenter.tabs.dlp'),
         icon: Lock,
       },
       {
         id: 'residency',
-        label: t('commandCenter.tabs.residency', 'Data residency'),
+        label: t('commandCenter.tabs.residency'),
         icon: Globe,
       },
       {
         id: 'retention',
-        label: t('commandCenter.tabs.retention', 'Retention'),
+        label: t('commandCenter.tabs.retention'),
         icon: Clock,
       },
       {
         id: 'ai-policy',
-        label: t('commandCenter.tabs.aiPolicy', 'AI policy'),
+        label: t('commandCenter.tabs.aiPolicy'),
         icon: Sparkles,
       },
       {
         id: 'benchmark',
-        label: t('commandCenter.tabs.benchmark', 'Consulting Bench'),
+        label: t('commandCenter.tabs.benchmark'),
         icon: ClipboardCheck,
       },
     ],
     [t]
   );
-
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedTab = useMemo(() => {
     const raw = searchParams.get('tab');
     return tabs.some((tab) => tab.id === raw) ? (raw as TabId) : 'overview';
   }, [searchParams, tabs]);
   const [activeTab, setActiveTab] = useState<TabId>(requestedTab);
-
   useEffect(() => {
     setActiveTab(requestedTab);
   }, [requestedTab]);
-
   const handleTabChange = (tab: TabId) => {
     setActiveTab(tab);
     const nextParams = new URLSearchParams(searchParams);
     nextParams.set('tab', tab);
-    setSearchParams(nextParams, { replace: true });
+    setSearchParams(nextParams, {
+      replace: true,
+    });
   };
-
   if (screen === 'attention-queue') return <CommandCenterAttentionQueue />;
   if (screen === 'cost-capacity') return <CommandCenterCostCapacity />;
-
   return (
     <div className="space-y-6">
       <div className="rounded-2xl border border-c-border bg-c-surface p-5">
-        <h3 className="text-lg font-semibold text-c-text">
-          {t('commandCenter.title', 'Command Center')}
-        </h3>
-        <p className="mt-1 text-sm text-c-text-secondary">
-          {t(
-            'commandCenter.description',
-            'One trust & control surface — SOC2 audit export, DLP, data residency, retention, and org AI policy. Roles, SSO, and the audit log live in their own sections and are only linked from here.'
-          )}
-        </p>
+        <h3 className="text-lg font-semibold text-c-text">{t('commandCenter.title')}</h3>
+        <p className="mt-1 text-sm text-c-text-secondary">{t('commandCenter.description')}</p>
       </div>
 
       {!aggregationOnly && (
@@ -907,5 +942,4 @@ export const AdminCommandCenterPanel: React.FC<AdminCommandCenterPanelProps> = (
     </div>
   );
 };
-
 export default AdminCommandCenterPanel;

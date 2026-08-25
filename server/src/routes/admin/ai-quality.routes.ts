@@ -94,8 +94,9 @@ router.get(
 
       // Get learning patterns count
       const patternsCount = (await dbGet(
-        `SELECT COUNT(*) as count FROM ai_style_learning_patterns WHERE status = 'active'`,
-        []
+        `SELECT COUNT(*) as count FROM ai_style_learning_patterns
+         WHERE status = 'active' AND organization_id = ?`,
+        [organizationId]
       )) as { count: number } | null;
 
       // Get style profiles count

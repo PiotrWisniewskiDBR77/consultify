@@ -10,7 +10,7 @@
  */
 
 import { randomUUID } from 'crypto';
-import { Response, Router } from 'express';
+import { type NextFunction, Response, Router } from 'express';
 
 import SuperAdminController from '../controllers/SuperAdminController.js';
 import { getIntegrationsCatalogSeed } from '../data/integrationsCatalog.js';
@@ -42,6 +42,30 @@ import {
 } from '../validators/admin.validators.js';
 
 const router = Router();
+const STATUS_CHANGES_REQUIRING_CONFIRMATION = new Set(['suspended', 'blocked', 'cancelled']);
+const confirmOrganizationStatusChange = requireConfirmation('update_organization', 'critical');
+
+export const conditionalOrganizationConfirmation = asyncHandler(
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
+    const status = typeof req.body?.status === 'string' ? req.body.status.trim() : '';
+    if (!STATUS_CHANGES_REQUIRING_CONFIRMATION.has(status)) return next();
+
+    // Gate on the TRANSITION, not on the presence of a critical status value in
+    // the body: forms always submit the current status alongside unrelated
+    // field edits (e.g. changing the plan of an already-suspended org), so
+    // gating on presence alone 428s every edit of a critical-status org even
+    // when nothing about its status is changing. Only require confirmation
+    // when the submitted status actually differs from the org's current
+    // status in the database (a real transition into/across a critical state).
+    const org = await dbGet('SELECT status FROM organizations WHERE id = $1', [req.params.id]);
+    const currentStatus = typeof (org as any)?.status === 'string' ? (org as any).status : undefined;
+    if (currentStatus === status) return next();
+
+    res.locals.organizationStatusChangeReason =
+      typeof req.body?.reason === 'string' ? req.body.reason.trim() : '';
+    return confirmOrganizationStatusChange(req, res, next);
+  }
+);
 
 interface AtomicAuditEventInput {
   actorType?: 'USER' | 'SYSTEM' | 'AI' | 'INTEGRATION' | 'CONSULTANT';
@@ -671,6 +695,8 @@ router.get('/activities/stats', SuperAdminController.getActivities);
 router.get('/dashboard', SuperAdminController.getDashboardStats);
 router.put(
   '/organizations/:id',
+  conditionalOrganizationConfirmation,
+  requireAudit,
   validateBody(UpdateOrganizationAdminSchema),
   SuperAdminController.updateOrganization
 );

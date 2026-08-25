@@ -3,11 +3,24 @@
  */
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { createRealT } from '@/test-utils/realTranslations';
 import type { ToolSession } from '@/store/useToolStore';
 
-import { GenericDomainStep } from '../tools/Digital/GenericDomainStep';
+// GenericDomainStep's own strings (Teresa hint, empty state, placeholders) go
+// through real t() calls with no defaultValue (see GenericDomainStep.tsx), so
+// this opts in to the real shipped translation.json — see
+// tests/setup.ts (global mock is intentionally key-agnostic) and
+// src/test-utils/realTranslations.ts. The `isPolish` prop only controls the
+// caller-supplied title/description text, not the component's own i18n
+// language, so language is switched per test via vi.doMock + a fresh dynamic
+// import (same pattern as KPITimeSeriesDrawer.a11y.test.tsx).
+function mockI18n(lang: 'en' | 'pl') {
+  vi.doMock('react-i18next', () => ({
+    useTranslation: () => ({ t: createRealT(lang), i18n: { language: lang } }),
+  }));
+}
 
 function makeSession(overrides: Partial<ToolSession> = {}): ToolSession {
   return {
@@ -29,8 +42,22 @@ function makeSession(overrides: Partial<ToolSession> = {}): ToolSession {
   } as ToolSession;
 }
 
+let GenericDomainStepImport: typeof import('../tools/Digital/GenericDomainStep');
+
+async function loadComponent(lang: 'en' | 'pl') {
+  vi.resetModules();
+  mockI18n(lang);
+  GenericDomainStepImport = await import('../tools/Digital/GenericDomainStep');
+}
+
 describe('GenericDomainStep', () => {
-  it('renders the domain title, description and Teresa assist hint', () => {
+  beforeEach(() => {
+    vi.doUnmock('react-i18next');
+  });
+
+  it('renders the domain title, description and Teresa assist hint', async () => {
+    await loadComponent('en');
+    const { GenericDomainStep } = GenericDomainStepImport;
     render(
       <GenericDomainStep
         sectionId="use-cases"
@@ -47,7 +74,9 @@ describe('GenericDomainStep', () => {
     expect(screen.getByText(/Teresa/)).toBeInTheDocument();
   });
 
-  it('shows an empty state when no items exist', () => {
+  it('shows an empty state when no items exist', async () => {
+    await loadComponent('en');
+    const { GenericDomainStep } = GenericDomainStepImport;
     render(
       <GenericDomainStep
         sectionId="use-cases"
@@ -60,7 +89,9 @@ describe('GenericDomainStep', () => {
     expect(screen.getByText('No items yet')).toBeInTheDocument();
   });
 
-  it('disables the Add button until a title is entered', () => {
+  it('disables the Add button until a title is entered', async () => {
+    await loadComponent('en');
+    const { GenericDomainStep } = GenericDomainStepImport;
     render(
       <GenericDomainStep
         sectionId="use-cases"
@@ -79,7 +110,9 @@ describe('GenericDomainStep', () => {
     expect(addBtn).not.toBeDisabled();
   });
 
-  it('renders Polish labels when isPolish is true', () => {
+  it('renders Polish labels when isPolish is true', async () => {
+    await loadComponent('pl');
+    const { GenericDomainStep } = GenericDomainStepImport;
     render(
       <GenericDomainStep
         sectionId="use-cases"

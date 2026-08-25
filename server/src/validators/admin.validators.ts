@@ -45,6 +45,8 @@ export const UpdateOrganizationAdminSchema = z.object({
   status: z.enum(['active', 'pending', 'blocked', 'suspended', 'cancelled', 'trial']).optional(),
   name: z.string().max(255).optional(),
   discount_percent: z.coerce.number().min(0).max(100).optional(),
+  confirmation: z.boolean().optional(),
+  reason: z.string().trim().min(3).max(4000).optional(),
 });
 
 export const CreateUserAdminSchema = z.object({

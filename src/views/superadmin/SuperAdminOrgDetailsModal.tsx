@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { DegradedState } from '../../components/Admin/AdminState';
+import { ConfirmDialog } from '../../components/MyWork/shared/ConfirmDialog';
 import { Api } from '../../services/api';
 import { Organization } from '../../types';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
@@ -92,6 +93,8 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
   const [editingOrg, setEditingOrg] = useState<Organization>(org);
   const [savingGeneral, setSavingGeneral] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [statusConfirmationOpen, setStatusConfirmationOpen] = useState(false);
+  const [statusChangeReason, setStatusChangeReason] = useState('');
 
   const fetchBillingDetails = useCallback(async () => {
     setLoading(true);
@@ -127,8 +130,7 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
     }
   }, [activeTab, billingDetails, fetchBillingDetails]);
 
-  const handleSaveGeneral = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const saveGeneral = async (confirmation?: { confirmation: true; reason: string }) => {
     try {
       setSavingGeneral(true);
       setActionError(null);
@@ -136,6 +138,7 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
         plan: editingOrg.plan,
         status: editingOrg.status,
         discount_percent: editingOrg.discount_percent,
+        ...confirmation,
       });
       const refreshedOrganizations = await Api.getOrganizations();
       if (!hasListShape(refreshedOrganizations, ['organizations', 'items'])) {
@@ -161,6 +164,18 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
     } finally {
       setSavingGeneral(false);
     }
+  };
+
+  const handleSaveGeneral = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (
+      editingOrg.status !== org.status &&
+      ['suspended', 'blocked', 'cancelled'].includes(editingOrg.status)
+    ) {
+      setStatusConfirmationOpen(true);
+      return;
+    }
+    void saveGeneral();
   };
 
   const formatDate = (value?: string | null, fallback = 'Unknown date') => {
@@ -532,6 +547,34 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
           )}
         </div>
       </div>
+      <ConfirmDialog
+        isOpen={statusConfirmationOpen}
+        onCancel={() => {
+          setStatusConfirmationOpen(false);
+          setStatusChangeReason('');
+        }}
+        onConfirm={() => {
+          if (statusChangeReason.trim().length < 3) return;
+          setStatusConfirmationOpen(false);
+          void saveGeneral({ confirmation: true, reason: statusChangeReason.trim() });
+        }}
+        title="Confirm critical organization status change"
+        description={`Changing status to ${editingOrg.status} can interrupt tenant access.`}
+        confirmLabel="Confirm status change"
+        variant="danger"
+        confirmDisabled={statusChangeReason.trim().length < 3}
+      >
+        <label className="mt-4 block text-sm text-slate-600 dark:text-slate-300">
+          Reason
+          <textarea
+            className="mt-1 w-full rounded-lg border border-c-border bg-c-surface p-2 text-c-text focus-visible:outline-none focus-visible:ring-2 ring-[color:var(--c-focus)]"
+            value={statusChangeReason}
+            onChange={(event) => setStatusChangeReason(event.target.value)}
+            rows={3}
+            required
+          />
+        </label>
+      </ConfirmDialog>
     </div>
   );
 };

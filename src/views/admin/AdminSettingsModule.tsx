@@ -3,33 +3,28 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+import { AdminAccessRequestsPanel } from '../../components/Admin/AdminAccessRequestsPanel';
+import { AdminAccessReviewsPanel } from '../../components/Admin/AdminAccessReviewsPanel';
 import { AdminAIControlCenterPanel } from '../../components/Admin/AdminAIControlCenterPanel';
+import { AdminAiIncidentsPanel } from '../../components/Admin/AdminAiIncidentsPanel';
+import { AdminAiQualityPanel } from '../../components/Admin/AdminAiQualityPanel';
+import { AdminAuditExportHistoryPanel } from '../../components/Admin/AdminAuditExportHistoryPanel';
+import { AdminAuditIntegrityPanel } from '../../components/Admin/AdminAuditIntegrityPanel';
 import { AdminAuditLogPanel } from '../../components/Admin/AdminAuditLogPanel';
 import { AdminBillingFinOpsPanel } from '../../components/Admin/AdminBillingFinOpsPanel';
+import { AdminBreakGlassPanel } from '../../components/Admin/AdminBreakGlassPanel';
 import { AdminCapabilityState } from '../../components/Admin/AdminCapabilityState';
 import { AdminCommandCenterPanel } from '../../components/Admin/AdminCommandCenterPanel';
 import { AdminComplianceEvidencePanel } from '../../components/Admin/AdminComplianceEvidencePanel';
-import { AdminHealthPanel } from '../../components/Admin/AdminHealthPanel';
-import { AdminJobsPanel } from '../../components/Admin/AdminJobsPanel';
-import { AdminSlaSloPanel } from '../../components/Admin/AdminSlaSloPanel';
-import { AdminMembersRolesPanel } from '../../components/Admin/AdminMembersRolesPanel';
-import { AdminPlanHistoryPanel } from '../../components/Admin/AdminPlanHistoryPanel';
-import { AdminServiceAccountsPanel } from '../../components/Admin/AdminServiceAccountsPanel';
-import { AdminSecurityAlertsPanel } from '../../components/Admin/AdminSecurityAlertsPanel';
-import { AdminSessionsPanel } from '../../components/Admin/AdminSessionsPanel';
-import { AdminBreakGlassPanel } from '../../components/Admin/AdminBreakGlassPanel';
-import { AdminGuestsPanel } from '../../components/Admin/AdminGuestsPanel';
-import { AdminAccessReviewsPanel } from '../../components/Admin/AdminAccessReviewsPanel';
-import { AdminRolesPermissionsPanel } from '../../components/Admin/AdminRolesPermissionsPanel';
-import { AdminLegalHoldPanel } from '../../components/Admin/AdminLegalHoldPanel';
-import { AdminAuditExportHistoryPanel } from '../../components/Admin/AdminAuditExportHistoryPanel';
-import { AdminAuditIntegrityPanel } from '../../components/Admin/AdminAuditIntegrityPanel';
-import { PersonasPanel } from '../../components/Admin/AI/PersonasPanel';
-import { AdminAiIncidentsPanel } from '../../components/Admin/AdminAiIncidentsPanel';
 import { AdminConfigurationVersionsPanel } from '../../components/Admin/AdminConfigurationVersionsPanel';
-import { AdminOrganizationDefaultsPanel } from '../../components/Admin/AdminOrganizationDefaultsPanel';
-import { AdminSeatsLicencesPanel } from '../../components/Admin/AdminSeatsLicencesPanel';
-import { AdminTeamsPanel } from '../../components/Admin/AdminTeamsPanel';
+import { AdminDependenciesPanel } from '../../components/Admin/AdminDependenciesPanel';
+import { AdminDomainsPanel } from '../../components/Admin/AdminDomainsPanel';
+import { AdminGuestsPanel } from '../../components/Admin/AdminGuestsPanel';
+import { AdminHealthPanel } from '../../components/Admin/AdminHealthPanel';
+import { AdminIncidentHistoryPanel } from '../../components/Admin/AdminIncidentHistoryPanel';
+import { AdminJobsPanel } from '../../components/Admin/AdminJobsPanel';
+import { AdminLegalHoldPanel } from '../../components/Admin/AdminLegalHoldPanel';
+import { AdminMembersRolesPanel } from '../../components/Admin/AdminMembersRolesPanel';
 import {
   ADMIN_DEFAULTS,
   ADMIN_DOMAINS,
@@ -37,15 +32,25 @@ import {
   type AdminScreen,
   getAdminDomains,
 } from '../../components/Admin/adminNavigation';
+import { AdminOrganizationDefaultsPanel } from '../../components/Admin/AdminOrganizationDefaultsPanel';
+import { AdminPlanHistoryPanel } from '../../components/Admin/AdminPlanHistoryPanel';
+import { AdminRolesPermissionsPanel } from '../../components/Admin/AdminRolesPermissionsPanel';
+import { AdminSeatsLicencesPanel } from '../../components/Admin/AdminSeatsLicencesPanel';
+import { AdminSecurityAlertsPanel } from '../../components/Admin/AdminSecurityAlertsPanel';
 import {
   AdminSecurityIdentityPanel,
   type AdminSecurityIdentityTabId,
 } from '../../components/Admin/AdminSecurityIdentityPanel';
+import { AdminServiceAccountsPanel } from '../../components/Admin/AdminServiceAccountsPanel';
+import { AdminSessionsPanel } from '../../components/Admin/AdminSessionsPanel';
 import {
   type AdminLocation,
   AdminSettingsSection,
   AdminSettingsSidebar,
 } from '../../components/Admin/AdminSettingsSidebar';
+import { AdminSlaSloPanel } from '../../components/Admin/AdminSlaSloPanel';
+import { AdminTeamsPanel } from '../../components/Admin/AdminTeamsPanel';
+import { PersonasPanel } from '../../components/Admin/AI/PersonasPanel';
 import { SettingsHeaderActionsProvider } from '../../components/settings/SettingsHeaderActions';
 import DomainScreenHeader from '../../components/settings/shared/DomainScreenHeader';
 import { Button } from '../../components/ui/primitives/Button';
@@ -331,6 +336,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
           'teams',
           'guests-external',
           'access-reviews',
+          'access-requests',
           'roles-permissions',
         ].includes(resolvedLocation.screen)) ||
       (resolvedLocation.domain === 'billing' &&
@@ -371,12 +377,15 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
       (resolvedLocation.domain === 'health' && resolvedLocation.screen === 'diagnostics') ||
       (resolvedLocation.domain === 'health' && resolvedLocation.screen === 'queues-jobs') ||
       (resolvedLocation.domain === 'health' && resolvedLocation.screen === 'sla-slo') ||
+      (resolvedLocation.domain === 'health' && resolvedLocation.screen === 'dependencies') ||
+      (resolvedLocation.domain === 'health' && resolvedLocation.screen === 'incident-history') ||
       // Fala 1 (Admin komplet 55): sso/scim-lifecycle/api-access/risk-summary
       // already have working tabs inside AdminSecurityIdentityPanel — see
       // SECURITY_TAB_BY_SCREEN below.
       (resolvedLocation.domain === 'security' &&
         Object.prototype.hasOwnProperty.call(SECURITY_TAB_BY_SCREEN, resolvedLocation.screen)) ||
       (resolvedLocation.domain === 'security' && resolvedLocation.screen === 'service-accounts') ||
+      (resolvedLocation.domain === 'security' && resolvedLocation.screen === 'domains') ||
       (resolvedLocation.domain === 'security' && resolvedLocation.screen === 'security-alerts') ||
       (resolvedLocation.domain === 'security' && resolvedLocation.screen === 'sessions') ||
       (resolvedLocation.domain === 'security' && resolvedLocation.screen === 'break-glass') ||
@@ -388,7 +397,9 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
         Object.prototype.hasOwnProperty.call(AI_MODULE_TAB_BY_SCREEN, resolvedLocation.screen)) ||
       (resolvedLocation.domain === 'ai' &&
         ['personas', 'ai-incidents', 'configuration-versions'].includes(resolvedLocation.screen));
-    if (!connected) {
+    const isAiQuality =
+      resolvedLocation.domain === 'ai' && resolvedLocation.screen === 'quality-evaluations';
+    if (!connected && !isAiQuality) {
       return (
         <AdminCapabilityState
           title={childConfig?.label || resolvedLocation.screen}
@@ -398,6 +409,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
     }
     switch (resolvedLocation.domain) {
       case 'team':
+        if (resolvedLocation.screen === 'access-requests') return <AdminAccessRequestsPanel />;
         if (resolvedLocation.screen === 'teams') return <AdminTeamsPanel />;
         if (resolvedLocation.screen === 'guests-external') return <AdminGuestsPanel />;
         if (resolvedLocation.screen === 'access-reviews') return <AdminAccessReviewsPanel />;
@@ -441,6 +453,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
           />
         );
       case 'ai':
+        if (resolvedLocation.screen === 'quality-evaluations') return <AdminAiQualityPanel />;
         if (resolvedLocation.screen === 'personas') return <PersonasPanel />;
         if (resolvedLocation.screen === 'ai-incidents') return <AdminAiIncidentsPanel />;
         if (resolvedLocation.screen === 'configuration-versions')
@@ -451,6 +464,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
           />
         );
       case 'security':
+        if (resolvedLocation.screen === 'domains') return <AdminDomainsPanel />;
         if (resolvedLocation.screen === 'service-accounts') return <AdminServiceAccountsPanel />;
         if (resolvedLocation.screen === 'security-alerts') return <AdminSecurityAlertsPanel />;
         if (resolvedLocation.screen === 'sessions') return <AdminSessionsPanel />;
@@ -493,6 +507,8 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
           />
         );
       case 'health':
+        if (resolvedLocation.screen === 'incident-history') return <AdminIncidentHistoryPanel />;
+        if (resolvedLocation.screen === 'dependencies') return <AdminDependenciesPanel />;
         if (resolvedLocation.screen === 'queues-jobs') return <AdminJobsPanel />;
         if (resolvedLocation.screen === 'sla-slo') return <AdminSlaSloPanel />;
         return <AdminHealthPanel canRunDiagnostics={CAN_ACCESS_PLATFORM_OPERATIONS} />;

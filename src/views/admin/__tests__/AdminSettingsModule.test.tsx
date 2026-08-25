@@ -35,6 +35,9 @@ vi.mock('../../../components/Admin/AdminSlaSloPanel', () => ({
 vi.mock('../../../components/Admin/AdminServiceAccountsPanel', () => ({
   AdminServiceAccountsPanel: () => <div data-testid="panel-service-accounts">service accounts</div>,
 }));
+vi.mock('../../../components/Admin/AdminDomainsPanel', () => ({
+  AdminDomainsPanel: () => <div data-testid="panel-domains">domains</div>,
+}));
 vi.mock('../../../components/Admin/AdminSecurityAlertsPanel', () => ({
   AdminSecurityAlertsPanel: () => <div data-testid="panel-security-alerts">alerts</div>,
 }));
@@ -49,6 +52,9 @@ vi.mock('../../../components/Admin/AdminGuestsPanel', () => ({
 }));
 vi.mock('../../../components/Admin/AdminAccessReviewsPanel', () => ({
   AdminAccessReviewsPanel: () => <div data-testid="panel-access-reviews">reviews</div>,
+}));
+vi.mock('../../../components/Admin/AdminAccessRequestsPanel', () => ({
+  AdminAccessRequestsPanel: () => <div data-testid="panel-access-requests">access requests</div>,
 }));
 vi.mock('../../../components/Admin/AdminRolesPermissionsPanel', () => ({
   AdminRolesPermissionsPanel: () => <div data-testid="panel-roles">roles</div>,
@@ -92,6 +98,9 @@ vi.mock('../../../components/Admin/AdminAIControlCenterPanel', () => ({
     </div>
   ),
 }));
+vi.mock('../../../components/Admin/AdminAiQualityPanel', () => ({
+  AdminAiQualityPanel: () => <div data-testid="panel-ai-quality">ai quality</div>,
+}));
 vi.mock('../../../components/Admin/AdminSecurityIdentityPanel', () => ({
   AdminSecurityIdentityPanel: ({ initialTab }: { initialTab?: string }) => (
     <div data-testid="panel-security" data-initial-tab={initialTab}>
@@ -107,6 +116,12 @@ vi.mock('../../../components/Admin/AdminComplianceEvidencePanel', () => ({
 }));
 vi.mock('../../../components/Admin/AdminHealthPanel', () => ({
   AdminHealthPanel: () => <div data-testid="panel-health">health</div>,
+}));
+vi.mock('../../../components/Admin/AdminDependenciesPanel', () => ({
+  AdminDependenciesPanel: () => <div data-testid="panel-dependencies">dependencies</div>,
+}));
+vi.mock('../../../components/Admin/AdminIncidentHistoryPanel', () => ({
+  AdminIncidentHistoryPanel: () => <div data-testid="panel-incident-history">incident history</div>,
 }));
 vi.mock('../../../components/Admin/AdminCommandCenterPanel', () => ({
   AdminCommandCenterPanel: ({
@@ -157,6 +172,10 @@ describe('AdminSettingsModule section routing', () => {
     renderAt('/admin/team/access-reviews');
     expect(screen.getByTestId('panel-access-reviews')).toBeInTheDocument();
   });
+  it('wires team/access-requests to the honest tenant skeleton', () => {
+    renderAt('/admin/team/access-requests');
+    expect(screen.getByTestId('panel-access-requests')).toBeInTheDocument();
+  });
   it('wires team/roles-permissions', () => {
     renderAt('/admin/team/roles-permissions');
     expect(screen.getByTestId('panel-roles')).toBeInTheDocument();
@@ -177,6 +196,18 @@ describe('AdminSettingsModule section routing', () => {
   it('wires health/sla-slo to tenant SLOs', () => {
     renderAt('/admin/health/sla-slo');
     expect(screen.getByTestId('panel-sla')).toBeInTheDocument();
+  });
+  it('wires health/dependencies to the cached dependency map', () => {
+    renderAt('/admin/health/dependencies');
+    expect(screen.getByTestId('panel-dependencies')).toBeInTheDocument();
+  });
+  it('wires health/incident-history to the honest tenant skeleton', () => {
+    renderAt('/admin/health/incident-history');
+    expect(screen.getByTestId('panel-incident-history')).toBeInTheDocument();
+  });
+  it('wires security/domains to real DNS management', () => {
+    renderAt('/admin/security/domains');
+    expect(screen.getByTestId('panel-domains')).toBeInTheDocument();
   });
   it('wires security/service-accounts to the service accounts panel', () => {
     renderAt('/admin/security/service-accounts');
@@ -252,6 +283,10 @@ describe('AdminSettingsModule section routing', () => {
   it('wires ai/configuration-versions', () => {
     renderAt('/admin/ai/configuration-versions');
     expect(screen.getByTestId('panel-configuration-versions')).toBeInTheDocument();
+  });
+  it('wires ai/quality-evaluations after tenant-safe FIX-11', () => {
+    renderAt('/admin/ai/quality-evaluations');
+    expect(screen.getByTestId('panel-ai-quality')).toBeInTheDocument();
   });
   it('wires command/organization-defaults', () => {
     renderAt('/admin/command/organization-defaults');
