@@ -11293,7 +11293,44 @@
       "overall": "Overall",
       "readiness": "People readiness for change",
       "readinessEmpty": "No adoption signals (pulse/capability) to assess yet.",
-      "readinessFailed": "Change readiness temporarily unavailable — the cockpit works normally."
+      "readinessFailed": "Change readiness temporarily unavailable — the cockpit works normally.",
+      "balance": {
+        "critical": "Critical",
+        "strained": "Strained",
+        "healthy": "Healthy"
+      },
+      "severity": {
+        "critical": "Critical",
+        "high": "High",
+        "medium": "Medium",
+        "low": "Low"
+      },
+      "readinessLevel": {
+        "atRisk": "At risk",
+        "developing": "Developing",
+        "ready": "Ready",
+        "unknown": "Unknown"
+      },
+      "championRole": {
+        "sponsor": "Sponsor",
+        "ambassador": "Ambassador",
+        "champion": "Champion"
+      },
+      "championStatus": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "barrier": {
+        "awareness": "Awareness",
+        "desire": "Desire",
+        "knowledge": "Knowledge",
+        "ability": "Ability",
+        "reinforcement": "Reinforcement"
+      },
+      "laneProblem": {
+        "atRisk": "People-change adoption at risk{{detail}}",
+        "developing": "Adoption barriers detected{{detail}}"
+      }
     },
     "whatIf": {
       "title": "What-if — intervention simulation",

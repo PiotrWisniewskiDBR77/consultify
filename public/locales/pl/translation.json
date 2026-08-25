@@ -10653,7 +10653,44 @@
       "overall": "Ogółem",
       "readiness": "Gotowość ludzi na zmianę",
       "readinessEmpty": "Brak jeszcze sygnałów adopcji (pulse/capability) do oceny.",
-      "readinessFailed": "Gotowość na zmianę niedostępna chwilowo — kokpit działa normalnie."
+      "readinessFailed": "Gotowość na zmianę niedostępna chwilowo — kokpit działa normalnie.",
+      "balance": {
+        "critical": "Krytyczny",
+        "strained": "Napięty",
+        "healthy": "Zdrowy"
+      },
+      "severity": {
+        "critical": "Krytyczny",
+        "high": "Wysoki",
+        "medium": "Średni",
+        "low": "Niski"
+      },
+      "readinessLevel": {
+        "atRisk": "Zagrożona",
+        "developing": "W trakcie",
+        "ready": "Gotowa",
+        "unknown": "Nieznana"
+      },
+      "championRole": {
+        "sponsor": "Sponsor",
+        "ambassador": "Ambasador",
+        "champion": "Champion"
+      },
+      "championStatus": {
+        "active": "Aktywny",
+        "inactive": "Nieaktywny"
+      },
+      "barrier": {
+        "awareness": "Świadomość",
+        "desire": "Chęć",
+        "knowledge": "Wiedza",
+        "ability": "Umiejętności",
+        "reinforcement": "Utrwalenie"
+      },
+      "laneProblem": {
+        "atRisk": "Adopcja zmiany zagrożona{{detail}}",
+        "developing": "Wykryto bariery adopcji{{detail}}"
+      }
     },
     "initiativeLabel": "Inicjatywa",
     "realization": {
