@@ -35,7 +35,11 @@ import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js'
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { requireOrgAccess, requireOrgRole } from '../../middleware/rbac.middleware.js';
 import { requireResultsInternalBetaVisibility } from '../../middleware/resultsInternalBetaVisibility.middleware.js';
-import { validateBody, validateParams, validateQuery } from '../../middleware/validation.middleware.js';
+import {
+  validateBody,
+  validateParams,
+  validateQuery,
+} from '../../middleware/validation.middleware.js';
 import { resolveEffectiveAccess } from '../../services/effectiveAccessService.js';
 import {
   CommandCapabilityDeniedError,
@@ -63,7 +67,12 @@ import {
   publishProgram,
   OkrProgramValidationError,
 } from '../../services/resultsVnext/okr/okrProgramCommands.js';
-import { getCycle, getProgram, listCycles, listPrograms } from '../../services/resultsVnext/okr/okrRepository.js';
+import {
+  getCycle,
+  getProgram,
+  listCycles,
+  listPrograms,
+} from '../../services/resultsVnext/okr/okrRepository.js';
 import {
   OKR_SET_ACTIVATE_SPEC,
   OKR_SET_CANCEL_SPEC,
@@ -308,7 +317,10 @@ function requireAuth(req: AuthenticatedRequest, res: Response): RouteAuth | null
  * rationale (no projectId: OKR Sets/Objectives/KeyResults are organization-
  * scoped ABAC resources, not project-scoped; Programs/Cycles are plain
  * RBAC — same distinction okrSetCommands.ts's own file header draws). */
-async function resolveAccess(req: AuthenticatedRequest, auth: RouteAuth): Promise<CommandAccessContext> {
+async function resolveAccess(
+  req: AuthenticatedRequest,
+  auth: RouteAuth
+): Promise<CommandAccessContext> {
   return resolveEffectiveAccess({
     userId: auth.userId,
     organizationId: auth.organizationId,
@@ -416,7 +428,10 @@ function handleOkrRouteError(res: Response, err: unknown, op: string): void {
     return;
   }
   // OKR-E005 (design §H's error-mapping table).
-  if (err instanceof OkrAlignmentVisibilityDeniedError || err instanceof OkrAlignmentNotOwnerError) {
+  if (
+    err instanceof OkrAlignmentVisibilityDeniedError ||
+    err instanceof OkrAlignmentNotOwnerError
+  ) {
     res.status(403).json({ error: err.message, code: err.code, ...err.details });
     return;
   }
@@ -787,7 +802,11 @@ router.get(
 // Cycle lifecycle transitions (design §6.5/§8)
 // ==========================================
 
-function mountTransitionRoute(path: string, op: string, spec: OkrCycleLifecycleTransitionSpec): void {
+function mountTransitionRoute(
+  path: string,
+  op: string,
+  spec: OkrCycleLifecycleTransitionSpec
+): void {
   router.post(
     path,
     requireAdminWrite,
@@ -829,7 +848,11 @@ function mountTransitionRoute(path: string, op: string, spec: OkrCycleLifecycleT
   );
 }
 
-mountTransitionRoute('/cycles/:cycleId/open-drafting', 'openDrafting', OKR_CYCLE_OPEN_DRAFTING_SPEC);
+mountTransitionRoute(
+  '/cycles/:cycleId/open-drafting',
+  'openDrafting',
+  OKR_CYCLE_OPEN_DRAFTING_SPEC
+);
 mountTransitionRoute('/cycles/:cycleId/activate', 'activateCycle', OKR_CYCLE_ACTIVATE_SPEC);
 mountTransitionRoute('/cycles/:cycleId/open-review', 'openReview', OKR_CYCLE_OPEN_REVIEW_SPEC);
 mountTransitionRoute('/cycles/:cycleId/close', 'closeCycle', OKR_CYCLE_CLOSE_SPEC);
@@ -923,6 +946,7 @@ router.get(
         scopeType: query.scopeType,
         status: query.status,
         attentionState: query.attentionState,
+        q: query.q,
         limit: query.limit,
         offset: query.offset,
       });
@@ -955,7 +979,9 @@ router.get(
     const auth = requireAuth(req, res);
     if (!auth) return;
     try {
-      const query = req.query as unknown as import('zod').infer<typeof ListOkrCompanySetsQuerySchema>;
+      const query = req.query as unknown as import('zod').infer<
+        typeof ListOkrCompanySetsQuerySchema
+      >;
       const sets = await listOkrSets({
         userId: auth.userId,
         organizationId: auth.organizationId,
@@ -1036,7 +1062,11 @@ router.get(
     if (!auth) return;
     try {
       const { setId } = req.params as { setId: string };
-      const set = await getOkrSet({ userId: auth.userId, organizationId: auth.organizationId, setId });
+      const set = await getOkrSet({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        setId,
+      });
       if (!set) {
         res.status(404).json({ error: 'OKR Set not found', code: 'NOT_FOUND' });
         return;
@@ -1061,7 +1091,11 @@ router.patch(
     if (!auth) return;
     try {
       const { setId } = req.params as { setId: string };
-      const existing = await getOkrSet({ userId: auth.userId, organizationId: auth.organizationId, setId });
+      const existing = await getOkrSet({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        setId,
+      });
       if (!existing) {
         res.status(404).json({ error: 'OKR Set not found', code: 'NOT_FOUND' });
         return;
@@ -1107,7 +1141,11 @@ router.patch(
     if (!auth) return;
     try {
       const { setId } = req.params as { setId: string };
-      const existing = await getOkrSet({ userId: auth.userId, organizationId: auth.organizationId, setId });
+      const existing = await getOkrSet({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        setId,
+      });
       if (!existing) {
         res.status(404).json({ error: 'OKR Set not found', code: 'NOT_FOUND' });
         return;
@@ -1152,7 +1190,11 @@ router.post(
     if (!auth) return;
     try {
       const { setId } = req.params as { setId: string };
-      const existing = await getOkrSet({ userId: auth.userId, organizationId: auth.organizationId, setId });
+      const existing = await getOkrSet({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        setId,
+      });
       if (!existing) {
         res.status(404).json({ error: 'OKR Set not found', code: 'NOT_FOUND' });
         return;
@@ -1195,7 +1237,11 @@ router.post(
     if (!auth) return;
     try {
       const { setId } = req.params as { setId: string };
-      const existing = await getOkrSet({ userId: auth.userId, organizationId: auth.organizationId, setId });
+      const existing = await getOkrSet({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        setId,
+      });
       if (!existing) {
         res.status(404).json({ error: 'OKR Set not found', code: 'NOT_FOUND' });
         return;
@@ -1239,7 +1285,11 @@ router.post(
     if (!auth) return;
     try {
       const { setId } = req.params as { setId: string };
-      const existing = await getOkrSet({ userId: auth.userId, organizationId: auth.organizationId, setId });
+      const existing = await getOkrSet({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        setId,
+      });
       if (!existing) {
         res.status(404).json({ error: 'OKR Set not found', code: 'NOT_FOUND' });
         return;
@@ -1273,7 +1323,11 @@ router.post(
 // Set lifecycle transitions — activate / cancel (design §4.7/§6)
 // ==========================================
 
-function mountSetTransitionRoute(path: string, op: string, spec: OkrSetLifecycleTransitionSpec): void {
+function mountSetTransitionRoute(
+  path: string,
+  op: string,
+  spec: OkrSetLifecycleTransitionSpec
+): void {
   router.post(
     path,
     validateParams(OkrSetIdParamsSchema),
@@ -1283,7 +1337,11 @@ function mountSetTransitionRoute(path: string, op: string, spec: OkrSetLifecycle
       if (!auth) return;
       try {
         const { setId } = req.params as { setId: string };
-        const existing = await getOkrSet({ userId: auth.userId, organizationId: auth.organizationId, setId });
+        const existing = await getOkrSet({
+          userId: auth.userId,
+          organizationId: auth.organizationId,
+          setId,
+        });
         if (!existing) {
           res.status(404).json({ error: 'OKR Set not found', code: 'NOT_FOUND' });
           return;
@@ -1333,7 +1391,11 @@ router.post(
     if (!auth) return;
     try {
       const { setId } = req.params as { setId: string };
-      const existing = await getOkrSet({ userId: auth.userId, organizationId: auth.organizationId, setId });
+      const existing = await getOkrSet({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        setId,
+      });
       if (!existing) {
         res.status(404).json({ error: 'OKR Set not found', code: 'NOT_FOUND' });
         return;
@@ -1444,7 +1506,11 @@ router.post(
     if (!auth) return;
     try {
       const { setId } = req.params as { setId: string };
-      const existingSet = await getOkrSet({ userId: auth.userId, organizationId: auth.organizationId, setId });
+      const existingSet = await getOkrSet({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        setId,
+      });
       if (!existingSet) {
         res.status(404).json({ error: 'OKR Set not found', code: 'NOT_FOUND' });
         return;
@@ -1493,7 +1559,11 @@ router.get(
     if (!auth) return;
     try {
       const { setId } = req.params as { setId: string };
-      const objectives = await listObjectivesForSet({ userId: auth.userId, organizationId: auth.organizationId, setId });
+      const objectives = await listObjectivesForSet({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        setId,
+      });
       res.status(200).json({ objectives });
     } catch (err) {
       handleOkrRouteError(res, err, 'listObjectivesForSet');
@@ -1513,7 +1583,11 @@ router.get(
     if (!auth) return;
     try {
       const { objectiveId } = req.params as { objectiveId: string };
-      const objective = await getObjective({ userId: auth.userId, organizationId: auth.organizationId, objectiveId });
+      const objective = await getObjective({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        objectiveId,
+      });
       if (!objective) {
         res.status(404).json({ error: 'OKR Objective not found', code: 'NOT_FOUND' });
         return;
@@ -1538,7 +1612,11 @@ router.patch(
     if (!auth) return;
     try {
       const { objectiveId } = req.params as { objectiveId: string };
-      const existing = await getObjective({ userId: auth.userId, organizationId: auth.organizationId, objectiveId });
+      const existing = await getObjective({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        objectiveId,
+      });
       if (!existing) {
         res.status(404).json({ error: 'OKR Objective not found', code: 'NOT_FOUND' });
         return;
@@ -1591,7 +1669,11 @@ router.post(
     if (!auth) return;
     try {
       const { objectiveId } = req.params as { objectiveId: string };
-      const existing = await getObjective({ userId: auth.userId, organizationId: auth.organizationId, objectiveId });
+      const existing = await getObjective({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        objectiveId,
+      });
       if (!existing) {
         res.status(404).json({ error: 'OKR Objective not found', code: 'NOT_FOUND' });
         return;
@@ -1634,7 +1716,11 @@ router.post(
     if (!auth) return;
     try {
       const { objectiveId } = req.params as { objectiveId: string };
-      const existingObjective = await getObjective({ userId: auth.userId, organizationId: auth.organizationId, objectiveId });
+      const existingObjective = await getObjective({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        objectiveId,
+      });
       if (!existingObjective) {
         res.status(404).json({ error: 'OKR Objective not found', code: 'NOT_FOUND' });
         return;
@@ -1693,7 +1779,11 @@ router.get(
     if (!auth) return;
     try {
       const { keyResultId } = req.params as { keyResultId: string };
-      const keyResult = await getKeyResult({ userId: auth.userId, organizationId: auth.organizationId, keyResultId });
+      const keyResult = await getKeyResult({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        keyResultId,
+      });
       if (!keyResult) {
         res.status(404).json({ error: 'OKR KeyResult not found', code: 'NOT_FOUND' });
         return;
@@ -1718,7 +1808,11 @@ router.patch(
     if (!auth) return;
     try {
       const { keyResultId } = req.params as { keyResultId: string };
-      const existing = await getKeyResult({ userId: auth.userId, organizationId: auth.organizationId, keyResultId });
+      const existing = await getKeyResult({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        keyResultId,
+      });
       if (!existing) {
         res.status(404).json({ error: 'OKR KeyResult not found', code: 'NOT_FOUND' });
         return;
@@ -1781,7 +1875,11 @@ router.post(
     if (!auth) return;
     try {
       const { keyResultId } = req.params as { keyResultId: string };
-      const existing = await getKeyResult({ userId: auth.userId, organizationId: auth.organizationId, keyResultId });
+      const existing = await getKeyResult({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        keyResultId,
+      });
       if (!existing) {
         res.status(404).json({ error: 'OKR KeyResult not found', code: 'NOT_FOUND' });
         return;
@@ -1828,7 +1926,11 @@ router.get(
     if (!auth) return;
     try {
       const { keyResultId } = req.params as { keyResultId: string };
-      const existing = await getKeyResult({ userId: auth.userId, organizationId: auth.organizationId, keyResultId });
+      const existing = await getKeyResult({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        keyResultId,
+      });
       if (!existing) {
         res.status(404).json({ error: 'OKR KeyResult not found', code: 'NOT_FOUND' });
         return;
@@ -1860,7 +1962,11 @@ router.post(
     if (!auth) return;
     try {
       const { keyResultId } = req.params as { keyResultId: string };
-      const existing = await getKeyResult({ userId: auth.userId, organizationId: auth.organizationId, keyResultId });
+      const existing = await getKeyResult({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        keyResultId,
+      });
       if (!existing) {
         res.status(404).json({ error: 'OKR KeyResult not found', code: 'NOT_FOUND' });
         return;
@@ -1913,12 +2019,20 @@ router.post(
     if (!auth) return;
     try {
       const { keyResultId, checkinId } = req.params as { keyResultId: string; checkinId: string };
-      const existing = await getKeyResult({ userId: auth.userId, organizationId: auth.organizationId, keyResultId });
+      const existing = await getKeyResult({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        keyResultId,
+      });
       if (!existing) {
         res.status(404).json({ error: 'OKR KeyResult not found', code: 'NOT_FOUND' });
         return;
       }
-      const existingCheckIn = await getCheckIn({ userId: auth.userId, organizationId: auth.organizationId, checkInId: checkinId });
+      const existingCheckIn = await getCheckIn({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        checkInId: checkinId,
+      });
       if (!existingCheckIn) {
         res.status(404).json({ error: 'OKR CheckIn not found', code: 'NOT_FOUND' });
         return;
@@ -1975,12 +2089,20 @@ router.get(
     if (!auth) return;
     try {
       const { keyResultId } = req.params as { keyResultId: string };
-      const keyResult = await getKeyResult({ userId: auth.userId, organizationId: auth.organizationId, keyResultId });
+      const keyResult = await getKeyResult({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        keyResultId,
+      });
       if (!keyResult) {
         res.status(404).json({ error: 'OKR KeyResult not found', code: 'NOT_FOUND' });
         return;
       }
-      const priorCheckIns = await listCheckIns({ userId: auth.userId, organizationId: auth.organizationId, keyResultId });
+      const priorCheckIns = await listCheckIns({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        keyResultId,
+      });
       const suggestion = suggestNextCheckInValue(priorCheckIns, keyResult);
       res.status(200).json({ suggestion });
     } catch (err) {
@@ -2019,7 +2141,11 @@ router.post(
     if (!auth) return;
     try {
       const { objectiveId } = req.params as { objectiveId: string };
-      const existingSource = await getObjective({ userId: auth.userId, organizationId: auth.organizationId, objectiveId });
+      const existingSource = await getObjective({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        objectiveId,
+      });
       if (!existingSource) {
         res.status(404).json({ error: 'OKR Objective not found', code: 'NOT_FOUND' });
         return;
@@ -2064,7 +2190,9 @@ router.get(
     if (!auth) return;
     try {
       const { objectiveId } = req.params as { objectiveId: string };
-      const query = req.query as unknown as import('zod').infer<typeof ListOkrAlignmentsForObjectiveQuerySchema>;
+      const query = req.query as unknown as import('zod').infer<
+        typeof ListOkrAlignmentsForObjectiveQuerySchema
+      >;
       const alignments = await listAlignmentsForObjective({
         userId: auth.userId,
         organizationId: auth.organizationId,
@@ -2092,7 +2220,9 @@ router.get(
     if (!auth) return;
     try {
       const { objectiveId } = req.params as { objectiveId: string };
-      const query = req.query as unknown as import('zod').infer<typeof GetOkrAlignmentTreeQuerySchema>;
+      const query = req.query as unknown as import('zod').infer<
+        typeof GetOkrAlignmentTreeQuerySchema
+      >;
       const nodes = await getAlignmentTreeUnderObjective({
         userId: auth.userId,
         organizationId: auth.organizationId,
@@ -2247,7 +2377,11 @@ router.post(
     if (!auth) return;
     try {
       const { setId } = req.params as { setId: string };
-      const existing = await getOkrSet({ userId: auth.userId, organizationId: auth.organizationId, setId });
+      const existing = await getOkrSet({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        setId,
+      });
       if (!existing) {
         res.status(404).json({ error: 'OKR Set not found', code: 'NOT_FOUND' });
         return;
@@ -2293,7 +2427,11 @@ router.get(
     if (!auth) return;
     try {
       const { objectiveId } = req.params as { objectiveId: string };
-      const existingObjective = await getObjective({ userId: auth.userId, organizationId: auth.organizationId, objectiveId });
+      const existingObjective = await getObjective({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        objectiveId,
+      });
       if (!existingObjective) {
         res.status(404).json({ error: 'OKR Objective not found', code: 'NOT_FOUND' });
         return;
@@ -2320,7 +2458,11 @@ router.post(
     try {
       const { objectiveId } = req.params as { objectiveId: string };
       const body = req.body as import('zod').infer<typeof RecordOkrObjectiveReflectionSchema>;
-      const existingObjective = await getObjective({ userId: auth.userId, organizationId: auth.organizationId, objectiveId });
+      const existingObjective = await getObjective({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        objectiveId,
+      });
       if (!existingObjective) {
         res.status(404).json({ error: 'OKR Objective not found', code: 'NOT_FOUND' });
         return;
@@ -2379,11 +2521,17 @@ router.post(
     if (!auth) return;
     try {
       const { objectiveId } = req.params as { objectiveId: string };
-      const body = req.body as import('zod').infer<typeof RecordOkrReflectionTeresaDraftDispositionSchema>;
+      const body = req.body as import('zod').infer<
+        typeof RecordOkrReflectionTeresaDraftDispositionSchema
+      >;
       // Same D06-posture existence+visibility pre-check
       // recordObjectiveReflection uses immediately above — generic 404 for
       // "not found" and "not visible" alike, never distinguishing the two.
-      const existingObjective = await getObjective({ userId: auth.userId, organizationId: auth.organizationId, objectiveId });
+      const existingObjective = await getObjective({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        objectiveId,
+      });
       if (!existingObjective) {
         res.status(404).json({ error: 'OKR Objective not found', code: 'NOT_FOUND' });
         return;
@@ -2426,7 +2574,11 @@ router.post(
     if (!auth) return;
     try {
       const { setId } = req.params as { setId: string };
-      const existing = await getOkrSet({ userId: auth.userId, organizationId: auth.organizationId, setId });
+      const existing = await getOkrSet({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        setId,
+      });
       if (!existing) {
         res.status(404).json({ error: 'OKR Set not found', code: 'NOT_FOUND' });
         return;
@@ -2469,7 +2621,11 @@ router.post(
     if (!auth) return;
     try {
       const { setId } = req.params as { setId: string };
-      const existing = await getOkrSet({ userId: auth.userId, organizationId: auth.organizationId, setId });
+      const existing = await getOkrSet({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        setId,
+      });
       if (!existing) {
         res.status(404).json({ error: 'OKR Set not found', code: 'NOT_FOUND' });
         return;
@@ -2512,7 +2668,11 @@ router.post(
     if (!auth) return;
     try {
       const { setId } = req.params as { setId: string };
-      const existing = await getOkrSet({ userId: auth.userId, organizationId: auth.organizationId, setId });
+      const existing = await getOkrSet({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        setId,
+      });
       if (!existing) {
         res.status(404).json({ error: 'OKR Set not found', code: 'NOT_FOUND' });
         return;
@@ -2556,12 +2716,18 @@ router.post(
     if (!auth) return;
     try {
       const { setId } = req.params as { setId: string };
-      const existing = await getOkrSet({ userId: auth.userId, organizationId: auth.organizationId, setId });
+      const existing = await getOkrSet({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        setId,
+      });
       if (!existing) {
         res.status(404).json({ error: 'OKR Set not found', code: 'NOT_FOUND' });
         return;
       }
-      const body = req.body as import('zod').infer<typeof RequestChangesOnOkrSetManagerReviewSchema>;
+      const body = req.body as import('zod').infer<
+        typeof RequestChangesOnOkrSetManagerReviewSchema
+      >;
       const access = await resolveAccess(req, auth);
       const outcome = await requestChangesOnOkrSetManagerReview({
         setId,
@@ -2599,7 +2765,11 @@ router.post(
     if (!auth) return;
     try {
       const { setId, reviewType } = req.params as { setId: string; reviewType: 'self' | 'manager' };
-      const existing = await getOkrSet({ userId: auth.userId, organizationId: auth.organizationId, setId });
+      const existing = await getOkrSet({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        setId,
+      });
       if (!existing) {
         res.status(404).json({ error: 'OKR Set not found', code: 'NOT_FOUND' });
         return;
@@ -2644,7 +2814,11 @@ router.get(
     if (!auth) return;
     try {
       const { setId } = req.params as { setId: string };
-      const reviews = await listOkrSetReviews({ userId: auth.userId, organizationId: auth.organizationId, setId });
+      const reviews = await listOkrSetReviews({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        setId,
+      });
       res.status(200).json({ reviews });
     } catch (err) {
       handleOkrRouteError(res, err, 'listOkrSetReviews');
@@ -2665,7 +2839,11 @@ router.post(
     if (!auth) return;
     try {
       const { setId } = req.params as { setId: string };
-      const existing = await getOkrSet({ userId: auth.userId, organizationId: auth.organizationId, setId });
+      const existing = await getOkrSet({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        setId,
+      });
       if (!existing) {
         res.status(404).json({ error: 'OKR Set not found', code: 'NOT_FOUND' });
         return;
@@ -2708,7 +2886,11 @@ router.post(
     if (!auth) return;
     try {
       const { setId } = req.params as { setId: string };
-      const existing = await getOkrSet({ userId: auth.userId, organizationId: auth.organizationId, setId });
+      const existing = await getOkrSet({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        setId,
+      });
       if (!existing) {
         res.status(404).json({ error: 'OKR Set not found', code: 'NOT_FOUND' });
         return;
@@ -2790,7 +2972,11 @@ router.post(
     if (!auth) return;
     try {
       const { setId, objectiveId } = req.params as { setId: string; objectiveId: string };
-      const objective = await getObjective({ userId: auth.userId, organizationId: auth.organizationId, objectiveId });
+      const objective = await getObjective({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        objectiveId,
+      });
       if (!objective || objective.setId !== setId) {
         res.status(404).json({ error: 'OKR Objective not found', code: 'NOT_FOUND' });
         return;
@@ -2835,7 +3021,11 @@ router.post(
     if (!auth) return;
     try {
       const { setId, objectiveId } = req.params as { setId: string; objectiveId: string };
-      const objective = await getObjective({ userId: auth.userId, organizationId: auth.organizationId, objectiveId });
+      const objective = await getObjective({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        objectiveId,
+      });
       if (!objective || objective.setId !== setId) {
         res.status(404).json({ error: 'OKR Objective not found', code: 'NOT_FOUND' });
         return;
@@ -2881,7 +3071,11 @@ router.post(
     if (!auth) return;
     try {
       const { setId, objectiveId } = req.params as { setId: string; objectiveId: string };
-      const objective = await getObjective({ userId: auth.userId, organizationId: auth.organizationId, objectiveId });
+      const objective = await getObjective({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        objectiveId,
+      });
       if (!objective || objective.setId !== setId) {
         res.status(404).json({ error: 'OKR Objective not found', code: 'NOT_FOUND' });
         return;
@@ -2928,12 +3122,18 @@ router.get(
     if (!auth) return;
     try {
       const { setId } = req.params as { setId: string };
-      const set = await getOkrSet({ userId: auth.userId, organizationId: auth.organizationId, setId });
+      const set = await getOkrSet({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        setId,
+      });
       if (!set) {
         res.status(404).json({ error: 'OKR Set not found', code: 'NOT_FOUND' });
         return;
       }
-      const query = req.query as unknown as import('zod').infer<typeof ListOkrSupportRequestsQuerySchema>;
+      const query = req.query as unknown as import('zod').infer<
+        typeof ListOkrSupportRequestsQuerySchema
+      >;
       const supportRequests = await listSupportRequestsForSet({
         userId: auth.userId,
         organizationId: auth.organizationId,
@@ -2960,7 +3160,11 @@ router.post(
     if (!auth) return;
     try {
       const { requestId } = req.params as { requestId: string };
-      const existing = await getSupportRequest({ userId: auth.userId, organizationId: auth.organizationId, requestId });
+      const existing = await getSupportRequest({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        requestId,
+      });
       if (!existing) {
         res.status(404).json({ error: 'OKR Support request not found', code: 'NOT_FOUND' });
         return;
@@ -3003,7 +3207,11 @@ router.post(
     if (!auth) return;
     try {
       const { requestId } = req.params as { requestId: string };
-      const existing = await getSupportRequest({ userId: auth.userId, organizationId: auth.organizationId, requestId });
+      const existing = await getSupportRequest({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        requestId,
+      });
       if (!existing) {
         res.status(404).json({ error: 'OKR Support request not found', code: 'NOT_FOUND' });
         return;
@@ -3047,7 +3255,11 @@ router.post(
     if (!auth) return;
     try {
       const { requestId } = req.params as { requestId: string };
-      const existing = await getSupportRequest({ userId: auth.userId, organizationId: auth.organizationId, requestId });
+      const existing = await getSupportRequest({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        requestId,
+      });
       if (!existing) {
         res.status(404).json({ error: 'OKR Support request not found', code: 'NOT_FOUND' });
         return;
@@ -3091,7 +3303,11 @@ router.post(
     if (!auth) return;
     try {
       const { requestId } = req.params as { requestId: string };
-      const existing = await getSupportRequest({ userId: auth.userId, organizationId: auth.organizationId, requestId });
+      const existing = await getSupportRequest({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        requestId,
+      });
       if (!existing) {
         res.status(404).json({ error: 'OKR Support request not found', code: 'NOT_FOUND' });
         return;
@@ -3210,7 +3426,10 @@ router.get('/attention', async (req: AuthenticatedRequest, res: Response) => {
   const auth = requireAuth(req, res);
   if (!auth) return;
   try {
-    const attention = await listOrganizationOkrAttention({ managerId: auth.userId, organizationId: auth.organizationId });
+    const attention = await listOrganizationOkrAttention({
+      managerId: auth.userId,
+      organizationId: auth.organizationId,
+    });
     res.status(200).json({ attention });
   } catch (err) {
     handleOkrRouteError(res, err, 'listOrganizationOkrAttention');

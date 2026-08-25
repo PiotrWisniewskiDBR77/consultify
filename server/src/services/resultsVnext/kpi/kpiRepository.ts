@@ -38,6 +38,7 @@ import {
   wrapWithVisibilityScope,
   VISIBILITY_CTE_PARAM_COUNT,
 } from '../platform/visibilityScopedQuery.js';
+import { resultsTextMatchPattern, resultsTextMatchSql } from '../platform/textMatch.js';
 
 import {
   toKpiDefinition,
@@ -89,12 +90,13 @@ export interface ListKpisParams {
   userId: string;
   organizationId: string;
   status?: KpiStatus;
+  q?: string;
   limit?: number;
   offset?: number;
 }
 
 export async function listKpis(params: ListKpisParams): Promise<KpiDefinition[]> {
-  const { userId, organizationId, status, limit = 100, offset = 0 } = params;
+  const { userId, organizationId, status, q, limit = 100, offset = 0 } = params;
 
   const cte = await buildVisibilityScopedCte({ userId, organizationId, resourceType: 'kpi' });
   const values: unknown[] = [...cte.values];
@@ -103,6 +105,12 @@ export async function listKpis(params: ListKpisParams): Promise<KpiDefinition[]>
   if (status) {
     values.push(status);
     filters.push(`kd.status = $${values.length}`);
+  }
+  if (q) {
+    values.push(resultsTextMatchPattern(q));
+    filters.push(
+      resultsTextMatchSql(['dv.name', 'kd.kpi_code', 'dv.description'], `$${values.length}`)
+    );
   }
 
   values.push(limit);
@@ -113,6 +121,9 @@ export async function listKpis(params: ListKpisParams): Promise<KpiDefinition[]>
   const baseQuerySql = `
     SELECT kd.*
       FROM rvn_kpi_definitions kd
+      LEFT JOIN rvn_kpi_definition_versions dv
+             ON dv.definition_version_id = kd.current_definition_version_id
+            AND dv.organization_id = kd.organization_id
       INNER JOIN rvn_visible_resources vr
               ON vr.resource_type = 'kpi' AND vr.resource_id = kd.kpi_id::text
      WHERE kd.organization_id = $1

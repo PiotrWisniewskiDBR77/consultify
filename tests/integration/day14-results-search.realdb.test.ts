@@ -11,6 +11,7 @@ vi.mock('../../server/src/services/effectiveAccessService.js', () => ({
 
 const { searchResults } =
   await import('../../server/src/services/resultsVnext/platform/resultsSearchRepository.js');
+const { listKpis } = await import('../../server/src/services/resultsVnext/kpi/kpiRepository.js');
 
 function buildClientConfig(): ClientConfig | null {
   return process.env.DATABASE_URL ? { connectionString: process.env.DATABASE_URL } : null;
@@ -88,5 +89,14 @@ describe.skipIf(!config)('Day 14 S.1 Results search real Postgres', () => {
     expect(seen).toHaveLength(5);
     expect(new Set(seen).size).toBe(5);
     expect(new Set(seen)).toEqual(new Set(ids));
+  });
+
+  it('keeps the KPI registry unchanged without q and filters inside SQL with q', async () => {
+    const unfiltered = await listKpis({ userId, organizationId, limit: 10 });
+    const matching = await listKpis({ userId, organizationId, q: 'margin-2', limit: 10 });
+    const absent = await listKpis({ userId, organizationId, q: 'definitely-absent', limit: 10 });
+    expect(unfiltered).toHaveLength(5);
+    expect(matching.map((kpi) => kpi.kpiCode)).toEqual(['DAY14-MARGIN-2']);
+    expect(absent).toEqual([]);
   });
 });

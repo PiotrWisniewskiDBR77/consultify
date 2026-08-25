@@ -107,6 +107,7 @@ export const CreateKpiDraftSchema = z.object({
 
 export const ListKpisQuerySchema = z.object({
   status: KpiStatusEnum.optional(),
+  q: z.string().trim().min(2).max(200).optional(),
   limit: z.coerce.number().int().positive().max(500).optional(),
   offset: z.coerce.number().int().nonnegative().optional(),
 });
