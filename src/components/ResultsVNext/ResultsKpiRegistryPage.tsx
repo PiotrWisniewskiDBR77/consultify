@@ -780,19 +780,30 @@ export interface ResultsKpiRegistryPageProps {
   initialTab?: 'my' | 'org' | 'scorecards';
   /** Existing Results hub create action; a changed non-zero nonce opens the canonical modal. */
   createNonce?: number;
-  /** Scorecards legacy cutover is already enforced server-side; do not strand this mounted successor behind the rollout flag. */
-  canonicalCutoverMount?: boolean;
 }
 
 export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
   initialTab,
   createNonce,
-  canonicalCutoverMount = false,
 }) => {
   const { i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
   const currentUser = useAppStore((s) => s.currentUser);
-  const enabled = canonicalCutoverMount || isResultsVNextFlagEnabled('kpiRegistry');
+  // FIX-6 (2026-08-25 odbiór dnia 4, nadzorca wariant a): replaces the old
+  // dedicated cutover-bypass PROP (retired; see `tests/resultsVnext/
+  // flagGateEnumeration.test.ts`, "keeps the historical scorecards bypass
+  // mechanism isolated, unrouted, and prop-free") with an equivalent
+  // mechanic keyed off `initialTab` itself. The only real caller that ever
+  // set that retired prop was `ResultsKpiScorecardsView.tsx`
+  // (the historical hub's scorecards adapter), and it ALWAYS paired it
+  // with `initialTab="scorecards"` — so `initialTab === 'scorecards'` is
+  // exactly the same signal, one prop instead of two, same edge cases
+  // (still a mount-time-fixed bypass, unaffected by later in-component tab
+  // switches, since `initialTab` is never reassigned after mount — same as
+  // the old prop). Scorecards' legacy cutover is already enforced
+  // server-side, so this mounted successor must not be strandable behind
+  // the `kpiRegistry` rollout flag.
+  const enabled = initialTab === 'scorecards' || isResultsVNextFlagEnabled('kpiRegistry');
 
   const navigate = useNavigate();
   const [rows, setRows] = useState<KpiDefinitionDto[]>([]);

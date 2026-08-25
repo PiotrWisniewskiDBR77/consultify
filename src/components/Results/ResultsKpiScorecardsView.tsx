@@ -25,7 +25,10 @@ export interface ResultsKpiScorecardsViewProps {
 export const ResultsKpiScorecardsView: React.FC<ResultsKpiScorecardsViewProps> = ({
   createNonce,
 }) => (
-  <ResultsKpiRegistryPage initialTab="scorecards" createNonce={createNonce} canonicalCutoverMount />
+  // `initialTab="scorecards"` IS the enablement signal — see the FIX-6 note
+  // on `ResultsKpiRegistryPage`'s `enabled` computation. There is no
+  // separate bypass prop to pass here anymore.
+  <ResultsKpiRegistryPage initialTab="scorecards" createNonce={createNonce} />
 );
 
 export default ResultsKpiScorecardsView;
