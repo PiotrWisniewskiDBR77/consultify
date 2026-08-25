@@ -40,6 +40,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import type { RelationItem, StandardModuleTab, TableRow } from '@/components/standard';
 
 import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
+import { shouldUseResultsVNextOwnerSampleData } from '../resultsVNextOwnerSampleData';
 import type { RoiCaseListItem } from './roiApi';
 import { isRoiCaseLocked, getRoiCaseLockInfo } from './roiRegistryMappers';
 import { roiEvidenceLinkPurposeLabel } from './roiCaseFullToolMappers';
@@ -1120,6 +1121,14 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
     <>
       <ResultsVNextRegistryShell
         domain="roi"
+        // FIX-3 (2026-08-25 odbiór dnia 4): `getRoiBaseline`/`getRoiCalculationPolicy`
+        // (roiCaseDetailApi.ts) return a fabricated baseline/policy for ANY real
+        // ROI case whenever `?sampleData=results-vnext` is present — the fixture
+        // branch does not check `roiCase.caseId`, it fires for every case. Without
+        // this banner a real case's baseline/policy card was indistinguishable
+        // from a genuinely persisted one. Same prop/pattern as
+        // ResultsRoiHub.tsx:521/576 and ResultsKpiRegistryPage.tsx:1397/1527.
+        sampleData={shouldUseResultsVNextOwnerSampleData()}
         moduleBar={{
           breadcrumbs,
           tabs,
