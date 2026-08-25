@@ -196,9 +196,12 @@ export function ControlLoopReport(): React.ReactElement {
               'Causal and bidirectional lineage'
             )}
           </h2>
-          <ul>
+          <ul className="mt-2 space-y-1 text-sm">
             {state.rows.map((row) => (
-              <li key={row.id}>
+              <li
+                key={row.id}
+                className="rounded-lg border border-c-border-subtle px-3 py-2 font-mono text-xs"
+              >
                 FACT · {row.kind}:{row.id} → decision:{row.decisionId} → work:{row.workItemId} →
                 verification:{row.verification} · SOURCE v{row.sourceVersion}
               </li>

@@ -216,33 +216,13 @@ export function ResourcesCapacityReport(): React.ReactElement {
             </span>
           </div>
         </section>
-        <section>
-          <h2 className="font-semibold">
-            {t('execution.reports.intelligence.resources.heatmap', 'Person × week load heatmap')}
-          </h2>
-          <div className="mt-2 grid min-w-[640px] grid-cols-3 gap-px overflow-x-auto rounded-lg border border-c-border bg-c-border text-sm">
-            {[
-              t('execution.reports.intelligence.resources.person', 'Person / role'),
-              t('execution.reports.intelligence.resources.week', 'Week'),
-              t('execution.reports.intelligence.resources.saturation', 'Saturation range'),
-            ].map((label) => (
-              <div key={label} className="bg-c-surface-raised p-2 font-semibold">
-                {label}
-              </div>
-            ))}
-            {state.rows.flatMap((row) => [
-              <div key={`${row.id}:person`} className="bg-c-surface p-2">
-                {row.person}
-              </div>,
-              <div key={`${row.id}:week`} className="bg-c-surface p-2">
-                {row.week}
-              </div>,
-              <div key={`${row.id}:load`} className="bg-c-surface p-2">
-                {row.saturation} · {row.confidence}
-              </div>,
-            ])}
-          </div>
-        </section>
+        {/* F8 polish pass, item 8: the previous "heatmap" section rendered
+            the exact same rows (person/week/saturation) as the People view
+            table below, with no pivot or aggregation — a literal duplicate
+            under a misleading name (see Day 11 report "Korekta odbiorcza",
+            item 1). Removed rather than dressed up: a real person×week
+            matrix is a rebuild, out of scope for this pass; the People view
+            table already carries every field this section repeated. */}
         <section>
           <h2 className="font-semibold">
             {t('execution.reports.intelligence.resources.peopleView', 'People view')}
@@ -267,9 +247,9 @@ export function ResourcesCapacityReport(): React.ReactElement {
           <h2 className="font-semibold">
             {t('execution.reports.intelligence.resources.projectView', 'Project view')}
           </h2>
-          <ul>
+          <ul className="mt-2 space-y-1 text-sm">
             {Array.from(new Set(state.rows.map((row) => row.project))).map((project) => (
-              <li key={project}>
+              <li key={project} className="rounded-lg border border-c-border-subtle px-3 py-2">
                 {project} ·{' '}
                 {t(
                   'execution.reports.intelligence.resources.coverageUnknown',
@@ -286,7 +266,7 @@ export function ResourcesCapacityReport(): React.ReactElement {
               'Conflict and missing-data registers'
             )}
           </h2>
-          <ul>
+          <ul className="mt-2 space-y-1 text-sm">
             {state.rows
               .filter(
                 (row) =>
@@ -295,7 +275,10 @@ export function ResourcesCapacityReport(): React.ReactElement {
                   row.availability === 'UNKNOWN'
               )
               .map((row) => (
-                <li key={row.id}>
+                <li
+                  key={row.id}
+                  className="rounded-lg border border-c-border-subtle px-3 py-2 font-mono text-xs"
+                >
                   {row.person} · {row.conflict} · {row.skill} · {row.availability} · SOURCE v
                   {row.sourceVersion}
                 </li>

@@ -10274,7 +10274,7 @@
         "noContributors": "Brak rekordów składowych",
         "sections": {
           "context": "Kontekst i pasek zaufania",
-          "pulse": "Executive Pulse",
+          "pulse": "Puls zarządczy",
           "hurts": "Co boli dziś",
           "approaching": "Co się zbliża",
           "stake": "Co jest zagrożone",
@@ -10293,6 +10293,15 @@
           "decisionLatency": "Czas decyzji",
           "dataCompleteness": "Kompletność danych"
         },
+        "buckets": {
+          "1_7": "1–7 dni",
+          "8_14": "8–14 dni",
+          "15_30": "15–30 dni",
+          "31_90": "31–90 dni",
+          "over90": "Powyżej 90 dni",
+          "noDue": "Bez terminu"
+        },
+        "showAllRecords": "Pokaż wszystkie rekordy",
         "columns": {
           "title": "Rekord",
           "kind": "Typ",
@@ -10369,7 +10378,10 @@
           "forecast": "Horyzont prognozy (tygodnie)",
           "scope": "Autoryzowana referencja zakresu",
           "validation": "Walidacja",
-          "sourcesWarning": "Dowody źródłowe dołącza nadzorowany workflow runtime; pusty zestaw źródeł nie może zostać zwalidowany ani opublikowany. Tydzień raportowy, horyzont prognozy i wybór sekcji są tylko kontekstem preflight, ponieważ runtime-v1 nie ma dla nich pól kontraktowych (BRAK_API).",
+          "missingFields": "brakuje",
+          "contextOnlyWarning": "Tydzień raportowy, horyzont prognozy i wybór sekcji są tylko kontekstem preflight, ponieważ runtime-v1 nie ma dla nich pól kontraktowych (BRAK_API).",
+          "draftIncomplete": "Stan szkicu po utworzeniu: NIEKOMPLETNY (dołączono 0 źródeł)",
+          "sourcesWarning": "Ten ekran nie może dołączać dowodów źródłowych; robi to osobno nadzorowany workflow runtime. Pusty zestaw źródeł nie może zostać zwalidowany ani opublikowany.",
           "createDraft": "Utwórz nadzorowany szkic",
           "createError": "Nie udało się utworzyć szkicu",
           "openReports": "Otwarte raporty",

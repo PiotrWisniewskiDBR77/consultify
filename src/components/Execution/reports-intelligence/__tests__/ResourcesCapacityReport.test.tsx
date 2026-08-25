@@ -61,7 +61,10 @@ describe('Resources Capacity report', () => {
     expect(await screen.findByTestId('standard-table')).toHaveTextContent(
       'Anna · Project A · 0.7–0.8'
     );
-    expect(screen.getByRole('heading', { name: 'Person × week load heatmap' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'People view' })).toBeInTheDocument();
+    // Polish pass item 8: the old duplicate "heatmap" grid (same rows as the
+    // People view table above, no pivot) is gone rather than dressed up.
+    expect(screen.queryByText(/load heatmap/i)).toBeNull();
   });
 
   it('keeps saturation UNKNOWN rather than 0% without availability', async () => {

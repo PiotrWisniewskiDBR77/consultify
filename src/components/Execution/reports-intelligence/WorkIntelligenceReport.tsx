@@ -43,6 +43,35 @@ const sections = [
   'register',
 ] as const;
 
+// Polish pass item 3: severity as a canonical semantic badge. Crimson
+// (c-danger) is reserved for genuinely critical (red) states only — amber
+// uses c-warning, unknown/neutral use muted text. Never `primary-*` (the
+// Tailwind `primary` token in this codebase IS crimson; see CLAUDE.md trap
+// #3), and never color implies a value the data does not support.
+// Polish pass item 2: bucket keys are internal ids, not copy — translate
+// each to an honest human label (falls back to English when no PL/EN
+// resource bundle key is registered yet).
+const BUCKET_LABEL_FALLBACK: Record<string, string> = {
+  '1_7': '1–7 days',
+  '8_14': '8–14 days',
+  '15_30': '15–30 days',
+  '31_90': '31–90 days',
+  over90: 'Over 90 days',
+  noDue: 'No due date',
+};
+
+// Polish pass item 5: one shared section shell (SPEC-A "Document centre"
+// rhythm) for sections 1-8, instead of only the Context section having a
+// card border while the rest sat bare against the page background.
+const SECTION_SHELL_CLASS = 'rounded-xl border border-c-border bg-c-surface-raised p-4';
+
+const SEVERITY_BADGE_CLASS: Record<string, string> = {
+  red: 'bg-[color-mix(in_srgb,var(--c-danger)_14%,transparent)] text-c-danger',
+  amber: 'bg-[color-mix(in_srgb,var(--c-warning)_14%,transparent)] text-c-warning',
+  neutral: 'bg-c-surface-raised text-c-text-secondary',
+  unknown: 'bg-c-surface-raised text-c-text-muted',
+};
+
 export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactElement {
   const { t, i18n } = useTranslation();
   const [state, setState] = useState<State>({ kind: 'loading' });
@@ -221,7 +250,14 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
               <dt className="text-c-text-muted">
                 {t('execution.reports.intelligence.lastSync', 'Last synchronization')}
               </dt>
-              <dd>{state.syncedAt}</dd>
+              {/* Polish pass item 1: one shared, locally-formatted timestamp
+                  under the trust strip, instead of a raw ISO string here and
+                  the same instant repeated (also as raw ISO) on every one of
+                  the eight KPI cards below. */}
+              <dd>{new Date(state.syncedAt).toLocaleString(i18n.language, {
+                dateStyle: 'medium',
+                timeStyle: 'short',
+              })}</dd>
             </div>
             <div>
               <dt className="text-c-text-muted">
@@ -246,7 +282,11 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
           ) : null}
         </section>
 
-        <section data-section-order={sections[1]} aria-labelledby="work-pulse-title">
+        <section
+          data-section-order={sections[1]}
+          aria-labelledby="work-pulse-title"
+          className={SECTION_SHELL_CLASS}
+        >
           <h2 id="work-pulse-title" className="font-semibold">
             {t('execution.reports.intelligence.sections.pulse', 'Executive Pulse')}
           </h2>
@@ -263,7 +303,14 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
                   {t(`execution.reports.intelligence.metrics.${metric.id}`, metric.id)}
                 </span>
                 {metric.value.kind === 'UNKNOWN' ? (
-                  <strong className="mt-2 block">UNKNOWN</strong>
+                  // Polish pass item 6: match the two-line layout of the
+                  // CALCULATED branch below (value line + muted detail line)
+                  // so the "CZAS DECYZJI" (decisionLatency) card does not
+                  // collapse to a shorter height and break the grid row.
+                  <>
+                    <strong className="mt-2 block text-2xl">UNKNOWN</strong>
+                    <span className="text-xs text-c-text-muted">{metric.value.reason}</span>
+                  </>
                 ) : (
                   <>
                     <strong className="mt-2 block text-2xl">
@@ -272,18 +319,23 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
                         : metric.value.value}
                     </strong>
                     <span className="text-xs text-c-text-muted">
-                      {metric.value.numerator}/{metric.value.denominator} · CALCULATED ·{' '}
-                      {model.calculatedAt}
+                      {metric.value.numerator}/{metric.value.denominator} · CALCULATED
                     </span>
                   </>
                 )}
-                <span className="mt-2 block text-xs">{metric.severity.toUpperCase()}</span>
+                <span
+                  className={`mt-2 inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${
+                    SEVERITY_BADGE_CLASS[metric.severity] ?? SEVERITY_BADGE_CLASS.unknown
+                  }`}
+                >
+                  {metric.severity.toUpperCase()}
+                </span>
               </button>
             ))}
           </div>
         </section>
 
-        <section data-section-order={sections[2]}>
+        <section data-section-order={sections[2]} className={SECTION_SHELL_CLASS}>
           <h2 className="font-semibold">
             {t('execution.reports.intelligence.sections.hurts', 'What hurts today')}
           </h2>
@@ -295,19 +347,23 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
             )}
           </p>
         </section>
-        <section data-section-order={sections[3]}>
+        <section data-section-order={sections[3]} className={SECTION_SHELL_CLASS}>
           <h2 className="font-semibold">
             {t('execution.reports.intelligence.sections.approaching', 'What is approaching')}
           </h2>
           <div className="mt-2 flex flex-wrap gap-2">
             {Object.entries(model.buckets).map(([bucket, items]) => (
               <span key={bucket} className="rounded-full border border-c-border px-3 py-1 text-sm">
-                {bucket}: {items.length}
+                {t(
+                  `execution.reports.intelligence.buckets.${bucket}`,
+                  BUCKET_LABEL_FALLBACK[bucket] ?? bucket
+                )}
+                : {items.length}
               </span>
             ))}
           </div>
         </section>
-        <section data-section-order={sections[4]}>
+        <section data-section-order={sections[4]} className={SECTION_SHELL_CLASS}>
           <h2 className="font-semibold">
             {t('execution.reports.intelligence.sections.stake', 'What is at stake')}
           </h2>
@@ -319,7 +375,7 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
             )}
           </p>
         </section>
-        <section data-section-order={sections[5]}>
+        <section data-section-order={sections[5]} className={SECTION_SHELL_CLASS}>
           <h2 className="font-semibold">
             {t('execution.reports.intelligence.sections.why', 'Why it is happening')}
           </h2>
@@ -331,13 +387,13 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
             )}
           </p>
         </section>
-        <section data-section-order={sections[6]}>
+        <section data-section-order={sections[6]} className={SECTION_SHELL_CLASS}>
           <h2 className="font-semibold">
             {t('execution.reports.intelligence.sections.trend', 'How the system is changing')}
           </h2>
           <p className="text-sm text-c-text-secondary">UNKNOWN · BRAK_API_HISTORY</p>
         </section>
-        <section data-section-order={sections[7]}>
+        <section data-section-order={sections[7]} className={SECTION_SHELL_CLASS}>
           <h2 className="font-semibold">
             {t('execution.reports.intelligence.sections.actions', 'What management should do')}
           </h2>
@@ -349,7 +405,11 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
             )}
           </p>
         </section>
-        <section data-section-order={sections[8]} aria-labelledby="work-register-title">
+        <section
+          data-section-order={sections[8]}
+          aria-labelledby="work-register-title"
+          className={SECTION_SHELL_CLASS}
+        >
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 id="work-register-title" className="font-semibold">
               {t('execution.reports.intelligence.sections.register', 'Auditable register')}

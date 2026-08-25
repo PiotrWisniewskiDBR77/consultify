@@ -90,6 +90,22 @@ export function UnifiedExecutionReportGenerator(): React.ReactElement {
     form.reportWeek &&
     form.scopeRef
   );
+  // Polish pass item 10: a bare "INCOMPLETE" forces the user to hunt across
+  // nine fields for the one they missed. List which ones, by their own label.
+  const missingFieldLabels = [
+    !selectedDefinition && t('execution.reports.intelligence.generator.definition', 'Published definition'),
+    !form.reportRunId && t('execution.reports.intelligence.generator.runId', 'Report run ID'),
+    !form.purpose && t('execution.reports.intelligence.generator.purpose', 'Purpose'),
+    !form.audience && t('execution.reports.intelligence.generator.audience', 'Audience'),
+    !form.periodStart &&
+      t('execution.reports.intelligence.generator.historyStart', 'Historical period start'),
+    !form.periodEnd &&
+      t('execution.reports.intelligence.generator.historyEnd', 'Historical period end'),
+    !form.asOf && t('execution.reports.intelligence.generator.asOf', 'Separate as-of timestamp'),
+    !form.reportWeek && t('execution.reports.intelligence.generator.reportWeek', 'Reporting week'),
+    !form.scopeRef &&
+      t('execution.reports.intelligence.generator.scope', 'Authorized scope reference'),
+  ].filter((label): label is string => Boolean(label));
   const create = async () => {
     if (!valid || !selectedDefinition) return;
     setWrite('SAVING');
@@ -150,17 +166,23 @@ export function UnifiedExecutionReportGenerator(): React.ReactElement {
           aria-label={t('execution.reports.intelligence.generator.context', 'Report context')}
           className="grid gap-3 rounded-xl border border-c-border p-4 sm:grid-cols-2"
         >
-          <label>
+          {/* Polish pass item 10: explicit id/htmlFor on every field, on top
+              of the implicit wrapping association these already had, so the
+              pairing survives even if a field is ever pulled out of its
+              <label> during a future refactor. */}
+          <label htmlFor="report-run-id">
             {t('execution.reports.intelligence.generator.runId', 'Report run ID')}
             <input
+              id="report-run-id"
               value={form.reportRunId}
               onChange={(event) => setForm({ ...form, reportRunId: event.target.value })}
               className="mt-1 w-full rounded-lg border border-c-border bg-c-surface p-2"
             />
           </label>
-          <label>
+          <label htmlFor="report-definition">
             {t('execution.reports.intelligence.generator.definition', 'Published definition')}
             <select
+              id="report-definition"
               value={form.definition}
               onChange={(event) => setForm({ ...form, definition: event.target.value })}
               className="mt-1 w-full rounded-lg border border-c-border bg-c-surface p-2"
@@ -175,61 +197,68 @@ export function UnifiedExecutionReportGenerator(): React.ReactElement {
               ))}
             </select>
           </label>
-          <label>
+          <label htmlFor="report-purpose">
             {t('execution.reports.intelligence.generator.purpose', 'Purpose')}
             <input
+              id="report-purpose"
               value={form.purpose}
               onChange={(event) => setForm({ ...form, purpose: event.target.value })}
               className="mt-1 w-full rounded-lg border border-c-border bg-c-surface p-2"
             />
           </label>
-          <label>
+          <label htmlFor="report-audience">
             {t('execution.reports.intelligence.generator.audience', 'Audience')}
             <input
+              id="report-audience"
               value={form.audience}
               onChange={(event) => setForm({ ...form, audience: event.target.value })}
               className="mt-1 w-full rounded-lg border border-c-border bg-c-surface p-2"
             />
           </label>
-          <label>
+          <label htmlFor="report-period-start">
             {t('execution.reports.intelligence.generator.historyStart', 'Historical period start')}
             <input
+              id="report-period-start"
               type="date"
               value={form.periodStart}
               onChange={(event) => setForm({ ...form, periodStart: event.target.value })}
               className="mt-1 w-full rounded-lg border border-c-border bg-c-surface p-2"
             />
           </label>
-          <label>
+          <label htmlFor="report-period-end">
             {t('execution.reports.intelligence.generator.historyEnd', 'Historical period end')}
             <input
+              id="report-period-end"
               type="date"
               value={form.periodEnd}
               onChange={(event) => setForm({ ...form, periodEnd: event.target.value })}
               className="mt-1 w-full rounded-lg border border-c-border bg-c-surface p-2"
             />
           </label>
-          <label>
+          <label htmlFor="report-as-of">
             {t('execution.reports.intelligence.generator.asOf', 'Separate as-of timestamp')}
             <input
+              id="report-as-of"
               type="datetime-local"
               value={form.asOf}
               onChange={(event) => setForm({ ...form, asOf: event.target.value })}
               className="mt-1 w-full rounded-lg border border-c-border bg-c-surface p-2"
             />
           </label>
-          <label>
+          <label htmlFor="report-week">
             {t('execution.reports.intelligence.generator.reportWeek', 'Reporting week')}
             <input
+              id="report-week"
               type="week"
               value={form.reportWeek}
               onChange={(event) => setForm({ ...form, reportWeek: event.target.value })}
               className="mt-1 w-full rounded-lg border border-c-border bg-c-surface p-2"
             />
           </label>
-          <label>
+          <label htmlFor="report-forecast-horizon">
             {t('execution.reports.intelligence.generator.forecast', 'Forecast horizon (weeks)')}
             <select
+              id="report-forecast-horizon"
               value={form.forecastHorizon}
               onChange={(event) => setForm({ ...form, forecastHorizon: event.target.value })}
               className="mt-1 w-full rounded-lg border border-c-border bg-c-surface p-2"
@@ -239,9 +268,10 @@ export function UnifiedExecutionReportGenerator(): React.ReactElement {
               ))}
             </select>
           </label>
-          <label>
+          <label htmlFor="report-scope-ref">
             {t('execution.reports.intelligence.generator.scope', 'Authorized scope reference')}
             <input
+              id="report-scope-ref"
               value={form.scopeRef}
               onChange={(event) => setForm({ ...form, scopeRef: event.target.value })}
               className="mt-1 w-full rounded-lg border border-c-border bg-c-surface p-2"
@@ -249,7 +279,15 @@ export function UnifiedExecutionReportGenerator(): React.ReactElement {
           </label>
           <p className="sm:col-span-2">
             {t('execution.reports.intelligence.generator.validation', 'Validation')}:{' '}
-            {valid ? 'READY_TO_CREATE_DRAFT' : 'INCOMPLETE'} ·{' '}
+            {valid ? 'READY_TO_CREATE_DRAFT' : 'INCOMPLETE'}
+            {!valid && missingFieldLabels.length > 0 ? (
+              <>
+                {' — '}
+                {t('execution.reports.intelligence.generator.missingFields', 'missing')}:{' '}
+                {missingFieldLabels.join(', ')}
+              </>
+            ) : null}{' '}
+            ·{' '}
             {t(
               'execution.reports.intelligence.generator.contextOnlyWarning',
               'Reporting week, forecast horizon and section selection are preflight context only because runtime-v1 has no contract fields for them (BRAK_API).'
