@@ -104,4 +104,28 @@ describe('D8 /partner four-state contract', () => {
     expect(await screen.findByTestId('partner-start-unknown')).toBeInTheDocument();
     expect(screen.queryByText('Zostań Naszym Partnerem')).not.toBeInTheDocument();
   });
+
+  // FIX-7 (sidebar polish): the sidebar is always mounted (it is not gated by
+  // connectionState), so an unconnected/error/loading visitor could otherwise
+  // see a fully-interactive nav promising sections that always no-op while
+  // disconnected. Operational items must be disabled (greyed) in that state
+  // and re-enabled once the profile is actually connected.
+  it('greys out operational sidebar items while unconnected, re-enables them once connected', async () => {
+    getConnection.mockResolvedValue({ connected: false, partnerOrganizationId: null });
+    const unconnectedRender = renderPortal();
+
+    await screen.findByTestId('partner-orientation-unconnected');
+    const dashboardItemUnconnected = screen.getByRole('button', { name: /Dashboard/ });
+    expect(dashboardItemUnconnected).toBeDisabled();
+    expect(dashboardItemUnconnected).toHaveAttribute('aria-disabled', 'true');
+    unconnectedRender.unmount();
+
+    getConnection.mockResolvedValue({ connected: true, partnerOrganizationId: 'partner-1' });
+    getProgramStatus.mockResolvedValue(statusFor('earn'));
+    renderPortal();
+
+    await screen.findByTestId('partner-start-active');
+    const dashboardItemConnected = screen.getByRole('button', { name: /Dashboard/ });
+    expect(dashboardItemConnected).not.toBeDisabled();
+  });
 });

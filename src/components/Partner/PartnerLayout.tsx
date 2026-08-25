@@ -40,6 +40,10 @@ interface PartnerLayoutProps {
   pendingCertifications?: number;
   onBack?: () => void;
   className?: string;
+  /** D8 sidebar polish: grey out operational nav items while unconnected
+   * (see PartnerSidebar's `connected` prop). Default true preserves the
+   * connected look for any other caller. */
+  connected?: boolean;
 }
 
 export const PartnerLayout: React.FC<PartnerLayoutProps> = ({
@@ -54,6 +58,7 @@ export const PartnerLayout: React.FC<PartnerLayoutProps> = ({
   pendingCertifications,
   onBack,
   className,
+  connected = true,
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -129,6 +134,7 @@ export const PartnerLayout: React.FC<PartnerLayoutProps> = ({
           activeClients={activeClients}
           pendingCertifications={pendingCertifications}
           onBack={handleBack}
+          connected={connected}
         />
       </aside>
 

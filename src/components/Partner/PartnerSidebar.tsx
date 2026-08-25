@@ -101,6 +101,11 @@ interface PartnerSidebarProps {
   pendingCertifications?: number;
   activeClients?: number;
   onBack?: () => void;
+  /** D8: no partner data/section is reachable before the profile is connected
+   * — grey out the operational nav items instead of promising navigation that
+   * silently no-ops (activeSection is pinned to the orientation content while
+   * unconnected). Orientation (header/branding, "Back to App") stays intact. */
+  connected?: boolean;
 }
 
 export const PartnerSidebar: React.FC<PartnerSidebarProps> = ({
@@ -110,6 +115,7 @@ export const PartnerSidebar: React.FC<PartnerSidebarProps> = ({
   pendingCertifications = 0,
   activeClients = 0,
   onBack,
+  connected = true,
 }) => {
   const { t } = useTranslation();
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['home']));
@@ -411,31 +417,40 @@ export const PartnerSidebar: React.FC<PartnerSidebarProps> = ({
                 >
                   <div className="space-y-0.5 pb-2">
                     {group.items.map((item) => {
-                      const isActive = activeSection === item.id;
+                      const isActive = connected && activeSection === item.id;
                       const Icon = item.icon;
 
                       return (
                         <button
                           key={item.id}
-                          onClick={() => onSectionChange(item.id)}
+                          type="button"
+                          disabled={!connected}
+                          aria-disabled={!connected}
+                          onClick={connected ? () => onSectionChange(item.id) : undefined}
                           className={cn(
                             'relative w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-150',
-                            isActive
-                              ? 'bg-slate-100 dark:bg-white/[0.08] text-slate-900 dark:text-white font-medium before:absolute before:left-0 before:top-1/2 before:h-5 before:w-0.5 before:-translate-y-1/2 before:rounded-full before:bg-[var(--c-info)]'
-                              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800/20 hover:text-slate-900 dark:hover:text-white'
+                            !connected
+                              ? 'cursor-not-allowed text-slate-400 opacity-50 dark:text-slate-600'
+                              : isActive
+                                ? 'bg-slate-100 dark:bg-white/[0.08] text-slate-900 dark:text-white font-medium before:absolute before:left-0 before:top-1/2 before:h-5 before:w-0.5 before:-translate-y-1/2 before:rounded-full before:bg-[var(--c-info)]'
+                                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800/20 hover:text-slate-900 dark:hover:text-white'
                           )}
                         >
                           <Icon
                             className={cn(
                               'w-4 h-4 flex-shrink-0',
-                              isActive
-                                ? 'text-[var(--c-info)]'
-                                : 'text-slate-500 dark:text-slate-400'
+                              !connected
+                                ? 'text-slate-400 dark:text-slate-600'
+                                : isActive
+                                  ? 'text-[var(--c-info)]'
+                                  : 'text-slate-500 dark:text-slate-400'
                             )}
                           />
                           <span className="flex-1 text-left">{item.label}</span>
-                          {renderBadge(item)}
-                          {item.external && <ExternalLink className="w-3 h-3 opacity-50" />}
+                          {connected && renderBadge(item)}
+                          {connected && item.external && (
+                            <ExternalLink className="w-3 h-3 opacity-50" />
+                          )}
                         </button>
                       );
                     })}
