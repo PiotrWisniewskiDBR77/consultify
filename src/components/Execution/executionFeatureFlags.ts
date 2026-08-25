@@ -58,6 +58,14 @@ const FLAGS = {
     localStorage: 'ff.exec_change_signals',
     env: 'VITE_EXEC_CHANGE_SIGNALS_ENABLED',
   },
+  // DEC-2026-08-25-63 — four Execution management reports and their unified
+  // generator. The surface remains OFF everywhere (including demo) until an
+  // explicit query/localStorage/env opt-in is provided.
+  execReportsIntelligence: {
+    query: 'ff_execReportsIntel',
+    localStorage: 'ff.exec_reports_intel',
+    env: 'VITE_EXEC_REPORTS_INTELLIGENCE_ENABLED',
+  },
 } as const satisfies Record<string, FlagKeys>;
 
 export type ExecutionFlag = keyof typeof FLAGS;
@@ -112,7 +120,7 @@ export function isExecutionFlagEnabled(
   // ★ Rule #7 (CLAUDE.md): brand-new, not-yet-screenshotted cockpit surface stays
   // OFF everywhere — including demo — until Piotr accepts a clean dev-render.
   // Does NOT inherit the D-D "ON except public prod" fallback below.
-  if (flag === 'changeSignals') return false;
+  if (flag === 'changeSignals' || flag === 'execReportsIntelligence') return false;
   // D-D (2026-06-29): verified-ready M14 cockpit (Intelligence/What-If/Rollout/
   // Benefits/ganttBaseline) defaults ON everywhere EXCEPT public production
   // (consultify.ai). Demo/stage/dev → ON; prod stays env-gated (D-G = no prod).
