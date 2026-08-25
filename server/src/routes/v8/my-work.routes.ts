@@ -174,6 +174,13 @@ function buildNotebookSelectFields(cols: Set<string>, tableAlias = 'np'): string
   return [
     `${prefix}id`,
     `${prefix}owner_user_id as "ownerUserId"`,
+    // DEC-26: the note-menu/right-rail owner display needs the OTHER user's
+    // real name for a shared/project-visible page (own pages are labeled
+    // "You" client-side and never need this). A correlated scalar subquery —
+    // not a JOIN — so this stays a drop-in addition at every call site of
+    // this function, several of which query notebook_pages with no alias.
+    `(SELECT COALESCE(NULLIF(TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')), ''), u.email)
+        FROM users u WHERE u.id = ${prefix}owner_user_id) as "ownerDisplayName"`,
     `${prefix}organization_id as "organizationId"`,
     `${prefix}project_id as "projectId"`,
     `${prefix}visibility`,

@@ -645,28 +645,30 @@ describe('NotebookContent — MW-08 UX acceptance', () => {
     }
   });
 
-  // PRODUCT_DO_DECYZJA (left RED, documented — see FAZA 2 report): this
-  // test's premise (owner shown as an honest "You" / "Another user" pair)
-  // does not match current NotebookRightRail.tsx behavior. ownerLabel is
-  // only ever populated by NotebookContent.tsx for the CURRENT user's own
-  // pages (`activePage?.ownerUserId === currentUserId ? currentUser?.displayName
-  // ... : undefined`); for a foreign page it is always undefined, and the
-  // rail falls back to a generic "Owner identity unavailable" /
-  // "Owner not assigned" message that never signals "someone else owns
-  // this". The two real states (no owner data at all vs. a different real
-  // owner) collapse into the same generic copy. Confirmed by querying the
-  // real element (added `data-testid="notebook-owner-state"` to
-  // NotebookRightRail.tsx for this) — it never contains "Another user".
-  // Needs an owner call: either surface a real distinguishing signal (which
-  // may mean exposing another user's display name — a scope/privacy
-  // question) or accept the generic copy and update this test's intent.
-  // Only the target testid was corrected (was pointed at the wrong element,
-  // 'notebook-save-state', reused from a since-consolidated single strip);
-  // the assertions are intentionally left as the product's original bar.
+  // DEC-26 (FAZA 2, fixed — see git history for the prior PRODUCT_DO_DECYZJA
+  // note this replaced): own pages now render "You" (i18n key
+  // notebook.rightRail.ownerYou, PL "Ty"/EN "You") instead of the current
+  // user's own real name, which used to show even on your own note. A
+  // foreign page shows the REAL owner name the server now resolves
+  // (server/src/routes/v8/my-work.routes.ts buildNotebookSelectFields —
+  // ownerDisplayName, COALESCE(first+last name, email)) via
+  // activePage.ownerDisplayName, simulated here the same way every other
+  // server field is simulated in this suite: on the mocked getNotebookPages
+  // response. The generic "Owner identity unavailable" copy
+  // (NotebookRightRail.tsx) is reserved for the true no-data case — a page
+  // whose owner is known but whose name the server could not resolve
+  // (ownerDisplayName omitted) — asserted separately below so that state
+  // stays distinguishable from both "You" and a real name, not collapsed
+  // into either.
   it('shows the owner as You for your own page and Another user for someone else\'s', async () => {
     apiMock.getNotebookPages.mockResolvedValue([
       makePage({ id: 'note-mine', title: 'Mine', ownerUserId: 'user-1' }),
-      makePage({ id: 'note-theirs', title: 'Theirs', ownerUserId: 'user-2' }),
+      makePage({
+        id: 'note-theirs',
+        title: 'Theirs',
+        ownerUserId: 'user-2',
+        ownerDisplayName: 'Another user',
+      }),
     ]);
 
     const { getByTestId, getByText } = renderWithRouter(<NotebookContent searchQuery="" />);
@@ -681,6 +683,8 @@ describe('NotebookContent — MW-08 UX acceptance', () => {
     await waitFor(() => {
       expect(getByTestId('notebook-owner-state').textContent).toContain('You');
     });
+    // Own page must never show the current user's own real name.
+    expect(getByTestId('notebook-owner-state').textContent).not.toContain('Piotr');
 
     await act(async () => {
       getByText('Theirs').click();
@@ -689,6 +693,29 @@ describe('NotebookContent — MW-08 UX acceptance', () => {
     await waitFor(() => {
       expect(getByTestId('notebook-owner-state').textContent).toContain('Another user');
     });
+  });
+
+  it('falls back to the honest "unavailable" state when the owner is known but unnamed', async () => {
+    apiMock.getNotebookPages.mockResolvedValue([
+      makePage({
+        id: 'note-unnamed-owner',
+        title: 'Unnamed owner',
+        ownerUserId: 'user-3',
+        // No ownerDisplayName — simulates the server being unable to resolve
+        // a name for a real, known owner (e.g. deleted account).
+      }),
+    ]);
+
+    const { getByTestId } = renderWithRouter(<NotebookContent searchQuery="" />);
+
+    await waitFor(() => {
+      expect(getByTestId('notebook-owner-state').textContent).toContain(
+        'Owner identity unavailable'
+      );
+    });
+    const text = getByTestId('notebook-owner-state').textContent;
+    expect(text).not.toContain('You');
+    expect(text).not.toContain('Another user');
   });
 
   // L-03 (Consolidated right rail): the old inline status strip showed one

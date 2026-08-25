@@ -4156,11 +4156,22 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                 setNotebookRailOpen(false);
                 window.requestAnimationFrame(() => notebookRailToggleRef.current?.focus());
               }}
+              // DEC-26: own pages are labeled "You" (i18n PL/EN), never the
+              // current user's own real name — that was previously shown
+              // even to the note's own author, which reads as odd/impersonal
+              // ("Piotr Test" on your own note). Someone else's page shows
+              // their REAL name from the server (activePage.ownerDisplayName,
+              // server/src/routes/v8/my-work.routes.ts buildNotebookSelectFields)
+              // instead of collapsing into the same generic "unavailable"
+              // copy as a page with no resolvable owner at all — that generic
+              // copy (NotebookRightRail.tsx) is now reserved for the true
+              // no-data case (ownerDisplayName null/undefined), so the two
+              // states stay distinguishable.
               ownerLabel={
-                activePage?.ownerUserId === currentUserId
-                  ? currentUser?.displayName ||
-                    `${currentUser?.firstName || ''} ${currentUser?.lastName || ''}`.trim() ||
-                    currentUser?.email
+                activePage?.ownerUserId
+                  ? activePage.ownerUserId === currentUserId
+                    ? t('notebook.rightRail.ownerYou', 'You')
+                    : activePage.ownerDisplayName || undefined
                   : undefined
               }
               activePage={activePage}

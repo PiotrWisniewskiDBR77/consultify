@@ -28503,7 +28503,8 @@
     "rightRail": {
       "work": "Work",
       "context": "Context",
-      "closePanel": "Close panel"
+      "closePanel": "Close panel",
+      "ownerYou": "You"
     },
     "hamburgerMenu": {
       "export": "Export",

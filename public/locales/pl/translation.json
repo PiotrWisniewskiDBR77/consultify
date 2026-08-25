@@ -29641,7 +29641,8 @@
     "rightRail": {
       "work": "Praca",
       "context": "Kontekst",
-      "closePanel": "Zamknij panel"
+      "closePanel": "Zamknij panel",
+      "ownerYou": "Ty"
     },
     "hamburgerMenu": {
       "export": "Eksportuj",
