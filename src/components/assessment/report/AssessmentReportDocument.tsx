@@ -28,7 +28,7 @@ import React, { useMemo } from 'react';
 
 import { StandardTable, type TableColumn, type TableRow } from '../../standard/StandardTable';
 import { StatusChip } from '../../ui/primitives/chips';
-import { resolveDrdUnitLabel } from './drdLabels';
+import { resolveDrdAxisName, resolveDrdUnitLabel } from './drdLabels';
 import { describeMaturityPosition } from './maturityBands';
 import type { AssessmentReportData, ReportFinding } from './types';
 
@@ -402,9 +402,17 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
             {aggregationEntries.map(([axisId, value]) => {
               const targetsInAxis = Object.entries(output.gap ?? {});
               void targetsInAxis;
+              // FIX-ATOM #8: resolve the raw `axis-N` group key to its
+              // Polish axis name (same dictionary the "Jednostka oceny"
+              // table below already uses) — never a bare code, known or
+              // not (honest fallback to the raw id only when the pack
+              // version genuinely doesn't match, same contract as
+              // resolveDrdUnitLabel elsewhere in this file).
+              const axisName =
+                resolveDrdAxisName(output.methodPackId, output.methodPackVersion, axisId) ?? axisId;
               return (
                 <div key={axisId} className="flex items-center justify-between gap-3 rounded-lg border border-c-border-subtle px-3 py-2">
-                  <span className="text-xs font-medium text-c-text">{axisId}</span>
+                  <span className="text-xs font-medium text-c-text">{axisName}</span>
                   <span className="text-xs tabular-nums text-c-text-secondary">
                     {value === null ? '—' : value}
                   </span>

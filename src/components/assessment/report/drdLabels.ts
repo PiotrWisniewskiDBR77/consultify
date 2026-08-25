@@ -88,6 +88,31 @@ export function resolveDrdUnitLabel(
   };
 }
 
+/**
+ * Resolves an axis GROUP id (`aggregation.byGroup`'s own keys — e.g.
+ * `axis-1`, NOT a unit id) to its Polish axis name, same
+ * pinned-version-gated honesty contract as `resolveDrdUnitLabel` above.
+ *
+ * ★ 2026-08-26 night-fixes-a (NIGHT_SWEEP_A_REPORT_20260826.md — Assessment
+ * FIX-ATOM #8): `AssessmentReportDocument.tsx`'s "Wynik per wymiar (oś)"
+ * section rendered these raw `axis-N` keys straight into the document —
+ * the exact same axes the "Jednostka oceny" table two sections below
+ * already resolves to full Polish names via `resolveDrdUnitLabel`'s own
+ * `axisName`. This closes that gap using the SAME dictionary
+ * (`AXIS_NAME_BY_ID`), not a second one.
+ */
+export function resolveDrdAxisName(
+  methodPackId: string,
+  methodPackVersion: string,
+  axisGroupId: string
+): string | null {
+  if (methodPackId !== DRD_METHOD_PACK_ID) return null;
+  const pack = getCompiledDrdPack();
+  if (!pack) return null;
+  if (pack.manifest.version !== methodPackVersion) return null;
+  return AXIS_NAME_BY_ID[axisGroupId] ?? null;
+}
+
 export function isDrdPack(methodPackId: string): boolean {
   return methodPackId === DRD_METHOD_PACK_ID;
 }
