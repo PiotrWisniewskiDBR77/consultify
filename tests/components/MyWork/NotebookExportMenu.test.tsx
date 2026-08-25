@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -12,7 +13,10 @@ import { NotebookExportMenu } from '@/components/MyWork/notebook/NotebookExportM
 const page = { id: 'p1', title: 'My note', contentText: 'body', contentJson: null };
 
 describe('NotebookExportMenu', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    exportNotebookPage.mockResolvedValue(undefined);
+  });
 
   it('is collapsed by default and shows the trigger label', () => {
     render(<NotebookExportMenu page={page} />);
@@ -43,12 +47,60 @@ describe('NotebookExportMenu', () => {
     await waitFor(() => expect(exportNotebookPage).toHaveBeenCalledWith(page, 'pdf'));
   });
 
+  it('keeps a failed export visible and retries the same format', async () => {
+    exportNotebookPage.mockRejectedValueOnce(new Error('disk unavailable'));
+    render(<NotebookExportMenu page={page} />);
+    fireEvent.click(screen.getByText('Export'));
+    fireEvent.click(screen.getByText('PDF (.pdf)'));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Export failed. Your note was not changed.'
+    );
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('Retry'));
+    await waitFor(() => expect(exportNotebookPage).toHaveBeenCalledTimes(2));
+    expect(exportNotebookPage).toHaveBeenLastCalledWith(page, 'pdf');
+    await waitFor(() => expect(screen.queryByRole('menu')).not.toBeInTheDocument());
+  });
+
+  it('locks duplicate export activation before React can rerender busy state', async () => {
+    let resolveExport: (() => void) | undefined;
+    exportNotebookPage.mockImplementationOnce(
+      () => new Promise<void>((resolve) => (resolveExport = resolve))
+    );
+    render(<NotebookExportMenu page={page} />);
+    fireEvent.click(screen.getByText('Export'));
+    const pdf = screen.getByText('PDF (.pdf)');
+    fireEvent.click(pdf);
+    fireEvent.click(pdf);
+
+    expect(exportNotebookPage).toHaveBeenCalledTimes(1);
+    resolveExport?.();
+    await waitFor(() => expect(screen.queryByRole('menu')).not.toBeInTheDocument());
+  });
+
   it('closes on Escape', () => {
     render(<NotebookExportMenu page={page} />);
     fireEvent.click(screen.getByText('Export'));
     expect(screen.getByRole('menu')).toBeInTheDocument();
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+  });
+
+  it('moves focus through the real menu and restores it on Escape', async () => {
+    const user = userEvent.setup();
+    render(<NotebookExportMenu page={page} />);
+    const trigger = screen.getByRole('button', { name: 'Export' });
+    await user.click(trigger);
+    await waitFor(() => expect(screen.getByRole('menuitem', { name: 'Markdown (.md)' })).toHaveFocus());
+    await user.keyboard('{ArrowDown}');
+    expect(screen.getByRole('menuitem', { name: 'PDF (.pdf)' })).toHaveFocus();
+    await user.keyboard('{End}');
+    expect(screen.getByRole('menuitem', { name: /Word/ })).toHaveFocus();
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
   });
 
   it('renders the trigger label via t() (language-driven, not isPolish prop)', () => {
