@@ -889,10 +889,10 @@ export async function checkAndSendUsageAlert(
     return;
   }
 
-  // Get admin emails for this org
-  const admins = await DbPromise.all<{ email: string; first_name: string }>(
+  // Get admins for this org
+  const admins = await DbPromise.all<{ id: string; email: string; first_name: string }>(
     db,
-    `SELECT email, first_name FROM users 
+    `SELECT id, email, first_name FROM users
          WHERE organization_id = ? AND role IN ('ADMIN', 'SUPERADMIN')`,
     [orgId]
   );
@@ -906,24 +906,39 @@ export async function checkAndSendUsageAlert(
     [orgId]
   );
 
-  // Send email alerts
+  // N2 (DEC-2026-08-25-21): routed through the notification engine instead
+  // of a direct EmailService.send() call, so `usage_alert` (registered
+  // in_app+email, is_critical in server/migrations/257_notification_system.sql:60)
+  // starts respecting per-user preferences instead of unconditionally
+  // emailing every admin (notyfikacje-audyt.md §1C). The daily
+  // per-org/per-threshold dedup above is unchanged; `dedupe: false` is
+  // passed to send() so its own (much shorter) default dedupe window
+  // doesn't collapse the per-admin sends in this loop into one.
   try {
-    const EmailService = (await import('./emailService.js')).default;
+    const { send: sendNotification } = await import('./notificationService.js');
+    const title = `⚠️ ${type === 'token' ? 'Token' : 'Storage'} Usage Alert: ${thresholdCrossed}% reached`;
+    const body = `${org?.name || 'Your organization'} has reached ${thresholdCrossed}% of its ${
+      type === 'token' ? 'token' : 'storage'
+    } limit (${Math.round(percentage)}% used).`;
 
     for (const admin of admins) {
-      await EmailService.send({
-        to: admin.email,
-        subject: `⚠️ ${type === 'token' ? 'Token' : 'Storage'} Usage Alert: ${thresholdCrossed}% reached`,
-        html: generateUsageAlertEmail({
-          firstName: admin.first_name,
-          orgName: org?.name || 'Your organization',
-          type,
-          percentage: Math.round(percentage),
+      await sendNotification({
+        userId: admin.id,
+        organizationId: orgId,
+        type: 'usage_alert',
+        title,
+        body,
+        priority: thresholdCrossed >= 100 ? 'critical' : thresholdCrossed >= 90 ? 'urgent' : 'high',
+        entityType: 'billing',
+        dedupe: false,
+        data: {
+          usageType: type,
           threshold: thresholdCrossed,
+          percentage: Math.round(percentage),
           used: type === 'token' ? usage.tokens.used : usage.storage.usedGB,
           limit: type === 'token' ? usage.tokens.limit : usage.storage.limitGB,
           unit: type === 'token' ? 'tokens' : 'GB',
-        }),
+        },
       });
     }
 
@@ -944,7 +959,14 @@ export async function checkAndSendUsageAlert(
 }
 
 /**
- * Generate usage alert email HTML
+ * Generate usage alert email HTML.
+ *
+ * N2 (DEC-2026-08-25-21): no longer called — checkAndSendUsageAlert() now
+ * routes through notificationService.send(), whose email channel renders
+ * a generic templated body from title/body (renderEmailNotification) like
+ * every other registry-driven type, not this bespoke template. Left in
+ * place rather than deleted since removing it is out of this ticket's
+ * scope.
  */
 function generateUsageAlertEmail(data: {
   firstName: string;
