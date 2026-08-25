@@ -34,6 +34,23 @@ vi.mock('../../middleware/auth.middleware.js', () => ({
   isAuthenticated: (_req: any, _res: any, next: () => void) => next(),
 }));
 
+// `closedBetaModuleGate` is real production middleware — it mirrors
+// `MODULE_MEETING: 'closed'` in `betaAccess.ts` and correctly 403s EVERY
+// non-admin-tier request to this whole router (by owner decision: a
+// closed-beta module is invisible to regular users, not just its
+// destructive routes — see `betaAccess.ts` MODULE_ECONOMICS comment for the
+// same policy). That is a coarser, orthogonal gate from the L-04 role split
+// this file tests (destructive ops require admin/owner/superadmin; read/
+// create stay open to every member). Mocked to a pass-through here so this
+// suite can exercise L-04's per-operation logic in isolation with a
+// non-admin role — the real gate stays fully wired in meeting.routes.ts for
+// actual traffic; nothing here weakens it.
+vi.mock('../../middleware/betaGate.middleware.js', () => ({
+  betaGate: (_req: any, _res: any, next: () => void) => next(),
+  closedBetaModuleGate: (_req: any, _res: any, next: () => void) => next(),
+  createBetaGate: () => (_req: any, _res: any, next: () => void) => next(),
+}));
+
 import meetingRoutes from '../meeting.routes.js';
 
 function createApp() {
@@ -70,6 +87,56 @@ describe('meeting routes', () => {
     expect(res.status).toBe(200);
     expect(res.body.meetings).toHaveLength(1);
     expect(mockList).toHaveBeenCalledWith({ organizationId: 'org-1', projectId: null });
+  });
+
+  it('GET /:id returns a single meeting shaped like a list row', async () => {
+    mockGet.mockResolvedValue(sampleMeeting);
+    const res = await request(createApp()).get('/api/meeting/meeting-1');
+    expect(res.status).toBe(200);
+    expect(res.body.meeting.id).toBe('meeting-1');
+    expect(res.body.meeting.title).toBe('Kickoff');
+    // Org scope comes from the token, never a client-supplied param.
+    expect(mockGet).toHaveBeenCalledWith({ organizationId: 'org-1', meetingId: 'meeting-1' });
+  });
+
+  it('GET /:id returns 404 when the meeting does not exist', async () => {
+    mockGet.mockResolvedValue(null);
+    const res = await request(createApp()).get('/api/meeting/missing');
+    expect(res.status).toBe(404);
+  });
+
+  it('GET /:id returns 404 (not 200/leak) for a different organization\'s meeting id', async () => {
+    // getMeeting's own `WHERE organization_id = ?` excludes rows outside the
+    // caller's org — mockGet returning null here simulates exactly that,
+    // regardless of what id was requested.
+    mockGet.mockResolvedValue(null);
+    const res = await request(createApp()).get('/api/meeting/other-org-meeting');
+    expect(res.status).toBe(404);
+    expect(mockGet).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      meetingId: 'other-org-meeting',
+    });
+  });
+
+  it('GET /:id returns 404 for a same-org meeting the requester cannot access (not creator/attendee/admin)', async () => {
+    mockGet.mockResolvedValue({
+      ...sampleMeeting,
+      createdBy: 'someone-else',
+      attendees: ['not-this-user@example.com'],
+    });
+    const res = await request(createApp())
+      .get('/api/meeting/meeting-1')
+      .set('x-test-role', 'team_member');
+    expect(res.status).toBe(404);
+  });
+
+  it('GET /:id succeeds for a non-admin attendee of the meeting', async () => {
+    mockGet.mockResolvedValue({ ...sampleMeeting, createdBy: 'someone-else', attendees: ['user-1'] });
+    const res = await request(createApp())
+      .get('/api/meeting/meeting-1')
+      .set('x-test-role', 'team_member');
+    expect(res.status).toBe(200);
+    expect(res.body.meeting.id).toBe('meeting-1');
   });
 
   it('POST / creates a meeting', async () => {

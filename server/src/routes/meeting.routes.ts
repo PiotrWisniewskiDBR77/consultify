@@ -163,6 +163,28 @@ router.get(
   })
 );
 
+/**
+ * GET /:id — single meeting, org-scoped from the token (never from a client
+ * param). Returns the same `{ meeting }` shape as `GET /` so callers (the
+ * `/meetings/:meetingId` object card) can treat this as "the list row for
+ * one id" without a separate DTO. Same 404-collapses-not-found-and-no-access
+ * posture as every other single-meeting route here (`denyMeetingAccess`):
+ * a different org's meeting id (excluded by `getMeeting`'s own
+ * `organization_id = ?` filter) and a same-org meeting the requester isn't
+ * privileged/creator/attendee for both answer 404, never a distinguishing
+ * 403 — do not leak which case it was.
+ */
+router.get(
+  '/:id',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const meeting = await getMeeting({ organizationId: orgId, meetingId: String(req.params.id) });
+    if (!canAccessMeeting(req, meeting)) return denyMeetingAccess(res);
+    return res.json({ meeting });
+  })
+);
+
 router.post(
   '/',
   asyncHandler(async (req: AuthRequest, res: Response) => {
