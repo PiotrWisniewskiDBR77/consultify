@@ -37,9 +37,11 @@ import toast from 'react-hot-toast';
 import { Select } from '@/components/shared/forms';
 import { RequiredProjectPicker } from '@/components/shared/RequiredProjectPicker';
 import {
+  CREATOR_SHELL_GEOMETRY,
   type WizardStep as SharedWizardStep,
   WizardStepper,
 } from '@/components/shared/WizardModal';
+import { isInterviewCreatorShellEnabled } from '@/utils/interviewCreatorShellFlag';
 import { Button } from '@/components/ui/primitives';
 import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 import { Api } from '@/services/api';
@@ -681,6 +683,10 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
   onClose,
   onCreated,
 }) => {
+  const creatorShellEnabled = isInterviewCreatorShellEnabled();
+  const creatorGeometryClassName = creatorShellEnabled
+    ? CREATOR_SHELL_GEOMETRY.stepped.panelClassName
+    : CREATOR_SHELL_GEOMETRY.legacy.initiativePanelClassName;
   const wizardDialogRef = useRef<HTMLDivElement>(null);
   useDialogA11y({ open: isOpen, onClose, containerRef: wizardDialogRef });
   const [step, setStep] = useState<WizardStep>('insights');
@@ -2534,7 +2540,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
         aria-modal="true"
         aria-labelledby="initiative-wizard-title"
         tabIndex={-1}
-        className="mx-4 flex h-[640px] w-[1080px] max-h-[calc(100vh-2rem)] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/20 dark:border-white/[0.08] dark:bg-navy-900 outline-none"
+        className={`mx-4 flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/20 outline-none dark:border-white/[0.08] dark:bg-navy-900 ${creatorGeometryClassName}`}
       >
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-white/[0.08]">

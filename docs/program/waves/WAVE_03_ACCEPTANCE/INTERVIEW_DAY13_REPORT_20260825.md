@@ -57,14 +57,15 @@ Nie wykonałem żadnego deployu, żadnej operacji Railway, żadnej zdalnej migra
 
 ## Pozycje — tabela zbiorcza
 
-| Pozycja | Commit SHA | Status      | Dowód                                        |
-| ------- | ---------- | ----------- | -------------------------------------------- |
-| S.0     | —          | W TOKU      | flaga, OFF proof i inwentarz w przygotowaniu |
-| S.1–S.7 | —          | NIE ZACZĘTA | —                                            |
-| K.1–K.3 | —          | NIE ZACZĘTA | —                                            |
-| W.1–W.2 | —          | NIE ZACZĘTA | —                                            |
-| T.1–T.6 | —          | NIE ZACZĘTA | —                                            |
-| R.1–R.2 | —          | NIE ZACZĘTA | —                                            |
+| Pozycja | Commit SHA     | Status      | Dowód                                                                        |
+| ------- | -------------- | ----------- | ---------------------------------------------------------------------------- |
+| S.0     | `17c5edb60e`   | DONE        | flaga default OFF, realny czytnik, 14/14 testów flagi i OFF                  |
+| S.1     | bieżący commit | DONE        | jeden token 1040×840; opt-in; legacy 720×560/1080×640 zachowane; 22/22 testy |
+| S.2–S.7 | —              | NIE ZACZĘTA | —                                                                            |
+| K.1–K.3 | —              | NIE ZACZĘTA | —                                                                            |
+| W.1–W.2 | —              | NIE ZACZĘTA | —                                                                            |
+| T.1–T.6 | —              | NIE ZACZĘTA | —                                                                            |
+| R.1–R.2 | —              | NIE ZACZĘTA | —                                                                            |
 
 ## ★ Parytet wizualny z prototypem (produkt R.2)
 

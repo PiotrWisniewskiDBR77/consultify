@@ -39,6 +39,7 @@ import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { WizardModalProps } from './types';
+import { CREATOR_SHELL_GEOMETRY } from './geometry';
 import { WizardStepper } from './WizardStepper';
 
 /** Default accent: the app primary token (matches the existing wizards). */
@@ -58,6 +59,7 @@ const COPY = {
 } as const;
 
 export const WizardModal: React.FC<WizardModalProps> = ({
+  geometry = 'legacy',
   open,
   onClose,
   title,
@@ -75,6 +77,10 @@ export const WizardModal: React.FC<WizardModalProps> = ({
   const { i18n } = useTranslation();
   // Self-localize unless the host forces a language.
   const isPolish = isPolishProp ?? i18n.language === 'pl';
+  const geometryClassName =
+    geometry === 'creator'
+      ? CREATOR_SHELL_GEOMETRY.stepped.panelClassName
+      : CREATOR_SHELL_GEOMETRY.legacy.panelClassName;
 
   const panelRef = useRef<HTMLDivElement | null>(null);
 
@@ -148,7 +154,7 @@ export const WizardModal: React.FC<WizardModalProps> = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby={headingId}
-        className="mx-4 flex h-[560px] max-h-[calc(100vh-2rem)] w-[720px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/20 outline-none dark:border-white/[0.08] dark:bg-navy-900"
+        className={`mx-4 flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/20 outline-none dark:border-white/[0.08] dark:bg-navy-900 ${geometryClassName}`}
       >
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-white/[0.08]">

@@ -93,6 +93,19 @@ describe('InsightCreatorModal — dialog accessible contract (EN)', () => {
     expect(V8InterviewApi.createInsight).not.toHaveBeenCalled();
   });
 
+  it('uses the shared 1040x840 stepped geometry when Creator Shell is explicitly ON', async () => {
+    window.localStorage.setItem(INTERVIEW_CREATOR_SHELL_FLAG_KEYS.localStorage, '1');
+    await mountAndOpen('en');
+
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toHaveAttribute('data-creator-shell', 'enabled');
+    expect(dialog).toHaveClass(
+      'h-[min(840px,calc(100vh-48px))]',
+      'w-[min(1040px,calc(100vw-64px))]'
+    );
+    expect(dialog).not.toHaveClass('h-[560px]', 'w-[720px]');
+  });
+
   it('exposes a dialog named "AI Insight Creator"', async () => {
     await mountAndOpen('en');
 

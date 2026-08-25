@@ -8,6 +8,8 @@
  */
 import type React from 'react';
 
+import type { WizardGeometry } from './geometry';
+
 /** A localized string pair. Every label/hint in the shell is bilingual. */
 export interface LocalizedText {
   en: string;
@@ -45,6 +47,8 @@ export interface WizardStep {
 }
 
 export interface WizardModalProps {
+  /** Additive geometry variant; legacy remains the default for existing consumers. */
+  geometry?: WizardGeometry;
   /** Whether the modal is mounted/visible. When false, nothing renders. */
   open: boolean;
   /** Close request (overlay click, Esc, X button, Cancel). */

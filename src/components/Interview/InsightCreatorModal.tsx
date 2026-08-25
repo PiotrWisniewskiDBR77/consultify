@@ -36,7 +36,11 @@ import { useTranslation } from 'react-i18next';
 import { DatePicker, Select } from '@/components/shared/forms';
 import { EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { TeresaMark } from '@/components/shared/TeresaMark';
-import { type WizardStep, WizardStepper } from '@/components/shared/WizardModal';
+import {
+  CREATOR_SHELL_GEOMETRY,
+  type WizardStep,
+  WizardStepper,
+} from '@/components/shared/WizardModal';
 import { Button, LoadingState } from '@/components/ui/primitives';
 import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 import { Api } from '@/services/api';
@@ -541,6 +545,9 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const creatorShellEnabled = isInterviewCreatorShellEnabled();
+  const creatorGeometryClassName = creatorShellEnabled
+    ? CREATOR_SHELL_GEOMETRY.stepped.panelClassName
+    : CREATOR_SHELL_GEOMETRY.legacy.panelClassName;
   const dialogContainerRef = useRef<HTMLDivElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
   useDialogA11y({
@@ -2587,7 +2594,7 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
         aria-labelledby="insight-creator-heading"
         data-creator-shell={creatorShellEnabled ? 'enabled' : undefined}
         tabIndex={-1}
-        className="mx-4 flex h-[560px] w-[720px] max-h-[calc(100vh-2rem)] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/20 dark:border-white/[0.08] dark:bg-navy-900 outline-none"
+        className={`mx-4 flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/20 outline-none dark:border-white/[0.08] dark:bg-navy-900 ${creatorGeometryClassName}`}
       >
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-white/[0.08]">
