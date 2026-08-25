@@ -568,6 +568,54 @@ export function clearCanonicalFinanceSearchParams(current: URLSearchParams): URL
   return next;
 }
 
+export type CanonicalFinanceQueryOutcome =
+  | { kind: 'none' }
+  | { kind: 'direct-workspace'; artifactId: string; businessVersionId: string; artifactType: string }
+  | { kind: 'clear-stale' };
+
+/**
+ * FIX-4 (2026-08-25 odbiór dnia 4): decides what a `canonical*` deep-link
+ * query should render, extracted out of the `fullView` useMemo so it's
+ * unit-testable without mounting the whole hub. Three outcomes:
+ *  - `none` — no canonical query present, caller falls through to its
+ *    normal activeDocument/list logic.
+ *  - `direct-workspace` — incomplete params, an unrecognized artifact type,
+ *    or a RECOGNIZED type whose v3 flag is ON: render
+ *    `CanonicalFinanceDirectWorkspace`, which owns its own honest
+ *    empty/error states for the incomplete/unrecognized cases.
+ *  - `clear-stale` — complete params, a recognized type, but that type's v3
+ *    flag is OFF: the workspace this link points at is disabled, so
+ *    rendering it would previously fall through to `if (!activeDocumentId ||
+ *    !activeDocument) return null`, i.e. a blank screen (no legacy document
+ *    was ever opened for a canonical-only deep link). The caller must clear
+ *    the stale query and show the list instead of rendering nothing.
+ */
+export function resolveCanonicalFinanceQueryOutcome(
+  params: URLSearchParams,
+  flags: CanonicalFinanceFlags
+): CanonicalFinanceQueryOutcome {
+  if (!hasAnyCanonicalFinanceQuery(params)) return { kind: 'none' };
+  const canonicalArtifactType = params.get('canonicalArtifactType');
+  const canonicalArtifactId = params.get('canonicalArtifactId');
+  const canonicalBusinessVersionId = params.get('canonicalBusinessVersionId');
+  const hasCompleteCanonicalQueryIdentity = Boolean(
+    canonicalArtifactType && canonicalArtifactId && canonicalBusinessVersionId
+  );
+  const hasRecognizedCanonicalType = Boolean(
+    canonicalArtifactType && CANONICAL_FINANCE_ARTIFACT_TYPES.has(canonicalArtifactType)
+  );
+  const canonicalFlagEnabled = isCanonicalFinanceTypeEnabled(canonicalArtifactType, flags);
+  if (!hasCompleteCanonicalQueryIdentity || !hasRecognizedCanonicalType || canonicalFlagEnabled) {
+    return {
+      kind: 'direct-workspace',
+      artifactId: canonicalArtifactId ?? '',
+      businessVersionId: canonicalBusinessVersionId ?? '',
+      artifactType: canonicalArtifactType ?? '',
+    };
+  }
+  return { kind: 'clear-stale' };
+}
+
 /** Canonical Finance detail URLs, including all five flag-gated workspaces. */
 export function parseFinanceDeepLink(pathname: string): FinanceDeepLink | null {
   const match = pathname.match(
@@ -3261,42 +3309,56 @@ export const FinanceHub: React.FC = () => {
   );
 
   // ---- Full view ----
+  // FIX-4 (2026-08-25 odbiór dnia 4): resolved once here and reused both by
+  // `fullView` below and by the render-branch decision further down, plus
+  // the stale-query cleanup effect right after — one source of truth for
+  // what a `canonical*` deep link should do instead of three copies of the
+  // same flag/completeness checks drifting apart.
+  const canonicalFinanceQueryOutcome = useMemo(
+    () =>
+      resolveCanonicalFinanceQueryOutcome(searchParams, {
+        statementPack: financeV3StatementPackFlag.enabled,
+        baseline: financeV3BaselineFlag.enabled,
+        analysis: financeV3AnalysisFlag.enabled,
+        prediction: financeV3PredictionFlag.enabled,
+        valuation: financeV3ValuationFlag.enabled,
+      }),
+    [
+      searchParams,
+      financeV3StatementPackFlag.enabled,
+      financeV3BaselineFlag.enabled,
+      financeV3AnalysisFlag.enabled,
+      financeV3PredictionFlag.enabled,
+      financeV3ValuationFlag.enabled,
+    ]
+  );
+
+  // A deep link with a COMPLETE, recognized canonical* identity whose v3
+  // flag is OFF used to fall all the way through `fullView` to `if
+  // (!activeDocumentId || !activeDocument) return null` — a blank screen,
+  // since a canonical-only deep link never had a legacy `activeDocument` to
+  // begin with. Clear the stale query so the next render's
+  // `canonicalFinanceQueryOutcome` is `none` and the table/grid list shows
+  // instead (see the render-branch change below, which also skips
+  // rendering `fullView` on THIS render already, so there's no blank
+  // flash while this effect is in flight).
+  useEffect(() => {
+    if (canonicalFinanceQueryOutcome.kind !== 'clear-stale') return;
+    setSearchParams(clearCanonicalFinanceSearchParams(searchParams));
+  }, [canonicalFinanceQueryOutcome, searchParams, setSearchParams]);
+
   const fullView = useMemo(() => {
-    const canonicalArtifactType = searchParams.get('canonicalArtifactType');
-    const canonicalArtifactId = searchParams.get('canonicalArtifactId');
-    const canonicalBusinessVersionId = searchParams.get('canonicalBusinessVersionId');
-    const hasAnyCanonicalQueryIdentity = hasAnyCanonicalFinanceQuery(searchParams);
-    const hasCompleteCanonicalQueryIdentity = Boolean(
-      canonicalArtifactType && canonicalArtifactId && canonicalBusinessVersionId
-    );
-    const canonicalFlagEnabled = isCanonicalFinanceTypeEnabled(canonicalArtifactType, {
-      statementPack: financeV3StatementPackFlag.enabled,
-      baseline: financeV3BaselineFlag.enabled,
-      analysis: financeV3AnalysisFlag.enabled,
-      prediction: financeV3PredictionFlag.enabled,
-      valuation: financeV3ValuationFlag.enabled,
-    });
-    const hasRecognizedCanonicalType = Boolean(
-      canonicalArtifactType && CANONICAL_FINANCE_ARTIFACT_TYPES.has(canonicalArtifactType)
-    );
-    if (
-      hasAnyCanonicalQueryIdentity &&
-      (!hasCompleteCanonicalQueryIdentity || !hasRecognizedCanonicalType || canonicalFlagEnabled)
-    ) {
+    if (canonicalFinanceQueryOutcome.kind === 'direct-workspace') {
       const closeCanonical = () => {
-        const next = new URLSearchParams(searchParams);
-        next.delete('canonicalArtifactType');
-        next.delete('canonicalArtifactId');
-        next.delete('canonicalBusinessVersionId');
-        setSearchParams(next);
+        setSearchParams(clearCanonicalFinanceSearchParams(searchParams));
       };
       return (
         <div className="p-4 lg:p-6">
           <div className="h-[calc(100vh-120px)] min-h-[620px] overflow-hidden rounded-xl border border-c-border-subtle bg-c-surface">
             <CanonicalFinanceDirectWorkspace
-              artifactId={canonicalArtifactId ?? ''}
-              businessVersionId={canonicalBusinessVersionId ?? ''}
-              artifactType={canonicalArtifactType ?? ''}
+              artifactId={canonicalFinanceQueryOutcome.artifactId}
+              businessVersionId={canonicalFinanceQueryOutcome.businessVersionId}
+              artifactType={canonicalFinanceQueryOutcome.artifactType}
               onNavigateBack={closeCanonical}
             />
           </div>
@@ -3607,6 +3669,7 @@ export const FinanceHub: React.FC = () => {
       </div>
     );
   }, [
+    canonicalFinanceQueryOutcome,
     activeDocumentId,
     activeDocument,
     financeV3AnalysisFlag.enabled,
@@ -3886,7 +3949,19 @@ export const FinanceHub: React.FC = () => {
           </div>
         </>
       );
-    if ((activeDocumentId && activeDocument) || hasAnyCanonicalFinanceQuery(searchParams))
+    // FIX-4 (2026-08-25 odbiór dnia 4): only route to `fullView` when it will
+    // actually render something — a legacy activeDocument, or the canonical
+    // direct workspace. The old `hasAnyCanonicalFinanceQuery(searchParams)`
+    // check here also matched the `clear-stale` case (complete + recognized
+    // canonical* identity whose v3 flag is OFF), which made `fullView`
+    // return null and this branch render a blank screen instead of falling
+    // through to the list below — even before the cleanup effect (declared
+    // next to `canonicalFinanceQueryOutcome` above) has a chance to strip
+    // the stale query from the URL.
+    if (
+      (activeDocumentId && activeDocument) ||
+      canonicalFinanceQueryOutcome.kind === 'direct-workspace'
+    )
       return fullView;
     // Finance tabs are list surfaces. Analysis tools, planners and charts belong
     // to the record workspace opened from a row, never below the list itself.
@@ -3908,6 +3983,7 @@ export const FinanceHub: React.FC = () => {
     activeDocumentId,
     activeDocument,
     fullView,
+    canonicalFinanceQueryOutcome,
     searchParams,
     viewMode,
     gridView,

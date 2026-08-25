@@ -5,6 +5,7 @@ import {
   clearCanonicalFinanceSearchParams,
   hasAnyCanonicalFinanceQuery,
   isCanonicalFinanceTypeEnabled,
+  resolveCanonicalFinanceQueryOutcome,
   resolveFinanceDetailBranches,
   toFinanceResolveInput,
 } from '../FinanceHub';
@@ -103,6 +104,61 @@ describe('Finance detail identity gate', () => {
       if (branch) expect(result[branch]).toBe(true);
     }
   );
+
+  // FIX-4 (2026-08-25 odbiór dnia 4): a COMPLETE, recognized canonical*
+  // identity whose own v3 flag is OFF used to fall through `fullView` to
+  // `if (!activeDocumentId || !activeDocument) return null` — a blank
+  // screen, because a canonical-only deep link never has a legacy
+  // activeDocument. `resolveCanonicalFinanceQueryOutcome` is the extracted
+  // decision this render branch is built on now; `clear-stale` is the new
+  // outcome the caller uses to skip `fullView` and fall through to the
+  // list instead (see the `useEffect` next to it in FinanceHub.tsx that
+  // strips the stale query so the URL matches what's on screen).
+  describe('resolveCanonicalFinanceQueryOutcome (FIX-4)', () => {
+    const allOff = {
+      statementPack: false,
+      baseline: false,
+      analysis: false,
+      prediction: false,
+      valuation: false,
+    };
+
+    it('is "none" when no canonical query is present', () => {
+      expect(resolveCanonicalFinanceQueryOutcome(new URLSearchParams('tab=models'), allOff)).toEqual(
+        { kind: 'none' }
+      );
+    });
+
+    it('is "clear-stale" for a complete, recognized identity whose flag is OFF', () => {
+      const params = new URLSearchParams(
+        'canonicalArtifactType=BASELINE_MODEL&canonicalArtifactId=a&canonicalBusinessVersionId=v'
+      );
+      expect(resolveCanonicalFinanceQueryOutcome(params, allOff)).toEqual({ kind: 'clear-stale' });
+    });
+
+    it('is "direct-workspace" for the same complete identity once its flag is ON', () => {
+      const params = new URLSearchParams(
+        'canonicalArtifactType=BASELINE_MODEL&canonicalArtifactId=a&canonicalBusinessVersionId=v'
+      );
+      expect(resolveCanonicalFinanceQueryOutcome(params, { ...allOff, baseline: true })).toEqual({
+        kind: 'direct-workspace',
+        artifactId: 'a',
+        businessVersionId: 'v',
+        artifactType: 'BASELINE_MODEL',
+      });
+    });
+
+    it.each([
+      ['canonicalArtifactType=BASELINE_MODEL&canonicalArtifactId=a', 'incomplete (missing version)'],
+      [
+        'canonicalArtifactType=ALIEN&canonicalArtifactId=a&canonicalBusinessVersionId=v',
+        'unrecognized type',
+      ],
+    ])('is still "direct-workspace" (never a blank screen) when %s: %s', (query) => {
+      const outcome = resolveCanonicalFinanceQueryOutcome(new URLSearchParams(query), allOff);
+      expect(outcome.kind).toBe('direct-workspace');
+    });
+  });
 
   it.each([
     [
