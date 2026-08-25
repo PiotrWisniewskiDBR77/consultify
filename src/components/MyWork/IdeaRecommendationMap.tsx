@@ -122,6 +122,7 @@ import { AIWhatIfScenarios } from './mindmap/AIWhatIfScenarios';
 import { type AlignMode, computeAlignDistribute } from './mindmap/alignDistribute';
 import { AssignPersonModal } from './mindmap/AssignPersonModal';
 import { AttachArtifactModal } from './mindmap/AttachArtifactModal';
+import { IdeaAINudgeStrip } from './IdeaAINudgeStrip';
 import { BatchConvertModal } from './mindmap/BatchConvertModal';
 import { BranchComparison } from './mindmap/BranchComparison';
 import { BranchSummaryPanel } from './mindmap/BranchSummaryPanel';
@@ -7331,6 +7332,43 @@ function MindMapInner({
         edgeCount={edges.length}
         onToggleSimplifiedMode={setSimplifiedMode}
       />
+
+      {/* MYW-IDEAS-011: previously mounted only in IdeaWhiteboardTool, so the
+          same owner-approved (source/preview/apply/dismiss, durable
+          dismissal, no silent mutation) AI nudge strip was invisible in
+          Mind Map. `mm_ai_expand`/`mm_ai_summarize` are the tool's own real
+          quick actions (useMindMapQuickActions.ts), dispatched the same way
+          MindmapCommandPalette above already dispatches every other mm_*
+          action — not a borrowed/foreign handler like whiteboard needed. */}
+      {nodes.length > 0 && (
+        <IdeaAINudgeStrip
+          ideaId={ideaId}
+          userId={currentUser?.id || null}
+          organizationId={currentUser?.organizationId || null}
+          activeTool={'mindmap' as any}
+          title={ideaTitle}
+          seedText={seedText}
+          isAccepted
+          graphNodes={nodes as any[]}
+          graphEdges={edges as any[]}
+          onActionExpand={() => {
+            window.dispatchEvent(
+              new CustomEvent('idea-workspace-quick-action', {
+                detail: { action: 'mm_ai_expand', ideaId },
+              })
+            );
+            return { status: 'handed_off' as const };
+          }}
+          onActionConvert={() => {
+            window.dispatchEvent(
+              new CustomEvent('idea-workspace-quick-action', {
+                detail: { action: 'mm_ai_summarize', ideaId },
+              })
+            );
+            return { status: 'handed_off' as const };
+          }}
+        />
+      )}
       {subtreeDeleteDialog}
     </div>
   );
