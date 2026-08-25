@@ -1794,6 +1794,19 @@ router.get(
             reason: isOwner ? null : 'Only the note owner can delete this page.',
             receiptContract: isOwner ? 'notebook_delete_receipt_v1' : null,
           },
+          // DEC-25: "Expand into document" (notebook-expand → Work Canvas draft)
+          // is a governed-api / server-receipt-required action in
+          // notebookActionRegistry.ts, same class as delete. It shares delete's
+          // owner-only write gate (PUT /notebook/pages/:id above enforces the
+          // identical NOTEBOOK_PAGE_OWNER_ONLY rule for page-write), so the
+          // capability check mirrors it rather than inventing a new rule.
+          expandDocument: {
+            allowed: isOwner,
+            reason: isOwner
+              ? null
+              : 'Only the note owner can create a document draft from this page.',
+            receiptContract: isOwner ? 'notebook_expand_document_receipt_v1' : null,
+          },
         },
       },
       meta: { version: 'v8', contract: V8_NOTEBOOK_CONTRACT },

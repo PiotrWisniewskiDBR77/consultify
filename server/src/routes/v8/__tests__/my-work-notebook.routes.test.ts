@@ -846,11 +846,18 @@ describe('V8 My Work notebook routes', () => {
           reason: null,
           receiptContract: 'notebook_delete_receipt_v1',
         },
+        // DEC-25: "Expand into document" shares delete's owner-only write gate
+        // (see the PUT /notebook/pages/:id NOTEBOOK_PAGE_OWNER_ONLY check above).
+        expandDocument: {
+          allowed: true,
+          reason: null,
+          receiptContract: 'notebook_expand_document_receipt_v1',
+        },
       },
     });
   });
 
-  it('returns an explicit owner-only denial capability without enabling Delete', async () => {
+  it('returns an explicit owner-only denial capability without enabling Delete or Expand into document', async () => {
     mockQueryOne
       .mockResolvedValueOnce({
         id: 'note-5',
@@ -868,6 +875,11 @@ describe('V8 My Work notebook routes', () => {
     expect(res.body.data.actions.delete).toEqual({
       allowed: false,
       reason: 'Only the note owner can delete this page.',
+      receiptContract: null,
+    });
+    expect(res.body.data.actions.expandDocument).toEqual({
+      allowed: false,
+      reason: 'Only the note owner can create a document draft from this page.',
       receiptContract: null,
     });
   });

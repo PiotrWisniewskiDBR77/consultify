@@ -35,14 +35,20 @@ describe('MYW-NBK-006 local toolbar simplification', () => {
   });
 
   it('qualifies Delete only through an idempotent server receipt and scoped readback', () => {
+    // DEC-25: 'expand-document' joined 'delete' on the same real server
+    // capability check (was previously ungated dead click — see
+    // notebookExpandToDocument.ts / server/src/routes/v8/my-work.routes.ts
+    // action-capabilities). receiptCapableActionIds now folds both flags into
+    // one array instead of the single-action ternary this test used to assert.
+    expect(contentSource).toContain("...(isDeleteReceiptCapable ? ['delete'] : [])");
     expect(contentSource).toContain(
-      "receiptCapableActionIds={isDeleteReceiptCapable ? ['delete'] : []}"
+      "...(isExpandDocumentReceiptCapable ? ['expand-document'] : [])"
     );
     expect(contentSource).toContain('Api.getNotebookActionCapabilities(pageId)');
     expect(contentSource).toContain('result.actorUserId !== currentUserId');
     expect(contentSource).toContain('result.organizationId !== currentOrganizationId');
     expect(contentSource).toContain(
-      'deleteCapability.organizationId === currentOrganizationId'
+      'actionCapabilities.organizationId === currentOrganizationId'
     );
     expect(contentSource).toContain("receiptContract === 'notebook_delete_receipt_v1'");
     expect(contentSource).toContain('deleteRequestRef.current?.pageId === activePage.id');

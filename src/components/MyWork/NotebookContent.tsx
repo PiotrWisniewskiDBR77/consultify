@@ -777,29 +777,51 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   const activePage = useMemo(() => pages.find((p) => p.id === activeId) || null, [pages, activeId]);
   // MYW-NBK-004 — cross-notebook search dialog (Api.notebookSemanticSearch).
   const [notebookSearchDialogOpen, setNotebookSearchDialogOpen] = useState(false);
-  const [deleteCapability, setDeleteCapability] = useState<{
+  // DEC-25: both 'delete' and 'expand-document' are governed-api /
+  // server-receipt-required note-menu actions (notebookActionRegistry.ts) —
+  // NotebookHamburgerMenu only enables them when the caller proves (via a real
+  // server round-trip, not just optimistic local state) that a durable receipt
+  // is obtainable for THIS actor/org/page/version. One fetch backs both flags.
+  const [actionCapabilities, setActionCapabilities] = useState<{
     pageId: string;
     pageVersion: string | null;
     actorUserId: string;
     organizationId: string;
-    allowed: boolean;
-    receiptContract: string | null;
+    delete: { allowed: boolean; receiptContract: string | null };
+    expandDocument: { allowed: boolean; receiptContract: string | null };
   } | null>(null);
-  const isDeleteReceiptCapable = useMemo(
+  const isCapabilityCurrent = useMemo(
     () =>
       Boolean(
         activePage &&
-        deleteCapability?.allowed === true &&
-        deleteCapability.pageId === activePage.id &&
-        deleteCapability.actorUserId === currentUserId &&
-        deleteCapability.organizationId === currentOrganizationId &&
-        deleteCapability.receiptContract === 'notebook_delete_receipt_v1' &&
+        actionCapabilities &&
+        actionCapabilities.pageId === activePage.id &&
+        actionCapabilities.actorUserId === currentUserId &&
+        actionCapabilities.organizationId === currentOrganizationId &&
         (!activePage.updatedAt ||
-          (deleteCapability.pageVersion !== null &&
-            new Date(deleteCapability.pageVersion).getTime() ===
+          (actionCapabilities.pageVersion !== null &&
+            new Date(actionCapabilities.pageVersion).getTime() ===
               new Date(activePage.updatedAt).getTime()))
       ),
-    [activePage, currentOrganizationId, currentUserId, deleteCapability]
+    [activePage, actionCapabilities, currentOrganizationId, currentUserId]
+  );
+  const isDeleteReceiptCapable = useMemo(
+    () =>
+      Boolean(
+        isCapabilityCurrent &&
+        actionCapabilities?.delete.allowed === true &&
+        actionCapabilities.delete.receiptContract === 'notebook_delete_receipt_v1'
+      ),
+    [actionCapabilities, isCapabilityCurrent]
+  );
+  const isExpandDocumentReceiptCapable = useMemo(
+    () =>
+      Boolean(
+        isCapabilityCurrent &&
+        actionCapabilities?.expandDocument.allowed === true &&
+        actionCapabilities.expandDocument.receiptContract === 'notebook_expand_document_receipt_v1'
+      ),
+    [actionCapabilities, isCapabilityCurrent]
   );
   const attemptedOpenPageRef = useRef<string | null>(null);
 
@@ -807,11 +829,11 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     const pageId = activePage?.id;
     const pageVersion = activePage?.updatedAt || null;
     if (!pageId || !currentUserId || !currentOrganizationId) {
-      setDeleteCapability(null);
+      setActionCapabilities(null);
       return;
     }
     let cancelled = false;
-    setDeleteCapability(null);
+    setActionCapabilities(null);
     void Api.getNotebookActionCapabilities(pageId)
       .then((result) => {
         if (cancelled) return;
@@ -827,17 +849,23 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
         ) {
           return;
         }
-        setDeleteCapability({
+        setActionCapabilities({
           pageId: result.pageId,
           pageVersion: result.pageVersion,
           actorUserId: result.actorUserId,
           organizationId: result.organizationId,
-          allowed: result.actions.delete.allowed,
-          receiptContract: result.actions.delete.receiptContract,
+          delete: {
+            allowed: result.actions.delete.allowed,
+            receiptContract: result.actions.delete.receiptContract,
+          },
+          expandDocument: {
+            allowed: result.actions.expandDocument.allowed,
+            receiptContract: result.actions.expandDocument.receiptContract,
+          },
         });
       })
       .catch(() => {
-        if (!cancelled) setDeleteCapability(null);
+        if (!cancelled) setActionCapabilities(null);
       });
     return () => {
       cancelled = true;
@@ -2638,7 +2666,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     try {
       // Prefer the live editor JSON — autosave debounces, so activePage may lag.
       const contentJson = editor?.getJSON() ?? activePage.contentJson;
-      const { chatUrl } = await expandNotebookPageToCanvasDraft({
+      const result = await expandNotebookPageToCanvasDraft({
         id: activePage.id,
         title: title || activePage.title || '',
         contentJson,
@@ -2647,7 +2675,12 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       toast.success(
         t('notebook.notebookContent.toastSuccess10', 'Document draft created in Canvas')
       );
-      navigate(chatUrl);
+      navigate(result.chatUrl);
+      // DEC-25: NotebookHamburgerMenu's executeAction() requires a `receiptId`
+      // on the resolved value for every 'server-receipt-required' contract
+      // (see notebookActionRegistry.ts 'expand-document') — without it the
+      // menu treats the action as failed even though the draft was created.
+      return result;
     } catch (error: any) {
       console.error('Failed to expand note into Canvas document', error);
       toast.error(t('notebook.notebookContent.toastError15', 'Failed to create the document'));
@@ -3411,7 +3444,10 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                     }
                     onAskAI={() => setAiCommand('action')}
                     onDelete={() => handleDeletePage()}
-                    receiptCapableActionIds={isDeleteReceiptCapable ? ['delete'] : []}
+                    receiptCapableActionIds={[
+                      ...(isDeleteReceiptCapable ? ['delete'] : []),
+                      ...(isExpandDocumentReceiptCapable ? ['expand-document'] : []),
+                    ]}
                   />
                 )}
 

@@ -135,8 +135,13 @@ describe('Notebook cross-surface action audit', () => {
     }
     expect(toolbar).toContain('NotebookToolbar');
     expect(content).toContain('receiptCapableActionIds={[]}');
+    // DEC-25: the note-menu's receiptCapableActionIds now folds in
+    // 'expand-document' alongside 'delete' (both governed-api /
+    // server-receipt-required — see notebookActionRegistry.ts), backed by the
+    // same real capability fetch instead of a single-action ternary.
+    expect(content).toContain("...(isDeleteReceiptCapable ? ['delete'] : [])");
     expect(content).toContain(
-      "receiptCapableActionIds={isDeleteReceiptCapable ? ['delete'] : []}"
+      "...(isExpandDocumentReceiptCapable ? ['expand-document'] : [])"
     );
   });
 

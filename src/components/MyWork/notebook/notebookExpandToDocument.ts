@@ -21,6 +21,16 @@ export interface NotebookExpandResult {
   draftId: string;
   /** Canonical deep-link consumed by UnifiedChatPanel (workPanel + canvasDraftId). */
   chatUrl: string;
+  /**
+   * DEC-25: the durable action receipt NotebookHamburgerMenu's executeAction()
+   * requires for every 'server-receipt-required' contract (see
+   * notebookActionRegistry.ts 'expand-document'). There is no separate audit
+   * receipt endpoint for canvas-draft creation the way notebook delete has
+   * (/notebook/action-receipts/:receiptId) — the created draft itself is the
+   * durable evidence, retrievable via GET /api/work-canvas/drafts/:draftId, so
+   * the draft id doubles as the receipt id.
+   */
+  receiptId: string;
 }
 
 const escapeTableCell = (text: string): string => text.replace(/\|/g, '\\|').replace(/\n+/g, ' ');
@@ -250,5 +260,5 @@ export async function expandNotebookPageToCanvasDraft(
   if (!draftId) {
     throw new Error('Canvas draft was created but no draft id was returned');
   }
-  return { draftId, chatUrl: buildExpandChatUrl(draftId) };
+  return { draftId, chatUrl: buildExpandChatUrl(draftId), receiptId: draftId };
 }
