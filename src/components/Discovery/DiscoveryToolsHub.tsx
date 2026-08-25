@@ -169,7 +169,11 @@ interface StatusFilterOption {
   bgColor: string;
 }
 
-// Discovery tab: DRAFT, PENDING_REVIEW (work in progress)
+// M14 (2026-08-25): was DRAFT/PENDING_REVIEW/EXECUTING only (work in
+// progress) — the underlying data fetch dropped approved/completed/archived/
+// blocked sessions before they ever reached this tab (TLS-XPR-009), so these
+// four filter options had nothing to filter. Now that the full lifecycle
+// reaches the Sessions tab, the filter chips cover it too.
 const DISCOVERY_STATUSES: StatusFilterOption[] = [
   { id: 'all', label: 'All', color: 'text-c-text-secondary', bgColor: 'bg-c-text-muted' },
   { id: 'draft', label: 'Draft', color: 'text-c-text-secondary', bgColor: 'bg-c-text-muted' },
@@ -184,6 +188,30 @@ const DISCOVERY_STATUSES: StatusFilterOption[] = [
     label: 'In Progress',
     color: 'text-blue-400',
     bgColor: 'bg-blue-500',
+  },
+  {
+    id: 'approved',
+    label: 'Approved',
+    color: 'text-emerald-400',
+    bgColor: 'bg-emerald-500',
+  },
+  {
+    id: 'done',
+    label: 'Completed',
+    color: 'text-emerald-400',
+    bgColor: 'bg-emerald-500',
+  },
+  {
+    id: 'archived',
+    label: 'Archived',
+    color: 'text-c-text-secondary',
+    bgColor: 'bg-c-text-muted',
+  },
+  {
+    id: 'blocked',
+    label: 'Blocked',
+    color: 'text-danger-400',
+    bgColor: 'bg-danger-500',
   },
 ];
 
@@ -735,9 +763,11 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
   const [previewItemId, setPreviewItemId] = useState<string | null>(null);
-  const [selectedLibraryIds, setSelectedLibraryIds] = useState<Set<string>>(new Set());
-  const [selectedSessionsIds, setSelectedSessionsIds] = useState<Set<string>>(new Set());
-  const [selectedReportsIds, setSelectedReportsIds] = useState<Set<string>>(new Set());
+  // M9 (2026-08-25): `selectedLibraryIds`/`selectedSessionsIds`/`selectedReportsIds`
+  // and the `selection` prop they drove were removed — no bulk action bar ever
+  // consumed them (TLS-XPR-013: affordance without an action). Bulk selection
+  // returns once `D4` (menu/bulk action matrix, FALA 0) is decided and a real
+  // action bar is built — see docs/.../tools-uwagi-komplet.md FALA 2.
   const [previewFullSession, setPreviewFullSession] = useState<any | null>(null);
   const [previewFullLoading, setPreviewFullLoading] = useState(false);
   const [previewFullAssessment, setPreviewFullAssessment] = useState<any | null>(null);
@@ -1033,12 +1063,14 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           transformAssessmentSession
         );
 
-        // Split by status for different tabs
-        // Discovery: DRAFT, REVIEW (work in progress)
-        const discoveryItems = allSessions.filter(
-          (s) => s.status === 'DRAFT' || s.status === 'PENDING_REVIEW'
-        );
-        setDiscoveries(discoveryItems);
+        // M14 (2026-08-25): was filtered to DRAFT/PENDING_REVIEW only
+        // (TLS-XPR-009) — an approved or frozen session vanished from the
+        // Sessions tab the moment it stopped being work-in-progress, even
+        // though approved sessions are exactly what downstream
+        // Outputs/Reports/Initiatives are supposed to source from. Show the
+        // full lifecycle; `statusFilter` (DISCOVERY_STATUSES below) is the
+        // place to narrow the view, not a silent server-side cut.
+        setDiscoveries(allSessions);
 
         // Reports & Presentations: real artifacts (assessment reports, report builder
         // reports, decks). This used to be its own hand-rolled Record<string,
@@ -1133,14 +1165,10 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         );
         setOutputs(mergedOutputs);
 
-        const inProgressAssessments = allAssessments.filter(
-          (a: any) =>
-            a.status === 'DRAFT' ||
-            a.status === 'PENDING_REVIEW' ||
-            a.status === 'EXECUTING' ||
-            a.status === 'PLANNING'
-        );
-        setAssessmentSessions(inProgressAssessments);
+        // M14 (2026-08-25): same defect as `discoveries` above — approved/
+        // completed assessment sessions were dropped before the Sessions tab
+        // ever saw them. Show the full lifecycle.
+        setAssessmentSessions(allAssessments);
 
         // Initiatives: Fetch initiatives derived from tools/assessments (traceability).
         try {
@@ -3865,7 +3893,6 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
               <StandardTable
                 persistKey="tools.library"
                 columns={libraryColumns}
-                selection={{ selectedIds: selectedLibraryIds, onChange: setSelectedLibraryIds }}
                 data={filteredLibraryItems}
                 selectedRowId={previewItemId}
                 onRowClick={(row) => setPreviewItemId(row.id)}
@@ -4112,7 +4139,6 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             <StandardTable
               persistKey="tools.sessions"
               columns={sessionsColumns}
-              selection={{ selectedIds: selectedSessionsIds, onChange: setSelectedSessionsIds }}
               data={unifiedSessionsData as any}
               selectedRowId={previewItemId}
               onRowClick={(row) => setPreviewItemId(row.id)}
@@ -4631,7 +4657,6 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           <StandardTable
             persistKey={isInitiativesTab ? 'tools.initiatives' : 'tools.outputs'}
             columns={columns}
-            selection={{ selectedIds: selectedReportsIds, onChange: setSelectedReportsIds }}
             data={currentData}
             selectedRowId={previewItemId}
             onRowClick={(row) => setPreviewItemId(row.id)}
@@ -4734,10 +4759,40 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                               onClick: () => setPreviewItemId(id),
                             },
                             {
+                              // M8 (2026-08-25): was `onClick: () => setPreviewItemId(id)`
+                              // — a silent duplicate of the `preview` action above,
+                              // not a chat handler. Wire the same real
+                              // `openChatWithContext` used by Library/Sessions/
+                              // Initiatives (TLS-MENU-OWN-001, XMOD-MENU-AC-004).
                               id: 'chat',
                               label: isPolish ? 'Czat' : 'Chat',
                               icon: MessageSquare,
-                              onClick: () => setPreviewItemId(id),
+                              onClick: async () => {
+                                try {
+                                  const convId = await openChatWithContext({
+                                    entityType: 'tool_output',
+                                    entityId: id,
+                                    entityName: String(row?.name || row?.title || '') || id,
+                                    contextData: {
+                                      outputKind: (row as any)?.outputKind,
+                                      sourceType: (row as any)?.sourceType,
+                                      sourceId: (row as any)?.sourceId,
+                                    },
+                                  });
+                                  await addChatMessage({
+                                    conversationId: convId,
+                                    role: 'user',
+                                    content: isPolish
+                                      ? 'Pomóż mi z tym wynikiem: co jeszcze warto sprawdzić lub uzupełnić?'
+                                      : 'Help me with this output: what else should I check or complete?',
+                                  } as any);
+                                  toast.success(t('tools.hub.toast.chatOpened', 'Chat opened'), {
+                                    duration: 1500,
+                                  });
+                                } catch {
+                                  toast.error(t('tools.hub.toast.chatOpenError', 'Failed to open chat'));
+                                }
+                              },
                             },
                           ],
                         },
@@ -4799,6 +4854,10 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         pending_review: t('common.pendingReview', 'Pending Review'),
         approved: t('common.approved', 'Approved'),
         completed: t('common.completed', 'Completed'),
+        done: t('common.completed', 'Completed'),
+        executing: t('common.inProgress', 'In Progress'),
+        archived: t('common.archived', 'Archived'),
+        blocked: t('common.blocked', 'Blocked'),
         proposed: t('common.proposed', 'Proposed'),
         planned: t('common.planned', 'Planned'),
         in_progress: t('common.inProgress', 'In Progress'),
@@ -5239,27 +5298,33 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                   dot: 'bg-c-text-muted',
                 },
               ] as const
-            ).map((opt) => {
-              const isActive = libraryCategoryFilter === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => setLibraryCategoryFilter(isActive ? 'all' : opt.id)}
-                  className={isActive ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
-                >
-                  <span
-                    className={
-                      opt.id === 'all' ? MENU_3_ALL_DOT_CLASS : `w-2 h-2 rounded-full ${opt.dot}`
-                    }
-                  />
-                  <span>{opt.label}</span>
-                  <span className={isActive ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
-                    {opt.count}
-                  </span>
-                </button>
-              );
-            })}
+            )
+              // M6 (2026-08-25): an empty category chip ("Other 0") is pure
+              // noise — it filters to nothing and just widens the row. Keep
+              // `all` always visible (it is the reset anchor, not a category
+              // count); drop any other chip whose count is zero.
+              .filter((opt) => opt.id === 'all' || opt.count > 0)
+              .map((opt) => {
+                const isActive = libraryCategoryFilter === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => setLibraryCategoryFilter(isActive ? 'all' : opt.id)}
+                    className={isActive ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
+                  >
+                    <span
+                      className={
+                        opt.id === 'all' ? MENU_3_ALL_DOT_CLASS : `w-2 h-2 rounded-full ${opt.dot}`
+                      }
+                    />
+                    <span>{opt.label}</span>
+                    <span className={isActive ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
+                      {opt.count}
+                    </span>
+                  </button>
+                );
+              })}
           </>
         ) : (
           <>
