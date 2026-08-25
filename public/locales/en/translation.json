@@ -16796,6 +16796,87 @@
         "actions": {
           "save": "Save security policy"
         }
+      },
+      "sessions": {
+        "day2Auto": {
+          "text1": "Error sesji",
+          "text2": "User",
+          "text3": "Urządzenie / Reviewarka",
+          "text4": "Ostatnia aktywność",
+          "text5": "Wygaśnięcie",
+          "text6": "Error unieważnienia",
+          "text7": "Sessions organization",
+          "text8": "Unieważnij sesję",
+          "text9": "No Activech sesji",
+          "text10": "Nie znaleziono Activech sesji członków organization.",
+          "text11": "Unieważnić sesję?",
+          "text12": "Ta Session natychmiast utraci Access. User może zalogować się ponownie."
+        }
+      },
+      "service-accounts": {
+        "day2Auto": {
+          "text1": "Failed to pobrać kont usługowych.",
+          "text2": "Account nie zostało potwierdzone przez serwer.",
+          "text3": "Account usługowe utworzone",
+          "text4": "Failed to utworzyć Accounts.",
+          "text5": "Odwołanie nie zostało potwierdzone.",
+          "text6": "Account usługowe odwołane",
+          "text7": "Failed to odwołać Accounts.",
+          "text8": "Name",
+          "text9": "Latest użycie",
+          "text10": "Never",
+          "text11": "Expires",
+          "text12": "Accounts usługowe",
+          "text13": "Poświadczenia maszynowe organization. Pełny sekret jest wyświetlany tylko raz.",
+          "text14": "Create",
+          "text15": "Skopiuj sekret teraz — nie będzie pokazany ponownie",
+          "text16": "Zapisałem sekret",
+          "text17": "Odwołaj Account",
+          "text18": "No kont usługowych",
+          "text19": "Nie Created jeszcze poświadczeń maszynowych.",
+          "text20": "Odwołać Account usługowe?",
+          "text21": "Token natychmiast przestanie działać. Tej operacji nie można cofnąć.",
+          "text22": "Odwołaj"
+        }
+      },
+      "security-alerts": {
+        "day2Auto": {
+          "text1": "Error alertów",
+          "text2": "Dotkliwość",
+          "text3": "User",
+          "text4": "Status",
+          "text5": "Status",
+          "text6": "Rozwiązany",
+          "text7": "Alerts bezpieczeństwa",
+          "text8": "Nierozwiązane:",
+          "text9": "Oznacz jako rozwiązane",
+          "text10": "No alertów",
+          "text11": "Nie wykryto zdarzeń bezpieczeństwa."
+        }
+      },
+      "break-glass": {
+        "day2Auto": {
+          "text1": "Error break-glass",
+          "text2": "Reason",
+          "text3": "Zatwierdził",
+          "text4": "Expires",
+          "text5": "Error aktywacji",
+          "text6": "Error wygaszenia",
+          "text7": "Awaryjny Access na maksymalnie 1 godzinę; widoczny w audycie.",
+          "text8": "Active Sessions: {{v0}}",
+          "text9": "No Activech sesji break-glass",
+          "text10": "Reason (min. 10 znaków)",
+          "text11": "Reason break-glass",
+          "text12": "Zatwierdzający",
+          "text13": "Funkcja jest wyłączona w polityce IAM organization.",
+          "text14": "Wygaś sesję",
+          "text15": "No historii Activech sesji",
+          "text16": "Nie ma obecnie Activego Accessu awaryjnego.",
+          "text17": "Aktywować Access break-glass?",
+          "text18": "Zakres: awaryjne uprawnienia administratora na maksymalnie 1h. Zatwierdzający: {{v0}}. Reason and zdarzenie będą widoczne w audycie. Odzyskanie: sesję można natychmiast wygasić.",
+          "text19": "Wygasić Access break-glass?",
+          "text20": "Access zostanie natychmiast odebrany. Ponowna aktywacja wymaga nowego powodu and zatwierdzenia."
+        }
       }
     },
     "tabs": {

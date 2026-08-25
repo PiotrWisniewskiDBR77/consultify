@@ -7,7 +7,9 @@ import {
 } from '../../services/adminSessionsApi';
 import { ConfirmDialog } from '../MyWork/shared/ConfirmDialog';
 import { StandardTable, type TableColumn, type TableRow } from '../standard/StandardTable';
+import { useTranslation } from 'react-i18next';
 export const AdminSessionsPanel: React.FC = () => {
+  const { t } = useTranslation();
   const [data, setData] = useState<AdminSession[]>([]),
     [target, setTarget] = useState<AdminSession | null>(null),
     [error, setError] = useState<string | null>(null);
@@ -16,7 +18,13 @@ export const AdminSessionsPanel: React.FC = () => {
       setData(await getAdminSessions());
       setError(null);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Błąd sesji');
+      setError(
+        e instanceof Error
+          ? e.message
+          : t('admin.security.sessions.day2Auto.text1', {
+              defaultValue: 'Błąd sesji',
+            })
+      );
     }
   }, []);
   useEffect(() => {
@@ -24,12 +32,38 @@ export const AdminSessionsPanel: React.FC = () => {
   }, [load]);
   const cols = useMemo<TableColumn[]>(
     () => [
-      { id: 'user', label: 'Użytkownik' },
-      { id: 'device', label: 'Urządzenie / przeglądarka' },
-      { id: 'ip', label: 'IP' },
-      { id: 'location', label: 'Lokalizacja' },
-      { id: 'active', label: 'Ostatnia aktywność' },
-      { id: 'expires', label: 'Wygaśnięcie' },
+      {
+        id: 'user',
+        label: t('admin.security.sessions.day2Auto.text2', {
+          defaultValue: 'Użytkownik',
+        }),
+      },
+      {
+        id: 'device',
+        label: t('admin.security.sessions.day2Auto.text3', {
+          defaultValue: 'Urządzenie / przeglądarka',
+        }),
+      },
+      {
+        id: 'ip',
+        label: 'IP',
+      },
+      {
+        id: 'location',
+        label: 'Lokalizacja',
+      },
+      {
+        id: 'active',
+        label: t('admin.security.sessions.day2Auto.text4', {
+          defaultValue: 'Ostatnia aktywność',
+        }),
+      },
+      {
+        id: 'expires',
+        label: t('admin.security.sessions.day2Auto.text5', {
+          defaultValue: 'Wygaśnięcie',
+        }),
+      },
     ],
     []
   );
@@ -52,27 +86,43 @@ export const AdminSessionsPanel: React.FC = () => {
       setData(await revokeAdminSession(target.id));
       setTarget(null);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Błąd unieważnienia');
+      setError(
+        e instanceof Error
+          ? e.message
+          : t('admin.security.sessions.day2Auto.text6', {
+              defaultValue: 'Błąd unieważnienia',
+            })
+      );
     }
   };
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold text-c-text">Sesje organizacji</h2>
+      <h2 className="text-lg font-semibold text-c-text">
+        {t('admin.security.sessions.day2Auto.text7', {
+          defaultValue: 'Sesje organizacji',
+        })}
+      </h2>
       {error && <div role="alert">{error}</div>}
       <StandardTable
         columns={cols}
         data={rows}
         rowMenu={(row) => ({
           destructive: {
-            label: 'Unieważnij sesję',
+            label: t('admin.security.sessions.day2Auto.text8', {
+              defaultValue: 'Unieważnij sesję',
+            }),
             icon: MonitorX,
             onClick: () => setTarget(data.find((s) => s.id === row.id) || null),
           },
         })}
         empty={{
           icon: MonitorX,
-          title: 'Brak aktywnych sesji',
-          description: 'Nie znaleziono aktywnych sesji członków organizacji.',
+          title: t('admin.security.sessions.day2Auto.text9', {
+            defaultValue: 'Brak aktywnych sesji',
+          }),
+          description: t('admin.security.sessions.day2Auto.text10', {
+            defaultValue: 'Nie znaleziono aktywnych sesji członków organizacji.',
+          }),
         }}
         persistKey="admin.sessions"
       />
@@ -80,9 +130,16 @@ export const AdminSessionsPanel: React.FC = () => {
         isOpen={!!target}
         onCancel={() => setTarget(null)}
         onConfirm={() => void revoke()}
-        title="Unieważnić sesję?"
-        description="Ta sesja natychmiast utraci dostęp. Użytkownik może zalogować się ponownie."
-        confirmLabel="Unieważnij sesję"
+        title={t('admin.security.sessions.day2Auto.text11', {
+          defaultValue: 'Unieważnić sesję?',
+        })}
+        description={t('admin.security.sessions.day2Auto.text12', {
+          defaultValue:
+            'Ta sesja natychmiast utraci dostęp. Użytkownik może zalogować się ponownie.',
+        })}
+        confirmLabel={t('admin.security.sessions.day2Auto.text8', {
+          defaultValue: 'Unieważnij sesję',
+        })}
         variant="danger"
       />
     </div>

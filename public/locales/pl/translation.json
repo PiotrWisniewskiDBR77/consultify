@@ -17642,6 +17642,87 @@
         "actions": {
           "save": "Zapisz politykę bezpieczeństwa"
         }
+      },
+      "sessions": {
+        "day2Auto": {
+          "text1": "Błąd sesji",
+          "text2": "Użytkownik",
+          "text3": "Urządzenie / przeglądarka",
+          "text4": "Ostatnia aktywność",
+          "text5": "Wygaśnięcie",
+          "text6": "Błąd unieważnienia",
+          "text7": "Sesje organizacji",
+          "text8": "Unieważnij sesję",
+          "text9": "Brak aktywnych sesji",
+          "text10": "Nie znaleziono aktywnych sesji członków organizacji.",
+          "text11": "Unieważnić sesję?",
+          "text12": "Ta sesja natychmiast utraci dostęp. Użytkownik może zalogować się ponownie."
+        }
+      },
+      "service-accounts": {
+        "day2Auto": {
+          "text1": "Nie udało się pobrać kont usługowych.",
+          "text2": "Konto nie zostało potwierdzone przez serwer.",
+          "text3": "Konto usługowe utworzone",
+          "text4": "Nie udało się utworzyć konta.",
+          "text5": "Odwołanie nie zostało potwierdzone.",
+          "text6": "Konto usługowe odwołane",
+          "text7": "Nie udało się odwołać konta.",
+          "text8": "Nazwa",
+          "text9": "Ostatnie użycie",
+          "text10": "Nigdy",
+          "text11": "Wygasa",
+          "text12": "Konta usługowe",
+          "text13": "Poświadczenia maszynowe organizacji. Pełny sekret jest wyświetlany tylko raz.",
+          "text14": "Utwórz",
+          "text15": "Skopiuj sekret teraz — nie będzie pokazany ponownie",
+          "text16": "Zapisałem sekret",
+          "text17": "Odwołaj konto",
+          "text18": "Brak kont usługowych",
+          "text19": "Nie utworzono jeszcze poświadczeń maszynowych.",
+          "text20": "Odwołać konto usługowe?",
+          "text21": "Token natychmiast przestanie działać. Tej operacji nie można cofnąć.",
+          "text22": "Odwołaj"
+        }
+      },
+      "security-alerts": {
+        "day2Auto": {
+          "text1": "Błąd alertów",
+          "text2": "Dotkliwość",
+          "text3": "Użytkownik",
+          "text4": "status",
+          "text5": "Status",
+          "text6": "Rozwiązany",
+          "text7": "Alerty bezpieczeństwa",
+          "text8": "Nierozwiązane:",
+          "text9": "Oznacz jako rozwiązane",
+          "text10": "Brak alertów",
+          "text11": "Nie wykryto zdarzeń bezpieczeństwa."
+        }
+      },
+      "break-glass": {
+        "day2Auto": {
+          "text1": "Błąd break-glass",
+          "text2": "Powód",
+          "text3": "Zatwierdził",
+          "text4": "Wygasa",
+          "text5": "Błąd aktywacji",
+          "text6": "Błąd wygaszenia",
+          "text7": "Awaryjny dostęp na maksymalnie 1 godzinę; widoczny w audycie.",
+          "text8": "Aktywne sesje: {{v0}}",
+          "text9": "Brak aktywnych sesji break-glass",
+          "text10": "Powód (min. 10 znaków)",
+          "text11": "Powód break-glass",
+          "text12": "Zatwierdzający",
+          "text13": "Funkcja jest wyłączona w polityce IAM organizacji.",
+          "text14": "Wygaś sesję",
+          "text15": "Brak historii aktywnych sesji",
+          "text16": "Nie ma obecnie aktywnego dostępu awaryjnego.",
+          "text17": "Aktywować dostęp break-glass?",
+          "text18": "Zakres: awaryjne uprawnienia administratora na maksymalnie 1h. Zatwierdzający: {{v0}}. Powód i zdarzenie będą widoczne w audycie. Odzyskanie: sesję można natychmiast wygasić.",
+          "text19": "Wygasić dostęp break-glass?",
+          "text20": "Dostęp zostanie natychmiast odebrany. Ponowna aktywacja wymaga nowego powodu i zatwierdzenia."
+        }
       }
     },
     "tabs": {
