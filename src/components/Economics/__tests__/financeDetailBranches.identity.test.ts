@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildCanonicalFinanceSearchParams,
+  clearCanonicalFinanceSearchParams,
   hasAnyCanonicalFinanceQuery,
   isCanonicalFinanceTypeEnabled,
   resolveFinanceDetailBranches,
@@ -70,6 +71,13 @@ describe('Finance detail identity gate', () => {
       businessVersionId: undefined,
     });
     expect(next.toString()).toBe('canonicalArtifactType=BASELINE_MODEL&canonicalArtifactId=new-a');
+  });
+
+  it('clears every stale canonical key before a complete flag-off row opens legacy', () => {
+    const stale = new URLSearchParams(
+      'tab=models&canonicalArtifactType=VALUATION_CASE&canonicalArtifactId=old-a&canonicalBusinessVersionId=old-v'
+    );
+    expect(clearCanonicalFinanceSearchParams(stale).toString()).toBe('tab=models');
   });
 
   it.each([

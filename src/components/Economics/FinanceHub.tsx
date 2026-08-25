@@ -551,15 +551,20 @@ export function buildCanonicalFinanceSearchParams(
   current: URLSearchParams,
   identity: FinanceResolveInput
 ): URLSearchParams {
-  const next = new URLSearchParams(current);
-  next.delete('canonicalArtifactType');
-  next.delete('canonicalArtifactId');
-  next.delete('canonicalBusinessVersionId');
+  const next = clearCanonicalFinanceSearchParams(current);
   if (identity.artifactType) next.set('canonicalArtifactType', identity.artifactType);
   if (identity.artifactId) next.set('canonicalArtifactId', identity.artifactId);
   if (identity.businessVersionId) {
     next.set('canonicalBusinessVersionId', identity.businessVersionId);
   }
+  return next;
+}
+
+export function clearCanonicalFinanceSearchParams(current: URLSearchParams): URLSearchParams {
+  const next = new URLSearchParams(current);
+  next.delete('canonicalArtifactType');
+  next.delete('canonicalArtifactId');
+  next.delete('canonicalBusinessVersionId');
   return next;
 }
 
@@ -1141,6 +1146,7 @@ export const FinanceHub: React.FC = () => {
           setSearchParams(buildCanonicalFinanceSearchParams(searchParams, canonicalIdentity));
           return;
         }
+        setSearchParams(clearCanonicalFinanceSearchParams(searchParams));
       }
       const doc: OpenDocument = {
         id: row.id,
