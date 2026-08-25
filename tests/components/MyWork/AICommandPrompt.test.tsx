@@ -1,6 +1,25 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import enTranslation from '../../../public/locales/en/translation.json';
+
+// AICommandPrompt.tsx calls t('myWorkNotebook.aiCommandPrompt.placeholder') etc. with NO
+// inline fallback (relies on public/locales/en/translation.json). A `t: (k) => k` identity
+// mock returns the raw key, so placeholder/title assertions against real product copy never
+// matched. Resolve real English copy instead (same pattern as IdeaExportMenu.test.tsx).
+function resolveTranslation(key: string, options?: Record<string, unknown>): string {
+  const value = key
+    .split('.')
+    .reduce<unknown>(
+      (acc, segment) => (acc && typeof acc === 'object' ? (acc as Record<string, unknown>)[segment] : undefined),
+      enTranslation
+    );
+  const template = typeof value === 'string' ? value : key;
+  if (!options) return template;
+  return template.replace(/\{\{(\w+)\}\}/g, (_match, name) =>
+    Object.prototype.hasOwnProperty.call(options, name) ? String(options[name]) : `{{${name}}}`
+  );
+}
 
 const chatWithAIStream = vi.fn();
 const notebookCreateAIProposal = vi.fn();
@@ -20,7 +39,7 @@ vi.mock('react-hot-toast', () => ({ default: { success: vi.fn(), error: vi.fn() 
 
 const i18nState = vi.hoisted(() => ({ language: 'en' }));
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ i18n: i18nState, t: (k: string) => k }),
+  useTranslation: () => ({ i18n: i18nState, t: (k: string, opts?: Record<string, unknown>) => resolveTranslation(k, opts) }),
 }));
 
 import { AICommandPrompt } from '@/components/MyWork/notebook/AICommandPrompt';
