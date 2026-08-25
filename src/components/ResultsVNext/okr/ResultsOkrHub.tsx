@@ -86,6 +86,7 @@ import {
   RESULTS_DOMAIN_TABS,
 } from '../resultsDomainNavigation';
 import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
+import { shouldUseResultsVNextOwnerSampleData } from '../resultsVNextOwnerSampleData';
 import { toUserFacingErrorMessage } from '../shared/errorMessage';
 import type { ResultsVNextForbiddenDetail } from '../types';
 import {
@@ -422,6 +423,7 @@ export const ResultsOkrHub: React.FC = () => {
   return (
     <ResultsVNextRegistryShell
       domain="okr"
+      sampleData={shouldUseResultsVNextOwnerSampleData()}
       moduleBar={{
         tabs: RESULTS_DOMAIN_TABS,
         activeTab: 'okr',

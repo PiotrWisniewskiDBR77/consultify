@@ -22659,6 +22659,9 @@
     }
   },
   "results": {
+    "sampleData": {
+      "banner": "Dane przykładowe — nie z bazy"
+    },
     "moduleName": "Rezultaty",
     "hub": {
       "failedToLoadKpis": "Nie udało się załadować katalogu KPI.",

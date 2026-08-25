@@ -1,10 +1,15 @@
 import type { KpiDefinitionDto, KpiDefinitionVersionDto, KpiMeasurementDto } from './kpiApi';
 import type { OkrSetDto } from './okr/okrApi';
 import type { RoiCaseListItem, RoiOrgBenefitsRealizationRow } from './roi/roiApi';
+import { isPublicProductionHost } from '@/utils/publicProduction';
 
-export function shouldUseResultsVNextOwnerSampleData(): boolean {
-  if (typeof window === 'undefined') return false;
-  return new URLSearchParams(window.location.search).get('sampleData') === 'results-vnext';
+export function shouldUseResultsVNextOwnerSampleData(
+  source: { search: string; hostname: string } | undefined = typeof window === 'undefined'
+    ? undefined
+    : { search: window.location.search, hostname: window.location?.hostname ?? '' }
+): boolean {
+  if (!source || isPublicProductionHost(source.hostname)) return false;
+  return new URLSearchParams(source.search).get('sampleData') === 'results-vnext';
 }
 
 const now = '2026-08-23T14:30:00.000Z';

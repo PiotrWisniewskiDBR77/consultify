@@ -74,6 +74,7 @@ import {
   RESULTS_DOMAIN_TABS,
 } from '../resultsDomainNavigation';
 import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
+import { shouldUseResultsVNextOwnerSampleData } from '../resultsVNextOwnerSampleData';
 import { toUserFacingErrorMessage } from '../shared/errorMessage';
 import {
   approveRoiCase,
@@ -517,6 +518,7 @@ export const ResultsRoiHub: React.FC = () => {
       <>
         <ResultsVNextRegistryShell
           domain="roi"
+          sampleData={shouldUseResultsVNextOwnerSampleData()}
           moduleBar={{
             tabs: RESULTS_DOMAIN_TABS,
             activeTab: 'roi',
@@ -571,6 +573,7 @@ export const ResultsRoiHub: React.FC = () => {
     <>
       <ResultsVNextRegistryShell
         domain="roi"
+        sampleData={shouldUseResultsVNextOwnerSampleData()}
         moduleBar={{
           tabs: RESULTS_DOMAIN_TABS,
           activeTab: 'roi',

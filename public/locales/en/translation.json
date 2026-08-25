@@ -22012,6 +22012,9 @@
     }
   },
   "results": {
+    "sampleData": {
+      "banner": "Sample data — not from the database"
+    },
     "moduleName": "Results",
     "hub": {
       "failedToLoadKpis": "Failed to load KPI catalog.",

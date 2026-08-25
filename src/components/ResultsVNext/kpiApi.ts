@@ -260,7 +260,7 @@ export async function listKpis(params: ListKpisParams = {}): Promise<KpiDefiniti
 export async function getKpi(kpiId: string): Promise<KpiDefinitionDto | null> {
   const { RESULTS_VNEXT_SAMPLE_KPIS, shouldUseResultsVNextOwnerSampleData } =
     await import('./resultsVNextOwnerSampleData');
-  if (shouldUseResultsVNextOwnerSampleData() || kpiId.startsWith('sample-kpi-')) {
+  if (shouldUseResultsVNextOwnerSampleData()) {
     return RESULTS_VNEXT_SAMPLE_KPIS.find((kpi) => kpi.kpiId === kpiId) ?? null;
   }
   try {
@@ -288,7 +288,7 @@ export async function getKpiCurrentDefinitionVersion(
 ): Promise<KpiDefinitionVersionDto | null> {
   const { RESULTS_VNEXT_SAMPLE_KPI_VERSIONS, shouldUseResultsVNextOwnerSampleData } =
     await import('./resultsVNextOwnerSampleData');
-  if (shouldUseResultsVNextOwnerSampleData() || kpiId.startsWith('sample-kpi-')) {
+  if (shouldUseResultsVNextOwnerSampleData()) {
     return RESULTS_VNEXT_SAMPLE_KPI_VERSIONS.find((version) => version.kpiId === kpiId) ?? null;
   }
   try {
@@ -550,7 +550,7 @@ export async function listKpiMeasurements(
 ): Promise<KpiMeasurementDto[]> {
   const { RESULTS_VNEXT_SAMPLE_KPI_MEASUREMENTS, shouldUseResultsVNextOwnerSampleData } =
     await import('./resultsVNextOwnerSampleData');
-  if (shouldUseResultsVNextOwnerSampleData() || kpiId.startsWith('sample-kpi-')) {
+  if (shouldUseResultsVNextOwnerSampleData()) {
     const offset = params.offset ?? 0;
     const limit = params.limit ?? 1;
     return RESULTS_VNEXT_SAMPLE_KPI_MEASUREMENTS.filter(

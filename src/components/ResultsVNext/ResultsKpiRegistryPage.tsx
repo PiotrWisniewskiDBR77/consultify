@@ -9,9 +9,9 @@
  * `GET /api/vnext/results/kpi*` data (`./kpiApi.ts`). Every state is wired to
  * real API behaviour — see the four state-management effects below (list
  * fetch, deep-link resolve, lazy measurement fetch, lifecycle mutations) —
- * none of it is mocked or hand-waved; the ONLY mock data anywhere is in the
- * dev-render harness screen, which stubs `Api.get`/`Api.post`, never this
- * component's logic.
+ * Owner-review sample data is available only through the explicit,
+ * production-denied `?sampleData=results-vnext` gate and is visibly labelled
+ * by the shared registry shell. Empty API responses remain empty.
  *
  * -- HONEST-DATA CAVEAT (see kpiApi.ts header for the full backend-gap
  * writeup): `GET /kpi` returns `KpiDefinition` rows only — no KPI *name*, no
@@ -150,6 +150,7 @@ import {
   ResultsVNextRegistryShell,
   type ResultsVNextTableProps,
 } from './ResultsVNextRegistryShell';
+import { shouldUseResultsVNextOwnerSampleData } from './resultsVNextOwnerSampleData';
 import { toUserFacingErrorMessage } from './shared/errorMessage';
 import type { ResultsVNextForbiddenDetail } from './types';
 
@@ -808,9 +809,7 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
   // the my/org KPI-filtering meaning it always had — renamed nowhere, kept
   // separate from `tab` so the scorecards branch never touches KPI-scope
   // logic.
-  const [tab, setTab] = useState<'my' | 'org' | 'scorecards'>(
-    initialTab ?? 'org'
-  );
+  const [tab, setTab] = useState<'my' | 'org' | 'scorecards'>(initialTab ?? 'org');
   const scope: 'my' | 'org' = tab === 'org' ? 'org' : 'my';
   const [statusFilter, setStatusFilter] = useState<KpiStatus | null>(
     restoredUiState.statusFilter ?? null
@@ -1395,6 +1394,7 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
       <div className="h-full" data-testid="results-vnext-kpi-registry-page">
         <ResultsVNextRegistryShell
           domain="kpi"
+          sampleData={shouldUseResultsVNextOwnerSampleData()}
           moduleBar={{
             tabs: RESULTS_DOMAIN_TABS,
             activeTab: 'kpi',
@@ -1524,6 +1524,7 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
       <div className="h-full" data-testid="results-vnext-kpi-registry-page">
         <ResultsVNextRegistryShell
           domain="kpi"
+          sampleData={shouldUseResultsVNextOwnerSampleData()}
           moduleBar={{
             tabs: RESULTS_DOMAIN_TABS,
             activeTab: 'kpi',
