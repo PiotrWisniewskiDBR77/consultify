@@ -72,7 +72,7 @@ import {
 import { isPartnerLegacyRollbackEnabled } from '../../services/api/v8/partner';
 import { cn } from '../../utils/cn';
 import { getLegacyPartnerSection } from './partnerLegacyRoutes';
-import { PartnerStartRouter } from './PartnerStartRouter';
+import { PartnerOnboardingOrientation, PartnerStartRouter } from './PartnerStartRouter';
 
 const PARTNER_SECTIONS = new Set<PartnerSection>([
   'partner-home',
@@ -2975,12 +2975,11 @@ interface PartnerPortalViewNewProps {
 type PartnerConnectionState = 'loading' | 'connected' | 'unconnected' | 'error';
 
 const PartnerOrientationPanel: React.FC<{
-  variant: 'unconnected' | 'onboarding' | 'error';
+  variant: 'unconnected' | 'error';
   onRetry?: () => void;
 }> = ({ variant, onRetry }) => {
   const { t } = useTranslation();
   const isError = variant === 'error';
-  const isOnboarding = variant === 'onboarding';
 
   return (
     <section
@@ -2993,21 +2992,13 @@ const PartnerOrientationPanel: React.FC<{
         <Building2 className="mx-auto h-10 w-10 text-c-text-secondary" aria-hidden="true" />
       )}
       <h1 className="mt-5 text-2xl font-semibold text-c-text">
-        {t(
-          isError
-            ? 'partner.day12.connectionErrorTitle'
-            : isOnboarding
-              ? 'partner.day12.onboardingTitle'
-              : 'partner.day12.unconnectedTitle'
-        )}
+        {t(isError ? 'partner.day12.connectionErrorTitle' : 'partner.day12.unconnectedTitle')}
       </h1>
       <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-c-text-secondary">
         {t(
           isError
             ? 'partner.day12.connectionErrorDescription'
-            : isOnboarding
-              ? 'partner.day12.onboardingDescription'
-              : 'partner.day12.unconnectedDescription'
+            : 'partner.day12.unconnectedDescription'
         )}
       </p>
       {isError && onRetry ? (
@@ -3182,7 +3173,7 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = () => {
       case 'partner-home':
         return (
           <PartnerStartRouter
-            onboardingSurface={<PartnerOrientationPanel variant="onboarding" />}
+            onboardingSurface={<PartnerOnboardingOrientation />}
             onNavigateSection={handleSectionChange}
           />
         );
@@ -3227,11 +3218,7 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = () => {
       case 'public-listing':
         return <ProfileSection subsection={activeSection} />;
       default:
-        return (
-          <PartnerStartRouter
-            onboardingSurface={<PartnerOrientationPanel variant="onboarding" />}
-          />
-        );
+        return <PartnerStartRouter onboardingSurface={<PartnerOnboardingOrientation />} />;
     }
   }, [activeSection, handleSectionChange]);
 
