@@ -36,6 +36,8 @@ import { createRoot } from 'react-dom/client';
 import { Toaster } from 'react-hot-toast';
 
 import i18n from '../src/i18n';
+import { FeatureFlagsProvider } from '../src/contexts/FeatureFlagsContext';
+import { createDrdDemoSession } from '../src/method-core/methods/drd/drdSessionRuntime';
 import { useAppStore } from '../src/store/useAppStore';
 import { DrdLibraryEntryHarness } from './screens/drd-library-entry';
 import { DrdMethodWorkspaceScreen } from '../src/components/assessment/drd/DrdMethodWorkspaceScreen';
@@ -101,11 +103,50 @@ const HTTP_FORCE_STATE_BY_SCREEN: Record<string, 'offline' | 'conflict' | 'recov
   'http-recovery': 'recovery',
 };
 
+// Computed once at module scope (not inside `Root`, which React.StrictMode
+// intentionally double-invokes) so this doesn't silently create two
+// orphaned draft sessions per load.
+const draftDemoSessionId =
+  screen === 'draft'
+    ? (() => {
+        const runtime = createDrdDemoSession({
+          organizationId: 'org-demo',
+          projectId: 'project-demo',
+          ownerUserId: 'demo-owner-anna',
+        });
+        runtime.assignRole('demo-owner-anna', 'owner');
+        runtime.assignRole('demo-owner-anna', 'lead_assessor');
+        return runtime.sessionId;
+      })()
+    : null;
+
 const mount = document.getElementById('dev-render-root')!;
 
+// night-fixes-a (2026-08-26): this isolated harness entry (see
+// drd-workspace.html's header for why it exists standalone) mounted
+// `DrdMethodWorkspaceScreen` with no `FeatureFlagsProvider` in the tree —
+// the screen's own `useFeatureFlagsContext()` call then throws
+// "must be used within FeatureFlagsProvider" and the harness renders a
+// blank page. Same fix every OTHER dev-render screen that needs flags
+// already applies (see e.g. assessment-five-surfaces.tsx) — harness-only,
+// never ships.
 function Root(): React.ReactElement {
   if (screen === 'library') {
     return <DrdLibraryEntryHarness />;
+  }
+  // 2026-08-26 night-fixes-a P0 #5 verification screen: `seedSession` (used
+  // by every other &screen= value) unconditionally transitions the session
+  // to 'active', so none of them can reproduce the 'draft'-state screenshot
+  // the night-sweep report captured (header pill "Szkic" + a duplicate
+  // "⚠ Status: draft" banner). This bypasses seeding entirely, keeping the
+  // session in its real freshly-created 'draft' state.
+  if (screen === 'draft' && draftDemoSessionId) {
+    return (
+      <DrdMethodWorkspaceScreen
+        demoSessionId={draftDemoSessionId}
+        initialActorUserId="demo-owner-anna"
+      />
+    );
   }
   if (isHttpScreen) {
     return (
@@ -128,9 +169,11 @@ function Root(): React.ReactElement {
 
 createRoot(mount).render(
   <React.StrictMode>
-    <React.Suspense fallback={<div style={{ padding: 24, color: '#64748b' }}>Ładowanie…</div>}>
-      <Root />
-    </React.Suspense>
-    <Toaster position="bottom-center" />
+    <FeatureFlagsProvider config={{ enableLocalOverrides: true }} showDevTools={false}>
+      <React.Suspense fallback={<div style={{ padding: 24, color: '#64748b' }}>Ładowanie…</div>}>
+        <Root />
+      </React.Suspense>
+      <Toaster position="bottom-center" />
+    </FeatureFlagsProvider>
   </React.StrictMode>
 );
