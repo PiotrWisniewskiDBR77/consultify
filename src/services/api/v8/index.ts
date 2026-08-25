@@ -49,6 +49,7 @@ export type {
   V8PartnerCampaignLink,
   V8PartnerClient,
   V8PartnerCommissionTransaction,
+  V8PartnerConnection,
   V8PartnerEarningsSummary,
   V8PartnerEmployee,
   V8PartnerListingUpdatePayload,

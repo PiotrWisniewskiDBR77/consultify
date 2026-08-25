@@ -28,6 +28,7 @@ import PartnerCommissionService from '../../services/partnerCommissionService.js
 import {
   PartnerConnectionError,
   connectPartnerOrganization,
+  getPartnerConnectionForTenant,
 } from '../../services/partnerConnectionService.js';
 import {
   startCertificationExam,
@@ -39,9 +40,7 @@ import {
   createPartnerEconomicsPolicyGuard,
   partnerEconomicsPolicyProjection,
 } from '../../services/partnerEconomicsPolicy.js';
-import {
-  getActivePartnerOrgIdForTenantUser,
-} from '../../services/partnerOrgResolution.js';
+import { getActivePartnerOrgIdForTenantUser } from '../../services/partnerOrgResolution.js';
 import {
   getPartnerPayoutSettings,
   isPartnerPayoutDestinationComplete,
@@ -176,12 +175,42 @@ router.post(
   unavailablePartnerWriter('partner_license_order')
 );
 
+export async function getPartnerConnectionHandler(req: AuthRequest, res: Response) {
+  const { organizationId, userId } = getV8Context(req);
+  try {
+    const connection = await getPartnerConnectionForTenant({ organizationId, userId });
+    return res.json({
+      data: connection,
+      meta: {
+        version: 'v8',
+        contract: V8_PARTNER_READ_CONTRACT,
+        v8TenantOrganizationId: organizationId,
+      },
+    });
+  } catch (error) {
+    logger.error('[Partner] canonical connection read unavailable', error);
+    return res.status(503).json({
+      success: false,
+      code: 'FEATURE_NOT_AVAILABLE',
+      capability: 'partner_connection_read',
+      message: 'Partner connection status is temporarily unavailable.',
+    });
+  }
+}
+
+/**
+ * D8 / DEC-2026-08-25-64 — canonical, strict exact-tenant connection read.
+ * Registered before `requireBoundPartnerTenant` so an authenticated tenant
+ * member without a Partner binding receives `connected:false`, not a 403.
+ */
+router.get('/connection', requireActiveMembership, asyncHandler(getPartnerConnectionHandler));
+
 // Every canonical Partner route after `/connect` is scoped to the exact live
 // Consultify tenant selected by the request.  Do not resolve or self-heal a
 // Partner membership from userId alone here: a user may legitimately belong
 // to more than one Consultify organization.  Demo fixtures are seeded by
 // explicit, disposable-DB harnesses rather than from a production request.
-router.use(/^(?!\/connect\/?$)/, requireActiveMembership, requireBoundPartnerTenant);
+router.use(/^(?!\/(?:connect|connection)\/?$)/, requireActiveMembership, requireBoundPartnerTenant);
 
 function partnerReadMeta(req: AuthRequest, partnerOrgId: string) {
   const { organizationId } = getV8Context(req);
@@ -299,7 +328,7 @@ router.get(
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
-      const partnerOrgId = await getBoundPartnerOrgId(req);
+    const partnerOrgId = await getBoundPartnerOrgId(req);
     if (!partnerOrgId) {
       return res.status(403).json({
         error: 'Partner organization required',

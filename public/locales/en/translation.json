@@ -756,6 +756,15 @@
     }
   },
   "partner": {
+    "day12": {
+      "unconnectedTitle": "The Partner profile is not connected yet",
+      "unconnectedDescription": "This screen is only for checking the connection to a Partner workspace. Your organization administrator can confirm the next step outside this dashboard.",
+      "onboardingTitle": "Partner workspace setup is in progress",
+      "onboardingDescription": "The connection is active. Complete the required operational steps in the Partner workspace; this dashboard does not show registration or marketing content.",
+      "connectionErrorTitle": "We could not determine the connection status",
+      "connectionErrorDescription": "We do not show registration or program content until the server confirms your status. Try again.",
+      "retryConnection": "Check again"
+    },
     "becomePartner": "Become Partner",
     "footerCta": {
       "title": "Become a Consultify Partner",

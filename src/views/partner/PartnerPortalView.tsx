@@ -102,17 +102,6 @@ const PARTNER_SECTIONS = new Set<PartnerSection>([
   'public-listing',
 ]);
 
-const PARTNER_PROGRAM_SECTIONS = new Set<PartnerSection>([
-  'partner-home',
-  'dashboard',
-  'metrics',
-  'earnings',
-  'company-info',
-  'learning-path',
-  'documentation',
-  'templates',
-]);
-
 const partnerMutationKey = (operation: string) => `${operation}-${globalThis.crypto.randomUUID()}`;
 
 function isPartnerSection(value: string | null): value is PartnerSection {
@@ -122,34 +111,6 @@ function isPartnerSection(value: string | null): value is PartnerSection {
 // Lazy load new sections
 const ReferralToolsSection = React.lazy(() => import('./sections/ReferralToolsSection'));
 const EarningsSection = React.lazy(() => import('./sections/EarningsSection'));
-const ProviderHomeView = React.lazy(() => import('./ProviderHomeView'));
-const ProgramBenefitsView = React.lazy(() =>
-  import('./ProviderHomeView').then((module) => ({ default: module.ValueCardsSection }))
-);
-const ProgramStoriesView = React.lazy(() =>
-  import('./ProviderHomeView').then((module) => ({ default: module.BetaSuccessStories }))
-);
-const ProgramTiersView = React.lazy(() =>
-  import('./ProviderHomeView').then((module) => ({ default: module.TierProgressionSection }))
-);
-const ProgramCalculatorView = React.lazy(() =>
-  import('./ProviderHomeView').then((module) => ({ default: module.CommissionCalculatorSection }))
-);
-const ProgramOnboardingView = React.lazy(() =>
-  import('./ProviderHomeView').then((module) => ({ default: module.OnboardingChecklistSection }))
-);
-const ProgramContactView = React.lazy(() =>
-  import('./ProviderHomeView').then((module) => ({ default: module.ContactPartnerManagerSection }))
-);
-const ProgramAcademyView = React.lazy(() =>
-  import('./ProviderHomeView').then((module) => ({ default: module.AcademyPreviewSection }))
-);
-const ProgramResourcesView = React.lazy(() =>
-  import('./ProviderHomeView').then((module) => ({ default: module.FooterResourcesSection }))
-);
-const ProgramFaqView = React.lazy(() =>
-  import('./ProviderHomeView').then((module) => ({ default: module.FAQSection }))
-);
 const ClientAccessView = React.lazy(() => import('./ClientAccessView'));
 
 // ============================================================================
@@ -3011,50 +2972,74 @@ interface PartnerPortalViewNewProps {
   onNavigate?: (view: string) => void;
 }
 
-class PartnerProspectContentBoundary extends React.Component<
-  React.PropsWithChildren,
-  { failed: boolean }
-> {
-  state = { failed: false };
+type PartnerConnectionState = 'loading' | 'connected' | 'unconnected' | 'error';
 
-  static getDerivedStateFromError() {
-    return { failed: true };
-  }
+const PartnerOrientationPanel: React.FC<{
+  variant: 'unconnected' | 'onboarding' | 'error';
+  onRetry?: () => void;
+}> = ({ variant, onRetry }) => {
+  const { t } = useTranslation();
+  const isError = variant === 'error';
+  const isOnboarding = variant === 'onboarding';
 
-  render() {
-    if (this.state.failed) {
-      return (
-        <div className="rounded-xl border border-amber-300 bg-c-surface p-6 text-sm text-c-text-secondary dark:border-amber-700/60">
-          Szczegóły programu są chwilowo niedostępne. Możesz nadal poprosić administratora o
-          zaproszenie do programu partnerskiego.
-        </div>
-      );
-    }
-    return this.props.children;
-  }
-}
+  return (
+    <section
+      className="mx-auto max-w-2xl rounded-2xl border border-c-border-subtle bg-c-surface p-8 text-center shadow-sm"
+      data-testid={`partner-orientation-${variant}`}
+    >
+      {isError ? (
+        <AlertTriangle className="mx-auto h-10 w-10 text-c-warning" aria-hidden="true" />
+      ) : (
+        <Building2 className="mx-auto h-10 w-10 text-c-text-secondary" aria-hidden="true" />
+      )}
+      <h1 className="mt-5 text-2xl font-semibold text-c-text">
+        {t(
+          isError
+            ? 'partner.day12.connectionErrorTitle'
+            : isOnboarding
+              ? 'partner.day12.onboardingTitle'
+              : 'partner.day12.unconnectedTitle'
+        )}
+      </h1>
+      <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-c-text-secondary">
+        {t(
+          isError
+            ? 'partner.day12.connectionErrorDescription'
+            : isOnboarding
+              ? 'partner.day12.onboardingDescription'
+              : 'partner.day12.unconnectedDescription'
+        )}
+      </p>
+      {isError && onRetry ? (
+        <button
+          type="button"
+          onClick={onRetry}
+          className="mt-6 rounded-lg border border-c-border px-4 py-2 text-sm font-medium text-c-text hover:bg-c-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+        >
+          {t('partner.day12.retryConnection')}
+        </button>
+      ) : null}
+    </section>
+  );
+};
 
 export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const [connectionLoading, setConnectionLoading] = useState(true);
-  const [isConnected, setIsConnected] = useState<boolean>(false);
+  const [connectionState, setConnectionState] = useState<PartnerConnectionState>('loading');
+  const isConnected = connectionState === 'connected';
   const fetchConnection = useCallback(async () => {
     try {
-      setConnectionLoading(true);
-      const response = await Api.get('/api/partners/connection');
-      const payload = response?.data;
-      const data = payload?.data;
-      if (response?.success && data && typeof data.connected === 'boolean') {
-        setIsConnected(Boolean(data.connected));
+      setConnectionState('loading');
+      const connection = await V8PartnerApi.getConnection();
+      if (connection && typeof connection.connected === 'boolean') {
+        setConnectionState(connection.connected ? 'connected' : 'unconnected');
         return;
       }
-      setIsConnected(false);
+      setConnectionState('error');
     } catch {
-      setIsConnected(false);
-    } finally {
-      setConnectionLoading(false);
+      setConnectionState('error');
     }
   }, []);
 
@@ -3067,8 +3052,7 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = () => {
     const section = params.get('tab');
 
     if (isPartnerSection(section)) {
-      if (isConnected || PARTNER_PROGRAM_SECTIONS.has(section)) return section;
-      return 'partner-home';
+      return isConnected ? section : 'partner-home';
     }
 
     const legacySection = getLegacyPartnerSection(location.pathname);
@@ -3076,7 +3060,7 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = () => {
   }, [location.pathname, location.search, isConnected]);
 
   useEffect(() => {
-    if (connectionLoading) return;
+    if (connectionState === 'loading') return;
 
     const legacySection = getLegacyPartnerSection(location.pathname);
     if (!legacySection) return;
@@ -3086,7 +3070,7 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = () => {
 
     params.set('tab', legacySection);
     navigate({ pathname: ROUTES.PARTNER.LANDING, search: params.toString() }, { replace: true });
-  }, [connectionLoading, location.pathname, location.search, navigate]);
+  }, [connectionState, location.pathname, location.search, navigate]);
 
   const handleSectionChange = useCallback(
     (section: PartnerSection) => {
@@ -3098,34 +3082,15 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = () => {
   );
 
   useEffect(() => {
-    if (connectionLoading || isConnected) return;
+    if (connectionState === 'loading' || isConnected) return;
     const params = new URLSearchParams(location.search);
-    const section = params.get('tab');
-    if (isPartnerSection(section) && PARTNER_PROGRAM_SECTIONS.has(section)) return;
+    if (params.get('tab') === 'partner-home') return;
     params.set('tab', 'partner-home');
     navigate({ pathname: ROUTES.PARTNER.LANDING, search: params.toString() }, { replace: true });
-  }, [connectionLoading, isConnected, location.search, navigate]);
+  }, [connectionState, isConnected, location.search, navigate]);
 
   // Get breadcrumbs based on active section
   const breadcrumbs = useMemo((): Breadcrumb[] => {
-    if (!isConnected) {
-      const programLabels: Partial<Record<PartnerSection, string>> = {
-        'partner-home': 'Program overview',
-        dashboard: 'Why become a partner',
-        metrics: 'Partner success stories',
-        earnings: 'Earnings and tiers',
-        'company-info': 'How to join',
-        'learning-path': 'Partner Academy',
-        documentation: 'Program resources',
-        templates: 'FAQ and support',
-      };
-      const crumbs: Breadcrumb[] = [{ label: 'Partner program', section: 'partner-home' }];
-      if (activeSection !== 'partner-home') {
-        crumbs.push({ label: programLabels[activeSection] || 'Program overview' });
-      }
-      return crumbs;
-    }
-
     const sectionLabels: Record<PartnerSection, string> = {
       'partner-home': 'Home',
       dashboard: 'Dashboard',
@@ -3208,19 +3173,16 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = () => {
     }
 
     return crumbs;
-  }, [activeSection, isConnected]);
+  }, [activeSection]);
 
   // Render content based on active section
   const renderContent = useCallback(() => {
     switch (activeSection) {
       // Home
       case 'partner-home':
-        // Owner decision 2026-08-05: an active (earn/payout) partner must not be
-        // shown the acquisition landing. The variant is chosen from the server's
-        // persisted lifecycle phase; unknown/error never falls back to acquisition.
         return (
           <PartnerStartRouter
-            onboardingSurface={<ProviderHomeView />}
+            onboardingSurface={<PartnerOrientationPanel variant="onboarding" />}
             onNavigateSection={handleSectionChange}
           />
         );
@@ -3265,70 +3227,37 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = () => {
       case 'public-listing':
         return <ProfileSection subsection={activeSection} />;
       default:
-        return <ProviderHomeView />;
+        return (
+          <PartnerStartRouter
+            onboardingSurface={<PartnerOrientationPanel variant="onboarding" />}
+          />
+        );
     }
   }, [activeSection, handleSectionChange]);
-
-  const renderProgramContent = useCallback(() => {
-    switch (activeSection) {
-      case 'dashboard':
-        return <ProgramBenefitsView />;
-      case 'metrics':
-        return <ProgramStoriesView />;
-      case 'earnings':
-        return (
-          <div className="space-y-10">
-            <ProgramTiersView />
-            <ProgramCalculatorView />
-          </div>
-        );
-      case 'company-info':
-        return (
-          <div className="space-y-10">
-            <ProgramOnboardingView />
-            <ProgramContactView />
-          </div>
-        );
-      case 'learning-path':
-        return <ProgramAcademyView />;
-      case 'documentation':
-        return <ProgramResourcesView />;
-      case 'templates':
-        return <ProgramFaqView />;
-      case 'partner-home':
-      default:
-        return <ProviderHomeView />;
-    }
-  }, [activeSection]);
 
   return (
     <PartnerLayout
       activeSection={activeSection}
       onSectionChange={handleSectionChange}
       breadcrumbs={breadcrumbs}
-      programMode={!isConnected}
+      programMode={false}
     >
-      {connectionLoading ? (
-        <div className="flex items-center justify-center h-64">
-          <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
+      {connectionState === 'loading' ? (
+        <div
+          className="flex h-64 items-center justify-center"
+          data-testid="partner-connection-loading"
+        >
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-c-border border-t-c-text-secondary" />
         </div>
-      ) : !isConnected ? (
-        <PartnerProspectContentBoundary>
-          <Suspense
-            fallback={
-              <div className="flex h-64 items-center justify-center">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-600 border-t-transparent" />
-              </div>
-            }
-          >
-            {renderProgramContent()}
-          </Suspense>
-        </PartnerProspectContentBoundary>
+      ) : connectionState === 'unconnected' ? (
+        <PartnerOrientationPanel variant="unconnected" />
+      ) : connectionState === 'error' ? (
+        <PartnerOrientationPanel variant="error" onRetry={() => void fetchConnection()} />
       ) : (
         <Suspense
           fallback={
-            <div className="flex items-center justify-center h-64">
-              <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
+            <div className="flex h-64 items-center justify-center">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-c-border border-t-c-text-secondary" />
             </div>
           }
         >

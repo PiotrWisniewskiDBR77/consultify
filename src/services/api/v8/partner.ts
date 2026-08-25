@@ -337,6 +337,11 @@ export interface V8PartnerConnectResult {
   [key: string]: unknown;
 }
 
+export interface V8PartnerConnection {
+  connected: boolean;
+  partnerOrganizationId: string | null;
+}
+
 export interface V8PartnerExamStartResult {
   attemptId: string;
   deadlineAt?: string | null;
@@ -377,6 +382,7 @@ export const shouldFallbackToLegacyPartner = (error: unknown): boolean => {
 };
 
 export const V8PartnerApi = {
+  getConnection: () => v8Get<V8PartnerConnection>('/partner/connection'),
   getReferralAnalytics: (days = 30) =>
     v8Get<{ analytics: V8PartnerReferralAnalytics; days: number }>('/partner/referral-analytics', {
       days: String(days),

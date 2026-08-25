@@ -15066,6 +15066,15 @@
     }
   },
   "partner": {
+    "day12": {
+      "unconnectedTitle": "Profil partnera nie jest jeszcze podłączony",
+      "unconnectedDescription": "Ten ekran służy wyłącznie do sprawdzenia połączenia z przestrzenią partnera. Administrator organizacji może potwierdzić dalszy krok poza tym pulpitem.",
+      "onboardingTitle": "Konfiguracja przestrzeni partnera trwa",
+      "onboardingDescription": "Połączenie jest aktywne. Dokończ wymagane kroki operacyjne w przestrzeni partnera; ten pulpit nie wyświetla treści rejestracyjnych ani marketingowych.",
+      "connectionErrorTitle": "Nie udało się ustalić statusu połączenia",
+      "connectionErrorDescription": "Nie pokazujemy rejestracji ani treści programu, dopóki nie potwierdzimy statusu z serwera. Spróbuj ponownie.",
+      "retryConnection": "Sprawdź ponownie"
+    },
     "becomePartner": "Zostań partnerem",
     "footerCta": {
       "title": "Zostań partnerem Consultify",
