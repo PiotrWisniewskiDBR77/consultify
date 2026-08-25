@@ -454,7 +454,12 @@ export const MeetingHub: React.FC = () => {
         active: activeFilters.some((f) => f.column === 'followUp'),
         onClick: () =>
           setActiveFilters([
-            { id: 'followUp:open', column: 'followUp', value: 'open', label: 'Needs follow-up' },
+            {
+              id: 'followUp:open',
+              column: 'followUp',
+              value: 'open',
+              label: t('meeting.counters.followUp', 'Needs follow-up'),
+            },
           ]),
       },
       {
@@ -464,7 +469,12 @@ export const MeetingHub: React.FC = () => {
         active: activeFilters.some((f) => f.id === 'status:completed'),
         onClick: () =>
           setActiveFilters([
-            { id: 'status:completed', column: 'status', value: 'completed', label: 'Completed' },
+            {
+              id: 'status:completed',
+              column: 'status',
+              value: 'completed',
+              label: t('meeting.counters.completed', 'Completed'),
+            },
           ]),
       },
     ];

@@ -20,12 +20,24 @@ import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+// Local override of the global `react-i18next` mock (tests/setup.ts): this
+// suite needs `t()` to return the literal defaultValue (not a key-agnostic
+// proxy) so assertions on rendered copy stay exact. Everything past `t`/
+// `useTranslation` is re-exported straight from the global mock's shape —
+// `StandardArtifactShell` pulls in `NModeShell`'s `SectionErrorBoundary`,
+// which imports `src/i18n.ts`, which calls `initReactI18next` at module
+// scope; omitting it here (as the pre-shell version of this mock did) throws
+// "No initReactI18next export is defined" before a single test can run.
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (k: string, opts?: string | { defaultValue?: string }) =>
       (typeof opts === 'string' ? opts : opts?.defaultValue) ?? k,
     i18n: { language: 'en' },
   }),
+  Trans: ({ children, i18nKey }: any) => children || i18nKey,
+  I18nextProvider: ({ children }: any) => children,
+  Translation: ({ children }: any) => children({ t: (k: string) => k, i18n: {} }),
+  initReactI18next: { type: '3rdParty', init: () => undefined },
 }));
 
 const { navigateMock, routerState } = vi.hoisted(() => ({
@@ -195,5 +207,35 @@ describe('MeetingObjectPage', () => {
 
     screen.getByText('Protokół').click();
     expect(navigateMock).toHaveBeenCalledWith('/meetings/meeting-1/minutes');
+  });
+
+  it('renders the SPEC-A shell — Menu 1 (title + lifecycle status) and the right panel (Akcje/Właściwości) — with real meeting data', async () => {
+    getMeetingMock.mockResolvedValue({ meeting });
+    render(<MeetingObjectPage />);
+
+    // Menu 1 (StandardArtifactShell -> NModeHeader): title + status pill.
+    // This fixture's `endAt` (2026-07-01) is in the past while `status`
+    // stays 'scheduled', so `deriveMeetingLifecycle` reports the "needs
+    // update" lifecycle — the pill must reflect that REAL derivation, not a
+    // static "Scheduled" label.
+    expect(await screen.findByText('Quarterly Review')).toBeTruthy();
+    expect(screen.getByText('Past — needs update')).toBeTruthy();
+
+    // Prawy panel (ArtifactRightPanel accordion): section headers always
+    // render regardless of open/closed state.
+    expect(screen.getByText('Akcje')).toBeTruthy();
+    expect(screen.getByText('Właściwości')).toBeTruthy();
+
+    // "Akcje" is the only section open by default (SPEC-N §2.2 R3) and has
+    // real, wired buttons (reload + back to list) — not placeholder copy.
+    expect(screen.getByText('Wczytaj ponownie')).toBeTruthy();
+    expect(screen.getByText('Wróć do listy')).toBeTruthy();
+
+    // "Właściwości" starts collapsed — expand it and assert it carries the
+    // meeting's REAL location, not invented/placeholder content.
+    screen.getByText('Właściwości').click();
+    expect(await screen.findByText('Zoom')).toBeTruthy();
+    expect(screen.getByText('Właściwość')).toBeTruthy();
+    expect(screen.getByText('Wartość')).toBeTruthy();
   });
 });

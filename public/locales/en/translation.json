@@ -24032,13 +24032,15 @@
     },
     "status": {
       "scheduled": "Scheduled",
-      "completed": "Completed"
+      "completed": "Completed",
+      "pastNeedsUpdate": "Past — needs update"
     },
     "counters": {
       "all": "All",
       "upcoming": "Upcoming",
       "followUp": "Needs follow-up",
-      "completed": "Completed"
+      "completed": "Completed",
+      "pastNeedsUpdate": "Past — needs update"
     },
     "sync": {
       "loading": "Loading workspace",

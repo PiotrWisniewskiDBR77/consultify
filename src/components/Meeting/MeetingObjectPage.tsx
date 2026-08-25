@@ -1,38 +1,77 @@
 /**
  * `/meetings/:meetingId` — Meeting object card (DEC-2026-08-24-07,
- * OWNER_DECISION_LEDGER). Route grammar per that decision: `/meetings`
- * (list, `MeetingHub`) + `/meetings/:meetingId` (this page, "Szczegóły") +
- * `/meetings/:meetingId/minutes` ("Protokół") +
+ * OWNER_DECISION_LEDGER, route grammar). Route grammar per that decision:
+ * `/meetings` (list, `MeetingHub`) + `/meetings/:meetingId` (this page,
+ * "Szczegóły") + `/meetings/:meetingId/minutes` ("Protokół") +
  * `/meetings/:meetingId/decisions` ("Decyzje i działania") +
  * `/meetings/:meetingId/notes/:noteId` (also "Protokół", scrolled/highlighted
  * to that one note) — all four mount this SAME page, which reads the active
  * section straight off `location.pathname` and re-navigates on tab click.
  *
- * Deliberately NOT a SPEC-A artifact shell (no `ArtifactRightPanel`, no
- * kebab, no Menu 1) — this is a simple, honest read view over REAL meeting
- * data so the object address is never a blank page. There are no write
- * actions here (edit / delete / toggle status / generate AI notes /
- * approve-reject a note) — that is a deliberate, explicit scope cut, not an
- * oversight: those stay on the list route's preview pane (`MeetingHub.tsx`)
- * for now, pending the full artifact shell
- * (`docs/ui-standards/TRIADA_KANON.md` / `ARTIFACT_ANATOMY_STANDARD.md`).
+ * ★ POWŁOKA ARTEFAKTU (SPEC-A, archetyp C „Rekord") — DEC-2026-08-25-52.
+ * Ten ekran stał wcześniej na własnym, bespoke tabbed-card layout (Menu3Chip
+ * + ręczne divy) — realne odstępstwo od CLAUDE.md §UI pkt 6/`ARTIFACT_
+ * ANATOMY_STANDARD.md` §10.2/§11.2: spotkanie jest OBIEKTEM (ma tożsamość,
+ * adres, cykl życia), nie zbiorem wierszy ani czymś bez powłoki. Teraz ekran
+ * stoi na `StandardArtifactShell` (`src/components/standard/
+ * StandardArtifactShell.tsx`), który opakowuje `NModeShell` i sam renderuje
+ * `ArtifactRightPanel` — zero lokalnej imitacji powłoki. Wzorzec 1:1 z
+ * `CaseWorkspace/CaseDetailScreen.tsx` (jedyny inny ekran dziś realnie
+ * wołający `<StandardArtifactShell>`).
+ *
+ * Co z tego wynika wprost (§10.2/§11.2):
+ *  · Menu 1 = powrót · ikona-typ (CalendarDays, z `ARTIFACT_IDENTITY.meeting`)
+ *    · tytuł · pigułka statusu (cykl życia spotkania) · wskaźnik zapisu ·
+ *    kebab z kodem obiektu i linkiem — wszystko z `NModeHeader`,
+ *  · Szczegóły · Protokół · Decyzje i działania to KANONICZNA nawigacja
+ *    powłoki (`sections`), nie własny pasek zakładek,
+ *  · prawy panel to accordion o stałej kolejności Akcje · Właściwości ·
+ *    Powiązania · Komentarze · Historia.
+ *
+ * UCZCIWIE o trzech sekcjach panelu bez treści: spotkania nie mają dziś
+ * (a) mechanizmu powiązań z innymi artefaktami, (b) wątku komentarzy, ani
+ * (c) dziennika zdarzeń w API (`meeting.routes.ts` zwraca tylko rekord
+ * spotkania) — każda z trzech jest `pominięta` z konkretnym uzasadnieniem
+ * (SPEC-N §2.2), a nie renderowana jako pusty akordeon udający funkcję,
+ * której nie ma.
+ *
+ * Zero nowych akcji zapisu: ekran pozostaje czystym odczytem (primary =
+ * świadomy, uzasadniony brak, SPEC-N §2.3) — edycja/usuwanie/AI-notatki
+ * zostają na liście (`MeetingHub.tsx`), zgodnie z zakresem DEC-52 („zmienia
+ * się tylko warstwa prezentacji").
  *
  * Backed by the dedicated `GET /api/meeting/:id` endpoint
  * (`server/src/routes/meeting.routes.ts`) — tenant-scoped from the token,
  * 404 on missing/other-org/non-participant. `error.status === 404` (thrown
  * by `Api.getMeeting`, see `src/services/api.ts` `handleResponse`) drives the
  * honest "not found" empty state below; any other failure is a retryable
- * error, never silently collapsed into the same empty state.
+ * error, never silently collapsed into the same empty state. These three
+ * top-level states (loading/error/not-found) render BEFORE the shell mounts
+ * — there is no honest way to fill Menu 1's title/status pill with data that
+ * does not exist yet, so the shell only ever mounts once `meeting` is real.
  */
-import { CalendarDays, CheckSquare2, ClipboardList, FileText, MapPin, Users } from 'lucide-react';
+import {
+  CalendarDays,
+  CheckSquare2,
+  ClipboardList,
+  FileText,
+  ListChecks,
+  MapPin,
+  RefreshCw,
+  Users,
+} from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
-import { Menu3Chip } from '@/components/shared/ModuleMenu3';
+import { PreviewActionBar } from '@/components/shared/PreviewPane';
 import { EmptyState } from '@/components/shared/states';
 import { ErrorState, LoadingState } from '@/components/ui/primitives';
 import { StatusChip } from '@/components/ui/primitives/chips';
+import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
+import type { KartaNKey } from '@/components/standard/registry';
+import { StandardArtifactShell, type StandardSekcjaDef } from '@/components/standard/StandardArtifactShell';
+import type { PresentationMode } from '@/hooks/usePresentationMode';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api, type GovernedMeetingNoteDto } from '@/services/api';
 
@@ -129,6 +168,8 @@ export const MeetingObjectPage: React.FC = () => {
   const [notesLoading, setNotesLoading] = useState(false);
   const [notesError, setNotesError] = useState<string | null>(null);
 
+  const [gestosc, setGestosc] = useState<PresentationMode>('n');
+
   const loadMeeting = async () => {
     setLoading(true);
     setLoadError(null);
@@ -193,26 +234,44 @@ export const MeetingObjectPage: React.FC = () => {
     return 'details';
   }, [location.pathname]);
 
-  const goToSection = (section: Section) => {
+  const goToSection = (section: string) => {
     const base = `${ROUTES.MEETINGS.ROOT}/${encodeURIComponent(meetingId)}`;
     navigate(section === 'details' ? base : `${base}/${section}`);
   };
 
-  return (
-    <div className="p-4 lg:p-6" data-testid="meeting-object-page">
-      <button
-        type="button"
-        onClick={goToList}
-        className="mb-3 inline-flex items-center text-sm text-c-text-muted hover:text-c-text"
-      >
-        ← {t('meeting.backToList', 'Back to list')}
-      </button>
-
-      {loading ? (
+  if (loading) {
+    return (
+      <div className="p-4 lg:p-6" data-testid="meeting-object-page">
         <LoadingState variant="spinner" className="h-64" />
-      ) : loadError ? (
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="p-4 lg:p-6" data-testid="meeting-object-page">
+        <button
+          type="button"
+          onClick={goToList}
+          className="mb-3 inline-flex items-center text-sm text-c-text-muted hover:text-c-text"
+        >
+          ← {t('meeting.backToList', 'Back to list')}
+        </button>
         <ErrorState message={loadError} retry={() => void loadMeeting()} />
-      ) : notFound || !meeting ? (
+      </div>
+    );
+  }
+
+  if (notFound || !meeting) {
+    return (
+      <div className="p-4 lg:p-6" data-testid="meeting-object-page">
+        <button
+          type="button"
+          onClick={goToList}
+          className="mb-3 inline-flex items-center text-sm text-c-text-muted hover:text-c-text"
+        >
+          ← {t('meeting.backToList', 'Back to list')}
+        </button>
         <EmptyState
           variant="new"
           icon={CalendarDays}
@@ -226,187 +285,289 @@ export const MeetingObjectPage: React.FC = () => {
             onClick: goToList,
           }}
         />
-      ) : (
-        <div className="rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface overflow-hidden">
-          <div className="px-5 py-4 border-b border-c-border-subtle">
-            <div className="text-[11px] uppercase tracking-wide text-c-text-muted">
-              {t('meeting.meetingLabel', 'Meeting')}
-            </div>
-            <div className="mt-1 flex flex-wrap items-center gap-2">
-              <h1 className="text-lg font-semibold text-c-text truncate">{meeting.title || '—'}</h1>
-              <StatusChip
-                tone={
-                  lifecycle === 'completed' ? 'success' : lifecycle === 'past_needs_update' ? 'warning' : 'info'
-                }
-                label={
-                  lifecycle === 'completed'
-                    ? t('meeting.status.completed', 'Completed')
-                    : lifecycle === 'past_needs_update'
-                      ? t('meeting.status.pastNeedsUpdate', 'Past — needs update')
-                      : t('meeting.status.scheduled', 'Scheduled')
-                }
-              />
-            </div>
-            <div className="mt-1 text-sm text-c-text-muted">
-              {formatDateTime(meeting.startAt, isPolish)}
-              {meeting.endAt && meeting.endAt !== meeting.startAt
-                ? ` – ${formatDateTime(meeting.endAt, isPolish)}`
-                : ''}
-            </div>
-            <div className="mt-1 flex items-center gap-1.5 text-sm text-c-text-muted">
-              <MapPin size={13} />
-              <span>{meeting.location || '—'}</span>
-            </div>
-          </div>
+      </div>
+    );
+  }
 
-          <div className="flex items-center gap-1.5 px-5 py-2.5 border-b border-c-border-subtle overflow-x-auto no-scrollbar">
-            <Menu3Chip active={activeSection === 'details'} onClick={() => goToSection('details')}>
-              {t('meeting.object.sectionDetails', 'Szczegóły')}
-            </Menu3Chip>
-            <Menu3Chip active={activeSection === 'minutes'} onClick={() => goToSection('minutes')}>
-              {t('meeting.object.minutes', 'Protokół')}
-            </Menu3Chip>
-            <Menu3Chip active={activeSection === 'decisions'} onClick={() => goToSection('decisions')}>
-              {t('meeting.object.sectionDecisions', 'Decyzje i działania')}
-            </Menu3Chip>
-          </div>
+  // ── Centrum: trzy sekcje = te same trasy co dziś (details/minutes/decisions) ──
+  const detailsContent = (
+    <div className="grid gap-4 p-5 lg:grid-cols-2">
+      <ListField icon={<Users size={14} />} label={t('meeting.attendees2', 'Attendees')} items={meeting.attendees} />
+      <ListField icon={<FileText size={14} />} label="Pre-read" items={meeting.preRead} />
+      <ListField icon={<ClipboardList size={14} />} label="Agenda" items={meeting.agenda} />
+    </div>
+  );
 
-          {activeSection === 'details' ? (
-            <div className="grid gap-4 p-5 lg:grid-cols-2">
-              <ListField
-                icon={<Users size={14} />}
-                label={t('meeting.attendees2', 'Attendees')}
-                items={meeting.attendees}
-              />
-              <ListField icon={<FileText size={14} />} label="Pre-read" items={meeting.preRead} />
-              <ListField
-                icon={<ClipboardList size={14} />}
-                label="Agenda"
-                items={meeting.agenda}
-              />
-            </div>
-          ) : null}
-
-          {activeSection === 'minutes' ? (
-            <div className="p-5">
-              <SectionCard icon={<FileText size={14} />} title={t('meeting.object.minutes', 'Protokół')}>
-                {notesLoading ? (
-                  <LoadingState variant="spinner" className="h-24" />
-                ) : notesError ? (
-                  <ErrorState message={notesError} retry={() => void loadNotes(meeting.id)} />
-                ) : notes.length ? (
-                  <div className="space-y-3">
-                    {notes.map((note) => {
-                      const decisions = (note.decisions || []).map(noteDecisionLabel).filter(Boolean);
-                      const actions = (note.actionItems || [])
-                        .map(noteActionLabel)
-                        .filter((item) => item.task);
-                      return (
-                        <div
-                          key={note.id}
-                          className={`rounded-lg border px-3 py-2 ${
-                            noteId && note.id === noteId
-                              ? 'border-c-focus ring-1 ring-c-focus'
-                              : 'border-c-border-subtle'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <StatusChip tone={noteStatusTone(note.status)} label={note.status} />
-                            {note.createdAt ? (
-                              <span className="text-xs text-c-text-muted">
-                                {formatDateTime(note.createdAt, isPolish)}
-                              </span>
-                            ) : null}
-                          </div>
-                          <div className="mt-1 text-sm text-c-text-secondary">{note.summary || '—'}</div>
-
-                          <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                            <div>
-                              <div className="mb-1 text-[11px] uppercase tracking-wide text-c-text-muted">
-                                {t('meeting.decisions2', 'Decisions')}
-                              </div>
-                              {decisions.length ? (
-                                <ul className="space-y-1">
-                                  {decisions.map((d, idx) => (
-                                    <li key={idx} className="text-xs text-c-text-secondary">
-                                      {d}
-                                    </li>
-                                  ))}
-                                </ul>
-                              ) : (
-                                <div className="text-xs text-c-text-muted">—</div>
-                              )}
-                            </div>
-                            <div>
-                              <div className="mb-1 text-[11px] uppercase tracking-wide text-c-text-muted">
-                                {t('meeting.object.actionItems', 'Działania')}
-                              </div>
-                              {actions.length ? (
-                                <ul className="space-y-1">
-                                  {actions.map((a, idx) => (
-                                    <li key={idx} className="text-xs text-c-text-secondary">
-                                      {a.task}
-                                      {a.owner ? (
-                                        <span className="text-c-text-muted"> — {a.owner}</span>
-                                      ) : null}
-                                    </li>
-                                  ))}
-                                </ul>
-                              ) : (
-                                <div className="text-xs text-c-text-muted">—</div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
+  const minutesContent = (
+    <div className="p-5">
+      <SectionCard icon={<FileText size={14} />} title={t('meeting.object.minutes', 'Protokół')}>
+        {notesLoading ? (
+          <LoadingState variant="spinner" className="h-24" />
+        ) : notesError ? (
+          <ErrorState message={notesError} retry={() => void loadNotes(meeting.id)} />
+        ) : notes.length ? (
+          <div className="space-y-3">
+            {notes.map((note) => {
+              const decisions = (note.decisions || []).map(noteDecisionLabel).filter(Boolean);
+              const actions = (note.actionItems || []).map(noteActionLabel).filter((item) => item.task);
+              return (
+                <div
+                  key={note.id}
+                  className={`rounded-lg border px-3 py-2 ${
+                    noteId && note.id === noteId
+                      ? 'border-c-focus ring-1 ring-c-focus'
+                      : 'border-c-border-subtle'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <StatusChip tone={noteStatusTone(note.status)} label={note.status} />
+                    {note.createdAt ? (
+                      <span className="text-xs text-c-text-muted">
+                        {formatDateTime(note.createdAt, isPolish)}
+                      </span>
+                    ) : null}
                   </div>
-                ) : (
-                  <div className="text-sm text-c-text-muted">—</div>
-                )}
-              </SectionCard>
-            </div>
-          ) : null}
+                  <div className="mt-1 text-sm text-c-text-secondary">{note.summary || '—'}</div>
 
-          {activeSection === 'decisions' ? (
-            <div className="grid gap-4 p-5">
-              <ListField
-                icon={<CheckSquare2 size={14} />}
-                label={t('meeting.decisions2', 'Decisions')}
-                items={meeting.decisions}
-              />
-              <SectionCard
-                icon={<CheckSquare2 size={14} />}
-                title={t('meeting.followUps2', 'Follow-ups')}
-              >
-                {meeting.followUps.length ? (
-                  <div className="space-y-2">
-                    {meeting.followUps.map((item) => (
-                      <div
-                        key={item.id}
-                        className="w-full rounded-xl border border-c-border-subtle px-3 py-2 text-left"
-                      >
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className="text-sm font-medium text-c-text truncate">{item.title}</div>
-                            <div className="text-xs text-c-text-muted">{item.owner}</div>
-                          </div>
-                          <StatusChip
-                            tone={item.status === 'done' ? 'success' : 'warning'}
-                            label={item.status === 'done' ? t('meeting.done', 'Done') : t('meeting.open2', 'Open')}
-                          />
-                        </div>
+                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                    <div>
+                      <div className="mb-1 text-[11px] uppercase tracking-wide text-c-text-muted">
+                        {t('meeting.decisions2', 'Decisions')}
                       </div>
-                    ))}
+                      {decisions.length ? (
+                        <ul className="space-y-1">
+                          {decisions.map((d, idx) => (
+                            <li key={idx} className="text-xs text-c-text-secondary">
+                              {d}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <div className="text-xs text-c-text-muted">—</div>
+                      )}
+                    </div>
+                    <div>
+                      <div className="mb-1 text-[11px] uppercase tracking-wide text-c-text-muted">
+                        {t('meeting.object.actionItems', 'Działania')}
+                      </div>
+                      {actions.length ? (
+                        <ul className="space-y-1">
+                          {actions.map((a, idx) => (
+                            <li key={idx} className="text-xs text-c-text-secondary">
+                              {a.task}
+                              {a.owner ? <span className="text-c-text-muted"> — {a.owner}</span> : null}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <div className="text-xs text-c-text-muted">—</div>
+                      )}
+                    </div>
                   </div>
-                ) : (
-                  <div className="text-sm text-c-text-muted">—</div>
-                )}
-              </SectionCard>
-            </div>
-          ) : null}
-        </div>
-      )}
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="text-sm text-c-text-muted">—</div>
+        )}
+      </SectionCard>
+    </div>
+  );
+
+  const decisionsContent = (
+    <div className="grid gap-4 p-5">
+      <ListField
+        icon={<CheckSquare2 size={14} />}
+        label={t('meeting.decisions2', 'Decisions')}
+        items={meeting.decisions}
+      />
+      <SectionCard icon={<CheckSquare2 size={14} />} title={t('meeting.followUps2', 'Follow-ups')}>
+        {meeting.followUps.length ? (
+          <div className="space-y-2">
+            {meeting.followUps.map((item) => (
+              <div key={item.id} className="w-full rounded-xl border border-c-border-subtle px-3 py-2 text-left">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium text-c-text truncate">{item.title}</div>
+                    <div className="text-xs text-c-text-muted">{item.owner}</div>
+                  </div>
+                  <StatusChip
+                    tone={item.status === 'done' ? 'success' : 'warning'}
+                    label={item.status === 'done' ? t('meeting.done', 'Done') : t('meeting.open2', 'Open')}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-sm text-c-text-muted">—</div>
+        )}
+      </SectionCard>
+    </div>
+  );
+
+  const sekcje: StandardSekcjaDef[] = [
+    {
+      id: 'details',
+      icon: ClipboardList,
+      label: {
+        en: t('meeting.object.sectionDetails', 'Szczegóły'),
+        pl: t('meeting.object.sectionDetails', 'Szczegóły'),
+      },
+      component: detailsContent,
+      aiContract: {
+        none: true,
+        reason:
+          'Treść tej sekcji to realne dane spotkania (uczestnicy, materiały, agenda) — model językowy jej nie pisze i nie ma tu czego regenerować.',
+      },
+    },
+    {
+      id: 'minutes',
+      icon: FileText,
+      label: { en: t('meeting.object.minutes', 'Protokół'), pl: t('meeting.object.minutes', 'Protokół') },
+      component: minutesContent,
+      aiContract: {
+        none: true,
+        reason:
+          'Notatki (propozycje AI) są renderowane HONESTLY z tego, co zwrócił `GET /api/meeting/:id/notes` — sekcja czyta stan, nie generuje go; generowanie żyje w widoku listy (przycisk „AI Meeting Notes").',
+      },
+    },
+    {
+      id: 'decisions',
+      icon: CheckSquare2,
+      label: {
+        en: t('meeting.object.sectionDecisions', 'Decyzje i działania'),
+        pl: t('meeting.object.sectionDecisions', 'Decyzje i działania'),
+      },
+      component: decisionsContent,
+      aiContract: {
+        none: true,
+        reason: 'Decyzje i follow-upy to realne dane spotkania — model językowy ich tu nie pisze.',
+      },
+    },
+  ];
+
+  // ── Prawy panel (SPEC-A §11.2) ──────────────────────────────────────────
+  const statusLabel =
+    lifecycle === 'completed'
+      ? t('meeting.status.completed', 'Completed')
+      : lifecycle === 'past_needs_update'
+        ? t('meeting.status.pastNeedsUpdate', 'Past — needs update')
+        : t('meeting.status.scheduled', 'Scheduled');
+  const statusTone: 'draft' | 'review' | 'approved' | 'rejected' | 'neutral' =
+    lifecycle === 'completed' ? 'approved' : lifecycle === 'past_needs_update' ? 'review' : 'draft';
+
+  const terminValue =
+    meeting.endAt && meeting.endAt !== meeting.startAt
+      ? `${formatDateTime(meeting.startAt, isPolish)} – ${formatDateTime(meeting.endAt, isPolish)}`
+      : formatDateTime(meeting.startAt, isPolish);
+
+  const statusChipTone: 'success' | 'warning' | 'info' =
+    lifecycle === 'completed' ? 'success' : lifecycle === 'past_needs_update' ? 'warning' : 'info';
+
+  const wierszeWlasciwosci = [
+    { id: 'status', label: 'Stan', value: <StatusChip tone={statusChipTone} label={statusLabel} /> },
+    { id: 'termin', label: 'Termin', value: terminValue, mono: true },
+    { id: 'lokalizacja', label: 'Lokalizacja', value: meeting.location || '—' },
+    { id: 'uczestnicy', label: 'Uczestnicy', value: String(meeting.attendees.length) },
+    { id: 'notatki', label: 'Notatki (Protokół)', value: String(notes.length) },
+  ];
+
+  const prawyPanel = {
+    actions: {
+      label: 'Akcje',
+      icon: RefreshCw,
+      children: (
+        <PreviewActionBar
+          rows={[
+            {
+              buttons: [
+                {
+                  label: 'Wczytaj ponownie',
+                  icon: RefreshCw,
+                  colorScheme: 'neutral' as const,
+                  flex: true,
+                  onClick: () => void loadMeeting(),
+                },
+                {
+                  label: 'Wróć do listy',
+                  icon: ListChecks,
+                  colorScheme: 'neutral' as const,
+                  flex: true,
+                  onClick: goToList,
+                },
+              ],
+            },
+          ]}
+        />
+      ),
+      actionIds: ['wczytaj-ponownie', 'wroc-do-listy'],
+    },
+    properties: {
+      label: 'Właściwości',
+      children: (
+        <ArtifactPropertiesTable rows={wierszeWlasciwosci} propertyLabel="Właściwość" valueLabel="Wartość" />
+      ),
+    },
+    relations: {
+      pominieta: true as const,
+      reason:
+        'Spotkania nie mają dziś mechanizmu powiązań z innymi obiektami (brak tabeli/serwisu linków w module Meeting) — pusty akordeon udawałby funkcję, której nie ma.',
+    },
+    comments: {
+      pominieta: true as const,
+      reason:
+        'Backend spotkań nie ma wątku komentarzy (brak serwisu i tabeli) — rozmowa o spotkaniu toczy się dziś w notatkach (zakładka Protokół), nie w osobnym wątku komentarzy.',
+    },
+    history: {
+      pominieta: true as const,
+      reason:
+        'Spotkania nie mają dziś dziennika zdarzeń w API (`GET /api/meeting/:id` zwraca wyłącznie bieżący rekord) — jedynym realnym zapisem zmian są propozycje notatek widoczne w zakładce Protokół, z własnymi znacznikami czasu i statusem.',
+    },
+  };
+
+  return (
+    <div className="h-full min-w-0" data-testid="meeting-object-page">
+      <StandardArtifactShell
+        /*
+         * ★ UCZCIWIE: `registry.ts` (SSOT kart N) nie zna dziś klucza
+         * „meeting" (zna 7 kart N, patrz `KartaNKey`) — dopisanie ósmego to
+         * zmiana rejestru, nie tego ekranu. Klucz jest więc rzutowany —
+         * powłoka używa go WYŁĄCZNIE do treści ostrzeżeń dev i do reguły
+         * warstwy dowodowej dla kart pisanych przez AI (nie dotyczy tej
+         * karty), więc rzutowanie nie wyłącza żadnej bramki obowiązującej ten
+         * ekran. Ten sam wzorzec co `CaseDetailScreen.tsx` (klucz „zlecenie").
+         */
+        karta={'meeting' as KartaNKey}
+        klasa="L"
+        header={{
+          title: meeting.title || '—',
+          onTitleChange: () => undefined,
+          titleReadOnly: true,
+          artifactType: 'meeting',
+          artifactId: meeting.id,
+          onSave: () => undefined,
+          saveState: 'saved',
+          lastSavedLabel: 'Dane odczytane z serwera',
+          onClose: goToList,
+          statusLabel,
+          statusTone,
+        }}
+        primaryAction={{
+          intentionallyNone: true,
+          reason:
+            'Ta karta jest dziś czystym odczytem — edycja, usuwanie i generowanie notatek AI żyją w widoku listy (`MeetingHub.tsx`), zgodnie z zakresem DEC-2026-08-25-52. Wyłączony przycisk byłby atrapą, więc primary po prostu nie powstaje (SPEC-N §2.3: brak jest jawny i uzasadniony, nie przemilczany).',
+        }}
+        sections={sekcje}
+        rightPanel={prawyPanel}
+        activeSection={activeSection}
+        onSectionChange={goToSection}
+        densityMode={gestosc}
+        onDensityModeChange={setGestosc}
+        panelAriaLabel="Szczegóły spotkania"
+        loading={false}
+      />
     </div>
   );
 };
