@@ -8,6 +8,8 @@
 import { act, renderHook } from '@testing-library/react';
 import type { Edge, Node } from 'reactflow';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import enTranslation from '../../../public/locales/en/translation.json';
+import plTranslation from '../../../public/locales/pl/translation.json';
 
 import { useProcessFlowAIProposal } from '../../../src/components/MyWork/processflow/useProcessFlowAIProposal';
 import type { Lane } from '../../../src/components/MyWork/processflow/useProcessFlowNodes';
@@ -16,6 +18,42 @@ const generateAIProposalMock = vi.fn();
 
 vi.mock('@/services/ideaAIGenerator', () => ({
   generateAIProposal: (...args: unknown[]) => generateAIProposalMock(...args),
+}));
+
+// useProcessFlowAIProposal's `tr()` calls the REAL i18next singleton directly
+// (`import i18n from '@/i18n'` → `i18n.t(key, default, { lng })`) instead of the
+// react-i18next hook, so the global react-i18next mock in tests/setup.ts does not
+// cover it. The real `@/i18n` module loads its translation bundles over HTTP
+// (i18next-http-backend); tests/setup.ts globally mocks `fetch` to always return
+// `{ data: [] }`, so no locale ever actually loads in tests and
+// `i18n.t(key, default, { lng: 'pl' })` always fell back to the English `default`
+// — the Polish-error-copy assertion could never pass. Mock `@/i18n`'s default
+// export to resolve real copy from the locale JSON per requested `lng`.
+function resolveTranslation(
+  dict: unknown,
+  key: string,
+  fallback: string,
+  vars?: Record<string, unknown>
+): string {
+  const value = key
+    .split('.')
+    .reduce<unknown>(
+      (acc, segment) => (acc && typeof acc === 'object' ? (acc as Record<string, unknown>)[segment] : undefined),
+      dict
+    );
+  const template = typeof value === 'string' ? value : fallback;
+  if (!vars) return template;
+  return template.replace(/\{\{(\w+)\}\}/g, (_match, name) =>
+    Object.prototype.hasOwnProperty.call(vars, name) ? String(vars[name]) : `{{${name}}}`
+  );
+}
+vi.mock('@/i18n', () => ({
+  default: {
+    t: (key: string, fallback: string, options?: { lng?: string } & Record<string, unknown>) => {
+      const { lng, ...vars } = options || {};
+      return resolveTranslation(lng === 'pl' ? plTranslation : enTranslation, key, fallback, vars);
+    },
+  },
 }));
 
 const lanes: Lane[] = [{ id: 'lane-1', label: 'Main Process', color: '#e0e7ff' }];

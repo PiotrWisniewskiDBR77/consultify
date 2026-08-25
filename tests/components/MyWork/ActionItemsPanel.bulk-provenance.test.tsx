@@ -8,8 +8,27 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import enTranslation from '../../../public/locales/en/translation.json';
 
 import { ActionItemsPanel } from '../../../src/components/MyWork/notebook/ActionItemsPanel';
+
+// ActionItemsPanel.tsx calls t('myWorkNotebook.actionItemsPanel.aiActions') etc. with NO
+// inline fallback (relies on public/locales/en/translation.json). The previous mock omitted
+// `t` entirely (`t is not a function`); resolve real English copy instead (same pattern as
+// IdeaExportMenu.test.tsx).
+function resolveTranslation(key: string, options?: Record<string, unknown>): string {
+  const value = key
+    .split('.')
+    .reduce<unknown>(
+      (acc, segment) => (acc && typeof acc === 'object' ? (acc as Record<string, unknown>)[segment] : undefined),
+      enTranslation
+    );
+  const template = typeof value === 'string' ? value : key;
+  if (!options) return template;
+  return template.replace(/\{\{(\w+)\}\}/g, (_match, name) =>
+    Object.prototype.hasOwnProperty.call(options, name) ? String(options[name]) : `{{${name}}}`
+  );
+}
 
 const { apiMock, trackFunnelEventMock } = vi.hoisted(() => ({
   trackFunnelEventMock: vi.fn(),
@@ -19,8 +38,14 @@ const { apiMock, trackFunnelEventMock } = vi.hoisted(() => ({
   },
 }));
 
+// Keep `t` a stable function identity across renders (react-i18next's real `t` is stable;
+// see tests/setup.ts note on why a per-call arrow can break effect/callback deps).
+const stableT = (key: string, options?: Record<string, unknown>) => resolveTranslation(key, options);
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ i18n: { language: 'en' } }),
+  useTranslation: () => ({
+    i18n: { language: 'en' },
+    t: stableT,
+  }),
 }));
 
 vi.mock('react-hot-toast', () => ({

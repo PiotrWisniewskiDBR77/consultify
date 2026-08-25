@@ -1,4 +1,5 @@
 export type CalendarEventSource =
+  | 'event'
   | 'task'
   | 'initiative'
   | 'decision'
@@ -84,6 +85,7 @@ export const LIFECYCLE_RECOVERY: Record<SourceLifecycleState, string> = {
 };
 
 export const SOURCE_COLORS: Record<CalendarEventSource, string> = {
+  event: '#475569',
   task: '#2563eb',
   initiative: '#A51C30',
   decision: '#d97706',
@@ -93,6 +95,7 @@ export const SOURCE_COLORS: Record<CalendarEventSource, string> = {
 };
 
 export const SOURCE_LABELS: Record<CalendarEventSource, { en: string; pl: string }> = {
+  event: { en: 'Own events', pl: 'Wydarzenia własne' },
   task: { en: 'Tasks', pl: 'Zadania' },
   initiative: { en: 'Initiatives', pl: 'Inicjatywy' },
   decision: { en: 'Decisions', pl: 'Decyzje' },

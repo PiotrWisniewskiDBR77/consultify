@@ -98,6 +98,7 @@ import { cn } from '@/utils/cn';
 
 import { Api } from '../../services/api';
 import { VaultDocumentPanel } from './VaultDocumentPanel';
+import { deleteVaultDocumentsWithReceipts } from './deleteVaultDocumentsWithReceipts';
 import {
   DOCUMENT_CATEGORIES,
   formatBytes,
@@ -106,6 +107,7 @@ import {
   indexStatusTone,
   normalizeVaultDocuments,
   normalizeVaultProjects,
+  safeDisplayName,
   scopeLabel,
   scopeMeta,
   type VaultDocument,
@@ -119,6 +121,7 @@ export interface VaultDocumentsViewProps {
   safe: { id: string; name: string; type: VaultScope; projectId: string | null };
   /** Powrót do tabeli sejfów (pierwszy człon breadcrumbu). */
   onBack: () => void;
+  initialFolderId?: string | null;
 }
 
 type StatusChipId = 'all' | 'indexed' | 'processing' | 'failed';
@@ -139,10 +142,20 @@ const SELECT_CLASS =
   'h-9 rounded-full border border-c-border bg-c-surface px-3.5 text-sm text-c-text transition-colors ' +
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus';
 
-export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, onBack }) => {
+export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
+  safe,
+  onBack,
+  initialFolderId = null,
+}) => {
   const { t, i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
   const currentUserId = useAppStore((s) => s.currentUser?.id);
+
+  // FIX-19 (Day 3 layer-2 acceptance): system safes (`user`/`organization`)
+  // ship a neutral English `name` from the server on purpose — this screen
+  // must localize it the same way `VaultSafesTable` already does, or the
+  // breadcrumb card / "Sejf: …" line show literal "My safe" in a Polish UI.
+  const displaySafeName = safeDisplayName(safe, isPolish, t);
 
   const [documents, setDocuments] = useState<VaultDocument[]>([]);
   const [projects, setProjects] = useState<VaultProject[]>([]);
@@ -244,7 +257,7 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
   // nie psuje wcześniej (fail-soft, tak jak `my_idea_folders`).
   const [folders, setFolders] = useState<Array<{ id: string; name: string }>>([]);
   const [foldersAvailable, setFoldersAvailable] = useState(false);
-  const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
+  const [activeFolderId, setActiveFolderId] = useState<string | null>(initialFolderId);
 
   const loadFolders = useCallback(async () => {
     try {
@@ -384,26 +397,36 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
               })
             );
       if (!confirmed) return;
-      try {
-        await Promise.all(ids.map((id) => Api.deleteKnowledgeDocument(id)));
+      const receipts = await deleteVaultDocumentsWithReceipts(ids, (id) =>
+        Api.deleteKnowledgeDocument(id)
+      );
+      const deleted = receipts.filter((receipt) => receipt.status === 'deleted');
+      const failed = receipts.filter((receipt) => receipt.status === 'failed');
+      if (deleted.length > 0) {
         toast.success(
           t('vault.docs.deleted', {
             defaultValue: isPolish
               ? 'Usunięto {{count}} dokument(y)'
               : 'Deleted {{count}} document(s)',
-            count: ids.length,
+            count: deleted.length,
           })
         );
-        setSelectedRowIds(new Set());
-        if (selectedId && ids.includes(selectedId)) setSelectedId(null);
-        await load();
-      } catch (err: unknown) {
+      }
+      if (failed.length > 0) {
         toast.error(
-          err instanceof Error
-            ? err.message
-            : t('vault.docs.deleteFailed', isPolish ? 'Nie udało się usunąć' : 'Delete failed')
+          t('vault.docs.deletePartial', {
+            defaultValue: isPolish
+              ? 'Usunięto {{deleted}} z {{total}}. Nie udało się: {{failedIds}}'
+              : 'Deleted {{deleted}} of {{total}}. Failed: {{failedIds}}',
+            deleted: deleted.length,
+            total: ids.length,
+            failedIds: failed.map((receipt) => receipt.id).join(', '),
+          })
         );
       }
+      setSelectedRowIds(new Set(failed.map((receipt) => receipt.id)));
+      if (selectedId && deleted.some((receipt) => receipt.id === selectedId)) setSelectedId(null);
+      if (deleted.length > 0) await load();
     },
     [t, isPolish, load, selectedId]
   );
@@ -751,8 +774,10 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
   // no-opem; `onCloseItem` (×) i `onShowList` ("Lista") oba wracają do
   // tabeli sejfów — jedyne dostępne "zamknięcie" tego ekranu.
   const openItems: OpenDocument[] = useMemo(
-    () => [{ id: safe.id, type: 'tool', subType: 'vault-safe', name: safe.name, status: 'DONE' }],
-    [safe.id, safe.name]
+    () => [
+      { id: safe.id, type: 'tool', subType: 'vault-safe', name: displaySafeName, status: 'DONE' },
+    ],
+    [safe.id, displaySafeName]
   );
   const handleSelectItem = useCallback(() => undefined, []);
 
@@ -1145,7 +1170,7 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
       <VaultDocumentPanel
         open={panelMode !== null}
         mode={panelMode ?? 'add'}
-        safeName={safe.name}
+        safeName={displaySafeName}
         safeScope={safe.type}
         safeProjectId={safe.projectId}
         document={editedDocument}

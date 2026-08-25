@@ -1,6 +1,25 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import enTranslation from '../../../public/locales/en/translation.json';
+
+// NotebookTopicView.tsx calls t() with real translation keys and NO inline fallback (relies
+// on public/locales/en/translation.json). A `t: (k) => k` identity mock returns the raw key,
+// so text/label assertions against real product copy ("Notes", "Close", "Retry", ...) never
+// matched. Resolve real English copy instead (same pattern as IdeaExportMenu.test.tsx).
+function resolveTranslation(key: string, options?: Record<string, unknown>): string {
+  const value = key
+    .split('.')
+    .reduce<unknown>(
+      (acc, segment) => (acc && typeof acc === 'object' ? (acc as Record<string, unknown>)[segment] : undefined),
+      enTranslation
+    );
+  const template = typeof value === 'string' ? value : key;
+  if (!options) return template;
+  return template.replace(/\{\{(\w+)\}\}/g, (_match, name) =>
+    Object.prototype.hasOwnProperty.call(options, name) ? String(options[name]) : `{{${name}}}`
+  );
+}
 
 const v8Get = vi.fn();
 vi.mock('@/services/api/v8/client', () => ({
@@ -8,8 +27,13 @@ vi.mock('@/services/api/v8/client', () => ({
 }));
 
 const i18nState = vi.hoisted(() => ({ language: 'en' }));
+// Keep `t` a stable function identity across renders (react-i18next's real `t` is stable).
+// A freshly-created arrow per useTranslation() call breaks components that put `t` in a
+// useCallback/useEffect dependency array (see tests/setup.ts note on this exact trap) —
+// the effect would re-fire every render and refetch data, masking mocked one-shot responses.
+const t = (key: string, options?: Record<string, unknown>) => resolveTranslation(key, options);
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ i18n: i18nState, t: (k: string) => k }),
+  useTranslation: () => ({ i18n: i18nState, t }),
 }));
 
 import { NotebookTopicView } from '@/components/MyWork/notebook/NotebookTopicView';

@@ -636,7 +636,7 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({
   onAICommand,
   receiptCapableActionIds,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const [selectedIdx, setSelectedIdx] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -796,9 +796,10 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({
                       className="block text-[11px] text-c-text-muted"
                     >
                       {governedUnavailable
-                        ? isPolish
-                          ? 'Niedostępne, dopóki serwer nie zwróci trwałego potwierdzenia'
-                          : 'Unavailable until the server can return a durable action receipt'
+                        ? t(
+                            'notebook.slashMenu.receiptUnavailable',
+                            'Niedostępne, dopóki serwer nie zwróci trwałego potwierdzenia'
+                          )
                         : isPolish
                           ? cmd.descriptionPl
                           : cmd.description}

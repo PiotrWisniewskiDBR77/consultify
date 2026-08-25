@@ -14,6 +14,23 @@ export interface NotebookCaptureSourceSummary {
   title: string;
 }
 
+/**
+ * `isPolish` is threaded explicitly through this function's args (not read
+ * from global i18next state), so `tr()` forces the i18next `lng` per-call —
+ * same pattern as useProcessFlowAIProposal.ts / ProcessFlowContextMenu.tsx.
+ */
+function tr(
+  isPolish: boolean,
+  key: string,
+  defaultValue: string,
+  vars?: Record<string, unknown>
+): string {
+  return i18n.t(`notebook.captureSourceSummary.${key}`, defaultValue, {
+    lng: isPolish ? 'pl' : 'en',
+    ...vars,
+  });
+}
+
 export function getNotebookUploadSourceSummary(
   captureSource: string | null | undefined,
   captureMetadata: NotebookCaptureMetadata | null | undefined,
@@ -33,44 +50,38 @@ export function getNotebookUploadSourceSummary(
   if (sourceType === 'work_canvas') {
     return {
       label: 'Canvas',
-      title: i18n.t('notebook.captureSourceSummary.title', 'Source: Canvas (conversation)'),
+      title: tr(isPolish, 'title', 'Source: Canvas (conversation)'),
     };
   }
 
   if (normalizedSource === 'web_clipper') {
     const sourceUrl = String(captureMetadata?.url || '').trim();
     return {
-      label: i18n.t('notebook.captureSourceSummary.label', 'Web clip'),
+      label: tr(isPolish, 'label', 'Web clip'),
       title: sourceUrl
-        ? i18n.t(
-            'notebook.captureSourceSummary.clippedPageWithUrl',
-            'Note created from a clipped page: {{sourceUrl}}',
-            {
-              sourceUrl,
-            }
-          )
-        : i18n.t('notebook.captureSourceSummary.label2', 'Note created from a clipped page'),
+        ? tr(isPolish, 'clippedPageWithUrl', 'Note created from a clipped page: {{sourceUrl}}', {
+            sourceUrl,
+          })
+        : tr(isPolish, 'label2', 'Note created from a clipped page'),
     };
   }
 
   if (normalizedSource === 'email_forward') {
     const sender = String(captureMetadata?.emailFrom || '').trim();
     return {
-      label: i18n.t('notebook.captureSourceSummary.label3', 'Email'),
+      label: tr(isPolish, 'label3', 'Email'),
       title: sender
-        ? i18n.t(
-            'notebook.captureSourceSummary.forwardedEmailFrom',
-            'Note created from a forwarded email from {{sender}}',
-            { sender }
-          )
-        : i18n.t('notebook.captureSourceSummary.label4', 'Note created from a forwarded email'),
+        ? tr(isPolish, 'forwardedEmailFrom', 'Note created from a forwarded email from {{sender}}', {
+            sender,
+          })
+        : tr(isPolish, 'label4', 'Note created from a forwarded email'),
     };
   }
 
   if (normalizedSource === 'api_import') {
     return {
-      label: i18n.t('notebook.captureSourceSummary.label5', 'API import'),
-      title: i18n.t('notebook.captureSourceSummary.title2', 'Note created from an external import'),
+      label: tr(isPolish, 'label5', 'API import'),
+      title: tr(isPolish, 'title2', 'Note created from an external import'),
     };
   }
 
@@ -81,19 +92,15 @@ export function getNotebookUploadSourceSummary(
   const originalName = String(captureMetadata?.fileOriginalname || '').trim();
   if (!originalName) {
     return {
-      label: i18n.t('notebook.captureSourceSummary.label6', 'Uploaded file'),
-      title: i18n.t('notebook.captureSourceSummary.title3', 'Note created from an uploaded file'),
+      label: tr(isPolish, 'label6', 'Uploaded file'),
+      title: tr(isPolish, 'title3', 'Note created from an uploaded file'),
     };
   }
 
   return {
-    label: `${i18n.t('notebook.captureSourceSummary.label7', 'File')}: ${originalName}`,
-    title: i18n.t(
-      'notebook.captureSourceSummary.createdFromFile',
-      'Note created from file {{originalName}}',
-      {
-        originalName,
-      }
-    ),
+    label: `${tr(isPolish, 'label7', 'File')}: ${originalName}`,
+    title: tr(isPolish, 'createdFromFile', 'Note created from file {{originalName}}', {
+      originalName,
+    }),
   };
 }

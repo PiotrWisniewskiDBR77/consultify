@@ -68,10 +68,7 @@ import {
 
 import TeresaMark from '../shared/TeresaMark';
 import { getCanvasBg } from './canvas/canvasBackground';
-import {
-  isCanvasKeyboardScope,
-  resolveMindMapGrammarAction,
-} from './canvas/mindmapKeyboardScope';
+import { isCanvasKeyboardScope, resolveMindMapGrammarAction } from './canvas/mindmapKeyboardScope';
 import {
   canvasObjectSurfaceStyle,
   canvasObjectTextStyle,
@@ -122,6 +119,7 @@ import { AIWhatIfScenarios } from './mindmap/AIWhatIfScenarios';
 import { type AlignMode, computeAlignDistribute } from './mindmap/alignDistribute';
 import { AssignPersonModal } from './mindmap/AssignPersonModal';
 import { AttachArtifactModal } from './mindmap/AttachArtifactModal';
+import { IdeaAINudgeStrip } from './IdeaAINudgeStrip';
 import { BatchConvertModal } from './mindmap/BatchConvertModal';
 import { BranchComparison } from './mindmap/BranchComparison';
 import { BranchSummaryPanel } from './mindmap/BranchSummaryPanel';
@@ -1790,10 +1788,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                   // depth3 / 13.01:1 at depth2; dark: 11.48:1 at depth3 / 14.43:1 at
                   // depth2 — computed via scripts/contrast-ratio.mjs), so it never
                   // regresses if the opacity ladder changes again later.
-                  <div
-                    className="text-[8px] text-c-text ml-auto"
-                    title={`Depth ${depth}`}
-                  >
+                  <div className="text-[8px] text-c-text ml-auto" title={`Depth ${depth}`}>
                     L{depth}
                   </div>
                 )}
@@ -2860,7 +2855,27 @@ function MindMapInner({
             count: selected.length,
             ids: selected.map((n: Node) => n.id),
             primaryId: selected[0]?.id,
-            meta: { nodeType: selected[0]?.type, label: selected[0]?.data?.label },
+            meta: {
+              nodeType: selected[0]?.type,
+              shape: selected[0]?.data?.shape,
+              color: selected[0]?.data?.color,
+              label: selected[0]?.data?.label,
+              description: selected[0]?.data?.description,
+              // FIX-16 (Day 3 layer-2 acceptance): the real, functioning "assign
+              // person" feature (AssignPersonModal, below) persists to
+              // `data.assignee` — the inspector's Owner field was reading only
+              // `data.owner`, which mindmap nodes never populate, so a real
+              // assignment always rendered as empty. Fallback like
+              // ProcessFlowPropertiesPanel already does (`assignee ?? owner`).
+              owner: selected[0]?.data?.owner ?? selected[0]?.data?.assignee,
+              semanticType: selected[0]?.data?.semanticType,
+              status: selected[0]?.data?.status,
+              tags: Array.isArray(selected[0]?.data?.tags) ? selected[0]?.data?.tags : undefined,
+              artifactRef: selected[0]?.data?.artifactRef,
+              attachments: Array.isArray(selected[0]?.data?.attachments)
+                ? selected[0]?.data?.attachments
+                : undefined,
+            },
           });
         }
       } catch (err: any) {
@@ -4564,7 +4579,8 @@ function MindMapInner({
       detachBranch: (nodeId?: string) => detachBranchRef.current?.(nodeId),
       duplicateBranch: (nodeId?: string) => duplicateBranchRef.current?.(nodeId),
       // N5 trzecia fala (2026-08-09) — `idea.node.mm_convert_branch_*`.
-      convertBranch: (target: string, nodeId?: string) => convertBranchRef.current?.(target, nodeId),
+      convertBranch: (target: string, nodeId?: string) =>
+        convertBranchRef.current?.(target, nodeId),
       // E11 fix (2026-08-10) — `idea.node.mm_convert_initiative`/`_decision`/
       // `_tasks` (single_item, no cascade).
       convertSingleNode: (target: string, nodeId?: string) =>
@@ -7331,6 +7347,43 @@ function MindMapInner({
         edgeCount={edges.length}
         onToggleSimplifiedMode={setSimplifiedMode}
       />
+
+      {/* MYW-IDEAS-011: previously mounted only in IdeaWhiteboardTool, so the
+          same owner-approved (source/preview/apply/dismiss, durable
+          dismissal, no silent mutation) AI nudge strip was invisible in
+          Mind Map. `mm_ai_expand`/`mm_ai_summarize` are the tool's own real
+          quick actions (useMindMapQuickActions.ts), dispatched the same way
+          MindmapCommandPalette above already dispatches every other mm_*
+          action — not a borrowed/foreign handler like whiteboard needed. */}
+      {nodes.length > 0 && (
+        <IdeaAINudgeStrip
+          ideaId={ideaId}
+          userId={currentUser?.id || null}
+          organizationId={currentUser?.organizationId || null}
+          activeTool={'mindmap' as any}
+          title={ideaTitle}
+          seedText={seedText}
+          isAccepted
+          graphNodes={nodes as any[]}
+          graphEdges={edges as any[]}
+          onActionExpand={() => {
+            window.dispatchEvent(
+              new CustomEvent('idea-workspace-quick-action', {
+                detail: { action: 'mm_ai_expand', ideaId },
+              })
+            );
+            return { status: 'handed_off' as const };
+          }}
+          onActionConvert={() => {
+            window.dispatchEvent(
+              new CustomEvent('idea-workspace-quick-action', {
+                detail: { action: 'mm_ai_summarize', ideaId },
+              })
+            );
+            return { status: 'handed_off' as const };
+          }}
+        />
+      )}
       {subtreeDeleteDialog}
     </div>
   );

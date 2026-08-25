@@ -109,8 +109,13 @@ export function useWhiteboardQuickActions(opts: UseWhiteboardQuickActionsOpts): 
       typeof detail?.label === 'string' && (detail.label as string).trim()
         ? (detail.label as string).trim()
         : undefined;
-    if (action === 'wb_add_sticky')
-      handlers.addElement('sticky', addLabel ? { label: addLabel } : undefined);
+    if (action === 'wb_add_sticky') {
+      if (addLabel) {
+        handlers.addElement('sticky', { label: addLabel });
+      } else {
+        handlers.addElement('sticky');
+      }
+    }
     if (action === 'wb_add_text') handlers.addElement('text');
     if (action === 'wb_add_group') handlers.addElement('group');
     if (action === 'wb_add_shape_rectangle') handlers.addElement('shape_rectangle');

@@ -3124,8 +3124,8 @@
       "markItemsAsDone": "Mark items as Done (E) and they'll appear here.",
       "noSavedItems": "No saved items",
       "useSaveBTo": "Use Save (B) to bookmark items for later.",
-      "inboxIsEmptyZero": "Inbox is empty — zero backlog!",
-      "everythingProcessedGreatJob": "Everything processed. Great job!",
+      "noItemsInInbox": "No items in your inbox",
+      "newItemsWillAppearHere": "New items will appear here as they come in. If you expected to see something here, check that you're looking at the right organization/project.",
       "urgency": {
         "critical": "Critical",
         "high": "High",
@@ -4757,12 +4757,12 @@
     },
     "postDecisionFollowUp": {},
     "calendarView": {
-      "statusLabel": "Coming soon",
-      "helper": "Google Calendar integration is in preparation — two-way connection is not available yet.",
-      "nextStep": "In the meantime, subscribe to the Consultify ICS feed in your calendar.",
-      "statusLabel2": "Coming soon",
-      "helper2": "Outlook integration is in preparation — two-way connection is not available yet.",
-      "nextStep2": "In the meantime, subscribe to the Consultify ICS feed in your calendar.",
+      "statusLabel": "Not connected",
+      "helper": "Google Calendar is not connected yet — connect it to bring events here.",
+      "nextStep": "Connect Google Calendar in Integrations.",
+      "statusLabel2": "Not connected",
+      "helper2": "Outlook is not connected yet — connect it to bring events here.",
+      "nextStep2": "Connect Outlook in Integrations.",
       "statusLabel3": "Active",
       "statusLabel4": "Setup in progress",
       "nextStep3": "Finish configuration or authorization in Integrations.",
@@ -4770,8 +4770,9 @@
       "nextStep4": "Start reauthorization in Integrations.",
       "statusLabel6": "Sync error",
       "nextStep5": "Review the status and logs in Integrations.",
-      "statusLabel7": "Coming soon",
-      "nextStep6": "In the meantime, subscribe to the Consultify ICS feed in your calendar.",
+      "statusLabel7": "Not connected",
+      "nextStep6": "Connect {{providerLabel}} in Integrations.",
+      "connectCta": "Connect",
       "title": "Day load",
       "body": "Checking the selected day load...",
       "title2": "Day-load preview limited",
@@ -4788,7 +4789,7 @@
       "helperPending": "{{providerLabel}} is on the governed path, but configuration or authorization is not complete yet.",
       "helperReauth": "{{providerLabel}} needs reauthorization before it returns to a trustworthy sync state.",
       "helperError": "{{providerLabel}} has an active error and should not be treated as a ready calendar source.",
-      "helperComingSoon": "{{providerLabel}} integration is in preparation — two-way connection is not available yet.",
+      "helperComingSoon": "{{providerLabel}} is not connected yet — connect it to bring events here.",
       "heavyLoadSuggestion": "You already have {{totalItems}} items here, including {{taskCount}} tasks and {{decisionCount}} decisions. Consider a reschedule or a planning adjustment.",
       "partialLoadSuggestion": "The selected day already has {{totalItems}} items. This is a good moment to place new work deliberately.",
       "toastVersionConflict": "This task was changed by someone else — restoring the current state.",
@@ -4828,6 +4829,31 @@
       "itemsOnThisDay": "You already have {{count}} items on this day.",
       "dayPreviewLimited": "Day preview is limited",
       "dayAlreadyBusy": "This day is already fairly busy"
+    },
+    "calendarV2": {
+      "deadlines": "Deadlines",
+      "new": "New",
+      "duplicateConfirm": "Create 4 independent copies on: {{dates}}?",
+      "duplicateResult": "Created {{created}} of 4. Failed: {{failed}}.",
+      "created": "Event created",
+      "createDescription": "Create an event or a task deadline.",
+      "entryType": "Entry type",
+      "event": "Event",
+      "task": "Task",
+      "from": "From",
+      "to": "To",
+      "visibility": "Visibility",
+      "private": "Private",
+      "busy": "Busy",
+      "organization": "Organization",
+      "duplicateFourWeeks": "Duplicate for the next 4 weeks",
+      "duplicateConfirmAction": "Create copies",
+      "attendees": "Attendees",
+      "attendeesHint": "(optional, organization members only)",
+      "attendeesSearchPlaceholder": "Add person…",
+      "attendeesSearching": "Searching…",
+      "attendeesNoResults": "No results",
+      "attendeesRemove": "Remove attendee {{name}}"
     },
     "calendarSidebar": {
       "currentDateToLocaleDateString": "en-US",
@@ -5207,6 +5233,54 @@
     },
     "shared": {
       "dragHandleTitle": "Drag to reorder"
+    },
+    "ideaInspector": {
+      "empty": "Select an element to see its properties",
+      "emptyHint": "Click a node, row, card, or edge",
+      "recent": "Recently opened",
+      "saved": "Saved",
+      "advice": "AI advice",
+      "adviceReason": "This action is waiting for its scope to be defined",
+      "drill": "Drill down",
+      "drillReason": "This action is waiting for its scope to be defined",
+      "summarize": "AI summary",
+      "summarizeReason": "This action is waiting for its scope to be defined",
+      "noState": "This tool does not track element state",
+      "saveFailed": "Changes could not be saved",
+      "ariaElementProperties": "Element properties",
+      "labelField": "Label",
+      "stateField": "State",
+      "priorityField": "Priority",
+      "ownerField": "Owner",
+      "semanticTypeField": "Semantic type",
+      "openButton": "Open",
+      "sections": {
+        "basics": "Basics",
+        "contentDepth": "Content and depth",
+        "classification": "Classification",
+        "evidence": "Evidence and sources",
+        "relations": "Relations",
+        "outputs": "Output artifacts"
+      },
+      "tool": {
+        "mindmap": "Node appearance",
+        "process": "Edge and lane",
+        "whiteboard": "Workshop session",
+        "table": "Column"
+      },
+      "nodeColor": "Branch color",
+      "nodeShape": "Shape",
+      "nodeShapeDefault": "default",
+      "lane": "Lane",
+      "laneNone": "No lane",
+      "edgeHint": "Edit edge direction and style on the canvas by clicking the arrow.",
+      "noSession": "No active workshop session",
+      "sessionRole": "Role",
+      "sessionPhase": "Phase",
+      "sessionParticipants": "Participants",
+      "sessionTimer": "Timer",
+      "sessionActive": "active",
+      "sessionInactive": "inactive"
     }
   },
   "step1": {
@@ -9379,7 +9453,14 @@
       "auditReadout": "Audit readout",
       "source": "Source",
       "interviewInsight": "Interview Insight",
-      "insight": "Insight"
+      "insight": "Insight",
+      "task": "Task",
+      "decision": "Decision",
+      "notebook": "Notebook",
+      "initiativeLabel": "Initiative",
+      "report": "Report",
+      "presentation": "Presentation",
+      "teamChat": "Task list"
     },
     "financialNarrativeBlocks": {
       "financialAnalysisSizingRoi": "Financial analysis (sizing + ROI)",
@@ -29119,6 +29200,11 @@
   },
   "notebook": {
     "notebookContent": {
+      "searchAllNotebooks": "Search all notebooks",
+      "searchAllNotebooksPlaceholder": "Search title, content, tags…",
+      "searchAllNotebooksEmpty": "No matching pages",
+      "searchAllNotebooksPrompt": "Type to search across every notebook",
+      "searchAllNotebooksFailed": "Search failed",
       "label": "Refine the note first: add more content or a clearer outline before converting it into a deliverable.",
       "toastError": "Failed to open the requested note",
       "label2": "Start writing… Type / to insert a block",
@@ -29375,7 +29461,12 @@
     "rightRail": {
       "work": "Work",
       "context": "Context",
-      "closePanel": "Close panel"
+      "closePanel": "Close panel",
+      "ownerYou": "You",
+      "receiptUnavailable": "Editing controls are unavailable until the server can return a durable action receipt."
+    },
+    "slashMenu": {
+      "receiptUnavailable": "Unavailable until the server can return a durable action receipt"
     },
     "hamburgerMenu": {
       "export": "Export",
@@ -29385,6 +29476,7 @@
       "expandDocument": "Expand into document",
       "askAi": "Ask AI",
       "deleteNote": "Delete note",
+      "receiptUnavailable": "Unavailable until the server can return a durable action receipt",
       "convertTo": "Convert to"
     },
     "presenceStack": {
@@ -31782,7 +31874,8 @@
       "empty": "AI returned no content. Please try again.",
       "proposalFailed": "Failed to create AI proposal.",
       "executeFailed": "AI error. Please try again.",
-      "approveFailed": "Failed to approve."
+      "approveFailed": "Failed to approve.",
+      "receiptUnavailable": "Unavailable until the server can return a durable action receipt"
     }
   },
   "myWorkMindmap": {
@@ -37013,5 +37106,63 @@
     "tracking": "Tracking",
     "cancelled": "Cancelled",
     "archived": "Archived"
+  },
+  "shared": {
+    "executiveModuleShell": {
+      "resizeElementInspector": "Resize element inspector"
+    }
+  },
+  "vault": {
+    "safes": {
+      "loadError": "Failed to load vault safes",
+      "name": "Name",
+      "scope": "Scope",
+      "documents": "Documents",
+      "size": "Size",
+      "inAiKnowledge": "In AI knowledge",
+      "indexingErrors": "Indexing errors",
+      "indexingErrorsCount": "{{count}} error(s)",
+      "lastModified": "Last modified",
+      "emptyTitle": "No safes yet",
+      "rowOpen": "Open",
+      "levelUser": "My safe",
+      "levelOrganization": "Organization safe",
+      "levelProject": "Project safe"
+    },
+    "folders": {
+      "loadFailed": "Failed to load folders",
+      "newFolder": "New folder",
+      "scope": {
+        "mine": "Mine",
+        "organization": "Organization",
+        "project": "Project"
+      },
+      "columns": {
+        "name": "Name",
+        "scope": "Scope",
+        "documents": "Documents",
+        "updatedAt": "Last modified"
+      },
+      "menu": {
+        "open": "Open",
+        "rename": "Rename",
+        "delete": "Delete"
+      },
+      "empty": {
+        "title": "No folders",
+        "description": "Folders organize documents before opening a safe."
+      },
+      "rename": {
+        "title": "Rename folder",
+        "save": "Save",
+        "fieldLabel": "Folder name"
+      },
+      "deleteConfirm": {
+        "title": "Delete folder?",
+        "description": "Documents remain in the safe and are detached from the folder.",
+        "confirm": "Delete",
+        "cancel": "Cancel"
+      }
+    }
   }
 }

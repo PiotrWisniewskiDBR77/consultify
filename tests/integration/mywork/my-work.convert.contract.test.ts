@@ -41,6 +41,11 @@ vi.mock('../../../server/src/utils/queryHelpers.js', () => ({
   enablePerformanceTracking: vi.fn(),
   disablePerformanceTracking: vi.fn(),
   getTableColumns: vi.fn().mockResolvedValue([]),
+  // withPgTransaction opens a real pg.Client in production; the /convert route
+  // only uses it to serialize the handler body (its callback never touches the
+  // client argument — it calls the already-mocked queryOne/queryRun directly),
+  // so a passthrough is a faithful mock here, same as the other DB helpers above.
+  withPgTransaction: (fn: (client?: unknown) => Promise<unknown>) => fn(undefined),
 }));
 
 // Table-aware getTableColumns — plain arrow fn so vi.resetAllMocks() won't clear it.
@@ -192,6 +197,7 @@ describe('M05 L-08 — S5: idea→entity conversion contracts', () => {
 
       const res = await request(buildApp())
         .post(`/api/my-work/my-ideas/${IDEA_ID}/convert`)
+        .set('Idempotency-Key', 'test-convert-200')
         .send({ target: 'initiative' });
 
       expect(res.status).toBe(200);
@@ -206,6 +212,7 @@ describe('M05 L-08 — S5: idea→entity conversion contracts', () => {
 
       await request(buildApp())
         .post(`/api/my-work/my-ideas/${IDEA_ID}/convert`)
+        .set('Idempotency-Key', 'test-convert-insert')
         .send({ target: 'initiative' });
 
       const initiativeInsert = mockQueryRun.mock.calls.find(([sql]) =>
@@ -221,6 +228,7 @@ describe('M05 L-08 — S5: idea→entity conversion contracts', () => {
 
       await request(buildApp())
         .post(`/api/my-work/my-ideas/${IDEA_ID}/convert`)
+        .set('Idempotency-Key', 'test-convert-promote')
         .send({ target: 'initiative' });
 
       const promoteUpdate = mockQueryRun.mock.calls.find(([sql]) =>
@@ -234,6 +242,7 @@ describe('M05 L-08 — S5: idea→entity conversion contracts', () => {
     it('unknown target → 400', async () => {
       const res = await request(buildApp())
         .post(`/api/my-work/my-ideas/${IDEA_ID}/convert`)
+        .set('Idempotency-Key', 'test-convert-bad-target')
         .send({ target: 'invalid_target' });
 
       expect(res.status).toBe(400);
@@ -243,9 +252,19 @@ describe('M05 L-08 — S5: idea→entity conversion contracts', () => {
     it('missing target → 400', async () => {
       const res = await request(buildApp())
         .post(`/api/my-work/my-ideas/${IDEA_ID}/convert`)
+        .set('Idempotency-Key', 'test-convert-missing-target')
         .send({});
 
       expect(res.status).toBe(400);
+    });
+
+    it('missing Idempotency-Key header → 428', async () => {
+      const res = await request(buildApp())
+        .post(`/api/my-work/my-ideas/${IDEA_ID}/convert`)
+        .send({ target: 'initiative' });
+
+      expect(res.status).toBe(428);
+      expect(res.body.code).toBe('IDEMPOTENCY_KEY_REQUIRED');
     });
   });
 
@@ -255,6 +274,7 @@ describe('M05 L-08 — S5: idea→entity conversion contracts', () => {
 
       const res = await request(buildApp())
         .post(`/api/my-work/my-ideas/nonexistent-idea/convert`)
+        .set('Idempotency-Key', 'test-convert-404')
         .send({ target: 'initiative' });
 
       expect(res.status).toBe(404);

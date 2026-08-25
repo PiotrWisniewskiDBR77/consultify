@@ -52,6 +52,40 @@ vi.mock('../../../services/notebookSourceFileService.js', () => ({
   persistNotebookSourceFile: vi.fn().mockResolvedValue({ storedSourceFile: true }),
 }));
 
+// notebookService.capture() filters its INSERT columns through
+// getTableColumns('notebook_pages') (compat guard for deployments whose
+// schema predates the V4 capture columns — see notebookService.ts). Without
+// a mock, getTableColumns falls through to querying via queryHelpers.queryAll
+// (mocked above, no default implementation) and then to
+// MOCK_TABLE_FALLBACK_COLUMNS in dbSchema.ts, which doesn't list
+// 'notebook_pages' — so every column silently gets filtered out of the real
+// INSERT and its params, not just in this test but in ANY mock-DB-mode run.
+// Mock it here with the columns capture() actually writes (see the `values`
+// object in notebookService.ts) so this test exercises the real column set.
+vi.mock('../../../utils/dbSchema.js', () => ({
+  getTableColumns: vi.fn(async () =>
+    new Set([
+      'id',
+      'owner_user_id',
+      'organization_id',
+      'project_id',
+      'visibility',
+      'title',
+      'content_json',
+      'content_text',
+      'tags_json',
+      'status',
+      'capture_source',
+      'capture_metadata',
+      'idempotency_key',
+      'source_type',
+      'source_id',
+      'created_at',
+      'updated_at',
+    ])
+  ),
+}));
+
 beforeEach(() => {
   vi.clearAllMocks();
 });

@@ -13,6 +13,11 @@ describe('MYW-NBK-006 local toolbar simplification', () => {
     expect(contentSource).not.toContain("aria-label={t('notebook.notebookContent.ariaLabel3'");
     expect(contentSource).toContain('onGraph={() => setShowGraphView((v) => !v)}');
     expect(contentSource).toContain('data-testid="notebook-toolbar-right-actions"');
+    expect(contentSource).not.toContain('<History size={14} />');
+    expect(contentSource).toContain('onExport={() => setNotebookExportOpen(true)}');
+    expect(contentSource).toContain('onVersionHistory={() => setShowVersionHistory');
+    expect(menuSource).toContain("id: 'export'");
+    expect(menuSource).toContain("id: 'version-history'");
   });
 
   it('routes Verification to the canonical Work rail instead of a removed legacy strip', () => {
@@ -35,15 +40,19 @@ describe('MYW-NBK-006 local toolbar simplification', () => {
   });
 
   it('qualifies Delete only through an idempotent server receipt and scoped readback', () => {
+    // DEC-25: 'expand-document' joined 'delete' on the same real server
+    // capability check (was previously ungated dead click — see
+    // notebookExpandToDocument.ts / server/src/routes/v8/my-work.routes.ts
+    // action-capabilities). receiptCapableActionIds now folds both flags into
+    // one array instead of the single-action ternary this test used to assert.
+    expect(contentSource).toContain("...(isDeleteReceiptCapable ? ['delete'] : [])");
     expect(contentSource).toContain(
-      "receiptCapableActionIds={isDeleteReceiptCapable ? ['delete'] : []}"
+      "...(isExpandDocumentReceiptCapable ? ['expand-document'] : [])"
     );
     expect(contentSource).toContain('Api.getNotebookActionCapabilities(pageId)');
     expect(contentSource).toContain('result.actorUserId !== currentUserId');
     expect(contentSource).toContain('result.organizationId !== currentOrganizationId');
-    expect(contentSource).toContain(
-      'deleteCapability.organizationId === currentOrganizationId'
-    );
+    expect(contentSource).toContain('actionCapabilities.organizationId === currentOrganizationId');
     expect(contentSource).toContain("receiptContract === 'notebook_delete_receipt_v1'");
     expect(contentSource).toContain('deleteRequestRef.current?.pageId === activePage.id');
     expect(contentSource).toContain('globalThis.crypto.randomUUID()');

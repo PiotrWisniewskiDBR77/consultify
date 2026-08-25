@@ -8,8 +8,15 @@
 # (--update) TYLKO gdy dług ŚWIADOMIE SPADŁ (akcja przeniesiona do rejestru),
 # nigdy żeby uciszyć nową regresję.
 #
-# WYGENEROWANO: 2026-08-10 (scripts/check-action-coverage.sh --update)
-# RAZEM: 188 naruszeń w 89 plikach (zeskanowano 455 plików w zakresie)
+# WYGENEROWANO: 2026-08-10 (scripts/check-action-coverage.sh --update); ręcznie
+# skorygowano 2026-08-25 (TRI-OBS-17): usunięto 2 wpisy (NotebookExportMenu.tsx,
+# NotebookInlineAIMenu.tsx) po realnej naprawie traceability (patrz commit) —
+# ClosureDecisionQueue.tsx/EffectivenessClosureQueue.tsx/NotebookHamburgerMenu.tsx
+# miały baseline=0 już wcześniej, nic do usunięcia. Reszta pliku NIEZMIENIONA —
+# świadomie NIE uruchomiono pełnego `--update` tu, żeby nie połknąć niepowiązanego
+# driftu z innych sesji na tej gałęzi (zaobserwowany podczas pracy: IdeaAINudgeStrip.tsx/
+# MyTasksListContent.tsx zmieniły stan bez udziału tego zadania).
+# RAZEM: 183 naruszeń w 87 plikach (zeskanowano 455 plików w zakresie)
 #
 # Posortowane po ścieżce (stabilny diff).
 1	src/components/MyWork/CreateProgramModal.tsx
@@ -58,8 +65,6 @@
 1	src/components/MyWork/mindmap/floating-toolbar/SemanticControlsPopover.tsx
 3	src/components/MyWork/notebook/AIChatInlinePanel.tsx
 1	src/components/MyWork/notebook/ActionItemsPanel.tsx
-3	src/components/MyWork/notebook/NotebookExportMenu.tsx
-2	src/components/MyWork/notebook/NotebookInlineAIMenu.tsx
 1	src/components/MyWork/notebook/NotebookTopicChips.tsx
 1	src/components/MyWork/notebook/NotebookVersionHistory.tsx
 1	src/components/MyWork/notebook/PulseItemPickerModal.tsx

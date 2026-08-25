@@ -3,6 +3,7 @@ import {
   ClipboardCheck,
   Download,
   FileText,
+  History,
   Lightbulb,
   ListChecks,
   Maximize2,
@@ -62,6 +63,8 @@ export interface NotebookHamburgerMenuProps {
   // --- Group "Note" --------------------------------------------------------
   /** Export the note (PDF/Markdown/etc.). */
   onExport?: () => unknown | Promise<unknown>;
+  /** Toggle the existing version-history surface. */
+  onVersionHistory?: () => unknown | Promise<unknown>;
   /** Open sources & attachments panel. */
   onSources?: () => unknown | Promise<unknown>;
   /** Open verification & review panel. */
@@ -93,6 +96,13 @@ export interface NotebookHamburgerMenuProps {
   deleteDisabled?: boolean;
   /** Durable actions stay disabled unless their backend receipt contract is proven. */
   receiptCapableActionIds?: string[];
+  /**
+   * FIX-7 (Day 3 acceptance): per-action id → real reason the action is
+   * unavailable (e.g. the server's actual action-capabilities `reason`
+   * field, PL/EN per `isPolish`). Falls back to a generic, still-localized
+   * message for any action id not present here.
+   */
+  receiptUnavailableReasons?: Record<string, string>;
 }
 
 const ALL_CONVERT_TARGETS: NotebookConvertTarget[] = [
@@ -122,6 +132,7 @@ const CONVERT_META: Record<
 export function buildNotebookMenuActions(props: NotebookHamburgerMenuProps): NotebookMenuAction[] {
   const {
     onExport,
+    onVersionHistory,
     onSources,
     onVerification,
     onShare,
@@ -143,6 +154,14 @@ export function buildNotebookMenuActions(props: NotebookHamburgerMenuProps): Not
       label: i18n.t('notebook.hamburgerMenu.export', 'Export'),
       icon: <Download size={14} />,
       onClick: onExport,
+    });
+  }
+  if (onVersionHistory) {
+    items.push({
+      id: 'version-history',
+      label: i18n.t('notebook.hamburgerMenu.versionHistory', 'Version history'),
+      icon: <History size={14} />,
+      onClick: onVersionHistory,
     });
   }
   if (onSources) {
@@ -248,7 +267,14 @@ function convertHeading(_pl: boolean): string {
  * Closes on Escape, outside-click, and after any action fires.
  */
 export const NotebookHamburgerMenu: React.FC<NotebookHamburgerMenuProps> = (props) => {
-  const { x, y, onClose, isPolish, receiptCapableActionIds = [] } = props;
+  const {
+    x,
+    y,
+    onClose,
+    isPolish,
+    receiptCapableActionIds = [],
+    receiptUnavailableReasons = {},
+  } = props;
   const menuRef = useRef<HTMLDivElement>(null);
   const executionLockRef = useRef(false);
   const [runningActionId, setRunningActionId] = useState<string | null>(null);
@@ -339,6 +365,19 @@ export const NotebookHamburgerMenu: React.FC<NotebookHamburgerMenuProps> = (prop
     }
   };
 
+  // TRI-OBS-17 (2026-08-25, R10 traceability): every `action` reaching here
+  // already carries a real `action.contract` — `buildNotebookMenuActions`
+  // above throws if `getNotebookActionContract(item.id)` is missing, so the
+  // guard below never actually changes behaviour. It IS the traceable entry
+  // point `scripts/check-action-coverage.sh` looks for (`runAction(id, run)`,
+  // same wiring convention as `WhiteboardToolbar.tsx`/`ProcessFlowToolbar.tsx`),
+  // wired to this file's OWN registry (`notebookActionRegistry.ts`) instead of
+  // the unrelated Idea Workspace one.
+  const runAction = (action: NotebookMenuAction) => {
+    if (!getNotebookActionContract(action.id)) return;
+    return executeAction(action);
+  };
+
   return (
     <div
       ref={menuRef}
@@ -354,7 +393,7 @@ export const NotebookHamburgerMenu: React.FC<NotebookHamburgerMenuProps> = (prop
             <button
               type="button"
               className="mt-1 font-semibold underline"
-              onClick={() => void executeAction(failedAction)}
+              onClick={() => void runAction(failedAction)}
             >
               {i18n.t('common.retry', 'Retry')}
             </button>
@@ -374,10 +413,18 @@ export const NotebookHamburgerMenu: React.FC<NotebookHamburgerMenuProps> = (prop
               action.contract.outcome === 'server-receipt-required' &&
               !receiptCapableActionIds.includes(action.id);
             const unavailableReasonId = `notebook-action-${action.id}-unavailable`;
-            const unavailableReason = i18n.t(
-              'notebook.hamburgerMenu.receiptUnavailable',
-              'Unavailable until the server can return a durable action receipt'
-            );
+            // FIX-7 (Day 3 acceptance): prefer the real, per-action reason
+            // (typically the server's own action-capabilities `reason`,
+            // e.g. "Only the note owner can delete this page.") over a
+            // one-size-fits-all sentence — different actions are blocked
+            // for different real causes (ownership vs. missing receipt
+            // support), and a blanket message obscures that.
+            const unavailableReason =
+              receiptUnavailableReasons[action.id] ||
+              i18n.t(
+                'notebook.hamburgerMenu.receiptUnavailable',
+                'Unavailable until the server can return a durable action receipt'
+              );
             return (
               <div className={receiptUnavailable ? 'py-1' : undefined}>
                 <button
@@ -392,7 +439,7 @@ export const NotebookHamburgerMenu: React.FC<NotebookHamburgerMenuProps> = (prop
                   aria-describedby={receiptUnavailable ? unavailableReasonId : undefined}
                   onClick={() => {
                     if (receiptUnavailable) return;
-                    void executeAction(action);
+                    void runAction(action);
                   }}
                   disabled={action.disabled || runningActionId !== null}
                   aria-busy={runningActionId === action.id || undefined}

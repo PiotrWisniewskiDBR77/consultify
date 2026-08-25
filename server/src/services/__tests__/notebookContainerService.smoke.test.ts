@@ -106,6 +106,10 @@ vi.mock('../../middleware/auth.middleware.js', () => ({
     (..._roles: string[]) =>
     (_req: any, _res: any, next: () => void) =>
       next(),
+  // my-work.routes.ts now runs this in the router chain (router.use(validateOrgMembership)
+  // after verifyToken). This is a container-layer smoke test, not a membership-gate test —
+  // pass through like the other stubbed middlewares below.
+  validateOrgMembership: (_req: any, _res: any, next: () => void) => next(),
 }));
 
 vi.mock('../../middleware/demoGuard.middleware.js', () => ({

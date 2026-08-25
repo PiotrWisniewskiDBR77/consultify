@@ -1287,7 +1287,10 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
             nodeType: selected[0]?.type,
             label: selected[0]?.data?.label,
             description: selected[0]?.data?.description,
-            owner: selected[0]?.data?.owner,
+            // FIX-16 (Day 3 layer-2 acceptance): mirror the fallback ProcessFlowPropertiesPanel
+            // already used (`assignee ?? owner`) so a real assign-person value is not stranded
+            // under a field name the shared inspector never reads.
+            owner: selected[0]?.data?.owner ?? selected[0]?.data?.assignee,
             status: selected[0]?.data?.status,
             tags: Array.isArray(selected[0]?.data?.tags) ? selected[0]?.data?.tags : undefined,
             artifactRef: selected[0]?.data?.artifactRef,
@@ -1296,6 +1299,8 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
               : undefined,
             shape:
               typeof selected[0]?.data?.shape === 'string' ? selected[0]?.data?.shape : undefined,
+            color:
+              typeof selected[0]?.data?.color === 'string' ? selected[0]?.data?.color : undefined,
             semanticType: inferWhiteboardSemanticType(selected[0]),
           },
         });

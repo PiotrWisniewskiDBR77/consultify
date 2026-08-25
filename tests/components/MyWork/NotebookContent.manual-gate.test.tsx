@@ -16,6 +16,15 @@ const { toastErrorMock, apiMock, editorMock } = vi.hoisted(() => ({
     getNotebookPage: vi.fn(),
     notebookGetAIProposals: vi.fn(),
     updateNotebookPage: vi.fn(),
+    // NotebookContent.tsx's orphan-badge effect calls this on mount
+    // (Api.getOrphanedNotebookPageIds(200).then(...)); the mock previously
+    // omitted it entirely, so every render crashed with
+    // "Api.getOrphanedNotebookPageIds is not a function".
+    getOrphanedNotebookPageIds: vi.fn(),
+    // DEC-25: backs the note-menu receipt-capability gate (delete AND
+    // expand-document) — NotebookContent.tsx only calls this once currentUser
+    // is present (see useAppStore mock below).
+    getNotebookActionCapabilities: vi.fn(),
   },
   editorMock: {
     commands: {
@@ -74,6 +83,12 @@ vi.mock('@/store/useAppStore', () => ({
     setChatKickoffMessage: vi.fn(),
     isChatCollapsed: false,
     toggleChatCollapse: vi.fn(),
+    // DEC-25: NotebookContent.tsx's action-capability effect (backs the
+    // note-menu receipt gate for delete/expand-document) only fires once
+    // currentUser is present — without it, the effect early-returns and the
+    // note-menu stays permanently ungated (closed), which is what the manual
+    // gate this file tests is verifying is NOT happening.
+    currentUser: { id: 'user-1', organizationId: 'org-1' },
   }),
 }));
 
@@ -133,6 +148,21 @@ vi.mock('../../../src/components/MyWork/notebook/SlashMenu', () => ({
 vi.mock('../../../src/components/MyWork/shared/askAiHelper', () => ({
   buildAskAIMessage: () => 'ask-ai',
 }));
+// DEC-25: adding `currentUser` to the useAppStore mock below (needed so the
+// note-menu action-capability effect can run) also activates NotebookContent's
+// live-presence hook (#23, real /ws/notebook/:noteId WebSocket — previously
+// dormant here because presenceUser was always null without a currentUser).
+// jsdom has no such server to connect to, and the hook's real reconnect/retry
+// loop then spins for the lifetime of the test, hanging the whole file — mock
+// it out like every other real subsystem in this file already is.
+vi.mock('../../../src/components/MyWork/notebook/useNotebookPresence', () => ({
+  useNotebookPresence: () => ({
+    isConnected: false,
+    connectedUsers: [],
+    localUser: null,
+    connectionStatus: 'disconnected',
+  }),
+}));
 // TipTap extension module pulls in lowlight/highlight.js which does not
 // resolve in the vitest environment — the editor is mocked anyway.
 vi.mock('../../../src/components/MyWork/notebook/extensions', () => ({
@@ -153,6 +183,22 @@ describe('NotebookContent manual gate regressions', () => {
     apiMock.getNotebookPages.mockResolvedValue([]);
     apiMock.notebookGetAIProposals.mockResolvedValue([]);
     apiMock.updateNotebookPage.mockResolvedValue({});
+    apiMock.getOrphanedNotebookPageIds.mockResolvedValue([]);
+    // Neutral default: pageId '' never matches a real activePage.id, so
+    // NotebookContent.tsx's version/actor/org guard discards it and the
+    // receipt gate stays closed — same as before this mock existed. Tests
+    // that need the gate open (e.g. "expand into document" below) override
+    // this with a page-matching implementation.
+    apiMock.getNotebookActionCapabilities.mockResolvedValue({
+      pageId: '',
+      pageVersion: null,
+      actorUserId: '',
+      organizationId: '',
+      actions: {
+        delete: { allowed: false, reason: null, receiptContract: null },
+        expandDocument: { allowed: false, reason: null, receiptContract: null },
+      },
+    });
   });
 
   it('shows an honest error when openPageId cannot be loaded', async () => {
@@ -299,7 +345,46 @@ describe('NotebookContent manual gate regressions', () => {
 
   // C3 (KROK 6): "Expand into document" creates a work-canvas draft copy of the
   // note (D-C-2 provenance) via POST /api/work-canvas/drafts.
-  it('renders the expand-into-document button and POSTs a draft with provenance', async () => {
+  //
+  // MYW-NBK-006 (src/components/MyWork/notebook/__tests__/NotebookToolbarSimplification.ownerFeedback.test.ts)
+  // is the accepted owner-feedback contract that moved this action off a
+  // standalone `notebook-expand-to-document` toolbar button and into the "Note
+  // menu" (hamburger/kebab) as the `expand-document` item — that test asserts
+  // the standalone testid is GONE from the source. This test previously still
+  // targeted the removed button; updated to open the Note menu and click the
+  // relocated "Expand into document" item instead.
+  //
+  // DEC-25 (FAZA 2): this was previously a confirmed dead click — see git
+  // history for the prior PRODUCT_DO_DECYZJA note. notebookActionRegistry.ts
+  // classifies 'expand-document' as outcome: 'server-receipt-required', which
+  // NotebookHamburgerMenu.tsx gates behind `receiptCapableActionIds`; but
+  // NotebookContent.tsx only ever populated that array for 'delete'. Fixed by
+  // giving 'expand-document' the same real capability check as 'delete':
+  // GET .../action-capabilities now also returns `actions.expandDocument`
+  // (server/src/routes/v8/my-work.routes.ts, owner-only, mirrors the PUT
+  // page-write gate), NotebookContent.tsx folds it into the same
+  // actorUserId/organizationId/pageId/pageVersion-checked capability fetch
+  // used for delete, and expandNotebookPageToCanvasDraft() now returns a
+  // `receiptId` (the created draft's id — the durable, independently
+  // retrievable evidence of the mutation, GET /api/work-canvas/drafts/:id)
+  // so NotebookHamburgerMenu's post-click receipt check is satisfied too.
+  it('expands into a document via the Note menu and POSTs a draft with provenance', async () => {
+    apiMock.getNotebookActionCapabilities.mockImplementation((pageId: string) =>
+      Promise.resolve({
+        pageId,
+        pageVersion: '2026-03-28T10:00:00.000Z',
+        actorUserId: 'user-1',
+        organizationId: 'org-1',
+        actions: {
+          delete: { allowed: true, reason: null, receiptContract: 'notebook_delete_receipt_v1' },
+          expandDocument: {
+            allowed: true,
+            reason: null,
+            receiptContract: 'notebook_expand_document_receipt_v1',
+          },
+        },
+      })
+    );
     apiMock.getNotebookPages.mockResolvedValue([
       {
         id: 'note-1',
@@ -335,11 +420,24 @@ describe('NotebookContent manual gate regressions', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     try {
-      const { findByTestId } = renderWithRouter(<NotebookContent searchQuery="" />);
+      const { findByTitle, findByText } = renderWithRouter(<NotebookContent searchQuery="" />);
 
-      const button = await findByTestId('notebook-expand-to-document');
+      const noteMenuButton = await findByTitle('Note menu');
       await act(async () => {
-        button.click();
+        noteMenuButton.click();
+      });
+
+      const expandItem = await findByText('Expand into document');
+      // Confirms the fix, not just its side effect: previously this button
+      // rendered aria-disabled="true"/data-notebook-action-receipt-ready="false"
+      // and its onClick returned before calling executeAction at all.
+      await waitFor(() => {
+        const button = expandItem.closest('button') as HTMLButtonElement;
+        expect(button.getAttribute('data-notebook-action-receipt-ready')).toBe('true');
+        expect(button.getAttribute('aria-disabled')).toBeNull();
+      });
+      await act(async () => {
+        expandItem.click();
       });
 
       await waitFor(() => {

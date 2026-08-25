@@ -22,6 +22,7 @@ interface ExternalCalendarSourceState {
   statusLabel: string;
   helper: string;
   nextStep?: string | null;
+  statusKey: ExternalCalendarStatusKey;
 }
 
 interface CalendarConflictItem {
@@ -53,6 +54,9 @@ interface CalendarViewProps {
   onTaskClick?: (id: string) => void;
   onDecisionClick?: (id: string) => void;
   onInitiativeClick?: (id: string) => void;
+  /** Calendar V2 wrapper opts into week-first without changing legacy default. */
+  initialViewMode?: CalendarViewMode;
+  includeOwnEvents?: boolean;
 }
 
 export const CalendarView: React.FC<CalendarViewProps> = ({
@@ -61,40 +65,41 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   onTaskClick,
   onDecisionClick,
   onInitiativeClick,
+  initialViewMode = 'month',
+  includeOwnEvents = false,
 }) => {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [viewMode, setViewMode] = useState<CalendarViewMode>('month');
+  const [viewMode, setViewMode] = useState<CalendarViewMode>(initialViewMode);
   const [dateRange, setDateRange] = useState<{ start: string; end: string } | undefined>();
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [externalSourceStatus, setExternalSourceStatus] = useState<
     Record<'google' | 'outlook', ExternalCalendarSourceState>
   >({
+    // SET-INT-REC-001: "not connected yet" must read as an invitation to
+    // connect, never as a "coming soon" dead end — see buildExternalSourceState's
+    // `default` branch below for the post-fetch equivalent of this same copy.
     google: {
       available: false,
-      statusLabel: t('myWork.calendarView.statusLabel', 'Coming soon'),
+      statusKey: 'disconnected',
+      statusLabel: t('myWork.calendarView.statusLabel', 'Not connected'),
       helper: t(
         'myWork.calendarView.helper',
-        'Google Calendar integration is in preparation — two-way connection is not available yet.'
+        'Google Calendar is not connected yet — connect it to bring events here.'
       ),
-      nextStep: t(
-        'myWork.calendarView.nextStep',
-        'In the meantime, subscribe to the Consultify ICS feed in your calendar.'
-      ),
+      nextStep: t('myWork.calendarView.nextStep', 'Connect Google Calendar in Integrations.'),
     },
     outlook: {
       available: false,
-      statusLabel: t('myWork.calendarView.statusLabel2', 'Coming soon'),
+      statusKey: 'disconnected',
+      statusLabel: t('myWork.calendarView.statusLabel2', 'Not connected'),
       helper: t(
         'myWork.calendarView.helper2',
-        'Outlook integration is in preparation — two-way connection is not available yet.'
+        'Outlook is not connected yet — connect it to bring events here.'
       ),
-      nextStep: t(
-        'myWork.calendarView.nextStep2',
-        'In the meantime, subscribe to the Consultify ICS feed in your calendar.'
-      ),
+      nextStep: t('myWork.calendarView.nextStep2', 'Connect Outlook in Integrations.'),
     },
   });
   const [dayLoad, setDayLoad] = useState<CalendarConflictResponse | null>(null);
@@ -116,7 +121,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
   const { events, loading, error, filter, setFilter, refetch } = useCalendarData(
     dateRange,
-    refreshTrigger
+    refreshTrigger,
+    includeOwnEvents ? ['event'] : []
   );
 
   const buildExternalSourceState = useCallback(
@@ -125,6 +131,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         case 'connected':
           return {
             available: true,
+            statusKey: 'connected',
             statusLabel: t('myWork.calendarView.statusLabel3', 'Active'),
             helper: t('myWork.calendarView.helperConnected', { providerLabel }),
             nextStep: null,
@@ -132,6 +139,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         case 'pending':
           return {
             available: false,
+            statusKey: 'pending',
             statusLabel: t('myWork.calendarView.statusLabel4', 'Setup in progress'),
             helper: t('myWork.calendarView.helperPending', { providerLabel }),
             nextStep: t(
@@ -142,6 +150,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         case 'reauth':
           return {
             available: false,
+            statusKey: 'reauth',
             statusLabel: t('myWork.calendarView.statusLabel5', 'Reauth required'),
             helper: t('myWork.calendarView.helperReauth', { providerLabel }),
             nextStep: t('myWork.calendarView.nextStep4', 'Start reauthorization in Integrations.'),
@@ -149,6 +158,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         case 'error':
           return {
             available: false,
+            statusKey: 'error',
             statusLabel: t('myWork.calendarView.statusLabel6', 'Sync error'),
             helper: t('myWork.calendarView.helperError', { providerLabel }),
             nextStep: t(
@@ -157,13 +167,24 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             ),
           };
         default:
+          // SET-INT-REC-001: owner explicitly rejected "coming soon" here —
+          // this is the disconnected state, which should read as an
+          // invitation to connect, not a feature that does not exist yet.
           return {
             available: false,
-            statusLabel: t('myWork.calendarView.statusLabel7', 'Coming soon'),
-            helper: t('myWork.calendarView.helperComingSoon', { providerLabel }),
+            statusKey: 'disconnected',
+            statusLabel: t('myWork.calendarView.statusLabel7', 'Not connected'),
+            helper: t('myWork.calendarView.helperComingSoon', {
+              providerLabel,
+              defaultValue:
+                '{{providerLabel}} is not connected yet — connect it to bring events here.',
+            }),
             nextStep: t(
               'myWork.calendarView.nextStep6',
-              'In the meantime, subscribe to the Consultify ICS feed in your calendar.'
+              'Connect {{providerLabel}} in Integrations.',
+              {
+                providerLabel,
+              }
             ),
           };
       }
@@ -428,6 +449,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           onDateChange={setCurrentDate}
           externalSourceStatus={externalSourceStatus}
           workloadSummary={buildWorkloadSummary()}
+          v2={includeOwnEvents}
+          events={events}
         />
       )}
       <div className="flex-1 flex flex-col min-w-0 min-h-0 relative">
@@ -470,6 +493,32 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             />
           </div>
         )}
+        {includeOwnEvents ? (
+          <section
+            aria-label={t('myWork.calendarV2.deadlines', 'Deadlines')}
+            className="flex min-h-12 items-center gap-2 overflow-x-auto border-b border-c-border px-4 py-2"
+          >
+            <strong className="shrink-0 text-xs uppercase text-c-text-secondary">
+              {t('myWork.calendarV2.deadlines', 'Deadlines')}
+            </strong>
+            {events
+              .filter((event) => event.source === 'task')
+              .map((event) => (
+                <button
+                  key={event.id}
+                  type="button"
+                  onClick={() => handleEventClick(event.sourceId || event.id, 'task')}
+                  className="inline-flex shrink-0 items-center gap-2 rounded-full border border-c-border bg-c-surface-raised px-3 py-1 text-xs text-c-text"
+                >
+                  <span className="h-2 w-2 bg-[var(--c-warning)]" aria-hidden="true" />
+                  {event.title}
+                </button>
+              ))}
+            <Button variant="secondary" size="sm" onClick={() => setCreateModalOpen(true)}>
+              {t('myWork.calendarV2.new', 'New')}
+            </Button>
+          </section>
+        ) : null}
         <CalendarGrid
           events={events}
           viewMode={viewMode}
@@ -479,6 +528,11 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           onEventClick={handleEventClick}
           onDateRangeChange={handleDateRangeChange}
           onEventMove={handleEventMove}
+          v2={includeOwnEvents}
+          onEmptySlotClick={(date) => {
+            setCurrentDate(date);
+            setCreateModalOpen(true);
+          }}
         />
       </div>
       {isMobile && (
@@ -499,6 +553,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               onDateChange={setCurrentDate}
               externalSourceStatus={externalSourceStatus}
               workloadSummary={buildWorkloadSummary()}
+              v2={includeOwnEvents}
+              events={events}
             />
           </DrawerContent>
         </Drawer>

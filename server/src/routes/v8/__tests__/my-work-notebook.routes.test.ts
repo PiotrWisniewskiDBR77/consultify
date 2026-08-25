@@ -846,11 +846,20 @@ describe('V8 My Work notebook routes', () => {
           reason: null,
           receiptContract: 'notebook_delete_receipt_v1',
         },
+        // FIX-15 (Day 3 layer-2 acceptance): expandDocument is now
+        // capability-gated the same way delete is — allowed for the owner,
+        // backed by a real audit_events receipt written by POST
+        // /api/work-canvas/drafts (see work-canvas.routes.ts).
+        expandDocument: {
+          allowed: true,
+          reason: null,
+          receiptContract: 'notebook_expand_document_receipt_v1',
+        },
       },
     });
   });
 
-  it('returns an explicit owner-only denial capability without enabling Delete', async () => {
+  it('returns an explicit owner-only denial capability without enabling Delete or Expand into document', async () => {
     mockQueryOne
       .mockResolvedValueOnce({
         id: 'note-5',
@@ -868,6 +877,11 @@ describe('V8 My Work notebook routes', () => {
     expect(res.body.data.actions.delete).toEqual({
       allowed: false,
       reason: 'Only the note owner can delete this page.',
+      receiptContract: null,
+    });
+    expect(res.body.data.actions.expandDocument).toEqual({
+      allowed: false,
+      reason: 'Only the note owner can create a document draft from this page.',
       receiptContract: null,
     });
   });
@@ -993,10 +1007,13 @@ describe('V8 My Work notebook routes', () => {
       resourceId: 'note-5',
       after: { deleted: true, id: 'note-5' },
     });
+    // FIX-15: readback now also takes an `action` param (defaults to the
+    // delete action for backward compatibility with existing callers).
     expect(mockQueryOne).toHaveBeenCalledWith(expect.stringContaining('org_id = ?'), [
       'ae-existing',
       ORG,
       USER_ID,
+      'NOTEBOOK_PAGE_DELETED',
     ]);
   });
 });

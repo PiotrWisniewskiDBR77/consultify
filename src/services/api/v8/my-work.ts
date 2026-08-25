@@ -419,6 +419,11 @@ export const V8MyWorkApi = {
           reason: string | null;
           receiptContract: 'notebook_delete_receipt_v1' | null;
         };
+        expandDocument: {
+          allowed: boolean;
+          reason: string | null;
+          receiptContract: 'notebook_expand_document_receipt_v1' | null;
+        };
       };
     }>(`/my-work/notebook/pages/${encodeURIComponent(id)}/action-capabilities`),
   pinNotebookPage: (id: string) =>

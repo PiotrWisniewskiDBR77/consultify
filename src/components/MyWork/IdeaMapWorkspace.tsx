@@ -38,15 +38,18 @@ import { useConversationStore } from '@/store/useConversationStore';
 import { buildIdeaWorkspacePath } from '@/routes/ideaWorkspaceNavigation';
 import { isEvidencePanelEnabled } from '@/utils/evidencePanelFlag';
 import { isIdeaDetailsInPanelEnabled } from '@/utils/ideaDetailsInPanelFlag';
+import { isIdeaInspectorRightRailEnabled } from '@/utils/ideaInspectorRightRailFlag';
 import { IDEA_TOP_BAR_SLOT_ID, isIdeaTopBarOneLineEnabled } from '@/utils/ideaTopBarOneLineFlag';
 import { isVf1CanvasSpecAEnabled } from '@/utils/vf1CanvasSpecAFlag';
 
 import {
+  ARTIFACT_IDENTITY,
   type ArtifactLinkRole,
   type ArtifactType,
   buildArtifactCode,
   buildArtifactRef,
   getArtifactLabel,
+  getArtifactPath,
 } from '../../utils/artifactLinks';
 import { ArtifactAttachPopover } from '../shared/NModeBlocks/ArtifactAttachPopover';
 import { applyAIProposalRuntime } from './aiProposalRuntime';
@@ -66,9 +69,11 @@ import { IdeaSaveIndicator, IdeaStageChip, IdeaToolIcon } from './IdeaCanvasMenu
 import { IdeaCanvasSecondBar } from './IdeaCanvasSecondBar';
 import { IdeaContextPanel } from './IdeaContextPanel';
 import {
-  ConversionPreviewDialog,
-  type ConversionPreviewData,
-} from './ConversionPreviewDialog';
+  IdeaElementInspector,
+  type IdeaInspectorItem,
+  type IdeaInspectorTool,
+} from './panel/IdeaElementInspector';
+import { ConversionPreviewDialog, type ConversionPreviewData } from './ConversionPreviewDialog';
 import { IdeaConvertMenu } from './IdeaConvertMenu';
 import {
   getConvertTargetMeta,
@@ -633,6 +638,26 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     },
     [activeTool, externalOnSelectionChange, realId]
   );
+
+  // FIX-3 (Day 3 acceptance): IdeaElementInspector's empty state can offer real
+  // recently-selected elements instead of nothing. Tracks the last distinct primary
+  // selections across all 4 tools — genuine selection history, not fabricated data.
+  const [recentInspectorItems, setRecentInspectorItems] = useState<IdeaInspectorItem[]>([]);
+  useEffect(() => {
+    if (selection.type === 'none' || !selection.primaryId) return;
+    const id = selection.primaryId;
+    const title = selection.meta?.label || id;
+    const type = selection.meta?.semanticType || selection.meta?.nodeType || activeTool;
+    const date = new Date().toLocaleTimeString(isPolish ? 'pl' : 'en', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    setRecentInspectorItems((prev) => {
+      const withoutDupe = prev.filter((item) => item.id !== id);
+      return [{ id, title, type, date }, ...withoutDupe].slice(0, 5);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selection.primaryId]);
 
   const conflictRefreshRef = useRef<(() => Promise<void>) | null>(null);
   // A brand-new board auto-seeds its first node (mindmap root / whiteboard sticky) into
@@ -2399,8 +2424,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   // and shows a preview; the actual server call moved to `performConvert`,
   // invoked solely from the dialog's confirm button.
   const [conversionPreviewOpen, setConversionPreviewOpen] = useState(false);
-  const [conversionPreviewData, setConversionPreviewData] =
-    useState<ConversionPreviewData | null>(null);
+  const [conversionPreviewData, setConversionPreviewData] = useState<ConversionPreviewData | null>(
+    null
+  );
   const [conversionSubmitting, setConversionSubmitting] = useState(false);
   const conversionPendingRef = useRef<{
     target: IdeaConvertTarget;
@@ -2582,9 +2608,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               ? `Uwzględnione elementy (${elementLabels.length})`
               : 'Kolejne kroki (next steps)',
           sourceEn:
-            elementLabels.length > 0
-              ? `Included elements (${elementLabels.length})`
-              : 'Next steps',
+            elementLabels.length > 0 ? `Included elements (${elementLabels.length})` : 'Next steps',
           targetPl: 'Po jednym zadaniu na element',
           targetEn: 'One task per element',
         });
@@ -2598,10 +2622,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         });
       }
 
-      const scopeLabelByKind: Record<
-        string,
-        { pl: string; en: string }
-      > = {
+      const scopeLabelByKind: Record<string, { pl: string; en: string }> = {
         workspace: { pl: 'Cała Idea', en: 'Whole Idea' },
         selected_items: {
           pl: `Zaznaczenie (${nodeIds.length})`,
@@ -2633,8 +2654,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       return {
         targetLabelPl: meta ? meta.labelPl : target,
         targetLabelEn: meta ? meta.labelEn : target,
-        targetArtifactName:
-          title || safeTitleFromSeed(seedText, isPolish) || t('mindmap.untitled'),
+        targetArtifactName: title || safeTitleFromSeed(seedText, isPolish) || t('mindmap.untitled'),
         scope: {
           kind:
             scopeKind === 'workspace'
@@ -3033,6 +3053,112 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     [activeTool, graphRuntime, i18n.language, realId]
   );
 
+  // FIX-3 (Day 3 acceptance): per-tool section of the shared IdeaElementInspector rail.
+  // Reads REAL state each tool already tracks (node color/shape, process lane, live
+  // whiteboard facilitation session, table column values) — no fabricated content, and
+  // no duplicate editor for state that already has a proper editor on the canvas itself.
+  const inspectorToolSection = useMemo(() => {
+    if (!selection.primaryId) return undefined;
+    const meta = selection.meta;
+    if (activeTool === 'mindmap') {
+      return (
+        <div className="space-y-2 text-sm">
+          <label className="flex items-center justify-between gap-2">
+            <span>{t('myWork.ideaInspector.nodeColor', 'Kolor gałęzi')}</span>
+            <input
+              type="color"
+              aria-label={t('myWork.ideaInspector.nodeColor', 'Kolor gałęzi')}
+              value={meta?.color || '#94a3b8'}
+              onChange={(e) => {
+                const nodeId = selection.primaryId;
+                if (nodeId) void handleNodeDataChange(nodeId, { color: e.target.value } as any);
+              }}
+              className="h-6 w-10 rounded border border-c-border bg-transparent"
+            />
+          </label>
+          <p className="text-c-text-secondary">
+            {t('myWork.ideaInspector.nodeShape', 'Kształt')}:{' '}
+            {meta?.shape || t('myWork.ideaInspector.nodeShapeDefault', 'domyślny')}
+          </p>
+        </div>
+      );
+    }
+    if (activeTool === 'process_flow') {
+      return (
+        <div className="space-y-1 text-sm">
+          <p>
+            {t('myWork.ideaInspector.lane', 'Tor')}:{' '}
+            {meta?.laneName || meta?.laneId || t('myWork.ideaInspector.laneNone', 'Brak toru')}
+          </p>
+          <p className="text-c-text-secondary">
+            {t(
+              'myWork.ideaInspector.edgeHint',
+              'Kierunek i styl krawędzi edytujesz na kanwie po kliknięciu strzałki.'
+            )}
+          </p>
+        </div>
+      );
+    }
+    if (activeTool === 'whiteboard') {
+      if (!whiteboardSession) {
+        return (
+          <p className="text-sm text-c-text-secondary">
+            {t('myWork.ideaInspector.noSession', 'Brak aktywnej sesji warsztatu')}
+          </p>
+        );
+      }
+      return (
+        <dl className="space-y-1 text-sm">
+          <div className="flex justify-between gap-2">
+            <dt className="text-c-text-secondary">
+              {t('myWork.ideaInspector.sessionRole', 'Rola')}
+            </dt>
+            <dd>{whiteboardSession.role || '—'}</dd>
+          </div>
+          <div className="flex justify-between gap-2">
+            <dt className="text-c-text-secondary">
+              {t('myWork.ideaInspector.sessionPhase', 'Faza')}
+            </dt>
+            <dd>{whiteboardSession.phase || '—'}</dd>
+          </div>
+          <div className="flex justify-between gap-2">
+            <dt className="text-c-text-secondary">
+              {t('myWork.ideaInspector.sessionParticipants', 'Uczestnicy')}
+            </dt>
+            <dd>{whiteboardSession.participantCount ?? '—'}</dd>
+          </div>
+          <div className="flex justify-between gap-2">
+            <dt className="text-c-text-secondary">
+              {t('myWork.ideaInspector.sessionTimer', 'Stoper')}
+            </dt>
+            <dd>
+              {whiteboardSession.timerActive
+                ? t('myWork.ideaInspector.sessionActive', 'aktywny')
+                : t('myWork.ideaInspector.sessionInactive', 'nieaktywny')}
+            </dd>
+          </div>
+        </dl>
+      );
+    }
+    if (activeTool === 'table') {
+      const cols = meta?.columns || [];
+      if (!cols.length) return undefined;
+      return (
+        <ul className="space-y-1 text-sm">
+          {cols.map((col) => (
+            <li key={col.key} className="flex justify-between gap-2">
+              <span className="text-c-text-secondary">{col.label}</span>
+              <span className="truncate">
+                {col.value == null || col.value === '' ? '—' : String(col.value)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      );
+    }
+    return undefined;
+  }, [activeTool, selection.meta, selection.primaryId, whiteboardSession, handleNodeDataChange, t]);
+
   // ── Drill-down (sub-idea navigation) ────────────────────────────────────────
   useEffect(() => {
     const handler = (e: Event) => {
@@ -3396,8 +3522,16 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     // KLUCZ („mindmap.savedSecondsAgo") i bez `t` nigdy sie nie przeliczalo.
   }, [t, isPolish, lastSavedAt, saving]);
 
+  // MYW-IDEAS-010: the candidate→initiative path used to be gated to
+  // activeTool === 'process_flow'. The candidate endpoints
+  // (getIdeaProcessFlowCandidate/preview/approve) operate on the idea's
+  // canonical map (`/my-work/my-ideas/:id/map/candidate*`) — the same
+  // shared graph all four tools (Mind Map/Whiteboard/Process Flow/Table)
+  // read and write, not something scoped to the Process Flow renderer.
+  // Gating this to one tool meant the exact same idea showed "candidate
+  // ready" only when the owner happened to have Process Flow open.
   useEffect(() => {
-    if (activeTool !== 'process_flow' || !realId) {
+    if (!realId) {
       setCandidateHandoff(null);
       return;
     }
@@ -3408,12 +3542,14 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     return () => {
       live = false;
     };
-  }, [activeTool, realId]);
+  }, [realId]);
 
   const handlePreviewProcessFlowCandidate = useCallback(async () => {
     if (!realId || candidateHandoffBusy) return;
     if (['offline', 'conflict'].includes(graphRuntime.syncState)) {
-      toast.error(isPolish ? 'Najpierw zapisz bieżący Process Flow' : 'Save the current Process Flow first');
+      toast.error(
+        isPolish ? 'Najpierw zapisz bieżący Process Flow' : 'Save the current Process Flow first'
+      );
       return;
     }
     setCandidateHandoffBusy(true);
@@ -3430,7 +3566,10 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       const preview = await Api.previewIdeaProcessFlowCandidate(realId);
       setCandidatePreview(preview);
     } catch (error: any) {
-      toast.error(error?.message || (isPolish ? 'Nie udało się przygotować podglądu' : 'Failed to prepare preview'));
+      toast.error(
+        error?.message ||
+          (isPolish ? 'Nie udało się przygotować podglądu' : 'Failed to prepare preview')
+      );
     } finally {
       setCandidateHandoffBusy(false);
     }
@@ -3456,7 +3595,10 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             : 'Initiative candidate already exists'
       );
     } catch (error: any) {
-      toast.error(error?.message || (isPolish ? 'Nie udało się utworzyć kandydata' : 'Failed to create candidate'));
+      toast.error(
+        error?.message ||
+          (isPolish ? 'Nie udało się utworzyć kandydata' : 'Failed to create candidate')
+      );
     } finally {
       setCandidateHandoffBusy(false);
     }
@@ -3499,7 +3641,76 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
    * `null` = zwinięty panel (kontrakt powłoki), więc stan startowy zachowuje
    * dotychczasowe zachowanie: nic nie otwiera się samo.
    */
-  const detaleWPanelu = isIdeaDetailsInPanelEnabled();
+  const ideaInspectorRightRail = isIdeaInspectorRightRailEnabled();
+  // DEC-27 guard: the new right inspector wins, so the legacy left portal is
+  // never active at the same time even when both operator flags are ON.
+  const detaleWPanelu = isIdeaDetailsInPanelEnabled() && !ideaInspectorRightRail;
+  const [inspectorOutputs, setInspectorOutputs] = useState<
+    Array<{ title: string; type: string; status?: string; targetId?: string }>
+  >([]);
+
+  // FIX-6 (Day 3 acceptance): resolves the REAL name/status of a conversion
+  // target instead of fabricating one. The conversions API only returns
+  // {targetType, targetId, scope} — no title, and `scope` (draft/final,
+  // an idea-side concept) is not the target's lifecycle status. Best-effort:
+  // on fetch failure or an unmapped type, falls back to the honest
+  // type+date label the code already used, never a fabricated status.
+  const resolveConversionTargetName = useCallback(
+    async (targetType: string, targetId: string): Promise<{ title?: string; status?: string }> => {
+      try {
+        if (targetType === 'initiative') {
+          const initiative = await Api.getInitiativeById(targetId);
+          return { title: initiative?.title || initiative?.name, status: initiative?.status };
+        }
+        if (targetType === 'task') {
+          const task = await Api.getTask(targetId);
+          return { title: task?.title, status: task?.status };
+        }
+        if (targetType === 'decision') {
+          const decision = await Api.getDecision(targetId);
+          return { title: decision?.title || decision?.question, status: decision?.status };
+        }
+      } catch {
+        /* best-effort — falls back to the type+date label below */
+      }
+      return {};
+    },
+    []
+  );
+
+  useEffect(() => {
+    if (!ideaInspectorRightRail || !realId) {
+      setInspectorOutputs([]);
+      return;
+    }
+    let cancelled = false;
+    Api.getMyIdeaConversions(realId)
+      .then(async (result) => {
+        if (cancelled) return;
+        const conversions = result.conversions || [];
+        const resolved = await Promise.all(
+          conversions.map(async (conversion) => {
+            const fallbackTitle = `${conversion.targetType} · ${new Date(conversion.createdAt).toLocaleDateString()}`;
+            const real = conversion.targetId
+              ? await resolveConversionTargetName(conversion.targetType, conversion.targetId)
+              : {};
+            return {
+              title: real.title || fallbackTitle,
+              type: conversion.targetType,
+              status: real.status,
+              targetId: conversion.targetId || undefined,
+            };
+          })
+        );
+        if (!cancelled) setInspectorOutputs(resolved);
+      })
+      .catch(() => {
+        if (!cancelled) setInspectorOutputs([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [ideaInspectorRightRail, realId, resolveConversionTargetName]);
   const [sekcjaPrawegoPaska, setSekcjaPrawegoPaska] = useState<string | null>(null);
 
   useEffect(() => {
@@ -3676,8 +3887,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     // Układ SZEŚCIU sekcji (flaga `ff_ideaPanel6Sections`, default OFF) ma
     // własny, niezależny budowniczy paska — patrz `panel/ideaPanel6Sections.ts`.
     // Przy fladze OFF nie zmienia się nic: leci stary builder pięciu ikon.
-    if (panel6Enabled)
-      return buildIdeaPanel6RailTools({ isPolish: Boolean(isPolish), activeTool });
+    if (panel6Enabled) return buildIdeaPanel6RailTools({ isPolish: Boolean(isPolish), activeTool });
     const inspektorJest =
       activeTool === 'mindmap' || activeTool === 'whiteboard' || activeTool === 'process_flow';
     const kondycjaJest = activeTool === 'mindmap' || activeTool === 'process_flow';
@@ -4050,14 +4260,15 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   // dziala w obu sciezkach renderu (mels i legacy). OFF => null.
   // MELS always exposes the four representations in the canonical bottom bar.
   // The legacy path still honours its reversible feature flag.
-  const viewSwitcherNode = melsCanvasEnabled || switcherBottomRight ? (
-    <IdeaViewSwitcher
-      activeTool={activeTool}
-      onToolChange={setActiveTool}
-      isPl={isPolish}
-      familyCounts={familyCounts}
-    />
-  ) : null;
+  const viewSwitcherNode =
+    melsCanvasEnabled || switcherBottomRight ? (
+      <IdeaViewSwitcher
+        activeTool={activeTool}
+        onToolChange={setActiveTool}
+        isPl={isPolish}
+        familyCounts={familyCounts}
+      />
+    ) : null;
   const workspaceSiblingsNode = renderWorkspaceSiblings();
 
   if (melsCanvasEnabled) {
@@ -4108,6 +4319,113 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             activeRightRailToolId={detaleWPanelu && panel6Enabled ? sekcjaPrawegoPaska : undefined}
             onActiveRightRailToolChange={setSekcjaPrawegoPaska}
             renderRightRailPanel={renderMelsCanvasRightRailPanel}
+            elementInspectorRail={
+              ideaInspectorRightRail ? (
+                <IdeaElementInspector
+                  element={
+                    selection.type === 'none' || !selection.primaryId
+                      ? null
+                      : {
+                          id: selection.primaryId,
+                          label: selection.meta?.label || selection.primaryId,
+                          state: selection.meta?.status,
+                          owner: selection.meta?.owner,
+                          semanticType: selection.meta?.semanticType || selection.meta?.nodeType,
+                          description: selection.meta?.description,
+                          tags: selection.meta?.tags,
+                          outputs: inspectorOutputs,
+                          branch: activeToolLabel,
+                          lineage: `${isPolish ? 'Rodowód' : 'Lineage'}: ${activeToolLabel} · v${graphRuntime.graph.version}`,
+                          savedAt: graphRuntime.lastSavedAt,
+                        }
+                  }
+                  tool={
+                    (activeTool === 'process_flow' ? 'process' : activeTool) as IdeaInspectorTool
+                  }
+                  toolSection={inspectorToolSection}
+                  recentItems={recentInspectorItems}
+                  onOpenRecent={(id) => {
+                    window.dispatchEvent(
+                      new CustomEvent('idea-node-open-detail', { detail: { nodeId: id } })
+                    );
+                  }}
+                  nativeStates={
+                    activeTool === 'table'
+                      ? ['todo', 'in_progress', 'done', 'blocked']
+                      : activeTool === 'process_flow'
+                        ? []
+                        : [
+                            'idea',
+                            'exploring',
+                            'validated',
+                            'ready_to_convert',
+                            'converted',
+                            'ready',
+                            'rejected',
+                          ]
+                  }
+                  language={isPolish ? 'pl' : 'en'}
+                  onOpenOutput={(targetId) => {
+                    // FIX-6 (Day 3 acceptance): "Otwórz" used to only handle
+                    // targetType 'initiative'/'task' — any other conversion
+                    // target (decision, report, …) had a dead button. Route
+                    // through the shared artifactLinks deep-link map for
+                    // every recognized ArtifactType instead of a 2-case
+                    // switch; 'task_set' is a convert-menu concept, not an
+                    // ArtifactType, so it keeps its own explicit route.
+                    const output = inspectorOutputs.find((item) => item.targetId === targetId);
+                    if (!output) return;
+                    if (output.type === 'task_set') {
+                      navigate(`/my-work/tasks?taskId=${encodeURIComponent(targetId)}`);
+                      return;
+                    }
+                    if (output.type in ARTIFACT_IDENTITY) {
+                      navigate(getArtifactPath(output.type as ArtifactType, targetId));
+                    }
+                  }}
+                  onSave={async (patch) => {
+                    if (!selection.primaryId) throw new Error('NO_SELECTION');
+                    const nativePatch: Partial<ExtendedNodeData> = {
+                      ...(patch.label !== undefined ? { label: patch.label } : {}),
+                      ...(patch.state !== undefined ? { status: patch.state } : {}),
+                      ...(patch.priority !== undefined ? { priority: patch.priority } : {}),
+                      ...(patch.description !== undefined
+                        ? { description: patch.description }
+                        : {}),
+                      // FIX-17 (Day 3 layer-2 acceptance): the inspector only offers an
+                      // editable Owner field for 'table' and 'mindmap' (see
+                      // IdeaElementInspector) — both write the declared `owner` field on
+                      // node data, same as Table's "person" column already does.
+                      ...(patch.owner !== undefined ? { owner: patch.owner } : {}),
+                    };
+                    await handleNodeDataChange(selection.primaryId, nativePatch);
+                    const readback = await Api.getMyIdeaMap(realId, { language: i18n.language });
+                    const node = (readback?.map?.nodes || []).find(
+                      (candidate: any) => String(candidate?.id) === selection.primaryId
+                    );
+                    if (!node) throw new Error('READBACK_MISSING');
+                    for (const [key, value] of Object.entries(nativePatch)) {
+                      if (node.data?.[key] !== value) throw new Error('READBACK_MISMATCH');
+                    }
+                    return {
+                      id: selection.primaryId,
+                      label: node.data?.label || '',
+                      state: node.data?.status,
+                      priority: node.data?.priority,
+                      owner: node.data?.owner ?? node.data?.assignee,
+                      semanticType: node.data?.semanticType || node.data?.nodeType,
+                      description: node.data?.description,
+                      tags: node.data?.tags,
+                      outputs: inspectorOutputs,
+                      branch: activeToolLabel,
+                      lineage: `${isPolish ? 'Rodowód' : 'Lineage'}: ${activeToolLabel} · v${readback.map?.version || graphRuntime.graph.version}`,
+                      savedAt: new Date(),
+                    };
+                  }}
+                  onReturnToCanvas={() => canvasContainerRef.current?.focus()}
+                />
+              ) : undefined
+            }
             // Układ 6 sekcji: pasek ikon zawsze widoczny (decyzja właściciela).
             rightRailCollapsible={!panel6Enabled}
             canvas={
@@ -4149,7 +4467,11 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           onConfirm={handleConversionPreviewConfirm}
           onCancel={handleConversionPreviewCancel}
         />
-        {activeTool === 'process_flow' && (
+        {/* MYW-IDEAS-010: previously gated to activeTool === 'process_flow'
+            only — the candidate is idea-level (see the fetch effect above),
+            so the affordance is now available from every tool, not just
+            whichever one happened to be open when the candidate was created. */}
+        {Boolean(realId) && (
           <div className="absolute bottom-4 right-4 z-sticky flex items-center gap-2 rounded-xl border border-c-border bg-c-surface-raised p-2 shadow-lg">
             {candidateHandoff?.candidate?.id || candidateHandoff?.candidate_id ? (
               <button
@@ -4168,8 +4490,14 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               </button>
             ) : null}
             {candidatePreview ? (
-              <div data-testid="process-flow-candidate-preview" className="max-w-xs text-xs text-c-text-secondary">
-                <div>{candidatePreview.nodeCount} nodes · {candidatePreview.edgeCount} edges · v{candidatePreview.mapVersion}</div>
+              <div
+                data-testid="process-flow-candidate-preview"
+                className="max-w-xs text-xs text-c-text-secondary"
+              >
+                <div>
+                  {candidatePreview.nodeCount} nodes · {candidatePreview.edgeCount} edges · v
+                  {candidatePreview.mapVersion}
+                </div>
                 <div>
                   {((candidatePreview.projection?.nodes || []) as any[])
                     .slice(0, 3)
@@ -4185,16 +4513,28 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                     .join(', ')}
                 </div>
                 <code>{String(candidatePreview.projectionHash).slice(0, 12)}…</code>
-                <button type="button" onClick={() => setCandidatePreview(null)} className="ml-2 underline">
+                <button
+                  type="button"
+                  onClick={() => setCandidatePreview(null)}
+                  className="ml-2 underline"
+                >
                   {isPolish ? 'Anuluj' : 'Cancel'}
                 </button>
               </div>
             ) : null}
             <button
               type="button"
-              data-testid={candidatePreview ? 'confirm-process-flow-candidate' : 'approve-process-flow-candidate'}
+              data-testid={
+                candidatePreview
+                  ? 'confirm-process-flow-candidate'
+                  : 'approve-process-flow-candidate'
+              }
               disabled={candidateHandoffBusy || graphRuntime.saving}
-              onClick={candidatePreview ? handleApproveProcessFlowCandidate : handlePreviewProcessFlowCandidate}
+              onClick={
+                candidatePreview
+                  ? handleApproveProcessFlowCandidate
+                  : handlePreviewProcessFlowCandidate
+              }
               className="rounded-lg bg-c-brand-primary px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"
             >
               {candidateHandoffBusy
@@ -4202,8 +4542,12 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                   ? 'Zatwierdzanie…'
                   : 'Approving…'
                 : isPolish
-                  ? candidatePreview ? 'Potwierdź kandydaturę' : 'Przejrzyj kandydaturę'
-                  : candidatePreview ? 'Confirm candidate' : 'Review candidate'}
+                  ? candidatePreview
+                    ? 'Potwierdź kandydaturę'
+                    : 'Przejrzyj kandydaturę'
+                  : candidatePreview
+                    ? 'Confirm candidate'
+                    : 'Review candidate'}
             </button>
           </div>
         )}

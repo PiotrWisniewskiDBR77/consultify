@@ -83,7 +83,10 @@ import {
 } from '@/utils/ideaTableGuidedBarFlag';
 
 import { EmptyStateInline } from '../shared/NModeBlocks/EmptyStateInline';
+import { IdeaAINudgeStrip } from './IdeaAINudgeStrip';
 import { getCanvasEdgeKindLabel } from './canvas/canvasEdgeKindVocabulary';
+import { isIdeaInspectorRightRailEnabled } from '@/utils/ideaInspectorRightRailFlag';
+
 import { getCanvasNodeTypeLabel } from './canvas/canvasNodeTypeVocabulary';
 import {
   EMPTY_SELECTION,
@@ -2082,6 +2085,41 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     [detailNodeId, effectiveNodes]
   );
 
+  // FIX-3 (Day 3 acceptance): the shared IdeaElementInspector rail (ff_ideaInspectorRightRail)
+  // never received a real row selection because every row-open path only set
+  // `detailNodeId` (RowDetailPanel's own trigger). Report the SAME row this table already
+  // resolved for RowDetailPanel — same data source, no duplicate edit surface — including
+  // the real, currently visible columns so the inspector's "Kolumna" tool section reads
+  // genuine values instead of nothing.
+  useEffect(() => {
+    if (!onSelectionChange) return;
+    if (!detailNode) {
+      onSelectionChange(EMPTY_SELECTION);
+      return;
+    }
+    onSelectionChange({
+      type: 'row',
+      count: 1,
+      ids: [detailNode.id],
+      primaryId: detailNode.id,
+      meta: {
+        nodeType: detailNode.type,
+        label: detailNode.data?.label,
+        description: detailNode.data?.description,
+        owner: detailNode.data?.owner,
+        status: detailNode.data?.status,
+        tags: Array.isArray(detailNode.data?.tags) ? detailNode.data?.tags : undefined,
+        color: typeof detailNode.data?.color === 'string' ? detailNode.data?.color : undefined,
+        columns: _visCols.map((col) => ({
+          key: col.key,
+          label: col.header,
+          value: (detailNode.data as Record<string, unknown> | undefined)?.[col.key],
+        })),
+      },
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [detailNode, _visCols, onSelectionChange]);
+
   // ── Render row ─────────────────────────────────────────────────────────────
   const renderRow = (row: TableNode, rowIdx: number) => {
     const isSelected = _selIds.has(row.id);
@@ -3758,54 +3796,6 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   </button>
                 </div>
               )}
-
-              {/* ZAPIS — „może save koło teresa" (zgłoszenie 2026-07-28).
-                  Flaga ON + slot Menu 1 obecny → etykieta i przycisk lecą PORTALEM
-                  do rzędu poleceń powłoki, tuż przed chip „Teresa"; w Menu 1
-                  przycisk jest chipem-duchem (jak Teresa), bo solidna pigułka obok
-                  „Konwertuj" dałaby dwa CTA równej wagi. Brak slotu (Idea poza
-                  powłoką MELS / stary harness) → zostaje w pasku 1:1 jak dziś,
-                  więc zapis nigdy nie znika przez brak celu portalu. */}
-              {guidedBar && menu1ToolSlot ? (
-                createPortal(
-                  <>
-                    <button
-                      type="button"
-                      onClick={_save}
-                      disabled={_saving || _loading || locked}
-                      data-testid="idea-table-save-in-menu1"
-                      title={t('ideas.table.save', 'Save')}
-                      className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                    >
-                      {_saving ? (
-                        <Loader2 size={14} className="animate-spin" />
-                      ) : (
-                        <Save size={14} />
-                      )}
-                      {_saving ? t('ideas.table.saving', 'Saving…') : t('ideas.table.save', 'Save')}
-                    </button>
-                  </>,
-                  menu1ToolSlot
-                )
-              ) : (
-                <>
-                  <span className="text-[11px] text-c-text-muted">{_saveLabel}</span>
-                  <button
-                    type="button"
-                    onClick={_save}
-                    disabled={_saving || _loading || locked}
-                    data-testid="idea-table-save-in-bar"
-                    className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors ${
-                      _saving || _loading || locked
-                        ? 'bg-c-surface-raised text-c-text-muted'
-                        : 'bg-c-text text-c-surface hover:brightness-95'
-                    }`}
-                  >
-                    {_saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                    {_saving ? t('ideas.table.saving', 'Saving…') : t('ideas.table.save', 'Save')}
-                  </button>
-                </>
-              )}
             </div>
           )}
 
@@ -4699,9 +4689,14 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         </TableDataProvider>
       </div>
 
-      {/* Row Detail Panel */}
+      {/* Row Detail Panel.
+          FIX-8 (Day 3 acceptance): when the shared IdeaElementInspector rail
+          (ff_ideaInspectorRightRail) is ON, this legacy panel must NOT also
+          render — that was the "two panels at once" defect. `open` alone
+          used to only depend on `detailNodeId`; it now also requires the
+          flag to be off. */}
       <RowDetailPanel
-        open={!!detailNodeId}
+        open={!!detailNodeId && !isIdeaInspectorRightRailEnabled()}
         onClose={() => {
           setDetailNodeId(null);
           setDetailInitialTab('properties');
@@ -5323,6 +5318,35 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           </div>
         </div>
       )}
+      {!locked ? (
+        <IdeaAINudgeStrip
+          ideaId={ideaId}
+          userId={currentUserId}
+          organizationId={workspaceId}
+          activeTool="table"
+          title={t('ideas.table.title', 'Table')}
+          seedText={effectiveNodes
+            .slice(0, 12)
+            .map((node) => String(node.data?.label || ''))
+            .filter(Boolean)
+            .join('\n')}
+          isAccepted={false}
+          graphNodes={effectiveNodes}
+          graphEdges={edges}
+          onActionExpand={() => {
+            window.dispatchEvent(
+              new CustomEvent('idea-workspace-quick-action', {
+                detail: { action: 'tbl_add_row', ideaId },
+              })
+            );
+            return { status: 'handed_off' as const };
+          }}
+          onActionConvert={() => {
+            onConvertProp?.('presentation');
+            return { status: 'handed_off' as const };
+          }}
+        />
+      ) : null}
     </div>
   );
 };

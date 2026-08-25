@@ -1,11 +1,32 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import enTranslation from '../../../public/locales/en/translation.json';
+
+// CollaborationPresence.tsx calls t('myWorkTable.collaborationPresence.locked') etc. with NO
+// fallback argument (relies on public/locales/en/translation.json). The previous mock only
+// resolved a string/defaultValue fallback, so calls with none returned the raw key, and the
+// "N locked" / "Row: status" text assertions never matched. Resolve real English copy
+// instead (same pattern as IdeaExportMenu.test.tsx), keeping `t` a stable identity.
+function resolveTranslation(key: string, options?: Record<string, unknown>): string {
+  const value = key
+    .split('.')
+    .reduce<unknown>(
+      (acc, segment) => (acc && typeof acc === 'object' ? (acc as Record<string, unknown>)[segment] : undefined),
+      enTranslation
+    );
+  const template = typeof value === 'string' ? value : key;
+  if (!options) return template;
+  return template.replace(/\{\{(\w+)\}\}/g, (_match, name) =>
+    Object.prototype.hasOwnProperty.call(options, name) ? String(options[name]) : `{{${name}}}`
+  );
+}
+const t = (key: string, options?: Record<string, unknown>) => resolveTranslation(key, options);
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     i18n: { language: 'en' },
-    t: (_key: string, fallback?: any) => (typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key)),
+    t,
   }),
   initReactI18next: { type: '3rdParty', init: vi.fn() },
 }));

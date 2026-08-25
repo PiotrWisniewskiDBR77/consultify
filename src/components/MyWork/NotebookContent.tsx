@@ -20,7 +20,6 @@ import {
   ChevronLeft,
   Clock,
   FileText,
-  History,
   Layers,
   Lightbulb,
   Lock,
@@ -119,6 +118,7 @@ import {
   SlashMenu,
   type SlashMenuState,
 } from './notebook/SlashMenu';
+import { NotebookSearchDialog } from './notebook/NotebookSearchDialog';
 import { useNotebookPresence } from './notebook/useNotebookPresence';
 import { NotebookHeaderActions } from './NotebookHeaderActions';
 import { buildAskAIMessage } from './shared/askAiHelper';
@@ -774,29 +774,58 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   const [hasMore, setHasMore] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
   const activePage = useMemo(() => pages.find((p) => p.id === activeId) || null, [pages, activeId]);
-  const [deleteCapability, setDeleteCapability] = useState<{
+  // MYW-NBK-004 — cross-notebook search dialog (Api.notebookSemanticSearch).
+  const [notebookSearchDialogOpen, setNotebookSearchDialogOpen] = useState(false);
+  const [notebookExportOpen, setNotebookExportOpen] = useState(false);
+  // DEC-25: both 'delete' and 'expand-document' are governed-api /
+  // server-receipt-required note-menu actions (notebookActionRegistry.ts) —
+  // NotebookHamburgerMenu only enables them when the caller proves (via a real
+  // server round-trip, not just optimistic local state) that a durable receipt
+  // is obtainable for THIS actor/org/page/version. One fetch backs both flags.
+  const [actionCapabilities, setActionCapabilities] = useState<{
     pageId: string;
     pageVersion: string | null;
     actorUserId: string;
     organizationId: string;
-    allowed: boolean;
-    receiptContract: string | null;
+    // FIX-7 (Day 3 acceptance): the server always returned a real, per-action
+    // `reason` (e.g. "Only the note owner can delete this page.") — this
+    // client type just never captured it, so NotebookHamburgerMenu fell back
+    // to one blanket sentence for every unavailable action regardless of why.
+    delete: { allowed: boolean; reason: string | null; receiptContract: string | null };
+    expandDocument: { allowed: boolean; reason: string | null; receiptContract: string | null };
   } | null>(null);
-  const isDeleteReceiptCapable = useMemo(
+  const isCapabilityCurrent = useMemo(
     () =>
       Boolean(
         activePage &&
-        deleteCapability?.allowed === true &&
-        deleteCapability.pageId === activePage.id &&
-        deleteCapability.actorUserId === currentUserId &&
-        deleteCapability.organizationId === currentOrganizationId &&
-        deleteCapability.receiptContract === 'notebook_delete_receipt_v1' &&
+        actionCapabilities &&
+        actionCapabilities.pageId === activePage.id &&
+        actionCapabilities.actorUserId === currentUserId &&
+        actionCapabilities.organizationId === currentOrganizationId &&
         (!activePage.updatedAt ||
-          (deleteCapability.pageVersion !== null &&
-            new Date(deleteCapability.pageVersion).getTime() ===
+          (actionCapabilities.pageVersion !== null &&
+            new Date(actionCapabilities.pageVersion).getTime() ===
               new Date(activePage.updatedAt).getTime()))
       ),
-    [activePage, currentOrganizationId, currentUserId, deleteCapability]
+    [activePage, actionCapabilities, currentOrganizationId, currentUserId]
+  );
+  const isDeleteReceiptCapable = useMemo(
+    () =>
+      Boolean(
+        isCapabilityCurrent &&
+        actionCapabilities?.delete.allowed === true &&
+        actionCapabilities.delete.receiptContract === 'notebook_delete_receipt_v1'
+      ),
+    [actionCapabilities, isCapabilityCurrent]
+  );
+  const isExpandDocumentReceiptCapable = useMemo(
+    () =>
+      Boolean(
+        isCapabilityCurrent &&
+        actionCapabilities?.expandDocument.allowed === true &&
+        actionCapabilities.expandDocument.receiptContract === 'notebook_expand_document_receipt_v1'
+      ),
+    [actionCapabilities, isCapabilityCurrent]
   );
   const attemptedOpenPageRef = useRef<string | null>(null);
 
@@ -804,11 +833,11 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     const pageId = activePage?.id;
     const pageVersion = activePage?.updatedAt || null;
     if (!pageId || !currentUserId || !currentOrganizationId) {
-      setDeleteCapability(null);
+      setActionCapabilities(null);
       return;
     }
     let cancelled = false;
-    setDeleteCapability(null);
+    setActionCapabilities(null);
     void Api.getNotebookActionCapabilities(pageId)
       .then((result) => {
         if (cancelled) return;
@@ -824,17 +853,25 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
         ) {
           return;
         }
-        setDeleteCapability({
+        setActionCapabilities({
           pageId: result.pageId,
           pageVersion: result.pageVersion,
           actorUserId: result.actorUserId,
           organizationId: result.organizationId,
-          allowed: result.actions.delete.allowed,
-          receiptContract: result.actions.delete.receiptContract,
+          delete: {
+            allowed: result.actions.delete.allowed,
+            reason: result.actions.delete.reason ?? null,
+            receiptContract: result.actions.delete.receiptContract,
+          },
+          expandDocument: {
+            allowed: result.actions.expandDocument.allowed,
+            reason: result.actions.expandDocument.reason ?? null,
+            receiptContract: result.actions.expandDocument.receiptContract,
+          },
         });
       })
       .catch(() => {
-        if (!cancelled) setDeleteCapability(null);
+        if (!cancelled) setActionCapabilities(null);
       });
     return () => {
       cancelled = true;
@@ -971,6 +1008,8 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   // Bumped whenever this note's link graph changes, to refresh the backlinks bar.
   const [backlinksRefresh, setBacklinksRefresh] = useState(0);
   const editorContainerRef = useRef<HTMLDivElement>(null);
+  const [blockGutterTop, setBlockGutterTop] = useState(0);
+
   const notebookRailToggleRef = useRef<HTMLButtonElement>(null);
 
   // Inline-image upload bridge — set after the upload helper is defined so the
@@ -1214,6 +1253,24 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       }
     },
   });
+
+  useEffect(() => {
+    if (!editor) return;
+    const update = () => {
+      const container = editorContainerRef.current;
+      if (!container) return;
+      const caret = editor.view.coordsAtPos(editor.state.selection.from);
+      const bounds = container.getBoundingClientRect();
+      setBlockGutterTop(Math.max(8, caret.top - bounds.top + container.scrollTop));
+    };
+    update();
+    editor.on('selectionUpdate', update);
+    editor.on('focus', update);
+    return () => {
+      editor.off('selectionUpdate', update);
+      editor.off('focus', update);
+    };
+  }, [editor]);
 
   // Sync editor when switching pages or when the same page gets fresher server content.
   useEffect(() => {
@@ -1829,6 +1886,28 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     }
   };
   const aiCommandPromptInputRef = useRef<HTMLInputElement | null>(null);
+
+  // MYW-NBK-004 — open a page found via cross-notebook search. Mirrors the
+  // `openPageId` prop's own fetch-if-missing effect above: a search hit can
+  // live in a different notebook/project than the one currently scoped here,
+  // so it may not already be in `pages`. Api.getNotebookPage(id) resolves it
+  // by id regardless of the current notebookId/projectId filter.
+  const handleOpenSearchResult = useCallback(
+    async (pageId: string) => {
+      setActiveId(pageId);
+      if (pagesRef.current.some((p) => p.id === pageId)) return;
+      try {
+        const page = (await Api.getNotebookPage(pageId)) as any;
+        if (!page?.id) return;
+        setPages((prev) =>
+          prev.some((p) => p.id === page.id) ? prev : [page as NotebookPage, ...prev]
+        );
+      } catch {
+        toast.error(t('notebook.notebookContent.toastError', 'Failed to open the requested note'));
+      }
+    },
+    [t]
+  );
 
   const handleNewPage = useCallback(
     async (template?: PageTemplate) => {
@@ -2615,7 +2694,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     try {
       // Prefer the live editor JSON — autosave debounces, so activePage may lag.
       const contentJson = editor?.getJSON() ?? activePage.contentJson;
-      const { chatUrl } = await expandNotebookPageToCanvasDraft({
+      const result = await expandNotebookPageToCanvasDraft({
         id: activePage.id,
         title: title || activePage.title || '',
         contentJson,
@@ -2624,7 +2703,12 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       toast.success(
         t('notebook.notebookContent.toastSuccess10', 'Document draft created in Canvas')
       );
-      navigate(chatUrl);
+      navigate(result.chatUrl);
+      // DEC-25: NotebookHamburgerMenu's executeAction() requires a `receiptId`
+      // on the resolved value for every 'server-receipt-required' contract
+      // (see notebookActionRegistry.ts 'expand-document') — without it the
+      // menu treats the action as failed even though the draft was created.
+      return result;
     } catch (error: any) {
       console.error('Failed to expand note into Canvas document', error);
       toast.error(t('notebook.notebookContent.toastError15', 'Failed to create the document'));
@@ -2766,6 +2850,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                 <NotebookHeaderActions
                   onBack={onBackToLibrary}
                   onNewPage={() => setTemplateModalOpen(true)}
+                  onSearchAllNotebooks={() => setNotebookSearchDialogOpen(true)}
                 />
                 <div className="min-w-0">
                   <div className="text-sm font-semibold text-c-text truncate">
@@ -3293,24 +3378,6 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                   <div className="flex items-center gap-2 flex-wrap">
                     {/* Toolbar */}
                     {editor && <NotebookToolbar editor={editor} />}
-                    <NotebookExportMenu
-                      page={{
-                        id: activePage.id,
-                        title: title,
-                        contentJson: activePage.contentJson,
-                        contentText: activePage.contentText,
-                      }}
-                      isPolish={isPolish}
-                      className="shrink-0"
-                    />
-                    <button
-                      onClick={() => setShowVersionHistory((v) => !v)}
-                      title={t('notebook.notebookContent.title7', 'Version history')}
-                      aria-label={t('notebook.notebookContent.ariaLabel', 'Version history')}
-                      className={`shrink-0 p-1.5 rounded-lg transition-colors ${showVersionHistory ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted hover:bg-c-surface-raised'}`}
-                    >
-                      <History size={14} />
-                    </button>
                     <div
                       className="ml-auto flex shrink-0 items-center gap-1"
                       data-testid="notebook-toolbar-right-actions"
@@ -3368,6 +3435,8 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                     y={hamburgerPos.y}
                     isPolish={!!isPolish}
                     onClose={() => setHamburgerPos(null)}
+                    onExport={() => setNotebookExportOpen(true)}
+                    onVersionHistory={() => setShowVersionHistory((value) => !value)}
                     onSources={() =>
                       attachmentsSectionRef.current?.scrollIntoView({
                         behavior: 'smooth',
@@ -3387,9 +3456,36 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                     }
                     onAskAI={() => setAiCommand('action')}
                     onDelete={() => handleDeletePage()}
-                    receiptCapableActionIds={isDeleteReceiptCapable ? ['delete'] : []}
+                    receiptCapableActionIds={[
+                      ...(isDeleteReceiptCapable ? ['delete'] : []),
+                      ...(isExpandDocumentReceiptCapable ? ['expand-document'] : []),
+                    ]}
+                    receiptUnavailableReasons={{
+                      ...(!isDeleteReceiptCapable && actionCapabilities?.delete.reason
+                        ? { delete: actionCapabilities.delete.reason }
+                        : {}),
+                      ...(!isExpandDocumentReceiptCapable &&
+                      actionCapabilities?.expandDocument.reason
+                        ? { 'expand-document': actionCapabilities.expandDocument.reason }
+                        : {}),
+                    }}
                   />
                 )}
+
+                {activePage ? (
+                  <NotebookExportMenu
+                    page={{
+                      id: activePage.id,
+                      title,
+                      contentJson: activePage.contentJson,
+                      contentText: activePage.contentText,
+                    }}
+                    isPolish={isPolish}
+                    open={notebookExportOpen}
+                    onOpenChange={setNotebookExportOpen}
+                    hideTrigger
+                  />
+                ) : null}
 
                 {/* Version History panel (toggleable) */}
                 {showVersionHistory && activePage && (
@@ -3422,9 +3518,17 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                   </div>
                 )}
 
-                {/* Editor area — drop zone for AI block */}
+                {/* Editor area — drop zone for AI block.
+                    FIX-14 (Day 3 acceptance): `group` belongs HERE — the
+                    content wrapper the user actually hovers — not on the
+                    gutter itself. It was on the tiny absolutely-positioned
+                    gutter div below, whose own `hover:opacity-100` requires
+                    the mouse to already be over a 0-opacity (invisible,
+                    undiscoverable) element — a hover trigger that can never
+                    fire. Runtime evidence: hovering the note text revealed
+                    nothing. */}
                 <div
-                  className="flex-1 overflow-y-auto nb-scroll relative"
+                  className="group flex-1 overflow-y-auto nb-scroll relative"
                   ref={editorContainerRef}
                   onDragOver={(e) => {
                     if (e.dataTransfer.types.includes(AI_BLOCK_MIME)) {
@@ -3443,6 +3547,52 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                     }
                   }}
                 >
+                  {editor ? (
+                    <div
+                      data-testid="notebook-block-gutter"
+                      className="absolute left-1 z-20 flex -translate-y-1/2 gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 hover:opacity-100 focus-within:opacity-100"
+                      style={{ top: blockGutterTop }}
+                    >
+                      <button
+                        type="button"
+                        aria-label={t('notebook.blockGutter.actions', 'Block actions')}
+                        className="rounded border border-c-border-subtle bg-c-surface p-1 text-c-text-secondary hover:bg-c-surface-raised focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                        onClick={(event) => {
+                          const rect = event.currentTarget.getBoundingClientRect();
+                          setSlashState({
+                            open: true,
+                            query: '',
+                            triggerPos: editor.state.selection.from,
+                            coords: { top: rect.bottom + 4, left: rect.left },
+                            mode: 'context',
+                          });
+                        }}
+                      >
+                        ⠿
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={t('notebook.blockGutter.insertBelow', 'Insert block below')}
+                        className="rounded border border-c-border-subtle bg-c-surface p-1 text-c-text-secondary hover:bg-c-surface-raised focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                        onClick={(event) => {
+                          const rect = event.currentTarget.getBoundingClientRect();
+                          const $from = editor.state.selection.$from;
+                          const insertPos =
+                            $from.depth > 0 ? $from.after(1) : editor.state.doc.content.size;
+                          editor.commands.setTextSelection(insertPos);
+                          setSlashState({
+                            open: true,
+                            query: '',
+                            triggerPos: insertPos,
+                            coords: { top: rect.bottom + 4, left: rect.left },
+                            mode: 'insert',
+                          });
+                        }}
+                      >
+                        +
+                      </button>
+                    </div>
+                  ) : null}
                   <div className="mx-auto max-w-3xl px-6 py-8">
                     {/* Hidden file input for the cover image. */}
                     <input
@@ -3915,7 +4065,27 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                       <NotebookInlineAIMenu
                         editor={editor}
                         pageId={activePage.id}
-                        receiptCapableActionIds={[]}
+                        // FIX-7 (Day 3 acceptance): was hardcoded `[]`, which
+                        // disabled every inline-AI action (isReceiptCapable()
+                        // gates handleAction/handleApprove/handleReject on
+                        // this list). These 7 ids ARE genuinely receipt-backed
+                        // — the 5 rewrite actions create a durable
+                        // notebook_ai_proposals row (Api.notebookCreateAIProposal,
+                        // proposal.id is the receipt), and approve/reject
+                        // mutate that same row's status (Api.notebookResolveAIProposal,
+                        // readback via GET .../ai-proposals) — unlike
+                        // expand-document, this durability does not depend on
+                        // page ownership, so it is not gated by the
+                        // action-capabilities endpoint.
+                        receiptCapableActionIds={[
+                          'shorten',
+                          'expand',
+                          'improve',
+                          'formal',
+                          'explain',
+                          'approve',
+                          'reject',
+                        ]}
                         onApplied={() => {
                           void Promise.all([fetchPages(), refreshAIProposals(activePage.id)]);
                         }}
@@ -4002,7 +4172,17 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                       state={slashState}
                       onClose={() => setSlashState(INITIAL_SLASH_STATE)}
                       containerRef={editorContainerRef}
-                      receiptCapableActionIds={[]}
+                      // FIX-7 (Day 3 acceptance): was hardcoded `[]`, which
+                      // disabled the 3 slash create-* commands entirely
+                      // (SlashMenu disables any command in
+                      // ['create-task','create-decision','save-as-idea'] not
+                      // in this list). All 3 dispatch a window event this
+                      // same component listens for (handleCreateTask/
+                      // handleCreateDecision/handleCreateIdea below) — each
+                      // is a real, durable server write (Api.createPersonalTask/
+                      // createDecision/createMyIdea) whose returned id is
+                      // independently readable back in My Tasks/Decisions/Ideas.
+                      receiptCapableActionIds={['create-task', 'create-decision', 'save-as-idea']}
                       onAICommand={(cmd) => setAiCommand(cmd)}
                     />
                   )}
@@ -4096,11 +4276,22 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                 setNotebookRailOpen(false);
                 window.requestAnimationFrame(() => notebookRailToggleRef.current?.focus());
               }}
+              // DEC-26: own pages are labeled "You" (i18n PL/EN), never the
+              // current user's own real name — that was previously shown
+              // even to the note's own author, which reads as odd/impersonal
+              // ("Piotr Test" on your own note). Someone else's page shows
+              // their REAL name from the server (activePage.ownerDisplayName,
+              // server/src/routes/v8/my-work.routes.ts buildNotebookSelectFields)
+              // instead of collapsing into the same generic "unavailable"
+              // copy as a page with no resolvable owner at all — that generic
+              // copy (NotebookRightRail.tsx) is now reserved for the true
+              // no-data case (ownerDisplayName null/undefined), so the two
+              // states stay distinguishable.
               ownerLabel={
-                activePage?.ownerUserId === currentUserId
-                  ? currentUser?.displayName ||
-                    `${currentUser?.firstName || ''} ${currentUser?.lastName || ''}`.trim() ||
-                    currentUser?.email
+                activePage?.ownerUserId
+                  ? activePage.ownerUserId === currentUserId
+                    ? t('notebook.rightRail.ownerYou', 'You')
+                    : activePage.ownerDisplayName || undefined
                   : undefined
               }
               activePage={activePage}
@@ -4148,7 +4339,24 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                 }
               }}
               saveState={saveState}
-              receiptCapableActionIds={[]}
+              // FIX-7 (Day 3 acceptance): was hardcoded `[]`, which disabled
+              // every rail editing control (isReceiptCapable() gates all 8
+              // — see NotebookRightRail.tsx). All 8 route through
+              // scheduleSave()/persistNotebookDraft() above, the SAME real
+              // PUT /notebook/pages/:id used everywhere else in this
+              // component, with genuine server-confirmed error/conflict
+              // handling (saveState reflects the real HTTP outcome, not an
+              // optimistic guess) — durable and receipt-capable.
+              receiptCapableActionIds={[
+                'retry-save',
+                'load-theirs',
+                'keep-mine',
+                'visibility-private',
+                'visibility-project',
+                'verification-status',
+                'review-cadence',
+                'mark-reviewed',
+              ]}
               onRetrySave={handleRetrySave}
               onReloadConflict={handleReloadFromConflict}
               onKeepMineConflict={handleRetryAfterConflict}
@@ -4191,6 +4399,12 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
             t('notebook.notebookContent.toastSuccess12', 'File uploaded, note created')
           );
         }}
+      />
+
+      <NotebookSearchDialog
+        open={notebookSearchDialogOpen}
+        onClose={() => setNotebookSearchDialogOpen(false)}
+        onOpenPage={(pageId) => void handleOpenSearchResult(pageId)}
       />
 
       {activePage && (

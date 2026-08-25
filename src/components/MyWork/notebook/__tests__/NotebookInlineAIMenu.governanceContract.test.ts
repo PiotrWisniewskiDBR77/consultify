@@ -8,7 +8,9 @@ describe('Notebook inline AI governance contract', () => {
   it('shows the exact before/proposed content and Teresa provenance before resolution', () => {
     expect(source).toContain('originalText: contextText');
     expect(source).toContain('revisedText: revised');
-    expect(source).toContain("'Teresa proposal'");
+    expect(source).toContain("'Źródło: Teresa'");
+    expect(source).toContain('createdAt: new Date()');
+    expect(source).not.toContain('border-c-accent/30 bg-c-accent-soft');
     expect(source).toContain("'Before'");
     expect(source).toContain("'Proposed'");
     expect(source).toContain('notebook-inline-ai-preview');

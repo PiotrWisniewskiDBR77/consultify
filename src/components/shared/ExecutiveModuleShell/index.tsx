@@ -19,6 +19,7 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { resolveArtifactPanelArbitration } from '@/components/shared/ArtifactStudio/layout';
 
@@ -112,6 +113,16 @@ export interface ExecutiveModuleShellProps {
   rightRailCollapsible?: boolean;
   /** Semantic information rail side. Ideas uses left; legacy consumers keep right. */
   inspectorRailSide?: 'left' | 'right';
+  /**
+   * Separate right-side element inspector. Additive: omitted by every legacy
+   * consumer, so no wrapper or empty aside is rendered (DEC-27, variant 1).
+   */
+  elementInspectorRail?: React.ReactNode;
+  /** Element-inspector width, clamped by the shell to 320–560 px. */
+  elementInspectorWidth?: number;
+  onElementInspectorWidthChange?: (width: number) => void;
+  elementInspectorCollapsed?: boolean;
+  onElementInspectorToggle?: () => void;
 
   /** Center canvas. */
   canvas: React.ReactNode;
@@ -208,6 +219,11 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
   onActiveRightRailToolChange,
   rightRailCollapsible = true,
   inspectorRailSide = 'right',
+  elementInspectorRail,
+  elementInspectorWidth,
+  onElementInspectorWidthChange,
+  elementInspectorCollapsed = false,
+  onElementInspectorToggle,
   canvas,
   centerMode = 'chrome',
   floatingLeftRail,
@@ -228,6 +244,7 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
   className,
   testId,
 }) => {
+  const { t } = useTranslation();
   const rail = useRailState({
     moduleKey,
     defaultLeftCollapsed,
@@ -236,6 +253,55 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
     defaultRightWidth,
     ephemeral: !persistRailState,
   });
+  const elementInspectorStorageKey = `mels:${moduleKey}:element-inspector-width`;
+  const clampElementInspectorWidth = useCallback(
+    (width: number) => Math.min(560, Math.max(320, Math.round(width))),
+    []
+  );
+  const [internalElementInspectorWidth, setInternalElementInspectorWidth] = useState(() => {
+    if (elementInspectorWidth != null) return clampElementInspectorWidth(elementInspectorWidth);
+    if (persistRailState && typeof window !== 'undefined') {
+      const stored = Number(window.localStorage.getItem(elementInspectorStorageKey));
+      if (Number.isFinite(stored) && stored > 0) return clampElementInspectorWidth(stored);
+    }
+    return 400;
+  });
+  const resolvedElementInspectorWidth = clampElementInspectorWidth(
+    elementInspectorWidth ?? internalElementInspectorWidth
+  );
+  const setElementInspectorWidth = useCallback(
+    (next: number) => {
+      const clamped = clampElementInspectorWidth(next);
+      if (elementInspectorWidth == null) setInternalElementInspectorWidth(clamped);
+      if (persistRailState && typeof window !== 'undefined') {
+        window.localStorage.setItem(elementInspectorStorageKey, String(clamped));
+      }
+      onElementInspectorWidthChange?.(clamped);
+    },
+    [
+      clampElementInspectorWidth,
+      elementInspectorStorageKey,
+      elementInspectorWidth,
+      onElementInspectorWidthChange,
+      persistRailState,
+    ]
+  );
+  const startElementInspectorResize = useCallback(
+    (event: React.MouseEvent) => {
+      event.preventDefault();
+      const startX = event.clientX;
+      const startWidth = resolvedElementInspectorWidth;
+      const onMove = (moveEvent: MouseEvent) =>
+        setElementInspectorWidth(startWidth + startX - moveEvent.clientX);
+      const onUp = () => {
+        window.removeEventListener('mousemove', onMove);
+        window.removeEventListener('mouseup', onUp);
+      };
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onUp);
+    },
+    [resolvedElementInspectorWidth, setElementInspectorWidth]
+  );
 
   const [internalActiveToolId, setInternalActiveToolId] = useState<string | null>(null);
   const isCanvasMode = centerMode === 'canvas';
@@ -542,6 +608,53 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
             onResize={rail.setRightWidth}
             collapsible={rightRailCollapsible}
           />
+        ) : null}
+
+        {!artifactStudioMode && elementInspectorRail ? (
+          <aside
+            data-testid="mels-element-inspector-rail"
+            className="relative hidden shrink-0 border-l border-c-border bg-c-surface sm:flex"
+            style={{ width: elementInspectorCollapsed ? 40 : resolvedElementInspectorWidth }}
+            data-collapsed={elementInspectorCollapsed ? 'true' : 'false'}
+          >
+            {!elementInspectorCollapsed ? (
+              <div
+                role="separator"
+                aria-label={t(
+                  'shared.executiveModuleShell.resizeElementInspector',
+                  'Resize element inspector'
+                )}
+                aria-orientation="vertical"
+                aria-valuemin={320}
+                aria-valuemax={560}
+                aria-valuenow={resolvedElementInspectorWidth}
+                tabIndex={0}
+                className="absolute inset-y-0 left-0 w-1 cursor-col-resize focus-visible:outline-none focus-visible:ring-2 ring-[color:var(--c-focus)]"
+                onMouseDown={startElementInspectorResize}
+                onKeyDown={(event) => {
+                  if (event.key === 'ArrowLeft')
+                    setElementInspectorWidth(resolvedElementInspectorWidth + 8);
+                  if (event.key === 'ArrowRight')
+                    setElementInspectorWidth(resolvedElementInspectorWidth - 8);
+                }}
+              />
+            ) : null}
+            <div className="min-w-0 flex-1 overflow-auto">{elementInspectorRail}</div>
+            {onElementInspectorToggle ? (
+              <button
+                type="button"
+                aria-label={
+                  elementInspectorCollapsed
+                    ? 'Expand element inspector'
+                    : 'Collapse element inspector'
+                }
+                onClick={onElementInspectorToggle}
+                className="absolute right-1 top-1 rounded border border-c-border bg-c-surface-raised px-2 py-1 text-c-text focus-visible:outline-none focus-visible:ring-2 ring-[color:var(--c-focus)]"
+              >
+                {elementInspectorCollapsed ? '‹' : '›'}
+              </button>
+            ) : null}
+          </aside>
         ) : null}
 
         {artifactStudioMode && artifactPanels.left === 'overlay' ? (

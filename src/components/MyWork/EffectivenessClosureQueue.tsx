@@ -1,5 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import {
+  type ActionContext,
+  getActionsForSurface,
+  runIdeaAction,
+} from '@/actions/ideaActionRegistry';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import {
   StandardTable,
@@ -20,6 +25,8 @@ import {
   RuntimeApiError,
   transitionEffectiveness,
 } from '@/services/initiatives-execution/runtimeApi';
+
+import { EMPTY_SELECTION } from './ideaSelectionTypes';
 
 type Knowledge = 'KNOWN' | 'ESTIMATED' | 'UNKNOWN' | 'UNCONFIRMED';
 type Confidence = 'HIGH' | 'MEDIUM' | 'LOW' | 'UNKNOWN';
@@ -155,6 +162,41 @@ export const EffectivenessClosureQueue = () => {
     [items]
   );
   const selected = rows.find((x) => x.id === selectedId) ?? null;
+
+  // TRI-OBS-17 (2026-08-25, R10 traceability): same `runAction(id, run)`
+  // wrapper as `WhiteboardToolbar.tsx`/`ProcessFlowToolbar.tsx` — checks the
+  // real central Idea Workspace registry first (this screen isn't an Idea
+  // canvas surface, so today it never matches, exactly like an unmigrated
+  // toolbar action) and otherwise runs the original callback unchanged. Zero
+  // behaviour change; makes this command mechanically traceable and ready to
+  // pick up a real registry entry later without touching the call site again.
+  const registryActionsById = useMemo(() => {
+    const map = new Map<string, ReturnType<typeof getActionsForSurface>[number]>();
+    for (const entry of getActionsForSurface('panel', { tool: 'table' })) {
+      map.set(entry.def.id, entry);
+    }
+    return map;
+  }, []);
+
+  const runAction = useCallback(
+    (id: string, run: () => void) => {
+      if (!registryActionsById.has(id)) {
+        run();
+        return;
+      }
+      const ctx: ActionContext = {
+        ideaId: '',
+        tool: 'table',
+        selection: EMPTY_SELECTION,
+        surface: 'panel',
+        source: 'ui',
+        params: { run },
+      };
+      void runIdeaAction(id, ctx);
+    },
+    [registryActionsById]
+  );
+
   const createFinance = async () => {
     const payload = JSON.parse(financeJson);
     await createFinanceReconciliation(financeId, {
@@ -541,7 +583,7 @@ export const EffectivenessClosureQueue = () => {
                 <button
                   className="btn-primary"
                   disabled={legalHold || !archive.retentionRef || !archive.exportRef}
-                  onClick={() => void archiveCase()}
+                  onClick={() => runAction('effectiveness.archive.create', () => void archiveCase())}
                 >
                   Create Archive Manifest
                 </button>

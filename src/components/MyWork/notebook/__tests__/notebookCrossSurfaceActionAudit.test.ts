@@ -16,7 +16,12 @@ describe('Notebook cross-surface action audit', () => {
   const actions = buildNotebookCrossSurfaceActionAudit();
 
   it('has a unique, machine-counted contract for every retained action surface', () => {
-    expect(actions).toHaveLength(104);
+    // FIX-4 (Day 3 acceptance): B.6 registered 'note:version-history'
+    // (notebookActionRegistry.ts, commit fba02fef05) but this count stayed at
+    // the pre-B.6 104 — a real, already-wired action (NotebookHamburgerMenu.tsx
+    // id 'version-history', panel in NotebookContent.tsx) was under-counted.
+    expect(actions.some((action) => action.id === 'note:version-history')).toBe(true);
+    expect(actions).toHaveLength(105);
     expect(new Set(actions.map((action) => action.id)).size).toBe(actions.length);
     expect(new Set(actions.map((action) => action.surface))).toEqual(
       new Set([
@@ -134,10 +139,20 @@ describe('Notebook cross-surface action audit', () => {
       expect(rail).toContain(`data-notebook-action-id="rail:${id}"`);
     }
     expect(toolbar).toContain('NotebookToolbar');
-    expect(content).toContain('receiptCapableActionIds={[]}');
-    expect(content).toContain(
-      "receiptCapableActionIds={isDeleteReceiptCapable ? ['delete'] : []}"
-    );
+    // FIX-7 (Day 3 acceptance): NotebookContent.tsx used to hardcode
+    // `receiptCapableActionIds={[]}` on 3 of 4 receipt-gated surfaces
+    // (NotebookInlineAIMenu, SlashMenu, NotebookRightRail), which disabled
+    // every action they gate — even ones with a genuinely durable server
+    // receipt (AI proposal create/resolve, task/decision/idea creation, page
+    // save). None of the 4 receipt-gated surfaces hardcode an empty list
+    // anymore; each now passes its real, verified id set.
+    expect(content).not.toContain('receiptCapableActionIds={[]}');
+    // DEC-25: the note-menu's receiptCapableActionIds now folds in
+    // 'expand-document' alongside 'delete' (both governed-api /
+    // server-receipt-required — see notebookActionRegistry.ts), backed by the
+    // same real capability fetch instead of a single-action ternary.
+    expect(content).toContain("...(isDeleteReceiptCapable ? ['delete'] : [])");
+    expect(content).toContain("...(isExpandDocumentReceiptCapable ? ['expand-document'] : [])");
   });
 
   it('keeps every governed menu conversion and rail mutation receipt-bound', () => {

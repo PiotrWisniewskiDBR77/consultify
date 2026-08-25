@@ -244,7 +244,11 @@ export function useProcessFlowQuickActions(opts: UseProcessFlowQuickActionsOpts)
     if (action === 'pf_add_step') {
       const label =
         typeof detail?.label === 'string' && detail.label.trim() ? detail.label.trim() : undefined;
-      handlers.addNode('action', label ? { label } : undefined);
+      if (label) {
+        handlers.addNode('action', { label });
+      } else {
+        handlers.addNode('action');
+      }
     }
     if (action === 'pf_add_decision') handlers.addNode('decision');
     if (action === 'pf_add_start') handlers.addNode('start');

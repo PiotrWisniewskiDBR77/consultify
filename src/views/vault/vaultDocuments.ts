@@ -67,6 +67,43 @@ export const scopeLabel = (scope: VaultScope | undefined, isPolish: boolean) => 
   return isPolish ? meta.labelPl : meta.labelEn;
 };
 
+/**
+ * safeLevelLabel / safeDisplayName — the ONE place that turns a system
+ * safe's `type` into user-facing text.
+ *
+ * FIX-19 (Day 3 layer-2 acceptance): moved here from `VaultSafesTable.tsx`
+ * and routed through real i18n keys (`vault.safes.level*`) instead of a raw
+ * PL/EN record with no translation entry — the reported bug was a Polish
+ * screen showing "Mój sejf" in the safes table but literal English
+ * "My safe" the moment the safe was opened (breadcrumb card, the "Sejf: …"
+ * line in the add/edit document panel, the exported CSV filename) because
+ * those call sites rendered the server's neutral `safe.name` fallback
+ * (`server/src/routes/knowledge.routes.ts` — deliberately English, "any
+ * consumer that does not localize") instead of localizing it. Every screen
+ * that shows a system safe's name must go through this function so there is
+ * exactly one PL/EN pair to keep in sync.
+ */
+export const safeLevelLabel = (
+  type: VaultScope,
+  isPolish: boolean,
+  t: (key: string, fallback: string) => string
+): string => {
+  if (type === 'user') return t('vault.safes.levelUser', isPolish ? 'Mój sejf' : 'My safe');
+  if (type === 'organization') {
+    return t('vault.safes.levelOrganization', isPolish ? 'Sejf organizacji' : 'Organization safe');
+  }
+  return t('vault.safes.levelProject', isPolish ? 'Sejf projektu' : 'Project safe');
+};
+
+export const safeDisplayName = (
+  safe: { type: VaultScope; name: string; isSystem?: boolean },
+  isPolish: boolean,
+  t: (key: string, fallback: string) => string
+): string => {
+  const isSystem = safe.isSystem ?? safe.type !== 'project';
+  return isSystem ? safeLevelLabel(safe.type, isPolish, t) : safe.name;
+};
+
 /** Statusy indeksowania → ton chipu statusu (kanon: cichy chip z kropką). */
 export const indexStatusTone = (status: string): 'success' | 'warning' | 'danger' | 'neutral' => {
   const s = (status || '').toLowerCase();

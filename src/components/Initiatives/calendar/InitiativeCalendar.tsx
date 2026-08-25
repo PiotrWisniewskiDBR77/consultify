@@ -13,6 +13,7 @@ import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { Api } from '@/services/api';
 import { toIsoDate } from '@/services/initiativeSchedule';
 import type { ScheduleItem, ScheduleItemType } from '@/types/initiativeSchedule';
 
@@ -148,6 +149,12 @@ export const InitiativeCalendar: React.FC<InitiativeCalendarProps> = ({
     async (item: ScheduleItem, newStart: string, newEnd: string) => {
       if (!onReschedule) return;
       try {
+        if (item.sourceKind === 'task') {
+          await Api.put(`/api/pmo/tasks/${encodeURIComponent(item.sourceId)}`, {
+            startedAt: newStart,
+            dueDate: newEnd,
+          });
+        }
         await onReschedule(item.id, item.sourceKind, item.sourceId, newStart, newEnd);
         setOverrides((prev) => {
           const next = new Map(prev);

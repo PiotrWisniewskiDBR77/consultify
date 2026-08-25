@@ -74,7 +74,7 @@ describe('NotebookInlineAIMenu governed lifecycle', () => {
     const onApplied = await reachPreview();
     expect(screen.getByText('Original text')).toBeInTheDocument();
     expect(screen.getByText('Revised text')).toBeInTheDocument();
-    expect(screen.getByText(/Teresa proposal · Shorten/)).toBeInTheDocument();
+    expect(screen.getByText(/Źródło: Teresa · akcja „Shorten” ·/)).toBeInTheDocument();
     const approve = screen.getByTestId('notebook-inline-ai-approve');
     fireEvent.click(approve);
     fireEvent.click(approve);

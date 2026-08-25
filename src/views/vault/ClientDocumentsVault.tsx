@@ -66,6 +66,7 @@ import { useHubBarSlot } from '../../components/shared/HubBarSlots';
 import { Api } from '../../services/api';
 import { isClientVaultEnabled } from '../../utils/clientVaultFlag';
 import { VaultDocumentsView } from './VaultDocumentsView';
+import { VaultFoldersTable } from './VaultFoldersTable';
 import { type VaultSafe, VaultSafesTable } from './VaultSafesTable';
 
 // RB-029/RV-010 (CB-02) — the opened safe is now canonical route state
@@ -84,6 +85,10 @@ export const ClientDocumentsVault: React.FC = () => {
   const [isResolvingSafe, setIsResolvingSafe] = useState(false);
   const [safeResolutionDenied, setSafeResolutionDenied] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [listMode, setListMode] = useState<'safes' | 'folders'>('safes');
+  const [scopeFilter, setScopeFilter] = useState<'all' | 'user' | 'organization' | 'project'>(
+    'all'
+  );
   // Patrz „★ PUŁAPKA WSPÓŁDZIELONEGO SLOTU" w nagłówku pliku.
   const [resyncTick, setResyncTick] = useState(0);
 
@@ -92,6 +97,7 @@ export const ClientDocumentsVault: React.FC = () => {
       (prev) => {
         const next = new URLSearchParams(prev);
         next.delete(SAFE_ID_PARAM);
+        next.delete('folderId');
         return next;
       },
       { replace: true }
@@ -168,26 +174,39 @@ export const ClientDocumentsVault: React.FC = () => {
 
   const filterControlsNode = useMemo(
     () => (
-      <div className="relative">
-        <Search
-          size={14}
-          className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-c-text-muted"
-        />
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder={t(
-            'vault.safes.searchPlaceholder',
-            isPolish ? 'Szukaj sejfu…' : 'Search safes…'
-          )}
-          aria-label={t('vault.breadcrumb.root', isPolish ? 'Sejf klienta' : 'Client Vault')}
-          className="h-9 w-48 rounded-lg border border-c-border bg-c-surface pl-8 pr-3 text-sm text-c-text placeholder:text-c-text-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-        />
+      <div className="flex items-center gap-2">
+        <div className="relative">
+          <Search
+            size={14}
+            className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-c-text-muted"
+          />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={t(
+              'vault.safes.searchPlaceholder',
+              isPolish ? 'Szukaj sejfu…' : 'Search safes…'
+            )}
+            aria-label={t('vault.breadcrumb.root', isPolish ? 'Sejf klienta' : 'Client Vault')}
+            className="h-9 w-48 rounded-lg border border-c-border bg-c-surface pl-8 pr-3 text-sm text-c-text placeholder:text-c-text-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+          />
+        </div>
+        <select
+          aria-label={isPolish ? 'Filtr zakresu' : 'Scope filter'}
+          value={scopeFilter}
+          onChange={(event) => setScopeFilter(event.target.value as typeof scopeFilter)}
+          className="h-9 rounded-lg border border-c-border bg-c-surface px-2 text-sm text-c-text"
+        >
+          <option value="all">{isPolish ? 'Wszystkie zakresy' : 'All scopes'}</option>
+          <option value="user">{isPolish ? 'Mój' : 'Mine'}</option>
+          <option value="organization">{isPolish ? 'Organizacji' : 'Organization'}</option>
+          <option value="project">{isPolish ? 'Projektu' : 'Project'}</option>
+        </select>
       </div>
     ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [searchQuery, t, isPolish, resyncTick]
+    [searchQuery, scopeFilter, t, isPolish, resyncTick]
   );
 
   useHubBarSlot({ filterControls: filterControlsNode });
@@ -199,7 +218,13 @@ export const ClientDocumentsVault: React.FC = () => {
   // tabelę (jej `filterControls` zostaje nadpisany przez wnętrze, dopóki jest
   // zamontowane).
   if (openSafe) {
-    return <VaultDocumentsView safe={openSafe} onBack={handleBackToSafes} />;
+    return (
+      <VaultDocumentsView
+        safe={openSafe}
+        onBack={handleBackToSafes}
+        initialFolderId={searchParams.get('folderId')}
+      />
+    );
   }
 
   // RB-029/RV-010: resolving `?safeId=` from a direct entry/refresh — show a
@@ -214,6 +239,19 @@ export const ClientDocumentsVault: React.FC = () => {
 
   return (
     <div className="h-full flex flex-col">
+      <div className="flex gap-1 border-b border-c-border px-4 py-2" role="tablist">
+        {(['safes', 'folders'] as const).map((mode) => (
+          <button
+            key={mode}
+            role="tab"
+            aria-selected={listMode === mode}
+            onClick={() => setListMode(mode)}
+            className="rounded px-3 py-1.5 text-sm text-c-text hover:bg-c-surface-raised"
+          >
+            {mode === 'safes' ? (isPolish ? 'Sejfy' : 'Safes') : isPolish ? 'Foldery' : 'Folders'}
+          </button>
+        ))}
+      </div>
       {safeResolutionDenied && (
         <div className="mx-4 mt-4 rounded-lg border border-c-border bg-c-surface-raised px-4 py-3 text-sm text-c-text-secondary">
           {t(
@@ -225,7 +263,32 @@ export const ClientDocumentsVault: React.FC = () => {
         </div>
       )}
       <div className="flex-1 min-h-0 overflow-auto">
-        <VaultSafesTable onOpenSafe={handleOpenSafe} searchQuery={searchQuery} />
+        {listMode === 'safes' ? (
+          <VaultSafesTable
+            onOpenSafe={handleOpenSafe}
+            searchQuery={searchQuery}
+            scopeFilter={scopeFilter}
+          />
+        ) : (
+          <VaultFoldersTable
+            onOpenFolder={async (folder) => {
+              const safes = await Api.getVaultSafes();
+              const safe = safes.find(
+                (candidate) =>
+                  candidate.type === folder.scope &&
+                  (folder.scope !== 'project' || candidate.projectId === folder.projectId)
+              );
+              if (!safe) return;
+              setSearchParams((prev) => {
+                const next = new URLSearchParams(prev);
+                next.set('folderId', folder.id);
+                next.set(SAFE_ID_PARAM, safe.id);
+                return next;
+              });
+              setOpenSafe(safe);
+            }}
+          />
+        )}
       </div>
     </div>
   );

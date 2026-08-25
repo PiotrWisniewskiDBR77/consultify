@@ -59,6 +59,11 @@ vi.mock('@/services/api', () => ({
     syncMyIdeaMap: (...a: unknown[]) => syncMyIdeaMap(...a),
     createMyIdeaMapSnapshot: vi.fn().mockResolvedValue(null),
     updateMyIdea: vi.fn().mockResolvedValue({}),
+    // MYW-IDEAS-010 (2026-08-25): the candidate→initiative fetch effect is
+    // no longer gated to activeTool === 'process_flow' — it now runs for
+    // every tool, including this test's Table scenario — so the mock must
+    // cover it even though this suite never opens Process Flow.
+    getIdeaProcessFlowCandidate: vi.fn().mockResolvedValue(null),
   },
   getMapVersionFromPayload: () => null,
 }));

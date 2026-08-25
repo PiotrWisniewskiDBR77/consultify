@@ -640,6 +640,15 @@ export interface NotebookPage {
     | null;
   /** V4-NOTE-05: Owner (owner_user_id in DB) */
   ownerUserId?: string;
+  /**
+   * DEC-26: the owner's real display name (first+last name, falling back to
+   * email), server-computed — used ONLY to label someone ELSE's page in the
+   * right rail/note menu ("You" is used for the current user's own pages
+   * instead, i18n'd client-side). Null/undefined means the server could not
+   * resolve a name (deleted/unknown user) — a distinct, honest "no data"
+   * state, never silently rendered as if it were a real name.
+   */
+  ownerDisplayName?: string | null;
   /** V4-NOTE-05: Verification status for knowledge governance */
   verificationStatus?: NotebookVerificationStatus;
   /** V4-NOTE-05: How often page should be reviewed */

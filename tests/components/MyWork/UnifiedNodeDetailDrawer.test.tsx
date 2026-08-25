@@ -57,8 +57,21 @@ vi.mock('react-hot-toast', () => ({
 }));
 
 const i18nState = vi.hoisted(() => ({ language: 'en' }));
+// Status-button labels come from `t(cfg.tkey, cfg.labelEn)` under the
+// 'myWorkMindmap.nodeStatus.*' namespace — the real react-i18next treats a string second
+// argument as the defaultValue (see tests/setup.ts's global mock, which does the same:
+// `if (typeof options === 'string') return options`). A plain identity `t: (k) => k`
+// dropped that second argument, so button names came back as raw keys
+// ("myWorkMindmap.nodeStatus.validated") instead of "Validated". Every OTHER call site in
+// this component (notes placeholder, comment placeholder, section titles, ...) also passes
+// a string default but this suite deliberately asserts the raw key comes through for those
+// — keep identity behavior everywhere except the status-button namespace so the rest of
+// the (currently-passing) assertions in this file don't flip.
+const STATUS_TKEY_PREFIX = 'myWorkMindmap.nodeStatus.';
+const t = (key: string, defaultValue?: string) =>
+  key.startsWith(STATUS_TKEY_PREFIX) && typeof defaultValue === 'string' ? defaultValue : key;
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ i18n: i18nState, t: (k: string) => k }),
+  useTranslation: () => ({ i18n: i18nState, t }),
 }));
 
 // Lightweight NModeBlocks stubs — render children so section content is queryable.

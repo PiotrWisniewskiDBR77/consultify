@@ -1,11 +1,17 @@
 import { AlertTriangle, CalendarDays, CheckSquare, Loader2 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/primitives/Button';
 import { Modal } from '@/components/ui/primitives/Modal';
 import Api from '@/services/api';
+import { isMyWorkCalendarV2Enabled } from '@/utils/myWorkCalendarV2Flag';
+
+import { duplicateCalendarEventFourWeeks } from '../CalendarV2/duplicateCalendarEvent';
+import { useConfirmDialog } from '../shared/ConfirmDialog';
+import { CalendarAttendeesField, type CalendarAttendeeOption } from './CalendarAttendeesField';
 
 interface CalendarConflictItem {
   id: string;
@@ -46,11 +52,20 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
   onCreated,
 }) => {
   const { t } = useTranslation();
+  const v2 = isMyWorkCalendarV2Enabled();
+  const { dialog: duplicateConfirmDialog, confirm: confirmDuplicate } = useConfirmDialog();
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [date, setDate] = useState(toDateInputValue(defaultDate));
   const [recurrencePreset, setRecurrencePreset] = useState<RecurrencePreset>('none');
+  const [entryType, setEntryType] = useState<'event' | 'task'>('event');
+  const [startTime, setStartTime] = useState('09:00');
+  const [endTime, setEndTime] = useState('10:00');
+  const [visibility, setVisibility] = useState<'private' | 'busy' | 'org'>('private');
+  const [attendees, setAttendees] = useState<CalendarAttendeeOption[]>([]);
+  const [duplicateFourWeeks, setDuplicateFourWeeks] = useState(false);
+  const [duplicateResult, setDuplicateResult] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [conflictsLoading, setConflictsLoading] = useState(false);
   const [conflicts, setConflicts] = useState<CalendarConflictResponse | null>(null);
@@ -62,6 +77,10 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
     setDescription('');
     setDate(toDateInputValue(defaultDate));
     setRecurrencePreset('none');
+    setEntryType('event');
+    setAttendees([]);
+    setDuplicateFourWeeks(false);
+    setDuplicateResult(null);
     setConflicts(null);
     setConflictsError(null);
   }, [defaultDate, open]);
@@ -127,17 +146,74 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
 
     try {
       setSaving(true);
-      await Api.createMyWorkCalendarEvent({
-        title: title.trim(),
-        description: description.trim() || undefined,
-        start: date,
-        allDay: true,
-        source: 'task',
-        recurrence: recurrencePreset === 'none' ? undefined : { preset: recurrencePreset },
-      });
-      toast.success(t('myWork.calendarCreateEvent.toastSuccess', 'Task added to calendar'));
+      if (v2 && entryType === 'event') {
+        const startAt = new Date(`${date}T${startTime}:00`).toISOString();
+        const endAt = new Date(`${date}T${endTime}:00`).toISOString();
+        if (endAt <= startAt) throw new Error('END_BEFORE_START');
+        const eventInput = {
+          title: title.trim(),
+          description: description.trim(),
+          startAt,
+          endAt,
+          allDay: false,
+          source: 'event',
+          visibility,
+          attendees: attendees.map((attendee) => attendee.id),
+        } as const;
+        if (duplicateFourWeeks) {
+          const dates = [1, 2, 3, 4].map((week) => {
+            const next = new Date(startAt);
+            next.setUTCDate(next.getUTCDate() + week * 7);
+            return next.toLocaleDateString();
+          });
+          // FIX-20 (Day 3 layer-2 acceptance): window.confirm() replaced with
+          // the canonical ConfirmDialog — same golden-standard modal every
+          // other destructive/multi-write confirmation in My Work uses —
+          // listing the 4 target dates instead of a native browser dialog.
+          const confirmed = await confirmDuplicate({
+            title: t('myWork.calendarV2.duplicateFourWeeks', 'Duplicate for the next 4 weeks'),
+            description: t('myWork.calendarV2.duplicateConfirm', {
+              defaultValue: 'Create 4 independent copies on: {{dates}}?',
+              dates: dates.join(', '),
+            }),
+            confirmLabel: t('myWork.calendarV2.duplicateConfirmAction', 'Create copies'),
+            cancelLabel: t('myWork.calendarCreateEvent.cancel', 'Cancel'),
+            variant: 'default',
+          });
+          if (!confirmed) {
+            return;
+          }
+        }
+        await Api.createMyWorkCalendarEvent(eventInput);
+        if (duplicateFourWeeks) {
+          const result = await duplicateCalendarEventFourWeeks(eventInput);
+          const summary = t('myWork.calendarV2.duplicateResult', {
+            defaultValue: 'Created {{created}} of 4. Failed: {{failed}}.',
+            created: result.created.length,
+            failed: result.failed.map((item) => item.date).join(', ') || '0',
+          });
+          setDuplicateResult(summary);
+          if (result.failed.length) {
+            toast.error(summary);
+          } else {
+            toast.success(summary);
+          }
+        } else {
+          toast.success(t('myWork.calendarV2.created', 'Event created'));
+        }
+      } else {
+        await Api.createMyWorkCalendarEvent({
+          title: title.trim(),
+          description: description.trim() || undefined,
+          start: date,
+          allDay: true,
+          source: 'task',
+          recurrence: recurrencePreset === 'none' ? undefined : { preset: recurrencePreset },
+        });
+        toast.success(t('myWork.calendarCreateEvent.toastSuccess', 'Task added to calendar'));
+      }
       onCreated?.();
-      onClose();
+      if (!duplicateFourWeeks) onClose();
     } catch (error) {
       console.error('Failed to create calendar event', error);
       toast.error(t('myWork.calendarCreateEvent.toastError2', 'Failed to add to calendar'));
@@ -147,15 +223,20 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
   };
 
   return (
+    <>
     <Modal
       open={open}
       onClose={onClose}
       size="lg"
       title={t('myWork.calendarCreateEvent.title', 'Add to calendar')}
-      description={t(
-        'myWork.calendarCreateEvent.inV1CalendarCreation',
-        'In V1, calendar creation produces a personal task with a due date, aligned with My Work logic.'
-      )}
+      description={
+        v2
+          ? t('myWork.calendarV2.createDescription', 'Create an event or a task deadline.')
+          : t(
+              'myWork.calendarCreateEvent.inV1CalendarCreation',
+              'In V1, calendar creation produces a personal task with a due date, aligned with My Work logic.'
+            )
+      }
       footer={
         <>
           <Button variant="secondary" onClick={onClose} disabled={saving}>
@@ -173,18 +254,41 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
       }
     >
       <form id="calendar-create-event-form" onSubmit={handleSubmit} className="space-y-5">
-        <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:bg-navy-950 dark:text-slate-300">
-          <div className="flex items-center gap-2 font-medium text-slate-900 dark:text-slate-100">
-            <CheckSquare size={16} className="text-primary-500" />
-            {t('myWork.calendarCreateEvent.artifactTypeTask', 'Artifact type: Task')}
+        {v2 ? (
+          <div
+            className="flex gap-2"
+            role="group"
+            aria-label={t('myWork.calendarV2.entryType', 'Entry type')}
+          >
+            {(['event', 'task'] as const).map((type) => (
+              <button
+                key={type}
+                type="button"
+                aria-pressed={entryType === type}
+                onClick={() => setEntryType(type)}
+                className="rounded-lg border border-c-border px-3 py-2 text-sm aria-pressed:bg-c-surface-raised"
+              >
+                {type === 'event'
+                  ? t('myWork.calendarV2.event', 'Event')
+                  : t('myWork.calendarV2.task', 'Task')}
+              </button>
+            ))}
           </div>
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            {t(
-              'myWork.calendarCreateEvent.decisionsAndInitiativesFrom',
-              'Decisions and initiatives from calendar are prepared for a later phase.'
-            )}
-          </p>
-        </div>
+        ) : null}
+        {!v2 ? (
+          <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:bg-navy-950 dark:text-slate-300">
+            <div className="flex items-center gap-2 font-medium text-slate-900 dark:text-slate-100">
+              <CheckSquare size={16} className="text-c-info" />
+              {t('myWork.calendarCreateEvent.artifactTypeTask', 'Artifact type: Task')}
+            </div>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              {t(
+                'myWork.calendarCreateEvent.decisionsAndInitiativesFrom',
+                'Decisions and initiatives from calendar are prepared for a later phase.'
+              )}
+            </p>
+          </div>
+        ) : null}
 
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-900 dark:text-slate-100">
@@ -195,25 +299,78 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
             onChange={(e) => setTitle(e.target.value)}
             autoFocus
             placeholder={t('myWork.calendarCreateEvent.placeholder', 'e.g. Prepare review deck')}
-            className="w-full rounded-lg border border-slate-300/60 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-primary-400 dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
+            className="w-full rounded-lg border border-slate-300/60 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-c-focus-solid dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
           />
         </div>
 
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-900 dark:text-slate-100">
-            {t('myWork.calendarCreateEvent.recurrence', 'Recurrence')}
-          </label>
-          <select
-            value={recurrencePreset}
-            onChange={(event) => setRecurrencePreset(event.target.value as RecurrencePreset)}
-            className="w-full rounded-lg border border-slate-300/60 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-primary-400 dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
-          >
-            <option value="none">{t('myWork.calendarCreateEvent.none', 'None')}</option>
-            <option value="daily">{t('myWork.calendarCreateEvent.daily', 'Daily')}</option>
-            <option value="weekly">{t('myWork.calendarCreateEvent.weekly', 'Weekly')}</option>
-            <option value="monthly">{t('myWork.calendarCreateEvent.monthly', 'Monthly')}</option>
-          </select>
-        </div>
+        {v2 && entryType === 'event' ? (
+          <div className="grid grid-cols-2 gap-3">
+            <label className="text-sm">
+              {t('myWork.calendarV2.from', 'From')}
+              <input
+                aria-label={t('myWork.calendarV2.from', 'From')}
+                type="time"
+                value={startTime}
+                onChange={(event) => setStartTime(event.target.value)}
+                className="mt-1 w-full rounded-lg border border-c-border bg-c-surface p-2"
+              />
+            </label>
+            <label className="text-sm">
+              {t('myWork.calendarV2.to', 'To')}
+              <input
+                aria-label={t('myWork.calendarV2.to', 'To')}
+                type="time"
+                value={endTime}
+                onChange={(event) => setEndTime(event.target.value)}
+                className="mt-1 w-full rounded-lg border border-c-border bg-c-surface p-2"
+              />
+            </label>
+            <label className="col-span-2 text-sm">
+              {t('myWork.calendarV2.visibility', 'Visibility')}
+              <select
+                value={visibility}
+                onChange={(event) => setVisibility(event.target.value as typeof visibility)}
+                className="mt-1 w-full rounded-lg border border-c-border bg-c-surface p-2"
+              >
+                <option value="private">{t('myWork.calendarV2.private', 'Private')}</option>
+                <option value="busy">{t('myWork.calendarV2.busy', 'Busy')}</option>
+                <option value="org">{t('myWork.calendarV2.organization', 'Organization')}</option>
+              </select>
+            </label>
+            <CalendarAttendeesField selected={attendees} onChange={setAttendees} />
+            <label className="col-span-2 flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={duplicateFourWeeks}
+                onChange={(event) => setDuplicateFourWeeks(event.target.checked)}
+              />
+              {t('myWork.calendarV2.duplicateFourWeeks', 'Duplicate for the next 4 weeks')}
+            </label>
+            {duplicateResult ? (
+              <output className="col-span-2 text-sm" aria-live="polite">
+                {duplicateResult}
+              </output>
+            ) : null}
+          </div>
+        ) : null}
+
+        {!v2 ? (
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-900 dark:text-slate-100">
+              {t('myWork.calendarCreateEvent.recurrence', 'Recurrence')}
+            </label>
+            <select
+              value={recurrencePreset}
+              onChange={(event) => setRecurrencePreset(event.target.value as RecurrencePreset)}
+              className="w-full rounded-lg border border-slate-300/60 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-c-focus-solid dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
+            >
+              <option value="none">{t('myWork.calendarCreateEvent.none', 'None')}</option>
+              <option value="daily">{t('myWork.calendarCreateEvent.daily', 'Daily')}</option>
+              <option value="weekly">{t('myWork.calendarCreateEvent.weekly', 'Weekly')}</option>
+              <option value="monthly">{t('myWork.calendarCreateEvent.monthly', 'Monthly')}</option>
+            </select>
+          </div>
+        ) : null}
 
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-900 dark:text-slate-100">
@@ -227,7 +384,7 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
               'myWork.calendarCreateEvent.shortContextOrDefinition',
               'Short context or definition of done...'
             )}
-            className="w-full rounded-lg border border-slate-300/60 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-primary-400 dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
+            className="w-full rounded-lg border border-slate-300/60 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-c-focus-solid dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
           />
         </div>
 
@@ -244,7 +401,7 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full rounded-lg border border-slate-300/60 bg-white py-2 pl-10 pr-3 text-sm text-slate-900 outline-none transition focus:border-primary-400 dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
+              className="w-full rounded-lg border border-slate-300/60 bg-white py-2 pl-10 pr-3 text-sm text-slate-900 outline-none transition focus:border-c-focus-solid dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
             />
           </div>
           {helperText && <p className="text-xs text-slate-500 dark:text-slate-400">{helperText}</p>}
@@ -305,6 +462,19 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
         </div>
       </form>
     </Modal>
+    {/* FIX-21 (Day 3 layer-2 acceptance, caught by the required dev-render
+        pass before showing the owner): <Modal> renders through a React
+        portal straight to document.body (Modal.tsx), but <ConfirmDialog>
+        (useConfirmDialog's `dialog`) does not — both share the same
+        `z-modal` z-index, so with equal stacking the later-appended,
+        already-portaled Modal painted OVER the inline confirm dialog,
+        making "Powiel na kolejne 4 tygodnie"'s confirmation invisible
+        behind the still-open event modal. Portal it too so DOM order (it
+        always mounts after the open Modal) puts it on top, same as native
+        window.confirm() always did. Scoped to this call site — no other
+        screen currently combines an open <Modal> with useConfirmDialog(). */}
+    {createPortal(duplicateConfirmDialog, document.body)}
+    </>
   );
 };
 

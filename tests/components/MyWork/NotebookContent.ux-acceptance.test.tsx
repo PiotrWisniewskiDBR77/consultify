@@ -118,6 +118,17 @@ const stableAppStoreReturn = {
   // NotebookContent.tsx. The sibling manual-gate mock omits this field
   // entirely (it doesn't need it); this suite does.
   currentUser: stableCurrentUser,
+  // L-03 (Consolidated right rail, see NotebookRightRail.ownerContract.test.ts):
+  // save-status, owner, and visibility — asserted by this suite via
+  // getByTestId('notebook-save-state') — moved off the old inline strip and
+  // into NotebookRightRail's "Work" tab. NotebookRightRail early-returns null
+  // unless `open` is true, so the mock previously omitting these store fields
+  // (all undefined/falsy) meant the rail — and everything this suite checks —
+  // never rendered at all. Default it open on the Work tab.
+  notebookRailOpen: true,
+  notebookRailTab: 'work' as const,
+  setNotebookRailOpen: vi.fn(),
+  setNotebookRailTab: vi.fn(),
 };
 vi.mock('@/store/useAppStore', () => ({
   useAppStore: () => stableAppStoreReturn,
@@ -424,7 +435,7 @@ describe('NotebookContent — MW-08 UX acceptance', () => {
         content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Edited body' }] }],
       });
 
-      const { getByTestId, getByRole } = renderWithRouter(<NotebookContent searchQuery="" />);
+      const { getByTestId, queryByText } = renderWithRouter(<NotebookContent searchQuery="" />);
 
       await vi.waitFor(() => {
         expect(apiMock.getNotebookPages).toHaveBeenCalled();
@@ -444,9 +455,20 @@ describe('NotebookContent — MW-08 UX acceptance', () => {
       const saveStateEl = getByTestId('notebook-save-state');
       expect(saveStateEl.textContent).toContain('Save failed');
       expect(saveStateEl.textContent).not.toContain('Saved');
-      // A generic error must never be confused with a conflict — no banner,
-      // no Reload/Save-mine-anyway (those are conflict-only recovery actions).
-      expect(() => getByRole('alert')).toThrow();
+      // A generic error must never be confused with a conflict — no
+      // Reload/Save-mine-anyway (those are conflict-only recovery actions).
+      // NOTE: this used to also assert `getByRole('alert')` throws (no alert
+      // role anywhere), which held back when the conflict banner was the
+      // only thing that could ever set role="alert". NotebookRightRail.tsx
+      // now legitimately gives the save-status element itself
+      // `role="alert"` on saveState === 'error' too (a11y: a real save
+      // failure is announce-worthy) — a second, correct use of the role,
+      // not a regression — so a blanket "no alert" check would now fail on
+      // the very save-failed banner this test is asserting exists. Scoped
+      // the check to what actually distinguishes "conflict" from "generic
+      // error": the conflict-only recovery actions.
+      expect(queryByText('Reload')).toBeNull();
+      expect(queryByText('Save mine anyway')).toBeNull();
 
       // Retry: the next successful save must clear the error state, proving
       // 'error' isn't a sticky dead-end the user can't recover from.
@@ -623,10 +645,30 @@ describe('NotebookContent — MW-08 UX acceptance', () => {
     }
   });
 
+  // DEC-26 (FAZA 2, fixed — see git history for the prior PRODUCT_DO_DECYZJA
+  // note this replaced): own pages now render "You" (i18n key
+  // notebook.rightRail.ownerYou, PL "Ty"/EN "You") instead of the current
+  // user's own real name, which used to show even on your own note. A
+  // foreign page shows the REAL owner name the server now resolves
+  // (server/src/routes/v8/my-work.routes.ts buildNotebookSelectFields —
+  // ownerDisplayName, COALESCE(first+last name, email)) via
+  // activePage.ownerDisplayName, simulated here the same way every other
+  // server field is simulated in this suite: on the mocked getNotebookPages
+  // response. The generic "Owner identity unavailable" copy
+  // (NotebookRightRail.tsx) is reserved for the true no-data case — a page
+  // whose owner is known but whose name the server could not resolve
+  // (ownerDisplayName omitted) — asserted separately below so that state
+  // stays distinguishable from both "You" and a real name, not collapsed
+  // into either.
   it('shows the owner as You for your own page and Another user for someone else\'s', async () => {
     apiMock.getNotebookPages.mockResolvedValue([
       makePage({ id: 'note-mine', title: 'Mine', ownerUserId: 'user-1' }),
-      makePage({ id: 'note-theirs', title: 'Theirs', ownerUserId: 'user-2' }),
+      makePage({
+        id: 'note-theirs',
+        title: 'Theirs',
+        ownerUserId: 'user-2',
+        ownerDisplayName: 'Another user',
+      }),
     ]);
 
     const { getByTestId, getByText } = renderWithRouter(<NotebookContent searchQuery="" />);
@@ -639,25 +681,63 @@ describe('NotebookContent — MW-08 UX acceptance', () => {
     // which matches the mocked currentUser.id) — NotebookContent.tsx
     // fetchPages: setActiveId((prev) => prev || arr?.[0]?.id || null).
     await waitFor(() => {
-      expect(getByTestId('notebook-save-state').textContent).toContain('You');
+      expect(getByTestId('notebook-owner-state').textContent).toContain('You');
     });
+    // Own page must never show the current user's own real name.
+    expect(getByTestId('notebook-owner-state').textContent).not.toContain('Piotr');
 
     await act(async () => {
       getByText('Theirs').click();
     });
 
     await waitFor(() => {
-      expect(getByTestId('notebook-save-state').textContent).toContain('Another user');
+      expect(getByTestId('notebook-owner-state').textContent).toContain('Another user');
     });
   });
 
-  it('shows Private vs Shared with project visibility honestly', async () => {
+  it('falls back to the honest "unavailable" state when the owner is known but unnamed', async () => {
     apiMock.getNotebookPages.mockResolvedValue([
-      makePage({ id: 'note-private', title: 'Private note', visibility: 'private' }),
-      makePage({ id: 'note-shared', title: 'Shared note', visibility: 'project' }),
+      makePage({
+        id: 'note-unnamed-owner',
+        title: 'Unnamed owner',
+        ownerUserId: 'user-3',
+        // No ownerDisplayName — simulates the server being unable to resolve
+        // a name for a real, known owner (e.g. deleted account).
+      }),
     ]);
 
-    const { getByTestId, getByText } = renderWithRouter(<NotebookContent searchQuery="" />);
+    const { getByTestId } = renderWithRouter(<NotebookContent searchQuery="" />);
+
+    await waitFor(() => {
+      expect(getByTestId('notebook-owner-state').textContent).toContain(
+        'Owner identity unavailable'
+      );
+    });
+    const text = getByTestId('notebook-owner-state').textContent;
+    expect(text).not.toContain('You');
+    expect(text).not.toContain('Another user');
+  });
+
+  // L-03 (Consolidated right rail): the old inline status strip showed one
+  // dynamic prose string ("Private" / "Shared with project"). The current,
+  // accepted rail design (NotebookRightRail.ownerContract.test.ts locks in
+  // its structure) instead renders a Private/Project TOGGLE BUTTON PAIR —
+  // both labels ("Private", "Project") are always present in the DOM; only
+  // aria-pressed changes with the active page's visibility. A textContent
+  // substring check against a container can never distinguish that (both
+  // words are always there), so this test's original assertion technique
+  // was structurally incompatible with the new UI, not just using stale
+  // copy. Rewritten to assert the real signal: which button carries
+  // aria-pressed="true" for the active page. The underlying capability
+  // (visibility read + toggle) is unchanged and still verified elsewhere by
+  // 'toggles visibility' (M04) style tests.
+  it('shows Private vs Project visibility honestly via aria-pressed', async () => {
+    apiMock.getNotebookPages.mockResolvedValue([
+      makePage({ id: 'note-private', title: 'Private note', visibility: 'private' }),
+      makePage({ id: 'note-shared', title: 'Shared note', visibility: 'project', projectId: 'proj-1' }),
+    ]);
+
+    const { getByRole, getByText } = renderWithRouter(<NotebookContent searchQuery="" />);
 
     await waitFor(() => {
       expect(apiMock.getNotebookPages).toHaveBeenCalled();
@@ -665,7 +745,8 @@ describe('NotebookContent — MW-08 UX acceptance', () => {
 
     // Auto-select lands on 'note-private' first.
     await waitFor(() => {
-      expect(getByTestId('notebook-save-state').textContent).toContain('Private');
+      expect(getByRole('button', { name: 'Private' })).toHaveAttribute('aria-pressed', 'true');
+      expect(getByRole('button', { name: 'Project' })).toHaveAttribute('aria-pressed', 'false');
     });
 
     await act(async () => {
@@ -673,7 +754,8 @@ describe('NotebookContent — MW-08 UX acceptance', () => {
     });
 
     await waitFor(() => {
-      expect(getByTestId('notebook-save-state').textContent).toContain('Shared with project');
+      expect(getByRole('button', { name: 'Private' })).toHaveAttribute('aria-pressed', 'false');
+      expect(getByRole('button', { name: 'Project' })).toHaveAttribute('aria-pressed', 'true');
     });
   });
 

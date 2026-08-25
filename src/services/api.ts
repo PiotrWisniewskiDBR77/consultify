@@ -1764,6 +1764,27 @@ export const Api = {
     return Array.isArray(data) ? data : data.users || [];
   },
 
+  /**
+   * Org-scoped user typeahead for pickers (any authenticated USER, not just
+   * ADMIN/OWNER — `GET /users` above is role-gated and would 403 for a plain
+   * member). Backend: `server/src/routes/users.routes.ts` `GET /users/search`
+   * — same endpoint TeamManagementPanel's `onSearchUsers` wiring documents as
+   * the canonical picker source.
+   */
+  searchOrgUsers: async (
+    query: string,
+    limit = 8
+  ): Promise<Array<{ id: string; name: string; email: string; avatarUrl?: string | null }>> => {
+    const q = String(query || '').trim();
+    if (q.length < 2) return [];
+    const params = new URLSearchParams({ q, limit: String(limit) });
+    const res = await fetch(`${API_URL}/users/search?${params.toString()}`, {
+      headers: getHeaders(),
+    });
+    const data = await handleResponse(res, 'Failed to search organization users');
+    return Array.isArray(data?.users) ? data.users : [];
+  },
+
   addUser: async (user: any): Promise<User> => {
     const res = await fetch(`${API_URL}/users`, {
       method: 'POST',
@@ -12438,6 +12459,19 @@ export const Api = {
     projectId?: string;
     ownership?: 'any' | 'assignee' | 'owner';
   }): Promise<{ events: any[] }> => {
+    if (filters?.sources?.includes('event')) {
+      const params = new URLSearchParams();
+      if (filters.start) params.set('start', filters.start);
+      if (filters.end) params.set('end', filters.end);
+      params.set('sources', filters.sources.join(','));
+      if (filters.projectId) params.set('projectId', filters.projectId);
+      if (filters.ownership && filters.ownership !== 'any')
+        params.set('ownership', filters.ownership);
+      const res = await fetch(`${API_URL}/my-work/calendar/unified?${params.toString()}`, {
+        headers: getHeaders(),
+      });
+      return handleResponse(res, 'Failed to load unified calendar');
+    }
     try {
       return await V8MyWorkApi.getCalendarUnified(filters);
     } catch (error) {
@@ -12476,15 +12510,30 @@ export const Api = {
   },
   createMyWorkCalendarEvent: async (body: {
     title: string;
-    start: string;
+    start?: string;
     end?: string;
+    startAt?: string;
+    endAt?: string;
     allDay?: boolean;
-    source?: 'task' | 'initiative' | 'decision';
+    source?: 'event' | 'task' | 'initiative' | 'decision';
     description?: string;
+    location?: string;
+    attendees?: string[];
+    visibility?: 'private' | 'busy' | 'org';
+    relatedType?: 'task' | 'initiative' | 'meeting' | null;
+    relatedId?: string | null;
     recurrence?: {
       preset: 'daily' | 'weekly' | 'monthly';
     };
   }): Promise<any> => {
+    if ((body.source ?? 'event') === 'event') {
+      const res = await fetch(`${API_URL}/my-work/calendar/events`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(body),
+      });
+      return handleResponse(res, 'Failed to create calendar event');
+    }
     try {
       return await V8MyWorkApi.createCalendarEvent(body);
     } catch (error) {
@@ -12512,6 +12561,17 @@ export const Api = {
     const sourceId = String(body.sourceId || '').trim();
     if (!source || !sourceId) {
       throw new Error('Missing calendar event source/sourceId');
+    }
+    if (source === 'event') {
+      const res = await fetch(
+        `${API_URL}/my-work/calendar/events/event-${encodeURIComponent(sourceId)}/reschedule`,
+        {
+          method: 'PATCH',
+          headers: getHeaders(),
+          body: JSON.stringify({ newStart: body.start, newEnd: body.end }),
+        }
+      );
+      return handleResponse(res, 'Failed to reschedule calendar event');
     }
 
     const sourceType =

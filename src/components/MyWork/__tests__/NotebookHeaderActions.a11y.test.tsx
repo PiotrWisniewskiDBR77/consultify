@@ -24,7 +24,7 @@ let NotebookHeaderActionsImport: typeof import('../NotebookHeaderActions');
 
 const mountWithLang = async (
   lang: 'en' | 'pl',
-  props: { onBack?: () => void; onNewPage: () => void }
+  props: { onBack?: () => void; onNewPage: () => void; onSearchAllNotebooks?: () => void }
 ) => {
   vi.resetModules();
   mockI18n(lang);
@@ -82,6 +82,28 @@ describe('NotebookHeaderActions — accessible contract (EN)', () => {
     expect(screen.queryByRole('button', { name: 'All notebooks' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'New page' })).toBeInTheDocument();
   });
+
+  // MYW-NBK-004
+  it('renders no search-all-notebooks button when onSearchAllNotebooks is not provided', async () => {
+    await mountWithLang('en', { onNewPage: vi.fn() });
+
+    expect(
+      screen.queryByRole('button', { name: 'Search all notebooks' })
+    ).not.toBeInTheDocument();
+  });
+
+  it('names the search-all-notebooks button, it is focusable, and invokes the callback', async () => {
+    const onSearchAllNotebooks = vi.fn();
+    await mountWithLang('en', { onNewPage: vi.fn(), onSearchAllNotebooks });
+
+    const search = screen.getByRole('button', { name: 'Search all notebooks' });
+    expect(search).toBeInTheDocument();
+    search.focus();
+    expect(search).toHaveFocus();
+
+    fireEvent.click(search);
+    expect(onSearchAllNotebooks).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('NotebookHeaderActions — accessible contract (real PL)', () => {
@@ -105,5 +127,17 @@ describe('NotebookHeaderActions — accessible contract (real PL)', () => {
 
     expect(onBack).toHaveBeenCalledTimes(1);
     expect(onNewPage).toHaveBeenCalledTimes(1);
+  });
+
+  // MYW-NBK-004 — real PL string: searchAllNotebooks = "Szukaj we wszystkich notatnikach"
+  it('names and invokes the search-all-notebooks button in real Polish', async () => {
+    const onSearchAllNotebooks = vi.fn();
+    await mountWithLang('pl', { onNewPage: vi.fn(), onSearchAllNotebooks });
+
+    const search = screen.getByRole('button', { name: 'Szukaj we wszystkich notatnikach' });
+    expect(search).toBeInTheDocument();
+
+    fireEvent.click(search);
+    expect(onSearchAllNotebooks).toHaveBeenCalledTimes(1);
   });
 });

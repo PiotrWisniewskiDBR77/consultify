@@ -1,5 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import {
+  type ActionContext,
+  getActionsForSurface,
+  runIdeaAction,
+} from '@/actions/ideaActionRegistry';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import {
   StandardTable,
@@ -21,6 +26,7 @@ import {
 } from '@/services/initiatives-execution/runtimeApi';
 
 import { useGateSignoffGuard } from './gateSignoffProjection';
+import { EMPTY_SELECTION } from './ideaSelectionTypes';
 
 interface ClosureRow extends TableRow {
   id: string;
@@ -122,6 +128,41 @@ export const ClosureDecisionQueue = () => {
   const gate = useGateSignoffGuard('CLOSURE', selectedId);
   const policyEnforced = gate.projection?.effectivePolicy.policyEnforced ?? true;
   const canDecide = Boolean(selected && (!policyEnforced || gate.quorumRef));
+
+  // TRI-OBS-17 (2026-08-25, R10 traceability): same `runAction(id, run)`
+  // wrapper as `WhiteboardToolbar.tsx`/`ProcessFlowToolbar.tsx` — checks the
+  // real central Idea Workspace registry first (this screen isn't an Idea
+  // canvas surface, so today it never matches, exactly like an
+  // unmigrated toolbar action) and otherwise runs the original callback
+  // unchanged. Zero behaviour change; makes these commands mechanically
+  // traceable and ready to pick up a real registry entry later without
+  // touching call sites again.
+  const registryActionsById = useMemo(() => {
+    const map = new Map<string, ReturnType<typeof getActionsForSurface>[number]>();
+    for (const entry of getActionsForSurface('panel', { tool: 'table' })) {
+      map.set(entry.def.id, entry);
+    }
+    return map;
+  }, []);
+
+  const runAction = useCallback(
+    (id: string, run: () => void) => {
+      if (!registryActionsById.has(id)) {
+        run();
+        return;
+      }
+      const ctx: ActionContext = {
+        ideaId: '',
+        tool: 'table',
+        selection: EMPTY_SELECTION,
+        surface: 'panel',
+        source: 'ui',
+        params: { run },
+      };
+      void runIdeaAction(id, ctx);
+    },
+    [registryActionsById]
+  );
 
   const submitRequest = async () => {
     const effect = effectiveness.find(
@@ -367,7 +408,10 @@ export const ClosureDecisionQueue = () => {
             Legal hold
           </label>
         </div>
-        <button className="btn-secondary mt-3" onClick={() => void submitRequest()}>
+        <button
+          className="btn-secondary mt-3"
+          onClick={() => runAction('closure.request.submit', () => void submitRequest())}
+        >
           Request independent Closure
         </button>
       </section>
@@ -457,7 +501,7 @@ export const ClosureDecisionQueue = () => {
           <button
             className="btn-primary mt-3"
             disabled={legalHold || !archive.retentionRef || !archive.exportRef}
-            onClick={() => void archiveSelected()}
+            onClick={() => runAction('closure.archive.create', () => void archiveSelected())}
           >
             Create Archive Manifest
           </button>

@@ -10,7 +10,7 @@
  */
 
 import { AnimatePresence, motion } from 'framer-motion';
-import i18n from 'i18next';
+import i18n from '../../i18n';
 import {
   AlertCircle,
   Archive,

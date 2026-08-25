@@ -16,7 +16,7 @@ import {
 } from '@/utils/notebookExport';
 
 import i18n from '../../../i18n';
-import type { NOTEBOOK_EXPORT_ACTION_IDS } from './notebookActionRegistry';
+import { NOTEBOOK_EXPORT_ACTION_IDS } from './notebookActionRegistry';
 
 type NotebookExportActionId = (typeof NOTEBOOK_EXPORT_ACTION_IDS)[number];
 
@@ -26,6 +26,9 @@ interface NotebookExportMenuProps {
   className?: string;
   /** Optional: disable when the page has no persisted content. */
   disabled?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
 }
 
 const labels = () => ({
@@ -41,8 +44,17 @@ export const NotebookExportMenu: React.FC<NotebookExportMenuProps> = ({
   isPolish: _isPolish = false,
   className = '',
   disabled = false,
+  open: controlledOpen,
+  onOpenChange,
+  hideTrigger = false,
 }) => {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = (next: boolean | ((current: boolean) => boolean)) => {
+    const resolved = typeof next === 'function' ? next(open) : next;
+    if (controlledOpen === undefined) setInternalOpen(resolved);
+    onOpenChange?.(resolved);
+  };
   const [busy, setBusy] = useState<NotebookExportFormat | null>(null);
   const [failedFormat, setFailedFormat] = useState<NotebookExportFormat | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -113,24 +125,41 @@ export const NotebookExportMenu: React.FC<NotebookExportMenuProps> = ({
     [page]
   );
 
+  // TRI-OBS-17 (2026-08-25, R10 traceability): the four export commands below
+  // are already registered in `notebookActionRegistry.ts` (each button already
+  // carries `data-notebook-action-id="export:<format>"`) — this wrapper is the
+  // real traceable entry point (`scripts/check-action-coverage.sh` recognizes
+  // `runAction(id, run)`, same wiring convention as
+  // `WhiteboardToolbar.tsx`/`ProcessFlowToolbar.tsx`'s `runAction`), and it
+  // genuinely validates against that registry instead of trusting the caller.
+  const runAction = useCallback(
+    (id: NotebookExportActionId, format: NotebookExportFormat) => {
+      if (!NOTEBOOK_EXPORT_ACTION_IDS.includes(id)) return;
+      void run(format);
+    },
+    [run]
+  );
+
   const itemBase =
     'flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] text-c-text-secondary transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-60 dark:text-c-text dark:hover:bg-white/[0.06]';
 
   return (
     <div ref={rootRef} className={`relative inline-block ${className}`}>
-      <button
-        ref={triggerRef}
-        type="button"
-        data-notebook-action-id={'export:trigger' satisfies `export:${NotebookExportActionId}`}
-        onClick={() => setOpen((v) => !v)}
-        disabled={disabled}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-c-border-subtle bg-c-surface px-2.5 py-1.5 text-[13px] font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-c-text dark:hover:bg-white/[0.08]"
-      >
-        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-        <span>{exportLabels.trigger}</span>
-      </button>
+      {!hideTrigger ? (
+        <button
+          ref={triggerRef}
+          type="button"
+          data-notebook-action-id={'export:trigger' satisfies `export:${NotebookExportActionId}`}
+          onClick={() => setOpen((v) => !v)}
+          disabled={disabled}
+          aria-haspopup="menu"
+          aria-expanded={open}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-c-border-subtle bg-c-surface px-2.5 py-1.5 text-[13px] font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-c-text dark:hover:bg-white/[0.08]"
+        >
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+          <span>{exportLabels.trigger}</span>
+        </button>
+      ) : null}
 
       {open && (
         <div
@@ -149,7 +178,7 @@ export const NotebookExportMenu: React.FC<NotebookExportMenuProps> = ({
                   type="button"
                   data-notebook-action-id={`export:${failedFormat}`}
                   className="mt-1 font-semibold underline"
-                  onClick={() => void run(failedFormat)}
+                  onClick={() => runAction(failedFormat, failedFormat)}
                 >
                   {i18n.t('common.retry', 'Retry')}
                 </button>
@@ -162,7 +191,7 @@ export const NotebookExportMenu: React.FC<NotebookExportMenuProps> = ({
             data-notebook-action-id="export:markdown"
             className={itemBase}
             disabled={busy !== null}
-            onClick={() => run('markdown')}
+            onClick={() => runAction('markdown', 'markdown')}
           >
             <FileText className="h-4 w-4 text-c-text-muted" />
             {exportLabels.markdown}
@@ -173,7 +202,7 @@ export const NotebookExportMenu: React.FC<NotebookExportMenuProps> = ({
             data-notebook-action-id="export:pdf"
             className={itemBase}
             disabled={busy !== null}
-            onClick={() => run('pdf')}
+            onClick={() => runAction('pdf', 'pdf')}
           >
             <FileType className="h-4 w-4 text-c-text-muted" />
             {exportLabels.pdf}
@@ -184,7 +213,7 @@ export const NotebookExportMenu: React.FC<NotebookExportMenuProps> = ({
             data-notebook-action-id="export:docx"
             className={itemBase}
             disabled={busy !== null}
-            onClick={() => run('docx')}
+            onClick={() => runAction('docx', 'docx')}
           >
             <FileType className="h-4 w-4 text-c-text-muted" />
             {exportLabels.docx}

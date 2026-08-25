@@ -37,6 +37,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { FolderCreateDialog } from '@/components/shared/FolderCreateDialog';
 import {
   type ActionRow,
   type MetaPill,
@@ -566,16 +567,53 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     [isPolish, fetchIdeas]
   );
 
-  const handleCreateFolder = useCallback(async () => {
-    const name = window.prompt(t('myWork.ideasList.windowPrompt', 'Folder name'))?.trim();
-    if (!name) return;
-    try {
-      const created = await Api.createMyIdeaFolder({ name });
-      setFolders((prev) => [...prev, { id: created.id, name: created.name }]);
-    } catch {
-      toast.error(t('myWork.ideasList.toastError2', 'Failed to create folder'));
-    }
-  }, [isPolish]);
+  // MYW-IDEA-REC-002: replaces the window.prompt sequence with the shared
+  // canon dialog (src/components/shared/FolderCreateDialog.tsx) that Vault
+  // (VaultDocumentsView) and Run agent (AgentHubShell.handleCreateFolder)
+  // already use — same component, same visual contract, no crimson.
+  //
+  // `fixedScope="user"` (dialog hides the level picker, shows it as
+  // read-only context) rather than the selectable 3-level picker Vault/Run
+  // agent offer: `my_idea_folders` (server/src/routes/my-work.routes.ts
+  // '/my-idea-folders') is unconditionally `WHERE user_id = ? AND
+  // organization_id = ?` — there is no `scope`/`project_id` column and no
+  // project-visibility query variant at all, unlike `agent_folders`/vault
+  // safes which already had a real scope model before their dialogs were
+  // wired. Offering Project/Organization here would be a fully silent no-op
+  // — exactly the "atrapa" (fake control) this closure program exists to
+  // remove, not a smaller version of the same fix. Real scope support needs
+  // a migration + a rewritten list-visibility query, out of scope for this
+  // mechanical dialog-wiring pass — tracked as the remaining gap in
+  // MODULE_ACCEPTANCE.md.
+  const [folderDialogOpen, setFolderDialogOpen] = useState(false);
+  const [folderDialogBusy, setFolderDialogBusy] = useState(false);
+  const [folderDialogError, setFolderDialogError] = useState<string | null>(null);
+
+  const handleCreateFolder = useCallback(() => {
+    setFolderDialogError(null);
+    setFolderDialogOpen(true);
+  }, []);
+
+  const handleFolderDialogSubmit = useCallback(
+    async (input: { name: string }) => {
+      setFolderDialogBusy(true);
+      setFolderDialogError(null);
+      try {
+        const created = await Api.createMyIdeaFolder({ name: input.name });
+        setFolders((prev) => [...prev, { id: created.id, name: created.name }]);
+        setFolderDialogOpen(false);
+      } catch (error) {
+        setFolderDialogError(
+          error instanceof Error
+            ? error.message
+            : t('myWork.ideasList.toastError2', 'Failed to create folder')
+        );
+      } finally {
+        setFolderDialogBusy(false);
+      }
+    },
+    [t]
+  );
 
   const handleDeleteFolder = useCallback(
     async (folderId: string) => {
@@ -1728,6 +1766,25 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     </div>
   ) : null;
 
+  // MYW-IDEA-REC-002 — canon "New folder…" dialog (see handleCreateFolder
+  // above for why fixedScope="user"). FolderCreateDialog portals itself to
+  // document.body and renders null while closed, so it's safe to include
+  // in every early-return branch below alongside the convert-idea modal.
+  const folderCreateDialogNode = (
+    <FolderCreateDialog
+      open={folderDialogOpen}
+      onClose={() => {
+        if (folderDialogBusy) return;
+        setFolderDialogOpen(false);
+      }}
+      onSubmit={handleFolderDialogSubmit}
+      fixedScope="user"
+      busy={folderDialogBusy}
+      errorMessage={folderDialogError}
+      title={t('myWork.ideasList.newFolder', isPolish ? 'Nowy folder…' : 'New folder…')}
+    />
+  );
+
   // ── Tag modal ──
 
   const tagModal = tagModalOpen ? (
@@ -1865,6 +1922,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       return (
         <div className="w-full h-full overflow-y-auto bg-c-bg p-4">
           {convertModal}
+          {folderCreateDialogNode}
           {tagModal}
           {confirmDialog}
           <div className="mt-4 px-4 pb-4">{renderEmpty()}</div>
@@ -1875,6 +1933,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     return (
       <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden bg-c-bg">
         {convertModal}
+          {folderCreateDialogNode}
         {tagModal}
         {confirmDialog}
         {/* Match Tasks/Inbox: bounded height so table scrolls inside row and preview stays viewport-high */}
@@ -1939,6 +1998,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       return (
         <div className="w-full h-full overflow-y-auto bg-c-bg p-4">
           {convertModal}
+          {folderCreateDialogNode}
           {tagModal}
           {confirmDialog}
           <div className="mt-4 px-4 pb-4">{renderEmpty()}</div>
@@ -1949,6 +2009,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     return (
       <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden bg-c-bg">
         {convertModal}
+          {folderCreateDialogNode}
         {tagModal}
         {confirmDialog}
         <div className="flex flex-col flex-1 min-h-0">
@@ -2086,6 +2147,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     return (
       <div className="w-full h-full overflow-y-auto bg-c-bg p-4">
         {convertModal}
+          {folderCreateDialogNode}
         {tagModal}
         {confirmDialog}
         <div className="p-4">{renderEmpty()}</div>
@@ -2096,6 +2158,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   return (
     <div className="w-full h-full overflow-y-auto bg-c-bg">
       {convertModal}
+          {folderCreateDialogNode}
       {tagModal}
       {confirmDialog}
       <div className="p-4 space-y-4">

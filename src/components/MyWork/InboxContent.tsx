@@ -4204,15 +4204,28 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                   </p>
                 </>
               ) : (
+                // MYW-PHOTO-002 (P0): the previous copy here celebrated a
+                // "zero backlog" success it cannot actually verify — zero
+                // items can just as easily mean scoped-out tenant data, an
+                // unseeded environment, or a filter silently excluding
+                // everything, none of which is a real achievement. The
+                // honest version states the fact (no items) and what happens
+                // next (an invitation), without claiming success.
                 <>
                   <Inbox size={40} className="mx-auto mb-4 text-c-text-muted" />
                   <p className="text-base font-semibold mb-1">
-                    {t('myWork.inboxContent.inboxIsEmptyZero', 'Inbox is empty — zero backlog!')}
+                    {t('myWork.inboxContent.noItemsInInbox', 'No items in your inbox')}
                   </p>
+                  {/* MYW-PHOTO-002: a successful, in-scope, genuinely-empty
+                      query is not distinguishable here from a zero caused by
+                      tenant/project scope, a missing fixture or unavailable
+                      data — so this can no longer claim an unverifiable
+                      "you succeeded" (the loading/error states above already
+                      cover the load-failure case honestly). */}
                   <p className="text-sm text-c-text-muted">
                     {t(
-                      'myWork.inboxContent.everythingProcessedGreatJob',
-                      'Everything processed. Great job!'
+                      'myWork.inboxContent.newItemsWillAppearHere',
+                      "New items will appear here as they come in. If you expected to see something here, check that you're looking at the right organization/project."
                     )}
                   </p>
                 </>

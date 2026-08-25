@@ -64,6 +64,7 @@ import { type ActionContext, runIdeaAction } from '@/actions/ideaActionRegistry'
 import type { LaneOpOutcome } from '@/actions/quickActionAck';
 import { ErrorState, SkeletonState } from '@/components/shared/states';
 import { Api } from '@/services/api';
+import { isIdeaInspectorRightRailEnabled } from '@/utils/ideaInspectorRightRailFlag';
 import {
   generateAIProposal,
   generateProcessSummary,
@@ -193,6 +194,7 @@ import {
   useProcessFlowPersistence,
 } from './processflow/useProcessFlowPersistence';
 import { useProcessFlowQuickActions } from './processflow/useProcessFlowQuickActions';
+import { IdeaAINudgeStrip } from './IdeaAINudgeStrip';
 import { useProcessFlowReadback } from './processflow/useProcessFlowReadback';
 import { useProcessFlowUndoRedo } from './processflow/useProcessFlowUndoRedo';
 import { useProcessFlowValidation } from './processflow/useProcessFlowValidation';
@@ -955,10 +957,15 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           meta: {
             nodeType: primary?.type,
             shape: primary?.data?.shape,
+            color: primary?.data?.color,
             laneId: primary?.data?.laneId,
+            laneName: lanes.find((lane) => lane.id === primary?.data?.laneId)?.label,
             label: primary?.data?.label,
             description: primary?.data?.description,
-            owner: primary?.data?.owner,
+            // FIX-16 (Day 3 layer-2 acceptance): ProcessFlowPropertiesPanel's own
+            // "assignee" field already reads `d.assignee ?? d.owner` — mirror that
+            // fallback here so the shared inspector's Owner reads the same value.
+            owner: primary?.data?.owner ?? primary?.data?.assignee,
             duration: primary?.data?.duration,
             durationUnit: primary?.data?.durationUnit,
             cost: primary?.data?.cost,
@@ -971,7 +978,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         });
       }
     },
-    [onSelectionChange]
+    [onSelectionChange, lanes]
   );
 
   // ── PASEK EDYCJI OBIEKTU (ff_canvasObjectEditBar) ──────────────────────
@@ -2211,8 +2218,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     // nothing) when asked to delete the only remaining lane. Surface that
     // refusal — same toast.error pattern as selectEdgeFirst/selectDecisionNode
     // above.
-    onLaneDeleteBlocked: () =>
-      toast.error(t('myWorkIdeas.processFlowTool.cannotDeleteLastLane')),
+    onLaneDeleteBlocked: () => toast.error(t('myWorkIdeas.processFlowTool.cannotDeleteLastLane')),
   });
 
   // ── F5a A3: lane collapse / resize (state in lanes[].{collapsed,height}) ──
@@ -2941,8 +2947,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       const currentCondition = String(edgeData.conditionType ?? '');
       const currentConditionEntry =
         EDGE_CONDITIONS.find((c) => c.id === currentCondition) ?? EDGE_CONDITIONS[0];
-      const truncate = (s: string, max: number) =>
-        s.length > max ? `${s.slice(0, max - 1)}…` : s;
+      const truncate = (s: string, max: number) => (s.length > max ? `${s.slice(0, max - 1)}…` : s);
       return {
         title: t('canvasEditBar.titleEdge', 'Połączenie'),
         groups: [
@@ -4018,7 +4023,10 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         </div>
       )}
 
-      {showPropertiesPanel && (
+      {/* FIX-8 (Day 3 acceptance): when the shared IdeaElementInspector rail
+          (ff_ideaInspectorRightRail) is ON, this legacy panel must NOT also
+          render — that was the "two panels at once" defect. */}
+      {showPropertiesPanel && !isIdeaInspectorRightRailEnabled() && (
         <div className="absolute right-0 top-0 bottom-0 w-80 z-30 border-l border-slate-200/60 dark:border-navy-700/60 bg-c-bg overflow-y-auto shadow-lg">
           <div className="flex items-center justify-between p-3 border-b border-slate-200/60 dark:border-navy-700/60">
             <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
@@ -4369,6 +4377,37 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         </div>
       )}
       {bulkDeleteDialog}
+      {!locked ? (
+        <IdeaAINudgeStrip
+          ideaId={ideaId}
+          userId={currentUser?.id || null}
+          organizationId={currentUser?.organizationId || null}
+          activeTool="process_flow"
+          title={t('myWorkIdeas.processFlowTool.title', 'Process flow')}
+          seedText={nodes
+            .slice(0, 12)
+            .map((node) => String(node.data?.label || ''))
+            .filter(Boolean)
+            .join('\n')}
+          isAccepted={false}
+          graphNodes={nodes}
+          graphEdges={edges}
+          onActionExpand={() => {
+            window.dispatchEvent(
+              new CustomEvent('idea-workspace-quick-action', {
+                detail: { action: 'pf_add_action', ideaId },
+              })
+            );
+            return { status: 'handed_off' as const };
+          }}
+          onActionConvert={() => {
+            onOpenChat?.(
+              t('myWorkIdeas.processFlowTool.summarizeInChat', 'Summarize this process flow')
+            );
+            return { status: 'handed_off' as const };
+          }}
+        />
+      ) : null}
     </div>
   );
 };
