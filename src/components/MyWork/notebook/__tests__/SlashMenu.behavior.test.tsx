@@ -157,7 +157,14 @@ describe('SlashMenu', () => {
     renderMenu({ state: openState({ query: 'create task' }), receiptCapableActionIds: [] });
     const item = screen.getByRole('menuitem', { name: /Create Task/ });
     expect(item).toHaveAttribute('aria-disabled', 'true');
-    expect(item).toHaveAccessibleDescription(/durable action receipt/);
+    // FIX-1/FIX-7 (Day 3 acceptance): the reason is now a real i18n key
+    // (t('notebook.slashMenu.receiptUnavailable', '<polish fallback>')),
+    // PL-led per this codebase's convention — this file's simplified mock
+    // (`(_k, d) => d ?? _k`) returns that fallback regardless of
+    // `mockLanguage`, since it does not do real per-key JSON resolution.
+    // Real i18next resolves this correctly per-language via
+    // public/locales/{pl,en}/translation.json.
+    expect(item).toHaveAccessibleDescription(/trwałego potwierdzenia/);
     fireEvent.mouseDown(item);
     expect(dispatched).not.toHaveBeenCalled();
     window.removeEventListener('notebook-create-task', dispatched);

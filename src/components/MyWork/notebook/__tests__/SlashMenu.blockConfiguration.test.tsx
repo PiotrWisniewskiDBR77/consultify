@@ -12,7 +12,16 @@ import { CalloutNode, DetailsContentNode, DetailsNode, DetailsSummaryNode } from
 import { SlashMenu } from '../SlashMenu';
 
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ i18n: { language: 'en' } }),
+  // FIX-7 (Day 3 acceptance): SlashMenu now also calls t() (for the
+  // governed-action "unavailable" reason) — this file's own local
+  // react-i18next mock previously only provided `i18n`, so `t` was
+  // undefined and any render path touching it threw `t is not a function`.
+  // Matches the global test-setup mock's t() contract (string default →
+  // returned verbatim).
+  useTranslation: () => ({
+    t: (key: string, fallback?: string) => (typeof fallback === 'string' ? fallback : key),
+    i18n: { language: 'en' },
+  }),
 }));
 
 let editor: Editor | null = null;
