@@ -17,8 +17,6 @@
 import {
   AlertTriangle,
   ArrowRight,
-  Bot,
-  ClipboardCheck,
   Clock,
   Globe,
   Loader2,
@@ -30,7 +28,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 import { Api } from '../../services/api';
 import {
@@ -46,6 +44,7 @@ import {
   type RetentionSchedule,
 } from '../../services/enterpriseComplianceApi';
 import { cn } from '../../utils/cn';
+import { formatListDate, formatListDateTime } from '../../utils/listDateFormat';
 import { StandardTable, type TableColumn, type TableRow } from '../standard/StandardTable';
 import type { AdminSettingsSection } from './AdminSettingsSidebar';
 import { CommandCenterAgentTraceTab } from './commandCenter/CommandCenterAgentTraceTab';
@@ -67,7 +66,7 @@ type TabId =
 interface AdminCommandCenterPanelProps {
   onSectionChange?: (section: AdminSettingsSection) => void;
   aggregationOnly?: boolean;
-  screen?: 'attention-queue' | 'cost-capacity';
+  screen?: 'attention-queue' | 'cost-capacity' | TabId;
 }
 interface AttentionSignal {
   id: string;
@@ -86,7 +85,7 @@ const CommandCenterAttentionQueue: React.FC = () => {
   useEffect(() => {
     let alive = true;
     void (async () => {
-      const freshness = new Date().toLocaleString();
+      const freshness = formatListDateTime(new Date());
       const results = await Promise.allSettled([
         Api.getAdminRiskSummary(),
         Api.getTenantAdminAuditStats(),
@@ -286,7 +285,7 @@ const CommandCenterCostCapacity: React.FC = () => {
         health: values[3],
         attribution: values[4],
       });
-      setFreshness(new Date().toLocaleString());
+      setFreshness(formatListDateTime(new Date()));
     })();
     return () => {
       alive = false;
@@ -733,7 +732,10 @@ const CommandCenterOverviewTab: React.FC<{
               <div>
                 <p className="text-lg font-semibold text-c-text">
                   {t('commandCenter.overview.tiles.aiPolicy.citationMode', {
-                    mode: aiPolicy.value.requiredCitationMode,
+                    mode: t(
+                      `commandCenter.aiPolicy.fields.citationModeOptions.${aiPolicy.value.requiredCitationMode}`,
+                      aiPolicy.value.requiredCitationMode
+                    ),
                   })}
                 </p>
                 <p className="mt-1 text-xs text-c-text-secondary">
@@ -790,7 +792,7 @@ const CommandCenterOverviewTab: React.FC<{
                 {retention.value.nextCleanupAt && (
                   <p className="mt-1 text-xs text-c-text-secondary">
                     {t('commandCenter.overview.tiles.retention.nextCleanup', {
-                      date: new Date(retention.value.nextCleanupAt).toLocaleDateString(),
+                      date: formatListDate(retention.value.nextCleanupAt),
                     })}
                   </p>
                 )}
@@ -813,7 +815,7 @@ const CommandCenterOverviewTab: React.FC<{
               </p>
               <p className="mt-1 text-xs text-c-text-secondary">
                 {t('commandCenter.overview.tiles.auditExport.generatedAt', {
-                  time: new Date(auditExport.value.exportedAt).toLocaleString(),
+                  time: formatListDateTime(auditExport.value.exportedAt),
                 })}
               </p>
             </div>
@@ -829,72 +831,13 @@ export const AdminCommandCenterPanel: React.FC<AdminCommandCenterPanelProps> = (
   screen,
 }) => {
   const { t } = useTranslation();
-  const tabs: Array<{
-    id: TabId;
-    label: string;
-    icon: React.ElementType;
-  }> = useMemo(
-    () => [
-      {
-        id: 'overview',
-        label: t('commandCenter.tabs.overview'),
-        icon: ShieldCheck,
-      },
-      {
-        id: 'agent-trace',
-        label: t('commandCenter.tabs.agentTrace'),
-        icon: Bot,
-      },
-      {
-        id: 'audit',
-        label: t('commandCenter.tabs.audit'),
-        icon: ScrollText,
-      },
-      {
-        id: 'dlp',
-        label: t('commandCenter.tabs.dlp'),
-        icon: Lock,
-      },
-      {
-        id: 'residency',
-        label: t('commandCenter.tabs.residency'),
-        icon: Globe,
-      },
-      {
-        id: 'retention',
-        label: t('commandCenter.tabs.retention'),
-        icon: Clock,
-      },
-      {
-        id: 'ai-policy',
-        label: t('commandCenter.tabs.aiPolicy'),
-        icon: Sparkles,
-      },
-      {
-        id: 'benchmark',
-        label: t('commandCenter.tabs.benchmark'),
-        icon: ClipboardCheck,
-      },
-    ],
-    [t]
-  );
-  const [searchParams, setSearchParams] = useSearchParams();
-  const requestedTab = useMemo(() => {
-    const raw = searchParams.get('tab');
-    return tabs.some((tab) => tab.id === raw) ? (raw as TabId) : 'overview';
-  }, [searchParams, tabs]);
-  const [activeTab, setActiveTab] = useState<TabId>(requestedTab);
-  useEffect(() => {
-    setActiveTab(requestedTab);
-  }, [requestedTab]);
-  const handleTabChange = (tab: TabId) => {
-    setActiveTab(tab);
-    const nextParams = new URLSearchParams(searchParams);
-    nextParams.set('tab', tab);
-    setSearchParams(nextParams, {
-      replace: true,
-    });
-  };
+  // DEC night-fixes-b-20260826 (ADM-OWN-001): navigation between these 7
+  // Command Center screens used to be an internal horizontal pill-nav,
+  // duplicating and contradicting the vertical AdminSettingsSidebar that
+  // wraps every other admin domain. Each screen is now its own vertical nav
+  // slot (see adminNavigation.ts, `command` domain) and this component just
+  // renders whichever one AdminSettingsModule routed to via `screen`.
+  const activeScreen: TabId = aggregationOnly ? 'overview' : (screen as TabId) || 'overview';
   if (screen === 'attention-queue') return <CommandCenterAttentionQueue />;
   if (screen === 'cost-capacity') return <CommandCenterCostCapacity />;
   return (
@@ -904,41 +847,14 @@ export const AdminCommandCenterPanel: React.FC<AdminCommandCenterPanelProps> = (
         <p className="mt-1 text-sm text-c-text-secondary">{t('commandCenter.description')}</p>
       </div>
 
-      {!aggregationOnly && (
-        <div className="rounded-2xl border border-c-border bg-c-surface p-2">
-          <div className="flex flex-wrap gap-2">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => handleTabChange(tab.id)}
-                  className={cn(
-                    'inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition',
-                    activeTab === tab.id
-                      ? 'bg-c-text text-c-bg'
-                      : 'bg-transparent text-c-text-secondary hover:bg-c-surface-raised'
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {(aggregationOnly || activeTab === 'overview') && (
-        <CommandCenterOverviewTab onSectionChange={onSectionChange} />
-      )}
-      {!aggregationOnly && activeTab === 'agent-trace' && <CommandCenterAgentTraceTab />}
-      {!aggregationOnly && activeTab === 'audit' && <CommandCenterAuditTab />}
-      {!aggregationOnly && activeTab === 'dlp' && <CommandCenterDlpTab />}
-      {!aggregationOnly && activeTab === 'residency' && <CommandCenterResidencyTab />}
-      {!aggregationOnly && activeTab === 'retention' && <CommandCenterRetentionTab />}
-      {!aggregationOnly && activeTab === 'ai-policy' && <CommandCenterAiPolicyTab />}
-      {!aggregationOnly && activeTab === 'benchmark' && <CommandCenterBenchmarkTab />}
+      {activeScreen === 'overview' && <CommandCenterOverviewTab onSectionChange={onSectionChange} />}
+      {activeScreen === 'agent-trace' && <CommandCenterAgentTraceTab />}
+      {activeScreen === 'audit' && <CommandCenterAuditTab />}
+      {activeScreen === 'dlp' && <CommandCenterDlpTab />}
+      {activeScreen === 'residency' && <CommandCenterResidencyTab />}
+      {activeScreen === 'retention' && <CommandCenterRetentionTab />}
+      {activeScreen === 'ai-policy' && <CommandCenterAiPolicyTab />}
+      {activeScreen === 'benchmark' && <CommandCenterBenchmarkTab />}
     </div>
   );
 };

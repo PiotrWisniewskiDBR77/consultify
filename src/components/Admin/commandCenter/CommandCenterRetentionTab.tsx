@@ -21,6 +21,7 @@ import {
   type RetentionSchedule,
   updateRetentionSchedule,
 } from '../../../services/enterpriseComplianceApi';
+import { formatListDateTime } from '../../../utils/listDateFormat';
 import { useConfirmDialog } from '../../MyWork/shared/ConfirmDialog';
 import { StandardTable, type TableColumn, type TableRow } from '../../standard';
 
@@ -184,11 +185,7 @@ export const CommandCenterRetentionTab: React.FC = () => {
     }
   };
 
-  const formatDate = (value: string | null): string => {
-    if (!value) return '—';
-    const d = new Date(value);
-    return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString();
-  };
+  const formatDate = (value: string | null): string => formatListDateTime(value);
 
   const rows = useMemo<TableRow[]>(() => schedules.map((s) => ({ ...s, id: s.id })), [schedules]);
 

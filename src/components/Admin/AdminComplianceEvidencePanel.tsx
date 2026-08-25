@@ -113,7 +113,7 @@ export const AdminComplianceEvidencePanel: React.FC = () => {
       label: t('admin.audit.compliance-evidence.cards.dataResidency'),
       value:
         data.residency?.dataResidencyRegion ?? t('admin.audit.compliance-evidence.values.notSet'),
-      href: '/admin/command/compliance-posture?tab=residency',
+      href: '/admin/command/residency',
       source: '/enterprise-compliance/data-residency',
     },
     {
@@ -121,14 +121,18 @@ export const AdminComplianceEvidencePanel: React.FC = () => {
       value: t('admin.audit.compliance-evidence.cards.retentionScheduleCount', {
         count: data.retention.length,
       }),
-      href: '/admin/command/compliance-posture?tab=retention',
+      href: '/admin/command/retention',
       source: '/enterprise-compliance/retention/schedules',
     },
     {
       label: t('admin.audit.compliance-evidence.cards.aiPolicy'),
-      value:
-        data.aiPolicy?.requiredCitationMode ?? t('admin.audit.compliance-evidence.values.notSet'),
-      href: '/admin/command/compliance-posture?tab=ai-policy',
+      value: data.aiPolicy?.requiredCitationMode
+        ? t(
+            `commandCenter.aiPolicy.fields.citationModeOptions.${data.aiPolicy.requiredCitationMode}`,
+            data.aiPolicy.requiredCitationMode
+          )
+        : t('admin.audit.compliance-evidence.values.notSet'),
+      href: '/admin/command/ai-policy',
       source: '/enterprise-compliance/ai-policy',
     },
   ];

@@ -3,11 +3,15 @@ import {
   AlertTriangle,
   Bot,
   Building2,
+  ClipboardCheck,
+  Clock,
   CreditCard,
   FileClock,
   FileText,
   Gauge,
+  Globe,
   KeyRound,
+  Lock,
   Network,
   Receipt,
   ScrollText,
@@ -68,7 +72,13 @@ export type AdminScreen =
   | 'legal-hold'
   | 'export-history'
   | 'attention-queue'
-  | 'compliance-posture'
+  | 'agent-trace'
+  | 'audit'
+  | 'dlp'
+  | 'residency'
+  | 'retention'
+  | 'ai-policy'
+  | 'benchmark'
   | 'cost-capacity'
   | 'organization-defaults'
   | 'service-status'
@@ -167,9 +177,15 @@ export const ADMIN_DOMAINS: DomainNavigationModule<AdminDomain, AdminScreen>[] =
     children: [
       c('overview', 'Przegląd', Gauge),
       c('attention-queue', 'Kolejka uwagi', AlertTriangle),
-      c('compliance-posture', 'Postawa zgodności', ShieldCheck),
       c('cost-capacity', 'Koszt i pojemność', Activity),
       c('organization-defaults', 'Ustawienia domyślne organizacji', SlidersHorizontal),
+      c('agent-trace', 'Ślad agentów', Bot),
+      c('audit', 'Audyt SOC2', ScrollText),
+      c('dlp', 'DLP', Lock),
+      c('residency', 'Rezydencja danych', Globe),
+      c('retention', 'Retencja', Clock),
+      c('ai-policy', 'Polityka AI', Sparkles),
+      c('benchmark', 'Benchmark konsultingowy', ClipboardCheck),
     ],
   },
   {
@@ -254,8 +270,14 @@ const ADMIN_SCREEN_EN: Partial<Record<AdminScreen, string>> = {
   'legal-hold': 'Legal Hold',
   'export-history': 'Export History',
   'attention-queue': 'Attention Queue',
-  'compliance-posture': 'Compliance Posture',
   'cost-capacity': 'Cost & Capacity',
+  'agent-trace': 'Agent Trace',
+  audit: 'SOC2 Audit',
+  dlp: 'DLP',
+  residency: 'Data Residency',
+  retention: 'Retention',
+  'ai-policy': 'AI Policy',
+  benchmark: 'Consulting Benchmark',
   'service-status': 'Service Status',
   dependencies: 'Dependencies',
   diagnostics: 'Diagnostics',
