@@ -475,4 +475,105 @@ describe('V8 interview insights candidate routes', () => {
     expect(mockCheckSimilarInitiatives).not.toHaveBeenCalled();
     expect(mockCreateInitiative).not.toHaveBeenCalled();
   });
+
+  // -------------------------------------------------------------------------
+  // Cross-org tenant fix — M03 Interview V4.
+  //
+  // `project_id` arrives in the request body and used to be accepted on the
+  // strength of a UUID regex alone. A well-formed UUID says nothing about
+  // ownership: the value went on to `initiativeService.createInitiative` and
+  // `decisionService.createDecision` (which stamp the caller's org but trust
+  // projectId as given) and to `TaskService.createTask`, which takes NO
+  // organizationId at all — so the task's only tenancy was that projectId. A
+  // caller passing another org's project id planted a real entity inside the
+  // victim tenant's project. The ownership probe below is the fix; these are
+  // its negative controls, driven through the ROUTE, not the service.
+  // -------------------------------------------------------------------------
+  describe('POST /handoff — project_id must belong to the caller org', () => {
+    const FOREIGN_PROJECT = '11111111-2222-4333-8444-555555555555';
+
+    const confirmedFinding = {
+      id: 'finding_1',
+      finding_statement: 'Onboarding process lacks a single owner.',
+      confidence_level: 'high',
+      limits: 'Scoped to interview sample.',
+      next_action: 'Assign an owner.',
+      evidence_pointers: [{ isTombstone: false, excerpt: 'No owner assigned.' }],
+      readback_status: 'confirmed_by_client',
+    };
+
+    it('refuses a well-formed UUID that names another org’s project — no initiative created', async () => {
+      mockGetFinding.mockResolvedValue(confirmedFinding);
+      // queryOne default is null → the ownership probe misses.
+      const res = await request(createApp())
+        .post('/api/v8/interview/insights/insight_1/findings/finding_1/handoff')
+        .send({ project_id: FOREIGN_PROJECT });
+
+      // 404, not 403: "not yours" must not be distinguishable from "not there".
+      expect(res.status).toBe(404);
+      expect(res.body.code).toBe('P10_TARGET_PROJECT_NOT_FOUND');
+      expect(mockCreateInitiative).not.toHaveBeenCalled();
+      expect(mockRecordHandoff).not.toHaveBeenCalled();
+    });
+
+    it('refuses a foreign project on the TASK branch — nothing is planted in the victim project', async () => {
+      mockGetFinding.mockResolvedValue(confirmedFinding);
+      const res = await request(createApp())
+        .post('/api/v8/interview/insights/insight_1/findings/finding_1/handoff')
+        .send({ project_id: FOREIGN_PROJECT, target_type: 'task' });
+
+      expect(res.status).toBe(404);
+      expect(res.body.code).toBe('P10_TARGET_PROJECT_NOT_FOUND');
+      expect(mockRecordHandoff).not.toHaveBeenCalled();
+    });
+
+    it('refuses a foreign project on the DECISION branch', async () => {
+      mockGetFinding.mockResolvedValue(confirmedFinding);
+      const res = await request(createApp())
+        .post('/api/v8/interview/insights/insight_1/findings/finding_1/handoff')
+        .send({ project_id: FOREIGN_PROJECT, target_type: 'decision' });
+
+      expect(res.status).toBe(404);
+      expect(res.body.code).toBe('P10_TARGET_PROJECT_NOT_FOUND');
+      expect(mockRecordHandoff).not.toHaveBeenCalled();
+    });
+
+    it('probes `projects` scoped by BOTH id and organization_id', async () => {
+      mockGetFinding.mockResolvedValue(confirmedFinding);
+      const { queryOne } = await import('../../../utils/queryHelpers.js');
+      await request(createApp())
+        .post('/api/v8/interview/insights/insight_1/findings/finding_1/handoff')
+        .send({ project_id: FOREIGN_PROJECT });
+
+      const call = (queryOne as unknown as ReturnType<typeof vi.fn>).mock.calls.find(
+        ([sql]: [string]) => /FROM projects/i.test(String(sql))
+      ) as [string, unknown[]] | undefined;
+      expect(call).toBeDefined();
+      expect(call![0]).toMatch(/organization_id\s*=\s*\?/i);
+      expect(call![1]).toEqual([FOREIGN_PROJECT, 'org_1']);
+    });
+
+    it('accepts a project the caller org owns and proceeds to create the initiative', async () => {
+      mockGetFinding.mockResolvedValue(confirmedFinding);
+      mockCheckSimilarInitiatives.mockResolvedValue({
+        results: [],
+        method: 'embeddings',
+        comparedCount: 0,
+        truncated: false,
+      });
+      mockCreateInitiative.mockResolvedValue({ id: 'init_owned_project' });
+      (await import('../../../utils/queryHelpers.js')).queryOne.mockResolvedValueOnce({
+        id: FOREIGN_PROJECT,
+      });
+
+      const res = await request(createApp())
+        .post('/api/v8/interview/insights/insight_1/findings/finding_1/handoff')
+        .send({ project_id: FOREIGN_PROJECT });
+
+      expect(res.status).toBe(200);
+      expect(mockCreateInitiative).toHaveBeenCalledWith(
+        expect.objectContaining({ organization_id: 'org_1', project_id: FOREIGN_PROJECT })
+      );
+    });
+  });
 });
