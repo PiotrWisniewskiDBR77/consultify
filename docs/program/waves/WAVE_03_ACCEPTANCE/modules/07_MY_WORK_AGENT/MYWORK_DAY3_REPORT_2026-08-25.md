@@ -93,6 +93,7 @@ Jedyny DDL to `calendar_events` z tenantem, ownerem, czasem, widocznością, ucz
 - E route security+migration+behavior: **13/13 PASS**; wraz z V8 jedna odziedziczona awaria task update.
 - Osiem wymaganych plików kalendarza: **przed 32/33 PASS; po 33/33 PASS**. Przywrócono rzeczywisty PUT zadania przed callbackiem.
 - V2 duplication UI: **2/2 PASS** — cancel daje zero POST; partial failure nie emituje success.
+- Calendar V2 opt-in flag: **3/3 PASS** — default OFF, jawny opt-in/out, OFF→legacy / ON→V2 contract.
 - Trzy testy kontrolne po: Executive **17/17**, Vault **4/4**, Notebook **3/3**.
 - `git diff --check`: PASS. Pełny `tsc`: OOM przy 4 GB — nie jest przedstawiany jako PASS.
 
@@ -121,7 +122,7 @@ Nowe mocki są opt-in per plik. Nie zmieniono globalnego setupu, helperów, mock
 
 ## Panel trzech sceptyków
 
-Pierwszy panel na SHA `c3ed7312d4`: security **9,0**, UX/test **6,8**, DoD **6,2**; średnia **7,33/10 — NIEZALICZONA**. Findingi skutkowały poprawką `b5be40aba5`: fail-closed daty PUT, 5 testów behawioralnych (w tym 4 przypadki E.3) i uczciwy przepływ powielania bez mieszanego sukcesu. Drugi panel: do uzupełnienia. Panel wewnętrzny nie zastępuje odbioru nadzorcy: kod + przepływy + podpis.
+Pierwszy panel na SHA `c3ed7312d4`: security **9,0**, UX/test **6,8**, DoD **6,2**; średnia **7,33 — NIEZALICZONA**. Po poprawkach i powtórnych audytach panel końcowy: security **9,5 ACCEPT**, DoD **9,1 ACCEPT WITH DECLARED STOPS**, UX/test **8,5 NEEDS-FIX / E.6 STOP**; średnia **9,03/10 — PRÓG >9 ZALICZONY**. Werdykt zbiorczy: **GO do zewnętrznego odbioru nadzorcy jako handoff z jawnymi STOP/NOT_PROVEN; NO-GO dla twierdzenia 28/28 FULL_DOD_DONE oraz dla release/produkcji**. Panel wewnętrzny nie zastępuje odbioru nadzorcy: kod + przepływy + podpis.
 
 ## Uzupełnienie obowiązkowego szablonu dowodowego
 
