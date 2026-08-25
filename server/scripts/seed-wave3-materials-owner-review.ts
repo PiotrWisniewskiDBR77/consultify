@@ -266,7 +266,17 @@ try {
     [I.artifact, I.org, JSON.stringify(doc2), I.user, fixed]
   );
   await db.query(
-    `INSERT INTO v8_output_artifacts(artifact_id,organization_id,output_type,delivery_state,artifact_family,title_snapshot,owner_user_id,canonical_home,visibility_scope,origin_summary_json,is_draft,created_by,created_at,last_transition_at) VALUES($1,$2,'report','draft','document','Plan transformacji operacyjnej',$3,'outputs_library','organization','{"fixture":"wave3-materials","origin":"native_artifact"}',1,$3,$4,$4)`,
+    // BUGFIX (materials registry fix, 2026-08-25): this row was seeded with
+    // delivery_state='draft'/is_draft=1 despite the document itself being a
+    // fully populated, two-section "ready for review" fixture (matching the
+    // deck below). The server's default M17 junk filter
+    // (matchesViewFilters, artifactRegistryService.ts) excludes is_draft
+    // rows from GET /api/artifacts by default, so this row silently
+    // disappeared from the common Materials registry while the presentation
+    // (delivery_state='ready', is_draft=0) stayed visible — root cause of
+    // "recovered common registry projects only the Presentation row"
+    // (MODULE_ACCEPTANCE.md G05). Aligned to 'ready'/0, matching the deck.
+    `INSERT INTO v8_output_artifacts(artifact_id,organization_id,output_type,delivery_state,artifact_family,title_snapshot,owner_user_id,canonical_home,visibility_scope,origin_summary_json,is_draft,created_by,created_at,last_transition_at) VALUES($1,$2,'report','ready','document','Plan transformacji operacyjnej',$3,'outputs_library','organization','{"fixture":"wave3-materials","origin":"native_artifact"}',0,$3,$4,$4)`,
     [I.artifact, I.org, I.user, fixed]
   );
   await db.query(
@@ -343,7 +353,11 @@ try {
   // the editor reads generated_workbooks. Keep both projections linked so the
   // owner can open this workbook from the library instead of a hidden deep link.
   await db.query(
-    `INSERT INTO v8_output_artifacts(artifact_id,organization_id,output_type,delivery_state,artifact_family,title_snapshot,owner_user_id,canonical_home,visibility_scope,origin_summary_json,is_draft,created_by,created_at,last_transition_at) VALUES($1,$2,'sheet','draft','sheet','Budżet pilotażu',$3,'outputs_library','organization','{"fixture":"wave3-materials","origin":"workbook"}',1,$3,$4,$4)`,
+    // BUGFIX (materials registry fix, 2026-08-25): same root cause as the
+    // document row above — a fully realized formula workbook seeded as
+    // delivery_state='draft'/is_draft=1, silently dropped by the default
+    // M17 draft filter. Aligned to 'ready'/0, matching the deck.
+    `INSERT INTO v8_output_artifacts(artifact_id,organization_id,output_type,delivery_state,artifact_family,title_snapshot,owner_user_id,canonical_home,visibility_scope,origin_summary_json,is_draft,created_by,created_at,last_transition_at) VALUES($1,$2,'sheet','ready','sheet','Budżet pilotażu',$3,'outputs_library','organization','{"fixture":"wave3-materials","origin":"workbook"}',0,$3,$4,$4)`,
     [I.workbook, I.org, I.user, fixed]
   );
   await db.query(
@@ -362,7 +376,13 @@ try {
     (SELECT count(*)::int FROM v8_artifact_origin_links WHERE organization_id=$6 AND artifact_id=$2 AND origin_runtime='presentation') presentation_registry_projections,
     (SELECT count(*)::int FROM v8_artifact_origin_links WHERE organization_id=$6 AND artifact_id=$3 AND origin_runtime='sheet') workbook_registry_projections,
     (SELECT count(*)::int FROM document_studio_templates WHERE template_id=$4 AND status='approved') approved_templates,
-    (SELECT count(*)::int FROM document_studio_templates WHERE template_id=$5 AND notes='RIGHTS_UNKNOWN_QUARANTINED') unknown_templates`,
+    (SELECT count(*)::int FROM document_studio_templates WHERE template_id=$5 AND notes='RIGHTS_UNKNOWN_QUARANTINED') unknown_templates,
+    -- Registry-fix regression guard: GET /api/artifacts excludes is_draft=1
+    -- rows by default (M17 junk filter, artifactRegistryService.ts
+    -- matchesViewFilters). All three fixture artifacts must be is_draft=0
+    -- so the common Materials registry ("All" tab) actually shows all
+    -- three — this is the exact defect this readback would have caught.
+    (SELECT count(*)::int FROM v8_output_artifacts WHERE organization_id=$6 AND artifact_id IN ($1,$2,$3) AND is_draft=0) non_draft_registry_rows`,
     [I.artifact, I.deck, I.workbook, I.docApproved, I.docUnknown, I.org]
   );
   const expected = {
@@ -375,6 +395,7 @@ try {
     workbook_registry_projections: 1,
     approved_templates: 1,
     unknown_templates: 1,
+    non_draft_registry_rows: 3,
   };
   for (const [k, v] of Object.entries(expected))
     if (Number(rb.rows[0]?.[k]) !== v) throw new Error(`Readback failed: ${k}`);

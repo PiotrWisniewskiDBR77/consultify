@@ -12,7 +12,14 @@ vi.mock('react-i18next', async () => {
   return {
     ...actual,
     useTranslation: () => ({
-      t: (_k: string, fallback?: string) => fallback || _k,
+      // The component wraps some calls through a `translate` helper that
+      // passes `{ defaultValue }` as the second arg (i18next convention)
+      // instead of a plain fallback string — both shapes must resolve to a
+      // string, or React throws "Objects are not valid as a React child."
+      t: (_k: string, fallback?: string | { defaultValue?: string }) =>
+        typeof fallback === 'string'
+          ? fallback
+          : ((fallback as { defaultValue?: string } | undefined)?.defaultValue ?? _k),
       i18n: { language: 'en' },
     }),
   };
@@ -44,6 +51,7 @@ vi.mock('../../../src/components/ReportsAndPresentations/useTrustState', () => (
 vi.mock('../../../src/contexts/FeatureFlagsContext', () => ({
   useFeatureFlagsContext: () => ({
     flags: {},
+    isEnabled: () => false,
   }),
 }));
 
@@ -52,27 +60,30 @@ vi.mock('../../../src/utils/sheetArtifactOpen', () => ({
   resolveTablePlatformWorkspaceIdForTable: vi.fn().mockResolvedValue('workspace-1'),
 }));
 
-vi.mock('../../../src/components/shared/ModuleHub', () => ({
-  FilterableTable: ({ data, selectedRowId, onRowClick }: any) => (
+// `StandardTable` (rendered by OutputsAggregateTabContent for viewMode==='table')
+// imports `FilterableTable` from the concrete submodule path, NOT the
+// `ModuleHub` barrel — a mock on the barrel silently misses it and the real,
+// heavier FilterableTable renders instead. Mock the exact import target.
+vi.mock('../../../src/components/shared/ModuleHub/FilterableTable', () => ({
+  FilterableTable: ({ data, selectedRowId, onRowClick, onRowDoubleClick }: any) => (
     <div data-testid="filterable-table">
       {data.map((row: any) => (
-        <button key={row.id} onClick={() => onRowClick(row)} data-testid={`row-${row.id}`}>
+        <button
+          key={row.id}
+          onClick={() => onRowClick?.(row)}
+          onDoubleClick={() => onRowDoubleClick?.(row)}
+          data-testid={`row-${row.id}`}
+        >
           {row.title}
         </button>
       ))}
       <div data-testid="selected-row">{selectedRowId || 'none'}</div>
     </div>
   ),
-  GridView: () => <div data-testid="grid-view" />,
 }));
 
-vi.mock('../../../src/components/shared/TableWithPreviewLayout', () => ({
-  TableWithPreviewLayout: ({ children, selectedId }: any) => (
-    <div data-testid="table-layout">
-      <div data-testid="selected-id">{selectedId || 'none'}</div>
-      {children}
-    </div>
-  ),
+vi.mock('../../../src/components/shared/ModuleHub', () => ({
+  GridView: () => <div data-testid="grid-view" />,
 }));
 
 const actions = {
@@ -136,6 +147,6 @@ describe('OutputsAggregateTabContent deep-link selection', () => {
       />
     );
 
-    expect(screen.getByTestId('selected-id').textContent).toBe('sheet:table-2');
+    expect(screen.getByTestId('selected-row').textContent).toBe('sheet:table-2');
   });
 });
