@@ -10300,6 +10300,32 @@
           "owner": "Właściciel",
           "due": "Termin",
           "version": "Wersja źródła"
+        },
+        "resources": {
+          "tab": "Raport zasobów",
+          "title": "Analiza zdolności ludzi",
+          "horizon": "Tydzień bazowy i horyzont 4/8/12/26 tygodni",
+          "loading": "Wczytywanie raportu zasobów…",
+          "error": "Raport zasobów jest niedostępny",
+          "kpi": "Podsumowanie zdolności",
+          "inScopePeople": "Osoby / role w zakresie",
+          "unknownCapacity": "Dostępność UNKNOWN",
+          "buffer": "Bufor operacyjny",
+          "heatmap": "Heatmapa obłożenia osoba × tydzień",
+          "person": "Osoba / rola",
+          "project": "Projekt",
+          "week": "Tydzień",
+          "availability": "Dostępność",
+          "demand": "Popyt",
+          "saturation": "Zakres saturacji",
+          "confidence": "Pewność",
+          "peopleView": "Widok Osoby",
+          "projectView": "Widok Projekt",
+          "empty": "Brak przydziałów w zakresie",
+          "coverageUnknown": "pokrycie ról/umiejętności UNKNOWN",
+          "registers": "Rejestry konfliktów i braków danych",
+          "recommendations": "Rekomendacje",
+          "noRecommendation": "Nie wydano propozycji równoważenia, gdy zdolność lub progi są UNKNOWN."
         }
       }
     },

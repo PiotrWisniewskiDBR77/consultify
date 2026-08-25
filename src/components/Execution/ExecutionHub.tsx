@@ -122,6 +122,7 @@ import { ExecutionControlSurface } from './ExecutionControlSurface';
 import { isExecutionFlagEnabled } from './executionFeatureFlags';
 import { ExecutionManagementView } from './ExecutionManagementView';
 import { normalizeExecutionArrayEnvelope } from './executionPayloadGuards';
+import { ResourcesCapacityReport } from './reports-intelligence/ResourcesCapacityReport';
 import { WorkIntelligenceReport } from './reports-intelligence/WorkIntelligenceReport';
 import {
   buildReportMarkdown,
@@ -2046,6 +2047,22 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       type: 'report',
       subType: 'work-intelligence',
       name: t('execution.reports.intelligence.workTab', 'Work report'),
+      status: 'DRAFT',
+    };
+    setOpenDocuments((current) =>
+      current.some((item) => item.id === docId) ? current : [...current, doc]
+    );
+    setActiveDocumentId(docId);
+  }, [execReportsIntelligenceEnabled, t]);
+
+  const openResourcesIntelligenceReport = useCallback(() => {
+    if (!execReportsIntelligenceEnabled) return;
+    const docId = 'execution-intelligence:resources';
+    const doc: OpenDocument = {
+      id: docId,
+      type: 'report',
+      subType: 'resources-intelligence',
+      name: t('execution.reports.intelligence.resources.tab', 'Resources report'),
       status: 'DRAFT',
     };
     setOpenDocuments((current) =>
@@ -5288,6 +5305,12 @@ Please return:
       if (execReportsIntelligenceEnabled && activeDocumentId === 'execution-intelligence:work') {
         return <WorkIntelligenceReport onOpenDocument={handleOpenWorkDocument} />;
       }
+      if (
+        execReportsIntelligenceEnabled &&
+        activeDocumentId === 'execution-intelligence:resources'
+      ) {
+        return <ResourcesCapacityReport />;
+      }
       if (activeDocumentId.startsWith('report:')) {
         const reportId = activeDocumentId.replace('report:', '');
         const report = enrichedReportCatalog.find((r) => r.id === reportId);
@@ -5697,12 +5720,27 @@ Please return:
                       },
                     ]
                   : []),
+                ...(execReportsIntelligenceEnabled && activeTab === 'resources'
+                  ? [
+                      {
+                        id: 'resources-intelligence-report',
+                        label: t(
+                          'execution.reports.intelligence.resources.tab',
+                          'Resources report'
+                        ),
+                      },
+                    ]
+                  : []),
               ]
         }
         activeChip={activeTab === 'list' ? null : (canonicalMenu3Preset[activeTab] ?? null)}
         onChipChange={(id) => {
           if (id === 'work-intelligence-report') {
             openWorkIntelligenceReport();
+            return;
+          }
+          if (id === 'resources-intelligence-report') {
+            openResourcesIntelligenceReport();
             return;
           }
           setCanonicalMenu3Preset((current) => ({ ...current, [activeTab]: id }));

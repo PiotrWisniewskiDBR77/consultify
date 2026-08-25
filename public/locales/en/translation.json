@@ -10948,6 +10948,32 @@
           "owner": "Owner",
           "due": "Due",
           "version": "Source version"
+        },
+        "resources": {
+          "tab": "Resources report",
+          "title": "People Capacity Intelligence",
+          "horizon": "Base week and 4/8/12/26-week horizon",
+          "loading": "Loading resources report…",
+          "error": "Resources report is unavailable",
+          "kpi": "Capacity summary",
+          "inScopePeople": "People / roles in scope",
+          "unknownCapacity": "UNKNOWN availability",
+          "buffer": "Operating buffer",
+          "heatmap": "Person × week load heatmap",
+          "person": "Person / role",
+          "project": "Project",
+          "week": "Week",
+          "availability": "Availability",
+          "demand": "Demand",
+          "saturation": "Saturation range",
+          "confidence": "Confidence",
+          "peopleView": "People view",
+          "projectView": "Project view",
+          "empty": "No allocations in scope",
+          "coverageUnknown": "role/skill coverage UNKNOWN",
+          "registers": "Conflict and missing-data registers",
+          "recommendations": "Recommendations",
+          "noRecommendation": "No rebalancing proposal is issued while capacity or thresholds are UNKNOWN."
         }
       }
     },

@@ -95,15 +95,15 @@ kontrakt modułu, rejestr decyzji, instrukcja oraz kod w izolowanym worktree.
 
 ## Pozycje — tabela zbiorcza
 
-| Pozycja  | Zakres                         | Status               | Commit             | Testy                           | Dowód OFF                                                 | Zrzut             | Uwagi                                                                                     |
-| -------- | ------------------------------ | -------------------- | ------------------ | ------------------------------- | --------------------------------------------------------- | ----------------- | ----------------------------------------------------------------------------------------- |
-| E.0      | flaga + mapa delty + dowód OFF | ZROBIONE_WG_DoD      | bieżący commit E.0 | własne 4/4 + zastane 11/11 PASS | PASS: obecny rejestr, brak nowej powierzchni, 0 requestów | kontrolny harness | Jedna flaga, default OFF także demo; realny czytnik runtime-v1 przy ON.                   |
-| E.1      | Work Intelligence Report       | CZĘŚCIOWO / BRAK_API | bieżący commit E.1 | własne 6/6 + T.2 5/5 PASS       | wspólny T.2 PASS                                          | Blok 5            | 9 sekcji, 8 KPI, drill-down i partial failure; historia/BSC/wagi pozostają BRAK_API/STOP. |
-| E.2      | Resources Capacity Report      | NIE_ZACZĘTE          | —                  | —                               | wspólny T.2 PASS                                          | —                 | Odblokowane przez DEC-2026-08-25-63.                                                      |
-| E.3      | Control Loop Report            | NIE_ZACZĘTE          | —                  | —                               | wspólny T.2 PASS                                          | —                 | Odblokowane przez DEC-2026-08-25-63.                                                      |
-| E.4      | unijny generator               | NIE_ZACZĘTE          | —                  | —                               | wspólny T.2 PASS                                          | —                 | E-O1 rozstrzygnięte w DEC-2026-08-25-63.                                                  |
-| T.1..T.6 | testy przekrojowe              | CZĘŚCIOWO            | bieżący commit E.0 | T.1 przed 11/11; T.2 4/4 PASS   | PASS                                                      | —                 | T.3–T.6 pozostają do wykonania.                                                           |
-| R.1..R.2 | rejestr/dowody                 | CZĘŚCIOWO            | —                  | —                               | —                                                         | kontrolny         | R.1 wykonane; R.2 ograniczone do stanu STOP.                                              |
+| Pozycja  | Zakres                         | Status               | Commit             | Testy                           | Dowód OFF                                                 | Zrzut             | Uwagi                                                                                        |
+| -------- | ------------------------------ | -------------------- | ------------------ | ------------------------------- | --------------------------------------------------------- | ----------------- | -------------------------------------------------------------------------------------------- |
+| E.0      | flaga + mapa delty + dowód OFF | ZROBIONE_WG_DoD      | bieżący commit E.0 | własne 4/4 + zastane 11/11 PASS | PASS: obecny rejestr, brak nowej powierzchni, 0 requestów | kontrolny harness | Jedna flaga, default OFF także demo; realny czytnik runtime-v1 przy ON.                      |
+| E.1      | Work Intelligence Report       | CZĘŚCIOWO / BRAK_API | bieżący commit E.1 | własne 6/6 + T.2 5/5 PASS       | wspólny T.2 PASS                                          | Blok 5            | 9 sekcji, 8 KPI, drill-down i partial failure; historia/BSC/wagi pozostają BRAK_API/STOP.    |
+| E.2      | Resources Capacity Report      | CZĘŚCIOWO / BRAK_API | bieżący commit E.2 | własne 4/4 + T.2 5/5 PASS       | wspólny T.2 PASS                                          | Blok 5            | Realne allocations, heatmapa, Osoby/Projekt/rejestry; brak pełnego availability/progów E-O5. |
+| E.3      | Control Loop Report            | NIE_ZACZĘTE          | —                  | —                               | wspólny T.2 PASS                                          | —                 | Odblokowane przez DEC-2026-08-25-63.                                                         |
+| E.4      | unijny generator               | NIE_ZACZĘTE          | —                  | —                               | wspólny T.2 PASS                                          | —                 | E-O1 rozstrzygnięte w DEC-2026-08-25-63.                                                     |
+| T.1..T.6 | testy przekrojowe              | CZĘŚCIOWO            | bieżący commit E.0 | T.1 przed 11/11; T.2 4/4 PASS   | PASS                                                      | —                 | T.3–T.6 pozostają do wykonania.                                                              |
+| R.1..R.2 | rejestr/dowody                 | CZĘŚCIOWO            | —                  | —                               | —                                                         | kontrolny         | R.1 wykonane; R.2 ograniczone do stanu STOP.                                                 |
 
 ## E.1 — tabele werdyktów
 
@@ -139,6 +139,19 @@ Formuły możliwe z obecnego read-modelu: `formalBackorder`, `slaBackorder`,
 historii lub decyzji konfiguracyjnej pozostają uczciwie niedostępne:
 `decisionLatency`, `blockedDays`, `throughputRatio`, `netBackorderChange`,
 `impactWeightedBackorder`.
+
+## E.2 — tabela werdyktów
+
+| Element                                                   | Werdykt        | Dowód                                                       |
+| --------------------------------------------------------- | -------------- | ----------------------------------------------------------- |
+| Populacja osób/role z projektów                           | JEST_CZĘŚCIOWO | runtime-v1 allocations; osoba bez taska pozostaje widoczna  |
+| Heatmapa osoba×tydzień                                    | JEST_CZĘŚCIOWO | tydzień i zakres load z allocation; brak load → UNKNOWN     |
+| Widok Osoby                                               | JEST           | StandardTable z availability/demand/saturation/confidence   |
+| Widok Projekt                                             | JEST_CZĘŚCIOWO | projekty z Execution cases; role/skills brakujące → UNKNOWN |
+| Rejestry konfliktów/braków                                | JEST           | jawne NOT_VERIFIED/UNKNOWN + sourceVersion                  |
+| Dostępność po absencjach/obowiązkach/rezerwacjach/buforze | BRAK_API       | E-O5; nie wyliczono 0 ani bezpiecznej saturacji             |
+| Progi saturacji i bufor                                   | STOP E-O5      | nie zaszyto wartości domyślnych                             |
+| Niezmienna publikacja                                     | JEST_CZĘŚCIOWO | wspólny runtime-v1 SSOT z DEC-63; raport jest read-only     |
 
 ## Pozycje otwarte — STOP-y do zatwierdzenia
 
