@@ -52,6 +52,7 @@ export {
 export {
   type RowAction,
   type RowActionSection,
+  rowMenuToSections,
   type StandardRowMenu,
   type StandardRowMenuAction,
   StandardTable,

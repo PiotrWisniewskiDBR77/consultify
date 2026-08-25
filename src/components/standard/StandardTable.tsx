@@ -108,6 +108,93 @@ const toRowAction = (action: StandardRowMenuAction): RowAction => ({
 });
 
 /**
+ * Jedyne miejsce, które tłumaczy deklaratywny `StandardRowMenu` (kontrakt 3
+ * stref) na renderowalne `RowActionSection[]`. Wyeksportowana, żeby ekrany z
+ * WŁASNYM widokiem kart (siatka/grid) mogły zbudować kebab karty z DOKŁADNIE
+ * tej samej funkcji `buildXRowMenu(entity)`, której używa `rowMenu` propa
+ * tabeli — zamiast ręcznie duplikować sekcje (co historycznie rozjeżdżało
+ * kebab tabeli i kebab karty, patrz `INT-MENU-OWN-001`/`REC-INT-005`).
+ */
+export function rowMenuToSections(
+  menu: StandardRowMenu,
+  translate: (key: string, fallback: string) => string,
+  isPolish: boolean
+): RowActionSection[] {
+  const sections: RowActionSection[] = [];
+  const contextActions = [...(menu.primary ?? []), ...(menu.statusTransitions ?? [])];
+  if (contextActions.length) {
+    sections.push({ id: 'context', kind: 'context', actions: contextActions.map(toRowAction) });
+  }
+
+  const u = menu.universalHandlers ?? {};
+  const manageActions: StandardRowMenuAction[] = [];
+  if (u.preview) {
+    manageActions.push({
+      id: 'open-preview',
+      label: translate('common.openPreview', isPolish ? 'Otwórz podgląd' : 'Open preview'),
+      icon: Eye,
+      onClick: u.preview,
+    });
+  } else if (u.previewNote) {
+    manageActions.push({
+      id: 'open-preview',
+      label: translate('common.openPreview', isPolish ? 'Otwórz podgląd' : 'Open preview'),
+      icon: Eye,
+      disabled: true,
+      note: u.previewNote,
+    });
+  }
+  if (u.edit || u.editNote) {
+    manageActions.push({
+      id: 'edit',
+      label: translate('common.edit', isPolish ? 'Edytuj' : 'Edit'),
+      icon: Pencil,
+      onClick: u.edit ?? NOOP,
+      disabled: !u.edit,
+      note: u.edit ? undefined : u.editNote,
+    });
+  }
+  if (u.archive || u.archiveNote) {
+    manageActions.push({
+      id: 'archive',
+      label: translate('common.archive', isPolish ? 'Archiwizuj' : 'Archive'),
+      icon: Archive,
+      onClick: u.archive ?? NOOP,
+      disabled: !u.archive,
+      note: u.archive ? undefined : u.archiveNote,
+    });
+  }
+  manageActions.push(...(menu.timeActions ?? []), ...(menu.convertActions ?? []));
+  if (manageActions.length) {
+    sections.push({
+      id: 'manage',
+      kind: 'manage',
+      actions: manageActions.map(toRowAction),
+    });
+  }
+
+  const d = menu.destructive;
+  if (d) {
+    sections.push({
+      id: 'danger',
+      kind: 'danger',
+      actions: [
+        {
+          id: 'destructive',
+          label: d.label ?? translate('common.delete', isPolish ? 'Usuń' : 'Delete'),
+          icon: d.icon ?? Trash2,
+          variant: 'danger',
+          onClick: d.onClick ?? NOOP,
+          disabled: !d.onClick,
+          description: d.note,
+        },
+      ],
+    });
+  }
+  return sections;
+}
+
+/**
  * Low-level compatibility seam: every legacy section is folded into the same
  * three visual zones as `rowMenu`, without changing action order or handlers.
  */
@@ -271,81 +358,10 @@ export const StandardTable: React.FC<StandardTableProps> = ({
   const isPolish = !!i18n.language?.startsWith('pl');
 
   // ── Kebab: deklaracje domeny → maks. 3 strefy wizualne ───────────────────
+  // Deleguje do wyeksportowanego `rowMenuToSections` (SSOT), żeby ekrany z
+  // własnym widokiem kart budowały kebab karty z TEJ SAMEJ funkcji.
   const buildSections = useCallback(
-    (menu: StandardRowMenu): RowActionSection[] => {
-      const sections: RowActionSection[] = [];
-      const contextActions = [...(menu.primary ?? []), ...(menu.statusTransitions ?? [])];
-      if (contextActions.length) {
-        sections.push({ id: 'context', kind: 'context', actions: contextActions.map(toRowAction) });
-      }
-
-      const u = menu.universalHandlers ?? {};
-      const manageActions: StandardRowMenuAction[] = [];
-      if (u.preview) {
-        manageActions.push({
-          id: 'open-preview',
-          label: t('common.openPreview', isPolish ? 'Otwórz podgląd' : 'Open preview'),
-          icon: Eye,
-          onClick: u.preview,
-        });
-      } else if (u.previewNote) {
-        manageActions.push({
-          id: 'open-preview',
-          label: t('common.openPreview', isPolish ? 'Otwórz podgląd' : 'Open preview'),
-          icon: Eye,
-          disabled: true,
-          note: u.previewNote,
-        });
-      }
-      if (u.edit || u.editNote) {
-        manageActions.push({
-          id: 'edit',
-          label: t('common.edit', isPolish ? 'Edytuj' : 'Edit'),
-          icon: Pencil,
-          onClick: u.edit ?? NOOP,
-          disabled: !u.edit,
-          note: u.edit ? undefined : u.editNote,
-        });
-      }
-      if (u.archive || u.archiveNote) {
-        manageActions.push({
-          id: 'archive',
-          label: t('common.archive', isPolish ? 'Archiwizuj' : 'Archive'),
-          icon: Archive,
-          onClick: u.archive ?? NOOP,
-          disabled: !u.archive,
-          note: u.archive ? undefined : u.archiveNote,
-        });
-      }
-      manageActions.push(...(menu.timeActions ?? []), ...(menu.convertActions ?? []));
-      if (manageActions.length) {
-        sections.push({
-          id: 'manage',
-          kind: 'manage',
-          actions: manageActions.map(toRowAction),
-        });
-      }
-
-      const d = menu.destructive;
-      if (d) {
-        sections.push({
-          id: 'danger',
-          kind: 'danger',
-          actions: [
-            {
-              id: 'destructive',
-              label: d.label ?? t('common.delete', isPolish ? 'Usuń' : 'Delete'),
-              icon: d.icon ?? Trash2,
-              variant: 'danger',
-              onClick: d.onClick ?? NOOP,
-              disabled: !d.onClick,
-              description: d.note,
-            },
-          ],
-        });
-      }
-      return sections;
-    },
+    (menu: StandardRowMenu): RowActionSection[] => rowMenuToSections(menu, t, isPolish),
     [t, isPolish]
   );
 

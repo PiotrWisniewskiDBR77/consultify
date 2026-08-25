@@ -94,6 +94,7 @@ import { RequiredProjectPicker } from '@/components/shared/RequiredProjectPicker
 import { EmptyState, LoadingState } from '@/components/shared/states';
 import { TeresaMark } from '@/components/shared/TeresaMark';
 import {
+  rowMenuToSections,
   StandardPreview,
   type StandardPreviewActions,
   standardPreviewShortcuts,
@@ -4448,6 +4449,139 @@ export const InterviewHub: React.FC = () => {
     return configs[status] || configs.in_progress;
   };
 
+  // REC-INT-005 / INT-MENU-OWN-001 — SSOT sesji: JEDNA funkcja karmi zarówno
+  // `rowMenu` tabeli (kontekst-prawoklik + kebab tabeli, jedna sekcja wg
+  // StandardTable), JAK I kebab karty (grid) przez `rowMenuToSections`. Bez
+  // tego kebab tabeli i kebab karty historycznie się rozjeżdżały (patrz
+  // `INT-MENU-OWN-001`).
+  const buildSessionRowMenu = (
+    session: InterviewSession,
+    opts?: { onPreview?: () => void }
+  ): StandardRowMenu => {
+    const workflowStatus = getSessionWorkflowStatus(session);
+    const isApproved = ['approved', 'completed'].includes(workflowStatus);
+    const isSubmitted = workflowStatus === 'submitted';
+    const canRemind = ['in_progress', 'sent_back'].includes(workflowStatus);
+    const linkedAssignment = getManagedAssignmentForSession(session);
+
+    return {
+      primary: [
+        ...(isSubmitted && linkedAssignment
+          ? [
+              {
+                id: 'approve',
+                label: t('interview.hub.approve'),
+                icon: Check,
+                onClick: () => handleApproveAssignment(linkedAssignment),
+              },
+            ]
+          : []),
+        ...(isApproved
+          ? [
+              {
+                id: 'generate-insight',
+                label: t('interview.hub.generateAiInsights'),
+                icon: Lightbulb,
+                onClick: () => handleGenerateInsight(session, 'summary'),
+              },
+            ]
+          : []),
+      ],
+      statusTransitions: [
+        ...(isSubmitted && linkedAssignment
+          ? [
+              {
+                id: 'send-back',
+                label: t('interview.hub.sendBack2'),
+                icon: ArrowRight,
+                onClick: () => handleOpenSendBackModal(linkedAssignment),
+              },
+            ]
+          : []),
+        ...(canRemind && linkedAssignment
+          ? [
+              {
+                id: 'remind',
+                label: t('interview.hub.remind'),
+                icon: Clock,
+                onClick: () => handleOpenReminderModal(linkedAssignment),
+              },
+            ]
+          : []),
+        // Restore/Untrash to real (non-Archive) labels — Blok 4 "Archive"
+        // stays reserved for the active→archived transition only.
+        ...(sessionLifecycle === 'archived'
+          ? [
+              {
+                id: 'restore',
+                label: t('interview.hub.restore'),
+                icon: RotateCcw,
+                disabled: sessionLifecycleBusy,
+                onClick: () => handleSessionLifecycleAction(session, 'restore'),
+              },
+            ]
+          : []),
+        ...(sessionLifecycle === 'trash'
+          ? [
+              {
+                id: 'untrash',
+                label: t('interview.hub.restore'),
+                icon: RotateCcw,
+                disabled: sessionLifecycleBusy,
+                onClick: () => handleSessionLifecycleAction(session, 'untrash'),
+              },
+            ]
+          : []),
+      ],
+      timeActions: linkedAssignment
+        ? [
+            {
+              id: 'delay',
+              label: t('interview.hub.delay'),
+              icon: Clock,
+              submenu: [1, 3, 7].map((d) => ({
+                id: `delay-${d}`,
+                label:
+                  d === 1
+                    ? t('interview.hub.plusDaysOne', { count: d })
+                    : t('interview.hub.plusDaysOther', { count: d }),
+                icon: Clock,
+                onClick: () => void handleDelayAssignment(linkedAssignment, d),
+              })),
+            },
+          ]
+        : [],
+      universalHandlers: {
+        preview: () => (opts?.onPreview ? opts.onPreview() : handleViewSession(session)),
+        // Brak endpointu edycji sesji — disabled z notą, parytet tabela/karta.
+        editNote: t('interview.hub.comingSoonBackend'),
+        archive:
+          sessionLifecycle === 'active'
+            ? () => handleSessionLifecycleAction(session, 'archive')
+            : undefined,
+        archiveNote: sessionLifecycle === 'active' ? undefined : t('interview.hub.useRestoreAbove'),
+      },
+      destructive:
+        sessionLifecycle === 'archived'
+          ? {
+              label: t('interview.hub.moveToTrash'),
+              onClick: () => handleSessionLifecycleAction(session, 'trash'),
+            }
+          : sessionLifecycle === 'trash'
+            ? {
+                label: t('interview.hub.deleteForever'),
+                onClick: () => {
+                  setSessionDeleteConfirmText('');
+                  setSessionDeleteTarget(session);
+                },
+              }
+            : {
+                // sessionLifecycle === 'active' — archiwizuj najpierw (StandardTable dokłada notę).
+                note: t('interview.hub.archiveFirst'),
+              },
+    };
+  };
+
   // Triada standard (docs/ui-standards/TRIADA_KANON.md A4-A7): Interview
   // Sessions (table mode) → StandardTable, mirroring the Inbox pattern
   // 1:1 (moduł deklaruje TYLKO dane + kontrakt kebaba/akcji; chrome pochodzi
@@ -4621,131 +4755,7 @@ export const InterviewHub: React.FC = () => {
             setActiveDocumentId(null);
           },
         }}
-        rowMenu={(row): StandardRowMenu => {
-          const session = row as unknown as InterviewSession;
-          const workflowStatus = getSessionWorkflowStatus(session);
-          const isApproved = ['approved', 'completed'].includes(workflowStatus);
-          const isSubmitted = workflowStatus === 'submitted';
-          const canRemind = ['in_progress', 'sent_back'].includes(workflowStatus);
-          const linkedAssignment = getManagedAssignmentForSession(session);
-
-          return {
-            primary: [
-              ...(isSubmitted && linkedAssignment
-                ? [
-                    {
-                      id: 'approve',
-                      label: t('interview.hub.approve'),
-                      icon: Check,
-                      onClick: () => handleApproveAssignment(linkedAssignment),
-                    },
-                  ]
-                : []),
-              ...(isApproved
-                ? [
-                    {
-                      id: 'generate-insight',
-                      label: t('interview.hub.generateAiInsights'),
-                      icon: Lightbulb,
-                      onClick: () => handleGenerateInsight(session, 'summary'),
-                    },
-                  ]
-                : []),
-            ],
-            statusTransitions: [
-              ...(isSubmitted && linkedAssignment
-                ? [
-                    {
-                      id: 'send-back',
-                      label: t('interview.hub.sendBack2'),
-                      icon: ArrowRight,
-                      onClick: () => handleOpenSendBackModal(linkedAssignment),
-                    },
-                  ]
-                : []),
-              ...(canRemind && linkedAssignment
-                ? [
-                    {
-                      id: 'remind',
-                      label: t('interview.hub.remind'),
-                      icon: Clock,
-                      onClick: () => handleOpenReminderModal(linkedAssignment),
-                    },
-                  ]
-                : []),
-              // Restore/Untrash to real (non-Archive) labels — Blok 4 "Archive"
-              // stays reserved for the active→archived transition only.
-              ...(sessionLifecycle === 'archived'
-                ? [
-                    {
-                      id: 'restore',
-                      label: t('interview.hub.restore'),
-                      icon: RotateCcw,
-                      disabled: sessionLifecycleBusy,
-                      onClick: () => handleSessionLifecycleAction(session, 'restore'),
-                    },
-                  ]
-                : []),
-              ...(sessionLifecycle === 'trash'
-                ? [
-                    {
-                      id: 'untrash',
-                      label: t('interview.hub.restore'),
-                      icon: RotateCcw,
-                      disabled: sessionLifecycleBusy,
-                      onClick: () => handleSessionLifecycleAction(session, 'untrash'),
-                    },
-                  ]
-                : []),
-            ],
-            timeActions: linkedAssignment
-              ? [
-                  {
-                    id: 'delay',
-                    label: t('interview.hub.delay'),
-                    icon: Clock,
-                    submenu: [1, 3, 7].map((d) => ({
-                      id: `delay-${d}`,
-                      label:
-                        d === 1
-                          ? t('interview.hub.plusDaysOne', { count: d })
-                          : t('interview.hub.plusDaysOther', { count: d }),
-                      icon: Clock,
-                      onClick: () => void handleDelayAssignment(linkedAssignment, d),
-                    })),
-                  },
-                ]
-              : [],
-            universalHandlers: {
-              preview: () => handleViewSession(session),
-              archive:
-                sessionLifecycle === 'active'
-                  ? () => handleSessionLifecycleAction(session, 'archive')
-                  : undefined,
-              archiveNote:
-                sessionLifecycle === 'active' ? undefined : t('interview.hub.useRestoreAbove'),
-              // Brak endpointu edycji sesji — disabled z notą (StandardTable dokłada ją sama).
-            },
-            destructive:
-              sessionLifecycle === 'archived'
-                ? {
-                    label: t('interview.hub.moveToTrash'),
-                    onClick: () => handleSessionLifecycleAction(session, 'trash'),
-                  }
-                : sessionLifecycle === 'trash'
-                  ? {
-                      label: t('interview.hub.deleteForever'),
-                      onClick: () => {
-                        setSessionDeleteConfirmText('');
-                        setSessionDeleteTarget(session);
-                      },
-                    }
-                  : {
-                      // sessionLifecycle === 'active' — archiwizuj najpierw (StandardTable dokłada notę).
-                      note: t('interview.hub.archiveFirst'),
-                    },
-          };
-        }}
+        rowMenu={(row): StandardRowMenu => buildSessionRowMenu(row as unknown as InterviewSession)}
       />
     );
   };
@@ -4763,175 +4773,20 @@ export const InterviewHub: React.FC = () => {
 
         const statusConfig = getSessionStatusConfig(workflowStatus);
 
-        // canon §8.0/§8.1: card kebab = identyczne sekcje co w tabeli (kontekst →
-        // fixed bottom manifest → danger). NO status-colored gradients.
-        const kebabSections: import('../shared/RowActionsMenu').RowActionSection[] = [
-          // GÓRA — kontekstowe (wg statusu sesji) — parytet z tabelą
-          {
-            id: 'context',
-            kind: 'context',
-            actions: [
-              ...(isSubmitted && linkedAssignment
-                ? [
-                    {
-                      id: 'approve',
-                      label: t('interview.hub.approve'),
-                      icon: Check,
-                      onClick: () => handleApproveAssignment(linkedAssignment),
-                    },
-                    {
-                      id: 'send-back',
-                      label: t('interview.hub.sendBack2'),
-                      icon: ArrowRight,
-                      onClick: () => handleOpenSendBackModal(linkedAssignment),
-                      variant: 'danger' as const,
-                    },
-                  ]
-                : []),
-              ...(canRemind && linkedAssignment
-                ? [
-                    {
-                      id: 'remind',
-                      label: t('interview.hub.remind'),
-                      icon: Clock,
-                      onClick: () => handleOpenReminderModal(linkedAssignment),
-                    },
-                  ]
-                : []),
-              ...(isApproved
-                ? [
-                    {
-                      id: 'generate-insight',
-                      label: t('interview.hub.generateAiInsights'),
-                      icon: Lightbulb,
-                      onClick: () => handleGenerateInsight(session, 'summary'),
-                    },
-                  ]
-                : []),
-            ],
-          },
-          // DÓŁ — FIXED BOTTOM MANIFEST (kanon §9.2): Open preview · Edit · Archiwizuj/Przywróć · [Delay]
-          {
-            id: 'fixed',
-            kind: 'manage',
-            actions: [
-              {
-                id: 'open_preview',
-                label: t('interview.hub.openPreview'),
-                icon: ChevronRight,
-                onClick: () =>
-                  onCardClick ? onCardClick(session.id) : setPreviewSessionId(session.id),
-              },
-              {
-                id: 'edit',
-                label: t('interview.hub.edit'),
-                icon: Edit2,
-                disabled: true,
-                description: t('interview.hub.comingSoonBackend'),
-                onClick: () => {},
-              },
-              ...(sessionLifecycle === 'active'
-                ? [
-                    {
-                      id: 'archive',
-                      label: t('interview.hub.archive'),
-                      icon: Archive,
-                      disabled: sessionLifecycleBusy,
-                      onClick: () => handleSessionLifecycleAction(session, 'archive'),
-                    },
-                  ]
-                : []),
-              ...(sessionLifecycle === 'archived'
-                ? [
-                    {
-                      id: 'restore',
-                      label: t('interview.hub.restore'),
-                      icon: RotateCcw,
-                      disabled: sessionLifecycleBusy,
-                      onClick: () => handleSessionLifecycleAction(session, 'restore'),
-                    },
-                  ]
-                : []),
-              ...(sessionLifecycle === 'trash'
-                ? [
-                    {
-                      id: 'untrash',
-                      label: t('interview.hub.restore'),
-                      icon: RotateCcw,
-                      disabled: sessionLifecycleBusy,
-                      onClick: () => handleSessionLifecycleAction(session, 'untrash'),
-                    },
-                  ]
-                : []),
-              ...(linkedAssignment
-                ? [
-                    {
-                      id: 'delay',
-                      label: t('interview.hub.delay'),
-                      icon: Clock,
-                      onClick: () => {},
-                      submenu: [1, 3, 7].map((d) => ({
-                        id: `delay-${d}`,
-                        label:
-                          d === 1
-                            ? t('interview.hub.plusDaysOne', { count: d })
-                            : t('interview.hub.plusDaysOther', { count: d }),
-                        icon: Clock,
-                        onClick: () => void handleDelayAssignment(linkedAssignment, d),
-                      })),
-                    },
-                  ]
-                : []),
-            ],
-          },
-          // DANGER — Trash / Delete forever (realny lifecycle) — parytet z tabelą
-          {
-            id: 'danger',
-            kind: 'danger',
-            actions: [
-              ...(sessionLifecycle === 'active'
-                ? [
-                    {
-                      id: 'trash-from-active',
-                      label: t('interview.hub.moveToTrash'),
-                      icon: Trash2,
-                      variant: 'danger' as const,
-                      disabled: true,
-                      description: t('interview.hub.archiveFirst'),
-                      onClick: () => {},
-                    },
-                  ]
-                : []),
-              ...(sessionLifecycle === 'archived'
-                ? [
-                    {
-                      id: 'trash',
-                      label: t('interview.hub.moveToTrash'),
-                      icon: Trash2,
-                      variant: 'danger' as const,
-                      disabled: sessionLifecycleBusy,
-                      onClick: () => handleSessionLifecycleAction(session, 'trash'),
-                    },
-                  ]
-                : []),
-              ...(sessionLifecycle === 'trash'
-                ? [
-                    {
-                      id: 'delete-forever',
-                      label: t('interview.hub.deleteForever'),
-                      icon: Trash2,
-                      variant: 'danger' as const,
-                      disabled: sessionLifecycleBusy,
-                      onClick: () => {
-                        setSessionDeleteConfirmText('');
-                        setSessionDeleteTarget(session);
-                      },
-                    },
-                  ]
-                : []),
-            ],
-          },
-        ];
+        // REC-INT-005 / INT-MENU-OWN-001 — kebab karty = TA SAMA funkcja co
+        // `rowMenu` tabeli (`buildSessionRowMenu`), przepuszczona przez
+        // wyeksportowany `rowMenuToSections` z StandardTable. Usuwa ręczne
+        // powielanie sekcji, które wcześniej rozjeżdżało kolejność/warianty
+        // (np. Send back stylizowany na czerwono tylko w karcie).
+        const kebabSections: import('../shared/RowActionsMenu').RowActionSection[] =
+          rowMenuToSections(
+            buildSessionRowMenu(session, {
+              onPreview: () =>
+                onCardClick ? onCardClick(session.id) : setPreviewSessionId(session.id),
+            }),
+            t,
+            isPolish
+          );
 
         return (
           <div
@@ -7513,6 +7368,75 @@ Return ONLY the answer text (no markdown fences).`;
         title: it.title || it.name || t('interview.hub.initiative'),
       });
 
+      // REC-INT-005 / INT-MENU-OWN-001 — SSOT dla akcji inicjatywy: JEDNA
+      // funkcja karmi `rowMenu` tabeli (kontekst-prawoklik + kebab tabeli) I
+      // kebab karty (grid, przez `rowMenuToSections`) tak, żeby oba widoki
+      // pokazywały te same akcje w tej samej strefie/kolejności. Wcześniej
+      // "Open in Initiatives" siedział w innej strefie menu w tabeli niż w
+      // karcie, mimo komentarza „same sections as table".
+      const buildInitiativeRowMenu = (
+        initiative: InterviewInitiativeDraft,
+        opts?: { onPreview?: () => void }
+      ): StandardRowMenu => {
+        const status = String(initiative.status || 'DRAFT').toUpperCase();
+        return {
+          primary: [
+            ...(status === 'DRAFT'
+              ? [
+                  {
+                    id: 'send-to-review',
+                    label: t('interview.hub.sendToReview'),
+                    icon: ArrowRight,
+                    onClick: () =>
+                      void handleUpdateInterviewInitiativeStatus(initiative.id, 'PENDING_REVIEW'),
+                  },
+                ]
+              : []),
+            ...(status === 'PENDING_REVIEW' && canReviewInsights
+              ? [
+                  {
+                    id: 'approve-to-initiatives',
+                    label: t('interview.hub.approveAndMoveForward'),
+                    icon: Rocket,
+                    onClick: () =>
+                      void handleUpdateInterviewInitiativeStatus(initiative.id, 'REVIEW', {
+                        openInInitiatives: true,
+                      }),
+                  },
+                ]
+              : []),
+            {
+              id: 'open-module',
+              label: t('interview.hub.openInInitiatives'),
+              icon: ExternalLink,
+              onClick: () =>
+                navigate(`/initiatives?open=${encodeURIComponent(initiative.id)}&mode=doc`),
+            },
+          ],
+          statusTransitions:
+            status === 'PENDING_REVIEW'
+              ? [
+                  {
+                    id: 'back-to-draft',
+                    label: t('interview.hub.backToDraft'),
+                    icon: RotateCcw,
+                    onClick: () =>
+                      void handleUpdateInterviewInitiativeStatus(initiative.id, 'DRAFT'),
+                  },
+                ]
+              : [],
+          universalHandlers: {
+            preview: () =>
+              opts?.onPreview ? opts.onPreview() : setSelectedInterviewInitiativeId(initiative.id),
+            editNote: t('interview.hub.comingSoonBackend'),
+            archiveNote: t('interview.hub.comingSoonBackend'),
+          },
+          destructive: {
+            note: t('interview.hub.comingSoonBackend'),
+          },
+        };
+      };
+
       // Side-preview body for an initiative (canon §7.3: meta → details).
       const renderInitiativePreview = (item: InterviewInitiativeDraft) => {
         const m = statusMeta(item.status);
@@ -7796,7 +7720,9 @@ Return ONLY the answer text (no markdown fences).`;
                               </span>
                               <span>{dateStr}</span>
                             </div>
-                            {/* KEBAB (same sections as table) */}
+                            {/* REC-INT-005 / INT-MENU-OWN-001 — kebab karty = TA SAMA
+                                funkcja co `rowMenu` tabeli (`buildInitiativeRowMenu`),
+                                przez wyeksportowany `rowMenuToSections`. */}
                             <div
                               className="absolute right-2 top-2 z-10"
                               onClick={(e) => e.stopPropagation()}
@@ -7804,110 +7730,14 @@ Return ONLY the answer text (no markdown fences).`;
                               <RowActionsMenu
                                 iconVariant="vertical"
                                 className="opacity-0 transition-opacity group-hover:opacity-100"
-                                sections={[
-                                  {
-                                    id: 'context',
-                                    kind: 'context' as const,
-                                    actions: [
-                                      ...(status === 'DRAFT'
-                                        ? [
-                                            {
-                                              id: 'send-to-review',
-                                              label: t('interview.hub.sendToReview'),
-                                              icon: ArrowRight,
-                                              onClick: () =>
-                                                void handleUpdateInterviewInitiativeStatus(
-                                                  initiative.id,
-                                                  'PENDING_REVIEW'
-                                                ),
-                                            },
-                                          ]
-                                        : []),
-                                      ...(status === 'PENDING_REVIEW'
-                                        ? [
-                                            ...(canReviewInsights
-                                              ? [
-                                                  {
-                                                    id: 'approve-to-initiatives',
-                                                    label: t('interview.hub.approveAndMoveForward'),
-                                                    icon: Rocket,
-                                                    onClick: () =>
-                                                      void handleUpdateInterviewInitiativeStatus(
-                                                        initiative.id,
-                                                        'REVIEW',
-                                                        { openInInitiatives: true }
-                                                      ),
-                                                  },
-                                                ]
-                                              : []),
-                                            {
-                                              id: 'back-to-draft',
-                                              label: t('interview.hub.backToDraft'),
-                                              icon: RotateCcw,
-                                              onClick: () =>
-                                                void handleUpdateInterviewInitiativeStatus(
-                                                  initiative.id,
-                                                  'DRAFT'
-                                                ),
-                                            },
-                                          ]
-                                        : []),
-                                    ],
-                                  },
-                                  {
-                                    id: 'fixed',
-                                    kind: 'manage' as const,
-                                    actions: [
-                                      {
-                                        id: 'open-preview',
-                                        label: t('interview.hub.openPreview'),
-                                        icon: ChevronRight,
-                                        onClick: () =>
-                                          setSelectedInterviewInitiativeId(initiative.id),
-                                      },
-                                      {
-                                        id: 'edit',
-                                        label: t('interview.hub.edit'),
-                                        icon: Edit2,
-                                        disabled: true,
-                                        description: t('interview.hub.comingSoonBackend'),
-                                        onClick: () => {},
-                                      },
-                                      {
-                                        id: 'open-module',
-                                        label: t('interview.hub.openInInitiatives'),
-                                        icon: ExternalLink,
-                                        onClick: () =>
-                                          navigate(
-                                            `/initiatives?open=${encodeURIComponent(initiative.id)}&mode=doc`
-                                          ),
-                                      },
-                                      {
-                                        id: 'archive',
-                                        label: t('interview.hub.archive'),
-                                        icon: Archive,
-                                        description: t('interview.hub.comingSoonBackend'),
-                                        disabled: true,
-                                        onClick: () => {},
-                                      },
-                                    ],
-                                  },
-                                  {
-                                    id: 'danger',
-                                    kind: 'danger' as const,
-                                    actions: [
-                                      {
-                                        id: 'delete',
-                                        label: t('interview.hub.delete'),
-                                        icon: Trash2,
-                                        variant: 'danger' as const,
-                                        description: t('interview.hub.comingSoonBackend'),
-                                        disabled: true,
-                                        onClick: () => {},
-                                      },
-                                    ],
-                                  },
-                                ]}
+                                sections={rowMenuToSections(
+                                  buildInitiativeRowMenu(initiative, {
+                                    onPreview: () =>
+                                      setSelectedInterviewInitiativeId(initiative.id),
+                                  }),
+                                  t,
+                                  isPolish
+                                )}
                               />
                             </div>
                           </div>
@@ -8091,75 +7921,9 @@ Return ONLY the answer text (no markdown fences).`;
                             }
                           : undefined,
                     }}
-                    rowMenu={(row): StandardRowMenu => {
-                      const initiative = row as unknown as InterviewInitiativeDraft;
-                      const status = String(initiative.status || 'DRAFT').toUpperCase();
-                      return {
-                        primary: [
-                          ...(status === 'DRAFT'
-                            ? [
-                                {
-                                  id: 'send-to-review',
-                                  label: t('interview.hub.sendToReview'),
-                                  icon: ArrowRight,
-                                  onClick: () =>
-                                    void handleUpdateInterviewInitiativeStatus(
-                                      initiative.id,
-                                      'PENDING_REVIEW'
-                                    ),
-                                },
-                              ]
-                            : []),
-                          ...(status === 'PENDING_REVIEW' && canReviewInsights
-                            ? [
-                                {
-                                  id: 'approve-to-initiatives',
-                                  label: t('interview.hub.approveAndMoveForward'),
-                                  icon: Rocket,
-                                  onClick: () =>
-                                    void handleUpdateInterviewInitiativeStatus(
-                                      initiative.id,
-                                      'REVIEW',
-                                      { openInInitiatives: true }
-                                    ),
-                                },
-                              ]
-                            : []),
-                          {
-                            id: 'open-module',
-                            label: t('interview.hub.openInInitiatives'),
-                            icon: ExternalLink,
-                            onClick: () =>
-                              navigate(
-                                `/initiatives?open=${encodeURIComponent(initiative.id)}&mode=doc`
-                              ),
-                          },
-                        ],
-                        statusTransitions:
-                          status === 'PENDING_REVIEW'
-                            ? [
-                                {
-                                  id: 'back-to-draft',
-                                  label: t('interview.hub.backToDraft'),
-                                  icon: RotateCcw,
-                                  onClick: () =>
-                                    void handleUpdateInterviewInitiativeStatus(
-                                      initiative.id,
-                                      'DRAFT'
-                                    ),
-                                },
-                              ]
-                            : [],
-                        universalHandlers: {
-                          preview: () => setSelectedInterviewInitiativeId(initiative.id),
-                          editNote: t('interview.hub.comingSoonBackend'),
-                          archiveNote: t('interview.hub.comingSoonBackend'),
-                        },
-                        destructive: {
-                          note: t('interview.hub.comingSoonBackend'),
-                        },
-                      };
-                    }}
+                    rowMenu={(row): StandardRowMenu =>
+                      buildInitiativeRowMenu(row as unknown as InterviewInitiativeDraft)
+                    }
                   />
                 )}{' '}
                 {/* end initiativesViewMode === 'table' */}
