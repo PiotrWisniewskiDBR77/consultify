@@ -40,6 +40,8 @@ interface CalendarSidebarProps {
   onDateChange: (date: Date) => void;
   externalSourceStatus?: Partial<Record<'google' | 'outlook', ExternalCalendarSourceState>>;
   workloadSummary?: CalendarWorkloadSummary | null;
+  v2?: boolean;
+  events?: Array<{ source: CalendarEventSource }>;
 }
 
 type OwnershipFilter = 'any' | 'assignee' | 'owner';
@@ -60,6 +62,8 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
   onDateChange,
   externalSourceStatus,
   workloadSummary,
+  v2 = false,
+  events = [],
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
@@ -168,7 +172,10 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
           {t('myWork.calendarSidebar.sources', 'Sources')}
         </h4>
         <div className="space-y-1.5">
-          {ALL_SOURCES.map((source) => {
+          {(v2
+            ? (['consultify', 'task', 'event', 'google', 'outlook'] as CalendarEventSource[])
+            : ALL_SOURCES
+          ).map((source) => {
             const isExternalSource = source === 'google' || source === 'outlook';
             const isAvailable = isExternalSource
               ? Boolean(externalSourceStatus?.[source]?.available)
@@ -189,14 +196,25 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
                 <span
                   className="w-3 h-3 rounded-sm flex-shrink-0"
                   style={{
-                    backgroundColor: active ? SOURCE_COLORS[source] : 'transparent',
-                    border: active ? 'none' : `2px solid ${SOURCE_COLORS[source]}`,
+                    backgroundColor: active
+                      ? v2
+                        ? source === 'task'
+                          ? 'var(--c-warning)'
+                          : source === 'event'
+                            ? '#475569'
+                            : 'var(--c-info)'
+                        : SOURCE_COLORS[source]
+                      : 'transparent',
+                    border: active ? 'none' : `2px solid ${v2 ? '#64748b' : SOURCE_COLORS[source]}`,
                     opacity: active ? 1 : 0.4,
                   }}
                 />
                 <span className="min-w-0 text-left">
                   <span className="block">
                     {isPolish ? SOURCE_LABELS[source].pl : SOURCE_LABELS[source].en}
+                    {!isExternalSource
+                      ? ` (${events.filter((item) => item.source === source).length})`
+                      : ''}
                   </span>
                   {!isAvailable && isExternalSource && (
                     <span className="block text-[10px] font-normal normal-case text-primary-500 dark:text-primary-400">

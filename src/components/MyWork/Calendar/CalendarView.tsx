@@ -449,6 +449,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           onDateChange={setCurrentDate}
           externalSourceStatus={externalSourceStatus}
           workloadSummary={buildWorkloadSummary()}
+          v2={includeOwnEvents}
+          events={events}
         />
       )}
       <div className="flex-1 flex flex-col min-w-0 min-h-0 relative">
@@ -491,6 +493,32 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             />
           </div>
         )}
+        {includeOwnEvents ? (
+          <section
+            aria-label={t('myWork.calendar.v2.deadlines', 'Deadlines')}
+            className="flex min-h-12 items-center gap-2 overflow-x-auto border-b border-c-border px-4 py-2"
+          >
+            <strong className="shrink-0 text-xs uppercase text-c-text-secondary">
+              {t('myWork.calendar.v2.deadlines', 'Deadlines')}
+            </strong>
+            {events
+              .filter((event) => event.source === 'task')
+              .map((event) => (
+                <button
+                  key={event.id}
+                  type="button"
+                  onClick={() => handleEventClick(event.sourceId || event.id, 'task')}
+                  className="inline-flex shrink-0 items-center gap-2 rounded-full border border-c-border bg-c-surface-raised px-3 py-1 text-xs text-c-text"
+                >
+                  <span className="h-2 w-2 bg-[var(--c-warning)]" aria-hidden="true" />
+                  {event.title}
+                </button>
+              ))}
+            <Button variant="secondary" size="sm" onClick={() => setCreateModalOpen(true)}>
+              {t('myWork.calendar.v2.new', 'New')}
+            </Button>
+          </section>
+        ) : null}
         <CalendarGrid
           events={events}
           viewMode={viewMode}
@@ -500,6 +528,11 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           onEventClick={handleEventClick}
           onDateRangeChange={handleDateRangeChange}
           onEventMove={handleEventMove}
+          v2={includeOwnEvents}
+          onEmptySlotClick={(date) => {
+            setCurrentDate(date);
+            setCreateModalOpen(true);
+          }}
         />
       </div>
       {isMobile && (
@@ -520,6 +553,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               onDateChange={setCurrentDate}
               externalSourceStatus={externalSourceStatus}
               workloadSummary={buildWorkloadSummary()}
+              v2={includeOwnEvents}
+              events={events}
             />
           </DrawerContent>
         </Drawer>

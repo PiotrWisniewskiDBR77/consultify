@@ -42,6 +42,8 @@ interface CalendarGridProps {
     etag?: string;
     expectedVersion?: string;
   }) => Promise<boolean>;
+  v2?: boolean;
+  onEmptySlotClick?: (date: Date) => void;
 }
 
 const VIEW_MAP: Record<CalendarViewMode, string> = {
@@ -60,53 +62,63 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
   onEventClick,
   onDateRangeChange,
   onEventMove,
+  v2 = false,
+  onEmptySlotClick,
 }) => {
   const { t } = useTranslation();
   const calendarRef = useRef<FullCalendar>(null);
 
   const fcEvents = useMemo(
     () =>
-      events.map((e) => {
-        const isFreeBusy = e.visibilityClass === 'free_busy_only';
-        const isConflict = e.syncState === 'conflict';
-        const classNames: string[] = [];
-        if (e.status === 'ai_suggestion') classNames.push('fc-ai-focus');
-        if (isFreeBusy) classNames.push('fc-free-busy');
-        if (isConflict) classNames.push('fc-conflict');
-        if (e.editAuthority === 'none') classNames.push('fc-readonly');
+      events
+        .filter((event) => !(v2 && event.source === 'task'))
+        .map((e) => {
+          const isFreeBusy = e.visibilityClass === 'free_busy_only';
+          const isConflict = e.syncState === 'conflict';
+          const classNames: string[] = [];
+          if (e.status === 'ai_suggestion') classNames.push('fc-ai-focus');
+          if (isFreeBusy) classNames.push('fc-free-busy');
+          if (isConflict) classNames.push('fc-conflict');
+          if (e.editAuthority === 'none') classNames.push('fc-readonly');
 
-        return {
-          id: e.id,
-          title: isFreeBusy ? t('myWork.calendarGrid.busy', 'Busy') : e.title,
-          start: e.start,
-          end: e.end || undefined,
-          allDay: e.allDay ?? false,
-          backgroundColor: e.color || SOURCE_COLORS[e.source] || '#64748b',
-          borderColor: isConflict
-            ? 'var(--c-danger)'
-            : e.status === 'ai_suggestion'
-              ? 'var(--c-accent)'
-              : 'transparent',
-          classNames,
-          editable: e.editAuthority !== 'none' && e.editAuthority !== undefined,
-          extendedProps: {
-            source: e.source,
-            sourceId: e.sourceId,
-            status: e.status,
-            priority: e.priority,
-            description: isFreeBusy ? undefined : e.description,
-            editAuthority: e.editAuthority,
-            syncState: e.syncState,
-            permissionGradient: e.permissionGradient,
-            visibilityClass: e.visibilityClass,
-            etag: e.etag,
-            projectName: e.projectName,
-            provider: e.provider,
-            version: e.version,
-          },
-        };
-      }),
-    [events, t]
+          return {
+            id: e.id,
+            title: isFreeBusy ? t('myWork.calendarGrid.busy', 'Busy') : e.title,
+            start: e.start,
+            end: e.end || undefined,
+            allDay: e.allDay ?? false,
+            backgroundColor: v2
+              ? e.source === 'task'
+                ? 'var(--c-warning)'
+                : e.source === 'event'
+                  ? '#475569'
+                  : 'var(--c-info)'
+              : e.color || SOURCE_COLORS[e.source] || '#64748b',
+            borderColor: isConflict
+              ? 'var(--c-danger)'
+              : e.status === 'ai_suggestion'
+                ? 'var(--c-accent)'
+                : 'transparent',
+            classNames,
+            editable: e.editAuthority !== 'none' && e.editAuthority !== undefined,
+            extendedProps: {
+              source: e.source,
+              sourceId: e.sourceId,
+              status: e.status,
+              priority: e.priority,
+              description: isFreeBusy ? undefined : e.description,
+              editAuthority: e.editAuthority,
+              syncState: e.syncState,
+              permissionGradient: e.permissionGradient,
+              visibilityClass: e.visibilityClass,
+              etag: e.etag,
+              projectName: e.projectName,
+              provider: e.provider,
+              version: e.version,
+            },
+          };
+        }),
+    [events, t, v2]
   );
 
   const handleEventClick = useCallback(
@@ -151,70 +163,77 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
     [onEventMove]
   );
 
-  const renderEventContent = useCallback((arg: any) => {
-    const source: CalendarEventSource | undefined = arg.event.extendedProps?.source;
-    const iconUrl = source ? SOURCE_ICONS[source] : undefined;
-    const isConsultify = source === 'consultify';
-    const hasBadge = iconUrl || isConsultify;
-    const projectName: string | undefined = arg.event.extendedProps?.projectName || undefined;
-    const provider: string | undefined = arg.event.extendedProps?.provider || undefined;
-    // Explicit project/provider lineage (MW-07 gate): visible, not hover-only \u2014
-    // an honest 'internal' marker rather than a fabricated Google/Outlook badge.
-    const lineageText = [projectName, provider === 'internal' ? 'Internal' : provider]
-      .filter(Boolean)
-      .join(' \u00B7 ');
+  const renderEventContent = useCallback(
+    (arg: any) => {
+      const source: CalendarEventSource | undefined = arg.event.extendedProps?.source;
+      const iconUrl = source ? SOURCE_ICONS[source] : undefined;
+      const isConsultify = source === 'consultify';
+      const hasBadge = iconUrl || isConsultify;
+      const projectName: string | undefined = arg.event.extendedProps?.projectName || undefined;
+      const provider: string | undefined = arg.event.extendedProps?.provider || undefined;
+      // Explicit project/provider lineage (MW-07 gate): visible, not hover-only \u2014
+      // an honest 'internal' marker rather than a fabricated Google/Outlook badge.
+      const lineageText = [projectName, provider === 'internal' ? 'Internal' : provider]
+        .filter(Boolean)
+        .join(' \u00B7 ');
 
-    return (
-      <div
-        className="fc-event-main-frame"
-        style={{ position: 'relative', overflow: 'hidden', width: '100%', height: '100%' }}
-        title={lineageText || undefined}
-      >
-        {arg.timeText && <div className="fc-event-time">{arg.timeText}</div>}
-        <div className="fc-event-title-container">
-          <div className="fc-event-title fc-sticky">{arg.event.title || '\u00A0'}</div>
-          {lineageText && (
-            <div
-              className="fc-event-lineage"
-              style={{ fontSize: '10px', opacity: 0.85, lineHeight: 1.2 }}
-            >
-              {lineageText}
+      return (
+        <div
+          className="fc-event-main-frame"
+          style={{ position: 'relative', overflow: 'hidden', width: '100%', height: '100%' }}
+          title={lineageText || undefined}
+        >
+          {arg.timeText && <div className="fc-event-time">{arg.timeText}</div>}
+          <div className="fc-event-title-container">
+            <div className="fc-event-title fc-sticky">
+              {v2 && source === 'consultify' ? <span aria-hidden="true">👥 </span> : null}
+              {v2 && source === 'event' ? <span aria-hidden="true">◷ </span> : null}
+              {arg.event.title || '\u00A0'}
             </div>
+            {lineageText && (
+              <div
+                className="fc-event-lineage"
+                style={{ fontSize: '10px', opacity: 0.85, lineHeight: 1.2 }}
+              >
+                {lineageText}
+              </div>
+            )}
+          </div>
+          {hasBadge && (
+            <span
+              className="fc-source-badge"
+              style={{
+                position: 'absolute',
+                bottom: 2,
+                right: 3,
+                width: 14,
+                height: 14,
+                borderRadius: 3,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                opacity: 0.85,
+                pointerEvents: 'none',
+              }}
+            >
+              {iconUrl ? (
+                <img src={iconUrl} alt="" width={14} height={14} style={{ borderRadius: 3 }} />
+              ) : (
+                CONSULTIFY_BADGE
+              )}
+            </span>
           )}
         </div>
-        {hasBadge && (
-          <span
-            className="fc-source-badge"
-            style={{
-              position: 'absolute',
-              bottom: 2,
-              right: 3,
-              width: 14,
-              height: 14,
-              borderRadius: 3,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: 0.85,
-              pointerEvents: 'none',
-            }}
-          >
-            {iconUrl ? (
-              <img src={iconUrl} alt="" width={14} height={14} style={{ borderRadius: 3 }} />
-            ) : (
-              CONSULTIFY_BADGE
-            )}
-          </span>
-        )}
-      </div>
-    );
-  }, []);
+      );
+    },
+    [v2]
+  );
 
   const viewButtons: { id: CalendarViewMode; label: string }[] = [
     { id: 'month', label: t('myWork.calendarGrid.viewMonth') },
     { id: 'week', label: t('myWork.calendarGrid.viewWeek') },
     { id: 'day', label: t('myWork.calendarGrid.viewDay') },
-    { id: 'list', label: t('myWork.calendarGrid.viewList') },
+    ...(v2 ? [] : [{ id: 'list' as const, label: t('myWork.calendarGrid.viewList') }]),
   ];
 
   const goToday = () => {
@@ -304,6 +323,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
           eventDrop={handleEventDrop}
           eventResize={handleEventDrop}
           eventContent={renderEventContent}
+          dateClick={(info) => onEmptySlotClick?.(info.date)}
           datesSet={handleDatesSet}
           headerToolbar={false}
           locale={t('myWork.calendarGrid.locale', 'en')}
@@ -311,10 +331,10 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
           height="100%"
           stickyHeaderDates
           nowIndicator
-          dayMaxEvents={5}
+          dayMaxEvents={v2 ? 3 : 5}
           eventDisplay="block"
-          slotMinTime="06:00:00"
-          slotMaxTime="22:00:00"
+          slotMinTime={v2 ? '07:00:00' : '06:00:00'}
+          slotMaxTime={v2 ? '19:00:00' : '22:00:00'}
           allDaySlot
           allDayText={t('myWork.calendarGrid.allDayText', 'all-day')}
         />
