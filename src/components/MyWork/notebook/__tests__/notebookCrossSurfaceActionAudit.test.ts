@@ -16,7 +16,12 @@ describe('Notebook cross-surface action audit', () => {
   const actions = buildNotebookCrossSurfaceActionAudit();
 
   it('has a unique, machine-counted contract for every retained action surface', () => {
-    expect(actions).toHaveLength(104);
+    // FIX-4 (Day 3 acceptance): B.6 registered 'note:version-history'
+    // (notebookActionRegistry.ts, commit fba02fef05) but this count stayed at
+    // the pre-B.6 104 — a real, already-wired action (NotebookHamburgerMenu.tsx
+    // id 'version-history', panel in NotebookContent.tsx) was under-counted.
+    expect(actions.some((action) => action.id === 'note:version-history')).toBe(true);
+    expect(actions).toHaveLength(105);
     expect(new Set(actions.map((action) => action.id)).size).toBe(actions.length);
     expect(new Set(actions.map((action) => action.surface))).toEqual(
       new Set([
