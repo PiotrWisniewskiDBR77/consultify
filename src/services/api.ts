@@ -12432,6 +12432,19 @@ export const Api = {
     projectId?: string;
     ownership?: 'any' | 'assignee' | 'owner';
   }): Promise<{ events: any[] }> => {
+    if (filters?.sources?.includes('event')) {
+      const params = new URLSearchParams();
+      if (filters.start) params.set('start', filters.start);
+      if (filters.end) params.set('end', filters.end);
+      params.set('sources', filters.sources.join(','));
+      if (filters.projectId) params.set('projectId', filters.projectId);
+      if (filters.ownership && filters.ownership !== 'any')
+        params.set('ownership', filters.ownership);
+      const res = await fetch(`${API_URL}/my-work/calendar/unified?${params.toString()}`, {
+        headers: getHeaders(),
+      });
+      return handleResponse(res, 'Failed to load unified calendar');
+    }
     try {
       return await V8MyWorkApi.getCalendarUnified(filters);
     } catch (error) {
@@ -12486,6 +12499,14 @@ export const Api = {
       preset: 'daily' | 'weekly' | 'monthly';
     };
   }): Promise<any> => {
+    if ((body.source ?? 'event') === 'event') {
+      const res = await fetch(`${API_URL}/my-work/calendar/events`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(body),
+      });
+      return handleResponse(res, 'Failed to create calendar event');
+    }
     try {
       return await V8MyWorkApi.createCalendarEvent(body);
     } catch (error) {
@@ -12513,6 +12534,17 @@ export const Api = {
     const sourceId = String(body.sourceId || '').trim();
     if (!source || !sourceId) {
       throw new Error('Missing calendar event source/sourceId');
+    }
+    if (source === 'event') {
+      const res = await fetch(
+        `${API_URL}/my-work/calendar/events/event-${encodeURIComponent(sourceId)}/reschedule`,
+        {
+          method: 'PATCH',
+          headers: getHeaders(),
+          body: JSON.stringify({ newStart: body.start, newEnd: body.end }),
+        }
+      );
+      return handleResponse(res, 'Failed to reschedule calendar event');
     }
 
     const sourceType =

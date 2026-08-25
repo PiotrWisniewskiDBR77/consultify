@@ -121,6 +121,16 @@ router.get(
     const start = startRaw || null;
     const end = endRaw || null; // FullCalendar endStr is typically exclusive
     const hasRange = Boolean(start && end);
+    if (
+      (startRaw && !endRaw) ||
+      (!startRaw && endRaw) ||
+      (hasRange &&
+        (!Number.isFinite(Date.parse(startRaw)) ||
+          !Number.isFinite(Date.parse(endRaw)) ||
+          Date.parse(endRaw) <= Date.parse(startRaw)))
+    ) {
+      return res.status(400).json({ error: 'start and end must define a valid increasing range' });
+    }
 
     const sourcesParam = req.query.sources ? String(req.query.sources) : null;
     const requestedSources = sourcesParam
@@ -549,7 +559,8 @@ router.get(
       // ── MEETINGS (Outlook / Google / Consultify) ──────────────────────
       const wantOutlook = requestedSources.includes('outlook');
       const wantGoogle = requestedSources.includes('google');
-      const wantConsultify = requestedSources.includes('consultify');
+      const wantConsultify =
+        requestedSources.includes('consultify') || requestedSources.includes('meeting');
       if (wantOutlook || wantGoogle || wantConsultify) {
         const meetingCols = await getTableColumns('meetings');
         if (meetingCols.has('start_at') && meetingCols.has('end_at')) {
@@ -848,23 +859,21 @@ router.post(
             userId,
           ]
         );
-        return res
-          .status(201)
-          .json({
-            id,
-            title,
-            description,
-            location: parsed.data.location,
-            startAt: start,
-            endAt: end,
-            allDay: parsed.data.allDay,
-            attendees: parsed.data.attendees,
-            visibility: parsed.data.visibility,
-            status: 'confirmed',
-            relatedType: parsed.data.relatedType || null,
-            relatedId: parsed.data.relatedId || null,
-            source: 'event',
-          });
+        return res.status(201).json({
+          id,
+          title,
+          description,
+          location: parsed.data.location,
+          startAt: start,
+          endAt: end,
+          allDay: parsed.data.allDay,
+          attendees: parsed.data.attendees,
+          visibility: parsed.data.visibility,
+          status: 'confirmed',
+          relatedType: parsed.data.relatedType || null,
+          relatedId: parsed.data.relatedId || null,
+          source: 'event',
+        });
       }
       if (source === 'task') {
         const id = uuidv4();
@@ -919,6 +928,16 @@ router.put(
     const end = parsed.data.endAt ?? current.end_at;
     if (Date.parse(end) <= Date.parse(start))
       return res.status(400).json({ error: 'endAt must be later than startAt' });
+    if (parsed.data.attendees?.length) {
+      const placeholders = parsed.data.attendees.map(() => '?').join(',');
+      const members = await req.db!.query(
+        `SELECT id FROM users WHERE organization_id = ? AND id IN (${placeholders})`,
+        [identity.orgId, ...parsed.data.attendees]
+      );
+      if ((members.rows || []).length !== new Set(parsed.data.attendees).size) {
+        return res.status(400).json({ error: 'Every attendee must belong to this organization' });
+      }
+    }
     await queryHelpers.queryRun(
       `UPDATE calendar_events SET title = ?, description = ?, location = ?, start_at = ?, end_at = ?, all_day = ?, attendees_json = ?, visibility = ?, related_type = ?, related_id = ?, updated_at = ${nowSql()} WHERE id = ? AND organization_id = ? AND owner_id = ?`,
       [
