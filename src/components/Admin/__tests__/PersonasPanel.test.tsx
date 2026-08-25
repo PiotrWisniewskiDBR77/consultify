@@ -22,4 +22,16 @@ describe('PersonasPanel', () => {
     );
     await waitFor(() => expect(Api.aiGetSystemPrompts).toHaveBeenCalledTimes(2));
   });
+
+  it('renders an honest empty state when there are no personas', async () => {
+    vi.mocked(Api.aiGetSystemPrompts).mockResolvedValue([]);
+    render(<PersonasPanel />);
+    expect(await screen.findByText('No personas configured.')).toBeInTheDocument();
+  });
+
+  it('renders an API error', async () => {
+    vi.mocked(Api.aiGetSystemPrompts).mockRejectedValue(new Error('personas service down'));
+    render(<PersonasPanel />);
+    expect(await screen.findByText('personas service down')).toBeInTheDocument();
+  });
 });

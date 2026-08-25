@@ -20,4 +20,16 @@ describe('AdminSessionsPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Unieważnij sesję' }));
     expect(revokeAdminSession).toHaveBeenCalledWith('s1');
   });
+
+  it('renders an honest empty state when there are no active sessions', async () => {
+    vi.mocked(getAdminSessions).mockResolvedValue([]);
+    render(<AdminSessionsPanel />);
+    expect(await screen.findByText('Brak aktywnych sesji')).toBeInTheDocument();
+  });
+
+  it('renders an API error', async () => {
+    vi.mocked(getAdminSessions).mockRejectedValue(new Error('sessions service down'));
+    render(<AdminSessionsPanel />);
+    expect(await screen.findByText('sessions service down')).toBeInTheDocument();
+  });
 });

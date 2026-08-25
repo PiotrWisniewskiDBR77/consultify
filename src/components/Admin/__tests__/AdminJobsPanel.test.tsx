@@ -22,4 +22,16 @@ describe('AdminJobsPanel', () => {
     expect(await screen.findByText('role-change')).toBeInTheDocument();
     expect(screen.queryByText(/Ponów|Anuluj/)).not.toBeInTheDocument();
   });
+
+  it('renders an honest empty state when there are no jobs', async () => {
+    vi.mocked(getAdminJobs).mockResolvedValue([]);
+    render(<AdminJobsPanel />);
+    expect(await screen.findByText('Brak zadań')).toBeInTheDocument();
+  });
+
+  it('renders an API error', async () => {
+    vi.mocked(getAdminJobs).mockRejectedValue(new Error('jobs service down'));
+    render(<AdminJobsPanel />);
+    expect((await screen.findAllByText('jobs service down')).length).toBeGreaterThan(0);
+  });
 });

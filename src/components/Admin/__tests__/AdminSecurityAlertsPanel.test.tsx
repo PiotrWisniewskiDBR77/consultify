@@ -26,4 +26,16 @@ describe('AdminSecurityAlertsPanel', () => {
     fireEvent.click(await screen.findByText('Oznacz jako rozwiązane'));
     expect(resolveSecurityAlert).toHaveBeenCalledWith('a1');
   });
+
+  it('renders an honest empty state when there are no alerts', async () => {
+    vi.mocked(getSecurityAlerts).mockResolvedValue([]);
+    render(<AdminSecurityAlertsPanel />);
+    expect(await screen.findByText('Brak alertów')).toBeInTheDocument();
+  });
+
+  it('renders an API error', async () => {
+    vi.mocked(getSecurityAlerts).mockRejectedValue(new Error('security alerts service down'));
+    render(<AdminSecurityAlertsPanel />);
+    expect(await screen.findByText('security alerts service down')).toBeInTheDocument();
+  });
 });

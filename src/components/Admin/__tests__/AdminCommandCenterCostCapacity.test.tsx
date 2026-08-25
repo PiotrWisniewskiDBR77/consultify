@@ -49,4 +49,27 @@ describe('Command Center cost and capacity', () => {
       '/admin/billing/usage-costs'
     );
   });
+
+  it('renders an honest empty state when there is no cost attribution', async () => {
+    attribution.mockResolvedValue({ totalCost: 0, byUser: [], byModel: [], byDay: [] });
+    render(
+      <MemoryRouter>
+        <AdminCommandCenterPanel screen="cost-capacity" />
+      </MemoryRouter>
+    );
+    expect(await screen.findByText('Brak atrybucji kosztów')).toBeInTheDocument();
+  });
+
+  it('surfaces a degraded-source warning when part of the aggregation fails', async () => {
+    api.getAdminBillingAlerts.mockRejectedValue(new Error('billing alerts unavailable'));
+    api.getHealthPanelSummary.mockRejectedValue(new Error('health panel unavailable'));
+    render(
+      <MemoryRouter>
+        <AdminCommandCenterPanel screen="cost-capacity" />
+      </MemoryRouter>
+    );
+    expect(
+      await screen.findByText('Część źródeł kosztu lub pojemności jest niedostępna.')
+    ).toBeInTheDocument();
+  });
 });

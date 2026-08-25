@@ -18,4 +18,19 @@ describe('AdminAccessReviewsPanel', () => {
     ).toBeInTheDocument();
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
   });
+
+  it('renders an honest empty state when there are no privileged accounts', async () => {
+    vi.mocked(getAccessReviewData).mockResolvedValue({
+      policy: { accessReviewsEnabled: false, accessReviewCadenceDays: 90 },
+      members: [],
+    });
+    render(<AdminAccessReviewsPanel />);
+    expect(await screen.findByText('Brak kont uprzywilejowanych')).toBeInTheDocument();
+  });
+
+  it('renders an API error', async () => {
+    vi.mocked(getAccessReviewData).mockRejectedValue(new Error('access review service down'));
+    render(<AdminAccessReviewsPanel />);
+    expect(await screen.findByText('access review service down')).toBeInTheDocument();
+  });
 });

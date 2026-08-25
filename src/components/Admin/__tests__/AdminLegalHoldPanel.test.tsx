@@ -16,4 +16,20 @@ describe('AdminLegalHoldPanel', () => {
     expect(screen.getByText(/Rejestr spraw nie jest jeszcze prowadzony/)).toBeInTheDocument();
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
+
+  it('renders an honest inactive state when legal hold is off', async () => {
+    vi.mocked(getLegalHold).mockResolvedValue({
+      legalHoldEnabled: false,
+      blockedOperations: [],
+      matterRegistryAvailable: false,
+    });
+    render(<AdminLegalHoldPanel />);
+    expect(await screen.findByText('Wstrzymanie nieaktywne')).toBeInTheDocument();
+  });
+
+  it('renders an API error', async () => {
+    vi.mocked(getLegalHold).mockRejectedValue(new Error('legal hold service down'));
+    render(<AdminLegalHoldPanel />);
+    expect(await screen.findByText('legal hold service down')).toBeInTheDocument();
+  });
 });

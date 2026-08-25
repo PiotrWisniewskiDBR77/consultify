@@ -24,4 +24,20 @@ describe('AdminSlaSloPanel', () => {
     expect(await screen.findByText('Availability')).toBeInTheDocument();
     expect(screen.getByText(/Targety AI-SLA są dziś stałe/)).toBeInTheDocument();
   });
+
+  it('renders an honest empty state when no SLOs are defined', async () => {
+    vi.mocked(getTenantSlos).mockResolvedValue([]);
+    vi.mocked(getAiSlaStatus).mockResolvedValue({ status: 'ok' });
+    render(<AdminSlaSloPanel />);
+    expect(
+      await screen.findByText('Dla tej organizacji nie zdefiniowano celów SLO.')
+    ).toBeInTheDocument();
+  });
+
+  it('renders an API error', async () => {
+    vi.mocked(getTenantSlos).mockRejectedValue(new Error('slo service down'));
+    vi.mocked(getAiSlaStatus).mockResolvedValue({ status: 'ok' });
+    render(<AdminSlaSloPanel />);
+    expect(await screen.findByText('slo service down')).toBeInTheDocument();
+  });
 });

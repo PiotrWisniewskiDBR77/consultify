@@ -23,4 +23,16 @@ describe('AdminGuestsPanel', () => {
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
     expect(screen.getByText(/nie jest jeszcze egzekwowany/)).toBeInTheDocument();
   });
+
+  it('renders an honest empty state when there are no guests', async () => {
+    vi.mocked(getAdminGuests).mockResolvedValue([]);
+    render(<AdminGuestsPanel />);
+    expect(await screen.findByText('Brak gości')).toBeInTheDocument();
+  });
+
+  it('renders an API error', async () => {
+    vi.mocked(getAdminGuests).mockRejectedValue(new Error('guests service down'));
+    render(<AdminGuestsPanel />);
+    expect(await screen.findByText('guests service down')).toBeInTheDocument();
+  });
 });

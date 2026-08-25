@@ -40,4 +40,20 @@ describe('AdminBreakGlassPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Aktywuj break-glass' }));
     expect(createBreakGlass).toHaveBeenCalledWith('Emergency access needed', 'u2');
   });
+
+  it('renders an honest empty state when there are no active sessions', async () => {
+    vi.mocked(getBreakGlass).mockResolvedValue({
+      sessions: [],
+      policy: { breakGlassEnabled: true, breakGlassApprovers: [] },
+      approvers: [],
+    });
+    render(<AdminBreakGlassPanel />);
+    expect(await screen.findByText('Brak aktywnych sesji break-glass')).toBeInTheDocument();
+  });
+
+  it('renders an API error', async () => {
+    vi.mocked(getBreakGlass).mockRejectedValue(new Error('break-glass service down'));
+    render(<AdminBreakGlassPanel />);
+    expect(await screen.findByText('break-glass service down')).toBeInTheDocument();
+  });
 });
