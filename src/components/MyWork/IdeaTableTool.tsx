@@ -3758,54 +3758,6 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   </button>
                 </div>
               )}
-
-              {/* ZAPIS — „może save koło teresa" (zgłoszenie 2026-07-28).
-                  Flaga ON + slot Menu 1 obecny → etykieta i przycisk lecą PORTALEM
-                  do rzędu poleceń powłoki, tuż przed chip „Teresa"; w Menu 1
-                  przycisk jest chipem-duchem (jak Teresa), bo solidna pigułka obok
-                  „Konwertuj" dałaby dwa CTA równej wagi. Brak slotu (Idea poza
-                  powłoką MELS / stary harness) → zostaje w pasku 1:1 jak dziś,
-                  więc zapis nigdy nie znika przez brak celu portalu. */}
-              {guidedBar && menu1ToolSlot ? (
-                createPortal(
-                  <>
-                    <button
-                      type="button"
-                      onClick={_save}
-                      disabled={_saving || _loading || locked}
-                      data-testid="idea-table-save-in-menu1"
-                      title={t('ideas.table.save', 'Save')}
-                      className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                    >
-                      {_saving ? (
-                        <Loader2 size={14} className="animate-spin" />
-                      ) : (
-                        <Save size={14} />
-                      )}
-                      {_saving ? t('ideas.table.saving', 'Saving…') : t('ideas.table.save', 'Save')}
-                    </button>
-                  </>,
-                  menu1ToolSlot
-                )
-              ) : (
-                <>
-                  <span className="text-[11px] text-c-text-muted">{_saveLabel}</span>
-                  <button
-                    type="button"
-                    onClick={_save}
-                    disabled={_saving || _loading || locked}
-                    data-testid="idea-table-save-in-bar"
-                    className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors ${
-                      _saving || _loading || locked
-                        ? 'bg-c-surface-raised text-c-text-muted'
-                        : 'bg-c-text text-c-surface hover:brightness-95'
-                    }`}
-                  >
-                    {_saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                    {_saving ? t('ideas.table.saving', 'Saving…') : t('ideas.table.save', 'Save')}
-                  </button>
-                </>
-              )}
             </div>
           )}
 
