@@ -43,11 +43,13 @@ import { IDEA_TOP_BAR_SLOT_ID, isIdeaTopBarOneLineEnabled } from '@/utils/ideaTo
 import { isVf1CanvasSpecAEnabled } from '@/utils/vf1CanvasSpecAFlag';
 
 import {
+  ARTIFACT_IDENTITY,
   type ArtifactLinkRole,
   type ArtifactType,
   buildArtifactCode,
   buildArtifactRef,
   getArtifactLabel,
+  getArtifactPath,
 } from '../../utils/artifactLinks';
 import { ArtifactAttachPopover } from '../shared/NModeBlocks/ArtifactAttachPopover';
 import { applyAIProposalRuntime } from './aiProposalRuntime';
@@ -3647,6 +3649,35 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     Array<{ title: string; type: string; status?: string; targetId?: string }>
   >([]);
 
+  // FIX-6 (Day 3 acceptance): resolves the REAL name/status of a conversion
+  // target instead of fabricating one. The conversions API only returns
+  // {targetType, targetId, scope} — no title, and `scope` (draft/final,
+  // an idea-side concept) is not the target's lifecycle status. Best-effort:
+  // on fetch failure or an unmapped type, falls back to the honest
+  // type+date label the code already used, never a fabricated status.
+  const resolveConversionTargetName = useCallback(
+    async (targetType: string, targetId: string): Promise<{ title?: string; status?: string }> => {
+      try {
+        if (targetType === 'initiative') {
+          const initiative = await Api.getInitiativeById(targetId);
+          return { title: initiative?.title || initiative?.name, status: initiative?.status };
+        }
+        if (targetType === 'task') {
+          const task = await Api.getTask(targetId);
+          return { title: task?.title, status: task?.status };
+        }
+        if (targetType === 'decision') {
+          const decision = await Api.getDecision(targetId);
+          return { title: decision?.title || decision?.question, status: decision?.status };
+        }
+      } catch {
+        /* best-effort — falls back to the type+date label below */
+      }
+      return {};
+    },
+    []
+  );
+
   useEffect(() => {
     if (!ideaInspectorRightRail || !realId) {
       setInspectorOutputs([]);
@@ -3654,16 +3685,24 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     }
     let cancelled = false;
     Api.getMyIdeaConversions(realId)
-      .then((result) => {
+      .then(async (result) => {
         if (cancelled) return;
-        setInspectorOutputs(
-          (result.conversions || []).map((conversion) => ({
-            title: `${conversion.targetType} · ${new Date(conversion.createdAt).toLocaleDateString()}`,
-            type: conversion.targetType,
-            status: conversion.scope,
-            targetId: conversion.targetId || undefined,
-          }))
+        const conversions = result.conversions || [];
+        const resolved = await Promise.all(
+          conversions.map(async (conversion) => {
+            const fallbackTitle = `${conversion.targetType} · ${new Date(conversion.createdAt).toLocaleDateString()}`;
+            const real = conversion.targetId
+              ? await resolveConversionTargetName(conversion.targetType, conversion.targetId)
+              : {};
+            return {
+              title: real.title || fallbackTitle,
+              type: conversion.targetType,
+              status: real.status,
+              targetId: conversion.targetId || undefined,
+            };
+          })
         );
+        if (!cancelled) setInspectorOutputs(resolved);
       })
       .catch(() => {
         if (!cancelled) setInspectorOutputs([]);
@@ -3671,7 +3710,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [ideaInspectorRightRail, realId]);
+  }, [ideaInspectorRightRail, realId, resolveConversionTargetName]);
   const [sekcjaPrawegoPaska, setSekcjaPrawegoPaska] = useState<string | null>(null);
 
   useEffect(() => {
@@ -4327,12 +4366,21 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                   }
                   language={isPolish ? 'pl' : 'en'}
                   onOpenOutput={(targetId) => {
+                    // FIX-6 (Day 3 acceptance): "Otwórz" used to only handle
+                    // targetType 'initiative'/'task' — any other conversion
+                    // target (decision, report, …) had a dead button. Route
+                    // through the shared artifactLinks deep-link map for
+                    // every recognized ArtifactType instead of a 2-case
+                    // switch; 'task_set' is a convert-menu concept, not an
+                    // ArtifactType, so it keeps its own explicit route.
                     const output = inspectorOutputs.find((item) => item.targetId === targetId);
                     if (!output) return;
-                    if (output.type === 'initiative') {
-                      navigate(`/initiatives?initiativeId=${encodeURIComponent(targetId)}`);
-                    } else if (output.type === 'task') {
+                    if (output.type === 'task_set') {
                       navigate(`/my-work/tasks?taskId=${encodeURIComponent(targetId)}`);
+                      return;
+                    }
+                    if (output.type in ARTIFACT_IDENTITY) {
+                      navigate(getArtifactPath(output.type as ArtifactType, targetId));
                     }
                   }}
                   onSave={async (patch) => {
