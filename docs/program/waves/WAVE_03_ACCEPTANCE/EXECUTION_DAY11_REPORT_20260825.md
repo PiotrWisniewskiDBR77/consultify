@@ -134,10 +134,12 @@ kontrakt modułu, rejestr decyzji, instrukcja oraz kod w izolowanym worktree.
 | 8   | Co zarząd ma zrobić       | STOP E-O4      | brak rekomendacji bez wag i dowodów                    |
 | 9   | Audytowalny rejestr       | JEST           | StandardTable, sourceVersion, exact task/decision open |
 
-Formuły możliwe z obecnego read-modelu: `formalBackorder`, `slaBackorder`,
-`undatedRisk`, bieżący `agingDays`, `dataCompleteness`. Formuły wymagające
-historii lub decyzji konfiguracyjnej pozostają uczciwie niedostępne:
-`decisionLatency`, `blockedDays`, `throughputRatio`, `netBackorderChange`,
+Formuły możliwe z obecnego read-modelu (nazwy pól faktycznie w
+`workReportModel.ts`, ★ skorygowano — patrz „Korekta odbiorcza"):
+`overdueTasks`, `overdueDecisions`, `dueToday`, `due7`, `activeBlocks`,
+`undatedRisk`, `dataCompleteness`. Formuły wymagające historii lub decyzji
+konfiguracyjnej pozostają uczciwie niedostępne: `decisionLatency`,
+`blockedDays`, `throughputRatio`, `netBackorderChange`,
 `impactWeightedBackorder`.
 
 ## E.2 — tabela werdyktów
@@ -145,10 +147,10 @@ historii lub decyzji konfiguracyjnej pozostają uczciwie niedostępne:
 | Element                                                   | Werdykt        | Dowód                                                       |
 | --------------------------------------------------------- | -------------- | ----------------------------------------------------------- |
 | Populacja osób/role z projektów                           | JEST_CZĘŚCIOWO | runtime-v1 allocations; osoba bez taska pozostaje widoczna  |
-| Heatmapa osoba×tydzień                                    | JEST_CZĘŚCIOWO | tydzień i zakres load z allocation; brak load → UNKNOWN     |
+| Heatmapa osoba×tydzień                                    | BRAK (korekta) | ★ patrz „Korekta odbiorcza": literalny duplikat tabeli Osoby, zero pivotu osoba×tydzień |
 | Widok Osoby                                               | JEST           | StandardTable z availability/demand/saturation/confidence   |
 | Widok Projekt                                             | JEST_CZĘŚCIOWO | projekty z Execution cases; role/skills brakujące → UNKNOWN |
-| Rejestry konfliktów/braków                                | JEST           | jawne NOT_VERIFIED/UNKNOWN + sourceVersion                  |
+| Rejestry konfliktów/braków                                | CZĘŚCIOWO (korekta) | ★ patrz „Korekta odbiorcza": wymiar konfliktu strukturalnie zawsze NOT_VERIFIED; działa tylko wymiar braku danych |
 | Dostępność po absencjach/obowiązkach/rezerwacjach/buforze | BRAK_API       | E-O5; nie wyliczono 0 ani bezpiecznej saturacji             |
 | Progi saturacji i bufor                                   | STOP E-O5      | nie zaszyto wartości domyślnych                             |
 | Niezmienna publikacja                                     | JEST_CZĘŚCIOWO | wspólny runtime-v1 SSOT z DEC-63; raport jest read-only     |
@@ -160,7 +162,7 @@ historii lub decyzji konfiguracyjnej pozostają uczciwie niedostępne:
 | Sygnały i interwencje                     | JEST                | realne `listManagementSignals/listInterventions` runtime-v1 |
 | KPI rekoncyliowalne                       | JEST_CZĘŚCIOWO      | 4 KPI z num/denom względem jednego rejestru                 |
 | Zunifikowany rejestr                      | JEST                | StandardTable, sourceVersion, jawne stany                   |
-| Rodowód signal→decision→work→verification | JEST_CZĘŚCIOWO      | identyfikatory źródłowe; brakujące relacje = UNKNOWN        |
+| Rodowód signal→decision→work→verification | CZĘŚCIOWO (korekta) | ★ patrz „Korekta odbiorcza": nawet ta ocena była zawyżona bugiem wnioskowania VERIFIED z evidenceRefs (naprawiony F6) |
 | Zamknięcie bez dowodu                     | JEST                | wymuszona prezentacja `NOT_VERIFIED`                        |
 | Forward scenarios                         | BRAK_API            | base/optimistic/pessimistic jawnie UNKNOWN                  |
 | Severity/reaction SLA                     | STOP decyzji Piotra | nie zaszyto taksonomii ani wartości                         |
@@ -174,11 +176,11 @@ historii lub decyzji konfiguracyjnej pozostają uczciwie niedostępne:
 | Wejście „Zrób raport”                    | JEST              | kontekstowa karta Menu 3 wyłącznie przy fladze ON                           |
 | Exact published definition               | JEST              | generator dopuszcza tylko wersję `PUBLISHED` odczytaną z runtime-v1         |
 | History/as-of/reporting week/forecast    | JEST_CZĘŚCIOWO    | osobne kontrolki; runtime-v1 utrwala period/asOf, pozostałe jawnie BRAK_API |
-| Utworzenie szkicu                        | JEST              | realne `createReportRun`, owner/approver z definicji, autoryzowany scope    |
-| Wiele raportów                           | JEST              | niezależnie otwierane pozycje z licznikiem kart                             |
+| Utworzenie szkicu                        | CZĘŚCIOWO (korekta) | ★ patrz „Korekta odbiorcza": szkic zawsze `sources:[]` → nigdy nie osiąga VALIDATED/PUBLISHED z tego ekranu |
+| Wiele raportów                           | CZĘŚCIOWO (korekta) | ★ patrz „Korekta odbiorcza": tylko licznik zaznaczeń, brak niezależnie renderowanej treści per pozycja |
 | Publikacja niezmienna                    | JEST              | opublikowany run pokazuje contentHash; brak kontroli mutacji snapshotu      |
 | Lifecycle kontraktowy                    | BRAK_API          | runtime-v1 zachowuje własny DRAFT→VALIDATED→FROZEN→APPROVED→PUBLISHED       |
-| Eksport                                  | JEST_CZĘŚCIOWO    | management-reports: PDF/PPTX; runtime-v1 JSON; XLSX BRAK_API                |
+| Eksport                                  | BRAK (korekta)    | ★ patrz „Korekta odbiorcza": na tym ekranie eksport to tekst opisowy, zero akcji eksportu |
 | Resumable section failure / refresh diff | BRAK_API          | brak pól i endpointu w dozwolonym backendzie                                |
 
 ## Pozycje otwarte — STOP-y do zatwierdzenia
@@ -321,6 +323,100 @@ uruchomiono: implementacja nie zmienia serwera ani bazy i nie stawiano PG.
 Inspekcja wizualna wykryła i usunęła semantyczny błąd zerowych KPI oznaczonych
 RED/AMBER; zrzuty `01`–`03` wygenerowano ponownie po korekcie. Wszystkie osiem
 przebiegów zakończyło się `OK`, bez wpisów `KONSOLA-BLEDY` i `SIEC-4XX5XX`.
+
+## Korekta odbiorcza (DEC-72, 2026-08-25 — robotnik FIX)
+
+Odbiór dnia 11 (DEC-72) zlecił naprawę merytoryki E.1–E.4 oraz sprostowanie
+tego raportu. Poniższe poprawki wykonano w gałęzi
+`codex/execution-day11-fixes-20260825` (baza `codex/day11-instrukcja-20260825`),
+zweryfikowane wobec ŻYWEGO kodu (`grep`/odczyt pliku), nie wobec tego
+dokumentu — zgodnie ze złotą regułą CLAUDE.md „weryfikuj realny runtime, nie
+docy".
+
+### Sprostowanie: `slaBackorder`/`agingDays` nie istnieją
+
+§E.1 tego raportu (akapit pod tabelą „Dziewięć sekcji") wymieniał formuły
+`formalBackorder`, `slaBackorder` i bieżący `agingDays` jako „możliwe z
+obecnego read-modelu". **To nieprawda** — `grep -rn
+"formalBackorder\|slaBackorder\|agingDays"
+src/components/Execution/reports-intelligence/` zwraca zero trafień w całej
+implementacji. Żadne z tych pól/metryk nigdy nie istniało w
+`workReportModel.ts`. Akapit powyżej poprawiono na literalną listę ID metryk
+faktycznie zwracanych przez `buildWorkReportModel` (`overdueTasks`,
+`overdueDecisions`, `dueToday`, `due7`, `activeBlocks`, `undatedRisk`,
+`dataCompleteness`).
+
+### Zamiana 6 werdyktów JEST na uczciwe CZĘŚCIOWO/BRAK
+
+Sześć poniższych komórek werdyktu zmieniono w tabelach powyżej (oznaczone
+„★ patrz «Korekta odbiorcza»"); uzasadnienie każdej — tutaj:
+
+1. **Heatmapa osoba×tydzień (E.2, było `JEST_CZĘŚCIOWO`, jest `BRAK`).**
+   `ResourcesCapacityReport.tsx:223-244` renderuje siatkę CSS z trzema
+   kolumnami (Osoba/Tydzień/Saturacja) wypełnianą `state.rows.flatMap(...)` —
+   to jest **ta sama lista alokacji co tabela „People view" poniżej**, bez
+   żadnego pivotu/agregacji po osobie×tygodniu. Nie ma tu macierzy; to
+   duplikat listy pod inną nazwą sekcji. (Ten sam problem, do naprawy
+   wizualnej bez przebudowy w prawdziwą heatmapę, jest już zaplanowany jako
+   punkt 8 Fazy 4 polish-pass.)
+
+2. **Rejestry konfliktów/braków (E.2, było `JEST`, jest `CZĘŚCIOWO`).**
+   `ResourcesCapacityReport.tsx:89-91`: `conflict: String(item.conflict?.state
+   || item.assessment?.state || 'NOT_VERIFIED')`. Żaden zweryfikowany
+   endpoint (E-O5, STOP) nie dostarcza `conflict.state` — więc ten wymiar
+   rejestru strukturalnie ZAWSZE wynosi `NOT_VERIFIED` i nigdy realnie nie
+   wykryje konfliktu. Jedyny wymiar, który faktycznie działa, to brak danych
+   (`skill === 'UNKNOWN'`/`availability === 'UNKNOWN'`) — stąd `CZĘŚCIOWO`,
+   nie `JEST`.
+
+3. **Rodowód signal→decision→work→verification (E.3, było `JEST_CZĘŚCIOWO`,
+   pozostaje `CZĘŚCIOWO`, ale ocena była zawyżona).** Przed naprawą F6,
+   `ControlLoopReport.tsx` wnioskował `VERIFIED` z samej obecności
+   `evidenceRefs` na zamkniętej interwencji, bez jawnej decyzji weryfikacji —
+   czyli fragment tego „rodowodu" (`verification:VERIFIED`) bywał
+   fabrykowany. Naprawiono w tej samej gałęzi (patrz commit F5-F6): teraz
+   `VERIFIED` pojawia się wyłącznie z jawnego `item.verificationState`, w
+   przeciwnym razie `NOT_VERIFIED`. Ocena `CZĘŚCIOWO` jest teraz uczciwa —
+   identyfikatory relacji są wyświetlane, ale nic nie potwierdza, że faktycznie
+   wskazują na istniejące rekordy (brak join/weryfikacji krzyżowej).
+
+4. **Utworzenie szkicu (E.4, było `JEST`, jest `CZĘŚCIOWO`).**
+   `UnifiedExecutionReportGenerator.tsx:110` wysyła `sources: []` przy każdym
+   `createReportRun` — ten ekran nie ma żadnego mechanizmu dołączania źródeł.
+   Szkic **zawsze** startuje `INCOMPLETE` i nigdy, z tego ekranu, nie może
+   osiągnąć `VALIDATED`/`PUBLISHED` bez zewnętrznego (backendowego,
+   niedotykanego tu) przepływu dołączającego dowody. Naprawiono w F7:
+   dodano stały, jednoznaczny komunikat „Draft state after creation:
+   INCOMPLETE (0 sources attached)" obok przycisku. `JEST` sugerowało pełną
+   funkcjonalność tworzenia szkicu; `CZĘŚCIOWO` jest uczciwe — tworzenie
+   działa, ale prowadzi donikąd bez kroku spoza tego ekranu.
+
+5. **Wiele raportów (E.4, było `JEST`, jest `CZĘŚCIOWO`).**
+   `UnifiedExecutionReportGenerator.tsx:276-303`: kliknięcie przycisku
+   uruchomionego dla danego `run` tylko przełącza jego `id` w tablicy
+   `selectedRunIds` i inkrementuje licznik „Open report tabs: N". Żadna
+   odrębna treść/panel per raport nie jest renderowana — nie ma „kart"
+   (`karty`) w sensie wizualnym ani osobnych widoków. Testowy tytuł „keeps
+   several report tabs open concurrently" (kłamiący) przemianowano w ramach
+   F11 na „increments the open-report counter as run pills are toggled".
+
+6. **Eksport z generatora (E.4, było `JEST_CZĘŚCIOWO`, jest `BRAK`).**
+   `UnifiedExecutionReportGenerator.tsx:304-309`: sekcja „Export" to
+   WYŁĄCZNIE statyczny tekst opisowy („PDF: management-reports pipeline ·
+   XLSX: BRAK_API · runtime-v1 package: JSON") — zero przycisku, zero
+   handlera, zero akcji eksportu na tym ekranie. PDF/PPTX istnieją naprawdę,
+   ale w zupełnie innym, nietykanym tu potoku (`managementReports.routes.ts`),
+   nieosiągalnym z tego ekranu. Z perspektywy TEGO komponentu eksport to
+   `BRAK`, nie `JEST_CZĘŚCIOWO` — poprzednia ocena myliła istnienie funkcji
+   gdzie indziej w systemie z jej dostępnością tutaj.
+
+### Zakres tej korekty
+
+Ta sekcja nie zmienia werdyktów E-O1…E-O7 (STOP-y pozostają w mocy) ani
+statusu E.0/gotowości poniżej — koryguje wyłącznie sześć konkretnych komórek
+werdyktu i jeden akapit z fabrykowanymi nazwami pól, zgodnie z zakresem
+zleconym w DEC-72. Pełna lista napraw merytorycznych (F1–F11) i dowodów
+testowych — w raporcie robotnika FIX, nie w tym pliku.
 
 ## Gotowość
 
