@@ -61,16 +61,16 @@ Właściciel poza publiczną produkcją wpisuje `/results?ff_wave3ResultsOwnerRe
 
 ## Sekcja F — Finance (DEC-2026-08-24-05)
 
-| Pozycja                               | Status           | Commit                      | Testy          | Uwagi                                                         |
-| ------------------------------------- | ---------------- | --------------------------- | -------------- | ------------------------------------------------------------- |
-| F.1 inwentarz FIN-REC-001             | DONE_CURRENT_SHA | `4ab7a61403`                | audyt źródłowy | Sześć gałęzi i pięć flag zamrożone poniżej                    |
-| F.2 resolver FIN-REC-002              | DONE_CURRENT_SHA | `5502e8fdb2`                | 81/81 PASS     | 53-case table + OFF regression + stare testy                  |
-| F.3 wspólny shell FIN-REC-003         | PARTIAL / STOP   | `b284ca6e43`                | 10/10 PASS     | Mechaniczne luki zamknięte; cold Back nie utrwala filtrów     |
-| F.4 `financeOwnerSampleData`          | DONE_CURRENT_SHA | `207124e9e9`                | 5/5 PASS       | Host produkcyjny fail-closed, jawny banner, licznik zamrożony |
-| F.5 ochrona danych i ufności          | DONE_CURRENT_SHA | do uzupełnienia po commicie | 4/4 PASS       | Zero migracji, ufność i tenant guards zamrożone               |
-| F.6 stany brzegowe FIN-REC-011        | PENDING          | —                           | —              | —                                                             |
-| F.7 testy FIN-REC-014                 | PENDING          | —                           | —              | —                                                             |
-| F.8 przygotowanie odłączenia Benefits | PENDING          | —                           | —              | —                                                             |
+| Pozycja                               | Status           | Commit                  | Testy          | Uwagi                                                         |
+| ------------------------------------- | ---------------- | ----------------------- | -------------- | ------------------------------------------------------------- |
+| F.1 inwentarz FIN-REC-001             | DONE_CURRENT_SHA | `4ab7a61403`            | audyt źródłowy | Sześć gałęzi i pięć flag zamrożone poniżej                    |
+| F.2 resolver FIN-REC-002              | DONE_CURRENT_SHA | `5502e8fdb2`            | 81/81 PASS     | 53-case table + OFF regression + stare testy                  |
+| F.3 wspólny shell FIN-REC-003         | PARTIAL / STOP   | `b284ca6e43`            | 10/10 PASS     | Mechaniczne luki zamknięte; cold Back nie utrwala filtrów     |
+| F.4 `financeOwnerSampleData`          | DONE_CURRENT_SHA | `207124e9e9`            | 5/5 PASS       | Host produkcyjny fail-closed, jawny banner, licznik zamrożony |
+| F.5 ochrona danych i ufności          | DONE_CURRENT_SHA | `1cc0724847`            | 4/4 PASS       | Zero migracji, ufność i tenant guards zamrożone               |
+| F.6 stany brzegowe FIN-REC-011        | STOP             | docs commit tej pozycji | audyt 5×8      | Brak jednolitych capability/error contracts                   |
+| F.7 testy FIN-REC-014                 | PENDING          | —                       | —              | —                                                             |
+| F.8 przygotowanie odłączenia Benefits | PENDING          | —                       | —              | —                                                             |
 
 ### F.1 — manifest runtime i zamrożenie
 
@@ -153,6 +153,18 @@ Domknięta luka mechaniczna: własne `w-[400px]` zastąpione wspólnym `PREVIEW_
 - Odczyt bez automatycznego zapisu rozliczono per gałąź w F.2.
 - Role `preparer` są zaszyte w sześciu miejscach `FinanceHub.tsx:332,346,352,3330,3394,3424`; nie zmieniono ich bez realnego checku capability.
 
+### F.6 — macierz stanów brzegowych (5 kart × 8 stanów)
+
+| Karta      | loading               | brak danych     | brak uprawnień | niezgodne ID           | błąd API               | konflikt wersji         | błąd obliczeń                  | dane częściowe                      |
+| ---------- | --------------------- | --------------- | -------------- | ---------------------- | ---------------------- | ----------------------- | ------------------------------ | ----------------------------------- |
+| Statements | JEST `:201,282`       | JEST `:625,664` | NIEODRÓŻNIALNY | JEST przez resolver    | JEST `:615`            | NIEODRÓŻNIALNY          | JEST jako reconciliation error | JEST, niezależne lines/lineage/runs |
+| Baseline   | JEST `:134,172`       | JEST_CZĘŚCIOWO  | NIEODRÓŻNIALNY | JEST resolver/bridge   | JEST `:175`            | NIEODRÓŻNIALNY          | JEST w compute hook            | JEST_CZĘŚCIOWO                      |
+| Analysis   | JEST `:138,511`       | JEST_CZĘŚCIOWO  | NIEODRÓŻNIALNY | JEST resolver/bridge   | JEST `:206,512`        | NIEODRÓŻNIALNY          | JEST jako compute error        | JEST_CZĘŚCIOWO                      |
+| Prediction | JEST `:113,458`       | JEST_CZĘŚCIOWO  | NIEODRÓŻNIALNY | JEST `:441` + resolver | JEST `:465`            | JEST w save path `:286` | NIEODRÓŻNIALNY                 | JEST_CZĘŚCIOWO                      |
+| Valuation  | JEST przez hooki/step | JEST_CZĘŚCIOWO  | NIEODRÓŻNIALNY | JEST resolver/bridge   | JEST boundary + `:462` | NIEODRÓŻNIALNY          | JEST `valuation-variant-error` | JEST_CZĘŚCIOWO                      |
+
+Każdy znaleziony stan ma tekst, nie tylko kolor. Nie dodano Retry dla mutacji bez potwierdzonego klucza idempotencji i nie ujawniono treści odpowiedzi serwera w nowym UI.
+
 ## Pozycje STOP
 
 ### STOP — R.3 `canonicalCutoverMount`
@@ -175,6 +187,13 @@ Powód: `tab` jest utrwalany w URL, ale wyszukiwanie, filtry, zaznaczenie i scro
 Dowód: `FinanceHub.tsx:554-563,1315-1351,1047`; test kontraktowy potwierdza zachowanie in-memory.  
 Co zrobiłbym po decyzji produktowej: zdefiniowałbym stabilny, wersjonowany format query dla search/filter/selection i osobno politykę odtwarzania scrolla.  
 Stan: zacommitowano częściowo; geometria preview i audyt gotowe.
+
+### STOP — F.6 rozróżnienie stanów
+
+Powód: brak uprawnień oraz część konfliktów/błędów obliczeń nie mają jednolitego, typowanego kontraktu we wszystkich pięciu workspace'ach; role są dodatkowo zaszyte jako `preparer`.  
+Dowód: macierz 5×8 powyżej oraz `FinanceHub.tsx:332,346,352,3330,3394,3424`.  
+Co zrobiłbym po udostępnieniu realnego checku capability i wspólnej taksonomii błędów: dodałbym osobne stany per workspace i wymagane 15 testów 403/409/compute bez zmiany globalnych mocków.  
+Stan: NIE ZACOMMITOWANO w kodzie produkcyjnym; audyt w raporcie.
 
 ## Znaleziska
 
