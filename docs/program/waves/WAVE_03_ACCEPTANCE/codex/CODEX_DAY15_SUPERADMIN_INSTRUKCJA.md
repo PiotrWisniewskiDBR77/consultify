@@ -86,13 +86,13 @@ w raporcie. Nie ma wyjątków „bo tak było szybciej".
 
    Nadzorca podaje Ci **SHA commitu-markera** przy wklejaniu tej instrukcji.
 
-   **SHA markera: «MARKER_SHA»**
+   **SHA markera: f0caf6a821**
 
    ```bash
    cd <root-repo>
    git fetch --all --prune
    git log --oneline -25 codex/m03-admin-20260824
-   git merge-base --is-ancestor «MARKER_SHA» codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
+   git merge-base --is-ancestor f0caf6a821 codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
    ```
 
 2. **Jeśli marker nie jest przodkiem tipa albo gałąź nie istnieje — STOP.**
@@ -1942,7 +1942,7 @@ w tytułach obiektów domenowych (heurystyki szkiców potrafią je ukryć).
 
 1. **Marker i baza** (§0.1). Wynik obu komend do raportu:
    ```bash
-   git merge-base --is-ancestor «MARKER_SHA» codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
+   git merge-base --is-ancestor f0caf6a821 codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
    ```
    `MARKER BRAK` = koniec dyżuru, raport z jedną pozycją STOP.
 2. **Materiały wiążące** (§0.1 pkt 3). Brak któregokolwiek = STOP.
@@ -2112,7 +2112,7 @@ Z13).
 # Superadmin dzień 15 — raport dyżuru <data>
 
 Baza: codex/m03-admin-20260824 @ <tip SHA>
-Marker: «MARKER_SHA» — POTWIERDZONY / BRAK
+Marker: f0caf6a821 — POTWIERDZONY / BRAK
 Gałąź robocza: codex/superadmin-day15-<data>
 Worktree: /private/tmp/consultify-superadmin-day15
 Porty użyte: 4340/4341 (albo: żadne) · Kontener PG: cx-day15-pg (usunięty: TAK/NIE)
