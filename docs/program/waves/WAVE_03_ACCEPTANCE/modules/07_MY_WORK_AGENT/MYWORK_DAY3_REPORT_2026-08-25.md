@@ -62,7 +62,7 @@ Usunięcie folderu wymaga ConfirmDialog i odpina dokumenty, nie usuwa ich. Bloka
 | E.3 spotkania | DONE | `ffbe804a15`, `f0fb77f223`, `7fdfe458ba`, `b5be40aba5` | implementacja nie miała osobnego commitu; 4 wymagane przypadki behawioralne PASS |
 | E.4 V2 za flagą | DONE | `ae8bb727d4`, `be0d6e6b2c` | tydzień, 07–19, warstwy, deadline strip, empty-slot modal |
 | E.5 powiel 4 tygodnie | DONE | `7d80d8df12` | jawna lista dat, 4 niezależne eventy, recurrence NULL |
-| E.6 testy+i18n | **PARTIAL / STOP** | — | własne kontrakty zielone; 32/33 testów zastanych; brak pełnego dowodu i18n PL+EN |
+| E.6 testy+i18n | **PARTIAL / STOP** | — | osiem obowiązkowych plików 33/33; brak pełnego dowodu i18n PL+EN oraz macierzy day/week/month |
 
 Jedyny DDL to `calendar_events` z tenantem, ownerem, czasem, widocznością, uczestnikami, relacją i zarezerwowanymi polami recurrence; indeksy: `idx_calendar_events_owner_range`, `idx_calendar_events_org_range`, `idx_calendar_events_related`. Cudzy prywatny event jest „Zajęte”; owner/org pochodzą z tokenu; uczestnicy create/update muszą należeć do organizacji; `related_id` jest opcjonalny.
 
@@ -81,7 +81,7 @@ Jedyny DDL to `calendar_events` z tenantem, ownerem, czasem, widocznością, ucz
 
 1. A.6: brak parytetu 6 zakładek starego panelu.
 2. B.3: brak prawdziwej kwitancji expand-document; fałszywa została wyłączona.
-3. E.6: brak pełnej zieleni i kompletnego dowodu i18n.
+3. E.6: testy obowiązkowe są zielone, ale brak kompletnego dowodu i18n oraz macierzy day/week/month.
 4. Prototypy `scratchpad/mywork-fala3/` i `scratchpad/mywork-kalendarz/` nie występują w tipie ani dostępnych referencjach: `PROTOTYPE_EVIDENCE_MISSING`. Nie twierdzę literalnej zgodności wizualnej.
 
 ## Testy i pomiar zasięgu §0.4a
@@ -91,7 +91,8 @@ Jedyny DDL to `calendar_events` z tenantem, ownerem, czasem, widocznością, ucz
 - Sejf: folder contracts **4/4**, opened toolbar **4/4**, bulk receipts **6/6 PASS**.
 - Pomysły: shell+inspector **33/33 PASS**; testy D.3–D.7 celowane zielone.
 - E route security+migration+behavior: **13/13 PASS**; wraz z V8 jedna odziedziczona awaria task update.
-- Osiem wymaganych plików kalendarza: **32/33 PASS** przed i po; awaria `InitiativeCalendar.drag-reschedule` odziedziczona.
+- Osiem wymaganych plików kalendarza: **przed 32/33 PASS; po 33/33 PASS**. Przywrócono rzeczywisty PUT zadania przed callbackiem.
+- V2 duplication UI: **2/2 PASS** — cancel daje zero POST; partial failure nie emituje success.
 - Trzy testy kontrolne po: Executive **17/17**, Vault **4/4**, Notebook **3/3**.
 - `git diff --check`: PASS. Pełny `tsc`: OOM przy 4 GB — nie jest przedstawiany jako PASS.
 
@@ -116,7 +117,7 @@ Nowe mocki są opt-in per plik. Nie zmieniono globalnego setupu, helperów, mock
 ## Licznik
 
 - Migracje: **1/1**. Commity Day 3 przed drugim audytem: **27**.
-- 28 pozycji: **25 DONE/ALREADY, 3 STOP/PARTIAL** (A.6, B.3, E.6). Brak prototypów jest ograniczeniem dowodu, nie dodatkową pozycją denominatora.
+- 28 pozycji funkcjonalnych: **25 FUNCTIONAL_DONE/ALREADY, 3 STOP/PARTIAL**. `FULL_DOD_DONE` jest `NOT_PROVEN` dla pozycji zależnych od brakujących prototypów.
 
 ## Panel trzech sceptyków
 
@@ -131,7 +132,7 @@ Pierwszy panel na SHA `c3ed7312d4`: security **9,0**, UX/test **6,8**, DoD **6,2
 | ExecutiveModuleShell | 17/17 PASS | 17/17 PASS |
 | Vault opened toolbar | 4/4 PASS | 4/4 PASS |
 | Notebook block menu | 3/3 PASS | 3/3 PASS |
-| Osiem plików kalendarza | 32/33 PASS | 32/33 PASS — ta sama awaria InitiativeCalendar |
+| Osiem plików kalendarza | 32/33 PASS | 33/33 PASS |
 
 DEC-25 i DEC-26 były obecne na bazie (`64b2716a1e`, `f2ed2df873`). DEC-25 miał jednak fałszywy identyfikator receipt, dlatego B.3 zatrzymano fail-closed.
 
@@ -156,10 +157,10 @@ DEC-25 i DEC-26 były obecne na bazie (`64b2716a1e`, `f2ed2df873`). DEC-25 miał
 
 | Decyzja | Realizacja | Dowód |
 | --- | --- | --- |
-| D prywatność | cudzy prywatny wpis redagowany do „Zajęte” | server-side mapping |
-| E własność | org/owner wyłącznie z auth | SQL guards + 13/13 testów E |
-| F relacja | `related_type/id` opcjonalne | schema + migracja |
-| G powielenie | cztery niezależne eventy, recurrence NULL | helper + test; potwierdzenie przed zapisem |
+| D1 recurrence | pola recurrence są NULL dla zwykłych i powielanych eventów | INSERT + contract |
+| E1 miesiąc | `dayMaxEvents=3`, nadmiar przez natywne `+N more`, ten sam feed | config Calendar V2 |
+| F1 prywatność | cudzy private/busy redagowany serwerowo do „Zajęte” | server mapping + guards |
+| G1 deadline | deadline jako punkt/all-day; bez zmian modelu `tasks` | strip + brak migracji tasks |
 
 ### Pełny DDL E.1
 
@@ -189,4 +190,24 @@ CREATE INDEX IF NOT EXISTS idx_calendar_events_related ON calendar_events(organi
 | --- | --- | --- | --- |
 | A.6 | brak parytetu 6 zakładek | stary RowDetailPanel vs inspector | projekt i testy brakujących zakładek + decyzja właściciela |
 | B.3 | brak prawdziwego receipt | odziedziczony `draftId` nie jest audytem | endpoint receipt + scoped readback |
-| E.6 | 32/33 i niepełne i18n | Initiative drag red; literalne fallbacki | zielone 8/8 plików + PL/EN + widoki happy/error/empty |
+| E.6 | niepełne i18n i macierz widoków | 33/33 mandatory green; literalne fallbacki | PL/EN + day/week/month happy/error/empty |
+
+### Osiem testów kalendarza osobno
+
+| Plik | Przed | Po |
+| --- | --- | --- |
+| CalendarCreateEventModal | PASS | PASS |
+| CalendarGrid.lineage-conflict | PASS | PASS |
+| CalendarSidebar.availability | PASS | PASS |
+| CalendarView.capacity-refresh | PASS | PASS |
+| CalendarView.error-state | PASS | PASS |
+| CalendarView.reschedule-no-premature-success | PASS | PASS |
+| CalendarView.responsive | PASS | PASS |
+| InitiativeCalendar.drag-reschedule | FAIL 2/3 | PASS 3/3 |
+
+### Znaleziska
+
+- Invalid timestamp PUT — FIXED, 400 i zero write.
+- Mieszany sukces powielania — FIXED; confirmation-before-write i partial-only-error mają testy UI.
+- Brak testów E.3 — FIXED, cztery przypadki w pakiecie 5/5.
+- Brak prototypów, niepełne i18n i macierz widoków — OPEN / STOP E.6.
