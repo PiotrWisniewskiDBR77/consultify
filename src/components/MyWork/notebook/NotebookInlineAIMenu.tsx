@@ -43,6 +43,7 @@ interface PendingReplace {
   originalText: string;
   revisedText: string;
   actionLabel: string;
+  createdAt: Date;
 }
 
 export interface NotebookInlineAIMenuProps {
@@ -222,6 +223,7 @@ export const NotebookInlineAIMenu: React.FC<NotebookInlineAIMenuProps> = ({
                 originalText: contextText,
                 revisedText: revised,
                 actionLabel: isPolish ? action.labelPl : action.labelEn,
+                createdAt: new Date(),
               };
               trackFunnelEvent('notebook_inline_ai_rewrite_proposed', {
                 actionId,
@@ -323,8 +325,13 @@ export const NotebookInlineAIMenu: React.FC<NotebookInlineAIMenuProps> = ({
       {status === 'done' && (
         <div className="space-y-2" data-testid="notebook-inline-ai-preview">
           <div className="text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">
-            {t('myWorkNotebook.inlineAi.provenance', 'Teresa proposal')}
-            {pendingRef.current?.actionLabel ? ` · ${pendingRef.current.actionLabel}` : ''}
+            {t('myWorkNotebook.inlineAi.provenance', 'Źródło: Teresa')}
+            {pendingRef.current?.actionLabel
+              ? ` · ${t('myWorkNotebook.inlineAi.action', 'akcja')} „${pendingRef.current.actionLabel}”`
+              : ''}
+            {pendingRef.current?.createdAt
+              ? ` · ${pendingRef.current.createdAt.toLocaleTimeString(isPolish ? 'pl' : 'en', { hour: '2-digit', minute: '2-digit' })}`
+              : ''}
           </div>
           <div className="grid max-h-52 gap-2 overflow-y-auto sm:grid-cols-2">
             <section className="rounded border border-c-border-subtle bg-c-surface-raised p-2">
@@ -335,7 +342,7 @@ export const NotebookInlineAIMenu: React.FC<NotebookInlineAIMenuProps> = ({
                 {pendingRef.current?.originalText}
               </p>
             </section>
-            <section className="rounded border border-c-accent/30 bg-c-accent-soft p-2">
+            <section className="rounded border border-c-border-subtle bg-c-surface-raised p-2">
               <h4 className="text-[10px] font-semibold uppercase text-c-text-muted">
                 {t('myWorkNotebook.inlineAi.proposed', 'Proposed')}
               </h4>
