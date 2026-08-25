@@ -55,7 +55,31 @@
 # w nagłówku `src/actions/ideaActionRegistry.ts`. Jeśli nie znajdzie ANI JEDNEJ
 # akcji, przerywa błędem (cichy „0 akcji, wszystko OK" byłby najgorszym wynikiem).
 #
-# Użycie: scripts/check-actions.sh [--verbose]
+# Użycie: scripts/check-actions.sh [--verbose] [--full]
+#   (domyślnie, tryb pre-commit) — R1-R9/R11 audytują rejestr (stały, mały
+#     zestaw plików — koszt nie rośnie z rozmiarem MyWork). R10 sprawdza
+#     TYLKO staged pliki src/components/MyWork/**/*.tsx (przekazane jawnie
+#     do check-action-coverage.sh; jeśli żaden nie jest w stage'u, R10 jest
+#     pomijane — brak nowego driftu, nic do zweryfikowania).
+#   --full — R10 robi pełny skan zakresu MyWork (jak dawny domyślny tryb) —
+#     do CI/ręcznych audytów, gdy chcesz zobaczyć CAŁY zastany dług, nie
+#     tylko to, co dotyka bieżący commit.
+#
+# BUGFIX 2026-08-25 (TRI-OBS-17): przed tą zmianą R10 wołał
+# check-action-coverage.sh BEZ ARGUMENTÓW. Ten skrypt sam odtwarza staged
+# diff i FILTRUJE __tests__ — więc commit dotykający WYŁĄCZNIE pliku w
+# src/components/MyWork/**/__tests__/*.tsx (np. SlashMenu.blockConfiguration.
+# test.tsx) dawał PUSTĄ listę PO filtrze, co uruchamiało wbudowany fallback
+# "pusty staging → pełny skan repo" w check-action-coverage.sh — i blokowało
+# commit na 5 plikach ZASTAŁEGO długu (ClosureDecisionQueue,
+# EffectivenessClosureQueue, NotebookExportMenu, NotebookHamburgerMenu,
+# NotebookInlineAIMenu), których commit w ogóle nie dotykał. Naprawa: ten
+# skrypt (check-actions.sh) sam ustala staged pliki MyWork i przekazuje je
+# check-action-coverage.sh JAWNIE jako argumenty — tryb "pliki z argumentów"
+# w tamtym skrypcie NIE MA fallbacku na pełny skan (pusta lista po filtrze
+# __tests__ = "sprawdzono 0 plików", exit 0). Sam check-action-coverage.sh
+# (i jego reguły R1-R9/R10 wewnętrzne) NIE ZOSTAŁ osłabiony — `--full` nadal
+# widzi cały dług, patrz scripts/check-action-coverage.baseline.txt.
 set -uo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -71,10 +95,12 @@ API_CLIENT="src/services/api.ts"
 ROUTES_DIR="server/src/routes"
 
 VERBOSE=0
+FULL=0
 for arg in "$@"; do
   case "$arg" in
     --verbose) VERBOSE=1 ;;
-    *) echo "check-actions: nieznany argument '$arg' (dozwolone: --verbose)" >&2; exit 2 ;;
+    --full) FULL=1 ;;
+    *) echo "check-actions: nieznany argument '$arg' (dozwolone: --verbose, --full)" >&2; exit 2 ;;
   esac
 done
 
@@ -332,18 +358,33 @@ EOF
 fi
 
 # ── R10: drift POZA rejestrem (companion, E02 DoD) ──────────────────────────
-# Domyślnie sprawdza tylko staged pliki w zakresie (szybko, jak reszta hooka);
-# `--verbose` tutaj przekłada się na pełny skan repo w companion skrypcie, bo
-# to jest tryb, w którym ktoś świadomie chce zobaczyć CAŁY stan R10, nie tylko
-# to, co akurat jest stagowane.
+# Domyślnie (tryb pre-commit) sprawdza WYŁĄCZNIE staged pliki
+# src/components/MyWork/**/*.tsx — przekazane JAWNIE jako argumenty do
+# check-action-coverage.sh, żeby nie trafić w jego wbudowany fallback
+# "pusty staging → pełny skan repo" (patrz BUGFIX 2026-08-25 w nagłówku
+# tego pliku — commit dotykający tylko pliku w __tests__/ dawał pustą listę
+# PO filtrze __tests__ w tamtym skrypcie i uruchamiał ten fallback, blokując
+# commity na zastałym długu spoza zakresu commita). `--full` (nie
+# `--verbose` — te dwie flagi są teraz rozdzielone) robi pełny skan zakresu
+# MyWork przez `--all --report`, tak jak dawny domyślny tryb — do CI/ręcznych
+# audytów. `--verbose` samo w sobie tylko odkrywa szczegóły (note()) i NIE
+# zmienia zakresu skanu.
 COVERAGE_SCRIPT="scripts/check-action-coverage.sh"
 if [ -f "$COVERAGE_SCRIPT" ]; then
-  if [ "$VERBOSE" = "1" ]; then
+  if [ "$FULL" = "1" ]; then
     COVERAGE_OUT=$(bash "$COVERAGE_SCRIPT" --all --report 2>&1)
+    COVERAGE_RC=$?
   else
-    COVERAGE_OUT=$(bash "$COVERAGE_SCRIPT" 2>&1)
+    STAGED_MYWORK_TSX=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null \
+      | grep -E '^src/components/MyWork/.*\.tsx$' || true)
+    if [ -n "$STAGED_MYWORK_TSX" ]; then
+      COVERAGE_OUT=$(bash "$COVERAGE_SCRIPT" $STAGED_MYWORK_TSX 2>&1)
+      COVERAGE_RC=$?
+    else
+      COVERAGE_OUT="✓ check-action-coverage: brak plików src/components/MyWork/**/*.tsx w stage'u — R10 pominięte (tryb staged-only; użyj --full dla pełnego skanu zakresu)."
+      COVERAGE_RC=0
+    fi
   fi
-  COVERAGE_RC=$?
   if [ "$COVERAGE_RC" -ne 0 ]; then
     printf '%s\n' "$COVERAGE_OUT" >&2
     err "R10: check-action-coverage.sh znalazł NOWĄ akcjopodobną konstrukcję spoza rejestru (patrz wyżej)."
