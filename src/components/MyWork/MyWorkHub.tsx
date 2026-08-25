@@ -4252,7 +4252,12 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             </button>
 
             {/* Main Tabs */}
-            <div className="flex items-center gap-2 min-w-0 overflow-x-auto whitespace-nowrap">
+            {/* MYW-PHOTO-003 (P1): at ~1280px this row runs out of room and
+                scrolls — `app-table-scrollbar` swaps the OS's thick default
+                bar for the app's thin styled one (same token used by every
+                other scrollable table surface); the trailing `pr-1` keeps
+                the last chip from sitting flush against the scroll edge. */}
+            <div className="flex items-center gap-2 min-w-0 overflow-x-auto whitespace-nowrap app-table-scrollbar pr-1">
               {tabs.map((tab) => {
                 const isActive = activeTab === tab.id;
                 return (
@@ -4297,7 +4302,11 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           {/* Right cluster (KANON v3, left→right): Filters → View → Tool → Add → Area */}
           <div className="flex items-center gap-3 min-w-0 flex-shrink-0">
             {/* Scrollable controls (keep primary action always visible) */}
-            <div className="flex items-center gap-3 min-w-0 overflow-x-auto whitespace-nowrap">
+            {/* MYW-PHOTO-003 (P1): same fix as the tab row above — thin
+                styled scrollbar instead of the OS default, plus trailing
+                room so the rightmost control (Area/kebab) is never cramped
+                against the panel edge when this row is scrolled to the end. */}
+            <div className="flex items-center gap-3 min-w-0 overflow-x-auto whitespace-nowrap app-table-scrollbar pr-1">
               {/* HubBarSlots — filtr zadeklarowany przez ekran-dziecko (np.
                   Run agent "Moje procesy | Szablony"). Kontrakt:
                   filterControls → lewa część prawego klastra (patrz
