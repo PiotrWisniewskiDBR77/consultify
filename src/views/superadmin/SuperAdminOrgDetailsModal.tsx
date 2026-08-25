@@ -562,6 +562,7 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
         description={`Changing status to ${editingOrg.status} can interrupt tenant access.`}
         confirmLabel="Confirm status change"
         variant="danger"
+        confirmDisabled={statusChangeReason.trim().length < 3}
       >
         <label className="mt-4 block text-sm text-slate-600 dark:text-slate-300">
           Reason

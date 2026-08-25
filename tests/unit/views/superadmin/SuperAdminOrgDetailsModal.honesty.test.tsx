@@ -216,4 +216,26 @@ describe('SuperAdminOrgDetailsModal honest UI', () => {
     expect(screen.getByText('Billing details response was incomplete')).toBeInTheDocument();
     expect(screen.queryByText('No billing details available.')).not.toBeInTheDocument();
   });
+
+  it('keeps the critical status confirmation button visibly disabled until a reason is typed', async () => {
+    render(<SuperAdminOrgDetailsModal org={baseOrg} onClose={vi.fn()} onUpdate={vi.fn()} />);
+
+    const [, statusSelect] = screen.getAllByRole('combobox');
+    fireEvent.change(statusSelect, { target: { value: 'blocked' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
+
+    const confirmBtn = await screen.findByRole('button', { name: 'Confirm status change' });
+    expect(confirmBtn).toBeDisabled();
+    expect(confirmBtn.className).toMatch(/disabled:opacity-50/);
+
+    fireEvent.change(screen.getByRole('textbox', { name: /Reason/i }), {
+      target: { value: 'ab' },
+    });
+    expect(confirmBtn).toBeDisabled();
+
+    fireEvent.change(screen.getByRole('textbox', { name: /Reason/i }), {
+      target: { value: 'Security incident' },
+    });
+    expect(confirmBtn).not.toBeDisabled();
+  });
 });

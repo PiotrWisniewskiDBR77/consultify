@@ -1353,6 +1353,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
         description={`Changing status to ${editForm.status} can interrupt tenant access.`}
         confirmLabel="Confirm status change"
         variant="danger"
+        confirmDisabled={criticalStatusReason.trim().length < 3}
       >
         <label className="mt-4 block text-sm text-slate-600 dark:text-slate-300">
           Reason

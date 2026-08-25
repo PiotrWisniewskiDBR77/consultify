@@ -152,7 +152,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
                 ref={confirmRef}
                 onClick={onConfirm}
                 disabled={confirmDisabled}
-                className={`h-9 px-4 rounded-lg text-sm font-medium text-white transition-colors focus:outline-none focus:ring-2 ${style.confirmBg}`}
+                className={`h-9 px-4 rounded-lg text-sm font-medium text-white transition-colors focus:outline-none focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed ${style.confirmBg}`}
               >
                 {confirmLabel}
               </button>
