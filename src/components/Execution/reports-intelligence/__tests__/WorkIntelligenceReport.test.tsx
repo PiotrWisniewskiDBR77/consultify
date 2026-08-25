@@ -94,7 +94,7 @@ describe('Work Intelligence report', () => {
     ).toEqual(['neutral', 'neutral', 'neutral']);
   });
 
-  it('renders all nine management sections in contract order from real runtime reads', async () => {
+  it('renders all nine management sections with real content in contract order', async () => {
     api.listExecutionCases.mockResolvedValue({
       cases: [{ executionCaseId: 'case-1', initiativeId: 'initiative-1' }],
     });
@@ -116,6 +116,10 @@ describe('Work Intelligence report', () => {
     render(<WorkIntelligenceReport />);
 
     await screen.findByRole('heading', { name: 'Work Intelligence Report' });
+    // F11: asserting only that the nine `data-section-order` keys equal the
+    // component's own hardcoded `sections` constant is a tautology — it
+    // cannot fail unless someone also edits that constant. Assert on the
+    // actual rendered content of each section instead.
     const orders = Array.from(document.querySelectorAll('[data-section-order]')).map((node) =>
       node.getAttribute('data-section-order')
     );
@@ -130,6 +134,28 @@ describe('Work Intelligence report', () => {
       'actions',
       'register',
     ]);
+
+    expect(screen.getByRole('heading', { name: 'Context and trust' })).toBeInTheDocument();
+    expect(screen.getByText('All accessible Execution cases')).toBeInTheDocument();
+
+    expect(screen.getByRole('heading', { name: 'Executive Pulse' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'overdueTasks' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'dataCompleteness' })).toBeInTheDocument();
+
+    expect(screen.getByRole('heading', { name: 'What hurts today' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'What is approaching' })).toBeInTheDocument();
+
+    expect(screen.getByRole('heading', { name: 'What is at stake' })).toBeInTheDocument();
+    expect(screen.getByText(/BRAK_API_BSC/)).toBeInTheDocument();
+
+    expect(screen.getByRole('heading', { name: 'Why it is happening' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'How the system is changing' })).toBeInTheDocument();
+    expect(screen.getByText('UNKNOWN · BRAK_API_HISTORY')).toBeInTheDocument();
+
+    expect(screen.getByRole('heading', { name: 'What management should do' })).toBeInTheDocument();
+    expect(screen.getByText(/No recommendation is issued/)).toBeInTheDocument();
+
+    expect(screen.getByRole('heading', { name: 'Auditable register' })).toBeInTheDocument();
     expect(api.readExecutionWork).toHaveBeenCalledWith('case-1');
     expect(screen.getByTestId('standard-table')).toHaveTextContent('Governed task');
   });

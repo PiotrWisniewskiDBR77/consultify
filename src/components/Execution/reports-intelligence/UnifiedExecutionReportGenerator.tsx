@@ -251,9 +251,29 @@ export function UnifiedExecutionReportGenerator(): React.ReactElement {
             {t('execution.reports.intelligence.generator.validation', 'Validation')}:{' '}
             {valid ? 'READY_TO_CREATE_DRAFT' : 'INCOMPLETE'} ·{' '}
             {t(
-              'execution.reports.intelligence.generator.sourcesWarning',
-              'Source evidence is attached by the governed runtime workflow; an empty source set cannot validate or publish. Reporting week, forecast horizon and section selection are preflight context only because runtime-v1 has no contract fields for them (BRAK_API).'
+              'execution.reports.intelligence.generator.contextOnlyWarning',
+              'Reporting week, forecast horizon and section selection are preflight context only because runtime-v1 has no contract fields for them (BRAK_API).'
             )}
+          </p>
+          {/* F7: a draft created from this screen always carries an empty
+              source set (evidence is attached by the governed runtime
+              workflow elsewhere, not by this UI) — so every draft this
+              button creates starts INCOMPLETE and cannot be validated or
+              published until that workflow attaches evidence. This must be
+              stated plainly next to the action, not buried in a shared
+              paragraph, so nobody mistakes READY_TO_CREATE_DRAFT for
+              "ready to publish". */}
+          <p role="status" className="sm:col-span-2 font-semibold text-c-warning">
+            {t(
+              'execution.reports.intelligence.generator.draftIncomplete',
+              'Draft state after creation: INCOMPLETE (0 sources attached)'
+            )}{' '}
+            <span className="font-normal text-c-text-secondary">
+              {t(
+                'execution.reports.intelligence.generator.sourcesWarning',
+                'This screen cannot attach source evidence; the governed runtime workflow does that separately. An empty source set cannot validate or publish.'
+              )}
+            </span>
           </p>
           <button
             type="button"

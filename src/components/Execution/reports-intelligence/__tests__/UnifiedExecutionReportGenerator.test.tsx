@@ -86,7 +86,10 @@ describe('Unified Execution report generator', () => {
     );
   });
 
-  it('keeps several report tabs open concurrently', async () => {
+  // F11: this only toggles membership in a selection counter — no distinct
+  // per-run tab or panel is actually rendered — so the title must not claim
+  // "tabs" or "cards" stay "open".
+  it('increments the open-report counter as run pills are toggled', async () => {
     ready([
       { reportRunId: 'run-1', status: 'DRAFT' },
       { reportRunId: 'run-2', status: 'DRAFT' },
@@ -115,7 +118,15 @@ describe('Unified Execution report generator', () => {
     unmount();
     ready();
     render(<UnifiedExecutionReportGenerator />);
-    expect(await screen.findByText(/INCOMPLETE/)).toBeInTheDocument();
+    expect(await screen.findByText(/Validation:\s*INCOMPLETE/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Create governed draft' })).toBeDisabled();
+  });
+
+  it('always warns that a created draft starts INCOMPLETE with zero sources attached', async () => {
+    ready();
+    render(<UnifiedExecutionReportGenerator />);
+    expect(
+      await screen.findByText(/Draft state after creation: INCOMPLETE \(0 sources attached\)/)
+    ).toBeInTheDocument();
   });
 });
