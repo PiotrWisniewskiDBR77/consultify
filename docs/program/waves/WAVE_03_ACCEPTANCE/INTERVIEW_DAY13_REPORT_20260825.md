@@ -150,6 +150,8 @@ Stan: NIE ZACOMMITOWANO; K.1 nie jest sztucznie oznaczony jako DONE.
 - Nieaktualny komentarz nagłówkowy `WizardModal.tsx:26-30` mówi o braku konsumentów, mimo że Reports i InitiativeCharter używają pełnej powłoki.
 - Rozbieżność portów harnessu 3020/3350; dyżur używa jawnie 3356.
 - Bazowy `shot.mjs` nie wypisuje dwóch pól diagnostycznych obiecanych przez instrukcję.
+- Harness ostrzegł, że warianty Tailwind `min-*`/`max-*` nie działają z obiektową konfiguracją `screens`; responsywny fullscreen zabezpieczono dlatego lokalnym `@media (max-width: 1023px)` w rodzinie powłoki.
+- Harness zgłosił zastany duplikat klucza `document-studio-blocks-i18n` w `dev-render/main.tsx`; nie naprawiano poza zakresem.
 - Hub używa „insight”, prototyp „Wniosek”; etykiety zaakceptowanego Huba pozostają nietknięte.
 
 ## Testy

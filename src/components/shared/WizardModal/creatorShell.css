@@ -2,6 +2,19 @@
   --creator-glass-bg: rgba(255, 255, 255, 0.74);
   --creator-glass-line: rgba(15, 23, 42, 0.07);
   --creator-scrim: rgba(15, 23, 42, 0.44);
+  width: min(1040px, calc(100vw - 64px));
+  height: min(840px, calc(100vh - 48px));
+}
+
+@media (max-width: 1023px) {
+  .creator-shell {
+    width: 100vw;
+    max-width: none;
+    height: 100vh;
+    max-height: none;
+    margin: 0;
+    border-radius: 0;
+  }
 }
 
 .dark .creator-shell {
