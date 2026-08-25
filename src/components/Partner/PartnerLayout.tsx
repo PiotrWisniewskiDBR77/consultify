@@ -40,7 +40,6 @@ interface PartnerLayoutProps {
   pendingCertifications?: number;
   onBack?: () => void;
   className?: string;
-  programMode?: boolean;
 }
 
 export const PartnerLayout: React.FC<PartnerLayoutProps> = ({
@@ -55,7 +54,6 @@ export const PartnerLayout: React.FC<PartnerLayoutProps> = ({
   pendingCertifications,
   onBack,
   className,
-  programMode = false,
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -131,7 +129,6 @@ export const PartnerLayout: React.FC<PartnerLayoutProps> = ({
           activeClients={activeClients}
           pendingCertifications={pendingCertifications}
           onBack={handleBack}
-          programMode={programMode}
         />
       </aside>
 

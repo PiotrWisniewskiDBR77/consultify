@@ -394,10 +394,6 @@ const PartnerPricingView = lazyWithRetry(() =>
 const ClientAccessView = lazyWithRetry(() =>
   import('@/views/partner/ClientAccessView').then((m) => ({ default: m.ClientAccessView }))
 );
-const ProviderHomeView = lazyWithRetry(() =>
-  import('@/views/partner/ProviderHomeView').then((m) => ({ default: m.ProviderHomeView }))
-);
-
 // Consultant
 const ConsultantPanelView = lazyWithRetry(() =>
   import('@/views/consultant/ConsultantPanelView').then((m) => ({ default: m.ConsultantPanelView }))
@@ -2610,7 +2606,10 @@ export const AppRoutes: React.FC = () => {
             <BetaGate moduleId="MODULE_MEETING">
               <MainLayout
                 breadcrumbs={
-                  breadcrumbs || [t('sidebar.meeting', 'Meeting'), t('meeting.meetingLabel', 'Meeting')]
+                  breadcrumbs || [
+                    t('sidebar.meeting', 'Meeting'),
+                    t('meeting.meetingLabel', 'Meeting'),
+                  ]
                 }
                 noPadding
               >
@@ -2632,7 +2631,10 @@ export const AppRoutes: React.FC = () => {
             <BetaGate moduleId="MODULE_MEETING">
               <MainLayout
                 breadcrumbs={
-                  breadcrumbs || [t('sidebar.meeting', 'Meeting'), t('meeting.meetingLabel', 'Meeting')]
+                  breadcrumbs || [
+                    t('sidebar.meeting', 'Meeting'),
+                    t('meeting.meetingLabel', 'Meeting'),
+                  ]
                 }
                 noPadding
               >
@@ -2654,7 +2656,10 @@ export const AppRoutes: React.FC = () => {
             <BetaGate moduleId="MODULE_MEETING">
               <MainLayout
                 breadcrumbs={
-                  breadcrumbs || [t('sidebar.meeting', 'Meeting'), t('meeting.meetingLabel', 'Meeting')]
+                  breadcrumbs || [
+                    t('sidebar.meeting', 'Meeting'),
+                    t('meeting.meetingLabel', 'Meeting'),
+                  ]
                 }
                 noPadding
               >
@@ -2676,7 +2681,10 @@ export const AppRoutes: React.FC = () => {
             <BetaGate moduleId="MODULE_MEETING">
               <MainLayout
                 breadcrumbs={
-                  breadcrumbs || [t('sidebar.meeting', 'Meeting'), t('meeting.meetingLabel', 'Meeting')]
+                  breadcrumbs || [
+                    t('sidebar.meeting', 'Meeting'),
+                    t('meeting.meetingLabel', 'Meeting'),
+                  ]
                 }
                 noPadding
               >

@@ -3236,7 +3236,6 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = () => {
       activeSection={activeSection}
       onSectionChange={handleSectionChange}
       breadcrumbs={breadcrumbs}
-      programMode={false}
     >
       {connectionState === 'loading' ? (
         <div
