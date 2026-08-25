@@ -83,3 +83,15 @@ TRI-MUST-06 (lokalizacja). TRI-MUST-05 blokuje fazę 3, nie odbiór modułów.
 |---|---|---|---|
 | TRI-MUST-13 | **ADMIN ma efektywny dostęp `'*'`** (effectiveAccessService, commit 2026-05-17) — przechodzi KAŻDĄ kontrolę capability, w tym `admin.project_roles.manage`; żywy dowód: ADMIN utworzył rolę (200, pełny formularz), wbrew zamierzonemu modelowi DEC-17 (OWNER-only). Zasięg: cały system uprawnień admina. | FLOW_VERDICTS.md (8e6931a367) | **MUST przed demo** — naprawa in-house (model uprawnień), nie w zadaniu Codexa |
 | TRI-OBS-14 | `billing_alerts` nie istnieje na żadnej czysto zmigrowanej bazie Postgres (migracja sklasyfikowana jako SQLite-only przez filtr). Kod fail-closed z uczciwym komunikatem, ale funkcja martwa wszędzie. | FLOW_VERDICTS.md | dołączyć do TRI-MUST-05 (bramka migracyjna fazy 3) |
+
+## Warstwa 3 odbioru nocy Codexa — PODPIS (2026-08-25, Fable)
+
+Werdykt: **PRZYJĘTE W CAŁOŚCI po naprawach.** Warstwa 1 (kod): ACCEPT_PARTIAL →
+warunki FIX-1..9 wykonane. Warstwa 2 (99 przepływów, żywy runtime): PRZYJĘTE
+WARUNKOWO → oba FAIL_NOCY naprawione (FIX-2); 5/5 negatywów TRI-MUST-07 czysto.
+Dodatkowo zamknięte przy odbiorze: FIX-11 (IDOR ai-quality), FIX-12
+(TRI-MUST-13: wildcard ADMIN → deny-lista owner-only, dowód stash-testem).
+Gałąź codex/admin55-fixes-20260825 (nocna praca + naprawy, 252/252 testów)
+scalona do codex/m03-admin-20260824. Stan programu Admin: ~50/56 ekranów
+podłączonych; pozostałe pozycje w instrukcji dnia 2 (STOP-y wg DEC-19, i18n,
+Superadmin fala 1).
