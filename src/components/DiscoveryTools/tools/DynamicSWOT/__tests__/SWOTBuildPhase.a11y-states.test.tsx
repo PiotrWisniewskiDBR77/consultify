@@ -306,3 +306,36 @@ describe('SWOTBuildPhase — dark-theme class presence (structural only, not ren
     expect(html).toMatch(/border-c-border bg-c-surface-raised/);
   });
 });
+
+/**
+ * M1/M2 (2026-08-25, FALA 1) — the phase root used to force
+ * `className="dark ... bg-navy-950 text-white"` unconditionally, overriding
+ * light mode regardless of the active theme (R13 / CLAUDE.md's "Standard is
+ * code" rule — dark must come from the active theme, never a hardcoded
+ * class), and rendered a top instructional callout
+ * (`oneMatrixNote`/`InlineAssist`) the owner asked removed (R14). Both are
+ * gone; the phase now composes only `c-*` tokens at its root.
+ */
+describe('SWOTBuildPhase — theme canon (R13/R14 fix)', () => {
+  beforeEach(() => {
+    resetStore();
+  });
+
+  it('does not force a dark theme or navy-950 background on the phase root', () => {
+    const { container } = render(<Harness />);
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.className).not.toMatch(/(^|\s)dark(\s|$)/);
+    expect(root.className).not.toMatch(/bg-navy-950/);
+    expect(container.innerHTML).not.toMatch(/bg-navy-950/);
+  });
+
+  it('does not render the removed instructional callout when idle', () => {
+    render(<Harness />);
+    expect(
+      screen.queryByText('discoveryToolsTools.dynamicSwot.buildPhase.oneMatrixNote')
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('discoveryToolsTools.dynamicSwot.buildPhase.acceptHint')
+    ).not.toBeInTheDocument();
+  });
+});
