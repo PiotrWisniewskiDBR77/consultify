@@ -3396,8 +3396,16 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     // KLUCZ („mindmap.savedSecondsAgo") i bez `t` nigdy sie nie przeliczalo.
   }, [t, isPolish, lastSavedAt, saving]);
 
+  // MYW-IDEAS-010: the candidate→initiative path used to be gated to
+  // activeTool === 'process_flow'. The candidate endpoints
+  // (getIdeaProcessFlowCandidate/preview/approve) operate on the idea's
+  // canonical map (`/my-work/my-ideas/:id/map/candidate*`) — the same
+  // shared graph all four tools (Mind Map/Whiteboard/Process Flow/Table)
+  // read and write, not something scoped to the Process Flow renderer.
+  // Gating this to one tool meant the exact same idea showed "candidate
+  // ready" only when the owner happened to have Process Flow open.
   useEffect(() => {
-    if (activeTool !== 'process_flow' || !realId) {
+    if (!realId) {
       setCandidateHandoff(null);
       return;
     }
@@ -3408,7 +3416,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     return () => {
       live = false;
     };
-  }, [activeTool, realId]);
+  }, [realId]);
 
   const handlePreviewProcessFlowCandidate = useCallback(async () => {
     if (!realId || candidateHandoffBusy) return;
@@ -4149,7 +4157,11 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           onConfirm={handleConversionPreviewConfirm}
           onCancel={handleConversionPreviewCancel}
         />
-        {activeTool === 'process_flow' && (
+        {/* MYW-IDEAS-010: previously gated to activeTool === 'process_flow'
+            only — the candidate is idea-level (see the fetch effect above),
+            so the affordance is now available from every tool, not just
+            whichever one happened to be open when the candidate was created. */}
+        {Boolean(realId) && (
           <div className="absolute bottom-4 right-4 z-sticky flex items-center gap-2 rounded-xl border border-c-border bg-c-surface-raised p-2 shadow-lg">
             {candidateHandoff?.candidate?.id || candidateHandoff?.candidate_id ? (
               <button
