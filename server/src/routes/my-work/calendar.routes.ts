@@ -267,6 +267,35 @@ router.get(
         }
       }
 
+      // ── OWN CALENDAR EVENTS ────────────────────────────────────────────────
+      if (requestedSources.includes('event')) {
+        const params: unknown[] = [orgId, userId, `%"${userId}"%`];
+        const rangeWhere = hasRange ? 'AND e.start_at < ? AND e.end_at >= ?' : '';
+        if (hasRange) params.push(end, start);
+        const rows = await queryHelpers.queryAll<any>(
+          `SELECT e.* FROM calendar_events e
+           WHERE e.organization_id = ?
+             AND (e.owner_id = ? OR e.attendees_json LIKE ? OR e.visibility = 'org')
+             ${rangeWhere}
+             AND e.status <> 'cancelled'`,
+          params
+        );
+        for (const row of rows || []) {
+          const foreignBusy = row.visibility === 'busy' && String(row.owner_id) !== String(userId);
+          events.push({
+            id: `event-${row.id}`,
+            title: foreignBusy ? 'Zajęte' : row.title,
+            start: row.start_at,
+            end: row.end_at,
+            allDay: Boolean(row.all_day),
+            source: 'event',
+            sourceId: row.id,
+            status: row.status,
+            ...(foreignBusy ? {} : { description: row.description || undefined }),
+          });
+        }
+      }
+
       // ── INITIATIVES (planned ranges) + MILESTONES (target dates) ───────────
       if (requestedSources.includes('initiative')) {
         const initCols = await getTableColumns('initiatives');
@@ -528,8 +557,13 @@ router.get(
           const params: any[] = [orgId];
 
           if (meetingCols.has('created_by')) {
-            where.push('m.created_by = ?');
-            params.push(userId);
+            if (meetingCols.has('attendees_json')) {
+              where.push('(m.created_by = ? OR m.attendees_json LIKE ?)');
+              params.push(userId, `%"${userId}"%`);
+            } else {
+              where.push('m.created_by = ?');
+              params.push(userId);
+            }
           }
 
           if (hasRange) {
@@ -744,11 +778,18 @@ router.post(
 
     const schema = z.object({
       title: z.string().min(1).max(500),
-      start: z.string(),
+      start: z.string().optional(),
       end: z.string().optional(),
-      allDay: z.boolean().optional().default(true),
-      source: z.enum(['task', 'initiative', 'decision']).optional().default('task'),
-      description: z.string().optional(),
+      startAt: z.string().optional(),
+      endAt: z.string().optional(),
+      allDay: z.boolean().optional().default(false),
+      source: z.enum(['event', 'task', 'initiative', 'decision']).optional().default('event'),
+      description: z.string().max(10000).optional().default(''),
+      location: z.string().max(1000).optional().default(''),
+      attendees: z.array(z.string().min(1)).optional().default([]),
+      visibility: z.enum(['private', 'busy', 'org']).optional().default('private'),
+      relatedType: z.enum(['task', 'initiative', 'meeting']).nullable().optional(),
+      relatedId: z.string().nullable().optional(),
     });
 
     const parsed = schema.safeParse(req.body);
@@ -756,9 +797,75 @@ router.post(
       return res.status(400).json({ error: 'Invalid event data', details: parsed.error.issues });
     }
 
-    const { title, start, end: _end, allDay: _allDay, source, description } = parsed.data;
+    const { title, source, description } = parsed.data;
+    const start = parsed.data.startAt || parsed.data.start;
+    const end = parsed.data.endAt || parsed.data.end;
+    if (!start) return res.status(400).json({ error: 'startAt is required' });
 
     try {
+      if (source === 'event') {
+        if (
+          !end ||
+          !Number.isFinite(Date.parse(start)) ||
+          !Number.isFinite(Date.parse(end)) ||
+          Date.parse(end) <= Date.parse(start)
+        ) {
+          return res.status(400).json({ error: 'endAt must be later than startAt' });
+        }
+        if (parsed.data.attendees.length) {
+          const placeholders = parsed.data.attendees.map(() => '?').join(',');
+          const members = await db.query(
+            `SELECT id FROM users WHERE organization_id = ? AND id IN (${placeholders})`,
+            [orgId, ...parsed.data.attendees]
+          );
+          if ((members.rows || []).length !== new Set(parsed.data.attendees).size) {
+            return res
+              .status(400)
+              .json({ error: 'Every attendee must belong to this organization' });
+          }
+        }
+        const id = uuidv4();
+        await db.query(
+          `INSERT INTO calendar_events
+           (id, organization_id, owner_id, title, description, location, start_at, end_at, all_day,
+            attendees_json, visibility, status, related_type, related_id, recurrence_rule,
+            recurrence_parent_id, created_by, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'confirmed', ?, ?, NULL, NULL, ?, ${nowSql()}, ${nowSql()})`,
+          [
+            id,
+            orgId,
+            userId,
+            title,
+            description,
+            parsed.data.location,
+            start,
+            end,
+            parsed.data.allDay ? 1 : 0,
+            JSON.stringify(parsed.data.attendees),
+            parsed.data.visibility,
+            parsed.data.relatedType || null,
+            parsed.data.relatedId || null,
+            userId,
+          ]
+        );
+        return res
+          .status(201)
+          .json({
+            id,
+            title,
+            description,
+            location: parsed.data.location,
+            startAt: start,
+            endAt: end,
+            allDay: parsed.data.allDay,
+            attendees: parsed.data.attendees,
+            visibility: parsed.data.visibility,
+            status: 'confirmed',
+            relatedType: parsed.data.relatedType || null,
+            relatedId: parsed.data.relatedId || null,
+            source: 'event',
+          });
+      }
       if (source === 'task') {
         const id = uuidv4();
         await db.query(
@@ -776,6 +883,87 @@ router.post(
       logger.error('[calendar-create-event]', err);
       res.status(500).json({ error: 'Failed to create calendar event' });
     }
+  })
+);
+
+const calendarEventUpdateSchema = z.object({
+  title: z.string().min(1).max(500).optional(),
+  description: z.string().max(10000).optional(),
+  location: z.string().max(1000).optional(),
+  startAt: z.string().optional(),
+  endAt: z.string().optional(),
+  allDay: z.boolean().optional(),
+  attendees: z.array(z.string().min(1)).optional(),
+  visibility: z.enum(['private', 'busy', 'org']).optional(),
+  relatedType: z.enum(['task', 'initiative', 'meeting']).nullable().optional(),
+  relatedId: z.string().nullable().optional(),
+});
+
+router.put(
+  '/calendar/events/:id',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const parsed = calendarEventUpdateSchema.safeParse(req.body);
+    if (!parsed.success)
+      return res.status(400).json({ error: 'Invalid event data', details: parsed.error.issues });
+    const current = await queryHelpers.queryOne<any>(
+      'SELECT * FROM calendar_events WHERE id = ? AND organization_id = ?',
+      [req.params.id, identity.orgId]
+    );
+    if (!current) return res.status(404).json({ error: 'Event not found' });
+    if (String(current.owner_id) !== String(identity.userId))
+      return res.status(403).json({ error: 'Only the owner can edit this event' });
+    const next = { ...current, ...parsed.data };
+    const start = parsed.data.startAt ?? current.start_at;
+    const end = parsed.data.endAt ?? current.end_at;
+    if (Date.parse(end) <= Date.parse(start))
+      return res.status(400).json({ error: 'endAt must be later than startAt' });
+    await queryHelpers.queryRun(
+      `UPDATE calendar_events SET title = ?, description = ?, location = ?, start_at = ?, end_at = ?, all_day = ?, attendees_json = ?, visibility = ?, related_type = ?, related_id = ?, updated_at = ${nowSql()} WHERE id = ? AND organization_id = ? AND owner_id = ?`,
+      [
+        next.title,
+        next.description,
+        next.location,
+        start,
+        end,
+        next.allDay === undefined ? current.all_day : next.allDay ? 1 : 0,
+        JSON.stringify(parsed.data.attendees ?? JSON.parse(current.attendees_json || '[]')),
+        next.visibility,
+        next.relatedType ?? current.related_type,
+        next.relatedId ?? current.related_id,
+        req.params.id,
+        identity.orgId,
+        identity.userId,
+      ]
+    );
+    return res.json({
+      id: req.params.id,
+      ...parsed.data,
+      startAt: start,
+      endAt: end,
+      source: 'event',
+    });
+  })
+);
+
+router.delete(
+  '/calendar/events/:id',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const current = await queryHelpers.queryOne<any>(
+      'SELECT id, owner_id FROM calendar_events WHERE id = ? AND organization_id = ?',
+      [req.params.id, identity.orgId]
+    );
+    if (!current) return res.status(404).json({ error: 'Event not found' });
+    if (String(current.owner_id) !== String(identity.userId))
+      return res.status(403).json({ error: 'Only the owner can delete this event' });
+    await queryHelpers.queryRun(
+      `UPDATE calendar_events SET status = 'cancelled', updated_at = ${nowSql()} WHERE id = ? AND organization_id = ? AND owner_id = ?`,
+      [req.params.id, identity.orgId, identity.userId]
+    );
+    return res.json({ id: req.params.id, status: 'cancelled' });
   })
 );
 
@@ -807,17 +995,26 @@ router.get(
          ORDER BY deadline ASC`,
         [orgId, userId, userId, date]
       );
+      const eventsOnDateResult = await db.query(
+        `SELECT id, title, start_at, end_at FROM calendar_events
+         WHERE organization_id = ? AND owner_id = ? AND status <> 'cancelled'
+           AND date(start_at) = date(?) ORDER BY start_at ASC`,
+        [orgId, userId, date]
+      );
 
       const tasksOnDate = tasksOnDateResult.rows;
       const decisionsOnDate = decisionsOnDateResult.rows;
+      const calendarEventsOnDate = eventsOnDateResult.rows;
 
-      const hasConflicts = tasksOnDate.length + decisionsOnDate.length > 3;
+      const hasConflicts =
+        tasksOnDate.length + decisionsOnDate.length + calendarEventsOnDate.length > 3;
 
       res.json({
         date,
         tasks: tasksOnDate,
         decisions: decisionsOnDate,
-        totalItems: tasksOnDate.length + decisionsOnDate.length,
+        events: calendarEventsOnDate,
+        totalItems: tasksOnDate.length + decisionsOnDate.length + calendarEventsOnDate.length,
         hasConflicts,
         suggestion: hasConflicts
           ? 'This day looks busy. Consider rescheduling lower-priority items.'
@@ -848,11 +1045,21 @@ router.patch(
       return res.status(400).json({ error: 'Invalid reschedule data' });
     }
 
-    const { newStart } = parsed.data;
+    const { newStart, newEnd } = parsed.data;
 
     try {
       // Determine source from eventId prefix
-      if (eventId.startsWith('task-')) {
+      if (eventId.startsWith('event-')) {
+        if (!newEnd || Date.parse(newEnd) <= Date.parse(newStart))
+          return res.status(400).json({ error: 'newEnd must be later than newStart' });
+        const id = eventId.replace('event-', '');
+        const result = await db.query(
+          `UPDATE calendar_events SET start_at = ?, end_at = ?, updated_at = ${nowSql()} WHERE id = ? AND organization_id = ? AND owner_id = ? RETURNING id, start_at, end_at`,
+          [newStart, newEnd, id, orgId, userId]
+        );
+        if (!(result.rows || []).length) return res.status(404).json({ error: 'Event not found' });
+        return res.json({ success: true, source: 'event', id, startAt: newStart, endAt: newEnd });
+      } else if (eventId.startsWith('task-')) {
         const taskId = eventId.replace('task-', '');
         await db.query(
           `UPDATE tasks SET due_date = ?, updated_at = ${nowSql()} WHERE id = ? AND assignee_id = ? AND organization_id = ?`,
