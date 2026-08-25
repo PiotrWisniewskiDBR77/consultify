@@ -64,7 +64,7 @@ Właściciel poza publiczną produkcją wpisuje `/results?ff_wave3ResultsOwnerRe
 | Pozycja                               | Status           | Commit                        | Testy          | Uwagi                                                         |
 | ------------------------------------- | ---------------- | ----------------------------- | -------------- | ------------------------------------------------------------- |
 | F.1 inwentarz FIN-REC-001             | DONE_CURRENT_SHA | `4ab7a61403`                  | audyt źródłowy | Sześć gałęzi i pięć flag zamrożone poniżej                    |
-| F.2 resolver FIN-REC-002              | DONE_CURRENT_SHA | `5502e8fdb2` + fixy sceptyków | 108/108 PASS   | Identity fail-closed; complete OFF zachowuje legacy           |
+| F.2 resolver FIN-REC-002              | DONE_CURRENT_SHA | `5502e8fdb2` + fixy sceptyków | 109/109 PASS   | Identity fail-closed; complete OFF zachowuje legacy           |
 | F.3 wspólny shell FIN-REC-003         | PARTIAL / STOP   | `b284ca6e43`                  | 10/10 PASS     | Mechaniczne luki zamknięte; cold Back nie utrwala filtrów     |
 | F.4 `financeOwnerSampleData`          | DONE_CURRENT_SHA | `207124e9e9`                  | 5/5 PASS       | Host produkcyjny fail-closed, jawny banner, licznik zamrożony |
 | F.5 ochrona danych i ufności          | PARTIAL / STOP   | `1cc0724847`                  | 4/4 PASS       | Brak testu 6 mountów z POST/PUT-throwing mockiem              |
@@ -356,7 +356,7 @@ tests/unit/finance/confidencePolicy.guard.test.ts
 | `npx vitest run tests/components/ResultsVNext tests/unit/results src/components/Results/__tests__ tests/resultsVnext`                           | 1066 PASS, 5 FAIL, 412 SKIP; 99 plików RealPG setup FAIL |
 | `npx vitest run tests/components/Finance tests/components/Economics src/components/Finance/shared/__tests__ src/components/Economics/__tests__` | 384 PASS, 17 FAIL                                        |
 | `npx vitest run tests/unit/finance`                                                                                                             | 795 PASS, 2 FAIL                                         |
-| dedykowane zmienione/nowe testy kandydata                                                                                                       | 130/130 Vitest PASS + 5/5 node guard PASS                |
+| dedykowane zmienione/nowe testy kandydata                                                                                                       | 131/131 Vitest PASS + 5/5 node guard PASS                |
 
 **Czerwone ścieżki z pełnych agregatów:**
 
