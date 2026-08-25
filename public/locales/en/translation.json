@@ -10896,7 +10896,17 @@
       "copied": "Weekly pack copied",
       "copyFailed": "Copy failed",
       "newReport": "New Report",
-      "workloadPreview": "Workload preview"
+      "workloadPreview": "Workload preview",
+      "intelligence": {
+        "eyebrow": "Management report",
+        "workTitle": "Work Intelligence Report",
+        "workTab": "Work report",
+        "ssot": "Published snapshots are read from the governed runtime-v1 report register.",
+        "loading": "Loading report register…",
+        "loadError": "Report register is unavailable",
+        "empty": "No governed report runs found.",
+        "runCount": "{{count}} governed report runs"
+      }
     },
     "tasks": {
       "subtitle": "Overdue, due soon, and upcoming tasks for initiatives in execution.",

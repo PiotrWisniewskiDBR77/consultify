@@ -10248,7 +10248,17 @@
       "copied": "Pakiet tygodniowy skopiowany",
       "copyFailed": "Nie udało się skopiować",
       "newReport": "Nowy raport",
-      "workloadPreview": "Podgląd obciążenia"
+      "workloadPreview": "Podgląd obciążenia",
+      "intelligence": {
+        "eyebrow": "Raport zarządczy",
+        "workTitle": "Raport inteligencji pracy",
+        "workTab": "Raport pracy",
+        "ssot": "Opublikowane migawki są odczytywane z nadzorowanego rejestru raportów runtime-v1.",
+        "loading": "Wczytywanie rejestru raportów…",
+        "loadError": "Rejestr raportów jest niedostępny",
+        "empty": "Nie znaleziono nadzorowanych uruchomień raportów.",
+        "runCount": "Liczba nadzorowanych uruchomień raportów: {{count}}"
+      }
     },
     "tasks": {
       "subtitle": "Zadania przeterminowane, nadchodzące i zbliżające się dla inicjatyw w realizacji.",

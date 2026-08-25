@@ -4,10 +4,10 @@ Baza: `codex/day11-instrukcja-20260825 @ 45f6f08d2436515655bd4d9594e78f12975dbb7
 Marker: `5f96e936ac` — POTWIERDZONY jako przodek HEAD  
 Gałąź robocza: `codex/execution-day11-20260825`  
 Worktree: `/private/tmp/consultify-execution-day11`  
-Zgoda na flagę `execReportsIntelligence`: **BRAK (E-O2)**  
+Zgoda na flagę `execReportsIntelligence`: **NADANA IMIENNIE — DEC-2026-08-25-63**
 Porty użyte: `3357` (dev-render); portu PG nie użyto  
 Kontener PG: nie stawiałem  
-Czas pracy: 2026-08-25 19:24–19:28 CEST
+Czas pracy: 2026-08-25 19:24–19:28 CEST; wznowienie od 20:35 CEST
 
 ## Oświadczenie o chronionym WIP (Z4/Z5)
 
@@ -95,19 +95,22 @@ kontrakt modułu, rejestr decyzji, instrukcja oraz kod w izolowanym worktree.
 
 ## Pozycje — tabela zbiorcza
 
-| Pozycja  | Zakres                         | Status           | Commit | Testy                    | Dowód OFF                  | Zrzut             | Uwagi                                        |
-| -------- | ------------------------------ | ---------------- | ------ | ------------------------ | -------------------------- | ----------------- | -------------------------------------------- |
-| E.0      | flaga + mapa delty + dowód OFF | CZĘŚCIOWO / STOP | —      | testy zastane 11/11 PASS | NIE — flaga nie powstała   | kontrolny harness | Mapa ukończona; E-O2 blokuje flagę i T.2.    |
-| E.1      | Work Intelligence Report       | NIE_ZACZĘTE      | —      | —                        | —                          | —                 | Zatrzymane przez E-O2 zgodnie z E.0.         |
-| E.2      | Resources Capacity Report      | NIE_ZACZĘTE      | —      | —                        | —                          | —                 | Zatrzymane przez E-O2.                       |
-| E.3      | Control Loop Report            | NIE_ZACZĘTE      | —      | —                        | —                          | —                 | Zatrzymane przez E-O2.                       |
-| E.4      | unijny generator               | STOP             | —      | —                        | —                          | —                 | E-O1 i E-O2 nierozstrzygnięte.               |
-| T.1..T.6 | testy przekrojowe              | CZĘŚCIOWO        | —      | T.1 przed: 11/11 PASS    | T.2 niewykonalne bez flagi | —                 | Nie utworzono testów ani infrastruktury.     |
-| R.1..R.2 | rejestr/dowody                 | CZĘŚCIOWO        | —      | —                        | —                          | kontrolny         | R.1 wykonane; R.2 ograniczone do stanu STOP. |
+| Pozycja  | Zakres                         | Status          | Commit             | Testy                           | Dowód OFF                                                 | Zrzut             | Uwagi                                                                   |
+| -------- | ------------------------------ | --------------- | ------------------ | ------------------------------- | --------------------------------------------------------- | ----------------- | ----------------------------------------------------------------------- |
+| E.0      | flaga + mapa delty + dowód OFF | ZROBIONE_WG_DoD | bieżący commit E.0 | własne 4/4 + zastane 11/11 PASS | PASS: obecny rejestr, brak nowej powierzchni, 0 requestów | kontrolny harness | Jedna flaga, default OFF także demo; realny czytnik runtime-v1 przy ON. |
+| E.1      | Work Intelligence Report       | W TOKU          | —                  | —                               | wspólny T.2 PASS                                          | —                 | Odblokowane przez DEC-2026-08-25-63.                                    |
+| E.2      | Resources Capacity Report      | NIE_ZACZĘTE     | —                  | —                               | wspólny T.2 PASS                                          | —                 | Odblokowane przez DEC-2026-08-25-63.                                    |
+| E.3      | Control Loop Report            | NIE_ZACZĘTE     | —                  | —                               | wspólny T.2 PASS                                          | —                 | Odblokowane przez DEC-2026-08-25-63.                                    |
+| E.4      | unijny generator               | NIE_ZACZĘTE     | —                  | —                               | wspólny T.2 PASS                                          | —                 | E-O1 rozstrzygnięte w DEC-2026-08-25-63.                                |
+| T.1..T.6 | testy przekrojowe              | CZĘŚCIOWO       | bieżący commit E.0 | T.1 przed 11/11; T.2 4/4 PASS   | PASS                                                      | —                 | T.3–T.6 pozostają do wykonania.                                         |
+| R.1..R.2 | rejestr/dowody                 | CZĘŚCIOWO       | —                  | —                               | —                                                         | kontrolny         | R.1 wykonane; R.2 ograniczone do stanu STOP.                            |
 
 ## Pozycje otwarte — STOP-y do zatwierdzenia
 
 ### STOP — E-O1 kanoniczny backend generatora
+
+**ROZSTRZYGNIĘTY — DEC-2026-08-25-63:** runtime-v1 `report-runs` jest SSOT
+niezmiennej publikacji; management-reports jest pipeline'em eksportowym.
 
 Powód: runtime-v1 daje frozen snapshot/hash i publikację JSON, a
 `/api/management-reports` daje generate/versioning/PDF/PPTX; kontraktowy cykl
@@ -119,6 +122,9 @@ eksportowy, ale implementacja wymaga wiążącego mapowania lifecycle.
 Stan: **NIE ZACOMMITOWANO**.
 
 ### STOP — E-O2 zgoda i granulacja flagi
+
+**ROZSTRZYGNIĘTY — DEC-2026-08-25-63:** imienna zgoda na dokładnie jedną
+umbrella flagę `execReportsIntelligence`, default OFF wszędzie, w tym demo.
 
 Powód: instrukcja wymaga imiennej zgody nadzorcy; przekazane polecenie nakazuje
 zacząć od E.0, ale nie zawiera sformułowania udzielającego zgody na flagę.  
@@ -217,12 +223,12 @@ nowych raportów, ponieważ praca implementacyjna zatrzymała się na E-O2.
 | --- | -------------------------------------------- | -------- | --------------------------------------------- | ----------------------------------------------------------------- | -------------------- |
 | 1   | kontrolny zastany `execution-change-signals` | domyślny | `evidence/execution-day11/block0-control.png` | harness zwrócił `OK`; Vite zgłosił zastane warningi opisane wyżej | harness zwrócił `OK` |
 
-Osiem zrzutów raportów nie powstało, ponieważ brak zgody na flagę zatrzymał
-implementację w E.0.
+Osiem docelowych zrzutów raportów pozostaje do wykonania po implementacji
+E.1–E.4.
 
 ## Gotowość
 
 Gotowe do zrzutu przez nadzorcę: **NIE**.  
-Gotowe do decyzji nadzorcy: **TAK — E-O1 i E-O2**.  
-Status E.0: **CZĘŚCIOWO / STOP** — mapa delty dostarczona; flaga i dowód OFF
-niepowstałe z powodu braku imiennej zgody.
+Gotowe do decyzji nadzorcy: **E-O1 i E-O2 ROZSTRZYGNIĘTE w DEC-2026-08-25-63**.
+Status E.0: **ZROBIONE_WG_DoD** — mapa delty, jedna flaga fail-closed, realny
+czytnik runtime-v1, behawioralny OFF/ON/error i zero requestów przy OFF.

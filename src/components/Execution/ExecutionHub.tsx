@@ -122,6 +122,7 @@ import { ExecutionControlSurface } from './ExecutionControlSurface';
 import { isExecutionFlagEnabled } from './executionFeatureFlags';
 import { ExecutionManagementView } from './ExecutionManagementView';
 import { normalizeExecutionArrayEnvelope } from './executionPayloadGuards';
+import { ExecutionReportsIntelligenceEntry } from './reports-intelligence/ExecutionReportsIntelligenceEntry';
 import {
   buildReportMarkdown,
   computeRAG,
@@ -720,7 +721,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     return createInitiativesDemoDataset({
       currentUserId: user?.id,
       currentUserName:
-        user?.name || [user?.firstName, user?.lastName].filter(Boolean).join(' ') || 'Piotr Wisniewski',
+        user?.name ||
+        [user?.firstName, user?.lastName].filter(Boolean).join(' ') ||
+        'Piotr Wisniewski',
       currentUserEmail: user?.email,
     });
   }, [currentUser]);
@@ -943,7 +946,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       setDeepLinkHandled(true);
       return;
     }
-
   }, [deepLinkHandled, searchParams]);
 
   useEffect(() => {
@@ -1230,7 +1232,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
               ? { ...initiative, status: InitiativeStatus.EXECUTING }
               : initiative
           );
-        const canonicalIds = new Set(canonicalExecutionInitiatives.map((initiative) => String(initiative.id)));
+        const canonicalIds = new Set(
+          canonicalExecutionInitiatives.map((initiative) => String(initiative.id))
+        );
         const reviewInitiatives = allowDemoData
           ? executionDemoData.initiatives.filter(
               (initiative) =>
@@ -1281,7 +1285,14 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       }
     };
     loadInitiatives();
-  }, [activeTab, allowDemoData, currentProjectId, executionDemoData.initiatives, executionTruthRefreshKey, t]);
+  }, [
+    activeTab,
+    allowDemoData,
+    currentProjectId,
+    executionDemoData.initiatives,
+    executionTruthRefreshKey,
+    t,
+  ]);
 
   useEffect(() => {
     const loadRiskSignals = async () => {
@@ -2025,6 +2036,23 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   // #77 / Z94 — flaga kokpitu; MUSI być zadeklarowana PRZED `tabs` (useMemo woła
   // fabrykę synchronicznie w renderze → użycie przed deklaracją = ReferenceError/TDZ).
   const summaryOneLookEnabled = isExecutionFlagEnabled('summaryOneLook');
+  const execReportsIntelligenceEnabled = isExecutionFlagEnabled('execReportsIntelligence');
+
+  const openWorkIntelligenceReport = useCallback(() => {
+    if (!execReportsIntelligenceEnabled) return;
+    const docId = 'execution-intelligence:work';
+    const doc: OpenDocument = {
+      id: docId,
+      type: 'report',
+      subType: 'work-intelligence',
+      name: t('execution.reports.intelligence.workTab', 'Work report'),
+      status: 'DRAFT',
+    };
+    setOpenDocuments((current) =>
+      current.some((item) => item.id === docId) ? current : [...current, doc]
+    );
+    setActiveDocumentId(docId);
+  }, [execReportsIntelligenceEnabled, t]);
 
   // Tab configuration
   const tabs = useMemo(
@@ -2555,9 +2583,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             ? 'DONE'
             : 'DRAFT',
     };
-    setOpenDocuments((prev) =>
-      prev.some((item) => item.id === docId) ? prev : [...prev, doc]
-    );
+    setOpenDocuments((prev) => (prev.some((item) => item.id === docId) ? prev : [...prev, doc]));
     setActiveDocumentId(docId);
     setIsSidePanelOpen(false);
   }, []);
@@ -5259,6 +5285,9 @@ Please return:
     // Otherwise a canonical Initiative deep link can update the URL correctly
     // while the `list` branch below still masks the document with the table.
     if (activeDocumentId) {
+      if (execReportsIntelligenceEnabled && activeDocumentId === 'execution-intelligence:work') {
+        return <ExecutionReportsIntelligenceEntry />;
+      }
       if (activeDocumentId.startsWith('report:')) {
         const reportId = activeDocumentId.replace('report:', '');
         const report = enrichedReportCatalog.find((r) => r.id === reportId);
@@ -5655,15 +5684,29 @@ Please return:
         chips={
           activeTab === 'list'
             ? []
-            : (EXECUTION_MENU3[activeTab] ?? []).map((preset) => ({
-                ...preset,
-                count: canonicalMenu3Counts[activeTab]?.[preset.id] ?? 0,
-              }))
+            : [
+                ...(EXECUTION_MENU3[activeTab] ?? []).map((preset) => ({
+                  ...preset,
+                  count: canonicalMenu3Counts[activeTab]?.[preset.id] ?? 0,
+                })),
+                ...(execReportsIntelligenceEnabled && activeTab === 'work'
+                  ? [
+                      {
+                        id: 'work-intelligence-report',
+                        label: t('execution.reports.intelligence.workTab', 'Work report'),
+                      },
+                    ]
+                  : []),
+              ]
         }
         activeChip={activeTab === 'list' ? null : (canonicalMenu3Preset[activeTab] ?? null)}
-        onChipChange={(id) =>
-          setCanonicalMenu3Preset((current) => ({ ...current, [activeTab]: id }))
-        }
+        onChipChange={(id) => {
+          if (id === 'work-intelligence-report') {
+            openWorkIntelligenceReport();
+            return;
+          }
+          setCanonicalMenu3Preset((current) => ({ ...current, [activeTab]: id }));
+        }}
       >
         {renderContent()}
       </StandardModuleBar>
