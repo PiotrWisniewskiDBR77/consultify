@@ -310,6 +310,46 @@ describe('adminP32Routes', () => {
     expect(exported.text).toContain('a1');
   });
 
+  it('applies query filters to the export and records them on the receipt', async () => {
+    dbGet.mockResolvedValue({ role: 'OWNER', status: 'ACTIVE' });
+    getLogs.mockResolvedValue([
+      {
+        id: 'a1',
+        organization_id: 'org-1',
+        admin_id: 'user-1',
+        action_type: 'role_change',
+        status: 'logged',
+        created_at: '2026-08-24T00:00:00Z',
+      },
+      {
+        id: 'a2',
+        organization_id: 'org-1',
+        admin_id: 'user-1',
+        action_type: 'read',
+        status: 'resolved',
+        created_at: '2026-08-24T00:00:00Z',
+      },
+    ]);
+    dbAll.mockResolvedValue([]);
+    const exported = await request(createApp())
+      .get('/api/admin/audit-logs/export')
+      .query({ status: 'logged' });
+    expect(exported.status).toBe(200);
+    expect(exported.text).toContain('a1');
+    expect(exported.text).not.toContain('a2');
+    const receiptCall = dbRun.mock.calls.find((call) =>
+      String(call[0]).includes('admin_audit_export_receipts')
+    );
+    expect(receiptCall).toBeDefined();
+    const filtersJson = receiptCall?.[1]?.[3];
+    expect(JSON.parse(filtersJson)).toEqual({
+      actionType: '',
+      status: 'logged',
+      riskScoreMin: '',
+      search: '',
+    });
+  });
+
   it('does not admit a foreign canonical IAM audit into the tenant projection', async () => {
     dbGet.mockResolvedValue({ role: 'OWNER', status: 'ACTIVE' });
     getLogs.mockResolvedValue([]);

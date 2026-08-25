@@ -3065,10 +3065,14 @@ router.get(
     const actor = await getAdminActor(req, res, ['audit:export', 'audit:read']);
     if (!actor) return;
     const { orgId } = actor;
+    const filters = {
+      actionType: String(req.query.actionType || ''),
+      status: String(req.query.status || ''),
+      riskScoreMin: String(req.query.riskScoreMin || ''),
+      search: String(req.query.search || ''),
+    };
     const logs = await readTenantAdminAuditProjection(orgId);
-    const scoped = logs.filter((log: any) =>
-      matchesAuditFilter(log, orgId, { actionType: '', status: '', riskScoreMin: '', search: '' })
-    );
+    const scoped = logs.filter((log: any) => matchesAuditFilter(log, orgId, filters));
     const headers = [
       'id',
       'admin_id',
@@ -3087,7 +3091,7 @@ router.get(
       await dbRun(
         `INSERT INTO admin_audit_export_receipts (id, organization_id, requested_by, export_kind, filters_json, row_count, output_format, created_at)
          VALUES (?, ?, ?, 'audit_logs_csv', ?, ?, 'csv', CURRENT_TIMESTAMP)`,
-        [uuidv4(), orgId, actor.actorId, JSON.stringify({}), scoped.length]
+        [uuidv4(), orgId, actor.actorId, JSON.stringify(filters), scoped.length]
       );
     } catch {
       // Receipt persistence is additive evidence and must never break a successful export.
