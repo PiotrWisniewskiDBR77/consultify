@@ -61,16 +61,45 @@ Właściciel poza publiczną produkcją wpisuje `/results?ff_wave3ResultsOwnerRe
 
 ## Sekcja F — Finance (DEC-2026-08-24-05)
 
-| Pozycja                               | Status  | Commit | Testy | Uwagi |
-| ------------------------------------- | ------- | ------ | ----- | ----- |
-| F.1 inwentarz FIN-REC-001             | PENDING | —      | —     | —     |
-| F.2 resolver FIN-REC-002              | PENDING | —      | —     | —     |
-| F.3 wspólny shell FIN-REC-003         | PENDING | —      | —     | —     |
-| F.4 `financeOwnerSampleData`          | PENDING | —      | —     | —     |
-| F.5 ochrona danych i ufności          | PENDING | —      | —     | —     |
-| F.6 stany brzegowe FIN-REC-011        | PENDING | —      | —     | —     |
-| F.7 testy FIN-REC-014                 | PENDING | —      | —     | —     |
-| F.8 przygotowanie odłączenia Benefits | PENDING | —      | —     | —     |
+| Pozycja                               | Status           | Commit                      | Testy          | Uwagi                                      |
+| ------------------------------------- | ---------------- | --------------------------- | -------------- | ------------------------------------------ |
+| F.1 inwentarz FIN-REC-001             | DONE_CURRENT_SHA | do uzupełnienia po commicie | audyt źródłowy | Sześć gałęzi i pięć flag zamrożone poniżej |
+| F.2 resolver FIN-REC-002              | PENDING          | —                           | —              | —                                          |
+| F.3 wspólny shell FIN-REC-003         | PENDING          | —                           | —              | —                                          |
+| F.4 `financeOwnerSampleData`          | PENDING          | —                           | —              | —                                          |
+| F.5 ochrona danych i ufności          | PENDING          | —                           | —              | —                                          |
+| F.6 stany brzegowe FIN-REC-011        | PENDING          | —                           | —              | —                                          |
+| F.7 testy FIN-REC-014                 | PENDING          | —                           | —              | —                                          |
+| F.8 przygotowanie odłączenia Benefits | PENDING          | —                           | —              | —                                          |
+
+### F.1 — manifest runtime i zamrożenie
+
+- Baza `ca292730ff`, gałąź `codex/results-finance-day4-20260825`, runtime nieuruchomiony, porty 4280/4281 nieużyte.
+- Tenant i źródło danych: `NOT VERIFIED / runtime not started`; żadnej bazy ani fixture'u nie użyto.
+- Flagi: Analysis OFF, Baseline OFF, Prediction OFF, Statement Pack V2 OFF, Valuation ON. Wartości niezmienione.
+
+### F.1 — mapa route → artifactType → resolver → workspace → API
+
+| Trasa / zakładka                          | artifactType             | Gałąź resolvera                            | Workspace ON                             | Workspace OFF                                    | Rodzina API                                                |
+| ----------------------------------------- | ------------------------ | ------------------------------------------ | ---------------------------------------- | ------------------------------------------------ | ---------------------------------------------------------- |
+| `/finance/statements/:id`                 | `STATEMENT_PACK`         | `openStatement`, `FinanceHub.tsx:472,3210` | `StatementPackWorkspaceV2`, `:3210-3237` | `FinancialStatementPackWorkspace`, `:3238-3244`  | `/api/v8/finance-v2/statements`, `/api/finance-statements` |
+| `/finance/models/:id`                     | `BASELINE_MODEL`         | `openV3Baseline`, `:477,3245`              | `FinanceV3BaselineWorkspace`, `:3264`    | `FinancialModelWorkspace`, `:3304-3316`          | `/api/v8/finance-v2/baseline`                              |
+| `/finance/analyses/:id` oraz `investment` | `HISTORICAL_ANALYSIS`    | `openV3Analysis`, `:479,3317`              | `FinanceV3AnalysisWorkspace`, `:3332`    | `FinancialAnalysisWorkspace` z Benefits, `:3342` | `/api/v8/finance-v2/analysis`                              |
+| `/finance/predictions/:id`, typ `model`   | `PREDICTION_SCENARIO`    | `openV3Prediction`, `:478,3278`            | `FinanceV3PredictionWorkspace`, `:3296`  | `FinancialModelWorkspace`, `:3304-3316`          | `/api/v8/finance-v2/prediction`                            |
+| `/finance/predictions/:id`, typ `budget`  | `UNKNOWN / brak typu V3` | `isBudgetPrediction`, `:471,3204`          | brak odpowiednika V3                     | `BudgetWorkspace` z Benefits, `:3205`            | `/api/economics`                                           |
+| `/finance/valuations/:id`                 | `VALUATION_CASE`         | `openV3Valuation`, `:480,3347`             | `FinanceV3ValuationWorkspace`, `:3362`   | `ValuationWorkspace` z Benefits, `:3372`         | `/api/v8/finance-v2/valuation`                             |
+
+Pozycje UNKNOWN: budżet nie ma `artifactType` ani workspace'u V3. Nie ukrywam tej luki jako gotowej.
+
+### F.1 — użycia Benefits poza FinanceHub
+
+| Komponent                    | Kto go używa poza FinanceHub                                                                                       | Dowód                                  |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------ | -------------------------------------- |
+| `BudgetWorkspace`            | brak konsumenta poza definicją w `src/components/Benefits/`                                                        | pełny `rg` po `src`                    |
+| `FinancialAnalysisWorkspace` | komentarze w `Finance/FinancialModelWorkspace.tsx`; brak montażu                                                   | `FinancialModelWorkspace.tsx:811,1230` |
+| `ValuationWorkspace`         | testy i kanoniczny, odrębny `Finance/Valuation/ValuationWorkspace`; stary komponent Benefits nie ma innego montażu | pełny `rg` po `src`                    |
+
+Komponenty Benefits nie są kasowane ani odłączane w tym dyżurze.
 
 ## Pozycje STOP
 
@@ -90,10 +119,11 @@ Stan: NIE ZACOMMITOWANO.
 
 ## Znaleziska
 
-| #   | Plik:linia                                         | Co znalazłem                                                                                      | Dlaczego nie naprawiłem                                                                                              |
-| --- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| 1   | konfiguracja Git remote `icloud-source`            | Remote wskazuje na usunięty lokalny worktree i powoduje częściowy błąd `git fetch --all --prune`. | Naprawa konfiguracji remote jest poza Results/Finance i nie jest potrzebna do pracy na potwierdzonym lokalnym tipie. |
-| 2   | `src/components/Results/resultsOwnerReviewMode.ts` | Żywy profil odbiorowy ResultsVNext mieszka w katalogu generacji HISTORICAL.                       | R.3 pozwala wyłącznie dodać bezpiecznik produkcyjny; relokacja wymagałaby szerszej zmiany importów.                  |
+| #   | Plik:linia                                         | Co znalazłem                                                                                                  | Dlaczego nie naprawiłem                                                                                              |
+| --- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| 1   | konfiguracja Git remote `icloud-source`            | Remote wskazuje na usunięty lokalny worktree i powoduje częściowy błąd `git fetch --all --prune`.             | Naprawa konfiguracji remote jest poza Results/Finance i nie jest potrzebna do pracy na potwierdzonym lokalnym tipie. |
+| 2   | `src/components/Results/resultsOwnerReviewMode.ts` | Żywy profil odbiorowy ResultsVNext mieszka w katalogu generacji HISTORICAL.                                   | R.3 pozwala wyłącznie dodać bezpiecznik produkcyjny; relokacja wymagałaby szerszej zmiany importów.                  |
+| 3   | `tests/unit/finance/financeFallbackGating.test.ts` | Baseline katalogu Finance ma 2 czerwone testy: oczekuje `MODULE_ECONOMICS=open`, zastany kod zwraca `closed`. | Test i gating należą do globalnej nawigacji; §0.5 i Z17 zabraniają naprawy w tym dyżurze.                            |
 
 ## Korekty wobec instrukcji
 
