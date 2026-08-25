@@ -26,6 +26,9 @@ interface NotebookExportMenuProps {
   className?: string;
   /** Optional: disable when the page has no persisted content. */
   disabled?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
 }
 
 const labels = () => ({
@@ -41,8 +44,17 @@ export const NotebookExportMenu: React.FC<NotebookExportMenuProps> = ({
   isPolish: _isPolish = false,
   className = '',
   disabled = false,
+  open: controlledOpen,
+  onOpenChange,
+  hideTrigger = false,
 }) => {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = (next: boolean | ((current: boolean) => boolean)) => {
+    const resolved = typeof next === 'function' ? next(open) : next;
+    if (controlledOpen === undefined) setInternalOpen(resolved);
+    onOpenChange?.(resolved);
+  };
   const [busy, setBusy] = useState<NotebookExportFormat | null>(null);
   const [failedFormat, setFailedFormat] = useState<NotebookExportFormat | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -118,19 +130,21 @@ export const NotebookExportMenu: React.FC<NotebookExportMenuProps> = ({
 
   return (
     <div ref={rootRef} className={`relative inline-block ${className}`}>
-      <button
-        ref={triggerRef}
-        type="button"
-        data-notebook-action-id={'export:trigger' satisfies `export:${NotebookExportActionId}`}
-        onClick={() => setOpen((v) => !v)}
-        disabled={disabled}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-c-border-subtle bg-c-surface px-2.5 py-1.5 text-[13px] font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-c-text dark:hover:bg-white/[0.08]"
-      >
-        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-        <span>{exportLabels.trigger}</span>
-      </button>
+      {!hideTrigger ? (
+        <button
+          ref={triggerRef}
+          type="button"
+          data-notebook-action-id={'export:trigger' satisfies `export:${NotebookExportActionId}`}
+          onClick={() => setOpen((v) => !v)}
+          disabled={disabled}
+          aria-haspopup="menu"
+          aria-expanded={open}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-c-border-subtle bg-c-surface px-2.5 py-1.5 text-[13px] font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-c-text dark:hover:bg-white/[0.08]"
+        >
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+          <span>{exportLabels.trigger}</span>
+        </button>
+      ) : null}
 
       {open && (
         <div

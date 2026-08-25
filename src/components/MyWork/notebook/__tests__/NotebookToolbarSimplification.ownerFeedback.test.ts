@@ -13,6 +13,11 @@ describe('MYW-NBK-006 local toolbar simplification', () => {
     expect(contentSource).not.toContain("aria-label={t('notebook.notebookContent.ariaLabel3'");
     expect(contentSource).toContain('onGraph={() => setShowGraphView((v) => !v)}');
     expect(contentSource).toContain('data-testid="notebook-toolbar-right-actions"');
+    expect(contentSource).not.toContain('<History size={14} />');
+    expect(contentSource).toContain('onExport={() => setNotebookExportOpen(true)}');
+    expect(contentSource).toContain('onVersionHistory={() => setShowVersionHistory');
+    expect(menuSource).toContain("id: 'export'");
+    expect(menuSource).toContain("id: 'version-history'");
   });
 
   it('routes Verification to the canonical Work rail instead of a removed legacy strip', () => {
@@ -47,9 +52,7 @@ describe('MYW-NBK-006 local toolbar simplification', () => {
     expect(contentSource).toContain('Api.getNotebookActionCapabilities(pageId)');
     expect(contentSource).toContain('result.actorUserId !== currentUserId');
     expect(contentSource).toContain('result.organizationId !== currentOrganizationId');
-    expect(contentSource).toContain(
-      'actionCapabilities.organizationId === currentOrganizationId'
-    );
+    expect(contentSource).toContain('actionCapabilities.organizationId === currentOrganizationId');
     expect(contentSource).toContain("receiptContract === 'notebook_delete_receipt_v1'");
     expect(contentSource).toContain('deleteRequestRef.current?.pageId === activePage.id');
     expect(contentSource).toContain('globalThis.crypto.randomUUID()');

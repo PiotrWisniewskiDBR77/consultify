@@ -3,6 +3,7 @@ import {
   ClipboardCheck,
   Download,
   FileText,
+  History,
   Lightbulb,
   ListChecks,
   Maximize2,
@@ -62,6 +63,8 @@ export interface NotebookHamburgerMenuProps {
   // --- Group "Note" --------------------------------------------------------
   /** Export the note (PDF/Markdown/etc.). */
   onExport?: () => unknown | Promise<unknown>;
+  /** Toggle the existing version-history surface. */
+  onVersionHistory?: () => unknown | Promise<unknown>;
   /** Open sources & attachments panel. */
   onSources?: () => unknown | Promise<unknown>;
   /** Open verification & review panel. */
@@ -122,6 +125,7 @@ const CONVERT_META: Record<
 export function buildNotebookMenuActions(props: NotebookHamburgerMenuProps): NotebookMenuAction[] {
   const {
     onExport,
+    onVersionHistory,
     onSources,
     onVerification,
     onShare,
@@ -143,6 +147,14 @@ export function buildNotebookMenuActions(props: NotebookHamburgerMenuProps): Not
       label: i18n.t('notebook.hamburgerMenu.export', 'Export'),
       icon: <Download size={14} />,
       onClick: onExport,
+    });
+  }
+  if (onVersionHistory) {
+    items.push({
+      id: 'version-history',
+      label: i18n.t('notebook.hamburgerMenu.versionHistory', 'Version history'),
+      icon: <History size={14} />,
+      onClick: onVersionHistory,
     });
   }
   if (onSources) {

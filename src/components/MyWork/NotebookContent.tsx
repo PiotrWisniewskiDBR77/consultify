@@ -20,7 +20,6 @@ import {
   ChevronLeft,
   Clock,
   FileText,
-  History,
   Layers,
   Lightbulb,
   Lock,
@@ -777,6 +776,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   const activePage = useMemo(() => pages.find((p) => p.id === activeId) || null, [pages, activeId]);
   // MYW-NBK-004 — cross-notebook search dialog (Api.notebookSemanticSearch).
   const [notebookSearchDialogOpen, setNotebookSearchDialogOpen] = useState(false);
+  const [notebookExportOpen, setNotebookExportOpen] = useState(false);
   // DEC-25: both 'delete' and 'expand-document' are governed-api /
   // server-receipt-required note-menu actions (notebookActionRegistry.ts) —
   // NotebookHamburgerMenu only enables them when the caller proves (via a real
@@ -1873,7 +1873,9 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       try {
         const page = (await Api.getNotebookPage(pageId)) as any;
         if (!page?.id) return;
-        setPages((prev) => (prev.some((p) => p.id === page.id) ? prev : [page as NotebookPage, ...prev]));
+        setPages((prev) =>
+          prev.some((p) => p.id === page.id) ? prev : [page as NotebookPage, ...prev]
+        );
       } catch {
         toast.error(t('notebook.notebookContent.toastError', 'Failed to open the requested note'));
       }
@@ -3350,24 +3352,6 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                   <div className="flex items-center gap-2 flex-wrap">
                     {/* Toolbar */}
                     {editor && <NotebookToolbar editor={editor} />}
-                    <NotebookExportMenu
-                      page={{
-                        id: activePage.id,
-                        title: title,
-                        contentJson: activePage.contentJson,
-                        contentText: activePage.contentText,
-                      }}
-                      isPolish={isPolish}
-                      className="shrink-0"
-                    />
-                    <button
-                      onClick={() => setShowVersionHistory((v) => !v)}
-                      title={t('notebook.notebookContent.title7', 'Version history')}
-                      aria-label={t('notebook.notebookContent.ariaLabel', 'Version history')}
-                      className={`shrink-0 p-1.5 rounded-lg transition-colors ${showVersionHistory ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted hover:bg-c-surface-raised'}`}
-                    >
-                      <History size={14} />
-                    </button>
                     <div
                       className="ml-auto flex shrink-0 items-center gap-1"
                       data-testid="notebook-toolbar-right-actions"
@@ -3425,6 +3409,8 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                     y={hamburgerPos.y}
                     isPolish={!!isPolish}
                     onClose={() => setHamburgerPos(null)}
+                    onExport={() => setNotebookExportOpen(true)}
+                    onVersionHistory={() => setShowVersionHistory((value) => !value)}
                     onSources={() =>
                       attachmentsSectionRef.current?.scrollIntoView({
                         behavior: 'smooth',
@@ -3450,6 +3436,21 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                     ]}
                   />
                 )}
+
+                {activePage ? (
+                  <NotebookExportMenu
+                    page={{
+                      id: activePage.id,
+                      title,
+                      contentJson: activePage.contentJson,
+                      contentText: activePage.contentText,
+                    }}
+                    isPolish={isPolish}
+                    open={notebookExportOpen}
+                    onOpenChange={setNotebookExportOpen}
+                    hideTrigger
+                  />
+                ) : null}
 
                 {/* Version History panel (toggleable) */}
                 {showVersionHistory && activePage && (
