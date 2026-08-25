@@ -55,6 +55,10 @@ export interface WizardModalProps {
   creatorHeaderStatus?: React.ReactNode;
   /** Creator-only one-line outcome summary rendered below the steps. */
   creatorScopeSummary?: React.ReactNode;
+  /** Details revealed on demand from the fixed outcome-summary band. */
+  creatorScopeDetails?: React.ReactNode;
+  creatorScopeExpandLabel?: string;
+  creatorScopeCollapseLabel?: string;
   /** Whether the modal is mounted/visible. When false, nothing renders. */
   open: boolean;
   /** Close request (overlay click, Esc, X button, Cancel). */

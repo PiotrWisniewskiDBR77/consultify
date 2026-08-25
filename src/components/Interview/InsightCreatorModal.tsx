@@ -2584,6 +2584,29 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
     return renderRefineStep();
   };
 
+  const scopeTitle = title || t('interview.creator.shell.untitled');
+  const creatorScopeText =
+    currentStep === 0
+      ? t('interview.creator.shell.scopeDefine', {
+          title: scopeTitle,
+          types: selectedTypes.length,
+        })
+      : currentStep === 1
+        ? t('interview.creator.shell.scopeMaterial', {
+            title: scopeTitle,
+            types: selectedTypes.length,
+            sessions: selectedSessions.length,
+            people: selectedRespondents.length,
+          })
+        : t('interview.creator.shell.scopeRefine', {
+            title: scopeTitle,
+            types: selectedTypes.length,
+            sessions: selectedSessions.length,
+            documents: selectedContextDocumentIds.length,
+            modes: selectedAnalysisModes.length,
+            topics: selectedTopicFocus.length,
+          });
+
   if (!isOpen) return null;
 
   if (creatorShellEnabled) {
@@ -2608,11 +2631,12 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
             <span className="font-semibold uppercase tracking-[0.14em] text-c-text-muted">
               {t('interview.creator.shell.scopeLabel')}
             </span>
-            <span className="truncate text-c-text-secondary">
-              {title || t('interview.creator.shell.untitled')}
-            </span>
+            <span className="truncate text-c-text-secondary">{creatorScopeText}</span>
           </>
         }
+        creatorScopeDetails={t('interview.creator.shell.scopeDetails')}
+        creatorScopeExpandLabel={t('interview.creator.shell.expand')}
+        creatorScopeCollapseLabel={t('interview.creator.shell.collapse')}
         footer={
           <div
             data-creator-band="footer"

@@ -5292,7 +5292,13 @@
       "shell": {
         "subtitle": "Interview › Insights · approved interview sessions",
         "scopeLabel": "What will be created",
-        "untitled": "Untitled insight"
+        "untitled": "Untitled insight",
+        "expand": "Expand",
+        "collapse": "Collapse",
+        "scopeDefine": "Insight “{{title}}” · {{types}} output type(s) · material: not selected yet",
+        "scopeMaterial": "Insight “{{title}}” · {{types}} output type(s) · {{sessions}} approved session(s) · {{people}} people",
+        "scopeRefine": "Insight “{{title}}” · {{types}} output type(s) · {{sessions}} session(s) · {{documents}} document(s) · {{modes}} analysis mode(s) · {{topics}} topic(s)",
+        "scopeDetails": "The summary is calculated from the current creator selections."
       }
     },
     "title": "Discovery Interview",

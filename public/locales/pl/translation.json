@@ -4619,7 +4619,13 @@
       "shell": {
         "subtitle": "Wywiad › Wnioski · zatwierdzone sesje wywiadu",
         "scopeLabel": "Co powstanie",
-        "untitled": "Wniosek bez tytułu"
+        "untitled": "Wniosek bez tytułu",
+        "expand": "Rozwiń",
+        "collapse": "Zwiń",
+        "scopeDefine": "Wniosek „{{title}}” · {{types}} typów wyniku · materiał: jeszcze nie wybrany",
+        "scopeMaterial": "Wniosek „{{title}}” · {{types}} typów wyniku · {{sessions}} zatwierdzonych sesji · {{people}} osób",
+        "scopeRefine": "Wniosek „{{title}}” · {{types}} typów wyniku · {{sessions}} sesji · {{documents}} dokumentów · {{modes}} trybów analizy · {{topics}} wątków",
+        "scopeDetails": "Podsumowanie jest liczone z bieżących wyborów w kreatorze."
       }
     },
     "title": "Wywiad Discovery",

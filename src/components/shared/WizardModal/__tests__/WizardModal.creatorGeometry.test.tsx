@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -109,5 +109,35 @@ describe('WizardModal creator geometry', () => {
   it('does not add creator bands to the legacy variant', () => {
     render(<WizardModal {...baseProps} activeStepIndex={0} />);
     expect(document.querySelector('[data-creator-band]')).toBeNull();
+  });
+
+  it('expands scope details on demand and resets them when the step changes', () => {
+    const { rerender } = render(
+      <WizardModal
+        {...baseProps}
+        activeStepIndex={0}
+        geometry="creator"
+        creatorScopeSummary="Scope"
+        creatorScopeDetails="Calculated details"
+        creatorScopeExpandLabel="Expand"
+        creatorScopeCollapseLabel="Collapse"
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Expand/i }));
+    expect(screen.getByText('Calculated details')).toBeInTheDocument();
+
+    rerender(
+      <WizardModal
+        {...baseProps}
+        activeStepIndex={1}
+        geometry="creator"
+        creatorScopeSummary="Scope"
+        creatorScopeDetails="Calculated details"
+        creatorScopeExpandLabel="Expand"
+        creatorScopeCollapseLabel="Collapse"
+      />
+    );
+    expect(screen.queryByText('Calculated details')).toBeNull();
   });
 });

@@ -34,7 +34,7 @@
  * rule is disabled at file scope.
  */
 /* eslint-disable no-restricted-syntax */
-import { Loader2 } from 'lucide-react';
+import { ChevronDown, Loader2 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -64,6 +64,9 @@ export const WizardModal: React.FC<WizardModalProps> = ({
   creatorSubtitle,
   creatorHeaderStatus,
   creatorScopeSummary,
+  creatorScopeDetails,
+  creatorScopeExpandLabel,
+  creatorScopeCollapseLabel,
   open,
   onClose,
   title,
@@ -88,6 +91,7 @@ export const WizardModal: React.FC<WizardModalProps> = ({
 
   const panelRef = useRef<HTMLDivElement | null>(null);
   const [reducedTransparency, setReducedTransparency] = React.useState(false);
+  const [scopeExpanded, setScopeExpanded] = React.useState(false);
 
   useEffect(() => {
     if (geometry !== 'creator' || typeof window === 'undefined' || !window.matchMedia) return;
@@ -103,6 +107,10 @@ export const WizardModal: React.FC<WizardModalProps> = ({
   const activeStep = steps[safeIndex];
   const isFirstStep = safeIndex <= 0;
   const isLastStep = safeIndex >= total - 1;
+
+  useEffect(() => {
+    setScopeExpanded(false);
+  }, [safeIndex]);
 
   // Reachability gate: the user may jump to any already-visited or active step,
   // plus the immediate next one. This keeps the canon honest (you can't skip
@@ -236,13 +244,35 @@ export const WizardModal: React.FC<WizardModalProps> = ({
         </div>
 
         {geometry === 'creator' ? (
-          <div
-            data-creator-band="scope"
-            data-transparency={reducedTransparency ? 'opaque' : undefined}
-            className="creator-glass-band flex h-[36px] shrink-0 items-center gap-2 border-b px-5 text-xs text-c-text-secondary"
-          >
-            {creatorScopeSummary}
-          </div>
+          <>
+            <div
+              data-creator-band="scope"
+              data-transparency={reducedTransparency ? 'opaque' : undefined}
+              className="creator-glass-band flex h-[36px] shrink-0 items-center gap-2 border-b px-5 text-xs text-c-text-secondary"
+            >
+              <div className="min-w-0 flex-1 truncate">{creatorScopeSummary}</div>
+              {creatorScopeDetails ? (
+                <button
+                  type="button"
+                  aria-expanded={scopeExpanded}
+                  onClick={() => setScopeExpanded((current) => !current)}
+                  className="inline-flex h-6 shrink-0 items-center gap-1 rounded-full border border-c-border px-2 text-[11px] text-c-text-secondary focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+                >
+                  {scopeExpanded ? creatorScopeCollapseLabel : creatorScopeExpandLabel}
+                  <ChevronDown
+                    size={12}
+                    aria-hidden="true"
+                    className={scopeExpanded ? 'rotate-180' : undefined}
+                  />
+                </button>
+              ) : null}
+            </div>
+            {scopeExpanded ? (
+              <div className="shrink-0 border-b border-c-border bg-c-surface-raised px-5 py-2 text-xs text-c-text-secondary">
+                {creatorScopeDetails}
+              </div>
+            ) : null}
+          </>
         ) : null}
 
         {/* Body — the active step's content (or the canonical empty placeholder) */}

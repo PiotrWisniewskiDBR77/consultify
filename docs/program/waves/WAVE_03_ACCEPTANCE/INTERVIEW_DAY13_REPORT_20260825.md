@@ -61,8 +61,9 @@ Nie wykonałem żadnego deployu, żadnej operacji Railway, żadnej zdalnej migra
 | ------- | -------------- | ----------- | --------------------------------------------------------------------------------------------------------------- |
 | S.0     | `17c5edb60e`   | DONE        | flaga default OFF, realny czytnik, 14/14 testów flagi i OFF                                                     |
 | S.1     | `2b2fa546aa`   | DONE        | jeden token 1040×840; opt-in; legacy 720×560/1080×640 zachowane; 22/22 testy                                    |
-| S.2     | bieżący commit | CZĘŚCIOWA   | 5 stref, szkło 4 pasów, opaque fallback i adopcja przez Wniosek; 18/18 testów; zrzuty/kontrast oczekują T.5/R.2 |
-| S.3–S.7 | —              | NIE ZACZĘTA | —                                                                                                               |
+| S.2     | `c9f946db24`   | CZĘŚCIOWA   | 5 stref, szkło 4 pasów, opaque fallback i adopcja przez Wniosek; 18/18 testów; zrzuty/kontrast oczekują T.5/R.2 |
+| S.3     | bieżący commit | DONE        | jednoliniowy pas w każdym kroku, wartości z realnego stanu, rozwijanie i reset na zmianie kroku; 20/20 testów   |
+| S.4–S.7 | —              | NIE ZACZĘTA | —                                                                                                               |
 | K.1–K.3 | —              | NIE ZACZĘTA | —                                                                                                               |
 | W.1–W.2 | —              | NIE ZACZĘTA | —                                                                                                               |
 | T.1–T.6 | —              | NIE ZACZĘTA | —                                                                                                               |
