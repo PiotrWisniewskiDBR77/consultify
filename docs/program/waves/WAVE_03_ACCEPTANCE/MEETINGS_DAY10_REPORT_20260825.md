@@ -68,6 +68,15 @@ przez realny router i realne serwisy; mockowana jest wyłącznie autoryzacja
 parametryzowana nagłówkami. Pakiet golden-flows po zmianie: **49/49 PASS**,
 bez modyfikacji pliku i z zachowaniem 10 asercji 410.
 
+## B.1 — brief operatora
+
+Wybrano wariant A: brief jest renderowany w istniejącej sekcji „Szczegóły”
+kanonicznej karty, bez czwartej sekcji i bez zmiany gramatyki tras. Powierzchnia
+rozróżnia dane, 404/brak oraz błąd 5xx z ponowieniem. Testy behawioralne:
+`MeetingObjectPage.operatorBrief.test.tsx` — **4/4 PASS**; zastany pakiet
+`MeetingObjectPage.test.tsx` — **9/9 PASS**. i18n `meeting.*`: PL 181 / EN 181,
+parytet pełny. Status pozostaje **CZĘŚCIOWO** do czasu własnych zrzutów light/dark.
+
 ## Testy stanu wyjściowego
 
 | Pakiet                             | Przed                                       |

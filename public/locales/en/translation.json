@@ -24249,6 +24249,7 @@
       "description": "This meeting does not exist, or you do not have access to it."
     },
     "operatorBriefError": "Could not load the operator brief.",
+    "operatorBriefUnavailable": "No operator brief is available.",
     "emptyState": {
       "description": "Schedule your first meeting to start tracking agendas and follow-ups."
     },

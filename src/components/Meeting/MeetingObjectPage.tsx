@@ -76,7 +76,10 @@ import { ErrorState, LoadingState } from '@/components/ui/primitives';
 import { StatusChip } from '@/components/ui/primitives/chips';
 import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
 import type { KartaNKey } from '@/components/standard/registry';
-import { StandardArtifactShell, type StandardSekcjaDef } from '@/components/standard/StandardArtifactShell';
+import {
+  StandardArtifactShell,
+  type StandardSekcjaDef,
+} from '@/components/standard/StandardArtifactShell';
 import type { PresentationMode } from '@/hooks/usePresentationMode';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api, type GovernedMeetingNoteDto } from '@/services/api';
@@ -116,7 +119,9 @@ function ListField({
   );
 }
 
-function noteStatusTone(status: GovernedMeetingNoteDto['status']): 'success' | 'warning' | 'danger' {
+function noteStatusTone(
+  status: GovernedMeetingNoteDto['status']
+): 'success' | 'warning' | 'danger' {
   if (status === 'approved') return 'success';
   if (status === 'rejected') return 'danger';
   return 'warning';
@@ -174,6 +179,10 @@ export const MeetingObjectPage: React.FC = () => {
   const [notesLoading, setNotesLoading] = useState(false);
   const [notesError, setNotesError] = useState<string | null>(null);
 
+  const [operatorBrief, setOperatorBrief] = useState<any>(null);
+  const [operatorBriefLoading, setOperatorBriefLoading] = useState(false);
+  const [operatorBriefError, setOperatorBriefError] = useState(false);
+
   const [gestosc, setGestosc] = useState<PresentationMode>('n');
 
   const loadMeeting = async () => {
@@ -213,13 +222,39 @@ export const MeetingObjectPage: React.FC = () => {
     }
   };
 
+  const loadOperatorBrief = async (id: string) => {
+    setOperatorBriefLoading(true);
+    setOperatorBriefError(false);
+    try {
+      const loader = Api.getAIOperatorMeetingBrief;
+      if (typeof loader !== 'function') {
+        setOperatorBrief(null);
+        return;
+      }
+      const response = await loader(id);
+      setOperatorBrief(response?.brief || response || null);
+    } catch (error: any) {
+      if (error?.status === 404) {
+        setOperatorBrief(null);
+      } else {
+        console.error('Failed to load operator brief:', error);
+        setOperatorBriefError(true);
+      }
+    } finally {
+      setOperatorBriefLoading(false);
+    }
+  };
+
   useEffect(() => {
     void loadMeeting();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [meetingId]);
 
   useEffect(() => {
-    if (meeting?.id) void loadNotes(meeting.id);
+    if (meeting?.id) {
+      void loadNotes(meeting.id);
+      void loadOperatorBrief(meeting.id);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [meeting?.id]);
 
@@ -298,7 +333,11 @@ export const MeetingObjectPage: React.FC = () => {
   // ── Centrum: trzy sekcje = te same trasy co dziś (details/minutes/decisions) ──
   const detailsContent = (
     <div className="grid gap-4 p-5 lg:grid-cols-2">
-      <ListField icon={<Users size={14} />} label={t('meeting.attendees2', 'Attendees')} items={meeting.attendees} />
+      <ListField
+        icon={<Users size={14} />}
+        label={t('meeting.attendees2', 'Attendees')}
+        items={meeting.attendees}
+      />
       <ListField
         icon={<FileText size={14} />}
         label={t('meeting.preRead', 'Pre-read')}
@@ -309,6 +348,45 @@ export const MeetingObjectPage: React.FC = () => {
         label={t('meeting.agenda', 'Agenda')}
         items={meeting.agenda}
       />
+      <SectionCard
+        icon={<ClipboardList size={14} />}
+        title={t('meeting.operatorBrief', 'Operator brief')}
+      >
+        {operatorBriefLoading ? (
+          <LoadingState variant="spinner" className="h-20" />
+        ) : operatorBriefError ? (
+          <ErrorState
+            message={t('meeting.operatorBriefError', 'Could not load the operator brief.')}
+            retry={() => void loadOperatorBrief(meeting.id)}
+          />
+        ) : operatorBrief ? (
+          <div
+            className="space-y-2 text-sm text-c-text-secondary"
+            data-testid="meeting-operator-brief"
+          >
+            {operatorBrief.prepSummary ? <p>{operatorBrief.prepSummary}</p> : null}
+            {Array.isArray(operatorBrief.agendaGaps) && operatorBrief.agendaGaps.length ? (
+              <ul className="list-disc space-y-1 pl-5">
+                {operatorBrief.agendaGaps.map((item: string, index: number) => (
+                  <li key={`gap-${index}`}>{item}</li>
+                ))}
+              </ul>
+            ) : null}
+            {Array.isArray(operatorBrief.followUpSuggestions) &&
+            operatorBrief.followUpSuggestions.length ? (
+              <ul className="list-disc space-y-1 pl-5">
+                {operatorBrief.followUpSuggestions.map((item: string, index: number) => (
+                  <li key={`follow-up-${index}`}>{item}</li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+        ) : (
+          <div className="text-sm text-c-text-muted">
+            {t('meeting.operatorBriefUnavailable', 'No operator brief is available.')}
+          </div>
+        )}
+      </SectionCard>
     </div>
   );
 
@@ -323,7 +401,9 @@ export const MeetingObjectPage: React.FC = () => {
           <div className="space-y-3">
             {notes.map((note) => {
               const decisions = (note.decisions || []).map(noteDecisionLabel).filter(Boolean);
-              const actions = (note.actionItems || []).map(noteActionLabel).filter((item) => item.task);
+              const actions = (note.actionItems || [])
+                .map(noteActionLabel)
+                .filter((item) => item.task);
               return (
                 <div
                   key={note.id}
@@ -369,7 +449,9 @@ export const MeetingObjectPage: React.FC = () => {
                           {actions.map((a, idx) => (
                             <li key={idx} className="text-xs text-c-text-secondary">
                               {a.task}
-                              {a.owner ? <span className="text-c-text-muted"> — {a.owner}</span> : null}
+                              {a.owner ? (
+                                <span className="text-c-text-muted"> — {a.owner}</span>
+                              ) : null}
                             </li>
                           ))}
                         </ul>
@@ -400,7 +482,10 @@ export const MeetingObjectPage: React.FC = () => {
         {meeting.followUps.length ? (
           <div className="space-y-2">
             {meeting.followUps.map((item) => (
-              <div key={item.id} className="w-full rounded-xl border border-c-border-subtle px-3 py-2 text-left">
+              <div
+                key={item.id}
+                className="w-full rounded-xl border border-c-border-subtle px-3 py-2 text-left"
+              >
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
                     <div className="text-sm font-medium text-c-text truncate">{item.title}</div>
@@ -408,7 +493,11 @@ export const MeetingObjectPage: React.FC = () => {
                   </div>
                   <StatusChip
                     tone={item.status === 'done' ? 'success' : 'warning'}
-                    label={item.status === 'done' ? t('meeting.done', 'Done') : t('meeting.open2', 'Open')}
+                    label={
+                      item.status === 'done'
+                        ? t('meeting.done', 'Done')
+                        : t('meeting.open2', 'Open')
+                    }
                   />
                 </div>
               </div>
@@ -439,7 +528,10 @@ export const MeetingObjectPage: React.FC = () => {
     {
       id: 'minutes',
       icon: FileText,
-      label: { en: t('meeting.object.minutes', 'Protokół'), pl: t('meeting.object.minutes', 'Protokół') },
+      label: {
+        en: t('meeting.object.minutes', 'Protokół'),
+        pl: t('meeting.object.minutes', 'Protokół'),
+      },
       component: minutesContent,
       aiContract: {
         none: true,
