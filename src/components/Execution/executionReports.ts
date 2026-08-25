@@ -134,7 +134,10 @@ interface RagConf {
   bg: string;
   text: string;
   border: string;
+  /** English text, kept for consumers that haven't switched to i18n yet. */
   label: string;
+  /** i18n key -- consumers should render t(labelKey, label). */
+  labelKey: string;
 }
 
 export const RAG_CONFIG: Record<string, RagConf> = {
@@ -144,6 +147,12 @@ export const RAG_CONFIG: Record<string, RagConf> = {
     text: 'text-emerald-700 dark:text-emerald-400',
     border: 'border-emerald-200 dark:border-emerald-800',
     label: 'On Track',
+    // `label` above is the English text used by any consumer that hasn't
+    // switched to i18n yet (kept for backward compat). New/updated
+    // consumers should pass `labelKey` through t(labelKey, label) instead
+    // -- night sweep B flagged this literal "AT RISK" showing on an
+    // otherwise Polish screen (execution-export-prezentacja).
+    labelKey: 'execution.reportPanel.rag.onTrack',
   },
   amber: {
     icon: AlertTriangle,
@@ -151,6 +160,7 @@ export const RAG_CONFIG: Record<string, RagConf> = {
     text: 'text-amber-700 dark:text-amber-400',
     border: 'border-amber-200 dark:border-amber-800',
     label: 'Needs Attention',
+    labelKey: 'execution.reportPanel.rag.needsAttention',
   },
   red: {
     icon: AlertTriangle,
@@ -158,6 +168,7 @@ export const RAG_CONFIG: Record<string, RagConf> = {
     text: 'text-danger-700 dark:text-danger-400',
     border: 'border-danger-200 dark:border-danger-800',
     label: 'At Risk',
+    labelKey: 'execution.reportPanel.rag.atRisk',
   },
 };
 

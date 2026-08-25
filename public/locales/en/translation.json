@@ -11264,7 +11264,29 @@
       "methodology": "Report configuration & methodology",
       "pdfExported": "PDF downloaded",
       "pdfFailed": "PDF export failed",
-      "presentationOpened": "Opening presentation generator…"
+      "presentationOpened": "Opening presentation generator…",
+      "contract": "Scope",
+      "data": "AI",
+      "export": "Export",
+      "sections": {
+        "scope": "Scope",
+        "dataSources": "Data Sources",
+        "mandatorySections": "Mandatory Sections",
+        "ragLogic": "RAG / Confidence Logic",
+        "aiExecutiveReadout": "AI Executive Readout",
+        "aiRecommendedActions": "AI Recommended Actions",
+        "dataQuality": "Data Quality",
+        "export": "Export"
+      },
+      "dataQualityTags": {
+        "freshness": "Freshness: {{value}}",
+        "confidence": "Confidence: {{value}}"
+      },
+      "rag": {
+        "onTrack": "On Track",
+        "needsAttention": "Needs Attention",
+        "atRisk": "At Risk"
+      }
     },
     "statusChange": {
       "confirmPrompt": "Are you sure you want to proceed?",

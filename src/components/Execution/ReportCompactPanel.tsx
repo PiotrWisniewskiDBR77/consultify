@@ -31,10 +31,10 @@ interface ReportCompactPanelProps {
 
 type PanelTab = 'contract' | 'ai' | 'export';
 
-const PANEL_TABS: { id: PanelTab; labelKey: string }[] = [
-  { id: 'contract', labelKey: 'execution.reportPanel.contract' },
-  { id: 'ai', labelKey: 'execution.reportPanel.data' },
-  { id: 'export', labelKey: 'execution.reportPanel.export' },
+const PANEL_TABS: { id: PanelTab; labelKey: string; fallback: string }[] = [
+  { id: 'contract', labelKey: 'execution.reportPanel.contract', fallback: 'Scope' },
+  { id: 'ai', labelKey: 'execution.reportPanel.data', fallback: 'AI' },
+  { id: 'export', labelKey: 'execution.reportPanel.export', fallback: 'Export' },
 ];
 
 const RAG_BAR: Record<string, string> = {
@@ -150,7 +150,7 @@ export const ReportCompactPanel: React.FC<ReportCompactPanelProps> = ({
                       <span
                         className={`text-[10px] font-semibold uppercase tracking-wide ${ragConf.text}`}
                       >
-                        {ragConf.label}
+                        {t(ragConf.labelKey, ragConf.label)}
                       </span>
                     </div>
                     <span className="text-[10px] font-medium uppercase tracking-wide text-slate-600 dark:text-slate-500">
@@ -173,7 +173,7 @@ export const ReportCompactPanel: React.FC<ReportCompactPanelProps> = ({
                     <button
                       type="button"
                       onClick={() => onGenerate(report)}
-                      className="rounded-lg p-1.5 text-slate-600 transition-colors hover:bg-slate-100/80 hover:text-primary-500 dark:hover:bg-white/[0.06]"
+                      className="rounded-lg p-1.5 text-slate-600 transition-colors hover:bg-slate-100/80 hover:text-slate-900 dark:hover:bg-white/[0.06] dark:hover:text-slate-100"
                       title={t('execution.reportPanel.generate', 'Generate with AI')}
                     >
                       <Maximize2 size={14} />
@@ -209,7 +209,7 @@ export const ReportCompactPanel: React.FC<ReportCompactPanelProps> = ({
                 {report.degradedFlags.map((flag) => (
                   <span
                     key={flag}
-                    className="inline-flex items-center rounded-full bg-primary-500/10 px-2 py-0.5 text-[10px] font-medium text-primary-400"
+                    className="inline-flex items-center rounded-full bg-danger-500/10 px-2 py-0.5 text-[10px] font-medium text-danger-400"
                   >
                     {flag}
                   </span>
@@ -228,11 +228,11 @@ export const ReportCompactPanel: React.FC<ReportCompactPanelProps> = ({
                       className={[
                         'rounded-t-lg border-b-2 px-2.5 py-1.5 text-[11px] font-medium transition-colors',
                         isActive
-                          ? 'border-primary-500 text-primary-500 dark:text-primary-400'
+                          ? 'border-[var(--c-info)] text-[var(--c-info)] dark:text-[var(--c-info)]'
                           : 'border-transparent text-slate-600 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300',
                       ].join(' ')}
                     >
-                      {t(tab.labelKey, tab.id)}
+                      {t(tab.labelKey, tab.fallback)}
                     </button>
                   );
                 })}
@@ -243,12 +243,14 @@ export const ReportCompactPanel: React.FC<ReportCompactPanelProps> = ({
             <div className="flex-1 space-y-4 overflow-y-auto p-4">
               {activeTab === 'contract' && (
                 <>
-                  <PanelSection label="Scope">
+                  <PanelSection label={t('execution.reportPanel.sections.scope', 'Scope')}>
                     <p className="text-[11px] leading-relaxed text-slate-600 dark:text-slate-300">
                       {report.scope}
                     </p>
                   </PanelSection>
-                  <PanelSection label="Data Sources">
+                  <PanelSection
+                    label={t('execution.reportPanel.sections.dataSources', 'Data Sources')}
+                  >
                     <div className="flex flex-wrap gap-1">
                       {report.dataSources.map((src) => (
                         <span
@@ -260,7 +262,9 @@ export const ReportCompactPanel: React.FC<ReportCompactPanelProps> = ({
                       ))}
                     </div>
                   </PanelSection>
-                  <PanelSection label="Mandatory Sections">
+                  <PanelSection
+                    label={t('execution.reportPanel.sections.mandatorySections', 'Mandatory Sections')}
+                  >
                     <ol className="list-inside list-decimal space-y-0.5">
                       {report.sections.map((s) => (
                         <li key={s} className="text-[11px] text-slate-500 dark:text-slate-400">
@@ -269,7 +273,9 @@ export const ReportCompactPanel: React.FC<ReportCompactPanelProps> = ({
                       ))}
                     </ol>
                   </PanelSection>
-                  <PanelSection label="RAG / Confidence Logic">
+                  <PanelSection
+                    label={t('execution.reportPanel.sections.ragLogic', 'RAG / Confidence Logic')}
+                  >
                     <p className="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
                       {report.ragLogic}
                     </p>
@@ -279,7 +285,12 @@ export const ReportCompactPanel: React.FC<ReportCompactPanelProps> = ({
 
               {activeTab === 'ai' && (
                 <>
-                  <PanelSection label="AI Executive Readout">
+                  <PanelSection
+                    label={t(
+                      'execution.reportPanel.sections.aiExecutiveReadout',
+                      'AI Executive Readout'
+                    )}
+                  >
                     <div className="space-y-1.5">
                       {report.aiExecutiveReadout.map((line) => (
                         <div
@@ -291,7 +302,12 @@ export const ReportCompactPanel: React.FC<ReportCompactPanelProps> = ({
                       ))}
                     </div>
                   </PanelSection>
-                  <PanelSection label="AI Recommended Actions">
+                  <PanelSection
+                    label={t(
+                      'execution.reportPanel.sections.aiRecommendedActions',
+                      'AI Recommended Actions'
+                    )}
+                  >
                     <div className="space-y-1.5">
                       {report.aiRecommendedActions.map((action) => (
                         <div
@@ -318,11 +334,19 @@ export const ReportCompactPanel: React.FC<ReportCompactPanelProps> = ({
                       ))}
                     </div>
                   </PanelSection>
-                  <PanelSection label="Data Quality">
+                  <PanelSection
+                    label={t('execution.reportPanel.sections.dataQuality', 'Data Quality')}
+                  >
                     <div className="flex flex-wrap gap-1">
                       {[
-                        `Freshness: ${report.dataQuality?.freshnessLabel ?? '—'}`,
-                        `Confidence: ${report.dataQuality?.confidence ?? '—'}`,
+                        t('execution.reportPanel.dataQualityTags.freshness', {
+                          defaultValue: 'Freshness: {{value}}',
+                          value: report.dataQuality?.freshnessLabel ?? '—',
+                        }),
+                        t('execution.reportPanel.dataQualityTags.confidence', {
+                          defaultValue: 'Confidence: {{value}}',
+                          value: report.dataQuality?.confidence ?? '—',
+                        }),
                       ].map((tag) => (
                         <span
                           key={tag}
@@ -346,7 +370,7 @@ export const ReportCompactPanel: React.FC<ReportCompactPanelProps> = ({
               )}
 
               {activeTab === 'export' && (
-                <PanelSection label="Export">
+                <PanelSection label={t('execution.reportPanel.sections.export', 'Export')}>
                   <div className="space-y-1.5">
                     <ExportButton
                       icon={Copy}

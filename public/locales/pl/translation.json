@@ -10624,7 +10624,29 @@
       "pdfExported": "PDF pobrany",
       "pdfFailed": "Eksport PDF nie powiódł się",
       "presentationOpened": "Otwieranie generatora prezentacji…",
-      "summarizePrompt": "Podsumuj ten raport w 5 punktach i zaproponuj 3 następne kroki."
+      "summarizePrompt": "Podsumuj ten raport w 5 punktach i zaproponuj 3 następne kroki.",
+      "contract": "Zakres",
+      "data": "AI",
+      "export": "Eksport",
+      "sections": {
+        "scope": "Zakres",
+        "dataSources": "Źródła danych",
+        "mandatorySections": "Sekcje obowiązkowe",
+        "ragLogic": "Logika RAG / pewności",
+        "aiExecutiveReadout": "Podsumowanie wykonawcze AI",
+        "aiRecommendedActions": "Rekomendowane działania AI",
+        "dataQuality": "Jakość danych",
+        "export": "Eksport"
+      },
+      "dataQualityTags": {
+        "freshness": "Świeżość: {{value}}",
+        "confidence": "Pewność: {{value}}"
+      },
+      "rag": {
+        "onTrack": "Zgodnie z planem",
+        "needsAttention": "Wymaga uwagi",
+        "atRisk": "Zagrożony"
+      }
     },
     "statusChange": {
       "confirmPrompt": "Czy na pewno chcesz kontynuować?",
