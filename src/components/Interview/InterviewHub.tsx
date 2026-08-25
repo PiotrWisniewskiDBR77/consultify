@@ -142,7 +142,10 @@ import {
 } from './InterviewAssignmentPreview';
 import { createInterviewDemoDataset, isInterviewDemoId } from './interviewDemoData';
 import { getSafeInterviewErrorMessage } from './interviewErrorCopy';
-import { InterviewInitiativePreviewFooter } from './InterviewInitiativePreview';
+import {
+  InterviewInitiativePreviewBody,
+  InterviewInitiativePreviewFooter,
+} from './InterviewInitiativePreview';
 import {
   InterviewInsightPreviewBody,
   InterviewInsightPreviewFooter,
@@ -838,6 +841,8 @@ export const InterviewHub: React.FC = () => {
   // Sessions preview (Outlook-style)
   const [previewSessionId, setPreviewSessionId] = useState<string | null>(null);
   const [sessionPreviewDetailsExpanded, setSessionPreviewDetailsExpanded] = useState(false);
+  // Initiatives preview — canon §7.3 Details kebab toggle (DEC-2026-08-25-53).
+  const [initiativePreviewDetailsExpanded, setInitiativePreviewDetailsExpanded] = useState(false);
 
   useEffect(() => {
     setSessionPreviewDetailsExpanded(false);
@@ -7009,15 +7014,29 @@ Return ONLY the answer text (no markdown fences).`;
                 currentOrganization?.id && s.organizationId === currentOrganization.id
                   ? currentOrganization.name
                   : null;
+              const assigneeName = s.assigneeName || s.respondentName || null;
+              const templateName = s.templateName || s.templateCategory || null;
+              // Same rule as the org chip below: a relation without a real value
+              // doesn't render at all — an em-dash pill is worse than no pill
+              // (canon §7.3: Relations shows real links, PreviewRelations already
+              // renders its own "No relations" empty state when the list is empty).
               const relations = [
-                {
-                  label: `${t('interview.hub.assignee3')}: ${s.assigneeName || s.respondentName || '—'}`,
-                  tone: 'text-slate-600 dark:text-slate-300',
-                },
-                {
-                  label: `${t('interview.hub.template')}: ${s.templateName || s.templateCategory || '—'}`,
-                  tone: 'text-slate-600 dark:text-slate-300',
-                },
+                ...(assigneeName
+                  ? [
+                      {
+                        label: `${t('interview.hub.assignee3')}: ${assigneeName}`,
+                        tone: 'text-slate-600 dark:text-slate-300',
+                      },
+                    ]
+                  : []),
+                ...(templateName
+                  ? [
+                      {
+                        label: `${t('interview.hub.template')}: ${templateName}`,
+                        tone: 'text-slate-600 dark:text-slate-300',
+                      },
+                    ]
+                  : []),
                 ...(orgName
                   ? [
                       {
@@ -7438,6 +7457,11 @@ Return ONLY the answer text (no markdown fences).`;
       };
 
       // Side-preview body for an initiative (canon §7.3: meta → details).
+      // canon §7.3 (DEC-2026-08-25-53): rebuilt onto the shared
+      // PreviewMetaCard/PreviewDetailsSection building blocks — see
+      // InterviewInitiativePreviewBody in InterviewInitiativePreview.tsx.
+      // Previously this hand-rolled its own meta row and a Details block with
+      // no local kebab at all (the violation the owner flagged).
       const renderInitiativePreview = (item: InterviewInitiativeDraft) => {
         const m = statusMeta(item.status);
         const desc = String(item.description || '')
@@ -7452,45 +7476,35 @@ Return ONLY the answer text (no markdown fences).`;
             : '—';
         const promoted = isInitiativePromoted(item.status);
         return (
-          <div className="space-y-4">
-            <div className="flex flex-wrap items-center gap-1.5 rounded-lg border border-slate-200/70 bg-slate-50/60 p-3 dark:border-white/[0.06] dark:bg-white/[0.03]">
-              <EntityStatusChip status={item.status} label={m.label} />
-              {item.priority ? (
-                <PriorityChip
-                  level={priorityLevel(item.priority)}
-                  label={String(item.priority).toLowerCase()}
-                />
-              ) : null}
-              {src ? (
-                <span className="inline-flex items-center gap-1 rounded-full border border-c-border bg-c-surface-raised px-2 py-0.5 text-[11px] font-medium text-c-text-secondary">
-                  <Lightbulb size={11} />
-                  Insight
-                </span>
-              ) : null}
-              <span className="inline-flex items-center rounded-full border border-c-border bg-c-surface-raised px-2 py-0.5 text-[11px] font-medium text-c-text-secondary">
-                {dateStr}
-              </span>
-            </div>
-            <div>
-              <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
-                {t('interview.hub.details')}
-              </div>
-              {desc ? (
-                <div className="whitespace-pre-wrap text-sm leading-relaxed text-c-text-secondary">
-                  {desc}
-                </div>
-              ) : (
-                <div className="text-sm text-slate-400 dark:text-slate-500">
-                  {t('interview.hub.noDescription')}
-                </div>
-              )}
-            </div>
-            {!promoted ? (
-              <div className="rounded-lg border-l-4 border-l-amber-500 border border-amber-300/50 bg-amber-100 px-3 py-2 text-[11px] text-amber-800 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-100">
-                {t('interview.hub.draftStaysInInterviewUntil')}
-              </div>
-            ) : null}
-          </div>
+          <InterviewInitiativePreviewBody
+            initiative={{
+              id: item.id,
+              status: item.status,
+              priority: item.priority,
+              description: desc,
+            }}
+            statusLabel={m.label}
+            priorityLevel={item.priority ? priorityLevel(item.priority) : undefined}
+            hasSourceInsight={!!src}
+            dateStr={dateStr}
+            promoted={promoted}
+            isPolish={isPolish}
+            detailsExpanded={initiativePreviewDetailsExpanded}
+            onToggleDetailsExpanded={() => setInitiativePreviewDetailsExpanded((v) => !v)}
+            onCopyDetails={() =>
+              copyToClipboard(
+                [
+                  `id: ${item.id}`,
+                  `status: ${String(item.status || '').toUpperCase()}`,
+                  item.priority ? `priority: ${item.priority}` : null,
+                  desc ? `description: ${desc}` : null,
+                ]
+                  .filter((line): line is string => !!line)
+                  .join('\n')
+              )
+            }
+            onCopyId={() => copyToClipboard(item.id)}
+          />
         );
       };
 
