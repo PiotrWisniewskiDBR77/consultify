@@ -295,9 +295,14 @@ export const PartnerOnboardingOrientation: React.FC = () => {
       className="mx-auto max-w-2xl rounded-2xl border border-c-border-subtle bg-c-surface p-8 text-center shadow-sm"
       data-testid="partner-orientation-onboarding"
     >
-      <h1 className="text-2xl font-semibold text-c-text">{t('partner.day12.onboardingTitle')}</h1>
+      <h1 className="text-2xl font-semibold text-c-text">
+        {t('partner.day12.onboardingTitle', 'Konfiguracja przestrzeni partnera trwa')}
+      </h1>
       <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-c-text-secondary">
-        {t('partner.day12.onboardingDescription')}
+        {t(
+          'partner.day12.onboardingDescription',
+          'Połączenie jest aktywne. Dokończ wymagane kroki operacyjne w przestrzeni partnera; ten pulpit nie wyświetla treści rejestracyjnych ani marketingowych.'
+        )}
       </p>
     </section>
   );

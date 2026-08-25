@@ -2995,14 +2995,20 @@ const PartnerOrientationPanel: React.FC<{
         <Building2 className="mx-auto h-10 w-10 text-c-text-secondary" aria-hidden="true" />
       )}
       <h1 className="mt-5 text-2xl font-semibold text-c-text">
-        {t(isError ? 'partner.day12.connectionErrorTitle' : 'partner.day12.unconnectedTitle')}
+        {isError
+          ? t('partner.day12.connectionErrorTitle', 'Nie udało się ustalić statusu połączenia')
+          : t('partner.day12.unconnectedTitle', 'Profil partnera nie jest jeszcze podłączony')}
       </h1>
       <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-c-text-secondary">
-        {t(
-          isError
-            ? 'partner.day12.connectionErrorDescription'
-            : 'partner.day12.unconnectedDescription'
-        )}
+        {isError
+          ? t(
+              'partner.day12.connectionErrorDescription',
+              'Nie pokazujemy rejestracji ani treści programu, dopóki nie potwierdzimy statusu z serwera. Spróbuj ponownie.'
+            )
+          : t(
+              'partner.day12.unconnectedDescription',
+              'Ten ekran służy wyłącznie do sprawdzenia połączenia z przestrzenią partnera. Administrator organizacji może potwierdzić dalszy krok poza tym pulpitem.'
+            )}
       </p>
       {isError && onRetry ? (
         <button
@@ -3010,7 +3016,7 @@ const PartnerOrientationPanel: React.FC<{
           onClick={onRetry}
           className="mt-6 rounded-lg border border-c-border px-4 py-2 text-sm font-medium text-c-text hover:bg-c-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
         >
-          {t('partner.day12.retryConnection')}
+          {t('partner.day12.retryConnection', 'Sprawdź ponownie')}
         </button>
       ) : null}
     </section>
