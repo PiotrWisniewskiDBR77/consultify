@@ -120,12 +120,12 @@ w raporcie. Nie ma wyjątków „bo tak było szybciej".
 
    Nadzorca podaje Ci **SHA commitu-markera** przy wklejaniu tej instrukcji.
 
-   **SHA markera: «MARKER_SHA»**
+   **SHA markera: f0caf6a821**
 
    ```bash
    cd /Users/piotrwisniewski/Developer/Consultify-final-mvp-integration-20260823
    git log --oneline -25 codex/m03-admin-20260824
-   git merge-base --is-ancestor «MARKER_SHA» codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
+   git merge-base --is-ancestor f0caf6a821 codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
    ```
 
    **`git fetch` jest w tym dyżurze ZAKAZANY** (FREEZE, `DEC-65` — zero
@@ -2025,7 +2025,7 @@ rodzin). `X.4` jest ostatni, bo ma najwięcej niewiadomych i najwięcej
    6a. **Powtórna weryfikacja markera** — ten sam warunek co w Bloku 0, żeby
    wykluczyć, że w trakcie dyżuru pracowałeś na przesuniętej bazie:
    ```bash
-   git merge-base --is-ancestor «MARKER_SHA» HEAD && echo "MARKER NADAL OK" || echo "MARKER ZGUBIONY"
+   git merge-base --is-ancestor f0caf6a821 HEAD && echo "MARKER NADAL OK" || echo "MARKER ZGUBIONY"
    ```
    Wynik `MARKER ZGUBIONY` = **STOP** i wpis do raportu; nie „naprawiasz"
    tego rebasem.
@@ -2053,7 +2053,7 @@ w którym dwa opierają się na zgadniętych progach.
 # Results + Execution dzień 14 — raport dyżuru backendowego <data>
 
 Baza: `codex/m03-admin-20260824 @ <SHA tipa>`
-Marker: `«MARKER_SHA»` — POTWIERDZONY / BRAK
+Marker: `f0caf6a821` — POTWIERDZONY / BRAK
 Gałąź robocza: `codex/backend-day14-<data>`
 Worktree: `/private/tmp/consultify-backend-day14`
 Porty użyte: PG 5442 · dev-render: ŻADEN (dyżur backendowy)
