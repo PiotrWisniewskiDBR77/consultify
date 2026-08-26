@@ -538,7 +538,7 @@ const AuditsMethodHub = lazyWithRetry(() => import('@/components/Audit/method/Au
 // Criterion Workspace (W1, 2026-08) — the screen where an auditor actually
 // works one criterion through the full evidence→finding→remediation chain.
 // Gate switches V1/V2 (DEC-88 SPEC-A reshell) behind `ff_criterionWorkspaceV2`
-// (default OFF) — see `CriterionWorkspaceGate.tsx`.
+// (default ON since DEC-97, 2026-08-26) — see `CriterionWorkspaceGate.tsx`.
 const CriterionWorkspace = lazyWithRetry(
   () => import('@/components/Audit/method/workspace/CriterionWorkspaceGate')
 );

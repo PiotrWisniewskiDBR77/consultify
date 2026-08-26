@@ -5,11 +5,11 @@
  * (`/audit-programs/:programId/criteria/:criterionId`, `AppRoutes.tsx`) — no
  * route/URL change, so this is a pure swap-in-place.
  *
- * Default OFF (`ff_criterionWorkspaceV2`, see
- * `src/utils/criterionWorkspaceV2Flag.ts`): renders V1 UNCHANGED. Flip via
- * `?ff_criterionWorkspaceV2=1` (query, instant) or
- * `localStorage["ff.criterion_workspace_v2"]` to preview V2 — CLAUDE.md
- * regułą 7: nie promuj do demo bez akceptu właściciela na zrzutach.
+ * Default ON since DEC-97 (owner accept, 2026-08-26) — see
+ * `src/utils/criterionWorkspaceV2Flag.ts`: renders V2 by default. V1 stays
+ * reachable via the explicit `?ff_criterionWorkspaceV2=0` (query, instant)
+ * or `localStorage["ff.criterion_workspace_v2"] = "off"` escape hatch for
+ * regression comparison.
  */
 import React from 'react';
 

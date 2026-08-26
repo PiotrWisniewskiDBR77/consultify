@@ -1,8 +1,8 @@
 /**
  * CriterionWorkspaceV2 — SPEC-A (archetyp Rekord) reshell of the criterion
  * workspace, DEC-88 (owner accept 2026-08-26, Variant A on all 4 decision
- * cards). Behind `ff_criterionWorkspaceV2` (default OFF) — see
- * `../CriterionWorkspaceGate.tsx`.
+ * cards). Behind `ff_criterionWorkspaceV2` (default ON since DEC-97,
+ * 2026-08-26) — see `../CriterionWorkspaceGate.tsx`.
  *
  * WHAT CHANGED vs. V1 (`../CriterionWorkspace.tsx`): ONLY the shell/layout.
  *  - 18 links grouped into 4 CONTIGUOUS macro-phases (Planowanie 1-3 ·
