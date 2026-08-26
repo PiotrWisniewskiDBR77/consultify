@@ -489,7 +489,7 @@ router.post(
       return;
     }
     try {
-      const skipReason = await assessmentSkipReasonService.record({
+      const { skipReason, replayed } = await assessmentSkipReasonService.record({
         organizationId,
         sessionId: req.params.sessionId,
         unitId: body.unitId,
@@ -499,7 +499,7 @@ router.post(
         actorUserId,
         idempotencyKey,
       });
-      res.status(201).json({ skipReason });
+      res.status(replayed ? 200 : 201).json({ skipReason });
     } catch (error) {
       sendAssessmentSkipReasonError(res, error);
     }
@@ -513,11 +513,14 @@ router.get(
     if (!organizationId) return;
     const unitId = isNonEmptyString(req.query.unitId) ? req.query.unitId : undefined;
     try {
-      const skipReasons = await assessmentSkipReasonService.listActive(
-        organizationId,
-        req.params.sessionId,
-        unitId
-      );
+      const includeSuperseded = req.query.includeSuperseded === 'true';
+      const skipReasons = includeSuperseded
+        ? await assessmentSkipReasonService.listHistory(organizationId, req.params.sessionId)
+        : await assessmentSkipReasonService.listActive(
+            organizationId,
+            req.params.sessionId,
+            unitId
+          );
       res.status(200).json({ skipReasons });
     } catch (error) {
       sendAssessmentSkipReasonError(res, error);
@@ -533,7 +536,8 @@ router.get(
     try {
       const reportContract = await assessmentReportContractService.build(
         organizationId,
-        req.params.sessionId
+        req.params.sessionId,
+        isNonEmptyString(req.query.outputId) ? req.query.outputId : undefined
       );
       res.status(200).json({ reportContract });
     } catch (error) {

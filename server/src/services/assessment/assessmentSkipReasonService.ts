@@ -22,6 +22,7 @@ export interface AssessmentSkipReason {
   readonly recordedByUserId: string;
   readonly recordedAt: string;
   readonly supersedesId: string | null;
+  readonly supersededBy: string | null;
   readonly idempotencyKey: string;
 }
 
@@ -36,13 +37,19 @@ interface SkipReasonRow {
   recorded_by_user_id: string;
   recorded_at: string;
   supersedes_id: string | null;
+  superseded_by_derived?: string | null;
   idempotency_key: string;
 }
 
 export class AssessmentSkipReasonError extends Error {
   constructor(
-    readonly code: 'SKIP_CODE_NOT_IN_DICTIONARY' | 'SESSION_NOT_FOUND' | 'INVALID_UNIT_OR_LEVEL',
-    readonly status: 400 | 404
+    readonly code:
+      | 'SKIP_CODE_NOT_IN_DICTIONARY'
+      | 'SESSION_NOT_FOUND'
+      | 'INVALID_UNIT_OR_LEVEL'
+      | 'IDEMPOTENCY_KEY_PAYLOAD_MISMATCH'
+      | 'REPORT_REVISION_NOT_FOUND',
+    readonly status: 400 | 404 | 409
   ) {
     super(code);
   }
@@ -60,6 +67,9 @@ function mapRow(row: SkipReasonRow): AssessmentSkipReason {
     recordedByUserId: row.recorded_by_user_id,
     recordedAt: new Date(row.recorded_at).toISOString(),
     supersedesId: row.supersedes_id,
+    // The physical superseded_by column is intentionally never written: the
+    // forward link is the mathematical inverse of the append-only backlink.
+    supersededBy: row.superseded_by_derived ?? null,
     idempotencyKey: row.idempotency_key,
   };
 }
@@ -81,7 +91,7 @@ export class AssessmentSkipReasonService {
     skipCode: unknown;
     actorUserId: string;
     idempotencyKey: string;
-  }): Promise<AssessmentSkipReason> {
+  }): Promise<{ skipReason: AssessmentSkipReason; replayed: boolean }> {
     if (!isAssessmentSkipReasonCode(input.skipCode)) {
       throw new AssessmentSkipReasonError('SKIP_CODE_NOT_IN_DICTIONARY', 400);
     }
@@ -107,7 +117,7 @@ export class AssessmentSkipReasonService {
     );
 
     const id = genId('asm-skip');
-    await DbPromise.run(
+    const insert = await DbPromise.run(
       `INSERT INTO assessment_skip_reasons
        (id, organization_id, session_id, unit_id, question_id, level, skip_code,
         recorded_by_user_id, supersedes_id, idempotency_key)
@@ -129,13 +139,29 @@ export class AssessmentSkipReasonService {
     );
 
     const recorded = await DbPromise.get<SkipReasonRow>(
-      `SELECT * FROM assessment_skip_reasons
+      `SELECT r.*,
+              (SELECT successor.id FROM assessment_skip_reasons successor
+               WHERE successor.organization_id = r.organization_id
+                 AND successor.supersedes_id = r.id
+               ORDER BY successor.recorded_at ASC, successor.id ASC LIMIT 1) AS superseded_by_derived
+       FROM assessment_skip_reasons r
        WHERE organization_id = ? AND idempotency_key = ?`,
       [input.organizationId, input.idempotencyKey],
       { fallback: false }
     );
     if (!recorded) throw new Error('ASSESSMENT_SKIP_REASON_WRITE_NOT_PERSISTED');
-    return mapRow(recorded);
+    const replayed = insert.changes === 0;
+    if (
+      replayed &&
+      (recorded.session_id !== input.sessionId ||
+        recorded.unit_id !== input.unitId ||
+        recorded.question_id !== input.questionId ||
+        Number(recorded.level) !== input.level ||
+        recorded.skip_code !== input.skipCode)
+    ) {
+      throw new AssessmentSkipReasonError('IDEMPOTENCY_KEY_PAYLOAD_MISMATCH', 409);
+    }
+    return { skipReason: mapRow(recorded), replayed };
   }
 
   async listActive(
@@ -151,14 +177,68 @@ export class AssessmentSkipReasonService {
     if (!session) throw new AssessmentSkipReasonError('SESSION_NOT_FOUND', 404);
 
     const params: unknown[] = [organizationId, sessionId];
-    const unitPredicate = unitId ? ' AND unit_id = ?' : '';
+    const unitPredicate = unitId ? ' AND r.unit_id = ?' : '';
     if (unitId) params.push(unitId);
     const rows = await DbPromise.all<SkipReasonRow>(
-      `SELECT DISTINCT ON (unit_id, question_id) *
-       FROM assessment_skip_reasons
-       WHERE organization_id = ? AND session_id = ?${unitPredicate}
-       ORDER BY unit_id, question_id, recorded_at DESC, id DESC`,
+      `SELECT DISTINCT ON (r.unit_id, r.question_id) r.*,
+              (SELECT successor.id FROM assessment_skip_reasons successor
+               WHERE successor.organization_id = r.organization_id
+                 AND successor.supersedes_id = r.id
+               ORDER BY successor.recorded_at ASC, successor.id ASC LIMIT 1) AS superseded_by_derived
+       FROM assessment_skip_reasons r
+       WHERE r.organization_id = ? AND r.session_id = ?${unitPredicate}
+       ORDER BY r.unit_id, r.question_id, r.recorded_at DESC, r.id DESC`,
       params,
+      { fallback: false }
+    );
+    return rows.map(mapRow);
+  }
+
+  async listHistory(organizationId: string, sessionId: string): Promise<AssessmentSkipReason[]> {
+    const session = await DbPromise.get<{ id: string }>(
+      `SELECT id FROM method_sessions WHERE id = ? AND organization_id = ?`,
+      [sessionId, organizationId],
+      { fallback: false }
+    );
+    if (!session) throw new AssessmentSkipReasonError('SESSION_NOT_FOUND', 404);
+
+    const rows = await DbPromise.all<SkipReasonRow>(
+      `SELECT r.*,
+              (SELECT successor.id FROM assessment_skip_reasons successor
+               WHERE successor.organization_id = r.organization_id
+                 AND successor.supersedes_id = r.id
+               ORDER BY successor.recorded_at ASC, successor.id ASC LIMIT 1) AS superseded_by_derived
+       FROM assessment_skip_reasons r
+       WHERE r.organization_id = ? AND r.session_id = ?
+       ORDER BY r.recorded_at ASC, r.id ASC`,
+      [organizationId, sessionId],
+      { fallback: false }
+    );
+    return rows.map(mapRow);
+  }
+
+  async listActiveAsOf(
+    organizationId: string,
+    sessionId: string,
+    recordedAt: string
+  ): Promise<AssessmentSkipReason[]> {
+    const session = await DbPromise.get<{ id: string }>(
+      `SELECT id FROM method_sessions WHERE id = ? AND organization_id = ?`,
+      [sessionId, organizationId],
+      { fallback: false }
+    );
+    if (!session) throw new AssessmentSkipReasonError('SESSION_NOT_FOUND', 404);
+    const rows = await DbPromise.all<SkipReasonRow>(
+      `SELECT DISTINCT ON (r.unit_id, r.question_id) r.*,
+              (SELECT successor.id FROM assessment_skip_reasons successor
+               WHERE successor.organization_id = r.organization_id
+                 AND successor.supersedes_id = r.id
+                 AND successor.recorded_at <= ?
+               ORDER BY successor.recorded_at ASC, successor.id ASC LIMIT 1) AS superseded_by_derived
+       FROM assessment_skip_reasons r
+       WHERE r.organization_id = ? AND r.session_id = ? AND r.recorded_at <= ?
+       ORDER BY r.unit_id, r.question_id, r.recorded_at DESC, r.id DESC`,
+      [recordedAt, organizationId, sessionId, recordedAt],
       { fallback: false }
     );
     return rows.map(mapRow);
