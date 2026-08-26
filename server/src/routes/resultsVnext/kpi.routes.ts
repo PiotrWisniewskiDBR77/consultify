@@ -89,6 +89,7 @@ import {
   submitDefinition,
   suspendKpi,
 } from '../../services/resultsVnext/kpi/kpiDefinitionCommands.js';
+import { getKpiHistory } from '../../services/resultsVnext/kpi/kpiHistoryRepository.js';
 import {
   correctMeasurement,
   disputeMeasurement,
@@ -126,6 +127,7 @@ import {
   DisputeMeasurementSchema,
   EditKpiDraftSchema,
   KpiDefinitionVersionParamsSchema,
+  KpiHistoryQuerySchema,
   KpiIdParamsSchema,
   KpiLifecycleActionSchema,
   KpiMeasurementParamsSchema,
@@ -458,6 +460,33 @@ router.get(
       res.status(200).json(buildKpiTrend({ kpiId, version, measurements }));
     } catch (err) {
       handleKpiRouteError(res, err, 'getKpiTrend');
+    }
+  }
+);
+
+router.get(
+  '/:kpiId/history',
+  validateParams(KpiIdParamsSchema),
+  validateQuery(KpiHistoryQuerySchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const query = req.query as unknown as import('zod').infer<typeof KpiHistoryQuerySchema>;
+      const result = await getKpiHistory({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        kpiId: req.params.kpiId,
+        cursor: query.cursor,
+        limit: query.limit,
+      });
+      if (!result.found) {
+        res.status(404).json({ error: 'KPI not found', code: 'NOT_FOUND' });
+        return;
+      }
+      res.status(200).json({ entries: result.entries, nextCursor: result.nextCursor });
+    } catch (err) {
+      handleKpiRouteError(res, err, 'getKpiHistory');
     }
   }
 );
