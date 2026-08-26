@@ -94,8 +94,12 @@ const MOCK_PACKS: AuditPackSummary[] = [
       'Kryteria zbudowane z procedury QMS klienta, mapowane na strukturę systemu zarządzania jakością.',
     sourceId: 'src-qms-elmax',
     sourceTitle: 'Procedura QMS Elmax Industries, wyd. 4',
-    sourceVersion: 'wyd. 4 (2026)',
-    classification: 'VERIFIED_NORMATIVE',
+    // FIX 2026-08-25: `AuditLibraryTab.tsx:273` renders this as
+    // `${sourceTitle} (v${sourceVersion})` — a full phrase here produced a
+    // "(vwyd. 4 (2026))" glitch in the preview pane. Short version tag only.
+    sourceVersion: '4',
+    sourceType: 'INTERNAL_PROCEDURE',
+    verificationStatus: 'VERIFIED',
     publicationStatus: 'published',
     requiredRoles: ['lead_auditor', 'qms_specialist'],
     criteriaCount: 42,
@@ -111,7 +115,8 @@ const MOCK_PACKS: AuditPackSummary[] = [
     sourceId: null,
     sourceTitle: 'DBR77 Framework wewnętrzny v3',
     sourceVersion: '3.1',
-    classification: 'INTERNAL_FRAMEWORK',
+    sourceType: 'INTERNAL_FRAMEWORK',
+    verificationStatus: 'VERIFIED',
     publicationStatus: 'published',
     requiredRoles: ['lead_auditor'],
     criteriaCount: 27,
@@ -127,7 +132,8 @@ const MOCK_PACKS: AuditPackSummary[] = [
     sourceId: null,
     sourceTitle: 'Dyrektywa NIS2 (UE) 2022/2555 — interpretacja robocza',
     sourceVersion: null,
-    classification: 'DEMONSTRATION',
+    sourceType: 'DEMONSTRATION',
+    verificationStatus: 'UNVERIFIED',
     publicationStatus: 'draft',
     requiredRoles: ['lead_auditor', 'cyber_specialist'],
     criteriaCount: 18,
@@ -143,7 +149,8 @@ const MOCK_PACKS: AuditPackSummary[] = [
     sourceId: 'src-dq2019',
     sourceTitle: 'Wewnętrzny standard jakości danych 2019',
     sourceVersion: '1.0',
-    classification: 'LEGACY',
+    sourceType: 'LEGACY',
+    verificationStatus: 'VERIFIED',
     publicationStatus: 'deprecated',
     requiredRoles: ['data_auditor'],
     criteriaCount: 15,
@@ -158,7 +165,8 @@ const MOCK_PACKS: AuditPackSummary[] = [
     sourceId: null,
     sourceTitle: null,
     sourceVersion: null,
-    classification: 'EVIDENCE_MISSING',
+    sourceType: 'REGULATION',
+    verificationStatus: 'EVIDENCE_MISSING',
     publicationStatus: 'in_review',
     requiredRoles: ['lead_auditor'],
     criteriaCount: 9,
@@ -444,9 +452,16 @@ const MOCK_OUTPUTS: AuditOutputSummary[] = [
     programName: 'Grupa Metalplast — Audyt QMS 2025 (zamknięty)',
     version: 1,
     title: 'Wynik audytu QMS 2025 — Grupa Metalplast (v1)',
+    packVersion: 3,
     finalizedBy: 'user-aleksandra',
     finalizedByName: 'Aleksandra Dąbrowska',
     finalizedAt: '2025-12-15T16:00:00Z',
+    // FIX 2026-08-25 (owner-review R2, AUD block, DEC-2026-08-25-66 pt.3):
+    // real field `/api/audits/outputs` sends but the table never surfaced —
+    // v1 is superseded by v2 below, exactly the case the new Status column
+    // is for.
+    supersededBy: 'out-metalplast-v2',
+    supersededAt: '2025-12-18T09:15:00Z',
     contentHash: 'a13f9c2e7b40',
   },
   {
@@ -455,9 +470,12 @@ const MOCK_OUTPUTS: AuditOutputSummary[] = [
     programName: 'Grupa Metalplast — Audyt QMS 2025 (zamknięty)',
     version: 2,
     title: 'Wynik audytu QMS 2025 — Grupa Metalplast (v2, korekta redakcyjna)',
+    packVersion: 3,
     finalizedBy: 'user-aleksandra',
     finalizedByName: 'Aleksandra Dąbrowska',
     finalizedAt: '2025-12-18T09:15:00Z',
+    supersededBy: null,
+    supersededAt: null,
     contentHash: 'f88021d4c9ab',
   },
 ];
@@ -477,6 +495,11 @@ const MOCK_REPORTS: AuditReportSummary[] = [
     title: 'Raport z audytu QMS 2025 — Grupa Metalplast',
     status: 'superseded',
     language: 'pl',
+    // FIX 2026-08-25 (owner-review R2, AUD block, DEC-2026-08-25-66 pt.3):
+    // real fields `/api/audits/reports` sends but the table never surfaced.
+    audience: 'Zarząd',
+    confidentiality: 'Poufne',
+    approvedAt: '2025-12-15T18:00:00Z',
     publishedAt: '2025-12-16T10:00:00Z',
     updatedAt: '2025-12-18T09:20:00Z',
   },
@@ -489,6 +512,9 @@ const MOCK_REPORTS: AuditReportSummary[] = [
     title: 'Raport z audytu QMS 2025 — Grupa Metalplast (wersja poprawiona)',
     status: 'published',
     language: 'pl',
+    audience: 'Zarząd',
+    confidentiality: 'Poufne',
+    approvedAt: '2025-12-18T20:00:00Z',
     publishedAt: '2025-12-19T08:00:00Z',
     updatedAt: '2025-12-19T08:00:00Z',
   },
@@ -501,6 +527,9 @@ const MOCK_REPORTS: AuditReportSummary[] = [
     title: 'Postęp naprawy — Elmax Industries (sierpień 2026)',
     status: 'draft',
     language: 'pl',
+    audience: 'Sponsor projektu',
+    confidentiality: 'Wewnętrzne',
+    approvedAt: null,
     publishedAt: null,
     updatedAt: '2026-08-11T08:30:00Z',
   },
@@ -548,8 +577,14 @@ const MOCK_PROPOSALS: AuditProposalSummary[] = [
 // Api.get/Api.post — patch singletona (patrz nagłówek pliku).
 // ---------------------------------------------------------------------------
 
-function envelope<T>(data: T): { data: T } {
-  return { data };
+// FIX 2026-08-25 (owner-review evidence, AUD block): `auditsMethodApi.ts`'s
+// `unwrapEnvelope()` requires the axios-like response body to itself be the
+// `{ success: true, data }` envelope (U7 contract) — this helper previously
+// returned only `{ data }` (single-wrapped), which fails that check with
+// `AUDITS_API_CONTRACT_ERROR: expected { success: true, data }` on every tab.
+// Double-wrap so the mock matches the real client's contract.
+function envelope<T>(data: T): { data: { success: true; data: T } } {
+  return { data: { success: true, data } };
 }
 
 function serverUnavailable(): never {
@@ -563,6 +598,13 @@ const originalPost = Api.post.bind(Api);
 // Processes) dopisuje nowy wiersz zamiast ginąć w próżni przy odświeżeniu
 // zakładki Processes po sukcesie.
 let programsStore: AuditProgramSummary[] = [...MOCK_PROGRAMS];
+// FIX 2026-08-25 (owner-review R2, AUD block, DEC-2026-08-25-66 pt.2/4): oba
+// magazyny wspierają REALNE przejścia stanu z nowego kebaba (Approve/Publish
+// na Reports, Register/Defer/Dismiss na Initiatives) — te same bramki co
+// backend (`reportService.ts`/`proposalService.ts`), więc odbiór na zrzutach
+// pokazuje faktycznie działające akcje, nie atrapę.
+let reportsStore: AuditReportSummary[] = [...MOCK_REPORTS];
+let proposalsStore: AuditProposalSummary[] = [...MOCK_PROPOSALS];
 
 Api.get = (async (url: string, ...rest: unknown[]) => {
   if (!url.startsWith('/audits/')) return (originalGet as any)(url, ...rest);
@@ -603,16 +645,28 @@ Api.get = (async (url: string, ...rest: unknown[]) => {
     return envelope({ outputs: items, total: items.length });
   }
   if (path === '/audits/reports') {
-    const items = empty ? [] : MOCK_REPORTS;
+    const items = empty ? [] : reportsStore;
     return envelope({ reports: items, total: items.length });
   }
   if (path === '/audits/proposals') {
-    const items = empty ? [] : MOCK_PROPOSALS;
+    const items = empty ? [] : proposalsStore;
     return envelope({ proposals: items, total: items.length });
   }
 
   return (originalGet as any)(url, ...rest);
 }) as typeof Api.get;
+
+// `AuditsMethodHub` calls the REAL `Api.getUsers()` to resolve `packTitle`/
+// `leadAuditorName`/`finalizedByName` — these are already present on the mock
+// rows above for realism, but this override proves the Hub's own resolution
+// map works end-to-end rather than silently depending on it.
+const originalGetUsers = Api.getUsers.bind(Api);
+Api.getUsers = (async () => [
+  { id: 'user-katarzyna', firstName: 'Katarzyna', lastName: 'Nowicka' },
+  { id: 'user-marek', firstName: 'Marek', lastName: 'Zieliński' },
+  { id: 'user-aleksandra', firstName: 'Aleksandra', lastName: 'Dąbrowska' },
+  { id: 'user-piotr-demo', firstName: 'Piotr', lastName: 'Wiśniewski' },
+]) as typeof originalGetUsers;
 
 Api.post = (async (url: string, data: any) => {
   if (!url.startsWith('/audits/')) return (originalPost as any)(url, data);
@@ -656,6 +710,78 @@ Api.post = (async (url: string, data: any) => {
       return envelope(programsStore[idx]);
     }
     return envelope(null);
+  }
+
+  // FIX 2026-08-25 (owner-review R2, AUD block, DEC-2026-08-25-66 pt.2):
+  // Reports kebab — same gates as `reportService.approveReport`/
+  // `publishReport` (draft/in_review → approved → published).
+  const approveReport = url.match(/^\/audits\/reports\/([^/]+)\/approve$/);
+  if (approveReport) {
+    const id = decodeURIComponent(approveReport[1]);
+    const idx = reportsStore.findIndex((r) => r.id === id);
+    if (idx < 0) serverUnavailable();
+    const report = reportsStore[idx];
+    if (report.status !== 'draft' && report.status !== 'in_review') {
+      throw Object.assign(new Error(`Raport w statusie „${report.status}" nie może zostać zatwierdzony.`), {
+        status: 409,
+      });
+    }
+    reportsStore[idx] = { ...report, status: 'approved', approvedAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+    return envelope(reportsStore[idx]);
+  }
+  const publishReport = url.match(/^\/audits\/reports\/([^/]+)\/publish$/);
+  if (publishReport) {
+    const id = decodeURIComponent(publishReport[1]);
+    const idx = reportsStore.findIndex((r) => r.id === id);
+    if (idx < 0) serverUnavailable();
+    const report = reportsStore[idx];
+    if (report.status !== 'approved') {
+      throw Object.assign(new Error(`Raport w statusie „${report.status}" nie może zostać opublikowany.`), {
+        status: 409,
+      });
+    }
+    reportsStore[idx] = { ...report, status: 'published', publishedAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+    return envelope(reportsStore[idx]);
+  }
+
+  // FIX 2026-08-25 (owner-review R2, AUD block, DEC-2026-08-25-66 pt.4):
+  // Initiatives kebab — same gates as `proposalService.registerAsInitiative`/
+  // `dismissProposal`/`deferProposal`.
+  const registerProposal = url.match(/^\/audits\/proposals\/([^/]+)\/register$/);
+  if (registerProposal) {
+    const id = decodeURIComponent(registerProposal[1]);
+    const idx = proposalsStore.findIndex((p) => p.id === id);
+    if (idx < 0) serverUnavailable();
+    const proposal = proposalsStore[idx];
+    if (proposal.status === 'registered' || proposal.status === 'dismissed') {
+      throw Object.assign(new Error(`Propozycja w statusie „${proposal.status}" nie może zostać zarejestrowana.`), {
+        status: 409,
+      });
+    }
+    proposalsStore[idx] = { ...proposal, status: 'registered', updatedAt: new Date().toISOString() };
+    return envelope(proposalsStore[idx]);
+  }
+  const dismissProposal = url.match(/^\/audits\/proposals\/([^/]+)\/dismiss$/);
+  if (dismissProposal) {
+    const id = decodeURIComponent(dismissProposal[1]);
+    const idx = proposalsStore.findIndex((p) => p.id === id);
+    if (idx < 0) serverUnavailable();
+    if (proposalsStore[idx].status === 'registered') {
+      throw Object.assign(new Error('Zarejestrowanej propozycji nie można odrzucić.'), { status: 409 });
+    }
+    proposalsStore[idx] = { ...proposalsStore[idx], status: 'dismissed', updatedAt: new Date().toISOString() };
+    return envelope(proposalsStore[idx]);
+  }
+  const deferProposal = url.match(/^\/audits\/proposals\/([^/]+)\/defer$/);
+  if (deferProposal) {
+    const id = decodeURIComponent(deferProposal[1]);
+    const idx = proposalsStore.findIndex((p) => p.id === id);
+    if (idx < 0) serverUnavailable();
+    if (proposalsStore[idx].status === 'registered') {
+      throw Object.assign(new Error('Zarejestrowanej propozycji nie można odroczyć.'), { status: 409 });
+    }
+    proposalsStore[idx] = { ...proposalsStore[idx], status: 'deferred', updatedAt: new Date().toISOString() };
+    return envelope(proposalsStore[idx]);
   }
 
   return (originalPost as any)(url, data);

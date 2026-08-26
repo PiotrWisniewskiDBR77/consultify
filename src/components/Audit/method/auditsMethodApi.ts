@@ -278,9 +278,14 @@ export interface AuditOutputSummary {
   programName: string | null;
   version: number;
   title: string;
+  /** Wersja pakietu, na podstawie którego program powstał — realne pole `audit_outputs.pack_version`. */
+  packVersion: number | null;
   finalizedBy: string | null;
   finalizedByName: string | null;
   finalizedAt: string;
+  /** Id nowszego Outputu, który zastąpił ten wiersz — `null` = aktualny. */
+  supersededBy: string | null;
+  supersededAt: string | null;
   contentHash: string | null;
 }
 
@@ -293,6 +298,11 @@ export interface AuditReportSummary {
   title: string;
   status: AuditReportStatus;
   language: string | null;
+  /** Kto ma być odbiorcą raportu (np. „Zarząd", „Sponsor") — realne pole z `audit_reports.audience`. */
+  audience: string | null;
+  /** Klasyfikacja poufności (np. „Poufne", „Wewnętrzne") — realne pole z `audit_reports.confidentiality`. */
+  confidentiality: string | null;
+  approvedAt: string | null;
   publishedAt: string | null;
   updatedAt: string;
 }
@@ -523,10 +533,45 @@ export async function listReports(programId?: string): Promise<ListResult<AuditR
   return { items, total: toTotal(payload, items.length, 'total') };
 }
 
+/** `POST /audits/reports/:id/approve` — draft/in_review → approved (real backend gate, `reportService.approveReport`). */
+export async function approveReport(id: string): Promise<AuditReportSummary | null> {
+  const res = await Api.post(`/audits/reports/${encodeURIComponent(id)}/approve`, {});
+  const payload = unwrapEnvelope(res) as AuditReportSummary | undefined;
+  return payload && payload.id ? payload : null;
+}
+
+/** `POST /audits/reports/:id/publish` — approved → published (real backend gate, `reportService.publishReport`). */
+export async function publishReport(id: string): Promise<AuditReportSummary | null> {
+  const res = await Api.post(`/audits/reports/${encodeURIComponent(id)}/publish`, {});
+  const payload = unwrapEnvelope(res) as AuditReportSummary | undefined;
+  return payload && payload.id ? payload : null;
+}
+
 export async function listProposals(programId?: string): Promise<ListResult<AuditProposalSummary>> {
   const qs = buildQuery({ programId });
   const res = await Api.get(`/audits/proposals${qs}`);
   const payload = unwrapEnvelope(res);
   const items = toArray<AuditProposalSummary>(payload, 'proposals', 'items');
   return { items, total: toTotal(payload, items.length, 'total') };
+}
+
+/** `POST /audits/proposals/:id/register` — draft/deferred/sent_to_candidates → registered (`proposalService.registerAsInitiative`). */
+export async function registerProposal(id: string): Promise<AuditProposalSummary | null> {
+  const res = await Api.post(`/audits/proposals/${encodeURIComponent(id)}/register`, {});
+  const payload = unwrapEnvelope(res) as AuditProposalSummary | undefined;
+  return payload && payload.id ? payload : null;
+}
+
+/** `POST /audits/proposals/:id/dismiss` — any non-registered status → dismissed (`proposalService.dismissProposal`). */
+export async function dismissProposal(id: string, reason?: string): Promise<AuditProposalSummary | null> {
+  const res = await Api.post(`/audits/proposals/${encodeURIComponent(id)}/dismiss`, { reason });
+  const payload = unwrapEnvelope(res) as AuditProposalSummary | undefined;
+  return payload && payload.id ? payload : null;
+}
+
+/** `POST /audits/proposals/:id/defer` — any non-registered status → deferred (`proposalService.deferProposal`). */
+export async function deferProposal(id: string, reason?: string): Promise<AuditProposalSummary | null> {
+  const res = await Api.post(`/audits/proposals/${encodeURIComponent(id)}/defer`, { reason });
+  const payload = unwrapEnvelope(res) as AuditProposalSummary | undefined;
+  return payload && payload.id ? payload : null;
 }

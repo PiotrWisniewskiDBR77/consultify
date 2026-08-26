@@ -333,57 +333,55 @@ describe('AuditsMethodHub', () => {
     expect(screen.getByText(/created automatically when an audit program is finalized/i)).toBeInTheDocument();
   });
 
-  describe('Library — two independent filter axes (P0 2026-08-13)', () => {
-    it('renders a source-type chip row AND a separate verification chip row, both with visible zero counts', async () => {
+  describe('Library — single-axis Menu 3 (DEC-2026-08-25-66)', () => {
+    // Piotr, werdykt partii D (2026-08-25): the previous two stacked chip
+    // rows (source type + verification) read as "a fourth menu" — Menu 3
+    // now carries exactly ONE chip track (verification), the same
+    // `chips`/`activeChip`/`onChipChange` mechanism Sessions already uses.
+    // `sourceType` remains filterable through the table's own column-header
+    // filter (`AuditLibraryTab`'s `filterable`/`filterOptions` on that
+    // column) — unaffected by this change.
+    it('renders exactly one chip row (verification), with visible zero counts, and no source-type chips', async () => {
       setupApiMocks();
       renderHub();
       await waitFor(() => expect(screen.getByText('ISO 19011 Audit Pack')).toBeInTheDocument());
 
-      // One axis chip per AuditSourceType, one per AuditVerificationState —
-      // both rows present at once (not a single merged chip row).
-      expect(screen.getByTestId('audits-library-source-type-chip-DEMONSTRATION')).toBeInTheDocument();
-      expect(screen.getByTestId('audits-library-verification-chip-VERIFIED')).toBeInTheDocument();
-      // A value with zero packs (REGULATION) still shows its chip with a "0".
-      const regulationChip = screen.getByTestId('audits-library-source-type-chip-REGULATION');
-      expect(within(regulationChip).getByText('0')).toBeInTheDocument();
+      expect(screen.getByTestId('standard-chip-VERIFIED')).toBeInTheDocument();
+      // A value with zero packs still shows its chip with a "0".
+      const evidenceMissingChip = screen.getByTestId('standard-chip-EVIDENCE_MISSING');
+      expect(within(evidenceMissingChip).getByText('0')).toBeInTheDocument();
+
+      // The old source-type chip row is gone — no chip for a source-type
+      // value exists anywhere in Menu 3.
+      expect(screen.queryByTestId('standard-chip-DEMONSTRATION')).toBeNull();
+      expect(screen.queryByTestId('standard-chip-LICENSED_STANDARD')).toBeNull();
+      expect(screen.queryByTestId('audits-library-source-type-chip-all')).toBeNull();
+      expect(screen.queryByTestId('audits-library-verification-chip-all')).toBeNull();
     });
 
-    it('combines both axes with AND — selecting one narrows the list without resetting the other', async () => {
+    it('selecting a verification chip narrows the list to that single axis', async () => {
       setupApiMocks();
       renderHub();
       await waitFor(() => expect(screen.getByText('ISO 19011 Audit Pack')).toBeInTheDocument());
 
-      // Two packs are VERIFIED (ISO + Client QMS); narrow by verification first.
-      fireEvent.click(screen.getByTestId('audits-library-verification-chip-VERIFIED'));
+      // Two packs are VERIFIED (ISO + Client QMS); the DEMONSTRATION pack is UNVERIFIED.
+      fireEvent.click(screen.getByTestId('standard-chip-VERIFIED'));
       await waitFor(() => {
         expect(screen.getByText('ISO 19011 Audit Pack')).toBeInTheDocument();
         expect(screen.getByText('Client QMS Procedure')).toBeInTheDocument();
         expect(screen.queryByText('Demonstration Pack')).toBeNull();
       });
-
-      // Now ALSO narrow by source type — the verification pick must still hold
-      // (combined AND, not a reset of the first axis).
-      fireEvent.click(screen.getByTestId('audits-library-source-type-chip-LICENSED_STANDARD'));
-      await waitFor(() => {
-        expect(screen.getByText('ISO 19011 Audit Pack')).toBeInTheDocument();
-        expect(screen.queryByText('Client QMS Procedure')).toBeNull();
-        expect(screen.queryByText('Demonstration Pack')).toBeNull();
-      });
-
-      // The verification chip is still shown as active — the click on the
-      // other axis did not clear it.
-      expect(screen.getByTestId('audits-library-verification-chip-VERIFIED')).toHaveAttribute(
-        'aria-pressed',
-        'true'
-      );
+      expect(screen.getByTestId('standard-chip-VERIFIED')).toHaveAttribute('aria-pressed', 'true');
     });
 
-    it('the two library filter rows do not appear on the Sessions (processes) tab', async () => {
+    it('the Library verification chip row does not appear on the Sessions (processes) tab', async () => {
       setupApiMocks();
       renderHub(['/audit-programs/method?tab=processes']);
       await waitFor(() => expect(screen.getByText('Q3 Compliance Audit')).toBeInTheDocument());
-      expect(screen.queryByTestId('audits-library-source-type-chip-all')).toBeNull();
-      expect(screen.queryByTestId('audits-library-verification-chip-all')).toBeNull();
+      expect(screen.queryByTestId('standard-chip-VERIFIED')).toBeNull();
+      expect(screen.queryByTestId('standard-chip-EVIDENCE_MISSING')).toBeNull();
+      // Sessions keeps its own single-axis lifecycle chip row, unaffected.
+      expect(screen.getByTestId('standard-chip-fieldwork')).toBeInTheDocument();
     });
   });
 });

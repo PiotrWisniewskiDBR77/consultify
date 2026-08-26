@@ -26,9 +26,12 @@ const output: AuditOutputSummary = {
   programName: 'Q3 Compliance Audit',
   version: 1,
   title: 'Q3 Compliance Audit — Output v1',
+  packVersion: 2,
   finalizedBy: 'u1',
   finalizedByName: 'Ada Lovelace',
   finalizedAt: '2026-08-01',
+  supersededBy: null,
+  supersededAt: null,
   contentHash: 'sha256:deadbeefcafef00d',
 };
 
@@ -45,5 +48,41 @@ describe('AuditOutputsTab', () => {
 
     // Hash appears once the preview panel is open.
     await waitFor(() => expect(screen.getByText(output.contentHash!)).toBeInTheDocument());
+  });
+
+  // DEC-2026-08-25-66, point 3 (too few columns / niczym się nie różniło od
+  // Tools). `packVersion`/`supersededBy` are real fields `/api/audits/outputs`
+  // already sends (`outputService.ts`) but the table never surfaced them.
+  it('adds a real Pack version column and a Current/Superseded status column', async () => {
+    mockedListOutputs.mockResolvedValue({ items: [output], total: 1 });
+    render(<AuditOutputsTab isPolish={false} />);
+    await waitFor(() => expect(screen.getByText('Q3 Compliance Audit — Output v1')).toBeInTheDocument());
+    expect(screen.getByText('v2')).toBeInTheDocument();
+    expect(screen.getByText('Current')).toBeInTheDocument();
+  });
+
+  it('marks a superseded Output distinctly instead of leaving it looking current', async () => {
+    mockedListOutputs.mockResolvedValue({
+      items: [{ ...output, supersededBy: 'out-2', supersededAt: '2026-08-15' }],
+      total: 1,
+    });
+    render(<AuditOutputsTab isPolish={false} />);
+    await waitFor(() => expect(screen.getByText('Superseded')).toBeInTheDocument());
+  });
+
+  it('resolves programName/finalizedByName from the Hub-provided maps when the API field is null', async () => {
+    mockedListOutputs.mockResolvedValue({
+      items: [{ ...output, programName: null, finalizedByName: null }],
+      total: 1,
+    });
+    render(
+      <AuditOutputsTab
+        isPolish={false}
+        programNameById={new Map([['prog-1', 'Q3 Compliance Audit (resolved)']])}
+        userNameById={new Map([['u1', 'Ada Lovelace (resolved)']])}
+      />
+    );
+    await waitFor(() => expect(screen.getByText('Q3 Compliance Audit (resolved)')).toBeInTheDocument());
+    expect(screen.getByText('Ada Lovelace (resolved)')).toBeInTheDocument();
   });
 });
