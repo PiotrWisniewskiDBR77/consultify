@@ -3436,4 +3436,39 @@ router.get('/attention', async (req: AuthenticatedRequest, res: Response) => {
   }
 });
 
+router.get(
+  '/sets/:setId/attention',
+  validateParams(OkrSetIdParamsSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const set = await getOkrSet({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        setId: req.params.setId,
+      });
+      if (!set) {
+        res.status(404).json({ error: 'OKR Set not found', code: 'NOT_FOUND' });
+        return;
+      }
+      const attention = await listOrganizationOkrAttention({
+        managerId: auth.userId,
+        organizationId: auth.organizationId,
+        setId: req.params.setId,
+      });
+      res
+        .status(200)
+        .json({
+          setId: req.params.setId,
+          attention,
+          scopeCompleteness: 'PARTIAL_MANAGEMENT_CHAIN',
+          calculatedAt: new Date().toISOString(),
+        });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'listSetOkrAttention');
+    }
+  }
+);
+
 export default router;
