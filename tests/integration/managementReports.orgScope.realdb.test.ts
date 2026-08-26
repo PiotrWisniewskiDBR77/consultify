@@ -1,14 +1,33 @@
 /**
- * DEC-131 P1-4 — Management Reports were completely unscoped by organization:
- * any authenticated user, knowing (or guessing) a report id, could read another
- * org's comments/audit-log, or finalize/unlock another org's report — against
- * a REAL Postgres database (no mocks).
+ * DEC-131 P1-4 + DEC-136 — Management Reports were completely unscoped by
+ * organization: any authenticated user, knowing (or guessing) a report id,
+ * could read another org's comments/audit-log, finalize/unlock another org's
+ * report, read its full content, rename it, comment on it, read its version
+ * history, drive its approval workflow, or — worst of all — mint a PUBLIC
+ * SHARE LINK to it. Tested against a REAL Postgres database (no mocks).
  *
  * Routes under test (server/src/routes/managementReports.routes.ts):
- *   GET  /:id/comments
- *   GET  /:id/audit-log
- *   POST /:id/finalize
- *   POST /:id/unlock
+ *   DEC-131 P1-4 (already fixed, kept as regression cover):
+ *     GET  /:id/comments
+ *     GET  /:id/audit-log
+ *     POST /:id/finalize
+ *     POST /:id/unlock
+ *   DEC-136 (this pass):
+ *     POST   /:id/share                      <- P0: leak leaves the system
+ *     GET    /pending-approvals
+ *     POST   /:id/submit
+ *     POST   /:id/approve
+ *     GET    /:id/approval-status
+ *     PATCH  /:id
+ *     GET    /:id
+ *     GET    /:id/versions
+ *     GET    /:id/versions/:versionNumber
+ *     GET    /:id/versions/compare
+ *     POST   /:id/comments
+ *     PATCH  /:id/comments/:commentId
+ *     DELETE /:id/comments/:commentId
+ *     POST   /bulk-export
+ *     GET    /history, GET /analytics/* (organizationId fallback removed)
  *
  * Fix (server/src/services/managementReportsService.ts): each of the four
  * service methods now calls the new `assertReportInOrganization(reportId,
@@ -125,6 +144,8 @@ const REQUIRED_TABLES = [
   'management_reports',
   'management_report_comments',
   'management_report_audit_log',
+  'management_report_versions',
+  'management_report_approvals',
   'organizations',
   'users',
 ] as const;
@@ -187,7 +208,14 @@ interface Harness {
   }) => Promise<string>;
   insertComment: (reportId: string) => Promise<string>;
   insertAuditLogRow: (reportId: string) => Promise<string>;
+  insertVersion: (reportId: string, versionNumber: number) => Promise<string>;
+  insertApproval: (reportId: string) => Promise<string>;
   getReportRow: (reportId: string) => Promise<Record<string, unknown> | null>;
+  getCommentRow: (commentId: string) => Promise<Record<string, unknown> | null>;
+  getApprovalRows: (reportId: string) => Promise<Record<string, unknown>[]>;
+  countComments: (reportId: string) => Promise<number>;
+  countAuditRows: (reportId: string) => Promise<number>;
+  countReportsInOrg: (organizationId: string) => Promise<number>;
 }
 
 function suffix(): string {
@@ -224,6 +252,8 @@ async function setupHarness(): Promise<Harness | null> {
   const reportIds: string[] = [];
   const commentIds: string[] = [];
   const auditIds: string[] = [];
+  const versionIds: string[] = [];
+  const approvalIds: string[] = [];
 
   await client.query(
     `INSERT INTO organizations (id, name, plan, status) VALUES ($1, 'MgmtReports RealDB Org A', 'enterprise', 'active')
@@ -292,9 +322,81 @@ async function setupHarness(): Promise<Harness | null> {
     return auditId;
   };
 
+  const insertVersion: Harness['insertVersion'] = async (
+    reportId: string,
+    versionNumber: number
+  ) => {
+    const versionId = `mrv_${suffix()}`;
+    await client.query(
+      `INSERT INTO management_report_versions
+         (id, report_id, version_number, version_label, content, ai_narrative, ai_warnings, change_summary, created_by)
+       VALUES ($1, $2, $3, $4, $5, 'secret org A narrative', '[]', 'fixture', $6)`,
+      [
+        versionId,
+        reportId,
+        versionNumber,
+        `${versionNumber}.0`,
+        JSON.stringify({ executiveSummary: `secret org A version ${versionNumber}` }),
+        ownerUserId,
+      ]
+    );
+    versionIds.push(versionId);
+    return versionId;
+  };
+
+  const insertApproval: Harness['insertApproval'] = async (reportId: string) => {
+    const approvalId = `mrap_${suffix()}`;
+    await client.query(
+      `INSERT INTO management_report_approvals (id, report_id, approval_level, required_role, status)
+       VALUES ($1, $2, 1, 'MANAGER', 'PENDING')`,
+      [approvalId, reportId]
+    );
+    approvalIds.push(approvalId);
+    return approvalId;
+  };
+
   const getReportRow: Harness['getReportRow'] = async (reportId: string) => {
     const res = await client.query(`SELECT * FROM management_reports WHERE id = $1`, [reportId]);
     return res.rows[0] || null;
+  };
+
+  const getCommentRow: Harness['getCommentRow'] = async (commentId: string) => {
+    const res = await client.query(`SELECT * FROM management_report_comments WHERE id = $1`, [
+      commentId,
+    ]);
+    return res.rows[0] || null;
+  };
+
+  const getApprovalRows: Harness['getApprovalRows'] = async (reportId: string) => {
+    const res = await client.query(
+      `SELECT * FROM management_report_approvals WHERE report_id = $1 ORDER BY approval_level`,
+      [reportId]
+    );
+    return res.rows;
+  };
+
+  const countComments: Harness['countComments'] = async (reportId: string) => {
+    const res = await client.query<{ n: string }>(
+      `SELECT COUNT(*)::text AS n FROM management_report_comments WHERE report_id = $1`,
+      [reportId]
+    );
+    return Number(res.rows[0]?.n || 0);
+  };
+
+  const countAuditRows: Harness['countAuditRows'] = async (reportId: string) => {
+    const res = await client.query<{ n: string }>(
+      `SELECT COUNT(*)::text AS n FROM management_report_audit_log WHERE report_id = $1`,
+      [reportId]
+    );
+    return Number(res.rows[0]?.n || 0);
+  };
+
+  const countReportsInOrg: Harness['countReportsInOrg'] = async (organizationId: string) => {
+    const res = await client.query<{ n: string }>(
+      `SELECT COUNT(*)::text AS n FROM management_reports WHERE organization_id = $1`,
+      [organizationId]
+    );
+    return Number(res.rows[0]?.n || 0);
   };
 
   const cleanup = async () => {
@@ -312,6 +414,16 @@ async function setupHarness(): Promise<Harness | null> {
       // Belt-and-braces: also sweep anything the routes themselves wrote
       // against these report ids during the test (comments/audit rows added
       // via HTTP, not just the ones inserted directly above).
+      if (versionIds.length) {
+        await client.query(`DELETE FROM management_report_versions WHERE id = ANY($1)`, [
+          versionIds,
+        ]);
+      }
+      if (approvalIds.length) {
+        await client.query(`DELETE FROM management_report_approvals WHERE id = ANY($1)`, [
+          approvalIds,
+        ]);
+      }
       if (reportIds.length) {
         await client.query(
           `DELETE FROM management_report_comments WHERE report_id = ANY($1)`,
@@ -321,8 +433,32 @@ async function setupHarness(): Promise<Harness | null> {
           `DELETE FROM management_report_audit_log WHERE report_id = ANY($1)`,
           [reportIds]
         );
+        await client.query(
+          `DELETE FROM management_report_approvals WHERE report_id = ANY($1)`,
+          [reportIds]
+        );
+        await client.query(
+          `DELETE FROM management_report_versions WHERE report_id = ANY($1)`,
+          [reportIds]
+        );
         await client.query(`DELETE FROM management_reports WHERE id = ANY($1)`, [reportIds]);
       }
+      // POST /generate creates reports this file never learns the ids of —
+      // sweep anything left in either fixture org so no test rows survive.
+      const orgs = [orgAId, orgBId];
+      for (const child of [
+        'management_report_comments',
+        'management_report_audit_log',
+        'management_report_approvals',
+        'management_report_versions',
+      ]) {
+        await client.query(
+          `DELETE FROM ${child} WHERE report_id IN
+             (SELECT id FROM management_reports WHERE organization_id = ANY($1))`,
+          [orgs]
+        );
+      }
+      await client.query(`DELETE FROM management_reports WHERE organization_id = ANY($1)`, [orgs]);
       await client.query(`DELETE FROM organization_members WHERE organization_id = ANY($1)`, [
         [orgAId, orgBId],
       ]);
@@ -350,7 +486,14 @@ async function setupHarness(): Promise<Harness | null> {
     insertReport,
     insertComment,
     insertAuditLogRow,
+    insertVersion,
+    insertApproval,
     getReportRow,
+    getCommentRow,
+    getApprovalRows,
+    countComments,
+    countAuditRows,
+    countReportsInOrg,
   };
 }
 
@@ -358,7 +501,7 @@ async function setupHarness(): Promise<Harness | null> {
 // Suite
 // ---------------------------------------------------------------------------
 
-describe('DEC-131 P1-4 — management-reports org scoping (real Postgres)', () => {
+describe('DEC-131 P1-4 + DEC-136 — management-reports org scoping (real Postgres)', () => {
   let harness: Harness | null = null;
   let skipMessageEmitted = false;
 
@@ -596,4 +739,77 @@ describe('DEC-131 P1-4 — management-reports org scoping (real Postgres)', () =
 
     expect(res.status).toBe(404);
   });
+
+  // ===================================================================
+  // DEC-136 — the rest of the router
+  // ===================================================================
+
+  // -------------------------------------------------------------------
+  // POST /:id/share — P0. The consequence of this one leaves the system:
+  // a share token is a URL that can be handed to anyone, so the proof that
+  // matters is that NO TOKEN ROW IS EVER WRITTEN for a foreign caller.
+  // -------------------------------------------------------------------
+
+  itDB(
+    'POST /:id/share — 404 for a different real org, and NO share link is created (zero rows)',
+    async (h) => {
+      const app = buildApp();
+      const reportId = await h.insertReport({});
+      const before = await h.getReportRow(reportId);
+      const auditBefore = await h.countAuditRows(reportId);
+      const attackerToken = makeE2EToken(h.attackerUserId, h.orgBId);
+
+      const res = await request(app)
+        .post(`/api/management-reports/${reportId}/share`)
+        .set('Authorization', `Bearer ${attackerToken}`)
+        .send({ expiresInDays: 30 });
+
+      expect(res.status).toBe(404);
+      // No share URL handed back to the attacker...
+      expect(res.body?.shareUrl).toBeUndefined();
+
+      // ...and, decisively, nothing was written: the report still has no
+      // share token, so there is no link in existence to be handed on.
+      const after = await h.getReportRow(reportId);
+      expect(after?.share_token).toBeNull();
+      expect(after?.share_expires_at).toBeNull();
+      expect(after).toEqual(before);
+      expect(await h.countAuditRows(reportId)).toBe(auditBefore);
+    }
+  );
+
+  itDB(
+    'POST /:id/share — a body organizationId= injection is ignored (still 404, still no token)',
+    async (h) => {
+      const app = buildApp();
+      const reportId = await h.insertReport({});
+      const attackerToken = makeE2EToken(h.attackerUserId, h.orgBId);
+
+      const res = await request(app)
+        .post(`/api/management-reports/${reportId}/share?organizationId=${h.orgAId}`)
+        .set('Authorization', `Bearer ${attackerToken}`)
+        .send({ expiresInDays: 30, organizationId: h.orgAId });
+
+      expect(res.status).toBe(404);
+      const after = await h.getReportRow(reportId);
+      expect(after?.share_token).toBeNull();
+    }
+  );
+
+  itDB('POST /:id/share — succeeds for the owning org and mints a token', async (h) => {
+    const app = buildApp();
+    const reportId = await h.insertReport({});
+    const ownerToken = makeE2EToken(h.ownerUserId, h.orgAId);
+
+    const res = await request(app)
+      .post(`/api/management-reports/${reportId}/share`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({ expiresInDays: 7 });
+
+    expect(res.status).toBe(200);
+    expect(typeof res.body?.shareUrl).toBe('string');
+    const after = await h.getReportRow(reportId);
+    expect(after?.share_token).toBeTruthy();
+  });
+
 });

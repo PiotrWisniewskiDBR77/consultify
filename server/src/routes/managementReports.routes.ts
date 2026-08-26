@@ -460,7 +460,8 @@ router.post(
     const { shareToken, expiresAt } = await managementReportsService.createShareLink(
       req.params.id,
       req.body.expiresInDays,
-      req.userId
+      req.userId,
+      req.organizationId
     );
     return res.json({
       success: true,

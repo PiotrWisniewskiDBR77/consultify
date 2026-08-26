@@ -1163,17 +1163,22 @@ class ManagementReportsService {
       .digest('hex');
     await managementReportRepository.finalizeReport(reportId, integrityHash, userId);
     await this.logAudit(reportId, 'FINALIZED', userId, { integrityHash });
-    return this.getReport(reportId);
+    return this.getReport(reportId, organizationId);
   }
 
   async unlockReport(reportId, userId, reason, organizationId) {
     await this.assertReportInOrganization(reportId, organizationId);
     await managementReportRepository.unlockReport(reportId);
     await this.logAudit(reportId, 'UNLOCKED', userId, { reason });
-    return this.getReport(reportId);
+    return this.getReport(reportId, organizationId);
   }
 
-  async createShareLink(reportId, expiresInDays, userId) {
+  // DEC-136 P0: a share link leaves the system entirely (anyone holding the
+  // URL can be handed the report), so the tenant check has to happen BEFORE
+  // the token is minted and BEFORE the row is touched — a foreign report must
+  // produce zero writes and the same 404 as a missing one.
+  async createShareLink(reportId, expiresInDays, userId, organizationId) {
+    await this.assertReportInOrganization(reportId, organizationId);
     const shareToken = uuidv4();
     const expiresAt = expiresInDays
       ? new Date(Date.now() + expiresInDays * 86400000).toISOString()
