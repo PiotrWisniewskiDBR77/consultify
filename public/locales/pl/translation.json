@@ -26771,44 +26771,6 @@
     "owner": "Właściciel",
     "chunks": "{{count}} fragmentów"
   },
-  "consultant": {
-    "panel": {
-      "loading": "Ładowanie prezentacji...",
-      "activeCount": "{{count}} aktywnych",
-      "createInvite": "Utwórz zaproszenie",
-      "inviteClient": "Zaproś klienta",
-      "linkedOrgs": "Powiązane organizacje",
-      "loadingError": "Nie udało się wczytać organizacji",
-      "noOrgsMessage": "Nie masz jeszcze powiązanych organizacji. Zaproś klienta, aby rozpocząć współpracę.",
-      "noOrgsTitle": "Brak powiązanych organizacji",
-      "openWorkspace": "Otwórz przestrzeń",
-      "role": "Rola: {{role}}",
-      "title": "Panel konsultanta",
-      "welcome": "Witaj, {{name}}"
-    },
-    "invites": {
-      "backToPanel": "Powrót do panelu",
-      "companyName": "Nazwa firmy",
-      "companyPlaceholder": "np. Acme Sp. z o.o.",
-      "emailHint": "Pozostaw puste, aby utworzyć otwarty kod do wielokrotnego użytku.",
-      "emailPlaceholder": "klient@firma.pl",
-      "generateCode": "Wygeneruj kod",
-      "generateInvites": "Generowanie zaproszeń",
-      "generating": "Generowanie...",
-      "inviteType": "Typ zaproszenia",
-      "labelExp": "Wygasa:",
-      "labelTo": "Dla:",
-      "labelType": "Typ:",
-      "labelUses": "Wykorzystania:",
-      "newInvitation": "Nowe zaproszenie",
-      "noInvites": "Brak wygenerowanych zaproszeń.",
-      "recentInvites": "Ostatnie zaproszenia",
-      "targetEmail": "Adres e-mail odbiorcy",
-      "typeAddMe": "Dołącz mnie jako konsultanta do organizacji",
-      "typeTrialOrg": "Wersja próbna dla organizacji",
-      "typeTrialUser": "Wersja próbna dla użytkownika"
-    }
-  },
   "intelligence": {
     "analyzing": "Analizowanie…",
     "autoGenerate": "Wygeneruj automatycznie",

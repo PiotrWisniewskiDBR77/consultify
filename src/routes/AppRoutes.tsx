@@ -395,16 +395,6 @@ const PartnerPricingView = lazyWithRetry(() =>
 const ClientAccessView = lazyWithRetry(() =>
   import('@/views/partner/ClientAccessView').then((m) => ({ default: m.ClientAccessView }))
 );
-// Consultant
-const ConsultantPanelView = lazyWithRetry(() =>
-  import('@/views/consultant/ConsultantPanelView').then((m) => ({ default: m.ConsultantPanelView }))
-);
-const ConsultantInviteView = lazyWithRetry(() =>
-  import('@/views/consultant/ConsultantInviteView').then((m) => ({
-    default: m.ConsultantInviteView,
-  }))
-);
-
 // Wizards
 const OrgSetupWizard = lazyWithRetry(() =>
   import('@/views/OrgSetupWizard').then((m) => ({ default: m.OrgSetupWizard }))
@@ -3449,33 +3439,6 @@ export const AppRoutes: React.FC = () => {
                   </AnimationWrapper>
                 </RouteErrorBoundary>
               </MainLayout>
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Consultant routes */}
-        <Route
-          path={`${ROUTES.CONSULTANT.PANEL}/*`}
-          element={
-            <ProtectedRoute requireAuth={true}>
-              <RouteErrorBoundary>
-                <AnimationWrapper variant="slideUp">
-                  <Routes>
-                    <Route index element={<ConsultantPanelView />} />
-                    <Route path="invites" element={<ConsultantInviteView />} />
-                  </Routes>
-                </AnimationWrapper>
-              </RouteErrorBoundary>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path={ROUTES.CONSULTANT.INVITES}
-          element={
-            <ProtectedRoute requireAuth={true}>
-              <AnimationWrapper variant="slideUp">
-                <ConsultantInviteView />
-              </AnimationWrapper>
             </ProtectedRoute>
           }
         />

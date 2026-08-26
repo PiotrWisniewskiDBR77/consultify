@@ -25635,44 +25635,6 @@
     "owner": "Owner",
     "chunks": "{{count}} chunks"
   },
-  "consultant": {
-    "panel": {
-      "loading": "Loading decks...",
-      "activeCount": "{{count}} active",
-      "createInvite": "Create invitation",
-      "inviteClient": "Invite a client",
-      "linkedOrgs": "Linked organizations",
-      "loadingError": "Failed to load organizations",
-      "noOrgsMessage": "You don't have any linked organizations yet. Invite a client to get started.",
-      "noOrgsTitle": "No linked organizations",
-      "openWorkspace": "Open workspace",
-      "role": "Role: {{role}}",
-      "title": "Consultant panel",
-      "welcome": "Welcome, {{name}}"
-    },
-    "invites": {
-      "backToPanel": "Back to panel",
-      "companyName": "Company name",
-      "companyPlaceholder": "e.g. Acme Inc.",
-      "emailHint": "Leave empty to create an open, reusable code.",
-      "emailPlaceholder": "client@company.com",
-      "generateCode": "Generate code",
-      "generateInvites": "Generate invitations",
-      "generating": "Generating...",
-      "inviteType": "Invitation type",
-      "labelExp": "Expires:",
-      "labelTo": "To:",
-      "labelType": "Type:",
-      "labelUses": "Uses:",
-      "newInvitation": "New invitation",
-      "noInvites": "No invitations generated yet.",
-      "recentInvites": "Recent invitations",
-      "targetEmail": "Recipient email",
-      "typeAddMe": "Add me as a consultant to an organization",
-      "typeTrialOrg": "Trial for an organization",
-      "typeTrialUser": "Trial for a user"
-    }
-  },
   "intelligence": {
     "analyzing": "Analyzing…",
     "autoGenerate": "Auto-generate",
