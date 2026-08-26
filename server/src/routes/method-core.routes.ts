@@ -45,6 +45,7 @@
 import { Router, type Request, type Response } from 'express';
 
 import { isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
+import { getAxisForArea } from '../data/drdStructure.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 import {
@@ -1054,6 +1055,44 @@ router.post(
     const supersedes = isNonEmptyString(body.supersedes) ? body.supersedes : undefined;
     const idempotencyKey = req.get('Idempotency-Key') ?? undefined;
     const payload = body.payload ?? {};
+
+    // --- DEC-137 (P1): DRD target_level must stay on the pinned scale ------
+    // Assessment-owned, NOT a kernel rule (Z16/Z17: the method-core event
+    // contract — server/src/method-core/contracts/events.ts — is shared with
+    // Audits/SIRI and is deliberately method-agnostic; it carries no
+    // DRD/SIRI/ADMA scale rule). Gated on methodPackId === DRD so no other
+    // pack's behaviour changes, mirroring the existing DRD-only branch at
+    // `POST /sessions` above. A target_level decision whose level falls
+    // outside the pinned axis's [0, levelCount] would otherwise persist a
+    // meaningless gap (targetLevel - currentLevel) into method_findings and
+    // the client-facing report.
+    if (
+      type === 'DECISION_APPROVED' &&
+      session.methodPackId === DRD_METHOD_PACK_ID &&
+      unitId !== undefined &&
+      typeof payload === 'object' &&
+      payload !== null &&
+      (payload as Record<string, unknown>).subject === 'target_level'
+    ) {
+      const axis = getAxisForArea(unitId);
+      if (axis) {
+        const levelIsValid =
+          typeof level === 'number' &&
+          Number.isInteger(level) &&
+          level >= 0 &&
+          level <= axis.levelCount;
+        if (!levelIsValid) {
+          res.status(400).json({
+            error: 'TARGET_LEVEL_OUT_OF_SCALE',
+            code: 'TARGET_LEVEL_OUT_OF_SCALE',
+            unitId,
+            level: body.level,
+            allowedRange: { min: 0, max: axis.levelCount },
+          });
+          return;
+        }
+      }
+    }
 
     const event = await methodEventStore.append({
       organizationId,
