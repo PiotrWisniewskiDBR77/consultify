@@ -12,6 +12,13 @@ export interface ReportReconstructionResult {
   sources: ReportSource[];
   gaps: Array<{ sourceType: string; sourceId: string; reason: ReconstructionGapReason }>;
   reconstructedAt: string;
+  reconstructionLevel: 'P1_VERSION_AT_INSTANT';
+  sourceVersions: Array<{
+    sourceType: string;
+    sourceId: string;
+    version: number;
+    eventCreatedAt: string;
+  }>;
 }
 
 /**
@@ -24,6 +31,15 @@ export interface ReportReconstructionResult {
 export function reconstructReportRun(
   run: ReportRun,
   asOf: string,
+  resolvedVersionsOrReconstructedAt:
+    | Array<{
+        sourceType: string;
+        sourceId: string;
+        version: number;
+        eventCreatedAt: string;
+      }>
+    | string
+    | undefined = [],
   reconstructedAt = new Date().toISOString()
 ): ReportReconstructionResult {
   const target = new Date(asOf);
@@ -31,17 +47,38 @@ export function reconstructReportRun(
     throw new RangeError('AS_OF_INVALID_OR_FUTURE');
   }
 
-  const sourceGaps = run.sources.map((source) => ({
-    sourceType: source.sourceType,
-    sourceId: source.sourceId,
-    reason: (source.accessState === 'DENIED'
-      ? 'ACCESS_DENIED'
-      : new Date(source.capturedAt).getTime() > target.getTime()
-        ? 'NO_EVENT_HISTORY_BEFORE_AS_OF'
-        : 'SOURCE_NOT_EVENT_SOURCED') as ReconstructionGapReason,
-  }));
+  const hasVersionReader = Array.isArray(resolvedVersionsOrReconstructedAt);
+  const resolvedVersions = hasVersionReader ? resolvedVersionsOrReconstructedAt : [];
+  if (typeof resolvedVersionsOrReconstructedAt === 'string') {
+    reconstructedAt = resolvedVersionsOrReconstructedAt;
+  }
+  const versionBySource = new Map(
+    resolvedVersions.map((source) => [`${source.sourceType}\u0000${source.sourceId}`, source])
+  );
+  const resolvedSources = run.sources.flatMap((source) => {
+    if (source.accessState === 'DENIED') return [];
+    const resolved = versionBySource.get(`${source.sourceType}\u0000${source.sourceId}`);
+    return resolved
+      ? [{ ...source, version: resolved.version, capturedAt: resolved.eventCreatedAt }]
+      : [];
+  });
+  const sourceGaps = run.sources.flatMap((source) => {
+    const resolved = versionBySource.get(`${source.sourceType}\u0000${source.sourceId}`);
+    if (source.accessState !== 'DENIED' && resolved) return [];
+    return [
+      {
+        sourceType: source.sourceType,
+        sourceId: source.sourceId,
+        reason: (source.accessState === 'DENIED'
+          ? 'ACCESS_DENIED'
+          : hasVersionReader
+            ? 'NO_EVENT_HISTORY_BEFORE_AS_OF'
+            : 'SOURCE_NOT_EVENT_SOURCED') as ReconstructionGapReason,
+      },
+    ];
+  });
   const gaps =
-    sourceGaps.length > 0
+    run.sources.length > 0
       ? sourceGaps
       : [
           {
@@ -54,9 +91,11 @@ export function reconstructReportRun(
   return {
     reportRunId: run.reportRunId,
     asOf: target.toISOString(),
-    reconstructable: false,
-    sources: [],
+    reconstructable: resolvedSources.length > 0,
+    sources: resolvedSources,
     gaps,
     reconstructedAt,
+    reconstructionLevel: 'P1_VERSION_AT_INSTANT',
+    sourceVersions: resolvedVersions,
   };
 }

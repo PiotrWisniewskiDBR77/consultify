@@ -28,20 +28,22 @@ describe('Day 17 X.4 control KPI read model', () => {
   });
 
   it('resolves a complete tenant policy but keeps unsupported populations explicit', async () => {
-    const query = vi.fn().mockResolvedValue({
-      rows: [
-        {
-          policy_id: 'policy-a',
-          parameters: {
-            impactWeights: {},
-            atRiskThresholdDays: 1,
-            capacitySaturationThreshold: 1,
-            capacityBuffer: 1,
-            decisionSlaDays: 1,
-          },
-        },
-      ],
-    });
+    const query = vi.fn().mockImplementation(async (sql: string) => ({
+      rows: sql.includes('execution_control_kpi_policies')
+        ? [
+            {
+              policy_id: 'policy-a',
+              parameters: {
+                impactWeights: {},
+                atRiskThresholdDays: 1,
+                capacitySaturationThreshold: 1,
+                capacityBuffer: 1,
+                decisionSlaDays: 1,
+              },
+            },
+          ]
+        : [],
+    }));
     const result = await new ControlKpiReadModel({ query } as any).read(
       'org-a',
       '2026-08-24',
