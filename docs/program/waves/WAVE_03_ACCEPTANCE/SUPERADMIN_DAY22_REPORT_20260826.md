@@ -45,22 +45,22 @@ Pusty `inet_server_port()` jest właściwością połączenia przez socket wewn�
 
 ## Pozycje — tabela zbiorcza
 
-| Pozycja               | Status            | Commit   | Dowód                                                                      |
-| --------------------- | ----------------- | -------- | -------------------------------------------------------------------------- |
-| A.1 pięć tabel        | `ZROBIONE_WG_DoD` | commit A | `to_regclass` 6/6 + kod pisarzy/czytelników                                |
-| A.2 inwentarz pisarzy | `ZROBIONE_WG_DoD` | commit A | 83/20/63 potwierdzone; lista zwarta poniżej                                |
-| A.3 ranking           | `ZROBIONE_WG_DoD` | commit A | ranking 1–5; zakres dwóch plików rankingu 1–2                              |
-| B.1 fail-closed       | `CZĘŚCIOWO`       | commit B | 4/7 tras, 8/8 RealPG; bulk STOP                                            |
-| B.2 ranking 4–5       | `NIE_ZACZĘTE`     | —        | warunek B.1 nie jest domknięty                                             |
-| B.3 nogi 4/5          | `ZROBIONE_WG_DoD` | commit B | eksperyment: `0/0/2/0/1`; nóg nie dodano                                   |
-| C.1 negatywy          | `CZĘŚCIOWO`       | commit B | walidacja + dwa negatywy cross-tenant z readbackiem                        |
-| C.2 wiersz-widmo      | `CZĘŚCIOWO`       | commit B | dwa negatywy zero semantic rows; nie wszystkie 5 tabel dla każdej trasy    |
-| C.3 dowody mutacyjne  | `NIE_ZACZĘTE`     | —        | nie neutralizowano chronionych kontroli                                    |
-| D scheduled_events    | `ZROBIONE_WG_DoD` | commit A | istnieje po 847 migracjach; producent 20261120                             |
-| E.1 tenant read       | `CZĘŚCIOWO`       | commit B | list udowodniony; stats/export niepełne                                    |
-| E.2 superadmin read   | `STOP`            | raport   | wymagałby rozszerzenia platformowej powierzchni i pełnych testów kontraktu |
-| T                     | `CZĘŚCIOWO`       | commit B | nowe 9/9 po eksperymencie; pełny wynik końcowy poniżej                     |
-| R.1                   | `CZĘŚCIOWO`       | commit R | tylko faktyczny zakres                                                     |
+| Pozycja               | Status            | Commit       | Dowód                                                                      |
+| --------------------- | ----------------- | ------------ | -------------------------------------------------------------------------- |
+| A.1 pięć tabel        | `ZROBIONE_WG_DoD` | `cd500abe0a` | `to_regclass` 6/6 + kod pisarzy/czytelników                                |
+| A.2 inwentarz pisarzy | `ZROBIONE_WG_DoD` | `cd500abe0a` | 83/20/63 potwierdzone; lista zwarta poniżej                                |
+| A.3 ranking           | `ZROBIONE_WG_DoD` | `cd500abe0a` | ranking 1–5; zakres dwóch plików rankingu 1–2                              |
+| B.1 fail-closed       | `CZĘŚCIOWO`       | `5065e37036` | 4/7 tras, 9/9 RealPG wraz z B.3; bulk STOP                                 |
+| B.2 ranking 4–5       | `NIE_ZACZĘTE`     | —            | warunek B.1 nie jest domknięty                                             |
+| B.3 nogi 4/5          | `ZROBIONE_WG_DoD` | `5065e37036` | eksperyment: `0/0/2/0/1`; nóg nie dodano                                   |
+| C.1 negatywy          | `CZĘŚCIOWO`       | `5065e37036` | walidacja + dwa negatywy cross-tenant z readbackiem                        |
+| C.2 wiersz-widmo      | `CZĘŚCIOWO`       | `5065e37036` | dwa negatywy zero semantic rows; nie wszystkie 5 tabel dla każdej trasy    |
+| C.3 dowody mutacyjne  | `NIE_ZACZĘTE`     | —            | nie neutralizowano chronionych kontroli                                    |
+| D scheduled_events    | `ZROBIONE_WG_DoD` | `cd500abe0a` | istnieje po 847 migracjach; producent 20261120                             |
+| E.1 tenant read       | `CZĘŚCIOWO`       | `5065e37036` | list udowodniony; stats/export niepełne                                    |
+| E.2 superadmin read   | `STOP`            | raport       | wymagałby rozszerzenia platformowej powierzchni i pełnych testów kontraktu |
+| T                     | `CZĘŚCIOWO`       | `5065e37036` | nowe 9/9 po eksperymencie; pełny wynik końcowy poniżej                     |
+| R.1                   | `CZĘŚCIOWO`       | commit R     | tylko faktyczny zakres; SHA tego commita                                   |
 
 ## A.1 — pięć tabel audytowych
 
@@ -187,6 +187,28 @@ Znaleziska nie naprawiane: nieaktualny komentarz `adminAuditService.getStats`; `
 - Z16: 5/5 PASS.
 
 Nowe testy RealPG: 9 przypadków po B.3 (happy, walidacja, cross-tenant, delete readbacks, dwa wymuszone błędy audytu, phantom-row, potrójny zapis). Ostateczny wynik i dziesięć dowodów uzupełniono po końcowym przebiegu.
+
+### Wynik końcowy — pełny zakres §0.4a (Z23)
+
+Zakres: **16 plików testowych; 10 PASS / 6 FAIL**. Test cases: **90 PASS / 16 FAIL / 19 skipped** (125 łącznie, 106 wykonanych).
+
+- czerwone ZASTANE: `adminP32.security-audit.test.ts` 1/1 FAIL; `tests/integration/admin` 5/8 plików FAIL, 15 testów FAIL. Identyczny wynik baseline i final.
+- czerwone WPROWADZONE: **PUSTE**.
+- nowe/bezpośrednie: Day 22 RealPG 9/9 PASS; istniejące break-glass/service-account 9/9 PASS; obie bitowo niezmienione projekcje RealPG 1/1 + 1/1 PASS.
+- `ZASIĘG PEŁNY` dla literalnej listy §0.4a. Skipped 19 raportowane, nie liczone jako PASS.
+
+### Dziesięć dowodów Bloku 6
+
+1. Globalna infrastruktura testów: diff pusty.
+2. `src/`: diff pusty.
+3. `organizationSuspensionGuard.ts`: diff pusty.
+4. Osiem frontów DEC-105: diff pusty.
+5. `effectiveAccessService.ts`: diff pusty.
+6. `auditLog.middleware.ts`, `requireAudit.middleware.ts`, `adminAuditService.ts`: diff pusty.
+7. Dwa zastane testy projekcji: diff pusty.
+8. Migracje: diff pusty.
+9. Flagi: kod produkcyjny pusty; grep całego diffu trafia wyłącznie cytat komendy w wiążącej instrukcji obecnej na gałęzi instrukcyjnej, nie zmianę runtime.
+10. Kontener i wolumeny: pusto. Usunięto `cx-day22-pg`; `docker volume prune -f` odzyskał 665,9 MB.
 
 ## TRI-MUST-08 — stan w liczbach
 
