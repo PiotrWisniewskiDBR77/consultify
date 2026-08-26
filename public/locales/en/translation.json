@@ -5305,7 +5305,7 @@
         "nextRefine": "Next: Refine",
         "runNow": "Run now",
         "runSessions": "Run analysis · {{count}} sessions",
-        "defineNote": "The draft saves automatically — closing the creator does not delete your choices.",
+        "defineNote": "Creator draft — finish configuration before closing the window.",
         "materialNote": "Step 3 is optional — you can run the analysis now with the default settings.",
         "refineNote": "The result will appear as an insight in Review — only your acceptance makes it material for initiatives."
       }

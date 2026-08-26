@@ -4632,7 +4632,7 @@
         "nextRefine": "Dalej: Dostrojenie",
         "runNow": "Uruchom teraz",
         "runSessions": "Uruchom analizę · {{count}} sesji",
-        "defineNote": "Szkic zapisuje się automatycznie — zamknięcie kreatora nie kasuje wyborów.",
+        "defineNote": "Wersja robocza kreatora — dokończ konfigurację przed zamknięciem okna.",
         "materialNote": "Krok 3 jest opcjonalny — możesz uruchomić analizę już teraz na ustawieniach domyślnych.",
         "refineNote": "Wynik pojawi się jako wniosek w stanie »Do przeglądu« — dopiero Twoja akceptacja czyni go materiałem dla inicjatyw."
       }
