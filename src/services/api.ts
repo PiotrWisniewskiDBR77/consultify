@@ -69,6 +69,56 @@ export interface MeetingNoteDecisionDto {
   replayed: boolean;
 }
 
+// D.4/D.5 (day 10 UI wiring): mirrors server/src/services/meetingService.ts
+// `MeetingDecisionRecord` / `MeetingFollowUpRecord` exactly — these back the
+// dedicated `/decision-records` and `/follow-up-records` resources
+// (meeting.routes.ts), distinct from the legacy `decisions_json` array still
+// embedded on `MeetingItem.decisions` (MeetingHub.tsx).
+export interface MeetingDecisionRecordDto {
+  id: string;
+  organizationId: string;
+  meetingId: string;
+  statement: string;
+  rationale: string;
+  decidedBy: string | null;
+  decidedAt: string | null;
+  status: 'recorded' | 'superseded';
+  sourceKind: 'manual' | 'note' | 'legacy';
+  sourceNoteId: string | null;
+  sourceIndex: number | null;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MeetingFollowUpRecordDto {
+  id: string;
+  organizationId: string | null;
+  meetingId: string;
+  title: string;
+  owner: string;
+  ownerUserId: string | null;
+  dueAt: string | null;
+  status: 'open' | 'done';
+  sourceKind: 'manual' | 'note' | 'legacy';
+  sourceNoteId: string | null;
+  sourceIndex: number | null;
+}
+
+// FIX-M-5 (D.4/D.5 owner review): mirrors `AIOperatorService.getMeetingBrief`
+// (server/src/services/aiOperatorService.ts:642-711) — replaces the `any` this
+// endpoint used to return, which had leaked into MeetingObjectPage.tsx's and
+// MeetingHub.tsx's own local `operatorBrief` state.
+export interface MeetingOperatorBriefDto {
+  meetingId: string;
+  title: string;
+  prepSummary: string;
+  stakeholderNotes: Array<{ name: string; note: string }>;
+  agendaGaps: string[];
+  followUpSuggestions: string[];
+  executiveBrief: { headline: string; bullets: string[] };
+}
+
 // Use relative path to allow Vite proxy to handle the request (avoiding CORS)
 // or use env var if provided.
 const _envApiUrl = (import.meta as any)?.env?.VITE_API_URL as string | undefined;
@@ -3575,6 +3625,118 @@ export const Api = {
     return handleResponse(res, 'Failed to decide meeting note proposal');
   },
 
+  // D.4/D.5 (day 10 UI wiring): backs the "Decyzje i działania" section of
+  // MeetingObjectPage.tsx. Tenant-scoped server-side from the token, same
+  // canAccessMeeting/404 posture as every other /meeting/:id route
+  // (meeting.routes.ts).
+  listMeetingDecisionRecords: async (
+    meetingId: string
+  ): Promise<{ decisions: MeetingDecisionRecordDto[] }> => {
+    const res = await fetchWithRetry(`${API_URL}/meeting/${meetingId}/decision-records`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to load meeting decisions');
+  },
+
+  createMeetingDecisionRecord: async (
+    meetingId: string,
+    data: { statement: string; rationale?: string }
+  ): Promise<{ decision: MeetingDecisionRecordDto }> => {
+    const res = await fetchWithRetry(`${API_URL}/meeting/${meetingId}/decision-records`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data || {}),
+    });
+    return handleResponse(res, 'Failed to create meeting decision');
+  },
+
+  updateMeetingDecisionRecord: async (
+    meetingId: string,
+    decisionId: string,
+    data: { statement?: string; rationale?: string; status?: 'recorded' | 'superseded' }
+  ): Promise<{ decision: MeetingDecisionRecordDto }> => {
+    const res = await fetchWithRetry(
+      `${API_URL}/meeting/${meetingId}/decision-records/${decisionId}`,
+      {
+        method: 'PATCH',
+        headers: getHeaders(),
+        body: JSON.stringify(data || {}),
+      }
+    );
+    return handleResponse(res, 'Failed to update meeting decision');
+  },
+
+  deleteMeetingDecisionRecord: async (
+    meetingId: string,
+    decisionId: string
+  ): Promise<{ deleted: boolean }> => {
+    const res = await fetchWithRetry(
+      `${API_URL}/meeting/${meetingId}/decision-records/${decisionId}`,
+      {
+        method: 'DELETE',
+        headers: getHeaders(),
+      }
+    );
+    return handleResponse(res, 'Failed to delete meeting decision');
+  },
+
+  listMeetingFollowUpRecords: async (
+    meetingId: string
+  ): Promise<{ followUps: MeetingFollowUpRecordDto[] }> => {
+    const res = await fetchWithRetry(`${API_URL}/meeting/${meetingId}/follow-up-records`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to load meeting follow-ups');
+  },
+
+  createMeetingFollowUpRecord: async (
+    meetingId: string,
+    data: { title: string; owner?: string; ownerUserId?: string | null; dueAt?: string | null }
+  ): Promise<{ followUp: MeetingFollowUpRecordDto }> => {
+    const res = await fetchWithRetry(`${API_URL}/meeting/${meetingId}/follow-up-records`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data || {}),
+    });
+    return handleResponse(res, 'Failed to create meeting follow-up');
+  },
+
+  updateMeetingFollowUpRecord: async (
+    meetingId: string,
+    followUpId: string,
+    data: {
+      title?: string;
+      owner?: string;
+      ownerUserId?: string | null;
+      dueAt?: string | null;
+      status?: 'open' | 'done';
+    }
+  ): Promise<{ followUp: MeetingFollowUpRecordDto }> => {
+    const res = await fetchWithRetry(
+      `${API_URL}/meeting/${meetingId}/follow-up-records/${followUpId}`,
+      {
+        method: 'PATCH',
+        headers: getHeaders(),
+        body: JSON.stringify(data || {}),
+      }
+    );
+    return handleResponse(res, 'Failed to update meeting follow-up');
+  },
+
+  deleteMeetingFollowUpRecord: async (
+    meetingId: string,
+    followUpId: string
+  ): Promise<{ deleted: boolean }> => {
+    const res = await fetchWithRetry(
+      `${API_URL}/meeting/${meetingId}/follow-up-records/${followUpId}`,
+      {
+        method: 'DELETE',
+        headers: getHeaders(),
+      }
+    );
+    return handleResponse(res, 'Failed to delete meeting follow-up');
+  },
+
   getAIOperatorOverview: async (): Promise<any> => {
     const res = await fetchWithRetry(`${API_URL}/ai-operator/overview`, {
       headers: getHeaders(),
@@ -3650,7 +3812,7 @@ export const Api = {
     return handleResponse(res, 'Failed to reject AI operator intervention');
   },
 
-  getAIOperatorMeetingBrief: async (meetingId: string): Promise<any> => {
+  getAIOperatorMeetingBrief: async (meetingId: string): Promise<MeetingOperatorBriefDto> => {
     const res = await fetchWithRetry(`${API_URL}/ai-operator/meetings/${meetingId}/brief`, {
       headers: getHeaders(),
     });

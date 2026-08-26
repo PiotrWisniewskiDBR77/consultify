@@ -50,6 +50,37 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_meeting_follow_ups_source_dedup
 CREATE INDEX IF NOT EXISTS idx_meeting_follow_ups_org_status
     ON meeting_follow_ups(organization_id, status);
 
+-- FIX-M-4b (D.4/D.5 owner review, 2026-08-25): `meetings.decisions_json` is a
+-- free-text TEXT column with no format enforcement at the write side (see
+-- meeting.routes.ts createMeeting — accepts whatever the client sends before
+-- the direct-write path was retired). A bare `m.decisions_json::jsonb` cast
+-- below would abort this ENTIRE migration/replay on the first row of demo
+-- data holding malformed legacy JSON (or plain non-JSON text). Mirrors the
+-- established fail-soft helper pattern (`mw_safe_jsonb`,
+-- 20260805_m02p03_inbox_projection_lifecycle.sql:75-84) but returns an EMPTY
+-- ARRAY, not an empty object, because the caller feeds it straight into
+-- `jsonb_array_elements_text` — an object there would raise its own cast
+-- error. Also guards the "valid JSON but not an array" case (e.g. a bare
+-- string or object slipped into decisions_json) the same way.
+CREATE OR REPLACE FUNCTION meeting_decisions_day10_safe_jsonb_array(raw text) RETURNS jsonb AS $$
+DECLARE
+  parsed jsonb;
+BEGIN
+  IF raw IS NULL OR btrim(raw) = '' THEN
+    RETURN '[]'::jsonb;
+  END IF;
+  BEGIN
+    parsed := raw::jsonb;
+  EXCEPTION WHEN others THEN
+    RETURN '[]'::jsonb;
+  END;
+  IF jsonb_typeof(parsed) IS DISTINCT FROM 'array' THEN
+    RETURN '[]'::jsonb;
+  END IF;
+  RETURN parsed;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
 INSERT INTO meeting_decisions (
     id,
     organization_id,
@@ -75,10 +106,10 @@ SELECT
     COALESCE(m.updated_at, m.created_at, now()::text)
 FROM meetings AS m
 CROSS JOIN LATERAL jsonb_array_elements_text(
-    CASE
-        WHEN m.decisions_json IS NULL OR btrim(m.decisions_json) = '' THEN '[]'::jsonb
-        ELSE m.decisions_json::jsonb
-    END
+    meeting_decisions_day10_safe_jsonb_array(m.decisions_json)
 ) WITH ORDINALITY AS legacy(statement, ordinality)
 WHERE btrim(legacy.statement) <> ''
 ON CONFLICT DO NOTHING;
+
+-- Migration-local helper, not needed after the backfill above runs.
+DROP FUNCTION IF EXISTS meeting_decisions_day10_safe_jsonb_array(text);

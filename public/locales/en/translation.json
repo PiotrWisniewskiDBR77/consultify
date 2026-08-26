@@ -24311,6 +24311,26 @@
         "createFailed": "Failed to add decision"
       }
     },
+    "decisionRecords": {
+      "statementPlaceholder": "New decision…",
+      "rationalePlaceholder": "Rationale (optional)",
+      "add": "Record decision",
+      "recorded": "Recorded",
+      "superseded": "Superseded",
+      "markRecorded": "Mark recorded",
+      "markSuperseded": "Mark superseded",
+      "notifications": {
+        "created": "Decision recorded",
+        "updated": "Decision updated",
+        "deleted": "Decision deleted"
+      },
+      "errors": {
+        "loadFailed": "Could not load decisions.",
+        "createFailed": "Failed to record decision",
+        "updateFailed": "Failed to update decision",
+        "deleteFailed": "Failed to delete decision"
+      }
+    },
     "followUp": {
       "title": "Add follow-up",
       "fields": {
@@ -24326,6 +24346,21 @@
       "errors": {
         "createFailed": "Failed to add follow-up",
         "statusFailed": "Failed to update follow-up status"
+      }
+    },
+    "followUpRecords": {
+      "titlePlaceholder": "Follow-up…",
+      "ownerPlaceholder": "Owner",
+      "add": "Add follow-up",
+      "notifications": {
+        "created": "Follow-up added",
+        "deleted": "Follow-up deleted"
+      },
+      "errors": {
+        "loadFailed": "Could not load follow-ups.",
+        "createFailed": "Failed to add follow-up",
+        "updateFailed": "Failed to update follow-up",
+        "deleteFailed": "Failed to delete follow-up"
       }
     },
     "delete": {

@@ -25445,6 +25445,26 @@
         "createFailed": "Nie udało się dodać decyzji"
       }
     },
+    "decisionRecords": {
+      "statementPlaceholder": "Nowa decyzja…",
+      "rationalePlaceholder": "Uzasadnienie (opcjonalnie)",
+      "add": "Zapisz decyzję",
+      "recorded": "Zapisana",
+      "superseded": "Zastąpiona",
+      "markRecorded": "Oznacz jako zapisaną",
+      "markSuperseded": "Oznacz jako zastąpioną",
+      "notifications": {
+        "created": "Zapisano decyzję",
+        "updated": "Zaktualizowano decyzję",
+        "deleted": "Usunięto decyzję"
+      },
+      "errors": {
+        "loadFailed": "Nie udało się załadować decyzji.",
+        "createFailed": "Nie udało się zapisać decyzji",
+        "updateFailed": "Nie udało się zaktualizować decyzji",
+        "deleteFailed": "Nie udało się usunąć decyzji"
+      }
+    },
     "followUp": {
       "title": "Dodaj follow-up",
       "fields": {
@@ -25460,6 +25480,21 @@
       "errors": {
         "createFailed": "Nie udało się dodać follow-upu",
         "statusFailed": "Nie udało się zaktualizować statusu follow-upu"
+      }
+    },
+    "followUpRecords": {
+      "titlePlaceholder": "Follow-up…",
+      "ownerPlaceholder": "Właściciel",
+      "add": "Dodaj follow-up",
+      "notifications": {
+        "created": "Dodano follow-up",
+        "deleted": "Usunięto follow-up"
+      },
+      "errors": {
+        "loadFailed": "Nie udało się załadować follow-upów.",
+        "createFailed": "Nie udało się dodać follow-upu",
+        "updateFailed": "Nie udało się zaktualizować follow-upu",
+        "deleteFailed": "Nie udało się usunąć follow-upu"
       }
     },
     "delete": {
