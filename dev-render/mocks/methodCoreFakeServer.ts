@@ -33,7 +33,10 @@
  * enough to exercise the real UI's rendering of that data, not a
  * reimplementation of `drdAdapter.resolveOpenLevels`.
  */
-import { DRD_METHOD_PACK_ID, DRD_METHOD_PACK_VERSION } from '../../src/method-core/methods/drd/compileDrdPack';
+import {
+  DRD_METHOD_PACK_ID,
+  DRD_METHOD_PACK_VERSION,
+} from '../../src/method-core/methods/drd/compileDrdPack';
 import { canTransition } from '../../src/method-core/contracts/session';
 import { DRD_STRUCTURE } from '../../src/services/drdStructure';
 
@@ -127,11 +130,15 @@ function computeOutputFromEvents(session: FakeSession, events: FakeEvent[]) {
 
   for (const unitId of unitIds) {
     const confirmed = events
-      .filter((e) => e.unitId === unitId && e.type === 'ANSWER_CONFIRMED' && typeof e.level === 'number')
+      .filter(
+        (e) => e.unitId === unitId && e.type === 'ANSWER_CONFIRMED' && typeof e.level === 'number'
+      )
       .map((e) => e.level as number);
     const cur = confirmed.length ? Math.max(...confirmed) : null;
     const decisions = events
-      .filter((e) => e.unitId === unitId && e.type === 'DECISION_APPROVED' && typeof e.level === 'number')
+      .filter(
+        (e) => e.unitId === unitId && e.type === 'DECISION_APPROVED' && typeof e.level === 'number'
+      )
       .map((e) => e.level as number);
     const tgt = decisions.length ? decisions[decisions.length - 1] : null;
     current[unitId] = cur;
@@ -162,7 +169,8 @@ function computeOutputFromEvents(session: FakeSession, events: FakeEvent[]) {
   const evidenceCount = events.filter((e) => e.type === 'EVIDENCE_ATTACHED').length;
   const limitations: string[] = [];
   if (evidenceCount === 0) limitations.push('Brak dowodów załączonych w tej sesji.');
-  if (unitIds.size < 2) limitations.push('Zakres oceny ograniczony do wybranych obszarów — nie cała oś.');
+  if (unitIds.size < 2)
+    limitations.push('Zakres oceny ograniczony do wybranych obszarów — nie cała oś.');
 
   return {
     id: genId('output'),
@@ -248,8 +256,10 @@ export function seedArtifactsCatalog(): void {
         currentLevel: 2,
         targetLevel: 4,
         gap: 2,
-        businessMeaning: 'Proces sprzedaży częściowo zautomatyzowany w CRM, bez regularnego przeglądu wskaźników.',
-        recommendation: 'Wdróż cykliczny przegląd KPI procesu sprzedaży i domknij automatyzację do poziomu 4.',
+        businessMeaning:
+          'Proces sprzedaży częściowo zautomatyzowany w CRM, bez regularnego przeglądu wskaźników.',
+        recommendation:
+          'Wdróż cykliczny przegląd KPI procesu sprzedaży i domknij automatyzację do poziomu 4.',
       },
     ],
     contentHash: 'sha256-demo-cat0001',
@@ -381,10 +391,13 @@ export function seedArtifactsCatalog(): void {
     outputId: outputCurrent.id,
     sessionId: sessionCurrentId,
     title: 'Wdroż jeden system marketing automation dla grupy',
-    summary: 'Initiative draft wygenerowany z findingu 1B — luka 2 poziomów w Procesach Marketingowych.',
+    summary:
+      'Initiative draft wygenerowany z findingu 1B — luka 2 poziomów w Procesach Marketingowych.',
     findingIds: ['finding-cat-0003'],
-    rationale: 'Kampanie prowadzone ręcznie w kilku systemach utrudniają pomiar i eskalują koszt operacyjny.',
-    expectedOutcome: 'Podniesienie poziomu dojrzałości Procesów Marketingowych z 1 do 3 w ciągu 2 kwartałów.',
+    rationale:
+      'Kampanie prowadzone ręcznie w kilku systemach utrudniają pomiar i eskalują koszt operacyjny.',
+    expectedOutcome:
+      'Podniesienie poziomu dojrzałości Procesów Marketingowych z 1 do 3 w ciągu 2 kwartałów.',
     confidence: 'medium',
     status: 'current',
     supersededByOutputId: null,
@@ -414,7 +427,10 @@ export function seedArtifactsCatalog(): void {
     outputs: [outputOld, outputCurrent],
     reports: [reportSnapshots.get('report-cat-0001'), reportSnapshots.get('report-cat-0002')],
     presentations: [],
-    initiativeDrafts: [initiativeDrafts.get('draft-cat-0002'), initiativeDrafts.get('draft-cat-0001')],
+    initiativeDrafts: [
+      initiativeDrafts.get('draft-cat-0002'),
+      initiativeDrafts.get('draft-cat-0001'),
+    ],
   });
 }
 
@@ -428,7 +444,12 @@ function getSessionOr404(id: string): FakeSession | null {
   return sessions.get(id) ?? null;
 }
 
-async function route(method: string, path: string, body: any, idemKey: string | null): Promise<Response> {
+async function route(
+  method: string,
+  path: string,
+  body: any,
+  idemKey: string | null
+): Promise<Response> {
   // Idempotency replay — appendEvent/createSession/transition/freeze pass a
   // key; replaying the same key must not double-create.
   if (idemKey && idemSeen.has(idemKey)) {
@@ -466,6 +487,99 @@ async function route(method: string, path: string, body: any, idemKey: string | 
     sessions.set(id, session);
     eventsBySession.set(id, []);
     return record(json({ session, idempotentReplay: false, demoBypassActive: !!body.demoBypass }));
+  }
+
+  const reportContractMatch = path.match(/^\/sessions\/([^/]+)\/assessment-report-contract$/);
+  if (method === 'GET' && reportContractMatch) {
+    const scenario = new URLSearchParams(window.location.search).get('scenario') || 'pelny';
+    if (scenario === 'blad')
+      return json({ error: 'SESSION_NOT_FOUND', code: 'SESSION_NOT_FOUND' }, 404);
+    const areasPerAxis = [9, 5, 5, 5, 5, 5, 5];
+    const chapters = areasPerAxis.map((areaCount, axisIndex) => {
+      const axisId = axisIndex + 1;
+      const maxLevel = [7, 5, 5, 7, 6, 6, 5][axisIndex];
+      const areas = Array.from({ length: areaCount }, (_, areaIndex) => {
+        const unitId = `${axisId}${String.fromCharCode(65 + areaIndex)}`;
+        const fullSkip = scenario === 'pominiecia' && unitId === '7B';
+        const partialSkip = scenario === 'pominiecia' && unitId === '7A';
+        const skips = fullSkip
+          ? Array.from({ length: maxLevel }, (_, level) => ({
+              questionId: `${unitId}-L${level + 1}`,
+              skipCode: 'poza_zakresem_zlecenia',
+            }))
+          : partialSkip
+            ? [
+                { questionId: `${unitId}-L1`, skipCode: 'poza_modelem_operacyjnym' },
+                { questionId: `${unitId}-L2`, skipCode: 'odroczone_do_kolejnej_rewizji' },
+              ]
+            : [];
+        return {
+          unitId,
+          unitName: `Area ${unitId}`,
+          unitNamePL: `Obszar ${unitId}`,
+          currentLevel: scenario === 'sloty' ? null : Math.min(2 + (areaIndex % 3), maxLevel),
+          targetLevel: scenario === 'sloty' ? null : Math.min(4 + (areaIndex % 2), maxLevel),
+          gap: scenario === 'sloty' ? null : 2,
+          skipped: fullSkip,
+          skipCode: skips.length === 1 ? skips[0].skipCode : null,
+          skips,
+          evidenceState:
+            scenario === 'sloty' ? 'not_assessed' : areaIndex % 2 ? 'incomplete' : 'evidenced',
+        };
+      });
+      return {
+        axisId,
+        axisName: `Axis ${axisId}`,
+        axisNamePL: `Oś ${axisId}`,
+        maxLevel,
+        introduction: { content: null, minWords: 120, maxWords: 180 },
+        matrix: { caption: { content: null, minWords: 30, maxWords: 60 }, areas },
+        areaComments: areas.map((area) => ({
+          unitId: area.unitId,
+          content: null,
+          minWords: 110,
+          maxWords: 170,
+          microstructure: [
+            'stan_faktyczny',
+            'ocena_i_wiarygodnosc',
+            'znaczenie_dla_przedsiebiorstwa',
+            'luka_i_sens_targetu',
+            'najblizszy_krok',
+          ],
+          skipped: area.skipped,
+          skipCode: area.skipCode,
+          skips: area.skips,
+          answerRefs: scenario === 'pelny' ? [`answer-${area.unitId}`] : [],
+          evidenceRefs: scenario === 'pelny' ? [`evidence-${area.unitId}`] : [],
+          sourceLocators: [],
+          uncertainty: area.evidenceState,
+        })),
+        conclusion: {
+          content: null,
+          minWords: 180,
+          maxWords: 260,
+          decisionLine: { direction: null, priority: null, horizon: null, successCondition: null },
+        },
+      };
+    });
+    return json({
+      reportContract: {
+        contractVersion: 'assessment-report-contract-v1',
+        sessionId: reportContractMatch[1],
+        outputId: scenario === 'sloty' ? null : 'output-metalpol-2026',
+        revision: scenario === 'sloty' ? 0 : 3,
+        generatedAt: '2026-08-26T10:00:00.000Z',
+        methodVersion: 'drd-2026.08',
+        chapters,
+      },
+    });
+  }
+
+  const skipReasonMatch = path.match(/^\/sessions\/([^/]+)\/assessment-skip-reasons$/);
+  if (method === 'POST' && skipReasonMatch) {
+    return record(
+      json({ skipReason: { id: genId('skip'), sessionId: skipReasonMatch[1], ...body } }, 201)
+    );
   }
 
   const sessionMatch = path.match(/^\/sessions\/([^/]+)(.*)$/);
@@ -525,7 +639,13 @@ async function route(method: string, path: string, body: any, idemKey: string | 
       }
       const events = eventsBySession.get(sessionId) ?? [];
       const output = computeOutputFromEvents(session, events);
-      outputs.set(output.id, { ...output, revisionOfOutputId: null, demoBypassActive: true, isSuperseded: false, supersededByOutputId: null });
+      outputs.set(output.id, {
+        ...output,
+        revisionOfOutputId: null,
+        demoBypassActive: true,
+        isSuperseded: false,
+        supersededByOutputId: null,
+      });
       session.state = 'frozen';
       session.version += 1;
       session.frozenSnapshotId = output.id;
@@ -566,7 +686,9 @@ async function route(method: string, path: string, body: any, idemKey: string | 
           outputs: output ? [output] : [],
           reports: [...reportSnapshots.values()].filter((r) => r.sessionId === session.id),
           presentations: [],
-          initiativeDrafts: [...initiativeDrafts.values()].filter((d) => d.sessionId === session.id),
+          initiativeDrafts: [...initiativeDrafts.values()].filter(
+            (d) => d.sessionId === session.id
+          ),
         },
       });
     }
@@ -597,11 +719,18 @@ async function route(method: string, path: string, body: any, idemKey: string | 
     const output = outputs.get(outputId);
     if (method === 'GET' && rest === '') {
       if (!output) return json({ error: 'not_found' }, 404);
-      return json({ output, superseded: !!output.isSuperseded, supersededByOutputId: output.supersededByOutputId ?? null });
+      return json({
+        output,
+        superseded: !!output.isSuperseded,
+        supersededByOutputId: output.supersededByOutputId ?? null,
+      });
     }
     if (method === 'GET' && rest === '/revisions') {
       const chain = [...outputs.values()].filter(
-        (o) => o.id === outputId || o.revisionOfOutputId === outputId || o.id === output?.revisionOfOutputId
+        (o) =>
+          o.id === outputId ||
+          o.revisionOfOutputId === outputId ||
+          o.id === output?.revisionOfOutputId
       );
       return json({
         revisions: chain.map((o) => ({
@@ -718,13 +847,15 @@ export function installMethodCoreFakeServer(): void {
   const originalFetch = window.fetch.bind(window);
 
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-    const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+    const url =
+      typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
     const method = (init?.method || 'GET').toUpperCase();
 
     const idx = url.indexOf('/api/method');
     if (idx === -1) return originalFetch(input, init);
     const path = url.slice(idx + '/api/method'.length) || '/';
-    const idemKey = (init?.headers as Record<string, string> | undefined)?.['Idempotency-Key'] ?? null;
+    const idemKey =
+      (init?.headers as Record<string, string> | undefined)?.['Idempotency-Key'] ?? null;
 
     let body: any = {};
     if (init?.body) {
@@ -743,7 +874,10 @@ export function installMethodCoreFakeServer(): void {
       // loudly in the console instead.
       // eslint-disable-next-line no-console
       console.error('[methodCoreFakeServer] route error', method, path, err);
-      return json({ error: 'fake_server_error', message: err instanceof Error ? err.message : String(err) }, 500);
+      return json(
+        { error: 'fake_server_error', message: err instanceof Error ? err.message : String(err) },
+        500
+      );
     }
   };
 }

@@ -125,6 +125,9 @@ const AssessmentMenu3StatusChipsScreen = React.lazy(
 const AssessmentReportsPanelScreen = React.lazy(() => import('./screens/assessment-reports-panel'));
 const AssessmentReportsTableScreen = React.lazy(() => import('./screens/assessment-reports-table'));
 const AssessmentOutputReportScreen = React.lazy(() => import('./screens/assessment-output-report'));
+const AssessmentReportContractScreen = React.lazy(
+  () => import('./screens/assessment-report-contract')
+);
 const CanvasKebabRestructureScreen = React.lazy(() => import('./screens/canvas-kebab-restructure'));
 const CanvasNewDocScreen = React.lazy(() => import('./screens/canvas-new-doc'));
 const CanvasToolbarMdHistoryScreen = React.lazy(
@@ -320,9 +323,7 @@ const StagingFixesExecutionI18nScreen = React.lazy(
 const AudytyWarsztatKryteriumScreen = React.lazy(
   () => import('./screens/audyty-warsztat-kryterium')
 );
-const AudytyRaportDokumentScreen = React.lazy(
-  () => import('./screens/audyty-raport-dokument')
-);
+const AudytyRaportDokumentScreen = React.lazy(() => import('./screens/audyty-raport-dokument'));
 const Mw007CalendarNarrowViewportScreen = React.lazy(
   () => import('./screens/mw-007-calendar-narrow-viewport')
 );
@@ -1037,6 +1038,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'Assessment Report (SPEC-A Dokument) — renderer zamrożonego Outputu; ?variant=happy|edge|not-frozen',
     render: () => <AssessmentOutputReportScreen />,
+  },
+  'assessment-report-contract': {
+    label:
+      'Assessment Report Contract — 7 rozdziałów SPEC-A; ?scenario=pelny|sloty|pominiecia|blad',
+    render: () => <AssessmentReportContractScreen />,
   },
   'canvas-new-doc': {
     label: '#87a Canvas "+" New — 3 opcje startu (Czysty/Z szablonu/Z canvasa) → Teresa',
