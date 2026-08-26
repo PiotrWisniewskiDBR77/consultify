@@ -6832,7 +6832,7 @@
       "empty": "Kontrakt raportu nie zawiera rozdziałów",
       "draft": "Szkic",
       "revision": "Rewizja {{revision}}",
-      "generate": "Generuj ▸ · Planowane",
+      "generate": "Generuj",
       "planned": "Planowane",
       "panelLabel": "Panel raportu Oceny",
       "property": "Właściwość",

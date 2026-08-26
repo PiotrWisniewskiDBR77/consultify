@@ -340,13 +340,22 @@ export const AssessmentReportContractView: React.FC<AssessmentReportContractView
       defaultOpen: true,
       children: (
         <div className="space-y-2">
-          {['pdf', 'all'].map((kind) => (
+          {/* P2-1 (day-27 acceptance fix-up): "Generuj" used to be the
+              header's primaryAction — a dark, icon-bearing CTA that read as
+              active even though onClick was a no-op and disabled=true (the
+              appended "▸ · Planowane" text in the label didn't fix the
+              visual weight). Moved here, next to the export rows, in the
+              SAME grayed-out "Planowane" treatment — honest about the fact
+              that none of these three actions do anything yet. */}
+          {(['generate', 'pdf', 'all'] as const).map((kind) => (
             <div
               key={kind}
               className="flex items-center justify-between rounded-lg border border-c-border-subtle px-3 py-2 opacity-60"
             >
               <span className="text-xs text-c-text-muted">
-                {t(`assessment.reportView.export.${kind}`)}
+                {kind === 'generate'
+                  ? t('assessment.reportView.generate')
+                  : t(`assessment.reportView.export.${kind}`)}
               </span>
               <span className="text-[10px] font-medium text-c-text-muted">
                 {t('assessment.reportView.planned')}
@@ -385,12 +394,9 @@ export const AssessmentReportContractView: React.FC<AssessmentReportContractView
         ? t('assessment.reportView.draft')
         : t('assessment.reportView.revision', { revision: contract.revision }),
     statusTone: contract.revision === 0 ? 'draft' : 'neutral',
-    primaryAction: {
-      label: { pl: t('assessment.reportView.generate'), en: t('assessment.reportView.generate') },
-      icon: FileCheck,
-      onClick: () => {},
-      disabled: true,
-    },
+    // P2-1: no header primaryAction — "Generuj" moved into the right-panel
+    // Akcje section (grayed out, next to the export rows) so it no longer
+    // reads as an active CTA. See the panelSections 'actions' children above.
   };
   return (
     <div
