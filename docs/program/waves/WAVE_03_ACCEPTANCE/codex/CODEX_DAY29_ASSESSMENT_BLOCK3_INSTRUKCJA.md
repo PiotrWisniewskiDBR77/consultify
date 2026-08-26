@@ -79,14 +79,12 @@ w całości — nie tylko „raczej nie", ale co do jednego znaku.**
 1. Punktem wyjścia jest **gałąź `codex/m03-admin-20260824`**, przypięta do
    commitu-markera podanego niżej.
 
-   **SHA markera: 936842bd16**
+   **SHA markera: 2f6040273f**
 
-   > **Uwaga dla nadzorcy wydającego zlecenie:** placeholder `936842bd16`
-   > wiążesz PRZED wydaniem instrukcji Codexowi — wpisujesz w to miejsce tip
-   > gałęzi `codex/m03-admin-20260824` z chwili wydania i commitujesz zmianę
-   > osobnym commitem `docs(codex): bind day29 base marker <sha>`. Codex, który
-   > widzi w tym miejscu nadal `936842bd16`, **wykonuje STOP całego dyżuru**
-   > i nie zgaduje bazy.
+   > **Marker ZWIĄZANY przez nadzorcę 2026-08-27** (tip `codex/m03-admin-20260824`
+   > z chwili wydania). Wykonujesz weryfikację merge-base z pkt 2 — jej negatywny
+   > wynik (MARKER BRAK) oznacza STOP; sama obecność powyższego SHA jest stanem
+   > poprawnym, nie wartownikiem.
 
 2. **Sprawdzasz marker PIERWSZĄ komendą dyżuru:**
 
@@ -94,7 +92,7 @@ w całości — nie tylko „raczej nie", ale co do jednego znaku.**
    cd <root-repo>
    git fetch --all --prune
    git log --oneline -25 codex/m03-admin-20260824
-   git merge-base --is-ancestor 936842bd16 codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
+   git merge-base --is-ancestor 2f6040273f codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
    ```
 
 3. **Jeśli marker nie jest przodkiem tipa albo gałąź nie istnieje — STOP.**
@@ -107,7 +105,7 @@ w całości — nie tylko „raczej nie", ale co do jednego znaku.**
    **Reguła rozejścia (`DEC-2026-08-26-95`).** Jeżeli marker JEST przodkiem, ale
    tip uciekł do przodu (nadzorca scalił coś po związaniu markera) — **to nie
    jest STOP**. Startujesz **dokładnie z markera**, wypisujesz w raporcie
-   `git log --oneline 936842bd16..codex/m03-admin-20260824` i listę plików
+   `git log --oneline 2f6040273f..codex/m03-admin-20260824` i listę plików
    rozejścia; scalenie z nowszym tipem wykonuje nadzorca przy odbiorze. Rebase
    w trakcie dyżuru: **ZAKAZANY**.
 
@@ -142,7 +140,7 @@ w całości — nie tylko „raczej nie", ale co do jednego znaku.**
    | `DAY27 NOT MERGED` (oczekiwane)                                  | Nic nie robisz. Twój zakres jest z nim rozłączny plikowo, **pod warunkiem że nie wchodzisz w `src/`** (★ ograniczenie krytyczne pkt 1–2). To jest jedyny mechanizm bezkolizyjności, jaki masz — i on jest w 100% pod Twoją kontrolą.                                                                                                                                                              |
    | `DAY27 MERGED`                                                   | Nadal nic nie robisz i nadal **nie wchodzisz w `src/`**. Zapisujesz fakt w „Korektach wobec instrukcji".                                                                                                                                                                                                                                                                                          |
    | `git diff` dnia 27 pokazuje **cokolwiek** w `server/**`          | **STOP przed rozpoczęciem §B.** Wypisz listę plików do raportu i czekaj na rozstrzygnięcie nadzorcy — mogłoby to oznaczać, że ktoś dotknął tras AI przed Tobą.                                                                                                                                                                                                                                    |
-   | Twój `git diff --name-only 936842bd16...HEAD` zawiera `src/**` | **Naruszenie ★ ograniczenia krytycznego = odrzucenie dyżuru.** Sprawdź to sam przed ostatnim commitem.                                                                                                                                                                                                                                                                                            |
+   | Twój `git diff --name-only 2f6040273f...HEAD` zawiera `src/**` | **Naruszenie ★ ograniczenia krytycznego = odrzucenie dyżuru.** Sprawdź to sam przed ostatnim commitem.                                                                                                                                                                                                                                                                                            |
 
 5. **★ Weryfikacja stanu wejściowego (warunek wstępny, NIE formalność).**
    Sprawdzasz sam; wynik jest obowiązkową pozycją raportu. **Każda z tych komend
@@ -181,7 +179,7 @@ w całości — nie tylko „raczej nie", ale co do jednego znaku.**
 6. **Własna gałąź i własny worktree** (nigdy praca na `codex/m03-admin-20260824`):
 
    ```bash
-   git branch codex/assessment-day29-<data> 936842bd16
+   git branch codex/assessment-day29-<data> 2f6040273f
    git worktree add /private/tmp/consultify-assessment-day29 codex/assessment-day29-<data>
    cd /private/tmp/consultify-assessment-day29
    ln -s /Users/piotrwisniewski/Developer/Consultify/node_modules node_modules   # DEC-86, TYLKO ODCZYT
@@ -191,7 +189,7 @@ w całości — nie tylko „raczej nie", ale co do jednego znaku.**
    nigdy wobec `HEAD~1`:
 
    ```bash
-   git diff --name-only 936842bd16...HEAD
+   git diff --name-only 2f6040273f...HEAD
    ```
 
    Ta komenda ma w tym dokumencie własną nazwę — **„komenda bazowa"** — i wraca
@@ -913,7 +911,7 @@ scripts/check-list-canon.sh · scripts/check-artefakt.sh   (dotyczą frontu; Cie
 ## BLOK 0 — START (wykonaj po kolei, ZANIM napiszesz pierwszą linię kodu)
 
 1. **Marker i gałąź** — §0.1 pkt 2, 6. Wynik obu komend do raportu.
-   **Jeżeli w §0.1 pkt 1 widnieje nadal `936842bd16` — STOP całego dyżuru.**
+   Marker w §0.1 pkt 1 jest związany przez nadzorcę; STOP wyłącznie przy wyniku MARKER BRAK.
 
 2. **★ Sprawdzenie kolizji z dniami 25/27/28** — §0.1 pkt 4, trzy komendy,
    tabela rozstrzygnięć. **`DAY25 NOT MERGED` = STOP całego dyżuru.**
@@ -1192,7 +1190,7 @@ Próg decyzyjny: **60 minut**.
   na „zakazany plik" — **żadna z nich nie blokuje §A**. `aiAssessmentPartnerService.ts`
   jest w ramce **WOLNO** i nic poza budżetem nie może go zablokować.
 - **STOP §A nie zwalnia Cię z §B, §C, §D.** Robisz je normalnie.
-- **Przy STOP-ie przywracasz plik do stanu z markera** (`git checkout 936842bd16
+- **Przy STOP-ie przywracasz plik do stanu z markera** (`git checkout 2f6040273f
 -- server/src/services/aiAssessmentPartnerService.ts`) albo commitujesz częściowy
   postęp **z powrotem założonym `@ts-nocheck`** — nigdy nie zostawiasz pliku
   bez `@ts-nocheck` i z błędami.
@@ -1794,7 +1792,7 @@ linii (mało prawdopodobne — §A rusza serwis, §B trasy), rozstrzyga §B.
 3. Raport `ASSESSMENT_DAY29_REPORT_20260827.md` wg szablonu §9.
 4. `prettier` na wszystkim, `git status --porcelain` czysty.
 5. Sprzątanie kontenera i wolumenów (BLOK 0 pkt 10).
-6. Ostatnie sprawdzenie: `git diff --name-only 936842bd16...HEAD | grep -E '^(src|dev-render|public)/'`
+6. Ostatnie sprawdzenie: `git diff --name-only 2f6040273f...HEAD | grep -E '^(src|dev-render|public)/'`
    **MUSI być PUSTE.**
 
 ### Zasada nadrzędna kolejności
@@ -1822,7 +1820,7 @@ tylko za nieuczciwy powód STOP-u**.
 
 ## ★ Oświadczenie o zakresie src/ (★ ograniczenie krytyczne)
 
-git diff --name-only 936842bd16...HEAD | grep -E '^(src|dev-render|public)/'
+git diff --name-only 2f6040273f...HEAD | grep -E '^(src|dev-render|public)/'
 → <MUSI być PUSTE; wklej dosłownie>
 
 ## ★ Kolizje z dniami 25/27/28 (§0.1 pkt 4)
@@ -1832,9 +1830,9 @@ DAY27 MERGED / NOT MERGED: <wynik>
 Pliki dnia 27 poza src/dev-render/public/docs: <lista albo BRAK>
 Pliki dnia 28 kolidujące z moim zakresem: <lista albo BRAK>
 
-## Marker: 936842bd16 — POTWIERDZONY / BRAK
+## Marker: 2f6040273f — POTWIERDZONY / BRAK
 
-<wynik obu komend; przy rozejściu: git log 936842bd16..codex/m03-admin-20260824 + lista plików>
+<wynik obu komend; przy rozejściu: git log 2f6040273f..codex/m03-admin-20260824 + lista plików>
 
 ## ★ Dowód celu połączenia (Z19)
 
@@ -2060,10 +2058,10 @@ grep -rn "<symbol>" server/src src tests
 git add -f tests/integration/routes/assessment.day29.*.postgres.integration.test.ts
 
 # komenda bazowa (NIE do HEAD~1)
-git diff --name-only 936842bd16...HEAD
+git diff --name-only 2f6040273f...HEAD
 
 # ★ OSTATNIE SPRAWDZENIE PRZED ODDANIEM — MUSI BYĆ PUSTE
-git diff --name-only 936842bd16...HEAD | grep -E '^(src|dev-render|public)/'
+git diff --name-only 2f6040273f...HEAD | grep -E '^(src|dev-render|public)/'
 ```
 
 ### 10.2. Dwanaście rzeczy, które najłatwiej zepsuć
