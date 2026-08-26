@@ -777,6 +777,91 @@
     }
   },
   "assessment": {
+    "reportView": {
+      "assessment": "Bewertung",
+      "report": "Bericht",
+      "title": "Bewertungsbericht — 7 Kapitel",
+      "loading": "Bewertungsbericht wird geladen…",
+      "empty": "Der Berichtsvertrag enthält keine Kapitel",
+      "draft": "Entwurf",
+      "revision": "Revision {{revision}}",
+      "generate": "Generieren",
+      "planned": "Geplant",
+      "panelLabel": "Panel des Bewertungsberichts",
+      "property": "Eigenschaft",
+      "value": "Wert",
+      "noFrozenOutput": "Kein eingefrorenes Ergebnis",
+      "notAssessedValue": "— (nicht bewertet)",
+      "skipWriteError": "Der Übersprungscode wurde nicht gespeichert — bitte erneut versuchen.",
+      "toComplete": "Noch auszufüllen",
+      "emptySlot": "Abschnitt auszufüllen — {{min}}–{{max}} Wörter.",
+      "wordLimit": "{{min}}–{{max}} Wörter",
+      "panel": {
+        "actions": "Aktionen",
+        "properties": "Eigenschaften"
+      },
+      "export": {
+        "pdf": "PDF exportieren",
+        "all": "Alles exportieren"
+      },
+      "sections": {
+        "introduction": "Einführung zur Achse",
+        "matrix": "Achsenmatrix und Beschriftung",
+        "comments": "Kommentar pro Bereich",
+        "conclusion": "Schlussfolgerungen zur Achse"
+      },
+      "matrix": {
+        "area": "Bereich",
+        "current": "Aktuelles Niveau",
+        "target": "Zielniveau",
+        "gap": "Lücke",
+        "evidence": "Nachweisstatus",
+        "skips": "Übersprungene Fragen"
+      },
+      "evidence": {
+        "evidenced": "Durch Nachweise bestätigt",
+        "incomplete": "Unvollständige Nachweise",
+        "declared": "Erklärt ohne Nachweis",
+        "notAssessed": "Nicht bewertet"
+      },
+      "microstructure": {
+        "stan_faktyczny": "Sachlage",
+        "ocena_i_wiarygodnosc": "Bewertung und Glaubwürdigkeit",
+        "znaczenie_dla_przedsiebiorstwa": "Bedeutung für das Unternehmen",
+        "luka_i_sens_targetu": "Lücke und Sinn des Zielwerts",
+        "najblizszy_krok": "Nächster Schritt"
+      },
+      "decision": {
+        "direction": "Empfohlene Richtung",
+        "priority": "Priorität",
+        "horizon": "Horizont",
+        "successCondition": "Erfolgsbedingung"
+      },
+      "skips": {
+        "whole": "Bereich vollständig übersprungen · {{count}} Fragen",
+        "partial": "Bereich bewertet · {{count}} von {{total}} Fragen übersprungen",
+        "question": "Frage {{question}} — {{reason}}"
+      },
+      "traceability": {
+        "title": "Rückverfolgbarkeit",
+        "counts": "Antworten: {{answers}} · Nachweise: {{evidence}} · Fundstellen: {{sources}}"
+      },
+      "properties": {
+        "revision": "Revision",
+        "outputId": "Eingefrorenes Ergebnis",
+        "generatedAt": "Erstellt am",
+        "methodVersion": "Methodenversion",
+        "contractVersion": "Vertragsversion",
+        "sessionId": "Sitzung"
+      },
+      "errors": {
+        "offline": "Keine Verbindung",
+        "notFound": "Die Sitzung existiert nicht oder Sie haben keinen Zugriff darauf",
+        "noOrganization": "Der Organisationskontext fehlt",
+        "version": "Nicht unterstützte Berichtsvertragsversion",
+        "generic": "Der Bericht konnte nicht geladen werden"
+      }
+    },
     "title": "Bewertung",
     "overview": "Übersicht",
     "drd": "DRD-Bewertung",

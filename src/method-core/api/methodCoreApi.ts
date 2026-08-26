@@ -45,7 +45,12 @@ export class MethodCoreApiError extends Error {
    * this is the signal the UI's `offline` state is built on. */
   readonly isNetworkError: boolean;
 
-  constructor(message: string, status: number, body: Record<string, unknown>, isNetworkError = false) {
+  constructor(
+    message: string,
+    status: number,
+    body: Record<string, unknown>,
+    isNetworkError = false
+  ) {
     super(message);
     this.name = 'MethodCoreApiError';
     this.status = status;
@@ -54,8 +59,12 @@ export class MethodCoreApiError extends Error {
   }
 }
 
-export function isVersionConflict(err: unknown): err is MethodCoreApiError & { body: { currentVersion: number } } {
-  return err instanceof MethodCoreApiError && err.status === 409 && err.body.error === 'version_conflict';
+export function isVersionConflict(
+  err: unknown
+): err is MethodCoreApiError & { body: { currentVersion: number } } {
+  return (
+    err instanceof MethodCoreApiError && err.status === 409 && err.body.error === 'version_conflict'
+  );
 }
 
 export function isAuthError(err: unknown): boolean {
@@ -128,6 +137,135 @@ export async function listPacks(): Promise<MethodPackSummary[]> {
 }
 
 // ---------------------------------------------------------------------------
+// Assessment report contract
+// ---------------------------------------------------------------------------
+
+export type AssessmentReportSkipCode =
+  | 'poza_modelem_operacyjnym'
+  | 'poza_zakresem_zlecenia'
+  | 'odroczone_do_kolejnej_rewizji'
+  | 'zastapione_innym_rozwiazaniem';
+
+export type AssessmentReportEvidenceState =
+  | 'evidenced'
+  | 'incomplete'
+  | 'declared'
+  | 'not_assessed';
+
+export interface AssessmentReportSkip {
+  readonly questionId: string;
+  readonly skipCode: AssessmentReportSkipCode;
+}
+
+export interface AssessmentReportArea {
+  readonly unitId: string;
+  readonly unitName: string;
+  readonly unitNamePL?: string;
+  readonly currentLevel: number | null;
+  readonly targetLevel: number | null;
+  readonly gap: number | null;
+  readonly skipped: boolean;
+  readonly skipCode: AssessmentReportSkipCode | null;
+  readonly skips: readonly AssessmentReportSkip[];
+  readonly evidenceState: AssessmentReportEvidenceState;
+}
+
+export interface AssessmentReportAreaComment {
+  readonly unitId: string;
+  readonly content: null;
+  readonly minWords: number;
+  readonly maxWords: number;
+  readonly microstructure: readonly string[];
+  readonly skipped: boolean;
+  readonly skipCode: AssessmentReportSkipCode | null;
+  readonly skips: readonly AssessmentReportSkip[];
+  readonly answerRefs: readonly string[];
+  readonly evidenceRefs: readonly string[];
+  readonly sourceLocators: readonly string[];
+  readonly uncertainty: AssessmentReportEvidenceState;
+}
+
+export interface AssessmentReportChapter {
+  readonly axisId: number;
+  readonly axisName: string;
+  readonly axisNamePL?: string;
+  readonly maxLevel: number;
+  readonly introduction: {
+    readonly content: null;
+    readonly minWords: number;
+    readonly maxWords: number;
+  };
+  readonly matrix: {
+    readonly caption: {
+      readonly content: null;
+      readonly minWords: number;
+      readonly maxWords: number;
+    };
+    readonly areas: readonly AssessmentReportArea[];
+  };
+  readonly areaComments: readonly AssessmentReportAreaComment[];
+  readonly conclusion: {
+    readonly content: null;
+    readonly minWords: number;
+    readonly maxWords: number;
+    readonly decisionLine: {
+      readonly direction: null;
+      readonly priority: null;
+      readonly horizon: null;
+      readonly successCondition: null;
+    };
+  };
+}
+
+export interface AssessmentReportContract {
+  readonly contractVersion: 'assessment-report-contract-v1';
+  readonly sessionId: string;
+  readonly outputId: string | null;
+  readonly revision: number;
+  readonly generatedAt: string;
+  readonly methodVersion: string;
+  readonly chapters: readonly AssessmentReportChapter[];
+}
+
+export async function getAssessmentReportContract(
+  sessionId: string
+): Promise<AssessmentReportContract> {
+  const response = await handle<{ reportContract: AssessmentReportContract }>(
+    fetchWithRetry(`${BASE}/sessions/${sessionId}/assessment-report-contract`, {
+      method: 'GET',
+      headers: getHeaders(),
+    })
+  );
+  if (response.reportContract.contractVersion !== 'assessment-report-contract-v1') {
+    throw new MethodCoreApiError('Unsupported assessment report contract version', 200, {
+      contractVersion: response.reportContract.contractVersion,
+    });
+  }
+  return response.reportContract;
+}
+
+export interface RecordAssessmentSkipReasonInput {
+  readonly unitId: string;
+  readonly questionId: string;
+  readonly level: number;
+  readonly skipCode: AssessmentReportSkipCode;
+}
+
+export async function recordAssessmentSkipReason(
+  sessionId: string,
+  input: RecordAssessmentSkipReasonInput,
+  idempotencyKey: string
+): Promise<{ readonly skipReason: unknown }> {
+  return handle(
+    fetchWithRetry(`${BASE}/sessions/${sessionId}/assessment-skip-reasons`, {
+      method: 'POST',
+      headers: { ...getHeaders(), ...idempotencyHeader(idempotencyKey) },
+      body: JSON.stringify(input),
+    })
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Sessions
 // ---------------------------------------------------------------------------
 
@@ -166,7 +304,9 @@ export async function createSession(
 export async function getSession(
   sessionId: string
 ): Promise<{ session: MethodSession; roles: MethodProcessRole[] }> {
-  return handle(fetchWithRetry(`${BASE}/sessions/${sessionId}`, { method: 'GET', headers: getHeaders() }));
+  return handle(
+    fetchWithRetry(`${BASE}/sessions/${sessionId}`, { method: 'GET', headers: getHeaders() })
+  );
 }
 
 /** One row of `GET /api/method/sessions` — a `MethodSession` plus the one
@@ -286,7 +426,10 @@ export interface TeresaPreviewRequest {
   readonly ttlMs?: number;
 }
 
-export async function teresaPreview(sessionId: string, input: TeresaPreviewRequest): Promise<TeresaPreview> {
+export async function teresaPreview(
+  sessionId: string,
+  input: TeresaPreviewRequest
+): Promise<TeresaPreview> {
   const res = await handle<{ preview: TeresaPreview }>(
     fetchWithRetry(`${BASE}/sessions/${sessionId}/teresa/preview`, {
       method: 'POST',
@@ -388,8 +531,14 @@ export interface MethodOutputSummary {
 
 export async function getOutput(
   outputId: string
-): Promise<{ output: MethodOutputSummary; superseded: boolean; supersededByOutputId: string | null }> {
-  return handle(fetchWithRetry(`${BASE}/outputs/${outputId}`, { method: 'GET', headers: getHeaders() }));
+): Promise<{
+  output: MethodOutputSummary;
+  superseded: boolean;
+  supersededByOutputId: string | null;
+}> {
+  return handle(
+    fetchWithRetry(`${BASE}/outputs/${outputId}`, { method: 'GET', headers: getHeaders() })
+  );
 }
 
 export interface CreateReportRequest {
@@ -421,7 +570,10 @@ export interface CreateInitiativeDraftRequest {
   readonly confidence: 'low' | 'medium' | 'high';
 }
 
-export async function createInitiativeDraft(outputId: string, input: CreateInitiativeDraftRequest): Promise<unknown> {
+export async function createInitiativeDraft(
+  outputId: string,
+  input: CreateInitiativeDraftRequest
+): Promise<unknown> {
   const res = await handle<{ draft: unknown }>(
     fetchWithRetry(`${BASE}/outputs/${outputId}/initiative-drafts`, {
       method: 'POST',
@@ -652,7 +804,10 @@ export async function listOutputRevisions(
   outputId: string
 ): Promise<readonly MethodOutputRevisionSummary[]> {
   const body = await handle<unknown>(
-    fetchWithRetry(`${BASE}/outputs/${outputId}/revisions`, { method: 'GET', headers: getHeaders() })
+    fetchWithRetry(`${BASE}/outputs/${outputId}/revisions`, {
+      method: 'GET',
+      headers: getHeaders(),
+    })
   );
   const data = unwrapData<unknown>(body);
   const rows = extractArray<unknown>(data, ['revisions', 'items']);
@@ -896,7 +1051,10 @@ export async function getInitiativeDraft(id: string): Promise<MethodInitiativeDr
  */
 export async function getSessionLineage(sessionId: string): Promise<unknown> {
   const body = await handle<unknown>(
-    fetchWithRetry(`${BASE}/sessions/${sessionId}/lineage`, { method: 'GET', headers: getHeaders() })
+    fetchWithRetry(`${BASE}/sessions/${sessionId}/lineage`, {
+      method: 'GET',
+      headers: getHeaders(),
+    })
   );
   return unwrapData<unknown>(body);
 }

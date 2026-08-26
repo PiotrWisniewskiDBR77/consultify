@@ -7694,6 +7694,85 @@
     "defaultSessionName": "Interview Session"
   },
   "assessment": {
+    "reportView": {
+      "assessment": "Assessment",
+      "report": "Report",
+      "title": "Assessment report — 7 chapters",
+      "loading": "Loading the assessment report…",
+      "empty": "The report contract contains no chapters",
+      "draft": "Draft",
+      "revision": "Revision {{revision}}",
+      "generate": "Generate",
+      "planned": "Planned",
+      "panelLabel": "Assessment report panel",
+      "property": "Property",
+      "value": "Value",
+      "noFrozenOutput": "No frozen output",
+      "notAssessedValue": "— (not assessed)",
+      "skipWriteError": "The skip code was not saved — try again.",
+      "toComplete": "To be completed",
+      "emptySlot": "Section to be completed — {{min}}–{{max}} word limit.",
+      "wordLimit": "{{min}}–{{max}} word limit",
+      "panel": { "actions": "Actions", "properties": "Properties" },
+      "export": { "pdf": "Export PDF", "all": "Export everything" },
+      "sections": {
+        "introduction": "Axis introduction",
+        "matrix": "Axis matrix and caption",
+        "comments": "Comment per area",
+        "conclusion": "Axis conclusions"
+      },
+      "matrix": {
+        "area": "Area",
+        "current": "Current level",
+        "target": "Target level",
+        "gap": "Gap",
+        "evidence": "Evidence state",
+        "skips": "Skipped questions"
+      },
+      "evidence": {
+        "evidenced": "Evidence confirmed",
+        "incomplete": "Incomplete evidence",
+        "declared": "Declared without evidence",
+        "notAssessed": "Not assessed"
+      },
+      "microstructure": {
+        "stan_faktyczny": "Current facts",
+        "ocena_i_wiarygodnosc": "Assessment and reliability",
+        "znaczenie_dla_przedsiebiorstwa": "Business significance",
+        "luka_i_sens_targetu": "Gap and target rationale",
+        "najblizszy_krok": "Next step"
+      },
+      "decision": {
+        "direction": "Recommended direction",
+        "priority": "Priority",
+        "horizon": "Horizon",
+        "successCondition": "Success condition"
+      },
+      "skips": {
+        "whole": "Area skipped in full · {{count}} questions",
+        "partial": "Area assessed · skipped {{count}} of {{total}} questions",
+        "question": "Question {{question}} — {{reason}}"
+      },
+      "traceability": {
+        "title": "Traceability",
+        "counts": "Answers: {{answers}} · Evidence: {{evidence}} · Locators: {{sources}}"
+      },
+      "properties": {
+        "revision": "Revision",
+        "outputId": "Frozen output",
+        "generatedAt": "Generated",
+        "methodVersion": "Method version",
+        "contractVersion": "Contract version",
+        "sessionId": "Session"
+      },
+      "errors": {
+        "offline": "No connection",
+        "notFound": "The session does not exist or you cannot access it",
+        "noOrganization": "Organization context is missing",
+        "version": "Unsupported report contract version",
+        "generic": "Could not load the report"
+      }
+    },
     "hub": {
       "errors": {
         "load": "Failed to load assessments"

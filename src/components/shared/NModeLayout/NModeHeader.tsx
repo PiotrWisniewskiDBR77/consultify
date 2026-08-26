@@ -246,6 +246,7 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
   primaryAction,
   extraOverflowItems,
   showChatButton = false,
+  hideSaveState = false,
   // NOTE: `statusDotColor` (deprecated, D-B) is intentionally NOT destructured
   // or rendered — the bare dot is replaced by the status pill above. The prop
   // stays in NModeHeaderConfig (accepted) so cards that still pass it typecheck.
@@ -436,15 +437,20 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
             </span>
           )}
 
-          {/* Save-state indicator — text, not a control (D-C). */}
-          <span
-            className={`shrink-0 whitespace-nowrap text-xs ${
-              effectiveSaveState === 'error' ? 'text-c-danger' : 'text-c-text-muted'
-            }`}
-            title={saveInfo.title}
-          >
-            {saveInfo.label}
-          </span>
+          {/* Save-state indicator — text, not a control (D-C). Read-only
+              documents (e.g. the assessment report view) pass
+              `hideSaveState` to gate it off entirely — there is nothing to
+              save, so "Zapisano"/"Zapisywanie…" would be misleading. */}
+          {!hideSaveState && (
+            <span
+              className={`shrink-0 whitespace-nowrap text-xs ${
+                effectiveSaveState === 'error' ? 'text-c-danger' : 'text-c-text-muted'
+              }`}
+              title={saveInfo.title}
+            >
+              {saveInfo.label}
+            </span>
+          )}
         </div>
 
         {/* Action buttons */}

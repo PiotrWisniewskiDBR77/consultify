@@ -6959,6 +6959,85 @@
     "defaultSessionName": "Sesja wywiadu"
   },
   "assessment": {
+    "reportView": {
+      "assessment": "Ocena",
+      "report": "Raport",
+      "title": "Raport Oceny — 7 rozdziałów",
+      "loading": "Wczytywanie raportu Oceny…",
+      "empty": "Kontrakt raportu nie zawiera rozdziałów",
+      "draft": "Szkic",
+      "revision": "Rewizja {{revision}}",
+      "generate": "Generuj",
+      "planned": "Planowane",
+      "panelLabel": "Panel raportu Oceny",
+      "property": "Właściwość",
+      "value": "Wartość",
+      "noFrozenOutput": "Brak zamrożonego wyniku",
+      "notAssessedValue": "— (nie oceniono)",
+      "skipWriteError": "Kod pominięcia nie został zapisany — spróbuj ponownie.",
+      "toComplete": "Do uzupełnienia",
+      "emptySlot": "Sekcja do uzupełnienia — limit {{min}}–{{max}} słów.",
+      "wordLimit": "Limit {{min}}–{{max}} słów",
+      "panel": { "actions": "Akcje", "properties": "Właściwości" },
+      "export": { "pdf": "Eksportuj PDF", "all": "Eksportuj wszystko" },
+      "sections": {
+        "introduction": "Wstęp do osi",
+        "matrix": "Macierz osi i podpis",
+        "comments": "Komentarz per obszar",
+        "conclusion": "Wnioski osi"
+      },
+      "matrix": {
+        "area": "Obszar",
+        "current": "Poziom obecny",
+        "target": "Poziom docelowy",
+        "gap": "Luka",
+        "evidence": "Stan dowodów",
+        "skips": "Pominięcia"
+      },
+      "evidence": {
+        "evidenced": "Potwierdzono dowodami",
+        "incomplete": "Dowody niepełne",
+        "declared": "Deklaracja bez dowodu",
+        "notAssessed": "Nie oceniono"
+      },
+      "microstructure": {
+        "stan_faktyczny": "Stan faktyczny",
+        "ocena_i_wiarygodnosc": "Ocena i wiarygodność",
+        "znaczenie_dla_przedsiebiorstwa": "Znaczenie dla przedsiębiorstwa",
+        "luka_i_sens_targetu": "Luka i sens targetu",
+        "najblizszy_krok": "Najbliższy krok"
+      },
+      "decision": {
+        "direction": "Rekomendowany kierunek",
+        "priority": "Priorytet",
+        "horizon": "Horyzont",
+        "successCondition": "Warunek powodzenia"
+      },
+      "skips": {
+        "whole": "Obszar pominięty w całości · {{count}} pytań",
+        "partial": "Obszar oceniany · pominięto {{count}} z {{total}} pytań",
+        "question": "Pytanie {{question}} — {{reason}}"
+      },
+      "traceability": {
+        "title": "Śledzenie źródeł",
+        "counts": "Odpowiedzi: {{answers}} · Dowody: {{evidence}} · Lokalizatory: {{sources}}"
+      },
+      "properties": {
+        "revision": "Rewizja",
+        "outputId": "Zamrożony wynik",
+        "generatedAt": "Wygenerowano",
+        "methodVersion": "Wersja metody",
+        "contractVersion": "Wersja kontraktu",
+        "sessionId": "Sesja"
+      },
+      "errors": {
+        "offline": "Brak połączenia",
+        "notFound": "Sesja nie istnieje lub nie masz do niej dostępu",
+        "noOrganization": "Brak kontekstu organizacji",
+        "version": "Nieobsługiwana wersja kontraktu raportu",
+        "generic": "Nie udało się wczytać raportu"
+      }
+    },
     "hub": {
       "errors": {
         "load": "Nie udało się załadować ocen"

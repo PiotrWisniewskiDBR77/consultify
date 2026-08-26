@@ -778,6 +778,91 @@
     }
   },
   "assessment": {
+    "reportView": {
+      "assessment": "Evaluación",
+      "report": "Informe",
+      "title": "Informe de evaluación — 7 capítulos",
+      "loading": "Cargando el informe de evaluación…",
+      "empty": "El contrato del informe no contiene capítulos",
+      "draft": "Borrador",
+      "revision": "Revisión {{revision}}",
+      "generate": "Generar",
+      "planned": "Planificado",
+      "panelLabel": "Panel del informe de evaluación",
+      "property": "Propiedad",
+      "value": "Valor",
+      "noFrozenOutput": "Sin resultado congelado",
+      "notAssessedValue": "— (no evaluado)",
+      "skipWriteError": "El código de omisión no se guardó — inténtalo de nuevo.",
+      "toComplete": "Por completar",
+      "emptySlot": "Sección por completar — límite de {{min}}–{{max}} palabras.",
+      "wordLimit": "Límite de {{min}}–{{max}} palabras",
+      "panel": {
+        "actions": "Acciones",
+        "properties": "Propiedades"
+      },
+      "export": {
+        "pdf": "Exportar PDF",
+        "all": "Exportar todo"
+      },
+      "sections": {
+        "introduction": "Introducción del eje",
+        "matrix": "Matriz del eje y leyenda",
+        "comments": "Comentario por área",
+        "conclusion": "Conclusiones del eje"
+      },
+      "matrix": {
+        "area": "Área",
+        "current": "Nivel actual",
+        "target": "Nivel objetivo",
+        "gap": "Brecha",
+        "evidence": "Estado de evidencia",
+        "skips": "Preguntas omitidas"
+      },
+      "evidence": {
+        "evidenced": "Confirmado con evidencia",
+        "incomplete": "Evidencia incompleta",
+        "declared": "Declarado sin evidencia",
+        "notAssessed": "No evaluado"
+      },
+      "microstructure": {
+        "stan_faktyczny": "Situación actual",
+        "ocena_i_wiarygodnosc": "Evaluación y fiabilidad",
+        "znaczenie_dla_przedsiebiorstwa": "Relevancia para la empresa",
+        "luka_i_sens_targetu": "Brecha y justificación del objetivo",
+        "najblizszy_krok": "Siguiente paso"
+      },
+      "decision": {
+        "direction": "Dirección recomendada",
+        "priority": "Prioridad",
+        "horizon": "Horizonte",
+        "successCondition": "Condición de éxito"
+      },
+      "skips": {
+        "whole": "Área omitida por completo · {{count}} preguntas",
+        "partial": "Área evaluada · {{count}} de {{total}} preguntas omitidas",
+        "question": "Pregunta {{question}} — {{reason}}"
+      },
+      "traceability": {
+        "title": "Trazabilidad",
+        "counts": "Respuestas: {{answers}} · Evidencias: {{evidence}} · Localizadores: {{sources}}"
+      },
+      "properties": {
+        "revision": "Revisión",
+        "outputId": "Resultado congelado",
+        "generatedAt": "Generado",
+        "methodVersion": "Versión del método",
+        "contractVersion": "Versión del contrato",
+        "sessionId": "Sesión"
+      },
+      "errors": {
+        "offline": "Sin conexión",
+        "notFound": "La sesión no existe o no tienes acceso a ella",
+        "noOrganization": "Falta el contexto de la organización",
+        "version": "Versión del contrato del informe no compatible",
+        "generic": "No se pudo cargar el informe"
+      }
+    },
     "title": "Evaluación",
     "overview": "Resumen",
     "drd": "Evaluación DRD",

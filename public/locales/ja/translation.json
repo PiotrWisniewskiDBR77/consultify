@@ -776,6 +776,91 @@
     }
   },
   "assessment": {
+    "reportView": {
+      "assessment": "アセスメント",
+      "report": "レポート",
+      "title": "アセスメントレポート — 全7章",
+      "loading": "アセスメントレポートを読み込み中…",
+      "empty": "レポートコントラクトに章が含まれていません",
+      "draft": "下書き",
+      "revision": "リビジョン {{revision}}",
+      "generate": "生成",
+      "planned": "予定",
+      "panelLabel": "アセスメントレポートパネル",
+      "property": "プロパティ",
+      "value": "値",
+      "noFrozenOutput": "確定済みの出力はありません",
+      "notAssessedValue": "— (未評価)",
+      "skipWriteError": "スキップコードを保存できませんでした — もう一度お試しください。",
+      "toComplete": "未記入",
+      "emptySlot": "未記入のセクション — {{min}}〜{{max}}語の上限。",
+      "wordLimit": "{{min}}〜{{max}}語の上限",
+      "panel": {
+        "actions": "アクション",
+        "properties": "プロパティ"
+      },
+      "export": {
+        "pdf": "PDFを書き出す",
+        "all": "すべてを書き出す"
+      },
+      "sections": {
+        "introduction": "軸の概要",
+        "matrix": "軸のマトリクスと注記",
+        "comments": "領域ごとのコメント",
+        "conclusion": "軸の結論"
+      },
+      "matrix": {
+        "area": "領域",
+        "current": "現在のレベル",
+        "target": "目標レベル",
+        "gap": "ギャップ",
+        "evidence": "エビデンスの状態",
+        "skips": "スキップされた質問"
+      },
+      "evidence": {
+        "evidenced": "エビデンスで確認済み",
+        "incomplete": "エビデンス不十分",
+        "declared": "エビデンスなしで申告",
+        "notAssessed": "未評価"
+      },
+      "microstructure": {
+        "stan_faktyczny": "現状",
+        "ocena_i_wiarygodnosc": "評価と信頼性",
+        "znaczenie_dla_przedsiebiorstwa": "事業における重要性",
+        "luka_i_sens_targetu": "ギャップと目標の妥当性",
+        "najblizszy_krok": "次のステップ"
+      },
+      "decision": {
+        "direction": "推奨される方向性",
+        "priority": "優先度",
+        "horizon": "時間軸",
+        "successCondition": "成功条件"
+      },
+      "skips": {
+        "whole": "領域全体をスキップ · {{count}}件の質問",
+        "partial": "領域を評価 · {{total}}件中{{count}}件の質問をスキップ",
+        "question": "質問 {{question}} — {{reason}}"
+      },
+      "traceability": {
+        "title": "トレーサビリティ",
+        "counts": "回答: {{answers}} · エビデンス: {{evidence}} · 参照元: {{sources}}"
+      },
+      "properties": {
+        "revision": "リビジョン",
+        "outputId": "確定済みの出力",
+        "generatedAt": "生成日時",
+        "methodVersion": "メソッドバージョン",
+        "contractVersion": "コントラクトバージョン",
+        "sessionId": "セッション"
+      },
+      "errors": {
+        "offline": "接続なし",
+        "notFound": "セッションが存在しないか、アクセス権がありません",
+        "noOrganization": "組織コンテキストがありません",
+        "version": "サポートされていないレポートコントラクトのバージョンです",
+        "generic": "レポートを読み込めませんでした"
+      }
+    },
     "title": "アセスメント",
     "overview": "概要",
     "drd": "DRDアセスメント",

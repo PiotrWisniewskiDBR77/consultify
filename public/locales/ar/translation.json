@@ -781,6 +781,91 @@
     }
   },
   "assessment": {
+    "reportView": {
+      "assessment": "التقييم",
+      "report": "التقرير",
+      "title": "تقرير التقييم — 7 فصول",
+      "loading": "جارٍ تحميل تقرير التقييم…",
+      "empty": "لا يحتوي عقد التقرير على أي فصول",
+      "draft": "مسودة",
+      "revision": "المراجعة {{revision}}",
+      "generate": "إنشاء",
+      "planned": "مخطَّط",
+      "panelLabel": "لوحة تقرير التقييم",
+      "property": "الخاصية",
+      "value": "القيمة",
+      "noFrozenOutput": "لا توجد نتيجة مجمَّدة",
+      "notAssessedValue": "— (لم يتم التقييم)",
+      "skipWriteError": "لم يتم حفظ رمز التخطي — يرجى المحاولة مرة أخرى.",
+      "toComplete": "قيد الإكمال",
+      "emptySlot": "قسم قيد الإكمال — الحد {{min}}–{{max}} كلمة.",
+      "wordLimit": "الحد {{min}}–{{max}} كلمة",
+      "panel": {
+        "actions": "الإجراءات",
+        "properties": "الخصائص"
+      },
+      "export": {
+        "pdf": "تصدير PDF",
+        "all": "تصدير الكل"
+      },
+      "sections": {
+        "introduction": "مقدمة المحور",
+        "matrix": "مصفوفة المحور والتعليق التوضيحي",
+        "comments": "تعليق لكل مجال",
+        "conclusion": "استنتاجات المحور"
+      },
+      "matrix": {
+        "area": "المجال",
+        "current": "المستوى الحالي",
+        "target": "المستوى المستهدف",
+        "gap": "الفجوة",
+        "evidence": "حالة الأدلة",
+        "skips": "الأسئلة المتخطاة"
+      },
+      "evidence": {
+        "evidenced": "مؤكَّد بالأدلة",
+        "incomplete": "أدلة غير مكتملة",
+        "declared": "مصرَّح به دون دليل",
+        "notAssessed": "لم يتم التقييم"
+      },
+      "microstructure": {
+        "stan_faktyczny": "الوضع الفعلي",
+        "ocena_i_wiarygodnosc": "التقييم والموثوقية",
+        "znaczenie_dla_przedsiebiorstwa": "الأهمية بالنسبة للمؤسسة",
+        "luka_i_sens_targetu": "الفجوة ومبرر الهدف",
+        "najblizszy_krok": "الخطوة التالية"
+      },
+      "decision": {
+        "direction": "الاتجاه الموصى به",
+        "priority": "الأولوية",
+        "horizon": "الأفق الزمني",
+        "successCondition": "شرط النجاح"
+      },
+      "skips": {
+        "whole": "تم تخطي المجال بالكامل · {{count}} أسئلة",
+        "partial": "تم تقييم المجال · تم تخطي {{count}} من {{total}} أسئلة",
+        "question": "السؤال {{question}} — {{reason}}"
+      },
+      "traceability": {
+        "title": "إمكانية التتبع",
+        "counts": "الإجابات: {{answers}} · الأدلة: {{evidence}} · مواقع المصادر: {{sources}}"
+      },
+      "properties": {
+        "revision": "المراجعة",
+        "outputId": "النتيجة المجمَّدة",
+        "generatedAt": "تاريخ الإنشاء",
+        "methodVersion": "إصدار المنهجية",
+        "contractVersion": "إصدار العقد",
+        "sessionId": "الجلسة"
+      },
+      "errors": {
+        "offline": "لا يوجد اتصال",
+        "notFound": "الجلسة غير موجودة أو ليس لديك صلاحية الوصول إليها",
+        "noOrganization": "سياق المؤسسة مفقود",
+        "version": "إصدار عقد التقرير غير مدعوم",
+        "generic": "تعذَّر تحميل التقرير"
+      }
+    },
     "title": "التقييم",
     "overview": "نظرة عامة",
     "drd": "تقييم DRD",
