@@ -7521,6 +7521,7 @@
       "value": "Value",
       "noFrozenOutput": "No frozen output",
       "notAssessedValue": "— (not assessed)",
+      "skipWriteError": "The skip code was not saved — try again.",
       "toComplete": "To be completed",
       "emptySlot": "Section to be completed — {{min}}–{{max}} word limit.",
       "wordLimit": "{{min}}–{{max}} word limit",

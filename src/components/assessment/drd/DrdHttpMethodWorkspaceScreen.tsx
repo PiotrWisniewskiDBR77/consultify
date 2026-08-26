@@ -38,6 +38,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { MethodWorkspaceShell } from '@/components/method-workspace/MethodWorkspaceShell';
 import { LiveMatrix } from '@/components/method-workspace/LiveMatrix';
@@ -54,6 +55,12 @@ import {
 } from '@/components/method-workspace/skipReasonCodes';
 import { useAssessmentSaveIndicator } from '@/hooks/useAssessmentSaveIndicator';
 import { DRD_METHOD_PACK_ID } from '@/method-core/methods/drd/compileDrdPack';
+import {
+  isOfflineError,
+  MethodCoreApiError,
+  newIdempotencyKey,
+  recordAssessmentSkipReason,
+} from '@/method-core/api/methodCoreApi';
 import { drdAdapter } from '@/method-core/methods/drd/drdAdapter';
 import {
   DrdHttpSessionRuntime,
@@ -401,6 +408,7 @@ const ErrorRetryView: React.FC<{ message: string; onRetry: () => void; onExit: (
 export const DrdHttpMethodWorkspaceScreen: React.FC<
   HttpScreenProps & { forceState?: DrdHttpDebugForcedState }
 > = ({ storage: storageProp, demoSessionId, onExit, seedTo, initialViewMode, forceState }) => {
+  const { t } = useTranslation();
   const storage = storageProp ?? window.localStorage;
   const runtimeRef = useRef<DrdHttpSessionRuntime | null>(null);
   // React 18 StrictMode (dev only) double-invokes effects: mount -> cleanup
@@ -415,6 +423,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
   const forceStateAppliedRef = useRef(false);
   const [state, setState] = useState<DrdHttpRuntimeState | null>(null);
   const [bootError, setBootError] = useState<string | null>(null);
+  const [skipWriteError, setSkipWriteError] = useState(false);
   const [viewMode, setViewMode] = useState<MethodWorkspaceViewMode>(initialViewMode ?? 'interview');
   const [mode, setMode] = useState<'guided_manual' | 'teresa_led'>('guided_manual');
   const [activeAxisId, setActiveAxisId] = useState<number>(DRD_STRUCTURE[0].id);
@@ -731,6 +740,31 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
           text: draftAnswerText[questionId],
           justification: formatSkipJustification(reasonCode),
         });
+        const sessionId = state.session?.id;
+        if (sessionId) {
+          const idempotencyKey = `skip-code:${sessionId}:${activeArea.id}:${questionId}:${focusLevelFallback}:${newIdempotencyKey()}`;
+          const input = {
+            unitId: activeArea.id,
+            questionId,
+            level: focusLevelFallback,
+            skipCode: reasonCode,
+          } as const;
+          setSkipWriteError(false);
+          for (let attempt = 0; attempt < 2; attempt += 1) {
+            try {
+              await recordAssessmentSkipReason(sessionId, input, idempotencyKey);
+              break;
+            } catch (error) {
+              const retryable =
+                isOfflineError(error) ||
+                (error instanceof MethodCoreApiError && error.status >= 500);
+              if (!retryable || attempt === 1) {
+                setSkipWriteError(true);
+                break;
+              }
+            }
+          }
+        }
       }
       handleUnitNav(1);
     },
@@ -742,6 +776,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
       focusQuestions,
       draftAnswerText,
       handleUnitNav,
+      state.session?.id,
     ]
   );
 
@@ -996,6 +1031,15 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
           </button>
         </div>
       )}
+      {skipWriteError ? (
+        <div
+          role="alert"
+          className="flex items-center gap-2 border-b border-c-warning/30 bg-c-warning/10 px-4 py-1.5 text-xs text-c-warning"
+        >
+          <AlertTriangle size={12} />
+          {t('assessment.reportView.skipWriteError')}
+        </div>
+      ) : null}
       <div className="min-h-0 flex-1">
         <MethodWorkspaceShell
           session={session}

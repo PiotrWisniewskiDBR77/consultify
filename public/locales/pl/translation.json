@@ -6839,6 +6839,7 @@
       "value": "Wartość",
       "noFrozenOutput": "Brak zamrożonego wyniku",
       "notAssessedValue": "— (nie oceniono)",
+      "skipWriteError": "Kod pominięcia nie został zapisany — spróbuj ponownie.",
       "toComplete": "Do uzupełnienia",
       "emptySlot": "Sekcja do uzupełnienia — limit {{min}}–{{max}} słów.",
       "wordLimit": "Limit {{min}}–{{max}} słów",

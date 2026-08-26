@@ -45,7 +45,12 @@ export class MethodCoreApiError extends Error {
    * this is the signal the UI's `offline` state is built on. */
   readonly isNetworkError: boolean;
 
-  constructor(message: string, status: number, body: Record<string, unknown>, isNetworkError = false) {
+  constructor(
+    message: string,
+    status: number,
+    body: Record<string, unknown>,
+    isNetworkError = false
+  ) {
     super(message);
     this.name = 'MethodCoreApiError';
     this.status = status;
@@ -54,8 +59,12 @@ export class MethodCoreApiError extends Error {
   }
 }
 
-export function isVersionConflict(err: unknown): err is MethodCoreApiError & { body: { currentVersion: number } } {
-  return err instanceof MethodCoreApiError && err.status === 409 && err.body.error === 'version_conflict';
+export function isVersionConflict(
+  err: unknown
+): err is MethodCoreApiError & { body: { currentVersion: number } } {
+  return (
+    err instanceof MethodCoreApiError && err.status === 409 && err.body.error === 'version_conflict'
+  );
 }
 
 export function isAuthError(err: unknown): boolean {
@@ -235,6 +244,27 @@ export async function getAssessmentReportContract(
   return response.reportContract;
 }
 
+export interface RecordAssessmentSkipReasonInput {
+  readonly unitId: string;
+  readonly questionId: string;
+  readonly level: number;
+  readonly skipCode: AssessmentReportSkipCode;
+}
+
+export async function recordAssessmentSkipReason(
+  sessionId: string,
+  input: RecordAssessmentSkipReasonInput,
+  idempotencyKey: string
+): Promise<{ readonly skipReason: unknown }> {
+  return handle(
+    fetchWithRetry(`${BASE}/sessions/${sessionId}/assessment-skip-reasons`, {
+      method: 'POST',
+      headers: { ...getHeaders(), ...idempotencyHeader(idempotencyKey) },
+      body: JSON.stringify(input),
+    })
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Sessions
 // ---------------------------------------------------------------------------
@@ -274,7 +304,9 @@ export async function createSession(
 export async function getSession(
   sessionId: string
 ): Promise<{ session: MethodSession; roles: MethodProcessRole[] }> {
-  return handle(fetchWithRetry(`${BASE}/sessions/${sessionId}`, { method: 'GET', headers: getHeaders() }));
+  return handle(
+    fetchWithRetry(`${BASE}/sessions/${sessionId}`, { method: 'GET', headers: getHeaders() })
+  );
 }
 
 /** One row of `GET /api/method/sessions` — a `MethodSession` plus the one
@@ -394,7 +426,10 @@ export interface TeresaPreviewRequest {
   readonly ttlMs?: number;
 }
 
-export async function teresaPreview(sessionId: string, input: TeresaPreviewRequest): Promise<TeresaPreview> {
+export async function teresaPreview(
+  sessionId: string,
+  input: TeresaPreviewRequest
+): Promise<TeresaPreview> {
   const res = await handle<{ preview: TeresaPreview }>(
     fetchWithRetry(`${BASE}/sessions/${sessionId}/teresa/preview`, {
       method: 'POST',
@@ -496,8 +531,14 @@ export interface MethodOutputSummary {
 
 export async function getOutput(
   outputId: string
-): Promise<{ output: MethodOutputSummary; superseded: boolean; supersededByOutputId: string | null }> {
-  return handle(fetchWithRetry(`${BASE}/outputs/${outputId}`, { method: 'GET', headers: getHeaders() }));
+): Promise<{
+  output: MethodOutputSummary;
+  superseded: boolean;
+  supersededByOutputId: string | null;
+}> {
+  return handle(
+    fetchWithRetry(`${BASE}/outputs/${outputId}`, { method: 'GET', headers: getHeaders() })
+  );
 }
 
 export interface CreateReportRequest {
@@ -529,7 +570,10 @@ export interface CreateInitiativeDraftRequest {
   readonly confidence: 'low' | 'medium' | 'high';
 }
 
-export async function createInitiativeDraft(outputId: string, input: CreateInitiativeDraftRequest): Promise<unknown> {
+export async function createInitiativeDraft(
+  outputId: string,
+  input: CreateInitiativeDraftRequest
+): Promise<unknown> {
   const res = await handle<{ draft: unknown }>(
     fetchWithRetry(`${BASE}/outputs/${outputId}/initiative-drafts`, {
       method: 'POST',
@@ -760,7 +804,10 @@ export async function listOutputRevisions(
   outputId: string
 ): Promise<readonly MethodOutputRevisionSummary[]> {
   const body = await handle<unknown>(
-    fetchWithRetry(`${BASE}/outputs/${outputId}/revisions`, { method: 'GET', headers: getHeaders() })
+    fetchWithRetry(`${BASE}/outputs/${outputId}/revisions`, {
+      method: 'GET',
+      headers: getHeaders(),
+    })
   );
   const data = unwrapData<unknown>(body);
   const rows = extractArray<unknown>(data, ['revisions', 'items']);
@@ -1004,7 +1051,10 @@ export async function getInitiativeDraft(id: string): Promise<MethodInitiativeDr
  */
 export async function getSessionLineage(sessionId: string): Promise<unknown> {
   const body = await handle<unknown>(
-    fetchWithRetry(`${BASE}/sessions/${sessionId}/lineage`, { method: 'GET', headers: getHeaders() })
+    fetchWithRetry(`${BASE}/sessions/${sessionId}/lineage`, {
+      method: 'GET',
+      headers: getHeaders(),
+    })
   );
   return unwrapData<unknown>(body);
 }
