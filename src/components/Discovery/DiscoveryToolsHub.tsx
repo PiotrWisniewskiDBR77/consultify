@@ -2190,6 +2190,34 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         label: t('tools.hub.outputs.columns.updated', 'Updated'),
         width: '120px',
         sortable: true,
+        // Insights/Outputs date-format fix (2026-08-27): without an explicit
+        // `render`, FilterableTable's default `updatedAt` handling mixes a
+        // relative label ("Xd ago") for rows under 7 days with a raw,
+        // non-localized `d.toLocaleDateString()` (always en-US M/D/YYYY,
+        // regardless of app language) for anything older — two different
+        // formats in the same column, the second one never in Polish. Same
+        // absolute-date mechanism ReportsAndPresentations/
+        // OutputsAggregateTabContent.tsx already uses for its Materials
+        // "Data" column: one consistent, locale-aware format for every row.
+        sortAccessor: (row: any) => {
+          const d = new Date(row?.updatedAt);
+          return Number.isNaN(d.getTime()) ? 0 : d.getTime();
+        },
+        render: (row: any) => {
+          const d = new Date(row?.updatedAt);
+          if (Number.isNaN(d.getTime())) {
+            return <span className="text-sm text-c-text-muted">—</span>;
+          }
+          return (
+            <span className="text-sm text-c-text-muted">
+              {d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+              })}
+            </span>
+          );
+        },
       },
     ],
     [isPolish, t]
