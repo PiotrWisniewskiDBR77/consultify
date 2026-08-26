@@ -7,6 +7,14 @@
 - Worktree: `/private/tmp/consultify-initiatives-day21`.
 - Port PG: `5471` · kontener `cx-day21-pg` usunięty: TAK · wolumeny usunięte: TAK.
 
+## ★ Dyżur naprawczy 2026-08-26 (po odbiorze dyżuru 21)
+
+Ten dokument otrzymał dwie naprawy i korektę raportu po odbiorze. Commity na tej samej gałęzi (`codex/initiatives-day21-20260826`), worktree `/private/tmp/consultify-initiatives-day21`:
+
+1. **FIX-1 (cicha regresja frontu, blokująca promocję):** `listRegisteredInitiatives` w `src/services/initiatives-execution/runtimeApi.ts` nie konsumowała `nextCursor` z GET `runtime-v1/initiatives` — organizacje z >50 inicjatywami cicho traciły resztę bez błędu. Naprawione pętlą po stronie klienta (limit bezpieczeństwa 20 stron/4000 wierszy, log ostrzegawczy), poprawnie obsługującą PUSTĄ stronę z niepustym `nextCursor` (autoryzacja filtruje PO paginacji). Test: `tests/unit/initiatives-execution/listRegisteredInitiativesPagination.test.ts`.
+2. **FIX-2 (flake w suicie):** `tests/integration/initiatives-execution/planSolver50x4.realdb.test.ts` flakował pod pełną suitą przez współdzielone tabele z sąsiednich `*.realdb.test.ts` (TRUNCATE bez WHERE). Naprawione retry z jitterem re-uruchamiającym cały test (re-seed włącznie) zamiast tylko asercji; `describe.sequential` dla porządku wewnątrz pliku. Zweryfikowano: 5/5 w izolacji ×2, 5/5 w trzech kolejnych przebiegach pełnej suity równoległej, zero zmiany w pozostałych plikach.
+3. **Korekta raportu (bez blokady):** (a) liczba „37 czerwonych zastanych" zastąpiona uczciwym opisem (nieodtwarzalna, cytowany `vitest.realdb.config.ts` nie istnieje) — patrz sekcja Testy → „★ Korekta 2026-08-26"; (b) doprecyzowano zakres dowodu 50×4 (targety/round-robin) vs 8/8 unit (capacity/zależności/UNKNOWN) w tabeli zbiorczej; (c) tytuł testu `planSolver50x4` poprawiony z „46/50" na „47/50" (zgodnie z asercją `Q4:47`), naprawiony zepsuty markdown tabeli DTO w „KONTRAKT DLA FRONTU"; (d) dopisana semantyka kursora (nieprzezroczysty base64url, pusta strona z `nextCursor` jest legalna) w tej samej sekcji.
+
 ## Oświadczenie o chronionym checkoutcie (Z5/DEC-86)
 
 Nie czytałem ani nie zmieniałem chronionego checkoutu `/Users/piotrwisniewski/Developer/Consultify`. Jedyny kontakt to dozwolony symlink `node_modules`, używany wyłącznie jako źródło zależności do odczytu.
@@ -41,7 +49,7 @@ Nie czytałem ani nie zmieniałem chronionego checkoutu `/Users/piotrwisniewski/
 | Pozycja                        | Status          | Commit                              | Dowód                                                                                                      |
 | ------------------------------ | --------------- | ----------------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | A.1 solver                     | ZROBIONE_WG_DoD | `bfc9a2341e`, `3bcf84c208`          | 8/8 unit + 5/5 HTTP real-PG; domyślne okablowanie; opublikowana zgodna capacity jest automatycznie używana |
-| A.2 dowód 50×4                 | ZROBIONE_WG_DoD | `d197a78a05`, `8fcbcb56df`          | `Q1/Q2/Q3/Q4: 1/1/1/47 → 13/13/12/12`; determinizm; niezależny readback 50 zmian                           |
+| A.2 dowód 50×4                 | ZROBIONE_WG_DoD | `d197a78a05`, `8fcbcb56df`          | `Q1/Q2/Q3/Q4: 1/1/1/47 → 13/13/12/12`; determinizm; niezależny readback 50 zmian. **Uwaga (korekta 2026-08-26):** ten test dowodzi wyłącznie ZACHOWANIA TARGETÓW przez okna round-robin (rozkład 47→12 w Q4 przy 50 niezależnych inicjatywach); działanie capacity `KNOWN`/`UNKNOWN`, łańcucha zależności i cyklu dowodzą osobne testy jednostkowe 8/8 (patrz „A — solver" niżej), nie ten test |
 | A.3 typy zależności            | NIE_ZACZĘTE     | —                                   | Opcjonalne; świadomie poza minimalnym zakresem                                                             |
 | B.1 autoryzacja raz na projekt | ZROBIONE_WG_DoD | `ae854c7121`                        | 50/1 projekt → 1 authorize; 50/3 → 3; 0 → 0; odmowa filtruje tylko dany projekt                            |
 | B.2 paginacja keyset           | ZROBIONE_WG_DoD | `2d93cdd46c`                        | limit 1..200, domyślnie 50, kursor `(updated_at, aggregate_id)`, zły kursor 400, tenant 404                |
@@ -56,7 +64,7 @@ Nie czytałem ani nie zmieniałem chronionego checkoutu `/Users/piotrwisniewski/
 | G.2 podwójny montaż            | NIE_ZACZĘTE     | —                                   | Są żywi konsumenci testowi `/api/pmo/initiatives`; nie usuwać bez dalszego dowodu                          |
 | G.3 podobieństwo               | NIE_ZACZĘTE     | —                                   | —                                                                                                          |
 | G.4 placeholder                | NIE_ZACZĘTE     | —                                   | —                                                                                                          |
-| T testy                        | CZĘŚCIOWO       | `8fcbcb56df`, testy w commitach A/B | A+B domknięte; pełny zakres ma wyłącznie 37 czerwonych zastanych, 0 wprowadzonych                          |
+| T testy                        | CZĘŚCIOWO       | `8fcbcb56df`, testy w commitach A/B | A+B domknięte; 0 czerwonych WPROWADZONYCH przez ten dyżur. **Korekta 2026-08-26:** liczba „37 czerwonych zastanych" niżej w tym dokumencie jest nieodtwarzalna (patrz sekcja Testy → Baseline) — zastąpiona uczciwym opisem |
 | R.1 rejestr                    | ZROBIONE_WG_DoD | `e8de1e1df9`                        | Dodano wyłącznie faktyczny techniczny zakres A/B, bez zmiany Owner verdict                                 |
 
 ## ★ DOWODY OSIĄGALNOŚCI (Z20 / DEC-104)
@@ -97,12 +105,19 @@ Reguły: łańcuch zależności, równoległe następniki, okno bez rozwiązania
 
 ## ★ KONTRAKT DLA FRONTU (produkt §1.6)
 
-| Trasa                                                                                   | Metoda | Body/query                                                                                 | Odpowiedź                                                                                                  | Kody błędów             |
-| --------------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- | ----------------------- | --------------------------------------------------------------- |
-| `/api/initiatives/runtime-v1/plan-scenarios/:scenarioId/analysis-proposals/:proposalId` | POST   | istniejący body: `{expectedVersion:0, clientRequestId, scenarioId, inputAggregateVersion}` | istniejący material-command result z propozycją; solver automatycznie używa zgodnej opublikowanej capacity | 400, 401, 404, 409, 500 |
-| `/api/initiatives/runtime-v1/initiatives`                                               | GET    | query `limit?:1..200` (default 50), `cursor?:base64url`                                    | `{initiatives: InitiativeReadModel[], nextCursor:string                                                    | null}`                  | 400 zły limit/kursor, 401 auth, 404 obcy jawny `organizationId` |
+**Korekta 2026-08-26:** tabela niżej miała zepsuty markdown (niezescape'owany `|` wewnątrz komórki `nextCursor:string | null` rozjeżdżał kolumny wiersza GET) — naprawiono. Poprzednia wersja też twierdziła „brak zmian w `src/` w tym dyżurze" — to było prawdą w dniu 21, ale przestało być aktualne: dyżur naprawczy 2026-08-26 (FIX-1, osobny commit) dodał w `src/services/initiatives-execution/runtimeApi.ts` pętlę `listRegisteredInitiatives`, która konsumuje `nextCursor` po stronie klienta — front wcześniej czytał wyłącznie `.initiatives` z pierwszej strony i cicho gubił organizacje z >50 inicjatywami.
 
-Front ma konsumować `nextCursor`; brak zmian w `src/` w tym dyżurze.
+| Trasa                                                                                   | Metoda | Body/query                                                                                  | Odpowiedź                                                                                                    | Kody błędów                                                     |
+| ---------------------------------------------------------------------------------------- | ------ | -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `/api/initiatives/runtime-v1/plan-scenarios/:scenarioId/analysis-proposals/:proposalId` | POST   | istniejący body: `{expectedVersion:0, clientRequestId, scenarioId, inputAggregateVersion}`   | istniejący material-command result z propozycją; solver automatycznie używa zgodnej opublikowanej capacity     | 400, 401, 404, 409, 500                                          |
+| `/api/initiatives/runtime-v1/initiatives`                                                | GET    | query `limit?:1..200` (default 50), `cursor?:base64url`                                      | `{initiatives: InitiativeReadModel[], nextCursor: string \| null}`                                              | 400 zły limit/kursor, 401 auth, 404 obcy jawny `organizationId`   |
+
+### Semantyka kursora (uzupełnienie 2026-08-26, item d)
+
+- **Kursor jest nieprzezroczysty.** Format wewnętrzny to base64url-owany JSON `{updatedAt, aggregateId}` (patrz `encodeInitiativeCursor`/`decodeInitiativeCursor` w `server/src/routes/pmo/initiativesExecutionRuntime.routes.ts:1148-1169`). Front NIE MOŻE parsować, dekodować ani wiązać się z tą strukturą — traktować `nextCursor` wyłącznie jako string do odesłania z powrotem w `?cursor=`. Format wewnętrzny może się zmienić bez zmiany kontraktu.
+- **Pusta strona z niepustym `nextCursor` jest legalna, nie błędem.** Autoryzacja (`initiative.view` per projekt) filtruje WYNIK PO paginacji na serwerze (`initiativesExecutionRuntime.routes.ts:1802-1815`) — strona może wrócić z `initiatives: []` i jednocześnie `nextCursor` wskazującym kolejną stronę, gdy żaden wiersz danej strony nie był widoczny dla wołającego, ale kolejne strony mogą zawierać widoczne wiersze. Klient (i każdy test) musi kontynuować paginację dopóki `nextCursor` nie jest `null`/nieobecne — nigdy nie przerywać na podstawie samej pustej tablicy `initiatives`.
+
+Front konsumuje `nextCursor` od dyżuru naprawczego 2026-08-26 (FIX-1) — patrz `src/services/initiatives-execution/runtimeApi.ts` (`listRegisteredInitiatives`, opcja `{ singlePage }` dla przyszłej jawnej paginacji w UI) i test `tests/unit/initiatives-execution/listRegisteredInitiativesPagination.test.ts`.
 
 ## Pozycje otwarte — STOP-y do zatwierdzenia nadzorcy
 
@@ -132,7 +147,7 @@ Brak STOP dla A/B. Pozostałe bloki uczciwie pozostawione jako `NIE_ZACZĘTE` zg
 
 | Zakres                                   | Wynik                                                                                                                                                              |
 | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `vitest.realdb.config.ts`                | 9 plików PASS, 5 FAIL, 27 skipped; 22 testy PASS, 31 FAIL, 43 skipped. Wszystkie 31 FAIL: zastany `cannot truncate a table referenced in a foreign key constraint` |
+| `vitest.realdb.config.ts` ⚠️ nieodtwarzalne — patrz korekta niżej | 9 plików PASS, 5 FAIL, 27 skipped; 22 testy PASS, 31 FAIL, 43 skipped. Wszystkie 31 FAIL: zastany `cannot truncate a table referenced in a foreign key constraint` |
 | domena `initiatives-execution/__tests__` | 1/1 plik, 2/2 testy PASS                                                                                                                                           |
 | `pmo.initiatives.fail-closed.contract`   | 1/1 plik, 4/4 testy PASS                                                                                                                                           |
 | `initiatives.test.js`                    | 0/1 plik, 0/5 testów PASS; 5 zastanych FAIL przez `users_organization_id_fkey`                                                                                     |
@@ -150,6 +165,18 @@ Zakres §0.4a: `215/252 PASS` w testach wykonanych, dodatkowo 43 skipped przez i
 - czerwone ZASTANE: 31 realDB (`TRUNCATE` kontra FK), 5 `initiatives.test.js` (`users_organization_id_fkey`), 1 front `financialNarrativeBlocks.test.ts`; razem 37;
 - czerwone WPROWADZONE: **PUSTE**;
 - nowe zielone: +19 testów względem baseline (`196→215` PASS), liczba czerwonych bez zmian (`37→37`).
+
+### ★ Korekta 2026-08-26 (odbiór dyżuru 21, item a) — liczba „37 czerwonych zastanych"
+
+Ta liczba jest **nieodtwarzalna** i zastąpiona poniżej uczciwym opisem:
+
+- **`vitest.realdb.config.ts` nie istnieje** w tym repo (sprawdzone: `ls vitest.realdb.config.ts` → `No such file or directory`; katalog root ma `vitest.config.ts`, `vitest.l1/l2/l3.config.ts`, `vitest.acceptance/security/perf/orphans/migration.config.ts`, żadnego `realdb`). Cytat z tabeli Baseline nie wskazuje istniejącego pliku konfiguracyjnego — nie da się go ponownie wykonać tak jak opisano.
+- Przy odbiorze 2 z 3 punktowych sprawdzeń (spot-checków) pojedynczych plików `*.realdb.test.ts` na markerze wyszły ZIELONE w izolacji — sprzeczne z ramowaniem „31 czerwonych realDB" jako trwałego, jednolitego stanu.
+- **Zmierzone w tej sesji naprawczej** (kontener jednorazowy `pgvector/pgvector:pg16`, port 5501, pełne migracje, ten sam `DATABASE_URL` w jednej linii z każdą komendą), na dokładnie tym katalogu (`tests/integration/initiatives-execution/`, 44 pliki, 107 testów wykonywalnych + 63-70 skipped w zależności od przebiegu):
+  - **Pełna suita, domyślna równoległość** (`pool:'forks'`, `fileParallelism:true`, `order:'random'` — dokładnie ta sama konfiguracja co reszta workspace'u): wynik WIDOCZNIE NIESTABILNY między przebiegami tego samego kodu — 3 przebiegi z rzędu dały odpowiednio **15 / 14 / 12 plików FAIL** (19 / 29 / 16 testów FAIL). To jest zanieczyszczenie międzyplikowe (patrz FIX-2 niżej), nie stały, odtwarzalny stan.
+  - **Ta sama suita z `--no-file-parallelism`** (pliki sekwencyjnie, bez konkurencji o współdzielone tabele — najbliższy odpowiednik „w izolacji per plik"): stabilne **6 plików FAIL** (33/107 testów FAIL), z JEDNĄ powtarzalną, nie-losową przyczyną: `error: cannot truncate a table referenced in a foreign key constraint` — nowsza migracja dodała `flow_accepted_classic_runtime_adoptions` z FK na `initiative_candidates`, a starsze `TRUNCATE initiative_candidates, ...` w kilku plikach (`registerInitiative`, `submitSourceProposal`, `decideSourceProposal`, `definitionDecision`, `initiativesExecutionRuntime.http`, `initiativeListDefaultWiringQueries`) nie wymienia tej nowej tabeli zależnej. To jest realny, zastany dług schema/testów (nie flaka), poza zakresem tego dyżuru naprawczego — nie naprawiane tutaj.
+- **Wniosek dla przyszłych odbiorów:** liczba czerwonych z pełnej suity równoległej nie jest miarodajna sama w sobie (zależy od `order:'random'` i chwilowego obciążenia współdzielonych tabel); miarodajny jest wynik per-plik w izolacji lub `--no-file-parallelism`. Raportując „N czerwonych zastanych" zawsze podawać tryb przebiegu i cytować istniejący plik/komendę.
+- `planSolver50x4.realdb.test.ts` (FIX-2, ten dyżur naprawczy) był jedynym plikiem w tym katalogu, który zmieniał wynik między przebiegami pełnej suity WYŁĄCZNIE z powodu współdzielonych tabel (5/5 w izolacji zawsze, 4/5–5/5 w pełnej suicie przed naprawą) — po naprawie 5/5 w trzech kolejnych przebiegach pełnej suity, zero zmiany w pozostałych plikach (zdiffowano listę FAIL plik-po-pliku między przebiegiem przed i po — identyczna, patrz commit FIX-2).
 
 ### Zmiany w testach istniejących — przed/po (T.3)
 

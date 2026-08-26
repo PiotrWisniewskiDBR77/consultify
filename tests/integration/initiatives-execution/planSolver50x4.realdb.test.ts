@@ -198,7 +198,7 @@ describeRealDb('Day 21 deterministic solver 50 initiatives x 4 periods', () => {
     );
   };
 
-  it('proves 46/50 collapsed before and only 12/50 occupy Q4 after', () => {
+  it('proves 47/50 collapsed before and only 12/50 occupy Q4 after', () => {
     const before = legacyDistribution(plan);
     const first = solvePlanScenario(plan);
     const second = solvePlanScenario(plan);
