@@ -4913,6 +4913,56 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                                 navigate(`${ROUTES.REPORTS.BUILDER}?${qs.toString()}`);
                               },
                             },
+                            // DEC-118 repair #5 (partial — endpoint-gated, per brief:
+                            // "bez endpointu = nie dodawaj"): reopen is the ONE
+                            // tool_output-row-level lifecycle action with a real,
+                            // state-gated endpoint (POST /api/tool-outputs/:id/reopen
+                            // -> correctToolOutput, only accepts status="approved" —
+                            // ToolOutputsController.ts:358). "Zatwierdź"/"promuj" are
+                            // SESSION-level actions (Api.approveTool /
+                            // ToolController.promoteToOutput) that happen BEFORE an
+                            // output row exists at all, not something this already-
+                            // promoted row itself exposes — not added here to avoid
+                            // wiring a button to an endpoint that doesn't apply at
+                            // this grain. "Historia rewizji" is already reachable via
+                            // "Open" (ToolOutputsPanel lists all revisions, current +
+                            // superseded, for the session).
+                            {
+                              id: 'reopen-output',
+                              label: isPolish ? 'Otwórz ponownie' : 'Reopen',
+                              icon: RefreshCw,
+                              disabled: !(
+                                (row as any)?.outputKind === 'tool_output' &&
+                                String((row as any)?.statusRaw || '').toLowerCase() === 'approved'
+                              ),
+                              description:
+                                (row as any)?.outputKind === 'tool_output' &&
+                                String((row as any)?.statusRaw || '').toLowerCase() === 'approved'
+                                  ? undefined
+                                  : isPolish
+                                    ? 'Dostępne dla zatwierdzonego wyniku narzędzia'
+                                    : 'Available for an approved tool output',
+                              onClick: async () => {
+                                const outputId = String((row as any)?.id || '');
+                                if (!outputId) return;
+                                try {
+                                  await Api.reopenToolOutput(outputId);
+                                  toast.success(
+                                    isPolish
+                                      ? 'Wynik otwarty ponownie jako nowa rewizja'
+                                      : 'Output reopened as a new revision'
+                                  );
+                                  await fetchData(true);
+                                } catch (e: any) {
+                                  toast.error(
+                                    e?.message ||
+                                      (isPolish
+                                        ? 'Nie udało się otworzyć ponownie'
+                                        : 'Failed to reopen')
+                                  );
+                                }
+                              },
+                            },
                           ],
                         },
                         // Blok 4 — FIXED BOTTOM MANIFEST (kanon §9.2): slot zawsze

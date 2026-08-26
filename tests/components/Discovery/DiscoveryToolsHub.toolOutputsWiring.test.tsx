@@ -28,6 +28,7 @@ const getKnownToolsMock = vi.fn();
 const listToolSessionsMock = vi.fn();
 const getAssessmentReportsMock = vi.fn();
 const listToolOutputsMock = vi.fn();
+const reopenToolOutputMock = vi.fn();
 
 vi.mock('@/services/api', () => ({
   Api: {
@@ -44,6 +45,7 @@ vi.mock('@/services/api', () => ({
     suggestTools: vi.fn().mockResolvedValue({ suggestions: [] }),
     getInitiativesByStatus: vi.fn().mockResolvedValue([]),
     listToolOutputs: (...args: unknown[]) => listToolOutputsMock(...args),
+    reopenToolOutput: (...args: unknown[]) => reopenToolOutputMock(...args),
   },
 }));
 
@@ -302,6 +304,89 @@ describe('DiscoveryToolsHub — DEC-118 repair #6: "Create report" enters Report
     );
 
     const button = await screen.findByTestId('row-ar-1-action-create-report');
+    expect(button).toBeDisabled();
+  });
+});
+
+describe('DiscoveryToolsHub — DEC-118 repair #5 (partial): "Reopen" for an approved tool output', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    standardTableMounts.length = 0;
+    window.localStorage.clear();
+    window.localStorage.setItem('ff.tools_insights_wiring', 'on');
+    resetToolsInsightsWiringFlagCache();
+    getKnownToolsMock.mockResolvedValue({ items: [buildKnownTool()] });
+    listToolSessionsMock.mockResolvedValue({ items: [], total: 0, limit: 0, offset: 0 });
+    getAssessmentReportsMock.mockResolvedValue([]);
+    listToolOutputsMock.mockResolvedValue({ outputs: [SAMPLE_TOOL_OUTPUT] });
+    reopenToolOutputMock.mockResolvedValue({
+      superseded: { id: SAMPLE_TOOL_OUTPUT.id, status: 'superseded' },
+      revision: { id: 'out-1-rev2', version: 2 },
+    });
+  });
+
+  afterEach(() => {
+    window.localStorage.clear();
+    resetToolsInsightsWiringFlagCache();
+  });
+
+  it('calls Api.reopenToolOutput(outputId) and refetches on click', async () => {
+    render(
+      <MemoryRouter initialEntries={['/discovery-tools']}>
+        <DiscoveryToolsHub initialTab="outputs" />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('row-out-1')).toBeInTheDocument();
+    });
+    const button = screen.getByTestId('row-out-1-action-reopen-output');
+    expect(button).not.toBeDisabled();
+    button.click();
+
+    await waitFor(() => {
+      expect(reopenToolOutputMock).toHaveBeenCalledWith(SAMPLE_TOOL_OUTPUT.id);
+    });
+    // Refetch after a successful reopen (fetchData(true)).
+    await waitFor(() => {
+      expect(listToolOutputsMock).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it('is disabled for a non-approved tool output (in_review)', async () => {
+    listToolOutputsMock.mockResolvedValue({
+      outputs: [{ ...SAMPLE_TOOL_OUTPUT, status: 'in_review' }],
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/discovery-tools']}>
+        <DiscoveryToolsHub initialTab="outputs" />
+      </MemoryRouter>
+    );
+
+    const button = await screen.findByTestId('row-out-1-action-reopen-output');
+    expect(button).toBeDisabled();
+  });
+
+  it('is disabled for a non-tool_output row (e.g. an assessment report)', async () => {
+    listToolOutputsMock.mockResolvedValue({ outputs: [] });
+    getAssessmentReportsMock.mockResolvedValue([
+      {
+        id: 'ar-1',
+        name: 'Assessment report',
+        status: 'APPROVED',
+        createdAt: new Date().toISOString(),
+        assessmentId: 'assessment-1',
+      },
+    ]);
+
+    render(
+      <MemoryRouter initialEntries={['/discovery-tools']}>
+        <DiscoveryToolsHub initialTab="outputs" />
+      </MemoryRouter>
+    );
+
+    const button = await screen.findByTestId('row-ar-1-action-reopen-output');
     expect(button).toBeDisabled();
   });
 });

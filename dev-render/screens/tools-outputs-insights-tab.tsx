@@ -103,6 +103,11 @@ const patchApi = () => {
   api.delete = async () => ({});
   // The repair under test: this call was NEVER made before DEC-118 #1.
   api.listToolOutputs = async () => ({ outputs: [TOOL_OUTPUT_APPROVED, TOOL_OUTPUT_IN_REVIEW] });
+  // DEC-118 repair #5 (partial): reopen for an approved tool_output.
+  api.reopenToolOutput = async () => ({
+    superseded: { id: TOOL_OUTPUT_APPROVED.id, status: 'superseded' },
+    revision: { id: 'out-swot-1-rev3', version: 3 },
+  });
 };
 
 /** ff_toolsInsightsWiring is OFF by default (fail-closed) — this harness
