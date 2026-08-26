@@ -115,28 +115,52 @@ describe('GET /my-work/signals — organization isolation', () => {
 });
 
 describe('POST /my-work/signals/:key mutations — cross-org guard', () => {
+  // FIX-6 (day18 layer-1 acceptance): these three tests used to assert only
+  // on the 404/200 status with `queryOneMock.mockResolvedValue(null)` (or a
+  // fixed sequence), which never inspected what was actually sent to the
+  // `ownedSignal` query. A mutation that deleted `organization_id = ?` from
+  // that query would still pass every one of them. Each `ownedSignal` call
+  // is now asserted to carry `organization_id = ?` in its SQL and ORG_A in
+  // its params — proof the org comes from the token, not from the key.
+  const expectOwnedSignalScopedToOrgA = (sql: string, params: unknown[]) => {
+    expect(sql).toContain('organization_id = ?');
+    expect(params).toContain(ORG_A);
+  };
+
   it('snooze on a foreign-org key returns 404 and performs no write', async () => {
-    queryOneMock.mockResolvedValue(null);
+    queryOneMock.mockImplementation(async (sql: string, params: unknown[]) => {
+      expectOwnedSignalScopedToOrgA(sql, params);
+      return null;
+    });
     const response = await request(app)
       .post(`/my-work/signals/${FOREIGN_SIGNAL}/snooze`)
       .send({ preset: '1h' });
     expect(response.status).toBe(404);
     expect(queryRunMock).not.toHaveBeenCalled();
+    expect(queryOneMock).toHaveBeenCalled();
   });
 
   it('dismiss on a foreign-org key returns 404 and performs no write', async () => {
-    queryOneMock.mockResolvedValue(null);
+    queryOneMock.mockImplementation(async (sql: string, params: unknown[]) => {
+      expectOwnedSignalScopedToOrgA(sql, params);
+      return null;
+    });
     const response = await request(app).post(`/my-work/signals/${FOREIGN_SIGNAL}/dismiss`);
     expect(response.status).toBe(404);
     expect(queryRunMock).not.toHaveBeenCalled();
+    expect(queryOneMock).toHaveBeenCalled();
   });
 
   it('the same mutations succeed for a key proven to belong to the token org', async () => {
-    queryOneMock
-      .mockResolvedValueOnce({ signal_id: OWN_SIGNAL })
-      .mockResolvedValueOnce({ snoozed_until: '2026-08-27T00:00:00Z' })
-      .mockResolvedValueOnce({ signal_id: OWN_SIGNAL })
-      .mockResolvedValueOnce({ dismissed_at: '2026-08-26T00:00:00Z' });
+    queryOneMock.mockImplementation(async (sql: string, params: unknown[]) => {
+      if (sql.includes('FROM work_signals')) {
+        expectOwnedSignalScopedToOrgA(sql, params);
+        return { signal_id: OWN_SIGNAL };
+      }
+      if (sql.includes('my_work_signal_snoozes')) return { snoozed_until: '2026-08-27T00:00:00Z' };
+      if (sql.includes('my_work_signal_dismissals')) return { dismissed_at: '2026-08-26T00:00:00Z' };
+      return null;
+    });
     expect(
       (await request(app).post(`/my-work/signals/${OWN_SIGNAL}/snooze`).send({ preset: '1h' }))
         .status
