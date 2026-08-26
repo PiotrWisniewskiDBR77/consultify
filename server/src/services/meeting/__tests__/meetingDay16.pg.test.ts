@@ -183,4 +183,35 @@ suite('Meetings day16 participants and safe invitation delivery (real PG)', () =
     if (previousDemoOrg === undefined) delete process.env.DEMO_ORG_ID;
     else process.env.DEMO_ORG_ID = previousDemoOrg;
   });
+
+  // FIX-9 (2026-08-26, runtime acceptance addendum): DbPromise's default
+  // `fallback: true` swallowed a "table does not exist" error into an empty
+  // array/null — a missing meeting_participants table (unrun 20261075
+  // migration) looked exactly like "this meeting has zero participants"
+  // instead of a hard failure. listMeetingParticipants() (and the other
+  // day16 participant/delivery functions) now pass `fallback: false`.
+  //
+  // This must be the LAST test in the file: it temporarily renames the real
+  // table out of existence to prove the missing-table case actually throws,
+  // then renames it back in a finally so every earlier test's fixtures (and
+  // any other suite sharing this database) are unaffected. A rename (not
+  // DROP+recreate) is used specifically so the exact schema/indexes/
+  // constraints are preserved with certainty across the round-trip.
+  it('FIX-9: surfaces a missing meeting_participants table as a thrown error, not an empty list', async () => {
+    await pool.query('ALTER TABLE meeting_participants RENAME TO meeting_participants_fix9_missing');
+    try {
+      await expect(
+        listMeetingParticipants({ organizationId: org, meetingId: meeting })
+      ).rejects.toThrow();
+    } finally {
+      await pool.query(
+        'ALTER TABLE meeting_participants_fix9_missing RENAME TO meeting_participants'
+      );
+    }
+    // Prove the rename-back actually worked and the table is usable again —
+    // otherwise a failure in the finally block could go unnoticed.
+    await expect(
+      listMeetingParticipants({ organizationId: org, meetingId: meeting })
+    ).resolves.toBeInstanceOf(Array);
+  });
 });

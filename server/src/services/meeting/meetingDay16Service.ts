@@ -48,6 +48,16 @@ export async function listMeetingParticipants(input: {
   organizationId: string;
   meetingId: string;
 }): Promise<MeetingParticipant[]> {
+  // FIX-9 (2026-08-26, runtime acceptance addendum): DbPromise.all() defaults
+  // to `fallback: true`, which swallows a "table does not exist" error and
+  // resolves with `[]` — indistinguishable from "this meeting genuinely has
+  // no participants". `ensureMeetingTables()` (run by the router's
+  // middleware) creates `meetings` but NOT `meeting_participants` /
+  // `meeting_invitation_deliveries`, which ship in a separate migration
+  // (20261075) — so an environment that hasn't run that migration got a
+  // silent, misleadingly-empty 200 from GET /:id/participants instead of a
+  // loud failure. `fallback: false` makes a missing table surface as a
+  // thrown error (500) here, consistent with the write paths below.
   const rows = await dbAll<ParticipantRow>(
     `SELECT p.*, COALESCE(NULLIF(p.email, ''), u.email) AS email,
             COALESCE(NULLIF(p.display_name, ''), u.first_name || ' ' || u.last_name, u.email, '') AS display_name
@@ -55,7 +65,8 @@ export async function listMeetingParticipants(input: {
        LEFT JOIN users u ON u.id = p.user_id AND u.organization_id = p.organization_id
       WHERE p.organization_id = ? AND p.meeting_id = ?
       ORDER BY CASE p.role WHEN 'organizer' THEN 0 ELSE 1 END, p.created_at, p.id`,
-    [input.organizationId, input.meetingId]
+    [input.organizationId, input.meetingId],
+    { fallback: false }
   );
   return rows.map(mapParticipant);
 }
@@ -118,7 +129,8 @@ export async function addMeetingParticipant(input: {
   }
   const created = await dbGet<ParticipantRow>(
     `SELECT * FROM meeting_participants WHERE id = ? AND organization_id = ?`,
-    [id, input.organizationId]
+    [id, input.organizationId],
+    { fallback: false }
   );
   if (!created) throw new Error('PARTICIPANT_READBACK_FAILED');
   return mapParticipant(created);
@@ -131,9 +143,14 @@ export async function updateMeetingParticipant(input: {
   role?: 'attendee' | 'optional';
   invitationStatus?: MeetingParticipant['invitationStatus'];
 }): Promise<MeetingParticipant | null> {
+  // FIX-9: fallback:false throughout this function — a missing
+  // meeting_participants table (unrun 20261075 migration) must surface as a
+  // thrown error, not a misleading 404 "Participant not found" from the
+  // dbGet below silently resolving null.
   const existing = await dbGet<ParticipantRow>(
     `SELECT * FROM meeting_participants WHERE id = ? AND organization_id = ? AND meeting_id = ?`,
-    [input.participantId, input.organizationId, input.meetingId]
+    [input.participantId, input.organizationId, input.meetingId],
+    { fallback: false }
   );
   if (!existing) return null;
   const now = new Date().toISOString();
@@ -148,11 +165,13 @@ export async function updateMeetingParticipant(input: {
       input.participantId,
       input.organizationId,
       input.meetingId,
-    ]
+    ],
+    { fallback: false }
   );
   const updated = await dbGet<ParticipantRow>(
     `SELECT * FROM meeting_participants WHERE id = ? AND organization_id = ? AND meeting_id = ?`,
-    [input.participantId, input.organizationId, input.meetingId]
+    [input.participantId, input.organizationId, input.meetingId],
+    { fallback: false }
   );
   return updated ? mapParticipant(updated) : null;
 }
@@ -162,15 +181,19 @@ export async function deleteMeetingParticipant(input: {
   meetingId: string;
   participantId: string;
 }): Promise<'deleted' | 'not_found' | 'organizer'> {
+  // FIX-9: fallback:false — a missing table must surface as a thrown error,
+  // not the misleading 'not_found' this dbGet would otherwise produce.
   const existing = await dbGet<ParticipantRow>(
     `SELECT * FROM meeting_participants WHERE id = ? AND organization_id = ? AND meeting_id = ?`,
-    [input.participantId, input.organizationId, input.meetingId]
+    [input.participantId, input.organizationId, input.meetingId],
+    { fallback: false }
   );
   if (!existing) return 'not_found';
   if (existing.role === 'organizer') return 'organizer';
   await dbRun(
     `DELETE FROM meeting_participants WHERE id = ? AND organization_id = ? AND meeting_id = ?`,
-    [input.participantId, input.organizationId, input.meetingId]
+    [input.participantId, input.organizationId, input.meetingId],
+    { fallback: false }
   );
   return 'deleted';
 }
@@ -182,6 +205,8 @@ export async function setParticipantDelivery(input: {
   status: MeetingParticipant['deliveryStatus'];
   error?: string | null;
 }): Promise<void> {
+  // FIX-9: fallback:false — a missing table must surface as a thrown error
+  // instead of a silently no-op'd delivery-status write.
   await dbRun(
     `UPDATE meeting_participants SET delivery_status = ?, delivery_at = ?, delivery_error = ?, updated_at = ?
       WHERE id = ? AND organization_id = ? AND meeting_id = ?`,
@@ -193,6 +218,7 @@ export async function setParticipantDelivery(input: {
       input.participantId,
       input.organizationId,
       input.meetingId,
-    ]
+    ],
+    { fallback: false }
   );
 }

@@ -123,6 +123,10 @@ export async function sendMeetingInvitations(input: {
       }
     }
     await setParticipantDelivery({ ...input, participantId: participant.id, status, error });
+    // FIX-9 (2026-08-26, runtime acceptance addendum): fallback:false — a
+    // missing meeting_invitation_deliveries table (unrun 20261075 migration)
+    // must surface as a thrown 500, not a silently no-op'd audit-trail write
+    // that leaves the caller believing the delivery attempt was recorded.
     await dbRun(
       `INSERT INTO meeting_invitation_deliveries (
          id, organization_id, meeting_id, participant_id, method, sequence,
@@ -139,7 +143,8 @@ export async function sendMeetingInvitations(input: {
         input.actorId,
         new Date().toISOString(),
         error || null,
-      ]
+      ],
+      { fallback: false }
     );
     results.push({ participantId: participant.id, status, ...(error ? { error } : {}) });
   }
