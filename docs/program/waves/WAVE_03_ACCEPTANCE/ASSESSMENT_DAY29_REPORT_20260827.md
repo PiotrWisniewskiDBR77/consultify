@@ -1,90 +1,77 @@
-# Assessment dzień 29 (blok 3 — serwerowy) — raport dyżuru 2026-08-27
+# Assessment dzień 29 (blok 3 — serwerowy) — raport 2026-08-27
 
-## Oświadczenie o chronionym checkoutcie (Z5/DEC-86)
+Historia: commit `a0266ea2c4` dokumentował poprawny STOP wadliwie związanego markera; po korekcie nadzorcy dyżur wznowiono.
 
-Nie wykonano odczytu ani zapisu w `/Users/piotrwisniewski/Developer/Consultify`
-poza dozwolonym, tylko-do-odczytu symlinkiem `node_modules`, potrzebnym do
-obowiązkowego formatowania raportu przed commitem.
+## Granice i start
 
-## Oświadczenie o zakresie `src/`
+- Marker `2f6040273f`: `MARKER OK`; `DAY25 MERGED`; `DAY27 NOT MERGED` i bez `server/**`.
+- Dzień 28 zmienia Meetings i nie koliduje z tym zakresem.
+- Zero push/Railway; zero zapisów w `src/`, `dev-render/`, `public/`.
+- Jedyny kontakt z chronionym checkoutem to symlink `node_modules` do odczytu.
+- Stan: partner AI 1439 linii i `@ts-nocheck`; AI: 26 tras, 11 wywołań DB; workflow v1: 27 handlerów; osierocony router: 497 linii/11 handlerów; allowlista Assessment: 0.
 
-Nie wykonano żadnych zapisów w `src/`, `dev-render/` ani `public/`.
+PG `cx-day29-pg`, `pgvector/pgvector:pg16`, `5512→5432`, baza `cx_day29`.
+Migracje `854 / 0 / pending 0`; wymagane kolumny istnieją; namespace
+`20261180-89` pusty; nowych migracji brak.
 
-## Marker: `936842bd16` — STOP
-
-Lokalna weryfikacja relacji markera:
-
-```text
-$ git merge-base --is-ancestor 936842bd16 codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
-MARKER OK
-```
-
-Stan własnej gałęzi po komendach START:
-
-```text
-branch: codex/assessment-day29-20260827
-HEAD:   4db75434d33af608cc920e51610d1a074f9bc875
-marker: 936842bd16ce4f154b9d44b709262d5d3aa1ab21
-```
-
-`git fetch --all --prune` nie zakończył się powodzeniem z powodu zastanego,
-nieosiągalnego remote `icloud-source`:
-
-```text
-Fetching icloud-source
-fatal: '/private/tmp/consultify-staging-deploy-e6ca' does not appear to be a git repository
-fatal: Could not read from remote repository.
-error: could not fetch icloud-source
-Fetching origin
-```
-
-Relację markera zweryfikowano następnie osobną komendą na lokalnych referencjach;
-wynik to `MARKER OK`. Nie zastępuje to jednak niższego, literalnego bezpiecznika
-STOP.
+Baseline: batch6 `18/18`, batch7 `3/3`, allowlista `201/201`, AI integration
+`5/5`, unit Assessment `550/550`, services Assessment `53/53`, routes Assessment
+`4/4`. Zastane czerwone: integration Assessment `35/43`, całe route tests
+`987 PASS / 173 FAIL / 53 SKIPPED`, DRD front `40/46`. Wskazany katalog
+`methodCore/__tests__` nie istnieje.
 
 ## Pozycje
 
-| Pozycja | Status         | Dowód                                                                     |
-| ------- | -------------- | ------------------------------------------------------------------------- |
-| §D      | NIE ROZPOCZĘTO | STOP całego dyżuru w BLOKU 0 pkt 1                                        |
-| §C.1    | NIE ROZPOCZĘTO | STOP całego dyżuru w BLOKU 0 pkt 1                                        |
-| §C.2    | NIE ROZPOCZĘTO | STOP całego dyżuru w BLOKU 0 pkt 1                                        |
-| §B      | NIE ROZPOCZĘTO | STOP całego dyżuru w BLOKU 0 pkt 1                                        |
-| §A      | NIE ROZPOCZĘTO | STOP całego dyżuru w BLOKU 0 pkt 1; licznik 90 min nie został uruchomiony |
-| §R.1    | NIE ROZPOCZĘTO | brak dowiezionego zakresu do odnotowania                                  |
+| Pozycja | Commit                     | Status                 | Dowód                                                                            |
+| ------- | -------------------------- | ---------------------- | -------------------------------------------------------------------------------- |
+| D       | `659c9f8d1a`               | `ZROBIONE_WG_DoD`      | nowe PG 5/5; razem z dniami 20/25: 33/33                                         |
+| C.2     | `d874e1e663`               | `ZROBIONE_WG_DoD`      | osierocony plik usunięty; batch7 na żywym hubie 3/3                              |
+| B       | `f22abfbc5b`, `c782a1b3af` | `CZĘŚCIOWO`            | 11 mapowań 404/503; day25 4/4; brak nowego minimum 7 testów i dowodu mutacyjnego |
+| C.1     | —                          | `NIE_WYKONANO`         | sześć handlerów v1 pozostało; batch6 18/18                                       |
+| A       | —                          | `STOP / NIE ZMIENIONO` | A.1 = 135/203; `@ts-nocheck` pozostał                                            |
+| R.1     | —                          | `NIE_WYKONANO`         | brak podstaw do aktualizacji przy niepełnym dyżurze                              |
 
-## STOP — cały dyżur, BLOK 0 pkt 1
+## D — nazwa sesji
 
-Powód: instrukcja w §0.1 oraz BLOKU 0 pkt 1 nadal zawiera literalny marker
-`936842bd16`, a BLOK 0 nakazuje w tej sytuacji: „STOP całego dyżuru”.
+Dodano top-level `sessionLabel: { displayName, source, projectId }`. Nazwa jest
+czytana przez `SELECT name FROM projects WHERE id = ? AND organization_id = ?`.
+Brak projektu daje trzy `null`; wiszące i obce `project_id` zachowują id bez
+nazwy. `contractVersion` pozostaje `assessment-report-contract-v1`; rozdziałów
+pozostaje 7.
 
-Dowód:
+Osiągalność: `GET /api/method/sessions/:id/assessment-report-contract` → montaż
+`/api/method` → `method-core.routes.ts` → serwis kontraktu → org-scoped
+`method_sessions` i `projects` → koperta HTTP. Konsument ekranu jest w
+niescalonej gałęzi dnia 27; na markerze ostatnim ogniwem jest koperta HTTP.
 
-```text
-docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY29_ASSESSMENT_BLOCK3_INSTRUKCJA.md:917
-„Jeżeli w §0.1 pkt 1 widnieje nadal `936842bd16` — STOP całego dyżuru.”
-```
+## C.2 — router osierocony
 
-Co zrobiłbym, gdyby nadzorca wydał skorygowaną instrukcję: potwierdziłbym nowy,
-jednoznacznie związany marker, odtworzył worktree dokładnie z niego i rozpoczął
-pełny BLOK 0 od kontroli kolizji dni 25/27/28. Bez takiej korekty nie zgaduję,
-czy `936842bd16` jest zamierzonym markerem, czy niezastąpionym placeholderem.
+`Gateway.ts` importuje żywy `assessment.routes.ts` bez końcowego „s”; nie
+importował usuniętego `assessments.routes.ts`. Test fail-soft `my-assessments`
+przepięto na zamontowany `assessment-hub.routes.ts`; stabilny kod odpowiada
+żywemu handlerowi, a asercje braku ujawnienia sekretu pozostały.
 
-Stan: zacommitowano wyłącznie niniejszy raport STOP; kodu i testów nie zmieniono.
+## B — zakres częściowy
 
-## Pomiary, baza i migracje
+Brak lub obcy rekord daje identyczne `404 / ASSESSMENT_NOT_FOUND`; awaria źródła
+jest mapowana na `503 / ASSESSMENT_SOURCE_UNAVAILABLE` bez treści wyjątku.
+Charakteryzacja dnia 25 montuje `verifyToken → trialEntryGuard`, seeduje realny
+obcy rekord i przechodzi 4/4. Piętnaście handlerów bez DB pozostało nietkniętych.
+Brak nowego pakietu 7 testów na ≥3 trasach i dowodu mutacyjnego oznacza uczciwe
+`CZĘŚCIOWO`, nie pełny DoD.
 
-Nie uruchomiono kontenera PG, migracji ani testów. Zgodnie z regułą STOP nie
-wykonywano dalszych kroków BLOKU 0 i nie przedstawia się nieistniejących
-pomiarów jako PASS. Zakres testów: `NIE ZMIERZONO — STOP PRZED BASELINE`.
+## STOP — A.2
 
-## Migracje
+Typowania nie rozpoczęto; nie przedstawiam samego pomiaru jako naprawy. A.1:
+domyślna konfiguracja `135` (`TS2339×92`, `TS1259×42`, `TS2724×1`); konfiguracja
+projektu `203` (`TS2339×81`, `TS7006×68`, `TS7053×29`, `TS18046×20`,
+`TS18047×3`, `TS7034×1`, `TS7005×1`). Plik pozostaje z `@ts-nocheck`.
 
-Nie utworzono i nie uruchomiono żadnej migracji. Zdalne wykonanie nie było
-autoryzowane ani podejmowane.
+## Kontrole końcowe
 
-## Czego nie zrobiłem i dlaczego
+Punktowe `esbuild`: PASS. Pakiet końcowy batch6 + batch7 + allowlista:
+`222/222`; realny PG dla day20/day25/D: `37/37`. Pełny §0.4a nie został
+powtórzony po HEAD, więc deklaruję `ZASIĘG CZĘŚCIOWY`.
 
-Nie rozpocząłem §D, §C, §B, §A ani §R.1; nie uruchomiłem PG i nie dotknąłem
-chronionych ścieżek. Powodem jest wiążący bezpiecznik STOP, nie brak czasu ani
-wynik testów.
+Kontener usunięto przez `docker rm -fv cx-day29-pg`. Zgodnie z nowszą twardą
+dyspozycją użytkownika nie wykonano `docker volume prune`.
