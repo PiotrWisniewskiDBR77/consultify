@@ -7499,7 +7499,9 @@
         "ariaLoading": "Ocena gotowości AI w toku",
         "loading": "Ocena…",
         "label": "Gotowość AI",
-        "scoreSuffix": "/100"
+        "scoreSuffix": "/100",
+        "degraded": "szacunek bez modelu AI — brak skonfigurowanego klucza AI, wynik liczony ze wzoru słów, nie przez model",
+        "degradedBadge": "bez AI"
       },
       "panel": {
         "title": "Gotowość do bramki — analiza AI",
@@ -8359,6 +8361,7 @@
     "initiativeDeleted2": "Inicjatywa usunięta",
     "changeStatus2": "Zmień status",
     "noStatusChangesAvailable2": "Brak dostępnych zmian statusu",
+    "statusGovernedGateOnly": "Status zmienisz w bramce cyklu życia inicjatywy, nie z tej karty.",
     "previewPhaseList2": "Podgląd listy faz",
     "previewPossibleNextGates2": "Podgląd możliwych kolejnych bram",
     "youCannotEditPriorityAtThis2": "Nie masz uprawnień do edycji priorytetu na tym etapie.",
@@ -8482,6 +8485,11 @@
     "delete2": "Usuń",
     "watchers2": "Obserwatorzy",
     "noWatchersForThisInitiativeYet2": "Brak obserwatorów dla tej inicjatywy.",
+    "watchersSection": {
+      "startWatching": "Obserwuj",
+      "stopWatching": "Przestań obserwować",
+      "you": "Ty"
+    },
     "usedInBacklinks2": "Użyte w (powiązania)",
     "noLinksYet2": "Brak powiązań",
     "presentation2": "Prezentacja",
@@ -9682,7 +9690,8 @@
       "priority": "Priorytet",
       "businessOwner": "Właściciel biznesowy",
       "executionOwner": "Właściciel wykonawczy",
-      "applyChanges": "Zastosuj zmiany"
+      "applyChanges": "Zastosuj zmiany",
+      "changeOwnerAction": "Zmień właściciela"
     },
     "drawer": {
       "showLess": "Pokaż mniej",

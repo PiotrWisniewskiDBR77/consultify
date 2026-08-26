@@ -8181,7 +8181,9 @@
         "ariaLoading": "AI readiness assessment in progress",
         "loading": "Assessing…",
         "label": "AI readiness",
-        "scoreSuffix": "/100"
+        "scoreSuffix": "/100",
+        "degraded": "estimate without an AI model — no AI key configured, score computed from a word-count formula, not by a model",
+        "degradedBadge": "no AI"
       },
       "panel": {
         "title": "Gate readiness — AI analysis",
@@ -9041,6 +9043,7 @@
     "initiativeDeleted2": "Initiative deleted",
     "changeStatus2": "Change status",
     "noStatusChangesAvailable2": "No status changes available",
+    "statusGovernedGateOnly": "Change status from the lifecycle gate workflow, not from this card.",
     "previewPhaseList2": "Preview phase list",
     "previewPossibleNextGates2": "Preview possible next gates",
     "youCannotEditPriorityAtThis2": "You cannot edit priority at this stage.",
@@ -9164,6 +9167,11 @@
     "delete2": "Delete",
     "watchers2": "Watchers",
     "noWatchersForThisInitiativeYet2": "No watchers for this initiative yet.",
+    "watchersSection": {
+      "startWatching": "Watch",
+      "stopWatching": "Stop watching",
+      "you": "You"
+    },
     "usedInBacklinks2": "Used in (backlinks)",
     "noLinksYet2": "No links yet",
     "presentation2": "Presentation",
@@ -10364,7 +10372,8 @@
       "priority": "Priority",
       "businessOwner": "Business owner",
       "executionOwner": "Execution owner",
-      "applyChanges": "Apply changes"
+      "applyChanges": "Apply changes",
+      "changeOwnerAction": "Change owner"
     },
     "drawer": {
       "showLess": "Show less",

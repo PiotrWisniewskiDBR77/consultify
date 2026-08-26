@@ -9,6 +9,16 @@
  * Self-contained: own fetch hook (no dependency on the shared
  * initiatives.api.ts), i18n PL/EN with fallbacks via t(). Canon tokens (no
  * hex/rose — primary + slate).
+ *
+ * PRESERVED, NOT WIRED (2026-08-26 — Initiatives expert panel 4.0/10, fix batch):
+ * the `activeTab === 'portfolioHealth'` mount in InitiativesHub.tsx was removed
+ * as unreachable dead code (CANONICAL_INITIATIVES_TABS only allows
+ * list/plan/capacity; the URL-param effect actively resets any other `?tab=`
+ * value back to 'list'). This component's underlying data/logic is real and
+ * valuable — the panel recommended re-exposing it later behind a proper Menu 1
+ * entry rather than deleting it. Do NOT delete this file; when re-wiring, add
+ * 'portfolioHealth' back to CANONICAL_INITIATIVES_TABS and mount
+ * <PortfolioHealthView /> from InitiativesHub's renderContent again.
  */
 import {
   AlertTriangle,

@@ -20,9 +20,6 @@ export {
   InitiativeLevelSelector,
 } from './templates';
 
-// V3-F02 — Portfolio Analysis
-export { PortfolioAnalysisView } from './Analysis';
-
 // Canonical exports
 export { InitiativeDocumentView } from './InitiativeDocumentView';
 export { InitiativeDrawer } from './InitiativeDrawer';

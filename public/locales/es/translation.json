@@ -722,7 +722,8 @@
       "noChange": "No change",
       "applyChanges": "Apply changes",
       "updatesFailed": "{{count}} updates failed",
-      "bulkUpdateApplied": "Bulk update applied"
+      "bulkUpdateApplied": "Bulk update applied",
+      "changeOwnerAction": "Change owner"
     },
     "empty": {
       "title": "No Initiatives Yet",

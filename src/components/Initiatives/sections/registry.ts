@@ -38,6 +38,7 @@ import { TasksMilestonesSection } from './TasksMilestonesSection';
 import { TeamSection } from './TeamSection';
 import { TimelineSection } from './TimelineSection';
 import type { InitiativeSectionProps } from './types';
+import { WatchersSection } from './WatchersSection';
 
 /**
  * Registry mapping component_key -> React component.
@@ -79,7 +80,7 @@ export const SECTION_REGISTRY: Record<string, React.ComponentType<InitiativeSect
   linkedItems: LinkedItemsSection,
   tags: TagsSection,
   reminders: RemindersSection,
-  watchers: OverviewSection, // Watchers have a simpler UI - can be enhanced later
+  watchers: WatchersSection,
 };
 
 /**
