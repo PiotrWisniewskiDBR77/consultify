@@ -10950,6 +10950,10 @@
       "failed": "Migawka kondycji PMO niedostępna",
       "failedDesc": "Nie udało się załadować autorytatywnej migawki kondycji PMO. Wskaźnik kondycji oraz liczby decyzji i blokad poniżej opierają się na szacunkach po stronie klienta i mogą być niepełne — to stan zdegradowany, a nie potwierdzone zdrowe portfolio."
     },
+    "entityLookup": {
+      "initiativeNotFound": "Nie znaleziono inicjatywy w tym widoku",
+      "unsupportedType": "Otwieranie tego typu elementu nie jest tu jeszcze obsługiwane"
+    },
     "signalsUnavailable": {
       "badge": "Źródło sygnałów niedostępne",
       "title": "Źródło sygnałów niedostępne",

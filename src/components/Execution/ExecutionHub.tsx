@@ -2686,6 +2686,39 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     setIsSidePanelOpen(true);
   }, []);
 
+  // A2b/DEC-120: onOpenEntity callbacks used to ignore `entityType` entirely
+  // and open the initiative side panel with a fabricated
+  // `{ id, name: id }` object — e.g. clicking a risk or decision opened an
+  // "initiative" literally named after its raw UUID. The side panel
+  // (handleOpenSidePanel) only knows how to render a real FullInitiative, so
+  // this now looks the entity up by type + id and opens it only when found;
+  // an unsupported type or a missing record shows a PL toast instead of a
+  // fabricated panel.
+  const openEntityById = useCallback(
+    (entityType: string, entityId: string) => {
+      const normalizedType = String(entityType || '').toUpperCase();
+      if (normalizedType === 'INITIATIVE') {
+        const pool = initiatives.length > 0 ? initiatives : dashboardBaseInitiatives;
+        const found = pool.find((i) => i.id === entityId);
+        if (found) {
+          handleOpenSidePanel(found as FullInitiative);
+          return;
+        }
+        toast.error(
+          t('execution.entityLookup.initiativeNotFound', 'Initiative not found in this view')
+        );
+        return;
+      }
+      toast.error(
+        t(
+          'execution.entityLookup.unsupportedType',
+          'Opening this item type is not supported here yet'
+        )
+      );
+    },
+    [initiatives, dashboardBaseInitiatives, handleOpenSidePanel, t]
+  );
+
   const handleCloseDocument = useCallback(
     (id: string) => {
       setOpenDocuments((prev) => prev.filter((d) => d.id !== id));
@@ -5725,9 +5758,7 @@ Please return:
           currency="PLN"
           isPolish={isPolish}
           generatedAt={summaryOneLookProps.generatedAt}
-          onOpenEntity={(type, id) => {
-            if (handleOpenSidePanel) handleOpenSidePanel({ id, name: id } as any);
-          }}
+          onOpenEntity={openEntityById}
         />
       );
     }
@@ -5742,11 +5773,7 @@ Please return:
           hasExecutingInitiatives={dashboardBaseInitiatives.length > 0}
           onRegisterCommandRowContent={setManagerCommandRowContent}
           onRegisterCommandRowRightContent={setManagerCommandRowRightContent}
-          onOpenEntity={
-            handleOpenSidePanel
-              ? (type, id) => handleOpenSidePanel({ id, name: id } as any)
-              : undefined
-          }
+          onOpenEntity={openEntityById}
         />
       );
     }
