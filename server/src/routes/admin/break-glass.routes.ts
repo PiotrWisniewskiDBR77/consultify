@@ -1,6 +1,7 @@
 import { type NextFunction, type Response, Router } from 'express';
 import verifyAdmin from '../../middleware/admin.middleware.js';
 import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
+import { requireAudit } from '../../middleware/requireAudit.middleware.js';
 import adminSessionService from '../../services/adminSessionService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet } from '../../utils/DbPromise.js';
@@ -24,6 +25,16 @@ router.use(
   })
 );
 router.use(verifyAdmin);
+router.use(requireAudit);
+
+function auditUnavailable(res: Response) {
+  return res.status(503).json({
+    success: false,
+    code: 'AUDIT_UNAVAILABLE',
+    operationApplied: true,
+    error: 'Operation completed but its audit record could not be persisted',
+  });
+}
 async function policy(o: string) {
   const row = await dbGet<{ setting_value?: string }>(
     'SELECT setting_value FROM organization_settings WHERE organization_id=? AND setting_key=?',
@@ -94,7 +105,7 @@ router.post(
       !p.breakGlassApprovers.includes(approvedBy)
     )
       return res.status(400).json({ error: 'Member is not an approved break-glass approver' });
-    await adminSessionService.createSession({
+    const session = await adminSessionService.createSession({
       userId: actor,
       organizationId: o,
       sessionType: 'break_glass',
@@ -103,6 +114,17 @@ router.post(
       approvedBy,
       createdBy: actor,
     });
+    try {
+      await req.emitAuditEvent?.({
+        action: 'break_glass_session.created',
+        resourceType: 'break_glass_session',
+        resourceId: String(session?.id || actor),
+        after: { active: true, approvedBy },
+        metadata: { reason, approvedBy, expiresInHours: 1 },
+      });
+    } catch {
+      return auditUnavailable(res);
+    }
     res.status(201).json({ success: true, ...(await payload(o)) });
   })
 );
@@ -117,7 +139,19 @@ router.delete(
       { fallback: false }
     );
     if (!found) return res.status(404).json({ error: 'Not found' });
-    await adminSessionService.revokeSession(id);
+    const revoked = await adminSessionService.revokeSession(id);
+    if (revoked === false) return res.status(409).json({ error: 'Session could not be revoked' });
+    try {
+      await req.emitAuditEvent?.({
+        action: 'break_glass_session.revoked',
+        resourceType: 'break_glass_session',
+        resourceId: id,
+        before: { active: true },
+        after: { active: false },
+      });
+    } catch {
+      return auditUnavailable(res);
+    }
     res.json({ success: true, ...(await payload(o)) });
   })
 );
