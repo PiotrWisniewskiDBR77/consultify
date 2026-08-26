@@ -215,9 +215,15 @@ export const ChatSignalsPanel: React.FC<ChatSignalsPanelProps> = ({ open, onClos
   }, [t, projectId]);
 
   useEffect(() => {
-    if (!open) return;
+    // FIX-7 (dyżur 26 chat-signals-front, odbiór P0.7, licencja nadzorcy
+    // wydana) — przy `ff_chatSignalsFeed` ON treść panelu to `ChatSignalsFeed`
+    // (poniżej), nie ten legacy blok. Bez tej strażniczki `refresh()` i tak
+    // strzelał do `/my-work/signals` przy każdym otwarciu i mógł pokazać
+    // `toast.error`, mimo że użytkownik nigdy nie widzi legacy UI, które ten
+    // fetch zasila — martwy, mylący ruch sieciowy.
+    if (!open || feedV2) return;
     refresh();
-  }, [open, refresh]);
+  }, [open, feedV2, refresh]);
 
   /**
    * M01-012 — koniec z cichym obcinaniem.
