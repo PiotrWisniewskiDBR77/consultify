@@ -1,13 +1,25 @@
 /**
- * FIN-006/B — pins that `Gateway.ts` actually applies the exact-match
- * stateless-compute allowlist, not just that the allowlist module itself is
- * correct (that's `financeValueRoutes.demoGuard.test.ts`, which mounts its
- * OWN express app, never `Gateway.ts`).
+ * DEC-2026-08-28-154(e) — pins that `Gateway.ts` applies `demoWriteGuard`
+ * UNCONDITIONALLY, with no allowlist-driven bypass ahead of it.
  *
- * Structural, source-scanning check (Gateway.ts pulls in far too much of the
- * app to mount and exercise directly in a unit test) — the same pattern this
- * repo already uses for `fin005PgTestCommand.test.ts` (scans package.json)
- * and `atelierFinancePrimaryReadStructure.test.ts` (scans a service file).
+ * Prior state (the bug): `Gateway.ts` imported `isStatelessComputeDemoRoute`
+ * from `./routes/v8/financeValueDemoAllowlist.js` and called it INSIDE the
+ * middleware, calling `next()` directly (skipping `demoWriteGuard` outright)
+ * for four Finance value POST routes whenever the path matched — before the
+ * guard ever ran, not as an argument to it. That bypass skipped the guard's
+ * own demo detection (the `X-Demo-Mode` header / demo org id check), so a
+ * POST to those routes could reach the live handler while targeting the demo
+ * organization. The owner ruled this a bug, not a feature (decision register
+ * `docs/program/waves/WAVE_03_ACCEPTANCE/OWNER_DECISION_LEDGER_2026-08-24.md`,
+ * `DEC-2026-08-28-154` point e) and ordered it fixed before deploy.
+ *
+ * This is a structural, source-scanning check (Gateway.ts pulls in far too
+ * much of the app to mount and exercise directly in a unit test) — the same
+ * pattern this repo already uses for `fin005PgTestCommand.test.ts` (scans
+ * package.json) and `atelierFinancePrimaryReadStructure.test.ts` (scans a
+ * service file). The behavioural, mutation-style proof that the guard now
+ * actually rejects these routes in demo mode (and still allows them outside
+ * demo mode) lives in `routes/v8/__tests__/financeValueRoutes.demoGuard.test.ts`.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -21,29 +33,28 @@ function readGatewaySource(): string {
   return fs.readFileSync(GATEWAY_PATH, 'utf8');
 }
 
-describe('Gateway.ts — FIN-006/B stateless-compute demo allowlist wiring', () => {
-  it('imports isStatelessComputeDemoRoute from the audited allowlist module', () => {
+describe('Gateway.ts — DEC-2026-08-28-154(e) demo write guard has no allowlist bypass', () => {
+  it('does NOT import isStatelessComputeDemoRoute / financeValueDemoAllowlist — the bypass module is unwired', () => {
     const src = readGatewaySource();
-    expect(src).toMatch(
-      /import\s*\{\s*isStatelessComputeDemoRoute\s*\}\s*from\s*['"]\.\/routes\/v8\/financeValueDemoAllowlist\.js['"]/
+    expect(src).not.toMatch(/isStatelessComputeDemoRoute/);
+    expect(src).not.toMatch(
+      /import\s*\{[^}]*\}\s*from\s*['"]\.\/routes\/v8\/financeValueDemoAllowlist\.js['"]/
     );
   });
 
-  it('the demo write guard checks isStatelessComputeDemoRoute BEFORE calling demoWriteGuard', () => {
+  it('mounts demoWriteGuard directly with app.use — no conditional wrapper that could call next() ahead of it', () => {
     const src = readGatewaySource();
+    // The guard construction and its mount must both be present...
     const guardIdx = src.indexOf('demoWriteProtection({');
-    const checkIdx = src.indexOf('isStatelessComputeDemoRoute(req.method, pathname)');
-    const callIdx = src.indexOf('return demoWriteGuard(req, res, next)');
+    const mountIdx = src.indexOf('app.use(demoWriteGuard)');
     expect(guardIdx).toBeGreaterThan(-1);
-    expect(checkIdx).toBeGreaterThan(-1);
-    expect(callIdx).toBeGreaterThan(-1);
-    // The guard is still constructed with the ORIGINAL allowlist (unchanged —
-    // FIN-006/B does not touch demoGuard.middleware.ts or widen it).
-    expect(guardIdx).toBeLessThan(checkIdx);
-    expect(checkIdx).toBeLessThan(callIdx);
+    expect(mountIdx).toBeGreaterThan(-1);
+    expect(guardIdx).toBeLessThan(mountIdx);
+    // ...and nothing routes requests to demoWriteGuard conditionally anymore.
+    expect(src).not.toMatch(/return demoWriteGuard\(req, res, next\)/);
   });
 
-  it('the original allowedRoutes ["/api/demo/", "/api/auth/"] are untouched — no widening of the guard itself', () => {
+  it('the allowedRoutes ["/api/demo/", "/api/auth/"] are untouched — no widening of the guard itself', () => {
     const src = readGatewaySource();
     expect(src).toMatch(/allowedRoutes:\s*\[\s*'\/api\/demo\/',\s*'\/api\/auth\/'\s*\]/);
   });

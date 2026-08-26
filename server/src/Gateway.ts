@@ -414,7 +414,6 @@ import userOrgsRoutes from './routes/user/userOrgs.routes.js';
 import userRoutes from './routes/user/users.routes.js';
 import { managerRouter as v8ExecutionControlManagerRouter } from './routes/v8/execution-control.routes.js';
 import { mountedFinanceStatementRouter } from './routes/v8/financeStatementMountedSurface.js';
-import { isStatelessComputeDemoRoute } from './routes/v8/financeValueDemoAllowlist.js';
 import v8Router from './routes/v8/index.js';
 import { publicKnowledgeBaseRoutes as publicV8KnowledgeBaseRoutes } from './routes/v8/knowledge-base.routes.js';
 import v10TeresaRoutes from './routes/v10/teresa.routes.js';
@@ -552,18 +551,15 @@ export class ApiGateway {
           // to enter and leave demo mode; auth routes handle login/logout.
           allowedRoutes: ['/api/demo/', '/api/auth/'],
         });
-        // FIN-006/B: the V8 Finance value layer is stateless compute exposed over
-        // POST because its input is a JSON body, not because it persists anything.
-        // Exempting it by EXACT path + method (not the guard's own prefix match)
-        // keeps this from ever covering a future sibling route by accident.
-        // Audit and rationale: routes/v8/financeValueDemoAllowlist.ts.
-        app.use((req, res, next) => {
-          const pathname = String(req.originalUrl || req.url || '')
-            .split('?')[0]
-            .split('#')[0];
-          if (isStatelessComputeDemoRoute(req.method, pathname)) return next();
-          return demoWriteGuard(req, res, next);
-        });
+        // DEC-2026-08-28-154(e): FIN-006/B previously let `financeValueDemoAllowlist`
+        // call next() directly for its four routes, BYPASSING demoWriteGuard outright
+        // instead of asking it to allow them. That skipped the guard's own demo
+        // detection (X-Demo-Mode header / demo org id), so a POST to those routes
+        // reached the real handler even while targeting the demo organization —
+        // a hole in the demo write boundary, confirmed by the owner as a bug, not a
+        // feature, and ordered fixed before deploy. demoWriteGuard is the sole
+        // authority on every request now; nothing may skip it ahead of time.
+        app.use(demoWriteGuard);
       }
 
       // TypeScript routes (migrated)
