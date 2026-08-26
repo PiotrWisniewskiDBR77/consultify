@@ -286,7 +286,10 @@ router.post(
 router.get(
   '/:id/comments',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const comments = await managementReportsService.getComments(req.params.id);
+    const comments = await managementReportsService.getComments(
+      req.params.id,
+      req.organizationId
+    );
     return res.json({ success: true, comments });
   })
 );
@@ -314,7 +317,11 @@ router.delete(
 router.get(
   '/:id/audit-log',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const log = await managementReportsService.getAuditLog(req.params.id, req.query.action);
+    const log = await managementReportsService.getAuditLog(
+      req.params.id,
+      req.query.action,
+      req.organizationId
+    );
     return res.json({ success: true, log });
   })
 );
@@ -322,7 +329,11 @@ router.get(
 router.post(
   '/:id/finalize',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const report = await managementReportsService.finalizeReport(req.params.id, req.userId);
+    const report = await managementReportsService.finalizeReport(
+      req.params.id,
+      req.userId,
+      req.organizationId
+    );
     return res.json({ success: true, report });
   })
 );
@@ -333,7 +344,8 @@ router.post(
     const report = await managementReportsService.unlockReport(
       req.params.id,
       req.userId,
-      req.body.reason
+      req.body.reason,
+      req.organizationId
     );
     return res.json({ success: true, report });
   })
