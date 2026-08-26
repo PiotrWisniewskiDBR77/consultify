@@ -81,22 +81,34 @@ export async function sendMeetingInvitations(input: {
         `[Meeting invitations] captured recipient=${participant.email} meeting=${meeting.id}\n${ics}`
       );
     } else {
-      const sent = await sendEmail({
-        to: participant.email!,
-        subject:
-          method === 'CANCEL' ? `Cancelled: ${meeting.title}` : `Invitation: ${meeting.title}`,
-        html: `<p>${meeting.title}</p><p>${meeting.startAt}</p><p>${meeting.location}</p>`,
-        attachments: [
-          {
-            filename: 'invite.ics',
-            content: ics,
-            contentType: `text/calendar; method=${method}`,
-          },
-        ],
-        requireDelivery: true,
-      });
-      status = sent ? 'sent' : 'failed';
-      error = sent ? undefined : 'MAILER_DELIVERY_FAILED';
+      // FIX-7 (P2, 2026-08-26): sendEmail() rejecting (SMTP transport
+      // exception, network error, etc.) used to propagate straight out of
+      // sendMeetingInvitations and abort the whole batch — every recipient
+      // after the failing one never got a delivery attempt or a status row
+      // at all, not even 'failed'. Contain the failure to this one
+      // recipient so one bad address/transient error can't block delivery
+      // to the rest of the invite list.
+      try {
+        const sent = await sendEmail({
+          to: participant.email!,
+          subject:
+            method === 'CANCEL' ? `Cancelled: ${meeting.title}` : `Invitation: ${meeting.title}`,
+          html: `<p>${meeting.title}</p><p>${meeting.startAt}</p><p>${meeting.location}</p>`,
+          attachments: [
+            {
+              filename: 'invite.ics',
+              content: ics,
+              contentType: `text/calendar; method=${method}`,
+            },
+          ],
+          requireDelivery: true,
+        });
+        status = sent ? 'sent' : 'failed';
+        error = sent ? undefined : 'MAILER_DELIVERY_FAILED';
+      } catch (err: unknown) {
+        status = 'failed';
+        error = err instanceof Error ? err.message : 'MAILER_DELIVERY_FAILED';
+      }
     }
     await setParticipantDelivery({ ...input, participantId: participant.id, status, error });
     await dbRun(
