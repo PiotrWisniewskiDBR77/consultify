@@ -4,8 +4,8 @@ Baza związania: `codex/m03-admin-20260824` @ `649bd730a6`; aktualny tip po roze
 Marker: `649bd730a6` — POTWIERDZONY (`git merge-base --is-ancestor`).
 Gałąź: `codex/assessment-day20-20260826`.
 Worktree: `/private/tmp/consultify-assessment-day20`.
-Port PG: `5469` · kontener `cx-day20-pg` usunięty: NIE (dyżur trwa) · wolumeny usunięte: NIE (dyżur trwa).
-Przedział migracji: `20261101`–`20261109` · użyte numery: brak na etapie Bloku 0.
+Port PG: `5469` · kontener `cx-day20-pg` usunięty: TAK · wolumeny usunięte: TAK.
+Przedział migracji: `20261101`–`20261109` · użyte numery: `20261101`.
 
 ## Oświadczenie o chronionym checkoutcie (Z5/DEC-86)
 
@@ -13,18 +13,18 @@ Nie wykonywałem odczytów ani zapisów w chronionym checkoutcie. Jedyny kontakt
 
 ## Oświadczenie o zakresie `src/`
 
-Nie zmieniono żadnego pliku w `src/`. Dowód końcowy zostanie wklejony po ostatnim commicie.
+Nie zmieniono żadnego pliku w `src/`. `git diff --name-only codex/m03-admin-20260824...HEAD | grep '^src/'` → PUSTO.
 
 ## Dowód celu połączenia (Z19 / DEC-96 / DEC-98)
 
 ```text
  current_database | inet_server_port
 ------------------+------------------
- cx_day20         |
+ cx_day20         |             5432
 (1 row)
 ```
 
-Puste `inet_server_port()` jest oczekiwane dla `psql` uruchomionego wewnątrz kontenera przez gniazdo Unix. Mapowanie hosta potwierdzone przez Docker: `5469:5432`; wszystkie polecenia DB miały jawne `DATABASE_URL=postgres://postgres:cx@localhost:5469/cx_day20` w tej samej linii.
+Dowód wykonano przez TCP wewnątrz kontenera; mapowanie hosta potwierdzone przez Docker: `5469:5432`. Wszystkie polecenia DB miały jawne `DATABASE_URL=postgres://postgres:cx@localhost:5469/cx_day20` w tej samej linii.
 
 ## Warunki wstępne
 
@@ -42,25 +42,25 @@ Puste `inet_server_port()` jest oczekiwane dla `psql` uruchomionego wewnątrz ko
 | Migracje lokalne przebieg 1     | PASS — 846 zastosowanych                                                                                                            |
 | Migracje lokalne przebieg 2     | PASS — `Applying migrations: 0`                                                                                                     |
 | Dry-run                         | PASS — `Pending migrations: 0`                                                                                                      |
-| Pomiar wejściowy §0.4a          | W TOKU — pełny zakres, realny PG, `MOCK_DB=false`                                                                                   |
+| Pomiar wejściowy §0.4a          | WYKONANY — pełny zakres, realny PG, `MOCK_DB=false`                                                                                 |
 
 ## Pozycje — tabela zbiorcza
 
-| Pozycja | Status      | Commit               | Dowód osiągalności                                                                                   | Dowód testowy                                                                  |
-| ------- | ----------- | -------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| A.1     | CZĘŚCIOWO   | raportowy commit A.1 | `Gateway.ts:639,641` → deklaracje routerów; 31 v1 + 41 v2 znalezione                                 | inwentarz statyczny; brak pełnego testu HTTP 72 tras                           |
-| A.2     | STOP        | —                    | kanon v2 potwierdzony, ale bez pełnego A.1 nie usuwam kodu                                           | brak zmian produkcyjnych                                                       |
-| A.3     | CZĘŚCIOWO   | raportowy commit A.1 | wywołania klienta zmierzone statycznie; reprezentatywne czerwone zastane w baseline                  | pełny kontrakt odpowiedzi wymaga osobnego pomiaru real-router                  |
-| B.1     | CZĘŚCIOWO   | commit B.1           | `Gateway` → raporty/Assessment → `drdVizAdapter` → `server/src/data/drdStructure.ts`                 | 16/16 PASS; brak osobnego readbacku sesji na realnym PG obniża status          |
-| B.2     | STOP        | —                    | serwis osiągalny przez `Gateway.ts` → `assessment-ai.routes.ts` → `aiAssessmentPartnerService.ts`    | 92 błędy punktowego `tsc` po zdjęciu `@ts-nocheck`; plik przywrócony bez diffu |
-| C.1     | NIE_ZACZĘTE | —                    | —                                                                                                    | —                                                                              |
-| D.1     | CZĘŚCIOWO   | commit D.1           | `Gateway.ts:958` → `/api/method` → skip routes → `AssessmentSkipReasonService` → lokalny PG          | 6/6 PASS real-router/PG; brak dowodu mutacyjnego T.3 obniża status             |
-| D.2     | CZĘŚCIOWO   | commit E.1           | report contract → `AssessmentSkipReasonService.listActive`; zero parsowania `justification`          | 9/9 wspólny pakiet PASS; osobny negatyw historycznego tekstu nie dodany        |
-| E.1     | CZĘŚCIOWO   | commit E.1           | `Gateway.ts:958` → `/api/method/.../assessment-report-contract` → serwis → output + DRD + skip model | 9/9 PASS; brak fixture z pełnym zamrożonym outputem obniża status              |
-| E.2     | NIE_ZACZĘTE | —                    | —                                                                                                    | —                                                                              |
-| F.1     | STOP        | —                    | brak importera barrela potwierdzony, ale nie dowiedziono odpowiedników wszystkich 11 semantyk        | zero usunięć zgodnie z Z20                                                     |
-| T       | NIE_ZACZĘTE | —                    | —                                                                                                    | —                                                                              |
-| R.1     | NIE_ZACZĘTE | —                    | —                                                                                                    | —                                                                              |
+| Pozycja | Status      | Commit                 | Dowód osiągalności                                                                                   | Dowód testowy                                                                   |
+| ------- | ----------- | ---------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| A.1     | CZĘŚCIOWO   | `6f45724eeb`           | `Gateway.ts:639,641` → deklaracje routerów; 31 v1 + 41 v2 znalezione                                 | inwentarz statyczny; brak pełnego testu HTTP 72 tras                            |
+| A.2     | STOP        | —                      | kanon v2 potwierdzony, ale bez pełnego A.1 nie usuwam kodu                                           | brak zmian produkcyjnych                                                        |
+| A.3     | CZĘŚCIOWO   | `6f45724eeb`           | wywołania klienta zmierzone statycznie; reprezentatywne czerwone zastane w baseline                  | pełny kontrakt odpowiedzi wymaga osobnego pomiaru real-router                   |
+| B.1     | CZĘŚCIOWO   | `0e34ffe479`           | `Gateway` → raporty/Assessment → `drdVizAdapter` → `server/src/data/drdStructure.ts`                 | 16/16 PASS; brak osobnego readbacku sesji na realnym PG obniża status           |
+| B.2     | STOP        | —                      | serwis osiągalny przez `Gateway.ts` → `assessment-ai.routes.ts` → `aiAssessmentPartnerService.ts`    | 92 błędy punktowego `tsc` po zdjęciu `@ts-nocheck`; plik przywrócony bez diffu  |
+| C.1     | NIE_ZACZĘTE | —                      | —                                                                                                    | —                                                                               |
+| D.1     | CZĘŚCIOWO   | `735b56a831`           | `Gateway.ts:958` → `/api/method` → skip routes → `AssessmentSkipReasonService` → lokalny PG          | 6/6 PASS real-router/PG; brak dowodu mutacyjnego T.3 obniża status              |
+| D.2     | CZĘŚCIOWO   | `729038166f`           | report contract → `AssessmentSkipReasonService.listActive`; zero parsowania `justification`          | 9/9 wspólny pakiet PASS; osobny negatyw historycznego tekstu nie dodany         |
+| E.1     | CZĘŚCIOWO   | `729038166f`           | `Gateway.ts:958` → `/api/method/.../assessment-report-contract` → serwis → output + DRD + skip model | 9/9 PASS; brak fixture z pełnym zamrożonym outputem obniża status               |
+| E.2     | NIE_ZACZĘTE | —                      | —                                                                                                    | —                                                                               |
+| F.1     | STOP        | —                      | brak importera barrela potwierdzony, ale nie dowiedziono odpowiedników wszystkich 11 semantyk        | zero usunięć zgodnie z Z20                                                      |
+| T       | CZĘŚCIOWO   | końcowy commit raportu | nowe trasy: real router → real PG                                                                    | pełny Z23 wykonany; 14 czerwonych zastanych front/v8, zero dowiedzionych nowych |
+| R.1     | NIE_ZACZĘTE | —                      | —                                                                                                    | —                                                                               |
 
 ## A.1 — inwentarz osiągalności obu mountów
 
@@ -212,3 +212,49 @@ Stan: pozycja decyzyjna otwarta.
 - Nie wykonałem deployu, Railway, zdalnej migracji, zdalnego zapisu, pushu, merge ani rebase.
 - Nie zmieniłem flag, `src/`, współdzielonego jądra zdarzeń, infrastruktury testowej ani modułu Audytów.
 - Nie użyłem LLM i nie renderowałem PDF.
+
+## Pomiar wyjściowy §0.4a — ZASIĘG PEŁNY
+
+| Target                                                                 | Wynik wyjściowy                                                              |
+| ---------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `server/src/routes/v8/__tests__/assessment.routes.test.ts`             | FAIL suite, 0 testów — zastany brak `validateOrgMembership` w lokalnym mocku |
+| `server/src/routes/v8/__tests__/assessment.accepted-freeze.pg.test.ts` | 2/2 PASS                                                                     |
+| `server/src/services/assessment/__tests__`                             | 21/21 PASS                                                                   |
+| `server/src/method-core/__tests__`                                     | 245/245 PASS, w tym 9 nowych testów Day 20                                   |
+| `server/src/method-core/outputs/__tests__`                             | 23/23 PASS                                                                   |
+| `server/src/routes/assessmentCatalog/__tests__`                        | 7/7 PASS                                                                     |
+| `server/src/services/assessmentMethodBootstrap/__tests__`              | 8/8 PASS                                                                     |
+| `assessmentAdapter.pg.test.ts`                                         | 8/8 PASS                                                                     |
+| `tests/unit/assessment`                                                | 550/550 PASS, w tym 4 nowe testy skali                                       |
+| `tests/unit/drdVizAdapter.test.ts`                                     | 4/4 PASS                                                                     |
+| `tests/integration/assessment`                                         | 43/43 PASS                                                                   |
+| sześć pojedynczych integration validator targets + overview            | 26/26 PASS                                                                   |
+| `tests/components/assessment`                                          | 266/274 PASS; 8 zastanych FAIL w trzech plikach Outputs                      |
+| `src/components/assessment/drd/__tests__`                              | 34/40 PASS; 6 zastanych FAIL bannera demo                                    |
+| `src/method-core/methods/drd/__tests__`                                | 63/63 PASS                                                                   |
+
+### Czerwone WPROWADZONE
+
+Zero dowiedzionych. Żaden czerwony plik nie jest dotknięty przez dyżur; zakres `src/` i globalnej infrastruktury testowej jest pusty. `tests/integration/assessment` było niestabilne w pierwszym sekwencyjnym baseline (37/43), a na wyjściu ma 43/43; nie przypisuję tego pracy produkcyjnej.
+
+### Pakiet domyślnego okablowania (Z21)
+
+`server/src/method-core/__tests__/assessmentSkipReasons.day20.pg.test.ts` bootuje produkcyjny eksport `method-core.routes.ts`, produkcyjny singleton serwisów, prawdziwe JWT i prawdziwy PostgreSQL; nie wstrzykuje repozytorium ani zależności. Wynik 9/9 PASS.
+
+### Brak atrapy z zewnętrznym skutkiem (Z22)
+
+Nowe POST zmienia tabelę `assessment_skip_reasons`; zły kod, zła skala, obcy tenant i brak uprawnień kończą się 4xx i zerem zapisu. Nowe GET-y nie mają skutku zewnętrznego. Nie dodano publikacji, eksportu pliku, mailera, webhooka ani powiadomienia.
+
+## Dowody granic
+
+- Z18: diff nie zawiera `tests/setup`, helpers, mocks ani configów Vitest.
+- `src/`: pusty diff.
+- Migracje: wyłącznie `20261101_assessment_day20_skip_reasons.sql`.
+- `server/src/method-core/contracts/events.ts`: pusty diff.
+- `server/src/services/audits/`: pusty diff.
+- Flagi: nie dodano i nie zmieniono wartości domyślnych.
+- LLM: brak importów/wywołań w kodzie zadania; trafienia grepa w całym diffie pochodzą wyłącznie z wiążącej instrukcji i raportu.
+
+## Licznik
+
+13 pozycji: 0 `ZROBIONE_WG_DoD`, 7 `CZĘŚCIOWO` (A.1, A.3, B.1, D.1, D.2, E.1, T), 3 `STOP` (A.2, B.2, F.1), 3 `NIE_ZACZĘTE` (C.1, E.2, R.1). Flagi pozostały OFF. Stan jest gotowy do odbioru przez nadzorcę jako częściowy, bez zawyżenia.
