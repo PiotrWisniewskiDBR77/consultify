@@ -36,6 +36,7 @@
 import { imageSize } from 'image-size';
 import PDFDocument from 'pdfkit';
 
+import { PDF_FONT, registerPdfFonts } from '../../utils/pdfFonts.js';
 import { renderChartBlockToPng } from './documentChartRasterizer.js';
 import {
   formatAppendixHeading,
@@ -535,7 +536,7 @@ function drawTableOfContents(doc: PDFKit.PDFDocument, ctx: PdfRenderContext): vo
   });
   if (filtered.length === 0) return;
   drawHeading(doc, 'Table of Contents', 1, ctx);
-  doc.fontSize(ctx.sizing.body).fillColor('#0F172A').font('Helvetica');
+  doc.fontSize(ctx.sizing.body).fillColor('#0F172A').font(PDF_FONT.regular);
   for (const entry of filtered) {
     doc.text(entry.heading, { indent: 8 });
   }
@@ -558,9 +559,9 @@ function drawHeading(
   const colors: Record<1 | 2 | 3, string> = { 1: '#0F172A', 2: '#1E293B', 3: '#334155' };
   if (options.pageBreakBefore === true) doc.addPage();
   doc.moveDown(level === 1 ? 0.7 : 0.4);
-  doc.fontSize(sizes[level]).fillColor(colors[level]).font('Helvetica-Bold').text(text);
+  doc.fontSize(sizes[level]).fillColor(colors[level]).font(PDF_FONT.bold).text(text);
   doc.moveDown(0.2);
-  doc.font('Helvetica');
+  doc.font(PDF_FONT.regular);
 }
 
 function drawParagraph(doc: PDFKit.PDFDocument, block: DocumentBlock, ctx: PdfRenderContext): void {
@@ -572,7 +573,7 @@ function drawParagraph(doc: PDFKit.PDFDocument, block: DocumentBlock, ctx: PdfRe
     doc
       .fontSize(ctx.sizing.body)
       .fillColor('#92400E')
-      .font('Helvetica-Oblique')
+      .font(PDF_FONT.italic)
       .text(`${text}${citationSuffix}`, { continued: true });
     doc
       .fontSize(ctx.sizing.caption)
@@ -582,7 +583,7 @@ function drawParagraph(doc: PDFKit.PDFDocument, block: DocumentBlock, ctx: PdfRe
     doc
       .fontSize(ctx.sizing.body)
       .fillColor('#0F172A')
-      .font('Helvetica')
+      .font(PDF_FONT.regular)
       .text(`${text}${citationSuffix}`);
   }
   doc.moveDown(0.4);
@@ -592,7 +593,7 @@ function drawList(doc: PDFKit.PDFDocument, block: DocumentBlock, ctx: PdfRenderC
   const value = (block.content ?? {}) as BlockListContent;
   const items = Array.isArray(value.items) ? value.items : [];
   const numbered = value.style === 'numbered' || block.type === 'numbered_list';
-  doc.fontSize(ctx.sizing.body).fillColor('#0F172A').font('Helvetica');
+  doc.fontSize(ctx.sizing.body).fillColor('#0F172A').font(PDF_FONT.regular);
   items.forEach((raw, idx) => {
     const prefix = numbered ? `${idx + 1}. ` : '• ';
     doc.text(`${prefix}${asString(raw)}`, { indent: 12 });
@@ -601,9 +602,9 @@ function drawList(doc: PDFKit.PDFDocument, block: DocumentBlock, ctx: PdfRenderC
     doc
       .fontSize(ctx.sizing.caption)
       .fillColor('#B45309')
-      .font('Helvetica-Oblique')
+      .font(PDF_FONT.italic)
       .text('  [Assumption — needs source]', { indent: 12 });
-    doc.font('Helvetica');
+    doc.font(PDF_FONT.regular);
   }
   doc.moveDown(0.4);
 }
@@ -618,12 +619,12 @@ function drawCallout(doc: PDFKit.PDFDocument, block: DocumentBlock, ctx: PdfRend
   doc
     .fontSize(ctx.sizing.body)
     .fillColor(accent)
-    .font('Helvetica-Bold')
+    .font(PDF_FONT.bold)
     .text(label, { continued: true })
-    .font('Helvetica-Oblique')
+    .font(PDF_FONT.italic)
     .fillColor('#0F172A')
     .text(text, { continued: false });
-  doc.font('Helvetica');
+  doc.font(PDF_FONT.regular);
   doc.moveDown(0.4);
 }
 
@@ -636,9 +637,9 @@ function drawQuote(doc: PDFKit.PDFDocument, block: DocumentBlock, ctx: PdfRender
   doc
     .fontSize(ctx.sizing.body)
     .fillColor('#475569')
-    .font('Helvetica-Oblique')
+    .font(PDF_FONT.italic)
     .text(`“${text}”${attribution}${citationSuffix}`, { indent: 18 });
-  doc.font('Helvetica');
+  doc.font(PDF_FONT.regular);
   doc.moveDown(0.4);
 }
 
@@ -654,7 +655,7 @@ function drawGridRow(
   const pad = 4;
   const lineHeight = fontSize * 1.25;
   // Pre-measure the tallest cell so all cells in the row share a height.
-  doc.fontSize(fontSize).font(opts.headerRow ? 'Helvetica-Bold' : 'Helvetica');
+  doc.fontSize(fontSize).font(opts.headerRow ? PDF_FONT.bold : PDF_FONT.regular);
   let maxLines = 1;
   cells.forEach((cell, i) => {
     const h = doc.heightOfString(cell.text || ' ', { width: colW[i] - 2 * pad });
@@ -678,7 +679,7 @@ function drawGridRow(
       cell.fill && isDarkHex(cell.fill) ? '#FFFFFF' : opts.headerRow ? '#0F172A' : '#0F172A';
     doc
       .fontSize(fontSize)
-      .font(opts.headerRow ? 'Helvetica-Bold' : 'Helvetica')
+      .font(opts.headerRow ? PDF_FONT.bold : PDF_FONT.regular)
       .fillColor(textColor)
       .text(cell.text, x + pad, top + pad, { width: w - 2 * pad });
     // Cell border.
@@ -686,7 +687,7 @@ function drawGridRow(
   });
   doc.y = top + rowH;
   doc.x = doc.page.margins.left;
-  doc.fillColor('#0F172A').font('Helvetica');
+  doc.fillColor('#0F172A').font(PDF_FONT.regular);
 }
 
 function drawTable(doc: PDFKit.PDFDocument, block: DocumentBlock, ctx: PdfRenderContext): void {
@@ -696,9 +697,9 @@ function drawTable(doc: PDFKit.PDFDocument, block: DocumentBlock, ctx: PdfRender
     doc
       .fontSize(ctx.sizing.caption)
       .fillColor('#64748B')
-      .font('Helvetica-Oblique')
+      .font(PDF_FONT.italic)
       .text('[Table placeholder — populate with structured data once sources are attached.]');
-    doc.font('Helvetica');
+    doc.font(PDF_FONT.regular);
     doc.moveDown(0.4);
     return;
   }
@@ -741,9 +742,9 @@ function drawTable(doc: PDFKit.PDFDocument, block: DocumentBlock, ctx: PdfRender
   doc
     .fontSize(ctx.sizing.caption)
     .fillColor('#64748B')
-    .font('Helvetica-Oblique')
+    .font(PDF_FONT.italic)
     .text(`${captionText}${citationSuffix}`);
-  doc.font('Helvetica');
+  doc.font(PDF_FONT.regular);
   doc.moveDown(0.4);
 }
 
@@ -807,9 +808,9 @@ function drawImage(doc: PDFKit.PDFDocument, block: DocumentBlock, ctx: PdfRender
       doc
         .fontSize(ctx.sizing.caption)
         .fillColor('#64748B')
-        .font('Helvetica-Oblique')
+        .font(PDF_FONT.italic)
         .text(`${captionText}${citationSuffix}`, { align: 'center' });
-      doc.font('Helvetica').fillColor('#0F172A');
+      doc.font(PDF_FONT.regular).fillColor('#0F172A');
       doc.moveDown(0.4);
       return;
     } catch {
@@ -821,10 +822,10 @@ function drawImage(doc: PDFKit.PDFDocument, block: DocumentBlock, ctx: PdfRender
   doc
     .fontSize(ctx.sizing.caption)
     .fillColor('#64748B')
-    .font('Helvetica-Oblique')
+    .font(PDF_FONT.italic)
     .text(`[${captionLabel} placeholder — no image asset attached]`);
   doc.text(`${captionText}${citationSuffix}`);
-  doc.font('Helvetica').fillColor('#0F172A');
+  doc.font(PDF_FONT.regular).fillColor('#0F172A');
   doc.moveDown(0.4);
 }
 
@@ -860,7 +861,7 @@ function drawChart(doc: PDFKit.PDFDocument, block: DocumentBlock, ctx: PdfRender
     doc
       .fontSize(ctx.sizing.caption)
       .fillColor('#64748B')
-      .font('Helvetica-Oblique')
+      .font(PDF_FONT.italic)
       .text(
         `[${captionLabel} chart placeholder — ${kindText} chart, ${seriesText}, ${valuesText}; rasterization fallback]`
       );
@@ -870,7 +871,7 @@ function drawChart(doc: PDFKit.PDFDocument, block: DocumentBlock, ctx: PdfRender
   if (content?.caption && content.caption.trim().length > 0) {
     doc.text(content.caption.trim());
   }
-  doc.font('Helvetica');
+  doc.font(PDF_FONT.regular);
   doc.moveDown(0.4);
 }
 
@@ -891,9 +892,9 @@ function drawKpiStrip(doc: PDFKit.PDFDocument, block: DocumentBlock, ctx: PdfRen
     doc
       .fontSize(ctx.sizing.caption)
       .fillColor('#64748B')
-      .font('Helvetica-Oblique')
+      .font(PDF_FONT.italic)
       .text('[KPI strip placeholder — no metrics provided.]');
-    doc.font('Helvetica').fillColor('#0F172A');
+    doc.font(PDF_FONT.regular).fillColor('#0F172A');
     doc.moveDown(0.4);
     return;
   }
@@ -916,12 +917,12 @@ function drawKpiStrip(doc: PDFKit.PDFDocument, block: DocumentBlock, ctx: PdfRen
     doc
       .fontSize(ctx.sizing.footnote)
       .fillColor('#64748B')
-      .font('Helvetica')
+      .font(PDF_FONT.regular)
       .text(label, x + 6, cardTop + 6, { width: cardW - 12, height: 14, ellipsis: true });
     doc
       .fontSize(ctx.sizing.heading2)
       .fillColor('#0F172A')
-      .font('Helvetica-Bold')
+      .font(PDF_FONT.bold)
       .text(metricValue, x + 6, cardTop + 20, { width: cardW - 12 });
     if (delta && delta !== '0') {
       let deltaColor = '#64748B';
@@ -930,13 +931,13 @@ function drawKpiStrip(doc: PDFKit.PDFDocument, block: DocumentBlock, ctx: PdfRen
       doc
         .fontSize(ctx.sizing.footnote)
         .fillColor(deltaColor)
-        .font('Helvetica')
+        .font(PDF_FONT.regular)
         .text(delta, x + 6, cardTop + 40, { width: cardW - 12, ellipsis: true });
     }
   });
   doc.y = cardTop + cardH;
   doc.x = doc.page.margins.left;
-  doc.fillColor('#0F172A').font('Helvetica');
+  doc.fillColor('#0F172A').font(PDF_FONT.regular);
   doc.moveDown(0.5);
 }
 
@@ -949,8 +950,8 @@ function drawInlineFootnote(
   const bodyText = asString(value.text ?? '').trim();
   if (bodyText.length === 0) return;
   const id = registerFootnoteBody(ctx, bodyText);
-  doc.fontSize(ctx.sizing.body).fillColor('#64748B').font('Helvetica-Oblique').text(`Note ^${id}`);
-  doc.font('Helvetica');
+  doc.fontSize(ctx.sizing.body).fillColor('#64748B').font(PDF_FONT.italic).text(`Note ^${id}`);
+  doc.font(PDF_FONT.regular);
   doc.moveDown(0.2);
 }
 
@@ -1009,9 +1010,9 @@ function drawSection(
     doc
       .fontSize(ctx.sizing.caption)
       .fillColor('#64748B')
-      .font('Helvetica-Oblique')
+      .font(PDF_FONT.italic)
       .text(section.purpose);
-    doc.font('Helvetica');
+    doc.font(PDF_FONT.regular);
     doc.moveDown(0.3);
   }
   for (const block of section.blocks) drawBlock(doc, block, ctx);
@@ -1020,7 +1021,7 @@ function drawSection(
 function drawNotesAppendix(doc: PDFKit.PDFDocument, ctx: PdfRenderContext): void {
   if (ctx.footnoteBodies.length === 0) return;
   drawHeading(doc, 'Notes', 1, ctx);
-  doc.fontSize(ctx.sizing.footnote).fillColor('#475569').font('Helvetica');
+  doc.fontSize(ctx.sizing.footnote).fillColor('#475569').font(PDF_FONT.regular);
   for (const note of ctx.footnoteBodies) {
     doc.text(`^${note.id} — ${note.body}`);
   }
@@ -1034,14 +1035,14 @@ function drawSources(doc: PDFKit.PDFDocument, ctx: PdfRenderContext): void {
     doc
       .fontSize(ctx.sizing.body)
       .fillColor('#92400E')
-      .font('Helvetica-Oblique')
+      .font(PDF_FONT.italic)
       .text(
         'No sources attached. Substantive content blocks are flagged as assumptions and require a source pack before client distribution.'
       );
-    doc.font('Helvetica');
+    doc.font(PDF_FONT.regular);
     return;
   }
-  doc.fontSize(ctx.sizing.body).fillColor('#0F172A').font('Helvetica');
+  doc.fontSize(ctx.sizing.body).fillColor('#0F172A').font(PDF_FONT.regular);
   schema.sourceRefs.forEach((ref, idx) => {
     const title = ref.sourceTitle ? ` — ${ref.sourceTitle}` : '';
     doc.text(`${idx + 1}. ${ref.sourceType}#${ref.sourceId}${title}`);
@@ -1066,7 +1067,7 @@ function drawHeaderFooter(
       .save()
       .fontSize(9)
       .fillColor('#64748B')
-      .font('Helvetica')
+      .font(PDF_FONT.regular)
       .text(headerText, margins.left, 22, {
         align: 'left',
         width: doc.page.width - margins.left - margins.right,
@@ -1096,7 +1097,7 @@ function drawHeaderFooter(
         .save()
         .fontSize(8)
         .fillColor('#94A3B8')
-        .font('Helvetica')
+        .font(PDF_FONT.regular)
         .text(schema.confidentiality.replace(/_/g, ' '), margins.left, footerY, {
           align: 'left',
           width: doc.page.width - margins.left - margins.right,
@@ -1120,7 +1121,7 @@ function drawHeaderFooter(
         .save()
         .fontSize(8)
         .fillColor('#94A3B8')
-        .font('Helvetica')
+        .font(PDF_FONT.regular)
         .text(numberingText, margins.left, footerY, {
           align: 'right',
           width: doc.page.width - margins.left - margins.right,
@@ -1154,6 +1155,8 @@ export async function renderDocumentSchemaToPdfBuffer(
           Subject: `${schema.documentType} · ${ctx.formattingClass}`,
         },
       });
+      // DEC-132/133: default pdfkit Helvetica has no Polish diacritics.
+      registerPdfFonts(doc);
       const chunks: Buffer[] = [];
       doc.on('data', (chunk: Buffer) => chunks.push(chunk));
       doc.on('end', () => resolve(Buffer.concat(chunks)));

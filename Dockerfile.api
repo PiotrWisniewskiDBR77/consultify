@@ -203,6 +203,17 @@ RUN test -f tsconfig.build.json || (echo "ERROR: tsconfig.build.json not found!"
 # Production backend compilation is fail-hard. `noEmitOnError` is enabled in
 # tsconfig.build.json, so a failed check can never leave a shippable partial dist.
 RUN rm -rf dist && NODE_OPTIONS="--max-old-space-size=3072" ./node_modules/.bin/tsc --build tsconfig.build.json
+# DEC-132/133: tsc only compiles .ts — it never copies non-TS assets — so the
+# vendored Lato .ttf files (server/src/assets/fonts, embedded by pdfFonts.ts
+# to fix Polish diacritics in every server-generated PDF) must be copied into
+# dist explicitly, at the same src/-relative path pdfFonts.ts resolves at
+# runtime (dist/src/utils/pdfFonts.js -> ../assets/fonts). Fail loudly if the
+# source files are ever missing, rather than silently shipping a dist that
+# falls back to broken Helvetica PDFs.
+RUN mkdir -p dist/src/assets/fonts && \
+    cp src/assets/fonts/*.ttf dist/src/assets/fonts/ && \
+    test "$(ls dist/src/assets/fonts/*.ttf | wc -l)" -eq 4 || \
+      (echo "FATAL: expected 4 Lato .ttf files copied into dist/src/assets/fonts" && exit 1)
 # Fail the image build if a stale cached backend dist is ever paired with the
 # current migration files.  Demo carries this exact, reviewed historical
 # checksum variant and also legacy NULL checksum rows.  Both classifications

@@ -1,0 +1,30 @@
+Lato — SIL Open Font License, Version 1.1
+
+Font: Lato (Regular, Bold, Italic, Bold Italic)
+Designer: Łukasz Dziedzic (tyPoland, team@latofonts.com)
+Copyright (c) 2010-2014 by tyPoland Lukasz Dziedzic with Reserved Font Name "Lato".
+
+Source of these .ttf files: the official Google Fonts repository, OFL-licensed
+distribution of Lato —
+https://github.com/google/fonts/tree/main/ofl/lato
+(files fetched: Lato-Regular.ttf, Lato-Bold.ttf, Lato-Italic.ttf, Lato-BoldItalic.ttf,
+plus this OFL.txt, from the `main` branch, 2026-08-26).
+
+These files are redistributed unmodified under the SIL Open Font License,
+Version 1.1. The full license text is in OFL.txt in this same directory —
+see http://scripts.sil.org/OFL for the license and FAQ.
+
+Why Lato: DEC-133 (Consultify PDF font fix, 2026-08-27). Server-side PDFs
+generated with pdfkit defaulted to the built-in Helvetica (WinAnsi encoding),
+which does not contain Polish diacritics (ą ę ł ń ó ś ź ż / Ą Ę Ł Ń Ó Ś Ź Ż) —
+every Polish-language PDF Consultify generated rendered those characters as
+garbage bytes. Lato is OFL (freely embeddable/redistributable, no per-seat
+licensing risk), has full Polish (and broader Latin) glyph coverage via the
+Google Fonts "Latin Plus" character set, and is already one of the 10 curated
+fonts in docs/product/DELIVERABLE_FORMATTING_SPEC.md (§1, pairing #3 and the
+"Clean" theme, docx/pptx/web-viewer surfaces) — so this choice is consistent
+with, not additive to, the existing brand font library. It is registered here
+for pdfkit specifically because pdfkit embeds font files directly into the
+PDF byte stream (no reliance on the client machine having any given font
+installed), which is the correct fix for a bug that has nothing to do with
+which fonts a viewer's OS ships.

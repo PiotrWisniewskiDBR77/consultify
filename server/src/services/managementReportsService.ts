@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import managementReportRepository from '../repositories/ManagementReportRepository.js';
 import { all, get, run } from '../utils/DbPromise.js';
+import { registerPdfFonts } from '../utils/pdfFonts.js';
 import { parseMaybeJson } from '../utils/pgFlags.js';
 import { exportsDir } from '../utils/storagePaths.js';
 
@@ -157,6 +158,8 @@ class ManagementReportsService {
     if (!PDFDocument) throw dependencyMissing('pdfkit');
 
     const doc = new PDFDocument({ margin: 48 });
+    // DEC-132/133: default pdfkit Helvetica has no Polish diacritics.
+    registerPdfFonts(doc);
     const stream = fs.createWriteStream(filePath);
     doc.pipe(stream);
 

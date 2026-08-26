@@ -10,6 +10,7 @@ import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { PDF_FONT, registerPdfFonts } from '../utils/pdfFonts.js';
 import { uploadsDir } from '../utils/storagePaths.js';
 
 // ==========================================
@@ -494,6 +495,10 @@ export class InvoiceServiceClass {
 
       return new Promise((resolve, reject) => {
         const doc = new PDFDocument({ margin: 50 });
+        // DEC-132/133: default pdfkit Helvetica has no Polish diacritics —
+        // this invoice already renders literal Polish text ("ul. Przemysłowa
+        // 12/14") in the header below, so this fix is not hypothetical here.
+        registerPdfFonts(doc);
         const stream = fs.createWriteStream(filePath);
         doc.pipe(stream);
 
@@ -534,7 +539,7 @@ export class InvoiceServiceClass {
         // Items table header
         const tableTop = 300;
         doc.moveTo(50, tableTop).lineTo(550, tableTop).stroke();
-        doc.fontSize(10).font('Helvetica-Bold');
+        doc.fontSize(10).font(PDF_FONT.bold);
         doc.text('Description', 50, tableTop + 10);
         doc.text('Qty', 300, tableTop + 10);
         doc.text('Unit Price', 370, tableTop + 10);
@@ -545,7 +550,7 @@ export class InvoiceServiceClass {
           .stroke();
 
         // Items
-        doc.font('Helvetica');
+        doc.font(PDF_FONT.regular);
         let yPos = tableTop + 35;
         const items = invoice.items || [];
 
@@ -586,20 +591,20 @@ export class InvoiceServiceClass {
           yPos += 20;
         }
 
-        doc.font('Helvetica-Bold');
+        doc.font(PDF_FONT.bold);
         doc.text('Total:', 350, yPos);
         doc.text(`${invoice.currency} ${invoice.total.toFixed(2)}`, 460, yPos);
 
         // Notes
         if (invoice.notes) {
           yPos += 50;
-          doc.font('Helvetica').fontSize(10);
+          doc.font(PDF_FONT.regular).fontSize(10);
           doc.text('Notes:', 50, yPos);
           doc.text(invoice.notes, 50, yPos + 15);
         }
 
         // Footer
-        doc.fontSize(8).font('Helvetica');
+        doc.fontSize(8).font(PDF_FONT.regular);
         doc.text('Thank you for your business!', 50, 700, { align: 'center', width: 500 });
         doc.text('Payment is due within the terms specified above.', 50, 715, {
           align: 'center',

@@ -14,6 +14,7 @@ import PDFDocument from 'pdfkit';
 import config from '../config/Config.js';
 import ReportBuilderService from '../services/reportBuilderService.js';
 import logger from '../utils/Logger.js';
+import { registerPdfFonts } from '../utils/pdfFonts.js';
 import { exportsDir } from '../utils/storagePaths.js';
 
 const router = Router();
@@ -52,6 +53,8 @@ const writePublicReportPdf = async (
   filePath: string
 ): Promise<void> => {
   const doc = new PDFDocument({ margin: 48, size: 'A4' });
+  // DEC-132/133: default pdfkit Helvetica has no Polish diacritics.
+  registerPdfFonts(doc);
   const stream = fs.createWriteStream(filePath);
   doc.pipe(stream);
 
