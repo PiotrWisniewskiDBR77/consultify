@@ -3,6 +3,34 @@ import type { KpiDefinitionVersion, KpiMeasurement } from './kpiTypes.js';
 
 export type KpiTrendDirection = 'IMPROVING' | 'WORSENING' | 'FLAT';
 
+/**
+ * DEC-93 fix (DEC-77 dozbrojenie follow-up): `KpiMeasurement.periodEnd`/
+ * `.periodStart` are typed `string` (kpiTypes.ts), but that type is a LIE
+ * at the real-Postgres boundary — `rvn_kpi_measurements.period_end` is
+ * TIMESTAMPTZ, `node-postgres` decodes TIMESTAMPTZ to a native JS `Date` by
+ * default, and this repo registers no `pg.types.setTypeParser` override
+ * anywhere (confirmed by grep — see kpiTrend.realpg.test.ts's own header
+ * comment for the full trail). `toKpiMeasurement()` (kpiTypes.ts) passes
+ * `period_end` straight through with no `.toISOString()`, so
+ * `listMeasurements()` really does hand this function a `Date` in
+ * production whenever 2+ measurements exist — confirmed by
+ * `kpiTrend.realpg.test.ts`'s real-Postgres round-trip, which is what
+ * caught this (a hand-written string fixture in the pure-unit and
+ * HTTP-mocked suites could never have).
+ *
+ * Fix is scoped to the comparator only, per DEC-93's own instruction ("nie
+ * zmieniaj kontraktu odpowiedzi API") — normalizes BOTH a `Date` and an
+ * ISO string to epoch milliseconds for comparison purposes only; the
+ * `points[].periodEnd`/`.periodStart` values written into the response
+ * below are still whatever `measurement.periodEnd`/`.periodStart` already
+ * were (a `Date` serializes to the same ISO string via `Date.prototype.
+ * toJSON` when `res.json()` stringifies it, so the wire contract is
+ * unchanged either way — only the in-memory sort no longer crashes).
+ */
+function periodEndTime(value: string | Date): number {
+  return value instanceof Date ? value.getTime() : new Date(value).getTime();
+}
+
 function distance(version: KpiDefinitionVersion, value: number): number {
   switch (version.targetGeometry) {
     case 'threshold_min':
@@ -30,7 +58,7 @@ export function buildKpiTrend(params: {
   calculatedAt?: string;
 }) {
   const points = [...params.measurements]
-    .sort((a, b) => a.periodEnd.localeCompare(b.periodEnd))
+    .sort((a, b) => periodEndTime(a.periodEnd) - periodEndTime(b.periodEnd))
     .map((measurement) => ({
       periodStart: measurement.periodStart,
       periodEnd: measurement.periodEnd,

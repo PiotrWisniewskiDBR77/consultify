@@ -317,6 +317,70 @@ describe('GET /api/vnext/results/roi/cases — listRoiCases', () => {
     expect(response.body).toEqual({ cases: [] });
     expect(mockListRoiCases).not.toHaveBeenCalled();
   });
+
+  // ==========================================
+  // DEC-77 dozbrojenie / DEC-93 (§S.2, Z17 extension) — q passthrough.
+  // The repository itself (roiRepository.ts's listRoiCases) is where the
+  // actual ILIKE/escaping/CTE-scoping happens — the repository is MOCKED
+  // in this file, same as every other case here, so these two tests only
+  // prove the HTTP boundary: the validated q reaches the repository call
+  // unchanged, and an empty repository result round-trips as 200 + [].
+  // ==========================================
+
+  it('passes a validated q through to the repository alongside the existing filters (happy path)', async () => {
+    mockListRoiCases.mockResolvedValue([caseFixture()]);
+
+    const response = await request(createApp()).get(
+      '/api/vnext/results/roi/cases?q=renewal&status=modeling&limit=10&offset=5'
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body.cases).toHaveLength(1);
+    expect(mockListRoiCases).toHaveBeenCalledWith({
+      userId: 'user-1',
+      organizationId: 'org-1',
+      status: 'modeling',
+      includeArchived: undefined,
+      q: 'renewal',
+      limit: 10,
+      offset: 5,
+    });
+  });
+
+  it('a q that matches nothing round-trips as 200 + an empty array, not an error', async () => {
+    mockListRoiCases.mockResolvedValue([]);
+
+    const response = await request(createApp()).get('/api/vnext/results/roi/cases?q=nonexistent');
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ cases: [] });
+    expect(mockListRoiCases).toHaveBeenCalledWith(
+      expect.objectContaining({ q: 'nonexistent' })
+    );
+  });
+
+  it('a q shorter than 2 characters 400s (Zod ListRoiCasesQuerySchema) before the repository is ever called', async () => {
+    const response = await request(createApp()).get('/api/vnext/results/roi/cases?q=a');
+
+    expect(response.status).toBe(400);
+    expect(mockListRoiCases).not.toHaveBeenCalled();
+  });
+
+  it('omitting q entirely is unchanged behavior — repository receives q: undefined, identical to the pre-S.2 call shape (DEC-65 backward compatibility)', async () => {
+    mockListRoiCases.mockResolvedValue([caseFixture()]);
+
+    await request(createApp()).get('/api/vnext/results/roi/cases');
+
+    expect(mockListRoiCases).toHaveBeenCalledWith({
+      userId: 'user-1',
+      organizationId: 'org-1',
+      status: undefined,
+      includeArchived: undefined,
+      q: undefined,
+      limit: undefined,
+      offset: undefined,
+    });
+  });
 });
 
 // ==========================================

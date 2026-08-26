@@ -97,9 +97,21 @@ export const CreateRoiCaseSchema = z.object({
 // GET /api/vnext/results/roi/cases — listRoiCases
 // ==========================================
 
+// DEC-77 dozbrojenie (S.2, Z17 extension — see
+// docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY14_BACKEND_INSTRUKCJA.md
+// §S.2 and RESULTS_EXECUTION_DAY14_REPORT_20260826.md's "STOP — S.2 ROI
+// validator poza Z17": this file was previously out of the day-14 agent's
+// WOLNO frame for exactly this one field. Same contract §S.2 already
+// applied to `ListKpisQuerySchema.q` (resultsVnextKpi.validators.ts) and
+// `ListOkrSetsQuerySchema.q` (resultsVnextOkr.validators.ts) — identical
+// shape, byte-for-byte, so the three list registries share one matching
+// contract (§S.2 requirement #2: "same semantics as S.1 — same columns,
+// same escaping, same case sensitivity"). Omitting `q` is unchanged
+// behavior (§S.2 requirement #1 — DEC-65 backward compatibility).
 export const ListRoiCasesQuerySchema = z.object({
   status: RoiCaseStatusEnum.optional(),
   includeArchived: z.coerce.boolean().optional(),
+  q: z.string().trim().min(2).max(200).optional(),
   limit: z.coerce.number().int().positive().max(500).optional(),
   offset: z.coerce.number().int().nonnegative().optional(),
 });

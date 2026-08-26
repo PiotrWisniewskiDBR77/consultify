@@ -390,6 +390,177 @@ describe('GET /api/vnext/results/kpi/:kpiId/version — getKpiCurrentDefinitionV
 });
 
 // ==========================================
+// Day 14 K.1 — GET /:kpiId/trend (dozbrojenie DEC-77: HTTP-boundary
+// coverage the K.1 landing commit never got — server/src/services/
+// resultsVnext/kpi/__tests__/kpiTrend.test.ts only covers buildKpiTrend()
+// as a pure function; nothing here exercised the route: query validation,
+// the version->measurements plumbing, or the 404/500 error mapping. Same
+// division of responsibility as the "version" describe block right above
+// this one — buildKpiTrend()'s OWN per-geometry direction math is that
+// pure-function suite's job, not this file's.)
+// ==========================================
+
+function trendVersionFixture(overrides: Record<string, unknown> = {}) {
+  return {
+    definitionVersionId: VERSION_ID,
+    kpiId: KPI_ID,
+    name: 'Customer NPS',
+    unit: null,
+    targetGeometry: 'threshold_min',
+    targetValue: 80,
+    targetMin: null,
+    targetMax: null,
+    warningLow: 70,
+    warningHigh: null,
+    criticalLow: null,
+    criticalHigh: null,
+    binarySuccessValue: null,
+    approvalStatus: 'approved',
+    rowVersion: 2,
+    ...overrides,
+  };
+}
+
+function trendMeasurementFixture(value: number, day: number, overrides: Record<string, unknown> = {}) {
+  return {
+    measurementId: `m-${day}`,
+    kpiId: KPI_ID,
+    definitionVersionId: VERSION_ID,
+    organizationId: 'org-1',
+    periodStart: `2026-01-${day.toString().padStart(2, '0')}T00:00:00.000Z`,
+    periodEnd: `2026-01-${day.toString().padStart(2, '0')}T23:00:00.000Z`,
+    actualValue: value,
+    performanceStatus: 'on_target',
+    dataQualityStatus: 'verified',
+    recordedBy: 'user-1',
+    recordedAt: `2026-01-${day.toString().padStart(2, '0')}T23:00:00.000Z`,
+    ...overrides,
+  };
+}
+
+describe('GET /api/vnext/results/kpi/:kpiId/trend — buildKpiTrend HTTP boundary (Day 14 K.1)', () => {
+  it('happy path: 200 with a computed trend body, listMeasurements limited to the default window (12)', async () => {
+    mockGetKpiCurrentDefinitionVersion.mockResolvedValue(trendVersionFixture());
+    mockListMeasurements.mockResolvedValue([
+      trendMeasurementFixture(70, 1),
+      trendMeasurementFixture(75, 2),
+    ]);
+
+    const response = await request(createApp()).get(`/api/vnext/results/kpi/${KPI_ID}/trend`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.kpiId).toBe(KPI_ID);
+    expect(response.body.definitionVersionId).toBe(VERSION_ID);
+    expect(response.body.points).toHaveLength(2);
+    // threshold_min, target 80: both below target, but the gap shrinks
+    // (distance 10 -> 5) -> IMPROVING (buildKpiTrend's own distance()
+    // semantics, proven in kpiTrend.test.ts — this suite only proves the
+    // route wires the same computation, not the geometry math itself).
+    expect(response.body.direction).toBe('IMPROVING');
+
+    expect(mockGetKpiCurrentDefinitionVersion).toHaveBeenCalledWith({
+      userId: 'user-1',
+      organizationId: 'org-1',
+      kpiId: KPI_ID,
+    });
+    expect(mockListMeasurements).toHaveBeenCalledWith({
+      userId: 'user-1',
+      organizationId: 'org-1',
+      kpiId: KPI_ID,
+      periodStart: undefined,
+      periodEnd: undefined,
+      includeSuperseded: false,
+      limit: 12,
+      offset: 0,
+    });
+  });
+
+  it('honors an explicit ?window= as the listMeasurements limit', async () => {
+    mockGetKpiCurrentDefinitionVersion.mockResolvedValue(trendVersionFixture());
+    mockListMeasurements.mockResolvedValue([trendMeasurementFixture(85, 1)]);
+
+    await request(createApp()).get(`/api/vnext/results/kpi/${KPI_ID}/trend?window=5`);
+
+    expect(mockListMeasurements).toHaveBeenCalledWith(
+      expect.objectContaining({ limit: 5, periodStart: undefined, periodEnd: undefined })
+    );
+  });
+
+  it('passes periodStart/periodEnd through to listMeasurements untouched', async () => {
+    mockGetKpiCurrentDefinitionVersion.mockResolvedValue(trendVersionFixture());
+    mockListMeasurements.mockResolvedValue([]);
+
+    await request(createApp()).get(
+      `/api/vnext/results/kpi/${KPI_ID}/trend?periodStart=2026-01-01T00:00:00.000Z&periodEnd=2026-01-31T00:00:00.000Z`
+    );
+
+    expect(mockListMeasurements).toHaveBeenCalledWith(
+      expect.objectContaining({
+        periodStart: '2026-01-01T00:00:00.000Z',
+        periodEnd: '2026-01-31T00:00:00.000Z',
+      })
+    );
+  });
+
+  it('400s (Zod) when window is combined with periodStart — the schema .refine(), never reaching the repository', async () => {
+    const response = await request(createApp()).get(
+      `/api/vnext/results/kpi/${KPI_ID}/trend?window=5&periodStart=2026-01-01T00:00:00.000Z`
+    );
+
+    expect(response.status).toBe(400);
+    expect(mockGetKpiCurrentDefinitionVersion).not.toHaveBeenCalled();
+  });
+
+  it('400s (Zod) when window exceeds the max of 60', async () => {
+    const response = await request(createApp()).get(
+      `/api/vnext/results/kpi/${KPI_ID}/trend?window=61`
+    );
+
+    expect(response.status).toBe(400);
+    expect(mockGetKpiCurrentDefinitionVersion).not.toHaveBeenCalled();
+  });
+
+  it('400s (Zod) on a malformed kpiId (KpiIdParamsSchema requires a UUID)', async () => {
+    const response = await request(createApp()).get(
+      `/api/vnext/results/kpi/not-a-uuid/trend`
+    );
+
+    expect(response.status).toBe(400);
+    expect(mockGetKpiCurrentDefinitionVersion).not.toHaveBeenCalled();
+  });
+
+  it('404s (generic, D06) when the repository returns null — covers a foreign-tenant KPI indistinguishably from a missing one: the repository join in kpiRepository.ts scopes strictly by the auth-derived organizationId, so a KPI belonging to a different org never reaches this route as a row to leak', async () => {
+    mockGetKpiCurrentDefinitionVersion.mockResolvedValue(null);
+
+    const response = await request(createApp()).get(`/api/vnext/results/kpi/${KPI_ID}/trend`);
+
+    expect(response.status).toBe(404);
+    expect(response.body.code).toBe('NOT_FOUND');
+    expect(mockListMeasurements).not.toHaveBeenCalled();
+  });
+
+  it('always resolves organizationId from the authenticated token (req.user), never from request input — the repository call is the tenant boundary, and this route has no organizationId field in its query/body a caller could even try to spoof', async () => {
+    mockGetKpiCurrentDefinitionVersion.mockResolvedValue(trendVersionFixture());
+    mockListMeasurements.mockResolvedValue([]);
+
+    await request(createApp()).get(`/api/vnext/results/kpi/${KPI_ID}/trend`);
+
+    const versionArgs = mockGetKpiCurrentDefinitionVersion.mock.calls[0][0];
+    const measurementArgs = mockListMeasurements.mock.calls[0][0];
+    expect(versionArgs.organizationId).toBe('org-1');
+    expect(measurementArgs.organizationId).toBe('org-1');
+  });
+
+  it('propagates a repository error through the same error mapper as every other KPI route (500)', async () => {
+    mockGetKpiCurrentDefinitionVersion.mockRejectedValue(new Error('db exploded'));
+
+    const response = await request(createApp()).get(`/api/vnext/results/kpi/${KPI_ID}/trend`);
+
+    expect(response.status).toBe(500);
+  });
+});
+
+// ==========================================
 // RN-G6 P0 fix (F1) — X-Correlation-ID validation
 // ==========================================
 //
