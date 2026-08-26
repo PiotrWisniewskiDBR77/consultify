@@ -10,6 +10,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
+import { AppError } from '../types/index.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import { normalizeApplicationRole } from '../utils/roleNormalization.js';
 
@@ -420,15 +421,41 @@ export async function passGate(
   const sql = `INSERT INTO stage_gates (id, project_id, gate_type, from_phase, to_phase, status, approved_by, approved_at, notes)
                  VALUES (?, ?, ?, ?, ?, 'PASSED', ?, CURRENT_TIMESTAMP, ?)`;
 
-  await DbPromise.run(db, sql, [
-    id,
-    projectId,
-    gateType,
-    fromPhase,
-    toPhase,
-    userId,
-    notes || null,
-  ]);
+  // M13 SECURITY (fix/inbox-failopen-stagegates-20260828, commit 2):
+  // DbPromise.run() defaults to `fallback: true`, which resolves
+  // `{success: false}` on a DB error INSTEAD OF rejecting — the same "cichy
+  // catch maskujący błąd SQL" pattern guarded against elsewhere in this
+  // codebase (see DbPromise.ts's isSilenceableMissingRelationError doc, and
+  // stripe.routes.ts's tryBeginStripeEvent H6.3 comment). Left unchecked
+  // here, a failed INSERT (e.g. `stage_gates` missing — true today on the
+  // current schema, it exists only in migrations-v2/001_baseline) would
+  // still fall through to `status: 'PASSED'` below: a fabricated success
+  // telling the caller their gate passage was recorded when nothing was
+  // written and no phase transition happened. `fallback: false` makes this
+  // call REJECT on a DB error instead, so it propagates through the
+  // controller's asyncHandler to the global error handler as an honest 5xx.
+  let insertResult: DbPromise.RunResult;
+  try {
+    insertResult = await DbPromise.run(
+      db,
+      sql,
+      [id, projectId, gateType, fromPhase, toPhase, userId, notes || null],
+      { fallback: false }
+    );
+  } catch (err) {
+    throw new AppError(
+      500,
+      'Failed to record stage gate passage due to a database error',
+      'STAGE_GATE_WRITE_FAILED'
+    );
+  }
+  if (!insertResult.success) {
+    throw new AppError(
+      500,
+      'Failed to record stage gate passage due to a database error',
+      'STAGE_GATE_WRITE_FAILED'
+    );
+  }
 
   // Update project phase
   if (toPhase) {
