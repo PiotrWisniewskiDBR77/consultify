@@ -38,16 +38,16 @@ Każda komenda testu DB miała w tej samej linii: `DATABASE_URL="postgres://post
 
 ## Pozycje — tabela zbiorcza
 
-| Pozycja                   | Status        | Commit               | Dowód                                                                                                                                                |
-| ------------------------- | ------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| A (macierz G.2)           | `NIE_ZACZĘTE` | —                    | Nie powstało 75 behawioralnych komórek; nie deklaruję macierzy na podstawie przewidywań.                                                             |
-| B (13 tras + tenant)      | `NIE_ZACZĘTE` | —                    | Nie powstały dwa wymagane pakiety 13×4 ani neutralizacja filtrów.                                                                                    |
-| C (DST)                   | `CZĘŚCIOWO`   | `908ec7434d`         | RealPG `2/2` w `TZ=UTC` i `2/2` w `TZ=Europe/Warsaw`; brak osobnego pomiaru `recurrenceId` bez strefy.                                               |
-| D (`materialTitle`)       | `CZĘŚCIOWO`   | `908ec7434d`         | Oba odczyty używają `getArtifactForUser`, lista cache'uje unikalne artifactId; brak wymaganego pakietu 6 testów i odtworzenia wycieku przed naprawą. |
-| E (bramka occurrence)     | `CZĘŚCIOWO`   | `908ec7434d`         | RealPG `4/4`: twórca PATCH 200/DELETE 403, uczestnik 404/403 bez zmian, admin 200, obcy tenant 404; brak pełnych 8 testów i osobnego spy wysyłki.    |
-| F (funnel My Work)        | `CZĘŚCIOWO`   | `908ec7434d`         | RealPG `5/5`: zapis+readback, replay, błędy, tenant/rola, concurrency; brak pełnych 8 osobnych przypadków i udowodnionej listy UI My Work.           |
-| G (częściowa awaria SMTP) | `NIE_ZACZĘTE` | —                    | `meetingInvitationService.ts` ma pusty diff, ale nie powstał wymagany test real-router/PG z lokalnym mockiem mailera.                                |
-| R.1                       | `CZĘŚCIOWO`   | następny commit docs | Dodano atomowy wpis wyłącznie o faktycznie dowiezionym zakresie, bez podnoszenia owner gate.                                                         |
+| Pozycja                   | Status        | Commit       | Dowód                                                                                                                                                |
+| ------------------------- | ------------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A (macierz G.2)           | `NIE_ZACZĘTE` | —            | Nie powstało 75 behawioralnych komórek; nie deklaruję macierzy na podstawie przewidywań.                                                             |
+| B (13 tras + tenant)      | `NIE_ZACZĘTE` | —            | Nie powstały dwa wymagane pakiety 13×4 ani neutralizacja filtrów.                                                                                    |
+| C (DST)                   | `CZĘŚCIOWO`   | `908ec7434d` | RealPG `2/2` w `TZ=UTC` i `2/2` w `TZ=Europe/Warsaw`; brak osobnego pomiaru `recurrenceId` bez strefy.                                               |
+| D (`materialTitle`)       | `CZĘŚCIOWO`   | `908ec7434d` | Oba odczyty używają `getArtifactForUser`, lista cache'uje unikalne artifactId; brak wymaganego pakietu 6 testów i odtworzenia wycieku przed naprawą. |
+| E (bramka occurrence)     | `CZĘŚCIOWO`   | `908ec7434d` | RealPG `4/4`: twórca PATCH 200/DELETE 403, uczestnik 404/403 bez zmian, admin 200, obcy tenant 404; brak pełnych 8 testów i osobnego spy wysyłki.    |
+| F (funnel My Work)        | `CZĘŚCIOWO`   | `908ec7434d` | RealPG `5/5`: zapis+readback, replay, błędy, tenant/rola, concurrency; brak pełnych 8 osobnych przypadków i udowodnionej listy UI My Work.           |
+| G (częściowa awaria SMTP) | `NIE_ZACZĘTE` | —            | `meetingInvitationService.ts` ma pusty diff, ale nie powstał wymagany test real-router/PG z lokalnym mockiem mailera.                                |
+| R.1                       | `CZĘŚCIOWO`   | `6e364366f3` | Dodano atomowy wpis wyłącznie o faktycznie dowiezionym zakresie, bez podnoszenia owner gate.                                                         |
 
 ## A — macierz dostępu
 
@@ -131,6 +131,8 @@ Powód: nie ukończono wymaganych pakietów dowodowych; nie wolno zastępować i
 Dowód: brak wymaganych nazw plików A/B/G oraz liczniki w tabeli zbiorczej.  
 Co dalej: dopisać dokładnie pakiety z instrukcji na tym samym lokalnym modelu bezpieczeństwa i ponowić pełny pomiar.  
 Stan: kod częściowy zacommitowany w `908ec7434d`; brak atrap i brak skutków zewnętrznych.
+
+Korekta higieny commitów: C/D/E/F znalazły się w jednym commicie `908ec7434d`, a nie w commitach per pozycja. To odstępstwo od §0.3 i dodatkowy powód, by nie przyznać żadnej z tych pozycji `ZROBIONE_WG_DoD`.
 
 ## Bezpieczniki — dowody
 
