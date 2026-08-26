@@ -27,6 +27,10 @@ import {
 } from '../realtime/wsOrgContext.js';
 import logger from '../utils/Logger.js';
 import {
+  isOrganizationSuspended,
+  writeOrgSuspendedUpgradeRefusal,
+} from '../services/organizationSuspensionGuard.js';
+import {
   evaluateRealtimeAccess,
   trackRealtimeConnection,
 } from '../realtime/demoRealtimeGuard.js';
@@ -412,6 +416,31 @@ export function attachIdeaCollabWs(server: HttpServer): void {
     resolveWsOrgContext(db, userId, organizationId)
       .then(async (orgCtx) => {
         const activeOrg = orgCtx.organizationId;
+
+        // -------------------------------------------------------------------
+        // DEC-91 / TRI-MUST-12 — suspension gate at UPGRADE time.
+        //
+        // Passing the org to `trackRealtimeConnection` below only gets an open
+        // socket closed by the next sweep; without this block a member of a
+        // suspended tenant could still OPEN one and hold it for up to a sweep
+        // interval. This closes that window.
+        //
+        // Placed before the idea/membership gate deliberately: a suspended
+        // tenant should not get to probe whether a given idea exists.
+        //
+        // `activeOrg` is resolved server-side by `resolveWsOrgContext` from the
+        // authenticated principal — it is the caller's OWN tenant, never a
+        // client-supplied id — so the refusal names its reason.
+        // -------------------------------------------------------------------
+        if (await isOrganizationSuspended(activeOrg, (sql, params) => db.get(sql, params))) {
+          logger.info('[IdeaCollabWs] WS upgrade refused: organization suspended', {
+            userId,
+            organizationId: activeOrg,
+          });
+          writeOrgSuspendedUpgradeRefusal(socket);
+          return;
+        }
+
         const sharedMaps = featureFlags.ENABLE_SHARED_IDEA_MAPS;
         const gate = sharedMaps
           ? await assertIdeaMembership(db, activeOrg, userId, ideaId).then((m) => ({
