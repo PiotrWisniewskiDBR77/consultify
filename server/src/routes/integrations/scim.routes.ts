@@ -117,6 +117,26 @@ const verifyScimToken = asyncHandler(async (req: ScimRequest, res: Response, nex
   req.scimOrgId = row.organization_id || undefined;
 
   // ---------------------------------------------------------------------------
+  // TENANT ISOLATION — a SCIM token with no organization_id is not a "global"
+  // credential, it is a broken/orphaned one. Every statement below this
+  // middleware assumes `req.scimOrgId` is a real tenant id and scopes every
+  // read and write to it; a token that carries no org would otherwise sail
+  // through every one of those filters as `WHERE ... = NULL`, which matches
+  // nothing in Postgres (safe) but also silently degrades into "no rows" in
+  // ways that are easy to get wrong route-by-route. Reject it here, once, so
+  // no downstream handler has to reason about an undefined org id. Refused
+  // BEFORE the `usage_count` bump below, same reasoning as the suspension
+  // gate: a refused call must not touch the token's own counters.
+  // ---------------------------------------------------------------------------
+  if (!req.scimOrgId) {
+    return res.status(401).json({
+      schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
+      detail: 'SCIM token is not associated with an organization',
+      status: '401',
+    });
+  }
+
+  // ---------------------------------------------------------------------------
   // DEC-91 / TRI-MUST-12 — SCIM is a FRONT DOOR, and it was standing open.
   //
   // This router does not use `verifyToken` or `verifyApiKey`; it authenticates
@@ -252,11 +272,34 @@ async function logConflict(
   return id;
 }
 
-async function revokeUserSessions(userId: string) {
+// Tenant-scoped by construction: the UPDATE only ever touches a session row
+// whose owning user is in `orgId`, even if a caller upstream mis-scoped the
+// user lookup that produced `userId`. Belt-and-suspenders — every call site
+// also confirms the user is in-org before calling this, but a deprovision
+// endpoint killing a stranger's sessions is exactly the kind of mistake this
+// function should be unable to make on its own.
+// Guards SCIM group-membership writes: a group is already confirmed to
+// belong to `orgId` by the caller before this runs, but the *member* id in
+// the request body comes straight off the wire from the IdP and could name
+// a user in any tenant. Without this check, org A's SCIM token could link an
+// org B user into an org A group (or vice versa via `remove`/`replace`).
+// Cross-tenant member ids are silently dropped rather than erroring — SCIM
+// group PATCH is idempotent/best-effort by design, and a hard error here
+// would confirm to org A's IdP that the id exists in *some* tenant.
+async function userBelongsToOrg(userId: string, orgId: string): Promise<boolean> {
+  const row = await dbGet<{ id: string }>(
+    'SELECT id FROM users WHERE id = ? AND organization_id = ?',
+    [userId, orgId]
+  );
+  return !!row;
+}
+
+async function revokeUserSessions(userId: string, orgId: string) {
   await dbRun(
     `UPDATE user_sessions SET is_active = 0, revoked_at = datetime('now'), revoke_reason = 'scim_deprovision'
-     WHERE user_id = ? AND is_active = 1`,
-    [userId]
+     WHERE user_id = ? AND is_active = 1
+       AND user_id IN (SELECT id FROM users WHERE organization_id = ?)`,
+    [userId, orgId]
   );
 }
 
@@ -275,15 +318,15 @@ router.get(
       const email = filter.replace('userName eq ', '').replace(/"/g, '');
       users = await dbAll(
         `SELECT id, email, first_name, last_name, is_active, scim_external_id, scim_last_sync_at, created_at
-         FROM users WHERE email = ?`,
-        [email],
+         FROM users WHERE email = ? AND organization_id = ?`,
+        [email, req.scimOrgId],
         { fallback: true }
       );
     } else {
       users = await dbAll(
         `SELECT id, email, first_name, last_name, is_active, scim_external_id, scim_last_sync_at, created_at
-         FROM users LIMIT ? OFFSET ?`,
-        [parsedCount, parsedStart - 1],
+         FROM users WHERE organization_id = ? LIMIT ? OFFSET ?`,
+        [req.scimOrgId, parsedCount, parsedStart - 1],
         { fallback: true }
       );
     }
@@ -312,42 +355,70 @@ router.post(
       });
     }
 
-    const existing = await dbGet<any>('SELECT id, email, is_active FROM users WHERE email = ?', [
-      email.toLowerCase(),
-    ]);
+    const orgId = req.scimOrgId as string;
+    const existing = await dbGet<any>(
+      'SELECT id, email, is_active, organization_id FROM users WHERE email = ?',
+      [email.toLowerCase()]
+    );
     if (existing) {
-      const orgId = req.scimOrgId || 'unknown';
+      // `users.email` is globally unique, so this row may belong to a
+      // DIFFERENT tenant than the one presenting this SCIM token. Only the
+      // same-org case is a legitimate re-provisioning merge — the
+      // cross-tenant case must never update or echo back a stranger's user
+      // row. Log the conflict either way (useful for the admin conflict
+      // console) but only mutate/return the record when it is this org's.
+      if (existing.organization_id !== orgId) {
+        await logConflict(orgId, 'duplicate_email_cross_org', 'User', externalId, undefined, {
+          email,
+        });
+        logger.warn(`[SCIM] Conflict: email ${email} already provisioned in another organization`);
+        return res.status(409).json({
+          schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
+          scimType: 'uniqueness',
+          detail: 'userName or emails value already in use',
+          status: '409',
+        });
+      }
+
       await logConflict(orgId, 'duplicate_email', 'User', externalId, existing.id, { email });
       logger.warn(`[SCIM] Conflict: user ${email} already exists (id=${existing.id})`);
 
       if (externalId) {
         await dbRun(
-          `UPDATE users SET scim_external_id = ?, scim_provisioned = 1, scim_last_sync_at = datetime('now') WHERE id = ?`,
-          [externalId, existing.id]
+          `UPDATE users SET scim_external_id = ?, scim_provisioned = 1, scim_last_sync_at = datetime('now')
+           WHERE id = ? AND organization_id = ?`,
+          [externalId, existing.id, orgId]
         );
       }
       await logSyncOp('create_merge', 'User', existing.id, externalId);
-      const merged = await dbGet<any>('SELECT * FROM users WHERE id = ?', [existing.id]);
+      const merged = await dbGet<any>('SELECT * FROM users WHERE id = ? AND organization_id = ?', [
+        existing.id,
+        orgId,
+      ]);
       return res.status(200).json(formatScimUser(merged));
     }
 
     const id = uuidv4();
     await dbRun(
-      `INSERT INTO users (id, email, first_name, last_name, is_active, scim_external_id, scim_provisioned, scim_last_sync_at, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, 1, datetime('now'), datetime('now'))`,
+      `INSERT INTO users (id, email, first_name, last_name, is_active, organization_id, scim_external_id, scim_provisioned, scim_last_sync_at, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 1, datetime('now'), datetime('now'))`,
       [
         id,
         email.toLowerCase(),
         name?.givenName || '',
         name?.familyName || '',
         active !== false ? 1 : 0,
+        orgId,
         externalId || null,
       ]
     );
     await logSyncOp('create', 'User', id, externalId);
     logger.info(`[SCIM] Created user: ${email}`);
 
-    const created = await dbGet<any>('SELECT * FROM users WHERE id = ?', [id]);
+    const created = await dbGet<any>('SELECT * FROM users WHERE id = ? AND organization_id = ?', [
+      id,
+      orgId,
+    ]);
     res.status(201).json(
       formatScimUser(
         created || {
@@ -366,12 +437,17 @@ router.get(
   '/Users/:id',
   verifyScimToken,
   asyncHandler(async (req: ScimRequest, res: Response) => {
+    const orgId = req.scimOrgId as string;
     const user = await dbGet<any>(
       `SELECT id, email, first_name, last_name, is_active, scim_external_id, scim_last_sync_at, created_at
-       FROM users WHERE id = ?`,
-      [req.params.id]
+       FROM users WHERE id = ? AND organization_id = ?`,
+      [req.params.id, orgId]
     );
     if (!user) {
+      // A same-tenant id that doesn't exist and a real id from a different
+      // tenant must be indistinguishable to the caller — 404 either way,
+      // never a 403/differentiated error that would confirm the id exists
+      // elsewhere.
       return res.status(404).json({
         schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
         detail: 'User not found',
@@ -386,8 +462,12 @@ router.put(
   '/Users/:id',
   verifyScimToken,
   asyncHandler(async (req: ScimRequest, res: Response) => {
+    const orgId = req.scimOrgId as string;
     const id = String(req.params.id);
-    const user = await dbGet<any>('SELECT id FROM users WHERE id = ?', [id]);
+    const user = await dbGet<any>('SELECT id FROM users WHERE id = ? AND organization_id = ?', [
+      id,
+      orgId,
+    ]);
     if (!user) {
       return res.status(404).json({
         schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
@@ -407,7 +487,7 @@ router.put(
         is_active = ?,
         scim_external_id = COALESCE(?, scim_external_id),
         scim_last_sync_at = datetime('now')
-       WHERE id = ?`,
+       WHERE id = ? AND organization_id = ?`,
       [
         email?.toLowerCase() || null,
         name?.givenName || null,
@@ -415,17 +495,21 @@ router.put(
         active !== false ? 1 : 0,
         externalId || null,
         id,
+        orgId,
       ]
     );
 
     if (active === false) {
-      await revokeUserSessions(id);
+      await revokeUserSessions(id, orgId);
     }
 
     await logSyncOp('replace', 'User', id, externalId);
     logger.info(`[SCIM] Replaced user: ${id}`);
 
-    const updated = await dbGet<any>('SELECT * FROM users WHERE id = ?', [id]);
+    const updated = await dbGet<any>('SELECT * FROM users WHERE id = ? AND organization_id = ?', [
+      id,
+      orgId,
+    ]);
     res.json(formatScimUser(updated));
   })
 );
@@ -434,8 +518,12 @@ router.patch(
   '/Users/:id',
   verifyScimToken,
   asyncHandler(async (req: ScimRequest, res: Response) => {
+    const orgId = req.scimOrgId as string;
     const id = String(req.params.id);
-    const user = await dbGet<any>('SELECT id FROM users WHERE id = ?', [id]);
+    const user = await dbGet<any>('SELECT id FROM users WHERE id = ? AND organization_id = ?', [
+      id,
+      orgId,
+    ]);
     if (!user) {
       return res.status(404).json({
         schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
@@ -451,54 +539,88 @@ router.patch(
       if (op.path === 'name.givenName' || op.path === 'name') {
         const givenName = typeof op.value === 'string' ? op.value : op.value?.givenName;
         const familyName = typeof op.value === 'object' ? op.value?.familyName : undefined;
-        if (givenName) await dbRun('UPDATE users SET first_name = ? WHERE id = ?', [givenName, id]);
+        if (givenName)
+          await dbRun('UPDATE users SET first_name = ? WHERE id = ? AND organization_id = ?', [
+            givenName,
+            id,
+            orgId,
+          ]);
         if (familyName)
-          await dbRun('UPDATE users SET last_name = ? WHERE id = ?', [familyName, id]);
+          await dbRun('UPDATE users SET last_name = ? WHERE id = ? AND organization_id = ?', [
+            familyName,
+            id,
+            orgId,
+          ]);
       } else if (op.path === 'name.familyName') {
-        await dbRun('UPDATE users SET last_name = ? WHERE id = ?', [op.value, id]);
+        await dbRun('UPDATE users SET last_name = ? WHERE id = ? AND organization_id = ?', [
+          op.value,
+          id,
+          orgId,
+        ]);
       } else if (op.path === 'emails' || op.path === 'userName') {
         const email = Array.isArray(op.value) ? op.value[0]?.value : op.value;
         if (email)
-          await dbRun('UPDATE users SET email = ? WHERE id = ?', [email.toLowerCase(), id]);
+          await dbRun('UPDATE users SET email = ? WHERE id = ? AND organization_id = ?', [
+            email.toLowerCase(),
+            id,
+            orgId,
+          ]);
       } else if (op.path === 'active') {
         const isActive = op.value === true || op.value === 'true';
-        await dbRun('UPDATE users SET is_active = ? WHERE id = ?', [isActive ? 1 : 0, id]);
+        await dbRun('UPDATE users SET is_active = ? WHERE id = ? AND organization_id = ?', [
+          isActive ? 1 : 0,
+          id,
+          orgId,
+        ]);
         if (!isActive) {
-          await revokeUserSessions(id);
+          await revokeUserSessions(id, orgId);
           logger.info(`[SCIM] Deprovisioned user: ${id}`);
         }
       } else if (!op.path && typeof op.value === 'object') {
         if (op.value.active !== undefined) {
           const isActive = op.value.active === true || op.value.active === 'true';
-          await dbRun('UPDATE users SET is_active = ? WHERE id = ?', [isActive ? 1 : 0, id]);
-          if (!isActive) await revokeUserSessions(id);
+          await dbRun('UPDATE users SET is_active = ? WHERE id = ? AND organization_id = ?', [
+            isActive ? 1 : 0,
+            id,
+            orgId,
+          ]);
+          if (!isActive) await revokeUserSessions(id, orgId);
         }
         if (op.value.name) {
           if (op.value.name.givenName)
-            await dbRun('UPDATE users SET first_name = ? WHERE id = ?', [
+            await dbRun('UPDATE users SET first_name = ? WHERE id = ? AND organization_id = ?', [
               op.value.name.givenName,
               id,
+              orgId,
             ]);
           if (op.value.name.familyName)
-            await dbRun('UPDATE users SET last_name = ? WHERE id = ?', [
+            await dbRun('UPDATE users SET last_name = ? WHERE id = ? AND organization_id = ?', [
               op.value.name.familyName,
               id,
+              orgId,
             ]);
         }
         if (op.value.emails?.[0]?.value) {
-          await dbRun('UPDATE users SET email = ? WHERE id = ?', [
+          await dbRun('UPDATE users SET email = ? WHERE id = ? AND organization_id = ?', [
             op.value.emails[0].value.toLowerCase(),
             id,
+            orgId,
           ]);
         }
       }
     }
 
-    await dbRun("UPDATE users SET scim_last_sync_at = datetime('now') WHERE id = ?", [id]);
+    await dbRun(
+      "UPDATE users SET scim_last_sync_at = datetime('now') WHERE id = ? AND organization_id = ?",
+      [id, orgId]
+    );
     await logSyncOp('patch', 'User', id);
     logger.info(`[SCIM] Patched user: ${id}`);
 
-    const updated = await dbGet<any>('SELECT * FROM users WHERE id = ?', [id]);
+    const updated = await dbGet<any>('SELECT * FROM users WHERE id = ? AND organization_id = ?', [
+      id,
+      orgId,
+    ]);
     res.json(formatScimUser(updated));
   })
 );
@@ -507,8 +629,12 @@ router.delete(
   '/Users/:id',
   verifyScimToken,
   asyncHandler(async (req: ScimRequest, res: Response) => {
+    const orgId = req.scimOrgId as string;
     const id = String(req.params.id);
-    const user = await dbGet<any>('SELECT id, email FROM users WHERE id = ?', [id]);
+    const user = await dbGet<any>('SELECT id, email FROM users WHERE id = ? AND organization_id = ?', [
+      id,
+      orgId,
+    ]);
     if (!user) {
       return res.status(404).json({
         schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
@@ -518,10 +644,10 @@ router.delete(
     }
 
     await dbRun(
-      `UPDATE users SET is_active = 0, scim_last_sync_at = datetime('now') WHERE id = ?`,
-      [id]
+      `UPDATE users SET is_active = 0, scim_last_sync_at = datetime('now') WHERE id = ? AND organization_id = ?`,
+      [id, orgId]
     );
-    await revokeUserSessions(id);
+    await revokeUserSessions(id, orgId);
     await logSyncOp('delete', 'User', id);
     logger.info(`[SCIM] Deactivated user: ${user.email} (${id})`);
 
@@ -542,13 +668,15 @@ router.get(
     let groups: any[];
     if (filter && typeof filter === 'string' && filter.startsWith('displayName eq ')) {
       const name = filter.replace('displayName eq ', '').replace(/"/g, '');
-      groups = await dbAll('SELECT id, name, created_at FROM user_groups WHERE name = ?', [name], {
-        fallback: true,
-      });
+      groups = await dbAll(
+        'SELECT id, name, created_at FROM user_groups WHERE name = ? AND organization_id = ?',
+        [name, req.scimOrgId],
+        { fallback: true }
+      );
     } else {
       groups = await dbAll(
-        'SELECT id, name, created_at FROM user_groups LIMIT ? OFFSET ?',
-        [parsedCount, parsedStart - 1],
+        'SELECT id, name, created_at FROM user_groups WHERE organization_id = ? LIMIT ? OFFSET ?',
+        [req.scimOrgId, parsedCount, parsedStart - 1],
         { fallback: true }
       );
     }
@@ -568,6 +696,7 @@ router.post(
   '/Groups',
   verifyScimToken,
   asyncHandler(async (req: ScimRequest, res: Response) => {
+    const orgId = req.scimOrgId as string;
     const { displayName, members } = req.body;
     if (!displayName) {
       return res.status(400).json({
@@ -577,11 +706,15 @@ router.post(
       });
     }
 
-    const existing = await dbGet<any>('SELECT id, name FROM user_groups WHERE name = ?', [
-      displayName,
-    ]);
+    // Group names have no uniqueness constraint at the schema level, so this
+    // dup-check must itself be org-scoped — otherwise org A's "Engineering"
+    // would collide with org B's "Engineering" and the code below would
+    // treat org B's group as an existing match to merge into.
+    const existing = await dbGet<any>(
+      'SELECT id, name FROM user_groups WHERE name = ? AND organization_id = ?',
+      [displayName, orgId]
+    );
     if (existing) {
-      const orgId = req.scimOrgId || 'unknown';
       await logConflict(orgId, 'duplicate_group_name', 'Group', undefined, existing.id, {
         displayName,
       });
@@ -594,12 +727,12 @@ router.post(
     await dbRun(
       `INSERT INTO user_groups (id, name, group_type, organization_id, created_at)
        VALUES (?, ?, 'scim', ?, datetime('now'))`,
-      [id, displayName, req.scimOrgId || null]
+      [id, displayName, orgId]
     );
 
     if (Array.isArray(members)) {
       for (const member of members) {
-        if (member.value) {
+        if (member.value && (await userBelongsToOrg(member.value, orgId))) {
           await dbRun(
             `INSERT OR IGNORE INTO user_group_members (group_id, user_id, role, added_at)
              VALUES (?, ?, 'member', datetime('now'))`,
@@ -612,9 +745,10 @@ router.post(
     await logSyncOp('create', 'Group', id);
     logger.info(`[SCIM] Created group: ${displayName}`);
 
-    const group = await dbGet<any>('SELECT id, name, created_at FROM user_groups WHERE id = ?', [
-      id,
-    ]);
+    const group = await dbGet<any>(
+      'SELECT id, name, created_at FROM user_groups WHERE id = ? AND organization_id = ?',
+      [id, orgId]
+    );
     const formatted = await formatScimGroup(group || { id, name: displayName });
     res.status(201).json(formatted);
   })
@@ -624,9 +758,10 @@ router.get(
   '/Groups/:id',
   verifyScimToken,
   asyncHandler(async (req: ScimRequest, res: Response) => {
-    const group = await dbGet<any>('SELECT id, name, created_at FROM user_groups WHERE id = ?', [
-      req.params.id,
-    ]);
+    const group = await dbGet<any>(
+      'SELECT id, name, created_at FROM user_groups WHERE id = ? AND organization_id = ?',
+      [req.params.id, req.scimOrgId]
+    );
     if (!group) {
       return res.status(404).json({
         schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
@@ -643,8 +778,12 @@ router.patch(
   '/Groups/:id',
   verifyScimToken,
   asyncHandler(async (req: ScimRequest, res: Response) => {
+    const orgId = req.scimOrgId as string;
     const id = String(req.params.id);
-    const group = await dbGet<any>('SELECT id, name FROM user_groups WHERE id = ?', [id]);
+    const group = await dbGet<any>(
+      'SELECT id, name FROM user_groups WHERE id = ? AND organization_id = ?',
+      [id, orgId]
+    );
     if (!group) {
       return res.status(404).json({
         schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
@@ -658,11 +797,15 @@ router.patch(
       const opType = op.op?.toLowerCase();
 
       if (opType === 'replace' && op.path === 'displayName') {
-        await dbRun('UPDATE user_groups SET name = ? WHERE id = ?', [op.value, id]);
+        await dbRun('UPDATE user_groups SET name = ? WHERE id = ? AND organization_id = ?', [
+          op.value,
+          id,
+          orgId,
+        ]);
       } else if (opType === 'add' && op.path === 'members') {
         const membersToAdd = Array.isArray(op.value) ? op.value : [op.value];
         for (const member of membersToAdd) {
-          if (member?.value) {
+          if (member?.value && (await userBelongsToOrg(member.value, orgId))) {
             await dbRun(
               `INSERT OR IGNORE INTO user_group_members (group_id, user_id, role, added_at)
                VALUES (?, ?, 'member', datetime('now'))`,
@@ -671,6 +814,9 @@ router.patch(
           }
         }
       } else if (opType === 'remove' && op.path?.startsWith('members')) {
+        // `id` (the group) was already confirmed to belong to `orgId` above,
+        // so scoping the delete by group_id is sufficient here — there is no
+        // way to reach another org's membership row through this group id.
         const memberMatch = op.path.match(/members\[value eq "(.+?)"\]/);
         if (memberMatch) {
           await dbRun('DELETE FROM user_group_members WHERE group_id = ? AND user_id = ?', [
@@ -691,7 +837,7 @@ router.patch(
         await dbRun('DELETE FROM user_group_members WHERE group_id = ?', [id]);
         const newMembers = Array.isArray(op.value) ? op.value : [];
         for (const member of newMembers) {
-          if (member?.value) {
+          if (member?.value && (await userBelongsToOrg(member.value, orgId))) {
             await dbRun(
               `INSERT OR IGNORE INTO user_group_members (group_id, user_id, role, added_at)
                VALUES (?, ?, 'member', datetime('now'))`,
@@ -705,9 +851,10 @@ router.patch(
     await logSyncOp('patch', 'Group', id);
     logger.info(`[SCIM] Patched group: ${id}`);
 
-    const updated = await dbGet<any>('SELECT id, name, created_at FROM user_groups WHERE id = ?', [
-      id,
-    ]);
+    const updated = await dbGet<any>(
+      'SELECT id, name, created_at FROM user_groups WHERE id = ? AND organization_id = ?',
+      [id, orgId]
+    );
     const formatted = await formatScimGroup(updated || group);
     res.json(formatted);
   })
@@ -717,8 +864,12 @@ router.delete(
   '/Groups/:id',
   verifyScimToken,
   asyncHandler(async (req: ScimRequest, res: Response) => {
+    const orgId = req.scimOrgId as string;
     const id = String(req.params.id);
-    const group = await dbGet<any>('SELECT id, name FROM user_groups WHERE id = ?', [id]);
+    const group = await dbGet<any>(
+      'SELECT id, name FROM user_groups WHERE id = ? AND organization_id = ?',
+      [id, orgId]
+    );
     if (!group) {
       return res.status(404).json({
         schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
@@ -727,8 +878,11 @@ router.delete(
       });
     }
 
+    // `id` is already confirmed in-org above, so the member-cleanup delete
+    // needs only group_id; the group-row delete keeps the org filter anyway
+    // as defense-in-depth against the two statements ever drifting apart.
     await dbRun('DELETE FROM user_group_members WHERE group_id = ?', [id]);
-    await dbRun('DELETE FROM user_groups WHERE id = ?', [id]);
+    await dbRun('DELETE FROM user_groups WHERE id = ? AND organization_id = ?', [id, orgId]);
     await logSyncOp('delete', 'Group', id);
     logger.info(`[SCIM] Deleted group: ${group.name} (${id})`);
 
