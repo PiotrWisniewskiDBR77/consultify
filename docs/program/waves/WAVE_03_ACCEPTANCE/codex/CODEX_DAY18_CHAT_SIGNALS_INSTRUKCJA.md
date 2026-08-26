@@ -86,13 +86,13 @@ reszty.
 1. Punktem wyjścia jest **NAJNOWSZY tip gałęzi `codex/m03-admin-20260824`**.
    Nadzorca podaje Ci **SHA commitu-markera** przy wklejaniu tej instrukcji.
 
-   **SHA markera: «MARKER_SHA»**
+   **SHA markera: c31155205e**
 
    ```bash
    cd <root-repo>
    git fetch --all --prune
    git log --oneline -25 codex/m03-admin-20260824
-   git merge-base --is-ancestor «MARKER_SHA» codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
+   git merge-base --is-ancestor c31155205e codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
    ```
 
 2. **Jeśli marker nie jest przodkiem tipa albo gałąź nie istnieje — STOP.**
@@ -1620,7 +1620,7 @@ interpretacyjna za `ENABLE_SIGNAL_INTERPRETER` (OFF), front feedu poza zakresem
 ### Blok 0 — start (obowiązkowo, ~75 min, NIE pomijasz)
 1. `git fetch --all --prune`; weryfikacja markera:
    ```bash
-   git merge-base --is-ancestor «MARKER_SHA» codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
+   git merge-base --is-ancestor c31155205e codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
    ```
    Brak → STOP i koniec dyżuru.
 2. Materiały wiążące (§0.1 pkt 3) + łata filtra org (§0.1 pkt 4). Wyniki → raport.
@@ -1722,7 +1722,7 @@ Nie tworzysz drugiego pliku nigdzie indziej (Z12).
 # Chat — producent sygnałów, dzień 18 — raport dyżuru <data>
 
 Baza: codex/m03-admin-20260824 @ <tip SHA>
-Marker: «MARKER_SHA» — POTWIERDZONY / BRAK
+Marker: c31155205e — POTWIERDZONY / BRAK
 Gałąź robocza: codex/chat-signals-day18-<data>
 Worktree: /private/tmp/consultify-chat-signals-day18
 Porty użyte: 4318/4319 (albo: żadne)  ·  Kontener PG: cx-day18-pg na 4320 (usunięty: TAK/NIE)
