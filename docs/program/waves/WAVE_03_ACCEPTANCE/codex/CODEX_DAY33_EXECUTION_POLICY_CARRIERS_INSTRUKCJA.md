@@ -99,7 +99,7 @@ produktem dla frontu jest **kontrakt** (`P.12`), nie ekran.
 1. Punktem wyjścia jest **gałąź `codex/m03-admin-20260824`**, przypięta do
    commitu-markera podanego niżej.
 
-   **SHA markera: «MARKER_SHA»**
+   **SHA markera: a257168bb3**
 
    > **★ WARTOWNIK WIĄZANIA — RAMKA W BLOKU CYTOWANYM (nadzorca jej NIE
    > podmienia).** Nadzorca wiąże marker skryptem
@@ -128,7 +128,7 @@ produktem dla frontu jest **kontrakt** (`P.12`), nie ekran.
    cd <root-repo>
    git fetch --all --prune
    git log --oneline -25 codex/m03-admin-20260824
-   git merge-base --is-ancestor «MARKER_SHA» codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
+   git merge-base --is-ancestor a257168bb3 codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
    ```
 
    Wynik obu komend wklejasz do raportu **dosłownie**.
@@ -145,7 +145,7 @@ produktem dla frontu jest **kontrakt** (`P.12`), nie ekran.
    **Reguła rozejścia (`DEC-2026-08-26-95`).** Jeżeli marker JEST przodkiem, ale
    tip uciekł do przodu (nadzorca scalił coś po związaniu markera) — **to nie
    jest STOP**. Startujesz **dokładnie z markera**, wypisujesz w raporcie
-   `git log --oneline «MARKER_SHA»..codex/m03-admin-20260824` i listę plików
+   `git log --oneline a257168bb3..codex/m03-admin-20260824` i listę plików
    rozejścia; scalenie z nowszym tipem wykonuje nadzorca przy odbiorze.
    **Rebase w trakcie dyżuru: ZAKAZANY.**
 
@@ -200,7 +200,7 @@ produktem dla frontu jest **kontrakt** (`P.12`), nie ekran.
 5. **Własna gałąź i własny worktree** (nigdy praca na `codex/m03-admin-20260824`):
 
    ```bash
-   git branch codex/execution-policy-day33-<data> «MARKER_SHA»
+   git branch codex/execution-policy-day33-<data> a257168bb3
    git worktree add /private/tmp/consultify-execution-policy-day33 codex/execution-policy-day33-<data>
    cd /private/tmp/consultify-execution-policy-day33
    ln -s /Users/piotrwisniewski/Developer/Consultify/node_modules node_modules   # DEC-86, TYLKO ODCZYT
@@ -214,7 +214,7 @@ produktem dla frontu jest **kontrakt** (`P.12`), nie ekran.
    nigdy wobec `HEAD~1`:
 
    ```bash
-   git diff --name-only «MARKER_SHA»...HEAD
+   git diff --name-only a257168bb3...HEAD
    ```
 
    Ta komenda ma w tym dokumencie własną nazwę — **„komenda bazowa"** — i wraca
@@ -1015,7 +1015,7 @@ pięć braków, zero wyjątków; (4) polityka kompletna i poprawna → `resolved
 (5) polityka z parametrem obecnym, ale błędnym → **NIE `resolved`**, powód
 `INVALID_PARAMETERS` z nazwą parametru; (6) **dowód pustego grepa liczb
 w Twoim diffie**:
-`git diff «MARKER_SHA»...HEAD -- <Twoje pliki> | grep -nE '(^\+.*)\b(5|7|14|15|30|80|95|0\.[0-9]+)\b'`
+`git diff a257168bb3...HEAD -- <Twoje pliki> | grep -nE '(^\+.*)\b(5|7|14|15|30|80|95|0\.[0-9]+)\b'`
 — **każde trafienie wyjaśnione w raporcie** (dozwolone są wyłącznie granice
 matematyczne, np. `0` i `1` w warunku „ułamek w `[0,1)`"); (7) `esbuild` na
 nowym pliku; (8) commit.
@@ -1706,10 +1706,10 @@ kusi, żeby „na razie coś policzyć".
 3. **Dowód bezpieczników — pusty diff tam, gdzie musi być pusty:**
 
    ```bash
-   git diff --name-only «MARKER_SHA»...HEAD -- src/                     # MUSI BYĆ PUSTE
-   git diff --name-only «MARKER_SHA»...HEAD -- tests/setup.ts tests/helpers tests/__mocks__ 'vitest*.config.ts' server/vitest.config.ts   # MUSI BYĆ PUSTE
-   git diff --name-only «MARKER_SHA»...HEAD -- server/src/middleware/executionSpineLegacyReadOnly.middleware.ts server/src/Gateway.ts server/src/routes/v8/index.ts server/src/routes/pmo/initiatives.routes.ts   # MUSI BYĆ PUSTE
-   git diff --name-only «MARKER_SHA»...HEAD -- server/src/services/results/ server/src/routes/v8/finance-v2/ server/src/services/documentStudio/ server/src/services/assessment/   # MUSI BYĆ PUSTE
+   git diff --name-only a257168bb3...HEAD -- src/                     # MUSI BYĆ PUSTE
+   git diff --name-only a257168bb3...HEAD -- tests/setup.ts tests/helpers tests/__mocks__ 'vitest*.config.ts' server/vitest.config.ts   # MUSI BYĆ PUSTE
+   git diff --name-only a257168bb3...HEAD -- server/src/middleware/executionSpineLegacyReadOnly.middleware.ts server/src/Gateway.ts server/src/routes/v8/index.ts server/src/routes/pmo/initiatives.routes.ts   # MUSI BYĆ PUSTE
+   git diff --name-only a257168bb3...HEAD -- server/src/services/results/ server/src/routes/v8/finance-v2/ server/src/services/documentStudio/ server/src/services/assessment/   # MUSI BYĆ PUSTE
    git stash list                                                        # MUSI BYĆ PUSTE (Z27)
    ```
 
