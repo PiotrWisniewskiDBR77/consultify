@@ -314,7 +314,7 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
             onClose={() => setSelectedId(null)}
             // NAPRAWA 2 (2026-08-26): pełny widok treści raportu
             // (`AuditReportDocumentView`, `/audit-programs/reports/:id`) —
-            // flag-gated (`ff_auditsFindingsAndReportView`, default OFF).
+            // flag-gated (`ff_auditsFindingsAndReportView`, default ON since 2026-08-27 owner accept).
             // Widoczne WYŁĄCZNIE gdy flaga ON, żeby nie pokazywać przycisku
             // wiodącego donikąd (route sam i tak przekierowuje, ale ukrycie
             // jest uczciwsze niż martwy klik).
