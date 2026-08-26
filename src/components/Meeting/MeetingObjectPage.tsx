@@ -122,6 +122,27 @@ function isMeetingApiError(error: unknown): error is MeetingApiError {
   return error instanceof Error;
 }
 
+/**
+ * DEC-82 (owner right-panel review, 2026-08-26): "czas trwania" metric for
+ * the Properties table. No existing formatter in the repo computes a
+ * duration from two timestamps (grepped `formatDuration`/duration helpers —
+ * none), so this is local to the one metric that needs it. Honest fallback:
+ * malformed/zero/negative spans render '—', never a fabricated "0m".
+ */
+function formatMeetingDuration(startAt: string, endAt: string, isPolish: boolean): string {
+  const start = new Date(startAt).getTime();
+  const end = new Date(endAt || startAt).getTime();
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return '—';
+  const totalMinutes = Math.round((end - start) / 60000);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (hours > 0 && minutes > 0) {
+    return isPolish ? `${hours} godz ${minutes} min` : `${hours}h ${minutes}m`;
+  }
+  if (hours > 0) return isPolish ? `${hours} godz` : `${hours}h`;
+  return isPolish ? `${minutes} min` : `${minutes}m`;
+}
+
 function ListField({
   icon,
   label,
@@ -242,6 +263,32 @@ export const MeetingObjectPage: React.FC = () => {
   const [followUpActionId, setFollowUpActionId] = useState<string | null>(null);
 
   const [gestosc, setGestosc] = useState<PresentationMode>('n');
+
+  // DEC-82: "Organizer" property row resolves `meeting.createdBy` (a user id,
+  // see `MeetingItem.createdBy` in MeetingHub.tsx) against the org roster —
+  // same pattern as `DecisionDetailView.loadUsers`/`deciderUser`. `GET /users`
+  // is ADMIN/OWNER/SUPERADMIN-gated (users.routes.ts) and 403s for a plain
+  // member; that failure is swallowed on purpose (best-effort roster) so the
+  // Properties table degrades to '—' instead of breaking the card for
+  // non-admins.
+  const [users, setUsers] = useState<Array<{ id: string; firstName: string; lastName: string }>>(
+    []
+  );
+
+  const loadUsers = async () => {
+    try {
+      const response = await Api.getUsers();
+      setUsers(
+        (Array.isArray(response) ? response : []).map((u) => ({
+          id: u.id,
+          firstName: u.firstName,
+          lastName: u.lastName,
+        }))
+      );
+    } catch (error) {
+      console.error('Failed to load organization users for organizer lookup:', error);
+    }
+  };
 
   const loadMeeting = async () => {
     setLoading(true);
@@ -481,6 +528,13 @@ export const MeetingObjectPage: React.FC = () => {
     void loadMeeting();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [meetingId]);
+
+  // Org roster for the "Organizer" property row — loaded once, independent
+  // of which meeting is open (same roster for every meeting in the org).
+  useEffect(() => {
+    void loadUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (meeting?.id) {
@@ -1037,6 +1091,18 @@ export const MeetingObjectPage: React.FC = () => {
   const statusChipTone: 'success' | 'warning' | 'info' =
     lifecycle === 'completed' ? 'success' : lifecycle === 'past_needs_update' ? 'warning' : 'info';
 
+  // DEC-82 (owner right-panel review, 2026-08-26): Properties table dostrojona
+  // do wzorca Decisions/Initiative — pełna metryczka spotkania, nie tylko
+  // status+termin+lokalizacja+uczestnicy+notatki. Kolejność 1:1 z brief
+  // właściciela: status cyklu życia · termin · czas trwania · liczba
+  // uczestników · liczba decyzji · liczba follow-upów · lokalizacja ·
+  // organizator.
+  const durationValue = formatMeetingDuration(meeting.startAt, meeting.endAt, isPolish);
+  const organizerUser = users.find((u) => u.id === meeting.createdBy);
+  const organizerName = organizerUser
+    ? `${organizerUser.firstName} ${organizerUser.lastName}`.trim() || '—'
+    : '—';
+
   const wierszeWlasciwosci = [
     {
       id: 'status',
@@ -1045,9 +1111,10 @@ export const MeetingObjectPage: React.FC = () => {
     },
     { id: 'termin', label: t('meeting.columns.when', 'When'), value: terminValue, mono: true },
     {
-      id: 'lokalizacja',
-      label: t('meeting.object.propLocation', 'Location'),
-      value: meeting.location || '—',
+      id: 'czas-trwania',
+      label: t('meeting.object.propDuration', 'Duration'),
+      value: durationValue,
+      mono: true,
     },
     {
       id: 'uczestnicy',
@@ -1055,9 +1122,24 @@ export const MeetingObjectPage: React.FC = () => {
       value: String(meeting.attendees.length),
     },
     {
-      id: 'notatki',
-      label: t('meeting.object.propNotes', 'Notes (Minutes)'),
-      value: String(notes.length),
+      id: 'liczba-decyzji',
+      label: t('meeting.object.propDecisionsCount', 'Decisions'),
+      value: decisionRecordsLoading ? '…' : String(decisionRecords.length),
+    },
+    {
+      id: 'liczba-follow-upow',
+      label: t('meeting.object.propFollowUpsCount', 'Follow-ups'),
+      value: followUpRecordsLoading ? '…' : String(followUpRecords.length),
+    },
+    {
+      id: 'lokalizacja',
+      label: t('meeting.object.propLocation', 'Location'),
+      value: meeting.location || '—',
+    },
+    {
+      id: 'organizator',
+      label: t('meeting.object.propOrganizer', 'Organizer'),
+      value: organizerName,
     },
   ];
 
@@ -1086,10 +1168,54 @@ export const MeetingObjectPage: React.FC = () => {
                 },
               ],
             },
+            // DEC-82 (owner right-panel review): jawne placeholdery „później" —
+            // te trzy działania żyją dziś WYŁĄCZNIE na liście (`MeetingHub.tsx`,
+            // patrz komentarz nagłówkowy tego pliku, DEC-2026-08-25-52). Zamiast
+            // milczeć o ich braku (SPEC-N §2.3 zabrania cichego pominięcia),
+            // panel pokazuje je jako wyłączone, podpisane „w przygotowaniu" —
+            // widoczna zapowiedź, nie atrapa udająca działającą akcję.
+            {
+              buttons: [
+                {
+                  label: `${t('meeting.object.editMeeting', 'Edit meeting')} — ${t('common.comingSoon', 'Coming soon')}`,
+                  icon: Pencil,
+                  colorScheme: 'neutral' as const,
+                  flex: true,
+                  disabled: true,
+                  onClick: () => undefined,
+                },
+                {
+                  label: `${t('meeting.object.generateAiNotesAction', 'Generate AI notes')} — ${t('common.comingSoon', 'Coming soon')}`,
+                  icon: RefreshCw,
+                  colorScheme: 'neutral' as const,
+                  flex: true,
+                  disabled: true,
+                  onClick: () => undefined,
+                },
+              ],
+            },
+            {
+              buttons: [
+                {
+                  label: `${t('meeting.object.deleteMeeting', 'Delete meeting')} — ${t('common.comingSoon', 'Coming soon')}`,
+                  icon: Trash2,
+                  colorScheme: 'red' as const,
+                  flex: true,
+                  disabled: true,
+                  onClick: () => undefined,
+                },
+              ],
+            },
           ]}
         />
       ),
-      actionIds: ['wczytaj-ponownie', 'wroc-do-listy'],
+      actionIds: [
+        'wczytaj-ponownie',
+        'wroc-do-listy',
+        'pozniej-edytuj-spotkanie',
+        'pozniej-generuj-notatki-ai',
+        'pozniej-usun-spotkanie',
+      ],
     },
     properties: {
       label: t('meeting.object.properties', 'Properties'),

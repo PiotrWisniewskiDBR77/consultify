@@ -334,7 +334,8 @@ export function StandardArtifactShell<const S extends readonly StandardSekcjaDef
   // ── Sekcje lewej kolumny: `aicontract` jest metadaną, `NModeShell` jej nie czyta ──
   const sekcjeNMode: NModeSection[] = useMemo(() => listaSekcji.map((s) => s), [listaSekcji]);
 
-  // ── Prawy panel: kolejność i stan początkowy narzuca KOMPONENT (§2.2 + R3) ──
+  // ── Prawy panel: kolejność i stan początkowy narzuca KOMPONENT (§2.2; stan
+  //    początkowy per ArtifactRightPanel.tsx SSOT, patrz komentarz niżej) ──
   const sekcjePanelu: ArtifactRightPanelSection[] = useMemo(
     () =>
       KOLEJNOSC_SEKCJI_PANELU.flatMap((id) => {
@@ -351,8 +352,23 @@ export function StandardArtifactShell<const S extends readonly StandardSekcjaDef
             isEmpty: slot.isEmpty,
             emptyLabel: slot.emptyLabel,
             collapsible: true,
-            // SPEC-N §2.2 R3 — wszystko zwinięte poza „Akcje". Nie do nadpisania przez moduł.
-            defaultOpen: id === 'actions',
+            // DEC-82 (owner right-panel review, 2026-08-26): this hardcoded
+            // `id === 'actions'` used to be the ONLY section open by default,
+            // citing SPEC-N §2.2 R3 (2026-07-21: "wszystko zwinięte poza
+            // Akcje"). That rule was superseded by the later grid-
+            // stabilization pass (`ArtifactRightPanel.tsx` header comment,
+            // 2026-07-24): "Domyślnie ROZWINIĘTE: Akcje i Właściwości" — the
+            // SSOT the six cards built directly on `ArtifactRightPanel`
+            // (Decision/Task/Notification/Insight/Tool/Initiative) already
+            // follow (each passes `properties: { defaultOpen: true, ... }`
+            // explicitly). This thinner `StandardArtifactShell` wrapper
+            // (MeetingObjectPage, CaseDetailScreen) never got the update, so
+            // its Properties section rendered collapsed while every other
+            // N-card's rendered open — a real, visible divergence from "the
+            // identical pattern" the owner asked for. Not to be overridden
+            // by the module — this stays the component's call, not the
+            // card's, exactly like before.
+            defaultOpen: id === 'actions' || id === 'properties',
           },
         ];
       }),

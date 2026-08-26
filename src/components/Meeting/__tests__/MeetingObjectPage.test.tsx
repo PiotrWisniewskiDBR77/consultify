@@ -16,7 +16,7 @@
  *   - which section is active is driven by the URL, and clicking a tab
  *     navigates rather than just flipping local state.
  */
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -60,6 +60,14 @@ vi.mock('@/services/api', () => ({
   Api: {
     getMeeting: getMeetingMock,
     listMeetingNotes: listNotesMock,
+    // DEC-82: the right panel's Properties table now also reads the org
+    // roster (organizer lookup) and the D.4/D.5 decision/follow-up-record
+    // resources (counts). Stubbed to honest empty defaults here — this
+    // suite doesn't assert on them, but an unmocked call would throw
+    // "not a function" on every render instead of resolving cleanly.
+    getUsers: vi.fn().mockResolvedValue([]),
+    listMeetingDecisionRecords: vi.fn().mockResolvedValue({ decisions: [] }),
+    listMeetingFollowUpRecords: vi.fn().mockResolvedValue({ followUps: [] }),
   },
 }));
 
@@ -104,7 +112,12 @@ describe('MeetingObjectPage', () => {
 
     await screen.findByText('Quarterly Review');
     expect(screen.getByText('Alice')).toBeTruthy();
-    expect(screen.getByText('Status')).toBeTruthy();
+    // DEC-82: "Status" is ambiguous on its own now — it's both this fixture's
+    // one agenda item AND the right panel's Properties row label (Properties
+    // is open by default, see StandardArtifactShell.tsx). Scope to the
+    // Agenda card so this asserts the agenda item specifically.
+    const agendaCard = screen.getByText('Agenda').closest('div')?.parentElement;
+    expect(agendaCard ? within(agendaCard).getByText('Status') : null).toBeTruthy();
     // Pre-read is empty — honest "—", never invented copy.
     const preReadCard = screen.getByText('Pre-read').closest('div')?.parentElement;
     expect(preReadCard?.textContent).toContain('—');
@@ -219,7 +232,12 @@ describe('MeetingObjectPage', () => {
     // update" lifecycle — the pill must reflect that REAL derivation, not a
     // static "Scheduled" label.
     expect(await screen.findByText('Quarterly Review')).toBeTruthy();
-    expect(screen.getByText('Past — needs update')).toBeTruthy();
+    // DEC-82: "Past — needs update" now also renders as this meeting's
+    // Properties/Status value (Properties is open by default) — scope to
+    // Menu 1's header (`data-nmode-header`, NModeHeader.tsx) to assert the
+    // lifecycle pill specifically, not either occurrence.
+    const header = document.querySelector('[data-nmode-header]') as HTMLElement;
+    expect(within(header).getByText('Past — needs update')).toBeTruthy();
 
     // Prawy panel (ArtifactRightPanel accordion): section headers always
     // render regardless of open/closed state. FIX-M-1c (DEC-58 sceptyk):
@@ -230,14 +248,15 @@ describe('MeetingObjectPage', () => {
     expect(screen.getByText('Actions')).toBeTruthy();
     expect(screen.getByText('Properties')).toBeTruthy();
 
-    // "Actions" is the only section open by default (SPEC-N §2.2 R3) and has
-    // real, wired buttons (reload + back to list) — not placeholder copy.
+    // "Actions" and "Properties" are open by default (DEC-82 —
+    // `ArtifactRightPanel.tsx` SSOT: "Domyślnie ROZWINIĘTE: Akcje i
+    // Właściwości", matching Decisions/Task/Initiative) and both carry real,
+    // wired content — not placeholder copy.
     expect(screen.getByText('Reload')).toBeTruthy();
     expect(screen.getByText('Back to list')).toBeTruthy();
 
-    // "Properties" starts collapsed — expand it and assert it carries the
-    // meeting's REAL location, not invented/placeholder content.
-    screen.getByText('Properties').click();
+    // "Properties" — already open — carries the meeting's REAL location, not
+    // invented/placeholder content.
     expect(await screen.findByText('Zoom')).toBeTruthy();
     expect(screen.getByText('Property')).toBeTruthy();
     expect(screen.getByText('Value')).toBeTruthy();
