@@ -46,11 +46,14 @@ import {
   buildDocxStyleConfig,
   clampHeadingText,
   clampTableColumns,
+  DRD_REPORT_GEOMETRY,
+  DRD_REPORT_PALETTE,
   DOCX_PALETTE,
   DOCX_STYLE_IDS,
   DOCX_TITLE_MAX_CHARS,
   DOCX_TONE_COLOR,
   DOCX_TONE_FILL,
+  isDrdReportProfile,
   resolveDocxFonts,
   resolveFormattingClass,
 } from './documentDocxStyles.js';
@@ -794,6 +797,7 @@ function renderTableBlock(block: DocumentBlock, ctx: RenderContext): (Table | Pa
   }
 
   const tableRows: unknown[] = [];
+  const drdProfile = isDrdReportProfile(ctx.schema);
   if (headers.length > 0) {
     tableRows.push(
       new TableRow({
@@ -803,7 +807,7 @@ function renderTableBlock(block: DocumentBlock, ctx: RenderContext): (Table | Pa
             // Navy header band + white bold text — the DOCX analogue of
             // WorkbookStyler's navy header fill and DeckStyler's dominant band.
             new TableCell({
-              shading: { fill: DOCX_PALETTE.navy },
+              shading: { fill: drdProfile ? DRD_REPORT_PALETTE.fillHead : DOCX_PALETTE.navy },
               children: [
                 new Paragraph({
                   style: DOCX_STYLE_IDS.BODY_TEXT,
@@ -813,7 +817,7 @@ function renderTableBlock(block: DocumentBlock, ctx: RenderContext): (Table | Pa
                       bold: true,
                       font: ctx.bodyFont,
                       size: 20,
-                      color: DOCX_PALETTE.white,
+                      color: drdProfile ? DRD_REPORT_PALETTE.navyDark : DOCX_PALETTE.white,
                     }),
                   ],
                 }),
@@ -826,7 +830,7 @@ function renderTableBlock(block: DocumentBlock, ctx: RenderContext): (Table | Pa
   rows.forEach((row, rowIndex) => {
     // Subtle zebra striping on odd body rows (WorkbookStyler zebra analogue).
     // An explicit per-cell fill (status semaphore etc.) always wins.
-    const zebra = rowIndex % 2 === 1;
+    const zebra = !drdProfile && rowIndex % 2 === 1;
     tableRows.push(
       new TableRow({
         children: row.map((cell) => {
@@ -1430,6 +1434,7 @@ export async function renderDocumentSchemaToDocxBuffer(
   const formattingClass = resolveFormattingClass(schema);
   const styles = buildDocxStyleConfig(schema, formattingClass);
   const margins = formatting.page.marginsCm;
+  const drdProfile = isDrdReportProfile(schema);
 
   const sectionChildren: unknown[] = [];
   if (formatting.coverPage) sectionChildren.push(...renderCoverBlock(ctx, options));
@@ -1622,19 +1627,39 @@ export async function renderDocumentSchemaToDocxBuffer(
       {
         properties: {
           page: {
-            size: { width: 11906, height: 16838 }, // A4 in twips
+            size: drdProfile
+              ? {
+                  width: DRD_REPORT_GEOMETRY.pageWidthTwips,
+                  height: DRD_REPORT_GEOMETRY.pageHeightTwips,
+                }
+              : { width: 11906, height: 16838 }, // A4 in twips
             margin: {
-              top: Math.round(margins.top * TWIPS_PER_CM),
-              bottom: Math.round(margins.bottom * TWIPS_PER_CM),
-              left: Math.round(margins.left * TWIPS_PER_CM),
-              right: Math.round(margins.right * TWIPS_PER_CM),
+              top: drdProfile
+                ? DRD_REPORT_GEOMETRY.marginTopTwips
+                : Math.round(margins.top * TWIPS_PER_CM),
+              bottom: drdProfile
+                ? DRD_REPORT_GEOMETRY.marginBottomTwips
+                : Math.round(margins.bottom * TWIPS_PER_CM),
+              left: drdProfile
+                ? DRD_REPORT_GEOMETRY.marginLeftTwips
+                : Math.round(margins.left * TWIPS_PER_CM),
+              right: drdProfile
+                ? DRD_REPORT_GEOMETRY.marginRightTwips
+                : Math.round(margins.right * TWIPS_PER_CM),
+              ...(drdProfile ? { footer: DRD_REPORT_GEOMETRY.footerTwips } : {}),
             },
           },
+          ...(drdProfile ? { titlePage: DRD_REPORT_GEOMETRY.titlePage } : {}),
         },
         headers: headerEnabled ? { default: new Header({ children: headerChildren }) } : undefined,
         footers:
           footerEnabled && footerChildren.length > 0
-            ? { default: new Footer({ children: footerChildren }) }
+            ? {
+                default: new Footer({ children: footerChildren }),
+                ...(drdProfile
+                  ? { first: new Footer({ children: [new Paragraph({ children: [] })] }) }
+                  : {}),
+              }
             : undefined,
         children: sectionChildren,
       },

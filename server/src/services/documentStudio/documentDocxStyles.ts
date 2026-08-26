@@ -91,6 +91,41 @@ export const DOCX_PALETTE = Object.freeze({
   white: 'FFFFFF',
 } as const);
 
+/** Owner-accepted DRD report palette. Opt-in; legacy exports keep DOCX_PALETTE. */
+export const DRD_REPORT_PALETTE = Object.freeze({
+  navy: '0C447C',
+  navyDark: '083152',
+  teal: '1D9E75',
+  tealDark: '14664B',
+  ink: '1F2937',
+  muted: '6B7280',
+  hair: 'D6DFE8',
+  crimson: '85182F',
+  fillHead: 'E2E9EF',
+  fillBelow: 'D3DDE7',
+  fillToGo: 'E8F5F1',
+  fillTarget: 'BFE4D8',
+  white: 'FFFFFF',
+} as const);
+
+/** A4 geometry measured from the owner-accepted DRD report. */
+export const DRD_REPORT_GEOMETRY = Object.freeze({
+  pageWidthTwips: 11906,
+  pageHeightTwips: 16838,
+  marginTopTwips: 1247,
+  marginBottomTwips: 1134,
+  marginLeftTwips: 1247,
+  marginRightTwips: 1247,
+  footerTwips: 624,
+  contentWidthTwips: 9412,
+  titlePage: true,
+} as const);
+
+/** Existing optional color-template slot is the additive DRD profile selector. */
+export function isDrdReportProfile(schema: DocumentSchema): boolean {
+  return schema.formattingSchema.colorTemplateId === 'drd-report';
+}
+
 /**
  * Tone → accent hex for callout labels + KPI deltas. Consistent with the
  * DeckStyler / WorkbookStyler doctrine: teal for success/positive, navy for
@@ -210,6 +245,15 @@ export const DOCX_STYLE_IDS = Object.freeze({
   CALLOUT: 'Callout',
   SOURCE_LIST: 'SourceList',
   TOC_HEADING: 'TOCHeading',
+  DRD_BODY: 'Tresc',
+  DRD_LEAD: 'Lead',
+  DRD_KICKER: 'Kicker',
+  DRD_CAPTION: 'Podpis',
+  DRD_SIGNATURE: 'Sygnatura',
+  DRD_TOC1: 'TOC1',
+  DRD_TOC2: 'TOC2',
+  DRD_UNNUMBERED_HEADING: 'NaglowekBezNumeru',
+  DRD_UNNUMBERED_SECTION: 'NaglowekBezNumeru2',
 } as const);
 
 export type DocxStyleId = (typeof DOCX_STYLE_IDS)[keyof typeof DOCX_STYLE_IDS];
@@ -384,6 +428,248 @@ export function buildDocxStyleConfig(
     ? detailedHeadings.h3.spacingAfterPt * 20
     : sizing.spacing.h3After;
 
+  const paragraphStyles: Record<string, unknown>[] = [
+    {
+      id: DOCX_STYLE_IDS.TITLE,
+      // The display name intentionally avoids the reserved "Title"
+      // value so Word does not merge our run properties with the
+      // built-in Title style (which would drop font/bold/color).
+      name: 'Doc Studio Title',
+      basedOn: 'Normal',
+      next: 'Subtitle',
+      quickFormat: true,
+      run: {
+        font: fonts.heading,
+        size: sizing.title,
+        bold: true,
+        color: DOCX_PALETTE.navyInk,
+      },
+      paragraph: { spacing: { before: 600, after: 200 }, alignment: 'center' },
+    },
+    {
+      id: DOCX_STYLE_IDS.SUBTITLE,
+      name: 'Subtitle',
+      basedOn: 'Normal',
+      next: 'BodyText',
+      quickFormat: true,
+      run: {
+        font: fonts.body,
+        size: sizing.subtitle,
+        italics: true,
+        color: DOCX_PALETTE.muted2,
+      },
+      paragraph: { spacing: { after: 80 }, alignment: 'center' },
+    },
+    {
+      id: DOCX_STYLE_IDS.HEADING1,
+      name: 'Heading 1',
+      basedOn: 'Normal',
+      next: 'BodyText',
+      quickFormat: true,
+      run: { font: fonts.heading, size: sizing.heading1, bold: true, color: DOCX_PALETTE.navy },
+      paragraph: {
+        spacing: { before: sizing.spacing.h1Before, after: sizing.spacing.h1After },
+        border: {
+          bottom: { color: DOCX_PALETTE.teal, space: 6, style: 'single', size: 8 },
+        },
+      },
+    },
+    {
+      id: DOCX_STYLE_IDS.HEADING2,
+      name: 'Heading 2',
+      basedOn: 'Normal',
+      next: 'BodyText',
+      quickFormat: true,
+      run: {
+        font: fonts.heading,
+        size: sizing.heading2,
+        bold: true,
+        color: DOCX_PALETTE.navySoft,
+      },
+      paragraph: {
+        spacing: { before: sizing.spacing.h2Before, after: sizing.spacing.h2After },
+      },
+    },
+    {
+      id: DOCX_STYLE_IDS.HEADING3,
+      name: 'Heading 3',
+      basedOn: 'Normal',
+      next: 'BodyText',
+      quickFormat: true,
+      run: { font: fonts.heading, size: sizing.heading3, bold: true, color: DOCX_PALETTE.ink3 },
+      paragraph: {
+        spacing: { before: sizing.spacing.h3Before, after: sizing.spacing.h3After },
+      },
+    },
+    {
+      id: DOCX_STYLE_IDS.BODY_TEXT,
+      name: 'Body Text',
+      basedOn: 'Normal',
+      next: 'BodyText',
+      quickFormat: true,
+      run: { font: fonts.body, size: sizing.body, color: DOCX_PALETTE.ink },
+      paragraph: { spacing: { after: sizing.spacing.bodyAfter } },
+    },
+    {
+      id: DOCX_STYLE_IDS.BLOCK_QUOTE,
+      name: 'Block Quote',
+      basedOn: 'BodyText',
+      next: 'BodyText',
+      run: { font: fonts.body, size: sizing.body, italics: true, color: DOCX_PALETTE.muted2 },
+      paragraph: {
+        indent: { left: 360 },
+        spacing: { before: 80, after: 120 },
+        border: {
+          left: { color: DOCX_PALETTE.navy, space: 12, style: 'single', size: 18 },
+        },
+      },
+    },
+    {
+      id: DOCX_STYLE_IDS.CAPTION,
+      name: 'Caption',
+      basedOn: 'Normal',
+      next: 'BodyText',
+      run: { font: fonts.body, size: sizing.caption, italics: true, color: DOCX_PALETTE.muted },
+      paragraph: { spacing: { before: 60, after: 120 } },
+    },
+    {
+      id: DOCX_STYLE_IDS.FOOTNOTE_TEXT,
+      name: 'Doc Studio Footnote',
+      basedOn: 'Normal',
+      next: 'BodyText',
+      run: { font: fonts.body, size: sizing.footnote, color: DOCX_PALETTE.muted2 },
+      paragraph: { spacing: { after: 40 } },
+    },
+    {
+      id: DOCX_STYLE_IDS.ASSUMPTION_BODY,
+      name: 'Assumption Body',
+      basedOn: 'BodyText',
+      next: 'BodyText',
+      run: { font: fonts.body, size: sizing.body, italics: true, color: DOCX_PALETTE.amberInk },
+      paragraph: { spacing: { after: sizing.spacing.bodyAfter } },
+    },
+    {
+      id: DOCX_STYLE_IDS.CALLOUT,
+      name: 'Callout',
+      basedOn: 'BodyText',
+      next: 'BodyText',
+      run: { font: fonts.body, size: sizing.body, color: DOCX_PALETTE.ink },
+      paragraph: {
+        spacing: { before: 80, after: 120 },
+        indent: { left: 240 },
+        shading: { type: 'clear', fill: DOCX_PALETTE.calloutFill },
+        border: {
+          left: { color: DOCX_PALETTE.teal, space: 12, style: 'single', size: 24 },
+        },
+      },
+    },
+    {
+      id: DOCX_STYLE_IDS.SOURCE_LIST,
+      name: 'Source List',
+      basedOn: 'BodyText',
+      next: 'SourceList',
+      run: { font: fonts.body, size: sizing.body, color: DOCX_PALETTE.ink },
+      paragraph: { spacing: { after: 60 } },
+    },
+    {
+      id: DOCX_STYLE_IDS.TOC_HEADING,
+      name: 'TOC Heading',
+      basedOn: 'Heading1',
+      next: 'BodyText',
+      quickFormat: true,
+      run: { font: fonts.heading, size: sizing.heading1, bold: true, color: DOCX_PALETTE.navy },
+      paragraph: {
+        spacing: { before: sizing.spacing.h1Before, after: sizing.spacing.h1After },
+      },
+    },
+  ];
+
+  if (isDrdReportProfile(schema)) {
+    paragraphStyles.push(
+      {
+        id: DOCX_STYLE_IDS.DRD_BODY,
+        name: 'Treść',
+        basedOn: 'Normal',
+        next: DOCX_STYLE_IDS.DRD_BODY,
+        quickFormat: true,
+        run: { font: fonts.body, size: 22, color: DRD_REPORT_PALETTE.ink },
+        paragraph: { spacing: { line: 312, after: 120 } },
+      },
+      {
+        id: DOCX_STYLE_IDS.DRD_LEAD,
+        name: 'Lead',
+        basedOn: DOCX_STYLE_IDS.DRD_BODY,
+        next: DOCX_STYLE_IDS.DRD_BODY,
+        run: { font: fonts.body, size: 24, color: DRD_REPORT_PALETTE.ink },
+        paragraph: { spacing: { line: 336, after: 160 } },
+      },
+      {
+        id: DOCX_STYLE_IDS.DRD_KICKER,
+        name: 'Kicker',
+        basedOn: 'Normal',
+        next: DOCX_STYLE_IDS.HEADING1,
+        run: { font: fonts.body, size: 18, bold: true, color: DRD_REPORT_PALETTE.teal },
+        paragraph: { spacing: { after: 80 } },
+      },
+      {
+        id: DOCX_STYLE_IDS.DRD_CAPTION,
+        name: 'Podpis',
+        basedOn: DOCX_STYLE_IDS.DRD_BODY,
+        next: DOCX_STYLE_IDS.DRD_BODY,
+        run: { font: fonts.body, size: 18, italics: true, color: DRD_REPORT_PALETTE.muted },
+        paragraph: { spacing: { before: 60, after: 120 } },
+      },
+      {
+        id: DOCX_STYLE_IDS.DRD_SIGNATURE,
+        name: 'Sygnatura',
+        basedOn: DOCX_STYLE_IDS.DRD_BODY,
+        next: DOCX_STYLE_IDS.DRD_BODY,
+        run: { font: fonts.body, size: 19, color: DRD_REPORT_PALETTE.ink },
+        paragraph: {
+          shading: { type: 'clear', fill: DRD_REPORT_PALETTE.fillHead },
+          border: {
+            left: { color: DRD_REPORT_PALETTE.teal, space: 10, style: 'single', size: 18 },
+          },
+          indent: { left: 180 },
+          spacing: { before: 80, after: 100 },
+        },
+      },
+      {
+        id: DOCX_STYLE_IDS.DRD_TOC1,
+        name: 'TOC 1',
+        basedOn: DOCX_STYLE_IDS.DRD_BODY,
+        next: DOCX_STYLE_IDS.DRD_TOC1,
+        run: { font: fonts.body, size: 20, color: DRD_REPORT_PALETTE.navyDark },
+        paragraph: { spacing: { after: 70 } },
+      },
+      {
+        id: DOCX_STYLE_IDS.DRD_TOC2,
+        name: 'TOC 2',
+        basedOn: DOCX_STYLE_IDS.DRD_BODY,
+        next: DOCX_STYLE_IDS.DRD_TOC2,
+        run: { font: fonts.body, size: 18, color: DRD_REPORT_PALETTE.muted },
+        paragraph: { indent: { left: 360 }, spacing: { after: 50 } },
+      },
+      {
+        id: DOCX_STYLE_IDS.DRD_UNNUMBERED_HEADING,
+        name: 'Nagłówek bez numeru',
+        basedOn: DOCX_STYLE_IDS.HEADING1,
+        next: DOCX_STYLE_IDS.DRD_BODY,
+        quickFormat: true,
+        run: { font: fonts.heading, size: 40, color: DRD_REPORT_PALETTE.navy },
+        paragraph: { spacing: { before: 240, after: 120 } },
+      },
+      {
+        id: DOCX_STYLE_IDS.DRD_UNNUMBERED_SECTION,
+        name: 'Nagłówek sekcji bez spisu',
+        basedOn: DOCX_STYLE_IDS.HEADING2,
+        next: DOCX_STYLE_IDS.DRD_BODY,
+        run: { font: fonts.heading, size: 27, bold: true, color: DRD_REPORT_PALETTE.navyDark },
+        paragraph: { spacing: { before: 200, after: 100 } },
+      }
+    );
+  }
+
   return {
     default: {
       document: {
@@ -425,172 +711,7 @@ export function buildDocxStyleConfig(
         paragraph: { spacing: { before: h3Before, after: h3After } },
       },
     },
-    paragraphStyles: [
-      {
-        id: DOCX_STYLE_IDS.TITLE,
-        // The display name intentionally avoids the reserved "Title"
-        // value so Word does not merge our run properties with the
-        // built-in Title style (which would drop font/bold/color).
-        name: 'Doc Studio Title',
-        basedOn: 'Normal',
-        next: 'Subtitle',
-        quickFormat: true,
-        run: {
-          font: fonts.heading,
-          size: sizing.title,
-          bold: true,
-          color: DOCX_PALETTE.navyInk,
-        },
-        paragraph: { spacing: { before: 600, after: 200 }, alignment: 'center' },
-      },
-      {
-        id: DOCX_STYLE_IDS.SUBTITLE,
-        name: 'Subtitle',
-        basedOn: 'Normal',
-        next: 'BodyText',
-        quickFormat: true,
-        run: {
-          font: fonts.body,
-          size: sizing.subtitle,
-          italics: true,
-          color: DOCX_PALETTE.muted2,
-        },
-        paragraph: { spacing: { after: 80 }, alignment: 'center' },
-      },
-      {
-        id: DOCX_STYLE_IDS.HEADING1,
-        name: 'Heading 1',
-        basedOn: 'Normal',
-        next: 'BodyText',
-        quickFormat: true,
-        run: { font: fonts.heading, size: sizing.heading1, bold: true, color: DOCX_PALETTE.navy },
-        paragraph: {
-          spacing: { before: sizing.spacing.h1Before, after: sizing.spacing.h1After },
-          // Teal hairline UNDER every H1 — the DOCX analogue of DeckStyler's
-          // accent rule beneath a section title. Gives the document rhythm.
-          border: {
-            bottom: { color: DOCX_PALETTE.teal, space: 6, style: 'single', size: 8 },
-          },
-        },
-      },
-      {
-        id: DOCX_STYLE_IDS.HEADING2,
-        name: 'Heading 2',
-        basedOn: 'Normal',
-        next: 'BodyText',
-        quickFormat: true,
-        run: {
-          font: fonts.heading,
-          size: sizing.heading2,
-          bold: true,
-          color: DOCX_PALETTE.navySoft,
-        },
-        paragraph: {
-          spacing: { before: sizing.spacing.h2Before, after: sizing.spacing.h2After },
-        },
-      },
-      {
-        id: DOCX_STYLE_IDS.HEADING3,
-        name: 'Heading 3',
-        basedOn: 'Normal',
-        next: 'BodyText',
-        quickFormat: true,
-        run: { font: fonts.heading, size: sizing.heading3, bold: true, color: DOCX_PALETTE.ink3 },
-        paragraph: {
-          spacing: { before: sizing.spacing.h3Before, after: sizing.spacing.h3After },
-        },
-      },
-      {
-        id: DOCX_STYLE_IDS.BODY_TEXT,
-        name: 'Body Text',
-        basedOn: 'Normal',
-        next: 'BodyText',
-        quickFormat: true,
-        run: { font: fonts.body, size: sizing.body, color: DOCX_PALETTE.ink },
-        paragraph: { spacing: { after: sizing.spacing.bodyAfter } },
-      },
-      {
-        id: DOCX_STYLE_IDS.BLOCK_QUOTE,
-        name: 'Block Quote',
-        basedOn: 'BodyText',
-        next: 'BodyText',
-        run: { font: fonts.body, size: sizing.body, italics: true, color: DOCX_PALETTE.muted2 },
-        paragraph: {
-          indent: { left: 360 },
-          spacing: { before: 80, after: 120 },
-          // Navy left rule — a pull-quote reads as a deliberate device, not
-          // just italic body text.
-          border: {
-            left: { color: DOCX_PALETTE.navy, space: 12, style: 'single', size: 18 },
-          },
-        },
-      },
-      {
-        id: DOCX_STYLE_IDS.CAPTION,
-        name: 'Caption',
-        basedOn: 'Normal',
-        next: 'BodyText',
-        run: { font: fonts.body, size: sizing.caption, italics: true, color: DOCX_PALETTE.muted },
-        paragraph: { spacing: { before: 60, after: 120 } },
-      },
-      {
-        id: DOCX_STYLE_IDS.FOOTNOTE_TEXT,
-        // Avoid the built-in `FootnoteText` id/name so docx does not
-        // attach the semiHidden/Char-link metadata that strips our run
-        // properties. Slice 8.3 will emit real Word footnote markers
-        // and we want full control of the visual presentation.
-        name: 'Doc Studio Footnote',
-        basedOn: 'Normal',
-        next: 'BodyText',
-        run: { font: fonts.body, size: sizing.footnote, color: DOCX_PALETTE.muted2 },
-        paragraph: { spacing: { after: 40 } },
-      },
-      {
-        id: DOCX_STYLE_IDS.ASSUMPTION_BODY,
-        name: 'Assumption Body',
-        basedOn: 'BodyText',
-        next: 'BodyText',
-        run: { font: fonts.body, size: sizing.body, italics: true, color: DOCX_PALETTE.amberInk },
-        paragraph: { spacing: { after: sizing.spacing.bodyAfter } },
-      },
-      {
-        id: DOCX_STYLE_IDS.CALLOUT,
-        name: 'Callout',
-        basedOn: 'BodyText',
-        next: 'BodyText',
-        run: { font: fonts.body, size: sizing.body, color: DOCX_PALETTE.ink },
-        paragraph: {
-          spacing: { before: 80, after: 120 },
-          indent: { left: 240 },
-          // Teal accent spine + soft navy tint — a callout is a boxed device,
-          // mirroring DeckStyler's accent-header panels. The renderer overrides
-          // the spine color per tone (danger→crimson) at emit time.
-          shading: { type: 'clear', fill: DOCX_PALETTE.calloutFill },
-          border: {
-            left: { color: DOCX_PALETTE.teal, space: 12, style: 'single', size: 24 },
-          },
-        },
-      },
-      {
-        id: DOCX_STYLE_IDS.SOURCE_LIST,
-        name: 'Source List',
-        basedOn: 'BodyText',
-        next: 'SourceList',
-        run: { font: fonts.body, size: sizing.body, color: DOCX_PALETTE.ink },
-        paragraph: { spacing: { after: 60 } },
-      },
-      {
-        id: DOCX_STYLE_IDS.TOC_HEADING,
-        name: 'TOC Heading',
-        basedOn: 'Heading1',
-        next: 'BodyText',
-        quickFormat: true,
-        run: { font: fonts.heading, size: sizing.heading1, bold: true, color: DOCX_PALETTE.navy },
-        paragraph: {
-          spacing: { before: sizing.spacing.h1Before, after: sizing.spacing.h1After },
-        },
-      },
-    ],
+    paragraphStyles,
   };
 }
 
