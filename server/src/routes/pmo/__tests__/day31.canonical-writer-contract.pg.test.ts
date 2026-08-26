@@ -481,4 +481,121 @@ describe.skipIf(!REAL_PG)('Day 31 canonical writer mounted contract', () => {
         'POST /api/initiatives/runtime-v1/initiatives/:initiativeId/budget-entries/:entryId',
     });
   });
+
+  it('reconstructs the exact P1 source version at an as-of instant without substituting current state', async () => {
+    const sourceId = `asof-source-${tag}`;
+    const reportRunId = `asof-run-${tag}`;
+    const eventTimes = [
+      '2026-08-20T10:00:00.000Z',
+      '2026-08-21T10:00:00.000Z',
+      '2026-08-22T10:00:00.000Z',
+    ];
+    await client.query(
+      `INSERT INTO ie_aggregate_state(organization_id,aggregate_type,aggregate_id,version,payload_json)
+       VALUES($1,'asof_test_source',$2,3,$3::jsonb),($1,'report_run',$4,1,$5::jsonb)`,
+      [
+        organizationId,
+        sourceId,
+        JSON.stringify({ initiativeId, projectId, currentValue: 3 }),
+        reportRunId,
+        JSON.stringify({
+          reportRunId,
+          projectId,
+          definitionRef: { definitionId: `definition-${tag}`, version: 1 },
+          parentRunRef: null,
+          status: 'DRAFT',
+          tenantId: organizationId,
+          audience: ['OWNER'],
+          scopeRefs: [initiativeId],
+          period: { start: '2026-08-01T00:00:00.000Z', end: '2026-08-31T23:59:59.000Z' },
+          asOf: '2026-08-22T10:00:00.000Z',
+          sources: [
+            {
+              sourceType: 'asof_test_source',
+              sourceId,
+              version: 3,
+              capturedAt: eventTimes[2],
+              freshness: 'CURRENT',
+              formula: null,
+              unit: null,
+              currency: null,
+              window: null,
+              confidence: 'HIGH',
+              accessState: 'FULL',
+              redactions: [],
+            },
+          ],
+          ownerId: userId,
+          approverId: userId,
+          validationFindings: [],
+          contentHash: null,
+          frozenSnapshot: null,
+          approval: null,
+          exportPackage: null,
+          distributionReceipts: [],
+          followUpTaskRef: null,
+          createdAt: eventTimes[0],
+          updatedAt: eventTimes[2],
+        }),
+      ]
+    );
+    for (const [index, createdAt] of eventTimes.entries()) {
+      const version = index + 1;
+      await client.query(
+        `INSERT INTO ie_audit_events(
+           organization_id,actor_id,aggregate_type,aggregate_id,aggregate_version,
+           command_type,client_request_id,correlation_id,policy_id,policy_version,payload_json,created_at
+         ) VALUES($1,$2,'asof_test_source',$3,$4,'asof-test.update',$5,$5,'test',1,$6::jsonb,$7)`,
+        [
+          organizationId,
+          userId,
+          sourceId,
+          version,
+          `asof-${version}-${tag}`,
+          JSON.stringify({ value: version }),
+          createdAt,
+        ]
+      );
+    }
+    const before = await client.query(
+      `SELECT version,payload_json FROM ie_aggregate_state
+       WHERE organization_id=$1 AND aggregate_type='report_run' AND aggregate_id=$2`,
+      [organizationId, reportRunId]
+    );
+    const response = await request(app)
+      .post(`/api/initiatives/runtime-v1/report-runs/${reportRunId}/reconstruct`)
+      .set(auth())
+      .send({ asOf: '2026-08-21T12:00:00.000Z' });
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      reconstructable: true,
+      reconstructionLevel: 'P1_VERSION_AT_INSTANT',
+      sources: [{ sourceType: 'asof_test_source', sourceId, version: 2 }],
+      gaps: [],
+    });
+    const after = await client.query(
+      `SELECT version,payload_json FROM ie_aggregate_state
+       WHERE organization_id=$1 AND aggregate_type='report_run' AND aggregate_id=$2`,
+      [organizationId, reportRunId]
+    );
+    expect(after.rows).toEqual(before.rows);
+
+    const beforeHistory = await request(app)
+      .post(`/api/initiatives/runtime-v1/report-runs/${reportRunId}/reconstruct`)
+      .set(auth())
+      .send({ asOf: '2026-08-19T12:00:00.000Z' });
+    expect(beforeHistory.body).toMatchObject({
+      reconstructable: false,
+      sources: [],
+      gaps: [{ sourceType: 'asof_test_source', sourceId, reason: 'NO_EVENT_HISTORY_BEFORE_AS_OF' }],
+    });
+    expect(
+      (
+        await request(app)
+          .post(`/api/initiatives/runtime-v1/report-runs/${reportRunId}/reconstruct`)
+          .set(auth())
+          .send({ asOf: '2999-01-01T00:00:00.000Z' })
+      ).status
+    ).toBe(400);
+  });
 });

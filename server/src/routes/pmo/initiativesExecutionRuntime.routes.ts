@@ -114,6 +114,7 @@ import {
   PostgresGovernancePolicyResolver,
 } from '../../domain/initiatives-execution/postgresGovernancePolicyResolver.js';
 import { PostgresInitiativeReader } from '../../domain/initiatives-execution/postgresInitiativeReader.js';
+import { PostgresAsOfVersionReader } from '../../domain/initiatives-execution/postgresAsOfVersionReader.js';
 import { PostgresMaterialCommandUnitOfWork } from '../../domain/initiatives-execution/postgresMaterialCommandUnitOfWork.js';
 import { publishInitiativeCard } from '../../domain/initiatives-execution/publishInitiativeCard.js';
 import { refreshInitiativeSource } from '../../domain/initiatives-execution/refreshInitiativeSource.js';
@@ -1172,6 +1173,7 @@ export interface InitiativesExecutionRuntimeDependencies {
     initiativeId?: string | null
   ) => Promise<EffectiveGovernancePolicy>;
   controlKpis?: ControlKpiReadModel;
+  asOfVersions?: PostgresAsOfVersionReader;
 }
 
 function actorFromRequest(req: Request): RuntimeActor | null {
@@ -5126,7 +5128,14 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(404).json({ error: { code: 'NOT_FOUND' } });
         return;
       }
-      res.json(reconstructReportRun(run as any, parsed.data.asOf));
+      const versions = deps.asOfVersions
+        ? await deps.asOfVersions.resolve(
+            actor.organizationId,
+            (run as any).sources,
+            parsed.data.asOf
+          )
+        : [];
+      res.json(reconstructReportRun(run as any, parsed.data.asOf, versions));
     })
   );
   router.get(
@@ -6251,6 +6260,7 @@ const runtimeDependencies: InitiativesExecutionRuntimeDependencies = {
   unitOfWork: new PostgresMaterialCommandUnitOfWork(runtimePool),
   reader: new PostgresInitiativeReader(runtimePool),
   controlKpis: new ControlKpiReadModel(runtimePool),
+  asOfVersions: new PostgresAsOfVersionReader(runtimePool),
   resolvePolicy: (organizationId, projectId, initiativeId) =>
     new PostgresGovernancePolicyResolver(runtimePool).resolve(
       organizationId,
