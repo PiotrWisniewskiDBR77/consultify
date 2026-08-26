@@ -32,11 +32,45 @@ export class AssessmentReportContractService {
     const outputs = await methodOutputService.listOutputsBySession(organizationId, sessionId);
     const output = outputs[0] ?? null;
     const skipReasons = await assessmentSkipReasonService.listActive(organizationId, sessionId);
-    const skipByUnit = new Map<string, AssessmentSkipReason>();
-    for (const reason of skipReasons) skipByUnit.set(reason.unitId, reason);
+    // FIX-2 (P1-2, nadzorca 2026-08-26): skip decisions are per-question
+    // (unitId + questionId), never per-area. Group every active decision for
+    // an area instead of collapsing to one arbitrary record — a single
+    // skipped question must not make the whole area read as fully skipped.
+    const skipsByUnit = new Map<string, AssessmentSkipReason[]>();
+    for (const reason of skipReasons) {
+      const existing = skipsByUnit.get(reason.unitId);
+      if (existing) existing.push(reason);
+      else skipsByUnit.set(reason.unitId, [reason]);
+    }
     const findingByUnit = new Map(
       (output?.findings ?? []).map((finding) => [finding.unitId, finding])
     );
+
+    // Area-level `skipped` is a true aggregate: true only when every
+    // assessable slot of the area (one per canonical axis level, the same
+    // bound already enforced on write by INVALID_UNIT_OR_LEVEL) has an
+    // active skip decision. A partial skip keeps `skipped: false` and
+    // surfaces the full per-question list so the consumer can see exactly
+    // which questions were skipped and with which code.
+    const areaSkipInfo = (
+      axis: (typeof DRD_STRUCTURE)[number],
+      area: (typeof DRD_STRUCTURE)[number]['areas'][number]
+    ) => {
+      const areaSkips = skipsByUnit.get(area.id) ?? [];
+      const skips = areaSkips.map((reason) => ({
+        questionId: reason.questionId,
+        skipCode: reason.skipCode,
+      }));
+      const distinctLevelsSkipped = new Set(areaSkips.map((reason) => reason.level)).size;
+      const allSkipped = areaSkips.length > 0 && distinctLevelsSkipped >= axis.levelCount;
+      return {
+        skipped: allSkipped,
+        // Deterministic single code only when exactly one question is
+        // skipped; never arbitrarily pick among multiple different codes.
+        skipCode: skips.length === 1 ? skips[0].skipCode : null,
+        skips,
+      };
+    };
 
     return {
       contractVersion: 'assessment-report-contract-v1',
@@ -55,7 +89,7 @@ export class AssessmentReportContractService {
           caption: { content: null, minWords: 30, maxWords: 60 },
           areas: axis.areas.map((area) => {
             const finding = findingByUnit.get(area.id);
-            const skip = skipByUnit.get(area.id);
+            const skipInfo = areaSkipInfo(axis, area);
             const currentLevel = finding?.currentLevel ?? null;
             const targetLevel = finding?.targetLevel ?? null;
             return {
@@ -66,8 +100,9 @@ export class AssessmentReportContractService {
               targetLevel,
               gap:
                 currentLevel === null || targetLevel === null ? null : targetLevel - currentLevel,
-              skipped: Boolean(skip),
-              skipCode: skip?.skipCode ?? null,
+              skipped: skipInfo.skipped,
+              skipCode: skipInfo.skipCode,
+              skips: skipInfo.skips,
               evidenceState: finding
                 ? finding.supportingEvidence.length > 0
                   ? 'evidenced'
@@ -80,15 +115,16 @@ export class AssessmentReportContractService {
         },
         areaComments: axis.areas.map((area) => {
           const finding = findingByUnit.get(area.id);
-          const skip = skipByUnit.get(area.id);
+          const skipInfo = areaSkipInfo(axis, area);
           return {
             unitId: area.id,
             content: null,
             minWords: 110,
             maxWords: 170,
             microstructure: AREA_MICROSTRUCTURE,
-            skipped: Boolean(skip),
-            skipCode: skip?.skipCode ?? null,
+            skipped: skipInfo.skipped,
+            skipCode: skipInfo.skipCode,
+            skips: skipInfo.skips,
             answerRefs: finding ? [finding.id] : [],
             evidenceRefs: finding?.supportingEvidence.map((evidence) => evidence.evidenceId) ?? [],
             sourceLocators: finding?.sourceLocators ?? [],

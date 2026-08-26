@@ -196,7 +196,29 @@ Kontrakt zwraca siedem rozdziałów w kolejności osi DRD. Każdy ma: wstęp `12
 
 Stan pominięcia jest czytany wyłącznie z `assessment_skip_reasons`: `skipped` + maszynowy `skipCode`. Serwis nie importuje ani nie parsuje `justification`, nie ma regexu polskiego zdania. Obszar bez findingu i bez pominięcia ma `not_assessed`, nigdy zero ani sukces.
 
-Pakiet real-router/PG 9/9 PASS obejmuje deterministyczne dwa odczyty, siedem osi, `content:null`, komentarze wszystkich pięciu obszarów osi 5, kod pominięcia z tabeli Assessmentu, nieznaną sesję 404 i obcego tenanta 404. Statusy `CZĘŚCIOWO`: brak pełnej zamrożonej sesji z findings/evidence do liczbowego porównania silnika oraz brak osobnego fixture historycznego, które zawiera tylko polski tekst `justification`.
+> **FIX-2 (P1-2, rozstrzygnięcie nadzorcy, 2026-08-26):** pierwotna implementacja
+> kluczowała `skipByUnit` wyłącznie po `unitId`, więc (a) obszar z JEDNYM
+> pominiętym pytaniem z pięciu prezentował się jako pominięty w całości, i (b)
+> przy dwóch różnych kodach pominięcia dla tego samego obszaru zwracała jeden
+> arbitralny (ostatni zapisany). Naprawiono w `assessmentReportContractService.ts`:
+> kontrakt niesie teraz listę pominięć per pytanie (`skips: [{questionId, skipCode}]`
+> w `matrix.areas[]` i `areaComments[]`), a pole `skipped` na poziomie obszaru jest
+> prawdziwym agregatem — `true` TYLKO gdy liczba różnych poziomów osi objętych
+> aktywnym pominięciem tego obszaru osiąga `axis.levelCount` (każdy poziom = jeden
+> assessable slot obszaru, ten sam limit już egzekwowany przy zapisie przez
+> `INVALID_UNIT_OR_LEVEL`); przy pominięciu częściowym `skipped: false` +
+> niepusta lista. Pole `skipCode` (pojedyncze, wsteczna zgodność) zwraca kod
+> TYLKO gdy lista ma dokładnie jeden wpis — inaczej `null`, nigdy arbitralny wybór.
+> Dwa nowe testy w `assessmentSkipReasons.day20.pg.test.ts` na realnym
+> PG dowodzą obu gałęzi: `lists two differently-coded partial skips without
+> collapsing the area` (2 pytania, 2 różne kody, obszar 7A → `skipped:false`,
+> `skips` ma 2 wpisy) i `marks the area fully skipped only once every one of its
+> five levels is skipped` (5/5 poziomów obszaru 7B pominiętych → `skipped:true`).
+> Istniejący test dla obszaru 5A (jedno pominięte pytanie na sześć poziomów osi 5)
+> zaktualizowano: było błędnie `skipped:true`, teraz poprawnie `skipped:false` +
+> `skips` z jednym wpisem. Pakiet real-router/PG rośnie z 9/9 do **11/11 PASS**.
+
+Pakiet real-router/PG 11/11 PASS obejmuje deterministyczne dwa odczyty, siedem osi, `content:null`, komentarze wszystkich pięciu obszarów osi 5, poprawną (nie-zwiniętą) listę pominięć z tabeli Assessmentu, nieznaną sesję 404 i obcego tenanta 404. Statusy `CZĘŚCIOWO`: brak pełnej zamrożonej sesji z findings/evidence do liczbowego porównania silnika oraz brak osobnego fixture historycznego, które zawiera tylko polski tekst `justification`.
 
 Konflikt 7 osi vs 8 wymiarów pozostaje jawnie otwarty; mapowania 8D nie zmieniono.
 

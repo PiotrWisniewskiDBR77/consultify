@@ -184,12 +184,87 @@ describe.skipIf(!REAL_DB)('Assessment day 20 skip reasons — real router and Po
       (chapter: { axisId: number }) => chapter.axisId === 5
     );
     expect(culture.areaComments).toHaveLength(5);
+    // FIX-2 (P1-2): a single skipped question out of area 5A's six canonical
+    // levels must NOT collapse the whole area to `skipped: true` — the area
+    // stays partially assessed, and the per-question list carries the detail.
     expect(
       culture.areaComments.find((comment: { unitId: string }) => comment.unitId === '5A')
     ).toMatchObject({
-      skipped: true,
+      skipped: false,
+      skipCode: 'poza_modelem_operacyjnym',
+      skips: [{ questionId: '5A-1', skipCode: 'poza_modelem_operacyjnym' }],
+    });
+  });
+
+  it('lists two differently-coded partial skips without collapsing the area (FIX-2)', async () => {
+    await post(`partial-a-${suffix}`, {
+      unitId: '7A',
+      questionId: '7A-1',
+      level: 1,
       skipCode: 'poza_modelem_operacyjnym',
     });
+    await post(`partial-b-${suffix}`, {
+      unitId: '7A',
+      questionId: '7A-2',
+      level: 2,
+      skipCode: 'odroczone_do_kolejnej_rewizji',
+    });
+
+    const response = await request(app)
+      .get(`/api/method/sessions/${session}/assessment-report-contract`)
+      .set('Authorization', `Bearer ${token}`);
+    const aiMaturity = response.body.reportContract.chapters.find(
+      (chapter: { axisId: number }) => chapter.axisId === 7
+    );
+    const area = aiMaturity.areaComments.find(
+      (comment: { unitId: string }) => comment.unitId === '7A'
+    );
+    expect(area.skipped).toBe(false);
+    expect(area.skipCode).toBeNull();
+    expect(area.skips).toEqual(
+      expect.arrayContaining([
+        { questionId: '7A-1', skipCode: 'poza_modelem_operacyjnym' },
+        { questionId: '7A-2', skipCode: 'odroczone_do_kolejnej_rewizji' },
+      ])
+    );
+    expect(area.skips).toHaveLength(2);
+
+    const matrixArea = aiMaturity.matrix.areas.find(
+      (entry: { unitId: string }) => entry.unitId === '7A'
+    );
+    expect(matrixArea.skipped).toBe(false);
+    expect(matrixArea.skips).toHaveLength(2);
+  });
+
+  it('marks the area fully skipped only once every one of its five levels is skipped (FIX-2)', async () => {
+    const codes = [
+      'poza_modelem_operacyjnym',
+      'poza_zakresem_zlecenia',
+      'odroczone_do_kolejnej_rewizji',
+      'zastapione_innym_rozwiazaniem',
+      'poza_modelem_operacyjnym',
+    ];
+    for (let level = 1; level <= 5; level++) {
+      const response = await post(`full-${level}-${suffix}`, {
+        unitId: '7B',
+        questionId: `7B-${level}`,
+        level,
+        skipCode: codes[level - 1],
+      });
+      expect(response.status).toBe(201);
+    }
+
+    const response = await request(app)
+      .get(`/api/method/sessions/${session}/assessment-report-contract`)
+      .set('Authorization', `Bearer ${token}`);
+    const aiMaturity = response.body.reportContract.chapters.find(
+      (chapter: { axisId: number }) => chapter.axisId === 7
+    );
+    const area = aiMaturity.areaComments.find(
+      (comment: { unitId: string }) => comment.unitId === '7B'
+    );
+    expect(area.skipped).toBe(true);
+    expect(area.skips).toHaveLength(5);
   });
 
   it('returns 404 for an unknown report session and across tenants', async () => {
