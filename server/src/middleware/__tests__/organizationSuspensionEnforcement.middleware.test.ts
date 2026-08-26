@@ -65,28 +65,58 @@ const DB_USER_ROLE: Record<string, string> = {
   'forged-membership-superadmin': 'ADMIN',
 };
 
-const mockDbGet = vi.fn(async (sql: string, params?: unknown[]) => {
-  const text = String(sql).replace(/\s+/g, ' ');
-  const first = String((params || [])[0] ?? '');
+/**
+ * FIX-4 REGRESSION GUARD — the double must be able to FAIL.
+ *
+ * The previous revision of this double took `(sql, params)` only. That made the
+ * suite structurally blind to the very defence it claims to cover: the guard
+ * call site passes `{ fallback: false }` as a THIRD argument, a two-parameter
+ * double silently discards it, and the suite went green either way. The third
+ * parameter is therefore captured here and asserted in its own test below, so
+ * deleting `{ fallback: false }` from `attachUser` turns this suite red.
+ */
+const mockDbGet = vi.fn(
+  async (sql: string, params?: unknown[], options?: { fallback?: boolean; timeout?: number }) => {
+    const text = String(sql).replace(/\s+/g, ' ');
+    const first = String((params || [])[0] ?? '');
 
-  if (text.includes('revoked_tokens')) return undefined;
-  if (text.includes('SELECT role FROM users')) {
-    const role = DB_USER_ROLE[first];
-    return role ? ({ role } as never) : undefined;
+    // A caller that asked for `fallback: false` is asking for a REJECTION on
+    // failure. Honour that here so the "database is down" case below exercises
+    // the real contract instead of a convenient fiction.
+    if (SIMULATE_DB_FAILURE.on && (text.includes('FROM organizations') || text.includes('FROM users'))) {
+      if (options?.fallback === false) throw new Error('simulated database failure');
+      return undefined;
+    }
+
+    if (text.includes('revoked_tokens')) return undefined;
+    if (text.includes('SELECT role FROM users')) {
+      const role = DB_USER_ROLE[first];
+      return role ? ({ role } as never) : undefined;
+    }
+    if (text.includes('FROM organizations')) {
+      const status = ORG_STATUS[first];
+      return status ? ({ status } as never) : undefined;
+    }
+    if (text.includes('organization_members')) {
+      // Every test user is an ACTIVE member of the org in its token, so the
+      // "any ACTIVE membership" rescue in attachUser is a no-op here and the
+      // effective tenant is exactly the one the test asked for.
+      const orgId =
+        text.includes('organization_id = ?') && params?.[1] ? String(params[1]) : first;
+      return { organization_id: orgId, role: 'ADMIN', status: 'ACTIVE' } as never;
+    }
+    return undefined;
   }
-  if (text.includes('FROM organizations')) {
-    const status = ORG_STATUS[first];
-    return status ? ({ status } as never) : undefined;
-  }
-  if (text.includes('organization_members')) {
-    // Every test user is an ACTIVE member of the org in its token, so the
-    // "any ACTIVE membership" rescue in attachUser is a no-op here and the
-    // effective tenant is exactly the one the test asked for.
-    const orgId = text.includes('organization_id = ?') && params?.[1] ? String(params[1]) : first;
-    return { organization_id: orgId, role: 'ADMIN', status: 'ACTIVE' } as never;
-  }
-  return undefined;
-});
+);
+
+/** Flipped by the "database is down" case only. */
+const SIMULATE_DB_FAILURE = { on: false };
+
+/** Every `{ fallback: ... }` the middleware asked for against `organizations`. */
+const orgStatusLookupOptions = (): Array<{ fallback?: boolean } | undefined> =>
+  mockDbGet.mock.calls
+    .filter(([sql]) => String(sql).replace(/\s+/g, ' ').includes('FROM organizations'))
+    .map(([, , options]) => options);
 
 interface Captured {
   status: number | null;
@@ -155,6 +185,7 @@ describe('DEC-91 organization suspension enforcement in auth middleware', () => 
   beforeEach(() => {
     vi.clearAllMocks();
     mockDbGet.mockClear();
+    SIMULATE_DB_FAILURE.on = false;
     __testing__.reset();
     __private__.resetRevocationCachesForTests?.();
     __private__.resetMembershipCacheForTests?.();
@@ -189,6 +220,51 @@ describe('DEC-91 organization suspension enforcement in auth middleware', () => 
     expect(result.status).toBe(403);
     expect(result.body).toMatchObject({ code: 'ORG_SUSPENDED' });
     expect(result.nextCalled).toBe(false);
+  });
+
+  // ---------------------------------------------------------------------------
+  // FIX-4 — the layer this suite previously could not see.
+  //
+  // `attachUser` must ask the database with `{ fallback: false }`, because
+  // `DbPromise.get` otherwise RESOLVES `null` on an error/timeout, the guard
+  // reads that as "no row" → "not suspended", and (before the guard also
+  // stopped caching absent rows) cached it for a full TTL.
+  //
+  // Until now the `dbGet` double here declared only `(sql, params)`, so the
+  // third argument was discarded on arrival and both tests below were
+  // impossible to write. They are the actual proof of the layer.
+  // ---------------------------------------------------------------------------
+  it('asks for the org status with { fallback: false } — a swallowed error must not read as "not suspended"', async () => {
+    await runRequest({ organizationId: 'org-suspended', url: '/api/initiatives' });
+
+    const lookups = orgStatusLookupOptions();
+    expect(lookups.length).toBeGreaterThan(0);
+    for (const options of lookups) {
+      expect(options).toMatchObject({ fallback: false });
+    }
+  });
+
+  it('a failing status lookup REJECTS rather than resolving null, and leaves nothing cached', async () => {
+    SIMULATE_DB_FAILURE.on = true;
+
+    // Fail-open is the deliberate choice (see the guard header), so this request
+    // is allowed through — the point is what it must NOT leave behind.
+    const duringOutage = await runRequest({
+      organizationId: 'org-suspended',
+      url: '/api/initiatives',
+    });
+    expect(duringOutage.nextCalled).toBe(true);
+    expect(__testing__.cacheSize()).toBe(0);
+
+    // The moment the database answers again the tenant is refused — proving the
+    // outage did not mint a sticky 30-second "not suspended" verdict.
+    SIMULATE_DB_FAILURE.on = false;
+    const afterOutage = await runRequest({
+      organizationId: 'org-suspended',
+      url: '/api/initiatives',
+    });
+    expect(afterOutage.status).toBe(403);
+    expect(afterOutage.nextCalled).toBe(false);
   });
 
   it('carries an i18n key alongside the code, so the client is not stuck with a hardcoded sentence', async () => {

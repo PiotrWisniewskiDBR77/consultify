@@ -361,11 +361,33 @@ export interface AuthRequest extends AuthenticatedRequest {
 // DEPENDENCIES (injectable for testing)
 // ==========================================
 
+/**
+ * Query options the injected `dbGet` MUST honour.
+ *
+ * DEC-91 FIX-4 depends on `fallback: false`: `DbPromise.get` defaults to
+ * `fallback: true`, which RESOLVES `null` on an error or a timeout instead of
+ * rejecting — and the suspension guard would read that `null` as "no row" and
+ * therefore "not suspended".
+ *
+ * FIX-4 was written against the real `DbPromise.get`, which accepts this third
+ * argument — but `Dependencies.dbGet` was still declared with two parameters.
+ * So the file did not typecheck (TS2554 at the guard call site), and, worse,
+ * every `setDependencies({ dbGet })` double was free to silently ignore the
+ * option: the injected two-parameter function type-checked fine and dropped
+ * `fallback: false` on the floor. Declaring the option here makes the
+ * fail-open defence part of the CONTRACT that test doubles must satisfy,
+ * instead of an accident of the default implementation.
+ */
+export interface AuthDbGetOptions {
+  fallback?: boolean;
+  timeout?: number;
+}
+
 interface Dependencies {
   jwt: typeof jwt;
   config: { JWT_SECRET: string } | { JWT_SECRET?: string } | any;
   PermissionService: any; // PermissionService has many methods, we only use 'can'
-  dbGet: <T>(sql: string, params?: any[]) => Promise<T | undefined>;
+  dbGet: <T>(sql: string, params?: any[], options?: AuthDbGetOptions) => Promise<T | undefined>;
 }
 
 let deps: Dependencies;
