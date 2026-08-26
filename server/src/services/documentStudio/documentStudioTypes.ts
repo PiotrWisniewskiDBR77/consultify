@@ -95,7 +95,7 @@ export type DocumentBlockType =
  * patterns. The renderer follow-up slice maps these to chart.js
  * configurations.
  */
-export type DocumentChartKind = 'bar' | 'line' | 'pie' | 'donut' | 'scatter' | 'area';
+export type DocumentChartKind = 'bar' | 'line' | 'pie' | 'donut' | 'scatter' | 'area' | 'radar';
 
 /**
  * Slice E17.charts — single chart series: a label + an array of
@@ -555,7 +555,8 @@ function isValidChartKind(value: unknown): value is DocumentChartKind {
     value === 'pie' ||
     value === 'donut' ||
     value === 'scatter' ||
-    value === 'area'
+    value === 'area' ||
+    value === 'radar'
   );
 }
 
@@ -963,7 +964,12 @@ export interface DocumentExportResult {
  *                  SSOT 6-scope edit doctrine.
  */
 export type DocumentEditorScope =
-  'local' | 'section' | 'global' | 'methodology' | 'source' | 'transformative';
+  | 'local'
+  | 'section'
+  | 'global'
+  | 'methodology'
+  | 'source'
+  | 'transformative';
 export type DocumentProposalStatus = 'proposed' | 'approved' | 'rejected' | 'executed';
 
 /**
@@ -1376,7 +1382,10 @@ export interface DocumentCommentSectionCounts {
  *                       snapshots are never pruned by that cap.
  */
 export type DocumentVersionSnapshotOrigin =
-  'manual' | 'auto_status_change' | 'rollback_revert' | 'autosave';
+  | 'manual'
+  | 'auto_status_change'
+  | 'rollback_revert'
+  | 'autosave';
 
 /**
  * Frozen, addressable copy of a `DocumentSchema` at a point in time.
@@ -2282,7 +2291,10 @@ export interface AudienceProfileUpdateInput {
 }
 
 export type AudienceProfileAuditAction =
-  'profile_drafted' | 'profile_updated' | 'profile_activated' | 'profile_archived';
+  | 'profile_drafted'
+  | 'profile_updated'
+  | 'profile_activated'
+  | 'profile_archived';
 
 export interface AudienceProfileAuditEntry {
   auditId: string;
@@ -2342,7 +2354,11 @@ export interface DocumentVariant {
  * Terminal states: approved, rejected, changes_requested, cancelled.
  */
 export type DocumentApprovalStatus =
-  'pending' | 'approved' | 'rejected' | 'changes_requested' | 'cancelled';
+  | 'pending'
+  | 'approved'
+  | 'rejected'
+  | 'changes_requested'
+  | 'cancelled';
 
 /** A single reviewer's verdict on an open approval request. */
 export type DocumentApprovalDecisionKind = 'approve' | 'reject' | 'request_changes';
