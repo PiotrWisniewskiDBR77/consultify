@@ -37,13 +37,17 @@ const signals: SignalDTO[] = types.map(([type, domain, severity], index) => ({
   createdAt: `2026-08-${20 + (index % 6)}T08:00:00Z`,
   projectId: 'metalpol-transformacja',
   projectName: 'Metalpol — transformacja operacyjna',
+  // FIX-13 (dyżur 26 chat-signals-front, odbiór P2.13) — realny enum
+  // `SourceObjectTypeValues` (server/src/types/executionVisibility.ts):
+  // task | decision | initiative | project | program. Poprzednio harness
+  // wpisywał wymyślone wartości ('TASK'/'KPI' wielkimi literami) — FIX-5/FIX-9
+  // (`refTypeLabel`/Relacje) czytają dokładnie ten enum, więc atrapa musiała
+  // kłamać dokładnie tam, gdzie naprawa miała być widoczna na zrzucie.
   entityType: type.startsWith('task')
-    ? 'TASK'
+    ? 'task'
     : type.startsWith('decision')
-      ? 'DECISION'
-      : type.includes('kpi')
-        ? 'KPI'
-        : 'INITIATIVE',
+      ? 'decision'
+      : 'initiative',
   entityId: `metalpol-${index + 1}`,
   domain,
   origin: index === 5 || index === 8 ? 'INTERPRETED' : 'DETERMINISTIC',
@@ -54,7 +58,11 @@ const signals: SignalDTO[] = types.map(([type, domain, severity], index) => ({
         : [
             {
               ref: `metalpol-${index + 1}`,
-              refType: 'Rekord',
+              refType: type.startsWith('task')
+                ? 'task'
+                : type.startsWith('decision')
+                  ? 'decision'
+                  : 'initiative',
               version: 1,
               observedValue: index + 3,
               observedAt: '2026-08-26T12:15:00Z',
@@ -133,7 +141,10 @@ export default function ChatSignalsFeedScreen() {
     <I18nextProvider i18n={i18n}>
       <MemoryRouter>
         <div className="h-screen p-6">
-          <div className="mx-auto h-full max-w-[1320px] overflow-hidden rounded-xl border border-c-border bg-c-surface shadow-xl">
+          {/* FIX-13 (odbiór P2.13) — realna szerokość szuflady panelu przy
+              fladze ON (A.3 §3: "max-w-[1040px] w-full"), nie dowolne 1320px
+              demo. */}
+          <div className="mx-auto h-full max-w-[1040px] overflow-hidden rounded-xl border border-c-border bg-c-surface shadow-xl">
             <ChatSignalsFeed
               initialResponse={response}
               api={api}

@@ -55,7 +55,7 @@
     "filters": {
       "all": "すべて",
       "mine": "自分のみ",
-      "mineHint": "(読み込み済みの中から)",
+      "mineHint": "(ローカル)",
       "warning": "警告以上",
       "critical": "重大以上"
     },

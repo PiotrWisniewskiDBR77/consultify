@@ -55,7 +55,7 @@
     "filters": {
       "all": "All",
       "mine": "Mine only",
-      "mineHint": "(from loaded)",
+      "mineHint": "(local)",
       "warning": "≥ warning",
       "critical": "≥ critical"
     },

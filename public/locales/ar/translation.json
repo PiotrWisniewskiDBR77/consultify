@@ -55,7 +55,7 @@
     "filters": {
       "all": "الكل",
       "mine": "لي فقط",
-      "mineHint": "(من العناصر المحمّلة)",
+      "mineHint": "(محليًا)",
       "warning": "≥ تحذير",
       "critical": "≥ حرج"
     },

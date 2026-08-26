@@ -55,7 +55,7 @@
     "filters": {
       "all": "Todas",
       "mine": "Solo las mías",
-      "mineHint": "(de las cargadas)",
+      "mineHint": "(local)",
       "warning": "≥ advertencia",
       "critical": "≥ crítico"
     },
