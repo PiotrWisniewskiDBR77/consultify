@@ -114,7 +114,7 @@ Status: **CZĘŚCIOWO**.
 
 Status: **ZROBIONE_WG_DoD**. Wybrano drogę (A): audyt bez nowego potwierdzenia. Kontroler zachowuje styl callbackowy; przed zapisem odczytuje status także dla celu `active`, a zdarzenie emituje wyłącznie dla przejść `suspended|blocked|cancelled → active`. `pending|trial|active → active` nie jest oznaczane jako reaktywacja.
 
-Test istniejący rozszerzono addytywnie: wcześniejsze 5 asercji zachowano; pakiet po zmianie 11/11 PASS (3 krytyczne reaktywacje oraz 3 negatywy bez audytu).
+Istniejący test pozostał bitowo niezmieniony względem bazy i nadal przechodzi 5/5. Nowe przypadki przeniesiono do osobnego `superadmin-organization-reactivation-audit.day15.test.ts`: 6/6 PASS (3 krytyczne reaktywacje oraz 3 negatywy bez audytu). Łączny dowód: 11/11 PASS, bez wyjątku od Q.1.
 
 ## T.3 — luki inwentarzowe
 
@@ -177,25 +177,47 @@ A.3: **NIE_ZACZĘTE**. A.4: stan przed 20/83 (24,1%) pisarzy semantycznych. Po A
 
 Klient używa `Promise.allSettled`: awaria jednej nogi nie usuwa organizacji/użytkowników ani pozostałych katalogów. Test katalogu request-level: 4/4 PASS (happy, empty, 401, błąd 500).
 
+## P.2 / P.4 — implementacja zatrzymana na Q.1
+
+Przygotowano lokalnie, lecz **nie zacommitowano** dwóch kart opartych o realne katalogi: awaryjne wyłączenie konektora i zawieszenie pracownika wirtualnego. Nowy pakiet `PlatformOperationsView.day15.test.tsx` przechodzi 4/4: render kart, zasięg konektora i blokada bez powodu, sukces zawieszenia oraz błąd bez fałszywego sukcesu. Przygotowano też semantyczny namespace `superadmin.platformOperations.*` w PL i EN.
+
+Pomiar literalną procedurą Q.4 na rzeczywistym tipie bazy dał **przed: PL 216 / EN 216**, a nie zapisane w instrukcji 267/267. Stan przygotowanych zmian: **po: PL 254 / EN 254**, `PL-only []`, `EN-only []`. Rozbieżności punktu odniesienia nie ukrywam; parytet jest zachowany, ale zmiany pozostają niezacommitowane z powodu STOP Q.1.
+
+### STOP — Q.1 / istniejący test fali 1 po i18n
+
+Po usunięciu niedozwolonej lokalnej modyfikacji `PlatformOperationsView.test.tsx` istniejący plik jest bitowo niezmieniony względem bazy, ale jego 10/10 przypadków kończy się FAIL. Przyczyna jest deterministyczna: globalny mock `react-i18next` zwraca surowy klucz, więc po zgodnym z P.4 usunięciu polskich literałów komponent renderuje np. `superadmin.platformOperations.actions.reactivate.label`, a istniejący test szuka `Reaktywuj organizację`.
+
+Sonda kontrolna z lokalnym mockiem opartym o rzeczywiste PL locale dawała 14/14 PASS (10 zastanych + 4 nowe), ale została cofnięta, ponieważ Q.1 literalnie zabrania dotykania istniejącego testu. Nie zmieniono globalnego setupu (Z18), nie dodano fallbacków ani polskiego mapowania w kodzie produktu. Zgodnie z instrukcją: „jeśli test nie przechodzi z innego powodu — STOP”.
+
+Skutek: P.2 i P.4 są **CZĘŚCIOWO / NIEZACOMMITOWANE**, P.6 i Q.4–Q.5 nie mogą być uczciwie zaliczone. Nie wykonano zrzutów ani polish-passu po wystąpieniu bramki STOP.
+
+Proponowane rozstrzygnięcie nadzorcy: jawnie dopuścić wyłącznie lokalne podpięcie `createRealUseTranslation('pl')` w istniejącym teście, bez zmiany jakiejkolwiek asercji, albo wskazać zatwierdzony mechanizm testowego i18n poza globalnym setupem. Bez takiej decyzji nie kontynuuję powierzchni wizualnej.
+
 ## Zakres wykonany
 
-| Pozycja                                | Status                              |
-| -------------------------------------- | ----------------------------------- |
-| Blok 0: baza, marker, materiały, hooki | ZROBIONE_WG_DoD                     |
-| P.1                                    | ZROBIONE_WG_DoD                     |
-| P.2–P.6                                | NIE_ZACZĘTE                         |
-| T.1                                    | NIE_ZACZĘTE                         |
-| T.2                                    | ZROBIONE_WG_DoD                     |
-| T.3                                    | ZROBIONE_WG_DoD / STOP              |
-| S.1–S.2                                | ZROBIONE_WG_DoD (realdb Q.3 w toku) |
-| S.3                                    | ZROBIONE_WG_DoD                     |
-| S.4                                    | ZROBIONE_WG_DoD                     |
-| S.5                                    | CZĘŚCIOWO / BRAK_API                |
-| A.1                                    | ZROBIONE_WG_DoD                     |
-| A.2                                    | ZROBIONE_WG_DoD                     |
-| A.3                                    | NIE_ZACZĘTE                         |
-| A.4                                    | CZĘŚCIOWO / NOT PROVEN              |
-| Q.1–Q.5                                | NIE_ZACZĘTE                         |
+| Pozycja                                | Status                                   |
+| -------------------------------------- | ---------------------------------------- |
+| Blok 0: baza, marker, materiały, hooki | ZROBIONE_WG_DoD                          |
+| P.1                                    | ZROBIONE_WG_DoD                          |
+| P.2                                    | CZĘŚCIOWO / STOP Q.1 / niezacommitowane  |
+| P.3                                    | STOP — ZAPIS_BEZ_EGZEKWOWANIA            |
+| P.4                                    | CZĘŚCIOWO / STOP Q.1 / niezacommitowane  |
+| P.5                                    | n/d — brak nowej powierzchni             |
+| P.6                                    | NIE_WYKONANO — STOP przed renderem       |
+| T.1                                    | NIE_ZACZĘTE                              |
+| T.2                                    | ZROBIONE_WG_DoD                          |
+| T.3                                    | ZROBIONE_WG_DoD / STOP                   |
+| S.1–S.2                                | ZROBIONE_WG_DoD (realdb Q.3 w toku)      |
+| S.3                                    | ZROBIONE_WG_DoD                          |
+| S.4                                    | ZROBIONE_WG_DoD                          |
+| S.5                                    | CZĘŚCIOWO / BRAK_API                     |
+| A.1                                    | ZROBIONE_WG_DoD                          |
+| A.2                                    | ZROBIONE_WG_DoD                          |
+| A.3                                    | NIE_ZACZĘTE                              |
+| A.4                                    | CZĘŚCIOWO / NOT PROVEN                   |
+| Q.1                                    | STOP — nietykalny test 10/10 FAIL po P.4 |
+| Q.2–Q.3                                | CZĘŚCIOWO — jawne pakiety opisane wyżej  |
+| Q.4–Q.5                                | NIE_WYKONANO — STOP                      |
 
 ## Testy
 
@@ -207,3 +229,4 @@ Testy bazowe i testy własne opisano powyżej. Żaden test pominięty przez `ski
 - Symlink do zależności jest używany tylko do odczytu na podstawie jawnej autoryzacji nadzorcy z 2026-08-26; nie edytuję jego zawartości.
 - Nie uruchomiłem Railway ani żadnej operacji chmurowej — DEC-65/Z8.
 - Nie zmieniam zastanych 92 czerwonych testów z cudzych modułów ani globalnych mocków.
+- Jednorazowy kontener `cx-day15-pg` używał wyłącznie tmpfs `/var/lib/postgresql/data` (brak mountów/wolumenów) i został usunięty przez `docker rm -f cx-day15-pg`; końcowy filtr `docker ps -a` był pusty.
