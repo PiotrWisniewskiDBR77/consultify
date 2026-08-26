@@ -22,6 +22,11 @@ import {
   resolvePublicDemoPrincipal,
   retireExpiredDemoPrincipal,
 } from '../services/demo/demoPrincipalGuard.js';
+import {
+  buildOrgSuspendedResponseBody,
+  isOrganizationSuspended,
+  isPathExemptFromOrgSuspension,
+} from '../services/organizationSuspensionGuard.js';
 import { DEMO_ORG_ID, DEMO_SESSION_ORG_HEADER } from './demoGuard.middleware.js';
 
 // Used by security integrity gate and to ensure test bypasses never run in prod.
@@ -908,6 +913,43 @@ const attachUser = async (
       guidance: 'Stop impersonation and retry the action from your own superadmin session.',
     });
     return;
+  }
+
+  // ---------------------------------------------------------------------------
+  // DEC-91 / TRI-MUST-12 — HARD ENFORCEMENT OF ORGANIZATION SUSPENSION
+  //
+  // Runs here, at the end of `attachUser`, because this is the first point where
+  // the EFFECTIVE tenant is final: the token org, an accepted `x-org-context`,
+  // the demo-session org and the "any ACTIVE membership" rescue above have all
+  // already had their say. Checking any earlier could refuse (or, worse, let
+  // through) a tenant the request was never actually going to run against.
+  //
+  // Path matching uses `originalUrl`, NOT `req.path`: `verifyToken` is mounted
+  // inside routers (`/api/superadmin`, …) where `req.path` is only the
+  // router-relative tail, so `/tenants/x/reactivate` would never match the
+  // superadmin exemption.
+  //
+  // Superadmins are exempt by principal as well as by path — mirroring the
+  // pre-existing `user.role !== 'SUPERADMIN'` carve-outs on the login path. A
+  // suspended tenant's own admins are ordinary ADMINs, so this does not weaken
+  // the block.
+  //
+  // Answer is TTL-cached in `organizationSuspensionGuard`; that TTL is the
+  // enforcement SLA for tokens already in the wild (see that module's header).
+  // ---------------------------------------------------------------------------
+  const isSuperAdminPrincipal =
+    resolvedIsSuperAdmin || String(req.userRole || '').toUpperCase() === 'SUPERADMIN';
+  if (!isSuperAdminPrincipal) {
+    const fullRequestPath = String(
+      safeRead(() => (req as Request).originalUrl, '') || safeRead(() => (req as Request).url, '')
+    );
+    if (!isPathExemptFromOrgSuspension(fullRequestPath)) {
+      const suspended = await isOrganizationSuspended(req.organizationId, dbGet);
+      if (suspended) {
+        res.status(403).json(buildOrgSuspendedResponseBody());
+        return;
+      }
+    }
   }
 
   // Attach permission helper
