@@ -1,4 +1,60 @@
 {
+  "chatSignals": {
+    "untitled": "Untitled signal",
+    "severity": {
+      "info": "Information",
+      "warning": "Warning",
+      "critical": "Critical",
+      "blocker": "Blocker"
+    },
+    "domain": {
+      "EXECUTION": "Execution",
+      "DECISION": "Decisions",
+      "RESULTS": "Results",
+      "FINANCE": "Finance",
+      "ASSESSMENT": "Assessment",
+      "MEETINGS": "Meetings",
+      "MATERIALS": "Materials",
+      "GOVERNANCE": "Governance"
+    },
+    "origin": {
+      "DETERMINISTIC": "Rule",
+      "AGGREGATED": "Aggregated",
+      "INTERPRETED": "AI interpretation"
+    },
+    "status": { "OPEN": "Open" },
+    "age": {
+      "now": "just now",
+      "minutes": "{{count}} min ago",
+      "hours": "{{count}} hr ago",
+      "yesterday": "yesterday",
+      "days": "{{count}} days ago"
+    },
+    "destination": {
+      "forbidden": "No permission to open this object",
+      "unavailable": "No route to this object"
+    },
+    "rule": {
+      "signals.exec.task.overdue.title": "Task overdue",
+      "signals.exec.task.overdue.body": "The task is {{value}} days overdue.",
+      "signals.exec.task.due_soon_not_started.title": "Unstarted task due soon",
+      "signals.exec.task.due_soon_not_started.body": "{{value}} days remain until the due date.",
+      "signals.exec.task.blocked_stale.title": "Blocked task without an update",
+      "signals.exec.task.blocked_stale.body": "No update for {{value}} days.",
+      "signals.exec.initiative.no_baseline.title": "Initiative without a baseline",
+      "signals.exec.initiative.no_baseline.body": "The active initiative has no schedule baseline.",
+      "signals.dec.pending_stale.title": "Decision pending too long",
+      "signals.dec.pending_stale.body": "The decision has been pending for {{value}} days.",
+      "signals.dec.blocking_dependents.title": "Decision blocks dependent objects",
+      "signals.dec.blocking_dependents.body": "The decision blocks {{value}} objects.",
+      "signals.res.kpi_threshold_breached.title": "KPI threshold breached",
+      "signals.res.kpi_threshold_breached.body": "The KPI value requires action.",
+      "signals.fin.budget_overspend.title": "Budget overspend",
+      "signals.fin.budget_overspend.body": "Actual spend exceeded the approved budget.",
+      "signals.fin.benefit_not_realized.title": "Benefit not realized by its due date",
+      "signals.fin.benefit_not_realized.body": "The realization date passed without confirmation."
+    }
+  },
   "layout": {
     "aiPanel": {
       "open": "Open AI panel",

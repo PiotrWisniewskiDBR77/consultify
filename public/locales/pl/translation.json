@@ -1,4 +1,60 @@
 {
+  "chatSignals": {
+    "untitled": "Sygnał bez tytułu",
+    "severity": {
+      "info": "Informacja",
+      "warning": "Ostrzeżenie",
+      "critical": "Krytyczny",
+      "blocker": "Blokada"
+    },
+    "domain": {
+      "EXECUTION": "Wykonanie",
+      "DECISION": "Decyzje",
+      "RESULTS": "Wyniki",
+      "FINANCE": "Finanse",
+      "ASSESSMENT": "Ocena",
+      "MEETINGS": "Spotkania",
+      "MATERIALS": "Materiały",
+      "GOVERNANCE": "Nadzór"
+    },
+    "origin": {
+      "DETERMINISTIC": "Reguła",
+      "AGGREGATED": "Zbiorczy",
+      "INTERPRETED": "Interpretacja AI"
+    },
+    "status": { "OPEN": "Otwarty" },
+    "age": {
+      "now": "przed chwilą",
+      "minutes": "{{count}} min temu",
+      "hours": "{{count}} godz. temu",
+      "yesterday": "wczoraj",
+      "days": "{{count}} dni temu"
+    },
+    "destination": {
+      "forbidden": "Brak uprawnień do obiektu",
+      "unavailable": "Brak trasy do tego obiektu"
+    },
+    "rule": {
+      "signals.exec.task.overdue.title": "Zadanie po terminie",
+      "signals.exec.task.overdue.body": "Zadanie jest po terminie o {{value}} dni.",
+      "signals.exec.task.due_soon_not_started.title": "Zbliża się termin nierozpoczętego zadania",
+      "signals.exec.task.due_soon_not_started.body": "Do terminu pozostało {{value}} dni.",
+      "signals.exec.task.blocked_stale.title": "Zablokowane zadanie bez aktualizacji",
+      "signals.exec.task.blocked_stale.body": "Brak aktualizacji od {{value}} dni.",
+      "signals.exec.initiative.no_baseline.title": "Inicjatywa bez baseline",
+      "signals.exec.initiative.no_baseline.body": "Aktywna inicjatywa nie ma baseline harmonogramu.",
+      "signals.dec.pending_stale.title": "Decyzja oczekuje zbyt długo",
+      "signals.dec.pending_stale.body": "Decyzja oczekuje od {{value}} dni.",
+      "signals.dec.blocking_dependents.title": "Decyzja blokuje zależne obiekty",
+      "signals.dec.blocking_dependents.body": "Decyzja blokuje {{value}} obiektów.",
+      "signals.res.kpi_threshold_breached.title": "KPI przekroczył próg",
+      "signals.res.kpi_threshold_breached.body": "Wartość KPI wymaga reakcji.",
+      "signals.fin.budget_overspend.title": "Budżet został przekroczony",
+      "signals.fin.budget_overspend.body": "Wykonanie przekroczyło zatwierdzony budżet.",
+      "signals.fin.benefit_not_realized.title": "Korzyść nie została zrealizowana w terminie",
+      "signals.fin.benefit_not_realized.body": "Termin realizacji korzyści minął bez potwierdzenia."
+    }
+  },
   "layout": {
     "aiPanel": {
       "open": "Otwórz panel AI",
