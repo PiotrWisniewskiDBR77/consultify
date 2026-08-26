@@ -3254,6 +3254,12 @@ export function createInitiativesExecutionRuntimeRouter(
         actor.organizationId,
         portfolio.scenario.scope.portfolioId
       );
+      const linkedCapacity = (await deps.reader.listCapacityScenarios(actor.organizationId)).find(
+        (candidate) =>
+          candidate.state === 'PUBLISHED' &&
+          candidate.planRef.scenarioId === found.scenario.scenarioId &&
+          candidate.planRef.scenarioVersion === found.scenario.scenarioVersion
+      );
       const result = await createPlanAnalysisProposal(deps.unitOfWork, {
         organizationId: actor.organizationId,
         actorId: actor.userId,
@@ -3269,6 +3275,7 @@ export function createInitiativesExecutionRuntimeRouter(
         payload: {
           scenarioId: parsed.data.scenarioId,
           inputAggregateVersion: parsed.data.inputAggregateVersion,
+          capacityScenarioId: linkedCapacity?.id,
         },
       });
       res.status(result.status === 'APPLIED' ? 201 : 200).json(result);

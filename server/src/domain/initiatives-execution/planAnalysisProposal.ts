@@ -5,6 +5,7 @@ import {
   type MaterialCommandUnitOfWork,
   MaterialCommandValidationError,
 } from './materialCommand.js';
+import type { CapacityScenario } from './capacityScenario.js';
 import type { PlannedWindow, PlanScenario } from './planScenario.js';
 import { solvePlanScenario } from './planSolver.js';
 
@@ -27,7 +28,11 @@ export interface PlanAnalysisProposal {
 
 export async function createPlanAnalysisProposal(
   uow: MaterialCommandUnitOfWork,
-  envelope: MaterialCommandEnvelope<{ scenarioId: string; inputAggregateVersion: number }>
+  envelope: MaterialCommandEnvelope<{
+    scenarioId: string;
+    inputAggregateVersion: number;
+    capacityScenarioId?: string;
+  }>
 ): Promise<MaterialCommandResult<PlanAnalysisProposal>> {
   return executeMaterialCommand(uow, envelope, async (tx) => {
     const source = await tx.getRelatedAggregateForUpdate<PlanScenario>(
@@ -39,7 +44,20 @@ export async function createPlanAnalysisProposal(
       throw new MaterialCommandValidationError('Exact Plan Scenario input version required');
     if (source.payload.status !== 'DRAFT')
       throw new MaterialCommandValidationError('Analysis proposals may target only a DRAFT Plan');
-    const solved = solvePlanScenario(source.payload);
+    const capacity = envelope.payload.capacityScenarioId
+      ? await tx.getRelatedAggregateForUpdate<CapacityScenario>(
+          envelope.organizationId,
+          'capacity_scenario',
+          envelope.payload.capacityScenarioId
+        )
+      : null;
+    const compatibleCapacity =
+      capacity?.payload.status === 'PUBLISHED' &&
+      capacity.payload.planScenarioId === source.payload.scenarioId &&
+      capacity.payload.planScenarioVersion === source.payload.scenarioVersion
+        ? capacity.payload
+        : undefined;
+    const solved = solvePlanScenario(source.payload, compatibleCapacity);
     const changes = solved.assignments.flatMap(({ window, periodId, rationale }) => {
       const period = source.payload.periods.find((candidate) => candidate.periodId === periodId);
       if (!period) return [];
