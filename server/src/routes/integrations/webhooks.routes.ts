@@ -3,8 +3,7 @@
  */
 import { Request, Response, Router } from 'express';
 
-import { verifyAdmin } from '../../middleware/admin.middleware.js';
-import { verifyToken } from '../../middleware/auth.middleware.js';
+import { verifySuperAdmin } from '../../middleware/superAdmin.middleware.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
@@ -162,10 +161,17 @@ router.post(
   })
 );
 
+// SECURITY (cross-tenant leak fix, 2026-08-28): `webhook_events` has no tenant
+// column — GitHub/generic webhook senders arrive unauthenticated, so there is
+// no organization to stamp on insert, and the rows cannot be sensibly
+// backfilled after the fact. A per-org filter is therefore not possible today.
+// Until a tenant column is added (tracked for a future integrations block),
+// this endpoint is restricted to platform superadmins only — a tenant admin
+// must NOT be able to see other organizations' webhook metadata (provider,
+// event type, timing) via `verifyAdmin` (org-scoped admin check).
 router.get(
   '/events',
-  verifyToken,
-  verifyAdmin,
+  verifySuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     await ensureWebhookEventsTable();
     const events = await dbAll(`SELECT id, provider, event_type, processed, created_at
