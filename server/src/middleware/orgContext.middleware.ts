@@ -35,12 +35,6 @@ interface MembershipRow {
   permission_scope?: string;
 }
 
-interface ConsultantLinkRow {
-  id: string;
-  permission_scope?: string;
-  status: string;
-}
-
 interface OrgAccessResult {
   allowed: boolean;
   isMember?: boolean;
@@ -311,29 +305,11 @@ async function resolveUserOrgAccess(userId: string, orgId: string): Promise<OrgA
     };
   }
 
-  // Check consultant link (fresh from DB — revocation is immediate)
-  const consultantLink = await dbGet<ConsultantLinkRow>(
-    `SELECT col.id, col.permission_scope, col.status
-         FROM consultant_org_links col
-         JOIN organizations o ON o.id = col.organization_id
-         WHERE col.consultant_id = ? AND col.organization_id = ? AND UPPER(col.status) = 'ACTIVE' AND o.is_active = 1`,
-    [userId, orgId]
-  );
-
-  if (consultantLink) {
-    const parsedPermissionScope = parsePermissionScope(consultantLink.permission_scope);
-    if (!parsedPermissionScope.valid) {
-      return { allowed: false };
-    }
-    return {
-      allowed: true,
-      isMember: false,
-      isConsultant: true,
-      role: 'CONSULTANT',
-      permissionScope: parsedPermissionScope.scope,
-      linkId: consultantLink.id,
-    };
-  }
+  // No consultant-link fallback: the consultant_org_links table exists on no
+  // database (Consultant Mode never shipped — DEC-116, CONSULTANTS_DUAL_PRODUCER
+  // _AUDIT_2026-08-26). The old query here always failed, was swallowed by
+  // DbPromise fallback=true and only produced error-log noise; net result was
+  // this same deny.
 
   // No access found
   return { allowed: false };
@@ -357,21 +333,6 @@ async function getUserOrganizations(
     [userId]
   );
   orgs.push(...memberOrgs);
-
-  // Get consultant organizations
-  const consultantOrgs = await dbAll<{
-    id: string;
-    name: string;
-    role: string;
-    access_type: string;
-  }>(
-    `SELECT o.id, o.name, 'CONSULTANT' as role, 'CONSULTANT' as access_type
-         FROM organizations o
-         JOIN consultant_org_links col ON o.id = col.organization_id
-         WHERE col.consultant_id = ? AND UPPER(col.status) = 'ACTIVE' AND o.is_active = 1`,
-    [userId]
-  );
-  orgs.push(...consultantOrgs);
 
   // Remove duplicates
   const uniqueOrgs = Array.from(new Map(orgs.map((o) => [o.id, o])).values());

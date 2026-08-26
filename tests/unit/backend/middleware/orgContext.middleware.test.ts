@@ -341,7 +341,10 @@ describeIfDb('orgContext.middleware (L1)', () => {
     expect(next).toHaveBeenCalledTimes(1);
   });
 
-  it('supports consultant access via consultant_org_links', async () => {
+  // DEC-116 (CONSULTANTS_DUAL_PRODUCER_AUDIT_2026-08-26): Consultant Mode never
+  // shipped — consultant_org_links exists on no real DB and the middleware no
+  // longer queries it. A link row must NOT grant access.
+  it('denies access via consultant_org_links — Consultant Mode removed (DEC-116)', async () => {
     await db.run(`INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)`, [
       'org2',
       'Org 2',
@@ -365,16 +368,13 @@ describeIfDb('orgContext.middleware (L1)', () => {
     const next = vi.fn();
     await mw(req, res, next);
 
-    expect(req.org).toEqual(
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({
-        id: 'org2',
-        isMember: false,
-        isConsultant: true,
-        role: 'CONSULTANT',
-        membershipId: 'l1',
+        error: 'Access denied',
       })
     );
-    expect(next).toHaveBeenCalledTimes(1);
+    expect(next).not.toHaveBeenCalled();
   });
 
   it('supports allowHeader=true to read orgId from header', async () => {
@@ -1033,7 +1033,7 @@ describeIfDb('orgContext.middleware (L1)', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
-  it('returns 403 when consultant permission_scope JSON is invalid', async () => {
+  it('returns 403 for a consultant-link-only user regardless of link contents (DEC-116)', async () => {
     await db.run(`INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)`, [
       'org4c',
       'Org 4c',
@@ -1121,10 +1121,9 @@ describeIfDb('orgContext.middleware (L1)', () => {
     );
 
     const orgs = await getUserOrganizations('u1');
-    expect(orgs.map((o: any) => o.id).sort()).toEqual(['orgA', 'orgB']);
-    const byId = Object.fromEntries(orgs.map((o: any) => [o.id, o]));
-    expect(byId.orgA.access_type).toBe('MEMBER');
-    expect(byId.orgB.access_type).toBe('CONSULTANT');
+    // DEC-116: the consultant link to orgB must NOT surface — memberships only.
+    expect(orgs.map((o: any) => o.id)).toEqual(['orgA']);
+    expect(orgs[0].access_type).toBe('MEMBER');
   });
 
   it('resolveUserOrgAccess returns allowed=false when inputs missing', async () => {
@@ -1165,7 +1164,7 @@ describeIfDb('orgContext.middleware (L1)', () => {
     );
   });
 
-  it('resolveUserOrgAccess returns consultant access when ACTIVE link exists', async () => {
+  it('resolveUserOrgAccess denies when only an ACTIVE consultant link exists (DEC-116)', async () => {
     await db.run(`INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)`, [
       'orgC',
       'Org C',
@@ -1178,15 +1177,7 @@ describeIfDb('orgContext.middleware (L1)', () => {
       ['lC', 'u1', 'orgC', 'ACTIVE', JSON.stringify({ c: 1 })]
     );
 
-    await expect(resolveUserOrgAccess('u1', 'orgC')).resolves.toEqual(
-      expect.objectContaining({
-        allowed: true,
-        isMember: false,
-        isConsultant: true,
-        role: 'CONSULTANT',
-        linkId: 'lC',
-      })
-    );
+    await expect(resolveUserOrgAccess('u1', 'orgC')).resolves.toEqual({ allowed: false });
   });
 
   it('ignores inherited orgId in req.params prototype and requires explicit own param', async () => {
