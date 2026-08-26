@@ -172,6 +172,31 @@ const getDb = (): Database => {
 // ==========================================
 
 /**
+ * NAPRAWA 2 (staging-fixes-20260826, TRI-MUST-05): whether a driver error is
+ * a benign "this optional table doesn't exist yet" case that `all()`'s
+ * `fallback:true` path is allowed to swallow WITHOUT logging.
+ *
+ * The previous check was a bare `err.message.includes('does not exist')`,
+ * which ALSO matches Postgres' "column \"x\" does not exist" (42703) — a
+ * completely different failure class (a real query/schema bug, e.g.
+ * `executionControlReadService.getTimelineWarningsSnapshot()` selecting
+ * `sla_deadline`/`blocked_at` off `initiatives` when those columns hadn't
+ * migrated). That bug made `GET /api/v8/execution-control/timeline-warnings`
+ * return 200 with a silently-empty `{warnings: [], total: 0}` AND skip both
+ * `dbLogger.warn` and `logger.error` — the exact "cichy catch maskujący błąd
+ * SQL" pattern CLAUDE.md calls out. Missing-column errors must always log
+ * loudly, even with `fallback:true`; only a genuinely missing TABLE (or an
+ * uninitialized DB) stays quiet.
+ */
+function isSilenceableMissingRelationError(message: string): boolean {
+  return (
+    message.includes('no such table') ||
+    message.includes('Database not initialized') ||
+    /relation ".*" does not exist/i.test(message)
+  );
+}
+
+/**
  * Promise wrapper for db.all() - returns array of rows
  */
 export function all<T = any>(sql: string, params?: unknown[], options?: QueryOptions): Promise<T[]>;
@@ -245,11 +270,9 @@ export function all<T = any>(
 
         if (err) {
           // Don't log errors when fallback is true and it's a "table doesn't exist" type error
-          const isTableNotFoundError =
-            err.message.includes('no such table') ||
-            err.message.includes('does not exist') ||
-            err.message.includes('relation') ||
-            err.message.includes('Database not initialized');
+          // (a real "column does not exist" schema bug always logs — see
+          // isSilenceableMissingRelationError's doc comment / NAPRAWA 2).
+          const isTableNotFoundError = isSilenceableMissingRelationError(err.message);
 
           if (!fallback || !isTableNotFoundError) {
             dbLogger.warn('Query error', {
@@ -276,11 +299,7 @@ export function all<T = any>(
       const err = error as Error;
 
       // Don't log errors when fallback is true and it's a "table doesn't exist" type error
-      const isTableNotFoundError =
-        err.message.includes('no such table') ||
-        err.message.includes('does not exist') ||
-        err.message.includes('relation') ||
-        err.message.includes('Database not initialized');
+      const isTableNotFoundError = isSilenceableMissingRelationError(err.message);
 
       if (!fallback || !isTableNotFoundError) {
         dbLogger.error('Query exception', {
