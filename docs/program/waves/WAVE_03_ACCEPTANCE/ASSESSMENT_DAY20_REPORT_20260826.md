@@ -55,8 +55,8 @@ Dowód wykonano przez TCP wewnątrz kontenera; mapowanie hosta potwierdzone prze
 | B.2     | STOP        | —                      | serwis osiągalny przez `Gateway.ts` → `assessment-ai.routes.ts` → `aiAssessmentPartnerService.ts`    | 92 błędy punktowego `tsc` po zdjęciu `@ts-nocheck`; plik przywrócony bez diffu  |
 | C.1     | NIE_ZACZĘTE | —                      | —                                                                                                    | —                                                                               |
 | D.1     | CZĘŚCIOWO   | `735b56a831`           | `Gateway.ts:958` → `/api/method` → skip routes → `AssessmentSkipReasonService` → lokalny PG          | 6/6 PASS real-router/PG; brak dowodu mutacyjnego T.3 obniża status              |
-| D.2     | CZĘŚCIOWO   | `729038166f`           | report contract → `AssessmentSkipReasonService.listActive`; zero parsowania `justification`          | 9/9 wspólny pakiet PASS; osobny negatyw historycznego tekstu nie dodany         |
-| E.1     | CZĘŚCIOWO   | `729038166f`           | `Gateway.ts:958` → `/api/method/.../assessment-report-contract` → serwis → output + DRD + skip model | 9/9 PASS; brak fixture z pełnym zamrożonym outputem obniża status               |
+| D.2     | CZĘŚCIOWO   | `729038166f` + FIX-2   | report contract → `AssessmentSkipReasonService.listActive`; zero parsowania `justification`          | 11/11 wspólny pakiet PASS (po FIX-2); osobny negatyw historycznego tekstu nie dodany |
+| E.1     | CZĘŚCIOWO   | `729038166f` + FIX-2   | `Gateway.ts:958` → `/api/method/.../assessment-report-contract` → serwis → output + DRD + skip model | 11/11 PASS (po FIX-2); brak fixture z pełnym zamrożonym outputem obniża status  |
 | E.2     | NIE_ZACZĘTE | —                      | —                                                                                                    | —                                                                               |
 | F.1     | STOP        | —                      | brak importera barrela potwierdzony, ale nie dowiedziono odpowiedników wszystkich 11 semantyk        | zero usunięć zgodnie z Z20                                                      |
 | T       | CZĘŚCIOWO   | końcowy commit raportu | nowe trasy: real router → real PG                                                                    | pełny Z23 wykonany; 14 czerwonych zastanych front/v8, zero dowiedzionych nowych |
@@ -301,7 +301,7 @@ Zero dowiedzionych. Żaden czerwony plik nie jest dotknięty przez dyżur; zakre
 
 ### Pakiet domyślnego okablowania (Z21)
 
-`server/src/method-core/__tests__/assessmentSkipReasons.day20.pg.test.ts` bootuje produkcyjny eksport `method-core.routes.ts`, produkcyjny singleton serwisów, prawdziwe JWT i prawdziwy PostgreSQL; nie wstrzykuje repozytorium ani zależności. Wynik 9/9 PASS.
+`server/src/services/assessment/__tests__/assessmentSkipReasons.day20.pg.test.ts` (przeniesiony z `server/src/method-core/__tests__/` w FIX-4, P2, patrz sekcja „FIX-y po odbiorze dyżuru 20") bootuje produkcyjny eksport `method-core.routes.ts`, produkcyjny singleton serwisów, prawdziwe JWT i prawdziwy PostgreSQL; nie wstrzykuje repozytorium ani zależności. Wynik po FIX-2/FIX-4: **11/11 PASS** (9 oryginalnych + 2 nowe testy FIX-2).
 
 ### Brak atrapy z zewnętrznym skutkiem (Z22)
 
