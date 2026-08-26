@@ -314,7 +314,11 @@ export async function apiKeyAuth(
     // key) and no health route behind key auth. Same guard, same process-wide
     // cache, same refusal body as the JWT path.
     // -------------------------------------------------------------------------
-    if (await isOrganizationSuspended(req.organizationId, dbGet)) {
+    // `fallback: false` is load-bearing: DbPromise.get otherwise RESOLVES null
+    // on error/timeout, which the guard would read as "not suspended".
+    const strictDbGet = <T>(sql: string, params?: unknown[]) =>
+      dbGet<T>(sql, params, { fallback: false });
+    if (await isOrganizationSuspended(req.organizationId, strictDbGet)) {
       sendApiKeyJsonIfOpen(res, 403, buildOrgSuspendedResponseBody(), { noStore: true });
       return;
     }

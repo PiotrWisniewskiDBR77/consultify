@@ -65,8 +65,16 @@ function extractToken(socket: Socket): string | null {
  * Resolve the tenant this socket is seated in, server-side.
  *
  * Prefers the claim from the just-verified JWT; falls back to the user's own
- * row when the token carries no org. Returns `''` when neither is available —
- * the caller then has nothing to check, and must not invent a refusal.
+ * row when the token carries no org. Returns `''` only when the user genuinely
+ * has no organization — the caller then has nothing to check.
+ *
+ * THROWS when the lookup fails, and that distinction is the whole point. The
+ * first revision passed `{ fallback: true }` and swallowed errors into `''`,
+ * which the caller could not tell apart from "no org" — so a database blip
+ * silently SKIPPED the suspension gate and handed out a live socket. The caller
+ * now treats a failure as a refusal, which is exactly how it already treats a
+ * failing `evaluateRealtimeAccess` a few lines below: on this plane, an
+ * identity we cannot resolve does not get a long-lived privileged channel.
  */
 async function resolveSocketOrganizationId(
   userId: string,
@@ -74,17 +82,21 @@ async function resolveSocketOrganizationId(
 ): Promise<string> {
   const fromToken = typeof tokenOrganizationId === 'string' ? tokenOrganizationId.trim() : '';
   if (fromToken) return fromToken;
-  try {
-    const row = await dbGet<{ organization_id?: string }>(
-      'SELECT organization_id FROM users WHERE id = ? LIMIT 1',
-      [userId],
-      { fallback: true }
-    );
-    return String(row?.organization_id || '').trim();
-  } catch {
-    return '';
-  }
+  const row = await dbGet<{ organization_id?: string }>(
+    'SELECT organization_id FROM users WHERE id = ? LIMIT 1',
+    [userId],
+    { fallback: false }
+  );
+  return String(row?.organization_id || '').trim();
 }
+
+/**
+ * `DbPromise.get` pinned to reject instead of resolving `null` on failure.
+ * The guard reads a `null` row as "not suspended", so a swallowed error would
+ * silently open the gate.
+ */
+const strictDbGet = <T,>(sql: string, params?: unknown[]): Promise<T | null> =>
+  dbGet<T>(sql, params, { fallback: false });
 
 /**
  * Namespace-level middleware: verifies the JWT and attaches the decoded
@@ -145,7 +157,7 @@ export const socketAuthMiddleware = (socket: Socket, next: (err?: Error) => void
         // -------------------------------------------------------------------
         void resolveSocketOrganizationId(userId, payload.organizationId)
           .then(async (organizationId) => {
-            if (organizationId && (await isOrganizationSuspended(organizationId, dbGet))) {
+            if (organizationId && (await isOrganizationSuspended(organizationId, strictDbGet))) {
               logger.info('[socketAuth] realtime connection refused: organization suspended', {
                 organizationId,
               });
@@ -185,7 +197,14 @@ export const socketAuthMiddleware = (socket: Socket, next: (err?: Error) => void
             socket.on('disconnect', untrack);
             next();
           })
-          .catch(() => {
+          .catch((resolveErr) => {
+            // Fail CLOSED, and say so in the log. An unresolvable tenant used to
+            // mean "skip the suspension gate and connect anyway"; now it means
+            // no socket. Logged because a database outage must not be invisible
+            // here — the refusal would otherwise look like a client problem.
+            logger.warn('[socketAuth] refusing socket: org resolution failed', {
+              error: resolveErr instanceof Error ? resolveErr.message : String(resolveErr),
+            });
             next(new Error('unauthorized'));
           });
       })

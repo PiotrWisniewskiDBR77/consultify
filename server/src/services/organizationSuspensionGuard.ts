@@ -32,14 +32,48 @@
  * invalidated inline and the effect is immediate; in a multi-process
  * deployment the other workers converge within the TTL.
  *
+ * MULTI-REPLICA WINDOW — CONSCIOUSLY ACCEPTED
+ * ---------------------------------------------------------------------------
+ * The cache lives in PROCESS memory and the invalidation on suspend/reactivate
+ * is in-process only. With more than one replica behind the load balancer, the
+ * replicas that did not serve the status change keep answering from their own
+ * memory for up to one TTL. So with N replicas the worst case is: suspension
+ * takes effect immediately on the replica that served it and within
+ * `ORG_SUSPENSION_CACHE_TTL_MS` (default 30 s) everywhere else.
+ *
+ * This is accepted on purpose, not overlooked. Lower the TTL to shrink the
+ * window. A cross-process invalidation (pub/sub on the status writers) is the
+ * real fix and is deferred until the staging replica count is settled — at one
+ * replica it would be pure cost.
+ *
  * ===========================================================================
- * FAIL-OPEN ON DATABASE ERRORS — DELIBERATE
+ * FAIL-OPEN ON DATABASE ERRORS — DELIBERATE, AND IT MUST NOT STICK
  * ===========================================================================
  * If the status lookup throws, this module reports "not suspended" and caches
- * nothing. Fail-closed here would convert any transient database blip into a
+ * NOTHING. Fail-closed here would convert any transient database blip into a
  * platform-wide 403 storm, and a request whose org lookup fails is going to
  * fail downstream anyway. The suspension state itself is never inferred — only
  * an explicit `'suspended'` row value blocks.
+ *
+ * "Caches nothing" is the load-bearing half of that sentence, and it was FALSE
+ * in the first revision — an adversarial audit caught it. `DbPromise.get`
+ * defaults to `fallback: true`, which RESOLVES `null` on an error, a timeout or
+ * a thrown exception instead of rejecting. The `catch` below was therefore dead
+ * for every DbPromise-backed caller: an error arrived as "no row", was read as
+ * "not suspended", and was written to the cache for a FULL TTL — refreshed by
+ * each subsequent error. A suspended tenant regained every front door for as
+ * long as the database misbehaved.
+ *
+ * Two independent defences now, because either alone can be re-broken:
+ *   1. every DbPromise-backed call site passes `{ fallback: false }`, so a
+ *      failure really rejects and really reaches the `catch`;
+ *   2. a NEGATIVE answer is cached only when a row was actually seen. A missing
+ *      row is never cached, so even a caller that forgets (1) can at most
+ *      fail open for that one request instead of for the next 30 seconds.
+ *
+ * Defence 2 also bounds the cache against a caller that passes attacker-chosen
+ * ids: absent rows leave no entry behind. See `MAX_CACHE_ENTRIES` for the hard
+ * ceiling that backs it up.
  */
 
 /** Machine-readable refusal code. The client maps it to a localized string. */
@@ -74,7 +108,29 @@ interface CacheEntry {
   expiresAt: number;
 }
 
+/**
+ * Hard ceiling on cache entries, as defence in depth behind "never cache a
+ * missing row". Real tenants are bounded, so this can only bind if something
+ * upstream starts feeding unverified ids — in which case a bounded, evicting
+ * map is a bug and an unbounded one is a memory-exhaustion vector.
+ *
+ * Eviction is oldest-inserted-first, which for a Map is simply its first key.
+ */
+const MAX_CACHE_ENTRIES = 10_000;
+
 const suspensionCache = new Map<string, CacheEntry>();
+
+function rememberSuspensionAnswer(organizationId: string, entry: CacheEntry): void {
+  // Re-inserting must refresh insertion order, or a hot tenant could be evicted
+  // while cold ones survive.
+  suspensionCache.delete(organizationId);
+  suspensionCache.set(organizationId, entry);
+  while (suspensionCache.size > MAX_CACHE_ENTRIES) {
+    const oldest = suspensionCache.keys().next();
+    if (oldest.done) break;
+    suspensionCache.delete(oldest.value);
+  }
+}
 
 /** Injectable clock so TTL expiry is testable without sleeping. */
 let now: () => number = () => Date.now();
@@ -132,7 +188,7 @@ export async function isOrganizationSuspended(
     return cached.suspended;
   }
 
-  let row: { status?: unknown } | undefined;
+  let row: { status?: unknown } | undefined | null;
   try {
     row = await dbGet<{ status?: unknown }>('SELECT status FROM organizations WHERE id = ?', [
       normalized,
@@ -145,10 +201,19 @@ export async function isOrganizationSuspended(
   // A missing organization row is not a suspension. Membership / org-context
   // checks elsewhere own that case; inventing a 403 here would change the
   // observable behaviour of unrelated surfaces.
-  const status = typeof row?.status === 'string' ? row.status.trim().toLowerCase() : '';
-  const suspended = BLOCKING_ORG_STATUSES.has(status);
+  //
+  // But it is NOT cached either, and that is the important part. A caller whose
+  // database handle swallows errors into `null` (DbPromise's `fallback: true`
+  // default) would otherwise turn every failed lookup into a 30-second
+  // "not suspended" verdict for a tenant that IS suspended. Re-querying an
+  // absent org is cheap; a sticky wrong answer is not. It also means an id the
+  // caller never verified cannot leave a cache entry behind.
+  const rawStatus = typeof row?.status === 'string' ? row.status : null;
+  if (rawStatus === null) return false;
 
-  suspensionCache.set(normalized, {
+  const suspended = BLOCKING_ORG_STATUSES.has(rawStatus.trim().toLowerCase());
+
+  rememberSuspensionAnswer(normalized, {
     suspended,
     expiresAt: currentTime + getOrgSuspensionCacheTtlMs(),
   });

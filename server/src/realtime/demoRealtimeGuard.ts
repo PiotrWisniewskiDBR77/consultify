@@ -154,7 +154,12 @@ export async function sweepRealtimeConnections(): Promise<number> {
     // N connections in the same tenant costs one query, not N.
     if (decision.allowed && connection.organizationId) {
       try {
-        if (await isOrganizationSuspended(connection.organizationId, dbGet)) {
+        // `fallback: false`: a swallowed error must not read as "not suspended".
+        if (
+          await isOrganizationSuspended(connection.organizationId, <T,>(sql, params) =>
+            dbGet<T>(sql, params, { fallback: false })
+          )
+        ) {
           decision = { allowed: false, reason: ORG_SUSPENDED_CODE };
         }
       } catch {

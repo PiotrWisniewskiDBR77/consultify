@@ -211,7 +211,11 @@ async function integrationApiKeyAuth(req: any, res: Response, next: any) {
   // runs. No exemptions: this router has no superadmin, logout or health
   // surface behind key auth. Same guard, same process cache, same body.
   // ---------------------------------------------------------------------------
-  if (await isOrganizationSuspended(req.organizationId, dbGet)) {
+  // `fallback: false` is load-bearing: DbPromise.get otherwise RESOLVES null
+  // on error/timeout, which the guard would read as "not suspended".
+  const strictDbGet = <T>(sql: string, params?: unknown[]) =>
+    dbGet<T>(sql, params, { fallback: false });
+  if (await isOrganizationSuspended(req.organizationId, strictDbGet)) {
     return res.status(403).json(buildOrgSuspendedResponseBody());
   }
 

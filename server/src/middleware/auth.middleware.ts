@@ -944,7 +944,13 @@ const attachUser = async (
       safeRead(() => (req as Request).originalUrl, '') || safeRead(() => (req as Request).url, '')
     );
     if (!isPathExemptFromOrgSuspension(fullRequestPath)) {
-      const suspended = await isOrganizationSuspended(req.organizationId, dbGet);
+      // `fallback: false` is load-bearing: DbPromise.get otherwise RESOLVES
+      // null on error/timeout, which the guard would read as "not suspended"
+      // and cache for a full TTL.
+      const suspended = await isOrganizationSuspended(req.organizationId, <T,>(
+        sql: string,
+        params?: unknown[]
+      ) => dbGet<T>(sql, params, { fallback: false }));
       if (suspended) {
         res.status(403).json(buildOrgSuspendedResponseBody());
         return;
