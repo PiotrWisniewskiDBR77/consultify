@@ -116,3 +116,5 @@ Zastane czerwone: DRD offline/banner (6), Outputs (8), globalne i18n (10). Test�
 ## Licznik i gotowość
 
 11 pozycji: 4 `ZROBIONE_WG_DoD`, 7 `CZĘŚCIOWE`, 0 niezaczętych. Żadne migracje. Gotowe do odbioru przez **NADZORCĘ**, nie do pokazania właścicielowi.
+
+Raport R.1 domknięty po finalnym pomiarze, bramkach chronionych ścieżek i własnych oględzinach wszystkich dziesięciu zrzutów.
