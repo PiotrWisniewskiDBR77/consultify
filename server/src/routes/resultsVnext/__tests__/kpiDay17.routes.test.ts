@@ -4,6 +4,7 @@ import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const history = vi.fn();
+const obligation = vi.fn();
 vi.mock('../../../middleware/auth.middleware.js', () => ({
   verifyToken: (req: any, _res: any, next: () => void) => {
     req.user = { id: 'user-1', organizationId: 'org-1', role: 'admin' };
@@ -34,6 +35,9 @@ vi.mock('../../../services/effectiveAccessService.js', () => ({
 }));
 vi.mock('../../../services/resultsVnext/kpi/kpiHistoryRepository.js', () => ({
   getKpiHistory: (...args: unknown[]) => history(...args),
+}));
+vi.mock('../../../services/resultsVnext/kpi/kpiNextObligationRepository.js', () => ({
+  getKpiNextObligation: (...args: unknown[]) => obligation(...args),
 }));
 
 const router = (await import('../kpi.routes.js')).default;
@@ -81,5 +85,37 @@ describe('Day 17 KPI HTTP contracts', () => {
     const response = await request(app()).get(`/api/vnext/results/kpi/${KPI}/history`);
     expect(response.status).toBe(200);
     expect(response.body).toEqual({ entries: [], nextCursor: null });
+  });
+  it('keeps recorded and derived obligations separate', async () => {
+    obligation.mockResolvedValue({
+      found: true,
+      kpiId: KPI,
+      obligation: null,
+      derived: {
+        nextExpectedAt: '2026-02-01T00:00:00.000Z',
+        basis: 'MEASUREMENT_FREQUENCY_DAYS',
+        frequencyDays: 31,
+        lastMeasuredPeriodEnd: '2026-01-01T00:00:00.000Z',
+      },
+      reason: null,
+      calculatedAt: '2026-01-02T00:00:00.000Z',
+    });
+    const response = await request(app()).get(`/api/vnext/results/kpi/${KPI}/next-obligation`);
+    expect(response.status).toBe(200);
+    expect(response.body.obligation).toBeNull();
+    expect(response.body.derived.basis).toBe('MEASUREMENT_FREQUENCY_DAYS');
+  });
+  it('returns 404 for an invisible KPI obligation', async () => {
+    obligation.mockResolvedValue({
+      found: false,
+      kpiId: KPI,
+      obligation: null,
+      derived: null,
+      reason: null,
+      calculatedAt: '2026-01-02T00:00:00.000Z',
+    });
+    expect((await request(app()).get(`/api/vnext/results/kpi/${KPI}/next-obligation`)).status).toBe(
+      404
+    );
   });
 });

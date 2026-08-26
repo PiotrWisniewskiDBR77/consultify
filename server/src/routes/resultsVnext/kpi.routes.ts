@@ -97,6 +97,7 @@ import {
   recordMeasurement,
   verifyMeasurement,
 } from '../../services/resultsVnext/kpi/kpiMeasurementCommands.js';
+import { getKpiNextObligation } from '../../services/resultsVnext/kpi/kpiNextObligationRepository.js';
 import {
   getKpi,
   getKpiCurrentDefinitionVersion,
@@ -487,6 +488,30 @@ router.get(
       res.status(200).json({ entries: result.entries, nextCursor: result.nextCursor });
     } catch (err) {
       handleKpiRouteError(res, err, 'getKpiHistory');
+    }
+  }
+);
+
+router.get(
+  '/:kpiId/next-obligation',
+  validateParams(KpiIdParamsSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const result = await getKpiNextObligation({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        kpiId: req.params.kpiId,
+      });
+      if (!result.found) {
+        res.status(404).json({ error: 'KPI not found', code: 'NOT_FOUND' });
+        return;
+      }
+      const { found: _found, ...body } = result;
+      res.status(200).json(body);
+    } catch (err) {
+      handleKpiRouteError(res, err, 'getKpiNextObligation');
     }
   }
 );
