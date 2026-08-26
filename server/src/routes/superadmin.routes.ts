@@ -30,6 +30,7 @@ import {
   requireNoLegalHold,
   upsertOrgPolicy,
 } from '../services/OrgPoliciesService.js';
+import { invalidateOrganizationSuspensionCache } from '../services/organizationSuspensionGuard.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -865,6 +866,10 @@ router.post(
         ['suspended', tenantId],
         { fallback: false }
       );
+      // DEC-91: drop the memoised status so enforcement is immediate in this
+      // process instead of waiting out the guard's TTL. Other workers converge
+      // within the TTL on their own.
+      invalidateOrganizationSuspensionCache(tenantId);
 
       return {
         auditEvent: {
@@ -903,6 +908,9 @@ router.post(
         ['active', tenantId],
         { fallback: false }
       );
+      // DEC-91: without this the reactivated tenant would stay locked out for
+      // up to one TTL — the operator would appear to have done nothing.
+      invalidateOrganizationSuspensionCache(tenantId);
 
       return {
         auditEvent: {

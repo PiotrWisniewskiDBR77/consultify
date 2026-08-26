@@ -13,6 +13,7 @@ import speakeasy from 'speakeasy';
 
 import AccessCodeService from '../services/accessCodeService.js';
 import auditEventsService from '../services/AuditEventsService.js';
+import { invalidateOrganizationSuspensionCache } from '../services/organizationSuspensionGuard.js';
 import { alertPrivilegeEscalation } from '../services/securityAlerts.js';
 import { hasColumn } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
@@ -365,6 +366,14 @@ const updateOrganization = catchAsync(async (req, res, next) => {
     deps.db.run(sql, [...params, id], async function (err) {
       if (err) return next(new AppError(err.message, 500));
       if (this.changes === 0) return next(new AppError('Organization not found', 404));
+
+      // DEC-91: this endpoint is the SECOND writer of organizations.status (the
+      // first is POST /tenants/:id/suspend|reactivate). Both must drop the
+      // memoised suspension answer, or a status edit made here would take up to
+      // one cache TTL to be felt — and a reactivation would look like a no-op.
+      if (status !== undefined) {
+        invalidateOrganizationSuspensionCache(id);
+      }
 
       deps.ActivityService.log({
         organizationId: id,
