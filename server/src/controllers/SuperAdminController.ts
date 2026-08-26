@@ -1050,6 +1050,15 @@ const approveAccessRequest = catchAsync(async (req, res, next) => {
       (err) => {
         if (err) return next(new AppError('Failed to activate organization', 500));
 
+        // DEC-91 — this is a THIRD writer of `organizations.status`, and it was
+        // the only one that did not tell the suspension cache. The other two
+        // (suspend/reactivate in superadmin.routes.ts, and the status update in
+        // this controller) invalidate inline, so their effect is immediate in
+        // this process. Approving an access request wrote 'active' and stayed
+        // silent, which meant a tenant reactivated THIS way kept being refused
+        // for up to a full TTL by the very process that had just approved it.
+        invalidateOrganizationSuspensionCache(request.organization_id);
+
         deps.db.run(
           `UPDATE access_requests SET status = 'approved', reviewed_by = ?, reviewed_at = datetime('now') WHERE id = ? `,
           [req.user.id, id],
