@@ -812,4 +812,419 @@ describe('DEC-131 P1-4 + DEC-136 — management-reports org scoping (real Postgr
     expect(after?.share_token).toBeTruthy();
   });
 
+  // -------------------------------------------------------------------
+  // GET /pending-approvals
+  // -------------------------------------------------------------------
+
+  itDB(
+    'GET /pending-approvals — never returns another org\'s approval rows',
+    async (h) => {
+      const app = buildApp();
+      const reportId = await h.insertReport({});
+      const approvalId = await h.insertApproval(reportId);
+      const attackerToken = makeE2EToken(h.attackerUserId, h.orgBId);
+
+      const res = await request(app)
+        .get('/api/management-reports/pending-approvals')
+        .set('Authorization', `Bearer ${attackerToken}`);
+
+      expect(res.status).toBe(200);
+      const ids = (res.body?.pending || []).map((row: any) => row.id);
+      expect(ids).not.toContain(approvalId);
+    }
+  );
+
+  itDB('GET /pending-approvals — returns the owning org\'s approval row', async (h) => {
+    const app = buildApp();
+    const reportId = await h.insertReport({});
+    const approvalId = await h.insertApproval(reportId);
+    const ownerToken = makeE2EToken(h.ownerUserId, h.orgAId);
+
+    const res = await request(app)
+      .get('/api/management-reports/pending-approvals')
+      .set('Authorization', `Bearer ${ownerToken}`);
+
+    expect(res.status).toBe(200);
+    const ids = (res.body?.pending || []).map((row: any) => row.id);
+    expect(ids).toContain(approvalId);
+  });
+
+  // -------------------------------------------------------------------
+  // POST /:id/submit · POST /:id/approve · GET /:id/approval-status
+  // -------------------------------------------------------------------
+
+  itDB('POST /:id/submit — 404 for a different real org, and ZERO row changes', async (h) => {
+    const app = buildApp();
+    const reportId = await h.insertReport({});
+    const before = await h.getReportRow(reportId);
+    const auditBefore = await h.countAuditRows(reportId);
+    const attackerToken = makeE2EToken(h.attackerUserId, h.orgBId);
+
+    const res = await request(app)
+      .post(`/api/management-reports/${reportId}/submit`)
+      .set('Authorization', `Bearer ${attackerToken}`)
+      .send({ organizationId: h.orgAId });
+
+    expect(res.status).toBe(404);
+    const after = await h.getReportRow(reportId);
+    expect(after).toEqual(before);
+    expect(await h.getApprovalRows(reportId)).toHaveLength(0);
+    expect(await h.countAuditRows(reportId)).toBe(auditBefore);
+  });
+
+  itDB('POST /:id/submit — succeeds for the owning org', async (h) => {
+    const app = buildApp();
+    const reportId = await h.insertReport({});
+    const ownerToken = makeE2EToken(h.ownerUserId, h.orgAId);
+
+    const res = await request(app)
+      .post(`/api/management-reports/${reportId}/submit`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({});
+
+    expect(res.status).toBe(200);
+    const after = await h.getReportRow(reportId);
+    expect(after?.approval_status).toBe('PENDING');
+  });
+
+  itDB(
+    'POST /:id/approve — 404 for a different real org, and the approval stays PENDING',
+    async (h) => {
+      const app = buildApp();
+      const reportId = await h.insertReport({});
+      await h.insertApproval(reportId);
+      const before = await h.getReportRow(reportId);
+      const attackerToken = makeE2EToken(h.attackerUserId, h.orgBId);
+
+      const res = await request(app)
+        .post(`/api/management-reports/${reportId}/approve`)
+        .set('Authorization', `Bearer ${attackerToken}`)
+        .send({ comment: 'approved by an outsider' });
+
+      expect(res.status).toBe(404);
+      const approvals = await h.getApprovalRows(reportId);
+      expect(approvals).toHaveLength(1);
+      expect(approvals[0]?.status).toBe('PENDING');
+      expect(approvals[0]?.decided_by).toBeNull();
+      expect(await h.getReportRow(reportId)).toEqual(before);
+    }
+  );
+
+  itDB('POST /:id/approve — succeeds for the owning org', async (h) => {
+    const app = buildApp();
+    const reportId = await h.insertReport({});
+    await h.insertApproval(reportId);
+    const ownerToken = makeE2EToken(h.ownerUserId, h.orgAId);
+
+    const res = await request(app)
+      .post(`/api/management-reports/${reportId}/approve`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({ comment: 'ok' });
+
+    expect(res.status).toBe(200);
+    const approvals = await h.getApprovalRows(reportId);
+    expect(approvals[0]?.status).toBe('APPROVED');
+  });
+
+  itDB('GET /:id/approval-status — 404 for a different real org', async (h) => {
+    const app = buildApp();
+    const reportId = await h.insertReport({});
+    await h.insertApproval(reportId);
+    const attackerToken = makeE2EToken(h.attackerUserId, h.orgBId);
+
+    const res = await request(app)
+      .get(`/api/management-reports/${reportId}/approval-status`)
+      .set('Authorization', `Bearer ${attackerToken}`);
+
+    expect(res.status).toBe(404);
+    expect(res.body?.approvals).toBeUndefined();
+  });
+
+  itDB('GET /:id/approval-status — 200 for the owning org', async (h) => {
+    const app = buildApp();
+    const reportId = await h.insertReport({});
+    await h.insertApproval(reportId);
+    const ownerToken = makeE2EToken(h.ownerUserId, h.orgAId);
+
+    const res = await request(app)
+      .get(`/api/management-reports/${reportId}/approval-status`)
+      .set('Authorization', `Bearer ${ownerToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body?.approvals).toHaveLength(1);
+  });
+
+  // -------------------------------------------------------------------
+  // GET /:id · PATCH /:id
+  // -------------------------------------------------------------------
+
+  itDB('GET /:id — 404 for a different real org, and no content leaks', async (h) => {
+    const app = buildApp();
+    const reportId = await h.insertReport({});
+    const attackerToken = makeE2EToken(h.attackerUserId, h.orgBId);
+
+    const res = await request(app)
+      .get(`/api/management-reports/${reportId}`)
+      .set('Authorization', `Bearer ${attackerToken}`);
+
+    expect(res.status).toBe(404);
+    expect(JSON.stringify(res.body)).not.toContain('secret org A content');
+  });
+
+  itDB('GET /:id — 200 with the full report for the owning org', async (h) => {
+    const app = buildApp();
+    const reportId = await h.insertReport({});
+    const ownerToken = makeE2EToken(h.ownerUserId, h.orgAId);
+
+    const res = await request(app)
+      .get(`/api/management-reports/${reportId}`)
+      .set('Authorization', `Bearer ${ownerToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body?.report?.content?.executiveSummary).toBe('secret org A content');
+  });
+
+  itDB(
+    'PATCH /:id — 404 for a different real org, and the title is NOT overwritten',
+    async (h) => {
+      const app = buildApp();
+      const reportId = await h.insertReport({});
+      const before = await h.getReportRow(reportId);
+      const attackerToken = makeE2EToken(h.attackerUserId, h.orgBId);
+
+      const res = await request(app)
+        .patch(`/api/management-reports/${reportId}`)
+        .set('Authorization', `Bearer ${attackerToken}`)
+        .send({ title: 'PWNED BY ORG B', organizationId: h.orgAId });
+
+      expect(res.status).toBe(404);
+      const after = await h.getReportRow(reportId);
+      expect(after?.title).toBe(before?.title);
+      expect(after).toEqual(before);
+    }
+  );
+
+  itDB('PATCH /:id — succeeds for the owning org', async (h) => {
+    const app = buildApp();
+    const reportId = await h.insertReport({});
+    const ownerToken = makeE2EToken(h.ownerUserId, h.orgAId);
+
+    const res = await request(app)
+      .patch(`/api/management-reports/${reportId}`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({ title: 'Renamed by the owner' });
+
+    expect(res.status).toBe(200);
+    const after = await h.getReportRow(reportId);
+    expect(after?.title).toBe('Renamed by the owner');
+  });
+
+  // -------------------------------------------------------------------
+  // Versions
+  // -------------------------------------------------------------------
+
+  itDB('GET /:id/versions — 404 for a different real org', async (h) => {
+    const app = buildApp();
+    const reportId = await h.insertReport({});
+    await h.insertVersion(reportId, 1);
+    const attackerToken = makeE2EToken(h.attackerUserId, h.orgBId);
+
+    const res = await request(app)
+      .get(`/api/management-reports/${reportId}/versions`)
+      .set('Authorization', `Bearer ${attackerToken}`);
+
+    expect(res.status).toBe(404);
+    expect(JSON.stringify(res.body)).not.toContain('secret org A version');
+  });
+
+  itDB('GET /:id/versions — 200 for the owning org', async (h) => {
+    const app = buildApp();
+    const reportId = await h.insertReport({});
+    await h.insertVersion(reportId, 1);
+    const ownerToken = makeE2EToken(h.ownerUserId, h.orgAId);
+
+    const res = await request(app)
+      .get(`/api/management-reports/${reportId}/versions`)
+      .set('Authorization', `Bearer ${ownerToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body?.versions).toHaveLength(1);
+  });
+
+  itDB('GET /:id/versions/:versionNumber — 404 for a different real org', async (h) => {
+    const app = buildApp();
+    const reportId = await h.insertReport({});
+    await h.insertVersion(reportId, 1);
+    const attackerToken = makeE2EToken(h.attackerUserId, h.orgBId);
+
+    const res = await request(app)
+      .get(`/api/management-reports/${reportId}/versions/1`)
+      .set('Authorization', `Bearer ${attackerToken}`);
+
+    expect(res.status).toBe(404);
+    expect(JSON.stringify(res.body)).not.toContain('secret org A version');
+  });
+
+  itDB('GET /:id/versions/:versionNumber — 200 for the owning org', async (h) => {
+    const app = buildApp();
+    const reportId = await h.insertReport({});
+    await h.insertVersion(reportId, 1);
+    const ownerToken = makeE2EToken(h.ownerUserId, h.orgAId);
+
+    const res = await request(app)
+      .get(`/api/management-reports/${reportId}/versions/1`)
+      .set('Authorization', `Bearer ${ownerToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body?.version?.version_number).toBe(1);
+  });
+
+  itDB(
+    'GET /:id/versions/compare — 404 (not 400) for a different real org, no content leak',
+    async (h) => {
+      const app = buildApp();
+      const reportId = await h.insertReport({});
+      await h.insertVersion(reportId, 1);
+      await h.insertVersion(reportId, 2);
+      const attackerToken = makeE2EToken(h.attackerUserId, h.orgBId);
+
+      const res = await request(app)
+        .get(`/api/management-reports/${reportId}/versions/compare?v1=1&v2=2`)
+        .set('Authorization', `Bearer ${attackerToken}`);
+
+      expect(res.status).toBe(404);
+      expect(JSON.stringify(res.body)).not.toContain('secret org A version');
+    }
+  );
+
+  itDB('GET /:id/versions/compare — 200 for the owning org', async (h) => {
+    const app = buildApp();
+    const reportId = await h.insertReport({});
+    await h.insertVersion(reportId, 1);
+    await h.insertVersion(reportId, 2);
+    const ownerToken = makeE2EToken(h.ownerUserId, h.orgAId);
+
+    const res = await request(app)
+      .get(`/api/management-reports/${reportId}/versions/compare?v1=1&v2=2`)
+      .set('Authorization', `Bearer ${ownerToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body?.comparison?.v1?.version_number).toBe(1);
+    expect(res.body?.comparison?.v2?.version_number).toBe(2);
+  });
+
+  // -------------------------------------------------------------------
+  // Comment writes (POST / PATCH / DELETE)
+  // -------------------------------------------------------------------
+
+  itDB(
+    'POST /:id/comments — 404 for a different real org, and no comment row is written',
+    async (h) => {
+      const app = buildApp();
+      const reportId = await h.insertReport({});
+      const before = await h.countComments(reportId);
+      const attackerToken = makeE2EToken(h.attackerUserId, h.orgBId);
+
+      const res = await request(app)
+        .post(`/api/management-reports/${reportId}/comments`)
+        .set('Authorization', `Bearer ${attackerToken}`)
+        .send({ content: 'comment injected from org B', organizationId: h.orgAId });
+
+      expect(res.status).toBe(404);
+      expect(await h.countComments(reportId)).toBe(before);
+    }
+  );
+
+  itDB('POST /:id/comments — succeeds for the owning org', async (h) => {
+    const app = buildApp();
+    const reportId = await h.insertReport({});
+    const before = await h.countComments(reportId);
+    const ownerToken = makeE2EToken(h.ownerUserId, h.orgAId);
+
+    const res = await request(app)
+      .post(`/api/management-reports/${reportId}/comments`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({ content: 'owner comment' });
+
+    expect(res.status).toBe(201);
+    expect(await h.countComments(reportId)).toBe(before + 1);
+  });
+
+  itDB(
+    'PATCH /:id/comments/:commentId — 404 for a different real org, content unchanged',
+    async (h) => {
+      const app = buildApp();
+      const reportId = await h.insertReport({});
+      const commentId = await h.insertComment(reportId);
+      const attackerToken = makeE2EToken(h.attackerUserId, h.orgBId);
+
+      const res = await request(app)
+        .patch(`/api/management-reports/${reportId}/comments/${commentId}`)
+        .set('Authorization', `Bearer ${attackerToken}`)
+        .send({ content: 'REWRITTEN BY ORG B' });
+
+      expect(res.status).toBe(404);
+      const after = await h.getCommentRow(commentId);
+      expect(after?.content).toBe('secret org A comment');
+    }
+  );
+
+  itDB(
+    'DELETE /:id/comments/:commentId — 404 for a different real org, and the comment SURVIVES',
+    async (h) => {
+      const app = buildApp();
+      const reportId = await h.insertReport({});
+      const commentId = await h.insertComment(reportId);
+      const attackerToken = makeE2EToken(h.attackerUserId, h.orgBId);
+
+      const res = await request(app)
+        .delete(`/api/management-reports/${reportId}/comments/${commentId}`)
+        .set('Authorization', `Bearer ${attackerToken}`);
+
+      expect(res.status).toBe(404);
+      expect(await h.getCommentRow(commentId)).not.toBeNull();
+    }
+  );
+
+  itDB(
+    'DELETE /:id/comments/:commentId — a comment id from ANOTHER report 404s even for the owner',
+    async (h) => {
+      const app = buildApp();
+      const reportA = await h.insertReport({});
+      const reportB = await h.insertReport({});
+      const commentOnB = await h.insertComment(reportB);
+      const ownerToken = makeE2EToken(h.ownerUserId, h.orgAId);
+
+      // Both reports are in the caller's own org, so the org check passes —
+      // this proves the SECOND check (comment belongs to the report in the
+      // path) is really there, not just the tenant one.
+      const res = await request(app)
+        .delete(`/api/management-reports/${reportA}/comments/${commentOnB}`)
+        .set('Authorization', `Bearer ${ownerToken}`);
+
+      expect(res.status).toBe(404);
+      expect(await h.getCommentRow(commentOnB)).not.toBeNull();
+    }
+  );
+
+  itDB('PATCH + DELETE /:id/comments/:commentId — succeed for the owning org', async (h) => {
+    const app = buildApp();
+    const reportId = await h.insertReport({});
+    const commentId = await h.insertComment(reportId);
+    const ownerToken = makeE2EToken(h.ownerUserId, h.orgAId);
+
+    const patched = await request(app)
+      .patch(`/api/management-reports/${reportId}/comments/${commentId}`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({ content: 'edited by owner' });
+    expect(patched.status).toBe(200);
+    expect((await h.getCommentRow(commentId))?.content).toBe('edited by owner');
+
+    const deleted = await request(app)
+      .delete(`/api/management-reports/${reportId}/comments/${commentId}`)
+      .set('Authorization', `Bearer ${ownerToken}`);
+    expect(deleted.status).toBe(200);
+    expect(await h.getCommentRow(commentId)).toBeNull();
+  });
+
 });

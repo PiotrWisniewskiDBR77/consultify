@@ -25,6 +25,22 @@ const respondFeatureUnavailable = (res: Response, _detail?: string) =>
 router.use(verifyToken);
 router.use(demoContextMiddleware);
 
+/**
+ * DEC-136 (same class as the DEC-131 hole): the organization is taken from the
+ * verified JWT (`req.organizationId`) and NOWHERE else. `?organizationId=` and
+ * `body.organizationId` are attacker-controlled and must never be able to
+ * widen the caller's tenant. Collection routes that cannot express the check
+ * as a 404-on-a-report answer 401 when the token carries no organization.
+ */
+const requireOrganizationId = (req: AuthRequest, res: Response): string | null => {
+  const organizationId = req.organizationId;
+  if (!organizationId) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return null;
+  }
+  return organizationId;
+};
+
 const validTypes = [
   'TEAM_MEETING',
   'TEAM_WEEKLY',
@@ -173,8 +189,10 @@ router.delete(
 
 router.get(
   '/pending-approvals',
-  asyncHandler(async (_req: AuthRequest, res: Response) => {
-    const pending = await managementReportsService.getPendingApprovals();
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const organizationId = requireOrganizationId(req, res);
+    if (!organizationId) return undefined;
+    const pending = await managementReportsService.getPendingApprovals(organizationId);
     return res.json({ success: true, pending });
   })
 );
@@ -182,7 +200,7 @@ router.get(
 router.get(
   '/:id',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const report = await managementReportsService.getReport(req.params.id);
+    const report = await managementReportsService.getReport(req.params.id, req.organizationId);
     if (!report) {
       return res.status(404).json({ error: 'Report not found' });
     }
@@ -193,7 +211,11 @@ router.get(
 router.post(
   '/:id/submit',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    await managementReportsService.submitForApproval(req.params.id, req.userId);
+    await managementReportsService.submitForApproval(
+      req.params.id,
+      req.userId,
+      req.organizationId
+    );
     return res.json({ success: true });
   })
 );
@@ -201,7 +223,10 @@ router.post(
 router.get(
   '/:id/approval-status',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const status = await managementReportsService.getApprovalStatus(req.params.id);
+    const status = await managementReportsService.getApprovalStatus(
+      req.params.id,
+      req.organizationId
+    );
     return res.json({ success: true, ...status });
   })
 );
@@ -209,7 +234,12 @@ router.get(
 router.post(
   '/:id/approve',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    await managementReportsService.approveReport(req.params.id, req.userId, req.body.comment);
+    await managementReportsService.approveReport(
+      req.params.id,
+      req.userId,
+      req.body.comment,
+      req.organizationId
+    );
     return res.json({ success: true });
   })
 );
@@ -217,8 +247,34 @@ router.post(
 router.get(
   '/:id/versions',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const versions = await managementReportsService.getVersions(req.params.id);
+    const versions = await managementReportsService.getVersions(req.params.id, req.organizationId);
     return res.json({ success: true, versions });
+  })
+);
+
+// NOTE: `/versions/compare` MUST stay above `/versions/:versionNumber`, or the
+// parameterised route swallows it (`Number('compare')` -> NaN) and the compare
+// endpoint is unreachable.
+router.get(
+  '/:id/versions/compare',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const organizationId = req.organizationId;
+    let comparison;
+    try {
+      comparison = await managementReportsService.compareVersions(
+        req.params.id,
+        Number(req.query.v1),
+        Number(req.query.v2),
+        organizationId
+      );
+    } catch (error: any) {
+      // A tenant miss must stay a 404 — do not let the generic 400 below
+      // swallow it, or "foreign report" becomes distinguishable from
+      // "versions do not compare".
+      if (error?.status === 404) throw error;
+      return res.status(400).json({ error: 'Unable to compare versions' });
+    }
+    return res.json({ success: true, comparison });
   })
 );
 
@@ -227,7 +283,8 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const version = await managementReportsService.getVersion(
       req.params.id,
-      Number(req.params.versionNumber)
+      Number(req.params.versionNumber),
+      req.organizationId
     );
     if (!version) {
       return res.status(404).json({ error: 'Version not found' });
@@ -236,33 +293,21 @@ router.get(
   })
 );
 
-router.get(
-  '/:id/versions/compare',
-  asyncHandler(async (req: AuthRequest, res: Response) => {
-    try {
-      const comparison = await managementReportsService.compareVersions(
-        req.params.id,
-        Number(req.query.v1),
-        Number(req.query.v2)
-      );
-      return res.json({ success: true, comparison });
-    } catch (error) {
-      return res.status(400).json({ error: 'Unable to compare versions' });
-    }
-  })
-);
-
 router.patch(
   '/:id',
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    let report;
     try {
-      const report = await managementReportsService.updateReport(
+      report = await managementReportsService.updateReport(
         req.params.id,
         req.body,
-        req.userId
+        req.userId,
+        req.organizationId
       );
-      return res.json({ success: true, report });
     } catch (error: any) {
+      // Tenant miss keeps its 404 identity; only genuine update failures
+      // become the generic 400.
+      if (error?.status === 404) throw error;
       logger.warn('[ManagementReports] Update report failed', {
         error,
         correlationId: (req as any).correlationId,
@@ -272,13 +317,19 @@ router.patch(
         code: 'MANAGEMENT_REPORT_UPDATE_FAILED',
       });
     }
+    return res.json({ success: true, report });
   })
 );
 
 router.post(
   '/:id/comments',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const comment = await managementReportsService.addComment(req.params.id, req.body, req.userId);
+    const comment = await managementReportsService.addComment(
+      req.params.id,
+      req.body,
+      req.userId,
+      req.organizationId
+    );
     return res.status(201).json({ success: true, comment });
   })
 );
@@ -300,7 +351,9 @@ router.patch(
     const comment = await managementReportsService.updateComment(
       req.params.commentId,
       req.body,
-      req.userId
+      req.userId,
+      req.params.id,
+      req.organizationId
     );
     return res.json({ success: true, comment });
   })
@@ -309,7 +362,11 @@ router.patch(
 router.delete(
   '/:id/comments/:commentId',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    await managementReportsService.deleteComment(req.params.commentId);
+    await managementReportsService.deleteComment(
+      req.params.commentId,
+      req.params.id,
+      req.organizationId
+    );
     return res.json({ success: true });
   })
 );
