@@ -346,7 +346,8 @@ router.get(
       const result = await managementReportsService.generateExport(
         req.params.id,
         'pdf',
-        req.userId
+        req.userId,
+        req.organizationId
       );
       return res.json({ success: true, pdfUrl: result.filePath });
     } catch (error: any) {
@@ -380,7 +381,8 @@ router.get(
       const result = await managementReportsService.generateExport(
         req.params.id,
         'pptx',
-        req.userId
+        req.userId,
+        req.organizationId
       );
       return res.json({ success: true, pptxUrl: result.filePath });
     } catch (error: any) {
@@ -402,6 +404,39 @@ router.get(
       ) {
         return respondFeatureUnavailable(res, 'schema missing');
       }
+      throw error;
+    }
+  })
+);
+
+router.get(
+  '/:id/xlsx',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const result = await managementReportsService.generateExport(
+        req.params.id,
+        'xlsx',
+        req.userId,
+        req.organizationId
+      );
+      return res.json({ success: true, xlsxUrl: result.filePath });
+    } catch (error: any) {
+      const status = Number(error?.status) || 500;
+      if (status === 404)
+        return res.status(404).json({ success: false, error: 'Report not found' });
+      if (error?.code === 'DEPENDENCY_MISSING')
+        return respondFeatureUnavailable(
+          res,
+          `missing dependency: ${error.dependency || 'unknown'}`
+        );
+      const msg = String(error?.message || '').toLowerCase();
+      if (
+        msg.includes('no such table') ||
+        msg.includes('no such column') ||
+        msg.includes('does not exist') ||
+        msg.includes('relation')
+      )
+        return respondFeatureUnavailable(res, 'schema missing');
       throw error;
     }
   })

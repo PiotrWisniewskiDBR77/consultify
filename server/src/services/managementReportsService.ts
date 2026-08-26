@@ -17,6 +17,7 @@ import { exportsDir } from '../utils/storagePaths.js';
 type ExportDeps = {
   PDFDocument: any | null;
   PptxGenJS: any | null;
+  ExcelJS: any | null;
 };
 
 let exportDepsPromise: Promise<ExportDeps> | null = null;
@@ -25,6 +26,7 @@ async function loadExportDeps(): Promise<ExportDeps> {
   exportDepsPromise = (async () => {
     let PDFDocument: any | null = null;
     let PptxGenJS: any | null = null;
+    let ExcelJS: any | null = null;
 
     try {
       const mod = await import('pdfkit');
@@ -40,12 +42,19 @@ async function loadExportDeps(): Promise<ExportDeps> {
       PptxGenJS = null;
     }
 
-    return { PDFDocument, PptxGenJS };
+    try {
+      const mod = await import('exceljs');
+      ExcelJS = (mod as any).default || mod;
+    } catch {
+      ExcelJS = null;
+    }
+
+    return { PDFDocument, PptxGenJS, ExcelJS };
   })();
   return exportDepsPromise;
 }
 
-function dependencyMissing(dep: 'pdfkit' | 'pptxgenjs'): Error {
+function dependencyMissing(dep: 'pdfkit' | 'pptxgenjs' | 'exceljs'): Error {
   const err = new Error(`Dependency missing: ${dep}`);
   (err as any).code = 'DEPENDENCY_MISSING';
   (err as any).dependency = dep;
@@ -232,6 +241,35 @@ class ManagementReportsService {
     );
 
     await pptx.writeFile({ fileName: filePath });
+  }
+
+  private async writeXlsxReport(report: any, filePath: string): Promise<void> {
+    const { ExcelJS } = await loadExportDeps();
+    if (!ExcelJS) throw dependencyMissing('exceljs');
+    const workbook = new ExcelJS.Workbook();
+    const summary = workbook.addWorksheet('Summary');
+    summary.addRow(['Summary']);
+    for (const line of this.buildSummaryLines(report)) summary.addRow([line]);
+    const content = report?.content && typeof report.content === 'object' ? report.content : {};
+    const used = new Set(['Summary']);
+    for (const [rawName, section] of Object.entries(content)) {
+      let name =
+        String(rawName)
+          .replace(/[\\/*?:\[\]]/g, '_')
+          .slice(0, 31) || 'Section';
+      let suffix = 1;
+      while (used.has(name)) name = `${name.slice(0, 27)}_${suffix++}`;
+      used.add(name);
+      const sheet = workbook.addWorksheet(name);
+      sheet.addRow(['Value']);
+      if (Array.isArray(section)) {
+        for (const item of section)
+          sheet.addRow([typeof item === 'string' ? item : JSON.stringify(item)]);
+      } else if (section !== null && section !== undefined && section !== '') {
+        sheet.addRow([typeof section === 'string' ? section : JSON.stringify(section)]);
+      }
+    }
+    await workbook.xlsx.writeFile(filePath);
   }
   async generateReport(options) {
     switch (options.reportType) {
@@ -1118,20 +1156,26 @@ class ManagementReportsService {
     return { shareToken, expiresAt };
   }
 
-  async generateExport(reportId, format, userId) {
-    // Make exports deterministic: fail fast if runtime dependencies are missing.
-    if (format === 'pdf' || format === 'pptx') {
-      const deps = await loadExportDeps();
-      if (format === 'pdf' && !deps.PDFDocument) throw dependencyMissing('pdfkit');
-      if (format === 'pptx' && !deps.PptxGenJS) throw dependencyMissing('pptxgenjs');
-    }
-
-    const report = await this.getReport(reportId);
+  async generateExport(reportId, format, userId, organizationId) {
+    const row = await managementReportRepository.getReportByIdForOrganization(
+      reportId,
+      organizationId
+    );
+    const report = row ? this.mapReport(row) : null;
     if (!report) {
       const err = new Error('Report not found');
       (err as any).code = 'NOT_FOUND';
       (err as any).status = 404;
       throw err;
+    }
+
+    // Resolve tenant visibility before dependency state so a foreign report is
+    // always indistinguishable from a missing report.
+    if (format === 'pdf' || format === 'pptx' || format === 'xlsx') {
+      const deps = await loadExportDeps();
+      if (format === 'pdf' && !deps.PDFDocument) throw dependencyMissing('pdfkit');
+      if (format === 'pptx' && !deps.PptxGenJS) throw dependencyMissing('pptxgenjs');
+      if (format === 'xlsx' && !deps.ExcelJS) throw dependencyMissing('exceljs');
     }
 
     const exportDir = await this.ensureExportDir();
@@ -1143,10 +1187,16 @@ class ManagementReportsService {
       await this.writePdfReport(report, filePath);
     } else if (format === 'pptx') {
       await this.writePptxReport(report, filePath);
+    } else if (format === 'xlsx') {
+      await this.writeXlsxReport(report, filePath);
     }
 
-    const column = format === 'pdf' ? 'pdf_path' : 'pptx_path';
-    await run(`UPDATE management_reports SET ${column} = ? WHERE id = ?`, [publicPath, reportId]);
+    const column = format === 'pdf' ? 'pdf_path' : format === 'pptx' ? 'pptx_path' : 'xlsx_path';
+    await run(`UPDATE management_reports SET ${column} = ? WHERE id = ? AND organization_id = ?`, [
+      publicPath,
+      reportId,
+      organizationId,
+    ]);
     await this.logAudit(reportId, 'EXPORTED', userId, { format });
     return { filePath: publicPath };
   }
@@ -1516,6 +1566,7 @@ class ManagementReportsService {
       aiWarnings,
       pdfPath: row.pdf_path,
       pptxPath: row.pptx_path,
+      xlsxPath: row.xlsx_path,
       shareToken: row.share_token,
       shareExpiresAt: row.share_expires_at,
       createdAt: row.created_at,
