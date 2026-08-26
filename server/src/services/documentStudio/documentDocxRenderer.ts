@@ -34,6 +34,7 @@
 // types.
 import * as docxModule from 'docx';
 import { imageSize } from 'image-size';
+import { AsyncLocalStorage } from 'node:async_hooks';
 
 import { renderChartBlockToPng } from './documentChartRasterizer.js';
 import {
@@ -145,9 +146,28 @@ const {
   Table,
   TableCell,
   TableRow,
-  TextRun,
+  TextRun: BaseTextRun,
   WidthType,
 } = docxModule as unknown as DocxRuntime;
+
+const polishTypographyScope = new AsyncLocalStorage<boolean>();
+
+/** Apply Polish non-breaking spaces at the single TextRun construction seam. */
+function polishTypographicSpacing(text: string): string {
+  return text.replace(/(^|\s)([aiouwzAIOUWZ]) /g, '$1$2\u00a0');
+}
+
+class TextRun extends BaseTextRun {
+  constructor(options: Record<string, unknown>) {
+    const text = options.text;
+    super({
+      ...options,
+      ...(polishTypographyScope.getStore() && typeof text === 'string'
+        ? { text: polishTypographicSpacing(text) }
+        : {}),
+    });
+  }
+}
 
 /**
  * G7 fix — real Word list outline (not manual `• ` / `1. ` text prefixes).
@@ -1420,7 +1440,7 @@ function renderSources(ctx: RenderContext): (Paragraph | Table)[] {
   return [heading, ...items];
 }
 
-export async function renderDocumentSchemaToDocxBuffer(
+async function renderDocumentSchemaToDocxBufferInternal(
   schemaInput: DocumentSchema,
   options: DocumentRenderOptions = {}
 ): Promise<Buffer> {
@@ -1668,4 +1688,14 @@ export async function renderDocumentSchemaToDocxBuffer(
 
   const buffer = await Packer.toBuffer(doc);
   return buffer;
+}
+
+export async function renderDocumentSchemaToDocxBuffer(
+  schemaInput: DocumentSchema,
+  options: DocumentRenderOptions = {}
+): Promise<Buffer> {
+  const isPolish = schemaInput.language.toLowerCase().startsWith('pl');
+  return polishTypographyScope.run(isPolish, () =>
+    renderDocumentSchemaToDocxBufferInternal(schemaInput, options)
+  );
 }
