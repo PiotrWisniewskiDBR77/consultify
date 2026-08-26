@@ -48,6 +48,11 @@ describe('IdeaElementInspector behavior', () => {
       'Powiązania 1',
       'Artefakty wyjściowe 1',
       'Wygląd węzła 1',
+      // RowDetailPanel parity (P0, 2026-08-26): 8th section, per the accepted
+      // prototype (Question 1, picked variant) — merges the old panel's
+      // "Activity"/"AI Insights" tabs. No `activity`/`aiInsights` passed in
+      // this fixture, so the count is 0.
+      'Historia i AI 0',
     ]);
   });
 
