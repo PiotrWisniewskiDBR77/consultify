@@ -1683,6 +1683,67 @@
       "proceed": "Confirm & Proceed",
       "auditNotice": "This action will be recorded in the audit log with your identity and timestamp."
     },
+    "platformOperations": {
+      "title": "Platform operations",
+      "subtitle": "Guarded P33 operations. Every execution requires a named target, a reason, and explicit confirmation.",
+      "loading": "Loading operation targets…",
+      "target": "Target",
+      "choose": "Choose…",
+      "review": "Review and confirm",
+      "execute": "Execute operation",
+      "confirmTitle": "Confirm operation",
+      "reason": "Reason",
+      "typeExactly": "Type exactly",
+      "criticalWarning": "This critical operation may be difficult or impossible to reverse.",
+      "affectedTenants": "Scope: {{count}} organizations.",
+      "noTargets": "No targets are available for this operation.",
+      "catalogError": "The target catalog could not be loaded. Try again later.",
+      "risk": { "high": "High risk", "critical": "Critical risk" },
+      "session": {
+        "title": "Recent operations in this session",
+        "empty": "No operations executed.",
+        "success": "Success"
+      },
+      "errors": {
+        "load": "Operation targets could not be loaded.",
+        "confirmationRequired": "The server requires explicit confirmation.",
+        "reasonRequired": "The server requires a reason for this operation.",
+        "nameMismatch": "The entered name does not match. Expected: {{name}}.",
+        "notFound": "The selected target no longer exists or is unavailable.",
+        "forbidden": "You are not authorized to execute this operation.",
+        "generic": "Operation failed"
+      },
+      "actions": {
+        "reactivate": {
+          "label": "Reactivate organization",
+          "description": "Restores access for the organization's users."
+        },
+        "reset_mfa": {
+          "label": "Force MFA reset",
+          "description": "Removes the current MFA configuration and requires the user to enroll again."
+        },
+        "suspend": {
+          "label": "Suspend organization",
+          "description": "Blocks access for the organization's users."
+        },
+        "lockdown": {
+          "label": "Emergency organization lockdown",
+          "description": "Immediately enables the tenant emergency lockdown."
+        },
+        "purge": {
+          "label": "Schedule permanent data purge",
+          "description": "Queues the organization for irreversible deletion of all data."
+        },
+        "connector_kill": {
+          "label": "Emergency connector shutdown",
+          "description": "Disables every active integration for the selected connector across the platform."
+        },
+        "worker_suspend": {
+          "label": "Suspend virtual worker",
+          "description": "Suspends the selected virtual worker at platform level."
+        }
+      }
+    },
     "impersonation": {
       "banner": "Impersonating Mode",
       "exit": "Exit Impersonation",

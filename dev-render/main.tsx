@@ -90,6 +90,9 @@ const AdminCommandCenterPanelScreen = React.lazy(
 const AdminSsoSelfServiceCardScreen = React.lazy(
   () => import('./screens/admin-sso-self-service-card')
 );
+const SuperadminPlatformOperationsDay15Screen = React.lazy(
+  () => import('./screens/superadmin-platform-operations-day15')
+);
 const AgentPlanCanvasScreen = React.lazy(() => import('./screens/agent-plan-canvas'));
 const AgentPlanViewScreen = React.lazy(() => import('./screens/agent-plan-view'));
 const AgentHubScreen = React.lazy(() => import('./screens/agent-hub'));
@@ -755,6 +758,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'admin-sso-self-service-card': {
     label: 'HP-24 SSO self-service — SAML skonfigurowany (2 domeny) + panel wyniku testu',
     render: () => <AdminSsoSelfServiceCardScreen />,
+  },
+  'superadmin-platform-operations-day15': {
+    label: 'Day 15 — REALNY <PlatformOperationsView>, katalogi fixture; &scene=ready|empty|error',
+    render: () => <SuperadminPlatformOperationsDay15Screen />,
   },
   'agent-plan-view': {
     label:

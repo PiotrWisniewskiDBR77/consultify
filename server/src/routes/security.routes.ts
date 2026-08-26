@@ -160,6 +160,8 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res) => {
     const orgId = req.user!.organizationId;
+    const denial = await requireOrgAdmin(req);
+    if (denial) return res.status(403).json(denial);
     const rows = await dbAll(
       `SELECT s.*, u.email as user_email, u.first_name, u.last_name
                FROM user_sessions s
@@ -194,7 +196,32 @@ router.delete(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res) => {
     const { sessionId } = req.params;
-    await dbRun(`DELETE FROM user_sessions WHERE id = ?`, [sessionId]);
+    const orgId = req.user!.organizationId;
+    const session = await dbGet<{ user_id: string }>(
+      `SELECT s.user_id
+         FROM user_sessions s
+         JOIN users u ON u.id = s.user_id
+        WHERE s.id = ? AND u.organization_id = ?
+        LIMIT 1`,
+      [sessionId, orgId],
+      { fallback: false }
+    );
+    if (!session) return res.status(404).json({ error: 'Session not found' });
+
+    if (session.user_id !== req.user!.id) {
+      const denial = await requireOrgAdmin(req);
+      if (denial) return res.status(403).json(denial);
+    }
+
+    await dbRun(
+      `DELETE FROM user_sessions
+        WHERE id = ?
+          AND EXISTS (
+            SELECT 1 FROM users u
+             WHERE u.id = user_sessions.user_id AND u.organization_id = ?
+          )`,
+      [sessionId, orgId]
+    );
     return res.json({ success: true });
   })
 );
@@ -204,7 +231,25 @@ router.delete(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res) => {
     const { userId } = req.params;
-    await dbRun(`DELETE FROM user_sessions WHERE user_id = ?`, [userId]);
+    const orgId = req.user!.organizationId;
+    const denial = await requireOrgAdmin(req);
+    if (denial) return res.status(403).json(denial);
+
+    const user = await dbGet<{ id: string }>(
+      `SELECT id FROM users WHERE id = ? AND organization_id = ? LIMIT 1`,
+      [userId, orgId],
+      { fallback: false }
+    );
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    await dbRun(
+      `DELETE FROM user_sessions
+        WHERE user_id = ?
+          AND EXISTS (
+            SELECT 1 FROM users u WHERE u.id = user_sessions.user_id AND u.organization_id = ?
+          )`,
+      [userId, orgId]
+    );
     return res.json({ success: true });
   })
 );
@@ -291,7 +336,10 @@ router.get(
 router.get(
   '/audit-logs',
   verifyToken,
-  asyncHandler(async (_req: AuthRequest, res) => {
+  asyncHandler(async (req: AuthRequest, res) => {
+    const orgId = req.user!.organizationId;
+    const denial = await requireOrgAdmin(req);
+    if (denial) return res.status(403).json(denial);
     try {
       const { all: dbAll } = await import('../utils/DbPromise.js');
       const rows = await dbAll(
@@ -299,10 +347,11 @@ router.get(
               SELECT al.*, u.email as user_email
               FROM activity_logs al
               LEFT JOIN users u ON u.id = al.user_id
+              WHERE al.organization_id = ?
               ORDER BY al.created_at DESC
               LIMIT 200
           `,
-        []
+        [orgId]
       );
 
       const logs = rows.map((r: any) => ({
@@ -331,18 +380,22 @@ router.get(
 router.get(
   '/api-keys/usage',
   verifyToken,
-  asyncHandler(async (_req: AuthRequest, res) => {
+  asyncHandler(async (req: AuthRequest, res) => {
+    const orgId = req.user!.organizationId;
+    const denial = await requireOrgAdmin(req);
+    if (denial) return res.status(403).json(denial);
     try {
       const { all: dbAll } = await import('../utils/DbPromise.js');
       const rows = await dbAll(
         `
               SELECT api_key_id, COUNT(*) as total_calls, SUM(tokens_used) as tokens, SUM(cost) as cost
               FROM api_logs
+              WHERE organization_id = ?
               GROUP BY api_key_id
               ORDER BY total_calls DESC
               LIMIT 50
           `,
-        []
+        [orgId]
       );
       return res.json({ usage: rows });
     } catch (err) {

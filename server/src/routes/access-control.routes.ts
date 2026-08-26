@@ -122,6 +122,34 @@ router.get(
 );
 
 /**
+ * GET /api/access-control/requests/organization
+ * Get access requests for the authenticated admin's organization.
+ */
+router.get(
+  '/requests/organization',
+  verifyToken,
+  verifyAdmin,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const organizationId = req.user?.organizationId;
+    if (!organizationId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const status = (req.query.status as string) || 'pending';
+    const params: unknown[] = [organizationId];
+    let where = 'organization_id = ?';
+    if (status !== 'all') {
+      where += ' AND status = ?';
+      params.push(status);
+    }
+
+    const requests = await dbAll(
+      `SELECT * FROM access_requests WHERE ${where} ORDER BY requested_at DESC`,
+      params
+    );
+    return res.json(requests);
+  })
+);
+
+/**
  * PUT /api/access-control/requests/:id/approve
  * Approve access request (Super Admin only)
  */

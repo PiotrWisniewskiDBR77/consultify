@@ -2228,8 +2228,33 @@ function normalizeIamAuditEvent(row: any) {
   };
 }
 
+function normalizeUnifiedAuditEvent(row: any) {
+  const actionType = String(row.action || row.action_type || 'admin_mutation');
+  return {
+    id: String(row.id),
+    organization_id: String(row.org_id),
+    admin_id: String(row.actor_id || row.actor_user_id || ''),
+    action_type: actionType,
+    resource_type: String(row.resource_type || row.entity_type || 'unknown'),
+    resource_id:
+      row.resource_id == null && row.entity_id == null
+        ? null
+        : String(row.resource_id || row.entity_id),
+    metadata_json: JSON.stringify({
+      source: 'audit_events',
+      before: parseJson(row.before_json, null),
+      after: parseJson(row.after_json, null),
+      ...parseJson(row.metadata_json, {}),
+    }),
+    risk_score: null,
+    risk_level: null,
+    status: 'logged',
+    created_at: row.ts,
+  };
+}
+
 async function readTenantAdminAuditProjection(orgId: string) {
-  const [legacyRows, iamRows] = await Promise.all([
+  const [legacyRows, iamRows, unifiedRows] = await Promise.all([
     adminAuditService.getLogs({ limit: 1000, offset: 0, organizationId: orgId }),
     dbAll<any>(
       `SELECT id, organization_id, project_id, actor_id, action, resource_type,
@@ -2241,11 +2266,23 @@ async function readTenantAdminAuditProjection(orgId: string) {
       [orgId],
       { fallback: false }
     ),
+    dbAll<any>(
+      `SELECT id, org_id, actor_id, actor_user_id, action, action_type,
+              resource_type, entity_type, resource_id, entity_id,
+              before_json, after_json, metadata_json, ts
+         FROM audit_events
+        WHERE org_id = ?
+        ORDER BY ts DESC
+        LIMIT 1000`,
+      [orgId],
+      { fallback: false }
+    ),
   ]);
 
   const normalized = [
     ...(Array.isArray(legacyRows) ? legacyRows : []),
     ...(Array.isArray(iamRows) ? iamRows.map(normalizeIamAuditEvent) : []),
+    ...(Array.isArray(unifiedRows) ? unifiedRows.map(normalizeUnifiedAuditEvent) : []),
   ];
   const unique = new Map<string, any>();
   for (const row of normalized) unique.set(`${row.organization_id || ''}:${row.id}`, row);

@@ -8,6 +8,11 @@ import {
 } from '../../../services/superadminPlatformOperationsApi';
 import { PlatformOperationsView } from '../PlatformOperationsView';
 
+vi.mock('react-i18next', async () => {
+  const { createRealUseTranslation } = await import('../../../test-utils/realTranslations');
+  return { useTranslation: createRealUseTranslation('pl') };
+});
+
 vi.mock('../../../services/superadminPlatformOperationsApi', () => ({
   getPlatformOperationTargets: vi.fn(),
   runPlatformOperation: vi.fn(),
