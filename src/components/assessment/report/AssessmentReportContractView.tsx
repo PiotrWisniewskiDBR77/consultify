@@ -289,6 +289,7 @@ export const AssessmentReportContractView: React.FC<AssessmentReportContractView
   if (sections.length === 0) {
     return <EmptyState variant="new" icon={FileCheck} title={t('assessment.reportView.empty')} />;
   }
+  if (!contract) return null;
 
   const propertyRows: ArtifactPropertyRow[] = [
     [
