@@ -77,11 +77,25 @@ describe('AssessmentReportContractView', () => {
     vi.restoreAllMocks();
   });
 
-  it('fails closed: OFF renders null and performs no request', () => {
+  // flip po akcepcie właściciela 27.08 (DEC-146/148): the flag now defaults
+  // ON, so this fail-closed assertion needs an explicit `off` override —
+  // localStorage/query "off" still disables the view per-session.
+  it('fails closed: explicit OFF override renders null and performs no request', () => {
+    localStorage.setItem('ff.assessment_report_view', 'off');
+    resetAssessmentReportViewFlagCache();
     const request = vi.spyOn(api, 'getAssessmentReportContract');
     const { container } = render(<AssessmentReportContractView sessionId="session-1" />);
     expect(container).toBeEmptyDOMElement();
     expect(request).not.toHaveBeenCalled();
+  });
+
+  // flip po akcepcie właściciela 27.08 (DEC-146/148): default was OFF, now
+  // ON — no override needed to reach the request/render path.
+  it('defaults ON: renders and requests the contract with no override', async () => {
+    vi.spyOn(api, 'getAssessmentReportContract').mockResolvedValue(contract);
+    render(<AssessmentReportContractView sessionId="session-1" />);
+    await screen.findByTestId('assessment-report-contract-view');
+    expect(api.getAssessmentReportContract).toHaveBeenCalledTimes(1);
   });
 
   it('renders seven chapters in server order and honest word limits', async () => {
