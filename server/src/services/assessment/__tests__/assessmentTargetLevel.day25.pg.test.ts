@@ -202,14 +202,104 @@ describe.skipIf(!REAL_DB)('Assessment day 25 — production TO-BE path', () => {
     expect(response.body.error).toBe('session_read_only');
   });
 
-  it('characterises the open gap: the event route currently accepts an out-of-scale target', async () => {
+  it('rejects an out-of-scale target_level (DEC-137 P1 fix) and writes zero rows', async () => {
+    const sessionId = await seedSession('active');
+    const response = await event(sessionId, {
+      type: 'DECISION_APPROVED',
+      unitId: '1A',
+      level: 8, // axis 1 ("1A") is levelCount 7 — 8 is out of scale
+      payload: { subject: 'target_level' },
+    });
+    expect(response.status).toBe(400);
+    expect(response.body.code).toBe('TARGET_LEVEL_OUT_OF_SCALE');
+    expect(response.body.allowedRange).toEqual({ min: 0, max: 7 });
+
+    const rows = await pool.query(
+      `SELECT id FROM method_events WHERE session_id = $1 AND type = 'DECISION_APPROVED' AND level = 8`,
+      [sessionId]
+    );
+    expect(rows.rowCount).toBe(0);
+  });
+
+  // Axis levelCount per drdStructure.ts: 1=7, 2=5, 3=5, 4=7, 5=6, 6=6, 7=5.
+  it.each([
+    { unitId: '1A', levelCount: 7, inScope: 7, outOfScope: 8 },
+    { unitId: '2A', levelCount: 5, inScope: 5, outOfScope: 6 },
+  ])(
+    'enforces the per-axis boundary for $unitId (levelCount=$levelCount)',
+    async ({ unitId, levelCount, inScope, outOfScope }) => {
+      const okSessionId = await seedSession('active');
+      const ok = await event(okSessionId, {
+        type: 'DECISION_APPROVED',
+        unitId,
+        level: inScope,
+        payload: { subject: 'target_level' },
+      });
+      expect(ok.status).toBe(201);
+
+      const badSessionId = await seedSession('active');
+      const bad = await event(badSessionId, {
+        type: 'DECISION_APPROVED',
+        unitId,
+        level: outOfScope,
+        payload: { subject: 'target_level' },
+      });
+      expect(bad.status).toBe(400);
+      expect(bad.body.code).toBe('TARGET_LEVEL_OUT_OF_SCALE');
+      expect(bad.body.allowedRange).toEqual({ min: 0, max: levelCount });
+
+      const rows = await pool.query(
+        `SELECT id FROM method_events WHERE session_id = $1 AND type = 'DECISION_APPROVED' AND level = $2`,
+        [badSessionId, outOfScope]
+      );
+      expect(rows.rowCount).toBe(0);
+    }
+  );
+
+  it('accepts target_level 0 (bottom of the [0, levelCount] scale)', async () => {
     const response = await event(await seedSession('active'), {
       type: 'DECISION_APPROVED',
       unitId: '1A',
-      level: 8,
+      level: 0,
       payload: { subject: 'target_level' },
     });
     expect(response.status).toBe(201);
+  });
+
+  it('rejects a negative target_level', async () => {
+    const sessionId = await seedSession('active');
+    const response = await event(sessionId, {
+      type: 'DECISION_APPROVED',
+      unitId: '1A',
+      level: -1,
+      payload: { subject: 'target_level' },
+    });
+    expect(response.status).toBe(400);
+    expect(response.body.code).toBe('TARGET_LEVEL_OUT_OF_SCALE');
+
+    const rows = await pool.query(
+      `SELECT id FROM method_events WHERE session_id = $1 AND type = 'DECISION_APPROVED'`,
+      [sessionId]
+    );
+    expect(rows.rowCount).toBe(0);
+  });
+
+  it('rejects a non-integer target_level', async () => {
+    const sessionId = await seedSession('active');
+    const response = await event(sessionId, {
+      type: 'DECISION_APPROVED',
+      unitId: '1A',
+      level: 2.5,
+      payload: { subject: 'target_level' },
+    });
+    expect(response.status).toBe(400);
+    expect(response.body.code).toBe('TARGET_LEVEL_OUT_OF_SCALE');
+
+    const rows = await pool.query(
+      `SELECT id FROM method_events WHERE session_id = $1 AND type = 'DECISION_APPROVED'`,
+      [sessionId]
+    );
+    expect(rows.rowCount).toBe(0);
   });
 
   it('does not reveal a session to another tenant', async () => {
