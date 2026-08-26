@@ -6,6 +6,8 @@ import { Pool } from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
+import { errorHandlerMiddleware } from '../../../server/src/utils/ErrorHandler.js';
+
 vi.mock('../../../server/src/middleware/auth.middleware.js', () => ({
   verifyToken: (req: any, res: any, next: () => void) => {
     const organizationId = req.headers['x-test-org-id'];
@@ -29,6 +31,7 @@ const orgB = `${prefix}-org-b`;
 const adminA = randomUUID();
 const memberA = randomUUID();
 const adminB = randomUUID();
+const deniedProject = randomUUID();
 const pool = new Pool({ connectionString: url });
 const headers = (org = orgA, user = adminA, role = 'ADMIN') => ({
   'x-test-org-id': org,
@@ -41,6 +44,7 @@ describe('Meetings day24 F — approved note action item to My Work task', () =>
   let meetingId = '';
   let noteId = '';
   let proposedNoteId = '';
+  let rejectedNoteId = '';
 
   beforeAll(async () => {
     const now = new Date().toISOString();
@@ -60,13 +64,15 @@ describe('Meetings day24 F — approved note action item to My Work task', () =>
         [id, org, `${id}@example.test`, role, now]
       );
     }
+    await pool.query(
+      `INSERT INTO projects (id,organization_id,name,owner_id) VALUES ($1,$2,$3,$4)`,
+      [deniedProject, orgA, `${prefix}-denied-project`, memberA]
+    );
     const routes = (await import('../../../server/src/routes/meeting.routes.js')).default;
     app = express();
     app.use(express.json());
     app.use('/api/meeting', routes);
-    app.use((error: any, _req: any, res: any, _next: any) =>
-      res.status(error?.name === 'AuthorizationError' ? 403 : 500).json({ error: error?.message })
-    );
+    app.use(errorHandlerMiddleware);
     const created = await request(app)
       .post('/api/meeting')
       .set(headers())
@@ -91,6 +97,19 @@ describe('Meetings day24 F — approved note action item to My Work task', () =>
         idempotencyKey: `${prefix}-pending`,
       });
     proposedNoteId = proposed.body.meetingNoteId;
+    const rejected = await request(app)
+      .post(`/api/meeting/${meetingId}/generate-notes`)
+      .set(headers())
+      .send({
+        transcript: 'Action item: reject this proposal.',
+        idempotencyKey: `${prefix}-rejected`,
+      });
+    rejectedNoteId = rejected.body.meetingNoteId;
+    const rejection = await request(app)
+      .post(`/api/meeting/${meetingId}/notes/${rejectedNoteId}/decision`)
+      .set(headers())
+      .send({ action: 'reject', reason: 'Not accepted' });
+    expect(rejection.status).toBe(200);
   });
 
   afterAll(async () => {
@@ -109,6 +128,7 @@ describe('Meetings day24 F — approved note action item to My Work task', () =>
     ]);
     await pool.query(`DELETE FROM meeting_notes WHERE organization_id IN ($1,$2)`, [orgA, orgB]);
     await pool.query(`DELETE FROM meetings WHERE organization_id IN ($1,$2)`, [orgA, orgB]);
+    await pool.query(`DELETE FROM projects WHERE id=$1`, [deniedProject]);
     await pool.query(`DELETE FROM users WHERE organization_id IN ($1,$2)`, [orgA, orgB]);
     await pool.query(`DELETE FROM organizations WHERE id IN ($1,$2)`, [orgA, orgB]);
     await pool.end();
@@ -168,6 +188,23 @@ describe('Meetings day24 F — approved note action item to My Work task', () =>
     expect(after.rows[0].n).toBe(before.rows[0].n);
   });
 
+  it('rejects a rejected note without writing a task', async () => {
+    const before = await pool.query(
+      `SELECT count(*)::int AS n FROM tasks WHERE organization_id=$1`,
+      [orgA]
+    );
+    const response = await request(app)
+      .post(`/api/meeting/${meetingId}/notes/${rejectedNoteId}/action-items/0/task`)
+      .set(headers());
+    const after = await pool.query(
+      `SELECT count(*)::int AS n FROM tasks WHERE organization_id=$1`,
+      [orgA]
+    );
+    expect(response.status).toBe(409);
+    expect(response.body.code).toBe('NOTE_NOT_APPROVED');
+    expect(after.rows[0].n).toBe(before.rows[0].n);
+  });
+
   it('rejects an unprivileged role and a foreign tenant without writes', async () => {
     const member = await request(app)
       .post(`/api/meeting/${meetingId}/notes/${noteId}/action-items/0/task`)
@@ -183,7 +220,34 @@ describe('Meetings day24 F — approved note action item to My Work task', () =>
     ).toBe(0);
   });
 
+  it('maps project authorization failure through the production error handler', async () => {
+    await pool.query(`DELETE FROM tasks WHERE organization_id=$1 AND idempotency_key=$2`, [
+      orgA,
+      `meeting-note-action:${noteId}:0`,
+    ]);
+    await pool.query(`UPDATE meetings SET project_id=$1 WHERE id=$2`, [deniedProject, meetingId]);
+    const before = await pool.query(
+      `SELECT count(*)::int AS n FROM tasks WHERE organization_id=$1`,
+      [orgA]
+    );
+    const response = await request(app)
+      .post(`/api/meeting/${meetingId}/notes/${noteId}/action-items/0/task`)
+      .set(headers());
+    await pool.query(`UPDATE meetings SET project_id=NULL WHERE id=$1`, [meetingId]);
+    const after = await pool.query(
+      `SELECT count(*)::int AS n FROM tasks WHERE organization_id=$1`,
+      [orgA]
+    );
+    expect(response.status).toBe(403);
+    expect(response.body.error.code).toBe('AUTHORIZATION_ERROR');
+    expect(after.rows[0].n).toBe(before.rows[0].n);
+  });
+
   it('collapses two concurrent replays to the same single row', async () => {
+    await pool.query(`DELETE FROM tasks WHERE organization_id=$1 AND idempotency_key=$2`, [
+      orgA,
+      `meeting-note-action:${noteId}:0`,
+    ]);
     const [a, b] = await Promise.all([
       request(app)
         .post(`/api/meeting/${meetingId}/notes/${noteId}/action-items/0/task`)
@@ -193,6 +257,7 @@ describe('Meetings day24 F — approved note action item to My Work task', () =>
         .set(headers()),
     ]);
     expect([a.status, b.status]).toEqual([200, 200]);
+    expect([a.body.replayed, b.body.replayed].sort()).toEqual([false, true]);
     const cold = await pool.query(
       `SELECT count(*)::int AS n FROM tasks WHERE organization_id=$1 AND idempotency_key=$2`,
       [orgA, `meeting-note-action:${noteId}:0`]
