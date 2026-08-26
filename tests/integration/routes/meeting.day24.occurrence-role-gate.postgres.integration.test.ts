@@ -6,6 +6,10 @@ import { Pool } from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
+const { sendMeetingInvitationsSpy } = vi.hoisted(() => ({
+  sendMeetingInvitationsSpy: vi.fn(async () => []),
+}));
+
 vi.mock('../../../src/utils/betaAccess.js', async (importOriginal) => {
   const actual = await importOriginal<any>();
   return { ...actual, BETA_MENU_STATUS: { ...actual.BETA_MENU_STATUS, MODULE_MEETING: 'open' } };
@@ -25,6 +29,9 @@ vi.mock('../../../server/src/middleware/auth.middleware.js', () => ({
 }));
 vi.mock('../../../server/src/utils/Logger.js', () => ({
   default: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+}));
+vi.mock('../../../server/src/services/meeting/meetingInvitationService.js', () => ({
+  sendMeetingInvitations: sendMeetingInvitationsSpy,
 }));
 
 const url = process.env.DATABASE_URL || '';
@@ -76,6 +83,7 @@ describe('Meetings day24 E — occurrence role gates', () => {
   });
 
   it('allows the USER creator to PATCH but not DELETE', async () => {
+    sendMeetingInvitationsSpy.mockClear();
     const id = await createSeries();
     const patch = await request(app)
       .patch(`/api/meeting/${id}/occurrence`)
@@ -98,9 +106,11 @@ describe('Meetings day24 E — occurrence role gates', () => {
       id,
     ]);
     expect(afterDelete.rows[0]).toEqual(beforeDelete.rows[0]);
+    expect(sendMeetingInvitationsSpy).toHaveBeenCalledTimes(1);
   });
 
   it('denies a non-creator attendee PATCH and DELETE with zero changes', async () => {
+    sendMeetingInvitationsSpy.mockClear();
     const id = await createSeries();
     const before = await pool.query(`SELECT * FROM meetings WHERE id=$1`, [id]);
     const patch = await request(app)
@@ -119,9 +129,11 @@ describe('Meetings day24 E — occurrence role gates', () => {
     expect(del.status).toBe(403);
     const after = await pool.query(`SELECT * FROM meetings WHERE id=$1`, [id]);
     expect(after.rows[0]).toEqual(before.rows[0]);
+    expect(sendMeetingInvitationsSpy).not.toHaveBeenCalled();
   });
 
   it('allows ADMIN PATCH and destructive cancellation', async () => {
+    sendMeetingInvitationsSpy.mockClear();
     const id = await createSeries();
     expect(
       (
@@ -147,18 +159,31 @@ describe('Meetings day24 E — occurrence role gates', () => {
       (await pool.query(`SELECT recurrence_status FROM meetings WHERE id=$1`, [id])).rows[0]
         .recurrence_status
     ).toBe('cancelled');
+    expect(sendMeetingInvitationsSpy).toHaveBeenCalledTimes(2);
   });
 
   it('keeps foreign tenant requests at 404 with zero mutation', async () => {
+    sendMeetingInvitationsSpy.mockClear();
     const id = await createSeries();
+    const patch = await request(app)
+      .patch(`/api/meeting/${id}/occurrence`)
+      .set(h(admin, 'ADMIN', foreign))
+      .send({
+        recurrenceId: '2026-10-25T08:00:00.000Z',
+        scope: 'all',
+        changes: { title: 'Foreign leak' },
+      });
     const result = await request(app)
       .delete(`/api/meeting/${id}/occurrence`)
       .set(h(admin, 'ADMIN', foreign))
       .send({ recurrenceId: '2026-10-25T08:00:00.000Z', scope: 'all' });
+    expect(patch.status).toBe(404);
     expect(result.status).toBe(404);
+    expect(JSON.stringify([patch.body, result.body])).not.toContain('Role-gated series');
     expect(
       (await pool.query(`SELECT recurrence_status FROM meetings WHERE id=$1`, [id])).rows[0]
         .recurrence_status
     ).toBeNull();
+    expect(sendMeetingInvitationsSpy).not.toHaveBeenCalled();
   });
 });
