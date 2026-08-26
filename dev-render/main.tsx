@@ -300,6 +300,7 @@ const FabRailKebabScreen = React.lazy(() => import('./screens/fab-rail-kebab'));
 const PrawyPanelSzynaIkonScreen = React.lazy(() => import('./screens/prawy-panel-szyna-ikon'));
 const Exe002004UiAuditScreen = React.lazy(() => import('./screens/exe-002-004-ui-audit'));
 const AudytyPiecPowierzchniScreen = React.lazy(() => import('./screens/audyty-piec-powierzchni'));
+const OrgIdentityOperatingScreen = React.lazy(() => import('./screens/org-identity-operating'));
 const AudytyWarsztatKryteriumScreen = React.lazy(
   () => import('./screens/audyty-warsztat-kryterium')
 );
@@ -365,6 +366,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'MOD06 Meetings etap 2 — REALNY <MeetingHub> (lista) + <MeetingObjectPage> (Szczegóły/Protokół/Decyzje). &view=list|object &tab=details|minutes|decisions',
     render: () => <MeetingsModuleScreen />,
+  },
+  'org-identity-operating': {
+    label:
+      'M01 Organizacja — REALNY <OrganizationView> z flagą orgRedesignV1 ON: ekran „Tożsamość i model działania" (11 ekranów w nawigacji, Menu 2/3 ze StandardModuleBar, prawy panel stanu). Dodaj &ff_org_redesign_v1=1 w URL.',
+    render: () => <OrgIdentityOperatingScreen />,
   },
   'audyty-piec-powierzchni': {
     label:
@@ -1250,8 +1256,11 @@ createRoot(mount).render(
       >
         {entry ? entry.render() : <Fallback />}
       </React.Suspense>
-      {/* Panel uwag właściciela — obecny na KAŻDYM ekranie odbioru (zapis: /__uwagi). */}
-      <PanelUwag ekran={screenKey} />
+      {/* Panel uwag właściciela — obecny na KAŻDYM ekranie odbioru (zapis: /__uwagi).
+          `&uwagi=0` wycina go z kadru: pływające „← Lista"/„Uwagi" to kontrolki
+          HARNESSU, a nie produkt — na zrzucie do akceptu nie mogą się pojawić
+          („zrzut czysty", CLAUDE.md §7c). */}
+      {params.get('uwagi') !== '0' && <PanelUwag ekran={screenKey} />}
       {/* Toasty (react-hot-toast). Do 2026-07-23 harness NIE montował <Toaster/>,
           więc każdy `toast.error(...)` z ekranu był NIEWIDOCZNY — a to właśnie
           toastem produkt mówi „AI niedostępne, oto powód". Bez tego nie dało się

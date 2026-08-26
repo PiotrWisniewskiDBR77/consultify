@@ -316,7 +316,7 @@ export const KnowledgeGraphExplorer: React.FC = () => {
               'organization.knowledgeGraph.searchPlaceholder',
               'Search knowledge graph entities...'
             )}
-            className="w-full h-9 pl-9 pr-3 rounded-xl text-xs bg-white dark:bg-navy-900/50 border border-slate-200/60 dark:border-navy-700/60 text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500/30"
+            className="w-full h-9 pl-9 pr-3 rounded-xl text-xs bg-white dark:bg-navy-900/50 border border-slate-200/60 dark:border-navy-700/60 text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-[var(--c-focus)]"
           />
         </div>
         <button

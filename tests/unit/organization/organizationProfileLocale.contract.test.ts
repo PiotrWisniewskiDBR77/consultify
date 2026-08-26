@@ -35,10 +35,16 @@ describe('Organization Profile EN/PL locale contract', () => {
   it('localizes visible labels while preserving canonical enum values in product source', () => {
     const en = readLocale('en').organization.profile;
     const pl = readLocale('pl').organization.profile;
-    const source = fs.readFileSync(
-      path.join(root, 'src/views/ContextBuilder/modules/OrganizationProfileModule.tsx'),
-      'utf8'
-    );
+    // Kanoniczne wartości enum mieszkają od 2026-08-24 w wyodrębnionej taksonomii
+    // (`organizationProfileTaxonomy.tsx`) — czytana przez STARY moduł profilu
+    // i przez redesign v1 ekranu „Tożsamość i model działania". Kontrakt bez
+    // zmian: te same literały + ten sam klucz i18n, tylko w dwóch plikach.
+    const source = [
+      'src/views/ContextBuilder/modules/OrganizationProfileModule.tsx',
+      'src/views/ContextBuilder/modules/organizationProfileTaxonomy.tsx',
+    ]
+      .map((relative) => fs.readFileSync(path.join(root, relative), 'utf8'))
+      .join('\n');
 
     expect(pl.options.organizationType.SERVICES.label).toBe('Usługi profesjonalne');
     expect(en.options.organizationType.SERVICES.label).toBe('Professional Services');

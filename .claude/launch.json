@@ -8,6 +8,12 @@
       "port": 4520
     },
     {
+      "name": "org-redesign-build",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "4521", "--strictPort"],
+      "port": 4521
+    },
+    {
       "name": "materials-registry-fix",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3610", "--strictPort"],

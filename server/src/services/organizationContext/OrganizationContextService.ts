@@ -357,6 +357,20 @@ async function getClaimQueryShape(): Promise<{
   };
 }
 
+// `created_at` comes back from Postgres `timestamp without time zone` columns
+// as a native JS `Date` object (node-postgres's default parser; this codebase
+// sets no `pg.types.setTypeParser` override — see grep note in
+// financePeriodFormat.ts / roiCalculationRunCommands.ts). `Date#toString()`
+// starts with the weekday abbreviation ("Mon", "Tue", ...), so comparing two
+// such strings lexically does NOT sort them chronologically — e.g. "Mon" <
+// "Sun" alphabetically even though Monday can be the LATER date. Always
+// compare claim recency via the numeric epoch value instead.
+function claimTimestampMs(createdAt: unknown): number {
+  if (createdAt instanceof Date) return createdAt.getTime();
+  const parsed = new Date(String(createdAt ?? ''));
+  return Number.isFinite(parsed.getTime()) ? parsed.getTime() : 0;
+}
+
 function pickBestClaim(
   claimRows: ClaimRow[],
   path: OrganizationContextClaimPath
@@ -368,7 +382,7 @@ function pickBestClaim(
       if (explicitDelta !== 0) return explicitDelta;
       const confidenceDelta = Number(right.confidence || 0) - Number(left.confidence || 0);
       if (confidenceDelta !== 0) return confidenceDelta;
-      return String(right.created_at || '').localeCompare(String(left.created_at || ''));
+      return claimTimestampMs(right.created_at) - claimTimestampMs(left.created_at);
     });
   if (!rows.length) return null;
   return { value: readValue(rows[0]), row: rows[0] };

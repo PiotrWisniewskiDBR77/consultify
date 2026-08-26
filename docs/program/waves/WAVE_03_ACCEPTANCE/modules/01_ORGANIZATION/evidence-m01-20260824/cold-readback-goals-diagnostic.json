@@ -1,0 +1,65 @@
+{
+  "valueBeforeEdit": "",
+  "marker": "[cold-readback-check 2026-08-24T21:58Z]",
+  "noteShownBeforeSave": false,
+  "noteShownAfterSave": false,
+  "raceBannerVisibleAfterSave": false,
+  "valueAfterSaveAndReload": "[cold-readback-check 2026-08-24T21:58Z]",
+  "matchAfterSaveAndReload": true,
+  "valueAfterRestoreAndReload": "",
+  "matchAfterRestoreAndReload": true,
+  "finalGetStatus": 200,
+  "finalGetGoalsPrimaryObjective": "",
+  "consoleLog": [],
+  "networkLog": [
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:4403/api/organization-context-store",
+      "status": 200,
+      "bodySnippet": "{\"goals\":{\"kpis\":[],\"noGo\":[],\"aiRole\":\"\",\"inScope\":[],\"outScope\":[],\"topPriorities\":[],\"strategicGoals\":[],\"successMetrics\":[],\"steeringCadence\":\"\",\"primaryObjective\":\"\",\"secondaryObjectives\":\"\",\"transformationArchetype\":\"\"},\"challenges\":{\"evidence\":[],\"activeBlockers\":[],\"rootCauseAnswers\":{},\"declaredChallenges\":[]},\"synthesis\":{\"risks\":[],\"scenarios\":[],\"strengths\":[],\"selectedScenarioId\":\"balanced\"},\"companyProfile\":{},\"version\":\"2026-08-24 20:31:32.742443+00\",\"companyProfileOwnership\":\"org",
+      "ts": "2026-08-24T20:33:34.129Z"
+    },
+    {
+      "method": "PUT",
+      "url": "http://127.0.0.1:4403/api/organization-context-store",
+      "status": 200,
+      "bodySnippet": "{\"ok\":true,\"version\":\"2026-08-24 20:33:36.410155+00\",\"companyProfileOwnership\":\"organization_profiles\"}",
+      "ts": "2026-08-24T20:33:36.349Z"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:4403/api/organization-context-store",
+      "status": 200,
+      "bodySnippet": "{\"goals\":{\"kpis\":[],\"noGo\":[],\"aiRole\":\"\",\"inScope\":[],\"outScope\":[],\"topPriorities\":[],\"strategicGoals\":[],\"successMetrics\":[],\"steeringCadence\":\"\",\"primaryObjective\":\"[cold-readback-check 2026-08-24T21:58Z]\",\"secondaryObjectives\":\"\",\"transformationArchetype\":\"\"},\"challenges\":{\"evidence\":[],\"activeBlockers\":[],\"rootCauseAnswers\":{},\"declaredChallenges\":[]},\"synthesis\":{\"risks\":[],\"scenarios\":[],\"strengths\":[],\"selectedScenarioId\":\"balanced\"},\"companyProfile\":{},\"version\":\"2026-08-24 20:33:36.41",
+      "ts": "2026-08-24T20:33:36.373Z"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:4403/api/organization-context-store",
+      "status": 200,
+      "bodySnippet": "{\"goals\":{\"kpis\":[],\"noGo\":[],\"aiRole\":\"\",\"inScope\":[],\"outScope\":[],\"topPriorities\":[],\"strategicGoals\":[],\"successMetrics\":[],\"steeringCadence\":\"\",\"primaryObjective\":\"[cold-readback-check 2026-08-24T21:58Z]\",\"secondaryObjectives\":\"\",\"transformationArchetype\":\"\"},\"challenges\":{\"evidence\":[],\"activeBlockers\":[],\"rootCauseAnswers\":{},\"declaredChallenges\":[]},\"synthesis\":{\"risks\":[],\"scenarios\":[],\"strengths\":[],\"selectedScenarioId\":\"balanced\"},\"companyProfile\":{},\"version\":\"2026-08-24 20:33:36.41",
+      "ts": "2026-08-24T20:33:39.546Z"
+    },
+    {
+      "method": "PUT",
+      "url": "http://127.0.0.1:4403/api/organization-context-store",
+      "status": 200,
+      "bodySnippet": "{\"ok\":true,\"version\":\"2026-08-24 20:33:41.718924+00\",\"companyProfileOwnership\":\"organization_profiles\"}",
+      "ts": "2026-08-24T20:33:41.657Z"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:4403/api/organization-context-store",
+      "status": 200,
+      "bodySnippet": "{\"goals\":{\"kpis\":[],\"noGo\":[],\"aiRole\":\"\",\"inScope\":[],\"outScope\":[],\"topPriorities\":[],\"strategicGoals\":[],\"successMetrics\":[],\"steeringCadence\":\"\",\"primaryObjective\":\"\",\"secondaryObjectives\":\"\",\"transformationArchetype\":\"\"},\"challenges\":{\"evidence\":[],\"activeBlockers\":[],\"rootCauseAnswers\":{},\"declaredChallenges\":[]},\"synthesis\":{\"risks\":[],\"scenarios\":[],\"strengths\":[],\"selectedScenarioId\":\"balanced\"},\"companyProfile\":{},\"version\":\"2026-08-24 20:33:41.718924+00\",\"companyProfileOwnership\":\"org",
+      "ts": "2026-08-24T20:33:41.679Z"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:4403/api/organization-context-store",
+      "status": 200,
+      "bodySnippet": "{\"goals\":{\"kpis\":[],\"noGo\":[],\"aiRole\":\"\",\"inScope\":[],\"outScope\":[],\"topPriorities\":[],\"strategicGoals\":[],\"successMetrics\":[],\"steeringCadence\":\"\",\"primaryObjective\":\"\",\"secondaryObjectives\":\"\",\"transformationArchetype\":\"\"},\"challenges\":{\"evidence\":[],\"activeBlockers\":[],\"rootCauseAnswers\":{},\"declaredChallenges\":[]},\"synthesis\":{\"risks\":[],\"scenarios\":[],\"strengths\":[],\"selectedScenarioId\":\"balanced\"},\"companyProfile\":{},\"version\":\"2026-08-24 20:33:41.718924+00\",\"companyProfileOwnership\":\"org",
+      "ts": "2026-08-24T20:33:44.838Z"
+    }
+  ]
+}

@@ -7,3 +7,6 @@
 # Na start PUSTA — żadnych plików nie znaleziono, które legalnie potrzebują
 # c-accent/primary-100/200/300 poza kanonem (brand/logo). Dopisz tu ścieżkę
 # TYLKO ze świadomą decyzją (np. świadomy hardkod loga marki), nie żeby ominąć hook.
+# Asercja NEGATYWNA pilnująca braku crimson focus-ring (strażnik, nie użycie) — nadzorca 2026-08-26
+*/src/components/Organization/redesign/__tests__/OrganizationKnowledgeGraphScreen.test.tsx
+src/components/Organization/redesign/__tests__/OrganizationKnowledgeGraphScreen.test.tsx
