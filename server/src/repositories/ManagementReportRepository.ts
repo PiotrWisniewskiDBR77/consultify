@@ -88,11 +88,16 @@ class ManagementReportRepository {
     });
   }
 
-  async createShareLink(reportId, shareToken, expiresAt) {
+  // DEC-131 P1-4 follow-up: org-filtered on purpose. The service already
+  // asserts tenant ownership before calling this, but a share token is the
+  // one artefact here that is honoured WITHOUT a session, so the write itself
+  // also refuses to land on a foreign row.
+  async createShareLink(reportId, shareToken, expiresAt, organizationId) {
     return new Promise((resolve, reject) => {
       this.db.run(
-        `UPDATE management_reports SET share_token = ?, share_expires_at = ? WHERE id = ?`,
-        [shareToken, expiresAt, reportId],
+        `UPDATE management_reports SET share_token = ?, share_expires_at = ?
+          WHERE id = ? AND organization_id = ?`,
+        [shareToken, expiresAt, reportId, organizationId],
         (err) => {
           if (err) reject(err);
           else resolve(true);

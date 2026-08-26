@@ -1222,7 +1222,12 @@ class ManagementReportsService {
     const expiresAt = expiresInDays
       ? new Date(Date.now() + expiresInDays * 86400000).toISOString()
       : null;
-    await managementReportRepository.createShareLink(reportId, shareToken, expiresAt);
+    await managementReportRepository.createShareLink(
+      reportId,
+      shareToken,
+      expiresAt,
+      organizationId
+    );
     await this.logAudit(reportId, 'SHARED', userId, { expiresAt });
     return { shareToken, expiresAt };
   }

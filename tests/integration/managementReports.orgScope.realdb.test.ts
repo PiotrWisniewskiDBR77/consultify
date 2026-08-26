@@ -180,6 +180,39 @@ function makeE2EToken(userId: string, organizationId: string): string {
   return `${header}.${payload}.e2e`;
 }
 
+/**
+ * An identity with NO organization at all — the only shape that could ever
+ * reach the removed `req.organizationId || req.query.organizationId` fallback,
+ * since `||` short-circuits whenever the JWT already carries an org.
+ *
+ * It cannot be minted through the E2E bypass above: that path defaults a
+ * missing org claim to 'e2e-org-id' (auth.middleware.ts), so `req.organizationId`
+ * is never falsy there. This mints a genuinely signed token with no
+ * organizationId claim instead, for a user with no organization_members row —
+ * which is what leaves `req.organizationId` empty after verifyToken.
+ *
+ * The secret is read back from the app's own Config rather than pinned here:
+ * ESM hoists imports above module-body statements, so a top-level
+ * `process.env.JWT_SECRET = ...` would race the router's import chain.
+ */
+async function makeOrglessSignedToken(userId: string): Promise<string> {
+  const jwtLib = (await import('jsonwebtoken')).default;
+  const configModule: any = await import('../../server/src/config/Config.js');
+  const secret = configModule.config?.JWT_SECRET || configModule.default?.JWT_SECRET;
+  return jwtLib.sign(
+    {
+      id: userId,
+      email: `${userId}@local.test`,
+      name: 'MgmtReports Orgless Test User',
+      role: 'ADMIN',
+      userRole: 'ADMIN',
+      // deliberately NO organizationId / organization_id claim
+    },
+    secret,
+    { algorithm: 'HS256', expiresIn: '1h' }
+  );
+}
+
 // ---------------------------------------------------------------------------
 // App under test — REAL router, REAL verifyToken.
 // ---------------------------------------------------------------------------
@@ -201,6 +234,7 @@ interface Harness {
   orgBId: string;
   ownerUserId: string; // member of org A, owns the fixture reports
   attackerUserId: string; // member of org B — must never reach org A's reports
+  orglessUserId: string; // no org claim, no membership row — the fallback's only reachable caller
   cleanup: () => Promise<void>;
   insertReport: (opts: {
     status?: string;
@@ -249,6 +283,7 @@ async function setupHarness(): Promise<Harness | null> {
   const orgBId = `org_mr_b_${tag}`;
   const ownerUserId = `user_mr_owner_${tag}`;
   const attackerUserId = `user_mr_attacker_${tag}`;
+  const orglessUserId = `user_mr_orgless_${tag}`;
   const reportIds: string[] = [];
   const commentIds: string[] = [];
   const auditIds: string[] = [];
@@ -276,6 +311,16 @@ async function setupHarness(): Promise<Harness | null> {
      VALUES ($1, $2, $3, 'x', 'ADMIN', 'active', 'Attacker', 'MR')
      ON CONFLICT (id) DO NOTHING`,
     [attackerUserId, orgBId, `${attackerUserId}@local.test`]
+  );
+  // Parked in org A's `users.organization_id` on purpose: the column is NOT
+  // NULLable and is NOT what verifyToken reads. Org context comes from the
+  // token claim and from organization_members — and this user has neither, so
+  // `req.organizationId` ends up empty, which is the whole point.
+  await client.query(
+    `INSERT INTO users (id, organization_id, email, password, role, status, first_name, last_name)
+     VALUES ($1, $2, $3, 'x', 'ADMIN', 'active', 'Orgless', 'MR')
+     ON CONFLICT (id) DO NOTHING`,
+    [orglessUserId, orgAId, `${orglessUserId}@local.test`]
   );
 
   const insertReport: Harness['insertReport'] = async ({ status = 'DRAFT', lockedAt = null }) => {
@@ -462,6 +507,7 @@ async function setupHarness(): Promise<Harness | null> {
       await client.query(`DELETE FROM organization_members WHERE organization_id = ANY($1)`, [
         [orgAId, orgBId],
       ]);
+      await client.query(`DELETE FROM users WHERE id = $1`, [orglessUserId]);
       await client.query(`DELETE FROM users WHERE organization_id = ANY($1)`, [
         [orgAId, orgBId],
       ]);
@@ -482,6 +528,7 @@ async function setupHarness(): Promise<Harness | null> {
     orgBId,
     ownerUserId,
     attackerUserId,
+    orglessUserId,
     cleanup,
     insertReport,
     insertComment,
@@ -1323,6 +1370,62 @@ describe('DEC-131 P1-4 + DEC-136 — management-reports org scoping (real Postgr
       // The report exists, but in the TOKEN's org — never the body's.
       expect(res.body?.report?.organizationId).toBe(h.orgBId);
       expect(await h.countReportsInOrg(h.orgAId)).toBe(orgABefore);
+    }
+  );
+
+  // -------------------------------------------------------------------
+  // ...and the same three routes driven by the ONLY identity that could
+  // actually reach the removed fallback: one with no organization at all.
+  // Before the fix these answered for whatever org the URL named. This
+  // closes the gap the HONEST NOTE above describes — a genuinely signed,
+  // org-less token via makeOrglessSignedToken(), not the E2E bypass.
+  // -------------------------------------------------------------------
+
+  itDB(
+    'GET /history — an org-less identity can no longer name a victim org in the query string',
+    async (h) => {
+      const app = buildApp();
+      const victimReportId = await h.insertReport({});
+      const orglessToken = await makeOrglessSignedToken(h.orglessUserId);
+
+      const res = await request(app)
+        .get(`/api/management-reports/history?organizationId=${h.orgAId}&limit=50`)
+        .set('Authorization', `Bearer ${orglessToken}`);
+
+      expect(res.status).toBe(401);
+      expect(JSON.stringify(res.body)).not.toContain(victimReportId);
+    }
+  );
+
+  itDB(
+    'GET /analytics/usage — an org-less identity can no longer name a victim org in the query string',
+    async (h) => {
+      const app = buildApp();
+      await h.insertReport({});
+      const orglessToken = await makeOrglessSignedToken(h.orglessUserId);
+
+      const res = await request(app)
+        .get(`/api/management-reports/analytics/usage?organizationId=${h.orgAId}`)
+        .set('Authorization', `Bearer ${orglessToken}`);
+
+      expect(res.status).toBe(401);
+      expect(res.body?.data).toBeUndefined();
+    }
+  );
+
+  itDB(
+    'GET /analytics/types — an org-less identity can no longer name a victim org in the query string',
+    async (h) => {
+      const app = buildApp();
+      await h.insertReport({});
+      const orglessToken = await makeOrglessSignedToken(h.orglessUserId);
+
+      const res = await request(app)
+        .get(`/api/management-reports/analytics/types?organizationId=${h.orgAId}`)
+        .set('Authorization', `Bearer ${orglessToken}`);
+
+      expect(res.status).toBe(401);
+      expect(res.body?.data).toBeUndefined();
     }
   );
 });
