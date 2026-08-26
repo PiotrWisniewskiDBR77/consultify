@@ -537,8 +537,10 @@ const PublicBookingView = lazyWithRetry(() =>
 const AuditsMethodHub = lazyWithRetry(() => import('@/components/Audit/method/AuditsMethodHub'));
 // Criterion Workspace (W1, 2026-08) — the screen where an auditor actually
 // works one criterion through the full evidence→finding→remediation chain.
+// Gate switches V1/V2 (DEC-88 SPEC-A reshell) behind `ff_criterionWorkspaceV2`
+// (default OFF) — see `CriterionWorkspaceGate.tsx`.
 const CriterionWorkspace = lazyWithRetry(
-  () => import('@/components/Audit/method/workspace/CriterionWorkspace')
+  () => import('@/components/Audit/method/workspace/CriterionWorkspaceGate')
 );
 // DRD Audit Report engine — full editor (AI chat, per-section AI actions, PDF
 // export, publishing-grade "Raport DRD" client report) wired to a live backend
