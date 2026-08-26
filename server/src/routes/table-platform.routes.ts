@@ -69,7 +69,7 @@ type Request = ExpressRequest<Record<string, string>>;
  * resolves; it does not change access-denial semantics (requireTableAccess
  * already gated that).
  */
-async function resolveUserRoleForTable(
+export async function resolveUserRoleForTable(
   tableId: string,
   userId: string,
   orgId: string
@@ -79,7 +79,13 @@ async function resolveUserRoleForTable(
     const r = await db.query('SELECT base_id FROM tp_tables WHERE id = $1', [tableId]);
     const baseId = (r.rows[0] as { base_id?: string })?.base_id;
     if (!baseId) return undefined;
-    const { role } = await requireRole(baseId, userId, orgId, ALL_ROLES);
+    // NOTE: call via the PermissionsService object (not the destructured
+    // `requireRole` binding above) — requireRole's body calls
+    // `this.getUserRole`/`this.canAccessBase`, and the destructuring at the
+    // top of this file strips that `this` binding, which made every call
+    // here throw "Cannot read properties of undefined (reading
+    // 'getUserRole')" and fail open (see the catch block below).
+    const { role } = await PermissionsService.requireRole(baseId, userId, orgId, ALL_ROLES);
     return role ?? undefined;
   } catch (e) {
     logger.warn('[TablePlatform] resolveUserRoleForTable failed', {
