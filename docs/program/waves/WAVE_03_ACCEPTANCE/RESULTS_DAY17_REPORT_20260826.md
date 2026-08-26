@@ -7,7 +7,7 @@ Worktree: `/private/tmp/consultify-results-day17`
 Start gałęzi roboczej: `686fe12e7bdd` (`codex/day17-instrukcja-20260826`; `codex/m03-admin-20260824` jest przodkiem)  
 `node_modules`: symlink do `/Users/piotrwisniewski/Developer/Consultify/node_modules` (DEC-86) — TAK  
 Port kontenera PG: 5447 · kontener `cx-day17-pg` uruchomiony: TAK · usunięty: TAK  
-Czas pracy: 15:08–15:25 CEST (wznowienie na mocy DEC-96)
+Czas pracy: 15:08–15:25 oraz 18:54–19:10 CEST (wznowienia DEC-96/DEC-98)
 
 ## Oświadczenia
 
@@ -17,7 +17,7 @@ Czas pracy: 15:08–15:25 CEST (wznowienie na mocy DEC-96)
 - Zero nowych flag i zero zmian wartości domyślnych (Z11): TAK.
 - Zero zmian globalnej infrastruktury testowej (Z18): TAK.
 - Zero zaszytych progów/wag/SLA (Z12): TAK.
-- Pierwszy STOP Z9 został uchylony proceduralnie przez DEC-96. Po wznowieniu nastąpiło drugie naruszenie Z9 opisane niżej; dalszą pracę ponownie zatrzymano.
+- Pierwszy STOP Z9 został uchylony proceduralnie przez DEC-96, drugi przez DEC-98. Po DEC-98 wszystkie testy potencjalnie bazodanowe miały jawny `DATABASE_URL` kontenera 5447 w tej samej linii.
 
 ## Koordynacja (§1.4)
 
@@ -66,16 +66,16 @@ Wszystkie dziewięć rozmiarów plików odpowiadało instrukcji dokładnie: 1150
 
 ## Pozycje — tabela zbiorcza
 
-| Pozycja           | Zakres                           | Status                     | Commit       | Dowód                                                                                                              |
-| ----------------- | -------------------------------- | -------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------ |
-| K.2               | historia i rodowód KPI           | CZĘŚCIOWO                  | `7f7d008d7b` | trasa + read-model; HTTP 3/3; brak własnego realdb i pełnego DoD                                                   |
-| K.3               | następny obowiązek KPI           | CZĘŚCIOWO                  | `1cf4b43fc4` | trasa + read-model; wspólny HTTP 5/5; brak własnego realdb i pełnego DoD                                           |
-| O.1               | attention w zasięgu Setu         | CZĘŚCIOWO                  | `4deea0a80e` | filtr `setId` w SQL pięciu zapytań; zastany realdb 7/7 i router 118/118 PASS; brak dedykowanego HTTP/rekoncyliacji |
-| O.2               | agregat check-inów Setu          | STOP                       | —            | brak wiążącej semantyki `CURRENT` kontra `DUE`; nie zgadywano                                                      |
-| X.1               | rekonstrukcja as-of              | BRAK_ŹRÓDŁA                | —            | `ReportSource` nie wskazuje event-sourced agregatu; wymaga X.3a lub decyzji mapowania                              |
-| X.2               | eksport XLSX + org-scoped odczyt | CZĘŚCIOWO_NIEZACOMMITOWANE | —            | implementacja robocza i migracja w worktree; testowanie przerwane przez drugi STOP Z9                              |
-| X.4               | osiem rodzin KPI Control         | NIE_ZACZĘTE                | —            | drugi STOP Z9                                                                                                      |
-| T.2–T.5, R.1, R.2 | testy i rejestr                  | STOP                       | —            | drugi, potwierdzony przypadek testu DB bez jawnego URL                                                             |
+| Pozycja           | Zakres                           | Status          | Commit                     | Dowód                                                                                                                               |
+| ----------------- | -------------------------------- | --------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| K.2               | historia i rodowód KPI           | CZĘŚCIOWO       | `7f7d008d7b`, `e14f16ff83` | HTTP 3/3 + real PG: pięć rodzajów i kursor bez duplikatów; HTTP używa lokalnych mocków middleware, więc nie zawyżono do pełnego DoD |
+| K.3               | następny obowiązek KPI           | CZĘŚCIOWO       | `1cf4b43fc4`, `e14f16ff83` | HTTP 2/2 + real PG zapisany obowiązek/overdue/tenant; HTTP używa lokalnych mocków middleware                                        |
+| O.1               | attention w zasięgu Setu         | CZĘŚCIOWO       | `4deea0a80e`               | filtr `setId` w SQL pięciu zapytań; zastany realdb 7/7 i router 118/118 PASS; brak dedykowanego HTTP/rekoncyliacji                  |
+| O.2               | agregat check-inów Setu          | STOP            | —                          | brak wiążącej semantyki `CURRENT` kontra `DUE`; nie zgadywano                                                                       |
+| X.1               | rekonstrukcja as-of              | CZĘŚCIOWO       | `262f2ecbeb`               | uczciwe `reconstructable:false`, deterministyczne luki, 8/8 unit+HTTP; brak osobnego realdb                                         |
+| X.2               | eksport XLSX + org-scoped odczyt | ZROBIONE_WG_DoD | `cbd04e7434`               | otwieralny XLSX, realny router/JWT/PG, 404 PDF/PPTX/XLSX dla obcego tenanta, 7/7 PASS                                               |
+| X.4               | osiem rodzin KPI Control         | CZĘŚCIOWO       | `b31aedc00a`               | 8 rodzin i pusta polityka, 7/7 unit+HTTP+realdb; brak kompletnych populacji źródłowych → jawne `BRAK_ŹRÓDŁA`                        |
+| T.2–T.5, R.1, R.2 | testy i rejestr                  | CZĘŚCIOWO       | `e14f16ff83` + raport      | pomiar PO kompletny; pełny DoD tylko X.2                                                                                            |
 
 ## Testy — STAN_WEJŚCIOWY przed STOP
 
@@ -97,7 +97,39 @@ Wszystkie dziewięć rozmiarów plików odpowiadało instrukcji dokładnie: 1150
 - O.1 realdb, jawnie na 5447: 7/7 PASS. Pełny istniejący router OKR: 118/118 PASS.
 - Kontener po drugim STOP: zatrzymany i usunięty; `docker ps -a --filter name=cx-day17` pusty; wolumeny `cx-day17` puste.
 
-Pomiar PO: NIE WYKONANO — drugi twardy STOP Z9. Zasięg: CZĘŚCIOWY.
+### Pomiar PO po DEC-98
+
+Każda komenda miała w tej samej linii `DATABASE_URL=postgresql://postgres:postgres@localhost:5447/cx_day17 RUN_DB_TESTS=1 MOCK_DB=false NODE_ENV=test DB_TYPE=postgres`.
+
+| Katalog                                             | PRZED                                               | PO                   | Delta             | Werdykt                     |
+| --------------------------------------------------- | --------------------------------------------------- | -------------------- | ----------------- | --------------------------- |
+| `server/src/routes/resultsVnext/__tests__`          | 15 plików / 419 PASS                                | 16 plików / 424 PASS | +1 plik / +5 PASS | tylko własny pakiet K.2/K.3 |
+| `server/src/services/resultsVnext`                  | 2 FAIL / 18 PASS / 39 SKIP w pomiarze sprzed DEC-96 | 2 FAIL / 57 PASS     | zero nowych FAIL  | zastane 2 FAIL bez regresji |
+| `tests/unit/execution`                              | 4 FAIL / 242 PASS                                   | 4 FAIL / 242 PASS    | 0                 | bez regresji                |
+| `tests/unit/initiatives-execution`                  | 1 FAIL / 166 PASS                                   | 1 FAIL / 166 PASS    | 0                 | bez regresji                |
+| `server/src/domain/initiatives-execution/__tests__` | 2 PASS                                              | 6 PASS               | +4 PASS           | własny X.1                  |
+| `tests/resultsVnext/okr`                            | 52 pliki / 358 PASS                                 | 52 pliki / 358 PASS  | 0                 | bez regresji                |
+
+ZASIĘG PEŁNY dla katalogów konsumentów wymienionych w §0.4a; brak nowych FAIL.
+
+## Wznowienie DEC-98 — wykonane pozycje i dowody
+
+- Cel DB: `SELECT current_database(), inet_server_port()` → `cx_day17`, `5432`; mapowanie hosta wyłącznie `127.0.0.1:5447`.
+- Migracje: pierwszy pełny replay `843`; po dodaniu X.4 `Applying migrations: 1`; powtórka `Applying migrations: 0`; dry-run `Pending migrations: 0`.
+- `MIGRATION_PREPARED`: `20261076_day17_management_reports_xlsx_path.sql`, `20261077_day17_execution_control_kpi_policy.sql`.
+- `REMOTE_EXECUTION_NOT_AUTHORIZED (DEC-65)` — migracje wykonano wyłącznie w lokalnym kontenerze.
+- KOMPATYBILNOŚĆ_WSTECZ: `xlsx_path` jest nullable i ignorowany przez stary kod; nowa tabela polityk jest pusta i nie ma producenta/triggera ingerującego w stare zapisy.
+
+### Testy własne po DEC-98
+
+| Pozycja | Dowód                                                                                                             | Wynik                  |
+| ------- | ----------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| K.2/K.3 | `kpiDay17.routes.test.ts` + `day17-results-kpi.realdb.test.ts`                                                    | 5/5 HTTP + 3/3 real PG |
+| X.1     | `reportReconstruction.test.ts` + `day17ReportReconstruction.routes.test.ts`                                       | 8/8 PASS               |
+| X.2     | `managementReportsXlsx.dependency.test.ts` + `day17-management-reports-xlsx.realdb.test.ts`                       | 7/7 PASS               |
+| X.4     | `controlKpiReadModel.test.ts` + `day17ControlKpis.routes.test.ts` + `day17-execution-control-kpis.realdb.test.ts` | 7/7 PASS               |
+
+Łącznie nowe testy dowodowe po DEC-98: 30 PASS. K.2/K.3 pozostają `CZĘŚCIOWO`, ponieważ ich HTTP test izoluje middleware lokalnymi mockami; X.1 nie ma osobnego realdb; X.4 nie może uczciwie policzyć pełnych populacji, więc pięć rodzin zwraca `BRAK_ŹRÓDŁA`, a trzy zależne od polityki `DECISION_REQUIRED` bez wartości domyślnych.
 
 ## Znaleziska — nie naprawiane
 
@@ -134,12 +166,12 @@ Stan: K.2, K.3 i O.1 częściowo zacommitowane w SHA powyżej. Robocze X.2 i mig
 
 ## Licznik
 
-Pozycji w zakresie: 7 · domknięte wg pełnego DoD: 0 · częściowe: 4 (w tym X.2 niezacommitowane) · STOP/BRAK_ŹRÓDŁA: 2 · niezaczęte: 1. Drugi STOP Z9 kończy cały dyżur.
+Pozycji w zakresie: 7 · domknięte wg pełnego DoD: 1 (`X.2`) · częściowe: 5 (`K.2`, `K.3`, `O.1`, `X.1`, `X.4`) · STOP: 1 (`O.2`) · niezaczęte: 0.
 
 ## Czego nie zrobiłem i dlaczego
 
-Nie domknąłem żadnej pozycji wg pełnego DoD, nie rozpocząłem X.4, nie zmieniłem rejestrów i nie wykonałem pomiaru PO. O.2 i X.1 zatrzymano bez atrap. X.2 pozostało robocze i niezacommitowane. Powód końcowy: literalna reguła STOP po drugim naruszeniu Z9.
+Nie podniosłem K.2/K.3 do pełnego DoD bez realnego łańcucha middleware w ich testach HTTP. O.1 zachowuje realdb 7/7 i router 118/118, ale bez dedykowanego HTTP/rekoncyliacji pozostaje częściowe. O.2 pozostaje STOP: brak wiążącej semantyki `CURRENT` kontra `DUE`. X.1 uczciwie odmawia replayu zamiast podawać stan bieżący, lecz bez osobnego realdb pozostaje częściowe. X.4 nie wymyśla populacji ani progów.
 
 ## Gotowość
 
-Gotowe do przeglądu przez nadzorcę: raport, trzy częściowe commity i roboczy diff X.2 — TAK. Żadna pozycja nie jest deklarowana jako ZROBIONE_WG_DoD. UI nie budowano; flag nie zmieniano; rejestrów nie podnoszono.
+Gotowe do przeglądu kodu i uruchomienia testów przez nadzorcę: X.2 wg pełnego DoD oraz częściowe K.2/K.3/O.1/X.1/X.4 — TAK. UI nie budowano; flag nie zmieniano; rejestrów nie podnoszono ponad stan faktyczny.
