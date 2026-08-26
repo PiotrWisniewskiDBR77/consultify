@@ -7,6 +7,10 @@
 
 import type { Response } from 'express';
 
+import {
+  buildOrgSuspendedResponseBody,
+  ORG_SUSPENDED_CODE,
+} from '../services/organizationSuspensionGuard.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
@@ -298,6 +302,17 @@ export class InvitationController {
         });
         res.json(result);
       } catch (error: any) {
+        // DEC-91 — the suspension refusal is not an "invalid payload" (400) nor
+        // an internal fault (500), and it must reach the client as the SAME
+        // machine-readable body every other DEC-91 gate returns, so one client
+        // branch handles all of them. Matched on the error CODE, not on the
+        // prose, so rewording the message cannot silently downgrade this to a
+        // 500.
+        if (error?.code === ORG_SUSPENDED_CODE) {
+          res.status(403).json(buildOrgSuspendedResponseBody());
+          return;
+        }
+
         const status = InvitationController.mapAcceptInvitationErrorStatus(
           error?.message || 'Unexpected error'
         );

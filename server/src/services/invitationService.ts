@@ -25,6 +25,10 @@ import {
   RequestInfo,
   RESEND_COOLDOWN_MINUTES,
 } from './invitation/InvitationTypes.js';
+import {
+  isOrganizationSuspended,
+  ORG_SUSPENDED_CODE,
+} from './organizationSuspensionGuard.js';
 import { mapToCanonicalProjectRole } from './projectRoleCanon.js';
 
 // Dynamic imports
@@ -480,6 +484,47 @@ export class InvitationServiceClass {
 
     const invitation = await this.getByToken(token);
     if (!invitation) throw new Error('Invalid invitation token');
+
+    // -------------------------------------------------------------------------
+    // DEC-91 / TRI-MUST-12 — the EIGHTH front door: a suspended tenant must not
+    // ONBOARD.
+    //
+    // `POST /api/invitations/accept` is deliberately PUBLIC (Gateway.ts excludes
+    // it from both `verifyToken` and `trialEntryGuard` — it has to be reachable
+    // by someone who does not yet have an account). That also means every
+    // DEC-91 gate built so far is upstream of a middleware this path never
+    // touches, so nothing on the way in ever read `organizations.status`.
+    //
+    // What that bought an attacker, or simply a confused customer: this method
+    // INSERTs a `users` row and an `organization_members` row bound to
+    // `invitation.organization_id`, and increments seat usage, for a tenant that
+    // is supposed to be cut off. The new member is then refused by every OTHER
+    // DEC-91 gate the moment they try to use the product — a spectacularly
+    // confusing way to discover the tenant is suspended, and a way for a
+    // suspended tenant to keep growing its member list and its seat count.
+    //
+    // Placed here, on the FIRST line after the invitation resolves and before
+    // ANY branch that writes: before the admin-IAM branch (which mints an
+    // account of its own), before `markAsExpired`, before `markAsAccepted`. A
+    // refused acceptance therefore leaves the invitation UNCONSUMED and still
+    // usable once the tenant is reactivated — refusing must not also destroy
+    // the invitation.
+    //
+    // `this.deps.db.get` (IDatabase) rejects on error rather than resolving
+    // null, so it needs no `fallback: false`; the guard's own "never cache an
+    // absent row" rule covers the rest.
+    // -------------------------------------------------------------------------
+    if (
+      await isOrganizationSuspended(invitation.organization_id, (sql, params) =>
+        this.deps.db.get(sql, params)
+      )
+    ) {
+      const suspended = new Error(
+        'This organization is suspended and cannot accept new members right now.'
+      ) as Error & { code?: string };
+      suspended.code = ORG_SUSPENDED_CODE;
+      throw suspended;
+    }
 
     // First-login profile enforcement (only when the invitation opts in)
     const acceptMeta = JSON.parse(invitation.metadata || '{}') as {
