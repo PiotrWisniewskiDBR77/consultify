@@ -2,7 +2,7 @@
 
 Baza związana: `5cfa62470e` (`codex/m03-admin-20260824`); gałąź robocza utworzona zgodnie z poleceniem użytkownika z tipa instrukcji `2d457adaaf`. Marker `5cfa62470e`: POTWIERDZONY (`merge-base --is-ancestor`, exit 0). Gałąź: `codex/execution-day31-20260828`; worktree: `/private/tmp/consultify-execution-day31`. Port PG: 5556; kontener: `cx-day31-pg` (`pgvector/pgvector:pg16`); baza: `cx_day31`.
 
-Poziom ukończenia: CODE_PRESENT (raport w toku).
+Poziom ukończenia: `TECHNICAL_PASS_WITH_DECLARED_STOP_AND_BASELINE_REDS`. B.1–B.6 oraz B.8–B.10 dostarczone; B.7 zatrzymane zgodnie z zasadą STOP. Nie jest to owner acceptance, browser acceptance ani release.
 
 ## Oświadczenie o chronionym checkoutcie (Z5/DEC-86)
 
@@ -67,20 +67,13 @@ Pełny denominator został uzyskany komendami z BLOK 0 pkt 9. Dla B.1 istotne wy
 
 ## B.1 — mapa przepięcia
 
-| Grupa                     | Zapis legacy                                                                                            | Skutek/tabela legacy                                        | Komenda runtime-v1                                                                                                      | Trasa odczytu                         | Dowód rozstrzygnięcia                                                                                                             |
-| ------------------------- | ------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| Dodanie pozycji budżetu   | POST `/api/v8/execution-control/budget/entries`; `execution-control.routes.ts:669`                      | `createBudgetEntry`; kanoniczny rejestr budżetu legacy      | `BRAK_API`; propozycja POST `/initiatives/:initiativeId/budget-entries/:entryId` z `expectedVersion`, `clientRequestId` | propozycja GET `/budget-entries`      | runtime-v1 nie ma ścieżki `/budget`; `finance-reconciliations` i `material-changes` nie są pozycją budżetu                        |
-| Zapis realizacji budżetu  | POST `/api/v8/execution-control/realizations`; `execution-control.routes.ts:737`                        | `roi_realized_values` + audit legacy                        | `BRAK_API`; propozycja POST `/initiatives/:initiativeId/realizations/:entryId`                                          | propozycja GET `/realizations`        | `results-observations` jest obserwacją akceptacji Results, a nie wpisem realizacji budżetu                                        |
-| Mitygacja RAID            | PATCH `/api/v8/execution-control/raid/:id/mitigation`; `execution-control.routes.ts:253`                | UPDATE `raid_items`                                         | `BRAK_API`; propozycja POST `/initiatives/:initiativeId/raid-mitigations/:raidItemId`                                   | propozycja GET `/raid-mitigations`    | runtime intervention wymaga management signal i opisuje case interwencji, nie aktualizację mitygacji RAID                         |
-| Akcja lane kokpitu        | POST `/manager/lanes/:laneId/problem-actions/execute`; `execution-control.routes.ts:1967`               | `executeManagerProblemAction` i jego efekty domenowe legacy | `BRAK_API`; propozycja POST `/initiatives/:initiativeId/manager-actions/:actionId`                                      | propozycja GET `/manager-actions`     | brak `problem-actions`/`lane` w runtime-v1; decision `/execution-cases/.../decide` jest innym przypadkiem                         |
-| Approve/Defer sugestii AI | POST `/manager/lanes/:laneId/suggestions/apply` i `/decisions`; `execution-control.routes.ts:1996,2052` | manager suggestions / `v8_lane_decisions`                   | `BRAK_API`; propozycja POST `/initiatives/:initiativeId/manager-suggestions/:suggestionId/review`                       | propozycja GET `/manager-suggestions` | `ai-analysis-proposals/:id/review` publikuje Initiative Card i wymaga niezależnego review; nie jest lane suggestion approve/defer |
-
-Dosłowne grepy braku:
-
-```text
-rg "budget|realization|raid.*mitigation|problem-actions|suggestions/apply|manager.*lane" server/src/routes/pmo/initiativesExecutionRuntime.routes.ts
-# brak semantycznie równoważnych rejestracji; trafienia opisowe lub inne domeny nie stanowią API tych pięciu zapisów
-```
+| Grupa                     | Zapis legacy                                                                                            | Skutek/tabela legacy                                        | Komenda runtime-v1                                                                               | Trasa odczytu              | Dowód rozstrzygnięcia       |
+| ------------------------- | ------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | -------------------------- | --------------------------- |
+| Dodanie pozycji budżetu   | POST `/api/v8/execution-control/budget/entries`; `execution-control.routes.ts:669`                      | `createBudgetEntry`; kanoniczny rejestr budżetu legacy      | POST `/initiatives/:initiativeId/budget-entries/:entryId` z `expectedVersion`, `clientRequestId` | `GET /execution-write-map` | `execution_budget_entry`    |
+| Zapis realizacji budżetu  | POST `/api/v8/execution-control/realizations`; `execution-control.routes.ts:737`                        | `roi_realized_values` + audit legacy                        | POST `/initiatives/:initiativeId/realizations/:realizationId`                                    | `GET /execution-write-map` | `execution_realization`     |
+| Mitygacja RAID            | PATCH `/api/v8/execution-control/raid/:id/mitigation`; `execution-control.routes.ts:253`                | UPDATE `raid_items`                                         | POST `/initiatives/:initiativeId/raid-mitigations/:raidItemId`                                   | `GET /execution-write-map` | `raid_mitigation`           |
+| Akcja lane kokpitu        | POST `/manager/lanes/:laneId/problem-actions/execute`; `execution-control.routes.ts:1967`               | `executeManagerProblemAction` i jego efekty domenowe legacy | POST `/initiatives/:initiativeId/manager-actions/:managerActionId`                               | `GET /execution-write-map` | `manager_execution_action`  |
+| Approve/Defer sugestii AI | POST `/manager/lanes/:laneId/suggestions/apply` i `/decisions`; `execution-control.routes.ts:1996,2052` | manager suggestions / `v8_lane_decisions`                   | POST `/initiatives/:initiativeId/manager-suggestions/:suggestionId/review`                       | `GET /execution-write-map` | `manager_suggestion_review` |
 
 ### B.1b — akcje nietknięte
 
@@ -91,12 +84,21 @@ rg "budget|realization|raid.*mitigation|problem-actions|suggestions/apply|manage
 
 ## Pozycje — tabela zbiorcza
 
-| Pozycja  | Status          | Commit             | Dowód              | Poziom         |
-| -------- | --------------- | ------------------ | ------------------ | -------------- |
-| BLOK 0   | ZROBIONE_WG_DoD | `242139eddf`       | 6/6 real PG        | TECHNICAL_PASS |
-| B.1      | ZROBIONE_WG_DoD | oczekuje na commit | tabela pięciu grup | CODE_PRESENT   |
-| B.2–B.10 | NIE_ZACZĘTE     | —                  | —                  | —              |
-| R.1–R.2  | NIE_ZACZĘTE     | —                  | —                  | —              |
+| Pozycja | Status          | Commit(y)                                                            | Dowód                                                   |
+| ------- | --------------- | -------------------------------------------------------------------- | ------------------------------------------------------- |
+| BLOK 0  | ZROBIONE_WG_DoD | `242139eddf`                                                         | 6/6 real PG                                             |
+| B.1     | ZROBIONE_WG_DoD | `e2b6a4fe2b`                                                         | mapa pięciu grup i dwóch akcji nietkniętych             |
+| B.2     | ZROBIONE_WG_DoD | `303d9022be`, `59955b5cb8`, `af0e90365f`, `d89e59831e`, `f1b65adbb6` | pięć komend przez wspólny material-command UoW          |
+| B.3     | ZROBIONE_WG_DoD | `82a57cefe4`                                                         | addytywna macierz capabilities z denial code            |
+| B.4     | ZROBIONE_WG_DoD | `a3f0911709`                                                         | jawna mapa legacy → runtime; bramka 409 bez zmian       |
+| B.5     | ZROBIONE_WG_DoD | `0d04982d4a`, `7a2aa0b650`                                           | P1 as-of oraz zgodność zastanego kontraktu              |
+| B.6     | ZROBIONE_WG_DoD | `fcd38e85bd`                                                         | pięć niezależnych rodzin KPI                            |
+| B.7     | `STOP`          | —                                                                    | brak autoryzowanego atomowego kontraktu zapisu polityki |
+| B.8     | ZROBIONE_WG_DoD | `d885499855`                                                         | provenance/completeness/value class                     |
+| B.9     | ZROBIONE_WG_DoD | `c59e980c5c`                                                         | 5 × concurrency: `[201,409]`, state 1, audit 1          |
+| B.10    | ZROBIONE_WG_DoD | `143ddcdf54`                                                         | ustalenie trzech konkurencyjnych ósemek                 |
+| R.1     | ZROBIONE_WG_DoD | `abf34bf103`                                                         | addytywny wpis w module acceptance, bez owner verdict   |
+| R.2     | ZROBIONE_WG_DoD | commit raportu                                                       | raport końcowy                                          |
 
 ## Decyzje właścicielskie — poza zakresem
 
@@ -108,13 +110,13 @@ Dowieziono P1 — wersję źródła na moment. `PostgresAsOfVersionReader` wybie
 
 ## B.6 — pięć rodzin niezależnych
 
-| Rodzina                    | Wzór                                                                             | Licznik / mianownik w teście               | Pusta populacja       |
-| -------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------ | --------------------- | --------------------- | --------------------- |
-| plan-delivery              | zadania `COMPLETED` z datą należną / wszystkie zadania z datą należną w tygodniu | 1 / 2                                      | `null`, `BRAK_ŹRÓDŁA` |
-| blocked-work               | zadania `BLOCKED` / zadania `OPEN                                                | BLOCKED                                    | COMPLETED` w tygodniu | 1 / 2                 | `null`, `BRAK_ŹRÓDŁA` |
-| milestone                  | kamienie `ACHIEVED                                                               | COMPLETED` / wszystkie kamienie w tygodniu | 1 / 2                 | `null`, `BRAK_ŹRÓDŁA` |
-| dependency                 | zależności z oboma tenantowymi końcami / zależności utworzone w tygodniu         | 1 / 1                                      | `null`, `BRAK_ŹRÓDŁA` |
-| intervention-effectiveness | weryfikacje `EFFECTIVE` / wszystkie interwencje z wynikiem weryfikacji           | 1 / 2                                      | `null`, `BRAK_ŹRÓDŁA` |
+| Rodzina                    | Wzór                                                                             | Licznik / mianownik w teście | Pusta populacja       |
+| -------------------------- | -------------------------------------------------------------------------------- | ---------------------------- | --------------------- |
+| plan-delivery              | zadania `COMPLETED` z datą należną / wszystkie zadania z datą należną w tygodniu | 1 / 2                        | `null`, `BRAK_ŹRÓDŁA` |
+| blocked-work               | zadania `BLOCKED` / zadania `OPEN`, `BLOCKED` lub `COMPLETED` w tygodniu         | 1 / 2                        | `null`, `BRAK_ŹRÓDŁA` |
+| milestone                  | kamienie `ACHIEVED` lub `COMPLETED` / wszystkie kamienie w tygodniu              | 1 / 2                        | `null`, `BRAK_ŹRÓDŁA` |
+| dependency                 | zależności z oboma tenantowymi końcami / zależności utworzone w tygodniu         | 1 / 1                        | `null`, `BRAK_ŹRÓDŁA` |
+| intervention-effectiveness | weryfikacje `EFFECTIVE` / wszystkie interwencje z wynikiem weryfikacji           | 1 / 2                        | `null`, `BRAK_ŹRÓDŁA` |
 
 Wszystkie zapytania filtrują `organization_id`; test seeduje dokładne wartości i drugi tenant nie jest włączany do licznika. Nie dodano `scheduleVariance`, `cycleTime`, `throughput` ani `blockedRate`.
 
@@ -158,9 +160,38 @@ Test równoległy uruchamia dwa żądania z `expectedVersion: 0` i różnymi `cl
 
 Ten dyżur buduje wyłącznie ósemkę osiągalnego `GET /control-kpis` z `controlKpiReadModel.ts`, nie domyka `EXE-OWN-006`. Rekomendacja: właściciel powinien wskazać jedną nazwę kanonicznej ósemki i jawne mapowanie/wycofanie dwóch pozostałych; bez tej decyzji list nie ujednolicano.
 
-## Pomiar testów — baseline w toku
+## Pomiar testów (Z24) — pełny zakres §0.4a
 
-Zastane czerwone potwierdzone przed pierwszym commitem: `execution-control.routes.test.ts` nie startuje z powodu niepełnego lokalnego mocka `auth.middleware` (brak `validateOrgMembership`); `src/components/Initiatives/__tests__/financialNarrativeBlocks.test.ts` 1 FAIL / 158 PASS; pakiet `src/services/__tests__ -t execution` trafia także 5 testów `artifactRegistryService.retry.test.ts` i daje 5 FAIL / 22 SKIPPED. Nie naprawiano cudzych testów.
+Każda komenda serwerowa miała jawnie w tej samej linii: `DATABASE_URL=postgresql://postgres:cx@127.0.0.1:5556/cx_day31 DB_TYPE=postgres NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false ENABLE_V8_GLOBAL=true`. Z powodu erraty ścieżek uruchomiono ją z cwd `server`, `--config vitest.config.ts` i filtrem `src/...`.
+
+Zakres §0.4a na HEAD: **345 PASS / 6 FAIL / 2567 SKIPPED oraz 5 suite setup FAIL**. Wszystkie FAIL/setup FAIL wymieniono niżej i sklasyfikowano jako ZASTANE; WPROWADZONE: **0**.
+
+| Zakres HEAD                              | PASS |        FAIL | SKIPPED | Klasyfikacja                                                                        |
+| ---------------------------------------- | ---: | ----------: | ------: | ----------------------------------------------------------------------------------- |
+| `routes/pmo/__tests__`                   |   24 |           0 |       0 | zielone po naprawie zgodności zastanych stubów P1                                   |
+| `domain/initiatives-execution/__tests__` |   14 |           0 |       0 | zielone                                                                             |
+| `services/executionControl/__tests__`    |    3 |           0 |       0 | zielone                                                                             |
+| middleware legacy 409                    |   24 |           0 |       0 | zielone; 409 zachowane                                                              |
+| v8 `execution-control.routes.test.ts`    |    0 |  suite fail |       0 | ZASTANE: mock auth nie eksportuje `validateOrgMembership`                           |
+| `services/__tests__ -t execution`        |   51 | 5 + 2 suite |    1383 | ZASTANE: 5 `artifactRegistryService.retry`; wymagane zewnętrzne fixture closure/PDF |
+| `executionGraphService.pg.test.ts`       |   11 |           0 |       0 | zielone RealDB                                                                      |
+| `executionSignalIngress.pg.test.ts`      |    2 |           0 |       0 | zielone RealDB                                                                      |
+| `routes/__tests__ -t execution`          |    1 |     2 suite |    1184 | ZASTANE: JWT secret mismatch i błędna ścieżka `server/server/...`                   |
+| frontend `Execution/__tests__`           |   30 |           0 |       0 | zielone; disabled controls zachowane                                                |
+| frontend reports-intelligence            |   27 |           0 |       0 | zielone                                                                             |
+| frontend `Initiatives/__tests__`         |  158 |           1 |       0 | ZASTANE: `financialNarrativeBlocks.test.ts`                                         |
+
+Nowy plik kontraktowy: `17/17 PASS`, w tym 5 komend, replay/CAS/tenant/capability, P1 as-of, pięć KPI, provenance i pięć prób współbieżności. W porównaniu z pomiarem markera nie powstał nowy czerwony test; pełny zakres ujawnił przejściowo trzy niezgodności zastanych stubów rekonstrukcji, naprawione w `7a2aa0b650`, po czym oba dotknięte pakiety dały `24/24` i `14/14` PASS. Nie usunięto ani nie osłabiono żadnego `describe`/`it`; zmieniony zastany test KPI tylko rozróżnia zapytanie polityki w mocku.
+
+`npm run typecheck` pozostaje czerwony na 11 zastanych błędach poza zakresem (m.in. `registerInitiative`, admin domains, betaGate/rootDir, Results auth type, meeting/signals); brak błędu z plików Day 31.
+
+## Higiena danych (EXE-PF-002)
+
+Końcowy niezależny readback: `ie_aggregate_state=0`, `ie_audit_events=0`, `ie_command_receipts=0`, `organizations=0` dla prefiksu `day31-%`.
+
+## Kontrakt dla osobnego toru frontendowego
+
+Frontend może korzystać wyłącznie z tras i nazw komend wymienionych w B.1 oraz z `GET /execution-write-map` i addytywnego `executionWrites` w capabilities. Każda mutacja wymaga `expectedVersion` i `clientRequestId`; 409 oznacza konflikt CAS, replay tego samego klucza jest idempotentny, a brak zdolności/obcy tenant nie może ujawniać istnienia rekordu. Ten dyżur nie autoryzuje zdjęcia `disabled`; decyzja należy do osobnego prototypu/polish-passu.
 
 ## Znaleziska (nie naprawiane)
 
@@ -173,4 +204,8 @@ Zastane czerwone potwierdzone przed pierwszym commitem: `execution-control.route
 
 ## Bezpieczniki
 
-Front `src/**`, middleware bramki, Gateway, montaż routerów, flagi i E-O3/E-O4/E-O5 pozostają nietknięte.
+Komenda z Bloku 7 pkt 2 zwróciła pusty diff dla: frontu `src/**`, middleware bramki, Gateway, montażu routerów, flag, effective access/capability oraz kontrolera Execution. `git diff --check`: exit 0. E-O3/E-O4/E-O5 pozostają nietknięte. Nie dodano migracji `20261200-09`, progów, wag, SLA ani drugiego writera. Zero push/merge/rebase/deploy.
+
+## Sprzątanie
+
+`docker rm -fv cx-day31-pg` zakończyło się powodzeniem. Końcowe `docker ps -a --filter name=^/cx-day31-pg$` oraz `docker volume ls --filter name=cx-day31` zwróciły puste wyniki. Nie użyto `docker volume prune` i nie dotknięto żadnego cudzego kontenera ani wolumenu.
