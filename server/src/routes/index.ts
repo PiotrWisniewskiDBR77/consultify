@@ -15,7 +15,6 @@
 
 // Domain-aggregated routes
 export { default as aiDomainRoutes } from './ai/index.js';
-export { default as assessmentDomainRoutes } from './assessment/index.js';
 export { default as billingDomainRoutes } from './billing/index.js';
 export { default as integrationsDomainRoutes } from './integrations/index.js';
 export { default as notificationsDomainRoutes } from './notifications/index.js';
