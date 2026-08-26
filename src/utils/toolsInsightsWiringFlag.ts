@@ -19,8 +19,10 @@
  * this flag gates only whether `DiscoveryToolsHub`'s bootstrap additionally
  * fetches and merges those rows into the aggregate Outputs/Insights list, a
  * layout-affecting change (new row type, new column-icon mapping) per
- * CLAUDE.md's "ZAKAZ MASOWEGO WŁĄCZANIA" rule — ships OFF until the owner
- * accepts a clean screenshot.
+ * CLAUDE.md's "ZAKAZ MASOWEGO WŁĄCZANIA" rule — shipped OFF until the owner
+ * accepted a clean screenshot. Piotr ZAAKCEPTOWAŁ na zrzutach dev-render
+ * (2026-08-27) — default flipped to ON (see `ideaInspectorRightRailFlag.ts`
+ * DEC-90, commit 1e8bd6b7f4, for the identical flip pattern).
  *
  * Resolution order (highest wins), identical contract to
  * `criterionWorkspaceV2Flag.ts` / `initiativesBulkStubFlag.ts` /
@@ -28,7 +30,9 @@
  *   1. URL query `?ff_toolsInsightsWiring=1|0`
  *   2. `localStorage["ff.tools_insights_wiring"]`
  *   3. `import.meta.env.VITE_TOOLS_INSIGHTS_WIRING`
- *   4. Default: OFF (fail-closed — unreleased, no owner accept yet).
+ *   4. Default: ON (flip po akcepcie właściciela 27.08). The outer catch
+ *      below still resolves to OFF on any read error, unchanged — only the
+ *      bottom of the fallback chain changed.
  *
  * Resolution result is cached at module scope — call
  * `resetToolsInsightsWiringFlagCache` between reads in tests.
@@ -76,12 +80,14 @@ function readLocalStorage(): boolean | null {
 let cached: boolean | null = null;
 
 /**
- * Resolution: query > localStorage > env > default (OFF, fail-closed — no
- * owner accept yet). Any read error along the chain resolves to the default
- * rather than throwing, so a hostile/locked-down `window` never blocks the
- * screen from rendering. Result is cached at module scope — call
- * `resetToolsInsightsWiringFlagCache` to force a re-read (tests, or after an
- * in-session override changes query/localStorage).
+ * Resolution: query > localStorage > env > default (ON since the
+ * 2026-08-27 owner accept). Any read error along the chain still resolves
+ * to OFF rather than throwing — the catch's fail-closed semantics are
+ * untouched by the flip, so a hostile/locked-down `window` never
+ * accidentally reveals the wiring through an error path. Result is cached
+ * at module scope — call `resetToolsInsightsWiringFlagCache` to force a
+ * re-read (tests, or after an in-session override changes
+ * query/localStorage).
  */
 export function isToolsInsightsWiringEnabled(): boolean {
   if (cached !== null) return cached;
@@ -90,7 +96,7 @@ export function isToolsInsightsWiringEnabled(): boolean {
     const fromQuery = readQueryOverride();
     const fromLs = fromQuery === null ? readLocalStorage() : null;
     const fromEnv = readEnvFlag();
-    resolved = fromQuery ?? fromLs ?? fromEnv ?? false;
+    resolved = fromQuery ?? fromLs ?? fromEnv ?? true;
   } catch {
     resolved = false;
   }

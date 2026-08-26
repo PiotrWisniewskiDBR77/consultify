@@ -1,4 +1,128 @@
 {
+  "chatSignals": {
+    "untitled": "إشارة بلا عنوان",
+    "severity": {
+      "info": "معلومة",
+      "warning": "تحذير",
+      "critical": "حرج",
+      "blocker": "معيق"
+    },
+    "domain": {
+      "EXECUTION": "التنفيذ",
+      "DECISION": "القرارات",
+      "RESULTS": "النتائج",
+      "FINANCE": "المالية",
+      "ASSESSMENT": "التقييم",
+      "MEETINGS": "الاجتماعات",
+      "MATERIALS": "المواد",
+      "GOVERNANCE": "الحوكمة"
+    },
+    "origin": {
+      "DETERMINISTIC": "قاعدة",
+      "AGGREGATED": "مجمّع",
+      "INTERPRETED": "تفسير الذكاء الاصطناعي"
+    },
+    "refType": {
+      "task": "مهمة",
+      "decision": "قرار",
+      "initiative": "مبادرة",
+      "project": "مشروع",
+      "program": "برنامج"
+    },
+    "status": {
+      "OPEN": "مفتوح"
+    },
+    "age": {
+      "now": "الآن",
+      "minutes": "قبل {{count}} دقيقة",
+      "hours": "قبل {{count}} ساعة",
+      "yesterday": "أمس",
+      "days": "قبل {{count}} يوم"
+    },
+    "destination": {
+      "forbidden": "لا توجد صلاحية لفتح هذا الكائن",
+      "unavailable": "لا يوجد مسار إلى هذا الكائن"
+    },
+    "mine": "لي",
+    "columns": {
+      "signal": "الإشارة",
+      "domain": "النطاق",
+      "severity": "الخطورة",
+      "source": "المصدر",
+      "age": "العمر",
+      "status": "الحالة"
+    },
+    "filters": {
+      "all": "الكل",
+      "mine": "لي فقط",
+      "mineHint": "(محليًا)",
+      "warning": "≥ تحذير",
+      "critical": "≥ حرج"
+    },
+    "action": {
+      "open": "فتح",
+      "refresh": "تحديث",
+      "retry": "إعادة المحاولة",
+      "loadMore": "عرض الأقدم",
+      "snooze": "تأجيل",
+      "snoozePreset": {
+        "1h": "ساعة واحدة",
+        "4h": "4 ساعات",
+        "tomorrow": "حتى الغد",
+        "week": "أسبوع"
+      },
+      "mute": "كتم النوع",
+      "dismiss": "تجاهل",
+      "copyId": "نسخ معرّف الإشارة",
+      "muteConfirm": "لا يمكن التراجع عن هذا الإجراء داخل التطبيق. هل تريد كتم هذا النوع؟"
+    },
+    "empty": {
+      "producerOff": "منتج الإشارات معطّل — إلى أن يتم تفعيله ستبقى هذه القائمة فارغة بغض النظر عن حالة المشروع.",
+      "unknown": "لا توجد إشارات مفتوحة. لا نعرف ما إذا كان المنتج مفعّلاً — تحقق باستخدام تحديث.",
+      "good": "لا توجد إشارات مفتوحة. شروط القواعد غير مستوفاة — وهذه حالة جيدة."
+    },
+    "error": {
+      "load": "تعذّر التحقق من الإشارات",
+      "action": "تعذّر تنفيذ الإجراء",
+      "demoBlocked": "هذا الإجراء محظور في وضع العرض التجريبي",
+      "gone": "لم تعد هذه الإشارة موجودة — قم بتحديث القائمة"
+    },
+    "notice": {
+      "snooze": "تم تأجيل الإشارة",
+      "snoozeUntil": "تم تأجيل الإشارة حتى {{until}}",
+      "dismiss": "تم تجاهل الإشارة",
+      "mute": "تم كتم نوع الإشارة",
+      "refreshed": "تم التحديث"
+    },
+    "throttle": "متاح خلال {{count}} ث",
+    "preview": {
+      "details": "التفاصيل",
+      "evidence": "كيف عرفنا ذلك",
+      "noEvidence": "لا توجد أدلة محفوظة",
+      "provenance": "مصدر الذكاء الاصطناعي",
+      "noProvenance": "لا يوجد مصدر لتفسير الذكاء الاصطناعي"
+    },
+    "rule": {
+      "signals.exec.task.overdue.title": "مهمة متأخرة",
+      "signals.exec.task.overdue.body": "تأخرت المهمة {{value}} يوم.",
+      "signals.exec.task.due_soon_not_started.title": "مهمة لم تبدأ واقترب موعدها",
+      "signals.exec.task.due_soon_not_started.body": "تبقّى {{value}} يوم على الموعد النهائي.",
+      "signals.exec.task.blocked_stale.title": "مهمة معطّلة بلا تحديث",
+      "signals.exec.task.blocked_stale.body": "لا يوجد تحديث منذ {{value}} يوم.",
+      "signals.exec.initiative.no_baseline.title": "مبادرة بلا خط أساس",
+      "signals.exec.initiative.no_baseline.body": "لا يوجد للمبادرة النشطة خط أساس للجدول الزمني.",
+      "signals.dec.pending_stale.title": "قرار معلّق لفترة طويلة",
+      "signals.dec.pending_stale.body": "القرار معلّق منذ {{value}} يوم.",
+      "signals.dec.blocking_dependents.title": "القرار يعيق كائنات تابعة",
+      "signals.dec.blocking_dependents.body": "يعيق القرار {{value}} كائنًا.",
+      "signals.res.kpi_threshold_breached.title": "تجاوز مؤشر الأداء الرئيسي للحد",
+      "signals.res.kpi_threshold_breached.body": "تتطلب قيمة مؤشر الأداء الرئيسي اتخاذ إجراء.",
+      "signals.fin.budget_overspend.title": "تجاوز الميزانية",
+      "signals.fin.budget_overspend.body": "تجاوز الإنفاق الفعلي الميزانية المعتمدة.",
+      "signals.fin.benefit_not_realized.title": "لم يتحقق العائد في موعده",
+      "signals.fin.benefit_not_realized.body": "مرّ تاريخ التحقق دون تأكيد."
+    }
+  },
   "common": {
     "save": "حفظ",
     "cancel": "إلغاء",

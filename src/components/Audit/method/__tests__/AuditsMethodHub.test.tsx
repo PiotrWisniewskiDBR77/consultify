@@ -210,18 +210,20 @@ describe('AuditsMethodHub', () => {
     clearPersistentCommandId(AUDIT_START_COMMAND_NAMESPACE, fingerprint);
   });
 
-  it('renders exactly five tabs in the required order — second tab reads "Sessions", not "Processes"', async () => {
+  // flip po akcepcie właściciela 27.08: ff_auditsFindingsAndReportView now
+  // defaults ON (was OFF), so the 6th "Findings" tab is present by default.
+  it('renders exactly six tabs in the required order — second tab reads "Sessions", not "Processes"', async () => {
     setupApiMocks();
     renderHub();
     await waitFor(() => expect(mockedListPacks).toHaveBeenCalled());
 
-    const tabButtons = ['Library', 'Sessions', 'Outputs', 'Reports', 'Initiatives'].map((label) =>
-      screen.getByRole('tab', { name: label })
+    const tabButtons = ['Library', 'Sessions', 'Outputs', 'Reports', 'Findings', 'Initiatives'].map(
+      (label) => screen.getByRole('tab', { name: label })
     );
-    expect(tabButtons).toHaveLength(5);
-    // Order in the DOM must match the required Library·Sessions·Outputs·Reports·Initiatives order.
+    expect(tabButtons).toHaveLength(6);
+    // Order in the DOM must match the required Library·Sessions·Outputs·Reports·Findings·Initiatives order.
     const allTabs = screen.getAllByRole('tab').map((b) => b.textContent);
-    expect(allTabs).toEqual(['Library', 'Sessions', 'Outputs', 'Reports', 'Initiatives']);
+    expect(allTabs).toEqual(['Library', 'Sessions', 'Outputs', 'Reports', 'Findings', 'Initiatives']);
     // "Processes" must not leak anywhere as a tab label.
     expect(screen.queryByRole('tab', { name: 'Processes' })).toBeNull();
   });

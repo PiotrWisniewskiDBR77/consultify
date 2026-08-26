@@ -9,7 +9,8 @@
  * METODY `Api.*` (ta sama zasada co tools-sesja-wyjscie.tsx — CLAUDE.md #7:
  * zrzut PRZED Piotrem, bez logowania, bez backendu).
  *
- * URL: /tools-outputs-insights-tab.html?theme=light|dark
+ * URL: /tools-outputs-insights-tab.html?theme=light|dark&lang=pl|en
+ * (language default 'pl' — set in tools-outputs-insights-tab-main.tsx)
  */
 import React from 'react';
 

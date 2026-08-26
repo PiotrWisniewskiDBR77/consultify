@@ -95,4 +95,44 @@ describe('StandardPreview', () => {
     map.A();
     expect(actions.resolutions![0].onClick).toHaveBeenCalled();
   });
+
+  // FIX-1 (dyżur 26 chat-signals-front, odbiór P0.1) — `openDisabledReason`
+  // regression: musi być addytywne, zero zmian dla istniejących wywołań bez
+  // żadnego z dwóch propów, i wyłączony przycisk z powodem, gdy podany sam.
+  describe('openDisabledReason (FIX-1)', () => {
+    it('active: onOpenFull present renders an enabled Open button, ignoring openDisabledReason', () => {
+      const onOpenFull = vi.fn();
+      render(
+        <StandardPreview
+          title="X"
+          onOpenFull={onOpenFull}
+          openDisabledReason="Should be ignored"
+        />
+      );
+      const button = screen.getByText('Open').closest('button');
+      expect(button).not.toBeNull();
+      expect(button).not.toBeDisabled();
+      button && button.click();
+      expect(onOpenFull).toHaveBeenCalled();
+    });
+
+    it('NO_ROUTE: no onOpenFull + openDisabledReason renders a disabled Open button with the reason as tooltip', () => {
+      render(<StandardPreview title="X" openDisabledReason="Brak trasy do tego obiektu" />);
+      const button = screen.getByText('Open').closest('button');
+      expect(button).toBeDisabled();
+      expect(button).toHaveAttribute('title', 'Brak trasy do tego obiektu');
+    });
+
+    it('FORBIDDEN: no onOpenFull + openDisabledReason renders a disabled Open button with a different reason', () => {
+      render(<StandardPreview title="X" openDisabledReason="Brak uprawnień do obiektu" />);
+      const button = screen.getByText('Open').closest('button');
+      expect(button).toBeDisabled();
+      expect(button).toHaveAttribute('title', 'Brak uprawnień do obiektu');
+    });
+
+    it('null/neither prop: no onOpenFull and no openDisabledReason renders nothing (unchanged legacy behavior)', () => {
+      render(<StandardPreview title="X" />);
+      expect(screen.queryByText('Open')).not.toBeInTheDocument();
+    });
+  });
 });

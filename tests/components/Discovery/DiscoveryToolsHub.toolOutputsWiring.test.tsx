@@ -5,8 +5,10 @@
  * tab bootstrap never called `Api.listToolOutputs()` (the canonical
  * `tool_outputs` snapshot, migration 946), so an approved tool result never
  * appeared in the module's own aggregate list — only inside that one
- * session's own workspace. Gated behind `ff_toolsInsightsWiring`
- * (default OFF, fail-closed) per CLAUDE.md's "ZAKAZ MASOWEGO WŁĄCZANIA" rule.
+ * session's own workspace. Gated behind `ff_toolsInsightsWiring` — default
+ * flipped OFF -> ON on 2026-08-27 (owner accept on dev-render screenshots)
+ * per CLAUDE.md's "ZAKAZ MASOWEGO WŁĄCZANIA" rule, fail-closed on read
+ * errors.
  *
  * Reuses the same mount/mocking scaffold as `DiscoveryToolsHub.fala1.test.tsx`
  * (StandardTable stubbed to a thin prop-capturing renderer).
@@ -169,7 +171,11 @@ describe('DiscoveryToolsHub — DEC-118 repair #1: tool_outputs wiring behind ff
     resetToolsInsightsWiringFlagCache();
   });
 
-  it('flag OFF (default): never calls Api.listToolOutputs and the row never appears', async () => {
+  // flip po akcepcie właściciela 27.08: default was OFF, now ON — force OFF
+  // via the localStorage kill switch to keep this regression coverage.
+  it('flag OFF (localStorage override): never calls Api.listToolOutputs and the row never appears', async () => {
+    window.localStorage.setItem('ff.tools_insights_wiring', 'off');
+    resetToolsInsightsWiringFlagCache();
     render(
       <MemoryRouter initialEntries={['/discovery-tools']}>
         <DiscoveryToolsHub initialTab="outputs" />
@@ -181,10 +187,9 @@ describe('DiscoveryToolsHub — DEC-118 repair #1: tool_outputs wiring behind ff
     expect(screen.queryByTestId('row-out-1')).not.toBeInTheDocument();
   });
 
-  it('flag ON: calls Api.listToolOutputs and merges the row into the Outputs tab as kind "tool_output"', async () => {
-    window.localStorage.setItem('ff.tools_insights_wiring', 'on');
-    resetToolsInsightsWiringFlagCache();
-
+  // flip po akcepcie właściciela 27.08: this is now the DEFAULT path — no
+  // explicit localStorage override needed for the flag to resolve ON.
+  it('flag ON (default, no explicit override): calls Api.listToolOutputs and merges the row into the Outputs tab as kind "tool_output"', async () => {
     render(
       <MemoryRouter initialEntries={['/discovery-tools']}>
         <DiscoveryToolsHub initialTab="outputs" />

@@ -1,15 +1,17 @@
 /**
  * AuditProcessesTab — overdue "Termin" signal (expert panel gap pack,
  * 2026-08-26, item 4): "na liście sesji trzy z sześciu są po terminie i nic
- * tego nie pokazuje". Behind `ff_auditsScaleAndPolish` (default OFF,
- * fail-closed) — see `src/utils/auditsScaleAndPolishFlag.ts`.
+ * tego nie pokazuje". Behind `ff_auditsScaleAndPolish` — default flipped
+ * OFF -> ON on 2026-08-27 (owner accept on dev-render screenshots) — see
+ * `src/utils/auditsScaleAndPolishFlag.ts`.
  *
  * Coverage:
- *   * Flag OFF (default) → plain formatted date, no "Po terminie" chip
- *     (byte-identical to before this pack).
- *   * Flag ON → a past-due, non-closed program shows the "Po terminie"
- *     chip; a past-due but `closed` program does NOT (finished work isn't a
- *     risk); a future-due program shows the plain date.
+ *   * Flag ON (default, flip po akcepcie właściciela 27.08) → a past-due,
+ *     non-closed program shows the "Po terminie" chip; a past-due but
+ *     `closed` program does NOT (finished work isn't a risk); a future-due
+ *     program shows the plain date.
+ *   * Flag OFF (localStorage override) → plain formatted date, no "Po
+ *     terminie" chip (pre-flip behavior still reachable per-session).
  */
 import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
@@ -43,7 +45,10 @@ describe('AuditProcessesTab — overdue "Termin" signal (ff_auditsScaleAndPolish
     window.localStorage.removeItem('ff.audits_scale_and_polish');
   });
 
-  it('flag OFF (default): renders the plain date, no "Po terminie" chip', async () => {
+  // flip po akcepcie właściciela 27.08: default was OFF, now ON — force OFF
+  // via the localStorage kill switch to keep this regression coverage.
+  it('flag OFF (localStorage override): renders the plain date, no "Po terminie" chip', async () => {
+    window.localStorage.setItem('ff.audits_scale_and_polish', '0');
     const program = makeProgram({ plannedEnd: '2020-01-01', lifecycleState: 'fieldwork' });
     render(
       <AuditProcessesTab
@@ -59,7 +64,7 @@ describe('AuditProcessesTab — overdue "Termin" signal (ff_auditsScaleAndPolish
     expect(screen.queryByText('Po terminie')).toBeNull();
   });
 
-  it('flag ON: an overdue, non-closed program shows the "Po terminie" chip', async () => {
+  it('flag ON (default): an overdue, non-closed program shows the "Po terminie" chip', async () => {
     window.localStorage.setItem('ff.audits_scale_and_polish', '1');
     const program = makeProgram({ plannedEnd: '2020-01-01', lifecycleState: 'fieldwork' });
     render(
@@ -76,7 +81,7 @@ describe('AuditProcessesTab — overdue "Termin" signal (ff_auditsScaleAndPolish
     expect(screen.getByText('Po terminie')).toBeInTheDocument();
   });
 
-  it('flag ON: an overdue but CLOSED program does not show the chip (finished, not a risk)', async () => {
+  it('flag ON (default): an overdue but CLOSED program does not show the chip (finished, not a risk)', async () => {
     window.localStorage.setItem('ff.audits_scale_and_polish', '1');
     const program = makeProgram({ plannedEnd: '2020-01-01', lifecycleState: 'closed' });
     render(
@@ -93,7 +98,7 @@ describe('AuditProcessesTab — overdue "Termin" signal (ff_auditsScaleAndPolish
     expect(screen.queryByText('Po terminie')).toBeNull();
   });
 
-  it('flag ON: a future due date shows the plain date, not the chip', async () => {
+  it('flag ON (default): a future due date shows the plain date, not the chip', async () => {
     window.localStorage.setItem('ff.audits_scale_and_polish', '1');
     const farFuture = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
     const program = makeProgram({ plannedEnd: farFuture, lifecycleState: 'fieldwork' });
