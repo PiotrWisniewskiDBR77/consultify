@@ -8485,6 +8485,11 @@
     "delete2": "Usuń",
     "watchers2": "Obserwatorzy",
     "noWatchersForThisInitiativeYet2": "Brak obserwatorów dla tej inicjatywy.",
+    "watchersSection": {
+      "startWatching": "Obserwuj",
+      "stopWatching": "Przestań obserwować",
+      "you": "Ty"
+    },
     "usedInBacklinks2": "Użyte w (powiązania)",
     "noLinksYet2": "Brak powiązań",
     "presentation2": "Prezentacja",

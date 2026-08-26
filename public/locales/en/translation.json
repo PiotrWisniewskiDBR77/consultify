@@ -9167,6 +9167,11 @@
     "delete2": "Delete",
     "watchers2": "Watchers",
     "noWatchersForThisInitiativeYet2": "No watchers for this initiative yet.",
+    "watchersSection": {
+      "startWatching": "Watch",
+      "stopWatching": "Stop watching",
+      "you": "You"
+    },
     "usedInBacklinks2": "Used in (backlinks)",
     "noLinksYet2": "No links yet",
     "presentation2": "Presentation",
