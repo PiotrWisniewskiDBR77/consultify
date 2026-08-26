@@ -45,6 +45,7 @@ import {
   type AuditProgramSummary,
   type AuditCriterionSummary,
 } from '../auditsMethodApi';
+import { AuditCriteriaBrowser } from './AuditCriteriaBrowser';
 
 export interface AuditProcessesTabProps {
   programs: AuditProgramSummary[];
@@ -89,10 +90,15 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
   const [criteria, setCriteria] = useState<AuditCriterionSummary[]>([]);
   const [criteriaError, setCriteriaError] = useState<string | null>(null);
   const scaleAndPolishEnabled = React.useMemo(() => isAuditsScaleAndPolishEnabled(), []);
+  const [criteriaBrowserOpen, setCriteriaBrowserOpen] = useState(false);
 
   useEffect(() => {
     if (initialSelectedId) setSelectedId(initialSelectedId);
   }, [initialSelectedId]);
+
+  useEffect(() => {
+    setCriteriaBrowserOpen(false);
+  }, [selectedId]);
 
   useEffect(() => {
     if (!selectedId) {
@@ -312,6 +318,20 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
       ]
     : undefined;
 
+  if (scaleAndPolishEnabled && criteriaBrowserOpen && selectedProgram) {
+    return (
+      <AuditCriteriaBrowser
+        programId={selectedProgram.id}
+        programName={selectedProgram.name}
+        criteria={flatCriteria}
+        loading={detailLoading}
+        error={criteriaError}
+        isPolish={isPolish}
+        onBack={() => setCriteriaBrowserOpen(false)}
+      />
+    );
+  }
+
   return (
     <div className="flex h-full min-h-0">
       <div className="flex-1 min-w-0 overflow-auto p-4">
@@ -403,8 +423,20 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
               )}
             </div>
             <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5" data-testid="audit-criteria-navigator">
-              <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
-                {isPolish ? 'Kryteria — otwórz warsztat' : 'Criteria — open workspace'}
+              <div className="mb-1.5 flex items-center justify-between gap-2">
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
+                  {isPolish ? 'Kryteria — otwórz warsztat' : 'Criteria — open workspace'}
+                </div>
+                {scaleAndPolishEnabled && flatCriteria.length > 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => setCriteriaBrowserOpen(true)}
+                    data-testid="open-criteria-browser"
+                    className="shrink-0 text-[11px] font-medium text-c-text-secondary underline decoration-c-border-subtle underline-offset-2 hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus rounded"
+                  >
+                    {isPolish ? 'Zobacz wszystkie' : 'View all'} ({flatCriteria.length})
+                  </button>
+                ) : null}
               </div>
               {criteriaError ? (
                 <p className="text-xs text-c-danger">{criteriaError}</p>
