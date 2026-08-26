@@ -18,6 +18,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { resetToolsInsightsWiringFlagCache } from '@/utils/toolsInsightsWiringFlag';
 
+const navigateMock = vi.fn();
+vi.mock('react-router-dom', async (importOriginal) => {
+  const actual = await importOriginal<any>();
+  return { ...actual, useNavigate: () => navigateMock };
+});
+
 const getKnownToolsMock = vi.fn();
 const listToolSessionsMock = vi.fn();
 const getAssessmentReportsMock = vi.fn();
@@ -88,6 +94,18 @@ vi.mock('@/components/standard', async (importOriginal) => {
             <div key={row.id} data-testid={`row-${row.id}`}>
               <span>{row.name}</span>
               <span data-testid={`row-${row.id}-kind`}>{row.outputKind}</span>
+              {(props.rowActions?.(row) || []).flatMap((block: any) =>
+                (block.actions || []).map((action: any) => (
+                  <button
+                    key={`${row.id}-${action.id}`}
+                    data-testid={`row-${row.id}-action-${action.id}`}
+                    disabled={!!action.disabled}
+                    onClick={action.onClick}
+                  >
+                    {action.label}
+                  </button>
+                ))
+              )}
             </div>
           ))}
         </div>
@@ -95,6 +113,7 @@ vi.mock('@/components/standard', async (importOriginal) => {
     },
   };
 });
+
 
 import { DiscoveryToolsHub } from '@/components/Discovery/DiscoveryToolsHub';
 
@@ -200,5 +219,89 @@ describe('DiscoveryToolsHub — DEC-118 repair #1: tool_outputs wiring behind ff
       expect(screen.getByTestId('row-out-1')).toBeInTheDocument();
     });
     expect(screen.queryByTestId('row-out-0-superseded')).not.toBeInTheDocument();
+  });
+});
+
+describe('DiscoveryToolsHub — DEC-118 repair #6: "Create report" enters Report Builder with a pre-selected TOOL source', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    standardTableMounts.length = 0;
+    window.localStorage.clear();
+    window.localStorage.setItem('ff.tools_insights_wiring', 'on');
+    resetToolsInsightsWiringFlagCache();
+    getKnownToolsMock.mockResolvedValue({ items: [buildKnownTool()] });
+    listToolSessionsMock.mockResolvedValue({ items: [], total: 0, limit: 0, offset: 0 });
+    getAssessmentReportsMock.mockResolvedValue([]);
+    listToolOutputsMock.mockResolvedValue({ outputs: [SAMPLE_TOOL_OUTPUT] });
+  });
+
+  afterEach(() => {
+    window.localStorage.clear();
+    resetToolsInsightsWiringFlagCache();
+  });
+
+  it('navigates to /reports/builder with sourceType=TOOL and the originating tool session id', async () => {
+    render(
+      <MemoryRouter initialEntries={['/discovery-tools']}>
+        <DiscoveryToolsHub initialTab="outputs" />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('row-out-1')).toBeInTheDocument();
+    });
+    // Query fresh (not `find*`, which could hand back a reference captured
+    // before the bootstrap fetch resolved and the row re-rendered) after the
+    // row has settled, so `.click()` fires on the node actually in the DOM.
+    const button = screen.getByTestId('row-out-1-action-create-report');
+    expect(button).not.toBeDisabled();
+    button.click();
+
+    await waitFor(() => {
+      expect(navigateMock).toHaveBeenCalledTimes(1);
+    });
+    const [target] = navigateMock.mock.calls[0];
+    expect(String(target)).toContain('/reports/builder?');
+    const search = new URLSearchParams(String(target).split('?')[1] || '');
+    expect(search.get('new')).toBe('true');
+    expect(search.get('sourceType')).toBe('TOOL');
+    expect(search.get('sourceId')).toBe(SAMPLE_TOOL_OUTPUT.toolSessionId);
+  });
+
+  it('is disabled for a non-approved tool output (in_review)', async () => {
+    listToolOutputsMock.mockResolvedValue({
+      outputs: [{ ...SAMPLE_TOOL_OUTPUT, status: 'in_review' }],
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/discovery-tools']}>
+        <DiscoveryToolsHub initialTab="outputs" />
+      </MemoryRouter>
+    );
+
+    const button = await screen.findByTestId('row-out-1-action-create-report');
+    expect(button).toBeDisabled();
+  });
+
+  it('is disabled for a non-tool_output row (e.g. an assessment report)', async () => {
+    listToolOutputsMock.mockResolvedValue({ outputs: [] });
+    getAssessmentReportsMock.mockResolvedValue([
+      {
+        id: 'ar-1',
+        name: 'Assessment report',
+        status: 'APPROVED',
+        createdAt: new Date().toISOString(),
+        assessmentId: 'assessment-1',
+      },
+    ]);
+
+    render(
+      <MemoryRouter initialEntries={['/discovery-tools']}>
+        <DiscoveryToolsHub initialTab="outputs" />
+      </MemoryRouter>
+    );
+
+    const button = await screen.findByTestId('row-ar-1-action-create-report');
+    expect(button).toBeDisabled();
   });
 });

@@ -4874,6 +4874,45 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                                 }
                               },
                             },
+                            // DEC-118 repair #6: real entry from an approved tool_output
+                            // into Report Builder with a pre-selected TOOL source — the
+                            // backend (GET /report-builder/sources/tool) and the wizard's
+                            // own SourceSelectStep already support it (ReportBuilderView
+                            // reads ?sourceType=&sourceId= from the URL); this was simply
+                            // never wired from the Tools module. Always visible per §9.2
+                            // (never a silent omission), disabled with a reason when the
+                            // row isn't an approved tool output.
+                            {
+                              id: 'create-report',
+                              label: isPolish ? 'Utwórz raport' : 'Create report',
+                              icon: FileText,
+                              disabled: !(
+                                (row as any)?.outputKind === 'tool_output' &&
+                                String((row as any)?.statusRaw || '').toLowerCase() === 'approved'
+                              ),
+                              description:
+                                (row as any)?.outputKind === 'tool_output' &&
+                                String((row as any)?.statusRaw || '').toLowerCase() === 'approved'
+                                  ? undefined
+                                  : isPolish
+                                    ? 'Dostępne dla zatwierdzonego wyniku narzędzia'
+                                    : 'Available for an approved tool output',
+                              onClick: () => {
+                                const sessionId = String(
+                                  (row as any)?.sourceId ||
+                                    (row as any)?._fullData?.toolSessionId ||
+                                    ''
+                                );
+                                if (!sessionId) return;
+                                const qs = new URLSearchParams({
+                                  new: 'true',
+                                  sourceType: 'TOOL',
+                                  sourceId: sessionId,
+                                  sourceName: String(row?.name || ''),
+                                });
+                                navigate(`${ROUTES.REPORTS.BUILDER}?${qs.toString()}`);
+                              },
+                            },
                           ],
                         },
                         // Blok 4 — FIXED BOTTOM MANIFEST (kanon §9.2): slot zawsze
