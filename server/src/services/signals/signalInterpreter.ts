@@ -298,5 +298,9 @@ export async function runInterpretationForOrganization(params: {
                        AND d.signal_id::text=source.id AND d.status='OPEN' AND d.origin='DETERMINISTIC'))`,
     [params.organizationId]
   );
-  return finish(errors.length ? 'PARTIAL' : 'OK', opened, errors, randomUUID());
+  // FIX-4 (day18 layer-1 acceptance): no generic aiRunLedgerService record exists
+  // yet for this interpreter run, so ai_run_id stays null — an honest absence
+  // beats a randomUUID() that looks like a real AI-run reference but points
+  // at nothing.
+  return finish(errors.length ? 'PARTIAL' : 'OK', opened, errors, null);
 }
