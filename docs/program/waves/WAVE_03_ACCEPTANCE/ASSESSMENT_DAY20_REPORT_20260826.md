@@ -51,7 +51,7 @@ Dowód wykonano przez TCP wewnątrz kontenera; mapowanie hosta potwierdzone prze
 | A.1     | CZĘŚCIOWO   | `6f45724eeb`           | `Gateway.ts:639,641` → deklaracje routerów; 31 v1 + 41 v2 znalezione                                 | inwentarz statyczny; brak pełnego testu HTTP 72 tras                            |
 | A.2     | STOP        | —                      | kanon v2 potwierdzony, ale bez pełnego A.1 nie usuwam kodu                                           | brak zmian produkcyjnych                                                        |
 | A.3     | CZĘŚCIOWO   | `6f45724eeb`           | wywołania klienta zmierzone statycznie; reprezentatywne czerwone zastane w baseline                  | pełny kontrakt odpowiedzi wymaga osobnego pomiaru real-router                   |
-| B.1     | CZĘŚCIOWO   | `0e34ffe479`           | `Gateway` → raporty/Assessment → `drdVizAdapter` → `server/src/data/drdStructure.ts`                 | 16/16 PASS; brak osobnego readbacku sesji na realnym PG obniża status           |
+| B.1     | ZROBIONE_WG_DoD *(FIX-3, 2026-08-26)* | `0e34ffe479` + FIX-3 | `Gateway` → raporty/Assessment → `drdVizAdapter` → `server/src/data/drdStructure.ts`                 | 16/16 PASS deterministyczne + przed/po zmierzone na realnym PG (patrz sekcja B.1, tabela FIX-3): 100%→83% (poziom 5), obcinanie poziomu 6 do 5 potwierdzone logiem `AxisDataGuard` przed fixem |
 | B.2     | STOP        | —                      | serwis osiągalny przez `Gateway.ts` → `assessment-ai.routes.ts` → `aiAssessmentPartnerService.ts`    | 92 błędy punktowego `tsc` po zdjęciu `@ts-nocheck`; plik przywrócony bez diffu  |
 | C.1     | NIE_ZACZĘTE | —                      | —                                                                                                    | —                                                                               |
 | D.1     | CZĘŚCIOWO   | `735b56a831`           | `Gateway.ts:958` → `/api/method` → skip routes → `AssessmentSkipReasonService` → lokalny PG          | 6/6 PASS real-router/PG; brak dowodu mutacyjnego T.3 obniża status              |
@@ -144,7 +144,31 @@ Kierunek synchronizacji: kanoniczna kopia kliencka została odczytana i mechanic
 | 5 — Kultura transformacji |      6 |            5 |         6 | poziom 5 |               100% |          83,33% | adapter publikuje `maxLevel: 6`; test zachowuje poziom 6 |
 | 6 — Cyberbezpieczeństwo   |      6 |            5 |         6 | poziom 5 |               100% |          83,33% | adapter publikuje `maxLevel: 6`; test zachowuje poziom 6 |
 
-Weryfikacja: `drdEvidenceScoring`, `compileDrdPack` i nowy `drdVizAdapter.day20` — 16/16 PASS. Punktowy `esbuild` PASS. Status pozostaje `CZĘŚCIOWO`, ponieważ DoD instrukcji wymaga także przykładowej sesji zapisanej i odczytanej z realnego PG; nie przedstawiam testu deterministycznego jako substytutu readbacku DB.
+Weryfikacja: `drdEvidenceScoring`, `compileDrdPack` i nowy `drdVizAdapter.day20` — 16/16 PASS. Punktowy `esbuild` PASS.
+
+### FIX-3 (P1-3, 2026-08-26) — pomiar przed/po na realnym PG
+
+DoD wymagał tabeli przed/po zmierzonej na realnym PG, nie tylko testu deterministycznego. Wykonano: jednorazowy kontener `pgvector/pgvector:pg16` (port **5487**, `DATABASE_URL` jawny w tej samej linii wywołania), pełne migracje (`Applying migrations: 846` → drugi przebieg `0` → dry-run `Pending migrations: 0`), zasiane minimalne dane (dwa wiersze `assessment_reports.axis_data` z `{culture, cybersecurity}` na poziomach 5 i 6), odczyt przez REALNĄ, żywą trasę `GET /api/assessment-reports/:reportId/drd-report` (router `assessment-reports.routes.ts`, ten sam kod co produkcja: `areaScoresFromAxisData` → `buildDrdReportHtmlServer` → `buildAreaRows`/`buildDimensions` → `pct(actual, axis.levelCount)`), z odczytem **wyrenderowanego HTML** (nie pośredniego obiektu). Pomiar „przed” = plik `server/src/data/drdStructure.ts` podmieniony na wersję z markera `6f45724eeb` (rodzic commitu B.1, `git show <sha>:path > path`, tańsze niż `git stash` — jeden plik, zero ryzyka dla reszty drzewa roboczego), po pomiarze przywrócony `git checkout HEAD -- <path>` i zweryfikowany bit-identyczny z HEAD. Pomiar „po” = bieżący HEAD (bez zmian, B.1 był już zacommitowany wcześniej).
+
+| Oś / obszar               | Zasiany poziom | Renderowany % PRZED (marker `6f45724eeb`, maxLevel=5) | Renderowany % PO (HEAD, maxLevel=6) | Frakcja obszaru PRZED | Frakcja obszaru PO |
+| -------------------------- | :------------: | :-----------------------------------------------------: | :------------------------------------: | :--------------------: | :------------------: |
+| 5 — Kultura transformacji  |        5       | 100%                                                     | **83%**                                 | 5/5                     | 5/6                  |
+| 5 — Kultura transformacji  |        6       | 100% *(obcięte — patrz niżej)*                           | **100%**                                | 5/5 *(obcięte z 6/6)*  | 6/6                  |
+| 6 — Cyberbezpieczeństwo    |        5       | 100%                                                     | **83%**                                 | 5/5                     | 5/6                  |
+| 6 — Cyberbezpieczeństwo    |        6       | 100% *(obcięte — patrz niżej)*                           | **100%**                                | 5/5 *(obcięte z 6/6)*  | 6/6                  |
+
+Dowód „obcinania” poziomu 6 przed fixem — realny log z żywego zapisu przez `AxisDataGuard` w `drdReportService.ts` podczas pomiaru „przed” (seed `actual=6, target=6` przy ówczesnym `axis.levelCount=5`):
+
+```text
+[AxisDataGuard] axis_data out of range — clamped actual=6 to [0,5] for axis "Culture of Transformation". axis_data must hold DRD levels (0..maxLevel), never 0-100 percentages. Check the write path (seed/import/generator).
+[AxisDataGuard] axis_data out of range — clamped target=6 to [0,5] for axis "Cybersecurity". axis_data must hold DRD levels (0..maxLevel), never 0-100 percentages. Check the write path (seed/import/generator).
+```
+
+Wniosek: korekta zgodna z kanonem klienckim (klient od zawsze miał 6 poziomów dla osi 5 i 6 — patrz kolumna „Klient” w tabeli wyżej). Żaden wiersz bazy nie jest przepisywany — `axis_data` trzyma zawsze SUROWY poziom DRD (`5` albo `6`), zmienia się wyłącznie `axis.levelCount` (stały, statyczny plik danych) użyty do renderowania procentu w locie, więc korekta jest czysto prezentacyjna: dane historyczne odczytane po fixie automatycznie przestają być fałszywie obcinane/zawyżane, bez migracji, backfillu ani jednorazowego skryptu naprawczego. Różnica względem wcześniejszej tabeli deterministycznej (83,33% z `drdVizAdapter.day20.test.ts`) to tylko precyzja: żywa trasa klienta zaokrągla `pct()` do liczby całkowitej (`Math.round`), więc renderuje **83%**, nie 83,33% — obie liczby opisują tę samą korektę (100%→83%), test deterministyczny po prostu nie zaokrąglał.
+
+Kontener i wolumeny posprzątane po pomiarze (`docker rm -f`, brak wolumenu nazwanego — `-v` nie był używany, więc nic nie zostaje). Dane zasiane i wyczyszczone własnym `DELETE ... WHERE organization_id = $throwaway_org` po każdym przebiegu; zero rekordów demo/produkcyjnych dotkniętych — kontener istniał wyłącznie lokalnie na porcie 5487, nigdy nie był bazą demo/staging/produkcyjną.
+
+Status B.1 zmienia się z `CZĘŚCIOWO` na w pełni udowodniony na realnym PG (DoD spełniony); pozostała treść sekcji (16/16 PASS deterministyczne) bez zmian.
 
 ## B.2 — `@ts-nocheck`
 
@@ -293,6 +317,19 @@ Nowe POST zmienia tabelę `assessment_skip_reasons`; zły kod, zła skala, obcy 
 - Flagi: nie dodano i nie zmieniono wartości domyślnych.
 - LLM: brak importów/wywołań w kodzie zadania; trafienia grepa w całym diffie pochodzą wyłącznie z wiążącej instrukcji i raportu.
 
+## FIX-y po odbiorze dyżuru 20 (2026-08-26) — warunki scalenia
+
+Odbiór dyżuru 20 potwierdził zero P0, zero atrap, słownik kodów zgodny z frontem 1:1, ale postawił trzy warunki P1 i jeden P2 przed scaleniem. Wykonane na gałęzi `codex/assessment-day20-20260826`, worktree `/private/tmp/consultify-day20-fixes`, commit-per-fix, bez push/merge.
+
+| Fix | Opis | Status | Dowód |
+| --- | ---- | ------ | ----- |
+| FIX-1 (P1-1) | Błędny wiersz A.3 (`api.ts:8351` opisany jako GET, realnie DELETE) + dwa pominięte legacy-fallbacki (GET `:8242`, PUT `:8272`) | ZROBIONE | patrz sekcja A.3 wyżej, adnotacja FIX-1 |
+| FIX-2 (P1-2) | `skipByUnit` kluczowany po `unitId` zwijał częściowe pominięcia do `skipped:true`; przy 2 kodach zwracał arbitralny | ZROBIONE | patrz sekcja D.2/E.1 wyżej, adnotacja FIX-2; real-router/PG 9/9→11/11 PASS |
+| FIX-3 (P1-3) | Zmiana `levelCount` osi 5/6 (5→6) zmienia prezentację (100%→83%, poziom 6 przestaje być obcinany) bez przepisywania danych; wymagany dowód przed/po na realnym PG | ZROBIONE | patrz sekcja B.1 wyżej, tabela FIX-3; kontener pgvector:pg16 port 5487, posprzątany |
+| FIX-4 (P2) | `assessmentSkipReasons.day20.pg.test.ts` poza dozwoloną ramką lokalizacyjną (`method-core/__tests__`) | ZROBIONE | przeniesiony do `server/src/services/assessment/__tests__/`, importy poprawione (`../../` → `../../../`), 11/11 PASS na tej samej instancji PG |
+
+Weryfikacja końcowa: cały pakiet `assessmentSkipReasons.day20.pg.test.ts` (9 oryginalnych + 2 nowe testy FIX-2) — **11/11 PASS** na realnym PG, z nowej lokalizacji po FIX-4. Migracje na jednorazowym kontenerze: przebieg 1 `Applying migrations: 846` (w tym `20261101_assessment_day20_skip_reasons.sql`), przebieg 2 `Applying migrations: 0`, dry-run `Pending migrations: 0`. Kontener i wszystkie zasiane dane usunięte po zakończeniu pomiarów; zero dotknięcia bazy demo/staging/produkcyjnej.
+
 ## Licznik
 
-13 pozycji: 0 `ZROBIONE_WG_DoD`, 7 `CZĘŚCIOWO` (A.1, A.3, B.1, D.1, D.2, E.1, T), 3 `STOP` (A.2, B.2, F.1), 3 `NIE_ZACZĘTE` (C.1, E.2, R.1). Flagi pozostały OFF. Stan jest gotowy do odbioru przez nadzorcę jako częściowy, bez zawyżenia.
+13 pozycji: 1 `ZROBIONE_WG_DoD` (B.1, po FIX-3), 6 `CZĘŚCIOWO` (A.1, A.3, D.1, D.2, E.1, T), 3 `STOP` (A.2, B.2, F.1), 3 `NIE_ZACZĘTE` (C.1, E.2, R.1). Flagi pozostały OFF. Stan jest gotowy do odbioru przez nadzorcę jako częściowy, bez zawyżenia — aktualizacja odzwierciedla wyłącznie FIX-1/FIX-2/FIX-3/FIX-4 (dyżur naprawczy po odbiorze 20); A.3, D.1, D.2, E.1, T pozostają CZĘŚCIOWO z powodów niezwiązanych z tymi czterema fixami (patrz kolumna „Dowód testowy”).
