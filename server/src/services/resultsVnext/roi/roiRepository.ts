@@ -60,6 +60,7 @@ import {
   wrapWithVisibilityScope,
   VISIBILITY_CTE_PARAM_COUNT,
 } from '../platform/visibilityScopedQuery.js';
+import { resultsTextMatchPattern, resultsTextMatchSql } from '../platform/textMatch.js';
 
 import { ROI_RESOURCE_TYPE } from './roiCaseCommands.js';
 import {
@@ -102,12 +103,33 @@ export interface ListRoiCasesParams {
   organizationId: string;
   status?: RoiCaseStatus;
   includeArchived?: boolean;
+  /** DEC-77 dozbrojenie / DEC-93 (§S.2, Z17 extension) — same matching
+   * contract as `kpiRepository.ts`'s `listKpis` and
+   * `okrSetRepository.ts`'s `listOkrSets`: literal ILIKE via the shared
+   * `resultsTextMatchPattern`/`resultsTextMatchSql` (textMatch.ts, S.1's
+   * own function, reused not reinvented), applied INSIDE this query's
+   * WHERE — before LIMIT/OFFSET, same as every other filter here — so
+   * paging stays correct. Matches `rc.title` only, the same single column
+   * S.1's own `roi_case` search kind matches
+   * (resultsSearchRepository.ts's `KIND_CONFIG.roi_case.fields`) — §S.2
+   * requirement #2 ("same semantics as S.1 — same columns"). Omitted `q`
+   * is unchanged behavior (§S.2 requirement #1 / DEC-65).
+   */
+  q?: string;
   limit?: number;
   offset?: number;
 }
 
 export async function listRoiCases(params: ListRoiCasesParams): Promise<RoiCase[]> {
-  const { userId, organizationId, status, includeArchived = false, limit = 100, offset = 0 } = params;
+  const {
+    userId,
+    organizationId,
+    status,
+    includeArchived = false,
+    q,
+    limit = 100,
+    offset = 0,
+  } = params;
 
   const cte = await buildVisibilityScopedCte({ userId, organizationId, resourceType: ROI_RESOURCE_TYPE });
   const values: unknown[] = [...cte.values];
@@ -119,6 +141,10 @@ export async function listRoiCases(params: ListRoiCasesParams): Promise<RoiCase[
   }
   if (!includeArchived) {
     filters.push(`rc.archived_at IS NULL`);
+  }
+  if (q) {
+    values.push(resultsTextMatchPattern(q));
+    filters.push(resultsTextMatchSql(['rc.title'], `$${values.length}`));
   }
 
   values.push(limit);

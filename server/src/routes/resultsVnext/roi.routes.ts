@@ -601,6 +601,12 @@ router.get(
         organizationId: auth.organizationId,
         status: query.status,
         includeArchived: query.includeArchived,
+        // DEC-77 dozbrojenie / DEC-93 (§S.2, Z17 extension) — same
+        // pass-through shape as kpi.routes.ts's listKpis / okr.routes.ts's
+        // listOkrSets already have for their own `q`. Validated/trimmed by
+        // ListRoiCasesQuerySchema above; the repository applies the actual
+        // ILIKE filter inside its own visibility-scoped CTE.
+        q: query.q,
         limit: query.limit,
         offset: query.offset,
       });
