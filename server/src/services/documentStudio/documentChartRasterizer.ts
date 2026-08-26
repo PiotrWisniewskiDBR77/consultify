@@ -156,7 +156,7 @@ function buildDatasets(
       const color = series.color ?? paletteColor(idx);
       const points: ScatterDataPoint[] = series.values.map((value, pointIdx) => ({
         x: pointIdx + 1,
-        y: value,
+        y: value ?? 0,
       }));
       return {
         label: series.label,

@@ -116,6 +116,7 @@ interface DocxRuntime {
   Table: new (options: Record<string, unknown>) => DocxTable;
   TableCell: new (options: Record<string, unknown>) => unknown;
   TableRow: new (options: Record<string, unknown>) => unknown;
+  TableOfContents: new (heading: string, options: Record<string, unknown>) => unknown;
   TextRun: new (options: Record<string, unknown>) => DocxTextRun;
   WidthType: { PERCENTAGE: unknown };
 }
@@ -146,11 +147,12 @@ const {
   Table,
   TableCell,
   TableRow,
+  TableOfContents,
   TextRun: BaseTextRun,
   WidthType,
 } = docxModule as unknown as DocxRuntime;
 
-const polishTypographyScope = new AsyncLocalStorage<boolean>();
+const textRunScope = new AsyncLocalStorage<{ isPolish: boolean; namedStyleRuns: boolean }>();
 
 /** Apply Polish non-breaking spaces at the single TextRun construction seam. */
 function polishTypographicSpacing(text: string): string {
@@ -159,13 +161,16 @@ function polishTypographicSpacing(text: string): string {
 
 class TextRun extends BaseTextRun {
   constructor(options: Record<string, unknown>) {
+    const scope = textRunScope.getStore();
     const text = options.text;
-    super({
+    const normalized = {
       ...options,
-      ...(polishTypographyScope.getStore() && typeof text === 'string'
+      ...(scope?.isPolish && typeof text === 'string'
         ? { text: polishTypographicSpacing(text) }
         : {}),
-    });
+    };
+    if (scope?.namedStyleRuns) delete normalized.font;
+    super(normalized);
   }
 }
 
@@ -517,7 +522,10 @@ function renderHeadingBlock(block: DocumentBlock, ctx: RenderContext): Paragraph
 }
 
 function renderParagraphBlock(block: DocumentBlock, ctx: RenderContext): Paragraph {
-  const value = (block.content ?? {}) as BlockTextContent;
+  const value = (block.content ?? {}) as BlockTextContent & {
+    docxStyleId?: string;
+    pageBreakBefore?: boolean;
+  };
   const text = asString(value.text ?? '');
   const children: TextRun[] = [
     new TextRun({
@@ -528,7 +536,13 @@ function renderParagraphBlock(block: DocumentBlock, ctx: RenderContext): Paragra
   if (block.isAssumption) children.push(buildAssumptionMarker(ctx.bodyFont));
   if (block.sourceRef) children.push(...buildCitationRuns(ctx, block.sourceRef));
   return new Paragraph({
-    style: block.isAssumption ? DOCX_STYLE_IDS.ASSUMPTION_BODY : DOCX_STYLE_IDS.BODY_TEXT,
+    style:
+      isDrdReportProfile(ctx.schema) && value.docxStyleId
+        ? value.docxStyleId
+        : block.isAssumption
+          ? DOCX_STYLE_IDS.ASSUMPTION_BODY
+          : DOCX_STYLE_IDS.BODY_TEXT,
+    pageBreakBefore: value.pageBreakBefore === true ? true : undefined,
     children,
   });
 }
@@ -771,7 +785,16 @@ function normalizeTableContent(content: unknown): {
   // Legacy array-of-arrays shape.
   const headers = Array.isArray(value.headers) ? value.headers.map((h) => asString(h)) : [];
   const rows: NormalizedCell[][] = rawRows.map((row) =>
-    (Array.isArray(row) ? row : []).map((cell) => ({ text: asString(cell), fill: null }))
+    (Array.isArray(row) ? row : []).map((cell) => {
+      if (cell != null && typeof cell === 'object' && 'value' in (cell as object)) {
+        const structured = cell as { value?: unknown; style?: { bgColor?: string } };
+        return {
+          text: asString(structured.value ?? ''),
+          fill: normalizeHex(structured.style?.bgColor),
+        };
+      }
+      return { text: asString(cell), fill: null };
+    })
   );
   return { headers, rows };
 }
@@ -1104,17 +1127,26 @@ function renderSection(
   options: { pageBreakBefore?: boolean } = {}
 ): (Paragraph | Table)[] {
   const level = section.level ?? 1;
+  const drdKicker =
+    isDrdReportProfile(ctx.schema) && section.purpose
+      ? new Paragraph({
+          style: DOCX_STYLE_IDS.DRD_KICKER,
+          pageBreakBefore: options.pageBreakBefore === true ? true : undefined,
+          keepNext: true,
+          children: [new TextRun({ text: section.purpose })],
+        })
+      : null;
   const heading = new Paragraph({
     style: styleIdForHeadingLevel(level),
     heading: headingLevelForSection(level),
     children: [new TextRun({ text: headingText, font: ctx.headingFont })],
-    pageBreakBefore: options.pageBreakBefore === true ? true : undefined,
+    pageBreakBefore: drdKicker ? undefined : options.pageBreakBefore === true ? true : undefined,
     // A section heading must travel with at least the first paragraph/table.
     // Without this explicit pagination hint Word/LibreOffice may leave a
     // heading as the last line on a page while its body starts on the next.
     keepNext: true,
   });
-  const normalizedPurpose = asString(section.purpose ?? '').trim();
+  const normalizedPurpose = drdKicker ? '' : asString(section.purpose ?? '').trim();
   const normalizedTitle = asString(section.title ?? '').trim();
   // Generated outlines often use the section title verbatim as `purpose`.
   // Rendering both produces an accidental duplicate immediately below the
@@ -1145,7 +1177,7 @@ function renderSection(
   for (const block of section.blocks) {
     blockOutputs.push(...renderBlock(block, ctx));
   }
-  return [heading, ...purpose, ...blockOutputs];
+  return [...(drdKicker ? [drdKicker] : []), heading, ...purpose, ...blockOutputs];
 }
 
 function renderCoverBlock(ctx: RenderContext, options: DocumentRenderOptions = {}): Paragraph[] {
@@ -1339,6 +1371,19 @@ function buildCoverLogoParagraph(
  */
 function renderTocBlock(ctx: RenderContext): unknown[] {
   const isPolish = ctx.schema.language.toLowerCase().startsWith('pl');
+  if (ctx.schema.formattingSchema.tocConfig?.nativeField) {
+    return [
+      new Paragraph({
+        style: DOCX_STYLE_IDS.DRD_KICKER,
+        pageBreakBefore: true,
+        children: [new TextRun({ text: isPolish ? 'NAWIGACJA' : 'NAVIGATION' })],
+      }),
+      new TableOfContents(isPolish ? 'Spis treści' : 'Table of Contents', {
+        hyperlink: true,
+        headingStyleRange: '1-2',
+      }),
+    ];
+  }
   const heading = new Paragraph({
     style: DOCX_STYLE_IDS.TOC_HEADING,
     children: [
@@ -1465,7 +1510,16 @@ async function renderDocumentSchemaToDocxBufferInternal(
   // regardless of where the schema author placed them.
   const partitioned = partitionSections(schema.sections);
   partitioned.body.forEach((section, index) => {
-    sectionChildren.push(...renderSection(section, ctx, formatBodyHeading(section, index)));
+    sectionChildren.push(
+      ...renderSection(
+        section,
+        ctx,
+        drdProfile ? section.title : formatBodyHeading(section, index),
+        {
+          pageBreakBefore: drdProfile && index > 0,
+        }
+      )
+    );
   });
   partitioned.appendix.forEach((section, index) => {
     sectionChildren.push(
@@ -1640,6 +1694,7 @@ async function renderDocumentSchemaToDocxBufferInternal(
     creator: 'Consultify Document Studio',
     title: schema.title,
     description: `Consultify Document Studio · ${schema.documentType} · ${formattingClass}`,
+    ...(formatting.tocConfig?.nativeField ? { features: { updateFields: true } } : {}),
     styles,
     numbering: { config: DOCX_NUMBERING_CONFIG },
     ...(footnotesPayload ? { footnotes: footnotesPayload } : {}),
@@ -1695,7 +1750,7 @@ export async function renderDocumentSchemaToDocxBuffer(
   options: DocumentRenderOptions = {}
 ): Promise<Buffer> {
   const isPolish = schemaInput.language.toLowerCase().startsWith('pl');
-  return polishTypographyScope.run(isPolish, () =>
+  return textRunScope.run({ isPolish, namedStyleRuns: isDrdReportProfile(schemaInput) }, () =>
     renderDocumentSchemaToDocxBufferInternal(schemaInput, options)
   );
 }

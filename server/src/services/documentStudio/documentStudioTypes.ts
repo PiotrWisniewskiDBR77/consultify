@@ -105,7 +105,7 @@ export type DocumentChartKind = 'bar' | 'line' | 'pie' | 'donut' | 'scatter' | '
  */
 export interface DocumentChartSeries {
   label: string;
-  values: number[];
+  values: Array<number | null>;
   /**
    * Optional series colour hint (any CSS-compatible string the
    * renderer can map to its chart library). Renderers may ignore
@@ -381,6 +381,8 @@ export interface FormattingSchema {
   tocConfig?: {
     enabled: boolean;
     maxDepth?: 1 | 2 | 3;
+    /** Emit a native Word TOC field; absent keeps the legacy static TOC byte-identical. */
+    nativeField?: boolean;
   };
   /**
    * Cover-page configuration object. When present, upgraded
@@ -542,6 +544,7 @@ export function isDocumentChartBlock(
     if (typeof s.label !== 'string') return false;
     if (!Array.isArray(s.values)) return false;
     for (const v of s.values) {
+      if (v === null && content.kind === 'radar') continue;
       if (typeof v !== 'number' || !Number.isFinite(v)) return false;
     }
   }
