@@ -62,7 +62,12 @@ const DEFAULT_CACHE_TTL_MS = 30_000;
 const MIN_CACHE_TTL_MS = 1_000;
 const MAX_CACHE_TTL_MS = 300_000;
 
-type DbGet = <T>(sql: string, params?: unknown[]) => Promise<T | undefined>;
+/**
+ * Accepts both database handles the codebase actually has: `DbPromise.get`
+ * (resolves `undefined` for no row) and `IDatabase.get` (resolves `null`).
+ * Widening here beats casting at every call site.
+ */
+type DbGet = <T>(sql: string, params?: unknown[]) => Promise<T | undefined | null>;
 
 interface CacheEntry {
   suspended: boolean;
@@ -214,6 +219,51 @@ export function buildOrgSuspendedResponseBody(): {
     messageKey: ORG_SUSPENDED_MESSAGE_KEY,
     guidance: 'A platform administrator must reactivate this organization.',
   };
+}
+
+/**
+ * Minimal shape of the raw TCP socket handed to an HTTP `upgrade` listener.
+ * Duck-typed on purpose: this module stays free of node `net`/`http` imports,
+ * and the three collab gateways can pass their socket straight through.
+ */
+interface UpgradeSocketLike {
+  write: (chunk: string) => unknown;
+  destroy: () => unknown;
+}
+
+/**
+ * Refuse a WebSocket UPGRADE that never completes the handshake.
+ *
+ * The three raw-`ws` collab gateways answer a rejected upgrade by writing a
+ * bare HTTP status line onto the socket (`HTTP/1.1 403 Forbidden`) and
+ * destroying it — there is no `ws` yet, so there is no close code to send. This
+ * keeps that convention and adds the DEC-91 body, so a suspended tenant gets
+ * the SAME machine-readable payload here as on the JWT, API-key and Socket.IO
+ * paths instead of an unexplained socket teardown.
+ *
+ * Named rather than silent: every caller resolves the tenant server-side from
+ * the authenticated principal, so it is the caller's OWN org and nothing about
+ * any other tenant leaks.
+ */
+export function writeOrgSuspendedUpgradeRefusal(socket: UpgradeSocketLike): void {
+  try {
+    const body = JSON.stringify(buildOrgSuspendedResponseBody());
+    socket.write(
+      'HTTP/1.1 403 Forbidden\r\n' +
+        'Content-Type: application/json\r\n' +
+        `Content-Length: ${Buffer.byteLength(body, 'utf8')}\r\n` +
+        'Connection: close\r\n' +
+        '\r\n' +
+        body
+    );
+  } catch {
+    /* the peer is already gone; the destroy below is still the right ending */
+  }
+  try {
+    socket.destroy();
+  } catch {
+    /* already destroyed */
+  }
 }
 
 /** Test-only seam: deterministic clock + cache reset. Never used in runtime code. */
