@@ -12,6 +12,10 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { verifyAdmin } from '../../middleware/admin.middleware.js';
 import { isAuthenticated, verifyToken } from '../../middleware/auth.middleware.js';
+import {
+  buildOrgSuspendedResponseBody,
+  isOrganizationSuspended,
+} from '../../services/organizationSuspensionGuard.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 
@@ -192,6 +196,24 @@ async function integrationApiKeyAuth(req: any, res: Response, next: any) {
   req.organizationId = validated.organizationId;
   req.integrationApiKeyPermissions = validated.permissions;
   req.integrationApiKeyAllowedActions = validated.allowedActions;
+
+  // ---------------------------------------------------------------------------
+  // DEC-91 / TRI-MUST-12 — the `ik_` integration keys are a FIFTH front door.
+  //
+  // This middleware is a second, independent API-key implementation: it never
+  // touches `verifyToken` AND it is not `apiKeyAuth.middleware.ts`, so neither
+  // of the enforcement points added earlier reached it. A Zapier/Make key of a
+  // suspended tenant kept working — `POST /actions/tasks.create` still INSERTed
+  // rows for an organization that had been cut off everywhere else.
+  //
+  // Checked AFTER the org is resolved from the key row in the database (never
+  // from anything the caller sends) and BEFORE `next()`, so no action handler
+  // runs. No exemptions: this router has no superadmin, logout or health
+  // surface behind key auth. Same guard, same process cache, same body.
+  // ---------------------------------------------------------------------------
+  if (await isOrganizationSuspended(req.organizationId, dbGet)) {
+    return res.status(403).json(buildOrgSuspendedResponseBody());
+  }
 
   // best-effort usage tracking
   await dbRun(
