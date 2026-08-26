@@ -833,7 +833,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
     // Common columns
     const frameworkCol: TableColumn = {
       id: 'framework',
-      label: 'Type',
+      label: t('assessment.hub.table.type', 'Type'),
       width: '120px',
       filterable: true,
       filterOptions: Object.entries(FRAMEWORK_META).map(([key, meta]) => ({
@@ -856,7 +856,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
     };
     const nameCol: TableColumn = {
       id: 'name',
-      label: 'Name',
+      label: t('assessment.hub.table.name', 'Name'),
       render: (row) => (
         <div className="flex items-center gap-2">
           <span className="text-sm font-semibold text-c-text">{row.name}</span>
@@ -864,10 +864,14 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
         </div>
       ),
     };
-    const progressCol: TableColumn = { id: 'progress', label: 'Progress', width: '150px' };
+    const progressCol: TableColumn = {
+      id: 'progress',
+      label: t('assessment.hub.table.progressHeader', 'Progress'),
+      width: '150px',
+    };
     const updatedCol: TableColumn = {
       id: 'updatedAt',
-      label: 'Updated',
+      label: t('assessment.hub.table.updated', 'Updated'),
       width: '120px',
       sortable: true,
     };
@@ -893,7 +897,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
         nameCol,
         {
           id: 'status',
-          label: 'Status',
+          label: t('assessment.hub.table.status', 'Status'),
           width: '180px',
           filterable: true,
           filterOptions: Object.values(REPORT_STATUSES).map((s) => ({
@@ -904,14 +908,14 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
           render: (row) => {
             if (row._isImported) {
               const importStatusConfig: Record<string, { label: string; tone: StatusTone }> = {
-                pending: { label: 'Uploaded', tone: 'neutral' },
-                detecting: { label: 'Detecting...', tone: 'warning' },
-                extracting: { label: 'Extracting...', tone: 'warning' },
-                ready_for_review: { label: 'Ready for review', tone: 'success' },
-                assessment_created: { label: 'Assessment created', tone: 'info' },
-                initiatives_created: { label: 'Initiatives created', tone: 'info' },
-                completed: { label: 'Completed', tone: 'success' },
-                failed: { label: 'Failed', tone: 'danger' },
+                pending: { label: t('assessment.hub.table.importStatus.pending', 'Uploaded'), tone: 'neutral' },
+                detecting: { label: t('assessment.hub.table.importStatus.detecting', 'Detecting...'), tone: 'warning' },
+                extracting: { label: t('assessment.hub.table.importStatus.extracting', 'Extracting...'), tone: 'warning' },
+                ready_for_review: { label: t('assessment.hub.table.importStatus.readyForReview', 'Ready for review'), tone: 'success' },
+                assessment_created: { label: t('assessment.hub.table.importStatus.assessmentCreated', 'Assessment created'), tone: 'info' },
+                initiatives_created: { label: t('assessment.hub.table.importStatus.initiativesCreated', 'Initiatives created'), tone: 'info' },
+                completed: { label: t('assessment.hub.table.importStatus.completed', 'Completed'), tone: 'success' },
+                failed: { label: t('assessment.hub.table.importStatus.failed', 'Failed'), tone: 'danger' },
               };
               const cfg = importStatusConfig[row._importStatus] || importStatusConfig.pending;
               return <StatusChip label={cfg.label} tone={cfg.tone} />;
@@ -931,7 +935,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
         nameCol,
         {
           id: 'sourceReport',
-          label: 'Source Report',
+          label: t('assessment.hub.table.sourceReport', 'Source Report'),
           width: '200px',
           render: (row) => (
             <span
@@ -944,28 +948,28 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
         },
         {
           id: 'status',
-          label: 'Status',
+          label: t('assessment.hub.table.status', 'Status'),
           width: '140px',
           filterable: true,
           filterOptions: [
-            { value: 'DRAFT', label: 'Draft', color: 'bg-c-text-muted' },
-            { value: 'REVIEW', label: 'In Review', color: 'bg-amber-500' },
-            { value: 'PLANNING', label: 'Planning', color: 'bg-blue-500' },
-            { value: 'APPROVED', label: 'Approved', color: 'bg-emerald-500' },
-            { value: 'EXECUTING', label: 'Executing', color: 'bg-blue-500' },
-            { value: 'CANCELLED', label: 'Cancelled', color: 'bg-danger-500' },
+            { value: 'DRAFT', label: t('assessment.hub.table.initiativeStatus.draft', 'Draft'), color: 'bg-c-text-muted' },
+            { value: 'REVIEW', label: t('assessment.hub.table.initiativeStatus.review', 'In Review'), color: 'bg-amber-500' },
+            { value: 'PLANNING', label: t('assessment.hub.table.initiativeStatus.planning', 'Planning'), color: 'bg-blue-500' },
+            { value: 'APPROVED', label: t('assessment.hub.table.initiativeStatus.approved', 'Approved'), color: 'bg-emerald-500' },
+            { value: 'EXECUTING', label: t('assessment.hub.table.initiativeStatus.executing', 'Executing'), color: 'bg-blue-500' },
+            { value: 'CANCELLED', label: t('assessment.hub.table.initiativeStatus.cancelled', 'Cancelled'), color: 'bg-danger-500' },
           ],
         },
         {
           id: 'priority',
-          label: 'Priority',
+          label: t('assessment.hub.table.priority', 'Priority'),
           width: '100px',
           filterable: true,
           filterOptions: [
-            { value: 'critical', label: 'Critical', color: 'bg-danger-500' },
-            { value: 'high', label: 'High', color: 'bg-amber-500' },
-            { value: 'medium', label: 'Medium', color: 'bg-blue-500' },
-            { value: 'low', label: 'Low', color: 'bg-c-text-muted' },
+            { value: 'critical', label: t('assessment.hub.table.priorityLevel.critical', 'Critical'), color: 'bg-danger-500' },
+            { value: 'high', label: t('assessment.hub.table.priorityLevel.high', 'High'), color: 'bg-amber-500' },
+            { value: 'medium', label: t('assessment.hub.table.priorityLevel.medium', 'Medium'), color: 'bg-blue-500' },
+            { value: 'low', label: t('assessment.hub.table.priorityLevel.low', 'Low'), color: 'bg-c-text-muted' },
           ],
           render: (row) => {
             const levels: Record<string, PriorityLevel> = {
@@ -975,7 +979,20 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
               low: 'low',
             };
             const level = levels[row.priority] || 'medium';
-            return <PriorityChip level={level} label={row.priority || 'medium'} />;
+            // 2026-08-26 assessment cleanup: this used to pass the RAW enum
+            // (`row.priority` — 'critical'/'high'/'medium'/'low', lowercase)
+            // straight through as the display label, so the visual dot said
+            // "urgent" (derived from `level`) while the text next to it said
+            // "critical" — a raw backend value on the client's face, and
+            // internally inconsistent with its own icon. Localized label
+            // keyed off the SAME `level` the dot already uses.
+            const priorityLabels: Record<PriorityLevel, string> = {
+              urgent: t('assessment.hub.table.priorityLevel.critical', 'Critical'),
+              high: t('assessment.hub.table.priorityLevel.high', 'High'),
+              medium: t('assessment.hub.table.priorityLevel.medium', 'Medium'),
+              low: t('assessment.hub.table.priorityLevel.low', 'Low'),
+            };
+            return <PriorityChip level={level} label={priorityLabels[level]} />;
           },
         },
         authorCol,
@@ -989,7 +1006,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
       nameCol,
       {
         id: 'status',
-        label: 'Status',
+        label: t('assessment.hub.table.status', 'Status'),
         width: '160px',
         filterable: true,
         filterOptions: Object.values(ASSESSMENT_STATUSES).map((s) => ({
