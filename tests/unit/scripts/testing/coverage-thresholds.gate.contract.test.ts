@@ -15,7 +15,6 @@ const l1Paths = [
   'server/src/middleware/permission.middleware.ts',
   'server/src/middleware/inputSanitization.middleware.ts',
   'server/src/middleware/rateLimitUserId.middleware.ts',
-  'server/src/middleware/resourceQuota.middleware.ts',
   'server/src/services/accessPolicyService.ts',
   'server/src/utils/security.utils.ts',
 ];

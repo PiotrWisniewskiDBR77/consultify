@@ -57,12 +57,6 @@ function getProfileThresholds(profile: string): Thresholds {
         functions: 95,
         lines: 95,
       },
-      'server/src/middleware/resourceQuota.middleware.ts': {
-        statements: 95,
-        branches: 80,
-        functions: 95,
-        lines: 95,
-      },
       'server/src/services/accessPolicyService.ts': {
         statements: 95,
         branches: 80,

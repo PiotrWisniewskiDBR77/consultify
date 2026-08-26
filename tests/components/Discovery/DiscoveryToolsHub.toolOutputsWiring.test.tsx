@@ -5,10 +5,12 @@
  * tab bootstrap never called `Api.listToolOutputs()` (the canonical
  * `tool_outputs` snapshot, migration 946), so an approved tool result never
  * appeared in the module's own aggregate list — only inside that one
- * session's own workspace. Gated behind `ff_toolsInsightsWiring` — default
- * flipped OFF -> ON on 2026-08-27 (owner accept on dev-render screenshots)
- * per CLAUDE.md's "ZAKAZ MASOWEGO WŁĄCZANIA" rule, fail-closed on read
- * errors.
+ * session's own workspace. Gated behind `ff_toolsInsightsWiring` — flipped
+ * OFF -> ON on 2026-08-27 (owner accept on dev-render screenshots), then
+ * reverted ON -> OFF again on 2026-08-28 (DEC-158: a staging DB check found
+ * `tool_outputs` does not exist there, and the unconditional call was 500ing
+ * the whole hub, not just the Insights tab). Default is OFF again;
+ * fail-closed on read errors either way.
  *
  * Reuses the same mount/mocking scaffold as `DiscoveryToolsHub.fala1.test.tsx`
  * (StandardTable stubbed to a thin prop-capturing renderer).
@@ -171,11 +173,12 @@ describe('DiscoveryToolsHub — DEC-118 repair #1: tool_outputs wiring behind ff
     resetToolsInsightsWiringFlagCache();
   });
 
-  // flip po akcepcie właściciela 27.08: default was OFF, now ON — force OFF
-  // via the localStorage kill switch to keep this regression coverage.
-  it('flag OFF (localStorage override): never calls Api.listToolOutputs and the row never appears', async () => {
-    window.localStorage.setItem('ff.tools_insights_wiring', 'off');
-    resetToolsInsightsWiringFlagCache();
+  // cofnięte 28.08 (DEC-158): default is OFF again — this is now the
+  // DEFAULT path, no explicit localStorage override needed. This is the
+  // regression guard for the staging incident: with the flag OFF,
+  // Api.listToolOutputs() must never be called, so a missing `tool_outputs`
+  // table on the live DB cannot 500 the whole hub.
+  it('flag OFF (default, no explicit override): never calls Api.listToolOutputs and the row never appears', async () => {
     render(
       <MemoryRouter initialEntries={['/discovery-tools']}>
         <DiscoveryToolsHub initialTab="outputs" />
@@ -187,9 +190,11 @@ describe('DiscoveryToolsHub — DEC-118 repair #1: tool_outputs wiring behind ff
     expect(screen.queryByTestId('row-out-1')).not.toBeInTheDocument();
   });
 
-  // flip po akcepcie właściciela 27.08: this is now the DEFAULT path — no
-  // explicit localStorage override needed for the flag to resolve ON.
-  it('flag ON (default, no explicit override): calls Api.listToolOutputs and merges the row into the Outputs tab as kind "tool_output"', async () => {
+  // flag ON only via explicit override now (localStorage/query/env) — the
+  // mechanika itself is unchanged by the 28.08 revert, only the default.
+  it('flag ON (explicit localStorage override): calls Api.listToolOutputs and merges the row into the Outputs tab as kind "tool_output"', async () => {
+    window.localStorage.setItem('ff.tools_insights_wiring', 'on');
+    resetToolsInsightsWiringFlagCache();
     render(
       <MemoryRouter initialEntries={['/discovery-tools']}>
         <DiscoveryToolsHub initialTab="outputs" />
@@ -206,7 +211,7 @@ describe('DiscoveryToolsHub — DEC-118 repair #1: tool_outputs wiring behind ff
     expect(screen.getByTestId('row-out-1-kind')).toHaveTextContent('tool_output');
   });
 
-  it('flag ON: a superseded revision (isCurrent: false) is excluded from the aggregate list', async () => {
+  it('flag ON (explicit override): a superseded revision (isCurrent: false) is excluded from the aggregate list', async () => {
     window.localStorage.setItem('ff.tools_insights_wiring', '1');
     resetToolsInsightsWiringFlagCache();
     listToolOutputsMock.mockResolvedValue({

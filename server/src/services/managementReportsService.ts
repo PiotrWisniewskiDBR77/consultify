@@ -74,6 +74,17 @@ function reportNotFoundError(): Error {
   return err;
 }
 
+// DEC-140: same shape as reportNotFoundError() above — a project in a
+// foreign org and a project that does not exist must be indistinguishable
+// (404, never 403) so the endpoint never confirms a foreign project's
+// existence to the caller.
+function projectNotFoundError(): Error {
+  const err = new Error('Project not found');
+  (err as any).code = 'NOT_FOUND';
+  (err as any).status = 404;
+  return err;
+}
+
 const DEFAULT_PERIODS: Record<string, number> = {
   TEAM_MEETING: 7,
   TEAM_WEEKLY: 7,
@@ -132,6 +143,24 @@ class ManagementReportsService {
     );
     if (!row) throw reportNotFoundError();
     return row;
+  }
+
+  // DEC-140: mirrors assertReportInOrganization() above, but gates
+  // generateReport() itself. Every report-generation branch (TEAM_MEETING,
+  // TEAM_WEEKLY, STEERING_COMMITTEE scope=PROJECT, RAID) eventually reads
+  // project-scoped data — some via getProjectById() (unscoped by design,
+  // see repository note), RAID additionally via raw SQL keyed on
+  // project_id alone. Neither of those checks tenancy on its own, so this
+  // must run BEFORE generateReport() dispatches to any branch, using ONLY
+  // the organizationId resolved from the verified token (never body/query).
+  private async assertProjectInOrganization(projectId: string, organizationId?: string) {
+    if (!organizationId) throw projectNotFoundError();
+    const project = await managementReportRepository.getProjectByIdForOrganization(
+      projectId,
+      organizationId
+    );
+    if (!project) throw projectNotFoundError();
+    return project;
   }
 
   private async ensureExportDir(): Promise<string> {
@@ -300,6 +329,13 @@ class ManagementReportsService {
     await workbook.xlsx.writeFile(filePath);
   }
   async generateReport(options) {
+    // DEC-140 gate: runs before ANY branch below touches project data
+    // (including RAID's raw SQL path, which bypasses getProjectById
+    // entirely). A projectId that does not resolve inside options.organizationId
+    // — foreign-tenant or nonexistent — is rejected here, uniformly, as 404.
+    if (options.projectId) {
+      await this.assertProjectInOrganization(options.projectId, options.organizationId);
+    }
     switch (options.reportType) {
       case 'TEAM_MEETING':
       case 'TEAM_WEEKLY':

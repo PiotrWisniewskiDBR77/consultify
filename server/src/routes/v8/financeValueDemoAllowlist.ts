@@ -1,13 +1,13 @@
 /**
- * FIN-005 / VALUE-ENGINE — PROPOSED demo read-only exemption for the V8 Finance
- * value layer.
+ * FIN-005 / VALUE-ENGINE — audited demo read-only exemption analysis for the
+ * V8 Finance value layer. NOT wired into `Gateway.ts`. See "History" below.
  *
  * ## Why this module exists
  *
  * `demoWriteProtection` (`middleware/demoGuard.middleware.ts`) classifies every
  * request as a write purely by HTTP verb: anything outside GET/HEAD/OPTIONS is
  * rejected in demo mode with `403 DEMO_READ_ONLY`. The Gateway mounts it with
- * `allowedRoutes: ['/api/demo/', '/api/auth/']` (`Gateway.ts:423-428`).
+ * `allowedRoutes: ['/api/demo/', '/api/auth/']`.
  *
  * The V8 Finance value layer is stateless compute exposed over POST because its
  * input is a JSON body, not because it persists anything. In demo mode the
@@ -16,13 +16,29 @@
  *
  * ## What this module is NOT
  *
- * It is a PROPOSAL. It is deliberately not imported by `Gateway.ts`. Changing
- * the global demo write guard is a security-review decision that sits outside
- * the FIN-005 ownership boundary. This module exists so that decision can be
- * reviewed against an exact, audited, executable list instead of a hand-waved
- * "exempt the value routes". The one-step Gateway diff lives in
- * `docs/program/WEEKEND_COMPLETION_2026-08-01/PACKETS/FIN-006_CROSS_MODULE_CURRENCY_AND_VALUE_ENGINE.md`
- * (§B.3).
+ * It is a PROPOSAL, not an active exemption. It is NOT imported by
+ * `Gateway.ts`. Changing the global demo write guard is a security-review
+ * decision that sits outside the FIN-005 ownership boundary. This module
+ * exists so that decision can be reviewed against an exact, audited,
+ * executable list instead of a hand-waved "exempt the value routes".
+ *
+ * ## History — why this is a proposal again, not a live exemption
+ *
+ * This module was, for a period, actually imported into `Gateway.ts` and its
+ * `isStatelessComputeDemoRoute()` predicate was used to call `next()` directly,
+ * BYPASSING `demoWriteGuard` entirely for its four routes — before the guard
+ * ever ran, not as an argument to it. That bypass skipped the guard's own demo
+ * detection (the `X-Demo-Mode` header and the demo org id check), so it opened
+ * a real hole in the demo write boundary: a POST to one of these paths could
+ * reach the live handler while targeting the demo organization, regardless of
+ * demo state. The owner classified this as a bug, not a feature (decision
+ * register `docs/program/waves/WAVE_03_ACCEPTANCE/OWNER_DECISION_LEDGER_2026-08-24.md`,
+ * `DEC-2026-08-28-154` point e), and ordered it fixed before deploy.
+ * `Gateway.ts` now always routes every request through `demoWriteGuard`
+ * unconditionally — nothing may skip it ahead of time. This module and its
+ * tests are kept as the audited analysis (which routes are provably DB-free)
+ * for whenever a real, reviewed exemption is designed — one that asks the
+ * guard to allow the route rather than bypassing the guard itself.
  *
  * ## Audit method
  *

@@ -211,6 +211,24 @@ class ManagementReportRepository {
     });
   }
 
+  // DEC-140: tenant-scoped project lookup for the generateReport() entry
+  // gate. Unlike getProjectById() above (deliberately unscoped — it backs
+  // reads that already ran the gate and need the row again), this is the
+  // ONLY project lookup allowed to decide whether a caller may touch a
+  // project's data at all.
+  async getProjectByIdForOrganization(projectId, organizationId) {
+    return new Promise((resolve, reject) => {
+      this.db.get(
+        `SELECT p.*, u.first_name || ' ' || u.last_name as owner_name
+                 FROM projects p
+                 LEFT JOIN users u ON p.owner_id = u.id
+                 WHERE p.id = ? AND p.organization_id = ?`,
+        [projectId, organizationId],
+        (err, row) => (err ? reject(err) : resolve(row))
+      );
+    });
+  }
+
   async getActiveProjects(organizationId) {
     return new Promise((resolve, reject) => {
       this.db.all(

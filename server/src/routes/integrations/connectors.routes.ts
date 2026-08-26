@@ -77,6 +77,8 @@ router.put(
   verifyAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
     const { name, config, status } = req.body;
     const updates: string[] = [];
     const params: any[] = [];
@@ -94,8 +96,14 @@ router.put(
     }
     if (!updates.length) return res.status(400).json({ error: 'No updates' });
     updates.push("updated_at = datetime('now')");
-    params.push(id);
-    await dbRun(`UPDATE connectors SET ${updates.join(', ')} WHERE id = ?`, params);
+    params.push(id, orgId);
+    const result = await dbRun(
+      `UPDATE connectors SET ${updates.join(', ')} WHERE id = ? AND organization_id = ?`,
+      params
+    );
+    if (!result || !result.changes) {
+      return res.status(404).json({ error: 'Connector not found' });
+    }
     res.json({ success: true });
   })
 );
@@ -105,7 +113,15 @@ router.delete(
   verifyToken,
   verifyAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    await dbRun('DELETE FROM connectors WHERE id = ?', [req.params.id]);
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const result = await dbRun('DELETE FROM connectors WHERE id = ? AND organization_id = ?', [
+      req.params.id,
+      orgId,
+    ]);
+    if (!result || !result.changes) {
+      return res.status(404).json({ error: 'Connector not found' });
+    }
     res.json({ success: true });
   })
 );

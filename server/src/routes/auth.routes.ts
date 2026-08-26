@@ -2147,6 +2147,8 @@ router.post(
         expires_at: string | null;
         max_uses: number;
         current_uses: number;
+        created_by_user_id: string | null;
+        created_by: string | null;
       }>('SELECT * FROM access_codes WHERE code = ? AND is_active = 1', [accessCode]);
 
       if (!codeRow) {
@@ -2171,6 +2173,60 @@ router.post(
               [codeRow.organization_id]
             );
             if (existingOrg) {
+              // ---------------------------------------------------------------
+              // Cross-org consumption guard (P0 fix 2026-08-28, barrier 2 of 2 —
+              // barrier 1 is the mint-time org check in accessCodes.routes.ts
+              // POST /generate). Defense-in-depth: even if a code somehow ends
+              // up bound (`organization_id`) to an org its creator did not
+              // belong to (pre-fix rows, seed data, a future bypass of barrier
+              // 1), this register flow must not honor it — that is exactly the
+              // step that grants ACTIVE organization_members in the victim org.
+              //
+              // "Belonged to the target org" is checked as CURRENT membership
+              // of the code's creator (created_by_user_id, falling back to the
+              // legacy created_by column) at USE time — the only signal this
+              // schema retains (access_codes has no creation-time snapshot of
+              // the creator's org). A platform superadmin creator is exempt,
+              // mirroring the mint-time exception.
+              // ---------------------------------------------------------------
+              const creatorUserId = codeRow.created_by_user_id || codeRow.created_by || null;
+              if (!creatorUserId) {
+                logger.warn(
+                  '[Auth] Register: org-bound access code has no recorded creator — refusing org join',
+                  { codeId: codeRow.id, organizationId: existingOrg.id }
+                );
+                return res.status(400).json({
+                  error: 'Access code is not valid for this organization',
+                  errorCode: 'ACCESS_CODE_ORG_MISMATCH',
+                });
+              }
+              const creator = await dbGet<{ role: string | null }>(
+                'SELECT role FROM users WHERE id = ? LIMIT 1',
+                [creatorUserId],
+                { fallback: false }
+              );
+              const creatorIsPlatformSuperAdmin =
+                String(creator?.role || '').toUpperCase() === 'SUPERADMIN';
+              if (!creatorIsPlatformSuperAdmin) {
+                const creatorMembership = await dbGet<{ id: string }>(
+                  `SELECT id FROM organization_members
+                   WHERE user_id = ? AND organization_id = ? AND status = 'ACTIVE'
+                   LIMIT 1`,
+                  [creatorUserId, existingOrg.id],
+                  { fallback: false }
+                );
+                if (!creatorMembership) {
+                  logger.warn(
+                    '[Auth] Register: access code creator is not an active member of the target organization — refusing org join',
+                    { codeId: codeRow.id, organizationId: existingOrg.id, creatorUserId }
+                  );
+                  return res.status(400).json({
+                    error: 'Access code is not valid for this organization',
+                    errorCode: 'ACCESS_CODE_ORG_MISMATCH',
+                  });
+                }
+              }
+
               // ---------------------------------------------------------------
               // DEC-91 / TRI-MUST-12 — a suspended tenant must not ONBOARD.
               //
