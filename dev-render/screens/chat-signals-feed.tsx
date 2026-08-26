@@ -99,7 +99,11 @@ const signals: SignalDTO[] = types.map(([type, domain, severity], index) => ({
 const state = query.get('stan') ?? 'pelny';
 const response =
   state === 'pelny'
-    ? { signals, nextCursor: 'opaque-cursor', producerEnabled: true }
+    ? {
+        signals,
+        nextCursor: query.get('podglad') === '1' ? null : 'opaque-cursor',
+        producerEnabled: true,
+      }
     : { signals: [], nextCursor: null, producerEnabled: state === 'producent-off' ? false : true };
 const api = { get: async () => response, post: async () => ({ producerEnabled: true }) };
 
