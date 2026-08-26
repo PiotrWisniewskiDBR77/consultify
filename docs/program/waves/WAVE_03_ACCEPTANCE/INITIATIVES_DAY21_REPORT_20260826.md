@@ -1,11 +1,11 @@
 # Inicjatywy dzień 21 — raport dyżuru 2026-08-26
 
-Baza wykonawcza: `codex/day21-instrukcja-20260826 @ eee030e1da8b195fa5fdd8cc9e20fc449dcfcb12` zgodnie z rozstrzygnięciem nadzorcy DEC-95.  
-Aktualny tip referencyjny: `codex/m03-admin-20260824` — rozbieżność poza zakresem; scalenie wykona nadzorca przy odbiorze.  
-Marker: `649bd730a6` — nie jest przodkiem aktualnego tipu m03; jawnie uchylone dla tego dyżuru późniejszym rozstrzygnięciem nadzorcy.  
-Gałąź: `codex/initiatives-day21-20260826`  
-Worktree: `/private/tmp/consultify-initiatives-day21`  
-Port PG: `5471` · kontener `cx-day21-pg` usunięty: TAK · wolumeny usunięte: TAK
+- Baza wykonawcza: `codex/day21-instrukcja-20260826 @ eee030e1da8b195fa5fdd8cc9e20fc449dcfcb12` zgodnie z rozstrzygnięciem nadzorcy DEC-95.
+- Aktualny tip referencyjny: `codex/m03-admin-20260824` — rozbieżność poza zakresem; scalenie wykona nadzorca przy odbiorze.
+- Marker: `649bd730a6` — nie jest przodkiem aktualnego tipu m03; jawnie uchylone dla tego dyżuru późniejszym rozstrzygnięciem nadzorcy.
+- Gałąź: `codex/initiatives-day21-20260826`.
+- Worktree: `/private/tmp/consultify-initiatives-day21`.
+- Port PG: `5471` · kontener `cx-day21-pg` usunięty: TAK · wolumeny usunięte: TAK.
 
 ## Oświadczenie o chronionym checkoutcie (Z5/DEC-86)
 
@@ -57,7 +57,7 @@ Nie czytałem ani nie zmieniałem chronionego checkoutu `/Users/piotrwisniewski/
 | G.3 podobieństwo               | NIE_ZACZĘTE     | —                                   | —                                                                                                          |
 | G.4 placeholder                | NIE_ZACZĘTE     | —                                   | —                                                                                                          |
 | T testy                        | CZĘŚCIOWO       | `8fcbcb56df`, testy w commitach A/B | A+B domknięte; pełny zakres ma wyłącznie 37 czerwonych zastanych, 0 wprowadzonych                          |
-| R.1 rejestr                    | ZROBIONE_WG_DoD | commit dokumentacyjny               | Dodano wyłącznie faktyczny techniczny zakres A/B, bez zmiany Owner verdict                                 |
+| R.1 rejestr                    | ZROBIONE_WG_DoD | `e8de1e1df9`                        | Dodano wyłącznie faktyczny techniczny zakres A/B, bez zmiany Owner verdict                                 |
 
 ## ★ DOWODY OSIĄGALNOŚCI (Z20 / DEC-104)
 
