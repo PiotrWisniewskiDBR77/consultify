@@ -689,5 +689,36 @@ describe.skipIf(!REAL_PG)('Day 31 canonical writer mounted contract', () => {
       denominator: 2,
       value: 0.5,
     });
+    expect(byFamily['plan-delivery']).toMatchObject({
+      drillDown: { ids: [initiativeId] },
+      sourceVersion: 4,
+      scopeCompleteness: 'FULL',
+      valueClass: 'CALCULATED',
+    });
+    expect(byFamily['initiative-risk']).toMatchObject({
+      drillDown: { ids: [] },
+      sourceVersion: 0,
+      scopeCompleteness: 'NOT_CALCULABLE',
+      valueClass: 'UNKNOWN',
+    });
+  });
+
+  it('marks an empty KPI population as unknown instead of zero', async () => {
+    const response = await request(app)
+      .get('/api/initiatives/runtime-v1/control-kpis?weekStart=2030-01-07')
+      .set(auth());
+    expect(response.status).toBe(200);
+    const planDelivery = response.body.families.find(
+      (family: any) => family.family === 'plan-delivery'
+    );
+    expect(planDelivery).toMatchObject({
+      numerator: null,
+      denominator: null,
+      value: null,
+      drillDown: { ids: [] },
+      sourceVersion: 0,
+      scopeCompleteness: 'NO_POPULATION',
+      valueClass: 'UNKNOWN',
+    });
   });
 });

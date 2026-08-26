@@ -71,6 +71,16 @@ export class ControlKpiReadModel {
               : ('BRAK_ŹRÓDŁA' as const),
           drillDown: { kind: family, ids: hasPopulation ? value!.ids : ([] as string[]) },
           sourceVersion: hasPopulation ? value!.sourceVersion : 0,
+          scopeCompleteness: decisionRequired
+            ? ('NOT_CALCULABLE' as const)
+            : hasPopulation
+              ? ('FULL' as const)
+              : ('NO_POPULATION' as const),
+          valueClass: decisionRequired
+            ? ('UNKNOWN' as const)
+            : hasPopulation
+              ? ('CALCULATED' as const)
+              : ('UNKNOWN' as const),
           calculatedAt,
         };
       }),
