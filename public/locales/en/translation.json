@@ -19343,7 +19343,7 @@
       "tabs": {
         "library": "Library",
         "sessions": "Sessions",
-        "outputs": "Outputs",
+        "outputs": "Insights",
         "reports": "Reports",
         "initiatives": "Initiatives"
       },
@@ -19357,7 +19357,8 @@
         "type": {
           "report": "Report",
           "assessmentReport": "Assessment report",
-          "presentation": "Presentation"
+          "presentation": "Presentation",
+          "toolOutput": "Tool output"
         }
       },
       "table": {
