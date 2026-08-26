@@ -13,6 +13,7 @@ import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createRealT } from '@/test-utils/realTranslations';
+import { INTERVIEW_CREATOR_SHELL_FLAG_KEYS } from '@/utils/interviewCreatorShellFlag';
 
 function mockI18n(lang: 'en' | 'pl') {
   const t = createRealT(lang);
@@ -75,9 +76,61 @@ const mountAndOpen = async (lang: 'en' | 'pl', onCloseSpy: () => void = vi.fn())
 
 beforeEach(() => {
   vi.resetModules();
+  window.localStorage.removeItem(INTERVIEW_CREATOR_SHELL_FLAG_KEYS.localStorage);
 });
 
 describe('InsightCreatorModal — dialog accessible contract (EN)', () => {
+  it('keeps the legacy chrome and performs no generation request when Creator Shell is OFF', async () => {
+    await mountAndOpen('en');
+
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toHaveClass('h-[560px]', 'w-[720px]');
+    expect(dialog).not.toHaveAttribute('data-creator-shell');
+
+    const { Api } = await import('@/services/api');
+    const { V8InterviewApi } = await import('@/services/api/v8/interview');
+    expect(Api.post).not.toHaveBeenCalled();
+    expect(V8InterviewApi.createInsight).not.toHaveBeenCalled();
+  });
+
+  it('uses the shared 1040x840 stepped geometry when Creator Shell is explicitly ON', async () => {
+    window.localStorage.setItem(INTERVIEW_CREATOR_SHELL_FLAG_KEYS.localStorage, '1');
+    await mountAndOpen('en');
+
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toHaveClass('creator-shell');
+    expect(dialog).toHaveClass(
+      'h-[min(840px,calc(100vh-48px))]',
+      'w-[min(1040px,calc(100vw-64px))]'
+    );
+    expect(dialog).not.toHaveClass('h-[560px]', 'w-[720px]');
+  });
+
+  it('updates the Creator Shell outcome summary from the real title state', async () => {
+    window.localStorage.setItem(INTERVIEW_CREATOR_SHELL_FLAG_KEYS.localStorage, '1');
+    await mountAndOpen('en');
+
+    fireEvent.change(screen.getByLabelText(/^Insight Title \*$/), {
+      target: { value: 'Warehouse ownership' },
+    });
+    expect(screen.getByText(/Insight “Warehouse ownership”/)).toBeInTheDocument();
+  });
+
+  it('names the step 1 and step 2 footer actions by their result', async () => {
+    window.localStorage.setItem(INTERVIEW_CREATOR_SHELL_FLAG_KEYS.localStorage, '1');
+    await mountAndOpen('en');
+
+    expect(screen.getByRole('button', { name: 'Next: Material' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Back' })).toBeDisabled();
+    fireEvent.change(screen.getByLabelText(/^Insight Title \*$/), {
+      target: { value: 'Warehouse ownership' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Next: Material' }));
+
+    expect(await screen.findByRole('button', { name: 'Run now' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Next: Refine' })).toBeInTheDocument();
+  });
+
   it('exposes a dialog named "AI Insight Creator"', async () => {
     await mountAndOpen('en');
 

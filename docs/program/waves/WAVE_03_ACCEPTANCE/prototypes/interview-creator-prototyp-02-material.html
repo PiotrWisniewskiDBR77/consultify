@@ -1,0 +1,681 @@
+<meta charset="utf-8">
+<title>Prototyp — Wywiad › Creator Shell · krok 2 Materiał</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --c-bg:#fafaf9; --c-surface:#ffffff; --c-surface-raised:#f8fafc;
+  --c-border-subtle:#e6e9ed; --c-border:#cbd2da; --c-border-strong:#9aa6b5;
+  --c-text:#0f172a; --c-text-secondary:#475569; --c-text-muted:#64748b;
+  --c-focus:rgba(37,99,235,.4); --c-focus-solid:#2563eb;
+  --c-success:#026833; --c-warning:#ae6429; --c-danger:#e80538; --c-info:#3b2883;
+  --c-active-bg:rgba(15,23,42,.07); --c-active-border:#cbd2da; --c-active-text:#0f172a;
+  --c-cta-bg:#0f172a; --c-cta-text:#ffffff;
+  --r-xs:6px; --r-sm:8px; --r-md:12px; --r-lg:16px; --r-pill:9999px;
+  --shadow-card:0 1px 2px rgba(15,23,42,.04);
+  --shadow-pop:0 12px 32px rgba(15,23,42,.14);
+  --shadow-modal:0 24px 64px rgba(15,23,42,.22);
+  /* LIQUID GLASS — wyłącznie powłoka (nagłówek/kroki/pasek zakresu/stopka) */
+  --glass-bg:rgba(255,255,255,.74);
+  --glass-line:rgba(15,23,42,.07);
+  --scrim:rgba(15,23,42,.44);
+  --tobe:#2563eb;
+}
+:root[data-theme="dark"]{
+  --c-bg:#0a0f1e; --c-surface:#0f172a; --c-surface-raised:#15213b;
+  --c-border-subtle:rgba(148,163,184,.12); --c-border:rgba(148,163,184,.22);
+  --c-border-strong:rgba(148,163,184,.36);
+  --c-text:#f4f7fb; --c-text-secondary:#b8c4d6; --c-text-muted:#8a99b0;
+  --c-focus:rgba(91,141,239,.45); --c-focus-solid:#5b8def;
+  --c-success:#3fb950; --c-warning:#e8a33d; --c-danger:#ed5565; --c-info:#58a6ff;
+  --c-active-bg:rgba(255,255,255,.10); --c-active-border:rgba(255,255,255,.25); --c-active-text:#f4f7fb;
+  --c-cta-bg:#f4f7fb; --c-cta-text:#0f172a;
+  --shadow-card:0 1px 2px rgba(0,0,0,.35);
+  --shadow-pop:0 12px 32px rgba(0,0,0,.55);
+  --shadow-modal:0 24px 64px rgba(0,0,0,.66);
+  --glass-bg:rgba(15,23,42,.74);
+  --glass-line:rgba(148,163,184,.14);
+  --scrim:rgba(3,7,18,.62);
+  --tobe:#5b8def;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --c-bg:#0a0f1e; --c-surface:#0f172a; --c-surface-raised:#15213b;
+    --c-border-subtle:rgba(148,163,184,.12); --c-border:rgba(148,163,184,.22);
+    --c-border-strong:rgba(148,163,184,.36);
+    --c-text:#f4f7fb; --c-text-secondary:#b8c4d6; --c-text-muted:#8a99b0;
+    --c-focus:rgba(91,141,239,.45); --c-focus-solid:#5b8def;
+    --c-success:#3fb950; --c-warning:#e8a33d; --c-danger:#ed5565; --c-info:#58a6ff;
+    --c-active-bg:rgba(255,255,255,.10); --c-active-border:rgba(255,255,255,.25); --c-active-text:#f4f7fb;
+    --c-cta-bg:#f4f7fb; --c-cta-text:#0f172a;
+    --shadow-card:0 1px 2px rgba(0,0,0,.35);
+    --shadow-pop:0 12px 32px rgba(0,0,0,.55);
+    --shadow-modal:0 24px 64px rgba(0,0,0,.66);
+    --glass-bg:rgba(15,23,42,.74);
+    --glass-line:rgba(148,163,184,.14);
+    --scrim:rgba(3,7,18,.62);
+    --tobe:#5b8def;
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--c-bg);color:var(--c-text);
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  font-size:13px;line-height:1.6;-webkit-font-smoothing:antialiased}
+:focus-visible{outline:none;box-shadow:0 0 0 3px var(--c-focus);border-radius:var(--r-sm)}
+svg{flex:none;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+button{font:inherit;cursor:pointer;color:inherit}
+
+.l1{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.16em;color:var(--c-text-muted)}
+.l2{font-size:13px;font-weight:600}
+.l3{font-size:12px;font-weight:600;color:var(--c-text)}
+.l4{font-size:12px;color:var(--c-text-secondary)}
+.l5{font-size:11px;color:var(--c-text-muted)}
+.mono{font-variant-numeric:tabular-nums}
+.kbd{font-size:10px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;border:1px solid var(--c-border-subtle);
+  background:var(--c-surface-raised);border-radius:4px;padding:1px 4px;color:var(--c-text-secondary);white-space:nowrap}
+
+/* ===== PASEK PROTOTYPU (poza kadrem aplikacji) ===== */
+.protobar{height:44px;display:flex;align-items:center;gap:10px;padding:0 16px;
+  background:var(--c-surface-raised);border-bottom:1px solid var(--c-border)}
+.protobar .pt{font-size:12px;font-weight:600;letter-spacing:-.01em}
+.protobar .sep{width:1px;height:18px;background:var(--c-border)}
+.plink{height:28px;padding:0 11px;border-radius:var(--r-pill);border:1px solid var(--c-border);
+  background:transparent;color:var(--c-text-secondary);font-size:11.5px;text-decoration:none;
+  display:inline-flex;align-items:center;gap:6px}
+.plink:hover{border-color:var(--c-border-strong);color:var(--c-text)}
+.plink[aria-current="page"]{background:var(--c-active-bg);border-color:var(--c-active-border);
+  color:var(--c-active-text);font-weight:600}
+.protobar .right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.tglt{display:inline-flex;border:1px solid var(--c-border);border-radius:var(--r-pill);overflow:hidden;height:28px}
+.tglt button{height:100%;padding:0 12px;border:0;background:transparent;color:var(--c-text-secondary);font-size:11.5px}
+.tglt button+button{border-left:1px solid var(--c-border)}
+.tglt button[aria-pressed="true"]{background:var(--c-active-bg);color:var(--c-active-text);font-weight:600}
+
+/* ===== KADR APLIKACJI ===== */
+.app{display:flex;height:900px;position:relative;overflow:hidden;background:var(--c-bg)}
+.appmain{flex:1;min-width:0;display:flex;flex-direction:column;min-height:0}
+.gmenu{width:210px;flex:none;display:flex;flex-direction:column;background:var(--c-surface-raised);
+  border-right:1px solid var(--c-border-subtle);padding:14px 0}
+.gmenu-brand{display:flex;align-items:center;gap:9px;padding:0 16px 14px;margin-bottom:6px;border-bottom:1px solid var(--c-border-subtle)}
+.gmark{width:26px;height:26px;border-radius:var(--r-xs);flex:none;background:var(--c-cta-bg);color:var(--c-cta-text);
+  display:grid;place-items:center;font-size:12px;font-weight:700;letter-spacing:-.02em}
+.gword{font-size:14px;font-weight:600;letter-spacing:-.01em;white-space:nowrap}
+.gmenu-main{flex:1;min-height:0;padding:6px 8px;display:flex;flex-direction:column;gap:2px}
+.gmenu-foot{flex:none;padding:6px 8px 0;display:flex;flex-direction:column;gap:2px}
+.gsep{height:1px;background:var(--c-border-subtle);margin:8px 4px}
+.gitem{display:flex;align-items:center;gap:10px;height:34px;padding:0 10px;border-radius:var(--r-sm);
+  color:var(--c-text-secondary);text-decoration:none;font-size:13px;white-space:nowrap}
+.gitem svg{width:17px;height:17px}
+.gitem .glabel{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.gitem .gbadge{flex:none;font-size:10px;font-weight:600;padding:1px 7px;border-radius:var(--r-pill);
+  background:var(--c-border-subtle);color:var(--c-text-muted)}
+.gitem[aria-current="page"]{background:var(--c-active-bg);color:var(--c-active-text);font-weight:600;
+  box-shadow:inset 3px 0 0 var(--c-focus-solid)}
+
+/* Menu 2 / Menu 3 modułu + tabela w tle */
+.m2{height:54px;flex:none;display:flex;align-items:center;gap:10px;padding:0 16px;
+  background:var(--c-surface);border-bottom:1px solid var(--c-border)}
+.crumb{font-size:12px;color:var(--c-text-muted)}
+.crumb b{color:var(--c-text)}
+.tabs{display:flex;align-items:center;gap:4px;margin-left:12px}
+.tab{height:32px;padding:0 12px;border-radius:var(--r-pill);border:1px solid transparent;background:transparent;
+  color:var(--c-text-secondary);font-size:12.5px;display:inline-flex;align-items:center;gap:7px}
+.tab .n{font-size:11px;font-variant-numeric:tabular-nums;color:var(--c-text-muted)}
+.tab[aria-current="page"]{background:var(--c-active-bg);border-color:var(--c-active-border);
+  color:var(--c-active-text);font-weight:600}
+.m2 .right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.ctabtn{height:34px;padding:0 14px;border-radius:var(--r-sm);background:var(--c-cta-bg);color:var(--c-cta-text);
+  border:1px solid var(--c-cta-bg);font-size:12.5px;font-weight:600;display:inline-flex;align-items:center;gap:7px}
+.m3{flex:none;display:flex;align-items:center;gap:8px;padding:10px 16px}
+.chip{height:30px;padding:0 11px;border-radius:var(--r-pill);border:1px solid var(--c-border);background:transparent;
+  color:var(--c-text-secondary);font-size:12px;display:inline-flex;align-items:center;gap:7px}
+.chip[aria-pressed="true"]{background:var(--c-active-bg);border-color:var(--c-active-border);color:var(--c-active-text);font-weight:600}
+.bgstage{flex:1;min-height:0;padding:0 16px 16px}
+.tbl{background:var(--c-surface);border:1px solid var(--c-border-subtle);border-radius:var(--r-md);
+  box-shadow:var(--shadow-card);overflow:hidden;height:100%}
+.tr{display:grid;grid-template-columns:34px minmax(0,2.4fr) 1fr 1fr 1fr .9fr 34px;align-items:center;gap:12px;
+  padding:0 14px;height:46px;border-bottom:1px solid var(--c-border-subtle)}
+.tr.head{height:40px;background:var(--c-surface-raised)}
+.tr.head span{font-size:11px;font-weight:600;color:var(--c-text-muted);text-transform:uppercase;letter-spacing:.08em}
+.tr .cell{font-size:12.5px;color:var(--c-text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tr .cell.t{font-weight:600;color:var(--c-text)}
+.box{width:14px;height:14px;border-radius:3px;border:1.5px solid var(--c-border-strong)}
+
+/* ===== BADGE ===== */
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:600;padding:2px 8px;
+  border-radius:var(--r-pill);border:1px solid var(--c-border-subtle);background:var(--c-surface-raised);
+  color:var(--c-text-secondary);white-space:nowrap}
+.badge.ok{border-color:color-mix(in srgb,var(--c-success) 40%,transparent);color:var(--c-success)}
+.badge.warn{border-color:color-mix(in srgb,var(--c-warning) 45%,transparent);color:var(--c-warning);
+  background:color-mix(in srgb,var(--c-warning) 9%,transparent)}
+.badge.info{border-color:color-mix(in srgb,var(--c-focus-solid) 40%,transparent);color:var(--c-focus-solid)}
+.badge.none{border-style:dotted;color:var(--c-text-muted)}
+.badge.bad{border-color:color-mix(in srgb,var(--c-danger) 45%,transparent);color:var(--c-danger)}
+
+/* ============================================================
+   CREATOR SHELL — powłoka wspólna Wniosek / Inicjatywa / (kompakt) Przypisanie
+   Geometria: min(1040px, 100vw-64px) x min(840px, 100vh-48px)
+   Jedna ramka, jeden obszar przewijany, trzy pasy stałe.
+   ============================================================ */
+.scrim{position:absolute;inset:0;background:var(--scrim);display:grid;place-items:center;z-index:20}
+.shell{width:min(1040px,calc(100% - 64px));height:min(840px,calc(100% - 48px));
+  background:var(--c-surface);border:1px solid var(--c-border);border-radius:var(--r-lg);
+  box-shadow:var(--shadow-modal);display:flex;flex-direction:column;overflow:hidden}
+
+/* — pas 1: nagłówek 60px (szkło) — */
+.shead{height:60px;flex:none;display:flex;align-items:center;gap:12px;padding:0 20px;
+  background:var(--glass-bg);-webkit-backdrop-filter:blur(14px) saturate(1.5);backdrop-filter:blur(14px) saturate(1.5);
+  border-bottom:1px solid var(--glass-line)}
+.sicon{width:32px;height:32px;flex:none;border-radius:var(--r-sm);border:1px solid var(--c-border);
+  background:var(--c-surface-raised);display:grid;place-items:center;color:var(--c-text-secondary)}
+.stitle{min-width:0;display:flex;flex-direction:column;justify-content:center}
+.stitle b{font-size:18px;line-height:24px;font-weight:600;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stitle span{font-size:12px;line-height:16px;color:var(--c-text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.shead .right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.savestate{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;color:var(--c-text-muted);
+  height:30px;padding:0 11px;border-radius:var(--r-pill);background:var(--c-surface);border:1px solid var(--c-border-subtle)}
+.dot{width:6px;height:6px;border-radius:var(--r-pill);display:inline-block;flex:none;background:var(--c-border-strong)}
+.xbtn{width:34px;height:34px;flex:none;border-radius:var(--r-sm);border:1px solid transparent;background:transparent;
+  color:var(--c-text-secondary);display:grid;place-items:center}
+.xbtn:hover{border-color:var(--c-border);color:var(--c-text)}
+
+/* — pas 2: kroki 70px (szkło) — */
+.ssteps{height:70px;flex:none;display:flex;align-items:stretch;gap:8px;padding:8px 20px;
+  background:var(--glass-bg);-webkit-backdrop-filter:blur(14px) saturate(1.5);backdrop-filter:blur(14px) saturate(1.5);
+  border-bottom:1px solid var(--glass-line)}
+.stp{flex:1;min-width:0;display:flex;align-items:center;gap:10px;padding:0 12px;border-radius:var(--r-sm);
+  border:1px solid transparent;background:transparent;text-align:left;color:var(--c-text-secondary)}
+.sidx{width:24px;height:24px;flex:none;border-radius:50%;display:grid;place-items:center;font-size:11.5px;font-weight:700;
+  border:1.5px solid var(--c-border-strong);color:var(--c-text-muted);font-variant-numeric:tabular-nums}
+.stx{min-width:0;display:block}
+.stx b{display:block;font-size:13px;line-height:18px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stx span{display:block;font-size:12px;line-height:16px;color:var(--c-text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stp.done{color:var(--c-text)}
+.stp.done .sidx{border-color:var(--c-success);color:var(--c-success)}
+.stp.done .stx span{color:var(--c-text-secondary)}
+.stp.now{background:var(--c-active-bg);border-color:var(--c-active-border);color:var(--c-active-text)}
+.stp.now .sidx{background:var(--c-cta-bg);border-color:var(--c-cta-bg);color:var(--c-cta-text)}
+.stp.now .stx b{font-weight:700}
+.stp.next .sidx{border-style:dashed}
+.stpsep{flex:none;width:16px;display:grid;place-items:center;color:var(--c-border-strong)}
+
+/* — pas 3: zakres, jedna linia 36px (szkło) — */
+.sscope{height:36px;flex:none;display:flex;align-items:center;gap:9px;padding:0 20px;
+  background:var(--glass-bg);-webkit-backdrop-filter:blur(14px) saturate(1.5);backdrop-filter:blur(14px) saturate(1.5);
+  border-bottom:1px solid var(--glass-line);font-size:12px;color:var(--c-text-secondary);overflow:hidden}
+.sscope .k{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.14em;color:var(--c-text-muted);flex:none}
+.sscope .v{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sscope .v b{color:var(--c-text);font-weight:600}
+.expand{margin-left:auto;flex:none;height:24px;padding:0 9px;border-radius:var(--r-pill);border:1px solid var(--c-border);
+  background:transparent;color:var(--c-text-secondary);font-size:11px;display:inline-flex;align-items:center;gap:5px}
+
+/* — pas 4: TREŚĆ, jedyny obszar przewijany — */
+.sview{flex:1;min-height:0;position:relative;background:var(--c-surface)}
+.sscroll{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden}
+.swrap{max-width:880px;margin:0 auto;padding:24px 24px 84px}
+.qhead{margin-bottom:20px}
+.qhead h2{font-size:18px;line-height:24px;font-weight:600;letter-spacing:-.01em}
+.qhead p{font-size:14px;line-height:20px;color:var(--c-text-secondary);margin-top:4px}
+.sect{margin-bottom:24px}
+.sh{display:flex;align-items:baseline;gap:10px;margin-bottom:12px}
+.sh label,.sh .lab{font-size:13px;line-height:18px;font-weight:600;flex:none}
+.sh .cnt{margin-left:auto;font-size:12px;color:var(--c-text-muted);font-variant-numeric:tabular-nums;
+  text-align:right;min-width:0}
+.helper{font-size:12px;line-height:16px;color:var(--c-text-muted);margin-top:6px;display:flex;align-items:center;gap:6px}
+.helper.ok{color:var(--c-success)}
+input.f,select.f{width:100%;height:40px;border:1px solid var(--c-border);border-radius:var(--r-sm);background:var(--c-surface);
+  color:var(--c-text);font:inherit;font-size:14px;padding:0 12px}
+input.f.big{height:48px;font-size:15px;font-weight:500}
+textarea.f{width:100%;min-height:112px;border:1px solid var(--c-border);border-radius:var(--r-sm);background:var(--c-surface);
+  color:var(--c-text);font:inherit;font-size:14px;line-height:20px;padding:10px 12px;resize:none}
+.two{display:grid;grid-template-columns:repeat(2,minmax(280px,1fr));gap:12px}
+.cards2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.card{min-height:64px;display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--c-border);
+  border-radius:var(--r-sm);background:var(--c-surface);text-align:left;color:var(--c-text-secondary)}
+.card .ci{width:30px;height:30px;flex:none;border-radius:var(--r-xs);border:1px solid var(--c-border-subtle);
+  background:var(--c-surface-raised);display:grid;place-items:center;color:var(--c-text-muted)}
+.card .cb{flex:1;min-width:0}
+.card .cb b{display:block;font-size:14px;line-height:20px;font-weight:600;color:var(--c-text)}
+.card .cb span{display:block;font-size:12px;line-height:16px;color:var(--c-text-muted)}
+.card .cx{width:18px;height:18px;flex:none;border-radius:4px;border:1.5px solid var(--c-border-strong);
+  display:grid;place-items:center;color:transparent}
+.card[aria-checked="true"]{background:var(--c-active-bg);border-color:var(--c-border-strong)}
+.card[aria-checked="true"] .cx{background:var(--c-cta-bg);border-color:var(--c-cta-bg);color:var(--c-cta-text)}
+.card[aria-checked="true"] .ci{background:var(--c-surface);border-color:var(--c-border)}
+.rows{border:1px solid var(--c-border);border-radius:var(--r-sm);overflow:hidden;background:var(--c-surface)}
+.row{display:flex;align-items:center;gap:12px;min-height:56px;padding:10px 14px;border-bottom:1px solid var(--c-border-subtle);
+  text-align:left;width:100%;background:transparent;border-left:0;border-right:0;border-top:0;color:var(--c-text-secondary)}
+.row:last-child{border-bottom:0}
+.row .cx{width:18px;height:18px;flex:none;border-radius:4px;border:1.5px solid var(--c-border-strong);
+  display:grid;place-items:center;color:transparent}
+.row[aria-checked="true"]{background:var(--c-active-bg)}
+.row[aria-checked="true"] .cx{background:var(--c-cta-bg);border-color:var(--c-cta-bg);color:var(--c-cta-text)}
+.row .rb{flex:1;min-width:0}
+.row .rb b{display:block;font-size:14px;line-height:20px;font-weight:600;color:var(--c-text)}
+.row .rb span{display:block;font-size:12px;line-height:16px;color:var(--c-text-muted)}
+.row .rn{flex:none;font-size:12px;color:var(--c-text-secondary);font-variant-numeric:tabular-nums}
+.row.off{opacity:.72}
+.row.off .cx{border-style:dashed;border-color:var(--c-border)}
+.notice{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border:1px solid var(--c-border);
+  border-left:3px solid var(--c-focus-solid);border-radius:var(--r-sm);background:var(--c-surface-raised)}
+.notice.warn{border-left-color:var(--c-warning)}
+.notice .nb{flex:1;min-width:0}
+.notice .nb b{display:block;font-size:13px;line-height:18px;font-weight:600;color:var(--c-text)}
+.notice .nb span{display:block;font-size:12px;line-height:17px;color:var(--c-text-secondary);margin-top:2px}
+.linkbtn{flex:none;height:32px;padding:0 12px;border-radius:var(--r-pill);border:1px solid var(--c-border);
+  background:var(--c-surface);color:var(--c-text-secondary);font-size:12px;font-weight:600}
+.disclose{width:100%;height:48px;display:flex;align-items:center;gap:10px;padding:0 14px;border:1px solid var(--c-border);
+  border-radius:var(--r-sm);background:var(--c-surface-raised);color:var(--c-text-secondary);text-align:left}
+.disclose b{font-size:13px;font-weight:600;color:var(--c-text);white-space:nowrap;flex:none}
+.disclose .sum{font-size:12px;color:var(--c-text-muted);flex:1;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.disclose .n{flex:none;font-size:11.5px;font-weight:600;color:var(--c-text-secondary);
+  border:1px solid var(--c-border);border-radius:var(--r-pill);padding:1px 8px;background:var(--c-surface);white-space:nowrap}
+.opened{border:1px solid var(--c-border);border-radius:var(--r-sm);background:var(--c-surface);margin-top:-1px}
+.opened>.oh{display:flex;align-items:center;gap:10px;height:48px;padding:0 14px;border-bottom:1px solid var(--c-border-subtle);
+  background:var(--c-surface-raised)}
+.opened>.ob{padding:16px 14px;display:flex;flex-direction:column;gap:20px}
+.drop{border:1px dashed var(--c-border-strong);border-radius:var(--r-sm);padding:20px;text-align:center;color:var(--c-text-muted)}
+.drop b{display:block;font-size:13px;font-weight:600;color:var(--c-text-secondary)}
+.tags{display:flex;flex-wrap:wrap;gap:8px}
+.tag{height:32px;padding:0 12px;border-radius:var(--r-pill);border:1px solid var(--c-border);background:var(--c-surface);
+  color:var(--c-text-secondary);font-size:12.5px;display:inline-flex;align-items:center;gap:6px}
+.tag[aria-pressed="true"]{background:var(--c-active-bg);border-color:var(--c-border-strong);color:var(--c-text);font-weight:600}
+.endmark{display:flex;align-items:center;gap:10px;color:var(--c-text-muted);font-size:11.5px;margin-top:4px}
+.endmark i{flex:1;height:1px;background:var(--c-border-subtle);display:block}
+
+/* — wskaźnik dalszej treści: jawny, nie sam gradient — */
+.morebelow{position:absolute;left:0;right:0;bottom:0;height:72px;pointer-events:none;
+  display:flex;align-items:flex-end;justify-content:center;padding-bottom:12px;
+  background:linear-gradient(to bottom,transparent,var(--c-surface) 62%)}
+.morebelow .pill{pointer-events:auto;height:32px;padding:0 14px;border-radius:var(--r-pill);border:1px solid var(--c-border);
+  background:var(--c-surface);box-shadow:var(--shadow-card);color:var(--c-text-secondary);font-size:12px;
+  display:inline-flex;align-items:center;gap:8px}
+.morebelow .pill b{color:var(--c-text);font-weight:600}
+
+/* — pas 5: stopka 70px (szkło) — */
+.sfoot{height:70px;flex:none;display:flex;align-items:center;gap:12px;padding:0 20px;
+  background:var(--glass-bg);-webkit-backdrop-filter:blur(14px) saturate(1.5);backdrop-filter:blur(14px) saturate(1.5);
+  border-top:1px solid var(--glass-line)}
+.sfoot .right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.btn{height:40px;padding:0 16px;border-radius:var(--r-sm);border:1px solid var(--c-border);background:var(--c-surface);
+  color:var(--c-text-secondary);font-size:13.5px;font-weight:600;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{border-color:var(--c-border-strong);color:var(--c-text)}
+.btn.ghost{border-color:transparent;background:transparent}
+.btn.cta{background:var(--c-cta-bg);border-color:var(--c-cta-bg);color:var(--c-cta-text)}
+.btn.off{opacity:.55;cursor:not-allowed}
+.footnote{font-size:11.5px;color:var(--c-text-muted);max-width:360px;line-height:1.45}
+
+/* przezroczystość ograniczona — awaryjnie pełne krycie */
+@media (prefers-reduced-transparency:reduce){
+  .shead,.ssteps,.sscope,.sfoot{-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--c-surface-raised)}
+}
+
+/* ===== SEKCJE DECYZYJNE POD EKRANEM ===== */
+.states{padding:0 16px 34px}
+.stateshead{display:flex;align-items:baseline;gap:10px;padding:22px 0 10px}
+.sgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:start}
+.scard{background:var(--c-surface);border:1px solid var(--c-border-subtle);border-radius:var(--r-md);
+  box-shadow:var(--shadow-card);overflow:hidden}
+.scard>header{padding:10px 12px;border-bottom:1px solid var(--c-border-subtle)}
+.scard>.b{padding:12px}
+.note{border:1px dashed var(--c-border);border-radius:var(--r-sm);padding:8px 10px;margin-top:10px;
+  color:var(--c-text-secondary);font-size:11px}
+.item{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid var(--c-border-subtle)}
+.item:last-of-type{border-bottom:0}
+.item .grow{flex:1;min-width:0}
+.item .grow .l2{display:block;font-size:12px}
+.item .grow .l5{display:block;font-size:11px}
+.status{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--c-text-secondary);white-space:nowrap;margin-top:3px}
+.status.warn{color:var(--c-warning)} .status.warn .dot{background:var(--c-warning)}
+.status.ok{color:var(--c-success)} .status.ok .dot{background:var(--c-success)}
+.status.info{color:var(--c-info)} .status.info .dot{background:var(--c-info)}
+.status.bad{color:var(--c-danger)} .status.bad .dot{background:var(--c-danger)}
+.opt{display:flex;align-items:flex-start;gap:8px;margin-bottom:9px}
+.radio{width:13px;height:13px;border-radius:50%;border:1.5px solid var(--c-border-strong);flex:none;position:relative;margin-top:4px}
+.radio.on{border-color:var(--c-cta-bg)}
+.radio.on::after{content:"";position:absolute;inset:2.5px;border-radius:50%;background:var(--c-cta-bg)}
+.opt .ot{flex:1;min-width:0}
+.opt .ot b{display:block;font-size:12px;font-weight:600}
+.opt .ot span{display:block;font-size:11px;color:var(--c-text-muted)}
+.qn{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:var(--r-xs);
+  background:var(--c-cta-bg);color:var(--c-cta-text);font-size:11px;font-weight:700;flex:none;margin-right:8px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;align-items:center;padding:10px 12px;border:1px solid var(--c-border-subtle);
+  border-radius:var(--r-md);margin-top:12px;background:var(--c-surface)}
+@media (max-width:1400px){.sgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:900px){.sgrid{grid-template-columns:minmax(0,1fr)}}
+</style>
+
+
+<div class="protobar">
+  <span class="pt">Prototyp · Creator Shell — Wywiad</span>
+  <span class="sep"></span>
+  <a class="plink" href="interview-creator-prototyp-01-definicja.html">1 · Definicja</a>
+  <a class="plink" href="interview-creator-prototyp-02-material.html" aria-current="page">2 · Materiał</a>
+  <a class="plink" href="interview-creator-prototyp-03-dostrojenie.html">3 · Dostrojenie</a>
+  <span class="right">
+    <span class="l5">makieta statyczna · kod powstaje po akcepcie</span>
+    <div class="tglt" role="group" aria-label="Motyw">
+      <button id="tl" aria-pressed="true">Jasny</button>
+      <button id="td" aria-pressed="false">Ciemny</button>
+    </div>
+  </span>
+</div>
+
+<div class="app">
+
+<nav class="gmenu" aria-label="Menu główne aplikacji">
+  <div class="gmenu-brand"><span class="gmark" aria-hidden="true">C</span><span class="gword">Consultify</span></div>
+  <div class="gmenu-main">
+    <a class="gitem" href="#"><svg width="17" height="17" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z"/></svg><span class="glabel">Czat</span></a>
+    <a class="gitem" href="#"><svg width="17" height="17" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><path d="M2 13h20"/></svg><span class="glabel">Moja Praca</span></a>
+    <a class="gitem" href="#" aria-current="page"><svg width="17" height="17" viewBox="0 0 24 24"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M9 11h6"/><path d="M9 15h6"/></svg><span class="glabel">Wywiad</span></a>
+    <a class="gitem" href="#"><svg width="17" height="17" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17l3 3 5.3-5.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2-2z"/></svg><span class="glabel">Narzędzia</span></a>
+    <a class="gitem" href="#"><svg width="17" height="17" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.2 2.2 4.8-4.8"/></svg><span class="glabel">Ocena</span></a>
+    <a class="gitem" href="#"><svg width="17" height="17" viewBox="0 0 24 24"><path d="M9.5 18h5"/><path d="M10.3 21.5h3.4"/><path d="M12 2.5a6.7 6.7 0 0 0-3.8 12.2c.7.5 1.2 1.5 1.2 2.3h5.2c0-.8.5-1.8 1.2-2.3A6.7 6.7 0 0 0 12 2.5z"/></svg><span class="glabel">Inicjatywy</span></a>
+    <a class="gitem" href="#"><svg width="17" height="17" viewBox="0 0 24 24"><path d="M12 2.5c2.3 2 3.7 5.3 3.7 8.7 0 2-1 3.8-2 4.8l-1.7 1.7-1.7-1.7c-1-1-2-2.8-2-4.8 0-3.4 1.4-6.7 3.7-8.7z"/><circle cx="12" cy="10.5" r="1.4"/></svg><span class="glabel">Realizacja</span></a>
+    <a class="gitem" href="#"><svg width="17" height="17" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M17 7h4v4"/></svg><span class="glabel">Rezultaty</span><span class="gbadge">beta</span></a>
+    <a class="gitem" href="#"><svg width="17" height="17" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 6h6"/><path d="M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01"/></svg><span class="glabel">Finanse</span><span class="gbadge">beta</span></a>
+    <a class="gitem" href="#"><svg width="17" height="17" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M12 17v-6"/><path d="M9.3 13.7L12 11l2.7 2.7"/></svg><span class="glabel">Materiały</span><span class="gbadge">beta</span></a>
+    <a class="gitem" href="#"><svg width="17" height="17" viewBox="0 0 24 24"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 13.5l2 2 4-4.5"/></svg><span class="glabel">Audyty</span><span class="gbadge">beta</span></a>
+    <a class="gitem" href="#"><svg width="17" height="17" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M2.5 20c0-3 2.9-5 6.5-5s6.5 2 6.5 5"/><path d="M16 6.2a3 3 0 0 1 0 5.8"/></svg><span class="glabel">Spotkania</span><span class="gbadge">beta</span></a>
+  </div>
+  <div class="gmenu-foot">
+    <div class="gsep"></div>
+    <a class="gitem" href="#"><svg width="17" height="17" viewBox="0 0 24 24"><path d="M3 21V10l4.7 3.3V10l4.7 3.3V10l4.7 3.3V6.5h2V21z"/><path d="M3 21h18"/></svg><span class="glabel">Organizacja</span></a>
+    <a class="gitem" href="#"><svg width="17" height="17" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M3 12h3M18 12h3M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1"/></svg><span class="glabel">Ustawienia</span></a>
+  </div>
+</nav>
+
+<div class="appmain" aria-hidden="true">
+  <div class="m2">
+    <span class="crumb">Wywiad › <b>Wnioski</b></span>
+    <div class="tabs">
+      <button class="tab">Skrzynka <span class="n">3</span></button>
+      <button class="tab">Sesje <span class="n">15</span></button>
+      <button class="tab">Przypisane <span class="n">4</span></button>
+      <button class="tab">Szablony <span class="n">6</span></button>
+      <button class="tab" aria-current="page">Wnioski <span class="n">9</span></button>
+      <button class="tab">Inicjatywy <span class="n">2</span></button>
+    </div>
+    <span class="right">
+      <button class="chip"><svg width="13" height="13" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>Szukaj</button>
+      <button class="ctabtn"><svg width="13" height="13" viewBox="0 0 24 24"><path d="M12 3l1.9 4.6L18.5 9.5 13.9 11.4 12 16l-1.9-4.6L5.5 9.5l4.6-1.9z"/><path d="M18.5 15.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/></svg>Nowy wniosek</button>
+    </span>
+  </div>
+  <div class="m3">
+    <button class="chip" aria-pressed="true">Wszystkie <span class="l5">9</span></button>
+    <button class="chip">Moje <span class="l5">4</span></button>
+    <button class="chip">Do przeglądu <span class="l5">2</span></button>
+    <button class="chip"><svg width="13" height="13" viewBox="0 0 24 24"><path d="M4 5h16l-6 7v6l-4 2v-8z"/></svg>Filtry</button>
+    <button class="chip">Projekt: Metalpol — Diagnoza 2026</button>
+  </div>
+  <div class="bgstage">
+    <div class="tbl">
+      <div class="tr head"><span></span><span>Tytuł</span><span>Typ</span><span>Status</span><span>Źródła</span><span>Data</span><span></span></div>
+      <div class="tr"><span class="box"></span><span class="cell t">Automatyzacja procesów magazynowych</span>
+        <span class="cell">Odkrywanie problemów</span><span class="cell">Zakończony</span>
+        <span class="cell">6 sesji</span><span class="cell mono">21.08.2026</span><span class="cell">⋯</span></div>
+      <div class="tr"><span class="box"></span><span class="cell t">Rozproszona odpowiedzialność za zlecenie</span>
+        <span class="cell">Analiza luk</span><span class="cell">Zakończony</span>
+        <span class="cell">4 sesje</span><span class="cell mono">20.08.2026</span><span class="cell">⋯</span></div>
+      <div class="tr"><span class="box"></span><span class="cell t">Sprzeczne dane o czasie realizacji</span>
+        <span class="cell">Skan sprzeczności</span><span class="cell">W przeglądzie</span>
+        <span class="cell">5 sesji</span><span class="cell mono">20.08.2026</span><span class="cell">⋯</span></div>
+      <div class="tr"><span class="box"></span><span class="cell t">Gotowość zespołu do zmiany</span>
+        <span class="cell">Ocena dojrzałości</span><span class="cell">Zakończony</span>
+        <span class="cell">7 sesji</span><span class="cell mono">19.08.2026</span><span class="cell">⋯</span></div>
+      <div class="tr"><span class="box"></span><span class="cell t">Ryzyka wdrożenia WMS</span>
+        <span class="cell">Ocena ryzyk</span><span class="cell">Zakończony</span>
+        <span class="cell">3 sesje</span><span class="cell mono">18.08.2026</span><span class="cell">⋯</span></div>
+      <div class="tr"><span class="box"></span><span class="cell t">Mapa interesariuszy transformacji</span>
+        <span class="cell">Mapa interesariuszy</span><span class="cell">Zakończony</span>
+        <span class="cell">9 sesji</span><span class="cell mono">17.08.2026</span><span class="cell">⋯</span></div>
+      <div class="tr"><span class="box"></span><span class="cell t">Quick wins w obszarze zakupów</span>
+        <span class="cell">Skan szans</span><span class="cell">Zakończony</span>
+        <span class="cell">4 sesje</span><span class="cell mono">15.08.2026</span><span class="cell">⋯</span></div>
+      <div class="tr"><span class="box"></span><span class="cell t">Podsumowanie dla zarządu — sierpień</span>
+        <span class="cell">Podsumowanie wykonawcze</span><span class="cell">Zakończony</span>
+        <span class="cell">12 sesji</span><span class="cell mono">14.08.2026</span><span class="cell">⋯</span></div>
+    </div>
+  </div>
+</div>
+
+  <div class="scrim">
+    <div class="shell" role="dialog" aria-modal="true" aria-label="Prototyp — Wywiad › Creator Shell · krok 2 Materiał">
+
+  <div class="shead">
+    <span class="sicon"><svg width="17" height="17" viewBox="0 0 24 24"><path d="M12 3l1.9 4.6L18.5 9.5 13.9 11.4 12 16l-1.9-4.6L5.5 9.5l4.6-1.9z"/><path d="M18.5 15.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/></svg></span>
+    <span class="stitle">
+      <b>Kreator wniosku</b>
+      <span>Wywiad › Wnioski · Metalpol Sp. z o.o. — Diagnoza operacyjna 2026</span>
+    </span>
+    <span class="right">
+      <span class="savestate"><span class="dot" style="background:var(--c-success)"></span>Szkic zapisany 10:14</span>
+      <button class="xbtn" aria-label="Zamknij kreator"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </span>
+  </div>
+
+  <div class="ssteps" role="group" aria-label="Kroki kreatora">
+    <button class="stp done">
+      <span class="sidx"><svg width="13" height="13" viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5"/></svg></span>
+      <span class="stx"><b>Definicja</b><span>2 typy wyniku · tytuł ustalony</span></span>
+    </button><span class="stpsep" aria-hidden="true"><svg width="13" height="13" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+    <button class="stp now" aria-current="step">
+      <span class="sidx">2</span>
+      <span class="stx"><b>Materiał</b><span>Z jakiego materiału korzystamy?</span></span>
+    </button><span class="stpsep" aria-hidden="true"><svg width="13" height="13" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+    <button class="stp next">
+      <span class="sidx">3</span>
+      <span class="stx"><b>Dostrojenie</b><span>Opcjonalny · można pominąć</span></span>
+    </button>
+  </div>
+
+  <div class="sscope">
+    <span class="k">Co powstanie</span>
+    <span class="v"><b>Wniosek</b> „Wąskie gardła…” · Podsumowanie wykonawcze + Odkrywanie problemów · <b>12 zatwierdzonych sesji</b> · 7 osób · 3 wykluczone</span>
+    <button class="expand">Rozwiń <svg width="12" height="12" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+  </div>
+      <div class="sview">
+        <div class="sscroll">
+
+    <div class="swrap">
+      <div class="qhead">
+        <h2>Z jakiego materiału korzystamy?</h2>
+        <p>Do analizy wchodzą wyłącznie sesje zatwierdzone przez menedżera. Resztę widzisz i wiesz dlaczego jej nie ma.</p>
+      </div>
+
+      <div class="sect">
+        <div class="notice warn">
+          <svg width="16" height="16" viewBox="0 0 24 24"><path d="M10.3 3.9L2.6 17a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+          <span class="nb"><b>15 sesji w projekcie · 12 zatwierdzonych wejdzie do analizy</b>
+          <span>2 sesje czekają na akceptację (R. Mazur), 1 sesja odesłana do poprawy 21.08 (A. Nowak). Materiał niezatwierdzony nigdy nie wchodzi do analizy po cichu.</span></span>
+          <button class="linkbtn">Pokaż wykluczone (3)</button>
+        </div>
+      </div>
+
+      <div class="sect">
+        <div class="sh"><span class="lab">Osoby</span><span class="cnt">Wybrano 7 z 7 · 12 sesji</span></div>
+        <div class="rows">
+          <button class="row" role="checkbox" aria-checked="true">
+            <span class="cx"><svg width="12" height="12" viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5"/></svg></span>
+            <span class="rb"><b>Wszystkie osoby z zatwierdzonym materiałem</b><span>7 osób · 12 sesji · okres 04.08 – 21.08.2026</span></span>
+            <span class="rn">12</span>
+          </button>
+          
+        <button class="row" role="checkbox" aria-checked="true">
+          <span class="cx"><svg width="12" height="12" viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5"/></svg></span>
+          <span class="rb"><b>Anna Nowak</b><span>Kierownik magazynu · Logistyka</span></span>
+          <span class="rn">3</span>
+        </button>
+          
+        <button class="row" role="checkbox" aria-checked="true">
+          <span class="cx"><svg width="12" height="12" viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5"/></svg></span>
+          <span class="rb"><b>Marek Zieliński</b><span>Kierownik IT · IT</span></span>
+          <span class="rn">2</span>
+        </button>
+          
+        <button class="row" role="checkbox" aria-checked="true">
+          <span class="cx"><svg width="12" height="12" viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5"/></svg></span>
+          <span class="rb"><b>Katarzyna Wójcik</b><span>Dyrektor operacyjny · Operacje</span></span>
+          <span class="rn">2</span>
+        </button>
+          
+        <button class="row" role="checkbox" aria-checked="true">
+          <span class="cx"><svg width="12" height="12" viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5"/></svg></span>
+          <span class="rb"><b>Paweł Kaczmarek</b><span>Specjalista ds. zakupów · Zakupy</span></span>
+          <span class="rn">2</span>
+        </button>
+          
+        <button class="row" role="checkbox" aria-checked="true">
+          <span class="cx"><svg width="12" height="12" viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5"/></svg></span>
+          <span class="rb"><b>Tomasz Lewandowski</b><span>Mistrz zmiany · Produkcja</span></span>
+          <span class="rn">1</span>
+        </button>
+          
+        <button class="row" role="checkbox" aria-checked="true">
+          <span class="cx"><svg width="12" height="12" viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5"/></svg></span>
+          <span class="rb"><b>Ewa Dąbrowska</b><span>Kierownik jakości · Jakość</span></span>
+          <span class="rn">1</span>
+        </button>
+          
+        <button class="row" role="checkbox" aria-checked="true">
+          <span class="cx"><svg width="12" height="12" viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5"/></svg></span>
+          <span class="rb"><b>Grzegorz Kowalczyk</b><span>Dyrektor finansowy · Finanse</span></span>
+          <span class="rn">1</span>
+        </button>
+          <button class="row off" role="checkbox" aria-checked="false" aria-disabled="true">
+            <span class="cx"></span>
+            <span class="rb"><b>Robert Mazur</b><span>Kierownik utrzymania ruchu · Techniczny — <b style="color:var(--c-warning)">czeka na akceptację menedżera</b></span></span>
+            <span class="rn">2</span>
+          </button>
+        </div>
+        <span class="helper">Wiersz niedostępny zawsze podaje powód. Pusty wybór osób jest zakazany — zawsze widać, co jest i czego brakuje.</span>
+      </div>
+
+      <div class="sect">
+        <div class="sh"><span class="lab">Zawężenie materiału</span><span class="cnt">Opcjonalne — bez zmian analizujemy wszystko powyżej</span></div>
+        <div class="two">
+          <div>
+            <span class="l4">Data od</span>
+            <input class="f" value="04.08.2026" style="margin-top:6px">
+          </div>
+          <div>
+            <span class="l4">Data do</span>
+            <input class="f" value="21.08.2026" style="margin-top:6px">
+          </div>
+          <div>
+            <span class="l4">Rola respondenta</span>
+            <input class="f" value="Wszystkie role" style="margin-top:6px">
+          </div>
+          <div>
+            <span class="l4">Dział</span>
+            <input class="f" value="Wszystkie działy" style="margin-top:6px">
+          </div>
+        </div>
+      </div>
+    </div>
+        </div>
+        <div class="morebelow"><span class="pill"><svg width="13" height="13" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg><span>Niżej: <b>1 sekcja — Zawężenie materiału (daty, rola, dział)</b></span></span></div>
+      </div>
+<div class="sfoot">
+    <span class="footnote">Krok 3 jest opcjonalny — możesz uruchomić analizę już teraz na ustawieniach domyślnych.</span>
+    <span class="right">
+      <button class="btn ghost">Anuluj</button>
+      <button class="btn"><svg width="14" height="14" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>Wstecz</button>
+      <button class="btn">Uruchom teraz</button>
+      <button class="btn cta">Dalej: Dostrojenie <svg width="14" height="14" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+    </span></div>
+    </div>
+  </div>
+</div>
+
+
+  <div class="states">
+    <div class="stateshead">
+      <span class="l1">Co ten ekran rozstrzyga — krok 2</span>
+      <span class="l5">Ta sama powłoka co w kroku 1: te same wymiary, ten sam nagłówek, te same kroki, ta sama stopka. Dialog nie drgnął.</span>
+    </div>
+    <div class="sgrid">
+
+      <section class="scard">
+        <header><p class="l2">Co ten ekran naprawia</p><p class="l5" style="margin-top:4px">uwaga właściciela → element prototypu</p></header>
+        <div class="b">
+          <div class="item"><span class="status ok"><span class="dot"></span></span><span class="grow"><span class="l2">INT-CREATOR-EVD-002 — osoby, daty, rola i dział walczą o wąską kolumnę</span><span class="l5">Osoby dostały pełną szerokość 880 px i wiersze 56 px z rolą, działem i liczbą sesji. Filtry są osobną sekcją w siatce 2×2, każde pole ≥ 280 px.</span></span></div>
+          <div class="item"><span class="status ok"><span class="dot"></span></span><span class="grow"><span class="l2">INT-CREATOR-EVD-002 — „All people” bez informacji, co to znaczy</span><span class="l5">Wiersz zbiorczy podaje wprost: 7 osób · 12 sesji · okres 04.08 – 21.08.2026.</span></span></div>
+          <div class="item"><span class="status ok"><span class="dot"></span></span><span class="grow"><span class="l2">Materiał niezatwierdzony wchodził po cichu albo znikał bez słowa</span><span class="l5">Pasek u góry mówi 15 / 12 / 3 i podaje powód każdego wykluczenia. Wiersz R. Mazura jest widoczny, nieklikalny i opisany.</span></span></div>
+          <div class="item"><span class="status ok"><span class="dot"></span></span><span class="grow"><span class="l2">Pasek „Co powstanie” pokazuje stan po kroku 1</span><span class="l5">Bez cofania się widać tytuł, oba typy wyniku i liczbę sesji.</span></span></div>
+          <div class="note">Reguła z wytycznych: pusty selektor jest zakazany, a stan „brak danych” musi różnić się od „brak danych spełniających warunki”.</div>
+        </div>
+      </section>
+
+      <section class="scard">
+        <header><p class="l2"><span class="qn">5</span>Gdzie mieszka pasek „Co powstanie”</p><p class="l5" style="margin-top:4px">Wytyczne żądają zwiniętego, jednoliniowego podsumowania zakresu o ograniczonej wysokości.</p></header>
+        <div class="b">
+          <div class="opt"><span class="radio on"></span><span class="ot"><b>Osobny pas 36 px pod krokami ★ rekomendacja</b><span>Widoczny w każdym kroku, jedna linia, rozwijany na żądanie. Kosztuje 36 px z 840.</span></span></div>
+          <div class="opt"><span class="radio"></span><span class="ot"><b>W stopce, po lewej</b><span>Konkuruje o miejsce z przyciskami i uzasadnieniem blokady CTA.</span></span></div>
+          <div class="opt"><span class="radio"></span><span class="ot"><b>Tylko na ostatnim kroku</b><span>Za późno — użytkownik chce wiedzieć w kroku 2, ile materiału zebrał.</span></span></div>
+          <div class="note">Zakaz z wytycznych: to <b>nie może</b> zamienić się w kolejną stale otwartą kartę.</div>
+        </div>
+      </section>
+
+      <section class="scard">
+        <header><p class="l2"><span class="qn">6</span>Materiał wykluczony — jak go pokazujemy</p><p class="l5" style="margin-top:4px">W projekcie są 3 sesje, które nie wejdą do analizy: 2 czekają na akceptację, 1 odesłana do poprawy.</p></header>
+        <div class="b">
+          <div class="opt"><span class="radio"></span><span class="ot"><b>Nie pokazujemy wcale</b><span>Użytkownik nie wie, czemu liczba sesji jest inna niż w module.</span></span></div>
+          <div class="opt"><span class="radio on"></span><span class="ot"><b>Licznik + wiersz nieklikalny z powodem ★ rekomendacja</b><span>Widać osobę, liczbę sesji i powód. Przycisk „Pokaż wykluczone (3)” otwiera pełną listę z datami.</span></span></div>
+          <div class="opt"><span class="radio"></span><span class="ot"><b>Osobna zakładka „Wykluczone”</b><span>Druga lista do przewijania; łamie regułę jednego obszaru przewijania.</span></span></div>
+          
+        </div>
+      </section>
+
+      <section class="scard">
+        <header><p class="l2"><span class="qn">7</span>Czy „Uruchom” ma być dostępny już w kroku 2</p><p class="l5" style="margin-top:4px">Krok 3 jest oznaczony jako opcjonalny — w takim razie musi dać się pominąć.</p></header>
+        <div class="b">
+          <div class="opt"><span class="radio on"></span><span class="ot"><b>Tak — „Uruchom teraz” obok „Dalej: Dostrojenie” ★ rekomendacja</b><span>Ścieżka podstawowa (tytuł + typ + materiał) kończy się w dwóch krokach. Krok 3 zostaje dla tych, którzy chcą.</span></span></div>
+          <div class="opt"><span class="radio"></span><span class="ot"><b>Nie — zawsze przez krok 3</b><span>Wtedy krok 3 nie jest opcjonalny i etykieta kłamie.</span></span></div>
+          <div class="opt"><span class="radio"></span><span class="ot"><b>Tak, ale jako link tekstowy „Pomiń dostrojenie”</b><span>Słabsza widoczność; przycisk główny i tak trzeba nazwać.</span></span></div>
+          <div class="note">Jeśli wybierzemy (a): w kroku 2 stoją obok siebie dwie akcje kończące. Wtedy „Dalej: Dostrojenie” zostaje główna, a „Uruchom teraz” jest zwykłym przyciskiem — tak jak na prototypie.</div>
+        </div>
+      </section>
+
+      <section class="scard">
+        <header><p class="l2">Granice — czego ten prototyp NIE dotyczy</p><p class="l5" style="margin-top:4px">D1 · D2 · zakaz czwartej powłoki</p></header>
+        <div class="b">
+          <div class="item"><span class="status info"><span class="dot"></span></span><span class="grow">
+            <span class="l2">To jest kreator wywiadu klasycznego</span>
+            <span class="l5">Wniosek i Inicjatywa powstają z <b>zatwierdzonych sesji wywiadu</b>. DRD ma własny silnik serwerowy i własne tryby (Interview / Matrix / Report) — <b>nie wchodzi</b> w tę powłokę.</span></span></div>
+          <div class="item"><span class="status info"><span class="dot"></span></span><span class="grow">
+            <span class="l2">Jeden adres modułu: <span class="kbd">/interview</span></span>
+            <span class="l5">Kreator jest dialogiem nad listą, nie osobną trasą. Nie tworzy nowego adresu ani nowego wejścia do modułu.</span></span></div>
+          <div class="item"><span class="status bad"><span class="dot"></span></span><span class="grow">
+            <span class="l2">Nie powstaje czwarty system kreatorów</span>
+            <span class="l5">Powłoka to rozszerzenie <span class="kbd">src/components/shared/WizardModal</span> (dziś <span class="kbd">720×560</span>), nie nowy komponent. <span class="kbd">ToolWizardShell</span> zostaje powłoką narzędzi na trasie.</span></span></div>
+          <div class="item"><span class="status warn"><span class="dot"></span></span><span class="grow">
+            <span class="l2">Inicjatywa: kroki 3–5 wciąż bez dowodu</span>
+            <span class="l5">Kandydaci · Nadzór · Wynik nie mają zrzutów z przeglądu 22.08 (<span class="kbd">STEPS_3_5_EVIDENCE_MISSING</span>). Parytet powłoki potwierdzimy dopiero po ich domknięciu.</span></span></div>
+        </div>
+      </section>
+    </div>
+
+    <div class="legend">
+      <span class="status ok"><span class="dot"></span>naprawione w prototypie</span>
+      <span class="status warn"><span class="dot"></span>wymaga decyzji właściciela</span>
+      <span class="status info"><span class="dot"></span>granica / świadomie poza zakresem</span>
+      <span class="status bad"><span class="dot"></span>zakazane</span>
+      <span class="l5" style="margin-left:auto">Prototyp = makieta statyczna. Nic z tego nie jest wdrożone — <b>kod powstaje dopiero po akcepcie</b> (reguła 7).</span>
+    </div>
+  </div>
+
+<script>
+(function(){
+  var r=document.documentElement,l=document.getElementById('tl'),d=document.getElementById('td');
+  function set(m){r.setAttribute('data-theme',m);l.setAttribute('aria-pressed',String(m==='light'));
+    d.setAttribute('aria-pressed',String(m==='dark'));try{localStorage.setItem('proto-theme',m)}catch(e){}}
+  l.addEventListener('click',function(){set('light')});
+  d.addEventListener('click',function(){set('dark')});
+  var s=null;try{s=localStorage.getItem('proto-theme')}catch(e){}
+  set(s|| (window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'));
+})();
+</script>
