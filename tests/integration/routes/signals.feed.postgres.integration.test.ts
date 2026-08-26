@@ -205,4 +205,45 @@ describePg('GET /api/signals canonical Postgres feed', () => {
     expect(second.body.signals).toHaveLength(1);
     expect(second.body.signals[0].key).not.toBe(first.body.signals[0].key);
   });
+
+  it('records an honest disabled on-demand run', async () => {
+    delete process.env.ENABLE_SIGNAL_PRODUCER;
+    const response = await request(app).post('/api/signals/refresh').send({});
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      producerEnabled: false,
+      run: { status: 'SKIPPED_DISABLED' },
+    });
+    const rows = await pool!.query(
+      "SELECT status FROM work_signal_runs WHERE organization_id=$1 AND trigger='ON_DEMAND'",
+      [orgA]
+    );
+    expect(rows.rows).toEqual([{ status: 'SKIPPED_DISABLED' }]);
+  });
+
+  it('throttles a second on-demand run from the durable ledger', async () => {
+    delete process.env.ENABLE_SIGNAL_PRODUCER;
+    expect((await request(app).post('/api/signals/refresh').send({})).status).toBe(200);
+    const second = await request(app).post('/api/signals/refresh').send({});
+    expect(second.status).toBe(429);
+    expect(second.body.retryAfterSeconds).toBeGreaterThan(0);
+    const count = await pool!.query(
+      "SELECT count(*)::int AS count FROM work_signal_runs WHERE organization_id=$1 AND trigger='ON_DEMAND'",
+      [orgA]
+    );
+    expect(count.rows[0].count).toBe(1);
+  });
+
+  it('rejects a foreign organization in the refresh body without writing it', async () => {
+    const response = await request(app)
+      .post('/api/signals/refresh')
+      .set('x-test-org', orgA)
+      .send({ organizationId: orgB });
+    expect(response.status).toBe(400);
+    const count = await pool!.query(
+      "SELECT count(*)::int AS count FROM work_signal_runs WHERE organization_id=$1 AND trigger='ON_DEMAND'",
+      [orgB]
+    );
+    expect(count.rows[0].count).toBe(0);
+  });
 });
