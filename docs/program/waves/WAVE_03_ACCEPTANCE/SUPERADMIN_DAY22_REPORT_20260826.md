@@ -47,8 +47,8 @@ Pusty `inet_server_port()` jest właściwością połączenia przez socket wewn�
 
 | Pozycja               | Status            | Commit       | Dowód                                                                      |
 | --------------------- | ----------------- | ------------ | -------------------------------------------------------------------------- |
-| A.1 pięć tabel        | `ZROBIONE_WG_DoD` | `cd500abe0a` | `to_regclass` 6/6 + kod pisarzy/czytelników                                |
-| A.2 inwentarz pisarzy | `ZROBIONE_WG_DoD` | `cd500abe0a` | 83/20/63 potwierdzone; lista zwarta poniżej                                |
+| A.1 pięć tabel        | `CZĘŚCIOWO`       | `cd500abe0a` | `to_regclass` 6/6 + kod; raport nie wkleja pięciu pełnych wyników `\\d`    |
+| A.2 inwentarz pisarzy | `CZĘŚCIOWO`       | `cd500abe0a` | 83/20/63 potwierdzone; skan poza Adminem nie jest tabelą per trasa         |
 | A.3 ranking           | `ZROBIONE_WG_DoD` | `cd500abe0a` | ranking 1–5; zakres dwóch plików rankingu 1–2                              |
 | B.1 fail-closed       | `CZĘŚCIOWO`       | `5065e37036` | 4/7 tras, 9/9 RealPG wraz z B.3; bulk STOP                                 |
 | B.2 ranking 4–5       | `NIE_ZACZĘTE`     | —            | warunek B.1 nie jest domknięty                                             |
@@ -60,7 +60,7 @@ Pusty `inet_server_port()` jest właściwością połączenia przez socket wewn�
 | E.1 tenant read       | `CZĘŚCIOWO`       | `5065e37036` | list udowodniony; stats/export niepełne                                    |
 | E.2 superadmin read   | `STOP`            | raport       | wymagałby rozszerzenia platformowej powierzchni i pełnych testów kontraktu |
 | T                     | `CZĘŚCIOWO`       | `5065e37036` | nowe 9/9 po eksperymencie; pełny wynik końcowy poniżej                     |
-| R.1                   | `CZĘŚCIOWO`       | commit R     | tylko faktyczny zakres; SHA tego commita                                   |
+| R.1                   | `CZĘŚCIOWO`       | `a9f064ca12` | tylko faktyczny zakres                                                     |
 
 ## A.1 — pięć tabel audytowych
 
