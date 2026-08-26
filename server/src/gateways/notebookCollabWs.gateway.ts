@@ -40,6 +40,10 @@ import {
 } from '../realtime/wsOrgContext.js';
 import logger from '../utils/Logger.js';
 import {
+  isOrganizationSuspended,
+  writeOrgSuspendedUpgradeRefusal,
+} from '../services/organizationSuspensionGuard.js';
+import {
   evaluateRealtimeAccess,
   trackRealtimeConnection,
 } from '../realtime/demoRealtimeGuard.js';
@@ -358,6 +362,34 @@ export function attachNotebookCollabWs(server: HttpServer): void {
     // inside a demo session must not open a realtime channel to their real org.
     resolveWsOrgContext(db, userId, organizationId)
       .then(async (orgCtx) => {
+        // -------------------------------------------------------------------
+        // DEC-91 / TRI-MUST-12 — suspension gate at UPGRADE time.
+        //
+        // Passing the org to `trackRealtimeConnection` below only gets an OPEN
+        // socket closed by the next sweep; without this block a member of a
+        // suspended tenant could still open one and hold it for up to a sweep
+        // interval. This closes that window.
+        //
+        // Placed before the note gate deliberately: a suspended tenant should not
+        // get to probe whether a given note exists.
+        //
+        // The org is resolved server-side by `resolveWsOrgContext` from the
+        // authenticated principal — the caller's OWN tenant, never a
+        // client-supplied id — so the refusal names its reason.
+        // -------------------------------------------------------------------
+        if (
+          await isOrganizationSuspended(orgCtx.organizationId, (sql, params) =>
+            db.get(sql, params)
+          )
+        ) {
+          logger.info('[NotebookCollabWs] WS upgrade refused: organization suspended', {
+            userId,
+            organizationId: orgCtx.organizationId,
+          });
+          writeOrgSuspendedUpgradeRefusal(socket);
+          return;
+        }
+
         const allowed = await canViewNote(db, noteId, orgCtx.organizationId, userId);
         if (!allowed) {
           socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
