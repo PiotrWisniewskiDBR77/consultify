@@ -6,6 +6,12 @@
  * evidence) to names instead of showing them raw, and that the kebab's
  * state-transition actions are wired to the REAL, backend-gated endpoints —
  * not decorative buttons.
+ *
+ * R2(a)/R3(c) (panel powtórny DEC-117): also proves (1) `listFindings` is
+ * called with `limit`/`offset` and the server's `total` — not `items.length`
+ * — drives the visible counter and paginator, and (2) the close/accept-risk
+ * note is entered through the canonical `NoteEntryModal` (validated
+ * multi-line field), never `window.prompt`.
  */
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
@@ -16,10 +22,8 @@ vi.mock('../auditsMethodApi', async () => {
   return {
     ...actual,
     listFindings: vi.fn(),
-    getFindingStatistics: vi.fn(),
-    getSystemicFindings: vi.fn(),
     listProgramCriteria: vi.fn(),
-    listActions: vi.fn(),
+    listAllActions: vi.fn(),
     listEvidence: vi.fn(),
     reviewFinding: vi.fn(),
     acceptResidualRisk: vi.fn(),
@@ -30,9 +34,7 @@ vi.mock('../auditsMethodApi', async () => {
 import { AuditFindingsTab } from '../tabs/AuditFindingsTab';
 import {
   closeFinding,
-  getFindingStatistics,
-  getSystemicFindings,
-  listActions,
+  listAllActions,
   listEvidence,
   listFindings,
   listProgramCriteria,
@@ -45,10 +47,8 @@ import {
 } from '../auditsMethodApi';
 
 const mockedListFindings = vi.mocked(listFindings);
-const mockedGetFindingStatistics = vi.mocked(getFindingStatistics);
-const mockedGetSystemicFindings = vi.mocked(getSystemicFindings);
 const mockedListProgramCriteria = vi.mocked(listProgramCriteria);
-const mockedListActions = vi.mocked(listActions);
+const mockedListAllActions = vi.mocked(listAllActions);
 const mockedListEvidence = vi.mocked(listEvidence);
 const mockedReviewFinding = vi.mocked(reviewFinding);
 const mockedCloseFinding = vi.mocked(closeFinding);
@@ -135,10 +135,8 @@ const draftFinding: AuditFindingSummary = {
 const actionsEmpty: AuditActionSummary[] = [];
 
 function stubCommonReads() {
-  mockedGetFindingStatistics.mockResolvedValue({ total: 1, byClassification: {}, bySeverity: {}, byStatus: {} });
-  mockedGetSystemicFindings.mockResolvedValue([]);
   mockedListProgramCriteria.mockResolvedValue([criterion]);
-  mockedListActions.mockResolvedValue({ items: actionsEmpty, total: 0 });
+  mockedListAllActions.mockResolvedValue(actionsEmpty);
   mockedListEvidence.mockResolvedValue([evidenceItem]);
 }
 
@@ -201,26 +199,63 @@ describe('AuditFindingsTab — findings/CAPA register (NAPRAWA 1)', () => {
     await waitFor(() => expect(screen.getByText('Confirmed')).toBeInTheDocument());
   });
 
-  it('close finding prompts for a note and calls closeFinding with it — a cancelled prompt makes no call', async () => {
+  it('R3(c): close finding opens the canonical note modal — Cancel makes no call, a validated note calls closeFinding', async () => {
     stubCommonReads();
     const confirmedFinding: AuditFindingSummary = { ...draftFinding, status: 'confirmed' };
     mockedListFindings.mockResolvedValue({ items: [confirmedFinding], total: 1 });
     render(<AuditFindingsTab isPolish={false} programs={[program]} />);
     await waitFor(() => expect(screen.getByText(/Missing periodic supplier assessment/)).toBeInTheDocument());
 
-    const promptSpy = vi.spyOn(window, 'prompt').mockReturnValueOnce(null);
     const menu1 = await openKebab();
     fireEvent.click(within(menu1).getByText('Close finding'));
+
+    // The submit button is disabled until the (multi-line) note is non-empty.
+    const submit = await screen.findByTestId('note-entry-modal-submit');
+    expect(submit).toBeDisabled();
+
+    // Cancel closes the modal without calling the API.
+    fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
+    await waitFor(() => expect(screen.queryByTestId('note-entry-modal-textarea')).not.toBeInTheDocument());
     expect(mockedCloseFinding).not.toHaveBeenCalled();
 
-    promptSpy.mockReturnValueOnce('Verified effective in the September re-test.');
     mockedCloseFinding.mockResolvedValue({ ...confirmedFinding, status: 'closed' });
     const menu2 = await openKebab();
     fireEvent.click(within(menu2).getByText('Close finding'));
+    const textarea = await screen.findByTestId('note-entry-modal-textarea');
+    fireEvent.change(textarea, { target: { value: 'Verified effective in the September re-test.' } });
+    fireEvent.click(screen.getByTestId('note-entry-modal-submit'));
+
     await waitFor(() =>
       expect(mockedCloseFinding).toHaveBeenCalledWith('find-1', 'Verified effective in the September re-test.')
     );
-    promptSpy.mockRestore();
+    // No `window.prompt` involved anywhere in this flow.
+    await waitFor(() => expect(screen.queryByTestId('note-entry-modal-textarea')).not.toBeInTheDocument());
+  });
+
+  it('R2(a): passes limit/offset to listFindings, shows the server total, and Next requests the second page', async () => {
+    stubCommonReads();
+    // 3 findings visible on a 1-item page (page size is internal to the tab,
+    // 50 in production) — what matters here is that `total` (73) drives the
+    // counter, NOT `items.length` (1), and that Next asks for `offset > 0`.
+    mockedListFindings.mockResolvedValue({ items: [draftFinding], total: 73 });
+    render(<AuditFindingsTab isPolish={true} programs={[program]} />);
+
+    await waitFor(() =>
+      expect(mockedListFindings).toHaveBeenCalledWith(
+        expect.objectContaining({ programId: 'prog-1', limit: expect.any(Number), offset: 0 })
+      )
+    );
+    // The visible counter must reflect the server's `total`, not the single
+    // item on this page.
+    await waitFor(() => expect(screen.getByTestId('audit-findings-total')).toHaveTextContent('73'));
+
+    const nextButton = await screen.findByTestId('audit-findings-next-page');
+    fireEvent.click(nextButton);
+
+    await waitFor(() => {
+      const lastCall = mockedListFindings.mock.calls.at(-1)?.[0];
+      expect(lastCall).toMatchObject({ programId: 'prog-1', offset: 50 });
+    });
   });
 
   it('shows an empty-state instead of a table when the organization has no audit programs at all', async () => {

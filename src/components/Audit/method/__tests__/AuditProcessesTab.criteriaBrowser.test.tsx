@@ -169,6 +169,61 @@ describe('AuditProcessesTab — criteria browser drill-down (ff_auditsScaleAndPo
     expect(mockNavigate).toHaveBeenCalledWith('/audit-programs/prog-1/criteria/c-1');
   });
 
+  it('R2(b): the workStatus column filter matches rows on later pages, not just the current page', async () => {
+    window.localStorage.setItem('ff.audits_scale_and_polish', '1');
+    // PAGE_SIZE inside AuditCriteriaBrowser is 25 — 25 "open" rows fill page 1
+    // exactly, and 3 "concluded" rows only exist on page 2. Before the R2(b)
+    // fix, the column filter ran on `paged` (page 1 only) and could never
+    // find them.
+    const manyCriteria: AuditCriterionSummary[] = [
+      ...Array.from({ length: 25 }, (_, i) =>
+        criterion({ id: `open-${i}`, refCode: `OPEN-${i}`, title: `Open item ${i}`, workStatus: 'open' })
+      ),
+      ...Array.from({ length: 3 }, (_, i) =>
+        criterion({
+          id: `concluded-${i}`,
+          refCode: `CONC-${i}`,
+          title: `Concluded item ${i}`,
+          workStatus: 'concluded',
+        })
+      ),
+    ];
+    mockedGetProgram.mockResolvedValue({
+      ...program, objective: null, scopeText: null, projectId: null, members: [],
+    });
+    mockedGetProgramCoverage.mockResolvedValue({
+      applicableCriteria: 28, concludedCriteria: 3, insufficientEvidenceCriteria: 0,
+    });
+    mockedGetProgramLifecycle.mockResolvedValue({ state: 'fieldwork', allowed: [] });
+    mockedListProgramCriteria.mockResolvedValue(manyCriteria);
+    renderTab();
+
+    fireEvent.click(await screen.findByText('Q3 Compliance Audit'));
+    fireEvent.click(await screen.findByTestId('open-criteria-browser'));
+    await screen.findByTestId('criteria-browser-back');
+
+    // Page 1 (all "open") is visible; the concluded rows are off-screen on page 2.
+    expect(screen.getByText('Open item 0')).toBeInTheDocument();
+    expect(screen.queryByText('Concluded item 0')).toBeNull();
+
+    // Open the (only) column filter — `workStatus` is the sole `filterable`
+    // column in this table, so any "Filter…" trigger is it.
+    const filterTrigger = screen.getAllByRole('button').find((btn) => /^filter/i.test(btn.getAttribute('aria-label') || ''));
+    expect(filterTrigger).toBeTruthy();
+    fireEvent.click(filterTrigger!);
+    const concludedOption = screen.getByRole('checkbox', { name: /Zakończone wnioskiem|Concluded/i });
+    fireEvent.click(concludedOption);
+    // The panel's checkbox change is staged locally — it only reaches
+    // `onFilterChange` once "Apply" is clicked (`FilterDropdown.handleApply`).
+    fireEvent.click(screen.getByRole('button', { name: /apply|zastosuj/i }));
+
+    // The filter must search the FULL 28-row set, not just the 25 already on page 1.
+    await waitFor(() => expect(screen.getByText('Concluded item 0')).toBeInTheDocument());
+    expect(screen.getByText('Concluded item 1')).toBeInTheDocument();
+    expect(screen.getByText('Concluded item 2')).toBeInTheDocument();
+    expect(screen.queryByText('Open item 0')).toBeNull();
+  });
+
   it('flag ON: back button returns to the sessions table', async () => {
     window.localStorage.setItem('ff.audits_scale_and_polish', '1');
     setupApiMocks();

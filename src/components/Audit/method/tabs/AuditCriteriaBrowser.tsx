@@ -23,16 +23,57 @@
  *
  * Behind `ff_auditsScaleAndPolish` (default OFF) — gated by the caller
  * (`AuditProcessesTab`), not duplicated here.
+ *
+ * R2(b) (panel powtórny DEC-117): the `workStatus` column's `filterable`
+ * chip was passed straight through to `StandardTable`, which is
+ * UNCONTROLLED by default — its filter (and, were a column `sortable`, its
+ * sort too) operates on whatever `data` it is handed, and `data` here was
+ * `paged` (the ALREADY-SLICED 25-row page). Picking a status filtered only
+ * the 25 rows on screen, not the criteria that scrolled past on earlier
+ * pages — so e.g. filtering "Zakończone wnioskiem" on page 1 of a 300-row
+ * program silently hid every concluded criterion sitting on pages 2-12.
+ * Fixed by lifting `activeFilters` to CONTROLLED state here (`StandardTable`
+ * accepts `activeFilters`/`onFilterChange` for exactly this) and applying
+ * the same column-filter semantics `FilterableTable` itself uses (OR within
+ * a column, AND across columns — see `applyColumnFilters` below, a 1:1
+ * mirror of `FilterableTable.tsx`'s `filteredData` memo) to the FULL
+ * search-matched set BEFORE pagination — `paged` now slices the filtered
+ * result, not the other way around. No column here is `sortable`, so there
+ * is no equivalent sort-scope bug to fix in this file.
  */
 import { ArrowLeft, ListChecks, Search } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { type StandardRowMenu, StandardTable, type TableColumn, type TableRow } from '@/components/standard';
+import type { FilterChip } from '@/components/shared/ModuleHub/ActiveFilters';
 import { StatusChip } from '@/components/ui/primitives/chips';
 
 import { criterionWorkStatusLabel, criterionWorkStatusTone } from '../auditStatusTones';
 import type { AuditCriterionSummary } from '../auditsMethodApi';
+
+/**
+ * Mirrors `FilterableTable.tsx`'s `filteredData` memo exactly (same grouping
+ * — OR within a column's selected values, AND across columns — same
+ * array-valued-column handling), so lifting the filter here changes WHERE
+ * it runs, never WHAT it matches.
+ */
+function applyColumnFilters<T extends Record<string, unknown>>(rows: T[], activeFilters: FilterChip[]): T[] {
+  if (activeFilters.length === 0) return rows;
+  const byColumn = new Map<string, string[]>();
+  for (const f of activeFilters) {
+    const values = byColumn.get(f.column) ?? [];
+    values.push(f.value);
+    byColumn.set(f.column, values);
+  }
+  return rows.filter((row) =>
+    Array.from(byColumn.entries()).every(([column, values]) => {
+      const rowValue = row[column];
+      if (Array.isArray(rowValue)) return rowValue.some((entry) => values.includes(String(entry)));
+      return values.includes(rowValue as string);
+    })
+  );
+}
 
 const PAGE_SIZE = 25;
 
@@ -60,14 +101,23 @@ export const AuditCriteriaBrowser: React.FC<AuditCriteriaBrowserProps> = ({
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  /** R2(b): controlled column filters — lifted here so they apply BEFORE pagination, not after. */
+  const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
 
-  const filtered = useMemo(() => {
+  const searched = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return criteria;
     return criteria.filter(
       (c) => c.title.toLowerCase().includes(q) || (c.refCode ?? '').toLowerCase().includes(q)
     );
   }, [criteria, search]);
+
+  // Filter the FULL search-matched set — `paged` below slices the result of
+  // this, never the other way around (R2(b) fix).
+  const filtered = useMemo(
+    () => applyColumnFilters(searched as unknown as Array<Record<string, unknown>>, activeFilters) as unknown as AuditCriterionSummary[],
+    [searched, activeFilters]
+  );
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
@@ -191,6 +241,11 @@ export const AuditCriteriaBrowser: React.FC<AuditCriteriaBrowserProps> = ({
           loading={loading}
           error={error}
           rowMenu={rowMenu}
+          activeFilters={activeFilters}
+          onFilterChange={(next) => {
+            setActiveFilters(next);
+            setPage(1);
+          }}
           onRowClick={(row) => {
             const match = criteria.find((c) => c.id === row.id);
             if (match) openCriterion(match);
@@ -200,11 +255,11 @@ export const AuditCriteriaBrowser: React.FC<AuditCriteriaBrowserProps> = ({
             icon: ListChecks,
             title: isPolish ? 'Brak kryteriów' : 'No criteria',
             description: isPolish
-              ? search
-                ? 'Żadne kryterium nie pasuje do wyszukiwania.'
+              ? search || activeFilters.length > 0
+                ? 'Żadne kryterium nie pasuje do wyszukiwania/filtra.'
                 : 'Ten program nie ma jeszcze kryteriów.'
-              : search
-                ? 'No criterion matches this search.'
+              : search || activeFilters.length > 0
+                ? 'No criterion matches this search/filter.'
                 : 'This program has no criteria yet.',
           }}
         />
