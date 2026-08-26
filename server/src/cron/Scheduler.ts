@@ -94,6 +94,46 @@ export function registerInternalBetaBackupJob(
   );
 }
 
+// FIX-2 (day18 layer-1 acceptance): both registrars used to be a bare
+// `async () => { await runXTick(); }` with no logger.info and no .catch() —
+// a thrown error (e.g. the organizations SELECT failing) became an
+// unhandled rejection instead of a logged failure. Brought to the exact
+// job7b pattern below: logger.info at start, promise chain with
+// .catch(logger.error).
+export function registerWorkSignalProducerJob(
+  schedule: typeof cron.schedule = cron.schedule
+): cron.ScheduledTask {
+  return schedule(
+    '*/15 * * * *',
+    () => {
+      logger.info('[Scheduler] Running Work Signal Producer (deterministic)');
+      import('../jobs/workSignalProducerJob.js')
+        .then(({ runDeterministicTick }) => runDeterministicTick())
+        .catch((err: Error) => {
+          logger.error('[Scheduler] Work Signal Producer job failed:', err.message);
+        });
+    },
+    { timezone: 'UTC' }
+  );
+}
+
+export function registerWorkSignalInterpreterJob(
+  schedule: typeof cron.schedule = cron.schedule
+): cron.ScheduledTask {
+  return schedule(
+    '0 5 * * *',
+    () => {
+      logger.info('[Scheduler] Running Work Signal Interpreter');
+      import('../jobs/workSignalInterpreterJob.js')
+        .then(({ runInterpretationTick }) => runInterpretationTick())
+        .catch((err: Error) => {
+          logger.error('[Scheduler] Work Signal Interpreter job failed:', err.message);
+        });
+    },
+    { timezone: 'UTC' }
+  );
+}
+
 export const Scheduler = {
   jobs: [] as cron.ScheduledTask[],
   initPromise: null as Promise<void> | null,
@@ -208,6 +248,8 @@ export const Scheduler = {
       });
     });
     this.jobs.push(job7b);
+    this.jobs.push(registerWorkSignalProducerJob());
+    this.jobs.push(registerWorkSignalInterpreterJob());
 
     // 7c. Initiative Auto-Start by timeline - Run every 5 minutes
     const job7c = cron.schedule('*/5 * * * *', async () => {

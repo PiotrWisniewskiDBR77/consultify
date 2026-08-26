@@ -114,6 +114,7 @@ import consultingTemplatesRoutes from './routes/consultingTemplates.routes.js';
 import contentRoutes from './routes/content.routes.js';
 import contextRoutes from './routes/context.routes.js';
 import conversationsRoutes from './routes/conversations.routes.js';
+import signalsFeedRoutes from './routes/signals.routes.js';
 import coreDocsRoutes from './routes/core-docs.routes.js';
 import cvMatchingRoutes from './routes/cv-matching.routes.js';
 import dailyBriefRoutes from './routes/daily-brief.routes.js';
@@ -715,6 +716,7 @@ export class ApiGateway {
       // re-checks active membership against the DB (fail-fast on revocation; passes through when
       // no org context = personal chat). Closes the stale-token tenancy gap on chat routes.
       app.use('/api/conversations', gatewayVerifyToken, orgMembershipGuard, conversationsRoutes);
+      app.use('/api/signals', gatewayVerifyToken, orgMembershipGuard, signalsFeedRoutes);
       app.use('/api/chat-projects', gatewayVerifyToken, orgMembershipGuard, chatProjectsRoutes);
       // Conversation share links (F4). Mounted AFTER conversations so its
       // /conversations/:id/share handlers don't shadow the main routes. Carries
