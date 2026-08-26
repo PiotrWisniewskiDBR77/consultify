@@ -1,9 +1,16 @@
 /**
  * Flaga widoku dokumentu raportu Oceny (`ff_assessmentReportView`).
  *
- * Włącza nowy, kontraktowy widok siedmiu rozdziałów. Domyślnie pozostaje
- * wyłączona (fail-closed) do czasu akceptacji zrzutów przez właściciela.
- * Kolejność rozstrzygania: query > localStorage > env > OFF.
+ * Włącza nowy, kontraktowy widok siedmiu rozdziałów. Piotr zaakceptował
+ * ekran raportu Oceny (dzień 27, po FIX-ach, DEC-146/148) na zrzutach
+ * 2026-08-27 — domyślnie ON od tej daty. `localStorage`/query "off" (i inne
+ * fałszywe zapisy) nadal wyłączają go per-sesję. Kolejność rozstrzygania:
+ * query > localStorage > env > ON. Każdy z trzech odczytów (`readQueryOverride`,
+ * `readLocalStorage`, `readEnvFlag`) połyka własne błędy i zwraca `null`,
+ * więc pojedynczy zepsuty odczyt po prostu spada w łańcuchu do kolejnego
+ * źródła (docelowo do domyślnego ON); zewnętrzny `catch` w
+ * `isAssessmentReportViewEnabled` zostaje nietknięty i nadal ustawia OFF,
+ * gdyby coś rzuciło poza tymi trzema funkcjami.
  */
 
 const LS_KEY = 'ff.assessment_report_view';
@@ -53,7 +60,10 @@ export function isAssessmentReportViewEnabled(): boolean {
     const fromQuery = readQueryOverride();
     const fromLs = fromQuery === null ? readLocalStorage() : null;
     const fromEnv = readEnvFlag();
-    const resolved = fromQuery ?? fromLs ?? fromEnv ?? false;
+    // Default ON since 2026-08-27 owner accept (DEC-146/148) — only the
+    // bottom of the query > localStorage > env > default chain changed; the
+    // catch below still fails closed on any read error.
+    const resolved = fromQuery ?? fromLs ?? fromEnv ?? true;
     cached = resolved;
     return resolved;
   } catch {
