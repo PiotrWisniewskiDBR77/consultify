@@ -107,7 +107,6 @@ import {
 } from '../shared/ModuleMenu3';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { StandardModuleBar } from '../standard/StandardModuleBar';
-import { CandidatesTable } from './CandidatesTable';
 import { CanonicalInitiativeCardWorkspace } from './CanonicalInitiativeCardWorkspace';
 import { CanonicalInitiativeRegister } from './CanonicalInitiativeRegister';
 import { CapacityScenarioSurface } from './CapacityScenarioSurface';
@@ -118,7 +117,6 @@ import {
 } from './initiativeCreateFlow';
 import { InitiativeDocumentView } from './InitiativeDocumentView';
 import { initiativeLoadErrorCode, isInitiativesNetworkError } from './initiativeLoadError';
-import { InitiativeObservabilityPanel } from './InitiativeObservabilityPanel';
 import {
   InitiativePreviewV3Body,
   InitiativePreviewV3Footer,
@@ -140,9 +138,6 @@ import { getSourceDisplayLabel } from './InitiativeSourceLink';
 import { InitiativesTimelineView } from './InitiativesTimelineView';
 import { DEFAULT_INITIATIVES_VIEW_MODE } from './initiativesViewDefaults';
 import { PlanScenarioSurface } from './PlanScenarioSurface';
-import PortfolioHealthView from './PortfolioHealthView';
-import { PortfolioScenarioSurface } from './PortfolioScenarioSurface';
-import { SourceProposalRegistrationSurface } from './SourceProposalRegistrationSurface';
 import { InitiativeWizardModal } from './Wizard/InitiativeWizardModal';
 
 const MODULE_STATUSES = getStatusesForModule('initiatives');
@@ -269,7 +264,6 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const [activeLifecyclePreset, setActiveLifecyclePreset] =
     useState<InitiativeLifecyclePreset | null>(null);
   const [canonicalMenu3Preset, setCanonicalMenu3Preset] = useState<Record<string, string>>({
-    portfolio: 'current',
     plan: 'published',
     capacity: 'all',
   });
@@ -291,10 +285,6 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         return { ...current, [surface]: counts };
       }),
     []
-  );
-  const handlePortfolioMenu3Counts = useCallback(
-    (counts: Record<string, number>) => updateCanonicalMenu3Counts('portfolio', counts),
-    [updateCanonicalMenu3Counts]
   );
   const handlePlanMenu3Counts = useCallback(
     (counts: Record<string, number>) => updateCanonicalMenu3Counts('plan', counts),
@@ -1555,120 +1545,6 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // ============================================
 
   const renderContent = () => {
-    // USPOJNIENIE E1/E2: Observability tab — lineage + funnel (read-only)
-    if (activeTab === 'observability') {
-      return <InitiativeObservabilityPanel initialInitiativeId={previewInitiativeId} />;
-    }
-    // Compatibility mount: source proposals belong to the Initiatives intake flow.
-    // The legacy "Accept candidate" write path is intentionally no longer reachable
-    // from the UI: registration is a governed, idempotent server command with read-back.
-    if (activeTab === 'candidates') {
-      const candidateInbox =
-        searchParams.get('candidateInbox') === 'discovery' ? 'discovery' : 'source';
-      const setCandidateInbox = (nextInbox: 'source' | 'discovery') => {
-        const next = new URLSearchParams(searchParams);
-        next.set('candidateInbox', nextInbox);
-        next.delete(nextInbox === 'source' ? 'candidateId' : 'sourceProposalId');
-        setSearchParams(next, { replace: true });
-      };
-      return (
-        <div className="flex h-full min-h-0 flex-col">
-          <div
-            className="flex items-center gap-2 border-b border-c-border px-4 py-2"
-            role="tablist"
-            aria-label="Candidate inbox"
-          >
-            <button
-              type="button"
-              role="tab"
-              aria-selected={candidateInbox === 'source'}
-              onClick={() => setCandidateInbox('source')}
-              className={candidateInbox === 'source' ? 'btn-primary' : 'btn-secondary'}
-            >
-              Source proposals
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={candidateInbox === 'discovery'}
-              onClick={() => setCandidateInbox('discovery')}
-              className={candidateInbox === 'discovery' ? 'btn-primary' : 'btn-secondary'}
-            >
-              Discovery candidates
-            </button>
-          </div>
-          <div className="min-h-0 flex-1">
-            {candidateInbox === 'discovery' ? (
-              <CandidatesTable
-                demoMode={allowDemoData}
-                initialSelectedId={searchParams.get('candidateId')}
-                onSelectionChange={(candidateId) => {
-                  const next = new URLSearchParams(searchParams);
-                  next.set('candidateInbox', 'discovery');
-                  if (candidateId) next.set('candidateId', candidateId);
-                  else next.delete('candidateId');
-                  setSearchParams(next, { replace: true });
-                }}
-              />
-            ) : (
-              <SourceProposalRegistrationSurface
-                demoMode={allowDemoData}
-                initialSelectedId={searchParams.get('sourceProposalId')}
-                onSelectionChange={(proposalId) => {
-                  const next = new URLSearchParams(searchParams);
-                  next.set('candidateInbox', 'source');
-                  if (proposalId) next.set('sourceProposalId', proposalId);
-                  else next.delete('sourceProposalId');
-                  setSearchParams(next, { replace: true });
-                }}
-                onOpenInitiative={(initiativeId) =>
-                  handleOpenDocument({
-                    id: initiativeId,
-                    type: 'initiative',
-                    name: t('initiatives.document.untitled', 'Untitled initiative'),
-                    subType: 'canonical-runtime',
-                    status: InitiativeStatus.DRAFT,
-                  })
-                }
-              />
-            )}
-          </div>
-        </div>
-      );
-    }
-    // F4: Portfolio health — MECE coverage / gaps / balance / duplicate clusters (read-only).
-    if (activeTab === 'portfolioHealth') {
-      return (
-        <PortfolioHealthView
-          onOpenInitiative={(id, title) =>
-            handleOpenDocument({
-              id,
-              type: 'initiative',
-              name: title || t('initiatives.document.untitled', 'Untitled initiative'),
-            })
-          }
-        />
-      );
-    }
-    if (activeTab === 'portfolio') {
-      return (
-        <PortfolioScenarioSurface
-          demoMode={allowDemoData}
-          portfolioId={currentProjectId}
-          initiatives={allInitiatives.map((initiative) => ({
-            id: initiative.id,
-            name: initiative.name || initiative.title || initiative.id,
-            version: (() => {
-              const exact = (initiative as PortfolioInitiative & { canonicalVersion?: number })
-                .canonicalVersion;
-              return Number.isInteger(exact) && Number(exact) > 0 ? Number(exact) : null;
-            })(),
-          }))}
-          activePreset={canonicalMenu3Preset.portfolio}
-          onCountsChange={handlePortfolioMenu3Counts}
-        />
-      );
-    }
     if (activeTab === 'plan') {
       return (
         <PlanScenarioSurface
@@ -2220,7 +2096,6 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const isBulkMode =
     viewMode === 'table' &&
     !activeDocumentId &&
-    activeTab !== 'portfolio' &&
     activeTab !== 'plan' &&
     !isPilotParticipant &&
     selectedIds.size > 0;
@@ -2387,18 +2262,6 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   );
 
   const canonicalMenu3Definitions: Record<string, Array<{ id: string; label: string }>> = {
-    portfolio: [
-      ['current', 'Current scenario'],
-      ['unassigned', 'Unassigned'],
-      ['included', 'Included'],
-      ['conditional', 'Conditional'],
-      ['deferred', 'Deferred'],
-      ['excluded', 'Excluded'],
-      ['mandatory', 'Mandatory'],
-      ['low-confidence', 'Low confidence'],
-      ['coverage-gaps', 'Coverage gaps'],
-      ['duplicates', 'Duplicates'],
-    ].map(([id, label]) => ({ id, label })),
     plan: [
       ['unscheduled', 'Unscheduled'],
       ['now', 'Now'],
@@ -2461,10 +2324,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         }
         filterControls={rightControls}
         commandRowContent={
-          activeTab === 'portfolio' ||
-          activeTab === 'plan' ||
-          activeTab === 'capacity' ||
-          activeTab === 'candidates'
+          activeTab === 'plan' || activeTab === 'capacity'
             ? undefined
             : isBulkMode
               ? bulkBarContent
