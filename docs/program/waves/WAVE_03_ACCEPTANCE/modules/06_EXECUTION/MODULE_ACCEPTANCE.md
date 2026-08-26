@@ -41,6 +41,18 @@ Mobile: `DEFERRED_NON_GATING`
 > This is an exact-SHA technical pass; owner retest and the broader G06/G20
 > denominator remain open.
 
+> Day 31 backend delivery — 2026-08-28: five canonical runtime-v1 Execution
+> mutations now have tenant-scoped authorization, optimistic concurrency,
+> idempotent replay and one atomic state-plus-audit writer. The additive
+> capability and write-map contracts expose the replacement for the legacy
+> `409` paths without enabling any disabled frontend control. Historical reads
+> implement only `P1_VERSION_AT_INSTANT`; five policy-independent KPI families
+> expose explicit provenance and completeness, while policy-dependent measures
+> remain `DECISION_REQUIRED` / `NOT_CALCULABLE`. The policy snapshot writer was
+> deliberately stopped because the protected transaction interface has no
+> policy-table operation; E-O3/E-O4/E-O5, report generation, owner acceptance
+> and all frontend work remain outside this delivery.
+
 ## Contract
 
 Primary journey: open a case, inspect capacity/health, perform a governed action
@@ -294,11 +306,15 @@ All formulas, denominators, timezone rules and inclusion/exclusion criteria must
 
 ## Preflight implementation ledger
 
-| Observation          | Root cause                                                                             | Resolution                                                                                                | Commit       | Verification                                                                                          |
-| -------------------- | -------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ------------ | ----------------------------------------------------------------------------------------------------- |
-| `EXE-PF-002`         | Immutable action audits were outside the common guarded cleanup helper.                | Add the audit ledger/trigger to guarded cleanup and remove exact test-org rows before parent teardown.    | `9ce72577f9` | `21/21 PASS`; subsequent `exe-actions-*` residue `0`; typecheck PASS                                  |
-| `EXE-PF-003`         | Live test contract lagged behind governed CAS/idempotent budget delete.                | Supply positive expected version and an explicit idempotency key in success, denial and rollback paths.   | `9ce72577f9` | server-config live stack `2/2` files, `39/39 PASS`                                                    |
-| `EXE-REPORT-XLSX-01` | Management-report exports lacked XLSX and PDF/PPTX reads were not organization-scoped. | Add an ExcelJS XLSX branch and require the token-derived organization for PDF/PPTX/XLSX repository reads. | `cbd04e7434` | real router/JWT/PostgreSQL `6/6`; missing dependency `1/1`; foreign tenant `404` on all three formats |
+| Observation          | Root cause                                                                                   | Resolution                                                                                                                                                     | Commit                                                                                           | Verification                                                                                                                   |
+| -------------------- | -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| `EXE-PF-002`         | Immutable action audits were outside the common guarded cleanup helper.                      | Add the audit ledger/trigger to guarded cleanup and remove exact test-org rows before parent teardown.                                                         | `9ce72577f9`                                                                                     | `21/21 PASS`; subsequent `exe-actions-*` residue `0`; typecheck PASS                                                           |
+| `EXE-PF-003`         | Live test contract lagged behind governed CAS/idempotent budget delete.                      | Supply positive expected version and an explicit idempotency key in success, denial and rollback paths.                                                        | `9ce72577f9`                                                                                     | server-config live stack `2/2` files, `39/39 PASS`                                                                             |
+| `EXE-REPORT-XLSX-01` | Management-report exports lacked XLSX and PDF/PPTX reads were not organization-scoped.       | Add an ExcelJS XLSX branch and require the token-derived organization for PDF/PPTX/XLSX repository reads.                                                      | `cbd04e7434`                                                                                     | real router/JWT/PostgreSQL `6/6`; missing dependency `1/1`; foreign tenant `404` on all three formats                          |
+| `EXE-PF-007`         | Five user-facing Execution mutations still terminated at legacy read-only `409` routes.      | Add five canonical backend-only runtime-v1 commands and expose additive capability/write-map discovery; keep every frontend control disabled.                  | `303d9022be`, `59955b5cb8`, `af0e90365f`, `d89e59831e`, `f1b65adbb6`, `82a57cefe4`, `a3f0911709` | Real PostgreSQL command, replay, stale-version, tenant and capability contracts; frontend source unchanged                     |
+| `EXE-PF-008`         | Historical reads did not reconstruct the latest governed version at an explicit instant.     | Add tenant-filtered P1 version-at-instant reconstruction from the audit ledger, with explicit history-gap and future-as-of failures.                           | `0d04982d4a`                                                                                     | Real PostgreSQL proves the version between v2/v3; no P2/P3 reconstruction claim                                                |
+| `EXE-PF-009`         | Policy-independent Execution measures lacked one truth-preserving read contract.             | Compute five families from owner-independent records and expose source version, completeness and value class; preserve unknown instead of coercing it to zero. | `fcd38e85bd`, `d885499855`                                                                       | Deterministic Real PostgreSQL fixture reconciles `1/2`, `1/2`, `1/2`, `1/1`, `1/2`; policy-dependent families remain undecided |
+| `EXE-PF-010`         | The protected material-command transaction interface has no policy-snapshot write operation. | `STOP`: do not add a second writer or change the protected interface; defer B7 until the owner supplies an atomic transaction contract.                        | —                                                                                                | Scope/atomicity review; no policy writer or false completeness claim                                                           |
 
 ## Owner verdict
 
