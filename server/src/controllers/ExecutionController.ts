@@ -876,14 +876,19 @@ export class ExecutionController {
         try {
           return (await queryHelpers.queryAll(sql, params)) || [];
         } catch (error: any) {
-          const msg = String(error?.message || '').toLowerCase();
-          if (
-            msg.includes('no such table') ||
-            msg.includes('does not exist') ||
-            msg.includes('relation')
-          ) {
+          const msg = String(error?.message || '');
+          // DEC-112/A5: a bare `.includes('does not exist')` also silences
+          // Postgres' "column \"x\" does not exist" (42703) — a real
+          // query/schema bug, not a benign missing-table case. Only a
+          // genuinely missing relation (or uninitialized DB) may go quiet;
+          // a missing column must log loudly and fail the request.
+          if (DbPromise.isSilenceableMissingRelationError(msg)) {
             return [];
           }
+          logger.error('[ExecutionController] Action Queue query failed (non-silenceable)', {
+            error: msg,
+            sql: sql.substring(0, 200),
+          });
           throw error;
         }
       };

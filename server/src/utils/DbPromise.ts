@@ -188,7 +188,7 @@ const getDb = (): Database => {
  * loudly, even with `fallback:true`; only a genuinely missing TABLE (or an
  * uninitialized DB) stays quiet.
  */
-function isSilenceableMissingRelationError(message: string): boolean {
+export function isSilenceableMissingRelationError(message: string): boolean {
   return (
     message.includes('no such table') ||
     message.includes('Database not initialized') ||
