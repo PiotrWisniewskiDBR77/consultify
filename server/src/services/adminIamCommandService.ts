@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { withPinnedPostgresTransaction } from '../database/PostgresDatabase.js';
 import { get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import { InvitationSendingService } from './invitation/InvitationSendingService.js';
+import { invalidatePlatformSuperAdminCache } from './organizationSuspensionGuard.js';
 
 type CommandType = 'CREATE' | 'RESEND' | 'REVOKE';
 type DeliveryState = 'SENT' | 'FAILED' | 'NOT_ATTEMPTED';
@@ -338,6 +339,12 @@ export async function acceptAdminIamInvitation(p: {
           `UPDATE users SET password = ?, first_name = ?, last_name = ?, role = ?, status = 'active' WHERE id = ?`,
           [p.passwordHash, p.firstName, p.lastName, role, user.id]
         );
+        // DEC-91 FIX-2 — `isVerifiedPlatformSuperAdmin` memoises `users.role` for
+        // 30 s, so any writer of that column must drop the entry or the answer
+        // goes stale in BOTH directions: a promotion is ignored for up to a TTL,
+        // and — the direction that matters — a REVOKED superadmin keeps the
+        // suspension exemption for up to a TTL after being demoted.
+        invalidatePlatformSuperAdminCache(user.id);
       }
       await tx.queryRun(
         `INSERT INTO organization_members (id, organization_id, user_id, role, status)

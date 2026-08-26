@@ -12,6 +12,7 @@ import type { Response } from 'express';
 
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { invalidatePlatformSuperAdminCache } from '../services/organizationSuspensionGuard.js';
 import { clearSchemaCache, getTableColumns } from '../utils/dbSchema.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import type { UpdateUserRequest, UpdateUserRoleRequest } from '../validators/user.validators.js';
@@ -804,6 +805,12 @@ export class UserController {
 
       const sql = `UPDATE users SET role = ?, updated_at = ? WHERE id = ? AND organization_id = ?`;
       await queryHelpers.queryRun(sql, [role, new Date().toISOString(), id, orgId]);
+      // DEC-91 FIX-2 — `isVerifiedPlatformSuperAdmin` memoises `users.role` for
+      // 30 s, so any writer of that column must drop the entry or the answer
+      // goes stale in BOTH directions: a promotion is ignored for up to a TTL,
+      // and — the direction that matters — a REVOKED superadmin keeps the
+      // suspension exemption for up to a TTL after being demoted.
+      invalidatePlatformSuperAdminCache(id);
 
       res.json({ id, role, message: 'Role updated' });
     }

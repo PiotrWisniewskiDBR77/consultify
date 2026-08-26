@@ -19,6 +19,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { verifyAdmin } from '../middleware/admin.middleware.js';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { invalidatePlatformSuperAdminCache } from '../services/organizationSuspensionGuard.js';
 import { all as dbAll, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 import { withPgTransaction } from '../utils/queryHelpers.js';
@@ -144,6 +145,12 @@ router.post(
       `UPDATE users SET role = ?, updated_at = ? WHERE id IN (${placeholders}) AND organization_id = ?`,
       [role, now, ...userIds, orgId]
     );
+    // DEC-91 FIX-2 — `isVerifiedPlatformSuperAdmin` memoises `users.role` for
+    // 30 s, so any writer of that column must drop the entry or the answer
+    // goes stale in BOTH directions: a promotion is ignored for up to a TTL,
+    // and — the direction that matters — a REVOKED superadmin keeps the
+    // suspension exemption for up to a TTL after being demoted.
+    for (const userId of userIds) invalidatePlatformSuperAdminCache(userId);
 
     logger.info(`Bulk role assignment: ${userIds.length} users assigned role ${role}`);
     return res.json({ success: true, updated: userIds.length });

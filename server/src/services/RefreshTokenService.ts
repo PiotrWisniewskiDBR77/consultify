@@ -31,6 +31,7 @@ import logger from '../utils/Logger.js';
 // inside a function, precisely so the two do not form a load-time cycle.
 import { assertDemoPrincipalMayReceiveCredentials } from './demo/demoPrincipalGuard.js';
 import {
+  invalidatePlatformSuperAdminCache,
   isOrganizationSuspended,
   isVerifiedPlatformSuperAdmin,
 } from './organizationSuspensionGuard.js';
@@ -154,6 +155,7 @@ class RefreshTokenService {
     // Best-effort: persist to DB so all future tokens are consistent.
     try {
       await this.dbRun(`UPDATE users SET role = ? WHERE id = ?`, ['SUPERADMIN', userId]);
+      invalidatePlatformSuperAdminCache(userId);
     } catch (e: any) {
       logger.warn('[RefreshToken] Failed to persist forced SUPERADMIN role (continuing)', {
         email: normalizedEmail,

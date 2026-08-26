@@ -13,7 +13,10 @@ import {
   assertDemoPrincipalMayReceiveCredentials,
   DEMO_EXPIRED_USER_STATUS,
 } from '../services/demo/demoPrincipalGuard.js';
-import { buildOrgSuspendedResponseBody } from '../services/organizationSuspensionGuard.js';
+import {
+  buildOrgSuspendedResponseBody,
+  invalidatePlatformSuperAdminCache,
+} from '../services/organizationSuspensionGuard.js';
 import refreshTokenService from '../services/RefreshTokenService.js';
 import { recordFailedLogin } from '../services/securityAlerts.js';
 import { setAuthCookies } from '../utils/cookieAuth.js';
@@ -211,6 +214,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
               () => resolve()
             );
           });
+          invalidatePlatformSuperAdminCache(user.id);
           user.role = 'SUPERADMIN';
         } catch (e: any) {
           // Don't block login on a best-effort role sync; still override in-memory.

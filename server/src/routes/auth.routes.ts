@@ -41,6 +41,7 @@ import {
 } from '../services/partnerEconomicsPolicy.js';
 import {
   buildOrgSuspendedResponseBody,
+  invalidatePlatformSuperAdminCache,
   isOrganizationSuspended,
 } from '../services/organizationSuspensionGuard.js';
 import refreshTokenService from '../services/RefreshTokenService.js';
@@ -585,6 +586,7 @@ router.get(
         if (user.role !== 'SUPERADMIN') {
           try {
             await dbRun(`UPDATE users SET role = ? WHERE id = ?`, ['SUPERADMIN', user.id]);
+            invalidatePlatformSuperAdminCache(user.id);
           } catch {
             // ignore DB write errors, we still override response below
           }
