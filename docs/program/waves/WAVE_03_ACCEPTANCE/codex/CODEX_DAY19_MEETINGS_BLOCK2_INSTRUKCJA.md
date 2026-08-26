@@ -90,13 +90,13 @@ Naruszenie tego ograniczenia = odrzucenie dyżuru, niezależnie od jakości resz
    rozstrzygnięcia DEC-95/96). Nadzorca podaje Ci **SHA commitu-markera** przy
    wklejaniu tej instrukcji.
 
-   **SHA markera: «MARKER_SHA»**
+   **SHA markera: 315adbb83b**
 
    ```bash
    cd <root-repo>
    git fetch --all --prune
    git log --oneline -25 codex/m03-admin-20260824
-   git merge-base --is-ancestor «MARKER_SHA» codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
+   git merge-base --is-ancestor 315adbb83b codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
    ```
 
 2. **Jeśli marker nie jest przodkiem tipa albo gałąź nie istnieje — STOP.**
@@ -157,7 +157,7 @@ Naruszenie tego ograniczenia = odrzucenie dyżuru, niezależnie od jakości resz
    format `YYYYMMDD`):
 
    ```bash
-   git branch codex/meetings-day19-<data> «MARKER_SHA»
+   git branch codex/meetings-day19-<data> 315adbb83b
    git worktree add /private/tmp/consultify-meetings-day19 codex/meetings-day19-<data>
    cd /private/tmp/consultify-meetings-day19
    ```
@@ -1241,7 +1241,7 @@ Nie tworzysz drugiego pliku nigdzie indziej (Z12).
 # Meetings dzień 19 (blok 2) — raport dyżuru <data>
 
 Baza: codex/m03-admin-20260824 @ <SHA tipa>
-Marker: «MARKER_SHA» — POTWIERDZONY / BRAK
+Marker: 315adbb83b — POTWIERDZONY / BRAK
 Gałąź: codex/meetings-day19-<data>
 Worktree: /private/tmp/consultify-meetings-day19
 Port PG: 5449 · kontener cx-day19-pg usunięty: TAK/NIE · wolumeny usunięte: TAK/NIE
