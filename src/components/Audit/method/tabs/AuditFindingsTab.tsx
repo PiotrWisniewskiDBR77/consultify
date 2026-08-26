@@ -8,8 +8,6 @@
  * Initiatives) i żadnej z ustaleniami, mimo że backend jest kompletny i
  * gotowy od dawna:
  *   - `GET /audits/findings` (`findings.routes.ts:36`, `findingService.listFindings`)
- *   - `GET /audits/findings/statistics` (`:47`, `findingService.getFindingStatistics`)
- *   - `GET /audits/findings/systemic` (`:58`, `findingService.detectSystemicFindings`)
  *   - `POST /audits/findings/:id/review` (confirm/send_back/reject)
  *   - `POST /audits/findings/:id/accept-risk` (`findingService.acceptResidualRisk`)
  *   - `POST /audits/findings/:id/close` (`findingService.closeFinding`)
@@ -33,6 +31,20 @@
  * klasyfikacja jako kolumny `filterable` (dokładnie wzorzec `AuditReportsTab`'s
  * `status`, i wzorzec Library's `sourceType` — druga oś danych bez drugiego
  * toru chipów).
+ *
+ * ODEBRANE 2026-08-26 (uwaga właściciela na zrzucie tej zakładki): pasek nad
+ * tabelą niósł WYŁĄCZNIE selektor programu (konieczność techniczna — patrz
+ * wyżej), a nie miał obok siebie doklejonych statystyk „Razem N ustaleń…”
+ * (`GET /audits/findings/statistics`) ani pigułki „N możliwych tematów
+ * systemowych” (`GET /audits/findings/systemic`) — to wniosek analityczny,
+ * nie filtr listy, i właściciel nie widział powodu, żeby żył tutaj. Nadzorca
+ * zdecydował: usunąć z tego paska, docelowo pokazać w zakładce Wyniki
+ * (`AuditOutputsTab.tsx`) — NIE przeniesiono jeszcze, bo `AuditOutputsTab` nie
+ * ma dziś ani selektora programu (jego `listOutputs()` jest globalne, nie
+ * `programId`-scoped, w przeciwieństwie do tych dwóch statystycznych
+ * endpointów), ani żadnej sekcji kafli/kart metryk do którego można by to
+ * doczepić bez wymyślania nowego układu — to osobny pakiet pracy po
+ * prototypie, nie ten merge.
  */
 import { CheckCircle2, ExternalLink, Lock, ShieldCheck } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -62,8 +74,6 @@ import {
   acceptResidualRisk,
   AUDIT_FINDING_STATUSES,
   closeFinding,
-  getFindingStatistics,
-  getSystemicFindings,
   listActions,
   listEvidence,
   listFindings,
@@ -73,10 +83,8 @@ import {
   type AuditActionSummary,
   type AuditCriterionSummary,
   type AuditEvidenceSummary,
-  type AuditFindingStatistics,
   type AuditFindingSummary,
   type AuditProgramSummary,
-  type AuditSystemicFindingGroup,
 } from '../auditsMethodApi';
 
 export interface AuditFindingsTabProps {
@@ -103,25 +111,6 @@ function permissionAwareMessage(e: any, isPolish: boolean, fallback: string): st
   return e?.message || fallback;
 }
 
-/**
- * Polska odmiana liczebnika (NAPRAWA 2, panel ekspercki 2026-08-26: pigułka
- * pokazywała „1 możliwych tematów systemowych" — genitiv liczby mnogiej użyty
- * dla WSZYSTKICH wartości, w tym 1). Standardowa reguła 1/few/many:
- *   n === 1                                            → `one`
- *   n % 10 ∈ {2,3,4} i n % 100 ∉ {12,13,14}             → `few`   (2,3,4,22,23,24…)
- *   w przeciwnym razie (0, 5-21, 25-31…)                → `many`
- * Jeden helper na cały ekran — każde miejsce „liczba + odmienny rzeczownik/
- * przymiotnik" (pigułka tematów systemowych, pasek „Razem N ustaleń…") woła
- * go zamiast zaszytej na sztywno formy dopełniacza liczby mnogiej.
- */
-function plForm(n: number, one: string, few: string, many: string): string {
-  if (n === 1) return one;
-  const mod10 = n % 10;
-  const mod100 = n % 100;
-  if (mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14)) return few;
-  return many;
-}
-
 /** Notatka wymagana przez backend (zamknięcie/akceptacja ryzyka/odesłanie/odrzucenie) — wzorzec `window.prompt` już używany w module (`AssessmentManagePanel`, `TransformationCasesPanel`). */
 function promptForNote(message: string): string | null {
   const value = window.prompt(message);
@@ -145,8 +134,6 @@ export const AuditFindingsTab: React.FC<AuditFindingsTabProps> = ({
   const [items, setItems] = useState<AuditFindingSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [statistics, setStatistics] = useState<AuditFindingStatistics | null>(null);
-  const [systemic, setSystemic] = useState<AuditSystemicFindingGroup[]>([]);
   const [criteria, setCriteria] = useState<AuditCriterionSummary[]>([]);
   const [actions, setActions] = useState<AuditActionSummary[]>([]);
   const [evidence, setEvidence] = useState<AuditEvidenceSummary[]>([]);
@@ -157,8 +144,6 @@ export const AuditFindingsTab: React.FC<AuditFindingsTabProps> = ({
   const load = useCallback(() => {
     if (!programId) {
       setItems([]);
-      setStatistics(null);
-      setSystemic([]);
       setCriteria([]);
       setActions([]);
       setEvidence([]);
@@ -169,16 +154,12 @@ export const AuditFindingsTab: React.FC<AuditFindingsTabProps> = ({
     setError(null);
     Promise.all([
       listFindings({ programId }),
-      getFindingStatistics(programId),
-      getSystemicFindings(programId),
       listProgramCriteria(programId),
       listActions(programId),
       listEvidence(programId),
     ])
-      .then(([findingsResult, stats, systemicGroups, criteriaResult, actionsResult, evidenceResult]) => {
+      .then(([findingsResult, criteriaResult, actionsResult, evidenceResult]) => {
         setItems(findingsResult.items);
-        setStatistics(stats);
-        setSystemic(systemicGroups);
         setCriteria(criteriaResult);
         setActions(actionsResult.items);
         setEvidence(evidenceResult);
@@ -558,33 +539,6 @@ export const AuditFindingsTab: React.FC<AuditFindingsTabProps> = ({
             ))}
           </select>
         </label>
-        {statistics ? (
-          <span className="text-xs text-c-text-muted">
-            {isPolish
-              ? `Razem ${statistics.total} ${plForm(statistics.total, 'ustalenie', 'ustalenia', 'ustaleń')} · ${
-                  statistics.byStatus.confirmed ?? 0
-                } ${plForm(statistics.byStatus.confirmed ?? 0, 'potwierdzone', 'potwierdzone', 'potwierdzonych')} · ${
-                  statistics.byStatus.closed ?? 0
-                } ${plForm(statistics.byStatus.closed ?? 0, 'zamknięte', 'zamknięte', 'zamkniętych')}`
-              : `${statistics.total} finding${statistics.total === 1 ? '' : 's'} total · ${statistics.byStatus.confirmed ?? 0} confirmed · ${statistics.byStatus.closed ?? 0} closed`}
-          </span>
-        ) : null}
-        {systemic.length > 0 ? (
-          <span
-            className="rounded-full border border-c-info/30 px-2.5 py-1 text-[11px] font-medium text-c-info"
-            style={{ background: 'color-mix(in srgb, var(--c-info) 12%, transparent)' }}
-            data-testid="audit-findings-systemic-banner"
-          >
-            {isPolish
-              ? `${systemic.length} ${plForm(
-                  systemic.length,
-                  'możliwy temat systemowy',
-                  'możliwe tematy systemowe',
-                  'możliwych tematów systemowych'
-                )} (wspólna przyczyna / obszar)`
-              : `${systemic.length} possible systemic theme${systemic.length === 1 ? '' : 's'} (shared root cause / area)`}
-          </span>
-        ) : null}
       </div>
       <div className="flex flex-1 min-h-0">
         <div className="flex-1 min-w-0 overflow-auto p-4">
