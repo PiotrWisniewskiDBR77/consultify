@@ -105,13 +105,13 @@ dyżuru.** To jest jedyne zdanie tej instrukcji, które warto zapamiętać na pa
 1. Punktem wyjścia jest **gałąź `codex/m03-admin-20260824`**, przypięta do
    commitu-markera podanego niżej.
 
-   **SHA markera: «MARKER_SHA»**
+   **SHA markera: 5cfa62470e**
 
    > **★★ WARTOWNIK WIĄZANIA — CZYTAJ DOSŁOWNIE.** Powyżej stoi **literalny
-   > napis `«MARKER_SHA»`**, w ostrych cudzysłowach francuskich. To jest
+   > napis `5cfa62470e`**, w ostrych cudzysłowach francuskich. To jest
    > **wartownik**: oznacza, że nadzorca **NIE ZWIĄZAŁ jeszcze markera**.
    >
-   > **Jeżeli w tym miejscu nadal widzisz napis `«MARKER_SHA»` — to jest STOP
+   > **Jeżeli w tym miejscu nadal widzisz napis `5cfa62470e` — to jest STOP
    > CAŁEGO DYŻURU.** Zakładasz raport, wpisujesz pozycję STOP z treścią
    > „marker niezwiązany — instrukcja wydana bez wiązania" i kończysz. **Nie
    > zgadujesz SHA. Nie bierzesz tipa gałęzi. Nie bierzesz „ostatniego commita,
