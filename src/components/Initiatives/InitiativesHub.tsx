@@ -192,42 +192,65 @@ const COMING_SOON_BADGE =
 // Downgrade blocked, upgrade possible
 export type InitiativeLevel = 'quick_win' | 'standard' | 'strategic' | 'transformation';
 
-export const INITIATIVE_LEVELS: {
+// D1.1 i18n fix (staging-fixes-20260826): this used to be a static, English-only
+// module-level constant, so the "New Initiative" type/level selector always
+// rendered English labels/descriptions regardless of app language — one of the
+// TRI-MUST-05 "mixed PL/EN on the same screen" findings. Converted to a
+// translation-key-backed builder, matching this file's dominant `t()`
+// convention (react-i18next + public/locales), called from inside the
+// component where `t` is available.
+type TFn = (key: string, defaultValue?: string) => string;
+
+export function getInitiativeLevels(t: TFn): {
   id: InitiativeLevel;
   label: string;
   description: string;
   color: string;
   icon: string;
-}[] = [
-  {
-    id: 'quick_win',
-    label: 'Quick Win',
-    description: 'Small improvement, minimal governance. < 1 month, 1-2 people.',
-    color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/30',
-    icon: '⚡',
-  },
-  {
-    id: 'standard',
-    label: 'Standard Project',
-    description: 'Regular project with defined scope. 1-3 months, dedicated team.',
-    color: 'text-blue-500 bg-blue-500/10 border-blue-500/30',
-    icon: '📋',
-  },
-  {
-    id: 'strategic',
-    label: 'Strategic Program',
-    description: 'Cross-functional program. 3-12 months, multiple teams, executive sponsor.',
-    color: 'text-violet-500 bg-violet-500/10 border-violet-500/30',
-    icon: '🎯',
-  },
-  {
-    id: 'transformation',
-    label: 'Transformation',
-    description: 'Organization-wide change. 6-24 months, full governance, board oversight.',
-    color: 'text-amber-500 bg-amber-500/10 border-amber-500/30',
-    icon: '🚀',
-  },
-];
+}[] {
+  return [
+    {
+      id: 'quick_win',
+      label: t('initiatives.form.levelQuickWinLabel', 'Quick Win'),
+      description: t(
+        'initiatives.form.levelQuickWinCardDesc',
+        'Small improvement, minimal governance. < 1 month, 1-2 people.'
+      ),
+      color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/30',
+      icon: '⚡',
+    },
+    {
+      id: 'standard',
+      label: t('initiatives.form.levelStandardLabel', 'Standard Project'),
+      description: t(
+        'initiatives.form.levelStandardCardDesc',
+        'Regular project with defined scope. 1-3 months, dedicated team.'
+      ),
+      color: 'text-blue-500 bg-blue-500/10 border-blue-500/30',
+      icon: '📋',
+    },
+    {
+      id: 'strategic',
+      label: t('initiatives.form.levelStrategicLabel', 'Strategic Program'),
+      description: t(
+        'initiatives.form.levelStrategicCardDesc',
+        'Cross-functional program. 3-12 months, multiple teams, executive sponsor.'
+      ),
+      color: 'text-violet-500 bg-violet-500/10 border-violet-500/30',
+      icon: '🎯',
+    },
+    {
+      id: 'transformation',
+      label: t('initiatives.form.levelTransformationLabel', 'Transformation'),
+      description: t(
+        'initiatives.form.levelTransformationCardDesc',
+        'Organization-wide change. 6-24 months, full governance, board oversight.'
+      ),
+      color: 'text-amber-500 bg-amber-500/10 border-amber-500/30',
+      icon: '🚀',
+    },
+  ];
+}
 
 interface InitiativesHubProps {
   initialTab?: ModuleTab;
@@ -1492,7 +1515,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         {
           id: 'open',
           variant: 'neutral',
-          label: 'Open',
+          label: t('common.open', 'Open'),
           shortcut: 'O',
           onClick: () => handleOpenInitiativeDocument(row),
         },
@@ -1521,6 +1544,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     initiatives,
     handleOpenInitiativeDocument,
     handlePreviewSelection,
+    t,
   ]);
 
   // ============================================
@@ -2415,10 +2439,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               {/* D1.1: Initiative Type/Level selector */}
               <div>
                 <label className="block text-xs text-c-text-muted mb-2">
-                  Initiative Type / Level *
+                  {t('initiatives.form.levelTypeLabel', 'Initiative Type / Level *')}
                 </label>
                 <div className="grid grid-cols-2 gap-2">
-                  {INITIATIVE_LEVELS.map((level) => (
+                  {getInitiativeLevels(t).map((level) => (
                     <button
                       key={level.id}
                       type="button"
@@ -2482,19 +2506,32 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                   <Shield size={14} className="text-c-text-muted mt-0.5 flex-shrink-0" />
                   <div className="text-xs text-c-text-muted">
                     <span className="font-medium text-c-text-secondary">
-                      {INITIATIVE_LEVELS.find((l) => l.id === newLevel)?.label}
+                      {getInitiativeLevels(t).find((l) => l.id === newLevel)?.label}
                     </span>
                     {' — '}
-                    {newLevel === 'quick_win' && 'Minimal governance. Can be self-approved.'}
+                    {newLevel === 'quick_win' &&
+                      t('initiatives.form.levelDescQuickWin', 'Minimal governance. Can be self-approved.')}
                     {newLevel === 'standard' &&
-                      'Standard approval flow. Requires owner + deadline + tasks.'}
+                      t(
+                        'initiatives.form.levelDescStandard',
+                        'Standard approval flow. Requires owner + deadline + tasks.'
+                      )}
                     {newLevel === 'strategic' &&
-                      'Executive approval required. Full charter + RAID analysis.'}
+                      t(
+                        'initiatives.form.levelDescStrategic',
+                        'Executive approval required. Full charter + RAID analysis.'
+                      )}
                     {newLevel === 'transformation' &&
-                      'Board-level governance. Full charter, steering committee, gate reviews.'}
+                      t(
+                        'initiatives.form.levelDescTransformation',
+                        'Board-level governance. Full charter, steering committee, gate reviews.'
+                      )}
                     <br />
                     <span className="text-c-text-muted italic">
-                      Level can be upgraded later but not downgraded.
+                      {t(
+                        'initiatives.form.levelUpgradeOnlyNote',
+                        'Level can be upgraded later but not downgraded.'
+                      )}
                     </span>
                   </div>
                 </div>

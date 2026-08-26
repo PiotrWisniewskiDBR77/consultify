@@ -729,22 +729,21 @@ router.post(
         { fallback: false }
       );
 
-      // Try to include permission_scope when the schema supports it.
-      try {
-        await DbPromise.run(
-          `INSERT INTO organization_members (id, organization_id, user_id, role, status, permission_scope)
-           VALUES (?, ?, ?, ?, ?, ?)`,
-          [memberId, organizationId, userId, memberRole, 'ACTIVE', JSON.stringify({ '*': true })],
-          { fallback: false }
-        );
-      } catch {
-        await DbPromise.run(
-          `INSERT INTO organization_members (id, organization_id, user_id, role, status)
-           VALUES (?, ?, ?, ?, ?)`,
-          [memberId, organizationId, userId, memberRole, 'ACTIVE'],
-          { fallback: false }
-        );
-      }
+      // NAPRAWA 4 (staging-fixes-20260826): `organization_members.permission_scope`
+      // does not exist in any of the 842 canonical migrations (grep-verified
+      // against server/migrations/*.sql and confirmed against a real Postgres
+      // schema dump — only unrelated tables like v8.v8_tool_session_governance
+      // carry that column name). The try-with-permission_scope-then-fallback
+      // pattern below always hit the catch branch in every real environment;
+      // removed as dead code. If the column is ever added for real, restore
+      // the two-step insert (or better: gate it behind a checked
+      // `information_schema.columns` lookup instead of try/catch-on-error).
+      await DbPromise.run(
+        `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+         VALUES (?, ?, ?, ?, ?)`,
+        [memberId, organizationId, userId, memberRole, 'ACTIVE'],
+        { fallback: false }
+      );
 
       await DbPromise.run(
         `INSERT INTO test_support_runs (run_id, organization_id, user_id)
@@ -787,8 +786,13 @@ router.post(
     });
 
     try {
+      // NAPRAWA 4: `admin_audit_logs.admin_id` has FK admin_audit_logs_admin_id_fkey
+      // -> users(id) (NOT NULL). The literal 'test-support' is not a real user row,
+      // so this insert used to fail its FK check on every single bootstrap call
+      // (silently, via this catch) — pure log noise and a wasted round trip. Use the
+      // just-created E2E user id, which is real and already scoped to this org.
       await adminAuditService.logAction({
-        adminId: 'test-support',
+        adminId: userId,
         actionType: 'test_support_bootstrap',
         details: { runId, organizationId, env: process.env.NODE_ENV },
       });
@@ -862,28 +866,14 @@ router.post(
       { fallback: false }
     );
 
-    try {
-      await DbPromise.run(
-        `INSERT INTO organization_members (id, organization_id, user_id, role, status, permission_scope)
-         VALUES (?, ?, ?, ?, ?, ?)`,
-        [
-          memberId,
-          run.organization_id,
-          userId,
-          memberRole,
-          'ACTIVE',
-          JSON.stringify({ '*': true }),
-        ],
-        { fallback: false }
-      );
-    } catch {
-      await DbPromise.run(
-        `INSERT INTO organization_members (id, organization_id, user_id, role, status)
-         VALUES (?, ?, ?, ?, ?)`,
-        [memberId, run.organization_id, userId, memberRole, 'ACTIVE'],
-        { fallback: false }
-      );
-    }
+    // NAPRAWA 4: see the matching comment above `/bootstrap` — permission_scope
+    // is not a real column on organization_members in any canonical migration.
+    await DbPromise.run(
+      `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+       VALUES (?, ?, ?, ?, ?)`,
+      [memberId, run.organization_id, userId, memberRole, 'ACTIVE'],
+      { fallback: false }
+    );
 
     const token = makeSignedToken({
       id: userId,
@@ -955,21 +945,14 @@ async function insertMembership(
   role: string,
   status: string
 ) {
-  try {
-    await DbPromise.run(
-      `INSERT INTO organization_members (id, organization_id, user_id, role, status, permission_scope)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [memberId, organizationId, userId, role, status, JSON.stringify({ '*': true })],
-      { fallback: false }
-    );
-  } catch {
-    await DbPromise.run(
-      `INSERT INTO organization_members (id, organization_id, user_id, role, status)
-       VALUES (?, ?, ?, ?, ?)`,
-      [memberId, organizationId, userId, role, status],
-      { fallback: false }
-    );
-  }
+  // NAPRAWA 4: see the matching comment above `/bootstrap` — permission_scope
+  // is not a real column on organization_members in any canonical migration.
+  await DbPromise.run(
+    `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+     VALUES (?, ?, ?, ?, ?)`,
+    [memberId, organizationId, userId, role, status],
+    { fallback: false }
+  );
 }
 
 router.post(
@@ -1477,6 +1460,21 @@ router.post(
 
     await purgeByOrganizationId(existing.organization_id);
 
+    // NAPRAWA 4: log the audit entry BEFORE deleting the users row it points
+    // at. `admin_audit_logs.admin_id` FKs to users(id) (NOT NULL); the old
+    // literal 'test-support' was never a real user, and even a real id would
+    // have failed here because it ran AFTER `DELETE FROM users`. Using the
+    // run's own user_id while it still exists satisfies the FK for real.
+    try {
+      await adminAuditService.logAction({
+        adminId: existing.user_id,
+        actionType: 'test_support_cleanup',
+        details: { runId, organizationId: existing.organization_id, env: process.env.NODE_ENV },
+      });
+    } catch {
+      /* audit best-effort */
+    }
+
     // Delete users/org at the end
     await DbPromise.run(`DELETE FROM users WHERE organization_id = ?`, [existing.organization_id], {
       fallback: false,
@@ -1487,16 +1485,6 @@ router.post(
     await DbPromise.run(`DELETE FROM test_support_runs WHERE run_id = ?`, [runId], {
       fallback: false,
     });
-
-    try {
-      await adminAuditService.logAction({
-        adminId: 'test-support',
-        actionType: 'test_support_cleanup',
-        details: { runId, organizationId: existing.organization_id, env: process.env.NODE_ENV },
-      });
-    } catch {
-      /* audit best-effort */
-    }
 
     return res.status(200).json({ ok: true, runId, deleted: true });
   })

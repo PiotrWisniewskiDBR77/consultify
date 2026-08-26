@@ -380,6 +380,19 @@
         "--strictPort"
       ],
       "port": 4501
+    },
+    {
+      "name": "staging-fixes-i18n-20260826",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "4530",
+        "--strictPort"
+      ],
+      "port": 4530
     }
   ]
 }
