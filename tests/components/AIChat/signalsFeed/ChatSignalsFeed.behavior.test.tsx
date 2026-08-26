@@ -227,4 +227,151 @@ describe('Chat signals feed behavior', () => {
     );
     await waitFor(() => expect(screen.getByTestId('chat-signals-feed')).toBeInTheDocument());
   });
+
+  // FIX-7 (dyżur 26 chat-signals-front, odbiór P0.7) — legacy refresh() nie
+  // strzela do /my-work/signals, kiedy treścią panelu jest już ChatSignalsFeed.
+  it('flag ON never calls the legacy /my-work/signals endpoint (FIX-7)', async () => {
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { ...window.location, search: '?ff_chatSignalsFeed=1' },
+    });
+    resetChatSignalsFeedFlagCache();
+    const get = vi.fn().mockResolvedValue({ signals: [], nextCursor: null, producerEnabled: true });
+    (Api.get as ReturnType<typeof vi.fn>).mockImplementation(get);
+    render(
+      <I18nextProvider i18n={i18n}>
+        <MemoryRouter>
+          <ChatSignalsPanel open onClose={vi.fn()} />
+        </MemoryRouter>
+      </I18nextProvider>
+    );
+    await waitFor(() => expect(screen.getByTestId('chat-signals-feed')).toBeInTheDocument());
+    const legacyCalls = get.mock.calls.filter(([url]) => String(url).includes('/my-work/signals'));
+    expect(legacyCalls).toHaveLength(0);
+  });
+
+  // FIX-4 (odbiór P0.4) — A.3 minima: chip serwerowy strzela ?domain=, chip
+  // kliencki nie strzela (test istnieje wyżej), nextCursor dokleja stronę,
+  // brak nextCursor chowa przycisk.
+  describe('A.3 — Menu 3 + StandardTable minima', () => {
+    it('the server domain chip fires a GET with ?domain= and reloads from the start', async () => {
+      const get = vi.fn().mockResolvedValue({ signals: [], nextCursor: null, producerEnabled: true });
+      mount({
+        initialResponse: { signals: [signal], nextCursor: 'cursor-1', producerEnabled: true },
+        api: { get, post: vi.fn() },
+      });
+      fireEvent.click(screen.getByText(/(?:Decyzje|chatSignals\.domain\.DECISION)/));
+      await waitFor(() => expect(get).toHaveBeenCalled());
+      const calledUrl = String(get.mock.calls[get.mock.calls.length - 1][0]);
+      expect(calledUrl).toContain('domain=DECISION');
+    });
+
+    it('Show older (nextCursor) appends the next page instead of replacing the list', async () => {
+      const secondPage = { ...signal, key: 'signal-2', title: 'Second page signal' };
+      const get = vi
+        .fn()
+        .mockResolvedValue({ signals: [secondPage], nextCursor: null, producerEnabled: true });
+      mount({
+        initialResponse: { signals: [signal], nextCursor: 'cursor-1', producerEnabled: true },
+        api: { get, post: vi.fn() },
+      });
+      fireEvent.click(screen.getByText(/(?:Pokaż starsze|chatSignals\.action\.loadMore)/));
+      await waitFor(() => expect(get).toHaveBeenCalled());
+      expect(String(get.mock.calls[0][0])).toContain('cursor=cursor-1');
+      expect(await screen.findByText('Second page signal')).toBeInTheDocument();
+      expect(screen.getByText('Fallback')).toBeInTheDocument();
+    });
+
+    it('no nextCursor hides the Show older button', () => {
+      mount({
+        initialResponse: { signals: [signal], nextCursor: null, producerEnabled: true },
+        api: { get: vi.fn(), post: vi.fn() },
+      });
+      expect(
+        screen.queryByText(/(?:Pokaż starsze|chatSignals\.action\.loadMore)/)
+      ).not.toBeInTheDocument();
+    });
+  });
+
+  // FIX-4 (odbiór P0.4) — A.4 minima: sześć stanów po treści. Full (istnieje
+  // wyżej), producer-off/3a (istnieje wyżej) i dławienie/6 (istnieje wyżej)
+  // dopełnione tu o empty-good/2, producer-unknown/3b, forbidden/4, error/5.
+  describe('A.4 — six honest states, by content', () => {
+    it('state 2 — empty-good: producer ON, zero signals', () => {
+      mount({
+        initialResponse: { signals: [], nextCursor: null, producerEnabled: true },
+        api: { get: vi.fn(), post: vi.fn() },
+      });
+      expect(
+        screen.getByText(/(?:Warunki reguł nie są spełnione|chatSignals\.empty\.good)/)
+      ).toBeInTheDocument();
+    });
+
+    it('state 3b — producer-unknown: producerEnabled absent from the envelope', () => {
+      mount({
+        initialResponse: { signals: [], nextCursor: null },
+        api: { get: vi.fn(), post: vi.fn() },
+      });
+      expect(
+        screen.getByText(/(?:Nie wiemy, czy producent|chatSignals\.empty\.unknown)/)
+      ).toBeInTheDocument();
+    });
+
+    it('state 4 — forbidden: 401/403 renders role=alert, distinct from empty', async () => {
+      const get = vi.fn().mockRejectedValue({ status: 403 });
+      mount({ api: { get, post: vi.fn() } });
+      expect(await screen.findByRole('alert')).toBeInTheDocument();
+    });
+
+    it('state 5 — error: other failures render a distinct error + retry, never the empty copy', async () => {
+      const get = vi.fn().mockRejectedValue({ status: 500 });
+      mount({ api: { get, post: vi.fn() } });
+      const alert = await screen.findByRole('alert');
+      expect(alert).toHaveTextContent(/(?:Nie udało się sprawdzić sygnałów|chatSignals\.error\.load)/);
+      expect(screen.getByText(/(?:Ponów|chatSignals\.action\.retry)/)).toBeInTheDocument();
+    });
+  });
+
+  // FIX-4 (odbiór P0.4) — C.1 minima: 200 ON / 200 OFF / 429 z data / 429 z
+  // Retry-After. 429 z `data.retryAfterSeconds` już istnieje wyżej.
+  describe('C.1 — POST /signals/refresh outcomes', () => {
+    it('200 { producerEnabled: true } reloads and reports success', async () => {
+      const post = vi.fn().mockResolvedValue({ producerEnabled: true });
+      const get = vi.fn().mockResolvedValue({ signals: [], nextCursor: null, producerEnabled: true });
+      mount({
+        initialResponse: { signals: [], nextCursor: null, producerEnabled: true },
+        api: { get, post },
+      });
+      fireEvent.click(screen.getByText(/(?:Odśwież|chatSignals\.action\.refresh)/));
+      expect(
+        await screen.findByText(/(?:Odświeżono|chatSignals\.notice\.refreshed)/)
+      ).toBeInTheDocument();
+    });
+
+    it('200 { producerEnabled: false } switches to the honest producer-off state (3a)', async () => {
+      const post = vi.fn().mockResolvedValue({ producerEnabled: false });
+      const get = vi.fn().mockResolvedValue({ signals: [], nextCursor: null, producerEnabled: false });
+      mount({
+        initialResponse: { signals: [], nextCursor: null, producerEnabled: true },
+        api: { get, post },
+      });
+      fireEvent.click(screen.getByText(/(?:Odśwież|chatSignals\.action\.refresh)/));
+      const matches = await screen.findAllByText(
+        /(?:Producent sygnałów jest wyłączony|chatSignals\.empty\.producerOff)/
+      );
+      expect(matches.length).toBeGreaterThan(0);
+    });
+
+    it('429 with err.retryAfter (Retry-After header shape) disables the button and counts down', async () => {
+      const post = vi.fn().mockRejectedValue({ status: 429, retryAfter: 12 });
+      mount({
+        initialResponse: { signals: [], nextCursor: null, producerEnabled: true },
+        api: { get: vi.fn(), post },
+      });
+      fireEvent.click(screen.getByText(/(?:Odśwież|chatSignals\.action\.refresh)/));
+      expect(
+        await screen.findByText(/(?:Dostępne za 12 s|chatSignals\.throttle)/)
+      ).toBeDisabled();
+    });
+  });
 });
