@@ -1687,6 +1687,8 @@
       "typeExactly": "Type exactly",
       "criticalWarning": "This critical operation may be difficult or impossible to reverse.",
       "affectedTenants": "Scope: {{count}} organizations.",
+      "noTargets": "No targets are available for this operation.",
+      "catalogError": "The target catalog could not be loaded. Try again later.",
       "risk": { "high": "High risk", "critical": "Critical risk" },
       "session": {
         "title": "Recent operations in this session",

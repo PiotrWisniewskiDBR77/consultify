@@ -7,6 +7,16 @@ export interface PlatformTarget {
   affectedTenants?: number;
 }
 
+export type PlatformTargetCatalog = 'organizations' | 'users' | 'connectors' | 'virtualWorkers';
+
+export interface PlatformOperationTargets {
+  organizations: PlatformTarget[];
+  users: PlatformTarget[];
+  connectors: PlatformTarget[];
+  virtualWorkers: PlatformTarget[];
+  catalogErrors?: Partial<Record<PlatformTargetCatalog, boolean>>;
+}
+
 const listPayload = (value: unknown, keys: string[]): any[] => {
   if (Array.isArray(value)) return value;
   if (!value || typeof value !== 'object') return [];
@@ -16,7 +26,7 @@ const listPayload = (value: unknown, keys: string[]): any[] => {
   return [];
 };
 
-export const getPlatformOperationTargets = async () => {
+export const getPlatformOperationTargets = async (): Promise<PlatformOperationTargets> => {
   const responses = await Promise.allSettled([
     apiGet<unknown>('/superadmin/organizations'),
     apiGet<unknown>('/superadmin/users'),
@@ -50,6 +60,12 @@ export const getPlatformOperationTargets = async () => {
       name: String(item.name || item.slug || item.id),
       status: String(item.status || ''),
     })),
+    catalogErrors: {
+      organizations: responses[0]?.status === 'rejected',
+      users: responses[1]?.status === 'rejected',
+      connectors: responses[2]?.status === 'rejected',
+      virtualWorkers: responses[3]?.status === 'rejected',
+    } satisfies Record<PlatformTargetCatalog, boolean>,
   };
 };
 

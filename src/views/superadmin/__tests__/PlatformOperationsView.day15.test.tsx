@@ -35,6 +35,7 @@ describe('PlatformOperationsView Day 15 actions', () => {
       users: [],
       connectors: [{ id: 'slack', name: 'Slack', affectedTenants: 3 }],
       virtualWorkers: [{ id: 'worker-1', name: 'Teresa', status: 'active' }],
+      catalogErrors: {},
     });
     run.mockResolvedValue({ success: true });
   });
@@ -49,6 +50,7 @@ describe('PlatformOperationsView Day 15 actions', () => {
     render(<PlatformOperationsView />);
     const dialog = await choose('Awaryjnie wyłącz konektor', 'slack');
     expect(within(dialog).getByText(/Zakres: 3 organizacji/)).toBeInTheDocument();
+    expect(within(dialog).getAllByRole('button', { name: 'Anuluj' })).toHaveLength(2);
     expect(within(dialog).getByRole('button', { name: 'Wykonaj operację' })).toBeDisabled();
   });
 
@@ -84,5 +86,32 @@ describe('PlatformOperationsView Day 15 actions', () => {
     expect(
       screen.queryByText(/Awaryjnie wyłącz konektor · Slack · Sukces/)
     ).not.toBeInTheDocument();
+  });
+
+  it('shows an honest empty state when a target catalog is empty', async () => {
+    getTargets.mockResolvedValueOnce({
+      organizations: [],
+      users: [],
+      connectors: [],
+      virtualWorkers: [],
+      catalogErrors: {},
+    });
+    render(<PlatformOperationsView />);
+    expect((await screen.findAllByText('Brak dostępnych celów dla tej operacji.')).length).toBe(7);
+  });
+
+  it('distinguishes a failed connector catalog from an honest empty catalog', async () => {
+    getTargets.mockResolvedValueOnce({
+      organizations: [],
+      users: [],
+      connectors: [],
+      virtualWorkers: [],
+      catalogErrors: { connectors: true },
+    });
+    render(<PlatformOperationsView />);
+    expect(
+      await screen.findByText('Nie udało się pobrać katalogu celów. Spróbuj ponownie później.')
+    ).toHaveAttribute('role', 'alert');
+    expect(screen.getAllByText('Brak dostępnych celów dla tej operacji.').length).toBe(6);
   });
 });

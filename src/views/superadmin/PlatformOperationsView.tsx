@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { ConfirmDialog } from '../../components/MyWork/shared/ConfirmDialog';
 import {
   getPlatformOperationTargets,
+  type PlatformTargetCatalog,
   type PlatformTarget,
   runPlatformOperation,
 } from '../../services/superadminPlatformOperationsApi';
@@ -80,6 +81,9 @@ export const PlatformOperationsView: React.FC = () => {
   const [users, setUsers] = useState<PlatformTarget[]>([]);
   const [connectors, setConnectors] = useState<PlatformTarget[]>([]);
   const [virtualWorkers, setVirtualWorkers] = useState<PlatformTarget[]>([]);
+  const [catalogErrors, setCatalogErrors] = useState<
+    Partial<Record<PlatformTargetCatalog, boolean>>
+  >({});
   const [selected, setSelected] = useState<Record<ActionId, string>>({
     suspend: '',
     reactivate: '',
@@ -105,6 +109,7 @@ export const PlatformOperationsView: React.FC = () => {
       setUsers(targets.users);
       setConnectors(targets.connectors || []);
       setVirtualWorkers(targets.virtualWorkers || []);
+      setCatalogErrors(targets.catalogErrors || {});
     } catch (cause) {
       setError(
         cause instanceof Error ? cause.message : t('superadmin.platformOperations.errors.load')
@@ -120,6 +125,12 @@ export const PlatformOperationsView: React.FC = () => {
     if (action.targetType === 'user') return users;
     if (action.targetType === 'connector') return connectors;
     return virtualWorkers;
+  };
+  const catalogFor = (action: ActionDefinition): PlatformTargetCatalog => {
+    if (action.targetType === 'organization') return 'organizations';
+    if (action.targetType === 'user') return 'users';
+    if (action.targetType === 'connector') return 'connectors';
+    return 'virtualWorkers';
   };
   const pendingTarget = pending
     ? targetsFor(pending).find((target) => target.id === selected[pending.id])
@@ -261,6 +272,18 @@ export const PlatformOperationsView: React.FC = () => {
                       ))}
                     </select>
                   </label>
+                  {targets.length === 0 ? (
+                    <p
+                      role={catalogErrors[catalogFor(action)] ? 'alert' : 'status'}
+                      className={`mt-2 text-sm ${catalogErrors[catalogFor(action)] ? 'text-c-danger' : 'text-c-text-muted'}`}
+                    >
+                      {t(
+                        catalogErrors[catalogFor(action)]
+                          ? 'superadmin.platformOperations.catalogError'
+                          : 'superadmin.platformOperations.noTargets'
+                      )}
+                    </p>
+                  ) : null}
                   <button
                     type="button"
                     disabled={!selected[action.id]}
@@ -320,6 +343,7 @@ export const PlatformOperationsView: React.FC = () => {
             : ''
         }
         confirmLabel={t('superadmin.platformOperations.execute')}
+        cancelLabel={t('superadmin.confirm.cancel')}
         variant="danger"
         confirmDisabled={!confirmationValid}
       >

@@ -318,6 +318,8 @@
       "typeExactly": "Przepisz dokładnie",
       "criticalWarning": "Operacja krytyczna może być trudna lub niemożliwa do odwrócenia.",
       "affectedTenants": "Zakres: {{count}} organizacji.",
+      "noTargets": "Brak dostępnych celów dla tej operacji.",
+      "catalogError": "Nie udało się pobrać katalogu celów. Spróbuj ponownie później.",
       "risk": { "high": "Wysokie ryzyko", "critical": "Ryzyko krytyczne" },
       "session": {
         "title": "Ostatnie operacje w tej sesji",
