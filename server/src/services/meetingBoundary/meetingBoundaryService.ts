@@ -55,6 +55,8 @@ import {
   materializeProposal,
   rejectProposal,
 } from '../artifactHandoff/handoffSpineService.js';
+import { getArtifactByOrigin, registerArtifactOrigin } from '../v8/artifactRegistryService.js';
+import { createWave5Artifact, getWave5Artifact } from '../wave5ArtifactRuntimeService.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -97,6 +99,10 @@ export interface MeetingNoteRecord {
   targetKind: string | null;
   targetRecordId: string | null;
   materializedAt: string | null;
+  materialArtifactId: string | null;
+  materialTitle: string | null;
+  materializationStatus: 'pending' | 'failed' | 'materialized' | null;
+  materializationFailureCode: string | null;
   idempotencyKey: string | null;
   createdBy: string;
   createdAt: string;
@@ -128,6 +134,10 @@ interface NoteRow {
   receipt_target_kind?: string | null;
   target_record_id?: string | null;
   materialized_at?: Date | string | null;
+  material_artifact_id?: string | null;
+  material_title?: string | null;
+  materialization_status?: string | null;
+  materialization_failure_code?: string | null;
 }
 
 function toIso(value: Date | string): string {
@@ -170,6 +180,14 @@ function mapNoteRow(row: NoteRow): MeetingNoteRecord {
     targetKind: row.receipt_target_kind || null,
     targetRecordId: row.target_record_id || null,
     materializedAt: row.materialized_at ? toIso(row.materialized_at) : null,
+    materialArtifactId: row.material_artifact_id || null,
+    materialTitle: row.material_title || null,
+    materializationStatus: ['pending', 'failed', 'materialized'].includes(
+      String(row.materialization_status)
+    )
+      ? (row.materialization_status as MeetingNoteRecord['materializationStatus'])
+      : null,
+    materializationFailureCode: row.materialization_failure_code || null,
     idempotencyKey: row.idempotency_key,
     createdBy: row.created_by,
     createdAt: toIso(row.created_at),
@@ -259,12 +277,20 @@ export async function getMeetingNote(input: {
     `SELECT n.*,
             p.state AS proposal_state, p.decided_by, p.decided_at, p.decision_reason,
             r.receipt_id, r.target_kind AS receipt_target_kind,
-            r.target_record_id, r.materialized_at
+            r.target_record_id, r.materialized_at,
+            mm.artifact_id AS material_artifact_id,
+            a.title_snapshot AS material_title,
+            mm.status AS materialization_status,
+            mm.failure_code AS materialization_failure_code
        FROM meeting_notes n
        LEFT JOIN artifact_handoff_proposals p
          ON p.proposal_id = n.proposal_id AND p.organization_id = n.organization_id
        LEFT JOIN artifact_handoff_receipts r
          ON r.proposal_id = n.proposal_id AND r.organization_id = n.organization_id
+       LEFT JOIN meeting_note_materializations mm
+         ON mm.note_id = n.id AND mm.meeting_id = n.meeting_id AND mm.organization_id = n.organization_id
+       LEFT JOIN v8_output_artifacts a
+         ON a.artifact_id = mm.artifact_id AND a.organization_id = n.organization_id
       WHERE n.id = ? AND n.organization_id = ? AND n.meeting_id = ? LIMIT 1`,
     [input.noteId, input.organizationId, input.meetingId]
   );
@@ -280,12 +306,20 @@ export async function listMeetingNotesForMeeting(input: {
     `SELECT n.*,
             p.state AS proposal_state, p.decided_by, p.decided_at, p.decision_reason,
             r.receipt_id, r.target_kind AS receipt_target_kind,
-            r.target_record_id, r.materialized_at
+            r.target_record_id, r.materialized_at,
+            mm.artifact_id AS material_artifact_id,
+            a.title_snapshot AS material_title,
+            mm.status AS materialization_status,
+            mm.failure_code AS materialization_failure_code
        FROM meeting_notes n
        LEFT JOIN artifact_handoff_proposals p
          ON p.proposal_id = n.proposal_id AND p.organization_id = n.organization_id
        LEFT JOIN artifact_handoff_receipts r
          ON r.proposal_id = n.proposal_id AND r.organization_id = n.organization_id
+       LEFT JOIN meeting_note_materializations mm
+         ON mm.note_id = n.id AND mm.meeting_id = n.meeting_id AND mm.organization_id = n.organization_id
+       LEFT JOIN v8_output_artifacts a
+         ON a.artifact_id = mm.artifact_id AND a.organization_id = n.organization_id
       WHERE n.organization_id = ? AND n.meeting_id = ?
       ORDER BY n.created_at DESC`,
     [input.organizationId, input.meetingId]
@@ -515,6 +549,174 @@ export interface DecideMeetingNoteResult {
   replayed: boolean;
 }
 
+function buildMeetingMinutesMarkdown(note: MeetingNoteRecord): string {
+  const sections = [
+    `# Protokół spotkania`,
+    note.summary,
+    note.keyPoints.length
+      ? `## Kluczowe punkty\n${note.keyPoints.map((item) => `- ${item}`).join('\n')}`
+      : '',
+    note.decisions.length
+      ? `## Decyzje\n${note.decisions.map((item) => `- ${item.decision}`).join('\n')}`
+      : '',
+    note.actionItems.length
+      ? `## Działania\n${note.actionItems.map((item) => `- ${item.task}`).join('\n')}`
+      : '',
+  ];
+  return sections.filter(Boolean).join('\n\n');
+}
+
+async function recordMaterializationAttempt(input: {
+  note: MeetingNoteRecord;
+  status: 'pending' | 'failed' | 'materialized';
+  stage: 'content' | 'registry' | 'receipt';
+  artifactId?: string | null;
+  receiptId?: string | null;
+  failureCode?: string | null;
+}): Promise<void> {
+  const note = input.note;
+  const now = new Date().toISOString();
+  await dbRun(
+    `INSERT INTO meeting_note_materializations (
+       id, organization_id, meeting_id, note_id, proposal_id, status, stage,
+       artifact_id, receipt_id, failure_code, attempts, last_attempt_at, created_at, updated_at
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)
+     ON CONFLICT (organization_id, meeting_id, note_id) DO UPDATE SET
+       proposal_id = EXCLUDED.proposal_id,
+       status = EXCLUDED.status,
+       stage = EXCLUDED.stage,
+       artifact_id = COALESCE(EXCLUDED.artifact_id, meeting_note_materializations.artifact_id),
+       receipt_id = COALESCE(EXCLUDED.receipt_id, meeting_note_materializations.receipt_id),
+       failure_code = EXCLUDED.failure_code,
+       attempts = meeting_note_materializations.attempts + 1,
+       last_attempt_at = EXCLUDED.last_attempt_at,
+       updated_at = EXCLUDED.updated_at`,
+    [
+      `meeting-note-materialization-${note.id}`,
+      note.organizationId,
+      note.meetingId,
+      note.id,
+      note.proposalId,
+      input.status,
+      input.stage,
+      input.artifactId || null,
+      input.receiptId || null,
+      input.failureCode || null,
+      now,
+      now,
+      now,
+    ],
+    { fallback: false }
+  );
+}
+
+async function materializeMeetingNote(input: {
+  note: MeetingNoteRecord;
+  materializedBy: string;
+}): Promise<{ receipt: HandoffReceipt; replayed: boolean }> {
+  const { note, materializedBy } = input;
+  if (!note.proposalId) {
+    throw new MeetingBoundaryError('meeting note has no proposal', 'MATERIALIZATION_FAILED');
+  }
+  const contentId = `meeting-material-${note.id}`;
+  const title = `Protokół spotkania ${note.meetingId}`;
+  let stage: 'content' | 'registry' | 'receipt' = 'content';
+  let registeredArtifactId: string | null = null;
+  await recordMaterializationAttempt({ note, status: 'pending', stage });
+  try {
+    const existingContent = await getWave5Artifact(contentId, note.organizationId);
+    if (!existingContent) {
+      const markdown = buildMeetingMinutesMarkdown(note);
+      await createWave5Artifact({
+        organizationId: note.organizationId,
+        userId: materializedBy,
+        artifactType: 'report',
+        title,
+        content: markdown,
+        contentMd: markdown,
+        canonicalFormat: 'markdown',
+        externalArtifactId: contentId,
+        metadata: {
+          documentStudioSchema: { version: 1, title, blocks: [] },
+          sourceType: 'meeting',
+          meetingId: note.meetingId,
+          noteId: note.id,
+        },
+      });
+    }
+
+    stage = 'registry';
+    const existingRegistry = await getArtifactByOrigin({
+      organizationId: note.organizationId,
+      originRuntime: 'native_artifact',
+      originRecordId: contentId,
+      userId: materializedBy,
+      roleKey: 'owner',
+    });
+    const registered =
+      existingRegistry ||
+      (await registerArtifactOrigin({
+        organizationId: note.organizationId,
+        outputType: 'report',
+        artifactFamily: 'document',
+        originRuntime: 'native_artifact',
+        originRecordId: contentId,
+        titleSnapshot: title,
+        ownerUserId: materializedBy,
+        createdBy: materializedBy,
+        deliveryState: 'ready',
+        visibilityScope: 'organization',
+        originSummary: {
+          sourceType: 'meeting',
+          sourceId: note.meetingId,
+          sourceTable: 'meeting_notes',
+          noteId: note.id,
+          receiptId: null,
+        },
+      }));
+    if (!registered) {
+      throw new Error('artifact registry returned no material');
+    }
+    registeredArtifactId = registered.artifactId;
+
+    stage = 'receipt';
+    const result = await materializeProposal({
+      organizationId: note.organizationId,
+      proposalId: note.proposalId,
+      targetRecordId: registered.artifactId,
+      materializedBy,
+      outputPayload: {
+        noteId: note.id,
+        artifactId: registered.artifactId,
+        summary: note.summary,
+        keyPoints: note.keyPoints,
+        decisions: note.decisions,
+        actionItems: note.actionItems,
+      },
+    });
+    await recordMaterializationAttempt({
+      note,
+      status: 'materialized',
+      stage,
+      artifactId: registered.artifactId,
+      receiptId: result.receipt.receiptId,
+    });
+    return result;
+  } catch (error) {
+    await recordMaterializationAttempt({
+      note,
+      status: 'failed',
+      stage,
+      artifactId: registeredArtifactId,
+      failureCode: 'MATERIALIZATION_FAILED',
+    });
+    throw new MeetingBoundaryError(
+      error instanceof Error ? error.message : 'meeting note materialization failed',
+      'MATERIALIZATION_FAILED'
+    );
+  }
+}
+
 /**
  * CROSS-LANE CONTRACT: on approval this materializes the note itself as the
  * ONE governed "material" output (`targetKind: 'material'`,
@@ -578,19 +780,7 @@ export async function decideMeetingNote(
       throw err;
     }
   }
-  const { receipt, replayed } = await materializeProposal({
-    organizationId,
-    proposalId: note.proposalId,
-    targetRecordId: note.id,
-    materializedBy: decidedBy,
-    outputPayload: {
-      noteId: note.id,
-      summary: note.summary,
-      keyPoints: note.keyPoints,
-      decisions: note.decisions,
-      actionItems: note.actionItems,
-    },
-  });
+  const { receipt, replayed } = await materializeMeetingNote({ note, materializedBy: decidedBy });
   // Read the proposal fresh rather than trust `approveProposal`'s return
   // value: on the replay path above it may not have been called at all (or
   // may have thrown), and even on the happy path its result predates the
@@ -598,6 +788,23 @@ export async function decideMeetingNote(
   // for the FINAL state ('materialized').
   const proposal = await readHandoffProposal(organizationId, note.proposalId);
   const updated = await setNoteStatus(note.id, organizationId, 'approved');
+  return { note: updated || note, proposal, receipt, replayed };
+}
+
+export async function retryMeetingNoteMaterialization(input: {
+  organizationId: string;
+  meetingId: string;
+  noteId: string;
+  materializedBy: string;
+}): Promise<DecideMeetingNoteResult | null> {
+  const note = await getMeetingNote(input);
+  if (!note || !note.proposalId) return null;
+  const { receipt, replayed } = await materializeMeetingNote({
+    note,
+    materializedBy: input.materializedBy,
+  });
+  const proposal = await readHandoffProposal(input.organizationId, note.proposalId);
+  const updated = await setNoteStatus(note.id, input.organizationId, 'approved');
   return { note: updated || note, proposal, receipt, replayed };
 }
 

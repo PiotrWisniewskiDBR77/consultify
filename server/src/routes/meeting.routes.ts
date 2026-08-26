@@ -10,7 +10,14 @@ import {
   listMeetingNotesForMeeting,
   MeetingBoundaryError,
   proposeMeetingNote,
+  retryMeetingNoteMaterialization,
 } from '../services/meetingBoundary/meetingBoundaryService.js';
+import {
+  addMeetingAttachment,
+  deleteMeetingAttachment,
+  listMeetingAttachments,
+  type MeetingAttachmentKind,
+} from '../services/meeting/meetingAttachmentService.js';
 import {
   addMeetingParticipant,
   deleteMeetingParticipant,
@@ -18,6 +25,10 @@ import {
   updateMeetingParticipant,
 } from '../services/meeting/meetingDay16Service.js';
 import { sendMeetingInvitations } from '../services/meeting/meetingInvitationService.js';
+import {
+  editMeetingOccurrence,
+  type MeetingOccurrenceScope,
+} from '../services/meeting/meetingOccurrenceService.js';
 import {
   createMeetingDecisionRecord,
   createMeetingFollowUpRecord,
@@ -190,7 +201,10 @@ export function validateRecurrenceRule(value: string): { ok: true } | { ok: fals
     seen.add(key);
     if (key === 'UNTIL') {
       if (!RRULE_UNTIL_RE.test(val)) {
-        return { ok: false, error: 'recurrenceRule UNTIL must be an ICS date/date-time (e.g. 20261231T235959Z)' };
+        return {
+          ok: false,
+          error: 'recurrenceRule UNTIL must be an ICS date/date-time (e.g. 20261231T235959Z)',
+        };
       }
     } else if (!RRULE_VALUE_RE.test(val)) {
       return { ok: false, error: `recurrenceRule has an invalid value for ${key}: "${val}"` };
@@ -250,7 +264,15 @@ router.get(
       typeof req.query.projectId === 'string' && req.query.projectId.trim()
         ? req.query.projectId.trim()
         : null;
-    const meetings = await listMeetings({ organizationId: orgId, projectId });
+    const search =
+      typeof req.query.search === 'string' && req.query.search.trim()
+        ? req.query.search.trim()
+        : null;
+    const meetings = await listMeetings({
+      organizationId: orgId,
+      projectId,
+      ...(search ? { search } : {}),
+    });
     return res.json({ meetings: meetings.filter((meeting) => canAccessMeeting(req, meeting)) });
   })
 );
@@ -1029,7 +1051,7 @@ router.post(
         replayed: result.replayed,
       });
     } catch (err: unknown) {
-      if (err instanceof HandoffSpineError) {
+      if (err instanceof HandoffSpineError || err instanceof MeetingBoundaryError) {
         return res
           .status(statusForSpineErrorCode(err.code))
           .json({ error: err.message, code: err.code });
@@ -1037,6 +1059,177 @@ router.post(
       throw err;
     }
   })
+);
+
+router.post(
+  '/:id/notes/:noteId/materialization/retry',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    const userId = req.user?.id;
+    if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
+    if (!requireMeetingAdmin(req, res)) return;
+    const meetingId = String(req.params.id);
+    const meeting = await getMeeting({ organizationId: orgId, meetingId });
+    if (!meeting) return res.status(404).json({ error: 'Meeting not found' });
+    if (!canAccessMeeting(req, meeting)) return denyMeetingAccess(res);
+    try {
+      const result = await retryMeetingNoteMaterialization({
+        organizationId: orgId,
+        meetingId,
+        noteId: String(req.params.noteId),
+        materializedBy: userId,
+      });
+      if (!result) return res.status(404).json({ error: 'Meeting note not found' });
+      return res.status(200).json(result);
+    } catch (err: unknown) {
+      if (err instanceof HandoffSpineError || err instanceof MeetingBoundaryError) {
+        return res
+          .status(statusForSpineErrorCode(err.code))
+          .json({ error: err.message, code: err.code });
+      }
+      throw err;
+    }
+  })
+);
+
+router.get(
+  '/:id/attachments',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    const userId = req.user?.id;
+    if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
+    const meetingId = String(req.params.id);
+    const meeting = await getMeeting({ organizationId: orgId, meetingId });
+    if (!meeting || !canAccessMeeting(req, meeting)) return denyMeetingAccess(res);
+    const attachments = await listMeetingAttachments({
+      organizationId: orgId,
+      meetingId,
+      userId,
+      roleKey: getMeetingUserRole(req),
+    });
+    return res.json({ attachments });
+  })
+);
+
+router.post(
+  '/:id/attachments',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    const userId = req.user?.id;
+    if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
+    const meetingId = String(req.params.id);
+    const artifactKind = String(req.body?.artifactKind || '') as MeetingAttachmentKind;
+    const artifactId = String(req.body?.artifactId || '').trim();
+    if (!['idea', 'note', 'material'].includes(artifactKind) || !artifactId) {
+      return res
+        .status(400)
+        .json({ error: 'artifactKind and artifactId are required', code: 'INVALID_ATTACHMENT' });
+    }
+    const meeting = await getMeeting({ organizationId: orgId, meetingId });
+    if (!meeting || !canAccessMeeting(req, meeting)) return denyMeetingAccess(res);
+    try {
+      const attachment = await addMeetingAttachment({
+        organizationId: orgId,
+        meetingId,
+        artifactKind,
+        artifactId,
+        userId,
+        roleKey: getMeetingUserRole(req),
+      });
+      return res.status(201).json({ attachment });
+    } catch (error) {
+      const code = (error as Error).message;
+      if (code === 'ATTACHMENT_DUPLICATE')
+        return res.status(409).json({ error: 'Attachment already exists', code });
+      if (code === 'ARTIFACT_NOT_ACCESSIBLE')
+        return res.status(404).json({ error: 'Artifact not found', code });
+      throw error;
+    }
+  })
+);
+
+router.delete(
+  '/:id/attachments/:attachmentId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const meetingId = String(req.params.id);
+    const meeting = await getMeeting({ organizationId: orgId, meetingId });
+    if (!meeting || !canAccessMeeting(req, meeting)) return denyMeetingAccess(res);
+    const deleted = await deleteMeetingAttachment({
+      organizationId: orgId,
+      meetingId,
+      attachmentId: String(req.params.attachmentId),
+    });
+    if (!deleted) return res.status(404).json({ error: 'Attachment not found' });
+    return res.status(204).send();
+  })
+);
+
+async function handleOccurrenceMutation(req: AuthRequest, res: Response, cancel: boolean) {
+  const orgId = req.user?.organizationId;
+  const userId = req.user?.id;
+  if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
+  const meetingId = String(req.params.id);
+  const recurrenceId = String(req.body?.recurrenceId || '').trim();
+  const scope = String(req.body?.scope || '') as MeetingOccurrenceScope;
+  if (
+    !recurrenceId ||
+    /[\r\n]/.test(recurrenceId) ||
+    !['this', 'this_and_following', 'all'].includes(scope)
+  ) {
+    return res
+      .status(400)
+      .json({ error: 'Invalid recurrenceId or scope', code: 'INVALID_OCCURRENCE' });
+  }
+  const changes = req.body?.changes && typeof req.body.changes === 'object' ? req.body.changes : {};
+  if (typeof changes.recurrenceRule === 'string') {
+    const validation = validateRecurrenceRule(changes.recurrenceRule);
+    if (!validation.ok)
+      return res.status(400).json({ error: validation.error, code: 'INVALID_RECURRENCE_RULE' });
+  }
+  const meeting = await getMeeting({ organizationId: orgId, meetingId });
+  if (!meeting || !canAccessMeeting(req, meeting)) return denyMeetingAccess(res);
+  try {
+    const result = await editMeetingOccurrence({
+      organizationId: orgId,
+      meetingId,
+      recurrenceId,
+      scope,
+      changes,
+      actorId: userId,
+      cancel,
+    });
+    let deliveries: Awaited<ReturnType<typeof sendMeetingInvitations>> = [];
+    try {
+      deliveries = await sendMeetingInvitations({
+        organizationId: orgId,
+        meetingId: result.meeting.id,
+        actorId: userId,
+        method: cancel ? 'CANCEL' : 'REQUEST',
+      });
+    } catch (deliveryError) {
+      return res
+        .status(200)
+        .json({ ...result, deliveries, deliveryError: (deliveryError as Error).message });
+    }
+    return res.status(200).json({ ...result, deliveries });
+  } catch (error) {
+    const code = (error as Error).message;
+    if (code === 'RECURRENCE_NOT_FOUND')
+      return res.status(404).json({ error: 'Occurrence not found', code });
+    if (code.startsWith('INVALID_')) return res.status(400).json({ error: code, code });
+    throw error;
+  }
+}
+
+router.patch(
+  '/:id/occurrence',
+  asyncHandler(async (req: AuthRequest, res: Response) => handleOccurrenceMutation(req, res, false))
+);
+router.delete(
+  '/:id/occurrence',
+  asyncHandler(async (req: AuthRequest, res: Response) => handleOccurrenceMutation(req, res, true))
 );
 
 export default router;
