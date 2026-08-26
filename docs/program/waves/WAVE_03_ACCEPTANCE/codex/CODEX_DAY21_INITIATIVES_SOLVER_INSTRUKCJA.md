@@ -83,13 +83,13 @@ Naruszenie tego ograniczenia = odrzucenie dyżuru, niezależnie od jakości resz
 1. Punktem wyjścia jest **gałąź `codex/m03-admin-20260824`**. Nadzorca podaje Ci
    **SHA commitu-markera** przy wklejaniu tej instrukcji.
 
-   **SHA markera: «MARKER_SHA»**
+   **SHA markera: 649bd730a6**
 
    ```bash
    cd <root-repo>
    git fetch --all --prune
    git log --oneline -25 codex/m03-admin-20260824
-   git merge-base --is-ancestor «MARKER_SHA» codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
+   git merge-base --is-ancestor 649bd730a6 codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
    ```
 
 2. **Jeśli marker nie jest przodkiem tipa albo gałąź nie istnieje — STOP.**
@@ -151,7 +151,7 @@ Naruszenie tego ograniczenia = odrzucenie dyżuru, niezależnie od jakości resz
    format `YYYYMMDD`):
 
    ```bash
-   git branch codex/initiatives-day21-<data> «MARKER_SHA»
+   git branch codex/initiatives-day21-<data> 649bd730a6
    git worktree add /private/tmp/consultify-initiatives-day21 codex/initiatives-day21-<data>
    cd /private/tmp/consultify-initiatives-day21
    ```
@@ -1598,7 +1598,7 @@ Nie tworzysz drugiego pliku nigdzie indziej (Z12).
 # Inicjatywy dzień 21 — raport dyżuru <data>
 
 Baza: codex/m03-admin-20260824 @ <SHA tipa>
-Marker: «MARKER_SHA» — POTWIERDZONY / BRAK
+Marker: 649bd730a6 — POTWIERDZONY / BRAK
 Gałąź: codex/initiatives-day21-<data>
 Worktree: /private/tmp/consultify-initiatives-day21
 Port PG: 5471 · kontener cx-day21-pg usunięty: TAK/NIE · wolumeny usunięte: TAK/NIE
