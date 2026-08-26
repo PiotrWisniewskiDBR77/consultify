@@ -128,6 +128,114 @@ export async function listPacks(): Promise<MethodPackSummary[]> {
 }
 
 // ---------------------------------------------------------------------------
+// Assessment report contract
+// ---------------------------------------------------------------------------
+
+export type AssessmentReportSkipCode =
+  | 'poza_modelem_operacyjnym'
+  | 'poza_zakresem_zlecenia'
+  | 'odroczone_do_kolejnej_rewizji'
+  | 'zastapione_innym_rozwiazaniem';
+
+export type AssessmentReportEvidenceState =
+  | 'evidenced'
+  | 'incomplete'
+  | 'declared'
+  | 'not_assessed';
+
+export interface AssessmentReportSkip {
+  readonly questionId: string;
+  readonly skipCode: AssessmentReportSkipCode;
+}
+
+export interface AssessmentReportArea {
+  readonly unitId: string;
+  readonly unitName: string;
+  readonly unitNamePL?: string;
+  readonly currentLevel: number | null;
+  readonly targetLevel: number | null;
+  readonly gap: number | null;
+  readonly skipped: boolean;
+  readonly skipCode: AssessmentReportSkipCode | null;
+  readonly skips: readonly AssessmentReportSkip[];
+  readonly evidenceState: AssessmentReportEvidenceState;
+}
+
+export interface AssessmentReportAreaComment {
+  readonly unitId: string;
+  readonly content: null;
+  readonly minWords: number;
+  readonly maxWords: number;
+  readonly microstructure: readonly string[];
+  readonly skipped: boolean;
+  readonly skipCode: AssessmentReportSkipCode | null;
+  readonly skips: readonly AssessmentReportSkip[];
+  readonly answerRefs: readonly string[];
+  readonly evidenceRefs: readonly string[];
+  readonly sourceLocators: readonly string[];
+  readonly uncertainty: AssessmentReportEvidenceState;
+}
+
+export interface AssessmentReportChapter {
+  readonly axisId: number;
+  readonly axisName: string;
+  readonly axisNamePL?: string;
+  readonly maxLevel: number;
+  readonly introduction: {
+    readonly content: null;
+    readonly minWords: number;
+    readonly maxWords: number;
+  };
+  readonly matrix: {
+    readonly caption: {
+      readonly content: null;
+      readonly minWords: number;
+      readonly maxWords: number;
+    };
+    readonly areas: readonly AssessmentReportArea[];
+  };
+  readonly areaComments: readonly AssessmentReportAreaComment[];
+  readonly conclusion: {
+    readonly content: null;
+    readonly minWords: number;
+    readonly maxWords: number;
+    readonly decisionLine: {
+      readonly direction: null;
+      readonly priority: null;
+      readonly horizon: null;
+      readonly successCondition: null;
+    };
+  };
+}
+
+export interface AssessmentReportContract {
+  readonly contractVersion: 'assessment-report-contract-v1';
+  readonly sessionId: string;
+  readonly outputId: string | null;
+  readonly revision: number;
+  readonly generatedAt: string;
+  readonly methodVersion: string;
+  readonly chapters: readonly AssessmentReportChapter[];
+}
+
+export async function getAssessmentReportContract(
+  sessionId: string
+): Promise<AssessmentReportContract> {
+  const response = await handle<{ reportContract: AssessmentReportContract }>(
+    fetchWithRetry(`${BASE}/sessions/${sessionId}/assessment-report-contract`, {
+      method: 'GET',
+      headers: getHeaders(),
+    })
+  );
+  if (response.reportContract.contractVersion !== 'assessment-report-contract-v1') {
+    throw new MethodCoreApiError('Unsupported assessment report contract version', 200, {
+      contractVersion: response.reportContract.contractVersion,
+    });
+  }
+  return response.reportContract;
+}
+
+// ---------------------------------------------------------------------------
 // Sessions
 // ---------------------------------------------------------------------------
 
