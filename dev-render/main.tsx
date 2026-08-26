@@ -359,7 +359,6 @@ const ResultsVNextTeresaOkrReflectionScreen = React.lazy(
 const ToolsSwotReportScreen = React.lazy(() => import('./screens/tools-swot-report'));
 
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
-<<<<<<< HEAD
   'meetings-module': {
     label:
       'MOD06 Meetings etap 2 — REALNY <MeetingHub> (lista) + <MeetingObjectPage> (Szczegóły/Protokół/Decyzje). &view=list|object &tab=details|minutes|decisions',
