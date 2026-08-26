@@ -234,7 +234,7 @@ function buildCriterion(): WorkspaceCriterion {
     title: 'Kwalifikacja i ocena okresowa dostawców krytycznych',
     requirementText:
       'Organizacja utrzymuje udokumentowany proces kwalifikacji dostawców krytycznych oraz przeprowadza ich ocenę okresową nie rzadziej niż raz w roku (Procedura P-ZAK-02 rew. 4, pkt 8.4.1).',
-    sourceReference: 'ISO 9001:2015, pkt 8.4.1',
+    sourceReference: 'Procedura P-ZAK-02 rew. 4, pkt 8.4.1',
     auditQuestion:
       'Czy każdy dostawca klasy A z zatwierdzonej listy (AVL) ma udokumentowaną kwalifikację wstępną oraz aktualną (za 2025) kartę oceny okresowej, a zamówienia są składane wyłącznie u dostawców z AVL?',
     expectedEvidence: EXPECTED_EVIDENCE,
@@ -680,8 +680,8 @@ Api.get = (async (url: string, ...rest: unknown[]) => {
       data: {
         id: PROGRAM_ID,
         name: 'Audyt wewnętrzny 2026/Q3 — proces zakupowy',
-        packId: 'pack-iso9001-zakupy',
-        packTitle: 'ISO 9001 · Zakupy',
+        packId: 'pack-qms-zakupy',
+        packTitle: 'Procedura QMS klienta · Zakupy',
         packVersion: 4,
         lifecycleState: 'fieldwork',
         applicableCriteria: 24,
@@ -692,7 +692,7 @@ Api.get = (async (url: string, ...rest: unknown[]) => {
         plannedStart: '2026-07-15',
         plannedEnd: '2026-09-30',
         updatedAt: '2026-08-21T14:32:00Z',
-        objective: 'Ocena zgodności procesu zakupowego z ISO 9001:2015 pkt 8.4.',
+        objective: 'Ocena zgodności procesu zakupowego z wewnętrzną procedurą zakupową klienta (P-ZAK-02).',
         scopeText: 'Zakład Ostrów Wlkp. — proces Zakupy i zaopatrzenie.',
         projectId: null,
         members: [],
