@@ -19,10 +19,20 @@ const base = {
 };
 
 describe('meeting ICS invitation', () => {
-  it('builds REQUEST with timezone, organizer and attendee', () => {
+  it('builds REQUEST with UTC start/end, organizer and attendee', () => {
+    // FIX-1 (P1-1/P1-4): DTSTART/DTEND must be plain UTC ("Z" suffix), never
+    // a TZID-qualified local time built from an un-converted UTC instant —
+    // that previously produced a 2h error for Europe/Warsaw. The meeting's
+    // configured zone is still surfaced, but only as an informational
+    // X-property that cannot desync the actual instant.
     const ics = buildMeetingInvitationIcs(base);
     expect(ics).toContain('METHOD:REQUEST');
-    expect(ics).toContain('DTSTART;TZID=Europe/Warsaw:20260826T080000');
+    expect(ics).toContain('DTSTART:20260826T080000Z');
+    expect(ics).toContain('DTEND:20260826T090000Z');
+    expect(ics).not.toMatch(/DTSTART;TZID/);
+    expect(ics).not.toMatch(/DTEND;TZID/);
+    expect(ics).not.toContain('BEGIN:VTIMEZONE');
+    expect(ics).toContain('X-CONSULTIFY-TIMEZONE:Europe/Warsaw');
     expect(ics).toContain('ORGANIZER;CN=Owner:mailto:owner@example.com');
     expect(ics).toContain('PARTSTAT=ACCEPTED');
   });
