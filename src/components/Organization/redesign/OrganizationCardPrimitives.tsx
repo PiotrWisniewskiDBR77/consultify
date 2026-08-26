@@ -13,7 +13,7 @@
  *  - fokus = pierścień `--c-focus` (niebieski), nie obrys marki.
  */
 
-import { Plus, X } from 'lucide-react';
+import { ChevronRight, Plus, X } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import React from 'react';
 
@@ -50,6 +50,11 @@ export const OrgStatusChip: React.FC<{ tone?: OrgStatusTone; children: React.Rea
   </span>
 );
 
+export interface OrgTechDetailItem {
+  label: string;
+  value: string;
+}
+
 export interface OrgSectionCardProps {
   id: string;
   title: string;
@@ -59,6 +64,12 @@ export interface OrgSectionCardProps {
   hint?: string;
   /** Krótkie wprowadzenie nad treścią. */
   lead?: string;
+  /**
+   * „Szczegóły techniczne" (prototyp `.tech`) — identyfikatory rekordu
+   * (np. `org_…` UUID), zwinięte pod jednym wierszem na dole karty. NIE
+   * dublować w treści pól — to jedyne miejsce, gdzie ID się pokazuje.
+   */
+  techDetails?: OrgTechDetailItem[];
   children: React.ReactNode;
   className?: string;
 }
@@ -70,35 +81,69 @@ export const OrgSectionCard: React.FC<OrgSectionCardProps> = ({
   status,
   hint,
   lead,
+  techDetails,
   children,
   className,
-}) => (
-  <section
-    aria-labelledby={`org-card-${id}`}
-    data-testid={`org-card-${id}`}
-    className={cn(
-      'mb-4 rounded-xl border border-c-border-subtle bg-c-surface shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.35)]',
-      className
-    )}
-  >
-    <header className="flex items-center gap-2 border-b border-c-border-subtle px-4 py-3">
-      {Icon && <Icon aria-hidden="true" className="h-4 w-4 shrink-0 text-c-text-muted" />}
-      <h3 id={`org-card-${id}`} className="flex-1 text-[13px] font-semibold text-c-text">
-        {title}
-      </h3>
-      {status && <OrgStatusChip tone={status.tone}>{status.label}</OrgStatusChip>}
-    </header>
-    <div className="p-4">
-      {lead && <p className="mb-3 text-[12px] text-c-text-secondary">{lead}</p>}
-      {children}
-    </div>
-    {hint && (
-      <p className="border-t border-c-border-subtle px-4 py-3 text-[11px] text-c-text-muted">
-        {hint}
-      </p>
-    )}
-  </section>
-);
+}) => {
+  const [techOpen, setTechOpen] = React.useState(false);
+  return (
+    <section
+      aria-labelledby={`org-card-${id}`}
+      data-testid={`org-card-${id}`}
+      className={cn(
+        'mb-4 rounded-xl border border-c-border-subtle bg-c-surface shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.35)]',
+        className
+      )}
+    >
+      <header className="flex items-center gap-2 border-b border-c-border-subtle px-4 py-3">
+        {Icon && <Icon aria-hidden="true" className="h-4 w-4 shrink-0 text-c-text-muted" />}
+        <h3 id={`org-card-${id}`} className="flex-1 text-[13px] font-semibold text-c-text">
+          {title}
+        </h3>
+        {status && <OrgStatusChip tone={status.tone}>{status.label}</OrgStatusChip>}
+      </header>
+      <div className="p-4">
+        {lead && <p className="mb-3 text-[12px] text-c-text-secondary">{lead}</p>}
+        {children}
+      </div>
+      {hint && (
+        <p className="border-t border-c-border-subtle px-4 py-3 text-[11px] text-c-text-muted">
+          {hint}
+        </p>
+      )}
+      {techDetails && techDetails.length > 0 && (
+        <div className="border-t border-c-border-subtle">
+          <button
+            type="button"
+            onClick={() => setTechOpen((open) => !open)}
+            aria-expanded={techOpen}
+            data-testid={`org-card-${id}-tech-toggle`}
+            className="flex w-full items-center gap-1.5 px-4 py-2 text-left text-[11px] font-medium text-c-text-muted transition-colors hover:text-c-text-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"
+          >
+            <ChevronRight
+              aria-hidden="true"
+              className={cn('h-3 w-3 shrink-0 transition-transform', techOpen && 'rotate-90')}
+            />
+            Szczegóły techniczne
+          </button>
+          {techOpen && (
+            <div className="flex flex-wrap gap-x-4 gap-y-1 px-4 pb-3 pl-[26px]">
+              {techDetails.map((item) => (
+                <span
+                  key={item.label}
+                  className="rounded-md bg-c-surface-raised px-1.5 py-0.5 font-mono text-[11px] text-c-text-muted"
+                  title={item.label}
+                >
+                  {item.value}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </section>
+  );
+};
 
 export const OrgFieldGrid: React.FC<{ children: React.ReactNode; className?: string }> = ({
   children,
@@ -116,6 +161,12 @@ export interface OrgFieldShellProps {
   label: string;
   htmlFor?: string;
   status?: { tone?: OrgStatusTone; label: string };
+  /**
+   * Pochodzenie faktu (prototyp `.prov`): „Źródło · Osoba · Data". Pokazuje
+   * SKĄD wartość pochodzi — nie duplikuje ID (to idzie do „Szczegóły
+   * techniczne" na poziomie karty).
+   */
+  provenance?: string;
   children: React.ReactNode;
 }
 
@@ -123,6 +174,7 @@ export const OrgFieldShell: React.FC<OrgFieldShellProps> = ({
   label,
   htmlFor,
   status,
+  provenance,
   children,
 }) => (
   <div className="border-b border-c-border-subtle py-2 last:border-b-0">
@@ -133,6 +185,11 @@ export const OrgFieldShell: React.FC<OrgFieldShellProps> = ({
       {status && <OrgStatusChip tone={status.tone}>{status.label}</OrgStatusChip>}
     </div>
     {children}
+    {provenance && (
+      <p className="mt-1 truncate text-[11px] text-c-text-muted" title={provenance}>
+        {provenance}
+      </p>
+    )}
   </div>
 );
 
@@ -142,6 +199,8 @@ export interface OrgTextFieldProps {
   value: string;
   onChange: (value: string) => void;
   status?: { tone?: OrgStatusTone; label: string };
+  /** Pochodzenie faktu (prototyp `.prov`) — patrz `OrgFieldShellProps`. */
+  provenance?: string;
   multiline?: boolean;
   type?: 'text' | 'number';
   /** Puste pole pokazuje „—" (kanon §5.6), a nie ramkę-zaproszenie. */
@@ -154,11 +213,12 @@ export const OrgTextField: React.FC<OrgTextFieldProps> = ({
   value,
   onChange,
   status,
+  provenance,
   multiline = false,
   type = 'text',
   placeholder = '—',
 }) => (
-  <OrgFieldShell label={label} htmlFor={id} status={status}>
+  <OrgFieldShell label={label} htmlFor={id} status={status} provenance={provenance}>
     {multiline ? (
       <textarea
         id={id}
@@ -237,8 +297,10 @@ export const OrgSelectField: React.FC<{
   onChange: (value: string) => void;
   emptyLabel?: string;
   status?: { tone?: OrgStatusTone; label: string };
-}> = ({ id, label, value, options, onChange, emptyLabel = '—', status }) => (
-  <OrgFieldShell label={label} htmlFor={id} status={status}>
+  /** Pochodzenie faktu (prototyp `.prov`) — patrz `OrgFieldShellProps`. */
+  provenance?: string;
+}> = ({ id, label, value, options, onChange, emptyLabel = '—', status, provenance }) => (
+  <OrgFieldShell label={label} htmlFor={id} status={status} provenance={provenance}>
     <select
       id={id}
       value={value}

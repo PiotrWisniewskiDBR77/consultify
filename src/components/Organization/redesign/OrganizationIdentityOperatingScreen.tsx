@@ -31,6 +31,10 @@ import { useNavigate } from 'react-router-dom';
 
 import { ROUTES } from '../../../routes/routeConfig';
 import { Api } from '../../../services/api';
+import {
+  organizationGovernedContextApi,
+  type GovernedClaim,
+} from '../../../services/organizationGovernedContextApi';
 import { useAppStore } from '../../../store/useAppStore';
 import {
   COMPANY_SIZES,
@@ -127,6 +131,53 @@ function isFilled(profile: OrgProfile, field: keyof OrgProfile): boolean {
   return String(value ?? '').trim().length > 0;
 }
 
+function formatDatePl(iso: string | null | undefined): string | null {
+  if (!iso) return null;
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+/** Etykieta typu źródła twierdzenia — spójna z `GovernedContextWorkspace`. */
+const SOURCE_TYPE_LABELS: Record<string, string> = {
+  document: 'Dokument',
+  interview_answer: 'Odpowiedź z wywiadu',
+  interview_context: 'Kontekst wywiadu',
+  manual_entry: 'Wpisane ręcznie',
+  organization_profile: 'Profil organizacji',
+};
+
+/** Pochodzenie faktu (prototyp `.prov`): „Źródło · zatwierdzone/data". */
+function formatProvenance(claim: GovernedClaim | undefined): string | undefined {
+  if (!claim) return undefined;
+  const sourceLabel = SOURCE_TYPE_LABELS[claim.sourceType] ?? claim.sourceType;
+  const date = formatDatePl(claim.decidedAt ?? claim.createdAt);
+  const approval = claim.approved ? 'zatwierdzone' : 'niezatwierdzone';
+  return date ? `${sourceLabel} · ${approval} ${date}` : `${sourceLabel} · ${approval}`;
+}
+
+/** Dla każdej ścieżki twierdzenia — najlepsze twierdzenie do pokazania jako pochodzenie: zatwierdzone przed niezatwierdzonym, potem najnowsze. */
+function bestClaimByPath(claims: GovernedClaim[]): Map<string, GovernedClaim> {
+  const map = new Map<string, GovernedClaim>();
+  for (const claim of claims) {
+    const current = map.get(claim.claimPath);
+    if (!current) {
+      map.set(claim.claimPath, claim);
+      continue;
+    }
+    const currentRank = current.approved ? 1 : 0;
+    const claimRank = claim.approved ? 1 : 0;
+    if (
+      claimRank > currentRank ||
+      (claimRank === currentRank &&
+        new Date(claim.createdAt).getTime() > new Date(current.createdAt).getTime())
+    ) {
+      map.set(claim.claimPath, claim);
+    }
+  }
+  return map;
+}
+
 function formatRelative(iso: string | null | undefined): string {
   if (!iso) return 'nigdy';
   const then = new Date(iso).getTime();
@@ -170,6 +221,7 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [context, setContext] = useState<OrgContextResponse | null>(null);
+  const [claims, setClaims] = useState<GovernedClaim[]>([]);
   const [activeSection, setActiveSection] = useState<IdentityOperatingSection>('identity');
   const [activeChip, setActiveChip] = useState<string>('all');
   const [searchValue, setSearchValue] = useState('');
@@ -231,6 +283,34 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
       cancelled = true;
     };
   }, [orgId]);
+
+  useEffect(() => {
+    if (!orgId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const rows = await organizationGovernedContextApi.listClaims();
+        if (!cancelled) setClaims(Array.isArray(rows) ? rows : []);
+      } catch {
+        // Pochodzenie faktu jest dodatkiem do pola — brak twierdzeń nie może zablokować ekranu.
+        if (!cancelled) setClaims([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [orgId]);
+
+  const bestClaimByClaimPath = useMemo(() => bestClaimByPath(claims), [claims]);
+
+  const provenanceFor = useCallback(
+    (id: keyof OrgProfile) => {
+      const field = fieldById(id);
+      if (!field.claimPath) return undefined;
+      return formatProvenance(bestClaimByClaimPath.get(field.claimPath));
+    },
+    [bestClaimByClaimPath]
+  );
 
   const update = useCallback(<K extends keyof OrgProfile>(field: K, value: OrgProfile[K]) => {
     setProfile((previous) => ({ ...previous, [field]: value }));
@@ -439,6 +519,7 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
                 ? { tone: 'warning', label: `${counts.conflicts} konfliktów źródeł` }
                 : undefined
             }
+            techDetails={orgId ? [{ label: 'Identyfikator organizacji', value: orgId }] : undefined}
           >
             {shows('organization_type') && (
               <div className="mb-4">
@@ -466,6 +547,7 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
                     label="Branża"
                     value={profile.industry}
                     status={conflictStatus(fieldById("industry"))}
+                    provenance={provenanceFor('industry')}
                     options={INDUSTRIES.map((industry) => ({
                       value: industry,
                       label: t(`organization.profile.options.industry.${optionKey(industry)}`, industry),
@@ -498,6 +580,7 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
                     multiline
                     value={profile.description}
                     status={conflictStatus(fieldById("description"))}
+                    provenance={provenanceFor('description')}
                     onChange={(value) => update('description', value)}
                   />
                 )}
@@ -517,6 +600,7 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
                     id="org-company-size"
                     label="Wielkość firmy"
                     value={profile.companySize}
+                    provenance={provenanceFor('companySize')}
                     options={COMPANY_SIZES.map((size) => ({
                       value: size.value,
                       label: t(`organization.profile.options.companySize.${size.value}`, size.label),
@@ -597,6 +681,7 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
                     id="org-delivery-model"
                     label="Model dostarczania"
                     value={profile.delivery_model}
+                    provenance={provenanceFor('delivery_model')}
                     options={DELIVERY_MODELS.map((model) => ({
                       value: model,
                       label: t(`organization.profile.options.deliveryModel.${optionKey(model)}`, model),
@@ -611,6 +696,7 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
                     id="org-revenue-model"
                     label="Model przychodowy / finansowania"
                     value={profile.revenue_model}
+                    provenance={provenanceFor('revenue_model')}
                     options={REVENUE_MODELS.map((model) => ({
                       value: model,
                       label: t(`organization.profile.options.revenueModel.${optionKey(model)}`, model),
