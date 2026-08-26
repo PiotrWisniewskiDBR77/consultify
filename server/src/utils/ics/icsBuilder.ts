@@ -21,6 +21,36 @@ export function formatIcsParamValue(value: string): string {
   return /[,;:]/.test(sanitized) ? `"${sanitized}"` : sanitized;
 }
 
+// FIX-5 (P2, 2026-08-26): RFC 5545 §3.1 requires content lines to be folded
+// at 75 octets — a long unfolded line (e.g. a verbose SUMMARY) is invalid
+// ICS and some parsers truncate or reject it. Fold by inserting CRLF +
+// a single leading space before the line would exceed 75 octets; the
+// leading space is unfolded away by any RFC-conformant reader and does not
+// become part of the value. Splits are octet-based (UTF-8 byte length, not
+// JS string length) but never inside a multi-byte character.
+function foldIcsLine(line: string): string {
+  const LIMIT = 75;
+  const bytes = Buffer.from(line, 'utf8');
+  if (bytes.length <= LIMIT) return line;
+  const parts: string[] = [];
+  let start = 0;
+  let limit = LIMIT;
+  while (start < bytes.length) {
+    let end = Math.min(start + limit, bytes.length);
+    // Back off if `end` lands inside a multi-byte UTF-8 sequence (a
+    // continuation byte has the high bits 10xxxxxx).
+    while (end > start && end < bytes.length && (bytes[end] & 0xc0) === 0x80) {
+      end--;
+    }
+    parts.push(bytes.subarray(start, end).toString('utf8'));
+    start = end;
+    // Continuation lines carry a 1-octet leading space that counts toward
+    // their own 75-octet budget.
+    limit = LIMIT - 1;
+  }
+  return parts.join('\r\n ');
+}
+
 export function formatIcsDate(value: string | Date): string {
   const date = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(date.getTime())) throw new Error('Invalid ICS date');
@@ -120,5 +150,5 @@ export function buildMeetingInvitationIcs(input: MeetingInvitationIcsInput): str
     if (safeRecurrenceRule) lines.push(`RRULE:${safeRecurrenceRule}`);
   }
   lines.push(...input.attendees.map(participantLine), 'END:VEVENT', 'END:VCALENDAR', '');
-  return lines.join('\r\n');
+  return lines.map(foldIcsLine).join('\r\n');
 }

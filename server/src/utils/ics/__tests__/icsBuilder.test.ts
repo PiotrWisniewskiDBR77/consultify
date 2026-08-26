@@ -97,6 +97,30 @@ describe('meeting ICS invitation', () => {
     expect(ics).not.toContain('CN=Doe\\,');
   });
 
+  it('FIX-5: folds a long SUMMARY line at 75 octets per RFC 5545 §3.1', () => {
+    const longTitle = 'A'.repeat(120);
+    const ics = buildMeetingInvitationIcs({ ...base, title: longTitle });
+    const physicalLines = ics.split('\r\n');
+    // Every physical line (as actually transmitted) must be <= 75 octets.
+    for (const line of physicalLines) {
+      expect(Buffer.byteLength(line, 'utf8')).toBeLessThanOrEqual(75);
+    }
+    // The SUMMARY value was split across at least one continuation line,
+    // each of which starts with exactly one space (the fold marker).
+    const summaryStart = physicalLines.findIndex((line) => line.startsWith('SUMMARY:'));
+    expect(summaryStart).toBeGreaterThanOrEqual(0);
+    expect(physicalLines[summaryStart + 1]?.startsWith(' ')).toBe(true);
+    // Unfolding (drop CRLF immediately followed by a single space) must
+    // reconstruct the exact original SUMMARY value.
+    const unfolded = ics.replace(/\r\n /g, '');
+    expect(unfolded).toContain(`SUMMARY:${longTitle}`);
+  });
+
+  it('FIX-5: does not fold a short line', () => {
+    const ics = buildMeetingInvitationIcs(base);
+    expect(ics.split('\r\n')).toContain('METHOD:REQUEST');
+  });
+
   it('FIX-4: strips DQUOTE and CR/LF from a CN parameter value', () => {
     const ics = buildMeetingInvitationIcs({
       ...base,
