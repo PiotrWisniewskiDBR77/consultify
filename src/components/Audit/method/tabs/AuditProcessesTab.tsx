@@ -26,7 +26,8 @@ import {
 } from '@/components/standard';
 import type { ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
 import { ErrorState } from '@/components/shared/states';
-import { StatusChip } from '@/components/ui/primitives/chips';
+import { DueChip, StatusChip } from '@/components/ui/primitives/chips';
+import { isAuditsScaleAndPolishEnabled } from '@/utils/auditsScaleAndPolishFlag';
 import { formatListDate } from '@/utils/listDateFormat';
 
 import { auditRoleLabel } from '../auditRoleLabels';
@@ -44,6 +45,7 @@ import {
   type AuditProgramSummary,
   type AuditCriterionSummary,
 } from '../auditsMethodApi';
+import { AuditCriteriaBrowser } from './AuditCriteriaBrowser';
 
 export interface AuditProcessesTabProps {
   programs: AuditProgramSummary[];
@@ -87,10 +89,16 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
   const [transitioning, setTransitioning] = useState<string | null>(null);
   const [criteria, setCriteria] = useState<AuditCriterionSummary[]>([]);
   const [criteriaError, setCriteriaError] = useState<string | null>(null);
+  const scaleAndPolishEnabled = React.useMemo(() => isAuditsScaleAndPolishEnabled(), []);
+  const [criteriaBrowserOpen, setCriteriaBrowserOpen] = useState(false);
 
   useEffect(() => {
     if (initialSelectedId) setSelectedId(initialSelectedId);
   }, [initialSelectedId]);
+
+  useEffect(() => {
+    setCriteriaBrowserOpen(false);
+  }, [selectedId]);
 
   useEffect(() => {
     if (!selectedId) {
@@ -225,9 +233,28 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
       label: isPolish ? 'Termin' : 'Due',
       width: '120px',
       sortable: true,
-      render: (row: AuditProgramSummary) => (
-        <span className="text-xs text-c-text-secondary tabular-nums">{formatListDate(row.plannedEnd)}</span>
-      ),
+      render: (row: AuditProgramSummary) => {
+        // Gap pack 2026-08-26 (item 4): three of six demo sessions were past
+        // `plannedEnd` with nothing signaling it. `DueChip` already carries
+        // the canon rule "color only for risk/passed deadline" (§N) — a
+        // closed program's own past due date is not a risk anymore, so it's
+        // suppressed (`due={null}`) exactly like Execution's deadline column
+        // does for terminal rows.
+        if (!scaleAndPolishEnabled) {
+          return <span className="text-xs text-c-text-secondary tabular-nums">{formatListDate(row.plannedEnd)}</span>;
+        }
+        const isTerminal = row.lifecycleState === 'closed';
+        const effectiveDue = isTerminal ? null : row.plannedEnd;
+        const overdue = !isTerminal && !!row.plannedEnd && new Date(row.plannedEnd).getTime() < Date.now();
+        return (
+          <DueChip
+            label={overdue ? (isPolish ? 'Po terminie' : 'Overdue') : formatListDate(row.plannedEnd)}
+            due={effectiveDue}
+            showIcon
+            title={overdue ? formatListDate(row.plannedEnd) : undefined}
+          />
+        );
+      },
     },
     {
       id: 'updatedAt',
@@ -290,6 +317,20 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
         },
       ]
     : undefined;
+
+  if (scaleAndPolishEnabled && criteriaBrowserOpen && selectedProgram) {
+    return (
+      <AuditCriteriaBrowser
+        programId={selectedProgram.id}
+        programName={selectedProgram.name}
+        criteria={flatCriteria}
+        loading={detailLoading}
+        error={criteriaError}
+        isPolish={isPolish}
+        onBack={() => setCriteriaBrowserOpen(false)}
+      />
+    );
+  }
 
   return (
     <div className="flex h-full min-h-0">
@@ -382,8 +423,20 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
               )}
             </div>
             <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5" data-testid="audit-criteria-navigator">
-              <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
-                {isPolish ? 'Kryteria — otwórz warsztat' : 'Criteria — open workspace'}
+              <div className="mb-1.5 flex items-center justify-between gap-2">
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
+                  {isPolish ? 'Kryteria — otwórz warsztat' : 'Criteria — open workspace'}
+                </div>
+                {scaleAndPolishEnabled && flatCriteria.length > 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => setCriteriaBrowserOpen(true)}
+                    data-testid="open-criteria-browser"
+                    className="shrink-0 text-[11px] font-medium text-c-text-secondary underline decoration-c-border-subtle underline-offset-2 hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus rounded"
+                  >
+                    {isPolish ? 'Zobacz wszystkie' : 'View all'} ({flatCriteria.length})
+                  </button>
+                ) : null}
               </div>
               {criteriaError ? (
                 <p className="text-xs text-c-danger">{criteriaError}</p>

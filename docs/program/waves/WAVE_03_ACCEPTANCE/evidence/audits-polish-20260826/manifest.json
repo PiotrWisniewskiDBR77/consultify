@@ -1,0 +1,244 @@
+[
+  {
+    "id": "01-warsztat-overview-flagon",
+    "tytul": "Warsztat kryterium (V2) — flaga ff_auditsScaleAndPolish ON — nagłówek pokazuje generyczne źródło wymagania (fix 1: brak ISO), przycisk Teresa (fix a)",
+    "theme": "light",
+    "png": "docs/program/waves/WAVE_03_ACCEPTANCE/evidence/audits-polish-20260826/01-warsztat-overview-flagon.png",
+    "url": "http://localhost:3777/?screen=audyty-warsztat-kryterium&lang=pl&theme=light&stage=remediation&role=lead_auditor",
+    "consoleErrors": [
+      "[OrgContext] Error fetching orgs: SyntaxError: Unexpected token '<', \"<!doctype \"... is not valid JSON",
+      "[OrgContext] Error fetching orgs: SyntaxError: Unexpected token '<', \"<!doctype \"... is not valid JSON"
+    ]
+  },
+  {
+    "id": "01-warsztat-overview-flagon",
+    "tytul": "Warsztat kryterium (V2) — flaga ff_auditsScaleAndPolish ON — nagłówek pokazuje generyczne źródło wymagania (fix 1: brak ISO), przycisk Teresa (fix a)",
+    "theme": "dark",
+    "png": "docs/program/waves/WAVE_03_ACCEPTANCE/evidence/audits-polish-20260826/01-warsztat-overview-flagon-dark.png",
+    "url": "http://localhost:3777/?screen=audyty-warsztat-kryterium&lang=pl&theme=dark&stage=remediation&role=lead_auditor",
+    "consoleErrors": [
+      "[OrgContext] Error fetching orgs: SyntaxError: Unexpected token '<', \"<!doctype \"... is not valid JSON",
+      "[OrgContext] Error fetching orgs: SyntaxError: Unexpected token '<', \"<!doctype \"... is not valid JSON"
+    ]
+  },
+  {
+    "id": "02-warsztat-faza4-wlasciciel-nazwa",
+    "tytul": "Faza 4 rozwinięta — Właściciel/termin pokazuje rozwiązaną nazwę zamiast surowego UUID (fix 5b)",
+    "theme": "light",
+    "png": "docs/program/waves/WAVE_03_ACCEPTANCE/evidence/audits-polish-20260826/02-warsztat-faza4-wlasciciel-nazwa.png",
+    "url": "http://localhost:3777/?screen=audyty-warsztat-kryterium&lang=pl&theme=light&stage=remediation&role=lead_auditor",
+    "consoleErrors": [
+      "[OrgContext] Error fetching orgs: SyntaxError: Unexpected token '<', \"<!doctype \"... is not valid JSON",
+      "[OrgContext] Error fetching orgs: SyntaxError: Unexpected token '<', \"<!doctype \"... is not valid JSON"
+    ]
+  },
+  {
+    "id": "02-warsztat-faza4-wlasciciel-nazwa",
+    "tytul": "Faza 4 rozwinięta — Właściciel/termin pokazuje rozwiązaną nazwę zamiast surowego UUID (fix 5b)",
+    "theme": "dark",
+    "png": "docs/program/waves/WAVE_03_ACCEPTANCE/evidence/audits-polish-20260826/02-warsztat-faza4-wlasciciel-nazwa-dark.png",
+    "url": "http://localhost:3777/?screen=audyty-warsztat-kryterium&lang=pl&theme=dark&stage=remediation&role=lead_auditor",
+    "consoleErrors": [
+      "[OrgContext] Error fetching orgs: SyntaxError: Unexpected token '<', \"<!doctype \"... is not valid JSON",
+      "[OrgContext] Error fetching orgs: SyntaxError: Unexpected token '<', \"<!doctype \"... is not valid JSON"
+    ]
+  },
+  {
+    "id": "03-warsztat-kebab-open",
+    "tytul": "Kebab „Więcej akcji\" otwarty — Kopiuj link (fix 5c/5d: toast + zamykanie na outside-click/Escape)",
+    "theme": "light",
+    "png": "docs/program/waves/WAVE_03_ACCEPTANCE/evidence/audits-polish-20260826/03-warsztat-kebab-open.png",
+    "url": "http://localhost:3777/?screen=audyty-warsztat-kryterium&lang=pl&theme=light&stage=remediation&role=lead_auditor",
+    "consoleErrors": [
+      "[OrgContext] Error fetching orgs: SyntaxError: Unexpected token '<', \"<!doctype \"... is not valid JSON",
+      "[OrgContext] Error fetching orgs: SyntaxError: Unexpected token '<', \"<!doctype \"... is not valid JSON"
+    ]
+  },
+  {
+    "id": "03-warsztat-kebab-open",
+    "tytul": "Kebab „Więcej akcji\" otwarty — Kopiuj link (fix 5c/5d: toast + zamykanie na outside-click/Escape)",
+    "theme": "dark",
+    "png": "docs/program/waves/WAVE_03_ACCEPTANCE/evidence/audits-polish-20260826/03-warsztat-kebab-open-dark.png",
+    "url": "http://localhost:3777/?screen=audyty-warsztat-kryterium&lang=pl&theme=dark&stage=remediation&role=lead_auditor",
+    "consoleErrors": [
+      "[OrgContext] Error fetching orgs: SyntaxError: Unexpected token '<', \"<!doctype \"... is not valid JSON",
+      "[OrgContext] Error fetching orgs: SyntaxError: Unexpected token '<', \"<!doctype \"... is not valid JSON"
+    ]
+  },
+  {
+    "id": "04-warsztat-cta-disabled-tooltip",
+    "tytul": "Rola bez uprawnień — CTA disabled z pełnym powodem w title (fix 5e)",
+    "theme": "light",
+    "png": "docs/program/waves/WAVE_03_ACCEPTANCE/evidence/audits-polish-20260826/04-warsztat-cta-disabled-tooltip.png",
+    "url": "http://localhost:3777/?screen=audyty-warsztat-kryterium&lang=pl&theme=light&stage=fresh&role=reviewer",
+    "consoleErrors": [
+      "[OrgContext] Error fetching orgs: SyntaxError: Unexpected token '<', \"<!doctype \"... is not valid JSON",
+      "[OrgContext] Error fetching orgs: SyntaxError: Unexpected token '<', \"<!doctype \"... is not valid JSON"
+    ]
+  },
+  {
+    "id": "04-warsztat-cta-disabled-tooltip",
+    "tytul": "Rola bez uprawnień — CTA disabled z pełnym powodem w title (fix 5e)",
+    "theme": "dark",
+    "png": "docs/program/waves/WAVE_03_ACCEPTANCE/evidence/audits-polish-20260826/04-warsztat-cta-disabled-tooltip-dark.png",
+    "url": "http://localhost:3777/?screen=audyty-warsztat-kryterium&lang=pl&theme=dark&stage=fresh&role=reviewer",
+    "consoleErrors": [
+      "[OrgContext] Error fetching orgs: SyntaxError: Unexpected token '<', \"<!doctype \"... is not valid JSON",
+      "[OrgContext] Error fetching orgs: SyntaxError: Unexpected token '<', \"<!doctype \"... is not valid JSON"
+    ]
+  },
+  {
+    "id": "05-warsztat-menu3-narrow",
+    "tytul": "Wąski viewport — pasek Menu 3 (fazy) przewija się poziomo zamiast się ucinać (fix 5f)",
+    "theme": "light",
+    "png": "docs/program/waves/WAVE_03_ACCEPTANCE/evidence/audits-polish-20260826/05-warsztat-menu3-narrow.png",
+    "url": "http://localhost:3777/?screen=audyty-warsztat-kryterium&lang=pl&theme=light&stage=remediation&role=lead_auditor",
+    "consoleErrors": [
+      "[OrgContext] Error fetching orgs: SyntaxError: Unexpected token '<', \"<!doctype \"... is not valid JSON",
+      "[OrgContext] Error fetching orgs: SyntaxError: Unexpected token '<', \"<!doctype \"... is not valid JSON"
+    ]
+  },
+  {
+    "id": "05-warsztat-menu3-narrow",
+    "tytul": "Wąski viewport — pasek Menu 3 (fazy) przewija się poziomo zamiast się ucinać (fix 5f)",
+    "theme": "dark",
+    "png": "docs/program/waves/WAVE_03_ACCEPTANCE/evidence/audits-polish-20260826/05-warsztat-menu3-narrow-dark.png",
+    "url": "http://localhost:3777/?screen=audyty-warsztat-kryterium&lang=pl&theme=dark&stage=remediation&role=lead_auditor",
+    "consoleErrors": [
+      "[OrgContext] Error fetching orgs: SyntaxError: Unexpected token '<', \"<!doctype \"... is not valid JSON",
+      "[OrgContext] Error fetching orgs: SyntaxError: Unexpected token '<', \"<!doctype \"... is not valid JSON"
+    ]
+  },
+  {
+    "id": "06-warsztat-permissions-auditee",
+    "tytul": "Rola strony audytowanej (auditee) — wiersze uprawnień poprawnie warunkowane wg roli (fix 5g)",
+    "theme": "light",
+    "png": "docs/program/waves/WAVE_03_ACCEPTANCE/evidence/audits-polish-20260826/06-warsztat-permissions-auditee.png",
+    "url": "http://localhost:3777/?screen=audyty-warsztat-kryterium&lang=pl&theme=light&stage=fresh&role=auditee",
+    "consoleErrors": [
+      "[OrgContext] Error fetching orgs: SyntaxError: Unexpected token '<', \"<!doctype \"... is not valid JSON",
+      "[OrgContext] Error fetching orgs: SyntaxError: Unexpected token '<', \"<!doctype \"... is not valid JSON"
+    ]
+  },
+  {
+    "id": "06-warsztat-permissions-auditee",
+    "tytul": "Rola strony audytowanej (auditee) — wiersze uprawnień poprawnie warunkowane wg roli (fix 5g)",
+    "theme": "dark",
+    "png": "docs/program/waves/WAVE_03_ACCEPTANCE/evidence/audits-polish-20260826/06-warsztat-permissions-auditee-dark.png",
+    "url": "http://localhost:3777/?screen=audyty-warsztat-kryterium&lang=pl&theme=dark&stage=fresh&role=auditee",
+    "consoleErrors": [
+      "[OrgContext] Error fetching orgs: SyntaxError: Unexpected token '<', \"<!doctype \"... is not valid JSON",
+      "[OrgContext] Error fetching orgs: SyntaxError: Unexpected token '<', \"<!doctype \"... is not valid JSON"
+    ]
+  },
+  {
+    "id": "07-hub-library-cta-flagon",
+    "tytul": "AuditsMethodHub — zakładka Library — przycisk „Nowy audyt\" w StandardModuleBar (fix 3), flaga ON",
+    "theme": "light",
+    "png": "docs/program/waves/WAVE_03_ACCEPTANCE/evidence/audits-polish-20260826/07-hub-library-cta-flagon.png",
+    "url": "http://localhost:3777/?screen=audyty-piec-powierzchni&lang=pl&theme=light&tab=library",
+    "consoleErrors": [
+      "[OrgContext] Error fetching orgs: SyntaxError: Unexpected token '<', \"<!doctype \"... is not valid JSON",
+      "[OrgContext] Error fetching orgs: SyntaxError: Unexpected token '<', \"<!doctype \"... is not valid JSON"
+    ]
+  },
+  {
+    "id": "07-hub-library-cta-flagon",
+    "tytul": "AuditsMethodHub — zakładka Library — przycisk „Nowy audyt\" w StandardModuleBar (fix 3), flaga ON",
+    "theme": "dark",
+    "png": "docs/program/waves/WAVE_03_ACCEPTANCE/evidence/audits-polish-20260826/07-hub-library-cta-flagon-dark.png",
+    "url": "http://localhost:3777/?screen=audyty-piec-powierzchni&lang=pl&theme=dark&tab=library",
+    "consoleErrors": [
+      "[OrgContext] Error fetching orgs: SyntaxError: Unexpected token '<', \"<!doctype \"... is not valid JSON",
+      "[OrgContext] Error fetching orgs: SyntaxError: Unexpected token '<', \"<!doctype \"... is not valid JSON"
+    ]
+  },
+  {
+    "id": "08-hub-library-cta-flagoff",
+    "tytul": "AuditsMethodHub — zakładka Library — flaga OFF (domyślnie), brak CTA — dowód, że domyślna ścieżka jest bez zmian",
+    "theme": "light",
+    "png": "docs/program/waves/WAVE_03_ACCEPTANCE/evidence/audits-polish-20260826/08-hub-library-cta-flagoff.png",
+    "url": "http://localhost:3777/?screen=audyty-piec-powierzchni&lang=pl&theme=light&tab=library",
+    "consoleErrors": [
+      "[OrgContext] Error fetching orgs: SyntaxError: Unexpected token '<', \"<!doctype \"... is not valid JSON",
+      "[OrgContext] Error fetching orgs: SyntaxError: Unexpected token '<', \"<!doctype \"... is not valid JSON"
+    ]
+  },
+  {
+    "id": "08-hub-library-cta-flagoff",
+    "tytul": "AuditsMethodHub — zakładka Library — flaga OFF (domyślnie), brak CTA — dowód, że domyślna ścieżka jest bez zmian",
+    "theme": "dark",
+    "png": "docs/program/waves/WAVE_03_ACCEPTANCE/evidence/audits-polish-20260826/08-hub-library-cta-flagoff-dark.png",
+    "url": "http://localhost:3777/?screen=audyty-piec-powierzchni&lang=pl&theme=dark&tab=library",
+    "consoleErrors": [
+      "[OrgContext] Error fetching orgs: SyntaxError: Unexpected token '<', \"<!doctype \"... is not valid JSON",
+      "[OrgContext] Error fetching orgs: SyntaxError: Unexpected token '<', \"<!doctype \"... is not valid JSON"
+    ]
+  },
+  {
+    "id": "09-hub-sessions-overdue",
+    "tytul": "AuditsMethodHub — zakładka Sesje — kolumna Termin z chipem „Po terminie\" dla przeterminowanych sesji (fix 4), flaga ON",
+    "theme": "light",
+    "png": "docs/program/waves/WAVE_03_ACCEPTANCE/evidence/audits-polish-20260826/09-hub-sessions-overdue.png",
+    "url": "http://localhost:3777/?screen=audyty-piec-powierzchni&lang=pl&theme=light&tab=processes",
+    "consoleErrors": [
+      "[OrgContext] Error fetching orgs: SyntaxError: Unexpected token '<', \"<!doctype \"... is not valid JSON",
+      "[OrgContext] Error fetching orgs: SyntaxError: Unexpected token '<', \"<!doctype \"... is not valid JSON"
+    ]
+  },
+  {
+    "id": "09-hub-sessions-overdue",
+    "tytul": "AuditsMethodHub — zakładka Sesje — kolumna Termin z chipem „Po terminie\" dla przeterminowanych sesji (fix 4), flaga ON",
+    "theme": "dark",
+    "png": "docs/program/waves/WAVE_03_ACCEPTANCE/evidence/audits-polish-20260826/09-hub-sessions-overdue-dark.png",
+    "url": "http://localhost:3777/?screen=audyty-piec-powierzchni&lang=pl&theme=dark&tab=processes",
+    "consoleErrors": [
+      "[OrgContext] Error fetching orgs: SyntaxError: Unexpected token '<', \"<!doctype \"... is not valid JSON",
+      "[OrgContext] Error fetching orgs: SyntaxError: Unexpected token '<', \"<!doctype \"... is not valid JSON"
+    ]
+  },
+  {
+    "id": "10-hub-sessions-overdue-flagoff",
+    "tytul": "AuditsMethodHub — zakładka Sesje — flaga OFF (domyślnie), zwykłe daty bez chipa — dowód braku zmian domyślnie",
+    "theme": "light",
+    "png": "docs/program/waves/WAVE_03_ACCEPTANCE/evidence/audits-polish-20260826/10-hub-sessions-overdue-flagoff.png",
+    "url": "http://localhost:3777/?screen=audyty-piec-powierzchni&lang=pl&theme=light&tab=processes",
+    "consoleErrors": [
+      "[OrgContext] Error fetching orgs: SyntaxError: Unexpected token '<', \"<!doctype \"... is not valid JSON",
+      "[OrgContext] Error fetching orgs: SyntaxError: Unexpected token '<', \"<!doctype \"... is not valid JSON"
+    ]
+  },
+  {
+    "id": "10-hub-sessions-overdue-flagoff",
+    "tytul": "AuditsMethodHub — zakładka Sesje — flaga OFF (domyślnie), zwykłe daty bez chipa — dowód braku zmian domyślnie",
+    "theme": "dark",
+    "png": "docs/program/waves/WAVE_03_ACCEPTANCE/evidence/audits-polish-20260826/10-hub-sessions-overdue-flagoff-dark.png",
+    "url": "http://localhost:3777/?screen=audyty-piec-powierzchni&lang=pl&theme=dark&tab=processes",
+    "consoleErrors": [
+      "[OrgContext] Error fetching orgs: SyntaxError: Unexpected token '<', \"<!doctype \"... is not valid JSON",
+      "[OrgContext] Error fetching orgs: SyntaxError: Unexpected token '<', \"<!doctype \"... is not valid JSON"
+    ]
+  },
+  {
+    "id": "11-hub-criteria-browser",
+    "tytul": "Drill-down „Zobacz wszystkie\" — pełnoekranowa lista kryteriów na StandardTable z wyszukiwaniem i filtrem statusu (fix 2), flaga ON",
+    "theme": "light",
+    "png": "docs/program/waves/WAVE_03_ACCEPTANCE/evidence/audits-polish-20260826/11-hub-criteria-browser.png",
+    "url": "http://localhost:3777/?screen=audyty-piec-powierzchni&lang=pl&theme=light&tab=processes",
+    "consoleErrors": [
+      "[OrgContext] Error fetching orgs: SyntaxError: Unexpected token '<', \"<!doctype \"... is not valid JSON",
+      "[OrgContext] Error fetching orgs: SyntaxError: Unexpected token '<', \"<!doctype \"... is not valid JSON"
+    ]
+  },
+  {
+    "id": "11-hub-criteria-browser",
+    "tytul": "Drill-down „Zobacz wszystkie\" — pełnoekranowa lista kryteriów na StandardTable z wyszukiwaniem i filtrem statusu (fix 2), flaga ON",
+    "theme": "dark",
+    "png": "docs/program/waves/WAVE_03_ACCEPTANCE/evidence/audits-polish-20260826/11-hub-criteria-browser-dark.png",
+    "url": "http://localhost:3777/?screen=audyty-piec-powierzchni&lang=pl&theme=dark&tab=processes",
+    "consoleErrors": [
+      "[OrgContext] Error fetching orgs: SyntaxError: Unexpected token '<', \"<!doctype \"... is not valid JSON",
+      "[OrgContext] Error fetching orgs: SyntaxError: Unexpected token '<', \"<!doctype \"... is not valid JSON"
+    ]
+  }
+]

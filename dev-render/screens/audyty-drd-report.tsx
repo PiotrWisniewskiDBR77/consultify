@@ -55,13 +55,13 @@ const AUDIT_PROGRAMS = [
   {
     id: 'audit-prog-elkomtech-iso',
     organizationId: 'org-dbr77-demo',
-    name: 'ISO 27001 — przegląd gotowości Elkomtech',
-    description: 'Wywiady przed certyfikacją, 4 obszary kontrolne.',
-    objective: 'Potwierdzić gotowość do audytu certyfikującego ISO 27001 w Q4 2026.',
+    name: 'Przegląd gotowości bezpieczeństwa informacji — Elkomtech',
+    description: 'Wywiady przed przeglądem zarządczym, 4 obszary kontrolne.',
+    objective: 'Potwierdzić gotowość organizacji do wewnętrznego przeglądu bezpieczeństwa informacji w Q4 2026.',
     status: 'active',
-    preset: 'iso27001',
+    preset: 'new-company',
     config: {
-      templateIds: ['tmpl-iso-a5', 'tmpl-iso-a9'],
+      templateIds: ['tmpl-secreview-a5', 'tmpl-secreview-a9'],
       assigneeIds: ['user-anna', 'user-marek'],
       surveysGenerated: true,
       generation: { requested: 8, created: 8, failed: 0, at: '2026-07-18T10:00:00Z' },
