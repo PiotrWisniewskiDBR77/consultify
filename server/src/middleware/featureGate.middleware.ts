@@ -146,11 +146,6 @@ export const FEATURE_REQUIREMENTS: Record<string, FeatureRequirements> = deepFre
     state: ['ECOSYSTEM_NODE'],
     role: ['ADMIN', 'OWNER'],
   },
-  consultant_mode: {
-    phase: ['G'],
-    state: ['ECOSYSTEM_NODE'],
-    role: ['CONSULTANT'],
-  },
 
   // Phase F features
   team_invite: {
