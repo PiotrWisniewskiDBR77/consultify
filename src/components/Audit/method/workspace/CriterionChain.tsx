@@ -67,7 +67,7 @@ export const CriterionChain: React.FC<CriterionChainProps> = ({ links, isPolish 
       // reachable by keyboard (axe scrollable-region-focusable, serious) —
       // the nav already carries a role+name, tabIndex just makes it focusable.
       tabIndex={0}
-      className="flex flex-wrap items-center gap-1.5 overflow-x-auto rounded-token-md border border-c-border-subtle bg-c-surface-raised/30 p-2"
+      className="flex shrink-0 flex-wrap items-center gap-1.5 rounded-token-md border border-c-border-subtle bg-c-surface-raised/30 p-2"
     >
       {links.map((link, i) => (
         <React.Fragment key={link.id}>
