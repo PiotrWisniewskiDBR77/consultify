@@ -74,11 +74,23 @@ export async function sendMeetingInvitations(input: {
     let error: string | undefined;
     if (input.organizationId === demoOrgId) {
       status = 'blocked_demo';
-      logger.warn(`[Meeting invitations] blocked demo delivery meeting=${meeting.id}`);
+      // FIX-8 (P2 PII, 2026-08-26): log identifiers, not personal data, at
+      // info level — meetingId/participantId/status are enough to trace a
+      // delivery in production logs without an email address landing in
+      // them (info-level logs are typically retained/aggregated far more
+      // broadly than debug).
+      logger.warn(
+        `[Meeting invitations] blocked_demo meetingId=${meeting.id} participantId=${participant.id} status=blocked_demo`
+      );
     } else if (!live) {
       status = 'captured';
       logger.info(
-        `[Meeting invitations] captured recipient=${participant.email} meeting=${meeting.id}\n${ics}`
+        `[Meeting invitations] captured meetingId=${meeting.id} participantId=${participant.id} status=captured`
+      );
+      // Full ICS content and the recipient's email are useful for local
+      // debugging but are PII-bearing / verbose — keep them at debug only.
+      logger.debug(
+        `[Meeting invitations] captured payload meetingId=${meeting.id} participantId=${participant.id} recipient=${participant.email}\n${ics}`
       );
     } else {
       // FIX-7 (P2, 2026-08-26): sendEmail() rejecting (SMTP transport
