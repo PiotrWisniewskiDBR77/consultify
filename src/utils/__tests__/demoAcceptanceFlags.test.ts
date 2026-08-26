@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { isExecutionFlagEnabled } from '@/components/Execution/executionFeatureFlags';
 import { isResultsVNextFlagEnabled } from '@/components/ResultsVNext/resultsVNextFeatureFlags';
 import { isIdeaBusinessCaseEnabled } from '../ideaBusinessCaseSchemaFlag';
 import { isIdeaDecisionLogEnabled } from '../ideaDecisionLogFlag';
@@ -57,10 +56,14 @@ describe('DEMO_ACCEPTANCE profile', () => {
     ).toBe(true);
   });
 
-  it('centrally enables Execution change signals and all Results VNext domains', () => {
+  it('centrally enables all Results VNext domains', () => {
+    // DEC-120/A7: the Execution 'changeSignals' assertion this test used to
+    // also carry was removed along with the phantom flag — real resolution
+    // logic in isExecutionFlagEnabled, but zero live callers
+    // (ExecutionChangeSignalsPanel, the only thing it gated, was never
+    // mounted anywhere reachable).
     const source = { env: { VITE_DEMO_ACCEPTANCE: 'true' }, hostname: 'demo.consultify.ai' };
 
-    expect(isExecutionFlagEnabled('changeSignals', source)).toBe(true);
     expect(isResultsVNextFlagEnabled('kpiRegistry', source)).toBe(true);
     expect(isResultsVNextFlagEnabled('roiRegistry', source)).toBe(true);
     expect(isResultsVNextFlagEnabled('okrRegistry', source)).toBe(true);

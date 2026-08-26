@@ -9,6 +9,7 @@
  */
 
 import { all as dbAll } from '../../utils/DbPromise.js';
+import logger from '../../utils/Logger.js';
 import { detectDelaySignals } from '../delayDetectionService.js';
 import { detectRiskSignals } from '../riskDetectionService.js';
 import { getExecutionControlTowerQueues } from '../v8ExecutionControlTowerService.js';
@@ -55,7 +56,12 @@ async function loadDecisions(organizationId: string, projectId?: string): Promis
       params.push(projectId);
     }
     return ((await dbAll(q, params)) || []) as any[];
-  } catch {
+  } catch (err) {
+    logger.error('[managerLaneAnalysisService] loadDecisions failed', {
+      error: err instanceof Error ? err.message : String(err),
+      organizationId,
+      projectId,
+    });
     return [];
   }
 }
@@ -75,7 +81,12 @@ async function loadInitiatives(organizationId: string, projectId?: string): Prom
       params.push(projectId);
     }
     return ((await dbAll(q, params)) || []) as any[];
-  } catch {
+  } catch (err) {
+    logger.error('[managerLaneAnalysisService] loadInitiatives failed', {
+      error: err instanceof Error ? err.message : String(err),
+      organizationId,
+      projectId,
+    });
     return [];
   }
 }
@@ -96,7 +107,12 @@ async function loadTasks(organizationId: string, projectId?: string): Promise<an
       params.push(projectId);
     }
     return ((await dbAll(q, params)) || []) as any[];
-  } catch {
+  } catch (err) {
+    logger.error('[managerLaneAnalysisService] loadTasks failed', {
+      error: err instanceof Error ? err.message : String(err),
+      organizationId,
+      projectId,
+    });
     return [];
   }
 }
@@ -113,7 +129,12 @@ async function loadLaneDecisions(organizationId: string, laneId: string): Promis
         [organizationId, laneId]
       )) || [];
     return rows as any[];
-  } catch {
+  } catch (err) {
+    logger.error('[managerLaneAnalysisService] loadLaneDecisions failed', {
+      error: err instanceof Error ? err.message : String(err),
+      organizationId,
+      laneId,
+    });
     return [];
   }
 }
@@ -134,7 +155,14 @@ async function loadLaneExecutionPlans(organizationId: string, laneId: string): P
       ...r,
       tasks: r.tasksJson ? JSON.parse(r.tasksJson) : [],
     }));
-  } catch {
+  } catch (err) {
+    // Also catches JSON.parse failures on a corrupted tasks_json row — a
+    // real data-integrity bug that a silent catch{} previously hid entirely.
+    logger.error('[managerLaneAnalysisService] loadLaneExecutionPlans failed', {
+      error: err instanceof Error ? err.message : String(err),
+      organizationId,
+      laneId,
+    });
     return [];
   }
 }

@@ -368,7 +368,18 @@ export async function detectRiskSignals(
 
     return signals.filter((s) => !dismissedIds.has(String(s.id))).slice(0, 50);
   } catch (err) {
-    logger.error('Risk detection failed', err);
+    // DEC-120/A1-A3: detectRiskSignals returns a plain array (RiskSignal[]) —
+    // the shape cannot carry a degraded flag without a breaking contract
+    // change (blok B). Until then, this loud log with tenant context is the
+    // only trace an operator has that "0 risk signals" was actually a
+    // failure. The caller (execution-control risk-signals route) is
+    // expected to surface the failure to the client via a non-200/degraded
+    // response rather than re-swallowing it.
+    logger.error('[riskDetectionService] detectRiskSignals failed', {
+      error: err instanceof Error ? err.message : String(err),
+      organizationId,
+      projectId,
+    });
     return [];
   }
 }

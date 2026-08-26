@@ -818,6 +818,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const [isLoading, setIsLoading] = useState(true);
   const [initiativesLoadError, setInitiativesLoadError] = useState<string | null>(null);
   const [initiativesLoadErrorCode, setInitiativesLoadErrorCode] = useState<string | null>(null);
+  // DEC-120/A10: real-data load failed in demo mode and the list below was
+  // substituted with sample rows. Must NOT be masked as a clean load — a
+  // visible banner stays up (never a full-page error blocker, which would
+  // hide the demo rows entirely) until a real load succeeds.
+  const [demoFallbackActive, setDemoFallbackActive] = useState(false);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [decisions, setDecisions] = useState<ExecutionDecision[]>([]);
   const [isLoadingTasks, setIsLoadingTasks] = useState(false);
@@ -853,6 +858,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     }>
   >([]);
   const [isLoadingControlSignals, setIsLoadingControlSignals] = useState(false);
+  // DEC-120/A1-A3: per-source SIGNALS_UNAVAILABLE — an awaria at any of these
+  // sources must render as a visible warning, never as a quiet empty list.
+  const [riskSignalsFailed, setRiskSignalsFailed] = useState(false);
+  const [delaySignalsFailed, setDelaySignalsFailed] = useState(false);
+  const [overspendSignalsFailed, setOverspendSignalsFailed] = useState(false);
   const [timelineWarnings, setTimelineWarnings] = useState<GovernedTimelineWarning[]>([]);
   const [timelineWarningTotal, setTimelineWarningTotal] = useState(0);
   const [capacityAlerts, setCapacityAlerts] = useState<GovernedCapacityAlert[]>([]);
@@ -1257,12 +1267,17 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         const canonicalIds = new Set(
           canonicalExecutionInitiatives.map((initiative) => String(initiative.id))
         );
+        // DEC-120/A10: reviewInitiatives are demo-derived rows shown
+        // alongside real canonical ones — mark them so they can never be
+        // mistaken for real customer data in the table.
         const reviewInitiatives = allowDemoData
-          ? executionDemoData.initiatives.filter(
-              (initiative) =>
-                EXECUTION_STATUSES.includes(initiative.status) &&
-                !canonicalIds.has(String(initiative.id))
-            )
+          ? executionDemoData.initiatives
+              .filter(
+                (initiative) =>
+                  EXECUTION_STATUSES.includes(initiative.status) &&
+                  !canonicalIds.has(String(initiative.id))
+              )
+              .map((initiative) => ({ ...initiative, isDemoSample: true }))
           : [];
 
         setInitiatives([
@@ -1270,6 +1285,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           ...(reviewInitiatives as unknown as FullInitiative[]),
         ]);
         initRetryRef.current = 0;
+        // A real load just succeeded — any earlier "sample data, source
+        // unavailable" banner from a previous failed attempt is stale.
+        setDemoFallbackActive(false);
       } catch (err: any) {
         console.error('[ExecutionHub] Failed to load:', err);
         const isNetworkError =
@@ -1285,17 +1303,23 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           setTimeout(loadInitiatives, delay);
           return;
         }
-        const fallbackInitiatives = allowDemoData
-          ? (executionDemoData.initiatives.filter((initiative) =>
-              EXECUTION_STATUSES.includes(initiative.status)
-            ) as unknown as FullInitiative[])
-          : [];
-        setInitiatives(fallbackInitiatives);
         if (allowDemoData) {
-          setInitiativesLoadError(null);
-          setInitiativesLoadErrorCode(null);
+          // DEC-120/A10: the real load failed and every row below is now a
+          // demo substitute. Previously this cleared initiativesLoadError,
+          // making a real failure look like a clean, healthy load. Every
+          // row is tagged isDemoSample and a persistent, visible banner
+          // ("sample data — source unavailable") replaces the silence —
+          // WITHOUT routing through initiativesLoadError, which would
+          // instead render a full-page blocker and hide the demo rows
+          // entirely (the opposite of "show something, but be honest").
+          const fallbackInitiatives = executionDemoData.initiatives
+            .filter((initiative) => EXECUTION_STATUSES.includes(initiative.status))
+            .map((initiative) => ({ ...initiative, isDemoSample: true })) as unknown as FullInitiative[];
+          setInitiatives(fallbackInitiatives);
+          setDemoFallbackActive(true);
           return;
         }
+        setInitiatives([]);
         const { message, code } = mapHubLoadFailureToPresentation(
           err,
           t('execution.hub.failedToLoad', 'Failed to load execution initiatives.')
@@ -1317,6 +1341,14 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   ]);
 
   useEffect(() => {
+    // DEC-120/A1-A3: a legacy fallback that has no auth token, or that hits a
+    // non-OK response, used to return `{ signals: [] }` — indistinguishable
+    // from "genuinely zero signals". Tag those degraded returns so the caller
+    // can flip a SIGNALS_UNAVAILABLE flag instead of rendering a quiet zero.
+    const SOURCE_UNAVAILABLE = { signals: [], __sourceUnavailable: true as const };
+    const isSourceUnavailable = (data: unknown): boolean =>
+      Boolean(data && typeof data === 'object' && (data as any).__sourceUnavailable === true);
+
     const loadRiskSignals = async () => {
       try {
         const data = await V8ExecutionControlApi.getRiskSignals(
@@ -1327,20 +1359,23 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           }
           return (async () => {
             const token = localStorage.getItem('token');
-            if (!token) return { signals: [] };
+            if (!token) return SOURCE_UNAVAILABLE;
             const params = new URLSearchParams();
             if (currentProjectId) params.set('projectId', currentProjectId);
             const res = await fetch(`/api/execution-control/risk-signals?${params}`, {
               headers: { Authorization: `Bearer ${token}` },
             });
-            if (!res.ok) return { signals: [] };
+            if (!res.ok) return SOURCE_UNAVAILABLE;
             return res.json();
           })();
         });
         setRiskSignals(normalizeExecutionArrayEnvelope<RiskSignalItem>(data, ['signals']));
-      } catch {
-        // risk signals are non-blocking
+        setRiskSignalsFailed(isSourceUnavailable(data));
+      } catch (error) {
+        // risk signals are non-blocking, but the failure itself must be visible
+        console.error('[ExecutionHub] risk signals load failed', error);
         setRiskSignals([]);
+        setRiskSignalsFailed(true);
       }
     };
     const loadDelaySignals = async () => {
@@ -1353,20 +1388,23 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           }
           return (async () => {
             const token = localStorage.getItem('token');
-            if (!token) return { signals: [] };
+            if (!token) return SOURCE_UNAVAILABLE;
             const params = new URLSearchParams();
             if (currentProjectId) params.set('projectId', currentProjectId);
             const res = await fetch(`/api/execution-control/delay-signals?${params}`, {
               headers: { Authorization: `Bearer ${token}` },
             });
-            if (!res.ok) return { signals: [] };
+            if (!res.ok) return SOURCE_UNAVAILABLE;
             return res.json();
           })();
         });
         setDelaySignals(normalizeExecutionArrayEnvelope<DelaySignalItem>(data, ['signals']));
-      } catch {
-        // delay signals are non-blocking
+        setDelaySignalsFailed(isSourceUnavailable(data));
+      } catch (error) {
+        // delay signals are non-blocking, but the failure itself must be visible
+        console.error('[ExecutionHub] delay signals load failed', error);
         setDelaySignals([]);
+        setDelaySignalsFailed(true);
       }
     };
     const loadOverspendSignals = async () => {
@@ -1385,8 +1423,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         setOverspendSignals(
           normalizeExecutionArrayEnvelope<(typeof overspendSignals)[number]>(data, ['signals'])
         );
-      } catch {
+        setOverspendSignalsFailed(isSourceUnavailable(data));
+      } catch (error) {
+        console.error('[ExecutionHub] overspend signals load failed', error);
         setOverspendSignals([]);
+        setOverspendSignalsFailed(true);
       }
     };
     setIsLoadingControlSignals(true);
@@ -2168,10 +2209,21 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         label: t('execution.table.initiative', 'Initiative'),
         render: (row) => (
           <span
-            className="text-sm text-c-text font-medium truncate block"
+            className="flex items-center gap-1.5 text-sm text-c-text font-medium truncate"
             title={String(row.name || '')}
           >
-            {row.name}
+            <span className="truncate">{row.name}</span>
+            {/* DEC-120/A10: demo/sample rows (mixed in demo mode, or
+                substituted after a real-data load failure) must never be
+                mistaken for real customer data. */}
+            {(row as any).isDemoSample && (
+              <span
+                className="shrink-0 rounded-full bg-danger-500/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-danger-600 dark:text-danger-400"
+                title={t('execution.table.demoSampleTitle', 'Sample data, not real')}
+              >
+                {t('execution.table.demoSampleBadge', 'Sample')}
+              </span>
+            )}
           </span>
         ),
       },
@@ -2664,6 +2716,39 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     setIsSidePanelOpen(true);
   }, []);
 
+  // A2b/DEC-120: onOpenEntity callbacks used to ignore `entityType` entirely
+  // and open the initiative side panel with a fabricated
+  // `{ id, name: id }` object — e.g. clicking a risk or decision opened an
+  // "initiative" literally named after its raw UUID. The side panel
+  // (handleOpenSidePanel) only knows how to render a real FullInitiative, so
+  // this now looks the entity up by type + id and opens it only when found;
+  // an unsupported type or a missing record shows a PL toast instead of a
+  // fabricated panel.
+  const openEntityById = useCallback(
+    (entityType: string, entityId: string) => {
+      const normalizedType = String(entityType || '').toUpperCase();
+      if (normalizedType === 'INITIATIVE') {
+        const pool = initiatives.length > 0 ? initiatives : dashboardBaseInitiatives;
+        const found = pool.find((i) => i.id === entityId);
+        if (found) {
+          handleOpenSidePanel(found as FullInitiative);
+          return;
+        }
+        toast.error(
+          t('execution.entityLookup.initiativeNotFound', 'Initiative not found in this view')
+        );
+        return;
+      }
+      toast.error(
+        t(
+          'execution.entityLookup.unsupportedType',
+          'Opening this item type is not supported here yet'
+        )
+      );
+    },
+    [initiatives, dashboardBaseInitiatives, handleOpenSidePanel, t]
+  );
+
   const handleCloseDocument = useCallback(
     (id: string) => {
       setOpenDocuments((prev) => prev.filter((d) => d.id !== id));
@@ -3088,6 +3173,12 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     await refreshExecutionAfterWrite();
   }, [refreshExecutionAfterWrite]);
 
+  const unavailableSignalSources = [
+    riskSignalsFailed && 'risk',
+    delaySignalsFailed && 'delay',
+    overspendSignalsFailed && 'overspend',
+  ].filter((v): v is 'risk' | 'delay' | 'overspend' => Boolean(v));
+
   const renderPortfolioHealth = () => (
     <div className="space-y-3" data-testid="portfolio-health">
       {healthSnapshotFailed && (
@@ -3100,6 +3191,46 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             'The authoritative PMO health snapshot could not be loaded. The Health Score, decision and blocker counts below fall back to client-side estimates and may be incomplete — a degraded state, not a confirmed-healthy portfolio.'
           )}
         </Callout>
+      )}
+      {/* DEC-120/A1-A3: controlTowerFailed and isLoadingControlSignals were
+          tracked but never read by any JSX — a broken signal source rendered
+          as a quiet signals:[] instead of a visible warning. */}
+      {controlTowerFailed && (
+        <div data-testid="control-tower-unavailable-banner">
+          <Callout
+            variant="critical"
+            title={t('execution.controlTower.failed', 'Control tower signals unavailable')}
+          >
+            {t(
+              'execution.controlTower.failedDesc',
+              'Failed to load timeline warnings and capacity leveling alerts. The view is operating without risk and delay overlays.'
+            )}
+          </Callout>
+        </div>
+      )}
+      {!isLoadingControlSignals && unavailableSignalSources.length > 0 && (
+        <div data-testid="signals-unavailable-banner">
+          <Callout
+            variant="critical"
+            title={t('execution.signalsUnavailable.badge', 'Signal source unavailable')}
+          >
+            {t(
+              'execution.signalsUnavailable.desc',
+              'Failed to load: {{sources}}. An empty list below does NOT mean there are no risks — it means this source is not currently responding.',
+              {
+                sources: unavailableSignalSources
+                  .map((source) =>
+                    t(`execution.signalsUnavailable.source.${source}`, {
+                      risk: 'risk signals',
+                      delay: 'delay signals',
+                      overspend: 'overspend signals',
+                    }[source])
+                  )
+                  .join(', '),
+              }
+            )}
+          </Callout>
+        </div>
       )}
       <div className="grid gap-4 lg:grid-cols-[1.2fr_2fr]">
         <PortfolioHealthScore
@@ -4546,6 +4677,17 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       progressPercent: execSnapshot?.overview?.progressPercent ?? null,
       totalInitiatives: dashboardBaseInitiatives.length,
       lastRefreshAt: execSnapshot?.generatedAt,
+      // DEC-120/A1-A3: propagate source failures into the report footer —
+      // a broken signal source must degrade Confidence/Freshness, not
+      // disappear into an empty array that reads as "all clear".
+      tasksFailed,
+      decisionsFailed,
+      controlTowerFailed,
+      signalsUnavailable: [
+        riskSignalsFailed && 'risk',
+        delaySignalsFailed && 'delay',
+        overspendSignalsFailed && 'overspend',
+      ].filter((v): v is string => Boolean(v)),
     }),
     [
       dashboardBaseInitiatives,
@@ -4560,6 +4702,12 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       timelineWarnings,
       capacityAlerts,
       capacityTimeline,
+      tasksFailed,
+      decisionsFailed,
+      controlTowerFailed,
+      riskSignalsFailed,
+      delaySignalsFailed,
+      overspendSignalsFailed,
     ]
   );
 
@@ -5414,6 +5562,22 @@ Please return:
               table (T32-TABLE-T13) — relocated, not deleted. */}
           <div className="min-h-0 flex-1 flex overflow-hidden">
             <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
+              {demoFallbackActive && (
+                <div className="mb-3" data-testid="demo-fallback-banner">
+                  <Callout
+                    variant="critical"
+                    title={t(
+                      'execution.hub.demoFallback.title',
+                      'Sample data — source unavailable'
+                    )}
+                  >
+                    {t(
+                      'execution.hub.demoFallback.desc',
+                      'The real initiative data could not be loaded. Rows marked "SAMPLE" below are demo data, not your actual portfolio.'
+                    )}
+                  </Callout>
+                </div>
+              )}
               <StandardTable
                 columns={columns}
                 data={
@@ -5640,9 +5804,7 @@ Please return:
           currency="PLN"
           isPolish={isPolish}
           generatedAt={summaryOneLookProps.generatedAt}
-          onOpenEntity={(type, id) => {
-            if (handleOpenSidePanel) handleOpenSidePanel({ id, name: id } as any);
-          }}
+          onOpenEntity={openEntityById}
         />
       );
     }
@@ -5657,11 +5819,7 @@ Please return:
           hasExecutingInitiatives={dashboardBaseInitiatives.length > 0}
           onRegisterCommandRowContent={setManagerCommandRowContent}
           onRegisterCommandRowRightContent={setManagerCommandRowRightContent}
-          onOpenEntity={
-            handleOpenSidePanel
-              ? (type, id) => handleOpenSidePanel({ id, name: id } as any)
-              : undefined
-          }
+          onOpenEntity={openEntityById}
         />
       );
     }

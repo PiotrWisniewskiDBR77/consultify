@@ -1,35 +1,32 @@
 /**
  * M14 — Execution cockpit feature flags (default OFF, live-safe).
  *
- * New cockpit surfaces (Intelligence panel, Gantt baseline, What-if sandbox) ship
- * behind flags so they land in code without changing the live cockpit until a
- * deliberate flip + pixel-verify. Resolution order (first wins): URL query →
- * localStorage → Vite build env → default false.
+ * New cockpit surfaces ship behind flags so they land in code without
+ * changing the live cockpit until a deliberate flip + pixel-verify.
+ * Resolution order (first wins): URL query → localStorage → Vite build
+ * env → default false.
+ *
+ * DEC-120/A7: the `intelligence`, `whatIfSandbox`, and `changeSignals`
+ * flags were removed as phantoms — each had real resolution logic here but
+ * zero real callers (ExecutionIntelligencePanel/ExecutionWhatIfSandbox/
+ * ExecutionChangeSignalsPanel were never mounted anywhere reachable; a
+ * stale source-anchor test claimed otherwise but had already drifted false
+ * before this batch — see the removed
+ * ExecutionHub.r14-panel-relocation.source-anchor.test.ts). `profileSource`
+ * is kept on the signature for future flags even though no live flag
+ * currently reads it.
  */
 
 import { isPublicProductionHost } from '@/utils/publicProduction';
-import {
-  isDemoAcceptanceProfileEnabled,
-  type DemoAcceptanceProfileSource,
-} from '@/utils/demoAcceptanceProfile';
+import { type DemoAcceptanceProfileSource } from '@/utils/demoAcceptanceProfile';
 
 type FlagKeys = { query: string; localStorage: string; env: string };
 
 const FLAGS = {
-  intelligence: {
-    query: 'ff_execIntel',
-    localStorage: 'ff.exec_intelligence',
-    env: 'VITE_EXEC_INTELLIGENCE_ENABLED',
-  },
   ganttBaseline: {
     query: 'ff_ganttBaseline',
     localStorage: 'ff.exec_gantt_baseline',
     env: 'VITE_EXEC_GANTT_BASELINE_ENABLED',
-  },
-  whatIfSandbox: {
-    query: 'ff_whatIf',
-    localStorage: 'ff.exec_whatif',
-    env: 'VITE_EXEC_WHATIF_ENABLED',
   },
   rolloutStages: {
     query: 'ff_rolloutStages',
@@ -48,15 +45,6 @@ const FLAGS = {
     query: 'ff_summaryOneLook',
     localStorage: 'ff.exec_summary_onelook',
     env: 'VITE_EXEC_SUMMARY_ONELOOK_ENABLED',
-  },
-  // M14-wire (2026-07-15) — Sygnały wydolności/gotowości ludzi/championów zmiany
-  // (capacitySignalService + peopleChangeReadinessService + changeChampionsService).
-  // Nowy, jeszcze nie zrzucony ekran → default OFF wszędzie (patrz special-case w
-  // isExecutionFlagEnabled poniżej — NIE dziedziczy fallbacku D-D "ON poza prod").
-  changeSignals: {
-    query: 'ff_execChangeSignals',
-    localStorage: 'ff.exec_change_signals',
-    env: 'VITE_EXEC_CHANGE_SIGNALS_ENABLED',
   },
   // DEC-2026-08-25-63 — four Execution management reports and their unified
   // generator. The surface remains OFF everywhere (including demo) until an
@@ -110,7 +98,6 @@ export function isExecutionFlagEnabled(
   flag: ExecutionFlag,
   profileSource?: DemoAcceptanceProfileSource
 ): boolean {
-  if (flag === 'changeSignals' && isDemoAcceptanceProfileEnabled(profileSource)) return true;
   const keys = FLAGS[flag];
   const fromQuery = readQuery(keys.query);
   if (fromQuery !== null) return fromQuery;
@@ -120,7 +107,7 @@ export function isExecutionFlagEnabled(
   // ★ Rule #7 (CLAUDE.md): brand-new, not-yet-screenshotted cockpit surface stays
   // OFF everywhere — including demo — until Piotr accepts a clean dev-render.
   // Does NOT inherit the D-D "ON except public prod" fallback below.
-  if (flag === 'changeSignals' || flag === 'execReportsIntelligence') return false;
+  if (flag === 'execReportsIntelligence') return false;
   // D-D (2026-06-29): verified-ready M14 cockpit (Intelligence/What-If/Rollout/
   // Benefits/ganttBaseline) defaults ON everywhere EXCEPT public production
   // (consultify.ai). Demo/stage/dev → ON; prod stays env-gated (D-G = no prod).

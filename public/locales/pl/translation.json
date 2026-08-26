@@ -10099,7 +10099,11 @@
       "retry": "Spróbuj ponownie",
       "dismiss": "Zamknij",
       "loadErrorTitle": "Nie udało się załadować danych wdrożenia",
-      "transportBlockedTitle": "Żądania chwilowo zablokowane"
+      "transportBlockedTitle": "Żądania chwilowo zablokowane",
+      "demoFallback": {
+        "title": "Dane przykładowe — źródło niedostępne",
+        "desc": "Nie udało się załadować rzeczywistych danych inicjatyw. Wiersze oznaczone „PRZYKŁAD” poniżej to dane demonstracyjne, nie Twój prawdziwy portfel."
+      }
     },
     "demo": {
       "label": "Demo",
@@ -10230,6 +10234,7 @@
       "noInitiativesDesc": "Kokpit menedżera zapełni się, gdy inicjatywy wejdą w fazę realizacji. Obecnie portfel jest pusty.",
       "actionApplied": "Akcja zastosowana",
       "actionFailed": "Akcja nie powiodła się",
+      "actionWritesDisabledReason": "Zapis przeniesiony do kanonicznego rejestru — w przygotowaniu",
       "preset": {
         "peopleChange": "Ludzie i zmiana"
       },
@@ -10259,6 +10264,14 @@
       },
       "v8Degraded": "Kokpit menedżera wymaga V8"
     },
+    "managementTable": {
+      "lane": "Tor",
+      "total": "Elementy",
+      "critical": "Krytyczne",
+      "warning": "Ostrzeżenia",
+      "openLane": "Otwórz tor",
+      "emptyTitle": "Brak torów zarządczych"
+    },
     "rollout": {
       "tabLabel": "Wdrożenie",
       "saveFailed": "Nie udało się zapisać. Spróbuj ponownie.",
@@ -10280,8 +10293,7 @@
         "title": "Śledzenie KPI",
         "subtitle": "Monitoruj operacyjne i finansowe wyniki wdrożenia.",
         "add": "Dodaj KPI",
-        "empty": "Brak śledzonych KPI. Dodaj pierwszy wskaźnik, aby monitorować wyniki wdrożenia.",
-        "seedDemo": "Wczytaj przykład Atelier Toys",
+        "empty": "Brak śledzonych KPI. Użyj przycisku „Dodaj KPI” powyżej, aby zacząć monitorować wyniki wdrożenia.",
         "baseline": "Bazowa",
         "current": "Obecna",
         "target": "Cel",
@@ -10357,8 +10369,10 @@
         },
         "editTitle": "Edytuj pozycję zamknięcia",
         "resultsHandoff": {
-          "title": "Przekazanie do Rezultatów — tylko podgląd"
-        }
+          "title": "Przekazanie do Rezultatów — tylko podgląd",
+          "body": "Wyniki zamknięcia (dostarczona wartość, ROI, odchylenia KPI) nie są jeszcze synchronizowane z modułem Rezultaty. To przekazanie jest podglądem na tę wersję; automatyczna synchronizacja z Rezultatami zostanie włączona w kolejnej fazie."
+        },
+        "derivedNote": "Wyznaczone z ukończonych inicjatyw — przekazanie PMI/PRINCE2, akceptacja i działania zamknięcia. Dodaj pozycję, aby prowadzić własną listę kontrolną."
       },
       "addClosureItem": "Dodaj pozycję",
       "addKpi": "Dodaj KPI",
@@ -10575,7 +10589,9 @@
       "selectAll": "Zaznacz wszystko",
       "selectRow": "Zaznacz wiersz",
       "selectedCount": "Zaznaczono: {{count}}",
-      "changeStatusFor": "Zmień status dla {{name}}"
+      "changeStatusFor": "Zmień status dla {{name}}",
+      "demoSampleBadge": "Przykład",
+      "demoSampleTitle": "Dane przykładowe, nie rzeczywiste"
     },
     "badges": {
       "done": "Ukończone",
@@ -10855,7 +10871,8 @@
       "statusClosed": "Zamknięte",
       "save": "Zapisz łagodzenie",
       "saved": "Łagodzenie zaktualizowane",
-      "ownerIdPlaceholder": "ID właściciela"
+      "ownerIdPlaceholder": "ID właściciela",
+      "saveDisabledReason": "Zapis przeniesiony do kanonicznego rejestru — w przygotowaniu"
     },
     "auditLog": {
       "title": "Dziennik zmian",
@@ -10906,6 +10923,7 @@
       "initiativeBreakdown": "Wg inicjatywy",
       "viewDetails": "Zobacz szczegóły",
       "addEntry": "Dodaj koszt rzeczywisty",
+      "writesDisabledReason": "Zapis przeniesiony do kanonicznego rejestru — w przygotowaniu",
       "newEntry": "Nowy wpis kosztowy",
       "amountPlaceholder": "Kwota",
       "categoryPlaceholder": "Kategoria (np. Konsulting, Licencje)",
@@ -10918,7 +10936,11 @@
         "amber": "Ostrzeżenie",
         "red": "Przekroczony budżet"
       },
-      "viewInResults": "Zobacz w Rezultatach"
+      "viewInResults": "Zobacz w Rezultatach",
+      "deleteConfirm": "Usunąć ten wpis budżetowy? Tej operacji nie można cofnąć.",
+      "deleteEntry": "Usuń wpis budżetowy",
+      "deleteFailed": "Nie udało się usunąć wpisu budżetowego",
+      "entryDeleted": "Wpis budżetowy usunięty"
     },
     "actionCenter": {
       "actionQueue": "Kolejka działań",
@@ -10947,6 +10969,20 @@
     "healthSnapshot": {
       "failed": "Migawka kondycji PMO niedostępna",
       "failedDesc": "Nie udało się załadować autorytatywnej migawki kondycji PMO. Wskaźnik kondycji oraz liczby decyzji i blokad poniżej opierają się na szacunkach po stronie klienta i mogą być niepełne — to stan zdegradowany, a nie potwierdzone zdrowe portfolio."
+    },
+    "entityLookup": {
+      "initiativeNotFound": "Nie znaleziono inicjatywy w tym widoku",
+      "unsupportedType": "Otwieranie tego typu elementu nie jest tu jeszcze obsługiwane"
+    },
+    "signalsUnavailable": {
+      "badge": "Źródło sygnałów niedostępne",
+      "title": "Źródło sygnałów niedostępne",
+      "desc": "Nie udało się załadować: {{sources}}. Pusta lista poniżej NIE oznacza braku ryzyk — oznacza, że to źródło aktualnie nie odpowiada.",
+      "source": {
+        "risk": "sygnały ryzyka",
+        "delay": "sygnały opóźnień",
+        "overspend": "sygnały przekroczenia budżetu"
+      }
     },
     "reportCatalog": {
       "cadence": {
@@ -25907,7 +25943,12 @@
     },
     "dueIn": "za",
     "problems": "problemów",
-    "noProblems": "Nie wykryto problemów — bez opóźnień."
+    "noProblems": "Nie wykryto problemów — bez opóźnień.",
+    "preview": {
+      "sourceEntity": "Encja źródłowa",
+      "details": "Szczegóły",
+      "affected": "Powiązane encje"
+    }
   },
   "audit": {
     "failedToCreateProgram": "Nie udało się utworzyć programu",

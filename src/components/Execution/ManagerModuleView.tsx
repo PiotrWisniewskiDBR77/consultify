@@ -270,22 +270,22 @@ export const ManagerModuleView: React.FC<ManagerModuleViewProps> = ({
         return;
       }
 
-      try {
-        const resp = await V8ExecutionControlApi.executeManagerProblemAction(
-          moduleId,
-          { problemId: row.id, actionId: action.id },
-          projectId
-        );
-        const result = (resp as { data?: { message?: string } }).data || resp;
-        toast.success(result.message || t('execution.manager.actionApplied', 'Action applied'));
-      } catch (error) {
-        const message =
-          error instanceof Error && error.message
-            ? error.message
-            : t('execution.manager.actionFailed', 'Action failed');
-        toast.error(message);
-      }
-      refresh();
+      // A11/DEC-120: every other manager-lane action (assign/reassign/escalate/
+      // set_baseline/send_nudge/...) posts through executeManagerProblemAction →
+      // /api/v8/execution-control/manager/lanes/.../problem-actions/execute,
+      // which requireCanonicalExecutionWriter 409s unconditionally (only DECISION
+      // approve/reject and open_entity above use a real, working API). Rather
+      // than let the click round-trip to a 409 and surface the middleware's
+      // English developer-facing error text, fail honestly in Polish before
+      // attempting the doomed call — same outcome as a disabled control with a
+      // visible reason, without needing to thread a per-action disabled state
+      // through ProblemTable/ProblemPreview in this batch.
+      toast.error(
+        t(
+          'execution.manager.actionWritesDisabledReason',
+          'Saving is moving to the canonical execution registry — in progress'
+        )
+      );
     },
     [moduleId, onOpenEntity, projectId, refresh, t]
   );

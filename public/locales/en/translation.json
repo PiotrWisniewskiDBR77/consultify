@@ -10756,7 +10756,11 @@
       "retry": "Retry",
       "dismiss": "Dismiss",
       "loadErrorTitle": "Failed to load implementation data",
-      "transportBlockedTitle": "Requests temporarily blocked"
+      "transportBlockedTitle": "Requests temporarily blocked",
+      "demoFallback": {
+        "title": "Sample data — source unavailable",
+        "desc": "The real initiative data could not be loaded. Rows marked \"SAMPLE\" below are demo data, not your actual portfolio."
+      }
     },
     "demo": {
       "label": "Demo",
@@ -10887,6 +10891,7 @@
       "noInitiativesDesc": "The Manager cockpit will populate when initiatives enter execution. Currently the portfolio is empty.",
       "actionApplied": "Action applied",
       "actionFailed": "Action failed",
+      "actionWritesDisabledReason": "Saving is moving to the canonical execution registry — in progress",
       "preset": {
         "peopleChange": "People & Change"
       },
@@ -10916,6 +10921,14 @@
       },
       "v8Degraded": "Manager cockpit requires V8"
     },
+    "managementTable": {
+      "lane": "Lane",
+      "total": "Items",
+      "critical": "Critical",
+      "warning": "Warning",
+      "openLane": "Open lane",
+      "emptyTitle": "No management lanes"
+    },
     "rollout": {
       "tabLabel": "Rollout",
       "saveFailed": "Failed to save. Please try again.",
@@ -10937,8 +10950,7 @@
         "title": "KPI Tracking",
         "subtitle": "Monitor operational and financial rollout performance.",
         "add": "Add KPI",
-        "empty": "No KPIs tracked yet. Add your first KPI to start monitoring rollout performance.",
-        "seedDemo": "Load Atelier Toys example",
+        "empty": "No KPIs tracked yet. Use \"Add KPI\" above to start monitoring rollout performance.",
         "baseline": "Baseline",
         "current": "Current",
         "target": "Target",
@@ -10991,7 +11003,12 @@
         },
         "status": {
           "done": "Done"
-        }
+        },
+        "resultsHandoff": {
+          "title": "Results hand-off — preview only",
+          "body": "Closure outcomes (value delivered, ROI, KPI deltas) are not yet synced to the Results module. This hand-off is a preview for this release; automatic sync to Results will be enabled in an upcoming phase."
+        },
+        "derivedNote": "Derived from completed initiatives — PMI/PRINCE2 handover, sign-off and closure actions. Add an item to maintain your own checklist."
       },
       "addClosureItem": "Add Item",
       "addKpi": "Add KPI",
@@ -11207,7 +11224,9 @@
       "selectAll": "Select all",
       "selectRow": "Select row",
       "selectedCount": "{{count}} selected",
-      "changeStatusFor": "Change status for {{name}}"
+      "changeStatusFor": "Change status for {{name}}",
+      "demoSampleBadge": "Sample",
+      "demoSampleTitle": "Sample data, not real"
     },
     "badges": {
       "done": "Done",
@@ -11487,7 +11506,8 @@
       "statusClosed": "Closed",
       "save": "Save Mitigation",
       "saved": "Mitigation updated",
-      "ownerIdPlaceholder": "Owner ID"
+      "ownerIdPlaceholder": "Owner ID",
+      "saveDisabledReason": "Saving is moving to the canonical execution registry — in progress"
     },
     "auditLog": {
       "title": "Audit Log",
@@ -11538,6 +11558,7 @@
       "initiativeBreakdown": "By Initiative",
       "viewDetails": "View details",
       "addEntry": "Add Actual Cost",
+      "writesDisabledReason": "Saving is moving to the canonical execution registry — in progress",
       "newEntry": "New Cost Entry",
       "amountPlaceholder": "Amount",
       "categoryPlaceholder": "Category (e.g. Consulting, Licenses)",
@@ -11550,7 +11571,11 @@
         "amber": "Warning",
         "red": "Over Budget"
       },
-      "viewInResults": "View in Results"
+      "viewInResults": "View in Results",
+      "deleteConfirm": "Delete this budget entry? This cannot be undone.",
+      "deleteEntry": "Delete budget entry",
+      "deleteFailed": "Failed to delete budget entry",
+      "entryDeleted": "Budget entry deleted"
     },
     "actionCenter": {
       "actionQueue": "Action queue",
@@ -11578,6 +11603,20 @@
     "healthSnapshot": {
       "failed": "PMO health snapshot unavailable",
       "failedDesc": "The authoritative PMO health snapshot could not be loaded. The Health Score, decision and blocker counts below fall back to client-side estimates and may be incomplete — a degraded state, not a confirmed-healthy portfolio."
+    },
+    "entityLookup": {
+      "initiativeNotFound": "Initiative not found in this view",
+      "unsupportedType": "Opening this item type is not supported here yet"
+    },
+    "signalsUnavailable": {
+      "badge": "Signal source unavailable",
+      "title": "Signal source unavailable",
+      "desc": "Failed to load: {{sources}}. An empty list below does NOT mean there are no risks — it means this source is not currently responding.",
+      "source": {
+        "risk": "risk signals",
+        "delay": "delay signals",
+        "overspend": "overspend signals"
+      }
     },
     "reportCatalog": {
       "cadence": {
@@ -24749,7 +24788,12 @@
     },
     "dueIn": "in",
     "problems": "problems",
-    "noProblems": "No problems detected — on track."
+    "noProblems": "No problems detected — on track.",
+    "preview": {
+      "sourceEntity": "Source Entity",
+      "details": "Details",
+      "affected": "Affected Entities"
+    }
   },
   "nav": {
     "product": "Product",

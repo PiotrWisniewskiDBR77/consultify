@@ -292,12 +292,14 @@ export class ExecutionController {
           FROM decisions d
           JOIN decision_impacts di ON d.id = di.decision_id
           WHERE (d.initiative_id = ? OR d.project_id = ?)
+            AND d.organization_id = ?
             AND d.status IN ('pending', 'escalated')
             AND di.is_blocker = TRUE
         `;
         const pendingResult = await queryHelpers.queryOne<{ count: number }>(pendingDecisionsSql, [
           initiativeId,
           projectId,
+          orgId,
         ]);
 
         if (pendingResult && pendingResult.count > 0) {
@@ -313,10 +315,11 @@ export class ExecutionController {
         const blockedTasksSql = `
           SELECT COUNT(*) as count
           FROM tasks
-          WHERE initiative_id = ? AND status = 'BLOCKED'
+          WHERE initiative_id = ? AND organization_id = ? AND status = 'BLOCKED'
         `;
         const blockedResult = await queryHelpers.queryOne<{ count: number }>(blockedTasksSql, [
           initiativeId,
+          orgId,
         ]);
 
         if (blockedResult && blockedResult.count > 0) {
@@ -873,14 +876,19 @@ export class ExecutionController {
         try {
           return (await queryHelpers.queryAll(sql, params)) || [];
         } catch (error: any) {
-          const msg = String(error?.message || '').toLowerCase();
-          if (
-            msg.includes('no such table') ||
-            msg.includes('does not exist') ||
-            msg.includes('relation')
-          ) {
+          const msg = String(error?.message || '');
+          // DEC-112/A5: a bare `.includes('does not exist')` also silences
+          // Postgres' "column \"x\" does not exist" (42703) — a real
+          // query/schema bug, not a benign missing-table case. Only a
+          // genuinely missing relation (or uninitialized DB) may go quiet;
+          // a missing column must log loudly and fail the request.
+          if (DbPromise.isSilenceableMissingRelationError(msg)) {
             return [];
           }
+          logger.error('[ExecutionController] Action Queue query failed (non-silenceable)', {
+            error: msg,
+            sql: sql.substring(0, 200),
+          });
           throw error;
         }
       };

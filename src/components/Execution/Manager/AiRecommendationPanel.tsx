@@ -268,6 +268,11 @@ const SuggestionCard: React.FC<{
   onApprove?: () => void;
   onDefer?: () => void;
   approveLabel?: string;
+  /** A11/DEC-120: applyManagerSuggestion/submitLaneDecision post through the
+      retired legacy execution-control writer (409 on every non-GET). Passing
+      a reason disables both actions with a visible, honest explanation
+      instead of leaving an active button that always errors. */
+  disabledReason?: string;
 }> = ({
   suggestion,
   decisionState,
@@ -275,6 +280,7 @@ const SuggestionCard: React.FC<{
   onApprove,
   onDefer,
   approveLabel = 'Approve',
+  disabledReason,
 }) => (
   <div className="rounded-lg border border-slate-200/70 p-3 dark:border-white/[0.06]">
     <div className="mb-2 flex flex-wrap items-center gap-2">
@@ -313,8 +319,9 @@ const SuggestionCard: React.FC<{
           <button
             type="button"
             onClick={onDefer}
-            disabled={busy}
-            className="rounded-full border border-slate-200/70 px-2.5 py-1 text-[10px] font-semibold text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-40 dark:border-white/[0.08] dark:text-slate-300 dark:hover:bg-white/[0.03]"
+            disabled={busy || Boolean(disabledReason)}
+            title={disabledReason}
+            className="rounded-full border border-slate-200/70 px-2.5 py-1 text-[10px] font-semibold text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed dark:border-white/[0.08] dark:text-slate-300 dark:hover:bg-white/[0.03]"
           >
             Defer
           </button>
@@ -323,14 +330,18 @@ const SuggestionCard: React.FC<{
           <button
             type="button"
             onClick={onApprove}
-            disabled={busy}
-            className="rounded-full bg-blue-500/10 px-2.5 py-1 text-[10px] font-semibold text-blue-700 transition-colors hover:bg-blue-500/15 disabled:opacity-40 dark:text-blue-200"
+            disabled={busy || Boolean(disabledReason)}
+            title={disabledReason}
+            className="rounded-full bg-blue-500/10 px-2.5 py-1 text-[10px] font-semibold text-blue-700 transition-colors hover:bg-blue-500/15 disabled:opacity-40 disabled:cursor-not-allowed dark:text-blue-200"
           >
             {approveLabel}
           </button>
         ) : null}
       </div>
     </div>
+    {disabledReason ? (
+      <p className="mt-1.5 text-[10px] text-amber-600 dark:text-amber-400">{disabledReason}</p>
+    ) : null}
   </div>
 );
 
@@ -501,7 +512,15 @@ const ActionPlanView: React.FC<{
   busySuggestionId: string | null;
   onApproveSuggestion: (suggestionId: string) => void;
   onDeferSuggestion: (suggestionId: string) => void;
-}> = ({ analysis, busySuggestionId, onApproveSuggestion, onDeferSuggestion }) => {
+  /** A11/DEC-120 — see SuggestionCard. */
+  suggestionActionsDisabledReason?: string;
+}> = ({
+  analysis,
+  busySuggestionId,
+  onApproveSuggestion,
+  onDeferSuggestion,
+  suggestionActionsDisabledReason,
+}) => {
   const decisionsBySuggestion = useMemo(
     () =>
       analysis.decisions.reduce((map, decision) => {
@@ -548,6 +567,7 @@ const ActionPlanView: React.FC<{
               approveLabel="Apply"
               onApprove={() => onApproveSuggestion(suggestion.id)}
               onDefer={() => onDeferSuggestion(suggestion.id)}
+              disabledReason={suggestionActionsDisabledReason}
             />
           ))}
         </div>
@@ -840,6 +860,10 @@ export const AiRecommendationPanel: React.FC<AiRecommendationPanelProps> = ({
             busySuggestionId={busySuggestionId}
             onApproveSuggestion={(suggestionId) => handleDecision(suggestionId, 'approved')}
             onDeferSuggestion={(suggestionId) => handleDecision(suggestionId, 'deferred')}
+            suggestionActionsDisabledReason={t(
+              'execution.manager.actionWritesDisabledReason',
+              'Saving is moving to the canonical execution registry — in progress'
+            )}
           />
         )}
 

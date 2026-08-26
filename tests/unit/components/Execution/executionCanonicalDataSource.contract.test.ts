@@ -16,8 +16,12 @@ describe('Execution canonical data-source contract', () => {
   });
 
   it('fails closed instead of replacing a failed canonical read with DEV fixtures', () => {
-    expect(source).toContain('const fallbackInitiatives = allowDemoData');
-    expect(source).toContain(': [];');
+    // DEC-120/A10: fallback substitution is now gated by an explicit
+    // `if (allowDemoData)` branch (not a ternary) so the failure can also
+    // set the visible demoFallbackActive banner instead of silently
+    // clearing the error. The non-demo path still fails closed to [].
+    expect(source).toContain('const fallbackInitiatives = executionDemoData.initiatives');
+    expect(source).toContain('setInitiatives([]);');
     expect(source).not.toMatch(/const fallbackInitiatives = import\.meta\.env\.DEV/);
   });
 

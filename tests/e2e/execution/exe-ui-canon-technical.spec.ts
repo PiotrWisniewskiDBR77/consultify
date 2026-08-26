@@ -50,7 +50,8 @@ const SCREENS_DIR = process.env.EXE_UI_SCREENS_DIR?.trim() ?? '';
 /**
  * One Menu-3 preset that only the given tab's canonical Surface renders, so a
  * visible anchor proves that specific Surface mounted:
- *   list      ExecutionRealizationsSurface
+ *   list      StandardTable (initiative register — ExecutionRealizationsSurface
+ *             was removed as dead code, DEC-120/A7; never the real 'list' mount)
  *   work      ExecutionWorkSurface
  *   resources ExecutionResourcesSurface
  *   control   ExecutionControlSurface (+ ExecutionDeliveryClosurePanel)

@@ -119,6 +119,19 @@ export interface ReportDataContext {
   progressPercent: number | null;
   totalInitiatives: number;
   lastRefreshAt?: string;
+  /**
+   * DEC-120/A1-A3 — a module whose job is telling the owner something is
+   * going wrong must not hide its own source failures behind a quiet empty
+   * list and a confident-looking footer. When any of these are set,
+   * buildDataQuality() must cap confidence below 'high' and freshnessLabel
+   * away from 'Live', and buildDegradedFlags() must name the failed source
+   * explicitly in the footer's known-limitations list.
+   */
+  tasksFailed?: boolean;
+  decisionsFailed?: boolean;
+  controlTowerFailed?: boolean;
+  /** Names of signal sources that could not be loaded, e.g. ['risk','delay','overspend']. */
+  signalsUnavailable?: string[];
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -244,6 +257,16 @@ function buildReadout(
   return lines;
 }
 
+/** DEC-120/A1-A3 — true when any upstream execution source failed to load. */
+function hasSourceFailure(ctx: ReportDataContext): boolean {
+  return Boolean(
+    ctx.tasksFailed ||
+      ctx.decisionsFailed ||
+      ctx.controlTowerFailed ||
+      (ctx.signalsUnavailable && ctx.signalsUnavailable.length > 0)
+  );
+}
+
 function buildDegradedFlags(ctx: ReportDataContext): string[] {
   const flags: string[] = [];
   if (ctx.missingDates.length > 0)
@@ -251,6 +274,16 @@ function buildDegradedFlags(ctx: ReportDataContext): string[] {
   const noDueTasks = ctx.tasks.filter((t) => !t.dueDate).length;
   if (noDueTasks > 0) flags.push(`${noDueTasks} task(s) without due date`);
   if (ctx.blocked.length > 0) flags.push(`${ctx.blocked.length} blocked initiative(s)`);
+  // DEC-120/A1-A3: a source failure is a data-quality event, not a silent
+  // zero — name it explicitly so the footer cannot read as "all clear".
+  if (ctx.tasksFailed) flags.push('Task source unavailable — task counts may be incomplete');
+  if (ctx.decisionsFailed)
+    flags.push('Decision source unavailable — decision counts may be incomplete');
+  if (ctx.controlTowerFailed)
+    flags.push('Control tower unavailable (timeline warnings / capacity alerts)');
+  if (ctx.signalsUnavailable && ctx.signalsUnavailable.length > 0) {
+    flags.push(`Signal source(s) unavailable: ${ctx.signalsUnavailable.join(', ')}`);
+  }
   return flags;
 }
 
@@ -265,10 +298,15 @@ function buildDataQuality(ctx: ReportDataContext): ReportDataQuality {
   let confidence = 'high';
   if (completeness < 50) confidence = 'low';
   else if (completeness < 80) confidence = 'medium';
+  const degraded = hasSourceFailure(ctx);
+  // DEC-120/A1-A3: an upstream source failure must never present as
+  // Confidence: high — the module itself is degraded, not just the data.
+  if (degraded && confidence === 'high') confidence = 'medium';
+  const freshnessLabel = degraded ? 'Degraded' : ctx.lastRefreshAt ? 'Live' : 'Snapshot';
   return {
     confidence,
     completeness,
-    freshnessLabel: ctx.lastRefreshAt ? 'Live' : 'Snapshot',
+    freshnessLabel,
     knownLimitations: buildDegradedFlags(ctx),
     missingBaselineCount,
     missingEstimateCount,

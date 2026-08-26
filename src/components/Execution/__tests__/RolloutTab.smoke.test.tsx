@@ -83,6 +83,19 @@ describe('RolloutTab smoke', () => {
     expect(apiGet).toHaveBeenCalledWith(expect.stringContaining('/rollout/risks'));
   });
 
+  it('DEC-120/A4: never offers the fake "Load Atelier Toys example" seed button on an empty KPI register', async () => {
+    emptyLists();
+    render(<RolloutTab projectId="proj-1" initiatives={[]} />);
+    await waitFor(() => {
+      expect(screen.getByText('KPI Tracking')).toBeInTheDocument();
+    });
+    // The empty state must be an honest message, not a CTA that fires 5
+    // hardcoded POSTs of fake data into the real API as its primary action.
+    expect(screen.queryByText(/Atelier Toys/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Atelier/i })).not.toBeInTheDocument();
+    expect(apiPost).not.toHaveBeenCalled();
+  });
+
   it('add KPI POSTs to /rollout/kpis and shows the returned row as read-only text', async () => {
     emptyLists();
     apiPost.mockResolvedValue({

@@ -35,12 +35,22 @@ describe('Execution mounted initiative truth spine', () => {
   });
 
   it('mounts and resolves the canonical execution-case deep link', () => {
+    // DEC-120/A7: ExecutionRealizationsSurface (the file this test used to
+    // read for its own useParams/deep-link handling) was removed as dead
+    // code — zero live importers, confirmed by the two tests above already
+    // in this file. The `:executionCaseId` route renders ExecutionHub
+    // directly and ExecutionHub resolves the deep link itself via query
+    // params (executionCaseId stays in the URL as correlation metadata
+    // only — see its own comment at the `openId`/`mode` resolution site).
     const routes = read('src/routes/AppRoutes.tsx');
-    const surface = read('src/components/Execution/ExecutionRealizationsSurface.tsx');
+    const hub = read('src/components/Execution/ExecutionHub.tsx');
 
     expect(routes).toContain('path={`${ROUTES.EXECUTION}/:executionCaseId`}');
-    expect(surface).toContain('useParams<{');
-    expect(surface).toContain('setSelectedExecutionCaseId(deepLinkedExecutionCaseId)');
-    expect(surface).toContain('setShowWorkbench(true)');
+    expect(hub).toContain(
+      "if (openId && (mode === 'doc' || mode === 'initiative')) {"
+    );
+    expect(hub).toContain(
+      'executionCaseId may remain in the URL as correlation metadata'
+    );
   });
 });

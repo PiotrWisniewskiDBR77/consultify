@@ -386,7 +386,15 @@ export async function detectDelaySignals(
     const cap = options?.maxSignals ?? 100;
     return cap > 0 ? visibleSignals.slice(0, cap) : visibleSignals;
   } catch (err) {
-    logger.error('Delay detection failed', err);
+    // DEC-120/A1-A3: detectDelaySignals returns a plain array (DelaySignal[])
+    // — the shape cannot carry a degraded flag without a breaking contract
+    // change (blok B). This loud, tenant-scoped log is the only trace an
+    // operator has that "0 delay signals" was actually a failure.
+    logger.error('[delayDetectionService] detectDelaySignals failed', {
+      error: err instanceof Error ? err.message : String(err),
+      organizationId,
+      projectId,
+    });
     return [];
   }
 }

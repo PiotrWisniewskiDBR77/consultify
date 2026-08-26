@@ -6,6 +6,7 @@
  */
 
 import { all as dbAll } from '../../utils/DbPromise.js';
+import logger from '../../utils/Logger.js';
 
 type ProblemSeverity = 'critical' | 'warning' | 'info';
 type SourceEntityType = 'INITIATIVE' | 'TASK' | 'DECISION' | 'RAID_ITEM' | 'PERSON';
@@ -70,7 +71,16 @@ async function loadInitiatives(orgId: string, projectId?: string): Promise<any[]
       params.push(projectId);
     }
     return ((await dbAll(q, params)) || []) as any[];
-  } catch {
+  } catch (err) {
+    // DEC-120/A1-A3: this fed the manager-lane problem lists as a silent
+    // empty array — indistinguishable from "no initiatives" — with zero
+    // trace in the logs. Loud log + degraded consumption happens one layer
+    // up (getManagerProblems / ExecutionHub managerV8Degraded).
+    logger.error('[managerProblemsService] loadInitiatives failed', {
+      error: err instanceof Error ? err.message : String(err),
+      orgId,
+      projectId,
+    });
     return [];
   }
 }
@@ -93,7 +103,12 @@ async function loadTasks(orgId: string, projectId?: string): Promise<any[]> {
       params.push(projectId);
     }
     return ((await dbAll(q, params)) || []) as any[];
-  } catch {
+  } catch (err) {
+    logger.error('[managerProblemsService] loadTasks failed', {
+      error: err instanceof Error ? err.message : String(err),
+      orgId,
+      projectId,
+    });
     return [];
   }
 }
@@ -117,7 +132,12 @@ async function loadDecisions(orgId: string, projectId?: string): Promise<any[]> 
       params.push(projectId);
     }
     return ((await dbAll(q, params)) || []) as any[];
-  } catch {
+  } catch (err) {
+    logger.error('[managerProblemsService] loadDecisions failed', {
+      error: err instanceof Error ? err.message : String(err),
+      orgId,
+      projectId,
+    });
     return [];
   }
 }
@@ -141,7 +161,12 @@ async function loadRaidItems(orgId: string, projectId?: string): Promise<any[]> 
       params.push(projectId);
     }
     return ((await dbAll(q, params)) || []) as any[];
-  } catch {
+  } catch (err) {
+    logger.error('[managerProblemsService] loadRaidItems failed', {
+      error: err instanceof Error ? err.message : String(err),
+      orgId,
+      projectId,
+    });
     return [];
   }
 }
@@ -160,7 +185,11 @@ async function loadTaskCountsByPerson(orgId: string): Promise<Record<string, num
       if (r.assignee_id) map[r.assignee_id] = Number(r.cnt);
     }
     return map;
-  } catch {
+  } catch (err) {
+    logger.error('[managerProblemsService] loadTaskCountsByPerson failed', {
+      error: err instanceof Error ? err.message : String(err),
+      orgId,
+    });
     return {};
   }
 }
