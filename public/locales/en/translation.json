@@ -10364,7 +10364,8 @@
       "priority": "Priority",
       "businessOwner": "Business owner",
       "executionOwner": "Execution owner",
-      "applyChanges": "Apply changes"
+      "applyChanges": "Apply changes",
+      "changeOwnerAction": "Change owner"
     },
     "drawer": {
       "showLess": "Show less",

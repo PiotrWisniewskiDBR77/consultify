@@ -3,11 +3,11 @@ import {
   ArrowDown,
   ArrowUp,
   Eye,
+  ListOrdered,
   Loader2,
   Plus,
   Save,
   Send,
-  Sparkles,
   Trash2,
   X,
 } from 'lucide-react';
@@ -1039,9 +1039,9 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                 {analysisState === 'LOADING' ? (
                   <Loader2 className="animate-spin" size={15} />
                 ) : (
-                  <Sparkles size={15} />
+                  <ListOrdered size={15} />
                 )}{' '}
-                Analyze
+                Uporządkuj wg zależności
               </button>
               <button
                 type="button"

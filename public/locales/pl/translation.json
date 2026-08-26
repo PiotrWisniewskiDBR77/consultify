@@ -9682,7 +9682,8 @@
       "priority": "Priorytet",
       "businessOwner": "Właściciel biznesowy",
       "executionOwner": "Właściciel wykonawczy",
-      "applyChanges": "Zastosuj zmiany"
+      "applyChanges": "Zastosuj zmiany",
+      "changeOwnerAction": "Zmień właściciela"
     },
     "drawer": {
       "showLess": "Pokaż mniej",
