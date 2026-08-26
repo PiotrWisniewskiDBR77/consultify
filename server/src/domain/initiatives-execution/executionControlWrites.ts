@@ -178,3 +178,41 @@ export async function executeCanonicalManagerAction(
     };
   });
 }
+
+export interface ManagerSuggestionReview {
+  suggestionId: string;
+  initiativeId: string;
+  laneId: string;
+  outcome: 'APPROVE' | 'DEFER';
+  notes: string | null;
+  reviewedBy: string;
+  reviewedAt: string;
+}
+
+type ManagerSuggestionPayload = Omit<ManagerSuggestionReview, 'reviewedBy' | 'reviewedAt'>;
+
+export async function reviewManagerSuggestion(
+  unitOfWork: MaterialCommandUnitOfWork,
+  envelope: MaterialCommandEnvelope<ManagerSuggestionPayload>
+): Promise<MaterialCommandResult<ManagerSuggestionReview>> {
+  return executeMaterialCommand(unitOfWork, envelope, async (tx) => {
+    const initiative = await tx.getRelatedAggregateForUpdate<Record<string, unknown>>(
+      envelope.organizationId,
+      'initiative',
+      envelope.payload.initiativeId
+    );
+    if (!initiative) throw new MaterialCommandValidationError('Initiative not found');
+    const review: ManagerSuggestionReview = {
+      ...envelope.payload,
+      reviewedBy: envelope.actorId,
+      reviewedAt: new Date().toISOString(),
+    };
+    return {
+      mutation: review,
+      response: review,
+      eventType: 'manager-suggestion.reviewed',
+      eventPayload: review,
+      auditPayload: review,
+    };
+  });
+}

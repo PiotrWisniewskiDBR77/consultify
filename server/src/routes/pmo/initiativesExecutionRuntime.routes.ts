@@ -63,6 +63,7 @@ import {
   executeCanonicalManagerAction,
   recordRaidMitigation,
   recordExecutionRealization,
+  reviewManagerSuggestion,
 } from '../../domain/initiatives-execution/executionControlWrites.js';
 import {
   gateSignoffId,
@@ -826,6 +827,13 @@ const ManagerExecutionActionSchema = z.object({
   problemId: z.string().min(1),
   actionId: z.string().min(1),
   rationale: z.string().nullable().default(null),
+});
+const ManagerSuggestionReviewSchema = z.object({
+  expectedVersion: z.literal(0),
+  clientRequestId: z.string().min(1),
+  laneId: z.string().min(1),
+  outcome: z.enum(['APPROVE', 'DEFER']),
+  notes: z.string().nullable().default(null),
 });
 const InterventionDraftSchema = z.object({
   expectedVersion: z.number().int().min(0),
@@ -4681,6 +4689,41 @@ export function createInitiativesExecutionRuntimeRouter(
         commandType: 'manager-action.execute',
         createIfMissing: true,
         payload: { ...action, initiativeId },
+      });
+      res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
+    })
+  );
+  router.post(
+    '/initiatives/:initiativeId/manager-suggestions/:suggestionId/review',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      const parsed = ManagerSuggestionReviewSchema.safeParse(req.body);
+      if (!actor) return void res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+      if (!parsed.success)
+        return void res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
+      const initiativeId = firstParam(req.params.initiativeId);
+      const projectIds = await deps.reader.resolveProjectIdsForAggregate(
+        actor.organizationId,
+        'initiative',
+        initiativeId
+      );
+      if (!(await authorizeProjects(actor, projectIds, 'initiative.review')))
+        return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
+      const { expectedVersion, clientRequestId, ...review } = parsed.data;
+      const suggestionId = firstParam(req.params.suggestionId);
+      const result = await reviewManagerSuggestion(deps.unitOfWork, {
+        organizationId: actor.organizationId,
+        actorId: actor.userId,
+        aggregateType: 'manager_suggestion_review',
+        aggregateId: suggestionId,
+        expectedVersion,
+        clientRequestId,
+        correlationId: clientRequestId,
+        policyId: 'execution-control',
+        policyVersion: 1,
+        commandType: 'manager-suggestion.review',
+        createIfMissing: true,
+        payload: { ...review, initiativeId, suggestionId },
       });
       res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
     })

@@ -393,4 +393,49 @@ describe.skipIf(!REAL_PG)('Day 31 canonical writer mounted contract', () => {
       ).status
     ).toBe(404);
   });
+
+  it('reviews a manager suggestion with an explicit approve or defer outcome', async () => {
+    const suggestionId = `suggestion-${tag}`;
+    const path = `/api/initiatives/runtime-v1/initiatives/${initiativeId}/manager-suggestions/${suggestionId}/review`;
+    const body = {
+      expectedVersion: 0,
+      clientRequestId: `suggestion-request-${tag}`,
+      laneId: 'blocked',
+      outcome: 'DEFER',
+      notes: 'Wait for governed evidence',
+    };
+    expect((await request(app).post(path).set(auth()).send(body)).status).toBe(201);
+    const state = await client.query(
+      `SELECT version,payload_json FROM ie_aggregate_state
+       WHERE organization_id=$1 AND aggregate_type='manager_suggestion_review' AND aggregate_id=$2`,
+      [organizationId, suggestionId]
+    );
+    expect(state.rows[0]).toMatchObject({ version: 1 });
+    expect(state.rows[0].payload_json).toMatchObject({ initiativeId, outcome: 'DEFER' });
+    expect((await request(app).post(path).set(auth()).send(body)).body.status).toBe('REPLAYED');
+    expect(
+      (
+        await request(app)
+          .post(path)
+          .set(auth())
+          .send({ ...body, clientRequestId: `suggestion-conflict-${tag}` })
+      ).status
+    ).toBe(409);
+    expect(
+      (
+        await request(app)
+          .post(path)
+          .set({ Authorization: `Bearer ${foreignToken}`, 'X-Organization-Id': organizationId })
+          .send({ ...body, organizationId })
+      ).status
+    ).toBe(404);
+    expect(
+      (
+        await request(app)
+          .post(path)
+          .set({ Authorization: `Bearer ${viewerToken}` })
+          .send(body)
+      ).status
+    ).toBe(404);
+  });
 });
