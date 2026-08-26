@@ -350,18 +350,34 @@ const attachmentsUpload = multer({
 async function ensureAiProviderAndAccess(
   req: AuthRequest
 ): Promise<{ status: number; body: Record<string, unknown> } | null> {
-  const hasEnvProvider = !!String(process.env.OPENROUTER_API_KEY || '').trim();
+  // DEC-59: this gate previously only recognized OPENROUTER_API_KEY, even
+  // though llmService.ts (getProviderSync) already supports Anthropic and
+  // OpenAI as real providers — so a deployment configured with e.g.
+  // ANTHROPIC_API_KEY (the owner's key) would be turned away here as
+  // "no LLM provider configured" before ever reaching llmService. Recognize
+  // all three env keys llmService actually knows how to use directly.
+  // Placeholder-key filtering (sk-demo-*, etc.) stays where it already is —
+  // llmService.ts's `isPlaceholderKey` check, applied when the real call is
+  // made — this gate only answers "is *a* provider configured at all".
+  const hasEnvProvider = !!(
+    String(process.env.OPENROUTER_API_KEY || '').trim() ||
+    String(process.env.ANTHROPIC_API_KEY || '').trim() ||
+    String(process.env.OPENAI_API_KEY || '').trim()
+  );
   const hasDbProvider = !!(await dbGet(
     `SELECT 1 AS ok
        FROM llm_providers
-       WHERE is_active = true AND provider = 'openrouter' AND api_key IS NOT NULL AND api_key != ''
+       WHERE is_active = true
+         AND provider IN ('openrouter', 'anthropic', 'openai')
+         AND api_key IS NOT NULL AND api_key != ''
        LIMIT 1`
   ));
   if (!hasEnvProvider && !hasDbProvider) {
     return {
       status: 500,
       body: {
-        error: 'No LLM provider configured. Set OPENROUTER_API_KEY or configure OpenRouter.',
+        error:
+          'No LLM provider configured. Set OPENROUTER_API_KEY, ANTHROPIC_API_KEY or OPENAI_API_KEY, or configure a provider.',
         code: 'NO_LLM_PROVIDER',
       },
     };
