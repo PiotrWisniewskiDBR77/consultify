@@ -536,7 +536,8 @@ router.get(
     try {
       const reportContract = await assessmentReportContractService.build(
         organizationId,
-        req.params.sessionId
+        req.params.sessionId,
+        isNonEmptyString(req.query.outputId) ? req.query.outputId : undefined
       );
       res.status(200).json({ reportContract });
     } catch (error) {

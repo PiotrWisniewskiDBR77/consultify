@@ -145,6 +145,39 @@ describe.skipIf(!REAL_DB)('Assessment day 25 — production TO-BE path', () => {
         target_level: Number(row.target_level),
       }))
     ).toEqual([{ unit_id: '1A', current_level: 2, target_level: 5 }]);
+
+    const pinnedBefore = await request(app)
+      .get(`/api/method/sessions/${sessionId}/assessment-report-contract?outputId=${outputId}`)
+      .set('Authorization', `Bearer ${token}`);
+    const skipAfterFreeze = await request(app)
+      .post(`/api/method/sessions/${sessionId}/assessment-skip-reasons`)
+      .set('Authorization', `Bearer ${token}`)
+      .set('Idempotency-Key', `post-freeze-skip-${suffix}`)
+      .send({
+        unitId: '1A',
+        questionId: '1A-2',
+        level: 2,
+        skipCode: 'odroczone_do_kolejnej_rewizji',
+      });
+    expect(skipAfterFreeze.status).toBe(201);
+    const pinnedAfter = await request(app)
+      .get(`/api/method/sessions/${sessionId}/assessment-report-contract?outputId=${outputId}`)
+      .set('Authorization', `Bearer ${token}`);
+    const unpinnedAfter = await request(app)
+      .get(`/api/method/sessions/${sessionId}/assessment-report-contract`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(pinnedBefore.status).toBe(200);
+    expect(pinnedAfter.body).toEqual(pinnedBefore.body);
+    expect(unpinnedAfter.body).not.toEqual(pinnedBefore.body);
+  });
+
+  it('returns a machine-readable 404 for a missing report output revision', async () => {
+    const sessionId = await seedSession('active');
+    const response = await request(app)
+      .get(`/api/method/sessions/${sessionId}/assessment-report-contract?outputId=missing-output`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(response.status).toBe(404);
+    expect(response.body.code).toBe('REPORT_REVISION_NOT_FOUND');
   });
 
   it('rejects actorKind system over the caller-authenticated route', async () => {

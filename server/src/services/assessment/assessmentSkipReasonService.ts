@@ -47,7 +47,8 @@ export class AssessmentSkipReasonError extends Error {
       | 'SKIP_CODE_NOT_IN_DICTIONARY'
       | 'SESSION_NOT_FOUND'
       | 'INVALID_UNIT_OR_LEVEL'
-      | 'IDEMPOTENCY_KEY_PAYLOAD_MISMATCH',
+      | 'IDEMPOTENCY_KEY_PAYLOAD_MISMATCH'
+      | 'REPORT_REVISION_NOT_FOUND',
     readonly status: 400 | 404 | 409
   ) {
     super(code);
@@ -211,6 +212,33 @@ export class AssessmentSkipReasonService {
        WHERE r.organization_id = ? AND r.session_id = ?
        ORDER BY r.recorded_at ASC, r.id ASC`,
       [organizationId, sessionId],
+      { fallback: false }
+    );
+    return rows.map(mapRow);
+  }
+
+  async listActiveAsOf(
+    organizationId: string,
+    sessionId: string,
+    recordedAt: string
+  ): Promise<AssessmentSkipReason[]> {
+    const session = await DbPromise.get<{ id: string }>(
+      `SELECT id FROM method_sessions WHERE id = ? AND organization_id = ?`,
+      [sessionId, organizationId],
+      { fallback: false }
+    );
+    if (!session) throw new AssessmentSkipReasonError('SESSION_NOT_FOUND', 404);
+    const rows = await DbPromise.all<SkipReasonRow>(
+      `SELECT DISTINCT ON (r.unit_id, r.question_id) r.*,
+              (SELECT successor.id FROM assessment_skip_reasons successor
+               WHERE successor.organization_id = r.organization_id
+                 AND successor.supersedes_id = r.id
+                 AND successor.recorded_at <= ?
+               ORDER BY successor.recorded_at ASC, successor.id ASC LIMIT 1) AS superseded_by_derived
+       FROM assessment_skip_reasons r
+       WHERE r.organization_id = ? AND r.session_id = ? AND r.recorded_at <= ?
+       ORDER BY r.unit_id, r.question_id, r.recorded_at DESC, r.id DESC`,
+      [recordedAt, organizationId, sessionId, recordedAt],
       { fallback: false }
     );
     return rows.map(mapRow);

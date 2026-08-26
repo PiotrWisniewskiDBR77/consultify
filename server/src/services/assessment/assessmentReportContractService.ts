@@ -16,7 +16,7 @@ const AREA_MICROSTRUCTURE = [
 ] as const;
 
 export class AssessmentReportContractService {
-  async build(organizationId: string, sessionId: string) {
+  async build(organizationId: string, sessionId: string, outputId?: string) {
     const session = await DbPromise.get<{
       id: string;
       method_pack_version: string;
@@ -30,8 +30,20 @@ export class AssessmentReportContractService {
     if (!session) throw new AssessmentSkipReasonError('SESSION_NOT_FOUND', 404);
 
     const outputs = await methodOutputService.listOutputsBySession(organizationId, sessionId);
-    const output = outputs[0] ?? null;
-    const skipReasons = await assessmentSkipReasonService.listActive(organizationId, sessionId);
+    const output = outputId
+      ? await methodOutputService.getOutput(organizationId, outputId)
+      : (outputs[0] ?? null);
+    if (outputId && (!output || output.sessionId !== sessionId)) {
+      throw new AssessmentSkipReasonError('REPORT_REVISION_NOT_FOUND', 404);
+    }
+    const skipReasons =
+      outputId && output
+        ? await assessmentSkipReasonService.listActiveAsOf(
+            organizationId,
+            sessionId,
+            output.frozenAt
+          )
+        : await assessmentSkipReasonService.listActive(organizationId, sessionId);
     // FIX-2 (P1-2, nadzorca 2026-08-26): skip decisions are per-question
     // (unitId + questionId), never per-area. Group every active decision for
     // an area instead of collapsing to one arbitrary record — a single
