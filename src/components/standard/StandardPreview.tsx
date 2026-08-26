@@ -138,6 +138,16 @@ export interface StandardPreviewProps {
   onClose?: () => void;
   onOpenFull?: () => void;
   openLabel?: string;
+  /**
+   * FIX-1 (dyżur 26 chat-signals-front, odbiór P0.1) — addytywny prop.
+   * Gdy podany BEZ `onOpenFull`, nagłówek renderuje WYŁĄCZONY przycisk
+   * „Otwórz" z tym powodem jako tooltip (np. „Brak trasy do tego obiektu" /
+   * „Brak uprawnień do obiektu") zamiast milczeć o istnieniu destynacji.
+   * Gdy `onOpenFull` jest podany, ten prop jest ignorowany (aktywny przycisk
+   * ma pierwszeństwo). Brak obu propów ⇒ zero zmian względem dotychczasowego
+   * zachowania — przycisk w ogóle się nie renderuje.
+   */
+  openDisabledReason?: string;
   pinned?: boolean;
   onTogglePin?: () => void;
   headerExtra?: React.ReactNode;
@@ -258,6 +268,7 @@ export const StandardPreview: React.FC<StandardPreviewProps> = ({
   onClose,
   onOpenFull,
   openLabel,
+  openDisabledReason,
   pinned,
   onTogglePin,
   headerExtra,
@@ -434,6 +445,17 @@ export const StandardPreview: React.FC<StandardPreviewProps> = ({
             >
               <ExternalLink size={13} />
               {openLabel ?? t('common.open', isPolish ? 'Otwórz' : 'Open')}
+            </button>
+          ) : openDisabledReason ? (
+            <button
+              type="button"
+              disabled
+              aria-disabled="true"
+              title={openDisabledReason}
+              className="inline-flex items-center gap-2 h-8 px-3 rounded-full border border-c-border bg-c-surface text-c-text-muted opacity-60 cursor-not-allowed"
+            >
+              <ExternalLink size={13} />
+              {t('common.open', isPolish ? 'Otwórz' : 'Open')}
             </button>
           ) : null}
         </>

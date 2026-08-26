@@ -11,18 +11,21 @@
  *      (`reports.routes.ts`).
  *
  * Fail-closed contract (CLAUDE.md #7 — "Piotr nigdy nie jest pierwszym
- * testerem wizualnym"): default OFF. Resolution mirrors
- * `criterionWorkspaceV2Flag.ts` (query > localStorage > env > default), the
- * ONLY difference being the default value (`false` here, not `true`) — this
- * screen has not been shown to the owner yet, so it stays behind the flag
- * until a dev-render screenshot is accepted.
+ * testerem wizualnym"): default was OFF until the owner's odbiór. Piotr
+ * ZAAKCEPTOWAŁ na zrzutach dev-render (2026-08-27) — default flipped to ON
+ * (see `ideaInspectorRightRailFlag.ts` DEC-90 for the identical flip
+ * pattern). Resolution still mirrors `criterionWorkspaceV2Flag.ts` (query >
+ * localStorage > env > default) — only the bottom of the fallback chain
+ * changed; the outer catch below still resolves to OFF on any read error,
+ * unchanged, so a hostile/locked-down `window` never accidentally reveals
+ * the screen through an error path.
  *
  * Resolution order (highest wins):
  *   1. URL query `?ff_auditsFindingsAndReportView=0|1` — instant per-session
  *      bypass (dev-render harness / regression checks).
  *   2. `localStorage["ff.audits_findings_and_report_view"]` — user/org override.
  *   3. `import.meta.env.VITE_AUDITS_FINDINGS_AND_REPORT_VIEW` — build-time override.
- *   4. Default: OFF.
+ *   4. Default: ON (flip po akcepcie właściciela 27.08).
  *
  * Resolution result is cached at module scope — call
  * `resetAuditsFindingsAndReportViewFlagCache` between reads in tests.
@@ -70,9 +73,11 @@ function readLocalStorage(): boolean | null {
 let cached: boolean | null = null;
 
 /**
- * Resolution: query > localStorage > env > default (OFF, fail-closed). Any
- * read error along the chain resolves to OFF rather than throwing, so a
- * hostile/locked-down `window` never accidentally turns the screen ON.
+ * Resolution: query > localStorage > env > default (ON since the 2026-08-27
+ * owner accept). Any read error along the chain still resolves to OFF rather
+ * than throwing — the catch's fail-closed semantics are untouched by the
+ * flip, so a hostile/locked-down `window` never accidentally turns the
+ * screen ON through an error path.
  */
 export function isAuditsFindingsAndReportViewEnabled(): boolean {
   if (cached !== null) return cached;
@@ -81,7 +86,7 @@ export function isAuditsFindingsAndReportViewEnabled(): boolean {
     const fromQuery = readQueryOverride();
     const fromLs = fromQuery === null ? readLocalStorage() : null;
     const fromEnv = readEnvFlag();
-    resolved = fromQuery ?? fromLs ?? fromEnv ?? false;
+    resolved = fromQuery ?? fromLs ?? fromEnv ?? true;
   } catch {
     resolved = false;
   }

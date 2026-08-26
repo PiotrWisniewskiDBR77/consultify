@@ -115,12 +115,18 @@ vi.mock('@/services/api', () => ({
     getToolSession: (...args: unknown[]) => getToolSessionMock(...args),
     listToolSessions: vi.fn().mockResolvedValue({ items: [], total: 0, limit: 0, offset: 0 }),
     listAssessments: vi.fn().mockResolvedValue({ items: [], total: 0, limit: 100, offset: 0 }),
+    listAssessmentsLegacy: vi.fn().mockResolvedValue({ items: [], total: 0, limit: 100, offset: 0 }),
+    listToolOutputs: vi.fn().mockResolvedValue({ outputs: [] }),
     getAssessmentReports: vi.fn().mockResolvedValue([]),
     get: vi.fn().mockResolvedValue({ reports: [], success: true, data: [] }),
     getUsers: vi.fn().mockResolvedValue([]),
     createToolSession: (...args: unknown[]) => createToolSessionMock(...args),
     suggestTools: vi.fn().mockResolvedValue({ suggestions: [] }),
     getInitiativesByStatus: vi.fn().mockResolvedValue([]),
+    // flip po akcepcie właściciela 27.08: ff_toolsInsightsWiring now
+    // defaults ON, so DiscoveryToolsHub's bootstrap calls this
+    // unconditionally — must be mocked or the hub throws (undefined call).
+    listToolOutputs: vi.fn().mockResolvedValue({ outputs: [] }),
   },
 }));
 

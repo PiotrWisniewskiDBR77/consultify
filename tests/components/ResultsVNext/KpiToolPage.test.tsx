@@ -177,10 +177,25 @@ describe('KpiToolPage — /results/kpi/:kpiId (klasa L full tool)', () => {
     window.localStorage.clear();
   });
 
-  it('renders the honest disabled-flag empty state when kpiRegistry flag is OFF (default)', async () => {
+  // flip po akcepcie właściciela 27.08: kpiRegistry now defaults ON (D-D
+  // default-on, non-production host) — see resultsVNextFeatureFlags.ts and
+  // DEC-2026-08-26-112. Force OFF via the localStorage kill switch to keep
+  // this regression coverage of the honest disabled-flag empty state.
+  it('renders the honest disabled-flag empty state when kpiRegistry flag is OFF (localStorage override)', async () => {
+    window.localStorage.setItem('ff.results_vnext_kpi_registry', '0');
     renderAt(`/results/kpi/${KPI_ID}`);
     expect(await screen.findByTestId('results-vnext-kpi-tool-disabled')).toBeInTheDocument();
     expect(Api.get).not.toHaveBeenCalled();
+  });
+
+  // flip po akcepcie właściciela 27.08: the golden flow now renders by
+  // default (no explicit localStorage override needed) — this is the new
+  // production default path.
+  it('golden flow renders with NO explicit flag override — this is now the default path', async () => {
+    mockApiGet();
+    renderAt(`/results/kpi/${KPI_ID}`);
+    await waitFor(() => expect(screen.getByTestId('results-vnext-kpi-tool-page')).toBeInTheDocument());
+    expect(Api.get).toHaveBeenCalledWith(`/vnext/results/kpi/${KPI_ID}`);
   });
 
   it('golden flow: loads the KPI, shows real latest measurement, performance+data-quality shown as two independent chips', async () => {

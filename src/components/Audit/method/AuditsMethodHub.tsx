@@ -81,11 +81,13 @@ export function auditStartFingerprint(organizationId: string, userId: string, pa
   return `${organizationId}:${userId}:${packId}`;
 }
 
-// `findings` (U4 rejestr niezgodności/CAPA) is flag-gated (`ff_auditsFindingsAndReportView`,
-// default OFF — fail-closed, CLAUDE.md #7). Included in the valid-id set only
-// when the flag resolves ON, so a stale `?tab=findings` link from a previous
-// session correctly falls back to `processes` while the flag is OFF, exactly
-// like any other unknown tab id.
+// `findings` (U4 rejestr niezgodności/CAPA) is flag-gated
+// (`ff_auditsFindingsAndReportView`, default ON since 2026-08-27 owner
+// accept — CLAUDE.md #7). Included in the valid-id set only when the flag
+// resolves ON, so a stale `?tab=findings` link from a session predating the
+// flip still resolves correctly (and would fall back to `processes` if the
+// flag were ever forced OFF via localStorage/query), exactly like any other
+// unknown tab id.
 const BASE_TAB_IDS: AuditsMethodTabId[] = ['library', 'processes', 'outputs', 'reports', 'initiatives'];
 const TAB_IDS: AuditsMethodTabId[] = isAuditsFindingsAndReportViewEnabled()
   ? ['library', 'processes', 'outputs', 'reports', 'findings', 'initiatives']
