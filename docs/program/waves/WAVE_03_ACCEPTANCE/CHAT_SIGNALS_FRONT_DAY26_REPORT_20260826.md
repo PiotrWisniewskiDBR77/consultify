@@ -38,7 +38,7 @@ Migracje: ŻADNE
 | 4 | rola nie jest parametrem UI/API | TAK | brak filtra roli |
 | 5 | „Tylko moje” używa `isMine` | TAK | filtr wyłącznie klientowy; test potwierdza 0 GET |
 | 6 | nie wolno ufać trasie z DTO | TAK | jawny resolver ośmiu typów |
-| 7 | brak trasy nie może wywołać `navigate()` | TAK | `NO_ROUTE` renderuje wyłączoną pigułkę |
+| 7 | brak trasy nie może wywołać `navigate()` | TAK | `NO_ROUTE`/`FORBIDDEN` nigdy nie wywołują `navigate()` — TO było prawdą już 26.08. Nieprawdziwa była DALSZA część zdania: „renderuje wyłączoną pigułkę" — `StandardPreview` nie miał wtedy mechanizmu wyłączonego przycisku z powodem, więc nagłówek podglądu w ogóle NIE renderował kontrolki „Otwórz" dla tych sygnałów (ani aktywnej, ani wyłączonej). Naprawione 27.08 przez FIX-1 — patrz „FIX-y po odbiorze 27.08". |
 | 8 | cursor pochodzi z odpowiedzi | TAK | `nextCursor` w hooku feedu |
 | 9 | brak automatycznego odświeżania | TAK | wyłącznie akcja użytkownika |
 | 10 | 429 honoruje retry-after | TAK | `retryAfter` lub `retryAfterSeconds`, zablokowany przycisk |
@@ -53,7 +53,7 @@ Migracje: ŻADNE
 |---|---|---|---|---|---|
 | F.1 | ZROBIONE_WG_DoD | `59bd972bec` | realny util + query override | 6/6 | pośrednio 10/10 |
 | D.1 | ZROBIONE_WG_DoD | `f49cc7f8e9` | DTO/presentation/i18n | test severity | pełny L/D |
-| A.2 | CZĘŚCIOWO | `3fa569a001` | 8 wpisów; tylko KPI ma potwierdzoną trasę | resolver PASS | pigułki w podglądzie |
+| A.2 | CZĘŚCIOWO (26.08) → ZROBIONE_WG_DoD (27.08, FIX-1+FIX-4) | `3fa569a001`; FIX-1/FIX-4 patrz „FIX-y po odbiorze 27.08" | 8 wpisów; tylko KPI ma potwierdzoną trasę | resolver PASS (26.08); 6 testów dedykowanych `signalDestination.test.ts` (27.08) | 26.08: BRAK kontrolki „Otwórz" dla NO_ROUTE/FORBIDDEN (patrz erata #7 wyżej); 27.08: wyłączona pigułka z powodem (FIX-1) |
 | A.3 | ZROBIONE_WG_DoD | `585123bfb2` | realny tryb panelu | behavior 9/9 | pełny/pusty/producer-off |
 | A.4 | ZROBIONE_WG_DoD | `585123bfb2` | 4 stany odpowiedzi | behavior + harness | stany L/D |
 | B.1 | ZROBIONE_WG_DoD | `c70a72d45a` | prawy podgląd | behavior PASS | podgląd L/D |
@@ -62,6 +62,13 @@ Migracje: ŻADNE
 | E.1 | ZROBIONE_WG_DoD | `1e390b89a0` | harness port 3026 | render zakończony | 10 plików |
 | E.2 | ZROBIONE_WG_DoD | `df6da70f7c` | osobista inspekcja i poprawka | console/network czyste | 10/10 obejrzane |
 | T.1 | CZĘŚCIOWO | `d968881ffd` | testy zachowania + regresji | nowe 9/9, stare 17/17 | nie dotyczy |
+
+**POPRAWKA 27.08:** statusy A.3/A.4/B.1/C.1/T.1 powyżej to zapis stanu z 26.08 —
+zostawione bez zmiany jako historia dyżuru, ale były zawyżone względem DoD z
+instrukcji (np. A.4 wymaga testu na KAŻDY z sześciu stanów po treści; 26.08
+istniały testy tylko dla 3 — full/producer-off/dławienie). Uczciwy stan przed
+naprawą i wynik po FIX-4 (27.08) jest w sekcji „FIX-y po odbiorze 27.08"
+niżej — to ONA jest teraz wiążąca, nie wiersze powyżej.
 
 ## ★ TABELA PARYTETU Z PROJEKTEM
 
@@ -82,14 +89,14 @@ Migracje: ŻADNE
 
 | `signalType` | `route` z serwera | Trasa w SPA | Werdykt | Co widzi użytkownik |
 |---|---|---|---|---|
-| `task_overdue` | route DTO nie jest zaufana | brak szczegółowej | NO_ROUTE | wyłączona pigułka |
-| `task_due_soon_not_started` | jw. | brak szczegółowej | NO_ROUTE | wyłączona pigułka |
-| `task_blocked_stale` | jw. | brak szczegółowej | NO_ROUTE | wyłączona pigułka |
-| `initiative_no_baseline` | jw. | tylko lista (`routeConfig.ts:110`) | NO_ROUTE | wyłączona pigułka |
-| `decision_pending_stale` | jw. | tylko redirect listy (`AppRoutes.tsx:1568`) | NO_ROUTE | wyłączona pigułka |
-| `decision_blocking_dependents` | jw. | tylko redirect listy | NO_ROUTE | wyłączona pigułka |
+| `task_overdue` | route DTO nie jest zaufana | brak szczegółowej | NO_ROUTE | brak kontrolki „Otwórz" w ogóle (POPRAWKA 27.08/FIX-1: teraz wyłączona pigułka z powodem — patrz „FIX-y po odbiorze 27.08") |
+| `task_due_soon_not_started` | jw. | brak szczegółowej | NO_ROUTE | brak kontrolki „Otwórz" w ogóle (POPRAWKA 27.08/FIX-1: teraz wyłączona pigułka z powodem — patrz „FIX-y po odbiorze 27.08") |
+| `task_blocked_stale` | jw. | brak szczegółowej | NO_ROUTE | brak kontrolki „Otwórz" w ogóle (POPRAWKA 27.08/FIX-1: teraz wyłączona pigułka z powodem — patrz „FIX-y po odbiorze 27.08") |
+| `initiative_no_baseline` | jw. | tylko lista (`routeConfig.ts:110`) | NO_ROUTE | brak kontrolki „Otwórz" w ogóle (POPRAWKA 27.08/FIX-1: teraz wyłączona pigułka z powodem — patrz „FIX-y po odbiorze 27.08") |
+| `decision_pending_stale` | jw. | tylko redirect listy (`AppRoutes.tsx:1568`) | NO_ROUTE | brak kontrolki „Otwórz" w ogóle (POPRAWKA 27.08/FIX-1: teraz wyłączona pigułka z powodem — patrz „FIX-y po odbiorze 27.08") |
+| `decision_blocking_dependents` | jw. | tylko redirect listy | NO_ROUTE | brak kontrolki „Otwórz" w ogóle (POPRAWKA 27.08/FIX-1: teraz wyłączona pigułka z powodem — patrz „FIX-y po odbiorze 27.08") |
 | `kpi_threshold_breached` | jw. | `/results/kpi/:id` (`routeConfig.ts:164`) | ROUTE | aktywna pigułka |
-| `budget_overspend` | jw. | brak szczegółowej | NO_ROUTE | wyłączona pigułka |
+| `budget_overspend` | jw. | brak szczegółowej | NO_ROUTE | brak kontrolki „Otwórz" w ogóle (POPRAWKA 27.08/FIX-1: teraz wyłączona pigułka z powodem — patrz „FIX-y po odbiorze 27.08") |
 
 Znalezisko P1: właściciele routingu powinni dostarczyć kanoniczne szczegółowe trasy dla siedmiu typów; front nie może zgadywać.
 
@@ -139,6 +146,8 @@ Deklaracja: **ZASIĘG CZĘŚCIOWY**. Nie twierdzę, że pełny zakres §0.4a jes
 
 Dodano drzewo `chatSignals.*` w PL i EN w tym samym commicie. Oba drzewa mają identyczny kształt (107 dodanych linii na plik). Pełny zastany test i18n jest czerwony, więc nie podnoszę statusu pełnego i18n do PASS.
 
+**POPRAWKA 27.08 (FIX-3):** dokładny pomiar `tests/unit/i18n/s2-locale-added-keys.test.ts` (`per-key resolves in de/es/ar/ja`) przed jakąkolwiek naprawą: **1613 → 1692** brakujących kluczy per locale (**+79 wprowadzone przez ten dyżur** — wyłącznie drzewo `chatSignals.*`, wszystkie 79 potwierdzone `git diff f856e87d9f -- public/locales/en/translation.json`; zero kluczy poza `chatSignals.*`). Naprawione w FIX-3 — patrz „FIX-y po odbiorze 27.08": po naprawie test wraca DOKŁADNIE do baseline **1613** (nie 0 — pozostałe 1613 to zastany, niezwiązany z tym dyżurem dług, głównie brakujące formy liczby mnogiej `admin.*`).
+
 ## Kanon
 
 `bash scripts/check-list-canon.sh --all`: PASS ratchet — 394 naruszenia repo, baseline 394, brak nowych. `hardcoded-colors.baseline.json` i `a11y-jsx.baseline.json`: NIEZMIENIONE.
@@ -172,5 +181,87 @@ Dodano drzewo `chatSignals.*` w PL i EN w tym samym commicie. Oba drzewa mają i
 ## Licznik i czego nie zrobiono
 
 11 pozycji: 8 ZROBIONE_WG_DoD, 3 CZĘŚCIOWO, 0 implementacyjnych STOP; flaga nadal OFF. Nie dostarczyłem siedmiu nieistniejących tras, selektora wielu presetów drzemki ani pełnego zielonego pomiaru Z23.
+
+---
+
+## FIX-y po odbiorze 27.08
+
+Dyżur 26 dostał werdykt CZERWONY. Poniżej lista naprawczych FIX-ów wykonanych
+27.08 na gałęzi `codex/day26-fixes-20260827` (worktree
+`/private/tmp/consultify-day26-fixes`), 11 commitów, z uczciwym stanem
+przed/po dla każdej pozycji.
+
+### P0 — blokery odbioru
+
+| # | Co | Commit | Stan PRZED (26.08) | Stan PO (27.08) |
+|---|---|---|---|---|
+| FIX-1 | Wyłączona pigułka „Otwórz” z powodem dla NO_ROUTE/FORBIDDEN | `56b1ad7a10` (StandardPreview) + **`c3e89f0626` (korekta — realna integracja)** | Nagłówek podglądu w ogóle NIE renderował kontrolki „Otwórz” dla tych sygnałów — twierdzenie w erracie #7/A.2 o „wyłączonej pigułce” było nieprawdziwe. | `StandardPreview` dostał addytywny `openDisabledReason`. **Odkrycie w trakcie naprawy:** ten prop sam w sobie nic nie renderował na żywo — `ChatSignalsFeedPreview` renderuje w trybie `embedded`, w którym `StandardPreview` wycisza WŁASNY nagłówek (powłokę nagłówka/stopki ma `TableWithPreviewLayout`). Realna, widoczna kontrolka „Otwórz” (aktywna dla ROUTE, wyłączona z powodem dla NO_ROUTE/FORBIDDEN) jest teraz podłączona w `ChatSignalsFeed.tsx` przez istniejący punkt rozszerzenia `renderPreviewActions` — zero zmian w `TableWithPreviewLayout.tsx`. Potwierdzone wizualnie w realnej przeglądarce (nie tylko testem) — patrz zrzuty `04-podglad-*`. |
+| FIX-2 | Korekta tego raportu | ten plik | Fałszywe zdanie o „wyłączonej pigułce” w 8 miejscach; brak uczciwego stanu i18n/testów serwera. | Poprawione inline (erata #7, tabela ośmiu destynacji, wiersz A.2) + ta sekcja. |
+| FIX-3 | +79 kluczy `chatSignals.*` w de/es/ar/ja | `3a743bc965` | `tests/unit/i18n/s2-locale-added-keys.test.ts`: **1613 → 1692** brakujących kluczy per locale (regresja tego dyżuru). | **1692 → 1613** — dokładnie z powrotem do baseline markera `f856e87d9f`. Zmierzone przed i po (patrz sekcja i18n wyżej). |
+| FIX-4 | Minima testowe DoD | `b1c4692677`, `95054816ae` | A.2: 1 test pośredni (nie dedykowany plik); A.3: 4/6; A.4: 3/6 (full, producer-off, dławienie — brakowały empty-good, producer-unknown/3b, forbidden, error); B.1: 0 dedykowanych testów nowego `ChatSignalsFeedPreview` (istniał tylko regres starego panelu); C.1: 1/4 (429 z `data`). | A.2: 6/6 w `signalDestination.test.ts` (≥4). A.3: 7 (4 istniejące + 3 nowe: domain chip → `?domain=`, `nextCursor` dokleja, brak kursora chowa przycisk). A.4: 6/6 stanów po treści. B.1: 9 nowych testów w `ChatSignalsFeedPreview.behavior.test.tsx` (3 akcje × sukces/4xx, 4 presety, pusty `evidence`, `INTERPRETED` bez `provenance`). C.1: 4 (200 ON, 200 OFF, 429 z `data`, 429 z `retryAfter`). Razem 29 nowych/rozszerzonych testów w tym pakiecie, wszystkie zielone. |
+
+### P1
+
+| # | Co | Commit | Wynik |
+|---|---|---|---|
+| FIX-5 | `refType` przez słownik, `observedAt` względnie | `e2eecd2caf` | „Skąd wiadomo” czyta `chatSignals.refType.*` (nowy słownik, 5 kluczy: task/decision/initiative/project/program — realny enum `SourceObjectTypeValues`) zamiast surowego stringa; `observedAt` przez nowy, wydzielony `signalPresentation.relativeTime`. Potwierdzone wizualnie: „Zadanie: 4 · 6 godz. temu”. |
+| FIX-6 | Presety drzemki (1h/4h/do jutra/tydzień) | `e2eecd2caf` | Cztery jawne przyciski presetów (front-only, dopasowane 1:1 do `server/src/routes/my-work/signals.routes.ts:158-166`, serwer nietknięty). Komunikat sukcesu czyta `snoozedUntil` z odpowiedzi i mówi do kiedy (`chatSignals.notice.snoozeUntil`). |
+| FIX-7 | Wyciszenie legacy panelu przy fladze ON | `483982ebda` | `ChatSignalsPanel`'s `useEffect` już nie woła `refresh()` (GET `/my-work/signals`) gdy `feedV2` jest `true`. Test: flaga ON → 0 wywołań legacy endpointu. |
+| FIX-8 | Dopisek „Tylko moje” | `e2eecd2caf`, doprecyzowane `3aeaf33229` | `StandardModuleBar` (poza zakresem — nie przyjmuje `title`/tooltip dla chipów), więc dopisek jest w samej etykiecie: „Tylko moje (lokalnie)” (skrócone z pierwotnego „(z załadowanych)” po odkryciu kolizji layoutu — patrz P2.13/finding niżej). |
+| FIX-9 | Relacje z treścią, nie „Powiązany rekord” | `e2eecd2caf` | Rozwiązane PO STRONIE FEEDU (`businessDisplayLabel.ts` nietknięty): etykieta chipu Relacji to WYŁĄCZNIE przetłumaczony typ (`refTypeLabel`), identyfikator żyje w tooltipie — to samo podejście, jakim `PreviewRelations` już radzi sobie z ID gdzie indziej. Generyczna etykieta nie występuje. |
+
+### P2
+
+| # | Co | Status |
+|---|---|---|
+| FIX-10 | Stan 3a trwały po `refresh` mimo `reload()` | ZROBIONE (`d92dea37c2`) — `useSignalsFeed.load()` już nie nadpisuje `producerEnabled` wartością `undefined`; tylko jawne `true`/`false` z odpowiedzi wygrywa. |
+| FIX-11 | Usunięcie `initialUiState` z kodu produkcyjnego | ZROBIONE (`8bf03cc3af`, `3aeaf33229`) — usunięte z `ChatSignalsFeed.tsx`; harness symuluje dławienie przez `api.post` odrzucający z 429 + autoklik realnego przycisku (`data-testid="chat-signals-refresh"`, dodany dla tego celu). |
+| FIX-12 | Fałszywe „0” na licznikach chipów przy aktywnym filtrze serwerowym | ZROBIONE (`e2eecd2caf`) — `serverSafeCount()` ukrywa (nie fałszuje) liczniki pozostałych chipów serwerowych, gdy jeden z nich jest aktywny. |
+| FIX-13 | Zrzuty w realnej szerokości 1040 px + `refType` mocka | ZROBIONE, **z wykrytym defektem** (`3aeaf33229`) — harness renderuje teraz na `max-w-[1040px]` (zamiast dowolnego 1320px) i mocki `entityType`/`refType` używają realnego enumu zamiast wymyślonych wartości. 6 zrzutów (pełny/podgląd/dławienie, light+dark) w `docs/program/waves/WAVE_03_ACCEPTANCE/evidence/chat-signals-front-fixes-20260827/`, wszystkie obejrzane osobiście. **Pełny i podgląd: czyste.** **Dławienie: NIE czyste** — przy realnej szerokości 1040px chip „≥ krytyczny” nachodzi na pigułkę „Dostępne za N s” (potwierdzone pomiarem DOM: ~16 px kolizji po skróceniu etykiety FIX-8, było ~60 px przed skróceniem). Przyczyna: `StandardModuleBar`/`ModuleMenu3` — wiersz chipów nie kurczy się poprawnie względem szerokiego sąsiada `menu3Right`. **Poza zakresem tego dyżuru** (`StandardModuleBar` jawnie na liście „nie ruszaj”) — zgłoszone jako osobne zadanie następcze (`task_a0bb8b6e`), niepomalowane pod dywan: zrzut `05-dlawienie-*` pokazuje prawdziwy, niedoskonały stan, nie ukrywa wady. |
+
+### Pomiar serwera — korekta
+
+Brief tego dyżuru FIX-ów podawał `server/src/services/signals/__tests__` jako
+„39 FAIL / 26 PASS (zastane, testy postgresowe bez bazy)”. **Zmierzone
+osobiście 27.08** (`cd server && npx vitest run src/services/signals/__tests__`,
+bez `DATABASE_URL`): **25 PASS, 1 FAIL, 39 SKIPPED** (65 testów w 10 plikach).
+Cztery pliki `*.postgres.test.ts` mają jawną strażniczkę
+`connectionString ? describe : describe.skip` — bez bazy poprawnie **pomijają
+się**, nie failują. Jeden realny, deterministyczny (nie flaky, sprawdzony
+dwukrotnie) fail:
+`executionSignalAdapter.test.ts > „does not adapt non-execution rules or
+rules without a frozen mapping”` — zastany, niezwiązany z tym dyżurem (zero
+zmian w `server/src` poza istniejącą licencją G.1), nienaprawiony (poza
+zakresem front-only dyżuru FIX-ów).
+
+### Nowe znalezisko
+
+**StandardModuleBar: kolizja wiersza chipów z `menu3Right` przy realnej
+szerokości.** Opisane w FIX-13 wyżej. Wpływa na KAŻDEGO konsumenta
+`StandardModuleBar` z szerokim `menu3Right`, nie tylko na ten feed. Zadanie
+następcze: `task_a0bb8b6e`.
+
+### Testy — zbiorczo po FIX-ach
+
+| Plik | Testy | Wynik |
+|---|---:|---|
+| `signalDestination.test.ts` (nowy) | 6 | 6/6 PASS |
+| `ChatSignalsFeed.behavior.test.tsx` (rozszerzony) | 23 | 23/23 PASS |
+| `ChatSignalsFeedPreview.behavior.test.tsx` (nowy) | 9 | 9/9 PASS |
+| `StandardPreview.test.tsx` (rozszerzony) | 9 | 9/9 PASS |
+| `ChatSignalsPanel.actions.test.tsx` (regresja legacy) | 11 | 11/11 PASS |
+| `chatSignalsFeedFlag.test.ts` (regresja) | 6 | 6/6 PASS |
+| `s2-locale-added-keys.test.ts` | 13 | 5 PASS / 8 FAIL — **identyczne z baseline 1613** (dług zastany, admin.\* liczba mnoga, poza zakresem) |
+
+`bash scripts/check-list-canon.sh`: PASS ratchet po każdym commicie (394
+naruszeń, baseline 394, dług nie rośnie). Zero nowego długu `check-artefakt`,
+`check-gestosc`.
+
+Potwierdzone, że sześć plików BEZ ZWIĄZKU z tym dyżurem (`UnifiedChatPanel.
+test.tsx`, `UnifiedChatPanel.helpers.test.ts`, `WorkCanvasDocumentPanel.
+test.tsx`, `AgentPlanPanel.readableLabels.test.tsx`, `Composer.singleBorder.
+guard.test.ts`, `KimiWorkspace/PrezentacjeView.templateBrief.test.tsx`) failują
+IDENTYCZNIE na HEAD sprzed tych FIX-ów (`git stash` + ponowny przebieg) — nie
+są regresją tej pracy.
 
 Gotowe do polish-passu nadzorcy.
