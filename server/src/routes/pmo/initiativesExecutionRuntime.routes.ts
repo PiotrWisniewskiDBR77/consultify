@@ -119,6 +119,7 @@ import {
   createReportRun,
   transitionReportRun,
 } from '../../domain/initiatives-execution/reportRun.js';
+import { reconstructReportRun } from '../../domain/initiatives-execution/reportReconstruction.js';
 import { resolveDefinitionRemediationWork } from '../../domain/initiatives-execution/resolveDefinitionRemediationWork.js';
 import {
   acceptResourceCommitment,
@@ -1012,6 +1013,7 @@ const ReportTransitionSchema = z.discriminatedUnion('action', [
     taskVersion: z.number().int().min(1),
   }),
 ]);
+const ReportReconstructionSchema = z.object({ asOf: z.string().datetime() });
 const AcceptanceCommandSchema = z
   .object({ expectedVersion: z.number().int().min(0), clientRequestId: z.string().min(1) })
   .passthrough();
@@ -1277,7 +1279,7 @@ export function createInitiativesExecutionRuntimeRouter(
             ];
       } else if (path.startsWith('/report-runs/')) {
         const id = idAfter('/report-runs/');
-        existing = path.includes('/transitions');
+        existing = path.includes('/transitions') || path.includes('/reconstruct');
         projectIds = existing
           ? await deps.reader.resolveProjectIdsForAggregate(actor.organizationId, 'report_run', id)
           : await deps.reader.resolveProjectIdsForAggregate(
@@ -4720,6 +4722,30 @@ export function createInitiativesExecutionRuntimeRouter(
           payload: payload as any,
         })
       );
+    })
+  );
+  router.post(
+    '/report-runs/:reportRunId/reconstruct',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      const parsed = ReportReconstructionSchema.safeParse(req.body);
+      if (!actor) {
+        res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+        return;
+      }
+      if (!parsed.success || new Date(parsed.data.asOf).getTime() > Date.now()) {
+        res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
+        return;
+      }
+      const reportRunId = firstParam(req.params.reportRunId);
+      const run = (await deps.reader.listReportRuns(actor.organizationId)).find(
+        (item: any) => item.reportRunId === reportRunId
+      );
+      if (!run || !(await canViewAggregate(actor, 'report_run', reportRunId))) {
+        res.status(404).json({ error: { code: 'NOT_FOUND' } });
+        return;
+      }
+      res.json(reconstructReportRun(run as any, parsed.data.asOf));
     })
   );
   router.get(
