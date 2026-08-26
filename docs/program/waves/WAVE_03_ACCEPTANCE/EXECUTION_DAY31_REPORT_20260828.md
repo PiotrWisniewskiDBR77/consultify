@@ -102,6 +102,62 @@ rg "budget|realization|raid.*mitigation|problem-actions|suggestions/apply|manage
 
 E-O3, E-O4 i E-O5 pozostają nierozstrzygnięte; nie przyjęto żadnego progu, wagi, SLA, bufora ani taksonomii.
 
+## B.5 — as-of
+
+Dowieziono P1 — wersję źródła na moment. `PostgresAsOfVersionReader` wybiera `MAX(aggregate_version)` ograniczone `organization_id` i `created_at <= asOf`; nie odtwarza payloadu i nie podstawia bieżącej migawki. Test z wersjami 1/2/3 zwraca wersję 2 dla chwili między 2 i 3, `NO_EVENT_HISTORY_BEFORE_AS_OF` przed pierwszym zdarzeniem, 400 dla przyszłości oraz dowodzi niezmienności runu przed/po. P2 pozostaje `NOT_PROVEN`; P3 nie został zbudowany i nie ma backfillu historii.
+
+## B.6 — pięć rodzin niezależnych
+
+| Rodzina                    | Wzór                                                                             | Licznik / mianownik w teście               | Pusta populacja       |
+| -------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------ | --------------------- | --------------------- | --------------------- |
+| plan-delivery              | zadania `COMPLETED` z datą należną / wszystkie zadania z datą należną w tygodniu | 1 / 2                                      | `null`, `BRAK_ŹRÓDŁA` |
+| blocked-work               | zadania `BLOCKED` / zadania `OPEN                                                | BLOCKED                                    | COMPLETED` w tygodniu | 1 / 2                 | `null`, `BRAK_ŹRÓDŁA` |
+| milestone                  | kamienie `ACHIEVED                                                               | COMPLETED` / wszystkie kamienie w tygodniu | 1 / 2                 | `null`, `BRAK_ŹRÓDŁA` |
+| dependency                 | zależności z oboma tenantowymi końcami / zależności utworzone w tygodniu         | 1 / 1                                      | `null`, `BRAK_ŹRÓDŁA` |
+| intervention-effectiveness | weryfikacje `EFFECTIVE` / wszystkie interwencje z wynikiem weryfikacji           | 1 / 2                                      | `null`, `BRAK_ŹRÓDŁA` |
+
+Wszystkie zapytania filtrują `organization_id`; test seeduje dokładne wartości i drugi tenant nie jest włączany do licznika. Nie dodano `scheduleVariance`, `cycleTime`, `throughput` ani `blockedRate`.
+
+## B.7 — polityka
+
+### STOP — B.7
+
+Powód: istniejący `MaterialCommandTransaction` nie udostępnia operacji na `execution_control_kpi_policies`, a `materialCommand.ts` jest imiennie nietykalny; zapis poza tą transakcją rozdzieliłby mutację od `ie_audit_events` i złamał Z23/AMD-EXE-SPINE-AUTHORITY-004.
+
+Dowód: `materialCommand.ts:90-204` — brak metody polityki; `postgresMaterialCommandUnitOfWork.ts` implementuje wyłącznie kontrakt; `\d execution_control_kpi_policies` potwierdza istniejącą tabelę i `row_version`, więc migracja nie jest potrzebna.
+
+Co po decyzji: nadzorca może autoryzować addytywne rozszerzenie transakcji o CAS-upsert tabeli polityk wykonywany przed audytem/receipt/outbox w tym samym `BEGIN/COMMIT`. Nie wolno budować osobnego writera.
+
+Stan: NIE ZACOMMITOWANO; zero migracji, zero progów domyślnych.
+
+## B.8 — proweniencja
+
+Pięć policzonych rodzin zwraca pełny zbiór kanonicznych `initiativeId`, realne maksimum wersji źródeł, `scopeCompleteness: FULL` i `valueClass: CALCULATED`. Pusta populacja zwraca `ids: []`, wersję 0, `NO_POPULATION/UNKNOWN`; trzy rodziny zależne od nierozstrzygniętej polityki zwracają `NOT_CALCULABLE/UNKNOWN`.
+
+## B.9 — brak atrapy
+
+Test równoległy uruchamia dwa żądania z `expectedVersion: 0` i różnymi `clientRequestId` dla każdej z pięciu komend. Każda para daje dokładnie `[201,409]`, a niezależny readback `SELECT` daje `{states: 1, audits: 1}`. Testy per komenda dowodzą replay tego samego klucza, konflikt innego klucza, obcego tenanta 404 i aktora bez zdolności 404.
+
+## B.10 — trzy konkurencyjne ósemki
+
+| Miara / rodzina              | Kontrakt właściciela `MODULE_ACCEPTANCE:135` | Layout `:258` / kod               | Dzień 11                   | Policzalna dziś                       | Zależność          |
+| ---------------------------- | -------------------------------------------- | --------------------------------- | -------------------------- | ------------------------------------- | ------------------ |
+| overdue tasks                | TAK                                          | plan-delivery (inna definicja)    | TAK                        | z tasków, ale nie jako osobna rodzina | brak               |
+| overdue decisions            | TAK                                          | decision-latency (inna definicja) | TAK                        | wymaga polityki                       | E-O4               |
+| impact-weighted backorder    | TAK                                          | initiative-risk (inna definicja)  | zastąpione                 | nie bez wag                           | E-O4               |
+| at-risk commitments          | TAK                                          | initiative-risk                   | at-risk 1–7 dni            | nie bez progu                         | E-O4               |
+| active blocks / blocked days | TAK                                          | blocked-work                      | active blocks              | częściowo: aktywne bloki              | brak               |
+| median/P90 decision latency  | TAK                                          | decision-latency                  | `BRAK_API`                 | nie bez SLA/uzgodnienia wzoru         | E-O4               |
+| throughput-to-inflow         | TAK                                          | brak dokładnej rodziny            | zastąpione przez due today | nie w tym endpointcie                 | decyzja produktowa |
+| data completeness            | TAK                                          | rozproszone `scopeCompleteness`   | TAK                        | tak jako proweniencja                 | brak               |
+| milestone                    | nie jako osobna pozycja                      | TAK                               | nie                        | TAK                                   | brak               |
+| dependency                   | nie jako osobna pozycja                      | TAK                               | nie                        | TAK                                   | brak               |
+| capacity                     | nie jako osobna pozycja                      | TAK                               | nie                        | nośnik bez wartości                   | E-O5               |
+| intervention-effectiveness   | nie jako osobna pozycja                      | TAK                               | nie                        | TAK                                   | brak               |
+| due today / undated risk     | nie                                          | nie                               | TAK, substytuty            | poza ósemką backendu                  | decyzja produktowa |
+
+Ten dyżur buduje wyłącznie ósemkę osiągalnego `GET /control-kpis` z `controlKpiReadModel.ts`, nie domyka `EXE-OWN-006`. Rekomendacja: właściciel powinien wskazać jedną nazwę kanonicznej ósemki i jawne mapowanie/wycofanie dwóch pozostałych; bez tej decyzji list nie ujednolicano.
+
 ## Pomiar testów — baseline w toku
 
 Zastane czerwone potwierdzone przed pierwszym commitem: `execution-control.routes.test.ts` nie startuje z powodu niepełnego lokalnego mocka `auth.middleware` (brak `validateOrgMembership`); `src/components/Initiatives/__tests__/financialNarrativeBlocks.test.ts` 1 FAIL / 158 PASS; pakiet `src/services/__tests__ -t execution` trafia także 5 testów `artifactRegistryService.retry.test.ts` i daje 5 FAIL / 22 SKIPPED. Nie naprawiano cudzych testów.
