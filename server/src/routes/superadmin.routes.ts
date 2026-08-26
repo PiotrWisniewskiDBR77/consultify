@@ -30,6 +30,7 @@ import {
   requireNoLegalHold,
   upsertOrgPolicy,
 } from '../services/OrgPoliciesService.js';
+import { invalidateOrganizationSuspensionCache } from '../services/organizationSuspensionGuard.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -865,6 +866,10 @@ router.post(
         ['suspended', tenantId],
         { fallback: false }
       );
+      // DEC-91: drop the memoised status so enforcement is immediate in this
+      // process instead of waiting out the guard's TTL. Other workers converge
+      // within the TTL on their own.
+      invalidateOrganizationSuspensionCache(tenantId);
 
       return {
         auditEvent: {
@@ -903,6 +908,9 @@ router.post(
         ['active', tenantId],
         { fallback: false }
       );
+      // DEC-91: without this the reactivated tenant would stay locked out for
+      // up to one TTL — the operator would appear to have done nothing.
+      invalidateOrganizationSuspensionCache(tenantId);
 
       return {
         auditEvent: {
@@ -1167,6 +1175,12 @@ router.post(
         ['purge_scheduled', tenantId],
         { fallback: false }
       );
+      // DEC-91 — any writer of `organizations.status` must drop the memoised
+      // answer, whether or not the status it writes currently blocks. Otherwise
+      // this process keeps serving a stale verdict for up to a full TTL, and a
+      // later widening of the blocking set (DEC-101 added 'locked') silently
+      // inherits the staleness.
+      invalidateOrganizationSuspensionCache(tenantId);
 
       return {
         auditEvent: {
@@ -1242,6 +1256,11 @@ router.post(
         ['locked', tenantId],
         { fallback: false }
       );
+      // DEC-91 / DEC-101 — 'locked' BLOCKS, so this invalidation is what makes
+      // emergency lockdown take effect on the next request in this process
+      // instead of up to a TTL later. Without it the "emergency" in the route
+      // name would be up to 30 seconds of continued access.
+      invalidateOrganizationSuspensionCache(tenantId);
 
       return {
         auditEvent: {

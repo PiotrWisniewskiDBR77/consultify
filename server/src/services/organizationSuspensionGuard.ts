@@ -1,0 +1,533 @@
+/**
+ * Organization suspension guard — DEC-91 / TRI-MUST-12.
+ *
+ * ===========================================================================
+ * WHAT THIS CLOSES
+ * ===========================================================================
+ * Suspending a tenant (`POST /api/superadmin/tenants/:id/suspend`, or
+ * `PUT /api/superadmin/organizations/:id` with `status: 'suspended'`) already
+ * wrote `organizations.status = 'suspended'` and emitted an audit event — but
+ * NOTHING read that column on the way in. A member of a suspended tenant could
+ * still log in and keep using every API surface. Day-15 acceptance (DEC-85)
+ * recorded exactly that gap.
+ *
+ * This module is the single place that answers "is this tenant suspended?" for
+ * both entry points:
+ *   - login   → `AuthController.login` (403 before a token is ever minted)
+ *   - API     → `attachUser` in `auth.middleware.ts` (403 on every request that
+ *               carries an already-issued token)
+ *
+ * ===========================================================================
+ * WHY A CACHE, AND WHAT ITS TTL MEANS
+ * ===========================================================================
+ * `attachUser` runs on EVERY authenticated request. An unconditional
+ * `SELECT status FROM organizations` there would add a round trip to the whole
+ * API surface. So the answer is memoised per organization for a short TTL
+ * (default 30 s, `ORG_SUSPENSION_CACHE_TTL_MS`).
+ *
+ * The TTL is therefore also the enforcement SLA for tokens that were already in
+ * the wild when the suspension landed: a live session of a suspended tenant
+ * stops working at the latest TTL seconds after the suspension is written. When
+ * the suspend/reactivate call is served by the SAME process, the cache is
+ * invalidated inline and the effect is immediate; in a multi-process
+ * deployment the other workers converge within the TTL.
+ *
+ * MULTI-REPLICA WINDOW — CONSCIOUSLY ACCEPTED
+ * ---------------------------------------------------------------------------
+ * The cache lives in PROCESS memory and the invalidation on suspend/reactivate
+ * is in-process only. With more than one replica behind the load balancer, the
+ * replicas that did not serve the status change keep answering from their own
+ * memory for up to one TTL. So with N replicas the worst case is: suspension
+ * takes effect immediately on the replica that served it and within
+ * `ORG_SUSPENSION_CACHE_TTL_MS` (default 30 s) everywhere else.
+ *
+ * This is accepted on purpose, not overlooked. Lower the TTL to shrink the
+ * window. A cross-process invalidation (pub/sub on the status writers) is the
+ * real fix and is deferred until the staging replica count is settled — at one
+ * replica it would be pure cost.
+ *
+ * ===========================================================================
+ * FAIL-OPEN ON DATABASE ERRORS — DELIBERATE, AND IT MUST NOT STICK
+ * ===========================================================================
+ * If the status lookup throws, this module reports "not suspended" and caches
+ * NOTHING. Fail-closed here would convert any transient database blip into a
+ * platform-wide 403 storm, and a request whose org lookup fails is going to
+ * fail downstream anyway. The suspension state itself is never inferred — only
+ * an explicit `'suspended'` row value blocks.
+ *
+ * "Caches nothing" is the load-bearing half of that sentence, and it was FALSE
+ * in the first revision — an adversarial audit caught it. `DbPromise.get`
+ * defaults to `fallback: true`, which RESOLVES `null` on an error, a timeout or
+ * a thrown exception instead of rejecting. The `catch` below was therefore dead
+ * for every DbPromise-backed caller: an error arrived as "no row", was read as
+ * "not suspended", and was written to the cache for a FULL TTL — refreshed by
+ * each subsequent error. A suspended tenant regained every front door for as
+ * long as the database misbehaved.
+ *
+ * Two independent defences now, because either alone can be re-broken:
+ *   1. every DbPromise-backed call site passes `{ fallback: false }`, so a
+ *      failure really rejects and really reaches the `catch`;
+ *   2. a NEGATIVE answer is cached only when a row was actually seen. A missing
+ *      row is never cached, so even a caller that forgets (1) can at most
+ *      fail open for that one request instead of for the next 30 seconds.
+ *
+ * Defence 2 also bounds the cache against a caller that passes attacker-chosen
+ * ids: absent rows leave no entry behind. See `MAX_CACHE_ENTRIES` for the hard
+ * ceiling that backs it up.
+ */
+
+/** Machine-readable refusal code. The client maps it to a localized string. */
+export const ORG_SUSPENDED_CODE = 'ORG_SUSPENDED';
+
+/** i18n key for the refusal. The `error` string below is only a fallback. */
+export const ORG_SUSPENDED_MESSAGE_KEY = 'errors.organizationSuspended';
+
+/** DEC-101 — emergency lockdown is a DIFFERENT event and says so to the user. */
+export const ORG_LOCKED_CODE = 'ORG_LOCKED';
+export const ORG_LOCKED_MESSAGE_KEY = 'errors.organizationLocked';
+
+/**
+ * Organization statuses that hard-block access — DEC-101.
+ *
+ * `suspended` — the billing/compliance action DEC-91 was written for.
+ *
+ * `locked`   — `POST /api/superadmin/tenants/:id/lockdown` ("emergency tenant
+ *              lockdown", gated on the `security_ops` capability and a
+ *              critical-severity confirmation). It wrote `status = 'locked'`,
+ *              audited it, and cut off NOBODY: no read path anywhere treated
+ *              `locked` as blocking. The most alarming button in the operator
+ *              console was decorative. Owner decision DEC-101 makes it real.
+ *
+ * Deliberately NOT blocking, also per DEC-101:
+ *
+ *   `purge_scheduled` / `expired` — these are the gentler product path. An
+ *   expired trial must meet a "renew your plan" experience, not a bare 403;
+ *   turning them into hard blocks here would cut off exactly the customers the
+ *   product is trying to win back. They stay out until that flow is designed.
+ *
+ *   `cancelled` — unchanged from DEC-91: widening further is its own decision.
+ *
+ * `blocked` / `pending` keep their own pre-existing login branches.
+ */
+const BLOCKING_ORG_STATUSES = new Set(['suspended', 'locked']);
+
+/**
+ * Statuses that are explicitly, deliberately NON-blocking.
+ *
+ * Not consulted by any logic — the check is `BLOCKING_ORG_STATUSES.has(...)`
+ * and everything else falls through. It exists so the DEC-101 negative control
+ * has something to enumerate, and so a future reader can tell "considered and
+ * excluded" apart from "never thought about".
+ */
+export const DELIBERATELY_NON_BLOCKING_ORG_STATUSES = Object.freeze([
+  'purge_scheduled',
+  'expired',
+]);
+
+const DEFAULT_CACHE_TTL_MS = 30_000;
+const MIN_CACHE_TTL_MS = 1_000;
+const MAX_CACHE_TTL_MS = 300_000;
+
+/**
+ * Accepts both database handles the codebase actually has: `DbPromise.get`
+ * (resolves `undefined` for no row) and `IDatabase.get` (resolves `null`).
+ * Widening here beats casting at every call site.
+ */
+type DbGet = <T>(sql: string, params?: unknown[]) => Promise<T | undefined | null>;
+
+interface CacheEntry {
+  suspended: boolean;
+  /**
+   * WHICH blocking status was seen, so the refusal can name it. `null` when the
+   * tenant is not blocked. DEC-101 introduced a second blocking status, and a
+   * bare boolean cannot tell a suspended tenant from a locked one — which is
+   * the whole difference the user-facing message has to carry.
+   */
+  blockingStatus: string | null;
+  expiresAt: number;
+}
+
+/**
+ * Hard ceiling on cache entries, as defence in depth behind "never cache a
+ * missing row". Real tenants are bounded, so this can only bind if something
+ * upstream starts feeding unverified ids — in which case a bounded, evicting
+ * map is a bug and an unbounded one is a memory-exhaustion vector.
+ *
+ * Eviction is oldest-inserted-first, which for a Map is simply its first key.
+ */
+const MAX_CACHE_ENTRIES = 10_000;
+
+const suspensionCache = new Map<string, CacheEntry>();
+
+function rememberSuspensionAnswer(organizationId: string, entry: CacheEntry): void {
+  // Re-inserting must refresh insertion order, or a hot tenant could be evicted
+  // while cold ones survive.
+  suspensionCache.delete(organizationId);
+  suspensionCache.set(organizationId, entry);
+  while (suspensionCache.size > MAX_CACHE_ENTRIES) {
+    const oldest = suspensionCache.keys().next();
+    if (oldest.done) break;
+    suspensionCache.delete(oldest.value);
+  }
+}
+
+/** Injectable clock so TTL expiry is testable without sleeping. */
+let now: () => number = () => Date.now();
+
+export function getOrgSuspensionCacheTtlMs(): number {
+  const raw = process.env.ORG_SUSPENSION_CACHE_TTL_MS;
+  if (raw === undefined) return DEFAULT_CACHE_TTL_MS;
+  const parsed = Number.parseInt(String(raw).trim(), 10);
+  if (!Number.isFinite(parsed)) return DEFAULT_CACHE_TTL_MS;
+  if (parsed < MIN_CACHE_TTL_MS) return MIN_CACHE_TTL_MS;
+  if (parsed > MAX_CACHE_TTL_MS) return MAX_CACHE_TTL_MS;
+  return parsed;
+}
+
+function normalizeOrganizationId(value: unknown): string {
+  if (typeof value !== 'string') return '';
+  const trimmed = value.trim();
+  if (!trimmed || trimmed.length > 128) return '';
+  return trimmed;
+}
+
+/**
+ * Drop the memoised answer for one organization (or all of them).
+ *
+ * Called inline by the suspend / reactivate / update-status handlers so that a
+ * reactivation performed in this process takes effect on the very next request
+ * instead of after the TTL.
+ */
+export function invalidateOrganizationSuspensionCache(organizationId?: unknown): void {
+  const normalized = normalizeOrganizationId(organizationId);
+  if (!normalized) {
+    suspensionCache.clear();
+    return;
+  }
+  suspensionCache.delete(normalized);
+}
+
+/**
+ * The pure, no-database half of the question: given a status VALUE already in
+ * hand, is it a blocking one — and which?
+ *
+ * Login is the caller that needs this: it has already SELECTed the organization
+ * row for its own `pending` / `blocked` branches, so asking the cache-backed
+ * lookup for the same row again would be a second query for no reason. More
+ * importantly, login used to carry its own hardcoded `=== 'suspended'` test,
+ * which is precisely how DEC-101's `locked` ended up enforced on the API but
+ * not at the front door. One list, two callers.
+ */
+export function resolveBlockingOrgStatusValue(status: unknown): string | null {
+  const canonical = String(status ?? '')
+    .trim()
+    .toLowerCase();
+  return canonical && BLOCKING_ORG_STATUSES.has(canonical) ? canonical : null;
+}
+
+/**
+ * WHICH blocking status this tenant is in, or `null` when it is not blocked.
+ *
+ * This is the full answer; `isOrganizationSuspended` is the boolean projection
+ * of it that every existing call site already uses. Callers that render a
+ * user-facing refusal want the status itself, because DEC-101 gave the platform
+ * two blocking statuses with genuinely different meanings — `suspended`
+ * (billing/compliance, "contact support") and `locked` (emergency security
+ * lockdown, "a platform administrator is investigating").
+ *
+ * Never throws: an unusable id or a failing lookup both resolve to `null`
+ * (see "FAIL-OPEN" in the file header).
+ */
+export async function resolveBlockingOrgStatus(
+  organizationId: unknown,
+  dbGet: DbGet
+): Promise<string | null> {
+  const normalized = normalizeOrganizationId(organizationId);
+  if (!normalized) return null;
+  if (typeof dbGet !== 'function') return null;
+
+  const cached = suspensionCache.get(normalized);
+  const currentTime = now();
+  if (cached && cached.expiresAt > currentTime) {
+    return cached.blockingStatus;
+  }
+
+  let row: { status?: unknown } | undefined | null;
+  try {
+    row = await dbGet<{ status?: unknown }>('SELECT status FROM organizations WHERE id = ?', [
+      normalized,
+    ]);
+  } catch {
+    // Fail open, and cache nothing — the next request retries the lookup.
+    return null;
+  }
+
+  // A missing organization row is not a suspension. Membership / org-context
+  // checks elsewhere own that case; inventing a 403 here would change the
+  // observable behaviour of unrelated surfaces.
+  //
+  // But it is NOT cached either, and that is the important part. A caller whose
+  // database handle swallows errors into `null` (DbPromise's `fallback: true`
+  // default) would otherwise turn every failed lookup into a 30-second
+  // "not suspended" verdict for a tenant that IS suspended. Re-querying an
+  // absent org is cheap; a sticky wrong answer is not. It also means an id the
+  // caller never verified cannot leave a cache entry behind.
+  const rawStatus = typeof row?.status === 'string' ? row.status : null;
+  if (rawStatus === null) return null;
+
+  const canonicalStatus = rawStatus.trim().toLowerCase();
+  const suspended = BLOCKING_ORG_STATUSES.has(canonicalStatus);
+  const blockingStatus = suspended ? canonicalStatus : null;
+
+  rememberSuspensionAnswer(normalized, {
+    suspended,
+    blockingStatus,
+    expiresAt: currentTime + getOrgSuspensionCacheTtlMs(),
+  });
+
+  return blockingStatus;
+}
+
+/**
+ * True when this tenant is in ANY blocking status.
+ *
+ * The boolean projection of `resolveBlockingOrgStatus`, kept because every
+ * enforcement point built for DEC-91 asks exactly this question and none of
+ * them should have to care that DEC-101 added a second blocking status.
+ *
+ * Never throws (see "FAIL-OPEN" in the file header).
+ */
+export async function isOrganizationSuspended(
+  organizationId: unknown,
+  dbGet: DbGet
+): Promise<boolean> {
+  return (await resolveBlockingOrgStatus(organizationId, dbGet)) !== null;
+}
+
+/**
+ * Paths a member of a suspended tenant may still reach.
+ *
+ * Exactly three, per DEC-91:
+ *   - `/api/superadmin/**` — the platform operator must be able to reactivate
+ *     the tenant (and inspect it) while the suspension is in force. That router
+ *     is itself behind `requireSuperAdmin`, so this is not a widening.
+ *   - `/api/auth/logout`  — never trap a client with a token it can neither use
+ *     nor drop (same reasoning as the lapsed-demo allowlist).
+ *   - `/api/health/**`    — liveness/readiness probes must not flip red because
+ *     one tenant got suspended.
+ *
+ * Nothing else. Matching is on the FULL request url (`originalUrl`), because
+ * `verifyToken` is mounted inside routers (e.g. `/api/superadmin`), where
+ * `req.path` is only the router-relative tail.
+ */
+const EXEMPT_PATH_PREFIXES = ['/api/superadmin', '/api/health'];
+const EXEMPT_PATHS_EXACT = ['/api/auth/logout'];
+
+function normalizeGuardPath(rawPath: unknown): string | null {
+  let path = String(rawPath || '');
+  path = path.split('?')[0] || '';
+  path = path.split('#')[0] || '';
+  if (!path) return null;
+
+  if (path.includes('%')) {
+    try {
+      path = decodeURIComponent(path);
+    } catch {
+      return null;
+    }
+  }
+
+  if (path.includes('\\') || path.includes('..') || path.includes('\0')) return null;
+  if (!path.startsWith('/')) return null;
+
+  path = path.replace(/\/{2,}/g, '/');
+  if (path.length > 1) path = path.replace(/\/+$/, '');
+  return path.toLowerCase();
+}
+
+export function isPathExemptFromOrgSuspension(rawPath: unknown): boolean {
+  const normalized = normalizeGuardPath(rawPath);
+  if (!normalized) return false;
+  if (EXEMPT_PATHS_EXACT.includes(normalized)) return true;
+  return EXEMPT_PATH_PREFIXES.some(
+    (prefix) => normalized === prefix || normalized.startsWith(`${prefix}/`)
+  );
+}
+
+/**
+ * The single refusal body, shared by the login path and the API middleware.
+ *
+ * DEC-101 — the SHAPE is identical for every blocking status, so no client has
+ * to learn a second envelope; only `code`, `messageKey` and the two English
+ * fallback strings change. That matters because the two statuses mean different
+ * things to the person reading them: `suspended` is a commercial/compliance
+ * state they can resolve by contacting support, while `locked` is an emergency
+ * security action taken BY the platform operator, where "contact support to
+ * restore access" would be actively misleading advice.
+ *
+ * Called with no argument it yields the `suspended` body — every pre-existing
+ * call site keeps its exact behaviour, which is correct for them because
+ * `suspended` was the only blocking status when they were written.
+ */
+export function buildOrgSuspendedResponseBody(blockingStatus?: string | null): {
+  error: string;
+  code: string;
+  messageKey: string;
+  guidance: string;
+} {
+  if (String(blockingStatus || '').trim().toLowerCase() === 'locked') {
+    return {
+      error: 'Your organization is temporarily locked by the platform operator.',
+      code: ORG_LOCKED_CODE,
+      messageKey: ORG_LOCKED_MESSAGE_KEY,
+      guidance:
+        'An emergency lockdown is in force. A platform administrator must lift it before access is restored.',
+    };
+  }
+  return {
+    error: 'Your organization has been suspended. Contact support to restore access.',
+    code: ORG_SUSPENDED_CODE,
+    messageKey: ORG_SUSPENDED_MESSAGE_KEY,
+    guidance: 'A platform administrator must reactivate this organization.',
+  };
+}
+
+/**
+ * ===========================================================================
+ * DB-VERIFIED PLATFORM SUPERADMIN (DEC-91 FIX-2)
+ * ===========================================================================
+ * Every DEC-91 gate exempts the platform operator, so that a suspended tenant
+ * can still be inspected and reactivated. The first revision decided that from
+ * the string `'SUPERADMIN'` in `req.userRole` — which `attachUser` may have
+ * populated from an `organization_members.role` row. That made a DATA-HYGIENE
+ * invariant (the CHECK constraint on that column allows only OWNER/ADMIN/
+ * MEMBER/CONSULTANT) load-bearing for a SECURITY decision: on a drifted
+ * database, a membership row saying `SUPERADMIN` bought a tenant-level admin a
+ * full exemption from its own suspension.
+ *
+ * The exemption is now the conjunction of two independent facts:
+ *   1. the signed token asserts `isSuperAdmin` — cheap, and false for everyone
+ *      normal, so the lookup below almost never runs; AND
+ *   2. `users.role` says superadmin in the DATABASE — the same "DB role as
+ *      source of truth" rule `superAdmin.middleware.ts` already enforces for
+ *      the control plane.
+ *
+ * A membership row can no longer contribute at all. Fails CLOSED: an
+ * unavailable database denies the exemption rather than granting it, which is
+ * safe here because the `/api/superadmin/**` PATH exemption is what actually
+ * guarantees the reactivation route — this only governs the operator's access
+ * to ordinary tenant surfaces.
+ */
+const SUPERADMIN_VERIFY_TTL_MS = 30_000;
+const superAdminVerifyCache = new Map<string, { verified: boolean; expiresAt: number }>();
+const MAX_SUPERADMIN_CACHE_ENTRIES = 5_000;
+
+export function invalidatePlatformSuperAdminCache(userId?: unknown): void {
+  const normalized = typeof userId === 'string' ? userId.trim() : '';
+  if (!normalized) {
+    superAdminVerifyCache.clear();
+    return;
+  }
+  superAdminVerifyCache.delete(normalized);
+}
+
+/** True only when `users.role` in the DATABASE names a platform superadmin. */
+export async function isVerifiedPlatformSuperAdmin(
+  userId: unknown,
+  dbGet: DbGet
+): Promise<boolean> {
+  const normalized = typeof userId === 'string' ? userId.trim() : '';
+  if (!normalized || normalized.length > 256) return false;
+  if (typeof dbGet !== 'function') return false;
+
+  const currentTime = now();
+  const cached = superAdminVerifyCache.get(normalized);
+  if (cached && cached.expiresAt > currentTime) return cached.verified;
+
+  let row: { role?: unknown } | undefined | null;
+  try {
+    row = await dbGet<{ role?: unknown }>('SELECT role FROM users WHERE id = ?', [normalized]);
+  } catch {
+    // Fail CLOSED — deny the exemption, cache nothing.
+    return false;
+  }
+
+  const role = typeof row?.role === 'string' ? row.role : null;
+  // As in the suspension guard: never cache an answer derived from an absent
+  // row, so a swallowed error cannot become a sticky verdict either way.
+  if (role === null) return false;
+
+  const verified = role.trim().toUpperCase() === 'SUPERADMIN';
+  superAdminVerifyCache.delete(normalized);
+  superAdminVerifyCache.set(normalized, {
+    verified,
+    expiresAt: currentTime + SUPERADMIN_VERIFY_TTL_MS,
+  });
+  while (superAdminVerifyCache.size > MAX_SUPERADMIN_CACHE_ENTRIES) {
+    const oldest = superAdminVerifyCache.keys().next();
+    if (oldest.done) break;
+    superAdminVerifyCache.delete(oldest.value);
+  }
+
+  return verified;
+}
+
+/**
+ * Minimal shape of the raw TCP socket handed to an HTTP `upgrade` listener.
+ * Duck-typed on purpose: this module stays free of node `net`/`http` imports,
+ * and the three collab gateways can pass their socket straight through.
+ */
+interface UpgradeSocketLike {
+  write: (chunk: string) => unknown;
+  destroy: () => unknown;
+}
+
+/**
+ * Refuse a WebSocket UPGRADE that never completes the handshake.
+ *
+ * The three raw-`ws` collab gateways answer a rejected upgrade by writing a
+ * bare HTTP status line onto the socket (`HTTP/1.1 403 Forbidden`) and
+ * destroying it — there is no `ws` yet, so there is no close code to send. This
+ * keeps that convention and adds the DEC-91 body, so a suspended tenant gets
+ * the SAME machine-readable payload here as on the JWT, API-key and Socket.IO
+ * paths instead of an unexplained socket teardown.
+ *
+ * Named rather than silent: every caller resolves the tenant server-side from
+ * the authenticated principal, so it is the caller's OWN org and nothing about
+ * any other tenant leaks.
+ */
+export function writeOrgSuspendedUpgradeRefusal(socket: UpgradeSocketLike): void {
+  try {
+    const body = JSON.stringify(buildOrgSuspendedResponseBody());
+    socket.write(
+      'HTTP/1.1 403 Forbidden\r\n' +
+        'Content-Type: application/json\r\n' +
+        `Content-Length: ${Buffer.byteLength(body, 'utf8')}\r\n` +
+        'Connection: close\r\n' +
+        '\r\n' +
+        body
+    );
+  } catch {
+    /* the peer is already gone; the destroy below is still the right ending */
+  }
+  try {
+    socket.destroy();
+  } catch {
+    /* already destroyed */
+  }
+}
+
+/** Test-only seam: deterministic clock + cache reset. Never used in runtime code. */
+export const __testing__ = {
+  setNow(fn: (() => number) | null): void {
+    now = fn ?? (() => Date.now());
+  },
+  reset(): void {
+    suspensionCache.clear();
+    superAdminVerifyCache.clear();
+    now = () => Date.now();
+  },
+  cacheSize(): number {
+    return suspensionCache.size;
+  },
+};

@@ -10,6 +10,11 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
 import { verifySuperAdmin as requireSuperAdmin } from '../../middleware/superAdmin.middleware.js';
+import {
+  buildOrgSuspendedResponseBody,
+  isOrganizationSuspended,
+  ORG_SUSPENDED_CODE,
+} from '../../services/organizationSuspensionGuard.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
@@ -110,6 +115,48 @@ const verifyScimToken = asyncHandler(async (req: ScimRequest, res: Response, nex
   }
   req.scimTokenId = row.id;
   req.scimOrgId = row.organization_id || undefined;
+
+  // ---------------------------------------------------------------------------
+  // DEC-91 / TRI-MUST-12 — SCIM is a FRONT DOOR, and it was standing open.
+  //
+  // This router does not use `verifyToken` or `verifyApiKey`; it authenticates
+  // with its own bearer scheme against `scim_tokens` and takes the tenant
+  // straight from `scim_tokens.organization_id`. Every DEC-91 gate built so far
+  // hangs off one of the other two paths, so NONE of them was ever reached
+  // here. A suspended tenant's provisioning key still drove eleven routes,
+  // including `POST/PUT/PATCH/DELETE /Users` and `/Groups` — creating,
+  // modifying and DEACTIVATING accounts inside a tenant that is supposed to be
+  // cut off. That is the same hole FIX-1 closed for `ik_` integration keys.
+  //
+  // Refused HERE, before the `usage_count` bump below and before `next()`, so a
+  // refused call writes NOTHING AT ALL — not the token's own usage counter, and
+  // certainly not a `users` row.
+  //
+  // `fallback: false` is load-bearing for the same reason as everywhere else:
+  // `DbPromise.get` otherwise resolves `null` on an error or a timeout, and the
+  // guard would read that as "no row" and therefore "not suspended".
+  //
+  // No superadmin carve-out: a SCIM token is a machine credential belonging to
+  // one tenant, never a platform-operator principal, so there is no operator
+  // access to preserve here. The operator reactivates through
+  // `/api/superadmin/**`, which this router is not part of.
+  // ---------------------------------------------------------------------------
+  if (
+    await isOrganizationSuspended(req.scimOrgId, <T,>(sql: string, params?: unknown[]) =>
+      dbGet<T>(sql, params, { fallback: false })
+    )
+  ) {
+    // SCIM error envelope (RFC 7644 §3.12), matching the two 401s above — an
+    // IdP parses this payload, so the DEC-91 code travels in `scimType` and the
+    // human-readable half in `detail`.
+    return res.status(403).json({
+      schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
+      scimType: ORG_SUSPENDED_CODE,
+      detail: buildOrgSuspendedResponseBody().error,
+      status: '403',
+    });
+  }
+
   await dbRun(
     "UPDATE scim_tokens SET last_used_at = datetime('now'), usage_count = usage_count + 1 WHERE id = ?",
     [row.id]

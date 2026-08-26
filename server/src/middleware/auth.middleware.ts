@@ -22,6 +22,12 @@ import {
   resolvePublicDemoPrincipal,
   retireExpiredDemoPrincipal,
 } from '../services/demo/demoPrincipalGuard.js';
+import {
+  buildOrgSuspendedResponseBody,
+  isPathExemptFromOrgSuspension,
+  isVerifiedPlatformSuperAdmin,
+  resolveBlockingOrgStatus,
+} from '../services/organizationSuspensionGuard.js';
 import { DEMO_ORG_ID, DEMO_SESSION_ORG_HEADER } from './demoGuard.middleware.js';
 
 // Used by security integrity gate and to ensure test bypasses never run in prod.
@@ -355,11 +361,33 @@ export interface AuthRequest extends AuthenticatedRequest {
 // DEPENDENCIES (injectable for testing)
 // ==========================================
 
+/**
+ * Query options the injected `dbGet` MUST honour.
+ *
+ * DEC-91 FIX-4 depends on `fallback: false`: `DbPromise.get` defaults to
+ * `fallback: true`, which RESOLVES `null` on an error or a timeout instead of
+ * rejecting — and the suspension guard would read that `null` as "no row" and
+ * therefore "not suspended".
+ *
+ * FIX-4 was written against the real `DbPromise.get`, which accepts this third
+ * argument — but `Dependencies.dbGet` was still declared with two parameters.
+ * So the file did not typecheck (TS2554 at the guard call site), and, worse,
+ * every `setDependencies({ dbGet })` double was free to silently ignore the
+ * option: the injected two-parameter function type-checked fine and dropped
+ * `fallback: false` on the floor. Declaring the option here makes the
+ * fail-open defence part of the CONTRACT that test doubles must satisfy,
+ * instead of an accident of the default implementation.
+ */
+export interface AuthDbGetOptions {
+  fallback?: boolean;
+  timeout?: number;
+}
+
 interface Dependencies {
   jwt: typeof jwt;
   config: { JWT_SECRET: string } | { JWT_SECRET?: string } | any;
   PermissionService: any; // PermissionService has many methods, we only use 'can'
-  dbGet: <T>(sql: string, params?: any[]) => Promise<T | undefined>;
+  dbGet: <T>(sql: string, params?: any[], options?: AuthDbGetOptions) => Promise<T | undefined>;
 }
 
 let deps: Dependencies;
@@ -908,6 +936,66 @@ const attachUser = async (
       guidance: 'Stop impersonation and retry the action from your own superadmin session.',
     });
     return;
+  }
+
+  // ---------------------------------------------------------------------------
+  // DEC-91 / TRI-MUST-12 — HARD ENFORCEMENT OF ORGANIZATION SUSPENSION
+  //
+  // Runs here, at the end of `attachUser`, because this is the first point where
+  // the EFFECTIVE tenant is final: the token org, an accepted `x-org-context`,
+  // the demo-session org and the "any ACTIVE membership" rescue above have all
+  // already had their say. Checking any earlier could refuse (or, worse, let
+  // through) a tenant the request was never actually going to run against.
+  //
+  // Path matching uses `originalUrl`, NOT `req.path`: `verifyToken` is mounted
+  // inside routers (`/api/superadmin`, …) where `req.path` is only the
+  // router-relative tail, so `/tenants/x/reactivate` would never match the
+  // superadmin exemption.
+  //
+  // Superadmins are exempt by principal as well as by path — mirroring the
+  // pre-existing `user.role !== 'SUPERADMIN'` carve-outs on the login path. A
+  // suspended tenant's own admins are ordinary ADMINs, so this does not weaken
+  // the block.
+  //
+  // Answer is TTL-cached in `organizationSuspensionGuard`; that TTL is the
+  // enforcement SLA for tokens already in the wild (see that module's header).
+  // ---------------------------------------------------------------------------
+  //
+  // FIX-2 — the exemption is NO LONGER decided by the string 'SUPERADMIN' in
+  // `req.userRole`. That value can come from an `organization_members.role`
+  // row, so a drifted database (the CHECK constraint allows only OWNER/ADMIN/
+  // MEMBER/CONSULTANT) let a tenant admin exempt themselves from their own
+  // tenant's suspension. It now takes BOTH the signed `isSuperAdmin` claim AND
+  // a `users.role` confirmation read from the database — the same "DB role as
+  // source of truth" rule the superadmin control plane already applies.
+  //
+  // The claim is checked first purely for cost: it is false for every ordinary
+  // principal, so the extra lookup effectively never runs on the hot path.
+  const strictSuspensionDbGet = <T,>(sql: string, params?: unknown[]) =>
+    dbGet<T>(sql, params, { fallback: false });
+  const isSuperAdminPrincipal =
+    resolvedIsSuperAdmin &&
+    (await isVerifiedPlatformSuperAdmin(decodedUserId, strictSuspensionDbGet));
+  if (!isSuperAdminPrincipal) {
+    const fullRequestPath = String(
+      safeRead(() => (req as Request).originalUrl, '') || safeRead(() => (req as Request).url, '')
+    );
+    if (!isPathExemptFromOrgSuspension(fullRequestPath)) {
+      // `fallback: false` is load-bearing: DbPromise.get otherwise RESOLVES
+      // null on error/timeout, which the guard would read as "not suspended"
+      // and cache for a full TTL.
+      // DEC-101 — resolve WHICH blocking status applies, not merely whether one
+      // does, so the refusal can say `locked` rather than mislabelling an
+      // emergency lockdown as a billing suspension.
+      const blockingStatus = await resolveBlockingOrgStatus(
+        req.organizationId,
+        strictSuspensionDbGet
+      );
+      if (blockingStatus !== null) {
+        res.status(403).json(buildOrgSuspendedResponseBody(blockingStatus));
+        return;
+      }
+    }
   }
 
   // Attach permission helper

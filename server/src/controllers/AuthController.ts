@@ -13,6 +13,11 @@ import {
   assertDemoPrincipalMayReceiveCredentials,
   DEMO_EXPIRED_USER_STATUS,
 } from '../services/demo/demoPrincipalGuard.js';
+import {
+  buildOrgSuspendedResponseBody,
+  invalidatePlatformSuperAdminCache,
+  resolveBlockingOrgStatusValue,
+} from '../services/organizationSuspensionGuard.js';
 import refreshTokenService from '../services/RefreshTokenService.js';
 import { recordFailedLogin } from '../services/securityAlerts.js';
 import { setAuthCookies } from '../utils/cookieAuth.js';
@@ -210,6 +215,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
               () => resolve()
             );
           });
+          invalidatePlatformSuperAdminCache(user.id);
           user.role = 'SUPERADMIN';
         } catch (e: any) {
           // Don't block login on a best-effort role sync; still override in-memory.
@@ -310,6 +316,16 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     // login must neither preserve a stale role from users.role nor mint a new
     // session after membership revocation. This also makes role changes visible
     // immediately in the next session without waiting for an old JWT to expire.
+    // DEC-91 FIX-2: capture the PLATFORM role from `users.role` before the line
+    // below overwrites `user.role` with the membership role. The suspension
+    // branch further down must not be satisfiable by an
+    // `organization_members.role` row that merely says 'SUPERADMIN' — that
+    // column's vocabulary is a data-hygiene invariant, not a security boundary.
+    const isPlatformSuperAdmin =
+      String(user.role || '')
+        .trim()
+        .toUpperCase() === 'SUPERADMIN';
+
     if (user.role !== 'SUPERADMIN') {
       if (!activeMembership?.role) {
         res.status(403).json({
@@ -333,6 +349,24 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       res.status(403).json({
         error: 'Your organization has been blocked. Contact support.',
       });
+      return;
+    }
+    // DEC-91 / TRI-MUST-12 — a blocked tenant must not mint new sessions.
+    // Until now `suspended` fell through this block entirely: the suspension was
+    // written and audited, but login carried on as if nothing had happened.
+    // SUPERADMIN is exempted for the same reason the two branches above exempt
+    // it — the operator has to be able to get in and reactivate the tenant.
+    //
+    // DEC-101 — the set of statuses that block is no longer spelled out here.
+    // It was, and the guard had its own copy, so `locked` was added to the guard
+    // and login silently kept letting locked tenants in: emergency lockdown cut
+    // off already-issued sessions (via the API middleware) while still handing
+    // out brand-new ones at the front door. `BLOCKING_ORG_STATUSES` in the guard
+    // is now the single list, and the refusal names the actual status so a
+    // locked tenant is not told to "contact support to restore access".
+    const loginBlockingStatus = resolveBlockingOrgStatusValue(org.status);
+    if (loginBlockingStatus !== null && !isPlatformSuperAdmin) {
+      res.status(403).json(buildOrgSuspendedResponseBody(loginBlockingStatus));
       return;
     }
 

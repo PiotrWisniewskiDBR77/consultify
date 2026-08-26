@@ -13,6 +13,7 @@ import speakeasy from 'speakeasy';
 
 import AccessCodeService from '../services/accessCodeService.js';
 import auditEventsService from '../services/AuditEventsService.js';
+import { invalidateOrganizationSuspensionCache } from '../services/organizationSuspensionGuard.js';
 import { alertPrivilegeEscalation } from '../services/securityAlerts.js';
 import { hasColumn } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
@@ -365,6 +366,14 @@ const updateOrganization = catchAsync(async (req, res, next) => {
     deps.db.run(sql, [...params, id], async function (err) {
       if (err) return next(new AppError(err.message, 500));
       if (this.changes === 0) return next(new AppError('Organization not found', 404));
+
+      // DEC-91: this endpoint is the SECOND writer of organizations.status (the
+      // first is POST /tenants/:id/suspend|reactivate). Both must drop the
+      // memoised suspension answer, or a status edit made here would take up to
+      // one cache TTL to be felt — and a reactivation would look like a no-op.
+      if (status !== undefined) {
+        invalidateOrganizationSuspensionCache(id);
+      }
 
       deps.ActivityService.log({
         organizationId: id,
@@ -1040,6 +1049,15 @@ const approveAccessRequest = catchAsync(async (req, res, next) => {
       [request.organization_id],
       (err) => {
         if (err) return next(new AppError('Failed to activate organization', 500));
+
+        // DEC-91 — this is a THIRD writer of `organizations.status`, and it was
+        // the only one that did not tell the suspension cache. The other two
+        // (suspend/reactivate in superadmin.routes.ts, and the status update in
+        // this controller) invalidate inline, so their effect is immediate in
+        // this process. Approving an access request wrote 'active' and stayed
+        // silent, which meant a tenant reactivated THIS way kept being refused
+        // for up to a full TTL by the very process that had just approved it.
+        invalidateOrganizationSuspensionCache(request.organization_id);
 
         deps.db.run(
           `UPDATE access_requests SET status = 'approved', reviewed_by = ?, reviewed_at = datetime('now') WHERE id = ? `,
