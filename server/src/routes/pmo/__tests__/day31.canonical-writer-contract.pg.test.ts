@@ -459,4 +459,26 @@ describe.skipIf(!REAL_PG)('Day 31 canonical writer mounted contract', () => {
       .set({ Authorization: `Bearer ${foreignToken}`, 'X-Organization-Id': organizationId });
     expect(foreign.status).toBe(404);
   });
+
+  it('resolves the legacy 409 prefix to an exact reachable canonical command', async () => {
+    const legacy = await request(app)
+      .post('/api/v8/execution-control/budget/entries')
+      .set(auth())
+      .send({ initiativeId });
+    expect(legacy.status).toBe(409);
+    expect(legacy.body).toMatchObject({
+      code: 'EXECUTION_RUNTIME_V1_WRITE_REQUIRED',
+      canonicalWriter: '/api/initiatives/runtime-v1',
+    });
+    const mapping = await request(app)
+      .get(`${legacy.body.canonicalWriter}/execution-write-map`)
+      .set(auth());
+    expect(mapping.status).toBe(200);
+    expect(mapping.body.mappings).toContainEqual({
+      legacyMethod: 'POST',
+      legacyPath: '/api/v8/execution-control/budget/entries',
+      canonicalCommand:
+        'POST /api/initiatives/runtime-v1/initiatives/:initiativeId/budget-entries/:entryId',
+    });
+  });
 });

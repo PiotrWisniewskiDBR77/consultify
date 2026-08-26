@@ -4775,6 +4775,43 @@ export function createInitiativesExecutionRuntimeRouter(
       res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
     })
   );
+  router.get('/execution-write-map', (_req, res) => {
+    res.json({
+      canonicalWriter: '/api/initiatives/runtime-v1',
+      mappings: [
+        {
+          legacyMethod: 'POST',
+          legacyPath: '/api/v8/execution-control/budget/entries',
+          canonicalCommand:
+            'POST /api/initiatives/runtime-v1/initiatives/:initiativeId/budget-entries/:entryId',
+        },
+        {
+          legacyMethod: 'POST',
+          legacyPath: '/api/v8/execution-control/realizations',
+          canonicalCommand:
+            'POST /api/initiatives/runtime-v1/initiatives/:initiativeId/realizations/:realizationId',
+        },
+        {
+          legacyMethod: 'PATCH',
+          legacyPath: '/api/v8/execution-control/raid/:raidItemId/mitigation',
+          canonicalCommand:
+            'POST /api/initiatives/runtime-v1/initiatives/:initiativeId/raid-mitigations/:raidItemId',
+        },
+        {
+          legacyMethod: 'POST',
+          legacyPath: '/api/v8/execution-control/manager/lanes/:laneId/problem-actions/execute',
+          canonicalCommand:
+            'POST /api/initiatives/runtime-v1/initiatives/:initiativeId/manager-actions/:managerActionId',
+        },
+        {
+          legacyMethod: 'POST',
+          legacyPath: '/api/v8/execution-control/manager/lanes/:laneId/suggestions/apply',
+          canonicalCommand:
+            'POST /api/initiatives/runtime-v1/initiatives/:initiativeId/manager-suggestions/:suggestionId/review',
+        },
+      ],
+    });
+  });
   router.post(
     '/management-signals/ingest',
     asyncHandler(async (req, res) => {
