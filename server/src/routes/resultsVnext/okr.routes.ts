@@ -158,6 +158,7 @@ import {
   listSupportRequestsForSet,
 } from '../../services/resultsVnext/okr/okrSupportRepository.js';
 import { listOrganizationOkrAttention } from '../../services/resultsVnext/okr/okrAttentionRepository.js';
+import { getSetCheckInSummary } from '../../services/resultsVnext/okr/okrCheckInSummaryRepository.js';
 import {
   listMyOkrSets,
   listOrganizationOkrTeamHealth,
@@ -3467,6 +3468,46 @@ router.get(
         });
     } catch (err) {
       handleOkrRouteError(res, err, 'listSetOkrAttention');
+    }
+  }
+);
+
+// ==========================================
+// GET /api/vnext/results/okr/sets/:setId/check-in-summary — getSetCheckInSummary (O.2)
+//
+// Day 17 instruction §O.2 / `DEC-62(d)`: read-only, server-side aggregate of
+// a Set's check-ins (per-KR staleness + Set-wide rollup) so the Set header
+// and the KR detail never compute the same thing twice with two different
+// formulas. Visibility gated the same way as `/sets/:setId/attention`
+// (§O.1): the Set is loaded through `getOkrSet` first — a missing/invisible
+// Set is `404`, never a `200` with an empty aggregate (an empty aggregate
+// would read as "this Set is clean," which is not the same claim as "you
+// cannot see this Set").
+// ==========================================
+
+router.get(
+  '/sets/:setId/check-in-summary',
+  validateParams(OkrSetIdParamsSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const set = await getOkrSet({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        setId: req.params.setId,
+      });
+      if (!set) {
+        res.status(404).json({ error: 'OKR Set not found', code: 'NOT_FOUND' });
+        return;
+      }
+      const summary = await getSetCheckInSummary({
+        setId: req.params.setId,
+        organizationId: auth.organizationId,
+      });
+      res.status(200).json(summary);
+    } catch (err) {
+      handleOkrRouteError(res, err, 'getSetCheckInSummary');
     }
   }
 );
