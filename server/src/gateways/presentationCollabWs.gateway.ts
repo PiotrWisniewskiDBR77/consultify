@@ -332,13 +332,20 @@ export function attachPresentationCollabWs(server: HttpServer): void {
           // OPS-DEMO-002: register for the periodic re-evaluation sweep. A handshake
           // check alone only proves the principal qualified at connect time; this is
           // what makes a principal that stops qualifying get disconnected.
-          const untrack = trackRealtimeConnection(userId, () => {
-            try {
-              ws.close(1008, 'realtime access revoked');
-            } catch {
-              /* already gone */
-            }
-          });
+          // DEC-91: passing the tenant enrols this connection in the suspension
+          // arm of the same sweep, so an org suspended DURING an open session
+          // loses its realtime channel too.
+          const untrack = trackRealtimeConnection(
+            userId,
+            () => {
+              try {
+                ws.close(1008, 'realtime access revoked');
+              } catch {
+                /* already gone */
+              }
+            },
+            orgCtx.organizationId
+          );
           ws.on('close', untrack);
           wss.emit('connection', ws, request, deckId);
         });

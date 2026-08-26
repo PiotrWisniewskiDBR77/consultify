@@ -32,6 +32,10 @@ import {
   DEMO_ENTRY_SOURCE_PREF_KEY,
   PUBLIC_DEMO_ENTRY_SOURCE,
 } from '../services/demo/demoSignupProvisioning.js';
+import {
+  isOrganizationSuspended,
+  ORG_SUSPENDED_CODE,
+} from '../services/organizationSuspensionGuard.js';
 
 export const REALTIME_DEMO_DENIED_REASON = 'demo_realtime_forbidden';
 
@@ -91,6 +95,13 @@ export async function evaluateRealtimeAccess(userId: string): Promise<RealtimeAc
 interface TrackedConnection {
   userId: string;
   close: () => void;
+  /**
+   * DEC-91: the tenant this connection is seated in, when the caller knows it.
+   * Optional so every pre-existing call site keeps compiling and behaving
+   * exactly as before — a connection registered without an org is simply not
+   * subject to the suspension arm of the sweep.
+   */
+  organizationId?: string;
 }
 
 const tracked = new Map<symbol, TrackedConnection>();
@@ -130,6 +141,28 @@ export async function sweepRealtimeConnections(): Promise<number> {
     } catch {
       decision = { allowed: false, reason: 'evaluation_failed' };
     }
+
+    // DEC-91 / TRI-MUST-12 — an organization suspended DURING an open session
+    // must lose its realtime sidechannel too, not just its HTTP access.
+    //
+    // This reuses the sweep that already exists for demo principals rather than
+    // standing up a second registry and a second timer: the connection is
+    // already tracked, already re-evaluated on a cadence, and already carries
+    // the `close` callback. The only new ingredient is the org id.
+    //
+    // The lookup behind `isOrganizationSuspended` is TTL-cached, so a sweep over
+    // N connections in the same tenant costs one query, not N.
+    if (decision.allowed && connection.organizationId) {
+      try {
+        if (await isOrganizationSuspended(connection.organizationId, dbGet)) {
+          decision = { allowed: false, reason: ORG_SUSPENDED_CODE };
+        }
+      } catch {
+        // Fail open, exactly as the guard itself does: a transient database
+        // fault must not mass-disconnect every open socket on the platform.
+      }
+    }
+
     if (!decision.allowed) {
       tracked.delete(key);
       closed += 1;
@@ -149,9 +182,18 @@ export async function sweepRealtimeConnections(): Promise<number> {
  *
  * Returns the cleanup function the caller must invoke on disconnect.
  */
-export function trackRealtimeConnection(userId: string, close: () => void): () => void {
+export function trackRealtimeConnection(
+  userId: string,
+  close: () => void,
+  /** DEC-91: optional — when supplied, the sweep also closes on org suspension. */
+  organizationId?: string
+): () => void {
   const key = Symbol('realtime-connection');
-  tracked.set(key, { userId: String(userId || '').trim(), close });
+  tracked.set(key, {
+    userId: String(userId || '').trim(),
+    close,
+    organizationId: String(organizationId || '').trim() || undefined,
+  });
   ensureSweepRunning();
   return () => {
     tracked.delete(key);
