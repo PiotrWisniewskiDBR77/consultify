@@ -84,9 +84,25 @@ Mimo pustych grepów nie wykonałem usunięcia w A.2, ponieważ A.1 nie ma jeszc
 
 ## A.3 — kontrakt dla frontu (potwierdzony zakres)
 
-| Wołający                            | Woła dziś                                             | Wynik/diagnoza                             | Trasa kanoniczna                                  | Body / odpowiedź                                                   | Kody                  | Uwaga                                     |
-| ----------------------------------- | ----------------------------------------------------- | ------------------------------------------ | ------------------------------------------------- | ------------------------------------------------------------------ | --------------------- | ----------------------------------------- |
-| `src/services/api.ts:8351`          | `GET /assessment-workflow/:id`                        | kształt v2 na v1; brak handlera            | `GET /assessment-workflow-v2/:id`                 | body brak; `{assessment}` wg kontrolera                            | `401,404,500`         | zmiana wyłącznie frontowa                 |
+> **FIX-1 (P1-1, korekta po odbiorze dyżuru 20, 2026-08-26):** wiersz `api.ts:8351`
+> błędnie opisywał `GET /assessment-workflow/:id`, a linia 8351 to
+> `deleteAssessment` → `DELETE`. Poza tym ten wołający NIE ma fallbacku v2→v1 —
+> woła v1 wprost, bez próby v2 najpierw (inaczej niż pozostałe wiersze tej
+> tabeli). Tabela pomijała też dwa realne wywołania legacy-fallback (`getAssessmentSession`
+> i `updateAssessmentSession`), oba dają `404` na v1, ponieważ
+> `server/src/routes/assessment/assessment-workflow.routes.ts` (realny zamontowany
+> v1 router pod `/api/assessment-workflow`, potwierdzone `Gateway.ts:639`) nie ma
+> gołego handlera `GET/PUT /:assessmentId` — każda jego trasa wymaga dodatkowego
+> segmentu (np. `/:assessmentId/status`). Kanoniczne `GET/PUT/DELETE /:assessmentId`
+> istnieją tylko na v2 (`server/src/routes/assessment-workflow-v2.routes.ts:250,253,276`).
+> Poniższe trzy wiersze (8242, 8272, 8351) są poprawione/dopisane; reszta tabeli
+> niezmieniona.
+
+| Wołający                            | Woła dziś                                             | Wynik/diagnoza                                            | Trasa kanoniczna                                  | Body / odpowiedź                                                   | Kody                  | Uwaga                                     |
+| ----------------------------------- | ----------------------------------------------------- | ----------------------------------------------------------| -------------------------------------------------- | ------------------------------------------------------------------ | --------------------- | ----------------------------------------- |
+| `src/services/api.ts:8242`          | `GET /assessment-workflow/:id` (legacy fallback z v2)  | `404` na v1 — brak gołego handlera `GET /:assessmentId`   | `GET /assessment-workflow-v2/:id`                 | body brak; `{assessment}` wg kontrolera                            | `401,404,500`         | zmiana wyłącznie frontowa                 |
+| `src/services/api.ts:8272`          | `PUT /assessment-workflow/:id` (legacy fallback z v2)  | `404` na v1 — brak gołego handlera `PUT /:assessmentId`   | `PUT /assessment-workflow-v2/:id`                 | body wg `UpdateAssessmentSchema`; `{assessment}` wg kontrolera     | `400,401,404,500`     | zmiana wyłącznie frontowa                 |
+| `src/services/api.ts:8351`          | `DELETE /assessment-workflow/:id` (wołanie v1 wprost, BEZ próby v2 — jedyny taki przypadek w tej tabeli) | `404` — brak gołego handlera `DELETE /:assessmentId` na v1 | `DELETE /assessment-workflow-v2/:id`              | brak body; `204`/potwierdzenie wg kontrolera                       | `401,404,500`         | zmiana wyłącznie frontowa; ujednolicić z resztą (dodać próbę v2 najpierw) |
 | `src/services/api.ts:8363`          | `POST /assessment-workflow/:id/request-review`        | `404` na v1                                | `POST /assessment-workflow-v2/:id/request-review` | body wg `RequestReviewSchema`; odpowiedź workflow                  | `400,401,403,404,500` | zmiana wyłącznie frontowa                 |
 | `src/services/api.ts:8375`          | `POST /assessment-workflow/:id/report`                | `404` na v1                                | `POST /assessment-workflow-v2/:id/report`         | generowanie deterministycznego zastanego raportu; nie kontrakt E.1 | `400,401,404,500`     | nie mylić z nowym kontraktem 7 rozdziałów |
 | `src/services/api.ts:8387`          | `POST /assessment-workflow/:id/report/approve`        | `404` na v1                                | `POST /assessment-workflow-v2/:id/report/approve` | body approval; odpowiedź raportu                                   | `400,401,403,404,500` | front                                     |
