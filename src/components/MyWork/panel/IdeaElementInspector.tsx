@@ -1,3 +1,4 @@
+import { ChevronDown, X } from 'lucide-react';
 import React, { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -58,10 +59,68 @@ const SLUG = /\b[a-z]+-\d+(?:-[a-z0-9]+)*\b/gi;
 const safeText = (value?: string) => (value ?? '').replace(UUID, '').replace(SLUG, '').trim();
 
 const CountHeading = ({ title, count }: { title: string; count: number }) => (
-  <h3 className="text-xs font-semibold uppercase tracking-wide text-c-text-secondary">
+  <h3 className="flex-1 min-w-0 truncate text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
     {title} <span aria-label={`${title}: ${count}`}>{count}</span>
   </h3>
 );
+
+/**
+ * DEC-68 — „lekki charakter": accordion section with NO surrounding card/box.
+ * Header = hairline top border + 44px row (L1 muted label via CountHeading +
+ * chevron). Body = plain padding, no nested border. All sections default
+ * OPEN (matches pre-existing behavior — every field was always visible with
+ * no click-to-expand step; this keeps that contract while adding the
+ * collapse affordance the prototype shows).
+ */
+const InspectorSection: React.FC<{
+  title: string;
+  count: number;
+  children: React.ReactNode;
+}> = ({ title, count, children }) => {
+  const [open, setOpen] = useState(true);
+  return (
+    <section className="border-t border-c-border-subtle first:border-t-0">
+      <div
+        role="button"
+        tabIndex={0}
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            setOpen((v) => !v);
+          }
+        }}
+        className="flex h-11 w-full cursor-pointer items-center gap-2 px-4 hover:bg-c-surface-raised"
+      >
+        <CountHeading title={title} count={count} />
+        <ChevronDown
+          size={15}
+          className={`shrink-0 text-c-text-muted transition-transform duration-150 ${open ? '' : '-rotate-90'}`}
+          aria-hidden="true"
+        />
+      </div>
+      {open ? <div className="space-y-2 px-4 pb-4 pt-0.5">{children}</div> : null}
+    </section>
+  );
+};
+
+/** Quiet field row: 104px muted label + value/control. No box, no default border. */
+const FieldRow: React.FC<{ label: string; children: React.ReactNode }> = ({
+  label,
+  children,
+}) => (
+  <div className="flex items-start gap-3 py-1">
+    <span className="w-[104px] shrink-0 pt-px text-xs leading-relaxed text-c-text-muted">
+      {label}
+    </span>
+    <div className="min-w-0 flex-1 text-[12.5px] leading-relaxed text-c-text">{children}</div>
+  </div>
+);
+
+/** Quiet control classes shared by inputs/selects/textareas (border only on hover/focus). */
+const quietControlClass =
+  '-mx-1.5 w-full rounded-md border border-transparent bg-transparent px-1.5 py-0.5 text-[12.5px] text-c-text transition-colors hover:border-c-border-subtle hover:bg-c-surface-raised focus:border-c-border focus:bg-c-surface focus:outline-none';
 
 export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
   element,
@@ -104,7 +163,6 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
     }
   };
 
-  const sectionClasses = 'space-y-2 border-b border-c-border-subtle p-4';
   const counts = useMemo(
     () => ({
       // FIX-11: "Podstawowe"/"Treść i głębia" no longer report a hardcoded 1/5 —
@@ -137,7 +195,11 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
   if (!draft) {
     const emptyText = t('myWork.ideaInspector.empty', 'Zaznacz element, aby zobaczyć właściwości');
     return (
-      <aside className="flex h-full flex-col bg-c-surface" aria-label={emptyText}>
+      <aside
+        className="flex h-full w-[360px] flex-col bg-c-surface"
+        style={{ width: 360, minWidth: 360 }}
+        aria-label={emptyText}
+      >
         <div className="m-auto max-w-xs p-6 text-center">
           <p className="font-medium text-c-text">{emptyText}</p>
           <p className="mt-1 text-sm text-c-text-secondary">
@@ -177,39 +239,52 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
     <aside
       ref={rootRef}
       className="flex h-full flex-col bg-c-surface text-c-text"
+      style={{ width: 360, minWidth: 360 }}
       aria-label={t('myWork.ideaInspector.ariaElementProperties', 'Właściwości elementu')}
       onKeyDown={(event) => {
         if (event.key === 'Escape') onReturnToCanvas?.();
       }}
     >
-      <header className="border-b border-c-border p-4">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <h2 className="truncate font-semibold">{safeText(draft.label)}</h2>
-            <p className="text-xs text-c-text-secondary">
-              {safeText(draft.branch)} · {safeText(draft.semanticType)}
-            </p>
-          </div>
-          {confirmedAt ? (
-            <time
-              className="shrink-0 text-xs text-c-text-secondary"
-              dateTime={confirmedAt.toISOString()}
+      {/* Header — no box, typographic title + light meta line (DEC-68). */}
+      <header className="px-4 pb-3 pt-3.5">
+        <div className="flex items-start gap-2">
+          <h2 className="min-w-0 flex-1 truncate text-[15px] font-semibold leading-snug tracking-tight">
+            {safeText(draft.label)}
+          </h2>
+          {onReturnToCanvas ? (
+            <button
+              type="button"
+              onClick={onReturnToCanvas}
+              aria-label={t('myWork.ideaInspector.close', 'Zamknij inspektor')}
+              className="shrink-0 rounded-md p-1 text-c-text-muted hover:bg-c-surface-raised hover:text-c-text"
             >
-              {t('myWork.ideaInspector.saved', 'Zapisano')}{' '}
-              {confirmedAt.toLocaleTimeString(language, { hour: '2-digit', minute: '2-digit' })}
-            </time>
+              <X size={15} />
+            </button>
           ) : null}
         </div>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {/* FIX-2 (Day 3 acceptance): these two actions have no implementation yet
-              (drill-down-in-place and AI summary are out of scope here — module 17
-              owns the AI surface). Disable with a real reason instead of a dead
-              onClick, matching the "AI porada" pattern already used below. */}
+        <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11.5px] text-c-text-muted">
+          {safeText(draft.semanticType) ? <span>{safeText(draft.semanticType)}</span> : null}
+          {safeText(draft.semanticType) && safeText(draft.branch) ? (
+            <span className="h-[3px] w-[3px] shrink-0 rounded-full bg-c-border-strong" />
+          ) : null}
+          {safeText(draft.branch) ? <span>{safeText(draft.branch)}</span> : null}
+          {confirmedAt ? (
+            <>
+              <span className="h-[3px] w-[3px] shrink-0 rounded-full bg-c-border-strong" />
+              <time dateTime={confirmedAt.toISOString()}>
+                {t('myWork.ideaInspector.saved', 'Zapisano')}{' '}
+                {confirmedAt.toLocaleTimeString(language, { hour: '2-digit', minute: '2-digit' })}
+              </time>
+            </>
+          ) : null}
+        </div>
+        {/* Quick actions — quiet text links, no borders (DEC-68). */}
+        <div className="mt-2.5 flex flex-wrap items-center gap-4">
           <button
             type="button"
             disabled
             title={t('myWork.ideaInspector.drillReason', 'Akcja czeka na definicję zakresu')}
-            className="rounded border border-c-border px-2 py-1 text-xs disabled:opacity-50"
+            className="text-[11.5px] font-medium text-c-text-secondary disabled:opacity-40"
           >
             {t('myWork.ideaInspector.drill', 'Drąż w głąb')}
           </button>
@@ -217,7 +292,7 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
             type="button"
             disabled
             title={t('myWork.ideaInspector.summarizeReason', 'Akcja czeka na definicję zakresu')}
-            className="rounded border border-c-border px-2 py-1 text-xs disabled:opacity-50"
+            className="text-[11.5px] font-medium text-c-text-secondary disabled:opacity-40"
           >
             {t('myWork.ideaInspector.summarize', 'AI podsumuj')}
           </button>
@@ -225,7 +300,7 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
             type="button"
             disabled
             title={t('myWork.ideaInspector.adviceReason', 'Akcja czeka na definicję zakresu')}
-            className="rounded border border-c-border px-2 py-1 text-xs disabled:opacity-50"
+            className="text-[11.5px] font-medium text-c-text-secondary disabled:opacity-40"
           >
             {t('myWork.ideaInspector.advice', 'AI porada')}
           </button>
@@ -243,53 +318,54 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
       </header>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <section className={sectionClasses}>
-          <CountHeading
-            title={t('myWork.ideaInspector.sections.basics', 'Podstawowe')}
-            count={counts.basics}
-          />
-          <label className="block text-xs">
-            {t('myWork.ideaInspector.labelField', 'Etykieta')}
+        <InspectorSection
+          title={t('myWork.ideaInspector.sections.basics', 'Podstawowe')}
+          count={counts.basics}
+        >
+          <FieldRow label={t('myWork.ideaInspector.labelField', 'Etykieta')}>
             <input
               aria-label={t('myWork.ideaInspector.labelField', 'Etykieta')}
               value={draft.label}
               onChange={(e) => setDraft({ ...draft, label: e.target.value })}
               onBlur={() => void commit({ label: draft.label })}
-              className="mt-1 w-full rounded border border-c-border bg-c-surface px-2 py-1"
+              className={quietControlClass}
             />
-          </label>
+          </FieldRow>
           {tool === 'process' ? (
             <p className="text-sm text-c-text-secondary">
               {t('myWork.ideaInspector.noState', 'To narzędzie nie prowadzi stanu elementu')}
             </p>
           ) : (
-            <select
-              aria-label={t('myWork.ideaInspector.stateField', 'Stan')}
-              value={draft.state ?? ''}
-              onChange={(e) => void commit({ state: e.target.value })}
-              className="w-full rounded border border-c-border bg-c-surface px-2 py-1"
-            >
-              <option value="" disabled>
-                —
-              </option>
-              {nativeStates.map((state) => (
-                // FIX (Day 3 layer-2 acceptance): a native <option> can only
-                // render text, not a <EntityStatusChip> component, so this
-                // routes through the same statusChip.* label-resolution the
-                // chip uses internally (see NotebookContextPanel,
-                // commit 58ff6ac3fe) instead of the raw "in_progress" string.
-                <option key={state} value={state}>
-                  {statusChipLabel(state, t)}
+            <FieldRow label={t('myWork.ideaInspector.stateField', 'Stan')}>
+              <select
+                aria-label={t('myWork.ideaInspector.stateField', 'Stan')}
+                value={draft.state ?? ''}
+                onChange={(e) => void commit({ state: e.target.value })}
+                className={quietControlClass}
+              >
+                <option value="" disabled>
+                  —
                 </option>
-              ))}
-            </select>
+                {nativeStates.map((state) => (
+                  // FIX (Day 3 layer-2 acceptance): a native <option> can only
+                  // render text, not a <EntityStatusChip> component, so this
+                  // routes through the same statusChip.* label-resolution the
+                  // chip uses internally (see NotebookContextPanel,
+                  // commit 58ff6ac3fe) instead of the raw "in_progress" string.
+                  <option key={state} value={state}>
+                    {statusChipLabel(state, t)}
+                  </option>
+                ))}
+              </select>
+            </FieldRow>
           )}
           {/* FIX-17 (Day 3 layer-2 acceptance): the accepted inspector prototype
               (mywork-fala3/proto-01-ideas-inspektor.html) shows the priority
               label as "Priorytet — 70" — a numeric readout right beside the
               slider, not a bare unlabeled range input. */}
-          <label className="block text-xs">
-            {t('myWork.ideaInspector.priorityField', 'Priorytet')} — {draft.priority ?? 0}
+          <FieldRow
+            label={`${t('myWork.ideaInspector.priorityField', 'Priorytet')} — ${draft.priority ?? 0}`}
+          >
             <input
               aria-label={t('myWork.ideaInspector.priorityField', 'Priorytet')}
               type="range"
@@ -298,9 +374,9 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
               value={draft.priority ?? 0}
               onChange={(e) => setDraft({ ...draft, priority: Number(e.target.value) })}
               onMouseUp={() => void commit({ priority: draft.priority })}
-              className="mt-1 w-full"
+              className="w-full accent-[color:var(--c-focus-solid)]"
             />
-          </label>
+          </FieldRow>
           {/* FIX-12 addendum (Day 3 layer-2 acceptance): owner/semanticType
               rendered as two bare, unlabeled <p> tags — a value with no
               visible field name. Labeled to match every other field in this
@@ -313,111 +389,108 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
               Whiteboard never had an assign feature at all, so both keep the
               read-only rendering rather than fabricating a new edit surface. */}
           {tool === 'table' || tool === 'mindmap' ? (
-            <label className="block text-xs">
-              {t('myWork.ideaInspector.ownerField', 'Właściciel')}
+            <FieldRow label={t('myWork.ideaInspector.ownerField', 'Właściciel')}>
               <input
                 aria-label={t('myWork.ideaInspector.ownerField', 'Właściciel')}
                 value={draft.owner ?? ''}
                 onChange={(e) => setDraft({ ...draft, owner: e.target.value })}
                 onBlur={() => void commit({ owner: draft.owner })}
-                className="mt-1 w-full rounded border border-c-border bg-c-surface px-2 py-1"
+                className={quietControlClass}
               />
-            </label>
+            </FieldRow>
           ) : (
-            <p className="text-sm">
-              <span className="text-c-text-secondary">
-                {t('myWork.ideaInspector.ownerField', 'Właściciel')}:
-              </span>{' '}
-              {safeText(draft.owner)}
-            </p>
+            <FieldRow label={t('myWork.ideaInspector.ownerField', 'Właściciel')}>
+              {safeText(draft.owner) || (
+                <span className="text-c-text-muted">
+                  {t('myWork.ideaInspector.ownerEmpty', '—')}
+                </span>
+              )}
+            </FieldRow>
           )}
-          <p className="text-sm">
-            <span className="text-c-text-secondary">
-              {t('myWork.ideaInspector.semanticTypeField', 'Typ semantyczny')}:
-            </span>{' '}
-            {safeText(draft.semanticType)}
-          </p>
-        </section>
-        <section className={sectionClasses}>
-          <CountHeading
-            title={t('myWork.ideaInspector.sections.contentDepth', 'Treść i głębia')}
-            count={counts.content}
-          />
+          <FieldRow label={t('myWork.ideaInspector.semanticTypeField', 'Typ semantyczny')}>
+            {safeText(draft.semanticType) || <span className="text-c-text-muted">—</span>}
+          </FieldRow>
+        </InspectorSection>
+
+        <InspectorSection
+          title={t('myWork.ideaInspector.sections.contentDepth', 'Treść i głębia')}
+          count={counts.content}
+        >
           {[draft.description, draft.context, draft.goal, draft.rationale, draft.risk]
             .filter(Boolean)
             .map((text, index) => (
-              <p key={index} className="text-sm">
+              <p key={index} className="text-[12.5px] leading-relaxed text-c-text-secondary">
                 {safeText(text)}
               </p>
             ))}
-        </section>
-        <section className={sectionClasses}>
-          <CountHeading
-            title={t('myWork.ideaInspector.sections.classification', 'Klasyfikacja')}
-            count={draft.tags?.length ?? 0}
-          />
-          <div className="flex flex-wrap gap-1">
+        </InspectorSection>
+
+        <InspectorSection
+          title={t('myWork.ideaInspector.sections.classification', 'Klasyfikacja')}
+          count={draft.tags?.length ?? 0}
+        >
+          <div className="flex flex-wrap gap-1.5">
             {draft.tags?.map((tag) => (
-              <span key={tag} className="rounded bg-c-surface-raised px-2 py-1 text-xs">
+              <span
+                key={tag}
+                className="inline-flex h-[22px] items-center rounded-full bg-c-surface-raised px-2 text-[11px] text-c-text-secondary"
+              >
                 {safeText(tag)}
               </span>
             ))}
           </div>
-        </section>
-        <section className={sectionClasses}>
-          <CountHeading
-            title={t('myWork.ideaInspector.sections.evidence', 'Dowody i źródła')}
-            count={counts.evidence}
-          />
+        </InspectorSection>
+
+        <InspectorSection
+          title={t('myWork.ideaInspector.sections.evidence', 'Dowody i źródła')}
+          count={counts.evidence}
+        >
           {draft.evidence?.map((item) => (
-            <p key={item.id ?? item.title} className="text-sm">
+            <p key={item.id ?? item.title} className="text-[12.5px] leading-relaxed text-c-text">
               {safeText(item.title)} · {safeText(item.type)} · {safeText(item.source)} ·{' '}
               {safeText(item.date)}
             </p>
           ))}
-        </section>
-        <section className={sectionClasses}>
-          <CountHeading
-            title={t('myWork.ideaInspector.sections.relations', 'Powiązania')}
-            count={counts.relations}
-          />
+        </InspectorSection>
+
+        <InspectorSection
+          title={t('myWork.ideaInspector.sections.relations', 'Powiązania')}
+          count={counts.relations}
+        >
           {draft.relations?.map((item) => (
-            <p key={item.id ?? item.title} className="text-sm">
+            <p key={item.id ?? item.title} className="text-[12.5px] leading-relaxed text-c-text">
               {safeText(item.title)} · {safeText(item.type)} · {safeText(item.branch)}
             </p>
           ))}
-        </section>
-        <section className={sectionClasses}>
-          <CountHeading
-            title={t('myWork.ideaInspector.sections.outputs', 'Artefakty wyjściowe')}
-            count={counts.outputs}
-          />
+        </InspectorSection>
+
+        <InspectorSection
+          title={t('myWork.ideaInspector.sections.outputs', 'Artefakty wyjściowe')}
+          count={counts.outputs}
+        >
           {draft.outputs?.map((item) => (
-            <div
-              key={item.id ?? item.title}
-              className="mb-2 flex items-center justify-between gap-2"
-            >
-              <p className="text-sm">
+            <div key={item.id ?? item.title} className="flex items-center justify-between gap-2">
+              <p className="text-[12.5px] leading-relaxed text-c-text">
                 {safeText(item.title)} · {safeText(item.type)} · {safeText(item.status)}
               </p>
               {item.targetId ? (
                 <button
                   type="button"
                   onClick={() => onOpenOutput?.(item.targetId!)}
-                  className="rounded border border-c-border px-2 py-1 text-xs"
+                  className="shrink-0 rounded-md px-2 py-1 text-xs text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text"
                 >
                   {t('myWork.ideaInspector.openButton', 'Otwórz')}
                 </button>
               ) : null}
             </div>
           ))}
-        </section>
-        <section className={sectionClasses}>
-          <CountHeading title={toolTitle} count={toolSection ? 1 : 0} />
+        </InspectorSection>
+
+        <InspectorSection title={toolTitle} count={toolSection ? 1 : 0}>
           {toolSection}
-        </section>
+        </InspectorSection>
       </div>
-      <footer className="border-t border-c-border p-3 text-xs text-c-text-secondary">
+      <footer className="border-t border-c-border-subtle px-4 py-2.5 text-[11px] text-c-text-muted">
         {safeText(draft.lineage)}
       </footer>
     </aside>

@@ -117,10 +117,19 @@ interface NotebookContextPanelProps {
   noteTags: string[];
   allNotes: NotebookPage[];
   noteConvertedTo?: Array<{ type?: string | null; id?: string | null }>;
+  /**
+   * DEC-69 (SPEC-A accordion rail): when true, drop the panel's own card
+   * chrome (border/rounded/fixed width) and header/close row — the host
+   * (an accordion section, e.g. NotebookRightRail's "Powiązania") already
+   * supplies both. Content below stays identical. Defaults to false so any
+   * other future standalone usage keeps today's self-contained look.
+   */
+  embedded?: boolean;
 }
 
 export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
   open,
+  embedded = false,
   onClose,
   editor,
   noteId,
@@ -585,22 +594,30 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
   );
 
   return (
-    <div className="w-80 shrink-0 rounded-2xl border border-slate-200/60 dark:border-white/[0.03] overflow-hidden bg-c-surface flex flex-col">
-      <div className="flex items-center justify-between px-3 py-3 border-b border-c-border-subtle">
-        <div className="flex items-center gap-2 text-sm font-semibold text-c-warning">
-          <Lightbulb size={16} />
-          <span>{t('myWorkNotebook.contextPanel.noteContext')}</span>
+    <div
+      className={
+        embedded
+          ? 'flex flex-col'
+          : 'w-80 shrink-0 rounded-2xl border border-slate-200/60 dark:border-white/[0.03] overflow-hidden bg-c-surface flex flex-col'
+      }
+    >
+      {embedded ? null : (
+        <div className="flex items-center justify-between px-3 py-3 border-b border-c-border-subtle">
+          <div className="flex items-center gap-2 text-sm font-semibold text-c-warning">
+            <Lightbulb size={16} />
+            <span>{t('myWorkNotebook.contextPanel.noteContext')}</span>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1 rounded-lg text-c-text-muted hover:bg-c-surface-raised"
+            title={t('myWorkNotebook.contextPanel.close')}
+          >
+            <X size={14} />
+          </button>
         </div>
-        <button
-          onClick={onClose}
-          className="p-1 rounded-lg text-c-text-muted hover:bg-c-surface-raised"
-          title={t('myWorkNotebook.contextPanel.close')}
-        >
-          <X size={14} />
-        </button>
-      </div>
+      )}
 
-      <div className="flex-1 overflow-y-auto nb-scroll">
+      <div className={embedded ? 'flex-1' : 'flex-1 overflow-y-auto nb-scroll'}>
         {loading ? (
           <div className="flex items-center justify-center py-10">
             <Loader2 size={18} className="animate-spin text-c-text-secondary" />

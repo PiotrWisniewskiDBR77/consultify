@@ -21,7 +21,11 @@ describe('Notebook cross-surface action audit', () => {
     // the pre-B.6 104 — a real, already-wired action (NotebookHamburgerMenu.tsx
     // id 'version-history', panel in NotebookContent.tsx) was under-counted.
     expect(actions.some((action) => action.id === 'note:version-history')).toBe(true);
-    expect(actions).toHaveLength(105);
+    // DEC-2026-08-25-69: the rail's Work/Context tablist (2 ids: tab-work,
+    // tab-context) was replaced by 4 new Akcje ids (export, share, copy-link,
+    // version-history) when NotebookRightRail became a SPEC-A accordion —
+    // net +2 over the prior 105.
+    expect(actions).toHaveLength(107);
     expect(new Set(actions.map((action) => action.id)).size).toBe(actions.length);
     expect(new Set(actions.map((action) => action.surface))).toEqual(
       new Set([
@@ -111,9 +115,11 @@ describe('Notebook cross-surface action audit', () => {
     expect(
       actions.filter((action) => action.surface === 'work-rail').map((action) => action.id)
     ).toEqual([
-      'rail:tab-work',
-      'rail:tab-context',
       'rail:close',
+      'rail:export',
+      'rail:share',
+      'rail:copy-link',
+      'rail:version-history',
       'rail:retry-save',
       'rail:load-theirs',
       'rail:keep-mine',
@@ -124,8 +130,12 @@ describe('Notebook cross-surface action audit', () => {
       'rail:mark-reviewed',
       'rail:open-teresa',
     ]);
-    expect(rail).toContain('data-notebook-action-id={`rail:tab-${tab}`}');
     expect(rail).toContain('data-notebook-action-id={`rail:visibility-${visibility}`}');
+    // 'close'/'retry-save'/'load-theirs'/'keep-mine'/'verification-status'/
+    // 'review-cadence'/'mark-reviewed'/'open-teresa' render with a literal
+    // data-notebook-action-id attribute; 'export'/'share'/'copy-link'/
+    // 'version-history' route through the shared <ActionRow actionId="..."/>
+    // helper, which forwards its prop to the same attribute at runtime.
     for (const id of [
       'close',
       'retry-save',
@@ -138,6 +148,10 @@ describe('Notebook cross-surface action audit', () => {
     ]) {
       expect(rail).toContain(`data-notebook-action-id="rail:${id}"`);
     }
+    for (const id of ['export', 'share', 'copy-link', 'version-history']) {
+      expect(rail).toContain(`actionId="rail:${id}"`);
+    }
+    expect(rail).toContain('data-notebook-action-id={actionId}');
     expect(toolbar).toContain('NotebookToolbar');
     // FIX-7 (Day 3 acceptance): NotebookContent.tsx used to hardcode
     // `receiptCapableActionIds={[]}` on 3 of 4 receipt-gated surfaces

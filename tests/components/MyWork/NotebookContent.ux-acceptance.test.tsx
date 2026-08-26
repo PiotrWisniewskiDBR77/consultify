@@ -824,9 +824,8 @@ describe('NotebookContent — MW-08 UX acceptance', () => {
       makePage({ id: 'note-2', title: 'Second page' }),
     ]);
 
-    const { getByText, getByTestId, queryByLabelText, queryByText } = renderWithRouter(
-      <NotebookContent searchQuery="" />
-    );
+    const { getByText, getAllByText, getByTestId, queryByLabelText, queryByText } =
+      renderWithRouter(<NotebookContent searchQuery="" />);
 
     await waitFor(() => {
       expect(apiMock.getNotebookPages).toHaveBeenCalled();
@@ -837,7 +836,11 @@ describe('NotebookContent — MW-08 UX acceptance', () => {
     await waitFor(() => {
       expect(getByTestId('editor-content')).toBeTruthy();
     });
-    expect(getByText('First page')).toBeTruthy();
+    // DEC-69: the SPEC-A right rail (desktop-only) now also shows the active
+    // page's title in its own header, alongside the sidebar list item — so
+    // "First page" (the active page) legitimately appears twice on screen.
+    // "Second page" (not active) still appears exactly once, in the list.
+    expect(getAllByText('First page').length).toBeGreaterThanOrEqual(1);
     expect(getByText('Second page')).toBeTruthy();
 
     // The mobile-only back-to-list chrome must not be present on desktop.
@@ -851,8 +854,10 @@ describe('NotebookContent — MW-08 UX acceptance', () => {
     await waitFor(() => {
       expect(apiMock.getNotebookPages).toHaveBeenCalled();
     });
+    // "Second page" is now the active page, so — same rail-header reason as
+    // above — it legitimately renders twice (sidebar + rail header).
     expect(getByText('First page')).toBeTruthy();
-    expect(getByText('Second page')).toBeTruthy();
+    expect(getAllByText('Second page').length).toBeGreaterThanOrEqual(1);
     expect(getByTestId('editor-content')).toBeTruthy();
     expect(queryByLabelText('All notes')).toBeNull();
   });
