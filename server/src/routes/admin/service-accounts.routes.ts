@@ -2,6 +2,7 @@ import { type NextFunction, type Response, Router } from 'express';
 
 import verifyAdmin from '../../middleware/admin.middleware.js';
 import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
+import { requireAudit } from '../../middleware/requireAudit.middleware.js';
 import { serviceAccountService } from '../../services/tablePlatform/ServiceAccountService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { get as dbGet } from '../../utils/DbPromise.js';
@@ -27,6 +28,16 @@ router.use(
   })
 );
 router.use(verifyAdmin);
+router.use(requireAudit);
+
+function auditUnavailable(res: Response) {
+  return res.status(503).json({
+    success: false,
+    code: 'AUDIT_UNAVAILABLE',
+    operationApplied: true,
+    error: 'Operation completed but its audit record could not be persisted',
+  });
+}
 
 router.get(
   '/',
@@ -56,6 +67,17 @@ router.post(
       expiresInDays: Number(req.body?.expiresInDays) || undefined,
       createdBy: req.user?.id,
     });
+    try {
+      await req.emitAuditEvent?.({
+        action: 'service_account.created',
+        resourceType: 'service_account',
+        resourceId: result.account.id,
+        after: { active: true, scopes },
+        metadata: { scopes, expiresInDays: Number(req.body?.expiresInDays) || null },
+      });
+    } catch {
+      return auditUnavailable(res);
+    }
     return res.status(201).json({ success: true, data: result });
   })
 );
@@ -71,6 +93,20 @@ router.delete(
     );
     if (!found) return res.status(404).json({ success: false, error: 'Service account not found' });
     await serviceAccountService.revokeServiceAccount(req.params.id);
+    const readback = await serviceAccountService.listServiceAccounts(organizationId);
+    if (readback.some((account) => account.id === req.params.id))
+      return res.status(409).json({ success: false, error: 'Service account was not revoked' });
+    try {
+      await req.emitAuditEvent?.({
+        action: 'service_account.revoked',
+        resourceType: 'service_account',
+        resourceId: req.params.id,
+        before: { active: true },
+        after: { active: false },
+      });
+    } catch {
+      return auditUnavailable(res);
+    }
     return res.status(204).send();
   })
 );
