@@ -130,12 +130,12 @@ w raporcie. Nie ma wyjątków „bo tak było szybciej".
 
    Nadzorca podaje Ci **SHA commitu-markera** przy wklejaniu tej instrukcji.
 
-   **SHA markera: «MARKER_SHA»**
+   **SHA markera: c31155205e**
 
    ```bash
    cd /Users/piotrwisniewski/Developer/Consultify-final-mvp-integration-20260823
    git log --oneline -25 codex/m03-admin-20260824
-   git merge-base --is-ancestor «MARKER_SHA» codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
+   git merge-base --is-ancestor c31155205e codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
    ```
 
    **`git fetch` / `git pull` są w tym dyżurze ZAKAZANE** (FREEZE, `DEC-65` —
@@ -1825,7 +1825,7 @@ lista znalezisk nienaprawianych, `git diff --name-only` wobec bazy.
 
 1. Weryfikacja markera (§0.1 pkt 1–2):
    ```bash
-   git merge-base --is-ancestor «MARKER_SHA» codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
+   git merge-base --is-ancestor c31155205e codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
    ```
    `MARKER BRAK` → STOP i koniec dyżuru.
 2. Warunki wstępne (§0.1 pkt 3) + stan dnia 14 (§0.1 pkt 4). `DZIEŃ 14
@@ -1913,7 +1913,7 @@ Nie tworzysz drugiego pliku nigdzie indziej (Z13).
 # Results/Execution dzień 17 — raport dyżuru <data>
 
 Baza: codex/m03-admin-20260824 @ <tip SHA>
-Marker: «MARKER_SHA» — POTWIERDZONY / BRAK
+Marker: c31155205e — POTWIERDZONY / BRAK
 Gałąź robocza: codex/results-day17-<data>
 Worktree: /private/tmp/consultify-results-day17
 node_modules: symlink do /Users/piotrwisniewski/Developer/Consultify/node_modules (DEC-86) TAK / NIE
