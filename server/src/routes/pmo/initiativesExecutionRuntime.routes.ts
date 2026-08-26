@@ -141,6 +141,7 @@ import {
   hasEffectiveCapability,
   resolveEffectiveAccess,
 } from '../../services/effectiveAccessService.js';
+import { ControlKpiReadModel } from '../../services/executionControl/controlKpiReadModel.js';
 
 const RegisterSchema = z.object({
   initiativeId: z.string().min(1).max(255),
@@ -1117,6 +1118,7 @@ export interface InitiativesExecutionRuntimeDependencies {
     projectId: string,
     initiativeId?: string | null
   ) => Promise<EffectiveGovernancePolicy>;
+  controlKpis?: ControlKpiReadModel;
 }
 
 function actorFromRequest(req: Request): RuntimeActor | null {
@@ -4790,6 +4792,27 @@ export function createInitiativesExecutionRuntimeRouter(
       });
     })
   );
+  router.get(
+    '/control-kpis',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      const weekStart = String(req.query.weekStart || '').trim();
+      const policyId = String(req.query.policyId || '').trim() || null;
+      if (!actor) {
+        res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+        return;
+      }
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(weekStart)) {
+        res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
+        return;
+      }
+      if (!deps.controlKpis) {
+        res.status(503).json({ error: { code: 'CONTROL_KPI_READ_MODEL_UNAVAILABLE' } });
+        return;
+      }
+      res.json(await deps.controlKpis.read(actor.organizationId, weekStart, policyId));
+    })
+  );
   router.post(
     '/delivery-acceptances/:id/request',
     asyncHandler(async (req, res) => {
@@ -5848,6 +5871,7 @@ const runtimePool = new Pool(databaseConfig.postgres as PoolConfig | undefined);
 const runtimeDependencies: InitiativesExecutionRuntimeDependencies = {
   unitOfWork: new PostgresMaterialCommandUnitOfWork(runtimePool),
   reader: new PostgresInitiativeReader(runtimePool),
+  controlKpis: new ControlKpiReadModel(runtimePool),
   resolvePolicy: (organizationId, projectId, initiativeId) =>
     new PostgresGovernancePolicyResolver(runtimePool).resolve(
       organizationId,
