@@ -6,7 +6,7 @@ Tip M03 przy starcie: `516c104e56`; pięć plików różnicy poza zakresem, świ
 Gałąź robocza: `codex/chat-signals-day18-20260826`
 Worktree: `/private/tmp/consultify-chat-signals-day18`
 Porty aplikacji: żadne · lokalny PG: `cx-day18-pg` na `4320` (usunięty po testach: TAK)
-Migracje: `20261076`, `20261077` (najwyższa zastana: `20261075`); `ls|grep` przed każdym plikiem: TAK
+Migracje: `20261080`, `20261081` (przenumerowane przy odbiorze — DEC-98 rezerwuje 20261076-79 dla dnia 17; pierwotnie utworzone jako `20261076`/`20261077` zgodnie z §0.1 instrukcji, która nie znała rezerwacji); `ls|grep` przed każdym plikiem: TAK
 
 ## Oświadczenia
 
@@ -109,8 +109,8 @@ Pakiet real-PG `signals.feed.postgres.integration.test.ts`: **18/18 PASS**. Obej
 
 | Plik | Addytywna | Przebieg 1 | Przebieg 2 | Dry | Stan wydania |
 | --- | --- | --- | --- | --- | --- |
-| `20261076_chat_signals_day18_work_signals.sql` | TAK | applied | 0 | 0 pending | MIGRATION_PREPARED |
-| `20261077_chat_signals_day18_run_ledger.sql` | TAK | applied | 0 | 0 pending | MIGRATION_PREPARED |
+| `20261080_chat_signals_day18_work_signals.sql` | TAK | applied | 0 | 0 pending | MIGRATION_PREPARED |
+| `20261081_chat_signals_day18_run_ledger.sql` | TAK | applied | 0 | 0 pending | MIGRATION_PREPARED |
 
 Pierwsza próba runnera bez `NODE_ENV=test` została prawidłowo odrzucona przez lokal-host guard. Powtórzono wyłącznie na lokalnym kontenerze z `NODE_ENV=test RUN_DB_TESTS=1`: `2 applied → 0 applied → 0 pending`. Nie wykonano migracji zdalnej.
 

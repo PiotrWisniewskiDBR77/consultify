@@ -174,16 +174,23 @@ reszty.
    ```bash
    ls server/migrations | grep -oE '^[0-9]{8}' | sort -n | uniq | tail -3
    # → w chwili wystawiania instrukcji najwyższy to 20261075 (meetings_day16).
-   #   Twój pierwszy numer = 20261076 LUB WYŻSZY, jeśli w międzyczasie doszły inne.
-   ls server/migrations | grep '^20261076'   # MUSI BYĆ PUSTE zanim utworzysz plik
-   ls server/migrations | grep '^20261077'   # jw. przed drugim plikiem
+   #   Twój przedział (DEC-98) = 20261080-20261089; pierwszy wolny numer z NIEGO.
+   ls server/migrations | grep '^20261080'   # MUSI BYĆ PUSTE zanim utworzysz plik
+   ls server/migrations | grep '^20261081'   # jw. przed drugim plikiem
    ```
+
+   > **ERRATA (odbiór, DEC-98).** Powyższy przedział `20261076-79` jest
+   > ZAREZERWOWANY dla dnia 17 (Results/Management Reports). Dzień 18 ma
+   > przedział `20261080-20261089`, dzień 19 — `20261090-20261099`. Migracje
+   > dnia 18 zostały przy odbiorze przenumerowane z `20261076`/`20261077` na
+   > `20261080`/`20261081`. Wolny numer sprawdzaj ZAWSZE w obrębie własnego
+   > przedziału, nie „najwyższy zastany + 1".
 
    Numer użyty i wynik obu `ls|grep` idą do raportu. `migrate.postgres.ts`
    stosuje migracje **w porządku alfabetycznym nazw plików**, więc numer rosnący
    jest wymogiem poprawności, nie kosmetyką. Konwencja nazw wymuszona przez
    `server/scripts/validate-migration-naming.ts` (`^\d{8}_[a-z0-9_]+\.sql$`):
-   `2026107X_chat_signals_day18_<temat>.sql`.
+   `2026108X_chat_signals_day18_<temat>.sql`.
 
 8. **Wszystkie porównania w raporcie robisz wobec bazy**, nie wobec `HEAD~1`:
 
@@ -246,7 +253,7 @@ nie zmiana globalnego mocka. Bez „addytywnie, więc nic nie zepsuje".
 
 ```
 WOLNO (Twój zakres — pliki NOWE albo należące do producenta sygnałów):
-  server/migrations/2026107X_chat_signals_day18_*.sql          (NOWE pliki, numer wg §0.1 pkt 7)
+  server/migrations/2026108X_chat_signals_day18_*.sql          (NOWE pliki, numer wg §0.1 pkt 7)
   server/src/types/workSignals.ts                              (NOWY — słowniki i kontrakty)
   server/src/services/signals/**                               (NOWY katalog: rejestr reguł, evaluator,
                                                                 harmonogram, read model, i18n serwerowe,
@@ -338,7 +345,7 @@ w raporcie, idziesz dalej.
      `INSERT … ON CONFLICT DO NOTHING`. **Zakaz** `DROP`,
      `ALTER COLUMN … TYPE`, `RENAME`, `DELETE`, bezwarunkowego `UPDATE`.
   2. **Numer wyznaczasz w Bloku 0** (§0.1 pkt 7) i sprawdzasz `ls | grep`
-     **przed każdym plikiem**. Nazwa: `2026107X_chat_signals_day18_<temat>.sql`.
+     **przed każdym plikiem**. Nazwa: `2026108X_chat_signals_day18_<temat>.sql`.
   3. **★ ZERO kluczy obcych** do tabel dziedzinowych (`tasks`, `decisions`,
      `initiatives`, `organizations`, `notifications`). Sygnał jest **obserwacją**,
      a nie własnością rekordu; FK do tabel o nieznanej kolejności migracji jest
@@ -816,7 +823,7 @@ puste tabele są nieszkodliwe.
 ### D.1 — Tabela `work_signals`
 
 **Co budujesz.** Migracja addytywna (numer wg §0.1 pkt 7,
-`2026107X_chat_signals_day18_work_signals.sql`) tworząca `work_signals`
+`2026108X_chat_signals_day18_work_signals.sql`) tworząca `work_signals`
 w kształcie z projektu §4.1. Kolumny obowiązkowe (nie skracasz listy):
 
 ```
@@ -1689,7 +1696,7 @@ blokuje.
    git diff --name-only codex/m03-admin-20260824...HEAD | grep -E "tests/setup|tests/helpers|tests/__mocks__|vitest.*config"   # PUSTY (Z18)
    git diff --name-only codex/m03-admin-20260824...HEAD | grep -E "^src/"                                                     # PUSTY (zero frontu)
    git diff --name-only codex/m03-admin-20260824...HEAD | grep -E "^public/locales/"                                          # PUSTY
-   git diff --name-only codex/m03-admin-20260824...HEAD | grep -E "^server/migrations/"                                       # tylko 2026107X_chat_signals_day18_*
+   git diff --name-only codex/m03-admin-20260824...HEAD | grep -E "^server/migrations/"                                       # tylko 2026108X_chat_signals_day18_*
    git diff codex/m03-admin-20260824...HEAD -- server/src/config/FeatureFlags.ts | grep -E "^[-+].*default"                    # tylko DWIE nowe, obie false
    git diff --name-only codex/m03-admin-20260824...HEAD | grep -E "effectiveAccessService|frameworkEntitlement"                # PUSTY (Z16)
    git diff --name-only codex/m03-admin-20260824...HEAD | grep -E "executionVisibilityService|aiEvidenceGovernance|notificationService"  # PUSTY (Z17)
@@ -1726,7 +1733,7 @@ Marker: c31155205e — POTWIERDZONY / BRAK
 Gałąź robocza: codex/chat-signals-day18-<data>
 Worktree: /private/tmp/consultify-chat-signals-day18
 Porty użyte: 4318/4319 (albo: żadne)  ·  Kontener PG: cx-day18-pg na 4320 (usunięty: TAK/NIE)
-Numer migracji wyznaczony: 2026107X (najwyższy zastany: <numer>)  ·  ls|grep przed każdym plikiem: TAK/NIE
+Numer migracji wyznaczony: 2026108X (najwyższy zastany: <numer>)  ·  ls|grep przed każdym plikiem: TAK/NIE
 Czas pracy: <od>–<do>
 
 ## Oświadczenie o chronionym katalogu (Z4/Z5)
@@ -1852,7 +1859,7 @@ DOWÓD: <osiem komend z Bloku 7 + wyniki>
 npx prettier --write <pliki tego commita>
 # numer migracji — PRZED KAŻDYM PLIKIEM
 ls server/migrations | grep -oE '^[0-9]{8}' | sort -n | uniq | tail -3
-ls server/migrations | grep '^2026107X'          # MUSI BYĆ PUSTE
+ls server/migrations | grep '^2026108X'          # MUSI BYĆ PUSTE
 # test celowany (NIGDY pełny vitest/tsc)
 npx vitest run server/src/services/signals/__tests__
 npx vitest run server/src/routes/my-work/__tests__/signals.routes.org-isolation.test.ts
