@@ -15,7 +15,7 @@ function setLocationSearch(search: string) {
   });
 }
 
-describe('Audits findings + report view flag (fail-closed — CLAUDE.md #7, default OFF)', () => {
+describe('Audits findings + report view flag (CLAUDE.md #7, default ON — flip po akcepcie właściciela 27.08)', () => {
   beforeEach(() => {
     window.localStorage.clear();
     setLocationSearch('');
@@ -28,11 +28,20 @@ describe('Audits findings + report view flag (fail-closed — CLAUDE.md #7, defa
     resetAuditsFindingsAndReportViewFlagCache();
   });
 
-  it('defaults OFF with no query, localStorage, or env override', () => {
-    expect(isAuditsFindingsAndReportViewEnabled()).toBe(false);
+  // flip po akcepcie właściciela 27.08 (Audits — dokument raportu, 13 sekcji): default was OFF, now ON.
+  it('defaults ON with no query, localStorage, or env override', () => {
+    expect(isAuditsFindingsAndReportViewEnabled()).toBe(true);
   });
 
-  it('enables via URL query "1"/"true"/"on"', () => {
+  it('localStorage "off"/"0"/"false" still disables it despite the ON default', () => {
+    for (const value of ['off', '0', 'false']) {
+      window.localStorage.setItem(AUDITS_FINDINGS_AND_REPORT_VIEW_FLAG_KEYS.localStorage, value);
+      resetAuditsFindingsAndReportViewFlagCache();
+      expect(isAuditsFindingsAndReportViewEnabled()).toBe(false);
+    }
+  });
+
+  it('enables via URL query "1"/"true"/"on" (redundant with default, still honoured)', () => {
     for (const value of ['1', 'true', 'on']) {
       setLocationSearch(`?${AUDITS_FINDINGS_AND_REPORT_VIEW_FLAG_KEYS.query}=${value}`);
       resetAuditsFindingsAndReportViewFlagCache();
@@ -40,7 +49,7 @@ describe('Audits findings + report view flag (fail-closed — CLAUDE.md #7, defa
     }
   });
 
-  it('enables via localStorage "1"/"true"/"on"', () => {
+  it('enables via localStorage "1"/"true"/"on" (redundant with default, still honoured)', () => {
     for (const value of ['1', 'true', 'on']) {
       window.localStorage.setItem(AUDITS_FINDINGS_AND_REPORT_VIEW_FLAG_KEYS.localStorage, value);
       resetAuditsFindingsAndReportViewFlagCache();
@@ -62,22 +71,35 @@ describe('Audits findings + report view flag (fail-closed — CLAUDE.md #7, defa
     expect(isAuditsFindingsAndReportViewEnabled()).toBe(true);
   });
 
-  it('caches the resolution: a query flip after first read has no effect until reset', () => {
+  it('invalid query value falls through to localStorage', () => {
+    window.localStorage.setItem(AUDITS_FINDINGS_AND_REPORT_VIEW_FLAG_KEYS.localStorage, 'off');
+    setLocationSearch(`?${AUDITS_FINDINGS_AND_REPORT_VIEW_FLAG_KEYS.query}=banana`);
+    resetAuditsFindingsAndReportViewFlagCache();
     expect(isAuditsFindingsAndReportViewEnabled()).toBe(false);
-    setLocationSearch(`?${AUDITS_FINDINGS_AND_REPORT_VIEW_FLAG_KEYS.query}=1`);
-    // No reset yet — cached value from the first call still wins.
-    expect(isAuditsFindingsAndReportViewEnabled()).toBe(false);
+  });
+
+  it('invalid localStorage value falls through to the ON default', () => {
+    window.localStorage.setItem(AUDITS_FINDINGS_AND_REPORT_VIEW_FLAG_KEYS.localStorage, 'banana');
     resetAuditsFindingsAndReportViewFlagCache();
     expect(isAuditsFindingsAndReportViewEnabled()).toBe(true);
   });
 
-  it('resetAuditsFindingsAndReportViewFlagCache forces a fresh read reflecting new state', () => {
-    window.localStorage.setItem(AUDITS_FINDINGS_AND_REPORT_VIEW_FLAG_KEYS.localStorage, '1');
-    resetAuditsFindingsAndReportViewFlagCache();
+  it('caches the resolution: a query flip after first read has no effect until reset', () => {
     expect(isAuditsFindingsAndReportViewEnabled()).toBe(true);
+    setLocationSearch(`?${AUDITS_FINDINGS_AND_REPORT_VIEW_FLAG_KEYS.query}=0`);
+    // No reset yet — cached value from the first call still wins.
+    expect(isAuditsFindingsAndReportViewEnabled()).toBe(true);
+    resetAuditsFindingsAndReportViewFlagCache();
+    expect(isAuditsFindingsAndReportViewEnabled()).toBe(false);
+  });
+
+  it('resetAuditsFindingsAndReportViewFlagCache forces a fresh read reflecting new state', () => {
+    window.localStorage.setItem(AUDITS_FINDINGS_AND_REPORT_VIEW_FLAG_KEYS.localStorage, 'off');
+    resetAuditsFindingsAndReportViewFlagCache();
+    expect(isAuditsFindingsAndReportViewEnabled()).toBe(false);
 
     window.localStorage.removeItem(AUDITS_FINDINGS_AND_REPORT_VIEW_FLAG_KEYS.localStorage);
     resetAuditsFindingsAndReportViewFlagCache();
-    expect(isAuditsFindingsAndReportViewEnabled()).toBe(false);
+    expect(isAuditsFindingsAndReportViewEnabled()).toBe(true);
   });
 });

@@ -160,7 +160,7 @@ export const SURFACES: SurfaceSpec[] = [
     },
     gates: [
       "AppRoutes.tsx:2632-2648 — BetaGate moduleId='MODULE_BENEFITS' status 'open' (betaAccess.ts:39): never blocks.",
-      'Results-Next registries (kpiRegistry/roiRegistry/okrRegistry, resultsVNextFeatureFlags.ts:32-48) default OFF; enabled here via their own localStorage keys so the registries render instead of the disabled panel. The default-OFF behaviour is itself recorded, not hidden.',
+      'Results-Next registries (kpiRegistry/roiRegistry/okrRegistry, resultsVNextFeatureFlags.ts) — roiRegistry/okrRegistry default OFF; kpiRegistry default flipped OFF -> ON on 2026-08-27 (owner accept, D-D default-on on non-production hosts). All three still forced ON here via their own localStorage keys for harness determinism, independent of host.',
       'RES-MVP-VISIBILITY-001 default is OWNER/ADMIN only; the bootstrap session is ADMIN.',
     ],
     stateProbes: [

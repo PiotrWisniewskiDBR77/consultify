@@ -1,12 +1,19 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { resetChatSignalsFeedFlagCache } from '@/utils/chatSignalsFeedFlag';
 
 /**
  * M01-012 — dwie wady wiersza sygnału w panelu czatu:
  *  1. `limit=50` w zapytaniu vs `slice(0, 12)` w renderze = ciche gubienie 38 sygnałów;
  *  2. pięć zawsze widocznych przycisków w każdym wierszu = brak hierarchii akcji.
  * Ten plik pilnuje obu napraw naraz.
+ *
+ * flip po akcepcie właściciela 27.08 (DEC-143): `ff_chatSignalsFeed` now
+ * defaults ON, so every test here forces it OFF via the query override —
+ * this suite specifically exercises the legacy panel (row actions, kebab,
+ * truncation), which stays reachable behind the explicit override.
  */
 
 const apiGet = vi.fn();
@@ -84,6 +91,8 @@ const renderPanel = async (count: number) => {
 };
 
 describe('ChatSignalsPanel — truncation and action hierarchy (M01-012)', () => {
+  const originalLocation = window.location;
+
   beforeEach(() => {
     apiGet.mockReset();
     apiPost.mockReset();
@@ -92,6 +101,22 @@ describe('ChatSignalsPanel — truncation and action hierarchy (M01-012)', () =>
     toastError.mockReset();
     apiPost.mockResolvedValue({});
     createMyIdea.mockResolvedValue({});
+    // flip po akcepcie właściciela 27.08 (DEC-143): force the legacy panel
+    // ON explicitly — the default flipped, but this suite tests legacy-only
+    // UI (row kebab, snooze/mute/dismiss), reachable via the override.
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { ...originalLocation, search: '?ff_chatSignalsFeed=0' },
+    });
+    resetChatSignalsFeedFlagCache();
+  });
+
+  afterEach(() => {
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: originalLocation,
+    });
+    resetChatSignalsFeedFlagCache();
   });
 
   it('shows 12 signals initially and reveals the rest through the show-more control', async () => {

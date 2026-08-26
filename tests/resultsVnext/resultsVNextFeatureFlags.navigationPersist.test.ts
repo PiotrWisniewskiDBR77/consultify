@@ -53,8 +53,15 @@ describe('resultsVNextFeatureFlags — flag survives in-app navigation that drop
     setLocationSearch('');
   });
 
-  it('defaults to false with no query, no localStorage, no env (never changed by this fix)', () => {
-    expect(isResultsVNextFlagEnabled('kpiRegistry')).toBe(false);
+  // flip po akcepcie właściciela 27.08: kpiRegistry now defaults ON on a
+  // non-production host (localhost here) — see resultsVNextFeatureFlags.ts
+  // and DEC-2026-08-26-112. This persistence-mechanism test's own subject
+  // (query -> localStorage carry-over across navigate()) is unaffected by
+  // the default; it only changes what "no explicit choice at all" resolves
+  // to, asserted here and cross-checked against roiRegistry (untouched,
+  // still OFF by default) later in this file.
+  it('defaults to true (D-D default-on, non-production host) with no query, no localStorage, no env', () => {
+    expect(isResultsVNextFlagEnabled('kpiRegistry')).toBe(true);
   });
 
   it('reads true from an explicit query param (existing behaviour, unchanged)', () => {
@@ -101,9 +108,10 @@ describe('resultsVNextFeatureFlags — flag survives in-app navigation that drop
     expect(window.localStorage.getItem(RESULTS_VNEXT_FLAG_KEYS.okrRegistry.localStorage)).toBeNull();
   });
 
-  it('never changes the DEFAULT (no query, no localStorage, no env still resolves false) — this fix is about persistence of an explicit choice, not a new default-on', () => {
+  it('never changes a DIFFERENT domain\'s default (roiRegistry still resolves false) — this fix is about persistence of an explicit choice, not a new default-on', () => {
     // Prove the persistence mechanism is live in this test run (sanity), then
-    // prove a truly fresh flag (no prior explicit choice) is still OFF.
+    // prove a truly fresh flag on a DIFFERENT domain (no prior explicit
+    // choice, untouched by the 2026-08-27 kpiRegistry flip) is still OFF.
     setLocationSearch(`?${QUERY_KEY}=1`);
     isResultsVNextFlagEnabled('kpiRegistry');
     setLocationSearch('');

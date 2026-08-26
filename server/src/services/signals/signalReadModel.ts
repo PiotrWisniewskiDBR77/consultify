@@ -1,4 +1,5 @@
 import type { SignalDTO, SignalQuery, WorkSignalRow } from '../../types/workSignals.js';
+import { isSignalProducerEnabled } from '../../jobs/workSignalProducerJob.js';
 import { translateSignal } from './i18n/dictionary.js';
 
 interface FeedRow extends WorkSignalRow {
@@ -34,7 +35,7 @@ export async function readSignalFeed(params: {
   severityMin?: string;
   cursor?: string;
   can?: (permission: string) => boolean;
-}): Promise<{ signals: SignalDTO[]; nextCursor: string | null }> {
+}): Promise<{ signals: SignalDTO[]; nextCursor: string | null; producerEnabled: boolean }> {
   const roles = [...new Set(params.roles.map(normalizeRole).filter(Boolean))];
   const limit = Math.max(1, Math.min(200, params.limit ?? 50));
   const conditions = [
@@ -149,6 +150,7 @@ export async function readSignalFeed(params: {
   const last = page.at(-1);
   return {
     signals,
+    producerEnabled: isSignalProducerEnabled(),
     nextCursor:
       rows.length > limit && last
         ? Buffer.from(

@@ -13,9 +13,11 @@
  *   (g) "you cannot…" permission rows are conditioned on actual role
  *       capability, not shown unconditionally regardless of role
  *
- * All behind `ff_auditsScaleAndPolish` (default OFF, fail-closed) — every
- * test below has an OFF-path assertion proving today's behavior is
- * untouched by default.
+ * All behind `ff_auditsScaleAndPolish` — default flipped OFF -> ON on
+ * 2026-08-27 (owner accept on dev-render screenshots). Every "flag OFF"
+ * test below now forces OFF via the localStorage kill switch (flip po
+ * akcepcie właściciela 27.08) — it proves the pre-flip behavior is still
+ * reachable per-session, not that it's the default anymore.
  */
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
@@ -130,7 +132,7 @@ function renderV2() {
   );
 }
 
-function setFlag(value: '1' | null) {
+function setFlag(value: '1' | '0' | null) {
   if (value) window.localStorage.setItem('ff.audits_scale_and_polish', value);
   else window.localStorage.removeItem('ff.audits_scale_and_polish');
 }
@@ -173,7 +175,8 @@ describe('CriterionWorkspaceV2 — expert panel gap pack point fixes (ff_auditsS
   });
 
   describe('(d) kebab closes on outside click / Escape', () => {
-    it('flag OFF: stays open on outside click (today\'s behavior unchanged)', async () => {
+    it('flag OFF (localStorage override): stays open on outside click (pre-flip behavior still reachable)', async () => {
+      setFlag('0');
       mockedGetCriterion.mockResolvedValue(baseDetail());
       mockedGetProgramMembers.mockResolvedValue(membersWithRole('user-1', 'lead_auditor'));
       renderV2();
@@ -229,7 +232,8 @@ describe('CriterionWorkspaceV2 — expert panel gap pack point fixes (ff_auditsS
       Object.defineProperty(navigator, 'clipboard', { value: originalClipboard, configurable: true });
     });
 
-    it('flag OFF: no toast on success (today\'s silent behavior unchanged)', async () => {
+    it('flag OFF (localStorage override): no toast on success (pre-flip behavior still reachable)', async () => {
+      setFlag('0');
       const writeText = vi.fn().mockResolvedValue(undefined);
       Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
       mockedGetCriterion.mockResolvedValue(baseDetail());
@@ -266,7 +270,8 @@ describe('CriterionWorkspaceV2 — expert panel gap pack point fixes (ff_auditsS
   });
 
   describe('(f) Menu 3 phase-chip row scrolls instead of clipping', () => {
-    it('flag OFF: no overflow-x-auto class', async () => {
+    it('flag OFF (localStorage override): no overflow-x-auto class', async () => {
+      setFlag('0');
       mockedGetCriterion.mockResolvedValue(baseDetail());
       mockedGetProgramMembers.mockResolvedValue(membersWithRole('user-1', 'lead_auditor'));
       renderV2();
@@ -287,7 +292,8 @@ describe('CriterionWorkspaceV2 — expert panel gap pack point fixes (ff_auditsS
   });
 
   describe('(g) permission rows conditioned by actual role capability', () => {
-    it('flag OFF: "you cannot respond as auditee" shows even for a real auditee (bug, unchanged by default)', async () => {
+    it('flag OFF (localStorage override): "you cannot respond as auditee" shows even for a real auditee (pre-flip bug still reachable)', async () => {
+      setFlag('0');
       mockedGetCriterion.mockResolvedValue(baseDetail());
       mockedGetProgramMembers.mockResolvedValue(membersWithRole('user-1', 'auditee'));
       renderV2();

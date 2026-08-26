@@ -128,7 +128,12 @@ describe('KpiDeviationCaseSubview — /results/kpi/:kpiId/deviation-cases/:caseI
     window.localStorage.clear();
   });
 
-  it('renders the honest disabled-flag empty state when kpiRegistry flag is OFF (default)', async () => {
+  // flip po akcepcie właściciela 27.08: kpiRegistry now defaults ON (D-D
+  // default-on, non-production host) — see resultsVNextFeatureFlags.ts and
+  // DEC-2026-08-26-112. Force OFF via the localStorage kill switch to keep
+  // this regression coverage of the honest disabled-flag empty state.
+  it('renders the honest disabled-flag empty state when kpiRegistry flag is OFF (localStorage override)', async () => {
+    window.localStorage.setItem('ff.results_vnext_kpi_registry', '0');
     renderAt(`/results/kpi/${KPI_ID}/deviation-cases/${CASE_ID}`);
     expect(await screen.findByTestId('kpi-deviation-case-disabled')).toBeInTheDocument();
     expect(Api.get).not.toHaveBeenCalled();

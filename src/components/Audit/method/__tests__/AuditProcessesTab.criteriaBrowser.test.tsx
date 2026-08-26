@@ -6,7 +6,8 @@
  * with a `StandardTable` (search + status filter + pager) — reusing the
  * SAME `listProgramCriteria` call the preview mini-list already makes.
  *
- * Behind `ff_auditsScaleAndPolish` (default OFF, fail-closed).
+ * Behind `ff_auditsScaleAndPolish` — default flipped OFF -> ON on 2026-08-27
+ * (owner accept on dev-render screenshots), fail-closed on read errors.
  *
  * Navigation is asserted via a mocked `useNavigate` (established pattern in
  * this codebase, e.g. `ProfileSettings.smoke.test.tsx`) rather than reading
@@ -129,7 +130,10 @@ describe('AuditProcessesTab — criteria browser drill-down (ff_auditsScaleAndPo
     mockNavigate.mockClear();
   });
 
-  it('flag OFF (default): no "View all" entry point, mini-list unchanged', async () => {
+  // flip po akcepcie właściciela 27.08: default was OFF, now ON — force OFF
+  // via the localStorage kill switch to keep this regression coverage.
+  it('flag OFF (localStorage override): no "View all" entry point, mini-list unchanged', async () => {
+    window.localStorage.setItem('ff.audits_scale_and_polish', '0');
     setupApiMocks();
     renderTab();
     fireEvent.click(await screen.findByText('Q3 Compliance Audit'));

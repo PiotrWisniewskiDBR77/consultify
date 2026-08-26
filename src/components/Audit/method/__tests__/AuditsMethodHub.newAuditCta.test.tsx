@@ -1,15 +1,17 @@
 /**
  * "Nowy audyt" CTA (expert panel gap pack, 2026-08-26, item 3): the
  * `StandardModuleBar` in `AuditsMethodHub` had zero action buttons —
- * TRIADA_KANON.md:17 violation. Behind `ff_auditsScaleAndPolish` (default
- * OFF, fail-closed) — see `src/utils/auditsScaleAndPolishFlag.ts`.
+ * TRIADA_KANON.md:17 violation. Behind `ff_auditsScaleAndPolish` — see
+ * `src/utils/auditsScaleAndPolishFlag.ts`. Default flipped OFF -> ON on
+ * 2026-08-27 (owner accept on dev-render screenshots).
  *
  * Coverage:
- *   * Flag OFF (default) → no CTA, byte-identical to before this pack.
- *   * Flag ON (query override) → CTA renders; opening it lists only packs
- *     that pass the same `evaluateStartGate` rule as the Library tab's
- *     per-row "Start audit" (published + has a source) — the draft
- *     "Demonstration Pack" fixture must NOT appear.
+ *   * Flag ON (default, flip po akcepcie właściciela 27.08) → CTA renders;
+ *     opening it lists only packs that pass the same `evaluateStartGate`
+ *     rule as the Library tab's per-row "Start audit" (published + has a
+ *     source) — the draft "Demonstration Pack" fixture must NOT appear.
+ *   * Flag OFF (localStorage override) → no CTA, byte-identical to before
+ *     this pack — the kill switch still works despite the ON default.
  */
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
@@ -118,21 +120,18 @@ describe('AuditsMethodHub — "Nowy audyt" CTA (ff_auditsScaleAndPolish)', () =>
     window.localStorage.removeItem('ff.audits_scale_and_polish');
   });
 
-  it('does not render the CTA when the flag is OFF (default)', async () => {
+  // flip po akcepcie właściciela 27.08: default was OFF, now ON — the kill
+  // switch (localStorage '0') must still be able to disable the CTA.
+  it('does not render the CTA when the flag is OFF (localStorage override)', async () => {
     setupApiMocks();
+    window.localStorage.setItem('ff.audits_scale_and_polish', '0');
     renderHub(['/audit-programs/method']);
     await waitFor(() => expect(mockedListPacks).toHaveBeenCalled());
     expect(screen.queryByTestId('audits-method-new-audit-cta')).toBeNull();
   });
 
-  it('renders the CTA and lists only eligible packs when the flag is ON', async () => {
+  it('renders the CTA and lists only eligible packs when the flag is ON (default)', async () => {
     setupApiMocks();
-    // `window.location.search` is what the flag reads (mirrors production
-    // query-param bypass); `MemoryRouter`'s `initialEntries` is a separate,
-    // in-memory history that never touches `window.location`, so the
-    // localStorage override is used here to exercise the same resolved-ON
-    // codepath deterministically.
-    window.localStorage.setItem('ff.audits_scale_and_polish', '1');
     renderHub(['/audit-programs/method']);
     await waitFor(() => expect(mockedListPacks).toHaveBeenCalled());
 
