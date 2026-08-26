@@ -67,6 +67,37 @@ export interface GateFinding {
   detail: string;
 }
 
+/**
+ * Relations on hot WRITE paths in server/src that a database built from scratch was silently
+ * missing until 20261120_fresh_db_schema_gap_closure.sql. Kept deliberately short and static:
+ * this is a tripwire against the schema going hollow again, not a generated inventory.
+ * Every entry is risk-1 (write path, no fallback) in the 2026-08-26 migration-integrity audit.
+ */
+export const CRITICAL_RELATIONS: readonly string[] = [
+  'active_sessions',
+  'ai_ab_experiments',
+  'ai_learning_patterns',
+  'approval_workflows',
+  'billing_alerts',
+  'billing_webhook_events',
+  'churn_warnings',
+  'credit_notes',
+  'custom_dashboards',
+  'customer_contracts',
+  'customer_lifecycle_stages',
+  'customer_lifecycle_transitions',
+  'decision_delegations',
+  'dlp_policies',
+  'invoice_templates',
+  'scheduled_events',
+  'sms_verification_codes',
+  'tax_rates',
+  'threat_intelligence',
+  'user_groups',
+  'user_group_members',
+  'user_profiles',
+];
+
 async function collectFindings(pool: Pool, migrationsDir: string): Promise<GateFinding[]> {
   const fs = await import('fs');
   const findings: GateFinding[] = [];
@@ -139,6 +170,34 @@ async function collectFindings(pool: Pool, migrationsDir: string): Promise<GateF
   add('repair_a_postcondition', p.repair_a === 2, `ai_instruction_suggestions new columns=${p.repair_a}/2`);
   add('repair_b_postcondition', p.repair_b_col === 1 && p.repair_b_chk === 1, `level col=${p.repair_b_col}/1 check=${p.repair_b_chk}/1`);
   add('repair_c_postcondition', p.repair_c === 29, `baseline repair columns=${p.repair_c}/29`);
+
+  // 6. SCHEMA COVERAGE — a "ledger is green, schema is empty" guard.
+  //    A migration-integrity audit (2026-08-26) found that the deploy runner never executes 212
+  //    files in server/migrations, so 174 relations used by server/src simply did not exist on a
+  //    database built from scratch. Demo/staging carried them physically (older databases predating
+  //    that rule), so nothing looked broken while every NEW environment — staging from scratch,
+  //    DR restore, e2e in CI — would fail at runtime instead of at deploy time.
+  //    The chain checks above cannot see this: they compare the ledger to the tree, not the tree to
+  //    the schema. This check asserts the relations themselves, after the chain has been applied.
+  //    All of them are produced by 20261120_fresh_db_schema_gap_closure.sql; losing that migration
+  //    (revert, bad merge, a filter change) turns the gate red instead of shipping a hollow schema.
+  const coverageResult = await pool.query<{ missing: string[] }>(
+    `SELECT coalesce(array_agg(rel ORDER BY rel) FILTER (WHERE to_regclass('public.' || quote_ident(rel)) IS NULL), '{}') AS missing
+       FROM unnest($1::text[]) AS rel`,
+    [CRITICAL_RELATIONS]
+  );
+  const missingRelations = coverageResult.rows[0].missing ?? [];
+  add(
+    'schema_coverage_critical_relations',
+    missingRelations.length === 0,
+    missingRelations.length === 0
+      ? `all ${CRITICAL_RELATIONS.length} critical write-path relations present`
+      : `${missingRelations.length}/${CRITICAL_RELATIONS.length} critical write-path relation(s) MISSING from the schema: ` +
+        `${missingRelations.join(', ')}. The ledger can still be green here — this is schema coverage, not chain state. ` +
+        `These relations are written to by server/src and are produced by ` +
+        `server/migrations/20261120_fresh_db_schema_gap_closure.sql; confirm that migration is present in the tree and applied. ` +
+        `Do NOT widen the autorun pattern or change isSqliteOnlyMigration() to fix this.`
+  );
 
   return findings;
 }
