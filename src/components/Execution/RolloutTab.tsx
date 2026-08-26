@@ -27,7 +27,6 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { useConfirmDialog } from '@/components/MyWork/shared/ConfirmDialog';
-import { Button } from '@/components/ui/primitives';
 import { Api } from '@/services/api';
 
 import type { FullInitiative } from '../../types';
@@ -548,33 +547,6 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
       setKpis((p) => p.filter((k) => k.id !== id));
     });
 
-  // Atelier Toys onboarding seed — populates representative KPIs + risks so the
-  // rollout surface demonstrates value immediately (P1-10 / spine demo).
-  const seedAtelierRollout = () =>
-    withSave(async () => {
-      const kpiSeeds = [
-        { name: 'NPS', baseline: 20, target: 60, currentValue: 38, unit: 'pt' },
-        { name: 'On-time delivery %', baseline: 70, target: 95, currentValue: 84, unit: '%' },
-        { name: 'Employee adoption rate', baseline: 0, target: 80, currentValue: 45, unit: '%' },
-      ];
-      const riskSeeds = [
-        { title: 'Supplier lead-time slippage', probability: 'high', impact: 'high' },
-        { title: 'Change fatigue on shop floor', probability: 'medium', impact: 'medium' },
-      ];
-      const createdKpis: RolloutKpi[] = [];
-      for (const k of kpiSeeds) {
-        const res = await Api.post('/rollout/kpis', { projectId, ...k });
-        if (res.data?.kpi) createdKpis.push(res.data.kpi);
-      }
-      const createdRisks: RolloutRisk[] = [];
-      for (const r of riskSeeds) {
-        const res = await Api.post('/rollout/risks', { projectId, ...r });
-        if (res.data?.risk) createdRisks.push(res.data.risk);
-      }
-      if (createdKpis.length) setKpis((p) => [...p, ...createdKpis]);
-      if (createdRisks.length) setRisks((p) => [...p, ...createdRisks]);
-    });
-
   const addRisk = () =>
     withSave(async () => {
       const res = await Api.post('/rollout/risks', { projectId });
@@ -1093,16 +1065,9 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
               icon={<Target className="w-8 h-8 text-slate-600 dark:text-slate-400" />}
               message={t(
                 'execution.rollout.kpi.empty',
-                'No KPIs tracked yet. Add your first KPI to start monitoring rollout performance.'
+                'No KPIs tracked yet. Use "Add KPI" above to start monitoring rollout performance.'
               )}
-            >
-              {!readOnly && (
-                <Button variant="outline" size="sm" onClick={seedAtelierRollout} disabled={busy}>
-                  <Sparkles size={14} />{' '}
-                  {t('execution.rollout.kpi.seedDemo', 'Load Atelier Toys example')}
-                </Button>
-              )}
-            </EmptyBox>
+            />
           ) : (
             <FilterableTable
               columns={kpiColumns}
