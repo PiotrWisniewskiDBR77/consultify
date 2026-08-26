@@ -75,7 +75,6 @@ Lokalizacja: `tests/utils/`
 | Plik                 | Opis                      |
 | -------------------- | ------------------------- |
 | `testUtils.ts`       | Helpery, fabryki, asercje |
-| `assessmentMocks.ts` | Dane mockowe, serwisy     |
 
 ## Uruchamianie testów
 
