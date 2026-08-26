@@ -45,6 +45,7 @@ describe('Meetings day24 F — approved note action item to My Work task', () =>
   let noteId = '';
   let proposedNoteId = '';
   let rejectedNoteId = '';
+  let firstApprovalReceiptId = '';
 
   beforeAll(async () => {
     const now = new Date().toISOString();
@@ -89,6 +90,8 @@ describe('Meetings day24 F — approved note action item to My Work task', () =>
       .set(headers())
       .send({ action: 'approve' });
     expect(approved.status, JSON.stringify(approved.body)).toBe(200);
+    firstApprovalReceiptId = approved.body.receipt?.receiptId || '';
+    expect(firstApprovalReceiptId).toBeTruthy();
     const proposed = await request(app)
       .post(`/api/meeting/${meetingId}/generate-notes`)
       .set(headers())
@@ -263,5 +266,38 @@ describe('Meetings day24 F — approved note action item to My Work task', () =>
       [orgA, `meeting-note-action:${noteId}:0`]
     );
     expect(cold.rows[0].n).toBe(1);
+  });
+
+  // FIX-2 (day28 duty fix-round, P1-1): decision is the funnel's OTHER entry
+  // point (POST /:id/notes/:noteId/decision), and it has its own idempotent
+  // replay path (meetingBoundaryService.ts decideMeetingNote, comment block
+  // above the `try { await approveProposal(...) }` call). It also exercises
+  // a read path the action-items funnel above never reaches: on a REPLAY of
+  // an already-materialized note, decideMeetingNote's own getMeetingNote
+  // call (meetingBoundaryService.ts:796-802) now finds a real
+  // material_artifact_id and, because userId is set, resolves it through
+  // getArtifactForUser(organizationId, artifactId, userId, roleKey) — on the
+  // FIRST approve that branch is a no-op (nothing materialized yet), so this
+  // is the only test in the suite that exercises it for real. This proves
+  // the caller who just approved+materialized a note can safely replay their
+  // own approve call without that access check tripping.
+  it('replays an approve decision without a second materialization', async () => {
+    const beforeReceipts = await pool.query(
+      `SELECT count(*)::int AS n FROM artifact_handoff_receipts WHERE organization_id=$1 AND proposal_id=(SELECT proposal_id FROM meeting_notes WHERE id=$2)`,
+      [orgA, noteId]
+    );
+    const replay = await request(app)
+      .post(`/api/meeting/${meetingId}/notes/${noteId}/decision`)
+      .set(headers())
+      .send({ action: 'approve' });
+    expect(replay.status, JSON.stringify(replay.body)).toBe(200);
+    expect(replay.body.replayed).toBe(true);
+    expect(replay.body.receipt?.receiptId).toBe(firstApprovalReceiptId);
+    const afterReceipts = await pool.query(
+      `SELECT count(*)::int AS n FROM artifact_handoff_receipts WHERE organization_id=$1 AND proposal_id=(SELECT proposal_id FROM meeting_notes WHERE id=$2)`,
+      [orgA, noteId]
+    );
+    expect(afterReceipts.rows[0].n).toBe(beforeReceipts.rows[0].n);
+    expect(afterReceipts.rows[0].n).toBe(1);
   });
 });
