@@ -290,7 +290,13 @@ export const AssessmentLibraryTab: React.FC = () => {
         width: '220px',
         render: (row: MethodologyRow) => {
           if (row.id !== 'DRD') {
-            return <StatusChip label={isPolish ? 'Wkrótce' : 'Coming soon'} tone="neutral" />;
+            // 2026-08-26 assessment cleanup: "Wkrótce"/"Coming soon" ->
+            // "Planowane"/"Planned" (program rule — never "Coming soon" on
+            // the client's face). Row stays visible/disabled on purpose
+            // (TRIADA_KANON.md C3, cited in this file's own header: a
+            // disabled catalog row explains WHY, it never lies by omission
+            // — only the wording changes here, not the visibility).
+            return <StatusChip label={isPolish ? 'Planowane' : 'Planned'} tone="neutral" />;
           }
           return <StatusChip label={isPolish ? 'Rdzeń metody' : 'Method Core'} tone="success" />;
         },
@@ -419,7 +425,7 @@ export const AssessmentLibraryTab: React.FC = () => {
                     {
                       label: item.supported
                         ? isPolish ? 'Dostępna' : 'Available'
-                        : isPolish ? 'Wkrótce' : 'Coming soon',
+                        : isPolish ? 'Planowane' : 'Planned',
                       tone: item.supported ? 'success' : 'neutral',
                     },
                   ],

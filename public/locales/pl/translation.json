@@ -7115,6 +7115,7 @@
       "copied": "Skopiowano",
       "copyFailed": "Nie udało się skopiować",
       "aiUnavailable": "AI niedostępne",
+      "aiPlanned": "Planowane — wymaga klucza dostawcy AI, którego nie ma w tym środowisku.",
       "copyJson": "Kopiuj JSON",
       "topGaps": "Top luki",
       "initiativeAngles": "Kąty inicjatyw",

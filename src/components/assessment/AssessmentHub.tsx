@@ -2188,8 +2188,22 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
                     t('assessment.preview.aiSummarize', 'Summarize assessment'),
                     t('assessment.preview.aiNextSteps', 'Suggest next steps'),
                   ],
+                  // 2026-08-26 assessment cleanup: server/src/routes/assessment/
+                  // assessment-ai.routes.ts DOES have a real matching endpoint
+                  // (POST /:projectId/ai/executive-summary) — but it calls
+                  // aiAssessmentPartnerService, which needs GEMINI_API_KEY/
+                  // OPENAI_API_KEY/OPENROUTER_API_KEY. None are configured in
+                  // this environment (.env absent, .env.example only has
+                  // placeholders) — same root cause DEC-2026-08-25-59 already
+                  // found for Initiatives "Analizuj AI". Wiring it here would
+                  // just be a different flavor of atrapa. "Coming soon" (a
+                  // program-rule violation on its own — English, ambiguous)
+                  // replaced with an explicit Polish "Planowane" note instead.
                   disabled: true,
-                  disabledTooltip: t('common.comingSoon', 'Coming soon'),
+                  disabledTooltip: t(
+                    'assessment.preview.aiPlanned',
+                    'Planowane — wymaga klucza dostawcy AI, którego nie ma w tym środowisku.'
+                  ),
                 }}
                 relations={[]}
                 actions={previewActions}
