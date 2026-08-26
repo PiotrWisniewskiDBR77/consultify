@@ -34,7 +34,7 @@ describe('MitigationPanel — writes disabled (DEC-120/A11)', () => {
   it('renders the Save button disabled with a visible reason', () => {
     render(<MitigationPanel raidItemId="raid-1" />);
 
-    const saveButton = screen.getByRole('button', { name: /Save Mitigation/i });
+    const saveButton = screen.getByRole('button', { name: /execution\.mitigation\.save/ });
     expect(saveButton).toBeDisabled();
     expect(
       screen.getByText('Saving is moving to the canonical execution registry — in progress')
@@ -43,7 +43,7 @@ describe('MitigationPanel — writes disabled (DEC-120/A11)', () => {
 
   it('never calls the retired legacy writer since the control cannot be activated', () => {
     render(<MitigationPanel raidItemId="raid-1" />);
-    const saveButton = screen.getByRole('button', { name: /Save Mitigation/i });
+    const saveButton = screen.getByRole('button', { name: /execution\.mitigation\.save/ });
     // A disabled button ignores click events in jsdom the same as real browsers.
     saveButton.click();
     expect(updateRaidMitigation).not.toHaveBeenCalled();

@@ -70,7 +70,8 @@ test('WCAG text resize 200% — canonical surfaces retain content and actions', 
     ['portfolio', `?mode=portfolio&initiativeId=${encodeURIComponent(initiativeId!)}`],
     ['plan', `?mode=plan&initiativeId=${encodeURIComponent(initiativeId!)}`],
     ['capacity', '?mode=capacity'],
-    ['realizations', '?mode=execution-realizations'],
+    // DEC-120/A7: 'realizations' (ExecutionRealizationsSurface) removed —
+    // dead component, zero live importers.
     ['work', '?mode=execution-work'],
     ['resources', '?mode=execution-resources'],
     ['control', '?mode=execution-control'],

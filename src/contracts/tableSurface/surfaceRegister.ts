@@ -766,10 +766,10 @@ export const TABLE_SURFACE_REGISTER: Readonly<Record<TableSurfaceId, TableSurfac
     surface: 'Summary',
     entity: 'initiative',
     // R14 — repaired: same real 'list' tab runtime as T31 (see its comment).
-    // The one genuinely current P0 defect (TABLE-T13: EVM/what-if analytics
-    // panels — ExecutionIntelligencePanel/ExecutionChangeSignalsPanel/
-    // ExecutionWhatIfSandbox — preceding the table) is fixed: relocated
-    // below the table+preview block, flag-gated content unchanged.
+    // DEC-120/A7: the EVM/what-if analytics panels this comment used to
+    // describe (ExecutionIntelligencePanel/ExecutionChangeSignalsPanel/
+    // ExecutionWhatIfSandbox) were removed as dead code — never mounted
+    // anywhere reachable, and their gating flags were phantoms.
     adapter: 'register',
     ownerPackage: 'R14',
     persistKey: 'execution.summary',

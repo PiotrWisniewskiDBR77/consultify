@@ -7,7 +7,6 @@ import { PortfolioScenarioSurface } from '@/components/Initiatives/PortfolioScen
 import { PlanScenarioSurface } from '@/components/Initiatives/PlanScenarioSurface';
 import { CapacityScenarioSurface } from '@/components/Initiatives/CapacityScenarioSurface';
 import { ExecutionControlSurface } from '@/components/Execution/ExecutionControlSurface';
-import { ExecutionRealizationsSurface } from '@/components/Execution/ExecutionRealizationsSurface';
 import { ExecutionReportsSurface } from '@/components/Execution/ExecutionReportsSurface';
 import { ExecutionResourcesSurface } from '@/components/Execution/ExecutionResourcesSurface';
 import { ExecutionWorkSurface } from '@/components/Execution/ExecutionWorkSurface';
@@ -191,16 +190,13 @@ const Harness: React.FC = () => {
       </main>
     );
   }
-  if (mode === 'execution-realizations') {
-    return (
-      <main
-        aria-label="Execution Realizations acceptance harness"
-        className="min-h-screen bg-c-app"
-      >
-        <ExecutionRealizationsSurface />
-      </main>
-    );
-  }
+  // DEC-120/A7: the 'execution-realizations' mode (ExecutionRealizationsSurface)
+  // was removed along with the dead component — zero live importers in the
+  // real app, confirmed by ExecutionRuntimeSpine.contract.test.ts asserting
+  // it as "the rejected Execution Case register". Follow-up: the mid-journey
+  // step in aco-definition-browser.spec.ts that navigated here needs a
+  // dedicated fix pointing it at whatever surface now verifies an accepted
+  // Execution Case (see DEC-120 batch-A report).
   if (mode === 'execution-work') {
     return (
       <main aria-label="Execution Work acceptance harness" className="min-h-screen bg-c-app">

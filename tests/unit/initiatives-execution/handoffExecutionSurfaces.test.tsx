@@ -1,7 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { HandoffAcceptanceQueue } from '../../../src/components/MyWork/HandoffAcceptanceQueue';
-import { ExecutionRealizationsSurface } from '../../../src/components/Execution/ExecutionRealizationsSurface';
 import {
   decideHandoffAcceptance,
   listExecutionCases,
@@ -124,25 +123,9 @@ describe('Handoff and Realizacje', () => {
     );
     expect(await screen.findByText(/Execution Case case1/)).toBeInTheDocument();
   });
-  it('opens canonical executionCaseId registry and workspace with keyboard', async () => {
-    render(<ExecutionRealizationsSurface scope="all" />);
-    const row = (await screen.findByText('Program poprawy jakości')).closest('tr')!;
-    fireEvent.click(row);
-    fireEvent.keyDown(row.closest('div[tabindex="0"]')!, { key: 'Enter' });
-    expect(await screen.findByLabelText('Karta realizacji')).toBeInTheDocument();
-    expect(readExecutionCase).toHaveBeenCalledWith('case1');
-    expect(screen.getByText('Zakres')).toBeInTheDocument();
-    expect(screen.getAllByText('Pakiet przekazania').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Zaakceptowana baza').length).toBeGreaterThan(0);
-  });
-
-  it('shows the exact Execution Case relation and opens it from preview', async () => {
-    render(<ExecutionRealizationsSurface scope="all" />);
-    const row = (await screen.findByText('Program poprawy jakości')).closest('tr')!;
-    fireEvent.click(row);
-    expect(await screen.findByText('Execution Case case1@v1')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /Otwórz|Open/ }));
-    expect(await screen.findByLabelText('Karta realizacji')).toBeInTheDocument();
-    expect(screen.getAllByText(/Execution Case case1/).length).toBeGreaterThan(0);
-  });
+  // DEC-120/A7: ExecutionRealizationsSurface removed as dead code (zero live
+  // importers — ExecutionRuntimeSpine.contract.test.ts already asserted it
+  // was never mounted in ExecutionHub's primary list). Its two tests here
+  // (keyboard-open registry, Execution Case relation from preview) went with
+  // it; the HandoffAcceptanceQueue coverage above is unaffected.
 });
