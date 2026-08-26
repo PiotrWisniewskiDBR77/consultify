@@ -3,7 +3,7 @@
 Baza związana: `f560de23683523419a39401a8e8a416afae4c4ca` (`codex/m03-admin-20260824`); tip kontrolny po fetchu: `045085fd02c71fea6b729e9670ab186d0ce21e9f`.
 Marker: `f560de2368` — **POTWIERDZONY** (`merge-base --is-ancestor` exit 0).
 Gałąź: `codex/finance-day23-20260826` · worktree: `/private/tmp/consultify-finance-day23`.
-Port PG: `5483` · kontener: `cx-day23-pg` (`pgvector/pgvector:pg16`).
+Port PG: `5483` · kontener roboczy: `cx-day23-pg` (`pgvector/pgvector:pg16`) — usunięty po testach wraz z wolumenami `cx-day23*`.
 Poziom ukończenia §7: `CODE_PRESENT`; `TECHNICAL_PASS` nie został osiągnięty.
 
 ## Oświadczenie o chronionym checkoutcie
@@ -115,7 +115,7 @@ Dowód: `server/src/middleware/v8FeatureGate.middleware.ts:14-18`, `Gateway.ts:1
 
 Co zrobiłbym, gdyby zapadła decyzja właścicielska: właściciel/nadzorca musi rozstrzygnąć kontrolowane otwarcie pięciu kart i właściwy model flag per karta. Dopiero na zaakceptowanym montażu można uczciwie dowodzić capability, CAS, idempotencji i audytu jako produkcyjnie osiągalnych. Nie zmieniłem flagi, wartości domyślnej, `Gateway.ts`, `routes/v8/index.ts` ani middleware.
 
-Stan: zacommitowany wyłącznie test dowodowy i raport; mechanika C–H nie została rozpoczęta.
+Stan: zacommitowany wyłącznie test dowodowy i raport; mechanika C–H nie została rozpoczęta. Commity dowodowe: `6b6554f13d` (A/raport) i `7de2d72498` (B/test).
 
 ## Testy
 
@@ -134,6 +134,8 @@ Pierwsze dwie próby filtra z root repo (`server/...` i `src/...`) zwróciły `N
 ### Test B.1
 
 `day23.default-mount-reachability.pg.test.ts`: **6 PASS / 0 FAIL / 0 SKIPPED**. Test używa domyślnych `mountedFinanceStatementRouter`, `v8FeatureGate` i `v8Router`, bez wstrzyknięcia auth/context/service.
+
+Końcowe powtórzenie tego samego testu po commitach: **6 PASS / 0 FAIL / 0 SKIPPED**.
 
 ### Zasięg
 
@@ -159,6 +161,12 @@ Brak nowej trasy i brak zmiany kontraktu API. Stan wiążący dla frontu: `/api/
 ## Migracje
 
 Brak nowej migracji. Wynik H pozostaje `NIE_ZACZĘTE` po STOP B.1. Zakres `20261140–20261149` nietknięty. `REMOTE_EXECUTION_NOT_AUTHORIZED` zachowane.
+
+## Kontrola zakresu i cleanup
+
+Końcowe `git diff --check` jest czyste. Porównanie z `codex/m03-admin-20260824` nie wykazało zmian w `src/`, `Gateway.ts`, `server/src/middleware/` ani `server/src/db/migrations/`. Lista różnic obejmuje wyłącznie wiążącą instrukcję obecną już w bazie gałęzi dnia 23, niniejszy raport i test B.1.
+
+Kontener `cx-day23-pg` usunięto. Końcowe odczyty `docker ps -a --filter name=cx-day23-pg` oraz wolumenów pasujących do `cx-day23` są puste. Nie wykonano deployu, operacji Railway, pushu ani merge.
 
 ## Czego nie zrobiłem i dlaczego
 
