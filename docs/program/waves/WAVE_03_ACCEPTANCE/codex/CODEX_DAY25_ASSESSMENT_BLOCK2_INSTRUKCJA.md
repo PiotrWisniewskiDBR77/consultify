@@ -64,13 +64,13 @@ Naruszenie tego ograniczenia = odrzucenie dyżuru, niezależnie od jakości resz
 1. Punktem wyjścia jest **NAJNOWSZY tip gałęzi `codex/m03-admin-20260824`**.
    Nadzorca podaje Ci **SHA commitu-markera** przy wklejaniu tej instrukcji.
 
-   **SHA markera: «MARKER_SHA»**
+   **SHA markera: c7647e9a23**
 
    ```bash
    cd <root-repo>
    git fetch --all --prune
    git log --oneline -25 codex/m03-admin-20260824
-   git merge-base --is-ancestor «MARKER_SHA» codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
+   git merge-base --is-ancestor c7647e9a23 codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
    ```
 
 2. **Jeśli marker nie jest przodkiem tipa albo gałąź nie istnieje — STOP.**
@@ -134,7 +134,7 @@ Naruszenie tego ograniczenia = odrzucenie dyżuru, niezależnie od jakości resz
    format `YYYYMMDD`):
 
    ```bash
-   git branch codex/assessment-day25-<data> «MARKER_SHA»
+   git branch codex/assessment-day25-<data> c7647e9a23
    git worktree add /private/tmp/consultify-assessment-day25 codex/assessment-day25-<data>
    cd /private/tmp/consultify-assessment-day25
    ln -s /Users/piotrwisniewski/Developer/Consultify/node_modules node_modules   # DEC-86, TYLKO ODCZYT
@@ -1473,7 +1473,7 @@ Nie tworzysz drugiego pliku nigdzie indziej (Z12). **Raportu dnia 20 nie edytuje
 # Assessment dzień 25 (blok 2 — dokończenia po dniu 20) — raport dyżuru <data>
 
 Baza: codex/m03-admin-20260824 @ <SHA tipa>
-Marker: «MARKER_SHA» — POTWIERDZONY / BRAK
+Marker: c7647e9a23 — POTWIERDZONY / BRAK
 Gałąź: codex/assessment-day25-<data>
 Worktree: /private/tmp/consultify-assessment-day25
 Port PG: 5499 · kontener cx-day25-pg usunięty: TAK/NIE · wolumeny usunięte: TAK/NIE
