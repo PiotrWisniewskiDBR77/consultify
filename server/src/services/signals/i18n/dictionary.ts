@@ -11,6 +11,12 @@ const pl: Record<string, string> = {
   'signals.dec.pending_stale.body': 'Decyzja oczekuje od {value} dni.',
   'signals.dec.blocking_dependents.title': 'Decyzja blokuje zależne obiekty',
   'signals.dec.blocking_dependents.body': 'Decyzja blokuje {value} obiektów.',
+  'signals.res.kpi_threshold_breached.title': 'KPI przekroczył próg',
+  'signals.res.kpi_threshold_breached.body': 'Wartość KPI wymaga reakcji.',
+  'signals.fin.budget_overspend.title': 'Budżet został przekroczony',
+  'signals.fin.budget_overspend.body': 'Wykonanie przekroczyło zatwierdzony budżet.',
+  'signals.fin.benefit_not_realized.title': 'Korzyść nie została zrealizowana w terminie',
+  'signals.fin.benefit_not_realized.body': 'Termin realizacji korzyści minął bez potwierdzenia.',
 };
 
 const en: Record<string, string> = {
@@ -26,6 +32,12 @@ const en: Record<string, string> = {
   'signals.dec.pending_stale.body': 'The decision has been pending for {value} days.',
   'signals.dec.blocking_dependents.title': 'Decision blocks dependent objects',
   'signals.dec.blocking_dependents.body': 'The decision blocks {value} objects.',
+  'signals.res.kpi_threshold_breached.title': 'KPI threshold breached',
+  'signals.res.kpi_threshold_breached.body': 'The KPI value requires action.',
+  'signals.fin.budget_overspend.title': 'Budget overspend',
+  'signals.fin.budget_overspend.body': 'Actual spend exceeded the approved budget.',
+  'signals.fin.benefit_not_realized.title': 'Benefit not realized by its due date',
+  'signals.fin.benefit_not_realized.body': 'The realization date passed without confirmation.',
 };
 
 export function translateSignal(
