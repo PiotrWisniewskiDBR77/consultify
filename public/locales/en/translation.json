@@ -34,6 +34,57 @@
       "forbidden": "No permission to open this object",
       "unavailable": "No route to this object"
     },
+    "mine": "Mine",
+    "columns": {
+      "signal": "Signal",
+      "domain": "Domain",
+      "severity": "Severity",
+      "source": "Source",
+      "age": "Age",
+      "status": "Status"
+    },
+    "filters": {
+      "all": "All",
+      "mine": "Mine only",
+      "warning": "≥ warning",
+      "critical": "≥ critical"
+    },
+    "action": {
+      "open": "Open",
+      "refresh": "Refresh",
+      "retry": "Retry",
+      "loadMore": "Show older",
+      "snooze": "Snooze",
+      "mute": "Mute type",
+      "dismiss": "Dismiss",
+      "copyId": "Copy signal identifier",
+      "muteConfirm": "This operation cannot be undone in the app. Mute this type?"
+    },
+    "empty": {
+      "producerOff": "The signal producer is disabled — until it is enabled this list will stay empty regardless of project state.",
+      "unknown": "No open signals. We do not know whether the producer is enabled — check with Refresh.",
+      "good": "No open signals. Rule conditions are not met — this is a good state."
+    },
+    "error": {
+      "load": "Could not check signals",
+      "action": "Could not perform the action",
+      "demoBlocked": "This action is blocked in demo mode",
+      "gone": "The signal no longer exists — refresh the list"
+    },
+    "notice": {
+      "snooze": "Signal snoozed",
+      "dismiss": "Signal dismissed",
+      "mute": "Signal type muted",
+      "refreshed": "Refreshed"
+    },
+    "throttle": "Available in {{count}} s",
+    "preview": {
+      "details": "Details",
+      "evidence": "Evidence",
+      "noEvidence": "No saved evidence",
+      "provenance": "AI provenance",
+      "noProvenance": "Missing provenance for AI interpretation"
+    },
     "rule": {
       "signals.exec.task.overdue.title": "Task overdue",
       "signals.exec.task.overdue.body": "The task is {{value}} days overdue.",

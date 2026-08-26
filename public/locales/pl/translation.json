@@ -34,6 +34,57 @@
       "forbidden": "Brak uprawnień do obiektu",
       "unavailable": "Brak trasy do tego obiektu"
     },
+    "mine": "Moje",
+    "columns": {
+      "signal": "Sygnał",
+      "domain": "Domena",
+      "severity": "Waga",
+      "source": "Źródło",
+      "age": "Wiek",
+      "status": "Status"
+    },
+    "filters": {
+      "all": "Wszystkie",
+      "mine": "Tylko moje",
+      "warning": "≥ ostrzeżenie",
+      "critical": "≥ krytyczny"
+    },
+    "action": {
+      "open": "Otwórz",
+      "refresh": "Odśwież",
+      "retry": "Ponów",
+      "loadMore": "Pokaż starsze",
+      "snooze": "Drzemka",
+      "mute": "Wycisz typ",
+      "dismiss": "Ukryj",
+      "copyId": "Kopiuj identyfikator sygnału",
+      "muteConfirm": "Tej operacji nie da się cofnąć z aplikacji. Wyciszyć ten typ?"
+    },
+    "empty": {
+      "producerOff": "Producent sygnałów jest wyłączony — dopóki nie zostanie włączony, ta lista będzie pusta niezależnie od stanu projektów.",
+      "unknown": "Brak otwartych sygnałów. Nie wiemy, czy producent sygnałów jest włączony — sprawdź przyciskiem Odśwież.",
+      "good": "Brak otwartych sygnałów. Warunki reguł nie są spełnione — to dobry stan."
+    },
+    "error": {
+      "load": "Nie udało się sprawdzić sygnałów",
+      "action": "Nie udało się wykonać akcji",
+      "demoBlocked": "W trybie demo ta akcja jest zablokowana",
+      "gone": "Sygnał już nie istnieje — odśwież listę"
+    },
+    "notice": {
+      "snooze": "Sygnał odłożono",
+      "dismiss": "Sygnał ukryto",
+      "mute": "Typ sygnału wyciszono",
+      "refreshed": "Odświeżono"
+    },
+    "throttle": "Dostępne za {{count}} s",
+    "preview": {
+      "details": "Szczegóły",
+      "evidence": "Skąd wiadomo",
+      "noEvidence": "Brak zapisanych dowodów",
+      "provenance": "Rodowód AI",
+      "noProvenance": "Brak rodowodu dla interpretacji AI"
+    },
     "rule": {
       "signals.exec.task.overdue.title": "Zadanie po terminie",
       "signals.exec.task.overdue.body": "Zadanie jest po terminie o {{value}} dni.",

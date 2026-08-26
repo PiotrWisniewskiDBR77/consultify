@@ -5,6 +5,9 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
+import { isChatSignalsFeedEnabled } from '@/utils/chatSignalsFeedFlag';
+
+import { ChatSignalsFeed } from './signalsFeed/ChatSignalsFeed';
 
 /**
  * M01-012 — hierarchia akcji w wierszu sygnału.
@@ -171,6 +174,7 @@ const clampText = (s: string, max = 220) => {
 
 export const ChatSignalsPanel: React.FC<ChatSignalsPanelProps> = ({ open, onClose, projectId }) => {
   const { t } = useTranslation();
+  const feedV2 = isChatSignalsFeedEnabled();
 
   const [loading, setLoading] = useState(false);
   const [signals, setSignals] = useState<Signal[]>([]);
@@ -340,7 +344,9 @@ export const ChatSignalsPanel: React.FC<ChatSignalsPanelProps> = ({ open, onClos
       <div className="absolute inset-0 bg-black/30" onClick={onClose} />
 
       {/* Panel */}
-      <div className="absolute right-0 top-0 h-full w-full max-w-md bg-white dark:bg-navy-950 border-l border-slate-200 dark:border-white/[0.06] shadow-xl flex flex-col">
+      <div
+        className={`absolute right-0 top-0 h-full w-full bg-white dark:bg-navy-950 border-l border-slate-200 dark:border-white/[0.06] shadow-xl flex flex-col ${feedV2 ? 'max-w-[1040px]' : 'max-w-md'}`}
+      >
         <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200/60 dark:border-white/[0.06]">
           <div className="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
             <Sparkles size={16} />
@@ -355,169 +361,180 @@ export const ChatSignalsPanel: React.FC<ChatSignalsPanelProps> = ({ open, onClos
           </button>
         </div>
 
-        <div className="px-4 py-2 border-b border-slate-200/60 dark:border-white/[0.06] flex items-center justify-between">
-          <div className="text-xs text-slate-500 dark:text-slate-400" data-testid="chat-signals-count">
-            {loading
-              ? t('common.loading', 'Loading...')
-              : t('aiChat.signals.count', '{{count}} signals', { count: allSignals.length })}
-          </div>
-          <button
-            onClick={() => refresh()}
-            className="text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:underline"
-          >
-            {t('common.refresh', 'Refresh')}
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
-          {errorKind === 'forbidden' ? (
-            <div
-              role="alert"
-              data-testid="chat-signals-forbidden"
-              className="rounded-lg border border-c-border bg-c-surface-raised p-4 text-sm text-c-text"
-            >
-              {t(
-                'aiChat.signals.forbidden',
-                "You don't have permission to view signals for this project."
-              )}
-            </div>
-          ) : errorKind === 'failed' ? (
-            <div
-              role="alert"
-              data-testid="chat-signals-error"
-              className="rounded-lg border border-c-border bg-c-surface-raised p-4 text-sm text-c-text"
-            >
-              <p>{t('aiChat.signals.errorState', "Couldn't check for signals right now.")}</p>
-              <button
-                type="button"
-                onClick={() => refresh()}
-                className="mt-2 text-xs font-medium text-c-text-secondary underline hover:text-c-text"
+        {feedV2 ? (
+          <ChatSignalsFeed projectId={projectId} />
+        ) : (
+          <>
+            <div className="px-4 py-2 border-b border-slate-200/60 dark:border-white/[0.06] flex items-center justify-between">
+              <div
+                className="text-xs text-slate-500 dark:text-slate-400"
+                data-testid="chat-signals-count"
               >
-                {t('common.retry', 'Retry')}
+                {loading
+                  ? t('common.loading', 'Loading...')
+                  : t('aiChat.signals.count', '{{count}} signals', { count: allSignals.length })}
+              </div>
+              <button
+                onClick={() => refresh()}
+                className="text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:underline"
+              >
+                {t('common.refresh', 'Refresh')}
               </button>
             </div>
-          ) : visibleSignals.length === 0 ? (
-            <div
-              data-testid="chat-signals-empty"
-              className="rounded-lg border border-slate-200 dark:border-navy-800 bg-slate-50 dark:bg-navy-900 p-4 text-sm text-slate-600 dark:text-slate-300"
-            >
-              {t('aiChat.signals.empty', 'No signals right now.')}
-            </div>
-          ) : (
-            visibleSignals.map((n) => {
-              return (
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              {errorKind === 'forbidden' ? (
                 <div
-                  key={n.key}
-                  className="rounded-xl border border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-900 p-3"
+                  role="alert"
+                  data-testid="chat-signals-forbidden"
+                  className="rounded-lg border border-c-border bg-c-surface-raised p-4 text-sm text-c-text"
                 >
-                  <div className="text-sm font-semibold text-slate-900 dark:text-white">
-                    {n.title || t('aiChat.signals.untitled', 'Signal')}
-                  </div>
-                  {/* M01-P03 — every row used to print "No details" whenever the
+                  {t(
+                    'aiChat.signals.forbidden',
+                    "You don't have permission to view signals for this project."
+                  )}
+                </div>
+              ) : errorKind === 'failed' ? (
+                <div
+                  role="alert"
+                  data-testid="chat-signals-error"
+                  className="rounded-lg border border-c-border bg-c-surface-raised p-4 text-sm text-c-text"
+                >
+                  <p>{t('aiChat.signals.errorState', "Couldn't check for signals right now.")}</p>
+                  <button
+                    type="button"
+                    onClick={() => refresh()}
+                    className="mt-2 text-xs font-medium text-c-text-secondary underline hover:text-c-text"
+                  >
+                    {t('common.retry', 'Retry')}
+                  </button>
+                </div>
+              ) : visibleSignals.length === 0 ? (
+                <div
+                  data-testid="chat-signals-empty"
+                  className="rounded-lg border border-slate-200 dark:border-navy-800 bg-slate-50 dark:bg-navy-900 p-4 text-sm text-slate-600 dark:text-slate-300"
+                >
+                  {t('aiChat.signals.empty', 'No signals right now.')}
+                </div>
+              ) : (
+                visibleSignals.map((n) => {
+                  return (
+                    <div
+                      key={n.key}
+                      className="rounded-xl border border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-900 p-3"
+                    >
+                      <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                        {n.title || t('aiChat.signals.untitled', 'Signal')}
+                      </div>
+                      {/* M01-P03 — every row used to print "No details" whenever the
                       body was empty, styled exactly like real body text: a
                       fabricated line that reads as "we checked, there's
                       nothing here" when the truth is simply "no body was
                       sent". An absent field is honestly represented by
                       absent UI, not by manufactured filler — omit the line
                       instead of asserting a hollow claim on every empty row. */}
-                  {n.body && n.body.trim() ? (
-                    <div className="mt-1 text-xs text-slate-600 dark:text-slate-300">
-                      {clampText(n.body)}
+                      {n.body && n.body.trim() ? (
+                        <div className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+                          {clampText(n.body)}
+                        </div>
+                      ) : null}
+
+                      {(n.projectName || n.projectId) && (
+                        <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+                          {n.projectName ? n.projectName : n.projectId}
+                        </div>
+                      )}
+
+                      <div className="mt-3 flex items-center justify-between gap-2">
+                        {/* JEDNA akcja główna na wiersz — reszta w kebabie. */}
+                        <button
+                          type="button"
+                          data-testid="chat-signal-primary-action"
+                          onClick={() => handleSaveToNotebook(n)}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-c-border bg-c-surface-raised px-2.5 py-1.5 text-xs font-semibold text-c-text transition-colors hover:bg-c-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                        >
+                          <BookOpen size={14} />
+                          {t('aiChat.signals.saveNotebook', 'Save to Notebook')}
+                        </button>
+
+                        <SignalActionsMenu
+                          testId="chat-signal-actions-menu"
+                          label={t('aiChat.signals.moreActions', 'More actions')}
+                          items={[
+                            {
+                              id: 'save-ideas',
+                              label: t('aiChat.signals.saveIdeas', 'Save to My Ideas'),
+                              icon: BookOpen,
+                              onSelect: () => handleSaveToIdeas(n),
+                            },
+                            {
+                              id: 'snooze',
+                              label: t('aiChat.signals.snooze', 'Snooze'),
+                              icon: Clock,
+                              onSelect: () => handleSnooze(n, '1h'),
+                            },
+                            {
+                              id: 'mute-type',
+                              label: t('aiChat.signals.muteType', 'Mute type'),
+                              icon: BellOff,
+                              onSelect: () => handleMuteType(n),
+                            },
+                            {
+                              id: 'dismiss',
+                              label: t('aiChat.signals.dismiss', 'Dismiss'),
+                              icon: X,
+                              onSelect: () => handleDismiss(n),
+                              variant: 'danger',
+                            },
+                          ]}
+                        />
+                      </div>
                     </div>
-                  ) : null}
+                  );
+                })
+              )}
 
-                  {(n.projectName || n.projectId) && (
-                    <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
-                      {n.projectName ? n.projectName : n.projectId}
-                    </div>
-                  )}
+              {(hiddenCount > 0 || expanded) && allSignals.length > COLLAPSED_SIGNAL_COUNT && (
+                <button
+                  type="button"
+                  data-testid="chat-signals-show-more"
+                  onClick={() => setExpanded((prev) => !prev)}
+                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-c-border bg-c-surface px-3 py-2 text-xs font-semibold text-c-text-secondary transition-colors hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                  aria-expanded={expanded}
+                >
+                  <ChevronDown
+                    size={14}
+                    className={
+                      expanded ? 'rotate-180 transition-transform' : 'transition-transform'
+                    }
+                  />
+                  {expanded
+                    ? t('aiChat.signals.showLess', 'Show fewer signals')
+                    : `${t('aiChat.signals.showMore', 'Show more signals')} (${hiddenCount})`}
+                </button>
+              )}
 
-                  <div className="mt-3 flex items-center justify-between gap-2">
-                    {/* JEDNA akcja główna na wiersz — reszta w kebabie. */}
-                    <button
-                      type="button"
-                      data-testid="chat-signal-primary-action"
-                      onClick={() => handleSaveToNotebook(n)}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-c-border bg-c-surface-raised px-2.5 py-1.5 text-xs font-semibold text-c-text transition-colors hover:bg-c-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                    >
-                      <BookOpen size={14} />
-                      {t('aiChat.signals.saveNotebook', 'Save to Notebook')}
-                    </button>
-
-                    <SignalActionsMenu
-                      testId="chat-signal-actions-menu"
-                      label={t('aiChat.signals.moreActions', 'More actions')}
-                      items={[
-                        {
-                          id: 'save-ideas',
-                          label: t('aiChat.signals.saveIdeas', 'Save to My Ideas'),
-                          icon: BookOpen,
-                          onSelect: () => handleSaveToIdeas(n),
-                        },
-                        {
-                          id: 'snooze',
-                          label: t('aiChat.signals.snooze', 'Snooze'),
-                          icon: Clock,
-                          onSelect: () => handleSnooze(n, '1h'),
-                        },
-                        {
-                          id: 'mute-type',
-                          label: t('aiChat.signals.muteType', 'Mute type'),
-                          icon: BellOff,
-                          onSelect: () => handleMuteType(n),
-                        },
-                        {
-                          id: 'dismiss',
-                          label: t('aiChat.signals.dismiss', 'Dismiss'),
-                          icon: X,
-                          onSelect: () => handleDismiss(n),
-                          variant: 'danger',
-                        },
-                      ]}
-                    />
+              {mutedTypes.length > 0 && (
+                <div className="rounded-lg border border-slate-200 dark:border-navy-800 bg-slate-50 dark:bg-navy-900 p-3 text-xs text-slate-600 dark:text-slate-300">
+                  <div className="flex items-center gap-2 font-medium">
+                    <BellOff size={14} />
+                    <span>{t('aiChat.signals.mutedHint', 'Muted types:')}</span>
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {mutedTypes.slice(0, 8).map((tpe) => (
+                      <span
+                        key={tpe}
+                        className="rounded-full bg-slate-200 dark:bg-white/[0.08] px-2 py-0.5 text-[11px]"
+                      >
+                        {tpe}
+                      </span>
+                    ))}
                   </div>
                 </div>
-              );
-            })
-          )}
-
-          {(hiddenCount > 0 || expanded) && allSignals.length > COLLAPSED_SIGNAL_COUNT && (
-            <button
-              type="button"
-              data-testid="chat-signals-show-more"
-              onClick={() => setExpanded((prev) => !prev)}
-              className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-c-border bg-c-surface px-3 py-2 text-xs font-semibold text-c-text-secondary transition-colors hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-              aria-expanded={expanded}
-            >
-              <ChevronDown
-                size={14}
-                className={expanded ? 'rotate-180 transition-transform' : 'transition-transform'}
-              />
-              {expanded
-                ? t('aiChat.signals.showLess', 'Show fewer signals')
-                : `${t('aiChat.signals.showMore', 'Show more signals')} (${hiddenCount})`}
-            </button>
-          )}
-
-          {mutedTypes.length > 0 && (
-            <div className="rounded-lg border border-slate-200 dark:border-navy-800 bg-slate-50 dark:bg-navy-900 p-3 text-xs text-slate-600 dark:text-slate-300">
-              <div className="flex items-center gap-2 font-medium">
-                <BellOff size={14} />
-                <span>{t('aiChat.signals.mutedHint', 'Muted types:')}</span>
-              </div>
-              <div className="mt-2 flex flex-wrap gap-1">
-                {mutedTypes.slice(0, 8).map((tpe) => (
-                  <span
-                    key={tpe}
-                    className="rounded-full bg-slate-200 dark:bg-white/[0.08] px-2 py-0.5 text-[11px]"
-                  >
-                    {tpe}
-                  </span>
-                ))}
-              </div>
+              )}
             </div>
-          )}
-        </div>
+          </>
+        )}
       </div>
     </div>
   );
