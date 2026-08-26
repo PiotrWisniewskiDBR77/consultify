@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 
 import { SIGNAL_SEVERITY_RANK, type SignalSeverity } from '../../types/executionVisibility.js';
 import type { RuleHit, SignalQuery, SignalRule, WorkSignalRow } from '../../types/workSignals.js';
+import { sendSystemAlert } from '../systemAlertNotifier.js';
 import { validateRuleRegistry } from './ruleRegistry.js';
 
 export interface SignalRunError {
@@ -223,6 +224,14 @@ export async function evaluateSignalRules(params: {
         runId,
       ]
     );
+    await sendSystemAlert({
+      title: 'Work signal producer failed',
+      message: `${organizationId}: ${globalError.message}`,
+      severity: 'CRITICAL',
+      source: 'WORK_SIGNALS',
+      throttleKey: `work-signals:${organizationId}`,
+      throttleMs: 300_000,
+    });
     return {
       runId,
       status: 'FAILED',
