@@ -22,6 +22,15 @@
  * (string vs {decision}/{task,owner}) and one note with empty
  * decisions/actionItems, so the Protokół section's honest "—" rendering and
  * its real-content rendering are both visible in the same screenshot set.
+ *
+ * DEC-82 (owner right-panel review, 2026-08-26): the object-card right panel
+ * Properties table now also shows duration/decisions-count/follow-ups-count/
+ * organizer — those read `Api.listMeetingDecisionRecords` /
+ * `Api.listMeetingFollowUpRecords` (the real D.4/D.5 resources, not the
+ * legacy `MEETING_1.decisions` array) and `Api.getUsers` (organizer name
+ * lookup from `meeting.createdBy`). Stubbed below so the "object" view shows
+ * real counts instead of the honest-but-empty '0' a 403/network failure
+ * would otherwise produce in this backend-less harness.
  */
 import React from 'react';
 import { Route, Routes } from 'react-router-dom';
@@ -51,10 +60,7 @@ const MEETING_1 = {
     'Katarzyna Nowak (Utrzymanie ruchu)',
     'Piotr Wiśniewski (DBR77 — doradca)',
   ],
-  preRead: [
-    'Raport czasu przezbrojenia — tydzień 33',
-    'Zdjęcia stanowiska 2 przed/po pilotażu',
-  ],
+  preRead: ['Raport czasu przezbrojenia — tydzień 33', 'Zdjęcia stanowiska 2 przed/po pilotażu'],
   agenda: [
     'Status działań z poprzedniego przeglądu',
     'Gotowość do pilotażu na stanowisku 2',
@@ -67,9 +73,17 @@ const MEETING_1 = {
   ],
   followUps: [
     { id: 'fu-1', title: 'Zamówić zapasowe matryce', owner: 'Katarzyna Nowak', status: 'open' },
-    { id: 'fu-2', title: 'Rozesłać zaktualizowaną checklistę SMED', owner: 'Anna Kowalczyk', status: 'done' },
+    {
+      id: 'fu-2',
+      title: 'Rozesłać zaktualizowaną checklistę SMED',
+      owner: 'Anna Kowalczyk',
+      status: 'done',
+    },
   ],
   status: 'scheduled',
+  // DEC-82: organizer lookup source for the Properties table (Api.getUsers
+  // resolves this id against MOCK_USERS below).
+  createdBy: 'user-anna',
 };
 
 const MEETING_2 = {
@@ -83,7 +97,14 @@ const MEETING_2 = {
   preRead: [],
   agenda: ['Przegląd 6 dużych strat', 'Priorytetyzacja wg wpływu na OEE'],
   decisions: ['Priorytet nr 1: czas przezbrojenia (44% strat)'],
-  followUps: [{ id: 'fu-3', title: 'Uzupełnić rejestr strat za sierpień', owner: 'Marek Zieliński', status: 'done' }],
+  followUps: [
+    {
+      id: 'fu-3',
+      title: 'Uzupełnić rejestr strat za sierpień',
+      owner: 'Marek Zieliński',
+      status: 'done',
+    },
+  ],
   status: 'completed',
 };
 
@@ -130,8 +151,14 @@ const MEETING_1_NOTES = [
     source: 'ai' as const,
     summary:
       'Zespół potwierdził gotowość do pilotażu na stanowisku 2; główne ryzyko: brak zapasowych matryc formujących.',
-    keyPoints: ['Czas przezbrojenia spadł z 42 do 27 minut', 'Operatorzy przeszkoleni na 2 z 3 zmian'],
-    decisions: ['Pilotaż startuje 2026-09-01', { decision: 'Backup matryc zamawiamy do końca tygodnia' }],
+    keyPoints: [
+      'Czas przezbrojenia spadł z 42 do 27 minut',
+      'Operatorzy przeszkoleni na 2 z 3 zmian',
+    ],
+    decisions: [
+      'Pilotaż startuje 2026-09-01',
+      { decision: 'Backup matryc zamawiamy do końca tygodnia' },
+    ],
     actionItems: [
       { task: 'Zamówić zapasowe matryce', owner: 'Katarzyna Nowak' },
       'Zaktualizować checklistę SMED',
@@ -150,6 +177,94 @@ const MEETING_1_NOTES = [
     status: 'proposed' as const,
     proposalId: 'proposal-2',
     createdAt: hoursAgo(3),
+  },
+];
+
+// DEC-82: org roster for the "Organizer" property row (Api.getUsers,
+// ADMIN/OWNER/SUPERADMIN-gated in the real backend — this dev-render user is
+// seeded as OWNER by seedRealisticSession(), matching that gate).
+const MOCK_USERS = [
+  {
+    id: 'user-anna',
+    firstName: 'Anna',
+    lastName: 'Kowalczyk',
+    email: 'anna.kowalczyk@nordfood.example',
+  },
+  {
+    id: 'user-marek',
+    firstName: 'Marek',
+    lastName: 'Zieliński',
+    email: 'marek.zielinski@nordfood.example',
+  },
+];
+
+// DEC-82: `/decision-records` + `/follow-up-records` fixtures for meeting-1
+// — the real resources the Properties table's "Liczba decyzji"/"Liczba
+// follow-upów" rows and the "Decyzje i działania" section both read (D.4/
+// D.5), distinct from the legacy `MEETING_1.decisions`/`followUps` arrays
+// above (which only feed the list-view preview pane's old summary chips).
+const MEETING_1_DECISION_RECORDS = [
+  {
+    id: 'dec-1',
+    organizationId: 'org-demo',
+    meetingId: MEETING_1.id,
+    statement: 'Zatwierdzono budżet doposażenia stanowiska 2 (18 400 PLN)',
+    rationale: 'Niezbędne do utrzymania terminu pilotażu 2026-09-01.',
+    decidedBy: 'user-anna',
+    decidedAt: hoursAgo(20),
+    status: 'recorded' as const,
+    sourceKind: 'manual' as const,
+    sourceNoteId: null,
+    sourceIndex: null,
+    createdBy: 'user-anna',
+    createdAt: hoursAgo(20),
+    updatedAt: hoursAgo(20),
+  },
+  {
+    id: 'dec-2',
+    organizationId: 'org-demo',
+    meetingId: MEETING_1.id,
+    statement: 'Przesunięto start pilotażu o tydzień — do 2026-09-01',
+    rationale:
+      'Brak potwierdzonej dostawy zapasowych matryc formujących przed pierwotnym terminem.',
+    decidedBy: 'user-marek',
+    decidedAt: hoursAgo(20),
+    status: 'recorded' as const,
+    sourceKind: 'manual' as const,
+    sourceNoteId: null,
+    sourceIndex: null,
+    createdBy: 'user-marek',
+    createdAt: hoursAgo(20),
+    updatedAt: hoursAgo(20),
+  },
+];
+
+const MEETING_1_FOLLOW_UP_RECORDS = [
+  {
+    id: 'fur-1',
+    organizationId: 'org-demo',
+    meetingId: MEETING_1.id,
+    title: 'Zamówić zapasowe matryce',
+    owner: 'Katarzyna Nowak',
+    ownerUserId: null,
+    dueAt: hoursFromNow(48),
+    status: 'open' as const,
+    sourceKind: 'manual' as const,
+    sourceNoteId: null,
+    sourceIndex: null,
+  },
+  {
+    id: 'fur-2',
+    organizationId: 'org-demo',
+    meetingId: MEETING_1.id,
+    title: 'Rozesłać zaktualizowaną checklistę SMED',
+    owner: 'Anna Kowalczyk',
+    ownerUserId: 'user-anna',
+    dueAt: null,
+    status: 'done' as const,
+    sourceKind: 'manual' as const,
+    sourceNoteId: null,
+    sourceIndex: null,
   },
 ];
 
@@ -173,9 +288,23 @@ Api.getAIOperatorMeetingBrief = async () => ({
   followUpSuggestions: [],
 });
 
+// DEC-82 additions — see file header note above.
+Api.getUsers = async () => MOCK_USERS as any;
+Api.listMeetingDecisionRecords = async (meetingId: string) =>
+  ({
+    decisions: meetingId === MEETING_1.id ? MEETING_1_DECISION_RECORDS : [],
+  }) as any;
+Api.listMeetingFollowUpRecords = async (meetingId: string) =>
+  ({
+    followUps: meetingId === MEETING_1.id ? MEETING_1_FOLLOW_UP_RECORDS : [],
+  }) as any;
+
 const params = new URLSearchParams(window.location.search);
 const view = params.get('view') === 'object' ? 'object' : 'list';
-const tab = params.get('tab') === 'minutes' || params.get('tab') === 'decisions' ? params.get('tab') : 'details';
+const tab =
+  params.get('tab') === 'minutes' || params.get('tab') === 'decisions'
+    ? params.get('tab')
+    : 'details';
 
 const path =
   view === 'object'

@@ -367,6 +367,19 @@
         "--strictPort"
       ],
       "port": 4490
+    },
+    {
+      "name": "meetings-rightpanel-4501",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "4501",
+        "--strictPort"
+      ],
+      "port": 4501
     }
   ]
 }
