@@ -26,6 +26,28 @@ interface AuthRequest extends Request {
   };
 }
 
+class AssessmentLookupError extends Error {
+  constructor(readonly kind: 'not_found' | 'source_unavailable') {
+    super(kind);
+  }
+}
+
+function sendAssessmentLookupError(res: Response, err: unknown): boolean {
+  if (!(err instanceof AssessmentLookupError)) return false;
+  if (err.kind === 'not_found') {
+    res.status(404).json({
+      error: 'Nie znaleziono oceny o podanym identyfikatorze.',
+      code: 'ASSESSMENT_NOT_FOUND',
+    });
+  } else {
+    res.status(503).json({
+      error: 'Źródło danych oceny jest chwilowo niedostępne.',
+      code: 'ASSESSMENT_SOURCE_UNAVAILABLE',
+    });
+  }
+  return true;
+}
+
 /**
  * Helper to get assessment data from database.
  * Fetches assessment row + parsed answers/scores for AI processing.
@@ -43,7 +65,7 @@ async function getAssessmentData(projectId: string, organizationId: string): Pro
 
     if (!row) {
       logger.warn(`[AssessmentAI] Assessment not found: ${projectId}`);
-      return { projectId, organizationId, axes: {} };
+      throw new AssessmentLookupError('not_found');
     }
 
     const parseJson = (str: string | null | undefined, fallback: any = {}) => {
@@ -124,8 +146,9 @@ async function getAssessmentData(projectId: string, organizationId: string): Pro
       companySize: contextSnapshot?.companySize || contextSnapshot?.organizationProfile?.size,
     };
   } catch (err: any) {
+    if (err instanceof AssessmentLookupError) throw err;
     logger.error(`[AssessmentAI] Error fetching assessment data: ${err.message}`);
-    return { projectId, organizationId, axes: {} };
+    throw new AssessmentLookupError('source_unavailable');
   }
 }
 
@@ -333,6 +356,7 @@ router.post('/:projectId/ai/validate', async (req: AuthRequest, res: Response) =
 
     res.json(result);
   } catch (err: any) {
+    if (sendAssessmentLookupError(res, err)) return;
     logger.error('[AssessmentAI] Error validating consistency', {
       err: err,
       correlationId: (res.req as any)?.correlationId,
@@ -426,6 +450,7 @@ router.get('/:projectId/ai/insights', async (req: AuthRequest, res: Response) =>
 
     res.json(result);
   } catch (err: any) {
+    if (sendAssessmentLookupError(res, err)) return;
     logger.error('[AssessmentAI] Error generating insights', {
       err: err,
       correlationId: (res.req as any)?.correlationId,
@@ -490,6 +515,7 @@ router.post('/:projectId/ai/executive-summary', async (req: AuthRequest, res: Re
 
     res.json(result);
   } catch (err: any) {
+    if (sendAssessmentLookupError(res, err)) return;
     logger.error('[AssessmentAI] Error generating executive summary', {
       err: err,
       correlationId: (res.req as any)?.correlationId,
@@ -527,6 +553,7 @@ router.post('/:projectId/ai/stakeholder-view', async (req: AuthRequest, res: Res
 
     res.json(result);
   } catch (err: any) {
+    if (sendAssessmentLookupError(res, err)) return;
     logger.error('[AssessmentAI] Error generating stakeholder view', {
       err: err,
       correlationId: (res.req as any)?.correlationId,
@@ -564,6 +591,7 @@ router.post('/:projectId/ai/benchmark-commentary', async (req: AuthRequest, res:
 
     res.json(result);
   } catch (err: any) {
+    if (sendAssessmentLookupError(res, err)) return;
     logger.error('[AssessmentAI] Error generating benchmark commentary', {
       err: err,
       correlationId: (res.req as any)?.correlationId,
@@ -751,6 +779,7 @@ router.post('/:projectId/ai/fill-missing', async (req: AuthRequest, res: Respons
 
     res.json(result);
   } catch (err: any) {
+    if (sendAssessmentLookupError(res, err)) return;
     logger.error('[AssessmentAI] Error filling missing fields', {
       err: err,
       correlationId: (res.req as any)?.correlationId,
@@ -781,6 +810,7 @@ router.post('/:projectId/ai/review-justifications', async (req: AuthRequest, res
 
     res.json(result);
   } catch (err: any) {
+    if (sendAssessmentLookupError(res, err)) return;
     logger.error('[AssessmentAI] Error reviewing justifications', {
       err: err,
       correlationId: (res.req as any)?.correlationId,
@@ -819,6 +849,7 @@ router.post('/:projectId/ai/reports/full', async (req: AuthRequest, res: Respons
 
     res.json(result);
   } catch (err: any) {
+    if (sendAssessmentLookupError(res, err)) return;
     logger.error('[AssessmentAI] Error generating full report', {
       err: err,
       correlationId: (res.req as any)?.correlationId,
@@ -860,6 +891,7 @@ router.post('/:projectId/ai/reports/stakeholder', async (req: AuthRequest, res: 
 
     res.json(result);
   } catch (err: any) {
+    if (sendAssessmentLookupError(res, err)) return;
     logger.error('[AssessmentAI] Error generating stakeholder report', {
       err: err,
       correlationId: (res.req as any)?.correlationId,
@@ -897,6 +929,7 @@ router.post('/:projectId/ai/reports/benchmark', async (req: AuthRequest, res: Re
 
     res.json(result);
   } catch (err: any) {
+    if (sendAssessmentLookupError(res, err)) return;
     logger.error('[AssessmentAI] Error generating benchmark report', {
       err: err,
       correlationId: (res.req as any)?.correlationId,
@@ -934,6 +967,7 @@ router.post('/:projectId/ai/reports/initiative-plan', async (req: AuthRequest, r
 
     res.json(result);
   } catch (err: any) {
+    if (sendAssessmentLookupError(res, err)) return;
     logger.error('[AssessmentAI] Error generating initiative plan', {
       err: err,
       correlationId: (res.req as any)?.correlationId,
