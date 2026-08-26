@@ -225,43 +225,74 @@ export async function validateJoinOrg(socket: Socket, organizationId: string): P
   const trimmedOrg = String(organizationId || '').trim();
   if (!trimmedOrg) return false;
 
-  // DEC-91: refuse joining a SUSPENDED tenant's room, before the membership
-  // question is even asked. The handshake gate covers the org the socket was
-  // seated in; this covers the org the client is asking to join, which for a
-  // multi-org user need not be the same one. Silent, like every other refusal
-  // in this function — here the org id IS client-supplied, so naming the reason
-  // would let a stranger probe which tenants exist and are suspended.
+  // ---------------------------------------------------------------------------
+  // ORDER MATTERS — MEMBERSHIP FIRST, SUSPENSION SECOND (DEC-91 FIX-5).
+  //
+  // `organizationId` here is whatever the client put in its `join:org` payload.
+  // The first revision asked the suspension guard about it BEFORE establishing
+  // that the caller has anything to do with that tenant, which handed an
+  // authenticated socket a way to drive the guard's cache with ids of its own
+  // choosing — a Map with no ceiling, spammed by a loop of random 128-character
+  // ids. An adversarial audit called that out, correctly.
+  //
+  // Establishing membership first means the guard is only ever asked about a
+  // tenant this user is genuinely bound to, so the cache key space is bounded
+  // by real tenants. (The guard also no longer caches absent rows, and carries
+  // a hard entry ceiling — three layers, because this one is easy to reorder
+  // back by accident.)
+  // ---------------------------------------------------------------------------
+  let isMember = Boolean(user.organizationId) && user.organizationId === trimmedOrg;
+
+  if (!isMember) {
+    // Membership probe — same shape the HTTP `validateOrgMembership` uses.
+    try {
+      const row = await dbGet<{ user_id: string }>(
+        `SELECT user_id FROM organization_members
+        WHERE organization_id = ? AND user_id = ?
+        LIMIT 1`,
+        [trimmedOrg, user.id],
+        { fallback: true }
+      );
+      isMember = !!row?.user_id;
+    } catch (err) {
+      logger.warn('[socketAuth] org membership check failed', {
+        userId: user.id,
+        organizationId: trimmedOrg,
+        error: err instanceof Error ? err.message : String(err),
+      });
+      return false;
+    }
+  }
+
+  if (!isMember) return false;
+
+  // DEC-91: a verified member still may not join a SUSPENDED tenant's room. The
+  // handshake gate covers the org the socket was seated in; this covers the org
+  // the client asked to join, which for a multi-org user need not be the same.
+  //
+  // Silent, like every other refusal in this function: the caller now provably
+  // belongs to this tenant, but keeping the answer indistinguishable from a
+  // plain membership failure costs nothing and keeps one uniform contract.
+  //
+  // Fails CLOSED on a lookup error, matching the membership probe directly
+  // above rather than the guard's own fail-open default — on this plane the
+  // house style is to refuse what it cannot verify.
   try {
-    if (await isOrganizationSuspended(trimmedOrg, dbGet)) {
+    if (await isOrganizationSuspended(trimmedOrg, strictDbGet)) {
       logger.info('[socketAuth] join:org refused: organization suspended', {
         organizationId: trimmedOrg,
       });
       return false;
     }
-  } catch {
-    // Fail open, consistent with the guard itself.
-  }
-
-  // Fast path: the JWT already binds the user to an org and it matches.
-  if (user.organizationId && user.organizationId === trimmedOrg) return true;
-  // Membership probe — same shape the HTTP `validateOrgMembership` uses.
-  try {
-    const row = await dbGet<{ user_id: string }>(
-      `SELECT user_id FROM organization_members
-        WHERE organization_id = ? AND user_id = ?
-        LIMIT 1`,
-      [trimmedOrg, user.id],
-      { fallback: true }
-    );
-    return !!row?.user_id;
   } catch (err) {
-    logger.warn('[socketAuth] org membership check failed', {
-      userId: user.id,
+    logger.warn('[socketAuth] join:org refused: suspension lookup failed', {
       organizationId: trimmedOrg,
       error: err instanceof Error ? err.message : String(err),
     });
     return false;
   }
+
+  return true;
 }
 
 /**
