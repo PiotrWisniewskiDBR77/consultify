@@ -182,7 +182,8 @@ const RRULE_FREQ_VALUES = new Set(['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY']);
 // an extra ";KEY=VALUE" segment, so it rules out line injection by
 // construction rather than by trying to enumerate bad characters.
 const RRULE_VALUE_RE = /^[A-Za-z0-9,-]+$/;
-const RRULE_UNTIL_RE = /^[0-9]{8}(T[0-9]{6}Z?)?$/;
+const RRULE_UNTIL_RE = /^[0-9]{8}(T[0-9]{6}Z)?$/;
+const EXPLICIT_TIME_ZONE_RE = /(?:Z|[+-][0-9]{2}:[0-9]{2})$/i;
 
 export function validateRecurrenceRule(value: string): { ok: true } | { ok: false; error: string } {
   const raw = value.replace(/^RRULE:/i, '');
@@ -1240,6 +1241,12 @@ async function handleOccurrenceMutation(req: AuthRequest, res: Response, cancel:
     return res
       .status(400)
       .json({ error: 'Invalid recurrenceId or scope', code: 'INVALID_OCCURRENCE' });
+  }
+  if (!EXPLICIT_TIME_ZONE_RE.test(recurrenceId)) {
+    return res.status(400).json({
+      error: 'recurrenceId must carry an explicit time zone (Z or +/-HH:MM)',
+      code: 'INVALID_OCCURRENCE',
+    });
   }
   const changes = req.body?.changes && typeof req.body.changes === 'object' ? req.body.changes : {};
   if (typeof changes.recurrenceRule === 'string') {
