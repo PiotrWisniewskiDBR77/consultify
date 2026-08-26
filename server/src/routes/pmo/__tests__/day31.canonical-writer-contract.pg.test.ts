@@ -438,4 +438,25 @@ describe.skipIf(!REAL_PG)('Day 31 canonical writer mounted contract', () => {
       ).status
     ).toBe(404);
   });
+
+  it('exposes an additive execution write-capability contract per actor', async () => {
+    const path = `/api/initiatives/runtime-v1/initiatives/${initiativeId}/capabilities`;
+    const owner = await request(app).get(path).set(auth());
+    expect(owner.status).toBe(200);
+    expect(owner.body.executionWrites).toMatchObject({
+      budgetEntry: { available: true, denialAt: null, legacyDenialAt: 'BRAMKA_LEGACY' },
+      realization: { available: true, denialAt: null },
+      raidMitigation: { available: true, denialAt: null },
+      managerAction: { available: true, denialAt: null },
+      managerSuggestionReview: { available: true, denialAt: null },
+    });
+    const viewer = await request(app)
+      .get(path)
+      .set({ Authorization: `Bearer ${viewerToken}` });
+    expect(viewer.status).toBe(404);
+    const foreign = await request(app)
+      .get(path)
+      .set({ Authorization: `Bearer ${foreignToken}`, 'X-Organization-Id': organizationId });
+    expect(foreign.status).toBe(404);
+  });
 });

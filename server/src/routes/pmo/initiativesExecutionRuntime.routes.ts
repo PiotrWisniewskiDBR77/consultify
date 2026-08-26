@@ -2167,6 +2167,53 @@ export function createInitiativesExecutionRuntimeRouter(
         canUpdate,
         canReview,
         canSelfApprove: Boolean(policy.config.selfApproval),
+        executionWrites: {
+          budgetEntry: {
+            available: canUpdate,
+            canonicalCommand:
+              'POST /api/initiatives/runtime-v1/initiatives/:initiativeId/budget-entries/:entryId',
+            denialAt: canUpdate ? null : 'ZDOLNOŚĆ',
+            denialCode: canUpdate ? null : 'NOT_FOUND',
+            legacyDenialAt: 'BRAMKA_LEGACY',
+            legacyDenialCode: 'EXECUTION_RUNTIME_V1_WRITE_REQUIRED',
+          },
+          realization: {
+            available: canUpdate,
+            canonicalCommand:
+              'POST /api/initiatives/runtime-v1/initiatives/:initiativeId/realizations/:realizationId',
+            denialAt: canUpdate ? null : 'ZDOLNOŚĆ',
+            denialCode: canUpdate ? null : 'NOT_FOUND',
+            legacyDenialAt: 'BRAMKA_LEGACY',
+            legacyDenialCode: 'EXECUTION_RUNTIME_V1_WRITE_REQUIRED',
+          },
+          raidMitigation: {
+            available: canUpdate,
+            canonicalCommand:
+              'POST /api/initiatives/runtime-v1/initiatives/:initiativeId/raid-mitigations/:raidItemId',
+            denialAt: canUpdate ? null : 'ZDOLNOŚĆ',
+            denialCode: canUpdate ? null : 'NOT_FOUND',
+            legacyDenialAt: 'BRAMKA_LEGACY',
+            legacyDenialCode: 'EXECUTION_RUNTIME_V1_WRITE_REQUIRED',
+          },
+          managerAction: {
+            available: canUpdate,
+            canonicalCommand:
+              'POST /api/initiatives/runtime-v1/initiatives/:initiativeId/manager-actions/:managerActionId',
+            denialAt: canUpdate ? null : 'ZDOLNOŚĆ',
+            denialCode: canUpdate ? null : 'NOT_FOUND',
+            legacyDenialAt: 'BRAMKA_LEGACY',
+            legacyDenialCode: 'EXECUTION_RUNTIME_V1_WRITE_REQUIRED',
+          },
+          managerSuggestionReview: {
+            available: canReview,
+            canonicalCommand:
+              'POST /api/initiatives/runtime-v1/initiatives/:initiativeId/manager-suggestions/:suggestionId/review',
+            denialAt: canReview ? null : 'ZDOLNOŚĆ',
+            denialCode: canReview ? null : 'NOT_FOUND',
+            legacyDenialAt: 'BRAMKA_LEGACY',
+            legacyDenialCode: 'EXECUTION_RUNTIME_V1_WRITE_REQUIRED',
+          },
+        },
       });
     })
   );
