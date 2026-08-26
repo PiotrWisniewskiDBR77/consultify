@@ -6,10 +6,11 @@
  * czysto prezentacyjny — dane wchodzą przez propsy). Pokazuje 360px, sekcje
  * accordion, typografię zamiast tabeli właściwości, ciche kontrolki.
  */
-import React from 'react';
+import React, { useState } from 'react';
 
 import {
   IdeaElementInspector,
+  type IdeaInspectorActivityItem,
   type IdeaInspectorElement,
 } from '@/components/MyWork/panel/IdeaElementInspector';
 
@@ -43,7 +44,55 @@ const ELEMENT: IdeaInspectorElement = {
   savedAt: '2026-08-25T14:32:00Z',
 };
 
+// RowDetailPanel parity (P0, 2026-08-26): mock activity mirrors the shape
+// `IdeaTableTool` now reads from `node.data.activity` (same field the old
+// RowDetailPanel's "Activity" tab read) — real field names, no fabricated
+// schema.
+const ACTIVITY: IdeaInspectorActivityItem[] = [
+  {
+    id: 'act-1',
+    action: 'status_change',
+    oldValue: 'idea',
+    newValue: 'in_progress',
+    author: 'Anna Kowalska',
+    createdAt: '2026-08-25T09:14:00Z',
+  },
+  {
+    id: 'act-2',
+    action: 'edited',
+    field: 'Priorytet',
+    author: 'Piotr',
+    createdAt: '2026-08-25T11:02:00Z',
+  },
+  {
+    id: 'act-3',
+    action: 'comment',
+    newValue: 'Sprawdźmy log duplikatów przed cutoverem.',
+    author: 'Anna Kowalska',
+    createdAt: '2026-08-25T13:48:00Z',
+  },
+];
+
+const AI_INSIGHTS = [
+  'Brak wspólnego klucza klienta w 3 systemach źródłowych — zdefiniuj standard MDM przed dry-runem.',
+  'Log duplikatów kontrahentów (CRM, 05.08) pokazuje 12% odrzuceń — warto go dołączyć jako dowód do decyzji o standardzie.',
+];
+
 export default function MyWorkIdeaInspectorLekkiScreen(): React.ReactElement {
+  // Real (mock-backed) handler — same "loading → real result" shape as
+  // IdeaMapWorkspace's `handleGenerateInspectorInsights` (Api.getIdeaAISuggestions),
+  // not a hardcoded pre-filled list, so the harness proves the empty→loading→
+  // populated states, not just a static screenshot of populated content.
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiInsights, setAiInsights] = useState<string[]>([]);
+  const handleGenerateInsights = () => {
+    setAiLoading(true);
+    window.setTimeout(() => {
+      setAiInsights(AI_INSIGHTS);
+      setAiLoading(false);
+    }, 300);
+  };
+
   return (
     <div className="flex h-screen w-screen items-stretch justify-end bg-c-bg">
       <div className="flex-1 min-w-0 flex items-center justify-center p-10 text-c-text-muted text-sm">
@@ -56,6 +105,10 @@ export default function MyWorkIdeaInspectorLekkiScreen(): React.ReactElement {
           nativeStates={['idea', 'in_progress', 'done', 'blocked']}
           onSave={async (patch) => ({ ...ELEMENT, ...patch })}
           onReturnToCanvas={() => undefined}
+          activity={ACTIVITY}
+          aiInsights={aiInsights}
+          aiLoading={aiLoading}
+          onGenerateInsights={handleGenerateInsights}
         />
       </div>
     </div>
