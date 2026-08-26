@@ -41,6 +41,11 @@ import {
 const ORG_STATUS: Record<string, string> = {
   'org-suspended': 'suspended',
   'org-active': 'active',
+  // DEC-101 — `locked` blocks; `purge_scheduled` and `expired` deliberately do
+  // not (an expired trial gets a renewal experience, not a bare 403).
+  'org-locked': 'locked',
+  'org-purge-scheduled': 'purge_scheduled',
+  'org-expired': 'expired',
 };
 
 const ORIGINAL_ENV = {
@@ -297,6 +302,37 @@ describe('DEC-91 organization suspension enforcement in auth middleware', () => 
 
     expect(result.status).toBe(403);
     expect(result.nextCalled).toBe(false);
+  });
+
+  // ---------------------------------------------------------------------------
+  // DEC-101 — the same enforcement point, the widened blocking set.
+  // ---------------------------------------------------------------------------
+  describe('DEC-101 blocking set on the API surface', () => {
+    it('refuses a LOCKED tenant — emergency lockdown reaches already-issued tokens', async () => {
+      const result = await runRequest({ organizationId: 'org-locked', url: '/api/initiatives' });
+
+      expect(result.status).toBe(403);
+      expect(result.nextCalled).toBe(false);
+    });
+
+    it('tells a locked tenant it is LOCKED rather than mislabelling it a suspension', async () => {
+      const result = await runRequest({ organizationId: 'org-locked', url: '/api/initiatives' });
+
+      expect(result.body).toMatchObject({
+        code: 'ORG_LOCKED',
+        messageKey: 'errors.organizationLocked',
+      });
+    });
+
+    it.each(['org-purge-scheduled', 'org-expired'])(
+      'NEGATIVE CONTROL: %s still passes — the gentler product path is not a 403',
+      async (organizationId) => {
+        const result = await runRequest({ organizationId, url: '/api/initiatives' });
+
+        expect(result.status).toBeNull();
+        expect(result.nextCalled).toBe(true);
+      }
+    );
   });
 
   describe('exemptions — exactly the three DEC-91 carve-outs', () => {

@@ -16,6 +16,7 @@ import {
 import {
   buildOrgSuspendedResponseBody,
   invalidatePlatformSuperAdminCache,
+  resolveBlockingOrgStatusValue,
 } from '../services/organizationSuspensionGuard.js';
 import refreshTokenService from '../services/RefreshTokenService.js';
 import { recordFailedLogin } from '../services/securityAlerts.js';
@@ -350,18 +351,22 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       });
       return;
     }
-    // DEC-91 / TRI-MUST-12 — a suspended tenant must not mint new sessions.
+    // DEC-91 / TRI-MUST-12 — a blocked tenant must not mint new sessions.
     // Until now `suspended` fell through this block entirely: the suspension was
     // written and audited, but login carried on as if nothing had happened.
     // SUPERADMIN is exempted for the same reason the two branches above exempt
     // it — the operator has to be able to get in and reactivate the tenant.
-    if (
-      String(org.status || '')
-        .trim()
-        .toLowerCase() === 'suspended' &&
-      !isPlatformSuperAdmin
-    ) {
-      res.status(403).json(buildOrgSuspendedResponseBody());
+    //
+    // DEC-101 — the set of statuses that block is no longer spelled out here.
+    // It was, and the guard had its own copy, so `locked` was added to the guard
+    // and login silently kept letting locked tenants in: emergency lockdown cut
+    // off already-issued sessions (via the API middleware) while still handing
+    // out brand-new ones at the front door. `BLOCKING_ORG_STATUSES` in the guard
+    // is now the single list, and the refusal names the actual status so a
+    // locked tenant is not told to "contact support to restore access".
+    const loginBlockingStatus = resolveBlockingOrgStatusValue(org.status);
+    if (loginBlockingStatus !== null && !isPlatformSuperAdmin) {
+      res.status(403).json(buildOrgSuspendedResponseBody(loginBlockingStatus));
       return;
     }
 

@@ -143,6 +143,59 @@ describe('DEC-91 login refuses a suspended organization', () => {
     expect(mockRefreshTokenService.generateTokenPair).toHaveBeenCalled();
   });
 
+  // ===========================================================================
+  // DEC-101 — the front door learns the same blocking set as the API.
+  // ===========================================================================
+  //
+  // Login used to carry its OWN hardcoded `status === 'suspended'` test, so
+  // adding `locked` to the guard would have enforced emergency lockdown on
+  // already-issued tokens while login kept handing out brand-new ones. Both now
+  // read one list.
+  it('DEC-101: refuses login to a LOCKED tenant — lockdown must close the front door too', async () => {
+    seedDb('locked', 'USER');
+
+    await login(req as Request, res as Response);
+
+    expect(statusFn).toHaveBeenCalledWith(403);
+    expect(mockRefreshTokenService.generateTokenPair).not.toHaveBeenCalled();
+  });
+
+  it('DEC-101: a locked tenant is told it is LOCKED, not told to contact billing support', async () => {
+    seedDb('locked', 'USER');
+
+    await login(req as Request, res as Response);
+
+    expect(jsonFn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        code: 'ORG_LOCKED',
+        messageKey: 'errors.organizationLocked',
+      })
+    );
+  });
+
+  it.each(['purge_scheduled', 'expired'])(
+    'DEC-101 NEGATIVE CONTROL: %s can still log in — that is the gentler product path',
+    async (status) => {
+      // Deliberate: an expired trial must meet a "renew your plan" experience.
+      // A 403 here would lock out exactly the customers the product wants back.
+      seedDb(status, 'USER');
+
+      await login(req as Request, res as Response);
+
+      expect(statusFn).not.toHaveBeenCalledWith(403);
+      expect(mockRefreshTokenService.generateTokenPair).toHaveBeenCalled();
+    }
+  );
+
+  it('DEC-101: a platform SUPERADMIN can still log in to a LOCKED tenant to lift the lockdown', async () => {
+    seedDb('locked', 'SUPERADMIN');
+
+    await login(req as Request, res as Response);
+
+    expect(statusFn).not.toHaveBeenCalledWith(403);
+    expect(mockRefreshTokenService.generateTokenPair).toHaveBeenCalled();
+  });
+
   it('FIX-2: a membership role forged to SUPERADMIN does NOT bypass the suspension', async () => {
     // users.role says USER (the platform truth); organization_members.role says
     // SUPERADMIN (a drifted row). login overwrites user.role with the membership

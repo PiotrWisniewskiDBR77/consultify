@@ -82,15 +82,47 @@ export const ORG_SUSPENDED_CODE = 'ORG_SUSPENDED';
 /** i18n key for the refusal. The `error` string below is only a fallback. */
 export const ORG_SUSPENDED_MESSAGE_KEY = 'errors.organizationSuspended';
 
+/** DEC-101 — emergency lockdown is a DIFFERENT event and says so to the user. */
+export const ORG_LOCKED_CODE = 'ORG_LOCKED';
+export const ORG_LOCKED_MESSAGE_KEY = 'errors.organizationLocked';
+
 /**
- * Organization statuses that hard-block access.
+ * Organization statuses that hard-block access — DEC-101.
  *
- * Deliberately just `suspended`. `blocked` / `pending` are already refused at
- * login by their own pre-existing branches, and `cancelled` is intentionally
- * NOT added here — widening the block set is a separate product decision, not
- * part of DEC-91.
+ * `suspended` — the billing/compliance action DEC-91 was written for.
+ *
+ * `locked`   — `POST /api/superadmin/tenants/:id/lockdown` ("emergency tenant
+ *              lockdown", gated on the `security_ops` capability and a
+ *              critical-severity confirmation). It wrote `status = 'locked'`,
+ *              audited it, and cut off NOBODY: no read path anywhere treated
+ *              `locked` as blocking. The most alarming button in the operator
+ *              console was decorative. Owner decision DEC-101 makes it real.
+ *
+ * Deliberately NOT blocking, also per DEC-101:
+ *
+ *   `purge_scheduled` / `expired` — these are the gentler product path. An
+ *   expired trial must meet a "renew your plan" experience, not a bare 403;
+ *   turning them into hard blocks here would cut off exactly the customers the
+ *   product is trying to win back. They stay out until that flow is designed.
+ *
+ *   `cancelled` — unchanged from DEC-91: widening further is its own decision.
+ *
+ * `blocked` / `pending` keep their own pre-existing login branches.
  */
-const BLOCKING_ORG_STATUSES = new Set(['suspended']);
+const BLOCKING_ORG_STATUSES = new Set(['suspended', 'locked']);
+
+/**
+ * Statuses that are explicitly, deliberately NON-blocking.
+ *
+ * Not consulted by any logic — the check is `BLOCKING_ORG_STATUSES.has(...)`
+ * and everything else falls through. It exists so the DEC-101 negative control
+ * has something to enumerate, and so a future reader can tell "considered and
+ * excluded" apart from "never thought about".
+ */
+export const DELIBERATELY_NON_BLOCKING_ORG_STATUSES = Object.freeze([
+  'purge_scheduled',
+  'expired',
+]);
 
 const DEFAULT_CACHE_TTL_MS = 30_000;
 const MIN_CACHE_TTL_MS = 1_000;
@@ -105,6 +137,13 @@ type DbGet = <T>(sql: string, params?: unknown[]) => Promise<T | undefined | nul
 
 interface CacheEntry {
   suspended: boolean;
+  /**
+   * WHICH blocking status was seen, so the refusal can name it. `null` when the
+   * tenant is not blocked. DEC-101 introduced a second blocking status, and a
+   * bare boolean cannot tell a suspended tenant from a locked one — which is
+   * the whole difference the user-facing message has to carry.
+   */
+  blockingStatus: string | null;
   expiresAt: number;
 }
 
@@ -169,23 +208,48 @@ export function invalidateOrganizationSuspensionCache(organizationId?: unknown):
 }
 
 /**
- * True when `organizations.status` for this tenant is a blocking status.
+ * The pure, no-database half of the question: given a status VALUE already in
+ * hand, is it a blocking one — and which?
  *
- * Never throws: an unusable id or a failing lookup both resolve to `false`
+ * Login is the caller that needs this: it has already SELECTed the organization
+ * row for its own `pending` / `blocked` branches, so asking the cache-backed
+ * lookup for the same row again would be a second query for no reason. More
+ * importantly, login used to carry its own hardcoded `=== 'suspended'` test,
+ * which is precisely how DEC-101's `locked` ended up enforced on the API but
+ * not at the front door. One list, two callers.
+ */
+export function resolveBlockingOrgStatusValue(status: unknown): string | null {
+  const canonical = String(status ?? '')
+    .trim()
+    .toLowerCase();
+  return canonical && BLOCKING_ORG_STATUSES.has(canonical) ? canonical : null;
+}
+
+/**
+ * WHICH blocking status this tenant is in, or `null` when it is not blocked.
+ *
+ * This is the full answer; `isOrganizationSuspended` is the boolean projection
+ * of it that every existing call site already uses. Callers that render a
+ * user-facing refusal want the status itself, because DEC-101 gave the platform
+ * two blocking statuses with genuinely different meanings — `suspended`
+ * (billing/compliance, "contact support") and `locked` (emergency security
+ * lockdown, "a platform administrator is investigating").
+ *
+ * Never throws: an unusable id or a failing lookup both resolve to `null`
  * (see "FAIL-OPEN" in the file header).
  */
-export async function isOrganizationSuspended(
+export async function resolveBlockingOrgStatus(
   organizationId: unknown,
   dbGet: DbGet
-): Promise<boolean> {
+): Promise<string | null> {
   const normalized = normalizeOrganizationId(organizationId);
-  if (!normalized) return false;
-  if (typeof dbGet !== 'function') return false;
+  if (!normalized) return null;
+  if (typeof dbGet !== 'function') return null;
 
   const cached = suspensionCache.get(normalized);
   const currentTime = now();
   if (cached && cached.expiresAt > currentTime) {
-    return cached.suspended;
+    return cached.blockingStatus;
   }
 
   let row: { status?: unknown } | undefined | null;
@@ -195,7 +259,7 @@ export async function isOrganizationSuspended(
     ]);
   } catch {
     // Fail open, and cache nothing — the next request retries the lookup.
-    return false;
+    return null;
   }
 
   // A missing organization row is not a suspension. Membership / org-context
@@ -209,16 +273,35 @@ export async function isOrganizationSuspended(
   // absent org is cheap; a sticky wrong answer is not. It also means an id the
   // caller never verified cannot leave a cache entry behind.
   const rawStatus = typeof row?.status === 'string' ? row.status : null;
-  if (rawStatus === null) return false;
+  if (rawStatus === null) return null;
 
-  const suspended = BLOCKING_ORG_STATUSES.has(rawStatus.trim().toLowerCase());
+  const canonicalStatus = rawStatus.trim().toLowerCase();
+  const suspended = BLOCKING_ORG_STATUSES.has(canonicalStatus);
+  const blockingStatus = suspended ? canonicalStatus : null;
 
   rememberSuspensionAnswer(normalized, {
     suspended,
+    blockingStatus,
     expiresAt: currentTime + getOrgSuspensionCacheTtlMs(),
   });
 
-  return suspended;
+  return blockingStatus;
+}
+
+/**
+ * True when this tenant is in ANY blocking status.
+ *
+ * The boolean projection of `resolveBlockingOrgStatus`, kept because every
+ * enforcement point built for DEC-91 asks exactly this question and none of
+ * them should have to care that DEC-101 added a second blocking status.
+ *
+ * Never throws (see "FAIL-OPEN" in the file header).
+ */
+export async function isOrganizationSuspended(
+  organizationId: unknown,
+  dbGet: DbGet
+): Promise<boolean> {
+  return (await resolveBlockingOrgStatus(organizationId, dbGet)) !== null;
 }
 
 /**
@@ -271,13 +354,36 @@ export function isPathExemptFromOrgSuspension(rawPath: unknown): boolean {
   );
 }
 
-/** The single refusal body, shared by the login path and the API middleware. */
-export function buildOrgSuspendedResponseBody(): {
+/**
+ * The single refusal body, shared by the login path and the API middleware.
+ *
+ * DEC-101 — the SHAPE is identical for every blocking status, so no client has
+ * to learn a second envelope; only `code`, `messageKey` and the two English
+ * fallback strings change. That matters because the two statuses mean different
+ * things to the person reading them: `suspended` is a commercial/compliance
+ * state they can resolve by contacting support, while `locked` is an emergency
+ * security action taken BY the platform operator, where "contact support to
+ * restore access" would be actively misleading advice.
+ *
+ * Called with no argument it yields the `suspended` body — every pre-existing
+ * call site keeps its exact behaviour, which is correct for them because
+ * `suspended` was the only blocking status when they were written.
+ */
+export function buildOrgSuspendedResponseBody(blockingStatus?: string | null): {
   error: string;
   code: string;
   messageKey: string;
   guidance: string;
 } {
+  if (String(blockingStatus || '').trim().toLowerCase() === 'locked') {
+    return {
+      error: 'Your organization is temporarily locked by the platform operator.',
+      code: ORG_LOCKED_CODE,
+      messageKey: ORG_LOCKED_MESSAGE_KEY,
+      guidance:
+        'An emergency lockdown is in force. A platform administrator must lift it before access is restored.',
+    };
+  }
   return {
     error: 'Your organization has been suspended. Contact support to restore access.',
     code: ORG_SUSPENDED_CODE,

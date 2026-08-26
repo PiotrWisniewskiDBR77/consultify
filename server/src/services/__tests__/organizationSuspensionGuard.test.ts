@@ -20,11 +20,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   __testing__,
   buildOrgSuspendedResponseBody,
+  DELIBERATELY_NON_BLOCKING_ORG_STATUSES,
   getOrgSuspensionCacheTtlMs,
   invalidateOrganizationSuspensionCache,
   isOrganizationSuspended,
   isPathExemptFromOrgSuspension,
   ORG_SUSPENDED_CODE,
+  resolveBlockingOrgStatus,
+  resolveBlockingOrgStatusValue,
 } from '../organizationSuspensionGuard.js';
 
 const ORIGINAL_TTL_ENV = process.env.ORG_SUSPENSION_CACHE_TTL_MS;
@@ -231,6 +234,93 @@ describe('organizationSuspensionGuard', () => {
       expect(body.messageKey).toBe('errors.organizationSuspended');
       expect(typeof body.error).toBe('string');
       expect(body.error.length).toBeGreaterThan(0);
+    });
+  });
+
+  // ===========================================================================
+  // DEC-101 — the blocking set, and the line the owner drew through it.
+  // ===========================================================================
+  //
+  // `locked` (emergency tenant lockdown) now blocks: the route wrote the status
+  // and audited it, and nothing read it, so the most alarming button in the
+  // operator console cut off precisely nobody.
+  //
+  // `purge_scheduled` and `expired` deliberately do NOT block. That negative
+  // control is the more important half of this block: an expired trial must
+  // meet a "renew your plan" experience, and turning it into a bare 403 here
+  // would cut off exactly the customers the product is trying to win back.
+  describe('DEC-101 blocking set', () => {
+    it('blocks a LOCKED organization — emergency lockdown must actually cut off', async () => {
+      const dbGet = makeDbGet({ 'org-locked': 'locked' });
+      await expect(isOrganizationSuspended('org-locked', dbGet)).resolves.toBe(true);
+    });
+
+    it.each(['purge_scheduled', 'expired'])(
+      'NEGATIVE CONTROL: %s does NOT block — it is the gentler product path, not a 403',
+      async (status) => {
+        const dbGet = makeDbGet({ 'org-x': status });
+        await expect(isOrganizationSuspended('org-x', dbGet)).resolves.toBe(false);
+      }
+    );
+
+    it.each(['cancelled', 'active', 'pending', 'trial'])(
+      'does not block %s either',
+      async (status) => {
+        const dbGet = makeDbGet({ 'org-y': status });
+        await expect(isOrganizationSuspended('org-y', dbGet)).resolves.toBe(false);
+      }
+    );
+
+    it('reports WHICH status blocked, so the refusal can name it', async () => {
+      const dbGet = makeDbGet({ 'org-s': 'suspended', 'org-l': 'LOCKED', 'org-a': 'active' });
+      await expect(resolveBlockingOrgStatus('org-s', dbGet)).resolves.toBe('suspended');
+      // Case and padding are canonicalised, so a drifted row still resolves.
+      await expect(resolveBlockingOrgStatus('org-l', dbGet)).resolves.toBe('locked');
+      await expect(resolveBlockingOrgStatus('org-a', dbGet)).resolves.toBeNull();
+    });
+
+    it('a locked tenant is told it is LOCKED, not told to contact billing support', async () => {
+      const locked = buildOrgSuspendedResponseBody('locked');
+      const suspended = buildOrgSuspendedResponseBody('suspended');
+
+      expect(locked.code).toBe('ORG_LOCKED');
+      expect(locked.messageKey).toBe('errors.organizationLocked');
+      expect(suspended.code).toBe('ORG_SUSPENDED');
+      expect(suspended.messageKey).toBe('errors.organizationSuspended');
+
+      // Same SHAPE, so no client has to learn a second envelope.
+      expect(Object.keys(locked).sort()).toEqual(Object.keys(suspended).sort());
+
+      // Default (no argument) stays exactly what every pre-existing call site
+      // was already emitting.
+      expect(buildOrgSuspendedResponseBody()).toEqual(suspended);
+    });
+
+    it('the pure status test used by login agrees with the DB-backed one', async () => {
+      // Login already has the org row in hand and used to carry its OWN
+      // hardcoded `=== 'suspended'` test — which is exactly how `locked` ended
+      // up enforced on the API but not at the front door. One list, two callers.
+      expect(resolveBlockingOrgStatusValue('suspended')).toBe('suspended');
+      expect(resolveBlockingOrgStatusValue(' LOCKED ')).toBe('locked');
+      expect(resolveBlockingOrgStatusValue('purge_scheduled')).toBeNull();
+      expect(resolveBlockingOrgStatusValue('expired')).toBeNull();
+      expect(resolveBlockingOrgStatusValue('active')).toBeNull();
+      expect(resolveBlockingOrgStatusValue(null)).toBeNull();
+      expect(resolveBlockingOrgStatusValue(undefined)).toBeNull();
+
+      for (const status of ['suspended', 'locked', 'purge_scheduled', 'expired', 'active']) {
+        const dbGet = makeDbGet({ 'org-z': status });
+        __testing__.reset();
+        await expect(resolveBlockingOrgStatus('org-z', dbGet)).resolves.toBe(
+          resolveBlockingOrgStatusValue(status)
+        );
+      }
+    });
+
+    it('the non-blocking list is documented, not merely absent', () => {
+      for (const status of DELIBERATELY_NON_BLOCKING_ORG_STATUSES) {
+        expect(resolveBlockingOrgStatusValue(status)).toBeNull();
+      }
     });
   });
 });

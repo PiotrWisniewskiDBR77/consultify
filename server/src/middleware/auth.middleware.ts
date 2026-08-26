@@ -24,9 +24,9 @@ import {
 } from '../services/demo/demoPrincipalGuard.js';
 import {
   buildOrgSuspendedResponseBody,
-  isOrganizationSuspended,
   isPathExemptFromOrgSuspension,
   isVerifiedPlatformSuperAdmin,
+  resolveBlockingOrgStatus,
 } from '../services/organizationSuspensionGuard.js';
 import { DEMO_ORG_ID, DEMO_SESSION_ORG_HEADER } from './demoGuard.middleware.js';
 
@@ -984,12 +984,15 @@ const attachUser = async (
       // `fallback: false` is load-bearing: DbPromise.get otherwise RESOLVES
       // null on error/timeout, which the guard would read as "not suspended"
       // and cache for a full TTL.
-      const suspended = await isOrganizationSuspended(
+      // DEC-101 — resolve WHICH blocking status applies, not merely whether one
+      // does, so the refusal can say `locked` rather than mislabelling an
+      // emergency lockdown as a billing suspension.
+      const blockingStatus = await resolveBlockingOrgStatus(
         req.organizationId,
         strictSuspensionDbGet
       );
-      if (suspended) {
-        res.status(403).json(buildOrgSuspendedResponseBody());
+      if (blockingStatus !== null) {
+        res.status(403).json(buildOrgSuspendedResponseBody(blockingStatus));
         return;
       }
     }
