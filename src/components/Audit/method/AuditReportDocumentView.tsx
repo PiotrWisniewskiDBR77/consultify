@@ -121,6 +121,7 @@ import {
   findingClassificationTone,
   findingSeverityLabel,
   findingSeverityTone,
+  findingStatusLabel,
   reportStatusLabel,
 } from './auditStatusTones';
 import {
@@ -715,7 +716,7 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
           {f.status ? (
             <div>
               <dt className="inline font-medium">{isPolish ? 'Status: ' : 'Status: '}</dt>
-              <dd className="inline">{f.status}</dd>
+              <dd className="inline">{findingStatusLabel(f.status as any, isPolish)}</dd>
             </div>
           ) : null}
           {f.rootCause ? (
