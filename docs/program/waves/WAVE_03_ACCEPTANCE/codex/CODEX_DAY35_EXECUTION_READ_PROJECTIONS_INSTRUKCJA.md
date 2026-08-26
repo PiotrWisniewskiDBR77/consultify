@@ -90,7 +90,7 @@ w CAŁOŚCI. Nie robisz zrzutów. Nie włączasz żadnej flagi frontowej.**
 1. Punktem wyjścia jest **gałąź `codex/m03-admin-20260824`**, przypięta do
    commitu-markera podanego niżej.
 
-   **SHA markera: «MARKER_SHA»**
+   **SHA markera: 3e707a9d3c**
 
    > **★ RAMKA WARTOWNIKA — uwaga dla nadzorcy wystawiającego ten dokument
    > (usuń tę ramkę przy wiązaniu):** w miejsce **każdego** literalnego napisu
@@ -110,13 +110,13 @@ w CAŁOŚCI. Nie robisz zrzutów. Nie włączasz żadnej flagi frontowej.**
    cd <root-repo>
    git fetch --all --prune
    git log --oneline -25 codex/m03-admin-20260824
-   git merge-base --is-ancestor «MARKER_SHA» codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
+   git merge-base --is-ancestor 3e707a9d3c codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
    ```
 
    Wynik obu komend wklejasz do raportu **dosłownie**.
 
-3. **Jeśli marker nie jest przodkiem tipa, gałąź nie istnieje, albo `«MARKER_SHA»`
-   jest nadal literalnym napisem `«MARKER_SHA»` — STOP.** Nie improwizuj bazy.
+3. **Jeśli marker nie jest przodkiem tipa, gałąź nie istnieje, albo `3e707a9d3c`
+   jest nadal literalnym napisem `3e707a9d3c` — STOP.** Nie improwizuj bazy.
    Nie startuj z `origin/demo`, `main`, `Londyn`, `codex/preserve-*`,
    `codex/execution-day31-20260828`, `codex/execution-batch-a-20260826`,
    `codex/finance-day30-20260827`, `codex/document-engine-day32-20260828`,
@@ -126,7 +126,7 @@ w CAŁOŚCI. Nie robisz zrzutów. Nie włączasz żadnej flagi frontowej.**
    **Reguła rozejścia (`DEC-2026-08-26-95`).** Jeżeli marker JEST przodkiem, ale
    tip uciekł do przodu (nadzorca scalił coś po związaniu markera) — **to nie
    jest STOP**. Startujesz **dokładnie z markera**, wypisujesz w raporcie
-   `git log --oneline «MARKER_SHA»..codex/m03-admin-20260824` i listę plików
+   `git log --oneline 3e707a9d3c..codex/m03-admin-20260824` i listę plików
    rozejścia; scalenie z nowszym tipem wykonuje nadzorca przy odbiorze.
    **Rebase w trakcie dyżuru: ZAKAZANY.**
 
@@ -193,7 +193,7 @@ w CAŁOŚCI. Nie robisz zrzutów. Nie włączasz żadnej flagi frontowej.**
 5. **Własna gałąź i własny worktree** (nigdy praca na `codex/m03-admin-20260824`):
 
    ```bash
-   git branch codex/execution-day35-<data> «MARKER_SHA»
+   git branch codex/execution-day35-<data> 3e707a9d3c
    git worktree add /private/tmp/consultify-execution-day35 codex/execution-day35-<data>
    cd /private/tmp/consultify-execution-day35
    ln -s /Users/piotrwisniewski/Developer/Consultify/node_modules node_modules   # DEC-86, TYLKO ODCZYT
@@ -207,7 +207,7 @@ w CAŁOŚCI. Nie robisz zrzutów. Nie włączasz żadnej flagi frontowej.**
    nigdy wobec `HEAD~1`:
 
    ```bash
-   git diff --name-only «MARKER_SHA»...HEAD
+   git diff --name-only 3e707a9d3c...HEAD
    ```
 
    Ta komenda ma w tym dokumencie własną nazwę — **„komenda bazowa"** — i wraca
@@ -420,7 +420,7 @@ Pozycja jest zrobiona, gdy spełnia **wszystkie trzynaście**:
     `D.2`.** Po ostatnim commicie uruchamiasz **dosłownie**:
 
     ```bash
-    git diff «MARKER_SHA»...HEAD | grep -nE '^\+.*\b(7|14|15|30|80|95|0\.[0-9]+)\b'
+    git diff 3e707a9d3c...HEAD | grep -nE '^\+.*\b(7|14|15|30|80|95|0\.[0-9]+)\b'
     ```
 
     Wynik ma być **pusty poza literałami jawnie wymienionymi niżej**. Każde inne
@@ -639,7 +639,7 @@ czytelnika nie jest zapisem — jest kosztem. Odbiór dnia 31 nazwał to wprost
 
 ### 1.2. ★★ ERRATA — DWANAŚCIE RZECZY ZWERYFIKOWANYCH W KODZIE NA MARKERZE
 
-**Wszystko poniżej sprawdziłem grepem na `«MARKER_SHA»`. To nie są przypuszczenia.
+**Wszystko poniżej sprawdziłem grepem na `3e707a9d3c`. To nie są przypuszczenia.
 Twoim obowiązkiem jest sprawdzić je ponownie (BLOK 0) — jeżeli którakolwiek się
 nie zgadza, idzie do „Korekt wobec instrukcji", a nie do improwizacji.**
 
@@ -1191,7 +1191,7 @@ się.** Ty idziesz tym samym kierunkiem do końca.
    ```bash
    shasum -a 256 server/src/domain/initiatives-execution/materialCommand.ts   # PRZED (BLOK 0 pkt 8 (vi))
    shasum -a 256 server/src/domain/initiatives-execution/materialCommand.ts   # PO ostatnim commicie
-   git diff «MARKER_SHA»...HEAD -- server/src/domain/initiatives-execution/materialCommand.ts   # MUSI BYĆ PUSTE
+   git diff 3e707a9d3c...HEAD -- server/src/domain/initiatives-execution/materialCommand.ts   # MUSI BYĆ PUSTE
    ```
 
    **Różnica choćby jednego bajtu = STOP i pozycja bez `ZROBIONE_WG_DoD`.**
@@ -1955,12 +1955,12 @@ Piszesz **po** blokach 1–3, bo kontrakt opisuje stan faktyczny, nie zamiar.
 2. **Dowody bezpieczników — wszystkie muszą być PUSTE:**
 
    ```bash
-   git diff --name-only «MARKER_SHA»...HEAD -- src/
-   git diff --name-only «MARKER_SHA»...HEAD -- tests/setup.ts tests/helpers tests/__mocks__ 'vitest*.config.ts' server/vitest.config.ts
-   git diff --name-only «MARKER_SHA»...HEAD -- server/src/middleware/executionSpineLegacyReadOnly.middleware.ts server/src/Gateway.ts server/src/routes/v8/index.ts server/src/routes/pmo/initiatives.routes.ts
-   git diff --name-only «MARKER_SHA»...HEAD -- server/src/domain/initiatives-execution/materialCommand.ts
-   git diff --name-only «MARKER_SHA»...HEAD -- server/src/services/executionBudgetService.ts
-   git diff --name-only «MARKER_SHA»...HEAD -- server/src/services/effectiveAccessService.ts server/src/controllers/ExecutionController.ts
+   git diff --name-only 3e707a9d3c...HEAD -- src/
+   git diff --name-only 3e707a9d3c...HEAD -- tests/setup.ts tests/helpers tests/__mocks__ 'vitest*.config.ts' server/vitest.config.ts
+   git diff --name-only 3e707a9d3c...HEAD -- server/src/middleware/executionSpineLegacyReadOnly.middleware.ts server/src/Gateway.ts server/src/routes/v8/index.ts server/src/routes/pmo/initiatives.routes.ts
+   git diff --name-only 3e707a9d3c...HEAD -- server/src/domain/initiatives-execution/materialCommand.ts
+   git diff --name-only 3e707a9d3c...HEAD -- server/src/services/executionBudgetService.ts
+   git diff --name-only 3e707a9d3c...HEAD -- server/src/services/effectiveAccessService.ts server/src/controllers/ExecutionController.ts
    git stash list
    ```
 
@@ -1990,7 +1990,7 @@ dostaje `NIE_ZACZĘTE` i jedno zdanie dlaczego; to jest **uczciwy** wynik.
 ```markdown
 # Realizacja dzień 35 — zapis polityki, projekcje odczytu, cykl życia budżetu — raport dyżuru <data>
 
-Gałąź: codex/execution-day35-<data> · baza: «MARKER_SHA» · Poziom ukończenia: <...>
+Gałąź: codex/execution-day35-<data> · baza: 3e707a9d3c · Poziom ukończenia: <...>
 Kontener: cx-day35-pg, port <5641 lub inny, jeśli zajęty>
 
 ## Oświadczenie o chronionym checkoutcie (Z5/DEC-86)
@@ -2102,14 +2102,14 @@ docker exec cx-day35-pg psql -U postgres -d cx_day35 -c "\d execution_control_kp
 docker rm -fv cx-day35-pg
 
 # porównanie do bazy (NIE do HEAD~1)
-git diff --name-only «MARKER_SHA»...HEAD
+git diff --name-only 3e707a9d3c...HEAD
 
 # dowód, że nie zaszyłem progów (§0.4 pkt 13)
-git diff «MARKER_SHA»...HEAD | grep -nE '^\+.*\b(7|14|15|30|80|95|0\.[0-9]+)\b'
+git diff 3e707a9d3c...HEAD | grep -nE '^\+.*\b(7|14|15|30|80|95|0\.[0-9]+)\b'
 
 # dowód, że plik chroniony jest bit-identyczny
-git diff «MARKER_SHA»...HEAD -- server/src/domain/initiatives-execution/materialCommand.ts
-git diff «MARKER_SHA»...HEAD -- server/src/services/executionBudgetService.ts
+git diff 3e707a9d3c...HEAD -- server/src/domain/initiatives-execution/materialCommand.ts
+git diff 3e707a9d3c...HEAD -- server/src/services/executionBudgetService.ts
 
 # odłożenie stanu roboczego — ZAMIAST git stash (Z27)
 mkdir -p /private/tmp/consultify-execution-day35-scratch
