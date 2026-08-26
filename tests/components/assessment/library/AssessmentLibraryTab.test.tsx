@@ -141,7 +141,9 @@ describe('AssessmentLibraryTab canonical method-core flow', () => {
     mocks.language = 'pl';
     render(<AssessmentLibraryTab />);
     expect(screen.queryByText('Twoje kanoniczne sesje DRD')).not.toBeInTheDocument();
-    expect(screen.getAllByText('Wkrótce')).toHaveLength(4);
+    // 2026-08-26 assessment cleanup: "Wkrótce" -> "Planowane" (program rule
+    // — never "Coming soon"/"Wkrótce" wording on the client's face).
+    expect(screen.getAllByText('Planowane')).toHaveLength(4);
     const startButtons = screen.getAllByRole('button', { name: 'Uruchom' });
     expect(startButtons.filter((button) => (button as HTMLButtonElement).disabled)).toHaveLength(4);
   });

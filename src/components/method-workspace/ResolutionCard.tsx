@@ -15,6 +15,13 @@ export interface ResolutionCardProps {
   data: ResolutionCardData;
   onAction: (action: ResolutionAction) => void;
   className?: string;
+  /**
+   * Actions with no real backing endpoint/mechanism yet — rendered disabled
+   * with a "Planowane" note instead of firing a decorative empty handler.
+   * `assign_question` has no per-question assignee anywhere in the app today
+   * (only session-level Owner/Approver roles exist) — it defaults disabled.
+   */
+  unavailableActions?: readonly ResolutionAction[];
 }
 
 const ACTIONS: Array<{ id: ResolutionAction; label: string; icon: React.ReactNode }> = [
@@ -24,7 +31,15 @@ const ACTIONS: Array<{ id: ResolutionAction; label: string; icon: React.ReactNod
   { id: 'return_later', label: 'Wróć później', icon: <MessageSquareText size={14} /> },
 ];
 
-export const ResolutionCard: React.FC<ResolutionCardProps> = ({ data, onAction, className = '' }) => {
+const DEFAULT_UNAVAILABLE: readonly ResolutionAction[] = ['assign_question'];
+
+export const ResolutionCard: React.FC<ResolutionCardProps> = ({
+  data,
+  onAction,
+  className = '',
+  unavailableActions = DEFAULT_UNAVAILABLE,
+}) => {
+  const [lastAction, setLastAction] = React.useState<ResolutionAction | null>(null);
   return (
     <div
       role="region"
@@ -63,19 +78,34 @@ export const ResolutionCard: React.FC<ResolutionCardProps> = ({ data, onAction, 
         </div>
       </dl>
 
-      <div className="flex flex-wrap gap-2 pt-1">
-        {ACTIONS.map((action) => (
-          <button
-            key={action.id}
-            type="button"
-            onClick={() => onAction(action.id)}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-c-border bg-c-surface px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-          >
-            {action.icon}
-            {action.label}
-          </button>
-        ))}
+      <div className="flex flex-wrap items-center gap-2 pt-1">
+        {ACTIONS.map((action) => {
+          const disabled = unavailableActions.includes(action.id);
+          return (
+            <button
+              key={action.id}
+              type="button"
+              disabled={disabled}
+              title={disabled ? 'Planowane — niedostępne w tej wersji.' : undefined}
+              onClick={() => {
+                if (disabled) return;
+                onAction(action.id);
+                setLastAction(action.id);
+              }}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-c-border bg-c-surface px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-c-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+            >
+              {action.icon}
+              {action.label}
+              {disabled && <span className="text-c-text-muted">(Planowane)</span>}
+            </button>
+          );
+        })}
       </div>
+      {lastAction && (
+        <p role="status" className="text-[11px] text-c-text-muted">
+          Zapisano: {ACTIONS.find((a) => a.id === lastAction)?.label}.
+        </p>
+      )}
     </div>
   );
 };

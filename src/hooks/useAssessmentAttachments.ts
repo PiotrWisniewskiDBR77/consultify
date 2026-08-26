@@ -147,36 +147,15 @@ export function useAssessmentAttachments({ assessmentId }: UseAssessmentAttachme
     [assessmentId]
   );
 
-  /**
-   * Get all attachments for the assessment
-   */
-  const getAllAttachments = useCallback(async (): Promise<{
-    attachments: LevelAttachment[];
-    grouped: LevelAttachmentsResponse[];
-    total: number;
-  } | null> => {
-    const token = getAuthToken();
-    if (!token || !assessmentId) {
-      return null;
-    }
-
-    try {
-      const response = await fetch(`/api/assessment-level-attachments/${assessmentId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch attachments');
-      }
-
-      return await response.json();
-    } catch (err) {
-      console.error('[useAssessmentAttachments] Fetch all error:', err);
-      return null;
-    }
-  }, [assessmentId]);
+  // 2026-08-26 assessment cleanup: removed dead `getAllAttachments` — it
+  // fetched `GET /api/assessment-level-attachments/${assessmentId}` (bare),
+  // a path the mounted router (server/src/routes/assessment/
+  // assessment-level-attachments.routes.ts) never defines — only
+  // `/level/:assessmentId/:axisId/:levelNumber`, `/download/:attachmentId`,
+  // `/:attachmentId/description`, `/:attachmentId` exist. Confirmed zero
+  // callers anywhere in src/ (its only consumer, LevelAttachments.tsx, uses
+  // `getAttachments` instead) — nothing to repoint, so removed rather than
+  // inventing a new backend route for an unused function.
 
   /**
    * Delete an attachment
@@ -256,7 +235,6 @@ export function useAssessmentAttachments({ assessmentId }: UseAssessmentAttachme
   return {
     uploadAttachment,
     getAttachments,
-    getAllAttachments,
     deleteAttachment,
     updateDescription,
     getDownloadUrl,

@@ -333,17 +333,39 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
         >
           <div>
             <p className="font-semibold text-c-text">Informacje o dokumencie</p>
-            <p>Sesja {session.id}</p>
             <p>Metoda {methodName} · {packVersionLabel}</p>
             <p>Wersja sesji v{session.version}</p>
             {documentSourceLabel && <p>Źródło: {documentSourceLabel}</p>}
             {documentSourceIndicator && <div className="mt-2">{documentSourceIndicator}</div>}
-            <p className="mt-2">Zapis: {saveState === 'SAVED' ? 'zapisano' : saveState}</p>
-            <p>
+            {/* Zapis (save state) already has its own header pill
+                (SaveStateIndicator) — a second line repeating the same fact
+                here is noise, not information (same reasoning already
+                applied to `degradedMessage` below in this file). */}
+            <p className="mt-2">
               Dowody: {readiness.totalUnits - readiness.unitsMissingEvidence}/{readiness.totalUnits}
             </p>
             <p>Do przeglądu: {readiness.openDiscrepancies}</p>
-            <p>Blokery zamrożenia: {readiness.freezeBlockers.length}</p>
+            {readiness.freezeBlockers.length > 0 ? (
+              <div className="mt-1">
+                <p>Blokery zamrożenia ({readiness.freezeBlockers.length}):</p>
+                <ul className="ml-3 list-disc space-y-0.5">
+                  {readiness.freezeBlockers.map((blocker, i) => (
+                    <li key={i}>{blocker}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <p>Brak blokerów zamrożenia.</p>
+            )}
+            {/* Raw session UUID — technical detail, not something an
+                operator needs on first glance (the header already shows a
+                short, human-scannable "Sesja {id.slice(0,8)}"). */}
+            <details className="mt-2">
+              <summary className="cursor-pointer text-c-text-muted hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus">
+                Szczegóły techniczne
+              </summary>
+              <p className="mt-1 font-mono text-[10px] text-c-text-muted">ID sesji: {session.id}</p>
+            </details>
           </div>
           <div>
             <p className="font-semibold text-c-text">Zespół i uprawnienia</p>
@@ -351,14 +373,19 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
             <p>{readOnly ? 'Tylko odczyt' : 'Edycja dozwolona'}</p>
           </div>
           <div>
-            <p className="font-semibold text-c-text">Zatwierdzenia</p>
+            {/* DEC-2026-08-25-56: "Akceptacje", nie "Zatwierdzenia". */}
+            <p className="font-semibold text-c-text">Akceptacje</p>
             <p>Odpowiedzi: {session.state === 'in_review' || session.state === 'frozen' ? 'w przeglądzie lub zatwierdzone' : 'robocze'}</p>
             <p>Targety i raport: {session.state === 'frozen' ? 'zamrożone' : 'niezatwierdzone'}</p>
             {governanceActions && <div className="mt-2 flex flex-wrap gap-2">{governanceActions}</div>}
           </div>
           <div>
             <p className="font-semibold text-c-text">Licencja i wersje</p>
-            <p>Status subskrypcji: do potwierdzenia przez backend</p>
+            {/* 2026-08-26 assessment cleanup: removed "Status subskrypcji: do
+                potwierdzenia przez backend" — a developer TODO note, not
+                real data, left visible on the client's face (no field on
+                `session`/`readiness` backs a subscription status; showing
+                one would just be another fabricated fact). */}
             <p>Historia wersji dostępna z menu dokumentu</p>
           </div>
           {settingsContent && <div className="md:col-span-4">{settingsContent}</div>}

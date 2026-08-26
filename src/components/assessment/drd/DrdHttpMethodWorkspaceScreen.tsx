@@ -33,8 +33,9 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { MethodWorkspaceShell } from '@/components/method-workspace/MethodWorkspaceShell';
 import { LiveMatrix } from '@/components/method-workspace/LiveMatrix';
 import { StandardTable } from '@/components/standard/StandardTable';
-import type { InterviewFocusQuestion, MethodWorkspaceViewMode } from '@/components/method-workspace/types';
+import type { InterviewFocusQuestion, MethodWorkspaceViewMode, ResolutionAction } from '@/components/method-workspace/types';
 import { useMethodWorkspaceSave } from '@/components/method-workspace/useMethodWorkspaceSave';
+import { formatSkipJustification, type DrdSkipReasonCode } from '@/components/method-workspace/skipReasonCodes';
 import { useAssessmentSaveIndicator } from '@/hooks/useAssessmentSaveIndicator';
 import { DRD_METHOD_PACK_ID } from '@/method-core/methods/drd/compileDrdPack';
 import { drdAdapter } from '@/method-core/methods/drd/drdAdapter';
@@ -453,7 +454,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
     ['owner', 'lead_assessor', 'assessor', 'respondent', 'evidence_owner'].includes(role)
   );
 
-  const { state: saveState, lastSavedAt, errorMessage: saveErrorMessage, markDirty, saveNow } = useMethodWorkspaceSave({
+  const { state: saveState, lastSavedAt, errorMessage: saveErrorMessage, markDirty, saveNow, acknowledgeFailure } = useMethodWorkspaceSave({
     isOnline,
     debounceMs: 800,
     save: async () => {
@@ -538,6 +539,72 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
       });
     },
     [runtime, canWrite, events, activeArea.id, focusLevelFallback]
+  );
+
+  const handleUnitNav = useCallback(
+    (direction: 1 | -1) => {
+      const idx = activeAxis.areas.findIndex((a) => a.id === activeArea.id);
+      const target = activeAxis.areas[idx + direction];
+      if (target) setActiveUnitId(target.id);
+    },
+    [activeAxis.areas, activeArea.id]
+  );
+
+  const handleBack = useCallback(() => handleUnitNav(-1), [handleUnitNav]);
+
+  // DEC-2026-08-25-55: skip requires one of the 4 dictionary codes (enforced
+  // by InterviewFocusPanel's select) — recorded as a real `recordAnswer` call
+  // over the SAME HTTP endpoint as every other answer, then the workspace
+  // advances like `onNext`.
+  const handleSkip = useCallback(
+    async (reasonCode: DrdSkipReasonCode) => {
+      const questionId = focusQuestions[0]?.questionId;
+      if (questionId && runtime && canWrite) {
+        await runtime.recordAnswer({
+          unitId: activeArea.id,
+          level: focusLevelFallback,
+          questionId,
+          answerState: 'no_evidence',
+          text: draftAnswerText[questionId],
+          justification: formatSkipJustification(reasonCode),
+        });
+      }
+      handleUnitNav(1);
+    },
+    [runtime, canWrite, activeArea.id, focusLevelFallback, focusQuestions, draftAnswerText, handleUnitNav]
+  );
+
+  // Only `ask_teresa` has a real backend today (Teresa preview pipeline,
+  // already wired above). `request_evidence`/`return_later` are logged as a
+  // real, persisted `recordAnswer` note on the SAME question over the SAME
+  // HTTP endpoint (honest audit trail, no new mechanism invented).
+  // `assign_question` has no per-question assignee anywhere in the app —
+  // ResolutionCard renders it disabled ("Planowane") instead of pretending
+  // it does something.
+  const handleResolutionAction = useCallback(
+    async (questionId: string, action: ResolutionAction) => {
+      if (action === 'ask_teresa') {
+        await handleAskTeresa(questionId);
+        return;
+      }
+      if (action === 'assign_question') return;
+      if (!runtime || !canWrite) return;
+      const note =
+        action === 'request_evidence'
+          ? 'Poproszono o dowód od właściciela procesu.'
+          : 'Odłożone — wróć później do tego pytania.';
+      await runtime.recordAnswer({
+        unitId: activeArea.id,
+        level: focusLevelFallback,
+        questionId,
+        answerState: 'dont_know',
+        text: draftAnswerText[questionId],
+        justification: note,
+        draft: true,
+      });
+      if (action === 'return_later') handleUnitNav(1);
+    },
+    [runtime, canWrite, activeArea.id, focusLevelFallback, draftAnswerText, handleAskTeresa, handleUnitNav]
   );
 
   const handleCommit = useCallback(
@@ -716,7 +783,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
           saveErrorMessage={saveErrorMessage}
           onSaveNow={() => void saveNow()}
           onSaveRetry={() => void saveNow()}
-          onSaveStay={() => {}}
+          onSaveStay={acknowledgeFailure}
           viewMode={viewMode}
           onViewModeChange={setViewMode}
           loading={state.status === 'loading' && Boolean(state.session)}
@@ -750,16 +817,12 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
             },
             onAnswerChange: handleAnswerChange,
             onAnswerStateChange: (qid, s, j) => void handleAnswerStateChange(qid, s, j),
-            onResolutionAction: () => {},
+            onResolutionAction: (qid, action) => void handleResolutionAction(qid, action),
             onEvidenceDrop: (qid, files) => void handleEvidenceDrop(qid, files),
-            onBack: () => {},
+            onBack: handleBack,
             onSave: () => void saveNow(),
-            onNext: () => {
-              const idx = activeAxis.areas.findIndex((a) => a.id === activeArea.id);
-              const next = activeAxis.areas[idx + 1];
-              if (next) setActiveUnitId(next.id);
-            },
-            onSkip: () => {},
+            onNext: () => handleUnitNav(1),
+            onSkip: (reasonCode) => void handleSkip(reasonCode),
             onAskTeresa: (questionId) => void handleAskTeresa(questionId),
             canGoBack: true,
             canGoNext: true,

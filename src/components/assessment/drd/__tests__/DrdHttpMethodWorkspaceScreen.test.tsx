@@ -185,7 +185,13 @@ describe('canonical cold reopen identity and read-only contract', () => {
     expect(await screen.findByText(/DRD/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
     const settings = screen.getByTestId('method-workspace-settings');
-    expect(within(settings).getByText('Sesja sess-http-1')).toBeInTheDocument();
+    // 2026-08-26 assessment cleanup: the raw session id moved off the
+    // card's default view into the collapsed "Szczegóły techniczne"
+    // <details> disclosure (was sitting in plain view before, duplicating
+    // the header's already-truncated "Sesja {id.slice(0,8)}"). Still
+    // present in the DOM (native <details> content isn't removed, only
+    // visually collapsed), just under its new label.
+    expect(within(settings).getByText(/ID sesji:\s*sess-http-1/)).toBeInTheDocument();
     expect(within(settings).getByText(new RegExp(DRD_METHOD_PACK_VERSION.replaceAll('.', '\\.')))).toBeInTheDocument();
     expect(within(settings).getByText('Wersja sesji v7')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Zapisz teraz' })).toBeDisabled();

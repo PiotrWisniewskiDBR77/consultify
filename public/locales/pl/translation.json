@@ -6835,7 +6835,38 @@
       "progress": "Postęp:",
       "saving": "Zapisuję...",
       "table": {
-        "author": "Autor"
+        "author": "Autor",
+        "type": "Typ",
+        "name": "Nazwa",
+        "progressHeader": "Postęp",
+        "updated": "Zaktualizowano",
+        "status": "Status",
+        "sourceReport": "Raport źródłowy",
+        "priority": "Priorytet",
+        "priorityLevel": {
+          "critical": "Pilny",
+          "high": "Wysoki",
+          "medium": "Średni",
+          "low": "Niski"
+        },
+        "initiativeStatus": {
+          "draft": "Szkic",
+          "review": "W przeglądzie",
+          "planning": "Planowanie",
+          "approved": "Zatwierdzona",
+          "executing": "W realizacji",
+          "cancelled": "Anulowana"
+        },
+        "importStatus": {
+          "pending": "Przesłano",
+          "detecting": "Wykrywanie…",
+          "extracting": "Ekstrakcja…",
+          "readyForReview": "Gotowe do przeglądu",
+          "assessmentCreated": "Assessment utworzony",
+          "initiativesCreated": "Inicjatywy utworzone",
+          "completed": "Zakończono",
+          "failed": "Błąd"
+        }
       },
       "editNoteImported": "Edycja przez przegląd zaimportowanego PDF",
       "triagePrompt": "Zrób wstępną ocenę AI listy „{{lane}}\" ({{count}} pozycji): co wymaga uwagi najpierw i dlaczego?",
@@ -7085,6 +7116,7 @@
       "copied": "Skopiowano",
       "copyFailed": "Nie udało się skopiować",
       "aiUnavailable": "AI niedostępne",
+      "aiPlanned": "Planowane — wymaga klucza dostawcy AI, którego nie ma w tym środowisku.",
       "copyJson": "Kopiuj JSON",
       "topGaps": "Top luki",
       "initiativeAngles": "Kąty inicjatyw",
