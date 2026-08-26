@@ -13,6 +13,7 @@ import {
   assertDemoPrincipalMayReceiveCredentials,
   DEMO_EXPIRED_USER_STATUS,
 } from '../services/demo/demoPrincipalGuard.js';
+import { buildOrgSuspendedResponseBody } from '../services/organizationSuspensionGuard.js';
 import refreshTokenService from '../services/RefreshTokenService.js';
 import { recordFailedLogin } from '../services/securityAlerts.js';
 import { setAuthCookies } from '../utils/cookieAuth.js';
@@ -333,6 +334,20 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       res.status(403).json({
         error: 'Your organization has been blocked. Contact support.',
       });
+      return;
+    }
+    // DEC-91 / TRI-MUST-12 — a suspended tenant must not mint new sessions.
+    // Until now `suspended` fell through this block entirely: the suspension was
+    // written and audited, but login carried on as if nothing had happened.
+    // SUPERADMIN is exempted for the same reason the two branches above exempt
+    // it — the operator has to be able to get in and reactivate the tenant.
+    if (
+      String(org.status || '')
+        .trim()
+        .toLowerCase() === 'suspended' &&
+      user.role !== 'SUPERADMIN'
+    ) {
+      res.status(403).json(buildOrgSuspendedResponseBody());
       return;
     }
 
