@@ -14,6 +14,15 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  actionKindLabel,
+  actionStatusLabel,
+  actionStatusTone,
+  findingClassificationLabel,
+  findingClassificationTone,
+  findingSeverityLabel,
+  findingSeverityTone,
+  findingStatusLabel,
+  findingStatusTone,
   packPublicationLabel,
   packPublicationTone,
   packSourceTypeLabel,
@@ -28,6 +37,10 @@ import {
   reportStatusTone,
 } from '../auditStatusTones';
 import {
+  AUDIT_ACTION_KINDS,
+  AUDIT_ACTION_STATUSES,
+  AUDIT_FINDING_SEVERITIES,
+  AUDIT_FINDING_STATUSES,
   AUDIT_LIFECYCLE_STATES,
   AUDIT_PROPOSAL_STATUSES,
   AUDIT_REPORT_STATUSES,
@@ -184,6 +197,94 @@ describe('proposalStatusTone / proposalStatusLabel', () => {
     for (const status of AUDIT_PROPOSAL_STATUSES) {
       expect(() => proposalStatusTone(status)).not.toThrow();
       expect(proposalStatusLabel(status, true).length).toBeGreaterThan(0);
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// NAPRAWA 1 (2026-08-26, panel ekspercki 6,0/10) — nowe pomocnicze mapy dla
+// U4 rejestru ustaleń/CAPA (`AuditFindingsTab`) i widoku raportu (U5).
+// ---------------------------------------------------------------------------
+
+describe('findingStatusTone / findingStatusLabel', () => {
+  it('closed is success, draft is neutral, in_review is warning', () => {
+    expect(findingStatusTone('closed')).toBe('success');
+    expect(findingStatusTone('draft')).toBe('neutral');
+    expect(findingStatusTone('in_review')).toBe('warning');
+  });
+
+  it('resolves every finding status to a non-empty, PL/EN-differing label without throwing', () => {
+    for (const status of AUDIT_FINDING_STATUSES) {
+      expect(() => findingStatusTone(status)).not.toThrow();
+      const pl = findingStatusLabel(status, true);
+      const en = findingStatusLabel(status, false);
+      expect(pl.length).toBeGreaterThan(0);
+      expect(en.length).toBeGreaterThan(0);
+      expect(pl).not.toBe(en);
+    }
+  });
+});
+
+describe('findingSeverityTone / findingSeverityLabel', () => {
+  it('critical is danger, informational is neutral', () => {
+    expect(findingSeverityTone('critical')).toBe('danger');
+    expect(findingSeverityTone('informational')).toBe('neutral');
+  });
+
+  it('null severity renders as an honest "unspecified" label, never throws or shows "null"', () => {
+    expect(findingSeverityTone(null)).toBe('neutral');
+    expect(findingSeverityLabel(null, true).toLowerCase()).not.toMatch(/null|undefined/);
+    expect(findingSeverityLabel(null, false).toLowerCase()).not.toMatch(/null|undefined/);
+  });
+
+  it('resolves every severity without throwing', () => {
+    for (const severity of AUDIT_FINDING_SEVERITIES) {
+      expect(() => findingSeverityTone(severity)).not.toThrow();
+      expect(findingSeverityLabel(severity, true).length).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe('findingClassificationTone / findingClassificationLabel', () => {
+  it('nonconforming is danger, conforming is success, observation is neutral', () => {
+    expect(findingClassificationTone('nonconforming')).toBe('danger');
+    expect(findingClassificationTone('conforming')).toBe('success');
+    expect(findingClassificationTone('observation')).toBe('neutral');
+  });
+
+  it('a classification key outside the kernel map (pack-specific taxonomy) renders the key itself — never "unknown"', () => {
+    expect(findingClassificationLabel('pack_specific_key', true)).toBe('pack_specific_key');
+    expect(findingClassificationTone('pack_specific_key')).toBe('neutral');
+  });
+});
+
+describe('actionStatusTone / actionStatusLabel', () => {
+  it('verified is success, overdue is danger, proposed is neutral', () => {
+    expect(actionStatusTone('verified')).toBe('success');
+    expect(actionStatusTone('overdue')).toBe('danger');
+    expect(actionStatusTone('proposed')).toBe('neutral');
+  });
+
+  it('resolves every action status to a non-empty, PL/EN-differing label without throwing', () => {
+    for (const status of AUDIT_ACTION_STATUSES) {
+      expect(() => actionStatusTone(status)).not.toThrow();
+      const pl = actionStatusLabel(status, true);
+      const en = actionStatusLabel(status, false);
+      expect(pl.length).toBeGreaterThan(0);
+      expect(pl).not.toBe(en);
+    }
+  });
+});
+
+describe('actionKindLabel', () => {
+  it('distinguishes correction (removes the effect) from corrective_action (removes the cause) in the rendered label', () => {
+    expect(actionKindLabel('correction', true)).not.toBe(actionKindLabel('corrective_action', true));
+  });
+
+  it('resolves every action kind to a non-empty label without throwing', () => {
+    for (const kind of AUDIT_ACTION_KINDS) {
+      expect(() => actionKindLabel(kind, true)).not.toThrow();
+      expect(actionKindLabel(kind, true).length).toBeGreaterThan(0);
     }
   });
 });

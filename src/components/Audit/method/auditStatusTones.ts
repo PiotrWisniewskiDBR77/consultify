@@ -24,6 +24,10 @@
 import type { StatusTone } from '@/components/ui/primitives/chips';
 
 import type {
+  AuditActionKind,
+  AuditActionStatus,
+  AuditFindingSeverity,
+  AuditFindingStatus,
   AuditLifecycleState,
   AuditProposalStatus,
   AuditReportStatus,
@@ -229,5 +233,167 @@ export function proposalStatusTone(status: AuditProposalStatus): StatusTone {
 export function proposalStatusLabel(status: AuditProposalStatus, isPolish = false): string {
   const entry = PROPOSAL_STATUS_LABEL[status];
   if (!entry) return status;
+  return isPolish ? entry.pl : entry.en;
+}
+
+// ---------------------------------------------------------------------------
+// Status ustalenia (Findings — U4 rejestr niezgodności i CAPA)
+// ---------------------------------------------------------------------------
+
+const FINDING_STATUS_TONE: Record<AuditFindingStatus, StatusTone> = {
+  draft: 'neutral',
+  in_review: 'warning',
+  confirmed: 'info',
+  response_pending: 'warning',
+  remediation_in_progress: 'warning',
+  verification_pending: 'info',
+  closed: 'success',
+  risk_accepted: 'info',
+  rejected: 'neutral',
+};
+
+const FINDING_STATUS_LABEL: Record<AuditFindingStatus, { pl: string; en: string }> = {
+  draft: { pl: 'Szkic', en: 'Draft' },
+  in_review: { pl: 'W przeglądzie', en: 'In review' },
+  confirmed: { pl: 'Potwierdzone', en: 'Confirmed' },
+  response_pending: { pl: 'Czeka na odpowiedź', en: 'Response pending' },
+  remediation_in_progress: { pl: 'Naprawa w toku', en: 'Remediation in progress' },
+  verification_pending: { pl: 'Czeka na weryfikację', en: 'Verification pending' },
+  closed: { pl: 'Zamknięte', en: 'Closed' },
+  risk_accepted: { pl: 'Ryzyko zaakceptowane', en: 'Risk accepted' },
+  rejected: { pl: 'Odrzucone', en: 'Rejected' },
+};
+
+export function findingStatusTone(status: AuditFindingStatus): StatusTone {
+  return FINDING_STATUS_TONE[status] ?? 'neutral';
+}
+
+export function findingStatusLabel(status: AuditFindingStatus, isPolish = false): string {
+  const entry = FINDING_STATUS_LABEL[status];
+  if (!entry) return status;
+  return isPolish ? entry.pl : entry.en;
+}
+
+// ---------------------------------------------------------------------------
+// Istotność ustalenia (severity)
+// ---------------------------------------------------------------------------
+
+const FINDING_SEVERITY_TONE: Record<AuditFindingSeverity, StatusTone> = {
+  informational: 'neutral',
+  low: 'info',
+  medium: 'warning',
+  high: 'warning',
+  critical: 'danger',
+};
+
+const FINDING_SEVERITY_LABEL: Record<AuditFindingSeverity, { pl: string; en: string }> = {
+  informational: { pl: 'Informacyjna', en: 'Informational' },
+  low: { pl: 'Niska', en: 'Low' },
+  medium: { pl: 'Średnia', en: 'Medium' },
+  high: { pl: 'Wysoka', en: 'High' },
+  critical: { pl: 'Krytyczna', en: 'Critical' },
+};
+
+export function findingSeverityTone(severity: AuditFindingSeverity | null): StatusTone {
+  if (!severity) return 'neutral';
+  return FINDING_SEVERITY_TONE[severity] ?? 'neutral';
+}
+
+export function findingSeverityLabel(severity: AuditFindingSeverity | null, isPolish = false): string {
+  if (!severity) return isPolish ? 'Nieokreślona' : 'Unspecified';
+  const entry = FINDING_SEVERITY_LABEL[severity];
+  if (!entry) return severity;
+  return isPolish ? entry.pl : entry.en;
+}
+
+// ---------------------------------------------------------------------------
+// Klasyfikacja ustalenia — klucz z taksonomii PAKIETU (nie jest zamkniętym
+// enumem kernela), więc mapa niżej pokrywa wyłącznie wartości najczęstsze z
+// kernela (`findingService.NEVER_NONCONFORMING` + domyślne `nonconforming`);
+// wartość spoza mapy (własna taksonomia pakietu) renderuje się wprost —
+// UCZCIWIE, nie jako "nieznana", bo pakiet ma prawo definiować własne klucze.
+// ---------------------------------------------------------------------------
+
+const FINDING_CLASSIFICATION_TONE: Record<string, StatusTone> = {
+  nonconforming: 'danger',
+  observation: 'neutral',
+  opportunity_for_improvement: 'info',
+  evidence_insufficient: 'warning',
+  conforming: 'success',
+  not_applicable: 'neutral',
+};
+
+const FINDING_CLASSIFICATION_LABEL: Record<string, { pl: string; en: string }> = {
+  nonconforming: { pl: 'Niezgodność', en: 'Nonconforming' },
+  observation: { pl: 'Obserwacja', en: 'Observation' },
+  opportunity_for_improvement: { pl: 'Szansa na usprawnienie', en: 'Opportunity for improvement' },
+  evidence_insufficient: { pl: 'Niewystarczający dowód', en: 'Evidence insufficient' },
+  conforming: { pl: 'Zgodność', en: 'Conforming' },
+  not_applicable: { pl: 'Nie dotyczy', en: 'Not applicable' },
+};
+
+export function findingClassificationTone(classification: string): StatusTone {
+  return FINDING_CLASSIFICATION_TONE[classification] ?? 'neutral';
+}
+
+/** Wpis spoza kernelowej mapy (własny klucz taksonomii pakietu) renderuje się jako podany klucz — nigdy "unknown". */
+export function findingClassificationLabel(classification: string, isPolish = false): string {
+  const entry = FINDING_CLASSIFICATION_LABEL[classification];
+  if (!entry) return classification;
+  return isPolish ? entry.pl : entry.en;
+}
+
+// ---------------------------------------------------------------------------
+// Status działania korygującego/naprawczego (Actions — U4 CAPA)
+// ---------------------------------------------------------------------------
+
+const ACTION_STATUS_TONE: Record<AuditActionStatus, StatusTone> = {
+  proposed: 'neutral',
+  approved: 'info',
+  in_progress: 'warning',
+  implemented: 'info',
+  verified: 'success',
+  rejected: 'neutral',
+  cancelled: 'neutral',
+  overdue: 'danger',
+};
+
+const ACTION_STATUS_LABEL: Record<AuditActionStatus, { pl: string; en: string }> = {
+  proposed: { pl: 'Zaproponowane', en: 'Proposed' },
+  approved: { pl: 'Zatwierdzone', en: 'Approved' },
+  in_progress: { pl: 'W toku', en: 'In progress' },
+  implemented: { pl: 'Wdrożone', en: 'Implemented' },
+  verified: { pl: 'Zweryfikowane', en: 'Verified' },
+  rejected: { pl: 'Odrzucone', en: 'Rejected' },
+  cancelled: { pl: 'Anulowane', en: 'Cancelled' },
+  overdue: { pl: 'Przeterminowane', en: 'Overdue' },
+};
+
+export function actionStatusTone(status: AuditActionStatus): StatusTone {
+  return ACTION_STATUS_TONE[status] ?? 'neutral';
+}
+
+export function actionStatusLabel(status: AuditActionStatus, isPolish = false): string {
+  const entry = ACTION_STATUS_LABEL[status];
+  if (!entry) return status;
+  return isPolish ? entry.pl : entry.en;
+}
+
+// ---------------------------------------------------------------------------
+// Rodzaj działania — korekcja/działanie doraźne usuwa SKUTEK; działanie
+// korygujące/prewencyjne usuwa PRZYCZYNĘ (patrz `findingService.closeFinding`
+// dla merytorycznego uzasadnienia rozróżnienia).
+// ---------------------------------------------------------------------------
+
+const ACTION_KIND_LABEL: Record<AuditActionKind, { pl: string; en: string }> = {
+  correction: { pl: 'Korekcja', en: 'Correction' },
+  containment: { pl: 'Działanie doraźne', en: 'Containment' },
+  corrective_action: { pl: 'Działanie korygujące', en: 'Corrective action' },
+  preventive_action: { pl: 'Działanie zapobiegawcze', en: 'Preventive action' },
+};
+
+export function actionKindLabel(kind: AuditActionKind, isPolish = false): string {
+  const entry = ACTION_KIND_LABEL[kind];
+  if (!entry) return kind;
   return isPolish ? entry.pl : entry.en;
 }

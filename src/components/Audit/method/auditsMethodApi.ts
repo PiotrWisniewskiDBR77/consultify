@@ -131,6 +131,41 @@ export const AUDIT_PROPOSAL_STATUSES = [
 ] as const;
 export type AuditProposalStatus = (typeof AUDIT_PROPOSAL_STATUSES)[number];
 
+/** Mirror `server/src/services/audits/types.ts` — status cyklu życia ustalenia. */
+export const AUDIT_FINDING_STATUSES = [
+  'draft',
+  'in_review',
+  'confirmed',
+  'response_pending',
+  'remediation_in_progress',
+  'verification_pending',
+  'closed',
+  'risk_accepted',
+  'rejected',
+] as const;
+export type AuditFindingStatus = (typeof AUDIT_FINDING_STATUSES)[number];
+
+/** Mirror `server/src/services/audits/types.ts` — istotność ustalenia. */
+export const AUDIT_FINDING_SEVERITIES = ['informational', 'low', 'medium', 'high', 'critical'] as const;
+export type AuditFindingSeverity = (typeof AUDIT_FINDING_SEVERITIES)[number];
+
+/** Mirror `server/src/services/audits/types.ts` — status działania korygującego. */
+export const AUDIT_ACTION_STATUSES = [
+  'proposed',
+  'approved',
+  'in_progress',
+  'implemented',
+  'verified',
+  'rejected',
+  'cancelled',
+  'overdue',
+] as const;
+export type AuditActionStatus = (typeof AUDIT_ACTION_STATUSES)[number];
+
+/** Mirror `server/src/services/audits/types.ts` — rodzaj działania (korekcja usuwa skutek, działanie korygujące usuwa przyczynę). */
+export const AUDIT_ACTION_KINDS = ['correction', 'containment', 'corrective_action', 'preventive_action'] as const;
+export type AuditActionKind = (typeof AUDIT_ACTION_KINDS)[number];
+
 // ---------------------------------------------------------------------------
 // Library — pakiety audytowe
 // ---------------------------------------------------------------------------
@@ -533,6 +568,13 @@ export async function listReports(programId?: string): Promise<ListResult<AuditR
   return { items, total: toTotal(payload, items.length, 'total') };
 }
 
+/** `GET /audits/reports/:id` — pojedynczy raport (metadane dla pełnego widoku, `reportService.getReport`). */
+export async function getReport(id: string): Promise<AuditReportSummary | null> {
+  const res = await Api.get(`/audits/reports/${encodeURIComponent(id)}`);
+  const payload = unwrapEnvelope(res) as AuditReportSummary | undefined;
+  return payload && payload.id ? payload : null;
+}
+
 /** `POST /audits/reports/:id/approve` — draft/in_review → approved (real backend gate, `reportService.approveReport`). */
 export async function approveReport(id: string): Promise<AuditReportSummary | null> {
   const res = await Api.post(`/audits/reports/${encodeURIComponent(id)}/approve`, {});
@@ -574,4 +616,208 @@ export async function deferProposal(id: string, reason?: string): Promise<AuditP
   const res = await Api.post(`/audits/proposals/${encodeURIComponent(id)}/defer`, { reason });
   const payload = unwrapEnvelope(res) as AuditProposalSummary | undefined;
   return payload && payload.id ? payload : null;
+}
+
+// ---------------------------------------------------------------------------
+// Findings — U4 rejestr niezgodności i CAPA (`GET /audits/findings*`)
+// ---------------------------------------------------------------------------
+
+export interface AuditFindingSummary {
+  id: string;
+  programId: string;
+  criterionId: string | null;
+  referenceCode: string | null;
+  statement: string;
+  requirementText: string | null;
+  conditionText: string | null;
+  sourceReference: string | null;
+  gapText: string | null;
+  objectiveEvidence: string[];
+  contradictingEvidence: string[];
+  classification: string;
+  severity: AuditFindingSeverity | null;
+  riskText: string | null;
+  impactText: string | null;
+  recommendation: string | null;
+  rootCause: string | null;
+  rootCauseMethod: string | null;
+  rootCauseConfirmed: boolean;
+  status: AuditFindingStatus;
+  ownerUserId: string | null;
+  authorId: string | null;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  reviewNote: string | null;
+  sentBackAt: string | null;
+  sentBackBy: string | null;
+  sendBackReason: string | null;
+  residualRisk: string | null;
+  residualRiskAcceptedBy: string | null;
+  residualRiskAcceptedAt: string | null;
+  residualRiskNote: string | null;
+  closedAt: string | null;
+  closedBy: string | null;
+  closureNote: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ListFindingsParams {
+  programId: string;
+  status?: AuditFindingStatus | 'all';
+  classification?: string | 'all';
+  severity?: AuditFindingSeverity | 'all';
+  ownerUserId?: string;
+  criterionId?: string;
+  search?: string;
+  limit?: number;
+  offset?: number;
+}
+
+/** `GET /audits/findings` — WYMAGA `programId` (backend `requireProgramId`, brak globalnego rejestru). */
+export async function listFindings(params: ListFindingsParams): Promise<ListResult<AuditFindingSummary>> {
+  const qs = buildQuery({
+    programId: params.programId,
+    status: params.status,
+    classification: params.classification,
+    severity: params.severity,
+    ownerUserId: params.ownerUserId,
+    criterionId: params.criterionId,
+    search: params.search,
+    limit: params.limit,
+    offset: params.offset,
+  });
+  const res = await Api.get(`/audits/findings${qs}`);
+  const payload = unwrapEnvelope(res);
+  const items = toArray<AuditFindingSummary>(payload, 'items');
+  return { items, total: toTotal(payload, items.length, 'total') };
+}
+
+export interface AuditFindingStatistics {
+  total: number;
+  byClassification: Record<string, number>;
+  bySeverity: Record<string, number>;
+  byStatus: Record<string, number>;
+}
+
+/** `GET /audits/findings/statistics` — agregaty per program (rejestrowane statycznie przed `/:id`). */
+export async function getFindingStatistics(programId: string): Promise<AuditFindingStatistics> {
+  const qs = buildQuery({ programId });
+  const res = await Api.get(`/audits/findings/statistics${qs}`);
+  const payload = unwrapEnvelope(res) as AuditFindingStatistics | undefined;
+  return (
+    payload ?? { total: 0, byClassification: {}, bySeverity: {}, byStatus: {} }
+  );
+}
+
+export interface AuditSystemicFindingGroup {
+  groupKind: 'root_cause' | 'criterion_area';
+  key: string;
+  label: string;
+  findingIds: string[];
+  count: number;
+}
+
+/** `GET /audits/findings/systemic` — czysta analiza (ustalenia CONFIRMED), nic nie zapisuje. */
+export async function getSystemicFindings(programId: string): Promise<AuditSystemicFindingGroup[]> {
+  const qs = buildQuery({ programId });
+  const res = await Api.get(`/audits/findings/systemic${qs}`);
+  return toArray<AuditSystemicFindingGroup>(unwrapEnvelope(res), 'items');
+}
+
+/** `POST /audits/findings/:id/review` — decision: confirm/send_back/reject (`findingService.reviewFinding`). */
+export async function reviewFinding(
+  id: string,
+  decision: 'confirm' | 'send_back' | 'reject',
+  note?: string
+): Promise<AuditFindingSummary | null> {
+  const res = await Api.post(`/audits/findings/${encodeURIComponent(id)}/review`, { decision, note });
+  const payload = unwrapEnvelope(res) as AuditFindingSummary | undefined;
+  return payload && payload.id ? payload : null;
+}
+
+/** `POST /audits/findings/:id/accept-risk` — wymaga notatki uzasadniającej (`findingService.acceptResidualRisk`). */
+export async function acceptResidualRisk(id: string, note: string): Promise<AuditFindingSummary | null> {
+  const res = await Api.post(`/audits/findings/${encodeURIComponent(id)}/accept-risk`, { note });
+  const payload = unwrapEnvelope(res) as AuditFindingSummary | undefined;
+  return payload && payload.id ? payload : null;
+}
+
+/** `POST /audits/findings/:id/close` — bramkowane weryfikacją skuteczności/wdrożenia (`findingService.closeFinding`). */
+export async function closeFinding(id: string, note: string): Promise<AuditFindingSummary | null> {
+  const res = await Api.post(`/audits/findings/${encodeURIComponent(id)}/close`, { note });
+  const payload = unwrapEnvelope(res) as AuditFindingSummary | undefined;
+  return payload && payload.id ? payload : null;
+}
+
+// ---------------------------------------------------------------------------
+// Actions — U4 działania korygujące (tylko odczyt, do kolumny „Termin" i
+// preview — kebab zapisu żyje w warsztacie kryterium, poza zakresem rejestru)
+// ---------------------------------------------------------------------------
+
+export interface AuditActionSummary {
+  id: string;
+  findingId: string;
+  programId: string;
+  actionKind: AuditActionKind;
+  title: string;
+  ownerUserId: string | null;
+  dueDate: string | null;
+  status: AuditActionStatus;
+}
+
+/** `GET /audits/actions` — filtrowane po `programId` (`correctiveActionService.listActions`). */
+export async function listActions(programId: string): Promise<ListResult<AuditActionSummary>> {
+  const qs = buildQuery({ programId });
+  const res = await Api.get(`/audits/actions${qs}`);
+  const payload = unwrapEnvelope(res);
+  const items = toArray<AuditActionSummary>(payload, 'items');
+  return { items, total: toTotal(payload, items.length, 'total') };
+}
+
+// ---------------------------------------------------------------------------
+// Evidence — U3 dowody (tylko odczyt, rozwiązywanie tytułów w podglądzie
+// ustalenia — `objectiveEvidence`/`contradictingEvidence` niosą same ID)
+// ---------------------------------------------------------------------------
+
+export interface AuditEvidenceSummary {
+  id: string;
+  programId: string;
+  criterionId: string | null;
+  evidenceKind: string;
+  title: string;
+}
+
+/** `GET /audits/evidence` — zwraca tablicę WPROST (bez `{items,total}`), `evidenceService.listEvidence`. */
+export async function listEvidence(programId: string): Promise<AuditEvidenceSummary[]> {
+  const qs = buildQuery({ programId });
+  const res = await Api.get(`/audits/evidence${qs}`);
+  return toArray<AuditEvidenceSummary>(unwrapEnvelope(res), 'evidence', 'items');
+}
+
+// ---------------------------------------------------------------------------
+// Report presentation — U5 widok prezentacyjny renderowany live z Outputu
+// (`GET /audits/reports/:id/presentation`, `reportService.renderReportPresentation`)
+// ---------------------------------------------------------------------------
+
+export type AuditReportDocumentSectionKind = 'text' | 'list' | 'table' | 'keyValue' | 'group';
+
+export interface AuditReportDocumentSection<T = unknown> {
+  id: string;
+  title: string;
+  kind: AuditReportDocumentSectionKind;
+  content: T;
+}
+
+export interface AuditReportDocument {
+  reportKind: 'audit_report' | 'remediation_progress' | 'presentation';
+  generatedAt: string | null;
+  asOfDate?: string | null;
+  sections: AuditReportDocumentSection[];
+}
+
+/** `GET /audits/reports/:id/presentation` — render live z Outputu, nic nie zapisuje. */
+export async function getReportPresentation(id: string): Promise<AuditReportDocument> {
+  const res = await Api.get(`/audits/reports/${encodeURIComponent(id)}/presentation`);
+  return unwrapEnvelope(res) as AuditReportDocument;
 }

@@ -24724,6 +24724,7 @@
         "processes": "Sessions",
         "outputs": "Outputs",
         "reports": "Reports",
+        "findings": "Findings",
         "initiatives": "Initiatives"
       }
     }
