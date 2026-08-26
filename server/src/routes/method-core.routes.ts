@@ -66,8 +66,15 @@ import {
   type TeresaStatement,
 } from '../method-core/contracts/index.js';
 import { methodEventStore } from '../method-core/MethodEventStore.js';
-import { DRD_METHOD_PACK_ID, ensureDrdPackRegistered, methodPackRegistry } from '../method-core/MethodPackRegistry.js';
-import { MethodSessionService, type PackReadinessLookup } from '../method-core/MethodSessionService.js';
+import {
+  DRD_METHOD_PACK_ID,
+  ensureDrdPackRegistered,
+  methodPackRegistry,
+} from '../method-core/MethodPackRegistry.js';
+import {
+  MethodSessionService,
+  type PackReadinessLookup,
+} from '../method-core/MethodSessionService.js';
 import { teresaProposalService } from '../method-core/TeresaProposalService.js';
 import {
   DEMO_BYPASS_NOTICE,
@@ -83,6 +90,11 @@ import {
 } from '../method-core/outputs/index.js';
 import { computeContentHash, genId, nowIso } from '../method-core/db.js';
 import * as DbPromise from '../utils/DbPromise.js';
+import {
+  AssessmentSkipReasonError,
+  assessmentSkipReasonService,
+} from '../services/assessment/assessmentSkipReasonService.js';
+import { assessmentReportContractService } from '../services/assessment/assessmentReportContractService.js';
 
 // ---------------------------------------------------------------------------
 // Wiring — one bridge, one session service instance, matching how the rest
@@ -143,6 +155,14 @@ function requireIdempotencyKey(req: Request, res: Response): string | null {
 
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0;
+}
+
+function sendAssessmentSkipReasonError(res: Response, error: unknown): void {
+  if (error instanceof AssessmentSkipReasonError) {
+    res.status(error.status).json({ error: error.code, code: error.code });
+    return;
+  }
+  throw error;
 }
 
 // ---------------------------------------------------------------------------
@@ -292,7 +312,6 @@ async function getUserOrganizationId(userId: string): Promise<string | null> {
   return row?.organization_id ?? null;
 }
 
-
 /**
  * Loads a session and enforces tenant isolation. Returns null and has
  * already written the response on: not found (404) or found-but-other-org
@@ -383,7 +402,11 @@ async function requireSessionWriteRole(
  */
 async function collectLineageSessionIds(
   organizationId: string,
-  output: { readonly id: string; readonly sessionId: string; readonly revisionOfOutputId: string | null }
+  output: {
+    readonly id: string;
+    readonly sessionId: string;
+    readonly revisionOfOutputId: string | null;
+  }
 ): Promise<string[]> {
   const sessionIds = new Set<string>([output.sessionId]);
   let cursor = output.revisionOfOutputId;
@@ -405,15 +428,119 @@ async function collectLineageSessionIds(
  * against a NEW Output. Never touches content columns (see each service's
  * class-level doc comment on column-scoped UPDATEs only).
  */
-async function supersedeLineageResultsFor(organizationId: string, output: MethodOutputRecordLike): Promise<void> {
+async function supersedeLineageResultsFor(
+  organizationId: string,
+  output: MethodOutputRecordLike
+): Promise<void> {
   const lineageSessionIds = await collectLineageSessionIds(organizationId, output);
   for (const sessionId of lineageSessionIds) {
-    await methodReportSnapshotService.supersedeCurrentForSession(organizationId, sessionId, output.id, 'superseded');
-    await methodInitiativeDraftService.supersedeCurrentForSession(organizationId, sessionId, output.id, 'superseded');
+    await methodReportSnapshotService.supersedeCurrentForSession(
+      organizationId,
+      sessionId,
+      output.id,
+      'superseded'
+    );
+    await methodInitiativeDraftService.supersedeCurrentForSession(
+      organizationId,
+      sessionId,
+      output.id,
+      'superseded'
+    );
   }
 }
 
-type MethodOutputRecordLike = { readonly id: string; readonly sessionId: string; readonly revisionOfOutputId: string | null };
+type MethodOutputRecordLike = {
+  readonly id: string;
+  readonly sessionId: string;
+  readonly revisionOfOutputId: string | null;
+};
+
+// ---------------------------------------------------------------------------
+// Assessment-owned skip reasons (DEC-55) — kernel event contract untouched.
+// ---------------------------------------------------------------------------
+
+router.post(
+  '/sessions/:sessionId/assessment-skip-reasons',
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
+    const organizationId = requireOrg(req, res);
+    if (!organizationId) return;
+    const actorUserId = requireActor(req, res);
+    if (!actorUserId) return;
+    const idempotencyKey = requireIdempotencyKey(req, res);
+    if (!idempotencyKey) return;
+    if (req.body?.organizationId && req.body.organizationId !== organizationId) {
+      res.status(403).json({ error: 'TENANT_CONTEXT_MISMATCH', code: 'TENANT_CONTEXT_MISMATCH' });
+      return;
+    }
+    if (!(await requireSessionWriteRole(res, organizationId, req.params.sessionId, actorUserId))) {
+      return;
+    }
+
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    if (
+      !isNonEmptyString(body.unitId) ||
+      !isNonEmptyString(body.questionId) ||
+      !Number.isInteger(body.level) ||
+      Number(body.level) < 1
+    ) {
+      res
+        .status(400)
+        .json({ error: 'INVALID_SKIP_REASON_INPUT', code: 'INVALID_SKIP_REASON_INPUT' });
+      return;
+    }
+    try {
+      const skipReason = await assessmentSkipReasonService.record({
+        organizationId,
+        sessionId: req.params.sessionId,
+        unitId: body.unitId,
+        questionId: body.questionId,
+        level: Number(body.level),
+        skipCode: body.skipCode,
+        actorUserId,
+        idempotencyKey,
+      });
+      res.status(201).json({ skipReason });
+    } catch (error) {
+      sendAssessmentSkipReasonError(res, error);
+    }
+  })
+);
+
+router.get(
+  '/sessions/:sessionId/assessment-skip-reasons',
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
+    const organizationId = requireOrg(req, res);
+    if (!organizationId) return;
+    const unitId = isNonEmptyString(req.query.unitId) ? req.query.unitId : undefined;
+    try {
+      const skipReasons = await assessmentSkipReasonService.listActive(
+        organizationId,
+        req.params.sessionId,
+        unitId
+      );
+      res.status(200).json({ skipReasons });
+    } catch (error) {
+      sendAssessmentSkipReasonError(res, error);
+    }
+  })
+);
+
+router.get(
+  '/sessions/:sessionId/assessment-report-contract',
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
+    const organizationId = requireOrg(req, res);
+    if (!organizationId) return;
+    try {
+      const reportContract = await assessmentReportContractService.build(
+        organizationId,
+        req.params.sessionId
+      );
+      res.status(200).json({ reportContract });
+    } catch (error) {
+      sendAssessmentSkipReasonError(res, error);
+    }
+  })
+);
 
 // ---------------------------------------------------------------------------
 // GET /api/method/packs — Library
@@ -515,7 +642,13 @@ router.post(
     // Session creator is the process owner — the FIRST transition
     // (draft -> prepared) requires the 'owner' role and nothing upstream
     // assigns it automatically otherwise.
-    await sessionService.assignRole(organizationId, result.session.id, actorUserId, 'owner', actorUserId);
+    await sessionService.assignRole(
+      organizationId,
+      result.session.id,
+      actorUserId,
+      'owner',
+      actorUserId
+    );
 
     const idemInsert = await DbPromise.run(
       `INSERT INTO method_session_create_idempotency (organization_id, idempotency_key, session_id, created_at)
@@ -524,7 +657,9 @@ router.post(
       { fallback: false }
     );
     if (!idemInsert.success) {
-      throw new Error(`method-core-http: idempotency anchor insert failed: ${idemInsert.error ?? 'unknown'}`);
+      throw new Error(
+        `method-core-http: idempotency anchor insert failed: ${idemInsert.error ?? 'unknown'}`
+      );
     }
 
     // ASM-BVP-001: lost-race repair. `existingIdemRow` above only catches a
@@ -547,9 +682,13 @@ router.post(
     // Idempotency-Key" converges on exactly one `method_sessions` row and one
     // returned session id no matter how the race lands.
     if ((idemInsert.changes ?? 0) === 0) {
-      const deleteOrphan = await DbPromise.run(`DELETE FROM method_sessions WHERE id = ?`, [result.session.id], {
-        fallback: false,
-      });
+      const deleteOrphan = await DbPromise.run(
+        `DELETE FROM method_sessions WHERE id = ?`,
+        [result.session.id],
+        {
+          fallback: false,
+        }
+      );
       if (!deleteOrphan.success) {
         throw new Error(
           `method-core-http: failed to delete orphaned session ${result.session.id} after a lost idempotency race: ${deleteOrphan.error ?? 'unknown'}`
@@ -559,7 +698,9 @@ router.post(
         `SELECT session_id FROM method_session_create_idempotency WHERE organization_id = ? AND idempotency_key = ?`,
         [organizationId, idempotencyKey]
       );
-      const winnerSession = winnerRow ? await sessionService.getSession(winnerRow.session_id) : null;
+      const winnerSession = winnerRow
+        ? await sessionService.getSession(winnerRow.session_id)
+        : null;
       if (!winnerSession) {
         throw new Error(
           `method-core-http: lost an idempotency race for (${organizationId}, ${idempotencyKey}) but the winning session ${winnerRow?.session_id ?? '(anchor missing)'} could not be read back`
@@ -598,11 +739,16 @@ router.get(
     const pagination = parsePagination(req, res);
     if (!pagination) return;
 
-    const methodPackId = isNonEmptyString(req.query.methodPackId) ? req.query.methodPackId : undefined;
+    const methodPackId = isNonEmptyString(req.query.methodPackId)
+      ? req.query.methodPackId
+      : undefined;
     const projectId = isNonEmptyString(req.query.projectId) ? req.query.projectId : undefined;
     const ownerUserId = isNonEmptyString(req.query.ownerUserId) ? req.query.ownerUserId : undefined;
     const stateParam = isNonEmptyString(req.query.state) ? req.query.state : undefined;
-    if (stateParam !== undefined && !(METHOD_SESSION_STATES as readonly string[]).includes(stateParam)) {
+    if (
+      stateParam !== undefined &&
+      !(METHOD_SESSION_STATES as readonly string[]).includes(stateParam)
+    ) {
       res.status(400).json({
         error: 'state must be one of the closed METHOD_SESSION_STATES set',
         allowed: METHOD_SESSION_STATES,
@@ -713,7 +859,10 @@ router.post(
       return;
     }
     if (typeof role !== 'string' || !(METHOD_PROCESS_ROLES as readonly string[]).includes(role)) {
-      res.status(400).json({ error: 'role must be one of the closed METHOD_PROCESS_ROLES set', allowed: METHOD_PROCESS_ROLES });
+      res.status(400).json({
+        error: 'role must be one of the closed METHOD_PROCESS_ROLES set',
+        allowed: METHOD_PROCESS_ROLES,
+      });
       return;
     }
     const typedRole = role as MethodProcessRole;
@@ -765,8 +914,8 @@ router.post(
     // self-elevation check above regardless of this gate.
     const actorRoles = await sessionService.listRoles(organizationId, session.id);
     const actorMayManageRoles = actorRoles.some(
-      (entry) => entry.userId === actorUserId &&
-        (entry.role === 'owner' || entry.role === 'lead_assessor')
+      (entry) =>
+        entry.userId === actorUserId && (entry.role === 'owner' || entry.role === 'lead_assessor')
     );
     const isSelfDeclaredNonPowerRole = targetUserId === actorUserId && !POWER_ROLES.has(typedRole);
     if (!actorMayManageRoles && !isSelfDeclaredNonPowerRole) {
@@ -784,7 +933,13 @@ router.post(
     // --- S2 hard rule #7: duplicate assignment is idempotent ---------------
     // `assignRole` itself is `ON CONFLICT ... DO NOTHING` — `inserted: false`
     // on a replay, and no second row anywhere (roster or history).
-    const { inserted } = await sessionService.assignRole(organizationId, session.id, targetUserId, typedRole, actorUserId);
+    const { inserted } = await sessionService.assignRole(
+      organizationId,
+      session.id,
+      targetUserId,
+      typedRole,
+      actorUserId
+    );
 
     res.status(inserted ? 201 : 200).json({
       role: { userId: targetUserId, role: typedRole },
@@ -811,7 +966,10 @@ router.delete(
     const targetUserId = firstParam(req.params.userId);
     const role = firstParam(req.params.role);
     if (!(METHOD_PROCESS_ROLES as readonly string[]).includes(role)) {
-      res.status(400).json({ error: 'role must be one of the closed METHOD_PROCESS_ROLES set', allowed: METHOD_PROCESS_ROLES });
+      res.status(400).json({
+        error: 'role must be one of the closed METHOD_PROCESS_ROLES set',
+        allowed: METHOD_PROCESS_ROLES,
+      });
       return;
     }
 
@@ -878,7 +1036,11 @@ router.post(
     // A caller-authenticated HTTP request can never honestly claim to BE the
     // system — 'system' events are reserved for kernel-internal writes
     // (e.g. EventDerivedOutputBridge's own OUTPUT_CREATED append).
-    if (requestedActorKind !== undefined && requestedActorKind !== 'human' && requestedActorKind !== 'teresa') {
+    if (
+      requestedActorKind !== undefined &&
+      requestedActorKind !== 'human' &&
+      requestedActorKind !== 'teresa'
+    ) {
       res.status(400).json({ error: "actorKind must be 'human' or 'teresa' over this endpoint" });
       return;
     }
@@ -1099,12 +1261,21 @@ router.post(
     const body = (req.body ?? {}) as Record<string, unknown>;
     const capabilityId = body.capabilityId as TeresaCapabilityId | undefined;
     if (!capabilityId || !(TERESA_CAPABILITIES as readonly string[]).includes(capabilityId)) {
-      res.status(400).json({ error: 'capabilityId must be one of the closed TERESA_CAPABILITIES set' });
+      res
+        .status(400)
+        .json({ error: 'capabilityId must be one of the closed TERESA_CAPABILITIES set' });
       return;
     }
     const quality = body.quality as TeresaQualityVerdict | undefined;
-    if (!quality || (quality.verdict !== 'valid' && quality.verdict !== 'needs_human_review' && quality.verdict !== 'invalid')) {
-      res.status(400).json({ error: 'quality.verdict is required and must be a valid TeresaQualityVerdict' });
+    if (
+      !quality ||
+      (quality.verdict !== 'valid' &&
+        quality.verdict !== 'needs_human_review' &&
+        quality.verdict !== 'invalid')
+    ) {
+      res
+        .status(400)
+        .json({ error: 'quality.verdict is required and must be a valid TeresaQualityVerdict' });
       return;
     }
     const statements = Array.isArray(body.statements) ? (body.statements as TeresaStatement[]) : [];
@@ -1172,7 +1343,9 @@ router.post(
     const body = (req.body ?? {}) as Record<string, unknown>;
     const previewId = body.previewId;
     if (!isNonEmptyString(previewId)) {
-      res.status(400).json({ error: 'previewId is required — a commit without a preview is unrepresentable' });
+      res
+        .status(400)
+        .json({ error: 'previewId is required — a commit without a preview is unrepresentable' });
       return;
     }
     const decision = body.decision;
@@ -1191,7 +1364,9 @@ router.post(
     const commitRequest: TeresaCommitRequest = {
       previewId,
       decision,
-      editedChanges: Array.isArray(body.editedChanges) ? (body.editedChanges as TeresaProposedChange[]) : undefined,
+      editedChanges: Array.isArray(body.editedChanges)
+        ? (body.editedChanges as TeresaProposedChange[])
+        : undefined,
       actorUserId, // provenance: never client-supplied
       idempotencyKey,
     };
@@ -1202,11 +1377,7 @@ router.post(
     if (!result.ok) {
       const refusal = result.refusal;
       const status =
-        refusal.kind === 'preview_not_found'
-          ? 404
-          : refusal.kind === 'quality_invalid'
-            ? 422
-            : 409; // preview_already_consumed | preview_expired | session_frozen | forbidden_effect | missing_permission
+        refusal.kind === 'preview_not_found' ? 404 : refusal.kind === 'quality_invalid' ? 422 : 409; // preview_already_consumed | preview_expired | session_frozen | forbidden_effect | missing_permission
       res.status(status).json({ error: refusal.kind, refusal });
       return;
     }
@@ -1215,7 +1386,8 @@ router.post(
     // the domain event (TERESA_PROPOSAL_ACCEPTED/REJECTED) is this route's
     // job, mirroring the browser mirror. idempotencyKey-keyed so a retry of
     // this exact request never appends a second event.
-    const eventType = decision === 'reject' ? 'TERESA_PROPOSAL_REJECTED' : 'TERESA_PROPOSAL_ACCEPTED';
+    const eventType =
+      decision === 'reject' ? 'TERESA_PROPOSAL_REJECTED' : 'TERESA_PROPOSAL_ACCEPTED';
     const event = await methodEventStore.append({
       organizationId,
       sessionId: session.id,
@@ -1255,7 +1427,11 @@ router.post(
     if (!session) return;
 
     const body = (req.body ?? {}) as Record<string, unknown>;
-    if (typeof body.expectedVersion === 'number' && body.expectedVersion !== session.version && session.state !== 'frozen') {
+    if (
+      typeof body.expectedVersion === 'number' &&
+      body.expectedVersion !== session.version &&
+      session.state !== 'frozen'
+    ) {
       res.status(409).json({ error: 'version_conflict', currentVersion: session.version, session });
       return;
     }
@@ -1333,7 +1509,9 @@ router.post(
       output = outputs[0] ?? null;
       selfHealed = true;
       if (!output) {
-        throw new Error(`method-core-http: self-heal did not produce an Output for session ${session.id}`);
+        throw new Error(
+          `method-core-http: self-heal did not produce an Output for session ${session.id}`
+        );
       }
     }
 
@@ -1359,7 +1537,9 @@ router.get(
 
     const sessionIds = await resolveProjectSessionIds(organizationId, req);
     if (sessionIds && sessionIds.length === 0) {
-      res.status(200).json({ outputs: [], total: 0, limit: pagination.limit, offset: pagination.offset });
+      res
+        .status(200)
+        .json({ outputs: [], total: 0, limit: pagination.limit, offset: pagination.offset });
       return;
     }
 
@@ -1379,7 +1559,9 @@ router.get(
       offset: pagination.offset,
     });
 
-    res.status(200).json({ outputs: items, total, limit: pagination.limit, offset: pagination.offset });
+    res
+      .status(200)
+      .json({ outputs: items, total, limit: pagination.limit, offset: pagination.offset });
   })
 );
 
@@ -1413,7 +1595,10 @@ router.get(
   asyncHandler(async (req: AuthedRequest, res: Response) => {
     const organizationId = requireOrg(req, res);
     if (!organizationId) return;
-    const chain = await methodOutputService.listRevisionChain(organizationId, firstParam(req.params.id));
+    const chain = await methodOutputService.listRevisionChain(
+      organizationId,
+      firstParam(req.params.id)
+    );
     if (!chain) {
       res.status(404).json({ error: 'Output not found' });
       return;
@@ -1478,7 +1663,9 @@ async function createArtefactSnapshot(
 
   res.status(201).json({
     report: snapshot,
-    ...(output.demoBypassActive ? { demoBypassActive: true, demoBypassNotice: DEMO_BYPASS_NOTICE } : {}),
+    ...(output.demoBypassActive
+      ? { demoBypassActive: true, demoBypassNotice: DEMO_BYPASS_NOTICE }
+      : {}),
   });
 }
 
@@ -1525,7 +1712,9 @@ async function listArtefactSnapshots(
 
   const sessionIds = await resolveProjectSessionIds(organizationId, req);
   if (sessionIds && sessionIds.length === 0) {
-    res.status(200).json({ [responseKey]: [], total: 0, limit: pagination.limit, offset: pagination.offset });
+    res
+      .status(200)
+      .json({ [responseKey]: [], total: 0, limit: pagination.limit, offset: pagination.offset });
     return;
   }
 
@@ -1553,7 +1742,9 @@ async function listArtefactSnapshots(
     offset: pagination.offset,
   });
 
-  res.status(200).json({ [responseKey]: items, total, limit: pagination.limit, offset: pagination.offset });
+  res
+    .status(200)
+    .json({ [responseKey]: items, total, limit: pagination.limit, offset: pagination.offset });
 }
 
 // ---------------------------------------------------------------------------
@@ -1576,7 +1767,10 @@ router.get(
   asyncHandler(async (req: AuthedRequest, res: Response) => {
     const organizationId = requireOrg(req, res);
     if (!organizationId) return;
-    const report = await methodReportSnapshotService.getById(organizationId, firstParam(req.params.id));
+    const report = await methodReportSnapshotService.getById(
+      organizationId,
+      firstParam(req.params.id)
+    );
     if (!report || report.kind !== 'report') {
       res.status(404).json({ error: 'Report not found' });
       return;
@@ -1606,7 +1800,10 @@ router.get(
   asyncHandler(async (req: AuthedRequest, res: Response) => {
     const organizationId = requireOrg(req, res);
     if (!organizationId) return;
-    const presentation = await methodReportSnapshotService.getById(organizationId, firstParam(req.params.id));
+    const presentation = await methodReportSnapshotService.getById(
+      organizationId,
+      firstParam(req.params.id)
+    );
     if (!presentation || presentation.kind !== 'presentation') {
       res.status(404).json({ error: 'Presentation not found' });
       return;
@@ -1631,7 +1828,8 @@ router.post(
       res.status(404).json({ error: 'Output not found' });
       return;
     }
-    if (!(await requireSessionWriteRole(res, organizationId, output.sessionId, actorUserId))) return;
+    if (!(await requireSessionWriteRole(res, organizationId, output.sessionId, actorUserId)))
+      return;
     const body = (req.body ?? {}) as Record<string, unknown>;
     const findingIds = Array.isArray(body.findingIds) ? (body.findingIds as string[]) : [];
     if (findingIds.length === 0) {
@@ -1641,7 +1839,9 @@ router.post(
     const realFindingIds = new Set(output.findings.map((f) => f.id));
     const unknownIds = findingIds.filter((id) => !realFindingIds.has(id));
     if (unknownIds.length > 0) {
-      res.status(400).json({ error: 'findingIds contains ids not present on this Output', unknownIds });
+      res
+        .status(400)
+        .json({ error: 'findingIds contains ids not present on this Output', unknownIds });
       return;
     }
     if (!isNonEmptyString(body.title)) {
@@ -1703,9 +1903,12 @@ router.get(
 
     const sessionIds = await resolveProjectSessionIds(organizationId, req);
     if (sessionIds && sessionIds.length === 0) {
-      res
-        .status(200)
-        .json({ initiativeDrafts: [], total: 0, limit: pagination.limit, offset: pagination.offset });
+      res.status(200).json({
+        initiativeDrafts: [],
+        total: 0,
+        limit: pagination.limit,
+        offset: pagination.offset,
+      });
       return;
     }
 
@@ -1747,7 +1950,10 @@ router.get(
   asyncHandler(async (req: AuthedRequest, res: Response) => {
     const organizationId = requireOrg(req, res);
     if (!organizationId) return;
-    const draft = await methodInitiativeDraftService.getById(organizationId, firstParam(req.params.id));
+    const draft = await methodInitiativeDraftService.getById(
+      organizationId,
+      firstParam(req.params.id)
+    );
     if (!draft) {
       res.status(404).json({ error: 'Initiative Proposal Draft not found' });
       return;
@@ -1791,12 +1997,20 @@ router.get(
       const sessionOutputs = await methodOutputService.listOutputsBySession(organizationId, s.id);
       for (const output of sessionOutputs) {
         const supersession = await methodOutputService.isSuperseded(organizationId, output.id);
-        const artefactsForSession = await methodReportSnapshotService.listBySession(organizationId, s.id);
-        const reports = artefactsForSession.filter((a) => a.outputId === output.id && a.kind === 'report');
+        const artefactsForSession = await methodReportSnapshotService.listBySession(
+          organizationId,
+          s.id
+        );
+        const reports = artefactsForSession.filter(
+          (a) => a.outputId === output.id && a.kind === 'report'
+        );
         const presentations = artefactsForSession.filter(
           (a) => a.outputId === output.id && a.kind === 'presentation'
         );
-        const draftsForSession = await methodInitiativeDraftService.listBySession(organizationId, s.id);
+        const draftsForSession = await methodInitiativeDraftService.listBySession(
+          organizationId,
+          s.id
+        );
         const initiativeDrafts = draftsForSession.filter((d) => d.outputId === output.id);
 
         outputs.push({
