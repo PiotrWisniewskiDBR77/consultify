@@ -10,7 +10,9 @@ import type {
   PlanScenario,
 } from '../../../server/src/domain/initiatives-execution/planScenario';
 import { solvePlanScenario } from '../../../server/src/domain/initiatives-execution/planSolver';
-import { createInitiativesExecutionRuntimeRouter } from '../../../server/src/routes/pmo/initiativesExecutionRuntime.routes';
+import defaultRuntimeRouter, {
+  createInitiativesExecutionRuntimeRouter,
+} from '../../../server/src/routes/pmo/initiativesExecutionRuntime.routes';
 
 const databaseUrl = process.env.DATABASE_URL?.trim();
 const describeRealDb = databaseUrl ? describe : describe.skip;
@@ -72,7 +74,7 @@ describeRealDb('Day 21 deterministic solver 50 initiatives x 4 periods', () => {
     (req as any).user = {
       id: req.header('x-test-user') ?? 'day21-user',
       organizationId: req.header('x-test-org') ?? organizationId,
-      role: 'USER',
+      role: req.header('x-test-role') ?? 'USER',
     };
     next();
   });
@@ -93,6 +95,7 @@ describeRealDb('Day 21 deterministic solver 50 initiatives x 4 periods', () => {
       }),
     })
   );
+  app.use('/default-runtime-v1', defaultRuntimeRouter);
 
   afterAll(async () => {
     for (const table of [
@@ -190,5 +193,27 @@ describeRealDb('Day 21 deterministic solver 50 initiatives x 4 periods', () => {
         organizationId,
       });
     expect(response.status).toBe(404);
+  });
+
+  it('reaches the same write through the default production dependencies', async () => {
+    await seed();
+    const response = await request(app)
+      .post(
+        `/default-runtime-v1/plan-scenarios/${planId}/analysis-proposals/day21-default-proposal`
+      )
+      .set('x-test-role', 'SUPERADMIN')
+      .send({
+        expectedVersion: 0,
+        clientRequestId: 'day21-default-proposal-request',
+        scenarioId: planId,
+        inputAggregateVersion: 1,
+      });
+    expect(response.status).toBe(201);
+    const readback = await pool.query(
+      `SELECT 1 FROM ie_aggregate_state
+       WHERE organization_id=$1 AND aggregate_type='plan_analysis_proposal' AND aggregate_id=$2`,
+      [organizationId, 'day21-default-proposal']
+    );
+    expect(readback.rowCount).toBe(1);
   });
 });
