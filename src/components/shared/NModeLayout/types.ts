@@ -270,6 +270,8 @@ export interface NModeHeaderConfig {
    * i ton c-danger (jedyne dozwolone miejsce czerwieni w Menu 1).
    */
   extraOverflowItems?: NModeHeaderOverflowItem[];
+  /** Dokument read-only: gasi wskaźnik zapisu. */
+  hideSaveState?: boolean;
 }
 
 /** Pozycja dodatkowa menu ⋮ Menu 1 (patrz `extraOverflowItems`). */

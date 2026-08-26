@@ -377,6 +377,9 @@ export const AssessmentReportContractView: React.FC<AssessmentReportContractView
     artifactId: contract.outputId ?? contract.sessionId,
     onSave: () => {},
     onClose: () => {},
+    // Read-only document — there is nothing to save, so the "Zapisano" /
+    // "Zapisywanie…" indicator would be misleading here.
+    hideSaveState: true,
     statusLabel:
       contract.revision === 0
         ? t('assessment.reportView.draft')
