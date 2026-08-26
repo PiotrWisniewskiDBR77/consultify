@@ -142,3 +142,7 @@ This does not raise the module-level gate or owner verdict. It records only the 
 - C.1 production TO-BE path is `CZĘŚCIOWO`: `766f5ac640`, with real event/freeze/HTTP/independent-PG readback; out-of-scale target acceptance remains a STOP finding. Current package after E.2: `6/6 PASS, 0 FAIL, 0 SKIPPED`.
 - E.2 outputId pinning and skip-state as-of freeze is `CZĘŚCIOWO`: `17faf7beae`; full six-scenario revision/chapter gate is not claimed.
 - B.2 is `STOP`: harness `8814333274` is `4/4 PASS`, but exposes foreign-project `200`; `@ts-nocheck` remains. F.1 is `STOP` because an in-scope measured test imports the otherwise unreachable file. P2.3 is `BRAK_API` by design.
+
+## Day 32 document engine — bounded update (2026-08-28)
+
+`CZĘŚCIOWO` — the existing server-side DOCX renderer now maps the tenant-scoped Assessment report contract into a deterministic DRD report and exposes one read-only JWT-scoped download route. Real PostgreSQL/router/JWT evidence covers populated, empty, foreign-tenant, missing-session and pinned-revision cases; two non-Metalpol tenant files are retained under `../../evidence/document-engine-day32-20260828/`. Narrative gaps remain explicit placeholders, pagination is not measurable without a prohibited office-suite render, and no frontend flag, browser replay, owner acceptance or release is claimed.
