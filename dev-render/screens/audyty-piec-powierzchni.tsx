@@ -36,11 +36,11 @@ import React from 'react';
 
 import { AuditsMethodHub } from '../../src/components/Audit/method/AuditsMethodHub';
 import type {
+  AuditCriterionSummary,
   AuditLifecycleState,
   AuditOutputSummary,
   AuditPackDetail,
   AuditPackSummary,
-  AuditProgramCoverage,
   AuditProgramDetail,
   AuditProgramLifecycle,
   AuditProgramSummary,
@@ -403,21 +403,71 @@ const MOCK_PROGRAM_DETAILS: Record<string, AuditProgramDetail> = {
   },
 };
 
-const DEFAULT_COVERAGE: AuditProgramCoverage = {
-  applicableCriteria: 0,
-  concludedCriteria: 0,
-  insufficientEvidenceCriteria: 0,
-  openFindings: 0,
-  unresolvedFindings: 0,
+// Gap pack 2026-08-26 (fix 2 — AuditCriteriaBrowser): a realistic audit runs
+// 100-300 criteria. `listProgramCriteria` had no mock at all in this harness
+// (fell through to a real, failing network call), so the "Zobacz wszystkie"
+// drill-down entry never had data to show. Generates a synthetic but
+// plausible-looking set — varied workStatus/refCode/title — for ANY
+// requested programId, purely so the odbiór harness can demonstrate the
+// full-screen StandardTable browser (search/status filter/pager) at scale.
+const CRITERION_WORK_STATUS_CYCLE = ['open', 'evidence_requested', 'evidence_received', 'tested', 'concluded'] as const;
+const CRITERION_TOPIC_CYCLE = [
+  'Kwalifikacja dostawców krytycznych',
+  'Zarządzanie zmianą dokumentacji',
+  'Przegląd zarządzania — cykl roczny',
+  'Kontrola procesu produkcyjnego',
+  'Zarządzanie reklamacjami klienta',
+  'Audyty wewnętrzne — harmonogram',
+  'Kalibracja przyrządów pomiarowych',
+  'Szkolenia i kompetencje personelu',
+  'Zarządzanie ryzykiem operacyjnym',
+  'Kontrola magazynowa i identyfikowalność',
+];
+function buildMockCriteria(count: number): AuditCriterionSummary[] {
+  return Array.from({ length: count }, (_, i) => {
+    const n = i + 1;
+    const workStatus = CRITERION_WORK_STATUS_CYCLE[i % CRITERION_WORK_STATUS_CYCLE.length];
+    const topic = CRITERION_TOPIC_CYCLE[i % CRITERION_TOPIC_CYCLE.length];
+    return {
+      id: `crit-mock-${n}`,
+      programId: 'mock',
+      parentId: null,
+      ordinal: n,
+      refCode: `KR-${String(n).padStart(3, '0')}`,
+      title: `${topic} (obszar ${Math.ceil(n / CRITERION_TOPIC_CYCLE.length)})`,
+      applicable: n % 11 !== 0,
+      conformityStatus: workStatus === 'concluded' ? (n % 3 === 0 ? 'nonconforming' : 'conforming') : 'not_tested',
+      workStatus,
+      evidenceCount: workStatus === 'open' ? 0 : (n % 4) + 1,
+      findingCount: workStatus === 'concluded' && n % 3 === 0 ? 1 : 0,
+      children: [],
+    } satisfies AuditCriterionSummary;
+  });
+}
+const MOCK_CRITERIA_ALL = buildMockCriteria(64);
+
+// NAPRAWA (odkryta przy odbiorze fix 2, 2026-08-26 — nie w zakresie pakietu,
+// ale blokowała jego demo): `getProgramCoverage` (auditsMethodApi.ts:493-512)
+// czyta SUROWE pola serwera `applicableTotal`/`concludedTotal`/
+// `evidenceInsufficientTotal` z `AUDITS_API_CONTRACT_ERROR` przy braku —
+// ten mock miał pola klienckie (`applicableCriteria` itd., niezgodne z
+// `AuditProgramCoverage`, stąd też błędy tsc na tych liniach sprzed naprawy),
+// więc KAŻDE zaznaczenie programu w zakładce Sesje rzucało błąd i psuło
+// listę kryteriów w podglądzie (już przed tym pakietem, nie tylko w nowym
+// pełnoekranowym widoku).
+const DEFAULT_COVERAGE = {
+  applicableTotal: 0,
+  concludedTotal: 0,
+  evidenceInsufficientTotal: 0,
 };
 
-const MOCK_COVERAGE: Record<string, AuditProgramCoverage> = {
-  'prog-elmax-iso': { applicableCriteria: 42, concludedCriteria: 0, insufficientEvidenceCriteria: 0, openFindings: 0, unresolvedFindings: 0 },
-  'prog-vantico-iso': { applicableCriteria: 42, concludedCriteria: 12, insufficientEvidenceCriteria: 3, openFindings: 4, unresolvedFindings: 4 },
-  'prog-metalplast-itvendor': { applicableCriteria: 27, concludedCriteria: 27, insufficientEvidenceCriteria: 0, openFindings: 6, unresolvedFindings: 6 },
-  'prog-elmax-remediation': { applicableCriteria: 27, concludedCriteria: 27, insufficientEvidenceCriteria: 0, openFindings: 2, unresolvedFindings: 2 },
-  'prog-vantico-verification': { applicableCriteria: 42, concludedCriteria: 40, insufficientEvidenceCriteria: 1, openFindings: 1, unresolvedFindings: 1 },
-  'prog-metalplast-closed': { applicableCriteria: 39, concludedCriteria: 39, insufficientEvidenceCriteria: 0, openFindings: 0, unresolvedFindings: 0 },
+const MOCK_COVERAGE: Record<string, { applicableTotal: number; concludedTotal: number; evidenceInsufficientTotal: number }> = {
+  'prog-elmax-iso': { applicableTotal: 42, concludedTotal: 0, evidenceInsufficientTotal: 0 },
+  'prog-vantico-iso': { applicableTotal: 42, concludedTotal: 12, evidenceInsufficientTotal: 3 },
+  'prog-metalplast-itvendor': { applicableTotal: 27, concludedTotal: 27, evidenceInsufficientTotal: 0 },
+  'prog-elmax-remediation': { applicableTotal: 27, concludedTotal: 27, evidenceInsufficientTotal: 0 },
+  'prog-vantico-verification': { applicableTotal: 42, concludedTotal: 40, evidenceInsufficientTotal: 1 },
+  'prog-metalplast-closed': { applicableTotal: 39, concludedTotal: 39, evidenceInsufficientTotal: 0 },
 };
 
 const DEFAULT_LIFECYCLE: AuditProgramLifecycle = { state: 'planning' as AuditLifecycleState, allowed: [] };
@@ -651,6 +701,10 @@ Api.get = (async (url: string, ...rest: unknown[]) => {
   if (path === '/audits/proposals') {
     const items = empty ? [] : proposalsStore;
     return envelope({ proposals: items, total: items.length });
+  }
+  if (path === '/audits/criteria') {
+    const items = empty ? [] : MOCK_CRITERIA_ALL;
+    return envelope({ criteria: items, total: items.length });
   }
 
   return (originalGet as any)(url, ...rest);
