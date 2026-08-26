@@ -8359,6 +8359,7 @@
     "initiativeDeleted2": "Inicjatywa usunięta",
     "changeStatus2": "Zmień status",
     "noStatusChangesAvailable2": "Brak dostępnych zmian statusu",
+    "statusGovernedGateOnly": "Status zmienisz w bramce cyklu życia inicjatywy, nie z tej karty.",
     "previewPhaseList2": "Podgląd listy faz",
     "previewPossibleNextGates2": "Podgląd możliwych kolejnych bram",
     "youCannotEditPriorityAtThis2": "Nie masz uprawnień do edycji priorytetu na tym etapie.",

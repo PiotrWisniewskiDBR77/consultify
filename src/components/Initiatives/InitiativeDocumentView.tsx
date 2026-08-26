@@ -97,7 +97,6 @@ import {
   getContextActions,
   getFilteredStatusActions,
   getModuleForStatus,
-  getStatusActions,
   getStatusMeta,
   StatusAction,
   willChangeModule,
@@ -1398,21 +1397,23 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     : INITIATIVE_STATUS_METADATA[status].label;
   const statusPillTone = INITIATIVE_STATUS_TONE[status];
   // Status actions are driven by backend `gate-readiness-check` (source of truth).
+  //
+  // DEC-104 fix (2026-08-26, Initiatives expert panel 4.0/10): the write path
+  // this array feeds — `updateInitiativeStatusWriteTruth` in
+  // src/services/initiativeWriteTruth.ts — unconditionally throws
+  // "Lifecycle status ... must be changed in its governed gate workflow" for
+  // EVERY target status, so every card-level status action was a guaranteed
+  // failure surfaced as a raw English dev-error toast. Same pattern already
+  // fixed for the Kanban board (PortfolioKanbanView `canDrag={false}` in
+  // InitiativesHub.tsx). Forcing this to `[]` here — rather than patching each
+  // of the several render sites that read it (kebab menu, properties-strip
+  // status pill, Menu-1 primary CTA) — hides all of them at the single source;
+  // each of those sites already degrades cleanly to a read-only state when
+  // there are zero actions (no dangling empty affordance). Restore this
+  // computation once a real governed-gate status write path exists.
   const statusActions = useMemo(() => {
-    const transitions = gateReadiness?.availableTransitions || [];
-    if (!transitions || transitions.length === 0) return [];
-
-    const byTarget = new Map<string, any>();
-    transitions.forEach((t: any) => byTarget.set(String(t.targetStatus).toUpperCase(), t));
-
-    return getStatusActions(status)
-      .map((a) => {
-        const tr = byTarget.get(String(a.targetStatus).toUpperCase());
-        if (!tr || !tr.canCurrentUserExecute) return null;
-        return { ...a, gate: tr.gate || null, requiredRoles: tr.requiredRoles || [] };
-      })
-      .filter(Boolean) as any[];
-  }, [status, gateReadiness]);
+    return [] as any[];
+  }, []);
   const statusDriftUi = useMemo(
     () => hasInitiativeStatusReadDrift(initiative as any),
     [initiative]
@@ -5675,8 +5676,19 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           // `readMode` wchodzi tu jako pełnoprawny warunek — w Podglądzie select
           // NIE JEST renderowany (nie „disabled", tylko go nie ma).
           const canChangeStatus = stripStatusActions.length > 0 && !isMutating && !readMode;
+          // DEC-104: `stripStatusActions` is currently always empty (see the
+          // `statusActions` comment above) — no card-level status write path
+          // exists yet. Explain via title instead of leaving a silent,
+          // unexplained read-only pill.
+          const noGateActionsTitle =
+            stripStatusActions.length === 0
+              ? t(
+                  'initiatives.statusGovernedGateOnly',
+                  'Status zmienisz w bramce cyklu życia inicjatywy, nie z tej karty.'
+                )
+              : undefined;
           const pill = (
-            <span className={propPill}>
+            <span className={propPill} title={noGateActionsTitle}>
               {propDot(currentStatusDot)}
               <span className="truncate">{currentStatusLabel}</span>
               {canChangeStatus && <ChevronDown size={11} className="shrink-0 opacity-60" />}

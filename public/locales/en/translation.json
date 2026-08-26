@@ -9041,6 +9041,7 @@
     "initiativeDeleted2": "Initiative deleted",
     "changeStatus2": "Change status",
     "noStatusChangesAvailable2": "No status changes available",
+    "statusGovernedGateOnly": "Change status from the lifecycle gate workflow, not from this card.",
     "previewPhaseList2": "Preview phase list",
     "previewPossibleNextGates2": "Preview possible next gates",
     "youCannotEditPriorityAtThis2": "You cannot edit priority at this stage.",
