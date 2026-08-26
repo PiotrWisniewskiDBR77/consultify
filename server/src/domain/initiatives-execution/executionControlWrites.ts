@@ -135,3 +135,46 @@ export async function recordRaidMitigation(
     };
   });
 }
+
+export interface ManagerExecutionAction {
+  managerActionId: string;
+  initiativeId: string;
+  laneId: string;
+  problemId: string;
+  actionId: string;
+  rationale: string | null;
+  executedBy: string;
+  executedAt: string;
+}
+
+type ManagerActionPayload = Omit<
+  ManagerExecutionAction,
+  'managerActionId' | 'executedBy' | 'executedAt'
+>;
+
+export async function executeCanonicalManagerAction(
+  unitOfWork: MaterialCommandUnitOfWork,
+  envelope: MaterialCommandEnvelope<ManagerActionPayload>
+): Promise<MaterialCommandResult<ManagerExecutionAction>> {
+  return executeMaterialCommand(unitOfWork, envelope, async (tx) => {
+    const initiative = await tx.getRelatedAggregateForUpdate<Record<string, unknown>>(
+      envelope.organizationId,
+      'initiative',
+      envelope.payload.initiativeId
+    );
+    if (!initiative) throw new MaterialCommandValidationError('Initiative not found');
+    const action: ManagerExecutionAction = {
+      ...envelope.payload,
+      managerActionId: envelope.aggregateId,
+      executedBy: envelope.actorId,
+      executedAt: new Date().toISOString(),
+    };
+    return {
+      mutation: action,
+      response: action,
+      eventType: 'manager-action.executed',
+      eventPayload: action,
+      auditPayload: action,
+    };
+  });
+}

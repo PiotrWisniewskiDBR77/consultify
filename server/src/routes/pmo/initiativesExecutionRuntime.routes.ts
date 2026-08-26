@@ -60,6 +60,7 @@ import {
 } from '../../domain/initiatives-execution/executionWorkHardening.js';
 import {
   createExecutionBudgetEntry,
+  executeCanonicalManagerAction,
   recordRaidMitigation,
   recordExecutionRealization,
 } from '../../domain/initiatives-execution/executionControlWrites.js';
@@ -817,6 +818,14 @@ const RaidMitigationSchema = z.object({
   mitigationOwnerId: z.string().min(1),
   mitigationDueDate: z.string().datetime().nullable().default(null),
   mitigationStatus: z.string().min(1),
+});
+const ManagerExecutionActionSchema = z.object({
+  expectedVersion: z.literal(0),
+  clientRequestId: z.string().min(1),
+  laneId: z.string().min(1),
+  problemId: z.string().min(1),
+  actionId: z.string().min(1),
+  rationale: z.string().nullable().default(null),
 });
 const InterventionDraftSchema = z.object({
   expectedVersion: z.number().int().min(0),
@@ -4638,6 +4647,40 @@ export function createInitiativesExecutionRuntimeRouter(
         commandType: 'raid-mitigation.record',
         createIfMissing: true,
         payload: { ...mitigation, initiativeId, raidItemId },
+      });
+      res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
+    })
+  );
+  router.post(
+    '/initiatives/:initiativeId/manager-actions/:managerActionId',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      const parsed = ManagerExecutionActionSchema.safeParse(req.body);
+      if (!actor) return void res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+      if (!parsed.success)
+        return void res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
+      const initiativeId = firstParam(req.params.initiativeId);
+      const projectIds = await deps.reader.resolveProjectIdsForAggregate(
+        actor.organizationId,
+        'initiative',
+        initiativeId
+      );
+      if (!(await authorizeProjects(actor, projectIds, 'initiative.update')))
+        return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
+      const { expectedVersion, clientRequestId, ...action } = parsed.data;
+      const result = await executeCanonicalManagerAction(deps.unitOfWork, {
+        organizationId: actor.organizationId,
+        actorId: actor.userId,
+        aggregateType: 'manager_execution_action',
+        aggregateId: firstParam(req.params.managerActionId),
+        expectedVersion,
+        clientRequestId,
+        correlationId: clientRequestId,
+        policyId: 'execution-control',
+        policyVersion: 1,
+        commandType: 'manager-action.execute',
+        createIfMissing: true,
+        payload: { ...action, initiativeId },
       });
       res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
     })

@@ -347,4 +347,50 @@ describe.skipIf(!REAL_PG)('Day 31 canonical writer mounted contract', () => {
       ).status
     ).toBe(404);
   });
+
+  it('executes a manager lane action as a canonical audited command', async () => {
+    const managerActionId = `manager-action-${tag}`;
+    const path = `/api/initiatives/runtime-v1/initiatives/${initiativeId}/manager-actions/${managerActionId}`;
+    const body = {
+      expectedVersion: 0,
+      clientRequestId: `manager-action-request-${tag}`,
+      laneId: 'blocked',
+      problemId: `problem-${tag}`,
+      actionId: 'escalate-owner',
+      rationale: 'Day 31 canonical action proof',
+    };
+    expect((await request(app).post(path).set(auth()).send(body)).status).toBe(201);
+    const state = await client.query(
+      `SELECT version,payload_json FROM ie_aggregate_state
+       WHERE organization_id=$1 AND aggregate_type='manager_execution_action' AND aggregate_id=$2`,
+      [organizationId, managerActionId]
+    );
+    expect(state.rows[0]).toMatchObject({ version: 1 });
+    expect(state.rows[0].payload_json).toMatchObject({ initiativeId, laneId: 'blocked' });
+    expect((await request(app).post(path).set(auth()).send(body)).body.status).toBe('REPLAYED');
+    expect(
+      (
+        await request(app)
+          .post(path)
+          .set(auth())
+          .send({ ...body, clientRequestId: `manager-action-conflict-${tag}` })
+      ).status
+    ).toBe(409);
+    expect(
+      (
+        await request(app)
+          .post(path)
+          .set({ Authorization: `Bearer ${foreignToken}`, 'X-Organization-Id': organizationId })
+          .send({ ...body, organizationId })
+      ).status
+    ).toBe(404);
+    expect(
+      (
+        await request(app)
+          .post(path)
+          .set({ Authorization: `Bearer ${viewerToken}` })
+          .send(body)
+      ).status
+    ).toBe(404);
+  });
 });
