@@ -292,7 +292,8 @@
     "filterByColumn": "Filtruj wg {{column}}",
     "list": "Lista",
     "closeDocumentNamed": "Zamknij {{name}}",
-    "moreOpenDocuments": "Więcej otwartych dokumentów ({{count}})"
+    "moreOpenDocuments": "Więcej otwartych dokumentów ({{count}})",
+    "sampleData": "PRZYKŁADOWE DANE"
   },
   "superadmin": {
     "confirm": {
@@ -7640,7 +7641,17 @@
       "failedToLoad": "Nie udało się załadować inicjatyw.",
       "retry": "Spróbuj ponownie",
       "dismiss": "Zamknij",
-      "noInitiativesFound": "Nie znaleziono inicjatyw"
+      "noInitiativesFound": "Nie znaleziono inicjatyw",
+      "noInitiativesFoundDesc": "Żadna inicjatywa nie pasuje do bieżących filtrów. Spróbuj poszerzyć wyszukiwanie lub wyczyścić filtry."
+    },
+    "filters": {
+      "priority": "Priorytet",
+      "allPriorities": "Wszystkie priorytety"
+    },
+    "materialize": {
+      "working": "Generowanie materiału z portfolio…",
+      "done": "Materiał gotowy",
+      "failed": "Nie udało się wygenerować materiału"
     },
     "document": {
       "failedToLoad": "Nie udało się załadować karty inicjatywy.",
@@ -7700,7 +7711,15 @@
       "levelDescStandard": "Standardowy proces akceptacji. Wymaga właściciela, terminu i zadań.",
       "levelDescStrategic": "Wymagana akceptacja zarządu. Pełny statut + analiza RAID.",
       "levelDescTransformation": "Nadzór na poziomie zarządu. Pełny statut, komitet sterujący, bramki decyzyjne.",
-      "levelUpgradeOnlyNote": "Poziom można później podnieść, ale nie obniżyć."
+      "levelUpgradeOnlyNote": "Poziom można później podnieść, ale nie obniżyć.",
+      "levelQuickWinLabel": "Szybka wygrana",
+      "levelQuickWinCardDesc": "Małe usprawnienie, minimalny nadzór. < 1 miesiąc, 1-2 osoby.",
+      "levelStandardLabel": "Projekt standardowy",
+      "levelStandardCardDesc": "Zwykły projekt o określonym zakresie. 1-3 miesiące, dedykowany zespół.",
+      "levelStrategicLabel": "Program strategiczny",
+      "levelStrategicCardDesc": "Program międzyfunkcyjny. 3-12 miesięcy, wiele zespołów, sponsor zarządczy.",
+      "levelTransformationLabel": "Transformacja",
+      "levelTransformationCardDesc": "Zmiana obejmująca całą organizację. 6-24 miesiące, pełny nadzór, nadzór zarządu."
     },
     "axis": {
       "operational": "Operacyjna",
@@ -9639,7 +9658,10 @@
       "downgradeBlocked": "Obniżenie poziomu jest zablokowane. Można jedynie podwyższyć poziom inicjatywy.",
       "cannotApprove": "Nie można zatwierdzić — brakuje wymaganych pól:\\n• {{errors}}",
       "linkCopied": "Skopiowano link",
-      "linkCopyError": "Nie udało się skopiować"
+      "linkCopyError": "Nie udało się skopiować",
+      "archiveGoverned": "Archiwizacja jest dostępna wyłącznie z poziomu zarządzanego procesu zamknięcia.",
+      "cancelled": "Inicjatywa anulowana",
+      "cancelError": "Nie udało się anulować inicjatywy"
     },
     "decisions": {
       "decision": "Decyzja",
@@ -9740,7 +9762,8 @@
     },
     "kanban": {
       "noOwner": "Nieprzypisana",
-      "nextGate": "Następna bramka"
+      "nextGate": "Następna bramka",
+      "dragDisabled": "Użyj zarządzanego obszaru bramek, aby przejść dalej w cyklu życia."
     },
     "archive": {
       "hint": "Zakończ lub anuluj najpierw"
@@ -9762,6 +9785,8 @@
       "gantt": "Gantt"
     },
     "confirmDelete": "Trwale usunąć „{{name}}\"? Tej operacji nie można cofnąć.",
+    "confirmCancel": "Anulować „{{name}}”? Jej niezmienna historia zostanie zachowana.",
+    "candidateInboxAria": "Skrzynka kandydatów",
     "thisInitiative": "tę inicjatywę",
     "card": {
       "nextStep": "Następny krok"
@@ -10479,7 +10504,8 @@
       "overdue": "Przeterminowane",
       "due7": "Termin ≤ 7 dni",
       "upcoming": "Nadchodzące (8–30 dni)",
-      "failed": "Zadania niedostępne"
+      "failed": "Zadania niedostępne",
+      "failedDesc": "Nie udało się załadować zadań. Poniższe kubełki są puste z powodu błędu ładowania, a nie dlatego, że nie ma zadań — to stan zdegradowany."
     },
     "decisionsBuckets": {
       "subtitle": "Bucket’y wg horyzontu terminu, żeby governance było szybkie i jednoznaczne.",
@@ -10489,7 +10515,8 @@
       "due14": "Termin 8–14 dni",
       "due30": "Termin 15–30 dni",
       "more": "30+ dni / brak terminu",
-      "failed": "Decyzje niedostępne"
+      "failed": "Decyzje niedostępne",
+      "failedDesc": "Nie udało się załadować decyzji. Poniższe kubełki są puste z powodu błędu ładowania, a nie dlatego, że nie ma oczekujących decyzji — to stan zdegradowany."
     },
     "table": {
       "type": "Typ",
@@ -10604,7 +10631,8 @@
       "decision": "Decyzja",
       "risk": "Ryzyko",
       "task": "Zadanie",
-      "failed": "Kolejka działań niedostępna"
+      "failed": "Kolejka działań niedostępna",
+      "failedDesc": "Nie udało się załadować kolejki działań (przeterminowane decyzje, ryzyka, odchylenia KPI). Pokazane liczby mogą być niepełne — to stan zdegradowany, a nie pusta kolejka."
     },
     "attention": {
       "blocked": "Zablokowane",
@@ -10613,6 +10641,68 @@
       "dueSoonTasks": "Wkrótce wymagane",
       "none": "Nic pilnego",
       "attention": "Uwaga"
+    },
+    "menu3": {
+      "list": {
+        "active": "Aktywne",
+        "atRisk": "Zagrożone",
+        "critical": "Krytyczne",
+        "blocked": "Zablokowana praca",
+        "missingBaseline": "Brak baseline",
+        "missingForecast": "Brak prognozy",
+        "closing": "Zamykanie",
+        "delivered": "Ostatnio dostarczone",
+        "unknown": "Brak danych"
+      },
+      "work": {
+        "tasks": "Zadania",
+        "decisions": "Decyzje",
+        "blocked": "Zablokowane",
+        "overdue": "Przeterminowane",
+        "dueSoon": "Wkrótce termin",
+        "missingOwner": "Brak właściciela",
+        "missingEvidence": "Brak DoD/dowodów",
+        "waiting": "Oczekuje na zależność",
+        "mine": "Moje",
+        "team": "Wg zespołu"
+      },
+      "resources": {
+        "overallocated": "Przeciążeni",
+        "unassigned": "Nieprzypisana praca",
+        "skillGaps": "Braki kompetencji",
+        "unconfirmed": "Niepotwierdzone przypisania",
+        "unknown": "Dostępność nieznana",
+        "costRisk": "Ryzyko kosztowe",
+        "needsDecision": "Wymaga decyzji",
+        "team": "Wg zespołu",
+        "initiative": "Wg inicjatywy"
+      },
+      "control": {
+        "needsAction": "Wymaga działania",
+        "critical": "Krytyczne",
+        "decisions": "Decyzje",
+        "schedule": "Harmonogram",
+        "resources": "Zasoby",
+        "cost": "Koszt",
+        "risk": "Ryzyko",
+        "dependencies": "Zależności",
+        "adoption": "Adopcja",
+        "outcomeRisk": "Ryzyko efektu",
+        "verificationOverdue": "Weryfikacja przeterminowana",
+        "resolved": "Rozwiązane"
+      },
+      "reports": {
+        "weekly": "Tygodniowe",
+        "monthly": "Miesięczne",
+        "onDemand": "Na żądanie",
+        "sponsor": "Sponsorskie",
+        "needsGeneration": "Wymaga wygenerowania",
+        "needsReview": "Wymaga przeglądu",
+        "partialStale": "Częściowe/nieaktualne",
+        "published": "Opublikowane",
+        "failed": "Nieudane",
+        "recent": "Ostatnie uruchomienia"
+      }
     },
     "scope": {
       "active": "Aktywne",
@@ -10810,10 +10900,12 @@
       "failedDesc": "Nie udało się załadować ostrzeżeń harmonogramu i sygnałów wydolności. Widok działa bez nakładek ryzyka i opóźnień."
     },
     "executiveHealth": {
-      "failed": "Sygnały kondycji zarządczej niedostępne"
+      "failed": "Sygnały kondycji zarządczej niedostępne",
+      "failedDesc": "Nie udało się załadować kondycji poszczególnych inicjatyw (status RAG, łańcuchy przyczyn stanu czerwonego). Pulpit działa bez nakładek kondycji realizacji — to stan zdegradowany, a nie w pełni zdrowe portfolio."
     },
     "healthSnapshot": {
-      "failed": "Migawka kondycji PMO niedostępna"
+      "failed": "Migawka kondycji PMO niedostępna",
+      "failedDesc": "Nie udało się załadować autorytatywnej migawki kondycji PMO. Wskaźnik kondycji oraz liczby decyzji i blokad poniżej opierają się na szacunkach po stronie klienta i mogą być niepełne — to stan zdegradowany, a nie potwierdzone zdrowe portfolio."
     },
     "reportCatalog": {
       "cadence": {
@@ -10831,6 +10923,7 @@
       "generateError": "Nie udało się wygenerować raportu",
       "generating": "Generowanie „{{title}}”…",
       "noData": "Brak danych wdrożenia",
+      "noDataDesc": "Raporty pojawią się, gdy inicjatywy przejdą do aktywnej realizacji. Dodaj inicjatywy do portfolio, aby zacząć generować raporty.",
       "openGlobal": "Raporty globalne →",
       "subheading": "Gotowe raporty budowane na żywych danych realizacji. Kliknij, aby rozwinąć kontrakt, a następnie wygeneruj lub wyeksportuj."
     },
@@ -10938,6 +11031,12 @@
       }
     },
     "initiativeLabel": "Inicjatywa",
+    "highlights": {
+      "initiatives": "Inicjatywy",
+      "missingDates": "Brakujące daty",
+      "dueSoon": "Zbliżający się termin",
+      "pending": "Oczekujące"
+    },
     "realization": {
       "amount": "Wartość zrealizowana",
       "amountPlaceholder": "Wartość zrealizowana",
@@ -21501,6 +21600,7 @@
       "title": "Organizacja",
       "subtitle": "Kontekst i administracja",
       "back": "Powrót do pulpitu",
+      "closeNav": "Zamknij nawigację organizacji",
       "group": "ORGANIZACJA",
       "contextGroup": "KONTEKST",
       "adminGroup": "ADMINISTRACJA",
@@ -21520,6 +21620,10 @@
     },
     "shell": {
       "breadcrumb": "Organizacja"
+    },
+    "sync": {
+      "saving": "Zapisywanie kontekstu organizacji…",
+      "unsynced": "Zmiany są zapisane lokalnie, ale nie zostały jeszcze potwierdzone przez serwer."
     },
     "profilePresentation": {
       "navigation": "Sekcje profilu organizacji",

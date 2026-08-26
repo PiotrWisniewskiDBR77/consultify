@@ -311,6 +311,12 @@ const PrawyPanelSzynaIkonScreen = React.lazy(() => import('./screens/prawy-panel
 const Exe002004UiAuditScreen = React.lazy(() => import('./screens/exe-002-004-ui-audit'));
 const AudytyPiecPowierzchniScreen = React.lazy(() => import('./screens/audyty-piec-powierzchni'));
 const OrgIdentityOperatingScreen = React.lazy(() => import('./screens/org-identity-operating'));
+const StagingFixesInitiativesI18nScreen = React.lazy(
+  () => import('./screens/staging-fixes-initiatives-i18n')
+);
+const StagingFixesExecutionI18nScreen = React.lazy(
+  () => import('./screens/staging-fixes-execution-i18n')
+);
 const AudytyWarsztatKryteriumScreen = React.lazy(
   () => import('./screens/audyty-warsztat-kryterium')
 );
@@ -381,6 +387,16 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'M01 Organizacja — REALNY <OrganizationView> z flagą orgRedesignV1 ON: ekran „Tożsamość i model działania" (11 ekranów w nawigacji, Menu 2/3 ze StandardModuleBar, prawy panel stanu). Dodaj &ff_org_redesign_v1=1 w URL.',
     render: () => <OrgIdentityOperatingScreen />,
+  },
+  'staging-fixes-initiatives-i18n': {
+    label:
+      'TRI-MUST-05 staging-fixes-20260826 Naprawa 1 — REALNY <InitiativesHub>: weryfikacja brakujących kluczy i18n (toast/hub/filters/materialize/kanban) i selektora poziomu inicjatywy w modalu "Nowa inicjatywa" (getInitiativeLevels(t) zamiast statycznej angielskiej stałej).',
+    render: () => <StagingFixesInitiativesI18nScreen />,
+  },
+  'staging-fixes-execution-i18n': {
+    label:
+      'TRI-MUST-05 staging-fixes-20260826 Naprawa 1 — REALNY <ExecutionHub>: weryfikacja brakujących kluczy i18n (failedDesc/noDataDesc) i etykiet highlights katalogu raportów (zakładka Raporty) przetłumaczonych przez t(...).',
+    render: () => <StagingFixesExecutionI18nScreen />,
   },
   'audyty-piec-powierzchni': {
     label:

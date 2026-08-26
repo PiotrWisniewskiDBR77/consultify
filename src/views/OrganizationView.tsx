@@ -533,7 +533,7 @@ export const OrganizationView: React.FC = () => {
         {sidebarOpen && (
           <button
             type="button"
-            aria-label="Close organization navigation"
+            aria-label={t('organization.sidebar.closeNav', 'Close organization navigation')}
             className="fixed inset-0 bg-black/40 z-40 lg:hidden"
             onClick={() => setSidebarOpen(false)}
           />

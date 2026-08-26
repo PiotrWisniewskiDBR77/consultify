@@ -640,71 +640,90 @@ const isPastDue = (date?: string): boolean => {
 interface ExecutionHubProps {
   initialTab?: ModuleTab;
 }
-const EXECUTION_MENU3: Record<string, Array<{ id: string; label: string }>> = {
-  list: [
-    ['active', 'Active'],
-    ['at-risk', 'At risk'],
-    ['critical', 'Critical'],
-    ['blocked', 'Blocked work'],
-    ['missing-baseline', 'Missing baseline'],
-    ['missing-forecast', 'Missing forecast'],
-    ['closing', 'Closing'],
-    ['delivered', 'Recently delivered'],
-    ['unknown', 'Unknown data'],
-  ].map(([id, label]) => ({ id, label })),
-  work: [
-    ['all', 'All'],
-    ['tasks', 'Tasks'],
-    ['decisions', 'Decisions'],
-    ['blocked', 'Blocked'],
-    ['overdue', 'Overdue'],
-    ['due-soon', 'Due soon'],
-    ['missing-owner', 'Missing owner'],
-    ['missing-evidence', 'Missing DoD/evidence'],
-    ['waiting', 'Waiting dependency'],
-    ['mine', 'Mine'],
-    ['team', 'By team'],
-  ].map(([id, label]) => ({ id, label })),
-  resources: [
-    ['all', 'All'],
-    ['overallocated', 'Overallocated'],
-    ['unassigned', 'Unassigned work'],
-    ['skill-gaps', 'Skill gaps'],
-    ['unconfirmed', 'Unconfirmed assignments'],
-    ['unknown', 'Availability unknown'],
-    ['cost-risk', 'Cost risk'],
-    ['needs-decision', 'Needs decision'],
-    ['team', 'By team'],
-    ['initiative', 'By Initiative'],
-  ].map(([id, label]) => ({ id, label })),
-  control: [
-    ['needs-action', 'Needs action'],
-    ['critical', 'Critical'],
-    ['decisions', 'Decisions'],
-    ['schedule', 'Schedule'],
-    ['resources', 'Resources'],
-    ['cost', 'Cost'],
-    ['risk', 'Risk'],
-    ['dependencies', 'Dependencies'],
-    ['adoption', 'Adoption'],
-    ['outcome-risk', 'Outcome risk'],
-    ['verification-overdue', 'Verification overdue'],
-    ['resolved', 'Resolved'],
-  ].map(([id, label]) => ({ id, label })),
-  reports: [
-    ['all', 'All'],
-    ['weekly', 'Weekly'],
-    ['monthly', 'Monthly'],
-    ['on-demand', 'On demand'],
-    ['sponsor', 'Sponsor'],
-    ['needs-generation', 'Needs generation'],
-    ['needs-review', 'Needs review'],
-    ['partial-stale', 'Partial/stale'],
-    ['published', 'Published'],
-    ['failed', 'Failed'],
-    ['recent', 'Recent runs'],
-  ].map(([id, label]) => ({ id, label })),
-};
+
+type TFn = (key: string, defaultValue?: string) => string;
+
+// NAPRAWA 1 i18n fix (staging-fixes-20260826, TRI-MUST-05): this was a static,
+// module-level, English-only constant feeding the Menu 3 filter-chip row
+// (`StandardModuleBar`'s `chips` prop) for EVERY Execution tab (list/work/
+// resources/control/reports) — i.e. the actual, live, always-English chip
+// labels a user sees regardless of app language ("Weekly", "Needs review",
+// "Partial/stale", ...). This is the REAL source of the "mixed PL/EN on the
+// same screen" finding for this module (unlike `getInitiativeLevels`'s
+// sibling fix in InitiativesHub.tsx, THIS constant's single call site below
+// is live and reachable, confirmed via dev-render screenshot). Converted to
+// a translation-key-backed builder, called from inside the component where
+// `t` is available (matches this file's dominant react-i18next convention).
+function getExecutionMenu3(t: TFn): Record<string, Array<{ id: string; label: string }>> {
+  return {
+    list: [
+      ['active', t('execution.menu3.list.active', 'Active')],
+      ['at-risk', t('execution.menu3.list.atRisk', 'At risk')],
+      ['critical', t('execution.menu3.list.critical', 'Critical')],
+      ['blocked', t('execution.menu3.list.blocked', 'Blocked work')],
+      ['missing-baseline', t('execution.menu3.list.missingBaseline', 'Missing baseline')],
+      ['missing-forecast', t('execution.menu3.list.missingForecast', 'Missing forecast')],
+      ['closing', t('execution.menu3.list.closing', 'Closing')],
+      ['delivered', t('execution.menu3.list.delivered', 'Recently delivered')],
+      ['unknown', t('execution.menu3.list.unknown', 'Unknown data')],
+    ].map(([id, label]) => ({ id, label })),
+    work: [
+      ['all', t('common.all', 'All')],
+      ['tasks', t('execution.menu3.work.tasks', 'Tasks')],
+      ['decisions', t('execution.menu3.work.decisions', 'Decisions')],
+      ['blocked', t('execution.menu3.work.blocked', 'Blocked')],
+      ['overdue', t('execution.menu3.work.overdue', 'Overdue')],
+      ['due-soon', t('execution.menu3.work.dueSoon', 'Due soon')],
+      ['missing-owner', t('execution.menu3.work.missingOwner', 'Missing owner')],
+      ['missing-evidence', t('execution.menu3.work.missingEvidence', 'Missing DoD/evidence')],
+      ['waiting', t('execution.menu3.work.waiting', 'Waiting dependency')],
+      ['mine', t('execution.menu3.work.mine', 'Mine')],
+      ['team', t('execution.menu3.work.team', 'By team')],
+    ].map(([id, label]) => ({ id, label })),
+    resources: [
+      ['all', t('common.all', 'All')],
+      ['overallocated', t('execution.menu3.resources.overallocated', 'Overallocated')],
+      ['unassigned', t('execution.menu3.resources.unassigned', 'Unassigned work')],
+      ['skill-gaps', t('execution.menu3.resources.skillGaps', 'Skill gaps')],
+      ['unconfirmed', t('execution.menu3.resources.unconfirmed', 'Unconfirmed assignments')],
+      ['unknown', t('execution.menu3.resources.unknown', 'Availability unknown')],
+      ['cost-risk', t('execution.menu3.resources.costRisk', 'Cost risk')],
+      ['needs-decision', t('execution.menu3.resources.needsDecision', 'Needs decision')],
+      ['team', t('execution.menu3.resources.team', 'By team')],
+      ['initiative', t('execution.menu3.resources.initiative', 'By Initiative')],
+    ].map(([id, label]) => ({ id, label })),
+    control: [
+      ['needs-action', t('execution.menu3.control.needsAction', 'Needs action')],
+      ['critical', t('execution.menu3.control.critical', 'Critical')],
+      ['decisions', t('execution.menu3.control.decisions', 'Decisions')],
+      ['schedule', t('execution.menu3.control.schedule', 'Schedule')],
+      ['resources', t('execution.menu3.control.resources', 'Resources')],
+      ['cost', t('execution.menu3.control.cost', 'Cost')],
+      ['risk', t('execution.menu3.control.risk', 'Risk')],
+      ['dependencies', t('execution.menu3.control.dependencies', 'Dependencies')],
+      ['adoption', t('execution.menu3.control.adoption', 'Adoption')],
+      ['outcome-risk', t('execution.menu3.control.outcomeRisk', 'Outcome risk')],
+      [
+        'verification-overdue',
+        t('execution.menu3.control.verificationOverdue', 'Verification overdue'),
+      ],
+      ['resolved', t('execution.menu3.control.resolved', 'Resolved')],
+    ].map(([id, label]) => ({ id, label })),
+    reports: [
+      ['all', t('common.all', 'All')],
+      ['weekly', t('execution.menu3.reports.weekly', 'Weekly')],
+      ['monthly', t('execution.menu3.reports.monthly', 'Monthly')],
+      ['on-demand', t('execution.menu3.reports.onDemand', 'On demand')],
+      ['sponsor', t('execution.menu3.reports.sponsor', 'Sponsor')],
+      ['needs-generation', t('execution.menu3.reports.needsGeneration', 'Needs generation')],
+      ['needs-review', t('execution.menu3.reports.needsReview', 'Needs review')],
+      ['partial-stale', t('execution.menu3.reports.partialStale', 'Partial/stale')],
+      ['published', t('execution.menu3.reports.published', 'Published')],
+      ['failed', t('execution.menu3.reports.failed', 'Failed')],
+      ['recent', t('execution.menu3.reports.recent', 'Recent runs')],
+    ].map(([id, label]) => ({ id, label })),
+  };
+}
 
 export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' }) => {
   const { t, i18n } = useTranslation();
@@ -4118,9 +4137,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         ],
         icon: <CalendarDays size={18} className="text-blue-500" />,
         highlights: [
-          { label: 'Progress', value: progressPct !== null ? `${progressPct}%` : '—' },
-          { label: 'Blocked', value: blocked, variant: blocked > 0 ? 'critical' : 'default' },
-          { label: 'Tasks', value: totalTasks },
+          { label: t('execution.table.progress'), value: progressPct !== null ? `${progressPct}%` : '—' },
+          { label: t('execution.badges.blocked'), value: blocked, variant: blocked > 0 ? 'critical' : 'default' },
+          { label: t('execution.table.tasks'), value: totalTasks },
         ],
       },
       {
@@ -4146,9 +4165,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         ],
         icon: <TrendingUp size={18} className="text-indigo-500" />,
         highlights: [
-          { label: 'Initiatives', value: totalInitiatives },
+          { label: t('execution.highlights.initiatives', 'Initiatives'), value: totalInitiatives },
           {
-            label: 'Missing dates',
+            label: t('execution.highlights.missingDates', 'Missing dates'),
             value: missingDatesCount,
             variant: missingDatesCount > 0 ? 'warn' : 'default',
           },
@@ -4183,8 +4202,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         ],
         icon: <Shield size={18} className="text-emerald-500" />,
         highlights: [
-          { label: 'Blocked', value: blocked, variant: blocked > 0 ? 'critical' : 'default' },
-          { label: 'Progress', value: progressPct !== null ? `${progressPct}%` : '—' },
+          { label: t('execution.badges.blocked'), value: blocked, variant: blocked > 0 ? 'critical' : 'default' },
+          { label: t('execution.table.progress'), value: progressPct !== null ? `${progressPct}%` : '—' },
         ],
       },
       {
@@ -4211,8 +4230,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         ],
         icon: <AlertTriangle size={18} className="text-danger-500" />,
         highlights: [
-          { label: 'Blocked', value: blocked, variant: blocked > 0 ? 'critical' : 'default' },
-          { label: 'Due soon', value: actionCenter.dueSoonTasks.length },
+          { label: t('execution.badges.blocked'), value: blocked, variant: blocked > 0 ? 'critical' : 'default' },
+          { label: t('execution.highlights.dueSoon', 'Due soon'), value: actionCenter.dueSoonTasks.length },
         ],
       },
       {
@@ -4239,7 +4258,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         icon: <Clock size={18} className="text-amber-500" />,
         highlights: [
           {
-            label: 'Missing dates',
+            label: t('execution.highlights.missingDates', 'Missing dates'),
             value: missingDatesCount,
             variant: missingDatesCount > 0 ? 'warn' : 'default',
           },
@@ -4267,7 +4286,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           'Flag resource gaps to hiring',
         ],
         icon: <Users size={18} className="text-c-text-muted" />,
-        highlights: [{ label: 'Tasks', value: totalTasks }],
+        highlights: [{ label: t('execution.table.tasks'), value: totalTasks }],
       },
       {
         id: 'budget-variance',
@@ -4291,7 +4310,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           'Freeze discretionary spend',
         ],
         icon: <TrendingUp size={18} className="text-green-500" />,
-        highlights: [{ label: 'Initiatives', value: totalInitiatives }],
+        highlights: [{ label: t('execution.highlights.initiatives', 'Initiatives'), value: totalInitiatives }],
       },
       {
         id: 'decision-backlog',
@@ -4317,11 +4336,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         icon: <Scale size={18} className="text-amber-600" />,
         highlights: [
           {
-            label: 'Overdue',
+            label: t('execution.badges.overdue'),
             value: overdueDecisionCount,
             variant: overdueDecisionCount > 0 ? 'warn' : 'default',
           },
-          { label: 'Pending', value: pendingDecisions },
+          { label: t('execution.highlights.pending', 'Pending'), value: pendingDecisions },
         ],
       },
       {
@@ -4346,7 +4365,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           'Add buffers to critical chains',
         ],
         icon: <GripVertical size={18} className="text-c-text-muted" />,
-        highlights: [{ label: 'Initiatives', value: totalInitiatives }],
+        highlights: [{ label: t('execution.highlights.initiatives', 'Initiatives'), value: totalInitiatives }],
       },
       {
         id: 'delivery-confidence',
@@ -4371,8 +4390,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         ],
         icon: <Sparkles size={18} className="text-blue-500" />,
         highlights: [
-          { label: 'Progress', value: progressPct !== null ? `${progressPct}%` : '—' },
-          { label: 'Blocked', value: blocked, variant: blocked > 0 ? 'critical' : 'default' },
+          { label: t('execution.table.progress'), value: progressPct !== null ? `${progressPct}%` : '—' },
+          { label: t('execution.badges.blocked'), value: blocked, variant: blocked > 0 ? 'critical' : 'default' },
         ],
       },
       {
@@ -4396,7 +4415,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           'Approve budget changes',
         ],
         icon: <FileText size={18} className="text-indigo-500" />,
-        highlights: [{ label: 'Progress', value: progressPct !== null ? `${progressPct}%` : '—' }],
+        highlights: [{ label: t('execution.table.progress'), value: progressPct !== null ? `${progressPct}%` : '—' }],
       },
     ];
 
@@ -4439,7 +4458,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       ragLogic: 'Mirrors program health RAG: composite of progress, blockers and confidence',
       followUpActions: [],
       icon: <Sparkles size={18} className="text-indigo-500" />,
-      highlights: [{ label: 'Progress', value: progressPct !== null ? `${progressPct}%` : '—' }],
+      highlights: [{ label: t('execution.table.progress'), value: progressPct !== null ? `${progressPct}%` : '—' }],
     }));
 
     return [...wizardEntries, ...base];
@@ -4451,6 +4470,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     execSnapshot,
     generatedReports,
     reportDefinitions,
+    t,
   ]);
 
   const reportDataContext = useMemo(
@@ -5751,7 +5771,7 @@ Please return:
           activeTab === 'list'
             ? []
             : [
-                ...(EXECUTION_MENU3[activeTab] ?? []).map((preset) => ({
+                ...(getExecutionMenu3(t)[activeTab] ?? []).map((preset) => ({
                   ...preset,
                   count: canonicalMenu3Counts[activeTab]?.[preset.id] ?? 0,
                 })),

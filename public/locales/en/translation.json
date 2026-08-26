@@ -1670,7 +1670,8 @@
     "filterByColumn": "Filter by {{column}}",
     "list": "List",
     "closeDocumentNamed": "Close {{name}}",
-    "moreOpenDocuments": "More open documents ({{count}})"
+    "moreOpenDocuments": "More open documents ({{count}})",
+    "sampleData": "SAMPLE DATA"
   },
   "superadmin": {
     "confirm": {
@@ -8322,7 +8323,17 @@
       "failedToLoad": "Failed to load initiatives.",
       "retry": "Retry",
       "dismiss": "Dismiss",
-      "noInitiativesFound": "No initiatives found"
+      "noInitiativesFound": "No initiatives found",
+      "noInitiativesFoundDesc": "No initiatives match the current filters. Try widening the search or clearing filters."
+    },
+    "filters": {
+      "priority": "Priority",
+      "allPriorities": "All priorities"
+    },
+    "materialize": {
+      "working": "Generating material from the portfolio…",
+      "done": "Material ready",
+      "failed": "Failed to generate material"
     },
     "document": {
       "failedToLoad": "Failed to load initiative card.",
@@ -8382,7 +8393,15 @@
       "levelDescStandard": "Standard approval flow. Requires owner + deadline + tasks.",
       "levelDescStrategic": "Executive approval required. Full charter + RAID analysis.",
       "levelDescTransformation": "Board-level governance. Full charter, steering committee, gate reviews.",
-      "levelUpgradeOnlyNote": "Level can be upgraded later but not downgraded."
+      "levelUpgradeOnlyNote": "Level can be upgraded later but not downgraded.",
+      "levelQuickWinLabel": "Quick Win",
+      "levelQuickWinCardDesc": "Small improvement, minimal governance. < 1 month, 1-2 people.",
+      "levelStandardLabel": "Standard Project",
+      "levelStandardCardDesc": "Regular project with defined scope. 1-3 months, dedicated team.",
+      "levelStrategicLabel": "Strategic Program",
+      "levelStrategicCardDesc": "Cross-functional program. 3-12 months, multiple teams, executive sponsor.",
+      "levelTransformationLabel": "Transformation",
+      "levelTransformationCardDesc": "Organization-wide change. 6-24 months, full governance, board oversight."
     },
     "axis": {
       "operational": "Operational",
@@ -10287,41 +10306,44 @@
       "viewOnlyForYourRole": "View-only for your role"
     },
     "toast": {
-      "scheduleUpdated": "Harmonogram zaktualizowany",
-      "scheduleUpdateError": "Nie udało się zaktualizować harmonogramu",
-      "gateActionSuccess": "Akcja \"{{gate}}\" wykonana pomyślnie",
-      "gateActionError": "Nie udało się wykonać {{gate}}",
-      "notFound": "Nie znaleziono inicjatywy",
-      "openFailed": "Nie udało się otworzyć inicjatywy",
-      "statusUpdated": "Status zaktualizowany",
-      "statusUpdateFailed": "Nie udało się zaktualizować statusu",
-      "updateFailed": "Nie udało się zaktualizować",
+      "scheduleUpdated": "Schedule updated",
+      "scheduleUpdateError": "Failed to update schedule",
+      "gateActionSuccess": "Action \"{{gate}}\" completed successfully",
+      "gateActionError": "Failed to execute {{gate}}",
+      "notFound": "Initiative not found",
+      "openFailed": "Failed to open initiative",
+      "statusUpdated": "Status updated",
+      "statusUpdateFailed": "Failed to update status",
+      "updateFailed": "Failed to update",
       "archived": "Initiative archived",
       "archiveFailed": "Could not archive initiative",
       "deleted": "Initiative deleted",
       "chatOpened": "Chat opened",
       "chatOpenError": "Failed to open chat",
-      "statusChanged": "Status zmieniony na {{status}}",
-      "statusChangeError": "Nie udało się zmienić statusu",
-      "statusChangeFailed": "Zmiana statusu nie powiodła się",
-      "statusChangedLabel": "Status zmieniony na {{label}}",
-      "statusUpdateError": "Nie udało się zaktualizować statusu",
-      "watchError": "Nie udało się zmienić obserwowania",
-      "saveError": "Nie udało się zapisać",
-      "createTaskError": "Nie udało się utworzyć zadania",
-      "createDecisionError": "Nie udało się utworzyć decyzji",
-      "createRaidError": "Nie udało się dodać elementu RAID",
-      "deleteRaidError": "Nie udało się usunąć elementu RAID",
-      "aiGenerationError": "Generowanie AI nie powiodło się",
-      "approvalRequestError": "Nie udało się wysłać prośby o zatwierdzenie",
-      "archiveError": "Nie udało się zarchiwizować",
+      "statusChanged": "Status changed to {{status}}",
+      "statusChangeError": "Failed to change status",
+      "statusChangeFailed": "Status change failed",
+      "statusChangedLabel": "Status changed to {{label}}",
+      "statusUpdateError": "Failed to update status",
+      "watchError": "Failed to change watch status",
+      "saveError": "Failed to save",
+      "createTaskError": "Failed to create task",
+      "createDecisionError": "Failed to create decision",
+      "createRaidError": "Failed to add RAID item",
+      "deleteRaidError": "Failed to delete RAID item",
+      "aiGenerationError": "AI generation failed",
+      "approvalRequestError": "Failed to send approval request",
+      "archiveError": "Failed to archive",
       "deleteError": "Could not delete initiative",
-      "statusNotAllowed": "Nie masz uprawnień lub bramka nie jest dostępna na tym etapie.",
-      "gateBlockedHub": "Nie można przejść dalej — brakuje elementów blokujących:\\n• {{items}}",
-      "downgradeBlocked": "Obniżenie poziomu jest zablokowane. Można jedynie podwyższyć poziom inicjatywy.",
-      "cannotApprove": "Nie można zatwierdzić — brakuje wymaganych pól:\\n• {{errors}}",
+      "statusNotAllowed": "You don't have permission, or this gate isn't available at this stage.",
+      "gateBlockedHub": "Cannot proceed — missing blocking items:\\n• {{items}}",
+      "downgradeBlocked": "Downgrade is blocked. You can only advance the initiative's level.",
+      "cannotApprove": "Cannot approve — missing required fields:\\n• {{errors}}",
       "linkCopied": "Link copied",
-      "linkCopyError": "Copy failed"
+      "linkCopyError": "Copy failed",
+      "archiveGoverned": "Archive is available only from the governed closure workflow.",
+      "cancelled": "Initiative cancelled",
+      "cancelError": "Could not cancel initiative"
     },
     "decisions": {
       "decision": "Decision",
@@ -10339,7 +10361,7 @@
       "changeDueDate": "Change due date",
       "exported": "Exported {{count}}",
       "selected": "{{count}} selected",
-      "archiveIneligible": "Tylko zakończone/anulowane można archiwizować"
+      "archiveIneligible": "Only completed/cancelled items can be archived"
     },
     "scope": {
       "label": "Scope",
@@ -10422,7 +10444,8 @@
     },
     "kanban": {
       "noOwner": "Unassigned",
-      "nextGate": "Next gate"
+      "nextGate": "Next gate",
+      "dragDisabled": "Use the governed gate workspace to advance lifecycle."
     },
     "archive": {
       "hint": "Finish or cancel it first"
@@ -10444,6 +10467,8 @@
       "gantt": "Gantt"
     },
     "confirmDelete": "Permanently delete \"{{name}}\"? This cannot be undone.",
+    "confirmCancel": "Cancel \"{{name}}\"? Its immutable history will be preserved.",
+    "candidateInboxAria": "Candidate inbox",
     "thisInitiative": "this initiative",
     "card": {
       "nextStep": "Next step"
@@ -10706,6 +10731,13 @@
   },
   "execution": {
     "title": "Execution Center",
+    "initiativeLabel": "Initiative",
+    "highlights": {
+      "initiatives": "Initiatives",
+      "missingDates": "Missing dates",
+      "dueSoon": "Due soon",
+      "pending": "Pending"
+    },
     "dashboard": "Dashboard",
     "calendar": "Calendar",
     "decisions": "Decisions",
@@ -11136,7 +11168,8 @@
       "overdue": "Overdue",
       "due7": "Due in 7 days",
       "upcoming": "Upcoming (8–30d)",
-      "failed": "Tasks unavailable"
+      "failed": "Tasks unavailable",
+      "failedDesc": "Tasks could not be loaded. The buckets below are empty because of a load failure, not because there are no tasks — this is a degraded state."
     },
     "decisionsBuckets": {
       "subtitle": "Buckets by due horizon to keep governance fast and explicit.",
@@ -11146,7 +11179,8 @@
       "due14": "Due 8–14d",
       "due30": "Due 15–30d",
       "more": "30d+ / No date",
-      "failed": "Decisions unavailable"
+      "failed": "Decisions unavailable",
+      "failedDesc": "Decisions could not be loaded. The buckets below are empty because of a load failure, not because there are no pending decisions — this is a degraded state."
     },
     "table": {
       "type": "Type",
@@ -11204,7 +11238,8 @@
       "noInExecution": "No initiatives in execution. Move initiatives to execution first.",
       "noAvailable": "No initiatives available.",
       "noDeadlines": "No deadlines scheduled",
-      "deadlinesWillAppear": "Tasks and decisions will appear here"
+      "deadlinesWillAppear": "Tasks and decisions will appear here",
+      "noInExecutionDesc": "Initiatives promoted to execution will appear here."
     },
     "detail": {
       "description": "Description",
@@ -11237,7 +11272,8 @@
       "raidLog": "RAID Log",
       "export": "Export",
       "report": "Report",
-      "aiChat": "AI Chat"
+      "aiChat": "AI Chat",
+      "copyLink": "Copy link"
     },
     "raidLog": {
       "title": "RAID Log",
@@ -11259,7 +11295,8 @@
       "decision": "Decision",
       "risk": "Risk",
       "task": "Task",
-      "failed": "Action queue unavailable"
+      "failed": "Action queue unavailable",
+      "failedDesc": "The action queue (overdue decisions, risks, KPI deviations) could not be loaded. Counts shown may be incomplete — this is a degraded state, not an empty queue."
     },
     "attention": {
       "blocked": "Blocked",
@@ -11268,6 +11305,68 @@
       "dueSoonTasks": "Due Soon",
       "none": "Nothing urgent",
       "attention": "Attention"
+    },
+    "menu3": {
+      "list": {
+        "active": "Active",
+        "atRisk": "At risk",
+        "critical": "Critical",
+        "blocked": "Blocked work",
+        "missingBaseline": "Missing baseline",
+        "missingForecast": "Missing forecast",
+        "closing": "Closing",
+        "delivered": "Recently delivered",
+        "unknown": "Unknown data"
+      },
+      "work": {
+        "tasks": "Tasks",
+        "decisions": "Decisions",
+        "blocked": "Blocked",
+        "overdue": "Overdue",
+        "dueSoon": "Due soon",
+        "missingOwner": "Missing owner",
+        "missingEvidence": "Missing DoD/evidence",
+        "waiting": "Waiting dependency",
+        "mine": "Mine",
+        "team": "By team"
+      },
+      "resources": {
+        "overallocated": "Overallocated",
+        "unassigned": "Unassigned work",
+        "skillGaps": "Skill gaps",
+        "unconfirmed": "Unconfirmed assignments",
+        "unknown": "Availability unknown",
+        "costRisk": "Cost risk",
+        "needsDecision": "Needs decision",
+        "team": "By team",
+        "initiative": "By Initiative"
+      },
+      "control": {
+        "needsAction": "Needs action",
+        "critical": "Critical",
+        "decisions": "Decisions",
+        "schedule": "Schedule",
+        "resources": "Resources",
+        "cost": "Cost",
+        "risk": "Risk",
+        "dependencies": "Dependencies",
+        "adoption": "Adoption",
+        "outcomeRisk": "Outcome risk",
+        "verificationOverdue": "Verification overdue",
+        "resolved": "Resolved"
+      },
+      "reports": {
+        "weekly": "Weekly",
+        "monthly": "Monthly",
+        "onDemand": "On demand",
+        "sponsor": "Sponsor",
+        "needsGeneration": "Needs generation",
+        "needsReview": "Needs review",
+        "partialStale": "Partial/stale",
+        "published": "Published",
+        "failed": "Failed",
+        "recent": "Recent runs"
+      }
     },
     "scope": {
       "active": "Active",
@@ -11447,7 +11546,10 @@
     "actionCenter": {
       "actionQueue": "Action queue",
       "kpiNoPlan": "KPI deviation without plan",
-      "missingPlan": "Missing-plan handling"
+      "missingPlan": "Missing-plan handling",
+      "actionQueueDesc": "Overdue decisions, risks, communications, and KPI deviations that need owner action.",
+      "kpiNoPlanDesc": "KPI deviations without recovery plans are tracked in the same action queue.",
+      "missingPlanDesc": "Initiatives without start/end dates stay visible as degraded planning state instead of disappearing from reports."
     },
     "bulk": {
       "confirmStatusTitle": "Change status of selected initiatives?",
@@ -11461,10 +11563,12 @@
       "failed": "Control tower signals unavailable"
     },
     "executiveHealth": {
-      "failed": "Executive health signals unavailable"
+      "failed": "Executive health signals unavailable",
+      "failedDesc": "Per-initiative health (RAG status, why-red chains) could not be loaded. The dashboard is operating without execution-health overlays — a degraded state, not an all-healthy portfolio."
     },
     "healthSnapshot": {
-      "failed": "PMO health snapshot unavailable"
+      "failed": "PMO health snapshot unavailable",
+      "failedDesc": "The authoritative PMO health snapshot could not be loaded. The Health Score, decision and blocker counts below fall back to client-side estimates and may be incomplete — a degraded state, not a confirmed-healthy portfolio."
     },
     "reportCatalog": {
       "cadence": {
@@ -11482,9 +11586,12 @@
       "generateError": "Failed to generate report",
       "generating": "Generating \"{{title}}\"…",
       "noData": "No execution data yet",
-      "openGlobal": "Global Reports →"
+      "noDataDesc": "Reports will be populated once initiatives are actively executing. Add initiatives to the portfolio to start generating reports.",
+      "openGlobal": "Global Reports →",
+      "subheading": "Pre-defined reports built from live execution data. Click to expand contract, then generate or export."
     },
     "reportPanel": {
+      "summarizePrompt": "Summarize this report in 5 bullets and propose 3 next steps.",
       "copied": "Report copied to clipboard",
       "copy": "Copy as Markdown",
       "copyFailed": "Copy failed",
@@ -20956,6 +21063,7 @@
       "title": "Organization",
       "subtitle": "Context & Administration",
       "back": "Back to Dashboard",
+      "closeNav": "Close organization navigation",
       "group": "ORGANIZATION",
       "contextGroup": "CONTEXT",
       "adminGroup": "ADMINISTRATION",
@@ -20975,6 +21083,10 @@
     },
     "shell": {
       "breadcrumb": "Organization"
+    },
+    "sync": {
+      "saving": "Saving organization context…",
+      "unsynced": "Changes are stored locally but have not been confirmed by the server."
     },
     "profilePresentation": {
       "navigation": "Organization profile sections",
