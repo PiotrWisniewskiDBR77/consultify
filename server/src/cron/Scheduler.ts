@@ -110,6 +110,19 @@ export function registerWorkSignalProducerJob(
   );
 }
 
+export function registerWorkSignalInterpreterJob(
+  schedule: typeof cron.schedule = cron.schedule
+): cron.ScheduledTask {
+  return schedule(
+    '0 5 * * *',
+    async () => {
+      const { runInterpretationTick } = await import('../jobs/workSignalInterpreterJob.js');
+      await runInterpretationTick();
+    },
+    { timezone: 'UTC' }
+  );
+}
+
 export const Scheduler = {
   jobs: [] as cron.ScheduledTask[],
   initPromise: null as Promise<void> | null,
@@ -225,6 +238,7 @@ export const Scheduler = {
     });
     this.jobs.push(job7b);
     this.jobs.push(registerWorkSignalProducerJob());
+    this.jobs.push(registerWorkSignalInterpreterJob());
 
     // 7c. Initiative Auto-Start by timeline - Run every 5 minutes
     const job7c = cron.schedule('*/5 * * * *', async () => {

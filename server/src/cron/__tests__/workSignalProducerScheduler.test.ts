@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { registerWorkSignalProducerJob } from '../Scheduler.js';
+import { registerWorkSignalInterpreterJob, registerWorkSignalProducerJob } from '../Scheduler.js';
 
 describe('work signal producer scheduler registration', () => {
   it('registers exactly one deterministic schedule at fifteen-minute cadence', () => {
@@ -10,5 +10,12 @@ describe('work signal producer scheduler registration', () => {
     expect(schedule).toHaveBeenCalledWith('*/15 * * * *', expect.any(Function), {
       timezone: 'UTC',
     });
+  });
+
+  it('registers exactly one interpreted schedule at the daily cadence', () => {
+    const schedule = vi.fn(() => ({ stop: vi.fn() })) as never;
+    registerWorkSignalInterpreterJob(schedule);
+    expect(schedule).toHaveBeenCalledTimes(1);
+    expect(schedule).toHaveBeenCalledWith('0 5 * * *', expect.any(Function), { timezone: 'UTC' });
   });
 });
