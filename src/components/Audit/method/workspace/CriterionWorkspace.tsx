@@ -28,11 +28,17 @@ import { ErrorState, LoadingState, SaveStateIndicator, type SaveStatus } from '@
 import { StatusChip } from '@/components/ui/primitives/chips';
 import { useAppStore } from '@/store/useAppStore';
 
-import { CriterionChain, type ChainLink } from './CriterionChain';
+import { CriterionChain } from './CriterionChain';
 import { EvidencePanel } from './EvidencePanel';
 import { FindingPanel } from './FindingPanel';
 import { RemediationPanel } from './RemediationPanel';
 import { TeresaProposalCard } from './TeresaProposalCard';
+import {
+  buildChainLinks,
+  REMEDIATION_LABELS_EN,
+  REMEDIATION_LABELS_PL,
+  REMEDIATION_LINK_IDS,
+} from './chainLinks';
 import * as workspaceApi from './workspaceApi';
 import type {
   ConformityStatus,
@@ -41,32 +47,6 @@ import type {
   WorkspaceCapability,
   WorkspaceFindingDetail,
 } from './workspaceApi';
-
-const REMEDIATION_LINK_IDS = [
-  'korekcja',
-  'przyczyna-zrodlowa',
-  'dzialanie-korygujace',
-  'wlasciciel-termin',
-  'weryfikacja-skutecznosci',
-  'zamkniecie',
-] as const;
-
-const REMEDIATION_LABELS_PL: Record<(typeof REMEDIATION_LINK_IDS)[number], string> = {
-  korekcja: 'Korekcja',
-  'przyczyna-zrodlowa': 'Przyczyna źródłowa',
-  'dzialanie-korygujace': 'Działanie korygujące',
-  'wlasciciel-termin': 'Właściciel / termin',
-  'weryfikacja-skutecznosci': 'Weryfikacja skuteczności',
-  zamkniecie: 'Zamknięcie',
-};
-const REMEDIATION_LABELS_EN: Record<(typeof REMEDIATION_LINK_IDS)[number], string> = {
-  korekcja: 'Correction',
-  'przyczyna-zrodlowa': 'Root cause',
-  'dzialanie-korygujace': 'Corrective action',
-  'wlasciciel-termin': 'Owner / due date',
-  'weryfikacja-skutecznosci': 'Effectiveness verification',
-  zamkniecie: 'Closure',
-};
 
 export const CriterionWorkspace: React.FC = () => {
   const params = useParams<{ programId: string; criterionId: string }>();
@@ -219,94 +199,19 @@ export const CriterionWorkspace: React.FC = () => {
     );
   }, [criterionId, conformityChoice, auditorConclusion, run, load]);
 
-  const chainLinks: ChainLink[] = useMemo(() => {
-    if (!criterion) return [];
-    const testDone = !!criterion.testResult;
-    const concluded = criterion.conformityStatus !== 'not_tested';
-    const findingsCount = detail?.findings.length ?? 0;
-    const hasConfirmedFinding = (detail?.findings ?? []).some(
-      (f) => f.status === 'confirmed' || f.status !== 'draft'
-    );
-    const remediationReachable = !!selectedFindingId;
-    const remediationDone = selectedFindingDetail?.status === 'closed';
-
-    const base: ChainLink[] = [
-      { id: 'kryterium-zrodlo', label: t('Kryterium/źródło', 'Criterion/source'), state: 'done' },
-      { id: 'pytanie-audytowe', label: t('Pytanie audytowe', 'Audit question'), state: 'done' },
-      { id: 'oczekiwany-dowod', label: t('Oczekiwany dowód', 'Expected evidence'), state: 'done' },
-      {
-        id: 'dostarczony-dowod',
-        label: t('Dostarczony dowód', 'Provided evidence'),
-        state: hasAcceptedEvidence ? 'done' : 'current',
-      },
-      {
-        id: 'procedura-audytora',
-        label: t('Procedura audytora', "Auditor's procedure"),
-        state: !criterion.applicable ? 'inactive' : criterion.procedurePerformed ? 'done' : 'current',
-        reason: !criterion.applicable ? t('Kryterium oznaczone jako „nie dotyczy".', 'Criterion marked "not applicable".') : undefined,
-      },
-      {
-        id: 'proba',
-        label: t('Próba', 'Sample'),
-        state: !criterion.applicable ? 'inactive' : criterion.sampleDescription ? 'done' : 'current',
-        reason: !criterion.applicable ? t('Kryterium oznaczone jako „nie dotyczy".', 'Criterion marked "not applicable".') : undefined,
-      },
-      {
-        id: 'wykonany-test',
-        label: t('Wykonany test', 'Test performed'),
-        state: !criterion.applicable ? 'inactive' : criterion.testPerformed ? 'done' : 'current',
-        reason: !criterion.applicable ? t('Kryterium oznaczone jako „nie dotyczy".', 'Criterion marked "not applicable".') : undefined,
-      },
-      {
-        id: 'wynik-testu',
-        label: t('Wynik testu', 'Test result'),
-        state: !criterion.applicable ? 'inactive' : testDone ? 'done' : 'current',
-        reason: !criterion.applicable ? t('Kryterium oznaczone jako „nie dotyczy".', 'Criterion marked "not applicable".') : undefined,
-      },
-      {
-        id: 'wniosek-audytora',
-        label: t('Wniosek audytora', "Auditor's conclusion"),
-        state: !testDone ? 'inactive' : concluded ? 'done' : 'current',
-        reason: !testDone
-          ? t('Wymaga wcześniej wykonanej procedury testowej (wynik testu).', 'Requires a recorded test result first.')
-          : undefined,
-      },
-      {
-        id: 'status-zgodnosci',
-        label: t('Status zgodności', 'Conformity status'),
-        state: !testDone ? 'inactive' : concluded ? 'done' : 'current',
-        reason: !testDone
-          ? t('Wymaga wcześniej wykonanej procedury testowej (wynik testu).', 'Requires a recorded test result first.')
-          : undefined,
-      },
-      {
-        id: 'ustalenie',
-        label: t('Ustalenie', 'Finding'),
-        state: findingsCount > 0 ? 'done' : 'current',
-      },
-      {
-        id: 'odpowiedz-wlasciciela',
-        label: t('Odpowiedź właściciela', 'Management response'),
-        state: !hasConfirmedFinding ? 'inactive' : 'current',
-        reason: !hasConfirmedFinding
-          ? t('Wymaga potwierdzonego ustalenia.', 'Requires a confirmed finding.')
-          : undefined,
-      },
-    ];
-
-    for (const id of REMEDIATION_LINK_IDS) {
-      base.push({
-        id,
-        label: isPolish ? REMEDIATION_LABELS_PL[id] : REMEDIATION_LABELS_EN[id],
-        state: !remediationReachable ? 'inactive' : remediationDone ? 'done' : 'current',
-        reason: !remediationReachable
-          ? t('Wybierz ustalenie powyżej, aby zobaczyć ten krok naprawczy.', 'Select a finding above to see this remediation step.')
-          : undefined,
-      });
-    }
-
-    return base;
-  }, [criterion, detail?.findings, hasAcceptedEvidence, selectedFindingId, selectedFindingDetail, isPolish, t]);
+  const chainLinks = useMemo(
+    () =>
+      buildChainLinks({
+        criterion,
+        findings: detail?.findings,
+        hasAcceptedEvidence,
+        selectedFindingId,
+        selectedFindingDetail,
+        isPolish,
+        t,
+      }),
+    [criterion, detail?.findings, hasAcceptedEvidence, selectedFindingId, selectedFindingDetail, isPolish, t]
+  );
 
   if (loading) {
     return <LoadingState template="panel" label={t('Wczytywanie kryterium…', 'Loading criterion…')} />;
