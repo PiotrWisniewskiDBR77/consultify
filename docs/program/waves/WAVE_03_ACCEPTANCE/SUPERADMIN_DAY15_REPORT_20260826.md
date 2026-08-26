@@ -1,16 +1,16 @@
 # SUPERADMIN DAY 15 — RAPORT 2026-08-26
 
-Status dyżuru: **W TOKU — BLOK 1**
+Status dyżuru: **DOMKNIĘTY LOKALNIE — CZĘŚCIOWO / OPEN STOP-y**
 
-Poziom raportowania: **NOT VERIFIED / NIE_ZACZĘTE**. Nie wykonano zmian produktowych, deployu, pushu, operacji Railway ani dostępu do zdalnej bazy.
+Poziom raportowania: **TARGETED VERIFIED / FULL_DOD_NOT_PROVEN**. Zmiany produktowe i dowody lokalne wykonano; zero deployu, pushu, Railway i dostępu do zdalnej bazy.
 
 ## Oświadczenie o chronionym WIP (Z4/Z5)
 
-Nie czytałem ani nie modyfikowałem chronionego worktree `/Users/piotrwisniewski/Developer/Consultify`. Nie czytałem wariantów `PRESERVED_PRODUCT_WIP` / `NO_COPY`.
+Nie modyfikowałem chronionego worktree `/Users/piotrwisniewski/Developer/Consultify`. Jedyny dostęp do jego zawartości to jawnie autoryzowany przez nadzorcę odczyt zależności przez symlink `node_modules`; nie edytowano żadnego pliku w katalogu docelowym. Nie czytałem wariantów `PRESERVED_PRODUCT_WIP` / `NO_COPY`.
 
 ## Oświadczenie FREEZE (DEC-2026-08-25-65)
 
-FREEZE zachowany: zero push, zero deployów, zero Railway, zero zdalnych baz, migracji, seedów i resetów. Nie uruchomiono lokalnego PostgreSQL, ponieważ dyżur zatrzymał się przed testami stanu wyjściowego.
+FREEZE zachowany: zero push, zero deployów, zero Railway i zero zdalnych baz. Jedyna migracja ma status **MIGRATION_PREPARED / REMOTE_EXECUTION_NOT_AUTHORIZED** i została uruchomiona wyłącznie w jednorazowym lokalnym PostgreSQL na tmpfs. Kod projekcji działa także bez indeksu, więc pozostaje kompatybilny wstecz z zamrożonym demo.
 
 ## Warunki wstępne — wynik sprawdzenia
 
@@ -73,7 +73,7 @@ Stan: **ROZSTRZYGNIĘTO 2026-08-26** — nadzorca jawnie autoryzował symlink ty
 
 ## S.1 / S.2 — sesje bezpieczeństwa
 
-Status: **ZROBIONE_WG_DoD — kod i request-level testy; realdb SELECT oczekuje na Q.3**.
+Status: **ZROBIONE_WG_DoD — kod, request-level i realdb SELECT**.
 
 - `GET /security/sessions/all` wymaga teraz OWNER/ADMIN.
 - Obie trasy DELETE najpierw rozwiązują zasób w organizacji z tokenu; obcy lub brakujący zasób daje 404.
@@ -90,7 +90,7 @@ Status: **ZROBIONE_WG_DoD**.
 - `apiAuthRateLimiter` dopięty do wszystkich czterech tras.
 - Front grep: brak konsumentów naprawianych destrukcyjnych tras; istniejący `AuditComplianceTab` używa bezpiecznej trasy z `:orgId`.
 - Test mock/request: `day15.admin-data.routes.test.ts` — 7/7 PASS.
-- Test realdb/request: `day15.cross-tenant.routes.pg.test.ts` — 3/3 PASS, faktycznie wykonany; po HTTP 404 bezpośrednie SELECT-y potwierdziły zachowanie obcej sesji i niezmieniony `security_events.resolved=0`.
+- Wspólny pakiet realdb/request `day15.cross-tenant.routes.pg.test.ts` — 6/6 PASS, faktycznie wykonany. Dla S.3 bezpośrednie SELECT-y po HTTP 404 potwierdziły zachowanie obcej sesji i niezmieniony `security_events.resolved=0`. Operacje scheduled-events pozostają `BRAK_TABELI` na świeżym replayu i dlatego pełna pozycja Q.3 jest częściowa.
 
 ## S.4 — tenant-scoped access requests
 
@@ -177,51 +177,106 @@ A.3: **NIE_ZACZĘTE**. A.4: stan przed 20/83 (24,1%) pisarzy semantycznych. Po A
 
 Klient używa `Promise.allSettled`: awaria jednej nogi nie usuwa organizacji/użytkowników ani pozostałych katalogów. Test katalogu request-level: 4/4 PASS (happy, empty, 401, błąd 500).
 
-## P.2 / P.4 — implementacja zatrzymana na Q.1
+## P.3 — konsumenci override
 
-Przygotowano lokalnie, lecz **nie zacommitowano** dwóch kart opartych o realne katalogi: awaryjne wyłączenie konektora i zawieszenie pracownika wirtualnego. Nowy pakiet `PlatformOperationsView.day15.test.tsx` przechodzi 4/4: render kart, zasięg konektora i blokada bez powodu, sukces zawieszenia oraz błąd bez fałszywego sukcesu. Przygotowano też semantyczny namespace `superadmin.platformOperations.*` w PL i EN.
+| Klucz                   | Trafienia poza trasą zapisującą | Werdykt                                              |
+| ----------------------- | ------------------------------: | ---------------------------------------------------- |
+| `platform:mfa_override` |                               0 | `ZAPIS_BEZ_EGZEKWOWANIA` — STOP, akcja niewystawiona |
+| `platform:sso_override` |                               0 | `ZAPIS_BEZ_EGZEKWOWANIA` — STOP, akcja niewystawiona |
 
-Pomiar literalną procedurą Q.4 na rzeczywistym tipie bazy dał **przed: PL 216 / EN 216**, a nie zapisane w instrukcji 267/267. Stan przygotowanych zmian: **po: PL 254 / EN 254**, `PL-only []`, `EN-only []`. Rozbieżności punktu odniesienia nie ukrywam; parytet jest zachowany, ale zmiany pozostają niezacommitowane z powodu STOP Q.1.
+Nie dopisano konsumenta ani przełącznika pozorującego egzekwowanie polityki.
 
-### STOP — Q.1 / istniejący test fali 1 po i18n
+## P.2 / P.4 — akcje i i18n
 
-Po usunięciu niedozwolonej lokalnej modyfikacji `PlatformOperationsView.test.tsx` istniejący plik jest bitowo niezmieniony względem bazy, ale jego 10/10 przypadków kończy się FAIL. Przyczyna jest deterministyczna: globalny mock `react-i18next` zwraca surowy klucz, więc po zgodnym z P.4 usunięciu polskich literałów komponent renderuje np. `superadmin.platformOperations.actions.reactivate.label`, a istniejący test szuka `Reaktywuj organizację`.
+Status: **ZROBIONE_WG_DoD dla P.2 i P.4**. Commit `519a202532` wystawia dwie karty oparte o realne katalogi: awaryjne wyłączenie konektora i zawieszenie pracownika wirtualnego. Model AI pominięto jako `BRAK_API`; MFA/SSO jako `ZAPIS_BEZ_EGZEKWOWANIA`; bulk export jako `BRAK_API`. Każda wystawiona akcja ma nazwany cel, reason, potwierdzenie serwerowe bez optymistycznego sukcesu; konektor pokazuje zasięg tenantów.
 
-Sonda kontrolna z lokalnym mockiem opartym o rzeczywiste PL locale dawała 14/14 PASS (10 zastanych + 4 nowe), ale została cofnięta, ponieważ Q.1 literalnie zabrania dotykania istniejącego testu. Nie zmieniono globalnego setupu (Z18), nie dodano fallbacków ani polskiego mapowania w kodzie produktu. Zgodnie z instrukcją: „jeśli test nie przechodzi z innego powodu — STOP”.
+Pakiet Day 15 po polish-passie: 6/6 PASS (cztery zachowania P.2 oraz uczciwy empty/error katalogu). Istniejący pakiet fali 1: 10/10 PASS. Dowód EN: 1/1 PASS. Cały katalog UI superadmin: 18/18 PASS.
 
-Skutek: P.2 i P.4 są **CZĘŚCIOWO / NIEZACOMMITOWANE**, P.6 i Q.4–Q.5 nie mogą być uczciwie zaliczone. Nie wykonano zrzutów ani polish-passu po wystąpieniu bramki STOP.
+Pomiar literalną procedurą Q.4 na rzeczywistym tipie bazy dał **przed: PL 216 / EN 216**, a nie zapisane w instrukcji 267/267. Stan po zmianie: **PL 256 / EN 256**, `PL-only []`, `EN-only []`. Zero `defaultValue`, zero polskich literałów w JSX. Rozbieżności punktu odniesienia nie ukrywam; parytet jest zachowany.
 
-Proponowane rozstrzygnięcie nadzorcy: jawnie dopuścić wyłącznie lokalne podpięcie `createRealUseTranslation('pl')` w istniejącym teście, bez zmiany jakiejkolwiek asercji, albo wskazać zatwierdzony mechanizm testowego i18n poza globalnym setupem. Bez takiej decyzji nie kontynuuję powierzchni wizualnej.
+### Q.1 — rozstrzygnięcie DEC-2026-08-25-83
+
+Nadzorca jednoznacznie dopuścił wyłącznie lokalne użycie `createRealUseTranslation('pl')` w `PlatformOperationsView.test.tsx`, bez zmiany asercji. Dodano tylko ten mock; liczba istniejących asercji i ich treść nie uległy zmianie. Wynik: 10/10 PASS. Globalnego setupu Z18 nie dotknięto.
+
+## P.6 — polish-pass
+
+Status: **CZĘŚCIOWO**. Commit `acb05b94e1`; realny komponent w lokalnym harnessie na porcie 4340, bez logowania i backendu. Dodano jawne rozróżnienie pustego katalogu i błędu pojedynczej nogi oraz lokalizację przycisku anulowania.
+
+|   # | Punkt                                    | Wynik              | Dowód                                                                                                                                                      |
+| --: | ---------------------------------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|   1 | zero crimsonu dekoracyjnego              | OK                 | grep plików produktu/harnessu: 0                                                                                                                           |
+|   2 | danger tylko dla critical                | OK dla nowych kart | konektor jest `critical`; worker `high` nie używa czerwieni na karcie                                                                                      |
+|   3 | niebieski fokus każdego pola i przycisku | **NIE OK**         | pole reason i przyciski powierzchni mają `c-focus`; zastany confirm button współdzielonego `ConfirmDialog` używa `focus:ring-danger-500/40`; plik poza Z17 |
+|   4 | tokeny c-\*, zero hexów                  | OK                 | grep: 0                                                                                                                                                    |
+|   5 | light/dark czytelne                      | OK                 | cztery główne PNG                                                                                                                                          |
+|   6 | PL/EN bez rozjazdu                       | OK                 | cztery główne PNG, EN 1280 bez overflow                                                                                                                    |
+|   7 | zero polskich literałów JSX              | OK                 | grep: 0                                                                                                                                                    |
+|   8 | zero emoji/ozdobników                    | OK                 | oględziny siedmiu PNG                                                                                                                                      |
+|   9 | uczciwy empty                            | OK                 | `platform-operations-empty-light-pl.png`                                                                                                                   |
+|  10 | uczciwy error                            | OK                 | `platform-operations-catalog-error-dark-en.png`                                                                                                            |
+|  11 | critical oddzielone od high              | OK                 | osobne sekcje i semantyczny danger tylko nagłówka critical                                                                                                 |
+|  12 | reason <3 blokuje                        | OK                 | test + kadr dialogu, `confirmEnabled=false`                                                                                                                |
+|  13 | brak poziomego scrolla 1280/1024         | OK                 | 1280: client=scroll=1280; 1024: client=scroll=1009 po uwzględnieniu pionowego scrollbara                                                                   |
+|  14 | etykiety a11y                            | OK                 | select przez label; textarea `aria-label=Powód`; DOM snapshot                                                                                              |
+
+Zrzuty w `modules/14_ADMIN/evidence-superadmin-day15/`: light/dark × PL/EN, empty PL, catalog-error EN, dialog focus 1024 PL. P.6 nie jest zawyżone do pełnego PASS z powodu punktu 3.
 
 ## Zakres wykonany
 
-| Pozycja                                | Status                                   |
-| -------------------------------------- | ---------------------------------------- |
-| Blok 0: baza, marker, materiały, hooki | ZROBIONE_WG_DoD                          |
-| P.1                                    | ZROBIONE_WG_DoD                          |
-| P.2                                    | CZĘŚCIOWO / STOP Q.1 / niezacommitowane  |
-| P.3                                    | STOP — ZAPIS_BEZ_EGZEKWOWANIA            |
-| P.4                                    | CZĘŚCIOWO / STOP Q.1 / niezacommitowane  |
-| P.5                                    | n/d — brak nowej powierzchni             |
-| P.6                                    | NIE_WYKONANO — STOP przed renderem       |
-| T.1                                    | NIE_ZACZĘTE                              |
-| T.2                                    | ZROBIONE_WG_DoD                          |
-| T.3                                    | ZROBIONE_WG_DoD / STOP                   |
-| S.1–S.2                                | ZROBIONE_WG_DoD (realdb Q.3 w toku)      |
-| S.3                                    | ZROBIONE_WG_DoD                          |
-| S.4                                    | ZROBIONE_WG_DoD                          |
-| S.5                                    | CZĘŚCIOWO / BRAK_API                     |
-| A.1                                    | ZROBIONE_WG_DoD                          |
-| A.2                                    | ZROBIONE_WG_DoD                          |
-| A.3                                    | NIE_ZACZĘTE                              |
-| A.4                                    | CZĘŚCIOWO / NOT PROVEN                   |
-| Q.1                                    | STOP — nietykalny test 10/10 FAIL po P.4 |
-| Q.2–Q.3                                | CZĘŚCIOWO — jawne pakiety opisane wyżej  |
-| Q.4–Q.5                                | NIE_WYKONANO — STOP                      |
+| Pozycja                                | Status                                                                       |
+| -------------------------------------- | ---------------------------------------------------------------------------- |
+| Blok 0: baza, marker, materiały, hooki | ZROBIONE_WG_DoD                                                              |
+| P.1                                    | ZROBIONE_WG_DoD                                                              |
+| P.2                                    | ZROBIONE_WG_DoD                                                              |
+| P.3                                    | STOP — ZAPIS_BEZ_EGZEKWOWANIA                                                |
+| P.4                                    | ZROBIONE_WG_DoD                                                              |
+| P.5                                    | n/d — brak nowej powierzchni                                                 |
+| P.6                                    | CZĘŚCIOWO — 13/14 polish-pass                                                |
+| T.1                                    | NIE_ZACZĘTE                                                                  |
+| T.2                                    | ZROBIONE_WG_DoD                                                              |
+| T.3                                    | ZROBIONE_WG_DoD / STOP                                                       |
+| S.1–S.2                                | ZROBIONE_WG_DoD — realdb wykonany                                            |
+| S.3                                    | ZROBIONE_WG_DoD                                                              |
+| S.4                                    | ZROBIONE_WG_DoD                                                              |
+| S.5                                    | CZĘŚCIOWO / BRAK_API                                                         |
+| A.1                                    | ZROBIONE_WG_DoD                                                              |
+| A.2                                    | ZROBIONE_WG_DoD                                                              |
+| A.3                                    | NIE_ZACZĘTE                                                                  |
+| A.4                                    | CZĘŚCIOWO / NOT PROVEN                                                       |
+| Q.1                                    | PASS wg DEC-2026-08-25-83                                                    |
+| Q.2                                    | CZĘŚCIOWO — targeted contracts, nie każda powierzchnia ma osobne 4 przypadki |
+| Q.3                                    | CZĘŚCIOWO — realdb wykonany; scheduled-events BRAK_TABELI                    |
+| Q.4                                    | PASS — PL/EN 256/256, listy różnic puste                                     |
+| Q.5                                    | PASS — fixture i 7 PNG w jednym katalogu                                     |
 
-## Testy
+## §Q — testy końcowe i zasięg
 
-Testy bazowe i testy własne opisano powyżej. Żaden test pominięty przez `skipIf` nie jest raportowany jako PASS.
+Żaden test pominięty przez `skipIf` nie jest raportowany jako PASS. Pakiet realdb był faktycznie wykonany z `RUN_DB_TESTS=1`, `MOCK_DB=false` i PostgreSQL URL na porcie 4342.
+
+| Pakiet                                                          | Wynik                                                                                            |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| 10 jawnych plików Day 15 + adminP32 + TRI-MUST-12, w tym realdb | **78/78 PASS**, 10/10 plików                                                                     |
+| `src/views/superadmin/__tests__`                                | **18/18 PASS**, 4/4 pliki                                                                        |
+| `cross-org-idor.test.ts`                                        | **92 FAIL / 22 PASS**, identycznie przed/po; zastany mock nie eksportuje `validateOrgMembership` |
+| migracje świeża/powtórka/dry                                    | **840 / 0 / 0**                                                                                  |
+| check-list-canon                                                | **404 / baseline 404**, brak wzrostu                                                             |
+
+Zasięg: **ZASIĘG CZĘŚCIOWY**. Uruchomiono wszystkie nowe testy, całe `src/views/superadmin/__tests__`, istniejące pakiety adminP32 i TRI-MUST-12 oraz jawny szeroki cross-org. Nie uruchomiono pełnego Vitest/tsc repo — instrukcja tego zabrania. Nie uruchomiono katalogów wszystkich konsumentów współdzielonych routerów w całym monorepo; szeroki zastany pakiet pozostaje czerwony i nie był modyfikowany.
+
+Q.2 pozostaje **CZĘŚCIOWO**: własne request-level pakiety pokrywają happy/4xx/cross-org dla krytycznych tras, lecz nie każda zmieniona powierzchnia ma cztery osobne przypadki w izolowanym pliku (szczególnie A.2 i S.5 API usage ze schematem `BRAK_API`).
+
+Q.3 jest osobnym, nazwanym realdb pakietem i wykonał 6/6 PASS: foreign security session, foreign user bulk-delete (dwa wiersze zachowane SELECT-em), foreign admin-data session, foreign security event, tenant access requests i tenant audit logs. Macierz pozostaje **CZĘŚCIOWO**, ponieważ świeży replay 840 migracji nie tworzy tabeli `scheduled_events`; dwóch wymaganych skutków PUT/DELETE nie da się potwierdzić realnym SELECT-em bez wymyślenia tabeli. Oznaczenie: **BRAK_TABELI / BRAK_API**. `api_logs` ma osobno brak wymaganych kolumn (`api_key_id`, `tokens_used`, `cost`).
+
+### Osiem dowodów domknięcia
+
+1. Z18 global test infra: wynik pusty.
+2. Z16 effective access/capability: wynik pusty; `effectiveAccessService` nietknięty.
+3. Z11 nawigacja/router shell: wynik pusty.
+4. Migracje: wyłącznie `20260826_day15_audit_events_org_ts_index.sql`.
+5. Flagi/defaultValue: brak nowej flagi (P.5 n/d), brak dodanych `defaultValue`.
+6. Z17 wyjątki z uzasadnieniem: `dev-render/main.tsx` i nowy ekran wyłącznie dla P.6; nowe pliki `__tests__` dla Q.2/Q.3; istniejący `PlatformOperationsView.test.tsx` wyłącznie zatwierdzony mock DEC-83. Pozostałe pliki mieszczą się w allowliście.
+7. Kanon tabel: 404/baseline 404, brak nowych naruszeń.
+8. Hooki `.husky`; symlink wskazuje jawnie autoryzowany read-only katalog zależności; końcowy worktree czysty po commicie raportu.
 
 ## Czego NIE zrobiłem i dlaczego
 
@@ -229,4 +284,4 @@ Testy bazowe i testy własne opisano powyżej. Żaden test pominięty przez `ski
 - Symlink do zależności jest używany tylko do odczytu na podstawie jawnej autoryzacji nadzorcy z 2026-08-26; nie edytuję jego zawartości.
 - Nie uruchomiłem Railway ani żadnej operacji chmurowej — DEC-65/Z8.
 - Nie zmieniam zastanych 92 czerwonych testów z cudzych modułów ani globalnych mocków.
-- Jednorazowy kontener `cx-day15-pg` używał wyłącznie tmpfs `/var/lib/postgresql/data` (brak mountów/wolumenów) i został usunięty przez `docker rm -f cx-day15-pg`; końcowy filtr `docker ps -a` był pusty.
+- Jednorazowy kontener `cx-day15-pg` używał wyłącznie tmpfs `/var/lib/postgresql/data` (mounts `[]`, tmpfs jawny) i został usunięty po końcowym przebiegu Q. Filtry `docker ps -a --filter name=cx-day15` i `docker volume ls -q | grep -i cx-day15` były puste.
