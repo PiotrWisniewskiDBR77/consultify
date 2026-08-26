@@ -75,4 +75,37 @@ describe('meeting ICS invitation', () => {
     const ics = buildMeetingInvitationIcs(base);
     expect(ics).not.toContain('STATUS:CANCELLED');
   });
+
+  it('FIX-4: quotes a CN parameter value containing comma/colon instead of backslash-escaping it', () => {
+    // RFC 5545 §3.2 param-value grammar has no backslash escape at all — a
+    // value with COLON/SEMICOLON/COMMA must be wrapped in DQUOTE. Backslash-
+    // escaping (correct for content VALUEs) would previously have produced
+    // an ill-formed `CN=Doe\, Jane: Consulting` parameter.
+    const ics = buildMeetingInvitationIcs({
+      ...base,
+      organizer: { email: 'owner@example.com', displayName: 'Doe, Jane: Consulting' },
+      attendees: [
+        {
+          email: 'guest@example.com',
+          displayName: 'Smith; Bob',
+          invitationStatus: 'accepted' as const,
+        },
+      ],
+    });
+    expect(ics).toContain('ORGANIZER;CN="Doe, Jane: Consulting":mailto:owner@example.com');
+    expect(ics).toContain('ATTENDEE;CN="Smith; Bob";ROLE=');
+    expect(ics).not.toContain('CN=Doe\\,');
+  });
+
+  it('FIX-4: strips DQUOTE and CR/LF from a CN parameter value', () => {
+    const ics = buildMeetingInvitationIcs({
+      ...base,
+      organizer: {
+        email: 'owner@example.com',
+        displayName: 'Weird "Quote"\r\nName, Inc.',
+      },
+    });
+    expect(ics).toContain('ORGANIZER;CN="Weird Quote' + 'Name, Inc.":mailto:owner@example.com');
+    expect(ics).not.toContain('"Weird "Quote"');
+  });
 });

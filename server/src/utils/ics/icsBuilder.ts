@@ -6,6 +6,21 @@ export function escapeIcsText(value: string): string {
     .replace(/;/g, '\\;');
 }
 
+// FIX-4 (P2, 2026-08-26): parameter values (e.g. CN=...) follow a different
+// escaping rule from property VALUEs. RFC 5545 §3.2 param-value grammar has
+// no backslash-escape mechanism at all — a value containing COLON,
+// SEMICOLON, or COMMA must instead be wrapped in DQUOTE (a quoted-string).
+// The previous code ran participant/organizer display names through
+// escapeIcsText (backslash-escaping, correct for content VALUEs like
+// SUMMARY/DESCRIPTION) which is invalid here: `CN=Doe\, Jane` is not
+// well-formed ICS and readers may parse the comma as ending the CN value.
+// DQUOTE cannot itself appear inside a quoted-string (no escape for it), and
+// CR/LF must never appear in an unfolded parameter, so both are stripped.
+export function formatIcsParamValue(value: string): string {
+  const sanitized = value.replace(/[\r\n"]/g, '');
+  return /[,;:]/.test(sanitized) ? `"${sanitized}"` : sanitized;
+}
+
 export function formatIcsDate(value: string | Date): string {
   const date = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(date.getTime())) throw new Error('Invalid ICS date');
@@ -46,7 +61,7 @@ const partStat = (status: IcsParticipant['invitationStatus']): string => {
 
 const participantLine = (participant: IcsParticipant): string => {
   const role = participant.role === 'optional' ? 'OPT-PARTICIPANT' : 'REQ-PARTICIPANT';
-  const name = escapeIcsText(participant.displayName || participant.email);
+  const name = formatIcsParamValue(participant.displayName || participant.email);
   return `ATTENDEE;CN=${name};ROLE=${role};PARTSTAT=${partStat(participant.invitationStatus)};RSVP=TRUE:mailto:${participant.email}`;
 };
 
@@ -83,7 +98,7 @@ export function buildMeetingInvitationIcs(input: MeetingInvitationIcsInput): str
     `SUMMARY:${escapeIcsText(input.title)}`,
     `DESCRIPTION:${escapeIcsText(input.description || '')}`,
     `LOCATION:${escapeIcsText(input.location || '')}`,
-    `ORGANIZER;CN=${escapeIcsText(input.organizer.displayName || input.organizer.email)}:mailto:${input.organizer.email}`,
+    `ORGANIZER;CN=${formatIcsParamValue(input.organizer.displayName || input.organizer.email)}:mailto:${input.organizer.email}`,
   ];
   if (method === 'CANCEL') {
     // FIX-3 (P2, 2026-08-26): RFC 5546 §3.2.5 requires a CANCEL component to
