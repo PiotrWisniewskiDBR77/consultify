@@ -10,14 +10,20 @@
  *   - jeden „Zapisz zmiany" w panelu stanu zamiast per-ekranowych przycisków.
  *
  * Żelazna zasada projektu (CLAUDE.md §7): wygląd wchodzi na demo DOPIERO po
- * akcepcie właściciela na REALNYCH zrzutach — więc flaga jest DEFAULT OFF.
+ * akcepcie właściciela na REALNYCH zrzutach. Ekran wzorcowy „Tożsamość i model
+ * działania" przeszedł ten odbiór 2026-08-24 (DEC-2026-08-24-11), a zakres
+ * pozostałych 10 ekranów + anatomia karty (pochodzenie faktu, „Szczegóły
+ * techniczne", karty Gotowość 5 wymiarów, karta Pliki „Używany w") — 2026-08-26
+ * na prototypie `organization-prototyp-{uklad,gotowosc}.html`
+ * (DEC-2026-08-26-78). Od tego odbioru flaga jest DEFAULT ON.
  *
- * OFF (default) → Organizacja renderuje się bajt w bajt jak dziś: 21 pozycji
+ * OFF → Organizacja renderuje się bajt w bajt jak przed redesignem: 21 pozycji
  * nawigacji w 6 grupach, stare komponenty ekranów, nagłówek z „Save Changes"
- * przez `SettingsHeaderActionPortal`.
- * ON → nawigacja pokazuje 11 skonsolidowanych ekranów, treść jest opakowana
- * w `OrganizationScreenShell`, a ekran wzorcowy „Tożsamość i model działania"
- * renderuje nowy, skonsolidowany widok profilu.
+ * przez `SettingsHeaderActionPortal`. Zostaje jako awaryjny wyłącznik
+ * (CLAUDE.md §8 — przycisk cofania), nie jako ścieżka domyślna.
+ * ON (default) → nawigacja pokazuje 11 skonsolidowanych ekranów, treść jest
+ * opakowana w `OrganizationScreenShell`, ekran wzorcowy „Tożsamość i model
+ * działania" renderuje nowy, skonsolidowany widok profilu.
  *
  * Wzorzec 1:1 z `src/utils/drdReportFlag.ts`.
  *
@@ -25,7 +31,7 @@
  *   1. URL query `?ff_org_redesign_v1=0|1` — bypass operatora / dev / dev-render.
  *   2. `localStorage["ff.orgRedesignV1"]` — override user / org.
  *   3. `import.meta.env.VITE_ORG_REDESIGN_V1_ENABLED` — build-time.
- *   4. Default: OFF.
+ *   4. Default: ON (DEC-2026-08-26-78).
  */
 
 const LS_KEY = 'ff.orgRedesignV1';
@@ -44,9 +50,10 @@ function readEnvFlag(): boolean {
   try {
     const meta = import.meta as unknown as { env?: Record<string, string | undefined> };
     const parsed = parseFlag(meta?.env?.[ENV_KEY]);
-    return parsed === null ? false : parsed;
+    // DEC-2026-08-26-78: brak build-time override → domyślnie ON.
+    return parsed === null ? true : parsed;
   } catch {
-    return false;
+    return true;
   }
 }
 

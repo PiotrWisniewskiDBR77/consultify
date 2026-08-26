@@ -3,9 +3,12 @@
  *
  * Flaga redesignu Organizacji (`orgRedesignV1`).
  *
- * DEFAULT OFF jest tu NOŚNY, nie kosmetyczny: dopóki właściciel nie zaakceptuje
- * realnych zrzutów, moduł 01 musi wyglądać dokładnie jak dziś (CLAUDE.md §7 —
- * „Piotr nigdy nie jest pierwszym testerem wizualnym").
+ * DEFAULT ON od DEC-2026-08-26-78: ekran wzorcowy przeszedł odbiór na
+ * realnych zrzutach 2026-08-24 (DEC-2026-08-24-11), zakres 11 ekranów +
+ * anatomia karty (pochodzenie faktu, „Szczegóły techniczne", 5 wymiarów
+ * Gotowości) — 2026-08-26 na prototypie zaakceptowanym przez właściciela
+ * (CLAUDE.md §7). Flaga OFF zostaje jako awaryjny wyłącznik (§8), nie jako
+ * ścieżka domyślna.
  */
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -31,28 +34,32 @@ describe('isOrgRedesignV1Enabled', () => {
     setLocationSearch('');
   });
 
-  it('domyślnie OFF', () => {
-    expect(isOrgRedesignV1Enabled()).toBe(false);
+  it('domyślnie ON (DEC-2026-08-26-78)', () => {
+    expect(isOrgRedesignV1Enabled()).toBe(true);
   });
 
-  it('localStorage włącza i wyłącza', () => {
-    window.localStorage.setItem(ORG_REDESIGN_V1_FLAG_KEYS.localStorage, '1');
-    expect(isOrgRedesignV1Enabled()).toBe(true);
+  it('localStorage wyłącza — awaryjny wyłącznik CLAUDE.md §8', () => {
     window.localStorage.setItem(ORG_REDESIGN_V1_FLAG_KEYS.localStorage, 'off');
     expect(isOrgRedesignV1Enabled()).toBe(false);
+    window.localStorage.setItem(ORG_REDESIGN_V1_FLAG_KEYS.localStorage, '1');
+    expect(isOrgRedesignV1Enabled()).toBe(true);
   });
 
   it('query wygrywa nad localStorage', () => {
-    window.localStorage.setItem(ORG_REDESIGN_V1_FLAG_KEYS.localStorage, '1');
+    window.localStorage.setItem(ORG_REDESIGN_V1_FLAG_KEYS.localStorage, '0');
+    setLocationSearch(`?${ORG_REDESIGN_V1_FLAG_KEYS.query}=1`);
+    expect(isOrgRedesignV1Enabled()).toBe(true);
     setLocationSearch(`?${ORG_REDESIGN_V1_FLAG_KEYS.query}=0`);
     expect(isOrgRedesignV1Enabled()).toBe(false);
   });
 
-  it('śmieciowa wartość spada do niższego priorytetu, nie włącza flagi', () => {
+  it('śmieciowa wartość spada do niższego priorytetu, nie zmienia wyniku', () => {
     setLocationSearch(`?${ORG_REDESIGN_V1_FLAG_KEYS.query}=banana`);
-    expect(isOrgRedesignV1Enabled()).toBe(false);
-    window.localStorage.setItem(ORG_REDESIGN_V1_FLAG_KEYS.localStorage, 'true');
     expect(isOrgRedesignV1Enabled()).toBe(true);
+    window.localStorage.setItem(ORG_REDESIGN_V1_FLAG_KEYS.localStorage, 'banana');
+    expect(isOrgRedesignV1Enabled()).toBe(true);
+    window.localStorage.setItem(ORG_REDESIGN_V1_FLAG_KEYS.localStorage, 'off');
+    expect(isOrgRedesignV1Enabled()).toBe(false);
   });
 
   it('klucze flagi są stabilne', () => {

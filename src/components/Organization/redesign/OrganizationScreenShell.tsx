@@ -1,9 +1,13 @@
 /**
  * OrganizationScreenShell — JEDEN szkielet dla WSZYSTKICH 11 ekranów Organizacji
- * po konsolidacji (redesign v1, flaga `orgRedesignV1`, default OFF).
+ * po konsolidacji (redesign v1, flaga `orgRedesignV1`, default ON od
+ * DEC-2026-08-26-78).
  *
- * Wzorzec WIĄŻĄCY: `org-prototyp-wzorzec.html` + zrzuty proto-light/proto-dark
- * (akcept właściciela 2026-08-24). Mapa treści: `org-konsolidacja-propozycja.md`.
+ * Wzorzec WIĄŻĄCY: `org-prototyp-wzorzec.html` + `organization-prototyp-
+ * {uklad,gotowosc}.html` + zrzuty proto-light/proto-dark (akcept właściciela
+ * 2026-08-24 i 2026-08-26). Mapa treści: `org-konsolidacja-propozycja.md`.
+ * Menu 2 to PIGUŁKI sekcji (`StandardModuleBar` `tabs`), nie pasek zakładek
+ * poziomych — DEC-2026-08-26-78 wymaga braku zakładek poziomych w module.
  *
  * Szkielet (§5.1 dokumentu konsolidacji — „bez wyjątków"):
  *   nagłówek breadcrumb (poza tym komponentem — DomainScreenHeader w widoku)
