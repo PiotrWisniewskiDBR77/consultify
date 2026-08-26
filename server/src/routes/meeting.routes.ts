@@ -12,6 +12,13 @@ import {
   proposeMeetingNote,
 } from '../services/meetingBoundary/meetingBoundaryService.js';
 import {
+  addMeetingParticipant,
+  deleteMeetingParticipant,
+  listMeetingParticipants,
+  updateMeetingParticipant,
+} from '../services/meeting/meetingDay16Service.js';
+import { sendMeetingInvitations } from '../services/meeting/meetingInvitationService.js';
+import {
   createMeetingDecisionRecord,
   createMeetingFollowUpRecord,
   createMeeting,
@@ -134,6 +141,83 @@ function denyMeetingAccess(res: Response): Response {
   return res.status(404).json({ error: 'Meeting not found' });
 }
 
+// FIX-2 (P1-2, 2026-08-26): recurrenceRule used to flow straight from the
+// request body into icsBuilder's RRULE line with no server-side validation —
+// a CR/LF in the string let a caller inject arbitrary extra ICS lines (e.g.
+// a spoofed ATTENDEE/ORGANIZER) into every invite generated for that
+// meeting. Whitelist the RRULE grammar we actually support instead of trying
+// to blacklist dangerous characters.
+const RRULE_ALLOWED_KEYS = new Set([
+  'FREQ',
+  'INTERVAL',
+  'COUNT',
+  'UNTIL',
+  'BYDAY',
+  'BYMONTHDAY',
+  'BYMONTH',
+  'WKST',
+]);
+const RRULE_FREQ_VALUES = new Set(['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY']);
+// Alphanumeric, comma, minus only — this alphabet cannot express a CR/LF or
+// an extra ";KEY=VALUE" segment, so it rules out line injection by
+// construction rather than by trying to enumerate bad characters.
+const RRULE_VALUE_RE = /^[A-Za-z0-9,-]+$/;
+const RRULE_UNTIL_RE = /^[0-9]{8}(T[0-9]{6}Z?)?$/;
+
+export function validateRecurrenceRule(value: string): { ok: true } | { ok: false; error: string } {
+  const raw = value.replace(/^RRULE:/i, '');
+  if (/[\r\n]/.test(value)) {
+    return { ok: false, error: 'recurrenceRule must not contain line breaks' };
+  }
+  if (!raw.trim()) {
+    return { ok: false, error: 'recurrenceRule must not be empty' };
+  }
+  const seen = new Set<string>();
+  let hasFreq = false;
+  for (const segment of raw.split(';')) {
+    const eq = segment.indexOf('=');
+    if (eq <= 0) {
+      return { ok: false, error: `recurrenceRule has an invalid segment: "${segment}"` };
+    }
+    const key = segment.slice(0, eq).toUpperCase();
+    const val = segment.slice(eq + 1);
+    if (!RRULE_ALLOWED_KEYS.has(key)) {
+      return { ok: false, error: `recurrenceRule has an unsupported key: "${key}"` };
+    }
+    if (seen.has(key)) {
+      return { ok: false, error: `recurrenceRule repeats key: "${key}"` };
+    }
+    seen.add(key);
+    if (key === 'UNTIL') {
+      if (!RRULE_UNTIL_RE.test(val)) {
+        return { ok: false, error: 'recurrenceRule UNTIL must be an ICS date/date-time (e.g. 20261231T235959Z)' };
+      }
+    } else if (!RRULE_VALUE_RE.test(val)) {
+      return { ok: false, error: `recurrenceRule has an invalid value for ${key}: "${val}"` };
+    }
+    if (key === 'FREQ') {
+      hasFreq = true;
+      if (!RRULE_FREQ_VALUES.has(val.toUpperCase())) {
+        return { ok: false, error: 'recurrenceRule FREQ must be DAILY, WEEKLY, MONTHLY or YEARLY' };
+      }
+    }
+  }
+  if (!hasFreq) {
+    return { ok: false, error: 'recurrenceRule must include FREQ' };
+  }
+  return { ok: true };
+}
+
+function isValidIanaTimezone(value: string): boolean {
+  if (!value || value === 'UTC') return value === 'UTC';
+  try {
+    new Intl.DateTimeFormat('en', { timeZone: value }).format();
+    return value.includes('/');
+  } catch {
+    return false;
+  }
+}
+
 function hasDirectMeetingOutputs(body: unknown): boolean {
   if (!body || typeof body !== 'object' || Array.isArray(body)) return false;
   const value = body as Record<string, unknown>;
@@ -207,6 +291,18 @@ router.post(
     if (!title || !startAt) {
       return res.status(400).json({ error: 'title and startAt are required' });
     }
+    const timezone = String(req.body?.timezone || '').trim();
+    if (timezone && !isValidIanaTimezone(timezone)) {
+      return res.status(400).json({ error: 'timezone must be a valid IANA identifier' });
+    }
+    const recurrenceRuleInput =
+      typeof req.body?.recurrenceRule === 'string' && req.body.recurrenceRule.trim()
+        ? req.body.recurrenceRule.trim()
+        : null;
+    if (recurrenceRuleInput) {
+      const validation = validateRecurrenceRule(recurrenceRuleInput);
+      if (!validation.ok) return res.status(400).json({ error: validation.error });
+    }
     if (hasDirectMeetingOutputs(req.body)) return rejectDirectMeetingOutputs(res);
 
     const meeting = await createMeeting({
@@ -219,6 +315,8 @@ router.post(
       title,
       startAt,
       endAt,
+      timezone: timezone || null,
+      recurrenceRule: recurrenceRuleInput,
       location: req.body?.location,
       attendees: Array.isArray(req.body?.attendees) ? req.body.attendees : [],
       preRead: Array.isArray(req.body?.preRead) ? req.body.preRead : [],
@@ -245,6 +343,16 @@ router.put(
       return res.status(400).json({ error: 'startAt cannot be empty' });
     }
     if (hasDirectMeetingOutputs(req.body)) return rejectDirectMeetingOutputs(res);
+    if (
+      req.body?.timezone !== undefined &&
+      !isValidIanaTimezone(String(req.body.timezone || '').trim())
+    ) {
+      return res.status(400).json({ error: 'timezone must be a valid IANA identifier' });
+    }
+    if (typeof req.body?.recurrenceRule === 'string' && req.body.recurrenceRule.trim()) {
+      const validation = validateRecurrenceRule(req.body.recurrenceRule.trim());
+      if (!validation.ok) return res.status(400).json({ error: validation.error });
+    }
     const existing = await getMeeting({
       organizationId: orgId,
       meetingId: String(req.params.id),
@@ -258,6 +366,12 @@ router.put(
       title: typeof req.body?.title === 'string' ? req.body.title : undefined,
       startAt: typeof req.body?.startAt === 'string' ? req.body.startAt : undefined,
       endAt: typeof req.body?.endAt === 'string' ? req.body.endAt : undefined,
+      timezone:
+        typeof req.body?.timezone === 'string' ? req.body.timezone.trim() || null : undefined,
+      recurrenceRule:
+        req.body?.recurrenceRule === null || typeof req.body?.recurrenceRule === 'string'
+          ? req.body.recurrenceRule
+          : undefined,
       location: req.body?.location,
       attendees: Array.isArray(req.body?.attendees) ? req.body.attendees : undefined,
       preRead: Array.isArray(req.body?.preRead) ? req.body.preRead : undefined,
@@ -265,6 +379,156 @@ router.put(
     });
     if (!meeting) return res.status(404).json({ error: 'Meeting not found' });
     return res.json({ meeting });
+  })
+);
+
+router.get(
+  '/:id/participants',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const meeting = await getMeeting({ organizationId: orgId, meetingId: String(req.params.id) });
+    if (!canAccessMeeting(req, meeting)) return denyMeetingAccess(res);
+    const participants = await listMeetingParticipants({
+      organizationId: orgId,
+      meetingId: meeting!.id,
+    });
+    return res.json({ participants });
+  })
+);
+
+router.post(
+  '/:id/participants',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    const userId = req.user?.id;
+    if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
+    const meeting = await getMeeting({ organizationId: orgId, meetingId: String(req.params.id) });
+    if (!meeting) return res.status(404).json({ error: 'Meeting not found' });
+    if (!isMeetingAdmin(req) && meeting.createdBy !== userId) return denyMeetingAccess(res);
+    const participantKind = req.body?.participantKind;
+    if (participantKind !== 'user' && participantKind !== 'guest') {
+      return res.status(400).json({ error: 'participantKind must be user or guest' });
+    }
+    try {
+      const participant = await addMeetingParticipant({
+        organizationId: orgId,
+        meetingId: meeting.id,
+        invitedBy: userId,
+        participantKind,
+        userId: typeof req.body?.userId === 'string' ? req.body.userId : undefined,
+        email: typeof req.body?.email === 'string' ? req.body.email : undefined,
+        displayName: typeof req.body?.displayName === 'string' ? req.body.displayName : undefined,
+        role: req.body?.role === 'optional' ? 'optional' : 'attendee',
+      });
+      return res.status(201).json({ participant });
+    } catch (error: unknown) {
+      const code = String((error as Error).message);
+      if (
+        ['PARTICIPANT_USER_NOT_FOUND', 'INVALID_GUEST_EMAIL', 'PARTICIPANT_DUPLICATE'].includes(
+          code
+        )
+      ) {
+        return res.status(400).json({ error: code });
+      }
+      throw error;
+    }
+  })
+);
+
+router.patch(
+  '/:id/participants/:participantId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    const userId = req.user?.id;
+    if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
+    const meeting = await getMeeting({ organizationId: orgId, meetingId: String(req.params.id) });
+    if (!meeting) return res.status(404).json({ error: 'Meeting not found' });
+    const participants = await listMeetingParticipants({
+      organizationId: orgId,
+      meetingId: meeting.id,
+    });
+    const current = participants.find((item) => item.id === String(req.params.participantId));
+    if (!current) return res.status(404).json({ error: 'Participant not found' });
+    const canManage = isMeetingAdmin(req) || meeting.createdBy === userId;
+    if (!canManage && current.userId !== userId)
+      return res.status(403).json({ error: 'Forbidden' });
+    if (!canManage && req.body?.role !== undefined)
+      return res.status(403).json({ error: 'Forbidden' });
+    const status = req.body?.invitationStatus;
+    if (
+      status !== undefined &&
+      !['invited', 'accepted', 'declined', 'tentative', 'no_response'].includes(status)
+    ) {
+      return res.status(400).json({ error: 'Invalid invitationStatus' });
+    }
+    const participant = await updateMeetingParticipant({
+      organizationId: orgId,
+      meetingId: meeting.id,
+      participantId: current.id,
+      role:
+        canManage && (req.body?.role === 'attendee' || req.body?.role === 'optional')
+          ? req.body.role
+          : undefined,
+      invitationStatus: status,
+    });
+    return res.json({ participant });
+  })
+);
+
+router.delete(
+  '/:id/participants/:participantId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    const userId = req.user?.id;
+    if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
+    const meeting = await getMeeting({ organizationId: orgId, meetingId: String(req.params.id) });
+    if (!meeting) return res.status(404).json({ error: 'Meeting not found' });
+    if (!isMeetingAdmin(req) && meeting.createdBy !== userId) return denyMeetingAccess(res);
+    const result = await deleteMeetingParticipant({
+      organizationId: orgId,
+      meetingId: meeting.id,
+      participantId: String(req.params.participantId),
+    });
+    if (result === 'not_found') return res.status(404).json({ error: 'Participant not found' });
+    if (result === 'organizer')
+      return res.status(400).json({ error: 'Organizer cannot be removed' });
+    return res.json({ deleted: true });
+  })
+);
+
+router.post(
+  '/:id/invitations/send',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    const userId = req.user?.id;
+    if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
+    const meeting = await getMeeting({ organizationId: orgId, meetingId: String(req.params.id) });
+    if (!meeting) return res.status(404).json({ error: 'Meeting not found' });
+    if (!isMeetingAdmin(req) && meeting.createdBy !== userId) {
+      return res.status(403).json({ error: 'Organizer or admin role required' });
+    }
+    const participantIds = req.body?.participantIds;
+    if (participantIds !== undefined && !Array.isArray(participantIds)) {
+      return res.status(400).json({ error: 'participantIds must be an array' });
+    }
+    try {
+      const deliveries = await sendMeetingInvitations({
+        organizationId: orgId,
+        meetingId: meeting.id,
+        actorId: userId,
+        participantIds: Array.isArray(participantIds)
+          ? participantIds.map((item: unknown) => String(item))
+          : undefined,
+        method: req.body?.method === 'CANCEL' ? 'CANCEL' : 'REQUEST',
+      });
+      return res.json({ deliveries });
+    } catch (error: unknown) {
+      if (String((error as Error).message) === 'ORGANIZER_EMAIL_REQUIRED') {
+        return res.status(409).json({ error: 'Organizer email is required' });
+      }
+      throw error;
+    }
   })
 );
 

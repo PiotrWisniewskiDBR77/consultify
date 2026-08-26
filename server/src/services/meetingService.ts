@@ -47,6 +47,13 @@ export interface MeetingRecord {
   title: string;
   startAt: string;
   endAt: string;
+  timezone: string | null;
+  recurrenceRule: string | null;
+  recurrenceParentId: string | null;
+  recurrenceExceptionAt: string | null;
+  recurrenceStatus: 'modified' | 'cancelled' | null;
+  splitFromMeetingId: string | null;
+  invitationSequence: number;
   location: string;
   attendees: string[];
   preRead: string[];
@@ -66,6 +73,13 @@ type MeetingRow = {
   title: string;
   start_at: string;
   end_at: string;
+  timezone?: string | null;
+  recurrence_rule?: string | null;
+  recurrence_parent_id?: string | null;
+  recurrence_exception_at?: string | null;
+  recurrence_status?: string | null;
+  split_from_meeting_id?: string | null;
+  invitation_sequence?: number | null;
   location: string | null;
   attendees_json: string | null;
   pre_read_json: string | null;
@@ -107,6 +121,16 @@ function mapMeeting(row: MeetingRow, followUps: MeetingFollowUp[]): MeetingRecor
     title: row.title,
     startAt: row.start_at,
     endAt: row.end_at,
+    timezone: row.timezone || null,
+    recurrenceRule: row.recurrence_rule || null,
+    recurrenceParentId: row.recurrence_parent_id || null,
+    recurrenceExceptionAt: row.recurrence_exception_at || null,
+    recurrenceStatus:
+      row.recurrence_status === 'modified' || row.recurrence_status === 'cancelled'
+        ? row.recurrence_status
+        : null,
+    splitFromMeetingId: row.split_from_meeting_id || null,
+    invitationSequence: Number(row.invitation_sequence || 0),
     location: row.location || '',
     attendees: safeJsonArray(row.attendees_json),
     preRead: safeJsonArray(row.pre_read_json),
@@ -221,6 +245,8 @@ export async function createMeeting(input: {
   title: string;
   startAt: string;
   endAt: string;
+  timezone?: string | null;
+  recurrenceRule?: string | null;
   location?: string | null;
   attendees?: string[];
   preRead?: string[];
@@ -252,6 +278,13 @@ export async function createMeeting(input: {
       now,
     ]
   );
+  if (input.timezone || input.recurrenceRule) {
+    await dbRun(
+      `UPDATE meetings SET timezone = ?, recurrence_rule = ?
+       WHERE id = ? AND organization_id = ?`,
+      [input.timezone || null, input.recurrenceRule || null, id, input.organizationId]
+    );
+  }
   const created = await getMeeting({ organizationId: input.organizationId, meetingId: id });
   if (!created) throw new Error('Failed to create meeting');
   return created;
@@ -263,6 +296,8 @@ export async function updateMeeting(input: {
   title?: string;
   startAt?: string;
   endAt?: string;
+  timezone?: string | null;
+  recurrenceRule?: string | null;
   location?: string | null;
   attendees?: string[];
   preRead?: string[];
@@ -289,6 +324,14 @@ export async function updateMeeting(input: {
   if (typeof input.endAt === 'string') {
     sets.push('end_at = ?');
     params.push(input.endAt.trim() || existing.startAt);
+  }
+  if (input.timezone !== undefined) {
+    sets.push('timezone = ?');
+    params.push(input.timezone || null);
+  }
+  if (input.recurrenceRule !== undefined) {
+    sets.push('recurrence_rule = ?');
+    params.push(input.recurrenceRule || null);
   }
   if (input.location !== undefined) {
     sets.push('location = ?');

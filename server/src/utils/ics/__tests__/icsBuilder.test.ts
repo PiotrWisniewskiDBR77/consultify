@@ -1,0 +1,135 @@
+import { describe, expect, it } from 'vitest';
+
+import { buildMeetingInvitationIcs } from '../icsBuilder.js';
+
+const base = {
+  uid: 'meeting-1@consultify',
+  title: 'Review, plan; next',
+  startAt: '2026-08-26T08:00:00.000Z',
+  endAt: '2026-08-26T09:00:00.000Z',
+  timezone: 'Europe/Warsaw',
+  organizer: { email: 'owner@example.com', displayName: 'Owner' },
+  attendees: [
+    {
+      email: 'guest@example.com',
+      displayName: 'Guest',
+      invitationStatus: 'accepted' as const,
+    },
+  ],
+};
+
+describe('meeting ICS invitation', () => {
+  it('builds REQUEST with UTC start/end, organizer and attendee', () => {
+    // FIX-1 (P1-1/P1-4): DTSTART/DTEND must be plain UTC ("Z" suffix), never
+    // a TZID-qualified local time built from an un-converted UTC instant —
+    // that previously produced a 2h error for Europe/Warsaw. The meeting's
+    // configured zone is still surfaced, but only as an informational
+    // X-property that cannot desync the actual instant.
+    const ics = buildMeetingInvitationIcs(base);
+    expect(ics).toContain('METHOD:REQUEST');
+    expect(ics).toContain('DTSTART:20260826T080000Z');
+    expect(ics).toContain('DTEND:20260826T090000Z');
+    expect(ics).not.toMatch(/DTSTART;TZID/);
+    expect(ics).not.toMatch(/DTEND;TZID/);
+    expect(ics).not.toContain('BEGIN:VTIMEZONE');
+    expect(ics).toContain('X-CONSULTIFY-TIMEZONE:Europe/Warsaw');
+    expect(ics).toContain('ORGANIZER;CN=Owner:mailto:owner@example.com');
+    expect(ics).toContain('PARTSTAT=ACCEPTED');
+  });
+
+  it('keeps a recurrence rule', () => {
+    expect(buildMeetingInvitationIcs({ ...base, recurrenceRule: 'FREQ=WEEKLY;COUNT=4' })).toContain(
+      'RRULE:FREQ=WEEKLY;COUNT=4'
+    );
+  });
+
+  it('FIX-2: strips CR/LF from recurrenceRule as defense in depth against line injection', () => {
+    // The route layer (meeting.routes.ts validateRecurrenceRule) is the
+    // primary guard and rejects this with 400 before it ever reaches the
+    // builder — this test proves the builder does not blindly trust that and
+    // would neutralise an injected line break even if it arrived here anyway.
+    const malicious = 'FREQ=WEEKLY\r\nATTENDEE;CN=Attacker:mailto:attacker@evil.example';
+    const ics = buildMeetingInvitationIcs({ ...base, recurrenceRule: malicious });
+    // The injected text survives as inert content glued onto the RRULE value
+    // — the point is that it must NOT become its own ICS line (no separate
+    // spoofed ATTENDEE property).
+    const lines = ics.split('\r\n');
+    expect(lines).not.toContain('ATTENDEE;CN=Attacker:mailto:attacker@evil.example');
+    expect(ics).toContain('RRULE:FREQ=WEEKLYATTENDEE;CN=Attacker:mailto:attacker@evil.example');
+  });
+
+  it('emits an update sequence', () => {
+    expect(buildMeetingInvitationIcs({ ...base, sequence: 3 })).toContain('SEQUENCE:3');
+  });
+
+  it('emits cancellation with STATUS:CANCELLED and escapes text', () => {
+    // FIX-3 (P2, 2026-08-26): RFC 5546 §3.2.5 requires STATUS:CANCELLED on a
+    // CANCEL component — some clients otherwise treat it as a normal update.
+    const ics = buildMeetingInvitationIcs({ ...base, method: 'CANCEL' });
+    expect(ics).toContain('METHOD:CANCEL');
+    expect(ics).toContain('STATUS:CANCELLED');
+    expect(ics).toContain('SUMMARY:Review\\, plan\\; next');
+  });
+
+  it('does not emit STATUS:CANCELLED for a REQUEST', () => {
+    const ics = buildMeetingInvitationIcs(base);
+    expect(ics).not.toContain('STATUS:CANCELLED');
+  });
+
+  it('FIX-4: quotes a CN parameter value containing comma/colon instead of backslash-escaping it', () => {
+    // RFC 5545 §3.2 param-value grammar has no backslash escape at all — a
+    // value with COLON/SEMICOLON/COMMA must be wrapped in DQUOTE. Backslash-
+    // escaping (correct for content VALUEs) would previously have produced
+    // an ill-formed `CN=Doe\, Jane: Consulting` parameter.
+    const ics = buildMeetingInvitationIcs({
+      ...base,
+      organizer: { email: 'owner@example.com', displayName: 'Doe, Jane: Consulting' },
+      attendees: [
+        {
+          email: 'guest@example.com',
+          displayName: 'Smith; Bob',
+          invitationStatus: 'accepted' as const,
+        },
+      ],
+    });
+    expect(ics).toContain('ORGANIZER;CN="Doe, Jane: Consulting":mailto:owner@example.com');
+    expect(ics).toContain('ATTENDEE;CN="Smith; Bob";ROLE=');
+    expect(ics).not.toContain('CN=Doe\\,');
+  });
+
+  it('FIX-5: folds a long SUMMARY line at 75 octets per RFC 5545 §3.1', () => {
+    const longTitle = 'A'.repeat(120);
+    const ics = buildMeetingInvitationIcs({ ...base, title: longTitle });
+    const physicalLines = ics.split('\r\n');
+    // Every physical line (as actually transmitted) must be <= 75 octets.
+    for (const line of physicalLines) {
+      expect(Buffer.byteLength(line, 'utf8')).toBeLessThanOrEqual(75);
+    }
+    // The SUMMARY value was split across at least one continuation line,
+    // each of which starts with exactly one space (the fold marker).
+    const summaryStart = physicalLines.findIndex((line) => line.startsWith('SUMMARY:'));
+    expect(summaryStart).toBeGreaterThanOrEqual(0);
+    expect(physicalLines[summaryStart + 1]?.startsWith(' ')).toBe(true);
+    // Unfolding (drop CRLF immediately followed by a single space) must
+    // reconstruct the exact original SUMMARY value.
+    const unfolded = ics.replace(/\r\n /g, '');
+    expect(unfolded).toContain(`SUMMARY:${longTitle}`);
+  });
+
+  it('FIX-5: does not fold a short line', () => {
+    const ics = buildMeetingInvitationIcs(base);
+    expect(ics.split('\r\n')).toContain('METHOD:REQUEST');
+  });
+
+  it('FIX-4: strips DQUOTE and CR/LF from a CN parameter value', () => {
+    const ics = buildMeetingInvitationIcs({
+      ...base,
+      organizer: {
+        email: 'owner@example.com',
+        displayName: 'Weird "Quote"\r\nName, Inc.',
+      },
+    });
+    expect(ics).toContain('ORGANIZER;CN="Weird Quote' + 'Name, Inc.":mailto:owner@example.com');
+    expect(ics).not.toContain('"Weird "Quote"');
+  });
+});

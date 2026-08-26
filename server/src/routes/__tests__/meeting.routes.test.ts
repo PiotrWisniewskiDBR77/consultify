@@ -156,6 +156,55 @@ describe('meeting routes', () => {
     expect(mockCreate).not.toHaveBeenCalled();
   });
 
+  // FIX-2 (P1-2, 2026-08-26): recurrenceRule used to flow straight into the
+  // generated ICS RRULE line with no server-side validation — a CR/LF let a
+  // caller inject arbitrary extra ICS lines into every invite for that
+  // meeting. POST and PUT now validate against a strict whitelist grammar.
+  it('POST / rejects a recurrenceRule containing a line break (ICS injection)', async () => {
+    const res = await request(createApp())
+      .post('/api/meeting')
+      .send({
+        title: 'Kickoff',
+        startAt: '2026-07-01T10:00:00.000Z',
+        recurrenceRule: 'FREQ=WEEKLY\r\nATTENDEE;CN=Attacker:mailto:attacker@evil.example',
+      });
+    expect(res.status).toBe(400);
+    expect(mockCreate).not.toHaveBeenCalled();
+  });
+
+  it('POST / rejects a recurrenceRule missing FREQ', async () => {
+    const res = await request(createApp()).post('/api/meeting').send({
+      title: 'Kickoff',
+      startAt: '2026-07-01T10:00:00.000Z',
+      recurrenceRule: 'COUNT=4',
+    });
+    expect(res.status).toBe(400);
+    expect(mockCreate).not.toHaveBeenCalled();
+  });
+
+  it('POST / rejects a recurrenceRule with an unsupported key', async () => {
+    const res = await request(createApp()).post('/api/meeting').send({
+      title: 'Kickoff',
+      startAt: '2026-07-01T10:00:00.000Z',
+      recurrenceRule: 'FREQ=WEEKLY;X-EVIL=1',
+    });
+    expect(res.status).toBe(400);
+    expect(mockCreate).not.toHaveBeenCalled();
+  });
+
+  it('POST / accepts a well-formed recurrenceRule', async () => {
+    mockCreate.mockResolvedValue(sampleMeeting);
+    const res = await request(createApp()).post('/api/meeting').send({
+      title: 'Kickoff',
+      startAt: '2026-07-01T10:00:00.000Z',
+      recurrenceRule: 'FREQ=WEEKLY;COUNT=4;BYDAY=MO,WE',
+    });
+    expect(res.status).toBe(201);
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ recurrenceRule: 'FREQ=WEEKLY;COUNT=4;BYDAY=MO,WE' })
+    );
+  });
+
   it('POST / rejects embedded decisions instead of silently dropping them', async () => {
     const res = await request(createApp()).post('/api/meeting').send({
       title: 'Kickoff',
@@ -182,6 +231,23 @@ describe('meeting routes', () => {
         location: 'Office',
       })
     );
+  });
+
+  it('PUT /:id rejects a recurrenceRule containing a line break (ICS injection)', async () => {
+    const res = await request(createApp())
+      .put('/api/meeting/meeting-1')
+      .send({ recurrenceRule: 'FREQ=DAILY\r\nATTENDEE;CN=Attacker:mailto:attacker@evil.example' });
+    expect(res.status).toBe(400);
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
+  it('PUT /:id accepts clearing recurrenceRule with null', async () => {
+    mockUpdate.mockResolvedValue({ ...sampleMeeting, recurrenceRule: null });
+    const res = await request(createApp())
+      .put('/api/meeting/meeting-1')
+      .send({ recurrenceRule: null });
+    expect(res.status).toBe(200);
+    expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ recurrenceRule: null }));
   });
 
   it('PUT /:id rejects an empty title', async () => {
