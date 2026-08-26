@@ -8347,117 +8347,21 @@ export const Api = {
   // must not probe a feature-gated V8 route merely to fall back when V8 is off.
   listAssessmentsLegacy,
 
-  deleteAssessment: async (assessmentId: string): Promise<any> => {
-    const res = await fetch(`${API_URL}/assessment-workflow/${assessmentId}`, {
-      method: 'DELETE',
-      headers: getHeaders(),
-    });
-    return handleResponse(res, 'Failed to delete assessment');
-  },
-
-  // Assessment workflow transitions
-  requestAssessmentReview: async (
-    assessmentId: string,
-    payload?: { decisionOwnerId?: string; dueDate?: string; priority?: string }
-  ): Promise<any> => {
-    const res = await fetch(`${API_URL}/assessment-workflow/${assessmentId}/request-review`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify(payload || {}),
-    });
-    return handleResponse(res, 'Failed to request review');
-  },
-
-  generateAssessmentReport: async (
-    assessmentId: string,
-    payload?: { includeRecommendations?: boolean; includeGapAnalysis?: boolean }
-  ): Promise<any> => {
-    const res = await fetch(`${API_URL}/assessment-workflow/${assessmentId}/report`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify(payload || {}),
-    });
-    return handleResponse(res, 'Failed to generate report');
-  },
-
-  approveAssessmentReport: async (
-    assessmentId: string,
-    payload?: { decisionOwnerId?: string; dueDate?: string; priority?: string; comment?: string }
-  ): Promise<any> => {
-    const res = await fetch(`${API_URL}/assessment-workflow/${assessmentId}/report/approve`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify(payload || {}),
-    });
-    return handleResponse(res, 'Failed to approve report');
-  },
-
-  approveAssessment: async (
-    assessmentId: string,
-    payload?: { decisionOwnerId?: string; dueDate?: string; priority?: string }
-  ): Promise<any> => {
-    const res = await fetch(`${API_URL}/assessment-workflow/${assessmentId}/approve`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify(payload || {}),
-    });
-    return handleResponse(res, 'Failed to approve assessment');
-  },
-
-  sendAssessmentBackToDraft: async (assessmentId: string, comment: string): Promise<any> => {
-    const res = await fetch(`${API_URL}/assessment-workflow/${assessmentId}/send-back`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify({ comment }),
-    });
-    return handleResponse(res, 'Failed to send back assessment');
-  },
-
-  generateAssessmentInitiatives: async (
-    assessmentId: string,
-    payload: { methodologyId: string; count: number; includeChatContext?: boolean }
-  ): Promise<any> => {
-    const res = await fetch(`${API_URL}/assessment-workflow/${assessmentId}/generate-initiatives`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify(payload),
-    });
-    return handleResponse(res, 'Failed to generate initiatives');
-  },
-
-  getAssessmentGeneratedInitiatives: async (assessmentId: string): Promise<any> => {
-    const res = await fetch(
-      `${API_URL}/assessment-workflow/${assessmentId}/generated-initiatives`,
-      {
-        headers: getHeaders(),
-      }
-    );
-    return handleResponse(res, 'Failed to fetch generated initiatives');
-  },
-
-  // Assessment sessions (for dynamic submenu)
-  getOpenAssessmentSessions: async (): Promise<any> => {
-    const res = await fetch(`${API_URL}/assessment-workflow/sessions`, {
-      headers: getHeaders(),
-    });
-    return handleResponse(res, 'Failed to fetch open sessions');
-  },
-
-  openAssessmentSession: async (assessmentId: string): Promise<any> => {
-    const res = await fetch(`${API_URL}/assessment-workflow/${assessmentId}/session/open`, {
-      method: 'POST',
-      headers: getHeaders(),
-    });
-    return handleResponse(res, 'Failed to open session');
-  },
-
-  closeAssessmentSession: async (assessmentId: string): Promise<any> => {
-    const res = await fetch(`${API_URL}/assessment-workflow/${assessmentId}/session/close`, {
-      method: 'POST',
-      headers: getHeaders(),
-    });
-    return handleResponse(res, 'Failed to close session');
-  },
+  // 2026-08-26 assessment cleanup: removed 11 dead methods that sent
+  // v2-shaped paths (report/approve, send-back, request-review,
+  // generate-initiatives, generated-initiatives, sessions, session/open,
+  // session/close, DELETE /:id) to the `/assessment-workflow` (v1) mount,
+  // which never defined them — 404 every call. The real implementations of
+  // every one of those paths live on `/assessment-workflow-v2`
+  // (server/src/routes/assessment-workflow-v2.routes.ts, confirmed by exact
+  // route match), but grep found zero live callers anywhere in src/ for any
+  // of the 11 (deleteAssessment/requestAssessmentReview/
+  // generateAssessmentReport/approveAssessmentReport/approveAssessment/
+  // sendAssessmentBackToDraft/generateAssessmentInitiatives/
+  // getAssessmentGeneratedInitiatives/getOpenAssessmentSessions/
+  // openAssessmentSession/closeAssessmentSession) — their one caller,
+  // AssessmentTable.tsx, was itself dead code (removed same pass). Deleted
+  // rather than repointed: there is nothing left to fix a path for.
 
   // --- PROJECTS ---
   suggestInitiativeTasks: async (initiativeId: string): Promise<any[]> => {

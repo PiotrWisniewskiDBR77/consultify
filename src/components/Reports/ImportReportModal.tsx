@@ -3,6 +3,15 @@
  *
  * Modal for importing external assessment reports (PDF/Excel).
  * Extracts scores and maps them to DRD structure.
+ *
+ * 2026-08-26 assessment cleanup: `handleImport` below posts to
+ * `POST /api/assessment-reports/import`, a path the mounted
+ * server/src/routes/assessment-reports.routes.ts never defines (grepped —
+ * zero matches for /import anywhere under assessment routes). Its only
+ * trigger (ReportsTable.tsx's "Import" button) is disabled with a
+ * "Planowane" note rather than the endpoint being invented for this batch —
+ * this component stays in the tree ready to wire up once that backend work
+ * lands.
  */
 
 import {

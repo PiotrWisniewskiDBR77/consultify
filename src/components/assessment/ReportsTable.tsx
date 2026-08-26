@@ -686,13 +686,26 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                 {t('assessment.reportsTable.header.settings', 'Settings')}
               </button>
             )}
+            {/* 2026-08-26 assessment cleanup: no backend endpoint exists for
+                this action anywhere (grepped server/src/routes/assessment*
+                for /import — zero matches; ImportReportModal.tsx's submit
+                posts to /api/assessment-reports/import, a path the mounted
+                assessment-reports.routes.ts never defines). Disabled with a
+                visible "Planowane" note instead of a control that 404s the
+                moment a user actually tries it. */}
             <button
-              onClick={() => setShowImportModal(true)}
-              className="flex items-center gap-2 px-4 py-2.5 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
-              title={t('assessment.reportsTable.header.importTitle', 'Import external report')}
+              disabled
+              title={t(
+                'assessment.reportsTable.header.importTitlePlanned',
+                'Planowane — import zewnętrznego raportu nie jest jeszcze dostępny (brak endpointu backendu).'
+              )}
+              className="flex items-center gap-2 px-4 py-2.5 border border-slate-200 dark:border-navy-700 text-slate-400 dark:text-slate-600 font-medium rounded-lg cursor-not-allowed opacity-60"
             >
               <Upload size={18} />
               {t('assessment.reportsTable.header.import', 'Import')}
+              <span className="text-[11px] font-normal">
+                ({t('assessment.reportsTable.header.importPlanned', 'Planowane')})
+              </span>
             </button>
             {showAllStatuses && onCreateTemplate && (
               <button
