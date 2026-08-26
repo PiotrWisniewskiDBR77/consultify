@@ -107,24 +107,21 @@ dyżuru.** To jest jedyne zdanie tej instrukcji, które warto zapamiętać na pa
 
    **SHA markera: 5cfa62470e**
 
-   > **★★ WARTOWNIK WIĄZANIA — CZYTAJ DOSŁOWNIE.** Powyżej stoi **literalny
-   > napis `5cfa62470e`**, w ostrych cudzysłowach francuskich. To jest
-   > **wartownik**: oznacza, że nadzorca **NIE ZWIĄZAŁ jeszcze markera**.
+   > **★★ MARKER ZWIĄZANY PRZEZ NADZORCĘ 2026-08-28.** Powyżej stoi realny,
+   > dziesięcioznakowy SHA tipa gałęzi `codex/m03-admin-20260824` z chwili
+   > wydania zlecenia. To NIE jest wartownik i NIE jest powodem do STOP-u.
    >
-   > **Jeżeli w tym miejscu nadal widzisz napis `5cfa62470e` — to jest STOP
-   > CAŁEGO DYŻURU.** Zakładasz raport, wpisujesz pozycję STOP z treścią
-   > „marker niezwiązany — instrukcja wydana bez wiązania" i kończysz. **Nie
-   > zgadujesz SHA. Nie bierzesz tipa gałęzi. Nie bierzesz „ostatniego commita,
-   > który wygląda sensownie".**
+   > **Jedyny STOP z tytułu markera** to negatywny wynik weryfikacji z pkt 2
+   > (`MARKER BRAK`, czyli `git merge-base --is-ancestor` zwraca błąd).
+   > Sama obecność SHA w tym miejscu jest stanem POPRAWNYM.
    >
-   > **Jeżeli widzisz tam czterdziestoznakowy albo dziesięcioznakowy SHA** —
-   > marker jest związany, wykonujesz weryfikację merge-base z pkt 2.
-   >
-   > **Lekcja z dnia 29, przez którą ta ramka wygląda właśnie tak:** instrukcja
-   > dnia 29 zawierała *przykładowy* SHA wpisany dla ilustracji. Robotnik nie
-   > miał jak odróżnić przykładu od wiązania i pracował z bazy, której nadzorca
-   > nie zatwierdził. **Dlatego wartownikiem jest LITERALNY NAPIS, nigdy
-   > przykładowy SHA — instrukcja z przykładowym SHA jest instrukcją zepsutą.**
+   > **Historia (do wiadomości, nie do działania):** pierwsze wydanie tej
+   > instrukcji miało w tym miejscu literalny wartownik `«MARKER_SHA»`, a
+   > nadzorca związał marker podstawieniem globalnym, które weszło również
+   > w treść tej ramki — przez co ramka zaczęła wskazywać prawdziwy marker
+   > jako wartownik. Dyżur zatrzymał się prawidłowo. Naprawione 2026-08-28
+   > przez nadzorcę: ramka wiązania nie zawiera już żadnego SHA poza polem
+   > markera, a procedura wiązania podmienia wyłącznie to pole.
 
 2. **Sprawdzasz marker PIERWSZĄ komendą dyżuru** (podstawiając za `<SHA>` to,
    co realnie stoi w ramce wyżej):
