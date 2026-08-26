@@ -85,7 +85,7 @@ treść. Treści nie dopisujesz — ani ręką, ani modelem.
 1. Punktem wyjścia jest **gałąź `codex/m03-admin-20260824`**, przypięta do
    commitu-markera podanego niżej.
 
-   **SHA markera: «MARKER_SHA»**
+   **SHA markera: 3e707a9d3c**
 
    > **★★ RAMKA WYJAŚNIAJĄCA WARTOWNIKA — CAŁA W BLOKU CYTOWANYM. NIE JEST
    > INSTRUKCJĄ OPERACYJNĄ.**
