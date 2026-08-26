@@ -954,8 +954,12 @@ class ManagementReportsService {
     return report;
   }
 
-  async getReport(reportId) {
-    const report = await managementReportRepository.getReportById(reportId);
+  async getReport(reportId, organizationId) {
+    if (!organizationId) return null;
+    const report = await managementReportRepository.getReportByIdForOrganization(
+      reportId,
+      organizationId
+    );
     if (!report) return null;
     if (!isUnitTest() && typeof managementReportRepository.getUser === 'function') {
       const user = report.generated_by
@@ -986,9 +990,8 @@ class ManagementReportsService {
     return { reports, total };
   }
 
-  async updateReport(reportId, updates, userId) {
-    const report = await managementReportRepository.getReportById(reportId);
-    if (!report) throw new Error('Report not found');
+  async updateReport(reportId, updates, userId, organizationId) {
+    const report = await this.assertReportInOrganization(reportId, organizationId);
     if (report.status === 'FINAL') {
       throw new Error('Finalized reports cannot be edited');
     }
@@ -1008,12 +1011,11 @@ class ManagementReportsService {
       'Updated report metadata'
     );
 
-    return this.getReport(reportId);
+    return this.getReport(reportId, organizationId);
   }
 
-  async submitForApproval(reportId, userId) {
-    const report = await managementReportRepository.getReportById(reportId);
-    if (!report) throw new Error('Report not found');
+  async submitForApproval(reportId, userId, organizationId) {
+    const report = await this.assertReportInOrganization(reportId, organizationId);
 
     await run(
       `UPDATE management_reports SET approval_status = 'PENDING', requires_approval = 1 WHERE id = ?`,
@@ -1037,19 +1039,20 @@ class ManagementReportsService {
     return true;
   }
 
-  async getApprovalStatus(reportId) {
+  async getApprovalStatus(reportId, organizationId) {
+    const report = await this.assertReportInOrganization(reportId, organizationId);
     const approvals = await all(
       `SELECT * FROM management_report_approvals WHERE report_id = ? ORDER BY approval_level`,
       [reportId]
     );
-    const report = await managementReportRepository.getReportById(reportId);
     return {
       status: report?.approval_status || 'NONE',
       approvals,
     };
   }
 
-  async approveReport(reportId, userId, comment) {
+  async approveReport(reportId, userId, comment, organizationId) {
+    await this.assertReportInOrganization(reportId, organizationId);
     await run(
       `UPDATE management_report_approvals SET status = 'APPROVED', decided_by = ?, decided_at = CURRENT_TIMESTAMP, decision_comment = ?
        WHERE report_id = ? AND status = 'PENDING'`,
@@ -1062,14 +1065,33 @@ class ManagementReportsService {
     return true;
   }
 
-  async getPendingApprovals() {
+  // DEC-136: this used to return every PENDING approval row in the whole
+  // installation. The approval row carries no organization of its own, so the
+  // tenant boundary is the parent report — join it and filter there.
+  async getPendingApprovals(organizationId) {
+    if (!organizationId) return [];
     const pending = await all(
-      `SELECT * FROM management_report_approvals WHERE status = 'PENDING' ORDER BY created_at DESC`
+      `SELECT a.* FROM management_report_approvals a
+        JOIN management_reports r ON r.id = a.report_id
+       WHERE a.status = 'PENDING' AND r.organization_id = ?
+       ORDER BY a.created_at DESC`,
+      [organizationId]
     );
     return pending;
   }
 
-  async getVersions(reportId) {
+  // Version rows are children of a report and carry no organization column of
+  // their own — the tenant check is always on the parent report, resolved
+  // BEFORE any version content is read.
+  private async readVersionRow(reportId, versionNumber) {
+    return get(
+      `SELECT * FROM management_report_versions WHERE report_id = ? AND version_number = ?`,
+      [reportId, versionNumber]
+    );
+  }
+
+  async getVersions(reportId, organizationId) {
+    await this.assertReportInOrganization(reportId, organizationId);
     const versions = await all(
       `SELECT * FROM management_report_versions WHERE report_id = ? ORDER BY version_number DESC`,
       [reportId]
@@ -1077,18 +1099,16 @@ class ManagementReportsService {
     return versions;
   }
 
-  async getVersion(reportId, versionNumber) {
-    const version = await get(
-      `SELECT * FROM management_report_versions WHERE report_id = ? AND version_number = ?`,
-      [reportId, versionNumber]
-    );
-    return version;
+  async getVersion(reportId, versionNumber, organizationId) {
+    await this.assertReportInOrganization(reportId, organizationId);
+    return this.readVersionRow(reportId, versionNumber);
   }
 
-  async compareVersions(reportId, v1, v2) {
+  async compareVersions(reportId, v1, v2, organizationId) {
+    await this.assertReportInOrganization(reportId, organizationId);
     const [version1, version2] = await Promise.all([
-      this.getVersion(reportId, v1),
-      this.getVersion(reportId, v2),
+      this.readVersionRow(reportId, v1),
+      this.readVersionRow(reportId, v2),
     ]);
     if (!version1 || !version2) {
       throw new Error('Version not found');
@@ -1096,7 +1116,8 @@ class ManagementReportsService {
     return { v1: version1, v2: version2 };
   }
 
-  async addComment(reportId, data, userId) {
+  async addComment(reportId, data, userId, organizationId) {
+    await this.assertReportInOrganization(reportId, organizationId);
     const comment = {
       id: uuidv4(),
       reportId,
@@ -1120,9 +1141,23 @@ class ManagementReportsService {
     return managementReportRepository.getComments(reportId);
   }
 
-  async updateComment(commentId, updates, userId) {
+  // DEC-136: a comment used to be addressable by its id alone, with no link to
+  // the report in the URL or to the caller's organization. Two checks now:
+  // the comment must belong to the report in the path, AND that report must
+  // belong to the caller's organization. Both failures look like one 404.
+  private async assertCommentInReportAndOrganization(commentId, reportId, organizationId) {
+    await this.assertReportInOrganization(reportId, organizationId);
     const comment = await managementReportRepository.getCommentById(commentId);
-    if (!comment) throw new Error('Comment not found');
+    if (!comment || comment.report_id !== reportId) throw reportNotFoundError();
+    return comment;
+  }
+
+  async updateComment(commentId, updates, userId, reportId, organizationId) {
+    const comment = await this.assertCommentInReportAndOrganization(
+      commentId,
+      reportId,
+      organizationId
+    );
 
     const content = updates.content ?? comment.content;
     const isResolved = updates.isResolved ?? comment.is_resolved;
@@ -1143,7 +1178,8 @@ class ManagementReportsService {
     };
   }
 
-  async deleteComment(commentId) {
+  async deleteComment(commentId, reportId, organizationId) {
+    await this.assertCommentInReportAndOrganization(commentId, reportId, organizationId);
     await managementReportRepository.deleteComment(commentId);
   }
 
@@ -1166,17 +1202,22 @@ class ManagementReportsService {
       .digest('hex');
     await managementReportRepository.finalizeReport(reportId, integrityHash, userId);
     await this.logAudit(reportId, 'FINALIZED', userId, { integrityHash });
-    return this.getReport(reportId);
+    return this.getReport(reportId, organizationId);
   }
 
   async unlockReport(reportId, userId, reason, organizationId) {
     await this.assertReportInOrganization(reportId, organizationId);
     await managementReportRepository.unlockReport(reportId);
     await this.logAudit(reportId, 'UNLOCKED', userId, { reason });
-    return this.getReport(reportId);
+    return this.getReport(reportId, organizationId);
   }
 
-  async createShareLink(reportId, expiresInDays, userId) {
+  // DEC-136 P0: a share link leaves the system entirely (anyone holding the
+  // URL can be handed the report), so the tenant check has to happen BEFORE
+  // the token is minted and BEFORE the row is touched — a foreign report must
+  // produce zero writes and the same 404 as a missing one.
+  async createShareLink(reportId, expiresInDays, userId, organizationId) {
+    await this.assertReportInOrganization(reportId, organizationId);
     const shareToken = uuidv4();
     const expiresAt = expiresInDays
       ? new Date(Date.now() + expiresInDays * 86400000).toISOString()
@@ -1250,7 +1291,13 @@ class ManagementReportsService {
     return rows || [];
   }
 
-  async bulkExport(reportIds, format, userId) {
+  // DEC-136: reportIds come straight from the request body and the only thing
+  // this does with them is write an audit row — which used to let a caller
+  // stamp a row onto ANOTHER org's report. Every id is tenant-checked first.
+  async bulkExport(reportIds, format, userId, organizationId) {
+    for (const reportId of reportIds) {
+      await this.assertReportInOrganization(reportId, organizationId);
+    }
     const exportId = uuidv4();
     await this.logAudit(reportIds[0], 'BULK_EXPORTED', userId, { reportIds, format });
     return {
