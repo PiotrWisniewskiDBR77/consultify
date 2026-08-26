@@ -88,50 +88,69 @@ function SkipSummary({
   );
 }
 
+// FIX P1-3 (day-27 acceptance): the "skips" column used to sit inside the
+// matrix table (a bulleted list crammed into a <td>), pushing the table past
+// its `min-w-[720px]` inside a `max-w-[760px]` chapter column — the last
+// header ("Pominięcia") was clipped at the default width, never fully in
+// frame without an undiscoverable horizontal scroll. Skips are now rendered
+// as a full-width block BELOW the table (one per area that actually has
+// them), so the table itself only needs its five narrow columns and fits
+// comfortably inside the chapter column with no overflow at all.
 function Matrix({ chapter }: { readonly chapter: AssessmentReportChapter }) {
   const { t } = useTranslation();
   const value = (v: number | null) =>
     v === null ? t('assessment.reportView.notAssessedValue') : String(v);
+  const areasWithSkips = chapter.matrix.areas.filter((area) => area.skips.length > 0);
   return (
-    <div className="overflow-x-auto rounded-xl border border-c-border-subtle">
-      {/* prettier-ignore */}
-      <table className="w-full min-w-[720px] border-collapse text-xs" data-table-canon="§27-exempt-document-matrix">
-        <thead className="bg-c-surface-raised text-left text-c-text-muted" data-table-canon="§27-exempt">
-          <tr>
-            {['area', 'current', 'target', 'gap', 'evidence', 'skips'].map((key) => (
-              <th key={key} className="border-b border-c-border-subtle px-3 py-2 font-semibold">
-                {t(`assessment.reportView.matrix.${key}`)}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody data-table-canon="§27-exempt">
-          {chapter.matrix.areas.map((area: AssessmentReportArea) => (
-            <tr key={area.unitId} className="align-top text-c-text">
-              <td className="border-b border-c-border-subtle px-3 py-3 font-medium">
-                {area.unitId} · {area.unitNamePL ?? area.unitName}
-              </td>
-              <td className="border-b border-c-border-subtle px-3 py-3">
-                {value(area.currentLevel)}
-              </td>
-              <td className="border-b border-c-border-subtle px-3 py-3">
-                {value(area.targetLevel)}
-              </td>
-              <td className="border-b border-c-border-subtle px-3 py-3">{value(area.gap)}</td>
-              <td className="border-b border-c-border-subtle px-3 py-3">
-                {t(`assessment.reportView.evidence.${evidenceKey[area.evidenceState]}`)}
-              </td>
-              <td className="border-b border-c-border-subtle px-3 py-3">
-                <SkipSummary
-                  skips={area.skips}
-                  skipped={area.skipped}
-                  maxLevel={chapter.maxLevel}
-                />
-              </td>
+    <div className="space-y-3">
+      <div className="overflow-x-auto rounded-xl border border-c-border-subtle">
+        {/* prettier-ignore */}
+        <table className="w-full min-w-[480px] border-collapse text-xs" data-table-canon="§27-exempt-document-matrix">
+          <thead className="bg-c-surface-raised text-left text-c-text-muted" data-table-canon="§27-exempt">
+            <tr>
+              {['area', 'current', 'target', 'gap', 'evidence'].map((key) => (
+                <th key={key} className="border-b border-c-border-subtle px-3 py-2 font-semibold">
+                  {t(`assessment.reportView.matrix.${key}`)}
+                </th>
+              ))}
             </tr>
+          </thead>
+          <tbody data-table-canon="§27-exempt">
+            {chapter.matrix.areas.map((area: AssessmentReportArea) => (
+              <tr key={area.unitId} className="align-top text-c-text">
+                <td className="border-b border-c-border-subtle px-3 py-3 font-medium">
+                  {area.unitId} · {area.unitNamePL ?? area.unitName}
+                </td>
+                <td className="border-b border-c-border-subtle px-3 py-3">
+                  {value(area.currentLevel)}
+                </td>
+                <td className="border-b border-c-border-subtle px-3 py-3">
+                  {value(area.targetLevel)}
+                </td>
+                <td className="border-b border-c-border-subtle px-3 py-3">{value(area.gap)}</td>
+                <td className="border-b border-c-border-subtle px-3 py-3">
+                  {t(`assessment.reportView.evidence.${evidenceKey[area.evidenceState]}`)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {areasWithSkips.length > 0 ? (
+        <div className="space-y-2">
+          <h4 className="text-xs font-semibold text-c-text-muted">
+            {t('assessment.reportView.matrix.skips')}
+          </h4>
+          {areasWithSkips.map((area) => (
+            <div key={area.unitId}>
+              <p className="mb-1 text-xs font-medium text-c-text">
+                {area.unitId} · {area.unitNamePL ?? area.unitName}
+              </p>
+              <SkipSummary skips={area.skips} skipped={area.skipped} maxLevel={chapter.maxLevel} />
+            </div>
           ))}
-        </tbody>
-      </table>
+        </div>
+      ) : null}
     </div>
   );
 }
