@@ -97,7 +97,6 @@ import competencyRoutes from './routes/competency.routes.js';
 import complianceRoutes from './routes/compliance.routes.js';
 import conclusionsRoutes from './routes/conclusions.routes.js';
 import consultantProjectAccessRoutes from './routes/consultant-project-access.routes.js';
-import consultantRoutes from './routes/consultants.routes.js';
 import consultingTemplatesRoutes from './routes/consultingTemplates.routes.js';
 import contentRoutes from './routes/content.routes.js';
 import contextRoutes from './routes/context.routes.js';
@@ -507,12 +506,19 @@ export class ApiGateway {
       'consultantRoutes', // ConsultantPanelView.tsx, ConsultantInviteView.tsx
     ]);
 
+    // DEC-116 (CONSULTANTS_DUAL_PRODUCER_AUDIT_2026-08-26): router=null means the
+    // stub router was deleted outright (wrong-shape SQL with no matching DDL in the
+    // repo). The name must stay in STUB_NAMES_WITH_LIVE_UI_ON_DEMO so the honest 501
+    // is mounted in EVERY environment (dev included) — live FE callers must get a
+    // structured 501, never a silent 404.
     const mountStub = (mountPath: string, router: any, name: string) => {
-      if (enableStubRoutes) {
+      if (router && enableStubRoutes) {
         app.use(mountPath, router);
       } else if (STUB_NAMES_WITH_LIVE_UI_ON_DEMO.has(name)) {
         logger.warn(
-          `[ApiGateway] Stub route disabled in production but has a live demo UI caller — mounting honest 501: ${mountPath} (${name})`
+          router
+            ? `[ApiGateway] Stub route disabled in production but has a live demo UI caller — mounting honest 501: ${mountPath} (${name})`
+            : `[ApiGateway] Stub route has no router (deleted) but has a live demo UI caller — mounting honest 501: ${mountPath} (${name})`
         );
         app.use(mountPath, (_req, res) => {
           res.status(501).json({
@@ -991,7 +997,10 @@ export class ApiGateway {
       // User management routes
       app.use('/api/onboarding', onboardingRoutes);
       app.use('/api/analytics/journey', journeyAnalyticsRoutes);
-      mountStub('/api/consultants', consultantRoutes, 'consultantRoutes');
+      // DEC-116: marketplace-shape consultants router deleted (no DDL for its
+      // schema anywhere in the repo); null keeps the honest 501 for the live
+      // ConsultantPanelView/ConsultantInviteView screens.
+      mountStub('/api/consultants', null, 'consultantRoutes');
       app.use('/api/consultant-project-access', consultantProjectAccessRoutes);
       mountStub('/api/users', userOrgsRoutes, 'userOrgsRoutes');
       mountStub('/api/user', userGoalsRoutes, 'userGoalsRoutes');
