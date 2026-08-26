@@ -3,12 +3,24 @@
  * V4-TASK-06: Workload model + capacity analytics
  */
 
-import DbPromise from '../utils/DbPromise.js';
+import DbPromise, { isSilenceableMissingRelationError } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 import {
   CAPACITY_POLICY,
   capacityHoursForAllocation,
   utilizationPercent,
 } from './capacityPolicy.js';
+
+// DEC-120/A1-A3 (same disease as DEC-112/A5): these catches were written as
+// blanket "the table may not exist yet" fallbacks, but a bare `catch {}`
+// with no message check ALSO silences a real bug (missing column, dropped
+// connection, permissions error) as if it were the benign missing-table
+// case. Classify before staying quiet.
+function logIfNotSilenceableMissingRelation(context: string, err: unknown, meta: object): void {
+  const message = err instanceof Error ? err.message : String(err);
+  if (isSilenceableMissingRelationError(message)) return;
+  logger.error(`[workloadCapacityService] ${context}`, { error: message, ...meta });
+}
 
 const displayNameSql = (userAlias: string, fallbackExpr: string) =>
   `COALESCE(NULLIF(TRIM(COALESCE(${userAlias}.first_name, '') || ' ' || COALESCE(${userAlias}.last_name, '')), ''), ${userAlias}.email, ${fallbackExpr})`;
@@ -200,8 +212,11 @@ export async function getCapacityOverview(orgId: string): Promise<CapacityOvervi
       [...userIds, orgId]
     );
     actualMap = new Map(actualRows.map((r) => [r.user_id, Number(r.actual_hours)]));
-  } catch {
-    // time_entries table may not exist yet
+  } catch (err) {
+    // time_entries table may not exist yet — silenceable; anything else logs.
+    logIfNotSilenceableMissingRelation('getCapacityOverview: time_entries lookup failed', err, {
+      orgId,
+    });
   }
 
   const users: CapacityOverviewUser[] = [];
@@ -285,8 +300,14 @@ export async function getUserForecast(orgId: string, userId: string): Promise<We
         [userId, orgId, wsStr]
       );
       allocated = Number(allocRow?.hours || 0);
-    } catch {
-      // task_allocations may not exist yet; fall back to estimated_hours
+    } catch (err) {
+      // task_allocations may not exist yet; fall back to estimated_hours —
+      // silenceable; anything else logs.
+      logIfNotSilenceableMissingRelation(
+        'getUserForecast: task_allocations lookup failed',
+        err,
+        { orgId, userId, weekStart: wsStr }
+      );
     }
 
     if (allocated === 0) {
@@ -440,8 +461,13 @@ export async function getInitiativeCapacity(
       [initiativeId, orgId, ...userIds]
     );
     actualMap = new Map(actualRows.map((r) => [r.user_id, Number(r.hours)]));
-  } catch {
-    // time_entries may not exist
+  } catch (err) {
+    // time_entries may not exist — silenceable; anything else logs.
+    logIfNotSilenceableMissingRelation(
+      'getInitiativeCapacity: time_entries lookup failed',
+      err,
+      { orgId, initiativeId }
+    );
   }
 
   const resources: InitiativeResourceCapacity[] = [];
@@ -547,8 +573,15 @@ export async function getLevelingAlerts(orgId: string): Promise<LevelingAlerts> 
       initiativeName: r.initiative_name,
       role: r.role,
     }));
-  } catch {
-    // role column may not exist
+  } catch (err) {
+    // A missing `role` column is a real schema/migration bug (DEC-112:
+    // 42703 "column does not exist" is never silenceable) — logs loudly,
+    // even though this alert list still degrades to empty for the caller.
+    logIfNotSilenceableMissingRelation(
+      'getLevelingAlerts: unfilled-roles lookup failed',
+      err,
+      { orgId }
+    );
   }
 
   return { overloaded, underutilized, unfilledRoles };
@@ -615,8 +648,13 @@ export async function getCapacityTimeline(
       }
       const row = await DbPromise.get<{ hours: number }>(sql, params);
       allocated = Number(row?.hours || 0);
-    } catch {
-      // task_allocations may not exist
+    } catch (err) {
+      // task_allocations may not exist — silenceable; anything else logs.
+      logIfNotSilenceableMissingRelation(
+        'getCapacityTimeline: task_allocations lookup failed',
+        err,
+        { orgId, initiativeId, weekStart: wsStr }
+      );
     }
 
     if (allocated === 0) {
