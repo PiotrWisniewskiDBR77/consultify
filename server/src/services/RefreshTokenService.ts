@@ -30,6 +30,10 @@ import logger from '../utils/Logger.js';
 // Safe to import statically: demoPrincipalGuard imports THIS module dynamically,
 // inside a function, precisely so the two do not form a load-time cycle.
 import { assertDemoPrincipalMayReceiveCredentials } from './demo/demoPrincipalGuard.js';
+import {
+  isOrganizationSuspended,
+  isVerifiedPlatformSuperAdmin,
+} from './organizationSuspensionGuard.js';
 
 const getForcedSuperAdminEmails = (): Set<string> => {
   const raw = String(process.env.FORCE_SUPERADMIN_EMAILS || '');
@@ -189,6 +193,20 @@ class RefreshTokenService {
   }
 
   /**
+   * DEC-91 / TRI-MUST-12 — is this tenant suspended?
+   *
+   * `this.dbGet` uses the callback form and REJECTS on error, so the guard's
+   * fail-open `catch` genuinely runs here (unlike `DbPromise.get`, whose
+   * `fallback: true` default resolves null and silently reads as
+   * "not suspended" — see the guard's header).
+   */
+  private async _isOrganizationSuspended(organizationId: unknown): Promise<boolean> {
+    return await isOrganizationSuspended(organizationId, (sql, params) =>
+      this.dbGet(sql, params)
+    );
+  }
+
+  /**
    * Database helper: Run query
    */
   private async dbRun(sql: string, params: unknown[] = []): Promise<RunResult> {
@@ -224,6 +242,23 @@ class RefreshTokenService {
 
     // Clean up excess sessions (keep only MAX_SESSIONS)
     await this._enforceSessionLimit(user.id);
+
+    // DEC-91: belt and braces. Login already refuses a suspended tenant before
+    // reaching here, but this method is the single place that mints a token
+    // pair and is callable from other flows; a gate here means a new caller
+    // cannot reintroduce the hole by forgetting one.
+    //
+    // The platform operator is exempt, verified against `users.role` in the
+    // DATABASE — never a caller-supplied role. Without this, refreshing a
+    // superadmin session whose own org happened to be suspended would throw and
+    // take away the very route used to reactivate it.
+    if (
+      (await this._isOrganizationSuspended(user.organization_id)) &&
+      !(await isVerifiedPlatformSuperAdmin(user.id, (sql, params) => this.dbGet(sql, params)))
+    ) {
+      logger.info('[RefreshToken] Token pair refused: organization suspended');
+      throw new Error('ORG_SUSPENDED');
+    }
 
     const isDemoFlag =
       user.isDemo === true || (await isDemoOrganizationId(this.db, user.organization_id));
@@ -364,6 +399,14 @@ class RefreshTokenService {
               return null;
             }
 
+            // DEC-91: the grace path mints an access token too, so it needs the
+            // same gate — otherwise it is simply the unguarded twin of the one
+            // below.
+            if (await this._isOrganizationSuspended(latestToken.organization_id)) {
+              logger.info('[RefreshToken] Grace period refused: organization suspended');
+              return null;
+            }
+
             // Generate new access token only (don't rotate refresh token again)
             const jti = uuidv4();
             const isDemoGrace = await isDemoOrganizationId(this.db, latestToken.organization_id!);
@@ -424,6 +467,16 @@ class RefreshTokenService {
     // Check if user is still active
     if (storedToken.user_status !== 'active') {
       await this._revokeAllUserTokens(storedToken.user_id, 'user_inactive');
+      return null;
+    }
+
+    // DEC-91: refuse before ANY mint or rotation, for the same reason the demo
+    // check above sits here. The impact is bounded — `attachUser` refuses the
+    // resulting access token anyway — but a suspended tenant should not be able
+    // to keep rolling a fresh 7-day refresh family for the moment it is
+    // reactivated. Closing the front door, not just the room behind it.
+    if (await this._isOrganizationSuspended(storedToken.organization_id)) {
+      logger.info('[RefreshToken] Refresh refused: organization suspended');
       return null;
     }
 

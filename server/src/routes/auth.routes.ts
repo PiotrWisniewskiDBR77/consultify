@@ -39,6 +39,10 @@ import {
   isPartnerEconomicsOperationAvailable,
   PARTNER_ECONOMICS_POLICY_DECISION,
 } from '../services/partnerEconomicsPolicy.js';
+import {
+  buildOrgSuspendedResponseBody,
+  isOrganizationSuspended,
+} from '../services/organizationSuspensionGuard.js';
 import refreshTokenService from '../services/RefreshTokenService.js';
 import slackService from '../services/slackService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -2165,6 +2169,32 @@ router.post(
               [codeRow.organization_id]
             );
             if (existingOrg) {
+              // ---------------------------------------------------------------
+              // DEC-91 / TRI-MUST-12 — a suspended tenant must not ONBOARD.
+              //
+              // This path mints a JWT and writes an organization_members row for
+              // an EXISTING organization, without ever consulting
+              // organizations.status. A suspended tenant could therefore still
+              // hand out access codes and take on new members — who would then
+              // be refused everywhere by the other DEC-91 gates, which is a
+              // confusing way to discover the tenant is cut off.
+              //
+              // Refused HERE, before the access-code use counters are
+              // incremented and before `proceedWithRegistration` mints anything,
+              // so a refused signup burns nothing.
+              //
+              // `fallback: false`: DbPromise.get otherwise resolves null on
+              // error, which the guard would read as "not suspended".
+              // ---------------------------------------------------------------
+              if (
+                await isOrganizationSuspended(existingOrg.id, <T,>(
+                  sql: string,
+                  params?: unknown[]
+                ) => dbGet<T>(sql, params, { fallback: false }))
+              ) {
+                return res.status(403).json(buildOrgSuspendedResponseBody());
+              }
+
               orgId = existingOrg.id;
               joiningExistingOrg = true;
               accessCodeRole = codeRow.role || 'MEMBER';
