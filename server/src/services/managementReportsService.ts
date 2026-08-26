@@ -62,6 +62,17 @@ function dependencyMissing(dep: 'pdfkit' | 'pptxgenjs' | 'exceljs'): Error {
   return err;
 }
 
+// Tenant-scoping helper (DEC-131 P1-4): a foreign report must be
+// indistinguishable from a missing one — 404, never a leak of existence,
+// never a 503 from something downstream running first. Callers resolve
+// this BEFORE any read or write on the report.
+function reportNotFoundError(): Error {
+  const err = new Error('Report not found');
+  (err as any).code = 'NOT_FOUND';
+  (err as any).status = 404;
+  return err;
+}
+
 const DEFAULT_PERIODS: Record<string, number> = {
   TEAM_MEETING: 7,
   TEAM_WEEKLY: 7,
@@ -108,6 +119,20 @@ const normalizeSeverity = (severity: string | null | undefined) => {
 };
 
 class ManagementReportsService {
+  // Tenant-scoping helper (DEC-131 P1-4): resolves the report AND verifies
+  // it belongs to organizationId in one query, before any other logic runs
+  // (dependency checks, writes, ...). Missing report and foreign-tenant
+  // report both throw the same 404 — no existence leak via status code.
+  private async assertReportInOrganization(reportId: string, organizationId?: string) {
+    if (!organizationId) throw reportNotFoundError();
+    const row = await managementReportRepository.getReportByIdForOrganization(
+      reportId,
+      organizationId
+    );
+    if (!row) throw reportNotFoundError();
+    return row;
+  }
+
   private async ensureExportDir(): Promise<string> {
     const exportDir = exportsDir('management-reports');
     return exportDir;
@@ -1087,7 +1112,8 @@ class ManagementReportsService {
     return comment;
   }
 
-  async getComments(reportId) {
+  async getComments(reportId, organizationId) {
+    await this.assertReportInOrganization(reportId, organizationId);
     return managementReportRepository.getComments(reportId);
   }
 
@@ -1118,7 +1144,8 @@ class ManagementReportsService {
     await managementReportRepository.deleteComment(commentId);
   }
 
-  async getAuditLog(reportId, action) {
+  async getAuditLog(reportId, action, organizationId) {
+    await this.assertReportInOrganization(reportId, organizationId);
     const rows = await all(
       `SELECT * FROM management_report_audit_log WHERE report_id = ? ${
         action ? 'AND action = ?' : ''
@@ -1128,9 +1155,8 @@ class ManagementReportsService {
     return rows;
   }
 
-  async finalizeReport(reportId, userId) {
-    const report = await managementReportRepository.getReportById(reportId);
-    if (!report) throw new Error('Report not found');
+  async finalizeReport(reportId, userId, organizationId) {
+    const report = await this.assertReportInOrganization(reportId, organizationId);
     const integrityHash = crypto
       .createHash('sha256')
       .update(JSON.stringify(report.content || {}))
@@ -1140,7 +1166,8 @@ class ManagementReportsService {
     return this.getReport(reportId);
   }
 
-  async unlockReport(reportId, userId, reason) {
+  async unlockReport(reportId, userId, reason, organizationId) {
+    await this.assertReportInOrganization(reportId, organizationId);
     await managementReportRepository.unlockReport(reportId);
     await this.logAudit(reportId, 'UNLOCKED', userId, { reason });
     return this.getReport(reportId);
