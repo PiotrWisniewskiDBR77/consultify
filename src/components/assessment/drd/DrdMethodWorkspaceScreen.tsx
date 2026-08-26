@@ -24,8 +24,10 @@ import { StandardTable } from '@/components/standard/StandardTable';
 import type {
   InterviewFocusQuestion,
   MethodWorkspaceViewMode,
+  ResolutionAction,
 } from '@/components/method-workspace/types';
 import { useMethodWorkspaceSave } from '@/components/method-workspace/useMethodWorkspaceSave';
+import { formatSkipJustification, type DrdSkipReasonCode } from '@/components/method-workspace/skipReasonCodes';
 import type {
   AssessmentOutput,
   DeliverableRecord,
@@ -296,7 +298,7 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
     };
   }, [events, pendingPreviews.length, session.state]);
 
-  const { state: saveState, lastSavedAt, errorMessage, markDirty, saveNow } = useMethodWorkspaceSave({
+  const { state: saveState, lastSavedAt, errorMessage, markDirty, saveNow, acknowledgeFailure } = useMethodWorkspaceSave({
     save: async () => ({ ok: true }),
     debounceMs: 800,
   });
@@ -368,6 +370,74 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
       refresh();
     },
     [runtime, events, activeArea.id, focusLevel, actorUserId, activeProgression.currentLevel, refresh]
+  );
+
+  const handleUnitNav = useCallback(
+    (direction: 1 | -1) => {
+      const idx = activeAxis.areas.findIndex((a) => a.id === activeArea.id);
+      const target = activeAxis.areas[idx + direction];
+      if (target) setActiveUnitId(target.id);
+    },
+    [activeAxis.areas, activeArea.id]
+  );
+
+  const handleBack = useCallback(() => handleUnitNav(-1), [handleUnitNav]);
+
+  // DEC-2026-08-25-55: skip requires one of the 4 dictionary codes (enforced
+  // by InterviewFocusPanel's select) — recorded as a real `recordAnswer` call
+  // (same event path as every other answer) so it is never a decorative
+  // no-op, then the workspace advances like `onNext`.
+  const handleSkip = useCallback(
+    (reasonCode: DrdSkipReasonCode) => {
+      const questionId = focusQuestions[0]?.questionId;
+      if (questionId) {
+        runtime.recordAnswer({
+          unitId: activeArea.id,
+          level: focusLevel,
+          questionId,
+          answerState: 'no_evidence',
+          text: draftAnswerText[questionId],
+          justification: formatSkipJustification(reasonCode),
+          actorUserId,
+        });
+      }
+      handleUnitNav(1);
+      refresh();
+    },
+    [runtime, activeArea.id, focusLevel, focusQuestions, draftAnswerText, actorUserId, handleUnitNav, refresh]
+  );
+
+  // Only `ask_teresa` has a real backend today (Teresa preview pipeline,
+  // already wired above). `request_evidence`/`return_later` are logged as a
+  // real, persisted `recordAnswer` note on the SAME question (honest audit
+  // trail, no new mechanism invented). `assign_question` has no per-question
+  // assignee anywhere in the app — ResolutionCard renders it disabled
+  // ("Planowane") instead of pretending it does something.
+  const handleResolutionAction = useCallback(
+    (questionId: string, action: ResolutionAction) => {
+      if (action === 'ask_teresa') {
+        handleAskTeresa(questionId);
+        return;
+      }
+      if (action === 'assign_question') return;
+      const note =
+        action === 'request_evidence'
+          ? 'Poproszono o dowód od właściciela procesu.'
+          : 'Odłożone — wróć później do tego pytania.';
+      runtime.recordAnswer({
+        unitId: activeArea.id,
+        level: focusLevel,
+        questionId,
+        answerState: 'dont_know',
+        text: draftAnswerText[questionId],
+        justification: note,
+        draft: true,
+        actorUserId,
+      });
+      if (action === 'return_later') handleUnitNav(1);
+      refresh();
+    },
+    [runtime, activeArea.id, focusLevel, draftAnswerText, actorUserId, handleAskTeresa, handleUnitNav, refresh]
   );
 
   const handleCommit = useCallback(
@@ -490,7 +560,7 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
           saveErrorMessage={errorMessage}
           onSaveNow={() => void saveNow()}
           onSaveRetry={() => void saveNow()}
-          onSaveStay={() => {}}
+          onSaveStay={acknowledgeFailure}
           viewMode={viewMode}
           onViewModeChange={setViewMode}
           // 2026-08-26 night-fixes-a (NIGHT_SWEEP_A_REPORT_20260826.md #5,
@@ -530,16 +600,12 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
             },
             onAnswerChange: handleAnswerChange,
             onAnswerStateChange: handleAnswerStateChange,
-            onResolutionAction: () => {},
+            onResolutionAction: handleResolutionAction,
             onEvidenceDrop: handleEvidenceDrop,
-            onBack: () => {},
+            onBack: handleBack,
             onSave: () => void saveNow(),
-            onNext: () => {
-              const idx = activeAxis.areas.findIndex((a) => a.id === activeArea.id);
-              const next = activeAxis.areas[idx + 1];
-              if (next) setActiveUnitId(next.id);
-            },
-            onSkip: () => {},
+            onNext: () => handleUnitNav(1),
+            onSkip: handleSkip,
             onAskTeresa: (questionId) => handleAskTeresa(questionId),
             canGoBack: true,
             canGoNext: true,

@@ -39,6 +39,8 @@ export interface UseMethodWorkspaceSaveReturn {
   saveNow: () => Promise<void>;
   /** After SAVE_FAILED: try the same save again. */
   retry: () => Promise<void>;
+  /** "Zostań" — after SAVE_FAILED, stay and let autosave retry quietly (see impl). */
+  acknowledgeFailure: () => void;
   /**
    * Call before navigating away / closing / refreshing. Returns `true` when it is
    * safe to leave immediately (CLEAN or SAVED with no pending timer) and
@@ -117,6 +119,20 @@ export function useMethodWorkspaceSave(
     await runSave('manual');
   }, [clearTimer, runSave]);
 
+  /**
+   * "Zostań" (`SaveStateIndicator`'s `onStay`) — the operator explicitly
+   * chooses not to retry immediately but to keep working here. Distinct from
+   * `retry`: it does not force a save attempt now, it re-arms the normal
+   * autosave debounce (SAVE_FAILED -> DIRTY) so the next edit — or the
+   * existing debounce window — tries again quietly instead of leaving the
+   * failed banner stuck forever.
+   */
+  const acknowledgeFailure = useCallback(() => {
+    if (stateRef.current !== 'SAVE_FAILED') return;
+    setErrorMessage(null);
+    markDirty();
+  }, [markDirty]);
+
   const attemptLeave = useCallback(() => {
     const current = stateRef.current;
     if (current === 'CLEAN' || current === 'SAVED') return true;
@@ -145,7 +161,7 @@ export function useMethodWorkspaceSave(
     };
   }, [clearTimer]);
 
-  return { state, lastSavedAt, errorMessage, markDirty, saveNow, retry, attemptLeave };
+  return { state, lastSavedAt, errorMessage, markDirty, saveNow, retry, acknowledgeFailure, attemptLeave };
 }
 
 export default useMethodWorkspaceSave;

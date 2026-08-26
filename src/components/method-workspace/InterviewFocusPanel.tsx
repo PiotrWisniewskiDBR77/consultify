@@ -16,6 +16,7 @@ import type { InterviewFocusQuestion } from './types';
 import { AnswerStateControl } from './AnswerStateControl';
 import { QuestionHelpDisclosure } from './QuestionHelpDisclosure';
 import { VoiceAnswerChannel } from './VoiceAnswerChannel';
+import { SKIP_REASON_OPTIONS, type DrdSkipReasonCode } from './skipReasonCodes';
 
 export interface InterviewFocusPanelProps {
   /** Breadcrumb context — axis/pillar, area/dimension, level under consideration. */
@@ -32,7 +33,11 @@ export interface InterviewFocusPanelProps {
   onBack: () => void;
   onSave: () => void;
   onNext: () => void;
-  onSkip: (justification: string) => void;
+  /**
+   * DEC-2026-08-25-55: skip requires picking one of the 4 canonical reason
+   * codes below — free-text justification is no longer accepted here.
+   */
+  onSkip: (reasonCode: DrdSkipReasonCode) => void;
   onAskTeresa: (questionId: string, topic: 'explain' | 'compare_levels' | 'examples') => void;
   canGoBack: boolean;
   canGoNext: boolean;
@@ -67,7 +72,7 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
   readOnly = false,
   className = '',
 }) => {
-  const [skipJustification, setSkipJustification] = useState('');
+  const [skipReasonCode, setSkipReasonCode] = useState<DrdSkipReasonCode | ''>('');
   const [skipping, setSkipping] = useState(false);
   const [dragActive, setDragActive] = useState<string | null>(null);
   const [activeSequenceIndex, setActiveSequenceIndex] = useState(0);
@@ -335,18 +340,30 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
           </button>
         ) : (
           <div className="flex items-center gap-1.5">
-            <input
-              value={skipJustification}
-              onChange={(e) => setSkipJustification(e.target.value)}
-              placeholder="Powód pominięcia…"
+            <label htmlFor="skip-reason-code" className="sr-only">
+              Powód pominięcia (wybierz kod)
+            </label>
+            <select
+              id="skip-reason-code"
+              data-testid="skip-reason-select"
+              value={skipReasonCode}
+              onChange={(e) => setSkipReasonCode(e.target.value as DrdSkipReasonCode | '')}
               className="rounded-md border border-c-border bg-c-surface px-2 py-1 text-xs text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-            />
+            >
+              <option value="">Wybierz powód…</option>
+              {SKIP_REASON_OPTIONS.map((option) => (
+                <option key={option.code} value={option.code}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
             <button
               type="button"
-              disabled={skipJustification.trim().length === 0}
+              disabled={skipReasonCode === ''}
               onClick={() => {
-                onSkip(skipJustification.trim());
-                setSkipJustification('');
+                if (skipReasonCode === '') return;
+                onSkip(skipReasonCode);
+                setSkipReasonCode('');
                 setSkipping(false);
               }}
               className="rounded-md border border-c-border px-2 py-1 text-xs font-medium text-c-text disabled:opacity-40 disabled:cursor-not-allowed hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
