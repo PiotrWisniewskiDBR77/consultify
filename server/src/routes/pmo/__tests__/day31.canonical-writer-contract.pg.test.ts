@@ -721,4 +721,95 @@ describe.skipIf(!REAL_PG)('Day 31 canonical writer mounted contract', () => {
       valueClass: 'UNKNOWN',
     });
   });
+
+  it('allows exactly one winner under concurrent CAS for every new execution command', async () => {
+    const commands = [
+      {
+        aggregateType: 'execution_budget_entry',
+        id: `parallel-budget-${tag}`,
+        path: (id: string) =>
+          `/api/initiatives/runtime-v1/initiatives/${initiativeId}/budget-entries/${id}`,
+        payload: {
+          entryType: 'PLANNED',
+          costType: 'OPEX',
+          category: 'parallel',
+          amount: 1,
+          currency: 'PLN',
+          description: null,
+          periodMonth: 8,
+          periodYear: 2026,
+          source: 'MANUAL',
+        },
+      },
+      {
+        aggregateType: 'execution_realization',
+        id: `parallel-realization-${tag}`,
+        path: (id: string) =>
+          `/api/initiatives/runtime-v1/initiatives/${initiativeId}/realizations/${id}`,
+        payload: {
+          periodMonth: '2026-08',
+          realizedRevenueDelta: 1,
+          realizedCostDelta: null,
+          realizedSavings: null,
+          varianceNotes: null,
+        },
+      },
+      {
+        aggregateType: 'raid_mitigation',
+        id: `parallel-raid-${tag}`,
+        path: (id: string) =>
+          `/api/initiatives/runtime-v1/initiatives/${initiativeId}/raid-mitigations/${id}`,
+        payload: {
+          mitigationPlan: 'Parallel CAS proof',
+          responseStrategy: 'MITIGATE',
+          mitigationOwnerId: userId,
+          mitigationDueDate: null,
+          mitigationStatus: 'PLANNED',
+        },
+      },
+      {
+        aggregateType: 'manager_execution_action',
+        id: `parallel-manager-${tag}`,
+        path: (id: string) =>
+          `/api/initiatives/runtime-v1/initiatives/${initiativeId}/manager-actions/${id}`,
+        payload: {
+          laneId: 'blocked',
+          problemId: `parallel-problem-${tag}`,
+          actionId: 'escalate-owner',
+          rationale: null,
+        },
+      },
+      {
+        aggregateType: 'manager_suggestion_review',
+        id: `parallel-suggestion-${tag}`,
+        path: (id: string) =>
+          `/api/initiatives/runtime-v1/initiatives/${initiativeId}/manager-suggestions/${id}/review`,
+        payload: { laneId: 'blocked', outcome: 'DEFER', notes: null },
+      },
+    ];
+    for (const command of commands) {
+      const attempts = await Promise.all(
+        [1, 2].map((attempt) =>
+          request(app)
+            .post(command.path(command.id))
+            .set(auth())
+            .send({
+              expectedVersion: 0,
+              clientRequestId: `parallel-${command.aggregateType}-${attempt}-${tag}`,
+              ...command.payload,
+            })
+        )
+      );
+      expect(attempts.map((attempt) => attempt.status).sort()).toEqual([201, 409]);
+      const readback = await client.query(
+        `SELECT
+           (SELECT COUNT(*)::int FROM ie_aggregate_state
+             WHERE organization_id=$1 AND aggregate_type=$2 AND aggregate_id=$3) AS states,
+           (SELECT COUNT(*)::int FROM ie_audit_events
+             WHERE organization_id=$1 AND aggregate_type=$2 AND aggregate_id=$3) AS audits`,
+        [organizationId, command.aggregateType, command.id]
+      );
+      expect(readback.rows).toEqual([{ states: 1, audits: 1 }]);
+    }
+  });
 });
