@@ -23,7 +23,7 @@
  * pigułkach zakładek (kanon: „bez liczników w Menu 2"; `StandardModuleTab`
  * nawet nie ma pola `count`, więc naruszenie nie jest tu fizycznie możliwe).
  */
-import { ClipboardList, FileText, Library, Lightbulb, Package } from 'lucide-react';
+import { ClipboardList, FileText, Library, Lightbulb, Package, ShieldCheck } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -37,6 +37,7 @@ import {
   persistentCommandId,
 } from '@/services/initiatives-execution/persistentCommandId';
 import { useAppStore } from '@/store/useAppStore';
+import { isAuditsFindingsAndReportViewEnabled } from '@/utils/auditsFindingsAndReportViewFlag';
 import { formatListDate } from '@/utils/listDateFormat';
 
 import {
@@ -57,13 +58,14 @@ import {
   type AuditVerificationState,
   type AuditLifecycleState,
 } from './auditsMethodApi';
+import { AuditFindingsTab } from './tabs/AuditFindingsTab';
 import { AuditInitiativesTab } from './tabs/AuditInitiativesTab';
 import { AuditLibraryTab } from './tabs/AuditLibraryTab';
 import { AuditOutputsTab } from './tabs/AuditOutputsTab';
 import { AuditProcessesTab } from './tabs/AuditProcessesTab';
 import { AuditReportsTab } from './tabs/AuditReportsTab';
 
-export type AuditsMethodTabId = 'library' | 'processes' | 'outputs' | 'reports' | 'initiatives';
+export type AuditsMethodTabId = 'library' | 'processes' | 'outputs' | 'reports' | 'findings' | 'initiatives';
 
 export function claimAuditStart(inFlight: Set<string>, packId: string): boolean {
   if (inFlight.has(packId)) return false;
@@ -77,7 +79,15 @@ export function auditStartFingerprint(organizationId: string, userId: string, pa
   return `${organizationId}:${userId}:${packId}`;
 }
 
-const TAB_IDS: AuditsMethodTabId[] = ['library', 'processes', 'outputs', 'reports', 'initiatives'];
+// `findings` (U4 rejestr niezgodności/CAPA) is flag-gated (`ff_auditsFindingsAndReportView`,
+// default OFF — fail-closed, CLAUDE.md #7). Included in the valid-id set only
+// when the flag resolves ON, so a stale `?tab=findings` link from a previous
+// session correctly falls back to `processes` while the flag is OFF, exactly
+// like any other unknown tab id.
+const BASE_TAB_IDS: AuditsMethodTabId[] = ['library', 'processes', 'outputs', 'reports', 'initiatives'];
+const TAB_IDS: AuditsMethodTabId[] = isAuditsFindingsAndReportViewEnabled()
+  ? ['library', 'processes', 'outputs', 'reports', 'findings', 'initiatives']
+  : BASE_TAB_IDS;
 const TAB_ID_SET = new Set<string>(TAB_IDS);
 
 /** Nieznana/legacy wartość `?tab=` → `processes` (nigdy `library`, żeby nie
@@ -284,8 +294,8 @@ export const AuditsMethodHub: React.FC = () => {
     [currentOrganizationId, currentUserId, isPolish, search, setActiveTab]
   );
 
-  const tabs: StandardModuleTab[] = useMemo(
-    () => [
+  const tabs: StandardModuleTab[] = useMemo(() => {
+    const base: StandardModuleTab[] = [
       { id: 'library', label: t('audits.method.tabs.library', 'Library'), icon: <Library size={16} /> },
       {
         id: 'processes',
@@ -298,10 +308,21 @@ export const AuditsMethodHub: React.FC = () => {
       },
       { id: 'outputs', label: t('audits.method.tabs.outputs', 'Outputs'), icon: <Package size={16} /> },
       { id: 'reports', label: t('audits.method.tabs.reports', 'Reports'), icon: <FileText size={16} /> },
-      { id: 'initiatives', label: t('audits.method.tabs.initiatives', 'Initiatives'), icon: <Lightbulb size={16} /> },
-    ],
-    [t, isPolish]
-  );
+    ];
+    if (isAuditsFindingsAndReportViewEnabled()) {
+      base.push({
+        id: 'findings',
+        label: t('audits.method.tabs.findings', isPolish ? 'Ustalenia' : 'Findings'),
+        icon: <ShieldCheck size={16} />,
+      });
+    }
+    base.push({
+      id: 'initiatives',
+      label: t('audits.method.tabs.initiatives', 'Initiatives'),
+      icon: <Lightbulb size={16} />,
+    });
+    return base;
+  }, [t, isPolish]);
 
   // Menu 3 = JEDEN tor (kanon A3/DEC-2026-08-25-66) — Library i Processes
   // dzielą dokładnie ten sam wbudowany `chips`/`activeChip`/`onChipChange`
@@ -394,6 +415,8 @@ export const AuditsMethodHub: React.FC = () => {
           <AuditOutputsTab isPolish={isPolish} programNameById={programNameById} userNameById={userNameById} />
         ) : activeTab === 'reports' ? (
           <AuditReportsTab isPolish={isPolish} programNameById={programNameById} />
+        ) : activeTab === 'findings' ? (
+          <AuditFindingsTab isPolish={isPolish} programs={programsAll} userNameById={userNameById} />
         ) : (
           <AuditInitiativesTab isPolish={isPolish} programNameById={programNameById} />
         )}

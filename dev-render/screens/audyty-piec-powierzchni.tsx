@@ -36,6 +36,11 @@ import React from 'react';
 
 import { AuditsMethodHub } from '../../src/components/Audit/method/AuditsMethodHub';
 import type {
+  AuditActionSummary,
+  AuditCriterionSummary,
+  AuditEvidenceSummary,
+  AuditFindingStatistics,
+  AuditFindingSummary,
   AuditLifecycleState,
   AuditOutputSummary,
   AuditPackDetail,
@@ -46,6 +51,7 @@ import type {
   AuditProgramSummary,
   AuditProposalSummary,
   AuditReportSummary,
+  AuditSystemicFindingGroup,
 } from '../../src/components/Audit/method/auditsMethodApi';
 import { FeatureFlagsProvider } from '../../src/contexts/FeatureFlagsContext';
 import { AppProviders } from '../../src/providers/AppProviders';
@@ -65,6 +71,20 @@ try {
     'consultify_feature_flags',
     JSON.stringify({ ...existing, auditsFiveSurfacesV1: true })
   );
+} catch {
+  // ignore
+}
+
+// NAPRAWA 1/2 (2026-08-26, panel ekspercki 6,0/10): zakładka „Ustalenia" i
+// pełny widok raportu żyją za `ff_auditsFindingsAndReportView` (default OFF,
+// fail-closed — CLAUDE.md #7). Ten harness domyślnie włącza flagę w
+// localStorage, żeby nadzorca sesji mógł zrobić zrzuty PRZED pokazaniem
+// właścicielowi; `?ff_auditsFindingsAndReportView=0` wyłącza dla porównania
+// regresji z pięcioma zakładkami — wzorzec 1:1 z `criterionWorkspaceV2Flag`.
+try {
+  const qp0 = new URLSearchParams(window.location.search);
+  const override = qp0.get('ff_auditsFindingsAndReportView');
+  localStorage.setItem('ff.audits_findings_and_report_view', override !== null ? override : '1');
 } catch {
   // ignore
 }
@@ -574,6 +594,285 @@ const MOCK_PROPOSALS: AuditProposalSummary[] = [
 ];
 
 // ---------------------------------------------------------------------------
+// FINDINGS (U4 „Ustalenia") — jeden dodatkowy program, „Metalpol Sp. z o.o.",
+// dane WYRÓWNANE 1:1 z `dev-render/screens/audyty-warsztat-kryterium.tsx`
+// (ZAK-8.4.1/ZAK-8.4.2, UST-2026-014/015) — spójność między dwoma harnessami
+// audytów, jak wymaga docstring `AuditFindingsTab`.
+// ---------------------------------------------------------------------------
+
+const METALPOL_PROGRAM_ID = 'prog-metalpol-zakupy';
+const METALPOL_CRITERION_1 = 'crit-metalpol-zak-8-4-1';
+const METALPOL_CRITERION_2 = 'crit-metalpol-zak-8-4-2';
+const METALPOL_AUDITOR_ID = 'user-pawel-nowak';
+const METALPOL_AUDITEE_ID = 'user-magdalena-zielinska';
+
+const METALPOL_PROGRAM: AuditProgramSummary = {
+  id: METALPOL_PROGRAM_ID,
+  name: 'Metalpol Sp. z o.o. — Audyt wewnętrzny 2026/Q3 (Zakupy)',
+  packId: 'pack-qms-elmax',
+  packTitle: MOCK_PACKS[0].title,
+  packVersion: 3,
+  lifecycleState: 'findings_review',
+  applicableCriteria: 24,
+  concludedCriteria: 9,
+  openFindings: 2,
+  leadAuditorId: 'user-piotr-demo',
+  leadAuditorName: 'Piotr Wiśniewski',
+  plannedStart: '2026-07-15',
+  plannedEnd: '2026-09-30',
+  updatedAt: '2026-08-21T14:32:00Z',
+};
+
+const METALPOL_CRITERIA: AuditCriterionSummary[] = [
+  {
+    id: METALPOL_CRITERION_1,
+    programId: METALPOL_PROGRAM_ID,
+    parentId: null,
+    ordinal: 12,
+    refCode: 'ZAK-8.4.1',
+    title: 'Kwalifikacja i ocena okresowa dostawców krytycznych',
+    applicable: true,
+    conformityStatus: 'nonconforming',
+    workStatus: 'concluded',
+    evidenceCount: 3,
+    findingCount: 1,
+    children: [],
+  },
+  {
+    id: METALPOL_CRITERION_2,
+    programId: METALPOL_PROGRAM_ID,
+    parentId: null,
+    ordinal: 13,
+    refCode: 'ZAK-8.4.2',
+    title: 'Nadzór nad dostawcami procesów zlecanych na zewnątrz',
+    applicable: true,
+    conformityStatus: 'nonconforming',
+    workStatus: 'concluded',
+    evidenceCount: 1,
+    findingCount: 1,
+    children: [],
+  },
+];
+
+const METALPOL_EVIDENCE: AuditEvidenceSummary[] = [
+  {
+    id: 'evid-d1',
+    programId: METALPOL_PROGRAM_ID,
+    criterionId: METALPOL_CRITERION_1,
+    evidenceKind: 'document',
+    title: 'Karty oceny okresowej dostawców klasy A — 2025 (12 z 17)',
+  },
+  {
+    id: 'evid-d2',
+    programId: METALPOL_PROGRAM_ID,
+    criterionId: METALPOL_CRITERION_1,
+    evidenceKind: 'system_export',
+    title: 'Eksport SRM — daty ostatniej oceny wszystkich dostawców klasy A',
+  },
+  {
+    id: 'evid-d4',
+    programId: METALPOL_PROGRAM_ID,
+    criterionId: METALPOL_CRITERION_2,
+    evidenceKind: 'document',
+    title: 'Rejestr zamówień Q1–Q3 2026 z odniesieniem do zatwierdzonej listy dostawców (AVL)',
+  },
+];
+
+// Wspólna, znormalizowana przyczyna źródłowa dla UST-2026-014 i UST-2026-016 —
+// żeby `GET /audits/findings/systemic` (root_cause, ≥2 ustalenia) miało co
+// wykryć, dokładnie jak realny `detectSystemicFindings`.
+const SHARED_ROOT_CAUSE =
+  'brak automatycznego przypomnienia w module srm o zbliżającym się terminie oceny okresowej dostawcy';
+
+let metalpolFindingsStore: AuditFindingSummary[] = [
+  {
+    id: 'find-ust-2026-014',
+    programId: METALPOL_PROGRAM_ID,
+    criterionId: METALPOL_CRITERION_1,
+    referenceCode: 'UST-2026-014',
+    statement: 'Brak oceny okresowej za 2025 dla 5 z 17 dostawców klasy A (2026-08-21)',
+    requirementText: 'Ocena okresowa dostawców krytycznych nie rzadziej niż raz w roku (Procedura P-ZAK-02 rew. 4, pkt 8.4.1).',
+    conditionText: 'Dla 5 z 17 dostawców klasy A brak jest karty oceny okresowej za 2025.',
+    sourceReference: 'Procedura P-ZAK-02 rew. 4, pkt 8.4.1',
+    gapText: 'Brak mechanizmu przypominającego o zbliżającym się terminie oceny okresowej w module SRM.',
+    objectiveEvidence: ['evid-d1', 'evid-d2'],
+    contradictingEvidence: [],
+    classification: 'nonconforming',
+    severity: 'medium',
+    riskText: null,
+    impactText: null,
+    recommendation: 'Wdrożyć automatyczne przypomnienie w module SRM 30 dni przed upływem terminu oceny okresowej.',
+    rootCause: SHARED_ROOT_CAUSE,
+    rootCauseMethod: '5 x Dlaczego',
+    rootCauseConfirmed: true,
+    status: 'remediation_in_progress',
+    ownerUserId: METALPOL_AUDITEE_ID,
+    authorId: METALPOL_AUDITOR_ID,
+    reviewedBy: METALPOL_AUDITOR_ID,
+    reviewNote: null,
+    sentBackAt: null,
+    sentBackBy: null,
+    sendBackReason: null,
+    residualRisk: null,
+    residualRiskAcceptedBy: null,
+    residualRiskAcceptedAt: null,
+    residualRiskNote: null,
+    closedAt: null,
+    closedBy: null,
+    closureNote: null,
+    createdAt: '2026-08-21T11:40:00Z',
+    updatedAt: '2026-09-01T14:00:00Z',
+  },
+  {
+    id: 'find-ust-2026-015',
+    programId: METALPOL_PROGRAM_ID,
+    criterionId: METALPOL_CRITERION_2,
+    referenceCode: 'UST-2026-015',
+    statement: 'Zamówienia złożone u dostawcy spoza zatwierdzonej listy (AVL) bez zapisu odstępstwa (3 przypadki)',
+    requirementText: 'Zamówienia są składane wyłącznie u dostawców z zatwierdzonej listy (AVL), chyba że odstępstwo jest udokumentowane.',
+    conditionText: 'W 3 przypadkach w Q1-Q3 2026 zamówienie złożono u dostawcy spoza AVL bez zapisu odstępstwa.',
+    sourceReference: 'Procedura P-ZAK-02 rew. 4, pkt 8.4.2',
+    gapText: null,
+    objectiveEvidence: ['evid-d4'],
+    contradictingEvidence: [],
+    classification: 'observation',
+    severity: 'low',
+    riskText: null,
+    impactText: null,
+    recommendation: null,
+    rootCause: null,
+    rootCauseMethod: null,
+    rootCauseConfirmed: false,
+    status: 'draft',
+    ownerUserId: null,
+    authorId: METALPOL_AUDITOR_ID,
+    reviewedBy: null,
+    reviewNote: null,
+    sentBackAt: null,
+    sentBackBy: null,
+    sendBackReason: null,
+    residualRisk: null,
+    residualRiskAcceptedBy: null,
+    residualRiskAcceptedAt: null,
+    residualRiskNote: null,
+    closedAt: null,
+    closedBy: null,
+    closureNote: null,
+    createdAt: '2026-08-21T11:50:00Z',
+    updatedAt: '2026-08-21T11:50:00Z',
+  },
+  {
+    id: 'find-ust-2026-016',
+    programId: METALPOL_PROGRAM_ID,
+    criterionId: METALPOL_CRITERION_1,
+    referenceCode: 'UST-2026-016',
+    statement: 'Brak zapisu kwalifikacji wstępnej dla 2 nowych dostawców klasy A wprowadzonych w 2026',
+    requirementText: 'Każdy nowy dostawca klasy A przechodzi udokumentowaną kwalifikację wstępną przed pierwszym zamówieniem.',
+    conditionText: '2 z 4 dostawców klasy A wprowadzonych w 2026 nie mają zapisu kwalifikacji wstępnej.',
+    sourceReference: 'Procedura P-ZAK-02 rew. 4, pkt 8.4.1',
+    gapText: 'Ten sam brak mechanizmu przypominającego w module SRM — kwalifikacja wstępna nie jest wymuszana systemowo.',
+    objectiveEvidence: ['evid-d1'],
+    contradictingEvidence: [],
+    classification: 'nonconforming',
+    severity: 'high',
+    riskText: null,
+    impactText: null,
+    recommendation: 'Zablokować możliwość złożenia zamówienia w module SRM bez zapisanej kwalifikacji wstępnej.',
+    rootCause: SHARED_ROOT_CAUSE,
+    rootCauseMethod: '5 x Dlaczego',
+    rootCauseConfirmed: true,
+    status: 'closed',
+    ownerUserId: METALPOL_AUDITEE_ID,
+    authorId: METALPOL_AUDITOR_ID,
+    reviewedBy: METALPOL_AUDITOR_ID,
+    reviewNote: 'Potwierdzone — zgodne z UST-2026-014 co do przyczyny źródłowej.',
+    sentBackAt: null,
+    sentBackBy: null,
+    sendBackReason: null,
+    residualRisk: null,
+    residualRiskAcceptedBy: null,
+    residualRiskAcceptedAt: null,
+    residualRiskNote: null,
+    closedAt: '2026-10-05T09:30:00Z',
+    closedBy: METALPOL_AUDITOR_ID,
+    closureNote: 'Działanie korygujące potwierdzone jako skuteczne w próbie kontrolnej z września 2026. Ustalenie zamknięte.',
+    createdAt: '2026-08-22T09:10:00Z',
+    updatedAt: '2026-10-05T09:30:00Z',
+  },
+];
+
+let metalpolActionsStore: AuditActionSummary[] = [
+  {
+    id: 'act-korygujace-01',
+    findingId: 'find-ust-2026-014',
+    programId: METALPOL_PROGRAM_ID,
+    actionKind: 'corrective_action',
+    title: 'Wdrożyć automatyczne przypomnienie w module SRM 30 dni przed upływem terminu oceny okresowej dostawcy klasy A',
+    ownerUserId: METALPOL_AUDITEE_ID,
+    dueDate: '2026-09-15',
+    status: 'approved',
+  },
+  {
+    id: 'act-korekcja-01',
+    findingId: 'find-ust-2026-014',
+    programId: METALPOL_PROGRAM_ID,
+    actionKind: 'correction',
+    title: 'Ręczne uzupełnienie kart oceny okresowej dla 5 dostawców klasy A z zaległością za 2025',
+    ownerUserId: METALPOL_AUDITEE_ID,
+    dueDate: '2026-08-25',
+    status: 'implemented',
+  },
+  {
+    id: 'act-korygujace-02',
+    findingId: 'find-ust-2026-016',
+    programId: METALPOL_PROGRAM_ID,
+    actionKind: 'corrective_action',
+    title: 'Zablokować możliwość złożenia zamówienia w module SRM bez zapisanej kwalifikacji wstępnej',
+    ownerUserId: METALPOL_AUDITEE_ID,
+    dueDate: '2026-09-01',
+    status: 'verified',
+  },
+];
+
+function computeMetalpolStatistics(): AuditFindingStatistics {
+  const byClassification: Record<string, number> = {};
+  const bySeverity: Record<string, number> = {};
+  const byStatus: Record<string, number> = {};
+  for (const f of metalpolFindingsStore) {
+    byClassification[f.classification] = (byClassification[f.classification] ?? 0) + 1;
+    const sevKey = f.severity ?? 'unspecified';
+    bySeverity[sevKey] = (bySeverity[sevKey] ?? 0) + 1;
+    byStatus[f.status] = (byStatus[f.status] ?? 0) + 1;
+  }
+  return { total: metalpolFindingsStore.length, byClassification, bySeverity, byStatus };
+}
+
+function computeMetalpolSystemic(): AuditSystemicFindingGroup[] {
+  const confirmed = metalpolFindingsStore.filter((f) => f.status !== 'draft');
+  const byRootCause = new Map<string, string[]>();
+  for (const f of confirmed) {
+    if (!f.rootCause) continue;
+    const key = f.rootCause.trim().toLowerCase();
+    const list = byRootCause.get(key) ?? [];
+    list.push(f.id);
+    byRootCause.set(key, list);
+  }
+  const groups: AuditSystemicFindingGroup[] = [];
+  for (const [key, findingIds] of byRootCause.entries()) {
+    if (findingIds.length >= 2) {
+      groups.push({
+        groupKind: 'root_cause',
+        key,
+        label: `Wspólna przyczyna źródłowa: ${key}`,
+        findingIds,
+        count: findingIds.length,
+      });
+    }
+  }
+  return groups;
+}
+
+// ---------------------------------------------------------------------------
 // Api.get/Api.post — patch singletona (patrz nagłówek pliku).
 // ---------------------------------------------------------------------------
 
@@ -597,7 +896,7 @@ const originalPost = Api.post.bind(Api);
 // Bardzo prosty stateful magazyn programów — "Rozpocznij audyt" (Library →
 // Processes) dopisuje nowy wiersz zamiast ginąć w próżni przy odświeżeniu
 // zakładki Processes po sukcesie.
-let programsStore: AuditProgramSummary[] = [...MOCK_PROGRAMS];
+let programsStore: AuditProgramSummary[] = [...MOCK_PROGRAMS, METALPOL_PROGRAM];
 // FIX 2026-08-25 (owner-review R2, AUD block, DEC-2026-08-25-66 pt.2/4): oba
 // magazyny wspierają REALNE przejścia stanu z nowego kebaba (Approve/Publish
 // na Reports, Register/Defer/Dismiss na Initiatives) — te same bramki co
@@ -653,6 +952,44 @@ Api.get = (async (url: string, ...rest: unknown[]) => {
     return envelope({ proposals: items, total: items.length });
   }
 
+  // -------------------------------------------------------------------------
+  // NAPRAWA 1 (`ff_auditsFindingsAndReportView`) — U4 rejestr ustaleń, tylko
+  // program `METALPOL_PROGRAM_ID` ma dane; inne programy dają uczciwie pustą
+  // listę (żaden mock findings dla Elmax/Vantico/Metalplast nie istnieje).
+  // -------------------------------------------------------------------------
+  if (path === '/audits/findings/statistics') {
+    const programId = new URL(url, 'http://localhost').searchParams.get('programId');
+    if (empty || programId !== METALPOL_PROGRAM_ID) {
+      return envelope({ total: 0, byClassification: {}, bySeverity: {}, byStatus: {} });
+    }
+    return envelope(computeMetalpolStatistics());
+  }
+  if (path === '/audits/findings/systemic') {
+    const programId = new URL(url, 'http://localhost').searchParams.get('programId');
+    if (empty || programId !== METALPOL_PROGRAM_ID) return envelope([]);
+    return envelope(computeMetalpolSystemic());
+  }
+  if (path === '/audits/findings') {
+    const programId = new URL(url, 'http://localhost').searchParams.get('programId');
+    const items = empty || programId !== METALPOL_PROGRAM_ID ? [] : metalpolFindingsStore;
+    return envelope({ items, total: items.length });
+  }
+  if (path === '/audits/actions') {
+    const programId = new URL(url, 'http://localhost').searchParams.get('programId');
+    const items = empty || programId !== METALPOL_PROGRAM_ID ? [] : metalpolActionsStore;
+    return envelope({ items, total: items.length });
+  }
+  if (path === '/audits/evidence') {
+    const programId = new URL(url, 'http://localhost').searchParams.get('programId');
+    const items = empty || programId !== METALPOL_PROGRAM_ID ? [] : METALPOL_EVIDENCE;
+    return envelope(items);
+  }
+  if (path === '/audits/criteria') {
+    const programId = new URL(url, 'http://localhost').searchParams.get('programId');
+    const items = empty || programId !== METALPOL_PROGRAM_ID ? [] : METALPOL_CRITERIA;
+    return envelope({ criteria: items });
+  }
+
   return (originalGet as any)(url, ...rest);
 }) as typeof Api.get;
 
@@ -666,6 +1003,9 @@ Api.getUsers = (async () => [
   { id: 'user-marek', firstName: 'Marek', lastName: 'Zieliński' },
   { id: 'user-aleksandra', firstName: 'Aleksandra', lastName: 'Dąbrowska' },
   { id: 'user-piotr-demo', firstName: 'Piotr', lastName: 'Wiśniewski' },
+  // Metalpol (Findings) — te same tożsamości co `audyty-warsztat-kryterium.tsx`.
+  { id: METALPOL_AUDITOR_ID, firstName: 'Paweł', lastName: 'Nowak' },
+  { id: METALPOL_AUDITEE_ID, firstName: 'Magdalena', lastName: 'Zielińska' },
 ]) as typeof originalGetUsers;
 
 Api.post = (async (url: string, data: any) => {
@@ -782,6 +1122,79 @@ Api.post = (async (url: string, data: any) => {
     }
     proposalsStore[idx] = { ...proposalsStore[idx], status: 'deferred', updatedAt: new Date().toISOString() };
     return envelope(proposalsStore[idx]);
+  }
+
+  // -------------------------------------------------------------------------
+  // NAPRAWA 1 — przejścia stanu ustalenia, te same bramki co
+  // `findingService.reviewFinding`/`acceptResidualRisk`/`closeFinding`.
+  // -------------------------------------------------------------------------
+  const reviewFinding = url.match(/^\/audits\/findings\/([^/]+)\/review$/);
+  if (reviewFinding) {
+    const id = decodeURIComponent(reviewFinding[1]);
+    const idx = metalpolFindingsStore.findIndex((f) => f.id === id);
+    if (idx < 0) serverUnavailable();
+    const decision = data?.decision;
+    const note = String(data?.note || '').trim() || null;
+    if ((decision === 'send_back' || decision === 'reject') && !note) {
+      throw Object.assign(new Error('Ta decyzja wymaga podania powodu.'), { status: 400 });
+    }
+    const nextStatus = decision === 'confirm' ? 'confirmed' : decision === 'send_back' ? 'draft' : 'rejected';
+    metalpolFindingsStore[idx] = {
+      ...metalpolFindingsStore[idx],
+      status: nextStatus,
+      reviewedBy: METALPOL_AUDITOR_ID,
+      reviewNote: note,
+      updatedAt: new Date().toISOString(),
+    };
+    return envelope(metalpolFindingsStore[idx]);
+  }
+  const acceptResidualRisk = url.match(/^\/audits\/findings\/([^/]+)\/accept-risk$/);
+  if (acceptResidualRisk) {
+    const id = decodeURIComponent(acceptResidualRisk[1]);
+    const idx = metalpolFindingsStore.findIndex((f) => f.id === id);
+    if (idx < 0) serverUnavailable();
+    const note = String(data?.note || '').trim();
+    if (!note) throw Object.assign(new Error('Akceptacja ryzyka rezydualnego wymaga notatki uzasadniającej decyzję.'), { status: 400 });
+    metalpolFindingsStore[idx] = {
+      ...metalpolFindingsStore[idx],
+      status: 'risk_accepted',
+      residualRiskAcceptedBy: 'user-piotr-demo',
+      residualRiskAcceptedAt: new Date().toISOString(),
+      residualRiskNote: note,
+      updatedAt: new Date().toISOString(),
+    };
+    return envelope(metalpolFindingsStore[idx]);
+  }
+  const closeFinding = url.match(/^\/audits\/findings\/([^/]+)\/close$/);
+  if (closeFinding) {
+    const id = decodeURIComponent(closeFinding[1]);
+    const idx = metalpolFindingsStore.findIndex((f) => f.id === id);
+    if (idx < 0) serverUnavailable();
+    const note = String(data?.note || '').trim();
+    if (!note) throw Object.assign(new Error('Zamknięcie ustalenia wymaga notatki.'), { status: 400 });
+    const stillOpenCorrective = metalpolActionsStore.some(
+      (a) =>
+        a.findingId === id &&
+        a.actionKind === 'corrective_action' &&
+        a.status !== 'verified' &&
+        a.status !== 'rejected' &&
+        a.status !== 'cancelled'
+    );
+    if (stillOpenCorrective) {
+      throw Object.assign(
+        new Error('Nie można zamknąć ustalenia — brakuje weryfikacji skuteczności działania korygującego.'),
+        { status: 409 }
+      );
+    }
+    metalpolFindingsStore[idx] = {
+      ...metalpolFindingsStore[idx],
+      status: 'closed',
+      closedAt: new Date().toISOString(),
+      closedBy: 'user-piotr-demo',
+      closureNote: note,
+      updatedAt: new Date().toISOString(),
+    };
+    return envelope(metalpolFindingsStore[idx]);
   }
 
   return (originalPost as any)(url, data);

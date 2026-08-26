@@ -31,6 +31,7 @@ import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
 import { AppView, AuthStep, SessionMode, User } from '@/types';
+import { isAuditsFindingsAndReportViewEnabled } from '@/utils/auditsFindingsAndReportViewFlag';
 import { isClientReaderEnabled } from '@/utils/clientReaderFlag';
 import { isDrdReportEnabled } from '@/utils/drdReportFlag';
 import { isExceleEngineEnabled } from '@/utils/exceleFlag';
@@ -549,6 +550,14 @@ const CriterionWorkspace = lazyWithRetry(
 const DRDAuditReportView = lazyWithRetry(() =>
   import('@/views/DRDAuditReportView').then((m) => ({ default: m.DRDAuditReportView }))
 );
+// NAPRAWA 2 (panel ekspercki 2026-08-26): pełny widok treści raportu
+// (`GET /audits/reports/:id/presentation`, U5) — DIFFERENT engine from
+// DRDAuditReportView above (that one reads `/assessment-reports/:id/full`,
+// an unrelated legacy contract). Flag-gated (`ff_auditsFindingsAndReportView`,
+// default OFF) — see `AuditReportDocumentRoute` below.
+const AuditReportDocumentView = lazyWithRetry(
+  () => import('@/components/Audit/method/AuditReportDocumentView')
+);
 
 // Public Mini Assessment (T015)
 const PublicMiniAssessmentView = lazyWithRetry(() =>
@@ -788,6 +797,21 @@ const DRDAuditReportRoute: React.FC = () => {
     return <Navigate to="/audit-programs" replace />;
   }
   return <DRDAuditReportView reportId={params.reportId} />;
+};
+
+/**
+ * Audits module entry for the full report content view (NAPRAWA 2,
+ * 2026-08-26 — `AuditReportDocumentView`, `GET /audits/reports/:id/presentation`).
+ * Flag-gated (`isAuditsFindingsAndReportViewEnabled`, default OFF, fail-closed
+ * — CLAUDE.md #7): OFF → redirects to the Reports tab, exactly the same
+ * no-op-until-accepted contract as `DRDAuditReportRoute` above.
+ */
+const AuditReportDocumentRoute: React.FC = () => {
+  const params = useParams<{ reportId: string }>();
+  if (!isAuditsFindingsAndReportViewEnabled()) {
+    return <Navigate to="/audit-programs?tab=reports" replace />;
+  }
+  return <AuditReportDocumentView reportId={params.reportId} />;
 };
 
 const LegacyAuditCriterionRedirect: React.FC = () => {
@@ -1641,6 +1665,28 @@ export const AppRoutes: React.FC = () => {
                     <AnimationWrapper variant="slideUp">
                       <Suspense fallback={<LoadingScreen message="Loading DRD report..." />}>
                         <DRDAuditReportRoute />
+                      </Suspense>
+                    </AnimationWrapper>
+                  </RouteErrorBoundary>
+                </MainLayout>
+              </BetaGate>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* NAPRAWA 2 (2026-08-26) — pełny widok treści raportu, SPEC-A Dokument,
+            otwierany z listy Raportów (AuditReportsTab). Flag-gated — patrz
+            AuditReportDocumentRoute powyżej. */}
+        <Route
+          path="/audit-programs/reports/:reportId"
+          element={
+            <ProtectedRoute requireAuth={true}>
+              <BetaGate moduleId="MODULE_AUDITS">
+                <MainLayout breadcrumbs={breadcrumbs || ['Audits', 'Reports']}>
+                  <RouteErrorBoundary>
+                    <AnimationWrapper variant="slideUp">
+                      <Suspense fallback={<LoadingScreen message="Loading report..." />}>
+                        <AuditReportDocumentRoute />
                       </Suspense>
                     </AnimationWrapper>
                   </RouteErrorBoundary>

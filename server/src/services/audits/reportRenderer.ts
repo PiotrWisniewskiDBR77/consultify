@@ -209,6 +209,33 @@ function severityLabel(severity: string | null): string {
   return 'nieokreślona';
 }
 
+/**
+ * Etykiety PL klasyfikacji pakietu (`output.meta.packClassification`) —
+ * pole `PackClassification` (`types.ts`, deprecated jednoosiowa klasyfikacja
+ * sprzed podziału na `sourceType`/`verificationStatus`) ORAZ, dla starszych
+ * rekordów zapisanych przed tym podziałem, wartości osi `verificationStatus`
+ * (`AuditVerificationState`) które trafiły bezpośrednio do tego pola (np.
+ * „VERIFIED" zamiast „VERIFIED_NORMATIVE"). Bramka „zero surowych enumów na
+ * twarzy produktu" (CLAUDE.md #4) — żadna gałąź nie zwraca surowego klucza.
+ */
+const PACK_CLASSIFICATION_LABELS: Record<string, string> = {
+  VERIFIED_NORMATIVE: 'zweryfikowana norma',
+  INTERNAL_FRAMEWORK: 'framework wewnętrzny',
+  DEMONSTRATION: 'materiał demonstracyjny',
+  LEGACY: 'wycofana (historyczna)',
+  EVIDENCE_MISSING: 'brak dowodu źródła',
+  // Legacy: wartości `AuditVerificationState` zapisane wprost w tym polu
+  // sprzed rozdzielenia osi — zachowane dla odczytu starych rekordów.
+  VERIFIED: 'zweryfikowana',
+  PENDING_REVIEW: 'w przeglądzie',
+  UNVERIFIED: 'niezweryfikowana',
+};
+
+function packClassificationLabel(classification: string | null): string {
+  if (!classification) return 'nieznana';
+  return PACK_CLASSIFICATION_LABELS[classification] ?? 'nieznana';
+}
+
 function severityRank(severity: string | null): number {
   const idx = severity ? FINDING_SEVERITIES.indexOf(severity as FindingSeverity) : -1;
   return idx === -1 ? -1 : idx;
@@ -278,7 +305,7 @@ function buildOverallConclusion(output: AuditOutputPayload): string {
 function buildMethodology(output: AuditOutputPayload): string {
   const teamSize = output.team.length;
   const packInfo = output.meta.packId
-    ? `pakiet audytowy (klasyfikacja: ${output.meta.packClassification ?? 'nieznana'}${
+    ? `pakiet audytowy (klasyfikacja: ${packClassificationLabel(output.meta.packClassification)}${
         output.meta.packSourceTitle ? `, źródło: ${output.meta.packSourceTitle}` : ''
       })`
     : 'pakiet audytowy niewskazany';

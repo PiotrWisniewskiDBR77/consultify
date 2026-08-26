@@ -8,6 +8,12 @@
       "port": 4520
     },
     {
+      "name": "audits-gaps-20260826",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "4530", "--strictPort"],
+      "port": 4530
+    },
+    {
       "name": "org-redesign-build",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "4521", "--strictPort"],
