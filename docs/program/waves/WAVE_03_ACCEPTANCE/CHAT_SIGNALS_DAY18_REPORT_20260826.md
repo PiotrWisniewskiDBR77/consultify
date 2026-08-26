@@ -40,9 +40,9 @@ Migracje: `20261080`, `20261081` (przenumerowane przy odbiorze — DEC-98 rezerw
 | 5 | `dec.pending_stale` | `decisions`: status, created_at, organization_id | ŹRÓDŁO_JEST |
 | 6 | `dec.blocking_dependents` | `decisions` + `decision_impacts.is_blocker` | ŹRÓDŁO_JEST |
 | 7 | `res.kpi_threshold_breached` | `v8_kpi_signals` + `v8_kpi_definitions`, przez initiative tenant scope | ŹRÓDŁO_INNE; reguła częściowa względem bezpośredniego subject KPI |
-| 8 | `res.roi_confidence_dropped` | brak historii confidence / poprzedniej wartości | BRAK_DANYCH — nie zaimplementowano |
+| 8 | `res.roi_confidence_dropped` | **KOREKTA FIX-5(a):** pierwotne stwierdzenie „brak wersjonowanej historii confidence" jest NIEPRAWDZIWE. Żywy schemat ma `kpi_attribution_snapshots` (organization_id, kpi_id, overall_confidence, confidence_reasons, computed_at) — dokładnie wersjonowana historia — oraz `rvn_roi_forecast_versions`. Oba istnieją jako migracje, zweryfikowane na żywym schemacie. Wybór źródła i implementacja NIE rozstrzygnięte przez tego robotnika. | ŹRÓDŁO_INNE — STOP, kandydaci wskazani, decyzja wyboru źródła należy do właściciela/nadzorcy |
 | 9 | `fin.budget_overspend` | `budget_overspend_signals`: budget/actual/variance | ŹRÓDŁO_JEST |
-| 10 | `fin.benefit_not_realized` | deklarowane `benefit_realization_plans`, lecz tabeli brak po rzeczywistym baseline replay | BRAK_DANYCH — nie zaimplementowano |
+| 10 | `fin.benefit_not_realized` | Stwierdzenie o braku `benefit_realization_plans` PRAWDZIWE (zweryfikowane: tabela nie istnieje w żadnej migracji). **KOREKTA FIX-5(b):** pierwotny raport nie wymienił ~8 kandydatów obecnych na żywym schemacie: `benefit_tracking`, `benefits_register`, `initiative_benefits`, `benefit_targets`, `benefit_measurements`, `rvn_roi_benefit_lines`, `roi_realized_values`, `v8_roi_realization_entries` (wszystkie zweryfikowane jako istniejące migracje). | BRAK_DANYCH (deklarowana tabela) — STOP, kandydaci dopisani, decyzja wyboru należy do właściciela/nadzorcy |
 
 ## Pozycje
 
@@ -55,8 +55,8 @@ Migracje: `20261080`, `20261081` (przenumerowane przy odbiorze — DEC-98 rezerw
 | E.2 | ZROBIONE_WG_DoD | `6fed5fff90` | dedupe, resolve, supersede, limit, isolation |
 | E.3 | ZROBIONE_WG_DoD | `c0855c3a97` | cztery reguły, real PG, 16/16 |
 | E.4 | ZROBIONE_WG_DoD | `a656253e69` | dwie reguły, real PG, 8/8 |
-| E.5 | CZĘŚCIOWO | `8f326c6980` | KPI 4/4; ROI BRAK_DANYCH |
-| E.6 | CZĘŚCIOWO | `3717071562` | budget 4/4; benefit BRAK_DANYCH |
+| E.5 | CZĘŚCIOWO | `8f326c6980` | KPI 4/4; ROI ŹRÓDŁO_INNE/STOP (kandydaci wskazani po FIX-5(a), decyzja właściciela oczekująca) |
+| E.6 | CZĘŚCIOWO | `3717071562` | budget 4/4; benefit BRAK_DANYCH/STOP (kandydaci dopisani po FIX-5(b), decyzja właściciela oczekująca) |
 | S.1 | ZROBIONE_WG_DoD | `3ed0b2803f` | cron 15 min, producer default OFF |
 | S.2 | ZROBIONE_WG_DoD | `f4dd3d906d` | durable throttle i mismatch org |
 | S.3 | ZROBIONE_WG_DoD | `bd925573cf` | FAILED/PARTIAL ledger + alarm |
@@ -69,7 +69,7 @@ Migracje: `20261080`, `20261081` (przenumerowane przy odbiorze — DEC-98 rezerw
 | W.3 | CZĘŚCIOWO | `22880d6755` | privacy/limit/budget/provenance; bez live provider i bez generycznego AI ledger API |
 | X.1 | ZROBIONE_WG_DoD | `492ac3da15` | real PG: canonical + legacy, idempotencja, rollup, tenant, PARTIAL |
 | X.2 | ZROBIONE_WG_DoD | — | `automated_insights`: 0 wyników; legacy trigger niezmieniony |
-| T.1–T.4 | CZĘŚCIOWO | wszystkie powyżej | wszystkie zbudowane reguły zielone; 2/10 zatrzymane BRAK_DANYCH |
+| T.1–T.4 | CZĘŚCIOWO | wszystkie powyżej | wszystkie zbudowane reguły zielone; 2/10 zatrzymane (1× ŹRÓDŁO_INNE/STOP, 1× BRAK_DANYCH/STOP — kandydaci obu wskazani po FIX-5) |
 | R.1 | STOP | — | w MODULE_ACCEPTANCE brak atomowego wpisu `CHAT-OWN-004`; jest tylko zbiorczy `CHAT-OWN-001–017`, więc nie zmieniono go bez zgadywania |
 
 ## Bramki evaluatora i reguł
@@ -144,12 +144,13 @@ Pierwsza próba runnera bez `NODE_ENV=test` została prawidłowo odrzucona przez
 
 ## STOP-y i znaleziska
 
-1. `res.roi_confidence_dropped`: brak wersjonowanej historii confidence. Propozycja po decyzji: addytywne źródło snapshot/history, nie heurystyka.
-2. `fin.benefit_not_realized`: baseline migracyjny nie materializuje deklarowanej tabeli. Propozycja: osobny właścicielski kontrakt/migracja źródła.
-3. Generyczne wejście do `aiRunLedgerService`: istniejący kontrakt jest action-centric. Interpreter zapisuje `ai_run_id` w `work_signal_runs`; rozszerzenia shared API nie zgadywano.
+1. **[SPROSTOWANIE po FIX-5(a), naprawa 2026-08-26]** `res.roi_confidence_dropped`: pierwotne „brak wersjonowanej historii confidence" było BŁĘDNE. Żywy schemat ma `kpi_attribution_snapshots` (organization_id, kpi_id, overall_confidence, confidence_reasons, computed_at — dokładnie wersjonowana historia) i `rvn_roi_forecast_versions`, oba zweryfikowane jako istniejące migracje. STOP: reguła nadal NIE zaimplementowana — wybór między tymi dwoma źródłami i kształt reguły to decyzja właściciela/nadzorcy, nie tego robotnika.
+2. **[UZUPEŁNIENIE po FIX-5(b), naprawa 2026-08-26]** `fin.benefit_not_realized`: stwierdzenie o braku `benefit_realization_plans` pozostaje PRAWDZIWE. Pierwotny raport pominął jednak ~8 realnych kandydatów istniejących na żywym schemacie: `benefit_tracking`, `benefits_register`, `initiative_benefits`, `benefit_targets`, `benefit_measurements`, `rvn_roi_benefit_lines`, `roi_realized_values`, `v8_roi_realization_entries`. STOP: wybór kandydata to decyzja właściciela/nadzorcy.
+3. Generyczne wejście do `aiRunLedgerService`: istniejący kontrakt jest action-centric. Interpreter zapisuje `ai_run_id` w `work_signal_runs`; rozszerzenia shared API nie zgadywano. **[Naprawa FIX-4, 2026-08-26]:** do czasu takiego API `ai_run_id` zapisuje się jako `null`, nie jako `randomUUID()` — poprzedni zapis wyglądał jak realna referencja do przebiegu AI, a nią nie był (fałszywa prowenienacja).
 4. `MODULE_ACCEPTANCE`: brak atomowego wiersza `CHAT-OWN-004`; zbiorczego wpisu nie rozbijano bez autoryzacji.
 5. `aiNotificationTriggers` ma ręcznego callera w `ai.routes.ts`; nie reanimowano ani nie usuwano. `automated_insights` ma zero odczytów/zapisów w `server/src` i pozostaje HISTORICAL.
 6. Kontrakt pełnej wagi DTO: wybrano konsekwentnie `severityRaw`; legacy `blocker` mapuje się na `CRITICAL`.
+7. **[UJAWNIENIE FIX-7e, naprawa 2026-08-26]** Zmiana zachowania przy snooze/dismiss dla kluczy spoza kanonicznego modelu (np. dawne `predict_overdue_*`, `bottleneck_decision_*` — zbiorczo określane jako „prediction:*"): stary handler (`signals.routes.ts` sprzed A.2) uznawał KAŻDY klucz bez prefiksu `notification:` za automatycznie „owned" (`if (!key.startsWith('notification:')) return true;`) i zwracał 200 + zapis w `my_work_signal_snoozes`/`dismissals`. Po remapie A.2 na kanoniczny `ownedSignal()` te same klucze — nieodpowiadające żadnemu wierszowi `work_signals` — zwracają 404. To zamierzona konsekwencja przejścia na kanoniczny model (silniejsza gwarancja tenant-isolation), ale NIE była ujawniona w pierwotnym raporcie jako zmiana zachowania. Brak dedykowanej migracji dla istniejących wierszy `my_work_signal_snoozes`/`dismissals` zapisanych pod starymi kluczami — pozostają nieużywalne (nikt już ich nie odpyta), ale nieszkodliwe.
 
 ## Korekty wobec instrukcji
 
@@ -166,6 +167,24 @@ Z tego dyżuru nie wyszła ani jedna zdalna operacja: zero deployów, zero Railw
 
 ## Licznik i czego nie zrobiono
 
-22 pozycje: 16 ZROBIONE_WG_DoD, 4 CZĘŚCIOWO, 2 STOP/BRAK_DANYCH agregowane w E.5/E.6; obie flagi nadal OFF. Mechanika jest gotowa do konsumpcji przez blok frontowy, ale nie ma deklaracji odbioru wizualnego ani release.
+22 pozycje: 16 ZROBIONE_WG_DoD, 4 CZĘŚCIOWO, 2 STOP (1× ŹRÓDŁO_INNE po korekcie FIX-5(a), 1× BRAK_DANYCH z uzupełnionymi kandydatami po FIX-5(b)) agregowane w E.5/E.6; obie flagi nadal OFF. Mechanika jest gotowa do konsumpcji przez blok frontowy, ale nie ma deklaracji odbioru wizualnego ani release.
+
+## Naprawy warstwy 1 (2026-08-26, po odbiorze)
+
+Rdzeń deterministyczny odebrany pozytywnie; warstwa AI (interpreter) zgłoszona jako zbudowana okazała się martwa na ścieżce produkcyjnej. Naprawiono na gałęzi `codex/chat-signals-day18-20260826`, commit-per-fix:
+
+| Fix | Problem | Naprawa |
+| --- | --- | --- |
+| FIX-1 (P0) | `signalInterpreter.ts` czytał nieistniejące `output.proposals`; `llmService.generateResponse` zwraca `{content, usage}` — JSON z `content` nigdy nie był parsowany, więc AI-warstwa zawsze zwracała zero propozycji, nawet z poprawną odpowiedzią modelu | `defaultDependencies.generate` parsuje i waliduje `output.content` (`parseInterpretedProposals`); błąd parsowania/kształtu → PARTIAL + wpis w `errors`, nigdy cichy fallback do `[]`; dodany test domyślnego okablowania (bez wstrzykniętych dependencies) |
+| FIX-2 (P1) | Cichy `catch { failed += 1 }` w ticku producenta; rejestratory cron bez `logger.info`/`.catch()` | `catch (error)` z `logger.error` (org + błąd); oba rejestratory Scheduler.ts doprowadzone do wzorca job7b |
+| FIX-3 (P1) | Rejestratory bezwarunkowe → `SKIPPED_DISABLED` zapisywany dla każdej organizacji co 15 min przy fladze OFF | Ścieżka CRON nie zapisuje `SKIPPED_DISABLED`; ścieżka ON_DEMAND nadal zapisuje |
+| FIX-4 (P1) | `ai_run_id` zapisywany jako `randomUUID()` — fałszywa prowenienacja, nie wskazuje żadnego rekordu | `ai_run_id = null` do czasu realnego API `aiRunLedgerService` |
+| FIX-5 (P1) | `res.roi_confidence_dropped` zgłoszony jako BRAK_DANYCH mimo istniejących `kpi_attribution_snapshots`/`rvn_roi_forecast_versions`; `fin.benefit_not_realized` nie wymieniał ~8 realnych kandydatów | Raport skorygowany (patrz wyżej); reguły NIE zaimplementowane bez decyzji właściciela |
+| FIX-6 (P2) | Test org-isolation osłabiony do `mockResolvedValue(null)` — usunięcie `organization_id = ?` z zapytania nie wywalało testu | Przywrócona asercja parametrów na zapytaniu `ownedSignal` |
+| FIX-7a (P2) | `ENABLE_SIGNAL_PRODUCER`/`ENABLE_SIGNAL_INTERPRETER` w `FeatureFlags.ts` martwe (realni czytelnicy sięgają wprost do `process.env`) | Wpisy usunięte |
+| FIX-7b (P2) | Kosmetyczny reformat `Scheduler.ts:41-47` poza zakresem | Cofnięty |
+| FIX-7c (P2) | Brak `.toUpperCase()` w handlerze mute-type | Przywrócone; DODATKOWO `signalReadModel.ts` — filtr `muted_types_json` zmieniony na porównanie `UPPER(...)` po obu stronach, inaczej normalizacja tylko po stronie zapisu psułaby dopasowanie do `signal_type` przechowywanego małymi literami (rzeczywisty format reguł, np. `task_overdue`) i regresowałaby test `signals.feed.postgres.integration.test.ts` |
+| FIX-7d (P2) | Brak testu na odrzucenie `severity='BLOCKER'` przez CHECK | Dodany `tests/integration/signals/work-signals-severity-check.pg.test.ts` |
+| FIX-7e (P2) | Zmiana zachowania kluczy `predict_*`/`bottleneck_*` przy snooze (200+zapis → 404) nieujawniona | Ujawniona w sekcji STOP-y powyżej |
 
 Nie zbudowano dwóch reguł bez prawdziwego źródła, nie zmieniono zbiorczego rejestru ownera, nie rozszerzono shared AI ledger, nie dotknięto frontu i nie wykonano żadnej operacji wydaniowej — zgodnie z „STOP zamiast zgadywania” i DEC-65/95.
