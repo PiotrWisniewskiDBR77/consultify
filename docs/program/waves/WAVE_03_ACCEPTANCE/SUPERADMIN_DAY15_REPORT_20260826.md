@@ -110,13 +110,38 @@ Status: **CZĘŚCIOWO**.
 - `api_logs.organization_id` istnieje, więc filtr jest poprawny. Świeży replay nie ma jednak kolumn `api_key_id`, `tokens_used`, `cost`, których wymaga zastane zapytanie; endpoint łapie błąd i zwraca pustą listę. Oznaczenie: **BRAK_API / zastana niezgodność schematu**, bez improwizowania semantyki kosztów.
 - Test request z mockiem: cały pakiet security 13/13 PASS.
 
+## T.2 — audyt reaktywacji
+
+Status: **ZROBIONE_WG_DoD**. Wybrano drogę (A): audyt bez nowego potwierdzenia. Kontroler zachowuje styl callbackowy; przed zapisem odczytuje status także dla celu `active`, a zdarzenie emituje wyłącznie dla przejść `suspended|blocked|cancelled → active`. `pending|trial|active → active` nie jest oznaczane jako reaktywacja.
+
+Test istniejący rozszerzono addytywnie: wcześniejsze 5 asercji zachowano; pakiet po zmianie 11/11 PASS (3 krytyczne reaktywacje oraz 3 negatywy bez audytu).
+
+## T.3 — luki inwentarzowe
+
+| Formularz                               | Dostępne wartości        | Brakujące                     | Skutek                                              |
+| --------------------------------------- | ------------------------ | ----------------------------- | --------------------------------------------------- |
+| `OrganizationsView.tsx:593-595`         | active, pending, blocked | suspended, cancelled, trial   | zawieszenie osiągalne wyłącznie dedykowaną operacją |
+| `SuperAdminOrgDetailsModal.tsx:268-270` | active, trial, blocked   | suspended, cancelled, pending | dwa niespójne katalogi statusów                     |
+
+STOP: nie dodano `suspended` do formularzy. Propozycja: ujednolicić zawieszenie na dedykowanym `POST /tenants/:id/suspend` po decyzji właściciela.
+
+| Warstwa          | Sprawdza `suspended`? | Dowód                                          | Skutek                                                    |
+| ---------------- | --------------------- | ---------------------------------------------- | --------------------------------------------------------- |
+| `AuthController` | NIE                   | sprawdza `pending` :325 i `blocked` :332       | użytkownik zawieszonej organizacji nadal może się logować |
+| middleware auth  | NIE                   | grep `organization.*status` bez guardu runtime | aktywne sesje nie są blokowane                            |
+| suspend P33      | NIE                   | tylko zapis statusu i liczba affectedUsers     | brak unieważnienia sesji                                  |
+
+STOP: nie dodano egzekwowania `suspended` podczas FREEZE; wymaga decyzji właściciela i osobnego odbioru.
+
 ## Zakres wykonany
 
 | Pozycja                                | Status                              |
 | -------------------------------------- | ----------------------------------- |
 | Blok 0: baza, marker, materiały, hooki | ZROBIONE_WG_DoD                     |
 | P.1–P.6                                | NIE_ZACZĘTE                         |
-| T.1–T.3                                | NIE_ZACZĘTE                         |
+| T.1                                    | NIE_ZACZĘTE                         |
+| T.2                                    | ZROBIONE_WG_DoD                     |
+| T.3                                    | ZROBIONE_WG_DoD / STOP              |
 | S.1–S.2                                | ZROBIONE_WG_DoD (realdb Q.3 w toku) |
 | S.3                                    | ZROBIONE_WG_DoD                     |
 | S.4                                    | ZROBIONE_WG_DoD                     |

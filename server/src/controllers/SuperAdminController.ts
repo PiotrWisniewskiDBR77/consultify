@@ -360,6 +360,7 @@ const updateOrganization = catchAsync(async (req, res, next) => {
   const sql = `UPDATE organizations SET ${updates.join(', ')} WHERE id = ?`;
 
   const criticalStatusChange = ['suspended', 'blocked', 'cancelled'].includes(status);
+  const statusChangeNeedsReadback = criticalStatusChange || status === 'active';
   const performUpdate = (beforeStatus) => {
     deps.db.run(sql, [...params, id], async function (err) {
       if (err) return next(new AppError(err.message, 500));
@@ -374,7 +375,9 @@ const updateOrganization = catchAsync(async (req, res, next) => {
         newValue: { name, plan, status, discount_percent },
       });
 
-      if (criticalStatusChange) {
+      const reactivation =
+        status === 'active' && ['suspended', 'blocked', 'cancelled'].includes(beforeStatus);
+      if (criticalStatusChange || reactivation) {
         try {
           await req.emitAuditEvent?.({
             action: 'organization.status_changed',
@@ -396,7 +399,7 @@ const updateOrganization = catchAsync(async (req, res, next) => {
     });
   };
 
-  if (!criticalStatusChange) return performUpdate(undefined);
+  if (!statusChangeNeedsReadback) return performUpdate(undefined);
   deps.db.get('SELECT status FROM organizations WHERE id = ?', [id], (err, row) => {
     if (err) return next(new AppError(err.message, 500));
     if (!row) return next(new AppError('Organization not found', 404));
