@@ -94,7 +94,7 @@ scoped_okr_sets AS (
             ON vr.resource_type = '${OKR_SET_RESOURCE_TYPE}' AND vr.resource_id = s.set_id::text
    WHERE s.organization_id = $1
      AND s.owner_user_id IN (SELECT user_id FROM chain_members)
-     ${setId ? 'AND s.set_id = $5' : ''}
+     ${setId ? `AND s.set_id = $${values.length}` : ''}
 )`;
   return { sql, values };
 }
