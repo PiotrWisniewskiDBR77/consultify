@@ -403,10 +403,17 @@ export const AssessmentReportContractView: React.FC<AssessmentReportContractView
       className={`flex h-full min-h-0 flex-col ${className ?? ''}`}
       data-testid="assessment-report-contract-view"
     >
+      {/* P2-2 (day-27 acceptance fix-up): the middle crumb used to be the
+          raw `contract.sessionId` ("session-…") — meaningless to a reader
+          and inconsistent with every other breadcrumb in the app, which
+          shows a human label, never a raw id. The report contract has no
+          session NAME field to show instead (that's a server-side addition,
+          out of this fix's scope — see the day-27 report's "FIX-y po
+          odbiorze 27.08" section), so the crumb is shortened to
+          Ocena / Raport rather than papering over the id with a fake name. */}
       <ArtifactBreadcrumb
         items={[
           { label: t('assessment.reportView.assessment') },
-          { label: contract.sessionId },
           { label: t('assessment.reportView.report') },
         ]}
       />
