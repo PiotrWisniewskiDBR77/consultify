@@ -1,6 +1,7 @@
 import { Pool } from 'pg';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
+import * as emailService from '../../emailService.js';
 import {
   addMeetingParticipant,
   deleteMeetingParticipant,
@@ -19,6 +20,14 @@ const meeting = 'day16-meetings-record';
 
 suite('Meetings day16 participants and safe invitation delivery (real PG)', () => {
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  // FIX-6 (P2 guardrails, 2026-08-26): spy on the real emailService.send
+  // (not a mock replacement — it stays wired to its real implementation) so
+  // the 'captured' and 'blocked_demo' tests below can assert the mailer was
+  // never invoked, not just that the reported status string was the
+  // expected one. A future regression that accidentally started calling
+  // sendEmail for either of these guarded paths would fail these tests even
+  // if the returned status still happened to look right.
+  const emailSendSpy = vi.spyOn(emailService, 'send');
 
   beforeAll(async () => {
     await pool.query(
@@ -66,6 +75,10 @@ suite('Meetings day16 participants and safe invitation delivery (real PG)', () =
     await pool.query(`DELETE FROM users WHERE id IN ($1,$2)`, [owner, member]);
     await pool.query(`DELETE FROM organizations WHERE id IN ($1,$2)`, [org, otherOrg]);
     await pool.end();
+  });
+
+  afterEach(() => {
+    emailSendSpy.mockClear();
   });
 
   it('adds an active user from the same organization and reads it back', async () => {
@@ -149,6 +162,8 @@ suite('Meetings day16 participants and safe invitation delivery (real PG)', () =
     });
     expect(deliveries.length).toBeGreaterThan(0);
     expect(deliveries.every((item) => item.status === 'captured')).toBe(true);
+    // FIX-6: proof, not inference — the mailer itself was never invoked.
+    expect(emailSendSpy).not.toHaveBeenCalled();
     if (previousLive === undefined) delete process.env.MEETING_INVITES_LIVE;
     else process.env.MEETING_INVITES_LIVE = previousLive;
   });
@@ -163,6 +178,8 @@ suite('Meetings day16 participants and safe invitation delivery (real PG)', () =
     });
     expect(deliveries.length).toBeGreaterThan(0);
     expect(deliveries.every((item) => item.status === 'blocked_demo')).toBe(true);
+    // FIX-6: proof, not inference — the mailer itself was never invoked.
+    expect(emailSendSpy).not.toHaveBeenCalled();
     if (previousDemoOrg === undefined) delete process.env.DEMO_ORG_ID;
     else process.env.DEMO_ORG_ID = previousDemoOrg;
   });
