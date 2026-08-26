@@ -41,7 +41,17 @@ export function useSignalsFeed(params: {
         const response = (await api.get(`/signals?${query}`)) as SignalsFeedResponse;
         setSignals((current) => (append ? [...current, ...response.signals] : response.signals));
         setNextCursor(response.nextCursor);
-        setProducerEnabled(response.producerEnabled);
+        // FIX-10 (dyżur 26 chat-signals-front, odbiór P2.10) — `POST
+        // /signals/refresh` może ustawić `producerEnabled: false` (stan 3a),
+        // po czym natychmiast woła `reload()`. Gdy TA odpowiedź GET nie niesie
+        // pola `producerEnabled` (np. starsza wersja endpointu/license F
+        // wyłączona), `undefined` nadpisywał już poznaną prawdę z powrotem na
+        // „nieznany" (stan 3b) — dokładnie ten sam sygnał w tej samej sesji
+        // przestawał być uczciwy. Jawny `false`/`true` zawsze wygrywa;
+        // `undefined` zachowuje ostatnią znaną wartość zamiast ją gubić.
+        setProducerEnabled((current) =>
+          response.producerEnabled === undefined ? current : response.producerEnabled
+        );
       } catch (cause) {
         const status = (cause as { status?: number })?.status;
         setError(status === 401 || status === 403 ? 'forbidden' : 'failed');
