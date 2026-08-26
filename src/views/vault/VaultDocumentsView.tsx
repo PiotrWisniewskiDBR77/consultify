@@ -65,7 +65,20 @@
  * + `useHubBarSlot` zamiast własnego paska.
  */
 
-import { Download, FileText, Folder, Info, Layers, Pencil, Search, Trash2 } from 'lucide-react';
+import {
+  CheckCircle2,
+  Download,
+  FileText,
+  Folder,
+  Info,
+  Layers,
+  Pencil,
+  Search,
+  Sparkles,
+  Trash2,
+  X,
+  XCircle,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -76,6 +89,7 @@ import type { FilterChip } from '@/components/shared/ModuleHub/ActiveFilters';
 import type { OpenDocument } from '@/components/shared/ModuleHub/types';
 import {
   MENU_3_ACTION_DANGER,
+  MENU_3_ACTION_NEUTRAL,
   MENU_3_INNER_CLASS,
   MENU_3_LEFT_CLASS,
   MENU_3_RIGHT_CLASS,
@@ -98,7 +112,11 @@ import { cn } from '@/utils/cn';
 
 import { Api } from '../../services/api';
 import { VaultDocumentPanel } from './VaultDocumentPanel';
-import { deleteVaultDocumentsWithReceipts } from './deleteVaultDocumentsWithReceipts';
+import {
+  applyVaultBulkActionWithReceipts,
+  deleteVaultDocumentsWithReceipts,
+  type VaultBulkReceipt,
+} from './deleteVaultDocumentsWithReceipts';
 import {
   DOCUMENT_CATEGORIES,
   formatBytes,
@@ -175,6 +193,12 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
+  // MYW-CV-REC-003 — dynamiczny kwit per element po akcji zbiorczej (usuń /
+  // dodaj do wiedzy AI), zamiast wyłącznie zbiorczego toasta.
+  const [bulkReceipts, setBulkReceipts] = useState<{
+    label: string;
+    items: VaultBulkReceipt[];
+  } | null>(null);
 
   const [panelMode, setPanelMode] = useState<'add' | 'edit' | null>(null);
   const [editedDocument, setEditedDocument] = useState<VaultDocument | null>(null);
@@ -424,11 +448,60 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
           })
         );
       }
+      // MYW-CV-REC-003 — kwit per element widoczny bezpośrednio na listwie,
+      // nie tylko w toaście, dopóki użytkownik go nie zamknie.
+      setBulkReceipts({
+        label: t('vault.docs.bulkReceiptsDelete', isPolish ? 'Usuwanie' : 'Delete'),
+        items: receipts,
+      });
       setSelectedRowIds(new Set(failed.map((receipt) => receipt.id)));
       if (selectedId && deleted.some((receipt) => receipt.id === selectedId)) setSelectedId(null);
       if (deleted.length > 0) await load();
     },
     [t, isPolish, load, selectedId]
+  );
+
+  // MYW-CV-REC-003 — druga akcja zbiorcza (prototyp: "Dodaj do wiedzy AI"),
+  // nie tylko delete — z tym samym rejestrem kwitów per element.
+  const addDocumentsToAiKnowledge = useCallback(
+    async (ids: string[]) => {
+      if (ids.length === 0) return;
+      const receipts = await applyVaultBulkActionWithReceipts(
+        ids,
+        (id) => Api.updateKnowledgeDocument(id, { ai_visibility: 'allowed' }),
+        'applied'
+      );
+      const applied = receipts.filter((receipt) => receipt.status === 'applied');
+      const failed = receipts.filter((receipt) => receipt.status === 'failed');
+      if (applied.length > 0) {
+        toast.success(
+          t('vault.docs.addedToAiKnowledge', {
+            defaultValue: isPolish
+              ? 'Dodano {{count}} dokument(y) do wiedzy AI'
+              : 'Added {{count}} document(s) to AI knowledge',
+            count: applied.length,
+          })
+        );
+      }
+      if (failed.length > 0) {
+        toast.error(
+          t('vault.docs.addToAiKnowledgePartial', {
+            defaultValue: isPolish
+              ? 'Dodano {{applied}} z {{total}}. Nie udało się: {{failedIds}}'
+              : 'Added {{applied}} of {{total}}. Failed: {{failedIds}}',
+            applied: applied.length,
+            total: ids.length,
+            failedIds: failed.map((receipt) => receipt.id).join(', '),
+          })
+        );
+      }
+      setBulkReceipts({
+        label: t('vault.docs.bulkReceiptsAiKnowledge', isPolish ? 'Dodawanie do wiedzy AI' : 'Add to AI knowledge'),
+        items: receipts,
+      });
+      if (applied.length > 0) await load();
+    },
+    [t, isPolish, load]
   );
 
   const exportCsv = useCallback(() => {
@@ -993,32 +1066,105 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
   // dublujemy TYLKO wygląd dawnego `StandardModuleBar.bulk` (te same klasy
   // `MENU_3_*`/`Menu3Chip`) bezpośrednio nad tabelą.
   const renderBulkBar = () => {
-    if (selectedRowIds.size === 0) return null;
+    if (selectedRowIds.size === 0 && !bulkReceipts) return null;
+    const nameById = new Map(documents.map((doc) => [doc.id, doc.filename]));
     return (
       <div className="pb-2">
-        <div className={MENU_3_INNER_CLASS}>
-          <div className={MENU_3_LEFT_CLASS}>
-            <span className="inline-flex h-7 items-center rounded-full px-2.5 text-[11px] font-semibold text-c-text whitespace-nowrap">
-              {t('vault.docs.selected', {
-                defaultValue: isPolish ? 'Zaznaczono: {{count}}' : '{{count}} selected',
-                count: selectedRowIds.size,
-              })}
-            </span>
-            <Menu3Chip onClick={() => setSelectedRowIds(new Set())}>
-              {t('common.clear', isPolish ? 'Wyczyść' : 'Clear')}
-            </Menu3Chip>
+        {selectedRowIds.size > 0 ? (
+          <div className={MENU_3_INNER_CLASS}>
+            <div className={MENU_3_LEFT_CLASS}>
+              <span className="inline-flex h-7 items-center rounded-full px-2.5 text-[11px] font-semibold text-c-text whitespace-nowrap">
+                {t('vault.docs.selected', {
+                  defaultValue: isPolish ? 'Zaznaczono: {{count}}' : '{{count}} selected',
+                  count: selectedRowIds.size,
+                })}
+              </span>
+              <Menu3Chip
+                onClick={() => {
+                  setSelectedRowIds(new Set());
+                  setBulkReceipts(null);
+                }}
+              >
+                {t('common.clear', isPolish ? 'Wyczyść' : 'Clear')}
+              </Menu3Chip>
+            </div>
+            <div className={MENU_3_RIGHT_CLASS}>
+              {/* MYW-CV-REC-003 — dynamiczna listwa: druga akcja zbiorcza obok
+                  Delete, nie tylko all-or-nothing. */}
+              <button
+                type="button"
+                onClick={() => void addDocumentsToAiKnowledge(Array.from(selectedRowIds))}
+                className={MENU_3_ACTION_NEUTRAL}
+              >
+                <Sparkles size={12} />
+                {t('vault.docs.addToAiKnowledge', isPolish ? 'Dodaj do wiedzy AI' : 'Add to AI knowledge')}
+              </button>
+              <button
+                type="button"
+                onClick={() => void deleteDocuments(Array.from(selectedRowIds))}
+                className={MENU_3_ACTION_DANGER}
+              >
+                <Trash2 size={12} />
+                {t('common.delete', isPolish ? 'Usuń' : 'Delete')}
+              </button>
+            </div>
           </div>
-          <div className={MENU_3_RIGHT_CLASS}>
-            <button
-              type="button"
-              onClick={() => void deleteDocuments(Array.from(selectedRowIds))}
-              className={MENU_3_ACTION_DANGER}
-            >
-              <Trash2 size={12} />
-              {t('common.delete', isPolish ? 'Usuń' : 'Delete')}
-            </button>
+        ) : null}
+        {/* MYW-CV-REC-003 — kwit per element: co dokładnie zostało
+            potwierdzone/odrzucone, nie tylko zbiorczy toast. */}
+        {bulkReceipts ? (
+          <div
+            data-testid="vault-bulk-receipts"
+            className="mt-2 overflow-hidden rounded-xl border border-c-border-subtle bg-c-surface"
+          >
+            <div className="flex items-center gap-2 border-b border-c-border-subtle px-3.5 py-2.5">
+              <span className="text-xs font-semibold text-c-text">{bulkReceipts.label}</span>
+              <span className="text-[11px] text-c-text-muted">
+                {t('vault.docs.bulkReceiptsCount', {
+                  defaultValue: isPolish
+                    ? '{{count}} element(y)'
+                    : '{{count}} item(s)',
+                  count: bulkReceipts.items.length,
+                })}
+              </span>
+              <button
+                type="button"
+                onClick={() => setBulkReceipts(null)}
+                aria-label={t('common.close', isPolish ? 'Zamknij' : 'Close')}
+                className="ml-auto rounded-md p-1 text-c-text-muted hover:bg-c-surface-raised hover:text-c-text"
+              >
+                <X size={13} />
+              </button>
+            </div>
+            <ul>
+              {bulkReceipts.items.map((receipt) => (
+                <li
+                  key={receipt.id}
+                  className="flex items-center gap-2.5 border-b border-c-border-subtle px-3.5 py-2 text-[12.5px] last:border-b-0"
+                >
+                  {receipt.status === 'failed' ? (
+                    <XCircle size={14} className="shrink-0 text-c-danger" aria-hidden="true" />
+                  ) : (
+                    <CheckCircle2 size={14} className="shrink-0 text-c-success" aria-hidden="true" />
+                  )}
+                  <span className="min-w-0 flex-1 truncate text-c-text">
+                    {nameById.get(receipt.id) || receipt.id}
+                  </span>
+                  <span
+                    className={
+                      receipt.status === 'failed' ? 'text-c-danger' : 'text-c-text-muted'
+                    }
+                  >
+                    {receipt.status === 'failed'
+                      ? receipt.reason ||
+                        t('vault.docs.bulkReceiptFailed', isPolish ? 'Nie udało się' : 'Failed')
+                      : t('vault.docs.bulkReceiptOk', isPolish ? 'Gotowe' : 'Done')}
+                  </span>
+                </li>
+              ))}
+            </ul>
           </div>
-        </div>
+        ) : null}
       </div>
     );
   };

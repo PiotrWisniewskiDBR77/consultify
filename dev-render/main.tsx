@@ -98,6 +98,12 @@ const MenuDlugiDomkniecieScreen = React.lazy(() => import('./screens/menu-dlugi-
 const AgentWarsztatScreen = React.lazy(() => import('./screens/agent-warsztat'));
 const VaultSejfWnetrzeScreen = React.lazy(() => import('./screens/vault-sejf-wnetrze'));
 const VaultFolderBlockProofScreen = React.lazy(() => import('./screens/vault-folder-block-proof'));
+const MyWorkIdeaInspectorLekkiScreen = React.lazy(
+  () => import('./screens/mywork-idea-inspector-lekki')
+);
+const MyWorkNotebookRailSpecAScreen = React.lazy(
+  () => import('./screens/mywork-notebook-rail-speca')
+);
 const AssessmentInitiativesPanelScreen = React.lazy(
   () => import('./screens/assessment-initiatives-panel')
 );
@@ -770,6 +776,16 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'VLT-FOLDERS — klocek "Vault-kontekst" (AgentPlanCanvas): select Poziom + DRUGI select Folder wewnątrz sejfu',
     render: () => <VaultFolderBlockProofScreen />,
+  },
+  'mywork-idea-inspector-lekki': {
+    label:
+      'DEC-68 — LEKKI inspektor elementu Idea (360px, accordion, bez obwódek) wg mywork-inspektor-prototyp.html',
+    render: () => <MyWorkIdeaInspectorLekkiScreen />,
+  },
+  'mywork-notebook-rail-speca': {
+    label:
+      'DEC-69 — prawa szyna Notatnika w kanonie SPEC-A (5 sekcji accordion, nie tabs) wg mywork-notatnik-szyna-prototyp.html',
+    render: () => <MyWorkNotebookRailSpecAScreen />,
   },
   'capability-gate-demo': {
     label: 'Faza C — CapabilityGate: shadow vs debugCapabilities vs enforce (model ról PM)',

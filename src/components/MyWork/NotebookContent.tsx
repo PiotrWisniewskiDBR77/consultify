@@ -4383,6 +4383,13 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
               onConvert={handleConvertFromPanel}
               canConvertDeliverable={canConvertDeliverable}
               convertBlockedReason={deliverableGuardMessage}
+              // DEC-69 Akcje section — same action registry as the kebab
+              // (NotebookHamburgerMenu): reuses the SAME handlers/state,
+              // not a second implementation of export/version history.
+              onExport={() => setNotebookExportOpen(true)}
+              onShare={handleShareEmail}
+              onToggleVersionHistory={() => setShowVersionHistory((value) => !value)}
+              versionHistoryOpen={showVersionHistory}
             />
           )}
         </div>

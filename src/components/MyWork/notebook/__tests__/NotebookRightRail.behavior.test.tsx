@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import React, { useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -6,10 +6,6 @@ import { NotebookRightRail } from '../NotebookRightRail';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (_key: string, fallback: string) => fallback }),
-}));
-
-vi.mock('../AIChatInlinePanel', () => ({
-  AIChatInlinePanel: () => <div>Work content</div>,
 }));
 
 vi.mock('../NotebookContextPanel', () => ({
@@ -54,46 +50,112 @@ function Harness() {
   );
 }
 
-describe('NotebookRightRail keyboard behavior', () => {
+// DEC-2026-08-25-69: the rail no longer implements Work/Context as an
+// exclusive tablist ("prawe menu rozwijane pochodzi z wersji aplikacji
+// sprzed pół roku") — it is a SPEC-A accordion (ArtifactRightPanel canon,
+// Harvard/wdrozenie-100/ARTIFACT_ANATOMY_STANDARD.md §9.1a/§11.2) with five
+// sections in a fixed order: Akcje · Właściwości · Powiązania · Komentarze ·
+// Historia i AI. Governance content that used to live under the "Work" tab
+// now lives under "Właściwości"; "Context" relations now live under
+// "Powiązania". Both can be open at once.
+describe('NotebookRightRail — SPEC-A accordion', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('uses roving tab focus and Arrow keys to activate the adjacent panel', () => {
+  it('renders the five canonical sections in the fixed order', () => {
     render(<Harness />);
-    const work = screen.getByRole('tab', { name: 'Work' });
-    const context = screen.getByRole('tab', { name: 'Context' });
-
-    expect(work).toHaveAttribute('tabindex', '0');
-    expect(context).toHaveAttribute('tabindex', '-1');
-    work.focus();
-    fireEvent.keyDown(work, { key: 'ArrowRight' });
-
-    expect(context).toHaveFocus();
-    expect(context).toHaveAttribute('aria-selected', 'true');
-    expect(screen.getByRole('tabpanel', { name: 'Context' })).not.toHaveClass('hidden');
+    const headers = screen
+      .getAllByRole('button')
+      .map((btn) => btn.textContent?.replace(/\s+/g, ' ').trim())
+      .filter((text): text is string => !!text);
+    // Every section header renders regardless of collapsed state.
+    const known = ['Akcje', 'Właściwości', 'Powiązania', 'Komentarze', 'Historia i AI'];
+    const seen = known.filter((label) => headers.some((h) => h?.startsWith(label)));
+    expect(seen).toEqual(known);
   });
 
-  it('uses Work as a document record instead of a second AI tools panel', () => {
+  it('shows governance fields under Właściwości without a separate tab click', () => {
     render(<Harness />);
-    expect(screen.getByRole('heading', { name: 'Document record' })).toBeInTheDocument();
     expect(screen.getByText('Verification')).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: 'Verification' })).toHaveValue('verified');
     expect(screen.getByText('Alex Owner')).toBeInTheDocument();
     expect(screen.getByText(/Source: upload/)).toBeInTheDocument();
     expect(screen.getByText(/Keep current through the next review/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Private' })).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.queryByText('Work content')).not.toBeInTheDocument();
   });
 
-  it('supports Home and End without moving focus outside the tablist', () => {
+  it('shows Powiązania (Context) content open by default alongside Właściwości', () => {
     render(<Harness />);
-    const work = screen.getByRole('tab', { name: 'Work' });
-    const context = screen.getByRole('tab', { name: 'Context' });
+    expect(screen.getByText('Context content')).toBeInTheDocument();
+  });
 
-    fireEvent.keyDown(work, { key: 'End' });
-    expect(context).toHaveFocus();
-    fireEvent.keyDown(context, { key: 'Home' });
-    expect(work).toHaveFocus();
-    expect(work).toHaveAttribute('aria-selected', 'true');
+  it('collapses and re-expands a section on header click', () => {
+    render(<Harness />);
+    const header = screen.getByRole('button', { name: /Komentarze/ });
+    expect(header).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(header);
+    expect(header).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByText('Brak komentarzy do tego dokumentu.')).toBeInTheDocument();
+    fireEvent.click(header);
+    expect(header).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('closes the rail via the header close button', () => {
+    const onClose = vi.fn();
+    render(
+      <NotebookRightRail
+        open
+        activeTab="work"
+        onTabChange={vi.fn()}
+        onClose={onClose}
+        activePage={activePage}
+        allPages={[activePage]}
+        editor={null}
+        noteTitle="Decision note"
+        noteContent=""
+        noteTags={[]}
+        notePage={undefined}
+      />
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Close panel' }));
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it('wires Akcje (Export/Share/Version history) to the same handlers as the kebab registry', () => {
+    const onExport = vi.fn();
+    const onShare = vi.fn();
+    const onToggleVersionHistory = vi.fn();
+    render(
+      <NotebookRightRail
+        open
+        activeTab="work"
+        onTabChange={vi.fn()}
+        onClose={vi.fn()}
+        activePage={activePage}
+        allPages={[activePage]}
+        editor={null}
+        noteTitle="Decision note"
+        noteContent=""
+        noteTags={[]}
+        notePage={undefined}
+        onExport={onExport}
+        onShare={onShare}
+        onToggleVersionHistory={onToggleVersionHistory}
+      />
+    );
+    const actionsSection = screen.getByRole('button', { name: /^Akcje/ }).closest('section')!;
+    fireEvent.click(within(actionsSection).getByText('Eksportuj'));
+    fireEvent.click(within(actionsSection).getByText('Udostępnij'));
+    fireEvent.click(within(actionsSection).getByText('Historia wersji'));
+    expect(onExport).toHaveBeenCalledOnce();
+    expect(onShare).toHaveBeenCalledOnce();
+    expect(onToggleVersionHistory).toHaveBeenCalledOnce();
+  });
+
+  it('disables Kopiuj link with an explicit reason instead of a dead click handler', () => {
+    render(<Harness />);
+    const button = screen.getByText('Kopiuj link').closest('button')!;
+    expect(button).toBeDisabled();
+    expect(button).toHaveAttribute('title', 'Akcja czeka na definicję zakresu');
   });
 
   it('owns editable governance controls and exposes a truthful failed-save retry', () => {
@@ -139,7 +201,7 @@ describe('NotebookRightRail keyboard behavior', () => {
     expect(retrySave).toHaveBeenCalledOnce();
   });
 
-  it('keeps conflict resolution in the governance rail without discarding local work', () => {
+  it('keeps conflict resolution in the governance section without discarding local work', () => {
     const loadTheirs = vi.fn();
     const keepMine = vi.fn();
     render(

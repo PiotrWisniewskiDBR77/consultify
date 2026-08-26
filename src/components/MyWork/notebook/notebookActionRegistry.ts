@@ -194,9 +194,14 @@ const inlineAiActions = NOTEBOOK_INLINE_AI_ACTION_IDS.map((id) =>
 );
 
 const railActions = [
-  ['tab-work', 'local-ui', 'page-read', 'visible-state'],
-  ['tab-context', 'local-ui', 'page-read', 'visible-state'],
+  // DEC-2026-08-25-69: the Work/Context tablist ('tab-work'/'tab-context')
+  // was replaced by the SPEC-A accordion (NotebookRightRail.tsx) — sections
+  // open/close independently, there is no longer a "switch tab" action.
   ['close', 'local-ui', 'page-read', 'visible-state'],
+  ['export', 'local-ui', 'page-read', 'visible-state'],
+  ['share', 'local-ui', 'page-read', 'visible-state'],
+  ['copy-link', 'local-ui', 'page-read', 'visible-state'],
+  ['version-history', 'local-ui', 'page-read', 'visible-state'],
   ['retry-save', 'server-mutation', 'server-capability', 'server-receipt'],
   ['load-theirs', 'server-mutation', 'server-capability', 'server-receipt'],
   ['keep-mine', 'server-mutation', 'server-capability', 'server-receipt'],
