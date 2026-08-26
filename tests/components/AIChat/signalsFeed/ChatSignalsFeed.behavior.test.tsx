@@ -196,23 +196,10 @@ describe('Chat signals feed behavior', () => {
     expect(post).toHaveBeenCalledTimes(1);
   });
 
-  it('real flag defaults OFF and leaves the old panel reachable', async () => {
-    (Api.get as ReturnType<typeof vi.fn>).mockResolvedValue({ signals: [] });
-    render(
-      <I18nextProvider i18n={i18n}>
-        <ChatSignalsPanel open onClose={vi.fn()} />
-      </I18nextProvider>
-    );
-    expect(await screen.findByTestId('chat-signals-count')).toBeInTheDocument();
-    expect(screen.queryByTestId('chat-signals-feed')).not.toBeInTheDocument();
-  });
-
-  it('real query override turns the new mode ON', async () => {
-    Object.defineProperty(window, 'location', {
-      configurable: true,
-      value: { ...window.location, search: '?ff_chatSignalsFeed=1' },
-    });
-    resetChatSignalsFeedFlagCache();
+  // flip po akcepcie właściciela 27.08 (dyżur 26 feed sygnałów, po FIX-1..13,
+  // scalony do m03, DEC-143): ff_chatSignalsFeed default was OFF, now ON —
+  // the new feed is what renders with no override.
+  it('real flag defaults ON and renders the new feed', async () => {
     (Api.get as ReturnType<typeof vi.fn>).mockResolvedValue({
       signals: [],
       nextCursor: null,
@@ -226,6 +213,23 @@ describe('Chat signals feed behavior', () => {
       </I18nextProvider>
     );
     await waitFor(() => expect(screen.getByTestId('chat-signals-feed')).toBeInTheDocument());
+    expect(screen.queryByTestId('chat-signals-count')).not.toBeInTheDocument();
+  });
+
+  it('real query override turns the old legacy panel back ON', async () => {
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { ...window.location, search: '?ff_chatSignalsFeed=0' },
+    });
+    resetChatSignalsFeedFlagCache();
+    (Api.get as ReturnType<typeof vi.fn>).mockResolvedValue({ signals: [] });
+    render(
+      <I18nextProvider i18n={i18n}>
+        <ChatSignalsPanel open onClose={vi.fn()} />
+      </I18nextProvider>
+    );
+    expect(await screen.findByTestId('chat-signals-count')).toBeInTheDocument();
+    expect(screen.queryByTestId('chat-signals-feed')).not.toBeInTheDocument();
   });
 
   // FIX-7 (dyżur 26 chat-signals-front, odbiór P0.7) — legacy refresh() nie
@@ -236,6 +240,24 @@ describe('Chat signals feed behavior', () => {
       value: { ...window.location, search: '?ff_chatSignalsFeed=1' },
     });
     resetChatSignalsFeedFlagCache();
+    const get = vi.fn().mockResolvedValue({ signals: [], nextCursor: null, producerEnabled: true });
+    (Api.get as ReturnType<typeof vi.fn>).mockImplementation(get);
+    render(
+      <I18nextProvider i18n={i18n}>
+        <MemoryRouter>
+          <ChatSignalsPanel open onClose={vi.fn()} />
+        </MemoryRouter>
+      </I18nextProvider>
+    );
+    await waitFor(() => expect(screen.getByTestId('chat-signals-feed')).toBeInTheDocument());
+    const legacyCalls = get.mock.calls.filter(([url]) => String(url).includes('/my-work/signals'));
+    expect(legacyCalls).toHaveLength(0);
+  });
+
+  // flip po akcepcie właściciela 27.08 (DEC-143): same FIX-7 guarantee, but
+  // with NO query override — the ON default alone must keep the legacy
+  // refresh() from firing, not just an explicit `?ff_chatSignalsFeed=1`.
+  it('flag defaults ON and never calls the legacy /my-work/signals endpoint (FIX-7, default path)', async () => {
     const get = vi.fn().mockResolvedValue({ signals: [], nextCursor: null, producerEnabled: true });
     (Api.get as ReturnType<typeof vi.fn>).mockImplementation(get);
     render(
