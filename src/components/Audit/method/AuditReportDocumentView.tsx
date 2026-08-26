@@ -465,7 +465,7 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
             <SimpleTable
               head={[isPolish ? 'Właściciel' : 'Owner', isPolish ? 'Ustalenia' : 'Findings', isPolish ? 'Działania' : 'Actions']}
               rows={items.map((a) => [
-                userNameById.get(a.ownerUserId) || a.ownerUserId,
+                userNameById.get(a.ownerUserId) || (isPolish ? 'Nieprzypisany' : 'Unassigned'),
                 <span key="f" className="tabular-nums">
                   {a.findingIds.length}
                 </span>,

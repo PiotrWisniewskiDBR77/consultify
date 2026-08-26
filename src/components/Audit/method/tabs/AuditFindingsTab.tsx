@@ -103,6 +103,25 @@ function permissionAwareMessage(e: any, isPolish: boolean, fallback: string): st
   return e?.message || fallback;
 }
 
+/**
+ * Polska odmiana liczebnika (NAPRAWA 2, panel ekspercki 2026-08-26: pigułka
+ * pokazywała „1 możliwych tematów systemowych" — genitiv liczby mnogiej użyty
+ * dla WSZYSTKICH wartości, w tym 1). Standardowa reguła 1/few/many:
+ *   n === 1                                            → `one`
+ *   n % 10 ∈ {2,3,4} i n % 100 ∉ {12,13,14}             → `few`   (2,3,4,22,23,24…)
+ *   w przeciwnym razie (0, 5-21, 25-31…)                → `many`
+ * Jeden helper na cały ekran — każde miejsce „liczba + odmienny rzeczownik/
+ * przymiotnik" (pigułka tematów systemowych, pasek „Razem N ustaleń…") woła
+ * go zamiast zaszytej na sztywno formy dopełniacza liczby mnogiej.
+ */
+function plForm(n: number, one: string, few: string, many: string): string {
+  if (n === 1) return one;
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14)) return few;
+  return many;
+}
+
 /** Notatka wymagana przez backend (zamknięcie/akceptacja ryzyka/odesłanie/odrzucenie) — wzorzec `window.prompt` już używany w module (`AssessmentManagePanel`, `TransformationCasesPanel`). */
 function promptForNote(message: string): string | null {
   const value = window.prompt(message);
@@ -542,8 +561,12 @@ export const AuditFindingsTab: React.FC<AuditFindingsTabProps> = ({
         {statistics ? (
           <span className="text-xs text-c-text-muted">
             {isPolish
-              ? `Razem ${statistics.total} ustaleń · ${statistics.byStatus.confirmed ?? 0} potwierdzonych · ${statistics.byStatus.closed ?? 0} zamkniętych`
-              : `${statistics.total} findings total · ${statistics.byStatus.confirmed ?? 0} confirmed · ${statistics.byStatus.closed ?? 0} closed`}
+              ? `Razem ${statistics.total} ${plForm(statistics.total, 'ustalenie', 'ustalenia', 'ustaleń')} · ${
+                  statistics.byStatus.confirmed ?? 0
+                } ${plForm(statistics.byStatus.confirmed ?? 0, 'potwierdzone', 'potwierdzone', 'potwierdzonych')} · ${
+                  statistics.byStatus.closed ?? 0
+                } ${plForm(statistics.byStatus.closed ?? 0, 'zamknięte', 'zamknięte', 'zamkniętych')}`
+              : `${statistics.total} finding${statistics.total === 1 ? '' : 's'} total · ${statistics.byStatus.confirmed ?? 0} confirmed · ${statistics.byStatus.closed ?? 0} closed`}
           </span>
         ) : null}
         {systemic.length > 0 ? (
@@ -553,8 +576,13 @@ export const AuditFindingsTab: React.FC<AuditFindingsTabProps> = ({
             data-testid="audit-findings-systemic-banner"
           >
             {isPolish
-              ? `${systemic.length} możliwych tematów systemowych (wspólna przyczyna / obszar)`
-              : `${systemic.length} possible systemic themes (shared root cause / area)`}
+              ? `${systemic.length} ${plForm(
+                  systemic.length,
+                  'możliwy temat systemowy',
+                  'możliwe tematy systemowe',
+                  'możliwych tematów systemowych'
+                )} (wspólna przyczyna / obszar)`
+              : `${systemic.length} possible systemic theme${systemic.length === 1 ? '' : 's'} (shared root cause / area)`}
           </span>
         ) : null}
       </div>

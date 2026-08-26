@@ -169,8 +169,15 @@ const DOCUMENT: AuditReportDocument = {
       id: 'conclusion',
       title: 'Konkluzja',
       kind: 'text',
+      // NAPRAWA 1 (fix-pass 2026-08-26): mock trzymał surowy enum EN
+      // `VERIFIED` wprost w treści — dokładnie ta wartość `output.meta.
+      // packClassification` (`server/src/services/audits/reportRenderer.ts`,
+      // `buildMethodology`'s `packInfo`), tłumaczona teraz przez
+      // `PACK_CLASSIFICATION_LABELS`/`packClassificationLabel()` w tym samym
+      // pliku — mock trzyma się tego samego słownika PL, żeby zrzut ekranu
+      // nigdy nie pokazywał surowego klucza.
       content:
-        'Audyt zidentyfikował 3 ustalenia: 1 o istotności wysokiej, 1 o istotności średniej, 1 o istotności niskiej. Audyt wykonano wg pakietu audytowego (klasyfikacja: VERIFIED, źródło: Procedura QMS Elmax Industries, wyd. 4), obejmując 24 kryteriów. Zespół audytowy liczył 2 osoby.',
+        'Audyt zidentyfikował 3 ustalenia: 1 o istotności wysokiej, 1 o istotności średniej, 1 o istotności niskiej. Audyt wykonano wg pakietu audytowego (klasyfikacja: zweryfikowana, źródło: Procedura QMS Elmax Industries, wyd. 4), obejmując 24 kryteriów. Zespół audytowy liczył 2 osoby.',
     },
     {
       id: 'systemic_themes',
