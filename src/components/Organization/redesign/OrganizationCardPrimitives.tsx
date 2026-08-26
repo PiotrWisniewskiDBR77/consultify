@@ -13,8 +13,8 @@
  *  - fokus = pierścień `--c-focus` (niebieski), nie obrys marki.
  */
 
-import { ChevronRight, Plus, X } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { ChevronRight, Plus, X } from 'lucide-react';
 import React from 'react';
 
 import { cn } from '../../../lib/utils';
@@ -401,7 +401,9 @@ export const OrgRecordList: React.FC<OrgRecordListProps> = ({
         >
           <X aria-hidden="true" className="h-3.5 w-3.5" />
         </button>
-        <div className={cn('grid grid-cols-1 gap-x-4 gap-y-2', columns.length > 2 && 'md:grid-cols-2')}>
+        <div
+          className={cn('grid grid-cols-1 gap-x-4 gap-y-2', columns.length > 2 && 'md:grid-cols-2')}
+        >
           {columns.map((column) => (
             <div key={column.key}>
               <label className={cn(ORG_L1, 'mb-0.5 block')}>{column.label}</label>
@@ -409,7 +411,11 @@ export const OrgRecordList: React.FC<OrgRecordListProps> = ({
                 <select
                   value={item[column.key] ?? ''}
                   onChange={(event) => onUpdate(item.id, column.key, event.target.value)}
-                  className={cn(CONTROL_BASE, 'cursor-pointer', !item[column.key] && 'text-c-text-muted')}
+                  className={cn(
+                    CONTROL_BASE,
+                    'cursor-pointer',
+                    !item[column.key] && 'text-c-text-muted'
+                  )}
                 >
                   <option value="">—</option>
                   {(column.options ?? []).map((option) => (

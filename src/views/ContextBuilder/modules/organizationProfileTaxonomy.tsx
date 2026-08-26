@@ -314,8 +314,8 @@ export function showOperatingSection(orgType: OrganizationType): boolean {
 // ─── Kompletność profilu (CAŁEGO, nie pojedynczego ekranu) ───
 // Wyodrębnione razem z taksonomią: wartość leci do API jako
 // `profile_completeness`, więc stary moduł i redesign MUSZĄ liczyć ją tak samo.
-export function computeCompleteness(p: OrgProfile): number {
-  const checks = [
+function completenessChecks(p: OrgProfile): unknown[] {
+  return [
     p.organization_type,
     p.industry,
     p.companySize,
@@ -332,5 +332,25 @@ export function computeCompleteness(p: OrgProfile): number {
     p.communication_style,
     p.key_competitors.length > 0,
   ];
+}
+
+export function computeCompleteness(p: OrgProfile): number {
+  const checks = completenessChecks(p);
   return Math.round((checks.filter(Boolean).length / checks.length) * 100);
+}
+
+/**
+ * Wariant `computeCompleteness` z surowym „X z Y" — do karty Gotowość
+ * (wymiar „Kompletność", DEC-2026-08-26-78: 5 wymiarów osobno, jedna z nich
+ * pokazuje ułamek pól, nie tylko procent).
+ */
+export function completenessDetail(p: OrgProfile): {
+  filled: number;
+  total: number;
+  percent: number;
+} {
+  const checks = completenessChecks(p);
+  const filled = checks.filter(Boolean).length;
+  const total = checks.length;
+  return { filled, total, percent: Math.round((filled / total) * 100) };
 }

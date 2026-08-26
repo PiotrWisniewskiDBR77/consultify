@@ -32,25 +32,25 @@ import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../../routes/routeConfig';
 import { Api } from '../../../services/api';
 import {
-  organizationGovernedContextApi,
   type GovernedClaim,
+  organizationGovernedContextApi,
 } from '../../../services/organizationGovernedContextApi';
 import { useAppStore } from '../../../store/useAppStore';
 import {
   COMPANY_SIZES,
+  computeCompleteness,
   CORE_SYSTEMS_OPTIONS,
   DELIVERY_MODELS,
   EMPTY_PROFILE,
   INDUSTRIES,
-  ORG_TYPES,
-  REVENUE_MODELS,
-  computeCompleteness,
   optionKey,
+  ORG_TYPES,
+  type OrganizationType,
+  type OrgProfile,
+  REVENUE_MODELS,
   showCoreSystems,
   showDeliveryModel,
   showRevenueModel,
-  type OrganizationType,
-  type OrgProfile,
 } from '../../../views/ContextBuilder/modules/organizationProfileTaxonomy';
 import type { StandardCounterChip, StandardModuleTab } from '../../standard/StandardModuleBar';
 import {
@@ -100,22 +100,82 @@ interface ScreenField {
 }
 
 const SCREEN_FIELDS: ScreenField[] = [
-  { id: 'organization_type', section: 'identity', label: 'Typ organizacji', claimPath: 'profile.organizationType' },
+  {
+    id: 'organization_type',
+    section: 'identity',
+    label: 'Typ organizacji',
+    claimPath: 'profile.organizationType',
+  },
   { id: 'industry', section: 'identity', label: 'Branża', claimPath: 'profile.industry' },
-  { id: 'industry_subsector', section: 'identity', label: 'Podbranża', claimPath: 'profile.industrySubsector' },
-  { id: 'industry_code', section: 'identity', label: 'Kod branży (PKD)', claimPath: 'profile.industryCode' },
-  { id: 'description', section: 'identity', label: 'Opis organizacji', claimPath: 'profile.description' },
-  { id: 'companySize', section: 'scale', label: 'Wielkość firmy', claimPath: 'profile.companySize' },
-  { id: 'employee_count', section: 'scale', label: 'Liczba pracowników', claimPath: 'profile.employeeCount' },
-  { id: 'annual_revenue', section: 'scale', label: 'Przychód roczny', claimPath: 'profile.annualRevenue' },
-  { id: 'founding_year', section: 'scale', label: 'Rok założenia', claimPath: 'profile.foundingYear' },
-  { id: 'headquarters_country', section: 'scale', label: 'Kraj siedziby', claimPath: 'profile.location' },
-  { id: 'delivery_model', section: 'delivery', label: 'Model dostarczania', claimPath: 'operations.deliveryModel' },
-  { id: 'revenue_model', section: 'delivery', label: 'Model przychodowy / finansowania', claimPath: 'profile.revenueModel' },
+  {
+    id: 'industry_subsector',
+    section: 'identity',
+    label: 'Podbranża',
+    claimPath: 'profile.industrySubsector',
+  },
+  {
+    id: 'industry_code',
+    section: 'identity',
+    label: 'Kod branży (PKD)',
+    claimPath: 'profile.industryCode',
+  },
+  {
+    id: 'description',
+    section: 'identity',
+    label: 'Opis organizacji',
+    claimPath: 'profile.description',
+  },
+  {
+    id: 'companySize',
+    section: 'scale',
+    label: 'Wielkość firmy',
+    claimPath: 'profile.companySize',
+  },
+  {
+    id: 'employee_count',
+    section: 'scale',
+    label: 'Liczba pracowników',
+    claimPath: 'profile.employeeCount',
+  },
+  {
+    id: 'annual_revenue',
+    section: 'scale',
+    label: 'Przychód roczny',
+    claimPath: 'profile.annualRevenue',
+  },
+  {
+    id: 'founding_year',
+    section: 'scale',
+    label: 'Rok założenia',
+    claimPath: 'profile.foundingYear',
+  },
+  {
+    id: 'headquarters_country',
+    section: 'scale',
+    label: 'Kraj siedziby',
+    claimPath: 'profile.location',
+  },
+  {
+    id: 'delivery_model',
+    section: 'delivery',
+    label: 'Model dostarczania',
+    claimPath: 'operations.deliveryModel',
+  },
+  {
+    id: 'revenue_model',
+    section: 'delivery',
+    label: 'Model przychodowy / finansowania',
+    claimPath: 'profile.revenueModel',
+  },
   { id: 'primary_markets', section: 'markets', label: 'Rynki podstawowe' },
   { id: 'customer_segments', section: 'markets', label: 'Segmenty klientów' },
   { id: 'key_competitors', section: 'markets', label: 'Kluczowi konkurenci' },
-  { id: 'core_systems', section: 'markets', label: 'Systemy rdzeniowe', claimPath: 'systems.coreSystems' },
+  {
+    id: 'core_systems',
+    section: 'markets',
+    label: 'Systemy rdzeniowe',
+    claimPath: 'systems.coreSystems',
+  },
 ];
 
 function fieldById(id: keyof OrgProfile): ScreenField {
@@ -338,7 +398,8 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
   }, [context]);
 
   const fieldConflict = useCallback(
-    (field: ScreenField) => (field.claimPath ? conflictByClaimPath.get(field.claimPath) : undefined),
+    (field: ScreenField) =>
+      field.claimPath ? conflictByClaimPath.get(field.claimPath) : undefined,
     [conflictByClaimPath]
   );
 
@@ -470,7 +531,9 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
       })),
     onResolveDecisions: goToSources,
     sourcesSummary:
-      typeof context?.counts?.claims === 'number' ? `${context.counts.claims} twierdzeń` : undefined,
+      typeof context?.counts?.claims === 'number'
+        ? `${context.counts.claims} twierdzeń`
+        : undefined,
     sources: context
       ? [
           {
@@ -546,11 +609,14 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
                     id="org-industry"
                     label="Branża"
                     value={profile.industry}
-                    status={conflictStatus(fieldById("industry"))}
+                    status={conflictStatus(fieldById('industry'))}
                     provenance={provenanceFor('industry')}
                     options={INDUSTRIES.map((industry) => ({
                       value: industry,
-                      label: t(`organization.profile.options.industry.${optionKey(industry)}`, industry),
+                      label: t(
+                        `organization.profile.options.industry.${optionKey(industry)}`,
+                        industry
+                      ),
                     }))}
                     onChange={(value) => update('industry', value)}
                   />
@@ -579,7 +645,7 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
                     label="Opis organizacji"
                     multiline
                     value={profile.description}
-                    status={conflictStatus(fieldById("description"))}
+                    status={conflictStatus(fieldById('description'))}
                     provenance={provenanceFor('description')}
                     onChange={(value) => update('description', value)}
                   />
@@ -603,7 +669,10 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
                     provenance={provenanceFor('companySize')}
                     options={COMPANY_SIZES.map((size) => ({
                       value: size.value,
-                      label: t(`organization.profile.options.companySize.${size.value}`, size.label),
+                      label: t(
+                        `organization.profile.options.companySize.${size.value}`,
+                        size.label
+                      ),
                     }))}
                     onChange={(value) => update('companySize', value)}
                   />
@@ -684,7 +753,10 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
                     provenance={provenanceFor('delivery_model')}
                     options={DELIVERY_MODELS.map((model) => ({
                       value: model,
-                      label: t(`organization.profile.options.deliveryModel.${optionKey(model)}`, model),
+                      label: t(
+                        `organization.profile.options.deliveryModel.${optionKey(model)}`,
+                        model
+                      ),
                     }))}
                     onChange={(value) => update('delivery_model', value)}
                   />
@@ -699,7 +771,10 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
                     provenance={provenanceFor('revenue_model')}
                     options={REVENUE_MODELS.map((model) => ({
                       value: model,
-                      label: t(`organization.profile.options.revenueModel.${optionKey(model)}`, model),
+                      label: t(
+                        `organization.profile.options.revenueModel.${optionKey(model)}`,
+                        model
+                      ),
                     }))}
                     onChange={(value) => update('revenue_model', value)}
                   />
