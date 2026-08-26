@@ -1,6 +1,6 @@
 # Assessment dzień 25 — blok 2 po dniu 20 — raport dyżuru 2026-08-26
 
-Baza integracyjna: `codex/m03-admin-20260824 @ c7647e9a23`; marker `c7647e9a23` — POTWIERDZONY (`merge_base_exit=0`). Gałąź: `codex/assessment-day25-20260826`; worktree: `/private/tmp/consultify-assessment-day25`. Start nastąpił z wiążącej gałęzi instrukcji `5a6cdfea3d`; jej jedyne rozejście od markera to dokument instrukcji. Port PG: `5499`, kontener: `cx-day25-pg`. Przedział migracji `20261160–20261169`; użyte numery: **ŻADNE**.
+Baza integracyjna: `codex/m03-admin-20260824 @ c7647e9a23`; marker `c7647e9a23` — POTWIERDZONY (`merge_base_exit=0`). Gałąź: `codex/assessment-day25-20260826`; worktree: `/private/tmp/consultify-assessment-day25`. Start nastąpił z wiążącej gałęzi instrukcji `5a6cdfea3d`; jej jedyne rozejście od markera to dokument instrukcji. Port PG: `5499`; kontener `cx-day25-pg` usunięty: **TAK**; wolumeny nazwane `cx-day25`: **BRAK**. Przedział migracji `20261160–20261169`; użyte numery: **ŻADNE**.
 
 Budżet B.2: 45 minut, próg 60%: 27 minut. Praca nad serwisem została zatrzymana przed licznikiem typów, ponieważ wymagany harness ujawnił niespełniony negatyw tenanta w pliku tras, którego Z17 zabrania zmieniać. `@ts-nocheck` pozostał bez zmian; liczba dodanych `any` i komentarzy `TODO(day25-B.2)`: `0 / 0`.
 
