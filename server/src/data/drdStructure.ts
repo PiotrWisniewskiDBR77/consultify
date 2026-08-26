@@ -33,6 +33,7 @@ export interface DRDAxis {
   namePL?: string;
   description?: string;
   levelCount: number; // 5 or 7 depending on axis
+  levelLabelsPL?: string[];
   areas: DRDArea[];
 }
 
@@ -46,6 +47,15 @@ const AXIS_1_PROCESSES: DRDAxis = {
   namePL: 'Procesy Cyfrowe',
   description: 'Assessment of digital transformation across core business processes',
   levelCount: 7,
+  levelLabelsPL: [
+    'Rejestracja danych',
+    'Kontrola stanowiska',
+    'Kontrola procesu',
+    'Automatyzacja',
+    'MES',
+    'ERP',
+    'Wsparcie AI',
+  ],
   areas: [
     {
       id: '1A',
@@ -501,6 +511,7 @@ const AXIS_2_PRODUCTS: DRDAxis = {
   namePL: 'Produkty Cyfrowe',
   description: 'Assessment of digital product offerings and their sophistication',
   levelCount: 5,
+  levelLabelsPL: ['Podstawowy', 'Średniozaawansowany', 'Zaawansowany', 'Interaktywny', 'Ekspercki'],
   areas: [
     {
       id: '2A',
