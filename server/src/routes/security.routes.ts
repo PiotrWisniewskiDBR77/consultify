@@ -336,7 +336,10 @@ router.get(
 router.get(
   '/audit-logs',
   verifyToken,
-  asyncHandler(async (_req: AuthRequest, res) => {
+  asyncHandler(async (req: AuthRequest, res) => {
+    const orgId = req.user!.organizationId;
+    const denial = await requireOrgAdmin(req);
+    if (denial) return res.status(403).json(denial);
     try {
       const { all: dbAll } = await import('../utils/DbPromise.js');
       const rows = await dbAll(
@@ -344,10 +347,11 @@ router.get(
               SELECT al.*, u.email as user_email
               FROM activity_logs al
               LEFT JOIN users u ON u.id = al.user_id
+              WHERE al.organization_id = ?
               ORDER BY al.created_at DESC
               LIMIT 200
           `,
-        []
+        [orgId]
       );
 
       const logs = rows.map((r: any) => ({
@@ -376,18 +380,22 @@ router.get(
 router.get(
   '/api-keys/usage',
   verifyToken,
-  asyncHandler(async (_req: AuthRequest, res) => {
+  asyncHandler(async (req: AuthRequest, res) => {
+    const orgId = req.user!.organizationId;
+    const denial = await requireOrgAdmin(req);
+    if (denial) return res.status(403).json(denial);
     try {
       const { all: dbAll } = await import('../utils/DbPromise.js');
       const rows = await dbAll(
         `
               SELECT api_key_id, COUNT(*) as total_calls, SUM(tokens_used) as tokens, SUM(cost) as cost
               FROM api_logs
+              WHERE organization_id = ?
               GROUP BY api_key_id
               ORDER BY total_calls DESC
               LIMIT 50
           `,
-        []
+        [orgId]
       );
       return res.json({ usage: rows });
     } catch (err) {

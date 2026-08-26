@@ -81,4 +81,48 @@ describe('Day 15 S.1/S.2 security request guards', () => {
     expect(response.status).toBe(404);
     expect(dbRun).not.toHaveBeenCalled();
   });
+
+  it.each(['/api/security/audit-logs', '/api/security/api-keys/usage'])(
+    'returns 403 for a member requesting %s',
+    async (path) => {
+      actor = { id: 'member-a', role: 'member', organizationId: 'org-a' };
+      dbGet.mockResolvedValueOnce({ role: 'MEMBER' });
+      expect((await request(await app()).get(path)).status).toBe(403);
+      expect(dbAll).not.toHaveBeenCalled();
+    }
+  );
+
+  it('filters audit logs by the token organization', async () => {
+    dbGet.mockResolvedValueOnce({ role: 'ADMIN' });
+    dbAll.mockResolvedValueOnce([{ id: 'log-a', organization_id: 'org-a' }]);
+    const response = await request(await app()).get('/api/security/audit-logs');
+    expect(response.status).toBe(200);
+    expect(response.body.logs).toHaveLength(1);
+    expect(dbAll).toHaveBeenCalledWith(expect.stringContaining('al.organization_id = ?'), [
+      'org-a',
+    ]);
+  });
+
+  it('returns an honest empty audit-log state', async () => {
+    dbGet.mockResolvedValueOnce({ role: 'OWNER' });
+    dbAll.mockResolvedValueOnce([]);
+    expect((await request(await app()).get('/api/security/audit-logs')).body.logs).toEqual([]);
+  });
+
+  it('filters API usage by the token organization', async () => {
+    dbGet.mockResolvedValueOnce({ role: 'ADMIN' });
+    dbAll.mockResolvedValueOnce([{ api_key_id: 'key-a', total_calls: 2 }]);
+    const response = await request(await app()).get('/api/security/api-keys/usage');
+    expect(response.status).toBe(200);
+    expect(response.body.usage).toHaveLength(1);
+    expect(dbAll).toHaveBeenCalledWith(expect.stringContaining('WHERE organization_id = ?'), [
+      'org-a',
+    ]);
+  });
+
+  it('returns an honest empty API-usage state', async () => {
+    dbGet.mockResolvedValueOnce({ role: 'OWNER' });
+    dbAll.mockResolvedValueOnce([]);
+    expect((await request(await app()).get('/api/security/api-keys/usage')).body.usage).toEqual([]);
+  });
 });

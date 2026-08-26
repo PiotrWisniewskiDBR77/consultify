@@ -84,6 +84,12 @@ describe.skipIf(!enabled)('Day 15 Q.3 real PostgreSQL cross-tenant effects', () 
               ('day15-request-b','beta@day15.local','day15-org-b','pending')
        ON CONFLICT (id) DO NOTHING`
     );
+    await pool.query(
+      `INSERT INTO activity_logs (id,organization_id,user_id,action,entity_type)
+       VALUES ('day15-log-a','day15-org-a','day15-admin-a','read','session'),
+              ('day15-log-b','day15-org-b','day15-user-b','read','session')
+       ON CONFLICT (id) DO NOTHING`
+    );
 
     const { default: security } = await import('../security.routes.js');
     securityApp = express();
@@ -100,6 +106,7 @@ describe.skipIf(!enabled)('Day 15 Q.3 real PostgreSQL cross-tenant effects', () 
   });
 
   afterAll(async () => {
+    await pool.query("DELETE FROM activity_logs WHERE id IN ('day15-log-a','day15-log-b')");
     await pool.query(
       "DELETE FROM access_requests WHERE id IN ('day15-request-a','day15-request-b')"
     );
@@ -146,5 +153,13 @@ describe.skipIf(!enabled)('Day 15 Q.3 real PostgreSQL cross-tenant effects', () 
     expect(response.status).toBe(200);
     expect(response.body.map((row: any) => row.id)).toEqual(['day15-request-a']);
     expect(response.body.some((row: any) => row.id === 'day15-request-b')).toBe(false);
+  });
+
+  it('returns only audit logs from the token organization', async () => {
+    actor = { id: 'day15-admin-a', role: 'admin', organizationId: 'day15-org-a' };
+    const response = await request(securityApp).get('/api/security/audit-logs');
+    expect(response.status).toBe(200);
+    expect(response.body.logs.map((row: any) => row.id)).toEqual(['day15-log-a']);
+    expect(response.body.logs.some((row: any) => row.id === 'day15-log-b')).toBe(false);
   });
 });

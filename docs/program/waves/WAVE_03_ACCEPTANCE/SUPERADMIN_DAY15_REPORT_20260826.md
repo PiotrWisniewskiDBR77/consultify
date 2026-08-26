@@ -101,6 +101,15 @@ Status: **ZROBIONE_WG_DoD**.
 - Istniejąca platformowa `GET /requests` pozostała nietknięta; dwa istniejące klienty nadal używają tej trasy.
 - Test request: 5/5 PASS. Realdb request: pakiet Q.3 4/4 PASS; odpowiedź dla org A zawierała wyłącznie `day15-request-a`, bez rekordu org B.
 
+## S.5 — audit logs i API usage
+
+Status: **CZĘŚCIOWO**.
+
+- Obie trasy wymagają teraz OWNER/ADMIN i filtrują `organization_id` z tokenu.
+- `activity_logs.organization_id` istnieje; realdb Q.3 5/5 PASS potwierdził, że org A nie otrzymuje `day15-log-b` z org B.
+- `api_logs.organization_id` istnieje, więc filtr jest poprawny. Świeży replay nie ma jednak kolumn `api_key_id`, `tokens_used`, `cost`, których wymaga zastane zapytanie; endpoint łapie błąd i zwraca pustą listę. Oznaczenie: **BRAK_API / zastana niezgodność schematu**, bez improwizowania semantyki kosztów.
+- Test request z mockiem: cały pakiet security 13/13 PASS.
+
 ## Zakres wykonany
 
 | Pozycja                                | Status                              |
@@ -111,7 +120,7 @@ Status: **ZROBIONE_WG_DoD**.
 | S.1–S.2                                | ZROBIONE_WG_DoD (realdb Q.3 w toku) |
 | S.3                                    | ZROBIONE_WG_DoD                     |
 | S.4                                    | ZROBIONE_WG_DoD                     |
-| S.5                                    | NIE_ZACZĘTE                         |
+| S.5                                    | CZĘŚCIOWO / BRAK_API                |
 | A.1–A.4                                | NIE_ZACZĘTE                         |
 | Q.1–Q.5                                | NIE_ZACZĘTE                         |
 
