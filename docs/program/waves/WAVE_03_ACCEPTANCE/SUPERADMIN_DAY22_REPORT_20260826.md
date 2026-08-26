@@ -4,6 +4,14 @@ Baza związana: marker `609e9235e0` (instrukcja: `01d418104f`). Tip `codex/m03-a
 Gałąź: `codex/superadmin-day22-20260826`. Worktree: `/private/tmp/consultify-superadmin-day22`.
 Port PG: `5481`. Kontener: `cx-day22-pg` (stan końcowy opisany w sekcji sprzątania).
 
+> **Dopisek FIX-1..4 (dyżur scalony, gałąź `codex/day22-fixes-20260826`, worktree
+> `/private/tmp/consultify-day22-fixes`, baza `codex/m03-admin-20260824`, kontener `cx-day22-pg`
+> port `5493`):** cztery naprawy warunków domknięcia TRI-MUST-08 z odbioru dnia 22 — patrz sekcje
+> „FIX-1"/„FIX-2" w tabeli Kontrakt dla frontu i „FIX-4(a)/(b)/(c)" pod STOP-em E.2 niżej. Kod:
+> `server/src/routes/admin/break-glass.routes.ts`, `server/src/routes/admin/service-accounts.routes.ts`.
+> Testy: `server/src/routes/__tests__/day22.highRiskAdminAudit.pg.test.ts` (9→27 przypadków RealPG),
+> `server/src/routes/__tests__/break-glass.routes.test.ts` (unit, zaktualizowany pod FIX-1 readback).
+
 ## Oświadczenia graniczne
 
 - Marker: `MARKER OK`. Rozjazd marker→tip m03: pięć commitów `df4ae9b47e..f560de2368`; pliki: ledger, migracje `20261121..23`, `server/src/ai/asyncJobService.ts`. Zgodnie z DEC-95 nie wykonano rebase.
@@ -149,11 +157,11 @@ Rozstrzygnięcie **A: nie dodawać nóg 4/5**. `audit_log` dubluje zdarzenie, `a
 
 | Trasa                           | Body                             | Sukces                  | Nowy błąd                                            | Front bez zmian?                                             |
 | ------------------------------- | -------------------------------- | ----------------------- | ---------------------------------------------------- | ------------------------------------------------------------ |
-| POST break-glass sessions       | `breakGlassReason`, `approvedBy` | 201, istniejący kształt | 503 `{code:AUDIT_UNAVAILABLE,operationApplied:true}` | sukces TAK; 503 wymaga jawnego komunikatu                    |
-| DELETE break-glass sessions/:id | —                                | 200, istniejący kształt | jw.; 409 przy braku potwierdzenia revoke             | sukces TAK; błędy do obsługi                                 |
-| POST service-accounts           | name/scopes/...                  | 201, istniejący kształt | jw.                                                  | sukces TAK; 503 do obsługi                                   |
+| POST break-glass sessions       | `breakGlassReason`, `approvedBy` | 201, istniejący kształt | 409 (INSERT nie potwierdzony, FIX-1, `codex/day22-fixes-20260826`); 503 `{code:AUDIT_UNAVAILABLE,operationApplied:false}` (audyt padł → sesja skompensowana/odwołana, FIX-2, ta sama gałąź — front MUSI dziś odczytać `operationApplied` zamiast zakładać `true`) | sukces TAK; 409/503 wymagają jawnego komunikatu                    |
+| DELETE break-glass sessions/:id | —                                | 200, istniejący kształt | 503 `{operationApplied:true}` (kontrakt bez zmian); 409 przy braku potwierdzenia revoke | sukces TAK; błędy do obsługi                                 |
+| POST service-accounts           | name/scopes/...                  | 201, istniejący kształt | 503 `{operationApplied:true}`                                  | sukces TAK; 503 do obsługi                                   |
 | DELETE service-accounts/:id     | —                                | 204                     | jw.; 409 przy nieudanym readback                     | sukces TAK; błędy do obsługi                                 |
-| superadmin audit surface        | —                                | bez zmian               | STOP                                                 | do czasu osobnej naprawy nie widzi wpisów `audit_events`/IAM |
+| superadmin audit surface        | —                                | bez zmian               | STOP (silnik); produkt (pomiar+kontrakt) dostarczony `codex/day22-fixes-20260826` | zob. „FIX-4(a)/(b)/(c)" w sekcji STOP-E.2 niżej — do czasu osobnej naprawy silnika nie widzi wpisów `audit_events`/IAM |
 
 ## STOP-y i znaleziska
 
@@ -168,6 +176,84 @@ Stan: NIE ZACOMMITOWANO.
 
 Powód: platformowa powierzchnia SuperAdmin czyta tylko `admin_audit_logs`; pełne rozszerzenie wymaga utrzymania cross-tenant, degraded per leg i testów kompatybilności konsumenta.
 Skutek: wpisy dnia 22 są widoczne tenantowo, niewidoczne na ekranie Superadmin.
+
+STOP dla ROZSZERZENIA silnika SuperAdmin pozostaje (to osobny projekt: cross-tenant, degraded-per-noga,
+testy kompatybilności konsumenta). Poniżej — dyżur `codex/day22-fixes-20260826` — brakujący PRODUKT: pomiar
+zmierzony testem i pełny kontrakt frontowy, żeby front mógł zacząć bez zgadywania.
+
+#### FIX-4(a) — tabela powierzchnia × widoczny, zmierzona testem
+
+Dowód: `server/src/routes/__tests__/day22.highRiskAdminAudit.pg.test.ts`, test
+`'FIX-4(a): a §B mutation is visible on the tenant surface and invisible on the SuperAdmin surface'`
+— RealPG, PASS. Harness montuje realny `break-glass.routes`, `service-accounts.routes`,
+`adminP32.routes` (tenant) i `superadmin.routes` (SuperAdmin) na jednym Express + realnym Postgresie
+z 27/27 innych testów w tym samym pliku. `verifySuperAdmin`/`requireSuperAdminCapability`/
+`apiAuthRateLimiter`/`superadminAuditMonitor` są zamockowane WYŁĄCZNIE jako bramka autoryzacji
+(orthogonal do pomiaru — pomiar dotyczy SQL-a czytanego przez `getAdminAuditLogs`, nie tokenu);
+sam SQL i obie tabele są realne, nietknięte.
+
+| Krok      | Wywołanie                                             | Wynik                                                                                                        |
+| --------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| Mutacja   | `POST /api/admin/service-accounts` (§B)                | `201`; `resource_id=<uuid>` w `tp_service_accounts` i w `audit_events` (`service_account.created`)            |
+| Tenant    | `GET /api/admin/audit-logs?limit=200`                  | `200`; `logs` zawiera wiersz `resource_type:'service_account', resource_id:<uuid>` — **WIDZI**                |
+| SuperAdmin | `GET /api/superadmin/admin/audit-logs?limit=200`       | `200`; `integrity.degraded:false` (zapytanie się powiodło, to nie zamaskowana awaria); `logs` **NIE zawiera** żadnego wiersza z tym `resource_id` ani `action:'service_account.created'` — **NIE WIDZI** |
+
+Przyczyna w kodzie: `SuperAdminController.getAdminAuditLogs`
+(`server/src/controllers/SuperAdminController.ts:4638`) czyta wyłącznie
+`SELECT ... FROM admin_audit_logs` (noga A). `service_account.created`/`break_glass_session.created`
+nigdy tam nie trafiają — jedyny ich pisarz to `requireAudit`→`AuditEventsService`, który pisze do
+`audit_events` (noga C). Tenant widzi nogę C przez `readTenantAdminAuditProjection`
+(`server/src/routes/adminP32.routes.ts:2256`, montaż `Gateway.ts:647`); SuperAdmin — nie.
+
+#### FIX-4(b) — pełny kontrakt frontowy
+
+Dziś front NIE trafia w ogóle w `GET /api/admin/audit-logs` (tenant, widzi mutacje z §B). Ma dwie
+ścieżki, obie inne: `Api.getAuditLogs(orgId, filters)` (`src/services/api.ts:12268`, tryb string-owy)
+woła stub `GET /api/audit-logs`; `Api.getAuditLogs(filters, paging)` bez pierwszego argumentu-stringa
+oraz osobna `Api.getAdminAuditLogs` (`:14034`) i `Api.getAdminAuditStats` (`:14864`) wołają wyłącznie
+`GET /api/superadmin/admin/audit-logs*` — czyli nogę A, ślepą na §B. Żadna dzisiejsza funkcja frontowa
+nie odpytuje `GET /api/admin/audit-logs`, więc ekran właściciela organizacji nie ma dziś JAK pokazać
+wpisu z §B, nawet gdyby UI chciał.
+
+| Trasa                          | Metoda | Body / query                                                                                     | Sukces (200)                                                                 | Błędy                                                                                                                                     |
+| ------------------------------- | ------ | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/api/admin/audit-logs`         | GET    | query: `actionType?, status?, riskScoreMin?, search?, limit?(≤200,def50), offset?`; opcjonalnie `?orgId=` (musi równać się orgowi z tokenu) | `{ logs:[{id,organization_id,admin_id,action_type,resource_type,resource_id,metadata_json,risk_score,risk_level,status,created_at}], total, limit, offset }` | `401 UNAUTHORIZED`; `403 ADMIN_BOUNDARY_VIOLATION` (obcy `?orgId`); `403 ADMIN_MEMBERSHIP_REQUIRED` / `ADMIN_ACCESS_REQUIRED`; wymaga capability `audit:read` |
+| `/api/admin/audit-logs/stats`   | GET    | —                                                                                                    | `{ totalLogs, unresolvedCount, highRiskCount }`                                | jw.                                                                                                                                          |
+| `/api/admin/audit-logs/export`  | GET    | te same filtry co listing                                                                           | `text/csv` (`admin-audit.csv`)                                                 | jw.; wymaga capability `audit:export` LUB `audit:read`                                                                                       |
+
+Pliki frontu do dotknięcia:
+
+- `src/services/api.ts:12233` (`getAuditLogs`) — dodać trzeci, jawny tryb `getTenantAdminAuditLogs(filters,paging)`
+  wołający `${API_URL}/admin/audit-logs` zamiast obecnego string-mode stuba `/audit-logs`; nie nadpisywać
+  istniejących dwóch trybów (SuperAdmin nadal potrzebny osobno dla `superadmin.routes`).
+- `src/services/api.ts:14019` (`getAdminAuditLogs`) i `:14861` (`getAdminAuditStats`) — zostają jako
+  wywołania SuperAdmin (`/superadmin/admin/audit-logs*`); dopisać komentarz, że to noga A, ślepa na §B,
+  żeby kolejny agent nie założył, że to samo co tenant.
+- Nowa funkcja `getTenantAdminAuditStats`/`exportTenantAdminAuditLogs` analogicznie do dwóch tras stats/export.
+- Ekran, który dziś woła `Api.getAuditLogs`/`getAdminAuditLogs` po stronie właściciela organizacji (Admin
+  Cockpit → Audit Log) — przełączyć na nową tenant-funkcję, żeby wpisy break-glass/service-account były
+  w ogóle osiągalne z UI.
+
+#### FIX-4(c) — duplikacja wiersza w projekcji tenanta
+
+Jedna mutacja na trasie z semantycznym pisarzem (§B) = **DWA** wiersze w `audit_events`, oba trafiające
+do `GET /api/admin/audit-logs` przez `readTenantAdminAuditProjection` (czyta całą tabelę `audit_events`
+dla orgu, bez deduplikacji między pisarzami):
+
+1. **semantyczny** — `action:'service_account.created'`/`'break_glass_session.created'`,
+   `resource_type:'service_account'`/`'break_glass_session'`, `resource_id:<realny id zasobu>` — pisze
+   `requireAudit`/`AuditEventsService` z jawnym `resourceId`.
+2. **generyczny** — pisze globalny `auditLog.middleware.ts` (dual-write przy KAŻDEJ 2xx mutacji, nie
+   tylko §B); `resource_type`/`resource_id` wyprowadzone z URL-a i metody HTTP (nie z realnego zasobu),
+   `action` z mapy `POST→create/PUT→update/DELETE→delete` — inny kształt, **inny `id` wiersza** niż
+   wpis semantyczny, choć ten sam moment/aktor/org.
+
+Zmierzone w eksperymencie B.3 (§ wyżej): jedna `POST /api/admin/service-accounts` dała `audit_events`
+delta `+2`. Front, zanim pokaże to właścicielowi, MUSI albo (i) grupować/collapsować po `(organization_id,
+created_at±kilka ms, admin_id)` i preferować wiersz semantyczny do wyświetlenia, albo (ii) jawnie
+oznaczyć oba jako "ten sam moment, dwa zapisy" — inaczej właściciel zobaczy w logu dwa zdarzenia tam,
+gdzie kliknął raz. To NIE jest błąd do naprawienia w warstwie zapisu (Rozstrzygnięcie A z B.3: nie
+dodawać nóg 4/5, nie usuwać generycznego pisarza) — to kontrakt, który front musi obsłużyć.
 
 Znaleziska nie naprawiane: nieaktualny komentarz `adminAuditService.getStats`; `resolveLog` po samym id; domain verification w pamięci; LIMIT 1000 przed paginacją; brak audytu odmowy; globalny `ActivityService` nie utrwalił wiersza w eksperymencie; globalny middleware może dublować semantic `audit_events`.
 
