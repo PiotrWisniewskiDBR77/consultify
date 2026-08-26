@@ -1,0 +1,43 @@
+-- =====================================================================
+-- 20261123_organization_members_permission_scope_column.sql
+-- =====================================================================
+-- POWOD POWSTANIA
+--   Boczne znalezisko przy triage DEC-116 NO_MIGRATION (przypadki
+--   consultant_org_links / organization_resource_usage / async_jobs):
+--   orgContext.middleware.ts:292 (resolveUserOrgAccess, GLOWNE — nie
+--   fallbackowe — sprawdzenie czlonkostwa) selectuje
+--   `om.permission_scope` z organization_members, a ZADEN plik migracji
+--   nie tworzy tej kolumny. Na swiezej bazie zapytanie pada
+--   ("column om.permission_scope does not exist"); DbPromise.dbGet ma
+--   fallback:true domyslnie, wiec blad jest tlumiony do `null` zamiast
+--   propagowany — resolveUserOrgAccess dostaje `membership = null` i
+--   traktuje uzytkownika tak, jakby nie mial czlonkostwa, mimo ze wiersz w
+--   organization_members istnieje i jest ACTIVE.
+--
+-- SKALA (korekta nadzorcy wobec pierwszego zgloszenia)
+--   orgContextMiddleware jest zamontowany WYLACZNIE w
+--   server/src/routes/apiKeys.routes.ts:51 (`router.use(orgContextMiddleware(...))`,
+--   trasy /api/api-keys/*). To NIE jest glowna sciezka logowania/uwierzytelnienia
+--   (ta idzie przez auth.middleware.ts innymi zapytaniami, bez tej kolumny).
+--   Realny skutek dzis: zarzadzanie kluczami API (tworzenie/lista/rotacja)
+--   jest MARTWE na kazdej swiezej bazie dla kazdego uzytkownika, niezaleznie
+--   od roli/czlonkostwa — kazde wywolanie resolveUserOrgAccess dla
+--   /api/api-keys/* dostaje `allowed:false` (403 "Access denied") zamiast
+--   normalnej autoryzacji wg roli (requireOrgRole('owner','administrator')
+--   nizej w lancuchu middleware nigdy sie nie uruchamia, bo blokuje juz
+--   orgContextMiddleware).
+--
+-- BEZPIECZENSTWO KOLUMNY NULLABLE
+--   Sprawdzone w kodzie: parsePermissionScope(value) (orgContext.middleware.ts)
+--   wola najpierw normalizeOptionalString(value), ktore dla null/undefined
+--   (typeof !== 'string') zwraca undefined -> parsePermissionScope zwraca
+--   { valid: true, scope: {} }. Czyli NULL w tej kolumnie jest w pelni
+--   poprawna, oczekiwana wartoscia (pusty zakres uprawnien) — nullable TEXT
+--   bez DEFAULT wystarcza, zadnego backfillu nie trzeba.
+--
+-- BEZPIECZENSTWO: wylacznie ALTER TABLE ... ADD COLUMN IF NOT EXISTS.
+--   Zero DROP/ALTER TYPE na istniejacych kolumnach, zero UPDATE/backfill.
+-- =====================================================================
+
+ALTER TABLE organization_members
+    ADD COLUMN IF NOT EXISTS permission_scope TEXT;

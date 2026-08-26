@@ -21,9 +21,20 @@ type QueueType = {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let aiQueueModule: any;
 try {
-  aiQueueModule = require('../queues/aiQueue.js');
+  // ESM: `require()` does not exist in this module scope (package.json has
+  // "type": "module"; NodeNext compiles this file to real ESM in dist/).
+  // The previous `require('../queues/aiQueue.js')` / `.ts` fallback threw
+  // "require is not defined in ES module scope" on EVERY call, unconditionally
+  // failing enqueueActionExecution/enqueuePlaybookAdvance in dev (tsx) and in
+  // the compiled dist/ production build alike. Mirrors the working dynamic
+  // import fallback aiQueue.ts itself already uses for QueueConfig.
+  aiQueueModule = await import('../queues/aiQueue.js');
 } catch {
-  aiQueueModule = require('../queues/aiQueue.ts');
+  // @ts-expect-error TS5097 — literal `.ts` specifier only resolves under
+  // tsx/ts-node in dev; the `.js` branch above is what resolves in the
+  // compiled dist/ build. aiQueue.ts itself has @ts-nocheck so its identical
+  // fallback isn't flagged; this file doesn't, so it's suppressed here.
+  aiQueueModule = await import('../queues/aiQueue.ts');
 }
 const aiQueue: QueueType = aiQueueModule.default || aiQueueModule;
 
