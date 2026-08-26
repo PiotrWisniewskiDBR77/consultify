@@ -1,9 +1,11 @@
 /**
  * Chat signals feed V2 kill-switch. It gates only the second, table-and-preview
- * mode inside the existing Chat signals drawer. The default is OFF until the
- * supervisor accepts the visual evidence (CLAUDE.md sections 7 and 9); the
- * supervisor removes that gate after screenshot acceptance. Every read error
- * fails closed so the existing panel remains unchanged.
+ * mode inside the existing Chat signals drawer. Default was OFF until the
+ * supervisor accepted the visual evidence (CLAUDE.md sections 7 and 9); Piotr
+ * accepted the dyżur-26 feed (post-FIX-1..13, merged m03, DEC-143) on
+ * 2026-08-27 and the default flipped to ON. `localStorage`/query "off" (and
+ * the other falsy spellings) still disable it per-session. Every read error
+ * still fails closed so the existing panel remains reachable.
  */
 
 const LS_KEY = 'ff.chat_signals_feed';
@@ -38,7 +40,10 @@ export function isChatSignalsFeedEnabled(): boolean {
     }
     const meta = import.meta as unknown as { env?: Record<string, string | undefined> };
     const env = parseFlag(meta?.env?.[ENV_KEY]);
-    cached = query ?? local ?? env ?? false;
+    // Default ON since 2026-08-27 owner accept (DEC-143) — only the bottom
+    // of the query > localStorage > env > default chain changed; the catch
+    // below still fails closed on any read error.
+    cached = query ?? local ?? env ?? true;
   } catch {
     cached = false;
   }
