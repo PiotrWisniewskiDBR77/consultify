@@ -46,8 +46,19 @@ export async function createTaskFromMeetingNoteAction(input: {
   const idempotencyKey = `meeting-note-action:${input.noteId}:${input.actionIndex}`;
   const sourceType = 'meeting_note_action_item';
   const sourceId = `${input.meetingId}:${input.noteId}:${input.actionIndex}`;
-  try {
-    return await withPgTransaction(async (query) => {
+
+  // The advisory xact lock below serializes every caller that goes through
+  // THIS function for the same (organizationId, idempotencyKey), which is
+  // what makes two concurrent callers of createTaskFromMeetingNoteAction
+  // collapse cleanly without ever reaching a 23505. It cannot serialize a
+  // write to `tasks` that lands from OUTSIDE this function's lock (a
+  // differently-timed writer touching the same idempotency key). For that
+  // residual case attempt() is retried once on a genuine 23505: the retry's
+  // own SELECT will now see the row the other writer committed and return it
+  // as an honest replay instead of letting the raw pg error escape as an
+  // unhandled 500 (see meetingNoteTaskFunnelService.race23505.test.ts).
+  const attempt = () =>
+    withPgTransaction(async (query) => {
       await query(`SELECT pg_advisory_xact_lock(hashtext($1), hashtext($2))`, [
         input.organizationId,
         idempotencyKey,
@@ -85,9 +96,15 @@ export async function createTaskFromMeetingNoteAction(input: {
       );
       return { task, replayed: Boolean(replayBefore.rows[0]) };
     });
+
+  try {
+    return await attempt();
   } catch (error: any) {
     if (error?.message === 'TASK_IDEMPOTENCY_COLLISION') {
       throw new MeetingNoteTaskFunnelError(error.message, 'TASK_IDEMPOTENCY_COLLISION');
+    }
+    if (error?.code === '23505') {
+      return await attempt();
     }
     throw error;
   }
