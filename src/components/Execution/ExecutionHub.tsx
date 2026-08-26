@@ -853,6 +853,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     }>
   >([]);
   const [isLoadingControlSignals, setIsLoadingControlSignals] = useState(false);
+  // DEC-120/A1-A3: per-source SIGNALS_UNAVAILABLE — an awaria at any of these
+  // sources must render as a visible warning, never as a quiet empty list.
+  const [riskSignalsFailed, setRiskSignalsFailed] = useState(false);
+  const [delaySignalsFailed, setDelaySignalsFailed] = useState(false);
+  const [overspendSignalsFailed, setOverspendSignalsFailed] = useState(false);
   const [timelineWarnings, setTimelineWarnings] = useState<GovernedTimelineWarning[]>([]);
   const [timelineWarningTotal, setTimelineWarningTotal] = useState(0);
   const [capacityAlerts, setCapacityAlerts] = useState<GovernedCapacityAlert[]>([]);
@@ -1317,6 +1322,14 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   ]);
 
   useEffect(() => {
+    // DEC-120/A1-A3: a legacy fallback that has no auth token, or that hits a
+    // non-OK response, used to return `{ signals: [] }` — indistinguishable
+    // from "genuinely zero signals". Tag those degraded returns so the caller
+    // can flip a SIGNALS_UNAVAILABLE flag instead of rendering a quiet zero.
+    const SOURCE_UNAVAILABLE = { signals: [], __sourceUnavailable: true as const };
+    const isSourceUnavailable = (data: unknown): boolean =>
+      Boolean(data && typeof data === 'object' && (data as any).__sourceUnavailable === true);
+
     const loadRiskSignals = async () => {
       try {
         const data = await V8ExecutionControlApi.getRiskSignals(
@@ -1327,20 +1340,23 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           }
           return (async () => {
             const token = localStorage.getItem('token');
-            if (!token) return { signals: [] };
+            if (!token) return SOURCE_UNAVAILABLE;
             const params = new URLSearchParams();
             if (currentProjectId) params.set('projectId', currentProjectId);
             const res = await fetch(`/api/execution-control/risk-signals?${params}`, {
               headers: { Authorization: `Bearer ${token}` },
             });
-            if (!res.ok) return { signals: [] };
+            if (!res.ok) return SOURCE_UNAVAILABLE;
             return res.json();
           })();
         });
         setRiskSignals(normalizeExecutionArrayEnvelope<RiskSignalItem>(data, ['signals']));
-      } catch {
-        // risk signals are non-blocking
+        setRiskSignalsFailed(isSourceUnavailable(data));
+      } catch (error) {
+        // risk signals are non-blocking, but the failure itself must be visible
+        console.error('[ExecutionHub] risk signals load failed', error);
         setRiskSignals([]);
+        setRiskSignalsFailed(true);
       }
     };
     const loadDelaySignals = async () => {
@@ -1353,20 +1369,23 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           }
           return (async () => {
             const token = localStorage.getItem('token');
-            if (!token) return { signals: [] };
+            if (!token) return SOURCE_UNAVAILABLE;
             const params = new URLSearchParams();
             if (currentProjectId) params.set('projectId', currentProjectId);
             const res = await fetch(`/api/execution-control/delay-signals?${params}`, {
               headers: { Authorization: `Bearer ${token}` },
             });
-            if (!res.ok) return { signals: [] };
+            if (!res.ok) return SOURCE_UNAVAILABLE;
             return res.json();
           })();
         });
         setDelaySignals(normalizeExecutionArrayEnvelope<DelaySignalItem>(data, ['signals']));
-      } catch {
-        // delay signals are non-blocking
+        setDelaySignalsFailed(isSourceUnavailable(data));
+      } catch (error) {
+        // delay signals are non-blocking, but the failure itself must be visible
+        console.error('[ExecutionHub] delay signals load failed', error);
         setDelaySignals([]);
+        setDelaySignalsFailed(true);
       }
     };
     const loadOverspendSignals = async () => {
@@ -1385,8 +1404,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         setOverspendSignals(
           normalizeExecutionArrayEnvelope<(typeof overspendSignals)[number]>(data, ['signals'])
         );
-      } catch {
+        setOverspendSignalsFailed(isSourceUnavailable(data));
+      } catch (error) {
+        console.error('[ExecutionHub] overspend signals load failed', error);
         setOverspendSignals([]);
+        setOverspendSignalsFailed(true);
       }
     };
     setIsLoadingControlSignals(true);
@@ -3088,6 +3110,12 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     await refreshExecutionAfterWrite();
   }, [refreshExecutionAfterWrite]);
 
+  const unavailableSignalSources = [
+    riskSignalsFailed && 'risk',
+    delaySignalsFailed && 'delay',
+    overspendSignalsFailed && 'overspend',
+  ].filter((v): v is 'risk' | 'delay' | 'overspend' => Boolean(v));
+
   const renderPortfolioHealth = () => (
     <div className="space-y-3" data-testid="portfolio-health">
       {healthSnapshotFailed && (
@@ -3100,6 +3128,46 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             'The authoritative PMO health snapshot could not be loaded. The Health Score, decision and blocker counts below fall back to client-side estimates and may be incomplete — a degraded state, not a confirmed-healthy portfolio.'
           )}
         </Callout>
+      )}
+      {/* DEC-120/A1-A3: controlTowerFailed and isLoadingControlSignals were
+          tracked but never read by any JSX — a broken signal source rendered
+          as a quiet signals:[] instead of a visible warning. */}
+      {controlTowerFailed && (
+        <div data-testid="control-tower-unavailable-banner">
+          <Callout
+            variant="critical"
+            title={t('execution.controlTower.failed', 'Control tower signals unavailable')}
+          >
+            {t(
+              'execution.controlTower.failedDesc',
+              'Failed to load timeline warnings and capacity leveling alerts. The view is operating without risk and delay overlays.'
+            )}
+          </Callout>
+        </div>
+      )}
+      {!isLoadingControlSignals && unavailableSignalSources.length > 0 && (
+        <div data-testid="signals-unavailable-banner">
+          <Callout
+            variant="critical"
+            title={t('execution.signalsUnavailable.badge', 'Signal source unavailable')}
+          >
+            {t(
+              'execution.signalsUnavailable.desc',
+              'Failed to load: {{sources}}. An empty list below does NOT mean there are no risks — it means this source is not currently responding.',
+              {
+                sources: unavailableSignalSources
+                  .map((source) =>
+                    t(`execution.signalsUnavailable.source.${source}`, {
+                      risk: 'risk signals',
+                      delay: 'delay signals',
+                      overspend: 'overspend signals',
+                    }[source])
+                  )
+                  .join(', '),
+              }
+            )}
+          </Callout>
+        </div>
       )}
       <div className="grid gap-4 lg:grid-cols-[1.2fr_2fr]">
         <PortfolioHealthScore
@@ -4546,6 +4614,17 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       progressPercent: execSnapshot?.overview?.progressPercent ?? null,
       totalInitiatives: dashboardBaseInitiatives.length,
       lastRefreshAt: execSnapshot?.generatedAt,
+      // DEC-120/A1-A3: propagate source failures into the report footer —
+      // a broken signal source must degrade Confidence/Freshness, not
+      // disappear into an empty array that reads as "all clear".
+      tasksFailed,
+      decisionsFailed,
+      controlTowerFailed,
+      signalsUnavailable: [
+        riskSignalsFailed && 'risk',
+        delaySignalsFailed && 'delay',
+        overspendSignalsFailed && 'overspend',
+      ].filter((v): v is string => Boolean(v)),
     }),
     [
       dashboardBaseInitiatives,
@@ -4560,6 +4639,12 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       timelineWarnings,
       capacityAlerts,
       capacityTimeline,
+      tasksFailed,
+      decisionsFailed,
+      controlTowerFailed,
+      riskSignalsFailed,
+      delaySignalsFailed,
+      overspendSignalsFailed,
     ]
   );
 

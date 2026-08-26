@@ -10948,6 +10948,16 @@
       "failed": "Migawka kondycji PMO niedostępna",
       "failedDesc": "Nie udało się załadować autorytatywnej migawki kondycji PMO. Wskaźnik kondycji oraz liczby decyzji i blokad poniżej opierają się na szacunkach po stronie klienta i mogą być niepełne — to stan zdegradowany, a nie potwierdzone zdrowe portfolio."
     },
+    "signalsUnavailable": {
+      "badge": "Źródło sygnałów niedostępne",
+      "title": "Źródło sygnałów niedostępne",
+      "desc": "Nie udało się załadować: {{sources}}. Pusta lista poniżej NIE oznacza braku ryzyk — oznacza, że to źródło aktualnie nie odpowiada.",
+      "source": {
+        "risk": "sygnały ryzyka",
+        "delay": "sygnały opóźnień",
+        "overspend": "sygnały przekroczenia budżetu"
+      }
+    },
     "reportCatalog": {
       "cadence": {
         "biweekly": "Co dwa tygodnie",

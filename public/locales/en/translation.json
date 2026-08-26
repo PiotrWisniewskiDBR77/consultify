@@ -11579,6 +11579,16 @@
       "failed": "PMO health snapshot unavailable",
       "failedDesc": "The authoritative PMO health snapshot could not be loaded. The Health Score, decision and blocker counts below fall back to client-side estimates and may be incomplete — a degraded state, not a confirmed-healthy portfolio."
     },
+    "signalsUnavailable": {
+      "badge": "Signal source unavailable",
+      "title": "Signal source unavailable",
+      "desc": "Failed to load: {{sources}}. An empty list below does NOT mean there are no risks — it means this source is not currently responding.",
+      "source": {
+        "risk": "risk signals",
+        "delay": "delay signals",
+        "overspend": "overspend signals"
+      }
+    },
     "reportCatalog": {
       "cadence": {
         "biweekly": "Bi-weekly",
