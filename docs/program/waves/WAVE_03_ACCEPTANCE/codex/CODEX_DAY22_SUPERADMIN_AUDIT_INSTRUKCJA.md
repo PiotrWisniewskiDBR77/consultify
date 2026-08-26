@@ -86,13 +86,13 @@ Naruszenie tego ograniczenia = odrzucenie dyżuru, niezależnie od jakości resz
 1. Punktem wyjścia jest **gałąź `codex/m03-admin-20260824`**. Nadzorca podaje Ci
    **SHA commitu-markera** przy wklejaniu tej instrukcji.
 
-   **SHA markera: «MARKER_SHA»**
+   **SHA markera: 609e9235e0**
 
    ```bash
    cd <root-repo>
    git fetch --all --prune
    git log --oneline -25 codex/m03-admin-20260824
-   git merge-base --is-ancestor «MARKER_SHA» codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
+   git merge-base --is-ancestor 609e9235e0 codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
    ```
 
 2. **Jeśli marker nie jest przodkiem tipa albo gałąź nie istnieje — STOP.**
@@ -161,7 +161,7 @@ Naruszenie tego ograniczenia = odrzucenie dyżuru, niezależnie od jakości resz
    format `YYYYMMDD`):
 
    ```bash
-   git branch codex/superadmin-day22-<data> «MARKER_SHA»
+   git branch codex/superadmin-day22-<data> 609e9235e0
    git worktree add /private/tmp/consultify-superadmin-day22 codex/superadmin-day22-<data>
    cd /private/tmp/consultify-superadmin-day22
    ```
@@ -1490,7 +1490,7 @@ Nie tworzysz drugiego pliku nigdzie indziej (Z12).
 # Superadmin dzień 22 — raport dyżuru <data>
 
 Baza: codex/m03-admin-20260824 @ <SHA tipa>
-Marker: «MARKER_SHA» — POTWIERDZONY / BRAK
+Marker: 609e9235e0 — POTWIERDZONY / BRAK
 Gałąź: codex/superadmin-day22-<data>
 Worktree: /private/tmp/consultify-superadmin-day22
 Port PG: 5481 · kontener cx-day22-pg usunięty: TAK/NIE · wolumeny usunięte: TAK/NIE
