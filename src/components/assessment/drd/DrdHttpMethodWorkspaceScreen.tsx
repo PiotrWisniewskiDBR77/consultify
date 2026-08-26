@@ -721,9 +721,11 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
           onViewModeChange={setViewMode}
           loading={state.status === 'loading' && Boolean(state.session)}
           readOnly={!canWrite}
-          degradedMessage={
-            session.state === 'active' ? null : `Status: ${session.state}`
-          }
+          // 2026-08-26 night-fixes-a (NIGHT_SWEEP_A_REPORT_20260826.md #5) —
+          // see DrdMethodWorkspaceScreen.tsx's sibling comment: this
+          // duplicated the header's own status pill, no separate fact left
+          // to report.
+          degradedMessage={null}
           navigatorProps={{
             nodes: navigatorNodes,
             activeUnitId: activeArea.id,

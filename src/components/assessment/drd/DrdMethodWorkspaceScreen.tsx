@@ -493,12 +493,18 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
           onSaveStay={() => {}}
           viewMode={viewMode}
           onViewModeChange={setViewMode}
+          // 2026-08-26 night-fixes-a (NIGHT_SWEEP_A_REPORT_20260826.md #5,
+          // ASM-OWN-013's "no unexplained global status legend" principle):
+          // the `Status: ${session.state}` fallback duplicated the header's
+          // own `statusLabel` pill (e.g. both showed "Szkic"/draft at once)
+          // — MethodWorkspaceShell's header ALWAYS renders that pill, so a
+          // second banner repeating the same fact added noise, not
+          // information. The revision message stays: it says something the
+          // header pill does NOT (which prior session this one supersedes).
           degradedMessage={
             session.revisionOfSessionId
               ? `Rewizja sesji ${session.revisionOfSessionId.slice(0, 8)} (utworzona przez reopen — poprzedni Output pozostaje nietknięty, oznaczony jako superseded po ponownym freeze).`
-              : session.state === 'active'
-                ? null
-                : `Status: ${session.state}`
+              : null
           }
           navigatorProps={{
             nodes: navigatorNodes,

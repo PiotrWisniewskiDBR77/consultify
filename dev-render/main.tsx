@@ -356,6 +356,9 @@ const ResultsVNextTeresaOkrReflectionScreen = React.lazy(
 );
 
 const ToolsSwotReportScreen = React.lazy(() => import('./screens/tools-swot-report'));
+const ToolsSwotInitiativeProposalScreen = React.lazy(
+  () => import('./screens/tools-swot-initiative-proposal')
+);
 
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
   'meetings-module': {
@@ -380,6 +383,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'Tools — Dynamic SWOT: Output -> Report/Presentation (deterministyczny renderer, Executive Paper/Night)',
     render: () => <ToolsSwotReportScreen />,
+  },
+  'tools-swot-initiative-proposal': {
+    label:
+      'Tools — Dynamic SWOT: SummaryStep dynamic-swot branch (Results & Readiness, night-sweep-20260826 #3)',
+    render: () => <ToolsSwotInitiativeProposalScreen />,
   },
   'drd-http-workspace': {
     label:

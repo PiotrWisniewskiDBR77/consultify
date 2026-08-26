@@ -49,6 +49,7 @@
  * is UX only, never the security boundary).
  */
 import type { OkrSetDto, OkrSetStatus } from './okrApi';
+import { okrSetStatusLabel } from './okrRegistryMappers';
 import type {
   OkrAlignmentStatus,
   OkrRecognitionVisibility,
@@ -173,23 +174,31 @@ export interface OkrActionGate {
   en: string;
 }
 
-function reasonWrongStatus(action: { pl: string; en: string }, allowed: OkrSetStatus[], current: OkrSetStatus, isPolish: boolean): OkrActionGate {
-  const allowedList = allowed.join(', ');
+// 2026-08-26 night-fixes-a P0 (NIGHT_SWEEP_A_REPORT_20260826.md #1): the
+// reason text used to interpolate the RAW server enum ('draft',
+// 'changes_requested', …) straight into the sentence shown to the user —
+// technical jargon on the product's face. Resolve every status through the
+// SAME i18n label dictionary the rest of the workspace already uses
+// (`OKR_SET_STATUS_LABELS` via `okrSetStatusLabel`) so the sentence reads in
+// plain PL/EN business language instead of the wire-format state machine.
+function reasonWrongStatus(action: { pl: string; en: string }, allowed: OkrSetStatus[], current: OkrSetStatus): OkrActionGate {
+  const allowedListPl = allowed.map((status) => okrSetStatusLabel(status, true)).join(', ');
+  const allowedListEn = allowed.map((status) => okrSetStatusLabel(status, false)).join(', ');
   return {
-    pl: `${action.pl}: wymaga statusu ${allowedList}, obecny status to "${current}".`,
-    en: `${action.en}: requires status ${allowedList}, current status is "${current}".`,
+    pl: `${action.pl}: wymaga statusu „${allowedListPl}” (obecny status: „${okrSetStatusLabel(current, true)}”).`,
+    en: `${action.en}: requires status "${allowedListEn}" (current status: "${okrSetStatusLabel(current, false)}").`,
   };
 }
 
 export function gateSubmit(set: OkrSetDto): OkrActionGate | null {
   const allowed: OkrSetStatus[] = ['draft', 'changes_requested'];
   if (allowed.includes(set.status)) return null;
-  return reasonWrongStatus({ pl: 'Złożenie do akceptacji', en: 'Submit for approval' }, allowed, set.status, true);
+  return reasonWrongStatus({ pl: 'Złożenie do akceptacji', en: 'Submit for approval' }, allowed, set.status);
 }
 
 export function gateApprove(set: OkrSetDto, currentUserId: string | null): OkrActionGate | null {
   if (set.status !== 'submitted') {
-    return reasonWrongStatus({ pl: 'Akceptacja', en: 'Approve' }, ['submitted'], set.status, true);
+    return reasonWrongStatus({ pl: 'Akceptacja', en: 'Approve' }, ['submitted'], set.status);
   }
   if (currentUserId && (currentUserId === set.submittedBy || currentUserId === set.createdBy)) {
     return {
@@ -202,21 +211,21 @@ export function gateApprove(set: OkrSetDto, currentUserId: string | null): OkrAc
 
 export function gateRequestChanges(set: OkrSetDto): OkrActionGate | null {
   if (set.status !== 'submitted') {
-    return reasonWrongStatus({ pl: 'Żądanie poprawek', en: 'Request changes' }, ['submitted'], set.status, true);
+    return reasonWrongStatus({ pl: 'Żądanie poprawek', en: 'Request changes' }, ['submitted'], set.status);
   }
   return null;
 }
 
 export function gateActivate(set: OkrSetDto): OkrActionGate | null {
   if (set.status !== 'approved') {
-    return reasonWrongStatus({ pl: 'Aktywacja', en: 'Activate' }, ['approved'], set.status, true);
+    return reasonWrongStatus({ pl: 'Aktywacja', en: 'Activate' }, ['approved'], set.status);
   }
   return null;
 }
 
 export function gateOpenReview(set: OkrSetDto): OkrActionGate | null {
   if (set.status !== 'active') {
-    return reasonWrongStatus({ pl: 'Otwarcie przeglądu', en: 'Open review' }, ['active'], set.status, true);
+    return reasonWrongStatus({ pl: 'Otwarcie przeglądu', en: 'Open review' }, ['active'], set.status);
   }
   return null;
 }
@@ -224,19 +233,19 @@ export function gateOpenReview(set: OkrSetDto): OkrActionGate | null {
 export function gateCancel(set: OkrSetDto): OkrActionGate | null {
   const allowed: OkrSetStatus[] = ['draft', 'submitted', 'changes_requested', 'approved', 'active'];
   if (allowed.includes(set.status)) return null;
-  return reasonWrongStatus({ pl: 'Anulowanie', en: 'Cancel' }, allowed, set.status, true);
+  return reasonWrongStatus({ pl: 'Anulowanie', en: 'Cancel' }, allowed, set.status);
 }
 
 export function gateClose(set: OkrSetDto): OkrActionGate | null {
   if (set.status !== 'review') {
-    return reasonWrongStatus({ pl: 'Zamknięcie', en: 'Close' }, ['review'], set.status, true);
+    return reasonWrongStatus({ pl: 'Zamknięcie', en: 'Close' }, ['review'], set.status);
   }
   return null;
 }
 
 export function gateCarryForward(set: OkrSetDto): OkrActionGate | null {
   if (set.status !== 'closed') {
-    return reasonWrongStatus({ pl: 'Przeniesienie na kolejny cykl', en: 'Carry forward' }, ['closed'], set.status, true);
+    return reasonWrongStatus({ pl: 'Przeniesienie na kolejny cykl', en: 'Carry forward' }, ['closed'], set.status);
   }
   return null;
 }

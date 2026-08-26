@@ -41,7 +41,20 @@ import {
 // Table columns
 // ==========================================
 
-export function buildRoiCaseColumns(isPolish: boolean): TableColumn[] {
+/**
+ * 2026-08-26 night-fixes-a (NIGHT_SWEEP_A_REPORT_20260826.md #6): the Owner
+ * column/preview used to render the raw `ownerUserId` id
+ * ("user-anna-kowals…") — same id->name resolver convention already added
+ * to Results Attention (`attentionPresenters.tsx`'s `MemberNameResolver`)
+ * and `useMentionAutocomplete` before that: real org member list, honest
+ * fallback to the id when unresolved, never a fabricated name.
+ */
+export type RoiMemberNameResolver = (userId: string) => string | null;
+
+export function buildRoiCaseColumns(
+  isPolish: boolean,
+  resolveMemberName: RoiMemberNameResolver = () => null
+): TableColumn[] {
   return [
     {
       id: 'title',
@@ -92,14 +105,17 @@ export function buildRoiCaseColumns(isPolish: boolean): TableColumn[] {
       id: 'owner',
       label: isPolish ? 'Właściciel' : 'Owner',
       width: '150px',
-      render: (row: RoiCaseListItem) => (
-        <span
-          className="block truncate text-sm text-c-text-secondary font-mono"
-          title={row.ownerUserId}
-        >
-          {row.ownerUserId}
-        </span>
-      ),
+      render: (row: RoiCaseListItem) => {
+        const name = resolveMemberName(row.ownerUserId);
+        return (
+          <span
+            className={`block truncate text-sm text-c-text-secondary${name ? '' : ' font-mono'}`}
+            title={row.ownerUserId}
+          >
+            {name || row.ownerUserId}
+          </span>
+        );
+      },
     },
     {
       id: 'currency',
@@ -116,7 +132,9 @@ export function buildRoiCaseColumns(isPolish: boolean): TableColumn[] {
       render: (row: RoiCaseListItem) => (
         <HonestValueCell
           value={row.nextActionType}
-          format={(v) => <span className="text-sm text-c-text-secondary">{humanizeActionType(v)}</span>}
+          format={(v) => (
+            <span className="text-sm text-c-text-secondary">{humanizeActionType(v, isPolish)}</span>
+          )}
         />
       ),
     },
@@ -285,10 +303,12 @@ export interface RoiPreviewDeps {
    * once settled with no run found. Distinguishes "still loading" from
    * "genuinely no run yet" so the preview never flashes a fabricated value. */
   calculationRun: RoiCalculationRunSummary | null | undefined;
+  /** Same resolver as `buildRoiCaseColumns` — see its own comment. */
+  resolveMemberName?: RoiMemberNameResolver;
 }
 
 export function buildRoiCasePreview(row: RoiCaseListItem, deps: RoiPreviewDeps): StandardPreviewProps {
-  const { isPolish, onClose, calculationRun } = deps;
+  const { isPolish, onClose, calculationRun, resolveMemberName = () => null } = deps;
   const lock = getRoiCaseLockInfo(row.status);
   const runResolved = calculationRun !== undefined;
   const run = runResolved ? calculationRun : null;
@@ -322,8 +342,8 @@ export function buildRoiCasePreview(row: RoiCaseListItem, deps: RoiPreviewDeps):
           : lock.reason.en
         : row.nextActionType
           ? isPolish
-            ? `Następny krok: ${humanizeActionType(row.nextActionType)}`
-            : `Next step: ${humanizeActionType(row.nextActionType)}`
+            ? `Następny krok: ${humanizeActionType(row.nextActionType, true)}`
+            : `Next step: ${humanizeActionType(row.nextActionType, false)}`
           : isPolish
             ? 'Podgląd rejestru — pełna edycja sprawy ROI jeszcze nie zbudowana w tym pakiecie.'
             : 'Registry preview — full ROI case editing is not built in this package yet.',
@@ -331,7 +351,12 @@ export function buildRoiCasePreview(row: RoiCaseListItem, deps: RoiPreviewDeps):
     details: {
       showWordCount: false,
       properties: [
-        { id: 'owner', label: isPolish ? 'Właściciel' : 'Owner', value: row.ownerUserId, mono: true },
+        {
+          id: 'owner',
+          label: isPolish ? 'Właściciel' : 'Owner',
+          value: resolveMemberName(row.ownerUserId) || row.ownerUserId,
+          mono: !resolveMemberName(row.ownerUserId),
+        },
         { id: 'initiative', label: isPolish ? 'Inicjatywa' : 'Initiative', value: row.initiativeId, mono: true },
         {
           id: 'analysisWindow',

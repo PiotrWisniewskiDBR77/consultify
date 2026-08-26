@@ -66,7 +66,9 @@ import { useNavigate } from 'react-router-dom';
 import type { StandardCounterChip, TableRow } from '@/components/standard';
 import { ROUTES } from '@/routes/routeConfig';
 import { InitiativeApi } from '@/services/api/initiatives.api';
+import { OrganizationApi } from '@/services/api/organizations.api';
 import { tokenService } from '@/services/tokenService';
+import { useAppStore } from '@/store/useAppStore';
 
 import {
   getResultsDomainPath,
@@ -242,6 +244,38 @@ export const ResultsRoiHub: React.FC = () => {
   const { i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
   const navigate = useNavigate();
+
+  // 2026-08-26 night-fixes-a P0 (NIGHT_SWEEP_A_REPORT_20260826.md #6): the
+  // Owner column/preview used to show the raw ownerUserId id — same
+  // id->name resolver convention as Results Attention
+  // (attentionPresenters.tsx) and useMentionAutocomplete: real org member
+  // list, honest fallback to the id when unresolved.
+  const currentOrganization = useAppStore((s) => s.currentOrganization);
+  const [memberNameById, setMemberNameById] = useState<Record<string, string>>({});
+  useEffect(() => {
+    if (!currentOrganization?.id) return;
+    let cancelled = false;
+    OrganizationApi.getOrganizationMembers(currentOrganization.id)
+      .then((members) => {
+        if (cancelled) return;
+        const map: Record<string, string> = {};
+        members.forEach((m) => {
+          const label = (m.name && m.name.trim()) || m.email || m.userId;
+          if (label) map[m.userId] = label;
+        });
+        setMemberNameById(map);
+      })
+      .catch(() => {
+        if (!cancelled) setMemberNameById({});
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [currentOrganization?.id]);
+  const resolveMemberName = useCallback(
+    (userId: string) => memberNameById[userId] || null,
+    [memberNameById]
+  );
 
   const restoredUiState = useMemo(() => readRoiHubUiState(), []);
   const [tab] = useState<RoiTab>(restoredUiState.tab ?? 'all');
@@ -596,7 +630,7 @@ export const ResultsRoiHub: React.FC = () => {
           },
         }}
         table={{
-          columns: buildRoiCaseColumns(isPolish),
+          columns: buildRoiCaseColumns(isPolish, resolveMemberName),
           data: rows,
           persistKey: 'results-vnext.roi-registry',
           loading: casesLoading,
@@ -652,6 +686,7 @@ export const ResultsRoiHub: React.FC = () => {
                 isPolish,
                 onClose: () => setSelectedCaseId(null),
                 calculationRun,
+                resolveMemberName,
               })
             : null
         }

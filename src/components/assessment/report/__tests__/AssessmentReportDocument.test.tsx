@@ -151,6 +151,48 @@ describe('AssessmentReportDocument', () => {
     expect(screen.getByText(/nie zawiera zagregowanego wyniku per wymiar/)).toBeInTheDocument();
   });
 
+  // 2026-08-26 night-fixes-a (NIGHT_SWEEP_A_REPORT_20260826.md FIX-ATOM #8):
+  // "Wynik per wymiar (oś)" used to render `aggregation.byGroup`'s raw
+  // `axis-N` keys verbatim — the SAME axes the "Jednostka oceny" table two
+  // sections down already resolves to full Polish names. Proves the fix and
+  // its honest degrade path (unknown pack/version still falls back to the
+  // raw id, never a guess).
+  it('resolves aggregation.byGroup axis keys to Polish axis names, not raw axis-N codes', () => {
+    const data = buildData({
+      aggregation: {
+        byGroup: { 'axis-1': 5.0, 'axis-2': null },
+        mappingVersion: 'drd-axis-mean-v1',
+        rule: 'arithmetic mean of non-null unit levels within the same axis',
+        excluded: {},
+      },
+    });
+    const { container } = render(<AssessmentReportDocument data={data} />);
+    // Scoped to the "Wynik ogólny" section specifically — "Procesy Cyfrowe"
+    // legitimately also appears in the "Jednostka oceny" table further down
+    // (same axis, same fixture unit `1A`) — that's the SAME fix working
+    // consistently in both places, not a collision.
+    const overallSection = container.querySelector('#overall') as HTMLElement;
+    expect(overallSection).toBeTruthy();
+    expect(within(overallSection).getByText('Procesy Cyfrowe')).toBeInTheDocument();
+    expect(within(overallSection).getByText('Produkty Cyfrowe')).toBeInTheDocument();
+    expect(within(overallSection).queryByText('axis-1')).not.toBeInTheDocument();
+    expect(within(overallSection).queryByText('axis-2')).not.toBeInTheDocument();
+  });
+
+  it('falls back to the raw axis id (never a mislabel) when the Output pack/version does not match the compiled pack', () => {
+    const data = buildData({
+      methodPackVersion: '0.0.1-unknown',
+      aggregation: {
+        byGroup: { 'axis-1': 5.0 },
+        mappingVersion: 'drd-axis-mean-v1',
+        rule: 'arithmetic mean of non-null unit levels within the same axis',
+        excluded: {},
+      },
+    });
+    render(<AssessmentReportDocument data={data} />);
+    expect(screen.getByText('axis-1')).toBeInTheDocument();
+  });
+
   it('lists the finding under both strengths/gaps and evidence, with a unit-id reference', () => {
     render(<AssessmentReportDocument data={buildData()} />);
     const gapsHeading = screen.getByText(/^Luki \(1\)$/);
