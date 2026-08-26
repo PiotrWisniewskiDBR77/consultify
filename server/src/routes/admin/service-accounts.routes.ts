@@ -15,6 +15,13 @@ router.use(
     const userId = String(req.user?.id || '').trim();
     if (!organizationId || !userId)
       return res.status(401).json({ success: false, code: 'UNAUTHORIZED' });
+    const requestedOrgId = String(req.query.orgId || organizationId).trim();
+    if (requestedOrgId !== organizationId)
+      return res.status(403).json({
+        success: false,
+        code: 'ADMIN_BOUNDARY_VIOLATION',
+        error: 'Cross-organization admin access is blocked',
+      });
     const membership = await dbGet<{ role?: string; status?: string }>(
       'SELECT role, status FROM organization_members WHERE organization_id = ? AND user_id = ? LIMIT 1',
       [organizationId, userId],

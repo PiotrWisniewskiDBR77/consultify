@@ -12,6 +12,12 @@ router.use(
     const o = String(req.user?.organizationId || ''),
       u = String(req.user?.id || '');
     if (!o || !u) return res.status(401).json({ error: 'Unauthorized' });
+    const requestedOrgId = String(req.query.orgId || o).trim();
+    if (requestedOrgId !== o)
+      return res.status(403).json({
+        code: 'ADMIN_BOUNDARY_VIOLATION',
+        error: 'Cross-organization admin access is blocked',
+      });
     const m = await dbGet<{ role?: string; status?: string }>(
       'SELECT role,status FROM organization_members WHERE organization_id=? AND user_id=? LIMIT 1',
       [o, u],
@@ -114,16 +120,35 @@ router.post(
       approvedBy,
       createdBy: actor,
     });
+    // FIX-1 (DEC-124 TRI-MUST-08): createSession can swallow a failed INSERT and
+    // return a synthetic object for a row that was never persisted. Confirm the
+    // row independently before trusting its id for the audit event.
+    const confirmed = await dbGet<{ id: string; is_active: number; session_type: string }>(
+      'SELECT id, is_active, session_type FROM admin_sessions WHERE id = ?',
+      [session?.id],
+      { fallback: false }
+    );
+    if (!confirmed || confirmed.session_type !== 'break_glass')
+      return res.status(409).json({ error: 'Break-glass session could not be created' });
     try {
       await req.emitAuditEvent?.({
         action: 'break_glass_session.created',
         resourceType: 'break_glass_session',
-        resourceId: String(session?.id || actor),
+        resourceId: String(confirmed.id),
         after: { active: true, approvedBy },
         metadata: { reason, approvedBy, expiresInHours: 1 },
       });
     } catch {
-      return auditUnavailable(res);
+      // FIX-2: an unaudited break-glass grant IS the TRI-MUST-08 risk — compensate
+      // by revoking the session we just created so nothing emergency-access stays
+      // live without a trail, and report the operation as NOT applied.
+      await adminSessionService.revokeSession(confirmed.id).catch(() => {});
+      return res.status(503).json({
+        success: false,
+        code: 'AUDIT_UNAVAILABLE',
+        operationApplied: false,
+        error: 'Operation was rolled back because its audit record could not be persisted',
+      });
     }
     res.status(201).json({ success: true, ...(await payload(o)) });
   })
