@@ -26,7 +26,8 @@ import {
 } from '@/components/standard';
 import type { ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
 import { ErrorState } from '@/components/shared/states';
-import { StatusChip } from '@/components/ui/primitives/chips';
+import { DueChip, StatusChip } from '@/components/ui/primitives/chips';
+import { isAuditsScaleAndPolishEnabled } from '@/utils/auditsScaleAndPolishFlag';
 import { formatListDate } from '@/utils/listDateFormat';
 
 import { auditRoleLabel } from '../auditRoleLabels';
@@ -87,6 +88,7 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
   const [transitioning, setTransitioning] = useState<string | null>(null);
   const [criteria, setCriteria] = useState<AuditCriterionSummary[]>([]);
   const [criteriaError, setCriteriaError] = useState<string | null>(null);
+  const scaleAndPolishEnabled = React.useMemo(() => isAuditsScaleAndPolishEnabled(), []);
 
   useEffect(() => {
     if (initialSelectedId) setSelectedId(initialSelectedId);
@@ -225,9 +227,28 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
       label: isPolish ? 'Termin' : 'Due',
       width: '120px',
       sortable: true,
-      render: (row: AuditProgramSummary) => (
-        <span className="text-xs text-c-text-secondary tabular-nums">{formatListDate(row.plannedEnd)}</span>
-      ),
+      render: (row: AuditProgramSummary) => {
+        // Gap pack 2026-08-26 (item 4): three of six demo sessions were past
+        // `plannedEnd` with nothing signaling it. `DueChip` already carries
+        // the canon rule "color only for risk/passed deadline" (§N) — a
+        // closed program's own past due date is not a risk anymore, so it's
+        // suppressed (`due={null}`) exactly like Execution's deadline column
+        // does for terminal rows.
+        if (!scaleAndPolishEnabled) {
+          return <span className="text-xs text-c-text-secondary tabular-nums">{formatListDate(row.plannedEnd)}</span>;
+        }
+        const isTerminal = row.lifecycleState === 'closed';
+        const effectiveDue = isTerminal ? null : row.plannedEnd;
+        const overdue = !isTerminal && !!row.plannedEnd && new Date(row.plannedEnd).getTime() < Date.now();
+        return (
+          <DueChip
+            label={overdue ? (isPolish ? 'Po terminie' : 'Overdue') : formatListDate(row.plannedEnd)}
+            due={effectiveDue}
+            showIcon
+            title={overdue ? formatListDate(row.plannedEnd) : undefined}
+          />
+        );
+      },
     },
     {
       id: 'updatedAt',
