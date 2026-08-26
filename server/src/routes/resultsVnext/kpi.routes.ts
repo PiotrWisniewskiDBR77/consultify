@@ -129,6 +129,7 @@ import {
   KpiIdParamsSchema,
   KpiLifecycleActionSchema,
   KpiMeasurementParamsSchema,
+  KpiTrendQuerySchema,
   ListKpisQuerySchema,
   ListMeasurementsQuerySchema,
   RecordMeasurementSchema,
@@ -137,6 +138,7 @@ import {
   SubmitDefinitionSchema,
   VerifyMeasurementSchema,
 } from '../../validators/resultsVnextKpi.validators.js';
+import { buildKpiTrend } from '../../services/resultsVnext/kpi/kpiTrend.js';
 
 const router = Router();
 
@@ -179,7 +181,10 @@ function requireAuth(req: AuthenticatedRequest, res: Response): RouteAuth | null
 
 /** RN-G5 — see kpiDeviation.routes.ts's identical helper for the full
  * rationale (no projectId: this domain is organization-scoped). */
-async function resolveAccess(req: AuthenticatedRequest, auth: RouteAuth): Promise<CommandAccessContext> {
+async function resolveAccess(
+  req: AuthenticatedRequest,
+  auth: RouteAuth
+): Promise<CommandAccessContext> {
   return resolveEffectiveAccess({
     userId: auth.userId,
     organizationId: auth.organizationId,
@@ -410,12 +415,49 @@ router.get(
         userId: auth.userId,
         organizationId: auth.organizationId,
         status: query.status,
+        q: query.q,
         limit: query.limit,
         offset: query.offset,
       });
       res.status(200).json({ kpis });
     } catch (err) {
       handleKpiRouteError(res, err, 'listKpis');
+    }
+  }
+);
+
+router.get(
+  '/:kpiId/trend',
+  validateParams(KpiIdParamsSchema),
+  validateQuery(KpiTrendQuerySchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const kpiId = req.params.kpiId;
+      const query = req.query as unknown as import('zod').infer<typeof KpiTrendQuerySchema>;
+      const version = await getKpiCurrentDefinitionVersion({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        kpiId,
+      });
+      if (!version) {
+        res.status(404).json({ error: 'KPI not found', code: 'NOT_FOUND' });
+        return;
+      }
+      const measurements = await listMeasurements({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        kpiId,
+        periodStart: query.periodStart,
+        periodEnd: query.periodEnd,
+        includeSuperseded: false,
+        limit: query.window ?? 12,
+        offset: 0,
+      });
+      res.status(200).json(buildKpiTrend({ kpiId, version, measurements }));
+    } catch (err) {
+      handleKpiRouteError(res, err, 'getKpiTrend');
     }
   }
 );
@@ -581,7 +623,12 @@ router.post(
         reason: body.reason ?? null,
         access,
       });
-      observeVnextKpiWriter(req, auth, 'submitDefinition', 'POST /api/vnext/results/kpi/:kpiId/submit');
+      observeVnextKpiWriter(
+        req,
+        auth,
+        'submitDefinition',
+        'POST /api/vnext/results/kpi/:kpiId/submit'
+      );
       res.status(200).json({
         outcome: outcome.outcome,
         eventId: outcome.eventId,
@@ -627,7 +674,12 @@ router.post(
         reason: body.reason ?? null,
         access,
       });
-      observeVnextKpiWriter(req, auth, 'approveDefinitionVersion', 'POST /api/vnext/results/kpi/:kpiId/definition-versions/:versionId/approve');
+      observeVnextKpiWriter(
+        req,
+        auth,
+        'approveDefinitionVersion',
+        'POST /api/vnext/results/kpi/:kpiId/definition-versions/:versionId/approve'
+      );
       res.status(200).json({
         outcome: outcome.outcome,
         eventId: outcome.eventId,
@@ -673,7 +725,12 @@ router.post(
         correlationId: getCorrelationId(req),
         access,
       });
-      observeVnextKpiWriter(req, auth, 'rejectDefinitionVersion', 'POST /api/vnext/results/kpi/:kpiId/definition-versions/:versionId/reject');
+      observeVnextKpiWriter(
+        req,
+        auth,
+        'rejectDefinitionVersion',
+        'POST /api/vnext/results/kpi/:kpiId/definition-versions/:versionId/reject'
+      );
       res.status(200).json({
         outcome: outcome.outcome,
         eventId: outcome.eventId,
@@ -726,7 +783,12 @@ router.post(
         reason: body.reason ?? null,
         access,
       });
-      observeVnextKpiWriter(req, auth, 'reviseDefinition', 'POST /api/vnext/results/kpi/:kpiId/definition-versions/:versionId/revise');
+      observeVnextKpiWriter(
+        req,
+        auth,
+        'reviseDefinition',
+        'POST /api/vnext/results/kpi/:kpiId/definition-versions/:versionId/revise'
+      );
       res.status(outcome.outcome === 'applied' ? 201 : 200).json({
         outcome: outcome.outcome,
         eventId: outcome.eventId,
@@ -857,7 +919,12 @@ router.post(
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
       });
-      observeVnextKpiWriter(req, auth, 'recordMeasurement', 'POST /api/vnext/results/kpi/:kpiId/measurements');
+      observeVnextKpiWriter(
+        req,
+        auth,
+        'recordMeasurement',
+        'POST /api/vnext/results/kpi/:kpiId/measurements'
+      );
       res.status(outcome.outcome === 'applied' ? 201 : 200).json({
         outcome: outcome.outcome,
         eventId: outcome.eventId,
@@ -963,7 +1030,12 @@ router.post(
         correlationId: getCorrelationId(req),
         access,
       });
-      observeVnextKpiWriter(req, auth, 'correctMeasurement', 'POST /api/vnext/results/kpi/:kpiId/measurements/:measurementId/corrections');
+      observeVnextKpiWriter(
+        req,
+        auth,
+        'correctMeasurement',
+        'POST /api/vnext/results/kpi/:kpiId/measurements/:measurementId/corrections'
+      );
       res.status(outcome.outcome === 'applied' ? 201 : 200).json({
         outcome: outcome.outcome,
         eventId: outcome.eventId,
@@ -1007,7 +1079,12 @@ router.post(
         notes: body.notes ?? null,
         access,
       });
-      observeVnextKpiWriter(req, auth, 'verifyMeasurement', 'POST /api/vnext/results/kpi/:kpiId/measurements/:measurementId/verify');
+      observeVnextKpiWriter(
+        req,
+        auth,
+        'verifyMeasurement',
+        'POST /api/vnext/results/kpi/:kpiId/measurements/:measurementId/verify'
+      );
       res.status(outcome.outcome === 'applied' ? 201 : 200).json({
         outcome: outcome.outcome,
         eventId: outcome.eventId,
@@ -1051,7 +1128,12 @@ router.post(
         correlationId: getCorrelationId(req),
         access,
       });
-      observeVnextKpiWriter(req, auth, 'disputeMeasurement', 'POST /api/vnext/results/kpi/:kpiId/measurements/:measurementId/dispute');
+      observeVnextKpiWriter(
+        req,
+        auth,
+        'disputeMeasurement',
+        'POST /api/vnext/results/kpi/:kpiId/measurements/:measurementId/dispute'
+      );
       res.status(outcome.outcome === 'applied' ? 201 : 200).json({
         outcome: outcome.outcome,
         eventId: outcome.eventId,

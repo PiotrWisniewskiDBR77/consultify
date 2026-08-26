@@ -42,10 +42,16 @@ import {
   OKR_SET_STATUSES,
   OKR_SET_VERSION_FIELD_NAMES,
 } from '../services/resultsVnext/okr/okrSetTypes.js';
-import { OKR_CHECKIN_CONFIDENCE_VALUES, OKR_CHECKIN_STATUS_VALUES } from '../services/resultsVnext/okr/okrCheckInTypes.js';
+import {
+  OKR_CHECKIN_CONFIDENCE_VALUES,
+  OKR_CHECKIN_STATUS_VALUES,
+} from '../services/resultsVnext/okr/okrCheckInTypes.js';
 import { OKR_ALIGNMENT_STATUSES } from '../services/resultsVnext/okr/okrAlignmentTypes.js';
 import { OKR_REFLECTION_DISPOSITIONS } from '../services/resultsVnext/okr/okrReflectionTypes.js';
-import { OKR_REVIEW_COMMENT_LEVELS, OKR_REVIEW_TYPES } from '../services/resultsVnext/okr/okrReviewTypes.js';
+import {
+  OKR_REVIEW_COMMENT_LEVELS,
+  OKR_REVIEW_TYPES,
+} from '../services/resultsVnext/okr/okrReviewTypes.js';
 import {
   OKR_RECOGNITION_VISIBILITY_VALUES,
   OKR_SUPPORT_REQUEST_KIND_VALUES,
@@ -256,6 +262,7 @@ export const ListOkrSetsQuerySchema = z.object({
   scopeType: OkrSetScopeTypeEnum.optional(),
   status: OkrSetStatusEnum.optional(),
   attentionState: OkrSetAttentionStateEnum.optional(),
+  q: z.string().trim().min(2).max(200).optional(),
   limit: z.coerce.number().int().positive().max(500).optional(),
   offset: z.coerce.number().int().nonnegative().optional(),
 });
@@ -448,10 +455,14 @@ export const CreateOkrKeyResultSchema = z
     message: 'currency is required when measurementType is "currency"',
     path: ['currency'],
   })
-  .refine((body) => body.direction !== 'maintain_range' || (body.rangeMin != null && body.rangeMax != null), {
-    message: 'rangeMin and rangeMax are both required when direction is "maintain_range"',
-    path: ['rangeMin'],
-  });
+  .refine(
+    (body) =>
+      body.direction !== 'maintain_range' || (body.rangeMin != null && body.rangeMax != null),
+    {
+      message: 'rangeMin and rangeMax are both required when direction is "maintain_range"',
+      path: ['rangeMin'],
+    }
+  );
 
 // ==========================================
 // PATCH /api/vnext/results/okr/key-results/:keyResultId — updateKeyResult

@@ -30,6 +30,7 @@ import {
   wrapWithVisibilityScope,
   VISIBILITY_CTE_PARAM_COUNT,
 } from '../platform/visibilityScopedQuery.js';
+import { resultsTextMatchPattern, resultsTextMatchSql } from '../platform/textMatch.js';
 
 import { OKR_SET_RESOURCE_TYPE } from './okrSetCommands.js';
 import {
@@ -39,7 +40,14 @@ import {
   type OkrSetApprovedSnapshotRow,
   type OkrSetApprovedSnapshotSummary,
 } from './okrSetApprovedSnapshotTypes.js';
-import { toOkrSet, type OkrSet, type OkrSetAttentionState, type OkrSetRow, type OkrSetScopeType, type OkrSetStatus } from './okrSetTypes.js';
+import {
+  toOkrSet,
+  type OkrSet,
+  type OkrSetAttentionState,
+  type OkrSetRow,
+  type OkrSetScopeType,
+  type OkrSetStatus,
+} from './okrSetTypes.js';
 
 /** Same pinned-client-per-call shape as `okrRepository.ts`'s
  * `withReadClient` / `roiRepository.ts`'s own helper — no BEGIN/COMMIT
@@ -53,7 +61,11 @@ async function withReadClient<T>(fn: (client: PoolClient) => Promise<T>): Promis
   }
 }
 
-async function queryRows<T extends QueryResultRow>(client: PoolClient, sql: string, values: unknown[]): Promise<T[]> {
+async function queryRows<T extends QueryResultRow>(
+  client: PoolClient,
+  sql: string,
+  values: unknown[]
+): Promise<T[]> {
   const result = await client.query<T>(sql, values);
   return result.rows;
 }
@@ -69,6 +81,7 @@ export interface ListOkrSetsParams {
   scopeType?: OkrSetScopeType;
   status?: OkrSetStatus;
   attentionState?: OkrSetAttentionState;
+  q?: string;
   limit?: number;
   offset?: number;
 }
@@ -82,9 +95,23 @@ export interface ListOkrSetsParams {
  * `attentionState` below — all real, queryable columns.
  */
 export async function listOkrSets(params: ListOkrSetsParams): Promise<OkrSet[]> {
-  const { userId, organizationId, cycleId, scopeType, status, attentionState, limit = 100, offset = 0 } = params;
+  const {
+    userId,
+    organizationId,
+    cycleId,
+    scopeType,
+    status,
+    attentionState,
+    q,
+    limit = 100,
+    offset = 0,
+  } = params;
 
-  const cte = await buildVisibilityScopedCte({ userId, organizationId, resourceType: OKR_SET_RESOURCE_TYPE });
+  const cte = await buildVisibilityScopedCte({
+    userId,
+    organizationId,
+    resourceType: OKR_SET_RESOURCE_TYPE,
+  });
   const values: unknown[] = [...cte.values];
   const filters: string[] = [];
   if (cycleId) {
@@ -102,6 +129,10 @@ export async function listOkrSets(params: ListOkrSetsParams): Promise<OkrSet[]> 
   if (attentionState) {
     values.push(attentionState);
     filters.push(`s.attention_state = $${values.length}`);
+  }
+  if (q) {
+    values.push(resultsTextMatchPattern(q));
+    filters.push(resultsTextMatchSql(['s.title'], `$${values.length}`));
   }
   values.push(limit);
   const limitParamIndex = values.length;
@@ -143,7 +174,11 @@ export async function getOkrSet(params: GetOkrSetParams): Promise<OkrSet | null>
      WHERE s.organization_id = $1
        AND s.set_id = $${VISIBILITY_CTE_PARAM_COUNT + 1}
   `;
-  const wrapped = await wrapWithVisibilityScope(baseQuerySql, { userId, organizationId, resourceType: OKR_SET_RESOURCE_TYPE });
+  const wrapped = await wrapWithVisibilityScope(baseQuerySql, {
+    userId,
+    organizationId,
+    resourceType: OKR_SET_RESOURCE_TYPE,
+  });
   const values = [...wrapped.values, setId];
   const rows = await withReadClient((client) => queryRows<OkrSetRow>(client, wrapped.sql, values));
   const row = rows[0];
@@ -173,9 +208,15 @@ export async function listOkrSetApprovedSnapshots(
        AND snap.set_id = $${VISIBILITY_CTE_PARAM_COUNT + 1}
      ORDER BY snap.sequence_number DESC
   `;
-  const wrapped = await wrapWithVisibilityScope(baseQuerySql, { userId, organizationId, resourceType: OKR_SET_RESOURCE_TYPE });
+  const wrapped = await wrapWithVisibilityScope(baseQuerySql, {
+    userId,
+    organizationId,
+    resourceType: OKR_SET_RESOURCE_TYPE,
+  });
   const values = [...wrapped.values, setId];
-  const rows = await withReadClient((client) => queryRows<OkrSetApprovedSnapshotRow>(client, wrapped.sql, values));
+  const rows = await withReadClient((client) =>
+    queryRows<OkrSetApprovedSnapshotRow>(client, wrapped.sql, values)
+  );
   return rows.map(toOkrSetApprovedSnapshotSummary);
 }
 
@@ -209,9 +250,15 @@ export async function getOkrSetApprovedSnapshot(
        AND snap.set_id = $${VISIBILITY_CTE_PARAM_COUNT + 1}
        AND snap.snapshot_id = $${VISIBILITY_CTE_PARAM_COUNT + 2}
   `;
-  const wrapped = await wrapWithVisibilityScope(baseQuerySql, { userId, organizationId, resourceType: OKR_SET_RESOURCE_TYPE });
+  const wrapped = await wrapWithVisibilityScope(baseQuerySql, {
+    userId,
+    organizationId,
+    resourceType: OKR_SET_RESOURCE_TYPE,
+  });
   const values = [...wrapped.values, setId, snapshotId];
-  const rows = await withReadClient((client) => queryRows<OkrSetApprovedSnapshotRow>(client, wrapped.sql, values));
+  const rows = await withReadClient((client) =>
+    queryRows<OkrSetApprovedSnapshotRow>(client, wrapped.sql, values)
+  );
   const row = rows[0];
   return row ? toOkrSetApprovedSnapshot(row) : null;
 }
