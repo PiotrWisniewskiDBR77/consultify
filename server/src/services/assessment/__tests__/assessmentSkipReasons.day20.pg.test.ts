@@ -19,9 +19,11 @@ describe.skipIf(!REAL_DB)('Assessment day 20 skip reasons — real router and Po
   const org = `org-day20-skip-${suffix}`;
   const otherOrg = `org-day20-skip-other-${suffix}`;
   const owner = `user-day20-skip-${suffix}`;
+  const member = `user-day20-skip-member-${suffix}`;
   const otherUser = `user-day20-skip-other-${suffix}`;
   const session = `session-day20-skip-${suffix}`;
   let token = '';
+  let memberToken = '';
   let otherToken = '';
 
   beforeAll(async () => {
@@ -34,8 +36,18 @@ describe.skipIf(!REAL_DB)('Assessment day 20 skip reasons — real router and Po
       'Day 20 skip other org',
     ]);
     await pool.query(
-      `INSERT INTO users (id, organization_id, email, role) VALUES ($1,$2,$3,'user'),($4,$5,$6,'user')`,
-      [owner, org, `${owner}@example.test`, otherUser, otherOrg, `${otherUser}@example.test`]
+      `INSERT INTO users (id, organization_id, email, role)
+       VALUES ($1,$2,$3,'user'),($4,$2,$5,'user'),($6,$7,$8,'user')`,
+      [
+        owner,
+        org,
+        `${owner}@example.test`,
+        member,
+        `${member}@example.test`,
+        otherUser,
+        otherOrg,
+        `${otherUser}@example.test`,
+      ]
     );
     await pool.query(
       `INSERT INTO method_sessions
@@ -57,6 +69,7 @@ describe.skipIf(!REAL_DB)('Assessment day 20 skip reasons — real router and Po
         ...(config.JWT_AUDIENCE ? { audience: config.JWT_AUDIENCE } : {}),
       });
     token = sign(owner, org);
+    memberToken = sign(member, org);
     otherToken = sign(otherUser, otherOrg);
 
     const { default: routes } = await import('../../../routes/method-core.routes.js');
@@ -70,7 +83,7 @@ describe.skipIf(!REAL_DB)('Assessment day 20 skip reasons — real router and Po
       org,
       otherOrg,
     ]);
-    await pool.query(`DELETE FROM users WHERE id IN ($1,$2)`, [owner, otherUser]);
+    await pool.query(`DELETE FROM users WHERE id IN ($1,$2,$3)`, [owner, member, otherUser]);
     await pool.query(`DELETE FROM organizations WHERE id IN ($1,$2)`, [org, otherOrg]);
     await pool.end();
   });
@@ -218,6 +231,37 @@ describe.skipIf(!REAL_DB)('Assessment day 20 skip reasons — real router and Po
   it('does not reveal another tenant session', async () => {
     const response = await request(app)
       .get(`/api/method/sessions/${session}/assessment-skip-reasons`)
+      .set('Authorization', `Bearer ${otherToken}`);
+    expect(response.status).toBe(404);
+    expect(response.body.code).toBe('SESSION_NOT_FOUND');
+  });
+
+  it('lets an organization member without a session role read the report contract', async () => {
+    const response = await request(app)
+      .get(`/api/method/sessions/${session}/assessment-report-contract`)
+      .set('Authorization', `Bearer ${memberToken}`);
+    expect(response.status).toBe(200);
+    expect(response.body.reportContract.sessionId).toBe(session);
+  });
+
+  it('keeps writes closed to that same role-less organization member', async () => {
+    const response = await request(app)
+      .post(`/api/method/sessions/${session}/assessment-skip-reasons`)
+      .set('Authorization', `Bearer ${memberToken}`)
+      .set('Idempotency-Key', `member-write-${suffix}`)
+      .send({
+        unitId: '5A',
+        questionId: '5A-4',
+        level: 2,
+        skipCode: 'poza_modelem_operacyjnym',
+      });
+    expect(response.status).toBe(403);
+    expect(response.body.error).toBe('session_read_only');
+  });
+
+  it('does not let an organization outsider read the report contract', async () => {
+    const response = await request(app)
+      .get(`/api/method/sessions/${session}/assessment-report-contract`)
       .set('Authorization', `Bearer ${otherToken}`);
     expect(response.status).toBe(404);
     expect(response.body.code).toBe('SESSION_NOT_FOUND');
