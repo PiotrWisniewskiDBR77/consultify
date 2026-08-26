@@ -5167,9 +5167,18 @@ router.get('/tables/:tableId/dependency-config', async (req: Request, res: Respo
 
 router.put('/tables/:tableId/dependency-config', async (req: Request, res: Response) => {
   try {
+    const authReq = req as any;
+    const userId = authReq.userId || authReq.user?.id;
+    const orgId = authReq.organizationId;
     const db = (await import('../database/Database.js')).getDatabase();
     const { tableId } = req.params;
     const { config } = req.body;
+
+    const tableRow = await db.query('SELECT base_id FROM tp_tables WHERE id = $1', [tableId]);
+    if (tableRow.rows.length === 0) return res.status(404).json({ error: 'Table not found' });
+    const baseId = (tableRow.rows[0] as any).base_id;
+    const allowed = await PermissionsService.canAccessBase(userId, orgId, baseId);
+    if (!allowed) return res.status(403).json({ error: 'Access denied' });
 
     await db.query(
       'UPDATE tp_tables SET dependency_config = $1, updated_at = NOW() WHERE id = $2',
@@ -5186,12 +5195,24 @@ router.post(
   '/tables/:tableId/date-dependencies/recalculate',
   async (req: Request, res: Response) => {
     try {
+      const authReq = req as any;
+      const userId = authReq.userId || authReq.user?.id;
+      const orgId = authReq.organizationId;
       const { DateDependencyEngine } =
         await import('../services/tablePlatform/DateDependencyEngine.js');
       const db = (await import('../database/Database.js')).getDatabase();
       const { tableId } = req.params;
       const { config } = req.body;
 
+      const tableRow = await db.query('SELECT base_id FROM tp_tables WHERE id = $1', [tableId]);
+      if (tableRow.rows.length === 0) return res.status(404).json({ error: 'Table not found' });
+      const baseId = (tableRow.rows[0] as any).base_id;
+      const allowed = await PermissionsService.canAccessBase(userId, orgId, baseId);
+      if (!allowed) return res.status(403).json({ error: 'Access denied' });
+
+      // Defense-in-depth: table_id is an exact match against the tableId we
+      // just verified access to above — no wildcard/range that could pull in
+      // another table's (and therefore another org's) records.
       const recordsResult = await db.query('SELECT * FROM tp_records WHERE table_id = $1', [
         tableId,
       ]);
@@ -5288,9 +5309,18 @@ router.post(
 
 router.post('/tables/:tableId/fields/reorder', async (req: Request, res: Response) => {
   try {
+    const authReq = req as any;
+    const userId = authReq.userId || authReq.user?.id;
+    const orgId = authReq.organizationId;
     const db = (await import('../database/Database.js')).getDatabase();
     const { tableId } = req.params;
     const { fieldIds } = req.body;
+
+    const tableRow = await db.query('SELECT base_id FROM tp_tables WHERE id = $1', [tableId]);
+    if (tableRow.rows.length === 0) return res.status(404).json({ error: 'Table not found' });
+    const baseId = (tableRow.rows[0] as any).base_id;
+    const allowed = await PermissionsService.canAccessBase(userId, orgId, baseId);
+    if (!allowed) return res.status(403).json({ error: 'Access denied' });
 
     if (!Array.isArray(fieldIds))
       return res.status(400).json({ error: 'fieldIds must be an array' });

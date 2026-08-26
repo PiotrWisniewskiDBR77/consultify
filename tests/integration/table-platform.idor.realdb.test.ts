@@ -369,3 +369,361 @@ describe('M20 — IDOR regression against a real Postgres database (no mocks)', 
     expect(res.status).toBe(401);
   });
 });
+
+// ---------------------------------------------------------------------------
+// M28 — three confirmed-live IDOR handlers in this same file:
+//   PUT  /tables/:tableId/dependency-config
+//   POST /tables/:tableId/date-dependencies/recalculate
+//   POST /tables/:tableId/fields/reorder
+// A live probe (attacker in org A, victim table in org B, real auth) proved
+// all three returned 200 and mutated org B's data with zero access check.
+// This suite proves, against a real Postgres database: (1) the legitimate
+// owner can still use all three (no regression), (2) a cross-org attacker
+// now gets 404 and the target row is provably unchanged by direct readback,
+// (3) a nonexistent tableId gets 404.
+// ---------------------------------------------------------------------------
+
+interface FixHarness {
+  client: Client;
+  orgAId: string;
+  orgBId: string;
+  userAId: string;
+  userBId: string;
+  baseId: string;
+  tableId: string;
+  fieldOneId: string;
+  fieldTwoId: string;
+  predecessorRecordId: string;
+  successorRecordId: string;
+  cleanup: () => Promise<void>;
+}
+
+const FIX_REQUIRED_TABLES = ['tp_bases', 'tp_tables', 'tp_fields', 'tp_records', 'organizations', 'users'] as const;
+
+async function setupFixHarness(): Promise<FixHarness | null> {
+  if (!(await pgReachable())) return null;
+  const config = buildClientConfig();
+  if (!config) return null;
+
+  const client = new Client(config);
+  try {
+    await client.connect();
+  } catch {
+    return null;
+  }
+
+  try {
+    if (!(await tablesExist(client, FIX_REQUIRED_TABLES))) {
+      await client.end().catch(() => {});
+      return null;
+    }
+  } catch {
+    await client.end().catch(() => {});
+    return null;
+  }
+
+  const tag = suffix();
+  const orgAId = `org_idor2_a_${tag}`;
+  const orgBId = `org_idor2_b_${tag}`;
+  const userAId = `user_idor2_a_${tag}`;
+  const userBId = `user_idor2_b_${tag}`;
+  // Owned by neither test user — see the comment on `createdBy` in
+  // setupHarness() above; the only path to `allowed === true` is the
+  // organization_id match, which is exactly what these three fixes enforce.
+  const createdBy = `user_idor2_creator_${tag}`;
+
+  await client.query(
+    `INSERT INTO organizations (id, name, plan, status) VALUES ($1, 'IDOR2 RealDB Org A', 'enterprise', 'active')
+     ON CONFLICT (id) DO NOTHING`,
+    [orgAId]
+  );
+  await client.query(
+    `INSERT INTO organizations (id, name, plan, status) VALUES ($1, 'IDOR2 RealDB Org B', 'enterprise', 'active')
+     ON CONFLICT (id) DO NOTHING`,
+    [orgBId]
+  );
+
+  const baseRes = await client.query<{ id: string }>(
+    `INSERT INTO tp_bases (workspace_id, organization_id, name, created_by)
+     VALUES ($1, $2, $3, $4) RETURNING id`,
+    [`ws_idor2_${tag}`, orgAId, 'IDOR2 RealDB Base (org A)', createdBy]
+  );
+  const baseId = baseRes.rows[0].id;
+
+  const tableRes = await client.query<{ id: string }>(
+    `INSERT INTO tp_tables (base_id, name, created_by) VALUES ($1, $2, $3) RETURNING id`,
+    [baseId, 'IDOR2 RealDB Table (org A)', createdBy]
+  );
+  const tableId = tableRes.rows[0].id;
+
+  // Two real fields, ordered 0/1, for the fields/reorder test.
+  const fieldOneRes = await client.query<{ id: string }>(
+    `INSERT INTO tp_fields (table_id, name, field_type, field_order) VALUES ($1, 'Field One', 'text', 0) RETURNING id`,
+    [tableId]
+  );
+  const fieldOneId = fieldOneRes.rows[0].id;
+  const fieldTwoRes = await client.query<{ id: string }>(
+    `INSERT INTO tp_fields (table_id, name, field_type, field_order) VALUES ($1, 'Field Two', 'text', 1) RETURNING id`,
+    [tableId]
+  );
+  const fieldTwoId = fieldTwoRes.rows[0].id;
+
+  // Two real records for the date-dependencies/recalculate test: a
+  // predecessor with a fixed end date, and a successor whose stored start
+  // date is deliberately wrong so a correct FS recalculation changes it.
+  const predRes = await client.query<{ id: string }>(
+    `INSERT INTO tp_records (table_id, data) VALUES ($1, $2::jsonb) RETURNING id`,
+    [tableId, JSON.stringify({ start: '2026-01-01', end: '2026-01-05' })]
+  );
+  const predecessorRecordId = predRes.rows[0].id;
+  const succRes = await client.query<{ id: string }>(
+    `INSERT INTO tp_records (table_id, data) VALUES ($1, $2::jsonb) RETURNING id`,
+    [tableId, JSON.stringify({ start: '2099-01-01', end: null, predecessors: [predecessorRecordId] })]
+  );
+  const successorRecordId = succRes.rows[0].id;
+
+  const cleanup = async () => {
+    try {
+      await client.query(`DELETE FROM tp_records WHERE table_id = $1`, [tableId]);
+      await client.query(`DELETE FROM tp_fields WHERE table_id = $1`, [tableId]);
+      await client.query(`DELETE FROM tp_tables WHERE id = $1`, [tableId]);
+      await client.query(`DELETE FROM tp_bases WHERE id = $1`, [baseId]);
+      await client.query(`DELETE FROM users WHERE organization_id = ANY($1)`, [[orgAId, orgBId]]);
+      await client.query(`DELETE FROM organizations WHERE id = ANY($1)`, [[orgAId, orgBId]]);
+    } catch {
+      // Leaking a few rows is acceptable; a hung/throwing cleanup is not.
+    }
+    try {
+      await client.end();
+    } catch {
+      // ignore
+    }
+  };
+
+  return {
+    client,
+    orgAId,
+    orgBId,
+    userAId,
+    userBId,
+    baseId,
+    tableId,
+    fieldOneId,
+    fieldTwoId,
+    predecessorRecordId,
+    successorRecordId,
+    cleanup,
+  };
+}
+
+const RECALC_CONFIG = {
+  startDateFieldId: 'start',
+  endDateFieldId: 'end',
+  predecessorFieldId: 'predecessors',
+  defaultDependencyType: 'FS' as const,
+  defaultLagDays: 0,
+  skipWeekends: false,
+};
+
+describe('M28 — dependency-config / recalculate / fields-reorder IDOR fix (real Postgres)', () => {
+  let harness: FixHarness | null = null;
+  let skipMessageEmitted = false;
+
+  function emitSkipOnce(): void {
+    if (skipMessageEmitted) return;
+    skipMessageEmitted = true;
+    // eslint-disable-next-line no-console
+    console.error(
+      '[skip] Postgres not reachable (or schema incomplete) — dependency-config/recalculate/fields-reorder ' +
+        'IDOR realdb tests skipped. See table-platform.idor.realdb.test.ts header for local setup.'
+    );
+  }
+
+  beforeAll(async () => {
+    harness = await setupFixHarness();
+    if (!harness) emitSkipOnce();
+  }, 30_000);
+
+  afterAll(async () => {
+    if (harness) {
+      await harness.cleanup();
+      harness = null;
+    }
+  });
+
+  const itDB = (name: string, fn: (h: FixHarness) => Promise<void>, timeoutMs = 20_000) =>
+    it(
+      name,
+      async () => {
+        if (!harness) {
+          expect(true).toBe(true);
+          return;
+        }
+        await fn(harness);
+      },
+      timeoutMs
+    );
+
+  // -- PUT /tables/:tableId/dependency-config --------------------------------
+
+  itDB('PUT dependency-config — owner (same org) gets 200 and the config is actually persisted', async (h) => {
+    const app = buildApp();
+    const ownerToken = makeE2EToken(h.userAId, h.orgAId);
+
+    const res = await request(app)
+      .put(`/api/table-platform/tables/${h.tableId}/dependency-config`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({ config: { startDateFieldId: 'start', endDateFieldId: 'end' } });
+
+    expect(res.status).toBe(200);
+
+    const row = await h.client.query('SELECT dependency_config FROM tp_tables WHERE id = $1', [h.tableId]);
+    expect(row.rows[0]?.dependency_config).toEqual({ startDateFieldId: 'start', endDateFieldId: 'end' });
+  });
+
+  itDB(
+    'PUT dependency-config — cross-org attacker gets 403 and the victim row is provably unchanged',
+    async (h) => {
+      const before = await h.client.query('SELECT dependency_config FROM tp_tables WHERE id = $1', [h.tableId]);
+
+      const app = buildApp();
+      const attackerToken = makeE2EToken(h.userBId, h.orgBId);
+      const res = await request(app)
+        .put(`/api/table-platform/tables/${h.tableId}/dependency-config`)
+        .set('Authorization', `Bearer ${attackerToken}`)
+        .send({ config: { HACKED_BY: 'org-A-attacker' } });
+
+      expect(res.status).toBe(403);
+
+      const after = await h.client.query('SELECT dependency_config FROM tp_tables WHERE id = $1', [h.tableId]);
+      expect(after.rows[0]?.dependency_config).toEqual(before.rows[0]?.dependency_config);
+      expect(after.rows[0]?.dependency_config).not.toEqual({ HACKED_BY: 'org-A-attacker' });
+    }
+  );
+
+  itDB('PUT dependency-config — nonexistent tableId gets 404', async (h) => {
+    const app = buildApp();
+    const ownerToken = makeE2EToken(h.userAId, h.orgAId);
+    const res = await request(app)
+      .put(`/api/table-platform/tables/00000000-0000-0000-0000-000000000000/dependency-config`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({ config: { x: 1 } });
+    expect(res.status).toBe(404);
+  });
+
+  // -- POST /tables/:tableId/date-dependencies/recalculate ------------------
+
+  itDB(
+    'POST date-dependencies/recalculate — owner (same org) gets 200 and the successor date is actually recalculated',
+    async (h) => {
+      const app = buildApp();
+      const ownerToken = makeE2EToken(h.userAId, h.orgAId);
+
+      const res = await request(app)
+        .post(`/api/table-platform/tables/${h.tableId}/date-dependencies/recalculate`)
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({ config: RECALC_CONFIG });
+
+      expect(res.status).toBe(200);
+      expect(res.body?.updatedRecords).toBeGreaterThanOrEqual(1);
+
+      const row = await h.client.query('SELECT data FROM tp_records WHERE id = $1', [h.successorRecordId]);
+      // FS from a predecessor ending 2026-01-05 with 0 lag must move the
+      // successor's bogus 2099-01-01 start date to 2026-01-05.
+      expect(row.rows[0]?.data?.start).toBe('2026-01-05');
+    }
+  );
+
+  itDB(
+    'POST date-dependencies/recalculate — cross-org attacker gets 403 and org A records are provably unchanged (worst finding: mass mutation)',
+    async (h) => {
+      // Re-corrupt the successor's start date back to the bogus value so this
+      // test is independent of execution order / the owner test above.
+      await h.client.query(`UPDATE tp_records SET data = jsonb_set(data, '{start}', '"2099-01-01"') WHERE id = $1`, [
+        h.successorRecordId,
+      ]);
+      const before = await h.client.query('SELECT data FROM tp_records WHERE table_id = $1 ORDER BY id', [
+        h.tableId,
+      ]);
+
+      const app = buildApp();
+      const attackerToken = makeE2EToken(h.userBId, h.orgBId);
+      const res = await request(app)
+        .post(`/api/table-platform/tables/${h.tableId}/date-dependencies/recalculate`)
+        .set('Authorization', `Bearer ${attackerToken}`)
+        .send({ config: RECALC_CONFIG });
+
+      expect(res.status).toBe(403);
+
+      const after = await h.client.query('SELECT data FROM tp_records WHERE table_id = $1 ORDER BY id', [
+        h.tableId,
+      ]);
+      expect(after.rows.map((r) => r.data)).toEqual(before.rows.map((r) => r.data));
+      const successor = after.rows.find((r) => (r.data as any)?.predecessors);
+      expect((successor?.data as any)?.start).toBe('2099-01-01');
+    }
+  );
+
+  itDB('POST date-dependencies/recalculate — nonexistent tableId gets 404', async (h) => {
+    const app = buildApp();
+    const ownerToken = makeE2EToken(h.userAId, h.orgAId);
+    const res = await request(app)
+      .post(`/api/table-platform/tables/00000000-0000-0000-0000-000000000000/date-dependencies/recalculate`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({ config: RECALC_CONFIG });
+    expect(res.status).toBe(404);
+  });
+
+  // -- POST /tables/:tableId/fields/reorder ----------------------------------
+
+  itDB('POST fields/reorder — owner (same org) gets 200 and field_order is actually persisted', async (h) => {
+    const app = buildApp();
+    const ownerToken = makeE2EToken(h.userAId, h.orgAId);
+
+    const res = await request(app)
+      .post(`/api/table-platform/tables/${h.tableId}/fields/reorder`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({ fieldIds: [h.fieldTwoId, h.fieldOneId] });
+
+    expect(res.status).toBe(200);
+
+    const rows = await h.client.query('SELECT id, field_order FROM tp_fields WHERE table_id = $1 ORDER BY field_order', [
+      h.tableId,
+    ]);
+    expect(rows.rows[0]?.id).toBe(h.fieldTwoId);
+    expect(rows.rows[1]?.id).toBe(h.fieldOneId);
+  });
+
+  itDB(
+    'POST fields/reorder — cross-org attacker gets 403 and org A field_order is provably unchanged',
+    async (h) => {
+      const before = await h.client.query('SELECT id, field_order FROM tp_fields WHERE table_id = $1 ORDER BY id', [
+        h.tableId,
+      ]);
+
+      const app = buildApp();
+      const attackerToken = makeE2EToken(h.userBId, h.orgBId);
+      const res = await request(app)
+        .post(`/api/table-platform/tables/${h.tableId}/fields/reorder`)
+        .set('Authorization', `Bearer ${attackerToken}`)
+        .send({ fieldIds: [h.fieldOneId, h.fieldTwoId].reverse() });
+
+      expect(res.status).toBe(403);
+
+      const after = await h.client.query('SELECT id, field_order FROM tp_fields WHERE table_id = $1 ORDER BY id', [
+        h.tableId,
+      ]);
+      expect(after.rows).toEqual(before.rows);
+    }
+  );
+
+  itDB('POST fields/reorder — nonexistent tableId gets 404', async (h) => {
+    const app = buildApp();
+    const ownerToken = makeE2EToken(h.userAId, h.orgAId);
+    const res = await request(app)
+      .post(`/api/table-platform/tables/00000000-0000-0000-0000-000000000000/fields/reorder`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({ fieldIds: [] });
+    expect(res.status).toBe(404);
+  });
+});
