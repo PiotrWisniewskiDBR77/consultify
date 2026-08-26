@@ -92,6 +92,13 @@ function buildMockQuery() {
     if (/SELECT organization_id FROM users WHERE id/.test(sql)) {
       return { rows: [{ organization_id: 'org-race-1' }], rowCount: 1 };
     }
+    // DEC-153 tenant/owner-resolution check (meetingNoteTaskFunnelService.ts):
+    // the note's author ('aaaaaaaa-1111-4111-8111-111111111111', see getMeetingNote mock below)
+    // is a real org-race-1 member, so this resolves and the created task is
+    // assigned to them.
+    if (/SELECT id FROM users WHERE id = \$1 AND organization_id = \$2/.test(sql)) {
+      return { rows: [{ id: 'aaaaaaaa-1111-4111-8111-111111111111' }], rowCount: 1 };
+    }
     if (/SELECT \* FROM tasks WHERE organization_id=\$1 AND idempotency_key=\$2/.test(sql)) {
       return state.otherWriterCommitted
         ? { rows: [EXISTING_TASK_ROW], rowCount: 1 }
@@ -124,6 +131,7 @@ vi.mock('../../meetingBoundary/meetingBoundaryService.js', () => ({
   getMeetingNote: vi.fn(async () => ({
     id: 'note-race-1',
     status: 'approved',
+    createdBy: 'aaaaaaaa-1111-4111-8111-111111111111',
     actionItems: [{ task: 'Prepare the evidence pack', owner: 'A. Nowak', priority: 'medium' }],
   })),
 }));
