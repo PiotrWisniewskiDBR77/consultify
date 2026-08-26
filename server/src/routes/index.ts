@@ -49,7 +49,6 @@ export { default as chatProjectsRoutes } from './chat-projects.routes.js';
 export { default as cloudRoutes } from './cloud.routes.js';
 export { default as complianceRoutes } from './compliance.routes.js';
 export { default as consultantProjectAccessRoutes } from './consultant-project-access.routes.js';
-export { default as consultantRoutes } from './consultants.routes.js';
 export { default as contentRoutes } from './content.routes.js';
 export { default as contextRoutes } from './context.routes.js';
 export { default as conversationsRoutes } from './conversations.routes.js';

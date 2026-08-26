@@ -171,12 +171,6 @@ export const VIEW_TO_MODULE_MAP: Record<string, ViewHelpMapping> = {
   [AppView.RESOURCES]: { moduleId: 'knowledge', cardId: 'knowledge-resources' },
 
   // ==========================================
-  // CONSULTANT MODULE
-  // ==========================================
-  [AppView.CONSULTANT_PANEL]: { moduleId: 'consultant', cardId: 'consultant-panel' },
-  [AppView.CONSULTANT_INVITES]: { moduleId: 'consultant', cardId: 'consultant-invites' },
-
-  // ==========================================
   // ECOSYSTEM MODULE
   // ==========================================
   [AppView.AFFILIATE_DASHBOARD]: { moduleId: 'ecosystem', cardId: 'affiliate-dashboard' },

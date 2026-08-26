@@ -109,7 +109,6 @@ import competencyRoutes from './routes/competency.routes.js';
 import complianceRoutes from './routes/compliance.routes.js';
 import conclusionsRoutes from './routes/conclusions.routes.js';
 import consultantProjectAccessRoutes from './routes/consultant-project-access.routes.js';
-import consultantRoutes from './routes/consultants.routes.js';
 import consultingTemplatesRoutes from './routes/consultingTemplates.routes.js';
 import contentRoutes from './routes/content.routes.js';
 import contextRoutes from './routes/context.routes.js';
@@ -516,7 +515,6 @@ export class ApiGateway {
       'multiFrameworkAssessmentRoutes', // MultiFrameworkStageGateModal.tsx, useMultiFrameworkStore.ts
       'notificationSettingsRoutes', // NotificationSettings.tsx (MyWork)
       'helpAnalyticsRoutes', // HelpAnalyticsDashboard.tsx (admin view)
-      'consultantRoutes', // ConsultantPanelView.tsx, ConsultantInviteView.tsx
     ]);
 
     const mountStub = (mountPath: string, router: any, name: string) => {
@@ -1012,7 +1010,6 @@ export class ApiGateway {
       // User management routes
       app.use('/api/onboarding', onboardingRoutes);
       app.use('/api/analytics/journey', journeyAnalyticsRoutes);
-      mountStub('/api/consultants', consultantRoutes, 'consultantRoutes');
       app.use('/api/consultant-project-access', consultantProjectAccessRoutes);
       mountStub('/api/users', userOrgsRoutes, 'userOrgsRoutes');
       mountStub('/api/user', userGoalsRoutes, 'userGoalsRoutes');

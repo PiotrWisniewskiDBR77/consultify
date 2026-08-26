@@ -37,7 +37,6 @@ const LIVE_UI_STUB_PATHS: Array<{ path: string; name: string; evidence: string }
   { path: '/api/mf-assessments', name: 'multiFrameworkAssessmentRoutes', evidence: 'MultiFrameworkStageGateModal.tsx, useMultiFrameworkStore.ts' },
   { path: '/api/notification-settings', name: 'notificationSettingsRoutes', evidence: 'NotificationSettings.tsx' },
   { path: '/api/help-analytics', name: 'helpAnalyticsRoutes', evidence: 'HelpAnalyticsDashboard.tsx' },
-  { path: '/api/consultants', name: 'consultantRoutes', evidence: 'ConsultantPanelView.tsx, ConsultantInviteView.tsx' },
 ];
 
 // Paths confirmed to have NO live demo caller — these must stay silently
@@ -52,6 +51,15 @@ const NO_LIVE_UI_CONTROL_PATHS = [
   '/api/daily-brief', // no FE caller found at all
   '/api/pinned-prompts', // no FE caller found at all
   '/api/task-advisor', // no FE caller found at all
+  // 2026-08-28 (owner decision, Consultant Mode UI removal, part a2): the
+  // consultants.routes.ts router, its Gateway.ts mount (mountStub +
+  // STUB_NAMES_WITH_LIVE_UI_ON_DEMO entry), and its only live-UI evidence —
+  // ConsultantPanelView.tsx / ConsultantInviteView.tsx — were all deleted
+  // (the front never called GET/POST /api/consultants; it called
+  // /consultants/orgs|clients|invites, which this router never served —
+  // always a plain 404). '/api/consultants' is no longer mounted at all,
+  // by any router, so it now belongs in the "fully unmounted" control list.
+  '/api/consultants',
 ];
 
 function makeMockApp() {

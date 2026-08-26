@@ -86,8 +86,12 @@ describe('routeConfig helpers', () => {
     expect(getAppViewFromPath('/roi/plan-1')).toBe(AppView.FULL_STEP4_ROI);
     expect(getAppViewFromPath('/project-intelligence/session-77')).toBe(AppView.PROJECT_INTELLIGENCE);
     expect(getAppViewFromPath('/ai-actions/queue')).toBe(AppView.AI_ACTION_PROPOSALS);
-    expect(getAppViewFromPath('/consultant/panel/team')).toBe(AppView.CONSULTANT_PANEL);
-    expect(getAppViewFromPath('/consultant/invites')).toBe(AppView.CONSULTANT_INVITES);
+    // Consultant Mode UI removed 2026-08-28 (owner decision, part a2 — never
+    // worked end-to-end, see chore/consultant-mode-ui-removal-20260828):
+    // '/consultant/panel' and '/consultant/invites' no longer map to an
+    // AppView, so they fall through like any other unknown path.
+    expect(getAppViewFromPath('/consultant/panel/team')).toBeNull();
+    expect(getAppViewFromPath('/consultant/invites')).toBeNull();
     expect(getAppViewFromPath('/affiliate/overview')).toBeNull();
     expect(getAppViewFromPath('/setup/organization')).toBe(AppView.ORG_SETUP_WIZARD);
     expect(getAppViewFromPath('/setup/onboarding/admin')).toBe(AppView.ONBOARDING_WIZARD);
