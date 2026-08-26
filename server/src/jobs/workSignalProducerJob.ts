@@ -11,14 +11,25 @@ export function isSignalProducerEnabled(): boolean {
   return process.env.ENABLE_SIGNAL_PRODUCER === 'true';
 }
 
+/**
+ * FIX-3 (day18 layer-1 acceptance): the CRON path fires every 15 minutes for
+ * every active organization. While the flag is OFF, writing a SKIPPED_DISABLED
+ * row per org per tick bloats work_signal_runs (~96 rows/day/org) before
+ * anything is ever turned on. The CRON trigger now records nothing and
+ * returns a synthetic (unpersisted) runId instead. The ON_DEMAND trigger
+ * (user-initiated from the UI) keeps writing the row — a 200 with
+ * producerEnabled:false backed by a real run makes sense for that caller.
+ */
 async function recordDisabled(organizationId: string, trigger: 'CRON' | 'ON_DEMAND') {
   const runId = randomUUID();
-  await queryAll(
-    `INSERT INTO work_signal_runs
-       (run_id, organization_id, kind, trigger, started_at, finished_at, status, duration_ms)
-     VALUES (?, ?, 'DETERMINISTIC', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'SKIPPED_DISABLED', 0)`,
-    [runId, organizationId, trigger]
-  );
+  if (trigger === 'ON_DEMAND') {
+    await queryAll(
+      `INSERT INTO work_signal_runs
+         (run_id, organization_id, kind, trigger, started_at, finished_at, status, duration_ms)
+       VALUES (?, ?, 'DETERMINISTIC', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'SKIPPED_DISABLED', 0)`,
+      [runId, organizationId, trigger]
+    );
+  }
   return { runId, status: 'SKIPPED_DISABLED' as const };
 }
 
