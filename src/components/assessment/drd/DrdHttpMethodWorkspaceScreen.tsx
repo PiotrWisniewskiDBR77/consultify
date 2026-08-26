@@ -27,15 +27,31 @@
  *  - persisted Output/Report/Initiative Draft state is rehydrated through
  *    the canonical method-core list endpoints.
  */
-import { AlertTriangle, ArrowLeft, CloudOff, FileText, Lightbulb, Lock, RefreshCw, RotateCcw } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  AlertTriangle,
+  ArrowLeft,
+  CloudOff,
+  FileText,
+  Lightbulb,
+  Lock,
+  RefreshCw,
+  RotateCcw,
+} from 'lucide-react';
+import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { MethodWorkspaceShell } from '@/components/method-workspace/MethodWorkspaceShell';
 import { LiveMatrix } from '@/components/method-workspace/LiveMatrix';
 import { StandardTable } from '@/components/standard/StandardTable';
-import type { InterviewFocusQuestion, MethodWorkspaceViewMode, ResolutionAction } from '@/components/method-workspace/types';
+import type {
+  InterviewFocusQuestion,
+  MethodWorkspaceViewMode,
+  ResolutionAction,
+} from '@/components/method-workspace/types';
 import { useMethodWorkspaceSave } from '@/components/method-workspace/useMethodWorkspaceSave';
-import { formatSkipJustification, type DrdSkipReasonCode } from '@/components/method-workspace/skipReasonCodes';
+import {
+  formatSkipJustification,
+  type DrdSkipReasonCode,
+} from '@/components/method-workspace/skipReasonCodes';
 import { useAssessmentSaveIndicator } from '@/hooks/useAssessmentSaveIndicator';
 import { DRD_METHOD_PACK_ID } from '@/method-core/methods/drd/compileDrdPack';
 import { drdAdapter } from '@/method-core/methods/drd/drdAdapter';
@@ -45,6 +61,7 @@ import {
 } from '@/method-core/methods/drd/drdHttpSessionRuntime';
 import type { MethodReadiness, TeresaCommitRequest } from '@/method-core/contracts';
 import { DRD_STRUCTURE } from '@/services/drdStructure';
+import { isAssessmentReportViewEnabled } from '@/utils/assessmentReportViewFlag';
 
 import {
   buildMatrixRowsForAxis,
@@ -61,7 +78,16 @@ import { AssessmentSaveStateIndicator } from './AssessmentSaveStateIndicator';
 import { DrdSourceIndicator } from './DrdSourceIndicator';
 import type { DrdMethodWorkspaceScreenProps } from './DrdMethodWorkspaceScreen';
 
-type HttpScreenProps = Omit<DrdMethodWorkspaceScreenProps, 'forceHttpSourceOfTruth' | 'initialActorUserId' | 'forceState'>;
+const AssessmentReportContractView = React.lazy(() =>
+  import('../report/AssessmentReportContractView').then((module) => ({
+    default: module.AssessmentReportContractView,
+  }))
+);
+
+type HttpScreenProps = Omit<
+  DrdMethodWorkspaceScreenProps,
+  'forceHttpSourceOfTruth' | 'initialActorUserId' | 'forceState'
+>;
 
 // ---------------------------------------------------------------------------
 // Dev-render / test only — reach offline/conflict/recovery deterministically
@@ -108,7 +134,11 @@ async function seedHttpSession(
     evidenceType: 'system_record',
     strength: 'E3',
   });
-  await runtime.recordTargetDecision({ unitId: area1A.id, level: 4, rationale: 'Cel ustalony z zarządem na ten rok.' });
+  await runtime.recordTargetDecision({
+    unitId: area1A.id,
+    level: 4,
+    rationale: 'Cel ustalony z zarządem na ten rok.',
+  });
 
   if (seedTo === 'interview') return;
 
@@ -120,20 +150,43 @@ async function seedHttpSession(
     answerState: 'confirmed',
     text: 'Zaawansowana praktyka zaobserwowana punktowo (poza kolejnością).',
   });
-  await runtime.recordEvidence({ unitId: area1B.id, level: 4, evidenceId: 'demo-ev-1b-l4', evidenceType: 'observation', strength: 'E1' });
+  await runtime.recordEvidence({
+    unitId: area1B.id,
+    level: 4,
+    evidenceId: 'demo-ev-1b-l4',
+    evidenceType: 'observation',
+    strength: 'E1',
+  });
 
   if (seedTo === 'matrix') return;
 
-  if (seedTo === 'teresa' || seedTo === 'approval' || seedTo === 'frozen' || seedTo === 'reopened') {
+  if (
+    seedTo === 'teresa' ||
+    seedTo === 'approval' ||
+    seedTo === 'frozen' ||
+    seedTo === 'reopened'
+  ) {
     await runtime.createTeresaPreview({
       capabilityId: 'draft_score_proposal',
       unitId: area1A.id,
       level: 3,
       invokedBy: 'local_action',
       statements: [
-        { kind: 'respondent_declaration', text: 'Proces w CRM istnieje i jest używany przez cały zespół handlowy.', sourceRefs: [] },
-        { kind: 'missing_evidence', text: 'Brak dowodu na regularny przegląd wskaźników procesu (poziom 3).', sourceRefs: [] },
-        { kind: 'proposal', text: 'Proponowany poziom: 3 (zdefiniowany, mierzony proces).', sourceRefs: [] },
+        {
+          kind: 'respondent_declaration',
+          text: 'Proces w CRM istnieje i jest używany przez cały zespół handlowy.',
+          sourceRefs: [],
+        },
+        {
+          kind: 'missing_evidence',
+          text: 'Brak dowodu na regularny przegląd wskaźników procesu (poziom 3).',
+          sourceRefs: [],
+        },
+        {
+          kind: 'proposal',
+          text: 'Proponowany poziom: 3 (zdefiniowany, mierzony proces).',
+          sourceRefs: [],
+        },
       ],
       proposedChanges: [{ target: 'score_proposal', targetId: area1A.id, before: 2, after: 3 }],
       quality: { verdict: 'needs_human_review', failedChecks: ['lists_missing_evidence'] },
@@ -175,8 +228,14 @@ async function seedHttpSession(
 // ---------------------------------------------------------------------------
 
 const BootstrapLoadingView: React.FC<{ label: string }> = ({ label }) => (
-  <div data-testid="drd-http-bootstrap-loading" className="flex h-full flex-col items-center justify-center gap-3 text-sm text-c-text-muted">
-    <DrdSourceIndicator source="RECOVERY_DRAFT" title="Jeszcze bez potwierdzonej odpowiedzi serwera." />
+  <div
+    data-testid="drd-http-bootstrap-loading"
+    className="flex h-full flex-col items-center justify-center gap-3 text-sm text-c-text-muted"
+  >
+    <DrdSourceIndicator
+      source="RECOVERY_DRAFT"
+      title="Jeszcze bez potwierdzonej odpowiedzi serwera."
+    />
     {label}
   </div>
 );
@@ -186,9 +245,16 @@ const ConflictView: React.FC<{
   onLoadServerVersion: () => void;
   onExit: () => void;
 }> = ({ state, onLoadServerVersion, onExit }) => (
-  <div data-testid="drd-http-conflict-view" role="alert" className="flex h-full flex-col items-center justify-center gap-4 p-6 text-center">
+  <div
+    data-testid="drd-http-conflict-view"
+    role="alert"
+    className="flex h-full flex-col items-center justify-center gap-4 p-6 text-center"
+  >
     <div className="flex items-center gap-2">
-      <DrdSourceIndicator source="RECOVERY_DRAFT" title="Konflikt wersji — lokalny widok jest nieaktualny." />
+      <DrdSourceIndicator
+        source="RECOVERY_DRAFT"
+        title="Konflikt wersji — lokalny widok jest nieaktualny."
+      />
       {/* CONFLICT requires a human decision but is NOT a failure — kanon UI
           (CLAUDE.md): not crimson, not c-danger. See AssessmentSaveStateIndicator.
           Status here is always 'conflict' by construction (this view only
@@ -199,8 +265,9 @@ const ConflictView: React.FC<{
     <AlertTriangle size={28} className="text-c-info" />
     <h2 className="text-sm font-semibold text-c-text">Sesja zmieniła się na serwerze</h2>
     <p className="max-w-md text-xs text-c-text-secondary">
-      Twoja przeglądarka miała wersję {state.session?.version ?? '—'}, serwer ma już wersję {state.serverVersion ?? '—'}.
-      Nic nie zostało nadpisane automatycznie — wybierz, jak kontynuować.
+      Twoja przeglądarka miała wersję {state.session?.version ?? '—'}, serwer ma już wersję{' '}
+      {state.serverVersion ?? '—'}. Nic nie zostało nadpisane automatycznie — wybierz, jak
+      kontynuować.
     </p>
     <div className="flex items-center gap-2">
       <button
@@ -211,7 +278,11 @@ const ConflictView: React.FC<{
       >
         <RefreshCw size={13} /> Wczytaj wersję serwera
       </button>
-      <button type="button" onClick={onExit} className="rounded-md border border-c-border px-3 py-1.5 text-xs text-c-text-secondary hover:bg-c-surface-raised">
+      <button
+        type="button"
+        onClick={onExit}
+        className="rounded-md border border-c-border px-3 py-1.5 text-xs text-c-text-secondary hover:bg-c-surface-raised"
+      >
         Wyjdź bez zmian
       </button>
     </div>
@@ -223,9 +294,16 @@ const RecoveryQueueView: React.FC<{
   onApplyPending: () => void;
   onDiscardPending: () => void;
 }> = ({ state, onApplyPending, onDiscardPending }) => (
-  <div data-testid="drd-http-recovery-view" role="alert" className="flex h-full flex-col items-center justify-center gap-4 p-6 text-center">
+  <div
+    data-testid="drd-http-recovery-view"
+    role="alert"
+    className="flex h-full flex-col items-center justify-center gap-4 p-6 text-center"
+  >
     <div className="flex items-center gap-2">
-      <DrdSourceIndicator source="RECOVERY_DRAFT" title="Zmiany zapisane lokalnie, jeszcze nie potwierdzone przez serwer." />
+      <DrdSourceIndicator
+        source="RECOVERY_DRAFT"
+        title="Zmiany zapisane lokalnie, jeszcze nie potwierdzone przez serwer."
+      />
       {/* Status here is always 'recovery' with pendingWriteCount > 0 by
           construction (this view only renders for `state.status === 'recovery'`),
           so RECOVERY_DRAFT is exactly what `deriveAssessmentSaveIndicator`
@@ -233,10 +311,13 @@ const RecoveryQueueView: React.FC<{
       <AssessmentSaveStateIndicator state="RECOVERY_DRAFT" />
     </div>
     <CloudOff size={28} className="text-c-warning" />
-    <h2 className="text-sm font-semibold text-c-text">Połączenie wróciło — {state.pendingWriteCount} zaległych zmian czeka</h2>
+    <h2 className="text-sm font-semibold text-c-text">
+      Połączenie wróciło — {state.pendingWriteCount} zaległych zmian czeka
+    </h2>
     <p className="max-w-md text-xs text-c-text-secondary">
-      Te zmiany zostały zapisane lokalnie, kiedy nie było połączenia z serwerem. Wybierz jawnie: zastosować je na serwerze, czy je odrzucić
-      i wczytać bieżący stan serwera. Nic nie dzieje się automatycznie.
+      Te zmiany zostały zapisane lokalnie, kiedy nie było połączenia z serwerem. Wybierz jawnie:
+      zastosować je na serwerze, czy je odrzucić i wczytać bieżący stan serwera. Nic nie dzieje się
+      automatycznie.
     </p>
     <div className="flex items-center gap-2">
       <button
@@ -260,25 +341,53 @@ const RecoveryQueueView: React.FC<{
 );
 
 const OfflineBanner: React.FC<{ onRetry: () => void }> = ({ onRetry }) => (
-  <div data-testid="drd-http-offline-banner" role="alert" className="flex items-center gap-3 border-b border-c-warning/30 bg-c-warning/10 px-4 py-1.5 text-[11px] text-c-warning">
+  <div
+    data-testid="drd-http-offline-banner"
+    role="alert"
+    className="flex items-center gap-3 border-b border-c-warning/30 bg-c-warning/10 px-4 py-1.5 text-[11px] text-c-warning"
+  >
     <CloudOff size={13} className="shrink-0" />
-    <span>Brak połączenia z serwerem — zapisy są kolejkowane lokalnie i nigdy nie znikają, ale to NIE jest potwierdzony stan serwera.</span>
-    <button type="button" onClick={onRetry} className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-md border border-c-warning/40 px-2 py-0.5 font-semibold hover:bg-c-warning/20">
+    <span>
+      Brak połączenia z serwerem — zapisy są kolejkowane lokalnie i nigdy nie znikają, ale to NIE
+      jest potwierdzony stan serwera.
+    </span>
+    <button
+      type="button"
+      onClick={onRetry}
+      className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-md border border-c-warning/40 px-2 py-0.5 font-semibold hover:bg-c-warning/20"
+    >
       <RefreshCw size={11} /> Spróbuj połączyć ponownie
     </button>
   </div>
 );
 
-const ErrorRetryView: React.FC<{ message: string; onRetry: () => void; onExit: () => void }> = ({ message, onRetry, onExit }) => (
-  <div data-testid="drd-http-error-view" role="alert" className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
+const ErrorRetryView: React.FC<{ message: string; onRetry: () => void; onExit: () => void }> = ({
+  message,
+  onRetry,
+  onExit,
+}) => (
+  <div
+    data-testid="drd-http-error-view"
+    role="alert"
+    className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center"
+  >
     <DrdSourceIndicator source="RECOVERY_DRAFT" />
     <AlertTriangle size={24} className="text-c-danger" />
     <p className="max-w-md text-xs text-c-danger">{message}</p>
     <div className="flex items-center gap-2">
-      <button type="button" data-testid="error-retry" onClick={onRetry} className="inline-flex items-center gap-1.5 rounded-md border border-c-border bg-c-surface-raised px-3 py-1.5 text-xs font-semibold text-c-text hover:bg-c-border-subtle">
+      <button
+        type="button"
+        data-testid="error-retry"
+        onClick={onRetry}
+        className="inline-flex items-center gap-1.5 rounded-md border border-c-border bg-c-surface-raised px-3 py-1.5 text-xs font-semibold text-c-text hover:bg-c-border-subtle"
+      >
         <RefreshCw size={13} /> Spróbuj ponownie
       </button>
-      <button type="button" onClick={onExit} className="rounded-md border border-c-border px-3 py-1.5 text-xs text-c-text-secondary hover:bg-c-surface-raised">
+      <button
+        type="button"
+        onClick={onExit}
+        className="rounded-md border border-c-border px-3 py-1.5 text-xs text-c-text-secondary hover:bg-c-surface-raised"
+      >
         Wyjdź
       </button>
     </div>
@@ -289,14 +398,9 @@ const ErrorRetryView: React.FC<{ message: string; onRetry: () => void; onExit: (
 // Component
 // ---------------------------------------------------------------------------
 
-export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceState?: DrdHttpDebugForcedState }> = ({
-  storage: storageProp,
-  demoSessionId,
-  onExit,
-  seedTo,
-  initialViewMode,
-  forceState,
-}) => {
+export const DrdHttpMethodWorkspaceScreen: React.FC<
+  HttpScreenProps & { forceState?: DrdHttpDebugForcedState }
+> = ({ storage: storageProp, demoSessionId, onExit, seedTo, initialViewMode, forceState }) => {
   const storage = storageProp ?? window.localStorage;
   const runtimeRef = useRef<DrdHttpSessionRuntime | null>(null);
   // React 18 StrictMode (dev only) double-invokes effects: mount -> cleanup
@@ -315,7 +419,9 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
   const [mode, setMode] = useState<'guided_manual' | 'teresa_led'>('guided_manual');
   const [activeAxisId, setActiveAxisId] = useState<number>(DRD_STRUCTURE[0].id);
   const [activeUnitId, setActiveUnitId] = useState<string>(DRD_STRUCTURE[0].areas[0].id);
-  const [matrixSelection, setMatrixSelection] = useState<{ unitId: string; level: number } | null>(null);
+  const [matrixSelection, setMatrixSelection] = useState<{ unitId: string; level: number } | null>(
+    null
+  );
   const [draftAnswerText, setDraftAnswerText] = useState<Record<string, string>>({});
   // True for the duration of an explicit reconciliation call (refresh() from
   // the offline banner / ErrorRetryView, or the Conflict/Recovery views'
@@ -356,7 +462,8 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
       try {
         runtime = await bootPromiseRef.current;
       } catch (err) {
-        if (!cancelled) setBootError(err instanceof Error ? err.message : 'Nie udało się utworzyć sesji.');
+        if (!cancelled)
+          setBootError(err instanceof Error ? err.message : 'Nie udało się utworzyć sesji.');
         return;
       }
       if (cancelled) return;
@@ -383,7 +490,11 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
           forceState === 'offline'
             ? { status: 'offline', error: 'Brak połączenia z serwerem.' }
             : forceState === 'conflict'
-              ? { status: 'conflict', serverVersion: (runtimeRef.current.getState().session?.version ?? 1) + 1, error: 'Sesja zmieniła się na serwerze.' }
+              ? {
+                  status: 'conflict',
+                  serverVersion: (runtimeRef.current.getState().session?.version ?? 1) + 1,
+                  error: 'Sesja zmieniła się na serwerze.',
+                }
               : forceState === 'recovery'
                 ? { status: 'recovery', pendingWriteCount: 2 }
                 : { status: 'loading' };
@@ -405,14 +516,18 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
   const pendingPreviewUnitLevels = useMemo(() => {
     const set = new Set<string>();
     for (const p of pendingPreviews) {
-      if (p.intent.unitId && typeof p.intent.level === 'number') set.add(`${p.intent.unitId}#${p.intent.level}`);
+      if (p.intent.unitId && typeof p.intent.level === 'number')
+        set.add(`${p.intent.unitId}#${p.intent.level}`);
     }
     return set;
   }, [pendingPreviews]);
 
   const navigatorNodes = useMemo(() => buildNavigatorNodes(events), [events]);
   const activeAxis = DRD_STRUCTURE.find((a) => a.id === activeAxisId) ?? DRD_STRUCTURE[0];
-  const matrixRows = useMemo(() => buildMatrixRowsForAxis(events, activeAxis, pendingPreviewUnitLevels), [events, activeAxis, pendingPreviewUnitLevels]);
+  const matrixRows = useMemo(
+    () => buildMatrixRowsForAxis(events, activeAxis, pendingPreviewUnitLevels),
+    [events, activeAxis, pendingPreviewUnitLevels]
+  );
   const matrixLevels = useMemo(() => {
     const first = activeAxis.areas[0];
     return first ? first.levels.map((l) => l.level).sort((a, b) => a - b) : [];
@@ -432,8 +547,11 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
       }),
     [events, activeArea.id]
   );
-  const focusLevelFallback = activeProgression.blockedAtLevel ?? Math.min(...activeArea.levels.map((l) => l.level));
-  const focusQuestions = pack.questions.filter((q) => q.unitId === activeArea.id && q.level === focusLevelFallback);
+  const focusLevelFallback =
+    activeProgression.blockedAtLevel ?? Math.min(...activeArea.levels.map((l) => l.level));
+  const focusQuestions = pack.questions.filter(
+    (q) => q.unitId === activeArea.id && q.level === focusLevelFallback
+  );
   const evidenceCountForUnit = evidenceEventsFor(events, activeArea.id).length;
   const evidenceStrengthForUnit = evidenceStrengthFor(events, activeArea.id);
 
@@ -454,16 +572,32 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
     ['owner', 'lead_assessor', 'assessor', 'respondent', 'evidence_owner'].includes(role)
   );
 
-  const { state: saveState, lastSavedAt, errorMessage: saveErrorMessage, markDirty, saveNow, acknowledgeFailure } = useMethodWorkspaceSave({
+  const {
+    state: saveState,
+    lastSavedAt,
+    errorMessage: saveErrorMessage,
+    markDirty,
+    saveNow,
+    acknowledgeFailure,
+  } = useMethodWorkspaceSave({
     isOnline,
     debounceMs: 800,
     save: async () => {
       if (!runtime || !canWrite) return { ok: false, error: 'Sesja jest tylko do odczytu.' };
-      const entry = Object.entries(draftAnswerText).find(([qid]) => focusQuestions.some((q) => q.questionId === qid));
+      const entry = Object.entries(draftAnswerText).find(([qid]) =>
+        focusQuestions.some((q) => q.questionId === qid)
+      );
       if (!entry) return { ok: true };
       const [questionId, text] = entry;
       try {
-        await runtime.recordAnswer({ unitId: activeArea.id, level: focusLevelFallback, questionId, answerState: 'partial', text, draft: true });
+        await runtime.recordAnswer({
+          unitId: activeArea.id,
+          level: focusLevelFallback,
+          questionId,
+          answerState: 'partial',
+          text,
+          draft: true,
+        });
         return { ok: true };
       } catch (err) {
         return { ok: false, error: err instanceof Error ? err.message : 'Zapis nieudany.' };
@@ -482,13 +616,20 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
     isReconciling,
   });
 
-  const handleAnswerChange = useCallback((questionId: string, text: string) => {
-    setDraftAnswerText((prev) => ({ ...prev, [questionId]: text }));
-    markDirty();
-  }, [markDirty]);
+  const handleAnswerChange = useCallback(
+    (questionId: string, text: string) => {
+      setDraftAnswerText((prev) => ({ ...prev, [questionId]: text }));
+      markDirty();
+    },
+    [markDirty]
+  );
 
   const handleAnswerStateChange = useCallback(
-    async (questionId: string, answerState: InterviewFocusQuestion['answerState'], justification?: string) => {
+    async (
+      questionId: string,
+      answerState: InterviewFocusQuestion['answerState'],
+      justification?: string
+    ) => {
       if (!answerState || !runtime || !canWrite) return;
       await runtime.recordAnswer({
         unitId: activeArea.id,
@@ -530,12 +671,34 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
         invokedBy: 'local_action',
         statements: [
           evidence.length > 0
-            ? { kind: 'confirmed_fact' as const, text: `Zebrano ${evidence.length} dowód/-ody dla tej jednostki.`, sourceRefs: evidence.map((e) => e.id) }
-            : { kind: 'missing_evidence' as const, text: 'Brak dowodu dla tej jednostki na tym poziomie.', sourceRefs: [] },
-          { kind: 'proposal' as const, text: `Proponowany poziom: ${focusLevelFallback} na podstawie odpowiedzi respondenta.`, sourceRefs: [] },
+            ? {
+                kind: 'confirmed_fact' as const,
+                text: `Zebrano ${evidence.length} dowód/-ody dla tej jednostki.`,
+                sourceRefs: evidence.map((e) => e.id),
+              }
+            : {
+                kind: 'missing_evidence' as const,
+                text: 'Brak dowodu dla tej jednostki na tym poziomie.',
+                sourceRefs: [],
+              },
+          {
+            kind: 'proposal' as const,
+            text: `Proponowany poziom: ${focusLevelFallback} na podstawie odpowiedzi respondenta.`,
+            sourceRefs: [],
+          },
         ],
-        proposedChanges: [{ target: 'score_proposal', targetId: activeArea.id, before: null, after: focusLevelFallback }],
-        quality: { verdict: evidence.length > 0 ? 'valid' : 'needs_human_review', failedChecks: evidence.length > 0 ? [] : ['lists_supporting_evidence'] },
+        proposedChanges: [
+          {
+            target: 'score_proposal',
+            targetId: activeArea.id,
+            before: null,
+            after: focusLevelFallback,
+          },
+        ],
+        quality: {
+          verdict: evidence.length > 0 ? 'valid' : 'needs_human_review',
+          failedChecks: evidence.length > 0 ? [] : ['lists_supporting_evidence'],
+        },
       });
     },
     [runtime, canWrite, events, activeArea.id, focusLevelFallback]
@@ -571,7 +734,15 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
       }
       handleUnitNav(1);
     },
-    [runtime, canWrite, activeArea.id, focusLevelFallback, focusQuestions, draftAnswerText, handleUnitNav]
+    [
+      runtime,
+      canWrite,
+      activeArea.id,
+      focusLevelFallback,
+      focusQuestions,
+      draftAnswerText,
+      handleUnitNav,
+    ]
   );
 
   // Only `ask_teresa` has a real backend today (Teresa preview pipeline,
@@ -604,14 +775,29 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
       });
       if (action === 'return_later') handleUnitNav(1);
     },
-    [runtime, canWrite, activeArea.id, focusLevelFallback, draftAnswerText, handleAskTeresa, handleUnitNav]
+    [
+      runtime,
+      canWrite,
+      activeArea.id,
+      focusLevelFallback,
+      draftAnswerText,
+      handleAskTeresa,
+      handleUnitNav,
+    ]
   );
 
   const handleCommit = useCallback(
     async (request: TeresaCommitRequest) => {
       if (!runtime || !canWrite) return;
-      const outcome = await runtime.commitTeresaPreview({ previewId: request.previewId, decision: request.decision, editedChanges: request.editedChanges });
-      if (outcome.ok && (request.decision === 'accept' || request.decision === 'accept_with_edits')) {
+      const outcome = await runtime.commitTeresaPreview({
+        previewId: request.previewId,
+        decision: request.decision,
+        editedChanges: request.editedChanges,
+      });
+      if (
+        outcome.ok &&
+        (request.decision === 'accept' || request.decision === 'accept_with_edits')
+      ) {
         const preview = pendingPreviews.find((p) => p.previewId === request.previewId);
         const change = preview?.proposedChanges.find((c) => c.target === 'score_proposal');
         if (preview && change && typeof change.after === 'number') {
@@ -634,16 +820,21 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
     let unitsMissingEvidence = 0;
     let answeredUnitsMissingEvidence = 0;
     for (const unit of pack.units) {
-      const confirmed = events.filter((e) => e.type === 'ANSWER_CONFIRMED' && e.unitId === unit.unitId);
+      const confirmed = events.filter(
+        (e) => e.type === 'ANSWER_CONFIRMED' && e.unitId === unit.unitId
+      );
       const hasEvidence = evidenceEventsFor(events, unit.unitId).length > 0;
       if (confirmed.length > 0) answeredUnits++;
       if (!hasEvidence) unitsMissingEvidence++;
       if (confirmed.length > 0 && !hasEvidence) answeredUnitsMissingEvidence++;
     }
     const freezeBlockers: string[] = [];
-    if (answeredUnits === 0) freezeBlockers.push('Brak potwierdzonych jednostek — wywiad nie został jeszcze rozpoczęty.');
-    if (answeredUnitsMissingEvidence > 0) freezeBlockers.push(`${answeredUnitsMissingEvidence} odpowiedzianych jednostek bez dowodu`);
-    if (pendingPreviews.length > 0) freezeBlockers.push(`${pendingPreviews.length} propozycji Teresy oczekuje decyzji`);
+    if (answeredUnits === 0)
+      freezeBlockers.push('Brak potwierdzonych jednostek — wywiad nie został jeszcze rozpoczęty.');
+    if (answeredUnitsMissingEvidence > 0)
+      freezeBlockers.push(`${answeredUnitsMissingEvidence} odpowiedzianych jednostek bez dowodu`);
+    if (pendingPreviews.length > 0)
+      freezeBlockers.push(`${pendingPreviews.length} propozycji Teresy oczekuje decyzji`);
     const frozenAlready = state?.session?.state === 'frozen' || state?.session?.state === 'closed';
     return {
       answeredUnits,
@@ -658,9 +849,17 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
   const teresaSixQuestions = {
     whereAreWe: `Sesja DRD, jednostka ${activeArea.namePL || activeArea.name}, poziom ${focusLevelFallback}. ${readiness.answeredUnits}/${readiness.totalUnits} jednostek dotkniętych.`,
     whatMattersNow: focusQuestions[0]?.canonicalWording ?? 'Brak pytań na tym poziomie.',
-    why: activeAxis.namePL ? `Oś „${activeAxis.namePL}" wymaga potwierdzenia tej jednostki, by odblokować dalsze poziomy.` : '',
-    whatIsMissing: evidenceCountForUnit === 0 ? 'Brak dowodu dla tej jednostki.' : `${evidenceCountForUnit} dowód/-ody zebrane.`,
-    nextSafeAction: pendingPreviews.length > 0 ? 'Zdecyduj o oczekujących propozycjach Teresy.' : 'Odpowiedz na bieżące pytanie lub dołącz dowód.',
+    why: activeAxis.namePL
+      ? `Oś „${activeAxis.namePL}" wymaga potwierdzenia tej jednostki, by odblokować dalsze poziomy.`
+      : '',
+    whatIsMissing:
+      evidenceCountForUnit === 0
+        ? 'Brak dowodu dla tej jednostki.'
+        : `${evidenceCountForUnit} dowód/-ody zebrane.`,
+    nextSafeAction:
+      pendingPreviews.length > 0
+        ? 'Zdecyduj o oczekujących propozycjach Teresy.'
+        : 'Odpowiedz na bieżące pytanie lub dołącz dowód.',
   };
 
   // -- render: bootstrap phases (no runtime state yet, or a hard boot error) --
@@ -686,7 +885,9 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
       <ConflictView
         state={state}
         onExit={onExit ?? (() => {})}
-        onLoadServerVersion={() => void runReconciliation(() => runtime?.refresh() ?? Promise.resolve())}
+        onLoadServerVersion={() =>
+          void runReconciliation(() => runtime?.refresh() ?? Promise.resolve())
+        }
       />
     );
   }
@@ -694,8 +895,14 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
     return (
       <RecoveryQueueView
         state={state}
-        onApplyPending={() => void runReconciliation(() => runtime?.retryPending() ?? Promise.resolve())}
-        onDiscardPending={() => void runReconciliation(() => runtime?.discardPendingAndReloadServer() ?? Promise.resolve())}
+        onApplyPending={() =>
+          void runReconciliation(() => runtime?.retryPending() ?? Promise.resolve())
+        }
+        onDiscardPending={() =>
+          void runReconciliation(
+            () => runtime?.discardPendingAndReloadServer() ?? Promise.resolve()
+          )
+        }
       />
     );
   }
@@ -703,13 +910,26 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
   // what the user was viewing, but it is never an editable fallback when the
   // API is unavailable.
   if (state.status === 'offline') {
-    return <ErrorRetryView message="Brak połączenia z serwerem. Tryb DRD jest tylko do odczytu po potwierdzeniu serwera; żadna zmiana nie została zapisana." onRetry={() => void runReconciliation(() => runtime?.refresh() ?? Promise.resolve())} onExit={onExit ?? (() => {})} />;
+    return (
+      <ErrorRetryView
+        message="Brak połączenia z serwerem. Tryb DRD jest tylko do odczytu po potwierdzeniu serwera; żadna zmiana nie została zapisana."
+        onRetry={() => void runReconciliation(() => runtime?.refresh() ?? Promise.resolve())}
+        onExit={onExit ?? (() => {})}
+      />
+    );
   }
   if (state.status === 'error' && !state.session) {
-    return <ErrorRetryView message={state.error ?? 'Nieznany błąd.'} onRetry={() => void runReconciliation(() => runtime?.refresh() ?? Promise.resolve())} onExit={onExit ?? (() => {})} />;
+    return (
+      <ErrorRetryView
+        message={state.error ?? 'Nieznany błąd.'}
+        onRetry={() => void runReconciliation(() => runtime?.refresh() ?? Promise.resolve())}
+        onExit={onExit ?? (() => {})}
+      />
+    );
   }
 
   const session = state.session;
+  const assessmentReportEnabled = isAssessmentReportViewEnabled();
   if (!session) {
     return <BootstrapLoadingView label="Wczytywanie sesji…" />;
   }
@@ -761,10 +981,17 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
   return (
     <div className="flex h-full flex-col">
       {state.status === 'error' && state.error && (
-        <div role="alert" className="flex items-center gap-2 border-b border-c-danger/30 bg-c-danger/10 px-4 py-1.5 text-xs text-c-danger">
+        <div
+          role="alert"
+          className="flex items-center gap-2 border-b border-c-danger/30 bg-c-danger/10 px-4 py-1.5 text-xs text-c-danger"
+        >
           <AlertTriangle size={12} />
           {state.error}
-          <button type="button" onClick={() => void runReconciliation(() => runtime?.refresh() ?? Promise.resolve())} className="ml-auto rounded border border-c-danger/40 px-2 py-0.5 font-semibold hover:bg-c-danger/20">
+          <button
+            type="button"
+            onClick={() => void runReconciliation(() => runtime?.refresh() ?? Promise.resolve())}
+            className="ml-auto rounded border border-c-danger/40 px-2 py-0.5 font-semibold hover:bg-c-danger/20"
+          >
             Spróbuj ponownie
           </button>
         </div>
@@ -803,7 +1030,11 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
             },
           }}
           interviewProps={{
-            breadcrumb: [activeAxis.namePL || activeAxis.name, activeArea.namePL || activeArea.name, `Poziom ${focusLevelFallback}`],
+            breadcrumb: [
+              activeAxis.namePL || activeAxis.name,
+              activeArea.namePL || activeArea.name,
+              `Poziom ${focusLevelFallback}`,
+            ],
             questions: interviewQuestions,
             questionIndex: focusLevelFallback - 1,
             questionTotal: activeArea.levels.length,
@@ -848,60 +1079,98 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
               <div className="text-xs text-c-text-secondary">
                 <p>
                   {selection.unitId} · poziom {selection.level} —{' '}
-                  {cell?.blocker ? 'BLOKER (pierwszy niespełniony poziom)' : cell?.reviewRequired ? 'above-gap: wymaga przeglądu' : cell?.achieved ? 'osiągnięty' : 'nieosiągnięty'}
+                  {cell?.blocker
+                    ? 'BLOKER (pierwszy niespełniony poziom)'
+                    : cell?.reviewRequired
+                      ? 'above-gap: wymaga przeglądu'
+                      : cell?.achieved
+                        ? 'osiągnięty'
+                        : 'nieosiągnięty'}
                 </p>
               </div>
             ),
           }}
-          reportContent={(
-            <div className="space-y-4">
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">DRD report · axis {activeAxis.id}</p>
-                <h2 className="text-lg font-semibold text-c-text">{activeAxis.namePL || activeAxis.name}</h2>
-                <p className="mt-1 max-w-3xl text-sm text-c-text-secondary">
-                  Roboczy rozdział raportu oparty na bieżących odpowiedziach, dowodach i targetach tej samej sesji.
-                  Nie jest zatwierdzonym raportem, dopóki sesja nie zostanie zamrożona przez approvera.
-                </p>
-              </div>
-              <div className="rounded-xl border border-c-border bg-c-surface p-4">
-                <h3 className="mb-3 text-sm font-semibold text-c-text">Macierz osi</h3>
-                <LiveMatrix {...{
-                  rows: matrixRows,
-                  levels: matrixLevels,
-                  selection: matrixSelection,
-                  onSelect: (selection) => {
-                    setMatrixSelection(selection);
-                    setActiveUnitId(selection.unitId);
-                  },
-                  onCloseSideSheet: () => setMatrixSelection(null),
-                  renderSideSheet: (selection, cell) => (
-                    <div className="text-xs text-c-text-secondary">
-                      <p>
-                        {selection.unitId} · poziom {selection.level} —{' '}
-                        {cell?.blocker ? 'BLOKER (pierwszy niespełniony poziom)' : cell?.reviewRequired ? 'above-gap: wymaga przeglądu' : cell?.achieved ? 'osiągnięty' : 'nieosiągnięty'}
+          reportContent={
+            assessmentReportEnabled ? (
+              <Suspense
+                fallback={
+                  <div
+                    className="m-6 h-24 animate-pulse rounded-xl border border-c-border-subtle bg-c-surface-raised"
+                    aria-busy="true"
+                  />
+                }
+              >
+                <AssessmentReportContractView sessionId={session.id} />
+              </Suspense>
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
+                    DRD report · axis {activeAxis.id}
+                  </p>
+                  <h2 className="text-lg font-semibold text-c-text">
+                    {activeAxis.namePL || activeAxis.name}
+                  </h2>
+                  <p className="mt-1 max-w-3xl text-sm text-c-text-secondary">
+                    Roboczy rozdział raportu oparty na bieżących odpowiedziach, dowodach i targetach
+                    tej samej sesji. Nie jest zatwierdzonym raportem, dopóki sesja nie zostanie
+                    zamrożona przez approvera.
+                  </p>
+                </div>
+                <div className="rounded-xl border border-c-border bg-c-surface p-4">
+                  <h3 className="mb-3 text-sm font-semibold text-c-text">Macierz osi</h3>
+                  <LiveMatrix
+                    {...{
+                      rows: matrixRows,
+                      levels: matrixLevels,
+                      selection: matrixSelection,
+                      onSelect: (selection) => {
+                        setMatrixSelection(selection);
+                        setActiveUnitId(selection.unitId);
+                      },
+                      onCloseSideSheet: () => setMatrixSelection(null),
+                      renderSideSheet: (selection, cell) => (
+                        <div className="text-xs text-c-text-secondary">
+                          <p>
+                            {selection.unitId} · poziom {selection.level} —{' '}
+                            {cell?.blocker
+                              ? 'BLOKER (pierwszy niespełniony poziom)'
+                              : cell?.reviewRequired
+                                ? 'above-gap: wymaga przeglądu'
+                                : cell?.achieved
+                                  ? 'osiągnięty'
+                                  : 'nieosiągnięty'}
+                          </p>
+                        </div>
+                      ),
+                    }}
+                    methodName={pack.manifest.name}
+                  />
+                </div>
+                <div className="grid gap-3 md:grid-cols-2">
+                  {activeAxis.areas.map((area) => (
+                    <article
+                      key={area.id}
+                      className="rounded-xl border border-c-border bg-c-surface p-4"
+                    >
+                      <p className="text-[11px] font-semibold text-c-text-muted">{area.id}</p>
+                      <h3 className="text-sm font-semibold text-c-text">
+                        {area.namePL || area.name}
+                      </h3>
+                      <p className="mt-2 text-xs text-c-text-secondary">
+                        {confirmedLevelsFor(events, area.id).length > 0
+                          ? `Potwierdzone poziomy: ${confirmedLevelsFor(events, area.id).join(', ')}. Wymaga komentarza eksperckiego przed zatwierdzeniem.`
+                          : 'Brak potwierdzonej oceny — raport nie może udawać wniosku dla tego obszaru.'}
                       </p>
-                    </div>
-                  ),
-                }} methodName={pack.manifest.name} />
+                    </article>
+                  ))}
+                </div>
               </div>
-              <div className="grid gap-3 md:grid-cols-2">
-                {activeAxis.areas.map((area) => (
-                  <article key={area.id} className="rounded-xl border border-c-border bg-c-surface p-4">
-                    <p className="text-[11px] font-semibold text-c-text-muted">{area.id}</p>
-                    <h3 className="text-sm font-semibold text-c-text">{area.namePL || area.name}</h3>
-                    <p className="mt-2 text-xs text-c-text-secondary">
-                      {confirmedLevelsFor(events, area.id).length > 0
-                        ? `Potwierdzone poziomy: ${confirmedLevelsFor(events, area.id).join(', ')}. Wymaga komentarza eksperckiego przed zatwierdzeniem.`
-                        : 'Brak potwierdzonej oceny — raport nie może udawać wniosku dla tego obszaru.'}
-                    </p>
-                  </article>
-                ))}
-              </div>
-            </div>
-          )}
+            )
+          }
           documentSourceLabel={sourceKind}
           documentSourceIndicator={<DrdSourceIndicator source={sourceKind} />}
-          governanceActions={(
+          governanceActions={
             <>
               <button
                 type="button"
@@ -930,7 +1199,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
                 Zamroź
               </button>
             </>
-          )}
+          }
         />
       </div>
     </div>
@@ -953,9 +1222,16 @@ const FrozenOutputHttpView: React.FC<{
   const output = state.output;
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto bg-c-bg p-6" data-testid="drd-http-frozen-output-view">
+    <div
+      className="flex h-full flex-col overflow-y-auto bg-c-bg p-6"
+      data-testid="drd-http-frozen-output-view"
+    >
       <div className="mb-4 flex items-center gap-3">
-        <button type="button" onClick={onExit} className="inline-flex items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs text-c-text-secondary hover:bg-c-surface-raised">
+        <button
+          type="button"
+          onClick={onExit}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs text-c-text-secondary hover:bg-c-surface-raised"
+        >
           <ArrowLeft size={13} /> Wyjdź
         </button>
         <h1 className="text-sm font-semibold text-c-text">
@@ -965,23 +1241,34 @@ const FrozenOutputHttpView: React.FC<{
             confirmed server response for THIS session's current freeze —
             `state.output` is only ever set from `freeze()`'s own response or
             a `getOutput()` re-fetch (see drdHttpSessionRuntime.ts refresh()). */}
-        <DrdSourceIndicator source={output ? sourceKind : 'RECOVERY_DRAFT'} title="Frozen Output pochodzi wyłącznie z odpowiedzi serwera, nigdy z localStorage." />
+        <DrdSourceIndicator
+          source={output ? sourceKind : 'RECOVERY_DRAFT'}
+          title="Frozen Output pochodzi wyłącznie z odpowiedzi serwera, nigdy z localStorage."
+        />
       </div>
 
       {/* Output */}
-      <section data-testid="output-panel" className="mb-6 rounded-xl border border-c-border bg-c-surface p-4">
+      <section
+        data-testid="output-panel"
+        className="mb-6 rounded-xl border border-c-border bg-c-surface p-4"
+      >
         <div className="mb-2 flex items-center gap-2">
           <Lock size={14} className="text-c-text-secondary" />
-          <h2 className="text-sm font-semibold text-c-text">AssessmentOutput (immutable, v{output?.outputVersion ?? '—'})</h2>
+          <h2 className="text-sm font-semibold text-c-text">
+            AssessmentOutput (immutable, v{output?.outputVersion ?? '—'})
+          </h2>
         </div>
         {!output ? (
           <p className="text-xs text-c-text-muted">
-            Sesja jest zamrożona na serwerze, ale nie udało się odnaleźć jej bieżącego Outputu. Odśwież widok;
-            ekran nie odtworzy treści z lokalnego cache.
+            Sesja jest zamrożona na serwerze, ale nie udało się odnaleźć jej bieżącego Outputu.
+            Odśwież widok; ekran nie odtworzy treści z lokalnego cache.
           </p>
         ) : (
           <div className="space-y-2 text-xs text-c-text-secondary">
-            <p>contentHash: <code className="text-c-text-muted">{output.contentHash.slice(0, 16)}…</code></p>
+            <p>
+              contentHash:{' '}
+              <code className="text-c-text-muted">{output.contentHash.slice(0, 16)}…</code>
+            </p>
             <p>scope: {output.scope}</p>
             <p>limitations: {output.limitations.join(' · ')}</p>
             <div className="rounded-lg border border-c-border-subtle">
@@ -1001,7 +1288,10 @@ const FrozenOutputHttpView: React.FC<{
               <div key={f.id} className="rounded-lg border border-c-border-subtle p-2">
                 <p className="text-c-text">{f.businessMeaning}</p>
                 <p className="text-c-text-muted">Rekomendacja: {f.recommendation}</p>
-                <p className="text-c-text-muted">Jednostka: {f.unitName} · current {f.currentLevel ?? '—'} · target {f.targetLevel ?? '—'} · gap {f.gap ?? '—'}</p>
+                <p className="text-c-text-muted">
+                  Jednostka: {f.unitName} · current {f.currentLevel ?? '—'} · target{' '}
+                  {f.targetLevel ?? '—'} · gap {f.gap ?? '—'}
+                </p>
               </div>
             ))}
           </div>
@@ -1009,13 +1299,21 @@ const FrozenOutputHttpView: React.FC<{
       </section>
 
       {/* Report */}
-      <section data-testid="report-panel" className="mb-6 rounded-xl border border-c-border bg-c-surface p-4">
+      <section
+        data-testid="report-panel"
+        className="mb-6 rounded-xl border border-c-border bg-c-surface p-4"
+      >
         <div className="mb-2 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <FileText size={14} className="text-c-text-secondary" />
             <h2 className="text-sm font-semibold text-c-text">Report Snapshot</h2>
           </div>
-          <button type="button" onClick={onGenerateReport} disabled={!output || readOnly} className="rounded-md border border-c-border px-2 py-1 text-[11px] font-medium text-c-text-secondary disabled:opacity-40 hover:bg-c-surface-raised">
+          <button
+            type="button"
+            onClick={onGenerateReport}
+            disabled={!output || readOnly}
+            className="rounded-md border border-c-border px-2 py-1 text-[11px] font-medium text-c-text-secondary disabled:opacity-40 hover:bg-c-surface-raised"
+          >
             Generuj raport z Outputu
           </button>
         </div>
@@ -1023,9 +1321,16 @@ const FrozenOutputHttpView: React.FC<{
           <p className="text-xs text-c-text-muted">Brak zapisanego raportu dla tego Outputu.</p>
         ) : (
           state.reports.map((r, i) => {
-            const rec = r as { id?: string; title?: string; content?: { executiveSummary?: string } };
+            const rec = r as {
+              id?: string;
+              title?: string;
+              content?: { executiveSummary?: string };
+            };
             return (
-              <div key={rec.id ?? i} className="mb-2 rounded-lg border border-c-border-subtle p-2 text-xs text-c-text-secondary">
+              <div
+                key={rec.id ?? i}
+                className="mb-2 rounded-lg border border-c-border-subtle p-2 text-xs text-c-text-secondary"
+              >
                 <p className="text-c-text">{rec.title}</p>
                 <p>{rec.content?.executiveSummary}</p>
               </div>
@@ -1035,27 +1340,49 @@ const FrozenOutputHttpView: React.FC<{
       </section>
 
       {/* Initiative Draft */}
-      <section data-testid="initiative-panel" className="mb-6 rounded-xl border border-c-border bg-c-surface p-4">
+      <section
+        data-testid="initiative-panel"
+        className="mb-6 rounded-xl border border-c-border bg-c-surface p-4"
+      >
         <div className="mb-2 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Lightbulb size={14} className="text-c-text-secondary" />
-            <h2 className="text-sm font-semibold text-c-text">Initiative Proposal Draft (lokalny, NIE Registered Initiative)</h2>
+            <h2 className="text-sm font-semibold text-c-text">
+              Initiative Proposal Draft (lokalny, NIE Registered Initiative)
+            </h2>
           </div>
-          <button type="button" onClick={onGenerateInitiative} disabled={!output || readOnly} className="rounded-md border border-c-border px-2 py-1 text-[11px] font-medium text-c-text-secondary disabled:opacity-40 hover:bg-c-surface-raised">
+          <button
+            type="button"
+            onClick={onGenerateInitiative}
+            disabled={!output || readOnly}
+            className="rounded-md border border-c-border px-2 py-1 text-[11px] font-medium text-c-text-secondary disabled:opacity-40 hover:bg-c-surface-raised"
+          >
             Wygeneruj z findingów
           </button>
         </div>
         {state.initiatives.length === 0 ? (
-          <p className="text-xs text-c-text-muted">Brak zapisanego Initiative Proposal Draft dla tego Outputu.</p>
+          <p className="text-xs text-c-text-muted">
+            Brak zapisanego Initiative Proposal Draft dla tego Outputu.
+          </p>
         ) : (
           state.initiatives.map((d, i) => {
-            const rec = d as { id?: string; title?: string; summary?: string | null; confidence?: string };
+            const rec = d as {
+              id?: string;
+              title?: string;
+              summary?: string | null;
+              confidence?: string;
+            };
             return (
-              <div key={rec.id ?? i} className="mb-2 rounded-lg border border-c-border-subtle p-2 text-xs">
+              <div
+                key={rec.id ?? i}
+                className="mb-2 rounded-lg border border-c-border-subtle p-2 text-xs"
+              >
                 <p className="font-medium text-c-text">{rec.title}</p>
                 <p className="text-c-text-secondary">{rec.summary}</p>
                 <p className="text-c-text-muted">confidence: {rec.confidence}</p>
-                <p className="mt-1 text-[10px] uppercase tracking-wide text-c-warning">Draft — decyzja „Register as Initiative" należy do człowieka, poza tym modułem.</p>
+                <p className="mt-1 text-[10px] uppercase tracking-wide text-c-warning">
+                  Draft — decyzja „Register as Initiative" należy do człowieka, poza tym modułem.
+                </p>
               </div>
             );
           })
@@ -1063,16 +1390,24 @@ const FrozenOutputHttpView: React.FC<{
       </section>
 
       {/* Reopen — no HTTP path yet */}
-      <section data-testid="reopen-panel" className="rounded-xl border border-c-border bg-c-surface p-4">
+      <section
+        data-testid="reopen-panel"
+        className="rounded-xl border border-c-border bg-c-surface p-4"
+      >
         <div className="mb-2 flex items-center gap-2">
           <RotateCcw size={14} className="text-c-text-secondary" />
           <h2 className="text-sm font-semibold text-c-text">Reopen — nowa rewizja</h2>
         </div>
         <p className="mb-2 text-xs text-c-text-muted">
-          Brak endpointu HTTP do reopen (poza zakresem tego pliku — server/src/method-core/*, server/src/routes/method-core.routes.ts).
-          Akcja wyłączona jawnie, nie udawana.
+          Brak endpointu HTTP do reopen (poza zakresem tego pliku — server/src/method-core/*,
+          server/src/routes/method-core.routes.ts). Akcja wyłączona jawnie, nie udawana.
         </p>
-        <button type="button" disabled data-testid="reopen-button" className="rounded-md border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary opacity-40">
+        <button
+          type="button"
+          disabled
+          data-testid="reopen-button"
+          className="rounded-md border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary opacity-40"
+        >
           Reopen sesji (niedostępne przez HTTP)
         </button>
       </section>
