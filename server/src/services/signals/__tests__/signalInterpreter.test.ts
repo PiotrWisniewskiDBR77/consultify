@@ -2,6 +2,34 @@ import { aiInputHash } from '../../../domain/initiatives-execution/aiEvidenceGov
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { SignalQuery } from '../../../types/workSignals.js';
+
+// FIX-1 (day18 layer-1 acceptance): every test in this file used to inject
+// its own `dependencies.generate`, so the PRODUCTION wiring
+// (`defaultDependencies` inside signalInterpreter.ts, which calls the real
+// `llmService.generateResponse` and parses `output.content` as JSON) was
+// never exercised by any test. That is exactly how the bug shipped: the code
+// read a field (`output.proposals`) that llmService never returns, and
+// `Array.isArray(undefined)` silently produced `[]` every time. These three
+// mocks let a dedicated describe block below call
+// `runInterpretationForOrganization` WITHOUT a `dependencies` override, so
+// the real `defaultDependencies.generate` (and therefore the new
+// `parseInterpretedProposals`) actually runs.
+const { mockGenerateResponse, mockGetDefaultProvider, mockCheckBudget } = vi.hoisted(() => ({
+  mockGenerateResponse: vi.fn(),
+  mockGetDefaultProvider: vi.fn(),
+  mockCheckBudget: vi.fn(),
+}));
+
+vi.mock('../../ai/llmService.js', () => ({
+  llmService: { generateResponse: mockGenerateResponse },
+}));
+vi.mock('../../ai/llmConfigService.js', () => ({
+  llmConfigService: { getDefaultProvider: mockGetDefaultProvider },
+}));
+vi.mock('../../aiBudgetService.js', () => ({
+  default: { checkBudget: mockCheckBudget },
+}));
+
 import {
   runInterpretationForOrganization,
   type InterpretedProposal,
@@ -226,5 +254,88 @@ describe('INTERPRETED signal layer', () => {
         proposal: proposal(input),
       })
     ).rejects.toThrow(/one tenant/);
+  });
+});
+
+describe('INTERPRETED signal layer — default production wiring (FIX-1)', () => {
+  afterEach(() => {
+    delete process.env.ENABLE_SIGNAL_INTERPRETER;
+    mockGenerateResponse.mockReset();
+    mockGetDefaultProvider.mockReset();
+    mockCheckBudget.mockReset();
+  });
+
+  it('a valid-JSON model response in `content` produces real proposals with NO injected dependencies', async () => {
+    process.env.ENABLE_SIGNAL_INTERPRETER = 'true';
+    mockGetDefaultProvider.mockResolvedValue({ id: 'mock-provider' });
+    mockCheckBudget.mockResolvedValue({ allowed: true });
+    mockGenerateResponse.mockImplementation(async ({ prompt }: { prompt: string }) => {
+      // The real defaultDependencies.generate sends
+      // `JSON.stringify({ input, inputHash })` as the prompt — read it back
+      // out so the returned proposal's evidenceRefs/inputHash are honest,
+      // exactly like a real model would echo the supplied signals.
+      const { input, inputHash } = JSON.parse(prompt) as {
+        input: InterpreterInputSignal[];
+        inputHash: string;
+      };
+      return {
+        content: JSON.stringify({
+          proposals: [
+            {
+              dedupeKey: 'interpreted:default-wiring',
+              severity: 'warning',
+              titleKey: 'signals.ai.pattern.title',
+              bodyKey: 'signals.ai.pattern.body',
+              subjectType: 'task',
+              subjectId: input[0].subjectId,
+              evidenceRefs: [input[0].signalId, input[1].signalId],
+              confidence: 'MEDIUM',
+              inputHash,
+              model: { provider: 'mock', model: 'budget-model', version: '1' },
+              prompt: { promptId: 'signal-pattern', version: '1' },
+              template: { templateId: 'signal-pattern', version: '1' },
+              action: { kind: 'OPEN_TASK', route: '/tasks/x', params: {}, permission: 'tasks.read' },
+            },
+          ],
+        }),
+        usage: { totalTokens: 42 },
+      };
+    });
+    const h = harness(6);
+    const result = await runInterpretationForOrganization({ organizationId: 'org-a', db: h.db });
+    expect(mockGenerateResponse).toHaveBeenCalledTimes(1);
+    expect(result.status).toBe('OK');
+    expect(result.signalsOpened).toBe(1);
+    expect(h.inserts).toBe(1);
+  });
+
+  it('a non-JSON model response yields PARTIAL with a real error entry, never a silent empty result', async () => {
+    process.env.ENABLE_SIGNAL_INTERPRETER = 'true';
+    mockGetDefaultProvider.mockResolvedValue({ id: 'mock-provider' });
+    mockCheckBudget.mockResolvedValue({ allowed: true });
+    mockGenerateResponse.mockResolvedValue({ content: 'this is not json at all' });
+    const h = harness(6);
+    const result = await runInterpretationForOrganization({ organizationId: 'org-a', db: h.db });
+    expect(mockGenerateResponse).toHaveBeenCalledTimes(1);
+    expect(result.status).toBe('PARTIAL');
+    expect(result.signalsOpened).toBe(0);
+    expect(result.errors).toHaveLength(1);
+    expect(String((result.errors[0] as { message: string }).message)).toMatch(/not valid JSON/i);
+    expect(h.inserts).toBe(0);
+  });
+
+  it('valid JSON missing the "proposals" array yields PARTIAL, reproducing and closing the original bug (Array.isArray(undefined) -> [])', async () => {
+    process.env.ENABLE_SIGNAL_INTERPRETER = 'true';
+    mockGetDefaultProvider.mockResolvedValue({ id: 'mock-provider' });
+    mockCheckBudget.mockResolvedValue({ allowed: true });
+    mockGenerateResponse.mockResolvedValue({
+      content: JSON.stringify({ notes: 'model ignored the contract, no proposals key here' }),
+    });
+    const h = harness(6);
+    const result = await runInterpretationForOrganization({ organizationId: 'org-a', db: h.db });
+    expect(result.status).toBe('PARTIAL');
+    expect(result.errors).toHaveLength(1);
+    expect(String((result.errors[0] as { message: string }).message)).toMatch(/proposals/i);
+    expect(h.inserts).toBe(0);
   });
 });

@@ -77,6 +77,68 @@ export async function validateInterpretedProvenance(params: {
   }
 }
 
+/**
+ * Tolerant-but-honest JSON extraction from the model's raw text response.
+ * Unlike `insightMaterializationService.parseDistillationResponse`, this
+ * NEVER fails soft: a malformed or missing `proposals` array throws so the
+ * caller can record a PARTIAL run with a real error entry instead of
+ * silently opening zero signals (FIX-1, day18 layer-1 acceptance).
+ */
+export function parseInterpretedProposals(raw: unknown): InterpretedProposal[] {
+  if (typeof raw !== 'string' || !raw.trim()) {
+    throw new Error('Interpreter model returned no textual content to parse');
+  }
+  const text = raw.trim();
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  const candidateText = fenced ? fenced[1] : text;
+  const firstBrace = candidateText.indexOf('{');
+  const lastBrace = candidateText.lastIndexOf('}');
+  const jsonSlice =
+    firstBrace >= 0 && lastBrace > firstBrace
+      ? candidateText.slice(firstBrace, lastBrace + 1)
+      : candidateText;
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(jsonSlice);
+  } catch (err) {
+    throw new Error(
+      `Interpreter model output is not valid JSON: ${err instanceof Error ? err.message : String(err)}`
+    );
+  }
+  if (
+    !parsed ||
+    typeof parsed !== 'object' ||
+    !Array.isArray((parsed as Record<string, unknown>).proposals)
+  ) {
+    throw new Error('Interpreter model output is missing a "proposals" array');
+  }
+  const proposals = (parsed as { proposals: unknown[] }).proposals;
+  proposals.forEach((item, index) => {
+    if (!item || typeof item !== 'object') {
+      throw new Error(`Interpreter proposal[${index}] is not an object`);
+    }
+    const candidate = item as Record<string, unknown>;
+    const requiredStringFields = [
+      'dedupeKey',
+      'severity',
+      'titleKey',
+      'bodyKey',
+      'subjectType',
+      'subjectId',
+    ];
+    for (const field of requiredStringFields) {
+      if (typeof candidate[field] !== 'string' || !candidate[field]) {
+        throw new Error(`Interpreter proposal[${index}] is missing required field "${field}"`);
+      }
+    }
+    if (!Array.isArray(candidate.evidenceRefs)) {
+      throw new Error(`Interpreter proposal[${index}] is missing required field "evidenceRefs"`);
+    }
+  });
+  return proposals as InterpretedProposal[];
+}
+
 const defaultDependencies = (db: SignalQuery): InterpreterDependencies => ({
   db,
   providerAvailable: async () => Boolean(await llmConfigService.getDefaultProvider()),
@@ -98,7 +160,7 @@ const defaultDependencies = (db: SignalQuery): InterpreterDependencies => ({
         'Synthesize at most three patterns. Use only supplied deterministic signals and return JSON.',
       prompt: JSON.stringify({ input, inputHash: aiInputHash(input) }),
     });
-    return (Array.isArray(output.proposals) ? output.proposals : []) as InterpretedProposal[];
+    return parseInterpretedProposals(output.content);
   },
 });
 
@@ -162,7 +224,18 @@ export async function runInterpretationForOrganization(params: {
     observedValue: Array.isArray(row.evidence) ? row.evidence[0]?.observedValue : undefined,
     firstObservedAt: new Date(String(row.first_observed_at)).toISOString(),
   }));
-  const proposals = (await deps.generate(input)).slice(0, 3);
+  let proposals: InterpretedProposal[];
+  try {
+    proposals = (await deps.generate(input)).slice(0, 3);
+  } catch (error) {
+    return finish('PARTIAL', 0, [
+      {
+        ruleId: 'ai.interpreted.pattern.generate',
+        message: error instanceof Error ? error.message : String(error),
+        at: new Date().toISOString(),
+      },
+    ]);
+  }
   let opened = 0;
   const errors: Array<{ ruleId: string; message: string; at: string }> = [];
   for (const proposal of proposals) {
