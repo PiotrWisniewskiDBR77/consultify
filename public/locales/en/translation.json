@@ -7514,7 +7514,7 @@
       "empty": "The report contract contains no chapters",
       "draft": "Draft",
       "revision": "Revision {{revision}}",
-      "generate": "Generate ▸",
+      "generate": "Generate ▸ · Planned",
       "planned": "Planned",
       "panelLabel": "Assessment report panel",
       "property": "Property",

@@ -740,7 +740,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
           text: draftAnswerText[questionId],
           justification: formatSkipJustification(reasonCode),
         });
-        const sessionId = state.session?.id;
+        const sessionId = state?.session?.id;
         if (sessionId) {
           const idempotencyKey = `skip-code:${sessionId}:${activeArea.id}:${questionId}:${focusLevelFallback}:${newIdempotencyKey()}`;
           const input = {
@@ -776,7 +776,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
       focusQuestions,
       draftAnswerText,
       handleUnitNav,
-      state.session?.id,
+      state?.session?.id,
     ]
   );
 
