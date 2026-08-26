@@ -14,21 +14,21 @@ FREEZE zachowany: zero push, zero deployów, zero Railway, zero zdalnych baz, mi
 
 ## Warunki wstępne — wynik sprawdzenia
 
-| Warunek | Wynik | Dowód |
-| --- | --- | --- |
-| Worktree | PASS | `/private/tmp/consultify-superadmin-day15` |
-| Gałąź | PASS | `codex/superadmin-day15-20260826` |
-| Tip przekazanej bazy | PASS | `c71ce1dc2e1165cb81e06bc2b90abf15e2915bdb` |
-| Marker `f0caf6a821` jest przodkiem tipa | PASS | `git merge-base --is-ancestor` zakończył się kodem 0 |
-| Instrukcja wiążąca | PASS | 2608 linii |
-| TRIANGLE_COMPLETENESS_VERDICT | PASS | 185 linii; trafienia TRI-MUST-07/08/11 obecne |
-| SUPERADMIN_COMPLETENESS_REPORT | PASS | 334 linie; TRI-MUST-12 obecny |
-| OWNER_DECISION_LEDGER / DEC-65 | PASS | wpis na linii 117 |
-| PlatformOperationsView (fala 1) | PASS | 309 linii |
-| Hooki | PASS | `core.hooksPath=.husky` |
-| Bezpieczne `node_modules` | PASS | nadzorca 2026-08-26 autoryzował odczyt zależności; symlink utworzony |
-| Replay PostgreSQL przed zmianami | PASS | 839 migracji; powtórka `Applying migrations: 0`; dry-run `Pending migrations: 0` |
-| Zapis `settings` na PostgreSQL | PASS | PK `(key)`; INSERT/SELECT/DELETE sondy `day15:probe` przeszły |
+| Warunek                                 | Wynik | Dowód                                                                            |
+| --------------------------------------- | ----- | -------------------------------------------------------------------------------- |
+| Worktree                                | PASS  | `/private/tmp/consultify-superadmin-day15`                                       |
+| Gałąź                                   | PASS  | `codex/superadmin-day15-20260826`                                                |
+| Tip przekazanej bazy                    | PASS  | `c71ce1dc2e1165cb81e06bc2b90abf15e2915bdb`                                       |
+| Marker `f0caf6a821` jest przodkiem tipa | PASS  | `git merge-base --is-ancestor` zakończył się kodem 0                             |
+| Instrukcja wiążąca                      | PASS  | 2608 linii                                                                       |
+| TRIANGLE_COMPLETENESS_VERDICT           | PASS  | 185 linii; trafienia TRI-MUST-07/08/11 obecne                                    |
+| SUPERADMIN_COMPLETENESS_REPORT          | PASS  | 334 linie; TRI-MUST-12 obecny                                                    |
+| OWNER_DECISION_LEDGER / DEC-65          | PASS  | wpis na linii 117                                                                |
+| PlatformOperationsView (fala 1)         | PASS  | 309 linii                                                                        |
+| Hooki                                   | PASS  | `core.hooksPath=.husky`                                                          |
+| Bezpieczne `node_modules`               | PASS  | nadzorca 2026-08-26 autoryzował odczyt zależności; symlink utworzony             |
+| Replay PostgreSQL przed zmianami        | PASS  | 839 migracji; powtórka `Applying migrations: 0`; dry-run `Pending migrations: 0` |
+| Zapis `settings` na PostgreSQL          | PASS  | PK `(key)`; INSERT/SELECT/DELETE sondy `day15:probe` przeszły                    |
 
 ## STOP — Blok 0 / zależności lokalne
 
@@ -53,23 +53,23 @@ Stan: **ROZSTRZYGNIĘTO 2026-08-26** — nadzorca jawnie autoryzował symlink ty
 
 ## Weryfikacja pięciu korekt z §1.4
 
-| Korekta | Wynik | Dowód skrócony |
-| --- | --- | --- |
-| 1 — TRI-MUST-12 istnieje | POTWIERDZONA | `STATUS_CHANGES_REQUIRING_CONFIRMATION`; `organization.status_changed` |
-| 2 — cztery trasy admin-data poza `:orgId` | POTWIERDZONA | route patterns `:eventId` / `:sessionId` |
-| 3 — sessions/all jest tenant-scoped, lecz bez roli | POTWIERDZONA | `WHERE u.organization_id = ?`; brak `requireOrgAdmin` przed zmianą |
-| 4 — dwa destrukcyjne IDOR-y + dwie trasy bez filtra | POTWIERDZONA | bezwarunkowe DELETE oraz zapytania `activity_logs`/`api_logs` bez WHERE |
-| 5 — middleware audytu istnieje, projekcja ma dwie nogi | POTWIERDZONA | `index.ts:1274`; `readTenantAdminAuditProjection` |
+| Korekta                                                | Wynik        | Dowód skrócony                                                          |
+| ------------------------------------------------------ | ------------ | ----------------------------------------------------------------------- |
+| 1 — TRI-MUST-12 istnieje                               | POTWIERDZONA | `STATUS_CHANGES_REQUIRING_CONFIRMATION`; `organization.status_changed`  |
+| 2 — cztery trasy admin-data poza `:orgId`              | POTWIERDZONA | route patterns `:eventId` / `:sessionId`                                |
+| 3 — sessions/all jest tenant-scoped, lecz bez roli     | POTWIERDZONA | `WHERE u.organization_id = ?`; brak `requireOrgAdmin` przed zmianą      |
+| 4 — dwa destrukcyjne IDOR-y + dwie trasy bez filtra    | POTWIERDZONA | bezwarunkowe DELETE oraz zapytania `activity_logs`/`api_logs` bez WHERE |
+| 5 — middleware audytu istnieje, projekcja ma dwie nogi | POTWIERDZONA | `index.ts:1274`; `readTenantAdminAuditProjection`                       |
 
 ## Testy stanu wyjściowego — przed
 
-| Test | Przed |
-| --- | --- |
-| `superadmin-organization-status-confirmation.test.ts` | 5/5 PASS |
-| `src/views/superadmin/__tests__` | PASS (pakiet) |
-| `cross-org-idor.test.ts` | **92 FAIL / 22 PASS — zastany baseline** |
-| `adminP32.routes.test.ts` | 30/30 PASS |
-| `check-list-canon` | 404 naruszenia / baseline 404 — brak wzrostu |
+| Test                                                  | Przed                                        |
+| ----------------------------------------------------- | -------------------------------------------- |
+| `superadmin-organization-status-confirmation.test.ts` | 5/5 PASS                                     |
+| `src/views/superadmin/__tests__`                      | PASS (pakiet)                                |
+| `cross-org-idor.test.ts`                              | **92 FAIL / 22 PASS — zastany baseline**     |
+| `adminP32.routes.test.ts`                             | 30/30 PASS                                   |
+| `check-list-canon`                                    | 404 naruszenia / baseline 404 — brak wzrostu |
 
 ## S.1 / S.2 — sesje bezpieczeństwa
 
@@ -79,18 +79,31 @@ Status: **ZROBIONE_WG_DoD — kod i request-level testy; realdb SELECT oczekuje 
 - Obie trasy DELETE najpierw rozwiązują zasób w organizacji z tokenu; obcy lub brakujący zasób daje 404.
 - Własną sesję można usunąć bez roli admina; cudzą lokalną sesję oraz wszystkie sesje użytkownika tylko jako OWNER/ADMIN.
 - Test własny: `day15.security.routes.test.ts` — 7/7 PASS przez supertest.
+- Realdb Q.3: obca sesja → HTTP 404; bezpośredni `SELECT` potwierdził, że wiersz nadal istnieje.
+
+## S.3 — cztery trasy admin-data
+
+Status: **ZROBIONE_WG_DoD**.
+
+- Cztery trasy wykonują load-then-check organizacji; obcy zasób jest maskowany jako 404.
+- UPDATE/DELETE mają dodatkowy predykat organizacji; zachowano jawny wyjątek `super_admin` zgodny z istniejącym routerem.
+- `apiAuthRateLimiter` dopięty do wszystkich czterech tras.
+- Front grep: brak konsumentów naprawianych destrukcyjnych tras; istniejący `AuditComplianceTab` używa bezpiecznej trasy z `:orgId`.
+- Test mock/request: `day15.admin-data.routes.test.ts` — 7/7 PASS.
+- Test realdb/request: `day15.cross-tenant.routes.pg.test.ts` — 3/3 PASS, faktycznie wykonany; po HTTP 404 bezpośrednie SELECT-y potwierdziły zachowanie obcej sesji i niezmieniony `security_events.resolved=0`.
 
 ## Zakres wykonany
 
-| Pozycja | Status |
-| --- | --- |
-| Blok 0: baza, marker, materiały, hooki | ZROBIONE_WG_DoD |
-| P.1–P.6 | NIE_ZACZĘTE |
-| T.1–T.3 | NIE_ZACZĘTE |
-| S.1–S.2 | ZROBIONE_WG_DoD (realdb Q.3 w toku) |
-| S.3–S.5 | NIE_ZACZĘTE |
-| A.1–A.4 | NIE_ZACZĘTE |
-| Q.1–Q.5 | NIE_ZACZĘTE |
+| Pozycja                                | Status                              |
+| -------------------------------------- | ----------------------------------- |
+| Blok 0: baza, marker, materiały, hooki | ZROBIONE_WG_DoD                     |
+| P.1–P.6                                | NIE_ZACZĘTE                         |
+| T.1–T.3                                | NIE_ZACZĘTE                         |
+| S.1–S.2                                | ZROBIONE_WG_DoD (realdb Q.3 w toku) |
+| S.3                                    | ZROBIONE_WG_DoD                     |
+| S.4–S.5                                | NIE_ZACZĘTE                         |
+| A.1–A.4                                | NIE_ZACZĘTE                         |
+| Q.1–Q.5                                | NIE_ZACZĘTE                         |
 
 ## Testy
 

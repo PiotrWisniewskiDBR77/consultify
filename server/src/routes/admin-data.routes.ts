@@ -277,6 +277,7 @@ router.get(
 router.put(
   '/security-events/:eventId/resolve',
   requireRole('super_admin', 'admin', 'owner'),
+  apiAuthRateLimiter,
   validateParams(EventIdParamSchema),
   validateBody(ResolveSecurityEventBodySchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -285,7 +286,18 @@ router.put(
 
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
-      return;
+    }
+
+    const event = await dbGet<{ organization_id: string | null }>(
+      'SELECT organization_id FROM security_events WHERE id = ? LIMIT 1',
+      [eventId],
+      { fallback: false }
+    );
+    if (
+      !event ||
+      (req.user?.role !== 'super_admin' && event.organization_id !== req.user?.organizationId)
+    ) {
+      return res.status(404).json({ error: 'Security event not found' });
     }
 
     const runResult = await dbRun(
@@ -498,11 +510,38 @@ router.get(
 router.delete(
   '/sessions/:sessionId',
   requireRole('super_admin', 'admin', 'owner'),
+  apiAuthRateLimiter,
   validateParams(SessionIdParamSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { sessionId } = req.params;
 
-    const result = await dbRun('DELETE FROM user_sessions WHERE id = ?', [sessionId]);
+    const session = await dbGet<{ organization_id: string | null }>(
+      `SELECT COALESCE(s.organization_id, u.organization_id) AS organization_id
+         FROM user_sessions s
+         JOIN users u ON u.id = s.user_id
+        WHERE s.id = ?
+        LIMIT 1`,
+      [sessionId],
+      { fallback: false }
+    );
+    if (
+      !session ||
+      (req.user?.role !== 'super_admin' && session.organization_id !== req.user?.organizationId)
+    ) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+
+    const result = await dbRun(
+      req.user?.role === 'super_admin'
+        ? 'DELETE FROM user_sessions WHERE id = ?'
+        : `DELETE FROM user_sessions
+            WHERE id = ?
+              AND EXISTS (
+                SELECT 1 FROM users u
+                 WHERE u.id = user_sessions.user_id AND u.organization_id = ?
+              )`,
+      req.user?.role === 'super_admin' ? [sessionId] : [sessionId, req.user?.organizationId]
+    );
     if (!result.success) {
       throw new Error(result.error || 'Failed to delete session');
     }
@@ -791,6 +830,7 @@ router.post(
 router.put(
   '/scheduled-events/:eventId',
   requireRole('super_admin', 'admin', 'owner'),
+  apiAuthRateLimiter,
   validateParams(ScheduledEventIdParamSchema),
   validateBody(UpdateScheduledEventBodySchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -807,6 +847,18 @@ router.put(
       projectId,
       attendees,
     } = req.body;
+
+    const event = await dbGet<{ organization_id: string | null }>(
+      'SELECT organization_id FROM scheduled_events WHERE id = ? LIMIT 1',
+      [eventId],
+      { fallback: false }
+    );
+    if (
+      !event ||
+      (req.user?.role !== 'super_admin' && event.organization_id !== req.user?.organizationId)
+    ) {
+      return res.status(404).json({ error: 'Scheduled event not found' });
+    }
 
     const updates: string[] = [];
     const params: unknown[] = [];
@@ -854,12 +906,13 @@ router.put(
 
     updates.push("updated_at = datetime('now')");
     params.push(eventId);
+    if (req.user?.role !== 'super_admin') params.push(req.user?.organizationId);
 
     const runResult = await dbRun(
       `
             UPDATE scheduled_events 
             SET ${updates.join(', ')}
-            WHERE id = ?
+            WHERE id = ?${req.user?.role === 'super_admin' ? '' : ' AND organization_id = ?'}
         `,
       params
     );
@@ -879,11 +932,29 @@ router.put(
 router.delete(
   '/scheduled-events/:eventId',
   requireRole('super_admin', 'admin', 'owner'),
+  apiAuthRateLimiter,
   validateParams(ScheduledEventIdParamSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { eventId } = req.params;
 
-    const result = await dbRun('DELETE FROM scheduled_events WHERE id = ?', [eventId]);
+    const event = await dbGet<{ organization_id: string | null }>(
+      'SELECT organization_id FROM scheduled_events WHERE id = ? LIMIT 1',
+      [eventId],
+      { fallback: false }
+    );
+    if (
+      !event ||
+      (req.user?.role !== 'super_admin' && event.organization_id !== req.user?.organizationId)
+    ) {
+      return res.status(404).json({ error: 'Scheduled event not found' });
+    }
+
+    const result = await dbRun(
+      req.user?.role === 'super_admin'
+        ? 'DELETE FROM scheduled_events WHERE id = ?'
+        : 'DELETE FROM scheduled_events WHERE id = ? AND organization_id = ?',
+      req.user?.role === 'super_admin' ? [eventId] : [eventId, req.user?.organizationId]
+    );
     if (!result.success) {
       throw new Error(result.error || 'Failed to delete event');
     }
