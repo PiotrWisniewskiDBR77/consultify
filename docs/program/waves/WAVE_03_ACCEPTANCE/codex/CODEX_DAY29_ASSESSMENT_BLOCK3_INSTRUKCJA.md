@@ -79,13 +79,13 @@ w całości — nie tylko „raczej nie", ale co do jednego znaku.**
 1. Punktem wyjścia jest **gałąź `codex/m03-admin-20260824`**, przypięta do
    commitu-markera podanego niżej.
 
-   **SHA markera: «MARKER_SHA»**
+   **SHA markera: 936842bd16**
 
-   > **Uwaga dla nadzorcy wydającego zlecenie:** placeholder `«MARKER_SHA»`
+   > **Uwaga dla nadzorcy wydającego zlecenie:** placeholder `936842bd16`
    > wiążesz PRZED wydaniem instrukcji Codexowi — wpisujesz w to miejsce tip
    > gałęzi `codex/m03-admin-20260824` z chwili wydania i commitujesz zmianę
    > osobnym commitem `docs(codex): bind day29 base marker <sha>`. Codex, który
-   > widzi w tym miejscu nadal `«MARKER_SHA»`, **wykonuje STOP całego dyżuru**
+   > widzi w tym miejscu nadal `936842bd16`, **wykonuje STOP całego dyżuru**
    > i nie zgaduje bazy.
 
 2. **Sprawdzasz marker PIERWSZĄ komendą dyżuru:**
@@ -94,7 +94,7 @@ w całości — nie tylko „raczej nie", ale co do jednego znaku.**
    cd <root-repo>
    git fetch --all --prune
    git log --oneline -25 codex/m03-admin-20260824
-   git merge-base --is-ancestor «MARKER_SHA» codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
+   git merge-base --is-ancestor 936842bd16 codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
    ```
 
 3. **Jeśli marker nie jest przodkiem tipa albo gałąź nie istnieje — STOP.**
@@ -107,7 +107,7 @@ w całości — nie tylko „raczej nie", ale co do jednego znaku.**
    **Reguła rozejścia (`DEC-2026-08-26-95`).** Jeżeli marker JEST przodkiem, ale
    tip uciekł do przodu (nadzorca scalił coś po związaniu markera) — **to nie
    jest STOP**. Startujesz **dokładnie z markera**, wypisujesz w raporcie
-   `git log --oneline «MARKER_SHA»..codex/m03-admin-20260824` i listę plików
+   `git log --oneline 936842bd16..codex/m03-admin-20260824` i listę plików
    rozejścia; scalenie z nowszym tipem wykonuje nadzorca przy odbiorze. Rebase
    w trakcie dyżuru: **ZAKAZANY**.
 
@@ -142,7 +142,7 @@ w całości — nie tylko „raczej nie", ale co do jednego znaku.**
    | `DAY27 NOT MERGED` (oczekiwane)                                  | Nic nie robisz. Twój zakres jest z nim rozłączny plikowo, **pod warunkiem że nie wchodzisz w `src/`** (★ ograniczenie krytyczne pkt 1–2). To jest jedyny mechanizm bezkolizyjności, jaki masz — i on jest w 100% pod Twoją kontrolą.                                                                                                                                                              |
    | `DAY27 MERGED`                                                   | Nadal nic nie robisz i nadal **nie wchodzisz w `src/`**. Zapisujesz fakt w „Korektach wobec instrukcji".                                                                                                                                                                                                                                                                                          |
    | `git diff` dnia 27 pokazuje **cokolwiek** w `server/**`          | **STOP przed rozpoczęciem §B.** Wypisz listę plików do raportu i czekaj na rozstrzygnięcie nadzorcy — mogłoby to oznaczać, że ktoś dotknął tras AI przed Tobą.                                                                                                                                                                                                                                    |
-   | Twój `git diff --name-only «MARKER_SHA»...HEAD` zawiera `src/**` | **Naruszenie ★ ograniczenia krytycznego = odrzucenie dyżuru.** Sprawdź to sam przed ostatnim commitem.                                                                                                                                                                                                                                                                                            |
+   | Twój `git diff --name-only 936842bd16...HEAD` zawiera `src/**` | **Naruszenie ★ ograniczenia krytycznego = odrzucenie dyżuru.** Sprawdź to sam przed ostatnim commitem.                                                                                                                                                                                                                                                                                            |
 
 5. **★ Weryfikacja stanu wejściowego (warunek wstępny, NIE formalność).**
    Sprawdzasz sam; wynik jest obowiązkową pozycją raportu. **Każda z tych komend
@@ -181,7 +181,7 @@ w całości — nie tylko „raczej nie", ale co do jednego znaku.**
 6. **Własna gałąź i własny worktree** (nigdy praca na `codex/m03-admin-20260824`):
 
    ```bash
-   git branch codex/assessment-day29-<data> «MARKER_SHA»
+   git branch codex/assessment-day29-<data> 936842bd16
    git worktree add /private/tmp/consultify-assessment-day29 codex/assessment-day29-<data>
    cd /private/tmp/consultify-assessment-day29
    ln -s /Users/piotrwisniewski/Developer/Consultify/node_modules node_modules   # DEC-86, TYLKO ODCZYT
@@ -191,7 +191,7 @@ w całości — nie tylko „raczej nie", ale co do jednego znaku.**
    nigdy wobec `HEAD~1`:
 
    ```bash
-   git diff --name-only «MARKER_SHA»...HEAD
+   git diff --name-only 936842bd16...HEAD
    ```
 
    Ta komenda ma w tym dokumencie własną nazwę — **„komenda bazowa"** — i wraca
@@ -207,7 +207,7 @@ w całości — nie tylko „raczej nie", ale co do jednego znaku.**
 | **Z4**  | **★ NIE CZYTASZ i NIE KOPIUJESZ wariantów WIP właściciela** (`PRESERVED_PRODUCT_WIP` / `NO_COPY`)                                                                                                                                                                                                                                                                 | Wymagania są w rejestrze uwag i decyzjach                                                                           |
 | **Z5**  | **★ Nie dotykasz katalogu `/Users/piotrwisniewski/Developer/Consultify` — ani do zapisu, ani do odczytu, ani `git`, ani `cat`, ani `grep -r`.** Jedyny dozwolony kontakt: **symlink `node_modules` (odczyt)** wg `DEC-86`                                                                                                                                         | Chroniony, brudny worktree właściciela — praca własna Piotra                                                        |
 | Z6      | **Nie dotykasz cudzych worktree** w `/private/tmp/consultify-*` — w chwili wystawienia żyją **64**, w tym `consultify-assessment-day25`, `consultify-assessment-day27`, `consultify-meetings-day28`, `consultify-day29-instrukcja`                                                                                                                                | Cudze worktree, część w aktywnym użyciu                                                                             |
-| Z7      | **Nie zajmujesz portów sesyjnych.** W chwili wystawienia NASŁUCHUJĄ m.in.: 3026, 5000, 5037, **5432**, **5474**, **5507**, 6379, 7000, 7679, 7768, 8080, 11434. **Twój kontener PG = 5511.** Zakazane wprost, nawet gdy akurat wolne: **5499** (dzień 25), **5474** (Tools), **5498** (mgmtreports). Port zajęty → bierzesz pierwszy wolny i wpisujesz do raportu | Cudze dyżury pracują równolegle; 5499/5474/5498 bywają wskrzeszane przez odbiorców                                  |
+| Z7      | **Nie zajmujesz portów sesyjnych.** W chwili wystawienia NASŁUCHUJĄ m.in.: 3026, 5000, 5037, **5432**, **5474**, **5507**, 6379, 7000, 7679, 7768, 8080, 11434. **Twój kontener PG = 5512.** Zakazane wprost, nawet gdy akurat wolne: **5499** (dzień 25), **5474** (Tools), **5498** (mgmtreports). Port zajęty → bierzesz pierwszy wolny i wpisujesz do raportu | Cudze dyżury pracują równolegle; 5499/5474/5498 bywają wskrzeszane przez odbiorców                                  |
 | Z8      | **Zero interakcji z Railway** — brak `railway` CLI, brak produkcyjnych env, brak redeployu, brak zdalnych migracji/seedów (`DEC-65`)                                                                                                                                                                                                                              | Produkcja/demo poza zakresem                                                                                        |
 | **Z9**  | **Żadnej bazy poza jednorazowym lokalnym kontenerem tego dyżuru** — nigdy demo/staging/produkcja, nigdy cudza retained-DB. **KOREKTA `DEC-2026-08-26-98`: Z9 przerywa DANĄ CZYNNOŚĆ, nie cały dyżur** — patrz ramka pod tabelą                                                                                                                                    | „dane demo = twarz produktu" (`DEC-65`)                                                                             |
 | **Z10** | **Zero nowych flag funkcyjnych. Zero zmian wartości domyślnej istniejącej flagi.** Także zero „tymczasowej flagi na czas testu". Dotyczy w szczególności `drdHttpSourceOfTruthV1`, `drdMethodWorkspaceSliceV1`, `methodWorkspaceShellV1`, `ff_assessmentReportView`, `DEMO_ORG_ID`, `enableStubRoutes`                                                            | CLAUDE.md reguła 9; flagi frontowe są w `src/` = poza zakresem                                                      |
@@ -252,7 +252,7 @@ więc każdy pomiar §B bez realnego PG jest bezwartościowy. Dlatego **każde**
 uruchomienie testu dotykającego bazy ma env **w tej samej linii**:
 
 ```bash
-DATABASE_URL="postgres://postgres:cx@localhost:5511/cx_day29" \
+DATABASE_URL="postgres://postgres:cx@localhost:5512/cx_day29" \
 DB_TYPE=postgres NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false \
 npx vitest run <plik>
 ```
@@ -514,7 +514,7 @@ Pozycja jest zrobiona, gdy spełnia **wszystkie dwanaście**:
    z org z tokenu (§1.2 poz. 5).
 9. **★ Kontrola negatywna roli** — tam, gdzie trasa ma bramkę roli, żądanie bez
    roli jest odrzucone i nie zostawia śladu mutacji.
-10. **Realny PG w jednorazowym Dockerze** (port **5511**, obraz
+10. **Realny PG w jednorazowym Dockerze** (port **5512**, obraz
     **`pgvector/pgvector:pg16`** — `postgres:15` **NIE przechodzi migracji**,
     brak rozszerzenia `vector`) z pełnymi migracjami, z dowodem celu połączenia
     (Z19), ze sprzątnięciem kontenera **i wolumenów**.
@@ -548,7 +548,7 @@ zakresu. Podanie zawężonego wyboru = naruszenie Z23.**
    - **(b) na `HEAD` po ostatnim commicie** → różnica to czerwone **WPROWADZONE**.
      Obie liczby idą do raportu, w formacie `X PASS / Y FAIL / Z SKIPPED`, per plik.
 4. Uruchom **minimum** poniższą listę. `ENV` niżej oznacza dosłownie
-   `DATABASE_URL="postgres://postgres:cx@localhost:5511/cx_day29" DB_TYPE=postgres NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false`
+   `DATABASE_URL="postgres://postgres:cx@localhost:5512/cx_day29" DB_TYPE=postgres NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false`
    **w tej samej linii komendy** (Z19):
 
    ```bash
@@ -913,7 +913,7 @@ scripts/check-list-canon.sh · scripts/check-artefakt.sh   (dotyczą frontu; Cie
 ## BLOK 0 — START (wykonaj po kolei, ZANIM napiszesz pierwszą linię kodu)
 
 1. **Marker i gałąź** — §0.1 pkt 2, 6. Wynik obu komend do raportu.
-   **Jeżeli w §0.1 pkt 1 widnieje nadal `«MARKER_SHA»` — STOP całego dyżuru.**
+   **Jeżeli w §0.1 pkt 1 widnieje nadal `936842bd16` — STOP całego dyżuru.**
 
 2. **★ Sprawdzenie kolizji z dniami 25/27/28** — §0.1 pkt 4, trzy komendy,
    tabela rozstrzygnięć. **`DAY25 NOT MERGED` = STOP całego dyżuru.**
@@ -934,7 +934,7 @@ scripts/check-list-canon.sh · scripts/check-artefakt.sh   (dotyczą frontu; Cie
    ```bash
    docker run -d --name cx-day29-pg \
      -e POSTGRES_PASSWORD=cx -e POSTGRES_DB=cx_day29 \
-     -p 5511:5432 pgvector/pgvector:pg16
+     -p 5512:5432 pgvector/pgvector:pg16
    sleep 8
    docker exec cx-day29-pg psql -U postgres -d cx_day29 -c "SELECT current_database(), inet_server_port();"
    docker port cx-day29-pg
@@ -942,17 +942,17 @@ scripts/check-list-canon.sh · scripts/check-artefakt.sh   (dotyczą frontu; Cie
 
    **Obraz `pgvector/pgvector:pg16` jest OBOWIĄZKOWY** (`DEC-124`). `postgres:15`
    nie ma rozszerzenia `vector` i **nie przechodzi migracji** — stracisz godzinę
-   na diagnozę cudzego problemu. **Port 5511**; zajęty → pierwszy wolny, ale
+   na diagnozę cudzego problemu. **Port 5512**; zajęty → pierwszy wolny, ale
    **nigdy 5499 / 5474 / 5498** (Z7).
 
 5. **Pełne migracje projektu — dwa przebiegi + dry-run.**
 
    ```bash
-   DATABASE_URL="postgres://postgres:cx@localhost:5511/cx_day29" DB_TYPE=postgres NODE_ENV=test \
+   DATABASE_URL="postgres://postgres:cx@localhost:5512/cx_day29" DB_TYPE=postgres NODE_ENV=test \
      npx tsx server/scripts/migrate.postgres.ts --strict 2>&1 | tail -20   # przebieg 1
-   DATABASE_URL="postgres://postgres:cx@localhost:5511/cx_day29" DB_TYPE=postgres NODE_ENV=test \
+   DATABASE_URL="postgres://postgres:cx@localhost:5512/cx_day29" DB_TYPE=postgres NODE_ENV=test \
      npx tsx server/scripts/migrate.postgres.ts --strict 2>&1 | tail -5    # przebieg 2: MUSI być 0
-   DATABASE_URL="postgres://postgres:cx@localhost:5511/cx_day29" DB_TYPE=postgres NODE_ENV=test \
+   DATABASE_URL="postgres://postgres:cx@localhost:5512/cx_day29" DB_TYPE=postgres NODE_ENV=test \
      npx tsx server/scripts/migrate.postgres.ts --dry-run 2>&1 | tail -5   # Pending: 0
    ```
 
@@ -1145,7 +1145,7 @@ wykonanie kodu, jest naruszeniem — łącznie z „przy okazji poprawiłem bł�
    dosłowne ciała odpowiedzi:
 
    ```bash
-   DATABASE_URL="postgres://postgres:cx@localhost:5511/cx_day29" DB_TYPE=postgres NODE_ENV=test \
+   DATABASE_URL="postgres://postgres:cx@localhost:5512/cx_day29" DB_TYPE=postgres NODE_ENV=test \
      RUN_DB_TESTS=1 MOCK_DB=false \
      npx vitest run server/src/services/assessment/__tests__/assessmentAiPartner.day25.pg.test.ts
    ```
@@ -1192,7 +1192,7 @@ Próg decyzyjny: **60 minut**.
   na „zakazany plik" — **żadna z nich nie blokuje §A**. `aiAssessmentPartnerService.ts`
   jest w ramce **WOLNO** i nic poza budżetem nie może go zablokować.
 - **STOP §A nie zwalnia Cię z §B, §C, §D.** Robisz je normalnie.
-- **Przy STOP-ie przywracasz plik do stanu z markera** (`git checkout «MARKER_SHA»
+- **Przy STOP-ie przywracasz plik do stanu z markera** (`git checkout 936842bd16
 -- server/src/services/aiAssessmentPartnerService.ts`) albo commitujesz częściowy
   postęp **z powrotem założonym `@ts-nocheck`** — nigdy nie zostawiasz pliku
   bez `@ts-nocheck` i z błędami.
@@ -1794,7 +1794,7 @@ linii (mało prawdopodobne — §A rusza serwis, §B trasy), rozstrzyga §B.
 3. Raport `ASSESSMENT_DAY29_REPORT_20260827.md` wg szablonu §9.
 4. `prettier` na wszystkim, `git status --porcelain` czysty.
 5. Sprzątanie kontenera i wolumenów (BLOK 0 pkt 10).
-6. Ostatnie sprawdzenie: `git diff --name-only «MARKER_SHA»...HEAD | grep -E '^(src|dev-render|public)/'`
+6. Ostatnie sprawdzenie: `git diff --name-only 936842bd16...HEAD | grep -E '^(src|dev-render|public)/'`
    **MUSI być PUSTE.**
 
 ### Zasada nadrzędna kolejności
@@ -1822,7 +1822,7 @@ tylko za nieuczciwy powód STOP-u**.
 
 ## ★ Oświadczenie o zakresie src/ (★ ograniczenie krytyczne)
 
-git diff --name-only «MARKER_SHA»...HEAD | grep -E '^(src|dev-render|public)/'
+git diff --name-only 936842bd16...HEAD | grep -E '^(src|dev-render|public)/'
 → <MUSI być PUSTE; wklej dosłownie>
 
 ## ★ Kolizje z dniami 25/27/28 (§0.1 pkt 4)
@@ -1832,15 +1832,15 @@ DAY27 MERGED / NOT MERGED: <wynik>
 Pliki dnia 27 poza src/dev-render/public/docs: <lista albo BRAK>
 Pliki dnia 28 kolidujące z moim zakresem: <lista albo BRAK>
 
-## Marker: «MARKER_SHA» — POTWIERDZONY / BRAK
+## Marker: 936842bd16 — POTWIERDZONY / BRAK
 
-<wynik obu komend; przy rozejściu: git log «MARKER_SHA»..codex/m03-admin-20260824 + lista plików>
+<wynik obu komend; przy rozejściu: git log 936842bd16..codex/m03-admin-20260824 + lista plików>
 
 ## ★ Dowód celu połączenia (Z19)
 
 <dosłowny wynik SELECT current_database(), inet_server_port() + docker port cx-day29-pg>
 Migracje: przebieg 1 <N> / przebieg 2 <0> / dry-run Pending <0>
-Port: 5511 (albo <inny> — powód). Kontener cx-day29-pg usunięty: TAK/NIE. Wolumeny: <wynik>
+Port: 5512 (albo <inny> — powód). Kontener cx-day29-pg usunięty: TAK/NIE. Wolumeny: <wynik>
 
 ## ★ WERYFIKACJA ERRATY §1.2 — dwanaście punktów
 
@@ -2040,7 +2040,7 @@ npx tsc --noEmit --target ES2022 --module NodeNext --moduleResolution NodeNext \
 npx vitest run <plik>
 
 # ★ test celowany Z bazą — ZAWSZE PIĘĆ ZMIENNYCH W TEJ SAMEJ LINII (Z19)
-DATABASE_URL="postgres://postgres:cx@localhost:5511/cx_day29" \
+DATABASE_URL="postgres://postgres:cx@localhost:5512/cx_day29" \
 DB_TYPE=postgres NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false \
 npx vitest run <plik>
 
@@ -2050,7 +2050,7 @@ ls server/migrations | grep '^2026118'        # MUSI być puste
 
 # migracje — jednorazowy kontener, dowód (1)(2)(3), sprzątanie kontenera I wolumenów
 docker run -d --name cx-day29-pg -e POSTGRES_PASSWORD=cx -e POSTGRES_DB=cx_day29 \
-  -p 5511:5432 pgvector/pgvector:pg16
+  -p 5512:5432 pgvector/pgvector:pg16
 docker rm -f cx-day29-pg && docker volume prune -f
 
 # ★ grep osiągalności — ZAWSZE po CAŁYM repo, nigdy tylko po src/ (Z20)
@@ -2060,10 +2060,10 @@ grep -rn "<symbol>" server/src src tests
 git add -f tests/integration/routes/assessment.day29.*.postgres.integration.test.ts
 
 # komenda bazowa (NIE do HEAD~1)
-git diff --name-only «MARKER_SHA»...HEAD
+git diff --name-only 936842bd16...HEAD
 
 # ★ OSTATNIE SPRAWDZENIE PRZED ODDANIEM — MUSI BYĆ PUSTE
-git diff --name-only «MARKER_SHA»...HEAD | grep -E '^(src|dev-render|public)/'
+git diff --name-only 936842bd16...HEAD | grep -E '^(src|dev-render|public)/'
 ```
 
 ### 10.2. Dwanaście rzeczy, które najłatwiej zepsuć
