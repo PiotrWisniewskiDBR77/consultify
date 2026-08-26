@@ -88,14 +88,14 @@ const permissionsService = {
     orgId: string,
     allowedRoles: BaseRole[]
   ): Promise<{ allowed: boolean; role: BaseRole | null }> {
-    const role = await this.getUserRole(baseId, userId);
+    const role = await permissionsService.getUserRole(baseId, userId);
 
     if (role) {
       return { allowed: allowedRoles.includes(role), role };
     }
 
     // Fallback: no tp_base_members entries — check legacy org/creator access
-    const hasLegacyAccess = await this.canAccessBase(userId, orgId, baseId);
+    const hasLegacyAccess = await permissionsService.canAccessBase(userId, orgId, baseId);
     if (hasLegacyAccess) {
       logger.warn(
         '[Permissions] Legacy fallback used — user has no tp_base_members entry, granting base_owner via org/creator access',
@@ -188,7 +188,7 @@ const permissionsService = {
    * Check if user can modify a base — requires data_editor or higher.
    */
   async canModifyBase(userId: string, orgId: string, baseId: string): Promise<boolean> {
-    const { allowed } = await this.requireRole(baseId, userId, orgId, DATA_WRITE_ROLES);
+    const { allowed } = await permissionsService.requireRole(baseId, userId, orgId, DATA_WRITE_ROLES);
     return allowed;
   },
 
@@ -196,7 +196,7 @@ const permissionsService = {
    * Check if user can modify schema — requires schema_editor or base_owner.
    */
   async canModifySchema(userId: string, orgId: string, baseId: string): Promise<boolean> {
-    const { allowed } = await this.requireRole(baseId, userId, orgId, SCHEMA_WRITE_ROLES);
+    const { allowed } = await permissionsService.requireRole(baseId, userId, orgId, SCHEMA_WRITE_ROLES);
     return allowed;
   },
 
