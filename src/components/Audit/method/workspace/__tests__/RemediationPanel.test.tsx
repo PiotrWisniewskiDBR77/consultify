@@ -95,7 +95,12 @@ function finding(overrides: Partial<WorkspaceFindingDetail> = {}): WorkspaceFind
   };
 }
 
-function renderPanel(capabilities: WorkspaceCapability[], currentUserId: string | null, f = finding()) {
+function renderPanel(
+  capabilities: WorkspaceCapability[],
+  currentUserId: string | null,
+  f = finding(),
+  nameForUser?: (userId: string | null | undefined) => string | null
+) {
   const onChanged = vi.fn();
   const utils = render(
     <RemediationPanel
@@ -105,6 +110,7 @@ function renderPanel(capabilities: WorkspaceCapability[], currentUserId: string 
       currentUserId={currentUserId}
       finding={f}
       onChanged={onChanged}
+      nameForUser={nameForUser}
     />
   );
   return { ...utils, onChanged };
@@ -144,6 +150,29 @@ describe('RemediationPanel', () => {
     await waitFor(() =>
       expect(mockedPerformVerification).toHaveBeenCalledWith('verification-1', expect.objectContaining({ result: 'effective' }))
     );
+  });
+
+  // Gap pack 2026-08-26 (item 5b): the "Właściciel / termin" link showed
+  // the raw `ownerUserId` UUID instead of a name.
+  it('without a nameForUser resolver, falls back to the raw ownerUserId (V1 caller, unaffected by this fix)', () => {
+    renderPanel(['verification.perform'], 'user-reviewer');
+    const ownerLink = screen.getByTestId('chain-link-wlasciciel-termin');
+    expect(ownerLink.textContent).toContain('user-owner');
+  });
+
+  it('with a nameForUser resolver (V2 passes its existing member-name lookup), shows the resolved name instead of the raw UUID', () => {
+    const nameForUser = vi.fn((userId: string | null | undefined) => (userId === 'user-owner' ? 'Marek Zieliński' : null));
+    renderPanel(['verification.perform'], 'user-reviewer', finding(), nameForUser);
+    const ownerLink = screen.getByTestId('chain-link-wlasciciel-termin');
+    expect(ownerLink.textContent).toContain('Marek Zieliński');
+    expect(ownerLink.textContent).not.toContain('user-owner');
+  });
+
+  it('falls back to the raw UUID if the resolver has no name for that user (e.g. a since-removed member)', () => {
+    const nameForUser = vi.fn(() => null);
+    renderPanel(['verification.perform'], 'user-reviewer', finding(), nameForUser);
+    const ownerLink = screen.getByTestId('chain-link-wlasciciel-termin');
+    expect(ownerLink.textContent).toContain('user-owner');
   });
 
   it('gates "close finding" on the finding.close capability, with a visible reason', () => {
