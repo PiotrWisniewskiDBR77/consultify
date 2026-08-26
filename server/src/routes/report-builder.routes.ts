@@ -81,6 +81,7 @@ import * as reportsPresModelService from '../services/v8/reportsPresModelService
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
+import { registerPdfFonts } from '../utils/pdfFonts.js';
 import { exportsDir, uploadsDir } from '../utils/storagePaths.js';
 
 // ==========================================
@@ -3245,15 +3246,23 @@ interface AssessmentMatrixData {
 }
 
 /**
- * Write PDF for report builder report
+ * Write PDF for report builder report.
+ *
+ * Exported (in addition to being used internally by the route handlers
+ * below) so DEC-132/133's Polish-diacritics fix has a smoke test that calls
+ * the real renderer directly (server/src/routes/__tests__/reportBuilderPdf.polishFonts.test.ts)
+ * rather than only the lower-level `registerPdfFonts` unit — no behavior
+ * change, this was previously module-private.
  */
-const writeReportBuilderPdf = async (
+export const writeReportBuilderPdf = async (
   report: any,
   sections: any[],
   filePath: string
 ): Promise<void> => {
   // bufferPages enables adding page numbers after content generation
   const doc = new PDFDocument({ margin: 48, size: 'A4', bufferPages: true });
+  // DEC-132/133: default pdfkit Helvetica has no Polish diacritics.
+  registerPdfFonts(doc);
   const stream = fs.createWriteStream(filePath);
   doc.pipe(stream);
 

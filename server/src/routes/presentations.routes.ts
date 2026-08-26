@@ -192,6 +192,7 @@ import { applyExportApprovalGate } from '../services/v8/exportApprovalGate.js';
 import * as reportsPresModelService from '../services/v8/reportsPresModelService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { registerPdfFonts } from '../utils/pdfFonts.js';
 import { exportsDir } from '../utils/storagePaths.js';
 import { canOverrideQualityGate, enforceQualityGateForExport } from './presentationExportGate.js';
 
@@ -2958,6 +2959,8 @@ router.get(
     try {
       const pdfMargin = 48;
       const doc = new PDFDocument({ margin: pdfMargin, size: 'A4' });
+      // DEC-132/133: default pdfkit Helvetica has no Polish diacritics.
+      registerPdfFonts(doc);
       // Buffered (not `doc.pipe(res)`) so the FULL rendered bytes can be
       // hashed for the governed export receipt before anything is sent to
       // the client — see `completePresentationExport` below, which requires

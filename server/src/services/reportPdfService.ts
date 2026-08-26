@@ -22,6 +22,8 @@
 
 import PDFDocument from 'pdfkit';
 
+import { PDF_FONT, registerPdfFonts } from '../utils/pdfFonts.js';
+
 /** RAG status accent colors — mirror StatusReportService.RAG_STATUS. */
 const RAG_COLOR: Record<string, string> = {
   GREEN: '#16A34A',
@@ -149,7 +151,7 @@ function ragColor(status: string | undefined): string {
 function drawRagPill(doc: PDFKit.PDFDocument, status: string, x: number, y: number): number {
   const label = (status ?? 'NA').toUpperCase();
   const color = ragColor(label);
-  doc.font('Helvetica-Bold').fontSize(9);
+  doc.font(PDF_FONT.bold).fontSize(9);
   const padX = 6;
   const textWidth = doc.widthOfString(label);
   const pillWidth = textWidth + padX * 2;
@@ -165,7 +167,7 @@ function drawRagPill(doc: PDFKit.PDFDocument, status: string, x: number, y: numb
 function drawSectionHeading(doc: PDFKit.PDFDocument, text: string): void {
   if (doc.y > doc.page.height - doc.page.margins.bottom - 60) doc.addPage();
   doc.moveDown(0.6);
-  doc.fillColor(INK).font('Helvetica-Bold').fontSize(13).text(text);
+  doc.fillColor(INK).font(PDF_FONT.bold).fontSize(13).text(text);
   const y = doc.y + 2;
   doc
     .moveTo(doc.page.margins.left, y)
@@ -178,12 +180,12 @@ function drawSectionHeading(doc: PDFKit.PDFDocument, text: string): void {
 }
 
 function drawParagraph(doc: PDFKit.PDFDocument, text: string): void {
-  doc.fillColor(INK).font('Helvetica').fontSize(10).text(text, { align: 'left' });
+  doc.fillColor(INK).font(PDF_FONT.regular).fontSize(10).text(text, { align: 'left' });
   doc.moveDown(0.3);
 }
 
 function drawBulletList(doc: PDFKit.PDFDocument, items: string[]): void {
-  doc.font('Helvetica').fontSize(10).fillColor(INK);
+  doc.font(PDF_FONT.regular).fontSize(10).fillColor(INK);
   for (const item of items) {
     doc.text(`•  ${item}`, { indent: 8, align: 'left' });
   }
@@ -211,6 +213,8 @@ export async function renderReportPdf(input: ReportPdfInput): Promise<Buffer> {
           Subject: `Status Report · ${report.period}`,
         },
       });
+      // DEC-132/133: default pdfkit Helvetica has no Polish diacritics.
+      registerPdfFonts(doc);
 
       const chunks: Buffer[] = [];
       doc.on('data', (chunk: Buffer) => chunks.push(chunk));
@@ -218,19 +222,19 @@ export async function renderReportPdf(input: ReportPdfInput): Promise<Buffer> {
       doc.on('error', (err: Error) => reject(err));
 
       // ---- Header block -------------------------------------------------
-      doc.fillColor(MUTED).font('Helvetica-Bold').fontSize(9).text('STATUS REPORT');
+      doc.fillColor(MUTED).font(PDF_FONT.bold).fontSize(9).text('STATUS REPORT');
       doc.moveDown(0.2);
-      doc.fillColor(INK).font('Helvetica-Bold').fontSize(20).text(report.title);
+      doc.fillColor(INK).font(PDF_FONT.bold).fontSize(20).text(report.title);
       doc.moveDown(0.3);
 
-      doc.font('Helvetica').fontSize(10).fillColor(MUTED);
+      doc.font(PDF_FONT.regular).fontSize(10).fillColor(MUTED);
       doc.text(`Period: ${report.period}`, { continued: false });
       doc.text(`Generated: ${report.generatedAt.toISOString().slice(0, 19).replace('T', ' ')} UTC`);
       doc.moveDown(0.4);
 
       // Overall RAG roll-up.
       const overallY = doc.y;
-      doc.fillColor(INK).font('Helvetica-Bold').fontSize(11).text('Overall status: ', {
+      doc.fillColor(INK).font(PDF_FONT.bold).fontSize(11).text('Overall status: ', {
         continued: true,
       });
       const pillX = doc.x;
@@ -270,7 +274,7 @@ export async function renderReportPdf(input: ReportPdfInput): Promise<Buffer> {
             doc.page.width - doc.page.margins.right - 56,
             rowY
           );
-          doc.fillColor(INK).font('Helvetica-Bold').fontSize(11);
+          doc.fillColor(INK).font(PDF_FONT.bold).fontSize(11);
           doc.text(section.name || 'Section', doc.page.margins.left, rowY, {
             width: doc.page.width - doc.page.margins.left - doc.page.margins.right - 64,
             lineBreak: false,
@@ -279,11 +283,11 @@ export async function renderReportPdf(input: ReportPdfInput): Promise<Buffer> {
           const highlights = asLines(section.highlights);
           const issues = asLines(section.issues);
           if (highlights.length > 0) {
-            doc.font('Helvetica-Bold').fontSize(9).fillColor(MUTED).text('Highlights');
+            doc.font(PDF_FONT.bold).fontSize(9).fillColor(MUTED).text('Highlights');
             drawBulletList(doc, highlights);
           }
           if (issues.length > 0) {
-            doc.font('Helvetica-Bold').fontSize(9).fillColor(MUTED).text('Issues');
+            doc.font(PDF_FONT.bold).fontSize(9).fillColor(MUTED).text('Issues');
             drawBulletList(doc, issues);
           }
           doc.moveDown(0.2);
@@ -325,7 +329,7 @@ export async function renderReportPdf(input: ReportPdfInput): Promise<Buffer> {
         doc.switchToPage(range.start + i);
         const footerY = doc.page.height - doc.page.margins.bottom + 18;
         doc
-          .font('Helvetica')
+          .font(PDF_FONT.regular)
           .fontSize(8)
           .fillColor(MUTED)
           .text(

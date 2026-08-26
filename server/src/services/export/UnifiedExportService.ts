@@ -26,6 +26,7 @@
  * markdown table in a slide body).
  */
 
+import { PDF_FONT, registerPdfFonts } from '../../utils/pdfFonts.js';
 import {
   type InlineRun,
   runsToPlainText,
@@ -138,6 +139,10 @@ class UnifiedExportService {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const PDFDocument = (await import('pdfkit')).default as any;
     const doc = new PDFDocument(options);
+    // DEC-132/133: default pdfkit Helvetica has no Polish diacritics. This is
+    // the shared low-level primitive (partnerToolkitResources.ts renders its
+    // 'pl' language variant through it), so every caller gets the fix here.
+    registerPdfFonts(doc);
     const chunks: Buffer[] = [];
     doc.on('data', (chunk: Buffer) => chunks.push(chunk));
     const finished = new Promise<Buffer>((resolve, reject) => {
@@ -184,18 +189,18 @@ class UnifiedExportService {
       const fontName = run.code
         ? 'Courier'
         : run.bold && run.italic
-          ? 'Helvetica-BoldOblique'
+          ? PDF_FONT.boldItalic
           : run.bold
-            ? 'Helvetica-Bold'
+            ? PDF_FONT.bold
             : run.italic
-              ? 'Helvetica-Oblique'
-              : 'Helvetica';
+              ? PDF_FONT.italic
+              : PDF_FONT.regular;
       doc.font(fontName).fillColor(run.href ? '#1d4ed8' : '#111827');
       doc.text(run.text || '', { ...opts, continued });
     });
     // Reset font + colour after the line so subsequent paragraphs aren't
     // styled by the last run's flags.
-    doc.font('Helvetica').fillColor('#111827');
+    doc.font(PDF_FONT.regular).fillColor('#111827');
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -229,7 +234,7 @@ class UnifiedExportService {
           doc.moveDown(0.2);
           doc.font('Courier').fontSize(10).fillColor('#1e293b');
           doc.text(tok.text, { width: 500 });
-          doc.font('Helvetica').fontSize(11).fillColor('#111827');
+          doc.font(PDF_FONT.regular).fontSize(11).fillColor('#111827');
           doc.moveDown(0.3);
           break;
         case 'blockquote':
@@ -247,9 +252,9 @@ class UnifiedExportService {
           // Render table as plain rows — pdfkit has no native table primitive,
           // and a hand-rolled grid is heavyweight. A pipe-separated layout
           // with bold header preserves structure for a consultant scan.
-          doc.fontSize(10).font('Helvetica-Bold');
+          doc.fontSize(10).font(PDF_FONT.bold);
           doc.text(tok.header.map((cell) => runsToPlainText(cell)).join('  |  '));
-          doc.font('Helvetica');
+          doc.font(PDF_FONT.regular);
           for (const row of tok.rows) {
             doc.text(row.map((cell) => runsToPlainText(cell)).join('  |  '));
           }
