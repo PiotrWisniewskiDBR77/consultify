@@ -55,7 +55,11 @@ import {
   materializeProposal,
   rejectProposal,
 } from '../artifactHandoff/handoffSpineService.js';
-import { getArtifactByOrigin, registerArtifactOrigin } from '../v8/artifactRegistryService.js';
+import {
+  getArtifactByOrigin,
+  getArtifactForUser,
+  registerArtifactOrigin,
+} from '../v8/artifactRegistryService.js';
 import { createWave5Artifact, getWave5Artifact } from '../wave5ArtifactRuntimeService.js';
 
 // ---------------------------------------------------------------------------
@@ -271,6 +275,8 @@ export async function getMeetingNote(input: {
   organizationId: string;
   meetingId: string;
   noteId: string;
+  userId?: string;
+  roleKey?: string | null;
 }): Promise<MeetingNoteRecord | null> {
   await ensureMeetingBoundaryTables();
   const row = await dbGet<NoteRow>(
@@ -294,12 +300,28 @@ export async function getMeetingNote(input: {
       WHERE n.id = ? AND n.organization_id = ? AND n.meeting_id = ? LIMIT 1`,
     [input.noteId, input.organizationId, input.meetingId]
   );
-  return row ? mapNoteRow(row) : null;
+  if (!row) return null;
+  if (row.material_artifact_id && input.userId) {
+    const artifact = await getArtifactForUser({
+      organizationId: input.organizationId,
+      artifactId: row.material_artifact_id,
+      userId: input.userId,
+      roleKey: input.roleKey,
+    });
+    row.material_title = artifact
+      ? artifact.resolvedTitle || artifact.titleSnapshot || row.material_title || null
+      : null;
+  } else {
+    row.material_title = null;
+  }
+  return mapNoteRow(row);
 }
 
 export async function listMeetingNotesForMeeting(input: {
   organizationId: string;
   meetingId: string;
+  userId?: string;
+  roleKey?: string | null;
 }): Promise<MeetingNoteRecord[]> {
   await ensureMeetingBoundaryTables();
   const rows = await dbAll<NoteRow>(
@@ -324,7 +346,30 @@ export async function listMeetingNotesForMeeting(input: {
       ORDER BY n.created_at DESC`,
     [input.organizationId, input.meetingId]
   );
-  return (rows || []).map(mapNoteRow);
+  const materialAccess = new Map<string, Promise<string | null>>();
+  const resolveTitle = (row: NoteRow): Promise<string | null> => {
+    if (!row.material_artifact_id || !input.userId) return Promise.resolve(null);
+    const cached = materialAccess.get(row.material_artifact_id);
+    if (cached) return cached;
+    const resolved = getArtifactForUser({
+      organizationId: input.organizationId,
+      artifactId: row.material_artifact_id,
+      userId: input.userId,
+      roleKey: input.roleKey,
+    }).then((artifact) =>
+      artifact
+        ? artifact.resolvedTitle || artifact.titleSnapshot || row.material_title || null
+        : null
+    );
+    materialAccess.set(row.material_artifact_id, resolved);
+    return resolved;
+  };
+  return Promise.all(
+    (rows || []).map(async (row) => {
+      row.material_title = await resolveTitle(row);
+      return mapNoteRow(row);
+    })
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -538,6 +583,7 @@ export interface DecideMeetingNoteInput {
   decidedBy: string;
   action: 'approve' | 'reject';
   reason?: string | null;
+  roleKey?: string | null;
 }
 
 export interface DecideMeetingNoteResult {
@@ -747,7 +793,13 @@ export async function decideMeetingNote(
   const noteId = requireNonEmpty(input.noteId, 'noteId');
   const decidedBy = requireNonEmpty(input.decidedBy, 'decidedBy');
 
-  const note = await getMeetingNote({ organizationId, meetingId, noteId });
+  const note = await getMeetingNote({
+    organizationId,
+    meetingId,
+    noteId,
+    userId: decidedBy,
+    roleKey: input.roleKey,
+  });
   if (!note || !note.proposalId) return null;
 
   if (input.action === 'reject') {
