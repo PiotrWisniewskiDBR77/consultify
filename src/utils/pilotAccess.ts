@@ -1,4 +1,5 @@
 import { isPilotRestrictedRole } from './roleGuards';
+import { isBetaClosed } from './betaAccess';
 
 // VTS pilot scope: Chat + Interview plus My Work (Ideas stays locked via
 // isPilotAllowedMyWorkTab), Initiatives, Execution and Settings.
@@ -68,7 +69,7 @@ export function getPilotLockedAreaDetail(
     normalized === 'MODULE_WORDY' ||
     normalized === 'MODULE_EXCELE' ||
     normalized === 'MODULE_PREZENTACJE_GEN' ||
-    normalized === 'MODULE_MEETING' ||
+    (normalized === 'MODULE_MEETING' && isBetaClosed('MODULE_MEETING')) ||
     normalized === 'MCP_IRIS' ||
     normalized === 'MCP_MARKETPLACE'
   ) {

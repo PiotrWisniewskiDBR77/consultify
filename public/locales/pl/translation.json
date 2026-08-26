@@ -25608,6 +25608,7 @@
       "description": "To spotkanie nie istnieje albo nie masz do niego dostępu."
     },
     "operatorBriefError": "Nie udało się załadować briefu operatora.",
+    "operatorBriefUnavailable": "Brief operatora nie jest dostępny.",
     "emptyState": {
       "description": "Zaplanuj pierwsze spotkanie, aby śledzić agendę i follow-upy."
     },

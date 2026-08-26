@@ -13,6 +13,33 @@ export interface MeetingFollowUp {
   status: FollowUpStatus;
 }
 
+export interface MeetingDecisionRecord {
+  id: string;
+  organizationId: string;
+  meetingId: string;
+  statement: string;
+  rationale: string;
+  decidedBy: string | null;
+  decidedAt: string | null;
+  status: 'recorded' | 'superseded';
+  sourceKind: 'manual' | 'note' | 'legacy';
+  sourceNoteId: string | null;
+  sourceIndex: number | null;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MeetingFollowUpRecord extends MeetingFollowUp {
+  organizationId: string | null;
+  meetingId: string;
+  ownerUserId: string | null;
+  dueAt: string | null;
+  sourceKind: 'manual' | 'note' | 'legacy';
+  sourceNoteId: string | null;
+  sourceIndex: number | null;
+}
+
 export interface MeetingRecord {
   id: string;
   organizationId: string;
@@ -431,4 +458,272 @@ export async function updateMeetingFollowUpStatus(input: {
     input.meetingId,
   ]);
   return getMeeting({ organizationId: input.organizationId, meetingId: input.meetingId });
+}
+
+type DecisionRecordRow = {
+  id: string;
+  organization_id: string;
+  meeting_id: string;
+  statement: string;
+  rationale: string | null;
+  decided_by: string | null;
+  decided_at: string | null;
+  status: string | null;
+  source_kind: string | null;
+  source_note_id: string | null;
+  source_index: number | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+};
+
+type FollowUpRecordRow = FollowUpRow & {
+  organization_id: string | null;
+  owner_user_id: string | null;
+  due_at: string | null;
+  source_kind: string | null;
+  source_note_id: string | null;
+  source_index: number | null;
+};
+
+function mapDecisionRecord(row: DecisionRecordRow): MeetingDecisionRecord {
+  return {
+    id: row.id,
+    organizationId: row.organization_id,
+    meetingId: row.meeting_id,
+    statement: row.statement,
+    rationale: row.rationale || '',
+    decidedBy: row.decided_by,
+    decidedAt: row.decided_at,
+    status: row.status === 'superseded' ? 'superseded' : 'recorded',
+    sourceKind:
+      row.source_kind === 'note' || row.source_kind === 'legacy' ? row.source_kind : 'manual',
+    sourceNoteId: row.source_note_id,
+    sourceIndex: row.source_index,
+    createdBy: row.created_by,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function mapFollowUpRecord(row: FollowUpRecordRow): MeetingFollowUpRecord {
+  return {
+    id: row.id,
+    organizationId: row.organization_id,
+    meetingId: row.meeting_id,
+    title: row.title,
+    owner: row.owner || '',
+    ownerUserId: row.owner_user_id,
+    dueAt: row.due_at,
+    status: row.status === 'done' ? 'done' : 'open',
+    sourceKind:
+      row.source_kind === 'note' || row.source_kind === 'legacy' ? row.source_kind : 'manual',
+    sourceNoteId: row.source_note_id,
+    sourceIndex: row.source_index,
+  };
+}
+
+export async function listMeetingDecisionRecords(input: {
+  organizationId: string;
+  meetingId: string;
+}): Promise<MeetingDecisionRecord[]> {
+  const rows = await dbAll<DecisionRecordRow>(
+    `SELECT * FROM meeting_decisions
+     WHERE organization_id = ? AND meeting_id = ? ORDER BY created_at ASC, id ASC`,
+    [input.organizationId, input.meetingId]
+  );
+  return (rows || []).map(mapDecisionRecord);
+}
+
+export async function getMeetingDecisionRecord(input: {
+  organizationId: string;
+  meetingId: string;
+  decisionId: string;
+}): Promise<MeetingDecisionRecord | null> {
+  const row = await dbGet<DecisionRecordRow>(
+    `SELECT * FROM meeting_decisions
+     WHERE id = ? AND organization_id = ? AND meeting_id = ? LIMIT 1`,
+    [input.decisionId, input.organizationId, input.meetingId]
+  );
+  return row ? mapDecisionRecord(row) : null;
+}
+
+export async function createMeetingDecisionRecord(input: {
+  organizationId: string;
+  meetingId: string;
+  statement: string;
+  rationale?: string;
+  decidedBy?: string | null;
+  createdBy: string;
+}): Promise<MeetingDecisionRecord> {
+  const id = `meeting-decision-${uuidv4()}`;
+  const now = new Date().toISOString();
+  await dbRun(
+    `INSERT INTO meeting_decisions (
+       id, organization_id, meeting_id, statement, rationale, decided_by,
+       decided_at, status, source_kind, created_by, created_at, updated_at
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, 'recorded', 'manual', ?, ?, ?)`,
+    [
+      id,
+      input.organizationId,
+      input.meetingId,
+      input.statement.trim(),
+      String(input.rationale || '').trim(),
+      input.decidedBy || null,
+      now,
+      input.createdBy,
+      now,
+      now,
+    ]
+  );
+  const created = await getMeetingDecisionRecord({ ...input, decisionId: id });
+  if (!created) throw new Error('Failed to read back meeting decision');
+  return created;
+}
+
+export async function updateMeetingDecisionRecord(input: {
+  organizationId: string;
+  meetingId: string;
+  decisionId: string;
+  statement?: string;
+  rationale?: string;
+  status?: 'recorded' | 'superseded';
+}): Promise<MeetingDecisionRecord | null> {
+  const existing = await getMeetingDecisionRecord(input);
+  if (!existing) return null;
+  await dbRun(
+    `UPDATE meeting_decisions SET statement = ?, rationale = ?, status = ?, updated_at = ?
+     WHERE id = ? AND organization_id = ? AND meeting_id = ?`,
+    [
+      input.statement?.trim() || existing.statement,
+      input.rationale === undefined ? existing.rationale : input.rationale.trim(),
+      input.status || existing.status,
+      new Date().toISOString(),
+      input.decisionId,
+      input.organizationId,
+      input.meetingId,
+    ]
+  );
+  return getMeetingDecisionRecord(input);
+}
+
+export async function deleteMeetingDecisionRecord(input: {
+  organizationId: string;
+  meetingId: string;
+  decisionId: string;
+}): Promise<boolean> {
+  if (!(await getMeetingDecisionRecord(input))) return false;
+  await dbRun(
+    `DELETE FROM meeting_decisions WHERE id = ? AND organization_id = ? AND meeting_id = ?`,
+    [input.decisionId, input.organizationId, input.meetingId]
+  );
+  return (await getMeetingDecisionRecord(input)) === null;
+}
+
+export async function listMeetingFollowUpRecords(input: {
+  organizationId: string;
+  meetingId: string;
+}): Promise<MeetingFollowUpRecord[]> {
+  const rows = await dbAll<FollowUpRecordRow>(
+    `SELECT id, meeting_id, organization_id, title, owner, owner_user_id, due_at,
+            status, source_kind, source_note_id, source_index
+     FROM meeting_follow_ups
+     WHERE meeting_id = ? AND (organization_id = ? OR organization_id IS NULL)
+     ORDER BY created_at ASC, id ASC`,
+    [input.meetingId, input.organizationId]
+  );
+  return (rows || []).map(mapFollowUpRecord);
+}
+
+export async function getMeetingFollowUpRecord(input: {
+  organizationId: string;
+  meetingId: string;
+  followUpId: string;
+}): Promise<MeetingFollowUpRecord | null> {
+  const row = await dbGet<FollowUpRecordRow>(
+    `SELECT id, meeting_id, organization_id, title, owner, owner_user_id, due_at,
+            status, source_kind, source_note_id, source_index
+     FROM meeting_follow_ups
+     WHERE id = ? AND meeting_id = ? AND (organization_id = ? OR organization_id IS NULL)
+     LIMIT 1`,
+    [input.followUpId, input.meetingId, input.organizationId]
+  );
+  return row ? mapFollowUpRecord(row) : null;
+}
+
+export async function createMeetingFollowUpRecord(input: {
+  organizationId: string;
+  meetingId: string;
+  title: string;
+  owner?: string;
+  ownerUserId?: string | null;
+  dueAt?: string | null;
+}): Promise<MeetingFollowUpRecord> {
+  const id = `meeting-fu-${uuidv4()}`;
+  const now = new Date().toISOString();
+  await dbRun(
+    `INSERT INTO meeting_follow_ups (
+       id, meeting_id, organization_id, title, owner, owner_user_id, due_at,
+       status, source_kind, created_at, updated_at
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, 'open', 'manual', ?, ?)`,
+    [
+      id,
+      input.meetingId,
+      input.organizationId,
+      input.title.trim(),
+      String(input.owner || '').trim(),
+      input.ownerUserId || null,
+      input.dueAt || null,
+      now,
+      now,
+    ]
+  );
+  const created = await getMeetingFollowUpRecord({ ...input, followUpId: id });
+  if (!created) throw new Error('Failed to read back meeting follow-up');
+  return created;
+}
+
+export async function updateMeetingFollowUpRecord(input: {
+  organizationId: string;
+  meetingId: string;
+  followUpId: string;
+  title?: string;
+  owner?: string;
+  ownerUserId?: string | null;
+  dueAt?: string | null;
+  status?: FollowUpStatus;
+}): Promise<MeetingFollowUpRecord | null> {
+  const existing = await getMeetingFollowUpRecord(input);
+  if (!existing) return null;
+  await dbRun(
+    `UPDATE meeting_follow_ups
+     SET title = ?, owner = ?, owner_user_id = ?, due_at = ?, status = ?, updated_at = ?
+     WHERE id = ? AND meeting_id = ? AND (organization_id = ? OR organization_id IS NULL)`,
+    [
+      input.title?.trim() || existing.title,
+      input.owner === undefined ? existing.owner : input.owner.trim(),
+      input.ownerUserId === undefined ? existing.ownerUserId : input.ownerUserId,
+      input.dueAt === undefined ? existing.dueAt : input.dueAt,
+      input.status || existing.status,
+      new Date().toISOString(),
+      input.followUpId,
+      input.meetingId,
+      input.organizationId,
+    ]
+  );
+  return getMeetingFollowUpRecord(input);
+}
+
+export async function deleteMeetingFollowUpRecord(input: {
+  organizationId: string;
+  meetingId: string;
+  followUpId: string;
+}): Promise<boolean> {
+  if (!(await getMeetingFollowUpRecord(input))) return false;
+  await dbRun(
+    `DELETE FROM meeting_follow_ups
+     WHERE id = ? AND meeting_id = ? AND (organization_id = ? OR organization_id IS NULL)`,
+    [input.followUpId, input.meetingId, input.organizationId]
+  );
+  return (await getMeetingFollowUpRecord(input)) === null;
 }
