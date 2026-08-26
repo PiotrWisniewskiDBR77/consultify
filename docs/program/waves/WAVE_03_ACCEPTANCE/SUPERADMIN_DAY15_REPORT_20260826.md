@@ -133,6 +133,40 @@ STOP: nie dodano `suspended` do formularzy. Propozycja: ujednolicić zawieszenie
 
 STOP: nie dodano egzekwowania `suspended` podczas FREEZE; wymaga decyzji właściciela i osobnego odbioru.
 
+## A.1 — inwentarz mutacji Admin
+
+Pomiar potwierdził punkt odniesienia: **83 mutacje / 20 jawnych pisarzy semantycznych / 63 bez pisarza semantycznego**. Globalny `auditLogMiddleware` jest zamontowany w `server/src/index.ts:1274`, ale pomija żądania bez `organizationId` lub `userId` (`auditLog.middleware.ts:374-376`).
+
+| Plik                           | Mutacji | Audytowanych semantycznie | Bez |
+| ------------------------------ | ------: | ------------------------: | --: |
+| adminP32                       |      20 |                        19 |   1 |
+| enterprise-compliance          |      10 |                         0 |  10 |
+| access-control                 |       6 |                         0 |   6 |
+| ai-governance                  |       6 |                         0 |   6 |
+| admin-data                     |       6 |                         0 |   6 |
+| teams                          |       5 |                         0 |   5 |
+| ai-settings                    |       5 |                         1 |   4 |
+| domains / backup               |       8 |                         0 |   8 |
+| admin-bulk                     |       3 |                         0 |   3 |
+| break-glass / service-accounts |       4 |                         0 |   4 |
+| pozostałe 8 plików             |      10 |                         0 |  10 |
+
+Ranking: break-glass → service accounts → bulk role change → access requests → domains.
+
+## A.2 — trzecia noga projekcji
+
+Status: **ZROBIONE_WG_DoD**.
+
+- Projekcja czyta teraz tenant-scoped `audit_events WHERE org_id = ?`, normalizuje oba warianty kolumn i nie fabrykuje ryzyka (`risk_score/risk_level = null`).
+- Istniejący limit 1000 przed paginacją pozostaje jako jawny dług, bez rozszerzania zakresu.
+- Dodano addytywny indeks `(org_id, ts DESC)` w `20260826_day15_audit_events_org_ts_index.sql`.
+- Migracja: **MIGRATION_PREPARED / REMOTE_EXECUTION_NOT_AUTHORIZED**; kod jest kompatybilny ze schematem bez indeksu. Lokalnie: pierwsze zastosowanie 1, powtórka 0, dry-run 0.
+- Testy: adminP32 mock 30/30 PASS; zastany realdb IAM 1/1 PASS bez zmian; nowy realdb 1/1 PASS — lokalny wiersz widoczny, obcy wykluczony, ryzyko null.
+
+## A.3 / A.4
+
+A.3: **NIE_ZACZĘTE**. A.4: stan przed 20/83 (24,1%) pisarzy semantycznych. Po A.2 projekcja widzi także globalne `audit_events`, ale nie zawyżam tego do 83/83: gwarancja jest fail-open i zależy od obecności kontekstu org/user. Kontrakt AC-005 pozostaje **NOT PROVEN**.
+
 ## Zakres wykonany
 
 | Pozycja                                | Status                              |
@@ -146,7 +180,10 @@ STOP: nie dodano egzekwowania `suspended` podczas FREEZE; wymaga decyzji właśc
 | S.3                                    | ZROBIONE_WG_DoD                     |
 | S.4                                    | ZROBIONE_WG_DoD                     |
 | S.5                                    | CZĘŚCIOWO / BRAK_API                |
-| A.1–A.4                                | NIE_ZACZĘTE                         |
+| A.1                                    | ZROBIONE_WG_DoD                     |
+| A.2                                    | ZROBIONE_WG_DoD                     |
+| A.3                                    | NIE_ZACZĘTE                         |
+| A.4                                    | CZĘŚCIOWO / NOT PROVEN              |
 | Q.1–Q.5                                | NIE_ZACZĘTE                         |
 
 ## Testy
