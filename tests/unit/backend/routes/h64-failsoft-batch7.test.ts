@@ -6,7 +6,7 @@
  * handlers that batches 1-6 (see h64-failsoft*.test.ts, knowledge-failsoft.test.ts)
  * did NOT cover — different endpoints within the same or sibling routers, per
  * docs/standards/ERROR_HANDLING_STANDARD.md §1/§3 ("Zero wycieku wnętrza"):
- *   - assessment/assessments.routes.ts (11 catch blocks)
+ *   - assessment/assessment-hub.routes.ts (live canonical read)
  *   - assessment/assessment-ai.routes.ts (26)
  *   - assessment-reports.routes.ts (23, incl. 3x notConfigured(details.message))
  *   - assessment/assessment-workflow.routes.ts (21)
@@ -31,13 +31,29 @@ afterEach(() => {
 const SECRET_LEAK = 'password authentication failed for user "consultinity_prod" at 10.0.0.7:5432';
 
 // ============================================================================
-// 1. assessment/assessments.routes.ts — GET /my-assessments
+// 1. assessment/assessment-hub.routes.ts — GET /my-assessments
 // ============================================================================
 describe('/api/assessments/my-assessments — read stays fail-closed (H6.4 batch7)', () => {
   beforeEach(() => {
+    vi.doMock('../../../../server/src/middleware/auth.middleware.js', () => ({
+      verifyToken: (req: any, _res: any, next: any) => {
+        req.user = { id: 'user-1', role: 'ADMIN', organizationId: 'org-1' };
+        next();
+      },
+    }));
+    vi.doMock('../../../../server/src/middleware/demoGuard.middleware.js', () => ({
+      demoContextMiddleware: (_req: any, _res: any, next: any) => next(),
+    }));
+    vi.doMock('../../../../server/src/middleware/rateLimiting.middleware.js', () => ({
+      apiAuthRateLimiter: (_req: any, _res: any, next: any) => next(),
+    }));
     vi.doMock('../../../../server/src/database/index.js', () => ({
       getDatabase: () => ({
-        all: (_sql: string, _params: unknown[], cb: (err: Error | null, rows?: unknown[]) => void) => {
+        all: (
+          _sql: string,
+          _params: unknown[],
+          cb: (err: Error | null, rows?: unknown[]) => void
+        ) => {
           cb(new Error(SECRET_LEAK));
         },
       }),
@@ -50,9 +66,8 @@ describe('/api/assessments/my-assessments — read stays fail-closed (H6.4 batch
       default: { error: loggerErrorSpy, warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
     }));
 
-    const { default: assessmentsRouter } = await import(
-      '../../../../server/src/routes/assessment/assessments.routes.js'
-    );
+    const { default: assessmentsRouter } =
+      await import('../../../../server/src/routes/assessment/assessment-hub.routes.js');
     const app = express();
     app.use(express.json());
     app.use((req: any, _res, next) => {
@@ -64,7 +79,7 @@ describe('/api/assessments/my-assessments — read stays fail-closed (H6.4 batch
     const res = await request(app).get('/api/assessments/my-assessments');
 
     expect(res.status).toBe(500);
-    expect(res.body).toHaveProperty('code', 'ASSESSMENTS_FETCH_ASSESSMENTS_FAILED');
+    expect(res.body).toHaveProperty('code', 'ASSESSMENT_HUB_FETCH_ASSESSMENTS_FAILED');
 
     const bodyText = JSON.stringify(res.body);
     expect(bodyText).not.toContain(SECRET_LEAK);
@@ -95,9 +110,8 @@ describe('/api/assessment/:projectId/ai/suggest-justification — AI POST stays 
       default: { error: loggerErrorSpy, warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
     }));
 
-    const { default: assessmentAiRouter } = await import(
-      '../../../../server/src/routes/assessment/assessment-ai.routes.js'
-    );
+    const { default: assessmentAiRouter } =
+      await import('../../../../server/src/routes/assessment/assessment-ai.routes.js');
     const app = express();
     app.use(express.json());
     app.use((req: any, _res, next) => {
@@ -139,9 +153,8 @@ describe('/api/public/report/:token/pdf — public download stays fail-closed (H
       default: { error: loggerErrorSpy, warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
     }));
 
-    const { default: reportBuilderPublicRouter } = await import(
-      '../../../../server/src/routes/report-builder-public.routes.js'
-    );
+    const { default: reportBuilderPublicRouter } =
+      await import('../../../../server/src/routes/report-builder-public.routes.js');
     const app = express();
     app.use(express.json());
     // NOTE: intentionally no auth middleware mounted — this route is public.
