@@ -5,7 +5,7 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import { Pool } from 'pg';
 import request from 'supertest';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 const databaseUrl = process.env.DATABASE_URL || '';
 const enabled =
@@ -18,6 +18,24 @@ process.env.NODE_ENV = 'test';
 process.env.DB_TYPE = 'postgres';
 process.env.MOCK_DB = 'false';
 
+// FIX-4(a): the SuperAdmin platform surface is gated by its own JWT check and
+// capability system (verifySuperAdmin / requireSuperAdminCapability), which is
+// orthogonal to what this measurement is about — whether that surface's SQL
+// (admin_audit_logs only) sees a row a semantic writer put in audit_events.
+// Bypass the gate, keep every query real against the same RealPG database.
+vi.mock('../../middleware/superAdmin.middleware.js', () => ({
+  verifySuperAdmin: (_req: unknown, _res: unknown, next: () => void) => next(),
+  requireSuperAdminCapability:
+    () => (_req: unknown, _res: unknown, next: () => void) =>
+      next(),
+}));
+vi.mock('../../middleware/rateLimiting.middleware.js', () => ({
+  apiAuthRateLimiter: (_req: unknown, _res: unknown, next: () => void) => next(),
+}));
+vi.mock('../../middleware/superadminAuditMonitor.middleware.js', () => ({
+  superadminAuditMonitor: (_req: unknown, _res: unknown, next: () => void) => next(),
+}));
+
 describe.skipIf(!enabled)('Day 22 high-risk Admin semantic audit on RealPG', () => {
   const org = randomUUID();
   const foreignOrg = randomUUID();
@@ -27,8 +45,10 @@ describe.skipIf(!enabled)('Day 22 high-risk Admin semantic audit on RealPG', () 
   const pool = new Pool({ connectionString: databaseUrl });
   let app: express.Express;
   let token: string;
+  let memberToken: string;
 
   const auth = () => ({ Authorization: `Bearer ${token}` });
+  const memberAuth = () => ({ Authorization: `Bearer ${memberToken}` });
   const auditRows = async (action: string) =>
     (
       await pool.query(
@@ -54,6 +74,44 @@ describe.skipIf(!enabled)('Day 22 high-risk Admin semantic audit on RealPG', () 
   };
   const restoreAuditWrites = async () => {
     await pool.query('DROP TRIGGER IF EXISTS day22_reject_audit ON audit_events');
+  };
+  // FIX-1 coverage: force the admin_sessions INSERT itself to fail (not the audit
+  // write) so createSession falls through to its minimal-schema fallback, which
+  // never sets session_type — the route's independent readback must catch that.
+  const rejectSessionInsert = async (reason: string) => {
+    await pool.query(`
+      CREATE OR REPLACE FUNCTION pg_temp.day22_reject_session_insert() RETURNS trigger AS $$
+      BEGIN
+        IF NEW.break_glass_reason = '${reason}' THEN RAISE EXCEPTION 'DAY22_SESSION_INSERT_FAILURE'; END IF;
+        RETURN NEW;
+      END;
+      $$ LANGUAGE plpgsql;
+      CREATE TRIGGER day22_reject_session_insert BEFORE INSERT ON admin_sessions
+      FOR EACH ROW EXECUTE FUNCTION pg_temp.day22_reject_session_insert();
+    `);
+  };
+  const restoreSessionInserts = async () => {
+    await pool.query('DROP TRIGGER IF EXISTS day22_reject_session_insert ON admin_sessions');
+  };
+  const insertOwnedBreakGlassSession = async (reason: string) => {
+    const id = randomUUID();
+    await pool.query(
+      `INSERT INTO admin_sessions
+       (id,admin_user_id,user_id,session_token,expires_at,session_type,organization_id,is_active,break_glass_reason,approved_by,created_by)
+       VALUES ($1,$2,$2,$3,NOW()+INTERVAL '1 hour','break_glass',$4,1,$5,$6,$2)`,
+      [id, owner, randomUUID(), org, reason, approver]
+    );
+    return id;
+  };
+  const insertOwnedServiceAccount = async (name: string) => {
+    const inserted = await pool.query(
+      `INSERT INTO tp_service_accounts
+       (organization_id,name,token_hash,token_prefix,scopes,created_by)
+       VALUES ($1,$2,'hash','prefix',ARRAY['records:read'],$3)
+       RETURNING id`,
+      [org, name, owner]
+    );
+    return inserted.rows[0].id as string;
   };
   const fiveTableCounts = async () => {
     const result = await pool.query(
@@ -91,6 +149,7 @@ describe.skipIf(!enabled)('Day 22 high-risk Admin semantic audit on RealPG', () 
     const breakGlass = (await import('../admin/break-glass.routes.js')).default;
     const serviceAccounts = (await import('../admin/service-accounts.routes.js')).default;
     const auditProjection = (await import('../adminP32.routes.js')).default;
+    const superAdminRoutes = (await import('../superadmin.routes.js')).default;
     const { verifyToken } = await import('../../middleware/auth.middleware.js');
     const { default: auditLogMiddleware } = await import('../../middleware/auditLog.middleware.js');
     app = express();
@@ -99,6 +158,7 @@ describe.skipIf(!enabled)('Day 22 high-risk Admin semantic audit on RealPG', () 
     app.use('/api/admin/break-glass', breakGlass);
     app.use('/api/admin/service-accounts', serviceAccounts);
     app.use('/api/admin', auditProjection);
+    app.use('/api/superadmin', superAdminRoutes);
     token = jwt.sign(
       {
         id: owner,
@@ -106,6 +166,18 @@ describe.skipIf(!enabled)('Day 22 high-risk Admin semantic audit on RealPG', () 
         organizationId: org,
         email: `${owner}@test.invalid`,
         role: 'OWNER',
+      },
+      secret,
+      { algorithm: 'HS256', expiresIn: '10m' }
+    );
+    // ACTIVE member with role MEMBER (no admin capability) — for scenario (b).
+    memberToken = jwt.sign(
+      {
+        id: approver,
+        userId: approver,
+        organizationId: org,
+        email: `${approver}@test.invalid`,
+        role: 'MEMBER',
       },
       secret,
       { algorithm: 'HS256', expiresIn: '10m' }
@@ -174,13 +246,13 @@ describe.skipIf(!enabled)('Day 22 high-risk Admin semantic audit on RealPG', () 
   });
 
   it('returns an honest empty validation result and writes neither resource nor audit row', async () => {
-    const before = (await auditRows('service_account.created')).length;
+    const before = await fiveTableCounts();
     const response = await request(app)
       .post('/api/admin/service-accounts')
       .set(auth())
       .send({ name: '', scopes: [] });
     expect(response.status).toBe(400);
-    expect((await auditRows('service_account.created')).length).toBe(before);
+    expect(await fiveTableCounts()).toEqual(before);
   });
 
   it('reports that service-account creation was applied when its audit write fails', async () => {
@@ -215,14 +287,14 @@ describe.skipIf(!enabled)('Day 22 high-risk Admin semantic audit on RealPG', () 
       [foreignOrg, foreignOwner]
     );
     const id = inserted.rows[0].id;
-    const before = (await auditRows('service_account.revoked')).length;
+    const before = await fiveTableCounts();
     const response = await request(app).delete(`/api/admin/service-accounts/${id}`).set(auth());
     expect(response.status).toBe(404);
     expect(
       (await pool.query('SELECT COUNT(*)::int AS n FROM tp_service_accounts WHERE id=$1', [id]))
         .rows[0].n
     ).toBe(1);
-    expect((await auditRows('service_account.revoked')).length).toBe(before);
+    expect(await fiveTableCounts()).toEqual(before);
   });
 
   it('revokes an owned service account and records the confirmed deletion', async () => {
@@ -287,9 +359,10 @@ describe.skipIf(!enabled)('Day 22 high-risk Admin semantic audit on RealPG', () 
     );
   });
 
-  it('reports that break-glass creation was applied when its audit write fails', async () => {
+  it('reports break-glass creation as NOT applied and revokes the compensated session when its audit write fails (FIX-2)', async () => {
     await rejectAuditAction('break_glass_session.created');
     try {
+      const auditBefore = (await auditRows('break_glass_session.created')).length;
       const response = await request(app)
         .post('/api/admin/break-glass/sessions')
         .set(auth())
@@ -297,16 +370,38 @@ describe.skipIf(!enabled)('Day 22 high-risk Admin semantic audit on RealPG', () 
       expect(response.status).toBe(503);
       expect(response.body).toMatchObject({
         code: 'AUDIT_UNAVAILABLE',
-        operationApplied: true,
+        operationApplied: false,
       });
       const resource = await pool.query(
-        `SELECT COUNT(*)::int AS n FROM admin_sessions
-          WHERE organization_id=$1 AND break_glass_reason='Day 22 forced audit failure'`,
+        `SELECT is_active FROM admin_sessions
+          WHERE organization_id=$1 AND break_glass_reason='Day 22 forced audit failure'
+          ORDER BY created_at DESC LIMIT 1`,
         [org]
       );
-      expect(resource.rows[0].n).toBe(1);
+      expect(resource.rows).toHaveLength(1);
+      // FIX-2: the session was created then compensated (revoked) — never left
+      // live-and-unaudited, which is exactly the TRI-MUST-08 risk.
+      expect(resource.rows[0].is_active).toBe(0);
+      expect((await auditRows('break_glass_session.created')).length).toBe(auditBefore);
     } finally {
       await restoreAuditWrites();
+    }
+  });
+
+  it('returns 409 with zero audit rows when the admin_sessions INSERT itself fails (FIX-1)', async () => {
+    await rejectSessionInsert('Day 22 forced INSERT failure');
+    try {
+      const before = await fiveTableCounts();
+      const auditBefore = (await auditRows('break_glass_session.created')).length;
+      const response = await request(app)
+        .post('/api/admin/break-glass/sessions')
+        .set(auth())
+        .send({ approvedBy: approver, breakGlassReason: 'Day 22 forced INSERT failure' });
+      expect(response.status).toBe(409);
+      expect((await auditRows('break_glass_session.created')).length).toBe(auditBefore);
+      expect(await fiveTableCounts()).toEqual(before);
+    } finally {
+      await restoreSessionInserts();
     }
   });
 
@@ -318,7 +413,7 @@ describe.skipIf(!enabled)('Day 22 high-risk Admin semantic audit on RealPG', () 
        VALUES ($1,$2,$2,$3,NOW()+INTERVAL '1 hour','break_glass',$4,1)`,
       [foreignSession, foreignOwner, randomUUID(), foreignOrg]
     );
-    const before = (await auditRows('break_glass_session.revoked')).length;
+    const before = await fiveTableCounts();
     const response = await request(app)
       .delete(`/api/admin/break-glass/sessions/${foreignSession}`)
       .set(auth());
@@ -327,7 +422,219 @@ describe.skipIf(!enabled)('Day 22 high-risk Admin semantic audit on RealPG', () 
       (await pool.query('SELECT is_active FROM admin_sessions WHERE id=$1', [foreignSession]))
         .rows[0].is_active
     ).toBe(1);
-    expect((await auditRows('break_glass_session.revoked')).length).toBe(before);
+    expect(await fiveTableCounts()).toEqual(before);
+  });
+
+  describe('DEC-124 boundary scenario matrix (a-d x 4 routes)', () => {
+    describe('break-glass create', () => {
+      it('(a) 401 without a token', async () => {
+        const response = await request(app)
+          .post('/api/admin/break-glass/sessions')
+          .send({ approvedBy: approver, breakGlassReason: 'Scenario matrix coverage reason' });
+        expect(response.status).toBe(401);
+      });
+
+      it('(b) 403 for an active member without admin capability', async () => {
+        const response = await request(app)
+          .post('/api/admin/break-glass/sessions')
+          .set(memberAuth())
+          .send({ approvedBy: owner, breakGlassReason: 'Scenario matrix coverage reason' });
+        expect(response.status).toBe(403);
+      });
+
+      it('(c) 403 ADMIN_BOUNDARY_VIOLATION when ?orgId differs from the token', async () => {
+        const response = await request(app)
+          .post(`/api/admin/break-glass/sessions?orgId=${foreignOrg}`)
+          .set(auth())
+          .send({ approvedBy: approver, breakGlassReason: 'Scenario matrix coverage reason' });
+        expect(response.status).toBe(403);
+        expect(response.body).toMatchObject({ code: 'ADMIN_BOUNDARY_VIOLATION' });
+      });
+
+      it('(d) ignores a foreign organizationId in the body and audits under the token org', async () => {
+        const response = await request(app)
+          .post('/api/admin/break-glass/sessions')
+          .set(auth())
+          .send({
+            approvedBy: approver,
+            breakGlassReason: 'Scenario matrix body org spoof attempt',
+            organizationId: foreignOrg,
+          });
+        expect(response.status).toBe(201);
+        const created = await pool.query(
+          `SELECT id FROM admin_sessions
+            WHERE organization_id=$1 AND break_glass_reason='Scenario matrix body org spoof attempt'`,
+          [org]
+        );
+        expect(created.rows).toHaveLength(1);
+        const rows = await auditRows('break_glass_session.created');
+        const row = rows.find((r) => r.resource_id === created.rows[0].id);
+        expect(row).toBeDefined();
+        expect(row.org_id).toBe(org);
+        expect(row.org_id).not.toBe(foreignOrg);
+      });
+    });
+
+    describe('break-glass revoke', () => {
+      it('(a) 401 without a token', async () => {
+        const response = await request(app).delete(
+          `/api/admin/break-glass/sessions/${randomUUID()}`
+        );
+        expect(response.status).toBe(401);
+      });
+
+      it('(b) 403 for an active member without admin capability', async () => {
+        const id = await insertOwnedBreakGlassSession('Scenario matrix revoke role fixture');
+        const response = await request(app)
+          .delete(`/api/admin/break-glass/sessions/${id}`)
+          .set(memberAuth());
+        expect(response.status).toBe(403);
+      });
+
+      it('(c) 403 ADMIN_BOUNDARY_VIOLATION when ?orgId differs from the token', async () => {
+        const id = await insertOwnedBreakGlassSession('Scenario matrix revoke boundary fixture');
+        const response = await request(app)
+          .delete(`/api/admin/break-glass/sessions/${id}?orgId=${foreignOrg}`)
+          .set(auth());
+        expect(response.status).toBe(403);
+        expect(response.body).toMatchObject({ code: 'ADMIN_BOUNDARY_VIOLATION' });
+      });
+
+      it('(d) ignores a foreign organizationId in the body and audits under the token org', async () => {
+        const id = await insertOwnedBreakGlassSession('Scenario matrix revoke body org spoof');
+        const response = await request(app)
+          .delete(`/api/admin/break-glass/sessions/${id}`)
+          .set(auth())
+          .send({ organizationId: foreignOrg });
+        expect(response.status).toBe(200);
+        const rows = await auditRows('break_glass_session.revoked');
+        const row = rows.find((r) => r.resource_id === id);
+        expect(row).toBeDefined();
+        expect(row.org_id).toBe(org);
+        expect(row.org_id).not.toBe(foreignOrg);
+      });
+    });
+
+    describe('service-account create', () => {
+      it('(a) 401 without a token', async () => {
+        const response = await request(app)
+          .post('/api/admin/service-accounts')
+          .send({ name: 'matrix-a', scopes: ['records:read'] });
+        expect(response.status).toBe(401);
+      });
+
+      it('(b) 403 for an active member without admin capability', async () => {
+        const response = await request(app)
+          .post('/api/admin/service-accounts')
+          .set(memberAuth())
+          .send({ name: 'matrix-b', scopes: ['records:read'] });
+        expect(response.status).toBe(403);
+      });
+
+      it('(c) 403 ADMIN_BOUNDARY_VIOLATION when ?orgId differs from the token', async () => {
+        const response = await request(app)
+          .post(`/api/admin/service-accounts?orgId=${foreignOrg}`)
+          .set(auth())
+          .send({ name: 'matrix-c', scopes: ['records:read'] });
+        expect(response.status).toBe(403);
+        expect(response.body).toMatchObject({ code: 'ADMIN_BOUNDARY_VIOLATION' });
+      });
+
+      it('(d) ignores a foreign organizationId in the body and audits under the token org', async () => {
+        const response = await request(app)
+          .post('/api/admin/service-accounts')
+          .set(auth())
+          .send({
+            name: 'matrix-d',
+            scopes: ['records:read'],
+            organizationId: foreignOrg,
+          });
+        expect(response.status).toBe(201);
+        const accountId = response.body.data.account.id;
+        const persisted = await pool.query(
+          'SELECT organization_id::text FROM tp_service_accounts WHERE id = $1',
+          [accountId]
+        );
+        expect(persisted.rows[0].organization_id).toBe(org);
+        const rows = await auditRows('service_account.created');
+        const row = rows.find((r) => r.resource_id === accountId);
+        expect(row).toBeDefined();
+        expect(row.org_id).toBe(org);
+        expect(row.org_id).not.toBe(foreignOrg);
+      });
+    });
+
+    describe('service-account revoke', () => {
+      it('(a) 401 without a token', async () => {
+        const response = await request(app).delete(
+          `/api/admin/service-accounts/${randomUUID()}`
+        );
+        expect(response.status).toBe(401);
+      });
+
+      it('(b) 403 for an active member without admin capability', async () => {
+        const id = await insertOwnedServiceAccount('matrix-revoke-role');
+        const response = await request(app)
+          .delete(`/api/admin/service-accounts/${id}`)
+          .set(memberAuth());
+        expect(response.status).toBe(403);
+      });
+
+      it('(c) 403 ADMIN_BOUNDARY_VIOLATION when ?orgId differs from the token', async () => {
+        const id = await insertOwnedServiceAccount('matrix-revoke-boundary');
+        const response = await request(app)
+          .delete(`/api/admin/service-accounts/${id}?orgId=${foreignOrg}`)
+          .set(auth());
+        expect(response.status).toBe(403);
+        expect(response.body).toMatchObject({ code: 'ADMIN_BOUNDARY_VIOLATION' });
+      });
+
+      it('(d) ignores a foreign organizationId in the body and audits under the token org', async () => {
+        const id = await insertOwnedServiceAccount('matrix-revoke-body-spoof');
+        const response = await request(app)
+          .delete(`/api/admin/service-accounts/${id}`)
+          .set(auth())
+          .send({ organizationId: foreignOrg });
+        expect(response.status).toBe(204);
+        const rows = await auditRows('service_account.revoked');
+        const row = rows.find((r) => r.resource_id === id);
+        expect(row).toBeDefined();
+        expect(row.org_id).toBe(org);
+        expect(row.org_id).not.toBe(foreignOrg);
+      });
+    });
+  });
+
+  it('FIX-4(a): a §B mutation is visible on the tenant surface and invisible on the SuperAdmin surface', async () => {
+    const response = await request(app)
+      .post('/api/admin/service-accounts')
+      .set(auth())
+      .send({ name: 'surface-matrix-machine', scopes: ['records:read'] });
+    expect(response.status).toBe(201);
+    const accountId = response.body.data.account.id;
+
+    const tenant = await request(app).get('/api/admin/audit-logs?limit=200').set(auth());
+    expect(tenant.status).toBe(200);
+    expect(tenant.body.logs).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ resource_type: 'service_account', resource_id: accountId }),
+      ])
+    );
+
+    const superAdmin = await request(app)
+      .get('/api/superadmin/admin/audit-logs?limit=200')
+      .set(auth());
+    expect(superAdmin.status).toBe(200);
+    // Genuinely absent, not a masked failure: the SuperAdmin surface queried
+    // admin_audit_logs successfully and it simply has no row for this
+    // mutation — service_account.created only ever lands in audit_events.
+    expect(superAdmin.body.integrity.degraded).toBe(false);
+    const superAdminRows: any[] = superAdmin.body.logs || [];
+    expect(
+      superAdminRows.some(
+        (row) => row.resource_id === accountId || row.action === 'service_account.created'
+      )
+    ).toBe(false);
   });
 
   it('proves the global writer duplicates one mutation and that projection legs 4/5 must not be added', async () => {

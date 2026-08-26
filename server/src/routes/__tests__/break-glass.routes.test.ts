@@ -60,12 +60,16 @@ describe('break-glass routes', () => {
     ).toBe(400);
   });
   it('creates tenant-scoped 1h session after valid approval', async () => {
+    create.mockResolvedValueOnce({ id: 'session-1' });
     get
       .mockResolvedValueOnce({ role: 'ADMIN', status: 'ACTIVE' })
       .mockResolvedValueOnce({ ok: 1 })
       .mockResolvedValueOnce({
         setting_value: '{"breakGlassEnabled":true,"breakGlassApprovers":["u2"]}',
       })
+      // FIX-1: independent readback confirming the session was really persisted
+      // before any audit event is emitted.
+      .mockResolvedValueOnce({ id: 'session-1', is_active: 1, session_type: 'break_glass' })
       .mockResolvedValueOnce({
         setting_value: '{"breakGlassEnabled":true,"breakGlassApprovers":["u2"]}',
       });
