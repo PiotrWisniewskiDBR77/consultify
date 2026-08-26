@@ -22,13 +22,14 @@ export const ChatSignalsFeed: React.FC<{
   initialResponse?: SignalsFeedResponse;
   api?: SignalsApi;
   initialUiState?: 'full' | 'throttled';
-}> = ({ projectId, initialResponse, api, initialUiState }) => {
+  initialSelectedId?: string | null;
+}> = ({ projectId, initialResponse, api, initialUiState, initialSelectedId = null }) => {
   const { t } = useTranslation();
   const [chip, setChip] = useState('all');
   const domain = ['EXECUTION', 'DECISION', 'RESULTS', 'FINANCE'].includes(chip) ? chip : undefined;
   const severityMin = chip === 'warning' || chip === 'critical' ? chip : undefined;
   const feed = useSignalsFeed({ projectId, domain, severityMin, initialResponse, api });
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
   const [retryAfter, setRetryAfter] = useState(initialUiState === 'throttled' ? 45 : 0);
