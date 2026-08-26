@@ -26,6 +26,7 @@ import {
   buildOrgSuspendedResponseBody,
   isOrganizationSuspended,
   isPathExemptFromOrgSuspension,
+  isVerifiedPlatformSuperAdmin,
 } from '../services/organizationSuspensionGuard.js';
 import { DEMO_ORG_ID, DEMO_SESSION_ORG_HEADER } from './demoGuard.middleware.js';
 
@@ -937,8 +938,22 @@ const attachUser = async (
   // Answer is TTL-cached in `organizationSuspensionGuard`; that TTL is the
   // enforcement SLA for tokens already in the wild (see that module's header).
   // ---------------------------------------------------------------------------
+  //
+  // FIX-2 — the exemption is NO LONGER decided by the string 'SUPERADMIN' in
+  // `req.userRole`. That value can come from an `organization_members.role`
+  // row, so a drifted database (the CHECK constraint allows only OWNER/ADMIN/
+  // MEMBER/CONSULTANT) let a tenant admin exempt themselves from their own
+  // tenant's suspension. It now takes BOTH the signed `isSuperAdmin` claim AND
+  // a `users.role` confirmation read from the database — the same "DB role as
+  // source of truth" rule the superadmin control plane already applies.
+  //
+  // The claim is checked first purely for cost: it is false for every ordinary
+  // principal, so the extra lookup effectively never runs on the hot path.
+  const strictSuspensionDbGet = <T,>(sql: string, params?: unknown[]) =>
+    dbGet<T>(sql, params, { fallback: false });
   const isSuperAdminPrincipal =
-    resolvedIsSuperAdmin || String(req.userRole || '').toUpperCase() === 'SUPERADMIN';
+    resolvedIsSuperAdmin &&
+    (await isVerifiedPlatformSuperAdmin(decodedUserId, strictSuspensionDbGet));
   if (!isSuperAdminPrincipal) {
     const fullRequestPath = String(
       safeRead(() => (req as Request).originalUrl, '') || safeRead(() => (req as Request).url, '')
@@ -947,10 +962,10 @@ const attachUser = async (
       // `fallback: false` is load-bearing: DbPromise.get otherwise RESOLVES
       // null on error/timeout, which the guard would read as "not suspended"
       // and cache for a full TTL.
-      const suspended = await isOrganizationSuspended(req.organizationId, <T,>(
-        sql: string,
-        params?: unknown[]
-      ) => dbGet<T>(sql, params, { fallback: false }));
+      const suspended = await isOrganizationSuspended(
+        req.organizationId,
+        strictSuspensionDbGet
+      );
       if (suspended) {
         res.status(403).json(buildOrgSuspendedResponseBody());
         return;

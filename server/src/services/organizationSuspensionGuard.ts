@@ -287,6 +287,86 @@ export function buildOrgSuspendedResponseBody(): {
 }
 
 /**
+ * ===========================================================================
+ * DB-VERIFIED PLATFORM SUPERADMIN (DEC-91 FIX-2)
+ * ===========================================================================
+ * Every DEC-91 gate exempts the platform operator, so that a suspended tenant
+ * can still be inspected and reactivated. The first revision decided that from
+ * the string `'SUPERADMIN'` in `req.userRole` — which `attachUser` may have
+ * populated from an `organization_members.role` row. That made a DATA-HYGIENE
+ * invariant (the CHECK constraint on that column allows only OWNER/ADMIN/
+ * MEMBER/CONSULTANT) load-bearing for a SECURITY decision: on a drifted
+ * database, a membership row saying `SUPERADMIN` bought a tenant-level admin a
+ * full exemption from its own suspension.
+ *
+ * The exemption is now the conjunction of two independent facts:
+ *   1. the signed token asserts `isSuperAdmin` — cheap, and false for everyone
+ *      normal, so the lookup below almost never runs; AND
+ *   2. `users.role` says superadmin in the DATABASE — the same "DB role as
+ *      source of truth" rule `superAdmin.middleware.ts` already enforces for
+ *      the control plane.
+ *
+ * A membership row can no longer contribute at all. Fails CLOSED: an
+ * unavailable database denies the exemption rather than granting it, which is
+ * safe here because the `/api/superadmin/**` PATH exemption is what actually
+ * guarantees the reactivation route — this only governs the operator's access
+ * to ordinary tenant surfaces.
+ */
+const SUPERADMIN_VERIFY_TTL_MS = 30_000;
+const superAdminVerifyCache = new Map<string, { verified: boolean; expiresAt: number }>();
+const MAX_SUPERADMIN_CACHE_ENTRIES = 5_000;
+
+export function invalidatePlatformSuperAdminCache(userId?: unknown): void {
+  const normalized = typeof userId === 'string' ? userId.trim() : '';
+  if (!normalized) {
+    superAdminVerifyCache.clear();
+    return;
+  }
+  superAdminVerifyCache.delete(normalized);
+}
+
+/** True only when `users.role` in the DATABASE names a platform superadmin. */
+export async function isVerifiedPlatformSuperAdmin(
+  userId: unknown,
+  dbGet: DbGet
+): Promise<boolean> {
+  const normalized = typeof userId === 'string' ? userId.trim() : '';
+  if (!normalized || normalized.length > 256) return false;
+  if (typeof dbGet !== 'function') return false;
+
+  const currentTime = now();
+  const cached = superAdminVerifyCache.get(normalized);
+  if (cached && cached.expiresAt > currentTime) return cached.verified;
+
+  let row: { role?: unknown } | undefined | null;
+  try {
+    row = await dbGet<{ role?: unknown }>('SELECT role FROM users WHERE id = ?', [normalized]);
+  } catch {
+    // Fail CLOSED — deny the exemption, cache nothing.
+    return false;
+  }
+
+  const role = typeof row?.role === 'string' ? row.role : null;
+  // As in the suspension guard: never cache an answer derived from an absent
+  // row, so a swallowed error cannot become a sticky verdict either way.
+  if (role === null) return false;
+
+  const verified = role.trim().toUpperCase() === 'SUPERADMIN';
+  superAdminVerifyCache.delete(normalized);
+  superAdminVerifyCache.set(normalized, {
+    verified,
+    expiresAt: currentTime + SUPERADMIN_VERIFY_TTL_MS,
+  });
+  while (superAdminVerifyCache.size > MAX_SUPERADMIN_CACHE_ENTRIES) {
+    const oldest = superAdminVerifyCache.keys().next();
+    if (oldest.done) break;
+    superAdminVerifyCache.delete(oldest.value);
+  }
+
+  return verified;
+}
+
+/**
  * Minimal shape of the raw TCP socket handed to an HTTP `upgrade` listener.
  * Duck-typed on purpose: this module stays free of node `net`/`http` imports,
  * and the three collab gateways can pass their socket straight through.
@@ -338,6 +418,7 @@ export const __testing__ = {
   },
   reset(): void {
     suspensionCache.clear();
+    superAdminVerifyCache.clear();
     now = () => Date.now();
   },
   cacheSize(): number {

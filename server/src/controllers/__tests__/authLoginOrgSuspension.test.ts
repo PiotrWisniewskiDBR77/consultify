@@ -27,14 +27,18 @@ const mockRedisStore = vi
   .fn()
   .mockImplementation(() => ({ resetKey: vi.fn().mockResolvedValue(undefined) }));
 
-/** Wire the db double to one tenant status + one user role. */
-const seedDb = (orgStatus: string, userRole: string) => {
+/**
+ * Wire the db double. `dbUserRole` is `users.role` (the PLATFORM role) and
+ * `membershipRole` is `organization_members.role` — kept separate on purpose,
+ * because FIX-2 is precisely about which of the two may grant the exemption.
+ */
+const seedDb = (orgStatus: string, dbUserRole: string, membershipRole = dbUserRole) => {
   mockDb.get.mockImplementation((sql: string, _params: unknown[], cb: Function) => {
-    if (sql.includes('FROM organization_members')) return cb(null, { role: userRole });
+    if (sql.includes('FROM organization_members')) return cb(null, { role: membershipRole });
     if (sql.includes('FROM users')) {
       return cb(null, {
         id: 'u1',
-        role: userRole,
+        role: dbUserRole,
         password: 'hashed',
         organization_id: 'o1',
         email: 'member@example.com',
@@ -130,12 +134,26 @@ describe('DEC-91 login refuses a suspended organization', () => {
     expect(mockRefreshTokenService.generateTokenPair).toHaveBeenCalled();
   });
 
-  it('NEGATIVE CONTROL: a SUPERADMIN can still log in to a suspended tenant to fix it', async () => {
+  it('NEGATIVE CONTROL: a platform SUPERADMIN can still log in to a suspended tenant to fix it', async () => {
     seedDb('suspended', 'SUPERADMIN');
 
     await login(req as Request, res as Response);
 
     expect(statusFn).not.toHaveBeenCalledWith(403);
     expect(mockRefreshTokenService.generateTokenPair).toHaveBeenCalled();
+  });
+
+  it('FIX-2: a membership role forged to SUPERADMIN does NOT bypass the suspension', async () => {
+    // users.role says USER (the platform truth); organization_members.role says
+    // SUPERADMIN (a drifted row). login overwrites user.role with the membership
+    // role, so the pre-FIX-2 check `user.role !== 'SUPERADMIN'` was satisfied by
+    // the forged value and let the login through.
+    seedDb('suspended', 'USER', 'SUPERADMIN');
+
+    await login(req as Request, res as Response);
+
+    expect(statusFn).toHaveBeenCalledWith(403);
+    expect(jsonFn).toHaveBeenCalledWith(expect.objectContaining({ code: 'ORG_SUSPENDED' }));
+    expect(mockRefreshTokenService.generateTokenPair).not.toHaveBeenCalled();
   });
 });

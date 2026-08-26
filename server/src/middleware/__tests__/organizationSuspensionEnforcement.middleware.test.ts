@@ -57,11 +57,23 @@ const mockPermissionService = { can: vi.fn().mockReturnValue(true) };
  * dbGet double. Routes on the SQL text so the middleware's own queries
  * (revocation, membership rescue, org status) each get a coherent answer.
  */
+/** users.role in the DATABASE — the only thing that can grant the exemption. */
+const DB_USER_ROLE: Record<string, string> = {
+  'user-of-org-suspended': 'ADMIN',
+  'user-of-org-active': 'ADMIN',
+  'platform-superadmin': 'SUPERADMIN',
+  'forged-membership-superadmin': 'ADMIN',
+};
+
 const mockDbGet = vi.fn(async (sql: string, params?: unknown[]) => {
   const text = String(sql).replace(/\s+/g, ' ');
   const first = String((params || [])[0] ?? '');
 
   if (text.includes('revoked_tokens')) return undefined;
+  if (text.includes('SELECT role FROM users')) {
+    const role = DB_USER_ROLE[first];
+    return role ? ({ role } as never) : undefined;
+  }
   if (text.includes('FROM organizations')) {
     const status = ORG_STATUS[first];
     return status ? ({ status } as never) : undefined;
@@ -88,9 +100,10 @@ const runRequest = async (options: {
   url: string;
   role?: string;
   isSuperAdmin?: boolean;
+  userId?: string;
 }): Promise<Captured> => {
   const claims = {
-    id: `user-of-${options.organizationId}`,
+    id: options.userId ?? `user-of-${options.organizationId}`,
     email: 'member@example.com',
     name: 'Member',
     role: options.role ?? 'ADMIN',
@@ -243,16 +256,50 @@ describe('DEC-91 organization suspension enforcement in auth middleware', () => 
       expect(result.nextCalled).toBe(true);
     });
 
-    it('a SUPERADMIN principal seated in a suspended tenant is not locked out', async () => {
+    it('a DB-VERIFIED platform superadmin seated in a suspended tenant is not locked out', async () => {
       const result = await runRequest({
         organizationId: 'org-suspended',
         url: '/api/initiatives',
         role: 'SUPERADMIN',
         isSuperAdmin: true,
+        userId: 'platform-superadmin',
       });
 
       expect(result.status).toBeNull();
       expect(result.nextCalled).toBe(true);
+    });
+
+    it('FIX-2: a membership role forged to SUPERADMIN buys NO exemption', async () => {
+      // `req.userRole` can be populated from organization_members.role. That
+      // column's CHECK constraint is a data-hygiene invariant, not a security
+      // boundary — on a drifted database it used to hand a tenant admin a full
+      // exemption from their own tenant's suspension. users.role in the
+      // DATABASE says ADMIN, so the exemption is refused.
+      const result = await runRequest({
+        organizationId: 'org-suspended',
+        url: '/api/initiatives',
+        role: 'SUPERADMIN',
+        isSuperAdmin: false,
+        userId: 'forged-membership-superadmin',
+      });
+
+      expect(result.status).toBe(403);
+      expect(result.body).toMatchObject({ code: 'ORG_SUSPENDED' });
+      expect(result.nextCalled).toBe(false);
+    });
+
+    it('FIX-2: even a signed isSuperAdmin claim needs the DB to agree', async () => {
+      // The claim alone is no longer sufficient: users.role must confirm it.
+      const result = await runRequest({
+        organizationId: 'org-suspended',
+        url: '/api/initiatives',
+        role: 'SUPERADMIN',
+        isSuperAdmin: true,
+        userId: 'forged-membership-superadmin',
+      });
+
+      expect(result.status).toBe(403);
+      expect(result.nextCalled).toBe(false);
     });
 
     it('NEGATIVE CONTROL: a path that merely LOOKS like an exempt one is still refused', async () => {

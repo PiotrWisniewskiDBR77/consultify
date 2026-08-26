@@ -311,6 +311,16 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     // login must neither preserve a stale role from users.role nor mint a new
     // session after membership revocation. This also makes role changes visible
     // immediately in the next session without waiting for an old JWT to expire.
+    // DEC-91 FIX-2: capture the PLATFORM role from `users.role` before the line
+    // below overwrites `user.role` with the membership role. The suspension
+    // branch further down must not be satisfiable by an
+    // `organization_members.role` row that merely says 'SUPERADMIN' — that
+    // column's vocabulary is a data-hygiene invariant, not a security boundary.
+    const isPlatformSuperAdmin =
+      String(user.role || '')
+        .trim()
+        .toUpperCase() === 'SUPERADMIN';
+
     if (user.role !== 'SUPERADMIN') {
       if (!activeMembership?.role) {
         res.status(403).json({
@@ -345,7 +355,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       String(org.status || '')
         .trim()
         .toLowerCase() === 'suspended' &&
-      user.role !== 'SUPERADMIN'
+      !isPlatformSuperAdmin
     ) {
       res.status(403).json(buildOrgSuspendedResponseBody());
       return;
