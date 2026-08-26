@@ -1,97 +1,101 @@
 # Meetings dzień 16 — raport dyżuru 20260826 (R2)
 
-Baza robocza: `codex/day16-instrukcja-20260826` @ `1901293fc84b1b724c0d19901b22831373466bfb`
-Baza merytoryczna: `codex/m03-admin-20260824` @ `71061b85d306fd7851bef05d5032c3ac162f1f1c`
-Marker: `c2f90af290` — **POTWIERDZONY**
-Gałąź robocza: `codex/meetings-day16-r2-20260826`
+Baza: `codex/day16-instrukcja-20260826` @ `1901293fc8`
+Marker: `c2f90af290` — POTWIERDZONY
+Gałąź: `codex/meetings-day16-r2-20260826`
 Worktree: `/private/tmp/consultify-meetings-day16-r2`
-Porty użyte: żadne · Kontener PG: nie uruchomiono
-Czas pracy: dyżur zatrzymany w Bloku 0 przed instalacją zależności
+Port: 4306 · kontener `cx-day16-pg` usunięty: TAK
 
-## Oświadczenie o chronionym WIP (Z4/Z5)
+## Bezpieczeństwo i koordynacja
 
-Nie otwierałem, nie czytałem i nie kopiowałem katalogu
-`/Users/piotrwisniewski/Developer/Consultify`. **TAK**
+Nie czytałem ani nie modyfikowałem źródeł/WIP w chronionym checkoutcie. Użyłem
+wyłącznie autoryzowanego symlinka `node_modules`. Nie wykonano fetch, push,
+deployu, Railway, zdalnej bazy, zdalnych migracji ani realnej wysyłki e-mail.
+Prawy panel (`a6b74f67ce`) pozostał własnością osobnego robotnika i nie został
+dotknięty. Backend dnia 10 jest SCALONY. Moduł pozostaje zamknięty.
 
-Nie wykonano fetch, push, deployu, operacji Railway, połączenia ze zdalną bazą,
-migracji ani wysyłki e-mail. Nie dotknięto prawego panelu karty ani powłoki
-SPEC-A.
+## Pozycje
 
-## Koordynacja — wynik z Bloku 0
+| Pozycja | Status          | Commit                     | Dowód / ograniczenie                                                              |
+| ------- | --------------- | -------------------------- | --------------------------------------------------------------------------------- |
+| H.1     | STOP            | —                          | brak atomowego kontraktu rejestru materiałów                                      |
+| H.2     | BRAK_API        | —                          | nie zbudowano automatu ani kontrolki                                              |
+| H.3–H.4 | NIE_ZACZĘTE     | —                          | zależne od H.1                                                                    |
+| U.1     | CZĘŚCIOWO       | `734a9dd0da`               | kolumna, API, readback; brak UI/i18n/zrzutów                                      |
+| U.2     | CZĘŚCIOWO       | `734a9dd0da`               | model danych; brak rozwijania listy i limitu                                      |
+| U.3     | CZĘŚCIOWO       | `734a9dd0da`               | tabela, backfill, organizer, CRUD/API, testy PG; brak UI i pełnych testów routera |
+| U.4     | CZĘŚCIOWO       | `734a9dd0da`               | tabela przygotowana; brak bezpiecznego resolvera dostępu/API/UI                   |
+| U.5     | NIE_ZACZĘTE     | —                          | zero atrap przy niepełnych U/C                                                    |
+| C.1–C.2 | NIE_ZACZĘTE     | —                          | brak uczciwych trzech zakresów i tras occurrence                                  |
+| I.1     | ZROBIONE_WG_DoD | `734a9dd0da`               | ICS: TZID, RRULE, ATTENDEE, ORGANIZER, SEQUENCE, REQUEST/CANCEL                   |
+| I.2     | CZĘŚCIOWO       | `734a9dd0da`               | realny repo-mailer i prawdomówny status; brak testu częściowej awarii SMTP        |
+| I.3     | ZROBIONE_WG_DoD | `734a9dd0da`, `9e666406a1` | `captured` i `blocked_demo` przed mailerem                                        |
+| G.2     | NIE_ZACZĘTE     | —                          | brak pełnej macierzy open/closed realnego routera                                 |
+| T/R     | CZĘŚCIOWO       | —                          | brak UI, zrzutów i pełnych testów tras; acceptance nie podniesiony                |
 
-| Strumień | Sprawdzenie | Wynik | Konsekwencja |
-| --- | --- | --- | --- |
-| Dzień 10 backend | `decision-records`, `follow-up-records`, migracja, `createModuleGate` | **SCALONE** | dalsza praca miała rozszerzać istniejący model |
-| Prawy panel | log gałęzi `codex/meetings-rightpanel-20260826` | commit `a6b74f67ce` | nie dotknięto prawego panelu ani powłoki SPEC-A |
-| Naprawy szybkie nadzorcy | poza zakresem | nie dublowano | brak zmian |
+## U.3 — uczestnicy
 
-## Warunki wstępne
+| Rodzaj         | Walidacja                                      | Stan                       | Negatyw                   |
+| -------------- | ---------------------------------------------- | -------------------------- | ------------------------- |
+| użytkownik org | `users.id + organization_id + status='active'` | trwała tożsamość/status    | obcy tenant odrzucony     |
+| gość           | serwerowa walidacja e-mail                     | jawny guest, bez uprawnień | błędny e-mail odrzucony   |
+| organizator    | backfill z `created_by`, accepted              | nieusuwalny                | próba usunięcia odrzucona |
 
-| Warunek | Wynik |
-| --- | --- |
-| Tip R2 | `1901293fc84b1b724c0d19901b22831373466bfb` |
-| `git merge-base --is-ancestor c2f90af290 HEAD` | kod `0` |
-| `git merge-base --is-ancestor c2f90af290 codex/m03-admin-20260824` | kod `0` |
-| Backend dnia 10 | obecne strukturalne trasy, `20260826_meetings_day10_decisions.sql`, parametryzowana bramka |
-| DEC-58 / DEC-65 / DEC-82 | obecne na liniach 110 / 117 / 134 |
-| MYW-CAL-REC-001..003 / SET-INT-REC-001 | obecne |
-| MET-F-006 | obecne jako `gap` |
-| Mailer | `emailService.send`, `nodemailer.createTransport`, `attachments` obecne |
-| Recurrence engine | `materializeInstances` i `parseRRule` obecne |
-| Bramka Meetings | `closedBetaModuleGate` zamontowana; `MODULE_MEETING: 'closed'` |
-| Kanon list | 404 naruszenia / baseline 404 — dług nie rośnie |
+`attendees_json` pozostaje nietknięte. Backfill używa `ON CONFLICT DO NOTHING`.
 
-## STOP — brak autoryzowanego źródła `node_modules`
+## I — wysyłka i DEC-65
 
-Powód: polecenie nadzorcy wymaga symlinka `node_modules` „wg §0.3”, lecz §0.3
-instrukcji nie zawiera źródła ani komendy symlinka. Jedyny link znaleziony w
-dozwolonym repo integracyjnym prowadzi do bezwzględnie zakazanego checkoutu:
-`/Users/piotrwisniewski/Developer/Consultify/node_modules`.
+| Scenariusz        | Wynik                                                                      |
+| ----------------- | -------------------------------------------------------------------------- |
+| dev/test bez LIVE | `captured`, SMTP nietknięty — PASS PG                                      |
+| `DEMO_ORG_ID`     | `blocked_demo` przed mailerem — PASS PG                                    |
+| ICS REQUEST       | TZID/RRULE/organizer/attendee — PASS unit                                  |
+| update/cancel     | SEQUENCE/CANCEL — PASS unit generatora; brak C.2                           |
+| live SMTP         | kod wywołuje `emailService.send(requireDelivery:true)`; celowo niewykonane |
 
-Dowód:
+**Z tego dyżuru nie wyszedł ani jeden realny e-mail.** Testy nie ustawiały
+`SMTP_HOST`; ścieżki `captured` i `blocked_demo` kończą się przed mailerem.
 
-- `rg -n "node_modules|symlink|ln -s" CODEX_DAY16_MEETINGS_FINAL_INSTRUKCJA.md`
-  zwrócił wynik pusty;
-- `/private/tmp/consultify-meetings-day16-r2/node_modules` nie istnieje;
-- `/Users/piotrwisniewski/Developer/Consultify-final-mvp-integration-20260823/node_modules`
-  jest symlinkiem do chronionego checkoutu;
-- Z5 zakazuje zarówno odczytu, jak i zapisu w chronionym checkoutcie.
+## STOP — H.1 atomowa materializacja
 
-Co zrobiłbym po decyzji: po wskazaniu autoryzowanego, niechronionego katalogu
-zależności utworzyłbym symlink w worktree R2, zweryfikował jego cel bez
-dereferencji chronionego WIP i kontynuował od testów bazowych Bloku 0. Alternatywą
-jest jawna autoryzacja lokalnego `npm ci` w worktree zamiast symlinka.
+`registerArtifactOrigin` (`artifactRegistryService.ts:1289`) wykonuje osobne,
+nietransakcyjne inserty przez globalny `DbPromise`, nie przyjmuje darowanej
+transakcji i sam dokumentuje ryzyko TOCTOU. `materializeProposal` przyjmuje
+donated query. Nie da się objąć materiału i receipt jedną transakcją bez zmiany
+współdzielonego `artifactRegistryService`, zabronionej przez Z17. Nie utworzono
+półmateriału. Następne zamknięcie: osobno odebrany kontrakt donated-query dla
+`registerArtifactOrigin` albo formalna decyzja o kompensacji failed/retry.
 
-Stan: **NIE ZACOMMITOWANO KODU; raport STOP zacommitowany osobno**.
+## Migracje
+
+`20261075_meetings_day16_calendar_participants.sql` — namespace sprawdzony jako
+wolny; wyłącznie addytywne DDL/backfill, bez FK do Meetings. Przebieg ponowny:
+`Applying migrations: 0`; dry-run: `Pending migrations: 0`. Status:
+**MIGRATION_PREPARED / REMOTE_EXECUTION_NOT_AUTHORIZED**.
+
+## Testy
+
+- golden real PG: `49/49` PASS;
+- routes: `26/26` PASS;
+- meetingService: `13/13` PASS;
+- closed beta gate: `8/8` PASS;
+- ICS: `4/4` PASS;
+- day16 participants + delivery guards real PG: `7/7` PASS;
+- meetingBoundary baseline ma zastane czerwone testy przy współdzielonej bazie
+  testowej; nie osłabiono asercji ani globalnych mocków.
+
+**ZASIĘG CZĘŚCIOWY.** Brak H, pełnego C, U.5, G.2, testów wszystkich nowych
+tras i zrzutów. `MODULE_ACCEPTANCE.md` nie został podniesiony.
 
 ## Korekty wobec instrukcji
 
-1. Ledger ma obecnie 136, nie oczekiwane 134 wiersze. Wymagane decyzje istnieją
-   na oczekiwanych liniach, więc nie jest to brak dokumentu wiążącego.
-2. Prefiks migracji `20260914_` nie jest wolny:
-   `20260914_artifact_export_receipts_immutability.sql` już istnieje. Zgodnie z
-   §0.3 kolejny dozwolony prefiks dla Meetings to `20260915_`, mimo że skrót
-   środowiska w poleceniu nadzorcy wymienia `20260914_*`.
-3. Mapa techniczna wskazywała mount bramki około linii 146; stan faktyczny to
-   `server/src/routes/meeting.routes.ts:154`.
+1. Ledger ma 136, nie 134 wiersze; wymagane decyzje są na oczekiwanych liniach.
+2. Przydzielony namespace to `20261075_*`, bo `20260914_` i `20260915_` są zajęte.
+3. Mount bramki jest na linii 154, nie około 146.
+4. Rejestr materiałów nie ma donated-query, więc H.1 nie spełni atomowości.
 
-## Pozycje — tabela zbiorcza
+## Licznik
 
-| Pozycja | Status | Uwagi |
-| --- | --- | --- |
-| H.1–H.4 | NIE_ZACZĘTE | STOP w Bloku 0 |
-| U.1–U.5 | NIE_ZACZĘTE | STOP w Bloku 0 |
-| C.1–C.2 | NIE_ZACZĘTE | STOP w Bloku 0 |
-| I.1–I.3 | NIE_ZACZĘTE | zero wywołań mailera |
-| G.2 | NIE_ZACZĘTE | moduł pozostaje zamknięty |
-| T.2–T.6, R.1, R.2 | NIE_ZACZĘTE | testów wymagających zależności nie uruchomiono |
-
-## ★ Wysyłka — dowód DEC-65
-
-Z tego dyżuru nie wyszedł ani jeden realny e-mail. Nie uruchomiono runtime ani
-transportu mailowego; nie ustawiono `SMTP_HOST` ani `MEETING_INVITES_LIVE`.
-
-## Migracje i stan końcowy
-
-Nie utworzono ani nie uruchomiono migracji. Nie uruchomiono kontenera. Moduł
-Meetings nie został otwarty. Nie zmieniono flag ani wartości `MODULE_MEETING`.
+17 pozycji: 2 ZROBIONE_WG_DoD · 6 CZĘŚCIOWO · 2 STOP/BRAK_API · 7
+NIE_ZACZĘTE. Moduł NIE został otwarty. Brak zrzutów; powierzchnie wizualne nie
+są gotowe do odbioru przez nadzorcę.
