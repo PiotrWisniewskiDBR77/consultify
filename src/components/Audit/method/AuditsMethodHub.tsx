@@ -23,7 +23,7 @@
  * pigułkach zakładek (kanon: „bez liczników w Menu 2"; `StandardModuleTab`
  * nawet nie ma pola `count`, więc naruszenie nie jest tu fizycznie możliwe).
  */
-import { ClipboardList, FileText, Library, Lightbulb, Package } from 'lucide-react';
+import { ClipboardList, FileText, Library, Lightbulb, Package, Plus } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -37,8 +37,10 @@ import {
   persistentCommandId,
 } from '@/services/initiatives-execution/persistentCommandId';
 import { useAppStore } from '@/store/useAppStore';
+import { isAuditsScaleAndPolishEnabled } from '@/utils/auditsScaleAndPolishFlag';
 import { formatListDate } from '@/utils/listDateFormat';
 
+import { NewAuditModal } from './NewAuditModal';
 import {
   packVerificationLabel,
   packVerificationTone,
@@ -235,6 +237,9 @@ export const AuditsMethodHub: React.FC = () => {
     [programsAll, isPolish]
   );
 
+  const [newAuditModalOpen, setNewAuditModalOpen] = useState(false);
+  const scaleAndPolishEnabled = useMemo(() => isAuditsScaleAndPolishEnabled(), []);
+
   const [startingPackId, setStartingPackId] = useState<string | null>(null);
   const startsInFlight = useRef(new Set<string>());
 
@@ -271,6 +276,7 @@ export const AuditsMethodHub: React.FC = () => {
         clearPersistentCommandId(AUDIT_START_COMMAND_NAMESPACE, commandFingerprint);
         toast.success(isPolish ? 'Program audytowy utworzony' : 'Audit program created', { id: toastId });
         setActiveTab('processes');
+        setNewAuditModalOpen(false);
       } catch (e: any) {
         toast.error(
           permissionAwareMessage(e, isPolish, isPolish ? 'Nie udało się rozpocząć audytu' : 'Failed to start the audit'),
@@ -366,6 +372,16 @@ export const AuditsMethodHub: React.FC = () => {
       chips={chips}
       activeChip={activeChip}
       onChipChange={onChipChange}
+      primaryCta={
+        scaleAndPolishEnabled
+          ? {
+              label: t('audits.method.newAudit.cta', isPolish ? 'Nowy audyt' : 'New audit'),
+              icon: Plus,
+              onClick: () => setNewAuditModalOpen(true),
+              testId: 'audits-method-new-audit-cta',
+            }
+          : undefined
+      }
     >
       <div className="min-h-0 flex-1 overflow-hidden">
         {activeTab === 'library' ? (
@@ -398,6 +414,16 @@ export const AuditsMethodHub: React.FC = () => {
           <AuditInitiativesTab isPolish={isPolish} programNameById={programNameById} />
         )}
       </div>
+      {scaleAndPolishEnabled ? (
+        <NewAuditModal
+          open={newAuditModalOpen}
+          onClose={() => setNewAuditModalOpen(false)}
+          packs={packsAll}
+          isPolish={isPolish}
+          onStartAudit={handleStartAudit}
+          starting={startingPackId !== null}
+        />
+      ) : null}
     </StandardModuleBar>
   );
 };
