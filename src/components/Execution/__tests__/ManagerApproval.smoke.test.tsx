@@ -20,7 +20,11 @@ vi.mock('react-i18next', () => ({
   initReactI18next: { type: '3rdParty', init: vi.fn() },
 }));
 
-vi.mock('react-hot-toast', () => ({ default: { success: vi.fn(), error: vi.fn() } }));
+const { toastSuccess, toastError } = vi.hoisted(() => ({
+  toastSuccess: vi.fn(),
+  toastError: vi.fn(),
+}));
+vi.mock('react-hot-toast', () => ({ default: { success: toastSuccess, error: toastError } }));
 vi.mock('@/providers/V8Provider', () => ({
   useV8: () => ({
     isV8Enabled: true,
@@ -66,12 +70,32 @@ const decisionProblem = {
   meta: {},
 };
 
+const workloadProblem = {
+  id: 'p2',
+  severity: 'warning',
+  problemType: 'unassigned_task',
+  title: 'Unassigned onboarding task',
+  rootCause: 'No maker assigned',
+  sourceEntityType: 'TASK',
+  sourceEntityId: 'task-9',
+  sourceEntityName: 'Onboarding task',
+  ownerId: null,
+  ownerName: null,
+  daysOverdue: 0,
+  impactCount: 0,
+  affectedEntities: [],
+  actions: [{ id: 'assign_maker', label: 'Assign maker', variant: 'primary' }],
+  meta: {},
+};
+
 beforeEach(() => {
   decideDecision.mockReset();
   getManagerProblems.mockReset();
   executeManagerProblemAction.mockReset();
   getManagerProblems.mockResolvedValue({ data: { problems: [decisionProblem] } });
   decideDecision.mockResolvedValue({ success: true });
+  toastSuccess.mockReset();
+  toastError.mockReset();
 });
 
 afterEach(() => vi.clearAllMocks());
@@ -97,5 +121,27 @@ describe('Manager approval write-back', () => {
     await waitFor(() => {
       expect(screen.getByTestId('decision-confirmed-badge')).toBeInTheDocument();
     });
+  });
+
+  it('DEC-120/A11: a non-decision lane action never round-trips through the retired 409 writer', async () => {
+    getManagerProblems.mockResolvedValue({ data: { problems: [workloadProblem] } });
+
+    render(<ManagerModuleView moduleId="workload" projectId="proj-1" />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Unassigned onboarding task')).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByText('Unassigned onboarding task'));
+
+    const assignButtons = await screen.findAllByText('Assign maker');
+    fireEvent.click(assignButtons[assignButtons.length - 1]);
+
+    // Must fail honestly WITHOUT ever calling the 409-guarded legacy writer.
+    await waitFor(() => {
+      expect(toastError).toHaveBeenCalledWith(
+        'Saving is moving to the canonical execution registry — in progress'
+      );
+    });
+    expect(executeManagerProblemAction).not.toHaveBeenCalled();
   });
 });

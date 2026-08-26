@@ -544,16 +544,29 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
           </div>
         )}
 
-        {/* Add Entry */}
+        {/* Add Entry — A11/DEC-120: the legacy execution-control writer this
+            form posted to is retired server-side (409 EXECUTION_RUNTIME_V1_WRITE_REQUIRED
+            on every non-GET except budget-entry DELETE). Disabled with a
+            visible reason instead of an active button that always errors. */}
         {!showAddEntry ? (
-          <button
-            type="button"
-            onClick={() => setShowAddEntry(true)}
-            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-blue-400 border border-dashed border-blue-500/30 rounded-lg hover:bg-blue-500/10 transition-colors"
+          <div
+            className="w-full flex flex-col items-center justify-center gap-1 px-3 py-2 text-xs font-medium text-slate-500 dark:text-slate-500 border border-dashed border-slate-300 dark:border-navy-700 rounded-lg cursor-not-allowed"
+            title={t(
+              'execution.budget.writesDisabledReason',
+              'Saving is moving to the canonical execution registry — in progress'
+            )}
           >
-            <Plus size={14} />
-            {t('execution.budget.addEntry')}
-          </button>
+            <span className="flex items-center gap-1.5 opacity-60">
+              <Plus size={14} />
+              {t('execution.budget.addEntry')}
+            </span>
+            <span className="text-[10px] text-amber-600 dark:text-amber-400">
+              {t(
+                'execution.budget.writesDisabledReason',
+                'Saving is moving to the canonical execution registry — in progress'
+              )}
+            </span>
+          </div>
         ) : (
           <div className="rounded-lg border border-slate-200 dark:border-navy-700 p-3 bg-white dark:bg-navy-900 space-y-3">
             <div className="flex items-center justify-between">
@@ -614,15 +627,27 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
 
         {/* Record Realization (M14 → M15 feed-forward) */}
         <div className="pt-2 border-t border-slate-200 dark:border-navy-700/50">
+          {/* A11/DEC-120: same retired legacy writer as Add Entry above — disabled
+              with a visible reason instead of an active button that always 409s. */}
           {!showRealization ? (
-            <button
-              type="button"
-              onClick={() => setShowRealization(true)}
-              className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-green-500 border border-dashed border-green-500/30 rounded-lg hover:bg-green-500/10 transition-colors"
+            <div
+              className="w-full flex flex-col items-center justify-center gap-1 px-3 py-2 text-xs font-medium text-slate-500 dark:text-slate-500 border border-dashed border-slate-300 dark:border-navy-700 rounded-lg cursor-not-allowed"
+              title={t(
+                'execution.budget.writesDisabledReason',
+                'Saving is moving to the canonical execution registry — in progress'
+              )}
             >
-              <TrendingUp size={14} />
-              {t('execution.realization.record', 'Record realization')}
-            </button>
+              <span className="flex items-center gap-1.5 opacity-60">
+                <TrendingUp size={14} />
+                {t('execution.realization.record', 'Record realization')}
+              </span>
+              <span className="text-[10px] text-amber-600 dark:text-amber-400">
+                {t(
+                  'execution.budget.writesDisabledReason',
+                  'Saving is moving to the canonical execution registry — in progress'
+                )}
+              </span>
+            </div>
           ) : (
             <div className="rounded-lg border border-slate-200 dark:border-navy-700 p-3 bg-white dark:bg-navy-900 space-y-3">
               <div className="flex items-center justify-between">

@@ -8,9 +8,11 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const mockAll = vi.fn();
-const mockGet = vi.fn();
-const mockLoggerError = vi.fn();
+const { mockAll, mockGet, mockLoggerError } = vi.hoisted(() => ({
+  mockAll: vi.fn(),
+  mockGet: vi.fn(),
+  mockLoggerError: vi.fn(),
+}));
 
 vi.mock('../../../server/src/utils/DbPromise.js', async () => {
   const actual = await vi.importActual<typeof import('../../../server/src/utils/DbPromise.js')>(

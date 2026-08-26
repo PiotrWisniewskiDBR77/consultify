@@ -10887,6 +10887,7 @@
       "noInitiativesDesc": "The Manager cockpit will populate when initiatives enter execution. Currently the portfolio is empty.",
       "actionApplied": "Action applied",
       "actionFailed": "Action failed",
+      "actionWritesDisabledReason": "Saving is moving to the canonical execution registry — in progress",
       "preset": {
         "peopleChange": "People & Change"
       },
@@ -11486,7 +11487,8 @@
       "statusClosed": "Closed",
       "save": "Save Mitigation",
       "saved": "Mitigation updated",
-      "ownerIdPlaceholder": "Owner ID"
+      "ownerIdPlaceholder": "Owner ID",
+      "saveDisabledReason": "Saving is moving to the canonical execution registry — in progress"
     },
     "auditLog": {
       "title": "Audit Log",
@@ -11537,6 +11539,7 @@
       "initiativeBreakdown": "By Initiative",
       "viewDetails": "View details",
       "addEntry": "Add Actual Cost",
+      "writesDisabledReason": "Saving is moving to the canonical execution registry — in progress",
       "newEntry": "New Cost Entry",
       "amountPlaceholder": "Amount",
       "categoryPlaceholder": "Category (e.g. Consulting, Licenses)",

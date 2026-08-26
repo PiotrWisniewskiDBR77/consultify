@@ -10230,6 +10230,7 @@
       "noInitiativesDesc": "Kokpit menedżera zapełni się, gdy inicjatywy wejdą w fazę realizacji. Obecnie portfel jest pusty.",
       "actionApplied": "Akcja zastosowana",
       "actionFailed": "Akcja nie powiodła się",
+      "actionWritesDisabledReason": "Zapis przeniesiony do kanonicznego rejestru — w przygotowaniu",
       "preset": {
         "peopleChange": "Ludzie i zmiana"
       },
@@ -10854,7 +10855,8 @@
       "statusClosed": "Zamknięte",
       "save": "Zapisz łagodzenie",
       "saved": "Łagodzenie zaktualizowane",
-      "ownerIdPlaceholder": "ID właściciela"
+      "ownerIdPlaceholder": "ID właściciela",
+      "saveDisabledReason": "Zapis przeniesiony do kanonicznego rejestru — w przygotowaniu"
     },
     "auditLog": {
       "title": "Dziennik zmian",
@@ -10905,6 +10907,7 @@
       "initiativeBreakdown": "Wg inicjatywy",
       "viewDetails": "Zobacz szczegóły",
       "addEntry": "Dodaj koszt rzeczywisty",
+      "writesDisabledReason": "Zapis przeniesiony do kanonicznego rejestru — w przygotowaniu",
       "newEntry": "Nowy wpis kosztowy",
       "amountPlaceholder": "Kwota",
       "categoryPlaceholder": "Kategoria (np. Konsulting, Licencje)",

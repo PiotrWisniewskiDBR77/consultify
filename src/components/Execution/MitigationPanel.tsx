@@ -31,6 +31,13 @@ interface MitigationPanelProps {
 const RESPONSE_STRATEGIES = ['AVOID', 'TRANSFER', 'MITIGATE', 'ACCEPT', 'ESCALATE'] as const;
 const MITIGATION_STATUSES = ['OPEN', 'IN_PROGRESS', 'MITIGATED', 'ACCEPTED', 'CLOSED'] as const;
 
+// A11/DEC-120: updateRaidMitigation posts through the retired legacy
+// execution-control writer — requireCanonicalExecutionWriter 409s every
+// non-GET on /api/v8/execution-control/* except budget-entry DELETE. Save
+// is disabled with a visible reason until this panel is repointed at the
+// canonical Runtime-v1 writer (tracked separately; not a batch-A change).
+const RAID_MITIGATION_WRITES_DISABLED = true;
+
 function getAuthToken(): string | null {
   try {
     return localStorage.getItem('token');
@@ -222,14 +229,28 @@ export const MitigationPanel: React.FC<MitigationPanelProps> = ({
         </div>
       </div>
 
+      {/* A11/DEC-120: updateRaidMitigation posts through the retired legacy
+          execution-control writer (409 EXECUTION_RUNTIME_V1_WRITE_REQUIRED on
+          every non-GET). Disabled with a visible reason instead of an active
+          Save button that always errors. */}
       <button
         onClick={handleSave}
-        disabled={saving}
-        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-colors disabled:opacity-50"
+        disabled={saving || RAID_MITIGATION_WRITES_DISABLED}
+        title={t(
+          'execution.mitigation.saveDisabledReason',
+          'Saving is moving to the canonical execution registry — in progress'
+        )}
+        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {saved ? <Check size={12} /> : <Shield size={12} />}
         {saved ? t('execution.mitigation.saved') : t('execution.mitigation.save')}
       </button>
+      <p className="text-[11px] leading-snug text-amber-600 dark:text-amber-400">
+        {t(
+          'execution.mitigation.saveDisabledReason',
+          'Saving is moving to the canonical execution registry — in progress'
+        )}
+      </p>
     </div>
   );
 };
