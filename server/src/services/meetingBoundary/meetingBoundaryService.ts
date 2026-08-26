@@ -718,11 +718,16 @@ async function materializeMeetingNote(input: {
 }
 
 /**
- * CROSS-LANE CONTRACT: on approval this materializes the note itself as the
- * ONE governed "material" output (`targetKind: 'material'`,
- * `targetRecordId: note.id` — the note row IS the produced artifact; its
- * `status` flips to 'approved' and it becomes the durable, approved minutes
- * record). The decisions/action items carried inside the note's payload are
+ * CROSS-LANE CONTRACT: on approval this materializes the note as the ONE
+ * governed "material" output (`targetKind: 'material'`). UPDATED under
+ * DEC-87 (H.1 option B, day19-fixes 2026-08-26): `targetRecordId` is now the
+ * id of a REAL artifact registered via `registerArtifactOrigin`
+ * (`materializeMeetingNote` above creates a Document Studio content row +
+ * registry entry first) — it is NOT `note.id` any more. The note's own
+ * `status` still flips to 'approved' and it remains the durable, approved
+ * minutes record; `materialArtifactId` on the note record points at the
+ * same artifact id as the receipt's `targetRecordId`. The decisions/action
+ * items carried inside the note's payload are
  * NOT separately materialized into `tasks`/`decisions` — those target kinds
  * do not exist in `handoffSpineService`'s `TARGET_KINDS`, and Lane C does
  * not own that lifecycle (see `handoffSpineService.ts` + the migration

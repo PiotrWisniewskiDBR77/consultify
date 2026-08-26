@@ -222,8 +222,16 @@ describe('MTG-BVP-001 mounted production router with real auth and PostgreSQL', 
 
     const cold = new Pool({ connectionString: DATABASE_URL, max: 1 });
     try {
+      // CONTRACT CHANGE (DEC-87, H.1 option B): the approved note now
+      // materializes a REAL artifact (Document Studio content + registry
+      // entry), and the receipt's target_record_id points at THAT artifact
+      // id, not at the note row. Before this fix this assertion still
+      // expected the pre-DEC-87 contract (targetRecordId: noteId), which no
+      // longer holds and made this test fail. Cold-read the artifact id
+      // independently rather than assume it — that is the whole point of
+      // this "cold reopen" test.
       const rows = await cold.query(
-        `SELECT r.receipt_id, r.organization_id, p.state
+        `SELECT r.receipt_id, r.organization_id, r.target_record_id, p.state
            FROM artifact_handoff_receipts r
            JOIN artifact_handoff_proposals p ON p.proposal_id = r.proposal_id
           WHERE p.organization_id = $1 AND p.producer_kind = 'meeting'
@@ -232,6 +240,8 @@ describe('MTG-BVP-001 mounted production router with real auth and PostgreSQL', 
       );
       expect(rows.rowCount).toBe(1);
       expect(rows.rows[0]).toMatchObject({ organization_id: orgA, state: 'materialized' });
+      expect(rows.rows[0].target_record_id).toBeTruthy();
+      expect(rows.rows[0].target_record_id).not.toBe(noteId);
 
       const reopened = await request(app)
         .get(`/api/meeting/${meetingId}/notes`)
@@ -244,7 +254,8 @@ describe('MTG-BVP-001 mounted production router with real auth and PostgreSQL', 
         proposalState: 'materialized',
         receiptId: rows.rows[0].receipt_id,
         targetKind: 'material',
-        targetRecordId: noteId,
+        targetRecordId: rows.rows[0].target_record_id,
+        materialArtifactId: rows.rows[0].target_record_id,
       });
       expect(reopened.body.notes[0].decidedBy).toBe(adminA);
       expect(reopened.body.notes[0].materializedAt).toBeTruthy();
