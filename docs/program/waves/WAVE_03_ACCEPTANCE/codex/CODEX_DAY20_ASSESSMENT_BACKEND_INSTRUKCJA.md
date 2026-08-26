@@ -68,13 +68,13 @@ Naruszenie tego ograniczenia = odrzucenie dyżuru, niezależnie od jakości resz
 1. Punktem wyjścia jest **NAJNOWSZY tip gałęzi `codex/m03-admin-20260824`**.
    Nadzorca podaje Ci **SHA commitu-markera** przy wklejaniu tej instrukcji.
 
-   **SHA markera: 1f333c2ac6**
+   **SHA markera: 649bd730a6**
 
    ```bash
    cd <root-repo>
    git fetch --all --prune
    git log --oneline -25 codex/m03-admin-20260824
-   git merge-base --is-ancestor 1f333c2ac6 codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
+   git merge-base --is-ancestor 649bd730a6 codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
    ```
 
 2. **Jeśli marker nie jest przodkiem tipa albo gałąź nie istnieje — STOP.**
@@ -133,7 +133,7 @@ Naruszenie tego ograniczenia = odrzucenie dyżuru, niezależnie od jakości resz
    format `YYYYMMDD`):
 
    ```bash
-   git branch codex/assessment-day20-<data> 1f333c2ac6
+   git branch codex/assessment-day20-<data> 649bd730a6
    git worktree add /private/tmp/consultify-assessment-day20 codex/assessment-day20-<data>
    cd /private/tmp/consultify-assessment-day20
    ```
@@ -312,7 +312,7 @@ idziesz dalej. Wyjątku nie ma nawet dla „jednej linii importu".
      **Obowiązkowe sprawdzenie PRZED KAŻDYM plikiem:**
      ```bash
      ls server/migrations | grep '^202611'      # co już zajęte w Twoim przedziale
-     ls server/migrations | grep '^20261100'    # MUSI być PUSTE przed utworzeniem pliku
+     ls server/migrations | grep '^20261101'    # MUSI być PUSTE przed utworzeniem pliku
      ```
      Nazwa: `<numer>_assessment_day20_<temat>.sql`. Twój pierwszy wolny numer to
      **`20261100`** — potwierdź komendą, nie pamięcią.
@@ -1035,7 +1035,7 @@ w katalogu poza Twoim zakresem.
    wymóg parytetu obu kopii jądra.
 2. **Budujesz reprezentację po stronie Assessmentu** — tabela własna,
    Assessment-owned, migracja w Twoim przedziale
-   (`20261100_assessment_day20_skip_reasons.sql`), minimum:
+   (`20261101_assessment_day20_skip_reasons.sql`), minimum:
    ```
    assessment_skip_reasons(
      id, organization_id, session_id, unit_id, question_id, level,
@@ -1338,7 +1338,7 @@ Każda pozycja: `commit SHA` · `ścieżka wywołania od realnego wejścia` (Z20
    ```bash
    ls server/migrations | grep -E '^[0-9]{8}' | sort | tail -5
    ls server/migrations | grep '^202611'        # co zajęte w Twoim przedziale
-   ls server/migrations | grep '^20261100'      # MUSI być puste
+   ls server/migrations | grep '^20261101'      # MUSI być puste
    ```
    **Nie liczysz „najwyższy zastany + 1".** Dni 17/18/19 pracują równolegle
    w przedziałach `76-79`, `80-89`, `90-99` i ich plików możesz nie widzieć.
@@ -1430,11 +1430,11 @@ Nie tworzysz drugiego pliku nigdzie indziej (Z12).
 # Assessment dzień 20 (mechanika tylna) — raport dyżuru <data>
 
 Baza: codex/m03-admin-20260824 @ <SHA tipa>
-Marker: 1f333c2ac6 — POTWIERDZONY / BRAK
+Marker: 649bd730a6 — POTWIERDZONY / BRAK
 Gałąź: codex/assessment-day20-<data>
 Worktree: /private/tmp/consultify-assessment-day20
 Port PG: 5469 · kontener cx-day20-pg usunięty: TAK/NIE · wolumeny usunięte: TAK/NIE
-Przedział migracji: 20261100-20261109 · użyte numery: <lista>
+Przedział migracji: 20261101-20261109 · użyte numery: <lista>
 
 ## Oświadczenie o chronionym checkoutcie (Z5/DEC-86)
 <czy dotykałeś /Users/piotrwisniewski/Developer/Consultify; symlink node_modules — tylko odczyt>
@@ -1552,9 +1552,9 @@ DATABASE_URL="postgres://postgres:cx@localhost:5469/cx_day20" \
 DB_TYPE=postgres NODE_ENV=test RUN_DB_TESTS=1 \
 npx vitest run tests/integration/assessment/assessment.day20.postgres.integration.test.ts
 
-# numeracja migracji — PRZEDZIAŁ 20261100-20261109, PRZED KAŻDYM NOWYM PLIKIEM
+# numeracja migracji — PRZEDZIAŁ 20261101-20261109, PRZED KAŻDYM NOWYM PLIKIEM
 ls server/migrations | grep '^202611'
-ls server/migrations | grep '^20261100'        # MUSI być puste
+ls server/migrations | grep '^20261101'        # MUSI być puste
 
 # migracje — jednorazowy kontener, dowód (1)(2)(3), sprzątanie kontenera I wolumenów
 docker run -d --name cx-day20-pg --tmpfs /var/lib/postgresql/data:rw,noexec,nosuid,size=2g \
