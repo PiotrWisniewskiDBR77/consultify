@@ -6,6 +6,7 @@ import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import signalsRoutes from '../../../server/src/routes/signals.routes.js';
+import myWorkSignalsRoutes from '../../../server/src/routes/my-work/signals.routes.js';
 
 const connectionString = process.env.DATABASE_URL;
 const describePg = connectionString ? describe : describe.skip;
@@ -27,6 +28,7 @@ app.use((req, res, next) => {
   next();
 });
 app.use('/api/signals', signalsRoutes);
+app.use('/my-work', myWorkSignalsRoutes);
 
 async function seedSignal(params: {
   org?: string;
@@ -245,5 +247,71 @@ describePg('GET /api/signals canonical Postgres feed', () => {
       [orgB]
     );
     expect(count.rows[0].count).toBe(0);
+  });
+
+  it('snoozes and dismisses an owned signal with database readback', async () => {
+    const signalId = await seedSignal({ audienceUser: userId });
+    expect(
+      (
+        await request(app)
+          .post(`/my-work/signals/${signalId}/snooze`)
+          .set('x-test-role', 'MEMBER')
+          .send({ preset: '1h' })
+      ).status
+    ).toBe(200);
+    expect(
+      (await request(app).post(`/my-work/signals/${signalId}/dismiss`).set('x-test-role', 'MEMBER'))
+        .status
+    ).toBe(200);
+    const rows = await pool!.query(
+      `SELECT s.signal_key AS snoozed, d.signal_key AS dismissed
+         FROM my_work_signal_snoozes s JOIN my_work_signal_dismissals d
+           ON d.user_id=s.user_id AND d.signal_key=s.signal_key
+        WHERE s.user_id=$1 AND s.signal_key=$2`,
+      [userId, signalId]
+    );
+    expect(rows.rows).toEqual([{ snoozed: signalId, dismissed: signalId }]);
+  });
+
+  it('returns 404 and writes nothing for a foreign-org signal key', async () => {
+    const signalId = await seedSignal({ org: orgB, audienceUser: userId });
+    const response = await request(app)
+      .post(`/my-work/signals/${signalId}/snooze`)
+      .set('x-test-org', orgA);
+    expect(response.status).toBe(404);
+    const rows = await pool!.query(
+      'SELECT count(*)::int AS count FROM my_work_signal_snoozes WHERE user_id=$1 AND signal_key=$2',
+      [userId, signalId]
+    );
+    expect(rows.rows[0].count).toBe(0);
+  });
+
+  it('returns 404 for a signal addressed to a different role', async () => {
+    const signalId = await seedSignal({ role: 'ADMIN' });
+    const response = await request(app)
+      .post(`/my-work/signals/${signalId}/dismiss`)
+      .set('x-test-role', 'MEMBER');
+    expect(response.status).toBe(404);
+  });
+
+  it('mutes a type and a domain and feed readback respects both', async () => {
+    await seedSignal({ type: 'type-muted', domain: 'DECISION' });
+    await seedSignal({ type: 'other-type', domain: 'FINANCE' });
+    expect(
+      (await request(app).post('/my-work/signals/mute-type').send({ type: 'type-muted' })).status
+    ).toBe(200);
+    expect(
+      (await request(app).post('/my-work/signals/mute-domain').send({ domain: 'FINANCE' })).status
+    ).toBe(200);
+    const response = await request(app).get('/my-work/signals');
+    expect(response.status).toBe(200);
+    expect(response.body.signals).toEqual([]);
+  });
+
+  it('handles unknown and legacy notification keys without a 500', async () => {
+    expect((await request(app).post(`/my-work/signals/${randomUUID()}/dismiss`)).status).toBe(404);
+    expect((await request(app).post('/my-work/signals/notification:legacy/snooze')).status).toBe(
+      404
+    );
   });
 });
