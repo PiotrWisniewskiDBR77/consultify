@@ -9,8 +9,8 @@
  * - Axis 2: Digital Products (5 areas, 5 levels)
  * - Axis 3: Digital Business Models (5 areas, 5 levels)
  * - Axis 4: Data Management (5 areas, 7 levels)
- * - Axis 5: Culture of Transformation (5 areas, 5 levels)
- * - Axis 6: Cybersecurity (5 areas, 5 levels)
+ * - Axis 5: Culture of Transformation (5 areas, 6 levels)
+ * - Axis 6: Cybersecurity (5 areas, 6 levels)
  * - Axis 7: AI Maturity (5 areas, 5 levels)
  */
 
@@ -1149,198 +1149,206 @@ const AXIS_4_DATA_MANAGEMENT: DRDAxis = {
 };
 
 // ============================================
-// AXIS 5: CULTURE OF TRANSFORMATION (5 areas, 5 levels)
+// AXIS 5: CULTURE OF TRANSFORMATION (5 areas, 6 levels)
 // ============================================
 
 const AXIS_5_CULTURE: DRDAxis = {
   id: 5,
   name: 'Culture of Transformation',
   namePL: 'Kultura Transformacji',
-  description: 'Assessment of organizational culture readiness for digital transformation',
-  levelCount: 5,
+  description:
+    'Assessment of whether culture and competencies enable transformation (not just buying technology). Per the DRD book, 5A describes leadership TYPES (not better/worse), while 5B–5E use a 1–6 maturity scale.',
+  levelCount: 6,
   areas: [
     {
       id: '5A',
-      name: 'Leadership Style',
-      namePL: 'Styl Przywództwa',
+      name: 'Leadership Attitudes',
+      namePL: 'Postawy przywódcze',
       levels: [
         {
           level: 1,
-          title: 'Traditional',
+          title: 'Pasywny',
           description:
-            'Leadership follows traditional hierarchical patterns. Decision-making is centralized at the top. Leaders focus on maintaining status quo and operational efficiency.',
+            'Typ przywództwa (nie „lepszy/gorszy") wg książki: lider pasywny, brak wsparcia dla innowacji i zmiany.',
         },
         {
           level: 2,
-          title: 'Transitional',
+          title: 'Autokratyczny',
           description:
-            'Leaders begin to recognize the need for change. Some delegation of decision-making occurs. Initial experiments with new leadership approaches are undertaken.',
+            'Typ przywództwa wg książki: decyzje podejmowane centralnie, niski udział zespołu w procesie decyzyjnym.',
         },
         {
           level: 3,
-          title: 'Adaptive',
+          title: 'Dyrektywny',
           description:
-            'Leadership actively promotes change and innovation. Decision-making is more distributed. Leaders encourage experimentation and learning from failures.',
+            'Typ przywództwa wg książki: wysokie wymagania połączone z zapewnieniem narzędzi i zasobów do ich realizacji.',
         },
         {
           level: 4,
-          title: 'Transformational',
+          title: 'Wspierający',
           description:
-            'Leaders inspire and motivate teams towards digital transformation. They model digital-first behaviors and champion new technologies. Empowerment and autonomy are core leadership principles.',
+            'Typ przywództwa wg książki: budowanie bezpieczeństwa psychologicznego i motywowanie zespołu.',
         },
         {
           level: 5,
-          title: 'Visionary',
+          title: 'Innowator',
           description:
-            'Leadership drives industry-leading innovation. Leaders anticipate future trends and position the organization accordingly. They create a culture of continuous reinvention and breakthrough thinking.',
+            'Typ przywództwa wg książki: podejmowanie ryzyka, eksperymentowanie i napędzanie zmiany.',
+        },
+        {
+          level: 6,
+          title: 'Transformacyjny',
+          description:
+            'Typ przywództwa wg książki: wizja, etyka, odrzucenie status quo i rozwój ludzi. To skala typów, nie rosnąca dojrzałość — oceniaj typ dominujący i 1–2 wspierające.',
         },
       ],
     },
     {
       id: '5B',
       name: 'Readiness for Change',
-      namePL: 'Gotowość na Zmiany',
+      namePL: 'Gotowość na zmianę',
       levels: [
         {
           level: 1,
-          title: 'Resistant',
-          description:
-            'Organization shows significant resistance to change. Employees prefer established processes and tools. Change initiatives face substantial pushback.',
+          title: 'Rozpoznanie potrzeby',
+          description: 'Organizacja rozpoznaje potrzebę zmiany.',
         },
         {
           level: 2,
-          title: 'Cautious',
-          description:
-            'Some openness to change exists but with reservations. Changes are accepted when clearly beneficial. Risk aversion still dominates decision-making.',
+          title: 'Koalicja zmiany',
+          description: 'Budowana jest koalicja zmiany — zespół i sponsorzy.',
         },
         {
           level: 3,
-          title: 'Accepting',
-          description:
-            'Organization accepts change as necessary for growth. Employees participate in change initiatives. Structured change management processes are in place.',
+          title: 'Poszukiwanie wizji',
+          description: 'Trwa poszukiwanie wizji i strategii zmiany.',
         },
         {
           level: 4,
-          title: 'Embracing',
-          description:
-            'Change is welcomed as an opportunity. Employees actively seek improvements and innovations. Agile methodologies support rapid adaptation.',
+          title: 'Komunikowanie wizji',
+          description: 'Wizja jest komunikowana w organizacji, dwukierunkowo.',
         },
         {
           level: 5,
-          title: 'Driving',
+          title: 'Wdrażanie zmiany',
+          description: 'Zmiana jest wdrażana poprzez inicjatywy i kryteria postępu.',
+        },
+        {
+          level: 6,
+          title: 'Instytucjonalizacja',
           description:
-            'Organization proactively drives change in the industry. Employees are change agents who continuously seek transformation opportunities. Change is embedded in organizational DNA.',
+            'Zmiana jest zinstytucjonalizowana — zakorzeniona w kulturze i sposobie pracy.',
         },
       ],
     },
     {
       id: '5C',
-      name: 'Continuous Improvement',
-      namePL: 'Ciągłe Doskonalenie',
+      name: 'Continuous Competency Development',
+      namePL: 'Ciągły rozwój kompetencji',
       levels: [
         {
           level: 1,
-          title: 'Ad-hoc',
-          description:
-            'Improvements occur sporadically without systematic approach. No formal processes for capturing and implementing improvements. Learning is individual rather than organizational.',
+          title: 'Kontakt zewnętrzny',
+          description: 'Rozwój przez kontakt zewnętrzny — udział w targach i konferencjach.',
         },
         {
           level: 2,
-          title: 'Reactive',
-          description:
-            'Improvements are made in response to problems. Some documentation of lessons learned exists. Improvement initiatives are project-based rather than continuous.',
+          title: 'Szkolenia wewnętrzne',
+          description: 'Prowadzone są szkolenia wewnętrzne.',
         },
         {
           level: 3,
-          title: 'Systematic',
-          description:
-            'Formal continuous improvement programs are established. Regular reviews and retrospectives occur. Best practices are documented and shared.',
+          title: 'Szkolenia zewnętrzne',
+          description: 'Organizacja korzysta ze szkoleń zewnętrznych.',
         },
         {
           level: 4,
-          title: 'Proactive',
-          description:
-            'Organization actively seeks improvement opportunities. Data-driven decision making guides improvements. Innovation labs and experiments are common.',
+          title: 'Self-learning',
+          description: 'Wspierany jest self-learning — platformy, książki, kursy.',
         },
         {
           level: 5,
-          title: 'Optimizing',
-          description:
-            'Continuous improvement is embedded in all processes. AI and analytics drive optimization. Organization achieves industry-leading performance through relentless improvement.',
+          title: 'Zespoły projektowe',
+          description: 'Rozwój przez pracę w zespołach projektowych (learning-by-doing).',
+        },
+        {
+          level: 6,
+          title: 'Mentoring',
+          description: 'Działa mentoring — systemowe rozwijanie juniorów.',
         },
       ],
     },
     {
       id: '5D',
       name: 'Innovation Culture',
-      namePL: 'Kultura Innowacji',
+      namePL: 'Kultura innowacji',
       levels: [
         {
           level: 1,
-          title: 'Conservative',
-          description:
-            'Innovation is not prioritized. Focus is on maintaining existing products and services. New ideas are rarely explored or implemented.',
+          title: 'Promowanie pomysłów',
+          description: 'Promowanie pomysłów — hackathony, platformy idei.',
         },
         {
           level: 2,
-          title: 'Incremental',
-          description:
-            'Small improvements to existing offerings are made. Innovation is limited to specific departments. Risk-taking is discouraged.',
+          title: 'Eksperymentowanie',
+          description: 'Eksperymentowanie — prototypy i pilotaże.',
         },
         {
           level: 3,
-          title: 'Structured',
-          description:
-            'Formal innovation processes exist. Dedicated resources for R&D and innovation. Regular ideation sessions and innovation challenges.',
+          title: 'Analiza trendów',
+          description: 'Aktywna analiza trendów rynkowych.',
         },
         {
           level: 4,
-          title: 'Entrepreneurial',
-          description:
-            'Innovation is encouraged across all levels. Intrapreneurship programs exist. Failure is seen as learning opportunity. Cross-functional innovation teams operate.',
+          title: 'Akceptacja błędów',
+          description: 'Akceptacja błędów jako element uczenia się.',
         },
         {
           level: 5,
-          title: 'Disruptive',
-          description:
-            'Organization leads industry disruption. Breakthrough innovations are regularly achieved. Open innovation and ecosystem partnerships drive new value creation.',
+          title: 'R&D w strategii',
+          description: 'R&D wpisane w strategię firmy — ciągłe, nie „ad hoc".',
+        },
+        {
+          level: 6,
+          title: 'Współpraca zewnętrzna',
+          description: 'Współpraca zewnętrzna w strategii — startupy, uczelnie, partnerzy.',
         },
       ],
     },
     {
       id: '5E',
       name: 'Resource Availability',
-      namePL: 'Dostępność Zasobów',
+      namePL: 'Dostępność zasobów',
       levels: [
         {
           level: 1,
-          title: 'Constrained',
-          description:
-            'Limited resources for transformation initiatives. Budget constraints limit digital investments. Talent gaps exist in key digital skills.',
+          title: 'Kapitał',
+          description: 'Dostęp do kapitału — plan finansowania inicjatyw.',
         },
         {
           level: 2,
-          title: 'Basic',
-          description:
-            'Minimum resources allocated for digital initiatives. Some investment in training and tools. Resource allocation is project-by-project.',
+          title: 'Szkolenia',
+          description: 'Dostęp do szkoleń — ścieżki rozwoju.',
         },
         {
           level: 3,
-          title: 'Adequate',
-          description:
-            'Sufficient resources for planned transformation. Dedicated digital transformation budget. Training programs address skill gaps.',
+          title: 'Eksperci',
+          description: 'Dostęp do ekspertów — wewnętrznych i zewnętrznych.',
         },
         {
           level: 4,
-          title: 'Strategic',
-          description:
-            'Resources are strategically allocated to transformation. Significant investment in digital capabilities. Talent acquisition and development are prioritized.',
+          title: 'Dane',
+          description: 'Dostęp do danych — systemy, bezpieczeństwo, sposób użycia.',
         },
         {
           level: 5,
-          title: 'Abundant',
-          description:
-            'Organization invests heavily in digital transformation. Best-in-class tools and technologies are available. Top digital talent is attracted and retained.',
+          title: 'Technologia',
+          description: 'Dostęp do technologii — narzędzia wraz ze wsparciem.',
+        },
+        {
+          level: 6,
+          title: 'Partnerzy',
+          description: 'Dostęp do partnerów — ekosystem i współpraca.',
         },
       ],
     },
@@ -1348,198 +1356,200 @@ const AXIS_5_CULTURE: DRDAxis = {
 };
 
 // ============================================
-// AXIS 6: CYBERSECURITY (5 areas, 5 levels)
+// AXIS 6: CYBERSECURITY (5 areas, 6 levels)
 // ============================================
 
 const AXIS_6_CYBERSECURITY: DRDAxis = {
   id: 6,
   name: 'Cybersecurity',
   namePL: 'Cyberbezpieczeństwo',
-  description: 'Assessment of cybersecurity posture and data protection capabilities',
-  levelCount: 5,
+  description:
+    'Assessment of cybersecurity maturity as a condition for survival (not just an IT problem). Each area uses a cumulative 1–6 scale per the DRD book.',
+  levelCount: 6,
   areas: [
     {
       id: '6A',
       name: 'Strategy and Risk Management',
-      namePL: 'Strategia i Zarządzanie Ryzykiem',
+      namePL: 'Strategia i zarządzanie ryzykiem',
       levels: [
         {
           level: 1,
-          title: 'Ad-hoc',
-          description:
-            'No formal cybersecurity strategy exists. Risk management is reactive. Security decisions are made on case-by-case basis without overall framework.',
+          title: 'Brak strategii',
+          description: 'Brak strategii i polityk bezpieczeństwa.',
         },
         {
           level: 2,
-          title: 'Basic',
-          description:
-            'Basic security policies are documented. Some risk assessment activities occur. Security is considered but not systematically managed.',
+          title: 'Analiza ryzyka',
+          description: 'Prowadzona jest analiza ryzyka.',
         },
         {
           level: 3,
-          title: 'Defined',
-          description:
-            'Comprehensive cybersecurity strategy is in place. Regular risk assessments are conducted. Security governance structure is established.',
+          title: 'Plan działań',
+          description: 'Powstaje plan działań w obszarze bezpieczeństwa.',
         },
         {
           level: 4,
-          title: 'Managed',
-          description:
-            'Risk management is integrated into business processes. Continuous monitoring of security posture. Metrics and KPIs track security performance.',
+          title: 'Polityki bezpieczeństwa',
+          description: 'Wdrożone polityki bezpieczeństwa — standardy i procedury.',
         },
         {
           level: 5,
-          title: 'Optimized',
-          description:
-            'Cybersecurity strategy drives competitive advantage. Predictive risk management using AI. Industry-leading security practices are implemented.',
+          title: 'HR w strategii',
+          description: 'HR włączone w strategię — szkolenia i budowanie kompetencji.',
+        },
+        {
+          level: 6,
+          title: 'Monitoring i ocena',
+          description: 'Monitoring i ocena skuteczności — audyty, testy, analiza logów.',
         },
       ],
     },
     {
       id: '6B',
       name: 'Network and System Protection',
-      namePL: 'Ochrona Sieci i Systemów',
+      namePL: 'Ochrona sieci i systemów',
       levels: [
         {
           level: 1,
-          title: 'Minimal',
-          description:
-            'Basic firewall and antivirus protection. No network segmentation. Limited monitoring of network traffic.',
+          title: 'Firewalle',
+          description: 'Stosowane są firewalle.',
         },
         {
           level: 2,
-          title: 'Basic',
-          description:
-            'Standard security controls are implemented. Some network segmentation exists. Regular patching of known vulnerabilities.',
+          title: 'Antywirus',
+          description: 'Wdrożona ochrona antywirusowa.',
         },
         {
           level: 3,
-          title: 'Intermediate',
-          description:
-            'Defense-in-depth approach is applied. Intrusion detection systems are deployed. Regular vulnerability assessments are conducted.',
+          title: 'IDS',
+          description: 'Działają systemy wykrywania włamań (IDS).',
         },
         {
           level: 4,
-          title: 'Advanced',
-          description:
-            'Zero-trust architecture principles are applied. Advanced threat detection and response. Automated security orchestration.',
+          title: 'SIEM/IDS korelujące',
+          description: 'SIEM/IDS korelujące zdarzenia z wielu źródeł.',
         },
         {
           level: 5,
-          title: 'Leading',
-          description:
-            'AI-powered threat detection and response. Continuous security validation. Proactive threat hunting and intelligence.',
+          title: 'Autoryzacja i uwierzytelnianie',
+          description: 'Wdrożone mechanizmy autoryzacji i uwierzytelniania.',
+        },
+        {
+          level: 6,
+          title: 'VPN i segmentacja',
+          description: 'VPN — bezpieczne kanały i segmentacja połączeń.',
         },
       ],
     },
     {
       id: '6C',
       name: 'Data Security',
-      namePL: 'Bezpieczeństwo Danych',
+      namePL: 'Ochrona danych',
       levels: [
         {
           level: 1,
-          title: 'Unprotected',
-          description:
-            'Data classification is not performed. Encryption is not consistently applied. Data access controls are minimal.',
+          title: 'Szyfrowanie',
+          description: 'Stosowane jest szyfrowanie danych.',
         },
         {
           level: 2,
-          title: 'Basic',
-          description:
-            'Some data classification exists. Encryption for sensitive data in transit. Basic access controls are implemented.',
+          title: 'Polityka haseł',
+          description: 'Polityka haseł i bezpieczne przechowywanie.',
         },
         {
           level: 3,
-          title: 'Controlled',
-          description:
-            'Comprehensive data classification scheme. Encryption at rest and in transit. Role-based access controls are enforced.',
+          title: 'Kontrola dostępu',
+          description: 'Kontrola dostępu — role i audyt.',
         },
         {
           level: 4,
-          title: 'Protected',
-          description:
-            'Data loss prevention tools are deployed. Advanced encryption and key management. Data access is monitored and audited.',
+          title: 'Backup i DR',
+          description: 'Backup oraz disaster recovery.',
         },
         {
           level: 5,
-          title: 'Secured',
-          description:
-            'Privacy by design principles are applied. Automated data protection. Compliance with all relevant regulations is maintained.',
+          title: 'Monitoring i detekcja',
+          description: 'Monitoring i detekcja zagrożeń.',
+        },
+        {
+          level: 6,
+          title: 'Weryfikacja tożsamości',
+          description: 'Weryfikacja tożsamości (np. certyfikaty/biometria) wraz z procesami.',
         },
       ],
     },
     {
       id: '6D',
-      name: 'Education and Training',
-      namePL: 'Edukacja i Szkolenia',
+      name: 'Security Education and System Quality',
+      namePL: 'Edukacja i jakość systemów',
       levels: [
         {
           level: 1,
-          title: 'None',
-          description:
-            'No formal security awareness training. Employees are unaware of security risks. Security is seen as IT responsibility only.',
+          title: 'Opis systemu szkoleń',
+          description: 'Istnieje opis systemu szkoleń z bezpieczeństwa.',
         },
         {
           level: 2,
-          title: 'Basic',
-          description:
-            'Annual security awareness training. Basic phishing awareness. Security policies are communicated to employees.',
+          title: 'Plan wdrożenia szkoleń',
+          description: 'Plan wdrożenia szkoleń w różnych formach.',
         },
         {
           level: 3,
-          title: 'Regular',
-          description:
-            'Quarterly security training programs. Simulated phishing exercises. Role-specific security training is provided.',
+          title: 'System testów',
+          description: 'Działa system testów bezpieczeństwa.',
         },
         {
           level: 4,
-          title: 'Comprehensive',
-          description:
-            'Continuous security education program. Gamified learning and engagement. Security champions program exists.',
+          title: 'Audytorzy wewnętrzni',
+          description: 'Wyznaczeni audytorzy wewnętrzni.',
         },
         {
           level: 5,
-          title: 'Culture',
+          title: 'Plan audytów cyber',
+          description: 'Istnieje plan audytów cyberbezpieczeństwa.',
+        },
+        {
+          level: 6,
+          title: 'ISO 27001',
           description:
-            'Security is embedded in organizational culture. Employees are proactive about security. Security awareness is measured and optimized.',
+            'Certyfikacja ISO 27001 (system zarządzania bezpieczeństwem informacji, ISMS).',
         },
       ],
     },
     {
       id: '6E',
-      name: 'Incident Response',
-      namePL: 'Reagowanie na Incydenty',
+      name: 'Contingency Plans',
+      namePL: 'Plany awaryjne',
       levels: [
         {
           level: 1,
-          title: 'Unprepared',
-          description:
-            'No incident response plan exists. Incidents are handled ad-hoc. No lessons learned process.',
+          title: 'Identyfikacja zagrożeń',
+          description: 'Identyfikacja zagrożeń.',
         },
         {
           level: 2,
-          title: 'Basic',
-          description:
-            'Basic incident response plan is documented. Key contacts are identified. Post-incident reviews are sometimes conducted.',
+          title: 'Priorytety w incydencie',
+          description: 'Ustalone priorytety postępowania w incydencie.',
         },
         {
           level: 3,
-          title: 'Defined',
-          description:
-            'Comprehensive incident response procedures. Regular tabletop exercises. Incident tracking and reporting.',
+          title: 'Procedury postępowania',
+          description: 'Opracowane procedury postępowania.',
         },
         {
           level: 4,
-          title: 'Managed',
-          description:
-            'Dedicated incident response team. Automated incident detection and triage. Regular drills and simulations.',
+          title: 'Szkolenia awaryjne',
+          description: 'Regularne szkolenia awaryjne.',
         },
         {
           level: 5,
-          title: 'Optimized',
-          description:
-            'AI-assisted incident response. Continuous improvement of response capabilities. Industry-leading response times and effectiveness.',
+          title: 'Testy planów',
+          description: 'Testy planów awaryjnych w oparciu o scenariusze.',
+        },
+        {
+          level: 6,
+          title: 'Dokumentacja i doskonalenie',
+          description: 'Dokumentacja i ciągłe doskonalenie planów.',
         },
       ],
     },
@@ -1848,6 +1858,328 @@ export const calculateAxisScore = (
 
   return { actual, target, gap };
 };
+
+// ============================================
+// COORD-11 — versioned scoring (§6.1/§6.2 of docs/product/DRD_CANON.md)
+// ============================================
+//
+// `calculateOverallScore` / `calculateAxisScore` above are frozen exactly as
+// they were before COORD-11 — DO NOT edit them. They have two confirmed
+// defects vs. canon §6:
+//
+//   DEFECT 1 (no normalization): a level-5 area on a 1-5 axis (=100% of that
+//   axis's ladder) and a level-5 area on a 1-7 axis (=66.7% of that ladder)
+//   both report `actual: 5` — see zz-opus-drd-agg-probe.test.ts.
+//
+//   DEFECT 2 (zero counted as a level): the only filter is `s !== undefined`,
+//   so an unassessed area recorded as `{actual: 0}` is averaged in as if "0"
+//   were a real, low maturity level. Canon §6.2: "Obszary nieocenione
+//   (score_raw = 0) nie wchodzą do średniej ... Zakaz liczenia zera jako
+//   poziomu."
+//
+// `legacy_v1` below is that exact behavior, explicitly named and re-exported
+// so callers can pin it on purpose. `drd_scoring_v2` is the canon-correct
+// engine. Nothing switches to v2 automatically — see
+// `src/utils/drdScoringV2Flag.ts` (default OFF) and
+// `docs/program/METHOD_ASSESSMENT_CORE_2026-08-13/DRD_SCORING_V1_VS_V2.md`.
+
+/** Traceability tag: which formula produced a given score. */
+export type DrdCalculationVersion = 'legacy_v1' | 'drd_scoring_v2';
+
+/**
+ * DRD maturity level bands per canon §6.2:
+ *   [0-0.2) I · [0.2-0.4) II · [0.4-0.6) III · [0.6-0.8) IV · [0.8-1.0] V
+ */
+export type DrdMaturityLevel = 'I' | 'II' | 'III' | 'IV' | 'V';
+
+export function drdLevelFromNorm(norm: number): DrdMaturityLevel {
+  if (norm < 0.2) return 'I';
+  if (norm < 0.4) return 'II';
+  if (norm < 0.6) return 'III';
+  if (norm < 0.8) return 'IV';
+  return 'V';
+}
+
+/**
+ * Four-plus-one area states the legacy engine conflates into a single
+ * `{actual: number}`. Canon §6.2 only explicitly names the first pair
+ * ("nieocenione" / assessed) — the other three are this engine's explicit,
+ * documented rules for cases the canon is silent on (see
+ * DRD_SCORING_V1_VS_V2.md "Canon citations" table); never silent imputation.
+ *
+ *  - 'assessed'              achieved_level ∈ [1, Lmax(a)] — a real measured
+ *                            value. The only state that contributes a
+ *                            non-null `scoreNorm`.
+ *  - 'assessed_zero'         achieved_level === 0, EXPLICITLY recorded as a
+ *                            real (not missing) zero. DRD's ladders are
+ *                            defined 1..Lmax (see DRD_STRUCTURE — every axis
+ *                            starts numbering areas' levels at 1), so a real
+ *                            achieved_level of 0 is NOT a valid position on
+ *                            any DRD ladder. This state exists in the type
+ *                            for API completeness (other method packs may
+ *                            allow a real zero); for DRD specifically it is
+ *                            normalized identically to 'unassessed' (excluded,
+ *                            never imputed as the lowest level) — see the
+ *                            EVIDENCE_MISSING note in DRD_SCORING_V1_VS_V2.md.
+ *  - 'unassessed'            not measured (null/undefined, or the legacy `0`
+ *                            sentinel when no explicit `state` is given).
+ *                            NEVER treated as the lowest level. Lowers
+ *                            `coverage`, excluded from the mean.
+ *  - 'insufficient_evidence' an answer/level was proposed but evidence does
+ *                            not support it (mirrors `needs_evidence` in
+ *                            `method-core/methods/drd/drdAdapter.ts`).
+ *                            NEVER promotes the level — excluded from the
+ *                            mean, same treatment as 'unassessed'.
+ *  - 'not_applicable'        out of scope for this organization. Canon §6
+ *                            does not state whether N/A areas lower the
+ *                            denominator — EVIDENCE_MISSING against a canon
+ *                            citation. Named rule adopted here (see
+ *                            DRD_SCORING_V1_VS_V2.md): N/A is removed from
+ *                            BOTH numerator and denominator, i.e. it does
+ *                            NOT lower `coverage`/`completeness` the way
+ *                            'unassessed' does.
+ */
+export type DrdAreaState =
+  | 'assessed'
+  | 'assessed_zero'
+  | 'unassessed'
+  | 'insufficient_evidence'
+  | 'not_applicable';
+
+/** Per-area input for the v2 engine. `state` is optional — when omitted it is
+ * inferred from `actual` (`null`/`undefined`/`0` → 'unassessed'), matching
+ * the shape most legacy callers already produce (`{actual, target}`). */
+export interface DrdAreaInputV2 {
+  readonly actual: number | null | undefined;
+  readonly target?: number | null;
+  readonly state?: DrdAreaState;
+}
+
+/** Per-area normalized result (score_norm/target_norm/gap per canon §6.1). */
+export interface DrdAreaNormResult {
+  readonly areaId: string;
+  readonly axisId: number;
+  readonly lmax: number;
+  readonly state: DrdAreaState;
+  readonly scoreNorm: number | null;
+  readonly targetNorm: number | null;
+  readonly gapNorm: number | null;
+}
+
+/** Aggregate result for `drd_scoring_v2` — always reports coverage/exclusions
+ * explicitly instead of hiding them behind a single averaged number. */
+export interface DrdAggregateResultV2 {
+  readonly calculationVersion: 'drd_scoring_v2';
+  /** Mean of `scoreNorm` over 'assessed' areas only. `null` when nothing is assessed. */
+  readonly scoreNorm: number | null;
+  readonly targetNorm: number | null;
+  readonly gapNorm: number | null;
+  readonly level: DrdMaturityLevel | null;
+  readonly assessedCount: number;
+  readonly assessedZeroCount: number;
+  readonly unassessedCount: number;
+  readonly insufficientEvidenceCount: number;
+  readonly notApplicableCount: number;
+  /** Areas counted in the coverage denominator (total minus not_applicable). */
+  readonly denominatorCount: number;
+  /** assessedCount / denominatorCount, in [0,1]. 0 when denominatorCount is 0. */
+  readonly coverage: number;
+  /** coverage * 100, rounded to 1 decimal place (e.g. 66.7). */
+  readonly coveragePercent: number;
+  /** Every area excluded from the mean, with its reason — "explicitly listed",
+   * per canon §6.2, never just silently dropped. */
+  readonly excluded: ReadonlyArray<{ readonly areaId: string; readonly state: DrdAreaState }>;
+}
+
+function round(n: number, decimals: number): number {
+  const f = 10 ** decimals;
+  return Math.round(n * f) / f;
+}
+
+function clamp01(n: number): number {
+  return Math.max(0, Math.min(1, n));
+}
+
+function inferDrdAreaState(actual: number | null | undefined): DrdAreaState {
+  if (actual === null || actual === undefined) return 'unassessed';
+  if (actual === 0) return 'unassessed'; // legacy sentinel — see DrdAreaState doc above
+  return 'assessed';
+}
+
+/**
+ * Normalizes one area's input into score_norm/target_norm/gap per canon §6.1:
+ *   score_norm(a)  = (achieved_level(a) − 1) / (Lmax(a) − 1)
+ *   target_norm(a) = (target_level(a) − 1) / (Lmax(a) − 1)
+ *   gap(a)         = max(0, target_norm(a) − score_norm(a))
+ * Returns `null` (not a thrown error) when `areaId` is not a known DRD area —
+ * callers filter these out and the caller-facing functions below never crash
+ * on an unknown id, they simply cannot score it.
+ */
+export function normalizeDrdAreaV2(
+  areaId: string,
+  input: DrdAreaInputV2
+): DrdAreaNormResult | null {
+  const axis = getAxisForArea(areaId);
+  if (!axis) return null;
+  const lmax = axis.levelCount;
+  const state: DrdAreaState = input.state ?? inferDrdAreaState(input.actual);
+
+  if (state !== 'assessed') {
+    return {
+      areaId,
+      axisId: axis.id,
+      lmax,
+      state,
+      scoreNorm: null,
+      targetNorm: null,
+      gapNorm: null,
+    };
+  }
+
+  const achieved = input.actual as number;
+  const scoreNorm = lmax > 1 ? clamp01(round((achieved - 1) / (lmax - 1), 6)) : 0;
+
+  const target = input.target;
+  const targetNorm =
+    target === null || target === undefined
+      ? null
+      : lmax > 1
+        ? clamp01(round((target - 1) / (lmax - 1), 6))
+        : 0;
+  const gapNorm = targetNorm === null ? null : round(Math.max(0, targetNorm - scoreNorm), 6);
+
+  return { areaId, axisId: axis.id, lmax, state, scoreNorm, targetNorm, gapNorm };
+}
+
+function aggregateDrdAreasV2(
+  entries: ReadonlyArray<readonly [string, DrdAreaInputV2]>
+): DrdAggregateResultV2 {
+  const normalized = entries
+    .map(([id, v]) => normalizeDrdAreaV2(id, v))
+    .filter((r): r is DrdAreaNormResult => r !== null);
+
+  const assessed = normalized.filter((r) => r.state === 'assessed');
+  const assessedZero = normalized.filter((r) => r.state === 'assessed_zero');
+  const unassessed = normalized.filter((r) => r.state === 'unassessed');
+  const insufficientEvidence = normalized.filter((r) => r.state === 'insufficient_evidence');
+  const notApplicable = normalized.filter((r) => r.state === 'not_applicable');
+
+  // Named rule (canon silent — see DrdAreaState doc / DRD_SCORING_V1_VS_V2.md):
+  // not_applicable is removed from BOTH numerator and denominator.
+  const denominator = normalized.filter((r) => r.state !== 'not_applicable');
+
+  const scoreNorm =
+    assessed.length > 0
+      ? round(assessed.reduce((sum, r) => sum + (r.scoreNorm as number), 0) / assessed.length, 4)
+      : null;
+
+  const withTarget = assessed.filter((r) => r.targetNorm !== null);
+  const targetNorm =
+    withTarget.length > 0
+      ? round(
+          withTarget.reduce((sum, r) => sum + (r.targetNorm as number), 0) / withTarget.length,
+          4
+        )
+      : null;
+
+  const gapNorm =
+    scoreNorm !== null && targetNorm !== null
+      ? round(Math.max(0, targetNorm - scoreNorm), 4)
+      : null;
+
+  const coverage = denominator.length > 0 ? assessed.length / denominator.length : 0;
+
+  return {
+    calculationVersion: 'drd_scoring_v2',
+    scoreNorm,
+    targetNorm,
+    gapNorm,
+    level: scoreNorm !== null ? drdLevelFromNorm(scoreNorm) : null,
+    assessedCount: assessed.length,
+    assessedZeroCount: assessedZero.length,
+    unassessedCount: unassessed.length,
+    insufficientEvidenceCount: insufficientEvidence.length,
+    notApplicableCount: notApplicable.length,
+    denominatorCount: denominator.length,
+    coverage: round(coverage, 4),
+    coveragePercent: round(coverage * 100, 1),
+    excluded: normalized
+      .filter((r) => r.state !== 'assessed')
+      .map((r) => ({ areaId: r.areaId, state: r.state })),
+  };
+}
+
+/**
+ * Overall DRD score across ALL areas — `drd_scoring_v2` engine.
+ * Normalizes per §6.1 and excludes non-'assessed' areas from the mean per
+ * §6.2 (explicitly listed in `.excluded`, never silently dropped).
+ */
+export function calculateOverallScoreV2(
+  areaScores: Readonly<Record<string, DrdAreaInputV2>>
+): DrdAggregateResultV2 {
+  return aggregateDrdAreasV2(Object.entries(areaScores));
+}
+
+/**
+ * Axis score — `drd_scoring_v2` engine. Only areas belonging to `axisId` are
+ * considered (unknown/other-axis area ids in `areaScores` are ignored, same
+ * scoping as legacy `calculateAxisScore`).
+ */
+export function calculateAxisScoreV2(
+  axisId: number,
+  areaScores: Readonly<Record<string, DrdAreaInputV2>>
+): DrdAggregateResultV2 {
+  const axis = getAxisById(axisId);
+  if (!axis) return aggregateDrdAreasV2([]);
+  const entries: Array<readonly [string, DrdAreaInputV2]> = axis.areas
+    .filter((a) => areaScores[a.id] !== undefined)
+    .map((a) => [a.id, areaScores[a.id]] as const);
+  return aggregateDrdAreasV2(entries);
+}
+
+/** Explicit alias for `calculateOverallScore` — use this name when you want
+ * the caller/reader to see, unambiguously, that the frozen legacy formula
+ * (bit-for-bit, defects included) is being invoked on purpose. */
+export const calculateOverallScoreLegacyV1 = calculateOverallScore;
+
+/** Explicit alias for `calculateAxisScore` — see `calculateOverallScoreLegacyV1`. */
+export const calculateAxisScoreLegacyV1 = calculateAxisScore;
+
+export type DrdVersionedOverallResult =
+  | ({ calculationVersion: 'legacy_v1' } & ReturnType<typeof calculateOverallScore>)
+  | DrdAggregateResultV2;
+
+/**
+ * Version-dispatching entry point. Defaults to `legacy_v1` — callers that
+ * want `drd_scoring_v2` must say so explicitly, either by passing `version`
+ * directly or by reading `isDrdScoringV2Enabled()`
+ * (`src/utils/drdScoringV2Flag.ts`) themselves and forwarding the result.
+ * This function does NOT read the flag itself, mirroring
+ * `rankByImpactValue`/`rankByImpactValueV2` in `siriPrioritisation.ts`
+ * (COORD-08): the pure calculation layer stays free of `window`/env access;
+ * flag resolution happens at the call site (e.g. `drdReportModel.ts`).
+ */
+export function calculateOverallScoreVersioned(
+  areaScores: Record<string, { actual: number; target: number }>,
+  version: DrdCalculationVersion = 'legacy_v1'
+): DrdVersionedOverallResult {
+  if (version === 'drd_scoring_v2') {
+    return calculateOverallScoreV2(areaScores);
+  }
+  return { calculationVersion: 'legacy_v1', ...calculateOverallScore(areaScores) };
+}
+
+/** Version-dispatching entry point for axis scores. See `calculateOverallScoreVersioned`. */
+export function calculateAxisScoreVersioned(
+  axisId: number,
+  areaScores: Record<string, { actual: number; target: number }>,
+  version: DrdCalculationVersion = 'legacy_v1'
+): DrdVersionedOverallResult {
+  if (version === 'drd_scoring_v2') {
+    return calculateAxisScoreV2(axisId, areaScores);
+  }
+  return { calculationVersion: 'legacy_v1', ...calculateAxisScore(axisId, areaScores) };
+}
 
 /**
  * Map DRD axis ID to internal key used in assessment data

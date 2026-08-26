@@ -51,7 +51,7 @@ Puste `inet_server_port()` jest oczekiwane dla `psql` uruchomionego wewnątrz ko
 | A.1     | CZĘŚCIOWO   | raportowy commit A.1 | `Gateway.ts:639,641` → deklaracje routerów; 31 v1 + 41 v2 znalezione                              | inwentarz statyczny; brak pełnego testu HTTP 72 tras                           |
 | A.2     | STOP        | —                    | kanon v2 potwierdzony, ale bez pełnego A.1 nie usuwam kodu                                        | brak zmian produkcyjnych                                                       |
 | A.3     | CZĘŚCIOWO   | raportowy commit A.1 | wywołania klienta zmierzone statycznie; reprezentatywne czerwone zastane w baseline               | pełny kontrakt odpowiedzi wymaga osobnego pomiaru real-router                  |
-| B.1     | NIE_ZACZĘTE | —                    | —                                                                                                 | —                                                                              |
+| B.1     | CZĘŚCIOWO   | commit B.1           | `Gateway` → raporty/Assessment → `drdVizAdapter` → `server/src/data/drdStructure.ts`              | 16/16 PASS; brak osobnego readbacku sesji na realnym PG obniża status          |
 | B.2     | STOP        | —                    | serwis osiągalny przez `Gateway.ts` → `assessment-ai.routes.ts` → `aiAssessmentPartnerService.ts` | 92 błędy punktowego `tsc` po zdjęciu `@ts-nocheck`; plik przywrócony bez diffu |
 | C.1     | NIE_ZACZĘTE | —                    | —                                                                                                 | —                                                                              |
 | D.1     | NIE_ZACZĘTE | —                    | —                                                                                                 | —                                                                              |
@@ -118,6 +118,35 @@ Na etapie raportowego commita A.1: brak zmian produkcyjnych, więc brak czerwony
 ### Testy osłabione
 
 Brak.
+
+## B.1 — jeden serwerowy model siedmiu osi DRD
+
+Kierunek synchronizacji: kanoniczna kopia kliencka została odczytana i mechanicznie przeniesiona do dozwolonego pliku serwerowego. Nie zmieniono żadnego pliku w `src/` i nie dopisano własnej treści metodycznej.
+
+| Oś                        | Klient | Serwer przed | Serwer po | Przykład | Normalizacja przed | Normalizacja po | Dowód                                                    |
+| ------------------------- | -----: | -----------: | --------: | -------: | -----------------: | --------------: | -------------------------------------------------------- |
+| 5 — Kultura transformacji |      6 |            5 |         6 | poziom 5 |               100% |          83,33% | adapter publikuje `maxLevel: 6`; test zachowuje poziom 6 |
+| 6 — Cyberbezpieczeństwo   |      6 |            5 |         6 | poziom 5 |               100% |          83,33% | adapter publikuje `maxLevel: 6`; test zachowuje poziom 6 |
+
+Weryfikacja: `drdEvidenceScoring`, `compileDrdPack` i nowy `drdVizAdapter.day20` — 16/16 PASS. Punktowy `esbuild` PASS. Status pozostaje `CZĘŚCIOWO`, ponieważ DoD instrukcji wymaga także przykładowej sesji zapisanej i odczytanej z realnego PG; nie przedstawiam testu deterministycznego jako substytutu readbacku DB.
+
+## B.2 — `@ts-nocheck`
+
+### STOP — B.2
+
+Powód: zdjęcie dyrektywy ujawnia 92 błędy punktowego `tsc`; pełne zamknięcie wymaga szerokiego typowania dynamicznych opcji i wyników w 1439-liniowym serwisie, a skrót przez `as any` jest zakazany.
+Dowód: dominujące kategorie to brak deklaracji `genAI`, `model`, `_injected`; odczyty `actual/target` z `unknown`; odczyty pól z `{}`. Serwis został przywrócony bez diffu i bez zmiany zachowania.
+Co zrobiłbym, gdyby przydzielono osobny zakres: wprowadziłbym jawne interfejsy opcji oraz typ osi, z testami tych samych trzech tras AI przed/po.
+Stan: NIE ZACOMMITOWANO; zero zmiany produkcyjnej.
+
+## F.1 — nieosiągalny agregator
+
+### STOP — F.1
+
+Powód: importer `assessmentDomainRoutes` jest nieosiągalny, ale agregowany `assessments.routes.ts` zawiera 11 handlerów, w tym odpowiedzi i framework questions; nie dowiedziono, że każda semantyka ma odpowiednik na zamontowanym moucie.
+Dowód: jedyne realne odwołanie to `server/src/routes/index.ts:18 → assessment/index.ts → assessments.routes.ts`; dodatkowe trafienia `routes/index` są komentarzami. Sam brak importera nie spełnia kroku F.1.2.
+Co zrobiłbym po kompletnej mapie semantycznej: usunąłbym minimalnie tylko te pliki, których każda semantyka ma zamontowany odpowiednik i pełny test regresji.
+Stan: NIE ZACOMMITOWANO; zero usunięć.
 
 ## Pozycje otwarte — STOP-y do zatwierdzenia nadzorcy
 
