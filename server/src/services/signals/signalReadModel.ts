@@ -91,8 +91,8 @@ export async function readSignalFeed(params: {
        LEFT JOIN projects p ON p.organization_id = w.organization_id AND p.id = w.project_id
        LEFT JOIN work_signal_runs r ON r.organization_id = w.organization_id AND r.run_id = w.run_id
       WHERE ${conditions.join(' AND ')}
-        AND w.signal_type NOT IN (
-          SELECT jsonb_array_elements_text(coalesce(nullif(pref.muted_types_json, '')::jsonb, '[]'::jsonb))
+        AND UPPER(w.signal_type) NOT IN (
+          SELECT UPPER(jsonb_array_elements_text(coalesce(nullif(pref.muted_types_json, '')::jsonb, '[]'::jsonb)))
             FROM my_work_signal_prefs pref WHERE pref.user_id = ? AND pref.organization_id = w.organization_id
         )
         AND w.domain NOT IN (

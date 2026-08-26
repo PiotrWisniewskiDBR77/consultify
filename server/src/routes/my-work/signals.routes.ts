@@ -108,7 +108,12 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
-    const value = String(req.body?.type || '').trim();
+    // FIX-7c (day18 layer-1 acceptance): the old handler normalized this
+    // value; without it a client that sends the type in uppercase silently
+    // fails to mute anything (mirrors mute-domain below).
+    const value = String(req.body?.type || '')
+      .trim()
+      .toUpperCase();
     if (!value) return res.status(400).json({ error: 'TYPE_REQUIRED' });
     res.status(200).json({
       mutedTypes: await updatePreference({
