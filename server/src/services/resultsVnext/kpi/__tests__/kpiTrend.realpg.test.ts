@@ -18,6 +18,20 @@
  *       403, a `null`/`[]` indistinguishable from "does not exist" (same
  *       generic-404 contract `kpi.routes.ts`'s trend handler relies on).
  *
+ * DEC-93 UPDATE: the same-org round-trip test below FIRST ran red against
+ * this real database — `kpiTrend.ts:33`'s `.sort()` assumed
+ * `periodEnd`/`periodStart` were strings, but a real Postgres TIMESTAMPTZ
+ * round-trips through `node-postgres` as a native `Date` (this repo
+ * registers no `pg.types.setTypeParser` override anywhere), which
+ * `.localeCompare()` cannot handle. Fixed in `kpiTrend.ts`'s
+ * `periodEndTime()` helper (DEC-93, licensed follow-up to this same
+ * DEC-77 dozbrojenie task) — the comparator now normalizes both a `Date`
+ * and an ISO string to epoch milliseconds before comparing, with no
+ * change to the response contract. This file is exactly what caught the
+ * defect in the first place (neither the pure-unit suite nor the
+ * HTTP-mocked route suite ever fed it a real `Date`), so re-running it
+ * green here is the actual proof the fix works — not a claim about it.
+ *
  * Pattern precedent: tests/resultsVnext/kpi/kpiReviseDefinition.realdb.test.ts
  * (DATABASE_URL-driven `DB_CONFIGURED` skip, `insertVisibilityPolicy`
  * helper, `access: FULL_ACCESS` command-layer injection) — reused
@@ -260,37 +274,30 @@ describe('Day 14 K.1 — KPI trend read model (real Postgres)', () => {
       });
       expect(measurements).toHaveLength(2);
 
-      // ⚠ CONFIRMED DEC-77 FINDING (dozbrojenie, 2026-08-26) — this next
-      // call is expected to THROW against a real Postgres, and that is the
-      // whole point of running this suite against one instead of a mock.
+      // DEC-93 FIX VERIFIED HERE (previously a confirmed, documented DEC-77
+      // finding — this call used to THROW against a real Postgres).
       // `rvn_kpi_measurements.period_start`/`period_end` are TIMESTAMPTZ;
-      // `node-postgres` (the exact `pg` client this project uses) decodes
-      // TIMESTAMPTZ into native JS `Date` objects by default, and this
-      // repo registers NO `pg.types.setTypeParser` override anywhere
-      // (verified: `grep -rn setTypeParser server/src` — the only hits are
-      // OTHER files' own comments confirming the same absence for oid
-      // 1082/1184). `toKpiMeasurement()` (kpiTypes.ts) passes `period_end`
-      // straight through with no `.toISOString()`, so the `KpiMeasurement`
-      // TS type's `periodEnd: string` is a LIE at this exact boundary — at
-      // runtime it is a `Date`. `buildKpiTrend()` (kpiTrend.ts:33) does
-      // `.sort((a, b) => a.periodEnd.localeCompare(b.periodEnd))`, which
-      // requires a string and crashes on a `Date`. Net effect: GET
-      // /api/vnext/results/kpi/:kpiId/trend 500s in PRODUCTION for every
-      // KPI with 2+ measurements (a single measurement never reaches the
-      // comparator, which is why this was invisible to any test that
-      // stopped at 0-1 real rows). Neither `kpiTrend.test.ts` (pure unit,
-      // hand-written string dates) nor kpi.routes.test.ts's block-1a HTTP
-      // suite (repository MOCKED with string-date fixtures) could ever
-      // have caught this — a real Postgres round-trip is the only thing
-      // that surfaces it, which is exactly this file's job.
-      // NOT FIXED HERE: this task's write license (DEC-77 licencja Z17)
-      // covers `resultsVnextRoi.validators.ts` only (block 2, ROI q-filter)
-      // — `kpiTrend.ts` is a different domain file outside that grant, so
-      // fixing the `.sort()` comparator (e.g. compare via `new
-      // Date(a.periodEnd).getTime()` or normalize in `toKpiMeasurement`)
-      // is intentionally left to a separately licensed follow-up. This
-      // test stays red until that fix lands — flip it green by re-running
-      // rather than "fixing" the assertion.
+      // `node-postgres` decodes TIMESTAMPTZ into native JS `Date` objects
+      // by default, and this repo registers NO `pg.types.setTypeParser`
+      // override anywhere (verified: `grep -rn setTypeParser server/src`).
+      // `toKpiMeasurement()` (kpiTypes.ts) passes `period_end` straight
+      // through with no `.toISOString()`, so the `KpiMeasurement` TS
+      // type's `periodEnd: string` was always a lie at this exact
+      // boundary — at runtime it is a `Date`. `buildKpiTrend()`
+      // (kpiTrend.ts) used to `.sort((a, b) =>
+      // a.periodEnd.localeCompare(b.periodEnd))`, which required a string
+      // and crashed on a `Date`: GET /api/vnext/results/kpi/:kpiId/trend
+      // 500'd in production for every KPI with 2+ measurements (a single
+      // measurement never reaches the comparator, which is why this was
+      // invisible to any test that stopped at 0-1 real rows). Neither
+      // `kpiTrend.test.ts` (pure unit, hand-written string dates) nor
+      // `kpi.routes.test.ts`'s block-1a HTTP suite (repository MOCKED with
+      // string-date fixtures) could ever have caught this — only a real
+      // Postgres round-trip could, which is exactly what this test is.
+      // DEC-93 fixed it in `kpiTrend.ts`'s `periodEndTime()` helper
+      // (normalizes both `Date` and ISO string to epoch millis before
+      // comparing, no response-contract change) — this assertion is the
+      // real, re-run proof that fix actually works end to end.
       const trend = buildKpiTrend({ kpiId, version: version!, measurements, calculatedAt: 'now' });
       expect(trend.points).toHaveLength(2);
       expect(trend.direction).toBe('IMPROVING');
