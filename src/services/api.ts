@@ -10340,45 +10340,6 @@ export const Api = {
     return handleResponse(res, 'Failed to fetch token ledger').then((data) => data?.ledger || []);
   },
 
-  // ==========================================
-  // PHASE C: CONSULTANT MODE
-  // ==========================================
-  getConsultantOrgs: async (): Promise<any[]> => {
-    const res = await fetch(`${API_URL}/consultants/orgs`, { headers: getHeaders() });
-    if (!res.ok) throw new Error('Failed to fetch consultant organizations');
-    return res.json();
-  },
-
-  getConsultantClients: async (orgId?: string): Promise<any[]> => {
-    let url = `${API_URL}/consultants/clients`;
-    if (orgId) url += `?orgId=${orgId}`;
-    const res = await fetch(url, { headers: getHeaders() });
-    if (!res.ok) throw new Error('Failed to fetch consultant clients');
-    return res.json();
-  },
-
-  createConsultantInvite: async (data: {
-    email: string;
-    invitationType: string;
-    firmName?: string;
-    projectName?: string;
-  }): Promise<any> => {
-    const res = await fetch(`${API_URL}/consultants/invites`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify(data),
-    });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error || 'Failed to create invite');
-    return json;
-  },
-
-  getConsultantInvites: async (): Promise<any[]> => {
-    const res = await fetch(`${API_URL}/consultants/invites`, { headers: getHeaders() });
-    if (!res.ok) throw new Error('Failed to fetch invites');
-    return res.json();
-  },
-
   // Org Admin: Invite a user (Member or Consultant)
   createOrganizationInvitation: async (email: string, role: string): Promise<any> => {
     const res = await fetch(`${API_URL}/invitations`, {

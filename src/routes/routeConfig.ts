@@ -288,12 +288,6 @@ export const ROUTES = {
     RESOURCES: '/partner/resources',
   },
 
-  // Consultant
-  CONSULTANT: {
-    PANEL: '/consultant/panel',
-    INVITES: '/consultant/invites',
-  },
-
   // Wizards
   ORG_SETUP: '/setup/organization',
   ONBOARDING: '/setup/onboarding',
@@ -583,10 +577,6 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
   [AppView.PARTNER_DIRECTORY]: ROUTES.PARTNER.DIRECTORY,
   [AppView.PARTNER_RESOURCES]: ROUTES.PARTNER.RESOURCES,
 
-  // Consultant
-  [AppView.CONSULTANT_PANEL]: ROUTES.CONSULTANT.PANEL,
-  [AppView.CONSULTANT_INVITES]: ROUTES.CONSULTANT.INVITES,
-
   // Wizards
   [AppView.ORG_SETUP_WIZARD]: ROUTES.ORG_SETUP,
   [AppView.ONBOARDING_WIZARD]: ROUTES.ONBOARDING,
@@ -773,8 +763,6 @@ export function getAppViewFromPath(path: string): AppView | null {
   if (normalized.startsWith(ROUTES.ROI)) return AppView.FULL_STEP4_ROI;
   if (normalized.startsWith(ROUTES.PROJECT_INTELLIGENCE)) return AppView.PROJECT_INTELLIGENCE;
   if (normalized.startsWith(ROUTES.AI_ACTIONS)) return AppView.AI_ACTION_PROPOSALS;
-  if (normalized.startsWith(ROUTES.CONSULTANT.PANEL)) return AppView.CONSULTANT_PANEL;
-  if (normalized.startsWith(ROUTES.CONSULTANT.INVITES)) return AppView.CONSULTANT_INVITES;
   if (normalized.startsWith(ROUTES.ORG_SETUP)) return AppView.ORG_SETUP_WIZARD;
   if (normalized.startsWith(ROUTES.ONBOARDING)) return AppView.ONBOARDING_WIZARD;
   if (normalized.startsWith(ROUTES.ONBOARDING_ADMIN)) return AppView.ONBOARDING_WIZARD;

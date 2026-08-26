@@ -328,14 +328,6 @@ export const useBreadcrumbs = (): string[] | null => {
   else if (viewParts.includes('PARTNER')) {
     return null;
   }
-  // =====================================================
-  // CONSULTANT VIEWS
-  // =====================================================
-  else if (currentView === AppView.CONSULTANT_PANEL) {
-    return null;
-  } else if (currentView === AppView.CONSULTANT_INVITES) {
-    return null;
-  }
   // If we couldn't compute a meaningful override, fall back to route-provided crumbs.
   if (!section) return null;
   if (!sub) return [section];
