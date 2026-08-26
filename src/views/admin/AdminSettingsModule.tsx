@@ -351,11 +351,22 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
           'seats-licences',
         ].includes(resolvedLocation.screen)) ||
       // Fala 0 (Admin komplet 55): the Command Center's 7 enterprise-compliance
-      // tabs (SOC2 audit, DLP, residency, retention, org AI policy, agent
+      // screens (SOC2 audit, DLP, residency, retention, org AI policy, agent
       // trace, benchmark) are fully wired to /api/admin/enterprise-compliance/*
-      // — only the "Postawa zgodności" nav slot was missing. Overview stays
-      // aggregation-only per FINAL_IMPLEMENTATION_SPEC.md.
-      (resolvedLocation.domain === 'command' && resolvedLocation.screen === 'compliance-posture') ||
+      // and now have their own vertical nav slots (DEC night-fixes-b-20260826
+      // — the old single "Postawa zgodności" slot with an internal horizontal
+      // pill-nav violated ADM-OWN-001, "every screen a different layout").
+      // Overview stays aggregation-only per FINAL_IMPLEMENTATION_SPEC.md.
+      (resolvedLocation.domain === 'command' &&
+        [
+          'agent-trace',
+          'audit',
+          'dlp',
+          'residency',
+          'retention',
+          'ai-policy',
+          'benchmark',
+        ].includes(resolvedLocation.screen)) ||
       (resolvedLocation.domain === 'command' && resolvedLocation.screen === 'attention-queue') ||
       (resolvedLocation.domain === 'command' && resolvedLocation.screen === 'cost-capacity') ||
       (resolvedLocation.domain === 'command' &&
@@ -486,17 +497,12 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
           return <AdminOrganizationDefaultsPanel organizationId={currentUser.organizationId} />;
         return (
           <AdminCommandCenterPanel
-            screen={
-              resolvedLocation.screen === 'attention-queue' ||
-              resolvedLocation.screen === 'cost-capacity'
-                ? resolvedLocation.screen
-                : undefined
-            }
+            screen={resolvedLocation.screen === 'overview' ? undefined : resolvedLocation.screen}
             // Only the Overview screen aggregates signals read-only (per
             // FINAL_IMPLEMENTATION_SPEC.md, Command "aggregates signals
-            // only"). Every other Command Center screen (currently just
-            // "compliance-posture", gated by `connected` above) gets the
-            // panel's full tabbed experience.
+            // only"). Every other Command Center screen — each now its own
+            // vertical nav slot instead of an internal horizontal pill-nav —
+            // gets that screen's dedicated content.
             aggregationOnly={resolvedLocation.screen === 'overview'}
             onSectionChange={(section) =>
               handleLocationChange({
@@ -532,7 +538,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
 
   return (
     <SettingsHeaderActionsProvider value={headerActionsTarget}>
-      <div className="relative flex h-full bg-slate-50 dark:bg-navy-950">
+      <div className="relative flex h-full bg-[var(--c-bg)]">
         {sidebarOpen && (
           <button
             type="button"
@@ -557,7 +563,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
           />
         </div>
 
-        <div className="flex min-w-0 flex-1 flex-col bg-white dark:bg-navy-900">
+        <div className="flex min-w-0 flex-1 flex-col bg-[var(--c-surface)]">
           <DomainScreenHeader
             breadcrumbs={[
               { label: t('admin.shell.breadcrumb'), onClick: handleBackToDashboard },

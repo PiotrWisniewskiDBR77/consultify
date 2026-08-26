@@ -16,6 +16,7 @@
  * Behind the `changeSignals` flag (default OFF everywhere — rule #7). Fails
  * soft per section: one section erroring never blocks the other two.
  */
+import type { TFunction } from 'i18next';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -175,6 +176,48 @@ const ADKAR_DIMENSIONS: Array<{ key: keyof ReadinessResult; label: string }> = [
   { key: 'reinforcement', label: 'Utrwalenie' },
 ];
 
+// The backend (peopleChangeReadinessService.ts) returns `barriers` as the
+// English ADKAR dimension label ('Awareness', 'Desire', ...) — same source
+// keys as ADKAR_DIMENSIONS above, just capitalized. Kept as a lookup instead
+// of re-keying the service response, so this is purely a display concern.
+const BARRIER_I18N_KEY: Record<string, string> = {
+  Awareness: 'awareness',
+  Desire: 'desire',
+  Knowledge: 'knowledge',
+  Ability: 'ability',
+  Reinforcement: 'reinforcement',
+};
+
+const READINESS_LEVEL_I18N_KEY: Record<ReadinessLevel, string> = {
+  AT_RISK: 'atRisk',
+  DEVELOPING: 'developing',
+  READY: 'ready',
+  UNKNOWN: 'unknown',
+};
+
+/**
+ * Builds the lane-problem sentence entirely on the client instead of using
+ * `laneProblem.title` from `peopleChangeReadinessService.ts` verbatim — the
+ * backend builds that title in hardcoded English ("Adoption barriers
+ * detected (Awareness)"), which showed up untranslated on an otherwise
+ * Polish screen (night sweep B, FIX-2026). The structured fields it's built
+ * from (`readiness.readiness` and `readiness.barriers`) are already
+ * available client-side, so this reconstructs the same two variants the
+ * service generates, fully localized.
+ */
+function laneProblemText(t: TFunction, readiness: ReadinessResult): string {
+  const barrierLabels = readiness.barriers.map((b) =>
+    t(`execution.changeSignals.barrier.${BARRIER_I18N_KEY[b] || b.toLowerCase()}`, b)
+  );
+  const detail = barrierLabels.length > 0 ? ` (${barrierLabels.join(', ')})` : '';
+  const variant = readiness.readiness === 'AT_RISK' ? 'atRisk' : 'developing';
+  const englishDefault =
+    variant === 'atRisk'
+      ? 'People-change adoption at risk{{detail}}'
+      : 'Adoption barriers detected{{detail}}';
+  return t(`execution.changeSignals.laneProblem.${variant}`, { defaultValue: englishDefault, detail });
+}
+
 export const ExecutionChangeSignalsPanel: React.FC<Props> = ({ fetchers }) => {
   const { t } = useTranslation();
   const f = { ...defaultFetchers, ...fetchers };
@@ -308,7 +351,10 @@ export const ExecutionChangeSignalsPanel: React.FC<Props> = ({ fetchers }) => {
               className={`rounded-full border px-2 py-0.5 text-xs font-medium ${BALANCE_STYLE[capacity.portfolio.balance]}`}
               data-testid="capacity-balance"
             >
-              {capacity.portfolio.balance}
+              {t(
+                `execution.changeSignals.balance.${capacity.portfolio.balance}`,
+                capacity.portfolio.balance
+              )}
             </span>
           )}
         </div>
@@ -344,7 +390,10 @@ export const ExecutionChangeSignalsPanel: React.FC<Props> = ({ fetchers }) => {
                         : BALANCE_STYLE.healthy
                   }`}
                 >
-                  {s.severity}
+                  {t(
+                    `execution.changeSignals.severity.${s.severity.toLowerCase()}`,
+                    s.severity
+                  )}
                 </span>
               </li>
             ))}
@@ -366,7 +415,10 @@ export const ExecutionChangeSignalsPanel: React.FC<Props> = ({ fetchers }) => {
               className={`rounded-full border px-2 py-0.5 text-xs font-medium ${READINESS_STYLE[readiness.readiness.readiness]}`}
               data-testid="readiness-level"
             >
-              {readiness.readiness.readiness}
+              {t(
+                `execution.changeSignals.readinessLevel.${READINESS_LEVEL_I18N_KEY[readiness.readiness.readiness]}`,
+                readiness.readiness.readiness
+              )}
             </span>
           )}
         </div>
@@ -409,7 +461,7 @@ export const ExecutionChangeSignalsPanel: React.FC<Props> = ({ fetchers }) => {
             </div>
             {readiness.laneProblem && (
               <p className="mt-1 text-xs text-warning-600" data-testid="readiness-lane-problem">
-                {readiness.laneProblem.title}
+                {laneProblemText(t, readiness.readiness)}
               </p>
             )}
           </div>
@@ -466,8 +518,15 @@ export const ExecutionChangeSignalsPanel: React.FC<Props> = ({ fetchers }) => {
             <ul className="space-y-1.5" data-testid="champions-list">
               {champions.slice(0, 6).map((c) => (
                 <li key={c.id} className="flex items-center justify-between text-xs">
-                  <span className="text-c-text-secondary">{c.role}</span>
-                  <span className="text-c-text-muted">{c.status}</span>
+                  <span className="text-c-text-secondary">
+                    {t(`execution.changeSignals.championRole.${c.role.toLowerCase()}`, c.role)}
+                  </span>
+                  <span className="text-c-text-muted">
+                    {t(
+                      `execution.changeSignals.championStatus.${c.status.toLowerCase()}`,
+                      c.status
+                    )}
+                  </span>
                 </li>
               ))}
             </ul>

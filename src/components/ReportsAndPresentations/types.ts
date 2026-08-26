@@ -422,3 +422,24 @@ export const TEMPLATE_STATUS_META: Record<
     tone: 'neutral',
   },
 };
+
+/**
+ * Night sweep B (2026-08-26, FIX-2026): the KATEGORIA column rendered
+ * `row.category` verbatim -- readable for the four short R1-R4 codes, but a
+ * raw snake_case backend enum ("executive_update", "custom", ...) for the
+ * other five. Mirrors the label/labelPl split already used by
+ * TEMPLATE_TYPE_META/TEMPLATE_STATUS_META above.
+ */
+export const TEMPLATE_CATEGORY_META: Record<TemplateCategory, { label: string; labelPl: string }> =
+  {
+    R1: { label: 'R1 — Weekly', labelPl: 'R1 — Tygodniowy' },
+    R2: { label: 'R2 — Steering', labelPl: 'R2 — Komitet sterujący' },
+    R3: { label: 'R3 — Benefits', labelPl: 'R3 — Korzyści' },
+    R4: { label: 'R4 — Portfolio', labelPl: 'R4 — Portfel' },
+    executive_update: { label: 'Executive Update', labelPl: 'Aktualizacja dla zarządu' },
+    project_kickoff: { label: 'Project Kickoff', labelPl: 'Start projektu' },
+    initiative_review: { label: 'Initiative Review', labelPl: 'Przegląd inicjatywy' },
+    financial_review: { label: 'Financial Review', labelPl: 'Przegląd finansowy' },
+    assessment_results: { label: 'Assessment Results', labelPl: 'Wyniki oceny' },
+    custom: { label: 'Custom', labelPl: 'Niestandardowa' },
+  };

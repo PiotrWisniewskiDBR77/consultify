@@ -19,6 +19,7 @@ import {
   type AuditExportResult,
   getComplianceAuditExport,
 } from '../../../services/enterpriseComplianceApi';
+import { formatListDateTime } from '../../../utils/listDateFormat';
 import { StandardTable, type TableColumn, type TableRow } from '../../standard';
 
 const inputClass =
@@ -98,10 +99,7 @@ export const CommandCenterAuditTab: React.FC = () => {
         label: t('commandCenter.audit.columns.createdAt', 'Date'),
         width: '170px',
         sortable: true,
-        render: (row: TableRow) => {
-          const d = new Date(row.createdAt as string);
-          return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString();
-        },
+        render: (row: TableRow) => formatListDateTime(row.createdAt as string),
       },
       {
         id: 'eventType',
@@ -167,7 +165,7 @@ export const CommandCenterAuditTab: React.FC = () => {
               <p className="mt-2 text-xs text-c-text-muted">
                 {t('commandCenter.audit.summary', '{{count}} entries — generated {{time}}', {
                   count: result.totalCount,
-                  time: new Date(result.exportedAt).toLocaleString(),
+                  time: formatListDateTime(result.exportedAt),
                 })}
               </p>
             )}

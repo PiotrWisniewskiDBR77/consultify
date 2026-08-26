@@ -65,8 +65,11 @@ describe('AdminComplianceEvidencePanel', () => {
     expect(screen.getByText('EU')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Rezydencja danych/ })).toHaveAttribute(
       'href',
-      '/admin/command/compliance-posture?tab=residency'
+      '/admin/command/residency'
     );
+    // Owner-flagged bug: the AI policy card was rendering the raw backend
+    // enum ("required") instead of the Polish label ("Wymagane").
+    expect(screen.getByText('Wymagane')).toBeInTheDocument();
   });
   it('shows the backend error honestly', async () => {
     api.getTenantAdminAuditLogs.mockRejectedValue(new Error('evidence down'));

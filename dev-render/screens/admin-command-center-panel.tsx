@@ -320,12 +320,21 @@ class DebugBoundary extends React.Component<
 }
 
 export default function AdminCommandCenterPanelScreen(): React.ReactElement {
+  // DEC night-fixes-b-20260826 (ADM-OWN-001): the internal horizontal
+  // pill-nav (driven by its own `?tab=` query param) is gone — each screen
+  // is now its own slot in the vertical AdminSettingsSidebar, and
+  // AdminCommandCenterPanel just renders whichever one it's told to via the
+  // `screen` prop, exactly like every other admin domain. This harness
+  // mirrors that: `?tab=` still selects which screen to photograph, it just
+  // passes straight through as a prop instead of round-tripping the panel's
+  // own router state.
   const requestedTab = new URLSearchParams(window.location.search).get('tab') || 'overview';
+  const screen = requestedTab === 'overview' ? undefined : (requestedTab as never);
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto', padding: 24 }}>
       <DebugBoundary>
-        <MemoryRouter initialEntries={[`/?tab=${requestedTab}`]}>
-          <AdminCommandCenterPanel />
+        <MemoryRouter initialEntries={['/']}>
+          <AdminCommandCenterPanel screen={screen} aggregationOnly={false} />
         </MemoryRouter>
       </DebugBoundary>
     </div>

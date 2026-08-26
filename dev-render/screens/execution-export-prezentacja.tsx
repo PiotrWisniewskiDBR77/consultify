@@ -59,7 +59,7 @@ const MOCK_REPORT: ReportDef = {
   scope: 'Portfel 12 inicjatyw — faza Execution',
   dataSources: ['Initiatives', 'Tasks', 'Decisions', 'Risk signals'],
   sections: [
-    'Executive summary',
+    'Podsumowanie wykonawcze',
     'Postęp inicjatyw (RAG)',
     'Decyzje wymagające uwagi',
     'Ryzyka i opóźnienia',
