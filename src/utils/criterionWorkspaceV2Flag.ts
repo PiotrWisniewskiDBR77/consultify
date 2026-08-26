@@ -9,6 +9,12 @@
  * `ARTIFACT_PANEL_SECTION_ORDER` with a "Rola i uprawnienia" group as the
  * first Properties block, Menu 1 primary tracks the current link.
  *
+ * DEC-97 (owner accept, 2026-08-26, real-component screenshots — "jest
+ * super"): default flipped ON. V1 stays reachable via the explicit
+ * `?ff_criterionWorkspaceV2=0` / `localStorage["ff.criterion_workspace_v2"]
+ * = "off"` escape hatch for regression comparison; it is otherwise retired
+ * from the default path.
+ *
  * Mechanika (18 ogniw, API, role, tabele dowodów/ustaleń) NIE się zmienia —
  * ten ekran przeprojektowuje WYŁĄCZNIE powłokę/układ (patrz
  * `CriterionWorkspaceGate.tsx`, który renderuje V1 lub V2 na podstawie tej
@@ -16,20 +22,25 @@
  *
  * Where this flag gates
  * ----------------------
- *   * `CriterionWorkspaceGate` — when OFF (default), renders the existing
- *     `CriterionWorkspace` (V1) UNCHANGED. When ON, renders
- *     `v2/CriterionWorkspaceV2`.
+ *   * `CriterionWorkspaceGate` — when ON (default, DEC-97), renders
+ *     `v2/CriterionWorkspaceV2`. When explicitly OFF, renders the existing
+ *     `CriterionWorkspace` (V1) UNCHANGED.
  *
  * Resolution order (highest wins), identical contract to
- * `initiativesBulkStubFlag.ts` / `m03DecisionWorkspaceFlag.ts`:
+ * `initiativesBulkStubFlag.ts` / `m03DecisionWorkspaceFlag.ts` /
+ * `ideaInspectorRightRailFlag.ts` (post-DEC-94: `query ?? local ?? env ??
+ * true`):
  *   1. URL query `?ff_criterionWorkspaceV2=0|1` — instant per-session bypass
- *      (used by the dev-render harness to preview V2 without flipping the
- *      default).
+ *      (used by the dev-render harness / regression checks to force V1
+ *      without touching the default).
  *   2. `localStorage["ff.criterion_workspace_v2"]` — user/org override.
  *   3. `import.meta.env.VITE_CRITERION_WORKSPACE_V2` — build-time override.
- *   4. Default: OFF. Flip ON only after owner acceptance on real-component
- *      screenshots (CLAUDE.md regułą 7 — Piotr nigdy nie jest pierwszym
- *      testerem wizualnym).
+ *   4. Default: ON (DEC-97). Disable per-session with `off`/`0`/`false` on
+ *      any of the above.
+ *
+ * Resolution result is cached at module scope (matches
+ * `ideaInspectorRightRailFlag.ts`) — call `resetCriterionWorkspaceV2FlagCache`
+ * between reads in tests.
  */
 
 const LS_KEY = 'ff.criterion_workspace_v2';
@@ -44,13 +55,12 @@ function parseFlag(raw: string | null | undefined): boolean | null {
   return null;
 }
 
-function readEnvFlag(): boolean {
+function readEnvFlag(): boolean | null {
   try {
     const meta = import.meta as unknown as { env?: Record<string, string | undefined> };
-    const parsed = parseFlag(meta?.env?.[ENV_KEY]);
-    return parsed === null ? false : parsed;
+    return parseFlag(meta?.env?.[ENV_KEY]);
   } catch {
-    return false;
+    return null;
   }
 }
 
@@ -72,18 +82,34 @@ function readLocalStorage(): boolean | null {
   }
 }
 
-/** Fail-closed: any read error along the chain resolves to OFF, never ON. */
+let cached: boolean | null = null;
+
+/**
+ * Resolution: query > localStorage > env > default (ON, DEC-97). Any read
+ * error along the chain resolves to the default rather than throwing, so a
+ * hostile/locked-down `window` never blocks the screen from rendering.
+ * Result is cached at module scope — call
+ * `resetCriterionWorkspaceV2FlagCache` to force a re-read (tests, or after
+ * an in-session override changes query/localStorage).
+ */
 export function isCriterionWorkspaceV2Enabled(): boolean {
+  if (cached !== null) return cached;
+  let resolved: boolean;
   try {
     const fromQuery = readQueryOverride();
-    if (fromQuery !== null) return fromQuery;
-    const fromLs = readLocalStorage();
-    if (fromLs !== null) return fromLs;
-    return readEnvFlag();
+    const fromLs = fromQuery === null ? readLocalStorage() : null;
+    const fromEnv = readEnvFlag();
+    resolved = fromQuery ?? fromLs ?? fromEnv ?? true;
   } catch {
-    return false;
+    resolved = true;
   }
+  cached = resolved;
+  return cached;
 }
+
+export const resetCriterionWorkspaceV2FlagCache = (): void => {
+  cached = null;
+};
 
 export const CRITERION_WORKSPACE_V2_FLAG_KEYS = {
   localStorage: LS_KEY,
