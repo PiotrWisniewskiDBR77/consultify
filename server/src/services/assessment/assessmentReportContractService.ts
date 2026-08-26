@@ -21,13 +21,22 @@ export class AssessmentReportContractService {
       id: string;
       method_pack_version: string;
       created_at: string;
+      project_id: string | null;
     }>(
-      `SELECT id, method_pack_version, created_at FROM method_sessions
+      `SELECT id, method_pack_version, created_at, project_id FROM method_sessions
        WHERE id = ? AND organization_id = ?`,
       [sessionId, organizationId],
       { fallback: false }
     );
     if (!session) throw new AssessmentSkipReasonError('SESSION_NOT_FOUND', 404);
+
+    const project = session.project_id
+      ? await DbPromise.get<{ name: string }>(
+          `SELECT name FROM projects WHERE id = ? AND organization_id = ?`,
+          [session.project_id, organizationId],
+          { fallback: false }
+        )
+      : null;
 
     const outputs = await methodOutputService.listOutputsBySession(organizationId, sessionId);
     const output = outputId
@@ -91,6 +100,11 @@ export class AssessmentReportContractService {
       revision: output?.outputVersion ?? 0,
       generatedAt: output?.frozenAt ?? session.created_at,
       methodVersion: output?.methodPackVersion ?? session.method_pack_version,
+      sessionLabel: {
+        displayName: project?.name ?? null,
+        source: project ? ('project' as const) : null,
+        projectId: session.project_id,
+      },
       chapters: DRD_STRUCTURE.map((axis) => ({
         axisId: axis.id,
         axisName: axis.name,
