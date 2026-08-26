@@ -120,6 +120,10 @@ describe.skipIf(!REAL_PG)('Day 31 canonical writer mounted contract', () => {
       ]) {
         await client.query(`DELETE FROM ${table} WHERE organization_id = $1`, [organizationId]);
       }
+      await client.query(`DELETE FROM initiative_dependencies WHERE organization_id = $1`, [
+        organizationId,
+      ]);
+      await client.query(`DELETE FROM initiatives WHERE organization_id = $1`, [organizationId]);
       await client.query(`DELETE FROM organization_members WHERE organization_id = ANY($1)`, [
         [organizationId, foreignOrganizationId],
       ]);
@@ -597,5 +601,93 @@ describe.skipIf(!REAL_PG)('Day 31 canonical writer mounted contract', () => {
           .send({ asOf: '2999-01-01T00:00:00.000Z' })
       ).status
     ).toBe(400);
+  });
+
+  it('computes the five owner-independent KPI families from known tenant data', async () => {
+    const secondInitiativeId = `day31-initiative-two-${tag}`;
+    const caseId = `kpi-case-${tag}`;
+    await client.query(
+      `INSERT INTO initiatives(id,organization_id,project_id,name)
+       VALUES($1,$2,$3,$1),($4,$2,$3,$4)`,
+      [initiativeId, organizationId, projectId, secondInitiativeId]
+    );
+    await client.query(
+      `INSERT INTO initiative_dependencies(
+         id,organization_id,project_id,from_initiative_id,to_initiative_id,source_id,created_at
+       ) VALUES($1,$2,$3,$4,$5,'day31',$6)`,
+      [
+        `dependency-${tag}`,
+        organizationId,
+        projectId,
+        initiativeId,
+        secondInitiativeId,
+        '2026-08-25T10:00:00.000Z',
+      ]
+    );
+    const rows = [
+      ['execution_case', caseId, 3, { initiativeId, projectId }],
+      [
+        'execution_task',
+        `task-complete-${tag}`,
+        2,
+        { executionCaseId: caseId, status: 'COMPLETED', dueAt: '2026-08-26T12:00:00.000Z' },
+      ],
+      [
+        'execution_task',
+        `task-blocked-${tag}`,
+        4,
+        { executionCaseId: caseId, status: 'BLOCKED', dueAt: '2026-08-27T12:00:00.000Z' },
+      ],
+      [
+        'execution_milestone',
+        `milestone-achieved-${tag}`,
+        2,
+        { executionCaseId: caseId, status: 'ACHIEVED' },
+      ],
+      [
+        'execution_milestone',
+        `milestone-open-${tag}`,
+        1,
+        { executionCaseId: caseId, status: 'OPEN' },
+      ],
+      [
+        'intervention_case',
+        `intervention-effective-${tag}`,
+        5,
+        { initiativeId, projectId, verification: { outcome: 'EFFECTIVE' } },
+      ],
+      [
+        'intervention_case',
+        `intervention-partial-${tag}`,
+        4,
+        { initiativeId, projectId, verification: { outcome: 'PARTIAL' } },
+      ],
+    ] as const;
+    for (const [aggregateType, aggregateId, version, payload] of rows) {
+      await client.query(
+        `INSERT INTO ie_aggregate_state(
+           organization_id,aggregate_type,aggregate_id,version,payload_json,updated_at
+         ) VALUES($1,$2,$3,$4,$5::jsonb,'2026-08-26T12:00:00.000Z')
+         ON CONFLICT (organization_id,aggregate_type,aggregate_id)
+         DO UPDATE SET version=EXCLUDED.version,payload_json=EXCLUDED.payload_json,updated_at=EXCLUDED.updated_at`,
+        [organizationId, aggregateType, aggregateId, version, JSON.stringify(payload)]
+      );
+    }
+    const response = await request(app)
+      .get('/api/initiatives/runtime-v1/control-kpis?weekStart=2026-08-24')
+      .set(auth());
+    expect(response.status).toBe(200);
+    const byFamily = Object.fromEntries(
+      response.body.families.map((family: any) => [family.family, family])
+    );
+    expect(byFamily['plan-delivery']).toMatchObject({ numerator: 1, denominator: 2, value: 0.5 });
+    expect(byFamily['blocked-work']).toMatchObject({ numerator: 1, denominator: 2, value: 0.5 });
+    expect(byFamily.milestone).toMatchObject({ numerator: 1, denominator: 2, value: 0.5 });
+    expect(byFamily.dependency).toMatchObject({ numerator: 1, denominator: 1, value: 1 });
+    expect(byFamily['intervention-effectiveness']).toMatchObject({
+      numerator: 1,
+      denominator: 2,
+      value: 0.5,
+    });
   });
 });
