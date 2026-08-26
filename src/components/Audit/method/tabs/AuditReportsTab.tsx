@@ -17,6 +17,7 @@
  */
 import { CheckCircle2, FileText, Send } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import {
   type StandardRowMenu,
@@ -28,6 +29,7 @@ import {
 import type { ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
 import { ErrorState } from '@/components/shared/states';
 import { StatusChip } from '@/components/ui/primitives/chips';
+import { isAuditsFindingsAndReportViewEnabled } from '@/utils/auditsFindingsAndReportViewFlag';
 import { formatListDate } from '@/utils/listDateFormat';
 
 import { reportStatusLabel, reportStatusTone } from '../auditStatusTones';
@@ -61,6 +63,7 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
   isPolish,
   programNameById = EMPTY_MAP,
 }) => {
+  const navigate = useNavigate();
   const [items, setItems] = useState<AuditReportSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -309,6 +312,18 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
           <StandardPreview
             title={selected.title}
             onClose={() => setSelectedId(null)}
+            // NAPRAWA 2 (2026-08-26): pełny widok treści raportu
+            // (`AuditReportDocumentView`, `/audit-programs/reports/:id`) —
+            // flag-gated (`ff_auditsFindingsAndReportView`, default OFF).
+            // Widoczne WYŁĄCZNIE gdy flaga ON, żeby nie pokazywać przycisku
+            // wiodącego donikąd (route sam i tak przekierowuje, ale ukrycie
+            // jest uczciwsze niż martwy klik).
+            onOpenFull={
+              isAuditsFindingsAndReportViewEnabled()
+                ? () => navigate(`/audit-programs/reports/${encodeURIComponent(selected.id)}`)
+                : undefined
+            }
+            openLabel={isPolish ? 'Otwórz pełny raport' : 'Open full report'}
             meta={{
               pills: [
                 {

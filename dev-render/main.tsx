@@ -314,6 +314,9 @@ const OrgIdentityOperatingScreen = React.lazy(() => import('./screens/org-identi
 const AudytyWarsztatKryteriumScreen = React.lazy(
   () => import('./screens/audyty-warsztat-kryterium')
 );
+const AudytyRaportDokumentScreen = React.lazy(
+  () => import('./screens/audyty-raport-dokument')
+);
 const Mw007CalendarNarrowViewportScreen = React.lazy(
   () => import('./screens/mw-007-calendar-narrow-viewport')
 );
@@ -394,6 +397,13 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
       '&stage=fresh|evidence|tested|finding|remediation|closed, ' +
       '&state=loading|error|forbidden, &teresa=1',
     render: () => <AudytyWarsztatKryteriumScreen />,
+  },
+  'audyty-raport-dokument': {
+    label:
+      'U9 — NAPRAWA 2 (2026-08-26): REALNY <AuditReportDocumentView> — pełny widok treści raportu, ' +
+      '`GET /audits/reports/:id/presentation`, SPEC-A Dokument (NModeShell+ArtifactRightPanel). ' +
+      '&status=draft|in_review|approved|published (default: approved).',
+    render: () => <AudytyRaportDokumentScreen />,
   },
   'tools-swot-report': {
     label:
