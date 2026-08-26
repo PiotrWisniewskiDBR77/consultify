@@ -92,13 +92,13 @@ reszty.
 1. Punktem wyjścia jest **NAJNOWSZY tip gałęzi `codex/m03-admin-20260824`**.
    Nadzorca podaje Ci **SHA commitu-markera** przy wklejaniu tej instrukcji.
 
-   **SHA markera: «MARKER_SHA»**
+   **SHA markera: c2f90af290**
 
    ```bash
    cd <root-repo>
    git fetch --all --prune
    git log --oneline -25 codex/m03-admin-20260824
-   git merge-base --is-ancestor «MARKER_SHA» codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
+   git merge-base --is-ancestor c2f90af290 codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
    ```
 
 2. **Jeśli marker nie jest przodkiem tipa albo gałąź nie istnieje — STOP.**
@@ -1282,7 +1282,7 @@ macierzy ról, wpis „zero realnych maili". Bez kompletu — pozycja `CZĘŚCIO
 ### Blok 0 — start (obowiązkowo, ~70 min, NIE pomijasz)
 1. `git fetch --all --prune`; weryfikacja markera:
    ```bash
-   git merge-base --is-ancestor «MARKER_SHA» codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
+   git merge-base --is-ancestor c2f90af290 codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
    ```
    Brak → STOP i koniec dyżuru.
 2. Weryfikacja stanu dnia 10 (§0.1 pkt 3) + materiałów wiążących (§0.1 pkt 4).
@@ -1366,7 +1366,7 @@ indziej (Z12).
 # Meetings dzień 16 — raport dyżuru <data>
 
 Baza: codex/m03-admin-20260824 @ <tip SHA>
-Marker: «MARKER_SHA» — POTWIERDZONY / BRAK
+Marker: c2f90af290 — POTWIERDZONY / BRAK
 Gałąź robocza: codex/meetings-day16-<data>
 Worktree: /private/tmp/consultify-meetings-day16
 Porty użyte: 4304/4305 (albo: żadne)  ·  Kontener PG: cx-day16-pg (usunięty: TAK/NIE)
