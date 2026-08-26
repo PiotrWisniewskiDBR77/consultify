@@ -1,4 +1,113 @@
 {
+  "chatSignals": {
+    "untitled": "Señal sin título",
+    "severity": {
+      "info": "Información",
+      "warning": "Advertencia",
+      "critical": "Crítico",
+      "blocker": "Bloqueante"
+    },
+    "domain": {
+      "EXECUTION": "Ejecución",
+      "DECISION": "Decisiones",
+      "RESULTS": "Resultados",
+      "FINANCE": "Finanzas",
+      "ASSESSMENT": "Evaluación",
+      "MEETINGS": "Reuniones",
+      "MATERIALS": "Materiales",
+      "GOVERNANCE": "Gobernanza"
+    },
+    "origin": {
+      "DETERMINISTIC": "Regla",
+      "AGGREGATED": "Agregado",
+      "INTERPRETED": "Interpretación de IA"
+    },
+    "status": {
+      "OPEN": "Abierto"
+    },
+    "age": {
+      "now": "justo ahora",
+      "minutes": "hace {{count}} min",
+      "hours": "hace {{count}} h",
+      "yesterday": "ayer",
+      "days": "hace {{count}} días"
+    },
+    "destination": {
+      "forbidden": "Sin permiso para abrir este objeto",
+      "unavailable": "Sin ruta a este objeto"
+    },
+    "mine": "Míos",
+    "columns": {
+      "signal": "Señal",
+      "domain": "Dominio",
+      "severity": "Gravedad",
+      "source": "Origen",
+      "age": "Antigüedad",
+      "status": "Estado"
+    },
+    "filters": {
+      "all": "Todas",
+      "mine": "Solo las mías",
+      "warning": "≥ advertencia",
+      "critical": "≥ crítico"
+    },
+    "action": {
+      "open": "Abrir",
+      "refresh": "Actualizar",
+      "retry": "Reintentar",
+      "loadMore": "Mostrar anteriores",
+      "snooze": "Posponer",
+      "mute": "Silenciar tipo",
+      "dismiss": "Descartar",
+      "copyId": "Copiar identificador de la señal",
+      "muteConfirm": "Esta operación no se puede deshacer en la aplicación. ¿Silenciar este tipo?"
+    },
+    "empty": {
+      "producerOff": "El productor de señales está desactivado; hasta que se active, esta lista permanecerá vacía sin importar el estado del proyecto.",
+      "unknown": "No hay señales abiertas. No sabemos si el productor está activado — compruébalo con Actualizar.",
+      "good": "No hay señales abiertas. Las condiciones de las reglas no se cumplen — es un buen estado."
+    },
+    "error": {
+      "load": "No se pudieron comprobar las señales",
+      "action": "No se pudo realizar la acción",
+      "demoBlocked": "Esta acción está bloqueada en modo demo",
+      "gone": "La señal ya no existe — actualiza la lista"
+    },
+    "notice": {
+      "snooze": "Señal pospuesta",
+      "dismiss": "Señal descartada",
+      "mute": "Tipo de señal silenciado",
+      "refreshed": "Actualizado"
+    },
+    "throttle": "Disponible en {{count}} s",
+    "preview": {
+      "details": "Detalles",
+      "evidence": "Cómo lo sabemos",
+      "noEvidence": "Sin evidencia guardada",
+      "provenance": "Procedencia de la IA",
+      "noProvenance": "Falta la procedencia de la interpretación de IA"
+    },
+    "rule": {
+      "signals.exec.task.overdue.title": "Tarea vencida",
+      "signals.exec.task.overdue.body": "La tarea lleva {{value}} días de retraso.",
+      "signals.exec.task.due_soon_not_started.title": "Tarea sin iniciar con vencimiento próximo",
+      "signals.exec.task.due_soon_not_started.body": "Quedan {{value}} días para el vencimiento.",
+      "signals.exec.task.blocked_stale.title": "Tarea bloqueada sin actualizaciones",
+      "signals.exec.task.blocked_stale.body": "Sin actualizaciones desde hace {{value}} días.",
+      "signals.exec.initiative.no_baseline.title": "Iniciativa sin línea base",
+      "signals.exec.initiative.no_baseline.body": "La iniciativa activa no tiene línea base de cronograma.",
+      "signals.dec.pending_stale.title": "Decisión pendiente demasiado tiempo",
+      "signals.dec.pending_stale.body": "La decisión lleva pendiente {{value}} días.",
+      "signals.dec.blocking_dependents.title": "La decisión bloquea objetos dependientes",
+      "signals.dec.blocking_dependents.body": "La decisión bloquea {{value}} objetos.",
+      "signals.res.kpi_threshold_breached.title": "Umbral de KPI superado",
+      "signals.res.kpi_threshold_breached.body": "El valor del KPI requiere una acción.",
+      "signals.fin.budget_overspend.title": "Sobrecosto de presupuesto",
+      "signals.fin.budget_overspend.body": "El gasto real superó el presupuesto aprobado.",
+      "signals.fin.benefit_not_realized.title": "Beneficio no realizado en el plazo",
+      "signals.fin.benefit_not_realized.body": "La fecha de realización pasó sin confirmación."
+    }
+  },
   "common": {
     "save": "Guardar",
     "cancel": "Cancelar",

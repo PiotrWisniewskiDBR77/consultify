@@ -1,4 +1,113 @@
 {
+  "chatSignals": {
+    "untitled": "Signal ohne Titel",
+    "severity": {
+      "info": "Information",
+      "warning": "Warnung",
+      "critical": "Kritisch",
+      "blocker": "Blockierend"
+    },
+    "domain": {
+      "EXECUTION": "Ausführung",
+      "DECISION": "Entscheidungen",
+      "RESULTS": "Ergebnisse",
+      "FINANCE": "Finanzen",
+      "ASSESSMENT": "Bewertung",
+      "MEETINGS": "Meetings",
+      "MATERIALS": "Materialien",
+      "GOVERNANCE": "Governance"
+    },
+    "origin": {
+      "DETERMINISTIC": "Regel",
+      "AGGREGATED": "Aggregiert",
+      "INTERPRETED": "KI-Interpretation"
+    },
+    "status": {
+      "OPEN": "Offen"
+    },
+    "age": {
+      "now": "gerade eben",
+      "minutes": "vor {{count}} Min.",
+      "hours": "vor {{count}} Std.",
+      "yesterday": "gestern",
+      "days": "vor {{count}} Tagen"
+    },
+    "destination": {
+      "forbidden": "Keine Berechtigung für dieses Objekt",
+      "unavailable": "Keine Route zu diesem Objekt"
+    },
+    "mine": "Meine",
+    "columns": {
+      "signal": "Signal",
+      "domain": "Bereich",
+      "severity": "Schweregrad",
+      "source": "Quelle",
+      "age": "Alter",
+      "status": "Status"
+    },
+    "filters": {
+      "all": "Alle",
+      "mine": "Nur meine",
+      "warning": "≥ Warnung",
+      "critical": "≥ kritisch"
+    },
+    "action": {
+      "open": "Öffnen",
+      "refresh": "Aktualisieren",
+      "retry": "Erneut versuchen",
+      "loadMore": "Ältere anzeigen",
+      "snooze": "Schlummern",
+      "mute": "Typ stummschalten",
+      "dismiss": "Verwerfen",
+      "copyId": "Signal-ID kopieren",
+      "muteConfirm": "Dieser Vorgang kann in der App nicht rückgängig gemacht werden. Diesen Typ stummschalten?"
+    },
+    "empty": {
+      "producerOff": "Der Signalproduzent ist deaktiviert — solange er nicht aktiviert ist, bleibt diese Liste unabhängig vom Projektstatus leer.",
+      "unknown": "Keine offenen Signale. Wir wissen nicht, ob der Produzent aktiviert ist — mit Aktualisieren prüfen.",
+      "good": "Keine offenen Signale. Die Regelbedingungen sind nicht erfüllt — das ist ein guter Zustand."
+    },
+    "error": {
+      "load": "Signale konnten nicht geprüft werden",
+      "action": "Aktion konnte nicht ausgeführt werden",
+      "demoBlocked": "Diese Aktion ist im Demo-Modus blockiert",
+      "gone": "Das Signal existiert nicht mehr — Liste aktualisieren"
+    },
+    "notice": {
+      "snooze": "Signal zurückgestellt",
+      "dismiss": "Signal verworfen",
+      "mute": "Signaltyp stummgeschaltet",
+      "refreshed": "Aktualisiert"
+    },
+    "throttle": "Verfügbar in {{count}} s",
+    "preview": {
+      "details": "Details",
+      "evidence": "Woher wir das wissen",
+      "noEvidence": "Keine gespeicherten Belege",
+      "provenance": "KI-Herkunft",
+      "noProvenance": "Keine Herkunftsangabe für die KI-Interpretation"
+    },
+    "rule": {
+      "signals.exec.task.overdue.title": "Aufgabe überfällig",
+      "signals.exec.task.overdue.body": "Die Aufgabe ist {{value}} Tage überfällig.",
+      "signals.exec.task.due_soon_not_started.title": "Nicht begonnene Aufgabe mit nahendem Termin",
+      "signals.exec.task.due_soon_not_started.body": "Bis zum Termin verbleiben {{value}} Tage.",
+      "signals.exec.task.blocked_stale.title": "Blockierte Aufgabe ohne Aktualisierung",
+      "signals.exec.task.blocked_stale.body": "Seit {{value}} Tagen keine Aktualisierung.",
+      "signals.exec.initiative.no_baseline.title": "Initiative ohne Baseline",
+      "signals.exec.initiative.no_baseline.body": "Die aktive Initiative hat keine Zeitplan-Baseline.",
+      "signals.dec.pending_stale.title": "Entscheidung wartet zu lange",
+      "signals.dec.pending_stale.body": "Die Entscheidung ist seit {{value}} Tagen ausstehend.",
+      "signals.dec.blocking_dependents.title": "Entscheidung blockiert abhängige Objekte",
+      "signals.dec.blocking_dependents.body": "Die Entscheidung blockiert {{value}} Objekte.",
+      "signals.res.kpi_threshold_breached.title": "KPI-Schwellenwert überschritten",
+      "signals.res.kpi_threshold_breached.body": "Der KPI-Wert erfordert eine Maßnahme.",
+      "signals.fin.budget_overspend.title": "Budgetüberschreitung",
+      "signals.fin.budget_overspend.body": "Die Ist-Ausgaben haben das genehmigte Budget überschritten.",
+      "signals.fin.benefit_not_realized.title": "Nutzen nicht fristgerecht realisiert",
+      "signals.fin.benefit_not_realized.body": "Der Realisierungstermin ist ohne Bestätigung verstrichen."
+    }
+  },
   "common": {
     "save": "Speichern",
     "cancel": "Abbrechen",
