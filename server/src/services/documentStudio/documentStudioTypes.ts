@@ -620,6 +620,7 @@ export function summarizeDocumentChartBlock(block: DocumentBlock | undefined | n
       if (!Array.isArray(s.values)) continue;
       let valid = true;
       for (const v of s.values) {
+        if (v === null && content.kind === 'radar') continue;
         if (typeof v !== 'number' || !Number.isFinite(v)) {
           valid = false;
           break;
