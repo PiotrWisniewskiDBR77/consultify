@@ -8181,7 +8181,9 @@
         "ariaLoading": "AI readiness assessment in progress",
         "loading": "Assessing…",
         "label": "AI readiness",
-        "scoreSuffix": "/100"
+        "scoreSuffix": "/100",
+        "degraded": "estimate without an AI model — no AI key configured, score computed from a word-count formula, not by a model",
+        "degradedBadge": "no AI"
       },
       "panel": {
         "title": "Gate readiness — AI analysis",

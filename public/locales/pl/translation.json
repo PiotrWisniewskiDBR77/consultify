@@ -7499,7 +7499,9 @@
         "ariaLoading": "Ocena gotowości AI w toku",
         "loading": "Ocena…",
         "label": "Gotowość AI",
-        "scoreSuffix": "/100"
+        "scoreSuffix": "/100",
+        "degraded": "szacunek bez modelu AI — brak skonfigurowanego klucza AI, wynik liczony ze wzoru słów, nie przez model",
+        "degradedBadge": "bez AI"
       },
       "panel": {
         "title": "Gotowość do bramki — analiza AI",

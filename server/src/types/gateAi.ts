@@ -28,6 +28,16 @@ export interface GateAiReadiness {
   gaps: GateAiGap[];
   /** actionable fixes (deduped across gaps) */
   fixes: string[];
+  /**
+   * DEC-104 (2026-08-26, Initiatives expert panel): true when at least one
+   * of the section reviews feeding this rollup came from the deterministic
+   * word-count heuristic (no LLM configured, or LLM output unparseable) —
+   * see `SectionReviewResult.degraded` in initiativeGenerationService.ts —
+   * rather than a real adversarial LLM pass. The UI MUST surface this: a
+   * "74/100" score that no model actually computed is a false precision
+   * claim if shown identically to a real AI-reviewed score.
+   */
+  degraded?: boolean;
 }
 
 /** One timeline finding (na linii czasu). */

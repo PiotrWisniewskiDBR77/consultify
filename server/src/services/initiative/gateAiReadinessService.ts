@@ -231,10 +231,14 @@ export async function getGateReadiness(
     let scoreSum = 0;
     const gaps: GateAiGap[] = [];
     const fixSet = new Set<string>();
+    // DEC-104: any section reviewed by the no-LLM heuristic fallback makes
+    // the WHOLE rollup a degraded estimate — surfaced to the UI below.
+    let anyDegraded = false;
 
     for (const { sectionKey, review } of reviews) {
       const score = Math.max(0, Math.min(100, Number(review?.score) || 0));
       scoreSum += score;
+      if (review?.degraded) anyDegraded = true;
 
       if (score < threshold) {
         const issues = [
@@ -259,6 +263,7 @@ export async function getGateReadiness(
       verdict: overall >= threshold ? 'ready' : 'below',
       gaps,
       fixes: Array.from(fixSet),
+      degraded: anyDegraded,
     };
 
     setCached(cacheKey, result);

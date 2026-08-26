@@ -16,6 +16,13 @@ export interface GateAiReadiness {
   verdict: 'ready' | 'below';
   gaps: GateAiGap[];
   fixes: string[];
+  /**
+   * DEC-104 — true when the score is a deterministic word-count heuristic
+   * fallback (no LLM configured, or unparseable model output), not a real
+   * AI review. GateReadinessPill MUST surface this instead of showing the
+   * score as if a model computed it.
+   */
+  degraded?: boolean;
 }
 
 export interface TimelineFlag {
