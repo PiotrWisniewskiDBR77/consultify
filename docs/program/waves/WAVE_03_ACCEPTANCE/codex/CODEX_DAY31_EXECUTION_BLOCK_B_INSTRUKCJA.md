@@ -89,10 +89,10 @@ w CAŁOŚCI. Nie robisz zrzutów. Nie włączasz żadnej flagi frontowej.**
 1. Punktem wyjścia jest **gałąź `codex/m03-admin-20260824`**, przypięta do
    commitu-markera podanego niżej.
 
-   **SHA markera: «MARKER_SHA»**
+   **SHA markera: 5cfa62470e**
 
    > **Uwaga dla nadzorcy wystawiającego ten dokument (usuń tę ramkę przy
-   > wiązaniu):** w miejsce `«MARKER_SHA»` wpisujesz **rzeczywisty SHA tipa
+   > wiązaniu):** w miejsce `5cfa62470e` wpisujesz **rzeczywisty SHA tipa
    > `codex/m03-admin-20260824` z chwili wystawienia**, we **wszystkich**
    > wystąpieniach w tym pliku. W dokumencie **nie ma i nie może być
    > przykładowego SHA** — dzień 29 dostał instrukcję z konkretnym SHA wpisanym
@@ -106,13 +106,13 @@ w CAŁOŚCI. Nie robisz zrzutów. Nie włączasz żadnej flagi frontowej.**
    cd <root-repo>
    git fetch --all --prune
    git log --oneline -25 codex/m03-admin-20260824
-   git merge-base --is-ancestor «MARKER_SHA» codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
+   git merge-base --is-ancestor 5cfa62470e codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
    ```
 
    Wynik obu komend wklejasz do raportu **dosłownie**.
 
-3. **Jeśli marker nie jest przodkiem tipa, gałąź nie istnieje, albo `«MARKER_SHA»`
-   jest nadal literalnym napisem `«MARKER_SHA»` — STOP.** Nie improwizuj bazy.
+3. **Jeśli marker nie jest przodkiem tipa, gałąź nie istnieje, albo `5cfa62470e`
+   jest nadal literalnym napisem `5cfa62470e` — STOP.** Nie improwizuj bazy.
    Nie startuj z `origin/demo`, `main`, `Londyn`, `codex/preserve-*`,
    `codex/execution-batch-a-20260826`, `codex/finance-day30-20260827`,
    `codex/day29-finish-20260827`, `codex/assessment-*`, `codex/meetings-*`
@@ -122,7 +122,7 @@ w CAŁOŚCI. Nie robisz zrzutów. Nie włączasz żadnej flagi frontowej.**
    **Reguła rozejścia (`DEC-2026-08-26-95`).** Jeżeli marker JEST przodkiem, ale
    tip uciekł do przodu (nadzorca scalił coś po związaniu markera) — **to nie
    jest STOP**. Startujesz **dokładnie z markera**, wypisujesz w raporcie
-   `git log --oneline «MARKER_SHA»..codex/m03-admin-20260824` i listę plików
+   `git log --oneline 5cfa62470e..codex/m03-admin-20260824` i listę plików
    rozejścia; scalenie z nowszym tipem wykonuje nadzorca przy odbiorze.
    **Rebase w trakcie dyżuru: ZAKAZANY.**
 
@@ -133,8 +133,8 @@ w CAŁOŚCI. Nie robisz zrzutów. Nie włączasz żadnej flagi frontowej.**
 
    ```bash
    # (a) partia A jest scalona — bez tego nie ma czego kontynuować
-   git merge-base --is-ancestor 9b53ee2490 «MARKER_SHA» && echo A11_SCALONE || echo A11_BRAK   # oczekiwane: A11_SCALONE
-   git merge-base --is-ancestor e1ca1f0fbd «MARKER_SHA» && echo BATCH_A_SCALONE || echo BRAK   # oczekiwane: BATCH_A_SCALONE
+   git merge-base --is-ancestor 9b53ee2490 5cfa62470e && echo A11_SCALONE || echo A11_BRAK   # oczekiwane: A11_SCALONE
+   git merge-base --is-ancestor e1ca1f0fbd 5cfa62470e && echo BATCH_A_SCALONE || echo BRAK   # oczekiwane: BATCH_A_SCALONE
 
    # (b) SEDNO CAŁEGO DYŻURU — bramka 409 istnieje i ma DOKŁADNIE JEDEN wyjątek
    grep -c "GOVERNED_EXECUTION_CONTROL_COMMANDS" server/src/middleware/executionSpineLegacyReadOnly.middleware.ts   # oczekiwane: 2
@@ -172,7 +172,7 @@ w CAŁOŚCI. Nie robisz zrzutów. Nie włączasz żadnej flagi frontowej.**
 5. **Własna gałąź i własny worktree** (nigdy praca na `codex/m03-admin-20260824`):
 
    ```bash
-   git branch codex/execution-day31-<data> «MARKER_SHA»
+   git branch codex/execution-day31-<data> 5cfa62470e
    git worktree add /private/tmp/consultify-execution-day31 codex/execution-day31-<data>
    cd /private/tmp/consultify-execution-day31
    ln -s /Users/piotrwisniewski/Developer/Consultify/node_modules node_modules   # DEC-86, TYLKO ODCZYT
@@ -186,7 +186,7 @@ w CAŁOŚCI. Nie robisz zrzutów. Nie włączasz żadnej flagi frontowej.**
    nigdy wobec `HEAD~1`:
 
    ```bash
-   git diff --name-only «MARKER_SHA»...HEAD
+   git diff --name-only 5cfa62470e...HEAD
    ```
 
    Ta komenda ma w tym dokumencie własną nazwę — **„komenda bazowa"** — i wraca
@@ -1140,7 +1140,7 @@ nie rozstrzygnie bez utraty pracy.
 potem jakikolwiek pomiar.** Czas: ~120 minut. **Nie pomijasz.**
 
 1. **Marker i gałąź** — §0.1 pkt 2, 3, 5. Wynik obu komend do raportu.
-   **Jeżeli `«MARKER_SHA»` nie został podmieniony przez nadzorcę na rzeczywisty
+   **Jeżeli `5cfa62470e` nie został podmieniony przez nadzorcę na rzeczywisty
    SHA — STOP natychmiast.**
 2. **Weryfikacja stanu wejściowego** — §0.1 pkt 4, dziewięć komend (a)–(i).
    Rozbieżność → „Korekty wobec instrukcji".
@@ -1681,7 +1681,7 @@ a `GET /control-kpis` **nadal** zwraca `DECISION_REQUIRED` dla trzech rodzin
 z listą `missingParameters`; test, w którym polityka **kompletna** sprawia,
 że te trzy rodziny **przestają** być `DECISION_REQUIRED` i mają licznik
 i mianownik; **dowód pustego grepa: zero literałów progowych w Twoim diffie**
-(`git diff «MARKER_SHA»...HEAD -- <Twoje pliki> | grep -nE '\b(7|14|30|0\.[0-9]+|80|90)\b'`
+(`git diff 5cfa62470e...HEAD -- <Twoje pliki> | grep -nE '\b(7|14|30|0\.[0-9]+|80|90)\b'`
 — każde trafienie wyjaśnione w raporcie); negatyw tenanta; negatyw zdolności;
 commit.
 
@@ -1898,7 +1898,7 @@ Dokumentacyjna, można wykonać w dowolnym momencie po `B.6`.
 2. **Dowód, że bezpieczniki są nietknięte — komenda MUSI dać pusty wynik:**
 
    ```bash
-   git diff «MARKER_SHA»...HEAD -- \
+   git diff 5cfa62470e...HEAD -- \
      server/src/middleware/executionSpineLegacyReadOnly.middleware.ts \
      server/src/Gateway.ts \
      server/src/routes/v8/index.ts \
@@ -1936,8 +1936,8 @@ Uczciwe `NIE_ZACZĘTE` jest w tym programie warte więcej niż rozmyte
 ```markdown
 # Realizacja dzień 31 (blok B) — raport dyżuru <data>
 
-Baza związana: «MARKER_SHA» (`codex/m03-admin-20260824`); tip kontrolny po fetchu: <sha>.
-Marker: «MARKER_SHA» — POTWIERDZONY / BRAK (`merge-base --is-ancestor`, exit <n>).
+Baza związana: 5cfa62470e (`codex/m03-admin-20260824`); tip kontrolny po fetchu: <sha>.
+Marker: 5cfa62470e — POTWIERDZONY / BRAK (`merge-base --is-ancestor`, exit <n>).
 Gałąź: `codex/execution-day31-<data>` · worktree: `/private/tmp/consultify-execution-day31`.
 Port PG: 5556 · kontener: `cx-day31-pg` (`pgvector/pgvector:pg16`) · baza `cx_day31`.
 Poziom ukończenia: CODE_PRESENT / TECHNICAL_PASS.
@@ -2146,10 +2146,10 @@ docker volume ls -q | grep cx-day31 | xargs -r docker volume rm
 docker ps -a --filter name=cx-day31-pg          # MUSI być puste
 
 # porównanie do bazy (NIE do HEAD~1)
-git diff --name-only «MARKER_SHA»...HEAD
+git diff --name-only 5cfa62470e...HEAD
 
 # dowód, że nie zaszyłem progów (B.7)
-git diff «MARKER_SHA»...HEAD -- server/src | grep -nE '\b(7|14|30|80|90|0\.[0-9]+)\b'
+git diff 5cfa62470e...HEAD -- server/src | grep -nE '\b(7|14|30|80|90|0\.[0-9]+)\b'
 ```
 
 ### 10.2. Czternaście rzeczy, które najłatwiej zepsuć
