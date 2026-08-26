@@ -2,7 +2,7 @@
 import express, { type Express } from 'express';
 import jwt from 'jsonwebtoken';
 import request from 'supertest';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 const CONNECTION_STRING = process.env.DATABASE_URL ?? '';
 const REAL_DB =
@@ -12,6 +12,7 @@ const REAL_DB =
 
 describe.skipIf(!REAL_DB)('Assessment day 25 — AI partner fallback characterisation', () => {
   let app: Express;
+  let pool: import('pg').Pool;
   let authorization = '';
 
   beforeAll(async () => {
@@ -28,10 +29,31 @@ describe.skipIf(!REAL_DB)('Assessment day 25 — AI partner fallback characteris
       }
     )}`;
     const { verifyToken } = await import('../../../middleware/auth.middleware.js');
+    const { trialEntryGuard } = await import('../../../middleware/trialEntryGuard.middleware.js');
     const { default: routes } = await import('../../../routes/assessment/assessment-ai.routes.js');
+    const { Pool } = await import('pg');
+    pool = new Pool({ connectionString: CONNECTION_STRING });
+    await pool.query(
+      `INSERT INTO organizations (id, name) VALUES
+       ('day25-ai-org','Day 25 AI org'),('day25-ai-foreign-org','Day 25 AI foreign org')
+       ON CONFLICT (id) DO NOTHING`
+    );
+    await pool.query(
+      `INSERT INTO assessments (id, organization_id, name, answers_json)
+       VALUES ('day25-real-foreign-assessment','day25-ai-foreign-org','Foreign assessment','{}')
+       ON CONFLICT (id) DO NOTHING`
+    );
     app = express();
     app.use(express.json());
-    app.use('/api/assessment', verifyToken, routes);
+    app.use('/api/assessment', verifyToken, trialEntryGuard, routes);
+  });
+
+  afterAll(async () => {
+    await pool.query(`DELETE FROM assessments WHERE id='day25-real-foreign-assessment'`);
+    await pool.query(
+      `DELETE FROM organizations WHERE id IN ('day25-ai-org','day25-ai-foreign-org')`
+    );
+    await pool.end();
   });
 
   const auth = (probe: request.Test) => probe.set('Authorization', authorization);
@@ -66,13 +88,19 @@ describe.skipIf(!REAL_DB)('Assessment day 25 — AI partner fallback characteris
 
   it('insights returns an honest fallback for an unknown project', async () => {
     const response = await auth(request(app).get('/api/assessment/unknown/ai/insights'));
-    expect(response.status).toBe(200);
-    expect(response.body).toEqual({ insights: [], message: 'No assessment data to analyze' });
+    expect(response.status).toBe(404);
+    expect(response.body).toEqual({
+      error: 'Nie znaleziono oceny o podanym identyfikatorze.',
+      code: 'ASSESSMENT_NOT_FOUND',
+    });
   });
 
-  it('characterises the open tenant gap: an unknown foreign project is not rejected', async () => {
-    const response = await auth(request(app).get('/api/assessment/foreign-project/ai/insights'));
-    expect(response.status).toBe(200);
-    expect(response.body).toEqual({ insights: [], message: 'No assessment data to analyze' });
+  it('makes a real foreign assessment indistinguishable from a missing assessment', async () => {
+    const missing = await auth(request(app).get('/api/assessment/unknown/ai/insights'));
+    const foreign = await auth(
+      request(app).get('/api/assessment/day25-real-foreign-assessment/ai/insights')
+    );
+    expect(foreign.status).toBe(404);
+    expect(foreign.body).toEqual(missing.body);
   });
 });
