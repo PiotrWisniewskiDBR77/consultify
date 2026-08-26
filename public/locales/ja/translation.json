@@ -22,6 +22,13 @@
       "AGGREGATED": "集計",
       "INTERPRETED": "AIによる解釈"
     },
+    "refType": {
+      "task": "タスク",
+      "decision": "意思決定",
+      "initiative": "イニシアチブ",
+      "project": "プロジェクト",
+      "program": "プログラム"
+    },
     "status": {
       "OPEN": "未対応"
     },
@@ -48,6 +55,7 @@
     "filters": {
       "all": "すべて",
       "mine": "自分のみ",
+      "mineHint": "(読み込み済みの中から)",
       "warning": "警告以上",
       "critical": "重大以上"
     },
@@ -57,6 +65,12 @@
       "retry": "再試行",
       "loadMore": "過去のシグナルを表示",
       "snooze": "スヌーズ",
+      "snoozePreset": {
+        "1h": "1時間",
+        "4h": "4時間",
+        "tomorrow": "明日まで",
+        "week": "1週間"
+      },
       "mute": "この種類をミュート",
       "dismiss": "却下",
       "copyId": "シグナルIDをコピー",
@@ -75,6 +89,7 @@
     },
     "notice": {
       "snooze": "シグナルをスヌーズしました",
+      "snoozeUntil": "{{until}}までスヌーズしました",
       "dismiss": "シグナルを却下しました",
       "mute": "シグナルの種類をミュートしました",
       "refreshed": "更新しました"

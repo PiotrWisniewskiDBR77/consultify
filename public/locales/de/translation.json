@@ -22,6 +22,13 @@
       "AGGREGATED": "Aggregiert",
       "INTERPRETED": "KI-Interpretation"
     },
+    "refType": {
+      "task": "Aufgabe",
+      "decision": "Entscheidung",
+      "initiative": "Initiative",
+      "project": "Projekt",
+      "program": "Programm"
+    },
     "status": {
       "OPEN": "Offen"
     },
@@ -48,6 +55,7 @@
     "filters": {
       "all": "Alle",
       "mine": "Nur meine",
+      "mineHint": "(aus den geladenen)",
       "warning": "≥ Warnung",
       "critical": "≥ kritisch"
     },
@@ -57,6 +65,12 @@
       "retry": "Erneut versuchen",
       "loadMore": "Ältere anzeigen",
       "snooze": "Schlummern",
+      "snoozePreset": {
+        "1h": "1 Std.",
+        "4h": "4 Std.",
+        "tomorrow": "Bis morgen",
+        "week": "Eine Woche"
+      },
       "mute": "Typ stummschalten",
       "dismiss": "Verwerfen",
       "copyId": "Signal-ID kopieren",
@@ -75,6 +89,7 @@
     },
     "notice": {
       "snooze": "Signal zurückgestellt",
+      "snoozeUntil": "Signal zurückgestellt bis {{until}}",
       "dismiss": "Signal verworfen",
       "mute": "Signaltyp stummgeschaltet",
       "refreshed": "Aktualisiert"
