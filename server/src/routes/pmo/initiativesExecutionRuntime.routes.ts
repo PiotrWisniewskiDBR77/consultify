@@ -60,6 +60,7 @@ import {
 } from '../../domain/initiatives-execution/executionWorkHardening.js';
 import {
   createExecutionBudgetEntry,
+  recordRaidMitigation,
   recordExecutionRealization,
 } from '../../domain/initiatives-execution/executionControlWrites.js';
 import {
@@ -807,6 +808,15 @@ const ExecutionRealizationSchema = z.object({
   realizedCostDelta: z.number().finite().nullable().default(null),
   realizedSavings: z.number().finite().nullable().default(null),
   varianceNotes: z.string().nullable().default(null),
+});
+const RaidMitigationSchema = z.object({
+  expectedVersion: z.literal(0),
+  clientRequestId: z.string().min(1),
+  mitigationPlan: z.string().min(1),
+  responseStrategy: z.string().min(1),
+  mitigationOwnerId: z.string().min(1),
+  mitigationDueDate: z.string().datetime().nullable().default(null),
+  mitigationStatus: z.string().min(1),
 });
 const InterventionDraftSchema = z.object({
   expectedVersion: z.number().int().min(0),
@@ -4593,6 +4603,41 @@ export function createInitiativesExecutionRuntimeRouter(
         commandType: 'execution-realization.record',
         createIfMissing: true,
         payload: { ...entry, initiativeId },
+      });
+      res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
+    })
+  );
+  router.post(
+    '/initiatives/:initiativeId/raid-mitigations/:raidItemId',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      const parsed = RaidMitigationSchema.safeParse(req.body);
+      if (!actor) return void res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+      if (!parsed.success)
+        return void res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
+      const initiativeId = firstParam(req.params.initiativeId);
+      const projectIds = await deps.reader.resolveProjectIdsForAggregate(
+        actor.organizationId,
+        'initiative',
+        initiativeId
+      );
+      if (!(await authorizeProjects(actor, projectIds, 'initiative.update')))
+        return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
+      const { expectedVersion, clientRequestId, ...mitigation } = parsed.data;
+      const raidItemId = firstParam(req.params.raidItemId);
+      const result = await recordRaidMitigation(deps.unitOfWork, {
+        organizationId: actor.organizationId,
+        actorId: actor.userId,
+        aggregateType: 'raid_mitigation',
+        aggregateId: raidItemId,
+        expectedVersion,
+        clientRequestId,
+        correlationId: clientRequestId,
+        policyId: 'execution-control',
+        policyVersion: 1,
+        commandType: 'raid-mitigation.record',
+        createIfMissing: true,
+        payload: { ...mitigation, initiativeId, raidItemId },
       });
       res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
     })

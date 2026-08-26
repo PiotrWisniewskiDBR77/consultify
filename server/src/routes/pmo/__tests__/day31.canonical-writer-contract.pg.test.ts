@@ -300,4 +300,51 @@ describe.skipIf(!REAL_PG)('Day 31 canonical writer mounted contract', () => {
       .send(body);
     expect(denied.status).toBe(404);
   });
+
+  it('records RAID mitigation through the canonical initiative identity', async () => {
+    const raidItemId = `raid-${tag}`;
+    const path = `/api/initiatives/runtime-v1/initiatives/${initiativeId}/raid-mitigations/${raidItemId}`;
+    const body = {
+      expectedVersion: 0,
+      clientRequestId: `raid-request-${tag}`,
+      mitigationPlan: 'Isolate the dependency and verify the owner',
+      responseStrategy: 'MITIGATE',
+      mitigationOwnerId: userId,
+      mitigationDueDate: '2026-09-01T12:00:00.000Z',
+      mitigationStatus: 'PLANNED',
+    };
+    expect((await request(app).post(path).set(auth()).send(body)).status).toBe(201);
+    const state = await client.query(
+      `SELECT version,payload_json FROM ie_aggregate_state
+       WHERE organization_id=$1 AND aggregate_type='raid_mitigation' AND aggregate_id=$2`,
+      [organizationId, raidItemId]
+    );
+    expect(state.rows[0]).toMatchObject({ version: 1 });
+    expect(state.rows[0].payload_json).toMatchObject({ initiativeId, raidItemId });
+    expect((await request(app).post(path).set(auth()).send(body)).body.status).toBe('REPLAYED');
+    expect(
+      (
+        await request(app)
+          .post(path)
+          .set(auth())
+          .send({ ...body, clientRequestId: `raid-conflict-${tag}` })
+      ).status
+    ).toBe(409);
+    expect(
+      (
+        await request(app)
+          .post(path)
+          .set({ Authorization: `Bearer ${foreignToken}`, 'X-Organization-Id': organizationId })
+          .send({ ...body, organizationId })
+      ).status
+    ).toBe(404);
+    expect(
+      (
+        await request(app)
+          .post(path)
+          .set({ Authorization: `Bearer ${viewerToken}` })
+          .send(body)
+      ).status
+    ).toBe(404);
+  });
 });

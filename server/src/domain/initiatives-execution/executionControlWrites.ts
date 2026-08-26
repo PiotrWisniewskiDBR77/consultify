@@ -95,3 +95,43 @@ export async function recordExecutionRealization(
     };
   });
 }
+
+export interface RaidMitigationRecord {
+  raidItemId: string;
+  initiativeId: string;
+  mitigationPlan: string;
+  responseStrategy: string;
+  mitigationOwnerId: string;
+  mitigationDueDate: string | null;
+  mitigationStatus: string;
+  recordedBy: string;
+  recordedAt: string;
+}
+
+type RaidMitigationPayload = Omit<RaidMitigationRecord, 'recordedBy' | 'recordedAt'>;
+
+export async function recordRaidMitigation(
+  unitOfWork: MaterialCommandUnitOfWork,
+  envelope: MaterialCommandEnvelope<RaidMitigationPayload>
+): Promise<MaterialCommandResult<RaidMitigationRecord>> {
+  return executeMaterialCommand(unitOfWork, envelope, async (tx) => {
+    const initiative = await tx.getRelatedAggregateForUpdate<Record<string, unknown>>(
+      envelope.organizationId,
+      'initiative',
+      envelope.payload.initiativeId
+    );
+    if (!initiative) throw new MaterialCommandValidationError('Initiative not found');
+    const record: RaidMitigationRecord = {
+      ...envelope.payload,
+      recordedBy: envelope.actorId,
+      recordedAt: new Date().toISOString(),
+    };
+    return {
+      mutation: record,
+      response: record,
+      eventType: 'raid-mitigation.recorded',
+      eventPayload: record,
+      auditPayload: record,
+    };
+  });
+}
