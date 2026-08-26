@@ -10921,6 +10921,14 @@
       },
       "v8Degraded": "Manager cockpit requires V8"
     },
+    "managementTable": {
+      "lane": "Lane",
+      "total": "Items",
+      "critical": "Critical",
+      "warning": "Warning",
+      "openLane": "Open lane",
+      "emptyTitle": "No management lanes"
+    },
     "rollout": {
       "tabLabel": "Rollout",
       "saveFailed": "Failed to save. Please try again.",
@@ -10995,7 +11003,12 @@
         },
         "status": {
           "done": "Done"
-        }
+        },
+        "resultsHandoff": {
+          "title": "Results hand-off — preview only",
+          "body": "Closure outcomes (value delivered, ROI, KPI deltas) are not yet synced to the Results module. This hand-off is a preview for this release; automatic sync to Results will be enabled in an upcoming phase."
+        },
+        "derivedNote": "Derived from completed initiatives — PMI/PRINCE2 handover, sign-off and closure actions. Add an item to maintain your own checklist."
       },
       "addClosureItem": "Add Item",
       "addKpi": "Add KPI",
@@ -11558,7 +11571,11 @@
         "amber": "Warning",
         "red": "Over Budget"
       },
-      "viewInResults": "View in Results"
+      "viewInResults": "View in Results",
+      "deleteConfirm": "Delete this budget entry? This cannot be undone.",
+      "deleteEntry": "Delete budget entry",
+      "deleteFailed": "Failed to delete budget entry",
+      "entryDeleted": "Budget entry deleted"
     },
     "actionCenter": {
       "actionQueue": "Action queue",
@@ -24770,7 +24787,12 @@
     },
     "dueIn": "in",
     "problems": "problems",
-    "noProblems": "No problems detected — on track."
+    "noProblems": "No problems detected — on track.",
+    "preview": {
+      "sourceEntity": "Source Entity",
+      "details": "Details",
+      "affected": "Affected Entities"
+    }
   },
   "nav": {
     "product": "Product",

@@ -10264,6 +10264,14 @@
       },
       "v8Degraded": "Kokpit menedżera wymaga V8"
     },
+    "managementTable": {
+      "lane": "Tor",
+      "total": "Elementy",
+      "critical": "Krytyczne",
+      "warning": "Ostrzeżenia",
+      "openLane": "Otwórz tor",
+      "emptyTitle": "Brak torów zarządczych"
+    },
     "rollout": {
       "tabLabel": "Wdrożenie",
       "saveFailed": "Nie udało się zapisać. Spróbuj ponownie.",
@@ -10361,8 +10369,10 @@
         },
         "editTitle": "Edytuj pozycję zamknięcia",
         "resultsHandoff": {
-          "title": "Przekazanie do Rezultatów — tylko podgląd"
-        }
+          "title": "Przekazanie do Rezultatów — tylko podgląd",
+          "body": "Wyniki zamknięcia (dostarczona wartość, ROI, odchylenia KPI) nie są jeszcze synchronizowane z modułem Rezultaty. To przekazanie jest podglądem na tę wersję; automatyczna synchronizacja z Rezultatami zostanie włączona w kolejnej fazie."
+        },
+        "derivedNote": "Wyznaczone z ukończonych inicjatyw — przekazanie PMI/PRINCE2, akceptacja i działania zamknięcia. Dodaj pozycję, aby prowadzić własną listę kontrolną."
       },
       "addClosureItem": "Dodaj pozycję",
       "addKpi": "Dodaj KPI",
@@ -10926,7 +10936,11 @@
         "amber": "Ostrzeżenie",
         "red": "Przekroczony budżet"
       },
-      "viewInResults": "Zobacz w Rezultatach"
+      "viewInResults": "Zobacz w Rezultatach",
+      "deleteConfirm": "Usunąć ten wpis budżetowy? Tej operacji nie można cofnąć.",
+      "deleteEntry": "Usuń wpis budżetowy",
+      "deleteFailed": "Nie udało się usunąć wpisu budżetowego",
+      "entryDeleted": "Wpis budżetowy usunięty"
     },
     "actionCenter": {
       "actionQueue": "Kolejka działań",
@@ -25928,7 +25942,12 @@
     },
     "dueIn": "za",
     "problems": "problemów",
-    "noProblems": "Nie wykryto problemów — bez opóźnień."
+    "noProblems": "Nie wykryto problemów — bez opóźnień.",
+    "preview": {
+      "sourceEntity": "Encja źródłowa",
+      "details": "Szczegóły",
+      "affected": "Powiązane encje"
+    }
   },
   "audit": {
     "failedToCreateProgram": "Nie udało się utworzyć programu",
