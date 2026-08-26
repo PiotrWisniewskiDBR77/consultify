@@ -292,12 +292,14 @@ export class ExecutionController {
           FROM decisions d
           JOIN decision_impacts di ON d.id = di.decision_id
           WHERE (d.initiative_id = ? OR d.project_id = ?)
+            AND d.organization_id = ?
             AND d.status IN ('pending', 'escalated')
             AND di.is_blocker = TRUE
         `;
         const pendingResult = await queryHelpers.queryOne<{ count: number }>(pendingDecisionsSql, [
           initiativeId,
           projectId,
+          orgId,
         ]);
 
         if (pendingResult && pendingResult.count > 0) {
@@ -313,10 +315,11 @@ export class ExecutionController {
         const blockedTasksSql = `
           SELECT COUNT(*) as count
           FROM tasks
-          WHERE initiative_id = ? AND status = 'BLOCKED'
+          WHERE initiative_id = ? AND organization_id = ? AND status = 'BLOCKED'
         `;
         const blockedResult = await queryHelpers.queryOne<{ count: number }>(blockedTasksSql, [
           initiativeId,
+          orgId,
         ]);
 
         if (blockedResult && blockedResult.count > 0) {
