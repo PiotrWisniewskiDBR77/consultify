@@ -49,7 +49,7 @@ describe.skipIf(!REAL_DB)('Assessment day 20 skip reasons — real router and Po
       [`role-${suffix}`, org, session, owner]
     );
 
-    const { default: config } = await import('../../config/Config.js');
+    const { default: config } = await import('../../../config/Config.js');
     const sign = (id: string, organizationId: string) =>
       jwt.sign({ id, organizationId, role: 'user' }, config.JWT_SECRET, {
         expiresIn: '15m',
@@ -59,7 +59,7 @@ describe.skipIf(!REAL_DB)('Assessment day 20 skip reasons — real router and Po
     token = sign(owner, org);
     otherToken = sign(otherUser, otherOrg);
 
-    const { default: routes } = await import('../../routes/method-core.routes.js');
+    const { default: routes } = await import('../../../routes/method-core.routes.js');
     app = express();
     app.use(express.json());
     app.use('/api/method', routes);
