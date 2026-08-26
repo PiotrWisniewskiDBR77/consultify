@@ -1161,6 +1161,19 @@ export function createInitiativesExecutionRuntimeRouter(
         [...new Set(projectIds)].map((projectId) => deps.authorize(actor, projectId, capability))
       )
     ).every(Boolean);
+  const authorizeProjectsMap = async (
+    actor: RuntimeActor,
+    projectIds: string[],
+    capability: 'initiative.view' | 'initiative.update' | 'initiative.review'
+  ) =>
+    new Map(
+      await Promise.all(
+        [...new Set(projectIds)].map(
+          async (projectId) =>
+            [projectId, await deps.authorize(actor, projectId, capability)] as const
+        )
+      )
+    );
   const projectsForInitiative = async (actor: RuntimeActor, initiativeId: unknown) =>
     typeof initiativeId === 'string'
       ? deps.reader.resolveProjectIdsForAggregate(actor.organizationId, 'initiative', initiativeId)
@@ -1749,13 +1762,12 @@ export function createInitiativesExecutionRuntimeRouter(
         return;
       }
       const rows = await deps.reader.listInitiatives(actor.organizationId);
-      const visible = (
-        await Promise.all(
-          rows.map(async (row) =>
-            (await deps.authorize(actor, row.initiative.projectId, 'initiative.view')) ? row : null
-          )
-        )
-      ).filter((row): row is NonNullable<typeof row> => Boolean(row));
+      const authorizations = await authorizeProjectsMap(
+        actor,
+        rows.map((row) => row.initiative.projectId),
+        'initiative.view'
+      );
+      const visible = rows.filter((row) => Boolean(authorizations.get(row.initiative.projectId)));
       res.json({ initiatives: visible });
     })
   );
