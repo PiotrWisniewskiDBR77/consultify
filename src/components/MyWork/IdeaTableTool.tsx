@@ -189,6 +189,7 @@ import { TableToolbar as P15TableToolbar } from './table/TableToolbar';
 import type {
   ColumnDef,
   FilterGroup,
+  NodeActivity,
   SavedView,
   SortConfig,
   TableEdge,
@@ -2108,6 +2109,16 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         description: detailNode.data?.description,
         owner: detailNode.data?.owner,
         status: detailNode.data?.status,
+        // RowDetailPanel parity (P0, 2026-08-26): the inspector's "Podstawowe"
+        // section renders a Priorytet slider and a Typ semantyczny field, but
+        // this report never carried either value across — both silently read
+        // as empty/zero for every Table row while the rail was on.
+        semanticType:
+          typeof detailNode.data?.semanticType === 'string'
+            ? detailNode.data?.semanticType
+            : undefined,
+        priority:
+          typeof detailNode.data?.priority === 'number' ? detailNode.data?.priority : undefined,
         tags: Array.isArray(detailNode.data?.tags) ? detailNode.data?.tags : undefined,
         color: typeof detailNode.data?.color === 'string' ? detailNode.data?.color : undefined,
         columns: _visCols.map((col) => ({
@@ -2115,6 +2126,13 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           label: col.header,
           value: (detailNode.data as Record<string, unknown> | undefined)?.[col.key],
         })),
+        // RowDetailPanel "Activity" tab parity — same source the legacy panel
+        // reads (`node.data.activity`, an in-memory log written locally, not a
+        // server fetch), now surfaced in the shared inspector's "Historia i AI"
+        // section instead of a dropped tab.
+        activity: Array.isArray(detailNode.data?.activity)
+          ? (detailNode.data?.activity as NodeActivity[])
+          : undefined,
       },
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps

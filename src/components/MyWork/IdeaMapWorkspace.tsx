@@ -70,6 +70,7 @@ import { IdeaCanvasSecondBar } from './IdeaCanvasSecondBar';
 import { IdeaContextPanel } from './IdeaContextPanel';
 import {
   IdeaElementInspector,
+  type IdeaInspectorActivityItem,
   type IdeaInspectorItem,
   type IdeaInspectorTool,
 } from './panel/IdeaElementInspector';
@@ -3143,21 +3144,51 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     if (activeTool === 'table') {
       const cols = meta?.columns || [];
       if (!cols.length) return undefined;
+      const nodeId = selection.primaryId;
+      // RowDetailPanel parity (P0, 2026-08-26): the old Table detail panel's
+      // "Properties" tab edited every column inline via `CellRenderer`; this
+      // tool section only ever displayed the value as text — a real editing
+      // capability loss. A plain text input (not the full typed `CellRenderer`
+      // — that needs the complete `ColumnDef`, which this selection contract
+      // does not carry, only {key,label,value}) restores single-line editing
+      // for the common case; select/relation/formula/rollup columns are
+      // computed or need a picker `CellRenderer` provides and stay read-only
+      // here, same as before.
       return (
-        <ul className="space-y-1 text-sm">
+        <ul className="space-y-1.5 text-sm">
           {cols.map((col) => (
-            <li key={col.key} className="flex justify-between gap-2">
-              <span className="text-c-text-secondary">{col.label}</span>
-              <span className="truncate">
-                {col.value == null || col.value === '' ? '—' : String(col.value)}
-              </span>
+            <li key={col.key} className="flex items-center justify-between gap-2">
+              <span className="shrink-0 text-c-text-secondary">{col.label}</span>
+              {nodeId && !canvasLocked ? (
+                <input
+                  aria-label={col.label}
+                  defaultValue={col.value == null ? '' : String(col.value)}
+                  onBlur={(e) => {
+                    if (e.target.value === (col.value == null ? '' : String(col.value))) return;
+                    void handleNodeDataChange(nodeId, { [col.key]: e.target.value } as any);
+                  }}
+                  className="min-w-0 flex-1 truncate rounded border border-transparent bg-transparent px-1 py-0.5 text-right transition-colors hover:border-c-border-subtle focus:border-c-border focus:bg-c-surface focus:outline-none"
+                />
+              ) : (
+                <span className="truncate">
+                  {col.value == null || col.value === '' ? '—' : String(col.value)}
+                </span>
+              )}
             </li>
           ))}
         </ul>
       );
     }
     return undefined;
-  }, [activeTool, selection.meta, selection.primaryId, whiteboardSession, handleNodeDataChange, t]);
+  }, [
+    activeTool,
+    selection.meta,
+    selection.primaryId,
+    whiteboardSession,
+    handleNodeDataChange,
+    canvasLocked,
+    t,
+  ]);
 
   // ── Drill-down (sub-idea navigation) ────────────────────────────────────────
   useEffect(() => {
@@ -3711,6 +3742,76 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       cancelled = true;
     };
   }, [ideaInspectorRightRail, realId, resolveConversionTargetName]);
+
+  // RowDetailPanel parity (P0, 2026-08-26 — STOP `f864a060f0`, day 3): the
+  // "Powiązania" section always rendered empty (`element.relations` was never
+  // populated by any caller) — a real regression vs. RowDetailPanel's
+  // "Related items" list, which reads genuine connected nodes from `edges`.
+  // Mirrors RowDetailPanel's own `relatedNodes` computation (table/RowDetailPanel.tsx).
+  const inspectorRelations = useMemo<IdeaInspectorItem[]>(() => {
+    if (!ideaInspectorRightRail || !selection.primaryId) return [];
+    const nodeId = selection.primaryId;
+    const relatedIds = new Set<string>();
+    (graphEdges || []).forEach((e: any) => {
+      if (e?.source === nodeId) relatedIds.add(e.target);
+      else if (e?.target === nodeId) relatedIds.add(e.source);
+    });
+    return Array.from(relatedIds)
+      .map((id) => (graphNodes || []).find((n: any) => n?.id === id))
+      .filter(Boolean)
+      .map((n: any) => ({
+        id: n.id,
+        title: n.data?.label || n.id,
+        type: n.data?.semanticType || n.type,
+        branch: n.data?.status,
+      }));
+  }, [ideaInspectorRightRail, selection.primaryId, graphEdges, graphNodes]);
+
+  // RowDetailPanel "AI Insights" tab parity — same API call the legacy panel
+  // made (`Api.getIdeaAISuggestions`, table/RowDetailPanel.tsx `handleGenerateAI`),
+  // surfaced from the shared inspector's "Historia i AI" section instead of a
+  // dropped tab. Real network call, real result — no fabricated suggestions.
+  const [inspectorAiLoading, setInspectorAiLoading] = useState(false);
+  const [inspectorAiInsights, setInspectorAiInsights] = useState<string[]>([]);
+  useEffect(() => {
+    // Selecting a different element must not keep showing the previous
+    // element's stale AI insights.
+    setInspectorAiInsights([]);
+  }, [selection.primaryId]);
+  const handleGenerateInspectorInsights = useCallback(async () => {
+    if (!selection.primaryId) return;
+    setInspectorAiLoading(true);
+    try {
+      const result = await Api.getIdeaAISuggestions(realId, {
+        context: {
+          title: selection.meta?.label || '',
+          seedText: selection.meta?.description || '',
+          currentNodes: [
+            {
+              id: selection.primaryId,
+              type: selection.meta?.nodeType,
+              label: selection.meta?.label,
+            },
+          ],
+          currentEdges: (graphEdges || [])
+            .filter((e: any) => e?.source === selection.primaryId || e?.target === selection.primaryId)
+            .map((e: any) => ({ source: e.source, target: e.target })),
+          activeTool,
+        },
+        mode: 'on_demand',
+        prompt: `Provide 4-5 specific insights and next steps for this idea: "${selection.meta?.label || ''}"`,
+        language: i18n.language,
+      });
+      setInspectorAiInsights((result?.suggestions || []).map((s: any) => s.text || s.detail || ''));
+    } catch {
+      setInspectorAiInsights([
+        t('ideas.table.failedToGenerateSuggestions', 'Failed to generate suggestions'),
+      ]);
+    } finally {
+      setInspectorAiLoading(false);
+    }
+  }, [selection.primaryId, selection.meta, realId, graphEdges, activeTool, i18n.language, t]);
+
   const [sekcjaPrawegoPaska, setSekcjaPrawegoPaska] = useState<string | null>(null);
 
   useEffect(() => {
@@ -4329,10 +4430,18 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                           id: selection.primaryId,
                           label: selection.meta?.label || selection.primaryId,
                           state: selection.meta?.status,
+                          // RowDetailPanel parity (P0, 2026-08-26): Priorytet silently
+                          // read as 0 for every element — the field was never carried
+                          // from `selection.meta` into the inspector's element.
+                          priority: selection.meta?.priority,
                           owner: selection.meta?.owner,
                           semanticType: selection.meta?.semanticType || selection.meta?.nodeType,
                           description: selection.meta?.description,
                           tags: selection.meta?.tags,
+                          // RowDetailPanel parity (P0, 2026-08-26): "Powiązania" was
+                          // always empty — wired to real connected nodes now (see
+                          // `inspectorRelations` above).
+                          relations: inspectorRelations,
                           outputs: inspectorOutputs,
                           branch: activeToolLabel,
                           lineage: `${isPolish ? 'Rodowód' : 'Lineage'}: ${activeToolLabel} · v${graphRuntime.graph.version}`,
@@ -4344,6 +4453,21 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                   }
                   toolSection={inspectorToolSection}
                   recentItems={recentInspectorItems}
+                  // RowDetailPanel parity (P0, 2026-08-26): "Activity"/"AI Insights"
+                  // tabs, merged into the "Historia i AI" 8th section. `activity` is
+                  // only populated for Table today (IdeaTableTool reads the same
+                  // `node.data.activity` RowDetailPanel used); the other 3 tools never
+                  // had an activity log to begin with, so they honestly show "Brak
+                  // aktywności" instead of fabricating one. AI generation is real for
+                  // every tool (same `Api.getIdeaAISuggestions` call RowDetailPanel made).
+                  activity={
+                    activeTool === 'table'
+                      ? (selection.meta?.activity as IdeaInspectorActivityItem[] | undefined)
+                      : undefined
+                  }
+                  aiInsights={inspectorAiInsights}
+                  aiLoading={inspectorAiLoading}
+                  onGenerateInsights={handleGenerateInspectorInsights}
                   onOpenRecent={(id) => {
                     window.dispatchEvent(
                       new CustomEvent('idea-node-open-detail', { detail: { nodeId: id } })
@@ -4416,6 +4540,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                       semanticType: node.data?.semanticType || node.data?.nodeType,
                       description: node.data?.description,
                       tags: node.data?.tags,
+                      relations: inspectorRelations,
                       outputs: inspectorOutputs,
                       branch: activeToolLabel,
                       lineage: `${isPolish ? 'Rodowód' : 'Lineage'}: ${activeToolLabel} · v${readback.map?.version || graphRuntime.graph.version}`,

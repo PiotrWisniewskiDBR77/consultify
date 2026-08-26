@@ -42,6 +42,9 @@ export interface IdeaWorkspaceSelection {
     description?: string;
     owner?: string;
     semanticType?: string;
+    /** RowDetailPanel parity (P0, 2026-08-26): Table's priority slider was
+     * silently reading undefined because this field never left IdeaTableTool. */
+    priority?: number;
     duration?: string;
     durationUnit?: string;
     cost?: string;
@@ -56,6 +59,19 @@ export interface IdeaWorkspaceSelection {
       url?: string;
       size?: number;
       createdAt?: number;
+    }>;
+    /** RowDetailPanel "Activity" tab parity — real per-node activity log
+     * (`node.data.activity`), surfaced in the shared inspector's "Historia i AI"
+     * section (prototype `mywork-inspektor-prototyp.html`, Question 1, picked
+     * variant — 8th section, collapsed by default). */
+    activity?: Array<{
+      id: string;
+      action: 'created' | 'edited' | 'comment' | 'attachment' | 'status_change' | 'ai_suggestion';
+      field?: string;
+      oldValue?: string;
+      newValue?: string;
+      author: string;
+      createdAt: string;
     }>;
   };
 }

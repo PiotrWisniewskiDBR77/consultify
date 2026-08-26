@@ -1,4 +1,4 @@
-import { ChevronDown, X } from 'lucide-react';
+import { ChevronDown, Loader2, Sparkles, X } from 'lucide-react';
 import React, { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -38,6 +38,16 @@ export interface IdeaInspectorElement {
   savedAt?: string | number | Date | null;
 }
 
+export interface IdeaInspectorActivityItem {
+  id: string;
+  action: 'created' | 'edited' | 'comment' | 'attachment' | 'status_change' | 'ai_suggestion';
+  field?: string;
+  oldValue?: string;
+  newValue?: string;
+  author: string;
+  createdAt: string;
+}
+
 export interface IdeaElementInspectorProps {
   element: IdeaInspectorElement | null;
   tool: IdeaInspectorTool;
@@ -49,6 +59,21 @@ export interface IdeaElementInspectorProps {
   onSave?: (patch: Partial<IdeaInspectorElement>) => Promise<IdeaInspectorElement>;
   onReturnToCanvas?: () => void;
   language?: 'pl' | 'en';
+  /**
+   * RowDetailPanel parity (P0, 2026-08-26 — STOP `f864a060f0`, day 3): the old
+   * Table detail panel had six tabs (Properties/Comments/Attachments/Activity/
+   * AI Insights/Drawing). This is the "Historia i AI" 8th section the accepted
+   * prototype (`mywork-inspektor-prototyp.html`, Question 1 — picked variant)
+   * specifies for Activity + AI — the two RowDetailPanel tabs this build
+   * closes. Comments/Attachments/Drawing are NOT part of `MYW-IDEAS-CORE-002`
+   * (the owner atom this component implements) or of the accepted prototype's
+   * 8-section list, so they stay out of this component; see the parity
+   * evidence log for that decision trail.
+   */
+  activity?: IdeaInspectorActivityItem[];
+  aiInsights?: string[];
+  aiLoading?: boolean;
+  onGenerateInsights?: () => void;
 }
 
 const UUID = /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/gi;
@@ -67,17 +92,19 @@ const CountHeading = ({ title, count }: { title: string; count: number }) => (
 /**
  * DEC-68 — „lekki charakter": accordion section with NO surrounding card/box.
  * Header = hairline top border + 44px row (L1 muted label via CountHeading +
- * chevron). Body = plain padding, no nested border. All sections default
- * OPEN (matches pre-existing behavior — every field was always visible with
- * no click-to-expand step; this keeps that contract while adding the
- * collapse affordance the prototype shows).
+ * chevron). Body = plain padding, no nested border. The original 6 fixed
+ * sections + tool section default OPEN (matches pre-existing, already
+ * evidence-logged behavior — kept unchanged here). `defaultOpen=false` is
+ * used only for the new "Historia i AI" 8th section (RowDetailPanel parity,
+ * P0, 2026-08-26), which the accepted prototype explicitly shows collapsed.
  */
 const InspectorSection: React.FC<{
   title: string;
   count: number;
   children: React.ReactNode;
-}> = ({ title, count, children }) => {
-  const [open, setOpen] = useState(true);
+  defaultOpen?: boolean;
+}> = ({ title, count, children, defaultOpen = true }) => {
+  const [open, setOpen] = useState(defaultOpen);
   return (
     <section className="border-t border-c-border-subtle first:border-t-0">
       <div
@@ -133,6 +160,10 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
   onSave,
   onReturnToCanvas,
   language = 'pl',
+  activity,
+  aiInsights,
+  aiLoading = false,
+  onGenerateInsights,
 }) => {
   const { t } = useTranslation();
   const [draft, setDraft] = useState(element);
@@ -181,6 +212,39 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
     }),
     [draft]
   );
+
+  const historyAiCount = (activity?.length ?? 0) + (aiInsights?.length ?? 0);
+
+  const formatActivityTime = (iso: string) => {
+    try {
+      const d = new Date(iso);
+      return `${d.toLocaleDateString(language)} ${d.toLocaleTimeString(language, { hour: '2-digit', minute: '2-digit' })}`;
+    } catch {
+      return iso;
+    }
+  };
+
+  const activityLabel = (item: IdeaInspectorActivityItem) => {
+    switch (item.action) {
+      case 'comment':
+        return t('myWork.ideaInspector.activity.commented', 'skomentował(a)');
+      case 'edited':
+        return t('myWork.ideaInspector.activity.edited', 'zmienił(a) {{field}}', {
+          field: item.field ?? '',
+        });
+      case 'attachment':
+        return t('myWork.ideaInspector.activity.addedAttachment', 'dodał(a) załącznik');
+      case 'status_change':
+        return t('myWork.ideaInspector.activity.changedStatus', 'zmienił(a) stan: {{oldValue}} → {{newValue}}', {
+          oldValue: item.oldValue,
+          newValue: item.newValue,
+        });
+      case 'ai_suggestion':
+        return t('myWork.ideaInspector.activity.aiSuggested', 'AI zasugerowało');
+      default:
+        return t('myWork.ideaInspector.activity.created', 'utworzył(a)');
+    }
+  };
 
   const toolTitle = t(
     `myWork.ideaInspector.tool.${tool}`,
@@ -488,6 +552,73 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
 
         <InspectorSection title={toolTitle} count={toolSection ? 1 : 0}>
           {toolSection}
+        </InspectorSection>
+
+        {/* RowDetailPanel parity (P0, 2026-08-26): 8th section per the accepted
+            prototype (Question 1, picked variant) — merges the old panel's
+            "Activity" and "AI Insights" tabs. Collapsed by default like the
+            prototype's own "Historia i AI" section. */}
+        <InspectorSection
+          title={t('myWork.ideaInspector.sections.historyAi', 'Historia i AI')}
+          count={historyAiCount}
+          defaultOpen={false}
+        >
+          <div className="space-y-1.5">
+            {(activity?.length ?? 0) === 0 ? (
+              <p className="text-[12.5px] text-c-text-muted">
+                {t('myWork.ideaInspector.noActivity', 'Brak aktywności')}
+              </p>
+            ) : (
+              [...(activity ?? [])]
+                .reverse()
+                .map((item) => (
+                  <div key={item.id} className="flex items-start gap-2">
+                    <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-c-border-strong" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[12.5px] leading-relaxed text-c-text-secondary">
+                        <strong className="font-semibold text-c-text">{item.author}</strong>{' '}
+                        {activityLabel(item)}
+                      </p>
+                      <span className="text-[10.5px] text-c-text-muted">
+                        {formatActivityTime(item.createdAt)}
+                      </span>
+                    </div>
+                  </div>
+                ))
+            )}
+          </div>
+
+          {onGenerateInsights ? (
+            <div className="mt-3 space-y-2 border-t border-c-border-subtle pt-3">
+              <button
+                type="button"
+                onClick={onGenerateInsights}
+                disabled={aiLoading}
+                className="inline-flex items-center gap-1.5 text-[11.5px] font-medium text-c-text-secondary disabled:opacity-40"
+              >
+                {aiLoading ? (
+                  <Loader2 size={13} className="animate-spin" />
+                ) : (
+                  <Sparkles size={13} />
+                )}
+                {aiLoading
+                  ? t('myWork.ideaInspector.generatingInsights', 'Generowanie…')
+                  : t('myWork.ideaInspector.generateInsights', 'Wygeneruj podpowiedzi AI')}
+              </button>
+              {(aiInsights?.length ?? 0) > 0 && (
+                <div className="space-y-1.5">
+                  {aiInsights!.map((insight, idx) => (
+                    <p
+                      key={idx}
+                      className="rounded-md bg-c-surface-raised px-2.5 py-2 text-[12px] leading-relaxed text-c-text-secondary"
+                    >
+                      {insight}
+                    </p>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : null}
         </InspectorSection>
       </div>
       <footer className="border-t border-c-border-subtle px-4 py-2.5 text-[11px] text-c-text-muted">
