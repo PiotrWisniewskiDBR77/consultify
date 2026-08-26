@@ -101,13 +101,13 @@ Naruszenie tego ograniczenia = odrzucenie dyżuru, niezależnie od jakości resz
 1. Punktem wyjścia jest **gałąź `codex/m03-admin-20260824`**. Nadzorca podaje Ci
    **SHA commitu-markera** przy wklejaniu tej instrukcji.
 
-   **SHA markera: «MARKER_SHA»**
+   **SHA markera: c7647e9a23**
 
    ```bash
    cd <root-repo>
    git fetch --all --prune
    git log --oneline -25 codex/m03-admin-20260824
-   git merge-base --is-ancestor «MARKER_SHA» codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
+   git merge-base --is-ancestor c7647e9a23 codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
    ```
 
 2. **Jeśli marker nie jest przodkiem tipa albo gałąź nie istnieje — STOP.**
@@ -186,7 +186,7 @@ Naruszenie tego ograniczenia = odrzucenie dyżuru, niezależnie od jakości resz
    format `YYYYMMDD`):
 
    ```bash
-   git branch codex/meetings-day24-<data> «MARKER_SHA»
+   git branch codex/meetings-day24-<data> c7647e9a23
    git worktree add /private/tmp/consultify-meetings-day24 codex/meetings-day24-<data>
    cd /private/tmp/consultify-meetings-day24
    ```
@@ -1647,7 +1647,7 @@ Plik: `docs/program/waves/WAVE_03_ACCEPTANCE/MEETINGS_DAY24_REPORT_20260826.md`
 ```markdown
 # Meetings dzień 24 (blok 3) — raport dyżuru 20260826
 
-Baza: `codex/m03-admin-20260824` @ «MARKER_SHA»
+Baza: `codex/m03-admin-20260824` @ c7647e9a23
 Marker: POTWIERDZONY / BRAK
 Gałąź: `codex/meetings-day24-<data>`
 Worktree: `/private/tmp/consultify-meetings-day24`
