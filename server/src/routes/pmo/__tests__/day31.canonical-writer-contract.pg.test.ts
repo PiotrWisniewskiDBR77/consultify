@@ -23,26 +23,52 @@ describe.skipIf(!REAL_PG)('Day 31 canonical writer mounted contract', () => {
   const tag = randomUUID();
   const organizationId = `day31-gate-${tag}`;
   const userId = `day31-owner-${tag}`;
+  const viewerId = `day31-viewer-${tag}`;
+  const foreignOrganizationId = `day31-foreign-${tag}`;
+  const foreignUserId = `day31-foreign-owner-${tag}`;
   const projectId = `day31-project-${tag}`;
   const initiativeId = `day31-initiative-${tag}`;
   const auth = () => ({ Authorization: `Bearer ${token}` });
   let client: Client;
   let token = '';
+  let viewerToken = '';
+  let foreignToken = '';
   let app: express.Express;
 
   beforeAll(async () => {
     client = new Client({ connectionString: DATABASE_URL });
     await client.connect();
-    await client.query(`INSERT INTO organizations(id,name) VALUES($1,$1)`, [organizationId]);
+    await client.query(`INSERT INTO organizations(id,name) VALUES($1,$1),($2,$2)`, [
+      organizationId,
+      foreignOrganizationId,
+    ]);
     await client.query(
       `INSERT INTO users(id,organization_id,email,role,status)
-       VALUES($1,$2,$3,'OWNER','active')`,
-      [userId, organizationId, `${userId}@example.test`]
+       VALUES($1,$2,$3,'OWNER','active'),($4,$2,$5,'USER','active'),($6,$7,$8,'OWNER','active')`,
+      [
+        userId,
+        organizationId,
+        `${userId}@example.test`,
+        viewerId,
+        `${viewerId}@example.test`,
+        foreignUserId,
+        foreignOrganizationId,
+        `${foreignUserId}@example.test`,
+      ]
     );
     await client.query(
       `INSERT INTO organization_members(id,organization_id,user_id,role,status)
-       VALUES($1,$2,$3,'OWNER','ACTIVE')`,
-      [`membership-${userId}`, organizationId, userId]
+       VALUES($1,$2,$3,'OWNER','ACTIVE'),($4,$2,$5,'USER','ACTIVE'),($6,$7,$8,'OWNER','ACTIVE')`,
+      [
+        `membership-${userId}`,
+        organizationId,
+        userId,
+        `membership-${viewerId}`,
+        viewerId,
+        `membership-${foreignUserId}`,
+        foreignOrganizationId,
+        foreignUserId,
+      ]
     );
     await client.query(`INSERT INTO projects(id,organization_id,name) VALUES($1,$2,$1)`, [
       projectId,
@@ -56,6 +82,21 @@ describe.skipIf(!REAL_PG)('Day 31 canonical writer mounted contract', () => {
 
     token = jwt.sign(
       { id: userId, organizationId, role: 'OWNER', email: `${userId}@example.test` },
+      config.JWT_SECRET,
+      { algorithm: 'HS256', expiresIn: '10m' }
+    );
+    viewerToken = jwt.sign(
+      { id: viewerId, organizationId, role: 'USER', email: `${viewerId}@example.test` },
+      config.JWT_SECRET,
+      { algorithm: 'HS256', expiresIn: '10m' }
+    );
+    foreignToken = jwt.sign(
+      {
+        id: foreignUserId,
+        organizationId: foreignOrganizationId,
+        role: 'OWNER',
+        email: `${foreignUserId}@example.test`,
+      },
       config.JWT_SECRET,
       { algorithm: 'HS256', expiresIn: '10m' }
     );
@@ -79,12 +120,16 @@ describe.skipIf(!REAL_PG)('Day 31 canonical writer mounted contract', () => {
       ]) {
         await client.query(`DELETE FROM ${table} WHERE organization_id = $1`, [organizationId]);
       }
-      await client.query(`DELETE FROM organization_members WHERE organization_id = $1`, [
-        organizationId,
+      await client.query(`DELETE FROM organization_members WHERE organization_id = ANY($1)`, [
+        [organizationId, foreignOrganizationId],
       ]);
       await client.query(`DELETE FROM projects WHERE organization_id = $1`, [organizationId]);
-      await client.query(`DELETE FROM users WHERE organization_id = $1`, [organizationId]);
-      await client.query(`DELETE FROM organizations WHERE id = $1`, [organizationId]);
+      await client.query(`DELETE FROM users WHERE organization_id = ANY($1)`, [
+        [organizationId, foreignOrganizationId],
+      ]);
+      await client.query(`DELETE FROM organizations WHERE id = ANY($1)`, [
+        [organizationId, foreignOrganizationId],
+      ]);
       await client.query('COMMIT');
     } catch (error) {
       await client.query('ROLLBACK');
@@ -146,5 +191,71 @@ describe.skipIf(!REAL_PG)('Day 31 canonical writer mounted contract', () => {
   it('keeps legacy reads outside the 409 boundary', async () => {
     const response = await request(app).get('/api/v8/execution-control/risk-signals').set(auth());
     expect(response.status).not.toBe(409);
+  });
+
+  it('writes a budget entry with CAS, idempotency, audit and fail-closed access', async () => {
+    const entryId = `budget-entry-${tag}`;
+    const path = `/api/initiatives/runtime-v1/initiatives/${initiativeId}/budget-entries/${entryId}`;
+    const body = {
+      expectedVersion: 0,
+      clientRequestId: `budget-request-${tag}`,
+      entryType: 'PLANNED',
+      costType: 'OPEX',
+      category: 'software',
+      amount: 1250,
+      currency: 'PLN',
+      description: 'Day 31 canonical writer proof',
+      periodMonth: 8,
+      periodYear: 2026,
+      source: 'MANUAL',
+    };
+    const first = await request(app).post(path).set(auth()).send(body);
+    expect(first.status).toBe(201);
+    const repeated = await request(app).post(path).set(auth()).send(body);
+    expect(repeated.status).toBe(200);
+    expect(repeated.body).toMatchObject({
+      status: 'REPLAYED',
+      aggregateVersion: first.body.aggregateVersion,
+      response: first.body.response,
+    });
+
+    const state = await client.query(
+      `SELECT version,payload_json FROM ie_aggregate_state
+       WHERE organization_id=$1 AND aggregate_type='execution_budget_entry' AND aggregate_id=$2`,
+      [organizationId, entryId]
+    );
+    const audit = await client.query(
+      `SELECT aggregate_version FROM ie_audit_events
+       WHERE organization_id=$1 AND aggregate_type='execution_budget_entry' AND aggregate_id=$2`,
+      [organizationId, entryId]
+    );
+    expect(state.rows).toHaveLength(1);
+    expect(state.rows[0]).toMatchObject({ version: 1 });
+    expect(state.rows[0].payload_json).toMatchObject({ initiativeId, amount: 1250 });
+    expect(audit.rows).toEqual([{ aggregate_version: 1 }]);
+
+    const conflict = await request(app)
+      .post(path)
+      .set(auth())
+      .send({ ...body, clientRequestId: `budget-conflict-${tag}` });
+    expect(conflict.status).toBe(409);
+    expect(
+      await client.query(
+        `SELECT COUNT(*)::int AS count FROM ie_audit_events
+         WHERE organization_id=$1 AND aggregate_type='execution_budget_entry' AND aggregate_id=$2`,
+        [organizationId, entryId]
+      )
+    ).toMatchObject({ rows: [{ count: 1 }] });
+
+    const foreign = await request(app)
+      .post(path)
+      .set({ Authorization: `Bearer ${foreignToken}`, 'X-Organization-Id': organizationId })
+      .send({ ...body, organizationId });
+    expect(foreign.status).toBe(404);
+    const denied = await request(app)
+      .post(path)
+      .set({ Authorization: `Bearer ${viewerToken}` })
+      .send(body);
+    expect(denied.status).toBe(404);
   });
 });
