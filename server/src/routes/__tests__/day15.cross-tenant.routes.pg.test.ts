@@ -22,6 +22,18 @@ vi.mock('../../middleware/auth.middleware.js', () => ({
 vi.mock('../../middleware/rateLimiting.middleware.js', () => ({
   apiAuthRateLimiter: (_req: any, _res: any, next: () => void) => next(),
 }));
+vi.mock('../../middleware/admin.middleware.js', () => ({
+  verifyAdmin: (req: any, res: any, next: () => void) =>
+    ['admin', 'owner'].includes(req.user?.role)
+      ? next()
+      : res.status(403).json({ error: 'Admin required' }),
+}));
+vi.mock('../../middleware/superAdmin.middleware.js', () => ({
+  verifySuperAdmin: (req: any, res: any, next: () => void) =>
+    req.user?.role === 'super_admin'
+      ? next()
+      : res.status(403).json({ error: 'Superadmin required' }),
+}));
 vi.mock('../../middleware/validation.middleware.js', () => ({
   validateBody: () => (_req: any, _res: any, next: () => void) => next(),
   validateParams: () => (_req: any, _res: any, next: () => void) => next(),
@@ -32,6 +44,7 @@ describe.skipIf(!enabled)('Day 15 Q.3 real PostgreSQL cross-tenant effects', () 
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
   let securityApp: express.Express;
   let adminDataApp: express.Express;
+  let accessControlApp: express.Express;
 
   beforeAll(async () => {
     for (const [id, name] of [
@@ -65,6 +78,12 @@ describe.skipIf(!enabled)('Day 15 Q.3 real PostgreSQL cross-tenant effects', () 
       `INSERT INTO security_events (id,organization_id,event_type,resolved)
        VALUES ('day15-event-b','day15-org-b','LOGIN',0) ON CONFLICT (id) DO NOTHING`
     );
+    await pool.query(
+      `INSERT INTO access_requests (id,email,organization_id,status)
+       VALUES ('day15-request-a','alpha@day15.local','day15-org-a','pending'),
+              ('day15-request-b','beta@day15.local','day15-org-b','pending')
+       ON CONFLICT (id) DO NOTHING`
+    );
 
     const { default: security } = await import('../security.routes.js');
     securityApp = express();
@@ -74,9 +93,16 @@ describe.skipIf(!enabled)('Day 15 Q.3 real PostgreSQL cross-tenant effects', () 
     adminDataApp = express();
     adminDataApp.use(express.json());
     adminDataApp.use('/api/admin-data', adminData);
+    const { default: accessControl } = await import('../access-control.routes.js');
+    accessControlApp = express();
+    accessControlApp.use(express.json());
+    accessControlApp.use('/api/access-control', accessControl);
   });
 
   afterAll(async () => {
+    await pool.query(
+      "DELETE FROM access_requests WHERE id IN ('day15-request-a','day15-request-b')"
+    );
     await pool.query("DELETE FROM security_events WHERE id='day15-event-b'");
     await pool.query("DELETE FROM user_sessions WHERE id='day15-session-b'");
     await pool.query("DELETE FROM organization_members WHERE id='day15-member-a'");
@@ -110,5 +136,15 @@ describe.skipIf(!enabled)('Day 15 Q.3 real PostgreSQL cross-tenant effects', () 
       (await pool.query("SELECT resolved FROM security_events WHERE id='day15-event-b'")).rows[0]
         .resolved
     ).toBe(0);
+  });
+
+  it('returns only access requests from the token organization', async () => {
+    actor = { id: 'day15-admin-a', role: 'admin', organizationId: 'day15-org-a' };
+    const response = await request(accessControlApp).get(
+      '/api/access-control/requests/organization'
+    );
+    expect(response.status).toBe(200);
+    expect(response.body.map((row: any) => row.id)).toEqual(['day15-request-a']);
+    expect(response.body.some((row: any) => row.id === 'day15-request-b')).toBe(false);
   });
 });

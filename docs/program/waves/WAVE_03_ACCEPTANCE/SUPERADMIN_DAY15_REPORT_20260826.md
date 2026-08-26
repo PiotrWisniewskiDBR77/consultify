@@ -92,6 +92,15 @@ Status: **ZROBIONE_WG_DoD**.
 - Test mock/request: `day15.admin-data.routes.test.ts` — 7/7 PASS.
 - Test realdb/request: `day15.cross-tenant.routes.pg.test.ts` — 3/3 PASS, faktycznie wykonany; po HTTP 404 bezpośrednie SELECT-y potwierdziły zachowanie obcej sesji i niezmieniony `security_events.resolved=0`.
 
+## S.4 — tenant-scoped access requests
+
+Status: **ZROBIONE_WG_DoD**.
+
+- Dodano `GET /api/access-control/requests/organization` z `verifyToken` + istniejącym `verifyAdmin`.
+- Organizacja pochodzi wyłącznie z tokenu; opcjonalny `status` jest drugim predykatem.
+- Istniejąca platformowa `GET /requests` pozostała nietknięta; dwa istniejące klienty nadal używają tej trasy.
+- Test request: 5/5 PASS. Realdb request: pakiet Q.3 4/4 PASS; odpowiedź dla org A zawierała wyłącznie `day15-request-a`, bez rekordu org B.
+
 ## Zakres wykonany
 
 | Pozycja                                | Status                              |
@@ -101,7 +110,8 @@ Status: **ZROBIONE_WG_DoD**.
 | T.1–T.3                                | NIE_ZACZĘTE                         |
 | S.1–S.2                                | ZROBIONE_WG_DoD (realdb Q.3 w toku) |
 | S.3                                    | ZROBIONE_WG_DoD                     |
-| S.4–S.5                                | NIE_ZACZĘTE                         |
+| S.4                                    | ZROBIONE_WG_DoD                     |
+| S.5                                    | NIE_ZACZĘTE                         |
 | A.1–A.4                                | NIE_ZACZĘTE                         |
 | Q.1–Q.5                                | NIE_ZACZĘTE                         |
 
