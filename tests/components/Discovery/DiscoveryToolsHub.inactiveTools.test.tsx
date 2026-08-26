@@ -115,6 +115,8 @@ vi.mock('@/services/api', () => ({
     getToolSession: (...args: unknown[]) => getToolSessionMock(...args),
     listToolSessions: vi.fn().mockResolvedValue({ items: [], total: 0, limit: 0, offset: 0 }),
     listAssessments: vi.fn().mockResolvedValue({ items: [], total: 0, limit: 100, offset: 0 }),
+    listAssessmentsLegacy: vi.fn().mockResolvedValue({ items: [], total: 0, limit: 100, offset: 0 }),
+    listToolOutputs: vi.fn().mockResolvedValue({ outputs: [] }),
     getAssessmentReports: vi.fn().mockResolvedValue([]),
     get: vi.fn().mockResolvedValue({ reports: [], success: true, data: [] }),
     getUsers: vi.fn().mockResolvedValue([]),
