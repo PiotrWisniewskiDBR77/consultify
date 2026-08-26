@@ -140,6 +140,14 @@ function labelsFromContent(
   return Array.from({ length: longest }, (_, idx) => String(idx + 1));
 }
 
+function wrapRadarLabel(label: string): string | string[] {
+  if (label.length <= 22) return label;
+  const words = label.split(/\s+/).filter(Boolean);
+  if (words.length < 2) return label;
+  const pivot = Math.ceil(words.length / 2);
+  return [words.slice(0, pivot).join(' '), words.slice(pivot).join(' ')];
+}
+
 function buildDatasets(
   content: NonNullable<ReturnType<typeof documentChartBlockContent>>
 ): ChartDataset[] {
@@ -148,7 +156,7 @@ function buildDatasets(
       const color = series.color ?? paletteColor(idx);
       const points: ScatterDataPoint[] = series.values.map((value, pointIdx) => ({
         x: pointIdx + 1,
-        y: value,
+        y: value ?? 0,
       }));
       return {
         label: series.label,
@@ -163,14 +171,21 @@ function buildDatasets(
   return content.series.map((series, idx) => {
     const color = series.color ?? paletteColor(idx);
     const isArea = content.kind === 'area';
+    const isRadar = content.kind === 'radar';
     return {
       label: series.label,
       data: series.values,
       borderColor: color,
-      backgroundColor: isArea ? rgba(color, 0.24) : rgba(color, 0.75),
-      fill: isArea ? 'origin' : false,
+      backgroundColor: isRadar
+        ? rgba(color, series.label === 'Poziom obecny' ? 0.17 : 0.1)
+        : isArea
+          ? rgba(color, 0.24)
+          : rgba(color, 0.75),
+      fill: isRadar ? true : isArea ? 'origin' : false,
       tension: isArea || content.kind === 'line' ? 0.28 : 0,
-      pointRadius: content.kind === 'line' || isArea ? 2 : 0,
+      pointRadius: isRadar ? 4 : content.kind === 'line' || isArea ? 2 : 0,
+      pointHoverRadius: isRadar ? 5 : undefined,
+      borderWidth: isRadar ? (series.label === 'Poziom obecny' ? 3 : 2.5) : undefined,
     };
   });
 }
@@ -215,7 +230,12 @@ export async function renderChartBlockToPng(
   const configuration: ChartConfiguration = {
     type: chartType,
     data: {
-      labels: chartType === 'scatter' ? undefined : labels,
+      labels:
+        chartType === 'scatter'
+          ? undefined
+          : chartType === 'radar'
+            ? labels.map(wrapRadarLabel)
+            : labels,
       datasets,
     },
     options: {
@@ -237,27 +257,39 @@ export async function renderChartBlockToPng(
       scales:
         chartType === 'pie' || chartType === 'doughnut'
           ? undefined
-          : {
-              x: {
-                title: {
-                  display: Boolean(content.xAxisLabel),
-                  text: content.xAxisLabel ?? '',
-                  color: '#334155',
+          : chartType === 'radar'
+            ? {
+                r: {
+                  min: 0,
+                  max: 100,
+                  beginAtZero: true,
+                  ticks: { stepSize: 20, color: '#6B7280', backdropColor: 'transparent' },
+                  grid: { color: '#D6DFE8' },
+                  angleLines: { color: '#D6DFE8' },
+                  pointLabels: { color: '#1F2937', font: { size: 12 } },
                 },
-                ticks: { color: '#334155' },
-                grid: { color: '#E2E8F0' },
-              },
-              y: {
-                title: {
-                  display: Boolean(content.yAxisLabel),
-                  text: content.yAxisLabel ?? '',
-                  color: '#334155',
+              }
+            : {
+                x: {
+                  title: {
+                    display: Boolean(content.xAxisLabel),
+                    text: content.xAxisLabel ?? '',
+                    color: '#334155',
+                  },
+                  ticks: { color: '#334155' },
+                  grid: { color: '#E2E8F0' },
                 },
-                ticks: { color: '#334155' },
-                grid: { color: '#E2E8F0' },
-                beginAtZero: true,
+                y: {
+                  title: {
+                    display: Boolean(content.yAxisLabel),
+                    text: content.yAxisLabel ?? '',
+                    color: '#334155',
+                  },
+                  ticks: { color: '#334155' },
+                  grid: { color: '#E2E8F0' },
+                  beginAtZero: true,
+                },
               },
-            },
     },
   };
 
