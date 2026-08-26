@@ -1227,4 +1227,102 @@ describe('DEC-131 P1-4 + DEC-136 — management-reports org scoping (real Postgr
     expect(await h.getCommentRow(commentId)).toBeNull();
   });
 
+  // -------------------------------------------------------------------
+  // POST /bulk-export — writes an audit row keyed on a caller-supplied id
+  // -------------------------------------------------------------------
+
+  itDB(
+    'POST /bulk-export — 404 for a foreign report id, and no audit row is written on it',
+    async (h) => {
+      const app = buildApp();
+      const reportId = await h.insertReport({});
+      const before = await h.countAuditRows(reportId);
+      const attackerToken = makeE2EToken(h.attackerUserId, h.orgBId);
+
+      const res = await request(app)
+        .post('/api/management-reports/bulk-export')
+        .set('Authorization', `Bearer ${attackerToken}`)
+        .send({ reportIds: [reportId], format: 'pdf' });
+
+      expect(res.status).toBe(404);
+      expect(await h.countAuditRows(reportId)).toBe(before);
+    }
+  );
+
+  // -------------------------------------------------------------------
+  // organizationId fallbacks (same class as the DEC-131 hole)
+  //
+  // HONEST NOTE ON WHAT THESE THREE PROVE. The removed `|| query.organizationId`
+  // / `|| body.organizationId` fallbacks only ever fired when `req.organizationId`
+  // was falsy, and the E2E auth bypass used by this harness ALWAYS substitutes an
+  // organization ('e2e-org-id' when the claim is absent — see
+  // auth.middleware.ts), so an org-less identity cannot be minted here. These
+  // three therefore pass both before and after the fix: they are regression
+  // guards proving the TOKEN's org wins, not red-then-green exploit proofs. The
+  // reachable-in-production case is a real token whose org resolution comes back
+  // empty (auth.middleware.ts:881) — the fallback removal closes that, and there
+  // is no longer any code path by which caller-supplied input reaches the tenant
+  // filter.
+  // -------------------------------------------------------------------
+
+  itDB(
+    'GET /history — ?organizationId= injection does NOT widen the caller\'s tenant',
+    async (h) => {
+      const app = buildApp();
+      const reportId = await h.insertReport({});
+      const attackerToken = makeE2EToken(h.attackerUserId, h.orgBId);
+
+      const res = await request(app)
+        .get(`/api/management-reports/history?organizationId=${h.orgAId}`)
+        .set('Authorization', `Bearer ${attackerToken}`);
+
+      expect(res.status).toBe(200);
+      const ids = (res.body?.reports || []).map((r: any) => r.id);
+      expect(ids).not.toContain(reportId);
+    }
+  );
+
+  itDB(
+    'GET /analytics/usage + /analytics/types — ?organizationId= injection is ignored',
+    async (h) => {
+      const app = buildApp();
+      await h.insertReport({});
+      const attackerToken = makeE2EToken(h.attackerUserId, h.orgBId);
+
+      const usage = await request(app)
+        .get(`/api/management-reports/analytics/usage?organizationId=${h.orgAId}`)
+        .set('Authorization', `Bearer ${attackerToken}`);
+      expect(usage.status).toBe(200);
+      expect(Number(usage.body?.data?.total ?? 0)).toBe(0);
+
+      const types = await request(app)
+        .get(`/api/management-reports/analytics/types?organizationId=${h.orgAId}`)
+        .set('Authorization', `Bearer ${attackerToken}`);
+      expect(types.status).toBe(200);
+      expect(types.body?.data).toHaveLength(0);
+    }
+  );
+
+  itDB(
+    'POST /generate — body organizationId= cannot plant a report in another org',
+    async (h) => {
+      const app = buildApp();
+      const orgABefore = await h.countReportsInOrg(h.orgAId);
+      const attackerToken = makeE2EToken(h.attackerUserId, h.orgBId);
+
+      const res = await request(app)
+        .post('/api/management-reports/generate')
+        .set('Authorization', `Bearer ${attackerToken}`)
+        .send({
+          reportType: 'PORTFOLIO_HEALTH',
+          scope: 'PORTFOLIO',
+          organizationId: h.orgAId,
+        });
+
+      expect(res.status).toBe(200);
+      // The report exists, but in the TOKEN's org — never the body's.
+      expect(res.body?.report?.organizationId).toBe(h.orgBId);
+      expect(await h.countReportsInOrg(h.orgAId)).toBe(orgABefore);
+    }
+  );
 });

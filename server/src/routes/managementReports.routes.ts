@@ -53,7 +53,7 @@ router.post(
   '/generate',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.userId;
-    const organizationId = req.organizationId || req.body.organizationId;
+    const organizationId = req.organizationId;
     const {
       reportType,
       scope,
@@ -103,10 +103,8 @@ router.post(
 router.get(
   '/history',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const organizationId = req.organizationId || (req.query.organizationId as string);
-    if (!organizationId) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
+    const organizationId = requireOrganizationId(req, res);
+    if (!organizationId) return undefined;
 
     const { reportType, scope, status, limit, offset } = req.query;
     const result = await managementReportsService.getReportHistory({
@@ -531,7 +529,8 @@ router.post(
 router.get(
   '/analytics/usage',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const organizationId = req.organizationId || (req.query.organizationId as string);
+    const organizationId = requireOrganizationId(req, res);
+    if (!organizationId) return undefined;
     const data = await managementReportsService.getUsageAnalytics(organizationId);
     return res.json({ success: true, data });
   })
@@ -540,7 +539,8 @@ router.get(
 router.get(
   '/analytics/types',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const organizationId = req.organizationId || (req.query.organizationId as string);
+    const organizationId = requireOrganizationId(req, res);
+    if (!organizationId) return undefined;
     const data = await managementReportsService.getTypesAnalytics(organizationId);
     return res.json({ success: true, data });
   })
@@ -550,13 +550,14 @@ router.post(
   '/bulk-export',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { reportIds, format } = req.body;
-    if (!reportIds || !Array.isArray(reportIds)) {
+    if (!reportIds || !Array.isArray(reportIds) || reportIds.length === 0) {
       return res.status(400).json({ error: 'reportIds are required' });
     }
     const result = await managementReportsService.bulkExport(
       reportIds,
       format || 'pdf',
-      req.userId
+      req.userId,
+      req.organizationId
     );
     return res.json({ success: true, ...result });
   })

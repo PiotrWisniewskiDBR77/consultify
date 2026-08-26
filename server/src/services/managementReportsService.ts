@@ -1288,7 +1288,13 @@ class ManagementReportsService {
     return rows || [];
   }
 
-  async bulkExport(reportIds, format, userId) {
+  // DEC-136: reportIds come straight from the request body and the only thing
+  // this does with them is write an audit row — which used to let a caller
+  // stamp a row onto ANOTHER org's report. Every id is tenant-checked first.
+  async bulkExport(reportIds, format, userId, organizationId) {
+    for (const reportId of reportIds) {
+      await this.assertReportInOrganization(reportId, organizationId);
+    }
     const exportId = uuidv4();
     await this.logAudit(reportIds[0], 'BULK_EXPORTED', userId, { reportIds, format });
     return {
