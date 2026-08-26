@@ -42,9 +42,8 @@ export const ChatSignalsFeedPreview: React.FC<{
       title={view.title}
       onClose={onClose}
       onOpenFull={destination.kind === 'ROUTE' ? () => navigate(destination.href) : undefined}
-      openLabel={
-        destination.kind === 'ROUTE' ? t('chatSignals.action.open') : t(destination.reason)
-      }
+      openLabel={destination.kind === 'ROUTE' ? t('chatSignals.action.open') : undefined}
+      openDisabledReason={destination.kind !== 'ROUTE' ? t(destination.reason) : undefined}
       meta={{
         pills: [
           {
