@@ -15,7 +15,7 @@ function setLocationSearch(search: string) {
   });
 }
 
-describe('Tools Insights Wiring flag (DEC-118 repair #1: default OFF, fail-closed)', () => {
+describe('Tools Insights Wiring flag (default ON — flip po akcepcie właściciela 27.08)', () => {
   beforeEach(() => {
     window.localStorage.clear();
     setLocationSearch('');
@@ -28,11 +28,20 @@ describe('Tools Insights Wiring flag (DEC-118 repair #1: default OFF, fail-close
     resetToolsInsightsWiringFlagCache();
   });
 
-  it('defaults OFF with no query, localStorage, or env override', () => {
-    expect(isToolsInsightsWiringEnabled()).toBe(false);
+  // flip po akcepcie właściciela 27.08: default was OFF, now ON.
+  it('defaults ON with no query, localStorage, or env override', () => {
+    expect(isToolsInsightsWiringEnabled()).toBe(true);
   });
 
-  it('enables via localStorage "on"/"1"/"true"', () => {
+  it('localStorage "off"/"0"/"false" still disables it despite the ON default', () => {
+    for (const value of ['off', '0', 'false']) {
+      window.localStorage.setItem(TOOLS_INSIGHTS_WIRING_FLAG_KEYS.localStorage, value);
+      resetToolsInsightsWiringFlagCache();
+      expect(isToolsInsightsWiringEnabled()).toBe(false);
+    }
+  });
+
+  it('enables via localStorage "on"/"1"/"true" (redundant with default, still honoured)', () => {
     for (const value of ['on', '1', 'true']) {
       window.localStorage.setItem(TOOLS_INSIGHTS_WIRING_FLAG_KEYS.localStorage, value);
       resetToolsInsightsWiringFlagCache();
@@ -40,7 +49,7 @@ describe('Tools Insights Wiring flag (DEC-118 repair #1: default OFF, fail-close
     }
   });
 
-  it('enables via URL query "on"/"1"/"true"', () => {
+  it('enables via URL query "on"/"1"/"true" (redundant with default, still honoured)', () => {
     for (const value of ['on', '1', 'true']) {
       setLocationSearch(`?${TOOLS_INSIGHTS_WIRING_FLAG_KEYS.query}=${value}`);
       resetToolsInsightsWiringFlagCache();
@@ -62,22 +71,28 @@ describe('Tools Insights Wiring flag (DEC-118 repair #1: default OFF, fail-close
     expect(isToolsInsightsWiringEnabled()).toBe(true);
   });
 
-  it('caches the resolution: a query flip after first read has no effect until reset', () => {
-    expect(isToolsInsightsWiringEnabled()).toBe(false);
-    setLocationSearch(`?${TOOLS_INSIGHTS_WIRING_FLAG_KEYS.query}=1`);
-    // No reset yet — cached value from the first call still wins.
-    expect(isToolsInsightsWiringEnabled()).toBe(false);
+  it('invalid localStorage value falls through to the ON default', () => {
+    window.localStorage.setItem(TOOLS_INSIGHTS_WIRING_FLAG_KEYS.localStorage, 'banana');
     resetToolsInsightsWiringFlagCache();
     expect(isToolsInsightsWiringEnabled()).toBe(true);
   });
 
-  it('resetToolsInsightsWiringFlagCache forces a fresh read reflecting new state', () => {
-    window.localStorage.setItem(TOOLS_INSIGHTS_WIRING_FLAG_KEYS.localStorage, 'on');
-    resetToolsInsightsWiringFlagCache();
+  it('caches the resolution: a query flip after first read has no effect until reset', () => {
     expect(isToolsInsightsWiringEnabled()).toBe(true);
+    setLocationSearch(`?${TOOLS_INSIGHTS_WIRING_FLAG_KEYS.query}=0`);
+    // No reset yet — cached value from the first call still wins.
+    expect(isToolsInsightsWiringEnabled()).toBe(true);
+    resetToolsInsightsWiringFlagCache();
+    expect(isToolsInsightsWiringEnabled()).toBe(false);
+  });
+
+  it('resetToolsInsightsWiringFlagCache forces a fresh read reflecting new state', () => {
+    window.localStorage.setItem(TOOLS_INSIGHTS_WIRING_FLAG_KEYS.localStorage, 'off');
+    resetToolsInsightsWiringFlagCache();
+    expect(isToolsInsightsWiringEnabled()).toBe(false);
 
     window.localStorage.removeItem(TOOLS_INSIGHTS_WIRING_FLAG_KEYS.localStorage);
     resetToolsInsightsWiringFlagCache();
-    expect(isToolsInsightsWiringEnabled()).toBe(false);
+    expect(isToolsInsightsWiringEnabled()).toBe(true);
   });
 });

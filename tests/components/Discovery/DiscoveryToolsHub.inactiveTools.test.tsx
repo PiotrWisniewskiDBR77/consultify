@@ -121,6 +121,10 @@ vi.mock('@/services/api', () => ({
     createToolSession: (...args: unknown[]) => createToolSessionMock(...args),
     suggestTools: vi.fn().mockResolvedValue({ suggestions: [] }),
     getInitiativesByStatus: vi.fn().mockResolvedValue([]),
+    // flip po akcepcie właściciela 27.08: ff_toolsInsightsWiring now
+    // defaults ON, so DiscoveryToolsHub's bootstrap calls this
+    // unconditionally — must be mocked or the hub throws (undefined call).
+    listToolOutputs: vi.fn().mockResolvedValue({ outputs: [] }),
   },
 }));
 

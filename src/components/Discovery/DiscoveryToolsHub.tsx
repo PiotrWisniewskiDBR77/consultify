@@ -1067,12 +1067,13 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             success: true,
             data: [] as any[],
           }),
-          // DEC-118 repair #1 (behind ff_toolsInsightsWiring, default OFF —
-          // fail-closed until an owner-accepted screenshot): the canonical
-          // tool_outputs snapshot (migration 946) was never fetched here, so
-          // an approved tool result never appeared in the module's own
-          // Outputs/Insights tab. Skip the network call entirely when the
-          // flag is off — zero behavior/perf change on the default path.
+          // DEC-118 repair #1 (behind ff_toolsInsightsWiring — default
+          // flipped OFF -> ON on 2026-08-27, owner accept on dev-render
+          // screenshots): the canonical tool_outputs snapshot (migration
+          // 946) was never fetched here, so an approved tool result never
+          // appeared in the module's own Outputs/Insights tab. The network
+          // call is still skippable per-session via the localStorage kill
+          // switch (?ff_toolsInsightsWiring=0).
           isToolsInsightsWiringEnabled()
             ? resolveBootstrapRequest('tool outputs', Api.listToolOutputs(undefined), {
                 outputs: [] as any[],
