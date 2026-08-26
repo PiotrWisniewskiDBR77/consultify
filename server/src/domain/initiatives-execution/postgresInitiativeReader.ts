@@ -37,6 +37,16 @@ export interface InitiativeReadModel {
   updatedAt: string;
 }
 
+export interface InitiativeListCursor {
+  updatedAt: string;
+  aggregateId: string;
+}
+
+export interface InitiativeListPage {
+  initiatives: InitiativeReadModel[];
+  nextCursor: InitiativeListCursor | null;
+}
+
 export interface InitiativeCardVersionReadModel {
   cardKey: string;
   cardVersion: number;
@@ -1242,6 +1252,48 @@ export class PostgresInitiativeReader {
       updatedAt:
         row.updated_at instanceof Date ? row.updated_at.toISOString() : String(row.updated_at),
     }));
+  }
+
+  async listInitiativesPage(
+    organizationId: string,
+    limit: number,
+    cursor: InitiativeListCursor | null
+  ): Promise<InitiativeListPage> {
+    const result = await this.pool.query<{
+      aggregate_id: string;
+      version: number;
+      payload_json: RegisteredInitiative;
+      updated_at: Date | string;
+    }>(
+      `SELECT aggregate_id, version, payload_json, updated_at
+         FROM ie_aggregate_state
+        WHERE organization_id = $1
+          AND aggregate_type = 'initiative'
+          AND ($2::timestamptz IS NULL OR (updated_at, aggregate_id) < ($2::timestamptz, $3::text))
+        ORDER BY updated_at DESC, aggregate_id DESC
+        LIMIT $4`,
+      [organizationId, cursor?.updatedAt ?? null, cursor?.aggregateId ?? null, limit + 1]
+    );
+    const pageRows = result.rows.slice(0, limit);
+    const last = pageRows.at(-1);
+    return {
+      initiatives: pageRows.map((row) => ({
+        version: row.version,
+        initiative: row.payload_json,
+        updatedAt:
+          row.updated_at instanceof Date ? row.updated_at.toISOString() : String(row.updated_at),
+      })),
+      nextCursor:
+        result.rows.length > limit && last
+          ? {
+              updatedAt:
+                last.updated_at instanceof Date
+                  ? last.updated_at.toISOString()
+                  : String(last.updated_at),
+              aggregateId: last.aggregate_id,
+            }
+          : null,
+    };
   }
 
   /**

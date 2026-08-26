@@ -38,7 +38,9 @@ const build = (rows: InitiativeReadModel[], authorize = vi.fn(async () => true))
     '/runtime-v1',
     createInitiativesExecutionRuntimeRouter({
       unitOfWork: {} as any,
-      reader: { listInitiatives: vi.fn(async () => rows) } as any,
+      reader: {
+        listInitiativesPage: vi.fn(async () => ({ initiatives: rows, nextCursor: null })),
+      } as any,
       authorize,
       resolvePolicy: vi.fn() as any,
     })

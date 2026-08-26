@@ -1145,6 +1145,29 @@ function firstParam(value: string | string[] | undefined): string {
   return value ?? '';
 }
 
+function decodeInitiativeCursor(value: unknown): { updatedAt: string; aggregateId: string } | null {
+  if (typeof value !== 'string' || !value.trim()) return null;
+  try {
+    const decoded = JSON.parse(Buffer.from(value, 'base64url').toString('utf8')) as Record<
+      string,
+      unknown
+    >;
+    if (
+      typeof decoded.updatedAt !== 'string' ||
+      !Number.isFinite(Date.parse(decoded.updatedAt)) ||
+      typeof decoded.aggregateId !== 'string' ||
+      !decoded.aggregateId.trim()
+    )
+      return null;
+    return { updatedAt: decoded.updatedAt, aggregateId: decoded.aggregateId };
+  } catch {
+    return null;
+  }
+}
+
+const encodeInitiativeCursor = (cursor: { updatedAt: string; aggregateId: string } | null) =>
+  cursor === null ? null : Buffer.from(JSON.stringify(cursor), 'utf8').toString('base64url');
+
 export function createInitiativesExecutionRuntimeRouter(
   deps: InitiativesExecutionRuntimeDependencies
 ): Router {
@@ -1761,14 +1784,35 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
         return;
       }
-      const rows = await deps.reader.listInitiatives(actor.organizationId);
+      if (
+        req.query.organizationId !== undefined &&
+        firstParam(req.query.organizationId as string | string[]) !== actor.organizationId
+      ) {
+        res.status(404).json({ error: { code: 'NOT_FOUND' } });
+        return;
+      }
+      const rawLimit = req.query.limit;
+      const limit = rawLimit === undefined ? 50 : Number(rawLimit);
+      if (!Number.isInteger(limit) || limit < 1 || limit > 200) {
+        res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
+        return;
+      }
+      const cursor =
+        req.query.cursor === undefined ? null : decodeInitiativeCursor(req.query.cursor);
+      if (req.query.cursor !== undefined && cursor === null) {
+        res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
+        return;
+      }
+      const page = await deps.reader.listInitiativesPage(actor.organizationId, limit, cursor);
       const authorizations = await authorizeProjectsMap(
         actor,
-        rows.map((row) => row.initiative.projectId),
+        page.initiatives.map((row) => row.initiative.projectId),
         'initiative.view'
       );
-      const visible = rows.filter((row) => Boolean(authorizations.get(row.initiative.projectId)));
-      res.json({ initiatives: visible });
+      const visible = page.initiatives.filter((row) =>
+        Boolean(authorizations.get(row.initiative.projectId))
+      );
+      res.json({ initiatives: visible, nextCursor: encodeInitiativeCursor(page.nextCursor) });
     })
   );
 
