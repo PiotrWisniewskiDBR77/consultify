@@ -6,14 +6,16 @@
  * nie miał ŻADNEGO ekranu pokazującego „wszystkie otwarte niezgodności" —
  * `AuditsMethodHub` miał pięć zakładek (Library/Processes/Outputs/Reports/
  * Initiatives) i żadnej z ustaleniami, mimo że backend jest kompletny i
- * gotowy od dawna:
- *   - `GET /audits/findings` (`findings.routes.ts:36`, `findingService.listFindings`)
+ * gotowy od dawna. Zakładka woła DOKŁADNIE te endpointy (żadnego innego):
+ *   - `GET /audits/findings` (`findings.routes.ts:58`, `findingService.listFindings`,
+ *     paginowane — `limit`/`offset` przekazywane z tego ekranu, patrz R2 niżej)
  *   - `POST /audits/findings/:id/review` (confirm/send_back/reject)
  *   - `POST /audits/findings/:id/accept-risk` (`findingService.acceptResidualRisk`)
  *   - `POST /audits/findings/:id/close` (`findingService.closeFinding`)
  *   - `GET /audits/actions` (`actions.routes.ts:95`, kolumna „Termin" — data z
  *     najbliższego OTWARTEGO działania korygującego danego ustalenia; ustalenie
- *     samo nie niesie terminu, to działanie ma `dueDate`)
+ *     samo nie niesie terminu, to działanie ma `dueDate`; pobierane W CAŁOŚCI
+ *     dla programu przez `listAllActions()`, patrz R2(a) niżej)
  *   - `GET /audits/evidence` (`evidence.routes.ts:84`, rozwiązywanie ID dowodów
  *     w `objectiveEvidence`/`contradictingEvidence` na tytuły w podglądzie —
  *     zero surowych ID na twarzy)
@@ -30,7 +32,9 @@
  * `StandardPreview` (CLAUDE.md #9 — zakaz własnych tabel). Filtry: status i
  * klasyfikacja jako kolumny `filterable` (dokładnie wzorzec `AuditReportsTab`'s
  * `status`, i wzorzec Library's `sourceType` — druga oś danych bez drugiego
- * toru chipów).
+ * toru chipów) — DZIAŁAJĄ na bieżącej stronie (patrz nota przy `columns`
+ * niżej: podniesienie ich do zapytania serwera to osobny pakiet pracy, `GET
+ * /audits/findings` już przyjmuje `status`/`classification`, gdyby był potrzebny).
  *
  * ODEBRANE 2026-08-26 (uwaga właściciela na zrzucie tej zakładki): pasek nad
  * tabelą niósł WYŁĄCZNIE selektor programu (konieczność techniczna — patrz
@@ -44,7 +48,16 @@
  * `programId`-scoped, w przeciwieństwie do tych dwóch statystycznych
  * endpointów), ani żadnej sekcji kafli/kart metryk do którego można by to
  * doczepić bez wymyślania nowego układu — to osobny pakiet pracy po
- * prototypie, nie ten merge.
+ * prototypie, nie ten merge. `getFindingStatistics`/`getSystemicFindings`
+ * zostały odtąd USUNIĘTE z `auditsMethodApi.ts` (martwy kod, R3(a) panelu
+ * powtórnego) — zero wołających po tym odjęciu.
+ *
+ * R2(a) (panel powtórny DEC-117): `GET /audits/findings` domyślnie ucina do
+ * 50 wierszy (`context.ts parsePaging`) — ta zakładka ładowała TYLKO pierwszą
+ * stronę i NIGDY nie pokazywała `total`, więc program z 51+ ustaleniami cicho
+ * gubił resztę bez śladu. Naprawione: `limit`/`offset` jawnie z paginatora
+ * niżej, licznik „N z M" zawsze widoczny, Poprzednia/Następna disabled na
+ * granicach.
  */
 import { CheckCircle2, ExternalLink, Lock, ShieldCheck } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -62,6 +75,7 @@ import { EmptyState, ErrorState } from '@/components/shared/states';
 import { StatusChip } from '@/components/ui/primitives/chips';
 import { formatListDate } from '@/utils/listDateFormat';
 
+import { NoteEntryModal } from '../NoteEntryModal';
 import {
   findingClassificationLabel,
   findingClassificationTone,
@@ -74,7 +88,7 @@ import {
   acceptResidualRisk,
   AUDIT_FINDING_STATUSES,
   closeFinding,
-  listActions,
+  listAllActions,
   listEvidence,
   listFindings,
   listProgramCriteria,
@@ -86,6 +100,9 @@ import {
   type AuditFindingSummary,
   type AuditProgramSummary,
 } from '../auditsMethodApi';
+
+/** Rozmiar strony rejestru — dopasowany do domyślnego `limit` backendu (`context.ts parsePaging`). */
+const PAGE_SIZE = 50;
 
 export interface AuditFindingsTabProps {
   isPolish: boolean;
@@ -111,14 +128,6 @@ function permissionAwareMessage(e: any, isPolish: boolean, fallback: string): st
   return e?.message || fallback;
 }
 
-/** Notatka wymagana przez backend (zamknięcie/akceptacja ryzyka/odesłanie/odrzucenie) — wzorzec `window.prompt` już używany w module (`AssessmentManagePanel`, `TransformationCasesPanel`). */
-function promptForNote(message: string): string | null {
-  const value = window.prompt(message);
-  if (value === null) return null;
-  const trimmed = value.trim();
-  return trimmed || null;
-}
-
 export const AuditFindingsTab: React.FC<AuditFindingsTabProps> = ({
   isPolish,
   programs,
@@ -132,6 +141,8 @@ export const AuditFindingsTab: React.FC<AuditFindingsTabProps> = ({
   }, [programs, programId]);
 
   const [items, setItems] = useState<AuditFindingSummary[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [criteria, setCriteria] = useState<AuditCriterionSummary[]>([]);
@@ -140,39 +151,72 @@ export const AuditFindingsTab: React.FC<AuditFindingsTabProps> = ({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [transitioning, setTransitioning] = useState<string | null>(null);
   const [transitionError, setTransitionError] = useState<string | null>(null);
+  /** R3(c): kanoniczny modal zastępujący `window.prompt` dla notatek zamknięcia/akceptacji ryzyka. */
+  const [noteModal, setNoteModal] = useState<{ kind: 'accept-risk' | 'close'; findingId: string } | null>(null);
 
-  const load = useCallback(() => {
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  /** Dane programu poza rejestrem ustaleń (kryteria/działania/dowody) — niezależne od strony, ładowane tylko przy zmianie programu. */
+  const loadProgramData = useCallback(() => {
     if (!programId) {
-      setItems([]);
       setCriteria([]);
       setActions([]);
       setEvidence([]);
+      return;
+    }
+    Promise.all([listProgramCriteria(programId), listAllActions(programId), listEvidence(programId)])
+      .then(([criteriaResult, actionsResult, evidenceResult]) => {
+        setCriteria(criteriaResult);
+        setActions(actionsResult);
+        setEvidence(evidenceResult);
+      })
+      .catch((e: any) =>
+        setError(permissionAwareMessage(e, isPolish, isPolish ? 'Nie udało się wczytać ustaleń' : 'Failed to load findings'))
+      );
+  }, [programId, isPolish]);
+
+  /** Sama strona rejestru ustaleń — jedyna część zależna od paginatora. */
+  const loadFindings = useCallback(() => {
+    if (!programId) {
+      setItems([]);
+      setTotal(0);
       setLoading(false);
       return;
     }
     setLoading(true);
     setError(null);
-    Promise.all([
-      listFindings({ programId }),
-      listProgramCriteria(programId),
-      listActions(programId),
-      listEvidence(programId),
-    ])
-      .then(([findingsResult, criteriaResult, actionsResult, evidenceResult]) => {
-        setItems(findingsResult.items);
-        setCriteria(criteriaResult);
-        setActions(actionsResult.items);
-        setEvidence(evidenceResult);
+    listFindings({ programId, limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE })
+      .then((result) => {
+        setItems(result.items);
+        setTotal(result.total);
       })
       .catch((e: any) =>
         setError(permissionAwareMessage(e, isPolish, isPolish ? 'Nie udało się wczytać ustaleń' : 'Failed to load findings'))
       )
       .finally(() => setLoading(false));
-  }, [programId, isPolish]);
+  }, [programId, page, isPolish]);
+
+  /** Pełny odśwież (program + strona) — po przejściu stanu, kiedy odpowiedź serwera nie zwróciła zaktualizowanego wiersza. */
+  const load = useCallback(() => {
+    loadProgramData();
+    loadFindings();
+  }, [loadProgramData, loadFindings]);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    loadProgramData();
+  }, [loadProgramData]);
+
+  useEffect(() => {
+    loadFindings();
+  }, [loadFindings]);
+
+  // Program ze strony >1 nie ma tylu ustaleń po przełączeniu (lub po
+  // przejściu stanu, które nie zmieniło liczności) — cofnij na ostatnią
+  // istniejącą stronę zamiast pokazywać pustą tabelę z paginatorem
+  // wskazującym stronę, która już nie istnieje.
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
 
   const criterionTitleById = useMemo(() => {
     const map = new Map<string, string>();
@@ -375,16 +419,7 @@ export const AuditFindingsTab: React.FC<AuditFindingsTabProps> = ({
           id: 'accept-risk',
           label: isPolish ? 'Zaakceptuj ryzyko rezydualne' : 'Accept residual risk',
           icon: ShieldCheck,
-          onClick: canAcceptRisk
-            ? () => {
-                const note = promptForNote(
-                  isPolish
-                    ? 'Notatka uzasadniająca akceptację ryzyka rezydualnego (wymagana):'
-                    : 'Note justifying the residual risk acceptance (required):'
-                );
-                if (note) void runTransition(row.id, () => acceptResidualRisk(row.id, note), `${row.id}:accept-risk`);
-              }
-            : undefined,
+          onClick: canAcceptRisk ? () => setNoteModal({ kind: 'accept-risk', findingId: row.id }) : undefined,
           disabled: !canAcceptRisk || transitioning === `${row.id}:accept-risk`,
           note: canAcceptRisk
             ? undefined
@@ -396,14 +431,7 @@ export const AuditFindingsTab: React.FC<AuditFindingsTabProps> = ({
           id: 'close',
           label: isPolish ? 'Zamknij ustalenie' : 'Close finding',
           icon: Lock,
-          onClick: canClose
-            ? () => {
-                const note = promptForNote(
-                  isPolish ? 'Notatka zamknięcia ustalenia (wymagana):' : 'Finding closure note (required):'
-                );
-                if (note) void runTransition(row.id, () => closeFinding(row.id, note), `${row.id}:close`);
-              }
-            : undefined,
+          onClick: canClose ? () => setNoteModal({ kind: 'close', findingId: row.id }) : undefined,
           disabled: !canClose || transitioning === `${row.id}:close`,
           note: canClose
             ? isPolish
@@ -487,6 +515,22 @@ export const AuditFindingsTab: React.FC<AuditFindingsTabProps> = ({
       ]
     : undefined;
 
+  /** R3(c): submit handler wspólny dla obu przejść wymagających notatki — modal woła to z przyciętą, niepustą treścią. */
+  const handleNoteSubmit = useCallback(
+    (note: string) => {
+      if (!noteModal) return;
+      const { kind, findingId } = noteModal;
+      const key = `${findingId}:${kind}`;
+      setNoteModal(null);
+      void runTransition(
+        findingId,
+        () => (kind === 'accept-risk' ? acceptResidualRisk(findingId, note) : closeFinding(findingId, note)),
+        key
+      );
+    },
+    [noteModal, runTransition]
+  );
+
   const programOptions = programs;
 
   if (!loading && programOptions.length === 0) {
@@ -529,6 +573,7 @@ export const AuditFindingsTab: React.FC<AuditFindingsTabProps> = ({
             onChange={(e) => {
               setProgramId(e.target.value);
               setSelectedId(null);
+              setPage(1);
             }}
             data-testid="audit-findings-program-select"
           >
@@ -539,6 +584,16 @@ export const AuditFindingsTab: React.FC<AuditFindingsTabProps> = ({
             ))}
           </select>
         </label>
+        {/* R2(a): licznik zawsze widoczny — `total` z serwera, nie `items.length` (strona ucina do PAGE_SIZE). */}
+        <span className="text-xs text-c-text-muted" data-testid="audit-findings-total">
+          {total > 0
+            ? isPolish
+              ? `${(page - 1) * PAGE_SIZE + 1}–${Math.min(page * PAGE_SIZE, total)} z ${total} ustaleń`
+              : `${(page - 1) * PAGE_SIZE + 1}–${Math.min(page * PAGE_SIZE, total)} of ${total} findings`
+            : isPolish
+              ? '0 ustaleń'
+              : '0 findings'}
+        </span>
       </div>
       <div className="flex flex-1 min-h-0">
         <div className="flex-1 min-w-0 overflow-auto p-4">
@@ -563,6 +618,33 @@ export const AuditFindingsTab: React.FC<AuditFindingsTabProps> = ({
                 : 'Findings are created in the criterion workspace when an auditor draws a nonconformity conclusion.',
             }}
           />
+          {totalPages > 1 ? (
+            <div className="mt-2 flex items-center justify-between gap-2 border-t border-c-border-subtle pt-2.5">
+              <span className="text-xs text-c-text-muted">
+                {isPolish ? 'Strona' : 'Page'} {page} {isPolish ? 'z' : 'of'} {totalPages}
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  data-testid="audit-findings-prev-page"
+                  className="inline-flex h-8 items-center rounded-full border border-c-border-subtle bg-c-surface px-3 text-xs font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                >
+                  {isPolish ? 'Poprzednia' : 'Previous'}
+                </button>
+                <button
+                  type="button"
+                  disabled={page >= totalPages}
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  data-testid="audit-findings-next-page"
+                  className="inline-flex h-8 items-center rounded-full border border-c-border-subtle bg-c-surface px-3 text-xs font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                >
+                  {isPolish ? 'Następna' : 'Next'}
+                </button>
+              </div>
+            </div>
+          ) : null}
         </div>
         {selected ? (
           <div className="w-[380px] shrink-0 border-l border-c-border-subtle" data-testid="audit-finding-preview">
@@ -593,6 +675,40 @@ export const AuditFindingsTab: React.FC<AuditFindingsTabProps> = ({
           </div>
         ) : null}
       </div>
+      <NoteEntryModal
+        open={noteModal !== null}
+        onClose={() => setNoteModal(null)}
+        isPolish={isPolish}
+        title={
+          noteModal?.kind === 'accept-risk'
+            ? isPolish
+              ? 'Zaakceptuj ryzyko rezydualne'
+              : 'Accept residual risk'
+            : isPolish
+              ? 'Zamknij ustalenie'
+              : 'Close finding'
+        }
+        description={
+          noteModal?.kind === 'accept-risk'
+            ? isPolish
+              ? 'Notatka uzasadniająca akceptację ryzyka rezydualnego jest wymagana i trafia do niezmiennego śladu audytu.'
+              : 'A note justifying the residual risk acceptance is required and is written to the immutable audit trail.'
+            : isPolish
+              ? 'Notatka zamknięcia ustalenia jest wymagana i trafia do niezmiennego śladu audytu.'
+              : 'A finding closure note is required and is written to the immutable audit trail.'
+        }
+        fieldLabel={isPolish ? 'Notatka' : 'Note'}
+        submitLabel={
+          noteModal?.kind === 'accept-risk'
+            ? isPolish
+              ? 'Zaakceptuj ryzyko'
+              : 'Accept risk'
+            : isPolish
+              ? 'Zamknij ustalenie'
+              : 'Close finding'
+        }
+        onSubmit={handleNoteSubmit}
+      />
     </div>
   );
 };

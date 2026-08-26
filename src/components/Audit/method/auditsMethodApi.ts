@@ -340,6 +340,15 @@ export interface AuditReportSummary {
   approvedAt: string | null;
   publishedAt: string | null;
   updatedAt: string;
+  /**
+   * R1 (panel powtórny DEC-117): `GET /audits/reports/:id` (`reportService.mapReportRow`,
+   * `server/src/services/audits/types.ts` `AuditReport.payload`) zawsze zwraca ten wiersz —
+   * to jest DOKŁADNIE `audit_reports.payload`, zaplombowany `content_hash`em raport, który
+   * użytkownik faktycznie zatwierdza (`AuditReportDocument`, kształt z `reportRenderer.ts`).
+   * Opcjonalne w typie WYŁĄCZNIE żeby nie łamać istniejących fixture'ów testowych, które
+   * budują `AuditReportSummary` ręcznie bez tego pola — w realnej odpowiedzi API jest zawsze.
+   */
+  payload?: Record<string, unknown>;
 }
 
 export interface AuditProposalSummary {
@@ -693,37 +702,15 @@ export async function listFindings(params: ListFindingsParams): Promise<ListResu
   return { items, total: toTotal(payload, items.length, 'total') };
 }
 
-export interface AuditFindingStatistics {
-  total: number;
-  byClassification: Record<string, number>;
-  bySeverity: Record<string, number>;
-  byStatus: Record<string, number>;
-}
-
-/** `GET /audits/findings/statistics` — agregaty per program (rejestrowane statycznie przed `/:id`). */
-export async function getFindingStatistics(programId: string): Promise<AuditFindingStatistics> {
-  const qs = buildQuery({ programId });
-  const res = await Api.get(`/audits/findings/statistics${qs}`);
-  const payload = unwrapEnvelope(res) as AuditFindingStatistics | undefined;
-  return (
-    payload ?? { total: 0, byClassification: {}, bySeverity: {}, byStatus: {} }
-  );
-}
-
-export interface AuditSystemicFindingGroup {
-  groupKind: 'root_cause' | 'criterion_area';
-  key: string;
-  label: string;
-  findingIds: string[];
-  count: number;
-}
-
-/** `GET /audits/findings/systemic` — czysta analiza (ustalenia CONFIRMED), nic nie zapisuje. */
-export async function getSystemicFindings(programId: string): Promise<AuditSystemicFindingGroup[]> {
-  const qs = buildQuery({ programId });
-  const res = await Api.get(`/audits/findings/systemic${qs}`);
-  return toArray<AuditSystemicFindingGroup>(unwrapEnvelope(res), 'items');
-}
+/**
+ * R3(a) (panel powtórny DEC-117): `getFindingStatistics`/`getSystemicFindings`
+ * (dawniej tutaj) usunięte — DEC-2026-08-26-114 zdjął pasek statystyk i pigułkę
+ * tematów systemowych z `AuditFindingsTab` na życzenie właściciela (przeniesienie
+ * do zakładki Wyniki NIE wykonane, patrz decyzja), więc od tego momentu żaden
+ * front nie wołał `GET /audits/findings/statistics` ani `GET /audits/findings/systemic`.
+ * Backend (`server/src/routes/audits/findings.routes.ts`, `findingService.ts`)
+ * ZOSTAJE nietknięty — trasy nadal istnieją dla przyszłego konsumenta (Wyniki).
+ */
 
 /** `POST /audits/findings/:id/review` — decision: confirm/send_back/reject (`findingService.reviewFinding`). */
 export async function reviewFinding(
@@ -766,13 +753,43 @@ export interface AuditActionSummary {
   status: AuditActionStatus;
 }
 
-/** `GET /audits/actions` — filtrowane po `programId` (`correctiveActionService.listActions`). */
-export async function listActions(programId: string): Promise<ListResult<AuditActionSummary>> {
-  const qs = buildQuery({ programId });
+/** `GET /audits/actions` — filtrowane po `programId` (`correctiveActionService.listActions`). Jedna strona — backend domyślnie ucina do 50 (`context.ts parsePaging`). */
+export async function listActions(
+  programId: string,
+  paging: { limit?: number; offset?: number } = {}
+): Promise<ListResult<AuditActionSummary>> {
+  const qs = buildQuery({ programId, limit: paging.limit, offset: paging.offset });
   const res = await Api.get(`/audits/actions${qs}`);
   const payload = unwrapEnvelope(res);
   const items = toArray<AuditActionSummary>(payload, 'items');
   return { items, total: toTotal(payload, items.length, 'total') };
+}
+
+/**
+ * R2(a) (panel powtórny DEC-117): `AuditFindingsTab`'s kolumna „Termin" potrzebuje
+ * WSZYSTKICH otwartych działań programu (najbliższy termin per ustalenie) —
+ * `listActions()` sama zwraca tylko jedną stronę (50). Backend nie ma endpointu
+ * „działania dla listy ustaleń" ani filtra `findingId IN (...)`, wyłącznie
+ * pojedynczy `findingId` — więc pobranie działań PER WIDOCZNE ustalenie
+ * oznaczałoby do N zapytań HTTP na stronę ustaleń (N = rozmiar strony rejestru).
+ * Pojedyncza pętla stronicująca po CAŁYM programie (limit=200/żądanie, backend
+ * clamp) jest tańsza przy każdej realistycznej wielkości programu (setki, nie
+ * tysiące działań) — i prostsza: jedno miejsce prawdy zamiast N równoległych
+ * zapytań z osobną obsługą błędu każde. Twardy sufit 20 stron (4000 działań)
+ * na wypadek zepsutego `total`/nieskończonej pętli.
+ */
+export async function listAllActions(programId: string): Promise<AuditActionSummary[]> {
+  const pageSize = 200;
+  const maxPages = 20;
+  const items: AuditActionSummary[] = [];
+  let offset = 0;
+  for (let page = 0; page < maxPages; page += 1) {
+    const result = await listActions(programId, { limit: pageSize, offset });
+    items.push(...result.items);
+    if (result.items.length < pageSize || items.length >= result.total) break;
+    offset += pageSize;
+  }
+  return items;
 }
 
 // ---------------------------------------------------------------------------
