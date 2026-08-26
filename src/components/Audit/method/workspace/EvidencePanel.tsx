@@ -30,6 +30,13 @@ export interface EvidencePanelProps {
   isPolish: boolean;
   /** Wywołane po każdej udanej zmianie (submit/review) — kryterium odświeża liczniki. */
   onEvidenceChanged?: () => void;
+  /**
+   * Gdy podane, tabela pokazuje domyślnie tylko pierwsze `maxRows` wierszy +
+   * link „pokaż wszystkie (N)" pod tabelą (DEC-88, wariant A pyt. 2 — tabela
+   * osadzona w karcie fazy nie rośnie bez ograniczeń). Nieustawione (domyślnie
+   * `undefined`) = bez zmian, cała lista jak dotąd (stary ekran V1).
+   */
+  maxRows?: number;
 }
 
 const EVIDENCE_KIND_OPTIONS: EvidenceKind[] = [
@@ -49,6 +56,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
   capabilities,
   isPolish,
   onEvidenceChanged,
+  maxRows,
 }) => {
   const t = useCallback((pl: string, en: string) => (isPolish ? pl : en), [isPolish]);
 
@@ -57,6 +65,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
+  const [showAll, setShowAll] = useState(false);
 
   const [formOpen, setFormOpen] = useState(false);
   const [formTitle, setFormTitle] = useState('');
@@ -235,21 +244,34 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
       {loading ? (
         <LoadingState template="list" rows={2} />
       ) : (
-        <StandardTable
-          columns={columns}
-          data={items as unknown as TableRow[]}
-          loading={false}
-          selectedRowId={selectedId}
-          onRowClick={(row) => setSelectedId(String(row.id))}
-          persistKey="audits.method.workspace.evidence"
-          empty={{
-            icon: FileText,
-            title: t('Brak dowodów', 'No evidence yet'),
-            description: canSubmit
-              ? t('Dodaj pierwszy dowód dla tego kryterium.', 'Add the first piece of evidence for this criterion.')
-              : t('Audytowany jeszcze nie złożył dowodu.', 'The auditee has not submitted evidence yet.'),
-          }}
-        />
+        <>
+          <StandardTable
+            columns={columns}
+            data={(maxRows && !showAll ? items.slice(0, maxRows) : items) as unknown as TableRow[]}
+            loading={false}
+            selectedRowId={selectedId}
+            onRowClick={(row) => setSelectedId(String(row.id))}
+            persistKey="audits.method.workspace.evidence"
+            empty={{
+              icon: FileText,
+              title: t('Brak dowodów', 'No evidence yet'),
+              description: canSubmit
+                ? t('Dodaj pierwszy dowód dla tego kryterium.', 'Add the first piece of evidence for this criterion.')
+                : t('Audytowany jeszcze nie złożył dowodu.', 'The auditee has not submitted evidence yet.'),
+            }}
+          />
+          {maxRows && items.length > maxRows && (
+            <button
+              type="button"
+              onClick={() => setShowAll((v) => !v)}
+              className="text-xs font-semibold text-c-focus-solid underline underline-offset-2"
+            >
+              {showAll
+                ? t('Pokaż mniej', 'Show fewer')
+                : t(`Pokaż wszystkie (${items.length})`, `Show all (${items.length})`)}
+            </button>
+          )}
+        </>
       )}
 
       {selected && canReview && (

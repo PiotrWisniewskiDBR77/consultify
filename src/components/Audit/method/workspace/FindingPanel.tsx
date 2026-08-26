@@ -44,6 +44,12 @@ export interface FindingPanelProps {
   onFindingDetailChange: (detail: WorkspaceFindingDetail | null) => void;
   /** Wywołane po każdej zmianie listy ustaleń — kryterium odświeża liczniki. */
   onFindingsChanged?: () => void;
+  /**
+   * Gdy podane, tabela pokazuje domyślnie tylko pierwsze `maxRows` wierszy +
+   * link „pokaż wszystkie (N)" pod tabelą (DEC-88, wariant A pyt. 2).
+   * Nieustawione (domyślnie `undefined`) = bez zmian, cała lista jak dotąd.
+   */
+  maxRows?: number;
 }
 
 const SEVERITIES: FindingSeverity[] = ['informational', 'low', 'medium', 'high', 'critical'];
@@ -66,6 +72,7 @@ export const FindingPanel: React.FC<FindingPanelProps> = ({
   onSelectFinding,
   onFindingDetailChange,
   onFindingsChanged,
+  maxRows,
 }) => {
   const t = useCallback((pl: string, en: string) => (isPolish ? pl : en), [isPolish]);
 
@@ -75,6 +82,7 @@ export const FindingPanel: React.FC<FindingPanelProps> = ({
   const [detail, setDetail] = useState<WorkspaceFindingDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
+  const [showAll, setShowAll] = useState(false);
 
   const [formOpen, setFormOpen] = useState(false);
   const [statement, setStatement] = useState('');
@@ -340,21 +348,34 @@ export const FindingPanel: React.FC<FindingPanelProps> = ({
       {loading ? (
         <LoadingState template="list" rows={2} />
       ) : (
-        <StandardTable
-          columns={columns}
-          data={items as unknown as TableRow[]}
-          loading={false}
-          selectedRowId={selectedFindingId}
-          onRowClick={(row) => onSelectFinding(String(row.id))}
-          persistKey="audits.method.workspace.findings"
-          empty={{
-            icon: ClipboardList,
-            title: t('Brak ustaleń', 'No findings yet'),
-            description: canDraft
-              ? t('Utwórz pierwsze ustalenie dla tego kryterium.', 'Create the first finding for this criterion.')
-              : t('Dla tego kryterium nie zarejestrowano jeszcze ustalenia.', 'No finding has been recorded for this criterion yet.'),
-          }}
-        />
+        <>
+          <StandardTable
+            columns={columns}
+            data={(maxRows && !showAll ? items.slice(0, maxRows) : items) as unknown as TableRow[]}
+            loading={false}
+            selectedRowId={selectedFindingId}
+            onRowClick={(row) => onSelectFinding(String(row.id))}
+            persistKey="audits.method.workspace.findings"
+            empty={{
+              icon: ClipboardList,
+              title: t('Brak ustaleń', 'No findings yet'),
+              description: canDraft
+                ? t('Utwórz pierwsze ustalenie dla tego kryterium.', 'Create the first finding for this criterion.')
+                : t('Dla tego kryterium nie zarejestrowano jeszcze ustalenia.', 'No finding has been recorded for this criterion yet.'),
+            }}
+          />
+          {maxRows && items.length > maxRows && (
+            <button
+              type="button"
+              onClick={() => setShowAll((v) => !v)}
+              className="text-xs font-semibold text-c-focus-solid underline underline-offset-2"
+            >
+              {showAll
+                ? t('Pokaż mniej', 'Show fewer')
+                : t(`Pokaż wszystkie (${items.length})`, `Show all (${items.length})`)}
+            </button>
+          )}
+        </>
       )}
 
       {selectedFindingId && detailLoading && <LoadingState template="panel" />}
