@@ -41,7 +41,10 @@ export async function runAuditIndependenceSchedulerTick(): Promise<void> {
     const result = await runTick();
     if (
       result.claimed &&
-      (result.withViolations > 0 || result.errors > 0 || result.cycleWrapped || !result.progressRecorded)
+      (result.withViolations > 0 ||
+        result.errors > 0 ||
+        result.cycleWrapped ||
+        !result.progressRecorded)
     ) {
       logger.warn('[Scheduler] Audit independence scan tick', {
         scanned: result.scanned,
@@ -89,6 +92,19 @@ export function registerInternalBetaBackupJob(
       } catch (err: any) {
         logger.error('[Scheduler] Internal-beta backup tick failed:', err?.message || err);
       }
+    },
+    { timezone: 'UTC' }
+  );
+}
+
+export function registerWorkSignalProducerJob(
+  schedule: typeof cron.schedule = cron.schedule
+): cron.ScheduledTask {
+  return schedule(
+    '*/15 * * * *',
+    async () => {
+      const { runDeterministicTick } = await import('../jobs/workSignalProducerJob.js');
+      await runDeterministicTick();
     },
     { timezone: 'UTC' }
   );
@@ -208,6 +224,7 @@ export const Scheduler = {
       });
     });
     this.jobs.push(job7b);
+    this.jobs.push(registerWorkSignalProducerJob());
 
     // 7c. Initiative Auto-Start by timeline - Run every 5 minutes
     const job7c = cron.schedule('*/5 * * * *', async () => {

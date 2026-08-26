@@ -16,6 +16,8 @@ import logger from '../utils/Logger.js';
 
 const FeatureFlagsSchema = z.object({
   ENABLE_ACTION_EXECUTION: z.boolean().default(false),
+  ENABLE_SIGNAL_PRODUCER: z.boolean().default(false),
+  ENABLE_SIGNAL_INTERPRETER: z.boolean().default(false),
   ENABLE_ACTION_DECISIONS: z.boolean().default(true),
   ENABLE_METRICS_DASHBOARD: z.boolean().default(true),
   ENABLE_AI_COACH: z.boolean().default(true),
@@ -72,6 +74,9 @@ export function loadFeatureFlags(): FeatureFlags {
   const rawFlags = {
     // Enable execution of AI-proposed actions (Dangerous)
     ENABLE_ACTION_EXECUTION: process.env.ENABLE_ACTION_EXECUTION === 'true' || false,
+
+    ENABLE_SIGNAL_PRODUCER: process.env.ENABLE_SIGNAL_PRODUCER === 'true',
+    ENABLE_SIGNAL_INTERPRETER: process.env.ENABLE_SIGNAL_INTERPRETER === 'true',
 
     // Enable human decision recording for AI actions
     ENABLE_ACTION_DECISIONS: process.env.ENABLE_ACTION_DECISIONS !== 'false', // Default true
