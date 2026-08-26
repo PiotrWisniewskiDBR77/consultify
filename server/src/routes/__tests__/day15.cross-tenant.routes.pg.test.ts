@@ -72,7 +72,9 @@ describe.skipIf(!enabled)('Day 15 Q.3 real PostgreSQL cross-tenant effects', () 
     );
     await pool.query(
       `INSERT INTO user_sessions (id,user_id,organization_id)
-       VALUES ('day15-session-b','day15-user-b','day15-org-b') ON CONFLICT (id) DO NOTHING`
+       VALUES ('day15-session-b','day15-user-b','day15-org-b'),
+              ('day15-session-b-2','day15-user-b','day15-org-b')
+       ON CONFLICT (id) DO NOTHING`
     );
     await pool.query(
       `INSERT INTO security_events (id,organization_id,event_type,resolved)
@@ -111,7 +113,9 @@ describe.skipIf(!enabled)('Day 15 Q.3 real PostgreSQL cross-tenant effects', () 
       "DELETE FROM access_requests WHERE id IN ('day15-request-a','day15-request-b')"
     );
     await pool.query("DELETE FROM security_events WHERE id='day15-event-b'");
-    await pool.query("DELETE FROM user_sessions WHERE id='day15-session-b'");
+    await pool.query(
+      "DELETE FROM user_sessions WHERE id IN ('day15-session-b','day15-session-b-2')"
+    );
     await pool.query("DELETE FROM organization_members WHERE id='day15-member-a'");
     await pool.query("DELETE FROM users WHERE id IN ('day15-admin-a','day15-user-b')");
     await pool.query("DELETE FROM organizations WHERE id IN ('day15-org-a','day15-org-b')");
@@ -132,6 +136,18 @@ describe.skipIf(!enabled)('Day 15 Q.3 real PostgreSQL cross-tenant effects', () 
     expect(
       (await pool.query("SELECT id FROM user_sessions WHERE id='day15-session-b'")).rowCount
     ).toBe(1);
+  });
+
+  it('returns 404 for foreign user bulk deletion and SELECT confirms all sessions remain', async () => {
+    const response = await request(securityApp).delete('/api/security/sessions/user/day15-user-b');
+    expect(response.status).toBe(404);
+    expect(
+      (
+        await pool.query(
+          "SELECT id FROM user_sessions WHERE id IN ('day15-session-b','day15-session-b-2') ORDER BY id"
+        )
+      ).rows.map((row) => row.id)
+    ).toEqual(['day15-session-b', 'day15-session-b-2']);
   });
 
   it('returns 404 for a foreign security event and SELECT confirms it is unchanged', async () => {
