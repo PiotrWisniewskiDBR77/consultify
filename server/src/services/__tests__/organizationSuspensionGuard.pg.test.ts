@@ -383,6 +383,56 @@ describe('DEC-91 organization suspension against a real PostgreSQL', () => {
     expect(membership?.user_id).toBe(`user-of-${SUSPENDED_ORG}`);
   });
 
+  // ===========================================================================
+  // DEC-101 — against the real column, which has NO check constraint.
+  // ===========================================================================
+  //
+  // `organizations.status` is a plain `TEXT DEFAULT 'active'`, so the lockdown
+  // route's `UPDATE ... SET status = 'locked'` really does land. That is the
+  // whole reason the status mattered and nothing enforced it: the write always
+  // succeeded, and no read path cared. These cases write the value through the
+  // EXACT statement the route uses and then drive the real middleware.
+  //
+  // The `expired` / `purge_scheduled` cases are the ones worth having: they are
+  // written the same way, land the same way, and must NOT produce a 403.
+  guard('DEC-101: a LOCKED tenant is refused, and its neighbour is not', async () => {
+    await setOrgStatus(SUSPENDED_ORG, 'locked');
+
+    const blocked = await request(SUSPENDED_ORG);
+    expect(blocked.status).toBe(403);
+    expect(blocked.body).toMatchObject({
+      code: 'ORG_LOCKED',
+      messageKey: 'errors.organizationLocked',
+    });
+    expect(blocked.passed).toBe(false);
+
+    const neighbour = await request(ACTIVE_ORG);
+    expect(neighbour.passed).toBe(true);
+  });
+
+  guard(
+    'DEC-101 NEGATIVE CONTROL: purge_scheduled and expired land in the column and still PASS',
+    async () => {
+      for (const status of ['purge_scheduled', 'expired']) {
+        await setOrgStatus(SUSPENDED_ORG, status);
+
+        // The value really is in the shipped column — this is not passing
+        // because the write silently failed.
+        const row = await pgDbGet<{ status: string }>(
+          'SELECT status FROM organizations WHERE id = ?',
+          [SUSPENDED_ORG]
+        );
+        expect(row?.status, status).toBe(status);
+
+        const result = await request(SUSPENDED_ORG);
+        expect(result.status, status).toBeNull();
+        expect(result.passed, status).toBe(true);
+      }
+
+      await setOrgStatus(SUSPENDED_ORG, 'suspended');
+    }
+  );
+
   guard('reactivation restores access once the cache is invalidated', async () => {
     expect((await request(SUSPENDED_ORG)).status).toBe(403);
 
