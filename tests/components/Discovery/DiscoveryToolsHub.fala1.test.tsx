@@ -45,9 +45,10 @@ vi.mock('@/services/api', () => ({
     createToolSession: vi.fn(),
     suggestTools: vi.fn().mockResolvedValue({ suggestions: [] }),
     getInitiativesByStatus: vi.fn().mockResolvedValue([]),
-    // flip po akcepcie właściciela 27.08: ff_toolsInsightsWiring now
-    // defaults ON, so DiscoveryToolsHub's bootstrap calls this
-    // unconditionally — must be mocked or the hub throws (undefined call).
+    // ff_toolsInsightsWiring defaulted ON 27.08 then reverted OFF 28.08
+    // (DEC-158, tool_outputs missing on staging) — the bootstrap call is now
+    // gated behind the flag again, so this mock is defensive only, but kept
+    // mocked in case a test in this file flips the flag on via override.
     listToolOutputs: vi.fn().mockResolvedValue({ outputs: [] }),
   },
 }));

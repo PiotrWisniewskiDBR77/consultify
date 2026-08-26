@@ -15,7 +15,7 @@ function setLocationSearch(search: string) {
   });
 }
 
-describe('Tools Insights Wiring flag (default ON — flip po akcepcie właściciela 27.08)', () => {
+describe('Tools Insights Wiring flag (default OFF again — cofnięte 28.08, DEC-158: tool_outputs nie istnieje na bazie staging)', () => {
   beforeEach(() => {
     window.localStorage.clear();
     setLocationSearch('');
@@ -28,12 +28,15 @@ describe('Tools Insights Wiring flag (default ON — flip po akcepcie właścici
     resetToolsInsightsWiringFlagCache();
   });
 
-  // flip po akcepcie właściciela 27.08: default was OFF, now ON.
-  it('defaults ON with no query, localStorage, or env override', () => {
-    expect(isToolsInsightsWiringEnabled()).toBe(true);
+  // cofnięte 28.08 (DEC-158): default was flipped ON 27.08, then reverted
+  // to OFF the next day when a staging DB check found `tool_outputs`
+  // missing — the unconditional listToolOutputs() call was 500ing the
+  // whole Discovery Tools hub, not just the Insights tab.
+  it('defaults OFF with no query, localStorage, or env override', () => {
+    expect(isToolsInsightsWiringEnabled()).toBe(false);
   });
 
-  it('localStorage "off"/"0"/"false" still disables it despite the ON default', () => {
+  it('localStorage "off"/"0"/"false" still disables it (redundant with default, still honoured)', () => {
     for (const value of ['off', '0', 'false']) {
       window.localStorage.setItem(TOOLS_INSIGHTS_WIRING_FLAG_KEYS.localStorage, value);
       resetToolsInsightsWiringFlagCache();
@@ -41,7 +44,7 @@ describe('Tools Insights Wiring flag (default ON — flip po akcepcie właścici
     }
   });
 
-  it('enables via localStorage "on"/"1"/"true" (redundant with default, still honoured)', () => {
+  it('enables via localStorage "on"/"1"/"true" despite the OFF default', () => {
     for (const value of ['on', '1', 'true']) {
       window.localStorage.setItem(TOOLS_INSIGHTS_WIRING_FLAG_KEYS.localStorage, value);
       resetToolsInsightsWiringFlagCache();
@@ -49,7 +52,7 @@ describe('Tools Insights Wiring flag (default ON — flip po akcepcie właścici
     }
   });
 
-  it('enables via URL query "on"/"1"/"true" (redundant with default, still honoured)', () => {
+  it('enables via URL query "on"/"1"/"true" despite the OFF default', () => {
     for (const value of ['on', '1', 'true']) {
       setLocationSearch(`?${TOOLS_INSIGHTS_WIRING_FLAG_KEYS.query}=${value}`);
       resetToolsInsightsWiringFlagCache();
@@ -71,28 +74,28 @@ describe('Tools Insights Wiring flag (default ON — flip po akcepcie właścici
     expect(isToolsInsightsWiringEnabled()).toBe(true);
   });
 
-  it('invalid localStorage value falls through to the ON default', () => {
+  it('invalid localStorage value falls through to the OFF default', () => {
     window.localStorage.setItem(TOOLS_INSIGHTS_WIRING_FLAG_KEYS.localStorage, 'banana');
     resetToolsInsightsWiringFlagCache();
-    expect(isToolsInsightsWiringEnabled()).toBe(true);
+    expect(isToolsInsightsWiringEnabled()).toBe(false);
   });
 
   it('caches the resolution: a query flip after first read has no effect until reset', () => {
-    expect(isToolsInsightsWiringEnabled()).toBe(true);
-    setLocationSearch(`?${TOOLS_INSIGHTS_WIRING_FLAG_KEYS.query}=0`);
-    // No reset yet — cached value from the first call still wins.
-    expect(isToolsInsightsWiringEnabled()).toBe(true);
-    resetToolsInsightsWiringFlagCache();
     expect(isToolsInsightsWiringEnabled()).toBe(false);
+    setLocationSearch(`?${TOOLS_INSIGHTS_WIRING_FLAG_KEYS.query}=1`);
+    // No reset yet — cached value from the first call still wins.
+    expect(isToolsInsightsWiringEnabled()).toBe(false);
+    resetToolsInsightsWiringFlagCache();
+    expect(isToolsInsightsWiringEnabled()).toBe(true);
   });
 
   it('resetToolsInsightsWiringFlagCache forces a fresh read reflecting new state', () => {
-    window.localStorage.setItem(TOOLS_INSIGHTS_WIRING_FLAG_KEYS.localStorage, 'off');
+    window.localStorage.setItem(TOOLS_INSIGHTS_WIRING_FLAG_KEYS.localStorage, 'on');
     resetToolsInsightsWiringFlagCache();
-    expect(isToolsInsightsWiringEnabled()).toBe(false);
+    expect(isToolsInsightsWiringEnabled()).toBe(true);
 
     window.localStorage.removeItem(TOOLS_INSIGHTS_WIRING_FLAG_KEYS.localStorage);
     resetToolsInsightsWiringFlagCache();
-    expect(isToolsInsightsWiringEnabled()).toBe(true);
+    expect(isToolsInsightsWiringEnabled()).toBe(false);
   });
 });
