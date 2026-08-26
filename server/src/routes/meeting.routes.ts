@@ -26,6 +26,10 @@ import {
 } from '../services/meeting/meetingDay16Service.js';
 import { sendMeetingInvitations } from '../services/meeting/meetingInvitationService.js';
 import {
+  createTaskFromMeetingNoteAction,
+  MeetingNoteTaskFunnelError,
+} from '../services/meeting/meetingNoteTaskFunnelService.js';
+import {
   editMeetingOccurrence,
   type MeetingOccurrenceScope,
 } from '../services/meeting/meetingOccurrenceService.js';
@@ -998,7 +1002,12 @@ router.get(
     const meeting = await getMeeting({ organizationId: orgId, meetingId });
     if (!meeting) return res.status(404).json({ error: 'Meeting not found' });
     if (!canAccessMeeting(req, meeting)) return denyMeetingAccess(res);
-    const notes = await listMeetingNotesForMeeting({ organizationId: orgId, meetingId });
+    const notes = await listMeetingNotesForMeeting({
+      organizationId: orgId,
+      meetingId,
+      userId: req.user?.id,
+      roleKey: getMeetingUserRole(req),
+    });
     return res.json({ notes });
   })
 );
@@ -1047,6 +1056,7 @@ router.post(
         decidedBy: userId,
         action,
         reason: typeof req.body?.reason === 'string' ? req.body.reason : null,
+        roleKey: getMeetingUserRole(req),
       });
       if (!result) return res.status(404).json({ error: 'Meeting note not found' });
       return res.status(200).json({
@@ -1093,6 +1103,50 @@ router.post(
           .json({ error: err.message, code: err.code });
       }
       throw err;
+    }
+  })
+);
+
+router.post(
+  '/:id/notes/:noteId/action-items/:index/task',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    const userId = req.user?.id;
+    if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
+    if (!requireMeetingAdmin(req, res)) return;
+    const meetingId = String(req.params.id);
+    const meeting = await getMeeting({ organizationId: orgId, meetingId });
+    if (!meeting || !canAccessMeeting(req, meeting)) return denyMeetingAccess(res);
+    const actionIndex = Number(req.params.index);
+    if (!Number.isInteger(actionIndex) || actionIndex < 0) {
+      return res.status(404).json({
+        error: 'Meeting note action item not found',
+        code: 'ACTION_ITEM_NOT_FOUND',
+      });
+    }
+    try {
+      const result = await createTaskFromMeetingNoteAction({
+        organizationId: orgId,
+        meetingId,
+        noteId: String(req.params.noteId),
+        actionIndex,
+        actorId: userId,
+        actorRole: getMeetingUserRole(req),
+        projectId: meeting.projectId,
+      });
+      return res.status(200).json({
+        task: { id: result.task.id, title: result.task.title, status: result.task.status },
+        replayed: result.replayed,
+      });
+    } catch (error: unknown) {
+      if (error instanceof MeetingNoteTaskFunnelError) {
+        const status =
+          error.code === 'NOTE_NOT_APPROVED' || error.code === 'TASK_IDEMPOTENCY_COLLISION'
+            ? 409
+            : 404;
+        return res.status(status).json({ error: error.message, code: error.code });
+      }
+      throw error;
     }
   })
 );
@@ -1195,6 +1249,11 @@ async function handleOccurrenceMutation(req: AuthRequest, res: Response, cancel:
   }
   const meeting = await getMeeting({ organizationId: orgId, meetingId });
   if (!meeting || !canAccessMeeting(req, meeting)) return denyMeetingAccess(res);
+  if (cancel) {
+    if (!requireMeetingAdmin(req, res)) return;
+  } else if (!isMeetingAdmin(req) && meeting.createdBy !== userId) {
+    return denyMeetingAccess(res);
+  }
   try {
     const result = await editMeetingOccurrence({
       organizationId: orgId,
