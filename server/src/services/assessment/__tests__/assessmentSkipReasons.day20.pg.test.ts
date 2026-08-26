@@ -170,6 +170,51 @@ describe.skipIf(!REAL_DB)('Assessment day 20 skip reasons — real router and Po
     expect(rows.rows).toEqual([{ question_id: '6A-2' }]);
   });
 
+  it('derives the forward supersession link without updating the physical column', async () => {
+    const first = await post(`chain-first-${suffix}`, {
+      unitId: '7A',
+      questionId: '7A-1',
+      level: 1,
+      skipCode: 'poza_modelem_operacyjnym',
+    });
+    const second = await post(`chain-second-${suffix}`, {
+      unitId: '7A',
+      questionId: '7A-1',
+      level: 2,
+      skipCode: 'odroczone_do_kolejnej_rewizji',
+    });
+    const history = await request(app)
+      .get(`/api/method/sessions/${session}/assessment-skip-reasons?includeSuperseded=true`)
+      .set('Authorization', `Bearer ${token}`);
+    const firstRead = history.body.skipReasons.find(
+      (reason: { id: string }) => reason.id === first.body.skipReason.id
+    );
+    const secondRead = history.body.skipReasons.find(
+      (reason: { id: string }) => reason.id === second.body.skipReason.id
+    );
+    expect(firstRead.supersededBy).toBe(secondRead.id);
+    expect(secondRead.supersededBy).toBeNull();
+    expect(secondRead.supersedesId).toBe(firstRead.id);
+
+    const physical = await pool.query(
+      `SELECT id, supersedes_id, superseded_by FROM assessment_skip_reasons
+       WHERE organization_id=$1 AND id = ANY($2::text[]) ORDER BY recorded_at, id`,
+      [org, [firstRead.id, secondRead.id]]
+    );
+    expect(physical.rows).toEqual([
+      { id: firstRead.id, supersedes_id: null, superseded_by: null },
+      { id: secondRead.id, supersedes_id: firstRead.id, superseded_by: null },
+    ]);
+  });
+
+  it('does not expose another tenant supersession history', async () => {
+    const response = await request(app)
+      .get(`/api/method/sessions/${session}/assessment-skip-reasons?includeSuperseded=true`)
+      .set('Authorization', `Bearer ${otherToken}`);
+    expect(response.status).toBe(404);
+    expect(response.body.code).toBe('SESSION_NOT_FOUND');
+  });
+
   it('does not reveal another tenant session', async () => {
     const response = await request(app)
       .get(`/api/method/sessions/${session}/assessment-skip-reasons`)

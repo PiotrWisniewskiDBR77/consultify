@@ -513,11 +513,14 @@ router.get(
     if (!organizationId) return;
     const unitId = isNonEmptyString(req.query.unitId) ? req.query.unitId : undefined;
     try {
-      const skipReasons = await assessmentSkipReasonService.listActive(
-        organizationId,
-        req.params.sessionId,
-        unitId
-      );
+      const includeSuperseded = req.query.includeSuperseded === 'true';
+      const skipReasons = includeSuperseded
+        ? await assessmentSkipReasonService.listHistory(organizationId, req.params.sessionId)
+        : await assessmentSkipReasonService.listActive(
+            organizationId,
+            req.params.sessionId,
+            unitId
+          );
       res.status(200).json({ skipReasons });
     } catch (error) {
       sendAssessmentSkipReasonError(res, error);
