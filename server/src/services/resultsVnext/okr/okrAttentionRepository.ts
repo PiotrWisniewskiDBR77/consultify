@@ -49,7 +49,11 @@ async function withReadClient<T>(fn: (client: PoolClient) => Promise<T>): Promis
   }
 }
 
-async function queryRows<T extends QueryResultRow>(client: PoolClient, sql: string, values: unknown[]): Promise<T[]> {
+async function queryRows<T extends QueryResultRow>(
+  client: PoolClient,
+  sql: string,
+  values: unknown[]
+): Promise<T[]> {
   const result = await client.query<T>(sql, values);
   return result.rows;
 }
@@ -63,9 +67,18 @@ interface ScopedBase {
  * (organizationId, resourceType, userId=managerId) plus this repeated
  * `managerId` reference for the `chain_members` CTE (mirrors
  * `buildScopedKpisBase`'s own `$4` placeholder exactly). */
-async function buildScopedOkrSetsBase(managerId: string, organizationId: string): Promise<ScopedBase> {
-  const cte = await buildVisibilityScopedCte({ userId: managerId, organizationId, resourceType: OKR_SET_RESOURCE_TYPE });
+async function buildScopedOkrSetsBase(
+  managerId: string,
+  organizationId: string,
+  setId?: string
+): Promise<ScopedBase> {
+  const cte = await buildVisibilityScopedCte({
+    userId: managerId,
+    organizationId,
+    resourceType: OKR_SET_RESOURCE_TYPE,
+  });
   const values: unknown[] = [...cte.values, managerId];
+  if (setId) values.push(setId);
   const sql = `${cte.sql},
 chain_members AS (
   SELECT descendant_user_id AS user_id
@@ -81,6 +94,7 @@ scoped_okr_sets AS (
             ON vr.resource_type = '${OKR_SET_RESOURCE_TYPE}' AND vr.resource_id = s.set_id::text
    WHERE s.organization_id = $1
      AND s.owner_user_id IN (SELECT user_id FROM chain_members)
+     ${setId ? 'AND s.set_id = $5' : ''}
 )`;
   return { sql, values };
 }
@@ -138,16 +152,28 @@ export interface OrganizationOkrAttention {
 // Sub-queries
 // ==========================================
 
-async function listStaleCheckinSets(managerId: string, organizationId: string): Promise<OkrAttentionStaleCheckinSet[]> {
-  const base = await buildScopedOkrSetsBase(managerId, organizationId);
+async function listStaleCheckinSets(
+  managerId: string,
+  organizationId: string,
+  setId?: string
+): Promise<OkrAttentionStaleCheckinSet[]> {
+  const base = await buildScopedOkrSetsBase(managerId, organizationId, setId);
   const sql = `${base.sql}
 SELECT set_id, title, next_checkin_due_at
   FROM scoped_okr_sets
  WHERE next_checkin_due_at IS NOT NULL AND next_checkin_due_at < now()`;
   const rows = await withReadClient((client) =>
-    queryRows<{ set_id: string; title: string; next_checkin_due_at: string }>(client, sql, base.values)
+    queryRows<{ set_id: string; title: string; next_checkin_due_at: string }>(
+      client,
+      sql,
+      base.values
+    )
   );
-  return rows.map((r) => ({ setId: r.set_id, title: r.title, nextCheckinDueAt: r.next_checkin_due_at }));
+  return rows.map((r) => ({
+    setId: r.set_id,
+    title: r.title,
+    nextCheckinDueAt: r.next_checkin_due_at,
+  }));
 }
 
 /** Plan §5.4's own worked example, verbatim: "progress 45% / expected 40% /
@@ -156,20 +182,23 @@ SELECT set_id, title, next_checkin_due_at
  * filter on progress/status at all. */
 async function listLowConfidenceObjectives(
   managerId: string,
-  organizationId: string
+  organizationId: string,
+  setId?: string
 ): Promise<OkrAttentionLowConfidenceObjective[]> {
-  const base = await buildScopedOkrSetsBase(managerId, organizationId);
+  const base = await buildScopedOkrSetsBase(managerId, organizationId, setId);
   const sql = `${base.sql}
 SELECT kr.key_result_id, kr.objective_id, kr.set_id, kr.title, kr.confidence
   FROM okr_vnext_key_results kr
   INNER JOIN scoped_okr_sets s ON s.set_id = kr.set_id
  WHERE kr.confidence = 'low' AND kr.status <> 'cancelled'`;
   const rows = await withReadClient((client) =>
-    queryRows<{ key_result_id: string; objective_id: string; set_id: string; title: string; confidence: string }>(
-      client,
-      sql,
-      base.values
-    )
+    queryRows<{
+      key_result_id: string;
+      objective_id: string;
+      set_id: string;
+      title: string;
+      confidence: string;
+    }>(client, sql, base.values)
   );
   return rows.map((r) => ({
     keyResultId: r.key_result_id,
@@ -180,8 +209,12 @@ SELECT kr.key_result_id, kr.objective_id, kr.set_id, kr.title, kr.confidence
   }));
 }
 
-async function listOpenSupportRequests(managerId: string, organizationId: string): Promise<OkrAttentionOpenSupportRequest[]> {
-  const base = await buildScopedOkrSetsBase(managerId, organizationId);
+async function listOpenSupportRequests(
+  managerId: string,
+  organizationId: string,
+  setId?: string
+): Promise<OkrAttentionOpenSupportRequest[]> {
+  const base = await buildScopedOkrSetsBase(managerId, organizationId, setId);
   const sql = `${base.sql}
 SELECT sr.request_id, sr.set_id, sr.objective_id, sr.key_result_id, sr.assigned_to_user_id, sr.status
   FROM okr_vnext_support_requests sr
@@ -213,8 +246,12 @@ SELECT sr.request_id, sr.set_id, sr.objective_id, sr.key_result_id, sr.assigned_
  * EXISTS a later correction), "no linked support_request yet" resolved via
  * NOT EXISTS an `okr_vnext_support_requests` row whose `origin_checkin_id`
  * points at this check-in. */
-async function listOpenBlockers(managerId: string, organizationId: string): Promise<OkrAttentionOpenBlocker[]> {
-  const base = await buildScopedOkrSetsBase(managerId, organizationId);
+async function listOpenBlockers(
+  managerId: string,
+  organizationId: string,
+  setId?: string
+): Promise<OkrAttentionOpenBlocker[]> {
+  const base = await buildScopedOkrSetsBase(managerId, organizationId, setId);
   const sql = `${base.sql}
 SELECT c.checkin_id, c.key_result_id, c.objective_id, c.set_id, c.blocker
   FROM okr_vnext_checkins c
@@ -223,11 +260,13 @@ SELECT c.checkin_id, c.key_result_id, c.objective_id, c.set_id, c.blocker
    AND NOT EXISTS (SELECT 1 FROM okr_vnext_checkins newer WHERE newer.correction_of_checkin_id = c.checkin_id)
    AND NOT EXISTS (SELECT 1 FROM okr_vnext_support_requests sr WHERE sr.origin_checkin_id = c.checkin_id)`;
   const rows = await withReadClient((client) =>
-    queryRows<{ checkin_id: string; key_result_id: string; objective_id: string; set_id: string; blocker: string }>(
-      client,
-      sql,
-      base.values
-    )
+    queryRows<{
+      checkin_id: string;
+      key_result_id: string;
+      objective_id: string;
+      set_id: string;
+      blocker: string;
+    }>(client, sql, base.values)
   );
   return rows.map((r) => ({
     checkInId: r.checkin_id,
@@ -238,8 +277,12 @@ SELECT c.checkin_id, c.key_result_id, c.objective_id, c.set_id, c.blocker
   }));
 }
 
-async function listEscalatedSets(managerId: string, organizationId: string): Promise<OkrAttentionEscalatedSet[]> {
-  const base = await buildScopedOkrSetsBase(managerId, organizationId);
+async function listEscalatedSets(
+  managerId: string,
+  organizationId: string,
+  setId?: string
+): Promise<OkrAttentionEscalatedSet[]> {
+  const base = await buildScopedOkrSetsBase(managerId, organizationId, setId);
   const sql = `${base.sql}
 SELECT set_id, title, attention_state
   FROM scoped_okr_sets
@@ -257,18 +300,26 @@ SELECT set_id, title, attention_state
 export interface ListOrganizationOkrAttentionParams {
   managerId: string;
   organizationId: string;
+  setId?: string;
 }
 
 export async function listOrganizationOkrAttention(
   params: ListOrganizationOkrAttentionParams
 ): Promise<OrganizationOkrAttention> {
-  const { managerId, organizationId } = params;
-  const [staleCheckins, lowConfidenceObjectives, openSupportRequests, openBlockers, escalatedSets] = await Promise.all([
-    listStaleCheckinSets(managerId, organizationId),
-    listLowConfidenceObjectives(managerId, organizationId),
-    listOpenSupportRequests(managerId, organizationId),
-    listOpenBlockers(managerId, organizationId),
-    listEscalatedSets(managerId, organizationId),
-  ]);
-  return { staleCheckins, lowConfidenceObjectives, openSupportRequests, openBlockers, escalatedSets };
+  const { managerId, organizationId, setId } = params;
+  const [staleCheckins, lowConfidenceObjectives, openSupportRequests, openBlockers, escalatedSets] =
+    await Promise.all([
+      listStaleCheckinSets(managerId, organizationId, setId),
+      listLowConfidenceObjectives(managerId, organizationId, setId),
+      listOpenSupportRequests(managerId, organizationId, setId),
+      listOpenBlockers(managerId, organizationId, setId),
+      listEscalatedSets(managerId, organizationId, setId),
+    ]);
+  return {
+    staleCheckins,
+    lowConfidenceObjectives,
+    openSupportRequests,
+    openBlockers,
+    escalatedSets,
+  };
 }

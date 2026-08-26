@@ -79,6 +79,11 @@ export const KpiTrendQuerySchema = z
     message: 'window cannot be combined with periodStart or periodEnd',
   });
 
+export const KpiHistoryQuerySchema = z.object({
+  cursor: z.string().regex(/^\d+$/).optional(),
+  limit: z.coerce.number().int().positive().max(500).optional(),
+});
+
 // ==========================================
 // POST /api/vnext/results/kpi — createKpiDraft
 // ==========================================

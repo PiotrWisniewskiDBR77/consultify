@@ -58,6 +58,23 @@ class ManagementReportRepository {
     });
   }
 
+  async getReportByIdForOrganization(reportId, organizationId) {
+    return new Promise((resolve, reject) => {
+      this.db.get(
+        `SELECT * FROM management_reports WHERE id = ? AND organization_id = ?`,
+        [reportId, organizationId],
+        (err, row) => {
+          if (err) reject(err);
+          else if (row) {
+            row.content = row.content ? JSON.parse(row.content) : null;
+            row.aiWarnings = row.ai_warnings ? JSON.parse(row.ai_warnings) : [];
+            resolve(row);
+          } else resolve(null);
+        }
+      );
+    });
+  }
+
   async updateStatus(reportId, status) {
     return new Promise((resolve, reject) => {
       this.db.run(

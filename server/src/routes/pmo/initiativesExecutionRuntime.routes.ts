@@ -119,6 +119,7 @@ import {
   createReportRun,
   transitionReportRun,
 } from '../../domain/initiatives-execution/reportRun.js';
+import { reconstructReportRun } from '../../domain/initiatives-execution/reportReconstruction.js';
 import { resolveDefinitionRemediationWork } from '../../domain/initiatives-execution/resolveDefinitionRemediationWork.js';
 import {
   acceptResourceCommitment,
@@ -140,6 +141,7 @@ import {
   hasEffectiveCapability,
   resolveEffectiveAccess,
 } from '../../services/effectiveAccessService.js';
+import { ControlKpiReadModel } from '../../services/executionControl/controlKpiReadModel.js';
 
 const RegisterSchema = z.object({
   initiativeId: z.string().min(1).max(255),
@@ -1012,6 +1014,7 @@ const ReportTransitionSchema = z.discriminatedUnion('action', [
     taskVersion: z.number().int().min(1),
   }),
 ]);
+const ReportReconstructionSchema = z.object({ asOf: z.string().datetime() });
 const AcceptanceCommandSchema = z
   .object({ expectedVersion: z.number().int().min(0), clientRequestId: z.string().min(1) })
   .passthrough();
@@ -1115,6 +1118,7 @@ export interface InitiativesExecutionRuntimeDependencies {
     projectId: string,
     initiativeId?: string | null
   ) => Promise<EffectiveGovernancePolicy>;
+  controlKpis?: ControlKpiReadModel;
 }
 
 function actorFromRequest(req: Request): RuntimeActor | null {
@@ -1313,7 +1317,7 @@ export function createInitiativesExecutionRuntimeRouter(
             ];
       } else if (path.startsWith('/report-runs/')) {
         const id = idAfter('/report-runs/');
-        existing = path.includes('/transitions');
+        existing = path.includes('/transitions') || path.includes('/reconstruct');
         projectIds = existing
           ? await deps.reader.resolveProjectIdsForAggregate(actor.organizationId, 'report_run', id)
           : await deps.reader.resolveProjectIdsForAggregate(
@@ -4785,6 +4789,30 @@ export function createInitiativesExecutionRuntimeRouter(
       );
     })
   );
+  router.post(
+    '/report-runs/:reportRunId/reconstruct',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      const parsed = ReportReconstructionSchema.safeParse(req.body);
+      if (!actor) {
+        res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+        return;
+      }
+      if (!parsed.success || new Date(parsed.data.asOf).getTime() > Date.now()) {
+        res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
+        return;
+      }
+      const reportRunId = firstParam(req.params.reportRunId);
+      const run = (await deps.reader.listReportRuns(actor.organizationId)).find(
+        (item: any) => item.reportRunId === reportRunId
+      );
+      if (!run || !(await canViewAggregate(actor, 'report_run', reportRunId))) {
+        res.status(404).json({ error: { code: 'NOT_FOUND' } });
+        return;
+      }
+      res.json(reconstructReportRun(run as any, parsed.data.asOf));
+    })
+  );
   router.get(
     '/report-definitions/:definitionId',
     asyncHandler(async (req, res) => {
@@ -4825,6 +4853,27 @@ export function createInitiativesExecutionRuntimeRouter(
           (item: any) => item.reportRunId
         ),
       });
+    })
+  );
+  router.get(
+    '/control-kpis',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      const weekStart = String(req.query.weekStart || '').trim();
+      const policyId = String(req.query.policyId || '').trim() || null;
+      if (!actor) {
+        res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+        return;
+      }
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(weekStart)) {
+        res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
+        return;
+      }
+      if (!deps.controlKpis) {
+        res.status(503).json({ error: { code: 'CONTROL_KPI_READ_MODEL_UNAVAILABLE' } });
+        return;
+      }
+      res.json(await deps.controlKpis.read(actor.organizationId, weekStart, policyId));
     })
   );
   router.post(
@@ -5885,6 +5934,7 @@ const runtimePool = new Pool(databaseConfig.postgres as PoolConfig | undefined);
 const runtimeDependencies: InitiativesExecutionRuntimeDependencies = {
   unitOfWork: new PostgresMaterialCommandUnitOfWork(runtimePool),
   reader: new PostgresInitiativeReader(runtimePool),
+  controlKpis: new ControlKpiReadModel(runtimePool),
   resolvePolicy: (organizationId, projectId, initiativeId) =>
     new PostgresGovernancePolicyResolver(runtimePool).resolve(
       organizationId,
