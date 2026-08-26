@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { SIGNAL_SEVERITY_RANK, type SignalSeverity } from '../../types/executionVisibility.js';
 import type { RuleHit, SignalQuery, SignalRule, WorkSignalRow } from '../../types/workSignals.js';
 import { sendSystemAlert } from '../systemAlertNotifier.js';
+import { adaptNewExecutionSignal } from './executionSignalAdapter.js';
 import { validateRuleRegistry } from './ruleRegistry.js';
 
 export interface SignalRunError {
@@ -30,6 +31,7 @@ export async function evaluateSignalRules(params: {
   rules: readonly SignalRule[];
   trigger?: 'CRON' | 'ON_DEMAND' | 'BACKFILL';
   now?: Date;
+  executionAdapter?: typeof adaptNewExecutionSignal;
 }): Promise<SignalRunResult> {
   const { db, organizationId } = params;
   const rules = validateRuleRegistry(params.rules);
@@ -134,6 +136,7 @@ export async function evaluateSignalRules(params: {
 
       for (const [dedupeKey, hit] of hitByKey) {
         const audience = rule.audience(hit);
+        const signalId = randomUUID();
         await db.query(
           `INSERT INTO work_signals
              (signal_id, organization_id, dedupe_key, domain, signal_type, origin,
@@ -144,7 +147,7 @@ export async function evaluateSignalRules(params: {
            VALUES (?, ?, ?, ?, ?, 'DETERMINISTIC', ?, ?, ?, ?, ?, ?, ?, ?::jsonb,
                    ?, ?::jsonb, ?::jsonb, ?::jsonb, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
-            randomUUID(),
+            signalId,
             organizationId,
             dedupeKey,
             rule.domain,
@@ -174,6 +177,22 @@ export async function evaluateSignalRules(params: {
           ]
         );
         signalsOpened += 1;
+        try {
+          await (params.executionAdapter ?? adaptNewExecutionSignal)({
+            organizationId,
+            canonicalSignalId: signalId,
+            rule,
+            hit,
+          });
+        } catch (error) {
+          errors.push({
+            ruleId: rule.ruleId,
+            message: `Legacy execution signal adapter failed: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+            at: new Date().toISOString(),
+          });
+        }
       }
     }
 

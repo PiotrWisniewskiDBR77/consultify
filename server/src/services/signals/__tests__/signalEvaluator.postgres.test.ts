@@ -4,6 +4,7 @@ import { Pool } from 'pg';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import type { RuleHit, SignalQuery, SignalRule } from '../../../types/workSignals.js';
+import { rollupSignals } from '../../v8/executionVisibilityService.js';
 import { evaluateSignalRules } from '../signalEvaluator.js';
 
 const connectionString = process.env.DATABASE_URL;
@@ -67,8 +68,8 @@ const rule = (params: {
 });
 
 describePg('signal evaluator on Postgres', () => {
-  const orgA = `org-eval-a-${randomUUID()}`;
-  const orgB = `org-eval-b-${randomUUID()}`;
+  const orgA = randomUUID();
+  const orgB = randomUUID();
 
   beforeAll(async () => {
     await pool!.query('SELECT 1');
@@ -77,6 +78,9 @@ describePg('signal evaluator on Postgres', () => {
   beforeEach(async () => {
     await pool!.query('DELETE FROM work_signals WHERE organization_id = ANY($1)', [[orgA, orgB]]);
     await pool!.query('DELETE FROM work_signal_runs WHERE organization_id = ANY($1)', [
+      [orgA, orgB],
+    ]);
+    await pool!.query('DELETE FROM v8_execution_signals WHERE organization_id = ANY($1)', [
       [orgA, orgB],
     ]);
   });
@@ -179,5 +183,47 @@ describePg('signal evaluator on Postgres', () => {
       [orgB]
     );
     expect(after.rows).toEqual(before.rows);
+  });
+
+  it('keeps the canonical signal and marks the run PARTIAL when the legacy adapter fails', async () => {
+    const result = await evaluateSignalRules({
+      db,
+      organizationId: orgA,
+      rules: [rule({ hits: () => [hit('adapter-failure-task')] })],
+      executionAdapter: async () => {
+        throw new Error('legacy unavailable');
+      },
+    });
+
+    expect(result.status).toBe('PARTIAL');
+    expect(result.errors[0]).toMatchObject({
+      ruleId: 'exec.task.overdue',
+      message: expect.stringContaining('legacy unavailable'),
+    });
+    const canonical = await pool!.query(
+      'SELECT status FROM work_signals WHERE organization_id=$1 AND subject_id=$2',
+      [orgA, 'adapter-failure-task']
+    );
+    expect(canonical.rows).toEqual([{ status: 'OPEN' }]);
+  });
+
+  it('persists one legacy row for two runs, rolls it up, and isolates the other tenant', async () => {
+    const subjectId = randomUUID();
+    const fixture = rule({ hits: () => [hit(subjectId)] });
+    const first = await evaluateSignalRules({ db, organizationId: orgA, rules: [fixture] });
+    const second = await evaluateSignalRules({ db, organizationId: orgA, rules: [fixture] });
+
+    expect(first.status).toBe('OK');
+    expect(second.status).toBe('OK');
+    const persisted = await pool!.query(
+      'SELECT signal_type FROM v8_execution_signals WHERE organization_id=$1',
+      [orgA]
+    );
+    expect(persisted.rows).toEqual([{ signal_type: 'overdue_tasks_count' }]);
+
+    const from = new Date(Date.now() - 60_000).toISOString();
+    const to = new Date(Date.now() + 60_000).toISOString();
+    await expect(rollupSignals(orgA, from, to)).resolves.toMatchObject({ total: 1 });
+    await expect(rollupSignals(orgB, from, to)).resolves.toMatchObject({ total: 0 });
   });
 });
