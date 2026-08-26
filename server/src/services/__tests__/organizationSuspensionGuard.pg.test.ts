@@ -345,6 +345,44 @@ describe('DEC-91 organization suspension against a real PostgreSQL', () => {
     }
   });
 
+  /**
+   * The socket middleware itself is driven end-to-end in
+   * `socketAuth OrgSuspension` — it imports `dbGet` directly, so there is no
+   * seam to point it at this scratch database. What CANNOT be proved there,
+   * and is proved here, is that the two SQL statements DEC-91 added for the
+   * realtime path are real: they name columns that exist in the shipped schema
+   * and return the shape the code destructures. A mock would have accepted any
+   * spelling.
+   */
+  guard('the realtime org-resolution SQL is real against the shipped schema', async () => {
+    invalidateOrganizationSuspensionCache();
+
+    // 1. `resolveSocketOrganizationId` fallback — used when the token carries
+    //    no org claim, which is exactly when the gate must not be bypassable.
+    const userRow = await pgDbGet<{ organization_id?: string }>(
+      'SELECT organization_id FROM users WHERE id = ? LIMIT 1',
+      [`user-of-${SUSPENDED_ORG}`]
+    );
+    expect(userRow?.organization_id).toBe(SUSPENDED_ORG);
+
+    // Feeding the server-derived org back into the guard refuses it.
+    await expect(
+      isOrganizationSuspended(userRow?.organization_id, pgDbGet as never)
+    ).resolves.toBe(true);
+
+    // 2. `validateJoinOrg` membership probe — the row must actually be there,
+    //    so that the suspension refusal preempts a join that would OTHERWISE
+    //    have succeeded. A refusal that only beats an already-failing join
+    //    would prove nothing.
+    const membership = await pgDbGet<{ user_id?: string }>(
+      `SELECT user_id FROM organization_members
+        WHERE organization_id = ? AND user_id = ?
+        LIMIT 1`,
+      [SUSPENDED_ORG, `user-of-${SUSPENDED_ORG}`]
+    );
+    expect(membership?.user_id).toBe(`user-of-${SUSPENDED_ORG}`);
+  });
+
   guard('reactivation restores access once the cache is invalidated', async () => {
     expect((await request(SUSPENDED_ORG)).status).toBe(403);
 
