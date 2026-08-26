@@ -250,6 +250,58 @@ describe('Chat signals feed behavior', () => {
     expect(legacyCalls).toHaveLength(0);
   });
 
+  // FIX-1 (odbiór P0.1, korekta 27.08) — StandardPreview's OWN header
+  // (StandardPreview.test.tsx) is suppressed by `embedded`, so the real,
+  // ON-SCREEN Open control for this feed comes from ChatSignalsFeed's
+  // `renderPreviewActions` wiring into TableWithPreviewLayout's own header.
+  // These tests exercise THAT integration, not just the StandardPreview prop.
+  describe('FIX-1 — visible Open pill in the real embedded preview', () => {
+    it('ROUTE (KPI, allowed=null): renders an enabled Open control that navigates', () => {
+      mount({
+        initialResponse: { signals: [signal], nextCursor: null, producerEnabled: true },
+        api: { get: vi.fn(), post: vi.fn() },
+        initialSelectedId: signal.key,
+      });
+      const open = screen.getByText(/(?:Otwórz|chatSignals\.action\.open)/).closest('button');
+      expect(open).not.toBeNull();
+      expect(open).not.toBeDisabled();
+    });
+
+    it('NO_ROUTE (task type): renders a DISABLED Open control with the no-route reason', () => {
+      const noRoute: SignalDTO = { ...signal, key: 'signal-no-route', type: 'task_overdue' };
+      mount({
+        initialResponse: { signals: [noRoute], nextCursor: null, producerEnabled: true },
+        api: { get: vi.fn(), post: vi.fn() },
+        initialSelectedId: noRoute.key,
+      });
+      const open = screen.getByText(/(?:Otwórz|chatSignals\.action\.open)/).closest('button');
+      expect(open).toBeDisabled();
+      expect(open).toHaveAttribute(
+        'title',
+        expect.stringMatching(/(?:Brak trasy do tego obiektu|chatSignals\.destination\.unavailable)/)
+      );
+    });
+
+    it('FORBIDDEN (allowed=false): renders a DISABLED Open control with the forbidden reason', () => {
+      const forbidden: SignalDTO = {
+        ...signal,
+        key: 'signal-forbidden',
+        destination: { ...signal.destination, allowed: false },
+      };
+      mount({
+        initialResponse: { signals: [forbidden], nextCursor: null, producerEnabled: true },
+        api: { get: vi.fn(), post: vi.fn() },
+        initialSelectedId: forbidden.key,
+      });
+      const open = screen.getByText(/(?:Otwórz|chatSignals\.action\.open)/).closest('button');
+      expect(open).toBeDisabled();
+      expect(open).toHaveAttribute(
+        'title',
+        expect.stringMatching(/(?:Brak uprawnień do obiektu|chatSignals\.destination\.forbidden)/)
+      );
+    });
+  });
+
   // FIX-4 (odbiór P0.4) — A.3 minima: chip serwerowy strzela ?domain=, chip
   // kliencki nie strzela (test istnieje wyżej), nextCursor dokleja stronę,
   // brak nextCursor chowa przycisk.

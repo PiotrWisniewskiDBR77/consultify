@@ -55,6 +55,14 @@ export const ChatSignalsFeedPreview: React.FC<{
       embedded
       title={view.title}
       onClose={onClose}
+      // NOTE (FIX-1, korekta 27.08): `embedded` (required — the parent
+      // `TableWithPreviewLayout` in ChatSignalsFeed.tsx owns header/footer
+      // chrome, per StandardPreview's own JSDoc) means StandardPreview's OWN
+      // header — and therefore these three props — never actually renders on
+      // screen here. Kept for correctness/consistency and for any future
+      // non-embedded reuse of this component; the REAL, visible „Otwórz"
+      // control for this surface is wired in ChatSignalsFeed.tsx via
+      // `TableWithPreviewLayout`'s `renderPreviewActions` extension point.
       onOpenFull={destination.kind === 'ROUTE' ? () => navigate(destination.href) : undefined}
       openLabel={destination.kind === 'ROUTE' ? t('chatSignals.action.open') : undefined}
       openDisabledReason={destination.kind !== 'ROUTE' ? t(destination.reason) : undefined}

@@ -1,6 +1,7 @@
-import { RefreshCw } from 'lucide-react';
+import { ExternalLink, RefreshCw } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import { StandardModuleBar } from '@/components/standard/StandardModuleBar';
 import {
@@ -11,6 +12,7 @@ import {
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 
 import { ChatSignalsFeedPreview } from './ChatSignalsFeedPreview';
+import { resolveDestination } from './signalDestination';
 import { localizedSignal, severityRank } from './signalPresentation';
 import type { SignalDTO, SignalsFeedResponse } from './signalTypes';
 import { type SignalsApi, useSignalsFeed } from './useSignalsFeed';
@@ -24,6 +26,7 @@ export const ChatSignalsFeed: React.FC<{
   initialSelectedId?: string | null;
 }> = ({ projectId, initialResponse, api, initialSelectedId = null }) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [chip, setChip] = useState('all');
   const domain = ['EXECUTION', 'DECISION', 'RESULTS', 'FINANCE'].includes(chip) ? chip : undefined;
   const severityMin = chip === 'warning' || chip === 'critical' ? chip : undefined;
@@ -317,6 +320,44 @@ export const ChatSignalsFeed: React.FC<{
           onSelect={setSelectedId}
           itemIds={rows.map((row) => row.id)}
           getItemById={(id) => rows.find((row) => row.id === id) ?? null}
+          // FIX-1 (odbiór P0.1, korekta 27.08) — `ChatSignalsFeedPreview` musi
+          // renderować w trybie `embedded` (powłoka nagłówka/stopki należy do
+          // `TableWithPreviewLayout`, nie do `StandardPreview` — patrz jego
+          // JSDoc "Parent layout owns header/footer chrome"), więc
+          // `StandardPreview`'s WŁASNY nagłówek — łącznie z przyciskiem
+          // „Otwórz"/`openDisabledReason` z FIX-1 — jest tam wyciszony i nigdy
+          // nie trafia na ekran. Realna, WIDOCZNA kontrolka „Otwórz" dla tej
+          // powierzchni żyje więc TUTAJ, przez istniejący punkt rozszerzenia
+          // `renderPreviewActions` (już używany przez layout do Pin/Open) —
+          // zero zmian w `TableWithPreviewLayout.tsx` samym.
+          renderPreviewActions={(row) => {
+            const destination = resolveDestination(row.dto);
+            if (destination.kind === 'ROUTE') {
+              return (
+                <button
+                  type="button"
+                  onClick={() => navigate(destination.href)}
+                  title={t('chatSignals.action.open')}
+                  className="inline-flex items-center gap-2 h-8 px-3 rounded-full border border-c-border bg-c-surface text-c-text-secondary hover:bg-c-surface-raised transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
+                >
+                  <ExternalLink size={13} />
+                  {t('chatSignals.action.open')}
+                </button>
+              );
+            }
+            return (
+              <button
+                type="button"
+                disabled
+                aria-disabled="true"
+                title={t(destination.reason)}
+                className="inline-flex items-center gap-2 h-8 px-3 rounded-full border border-c-border bg-c-surface text-c-text-muted opacity-60 cursor-not-allowed"
+              >
+                <ExternalLink size={13} />
+                {t('chatSignals.action.open')}
+              </button>
+            );
+          }}
           renderPreview={(row) => (
             <ChatSignalsFeedPreview
               signal={row.dto}
