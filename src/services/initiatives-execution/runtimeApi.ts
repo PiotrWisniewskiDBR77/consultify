@@ -1016,16 +1016,84 @@ export async function cancelRegisteredInitiative(
   };
 }
 
-export async function listRegisteredInitiatives(signal?: AbortSignal): Promise<{
+// Server-side keyset pagination (day 21) caps a single page at `limit`
+// (default 50) and returns `nextCursor` when more rows remain. Authorization
+// is applied AFTER pagination server-side, so a page can legitimately come
+// back with zero visible rows while `nextCursor` is still non-null — the
+// loop below must keep following `nextCursor` and only stop once it is
+// null/absent, never because a page happened to be empty.
+const LIST_REGISTERED_INITIATIVES_MAX_PAGES = 20; // safety cap: 20 * 200 = 4000 rows
+
+export interface ListRegisteredInitiativesOptions {
+  signal?: AbortSignal;
+  /** Explicit page size forwarded to the server (server default/limit rules apply). */
+  limit?: number;
+  /** Opaque cursor (as returned by the server) to resume a specific page from. */
+  cursor?: string;
+  /**
+   * When true, fetch exactly one page (honoring `cursor`/`limit`) instead of
+   * following `nextCursor` to assemble the complete list. Callers that want
+   * to build their own pagination UI can opt into this; the default keeps
+   * existing callers (e.g. InitiativesHub) working against a complete list.
+   */
+  singlePage?: boolean;
+}
+
+export async function listRegisteredInitiatives(
+  signalOrOptions?: AbortSignal | ListRegisteredInitiativesOptions
+): Promise<{
   initiatives: RegisteredInitiativeReadModel[];
+  nextCursor?: string | null;
 }> {
-  const response = await fetch('/api/initiatives/runtime-v1/initiatives', {
-    credentials: 'include',
-    signal,
-  });
-  const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
-  return body as { initiatives: RegisteredInitiativeReadModel[] };
+  const options: ListRegisteredInitiativesOptions =
+    signalOrOptions instanceof AbortSignal ? { signal: signalOrOptions } : (signalOrOptions ?? {});
+  const { signal, limit, singlePage } = options;
+
+  const fetchPage = async (
+    cursor: string | undefined
+  ): Promise<{ initiatives: RegisteredInitiativeReadModel[]; nextCursor: string | null }> => {
+    const params = new URLSearchParams();
+    if (limit !== undefined) params.set('limit', String(limit));
+    if (cursor) params.set('cursor', cursor);
+    const query = params.toString();
+    const response = await fetch(
+      `/api/initiatives/runtime-v1/initiatives${query ? `?${query}` : ''}`,
+      { credentials: 'include', signal }
+    );
+    const body = await readJson(response);
+    if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+    return body as { initiatives: RegisteredInitiativeReadModel[]; nextCursor: string | null };
+  };
+
+  if (singlePage) {
+    return fetchPage(options.cursor);
+  }
+
+  const initiatives: RegisteredInitiativeReadModel[] = [];
+  let cursor: string | undefined = options.cursor;
+  let pageCount = 0;
+
+  for (;;) {
+    const page = await fetchPage(cursor);
+    initiatives.push(...page.initiatives);
+    pageCount += 1;
+
+    if (!page.nextCursor) {
+      return { initiatives, nextCursor: null };
+    }
+
+    if (pageCount >= LIST_REGISTERED_INITIATIVES_MAX_PAGES) {
+      console.warn(
+        `[listRegisteredInitiatives] safety limit reached: stopped after ${pageCount} pages ` +
+          `(${initiatives.length} initiatives). More rows remain (nextCursor still present). ` +
+          'Raise LIST_REGISTERED_INITIATIVES_MAX_PAGES or add explicit pagination if this org ' +
+          'legitimately has more initiatives than the cap.'
+      );
+      return { initiatives, nextCursor: page.nextCursor };
+    }
+
+    cursor = page.nextCursor;
+  }
 }
 
 export async function readInitiativeCards(

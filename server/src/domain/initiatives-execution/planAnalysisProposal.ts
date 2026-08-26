@@ -5,7 +5,9 @@ import {
   type MaterialCommandUnitOfWork,
   MaterialCommandValidationError,
 } from './materialCommand.js';
+import type { CapacityScenario } from './capacityScenario.js';
 import type { PlannedWindow, PlanScenario } from './planScenario.js';
+import { solvePlanScenario } from './planSolver.js';
 
 export interface PlanAnalysisProposal {
   proposalId: string;
@@ -24,38 +26,13 @@ export interface PlanAnalysisProposal {
   reviewedAt: string | null;
 }
 
-const periodFor = (scenario: PlanScenario, index: number) =>
-  scenario.periods[Math.min(index, scenario.periods.length - 1)];
-
-function dependencyOrder(windows: PlannedWindow[]) {
-  const byId = new Map(windows.map((window) => [window.initiativeId, window]));
-  const visited = new Set<string>();
-  const visiting = new Set<string>();
-  const ordered: PlannedWindow[] = [];
-  const conflicts: string[] = [];
-  const visit = (window: PlannedWindow) => {
-    if (visited.has(window.initiativeId)) return;
-    if (visiting.has(window.initiativeId)) {
-      conflicts.push(`Dependency cycle: ${window.initiativeId}`);
-      return;
-    }
-    visiting.add(window.initiativeId);
-    for (const dependency of window.dependencySnapshot) {
-      const source = byId.get(dependency);
-      if (source) visit(source);
-      else conflicts.push(`Missing dependency in plan: ${window.initiativeId} -> ${dependency}`);
-    }
-    visiting.delete(window.initiativeId);
-    visited.add(window.initiativeId);
-    ordered.push(window);
-  };
-  windows.forEach(visit);
-  return { ordered, conflicts: [...new Set(conflicts)] };
-}
-
 export async function createPlanAnalysisProposal(
   uow: MaterialCommandUnitOfWork,
-  envelope: MaterialCommandEnvelope<{ scenarioId: string; inputAggregateVersion: number }>
+  envelope: MaterialCommandEnvelope<{
+    scenarioId: string;
+    inputAggregateVersion: number;
+    capacityScenarioId?: string;
+  }>
 ): Promise<MaterialCommandResult<PlanAnalysisProposal>> {
   return executeMaterialCommand(uow, envelope, async (tx) => {
     const source = await tx.getRelatedAggregateForUpdate<PlanScenario>(
@@ -67,21 +44,37 @@ export async function createPlanAnalysisProposal(
       throw new MaterialCommandValidationError('Exact Plan Scenario input version required');
     if (source.payload.status !== 'DRAFT')
       throw new MaterialCommandValidationError('Analysis proposals may target only a DRAFT Plan');
-    const { ordered, conflicts } = dependencyOrder(source.payload.windows);
-    const changes = ordered.flatMap((window, index) => {
-      const period = periodFor(source.payload, index);
+    const capacity = envelope.payload.capacityScenarioId
+      ? await tx.getRelatedAggregateForUpdate<CapacityScenario>(
+          envelope.organizationId,
+          'capacity_scenario',
+          envelope.payload.capacityScenarioId
+        )
+      : null;
+    const compatibleCapacity =
+      capacity?.payload.status === 'PUBLISHED' &&
+      capacity.payload.planScenarioId === source.payload.scenarioId &&
+      capacity.payload.planScenarioVersion === source.payload.scenarioVersion
+        ? capacity.payload
+        : undefined;
+    const solved = solvePlanScenario(source.payload, compatibleCapacity);
+    const changes = solved.assignments.flatMap(({ window, periodId, rationale }) => {
+      const period = source.payload.periods.find((candidate) => candidate.periodId === periodId);
       if (!period) return [];
+      const withinPeriod = (value: string | null) =>
+        value !== null && value >= period.start && value <= period.end;
       const after: PlannedWindow = {
         ...window,
-        earliest: period.start,
-        target: period.start,
-        latest: period.end,
-        confidence: conflicts.some((item) => item.includes(window.initiativeId))
+        earliest:
+          window.earliest && window.earliest > period.start ? window.earliest : period.start,
+        target: withinPeriod(window.target) ? window.target : period.start,
+        latest: window.latest && window.latest < period.end ? window.latest : period.end,
+        confidence: solved.conflicts.some((item) => item.includes(window.initiativeId))
           ? 'LOW'
           : window.confidence === 'UNKNOWN'
             ? 'MEDIUM'
             : window.confidence,
-        rationale: `Dependency-aware proposal; human validation required. ${window.rationale}`,
+        rationale: `${rationale} Human validation required. ${window.rationale}`,
       };
       return JSON.stringify(after) === JSON.stringify(window)
         ? []
@@ -96,11 +89,12 @@ export async function createPlanAnalysisProposal(
       status: 'PENDING_REVIEW',
       assumptions: [
         'Dependencies precede dependent initiatives.',
-        'One proposed target period per initiative; capacity is not inferred.',
+        'A deterministic solver selects one feasible target period per initiative.',
+        ...solved.assumptions,
         ...source.payload.assumptions,
       ],
-      rationale: 'Canonical dependency-order analysis. No Plan or Initiative date was changed.',
-      conflicts,
+      rationale: 'Canonical deterministic plan analysis. No Plan or Initiative date was changed.',
+      conflicts: solved.conflicts,
       changes,
       requestedBy: envelope.actorId,
       reviewedBy: null,
