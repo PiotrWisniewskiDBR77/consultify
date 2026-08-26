@@ -576,16 +576,25 @@ describe('M12 Meeting — golden flows (real Postgres)', () => {
           .set(admin())
           .send({ action: 'approve' });
 
-      expect((await approve()).status).toBe(200);
+      const firstApproval = await approve();
+      expect(firstApproval.status, JSON.stringify(firstApproval.body)).toBe(200);
       await approve(); // replay: must be idempotent, not a second effect
 
-      // The note row IS the produced material, so it is the receipt's
-      // `target_record_id`; `producer_record_id` holds the meeting id.
+      // CONTRACT CHANGE (DEC-87, H.1 option B, day19-fixes 2026-08-26): this
+      // test previously asserted the receipt's `target_record_id` was the
+      // NOTE id ("the note row IS the produced material"). That contract
+      // changed under DEC-87 — approval now materializes a REAL artifact
+      // (Document Studio content + registry entry), and the receipt's
+      // `target_record_id` points at THAT artifact id instead.
+      // `producer_record_id` still holds the meeting id, unchanged.
+      const artifactId = firstApproval.body.receipt?.targetRecordId;
+      expect(artifactId).toBeTruthy();
+      expect(artifactId).not.toBe(noteId);
       const { rows: receipts } = await pool.query(
         `SELECT r.receipt_id FROM artifact_handoff_receipts r
            JOIN artifact_handoff_proposals p ON p.proposal_id = r.proposal_id
           WHERE p.producer_kind = 'meeting' AND r.target_record_id = $1`,
-        [noteId]
+        [artifactId]
       );
       expect(receipts).toHaveLength(1);
     });

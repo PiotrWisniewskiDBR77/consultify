@@ -177,7 +177,7 @@ describe('propose -> approve -> materialize happy path', () => {
     expect(decided!.note.status).toBe('approved');
     expect(decided!.proposal.state).toBe('materialized');
     expect(decided!.receipt).not.toBeNull();
-    expect(decided!.receipt!.targetRecordId).toBe(proposed.note.id);
+    expect(decided!.receipt!.targetRecordId).not.toBe(proposed.note.id);
     expect(decided!.replayed).toBe(false);
 
     // Cold reopen: fresh, independent reads — never trust the in-memory
@@ -189,6 +189,8 @@ describe('propose -> approve -> materialize happy path', () => {
     });
     expect(reread?.status).toBe('approved');
     expect(reread?.decisions).toEqual([{ decision: 'Ship on Friday' }]);
+    expect(reread?.materializationStatus).toBe('materialized');
+    expect(reread?.materialArtifactId).toBe(decided!.receipt!.targetRecordId);
 
     const list = await listMeetingNotesForMeeting({ organizationId: ORG_A, meetingId });
     expect(list.some((n) => n.id === proposed.note.id && n.status === 'approved')).toBe(true);
@@ -198,7 +200,7 @@ describe('propose -> approve -> materialize happy path', () => {
       [proposed.proposal.proposalId]
     );
     expect(receiptRow.rows).toHaveLength(1);
-    expect(receiptRow.rows[0].target_record_id).toBe(proposed.note.id);
+    expect(receiptRow.rows[0].target_record_id).toBe(reread?.materialArtifactId);
   });
 });
 

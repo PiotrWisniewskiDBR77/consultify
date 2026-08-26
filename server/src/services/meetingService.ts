@@ -54,6 +54,8 @@ export interface MeetingRecord {
   recurrenceStatus: 'modified' | 'cancelled' | null;
   splitFromMeetingId: string | null;
   invitationSequence: number;
+  participantCount: number;
+  attachmentCount: number;
   location: string;
   attendees: string[];
   preRead: string[];
@@ -80,6 +82,8 @@ type MeetingRow = {
   recurrence_status?: string | null;
   split_from_meeting_id?: string | null;
   invitation_sequence?: number | null;
+  participant_count?: number | string | null;
+  attachment_count?: number | string | null;
   location: string | null;
   attendees_json: string | null;
   pre_read_json: string | null;
@@ -131,6 +135,8 @@ function mapMeeting(row: MeetingRow, followUps: MeetingFollowUp[]): MeetingRecor
         : null,
     splitFromMeetingId: row.split_from_meeting_id || null,
     invitationSequence: Number(row.invitation_sequence || 0),
+    participantCount: Number(row.participant_count || 0),
+    attachmentCount: Number(row.attachment_count || 0),
     location: row.location || '',
     attendees: safeJsonArray(row.attendees_json),
     preRead: safeJsonArray(row.pre_read_json),
@@ -211,15 +217,61 @@ async function getFollowUpsForMeetings(
 export async function listMeetings(input: {
   organizationId: string;
   projectId?: string | null;
+  search?: string | null;
 }): Promise<MeetingRecord[]> {
   await ensureMeetingTables();
+  const search = String(input.search || '')
+    .trim()
+    .toLowerCase();
+  const select = `SELECT m.* FROM meetings m`;
+  const searchClause = search
+    ? ` AND (lower(m.title) LIKE ? OR lower(COALESCE(m.location, '')) LIKE ? OR EXISTS (
+        SELECT 1 FROM meeting_participants p
+        LEFT JOIN users u ON u.id = p.user_id AND u.organization_id = p.organization_id
+        WHERE p.organization_id = m.organization_id AND p.meeting_id = m.id
+          AND (lower(COALESCE(p.display_name, u.first_name || ' ' || u.last_name, '')) LIKE ?
+            OR lower(COALESCE(p.email, u.email, '')) LIKE ?)
+      ))`
+    : '';
+  const searchParams = search ? Array(4).fill(`%${search}%`) : [];
   const rows = await dbAll<MeetingRow>(
     input.projectId
-      ? `SELECT * FROM meetings WHERE organization_id = ? AND project_id = ? ORDER BY start_at ASC`
-      : `SELECT * FROM meetings WHERE organization_id = ? ORDER BY start_at ASC`,
-    input.projectId ? [input.organizationId, input.projectId] : [input.organizationId]
+      ? `${select} WHERE m.organization_id = ? AND m.project_id = ?${searchClause} ORDER BY m.start_at ASC`
+      : `${select} WHERE m.organization_id = ?${searchClause} ORDER BY m.start_at ASC`,
+    input.projectId
+      ? [input.organizationId, input.projectId, ...searchParams]
+      : [input.organizationId, ...searchParams]
   );
   const meetingIds = (rows || []).map((row) => row.id);
+  if (meetingIds.length) {
+    const placeholders = meetingIds.map(() => '?').join(', ');
+    let participantCounts: Array<{ meeting_id: string; count: number | string }> = [];
+    let attachmentCounts: Array<{ meeting_id: string; count: number | string }> = [];
+    try {
+      [participantCounts, attachmentCounts] = await Promise.all([
+        dbAll<{ meeting_id: string; count: number | string }>(
+          `SELECT meeting_id, COUNT(*) AS count FROM meeting_participants WHERE organization_id = ? AND meeting_id IN (${placeholders}) GROUP BY meeting_id`,
+          [input.organizationId, ...meetingIds]
+        ),
+        dbAll<{ meeting_id: string; count: number | string }>(
+          `SELECT meeting_id, COUNT(*) AS count FROM meeting_attachments WHERE organization_id = ? AND meeting_id IN (${placeholders}) GROUP BY meeting_id`,
+          [input.organizationId, ...meetingIds]
+        ),
+      ]);
+    } catch (error) {
+      if (!String((error as Error).message).includes('no such table')) throw error;
+    }
+    const participants = new Map(
+      participantCounts.map((item) => [item.meeting_id, Number(item.count)])
+    );
+    const attachments = new Map(
+      attachmentCounts.map((item) => [item.meeting_id, Number(item.count)])
+    );
+    for (const row of rows || []) {
+      row.participant_count = participants.get(row.id) || 0;
+      row.attachment_count = attachments.get(row.id) || 0;
+    }
+  }
   const followUps = await getFollowUpsForMeetings(meetingIds);
   return (rows || []).map((row) => mapMeeting(row, followUps[row.id] || []));
 }
@@ -234,6 +286,25 @@ export async function getMeeting(input: {
     [input.meetingId, input.organizationId]
   );
   if (!row) return null;
+  let counts: {
+    participant_count: number | string;
+    attachment_count: number | string;
+  } | null = null;
+  try {
+    counts = await dbGet<{
+      participant_count: number | string;
+      attachment_count: number | string;
+    }>(
+      `SELECT
+         (SELECT COUNT(*) FROM meeting_participants WHERE organization_id = ? AND meeting_id = ?) AS participant_count,
+         (SELECT COUNT(*) FROM meeting_attachments WHERE organization_id = ? AND meeting_id = ?) AS attachment_count`,
+      [input.organizationId, row.id, input.organizationId, row.id]
+    );
+  } catch (error) {
+    if (!String((error as Error).message).includes('no such table')) throw error;
+  }
+  row.participant_count = counts?.participant_count || 0;
+  row.attachment_count = counts?.attachment_count || 0;
   const followUps = await getFollowUpsForMeetings([row.id]);
   return mapMeeting(row, followUps[row.id] || []);
 }
