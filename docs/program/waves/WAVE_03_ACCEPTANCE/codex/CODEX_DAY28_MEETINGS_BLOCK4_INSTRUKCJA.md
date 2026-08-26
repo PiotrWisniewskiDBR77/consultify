@@ -60,7 +60,7 @@ w całości. Moduł zostaje ZAMKNIĘTY (`closed`).**
 1. Punktem wyjścia jest **gałąź `codex/m03-admin-20260824`**, przypięta do
    commitu-markera podanego niżej.
 
-   **SHA markera: «MARKER_SHA»**
+   **SHA markera: fed3b9d855**
 
 2. **Sprawdzasz marker PIERWSZĄ komendą dyżuru:**
 
@@ -68,7 +68,7 @@ w całości. Moduł zostaje ZAMKNIĘTY (`closed`).**
    cd <root-repo>
    git fetch --all --prune
    git log --oneline -25 codex/m03-admin-20260824
-   git merge-base --is-ancestor «MARKER_SHA» HEAD && echo "MARKER OK" || echo "MARKER BRAK"
+   git merge-base --is-ancestor fed3b9d855 HEAD && echo "MARKER OK" || echo "MARKER BRAK"
    ```
 
    (`HEAD` = tip gałęzi `codex/m03-admin-20260824`; jeżeli stoisz gdzie indziej,
@@ -118,7 +118,7 @@ w całości. Moduł zostaje ZAMKNIĘTY (`closed`).**
 5. **Własna gałąź i własny worktree** (nigdy praca na `codex/m03-admin-20260824`):
 
    ```bash
-   git branch codex/meetings-day28-<data> «MARKER_SHA»
+   git branch codex/meetings-day28-<data> fed3b9d855
    git worktree add /private/tmp/consultify-meetings-day28 codex/meetings-day28-<data>
    cd /private/tmp/consultify-meetings-day28
    ln -s /Users/piotrwisniewski/Developer/Consultify/node_modules node_modules   # DEC-86, TYLKO ODCZYT
@@ -128,7 +128,7 @@ w całości. Moduł zostaje ZAMKNIĘTY (`closed`).**
    nigdy wobec `HEAD~1`:
 
    ```bash
-   git diff --name-only «MARKER_SHA»...HEAD
+   git diff --name-only fed3b9d855...HEAD
    ```
 
    Ta komenda ma w tym dokumencie własną nazwę — **„komenda bazowa"** — i wraca
@@ -1850,18 +1850,18 @@ Z17 (src/\*\* — pusty diff) · Z18 (globalna infra testowa) · DEC-65 (Railway
 
 ```bash
 # ★ OSTATNIA BRAMKA — wszystkie MUSZĄ być puste
-git diff --name-only «MARKER_SHA»...HEAD -- src/                       # ← Z17: PUSTE
-git diff --name-only «MARKER_SHA»...HEAD -- server/src/services/effectiveAccessService.ts
-git diff --name-only «MARKER_SHA»...HEAD -- server/src/services/v8/recurrenceEngine.ts
-git diff --name-only «MARKER_SHA»...HEAD -- server/src/services/v8/artifactRegistryService.ts
-git diff --name-only «MARKER_SHA»...HEAD -- server/src/services/meeting/meetingInvitationService.ts
-git diff --name-only «MARKER_SHA»...HEAD -- server/src/services/emailService.ts
-git diff --name-only «MARKER_SHA»...HEAD -- server/src/utils/ics/icsBuilder.ts
-git diff --name-only «MARKER_SHA»...HEAD -- server/src/services/TaskService.ts
-git diff --name-only «MARKER_SHA»...HEAD -- server/src/utils/ErrorHandler.ts
-git diff --name-only «MARKER_SHA»...HEAD -- tests/setup.ts tests/helpers tests/__mocks__
-git diff --name-only «MARKER_SHA»...HEAD -- 'vitest*.config.ts' 'server/vitest*.ts'
-git diff --name-only «MARKER_SHA»...HEAD -- tests/e2e tests/acceptance
+git diff --name-only fed3b9d855...HEAD -- src/                       # ← Z17: PUSTE
+git diff --name-only fed3b9d855...HEAD -- server/src/services/effectiveAccessService.ts
+git diff --name-only fed3b9d855...HEAD -- server/src/services/v8/recurrenceEngine.ts
+git diff --name-only fed3b9d855...HEAD -- server/src/services/v8/artifactRegistryService.ts
+git diff --name-only fed3b9d855...HEAD -- server/src/services/meeting/meetingInvitationService.ts
+git diff --name-only fed3b9d855...HEAD -- server/src/services/emailService.ts
+git diff --name-only fed3b9d855...HEAD -- server/src/utils/ics/icsBuilder.ts
+git diff --name-only fed3b9d855...HEAD -- server/src/services/TaskService.ts
+git diff --name-only fed3b9d855...HEAD -- server/src/utils/ErrorHandler.ts
+git diff --name-only fed3b9d855...HEAD -- tests/setup.ts tests/helpers tests/__mocks__
+git diff --name-only fed3b9d855...HEAD -- 'vitest*.config.ts' 'server/vitest*.ts'
+git diff --name-only fed3b9d855...HEAD -- tests/e2e tests/acceptance
 ```
 
 Dalej, punkt po punkcie:
