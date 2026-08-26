@@ -63,8 +63,19 @@ export interface ToolStatusInfo {
  * `DiscoveryToolsHub.tsx`'s `mapOutputStatus`, which is now a thin wrapper
  * around this table rather than a second, independently-maintained map.
  */
+// Tools batch 1 (2026-08-26, DEC-118 repair #2): CONFIGURING was missing —
+// server/src/services/reportBuilderService.ts's ReportStatus union lists it
+// as the report-builder shell's initial state (before outline/config is
+// touched it auto-advances to DRAFT, report-builder.routes.ts:2437-2438), so
+// it belongs in the same 'draft' bucket. It rendered "unknown status:
+// CONFIGURING" on ~4/7 rows of the live Outputs tab. SENT_INTERNAL /
+// SENT_EXTERNAL (same ReportStatus union) were also missing; collapsed to
+// 'approved' to match the one other place that already classifies this pair
+// (assessmentReportBuilderLinkService.ts:29: SENT_INTERNAL/SENT_EXTERNAL ->
+// 'APPROVED'), rather than inventing a third, disagreeing rule.
 const RAW_TO_DOMAIN: Record<string, ToolStatusDomain> = {
   DRAFT: 'draft',
+  CONFIGURING: 'draft',
   IN_PROGRESS: 'in_progress',
   EXECUTING: 'in_progress',
   GENERATING: 'in_progress',
@@ -73,6 +84,8 @@ const RAW_TO_DOMAIN: Record<string, ToolStatusDomain> = {
   PENDING_REVIEW: 'in_review',
   PENDING_APPROVAL: 'in_review',
   APPROVED: 'approved',
+  SENT_INTERNAL: 'approved',
+  SENT_EXTERNAL: 'approved',
   GENERATED: 'generated',
   FINALIZED: 'finalized',
   COMPLETED: 'finalized',

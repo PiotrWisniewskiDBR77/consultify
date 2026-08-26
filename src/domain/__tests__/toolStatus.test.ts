@@ -20,6 +20,10 @@ import {
  */
 const EXPECTED_DOMAIN_BY_RAW: Record<string, ToolStatusDomain> = {
   DRAFT: 'draft',
+  // DEC-118 repair #2 (2026-08-26): CONFIGURING is report-builder's initial
+  // shell state (reportBuilderService.ts ReportStatus union) — it rendered
+  // "unknown status: CONFIGURING" on ~4/7 live Outputs-tab rows before this.
+  CONFIGURING: 'draft',
   IN_PROGRESS: 'in_progress',
   EXECUTING: 'in_progress',
   GENERATING: 'in_progress',
@@ -28,6 +32,10 @@ const EXPECTED_DOMAIN_BY_RAW: Record<string, ToolStatusDomain> = {
   PENDING_REVIEW: 'in_review',
   PENDING_APPROVAL: 'in_review',
   APPROVED: 'approved',
+  // Same repair: SENT_INTERNAL/SENT_EXTERNAL (also ReportStatus) collapsed to
+  // 'approved' to match assessmentReportBuilderLinkService.ts's own precedent.
+  SENT_INTERNAL: 'approved',
+  SENT_EXTERNAL: 'approved',
   GENERATED: 'generated',
   FINALIZED: 'finalized',
   COMPLETED: 'finalized',
