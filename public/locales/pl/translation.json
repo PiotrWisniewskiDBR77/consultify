@@ -305,6 +305,65 @@
       "proceed": "Potwierdź i wykonaj",
       "auditNotice": "Ta akcja zostanie zapisana w dzienniku audytu wraz z Twoją tożsamością i znacznikiem czasu."
     },
+    "platformOperations": {
+      "title": "Operacje platformowe",
+      "subtitle": "Zabezpieczone operacje P33. Każde wykonanie wymaga wskazanego celu, powodu i jawnego potwierdzenia.",
+      "loading": "Ładowanie celów operacji…",
+      "target": "Cel",
+      "choose": "Wybierz…",
+      "review": "Przejdź do potwierdzenia",
+      "execute": "Wykonaj operację",
+      "confirmTitle": "Potwierdź operację",
+      "reason": "Powód",
+      "typeExactly": "Przepisz dokładnie",
+      "criticalWarning": "Operacja krytyczna może być trudna lub niemożliwa do odwrócenia.",
+      "affectedTenants": "Zakres: {{count}} organizacji.",
+      "risk": { "high": "Wysokie ryzyko", "critical": "Ryzyko krytyczne" },
+      "session": {
+        "title": "Ostatnie operacje w tej sesji",
+        "empty": "Brak wykonanych operacji.",
+        "success": "Sukces"
+      },
+      "errors": {
+        "load": "Nie udało się pobrać celów operacji.",
+        "confirmationRequired": "Serwer wymaga jawnego potwierdzenia operacji.",
+        "reasonRequired": "Serwer wymaga podania powodu operacji.",
+        "nameMismatch": "Wpisana nazwa nie zgadza się. Oczekiwano: {{name}}.",
+        "notFound": "Wybrany cel operacji nie istnieje lub nie jest już dostępny.",
+        "forbidden": "Nie masz uprawnień do wykonania tej operacji.",
+        "generic": "Błąd operacji"
+      },
+      "actions": {
+        "reactivate": {
+          "label": "Reaktywuj organizację",
+          "description": "Przywraca dostęp użytkowników organizacji."
+        },
+        "reset_mfa": {
+          "label": "Wymuś reset MFA",
+          "description": "Usuwa bieżącą konfigurację MFA użytkownika i wymaga ponownej rejestracji."
+        },
+        "suspend": {
+          "label": "Zawieś organizację",
+          "description": "Blokuje dostęp użytkowników organizacji."
+        },
+        "lockdown": {
+          "label": "Awaryjnie zablokuj organizację",
+          "description": "Natychmiast uruchamia awaryjną blokadę tenanta."
+        },
+        "purge": {
+          "label": "Zaplanuj trwałe usunięcie danych",
+          "description": "Ustawia organizację w kolejce nieodwracalnego usunięcia wszystkich danych."
+        },
+        "connector_kill": {
+          "label": "Awaryjnie wyłącz konektor",
+          "description": "Wyłącza wszystkie aktywne integracje wskazanego konektora na platformie."
+        },
+        "worker_suspend": {
+          "label": "Zawieś pracownika wirtualnego",
+          "description": "Zawiesza wskazanego pracownika wirtualnego na poziomie platformy."
+        }
+      }
+    },
     "impersonation": {
       "banner": "Tryb podszywania",
       "exit": "Zakończ podszywanie",
