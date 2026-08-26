@@ -874,7 +874,11 @@ export async function retryMeetingNoteMaterialization(input: {
   noteId: string;
   materializedBy: string;
 }): Promise<DecideMeetingNoteResult | null> {
-  const note = await getMeetingNote(input);
+  const note = await getMeetingNote({
+    ...input,
+    userId: input.materializedBy,
+    roleKey: 'owner',
+  });
   if (!note || !note.proposalId) return null;
   const retryAllowed = note.proposalState === 'approved' || note.materializationStatus === 'failed';
   if (!retryAllowed) {
