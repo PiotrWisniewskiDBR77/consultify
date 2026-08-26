@@ -74,13 +74,13 @@ niezależnie od jakości reszty.
 1. Punktem wyjścia jest **NAJNOWSZY tip gałęzi `codex/m03-admin-20260824`**.
    Nadzorca podaje Ci **SHA commitu-markera** przy wklejaniu tej instrukcji.
 
-   **SHA markera: «MARKER_SHA»**
+   **SHA markera: f856e87d9f**
 
    ```bash
    cd <root-repo>
    git fetch --all --prune
    git log --oneline -25 codex/m03-admin-20260824
-   git merge-base --is-ancestor «MARKER_SHA» codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
+   git merge-base --is-ancestor f856e87d9f codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
    ```
 
 2. **Jeśli marker nie jest przodkiem tipa albo gałąź nie istnieje — STOP.**
@@ -144,7 +144,7 @@ niezależnie od jakości reszty.
 5. Tworzysz **własną świeżą gałąź** z markera:
 
    ```bash
-   git branch codex/chat-signals-front-day26-20260826 «MARKER_SHA»
+   git branch codex/chat-signals-front-day26-20260826 f856e87d9f
    git worktree add /private/tmp/consultify-chat-signals-front-day26 codex/chat-signals-front-day26-20260826
    cd /private/tmp/consultify-chat-signals-front-day26
    ln -s /Users/piotrwisniewski/Developer/Consultify/node_modules node_modules   # DEC-86, TYLKO ODCZYT
@@ -153,7 +153,7 @@ niezależnie od jakości reszty.
 6. **Wszystkie porównania w raporcie robisz wobec bazy**, nie wobec `HEAD~1`:
 
    ```bash
-   git diff --name-only «MARKER_SHA»...HEAD
+   git diff --name-only f856e87d9f...HEAD
    ```
 
 ### 0.2. Bezwzględne ZAKAZY
