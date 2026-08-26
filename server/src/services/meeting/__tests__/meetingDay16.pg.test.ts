@@ -152,4 +152,22 @@ suite('Meetings day16 participants and safe invitation delivery (real PG)', () =
     if (previousLive === undefined) delete process.env.MEETING_INVITES_LIVE;
     else process.env.MEETING_INVITES_LIVE = previousLive;
   });
+
+  it('blocks the protected demo organization before the mailer', async () => {
+    const previousDemoOrg = process.env.DEMO_ORG_ID;
+    const previousLive = process.env.MEETING_INVITES_LIVE;
+    process.env.DEMO_ORG_ID = org;
+    process.env.MEETING_INVITES_LIVE = 'true';
+    const deliveries = await sendMeetingInvitations({
+      organizationId: org,
+      meetingId: meeting,
+      actorId: owner,
+    });
+    expect(deliveries.length).toBeGreaterThan(0);
+    expect(deliveries.every((item) => item.status === 'blocked_demo')).toBe(true);
+    if (previousDemoOrg === undefined) delete process.env.DEMO_ORG_ID;
+    else process.env.DEMO_ORG_ID = previousDemoOrg;
+    if (previousLive === undefined) delete process.env.MEETING_INVITES_LIVE;
+    else process.env.MEETING_INVITES_LIVE = previousLive;
+  });
 });
