@@ -58,7 +58,8 @@ export const conditionalOrganizationConfirmation = asyncHandler(
     // when the submitted status actually differs from the org's current
     // status in the database (a real transition into/across a critical state).
     const org = await dbGet('SELECT status FROM organizations WHERE id = $1', [req.params.id]);
-    const currentStatus = typeof (org as any)?.status === 'string' ? (org as any).status : undefined;
+    const currentStatus =
+      typeof (org as any)?.status === 'string' ? (org as any).status : undefined;
     if (currentStatus === status) return next();
 
     res.locals.organizationStatusChangeReason =
@@ -688,6 +689,31 @@ router.get(
 // ==========================================
 // ORGANIZATIONS
 // ==========================================
+
+router.get(
+  '/connectors',
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    const rows = await dbAll<any>(
+      `SELECT connector_id AS id,
+              connector_id AS name,
+              COUNT(DISTINCT organization_id) AS affected_tenants,
+              COUNT(*) AS integrations
+         FROM integrations
+        WHERE status != 'disabled' AND connector_id IS NOT NULL AND connector_id != ''
+        GROUP BY connector_id
+        ORDER BY connector_id`,
+      [],
+      { fallback: false }
+    );
+    return res.json({
+      connectors: rows.map((row) => ({
+        id: String(row.id),
+        name: String(row.name || row.id),
+        affectedTenants: Number(row.affected_tenants || 0),
+      })),
+    });
+  })
+);
 
 router.get('/organizations', SuperAdminController.getOrganizations);
 router.get('/activities', SuperAdminController.getActivities);

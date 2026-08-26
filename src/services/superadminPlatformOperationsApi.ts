@@ -4,6 +4,7 @@ export interface PlatformTarget {
   id: string;
   name: string;
   status?: string;
+  affectedTenants?: number;
 }
 
 const listPayload = (value: unknown, keys: string[]): any[] => {
@@ -16,10 +17,18 @@ const listPayload = (value: unknown, keys: string[]): any[] => {
 };
 
 export const getPlatformOperationTargets = async () => {
-  const [organizationsResponse, usersResponse] = await Promise.all([
+  const responses = await Promise.allSettled([
     apiGet<unknown>('/superadmin/organizations'),
     apiGet<unknown>('/superadmin/users'),
+    apiGet<unknown>('/superadmin/connectors'),
+    apiGet<unknown>('/virtual-workers'),
   ]);
+  const value = (index: number) =>
+    responses[index]?.status === 'fulfilled' ? responses[index].value : undefined;
+  const organizationsResponse = value(0);
+  const usersResponse = value(1);
+  const connectorsResponse = value(2);
+  const workersResponse = value(3);
   return {
     organizations: listPayload(organizationsResponse, ['organizations', 'items']).map((item) => ({
       id: String(item.id),
@@ -29,6 +38,16 @@ export const getPlatformOperationTargets = async () => {
     users: listPayload(usersResponse, ['users', 'items']).map((item) => ({
       id: String(item.id),
       name: String(item.email || item.name || item.id),
+      status: String(item.status || ''),
+    })),
+    connectors: listPayload(connectorsResponse, ['connectors', 'items']).map((item) => ({
+      id: String(item.id),
+      name: String(item.name || item.id),
+      affectedTenants: Number(item.affectedTenants || 0),
+    })),
+    virtualWorkers: listPayload(workersResponse, ['workers', 'items']).map((item) => ({
+      id: String(item.id),
+      name: String(item.name || item.slug || item.id),
       status: String(item.status || ''),
     })),
   };

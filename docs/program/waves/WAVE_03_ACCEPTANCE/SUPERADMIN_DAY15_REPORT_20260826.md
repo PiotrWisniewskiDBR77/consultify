@@ -167,12 +167,23 @@ Status: **ZROBIONE_WG_DoD**.
 
 A.3: **NIE_ZACZĘTE**. A.4: stan przed 20/83 (24,1%) pisarzy semantycznych. Po A.2 projekcja widzi także globalne `audit_events`, ale nie zawyżam tego do 83/83: gwarancja jest fail-open i zależy od obecności kontekstu org/user. Kontrakt AC-005 pozostaje **NOT PROVEN**.
 
+## P.1 — katalogi celów
+
+| Akcja                    | Typ celu      | Skąd lista                                                | JEST / BRAK | Zapis działa na PG?  |
+| ------------------------ | ------------- | --------------------------------------------------------- | ----------- | -------------------- |
+| emergency-kill connector | connector     | nowy GET `/superadmin/connectors`, agregat `integrations` | JEST        | n/d                  |
+| suspend virtual worker   | virtualWorker | istniejący GET `/api/virtual-workers`                     | JUŻ_BYŁO    | TAK — sonda settings |
+| suspend AI model         | aiModel       | brak serwerowego katalogu; fallback klienta odrzucony     | BRAK_API    | TAK — sonda settings |
+
+Klient używa `Promise.allSettled`: awaria jednej nogi nie usuwa organizacji/użytkowników ani pozostałych katalogów. Test katalogu request-level: 4/4 PASS (happy, empty, 401, błąd 500).
+
 ## Zakres wykonany
 
 | Pozycja                                | Status                              |
 | -------------------------------------- | ----------------------------------- |
 | Blok 0: baza, marker, materiały, hooki | ZROBIONE_WG_DoD                     |
-| P.1–P.6                                | NIE_ZACZĘTE                         |
+| P.1                                    | ZROBIONE_WG_DoD                     |
+| P.2–P.6                                | NIE_ZACZĘTE                         |
 | T.1                                    | NIE_ZACZĘTE                         |
 | T.2                                    | ZROBIONE_WG_DoD                     |
 | T.3                                    | ZROBIONE_WG_DoD / STOP              |
