@@ -77,6 +77,7 @@ function renderPanel(props: {
   capabilities: WorkspaceCapability[];
   currentUserId: string | null;
   selectedFindingId?: string | null;
+  maxRows?: number;
 }) {
   const onSelectFinding = vi.fn();
   const onFindingDetailChange = vi.fn();
@@ -90,6 +91,7 @@ function renderPanel(props: {
       selectedFindingId={props.selectedFindingId ?? null}
       onSelectFinding={onSelectFinding}
       onFindingDetailChange={onFindingDetailChange}
+      maxRows={props.maxRows}
     />
   );
   return { ...utils, onSelectFinding, onFindingDetailChange };
@@ -135,5 +137,36 @@ describe('FindingPanel', () => {
 
     await waitFor(() => expect(mockedListFindings).toHaveBeenCalled());
     expect(screen.queryByRole('button', { name: /nowe ustalenie/i })).not.toBeInTheDocument();
+  });
+
+  it('maxRows (DEC-88 phase-card table) truncates to N rows with a "show all" toggle; unset stays unlimited', async () => {
+    const items = [
+      findingSummary({ id: 'f-1', referenceCode: 'F-1', statement: 'First finding statement text' }),
+      findingSummary({ id: 'f-2', referenceCode: 'F-2', statement: 'Second finding statement text' }),
+      findingSummary({ id: 'f-3', referenceCode: 'F-3', statement: 'Third finding statement text' }),
+    ];
+    mockedListFindings.mockResolvedValue({ items, total: 3 });
+    renderPanel({ capabilities: ['finding.review'], currentUserId: 'user-reviewer', maxRows: 2 });
+
+    await waitFor(() => expect(screen.getByText(/first finding/i)).toBeInTheDocument());
+    expect(screen.getByText(/second finding/i)).toBeInTheDocument();
+    expect(screen.queryByText(/third finding/i)).not.toBeInTheDocument();
+
+    const showAll = screen.getByRole('button', { name: /pokaż wszystkie \(3\)/i });
+    fireEvent.click(showAll);
+    expect(await screen.findByText(/third finding/i)).toBeInTheDocument();
+  });
+
+  it('without maxRows, every row renders and no "show all" toggle appears (V1 unaffected)', async () => {
+    const items = [
+      findingSummary({ id: 'f-1', referenceCode: 'F-1', statement: 'First finding statement text' }),
+      findingSummary({ id: 'f-2', referenceCode: 'F-2', statement: 'Second finding statement text' }),
+      findingSummary({ id: 'f-3', referenceCode: 'F-3', statement: 'Third finding statement text' }),
+    ];
+    mockedListFindings.mockResolvedValue({ items, total: 3 });
+    renderPanel({ capabilities: ['finding.review'], currentUserId: 'user-reviewer' });
+
+    await waitFor(() => expect(screen.getByText(/third finding/i)).toBeInTheDocument());
+    expect(screen.queryByRole('button', { name: /pokaż wszystkie/i })).not.toBeInTheDocument();
   });
 });
