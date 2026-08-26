@@ -160,6 +160,30 @@ router.post(
       // RBAC enforcement
       let createdByConsultantId: string | null = null;
 
+      // Cross-org mint guard (P0 fix 2026-08-28): a code minted with
+      // `organizationId` set to an org the caller does not belong to lets
+      // that organizationId's victim be onboarded into via the register
+      // flow (auth.routes.ts, joiningExistingOrg) once the code is used —
+      // full cross-tenant privilege escalation. Only a platform superadmin
+      // (signed `isSuperAdmin` claim — same guard already used below for
+      // /:id/revoke) may mint a code bound to an org other than their own.
+      // Applied to EVERY code type reachable from this endpoint, not just
+      // CONSULTANT/TRIAL: the INVITE branch already had an (narrower,
+      // pre-existing, left untouched) org check, and anything falling
+      // through to neither branch (e.g. REFERRAL) previously had NO check
+      // at all, which was the same escalation with an even lower bar (no
+      // role requirement whatsoever).
+      const userOrgId = req.user?.organizationId || req.user?.organization_id;
+      const isPlatformSuperAdmin = req.user?.isSuperAdmin === true;
+      const assertSameOrgUnlessPlatformSuperAdmin = () => {
+        if (!isPlatformSuperAdmin && organizationId && organizationId !== userOrgId) {
+          return res
+            .status(403)
+            .json({ error: 'Cannot generate this access code for another organization' });
+        }
+        return null;
+      };
+
       if (
         type === AccessCodeService.CODE_TYPES.CONSULTANT ||
         type === AccessCodeService.CODE_TYPES.TRIAL
@@ -175,6 +199,8 @@ router.post(
         if (normalizedRole === 'consultant') {
           createdByConsultantId = userId;
         }
+        const blocked = assertSameOrgUnlessPlatformSuperAdmin();
+        if (blocked) return blocked;
       } else if (type === AccessCodeService.CODE_TYPES.INVITE) {
         const normalizedRole = (userRole || '').toLowerCase();
         if (
@@ -182,8 +208,8 @@ router.post(
         ) {
           return res.status(403).json({ error: 'Only Admins can generate team invites' });
         }
-        // Org scoping
-        const userOrgId = req.user?.organizationId || req.user?.organization_id;
+        // Org scoping — pre-existing, narrower check (admin/administrator
+        // only), left as-is to avoid regressing existing INVITE behavior.
         if (
           ['admin', 'administrator'].includes(normalizedRole) &&
           organizationId &&
@@ -191,6 +217,10 @@ router.post(
         ) {
           return res.status(403).json({ error: 'Cannot generate invite for another organization' });
         }
+      } else {
+        // REFERRAL and any other/future type: same mint-time org guard.
+        const blocked = assertSameOrgUnlessPlatformSuperAdmin();
+        if (blocked) return blocked;
       }
 
       const code = await AccessCodeService.generateCode({
