@@ -9,22 +9,21 @@
  * highlight in Processes, and the seven point-fixes inside
  * `CriterionWorkspaceV2`.
  *
- * OFF (default) → every touched screen renders byte-identical to before
- * this pack. ON → the new behaviors above are visible. Fail-closed: any
- * read error along the resolution chain resolves to OFF (mirrors
+ * Default was OFF until Piotr accepted clean screenshots; flipped to ON
+ * 2026-08-27 (owner accept — mirrors DEC-97 for `criterionWorkspaceV2Flag.ts`
+ * and the ff_ideaInspectorRightRail flip, DEC-90, commit 1e8bd6b7f4). ON →
+ * the new behaviors above are visible by default. Fail-closed: any read
+ * error along the resolution chain still resolves to OFF (mirrors
  * `src/utils/drdReportFlag.ts`), so a hostile/locked-down `window` never
- * accidentally reveals unreviewed UI.
- *
- * Per CLAUDE.md #7/#9: stays OFF until Piotr accepts clean screenshots —
- * do not flip the default without an explicit owner accept (mirror DEC-97
- * for `criterionWorkspaceV2Flag.ts`).
+ * accidentally reveals unreviewed UI through an error path — the flip only
+ * changed the bottom of the fallback chain, not the catch semantics.
  *
  * Kolejność (wygrywa najwyższe):
  *   1. URL query `?ff_auditsScaleAndPolish=0|1` — bypass operatora / dev /
  *      dev-render / regression checks.
  *   2. `localStorage["ff.audits_scale_and_polish"]` — override user / org.
  *   3. `import.meta.env.VITE_AUDITS_SCALE_AND_POLISH` — build-time.
- *   4. Default: OFF.
+ *   4. Default: ON (flip po akcepcie właściciela 27.08).
  */
 
 const LS_KEY = 'ff.audits_scale_and_polish';
@@ -39,13 +38,12 @@ function parseFlag(raw: string | null | undefined): boolean | null {
   return null;
 }
 
-function readEnvFlag(): boolean {
+function readEnvFlag(): boolean | null {
   try {
     const meta = import.meta as unknown as { env?: Record<string, string | undefined> };
-    const parsed = parseFlag(meta?.env?.[ENV_KEY]);
-    return parsed === null ? false : parsed;
+    return parseFlag(meta?.env?.[ENV_KEY]);
   } catch {
-    return false;
+    return null;
   }
 }
 
@@ -73,7 +71,11 @@ export function isAuditsScaleAndPolishEnabled(): boolean {
     if (fromQuery !== null) return fromQuery;
     const fromLs = readLocalStorage();
     if (fromLs !== null) return fromLs;
-    return readEnvFlag();
+    const fromEnv = readEnvFlag();
+    if (fromEnv !== null) return fromEnv;
+    // Default ON since the 2026-08-27 owner accept — only this bottom-of-chain
+    // value changed; query/localStorage 'off' and the catch below are untouched.
+    return true;
   } catch {
     return false;
   }

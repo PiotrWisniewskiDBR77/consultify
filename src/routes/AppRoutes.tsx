@@ -802,7 +802,7 @@ const DRDAuditReportRoute: React.FC = () => {
 /**
  * Audits module entry for the full report content view (NAPRAWA 2,
  * 2026-08-26 — `AuditReportDocumentView`, `GET /audits/reports/:id/presentation`).
- * Flag-gated (`isAuditsFindingsAndReportViewEnabled`, default OFF, fail-closed
+ * Flag-gated (`isAuditsFindingsAndReportViewEnabled`, default ON since 2026-08-27 owner accept, fail-closed
  * — CLAUDE.md #7): OFF → redirects to the Reports tab, exactly the same
  * no-op-until-accepted contract as `DRDAuditReportRoute` above.
  */
