@@ -397,3 +397,37 @@ export function actionKindLabel(kind: AuditActionKind, isPolish = false): string
   if (!entry) return kind;
   return isPolish ? entry.pl : entry.en;
 }
+
+// ---------------------------------------------------------------------------
+// Kryterium — status roboczy (`CriterionWorkStatus` server-side,
+// `server/src/services/audits/types.ts` CRITERION_WORK_STATUSES). Etykiety
+// zgodne z lokalną mapą w `workspace/v2/CriterionWorkspaceV2.tsx` (nie
+// eksportowaną stamtąd) — jedno źródło dla ekranów spoza warsztatu
+// (np. `AuditCriteriaBrowser`, gap pack 2026-08-26 punkt 2).
+// ---------------------------------------------------------------------------
+
+const CRITERION_WORK_STATUS_LABEL: Record<string, { pl: string; en: string }> = {
+  open: { pl: 'Otwarte', en: 'Open' },
+  evidence_requested: { pl: 'Poproszono o dowód', en: 'Evidence requested' },
+  evidence_received: { pl: 'Dowód dostarczony', en: 'Evidence received' },
+  tested: { pl: 'Przetestowane', en: 'Tested' },
+  concluded: { pl: 'Zakończone wnioskiem', en: 'Concluded' },
+};
+
+const CRITERION_WORK_STATUS_TONE: Record<string, StatusTone> = {
+  open: 'neutral',
+  evidence_requested: 'info',
+  evidence_received: 'info',
+  tested: 'warning',
+  concluded: 'success',
+};
+
+export function criterionWorkStatusTone(status: string): StatusTone {
+  return CRITERION_WORK_STATUS_TONE[status] ?? 'neutral';
+}
+
+export function criterionWorkStatusLabel(status: string, isPolish = false): string {
+  const entry = CRITERION_WORK_STATUS_LABEL[status];
+  if (!entry) return status;
+  return isPolish ? entry.pl : entry.en;
+}

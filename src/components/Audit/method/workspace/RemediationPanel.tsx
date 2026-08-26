@@ -30,6 +30,15 @@ export interface RemediationPanelProps {
   currentUserId: string | null;
   finding: WorkspaceFindingDetail;
   onChanged: () => void;
+  /**
+   * Resolves a member userId to a display name (gap pack 2026-08-26, item
+   * 5b: the "Właściciel / termin" link showed the raw `ownerUserId` UUID
+   * instead of a name). Optional and additive — omitting it keeps the
+   * previous raw-UUID fallback, so the caller in `CriterionWorkspace.tsx`
+   * (V1) is unaffected; `CriterionWorkspaceV2.tsx` passes its existing
+   * `nameFor` (already resolved from the program members it loads).
+   */
+  nameForUser?: (userId: string | null | undefined) => string | null;
 }
 
 function actionStatusTone(status: string): 'success' | 'warning' | 'danger' | 'info' | 'neutral' {
@@ -46,6 +55,7 @@ export const RemediationPanel: React.FC<RemediationPanelProps> = ({
   currentUserId,
   finding,
   onChanged,
+  nameForUser,
 }) => {
   const t = useCallback((pl: string, en: string) => (isPolish ? pl : en), [isPolish]);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
@@ -245,7 +255,8 @@ export const RemediationPanel: React.FC<RemediationPanelProps> = ({
         ) : (
           finding.correctiveActions.map((a) => (
             <p key={a.id} className="text-xs text-c-text-muted">
-              <span className="font-medium text-c-text">{a.title}:</span> {a.ownerUserId || t('brak właściciela', 'no owner')} ·{' '}
+              <span className="font-medium text-c-text">{a.title}:</span>{' '}
+              {(a.ownerUserId && nameForUser?.(a.ownerUserId)) || a.ownerUserId || t('brak właściciela', 'no owner')} ·{' '}
               {a.dueDate || t('brak terminu', 'no due date')}
             </p>
           ))

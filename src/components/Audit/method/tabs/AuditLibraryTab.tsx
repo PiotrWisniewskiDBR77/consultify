@@ -65,7 +65,7 @@ export interface AuditLibraryTabProps {
  * opublikowany, niezależnie od tego, co zwróci API (test: „pakiet bez źródła
  * nie może mieć statusu published w UI").
  */
-function evaluateStartGate(
+export function evaluateStartGate(
   row: AuditPackSummary,
   isPolish: boolean
 ): { allowed: boolean; reason?: string } {

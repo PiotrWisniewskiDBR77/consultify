@@ -1,8 +1,8 @@
 /**
  * CriterionWorkspaceV2 — SPEC-A (archetyp Rekord) reshell of the criterion
  * workspace, DEC-88 (owner accept 2026-08-26, Variant A on all 4 decision
- * cards). Behind `ff_criterionWorkspaceV2` (default OFF) — see
- * `../CriterionWorkspaceGate.tsx`.
+ * cards). Behind `ff_criterionWorkspaceV2` (default ON since DEC-97,
+ * 2026-08-26) — see `../CriterionWorkspaceGate.tsx`.
  *
  * WHAT CHANGED vs. V1 (`../CriterionWorkspace.tsx`): ONLY the shell/layout.
  *  - 18 links grouped into 4 CONTIGUOUS macro-phases (Planowanie 1-3 ·
@@ -49,6 +49,7 @@ import {
   Users,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { PreviewActivityStrip, type ActivityEvent } from '@/components/shared/PreviewPane/PreviewActivityStrip';
@@ -56,6 +57,8 @@ import { ErrorState, LoadingState, SaveStateIndicator, type SaveStatus } from '@
 import { ArtifactRightPanel, type ArtifactRightPanelSection } from '@/components/standard/ArtifactRightPanel';
 import { StatusChip, type StatusTone } from '@/components/ui/primitives/chips';
 import { useAppStore } from '@/store/useAppStore';
+import { isAuditsScaleAndPolishEnabled } from '@/utils/auditsScaleAndPolishFlag';
+import { useOnClickOutside } from '@/hooks/useOnClickOutside';
 
 import * as auditsMethodApi from '../../auditsMethodApi';
 import type {
@@ -579,6 +582,11 @@ export const CriterionWorkspaceV2: React.FC = () => {
     },
     [memberById, currentUserId, t]
   );
+  // Gap pack 2026-08-26 (item 5, sub-fixes b/c/d/e/f/g): all visual polish
+  // in this batch is behind the same kill-switch as the rest of the audits
+  // fix pack — default OFF, fail-closed (CLAUDE.md #7/#9: nothing new goes
+  // live before Piotr accepts a clean screenshot).
+  const scaleAndPolishEnabled = useMemo(() => isAuditsScaleAndPolishEnabled(), []);
 
   const run = useCallback(async (fn: () => Promise<unknown>) => {
     setSaveStatus('saving');
@@ -792,15 +800,50 @@ export const CriterionWorkspaceV2: React.FC = () => {
     scrollToPhase,
   ]);
 
+  // Gap pack 2026-08-26 (item 5c): the old `try { void promise } catch {}`
+  // only caught SYNCHRONOUS throws (e.g. `navigator.clipboard` missing) —
+  // an async rejection from `writeText` (permission denied, insecure
+  // context) was an unhandled promise rejection, and success gave the user
+  // no feedback at all. `await` inside the try/catch fixes both; the toast
+  // itself stays behind the flag (visual addition), the corrected error
+  // handling does not change the OFF-path's silent-fail behavior.
+  const copyToClipboard = useCallback(
+    async (text: string, successMessage: string) => {
+      try {
+        await navigator.clipboard.writeText(text);
+        if (scaleAndPolishEnabled) toast.success(successMessage);
+      } catch {
+        if (scaleAndPolishEnabled) {
+          toast.error(t('Nie udało się skopiować do schowka.', 'Could not copy to clipboard.'));
+        }
+      }
+    },
+    [scaleAndPolishEnabled, t]
+  );
+
   const handleCopyLink = useCallback(() => {
-    try {
-      void navigator.clipboard.writeText(window.location.href);
-    } catch {
-      /* clipboard może być niedostępny w niektórych kontekstach — cichy no-op */
-    }
-  }, []);
+    void copyToClipboard(window.location.href, t('Skopiowano link', 'Link copied'));
+  }, [copyToClipboard, t]);
 
   const [kebabOpen, setKebabOpen] = useState(false);
+  // Gap pack 2026-08-26 (item 5d): the kebab menu didn't close on an
+  // outside click or Escape — only re-clicking the trigger closed it.
+  // Guarded by the flag so the OFF path keeps today's behavior exactly.
+  const kebabRef = useRef<HTMLDivElement>(null);
+  useOnClickOutside(
+    kebabRef,
+    useCallback(() => {
+      if (scaleAndPolishEnabled) setKebabOpen(false);
+    }, [scaleAndPolishEnabled])
+  );
+  useEffect(() => {
+    if (!scaleAndPolishEnabled || !kebabOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setKebabOpen(false);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [scaleAndPolishEnabled, kebabOpen]);
 
   if (loading) {
     return <LoadingState template="panel" label={t('Wczytywanie kryterium…', 'Loading criterion…')} />;
@@ -978,17 +1021,32 @@ export const CriterionWorkspaceV2: React.FC = () => {
                   {t('możesz odpowiadać jako strona audytowana', 'you can respond as the auditee')}
                 </p>
               )}
-              <p className="flex gap-1.5 text-[11px] text-c-text-muted">
-                <Lock size={12} className="mt-0.5 shrink-0" aria-hidden />
-                {t('nie możesz odpowiadać w imieniu strony audytowanej', 'you cannot respond on behalf of the auditee')}
-              </p>
-              <p className="flex gap-1.5 text-[11px] text-c-text-muted">
-                <Lock size={12} className="mt-0.5 shrink-0" aria-hidden />
-                {t(
-                  'nie możesz zweryfikować skuteczności własnego działania korygującego',
-                  'you cannot verify the effectiveness of your own corrective action'
-                )}
-              </p>
+              {/*
+                Gap pack 2026-08-26 (item 5g): these two "you cannot…" rows
+                used to render unconditionally, regardless of role — a user
+                who genuinely CAN respond as auditee (`canRespondAsAuditee`)
+                was told "you cannot respond on behalf of the auditee",
+                which is simply false for them. Now conditioned on role:
+                the first row only for someone who really lacks the
+                capability; the second (segregation-of-duty caveat) only
+                for someone who has `canVerify` at all — irrelevant noise
+                otherwise, since they can't verify anything, own or not.
+              */}
+              {(!scaleAndPolishEnabled || !canRespondAsAuditee) && (
+                <p className="flex gap-1.5 text-[11px] text-c-text-muted">
+                  <Lock size={12} className="mt-0.5 shrink-0" aria-hidden />
+                  {t('nie możesz odpowiadać w imieniu strony audytowanej', 'you cannot respond on behalf of the auditee')}
+                </p>
+              )}
+              {(!scaleAndPolishEnabled || canVerify) && (
+                <p className="flex gap-1.5 text-[11px] text-c-text-muted">
+                  <Lock size={12} className="mt-0.5 shrink-0" aria-hidden />
+                  {t(
+                    'nie możesz zweryfikować skuteczności własnego działania korygującego',
+                    'you cannot verify the effectiveness of your own corrective action'
+                  )}
+                </p>
+              )}
             </div>
           </div>
 
@@ -1188,14 +1246,19 @@ export const CriterionWorkspaceV2: React.FC = () => {
           {canProposeAi && (
             <button
               type="button"
-              onClick={() => scrollToPhase('planowanie')}
+              // Gap pack 2026-08-26 (item 5a): this used to jump to
+              // 'planowanie', which has no Teresa card at all (see the
+              // `p.id === 'planowanie'` block above) — the only
+              // `TeresaProposalCard` instance lives in the 'ustalenia' phase
+              // (line ~1566, "Teresa: wyjaśnij kryterium").
+              onClick={() => scrollToPhase('ustalenia')}
               className="inline-flex h-8 items-center gap-1.5 rounded-token-sm border border-c-border px-2.5 text-[11.5px] font-medium text-c-text-secondary hover:border-c-border-strong hover:text-c-text"
             >
               <Sparkles size={13} aria-hidden />
               {t('Teresa', 'Teresa')}
             </button>
           )}
-          <div className="relative">
+          <div className="relative" ref={kebabRef}>
             <button
               type="button"
               onClick={() => setKebabOpen((v) => !v)}
@@ -1206,7 +1269,7 @@ export const CriterionWorkspaceV2: React.FC = () => {
               <MoreVertical size={17} aria-hidden />
             </button>
             {kebabOpen && (
-              <div className="absolute right-0 top-9 z-10 w-56 rounded-token-md border border-c-border-subtle bg-c-surface py-1 shadow-token-pop">
+              <div data-testid="v2-kebab-menu" className="absolute right-0 top-9 z-10 w-56 rounded-token-md border border-c-border-subtle bg-c-surface py-1 shadow-token-pop">
                 <button
                   type="button"
                   onClick={() => {
@@ -1221,11 +1284,7 @@ export const CriterionWorkspaceV2: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => {
-                    try {
-                      void navigator.clipboard.writeText(criterion.refCode || criterion.id);
-                    } catch {
-                      /* no-op */
-                    }
+                    void copyToClipboard(criterion.refCode || criterion.id, t('Skopiowano kod obiektu', 'Object code copied'));
                     setKebabOpen(false);
                   }}
                   className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-c-text hover:bg-c-surface-raised"
@@ -1238,10 +1297,19 @@ export const CriterionWorkspaceV2: React.FC = () => {
           </div>
           <button
             type="button"
+            data-testid="v2-primary-cta"
             onClick={primaryAction.onClick}
             disabled={primaryAction.disabled}
-            title={primaryAction.title}
-            className="inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-token-lg border border-c-cta-bg bg-c-cta-bg px-3.5 text-xs font-semibold text-c-cta-text disabled:cursor-not-allowed disabled:opacity-45"
+            // Gap pack 2026-08-26 (item 5e): most disabled reasons only had
+            // `primaryAction.title` set for 2 of 9 branches — the label
+            // text itself (the reason) had no guaranteed hover/focus
+            // tooltip, so a visually clipped label lost its explanation.
+            // Falls back to the label itself when no explicit title was
+            // set and the button is disabled.
+            title={scaleAndPolishEnabled ? (primaryAction.title ?? (primaryAction.disabled ? primaryAction.label : undefined)) : primaryAction.title}
+            className={`inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-token-lg border border-c-cta-bg bg-c-cta-bg px-3.5 text-xs font-semibold text-c-cta-text disabled:cursor-not-allowed disabled:opacity-45 ${
+              scaleAndPolishEnabled ? 'max-w-[260px] truncate' : ''
+            }`}
           >
             {primaryAction.label}
           </button>
@@ -1249,7 +1317,13 @@ export const CriterionWorkspaceV2: React.FC = () => {
       </div>
 
       {/* ===== Menu 3 — 4 fazy jako nawigacja wewnętrzna ===== */}
-      <div className="flex h-12 shrink-0 items-center gap-2 border-b border-c-border-subtle bg-c-bg px-4">
+      {/*
+        Gap pack 2026-08-26 (item 5f): every child here is `shrink-0`, so on
+        a narrow viewport (or long PL phase labels) the row overflowed the
+        screen with no way to reach the clipped chips. `overflow-x-auto`
+        turns that into a scrollable row instead — additive, no chip removed.
+      */}
+      <div className={`flex h-12 shrink-0 items-center gap-2 border-b border-c-border-subtle bg-c-bg px-4 ${scaleAndPolishEnabled ? 'overflow-x-auto' : ''}`}>
         <span className="mr-0.5 shrink-0 text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">{t('Faza audytu', 'Audit phase')}</span>
         <div role="group" aria-label={t('Fazy audytu kryterium', 'Criterion audit phases')} className="inline-flex items-center gap-1 rounded-full border border-c-border-subtle bg-c-surface-raised p-1">
           {phases.map((p) => (
@@ -1648,6 +1722,7 @@ export const CriterionWorkspaceV2: React.FC = () => {
                         load();
                         loadHistory();
                       }}
+                      nameForUser={scaleAndPolishEnabled ? nameFor : undefined}
                     />
                   ) : (
                     <div className="space-y-2.5">
