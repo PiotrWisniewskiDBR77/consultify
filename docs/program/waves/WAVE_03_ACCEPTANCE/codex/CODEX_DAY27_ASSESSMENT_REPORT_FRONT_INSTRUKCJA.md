@@ -79,13 +79,13 @@ Naruszenie tego ograniczenia = odrzucenie dyżuru, niezależnie od jakości resz
 1. Punktem wyjścia jest **gałąź `codex/m03-admin-20260824`**, przypięta do
    commitu-markera podanego niżej.
 
-   **SHA markera: 2c455fabe2**
+   **SHA markera: 6d3cebe779**
 
    ```bash
    cd <root-repo>
    git fetch --all --prune
    git log --oneline -25 codex/m03-admin-20260824
-   git merge-base --is-ancestor 2c455fabe2 codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
+   git merge-base --is-ancestor 6d3cebe779 codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
    ```
 
 2. **Jeśli marker nie jest przodkiem tipa albo gałąź nie istnieje — STOP.**
@@ -178,7 +178,7 @@ Naruszenie tego ograniczenia = odrzucenie dyżuru, niezależnie od jakości resz
    format `YYYYMMDD`):
 
    ```bash
-   git branch codex/assessment-report-front-day27-<data> 2c455fabe2
+   git branch codex/assessment-report-front-day27-<data> 6d3cebe779
    git worktree add /private/tmp/consultify-assessment-day27 codex/assessment-report-front-day27-<data>
    cd /private/tmp/consultify-assessment-day27
    ln -s /Users/piotrwisniewski/Developer/Consultify/node_modules node_modules   # DEC-86, TYLKO ODCZYT
@@ -1664,7 +1664,7 @@ git diff --name-only codex/m03-admin-20260824...HEAD -- server/
 git diff --name-only codex/m03-admin-20260824...HEAD -- src/components/assessment/drd/DrdMethodWorkspaceScreen.tsx src/components/method-workspace/MethodWorkspaceShell.tsx src/components/standard src/components/shared
 <wynik MUSI być pusty — wklej dosłownie>
 
-## Marker: 2c455fabe2 — POTWIERDZONY / BRAK
+## Marker: 6d3cebe779 — POTWIERDZONY / BRAK
 
 <wynik obu komend z §0.1 pkt 1; przy rozejściu: git log --oneline marker..tip + lista plików>
 
