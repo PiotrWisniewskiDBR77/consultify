@@ -105,7 +105,28 @@ const response =
         producerEnabled: true,
       }
     : { signals: [], nextCursor: null, producerEnabled: state === 'producent-off' ? false : true };
-const api = { get: async () => response, post: async () => ({ producerEnabled: true }) };
+
+// FIX-11 (dyżur 26 chat-signals-front, odbiór P2.11) — stan dławienia (6) nie
+// jest już wstrzykiwany przez harnessowy prop w kodzie produkcyjnym. Zamiast
+// tego ten harness (dev-render, NIE kod produkcyjny) symuluje realny 429 przez
+// istniejące DI `api.post` i sam klika „Odśwież" tuż po zamontowaniu — to samo
+// zdarzenie, które w apce wywołuje prawdziwy klik użytkownika.
+const throttled = state === 'dlawienie';
+const api = {
+  get: async () => response,
+  post: async (path: string) => {
+    if (throttled && path === '/signals/refresh') {
+      throw { status: 429, data: { retryAfterSeconds: 45 } };
+    }
+    return { producerEnabled: true };
+  },
+};
+
+if (throttled) {
+  window.setTimeout(() => {
+    document.querySelector<HTMLButtonElement>('[data-testid="chat-signals-refresh"]')?.click();
+  }, 50);
+}
 
 export default function ChatSignalsFeedScreen() {
   return (
@@ -116,7 +137,6 @@ export default function ChatSignalsFeedScreen() {
             <ChatSignalsFeed
               initialResponse={response}
               api={api}
-              initialUiState={state === 'dlawienie' ? 'throttled' : 'full'}
               initialSelectedId={query.get('podglad') === '1' ? 'signal-1' : null}
             />
           </div>
