@@ -187,7 +187,99 @@ Sprzątanie: `docker rm -f cx-day28-pg` usunęło kontener; wymagane przez instr
 - C nie ma pełnego licznika K resolvera ani udanego retry-title proof.
 - E nie ma testu końcowego odczytu zadania przez My Work.
 
+## FIX-y i sprostowania po odbiorze 27.08
+
+Dyżur robotnika po werdykcie ZIELONY Z FIX-AMI (odbiór 28). Gałąź
+`codex/day28-fixes-20260827`, worktree `/private/tmp/consultify-day28-fixes`,
+z `codex/meetings-day28-20260827`. Cztery commity, po jednym na FIX:
+
+| FIX | SHA          | Pozycja instrukcji  |
+| --- | ------------ | -------------------- |
+| 1   | `9c5c4c6fe6` | P0-1 (wyścig `replayed`) |
+| 2   | `bbdfa9cc14` | P1-1 (funnel `decision`) |
+| 3   | `e5ad71671e` | P1-2 / §C.4 (retry `materialTitle`) |
+| 4   | `ae06ec6954` | P1-4 / §F.3 pkt 7 (captured-only) |
+
+### (i) ZNALEZISKO P1 — zadanie z funnela niewidoczne w My Work
+
+Funnel (`meetingNoteTaskFunnelService.ts`) tworzy zadanie przez
+`TaskService.createTask` bez pola `assigneeId` w komendzie — INSERT w
+`TaskService.ts:152-176` wstawia `assignee_id: validated.assigneeId || null`,
+czyli **zawsze `NULL`** dla tej ścieżki (żaden argument wywołania funnela
+nie niesie przypisania). Każdy odczyt My Work filtruje po `assignee_id`
+(zweryfikowano w tej sesji, `grep -n "assignee_id" server/src/routes/my-work.routes.ts`,
+m.in. `:1112-1126` GET pojedynczego zadania, `:1219-1226` listy, `:1360`/`:1597`
+filtry, `:1777`/`:1802`/`:1829` liczniki, `:8077-8525` statystyki, `:8646` —
+łącznie kilkanaście miejsc) — zadanie z funnela istnieje w bazie i przechodzi
+przez `TaskService.getTask`, ale nie pojawi się w żadnym z tych widoków dla
+nikogo, bo `assignee_id IS NULL` nie zrówna się z żadnym `userId`.
+
+Naprawa POZA zakresem tego dyżuru: to decyzja produktowa (kto ma być
+`assignee` — twórca akcji z notatki? `owner` z action item, jeśli da się
+zmapować na `userId`? administrator spotkania?), nie mechaniczny FIX.
+Zostawione jako znalezisko z dokładnym adresem, nie naprawione po cichu.
+
+### (ii) Sprostowanie do sekcji C — przypadek `decision` był przemilczany
+
+Sekcja C tego raportu (dzień 24/28, przed FIX-ami) opisuje testy funnela
+tylko dla `POST .../action-items/:index/task`. Druga ścieżka wejścia do tego
+samego funnela, `POST /:id/notes/:noteId/decision`, miała własny kontrakt
+replayu (`decideMeetingNote`) bez pokrycia — w tym odczyt
+`meetingBoundaryService.ts:796-802`, który na REPLAYU (drugie `approve` tej
+samej notatki) przekazuje `userId`/`roleKey` do `getMeetingNote` i faktycznie
+trafia w gałąź `getArtifactForUser` (na pierwszym `approve` ta gałąź jest
+martwa — `material_artifact_id` jeszcze `NULL`). FIX-2 dokłada test
+"replays an approve decision without a second materialization": trasa
+zachowuje się zgodnie z kontraktem — `replayed:true`, ten sam `receiptId`,
+dokładnie jeden wiersz w `artifact_handoff_receipts`. 8/8 PASS (7 istniejących
++ 1 nowy), realny router + realny PG.
+
+### (iii) Dopisek — zasięg zaostrzenia RRULE_UNTIL_RE / EXPLICIT_TIME_ZONE_RE
+
+`validateRecurrenceRule` (wywołująca `RRULE_UNTIL_RE`) jest wołana w
+**trzech** miejscach, nie dwóch: `POST /` (`meeting.routes.ts:335`),
+`PUT /:id` (`:385`) **i** `PATCH/DELETE /:id/occurrence` przy
+`changes.recurrenceRule` (`:1253`). Konsument frontowy dla `recurrenceRule`
+to generyczny passthrough `createMeeting`/`updateMeeting`
+(`src/services/api.ts:3553-3554`, `:3562-3563`) — `JSON.stringify(data)` bez
+żadnej konstrukcji `UNTIL=` po stronie klienta.
+`grep -rn "UNTIL=" src/` (poza testami) = **zero trafień**. Ryzyko
+regresji dla frontu = zerowe, zweryfikowane, nie tylko założone.
+
+`EXPLICIT_TIME_ZONE_RE` (`/(?:Z|[+-][0-9]{2}:[0-9]{2})$/i`) odrzuca ISO offset
+bez dwukropka (np. `+0100`, kontra poprawne `+01:00`). Dziś brak konsumenta w
+`src/` konstruującego taki offset (to samo zero-konsumentowe pole co reszta
+`recurrenceId` — patrz erraty §1.2 poz. 2 wyżej w tym raporcie).
+
+### (iv) Pomiar odbierającego po FIX-ach
+
+Pełny pomiar zasięgu wykonany przez odbierającego po scaleniu FIX-1..4:
+**269/270 PASS, ZASIĘG PEŁNY.** Jedyny FAIL jest zastany sprzed dyżuru —
+`src/components/Meeting/__tests__/MeetingObjectPage.test.tsx` (brak tekstu
+`Ship v2`) — niezwiązany z żadnym FIX-em tej sesji; `git diff --stat` na
+`src/` między `codex/meetings-day28-20260827` a `HEAD` tej gałęzi jest **pusty**
+(zero plików frontendowych dotkniętych przez FIX-1..4).
+
+### (v) Statusy pozycji po FIX-ach
+
+| Pozycja | Przed FIX-ami   | Po FIX-ach                                                                                       |
+| ------- | ---------------- | -------------------------------------------------------------------------------------------------- |
+| E       | ZROBIONE_WG_DoD, ale wyścig `replayed` niedowiedziony (P0-1) | ZROBIONE_WG_DoD — różnicujący test dowiódł regresji na HEAD (`fail`), naprawiono retry-na-23505, test zielony po naprawie; FIX-2 domyka drugi wpis do funnela (`decision`) |
+| C       | CZĘŚCIOWO (brak testu retry-title)     | CZĘŚCIOWO — test dostarczony, dowiódł że linia `userId/roleKey` w retry była neutralna (bez wpływu na odpowiedź); zrewertowana; realna luka (`setNoteStatus` nie dołącza kolumn materiału) zostaje jako osobne, większe znalezisko poza zakresem tego FIX-u |
+| F       | STOP                                    | CZĘŚCIOWO — tryb `captured` (§F.3 pkt 7) dowiedziony testem na realnym routerze+PG; pkt 4-6 (gałąź `live`) pozostają STOP, uznane za zasadne w tym dyżurze |
+| pozostałe (A, B, D) | bez zmian | bez zmian — FIX-y nie dotykały tych pozycji |
+
+Nowy P1 (brak `assigneeId` w funnelu → zadanie niewidoczne w My Work) czeka
+na decyzję produktową, poza zakresem mechanicznego FIX-u.
+
 ## Licznik i gotowość
 
 8 pozycji: **5 ZROBIONE_WG_DoD / 2 CZĘŚCIOWO / 1 STOP / 0 BRAK_API / 0 NIE_ZACZĘTE**.  
 Gotowość: **TECHNICAL_PARTIAL**. Moduł nadal `closed`; zero push i zero wysyłek rzeczywistych.
+
+Po FIX-ach dyżuru robotnika (SHA `9c5c4c6fe6`, `bbdfa9cc14`, `e5ad71671e`,
+`ae06ec6954` na `codex/day28-fixes-20260827`): pozycja E potwierdzona
+różnicującym testem wyścigu i domknięta o drugi wpis funnela; pozycja C
+pozostaje CZĘŚCIOWO ze zweryfikowaną (nie domniemaną) przyczyną braku
+retry-title; pozycja F przechodzi STOP → CZĘŚCIOWO za sprawą pkt 7 §F.3.
+Zero push, zero wysyłek rzeczywistych, zero zmian w `src/**`.
