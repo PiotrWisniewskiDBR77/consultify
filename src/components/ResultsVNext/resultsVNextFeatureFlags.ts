@@ -111,7 +111,16 @@ function writeLocalStorage(key: string, value: boolean): void {
   }
 }
 
-/** True when the given Results Next registry is enabled (default OFF everywhere). */
+/**
+ * True when the given Results Next registry is enabled. Default OFF for
+ * roiRegistry/okrRegistry (no dev-render odbiór yet). kpiRegistry flipped to
+ * the D-D default-on set on 2026-08-27 (Piotr accepted the KPI registry on
+ * dev-render screenshots — DEC-2026-08-26-112 flagged it "GOTOWE DO
+ * WŁĄCZENIA", decision deferred to the owner's visual odbiór per CLAUDE.md
+ * #7; that odbiór has now happened) — same shape as the `threePairs` /
+ * `deviationDiagnostics` promotions in `resultsFeatureFlags.ts`: ON on
+ * demo/stage/dev, OFF on public production via `resultsVNextHostAllowsDefaultOn`.
+ */
 export function isResultsVNextFlagEnabled(
   flag: ResultsVNextFlag,
   profileSource?: DemoAcceptanceProfileSource
@@ -127,9 +136,17 @@ export function isResultsVNextFlagEnabled(
   const fromLs = readLocalStorage(keys.localStorage);
   if (fromLs !== null) return fromLs;
   if (readEnv(keys.env)) return true;
-  // No D-D default-on set yet (unlike resultsFeatureFlags.ts) — none of these
-  // three domains has had a dev-render screenshot round + Piotr's odbiór.
-  // Every host (prod, demo, stage, dev) reads OFF until an explicit opt-in.
+  // kpiRegistry (DEC-2026-08-26-112, owner accept 2026-08-27): dołączony do
+  // D-D default-on (demo/stage/dev ON, public production OFF). Opt-out:
+  // ?ff_resultsVNextKpi=0. roiRegistry/okrRegistry stay OFF below — neither
+  // domain has had its dev-render screenshot round + Piotr's odbiór yet.
+  if (flag === 'kpiRegistry') {
+    return resultsVNextHostAllowsDefaultOn(
+      typeof window !== 'undefined' ? (window.location?.hostname ?? '') : ''
+    );
+  }
+  // No D-D default-on set yet for roi/okr. Every host (prod, demo, stage,
+  // dev) reads OFF until an explicit opt-in.
   return false;
 }
 
