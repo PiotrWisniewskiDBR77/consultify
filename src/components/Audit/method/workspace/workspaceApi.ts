@@ -795,3 +795,42 @@ export async function commitProposal(id: string): Promise<WorkspaceAiProposal> {
   const res = await Api.post(`/audits/ai/proposals/${encodeURIComponent(id)}/commit`, {});
   return unwrapEnvelope(res) as WorkspaceAiProposal;
 }
+
+// ---------------------------------------------------------------------------
+// Ścieżka audytowa (audit trail) — U6, `server/src/routes/audits/trail.routes.ts`.
+// Realny log zdarzeń domenowych (`audit_domain_events`), nie atrapa: użyty
+// przez v2/CriterionWorkspaceV2 dla sekcji „Historia" prawego panelu.
+// ---------------------------------------------------------------------------
+
+export interface WorkspaceDomainEvent {
+  id: string;
+  programId: string | null;
+  entityType: string;
+  entityId: string | null;
+  eventType: string;
+  actorId: string | null;
+  actorRole: string | null;
+  summary: string | null;
+  payload: Record<string, unknown>;
+  occurredAt: string;
+}
+
+/** Pełna historia jednego obiektu (rosnąco chronologicznie) — `GET /trail/history`. */
+export async function getEntityHistory(entityType: string, entityId: string): Promise<WorkspaceDomainEvent[]> {
+  const res = await Api.get(
+    `/audits/trail/history?entityType=${encodeURIComponent(entityType)}&entityId=${encodeURIComponent(entityId)}`
+  );
+  const payload = unwrapEnvelope(res);
+  return toArray<Record<string, unknown>>(payload).map((r) => ({
+    id: String(r.id ?? ''),
+    programId: (r.programId as string | null | undefined) ?? null,
+    entityType: String(r.entityType ?? entityType),
+    entityId: (r.entityId as string | null | undefined) ?? entityId,
+    eventType: String(r.eventType ?? ''),
+    actorId: (r.actorId as string | null | undefined) ?? null,
+    actorRole: (r.actorRole as string | null | undefined) ?? null,
+    summary: (r.summary as string | null | undefined) ?? null,
+    payload: (r.payload as Record<string, unknown> | undefined) ?? {},
+    occurredAt: String(r.occurredAt ?? ''),
+  }));
+}

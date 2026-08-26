@@ -44,6 +44,12 @@ export interface FindingPanelProps {
   onFindingDetailChange: (detail: WorkspaceFindingDetail | null) => void;
   /** Wywołane po każdej zmianie listy ustaleń — kryterium odświeża liczniki. */
   onFindingsChanged?: () => void;
+  /**
+   * Gdy podane, tabela pokazuje domyślnie tylko pierwsze `maxRows` wierszy +
+   * link „pokaż wszystkie (N)" pod tabelą (DEC-88, wariant A pyt. 2).
+   * Nieustawione (domyślnie `undefined`) = bez zmian, cała lista jak dotąd.
+   */
+  maxRows?: number;
 }
 
 const SEVERITIES: FindingSeverity[] = ['informational', 'low', 'medium', 'high', 'critical'];
@@ -56,6 +62,56 @@ function findingStatusTone(status: string): 'success' | 'warning' | 'danger' | '
   return 'warning';
 }
 
+// Słowniki KLASYFIKACJI i STATUSU ustalenia — jedno miejsce, tak jak lokalny
+// `t(pl,en)` tego ekranu. Odbiór 2026-08-26: „zero surowych enumów na twarzy
+// ekranu" — wartości z API (`classification` wolny string ograniczony do
+// czterech opcji formularza niżej; `FindingStatus`, `workspaceApi.ts`)
+// zostają bez zmian, tylko WARSTWA WYŚWIETLANIA dostaje pigułkę PL/EN.
+// Nierozpoznana wartość (np. przyszłe rozszerzenie słownika) pokazuje się
+// wprost — nigdy pusto — więc nic nie znika po cichu.
+const FINDING_CLASSIFICATION_LABEL_PL: Record<string, string> = {
+  nonconforming: 'Niezgodność',
+  observation: 'Obserwacja',
+  opportunity_for_improvement: 'Szansa na usprawnienie',
+  evidence_insufficient: 'Dowód niewystarczający',
+};
+const FINDING_CLASSIFICATION_LABEL_EN: Record<string, string> = {
+  nonconforming: 'Nonconformity',
+  observation: 'Observation',
+  opportunity_for_improvement: 'Opportunity for improvement',
+  evidence_insufficient: 'Insufficient evidence',
+};
+
+const FINDING_STATUS_LABEL_PL: Record<string, string> = {
+  draft: 'Szkic',
+  in_review: 'W recenzji',
+  confirmed: 'Potwierdzone',
+  response_pending: 'Czeka na odpowiedź',
+  remediation_in_progress: 'Naprawa w toku',
+  verification_pending: 'Czeka na weryfikację',
+  closed: 'Zamknięte',
+  risk_accepted: 'Ryzyko zaakceptowane',
+  rejected: 'Odrzucone',
+};
+const FINDING_STATUS_LABEL_EN: Record<string, string> = {
+  draft: 'Draft',
+  in_review: 'In review',
+  confirmed: 'Confirmed',
+  response_pending: 'Response pending',
+  remediation_in_progress: 'Remediation in progress',
+  verification_pending: 'Verification pending',
+  closed: 'Closed',
+  risk_accepted: 'Risk accepted',
+  rejected: 'Rejected',
+};
+
+export function findingStatusLabel(status: string, isPolish: boolean): string {
+  return (isPolish ? FINDING_STATUS_LABEL_PL : FINDING_STATUS_LABEL_EN)[status] ?? status;
+}
+export function findingClassificationLabel(classification: string, isPolish: boolean): string {
+  return (isPolish ? FINDING_CLASSIFICATION_LABEL_PL : FINDING_CLASSIFICATION_LABEL_EN)[classification] ?? classification;
+}
+
 export const FindingPanel: React.FC<FindingPanelProps> = ({
   programId,
   criterionId,
@@ -66,6 +122,7 @@ export const FindingPanel: React.FC<FindingPanelProps> = ({
   onSelectFinding,
   onFindingDetailChange,
   onFindingsChanged,
+  maxRows,
 }) => {
   const t = useCallback((pl: string, en: string) => (isPolish ? pl : en), [isPolish]);
 
@@ -75,6 +132,7 @@ export const FindingPanel: React.FC<FindingPanelProps> = ({
   const [detail, setDetail] = useState<WorkspaceFindingDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
+  const [showAll, setShowAll] = useState(false);
 
   const [formOpen, setFormOpen] = useState(false);
   const [statement, setStatement] = useState('');
@@ -237,12 +295,17 @@ export const FindingPanel: React.FC<FindingPanelProps> = ({
       id: 'classification',
       label: t('Klasyfikacja', 'Classification'),
       width: '160px',
+      render: (row: WorkspaceFinding) => (
+        <span className="text-sm text-c-text">{findingClassificationLabel(row.classification, isPolish)}</span>
+      ),
     },
     {
       id: 'status',
       label: t('Status', 'Status'),
       width: '150px',
-      render: (row: WorkspaceFinding) => <StatusChip label={row.status} tone={findingStatusTone(row.status)} />,
+      render: (row: WorkspaceFinding) => (
+        <StatusChip label={findingStatusLabel(row.status, isPolish)} tone={findingStatusTone(row.status)} />
+      ),
     },
   ];
 
@@ -340,21 +403,34 @@ export const FindingPanel: React.FC<FindingPanelProps> = ({
       {loading ? (
         <LoadingState template="list" rows={2} />
       ) : (
-        <StandardTable
-          columns={columns}
-          data={items as unknown as TableRow[]}
-          loading={false}
-          selectedRowId={selectedFindingId}
-          onRowClick={(row) => onSelectFinding(String(row.id))}
-          persistKey="audits.method.workspace.findings"
-          empty={{
-            icon: ClipboardList,
-            title: t('Brak ustaleń', 'No findings yet'),
-            description: canDraft
-              ? t('Utwórz pierwsze ustalenie dla tego kryterium.', 'Create the first finding for this criterion.')
-              : t('Dla tego kryterium nie zarejestrowano jeszcze ustalenia.', 'No finding has been recorded for this criterion yet.'),
-          }}
-        />
+        <>
+          <StandardTable
+            columns={columns}
+            data={(maxRows && !showAll ? items.slice(0, maxRows) : items) as unknown as TableRow[]}
+            loading={false}
+            selectedRowId={selectedFindingId}
+            onRowClick={(row) => onSelectFinding(String(row.id))}
+            persistKey="audits.method.workspace.findings"
+            empty={{
+              icon: ClipboardList,
+              title: t('Brak ustaleń', 'No findings yet'),
+              description: canDraft
+                ? t('Utwórz pierwsze ustalenie dla tego kryterium.', 'Create the first finding for this criterion.')
+                : t('Dla tego kryterium nie zarejestrowano jeszcze ustalenia.', 'No finding has been recorded for this criterion yet.'),
+            }}
+          />
+          {maxRows && items.length > maxRows && (
+            <button
+              type="button"
+              onClick={() => setShowAll((v) => !v)}
+              className="text-xs font-semibold text-c-focus-solid underline underline-offset-2"
+            >
+              {showAll
+                ? t('Pokaż mniej', 'Show fewer')
+                : t(`Pokaż wszystkie (${items.length})`, `Show all (${items.length})`)}
+            </button>
+          )}
+        </>
       )}
 
       {selectedFindingId && detailLoading && <LoadingState template="panel" />}

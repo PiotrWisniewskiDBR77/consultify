@@ -94,7 +94,7 @@
 import React, { useEffect } from 'react';
 import { Route, Routes, useNavigate } from 'react-router-dom';
 
-import { CriterionWorkspace } from '../../src/components/Audit/method/workspace/CriterionWorkspace';
+import { CriterionWorkspaceGate } from '../../src/components/Audit/method/workspace/CriterionWorkspaceGate';
 import type {
   ActionKind,
   ActionStatus,
@@ -117,6 +117,7 @@ import type {
 import { FeatureFlagsProvider } from '../../src/contexts/FeatureFlagsContext';
 import { AppProviders } from '../../src/providers/AppProviders';
 import { Api } from '../../src/services/api';
+import { useAppStore } from '../../src/store/useAppStore';
 import { seedRealisticSession } from '../mocks/seedStore';
 
 seedRealisticSession();
@@ -132,12 +133,32 @@ try {
 }
 
 const CURRENT_USER_ID = 'user-piotr-demo'; // z seedRealisticSession — stałe dla całego harnessu
-const AUDITOR_ID = 'user-marek-audytor';
-const AUDITEE_ID = 'user-jan-kowalski';
+const AUDITOR_ID = 'user-pawel-nowak';
+const AUDITEE_ID = 'user-magdalena-zielinska';
 
-const PROGRAM_ID = 'prog-crm-obsluga-zgloszen';
-const CRITERION_ID = 'crit-rejestracja-zgloszenia';
+const PROGRAM_ID = 'prog-zak-2026-q3';
+const CRITERION_ID = 'crit-zak-8-4-1';
 const ROUTE_PATH = `/audit-programs/method/${PROGRAM_ID}/criteria/${CRITERION_ID}`;
+
+// W4 (2026-08-26): dane wyrównane 1:1 z akceptowanym prototypem SPEC-A
+// (`docs/program/waves/WAVE_03_ACCEPTANCE/prototypes/audit-criterion-prototyp.html`,
+// gałąź `codex/criterion-prototyp-20260826`) — Metalpol Sp. z o.o., ZAK-8.4.1,
+// UST-2026-014/015 — tak żeby zrzuty V2 były porównywalne 1:1 z tym, co
+// zaakceptował właściciel (DEC-88). Tożsamość `currentUser` harnessu jest
+// STAŁA (Piotr, `user-piotr-demo` z `seedRealisticSession`) — tu gra rolę
+// audytora wiodącego (parametr `?role=` domyślnie `lead_auditor`), Paweł
+// Nowak jest audytorem, Magdalena Zielińska stroną audytowaną — jedyna
+// świadoma różnica względem prototypu (tam audytor wiodący to „Anna
+// Kowalczyk"): tożsamości harnessu nie da się podmienić bez złamania wzorca
+// `audyty-piec-powierzchni.tsx`.
+useAppStore.setState({
+  currentOrganization: {
+    id: 'org-metalpol-demo',
+    name: 'Metalpol Sp. z o.o.',
+    plan: 'enterprise',
+    status: 'active',
+  } as any,
+} as any);
 
 const VALID_ROLES: AuditRole[] = ['auditee', 'auditor', 'lead_auditor', 'reviewer', 'action_owner'];
 const VALID_STAGES = ['fresh', 'evidence', 'tested', 'finding', 'remediation', 'closed'] as const;
@@ -155,6 +176,19 @@ const RANKN = RANK[STAGE];
 const STATE = qp.get('state') || 'default'; // loading|error|forbidden|default
 const TERESA_ON = qp.get('teresa') === '1';
 
+// W4 V2: `?ff_criterionWorkspaceV2=1` musi być zapisane do localStorage TERAZ
+// (przed montowaniem) — `AudytyWarsztatKryteriumRoutes` poniżej robi
+// `navigate(ROUTE_PATH, {replace:true})`, który podmienia URL i GUBI query
+// string, więc `CriterionWorkspaceGate`'s query-override (czytany przy
+// renderze, po tej nawigacji) nigdy by go nie zobaczył. localStorage
+// przechodzi przez tę nawigację bez zmian.
+try {
+  const v2Param = qp.get('ff_criterionWorkspaceV2');
+  if (v2Param !== null) localStorage.setItem('ff.criterion_workspace_v2', v2Param);
+} catch {
+  // ignore
+}
+
 // ---------------------------------------------------------------------------
 // Kryterium — łączy się jeden do jednego z realistycznym audytem procesu
 // obsługi zgłoszeń (BEZ odniesienia do ISO/IATF — norma zewnętrzna nie jest
@@ -163,13 +197,23 @@ const TERESA_ON = qp.get('teresa') === '1';
 
 const EXPECTED_EVIDENCE = [
   {
-    kind: 'system_export' as EvidenceKind,
-    description: 'Eksport rejestru zgłoszeń z systemu ticketowego za wybrany miesiąc (data wpłynięcia i data rejestracji)',
+    kind: 'document' as EvidenceKind,
+    description: 'Karty oceny okresowej dostawców klasy A za 2025 (17 dostawców, lista AVL aktualna)',
     mandatory: true,
   },
   {
-    kind: 'screenshot' as EvidenceKind,
-    description: 'Zrzut ekranu potwierdzający znacznik czasu rejestracji przykładowego zgłoszenia',
+    kind: 'system_export' as EvidenceKind,
+    description: 'Eksport modułu SRM potwierdzający daty ostatniej kwalifikacji/oceny każdego dostawcy klasy A',
+    mandatory: true,
+  },
+  {
+    kind: 'document' as EvidenceKind,
+    description: 'Rejestr zamówień z Q1-Q3 2026 z odniesieniem do zatwierdzonej listy dostawców (AVL)',
+    mandatory: true,
+  },
+  {
+    kind: 'note' as EvidenceKind,
+    description: 'Zapisy odstępstw od AVL (jeśli występują) z uzasadnieniem',
     mandatory: false,
   },
 ];
@@ -185,113 +229,161 @@ function buildCriterion(): WorkspaceCriterion {
   return {
     id: CRITERION_ID,
     programId: PROGRAM_ID,
-    organizationId: 'org-dbr77-demo',
-    refCode: 'OBS-3.1',
-    title: 'Rejestracja zgłoszenia',
-    requirementText: 'Zgłoszenie jest rejestrowane w ciągu jednego dnia roboczego od wpłynięcia.',
-    sourceReference: 'Procedura obsługi zgłoszeń, pkt 3.1',
+    organizationId: 'org-metalpol-demo',
+    refCode: 'ZAK-8.4.1',
+    title: 'Kwalifikacja i ocena okresowa dostawców krytycznych',
+    requirementText:
+      'Organizacja utrzymuje udokumentowany proces kwalifikacji dostawców krytycznych oraz przeprowadza ich ocenę okresową nie rzadziej niż raz w roku (Procedura P-ZAK-02 rew. 4, pkt 8.4.1).',
+    sourceReference: 'ISO 9001:2015, pkt 8.4.1',
     auditQuestion:
-      'Czy każde zgłoszenie klienta trafiające do zespołu obsługi jest rejestrowane w systemie ticketowym w ciągu jednego dnia roboczego od wpłynięcia?',
+      'Czy każdy dostawca klasy A z zatwierdzonej listy (AVL) ma udokumentowaną kwalifikację wstępną oraz aktualną (za 2025) kartę oceny okresowej, a zamówienia są składane wyłącznie u dostawców z AVL?',
     expectedEvidence: EXPECTED_EVIDENCE,
     auditProcedure:
-      'Porównanie znacznika czasu wpłynięcia zgłoszenia ze znacznikiem czasu jego rejestracji w systemie ticketowym, na próbie zgłoszeń z jednego miesiąca kalendarzowego.',
-    samplingGuidance:
-      'Min. 12 zgłoszeń z jednego miesiąca, w tym zgłoszenia wpływające w piątki po południu i przed dniami wolnymi od pracy.',
+      'Porównanie listy dostawców klasy A (AVL) z rejestrem kart oceny okresowej za 2025 oraz z rejestrem zamówień Q1-Q3 2026, na próbie dostawców klasy A.',
+    samplingGuidance: 'Wszyscy dostawcy klasy A (17), pełna próba — nie losowa (populacja niewielka, ryzyko wysokie).',
     applicable: true,
     notApplicableReason: null,
     assignedAuditorId: AUDITOR_ID,
     assignedAuditeeId: AUDITEE_ID,
     auditeeResponse: auditeeResponded
-      ? 'Wszystkie zgłoszenia są rejestrowane przez konsultanta pierwszej linii bezpośrednio w momencie odebrania telefonu lub maila. Wyjątkiem są zgłoszenia wpływające po godzinach pracy — te są rejestrowane następnego dnia roboczego rano.'
+      ? 'Potwierdzamy, że proces kwalifikacji wstępnej jest stosowany przy wprowadzaniu każdego nowego dostawcy. Ocena okresowa dla części dostawców klasy A rzeczywiście nie została wykonana za 2025 — zespół zakupów był w tym okresie w trakcie wdrożenia nowego modułu SRM.'
       : null,
     auditeeRespondedBy: auditeeResponded ? AUDITEE_ID : null,
     auditeeRespondedAt: auditeeResponded ? '2026-08-05T09:40:00Z' : null,
     procedurePerformed: tested
-      ? 'Porównano datę/godzinę wpłynięcia zgłoszenia (znacznik z bramki mailowej / call center) z datą/godziną utworzenia rekordu w systemie ticketowym dla próby 12 zgłoszeń z lipca 2026.'
+      ? 'Porównano listę 17 dostawców klasy A (AVL) z rejestrem kart oceny okresowej za 2025 oraz z rejestrem zamówień Q1-Q3 2026 w module SRM.'
       : null,
-    sampleDescription: tested
-      ? '12 zgłoszeń wylosowanych z rejestru lipca 2026, w tym 3 zgłoszenia wpływające w piątek po południu.'
-      : null,
+    sampleDescription: tested ? '17 dostawców klasy A — pełna próba (populacja niewielka, ryzyko wysokie).' : null,
     testPerformed: tested
-      ? 'Dla każdego zgłoszenia w próbie policzono liczbę dni roboczych między wpłynięciem a rejestracją w systemie.'
+      ? 'Dla każdego z 17 dostawców klasy A zweryfikowano obecność karty oceny okresowej za 2025 oraz zgodność zamówień Q1-Q3 2026 z aktualną listą AVL.'
       : null,
-    testResult: tested ? ('fail' as TestResult) : null,
+    testResult: tested ? ('partial' as TestResult) : null,
     auditorNote: null,
     auditorConclusion: concluded
-      ? 'Trzy z dwunastu próbkowanych zgłoszeń (25%) zostały zarejestrowane później niż jeden dzień roboczy od wpłynięcia — wymóg pkt 3.1 procedury nie jest spełniany w sposób systematyczny.'
+      ? 'Kryterium spełnione częściowo. Mechanizm kwalifikacji i oceny dostawców istnieje i jest realnie stosowany przy wprowadzaniu nowych dostawców, ale nie jest utrzymywany w cyklu rocznym: dla 5 z 17 dostawców klasy A brak karty oceny okresowej za 2025, a w 3 przypadkach zamówienia złożono u dostawcy spoza AVL bez zapisu odstępstwa.'
       : null,
     conformityStatus: concluded ? ('nonconforming' as ConformityStatus) : ('not_tested' as ConformityStatus),
     concludedBy: concluded ? AUDITOR_ID : null,
-    concludedAt: concluded ? '2026-08-07T11:00:00Z' : null,
+    concludedAt: concluded ? '2026-08-21T11:47:00Z' : null,
     workStatus,
     createdAt: '2026-07-20T08:00:00Z',
-    updatedAt: concluded ? '2026-08-07T11:00:00Z' : tested ? '2026-08-06T16:00:00Z' : auditeeResponded ? '2026-08-05T09:40:00Z' : '2026-07-20T08:00:00Z',
+    updatedAt: concluded ? '2026-08-21T14:32:00Z' : tested ? '2026-08-20T16:05:00Z' : auditeeResponded ? '2026-08-05T09:40:00Z' : '2026-07-20T08:00:00Z',
   };
 }
 
 function buildEvidence(): WorkspaceEvidence[] {
   if (RANKN < RANK.evidence) return [];
   const reviewed = RANKN >= RANK.tested;
-  const item: WorkspaceEvidence = {
-    id: 'evid-114',
+  const accepted: WorkspaceEvidence = {
+    id: 'evid-d1',
+    programId: PROGRAM_ID,
+    criterionId: CRITERION_ID,
+    requestId: null,
+    evidenceKind: 'document',
+    title: 'Karty oceny okresowej dostawców klasy A — 2025 (12 z 17)',
+    description: 'Komplet kart oceny okresowej dla 12 z 17 dostawców klasy A za 2025.',
+    externalReference: null,
+    contentSnapshot: null,
+    providedBy: AUDITEE_ID,
+    providedAt: '2026-08-18T09:10:00Z',
+    capturedAt: '2026-08-18T09:10:00Z',
+    sufficiency: reviewed ? 'sufficient' : 'unknown',
+    reliability: reviewed ? 'reliable' : 'unknown',
+    currencyStatus: reviewed ? 'current' : 'unknown',
+    supportsConformity: reviewed ? true : null,
+    reviewNote: reviewed ? 'D-1 — potwierdza kwalifikację i ocenę dla 12 z 17 dostawców klasy A.' : null,
+    accepted: reviewed ? true : null,
+    acceptedBy: reviewed ? AUDITOR_ID : null,
+    acceptedAt: reviewed ? '2026-08-20T09:00:00Z' : null,
+    rejectionReason: null,
+    createdAt: '2026-08-18T09:10:00Z',
+    updatedAt: reviewed ? '2026-08-20T09:00:00Z' : '2026-08-18T09:10:00Z',
+  };
+  const contradicting: WorkspaceEvidence = {
+    id: 'evid-d2',
     programId: PROGRAM_ID,
     criterionId: CRITERION_ID,
     requestId: null,
     evidenceKind: 'system_export',
-    title: 'Eksport rejestru zgłoszeń — lipiec 2026',
-    description: 'Pełny eksport CSV z systemu ticketowego, 214 zgłoszeń, z datami wpłynięcia i rejestracji.',
+    title: 'Eksport SRM — daty ostatniej oceny wszystkich dostawców klasy A',
+    description: 'Pełny eksport z modułu SRM, 17 dostawców klasy A, z datą ostatniej kwalifikacji/oceny.',
     externalReference: null,
     contentSnapshot: null,
     providedBy: AUDITEE_ID,
-    providedAt: '2026-08-05T10:15:00Z',
-    capturedAt: '2026-08-05T10:15:00Z',
+    providedAt: '2026-08-18T09:20:00Z',
+    capturedAt: '2026-08-18T09:20:00Z',
     sufficiency: reviewed ? 'sufficient' : 'unknown',
     reliability: reviewed ? 'reliable' : 'unknown',
     currencyStatus: reviewed ? 'current' : 'unknown',
     supportsConformity: reviewed ? false : null, // dowód PRZECZĄCY — nigdy chowany (kanon EvidencePanel)
     reviewNote: reviewed
-      ? 'Dowód potwierdza rejestrację, ale ujawnia opóźnienia w 3 z 12 próbkowanych zgłoszeń.'
+      ? 'D-2 — ujawnia brak oceny okresowej za 2025 dla 5 z 17 dostawców klasy A.'
       : null,
     accepted: reviewed ? true : null,
     acceptedBy: reviewed ? AUDITOR_ID : null,
-    acceptedAt: reviewed ? '2026-08-06T09:00:00Z' : null,
+    acceptedAt: reviewed ? '2026-08-20T09:05:00Z' : null,
     rejectionReason: null,
-    createdAt: '2026-08-05T10:15:00Z',
-    updatedAt: reviewed ? '2026-08-06T09:00:00Z' : '2026-08-05T10:15:00Z',
+    createdAt: '2026-08-18T09:20:00Z',
+    updatedAt: reviewed ? '2026-08-20T09:05:00Z' : '2026-08-18T09:20:00Z',
   };
-  return [item];
+  const rejected: WorkspaceEvidence = {
+    id: 'evid-d3',
+    programId: PROGRAM_ID,
+    criterionId: CRITERION_ID,
+    requestId: null,
+    evidenceKind: 'screenshot',
+    title: 'Zrzut ekranu modułu SRM (D-3)',
+    description: 'Zrzut ekranu przedstawiający listę dostawców bez widocznego okresu oceny.',
+    externalReference: null,
+    contentSnapshot: null,
+    providedBy: AUDITEE_ID,
+    providedAt: '2026-08-19T14:00:00Z',
+    capturedAt: '2026-08-19T14:00:00Z',
+    sufficiency: reviewed ? 'insufficient' : 'unknown',
+    reliability: reviewed ? 'questionable' : 'unknown',
+    currencyStatus: reviewed ? 'unknown' : 'unknown',
+    supportsConformity: null,
+    reviewNote: reviewed ? 'D-3 odrzucony — zrzut nie identyfikuje okresu, nie wchodzi do podstawy wniosku.' : null,
+    accepted: reviewed ? false : null,
+    acceptedBy: reviewed ? AUDITOR_ID : null,
+    acceptedAt: reviewed ? '2026-08-20T16:05:00Z' : null,
+    rejectionReason: reviewed ? 'Dowód nie identyfikuje okresu.' : null,
+    createdAt: '2026-08-19T14:00:00Z',
+    updatedAt: reviewed ? '2026-08-20T16:05:00Z' : '2026-08-19T14:00:00Z',
+  };
+  return [accepted, contradicting, rejected];
 }
 
-function buildFinding(): { finding: WorkspaceFinding | null; detail: WorkspaceFindingDetail | null } {
-  if (RANKN < RANK.finding) return { finding: null, detail: null };
+function buildFindings(): { findings: WorkspaceFinding[]; details: Record<string, WorkspaceFindingDetail> } {
+  if (RANKN < RANK.finding) return { findings: [], details: {} };
 
-  const status = RANKN === RANK.finding ? 'draft' : RANKN === RANK.remediation ? 'remediation_in_progress' : 'closed';
+  const status = RANKN === RANK.finding ? 'confirmed' : RANKN === RANK.remediation ? 'remediation_in_progress' : 'closed';
 
   const correction: WorkspaceCorrectiveAction = {
     id: 'act-korekcja-01',
-    findingId: 'find-obs31-01',
+    findingId: 'find-ust-2026-014',
     actionKind: 'correction' as ActionKind,
-    title: 'Ręczna rejestracja trzech zaległych zgłoszeń (#REF-2201, #REF-2244, #REF-2291) w systemie',
+    title: 'Ręczne uzupełnienie kart oceny okresowej dla 5 dostawców klasy A z zaległością za 2025',
     description: null,
     ownerUserId: AUDITEE_ID,
-    dueDate: '2026-08-08',
+    dueDate: '2026-08-25',
     status: 'implemented' as ActionStatus,
     approvedBy: AUDITOR_ID,
-    implementedAt: '2026-08-08T10:00:00Z',
+    implementedAt: '2026-08-22T10:00:00Z',
     implementedBy: AUDITEE_ID,
     createdBy: AUDITEE_ID,
   };
   const correctiveAction: WorkspaceCorrectiveAction = {
     id: 'act-korygujace-01',
-    findingId: 'find-obs31-01',
+    findingId: 'find-ust-2026-014',
     actionKind: 'corrective_action' as ActionKind,
-    title: 'Wdrożyć automatyczne powiadomienie w systemie ticketowym po 18 godzinach bez rejestracji zgłoszenia',
+    title: 'Wdrożyć automatyczne przypomnienie w module SRM 30 dni przed upływem terminu oceny okresowej dostawcy klasy A',
     description: null,
     ownerUserId: AUDITEE_ID,
-    dueDate: '2026-08-25',
+    dueDate: '2026-09-15',
     status: (RANKN >= RANK.closed ? 'verified' : 'approved') as ActionStatus,
     approvedBy: AUDITOR_ID,
-    implementedAt: RANKN >= RANK.closed ? '2026-08-20T14:00:00Z' : null,
+    implementedAt: RANKN >= RANK.closed ? '2026-09-01T14:00:00Z' : null,
     implementedBy: RANKN >= RANK.closed ? AUDITEE_ID : null,
     createdBy: AUDITOR_ID,
   };
@@ -304,13 +396,13 @@ function buildFinding(): { finding: WorkspaceFinding | null; detail: WorkspaceFi
           {
             id: 'ver-01',
             correctiveActionId: correctiveAction.id,
-            findingId: 'find-obs31-01',
+            findingId: 'find-ust-2026-014',
             verificationKind: 'effectiveness',
-            performedAt: '2026-09-05T09:00:00Z',
+            performedAt: '2026-10-05T09:00:00Z',
             performedBy: AUDITOR_ID, // NIE właściciel działania — kanon niezależnego weryfikatora
             evidenceId: null,
             result: 'effective',
-            note: 'Sprawdzono rejestr zgłoszeń za wrzesień 2026 — 0 przypadków przekroczenia terminu w próbie 15 zgłoszeń.',
+            note: 'Sprawdzono rejestr ocen okresowych za wrzesień 2026 — wszyscy 17 dostawcy klasy A mają aktualną kartę oceny.',
           },
         ]
       : [];
@@ -320,61 +412,101 @@ function buildFinding(): { finding: WorkspaceFinding | null; detail: WorkspaceFi
       ? [
           {
             id: 'resp-01',
-            findingId: 'find-obs31-01',
+            findingId: 'find-ust-2026-014',
             position: 'accept',
-            statement: 'Zgadzamy się z ustaleniem. Wdrożymy automatyczne powiadomienie w systemie ticketowym.',
+            statement: 'Zgadzamy się z ustaleniem. Wdrożymy automatyczne przypomnienie w module SRM przed upływem terminu oceny.',
             respondedBy: AUDITEE_ID,
-            respondedAt: '2026-08-07T15:00:00Z',
+            respondedAt: '2026-08-22T15:00:00Z',
             status: 'submitted',
           },
         ]
       : [];
 
-  const finding: WorkspaceFinding = {
-    id: 'find-obs31-01',
+  const primaryFinding: WorkspaceFinding = {
+    id: 'find-ust-2026-014',
     programId: PROGRAM_ID,
     criterionId: CRITERION_ID,
-    referenceCode: 'F-2026-014',
-    statement:
-      'Trzy z dwunastu próbkowanych zgłoszeń (25%) zostały zarejestrowane w systemie później niż jeden dzień roboczy od wpłynięcia, niezgodnie z pkt 3.1 procedury obsługi zgłoszeń.',
-    requirementText: 'Zgłoszenie jest rejestrowane w ciągu jednego dnia roboczego od wpłynięcia.',
-    conditionText: 'Zgłoszenia #REF-2201, #REF-2244, #REF-2291 zarejestrowano odpowiednio 2, 2 i 3 dni robocze po wpłynięciu.',
-    gapText: 'Brak mechanizmu przypominającego / eskalacji dla zgłoszeń wpływających poza godzinami szczytu (piątek po południu, przed dniami wolnymi).',
-    objectiveEvidence: ['Eksport rejestru zgłoszeń — lipiec 2026 (D-114)'],
+    referenceCode: 'UST-2026-014',
+    statement: 'Brak oceny okresowej za 2025 dla 5 z 17 dostawców klasy A (2026-08-21)',
+    requirementText: 'Ocena okresowa dostawców krytycznych nie rzadziej niż raz w roku (Procedura P-ZAK-02 rew. 4, pkt 8.4.1).',
+    conditionText: 'Dla 5 z 17 dostawców klasy A brak jest karty oceny okresowej za 2025.',
+    gapText: 'Brak mechanizmu przypominającego o zbliżającym się terminie oceny okresowej w module SRM.',
+    objectiveEvidence: ['D-1 — Karty oceny okresowej 2025', 'D-2 — Eksport SRM (daty ostatniej oceny)'],
     contradictingEvidence: [],
     classification: 'nonconforming',
     severity: 'medium',
-    recommendation: 'Wprowadzić automatyczne powiadomienie dla konsultanta, gdy zgłoszenie zbliża się do limitu jednego dnia roboczego bez rejestracji.',
+    recommendation: 'Wdrożyć automatyczne przypomnienie w module SRM 30 dni przed upływem terminu oceny okresowej.',
     rootCause:
       RANKN >= RANK.remediation
-        ? 'Brak automatycznego przypomnienia w systemie ticketowym dla zgłoszeń wpływających po godzinach szczytu — rejestracja zależy wyłącznie od pamięci konsultanta.'
+        ? 'Brak automatycznego przypomnienia w module SRM o zbliżającym się terminie oceny okresowej — proces zależy wyłącznie od ręcznego śledzenia przez zespół zakupów.'
         : null,
     rootCauseMethod: RANKN >= RANK.remediation ? '5 x Dlaczego' : null,
     rootCauseConfirmed: RANKN >= RANK.remediation,
     status,
     ownerUserId: AUDITEE_ID,
     authorId: AUDITOR_ID, // ŚWIADOMIE różny od CURRENT_USER_ID — inaczej isOwnFinding chowałby przyciski recenzji dla KAŻDEJ roli
-    reviewedBy: RANKN >= RANK.remediation ? AUDITOR_ID : null,
+    reviewedBy: AUDITOR_ID,
     aiProposed: false,
     residualRisk: null,
     residualRiskNote: null,
-    closedAt: RANKN >= RANK.closed ? '2026-09-05T09:30:00Z' : null,
+    closedAt: RANKN >= RANK.closed ? '2026-10-05T09:30:00Z' : null,
     closureNote:
       RANKN >= RANK.closed
         ? 'Działanie korygujące potwierdzone jako skuteczne w próbie kontrolnej z września 2026. Ustalenie zamknięte.'
         : null,
-    createdAt: '2026-08-07T11:05:00Z',
-    updatedAt: RANKN >= RANK.closed ? '2026-09-05T09:30:00Z' : RANKN >= RANK.remediation ? '2026-08-20T14:00:00Z' : '2026-08-07T11:05:00Z',
+    createdAt: '2026-08-21T11:40:00Z',
+    updatedAt: RANKN >= RANK.closed ? '2026-10-05T09:30:00Z' : RANKN >= RANK.remediation ? '2026-09-01T14:00:00Z' : '2026-08-21T14:32:00Z',
+  };
+  const primaryDetail: WorkspaceFindingDetail = { ...primaryFinding, managementResponses, correctiveActions, verifications };
+
+  // Drugie ustalenie — szkic, nieprzypisane, ŻADNEGO działania — realistyczny
+  // przykład wiersza „w toku" obok potwierdzonego (kanon DEC-88 pyt. 2:
+  // domyślnie 3 wiersze widoczne, tabela ma wtedy sens do przetestowania).
+  const secondaryFinding: WorkspaceFinding = {
+    id: 'find-ust-2026-015',
+    programId: PROGRAM_ID,
+    criterionId: CRITERION_ID,
+    referenceCode: 'UST-2026-015',
+    statement: 'Zamówienia złożone u dostawcy spoza zatwierdzonej listy (AVL) bez zapisu odstępstwa (3 przypadki)',
+    requirementText: 'Zamówienia są składane wyłącznie u dostawców z zatwierdzonej listy (AVL), chyba że odstępstwo jest udokumentowane.',
+    conditionText: 'W 3 przypadkach w Q1-Q3 2026 zamówienie złożono u dostawcy spoza AVL bez zapisu odstępstwa.',
+    gapText: null,
+    objectiveEvidence: ['D-2 — Eksport SRM'],
+    contradictingEvidence: [],
+    classification: 'observation',
+    severity: 'low',
+    recommendation: null,
+    rootCause: null,
+    rootCauseMethod: null,
+    rootCauseConfirmed: false,
+    status: 'draft',
+    ownerUserId: null,
+    authorId: AUDITOR_ID,
+    reviewedBy: null,
+    aiProposed: false,
+    residualRisk: null,
+    residualRiskNote: null,
+    closedAt: null,
+    closureNote: null,
+    createdAt: '2026-08-21T11:50:00Z',
+    updatedAt: '2026-08-21T11:50:00Z',
+  };
+  const secondaryDetail: WorkspaceFindingDetail = {
+    ...secondaryFinding,
+    managementResponses: [],
+    correctiveActions: [],
+    verifications: [],
   };
 
-  const detail: WorkspaceFindingDetail = { ...finding, managementResponses, correctiveActions, verifications };
-  return { finding, detail };
+  return {
+    findings: [primaryFinding, secondaryFinding],
+    details: { [primaryDetail.id]: primaryDetail, [secondaryDetail.id]: secondaryDetail },
+  };
 }
 
 const CRITERION = buildCriterion();
 const EVIDENCE: WorkspaceEvidence[] = buildEvidence();
-const { finding: FINDING, detail: FINDING_DETAIL } = buildFinding();
-const FINDINGS: WorkspaceFinding[] = FINDING ? [FINDING] : [];
+const { findings: FINDINGS, details: FINDING_DETAILS } = buildFindings();
 
 // Kopie mutowalne — POST/PATCH z ekranu (kliknięcia nadzorcy) modyfikują TE
 // zmienne, więc harness zostaje użyteczny do eksploracji, nie tylko do
@@ -382,7 +514,7 @@ const FINDINGS: WorkspaceFinding[] = FINDING ? [FINDING] : [];
 let criterionStore: WorkspaceCriterion = { ...CRITERION };
 let evidenceStore: WorkspaceEvidence[] = [...EVIDENCE];
 let findingsStore: WorkspaceFinding[] = [...FINDINGS];
-let findingDetailStore: Record<string, WorkspaceFindingDetail> = FINDING_DETAIL ? { [FINDING_DETAIL.id]: { ...FINDING_DETAIL } } : {};
+let findingDetailStore: Record<string, WorkspaceFindingDetail> = { ...FINDING_DETAILS };
 const aiProposals: Record<string, WorkspaceAiProposal> = {};
 let aiCounter = 0;
 
@@ -510,7 +642,16 @@ Api.get = (async (url: string, ...rest: unknown[]) => {
   const members = path.match(/^\/audits\/programs\/([^/]+)\/members$/);
   if (members) {
     if (STATE === 'forbidden') return envelope({ members: [] as WorkspaceProgramMember[] });
-    return envelope({ members: [{ userId: CURRENT_USER_ID, name: 'Piotr Wiśniewski', memberRole: ROLE }] });
+    // Pełna lista — Piotr (Ty) w roli z `?role=`, plus Paweł (audytor) i
+    // Magdalena (strona audytowana) — realne dane do rozwiązywania nazw w
+    // prawym panelu V2 (Właściwości/Powiązania), nie tylko do capabilities.
+    return envelope({
+      members: [
+        { userId: CURRENT_USER_ID, name: 'Piotr Wiśniewski', memberRole: ROLE },
+        { userId: AUDITOR_ID, name: 'Paweł Nowak', memberRole: 'auditor' },
+        { userId: AUDITEE_ID, name: 'Magdalena Zielińska', memberRole: 'auditee' },
+      ],
+    });
   }
 
   const criterionDetail = path.match(/^\/audits\/criteria\/([^/]+)$/);
@@ -519,6 +660,169 @@ Api.get = (async (url: string, ...rest: unknown[]) => {
     if (STATE === 'error') httpError('Serwer audytów chwilowo niedostępny (503).', 503);
     if (STATE === 'forbidden') httpError('Nie masz dostępu do tego kryterium — nie jesteś przypisany do tego programu audytowego.', 403);
     return envelope(toCriterionDetail());
+  }
+
+  // ---- V2 (SPEC-A reshell, DEC-88): kontekst programu/rodzeństwa/raportów/
+  // wniosków/historii — WSZYSTKIE realne endpointy auditsMethodApi/workspaceApi,
+  // zamockowane tu tak samo jak reszta tego harnessu (nie atrapa w komponencie). ---
+
+  // UWAGA KOPERTY: `auditsMethodApi.ts` ma WŁASNY, ŚCISŁY `unwrapEnvelope`
+  // (inny niż `workspaceApi.ts`'s) — wymaga dosłownie `res.data ===
+  // {success:true, data:<payload>}`, inaczej rzuca AUDITS_API_CONTRACT_ERROR.
+  // Te cztery mocki (getProgram/listProgramCriteria/listReports/
+  // listProposals — wszystkie z `auditsMethodApi.ts`) MUSZĄ więc owijać
+  // payload w `{success:true, data:...}` przed `envelope()`, w odróżnieniu
+  // od mocków `/audits/evidence`, `/audits/findings` itd. niżej (te idą przez
+  // `workspaceApi.ts`'s luźniejszy unwrap i payload dają wprost).
+  if (path === `/audits/programs/${PROGRAM_ID}`) {
+    return envelope({
+      success: true,
+      data: {
+        id: PROGRAM_ID,
+        name: 'Audyt wewnętrzny 2026/Q3 — proces zakupowy',
+        packId: 'pack-iso9001-zakupy',
+        packTitle: 'ISO 9001 · Zakupy',
+        packVersion: 4,
+        lifecycleState: 'fieldwork',
+        applicableCriteria: 24,
+        concludedCriteria: 9,
+        openFindings: 6,
+        leadAuditorId: CURRENT_USER_ID,
+        leadAuditorName: 'Piotr Wiśniewski',
+        plannedStart: '2026-07-15',
+        plannedEnd: '2026-09-30',
+        updatedAt: '2026-08-21T14:32:00Z',
+        objective: 'Ocena zgodności procesu zakupowego z ISO 9001:2015 pkt 8.4.',
+        scopeText: 'Zakład Ostrów Wlkp. — proces Zakupy i zaopatrzenie.',
+        projectId: null,
+        members: [],
+      },
+    });
+  }
+
+  if (path === '/audits/criteria') {
+    return envelope({
+      success: true,
+      data: {
+        criteria: [
+          {
+            id: CRITERION_ID,
+            programId: PROGRAM_ID,
+            parentId: null,
+            ordinal: 12,
+            refCode: 'ZAK-8.4.1',
+            title: 'Kwalifikacja i ocena okresowa dostawców krytycznych',
+            applicable: true,
+            conformityStatus: criterionStore.conformityStatus,
+            workStatus: criterionStore.workStatus,
+            evidenceCount: evidenceStore.length,
+            findingCount: findingsStore.length,
+            children: [],
+          },
+          {
+            id: 'crit-zak-8-4-2',
+            programId: PROGRAM_ID,
+            parentId: null,
+            ordinal: 13,
+            refCode: 'ZAK-8.4.2',
+            title: 'Nadzór nad dostawcami procesów zlecanych na zewnątrz',
+            applicable: true,
+            conformityStatus: 'not_tested',
+            workStatus: 'evidence_received',
+            evidenceCount: 1,
+            findingCount: 0,
+            children: [],
+          },
+        ],
+      },
+    });
+  }
+
+  if (path === '/audits/reports') {
+    return envelope({
+      success: true,
+      data: {
+        reports: [
+          {
+            id: 'rep-2026-q3-zakupy',
+            programId: PROGRAM_ID,
+            programName: 'Audyt wewnętrzny 2026/Q3 — proces zakupowy',
+            reportKind: 'internal',
+            version: 1,
+            title: 'Raport z audytu 2026/Q3',
+            status: 'draft',
+            language: 'pl',
+            audience: 'Zarząd',
+            confidentiality: 'Wewnętrzne',
+            approvedAt: null,
+            publishedAt: null,
+            updatedAt: '2026-08-20T10:00:00Z',
+          },
+        ],
+      },
+    });
+  }
+
+  if (path === '/audits/proposals') {
+    // Uczciwie pusto — inicjatywa naprawcza jeszcze nie istnieje, dopóki
+    // działanie korygujące (ogniwo 15) nie zostanie zarejestrowane jako
+    // wniosek (`proposalService`). V2 pokazuje to jako informacyjny stan
+    // „powstanie z działania korygującego", nie jako pustkę bez powodu.
+    return envelope({ success: true, data: { proposals: [] } });
+  }
+
+  const trailHistory = path === '/audits/trail/history';
+  if (trailHistory) {
+    return envelope([
+      {
+        id: 'ev-1',
+        programId: PROGRAM_ID,
+        entityType: 'criterion',
+        entityId: CRITERION_ID,
+        eventType: 'evidence_reviewed',
+        actorId: AUDITOR_ID,
+        actorRole: 'auditor',
+        summary: 'Dowód D-3 odrzucony — nie identyfikuje okresu',
+        payload: {},
+        occurredAt: '2026-08-20T16:05:00Z',
+      },
+      {
+        id: 'ev-2',
+        programId: PROGRAM_ID,
+        entityType: 'criterion',
+        entityId: CRITERION_ID,
+        eventType: 'ai_proposal_accepted',
+        actorId: CURRENT_USER_ID,
+        actorRole: 'lead_auditor',
+        summary: 'Teresa: propozycja redakcji ustalenia — przyjęta z poprawką',
+        payload: {},
+        occurredAt: '2026-08-21T11:12:00Z',
+      },
+      {
+        id: 'ev-3',
+        programId: PROGRAM_ID,
+        entityType: 'criterion',
+        entityId: CRITERION_ID,
+        eventType: 'criterion_concluded',
+        actorId: CURRENT_USER_ID,
+        actorRole: 'lead_auditor',
+        summary: 'Wniosek i status zgodności zapisane',
+        payload: {},
+        occurredAt: '2026-08-21T11:47:00Z',
+      },
+      {
+        id: 'ev-4',
+        programId: PROGRAM_ID,
+        entityType: 'criterion',
+        entityId: CRITERION_ID,
+        eventType: 'finding_confirmed',
+        actorId: CURRENT_USER_ID,
+        actorRole: 'lead_auditor',
+        summary: 'Potwierdzono ustalenie UST-2026-014',
+        payload: {},
+        occurredAt: '2026-08-21T14:32:00Z',
+      },
+    ]);
   }
 
   if (path === '/audits/evidence') {
@@ -854,6 +1158,29 @@ Api.patch = (async (url: string, data: any) => {
     return envelope(findingsStore.find((f) => f.id === id));
   }
 
+  // V2 Akcje: „Przekaż innemu audytorowi" / „Oznacz nie dotyczy" — realne
+  // PATCH endpointy (`assignCriterion`/`updateApplicability`), wcześniej
+  // niewpięte w żadną UI (patrz raport pracy) — teraz wpięte w V2.
+  const assign = url.match(/^\/audits\/criteria\/([^/]+)\/assign$/);
+  if (assign) {
+    criterionStore = {
+      ...criterionStore,
+      assignedAuditorId: data?.auditorId !== undefined ? data.auditorId : criterionStore.assignedAuditorId,
+      assignedAuditeeId: data?.auditeeId !== undefined ? data.auditeeId : criterionStore.assignedAuditeeId,
+    };
+    return envelope(criterionStore);
+  }
+
+  const applicability = url.match(/^\/audits\/criteria\/([^/]+)\/applicability$/);
+  if (applicability) {
+    criterionStore = {
+      ...criterionStore,
+      applicable: Boolean(data?.applicable),
+      notApplicableReason: data?.applicable ? null : (data?.reason ?? null),
+    };
+    return envelope(criterionStore);
+  }
+
   return (originalPatch as any)(url, data);
 }) as typeof Api.patch;
 
@@ -864,10 +1191,19 @@ Api.patch = (async (url: string, data: any) => {
 // `dev-render/screens/audyty-drd-report.tsx` (querySelector + .click()).
 // ---------------------------------------------------------------------------
 
+// W4 V2 (2026-08-26): `?autoselect=0` wyłącza auto-klik pierwszego wiersza
+// ustalenia. Domyślnie ON (1) — zachowuje oryginalne zachowanie tego
+// harnessu (RemediationPanel widoczny bez ręcznego klikania). Wyłączone dla
+// zrzutu „domyślny widok" fazy 3/4 zgodnego z prototypem (tam żaden wiersz
+// nie jest zaznaczony domyślnie — faza 4 zablokowana, patrz DEC-88 pyt. 2:
+// „zaznaczony wiersz ustalenia steruje fazą 4" — to realny mechanizm
+// selekcji, nie tylko etykieta).
+const AUTOSELECT = qp.get('autoselect') !== '0';
+
 function AutoInteractions(): null {
   useEffect(() => {
     let cancelled = false;
-    let findingClicked = false;
+    let findingClicked = !AUTOSELECT;
     let teresaAsked = 0;
 
     const tick = () => {
@@ -921,7 +1257,7 @@ function AudytyWarsztatKryteriumRoutes(): React.ReactElement {
   return (
     <>
       <Routes>
-        <Route path="/audit-programs/method/:programId/criteria/:criterionId" element={<CriterionWorkspace />} />
+        <Route path="/audit-programs/method/:programId/criteria/:criterionId" element={<CriterionWorkspaceGate />} />
       </Routes>
       <AutoInteractions />
     </>

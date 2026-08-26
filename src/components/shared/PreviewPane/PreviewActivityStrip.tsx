@@ -14,6 +14,15 @@ export interface PreviewActivityStripProps {
   events: ActivityEvent[];
   /** Max events to show before collapsing (default: 3) */
   initialCount?: number;
+  /**
+   * Optional override for the per-event timestamp text (default: relative
+   * "5m"/"2h"/"3d", see `formatRelative` below). Additive — existing callers
+   * that don't pass it keep the relative format unchanged. Added 2026-08-26
+   * for `CriterionWorkspaceV2` (Historia panel), which needs a full localized
+   * date/time to match its "zero raw enums/timestamps on the screen's face"
+   * canon rather than a relative offset.
+   */
+  formatTimestamp?: (timestamp: string, t: TFunction) => string;
 }
 
 function formatRelative(ts: string, t: TFunction): string {
@@ -30,6 +39,7 @@ function formatRelative(ts: string, t: TFunction): string {
 export const PreviewActivityStrip: React.FC<PreviewActivityStripProps> = ({
   events,
   initialCount = 3,
+  formatTimestamp,
 }) => {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
@@ -60,7 +70,7 @@ export const PreviewActivityStrip: React.FC<PreviewActivityStripProps> = ({
                 {event.description}
               </div>
               <div className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
-                {formatRelative(event.timestamp, t)}
+                {(formatTimestamp ?? formatRelative)(event.timestamp, t)}
               </div>
             </div>
           </div>
