@@ -54,7 +54,7 @@ Puste `inet_server_port()` jest oczekiwane dla `psql` uruchomionego wewnątrz ko
 | B.1     | CZĘŚCIOWO   | commit B.1           | `Gateway` → raporty/Assessment → `drdVizAdapter` → `server/src/data/drdStructure.ts`              | 16/16 PASS; brak osobnego readbacku sesji na realnym PG obniża status          |
 | B.2     | STOP        | —                    | serwis osiągalny przez `Gateway.ts` → `assessment-ai.routes.ts` → `aiAssessmentPartnerService.ts` | 92 błędy punktowego `tsc` po zdjęciu `@ts-nocheck`; plik przywrócony bez diffu |
 | C.1     | NIE_ZACZĘTE | —                    | —                                                                                                 | —                                                                              |
-| D.1     | NIE_ZACZĘTE | —                    | —                                                                                                 | —                                                                              |
+| D.1     | CZĘŚCIOWO   | commit D.1           | `Gateway.ts:958` → `/api/method` → skip routes → `AssessmentSkipReasonService` → lokalny PG       | 6/6 PASS real-router/PG; brak dowodu mutacyjnego T.3 obniża status             |
 | D.2     | NIE_ZACZĘTE | —                    | —                                                                                                 | —                                                                              |
 | E.1     | NIE_ZACZĘTE | —                    | —                                                                                                 | —                                                                              |
 | E.2     | NIE_ZACZĘTE | —                    | —                                                                                                 | —                                                                              |
@@ -147,6 +147,26 @@ Powód: importer `assessmentDomainRoutes` jest nieosiągalny, ale agregowany `as
 Dowód: jedyne realne odwołanie to `server/src/routes/index.ts:18 → assessment/index.ts → assessments.routes.ts`; dodatkowe trafienia `routes/index` są komentarzami. Sam brak importera nie spełnia kroku F.1.2.
 Co zrobiłbym po kompletnej mapie semantycznej: usunąłbym minimalnie tylko te pliki, których każda semantyka ma zamontowany odpowiednik i pełny test regresji.
 Stan: NIE ZACOMMITOWANO; zero usunięć.
+
+## D.1 — Assessment-owned słownik kodów „Pomiń”
+
+Jądro `MethodEvent`/`AnswerEventPayload` pozostaje nietknięte. Nowa powierzchnia jest osiągalna przez istniejący mount `/api/method`:
+
+- `POST /api/method/sessions/:sessionId/assessment-skip-reasons` — wymagany `Idempotency-Key`; body `{unitId, questionId, level, skipCode}`; `organizationId` wyłącznie z tokenu;
+- `GET /api/method/sessions/:sessionId/assessment-skip-reasons?unitId=` — aktywna, najnowsza decyzja per `unitId + questionId`.
+
+| Kod maszynowy                   | Etykieta PL                   | CHECK w bazie | Walidacja aplikacji | Test                         |
+| ------------------------------- | ----------------------------- | ------------- | ------------------- | ---------------------------- |
+| `poza_modelem_operacyjnym`      | poza modelem operacyjnym      | TAK           | TAK                 | happy + readback             |
+| `poza_zakresem_zlecenia`        | poza zakresem zlecenia        | TAK           | TAK                 | replay idempotentny          |
+| `odroczone_do_kolejnej_rewizji` | odroczone do kolejnej rewizji | TAK           | TAK                 | walidacja skali              |
+| `zastapione_innym_rozwiazaniem` | zastąpione innym rozwiązaniem | TAK           | TAK                 | objęty zamkniętym słownikiem |
+
+Zapis jest addytywny i append-only: kolejny wpis wskazuje poprzedni przez `supersedes_id`; nie wykonuje `UPDATE` ani `DELETE`. Unikat `(organization_id, idempotency_key)` oraz `ON CONFLICT DO NOTHING` zapewniają replay bez drugiego wiersza. Wszystkie zapytania do nowej tabeli mają `fallback:false`.
+
+Test realnego routera i domyślnego okablowania: `assessmentSkipReasons.day20.pg.test.ts` — 6/6 PASS (happy + niezależny readback, kod spoza słownika i zero zapisu, pusty stan, zła skala, replay, obcy tenant 404). Status `CZĘŚCIOWO`: nie wykonano jeszcze wymaganego przez T.3 kontrolowanego testu mutacyjnego polegającego na czasowym zneutralizowaniu filtru organizacji.
+
+Migracja `20261101_assessment_day20_skip_reasons.sql`: `MIGRATION_PREPARED`, addytywna, zero FK, przebieg po dodaniu `Applying migrations: 1`, drugi `0`, dry-run `Pending migrations: 0`. Prettier nie ma parsera SQL w tym repo (`No parser could be inferred`); plik sformatowano ręcznie, TypeScript i raport przeszły Prettier.
 
 ## Pozycje otwarte — STOP-y do zatwierdzenia nadzorcy
 
