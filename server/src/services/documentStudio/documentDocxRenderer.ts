@@ -49,6 +49,7 @@ import {
   clampTableColumns,
   DRD_REPORT_GEOMETRY,
   DRD_REPORT_PALETTE,
+  DRD_DOCX_STYLE_IDS,
   DOCX_PALETTE,
   DOCX_STYLE_IDS,
   DOCX_TITLE_MAX_CHARS,
@@ -1130,7 +1131,7 @@ function renderSection(
   const drdKicker =
     isDrdReportProfile(ctx.schema) && section.purpose
       ? new Paragraph({
-          style: DOCX_STYLE_IDS.DRD_KICKER,
+          style: DRD_DOCX_STYLE_IDS.KICKER,
           pageBreakBefore: options.pageBreakBefore === true ? true : undefined,
           keepNext: true,
           children: [new TextRun({ text: section.purpose })],
@@ -1374,7 +1375,7 @@ function renderTocBlock(ctx: RenderContext): unknown[] {
   if (ctx.schema.formattingSchema.tocConfig?.nativeField) {
     return [
       new Paragraph({
-        style: DOCX_STYLE_IDS.DRD_KICKER,
+        style: DRD_DOCX_STYLE_IDS.KICKER,
         pageBreakBefore: true,
         children: [new TextRun({ text: isPolish ? 'NAWIGACJA' : 'NAVIGATION' })],
       }),
@@ -1750,7 +1751,11 @@ export async function renderDocumentSchemaToDocxBuffer(
   options: DocumentRenderOptions = {}
 ): Promise<Buffer> {
   const isPolish = schemaInput.language.toLowerCase().startsWith('pl');
-  return textRunScope.run({ isPolish, namedStyleRuns: isDrdReportProfile(schemaInput) }, () =>
-    renderDocumentSchemaToDocxBufferInternal(schemaInput, options)
+  return textRunScope.run(
+    {
+      isPolish: isPolish && isDrdReportProfile(schemaInput),
+      namedStyleRuns: isDrdReportProfile(schemaInput),
+    },
+    () => renderDocumentSchemaToDocxBufferInternal(schemaInput, options)
   );
 }

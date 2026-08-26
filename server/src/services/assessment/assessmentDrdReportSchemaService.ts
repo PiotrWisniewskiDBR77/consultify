@@ -1,6 +1,6 @@
 import DRD_STRUCTURE, { type DRDAxis } from '../../data/drdStructure.js';
 import type { DocumentBlock, DocumentSchema } from '../documentStudio/documentStudioTypes.js';
-import { DRD_REPORT_PALETTE, DOCX_STYLE_IDS } from '../documentStudio/documentDocxStyles.js';
+import { DRD_DOCX_STYLE_IDS, DRD_REPORT_PALETTE } from '../documentStudio/documentDocxStyles.js';
 import type { AssessmentReportContractService } from './assessmentReportContractService.js';
 
 export type AssessmentReportContract = Awaited<
@@ -73,7 +73,7 @@ export function resolveDrdLevelLabelPL(axisId: number, level: number): string {
 function paragraph(
   blockId: string,
   text: string,
-  docxStyleId: string = DOCX_STYLE_IDS.DRD_BODY,
+  docxStyleId: string = DRD_DOCX_STYLE_IDS.BODY,
   pageBreakBefore = false
 ): DocumentBlock {
   return {
@@ -159,7 +159,7 @@ function chapterBlocks(chapter: ContractChapter): DocumentBlock[] {
             chapter.introduction as { content: string | null; minWords: number; maxWords: number }
           )
         : `${DRD_REPORT_FIXED_TEXT.notAssessed} ${slotText(chapter.introduction as { content: string | null; minWords: number; maxWords: number })}`,
-      DOCX_STYLE_IDS.DRD_CAPTION
+      DRD_DOCX_STYLE_IDS.CAPTION
     ),
     heading(`${chapter.axisId}-matrix-heading`, 'Matryca poziomów dojrzałości', 2),
     table(
@@ -180,7 +180,7 @@ function chapterBlocks(chapter: ContractChapter): DocumentBlock[] {
       slotText(
         chapter.matrix.caption as { content: string | null; minWords: number; maxWords: number }
       ),
-      DOCX_STYLE_IDS.DRD_CAPTION
+      DRD_DOCX_STYLE_IDS.CAPTION
     ),
     heading(`${chapter.axisId}-areas-heading`, 'Ocena obszarów', 2)
   );
@@ -192,17 +192,17 @@ function chapterBlocks(chapter: ContractChapter): DocumentBlock[] {
       paragraph(
         `${area.unitId}-signature`,
         `Poziom obecny: ${area.currentLevel ?? '—'} (${area.currentLevel ? resolveDrdLevelLabelPL(chapter.axisId, area.currentLevel) : '—'}) · Poziom docelowy: ${area.targetLevel ?? '—'} (${area.targetLevel ? resolveDrdLevelLabelPL(chapter.axisId, area.targetLevel) : '—'}) · Luka: ${area.gap ?? '—'} · Priorytet: ${priorityForGap(area.gap)} · Dowody: ${EVIDENCE_STATE_PL[area.evidenceState]}`,
-        DOCX_STYLE_IDS.DRD_SIGNATURE
+        DRD_DOCX_STYLE_IDS.SIGNATURE
       )
     );
     const notice = skipNotice(area);
-    if (notice) blocks.push(paragraph(`${area.unitId}-skip`, notice, DOCX_STYLE_IDS.DRD_CAPTION));
+    if (notice) blocks.push(paragraph(`${area.unitId}-skip`, notice, DRD_DOCX_STYLE_IDS.CAPTION));
     if (comment) {
       blocks.push(
         paragraph(
           `${area.unitId}-comment`,
           slotText(comment as { content: string | null; minWords: number; maxWords: number }),
-          DOCX_STYLE_IDS.DRD_CAPTION
+          DRD_DOCX_STYLE_IDS.CAPTION
         ),
         {
           blockId: `${area.unitId}-microstructure`,
@@ -222,11 +222,11 @@ function chapterBlocks(chapter: ContractChapter): DocumentBlock[] {
   );
   blocks.push(
     heading(`${chapter.axisId}-conclusion-heading`, 'Wnioski rozdziału', 2),
-    paragraph(`${chapter.axisId}-conclusion`, conclusionPlaceholder, DOCX_STYLE_IDS.DRD_CAPTION),
+    paragraph(`${chapter.axisId}-conclusion`, conclusionPlaceholder, DRD_DOCX_STYLE_IDS.CAPTION),
     paragraph(
       `${chapter.axisId}-decision-label`,
       DRD_REPORT_FIXED_TEXT.decisionLine,
-      DOCX_STYLE_IDS.DRD_KICKER
+      DRD_DOCX_STYLE_IDS.KICKER
     ),
     table(
       `${chapter.axisId}-decision`,
@@ -299,7 +299,7 @@ export function buildAssessmentDrdReportSchema(contract: AssessmentReportContrac
         paragraph(
           'executive-placeholder',
           placeholder(executiveLimit.minWords, executiveLimit.maxWords),
-          DOCX_STYLE_IDS.DRD_CAPTION
+          DRD_DOCX_STYLE_IDS.CAPTION
         ),
         radar,
         table(
@@ -312,7 +312,7 @@ export function buildAssessmentDrdReportSchema(contract: AssessmentReportContrac
         paragraph(
           'critical-gaps-placeholder',
           placeholder(executiveLimit.minWords, executiveLimit.maxWords),
-          DOCX_STYLE_IDS.DRD_CAPTION
+          DRD_DOCX_STYLE_IDS.CAPTION
         ),
       ],
     },
@@ -336,7 +336,7 @@ export function buildAssessmentDrdReportSchema(contract: AssessmentReportContrac
         paragraph(
           'final-placeholder',
           placeholder(finalLimit.minWords, finalLimit.maxWords),
-          DOCX_STYLE_IDS.DRD_CAPTION
+          DRD_DOCX_STYLE_IDS.CAPTION
         ),
         heading('program-decision-heading', 'Linia decyzyjna programu', 2),
         table(
