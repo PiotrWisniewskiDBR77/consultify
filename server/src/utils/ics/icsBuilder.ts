@@ -85,6 +85,13 @@ export function buildMeetingInvitationIcs(input: MeetingInvitationIcsInput): str
     `LOCATION:${escapeIcsText(input.location || '')}`,
     `ORGANIZER;CN=${escapeIcsText(input.organizer.displayName || input.organizer.email)}:mailto:${input.organizer.email}`,
   ];
+  if (method === 'CANCEL') {
+    // FIX-3 (P2, 2026-08-26): RFC 5546 §3.2.5 requires a CANCEL component to
+    // carry STATUS:CANCELLED — without it, some calendar clients (Outlook in
+    // particular) show METHOD:CANCEL as an ordinary update rather than
+    // removing/greying out the event.
+    lines.push('STATUS:CANCELLED');
+  }
   if (input.recurrenceRule) {
     // FIX-2 (P1-2, 2026-08-26) defense in depth: the route layer validates
     // recurrenceRule against a strict FREQ/INTERVAL/... whitelist before it

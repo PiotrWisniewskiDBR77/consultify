@@ -62,9 +62,17 @@ describe('meeting ICS invitation', () => {
     expect(buildMeetingInvitationIcs({ ...base, sequence: 3 })).toContain('SEQUENCE:3');
   });
 
-  it('emits cancellation and escapes text', () => {
+  it('emits cancellation with STATUS:CANCELLED and escapes text', () => {
+    // FIX-3 (P2, 2026-08-26): RFC 5546 §3.2.5 requires STATUS:CANCELLED on a
+    // CANCEL component — some clients otherwise treat it as a normal update.
     const ics = buildMeetingInvitationIcs({ ...base, method: 'CANCEL' });
     expect(ics).toContain('METHOD:CANCEL');
+    expect(ics).toContain('STATUS:CANCELLED');
     expect(ics).toContain('SUMMARY:Review\\, plan\\; next');
+  });
+
+  it('does not emit STATUS:CANCELLED for a REQUEST', () => {
+    const ics = buildMeetingInvitationIcs(base);
+    expect(ics).not.toContain('STATUS:CANCELLED');
   });
 });
