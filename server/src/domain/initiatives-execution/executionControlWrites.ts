@@ -51,3 +51,47 @@ export async function createExecutionBudgetEntry(
     };
   });
 }
+
+export interface ExecutionRealizationEntry {
+  realizationId: string;
+  initiativeId: string;
+  periodMonth: string;
+  realizedRevenueDelta: number | null;
+  realizedCostDelta: number | null;
+  realizedSavings: number | null;
+  varianceNotes: string | null;
+  recordedBy: string;
+  recordedAt: string;
+}
+
+type RealizationPayload = Omit<
+  ExecutionRealizationEntry,
+  'realizationId' | 'recordedBy' | 'recordedAt'
+>;
+
+export async function recordExecutionRealization(
+  unitOfWork: MaterialCommandUnitOfWork,
+  envelope: MaterialCommandEnvelope<RealizationPayload>
+): Promise<MaterialCommandResult<ExecutionRealizationEntry>> {
+  return executeMaterialCommand(unitOfWork, envelope, async (tx) => {
+    const initiative = await tx.getRelatedAggregateForUpdate<Record<string, unknown>>(
+      envelope.organizationId,
+      'initiative',
+      envelope.payload.initiativeId
+    );
+    if (!initiative) throw new MaterialCommandValidationError('Initiative not found');
+    const entry: ExecutionRealizationEntry = {
+      ...envelope.payload,
+      realizationId: envelope.aggregateId,
+      recordedBy: envelope.actorId,
+      recordedAt: new Date().toISOString(),
+    };
+    return {
+      mutation: entry,
+      response: entry,
+      eventType: 'execution-realization.recorded',
+      eventPayload: entry,
+      auditPayload: entry,
+    };
+  });
+}

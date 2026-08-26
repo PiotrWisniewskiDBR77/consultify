@@ -58,7 +58,10 @@ import {
   transitionCanonicalDecision,
   transitionCanonicalTask,
 } from '../../domain/initiatives-execution/executionWorkHardening.js';
-import { createExecutionBudgetEntry } from '../../domain/initiatives-execution/executionControlWrites.js';
+import {
+  createExecutionBudgetEntry,
+  recordExecutionRealization,
+} from '../../domain/initiatives-execution/executionControlWrites.js';
 import {
   gateSignoffId,
   submitGateSignoff,
@@ -795,6 +798,15 @@ const ExecutionBudgetEntrySchema = z.object({
   periodMonth: z.number().int().min(1).max(12),
   periodYear: z.number().int().min(2000),
   source: z.string().min(1),
+});
+const ExecutionRealizationSchema = z.object({
+  expectedVersion: z.literal(0),
+  clientRequestId: z.string().min(1),
+  periodMonth: z.string().regex(/^\d{4}-\d{2}$/),
+  realizedRevenueDelta: z.number().finite().nullable().default(null),
+  realizedCostDelta: z.number().finite().nullable().default(null),
+  realizedSavings: z.number().finite().nullable().default(null),
+  varianceNotes: z.string().nullable().default(null),
 });
 const InterventionDraftSchema = z.object({
   expectedVersion: z.number().int().min(0),
@@ -4545,6 +4557,40 @@ export function createInitiativesExecutionRuntimeRouter(
         policyId: 'execution-control',
         policyVersion: 1,
         commandType: 'execution-budget-entry.create',
+        createIfMissing: true,
+        payload: { ...entry, initiativeId },
+      });
+      res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
+    })
+  );
+  router.post(
+    '/initiatives/:initiativeId/realizations/:realizationId',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      const parsed = ExecutionRealizationSchema.safeParse(req.body);
+      if (!actor) return void res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+      if (!parsed.success)
+        return void res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
+      const initiativeId = firstParam(req.params.initiativeId);
+      const projectIds = await deps.reader.resolveProjectIdsForAggregate(
+        actor.organizationId,
+        'initiative',
+        initiativeId
+      );
+      if (!(await authorizeProjects(actor, projectIds, 'initiative.update')))
+        return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
+      const { expectedVersion, clientRequestId, ...entry } = parsed.data;
+      const result = await recordExecutionRealization(deps.unitOfWork, {
+        organizationId: actor.organizationId,
+        actorId: actor.userId,
+        aggregateType: 'execution_realization',
+        aggregateId: firstParam(req.params.realizationId),
+        expectedVersion,
+        clientRequestId,
+        correlationId: clientRequestId,
+        policyId: 'execution-control',
+        policyVersion: 1,
+        commandType: 'execution-realization.record',
         createIfMissing: true,
         payload: { ...entry, initiativeId },
       });

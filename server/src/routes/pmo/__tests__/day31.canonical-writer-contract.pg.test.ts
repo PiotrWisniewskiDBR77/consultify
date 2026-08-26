@@ -258,4 +258,46 @@ describe.skipIf(!REAL_PG)('Day 31 canonical writer mounted contract', () => {
       .send(body);
     expect(denied.status).toBe(404);
   });
+
+  it('records a realization through the same CAS and receipt spine', async () => {
+    const realizationId = `realization-${tag}`;
+    const path = `/api/initiatives/runtime-v1/initiatives/${initiativeId}/realizations/${realizationId}`;
+    const body = {
+      expectedVersion: 0,
+      clientRequestId: `realization-request-${tag}`,
+      periodMonth: '2026-08',
+      realizedRevenueDelta: 5000,
+      realizedCostDelta: null,
+      realizedSavings: 750,
+      varianceNotes: 'Independent readback proof',
+    };
+    const first = await request(app).post(path).set(auth()).send(body);
+    expect(first.status).toBe(201);
+    const state = await client.query(
+      `SELECT version,payload_json FROM ie_aggregate_state
+       WHERE organization_id=$1 AND aggregate_type='execution_realization' AND aggregate_id=$2`,
+      [organizationId, realizationId]
+    );
+    expect(state.rows).toHaveLength(1);
+    expect(state.rows[0]).toMatchObject({ version: 1 });
+    expect(state.rows[0].payload_json).toMatchObject({ initiativeId, realizedSavings: 750 });
+    const replay = await request(app).post(path).set(auth()).send(body);
+    expect(replay.status).toBe(200);
+    expect(replay.body.status).toBe('REPLAYED');
+    const conflict = await request(app)
+      .post(path)
+      .set(auth())
+      .send({ ...body, clientRequestId: `realization-conflict-${tag}` });
+    expect(conflict.status).toBe(409);
+    const foreign = await request(app)
+      .post(path)
+      .set({ Authorization: `Bearer ${foreignToken}`, 'X-Organization-Id': organizationId })
+      .send({ ...body, organizationId });
+    expect(foreign.status).toBe(404);
+    const denied = await request(app)
+      .post(path)
+      .set({ Authorization: `Bearer ${viewerToken}` })
+      .send(body);
+    expect(denied.status).toBe(404);
+  });
 });
