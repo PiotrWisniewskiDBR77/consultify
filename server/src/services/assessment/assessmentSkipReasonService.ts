@@ -41,8 +41,12 @@ interface SkipReasonRow {
 
 export class AssessmentSkipReasonError extends Error {
   constructor(
-    readonly code: 'SKIP_CODE_NOT_IN_DICTIONARY' | 'SESSION_NOT_FOUND' | 'INVALID_UNIT_OR_LEVEL',
-    readonly status: 400 | 404
+    readonly code:
+      | 'SKIP_CODE_NOT_IN_DICTIONARY'
+      | 'SESSION_NOT_FOUND'
+      | 'INVALID_UNIT_OR_LEVEL'
+      | 'IDEMPOTENCY_KEY_PAYLOAD_MISMATCH',
+    readonly status: 400 | 404 | 409
   ) {
     super(code);
   }
@@ -81,7 +85,7 @@ export class AssessmentSkipReasonService {
     skipCode: unknown;
     actorUserId: string;
     idempotencyKey: string;
-  }): Promise<AssessmentSkipReason> {
+  }): Promise<{ skipReason: AssessmentSkipReason; replayed: boolean }> {
     if (!isAssessmentSkipReasonCode(input.skipCode)) {
       throw new AssessmentSkipReasonError('SKIP_CODE_NOT_IN_DICTIONARY', 400);
     }
@@ -107,7 +111,7 @@ export class AssessmentSkipReasonService {
     );
 
     const id = genId('asm-skip');
-    await DbPromise.run(
+    const insert = await DbPromise.run(
       `INSERT INTO assessment_skip_reasons
        (id, organization_id, session_id, unit_id, question_id, level, skip_code,
         recorded_by_user_id, supersedes_id, idempotency_key)
@@ -135,7 +139,18 @@ export class AssessmentSkipReasonService {
       { fallback: false }
     );
     if (!recorded) throw new Error('ASSESSMENT_SKIP_REASON_WRITE_NOT_PERSISTED');
-    return mapRow(recorded);
+    const replayed = insert.changes === 0;
+    if (
+      replayed &&
+      (recorded.session_id !== input.sessionId ||
+        recorded.unit_id !== input.unitId ||
+        recorded.question_id !== input.questionId ||
+        Number(recorded.level) !== input.level ||
+        recorded.skip_code !== input.skipCode)
+    ) {
+      throw new AssessmentSkipReasonError('IDEMPOTENCY_KEY_PAYLOAD_MISMATCH', 409);
+    }
+    return { skipReason: mapRow(recorded), replayed };
   }
 
   async listActive(

@@ -141,12 +141,33 @@ describe.skipIf(!REAL_DB)('Assessment day 20 skip reasons — real router and Po
       skipCode: 'poza_zakresem_zlecenia',
     };
     expect((await post(key, body)).status).toBe(201);
-    expect((await post(key, body)).status).toBe(201);
+    const replay = await post(key, body);
+    expect(replay.status).toBe(200);
     const count = await pool.query(
       `SELECT count(*)::int AS count FROM assessment_skip_reasons WHERE organization_id=$1 AND idempotency_key=$2`,
       [org, key]
     );
     expect(count.rows[0].count).toBe(1);
+  });
+
+  it('rejects an idempotency-key payload collision and writes no second row', async () => {
+    const key = `collision-${suffix}`;
+    const original = {
+      unitId: '6A',
+      questionId: '6A-2',
+      level: 2,
+      skipCode: 'poza_zakresem_zlecenia',
+    };
+    const first = await post(key, original);
+    const collision = await post(key, { ...original, questionId: '6A-3' });
+    expect(first.status).toBe(201);
+    expect(collision.status).toBe(409);
+    expect(collision.body.code).toBe('IDEMPOTENCY_KEY_PAYLOAD_MISMATCH');
+    const rows = await pool.query(
+      `SELECT question_id FROM assessment_skip_reasons WHERE organization_id=$1 AND idempotency_key=$2`,
+      [org, key]
+    );
+    expect(rows.rows).toEqual([{ question_id: '6A-2' }]);
   });
 
   it('does not reveal another tenant session', async () => {

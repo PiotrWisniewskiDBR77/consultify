@@ -489,7 +489,7 @@ router.post(
       return;
     }
     try {
-      const skipReason = await assessmentSkipReasonService.record({
+      const { skipReason, replayed } = await assessmentSkipReasonService.record({
         organizationId,
         sessionId: req.params.sessionId,
         unitId: body.unitId,
@@ -499,7 +499,7 @@ router.post(
         actorUserId,
         idempotencyKey,
       });
-      res.status(201).json({ skipReason });
+      res.status(replayed ? 200 : 201).json({ skipReason });
     } catch (error) {
       sendAssessmentSkipReasonError(res, error);
     }
