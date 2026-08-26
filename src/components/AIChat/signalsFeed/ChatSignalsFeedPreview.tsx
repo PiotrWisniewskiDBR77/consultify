@@ -6,8 +6,16 @@ import { useNavigate } from 'react-router-dom';
 import { StandardPreview } from '@/components/standard/StandardPreview';
 
 import { resolveDestination } from './signalDestination';
-import { localizedSignal } from './signalPresentation';
+import { localizedSignal, refTypeLabel, relativeTime } from './signalPresentation';
 import type { SignalDTO } from './signalTypes';
+
+/**
+ * FIX-6 (dyżur 26 chat-signals-front, odbiór P1.6) — cztery bezpieczne
+ * presety drzemki (serwer: `server/src/routes/my-work/signals.routes.ts:158-166`
+ * zna dokładnie te cztery wartości `preset`, domyślnie `tomorrow`). Front-only:
+ * ten plik nie dotyka `server/src`.
+ */
+const SNOOZE_PRESETS = ['1h', '4h', 'tomorrow', 'week'] as const;
 
 export const ChatSignalsFeedPreview: React.FC<{
   signal: SignalDTO;
@@ -17,6 +25,7 @@ export const ChatSignalsFeedPreview: React.FC<{
 }> = ({ signal, onClose, onAction, busy }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const now = new Date();
   const view = localizedSignal(signal, t);
   const destination = resolveDestination(signal);
   const evidence = signal.source.evidence;
@@ -24,7 +33,12 @@ export const ChatSignalsFeedPreview: React.FC<{
     view.body,
     t('chatSignals.preview.evidence'),
     evidence.length
-      ? evidence.map((item) => `${item.refType}: ${String(item.observedValue ?? '—')}`).join('\n')
+      ? evidence
+          .map(
+            (item) =>
+              `${refTypeLabel(item.refType, t)}: ${String(item.observedValue ?? '—')} · ${relativeTime(item.observedAt, now, t)}`
+          )
+          .join('\n')
       : t('chatSignals.preview.noEvidence'),
     `${signal.source.ruleId} · v${signal.source.ruleVersion}`,
     signal.origin === 'INTERPRETED'
@@ -72,20 +86,32 @@ export const ChatSignalsFeedPreview: React.FC<{
       }}
       relations={[
         {
-          label: `${signal.entityType}: ${signal.entityId}`,
+          // FIX-9 (dyżur 26 chat-signals-front, odbiór P1.9) — `label`
+          // przechodzi WYŁĄCZNIE przetłumaczony typ obiektu (np. „Zadanie"),
+          // nigdy surowy `${entityType}: ${entityId}`. Poprzedni zapis
+          // trafiał w `PreviewRelations`' `containsTechnicalIdentifier` (widzi
+          // UUID po dwukropku) → `resolveBusinessDisplayLabel` bez `type` →
+          // generyczne „Powiązany rekord" (`businessDisplayLabel.ts:86-87`).
+          // Rozwiązane PO STRONIE FEEDU: identyfikator idzie do `value`
+          // (widoczny, przyciemniony) i `title` (tooltip pełny), etykieta
+          // zostaje czysta, więc auto-detekcja w ogóle się nie uruchamia.
+          id: signal.entityId,
+          type: signal.entityType,
+          label: refTypeLabel(signal.entityType, t),
+          title: `${refTypeLabel(signal.entityType, t)}: ${signal.entityId}`,
           onClick: destination.kind === 'ROUTE' ? () => navigate(destination.href) : undefined,
         },
       ]}
       actions={{
         time: [
-          {
-            id: 'snooze',
-            variant: 'neutral',
-            label: t('chatSignals.action.snooze'),
+          ...SNOOZE_PRESETS.map((preset) => ({
+            id: `snooze-${preset}`,
+            variant: 'neutral' as const,
+            label: t(`chatSignals.action.snoozePreset.${preset}`),
             icon: Clock,
             disabled: busy,
-            onClick: () => onAction('snooze', 'tomorrow'),
-          },
+            onClick: () => onAction('snooze', preset),
+          })),
           {
             id: 'mute',
             variant: 'warning',

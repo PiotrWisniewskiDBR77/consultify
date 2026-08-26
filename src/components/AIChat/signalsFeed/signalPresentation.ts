@@ -36,8 +36,15 @@ export const signalTitle = (dto: SignalDTO, t: TFunction) =>
 export const signalBody = (dto: SignalDTO, t: TFunction) =>
   translated(dto.bodyKey, dto.bodyParams, dto.body || '', t);
 
-export function signalAge(dto: SignalDTO, now: Date, t: TFunction): string {
-  const delta = Math.max(0, now.getTime() - new Date(dto.firstObservedAt).getTime());
+/**
+ * FIX-5 (dyżur 26 chat-signals-front, odbiór P1.5) — wydzielone z `signalAge`
+ * tak, aby dowolna data ISO (nie tylko `dto.firstObservedAt`) mogła dostać
+ * ten sam, względny, PRZETŁUMACZONY zapis. Używane też przez „Skąd wiadomo"
+ * (`source.evidence[].observedAt`), które wcześniej pokazywało surowy string
+ * ISO zamiast czasu względnego.
+ */
+export function relativeTime(iso: string, now: Date, t: TFunction): string {
+  const delta = Math.max(0, now.getTime() - new Date(iso).getTime());
   const minutes = Math.floor(delta / 60_000);
   if (minutes < 1) return t('chatSignals.age.now');
   if (minutes < 60) return t('chatSignals.age.minutes', { count: minutes });
@@ -46,6 +53,19 @@ export function signalAge(dto: SignalDTO, now: Date, t: TFunction): string {
   if (hours < 48) return t('chatSignals.age.yesterday');
   return t('chatSignals.age.days', { count: Math.floor(hours / 24) });
 }
+
+export function signalAge(dto: SignalDTO, now: Date, t: TFunction): string {
+  return relativeTime(dto.firstObservedAt, now, t);
+}
+
+/**
+ * FIX-5 — `refType` (task/decision/initiative/project/program, patrz
+ * `server/src/types/executionVisibility.ts:SourceObjectTypeValues`) idzie
+ * przez słownik `chatSignals.refType.*` zamiast surowego stringa z API.
+ * Nieznana wartość ma bezpieczny fallback (sam string), zamiast pustego pola.
+ */
+export const refTypeLabel = (refType: string, t: TFunction): string =>
+  t(`chatSignals.refType.${refType}`, { defaultValue: refType });
 
 export const localizedSignal = (dto: SignalDTO, t: TFunction, now = new Date()) => ({
   severity: readSeverity(dto).value,

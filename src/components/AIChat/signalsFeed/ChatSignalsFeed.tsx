@@ -21,9 +21,8 @@ export const ChatSignalsFeed: React.FC<{
   projectId?: string | null;
   initialResponse?: SignalsFeedResponse;
   api?: SignalsApi;
-  initialUiState?: 'full' | 'throttled';
   initialSelectedId?: string | null;
-}> = ({ projectId, initialResponse, api, initialUiState, initialSelectedId = null }) => {
+}> = ({ projectId, initialResponse, api, initialSelectedId = null }) => {
   const { t } = useTranslation();
   const [chip, setChip] = useState('all');
   const domain = ['EXECUTION', 'DECISION', 'RESULTS', 'FINANCE'].includes(chip) ? chip : undefined;
@@ -32,7 +31,12 @@ export const ChatSignalsFeed: React.FC<{
   const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
-  const [retryAfter, setRetryAfter] = useState(initialUiState === 'throttled' ? 45 : 0);
+  // FIX-11 (dyżur 26 chat-signals-front, odbiór P2.11) — `initialUiState`
+  // było gałęzią WYŁĄCZNIE dla harnessu wewnątrz kodu produkcyjnego. Stan
+  // dławienia (state 6) jest teraz zawsze realny: harness symuluje 429 przez
+  // istniejące DI (`api.post` odrzucający wywołanie „Odśwież"), tak samo jak
+  // zrobiłby to prawdziwy serwer — patrz `dev-render/screens/chat-signals-feed.tsx`.
+  const [retryAfter, setRetryAfter] = useState(0);
 
   useEffect(() => {
     if (retryAfter <= 0) return;
@@ -142,10 +146,14 @@ export const ChatSignalsFeed: React.FC<{
     setBusy(true);
     setNotice('');
     try {
-      if (action === 'snooze')
-        await feed.api.post(`/my-work/signals/${encodeURIComponent(selected.dto.key)}/snooze`, {
-          preset,
-        });
+      let snoozedUntil: string | undefined;
+      if (action === 'snooze') {
+        const response = (await feed.api.post(
+          `/my-work/signals/${encodeURIComponent(selected.dto.key)}/snooze`,
+          { preset }
+        )) as { snoozedUntil?: string };
+        snoozedUntil = response?.snoozedUntil;
+      }
       if (action === 'dismiss')
         await feed.api.post(`/my-work/signals/${encodeURIComponent(selected.dto.key)}/dismiss`, {});
       if (action === 'mute')
@@ -156,7 +164,16 @@ export const ChatSignalsFeed: React.FC<{
         )
       );
       setSelectedId(null);
-      setNotice(t(`chatSignals.notice.${action}`));
+      // FIX-6 (dyżur 26 chat-signals-front, odbiór P1.6) — komunikat sukcesu
+      // drzemki mówi DO KIEDY, korzystając z `snoozedUntil` zwracanego przez
+      // `POST /my-work/signals/{key}/snooze` (serwer, nietknięty przez ten fix).
+      setNotice(
+        action === 'snooze' && snoozedUntil
+          ? t('chatSignals.notice.snoozeUntil', {
+              until: new Date(snoozedUntil).toLocaleString(),
+            })
+          : t(`chatSignals.notice.${action}`)
+      );
     } catch (cause) {
       const status = (cause as { status?: number })?.status;
       setNotice(
@@ -199,27 +216,48 @@ export const ChatSignalsFeed: React.FC<{
     }
   };
 
+  // FIX-12 (dyżur 26 chat-signals-front, odbiór P2.12) — gdy chip SERWEROWY
+  // (domena/waga) jest aktywny, `feed.signals` to już strona przefiltrowana
+  // przez `?domain=`/`?severityMin=` — liczniki innych chipów serwerowych,
+  // policzone na TEJ liście, kłamią „0" dla wszystkiego poza aktywnym
+  // filtrem zamiast mówić „nie wiem". Ukrywamy je zamiast fałszować.
+  const SERVER_CHIP_IDS = ['EXECUTION', 'DECISION', 'RESULTS', 'FINANCE', 'warning', 'critical'];
+  const serverChipActive = SERVER_CHIP_IDS.includes(chip);
+  const serverSafeCount = (id: string, computed: number) =>
+    serverChipActive && id !== chip ? undefined : computed;
+
   const chips = [
     { id: 'all', label: t('chatSignals.filters.all'), count: feed.signals.length },
     {
       id: 'mine',
-      label: t('chatSignals.filters.mine'),
+      // FIX-8 (dyżur 26 chat-signals-front, odbiór P1.8) — `StandardModuleBar`
+      // (kanon, poza zakresem tych fixów) nie przekazuje `title`/tooltip do
+      // `Menu3Chip`, więc jedyny sposób jawnie powiedzieć „to filtr klientowy
+      // na już załadowanych wierszach, nie granica bezpieczeństwa" bez
+      // dotykania tego komponentu jest dopisek w samej etykiecie.
+      label: `${t('chatSignals.filters.mine')} ${t('chatSignals.filters.mineHint')}`,
       count: feed.signals.filter((x) => x.isMine).length,
     },
     ...(['EXECUTION', 'DECISION', 'RESULTS', 'FINANCE'] as const).map((id) => ({
       id,
       label: t(`chatSignals.domain.${id}`),
-      count: feed.signals.filter((x) => x.domain === id).length,
+      count: serverSafeCount(id, feed.signals.filter((x) => x.domain === id).length),
     })),
     {
       id: 'warning',
       label: t('chatSignals.filters.warning'),
-      count: feed.signals.filter((x) => severityRank[localizedSignal(x, t).severity] >= 1).length,
+      count: serverSafeCount(
+        'warning',
+        feed.signals.filter((x) => severityRank[localizedSignal(x, t).severity] >= 1).length
+      ),
     },
     {
       id: 'critical',
       label: t('chatSignals.filters.critical'),
-      count: feed.signals.filter((x) => severityRank[localizedSignal(x, t).severity] >= 2).length,
+      count: serverSafeCount(
+        'critical',
+        feed.signals.filter((x) => severityRank[localizedSignal(x, t).severity] >= 2).length
+      ),
     },
   ];
   const emptyMessage =
@@ -241,6 +279,7 @@ export const ChatSignalsFeed: React.FC<{
         menu3Right={
           <button
             type="button"
+            data-testid="chat-signals-refresh"
             disabled={busy || retryAfter > 0}
             onClick={() => void refresh()}
             className="inline-flex items-center gap-1 rounded-md border border-c-border bg-c-surface-raised px-3 py-1.5 text-xs text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:opacity-50"
