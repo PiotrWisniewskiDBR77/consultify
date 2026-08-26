@@ -10756,7 +10756,11 @@
       "retry": "Retry",
       "dismiss": "Dismiss",
       "loadErrorTitle": "Failed to load implementation data",
-      "transportBlockedTitle": "Requests temporarily blocked"
+      "transportBlockedTitle": "Requests temporarily blocked",
+      "demoFallback": {
+        "title": "Sample data — source unavailable",
+        "desc": "The real initiative data could not be loaded. Rows marked \"SAMPLE\" below are demo data, not your actual portfolio."
+      }
     },
     "demo": {
       "label": "Demo",
@@ -11207,7 +11211,9 @@
       "selectAll": "Select all",
       "selectRow": "Select row",
       "selectedCount": "{{count}} selected",
-      "changeStatusFor": "Change status for {{name}}"
+      "changeStatusFor": "Change status for {{name}}",
+      "demoSampleBadge": "Sample",
+      "demoSampleTitle": "Sample data, not real"
     },
     "badges": {
       "done": "Done",

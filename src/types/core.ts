@@ -2676,6 +2676,13 @@ export interface FullInitiative {
   actualEndDate?: string;
   sourceId?: string;
   sourceType?: string;
+  /**
+   * DEC-120/A10 — set on rows substituted from demo/sample data (e.g. a
+   * failed real-data load falling back to demo rows in demo mode). Consumers
+   * that render a mixed real+demo list MUST show a visible marker on these
+   * rows rather than letting them pass as real customer data.
+   */
+  isDemoSample?: boolean;
   blockedReason?: string;
   slaDeadline?: string;
   tasks?: Task[];

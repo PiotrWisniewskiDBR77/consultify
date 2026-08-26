@@ -10099,7 +10099,11 @@
       "retry": "Spróbuj ponownie",
       "dismiss": "Zamknij",
       "loadErrorTitle": "Nie udało się załadować danych wdrożenia",
-      "transportBlockedTitle": "Żądania chwilowo zablokowane"
+      "transportBlockedTitle": "Żądania chwilowo zablokowane",
+      "demoFallback": {
+        "title": "Dane przykładowe — źródło niedostępne",
+        "desc": "Nie udało się załadować rzeczywistych danych inicjatyw. Wiersze oznaczone „PRZYKŁAD” poniżej to dane demonstracyjne, nie Twój prawdziwy portfel."
+      }
     },
     "demo": {
       "label": "Demo",
@@ -10575,7 +10579,9 @@
       "selectAll": "Zaznacz wszystko",
       "selectRow": "Zaznacz wiersz",
       "selectedCount": "Zaznaczono: {{count}}",
-      "changeStatusFor": "Zmień status dla {{name}}"
+      "changeStatusFor": "Zmień status dla {{name}}",
+      "demoSampleBadge": "Przykład",
+      "demoSampleTitle": "Dane przykładowe, nie rzeczywiste"
     },
     "badges": {
       "done": "Ukończone",

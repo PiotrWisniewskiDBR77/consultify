@@ -818,6 +818,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const [isLoading, setIsLoading] = useState(true);
   const [initiativesLoadError, setInitiativesLoadError] = useState<string | null>(null);
   const [initiativesLoadErrorCode, setInitiativesLoadErrorCode] = useState<string | null>(null);
+  // DEC-120/A10: real-data load failed in demo mode and the list below was
+  // substituted with sample rows. Must NOT be masked as a clean load — a
+  // visible banner stays up (never a full-page error blocker, which would
+  // hide the demo rows entirely) until a real load succeeds.
+  const [demoFallbackActive, setDemoFallbackActive] = useState(false);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [decisions, setDecisions] = useState<ExecutionDecision[]>([]);
   const [isLoadingTasks, setIsLoadingTasks] = useState(false);
@@ -1262,12 +1267,17 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         const canonicalIds = new Set(
           canonicalExecutionInitiatives.map((initiative) => String(initiative.id))
         );
+        // DEC-120/A10: reviewInitiatives are demo-derived rows shown
+        // alongside real canonical ones — mark them so they can never be
+        // mistaken for real customer data in the table.
         const reviewInitiatives = allowDemoData
-          ? executionDemoData.initiatives.filter(
-              (initiative) =>
-                EXECUTION_STATUSES.includes(initiative.status) &&
-                !canonicalIds.has(String(initiative.id))
-            )
+          ? executionDemoData.initiatives
+              .filter(
+                (initiative) =>
+                  EXECUTION_STATUSES.includes(initiative.status) &&
+                  !canonicalIds.has(String(initiative.id))
+              )
+              .map((initiative) => ({ ...initiative, isDemoSample: true }))
           : [];
 
         setInitiatives([
@@ -1275,6 +1285,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           ...(reviewInitiatives as unknown as FullInitiative[]),
         ]);
         initRetryRef.current = 0;
+        // A real load just succeeded — any earlier "sample data, source
+        // unavailable" banner from a previous failed attempt is stale.
+        setDemoFallbackActive(false);
       } catch (err: any) {
         console.error('[ExecutionHub] Failed to load:', err);
         const isNetworkError =
@@ -1290,17 +1303,23 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           setTimeout(loadInitiatives, delay);
           return;
         }
-        const fallbackInitiatives = allowDemoData
-          ? (executionDemoData.initiatives.filter((initiative) =>
-              EXECUTION_STATUSES.includes(initiative.status)
-            ) as unknown as FullInitiative[])
-          : [];
-        setInitiatives(fallbackInitiatives);
         if (allowDemoData) {
-          setInitiativesLoadError(null);
-          setInitiativesLoadErrorCode(null);
+          // DEC-120/A10: the real load failed and every row below is now a
+          // demo substitute. Previously this cleared initiativesLoadError,
+          // making a real failure look like a clean, healthy load. Every
+          // row is tagged isDemoSample and a persistent, visible banner
+          // ("sample data — source unavailable") replaces the silence —
+          // WITHOUT routing through initiativesLoadError, which would
+          // instead render a full-page blocker and hide the demo rows
+          // entirely (the opposite of "show something, but be honest").
+          const fallbackInitiatives = executionDemoData.initiatives
+            .filter((initiative) => EXECUTION_STATUSES.includes(initiative.status))
+            .map((initiative) => ({ ...initiative, isDemoSample: true })) as unknown as FullInitiative[];
+          setInitiatives(fallbackInitiatives);
+          setDemoFallbackActive(true);
           return;
         }
+        setInitiatives([]);
         const { message, code } = mapHubLoadFailureToPresentation(
           err,
           t('execution.hub.failedToLoad', 'Failed to load execution initiatives.')
@@ -2190,10 +2209,21 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         label: t('execution.table.initiative', 'Initiative'),
         render: (row) => (
           <span
-            className="text-sm text-c-text font-medium truncate block"
+            className="flex items-center gap-1.5 text-sm text-c-text font-medium truncate"
             title={String(row.name || '')}
           >
-            {row.name}
+            <span className="truncate">{row.name}</span>
+            {/* DEC-120/A10: demo/sample rows (mixed in demo mode, or
+                substituted after a real-data load failure) must never be
+                mistaken for real customer data. */}
+            {(row as any).isDemoSample && (
+              <span
+                className="shrink-0 rounded-full bg-danger-500/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-danger-600 dark:text-danger-400"
+                title={t('execution.table.demoSampleTitle', 'Sample data, not real')}
+              >
+                {t('execution.table.demoSampleBadge', 'Sample')}
+              </span>
+            )}
           </span>
         ),
       },
@@ -5532,6 +5562,22 @@ Please return:
               table (T32-TABLE-T13) — relocated, not deleted. */}
           <div className="min-h-0 flex-1 flex overflow-hidden">
             <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
+              {demoFallbackActive && (
+                <div className="mb-3" data-testid="demo-fallback-banner">
+                  <Callout
+                    variant="critical"
+                    title={t(
+                      'execution.hub.demoFallback.title',
+                      'Sample data — source unavailable'
+                    )}
+                  >
+                    {t(
+                      'execution.hub.demoFallback.desc',
+                      'The real initiative data could not be loaded. Rows marked "SAMPLE" below are demo data, not your actual portfolio.'
+                    )}
+                  </Callout>
+                </div>
+              )}
               <StandardTable
                 columns={columns}
                 data={
