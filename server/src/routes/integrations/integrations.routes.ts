@@ -954,6 +954,15 @@ router.get(
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const owned = await dbGet<{ id: string }>(
+      `SELECT id FROM integrations WHERE id = ? AND organization_id = ?`,
+      [id, orgId]
+    );
+    if (!owned) return res.status(404).json({ error: 'Integration not found' });
+
     const cols = await tryGetColumns('integration_sync_log');
     if (!cols.size) return res.json({ logs: [] });
 

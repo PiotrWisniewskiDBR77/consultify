@@ -148,6 +148,7 @@ const REQUIRED_TABLES = [
   'management_report_approvals',
   'organizations',
   'users',
+  'projects',
 ] as const;
 
 // ---------------------------------------------------------------------------
@@ -250,6 +251,9 @@ interface Harness {
   countComments: (reportId: string) => Promise<number>;
   countAuditRows: (reportId: string) => Promise<number>;
   countReportsInOrg: (organizationId: string) => Promise<number>;
+  // DEC-140 fixtures — a real project row, owned by orgAId, that a caller
+  // authenticated for orgBId must never be able to read report content from.
+  insertProject: (organizationId: string, name: string) => Promise<string>;
 }
 
 function suffix(): string {
@@ -289,6 +293,7 @@ async function setupHarness(): Promise<Harness | null> {
   const auditIds: string[] = [];
   const versionIds: string[] = [];
   const approvalIds: string[] = [];
+  const projectIds: string[] = [];
 
   await client.query(
     `INSERT INTO organizations (id, name, plan, status) VALUES ($1, 'MgmtReports RealDB Org A', 'enterprise', 'active')
@@ -322,6 +327,20 @@ async function setupHarness(): Promise<Harness | null> {
      ON CONFLICT (id) DO NOTHING`,
     [orglessUserId, orgAId, `${orglessUserId}@local.test`]
   );
+
+  const insertProject: Harness['insertProject'] = async (
+    organizationId: string,
+    name: string
+  ) => {
+    const projectId = `proj_mr_${suffix()}`;
+    await client.query(
+      `INSERT INTO projects (id, organization_id, name, status)
+       VALUES ($1, $2, $3, 'active')`,
+      [projectId, organizationId, name]
+    );
+    projectIds.push(projectId);
+    return projectId;
+  };
 
   const insertReport: Harness['insertReport'] = async ({ status = 'DRAFT', lockedAt = null }) => {
     const reportId = `mr_${suffix()}`;
@@ -511,6 +530,16 @@ async function setupHarness(): Promise<Harness | null> {
       await client.query(`DELETE FROM users WHERE organization_id = ANY($1)`, [
         [orgAId, orgBId],
       ]);
+      // DEC-140 fixtures: explicit delete (belt-and-braces) ahead of the
+      // organizations cascade below — projects/project_insights both carry
+      // ON DELETE CASCADE from organizations/projects respectively, but this
+      // file prefers not to depend on that alone.
+      if (projectIds.length) {
+        await client.query(`DELETE FROM project_insights WHERE project_id = ANY($1)`, [
+          projectIds,
+        ]);
+        await client.query(`DELETE FROM projects WHERE id = ANY($1)`, [projectIds]);
+      }
       await client.query(`DELETE FROM organizations WHERE id = ANY($1)`, [[orgAId, orgBId]]);
     } catch {
       // Leaking a few rows is acceptable; a hung/throwing cleanup is not.
@@ -530,6 +559,7 @@ async function setupHarness(): Promise<Harness | null> {
     attackerUserId,
     orglessUserId,
     cleanup,
+    insertProject,
     insertReport,
     insertComment,
     insertAuditLogRow,
@@ -1426,6 +1456,164 @@ describe('DEC-131 P1-4 + DEC-136 — management-reports org scoping (real Postgr
 
       expect(res.status).toBe(401);
       expect(res.body?.data).toBeUndefined();
+    }
+  );
+
+  // -------------------------------------------------------------------
+  // DEC-140 — POST /generate built a report from ANY project id in the
+  // request body, with no check that the project belongs to the caller's
+  // organization, and then SAVED the result into the caller's own org
+  // (managementReportsService.generateReport() -> saveReport() with
+  // options.organizationId, which is req.organizationId — the token's org,
+  // never the project's). An attacker in org B could hand a real org A
+  // project id to /generate and receive a 200 with org A's task/risk/RAID
+  // data baked into a report that now lives in org B.
+  //
+  // getProjectById() (used by TEAM_MEETING/TEAM_WEEKLY/STEERING_COMMITTEE)
+  // carries no org filter by design. RAID does not even call it — it reads
+  // project_insights via raw SQL keyed on project_id alone — so a fix that
+  // only patched getProjectById() would have left RAID exploitable. The fix
+  // adds assertProjectInOrganization(projectId, organizationId) as the FIRST
+  // statement in generateReport(), before the reportType switch, so every
+  // branch (including RAID's raw-SQL path) sits behind one gate.
+  //
+  // "victim" project below belongs to orgAId (the owner org used throughout
+  // this file); attackerToken carries orgBId — same direction as every other
+  // test in this file.
+  // -------------------------------------------------------------------
+
+  const GENERATE_TYPES: Array<{
+    reportType: string;
+    scope: string;
+    // STEERING_COMMITTEE (scope=PROJECT) and RAID both call
+    // ManagementReportRepository.getBoardDecisions(), whose SQL compares the
+    // TEXT column decisions.escalation_level to the integer literal 2 (and
+    // joins on a d.requested_by column decisions does not have) — a
+    // pre-existing, PRE-DEC-140 schema/query bug that 500s on ANY project,
+    // own-org or foreign. Confirmed by temporarily disabling the new
+    // assertProjectInOrganization() gate and re-running this exact test:
+    // identical 500, so the gate is not the cause. Out of scope for this P0
+    // tenant-isolation fix — flagged separately. The own-project assertion
+    // below is relaxed to "gate did not block it" (any non-404) for these
+    // two types instead of a hard 200, so this pre-existing bug doesn't mask
+    // a DEC-140 regression or vice versa.
+    knownPreexistingGetBoardDecisionsBug?: boolean;
+  }> = [
+    { reportType: 'TEAM_MEETING', scope: 'PROJECT' },
+    { reportType: 'TEAM_WEEKLY', scope: 'PROJECT' },
+    { reportType: 'STEERING_COMMITTEE', scope: 'PROJECT', knownPreexistingGetBoardDecisionsBug: true },
+    { reportType: 'RAID', scope: 'PROJECT', knownPreexistingGetBoardDecisionsBug: true },
+  ];
+
+  itDB(
+    'POST /generate — own project (owner org) — 200, report created with project content',
+    async (h) => {
+      const app = buildApp();
+      const projectId = await h.insertProject(h.orgAId, 'DEC-140 Owner Project');
+      const ownerToken = makeE2EToken(h.ownerUserId, h.orgAId);
+
+      const res = await request(app)
+        .post('/api/management-reports/generate')
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({ reportType: 'TEAM_MEETING', scope: 'PROJECT', projectId });
+
+      expect(res.status).toBe(200);
+      expect(res.body?.report?.organizationId).toBe(h.orgAId);
+      expect(res.body?.report?.projectId).toBe(projectId);
+      const row = await h.getReportRow(res.body.report.id);
+      expect(row?.organization_id).toBe(h.orgAId);
+      expect(row?.project_id).toBe(projectId);
+    }
+  );
+
+  itDB(
+    'POST /generate — foreign project (real row in a different real org) — 404, zero write',
+    async (h) => {
+      const app = buildApp();
+      const victimProjectId = await h.insertProject(h.orgAId, 'DEC-140 Victim Project');
+      const attackerToken = makeE2EToken(h.attackerUserId, h.orgBId);
+      const orgBBefore = await h.countReportsInOrg(h.orgBId);
+
+      const res = await request(app)
+        .post('/api/management-reports/generate')
+        .set('Authorization', `Bearer ${attackerToken}`)
+        .send({ reportType: 'TEAM_MEETING', scope: 'PROJECT', projectId: victimProjectId });
+
+      expect(res.status).toBe(404);
+      // No report leaked org A's data into org B (the attacker's own org —
+      // the class of write this hole allowed).
+      expect(await h.countReportsInOrg(h.orgBId)).toBe(orgBBefore);
+      // ...and nothing was planted in org A either.
+      const leaked = await h.client.query(
+        `SELECT COUNT(*)::text AS n FROM management_reports WHERE project_id = $1`,
+        [victimProjectId]
+      );
+      expect(Number(leaked.rows[0]?.n || 0)).toBe(0);
+    }
+  );
+
+  itDB('POST /generate — nonexistent projectId — 404', async (h) => {
+    const app = buildApp();
+    const ownerToken = makeE2EToken(h.ownerUserId, h.orgAId);
+    const ghostProjectId = `proj_mr_ghost_${suffix()}`;
+
+    const res = await request(app)
+      .post('/api/management-reports/generate')
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({ reportType: 'TEAM_MEETING', scope: 'PROJECT', projectId: ghostProjectId });
+
+    expect(res.status).toBe(404);
+  });
+
+  describe.each(GENERATE_TYPES)(
+    'POST /generate — $reportType behind the DEC-140 gate',
+    ({ reportType, scope, knownPreexistingGetBoardDecisionsBug }) => {
+      itDB(
+        knownPreexistingGetBoardDecisionsBug
+          ? `${reportType} — own project (owner org) — gate lets it through (pre-existing getBoardDecisions bug tracked separately, not 404)`
+          : `${reportType} — own project (owner org) — 200`,
+        async (h) => {
+          const app = buildApp();
+          const projectId = await h.insertProject(
+            h.orgAId,
+            `DEC-140 ${reportType} Owner Project`
+          );
+          const ownerToken = makeE2EToken(h.ownerUserId, h.orgAId);
+
+          const res = await request(app)
+            .post('/api/management-reports/generate')
+            .set('Authorization', `Bearer ${ownerToken}`)
+            .send({ reportType, scope, projectId });
+
+          if (knownPreexistingGetBoardDecisionsBug) {
+            // The DEC-140 gate must not be what's blocking this — prove it
+            // let the owner's own project through by asserting the failure
+            // is anything OTHER than the gate's 404.
+            expect(res.status).not.toBe(404);
+          } else {
+            expect(res.status).toBe(200);
+            expect(res.body?.report?.organizationId).toBe(h.orgAId);
+          }
+        }
+      );
+
+      itDB(`${reportType} — foreign project (real row, different real org) — 404`, async (h) => {
+        const app = buildApp();
+        const victimProjectId = await h.insertProject(
+          h.orgAId,
+          `DEC-140 ${reportType} Victim Project`
+        );
+        const attackerToken = makeE2EToken(h.attackerUserId, h.orgBId);
+        const orgBBefore = await h.countReportsInOrg(h.orgBId);
+
+        const res = await request(app)
+          .post('/api/management-reports/generate')
+          .set('Authorization', `Bearer ${attackerToken}`)
+          .send({ reportType, scope, projectId: victimProjectId });
+
+        expect(res.status).toBe(404);
+        expect(await h.countReportsInOrg(h.orgBId)).toBe(orgBBefore);
+      });
     }
   );
 });

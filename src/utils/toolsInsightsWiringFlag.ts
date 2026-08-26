@@ -24,15 +24,28 @@
  * (2026-08-27) — default flipped to ON (see `ideaInspectorRightRailFlag.ts`
  * DEC-90, commit 1e8bd6b7f4, for the identical flip pattern).
  *
+ * COFNIĘTE 28.08 (DEC-158): read-only kontrola bazy staging potwierdziła, że
+ * tabela `tool_outputs` NIE ISTNIEJE na tej bazie. Z default=ON bootstrap
+ * `DiscoveryToolsHub`'s `fetchData` wołał `Api.listToolOutputs()`
+ * bezwarunkowo w `Promise.all`; `ToolOutputsController.listOutputs` →
+ * `queryHelpers.queryAll` odrzuca (nie połyka błędu) → 500
+ * (`ErrorHandler.ts:190`) → `DiscoveryToolsHub.tsx` przy odpowiedzi 5xx
+ * celowo POMIJA fallback `{outputs:[]}` i rzuca dalej → cały hub narzędzi
+ * (nie tylko zakładka Insights) pada na pełnoekranowy błąd. Default wraca na
+ * OFF, dopóki istnienie tabeli na żywej bazie nie zostanie potwierdzone
+ * ponownie. Reguła CLAUDE.md nr 7 (Piotr nigdy nie jest pierwszym testerem
+ * wizualnym) — taki ekran nie może wystąpić.
+ *
  * Resolution order (highest wins), identical contract to
  * `criterionWorkspaceV2Flag.ts` / `initiativesBulkStubFlag.ts` /
  * `m03DecisionWorkspaceFlag.ts` (query ?? local ?? env ?? default):
  *   1. URL query `?ff_toolsInsightsWiring=1|0`
  *   2. `localStorage["ff.tools_insights_wiring"]`
  *   3. `import.meta.env.VITE_TOOLS_INSIGHTS_WIRING`
- *   4. Default: ON (flip po akcepcie właściciela 27.08). The outer catch
- *      below still resolves to OFF on any read error, unchanged — only the
- *      bottom of the fallback chain changed.
+ *   4. Default: OFF — cofnięte 28.08 (tool_outputs nie istnieje na bazie
+ *      staging, DEC-158); ponowne włączenie dopiero po potwierdzeniu tabeli
+ *      na żywej bazie. The outer catch below still resolves to OFF on any
+ *      read error, unchanged.
  *
  * Resolution result is cached at module scope — call
  * `resetToolsInsightsWiringFlagCache` between reads in tests.
@@ -80,13 +93,12 @@ function readLocalStorage(): boolean | null {
 let cached: boolean | null = null;
 
 /**
- * Resolution: query > localStorage > env > default (ON since the
- * 2026-08-27 owner accept). Any read error along the chain still resolves
- * to OFF rather than throwing — the catch's fail-closed semantics are
- * untouched by the flip, so a hostile/locked-down `window` never
- * accidentally reveals the wiring through an error path. Result is cached
- * at module scope — call `resetToolsInsightsWiringFlagCache` to force a
- * re-read (tests, or after an in-session override changes
+ * Resolution: query > localStorage > env > default (OFF again since the
+ * 2026-08-28 revert, DEC-158 — `tool_outputs` does not exist on the staging
+ * database). Any read error along the chain still resolves to OFF rather
+ * than throwing — the catch's fail-closed semantics are untouched. Result is
+ * cached at module scope — call `resetToolsInsightsWiringFlagCache` to force
+ * a re-read (tests, or after an in-session override changes
  * query/localStorage).
  */
 export function isToolsInsightsWiringEnabled(): boolean {
@@ -96,7 +108,7 @@ export function isToolsInsightsWiringEnabled(): boolean {
     const fromQuery = readQueryOverride();
     const fromLs = fromQuery === null ? readLocalStorage() : null;
     const fromEnv = readEnvFlag();
-    resolved = fromQuery ?? fromLs ?? fromEnv ?? true;
+    resolved = fromQuery ?? fromLs ?? fromEnv ?? false;
   } catch {
     resolved = false;
   }
