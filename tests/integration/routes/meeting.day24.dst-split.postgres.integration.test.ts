@@ -2,7 +2,9 @@
 import { randomUUID } from 'node:crypto';
 
 import express from 'express';
+import { DateTime } from 'luxon';
 import { Pool } from 'pg';
+import RRulePackage from 'rrule';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
@@ -25,6 +27,27 @@ const org = `${prefix}-org`;
 const user = `${prefix}-admin`;
 const pool = new Pool({ connectionString: url });
 const headers = { 'x-org': org, 'x-user': user };
+const { rrulestr } = (RRulePackage as any).default || (RRulePackage as any);
+
+const formatRRuleDate = (value: Date) =>
+  value
+    .toISOString()
+    .replace(/[-:]/g, '')
+    .replace(/\.\d{3}/, '');
+const seriesGrid = (dtstart: string) =>
+  (rrulestr(`DTSTART:${dtstart}Z\nRRULE:FREQ=WEEKLY;COUNT=8`).all() as Date[]).map((wall) =>
+    DateTime.fromObject(
+      {
+        year: wall.getUTCFullYear(),
+        month: wall.getUTCMonth() + 1,
+        day: wall.getUTCDate(),
+        hour: wall.getUTCHours(),
+        minute: wall.getUTCMinutes(),
+        second: wall.getUTCSeconds(),
+      },
+      { zone: 'Europe/Warsaw' }
+    ).toJSDate()
+  );
 
 describe('Meetings day24 C — UTC UNTIL across both Warsaw DST boundaries', () => {
   let app: express.Express;
@@ -45,15 +68,20 @@ describe('Meetings day24 C — UTC UNTIL across both Warsaw DST boundaries', () 
     {
       name: 'autumn CEST to CET',
       startAt: '2026-10-18T07:00:00.000Z',
-      recurrenceId: '2026-11-01T08:00:00.000Z',
+      dtstart: '20261018T090000',
+      expectedOccurrence: '2026-11-01T08:00:00.000Z',
     },
     {
       name: 'spring CET to CEST',
       startAt: '2027-03-21T08:00:00.000Z',
-      recurrenceId: '2027-04-04T07:00:00.000Z',
+      dtstart: '20270321T090000',
+      expectedOccurrence: '2027-04-04T07:00:00.000Z',
     },
   ]) {
     it(scenario.name, async () => {
+      const grid = seriesGrid(scenario.dtstart);
+      const recurrenceId = grid[2].toISOString();
+      expect(recurrenceId).toBe(scenario.expectedOccurrence);
       const created = await request(app).post('/api/meeting').set(headers).send({
         title: scenario.name,
         startAt: scenario.startAt,
@@ -65,25 +93,17 @@ describe('Meetings day24 C — UTC UNTIL across both Warsaw DST boundaries', () 
       const split = await request(app)
         .patch(`/api/meeting/${meetingId}/occurrence`)
         .set(headers)
-        .send({ recurrenceId: scenario.recurrenceId, scope: 'this_and_following', changes: {} });
+        .send({ recurrenceId, scope: 'this_and_following', changes: {} });
       expect(split.status, JSON.stringify(split.body)).toBe(200);
       const cold = await pool.query(
         `SELECT recurrence_rule FROM meetings WHERE id=$1 AND organization_id=$2`,
         [meetingId, org]
       );
-      const expected = new Date(new Date(scenario.recurrenceId).getTime() - 1000)
-        .toISOString()
-        .replace(/[-:]/g, '')
-        .replace(/\.\d{3}/, '');
+      const expected = formatRRuleDate(new Date(grid[2].getTime() - 1000));
       const until = String(cold.rows[0].recurrence_rule).match(/UNTIL=([^;]+)/)?.[1];
       expect(until).toBe(expected);
       expect(until).toMatch(/Z$/);
-      expect(until).not.toBe(
-        new Date(new Date(scenario.recurrenceId).getTime() - 3601000)
-          .toISOString()
-          .replace(/[-:]/g, '')
-          .replace(/\.\d{3}/, '')
-      );
+      expect(until).not.toBe(formatRRuleDate(new Date(grid[2].getTime() - 3601000)));
       expect(split.body.splitMeeting.splitFromMeetingId).toBe(meetingId);
       const newMaster = await pool.query(
         `SELECT recurrence_parent_id,split_from_meeting_id FROM meetings WHERE id=$1`,
@@ -93,6 +113,27 @@ describe('Meetings day24 C — UTC UNTIL across both Warsaw DST boundaries', () 
         recurrence_parent_id: null,
         split_from_meeting_id: meetingId,
       });
+    });
+
+    it(`${scenario.name} documents that an explicit-zone instant outside the series grid is accepted`, async () => {
+      const grid = seriesGrid(scenario.dtstart);
+      const outsideGrid = new Date(grid[2].getTime() + 60 * 60 * 1000).toISOString();
+      expect(grid.map((value) => value.toISOString())).not.toContain(outsideGrid);
+      const created = await request(app)
+        .post('/api/meeting')
+        .set(headers)
+        .send({
+          title: `${scenario.name} outside grid`,
+          startAt: scenario.startAt,
+          timezone: 'Europe/Warsaw',
+          recurrenceRule: 'FREQ=WEEKLY;COUNT=8',
+        });
+      expect(created.status).toBe(201);
+      const response = await request(app)
+        .patch(`/api/meeting/${created.body.meeting.id}/occurrence`)
+        .set(headers)
+        .send({ recurrenceId: outsideGrid, scope: 'this_and_following', changes: {} });
+      expect(response.status, JSON.stringify(response.body)).toBe(200);
     });
   }
 });
