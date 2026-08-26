@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 
 import { evaluateSignalRules, type SignalRunResult } from '../services/signals/signalEvaluator.js';
 import { deterministicSignalRules } from '../services/signals/rules/index.js';
+import logger from '../utils/Logger.js';
 import { queryAll } from '../utils/queryHelpers.js';
 
 const signalDb = { query: queryAll };
@@ -55,8 +56,17 @@ export async function runDeterministicTick(): Promise<{
       });
       if (result.status === 'FAILED') failed += 1;
       else completed += 1;
-    } catch {
+    } catch (error) {
       failed += 1;
+      // FIX-2 (day18 layer-1 acceptance): this used to be a silent catch —
+      // a thrown queryAll/evaluateSignalRules failure for one org vanished
+      // with no trace. Log with the organization and rule context so an
+      // operator can find it.
+      logger.error('[WorkSignalProducerJob] Deterministic tick failed for organization', {
+        organizationId: organization.id,
+        trigger: 'CRON',
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
   return { organizations: organizations.length, completed, failed };
