@@ -19357,7 +19357,8 @@
         "type": {
           "report": "Report",
           "assessmentReport": "Assessment report",
-          "presentation": "Presentation"
+          "presentation": "Presentation",
+          "toolOutput": "Tool output"
         }
       },
       "table": {

@@ -73,6 +73,7 @@ import { useConversationStore } from '@/store/useConversationStore';
 import { listStrategyToolSlugs } from '@/toolCatalog/strategy/catalog';
 import { parseArtifactRef } from '@/utils/artifactLinks';
 import { formatRoiDisplay } from '@/utils/safeFormat';
+import { isToolsInsightsWiringEnabled } from '@/utils/toolsInsightsWiringFlag';
 
 import {
   type AssessmentFrameworkPreviewModel,
@@ -663,7 +664,11 @@ interface DisplayItem {
   _fullData?: any; // Full initiative data for detail view
 }
 
-type OutputKind = 'assessment_report' | 'report_builder' | 'presentation_deck';
+// 'tool_output' (DEC-118 repair #1, behind ff_toolsInsightsWiring, default
+// OFF): rows from the canonical `tool_outputs` snapshot (migration 946,
+// GET /api/tool-outputs) — the module's OWN approved tool results, as
+// distinct from the three downstream artifact kinds below.
+type OutputKind = 'assessment_report' | 'report_builder' | 'presentation_deck' | 'tool_output';
 
 interface OutputItem {
   kind: 'output';
@@ -1026,37 +1031,54 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       setLoadError(null);
 
       try {
-        const [toolSessionsRes, assessmentRes, assessmentReports, reportBuilderList, decksList] =
-          await Promise.all([
-            resolveBootstrapRequest(
-              'tool sessions',
-              Api.listToolSessions({
-                projectId: currentProjectId || undefined,
-              }),
-              { items: [] as ToolSessionData[], total: 0, limit: 0, offset: 0 }
-            ),
-            resolveBootstrapRequest(
-              'assessments',
-              Api.listAssessmentsLegacy({
-                projectId: currentProjectId || undefined,
-                limit: 100,
-                offset: 0,
-              }),
-              { items: [] as any[], total: 0, limit: 100, offset: 0 }
-            ),
-            resolveBootstrapRequest(
-              'assessment reports',
-              Api.getAssessmentReports(currentProjectId || undefined),
-              [] as any[]
-            ),
-            resolveBootstrapRequest('report builder list', Api.get('/report-builder'), {
-              reports: [] as any[],
+        const [
+          toolSessionsRes,
+          assessmentRes,
+          assessmentReports,
+          reportBuilderList,
+          decksList,
+          toolOutputsRes,
+        ] = await Promise.all([
+          resolveBootstrapRequest(
+            'tool sessions',
+            Api.listToolSessions({
+              projectId: currentProjectId || undefined,
             }),
-            resolveBootstrapRequest('presentation decks', Api.get('/presentations/decks'), {
-              success: true,
-              data: [] as any[],
+            { items: [] as ToolSessionData[], total: 0, limit: 0, offset: 0 }
+          ),
+          resolveBootstrapRequest(
+            'assessments',
+            Api.listAssessmentsLegacy({
+              projectId: currentProjectId || undefined,
+              limit: 100,
+              offset: 0,
             }),
-          ]);
+            { items: [] as any[], total: 0, limit: 100, offset: 0 }
+          ),
+          resolveBootstrapRequest(
+            'assessment reports',
+            Api.getAssessmentReports(currentProjectId || undefined),
+            [] as any[]
+          ),
+          resolveBootstrapRequest('report builder list', Api.get('/report-builder'), {
+            reports: [] as any[],
+          }),
+          resolveBootstrapRequest('presentation decks', Api.get('/presentations/decks'), {
+            success: true,
+            data: [] as any[],
+          }),
+          // DEC-118 repair #1 (behind ff_toolsInsightsWiring, default OFF —
+          // fail-closed until an owner-accepted screenshot): the canonical
+          // tool_outputs snapshot (migration 946) was never fetched here, so
+          // an approved tool result never appeared in the module's own
+          // Outputs/Insights tab. Skip the network call entirely when the
+          // flag is off — zero behavior/perf change on the default path.
+          isToolsInsightsWiringEnabled()
+            ? resolveBootstrapRequest('tool outputs', Api.listToolOutputs(undefined), {
+                outputs: [] as any[],
+              })
+            : Promise.resolve({ outputs: [] as any[] }),
+        ]);
 
         const allSessions = (toolSessionsRes.items || []).map(transformToolSession);
         const allAssessments = ((assessmentRes as any)?.items || []).map(
@@ -1160,9 +1182,41 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           }))
           .filter((r: any) => Boolean(r.id));
 
-        const mergedOutputs = [...assessmentReportRows, ...reportBuilderRows, ...deckRows].sort(
-          (a, b) => Number(b.updatedAt.getTime()) - Number(a.updatedAt.getTime())
-        );
+        // DEC-118 repair #1: the module's OWN tool_outputs snapshot rows.
+        // `toolOutputsRes.outputs` is `[]` when the flag is off (see the
+        // conditional fetch above), so this is a no-op merge on the default
+        // path. `isCurrent !== false` hides superseded revisions from the
+        // aggregate list — the full version history (incl. superseded) stays
+        // reachable via ToolOutputsPanel inside that session's own workspace,
+        // matching how `listOutputs` already documents that distinction.
+        const toolOutputsRaw = (toolOutputsRes as any)?.outputs;
+        const toolOutputRows: OutputItem[] = (
+          Array.isArray(toolOutputsRaw) ? toolOutputsRaw : []
+        )
+          .filter((o: any) => o?.isCurrent !== false)
+          .slice(0, 200)
+          .map((o: any) => ({
+            kind: 'output' as const,
+            outputKind: 'tool_output' as const,
+            id: String(o?.id || ''),
+            name: String(o?.title || 'Tool Output'),
+            status: mapOutputStatus(o?.status),
+            statusRaw: o?.status != null ? String(o.status) : undefined,
+            createdAt: o?.createdAt ? normalizeDate(o.createdAt) : undefined,
+            updatedAt: normalizeDate(o?.approvedAt || o?.createdAt),
+            projectId: currentProjectId || undefined,
+            sourceType: 'tool_session',
+            sourceId: o?.toolSessionId || null,
+            _fullData: o,
+          }))
+          .filter((r: any) => Boolean(r.id));
+
+        const mergedOutputs = [
+          ...assessmentReportRows,
+          ...reportBuilderRows,
+          ...deckRows,
+          ...toolOutputRows,
+        ].sort((a, b) => Number(b.updatedAt.getTime()) - Number(a.updatedAt.getTime()));
         setOutputs(mergedOutputs);
 
         // M14 (2026-08-25): same defect as `discoveries` above — approved/
@@ -2092,6 +2146,14 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
               label: isPolish ? 'Prezentacja' : 'Presentation',
               color: 'text-emerald-400',
             },
+            // DEC-118 repair #1: the module's OWN tool_outputs snapshot rows
+            // (migration 946), distinguishable from the three downstream
+            // artifact kinds above.
+            tool_output: {
+              icon: <Zap size={14} />,
+              label: isPolish ? 'Wynik narzędzia' : 'Tool output',
+              color: 'text-amber-400',
+            },
           };
           const c = cfg[kind] || {
             icon: <FileText size={14} />,
@@ -2202,8 +2264,24 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         navigate(`/presentations/builder/${encodeURIComponent(item.id)}`);
         return;
       }
+      if (item.outputKind === 'tool_output') {
+        // No dedicated tool_outputs detail route exists yet — open the
+        // originating tool session instead, same as the Sessions tab does.
+        // That session's own ToolWorkspace already renders ToolOutputsPanel
+        // (server/src/routes/toolOutputs.routes.ts) once APPROVED, so this
+        // reaches the SAME read/reopen surface, not a dead end.
+        const sessionId = item.sourceId || String(item?._fullData?.toolSessionId || '');
+        if (!sessionId) return;
+        handleOpenDocument({
+          id: sessionId,
+          toolType: String(item?._fullData?.toolType || ''),
+          name: item.name,
+          status: item.statusRaw || item.status,
+        });
+        return;
+      }
     },
-    [navigate]
+    [navigate, handleOpenDocument]
   );
 
   // RV-027 (CB-02 pass 3): returns whether a matching document was actually
@@ -4339,7 +4417,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                   ? t('tools.hub.outputs.type.assessmentReport', 'Assessment report')
                   : kind === 'presentation_deck'
                     ? t('tools.hub.outputs.type.presentation', 'Presentation')
-                    : t('tools.hub.outputs.type.report', 'Report');
+                    : kind === 'tool_output'
+                      ? t('tools.hub.outputs.type.toolOutput', 'Tool output')
+                      : t('tools.hub.outputs.type.report', 'Report');
               return (
                 <div className="p-4 space-y-3">
                   <div className="flex items-start justify-between gap-3">

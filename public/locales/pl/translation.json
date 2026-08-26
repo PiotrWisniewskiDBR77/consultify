@@ -20237,7 +20237,8 @@
         "type": {
           "report": "Raport",
           "assessmentReport": "Raport assessment",
-          "presentation": "Prezentacja"
+          "presentation": "Prezentacja",
+          "toolOutput": "Wynik narzędzia"
         }
       },
       "table": {
