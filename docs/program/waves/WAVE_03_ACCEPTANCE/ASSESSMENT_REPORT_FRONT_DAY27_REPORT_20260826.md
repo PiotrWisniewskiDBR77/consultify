@@ -118,3 +118,34 @@ Zastane czerwone: DRD offline/banner (6), Outputs (8), globalne i18n (10). Test�
 11 pozycji: 4 `ZROBIONE_WG_DoD`, 7 `CZĘŚCIOWE`, 0 niezaczętych. Żadne migracje. Gotowe do odbioru przez **NADZORCĘ**, nie do pokazania właścicielowi.
 
 Raport R.1 domknięty po finalnym pomiarze, bramkach chronionych ścieżek i własnych oględzinach wszystkich dziesięciu zrzutów.
+
+## FIX-y po odbiorze 27.08
+
+Odbiór dyżuru 27 zakończył się werdyktem **ZIELONY Z FIX-AMI**. Poniższe poprawki wykonano osobnym robotnikiem na gałęzi
+`codex/day27-fixes-20260827` (worktree `/private/tmp/consultify-day27-fixes`), commit-per-FIX, zero push. Historia gita
+niżej jest niezmienialna (nie przepisujemy cudzych commitów) — to jest jej sprostowanie, nie edycja.
+
+**Sprostowanie commita `7a6ff41c15`** ("test(assessment): behaviour tests for the report view, flag reader and skip
+post (E.1)"): wiadomość commita twierdzi, że dodano testy "skip post", ale commit dotyka WYŁĄCZNIE
+`AssessmentReportContractView.test.tsx` (122 linie) — plik nie zawiera ani jednego przypadku wywołującego
+`recordAssessmentSkipReason`/`DrdHttpMethodWorkspaceScreen`. Testów zachowania POST-a kodu pominięcia w tym repo
+przed niniejszym dyżurem FIX nie było — powstały dopiero w FIX-2 poniżej (`DrdHttpMethodWorkspaceScreen.skipCode.test.tsx`,
+commit `6fcac0acf8`, 6/6 zielone).
+
+Wykonane poprawki (SHA na `codex/day27-fixes-20260827`, względem tipu `codex/assessment-report-front-day27-20260827`):
+
+| # | Zakres | SHA | Wynik |
+| - | ------ | --- | ----- |
+| P1-1 | 13× TS18047 w `AssessmentReportContractView.tsx` | `5bc113caba` | Celowany `tsc` (temp tsconfig, include=ten plik): 0 błędów w pliku. |
+| P1-2 | Nowy `DrdHttpMethodWorkspaceScreen.skipCode.test.tsx` (6 przypadków: happy path, kolejność wywołań, status 200, retry sieciowy z tym samym Idempotency-Key, 403 bez retry, brak `organizationId` w body) | `6fcac0acf8` | 6/6 zielone. |
+| P1-3 | Obcięta kolumna „Pominięcia" w Matrix (`min-w-[720px]` w kolumnie `max-w-[760px]`) | `087ebfbad2` | Skips przeniesione pod tabelę (pełna szerokość); tabela zwężona do `min-w-[480px]`; zrzuty light+dark (harness, `scenario=pominiecia&axis=7`) potwierdzają ostatnią kolumnę w całości w kadrze. |
+| FIX-4 | `NModeHeaderConfig.hideSaveState` (addytywne, licencja nadzorcy) + użycie w widoku raportu | `68eedc62a3` | Rozwiązuje STOP A.3 z tego raportu ("ukrycie wymagałoby zmiany `src/components/shared/**`, zakazanej Z19") — tym razem zmiana była jawnie licencjonowana. Nowy `NModeHeader.hideSaveState.test.tsx` (4/4); regresyjnie bez propa = jak dotąd. |
+| P2-1 | „Generuj" jako header CTA mimo `disabled` | `aa159dff40` | Usunięto `primaryAction` z nagłówka; „Generuj" przeniesiony do wyszarzonego wiersza panelu Akcje obok Eksportów. |
+| P2-2 | Surowe `session-…` w breadcrumbie | `009da7ca88` | Skrócono do „Ocena / Raport" (2 crumbs); nazwa sesji w kontrakcie zostaje na dyżur serwerowy. |
+| P2-8 | Dług i18n: 61 kluczy `assessment.reportView.*` dodanych tylko do en/pl | `b7d2c6c3a8` | de/es/ar/ja uzupełnione (LLM-tłumaczenie, konwencja S2-LOCALE). `tests/unit/i18n/s2-locale-added-keys.test.ts`: 1674 → 1613 brakujących kluczy (mierzone dla `de`, identycznie dla wszystkich 4 lokalizacji). Uwaga: brief mówił o „62 kluczach / dług do ≤1612" — trzy niezależne pomiary (filtr prefiksu `reportView`, diff per-commit en, diff per-commit pl) zgodnie dają 61, nie 62; zaraportowano zmierzoną liczbę zamiast dociągać sztucznie do okrągłej wartości tłumacząc niepowiązany, wcześniejszy dług. |
+
+Status pozycji po FIX-ach: STOP A.3 (wskaźnik zapisu) — **rozwiązany** (FIX-4, licencja nadzorcy). Testy E.1 —
+**sprostowane i uzupełnione** (skip-post coverage realnie istnieje od FIX-2). P1-1/P1-3 — **zamknięte**. P2-1/P2-2 —
+**zamknięte** w zakresie widoku; rozszerzenie kontraktu o nazwę sesji pozostaje otwarte na dyżur serwerowy. P2-8 —
+**dług zmniejszony o 61 kluczy** (1674 → 1613); pozostały dług (1613) jest zastany z innych strumieni, poza zakresem
+tego dyżuru FIX.
