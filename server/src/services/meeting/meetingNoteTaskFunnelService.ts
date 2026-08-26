@@ -77,6 +77,45 @@ export async function createTaskFromMeetingNoteAction(input: {
           'TASK_IDEMPOTENCY_COLLISION'
         );
       }
+      // DEC-153 (odbiór dyżuru 28, DEC-147/153, delegacja właściciela,
+      // 2026-08-28): a task born from this funnel MUST carry a non-null
+      // assignee_id — every My Work read filters `assignee_id = ?`
+      // (my-work.routes.ts), so a NULL assignee makes the task invisible to
+      // anyone. That was the bug: this call never set `assigneeId` at all.
+      //
+      // Rule per DEC-153: assignee = the action item's owner; if none,
+      // fall back to the note's author.
+      //
+      // HONEST LIMITATION (documented per the decision's own instruction):
+      // `MeetingNoteActionItem.owner` (meetingBoundaryService.ts) is
+      // free-text the AI/heuristic extractor lifts from the transcript — a
+      // name, "Unassigned", etc. There is no `ownerUserId`/structured field
+      // on the action item (contrast `meeting_follow_ups`, which DOES carry
+      // a structured `ownerUserId` next to its text `owner` —
+      // meeting.routes.ts createMeetingFollowUpRecord). Resolving that free
+      // text to a real user would mean heuristic name-matching (typos,
+      // duplicate first names, `owner: "Unassigned"` never actually
+      // matching anyone) — explicitly out of scope, since a wrong match
+      // silently assigns the task to the wrong person, which is worse than
+      // today's invisible-task bug. So under the CURRENT data model this
+      // rule always resolves to its fallback branch: the note's author
+      // (`note.createdBy`). The raw owner text is not lost — it stays in
+      // the task description below, same as before this fix.
+      //
+      // Tenant guard: only assign to the note's author if that user still
+      // belongs to THIS organization. `note` was fetched scoped to
+      // `input.organizationId`, but `created_by` is a historical value
+      // that is not re-validated on read — a user could since have moved
+      // org, or the row could be corrupt. Never hand an assignee_id to a
+      // user outside the task's own org; fall back to the actor performing
+      // this conversion, who the route has already authenticated as a
+      // member of `input.organizationId`.
+      const ownerCheck = await query<{ id: string }>(
+        `SELECT id FROM users WHERE id = $1 AND organization_id = $2`,
+        [note.createdBy, input.organizationId]
+      );
+      const assigneeId = ownerCheck.rows[0]?.id || input.actorId;
+
       const service = new TaskService({ query } as any);
       const task = await service.createTask(
         {
@@ -90,6 +129,7 @@ export async function createTaskFromMeetingNoteAction(input: {
             .join('\n'),
           status: 'todo',
           priority: action.priority || 'medium',
+          assigneeId,
         },
         input.actorId,
         { idempotencyKey, sourceType, sourceId }
