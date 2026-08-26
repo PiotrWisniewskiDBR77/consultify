@@ -65,7 +65,7 @@ import type {
   AuditReportSummary,
 } from '../../auditsMethodApi';
 import { EvidencePanel } from '../EvidencePanel';
-import { FindingPanel } from '../FindingPanel';
+import { FindingPanel, findingStatusLabel } from '../FindingPanel';
 import { RemediationPanel } from '../RemediationPanel';
 import { TeresaProposalCard } from '../TeresaProposalCard';
 import {
@@ -145,6 +145,85 @@ const ROLE_LABEL_EN: Record<string, string> = {
   administrator: 'administrator',
   viewer: 'viewer',
 };
+
+// Odbiór 2026-08-26 (fix-pass po nadzorcy): „zero surowych enumów/ID na
+// twarzy ekranu" — poniższe słowniki tłumaczą KAŻDĄ wartość enum z API, która
+// trafia na widok, na pigułkę PL/EN. Jedno miejsce, jak lokalny `t(pl,en)`
+// tego ekranu; wartości z API (TestResult/AuditCriterionSummary.workStatus/
+// AuditReportStatus/AuditProposalStatus, wszystkie `workspaceApi.ts` /
+// `auditsMethodApi.ts`) zostają BEZ ZMIAN, tylko warstwa wyświetlania.
+// Nierozpoznana wartość pokazuje się wprost (fallback `?? value`) — nigdy
+// nie znika po cichu.
+const TEST_RESULT_LABEL_PL: Record<string, string> = {
+  pass: 'Zaliczony',
+  fail: 'Niezaliczony',
+  partial: 'Częściowy',
+  inconclusive: 'Nierozstrzygający',
+};
+const TEST_RESULT_LABEL_EN: Record<string, string> = {
+  pass: 'Pass',
+  fail: 'Fail',
+  partial: 'Partial',
+  inconclusive: 'Inconclusive',
+};
+
+const CRITERION_WORK_STATUS_LABEL_PL: Record<string, string> = {
+  open: 'Otwarte',
+  evidence_requested: 'Poproszono o dowód',
+  evidence_received: 'Dowód dostarczony',
+  tested: 'Przetestowane',
+  concluded: 'Zakończone wnioskiem',
+};
+const CRITERION_WORK_STATUS_LABEL_EN: Record<string, string> = {
+  open: 'Open',
+  evidence_requested: 'Evidence requested',
+  evidence_received: 'Evidence received',
+  tested: 'Tested',
+  concluded: 'Concluded',
+};
+
+const AUDIT_REPORT_STATUS_LABEL_PL: Record<string, string> = {
+  draft: 'Szkic',
+  in_review: 'W recenzji',
+  approved: 'Zatwierdzony',
+  published: 'Opublikowany',
+  superseded: 'Zastąpiony',
+};
+const AUDIT_REPORT_STATUS_LABEL_EN: Record<string, string> = {
+  draft: 'Draft',
+  in_review: 'In review',
+  approved: 'Approved',
+  published: 'Published',
+  superseded: 'Superseded',
+};
+
+const AUDIT_PROPOSAL_STATUS_LABEL_PL: Record<string, string> = {
+  draft: 'Szkic',
+  sent_to_candidates: 'Wysłano do kandydatów',
+  registered: 'Zarejestrowana',
+  deferred: 'Odłożona',
+  dismissed: 'Odrzucona',
+};
+const AUDIT_PROPOSAL_STATUS_LABEL_EN: Record<string, string> = {
+  draft: 'Draft',
+  sent_to_candidates: 'Sent to candidates',
+  registered: 'Registered',
+  deferred: 'Deferred',
+  dismissed: 'Dismissed',
+};
+
+function testResultLabel(value: string, isPolish: boolean): string {
+  return (isPolish ? TEST_RESULT_LABEL_PL : TEST_RESULT_LABEL_EN)[value] ?? value;
+}
+function criterionWorkStatusLabel(value: string, isPolish: boolean): string {
+  return (isPolish ? CRITERION_WORK_STATUS_LABEL_PL : CRITERION_WORK_STATUS_LABEL_EN)[value] ?? value;
+}
+function reportStatusLabel(value: string, isPolish: boolean): string {
+  return (isPolish ? AUDIT_REPORT_STATUS_LABEL_PL : AUDIT_REPORT_STATUS_LABEL_EN)[value] ?? value;
+}
+function proposalStatusLabel(value: string, isPolish: boolean): string {
+  return (isPolish ? AUDIT_PROPOSAL_STATUS_LABEL_PL : AUDIT_PROPOSAL_STATUS_LABEL_EN)[value] ?? value;
+}
 
 function formatDateTime(iso: string | null | undefined, isPolish: boolean): string {
   if (!iso) return '—';
@@ -931,7 +1010,7 @@ export const CriterionWorkspaceV2: React.FC = () => {
           <PropRow k={t('Status zgodności', 'Conformity status')} v={<StatusChip label={conformityLabel} tone={conformityTone} />} />
           <PropRow
             k={t('Wynik testu', 'Test result')}
-            v={criterion.testResult || t('Brak', 'None')}
+            v={criterion.testResult ? testResultLabel(criterion.testResult, isPolish) : t('Brak', 'None')}
             sub={criterion.sampleDescription || undefined}
           />
           <PropRow k={t('Ostatnia zmiana', 'Last change')} v={formatDateTime(criterion.updatedAt, isPolish)} />
@@ -951,7 +1030,10 @@ export const CriterionWorkspaceV2: React.FC = () => {
             <RelationRow
               icon={<AlertCircle size={13} aria-hidden />}
               title={`${selectedFindingDetail.referenceCode ?? ''} · ${selectedFindingDetail.statement}`.slice(0, 72)}
-              subtitle={t(`ustalenie · ${selectedFindingDetail.status}`, `finding · ${selectedFindingDetail.status}`)}
+              subtitle={t(
+                `ustalenie · ${findingStatusLabel(selectedFindingDetail.status, true)}`,
+                `finding · ${findingStatusLabel(selectedFindingDetail.status, false)}`
+              )}
               onClick={() => scrollToPhase('ustalenia')}
             />
           )}
@@ -959,7 +1041,10 @@ export const CriterionWorkspaceV2: React.FC = () => {
             <RelationRow
               icon={<ScrollText size={13} aria-hidden />}
               title={`${siblingCriterion.refCode ?? ''} · ${siblingCriterion.title}`}
-              subtitle={t(`kryterium siostrzane · ${siblingCriterion.workStatus}`, `sibling criterion · ${siblingCriterion.workStatus}`)}
+              subtitle={t(
+                `kryterium siostrzane · ${criterionWorkStatusLabel(siblingCriterion.workStatus, true)}`,
+                `sibling criterion · ${criterionWorkStatusLabel(siblingCriterion.workStatus, false)}`
+              )}
               onClick={() => navigate(`/audit-programs/${programId}/criteria/${siblingCriterion.id}`)}
             />
           )}
@@ -967,7 +1052,10 @@ export const CriterionWorkspaceV2: React.FC = () => {
             <RelationRow
               icon={<FileText size={13} aria-hidden />}
               title={latestReport.title}
-              subtitle={t(`dokument · ${latestReport.status}`, `document · ${latestReport.status}`)}
+              subtitle={t(
+                `dokument · ${reportStatusLabel(latestReport.status, true)}`,
+                `document · ${reportStatusLabel(latestReport.status, false)}`
+              )}
               onClick={() => navigate('/audit-programs?tab=reports')}
             />
           )}
@@ -975,7 +1063,10 @@ export const CriterionWorkspaceV2: React.FC = () => {
             <RelationRow
               icon={<ClipboardCheck size={13} aria-hidden />}
               title={relatedProposal.title}
-              subtitle={t(`inicjatywa naprawcza · ${relatedProposal.status}`, `remediation initiative · ${relatedProposal.status}`)}
+              subtitle={t(
+                `inicjatywa naprawcza · ${proposalStatusLabel(relatedProposal.status, true)}`,
+                `remediation initiative · ${proposalStatusLabel(relatedProposal.status, false)}`
+              )}
               onClick={() => navigate('/audit-programs?tab=initiatives')}
             />
           )}
@@ -1031,7 +1122,11 @@ export const CriterionWorkspaceV2: React.FC = () => {
       emptyLabel: t('Brak zdarzeń dla tego kryterium.', 'No events for this criterion yet.'),
       children: (
         <div>
-          <PreviewActivityStrip events={activityEvents} initialCount={4} />
+          <PreviewActivityStrip
+            events={activityEvents}
+            initialCount={4}
+            formatTimestamp={(ts) => formatDateTime(ts, isPolish)}
+          />
           {canProposeAi && (
             <div className="mt-2 rounded-token-sm border border-c-focus-solid/30 bg-c-focus/5 p-2">
               <p className="text-[11px] leading-snug text-c-text-secondary">
@@ -1390,10 +1485,10 @@ export const CriterionWorkspaceV2: React.FC = () => {
                             className="w-full rounded-token-sm border border-c-border bg-c-surface px-2 py-1.5 text-sm text-c-text disabled:opacity-60"
                           >
                             <option value="">—</option>
-                            <option value="pass">pass</option>
-                            <option value="fail">fail</option>
-                            <option value="partial">partial</option>
-                            <option value="inconclusive">inconclusive</option>
+                            <option value="pass">{testResultLabel('pass', isPolish)}</option>
+                            <option value="fail">{testResultLabel('fail', isPolish)}</option>
+                            <option value="partial">{testResultLabel('partial', isPolish)}</option>
+                            <option value="inconclusive">{testResultLabel('inconclusive', isPolish)}</option>
                           </select>
                           {canPerformTest ? (
                             <button
@@ -1451,7 +1546,7 @@ export const CriterionWorkspaceV2: React.FC = () => {
                           >
                             {workspaceApi.CONFORMITY_STATUSES.filter((s) => s !== 'not_tested').map((s) => (
                               <option key={s} value={s} disabled={s === 'conforming' && !hasAcceptedEvidence}>
-                                {s}
+                                {(isPolish ? CONFORMITY_LABEL_PL : CONFORMITY_LABEL_EN)[s]}
                                 {s === 'conforming' && !hasAcceptedEvidence ? ` — ${t('wymaga zaakceptowanego dowodu', 'requires accepted evidence')}` : ''}
                               </option>
                             ))}

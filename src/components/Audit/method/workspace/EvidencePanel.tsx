@@ -50,6 +50,31 @@ const EVIDENCE_KIND_OPTIONS: EvidenceKind[] = [
   'sample',
 ];
 
+// Słownik RODZAJU dowodu — jedno miejsce, tak jak lokalny `t(pl,en)` tego
+// ekranu. Odbiór 2026-08-26: „zero surowych enumów na twarzy ekranu" —
+// `evidenceKind` z API (`EvidenceKind`, `workspaceApi.ts`) zostaje bez zmian,
+// tylko WARSTWA WYŚWIETLANIA dostaje pigułkę PL/EN.
+const EVIDENCE_KIND_LABEL_PL: Record<EvidenceKind, string> = {
+  document: 'Dokument',
+  interview_answer: 'Odpowiedź z wywiadu',
+  interview_statement: 'Oświadczenie z wywiadu',
+  observation: 'Obserwacja',
+  system_export: 'Eksport systemowy',
+  screenshot: 'Zrzut ekranu',
+  note: 'Notatka',
+  sample: 'Próbka',
+};
+const EVIDENCE_KIND_LABEL_EN: Record<EvidenceKind, string> = {
+  document: 'Document',
+  interview_answer: 'Interview answer',
+  interview_statement: 'Interview statement',
+  observation: 'Observation',
+  system_export: 'System export',
+  screenshot: 'Screenshot',
+  note: 'Note',
+  sample: 'Sample',
+};
+
 export const EvidencePanel: React.FC<EvidencePanelProps> = ({
   programId,
   criterionId,
@@ -145,6 +170,11 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
       id: 'evidenceKind',
       label: t('Rodzaj', 'Kind'),
       width: '140px',
+      render: (row: WorkspaceEvidence) => (
+        <span className="text-sm text-c-text">
+          {(isPolish ? EVIDENCE_KIND_LABEL_PL : EVIDENCE_KIND_LABEL_EN)[row.evidenceKind] ?? row.evidenceKind}
+        </span>
+      ),
     },
     {
       id: 'supportsConformity',
