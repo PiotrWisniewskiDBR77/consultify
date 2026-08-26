@@ -20,6 +20,29 @@ interface AuthRequest extends Request {
   user?: { id: string; organizationId: string };
 }
 
+// Tenant-scoping helper (P0 IDOR fix): a raid_items row belonging to
+// another organization must be indistinguishable from a row that does
+// not exist at all — 404, never 403 (403 would confirm the row's
+// existence to a caller in a foreign org). organizationId comes ONLY
+// from the verified token (req.user.organizationId), never from
+// body/query, and this must run BEFORE any mutation on the row.
+function raidItemNotFoundError(): Error {
+  const err = new Error('RAID item not found');
+  (err as any).code = 'NOT_FOUND';
+  (err as any).status = 404;
+  return err;
+}
+
+async function assertRaidItemInOrganization(itemId: string, organizationId?: string) {
+  if (!organizationId) throw raidItemNotFoundError();
+  const row = (await dbGet('SELECT id FROM raid_items WHERE id = ? AND organization_id = ?', [
+    itemId,
+    organizationId,
+  ])) as any;
+  if (!row) throw raidItemNotFoundError();
+  return row;
+}
+
 router.get(
   '/',
   verifyToken,
@@ -104,6 +127,9 @@ router.put(
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    await assertRaidItemInOrganization(req.params.id, orgId);
+
     const { title, description, severity, probability, status, ownerId, dueDate } = req.body;
     const updates: string[] = [];
     const params: any[] = [];
@@ -138,9 +164,10 @@ router.put(
     if (!updates.length) return res.status(400).json({ error: 'No updates' });
 
     if (severity !== undefined || probability !== undefined) {
-      const existing = (await dbGet('SELECT probability, impact FROM raid_items WHERE id = ?', [
-        req.params.id,
-      ])) as any;
+      const existing = (await dbGet(
+        'SELECT probability, impact FROM raid_items WHERE id = ? AND organization_id = ?',
+        [req.params.id, orgId]
+      )) as any;
       const finalProb = probability
         ? String(probability).toUpperCase()
         : existing?.probability || 'LOW';
@@ -154,8 +181,11 @@ router.put(
     }
 
     updates.push("updated_at = datetime('now')");
-    params.push(req.params.id);
-    await dbRun(`UPDATE raid_items SET ${updates.join(', ')} WHERE id = ?`, params);
+    params.push(req.params.id, orgId);
+    await dbRun(
+      `UPDATE raid_items SET ${updates.join(', ')} WHERE id = ? AND organization_id = ?`,
+      params
+    );
     res.json({ success: true });
   })
 );
@@ -165,12 +195,15 @@ router.patch(
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    await assertRaidItemInOrganization(req.params.id, orgId);
+
     const { status } = req.body || {};
     if (!status) return res.status(400).json({ error: 'status required' });
-    await dbRun(`UPDATE raid_items SET status = ?, updated_at = datetime('now') WHERE id = ?`, [
-      String(status).toUpperCase(),
-      req.params.id,
-    ]);
+    await dbRun(
+      `UPDATE raid_items SET status = ?, updated_at = datetime('now') WHERE id = ? AND organization_id = ?`,
+      [String(status).toUpperCase(), req.params.id, orgId]
+    );
     res.json({ success: true });
   })
 );
@@ -180,7 +213,13 @@ router.delete(
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    await dbRun('DELETE FROM raid_items WHERE id = ?', [req.params.id]);
+    const orgId = req.user?.organizationId;
+    await assertRaidItemInOrganization(req.params.id, orgId);
+
+    await dbRun('DELETE FROM raid_items WHERE id = ? AND organization_id = ?', [
+      req.params.id,
+      orgId,
+    ]);
     res.json({ success: true });
   })
 );
