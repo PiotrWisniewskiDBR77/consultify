@@ -5134,7 +5134,7 @@ export function createInitiativesExecutionRuntimeRouter(
             (run as any).sources,
             parsed.data.asOf
           )
-        : [];
+        : new Date().toISOString();
       res.json(reconstructReportRun(run as any, parsed.data.asOf, versions));
     })
   );

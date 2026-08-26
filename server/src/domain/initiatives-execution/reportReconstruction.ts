@@ -31,12 +31,15 @@ export interface ReportReconstructionResult {
 export function reconstructReportRun(
   run: ReportRun,
   asOf: string,
-  resolvedVersions: Array<{
-    sourceType: string;
-    sourceId: string;
-    version: number;
-    eventCreatedAt: string;
-  }> = [],
+  resolvedVersionsOrReconstructedAt:
+    | Array<{
+        sourceType: string;
+        sourceId: string;
+        version: number;
+        eventCreatedAt: string;
+      }>
+    | string
+    | undefined = [],
   reconstructedAt = new Date().toISOString()
 ): ReportReconstructionResult {
   const target = new Date(asOf);
@@ -44,6 +47,11 @@ export function reconstructReportRun(
     throw new RangeError('AS_OF_INVALID_OR_FUTURE');
   }
 
+  const hasVersionReader = Array.isArray(resolvedVersionsOrReconstructedAt);
+  const resolvedVersions = hasVersionReader ? resolvedVersionsOrReconstructedAt : [];
+  if (typeof resolvedVersionsOrReconstructedAt === 'string') {
+    reconstructedAt = resolvedVersionsOrReconstructedAt;
+  }
   const versionBySource = new Map(
     resolvedVersions.map((source) => [`${source.sourceType}\u0000${source.sourceId}`, source])
   );
@@ -63,7 +71,9 @@ export function reconstructReportRun(
         sourceId: source.sourceId,
         reason: (source.accessState === 'DENIED'
           ? 'ACCESS_DENIED'
-          : 'NO_EVENT_HISTORY_BEFORE_AS_OF') as ReconstructionGapReason,
+          : hasVersionReader
+            ? 'NO_EVENT_HISTORY_BEFORE_AS_OF'
+            : 'SOURCE_NOT_EVENT_SOURCED') as ReconstructionGapReason,
       },
     ];
   });
