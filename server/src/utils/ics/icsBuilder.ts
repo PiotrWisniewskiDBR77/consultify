@@ -86,7 +86,16 @@ export function buildMeetingInvitationIcs(input: MeetingInvitationIcsInput): str
     `ORGANIZER;CN=${escapeIcsText(input.organizer.displayName || input.organizer.email)}:mailto:${input.organizer.email}`,
   ];
   if (input.recurrenceRule) {
-    lines.push(`RRULE:${input.recurrenceRule.replace(/^RRULE:/i, '')}`);
+    // FIX-2 (P1-2, 2026-08-26) defense in depth: the route layer validates
+    // recurrenceRule against a strict FREQ/INTERVAL/... whitelist before it
+    // ever reaches here (server/src/routes/meeting.routes.ts,
+    // validateRecurrenceRule), but this builder must not rely on that as its
+    // only guard — strip any CR/LF an upstream caller might still pass
+    // through. An unescaped line break inside an RRULE value would inject
+    // arbitrary extra ICS lines (e.g. a spoofed ATTENDEE/ORGANIZER) into the
+    // generated invite.
+    const safeRecurrenceRule = input.recurrenceRule.replace(/^RRULE:/i, '').replace(/[\r\n]/g, '');
+    if (safeRecurrenceRule) lines.push(`RRULE:${safeRecurrenceRule}`);
   }
   lines.push(...input.attendees.map(participantLine), 'END:VEVENT', 'END:VCALENDAR', '');
   return lines.join('\r\n');

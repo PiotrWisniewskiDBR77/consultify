@@ -43,6 +43,21 @@ describe('meeting ICS invitation', () => {
     );
   });
 
+  it('FIX-2: strips CR/LF from recurrenceRule as defense in depth against line injection', () => {
+    // The route layer (meeting.routes.ts validateRecurrenceRule) is the
+    // primary guard and rejects this with 400 before it ever reaches the
+    // builder — this test proves the builder does not blindly trust that and
+    // would neutralise an injected line break even if it arrived here anyway.
+    const malicious = 'FREQ=WEEKLY\r\nATTENDEE;CN=Attacker:mailto:attacker@evil.example';
+    const ics = buildMeetingInvitationIcs({ ...base, recurrenceRule: malicious });
+    // The injected text survives as inert content glued onto the RRULE value
+    // — the point is that it must NOT become its own ICS line (no separate
+    // spoofed ATTENDEE property).
+    const lines = ics.split('\r\n');
+    expect(lines).not.toContain('ATTENDEE;CN=Attacker:mailto:attacker@evil.example');
+    expect(ics).toContain('RRULE:FREQ=WEEKLYATTENDEE;CN=Attacker:mailto:attacker@evil.example');
+  });
+
   it('emits an update sequence', () => {
     expect(buildMeetingInvitationIcs({ ...base, sequence: 3 })).toContain('SEQUENCE:3');
   });

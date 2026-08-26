@@ -141,6 +141,73 @@ function denyMeetingAccess(res: Response): Response {
   return res.status(404).json({ error: 'Meeting not found' });
 }
 
+// FIX-2 (P1-2, 2026-08-26): recurrenceRule used to flow straight from the
+// request body into icsBuilder's RRULE line with no server-side validation —
+// a CR/LF in the string let a caller inject arbitrary extra ICS lines (e.g.
+// a spoofed ATTENDEE/ORGANIZER) into every invite generated for that
+// meeting. Whitelist the RRULE grammar we actually support instead of trying
+// to blacklist dangerous characters.
+const RRULE_ALLOWED_KEYS = new Set([
+  'FREQ',
+  'INTERVAL',
+  'COUNT',
+  'UNTIL',
+  'BYDAY',
+  'BYMONTHDAY',
+  'BYMONTH',
+  'WKST',
+]);
+const RRULE_FREQ_VALUES = new Set(['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY']);
+// Alphanumeric, comma, minus only — this alphabet cannot express a CR/LF or
+// an extra ";KEY=VALUE" segment, so it rules out line injection by
+// construction rather than by trying to enumerate bad characters.
+const RRULE_VALUE_RE = /^[A-Za-z0-9,-]+$/;
+const RRULE_UNTIL_RE = /^[0-9]{8}(T[0-9]{6}Z?)?$/;
+
+export function validateRecurrenceRule(value: string): { ok: true } | { ok: false; error: string } {
+  const raw = value.replace(/^RRULE:/i, '');
+  if (/[\r\n]/.test(value)) {
+    return { ok: false, error: 'recurrenceRule must not contain line breaks' };
+  }
+  if (!raw.trim()) {
+    return { ok: false, error: 'recurrenceRule must not be empty' };
+  }
+  const seen = new Set<string>();
+  let hasFreq = false;
+  for (const segment of raw.split(';')) {
+    const eq = segment.indexOf('=');
+    if (eq <= 0) {
+      return { ok: false, error: `recurrenceRule has an invalid segment: "${segment}"` };
+    }
+    const key = segment.slice(0, eq).toUpperCase();
+    const val = segment.slice(eq + 1);
+    if (!RRULE_ALLOWED_KEYS.has(key)) {
+      return { ok: false, error: `recurrenceRule has an unsupported key: "${key}"` };
+    }
+    if (seen.has(key)) {
+      return { ok: false, error: `recurrenceRule repeats key: "${key}"` };
+    }
+    seen.add(key);
+    if (key === 'UNTIL') {
+      if (!RRULE_UNTIL_RE.test(val)) {
+        return { ok: false, error: 'recurrenceRule UNTIL must be an ICS date/date-time (e.g. 20261231T235959Z)' };
+      }
+    } else if (!RRULE_VALUE_RE.test(val)) {
+      return { ok: false, error: `recurrenceRule has an invalid value for ${key}: "${val}"` };
+    }
+    if (key === 'FREQ') {
+      hasFreq = true;
+      if (!RRULE_FREQ_VALUES.has(val.toUpperCase())) {
+        return { ok: false, error: 'recurrenceRule FREQ must be DAILY, WEEKLY, MONTHLY or YEARLY' };
+      }
+    }
+  }
+  if (!hasFreq) {
+    return { ok: false, error: 'recurrenceRule must include FREQ' };
+  }
+  return { ok: true };
+}
+
 function isValidIanaTimezone(value: string): boolean {
   if (!value || value === 'UTC') return value === 'UTC';
   try {
@@ -228,6 +295,14 @@ router.post(
     if (timezone && !isValidIanaTimezone(timezone)) {
       return res.status(400).json({ error: 'timezone must be a valid IANA identifier' });
     }
+    const recurrenceRuleInput =
+      typeof req.body?.recurrenceRule === 'string' && req.body.recurrenceRule.trim()
+        ? req.body.recurrenceRule.trim()
+        : null;
+    if (recurrenceRuleInput) {
+      const validation = validateRecurrenceRule(recurrenceRuleInput);
+      if (!validation.ok) return res.status(400).json({ error: validation.error });
+    }
     if (hasDirectMeetingOutputs(req.body)) return rejectDirectMeetingOutputs(res);
 
     const meeting = await createMeeting({
@@ -241,10 +316,7 @@ router.post(
       startAt,
       endAt,
       timezone: timezone || null,
-      recurrenceRule:
-        typeof req.body?.recurrenceRule === 'string' && req.body.recurrenceRule.trim()
-          ? req.body.recurrenceRule.trim()
-          : null,
+      recurrenceRule: recurrenceRuleInput,
       location: req.body?.location,
       attendees: Array.isArray(req.body?.attendees) ? req.body.attendees : [],
       preRead: Array.isArray(req.body?.preRead) ? req.body.preRead : [],
@@ -276,6 +348,10 @@ router.put(
       !isValidIanaTimezone(String(req.body.timezone || '').trim())
     ) {
       return res.status(400).json({ error: 'timezone must be a valid IANA identifier' });
+    }
+    if (typeof req.body?.recurrenceRule === 'string' && req.body.recurrenceRule.trim()) {
+      const validation = validateRecurrenceRule(req.body.recurrenceRule.trim());
+      if (!validation.ok) return res.status(400).json({ error: validation.error });
     }
     const existing = await getMeeting({
       organizationId: orgId,
