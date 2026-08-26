@@ -4,7 +4,9 @@
  * Unit tests for the Audits scale & polish reveal flag
  * (`isAuditsScaleAndPolishEnabled`). Mirrors
  * `src/utils/__tests__/drdReportFlag.test.ts` — same resolution order
- * (query > localStorage > env > default), default OFF, fail-closed.
+ * (query > localStorage > env > default). Default flipped OFF -> ON on
+ * 2026-08-27 (owner accept on dev-render screenshots) — fail-closed on
+ * read errors is unchanged.
  */
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -33,16 +35,17 @@ describe('isAuditsScaleAndPolishEnabled', () => {
     setLocationSearch('');
   });
 
-  it('defaults to OFF when nothing is set', () => {
-    expect(isAuditsScaleAndPolishEnabled()).toBe(false);
+  // flip po akcepcie właściciela 27.08: default was OFF, now ON.
+  it('defaults to ON when nothing is set', () => {
+    expect(isAuditsScaleAndPolishEnabled()).toBe(true);
   });
 
-  it('honours localStorage override (1)', () => {
+  it('honours localStorage override (1) — redundant with default, still honoured', () => {
     window.localStorage.setItem(AUDITS_SCALE_AND_POLISH_FLAG_KEYS.localStorage, '1');
     expect(isAuditsScaleAndPolishEnabled()).toBe(true);
   });
 
-  it('honours localStorage override (off)', () => {
+  it('honours localStorage override (off) — still disables despite the ON default', () => {
     window.localStorage.setItem(AUDITS_SCALE_AND_POLISH_FLAG_KEYS.localStorage, 'off');
     expect(isAuditsScaleAndPolishEnabled()).toBe(false);
   });
@@ -64,9 +67,9 @@ describe('isAuditsScaleAndPolishEnabled', () => {
     expect(isAuditsScaleAndPolishEnabled()).toBe(true);
   });
 
-  it('invalid localStorage value also falls through to default OFF', () => {
+  it('invalid localStorage value falls through to the ON default', () => {
     window.localStorage.setItem(AUDITS_SCALE_AND_POLISH_FLAG_KEYS.localStorage, 'banana');
-    expect(isAuditsScaleAndPolishEnabled()).toBe(false);
+    expect(isAuditsScaleAndPolishEnabled()).toBe(true);
   });
 
   it('exposes stable flag keys', () => {
