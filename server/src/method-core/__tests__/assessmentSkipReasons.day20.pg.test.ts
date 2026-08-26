@@ -156,4 +156,50 @@ describe.skipIf(!REAL_DB)('Assessment day 20 skip reasons — real router and Po
     expect(response.status).toBe(404);
     expect(response.body.code).toBe('SESSION_NOT_FOUND');
   });
+
+  it('returns seven deterministic empty chapters in canonical axis order', async () => {
+    const first = await request(app)
+      .get(`/api/method/sessions/${session}/assessment-report-contract`)
+      .set('Authorization', `Bearer ${token}`);
+    const second = await request(app)
+      .get(`/api/method/sessions/${session}/assessment-report-contract`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(first.status).toBe(200);
+    expect(second.body).toEqual(first.body);
+    expect(
+      first.body.reportContract.chapters.map((chapter: { axisId: number }) => chapter.axisId)
+    ).toEqual([1, 2, 3, 4, 5, 6, 7]);
+    expect(
+      first.body.reportContract.chapters.every(
+        (chapter: { introduction: { content: unknown } }) => chapter.introduction.content === null
+      )
+    ).toBe(true);
+  });
+
+  it('keeps every applicable area comment and reads skipCode from the Assessment table', async () => {
+    const response = await request(app)
+      .get(`/api/method/sessions/${session}/assessment-report-contract`)
+      .set('Authorization', `Bearer ${token}`);
+    const culture = response.body.reportContract.chapters.find(
+      (chapter: { axisId: number }) => chapter.axisId === 5
+    );
+    expect(culture.areaComments).toHaveLength(5);
+    expect(
+      culture.areaComments.find((comment: { unitId: string }) => comment.unitId === '5A')
+    ).toMatchObject({
+      skipped: true,
+      skipCode: 'poza_modelem_operacyjnym',
+    });
+  });
+
+  it('returns 404 for an unknown report session and across tenants', async () => {
+    const unknown = await request(app)
+      .get(`/api/method/sessions/missing-${suffix}/assessment-report-contract`)
+      .set('Authorization', `Bearer ${token}`);
+    const crossTenant = await request(app)
+      .get(`/api/method/sessions/${session}/assessment-report-contract`)
+      .set('Authorization', `Bearer ${otherToken}`);
+    expect(unknown.status).toBe(404);
+    expect(crossTenant.status).toBe(404);
+  });
 });

@@ -94,6 +94,7 @@ import {
   AssessmentSkipReasonError,
   assessmentSkipReasonService,
 } from '../services/assessment/assessmentSkipReasonService.js';
+import { assessmentReportContractService } from '../services/assessment/assessmentReportContractService.js';
 
 // ---------------------------------------------------------------------------
 // Wiring — one bridge, one session service instance, matching how the rest
@@ -518,6 +519,23 @@ router.get(
         unitId
       );
       res.status(200).json({ skipReasons });
+    } catch (error) {
+      sendAssessmentSkipReasonError(res, error);
+    }
+  })
+);
+
+router.get(
+  '/sessions/:sessionId/assessment-report-contract',
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
+    const organizationId = requireOrg(req, res);
+    if (!organizationId) return;
+    try {
+      const reportContract = await assessmentReportContractService.build(
+        organizationId,
+        req.params.sessionId
+      );
+      res.status(200).json({ reportContract });
     } catch (error) {
       sendAssessmentSkipReasonError(res, error);
     }

@@ -46,21 +46,21 @@ Puste `inet_server_port()` jest oczekiwane dla `psql` uruchomionego wewnątrz ko
 
 ## Pozycje — tabela zbiorcza
 
-| Pozycja | Status      | Commit               | Dowód osiągalności                                                                                | Dowód testowy                                                                  |
-| ------- | ----------- | -------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| A.1     | CZĘŚCIOWO   | raportowy commit A.1 | `Gateway.ts:639,641` → deklaracje routerów; 31 v1 + 41 v2 znalezione                              | inwentarz statyczny; brak pełnego testu HTTP 72 tras                           |
-| A.2     | STOP        | —                    | kanon v2 potwierdzony, ale bez pełnego A.1 nie usuwam kodu                                        | brak zmian produkcyjnych                                                       |
-| A.3     | CZĘŚCIOWO   | raportowy commit A.1 | wywołania klienta zmierzone statycznie; reprezentatywne czerwone zastane w baseline               | pełny kontrakt odpowiedzi wymaga osobnego pomiaru real-router                  |
-| B.1     | CZĘŚCIOWO   | commit B.1           | `Gateway` → raporty/Assessment → `drdVizAdapter` → `server/src/data/drdStructure.ts`              | 16/16 PASS; brak osobnego readbacku sesji na realnym PG obniża status          |
-| B.2     | STOP        | —                    | serwis osiągalny przez `Gateway.ts` → `assessment-ai.routes.ts` → `aiAssessmentPartnerService.ts` | 92 błędy punktowego `tsc` po zdjęciu `@ts-nocheck`; plik przywrócony bez diffu |
-| C.1     | NIE_ZACZĘTE | —                    | —                                                                                                 | —                                                                              |
-| D.1     | CZĘŚCIOWO   | commit D.1           | `Gateway.ts:958` → `/api/method` → skip routes → `AssessmentSkipReasonService` → lokalny PG       | 6/6 PASS real-router/PG; brak dowodu mutacyjnego T.3 obniża status             |
-| D.2     | NIE_ZACZĘTE | —                    | —                                                                                                 | —                                                                              |
-| E.1     | NIE_ZACZĘTE | —                    | —                                                                                                 | —                                                                              |
-| E.2     | NIE_ZACZĘTE | —                    | —                                                                                                 | —                                                                              |
-| F.1     | STOP        | —                    | brak importera barrela potwierdzony, ale nie dowiedziono odpowiedników wszystkich 11 semantyk     | zero usunięć zgodnie z Z20                                                     |
-| T       | NIE_ZACZĘTE | —                    | —                                                                                                 | —                                                                              |
-| R.1     | NIE_ZACZĘTE | —                    | —                                                                                                 | —                                                                              |
+| Pozycja | Status      | Commit               | Dowód osiągalności                                                                                   | Dowód testowy                                                                  |
+| ------- | ----------- | -------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| A.1     | CZĘŚCIOWO   | raportowy commit A.1 | `Gateway.ts:639,641` → deklaracje routerów; 31 v1 + 41 v2 znalezione                                 | inwentarz statyczny; brak pełnego testu HTTP 72 tras                           |
+| A.2     | STOP        | —                    | kanon v2 potwierdzony, ale bez pełnego A.1 nie usuwam kodu                                           | brak zmian produkcyjnych                                                       |
+| A.3     | CZĘŚCIOWO   | raportowy commit A.1 | wywołania klienta zmierzone statycznie; reprezentatywne czerwone zastane w baseline                  | pełny kontrakt odpowiedzi wymaga osobnego pomiaru real-router                  |
+| B.1     | CZĘŚCIOWO   | commit B.1           | `Gateway` → raporty/Assessment → `drdVizAdapter` → `server/src/data/drdStructure.ts`                 | 16/16 PASS; brak osobnego readbacku sesji na realnym PG obniża status          |
+| B.2     | STOP        | —                    | serwis osiągalny przez `Gateway.ts` → `assessment-ai.routes.ts` → `aiAssessmentPartnerService.ts`    | 92 błędy punktowego `tsc` po zdjęciu `@ts-nocheck`; plik przywrócony bez diffu |
+| C.1     | NIE_ZACZĘTE | —                    | —                                                                                                    | —                                                                              |
+| D.1     | CZĘŚCIOWO   | commit D.1           | `Gateway.ts:958` → `/api/method` → skip routes → `AssessmentSkipReasonService` → lokalny PG          | 6/6 PASS real-router/PG; brak dowodu mutacyjnego T.3 obniża status             |
+| D.2     | CZĘŚCIOWO   | commit E.1           | report contract → `AssessmentSkipReasonService.listActive`; zero parsowania `justification`          | 9/9 wspólny pakiet PASS; osobny negatyw historycznego tekstu nie dodany        |
+| E.1     | CZĘŚCIOWO   | commit E.1           | `Gateway.ts:958` → `/api/method/.../assessment-report-contract` → serwis → output + DRD + skip model | 9/9 PASS; brak fixture z pełnym zamrożonym outputem obniża status              |
+| E.2     | NIE_ZACZĘTE | —                    | —                                                                                                    | —                                                                              |
+| F.1     | STOP        | —                    | brak importera barrela potwierdzony, ale nie dowiedziono odpowiedników wszystkich 11 semantyk        | zero usunięć zgodnie z Z20                                                     |
+| T       | NIE_ZACZĘTE | —                    | —                                                                                                    | —                                                                              |
+| R.1     | NIE_ZACZĘTE | —                    | —                                                                                                    | —                                                                              |
 
 ## A.1 — inwentarz osiągalności obu mountów
 
@@ -167,6 +167,22 @@ Zapis jest addytywny i append-only: kolejny wpis wskazuje poprzedni przez `super
 Test realnego routera i domyślnego okablowania: `assessmentSkipReasons.day20.pg.test.ts` — 6/6 PASS (happy + niezależny readback, kod spoza słownika i zero zapisu, pusty stan, zła skala, replay, obcy tenant 404). Status `CZĘŚCIOWO`: nie wykonano jeszcze wymaganego przez T.3 kontrolowanego testu mutacyjnego polegającego na czasowym zneutralizowaniu filtru organizacji.
 
 Migracja `20261101_assessment_day20_skip_reasons.sql`: `MIGRATION_PREPARED`, addytywna, zero FK, przebieg po dodaniu `Applying migrations: 1`, drugi `0`, dry-run `Pending migrations: 0`. Prettier nie ma parsera SQL w tym repo (`No parser could be inferred`); plik sformatowano ręcznie, TypeScript i raport przeszły Prettier.
+
+## D.2 / E.1 — deterministyczny kontrakt siedmiu rozdziałów
+
+Nowe API: `GET /api/method/sessions/:sessionId/assessment-report-contract`.
+
+Kontrakt zwraca siedem rozdziałów w kolejności osi DRD. Każdy ma: wstęp `120–180`, matrycę z podpisem `30–60`, komentarz dla każdego kanonicznego obszaru `110–170` z pięcioczęściową mikrostrukturą oraz wnioski `180–260` i pustą linię decyzyjną. Wszystkie treści mają uczciwe `content: null`; zero LLM i zero zegara runtime — `generatedAt` pochodzi z niezmiennego outputu albo czasu utworzenia sesji.
+
+| Rozdział | Sloty                                          | Źródło liczb                                                 | Traceability                                         |
+| -------- | ---------------------------------------------- | ------------------------------------------------------------ | ---------------------------------------------------- |
+| Osie 1–7 | introduction, matrix, areaComments, conclusion | najnowszy `MethodOutputService` + kanoniczny `DRD_STRUCTURE` | finding id, evidence id, source locator, uncertainty |
+
+Stan pominięcia jest czytany wyłącznie z `assessment_skip_reasons`: `skipped` + maszynowy `skipCode`. Serwis nie importuje ani nie parsuje `justification`, nie ma regexu polskiego zdania. Obszar bez findingu i bez pominięcia ma `not_assessed`, nigdy zero ani sukces.
+
+Pakiet real-router/PG 9/9 PASS obejmuje deterministyczne dwa odczyty, siedem osi, `content:null`, komentarze wszystkich pięciu obszarów osi 5, kod pominięcia z tabeli Assessmentu, nieznaną sesję 404 i obcego tenanta 404. Statusy `CZĘŚCIOWO`: brak pełnej zamrożonej sesji z findings/evidence do liczbowego porównania silnika oraz brak osobnego fixture historycznego, które zawiera tylko polski tekst `justification`.
+
+Konflikt 7 osi vs 8 wymiarów pozostaje jawnie otwarty; mapowania 8D nie zmieniono.
 
 ## Pozycje otwarte — STOP-y do zatwierdzenia nadzorcy
 
