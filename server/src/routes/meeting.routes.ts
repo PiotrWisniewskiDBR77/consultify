@@ -90,6 +90,11 @@ function statusForSpineErrorCode(code: string): number {
     case 'INVALID_STATE_TRANSITION':
     case 'NOT_APPROVED':
     case 'IDEMPOTENCY_CONFLICT':
+    // FIX-4 (day19-fixes P2, 2026-08-26): materialization retry precondition
+    // failure (rejected/pending proposal, or a materialized one with no
+    // failed attempt on record) — a conflict with current state, not a
+    // server error.
+    case 'RETRY_NOT_ALLOWED':
       return 409;
     case 'NOT_A_HUMAN_ACTOR':
     case 'INVALID_ARGUMENT':

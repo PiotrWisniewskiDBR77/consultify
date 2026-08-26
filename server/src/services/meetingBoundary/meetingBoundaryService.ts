@@ -796,6 +796,26 @@ export async function decideMeetingNote(
   return { note: updated || note, proposal, receipt, replayed };
 }
 
+/**
+ * FIX-4 (day19-fixes P2, 2026-08-26): this used to run unconditionally on
+ * whatever note it was given. On a REJECTED note (proposal.state ===
+ * 'rejected', contract: "reject → zero materiały") it still walked stages
+ * 1-2 of `materializeMeetingNote` — creating the Document Studio content row
+ * AND registering it in the artifact registry — before stage 3
+ * (`materializeProposal`, guarded by the handoff spine) finally refused a
+ * non-'approved' proposal and threw. The content + registry rows created in
+ * stages 1-2 were never rolled back, leaving an orphaned artifact
+ * (`delivery_state='ready'`, materialization attempt recorded 'failed') for
+ * content nobody approved.
+ *
+ * Precondition: retry is allowed ONLY when the proposal is still 'approved'
+ * (materialize started and failed partway, before the note itself flipped
+ * to 'approved' — see the try/catch in `decideMeetingNote` above) OR the
+ * last recorded materialization attempt is 'failed'. Anything else —
+ * 'rejected', 'pending', or an already-succeeded 'materialized' state with
+ * no failed attempt on record — is refused with 409 rather than silently
+ * doing nothing or creating another orphan.
+ */
 export async function retryMeetingNoteMaterialization(input: {
   organizationId: string;
   meetingId: string;
@@ -804,6 +824,13 @@ export async function retryMeetingNoteMaterialization(input: {
 }): Promise<DecideMeetingNoteResult | null> {
   const note = await getMeetingNote(input);
   if (!note || !note.proposalId) return null;
+  const retryAllowed = note.proposalState === 'approved' || note.materializationStatus === 'failed';
+  if (!retryAllowed) {
+    throw new MeetingBoundaryError(
+      `materialization retry not allowed: proposal is '${note.proposalState}', last attempt is '${note.materializationStatus}'`,
+      'RETRY_NOT_ALLOWED'
+    );
+  }
   const { receipt, replayed } = await materializeMeetingNote({
     note,
     materializedBy: input.materializedBy,
