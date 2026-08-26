@@ -20,6 +20,10 @@ import crypto from 'crypto';
 import { NextFunction, Request, Response } from 'express';
 
 import { API_KEY_PERMISSIONS, ApiKey, ApiKeyService } from '../services/apiKeyService.js';
+import {
+  buildOrgSuspendedResponseBody,
+  isOrganizationSuspended,
+} from '../services/organizationSuspensionGuard.js';
 import { get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
@@ -296,6 +300,25 @@ export async function apiKeyAuth(
     req.apiKey = validatedKey;
     req.organizationId = validatedKey.organizationId;
     req.userId = validatedKey.userId;
+
+    // -------------------------------------------------------------------------
+    // DEC-91 / TRI-MUST-12 — a suspended tenant's API keys stop working too.
+    //
+    // This is a SECOND front door: `apiKeyAuth` never touches `verifyToken`, so
+    // the enforcement added to `attachUser` does not cover `/api/v1/*`. Without
+    // this block, suspending a tenant closed the browser session and left its
+    // programmatic access wide open.
+    //
+    // No exemptions, deliberately: the public API has no superadmin surface, no
+    // logout (there is no session to drop — the caller simply stops sending the
+    // key) and no health route behind key auth. Same guard, same process-wide
+    // cache, same refusal body as the JWT path.
+    // -------------------------------------------------------------------------
+    if (await isOrganizationSuspended(req.organizationId, dbGet)) {
+      sendApiKeyJsonIfOpen(res, 403, buildOrgSuspendedResponseBody(), { noStore: true });
+      return;
+    }
+
     if (responseWriteBlocked(res)) {
       logger.warn('[APIKeyAuth] Response already committed before downstream handlers', { ip });
       return;
