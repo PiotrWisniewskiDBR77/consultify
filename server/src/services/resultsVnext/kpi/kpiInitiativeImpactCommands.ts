@@ -79,12 +79,49 @@ export const KPI_INITIATIVE_IMPACT_CAPABILITIES = {
  * not imported from `kpiDefinitionCommands.ts`/`kpiMeasurementCommands.ts` —
  * same "each file keeps its own minimal copy" convention those two already
  * follow for this exact query.
+ *
+ * F.2 tenant-isolation fix (RESULTS_DAY46_FINISH — day46-finish-b-20260828):
+ * this lookup used to run WITHOUT `organization_id` in its WHERE clause —
+ * unlike every sibling "check the parent belongs to my org before touching
+ * it" helper in this same package (`addScorecardItem`'s own
+ * `SELECT 1 FROM rvn_kpi_definitions WHERE kpi_id = $1 AND organization_id =
+ * $2` in kpiScorecardCommands.ts, or `loadRoiCaseOwnerUserId` in every ROI
+ * command file, which all take `organizationId` and scope by it). Because
+ * `proposeInitiativeKpiImpact` is a CREATE with no existing row to
+ * `loadForUpdate` first (unlike `kpiDefinitionCommands.ts`/
+ * `kpiMeasurementCommands.ts`'s own same-named-but-safe helpers, which only
+ * ever receive an ALREADY org-scoped `currentRow.kpi_id`), `kpiId` here
+ * comes straight from the request body — untrusted. Real, reproduced
+ * exploit: an OWNER/ADMIN in organization B could `POST
+ * /api/vnext/results/kpi/initiative-impacts` with organization A's real
+ * `kpiId` — `assertCommandCapability` below ALLOWS any OWNER/ADMIN via their
+ * own org's `'*'` capability (unrelated to which org the KPI belongs to),
+ * so the unscoped owner lookup never blocked it, and the INSERT would then
+ * write a `rvn_kpi_initiative_impacts` row with `organization_id` = org B
+ * but `kpi_id` pointing at org A's KPI. Fixed by requiring the KPI to exist
+ * IN THE CALLER'S OWN organization before anything else runs — same
+ * `KPI_NOT_FOUND` code/409 shape `addScorecardItem` already uses for the
+ * identical "child references a parent id from the wrong org" case, so the
+ * route's existing `KpiInitiativeImpactValidationError` branch (409) needs
+ * no change. Table `rvn_kpi_initiative_impacts` itself is untouched — this
+ * is a query fix, not a shape change.
  */
-async function loadKpiOwnerUserId(client: PoolClient, kpiId: string): Promise<string | null> {
+async function loadKpiOwnerUserId(
+  client: PoolClient,
+  kpiId: string,
+  organizationId: string
+): Promise<string | null> {
   const result = await client.query<{ owner_user_id: string | null }>(
-    `SELECT owner_user_id FROM rvn_kpi_definitions WHERE kpi_id = $1`,
-    [kpiId]
+    `SELECT owner_user_id FROM rvn_kpi_definitions WHERE kpi_id = $1 AND organization_id = $2`,
+    [kpiId, organizationId]
   );
+  if (result.rowCount === 0) {
+    throw new KpiInitiativeImpactValidationError(
+      `KPI ${kpiId} does not exist in organization ${organizationId}`,
+      'KPI_NOT_FOUND',
+      { kpiId, organizationId }
+    );
+  }
   return result.rows[0]?.owner_user_id ?? null;
 }
 
@@ -200,7 +237,7 @@ export async function proposeInitiativeKpiImpact(
       // for why the OWNING KPI's owner is what's checked (no impact row
       // exists yet, but kpiId is already a known input referencing an
       // existing, already-owned KPI).
-      const ownerUserId = await loadKpiOwnerUserId(client, kpiId);
+      const ownerUserId = await loadKpiOwnerUserId(client, kpiId, organizationId);
       assertCommandCapability({
         access,
         actorUserId: proposedBy,
@@ -367,7 +404,7 @@ export async function commitInitiativeKpiImpact(
     getCurrentVersion: impactRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
       // RN-G5: authorization FIRST, before the domain-state check below.
-      const ownerUserId = await loadKpiOwnerUserId(client, currentRow.kpi_id);
+      const ownerUserId = await loadKpiOwnerUserId(client, currentRow.kpi_id, organizationId);
       assertCommandCapability({
         access,
         actorUserId: committedBy,
@@ -388,7 +425,8 @@ export async function commitInitiativeKpiImpact(
         `SELECT current_definition_version_id FROM rvn_kpi_definitions WHERE kpi_id = $1 AND organization_id = $2`,
         [currentRow.kpi_id, organizationId]
       );
-      const definitionVersionIdAtCommitment = kpiResult.rows[0]?.current_definition_version_id ?? null;
+      const definitionVersionIdAtCommitment =
+        kpiResult.rows[0]?.current_definition_version_id ?? null;
 
       const latestResult = await client.query<LatestMeasurementRow>(
         `SELECT m.measurement_id, m.actual_value, m.period_end
@@ -424,7 +462,8 @@ export async function commitInitiativeKpiImpact(
         ]
       );
       const updatedRow = updateResult.rows[0];
-      if (!updatedRow) throw new Error(`[commitInitiativeKpiImpact] update returned no row for ${impactId}`);
+      if (!updatedRow)
+        throw new Error(`[commitInitiativeKpiImpact] update returned no row for ${impactId}`);
 
       // link_graph_edges row — same transaction, same shape as
       // linkGraphAddEdge (see this function's own doc comment above for why
@@ -538,7 +577,7 @@ export async function recordReviewedAttribution(
     loadForUpdate: loadInitiativeKpiImpactForUpdate,
     getCurrentVersion: impactRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
-      const ownerUserId = await loadKpiOwnerUserId(client, currentRow.kpi_id);
+      const ownerUserId = await loadKpiOwnerUserId(client, currentRow.kpi_id, organizationId);
       assertCommandCapability({
         access,
         actorUserId: reviewedBy,
@@ -583,7 +622,8 @@ export async function recordReviewedAttribution(
         ]
       );
       const updatedRow = updateResult.rows[0];
-      if (!updatedRow) throw new Error(`[recordReviewedAttribution] update returned no row for ${impactId}`);
+      if (!updatedRow)
+        throw new Error(`[recordReviewedAttribution] update returned no row for ${impactId}`);
       return { impact: toInitiativeKpiImpact(updatedRow) };
     },
     buildEvent: ({ result, nextVersion }) => {
@@ -624,7 +664,10 @@ export interface SupersedeInitiativeKpiImpactInput {
   organizationId: string;
   impactId: string;
   expectedVersion: number;
-  replacementInput: Omit<ProposeInitiativeKpiImpactInput, 'organizationId' | 'kpiId' | 'initiativeId'>;
+  replacementInput: Omit<
+    ProposeInitiativeKpiImpactInput,
+    'organizationId' | 'kpiId' | 'initiativeId'
+  >;
   actorUserId: string;
   actorEffectiveRole: string;
   idempotencyKey: string;
@@ -677,7 +720,7 @@ export async function supersedeInitiativeKpiImpact(
     getCurrentVersion: impactRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
       // RN-G5: authorization FIRST, before the domain-state check below.
-      const ownerUserId = await loadKpiOwnerUserId(client, currentRow.kpi_id);
+      const ownerUserId = await loadKpiOwnerUserId(client, currentRow.kpi_id, organizationId);
       assertCommandCapability({
         access,
         actorUserId,
@@ -711,7 +754,8 @@ export async function supersedeInitiativeKpiImpact(
         [nextVersion, impactId]
       );
       const supersededRow = supersedeResult.rows[0];
-      if (!supersededRow) throw new Error(`[supersedeInitiativeKpiImpact] update returned no row for ${impactId}`);
+      if (!supersededRow)
+        throw new Error(`[supersedeInitiativeKpiImpact] update returned no row for ${impactId}`);
 
       const replacementInsert = await client.query<InitiativeKpiImpactRow>(
         `INSERT INTO rvn_kpi_initiative_impacts
@@ -731,7 +775,8 @@ export async function supersedeInitiativeKpiImpact(
         ]
       );
       const replacementRow = replacementInsert.rows[0];
-      if (!replacementRow) throw new Error('[supersedeInitiativeKpiImpact] replacement insert returned no row');
+      if (!replacementRow)
+        throw new Error('[supersedeInitiativeKpiImpact] replacement insert returned no row');
 
       const finalSupersedeResult = await client.query<InitiativeKpiImpactRow>(
         `UPDATE rvn_kpi_initiative_impacts
@@ -742,7 +787,9 @@ export async function supersedeInitiativeKpiImpact(
       );
       const finalSupersededRow = finalSupersedeResult.rows[0];
       if (!finalSupersededRow) {
-        throw new Error(`[supersedeInitiativeKpiImpact] final update returned no row for ${impactId}`);
+        throw new Error(
+          `[supersedeInitiativeKpiImpact] final update returned no row for ${impactId}`
+        );
       }
 
       return {
