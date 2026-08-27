@@ -72,9 +72,9 @@ Pierwsza instrukcyjna komenda serwerowa z korzenia zwróciła `No test files fou
 
 | pozycja | werdykt     | commit SHA         | dowód                                                                                                                                        |
 | ------- | ----------- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| S.1     | CZĘŚCIOWO   | oczekuje na commit | 37/37 PASS, 0 SKIP przez realny ApiGateway; R1–R9 N1/N2/N4, trzy pozytywy, N5, N6; R10 N1/N2 zmierzone, N4 nie dowodzi aktywnego członkostwa |
-| S.2     | NIE_ZACZĘTE | —                  | —                                                                                                                                            |
-| S.3     | CZĘŚCIOWO   | oczekuje na commit | trzy pomiary; naprawa cichej utraty danych; 7/7 PASS i mutacja 1 FAIL                                                                        |
+| S.1     | CZĘŚCIOWO   | `c06fd0cea9`       | 37/37 PASS, 0 SKIP przez realny ApiGateway; R1–R9 N1/N2/N4, trzy pozytywy, N5, N6; R10 N1/N2 zmierzone, N4 nie dowodzi aktywnego członkostwa |
+| S.2     | ZROBIONE    | oczekuje na commit | warstwa A: 4/4 przez realny ApiGateway; warstwa B: 3/3 wyłącznie na `createModuleGate`; inwentarz 11 odczytów i 47 symboli bramki            |
+| S.3     | CZĘŚCIOWO   | `01254b6289`       | trzy pomiary; naprawa cichej utraty danych; 7/7 PASS i mutacja 1 FAIL                                                                        |
 | S.4     | NIE_ZACZĘTE | —                  | —                                                                                                                                            |
 | S.5     | NIE_ZACZĘTE | —                  | —                                                                                                                                            |
 | S.6     | NIE_ZACZĘTE | —                  | —                                                                                                                                            |
@@ -88,7 +88,15 @@ Pierwsza instrukcyjna komenda serwerowa z korzenia zwróciła `No test files fou
 
 ## ★ SIEDEM KSZTAŁTÓW FAŁSZYWEGO „GOTOWE" (§1.7) — siedem odpowiedzi na KAŻDĄ pozycję
 
-Do uzupełnienia.
+### S.2 — siedem odpowiedzi
+
+1. **TAK** — wołający istnieje: realny `ApiGateway` montuje `meeting.routes.ts`, a realne żądania doszły do produkcyjnej bramki i handlera.
+2. **TAK dla warstwy A; NIE dla warstwy B** — cztery przypadki A przeszły przez realny Gateway. Trzy przypadki B celowo montują goły `express()` i dowodzą wyłącznie zachowania samej funkcji `createModuleGate`, nie osiągalności produktu (`Z22`/`Z34`).
+3. **TAK** — 7 PASS, 0 SKIP; helper przypiął test do `consultify_w3_meetings_owner_day57`. Pułapkę `Z33(c)` rozlicza przywrócenie `DB_TYPE=postgres`, a `Z33(d)` realny `BETA_LOCKED` dla MEMBER i przejście ADMIN/ADMINISTRATOR.
+4. **NIE DOTYCZY** — S.2 nie wykonuje zapisów biznesowych ani nie zmienia statusu bety.
+5. **TAK dla warstwy A** — mamy realne kody `403 BETA_LOCKED`, `200`, odmowę bez `BETA_LOCKED` i `401`; sam grep służy tylko inwentarzowi.
+6. **NIE DOTYCZY** — pozycja nie oddaje zrzutu ekranu; pozytyw ADMIN działa na realnym fixture w PG.
+7. **CZĘŚCIOWO** — finalny pomiar miał `--retry=0`; mutacja produkcji jest zakazana dla S.2, a przełączalność udowodniono publicznym parametrem `resolveStatus`, więc nie wykonywano mutacji pliku `betaAccess.ts`.
 
 ## ★ DOWODY OSIĄGALNOŚCI (Z21) — pełny łańcuch per rodzina tras
 
@@ -111,13 +119,44 @@ Do uzupełnienia.
 
 `meeting.runtimeTraps.day57.pg.test.ts`: realny PG potwierdzony helperem i `DB_IDENTITY`; realny Gateway używa aktywnego `OWNER`, więc beta nie maskuje odczytu. Pułapka (c) rozliczona przez jawne przywrócenie `DB_TYPE=postgres`; pozytyw daje `200` i `code != BETA_LOCKED`. Wynik: 7 PASS, 0 SKIP.
 
+`meeting.betaGate.gateway.day57.pg.test.ts`: warstwa A montuje realny `ApiGateway`, nie mockuje bramki i mierzy produkcyjny stan `closed`: MEMBER=`403 BETA_LOCKED`, ADMIN=`200`, ADMINISTRATOR przechodzi betę i dostaje odmowę trasy admińskiej bez `BETA_LOCKED`, anonim=`401`; warstwa B jawnie nie jest dowodem Gateway (`Z22`/`Z34`) i mierzy tylko `createModuleGate(..., () => 'open')` dla MEMBER/USER/GUEST. Config przybił `DB_TYPE=sqlite`, więc `beforeAll` przywraca `postgres`, a helper wiąże bazę. Pierwsza próba powtórzenia z błędnym lokalnym hasłem uczciwie dała 1 FAIL, 3 PASS i 4 SKIP; po pobraniu bieżącego sekretu z konfiguracji kontenera bez jego wypisania finalny wynik z `--retry=0` to 7 PASS, 0 SKIP.
+
 ## Tabela werdyktów tras (§S.9) — 33 wiersze
 
 Do uzupełnienia.
 
 ## KONTRAKT OTWARCIA BETY (§S.2c)
 
-Do uzupełnienia.
+### Inwentarz miejsc egzekwowania
+
+Samodzielny pomiar znalazł 11 produkcyjnych odczytów `MODULE_MEETING`; szerszy mianownik `BETA_MENU_STATUS|BETA_ADMINS_EXEMPT|isBetaLocked|BETA_LOCKED` wynosi 47 linii (bez `__tests__`).
+
+| plik:linia                                              | co czyta                         | skutek dla użytkownika po otwarciu                                                                                  | realne żądanie                                                         |
+| ------------------------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `src/utils/betaAccess.ts:56`                            | SSOT statusu `MODULE_MEETING`    | status zmienia się z `closed` na `open`                                                                             | NIE — zmiana zakazana                                                  |
+| `src/utils/pilotAccess.ts:72`                           | `isBetaClosed('MODULE_MEETING')` | pilot nie przekieruje Spotkań do `/interview` z powodu bety                                                         | NIE                                                                    |
+| `src/components/navigation/Sidebar/menuConfig.ts:176`   | identyfikator pozycji menu       | pozycja z badge beta nie zostanie odfiltrowana/zablokowana przez status                                             | NIE                                                                    |
+| `src/routes/AppRoutes.tsx:2619,2644,2669,2694,2719`     | pięć `BetaGate moduleId`         | lista, karta, protokół, decyzje i notatka przestaną pokazywać blokadę bety; `ProductionModuleGate` nadal obowiązuje | NIE                                                                    |
+| `server/src/middleware/betaGate.middleware.ts:16,53,57` | opis i serwerowy odczyt statusu  | zwykłe role przejdą bramkę API po uwierzytelnieniu                                                                  | TAK — stan `closed` i jednostkowy kontrakt `open` rozdzielone w teście |
+
+### KONTRAKT OTWARCIA BETY — MODULE_MEETING (staging)
+
+Jedna linia do zmiany: `src/utils/betaAccess.ts:56  'closed' -> 'open'`
+
+Kto to robi: nadzorca. NIE wykonawca tego dyżuru (`Z10`/`Z12`).
+
+Środowisko docelowe: WYŁĄCZNIE staging (`DEC-2026-08-28-227`). Demo: NIE RUSZAMY.
+
+Co zobaczy zwykły użytkownik po otwarciu: pozycję Meeting w sidebarze oraz `/meetings`, `/meetings/:meetingId`, `/meetings/:meetingId/minutes`, `/meetings/:meetingId/decisions`, `/meetings/:meetingId/note`; API `/api/meeting/**` przestanie zwracać `BETA_LOCKED`.
+
+Co NADAL będzie zamknięte: anonim pozostaje na `401 verifyToken`; `ProductionModuleGate` nadal może ukryć frontend w publicznej produkcji; kontrola aktywnego członkostwa, zakres organizacji, `isMeetingAdmin` i uprawnienia organizatora pozostają aktywne.
+
+Czego BRAKUJE, żeby otwarcie było uczciwe: niewykonane jeszcze S.4–S.11, R.1/R.2, brak pełnego N3/readback per rodzina z S.1, nieudowodnione N4 dla R10 oraz brak kart akceptu i końcowego pomiaru 33 tras.
+
+Ryzyko wysyłki po otwarciu: trasa `POST /:id/invitations/send` stanie się osiągalna dla ról nie-admin? **TAK warunkowo** — po otwarciu zwykła rola przejdzie bramkę, ale handler nadal wymaga, by użytkownik był twórcą spotkania albo adminem (`meeting.routes.ts:581-585`). Czy `MEETING_INVITES_LIVE` jest ustawione na stagingu? **NIE ZMIERZONE** (`Z28` zabrania sprawdzania) — pytanie do nadzorcy przed flipem.
+Dowód przełączalności: `server/src/routes/__tests__/meeting.betaGate.gateway.day57.pg.test.ts`; warstwa A 4/4 realny Gateway, warstwa B 3/3 sama bramka, łącznie 7/7 PASS z `--retry=0`.
+
+Dowód braku zmiany produkcyjnej: `git diff b3179d0a52603f62b5cd3673caa754c8fc3b0055..HEAD -- src/utils/betaAccess.ts server/src/middleware/betaGate.middleware.ts` zwrócił pusty wynik.
 
 ## CZTERY KARTY AKCEPTU (§S.5–§S.8) + ścieżki zrzutów z sumami SHA-256
 
