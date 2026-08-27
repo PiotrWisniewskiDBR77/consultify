@@ -9,6 +9,13 @@ export type DrdDocxMetrics = Readonly<{
   totalWords: number;
   placeholderWords: number;
   placeholderRatio: number;
+  /**
+   * FIX-4 (nadzorca 2026-08-28): kept for backward compatibility with
+   * existing callers, but no longer independently computed — it is always
+   * exactly `emptySlotCount`. Previously a second, narrower regex counted
+   * a DIFFERENT number here (56 vs. the real 95 empty-slot denominator on
+   * the Metalpol demo document) and the two numbers silently drifted.
+   */
   placeholderCount: number;
   narrativeSlotCount: number;
   filledSlotCount: number;
@@ -42,19 +49,49 @@ const SLOT_TOTALS: Readonly<Record<NarrativeSlotKind, number>> = Object.freeze({
   wnioski_koncowe: 1,
 });
 
+// FIX-3 (nadzorca 2026-08-28) replaced the raw editorial placeholder with
+// honest sentences in exactly two places — the area comment and the
+// "Horyzont" decision-line cell (see assessmentDrdReportSchemaService.ts).
+// The patterns below recognise BOTH the pre-FIX-3 raw placeholder (for any
+// already-generated .docx still on disk) and the new honest text, so this
+// measurement tool keeps counting the same real slots instead of silently
+// reporting them as "filled" once the raw jargon disappeared.
+//
+// AREA_NOT_ASSESSED_TEXT is a special case: assessmentDrdReportSchemaService
+// prints the identical sentence TWICE for a not-assessed area with no skip
+// notice — once as the area's own "not assessed" notice paragraph, once
+// again as the area-comment fallback (areaCommentPlaceholder). Both prints
+// are real, load-bearing text in the rendered document (real duplicated
+// words), so word-counting (narrativePlaceholders below) counts every
+// occurrence; but as a SLOT count there is only one comment slot per area,
+// so komentarz_obszaru halves this specific count.
+const AREA_COMMENT_LEGACY_PLACEHOLDER =
+  /Sekcja do uzupełnienia — limit 110–170 słów; wymagane:[^.]*\./g;
+const AREA_NOT_ASSESSED_TEXT = /Obszaru \S+ nie oceniono — brak danych źródłowych\./g;
+const AREA_COMMENT_NOT_PREPARED_TEXT = /Komentarz obszaru \S+ nie został przygotowany\./g;
+const DECISION_LEGACY_PLACEHOLDER = /Sekcja do uzupełnienia — limit 10–30 słów\./g;
+// `\s` (not a literal space) between "w" and "danych": the docx renderer
+// inserts a non-breaking space after one-letter Polish prepositions, and
+// JS `\s` matches U+00A0 — a literal space here would silently never match
+// the real rendered document.
+const HORIZON_HONEST_TEXT = /Nie określono — brak źródła w\s+danych\./g;
+
 export function measureNarrativeSlots(text: string) {
   const count = (pattern: RegExp) => occurrences(text, pattern).length;
   const empty: Record<NarrativeSlotKind, number> = {
     wstep_rozdzialu: count(/Sekcja do uzupełnienia — limit 120–180 słów\./g),
     podpis_matrycy: count(/Sekcja do uzupełnienia — limit 30–60 słów\./g),
-    komentarz_obszaru: count(/Sekcja do uzupełnienia — limit 110–170 słów; wymagane:/g),
+    komentarz_obszaru:
+      count(AREA_COMMENT_LEGACY_PLACEHOLDER) +
+      count(AREA_COMMENT_NOT_PREPARED_TEXT) +
+      Math.floor(count(AREA_NOT_ASSESSED_TEXT) / 2),
     wnioski_rozdzialu: count(/Sekcja do uzupełnienia — limit 180–260 słów\./g),
     linia_decyzyjna_rozdzialu: 0,
     linia_decyzyjna_programu: 0,
     streszczenie: count(/Sekcja do uzupełnienia — limit 120–150 słów\./g),
     wnioski_koncowe: count(/Sekcja do uzupełnienia — limit 250–300 słów\./g),
   };
-  const decisionEmpty = count(/Sekcja do uzupełnienia — limit 10–30 słów\./g);
+  const decisionEmpty = count(DECISION_LEGACY_PLACEHOLDER) + count(HORIZON_HONEST_TEXT);
   empty.linia_decyzyjna_rozdzialu = Math.min(SLOT_TOTALS.linia_decyzyjna_rozdzialu, decisionEmpty);
   empty.linia_decyzyjna_programu = Math.max(0, decisionEmpty - empty.linia_decyzyjna_rozdzialu);
   const slots = Object.fromEntries(
@@ -91,11 +128,25 @@ export async function measureDrdDocx(file: string): Promise<DrdDocxMetrics> {
   const text = [...documentXml.matchAll(/<w:t(?:\s[^>]*)?>([\s\S]*?)<\/w:t>/g)]
     .map((match) => decodeXml(match[1] ?? ''))
     .join(' ');
-  const placeholders = occurrences(text, /Sekcja do uzupełnienia — limit \d+–\d+ słów\./g);
-  const narrativePlaceholders = occurrences(
-    text,
-    /Sekcja do uzupełnienia — limit \d+–\d+ słów(?:\.|; wymagane:[^.]*\.)/g
-  );
+  // FIX-4 (nadzorca 2026-08-28): this used to be TWO independently-drifting
+  // counts of "how many placeholders are in this document" — a narrow
+  // `placeholders` regex (period-ending only, blind to the area-comment
+  // semicolon variant, reporting 56 where the real count was 95) feeding
+  // `placeholderCount`, and a separate, wider `narrativePlaceholders` regex
+  // feeding `placeholderWords`. `placeholderCount` is now the SAME number
+  // as `emptySlotCount` below (the slot-based measurement, corrected for
+  // FIX-3's honest-sentence text) — one source of truth, not a third
+  // circulating number. `narrativePlaceholders` (word-counting, every raw
+  // occurrence — including the FIX-3 area-comment duplicate — counts once
+  // per literal print, unlike the slot count above) keeps its own broader
+  // pattern set since it answers a different question (how many WORDS of
+  // this document are placeholder text, not how many SLOTS are empty).
+  const narrativePlaceholders = [
+    ...occurrences(text, /Sekcja do uzupełnienia — limit \d+–\d+ słów(?:\.|; wymagane:[^.]*\.)/g),
+    ...occurrences(text, AREA_NOT_ASSESSED_TEXT),
+    ...occurrences(text, AREA_COMMENT_NOT_PREPARED_TEXT),
+    ...occurrences(text, HORIZON_HONEST_TEXT),
+  ];
   const slots = measureNarrativeSlots(text);
   const narrativeSlotCount = Object.values(slots).reduce((sum, slot) => sum + slot.total, 0);
   const emptySlotCount = Object.values(slots).reduce((sum, slot) => sum + slot.empty, 0);
@@ -111,7 +162,7 @@ export async function measureDrdDocx(file: string): Promise<DrdDocxMetrics> {
     totalWords,
     placeholderWords,
     placeholderRatio: placeholderWords / totalWords,
-    placeholderCount: placeholders.length,
+    placeholderCount: emptySlotCount,
     narrativeSlotCount,
     filledSlotCount: narrativeSlotCount - emptySlotCount,
     emptySlotCount,

@@ -103,7 +103,7 @@ describe.skipIf(!REAL_DB)('Day 36 Metalpol seed DOCX — real router, JWT and Po
     await pool.end();
   });
 
-  it('keeps 102 narrative placeholders while measured data fills the report', async () => {
+  it('keeps 95 structural narrative slots while measured data fills the report and empties fall from 88 to 18', async () => {
     const before = await getDocx(emptySession, emptyToken);
     expect(before.status).toBe(200);
     await fs.writeFile(BEFORE_FILE, before.body);
@@ -126,8 +126,26 @@ describe.skipIf(!REAL_DB)('Day 36 Metalpol seed DOCX — real router, JWT and Po
 
     const beforeMetrics = await measureDrdDocx(BEFORE_FILE);
     const afterMetrics = await measureDrdDocx(AFTER_FILE);
-    expect(beforeMetrics.placeholderCount).toBe(102);
-    expect(afterMetrics.placeholderCount).toBe(102);
+    // FIX-4 (nadzorca 2026-08-28): this used to assert
+    // `placeholderCount === 102` for BOTH before and after, which was
+    // already wrong before this fix — a real measurement of this exact
+    // fixture gives 88 (before, a session with no output at all — every
+    // narrative slot genuinely empty except the seven always-populated
+    // matrix captions) and 0 (after, on the buggy pre-FIX-3 measurement
+    // that missed the area-comment semicolon variant entirely). Nothing in
+    // the fixture ever produced 102, on this branch or before it — the
+    // assertion was pinned to a number that doesn't correspond to this
+    // document. The field that IS invariant across before/after is the
+    // STRUCTURAL slot count (`narrativeSlotCount`, 95 — how many narrative
+    // slots this report has, independent of whether any of them are
+    // filled). `placeholderCount` is exactly `emptySlotCount` (FIX-4) and
+    // is supposed to differ before vs. after — that is the whole point of
+    // seeding real data, and it is what `placeholderRatio` already checked
+    // below.
+    expect(beforeMetrics.narrativeSlotCount).toBe(95);
+    expect(afterMetrics.narrativeSlotCount).toBe(95);
+    expect(beforeMetrics.placeholderCount).toBe(88);
+    expect(afterMetrics.placeholderCount).toBe(18);
     expect(afterMetrics.placeholderRatio).toBeLessThan(beforeMetrics.placeholderRatio);
     expect(afterMetrics.totalWords).toBeGreaterThan(beforeMetrics.totalWords);
   }, 60_000);
