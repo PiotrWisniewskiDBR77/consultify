@@ -99,19 +99,19 @@ domknięcie zadania.**
    > **★ RAMKA WARTOWNIKA — uwaga dla nadzorcy wiążącego ten dokument
    > (usuń tę ramkę przy wiązaniu).**
    >
-   > W miejsce **każdego** literalnego napisu `«MARKER_SHA»` wpisujesz
+> **MARKER ZWIAZANY PRZEZ NADZORCE 2026-08-28** — pole „SHA markera" powyzej zawiera realny SHA tipa m03. Jedyny STOP z tytulu markera to negatywny wynik `git merge-base --is-ancestor` (MARKER BRAK).
    > **rzeczywisty SHA tipa `codex/m03-admin-20260824` z chwili wystawienia**,
    > we **wszystkich** wystąpieniach w tym pliku. Sprawdzasz komendą
-   > `grep -c '«MARKER_SHA»' <ten-plik>` — wynik po podmianie musi być `0`.
+>
    >
    > W dokumencie **nie ma i nie może być przykładowego SHA**: dzień 29 dostał
    > instrukcję z konkretnym SHA wpisanym „na przykład", wykonawca zawiązał się
    > do niego dosłownie i przepracował dyżur na martwej bazie. Z tego powodu
    > jedynym wartownikiem w tym dokumencie jest **literalny napis
-   > `«MARKER_SHA»`** — nie „SHA do uzupełnienia", nie `<TU_WPISZ>`, nie
+>
    > `xxxxxxxxxx`, nie skrót przykładowy.
    >
-   > **Dopóki ta ramka nie jest usunięta, a `«MARKER_SHA»` nadal jest literalnym
+>
    > napisem, dokument NIE JEST ZWIĄZANY** i wykonawca ma obowiązek odrzucić go
    > na pierwszej komendzie dyżuru, założyć raport i zakończyć pracę.
 
@@ -121,13 +121,13 @@ domknięcie zadania.**
    cd <root-repo>
    git fetch --all --prune
    git log --oneline -25 codex/m03-admin-20260824
-   git merge-base --is-ancestor «MARKER_SHA» codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
+   git merge-base --is-ancestor 23652ec80a codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
    ```
 
    Wynik obu komend wklejasz do raportu **dosłownie**.
 
 3. **Jeśli marker nie jest przodkiem tipa, gałąź nie istnieje, albo
-   `«MARKER_SHA»` jest nadal literalnym napisem `«MARKER_SHA»` — STOP.**
+   `23652ec80a` jest nadal literalnym napisem `23652ec80a` — STOP.**
    Nie improwizuj bazy. Nie startuj z `origin/demo`, `main`, `Londyn`,
    `codex/preserve-*`, `codex/prt-*`, `codex/day12-instrukcja-20260825`,
    `codex/day3*-instrukcja-*`, `codex/day4*-instrukcja-*` ani z żadnej gałęzi
@@ -137,14 +137,14 @@ domknięcie zadania.**
    **Reguła rozejścia (`DEC-2026-08-26-95`).** Jeżeli marker JEST przodkiem, ale
    tip uciekł do przodu (nadzorca scalił coś po związaniu markera) — **to nie
    jest STOP**. Startujesz **dokładnie z markera**, wypisujesz w raporcie
-   `git log --oneline «MARKER_SHA»..codex/m03-admin-20260824` i listę plików
+   `git log --oneline 23652ec80a..codex/m03-admin-20260824` i listę plików
    rozejścia; scalenie z nowszym tipem wykonuje nadzorca przy odbiorze.
    **Rebase w trakcie dyżuru: ZAKAZANY.**
 
 4. **Twoja gałąź i worktree.**
 
    ```bash
-   git worktree add -b codex/partner-day42-<data> /private/tmp/consultify-partner-day42 «MARKER_SHA»
+   git worktree add -b codex/partner-day42-<data> /private/tmp/consultify-partner-day42 23652ec80a
    ```
 
    Pracujesz **wyłącznie** w `/private/tmp/consultify-partner-day42`.
@@ -211,7 +211,7 @@ domknięcie zadania.**
 6. **Komenda bazowa dotkniętych plików** (używasz jej w `§0.4a` i w raporcie):
 
    ```bash
-   git diff --name-only «MARKER_SHA»...HEAD
+   git diff --name-only 23652ec80a...HEAD
    ```
 
 ### 0.2. Bezwzględne ZAKAZY
@@ -1088,7 +1088,7 @@ było nią M14 D-03.
    W RAMACH TEJ POZYCJI.** Dowodzisz tego w raporcie:
 
    ```bash
-   git diff «MARKER_SHA»...HEAD -- server/src/routes/v8/index.ts \
+   git diff 23652ec80a...HEAD -- server/src/routes/v8/index.ts \
      server/src/routes/v8/partner.routes.ts | grep -E '^[+-]' | grep -vE '^[+-]{3}' | grep -vE '^[+-]\s*(\*|//|$)'
    ```
 
@@ -1436,11 +1436,11 @@ podsumowuje wszystko dla frontu.
    ```bash
    git stash list                                  # puste (Z27)
    git status --short                              # nic nieoczekiwanego
-   git log --oneline «MARKER_SHA»..HEAD            # commit-per-pozycja
-   git diff --name-only «MARKER_SHA»...HEAD        # zakres plikowy
-   git diff «MARKER_SHA»...HEAD -- src/ | wc -l    # MUSI być 0 (Z17)
-   git diff «MARKER_SHA»...HEAD -- .env.example server/src/middleware/ | wc -l   # MUSI być 0 (Z10/Z12)
-   grep -c '«MARKER_SHA»' docs/…/CODEX_DAY42_PARTNER_PORTAL_INSTRUKCJA.md        # kontrola wiązania
+   git log --oneline 23652ec80a..HEAD            # commit-per-pozycja
+   git diff --name-only 23652ec80a...HEAD        # zakres plikowy
+   git diff 23652ec80a...HEAD -- src/ | wc -l    # MUSI być 0 (Z17)
+   git diff 23652ec80a...HEAD -- .env.example server/src/middleware/ | wc -l   # MUSI być 0 (Z10/Z12)
+   grep -c '23652ec80a' docs/…/CODEX_DAY42_PARTNER_PORTAL_INSTRUKCJA.md        # kontrola wiązania
    ```
 
 3. `docker rm -fv cx-day42-pg` (**z `-v`**) i potwierdzenie w raporcie.
@@ -1461,7 +1461,7 @@ Pozycja bez commita i bez dowodu nie istnieje.
 ```markdown
 # Partner dzień 42 — odblokowanie portalu, inwentarz tras, izolacja tenantowa — raport dyżuru <data>
 
-Gałąź: codex/partner-day42-<data> · baza: «MARKER_SHA» · Poziom ukończenia: <...>
+Gałąź: codex/partner-day42-<data> · baza: 23652ec80a · Poziom ukończenia: <...>
 Kontener: cx-day42-pg, port <5697 lub inny, jeśli zajęty>
 
 ## Oświadczenie o chronionym checkoutcie (Z5/DEC-86)
