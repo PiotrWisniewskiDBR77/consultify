@@ -83,11 +83,23 @@ Dyżury 49b/49c oraz 47b/47c dotykają obu plików locale; ewentualna F.2 wymaga
 
 ## ★★ WYNIK GŁÓWNY — TABELA ZAMKNIĘCIA GNIAZD (§A.6)
 
-Do uzupełnienia w A.6.
+| Rodzaj gniazda            | Gniazd | Wypełnionych | Pustych | Powód pozostania pustym                      |
+| ------------------------- | -----: | -----------: | ------: | -------------------------------------------- |
+| wstęp rozdziału           |      7 |            7 |       0 | —                                            |
+| podpis matrycy            |      7 |            7 |       0 | —                                            |
+| komentarz obszaru         |     39 |           23 |      16 | 10 bez findingu, 3 pełne i 3 częściowe skipy |
+| wnioski rozdziału         |      7 |            7 |       0 | —                                            |
+| linia decyzyjna rozdziału |     28 |           21 |       7 | brak źródła `horizon`                        |
+| linia decyzyjna programu  |      4 |            3 |       1 | brak źródła `horizon`                        |
+| streszczenie              |      2 |            2 |       0 | —                                            |
+| wnioski końcowe           |      1 |            1 |       0 | —                                            |
+| **RAZEM**                 | **95** |       **71** |  **24** | wyłącznie jawne braki danych                 |
 
 ## ★★ ZDANIE UCZCIWE (§A.6 pkt 5)
 
-Na wejściu: dokument NADAL jest pustym formularzem — 95 z 95 gniazd pozostaje rusztowaniem.
+**Dokument przestał być pustym formularzem: 71 z 95 gniazd niesie treść z danych sesji.**
+
+PRZED: 95/95 pustych, udział słów rusztowania `40,07%`, 232 466 B. PO: 71/95 wypełnionych, 24/95 pustych, udział słów rusztowania `4,68%`, 249 852 B. Liczby stron PRZED i PO są `NIEZWERYFIKOWANE`: instrukcja zakazuje serwerowego LibreOffice, a Microsoft Word nie został uruchomiony.
 
 ## ★★ PLIKI .docx — PRZED i PO
 
@@ -95,10 +107,12 @@ Na wejściu: dokument NADAL jest pustym formularzem — 95 z 95 gniazd pozostaje
 - PO A.2: `/private/tmp/consultify-assessment-day50-artefakty/PO_A2_metalpol.docx`, 242 894 B, SHA-256 `8144ca698b8ab688a6fafe8f83ec73e01d9c8bbbb0d723652c9bb1ac9f7130a0`.
 - PO A.4: `/private/tmp/consultify-assessment-day50-artefakty/PO_A4_metalpol.docx`, 243 171 B, SHA-256 `a46e9c708e0517a40060f7f8004e1f2fdb7e1733a4928c08a846b320568735e1`.
 - PO A.3: `/private/tmp/consultify-assessment-day50-artefakty/PO_A3_metalpol.docx`, 249 852 B, SHA-256 `68ef43701e3f65b4b589f816bac5bafc928498ea6db8602b0c0f6d44b0caaf78`.
+- PO A.6 przebieg 1: `/private/tmp/consultify-assessment-day50-artefakty/PO_metalpol.docx`, 249 852 B, SHA-256 `4db9f06e92a2e4e0f15365f7a3742eb2e34028315ebc068781bafc3238a03d97`.
+- PO A.6 przebieg 2: `/private/tmp/consultify-assessment-day50-artefakty/PO_metalpol_run2.docx`, 249 851 B, SHA-256 `ffada8ff774fcd920d506a38a97c17b56e80ffbb4a8696d19706ae5f7f2bc165`.
 
 ## ★★ DOWÓD STABILNOŚCI DWÓCH PRZEBIEGÓW (§A.6 pkt 3)
 
-Do wykonania w A.6.
+Wyciągi `word/document.xml` z dwóch niezależnych żądań mają ten sam SHA-256: `0c4f2b33cdecf7395e914136e3c6078a3bb718475638d3f5b374cd4f28247626`; `cmp` zwrócił `0`. Pełne archiwa DOCX różnią się o 1 bajt i mają różne hashe z powodu metadanych/konstrukcji kontenera ZIP; nie wykluczono żadnego pola z XML, ponieważ XML jest identyczny bajt w bajt.
 
 ## ★★ DOWÓD POCHODZENIA
 
@@ -119,7 +133,8 @@ A.2/A.4 nie generują danych: czysta funkcja składa wyłącznie nazwane pola za
 | A.2     | ZROBIONE_WG_DoD                                                                         | 23 pełne akapity / 0 skróconych / 16 placeholderów; długości 131/141/159; 13 testów, 0 skipów; ApiGateway→kontrakt→DOCX                         |
 | A.4     | ZROBIONE_WG_DoD                                                                         | 23 ocenione / 10 nieocenionych / 3 pełne pominięcia / 3 częściowe; pełne pominięcie blokuje narrację                                            |
 | A.3     | ZROBIONE_WG_DoD                                                                         | 48/56 agregatów wypełnionych; 8/56 `BRAK_DANYCH` wyłącznie dla Horyzontu; walidator liczb                                                       |
-| A.6–R.2 | NIE ROZPOCZĘTO                                                                          | kolejność wiążąca                                                                                                                               |
+| A.6     | ZROBIONE_WG_DoD                                                                         | 71/95 wypełnionych, 24/95 uczciwie pustych; dwa XML mają identyczny SHA-256                                                                     |
+| D.1–R.2 | NIE ROZPOCZĘTO                                                                          | kolejność wiążąca                                                                                                                               |
 
 ## ★ DOWODY OSIĄGALNOŚCI (Z21)
 
@@ -143,6 +158,8 @@ A.4: usunięcie warunku `context.skipped` spowodowało `1 failed / 9 passed`, po
 
 A.3: mutacja walidatora liczb do bezwarunkowego `true` spowodowała `2 failed / 10 passed`, w tym przepuszczenie zmyślonego `12`. Po przywróceniu sprawdzania zbioru faktów: `12 passed`.
 
+A.6: mutacja syntetycznego pomiaru z 16 do 15 pustych komentarzy dała `1 failed / 2 passed` (`23` zamiast oczekiwanych `24` pustych). Po przywróceniu: `3 passed`.
+
 ## ★ LISTA KONTROLNA PIĘCIU KSZTAŁTÓW FAŁSZYWEGO „GOTOWE"
 
 A.1: wołacz realny TAK; realny ApiGateway TAK; SKIPPED własnego testu 0; brak fałszywego 200/0 TAK; proza bez źródła — nie dotyczy, A.1 nie dodaje prozy.
@@ -154,6 +171,8 @@ A.2: wołacz realny TAK; realny ApiGateway TAK; SKIPPED 0; brak fałszywego 200/
 A.4: wołacz realny TAK; realny ApiGateway TAK; SKIPPED 0; brak fałszywego sukcesu TAK; trzy stany braku danych są jawne; pełne pominięcie i brak findingu nie dostają prozy analitycznej.
 
 A.3: wołacz realny TAK; realny ApiGateway TAK; SKIPPED 0; `BRAK_DANYCH` pozostaje placeholderem, nie zerem; wszystkie cytowane rekomendacje zachowują `unitId`, a liczby przechodzą walidator zbioru faktów.
+
+A.6: wołacz realny TAK; dwa żądania przez realny ApiGateway TAK; SKIPPED 0; licznik nie zamienia braku na zero; pomiar odróżnia 71 treści od 24 jawnych pustek i dowodzi identyczności XML.
 
 ## ★ ZRZUTY
 
