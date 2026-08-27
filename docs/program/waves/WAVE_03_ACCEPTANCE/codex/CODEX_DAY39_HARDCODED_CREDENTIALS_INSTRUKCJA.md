@@ -97,7 +97,7 @@ pracy jest „nie zepsuć tego, co działa", a nie „usunąć, bo brzydkie".**
 1. Punktem wyjścia jest **gałąź `codex/m03-admin-20260824`**, przypięta do
    commitu-markera podanego niżej.
 
-   **SHA markera: «MARKER_SHA»**
+   **SHA markera: 87e7cecf3a**
 
    > **★ RAMKA WARTOWNIKA — uwaga dla nadzorcy wystawiającego ten dokument
    > (usuń tę ramkę przy wiązaniu):** w miejsce **każdego** literalnego napisu
@@ -117,13 +117,13 @@ pracy jest „nie zepsuć tego, co działa", a nie „usunąć, bo brzydkie".**
    cd <root-repo>
    git fetch --all --prune
    git log --oneline -25 codex/m03-admin-20260824
-   git merge-base --is-ancestor «MARKER_SHA» codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
+   git merge-base --is-ancestor 87e7cecf3a codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
    ```
 
    Wynik obu komend wklejasz do raportu **dosłownie**.
 
-3. **Jeśli marker nie jest przodkiem tipa, gałąź nie istnieje, albo `«MARKER_SHA»`
-   jest nadal literalnym napisem `«MARKER_SHA»` — STOP.** Nie improwizuj bazy.
+3. **Jeśli marker nie jest przodkiem tipa, gałąź nie istnieje, albo `87e7cecf3a`
+   jest nadal literalnym napisem `87e7cecf3a` — STOP.** Nie improwizuj bazy.
    Nie startuj z `origin/demo`, `main`, `Londyn`, `codex/preserve-*`,
    `codex/execution-*`, `codex/finance-*`, `codex/assessment-*`,
    `codex/meetings-*`, `codex/day3*` ani z żadnej gałęzi dni 17–38.
@@ -132,7 +132,7 @@ pracy jest „nie zepsuć tego, co działa", a nie „usunąć, bo brzydkie".**
    **Reguła rozejścia.** Jeżeli marker JEST przodkiem, ale tip uciekł do przodu
    (nadzorca scalił coś po związaniu markera) — **to nie jest STOP**. Startujesz
    **dokładnie z markera**, wypisujesz w raporcie
-   `git log --oneline «MARKER_SHA»..codex/m03-admin-20260824` i listę plików
+   `git log --oneline 87e7cecf3a..codex/m03-admin-20260824` i listę plików
    rozejścia; scalenie z nowszym tipem wykonuje nadzorca przy odbiorze.
    **Rebase w trakcie dyżuru: ZAKAZANY.**
 
@@ -198,7 +198,7 @@ pracy jest „nie zepsuć tego, co działa", a nie „usunąć, bo brzydkie".**
 5. **Własna gałąź i własny worktree** (nigdy praca na `codex/m03-admin-20260824`):
 
    ```bash
-   git branch codex/credentials-day39-<data> «MARKER_SHA»
+   git branch codex/credentials-day39-<data> 87e7cecf3a
    git worktree add /private/tmp/consultify-credentials-day39 codex/credentials-day39-<data>
    cd /private/tmp/consultify-credentials-day39
    ln -s /Users/piotrwisniewski/Developer/Consultify/node_modules node_modules   # TYLKO ODCZYT
@@ -212,7 +212,7 @@ pracy jest „nie zepsuć tego, co działa", a nie „usunąć, bo brzydkie".**
    nigdy wobec `HEAD~1`:
 
    ```bash
-   git diff --name-only «MARKER_SHA»...HEAD
+   git diff --name-only 87e7cecf3a...HEAD
    ```
 
    Ta komenda ma w tym dokumencie własną nazwę — **„komenda bazowa"** — i wraca
@@ -348,7 +348,7 @@ Pozycja jest zrobiona, gdy spełnia **wszystkie dwanaście**:
     i wklejasz wynik:
 
     ```bash
-    git diff «MARKER_SHA»...HEAD -- docs/ | grep -c "$(printf '1234''56')" || true
+    git diff 87e7cecf3a...HEAD -- docs/ | grep -c "$(printf '1234''56')" || true
     ```
 
     (Wynik ma być `0`. Konstrukcja `printf` jest celowa — żeby literał nie
@@ -1261,18 +1261,18 @@ Test + allowlista + dwa testy strażnika. **Commit.**
 
 ```bash
 # 1. komenda bazowa — pełna lista zmian
-git diff --name-only «MARKER_SHA»...HEAD
+git diff --name-only 87e7cecf3a...HEAD
 
 # 2. kontrola zakresu — te komendy MUSZĄ być puste
-git diff --name-only «MARKER_SHA»...HEAD | grep -E "seed-m16-demo\.py|validate-deploy-target\.sh|deploy-demo\.sh"
-git diff --name-only «MARKER_SHA»...HEAD | grep -E "auth\.routes\.ts|auth\.middleware\.ts|routes/assessment"
-git diff --name-only «MARKER_SHA»...HEAD | grep -E "vitest.*\.config\.ts|playwright.*\.config\.ts|tests/setup\.ts|tests/helpers/|tests/__mocks__/"
-git diff --name-only «MARKER_SHA»...HEAD | grep -E "server/src/services/finance/|src/components/Finance/|server/src/services/executionControl/"
-git diff --name-only «MARKER_SHA»...HEAD | grep -E "^server/migrations/"
+git diff --name-only 87e7cecf3a...HEAD | grep -E "seed-m16-demo\.py|validate-deploy-target\.sh|deploy-demo\.sh"
+git diff --name-only 87e7cecf3a...HEAD | grep -E "auth\.routes\.ts|auth\.middleware\.ts|routes/assessment"
+git diff --name-only 87e7cecf3a...HEAD | grep -E "vitest.*\.config\.ts|playwright.*\.config\.ts|tests/setup\.ts|tests/helpers/|tests/__mocks__/"
+git diff --name-only 87e7cecf3a...HEAD | grep -E "server/src/services/finance/|src/components/Finance/|server/src/services/executionControl/"
+git diff --name-only 87e7cecf3a...HEAD | grep -E "^server/migrations/"
 
 # 3. Z18 — hasło nie trafiło do raportu ani do żadnego nowego pliku
 LIT="$(printf '1234''56')"
-git diff «MARKER_SHA»...HEAD | grep -c "^+.*$LIT" || true      # oczekiwane: 0
+git diff 87e7cecf3a...HEAD | grep -c "^+.*$LIT" || true      # oczekiwane: 0
 
 # 4. Z27 — brak stasha
 git stash list                                                  # oczekiwane: PUSTE
@@ -1431,7 +1431,7 @@ npx vitest run <plik> --reporter=basic
 docker rm -fv cx-day39-pg
 
 # porównanie do bazy (NIE do HEAD~1)
-git diff --name-only «MARKER_SHA»...HEAD
+git diff --name-only 87e7cecf3a...HEAD
 
 # odłożenie stanu roboczego — ZAMIAST git stash (Z27)
 mkdir -p /private/tmp/consultify-credentials-day39-scratch
