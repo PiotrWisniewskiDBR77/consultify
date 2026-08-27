@@ -1365,9 +1365,23 @@ function renderCoverBlock(ctx: RenderContext, options: DocumentRenderOptions = {
   return out;
 }
 
+// W3 (nadzorca 2026-08-28): DRD cover dates render in Polish long form
+// ("26 sierpnia 2026"), matching the wzorzec — never the ISO
+// `YYYY-MM-DD` technical form. Scoped to `renderDrdCoverBlock` only
+// (its sole caller already gates on `isDrdReportProfile`), so every other
+// document type keeps rendering `generatedAt`/dates exactly as before —
+// see `renderCoverBlock`'s own `.toISOString().slice(0, 10)` a few dozen
+// lines up, which this change does not touch.
+const DRD_ISSUED_DATE_FORMAT = new Intl.DateTimeFormat('pl-PL', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+});
+
 function renderDrdCoverBlock(ctx: RenderContext): (Paragraph | Table)[] {
   const metadata = ctx.schema.drdReportMetadata;
   const missing = 'Do uzupełnienia — dane nie są zapisane w sesji oceny.';
+  const issuedDate = metadata?.issuedAt ? new Date(metadata.issuedAt) : null;
   const rows: Array<[string, string, boolean]> = [
     ['Klient', metadata?.clientName ?? ctx.schema.audience[0] ?? missing, false],
     ['Profil działalności', metadata?.businessProfile ?? missing, !metadata?.businessProfile],
@@ -1379,7 +1393,9 @@ function renderDrdCoverBlock(ctx: RenderContext): (Paragraph | Table)[] {
     ['Sygnatura sesji', metadata?.sessionSignature ?? missing, !metadata?.sessionSignature],
     [
       'Data wydania',
-      metadata?.issuedAt ? new Date(metadata.issuedAt).toISOString().slice(0, 10) : missing,
+      issuedDate && !Number.isNaN(issuedDate.getTime())
+        ? DRD_ISSUED_DATE_FORMAT.format(issuedDate)
+        : missing,
       !metadata?.issuedAt,
     ],
   ];
