@@ -1,13 +1,13 @@
 /**
  * M16 Finanse — wspólny harness E2E (kubełek B: testy wymagające przeglądarki).
  *
- * Most: lokalny vite FE (:3010) → demo BE (VITE_API_TARGET=https://demo.consultify.ai).
- * Logowanie przez UI (piotr/123456) — wypełnia zustand auth-store poprawnie,
+ * Most: lokalny Vite FE przekazuje ruch do jawnego `$VITE_API_TARGET`.
+ * Logowanie przez UI (piotr/<HASLO>) — wypełnia zustand auth-store poprawnie,
  * unika zgadywania kształtu localStorage. Dane = seed z scripts/seed-m16-demo.py.
  *
  * Uruchom:
- *   1) VITE_API_TARGET=https://demo.consultify.ai node node_modules/vite/bin/vite.js --port 3010 --strictPort
- *   2) python3 scripts/seed-m16-demo.py   (raz, dane na demo)
+ *   1) Ustaw VITE_API_TARGET jawnie, potem uruchom Vite na porcie 3010.
+ *   2) Seed uruchamiaj wyłącznie w dozwolonym środowisku z kompletem env.
  *   3) E2E_BASE_URL=http://localhost:3010 npx playwright test tests/e2e/m16 --config playwright.config.ts --workers 1
  *
  * Bezpieczeństwo: czyta/pisze TYLKO demo. PROD nietknięty.
@@ -18,8 +18,8 @@ import path from 'node:path';
 import { type Page, expect } from '@playwright/test';
 
 export const FE = process.env.E2E_BASE_URL || 'http://localhost:3010';
-export const EMAIL = 'piotr.wisniewski@dbr77.com';
-export const PASSWORD = '123456';
+export const EMAIL = process.env.TEST_USER_EMAIL || 'test@localhost';
+export const PASSWORD = process.env.TEST_USER_PASSWORD || 'testpassword123';
 export const SHOT_DIR = path.resolve(process.cwd(), 'tests/e2e/screenshots/m16');
 fs.mkdirSync(SHOT_DIR, { recursive: true });
 
@@ -84,8 +84,15 @@ async function waitShellReady(page: Page, tries = 3): Promise<void> {
   for (let i = 0; i < tries; i += 1) {
     // tab-bar obecny jak tylko body zawiera etykiety zakładek (Statements+Investment)
     for (let t = 0; t < 16; t += 1) {
-      const body = await page.locator('body').innerText().catch(() => '');
-      if (/Statements/.test(body) && /Investment/.test(body) && !/^\s*Loading\s*$/i.test(body.trim())) {
+      const body = await page
+        .locator('body')
+        .innerText()
+        .catch(() => '');
+      if (
+        /Statements/.test(body) &&
+        /Investment/.test(body) &&
+        !/^\s*Loading\s*$/i.test(body.trim())
+      ) {
         return;
       }
       await page.waitForTimeout(700);

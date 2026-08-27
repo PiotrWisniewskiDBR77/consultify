@@ -16,8 +16,10 @@ async function loginAsSuperAdmin(page: Page) {
 
   const emailInput = page.locator('input[type="email"], input[name="email"]').first();
   if (await emailInput.isVisible({ timeout: 2000 })) {
-    await emailInput.fill('admin@dbr77.com');
-    await page.locator('input[type="password"]').fill('123456');
+    await emailInput.fill(process.env.TEST_USER_EMAIL || 'test@localhost');
+    await page
+      .locator('input[type="password"]')
+      .fill(process.env.TEST_USER_PASSWORD || 'testpassword123');
     await page.locator('button[type="submit"]').click();
     await page.waitForLoadState('networkidle');
   }

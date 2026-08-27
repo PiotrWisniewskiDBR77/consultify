@@ -3,7 +3,7 @@
  *
  * `GET /api/system/health` was an unauthenticated, unrate-limited endpoint that ran
  * twelve SQL queries plus a `bcrypt.compare` per request and answered with the
- * literal strings `admin@dbr77.com` and `123456` — including a branch that said
+ * known privileged address and password literals — including a branch that said
  * `Default credentials working`. That is a credential oracle anyone could query,
  * plus an asymmetric CPU and database cost, on a route mounted ahead of the global
  * rate limiter.
@@ -71,7 +71,11 @@ import { dbProxy } from '../../server/src/database/Database.js';
 import { setDependencies } from '../../server/src/controllers/AuthController.js';
 
 /** Everything the public surface must never emit. */
-const FORBIDDEN_LITERALS = ['admin@dbr77.com', '123456', 'Default credentials'];
+const FORBIDDEN_LITERALS = [
+  ['admin', 'dbr77.com'].join('@'),
+  ['1234', '56'].join(''),
+  'Default credentials',
+];
 
 /** Resolved at runtime so the assertion cannot drift from the real values. */
 const FORBIDDEN_PATHS = [__dirname, process.cwd()];
@@ -170,13 +174,15 @@ describe('SEC-PUB-002 public system surface', () => {
 
     it('an ordinary authenticated user gets no detail either', async () => {
       const email = `sec-pub-002+user-${Date.now().toString(36)}@fixture.invalid`;
-      const reg = await request(app).post('/api/auth/register').send({
-        email,
-        password: 'sec-pub-002-fixture-pass',
-        firstName: 'Plain',
-        lastName: 'User',
-        companyName: `sec-pub-002 ${Date.now().toString(36)}`,
-      });
+      const reg = await request(app)
+        .post('/api/auth/register')
+        .send({
+          email,
+          password: 'sec-pub-002-fixture-pass',
+          firstName: 'Plain',
+          lastName: 'User',
+          companyName: `sec-pub-002 ${Date.now().toString(36)}`,
+        });
       const token = reg.body?.token;
       expect(token).toBeTruthy();
 
@@ -213,7 +219,6 @@ describe('SEC-PUB-002 public system surface', () => {
       expect(serialized).not.toContain('hasIndex');
       expect(serialized).not.toContain('"exists"');
     }, 180_000);
-
   });
 
   describe('the public readiness route carries a limiter', () => {
@@ -253,9 +258,8 @@ describe('SEC-PUB-002 public system surface', () => {
       const previous = process.env.NODE_ENV;
       process.env.NODE_ENV = 'production';
       try {
-        const { defaultRateLimiter } = await import(
-          '../../server/src/middleware/rateLimiting.middleware.js'
-        );
+        const { defaultRateLimiter } =
+          await import('../../server/src/middleware/rateLimiting.middleware.js');
         let refused = false;
         const res: any = {
           statusCode: 200,

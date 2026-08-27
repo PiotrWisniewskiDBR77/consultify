@@ -16,8 +16,8 @@ import { seedPageAuth } from '../cases/_m07-helpers';
 
 const BACKEND = process.env.M15_BACKEND || 'http://localhost:3001';
 const CREDS = {
-  email: process.env.M15_EMAIL || 'piotr.wisniewski@dbr77.com',
-  password: process.env.M15_PASSWORD || '123456',
+  email: process.env.M15_EMAIL || process.env.TEST_USER_EMAIL || 'test@localhost',
+  password: process.env.M15_PASSWORD || process.env.TEST_USER_PASSWORD || 'testpassword123',
 };
 const SHOTS = path.resolve('docs/qa/screens/m15-2026-06-26');
 
@@ -51,20 +51,26 @@ test.describe('M15 Seria D panels', () => {
             state.theme = t;
             localStorage.setItem(k, JSON.stringify({ state, version: 2 }));
             localStorage.setItem('consultify_onboarding_done', 'true');
-          } catch { /* storage unavailable */ }
+          } catch {
+            /* storage unavailable */
+          }
         }, theme);
         await seedPageAuth(page, token);
         await page.setViewportSize({ width: 1680, height: 1050 });
       });
 
-      test(`Strategic tab — BSC + OKR + benefit-profiles + adoption (${theme})`, async ({ page }) => {
+      test(`Strategic tab — BSC + OKR + benefit-profiles + adoption (${theme})`, async ({
+        page,
+      }) => {
         await page.goto(STRATEGIC, { waitUntil: 'domcontentloaded' });
         // error boundary must not show
         await expect(page.getByText(/Coś poszło nie tak|Something went wrong/i)).toHaveCount(0);
         // D10 OKR cascade section + D2 benefit profiles + D3/D4 adoption
         await expect(page.getByText(/Balanced Scorecard/i).first()).toBeVisible({ timeout: 60000 });
         await expect(page.getByText(/OKR/i).first()).toBeVisible({ timeout: 30000 });
-        await expect(page.getByText(/Profil korzyści|Benefit profile/i).first()).toBeVisible({ timeout: 30000 });
+        await expect(page.getByText(/Profil korzyści|Benefit profile/i).first()).toBeVisible({
+          timeout: 30000,
+        });
         await page.waitForTimeout(1500);
         await page.screenshot({ path: path.join(SHOTS, `${theme}-strategic.png`), fullPage: true });
       });
@@ -73,7 +79,9 @@ test.describe('M15 Seria D panels', () => {
         await page.goto(AI, { waitUntil: 'domcontentloaded' });
         await expect(page.getByText(/Coś poszło nie tak|Something went wrong/i)).toHaveCount(0);
         // D6 funnel + D11 anomaly/forecast/RCA sections
-        await expect(page.getByText(/Lejek wartości|value funnel/i).first()).toBeVisible({ timeout: 60000 });
+        await expect(page.getByText(/Lejek wartości|value funnel/i).first()).toBeVisible({
+          timeout: 60000,
+        });
         await expect(page.getByText(/anomali/i).first()).toBeVisible({ timeout: 30000 });
         await page.waitForTimeout(1500);
         await page.screenshot({ path: path.join(SHOTS, `${theme}-ai.png`), fullPage: true });

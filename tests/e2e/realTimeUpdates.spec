@@ -10,8 +10,8 @@ test.describe('Real-time Updates Tests', () => {
         // Login both users
         await page1.goto('/');
         await page1.click('text=Log In');
-        await page1.fill('input[type="email"]', 'admin@dbr77.com');
-        await page1.fill('input[type="password"]', '123456');
+        await page1.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+        await page1.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
         await page1.click('button[type="submit"]');
 
         await page2.goto('/');
@@ -53,8 +53,8 @@ test.describe('Real-time Updates Tests', () => {
         // Login both users
         await page1.goto('/');
         await page1.click('text=Log In');
-        await page1.fill('input[type="email"]', 'admin@dbr77.com');
-        await page1.fill('input[type="password"]', '123456');
+        await page1.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+        await page1.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
         await page1.click('button[type="submit"]');
 
         await page2.goto('/');
@@ -87,8 +87,8 @@ test.describe('Real-time Updates Tests', () => {
     test('should handle real-time notifications', async ({ page }) => {
         await page.goto('/');
         await page.click('text=Log In');
-        await page.fill('input[type="email"]', 'admin@dbr77.com');
-        await page.fill('input[type="password"]', '123456');
+        await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+        await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
         await page.click('button[type="submit"]');
 
         // Enable notifications
@@ -99,7 +99,7 @@ test.describe('Real-time Updates Tests', () => {
         await page.click('button:has-text("New Task")');
         await page.fill('input[name="title"]', 'Real-time Test Task');
         await page.fill('textarea[name="description"]', 'Task for real-time notification test');
-        await page.selectOption('select[name="assignee"]', 'admin@dbr77.com');
+        await page.selectOption('select[name="assignee"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
         await page.click('button:has-text("Create Task")');
 
         // Should receive real-time notification
@@ -114,8 +114,8 @@ test.describe('Real-time Updates Tests', () => {
     test('should maintain real-time connection stability', async ({ page }) => {
         await page.goto('/');
         await page.click('text=Log In');
-        await page.fill('input[type="email"]', 'admin@dbr77.com');
-        await page.fill('input[type="password"]', '123456');
+        await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+        await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
         await page.click('button[type="submit"]');
 
         // Wait for real-time connection to establish
@@ -140,8 +140,8 @@ test.describe('Real-time Updates Tests', () => {
     test('should handle real-time dashboard updates', async ({ page }) => {
         await page.goto('/');
         await page.click('text=Log In');
-        await page.fill('input[type="email"]', 'admin@dbr77.com');
-        await page.fill('input[type="password"]', '123456');
+        await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+        await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
         await page.click('button[type="submit"]');
 
         // Navigate to dashboard
@@ -155,8 +155,8 @@ test.describe('Real-time Updates Tests', () => {
         const newPage = await page.context().newPage();
         await newPage.goto('/');
         await newPage.click('text=Log In');
-        await newPage.fill('input[type="email"]', 'admin@dbr77.com');
-        await newPage.fill('input[type="password"]', '123456');
+        await newPage.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+        await newPage.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
         await newPage.click('button[type="submit"]');
 
         await newPage.goto('/tasks');

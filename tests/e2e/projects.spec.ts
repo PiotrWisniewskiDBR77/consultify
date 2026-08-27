@@ -5,8 +5,8 @@ test.describe('Project Management', () => {
     // Login via UI
     await page.goto('/');
     await page.click('text=Log In');
-    await page.fill('input[type="email"]', 'piotr.wisniewski@dbr77.com');
-    await page.fill('input[type="password"]', '123456');
+    await page.fill('input[type="email"]', process.env.TEST_USER_EMAIL || 'test@localhost');
+    await page.fill('input[type="password"]', process.env.TEST_USER_PASSWORD || 'testpassword123');
     await page.click('button[type="submit"]');
     await expect(page.locator('h1:has-text("Admin Panel")')).toBeVisible();
   });

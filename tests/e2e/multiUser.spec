@@ -5,8 +5,8 @@ test.describe('Multi-User Collaboration Flow', () => {
         // Login as first user
         await page.goto('/');
         await page.click('text=Log In');
-        await page.fill('input[type="email"]', 'admin@dbr77.com');
-        await page.fill('input[type="password"]', '123456');
+        await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+        await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
         await page.click('button[type="submit"]');
 
         await page.goto('/projects');
@@ -35,8 +35,8 @@ test.describe('Multi-User Collaboration Flow', () => {
     test('should manage user permissions', async ({ page }) => {
         await page.goto('/');
         await page.click('text=Log In');
-        await page.fill('input[type="email"]', 'admin@dbr77.com');
-        await page.fill('input[type="password"]', '123456');
+        await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+        await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
         await page.click('button[type="submit"]');
 
         await page.goto('/admin/users');
@@ -54,8 +54,8 @@ test.describe('Multi-User Collaboration Flow', () => {
         // Two users editing the same item
         await page.goto('/');
         await page.click('text=Log In');
-        await page.fill('input[type="email"]', 'admin@dbr77.com');
-        await page.fill('input[type="password"]', '123456');
+        await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+        await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
         await page.click('button[type="submit"]');
 
         const page2 = await context.newPage();

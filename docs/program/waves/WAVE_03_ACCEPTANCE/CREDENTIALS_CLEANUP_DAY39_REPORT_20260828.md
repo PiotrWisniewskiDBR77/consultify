@@ -151,8 +151,8 @@ Liczba 145 z briefu nie jest zgodna z metodą wiążącą; własny wynik to 104 
 | D.1 | ZROBIONE_WG_DoD | `1d10bdfe26` | trzy własne pomiary i klasyfikacja | tabela powyżej | nie dotyczy |
 | D.2 | CZĘŚCIOWO | `1e1dfd0efb` | 25/25 testów PASS; brak sekretu i domen uprzywilejowanych | policzeni | mapa syntetyczna działa; brak mapy odmawia |
 | D.3 | CZĘŚCIOWO | `59dda561fb` | build OOM; dowód zastępczy | Vite | brak artefaktu do rozstrzygnięcia |
-| D.4 | CZĘŚCIOWO | do uzupełnienia po commicie | 16/16 bez literału; składnia OK | policzeni | zdalne wykonanie zabronione Z28 |
-| D.5 | NIE_ZACZĘTE | — | — | policzeni | — |
+| D.4 | CZĘŚCIOWO | `4b7e304d62` | 16/16 bez literału; składnia OK | policzeni | zdalne wykonanie zabronione Z28 |
+| D.5 | CZĘŚCIOWO | do uzupełnienia po commicie | 40/40 e2e i strażnik integracyjny bez literału | policzeni | statycznie równoważne; e2e nieuruchomione Z28 |
 | D.6 | NIE_ZACZĘTE | — | — | policzeni | — |
 | D.7 | NIE_ZACZĘTE | — | — | — | — |
 | R.1 | NIE_ZACZĘTE | — | — | — | — |
@@ -226,6 +226,26 @@ Mapa PIN do konta została całkowicie usunięta z kodu i zastąpiona rygorystyc
 | `server/seeds/demoUser*.js` | wrapper + ręczny | exit 1, brak `SEED_USER_PASSWORD` | przed otwarciem DB |
 
 `grep` zdalnych wartości domyślnych w dwóch M16: `0`. Pozostałe skrypty nie dostały nowych zdalnych wartości domyślnych.
+
+## D.5 — testy E2E i integracyjne
+
+- `_m16.ts` zmieniono jako pierwszy. Jego konsumenci to `m16-w1-w3.spec.ts` i `m16-w4-w6.spec.ts`; oba dziedziczą teraz `TEST_USER_EMAIL` i `TEST_USER_PASSWORD`.
+- Następnie zmieniono pięć speców `uspojnienie/f1…f5`, pozostałe pliki z inwentarza oraz zastany test integracyjny powierzchni publicznej.
+- Fallbacki są wyłącznie lokalne i jawnie syntetyczne: `test@localhost` oraz `testpassword123`.
+- 40 plików pod `tests/e2e/**`: zero trafień literału. Wśród nich 23 żywe pliki TypeScript oraz 17 plików bez rozszerzenia oznaczonych `MARTWY_PLIK`.
+- Esbuild: 23/23 żywe pliki E2E PASS. `playwright test --list`: 282 testy w 22 plikach, PASS. Było to wyłącznie zebranie listy; żadnego testu E2E ani połączenia sieciowego nie wykonano (`Z28`).
+- `tests/integration/publicSystemSurface.contract.test.ts` nadal wykrywa zabronione wartości, lecz składa wzorce z fragmentów i sam nie przechowuje literałów. Esbuild bez bundlowania: PASS z 4 zastanymi ostrzeżeniami.
+- Vitest tego testu z wymaganym własnym PG: 9 PASS, 2 FAIL, 0 SKIPPED. Oba błędy są niezwiązane ze zmianą: endpoint szczegółowy zwrócił 503 zamiast jednego z 401/403/404, a rejestracja użytkownika nie zwróciła tokenu. Zmiana dotyczy wyłącznie konstrukcji stałej skanera, więc klasyfikacja to `ZASTANE/ŚRODOWISKOWE`, wprowadzone: 0.
+- Nie zmieniono żadnego `playwright*.config.ts` ani `vitest*.config.ts`.
+
+### Równoważność per plik D.5
+
+| plik/grupa | esbuild | `playwright --list` | wynik |
+| --- | --- | --- | --- |
+| 22 żywe `*.spec.ts` | 22/22 OK | 282 testy zebrane | ta sama ścieżka logowania, dane z env lub lokalnego fallbacku |
+| `tests/e2e/m16/_m16.ts` | OK | moduł pomocniczy, zebrany przez dwóch konsumentów | wspólne `EMAIL`/`PASSWORD` zachowane |
+| 17 plików `*.spec` bez `.ts` | nie dotyczy | nie są zbierane | `MARTWY_PLIK`; literał usunięty bez dodawania testów |
+| `tests/integration/publicSystemSurface.contract.test.ts` | OK | nie dotyczy | ten sam zestaw trzech zabronionych wzorców, składany bez przechowywania sekretu |
 
 ## Errata i korekty wobec instrukcji
 

@@ -6,8 +6,8 @@ test.describe('Settings Management Flow', () => {
             // Login first
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             // Navigate to settings
@@ -38,8 +38,8 @@ test.describe('Settings Management Flow', () => {
         test('should upload and update profile picture', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.click('[data-testid="user-menu"]');
@@ -60,8 +60,8 @@ test.describe('Settings Management Flow', () => {
         test('should validate profile data', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.click('[data-testid="user-menu"]');
@@ -81,8 +81,8 @@ test.describe('Settings Management Flow', () => {
         test('should change password successfully', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.click('[data-testid="user-menu"]');
@@ -90,7 +90,7 @@ test.describe('Settings Management Flow', () => {
             await page.click('text=Security');
 
             // Change password
-            await page.fill('input[name="currentPassword"]', '123456');
+            await page.fill('input[name="currentPassword"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.fill('input[name="newPassword"]', 'NewSecurePass123!');
             await page.fill('input[name="confirmPassword"]', 'NewSecurePass123!');
 
@@ -103,8 +103,8 @@ test.describe('Settings Management Flow', () => {
             await page.click('text=Logout');
 
             // Try to login with old password - should fail
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await expect(page.locator('text=Invalid credentials')).toBeVisible();
@@ -119,8 +119,8 @@ test.describe('Settings Management Flow', () => {
         test('should enable two-factor authentication', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.click('[data-testid="user-menu"]');
@@ -135,7 +135,7 @@ test.describe('Settings Management Flow', () => {
             await expect(page.locator('.qr-code')).toBeVisible();
 
             // Simulate entering verification code
-            await page.fill('input[name="verificationCode"]', '123456');
+            await page.fill('input[name="verificationCode"]', '000000');
             await page.click('button:has-text("Verify and Enable")');
 
             await expect(page.locator('text=Two-factor authentication enabled')).toBeVisible();
@@ -147,8 +147,8 @@ test.describe('Settings Management Flow', () => {
         test('should manage active sessions', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.click('[data-testid="user-menu"]');
@@ -174,8 +174,8 @@ test.describe('Settings Management Flow', () => {
         test('should configure login notifications', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.click('[data-testid="user-menu"]');
@@ -197,8 +197,8 @@ test.describe('Settings Management Flow', () => {
         test('should configure project notifications', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.click('[data-testid="user-menu"]');
@@ -222,8 +222,8 @@ test.describe('Settings Management Flow', () => {
         test('should configure AI assistant notifications', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.click('[data-testid="user-menu"]');
@@ -244,8 +244,8 @@ test.describe('Settings Management Flow', () => {
         test('should manage notification channels', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.click('[data-testid="user-menu"]');
@@ -269,8 +269,8 @@ test.describe('Settings Management Flow', () => {
             // Login as organization admin
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.click('[data-testid="user-menu"]');
@@ -290,8 +290,8 @@ test.describe('Settings Management Flow', () => {
         test('should manage organization members', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.click('[data-testid="user-menu"]');
@@ -318,8 +318,8 @@ test.describe('Settings Management Flow', () => {
         test('should configure organization preferences', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.click('[data-testid="user-menu"]');
@@ -342,8 +342,8 @@ test.describe('Settings Management Flow', () => {
         test('should view and update billing information', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.click('[data-testid="user-menu"]');
@@ -368,8 +368,8 @@ test.describe('Settings Management Flow', () => {
         test('should view billing history', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.click('[data-testid="user-menu"]');
@@ -387,8 +387,8 @@ test.describe('Settings Management Flow', () => {
         test('should handle plan upgrades', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.click('[data-testid="user-menu"]');
@@ -411,8 +411,8 @@ test.describe('Settings Management Flow', () => {
         test('should configure AI assistant preferences', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.click('[data-testid="user-menu"]');
@@ -432,8 +432,8 @@ test.describe('Settings Management Flow', () => {
         test('should manage AI model preferences', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.click('[data-testid="user-menu"]');
@@ -454,8 +454,8 @@ test.describe('Settings Management Flow', () => {
         test('should configure AI usage limits', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.click('[data-testid="user-menu"]');
@@ -478,8 +478,8 @@ test.describe('Settings Management Flow', () => {
         test('should configure external integrations', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.click('[data-testid="user-menu"]');
@@ -509,8 +509,8 @@ test.describe('Settings Management Flow', () => {
         test('should manage API keys', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.click('[data-testid="user-menu"]');
@@ -538,8 +538,8 @@ test.describe('Settings Management Flow', () => {
         test('should export user data', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.click('[data-testid="user-menu"]');
@@ -560,8 +560,8 @@ test.describe('Settings Management Flow', () => {
         test('should delete user account', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.click('[data-testid="user-menu"]');
@@ -586,8 +586,8 @@ test.describe('Settings Management Flow', () => {
         test('should manage data retention settings', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.click('[data-testid="user-menu"]');
@@ -609,8 +609,8 @@ test.describe('Settings Management Flow', () => {
         test('should configure accessibility preferences', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.click('[data-testid="user-menu"]');
@@ -631,8 +631,8 @@ test.describe('Settings Management Flow', () => {
         test('should test accessibility features', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.click('[data-testid="user-menu"]');
@@ -658,8 +658,8 @@ test.describe('Settings Management Flow', () => {
 
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.click('[data-testid="user-menu"]');
@@ -675,8 +675,8 @@ test.describe('Settings Management Flow', () => {
         test('should validate setting values', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.click('[data-testid="user-menu"]');
@@ -700,8 +700,8 @@ test.describe('Settings Management Flow', () => {
             // For now, just verify the UI handles conflicts
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.click('[data-testid="user-menu"]');
@@ -715,7 +715,6 @@ test.describe('Settings Management Flow', () => {
         });
     });
 });
-
 
 
 

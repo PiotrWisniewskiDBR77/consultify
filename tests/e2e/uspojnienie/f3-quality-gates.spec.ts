@@ -9,8 +9,8 @@ import { test, expect, type APIRequestContext } from '@playwright/test';
 
 const BACKEND = process.env.USPOJNIENIE_BACKEND || 'http://localhost:3001';
 const CREDS = {
-  email: process.env.USPOJNIENIE_EMAIL || 'piotr.wisniewski@dbr77.com',
-  password: process.env.USPOJNIENIE_PASSWORD || '123456',
+  email: process.env.USPOJNIENIE_EMAIL || process.env.TEST_USER_EMAIL || 'test@localhost',
+  password: process.env.USPOJNIENIE_PASSWORD || process.env.TEST_USER_PASSWORD || 'testpassword123',
 };
 
 let token = '';
@@ -19,7 +19,7 @@ async function api(
   request: APIRequestContext,
   method: 'GET' | 'POST' | 'PATCH' | 'DELETE',
   path: string,
-  body?: object,
+  body?: object
 ): Promise<{ status: number; json: any }> {
   const res = await request.fetch(`${BACKEND}/api${path}`, {
     method,
@@ -27,7 +27,9 @@ async function api(
     ...(body ? { data: JSON.stringify(body) } : {}),
   });
   let json: any = null;
-  try { json = await res.json(); } catch {}
+  try {
+    json = await res.json();
+  } catch {}
   return { status: res.status(), json };
 }
 
@@ -164,14 +166,27 @@ test.describe('F3 — Quality Gates', () => {
     const { json } = await api(request, 'GET', '/initiatives?limit=20');
     const list: any[] = json?.initiatives ?? json?.data ?? [];
     const missingStatus = list.find((i: any) => !i.status);
-    expect(missingStatus, `Initiative without status: ${JSON.stringify(missingStatus)}`).toBeUndefined();
+    expect(
+      missingStatus,
+      `Initiative without status: ${JSON.stringify(missingStatus)}`
+    ).toBeUndefined();
   });
 
   // ──────────────────────────────────────────────────────────────────────
   // F3-10  No status=null in existing data
   // ──────────────────────────────────────────────────────────────────────
   test('F3-10 — existing initiatives have valid status values', async ({ request }) => {
-    const VALID = new Set(['DRAFT', 'APPROVED', 'SCHEDULED', 'EXECUTING', 'DONE', 'TRACKING', 'BLOCKED', 'CANCELLED', 'ARCHIVED']);
+    const VALID = new Set([
+      'DRAFT',
+      'APPROVED',
+      'SCHEDULED',
+      'EXECUTING',
+      'DONE',
+      'TRACKING',
+      'BLOCKED',
+      'CANCELLED',
+      'ARCHIVED',
+    ]);
     const { json } = await api(request, 'GET', '/initiatives?limit=50');
     const list: any[] = json?.initiatives ?? json?.data ?? [];
     const invalid = list.find((i: any) => i.status && !VALID.has(i.status.toUpperCase()));
@@ -220,7 +235,8 @@ test.describe('F3 — Quality Gates', () => {
     if (!id) return;
     const { json: detail } = await api(request, 'GET', `/initiatives/${id}`);
     const ini = detail?.initiative ?? detail;
-    if (ini?.scope_out) expect(Array.isArray(ini.scope_out) || typeof ini.scope_out === 'string').toBeTruthy();
+    if (ini?.scope_out)
+      expect(Array.isArray(ini.scope_out) || typeof ini.scope_out === 'string').toBeTruthy();
     await api(request, 'DELETE', `/initiatives/${id}`);
   });
 
@@ -407,7 +423,7 @@ test.describe('F3 — Quality Gates', () => {
     const { json } = await api(request, 'GET', '/initiatives?limit=100');
     const list: any[] = json?.initiatives ?? json?.data ?? [];
     const legacy = list.find((i: any) =>
-      ['step3', 'step_3', 'PENDING_REVIEW'].includes(i.status ?? ''),
+      ['step3', 'step_3', 'PENDING_REVIEW'].includes(i.status ?? '')
     );
     expect(legacy, `Legacy status found: ${JSON.stringify(legacy)}`).toBeUndefined();
   });

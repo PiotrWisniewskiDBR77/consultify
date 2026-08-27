@@ -6,8 +6,8 @@ test.describe('Performance Tests', () => {
 
         await page.goto('/');
         await page.click('text=Log In');
-        await page.fill('input[type="email"]', 'admin@dbr77.com');
-        await page.fill('input[type="password"]', '123456');
+        await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+        await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
         await page.click('button[type="submit"]');
 
         // Wait for dashboard to load
@@ -20,8 +20,8 @@ test.describe('Performance Tests', () => {
     test('should handle large task lists efficiently', async ({ page }) => {
         await page.goto('/');
         await page.click('text=Log In');
-        await page.fill('input[type="email"]', 'admin@dbr77.com');
-        await page.fill('input[type="password"]', '123456');
+        await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+        await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
         await page.click('button[type="submit"]');
 
         const startTime = Date.now();
@@ -45,8 +45,8 @@ test.describe('Performance Tests', () => {
     test('should maintain performance during extended use', async ({ page }) => {
         await page.goto('/');
         await page.click('text=Log In');
-        await page.fill('input[type="email"]', 'admin@dbr77.com');
-        await page.fill('input[type="password"]', '123456');
+        await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+        await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
         await page.click('button[type="submit"]');
 
         const memoryUsages: number[] = [];

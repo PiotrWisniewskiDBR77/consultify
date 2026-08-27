@@ -57,8 +57,8 @@ test.describe('Security Flow Tests', () => {
             // Login first
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await expect(page.locator('h1:has-text("System Overview")')).toBeVisible();
@@ -77,8 +77,8 @@ test.describe('Security Flow Tests', () => {
             // Login
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await expect(page.locator('h1:has-text("System Overview")')).toBeVisible();
@@ -112,8 +112,8 @@ test.describe('Security Flow Tests', () => {
 
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             // Check that login request uses HTTPS
@@ -126,8 +126,8 @@ test.describe('Security Flow Tests', () => {
             // Login first
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.goto('/initiatives');
@@ -151,8 +151,8 @@ test.describe('Security Flow Tests', () => {
             // Login first
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.goto('/documents');
@@ -242,14 +242,14 @@ test.describe('Security Flow Tests', () => {
             // Login
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             // Perform security-relevant action (password change)
             await page.goto('/settings');
             await page.click('text=Security');
-            await page.fill('input[name="currentPassword"]', '123456');
+            await page.fill('input[name="currentPassword"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.fill('input[name="newPassword"]', 'NewSecurePass123!');
             await page.fill('input[name="confirmPassword"]', 'NewSecurePass123!');
             await page.click('button:has-text("Update Password")');
@@ -271,8 +271,8 @@ test.describe('Security Flow Tests', () => {
             await page.click('button[type="submit"]');
 
             // Login as admin
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             // Check audit log for failed login
@@ -337,8 +337,8 @@ test.describe('Security Flow Tests', () => {
             // Login first
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             // Create initiative with HTML content
@@ -362,8 +362,8 @@ test.describe('Security Flow Tests', () => {
             // Login
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await expect(page.locator('h1:has-text("System Overview")')).toBeVisible();
@@ -383,16 +383,16 @@ test.describe('Security Flow Tests', () => {
             // Login from first device
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             // Login from "second device" (new page context)
             const newPage = await page.context().newPage();
             await newPage.goto('/');
             await newPage.click('text=Log In');
-            await newPage.fill('input[type="email"]', 'admin@dbr77.com');
-            await newPage.fill('input[type="password"]', '123456');
+            await newPage.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await newPage.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await newPage.click('button[type="submit"]');
 
             // First session should be invalidated

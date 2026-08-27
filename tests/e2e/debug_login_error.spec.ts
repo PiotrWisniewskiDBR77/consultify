@@ -5,8 +5,8 @@ test('debug login error', async ({ page }) => {
   page.on('pageerror', (err) => console.log('BROWSER ERROR:', err.message));
 
   await page.goto('/login', { waitUntil: 'networkidle' });
-  await page.fill('input[type="email"]', 'admin@dbr77.com');
-  await page.fill('input[type="password"]', '123456');
+  await page.fill('input[type="email"]', process.env.TEST_USER_EMAIL || 'test@localhost');
+  await page.fill('input[type="password"]', process.env.TEST_USER_PASSWORD || 'testpassword123');
 
   // Intercept response
   const loginResponse = page.waitForResponse(

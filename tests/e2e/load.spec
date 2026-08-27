@@ -47,8 +47,8 @@ test.describe('Load Testing', () => {
     test('should handle large data sets', async ({ page }) => {
         await page.goto('/');
         await page.click('text=Log In');
-        await page.fill('input[type="email"]', 'admin@dbr77.com');
-        await page.fill('input[type="password"]', '123456');
+        await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+        await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
         await page.click('button[type="submit"]');
 
         const startTime = Date.now();
@@ -72,8 +72,8 @@ test.describe('Load Testing', () => {
     test('should handle rapid API calls', async ({ page }) => {
         await page.goto('/');
         await page.click('text=Log In');
-        await page.fill('input[type="email"]', 'admin@dbr77.com');
-        await page.fill('input[type="password"]', '123456');
+        await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+        await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
         await page.click('button[type="submit"]');
 
         // Rapid navigation between pages

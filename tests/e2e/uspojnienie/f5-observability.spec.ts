@@ -9,8 +9,8 @@ import { test, expect, type APIRequestContext } from '@playwright/test';
 
 const BACKEND = process.env.USPOJNIENIE_BACKEND || 'http://localhost:3001';
 const CREDS = {
-  email: process.env.USPOJNIENIE_EMAIL || 'piotr.wisniewski@dbr77.com',
-  password: process.env.USPOJNIENIE_PASSWORD || '123456',
+  email: process.env.USPOJNIENIE_EMAIL || process.env.TEST_USER_EMAIL || 'test@localhost',
+  password: process.env.USPOJNIENIE_PASSWORD || process.env.TEST_USER_PASSWORD || 'testpassword123',
 };
 
 let token = '';
@@ -20,7 +20,7 @@ async function api(
   request: APIRequestContext,
   method: 'GET' | 'POST' | 'PATCH' | 'DELETE',
   path: string,
-  body?: object,
+  body?: object
 ): Promise<{ status: number; json: any }> {
   const res = await request.fetch(`${BACKEND}/api${path}`, {
     method,
@@ -28,7 +28,9 @@ async function api(
     ...(body ? { data: JSON.stringify(body) } : {}),
   });
   let json: any = null;
-  try { json = await res.json(); } catch {}
+  try {
+    json = await res.json();
+  } catch {}
   return { status: res.status(), json };
 }
 
@@ -49,7 +51,10 @@ test.describe('F5 — Observability', () => {
   test('F5-01 — GET lineage → 200 for existing initiative', async ({ request }) => {
     const { json: list } = await api(request, 'GET', '/initiatives?limit=1');
     const items: any[] = list?.initiatives ?? list?.data ?? [];
-    if (!items.length) { console.log('No initiatives to test'); return; }
+    if (!items.length) {
+      console.log('No initiatives to test');
+      return;
+    }
     const { status } = await api(request, 'GET', `/initiatives/${items[0].id}/lineage`);
     expect(status).toBe(200);
   });
@@ -74,7 +79,11 @@ test.describe('F5 — Observability', () => {
     const items: any[] = list?.initiatives ?? list?.data ?? [];
     for (const item of items) {
       const { json } = await api(request, 'GET', `/initiatives/${item.id}/lineage`);
-      if (json?.source !== undefined || json?.source_type !== undefined || json?.sourceType !== undefined) {
+      if (
+        json?.source !== undefined ||
+        json?.source_type !== undefined ||
+        json?.sourceType !== undefined
+      ) {
         expect(true).toBeTruthy();
         return;
       }
@@ -106,7 +115,9 @@ test.describe('F5 — Observability', () => {
       const { json } = await api(request, 'GET', `/initiatives/${item.id}/lineage`);
       const handoffs: any[] = json?.handoffs ?? [];
       if (handoffs.length >= 2) {
-        const timestamps = handoffs.map((h: any) => new Date(h.created_at ?? h.createdAt ?? h.at).getTime());
+        const timestamps = handoffs.map((h: any) =>
+          new Date(h.created_at ?? h.createdAt ?? h.at).getTime()
+        );
         for (let i = 1; i < timestamps.length; i++) {
           expect(timestamps[i]).toBeGreaterThanOrEqual(timestamps[i - 1]);
         }
@@ -119,7 +130,11 @@ test.describe('F5 — Observability', () => {
   // F5-06  Lineage 404 for non-existent
   // ──────────────────────────────────────────────────────────────────────
   test('F5-06 — lineage 404 for unknown initiative', async ({ request }) => {
-    const { status } = await api(request, 'GET', '/initiatives/00000000-0000-0000-0000-000000000000/lineage');
+    const { status } = await api(
+      request,
+      'GET',
+      '/initiatives/00000000-0000-0000-0000-000000000000/lineage'
+    );
     expect(status).toBeGreaterThanOrEqual(400);
   });
 
@@ -188,7 +203,11 @@ test.describe('F5 — Observability', () => {
     const byStatus = json?.byStatus ?? json?.by_status;
     if (byStatus) {
       const draftCount =
-        byStatus.DRAFT ?? byStatus.draft ?? (Array.isArray(byStatus) ? byStatus.find((s: any) => s.status === 'DRAFT')?.count : undefined);
+        byStatus.DRAFT ??
+        byStatus.draft ??
+        (Array.isArray(byStatus)
+          ? byStatus.find((s: any) => s.status === 'DRAFT')?.count
+          : undefined);
       expect(draftCount !== undefined).toBeTruthy();
     }
   });
@@ -198,8 +217,12 @@ test.describe('F5 — Observability', () => {
   // ──────────────────────────────────────────────────────────────────────
   test('F5-13 — funnel stats has bySource or conversions field', async ({ request }) => {
     const { json } = await api(request, 'GET', '/initiatives/funnel/stats');
-    const hasSource = json?.bySource !== undefined || json?.by_source !== undefined ||
-      json?.conversions !== undefined || json?.totalActive !== undefined || json?.total !== undefined;
+    const hasSource =
+      json?.bySource !== undefined ||
+      json?.by_source !== undefined ||
+      json?.conversions !== undefined ||
+      json?.totalActive !== undefined ||
+      json?.total !== undefined;
     expect(hasSource || json).toBeTruthy();
   });
 
@@ -228,8 +251,7 @@ test.describe('F5 — Observability', () => {
     const id = created?.id ?? created?.initiative?.id;
     const { json: statsAfter } = await api(request, 'GET', '/initiatives/funnel/stats');
     // DRAFT count should be ≥1
-    const draftAfter =
-      (statsAfter?.byStatus?.DRAFT ?? statsAfter?.byStatus?.draft ?? 0);
+    const draftAfter = statsAfter?.byStatus?.DRAFT ?? statsAfter?.byStatus?.draft ?? 0;
     expect(typeof draftAfter === 'number' ? draftAfter : 1).toBeGreaterThanOrEqual(0);
     if (id) await api(request, 'DELETE', `/initiatives/${id}`);
   });

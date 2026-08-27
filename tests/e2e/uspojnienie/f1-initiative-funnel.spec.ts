@@ -11,8 +11,8 @@ import { test, expect, type APIRequestContext } from '@playwright/test';
 
 const BACKEND = process.env.USPOJNIENIE_BACKEND || 'http://localhost:3001';
 const CREDS = {
-  email: process.env.USPOJNIENIE_EMAIL || 'piotr.wisniewski@dbr77.com',
-  password: process.env.USPOJNIENIE_PASSWORD || '123456',
+  email: process.env.USPOJNIENIE_EMAIL || process.env.TEST_USER_EMAIL || 'test@localhost',
+  password: process.env.USPOJNIENIE_PASSWORD || process.env.TEST_USER_PASSWORD || 'testpassword123',
 };
 
 let token = '';
@@ -22,7 +22,7 @@ async function api(
   request: APIRequestContext,
   method: 'GET' | 'POST' | 'PATCH' | 'DELETE',
   path: string,
-  body?: object,
+  body?: object
 ): Promise<{ status: number; json: any }> {
   const res = await request.fetch(`${BACKEND}/api${path}`, {
     method,
@@ -143,8 +143,7 @@ test.describe('F1 — Initiative Funnel', () => {
     const { json } = await api(request, 'GET', '/initiatives');
     const list: any[] = json?.initiatives ?? json?.data ?? (Array.isArray(json) ? json : []);
     const badStatus = list.find(
-      (i: any) =>
-        i.status === 'step3' || i.status === 'PENDING_REVIEW' || i.status === 'step_3',
+      (i: any) => i.status === 'step3' || i.status === 'PENDING_REVIEW' || i.status === 'step_3'
     );
     expect(badStatus, `Found legacy status: ${JSON.stringify(badStatus)}`).toBeUndefined();
   });
@@ -155,9 +154,7 @@ test.describe('F1 — Initiative Funnel', () => {
   test('F1-08 — GET /api/initiatives — all have organization_id', async ({ request }) => {
     const { json } = await api(request, 'GET', '/initiatives');
     const list: any[] = json?.initiatives ?? json?.data ?? (Array.isArray(json) ? json : []);
-    const noOrg = list.find(
-      (i: any) => !i.organization_id && !i.organizationId,
-    );
+    const noOrg = list.find((i: any) => !i.organization_id && !i.organizationId);
     expect(noOrg, `Initiative without org: ${JSON.stringify(noOrg)}`).toBeUndefined();
   });
 
@@ -190,7 +187,7 @@ test.describe('F1 — Initiative Funnel', () => {
     const wrongOrg = list.find(
       (i: any) =>
         (i.organization_id && i.organization_id !== orgId) ||
-        (i.organizationId && i.organizationId !== orgId),
+        (i.organizationId && i.organizationId !== orgId)
     );
     expect(wrongOrg, `Cross-org leak: ${JSON.stringify(wrongOrg)}`).toBeUndefined();
   });
@@ -217,7 +214,11 @@ test.describe('F1 — Initiative Funnel', () => {
   // F1-13  GET /api/initiatives/:id — 404 for non-existent
   // ──────────────────────────────────────────────────────────────────────
   test('F1-13 — GET /api/initiatives/:id → 404 for missing', async ({ request }) => {
-    const { status } = await api(request, 'GET', '/initiatives/00000000-0000-0000-0000-000000000000');
+    const { status } = await api(
+      request,
+      'GET',
+      '/initiatives/00000000-0000-0000-0000-000000000000'
+    );
     expect(status).toBeGreaterThanOrEqual(400);
   });
 
@@ -243,7 +244,9 @@ test.describe('F1 — Initiative Funnel', () => {
   // ──────────────────────────────────────────────────────────────────────
   // F1-15  PATCH status: DRAFT → APPROVED
   // ──────────────────────────────────────────────────────────────────────
-  test('F1-15 — PATCH status DRAFT→PENDING_REVIEW gate returns structured response', async ({ request }) => {
+  test('F1-15 — PATCH status DRAFT→PENDING_REVIEW gate returns structured response', async ({
+    request,
+  }) => {
     // FINDING: DRAFT→APPROVED is NOT a direct transition. Full chain:
     // DRAFT→PENDING_REVIEW→REVIEW→PROMOTED→PLANNING→APPROVED
     // Gate check on PENDING_REVIEW requires AI-graded card completeness.
@@ -277,7 +280,9 @@ test.describe('F1 — Initiative Funnel', () => {
   // ──────────────────────────────────────────────────────────────────────
   // F1-17  GET /api/initiatives — pagination params accepted
   // ──────────────────────────────────────────────────────────────────────
-  test('F1-17 — GET /api/initiatives returns 200 (limit param not enforced by API)', async ({ request }) => {
+  test('F1-17 — GET /api/initiatives returns 200 (limit param not enforced by API)', async ({
+    request,
+  }) => {
     // FINDING: `?limit=N` query param is not supported — API returns full list.
     // This is a known API design gap (pagination not implemented for initiatives list).
     const { status } = await api(request, 'GET', '/initiatives?limit=5');
@@ -378,7 +383,9 @@ test.describe('F1 — Initiative Funnel', () => {
   // ──────────────────────────────────────────────────────────────────────
   // F1-25  DELETE removes initiative
   // ──────────────────────────────────────────────────────────────────────
-  test('F1-25 — DELETE /api/initiatives/:id returns 403 (policy: users cannot delete)', async ({ request }) => {
+  test('F1-25 — DELETE /api/initiatives/:id returns 403 (policy: users cannot delete)', async ({
+    request,
+  }) => {
     // FINDING: DELETE returns 403. Initiatives cannot be deleted by regular users —
     // only soft-deletion via CANCELLED status is allowed. This is a governance policy.
     const { json } = await api(request, 'POST', '/initiatives', { title: 'F1-25 delete test' });
@@ -408,9 +415,14 @@ test.describe('F1 — Initiative Funnel', () => {
   // F1-27  PATCH non-existent → 404
   // ──────────────────────────────────────────────────────────────────────
   test('F1-27 — PATCH non-existent initiative → 404', async ({ request }) => {
-    const { status } = await api(request, 'PATCH', '/initiatives/00000000-0000-0000-0000-000000000000', {
-      title: 'Ghost',
-    });
+    const { status } = await api(
+      request,
+      'PATCH',
+      '/initiatives/00000000-0000-0000-0000-000000000000',
+      {
+        title: 'Ghost',
+      }
+    );
     expect(status).toBeGreaterThanOrEqual(400);
   });
 

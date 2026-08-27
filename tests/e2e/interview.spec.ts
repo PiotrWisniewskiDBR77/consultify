@@ -11,7 +11,7 @@
  * @see PROMPT 8 in wdrozenia/PROMPTY_DLA_AGENTOW.md
  *
  * SAFETY (2026-07-13): This spec used to authenticate with a hard-coded
- * REAL account (piotr.wisniewski@dbr77.com / 123456) against the seeded
+ * REAL account (piotr.wisniewski@dbr77.com / <HASLO>) against the seeded
  * project-dbr77-001 in the real DBR77 workspace. Every run wrote real
  * "Interview <date>" sessions/assignments/notes directly into that org
  * (a3e05d4a-5397-419d-b486-8e44366c0063) — hundreds of garbage records
@@ -126,7 +126,9 @@ test.describe('Interview Module - v2.0', () => {
     await dismissTourModal(page);
     await expect(page).toHaveURL(new RegExp(`sessionId=${sessionId}`));
     const savedQuestionPattern = new RegExp(
-      String(savedQuestion.questionText).replace(/[.*+?^${}()|[\]\\]/g, '\\$&').slice(0, 80)
+      String(savedQuestion.questionText)
+        .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+        .slice(0, 80)
     );
     await page.getByRole('button', { name: savedQuestionPattern }).click();
     await expect(answerBox).toHaveValue(answer, { timeout: 30_000 });
@@ -182,10 +184,13 @@ test.describe('Interview API - v2.0', () => {
       { category: 'digital', questionText: 'How mature is your digital tooling?' },
     ];
     for (const q of seedQuestions) {
-      const qRes = await request.post(`${API_BASE_URL}/api/interview/templates/${templateId}/questions`, {
-        headers: { Authorization: `Bearer ${token}` },
-        data: q,
-      });
+      const qRes = await request.post(
+        `${API_BASE_URL}/api/interview/templates/${templateId}/questions`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          data: q,
+        }
+      );
       expect(qRes.ok()).toBeTruthy();
     }
 

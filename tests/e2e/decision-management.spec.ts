@@ -17,8 +17,8 @@ async function login(page: Page) {
 
   const response = await page.request.post('http://localhost:3005/api/auth/login', {
     data: {
-      email: 'piotr.wisniewski@dbr77.com',
-      password: '123456',
+      email: process.env.TEST_USER_EMAIL || 'test@localhost',
+      password: process.env.TEST_USER_PASSWORD || 'testpassword123',
     },
     timeout: 30000,
   });
