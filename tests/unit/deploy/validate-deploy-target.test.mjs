@@ -389,3 +389,12 @@ test('a connection string pasted into APP_DB_IDENTITY is refused, not printed', 
   assert.doesNotMatch(output, /uzytkownik/);
   assert.match(result.stderr, /is not a bare host\[:port\]\/database/);
 });
+test('a bare secret pasted into APP_DATABASE_URL is refused, not echoed as a host', () => {
+  // No scheme, no '@' to strip: the old parser would have emitted the secret
+  // itself as "host". A scheme is required, exactly as new URL() requires one.
+  const result = runGuard({ ...staging, APP_DATABASE_URL: 'tajnehaslo123' });
+  const output = result.stdout + result.stderr;
+  assert.notEqual(result.status, 0);
+  assert.doesNotMatch(output, /tajnehaslo123/);
+  assert.match(result.stderr, /no valid host:port could be parsed/);
+});

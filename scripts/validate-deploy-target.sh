@@ -113,8 +113,11 @@ identity_from_url() {
     {
       s = $0
 
-      # 1. scheme
-      if (match(s, /^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//)) s = substr(s, RLENGTH + 1)
+      # 1. scheme. REQUIRED: new URL() refuses a scheme-less string, and so do
+      #    we. Without it a bare secret with no "@" (a password pasted into the
+      #    wrong variable) would be accepted as a "host" and printed.
+      if (!match(s, /^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//)) exit 1
+      s = substr(s, RLENGTH + 1)
 
       # 2. authority ends at the first "/", "?" or "#" (WHATWG URL, and what
       #    new URL() does). Everything after it is path/query.
