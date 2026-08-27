@@ -12627,6 +12627,58 @@ export const Api = {
       throw new Error('Calendar event updates require V8 calendar routes');
     }
   },
+  // day47-finish (B.2 backend wiring): `updateMyWorkCalendarEvent` above only
+  // covers the drag/reschedule PATCH — it never touches title/description/
+  // location/attendees/visibility. `PUT /my-work/calendar/events/:id`
+  // (calendar.routes.ts) has always supported a full-detail edit of an OWN
+  // `source: 'event'` calendar item; nothing in `src/` called it. Added
+  // addytywnie (does not change `updateMyWorkCalendarEvent`'s contract or
+  // its existing `CalendarView.tsx` caller). Named to match the recovered
+  // day47c UI prototype (`/private/tmp/consultify-mywork-day47c-scratch/
+  // b2-partial/CalendarCreateEventModal.tsx`), which already expects exactly
+  // this name/signature and gates its edit mode on `editAuthority ===
+  // 'local_only'` — the contract field this same pass added server-side.
+  editMyWorkCalendarEvent: async (
+    id: string,
+    body: {
+      title?: string;
+      description?: string;
+      location?: string;
+      startAt?: string;
+      endAt?: string;
+      allDay?: boolean;
+      attendees?: string[];
+      visibility?: 'private' | 'busy' | 'org';
+      relatedType?: 'task' | 'initiative' | 'meeting' | null;
+      relatedId?: string | null;
+    }
+  ): Promise<any> => {
+    const eventId = String(id || '').trim();
+    if (!eventId) {
+      throw new Error('Missing calendar event id');
+    }
+    const res = await fetch(`${API_URL}/my-work/calendar/events/${encodeURIComponent(eventId)}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(body),
+    });
+    return handleResponse(res, 'Failed to edit calendar event');
+  },
+  // day47-finish (B.3 backend wiring): `DELETE /my-work/calendar/events/:id`
+  // (calendar.routes.ts) has always existed and soft-cancels an OWN
+  // `source: 'event'` calendar item (`status = 'cancelled'`); nothing in
+  // `src/` called it. Added addytywnie.
+  cancelMyWorkCalendarEvent: async (id: string): Promise<any> => {
+    const eventId = String(id || '').trim();
+    if (!eventId) {
+      throw new Error('Missing calendar event id');
+    }
+    const res = await fetch(`${API_URL}/my-work/calendar/events/${encodeURIComponent(eventId)}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to cancel calendar event');
+  },
   // Assessment Reports
   getAssessmentReports: async (projectId?: string) => {
     const url = projectId
