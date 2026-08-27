@@ -28,6 +28,12 @@ import { Pool } from 'pg';
 
 import '../src/config/loadEnv.js';
 import { resolveReachableDatabaseUrl } from '../src/config/databaseTargetResolver.js';
+import { resolveDbTargetLabel } from '../src/config/dbTargetLabel.js';
+import {
+  emitDatabaseIdentity,
+  formatDatabaseIdentity,
+  parseDatabaseIdentityFromUrl,
+} from '../src/config/databaseIdentity.js';
 import { isRuntimeMigrationFile } from '../src/services/tablePlatform/migrationIdentity.js';
 import {
   evaluateSqlChain,
@@ -231,9 +237,64 @@ async function main() {
   const databaseUrl = resolved.databaseUrl;
   if (!databaseUrl) throw new Error('DATABASE_URL is required');
 
-  const host = assertExpectedTarget(databaseUrl, process.env.RELEASE_TARGET_DB_HOST_FINGERPRINT);
+  // Environment pin: the resolved host must contain the operator's declared fingerprint.
+  // Throws on mismatch; the returned host is deliberately not printed.
+  assertExpectedTarget(databaseUrl, process.env.RELEASE_TARGET_DB_HOST_FINGERPRINT);
+  const dbTarget = resolveDbTargetLabel(process.env);
+
+  // ---- DEC-2026-08-28-165: what this gate CAN and CANNOT prove ------------------------------
+  //
+  // HONEST STATEMENT - READ THIS BEFORE ADDING A "DIVERGENCE CHECK" HERE AGAIN.
+  //
+  // This gate runs as `preDeployCommand` (railway.json) INSIDE THE APPLICATION SERVICE. Its
+  // `process.env` IS the application's environment. Every value it could read to describe "the
+  // database the application will use" is the same value it already read to describe "the
+  // database I am about to migrate":
+  //
+  //   gate    : resolveReachableDatabaseUrl({ DATABASE_URL, DATABASE_PUBLIC_URL })   (above)
+  //   the app : DatabaseConfig.getDatabaseUrl() -> the identical call, identical variables
+  //
+  // The day-38 attempt compared DB_TARGET_LABEL against DB_TARGET_LABEL - a tautology. The
+  // first FIX round replaced it with resolveApplicationDatabaseIdentity(process.env), which
+  // re-entered the SAME resolver with the SAME two variables: the same tautology in a new
+  // place. Measured against the real modules it answered "match" for a divergence injected
+  // into DATABASE_PUBLIC_URL, for one injected into DB_HOST, and for a genuinely different
+  // migration URL - it could not do otherwise. Logging that green claim was WORSE than logging
+  // nothing, because it told the operator a cross-service question had been answered.
+  //
+  // So this gate no longer claims it. A DEC-165 cross-service divergence is observable only
+  // from OUTSIDE both services, where two independently supplied values exist:
+  //   scripts/validate-deploy-target.sh  (GitHub Actions)
+  //   APP_DATABASE_URL vs MIGRATION_DATABASE_URL, copied from two different Railway services.
+  // That guard, armed with DEPLOY_TARGET_GUARD_ENFORCE, is the only proof there is.
+  //
+  // What this gate does still prove, and keeps: the target it migrates is identifiable, and its
+  // host carries the operator's declared fingerprint (assertExpectedTarget, above).
+  const migrationIdentity = parseDatabaseIdentityFromUrl(databaseUrl, 'migration:resolved-url');
+  emitDatabaseIdentity('migration', migrationIdentity);
+
+  if (!migrationIdentity) {
+    throw new Error(
+      'Release gate cannot derive the migration database identity from its resolved connection ' +
+        'string. Refusing to migrate an unidentifiable target.'
+    );
+  }
+
   // eslint-disable-next-line no-console
-  console.log(`[release-gate] target host verified against expected fingerprint (host redacted).`);
+  console.log(
+    '[release-gate] NOTE: this gate runs inside the application service and shares its ' +
+      'environment, so it CANNOT observe a migration/application database divergence ' +
+      '(DEC-2026-08-28-165) and does not claim to. That divergence is checked only by ' +
+      'scripts/validate-deploy-target.sh in GitHub Actions, from APP_DATABASE_URL and ' +
+      'MIGRATION_DATABASE_URL supplied independently. If that guard is unarmed, this deploy ' +
+      'carries NO cross-service divergence check at all.'
+  );
+
+  // eslint-disable-next-line no-console
+  console.log(
+    `[release-gate] target host verified against expected fingerprint (host redacted). ` +
+      `dbTarget=${dbTarget} dbIdentity=${formatDatabaseIdentity(migrationIdentity)}`
+  );
   // eslint-disable-next-line no-console
   console.log(`[release-gate] build sha: ${resolveBuildSha()}`);
 
@@ -291,7 +352,7 @@ async function main() {
     // ---- 3. success receipt --------------------------------------------------------------------
     // eslint-disable-next-line no-console
     console.log(
-      `\nRELEASE_MIGRATION_GATE_PASS buildSha=${resolveBuildSha()} checks=${findings.length} hostVerified=true`
+      `\nRELEASE_MIGRATION_GATE_PASS buildSha=${resolveBuildSha()} checks=${findings.length} hostVerified=true dbTarget=${dbTarget} dbIdentity=${formatDatabaseIdentity(migrationIdentity)}`
     );
   } finally {
     await pool.end();

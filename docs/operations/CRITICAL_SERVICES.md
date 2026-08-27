@@ -1,5 +1,10 @@
 # Critical Services List
 
+This generated document is a 2026-01-04 inventory of TypeScript application
+service files and their conversion priority; it is not an infrastructure or
+Railway service map. For deployment-critical environments and database targets,
+use `docs/operations/RAILWAY_DB_TARGET_RULES.md`.
+
 **Generated:** 2026-01-04T07:52:30.353Z
 
 These services are critical for application functionality and should be converted with priority.

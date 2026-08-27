@@ -41,7 +41,32 @@ ENV_FILE=.env.staging.local npm run db:audit:truth:staging
 - `server/exports/data-truth-audit-*.md`
 - `server/exports/data-truth-release-gate-*.md`
 
+## Migration Gate (Target Verification)
+
+`server/scripts/release-migration-gate.ts` is the fail-closed pre-deploy
+migration entry point. It requires `RELEASE_TARGET_DB_HOST_FINGERPRINT`; absence
+of that declaration stops the gate, as does a mismatch
+(`server/src/services/releaseGate/gateContract.ts:33-47`). The gate deliberately
+keeps the host redacted and prints a human-supplied, sanitized `dbTarget=` label
+instead (`server/scripts/release-migration-gate.ts`). See
+`docs/operations/RAILWAY_DB_TARGET_RULES.md` for the single environment map.
+
+Deployment-log acceptance procedure:
+
+1. Find the line beginning with `RELEASE_MIGRATION_GATE_PASS`.
+2. Find the `[Postgres] Config:` line.
+3. Compare the `dbTarget=` field in both:
+   - identical values: target-label check is consistent;
+   - different values: divergence — stop the deployment;
+   - either value is `unset`: `DB_TARGET_LABEL` is not configured;
+   - either line lacks `dbTarget`: that side is running an older build.
+
+Until both sides run code that emits the field, a missing field means an older
+build, not an unset label.
+
 ## Go / No-Go
 
 - `GO`: all release-gate checks pass and readonly audits are reviewed.
 - `NO-GO`: any hardcoded DB target remains, any critical module still mixes sample data silently, or active data context is not visible.
+- `NO-GO`: the two `dbTarget=` values differ, either is `unset`, or either log
+  line lacks the field.

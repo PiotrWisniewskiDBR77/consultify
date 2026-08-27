@@ -76,10 +76,28 @@ jobs:
           test -n "$TARGET_ENVIRONMENT"
           test -n "$APP_SERVICE"
 
+      # The guard runs HERE, in GitHub Actions — not inside Railway. Anything it
+      # needs must be handed to it below; a variable set only in the Railway
+      # panel is invisible to this step. FRONTEND_URL and TARGET_ENVIRONMENT
+      # already come from the job-level env block above.
+      #
+      # APP_DATABASE_URL and MIGRATION_DATABASE_URL are the two INDEPENDENT
+      # sources the DEC-165 divergence check compares. They are secrets because
+      # they are connection strings; the guard parses host/port/database out of
+      # them and never prints the values.
+      #
+      # While vars.DEPLOY_TARGET_GUARD_ENFORCE is unset the guard is advisory:
+      # missing inputs produce a loud ::warning:: and the deploy continues. An
+      # observed divergence blocks the deploy in either mode.
       - name: Validate staging target mapping
         env:
           DEPLOY_ENVIRONMENT: staging
           GIT_REF: ${{ github.ref }}
+          DEPLOY_TARGET_GUARD_ENFORCE: ${{ vars.DEPLOY_TARGET_GUARD_ENFORCE }}
+          STAGING_DB_HOST_FINGERPRINT: ${{ vars.STAGING_DB_HOST_FINGERPRINT }}
+          RELEASE_TARGET_DB_HOST_FINGERPRINT: ${{ vars.STAGING_RELEASE_TARGET_DB_HOST_FINGERPRINT }}
+          APP_DATABASE_URL: ${{ secrets.STAGING_APP_DATABASE_URL }}
+          MIGRATION_DATABASE_URL: ${{ secrets.STAGING_MIGRATION_DATABASE_URL }}
         run: |
           chmod +x scripts/validate-deploy-target.sh
           bash scripts/validate-deploy-target.sh
@@ -235,10 +253,16 @@ jobs:
           chmod +x scripts/deploy-gate.sh
           bash scripts/deploy-gate.sh
 
+      # See the staging step for why these are passed here and not in Railway.
       - name: Validate production target mapping
         env:
           DEPLOY_ENVIRONMENT: production
           GIT_REF: ${{ github.ref }}
+          DEPLOY_TARGET_GUARD_ENFORCE: ${{ vars.DEPLOY_TARGET_GUARD_ENFORCE }}
+          PRODUCTION_DB_HOST_FINGERPRINT: ${{ vars.PRODUCTION_DB_HOST_FINGERPRINT }}
+          RELEASE_TARGET_DB_HOST_FINGERPRINT: ${{ vars.PRODUCTION_RELEASE_TARGET_DB_HOST_FINGERPRINT }}
+          APP_DATABASE_URL: ${{ secrets.PRODUCTION_APP_DATABASE_URL }}
+          MIGRATION_DATABASE_URL: ${{ secrets.PRODUCTION_MIGRATION_DATABASE_URL }}
         run: |
           chmod +x scripts/validate-deploy-target.sh
           bash scripts/validate-deploy-target.sh

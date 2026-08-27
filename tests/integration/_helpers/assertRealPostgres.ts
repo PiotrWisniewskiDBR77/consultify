@@ -24,11 +24,21 @@ export interface RealPostgresProof {
   port: string;
 }
 
-/** Nazwy baz, na których testy NIE MOGĄ być uruchamiane. */
+/**
+ * Hosty baz, na których testy NIE MOGĄ być uruchamiane.
+ *
+ * Mapa pochodzi z DEC-2026-08-28-165 i DEC-2026-08-28-172. Trzy różne bazy
+ * nazywają się `railway`, a domeny środowisk są skrzyżowane, więc sama nazwa
+ * bazy lub domeny nie identyfikuje celu. Lista może wyłącznie rosnąć; wpis wolno
+ * usunąć dopiero po potwierdzeniu, że dana usługa realnie przestała istnieć.
+ */
 const FORBIDDEN_DB_HOSTS = [
-  'centerbeam.proxy.rlwy.net', // PROD
-  'trolley.proxy.rlwy.net', // DEMO / staging
-  'ballast.proxy.rlwy.net',
+  'centerbeam.proxy.rlwy.net', // Production (DEC-2026-08-28-165).
+  'trolley.proxy.rlwy.net', // Demo pgvector; staging app DATABASE_URL pointed here (DEC-165/DEC-172).
+  'sakura.proxy.rlwy.net', // Staging release-gate migration target (DEC-2026-08-28-165).
+  'thomas.proxy.rlwy.net', // Staging Postgres service, also referenced by dev (DEC-165/DEC-172).
+  'caboose.proxy.rlwy.net', // Origin unresolved; retained defensively from a stale seed-script note.
+  'ballast.proxy.rlwy.net', // Origin unresolved; retained from the previous list.
 ];
 
 function fail(msg: string): never {

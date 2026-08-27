@@ -7,6 +7,12 @@
 #
 # Bezpieczeństwo:
 #   - NIE dotyka production ani staging
+#   - Przed pobraniem tokenu i pushem uruchamia repozytoryjną bramkę celu dla demo
+#   - Bramka celu potrzebuje zmiennych podanych JEJ w tej powloce (nie w panelu
+#     Railway): APP_DATABASE_URL + MIGRATION_DATABASE_URL (lub APP_DB_IDENTITY +
+#     MIGRATION_DB_IDENTITY), DEMO_DB_HOST_FINGERPRINT oraz opcjonalnie
+#     DEPLOY_TARGET_GUARD_ENFORCE=1. Bez nich bramka wypisze GLOSNE ostrzezenie
+#     i przepusci deploy; wykryty rozjazd blokuje deploy zawsze.
 #   - Wymaga aktywnej sesji railway CLI (railway whoami)
 #   - Token pobierany z ~/.railway/config.json (bez haseł w env)
 
@@ -15,6 +21,25 @@ set -euo pipefail
 PROJECT_ID="a6d59e88-263d-45f3-96bc-861f66bf467b"
 SERVICE_ID="8f65b820-3d55-4dd9-8076-929d01cc4157"
 DEMO_ENV_ID="a257fce9-33f0-4e10-8e7c-a9cec472f377"  # demo environment
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# GIT_REF describes the push destination (origin/demo), not the operator's
+# current local branch. The guard must approve the destination before any token
+# is read or any external side effect occurs.
+# Zmienne bazy przekazujemy JAWNIE ze srodowiska operatora — skrypt biegnie na
+# laptopie, wiec panel Railway nic tu nie ustawia.
+DEPLOY_ENVIRONMENT=demo \
+GIT_REF=refs/heads/demo \
+FRONTEND_URL=https://demo.consultify.ai \
+APP_DATABASE_URL="${APP_DATABASE_URL:-}" \
+MIGRATION_DATABASE_URL="${MIGRATION_DATABASE_URL:-}" \
+APP_DB_IDENTITY="${APP_DB_IDENTITY:-}" \
+MIGRATION_DB_IDENTITY="${MIGRATION_DB_IDENTITY:-}" \
+DEMO_DB_HOST_FINGERPRINT="${DEMO_DB_HOST_FINGERPRINT:-}" \
+RELEASE_TARGET_DB_HOST_FINGERPRINT="${RELEASE_TARGET_DB_HOST_FINGERPRINT:-}" \
+DEPLOY_TARGET_GUARD_ENFORCE="${DEPLOY_TARGET_GUARD_ENFORCE:-}" \
+  "$SCRIPT_DIR/validate-deploy-target.sh"
 
 RAILWAY_TOKEN=$(python3 -c "
 import json

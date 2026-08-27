@@ -12,7 +12,10 @@ Tworzy w pełni policzone dane, których brakowało (przyczyna 49 SKIP-ów kube�
 Idempotentny: rekordy seed mają prefiks tytułu "M16-SEED-" / "M16-THROWAWAY-".
 Skrypt sprawdza istnienie po prefiksie i pomija ponowne tworzenie (poza compute, który odświeża).
 
-Bezpieczeństwo: tylko demo.consultify.ai (caboose). NIE dotyka centerbeam/PROD.
+Bezpieczeństwo: skrypt zapisuje dane przez REST API wskazane wyłącznie przez
+M16_SEED_BASE_URL. Poświadczenia pochodzą wyłącznie ze zmiennych środowiskowych
+i nigdy nie mogą wrócić do repozytorium. Aktualna mapa środowisk:
+docs/operations/RAILWAY_DB_TARGET_RULES.md.
 
 Output: na końcu drukuje JSON manifest wszystkich ID do /tmp/m16_seed_manifest.json
         (konsumowany przez skrypt testów Fazy 2).
@@ -20,13 +23,17 @@ Output: na końcu drukuje JSON manifest wszystkich ID do /tmp/m16_seed_manifest.
 Użycie:  python3 scripts/seed-m16-demo.py
 """
 import json
+import os
 import sys
 import time
 import urllib.request
 import urllib.error
 
-BASE = "https://demo.consultify.ai"
-LOGIN = {"email": "piotr.wisniewski@dbr77.com", "password": "123456"}
+BASE = os.environ.get("M16_SEED_BASE_URL", "").strip().rstrip("/")
+LOGIN = {
+    "email": os.environ.get("M16_SEED_EMAIL", "").strip(),
+    "password": os.environ.get("M16_SEED_PASSWORD", ""),
+}
 UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
 
 SEED = "M16-SEED-"
@@ -292,6 +299,19 @@ def seed_throwaways(token):
 
 
 def main():
+    missing = [
+        name
+        for name, value in (
+            ("M16_SEED_BASE_URL", BASE),
+            ("M16_SEED_EMAIL", LOGIN["email"]),
+            ("M16_SEED_PASSWORD", LOGIN["password"]),
+        )
+        if not value
+    ]
+    if missing:
+        print(f"❌ Missing required environment variables: {', '.join(missing)}", file=sys.stderr)
+        sys.exit(1)
+
     token = login()
     manifest = {"token_org": "a3e05d4a-5397-419d-b486-8e44366c0063"}
     manifest["model"] = seed_model(token)
