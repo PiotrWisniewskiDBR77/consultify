@@ -34,7 +34,7 @@ Kontener: `cx-day50-pg`, obraz `pgvector/pgvector:pg16`. Hostowy port 5830 mapuj
 
 ## ★ Oświadczenie o strażnikach testów (Z31)
 
-Baseline serwera: `162 PASS / 10 failed suites / 140 SKIPPED`. Baseline roota: `177 PASS / 8 FAIL / 0 SKIPPED`. Własny test A.1: `2 PASS / 0 FAIL / 0 SKIPPED`. Zastane pakiety nie wszystkie używają `assertRealPostgresTestEnvironment()` i część cicho pomija przypadki; nie przedstawiam ich jako pełnego zielonego dowodu.
+Baseline serwera: `162 PASS / 10 failed suites / 140 SKIPPED`. Baseline roota: `177 PASS / 8 FAIL / 0 SKIPPED`. Własny test A.1: `2 PASS / 0 FAIL / 0 SKIPPED`. Własny test B.1: `4 PASS / 0 FAIL / 0 SKIPPED`. Zastane pakiety nie wszystkie używają `assertRealPostgresTestEnvironment()` i część cicho pomija przypadki; nie przedstawiam ich jako pełnego zielonego dowodu.
 
 ## ★★ DOWODY Z33
 
@@ -108,14 +108,17 @@ Do wykonania w A.4.
 
 ## Pozycje — tabela zbiorcza
 
-| Pozycja | Stan                                                                                    | Dowód                                                                  |
-| ------- | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| A.1     | ZROBIONE_WG_DoD w zakresie licznika i pliku wejściowego; pełne DoD dyżuru nadal otwarte | 95/95 pustych; test mutacyjny czerwony→zielony; realny ApiGateway→plik |
-| B.1–R.2 | NIE ROZPOCZĘTO                                                                          | kolejność wiążąca                                                      |
+| Pozycja | Stan                                                                                    | Dowód                                                                                                                                           |
+| ------- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| A.1     | ZROBIONE_WG_DoD w zakresie licznika i pliku wejściowego; pełne DoD dyżuru nadal otwarte | 95/95 pustych; test mutacyjny czerwony→zielony; realny ApiGateway→plik                                                                          |
+| B.1     | ZROBIONE_WG_DoD                                                                         | 23/23 findingów ma 7 niepustych pól narracyjnych; ponowny seed 23/23; purge 0/0 i reapply 23/23; hash treści `d5ca73c683bf523400e6bb5e85d31929` |
+| A.2–R.2 | NIE ROZPOCZĘTO                                                                          | kolejność wiążąca                                                                                                                               |
 
 ## ★ DOWODY OSIĄGALNOŚCI (Z21)
 
 A.1: Supertest → pełny `ApiGateway.initializeRoutes` → `verifyToken` → `/api/method` → handler DOCX → tenant-scoped kontrakt → mapper → renderer → plik `PRZED_metalpol.docx` otwarty przez JSZip/licznik.
+
+B.1: pełny seed uruchomiony dwukrotnie do lokalnego PostgreSQL na porcie 5830, następnie `verify`; niezależny odczyt SQL wykazał `findings=23`, `complete=23`, `face_markers=0`. Po `purge` niezależny readback wykazał zero rekordów, a ponowne `apply`/`verify` odtworzyło 23/23.
 
 ## ★★ DOWODY MUTACYJNE W OBIE STRONY
 
@@ -124,6 +127,8 @@ A.1: zmiana wzorca komentarza z `; wymagane:` na `, wymagane:` dała `1 failed /
 ## ★ LISTA KONTROLNA PIĘCIU KSZTAŁTÓW FAŁSZYWEGO „GOTOWE"
 
 A.1: wołacz realny TAK; realny ApiGateway TAK; SKIPPED własnego testu 0; brak fałszywego 200/0 TAK; proza bez źródła — nie dotyczy, A.1 nie dodaje prozy.
+
+B.1: ścieżka zapisu realna TAK; ten sam lokalny PostgreSQL TAK; SKIPPED własnego testu 0; kompletność 23/23 potwierdzona niezależnym SQL; proza ma jawne źródło w wersjonowanym zbiorze Metalpol i nie zawiera `[demo-seed]` ani nazw norm ISO.
 
 ## ★ ZRZUTY
 
