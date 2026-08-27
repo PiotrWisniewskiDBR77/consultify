@@ -190,6 +190,62 @@ Acceptance requires:
 |---|---|---|---|---|---|---|---|
 | `INT-ASSIGN-OWN-001` / `REC-INT-002` | The list treated an approved system template as unassignable unless a tenant-scoped publication snapshot already existed, while the assignment writer rejected every system template by requiring `organization_id = actor.organizationId`. | Keep exact-version publication mandatory. Approved product-owned system templates with questions are listable as assignable; the first governed assignment atomically freezes one immutable global `system` snapshot. Organization/private templates still require their tenant publication receipt. | `f3c35cecce` | Template list/detail, assignment writer, publication snapshot reader | Interview | unit `3/3`; startup/readiness `43/43`; fresh pgvector16 mounted delivery `7/7`; migrations `817/0/0`; residue, disabled triggers and advisory locks `0` | `TECHNICAL_PASS / OWNER_RETEST_AND_RAILWAY_READBACK_PENDING` |
 | `INT-APPROVAL-OWN-001` / `REC-INT-004` | The lifecycle existed in fragments, but its mounted exact-version round trip and response contract were not covered; send-back returned raw snake-case timestamps/reason while the client contract expects camel case. | Preserve the implemented workflow and add canonical `sentBackAt`/`sentBackReason` readback. Prove answer → submit → edit lock → send back with reason → correction → resubmit → approval, final context eligibility and immutable answer-history snapshots on one database. | `01d1cd8057` | Respondent runtime, manager review actions, assignment/session API, answer history | Interview | fresh pgvector16 mounted delivery `8/8`; UI/API lifecycle regressions `68/68`; assignment `approved`, session `completed`, corrected answer persisted, history snapshots `3`; migrations `817`; residue, disabled triggers and advisory locks `0` | `TECHNICAL_PASS / VISUAL_DISCOVERABILITY_AND_OWNER_RETEST_PENDING` |
+| `INT-V4-CLEANUP-001` | Owner decision 28.08.2026: `interview-v4` (`server/src/routes/interview-enterprise.routes.ts`, V4-INTV-01..07) was believed to be a dead layer that shipped once (`05b994e24c`, 2026-03-06) and was never wired to the UI. Measured basis: all 22 client wrappers in `src/services/api.ts` (`interviewCreateSegment` … `interviewDiffContextVersions`) have zero callers anywhere in `src/`, `server/src/` or `tests/` beyond their own definitions, and zero commit touches since introduction. | Removed only the confirmed-dead client layer: 22 methods / 193 lines deleted from `src/services/api.ts`. **The backend routes and service were investigated and intentionally NOT touched** — see "interview-v4 backend: STOP finding" below for why the "never touched" premise does not hold for the server side. | `c150230f29` | `src/services/api.ts` only | Interview (client only) | tsc frontend `22/22` pre-existing errors unchanged (0 new); tsc backend `17/17` pre-existing errors unchanged (0 new, file untouched); vitest `24/24` PASS across `tests/unit/services/publicInterview.api.test.ts`, `server/src/routes/__tests__/interview-enterprise.routes.tenant.test.ts`, `src/views/__tests__/PublicInterviewRespondentView.delivery.test.tsx`; esbuild syntax check on edited file clean | `TECHNICAL_PASS / BACKEND_PORTION_STOPPED_NOT_A_REGRESSION` |
+
+### interview-v4 backend: STOP finding (2026-08-28)
+
+The task ordered full removal of `interview-v4` (backend + client) on the
+premise that the whole layer "urodziła się martwa" ~6 miesięcy temu and was
+never touched again. That premise is **true for the 22 client wrappers**
+(verified: `git log --oneline -- src/services/api.ts` shows the interview-v4
+block was added once and never modified or called; 0 callers via `grep -rn`
+of each method name across `src/`, `server/src/`, `tests/`), but it is
+**false for the backend**, discovered before any backend file was touched:
+
+- `server/src/routes/interview-enterprise.routes.ts` has **7 commits**, the
+  most recent being a **security fix** (`1de731c5c1
+  fix(interview-v4): resolve tenant from the token only, gate the router
+  centrally`) — a cross-org tenant-isolation vulnerability patched on this
+  same M03 branch, not a March-2026 fossil.
+- `server/src/services/interviewEnterpriseService.ts` has **5 commits**,
+  including its own security fix (`aff258cd17 fix(interview-v4): bind
+  session and initiative references to the caller org`).
+- `server/src/routes/__tests__/interview-enterprise.routes.tenant.test.ts`
+  (added by `1de731c5c1`) is a live regression test that sends real HTTP
+  requests through the mounted router to `findings`, `evidence/.../access-log`,
+  `distributions`, `distributions/.../revoke`, `findings/.../promote`,
+  `context/versions/.../sign-off`, `context/versions`, `segments` and the
+  public token route, and asserts 403/tenant-scoping behaviour on nearly
+  every one of the 27 routes. Deleting any of those routes breaks this test.
+- A **separate, active audit workstream** — `CLAUDE-NEXT-LEGACY-CUTOVER` —
+  independently inventories this exact router in
+  `server/src/services/legacyCutover/registry/interview.ts`
+  (writers `INTERVIEW-E01`..`E13`, all `state: 'observed'`) with a paired
+  real-Postgres test, `server/src/services/legacyCutover/__tests__/interviewCutover.pg.test.ts`,
+  that mounts the real router behind a telemetry guard and sends live HTTP
+  requests to `POST /sessions/:id/segments` and `POST /sessions/:id/distributions`,
+  asserting specific rows land in `legacy_cutover_usage_events`. That
+  workstream's own stated retirement path is observe-then-disable-then-delete,
+  and it has not finished observing.
+
+Deleting the backend routes/service now would (a) break the tenant-isolation
+regression test, (b) break the legacy-cutover guard test for the two writers
+it exercises, and (c) collide with a parallel, independently-authored
+decommissioning effort mid-flight on the identical file. Per the task's own
+STOP rule ("jeśli znajdziesz wołacza tam, gdzie miało go nie być —
+ZATRZYMAJ SIĘ na tej pozycji, opisz co znalazłeś, usuń resztę"), this agent
+stopped at the backend boundary, completed the client-side removal that had
+no such wołacz, and is reporting this finding for the owner/session
+supervisor to sequence against the legacy-cutover workstream before any
+backend deletion is attempted.
+
+**Not removed, and why:** `server/src/routes/interview-enterprise.routes.ts`
+(all 27 routes, including the 3 live public-respondent routes), and
+`server/src/services/interviewEnterpriseService.ts` — both actively
+maintained, security-patched, and depended on by two independent test
+suites as described above. No orphaned types were found on the client side
+(the 22 removed methods used only inline object types, no dedicated
+`InterviewSegment`/`InterviewQuota`/… exported type existed to orphan).
 
 ## Preflight implementation ledger
 
