@@ -119,7 +119,7 @@ interface DocxRuntime {
   TableRow: new (options: Record<string, unknown>) => unknown;
   TableOfContents: new (heading: string, options: Record<string, unknown>) => unknown;
   TextRun: new (options: Record<string, unknown>) => DocxTextRun;
-  WidthType: { PERCENTAGE: unknown };
+  WidthType: { PERCENTAGE: unknown; DXA: unknown };
 }
 
 interface DocxParagraph {
@@ -823,7 +823,14 @@ function renderTableBlock(block: DocumentBlock, ctx: RenderContext): (Table | Pa
   // cell to a sliver. Keep the leading columns and fold the remainder into a
   // single "+N more" column (DeckStyler/WorkbookStyler width-clamp analogue).
   const columnCount = Math.max(headers.length, ...rows.map((r) => r.length), 0);
-  const clamp = clampTableColumns(columnCount);
+  const drdProfile = isDrdReportProfile(ctx.schema);
+  const clamp = drdProfile
+    ? {
+        overflowed: false,
+        keep: Array.from({ length: columnCount }, (_, index) => index),
+        folded: [],
+      }
+    : clampTableColumns(columnCount);
   if (clamp.overflowed) {
     const foldLabel = `+${clamp.folded.length} more`;
     const pick = <T>(arr: T[], fallback: T): T[] => clamp.keep.map((i) => arr[i] ?? fallback);
@@ -841,16 +848,34 @@ function renderTableBlock(block: DocumentBlock, ctx: RenderContext): (Table | Pa
   }
 
   const tableRows: unknown[] = [];
-  const drdProfile = isDrdReportProfile(ctx.schema);
+  const drdMatrix = drdProfile && block.blockId.endsWith('-matrix') && columnCount >= 8;
+  const levelCount = Math.max(columnCount - 3, 1);
+  const drdColumnWidths = drdMatrix
+    ? [3200, ...Array.from({ length: levelCount }, () => Math.floor(3812 / levelCount)), 1100, 1300]
+    : [];
+  const drdCellOptions = (columnIndex: number) =>
+    drdMatrix
+      ? {
+          width: { size: drdColumnWidths[columnIndex], type: WidthType.DXA },
+          margins: { top: 80, bottom: 80, left: 90, right: 90 },
+          borders: {
+            top: { style: 'single', size: 2, color: DRD_REPORT_PALETTE.hair },
+            bottom: { style: 'single', size: 2, color: DRD_REPORT_PALETTE.hair },
+            left: { style: 'nil', size: 0, color: DRD_REPORT_PALETTE.white },
+            right: { style: 'nil', size: 0, color: DRD_REPORT_PALETTE.white },
+          },
+        }
+      : {};
   if (headers.length > 0) {
     tableRows.push(
       new TableRow({
         tableHeader: true,
         children: headers.map(
-          (cell) =>
+          (cell, columnIndex) =>
             // Navy header band + white bold text — the DOCX analogue of
             // WorkbookStyler's navy header fill and DeckStyler's dominant band.
             new TableCell({
+              ...drdCellOptions(columnIndex),
               shading: { fill: drdProfile ? DRD_REPORT_PALETTE.fillHead : DOCX_PALETTE.navy },
               children: [
                 new Paragraph({
@@ -877,9 +902,10 @@ function renderTableBlock(block: DocumentBlock, ctx: RenderContext): (Table | Pa
     const zebra = !drdProfile && rowIndex % 2 === 1;
     tableRows.push(
       new TableRow({
-        children: row.map((cell) => {
+        children: row.map((cell, columnIndex) => {
           const fill = cell.fill ?? (zebra ? DOCX_PALETTE.zebraFill : null);
           return new TableCell({
+            ...drdCellOptions(columnIndex),
             ...(fill ? { shading: { fill } } : {}),
             children: [
               new Paragraph({
@@ -906,6 +932,7 @@ function renderTableBlock(block: DocumentBlock, ctx: RenderContext): (Table | Pa
   const table = new Table({
     rows: tableRows,
     width: { size: 100, type: WidthType.PERCENTAGE },
+    ...(drdMatrix ? { columnWidths: drdColumnWidths } : {}),
   });
 
   // Auto-numbered caption — emitted after the table so Word's "Update

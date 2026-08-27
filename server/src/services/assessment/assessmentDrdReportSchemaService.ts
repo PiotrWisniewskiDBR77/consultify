@@ -119,19 +119,24 @@ function matrixRows(chapter: ContractChapter): unknown[][] {
       if (!area.skipped && area.currentLevel !== null && area.targetLevel !== null) {
         if (level < area.currentLevel) fill = DRD_REPORT_PALETTE.fillBelow;
         if (level === area.currentLevel) {
-          value = `${level} — ${resolveDrdLevelLabelPL(chapter.axisId, level)}`;
+          value = String(level);
           fill = DRD_REPORT_PALETTE.navy;
         }
         if (level > area.currentLevel && level < area.targetLevel)
           fill = DRD_REPORT_PALETTE.fillToGo;
         if (level === area.targetLevel) {
-          value = `${level} — ${resolveDrdLevelLabelPL(chapter.axisId, level)}`;
+          value = String(level);
           fill = DRD_REPORT_PALETTE.fillTarget;
         }
       }
       cells.push(fill ? { value, style: { bgColor: fill } } : value);
     }
-    cells.push(area.gap ?? '—', priorityForGap(area.gap));
+    cells.push(
+      area.gap ?? '—',
+      area.gap !== null && area.gap >= 3
+        ? { value: priorityForGap(area.gap), style: { bgColor: DRD_REPORT_PALETTE.crimson } }
+        : priorityForGap(area.gap)
+    );
     return cells;
   });
 }
