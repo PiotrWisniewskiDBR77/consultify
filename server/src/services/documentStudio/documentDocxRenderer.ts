@@ -1811,14 +1811,73 @@ async function renderDocumentSchemaToDocxBufferInternal(
     }
   }
   const footerChildren =
-    footerEnabled && footerRuns.length > 0
+    footerEnabled && drdProfile
       ? [
           new Paragraph({
-            alignment: AlignmentType.RIGHT,
-            children: footerRuns,
+            alignment: AlignmentType.LEFT,
+            tabStops: [
+              { type: 'center', position: Math.round(DRD_REPORT_GEOMETRY.contentWidthTwips / 2) },
+              { type: 'right', position: DRD_REPORT_GEOMETRY.contentWidthTwips },
+            ],
+            border: {
+              top: { color: DRD_REPORT_PALETTE.hair, space: 6, style: 'single', size: 2 },
+            },
+            children: [
+              new TextRun({
+                text: formatting.footers.content?.trim() || `Poufne — ${schema.audience[0] ?? ''}`,
+                size: 16,
+                color: DRD_REPORT_PALETTE.muted,
+                font: ctx.bodyFont,
+              }),
+              new TextRun({ text: '\t', size: 16, font: ctx.bodyFont }),
+              new TextRun({
+                text: 'Strona ',
+                size: 16,
+                color: DRD_REPORT_PALETTE.muted,
+                font: ctx.bodyFont,
+              }),
+              new TextRun({
+                children: [PageNumber.CURRENT],
+                size: 16,
+                color: DRD_REPORT_PALETTE.muted,
+                font: ctx.bodyFont,
+              }),
+              new TextRun({
+                text: ' z ',
+                size: 16,
+                color: DRD_REPORT_PALETTE.muted,
+                font: ctx.bodyFont,
+              }),
+              new TextRun({
+                children: [PageNumber.TOTAL_PAGES],
+                size: 16,
+                color: DRD_REPORT_PALETTE.muted,
+                font: ctx.bodyFont,
+              }),
+              new TextRun({ text: '\t', size: 16, font: ctx.bodyFont }),
+              new TextRun({
+                text: '● ',
+                size: 16,
+                color: DRD_REPORT_PALETTE.crimson,
+                font: ctx.bodyFont,
+              }),
+              new TextRun({
+                text: 'Consultify',
+                size: 16,
+                color: DRD_REPORT_PALETTE.muted,
+                font: ctx.bodyFont,
+              }),
+            ],
           }),
         ]
-      : [];
+      : footerEnabled && footerRuns.length > 0
+        ? [
+            new Paragraph({
+              alignment: AlignmentType.RIGHT,
+              children: footerRuns,
+            }),
+          ]
+        : [];
 
   // Materialise the accumulated footnote registry into the
   // string-keyed shape `Document({ footnotes })` expects. Empty when
