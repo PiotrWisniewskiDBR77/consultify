@@ -63,6 +63,20 @@ function flagOn(v: unknown): boolean {
   return v === true || Number(v) === 1;
 }
 
+// `settings` is a JSON/JSONB column. node-pg (Postgres) parses JSON columns
+// into a JS object automatically, while the SQLite driver returns the raw
+// TEXT. A bare `JSON.parse(share.settings || '{}')` therefore throws
+// `SyntaxError: "[object Object]" is not valid JSON` on every Postgres row —
+// this is what made every /api/share/:token request 500 on demo/staging/prod.
+// Handle both shapes uniformly.
+function parseSettings(v: unknown): ShareSettings {
+  if (v == null) return {};
+  if (typeof v === 'string') {
+    return v ? JSON.parse(v) : {};
+  }
+  return v as ShareSettings;
+}
+
 // ==========================================
 // TYPES
 // ==========================================
@@ -385,8 +399,8 @@ router.get('/conversations/:id/share', authenticate, async (req: AuthRequest, re
       description: share.description,
       viewCount: share.view_count,
       expiresAt: share.expires_at,
-      isPasswordProtected: !!JSON.parse(share.settings || '{}').passwordHash,
-      settings: JSON.parse(share.settings || '{}'),
+      isPasswordProtected: !!parseSettings(share.settings).passwordHash,
+      settings: parseSettings(share.settings),
       createdAt: share.created_at,
     });
   } catch (error: any) {
@@ -421,7 +435,7 @@ router.post('/share/:token/unlock', async (req: Request, res: Response) => {
     const share = await db.get('SELECT * FROM conversation_shares WHERE share_token = ?', [token]);
     if (!share) return res.status(404).json({ error: 'Share not found' });
     if (!flagOn(share.is_active)) return res.status(410).json({ error: 'Share has been revoked' });
-    const settings = JSON.parse(share.settings || '{}');
+    const settings = parseSettings(share.settings);
     if (!settings.passwordHash)
       return res.status(400).json({ error: 'Share is not password-protected' });
     const verdict = await verifyPasscode(password, String(settings.passwordHash));
@@ -480,7 +494,7 @@ router.get('/share/:token', optionalAuth, async (req: Request, res: Response) =>
       return res.status(410).json({ error: 'Share has expired' });
     }
 
-    const settings = JSON.parse(share.settings || '{}');
+    const settings = parseSettings(share.settings);
 
     if (settings.passwordHash) {
       // Chat P0-2 — check the signed access cookie first. Falls back to a
@@ -602,7 +616,7 @@ router.patch('/conversations/:id/share', authenticate, async (req: AuthRequest, 
       return res.status(404).json({ error: 'Share not found' });
     }
 
-    const currentSettings = JSON.parse(share.settings || '{}');
+    const currentSettings = parseSettings(share.settings);
     const newSettings = { ...currentSettings, ...settings };
 
     if (passcode !== undefined) {
