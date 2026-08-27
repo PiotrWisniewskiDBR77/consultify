@@ -20,12 +20,12 @@
 import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
-import { correctToolOutput } from '../services/tools/toolOutputSnapshotService.js';
+import { renderDocumentSchemaToDocxBuffer } from '../services/documentStudio/documentDocxRenderer.js';
 import {
   buildToolOutputReportSchema,
   getToolReportCompleteness,
 } from '../services/tools/toolOutputReportSchemaService.js';
-import { renderDocumentSchemaToDocxBuffer } from '../services/documentStudio/documentDocxRenderer.js';
+import { correctToolOutput } from '../services/tools/toolOutputSnapshotService.js';
 import { renderToolReport } from '../sharedRuntime/toolOutputs/renderReport.js';
 import type { ToolOutput } from '../sharedRuntime/toolOutputs/types.js';
 import type { AuthenticatedRequest } from '../types/index.js';
@@ -449,11 +449,9 @@ export default class ToolOutputsController {
         return;
       }
       if (current.status !== 'approved') {
-        res
-          .status(409)
-          .json({
-            error: `Only an approved output can be reopened (status is "${current.status}")`,
-          });
+        res.status(409).json({
+          error: `Only an approved output can be reopened (status is "${current.status}")`,
+        });
         return;
       }
 

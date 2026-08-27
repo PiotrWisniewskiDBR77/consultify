@@ -1,9 +1,9 @@
+import type { ReportBlock, ToolReportDocument } from '../../sharedRuntime/toolOutputs/types.js';
 import type {
   DocumentBlock,
   DocumentSchema,
   DocumentSourceRef,
 } from '../documentStudio/documentStudioTypes.js';
-import type { ReportBlock, ToolReportDocument } from '../../sharedRuntime/toolOutputs/types.js';
 
 export type ToolReportCompleteness = 'full' | 'partial' | 'empty';
 
