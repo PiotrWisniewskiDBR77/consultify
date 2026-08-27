@@ -44,13 +44,13 @@ wykonano klientem `psql` wewnątrz wyłącznie własnego kontenera
 `cx-day54-pg`. `SELECT current_database(), inet_server_port(), version()`
 zwrócił bazę `cx_day54` i PostgreSQL `16.15`; port serwera wewnątrz połączenia
 unix-socket jest pusty. `docker port cx-day54-pg` potwierdza mapowanie hosta
-`127.0.0.1:5839` (do uzupełnienia w końcowym przebiegu).
+`5432/tcp -> 127.0.0.1:5839`.
 
 ## ★ Oświadczenie o strażnikach testów (Z31)
 
-Do uzupełnienia po wykonaniu pakietów. Żaden napisany test nie będzie przypięty
-do nazwy bazy, hosta ani portu; testy realdb muszą użyć
-`assertRealPostgresTestEnvironment()` bez argumentów i raportować liczbę SKIPPED.
+Oba pakiety realdb używają `assertRealPostgresTestEnvironment()` bez argumentów;
+nie są przypięte do nazwy bazy, hosta ani portu. Końcowy przebieg pięciu plików:
+37 PASS / 0 FAIL / 0 SKIPPED, zawsze z `--retry=0`.
 
 ## ★★ DOWODY Z33
 
@@ -60,9 +60,16 @@ negatywnym kontraktem, że brak trwałego helpera daje `503`, a nie `200`.
 Komenda miała jawny komplet env i `--retry=0`; wynik 11 PASS / 0 FAIL /
 0 SKIPPED.
 
+Pakiet katalogu A.1 przechodzi przez realny `ApiGateway`, JWT, membership i PG;
+`DB_TYPE=postgres` ustawiono przed dynamicznym importem Gateway, więc nie wpada
+w pułapkę (c). Pakiet A.2 realdb używa realnego PG i handlerów HTTP, ale nie
+pełnego Gateway; nie przedstawiam go jako dowodu Gateway/autoryzacji. Test huba
+i test schematu są odpowiednio komponentowym mockiem i testem czystej funkcji.
+
 ## ★★ WERYFIKACJA TRZYNASTU TEZ ZLECENIA
 
-W toku. Pierwszy pomiar `GREP`: `toolAvailability.ts` ma 19 wpisów, lecz poza
+Zweryfikowano wszystkie trzynaście tez w granicach zawężonego dyżuru. `GREP`:
+`toolAvailability.ts` ma 19 wpisów, lecz poza
 własnymi definicjami i komentarzem nie ma importera produkcyjnego. Realna bramka
 startu prowadzi przez `ToolController.createToolSession` →
 `KnownToolsService.getKnownToolAvailability` → `ACTIVE_KNOWN_TOOL_TYPES` →
@@ -108,18 +115,20 @@ wyniku istnieje: `tool_outputs`, `tool_output_approvals`, `tool_reports`,
 | tabele `tool_*` po migracjach                     |      25 | PRZEBIEG |
 | migracje zastosowane w pierwszym/drugim przebiegu | 858 / 0 | PRZEBIEG |
 
-Pozostałe mianowniki zostaną wpisane po własnych pomiarach; żadna liczba z
-instrukcji ani raportu dnia 40c nie jest traktowana jako wynik tego dyżuru.
+Żadna liczba z instrukcji ani raportu dnia 40c nie jest traktowana jako wynik
+tego dyżuru.
 
 ## ★ KOLIZJE Z DYŻURAMI W TOKU
 
-W toku; przed modyfikacją każdego pliku sprawdzany jest diff gałęzi 40c i
-zakazane `documentStudio/**`.
+Rozejście 40c zostało zinwentaryzowane per plik. Wzięto wyłącznie backendowy
+eksport DOCX i jego testy; poprawkę huba wzięto osobnym commitem A.3. Flagi,
+cudze raporty/instrukcje i `documentStudio/**` pozostały nietknięte.
 
 ## ★ ODPOWIEDZI NA PYTANIA KONTROLNE
 
 1. `GREP`: realną bramkę startu stanowi katalog A przez ścieżkę opisaną wyżej.
-2. `PRZEBIEG` zachowania bez `tool_outputs`: jeszcze nie wykonany.
+2. `PRZEBIEG` bez `tool_outputs`: 503, kod
+   `TOOL_OUTPUT_PERSISTENCE_UNAVAILABLE`, zero wpisów ledgera.
 3. Rozstrzygnięcie właściciela z 28.08 nadrzędnie odblokowuje zamiar szerszego
    MVP, ale brak listy typów, pakietów metodycznych i praw. Dlatego zero zmian
    w `APPROVED_MVP_TOOL_TYPES`; wykonuję wyłącznie defekty wskazane w zleceniu.
@@ -182,10 +191,10 @@ potwierdzenia pakietów metodycznych i praw.
 | Pozycja | Stan                        | Zakres po rozstrzygnięciu właściciela             |
 | ------- | --------------------------- | ------------------------------------------------- |
 | A.1     | `ZMIERZONE`                 | real Gateway 3/3; katalog bez zmian; luka unknown |
-| A.2     | `W_TOKU`                    | trzy ciche połyki                                 |
+| A.2     | `CZĘŚCIOWO`                 | 2 aktywne zamknięte; 3. martwy; brak mutacji      |
 | A.3     | `CZĘŚCIOWO`                 | 5xx degraduje tylko Insights; brak zrzutów 3365   |
 | A.4     | `POZA_ZAKRESEM_WYKONAWCZYM` | bez flipu flagi                                   |
-| B.1     | `W_TOKU`                    | forward-port `.docx`                              |
+| B.1     | `CZĘŚCIOWO`                 | backend + DOCX; brak konsumenta frontend/Gateway  |
 | B.2     | `POZA_ZAKRESEM_WYKONAWCZYM` | produkt/kontrakt dla nowych formatów              |
 | C.1     | `POZA_ZAKRESEM_WYKONAWCZYM` | właściciel wskazał węższy dyżur defektowy         |
 | C.2     | `CZĘŚCIOWO`                 | werdykt martwego kodu tylko w zakresie wskazanym  |
@@ -193,8 +202,8 @@ potwierdzenia pakietów metodycznych i praw.
 | D.2     | `POZA_ZAKRESEM_WYKONAWCZYM` | brak autoryzacji do rozszerzenia dyżuru           |
 | E.1     | `POZA_ZAKRESEM_WYKONAWCZYM` | brak autoryzacji do rozszerzenia dyżuru           |
 | F.1     | `CZĘŚCIOWO`                 | pytanie o listę narzędzi; bez produktu            |
-| R.1     | `W_TOKU`                    | wyłącznie dowiedzione defekty                     |
-| R.2     | `W_TOKU`                    | ten raport                                        |
+| R.1     | `CZĘŚCIOWO`                 | wyłącznie dowiedzione defekty                     |
+| R.2     | `GOTOWE`                    | ten raport                                        |
 
 ## ★ DOWODY OSIĄGALNOŚCI (Z21)
 
@@ -206,22 +215,28 @@ do pełnoekranowego błędu. Pakiet: 11 PASS / 0 FAIL / 0 SKIPPED.
 
 ## ★★ DOWODY MUTACYJNE W OBIE STRONY (Z29/Z32)
 
-W toku.
+Nie wykonano testów mutacyjnych w obie strony. To jawna luka akceptacyjna;
+dlatego A.2 nie otrzymuje statusu `FIXED` i nie aktualizuję
+`MODULE_ACCEPTANCE.md`.
 
 ## ★ LISTA KONTROLNA PIĘCIU KSZTAŁTÓW FAŁSZYWEGO „GOTOWE"
 
-W toku.
+1. Istnienie testu bez runtime: rozdzielone i oznaczone.
+2. Mock jako realdb/Gateway: nie; każdy mock nazwany.
+3. HTTP bez tożsamości bazy: katalog ma Gateway/JWT/membership/PG; A.2 nie.
+4. Zielony happy path bez negatywnego zapisu: brak tabeli daje 503 i zero ledger.
+5. Komponent bez `OCZY`: A.3 pozostaje `CZĘŚCIOWO`.
 
 ## ★ ZRZUTY
 
-Nie wykonano jeszcze harnessu 3365. Komponentowy stan błędu jest dowiedziony,
+Nie wykonano harnessu 3365. Komponentowy stan błędu jest dowiedziony,
 ale pozycja A.3 pozostaje `CZĘŚCIOWO` bez dowodu `OCZY`.
 
 ## ★★ PLIK .docx (§B.1)
 
 `PRZEBIEG`: `/private/tmp/consultify-tools-day54-artefakty/dynamic-swot-output-report.docx`.
-SHA-256: `0190d6eb66482db10437cefb727f32fcdd5bab0b399e2afec0817e3027fd7f66`;
-rozmiar 10 272 B; po konwersji LibreOffice: 2 strony A4. `OCZY/ekstrakcja`:
+SHA-256: `5132c3ceb5f595cda935f14415121324aa4730573dd4b3ceddbee9b20ed0cd31`;
+rozmiar 10 269 B; po końcowej konwersji LibreOffice: 2 strony A4. `OCZY/ekstrakcja`:
 dokument zawiera metryczkę klienta, spis treści, wynik Dynamic SWOT, napięcie
 „Wzrost”, dwa potwierdzone fakty, znaczenie, działania, efekt, wybór i lineage
 do konkretnego `tool_output`. Polskie znaki są obecne. Nie jest pustym szkieletem.
@@ -242,7 +257,9 @@ Poza zawężonym zakresem wykonawczym.
 
 ### §C.2 — powierzchnie promocji
 
-W toku wyłącznie w zakresie martwego kodu.
+`toolAvailability.ts` ma zero importerów produkcyjnych, ale dokumentuje intencję
+szerszego katalogu. Werdykt: `MARTWY_ALE_DOKUMENTUJE_INTENCJĘ`; nie usunięto go
+bez listy i autoryzacji właściciela.
 
 ### §D.1 — trasy modułu
 
@@ -278,7 +295,7 @@ nowego typu. Defekty wskazane w zleceniu są wykonywalne; produkt czeka na list�
 | `toolOutputs.routes.ts`            | WZIĘTY            | trasa w istniejącym routerze     |
 | `toolOutputReportSchemaService.ts` | WZIĘTY            | deterministyczne mapowanie       |
 | test schematu                      | WZIĘTY            | 5/5 PASS                         |
-| test realdb dnia 40                | WZIĘTY            | 6/6 PASS; zapis artefaktu dodany |
+| test realdb dnia 40                | WZIĘTY            | 7/7 PASS; zapis artefaktu dodany |
 | `DiscoveryToolsHub.tsx`            | WZIĘTY OSOBNO A.3 | defekt 5xx, nie B.1              |
 | test wiring huba                   | WZIĘTY OSOBNO A.3 | defekt 5xx, nie B.1              |
 | `toolsInsightsWiringFlag.ts`       | NIEWZIĘTY         | brak flipu i A.4 poza zakresem   |
@@ -292,15 +309,21 @@ ale produktowo `CZĘŚCIOWO` z jawnym „brak konsumenta”.
 
 ## ★ POMIAR ZASIĘGU (§0.4a)
 
-W toku.
+Od markera do końcowego kodu: 12 plików, 1364 insercje i 159 usunięć (w tym
+raport). Zmiany funkcjonalne ograniczają się do kontrolera/promocji snapshotu,
+degradacji huba, backendowego DOCX oraz testów. `documentStudio/**`, katalogi i
+flaga Insights: zero zmian.
 
 ## ★ ZMIENIONE ASERCJE (§0.4a pkt 6)
 
-W toku.
+Zmieniono asercje roundtrip z fałszywego `200`/wpisu ledgera na `503`/brak wpisu;
+dodano asercje real-PG dla trwałego readbacku, braku tabeli i izolacji tenantów,
+asercje katalogu 200/409/unknown-200, DOCX 200/OOXML/tenant-404 oraz komponentowe
+asercje „hub żyje” i „błąd sesji nadal zatrzymuje hub”.
 
 ## ★ Deklaracja zasięgu
 
-`ZASIĘG CZĘŚCIOWY` na tym etapie. NIE przepisałem liczb panelu eksperckiego,
+`ZASIĘG CZĘŚCIOWY`. NIE przepisałem liczb panelu eksperckiego,
 dnia 40/40b/40c, autora instrukcji ani z `MODULE_ACCEPTANCE.md` — zmierzyłem sam.
 
 ## ★ DOWÓD, ŻE documentStudio/\*\* NIETKNIĘTE
@@ -321,13 +344,18 @@ zwraca pusty wynik (`0`).
 
 Brak STOP-u całego dyżuru. Naruszenie Z5 sprzed odczytania instrukcji opisano
 jawnie; nie doszło do edycji chronionego checkoutu ani połączenia z obcą bazą.
+Po testach usunięto wyłącznie dedykowany kontener `cx-day54-pg`; końcowy
+`docker inspect` zwrócił kod 1 (kontener nie istnieje).
 
 ## ★★ TWIERDZENIA NIEZWERYFIKOWANE
 
-- Zachowanie realnego HTTP dla trzech katalogów nie zostało jeszcze zmierzone.
-- Zamknięcie trzech dróg cichego połyku nie zostało jeszcze dowiedzione.
-- Jakość i paginacja `.docx` w Microsoft Word pozostaną niezweryfikowane, jeśli
-  nie będzie dostępny Word; spójność danych zostanie sprawdzona niezależnie.
+- Trzecia gałąź połyku jest obecnie nieosiągalna; strażnik `changes` nie ma
+  dowodu runtime.
+- Brak testów mutacyjnych i zrzutów 3365.
+- A.2 realdb i B.1 nie mają dowodu przez pełny ApiGateway; B.1 nie ma konsumenta
+  frontendowego.
+- Jakość i paginacja `.docx` w Microsoft Word są niezweryfikowane; LibreOffice
+  potwierdził 2 strony A4, a ekstrakcja potwierdziła treść i lineage.
 - Stan Railway/demo/staging/produkcji jest celowo niezweryfikowany (Z28).
 
 ## Rekomendacje dla nadzorcy
