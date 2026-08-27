@@ -119,7 +119,7 @@ export async function listKpis(params: ListKpisParams): Promise<KpiDefinition[]>
   const offsetParamIndex = values.length;
 
   const baseQuerySql = `
-    SELECT kd.*
+    SELECT kd.*, dv.name AS current_definition_name
       FROM rvn_kpi_definitions kd
       LEFT JOIN rvn_kpi_definition_versions dv
              ON dv.definition_version_id = kd.current_definition_version_id

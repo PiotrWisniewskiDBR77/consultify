@@ -12,13 +12,7 @@
  * wire-shape types the same way). Keep these in sync by hand if the server
  * DTOs change shape.
  *
- * -- CONFIRMED BACKEND GAP (see RN_G2 P1 report), PARTIALLY CLOSED by the
- * RN-G6 P0 fix (F1B, `getKpiCurrentDefinitionVersion` below): `GET /kpi` and
- * `GET /kpi/:kpiId` still both return the bare `rvn_kpi_definitions` row
- * (`KpiDefinition` — kpiCode/status/owner/timestamps only) — this module
- * still cannot resolve a KPI's display *name* or target/current-value
- * fields from the LIST/single-row endpoints, only from a lazily-fetched
- * latest measurement's `actualValue` (unchanged). What F1B added is
+ * -- RN-G6 P0 fix (F1B, `getKpiCurrentDefinitionVersion` below) added
  * `GET /kpi/:kpiId/version`, which DOES return the joined
  * `rvn_kpi_definition_versions` row (name/unit/target geometry/approval
  * status/CAS `rowVersion`) for a single KPI on demand — see
@@ -124,6 +118,7 @@ export interface KpiDefinitionDto {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+  name?: string | null;
 }
 
 /** Wire shape of `rvn_kpi_definition_versions`, camelCased server-side by
