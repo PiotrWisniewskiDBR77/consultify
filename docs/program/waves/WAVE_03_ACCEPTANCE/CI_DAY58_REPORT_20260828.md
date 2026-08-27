@@ -48,7 +48,7 @@ Tip był równy markerowi; zakres `marker..tip` był pusty. Worktree: `/private/
 | §A | ZROBIONE_WG_DoD | PENDING | §A |
 | §C | ZROBIONE_WG_DoD | PENDING | §C |
 | §D | CZĘŚCIOWO | PENDING | §D |
-| §E | NIEROZPOCZĘTE | — | — |
+| §E | CZĘŚCIOWO | PENDING | §E |
 | §F | NIEROZPOCZĘTE | — | — |
 
 ## §B.0 — ESLint przed type-checkiem
@@ -206,6 +206,38 @@ Nie zmieniono `playwright.config.ts:80`: brak pięciu wykonalnych prób presenta
 `DECISION_REQUIRED`: retries w Playwright — brak kompletnego lokalnego pomiaru niestabilności wszystkich trzech specyfikacji; czy czekamy na okno ze stabilnym harnessem (rekomendowane), czy właściciel świadomie zmienia globalnie w ciemno? Cena oczekiwania: retry może nadal maskować; cena zmiany w ciemno: fałszywie czerwone CI przez niestabilny start/kontekst.
 
 Niezweryfikowane dla §D: wynik presentations po starcie przeglądarki; przyczyna porażki procesu webServer (odfiltrowany log CLI podał tylko exit 1); zachowanie realnego runnera GitHuba.
+
+## §E — klasyfikacja 19 czerwonych przypadków
+
+Pomiar zbiorczy: cztery pliki, `--retry=0 --reporter=verbose` → `19 failed | 16 passed`. Następnie każdy czerwony przypadek uruchomiono osobno przez `-t <pełna nazwa>`. To rozdzieliło realne luki od zanieczyszczenia kolejkami mocków. `vi.clearAllMocks()` czyści historię, ale nie resetuje niewykorzystanych `mockResolvedValueOnce`; dowód: test clone-on-write czerwony w pakiecie, a osobno `exit=0`.
+
+| przypadek | etykieta | dowód izolowany / kod |
+| --- | --- | --- |
+| accessRoleBuilder — clone-on-writes factory template | BUG TESTU | osobno exit 0; poprzedni test kolejkuje `queryOne`, lecz wraca przed query na guardrail |
+| AdminSessions — stale read-back po revoke single | BUG PRODUKTU | osobno exit 1; asercja wymaga widocznej sesji i potwierdzenia; `AdminSessionsView.tsx:260-272` |
+| AdminSessions — usuwa dopiero po potwierdzeniu | BUG PRODUKTU | osobno exit 1; ten sam seam `loadData`/normalizacji |
+| AdminSessions — bulk revoke bez fałszywego sukcesu | BUG TESTU | osobno exit 0; porażka tylko w sekwencji pliku |
+| AdminSessions — wrapped session/stats | BUG PRODUKTU | osobno exit 1; normalizator nie odsłania sesji z testowego envelope |
+| DLP — wrapped policy/violation | BUG PRODUKTU | osobno exit 1; brak akcji Resolve po normalizacji envelope |
+| DLP — stale toggle/delete | BUG PRODUKTU | osobno exit 1; `DLPView.tsx:332-368` nie osiąga oczekiwanego widoku/read-back seam |
+| DLP — delete read-back unavailable | BUG PRODUKTU | osobno exit 1; asercja poprawnie zabrania toastu sukcesu |
+| DLP — violation pozostaje + safe dates | BUG PRODUKTU | osobno exit 1; `DLPView.tsx:371-383` |
+| DLP — resolve read-back unavailable | BUG PRODUKTU | osobno exit 1; jw. |
+| DLP — deeply wrapped create | BUG TESTU | osobno exit 0; porażka zależy od kolejności mocków |
+| DLP — malformed payload nie jako empty | BUG TESTU | osobno exit 0; porażka zależy od kolejności mocków |
+| SecurityIncidents — wrapped payload/actions | BUG PRODUKTU | osobno exit 1; normalizator nie odsłania wiersza/akcji |
+| SecurityIncidents — staging row details | BUG PRODUKTU | osobno exit 1; `normalizeIncident`/render details seam |
+| SecurityIncidents — stale resolve/delete | BUG PRODUKTU | osobno exit 1; `SecurityIncidentsView.tsx:356-399` |
+| SecurityIncidents — delete read-back unavailable | BUG PRODUKTU | osobno exit 1; asercja poprawnie zabrania toastu sukcesu |
+| SecurityIncidents — absent after resolve | BUG PRODUKTU | osobno exit 1; brak potwierdzonego przejścia UI |
+| SecurityIncidents — deeply wrapped create | BUG TESTU | osobno exit 0; porażka zależy od kolejności mocków |
+| SecurityIncidents — malformed payload nie jako empty | BUG TESTU | osobno exit 0; porażka zależy od kolejności mocków |
+
+Bilans: `BUG PRODUKTU=13`, `BUG TESTU=6`, `ARTEFAKT ŚRODOWISKA=0`. Dla 13 błędów produktu nie nałożono zmian: `git log --all --since='5 days ago'` wykazał świeże commity w `src/views/superadmin/**`, więc zgodnie z licencją dostarczam rekomendację zamiast mutacji. Rekomendacja: wydzielić jeden rekursywny `unwrapEnvelope`, użyć go przed `hasListShape` we wszystkich trzech widokach, zachować obecne read-back guards, a akcje/toasty emitować wyłącznie po potwierdzonym snapshot. Dla sześciu błędów testu: w `beforeEach` użyć `mockReset()` dla każdego mocka z kolejkami `*Once` przed ustawieniem defaultów; nie zmieniać żadnej asercji.
+
+Dowód mutacyjny napraw produktu: NIE WYKONANO — brak licencji na świeżo zajęte pliki superadmin. Dlatego §E jest `CZĘŚCIOWO`, nie `ZROBIONE_WG_DoD`.
+
+Niezweryfikowane dla §E: dokładny wspólny diff produktu i jego czerwony→zielony→czerwony dowód; właściciel aktywnego toru superadmin musi wykonać go w swoim worktree.
 
 ## 9. DECISION_REQUIRED
 
