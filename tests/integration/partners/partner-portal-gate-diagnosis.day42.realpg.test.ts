@@ -89,6 +89,15 @@ describeReal('Day 42 Partner portal global-gate diagnosis through the real ApiGa
   afterAll(async () => {
     process.env.ENABLE_V8_GLOBAL = 'true';
     if (!sql) return;
+    await sql.query('DELETE FROM partner_campaign_links WHERE partner_org_id = ANY($1::uuid[])', [
+      [partnerA, partnerB],
+    ]);
+    await sql.query('DELETE FROM partner_program_ledger WHERE partner_org_id = ANY($1::text[])', [
+      [partnerA, partnerB],
+    ]);
+    await sql.query('DELETE FROM partner_program_runtime WHERE partner_org_id = ANY($1::text[])', [
+      [partnerA, partnerB],
+    ]);
     await sql.query('DELETE FROM partner_users WHERE user_id = ANY($1::uuid[])', [
       [unboundUser, boundUser],
     ]);
@@ -178,5 +187,120 @@ describeReal('Day 42 Partner portal global-gate diagnosis through the real ApiGa
     expect(migrationIdentity).toContain('/^(7\\d{2}|\\d{8})_.*\\.sql$/');
     expect(bindingMigration).toContain('ADD COLUMN IF NOT EXISTS owner_organization_id');
     expect('955_partner_connection_receipts.sql').not.toMatch(/^(7\d{2}|\d{8})_.*\.sql$/);
+  });
+
+  it('D.2 reaches the connection row through the real global gate and exact tenant binding', async () => {
+    process.env.ENABLE_V8_GLOBAL = 'true';
+    const response = await request(app)
+      .get('/api/v8/partner/connection')
+      .set(auth(boundUser, orgA));
+    expect(response.status).toBe(200);
+    expect(response.body.data.connected).toBe(true);
+    expect(response.body.data.partnerOrganizationId).toBe(partnerA);
+  });
+
+  it('D.2 reaches the clients SQL reader without leaking another partner', async () => {
+    process.env.ENABLE_V8_GLOBAL = 'true';
+    const response = await request(app).get('/api/v8/partner/clients').set(auth(boundUser, orgA));
+    expect(response.status).toBe(200);
+    expect(response.body.meta.partnerOrgId).toBe(partnerA);
+    expect(JSON.stringify(response.body)).not.toContain(partnerB);
+  });
+
+  it('D.2 provisions referral identity and cold-reads the exact persisted row', async () => {
+    process.env.ENABLE_V8_GLOBAL = 'true';
+    const response = await request(app)
+      .get('/api/v8/partner/referral-tools')
+      .set(auth(boundUser, orgA));
+    expect(response.status).toBe(200);
+    expect(response.body.data.tools.referralCode).toBeTruthy();
+    const cold = new Client({ connectionString: DATABASE_URL });
+    await cold.connect();
+    try {
+      const readback = await cold.query(
+        'SELECT referral_code, referral_link_slug FROM partner_organizations WHERE id = $1',
+        [partnerA]
+      );
+      expect(readback.rows[0].referral_code).toBe(response.body.data.tools.referralCode);
+      expect(readback.rows[0].referral_link_slug).toBeTruthy();
+    } finally {
+      await cold.end();
+    }
+  });
+
+  it('D.2 creates the program runtime through GET /program/status and cold-reads it', async () => {
+    process.env.ENABLE_V8_GLOBAL = 'true';
+    const response = await request(app)
+      .get('/api/v8/partner/program/status')
+      .set(auth(boundUser, orgA));
+    expect(response.status).toBe(200);
+    const cold = new Client({ connectionString: DATABASE_URL });
+    await cold.connect();
+    try {
+      const readback = await cold.query(
+        'SELECT lifecycle_phase FROM partner_program_runtime WHERE partner_org_id = $1',
+        [partnerA]
+      );
+      expect(readback.rowCount).toBe(1);
+      expect(readback.rows[0].lifecycle_phase).toBe(response.body.data.lifecyclePhase);
+    } finally {
+      await cold.end();
+    }
+  });
+
+  it('D.2 refuses an invalid campaign write with a cold zero-residue readback', async () => {
+    process.env.ENABLE_V8_GLOBAL = 'true';
+    const before = await sql.query<{ count: string }>(
+      'SELECT count(*)::text AS count FROM partner_campaign_links WHERE partner_org_id = $1',
+      [partnerA]
+    );
+    const response = await request(app)
+      .post('/api/v8/partner/campaign-links')
+      .set(auth(boundUser, orgA))
+      .send({});
+    expect(response.status).toBe(400);
+    expect(response.body.code).toBe('CAMPAIGN_NAME_REQUIRED');
+    const cold = new Client({ connectionString: DATABASE_URL });
+    await cold.connect();
+    try {
+      const after = await cold.query<{ count: string }>(
+        'SELECT count(*)::text AS count FROM partner_campaign_links WHERE partner_org_id = $1',
+        [partnerA]
+      );
+      expect(after.rows).toEqual(before.rows);
+    } finally {
+      await cold.end();
+    }
+  });
+
+  it('D.2 writes a campaign link, cold-reads it, and reads it back through referral-tools', async () => {
+    process.env.ENABLE_V8_GLOBAL = 'true';
+    const name = `${prefix} Campaign`;
+    const created = await request(app)
+      .post('/api/v8/partner/campaign-links')
+      .set(auth(boundUser, orgA))
+      .send({ name, utmSource: 'day42', destinationUrl: '/partner' });
+    expect(created.status).toBe(201);
+    const campaignId = created.body.data.campaignLink.id;
+
+    const cold = new Client({ connectionString: DATABASE_URL });
+    await cold.connect();
+    try {
+      const readback = await cold.query(
+        'SELECT id, partner_org_id, name FROM partner_campaign_links WHERE id = $1',
+        [campaignId]
+      );
+      expect(readback.rows[0]).toMatchObject({ partner_org_id: partnerA, name });
+    } finally {
+      await cold.end();
+    }
+
+    const tools = await request(app)
+      .get('/api/v8/partner/referral-tools')
+      .set(auth(boundUser, orgA));
+    expect(tools.status).toBe(200);
+    expect(tools.body.data.tools.campaignLinks).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: campaignId, name })])
+    );
   });
 });
