@@ -1,4 +1,17 @@
 /** @vitest-environment node */
+/**
+ * DOWÓD MUTACYJNY dla FIX-D (dyżur 54, odbiór adwersaryjny 2026-08-28).
+ *
+ * Defekt: `ToolController.createToolSession` sprawdzał wyłącznie
+ * `availability.exists && !availability.isActive` (409 dla znanego,
+ * nieaktywnego typu). Nieznany typ narzędzia (`availability.exists === false`)
+ * omijał ten warunek w całości i tworzył REALNĄ sesję w `tool_sessions`
+ * (potwierdzone odbiorem: `business-model-canvas` -> 200 + wiersz w bazie).
+ *
+ * Ten test biegnie przez realny `ApiGateway.getInstance().initializeRoutes(app)`,
+ * podpisany JWT, realny PostgreSQL (własny kontener, pełny runner migracji
+ * `NODE_ENV=test`) — zero mocków warstwy HTTP ani bazy.
+ */
 import { randomUUID } from 'node:crypto';
 
 import express from 'express';
@@ -14,8 +27,8 @@ process.env.DB_TYPE = 'postgres';
 const databaseUrl = process.env.DATABASE_URL ?? '';
 const NO_RETRY = { retry: 0 } as const;
 
-describe('Day 54 — catalog reachability through real ApiGateway', NO_RETRY, () => {
-  const prefix = `day54-catalog-${randomUUID()}`;
+describe('Day 54 FIX-D — nieznany typ narzędzia nie tworzy sesji', NO_RETRY, () => {
+  const prefix = `day54-fixd-${randomUUID()}`;
   const organizationId = `${prefix}-org`;
   const userId = `${prefix}-owner`;
   const pool = new Pool({ connectionString: databaseUrl });
@@ -74,24 +87,54 @@ describe('Day 54 — catalog reachability through real ApiGateway', NO_RETRY, ()
       .set('Authorization', `Bearer ${token}`)
       .send({ toolType, name: `${prefix}-${toolType}` });
 
-  it('allows the approved Dynamic SWOT type', async () => {
+  const countToolSessions = async (): Promise<number> => {
+    const res = await pool.query<{ count: string }>(
+      `SELECT COUNT(*)::text AS count FROM tool_sessions WHERE organization_id = $1`,
+      [organizationId]
+    );
+    return Number(res.rows[0]?.count ?? '0');
+  };
+
+  it('refuses an unknown tool type with 404 UNKNOWN_TOOL_TYPE and creates ZERO rows', async () => {
+    const before = await countToolSessions();
+    expect(before, 'baseline musi być zero przed testem').toBe(0);
+
+    const response = await create('business-model-canvas');
+
+    expect(response.status, JSON.stringify(response.body)).toBe(404);
+    expect(response.body.code).toBe('UNKNOWN_TOOL_TYPE');
+
+    // Niezależny SELECT — nie ufamy kodowi odpowiedzi, sprawdzamy stan bazy.
+    const after = await countToolSessions();
+    expect(after, 'nieznany typ NIE MOŻE utworzyć wiersza w tool_sessions').toBe(0);
+  });
+
+  it('still allows the approved Dynamic SWOT type (200) — no behavior change', async () => {
     const response = await create('dynamic-swot');
     expect(response.status, JSON.stringify(response.body)).toBe(200);
   });
 
-  it('refuses a known but inactive catalog type', async () => {
+  it('still refuses a known but inactive catalog type (409) — no behavior change', async () => {
     const response = await create('market-forces');
     expect(response.status, JSON.stringify(response.body)).toBe(409);
     expect(response.body.error).toBe('This tool is inactive and cannot start a session yet');
   });
 
-  it('closes the unknown-type gap (day54 FIX-D, 2026-08-28): refuses instead of creating a session', async () => {
-    // Do 2026-08-28 ten test dokumentował LUKĘ: nieznany typ omijał warunek
-    // `availability.exists && !availability.isActive` i tworzył realną sesję
-    // (200). Po FIX-D (server/src/controllers/ToolController.ts) nieznany typ
-    // jest odrzucany z 404 UNKNOWN_TOOL_TYPE PRZED utworzeniem id sesji.
-    const response = await create('nie-ma-takiego-narzedzia');
-    expect(response.status, JSON.stringify(response.body)).toBe(404);
-    expect(response.body.code).toBe('UNKNOWN_TOOL_TYPE');
+  /**
+   * FIX-D CORRECTION (adversarial self-check, 2026-08-28): the literal
+   * instruction ("!availability.exists -> 404, no exception") was proven
+   * live to break `traceabilityService.materializeMyWorkSession()`
+   * (src/services/traceabilityService.ts), which creates a
+   * `toolType: 'MYWORK'` session as the canonical source for MyWork ->
+   * output traceability. 'MYWORK' is a reserved, non-catalog session kind —
+   * it is never a row in KnownToolsService's `tools` table, so
+   * `getKnownToolAvailability('MYWORK')` always returns `exists: false`.
+   * ToolController.createToolSession therefore carries an explicit
+   * exception for it (see the comment above the availability check). This
+   * test is the mutation-proof for that correction.
+   */
+  it('still allows the reserved MYWORK session kind (200) — traceability path', async () => {
+    const response = await create('MYWORK');
+    expect(response.status, JSON.stringify(response.body)).toBe(200);
   });
 });

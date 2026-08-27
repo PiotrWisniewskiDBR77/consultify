@@ -32,13 +32,41 @@ const as = (org: string, user: string) => ({
   'x-test-role': 'admin',
 });
 
-async function driveSession(toolType: string): Promise<string> {
-  const created = await request(app)
-    .post('/api/tools')
-    .set(as(ORG_A, ACTOR_A))
-    .send({ toolType, name: `${P}${toolType}-${++sessionSequence}` });
-  expect(created.status).toBe(200);
-  const sessionId = created.body.id as string;
+/**
+ * day54 FIX-D note (2026-08-28): `POST /api/tools` now 404s
+ * (UNKNOWN_TOOL_TYPE) for any toolType absent from the KnownToolsService
+ * catalog — 'day40-generic' below is a synthetic, never-cataloged label used
+ * ONLY to exercise the honest-empty-snapshot fallback of the OUTPUT
+ * PIPELINE (`buildOutputForSession` / `promoteToOutput`), not a real
+ * discoverable tool. It was never reachable through the public creation
+ * endpoint on its own merits — the pre-FIX-D permissiveness that let it
+ * through was exactly the gap FIX-D closes. To keep exercising the
+ * downstream pipeline this scenario targets, this helper seeds the
+ * `tool_sessions` row directly (bypassing ONLY the creation gate) and then
+ * drives IN_PROGRESS -> REVIEW -> approve -> promote through the same real
+ * HTTP handlers as every other case — those handlers are untouched by
+ * FIX-D.
+ */
+async function seedSessionDirectly(toolType: string): Promise<string> {
+  const client = await db();
+  const id = (await import('node:crypto')).randomUUID();
+  const now = new Date().toISOString();
+  try {
+    await client.query(
+      `INSERT INTO tool_sessions (
+        id, organization_id, project_id, tool_type, name, status,
+        completion_percent, confidence_avg, answers_json, context_snapshot,
+        created_by, updated_by, created_at, updated_at
+      ) VALUES ($1,$2,$3,$4,$5,'DRAFT',0,0,'{}','{}',$6,$6,$7,$7)`,
+      [id, ORG_A, null, toolType, `${P}${toolType}-${++sessionSequence}`, ACTOR_A, now]
+    );
+  } finally {
+    await client.end();
+  }
+  return id;
+}
+
+async function driveAnswersApprovePromote(sessionId: string, toolType: string): Promise<void> {
   const answers =
     toolType === 'dynamic-swot'
       ? {
@@ -115,6 +143,16 @@ async function driveSession(toolType: string): Promise<string> {
     .set(as(ORG_A, ACTOR_A))
     .send({ outputType: 'report', title: `${toolType} report` });
   expect(promoted.status).toBe(200);
+}
+
+async function driveSession(toolType: string): Promise<string> {
+  const created = await request(app)
+    .post('/api/tools')
+    .set(as(ORG_A, ACTOR_A))
+    .send({ toolType, name: `${P}${toolType}-${++sessionSequence}` });
+  expect(created.status).toBe(200);
+  const sessionId = created.body.id as string;
+  await driveAnswersApprovePromote(sessionId, toolType);
   return sessionId;
 }
 
@@ -217,7 +255,12 @@ describe.sequential('Day 40 tool value chain (real Postgres)', () => {
   });
 
   it('a generic tool promotes through HTTP to an honestly empty snapshot', async () => {
-    const sessionId = await driveSession('day40-generic');
+    // day54 FIX-D: 'day40-generic' is not a cataloged tool type, so it can no
+    // longer be CREATED through the public HTTP endpoint (that gap is what
+    // FIX-D closes). Seed the session row directly to keep exercising the
+    // downstream update/approve/promote HTTP pipeline this test targets.
+    const sessionId = await seedSessionDirectly('day40-generic');
+    await driveAnswersApprovePromote(sessionId, 'day40-generic');
     const client = await db();
     const result = await client.query(
       `SELECT id,payload_json FROM tool_outputs WHERE tool_session_id=$1`,

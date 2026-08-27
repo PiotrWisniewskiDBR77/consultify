@@ -847,8 +847,26 @@ export class ToolController {
       // of a literal `&amp;` that would otherwise render un-decoded in the UI.
       const name = decodeHtmlEntities(String(rawName));
 
+      // day54 FIX-D correction (adversarial re-check, 2026-08-28): 'MYWORK' is
+      // a RESERVED, non-catalog session kind — it is never registered in
+      // KnownToolsService's `tools` table (it is not a marketplace/discovery
+      // tool at all), so `getKnownToolAvailability('MYWORK')` always returns
+      // `exists: false`. It is the canonical source type created by
+      // `traceabilityService.materializeMyWorkSession()` (src/services/
+      // traceabilityService.ts) for MyWork -> output traceability, and this
+      // same function already special-cases it below (V3-C03,
+      // `context_snapshot`). A literal `!availability.exists -> 404` here —
+      // with no exception — was proven live (real ApiGateway + real Postgres)
+      // to 404 every MYWORK session creation, breaking that traceability
+      // path. The unknown-type gate below therefore only applies to
+      // non-reserved tool types.
+      const isReservedNonCatalogToolType = String(toolType).toUpperCase() === 'MYWORK';
       const availability = await KnownToolsService.getKnownToolAvailability(String(toolType));
-      if (availability.exists && !availability.isActive) {
+      if (!isReservedNonCatalogToolType && !availability.exists) {
+        res.status(404).json({ error: 'Unknown tool type', code: 'UNKNOWN_TOOL_TYPE' });
+        return;
+      }
+      if (!isReservedNonCatalogToolType && !availability.isActive) {
         res.status(409).json({ error: 'This tool is inactive and cannot start a session yet' });
         return;
       }
