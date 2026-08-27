@@ -33,7 +33,7 @@ If a step here is skipped, the round is invalid.
 
 Default QA account for demo rounds:
 - User: `piotr.wisniewski@dbr77.com`
-- Password: `123456`
+- Password: `<HASLO>`
 
 Get/refresh known credentials:
 - `npm run fix:credentials`

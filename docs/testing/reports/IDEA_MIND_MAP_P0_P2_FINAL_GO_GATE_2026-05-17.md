@@ -74,7 +74,7 @@ Result:
 
 Command:
 
-- `E2E_QA_EMAIL=admin@dbr77.com E2E_QA_PASSWORD=123456 npx playwright test tests/e2e/smoke/qa-idea-mindmap-checklist.spec.ts -c playwright.qa.config.ts`
+- `E2E_QA_EMAIL=admin@dbr77.com E2E_QA_PASSWORD=<HASLO> npx playwright test tests/e2e/smoke/qa-idea-mindmap-checklist.spec.ts -c playwright.qa.config.ts`
 
 Latest final report:
 

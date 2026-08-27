@@ -19,7 +19,7 @@ poza tym dokumentem.**
 Rodziny `/api/system/*`, `/api/system-health/*`, `/api/health/*`, `/ping`, `/test-*`,
 `/debug-*`, `/diagnostic-*` dają razem **24 żywe trasy** (plus 1 zamkniętą). Z tych 24
 **13 jest anonimowych**, a jedna z nich — `GET /api/system/health` — **potwierdza
-anonimowemu klientowi z internetu, że para `admin@dbr77.com` / `123456` jest działającym
+anonimowemu klientowi z internetu, że para `admin@dbr77.com` / `<HASLO>` jest działającym
 poświadczeniem, i przy okazji wypisuje adresy e-mail wszystkich kont ADMIN i SUPERADMIN
 z bazy.** To jest powód priorytetu P0 i jedyna pozycja w tym rejestrze, która nie może
 czekać na kolejkę.
@@ -119,7 +119,7 @@ z tabeli wyżej pomijają 13 tras — zaznaczone jako `—` z przypisem „poza 
 
 | M | Ścieżka | Plik:linia | Moduł | Łańcuch | Koszt | Ujawnia | Klasa |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| GET | `/api/system/health` | `routes/system-health.routes.ts:375` | z myślnikiem (`index.ts:150`) | **brak — zero middleware**, poza łańcuchem | **12 zapytań SQL sekwencyjnie** + **1 × `bcrypt.compare`** | adresy e-mail wszystkich adminów, para `admin@dbr77.com`/`123456`, nazwy tabel, nazwy zmiennych env, dostawcy LLM, statystyki puli, tekst błędów DB | **DEL** |
+| GET | `/api/system/health` | `routes/system-health.routes.ts:375` | z myślnikiem (`index.ts:150`) | **brak — zero middleware**, poza łańcuchem | **12 zapytań SQL sekwencyjnie** + **1 × `bcrypt.compare`** | adresy e-mail wszystkich adminów, para `admin@dbr77.com`/`<HASLO>`, nazwy tabel, nazwy zmiennych env, dostawcy LLM, statystyki puli, tekst błędów DB | **DEL** |
 
 ### B. `/api/system-health/*` — moduł `systemHealth.routes.ts` (11 tras)
 
@@ -199,14 +199,14 @@ Konsument był martwy podwójnie i to również potwierdzam własnym pomiarem:
 
 Każda pozycja niżej została przeczytana w kodzie, nie wywnioskowana z nazwy trasy.
 
-### U1. `admin@dbr77.com` / `123456` — anonimowa wyrocznia poświadczenia (P0)
+### U1. `admin@dbr77.com` / `<HASLO>` — anonimowa wyrocznia poświadczenia (P0)
 
 `server/src/routes/system-health.routes.ts:181-230`, funkcja `checkDefaultLogin()`,
 wołana bezwarunkowo z handlera `GET /health` (`:383`):
 
 ```
 const testEmail = 'admin@dbr77.com';      // :184
-const testPassword = '123456';            // :185
+const testPassword = '<HASLO>';            // :185
 const user = await db.query('SELECT * FROM users WHERE email = $1', [testEmail]);  // :187
 const isValid = await bcrypt.compare(testPassword, user.rows[0].password);         // :200
 ```
@@ -215,12 +215,12 @@ Para trafia do odpowiedzi w **każdej z trzech gałęzi**, nie tylko w błędzie
 
 | Gałąź | Linia | Co wraca |
 | --- | --- | --- |
-| użytkownik nie istnieje | `:194` | `details: { email: 'admin@dbr77.com', password: '123456' }` |
-| hasło się nie zgadza | `:207` | `details: { email: 'admin@dbr77.com', password: '123456' }` |
+| użytkownik nie istnieje | `:194` | `details: { email: 'admin@dbr77.com', password: '<HASLO>' }` |
+| hasło się nie zgadza | `:207` | `details: { email: 'admin@dbr77.com', password: '<HASLO>' }` |
 | **hasło działa** | `:216-220` | `status: 'healthy'`, `message: 'Default credentials working'`, `details: { email, password, role: <rola konta> }` |
 
 Trzeci wiersz jest sednem: anonimowy `GET /api/system/health` zwraca **pozytywne
-potwierdzenie**, że `admin@dbr77.com` + `123456` to działający login, razem z rolą tego
+potwierdzenie**, że `admin@dbr77.com` + `<HASLO>` to działający login, razem z rolą tego
 konta. To nie jest wyciek konfiguracji — to gotowe poświadczenie podane w odpowiedzi
 HTTP. Trasa nie ma limitera i nie zostawia wpisu audytowego.
 
@@ -435,7 +435,7 @@ jest jej treść, a realnego konsumenta nie ma.
 
 | Trasa | Uzasadnienie |
 | --- | --- |
-| `GET /api/system/health` | Guard nie usuwa defektu: sprawdzanie zaszytego hasła `123456` i odsyłanie go w odpowiedzi jest złe także dla superadmina; reszta treści dubluje `/api/system-health/detailed`; jedyny konsument w `src/` (`SystemHealthDashboard.tsx:34`) jest **martwy** — plik nie jest nigdzie importowany. Usunięcie trasy zwalnia cały montaż `app.use('/api/system', …)` (`index.ts:150`), bo to jedyna trasa tego routera. |
+| `GET /api/system/health` | Guard nie usuwa defektu: sprawdzanie zaszytego hasła `<HASLO>` i odsyłanie go w odpowiedzi jest złe także dla superadmina; reszta treści dubluje `/api/system-health/detailed`; jedyny konsument w `src/` (`SystemHealthDashboard.tsx:34`) jest **martwy** — plik nie jest nigdzie importowany. Usunięcie trasy zwalnia cały montaż `app.use('/api/system', …)` (`index.ts:150`), bo to jedyna trasa tego routera. |
 | `GET /test-frontend-path` | **Zero konsumentów** — `grep -rl "test-frontend-path" src/` nie zwraca nic; ujawnia `__dirname` i układ katalogów kontenera; jej użyteczna część (rozwiązana ścieżka `dist`) była w `/api/build-info` — **KOREKTA: ta trasa nie miała realnego odbiorcy** (wpis w `src/services/api.ts:330` to allowlista, nie wywołanie) i została usunięta razem z trzema pozostałymi wariantami. |
 
 ---
@@ -455,7 +455,7 @@ Kolejność jest kolejnością wykonania, nie listą życzeń.
    z ustaleniem K2 z `SEC-PUB-001`: **nie** „zwraca 404", tylko „nieodróżnialna od trasy,
    której nigdy nie było" (aplikacja odpowiada `401` na nieznane `/api/*`).
 2. **Usunąć zaszyte poświadczenie z repozytorium.** Nawet po skasowaniu trasy literały
-   `admin@dbr77.com` i `123456` nie powinny zostać w kodzie serwera. Osobno — pytanie
+   `admin@dbr77.com` i `<HASLO>` nie powinny zostać w kodzie serwera. Osobno — pytanie
    operacyjne do właściciela, poza kodem: **czy to konto i to hasło istnieją dziś na
    PROD i na demo?** Jeśli tak, hasło do natychmiastowej zmiany, niezależnie od losu
    trasy. Tego nie sprawdzałem — wymaga zapytania do żywej bazy, a nie lektury kodu.
@@ -550,7 +550,7 @@ z ustaleniem K3 (patrz U6).
    klucze API dostawców LLM (`systemHealthService.ts:194-205` — testowana prawdziwość, nie
    wartość), `JWT_SECRET` i `DATABASE_URL` (`system-health.routes.ts:292-315` — ujawniane
    są **nazwy** zmiennych, nie ich wartości). Wyjątkiem, który nie jest sekretem tylko
-   poświadczeniem, jest zaszyte `123456` (U1).
+   poświadczeniem, jest zaszyte `<HASLO>` (U1).
 2. **Nie twierdzę, że w tych rodzinach wycieka stack trace.** Znalazłem interpolacje treści
    błędu (U5), nie serializację `error.stack`.
 3. **Nie zweryfikowano tego na żywym środowisku.** Analiza statyczna na HEAD `3957c486bf`.
@@ -590,7 +590,7 @@ pracują nad nimi równoległe strumienie. Do dopisania przez właściciela inde
    „Odkrycia stagingowe wymagające naprawy":
 
    ```
-   | `SEC-PUB-002` | Publiczna powierzchnia systemowo-diagnostyczna API | READY_FOR_DECISION | 24 trasy w 7 rodzinach, 13 anonimowych; P0: `GET /api/system/health` anonimowo potwierdza działające poświadczenie `admin@dbr77.com`/`123456` i wypisuje e-maile wszystkich adminów; 13 tras montowanych przed globalnym middleware (bez limitera i bez audytu); korekty K3 i montażu `/api/test-support` do SEC-PUB-001 |
+   | `SEC-PUB-002` | Publiczna powierzchnia systemowo-diagnostyczna API | READY_FOR_DECISION | 24 trasy w 7 rodzinach, 13 anonimowych; P0: `GET /api/system/health` anonimowo potwierdza działające poświadczenie `admin@dbr77.com`/`<HASLO>` i wypisuje e-maile wszystkich adminów; 13 tras montowanych przed globalnym middleware (bez limitera i bez audytu); korekty K3 i montażu `/api/test-support` do SEC-PUB-001 |
    ```
 
 2. `docs/program/WEEKEND_COMPLETION_2026-08-01/README.md` — odnośnik

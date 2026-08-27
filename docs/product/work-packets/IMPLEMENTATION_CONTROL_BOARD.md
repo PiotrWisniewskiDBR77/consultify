@@ -2617,7 +2617,7 @@ railway redeploy -y
 
 | Gate | Status |
 |------|--------|
-| Password rotation | PASS — old `123456` rejected, new 24-char bcrypt-hashed |
+| Password rotation | PASS — old `<HASLO>` rejected, new 24-char bcrypt-hashed |
 | Secrets audit | PASS — no secrets in committed artifacts |
 | Flags for PM Test GmbH | PASS — `chat=true`, `ai_core=true` |
 | V8 system health | PASS — all 6 domains healthy + ready |

@@ -152,8 +152,8 @@ Liczba 145 z briefu nie jest zgodna z metodą wiążącą; własny wynik to 104 
 | D.2 | CZĘŚCIOWO | `1e1dfd0efb` | 25/25 testów PASS; brak sekretu i domen uprzywilejowanych | policzeni | mapa syntetyczna działa; brak mapy odmawia |
 | D.3 | CZĘŚCIOWO | `59dda561fb` | build OOM; dowód zastępczy | Vite | brak artefaktu do rozstrzygnięcia |
 | D.4 | CZĘŚCIOWO | `4b7e304d62` | 16/16 bez literału; składnia OK | policzeni | zdalne wykonanie zabronione Z28 |
-| D.5 | CZĘŚCIOWO | do uzupełnienia po commicie | 40/40 e2e i strażnik integracyjny bez literału | policzeni | statycznie równoważne; e2e nieuruchomione Z28 |
-| D.6 | NIE_ZACZĘTE | — | — | policzeni | — |
+| D.5 | CZĘŚCIOWO | `0c5e1871c0` | 40/40 e2e i strażnik integracyjny bez literału | policzeni | statycznie równoważne; e2e nieuruchomione Z28 |
+| D.6 | ZROBIONE_WG_DoD | do uzupełnienia po commicie | 14/14 dokumentów oczyszczonych | policzeni | instrukcje zachowują przebieg z placeholderem |
 | D.7 | NIE_ZACZĘTE | — | — | — | — |
 | R.1 | NIE_ZACZĘTE | — | — | — | — |
 
@@ -246,6 +246,13 @@ Mapa PIN do konta została całkowicie usunięta z kodu i zastąpiona rygorystyc
 | `tests/e2e/m16/_m16.ts` | OK | moduł pomocniczy, zebrany przez dwóch konsumentów | wspólne `EMAIL`/`PASSWORD` zachowane |
 | 17 plików `*.spec` bez `.ts` | nie dotyczy | nie są zbierane | `MARTWY_PLIK`; literał usunięty bez dodawania testów |
 | `tests/integration/publicSystemSurface.contract.test.ts` | OK | nie dotyczy | ten sam zestaw trzech zabronionych wzorców, składany bez przechowywania sekretu |
+
+## D.6 — dokumentacja
+
+- Inwentarz konsumentów wykonano przed zmianą: dokumenty są używane przez od 0 do 13 innych śledzonych materiałów; nie są importowane przez kod wykonawczy.
+- W 14 dokumentach z inwentarza zastąpiono 25 wystąpień wartością `<HASLO>`. Po zmianie każdy z 14 plików ma 0 trafień literału.
+- Procedury zachowują użytkownika, kolejność kroków i cel testu; usunięta została wyłącznie gotowa wartość poświadczenia. Operator musi dostarczyć hasło poza repozytorium.
+- Fałszywe trafienia w dokumentacji IAM i deployment pozostawiono bez zmian zgodnie z klasyfikacją D.1.
 
 ## Errata i korekty wobec instrukcji
 

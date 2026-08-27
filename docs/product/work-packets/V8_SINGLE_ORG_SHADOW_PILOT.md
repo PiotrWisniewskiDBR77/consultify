@@ -12,7 +12,7 @@
 
 | Gate | Status | Evidence |
 |------|--------|----------|
-| Password rotation | PASS | Old `123456` rejected, new 24-char bcrypt-hashed |
+| Password rotation | PASS | Old `<HASLO>` rejected, new 24-char bcrypt-hashed |
 | Secrets audit | PASS | No secrets in committed docs or evidence |
 | Flags for PM Test GmbH | PASS | `chat=true`, `ai_core=true` |
 | V8 system health | PASS | Overall: healthy, all 6 domains ready |
@@ -26,7 +26,7 @@
 
 ## 2. Password Rotation Dependency
 
-- Old weak password (`123456`): **REJECTED** (verified at login endpoint)
+- Old weak password (`<HASLO>`): **REJECTED** (verified at login endpoint)
 - New password: 24-char random, bcrypt-hashed
 - Storage: `.env.staging.secrets` (gitignored, local-only)
 - No secrets in any committed artifact

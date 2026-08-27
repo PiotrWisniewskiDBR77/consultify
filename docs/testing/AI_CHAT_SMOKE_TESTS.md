@@ -20,7 +20,7 @@ npm run dev:stable
 npm run fix:credentials
 ```
 
-This prints known dev accounts (e.g. `piotr.wisniewski@dbr77.com / 123456`).
+This prints known dev accounts (e.g. `piotr.wisniewski@dbr77.com / <HASLO>`).
 
 - You need a valid JWT token (e.g. from browser localStorage `token`).
 
