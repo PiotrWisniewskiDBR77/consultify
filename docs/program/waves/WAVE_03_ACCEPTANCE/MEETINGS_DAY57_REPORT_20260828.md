@@ -73,7 +73,7 @@ Pierwsza instrukcyjna komenda serwerowa z korzenia zwróciła `No test files fou
 | pozycja | werdykt     | commit SHA         | dowód                                                                                                                                        |
 | ------- | ----------- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | S.1     | CZĘŚCIOWO   | `c06fd0cea9`       | 37/37 PASS, 0 SKIP przez realny ApiGateway; R1–R9 N1/N2/N4, trzy pozytywy, N5, N6; R10 N1/N2 zmierzone, N4 nie dowodzi aktywnego członkostwa |
-| S.2     | ZROBIONE    | oczekuje na commit | warstwa A: 4/4 przez realny ApiGateway; warstwa B: 3/3 wyłącznie na `createModuleGate`; inwentarz 11 odczytów i 47 symboli bramki            |
+| S.2     | ZROBIONE    | `f2fcf371ab`       | warstwa A: 4/4 przez realny ApiGateway; warstwa B: 3/3 wyłącznie na `createModuleGate`; inwentarz 11 odczytów i 47 symboli bramki            |
 | S.3     | CZĘŚCIOWO   | `01254b6289`       | trzy pomiary; naprawa cichej utraty danych; 7/7 PASS i mutacja 1 FAIL                                                                        |
 | S.4     | NIE_ZACZĘTE | —                  | —                                                                                                                                            |
 | S.5     | NIE_ZACZĘTE | —                  | —                                                                                                                                            |
@@ -81,7 +81,7 @@ Pierwsza instrukcyjna komenda serwerowa z korzenia zwróciła `No test files fou
 | S.7     | NIE_ZACZĘTE | —                  | —                                                                                                                                            |
 | S.8     | NIE_ZACZĘTE | —                  | —                                                                                                                                            |
 | S.9     | NIE_ZACZĘTE | —                  | —                                                                                                                                            |
-| S.10    | NIE_ZACZĘTE | —                  | —                                                                                                                                            |
+| S.10    | CZĘŚCIOWO   | oczekuje na commit | addytywny fixture: 12 uczestników, 2 załączniki, 1 seria; dwa identyczne przebiegi; oczekuje na zrzuty S.5–S.8                               |
 | S.11    | NIE_ZACZĘTE | —                  | —                                                                                                                                            |
 | R.1     | NIE_ZACZĘTE | —                  | —                                                                                                                                            |
 | R.2     | W_TOKU      | `770baf0e1c`       | szkielet raportu i baseline                                                                                                                  |
@@ -97,6 +97,16 @@ Pierwsza instrukcyjna komenda serwerowa z korzenia zwróciła `No test files fou
 5. **TAK dla warstwy A** — mamy realne kody `403 BETA_LOCKED`, `200`, odmowę bez `BETA_LOCKED` i `401`; sam grep służy tylko inwentarzowi.
 6. **NIE DOTYCZY** — pozycja nie oddaje zrzutu ekranu; pozytyw ADMIN działa na realnym fixture w PG.
 7. **CZĘŚCIOWO** — finalny pomiar miał `--retry=0`; mutacja produkcji jest zakazana dla S.2, a przełączalność udowodniono publicznym parametrem `resolveStatus`, więc nie wykonywano mutacji pliku `betaAccess.ts`.
+
+### S.10 — siedem odpowiedzi
+
+1. **TAK** — `seed` woła `seedPresentationData()` zarówno przy pierwszym obsianiu, jak i gdy trzy notatki już istnieją.
+2. **NIE DOTYCZY** — pozycja jest fixture'em; osiągalność ekranów zostanie zmierzona przez realny runtime w S.5–S.8.
+3. **TAK** — oba przebiegi zakończyły się readbackiem bez SKIP, na bazie o wymaganym prefiksie i loopbacku.
+4. **TAK** — każdy seed kończy niezależny SQL readback, a manifest asertuje dokładnie 12 uczestników, 2 załączniki i 1 serię.
+5. **TAK dla danych** — wynik pochodzi z realnych zapytań PG, nie z grep; kod odpowiedzi HTTP nie jest produktem tej pozycji.
+6. **CZĘŚCIOWO** — realne dane są gotowe, lecz zrzuty S.5–S.8 jeszcze nie powstały; dlatego werdykt S.10 nie jest `ZROBIONE`.
+7. **NIE DOTYCZY** — to dwa deterministyczne przebiegi seeda, nie test z retry; identyczne county i SHA manifestów dowodzą idempotencji.
 
 ## ★ DOWODY OSIĄGALNOŚCI (Z21) — pełny łańcuch per rodzina tras
 
@@ -168,7 +178,24 @@ Do uzupełnienia.
 
 ## Dane demo (§S.10) — tabela przed/po + dowód idempotencji
 
-Do uzupełnienia.
+**Werdykt: TEZA DNIA 45 OBALONA.** `ls -la` i `git log --oneline -3 -- scripts/dev/seed-wave3-meetings-owner-review.mjs` potwierdzają istniejący, wersjonowany fixture z komendami `provision|seed|readback|reset|drop`; pomiar porównawczy znalazł 10 fixture'ów `server/scripts/` plus ten jeden `scripts/dev/` dla Spotkań.
+
+| zbiór                                      | przed | po przebiegu 1 | po przebiegu 2 |
+| ------------------------------------------ | ----: | -------------: | -------------: |
+| organizations                              |     2 |              2 |              2 |
+| users                                      |     5 |              5 |              5 |
+| organization_members                       |     5 |              5 |              5 |
+| meetings                                   |     3 |              3 |              3 |
+| meeting_notes                              |     3 |              3 |              3 |
+| meeting_participants                       |     0 |             12 |             12 |
+| meeting_attachments                        |     0 |              2 |              2 |
+| spotkania z `recurrence_rule` i `timezone` |     0 |              1 |              1 |
+
+Pierwszy i drugi `seed` wykonano przez `npx tsx` z `RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres NODE_ENV=test MTG_OWNER_FIXTURE_CONFIRM=YES` oraz lokalnym `DATABASE_URL` do `127.0.0.1:5857`; każdorazowo użyto nowej ścieżki manifestu. Oba readbacki dały `12|2|1`, oba manifesty miały tryb `0600` i identyczny SHA-256 `6c83dfa6e5bf20648ccf945bf5947c6caecc71053a3046c623f683a80e7dfb79`.
+
+Rozkład per każde z trzech spotkań: organizer=`accepted/captured`, attendee owner=`accepted/sent`, attendee admin=`declined/failed`, gość optional=`no_response/captured`. Adres gościa ma wyłącznie domenę `local.test`. Seria: `FREQ=WEEKLY;BYDAY=FR`, `Europe/Warsaw`, `active`. Załączniki: istniejąca zatwierdzona notatka oraz `material` o identyfikatorze `w3-mtg-restricted-material-v1`; niezależny readback rejestru artefaktów dla tego identyfikatora zwrócił `0`, więc resolver ukryje tytuł i href przed personą `member`.
+
+Strażnik pozostał nietknięty: diff zaczyna się dopiero od `reset()` po `qualifiedUrl()` i nie zmienia wymagań loopback, prefiksu bazy ani `MTG_OWNER_FIXTURE_CONFIRM=YES`. Zmiany dodają sprzątanie dwóch nowych tabel, `seedPresentationData()`, jego wywołania oraz kontrakt readback `12/2/1`; nie zapisują potwierdzenia ani poświadczeń do pliku.
 
 ## Uwagi właściciela (§S.11) — tabela rozliczenia czterech uwag
 
