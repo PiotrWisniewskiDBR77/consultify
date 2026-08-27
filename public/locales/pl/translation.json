@@ -4330,6 +4330,7 @@
       "daily": "Codziennie",
       "weekly": "Co tydzień",
       "monthly": "Co miesiąc",
+      "recurrencePlanned": "Powtarzanie: planowane",
       "description": "Opis",
       "shortContextOrDefinition": "Krótki kontekst lub definicja done...",
       "date": "Data",

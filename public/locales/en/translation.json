@@ -5069,6 +5069,7 @@
       "daily": "Daily",
       "weekly": "Weekly",
       "monthly": "Monthly",
+      "recurrencePlanned": "Repeating: planned",
       "description": "Description",
       "shortContextOrDefinition": "Short context or definition of done...",
       "date": "Date",

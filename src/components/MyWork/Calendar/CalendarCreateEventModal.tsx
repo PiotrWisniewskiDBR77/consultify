@@ -36,8 +36,6 @@ interface CalendarCreateEventModalProps {
   onCreated?: () => void;
 }
 
-type RecurrencePreset = 'none' | 'daily' | 'weekly' | 'monthly';
-
 const toDateInputValue = (date: Date) => {
   const year = date.getFullYear();
   const month = `${date.getMonth() + 1}`.padStart(2, '0');
@@ -58,7 +56,6 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [date, setDate] = useState(toDateInputValue(defaultDate));
-  const [recurrencePreset, setRecurrencePreset] = useState<RecurrencePreset>('none');
   const [entryType, setEntryType] = useState<'event' | 'task'>('event');
   const [startTime, setStartTime] = useState('09:00');
   const [endTime, setEndTime] = useState('10:00');
@@ -76,7 +73,6 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
     setTitle('');
     setDescription('');
     setDate(toDateInputValue(defaultDate));
-    setRecurrencePreset('none');
     setEntryType('event');
     setAttendees([]);
     setDuplicateFourWeeks(false);
@@ -208,7 +204,6 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
           start: date,
           allDay: true,
           source: 'task',
-          recurrence: recurrencePreset === 'none' ? undefined : { preset: recurrencePreset },
         });
         toast.success(t('myWork.calendarCreateEvent.toastSuccess', 'Task added to calendar'));
       }
@@ -355,21 +350,9 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
         ) : null}
 
         {!v2 ? (
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-900 dark:text-slate-100">
-              {t('myWork.calendarCreateEvent.recurrence', 'Recurrence')}
-            </label>
-            <select
-              value={recurrencePreset}
-              onChange={(event) => setRecurrencePreset(event.target.value as RecurrencePreset)}
-              className="w-full rounded-lg border border-slate-300/60 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-c-focus-solid dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
-            >
-              <option value="none">{t('myWork.calendarCreateEvent.none', 'None')}</option>
-              <option value="daily">{t('myWork.calendarCreateEvent.daily', 'Daily')}</option>
-              <option value="weekly">{t('myWork.calendarCreateEvent.weekly', 'Weekly')}</option>
-              <option value="monthly">{t('myWork.calendarCreateEvent.monthly', 'Monthly')}</option>
-            </select>
-          </div>
+          <p className="text-sm text-slate-600 dark:text-slate-300">
+            {t('myWork.calendarCreateEvent.recurrencePlanned', 'Repeating: planned')}
+          </p>
         ) : null}
 
         <div className="space-y-2">

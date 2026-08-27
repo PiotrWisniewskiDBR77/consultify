@@ -820,11 +820,18 @@ router.post(
       visibility: z.enum(['private', 'busy', 'org']).optional().default('private'),
       relatedType: z.enum(['task', 'initiative', 'meeting']).nullable().optional(),
       relatedId: z.string().nullable().optional(),
+      recurrence: z.unknown().optional(),
     });
 
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({ error: 'Invalid event data', details: parsed.error.issues });
+    }
+    if (parsed.data.recurrence !== undefined) {
+      return res.status(400).json({
+        error: 'Recurrence is not supported; create independent copies instead',
+        code: 'RECURRENCE_NOT_SUPPORTED',
+      });
     }
 
     const { title, source, description } = parsed.data;

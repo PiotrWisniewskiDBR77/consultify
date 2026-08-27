@@ -181,4 +181,33 @@ describe('calendar event and meeting behavior', () => {
     expect(res.status).toBe(400);
     expect(mockQueryRun).not.toHaveBeenCalled();
   });
+
+  it('creates a one-off event when recurrence is absent', async () => {
+    const app = createApp();
+    const res = await request(app).post('/api/my-work/calendar/events').send({
+      title: 'One-off event',
+      source: 'event',
+      startAt: '2026-08-25T09:00:00.000Z',
+      endAt: '2026-08-25T10:00:00.000Z',
+    });
+
+    expect(res.status).toBe(201);
+    expect(res.body).toEqual(expect.objectContaining({ source: 'event', status: 'confirmed' }));
+  });
+
+  it('rejects recurrence explicitly before any calendar-event write', async () => {
+    const app = createApp();
+    const res = await request(app)
+      .post('/api/my-work/calendar/events')
+      .send({
+        title: 'Pretend weekly event',
+        source: 'event',
+        startAt: '2026-08-25T09:00:00.000Z',
+        endAt: '2026-08-25T10:00:00.000Z',
+        recurrence: { preset: 'weekly' },
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('RECURRENCE_NOT_SUPPORTED');
+  });
 });

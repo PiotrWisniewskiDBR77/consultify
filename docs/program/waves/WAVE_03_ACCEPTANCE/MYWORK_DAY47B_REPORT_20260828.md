@@ -251,6 +251,25 @@ Lista jest tożsama z wierszami `BRAK KONSUMENTA` w tabeli A.1 i stanowi
 denominator wejściowy dla późniejszej pozycji G.1; samo istnienie handlera nie
 jest dowodem osiągalności z UI.
 
+## B.4 — koniec atrapy „Powtarzalność"
+
+Usunięto stan, selekt i wysyłkę pola `recurrence` z legacy ścieżki modala.
+Wybrano dozwoloną przez instrukcję uczciwą notatkę „Powtarzanie: planowane”,
+ponieważ istniejący mechanizm czterech kopii tworzy własne wydarzenia V2, a
+legacy formularz tworzy zadanie; przeniesienie go na zadania rozszerzałoby
+kontrakt poza kalendarz. Serwer rozpoznaje teraz obecność `recurrence` i
+odmawia przed zapisem kodem `400 RECURRENCE_NOT_SUPPORTED`.
+
+Testy: serwerowy test celowany 9/9 PASS; helper czterech niezależnych wpisów
+2/2 PASS, w tym kontynuacja po częściowej porażce. Punktowe kompilacje
+`calendar.routes.ts` i `CalendarCreateEventModal.tsx` przez esbuild przeszły.
+Pierwsza próba testu serwerowego z configiem od roota znalazła zero plików i
+nie została uznana za PASS; właściwy przebieg wykonano z katalogu `server`.
+
+Klucze `recurrence`, `none`, `daily`, `weekly`, `monthly` w PL/EN pozostają
+świadomie osierocone po B.4 — instrukcja zabrania ich usuwać. Dodano parę
+PL/EN `recurrencePlanned` dla uczciwej notatki.
+
 ## Pozycje
 
 | Pozycja | Status          | Commit             |
