@@ -170,7 +170,7 @@ potwierdzenia pakietów metodycznych i praw.
 | ------- | --------------------------- | ----------------------------------------------------- |
 | A.1     | `CZĘŚCIOWO`                 | pomiar katalogów i werdykt martwego kodu; HTTP w toku |
 | A.2     | `W_TOKU`                    | trzy ciche połyki                                     |
-| A.3     | `W_TOKU`                    | padanie huba na 5xx                                   |
+| A.3     | `CZĘŚCIOWO`                 | 5xx degraduje tylko Insights; brak zrzutów 3365       |
 | A.4     | `POZA_ZAKRESEM_WYKONAWCZYM` | bez flipu flagi                                       |
 | B.1     | `W_TOKU`                    | forward-port `.docx`                                  |
 | B.2     | `POZA_ZAKRESEM_WYKONAWCZYM` | produkt/kontrakt dla nowych formatów                  |
@@ -185,7 +185,11 @@ potwierdzenia pakietów metodycznych i praw.
 
 ## ★ DOWODY OSIĄGALNOŚCI (Z21)
 
-W toku.
+`A.3 PRZEBIEG komponentowy`: przy włączonej wyłącznie lokalnym override fladze
+`Api.listToolOutputs` odrzuca 500, hub pozostaje zamontowany, tabela pozostałych
+danych jest widoczna, a Insights pokazuje jawny
+`tool-outputs-unavailable`. Kontrolny 500 z `listToolSessions` nadal prowadzi
+do pełnoekranowego błędu. Pakiet: 11 PASS / 0 FAIL / 0 SKIPPED.
 
 ## ★★ DOWODY MUTACYJNE W OBIE STRONY (Z29/Z32)
 
@@ -197,7 +201,8 @@ W toku.
 
 ## ★ ZRZUTY
 
-Nie wykonano; zmiana wizualna nie została jeszcze wprowadzona.
+Nie wykonano jeszcze harnessu 3365. Komponentowy stan błędu jest dowiedziony,
+ale pozycja A.3 pozostaje `CZĘŚCIOWO` bez dowodu `OCZY`.
 
 ## ★★ PLIK .docx (§B.1)
 
