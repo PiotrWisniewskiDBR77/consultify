@@ -104,12 +104,19 @@ describe.skipIf(!REAL_DB)(
       // FIX-3 (nadzorca 2026-08-28): the area-comment fallback used to be
       // the raw editorial instruction ('Sekcja do uzupełnienia — limit
       // 110–170 słów; wymagane: ...'), which reads as an unfinished
-      // template in a client-facing document. It is now the same honest
-      // sentence already shown by the "not assessed" notice above it (see
-      // areaCommentPlaceholder() in assessmentDrdReportSchemaService.ts) —
-      // and the raw instruction must not appear anywhere in the document.
+      // template in a client-facing document. It is now an honest sentence
+      // — see areaCommentPlaceholder() in assessmentDrdReportSchemaService.ts
+      // — and the raw instruction must not appear anywhere in the document.
+      // DEDUP (nadzorca 2026-08-28): for a not-assessed area with no skip
+      // notice, that honest sentence used to print TWICE (once as the
+      // dedicated not-assessed notice, once again as the area-comment
+      // fallback). The fallback is now suppressed for `not_assessed` areas,
+      // so the sentence below appears exactly once in the document.
       expect(xml).not.toContain('Sekcja do uzupełnienia');
       expect(xml).toContain('Obszaru 1C nie oceniono — brak danych źródłowych.');
+      expect(
+        xml.split('Obszaru 1C nie oceniono — brak danych źródłowych.').length - 1
+      ).toBe(1);
       expect(xml).toContain('Obszar pominięty w ocenie — kod: poza zakresem zlecenia.');
       expect(xml).toContain('Pominięte pytania: 4E-L1 — odroczone do kolejnej rewizji;');
       expect(xml).not.toMatch(/poza_zakresem_zlecenia|odroczone_do_kolejnej_rewizji/u);
