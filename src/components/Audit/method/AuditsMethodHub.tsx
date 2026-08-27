@@ -23,13 +23,25 @@
  * pigułkach zakładek (kanon: „bez liczników w Menu 2"; `StandardModuleTab`
  * nawet nie ma pola `count`, więc naruszenie nie jest tu fizycznie możliwe).
  */
-import { ClipboardList, FileText, Library, Lightbulb, Package, Plus, ShieldCheck } from 'lucide-react';
+import {
+  ClipboardList,
+  FileText,
+  Library,
+  Lightbulb,
+  Package,
+  Plus,
+  ShieldCheck,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 
-import { type StandardCounterChip, StandardModuleBar, type StandardModuleTab } from '@/components/standard';
+import {
+  type StandardCounterChip,
+  StandardModuleBar,
+  type StandardModuleTab,
+} from '@/components/standard';
 import type { StatusTone } from '@/components/ui/primitives/chips';
 import { Api } from '@/services/api';
 import {
@@ -67,7 +79,13 @@ import { AuditOutputsTab } from './tabs/AuditOutputsTab';
 import { AuditProcessesTab } from './tabs/AuditProcessesTab';
 import { AuditReportsTab } from './tabs/AuditReportsTab';
 
-export type AuditsMethodTabId = 'library' | 'processes' | 'outputs' | 'reports' | 'findings' | 'initiatives';
+export type AuditsMethodTabId =
+  | 'library'
+  | 'processes'
+  | 'outputs'
+  | 'reports'
+  | 'findings'
+  | 'initiatives';
 
 export function claimAuditStart(inFlight: Set<string>, packId: string): boolean {
   if (inFlight.has(packId)) return false;
@@ -77,7 +95,11 @@ export function claimAuditStart(inFlight: Set<string>, packId: string): boolean 
 
 export const AUDIT_START_COMMAND_NAMESPACE = 'audits.program.start.v1';
 
-export function auditStartFingerprint(organizationId: string, userId: string, packId: string): string {
+export function auditStartFingerprint(
+  organizationId: string,
+  userId: string,
+  packId: string
+): string {
   return `${organizationId}:${userId}:${packId}`;
 }
 
@@ -88,7 +110,13 @@ export function auditStartFingerprint(organizationId: string, userId: string, pa
 // flip still resolves correctly (and would fall back to `processes` if the
 // flag were ever forced OFF via localStorage/query), exactly like any other
 // unknown tab id.
-const BASE_TAB_IDS: AuditsMethodTabId[] = ['library', 'processes', 'outputs', 'reports', 'initiatives'];
+const BASE_TAB_IDS: AuditsMethodTabId[] = [
+  'library',
+  'processes',
+  'outputs',
+  'reports',
+  'initiatives',
+];
 const TAB_IDS: AuditsMethodTabId[] = isAuditsFindingsAndReportViewEnabled()
   ? ['library', 'processes', 'outputs', 'reports', 'findings', 'initiatives']
   : BASE_TAB_IDS;
@@ -164,8 +192,11 @@ export const AuditsMethodHub: React.FC = () => {
   // tor). `sourceType` zostaje filtrowalny przez lejek w nagłówku kolumny
   // tabeli (`AuditLibraryTab` → `filterable`/`filterOptions` na kolumnie
   // „Typ źródła") — mechanika kolumnowa działa niezależnie od stanu tutaj.
-  const [libraryVerification, setLibraryVerification] = useState<'all' | AuditVerificationState>('all');
+  const [libraryVerification, setLibraryVerification] = useState<'all' | AuditVerificationState>(
+    'all'
+  );
   const [processesLifecycle, setProcessesLifecycle] = useState<'all' | AuditLifecycleState>('all');
+  const [reportsReloadToken, setReportsReloadToken] = useState(0);
 
   const [packsAll, setPacksAll] = useState<AuditPackSummary[]>([]);
   const [packsLoading, setPacksLoading] = useState(true);
@@ -177,7 +208,13 @@ export const AuditsMethodHub: React.FC = () => {
     listPacks({ search })
       .then((result) => setPacksAll(result.items))
       .catch((e: any) =>
-        setPacksError(permissionAwareMessage(e, isPolish, isPolish ? 'Nie udało się wczytać biblioteki' : 'Failed to load the library'))
+        setPacksError(
+          permissionAwareMessage(
+            e,
+            isPolish,
+            isPolish ? 'Nie udało się wczytać biblioteki' : 'Failed to load the library'
+          )
+        )
       )
       .finally(() => setPacksLoading(false));
   }, [search, isPolish]);
@@ -198,7 +235,11 @@ export const AuditsMethodHub: React.FC = () => {
       .then((result) => setProgramsAll(result.items))
       .catch((e: any) =>
         setProgramsError(
-          permissionAwareMessage(e, isPolish, isPolish ? 'Nie udało się wczytać programów' : 'Failed to load programs')
+          permissionAwareMessage(
+            e,
+            isPolish,
+            isPolish ? 'Nie udało się wczytać programów' : 'Failed to load programs'
+          )
         )
       )
       .finally(() => setProgramsLoading(false));
@@ -211,7 +252,9 @@ export const AuditsMethodHub: React.FC = () => {
 
   const filteredPacks = useMemo(
     () =>
-      packsAll.filter((p) => libraryVerification === 'all' || p.verificationStatus === libraryVerification),
+      packsAll.filter(
+        (p) => libraryVerification === 'all' || p.verificationStatus === libraryVerification
+      ),
     [packsAll, libraryVerification]
   );
 
@@ -259,21 +302,37 @@ export const AuditsMethodHub: React.FC = () => {
     async (pack: AuditPackSummary) => {
       if (!claimAuditStart(startsInFlight.current, pack.id)) return;
       setStartingPackId(pack.id);
-      const toastId = toast.loading(isPolish ? `Uruchamianie audytu „${pack.title}"…` : `Starting audit "${pack.title}"…`);
+      const toastId = toast.loading(
+        isPolish ? `Uruchamianie audytu „${pack.title}"…` : `Starting audit "${pack.title}"…`
+      );
       try {
         if (!currentOrganizationId || !currentUserId) {
-          throw new Error(isPolish ? 'Brak aktywnej organizacji lub użytkownika.' : 'No active organization or user.');
+          throw new Error(
+            isPolish
+              ? 'Brak aktywnej organizacji lub użytkownika.'
+              : 'No active organization or user.'
+          );
         }
-        const commandFingerprint = auditStartFingerprint(currentOrganizationId, currentUserId, pack.id);
-        const idempotencyKey = persistentCommandId(AUDIT_START_COMMAND_NAMESPACE, commandFingerprint);
-        const created = await createProgram({
-          packId: pack.id,
-          // `formatListDate` (SSOT `utils/listDateFormat.ts`), NIE
-          // `toLocaleDateString()` bez locale — ten ostatni bierze locale z
-          // przeglądarki, nie z języka konta, i to jest dokładnie defekt,
-          // który dał `6/18/2026` na koncie polskim (C4 audytu jakości list).
-          name: `${pack.title} — ${formatListDate(new Date())}`,
-        }, idempotencyKey);
+        const commandFingerprint = auditStartFingerprint(
+          currentOrganizationId,
+          currentUserId,
+          pack.id
+        );
+        const idempotencyKey = persistentCommandId(
+          AUDIT_START_COMMAND_NAMESPACE,
+          commandFingerprint
+        );
+        const created = await createProgram(
+          {
+            packId: pack.id,
+            // `formatListDate` (SSOT `utils/listDateFormat.ts`), NIE
+            // `toLocaleDateString()` bez locale — ten ostatni bierze locale z
+            // przeglądarki, nie z języka konta, i to jest dokładnie defekt,
+            // który dał `6/18/2026` na koncie polskim (C4 audytu jakości list).
+            name: `${pack.title} — ${formatListDate(new Date())}`,
+          },
+          idempotencyKey
+        );
         const readback = await getProgram(created.id);
         if (!readback || readback.id !== created.id || readback.packId !== pack.id) {
           throw new Error(
@@ -286,12 +345,18 @@ export const AuditsMethodHub: React.FC = () => {
         setProgramsAll(refreshed.items);
         setProgramsError(null);
         clearPersistentCommandId(AUDIT_START_COMMAND_NAMESPACE, commandFingerprint);
-        toast.success(isPolish ? 'Program audytowy utworzony' : 'Audit program created', { id: toastId });
+        toast.success(isPolish ? 'Program audytowy utworzony' : 'Audit program created', {
+          id: toastId,
+        });
         setActiveTab('processes');
         setNewAuditModalOpen(false);
       } catch (e: any) {
         toast.error(
-          permissionAwareMessage(e, isPolish, isPolish ? 'Nie udało się rozpocząć audytu' : 'Failed to start the audit'),
+          permissionAwareMessage(
+            e,
+            isPolish,
+            isPolish ? 'Nie udało się rozpocząć audytu' : 'Failed to start the audit'
+          ),
           { id: toastId }
         );
       } finally {
@@ -304,7 +369,11 @@ export const AuditsMethodHub: React.FC = () => {
 
   const tabs: StandardModuleTab[] = useMemo(() => {
     const base: StandardModuleTab[] = [
-      { id: 'library', label: t('audits.method.tabs.library', 'Library'), icon: <Library size={16} /> },
+      {
+        id: 'library',
+        label: t('audits.method.tabs.library', 'Library'),
+        icon: <Library size={16} />,
+      },
       {
         id: 'processes',
         // Id URL zostaje `processes` (linki/deep-linki nie mogą się zepsuć) —
@@ -314,8 +383,16 @@ export const AuditsMethodHub: React.FC = () => {
         label: t('audits.method.tabs.processes', isPolish ? 'Sesje' : 'Sessions'),
         icon: <ClipboardList size={16} />,
       },
-      { id: 'outputs', label: t('audits.method.tabs.outputs', 'Outputs'), icon: <Package size={16} /> },
-      { id: 'reports', label: t('audits.method.tabs.reports', 'Reports'), icon: <FileText size={16} /> },
+      {
+        id: 'outputs',
+        label: t('audits.method.tabs.outputs', 'Outputs'),
+        icon: <Package size={16} />,
+      },
+      {
+        id: 'reports',
+        label: t('audits.method.tabs.reports', 'Reports'),
+        icon: <FileText size={16} />,
+      },
     ];
     if (isAuditsFindingsAndReportViewEnabled()) {
       base.push({
@@ -335,9 +412,18 @@ export const AuditsMethodHub: React.FC = () => {
   // Menu 3 = JEDEN tor (kanon A3/DEC-2026-08-25-66) — Library i Processes
   // dzielą dokładnie ten sam wbudowany `chips`/`activeChip`/`onChipChange`
   // mechanizm StandardModuleBar, zero escape-hatchu `commandRowContent`.
-  const chips = activeTab === 'library' ? verificationChips : activeTab === 'processes' ? processesChips : undefined;
+  const chips =
+    activeTab === 'library'
+      ? verificationChips
+      : activeTab === 'processes'
+        ? processesChips
+        : undefined;
   const activeChip =
-    activeTab === 'library' ? libraryVerification : activeTab === 'processes' ? processesLifecycle : null;
+    activeTab === 'library'
+      ? libraryVerification
+      : activeTab === 'processes'
+        ? processesLifecycle
+        : null;
   const onChipChange =
     activeTab === 'library'
       ? (id: string) => setLibraryVerification(id as 'all' | AuditVerificationState)
@@ -367,21 +453,26 @@ export const AuditsMethodHub: React.FC = () => {
     return map;
   }, [packsAll]);
 
-  const [orgUsers, setOrgUsers] = useState<Array<{ id: string; firstName: string; lastName: string }>>([]);
+  const [orgUsers, setOrgUsers] = useState<
+    Array<{ id: string; firstName: string; lastName: string }>
+  >([]);
   useEffect(() => {
     let cancelled = false;
     Api.getUsers()
       .then((fetched) => {
         if (!cancelled) setOrgUsers(fetched || []);
       })
-      .catch((err) => console.error('[AuditsMethodHub] Failed to load users for name resolution', err));
+      .catch((err) =>
+        console.error('[AuditsMethodHub] Failed to load users for name resolution', err)
+      );
     return () => {
       cancelled = true;
     };
   }, []);
   const userNameById = useMemo(() => {
     const map = new Map<string, string>();
-    for (const u of orgUsers) map.set(u.id, `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.id);
+    for (const u of orgUsers)
+      map.set(u.id, `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.id);
     return map;
   }, [orgUsers]);
 
@@ -430,11 +521,24 @@ export const AuditsMethodHub: React.FC = () => {
             userNameById={userNameById}
           />
         ) : activeTab === 'outputs' ? (
-          <AuditOutputsTab isPolish={isPolish} programNameById={programNameById} userNameById={userNameById} />
+          <AuditOutputsTab
+            isPolish={isPolish}
+            programNameById={programNameById}
+            userNameById={userNameById}
+            onReportCreated={() => setReportsReloadToken((value) => value + 1)}
+          />
         ) : activeTab === 'reports' ? (
-          <AuditReportsTab isPolish={isPolish} programNameById={programNameById} />
+          <AuditReportsTab
+            isPolish={isPolish}
+            programNameById={programNameById}
+            reloadToken={reportsReloadToken}
+          />
         ) : activeTab === 'findings' ? (
-          <AuditFindingsTab isPolish={isPolish} programs={programsAll} userNameById={userNameById} />
+          <AuditFindingsTab
+            isPolish={isPolish}
+            programs={programsAll}
+            userNameById={userNameById}
+          />
         ) : (
           <AuditInitiativesTab isPolish={isPolish} programNameById={programNameById} />
         )}

@@ -27,6 +27,7 @@ import {
 import type { ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
 import { ErrorState } from '@/components/shared/states';
 import { DueChip, StatusChip } from '@/components/ui/primitives/chips';
+import { isAuditsReportChainEnabled } from '@/utils/auditsReportChainFlag';
 import { isAuditsScaleAndPolishEnabled } from '@/utils/auditsScaleAndPolishFlag';
 import { formatListDate } from '@/utils/listDateFormat';
 
@@ -34,6 +35,7 @@ import { auditRoleLabel } from '../auditRoleLabels';
 import { programLifecycleLabel, programLifecycleTone } from '../auditStatusTones';
 import {
   AUDIT_LIFECYCLE_STATES,
+  finalizeOutput,
   getProgram,
   getProgramCoverage,
   getProgramLifecycle,
@@ -44,6 +46,7 @@ import {
   type AuditProgramLifecycle,
   type AuditProgramSummary,
   type AuditCriterionSummary,
+  type AuditOutputSummary,
 } from '../auditsMethodApi';
 import { AuditCriteriaBrowser } from './AuditCriteriaBrowser';
 
@@ -91,6 +94,10 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
   const [criteriaError, setCriteriaError] = useState<string | null>(null);
   const scaleAndPolishEnabled = React.useMemo(() => isAuditsScaleAndPolishEnabled(), []);
   const [criteriaBrowserOpen, setCriteriaBrowserOpen] = useState(false);
+  const reportChainEnabled = React.useMemo(() => isAuditsReportChainEnabled(), []);
+  const [finalizingOutput, setFinalizingOutput] = useState(false);
+  const [finalizeResult, setFinalizeResult] = useState<AuditOutputSummary | null>(null);
+  const [finalizeError, setFinalizeError] = useState<string | null>(null);
 
   useEffect(() => {
     if (initialSelectedId) setSelectedId(initialSelectedId);
@@ -110,7 +117,12 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
     let cancelled = false;
     setDetailLoading(true);
     setCriteriaError(null);
-    Promise.all([getProgram(selectedId), getProgramCoverage(selectedId), getProgramLifecycle(selectedId), listProgramCriteria(selectedId)])
+    Promise.all([
+      getProgram(selectedId),
+      getProgramCoverage(selectedId),
+      getProgramLifecycle(selectedId),
+      listProgramCriteria(selectedId),
+    ])
       .then(([programResult, coverageResult, lifecycleResult, criteriaResult]) => {
         if (cancelled) return;
         setDetail(programResult);
@@ -124,7 +136,9 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
           setCoverage(null);
           setLifecycle(null);
           setCriteria([]);
-          setCriteriaError(isPolish ? 'Nie udało się wczytać kryteriów.' : 'Could not load criteria.');
+          setCriteriaError(
+            isPolish ? 'Nie udało się wczytać kryteriów.' : 'Could not load criteria.'
+          );
         }
       })
       .finally(() => {
@@ -153,6 +167,34 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
     }
   };
 
+  const handleFinalizeOutput = async () => {
+    if (!selectedId || finalizingOutput) return;
+    setFinalizingOutput(true);
+    setFinalizeError(null);
+    try {
+      const output = await finalizeOutput(selectedId);
+      setFinalizeResult(output);
+      onProgramChanged();
+    } catch (error: any) {
+      const status = error?.response?.status ?? error?.status;
+      if (status === 403) {
+        setFinalizeError(
+          isPolish
+            ? 'Brak wymaganego uprawnienia: output.finalize.'
+            : 'Missing required permission: output.finalize.'
+        );
+      } else {
+        setFinalizeError(
+          error?.response?.data?.error ||
+            error?.message ||
+            (isPolish ? 'Nie udało się sfinalizować Outputu.' : 'Could not finalize the Output.')
+        );
+      }
+    } finally {
+      setFinalizingOutput(false);
+    }
+  };
+
   const columns: TableColumn[] = [
     {
       id: 'name',
@@ -168,7 +210,9 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
       render: (row: AuditProgramSummary) => (
         <span className="text-xs text-c-text-secondary truncate block max-w-[160px]">
           {packTitleById.get(row.packId) ||
-            (row.packTitle ? `${row.packTitle}${row.packVersion ? ` v${row.packVersion}` : ''}` : '—')}
+            (row.packTitle
+              ? `${row.packTitle}${row.packVersion ? ` v${row.packVersion}` : ''}`
+              : '—')}
         </span>
       ),
     },
@@ -213,9 +257,12 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
       label: isPolish ? 'Audytor wiodący' : 'Lead auditor',
       width: '160px',
       render: (row: AuditProgramSummary) => {
-        const name = (row.leadAuditorId && userNameById.get(row.leadAuditorId)) || row.leadAuditorName;
+        const name =
+          (row.leadAuditorId && userNameById.get(row.leadAuditorId)) || row.leadAuditorName;
         return (
-          <span className="text-sm text-c-text truncate">{name || <span className="text-slate-400">—</span>}</span>
+          <span className="text-sm text-c-text truncate">
+            {name || <span className="text-slate-400">—</span>}
+          </span>
         );
       },
     },
@@ -225,7 +272,9 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
       width: '110px',
       sortable: true,
       render: (row: AuditProgramSummary) => (
-        <span className="text-xs text-c-text-secondary tabular-nums">{formatListDate(row.plannedStart)}</span>
+        <span className="text-xs text-c-text-secondary tabular-nums">
+          {formatListDate(row.plannedStart)}
+        </span>
       ),
     },
     {
@@ -241,14 +290,21 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
         // suppressed (`due={null}`) exactly like Execution's deadline column
         // does for terminal rows.
         if (!scaleAndPolishEnabled) {
-          return <span className="text-xs text-c-text-secondary tabular-nums">{formatListDate(row.plannedEnd)}</span>;
+          return (
+            <span className="text-xs text-c-text-secondary tabular-nums">
+              {formatListDate(row.plannedEnd)}
+            </span>
+          );
         }
         const isTerminal = row.lifecycleState === 'closed';
         const effectiveDue = isTerminal ? null : row.plannedEnd;
-        const overdue = !isTerminal && !!row.plannedEnd && new Date(row.plannedEnd).getTime() < Date.now();
+        const overdue =
+          !isTerminal && !!row.plannedEnd && new Date(row.plannedEnd).getTime() < Date.now();
         return (
           <DueChip
-            label={overdue ? (isPolish ? 'Po terminie' : 'Overdue') : formatListDate(row.plannedEnd)}
+            label={
+              overdue ? (isPolish ? 'Po terminie' : 'Overdue') : formatListDate(row.plannedEnd)
+            }
             due={effectiveDue}
             showIcon
             title={overdue ? formatListDate(row.plannedEnd) : undefined}
@@ -262,7 +318,9 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
       width: '140px',
       sortable: true,
       render: (row: AuditProgramSummary) => (
-        <span className="text-xs text-c-text-secondary tabular-nums">{formatListDate(row.updatedAt)}</span>
+        <span className="text-xs text-c-text-secondary tabular-nums">
+          {formatListDate(row.updatedAt)}
+        </span>
       ),
     },
   ];
@@ -279,7 +337,11 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
     return (
       <div className="p-4">
         <ErrorState
-          title={isPolish ? 'Nie udało się wczytać programów audytowych' : 'Could not load audit programs'}
+          title={
+            isPolish
+              ? 'Nie udało się wczytać programów audytowych'
+              : 'Could not load audit programs'
+          }
           description={error}
           onRetry={onRetry}
         />
@@ -382,6 +444,43 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
             }
             relationsEmptyLabel={isPolish ? 'Brak przypisanego zespołu' : 'No team assigned'}
           >
+            {reportChainEnabled ? (
+              <div
+                className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5"
+                data-testid="audit-finalize-output-control"
+              >
+                <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
+                  {isPolish ? 'Output programu' : 'Program Output'}
+                </div>
+                <button
+                  type="button"
+                  disabled={finalizingOutput}
+                  onClick={() => void handleFinalizeOutput()}
+                  className="inline-flex h-8 items-center rounded-full border border-c-border bg-c-surface px-3 text-xs font-medium text-c-text transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                >
+                  {finalizingOutput
+                    ? isPolish
+                      ? 'Finalizowanie…'
+                      : 'Finalizing…'
+                    : isPolish
+                      ? 'Sfinalizuj Output'
+                      : 'Finalize Output'}
+                </button>
+                {finalizeResult ? (
+                  <p className="mt-2 text-xs text-c-text-secondary" role="status">
+                    {isPolish ? 'Utworzono Output' : 'Output created'} v{finalizeResult.version} ·{' '}
+                    <span className="font-mono">
+                      {(finalizeResult.contentHash || '—').slice(0, 12)}
+                    </span>
+                  </p>
+                ) : null}
+                {finalizeError ? (
+                  <p className="mt-2 text-xs text-c-danger" role="alert">
+                    {finalizeError}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
             <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5">
               <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
                 {isPolish ? 'Bramki następnego etapu' : 'Next-stage gates'}
@@ -392,7 +491,9 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
                 </div>
               ) : lifecycle.allowed.length === 0 ? (
                 <div className="text-xs text-c-text-muted">
-                  {isPolish ? 'Brak dalszych przejść z tego etapu.' : 'No further transitions from this stage.'}
+                  {isPolish
+                    ? 'Brak dalszych przejść z tego etapu.'
+                    : 'No further transitions from this stage.'}
                 </div>
               ) : (
                 <div className="space-y-1.5">
@@ -422,7 +523,10 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
                 </div>
               )}
             </div>
-            <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5" data-testid="audit-criteria-navigator">
+            <div
+              className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5"
+              data-testid="audit-criteria-navigator"
+            >
               <div className="mb-1.5 flex items-center justify-between gap-2">
                 <div className="text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
                   {isPolish ? 'Kryteria — otwórz warsztat' : 'Criteria — open workspace'}
@@ -453,7 +557,8 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
                       className="flex w-full items-center justify-between gap-2 rounded-lg border border-c-border-subtle bg-c-surface px-2 py-1.5 text-left hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                     >
                       <span className="min-w-0 truncate text-xs font-medium text-c-text">
-                        {item.refCode ? `${item.refCode} · ` : ''}{item.title}
+                        {item.refCode ? `${item.refCode} · ` : ''}
+                        {item.title}
                       </span>
                       <span className="shrink-0 text-[10px] text-c-text-muted">
                         {item.evidenceCount} / {item.findingCount}

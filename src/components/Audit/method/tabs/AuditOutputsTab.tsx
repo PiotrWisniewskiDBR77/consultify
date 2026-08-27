@@ -10,8 +10,9 @@
  * dowód integralności czyta się przy weryfikacji, nie przy skanowaniu listy.
  * Żyje wyłącznie w panelu podglądu (klik wiersza / kebab „Podgląd").
  */
-import { Package } from 'lucide-react';
+import { FileText, Package, Wrench } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 import {
   type StandardRowMenu,
@@ -23,9 +24,17 @@ import {
 import type { ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
 import { ErrorState } from '@/components/shared/states';
 import { StatusChip } from '@/components/ui/primitives/chips';
+import { Button } from '@/components/ui/primitives/Button';
+import { Modal } from '@/components/ui/primitives/Modal';
+import { isAuditsReportChainEnabled } from '@/utils/auditsReportChainFlag';
 import { formatListDate } from '@/utils/listDateFormat';
 
-import { listOutputs, type AuditOutputSummary } from '../auditsMethodApi';
+import {
+  generateReport,
+  listOutputs,
+  type AuditOutputSummary,
+  type AuditReportSummary,
+} from '../auditsMethodApi';
 
 export interface AuditOutputsTabProps {
   isPolish: boolean;
@@ -38,6 +47,7 @@ export interface AuditOutputsTabProps {
    */
   programNameById?: Map<string, string>;
   userNameById?: Map<string, string>;
+  onReportCreated?: (report: AuditReportSummary) => void;
 }
 
 const EMPTY_MAP = new Map<string, string>();
@@ -46,24 +56,68 @@ export const AuditOutputsTab: React.FC<AuditOutputsTabProps> = ({
   isPolish,
   programNameById = EMPTY_MAP,
   userNameById = EMPTY_MAP,
+  onReportCreated,
 }) => {
+  const reportChainEnabled = isAuditsReportChainEnabled();
   const [items, setItems] = useState<AuditOutputSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [creatingReport, setCreatingReport] = useState<string | null>(null);
+  const [createdReport, setCreatedReport] = useState<AuditReportSummary | null>(null);
+  const [reportError, setReportError] = useState<string | null>(null);
+  const [remediationOutput, setRemediationOutput] = useState<AuditOutputSummary | null>(null);
+  const [asOfDate, setAsOfDate] = useState('');
 
   const load = useCallback(() => {
     setLoading(true);
     setError(null);
     listOutputs()
       .then((result) => setItems(result.items))
-      .catch((e: any) => setError(e?.message || (isPolish ? 'Nie udało się wczytać Outputów' : 'Failed to load Outputs')))
+      .catch((e: any) =>
+        setError(
+          e?.message || (isPolish ? 'Nie udało się wczytać Outputów' : 'Failed to load Outputs')
+        )
+      )
       .finally(() => setLoading(false));
   }, [isPolish]);
 
   useEffect(() => {
     load();
   }, [load]);
+
+  const createReport = useCallback(
+    async (
+      output: AuditOutputSummary,
+      reportKind: 'audit_report' | 'remediation_progress',
+      date?: string
+    ) => {
+      if (creatingReport || output.supersededBy) return;
+      setCreatingReport(`${output.id}:${reportKind}`);
+      setReportError(null);
+      try {
+        const report = await generateReport({
+          programId: output.programId,
+          outputId: output.id,
+          reportKind,
+          ...(date ? { asOfDate: date } : {}),
+        });
+        setCreatedReport(report);
+        onReportCreated?.(report);
+        setRemediationOutput(null);
+        setAsOfDate('');
+      } catch (e: any) {
+        setReportError(
+          e?.response?.data?.error ||
+            e?.message ||
+            (isPolish ? 'Nie udało się wygenerować raportu.' : 'Could not generate the report.')
+        );
+      } finally {
+        setCreatingReport(null);
+      }
+    },
+    [creatingReport, isPolish, onReportCreated]
+  );
 
   const columns: TableColumn[] = [
     {
@@ -106,7 +160,9 @@ export const AuditOutputsTab: React.FC<AuditOutputsTabProps> = ({
       width: '160px',
       sortable: true,
       render: (row: AuditOutputSummary) => (
-        <span className="text-xs text-c-text-secondary tabular-nums">{formatListDate(row.finalizedAt)}</span>
+        <span className="text-xs text-c-text-secondary tabular-nums">
+          {formatListDate(row.finalizedAt)}
+        </span>
       ),
     },
     {
@@ -116,7 +172,9 @@ export const AuditOutputsTab: React.FC<AuditOutputsTabProps> = ({
       render: (row: AuditOutputSummary) => {
         const name = (row.finalizedBy && userNameById.get(row.finalizedBy)) || row.finalizedByName;
         return (
-          <span className="text-sm text-c-text truncate">{name || <span className="text-slate-400">—</span>}</span>
+          <span className="text-sm text-c-text truncate">
+            {name || <span className="text-slate-400">—</span>}
+          </span>
         );
       },
     },
@@ -126,7 +184,33 @@ export const AuditOutputsTab: React.FC<AuditOutputsTabProps> = ({
   // (§C6: hash treści nie jest informacją pierwszego rzutu oka).
   const rowMenu = (rawRow: TableRow): StandardRowMenu => {
     const row = rawRow as unknown as AuditOutputSummary;
-    return { universalHandlers: { preview: () => setSelectedId(row.id) } };
+    const current = !row.supersededBy;
+    const disabledReason = isPolish
+      ? 'Raport można wygenerować tylko z aktualnej wersji Outputu.'
+      : 'A report can only be generated from the current Output version.';
+    return {
+      statusTransitions: reportChainEnabled
+        ? [
+            {
+              id: 'generate-audit-report',
+              label: isPolish ? 'Generuj raport audytu' : 'Generate audit report',
+              icon: FileText,
+              onClick: current ? () => void createReport(row, 'audit_report') : undefined,
+              disabled: !current || creatingReport !== null,
+              note: current ? undefined : disabledReason,
+            },
+            {
+              id: 'generate-remediation-report',
+              label: isPolish ? 'Generuj raport naprawczy' : 'Generate remediation report',
+              icon: Wrench,
+              onClick: current ? () => setRemediationOutput(row) : undefined,
+              disabled: !current || creatingReport !== null,
+              note: current ? undefined : disabledReason,
+            },
+          ]
+        : undefined,
+      universalHandlers: { preview: () => setSelectedId(row.id) },
+    };
   };
 
   const selected = items.find((o) => o.id === selectedId) || null;
@@ -158,7 +242,9 @@ export const AuditOutputsTab: React.FC<AuditOutputsTabProps> = ({
           id: 'finalizedBy',
           label: isPolish ? 'Kto' : 'By',
           value:
-            (selected.finalizedBy && userNameById.get(selected.finalizedBy)) || selected.finalizedByName || '—',
+            (selected.finalizedBy && userNameById.get(selected.finalizedBy)) ||
+            selected.finalizedByName ||
+            '—',
         },
         {
           id: 'status',
@@ -198,6 +284,27 @@ export const AuditOutputsTab: React.FC<AuditOutputsTabProps> = ({
   return (
     <div className="flex h-full min-h-0">
       <div className="flex-1 min-w-0 overflow-auto p-4">
+        {reportChainEnabled && (createdReport || reportError) ? (
+          <div className="mb-3 rounded-xl border border-c-border-subtle bg-c-surface-raised p-3 text-xs">
+            {createdReport ? (
+              <p className="text-c-text" role="status">
+                {isPolish ? 'Utworzono' : 'Created'} {createdReport.reportKind} v
+                {createdReport.version}.{' '}
+                <Link
+                  to={`/audit-programs/reports/${encodeURIComponent(createdReport.id)}`}
+                  className="font-medium text-c-focus-solid underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                >
+                  {isPolish ? 'Otwórz raport' : 'Open report'}
+                </Link>
+              </p>
+            ) : null}
+            {reportError ? (
+              <p className="text-c-danger" role="alert">
+                {reportError}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
         <StandardTable
           columns={columns}
           data={items}
@@ -210,8 +317,12 @@ export const AuditOutputsTab: React.FC<AuditOutputsTabProps> = ({
             icon: Package,
             title: isPolish ? 'Brak Outputów' : 'No Outputs yet',
             description: isPolish
-              ? 'Output powstaje automatycznie przy finalizacji programu audytowego (zamknięcie etapu closure) — jest wtedy niezmienny i wersjonowany. Żaden program nie doszedł jeszcze do tego etapu.'
-              : 'An Output is created automatically when an audit program is finalized (closure stage) — it is then immutable and versioned. No program has reached that stage yet.',
+              ? reportChainEnabled
+                ? 'Output powstaje przez osobną, jawną finalizację programu audytowego. Otwórz sesję na zakładce Sesje i użyj „Sfinalizuj Output”.'
+                : 'Output powstaje przez osobną, jawną finalizację programu audytowego. W tej wersji interfejsu ta czynność nie jest dostępna z ekranu.'
+              : reportChainEnabled
+                ? 'An Output is created by a separate, explicit audit-program finalization. Open the session on Sessions and use “Finalize Output”.'
+                : 'An Output is created by a separate, explicit audit-program finalization. This action is not available from the screen in this interface version.',
           }}
         />
       </div>
@@ -226,9 +337,71 @@ export const AuditOutputsTab: React.FC<AuditOutputsTabProps> = ({
               propertyLabel: isPolish ? 'Właściwość' : 'Property',
               valueLabel: isPolish ? 'Wartość' : 'Value',
             }}
-          />
+          >
+            {reportChainEnabled ? (
+              <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5">
+                <p className="text-xs text-c-text-secondary">
+                  {isPolish
+                    ? 'Raporty utworzysz z menu wiersza (⋮).'
+                    : 'Create reports from the row menu (⋮).'}
+                </p>
+                {createdReport ? (
+                  <p className="mt-2 text-xs text-c-text" role="status">
+                    {isPolish ? 'Utworzono' : 'Created'} {createdReport.reportKind} v
+                    {createdReport.version}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+          </StandardPreview>
         </div>
       ) : null}
+      <Modal
+        open={remediationOutput !== null}
+        onClose={() => {
+          if (!creatingReport) setRemediationOutput(null);
+        }}
+        title={isPolish ? 'Generuj raport naprawczy' : 'Generate remediation report'}
+        description={
+          isPolish
+            ? 'Data stanu jest opcjonalna. Puste pole oznacza dzisiejszą datę po stronie serwera.'
+            : "The as-of date is optional. Empty means today's date on the server."
+        }
+        size="sm"
+        footer={
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="secondary"
+              disabled={creatingReport !== null}
+              onClick={() => setRemediationOutput(null)}
+            >
+              {isPolish ? 'Anuluj' : 'Cancel'}
+            </Button>
+            <Button
+              variant="primary"
+              loading={creatingReport !== null}
+              disabled={!remediationOutput || creatingReport !== null}
+              onClick={() =>
+                remediationOutput &&
+                void createReport(remediationOutput, 'remediation_progress', asOfDate)
+              }
+            >
+              {isPolish ? 'Generuj' : 'Generate'}
+            </Button>
+          </div>
+        }
+      >
+        <label className="flex flex-col gap-1.5 text-sm text-c-text">
+          <span>{isPolish ? 'Stan na dzień (opcjonalnie)' : 'As-of date (optional)'}</span>
+          <input
+            type="date"
+            value={asOfDate}
+            onChange={(event) => setAsOfDate(event.target.value)}
+            disabled={creatingReport !== null}
+            className="rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 focus:outline-none focus:ring-2 focus:ring-c-focus"
+          />
+        </label>
+      </Modal>
     </div>
   );
 };

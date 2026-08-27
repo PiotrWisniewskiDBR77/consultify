@@ -30,6 +30,7 @@ import type { ArtifactPropertyRow } from '@/components/standard/ArtifactProperti
 import { ErrorState } from '@/components/shared/states';
 import { StatusChip } from '@/components/ui/primitives/chips';
 import { isAuditsFindingsAndReportViewEnabled } from '@/utils/auditsFindingsAndReportViewFlag';
+import { isAuditsReportChainEnabled } from '@/utils/auditsReportChainFlag';
 import { formatListDate } from '@/utils/listDateFormat';
 
 import { reportStatusLabel, reportStatusTone } from '../auditStatusTones';
@@ -50,6 +51,7 @@ export interface AuditReportsTabProps {
    * danych, które Hub już wczytał (`programsAll`).
    */
   programNameById?: Map<string, string>;
+  reloadToken?: number;
 }
 
 const EMPTY_MAP = new Map<string, string>();
@@ -62,7 +64,9 @@ const REPORT_KIND_LABEL: Record<string, { pl: string; en: string }> = {
 export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
   isPolish,
   programNameById = EMPTY_MAP,
+  reloadToken = 0,
 }) => {
+  const reportChainEnabled = isAuditsReportChainEnabled();
   const navigate = useNavigate();
   const [items, setItems] = useState<AuditReportSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,19 +74,25 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [transitioning, setTransitioning] = useState<string | null>(null);
   const [transitionError, setTransitionError] = useState<string | null>(null);
+  const [exportingId, setExportingId] = useState<string | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const load = useCallback(() => {
     setLoading(true);
     setError(null);
     listReports()
       .then((result) => setItems(result.items))
-      .catch((e: any) => setError(e?.message || (isPolish ? 'Nie udało się wczytać raportów' : 'Failed to load reports')))
+      .catch((e: any) =>
+        setError(
+          e?.message || (isPolish ? 'Nie udało się wczytać raportów' : 'Failed to load reports')
+        )
+      )
       .finally(() => setLoading(false));
   }, [isPolish]);
 
   useEffect(() => {
     load();
-  }, [load]);
+  }, [load, reloadToken]);
 
   const runTransition = useCallback(
     async (id: string, action: 'approve' | 'publish') => {
@@ -98,13 +108,63 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
       } catch (e: any) {
         setTransitionError(
           e?.message ||
-            (isPolish ? 'Nie udało się zmienić statusu raportu' : 'Failed to change the report status')
+            (isPolish
+              ? 'Nie udało się zmienić statusu raportu'
+              : 'Failed to change the report status')
         );
       } finally {
         setTransitioning(null);
       }
     },
     [isPolish, load]
+  );
+
+  /**
+   * FIX-1 (dyżur 41, odbiór): `GET /reports/:id/export.docx` istniało od
+   * dawna i renderowało realny DOCX (`renderDocumentSchemaToDocxBuffer`),
+   * ale `grep -rn "export.docx" src/` dawał 0 trafień — żaden ekran nie
+   * miał wołacza. Wzorzec pobierania (blob → tymczasowy `<a download>` →
+   * revoke) skopiowany z `AuditReportDocumentView.tsx` (D.9), która ma tę
+   * samą trasę spiętą w pełnym widoku raportu; tu dopinamy DRUGIE miejsce —
+   * kanoniczny slot `⋮ Pobierz` w kebabie bloku Details podglądu
+   * (`StandardPreviewDetails.onDownload`, patrz `StandardPreview.tsx`) —
+   * żeby ścieżka istniała też z samej listy, bez otwierania pełnego widoku.
+   */
+  const downloadReportDocx = useCallback(
+    async (report: AuditReportSummary) => {
+      if (exportingId) return;
+      setExportingId(report.id);
+      setExportError(null);
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(
+          `/api/audits/reports/${encodeURIComponent(report.id)}/export.docx`,
+          { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+        );
+        if (!response.ok) {
+          const payload = await response.json().catch(() => ({}));
+          throw new Error(
+            payload.error ||
+              (isPolish ? 'Nie udało się pobrać DOCX.' : 'Could not download the DOCX.')
+          );
+        }
+        const blobUrl = URL.createObjectURL(await response.blob());
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = `audit-report-${report.id}.docx`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(blobUrl);
+      } catch (e: any) {
+        setExportError(
+          e?.message || (isPolish ? 'Nie udało się pobrać DOCX.' : 'Could not download the DOCX.')
+        );
+      } finally {
+        setExportingId(null);
+      }
+    },
+    [exportingId, isPolish]
   );
 
   const columns: TableColumn[] = [
@@ -126,7 +186,11 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
       width: '170px',
       render: (row: AuditReportSummary) => {
         const entry = REPORT_KIND_LABEL[row.reportKind];
-        return <span className="text-xs text-c-text-secondary">{entry ? (isPolish ? entry.pl : entry.en) : row.reportKind}</span>;
+        return (
+          <span className="text-xs text-c-text-secondary">
+            {entry ? (isPolish ? entry.pl : entry.en) : row.reportKind}
+          </span>
+        );
       },
     },
     { id: 'version', label: isPolish ? 'Wersja' : 'Version', width: '90px' },
@@ -140,7 +204,10 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
         label: reportStatusLabel(value, isPolish),
       })),
       render: (row: AuditReportSummary) => (
-        <StatusChip label={reportStatusLabel(row.status, isPolish)} tone={reportStatusTone(row.status)} />
+        <StatusChip
+          label={reportStatusLabel(row.status, isPolish)}
+          tone={reportStatusTone(row.status)}
+        />
       ),
     },
     {
@@ -156,7 +223,9 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
       label: isPolish ? 'Odbiorca' : 'Audience',
       width: '140px',
       render: (row: AuditReportSummary) => (
-        <span className="text-xs text-c-text-secondary truncate block max-w-[130px]">{row.audience || '—'}</span>
+        <span className="text-xs text-c-text-secondary truncate block max-w-[130px]">
+          {row.audience || '—'}
+        </span>
       ),
     },
     {
@@ -175,7 +244,9 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
       width: '150px',
       sortable: true,
       render: (row: AuditReportSummary) => (
-        <span className="text-xs text-c-text-secondary tabular-nums">{formatListDate(row.publishedAt)}</span>
+        <span className="text-xs text-c-text-secondary tabular-nums">
+          {formatListDate(row.publishedAt)}
+        </span>
       ),
     },
     {
@@ -184,7 +255,9 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
       width: '140px',
       sortable: true,
       render: (row: AuditReportSummary) => (
-        <span className="text-xs text-c-text-secondary tabular-nums">{formatListDate(row.updatedAt)}</span>
+        <span className="text-xs text-c-text-secondary tabular-nums">
+          {formatListDate(row.updatedAt)}
+        </span>
       ),
     },
   ];
@@ -254,19 +327,42 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
           label: isPolish ? 'Rodzaj' : 'Kind',
           value:
             (REPORT_KIND_LABEL[selected.reportKind] &&
-              (isPolish ? REPORT_KIND_LABEL[selected.reportKind].pl : REPORT_KIND_LABEL[selected.reportKind].en)) ||
+              (isPolish
+                ? REPORT_KIND_LABEL[selected.reportKind].pl
+                : REPORT_KIND_LABEL[selected.reportKind].en)) ||
             selected.reportKind,
         },
-        { id: 'version', label: isPolish ? 'Wersja' : 'Version', value: String(selected.version), mono: true },
-        { id: 'language', label: isPolish ? 'Język' : 'Language', value: selected.language?.toUpperCase() || '—' },
-        { id: 'audience', label: isPolish ? 'Odbiorca' : 'Audience', value: selected.audience || '—' },
+        {
+          id: 'version',
+          label: isPolish ? 'Wersja' : 'Version',
+          value: String(selected.version),
+          mono: true,
+        },
+        {
+          id: 'language',
+          label: isPolish ? 'Język' : 'Language',
+          value: selected.language?.toUpperCase() || '—',
+        },
+        {
+          id: 'audience',
+          label: isPolish ? 'Odbiorca' : 'Audience',
+          value: selected.audience || '—',
+        },
         {
           id: 'confidentiality',
           label: isPolish ? 'Poufność' : 'Confidentiality',
           value: selected.confidentiality || '—',
         },
-        { id: 'approvedAt', label: isPolish ? 'Data zatwierdzenia' : 'Approved at', value: formatListDate(selected.approvedAt) },
-        { id: 'publishedAt', label: isPolish ? 'Data publikacji' : 'Published at', value: formatListDate(selected.publishedAt) },
+        {
+          id: 'approvedAt',
+          label: isPolish ? 'Data zatwierdzenia' : 'Approved at',
+          value: formatListDate(selected.approvedAt),
+        },
+        {
+          id: 'publishedAt',
+          label: isPolish ? 'Data publikacji' : 'Published at',
+          value: formatListDate(selected.publishedAt),
+        },
       ]
     : undefined;
 
@@ -302,13 +398,28 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
             icon: FileText,
             title: isPolish ? 'Brak raportów' : 'No reports yet',
             description: isPolish
-              ? 'Raport powstaje z Outputu programu audytowego. Sfinalizuj program, żeby móc wystawić pierwszy raport.'
-              : 'A report is issued from a program Output. Finalize a program to issue the first report.',
+              ? reportChainEnabled
+                ? // FIX-4 (dyżur 41, odbiór): pusty stan wskazywał nieistniejącą
+                  // etykietę „Wystaw raport” — realny kebab Outputów (AuditOutputsTab.tsx)
+                  // ma dwie osobne pozycje: „Generuj raport audytu” / „Generuj raport naprawczy”.
+                  'Raport powstaje z Outputu programu audytowego. Otwórz zakładkę Outputy i użyj akcji „Generuj raport audytu” lub „Generuj raport naprawczy”.'
+                : 'Raport powstaje z Outputu programu audytowego. W tej wersji interfejsu ścieżka wystawienia raportu nie jest dostępna z ekranu.'
+              : reportChainEnabled
+                ? 'A report is issued from a program Output. Open Outputs and use “Generate audit report” or “Generate remediation report”.'
+                : 'A report is issued from a program Output. The report-issuance path is not available from the screen in this interface version.',
           }}
         />
       </div>
       {selected ? (
-        <div className="w-[380px] shrink-0 border-l border-c-border-subtle" data-testid="audit-report-preview">
+        <div
+          className="w-[380px] shrink-0 border-l border-c-border-subtle"
+          data-testid="audit-report-preview"
+        >
+          {exportError ? (
+            <div className="m-2 rounded-lg border border-c-danger/30 bg-c-danger/5 px-3 py-2 text-xs text-c-danger" role="alert">
+              {exportError}
+            </div>
+          ) : null}
           <StandardPreview
             title={selected.title}
             onClose={() => setSelectedId(null)}
@@ -338,6 +449,18 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
               label: isPolish ? 'Szczegóły' : 'Details',
               propertyLabel: isPolish ? 'Właściwość' : 'Property',
               valueLabel: isPolish ? 'Wartość' : 'Value',
+              // FIX-1 (dyżur 41, odbiór): kanoniczny slot „⋮ Pobierz" —
+              // za tą samą flagą co reszta łańcucha raportów (D.2-D.9),
+              // flaga NIE jest tu włączana.
+              onDownload: reportChainEnabled ? () => void downloadReportDocx(selected) : undefined,
+              downloadLabel:
+                exportingId === selected.id
+                  ? isPolish
+                    ? 'Pobieranie…'
+                    : 'Downloading…'
+                  : isPolish
+                    ? 'Pobierz DOCX'
+                    : 'Download DOCX',
             }}
           />
         </div>
