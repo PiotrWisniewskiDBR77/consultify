@@ -75,13 +75,13 @@ Pierwsza instrukcyjna komenda serwerowa z korzenia zwróciła `No test files fou
 | S.1     | CZĘŚCIOWO   | `c06fd0cea9`       | 37/37 PASS, 0 SKIP przez realny ApiGateway; R1–R9 N1/N2/N4, trzy pozytywy, N5, N6; R10 N1/N2 zmierzone, N4 nie dowodzi aktywnego członkostwa |
 | S.2     | ZROBIONE    | `f2fcf371ab`       | warstwa A: 4/4 przez realny ApiGateway; warstwa B: 3/3 wyłącznie na `createModuleGate`; inwentarz 11 odczytów i 47 symboli bramki            |
 | S.3     | CZĘŚCIOWO   | `01254b6289`       | trzy pomiary; naprawa cichej utraty danych; 7/7 PASS i mutacja 1 FAIL                                                                        |
-| S.4     | NIE_ZACZĘTE | —                  | —                                                                                                                                            |
+| S.4     | CZĘŚCIOWO   | oczekuje na commit | ograniczenie obowiązuje; 8/8 PASS przez realny Gateway; wolny tekst nie wyznacza assignee; krok 3 i UI niewykonane                           |
 | S.5     | NIE_ZACZĘTE | —                  | —                                                                                                                                            |
 | S.6     | NIE_ZACZĘTE | —                  | —                                                                                                                                            |
 | S.7     | NIE_ZACZĘTE | —                  | —                                                                                                                                            |
 | S.8     | NIE_ZACZĘTE | —                  | —                                                                                                                                            |
 | S.9     | NIE_ZACZĘTE | —                  | —                                                                                                                                            |
-| S.10    | CZĘŚCIOWO   | oczekuje na commit | addytywny fixture: 12 uczestników, 2 załączniki, 1 seria; dwa identyczne przebiegi; oczekuje na zrzuty S.5–S.8                               |
+| S.10    | CZĘŚCIOWO   | `5d21cbdb3a`       | addytywny fixture: 12 uczestników, 2 załączniki, 1 seria; dwa identyczne przebiegi; oczekuje na zrzuty S.5–S.8                               |
 | S.11    | NIE_ZACZĘTE | —                  | —                                                                                                                                            |
 | R.1     | NIE_ZACZĘTE | —                  | —                                                                                                                                            |
 | R.2     | W_TOKU      | `770baf0e1c`       | szkielet raportu i baseline                                                                                                                  |
@@ -108,6 +108,16 @@ Pierwsza instrukcyjna komenda serwerowa z korzenia zwróciła `No test files fou
 6. **CZĘŚCIOWO** — realne dane są gotowe, lecz zrzuty S.5–S.8 jeszcze nie powstały; dlatego werdykt S.10 nie jest `ZROBIONE`.
 7. **NIE DOTYCZY** — to dwa deterministyczne przebiegi seeda, nie test z retry; identyczne county i SHA manifestów dowodzą idempotencji.
 
+### S.4 — siedem odpowiedzi
+
+1. **TAK** — realne trasy `generate-notes`, `decision` i `action-items/:index/task` wołają funnel; nie poprzestano na istnieniu funkcji.
+2. **TAK** — 8 przypadków przeszło przez realny `ApiGateway`, bez mocka auth i bety.
+3. **TAK** — 8 PASS, 0 SKIP; baza związana helperem, `DB_TYPE` przywrócone na postgres, ADMIN/OWNER omijają maskującą betę.
+4. **TAK** — każdy task odczytano niezależnym `Pool`; cleanup potwierdził zera prób.
+5. **TAK** — realne kody to 200 dla funnela i 404 dla obcego tenanta; wcześniejsze 500 z nie-UUID także zachowano jako finding.
+6. **NIE DOTYCZY** — pozycja backendowa, bez zrzutów.
+7. **CZĘŚCIOWO** — finalny przebieg miał `--retry=0`; krok 3 i jego mutacja nie zostały wykonane.
+
 ## ★ DOWODY OSIĄGALNOŚCI (Z21) — pełny łańcuch per rodzina tras
 
 §S.1: podpisany JWT → realny `ApiGateway` → `verifyToken` → `closedBetaModuleGate` → nowa kontrola aktywnego `organization_members` → router Spotkań → realny PostgreSQL. R1/R7/R8 mają pozytywne `200`. R1–R9 mają negatywy N1/N2 bez `BETA_LOCKED` oraz N4=`403 ORG_MEMBERSHIP_REVOKED`. R10 jest osiągalny przez `/api/ai-operator`, ale leży poza routerem Spotkań i jego N4 pozostaje nieudowodnione.
@@ -130,6 +140,8 @@ Pierwsza instrukcyjna komenda serwerowa z korzenia zwróciła `No test files fou
 `meeting.runtimeTraps.day57.pg.test.ts`: realny PG potwierdzony helperem i `DB_IDENTITY`; realny Gateway używa aktywnego `OWNER`, więc beta nie maskuje odczytu. Pułapka (c) rozliczona przez jawne przywrócenie `DB_TYPE=postgres`; pozytyw daje `200` i `code != BETA_LOCKED`. Wynik: 7 PASS, 0 SKIP.
 
 `meeting.betaGate.gateway.day57.pg.test.ts`: warstwa A montuje realny `ApiGateway`, nie mockuje bramki i mierzy produkcyjny stan `closed`: MEMBER=`403 BETA_LOCKED`, ADMIN=`200`, ADMINISTRATOR przechodzi betę i dostaje odmowę trasy admińskiej bez `BETA_LOCKED`, anonim=`401`; warstwa B jawnie nie jest dowodem Gateway (`Z22`/`Z34`) i mierzy tylko `createModuleGate(..., () => 'open')` dla MEMBER/USER/GUEST. Config przybił `DB_TYPE=sqlite`, więc `beforeAll` przywraca `postgres`, a helper wiąże bazę. Pierwsza próba powtórzenia z błędnym lokalnym hasłem uczciwie dała 1 FAIL, 3 PASS i 4 SKIP; po pobraniu bieżącego sekretu z konfiguracji kontenera bez jego wypisania finalny wynik z `--retry=0` to 7 PASS, 0 SKIP.
+
+`meeting.actionItemOwner.day57.pg.test.ts`: realny Gateway, podpisane JWT, brak mocków auth/bety, realny PG i `DB_IDENTITY` na porcie 5857. `Z33(c)` rozliczone przez przywrócenie `DB_TYPE=postgres`; `Z33(d)` przez role OWNER/ADMIN oraz asercję, że odmowa tenanta nie jest `BETA_LOCKED`. Finalnie 8 PASS, 0 SKIP z `--retry=0`. Pierwszy przebieg dał 7 FAIL/1 PASS bez error handlera, następny 6 FAIL/2 PASS ujawnił `Invalid UUID` kanonicznych person fixture'u; pomiar docelowy użył tymczasowych aktywnych person UUID i posprzątał je wraz z taskami, notatkami, receiptami i sześcioma artefaktami.
 
 ## Tabela werdyktów tras (§S.9) — 33 wiersze
 
@@ -197,6 +209,16 @@ Rozkład per każde z trzech spotkań: organizer=`accepted/captured`, attendee o
 
 Strażnik pozostał nietknięty: diff zaczyna się dopiero od `reset()` po `qualifiedUrl()` i nie zmienia wymagań loopback, prefiksu bazy ani `MTG_OWNER_FIXTURE_CONFIRM=YES`. Zmiany dodają sprzątanie dwóch nowych tabel, `seedPresentationData()`, jego wywołania oraz kontrakt readback `12/2/1`; nie zapisują potwierdzenia ani poświadczeń do pliku.
 
+## Strukturalny właściciel działania (§S.4)
+
+**Werdykt kroku 1: OGRANICZENIE OBOWIĄZUJE.** `MeetingNoteActionItem` ma wyłącznie wolny tekst `owner?: string`; trafienia `ownerUserId` dotyczą follow-upów lub materializacji, nie działania notatki. Funnel sprawdza autora notatki w organizacji i używa autora albo aktora.
+
+Dowód kroku 2: realny przebieg `generate-notes → decision → action-item/task` potwierdził, że heurystyka zapisuje `owner: Unassigned`; kontrolowany SQL ustawił warianty `Admin`, brak pola, niepasującą osobę i dokładnie pasujący e-mail administratora. Wszystkie cztery utworzyły zadanie przypisane autorowi notatki, a tekst pozostał w `description`. Historyczny autor z obcej organizacji dał bezpieczny fallback na aktora; obcy tenant dostał 404; replay pozostawił jeden task. Lokalny backfill: `0` tasków z `assignee_id IS NULL AND source_type='meeting_note_action_item'`. To jest liczba na bazie tego dyżuru; liczb na demo/staging **NIE ZMIERZYŁEM**, bo `Z28` tego zabrania.
+
+Krok 3 nie został wykonany: pole strukturalne i walidacja wymagają dalszej implementacji oraz dowodu mutacyjnego. Migracja nie powstała — `action_items_json` przechowa opcjonalne pole, więc obecnie nie udowodniono potrzeby nowej kolumny.
+
+**DECISION_REQUIRED:** Czy dobudować w karcie spotkania listę wyboru właściciela działania (z rosteru organizacji) przed konwersją na zadanie? Backend nie jest gotowy — dowód: brak `ownerUserId` w `MeetingNoteActionItem`, a wolny tekst zawsze kończy w fallbacku. Nie mogłem rozstrzygnąć samodzielnie, ponieważ `DEC-2026-08-28-163` pozostawia UI do decyzji właściciela i instrukcja wprost zakazuje wykonania UI w tym dyżurze.
+
 ## Uwagi właściciela (§S.11) — tabela rozliczenia czterech uwag
 
 Do uzupełnienia.
@@ -218,10 +240,12 @@ R10 (`ai-operator.routes.ts`) leży poza licencją zapisu §1.9.3 i poza routere
 - `vitest.config.ts` na markerze ma `retry: 0`, nie wartość większą od zera; przebieg S.1 po mutacji bez jawnego `--retry=0` pozostał czerwony 9/37.
 - `req.db` nie występuje w Spotkaniach; `my-work.routes.ts:110` zawiera zastane `req.db = getDatabase()`.
 - Osiem rzeczywistych kolumn `*_json` Spotkań ma typ `text`; teza żywego 500 jest obalona, ale przyszła zmiana na `json/jsonb` powodowała cichą utratę danych przed naprawą.
+- Heurystyczny generator nie ekstrahuje czytelnego właściciela z transkryptu; zawsze wpisuje `Unassigned`. Wymagany przez S.4 skutek zmierzono po kontrolowanej zmianie wolnego tekstu w realnie wygenerowanej notatce.
+- Kanoniczne persony fixture'u mają identyfikatory tekstowe `w3-mtg-*`, lecz `TaskService` wymaga UUID dla `assigneeId`; realny funnel zwraca dla nich 500 `Invalid UUID`. Test skutku użył tymczasowych person UUID i posprzątał je.
 
 ## Znaleziska poza zakresem (z adresatem)
 
-Do uzupełnienia.
+- **Do nadzorcy S.8/S.10:** persony `w3-mtg-*` nie mogą być assignee zadań przez walidację UUID. Przed wizualnym dowodem konwersji działania fixture wymaga decyzji: zmienić identyfikatory person na UUID czy jawnie nie pokazywać konwersji na tych danych.
 
 ## STOP-y — w formacie §0.5, każdy z polami „Licencja, którą sprawdziłem" i „Co dostarczyłem ZAMIAST zmiany"
 
@@ -232,6 +256,8 @@ Brak STOP-u całego dyżuru.
 - R10 N4 nie dowodzi jeszcze aktywnego członkostwa, bo wcześniejsze bramki `/api/ai-operator` mogą odmawiać z innego powodu.
 - N3 nie został zmierzony per każda rodzina; N5 zmierzono na trzech trasach administracyjnych, N6 na wejściu routera.
 - N1/N2 są testami odmowy bez mutacji danych; niezależny readback zera zmian dla każdej rodziny zapisowej nie został jeszcze wykonany.
+- Staging/demo backfill dla tasków bez assignee pozostaje NIE ZMIERZONY zgodnie z `Z28`.
+- Backend `ownerUserId` i UI wyboru właściciela nie powstały; §S.4 pozostaje CZĘŚCIOWO.
 
 ## Rozłączność plikowa — pełny `git diff --name-only b3179d0a52603f62b5cd3673caa754c8fc3b0055..HEAD` + porównanie z listą §1.9.3
 
