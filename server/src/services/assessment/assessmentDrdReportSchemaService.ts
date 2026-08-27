@@ -77,10 +77,17 @@ function placeholder(minWords: number, maxWords: number): string {
 // they are not touched by this fix.
 const HORIZON_PLACEHOLDER = 'Nie określono — brak źródła w danych.';
 
+// DEDUP (nadzorca 2026-08-28): this used to also handle `not_assessed` with
+// its own copy of "Obszaru X nie oceniono — brak danych źródłowych." — the
+// exact same sentence the dedicated `{unitId}-not-assessed` block in
+// chapterBlocks already prints right under the signature line (guarded by
+// the identical `evidenceState === 'not_assessed' && !notice` condition).
+// Both fired every time, printing the sentence twice per unassessed area.
+// The dedicated block owns that sentence now; this placeholder only covers
+// the genuinely different case — a scored area (evidenced/incomplete/
+// declared) whose narrative simply wasn't composed.
 function areaCommentPlaceholder(area: ContractArea): string {
-  return area.evidenceState === 'not_assessed'
-    ? `Obszaru ${area.unitId} nie oceniono — brak danych źródłowych.`
-    : `Komentarz obszaru ${area.unitId} nie został przygotowany.`;
+  return `Komentarz obszaru ${area.unitId} nie został przygotowany.`;
 }
 
 // W2 (nadzorca 2026-08-28) + FIX-2 (nadzorca 2026-08-28, drugi obieg):
@@ -344,16 +351,19 @@ function chapterBlocks(
       );
     }
     if (comment) {
-      // FIX-3 (nadzorca 2026-08-28): when there is no composed narrative
-      // AND a skip notice already printed above (deliberate skip, either a
-      // whole-area code or specific skipped questions), that notice already
-      // honestly explains the gap — a second, generic "not assessed"
-      // sentence right under it would blur the distinction the notice draws
-      // (deliberately skipped vs. genuinely never reached). Say nothing
-      // twice; only add the fallback sentence when there was no notice.
+      // FIX-3 (nadzorca 2026-08-28) + DEDUP (nadzorca 2026-08-28): when there
+      // is no composed narrative AND a status notice already printed above —
+      // either the skip notice (deliberate skip, whole-area code or specific
+      // skipped questions) or the dedicated `{unitId}-not-assessed` sentence
+      // a few lines up — that notice already honestly explains the gap. A
+      // second, generic sentence right under it would blur the distinction
+      // the notice draws (deliberately skipped vs. genuinely never reached
+      // vs. scored-but-uncomposed). Say nothing twice; only add the fallback
+      // sentence when there was neither a skip notice nor a not-assessed
+      // notice — i.e. only for scored areas whose narrative is missing.
       const commentText = comment.content
         ? comment.content
-        : notice
+        : notice || area.evidenceState === 'not_assessed'
           ? null
           : areaCommentPlaceholder(area);
       if (commentText) {

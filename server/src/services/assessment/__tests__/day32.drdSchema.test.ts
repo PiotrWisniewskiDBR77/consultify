@@ -236,6 +236,13 @@ describe('Day 32 — assessment contract to DRD document schema', () => {
     const text = allText(buildAssessmentDrdReportSchema(input));
     expect(text).not.toContain('Sekcja do uzupełnienia — limit 110–170 słów');
     expect(text).toContain('Obszaru 1A nie oceniono — brak danych źródłowych.');
+    // DEDUP (nadzorca 2026-08-28): this sentence used to print twice for
+    // every not-assessed area with no skip notice — once as the dedicated
+    // not-assessed notice paragraph, once again as the area-comment
+    // fallback (areaCommentPlaceholder). The fallback is now suppressed for
+    // `not_assessed` areas, so it must appear exactly once.
+    const occurrences = text.split('Obszaru 1A nie oceniono — brak danych źródłowych.').length - 1;
+    expect(occurrences).toBe(1);
   });
 
   it('FIX-3: a deliberately skipped area does not also get a contradicting "not assessed" comment line', () => {

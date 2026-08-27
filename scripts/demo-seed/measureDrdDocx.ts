@@ -57,14 +57,15 @@ const SLOT_TOTALS: Readonly<Record<NarrativeSlotKind, number>> = Object.freeze({
 // measurement tool keeps counting the same real slots instead of silently
 // reporting them as "filled" once the raw jargon disappeared.
 //
-// AREA_NOT_ASSESSED_TEXT is a special case: assessmentDrdReportSchemaService
-// prints the identical sentence TWICE for a not-assessed area with no skip
-// notice — once as the area's own "not assessed" notice paragraph, once
-// again as the area-comment fallback (areaCommentPlaceholder). Both prints
-// are real, load-bearing text in the rendered document (real duplicated
-// words), so word-counting (narrativePlaceholders below) counts every
-// occurrence; but as a SLOT count there is only one comment slot per area,
-// so komentarz_obszaru halves this specific count.
+// AREA_NOT_ASSESSED_TEXT: assessmentDrdReportSchemaService prints this
+// sentence exactly ONCE per not-assessed area with no skip notice — as the
+// area's own "not assessed" notice paragraph. It also stands in for that
+// area's empty komentarz_obszaru slot: a not-assessed area with no skip
+// notice never gets a separate area-comment paragraph (DEDUP fix, nadzorca
+// 2026-08-28 — the comment fallback is suppressed for `not_assessed` areas
+// precisely because this notice already covers the slot), so counting one
+// occurrence per empty komentarz_obszaru slot here is correct without any
+// halving.
 const AREA_COMMENT_LEGACY_PLACEHOLDER =
   /Sekcja do uzupełnienia — limit 110–170 słów; wymagane:[^.]*\./g;
 const AREA_NOT_ASSESSED_TEXT = /Obszaru \S+ nie oceniono — brak danych źródłowych\./g;
@@ -84,7 +85,7 @@ export function measureNarrativeSlots(text: string) {
     komentarz_obszaru:
       count(AREA_COMMENT_LEGACY_PLACEHOLDER) +
       count(AREA_COMMENT_NOT_PREPARED_TEXT) +
-      Math.floor(count(AREA_NOT_ASSESSED_TEXT) / 2),
+      count(AREA_NOT_ASSESSED_TEXT),
     wnioski_rozdzialu: count(/Sekcja do uzupełnienia — limit 180–260 słów\./g),
     linia_decyzyjna_rozdzialu: 0,
     linia_decyzyjna_programu: 0,
@@ -137,10 +138,10 @@ export async function measureDrdDocx(file: string): Promise<DrdDocxMetrics> {
   // as `emptySlotCount` below (the slot-based measurement, corrected for
   // FIX-3's honest-sentence text) — one source of truth, not a third
   // circulating number. `narrativePlaceholders` (word-counting, every raw
-  // occurrence — including the FIX-3 area-comment duplicate — counts once
-  // per literal print, unlike the slot count above) keeps its own broader
-  // pattern set since it answers a different question (how many WORDS of
-  // this document are placeholder text, not how many SLOTS are empty).
+  // occurrence counts once per literal print, unlike the slot count above)
+  // keeps its own broader pattern set since it answers a different question
+  // (how many WORDS of this document are placeholder text, not how many
+  // SLOTS are empty).
   const narrativePlaceholders = [
     ...occurrences(text, /Sekcja do uzupełnienia — limit \d+–\d+ słów(?:\.|; wymagane:[^.]*\.)/g),
     ...occurrences(text, AREA_NOT_ASSESSED_TEXT),

@@ -52,17 +52,14 @@ describe('Day 50 DRD narrative-slot measurement', () => {
   // Metalpol document's `emptySlotCount` silently dropped to 0 even though
   // 18 slots were genuinely still empty, because the old regexes only knew
   // the raw "Sekcja do uzupełnienia" text.
-  it('FIX-3 follow-up: counts the honest "not assessed" area-comment sentence as ONE empty slot, not two, even though it is printed twice', () => {
-    // assessmentDrdReportSchemaService.ts prints this exact sentence twice
-    // for a not-assessed area with no skip notice — once as the area's own
-    // notice paragraph, once again as the area-comment fallback. Both are
-    // real printed words (so word-counting must see two), but there is only
-    // one logical "comment" slot for that area (so the slot count must see
-    // one).
-    const text = Array.from(
-      { length: 2 },
-      () => 'Obszaru 1C nie oceniono — brak danych źródłowych.'
-    ).join(' ');
+  it('FIX-3 follow-up: counts the honest "not assessed" area-comment sentence as ONE empty slot', () => {
+    // DEDUP (nadzorca 2026-08-28): assessmentDrdReportSchemaService.ts used
+    // to print this exact sentence twice for a not-assessed area with no
+    // skip notice (once as the area's own notice paragraph, once again as
+    // the area-comment fallback) — that duplicate print was removed at the
+    // source, so it now prints exactly once and stands for the area's one
+    // logical "comment" slot directly, with no halving needed.
+    const text = 'Obszaru 1C nie oceniono — brak danych źródłowych.';
     const slots = measureNarrativeSlots(text);
     expect(slots.komentarz_obszaru.empty).toBe(1);
   });
@@ -87,18 +84,18 @@ describe('Day 50 DRD narrative-slot measurement', () => {
   });
 
   it('FIX-3 follow-up: a realistic mixed document (10 not-assessed areas, 6 silently-skipped areas with no comment slot at all, 8 empty Horyzont cells) matches the real Metalpol measurement', () => {
-    // Mirrors the real demo-metalpol-session document after FIX-1/2/3: 10
-    // areas print the "not assessed" sentence twice (notice + comment
-    // fallback), 6 deliberately-skipped areas print no comment paragraph
-    // at all (the skip notice alone explains them — not reproduced here,
-    // irrelevant to this measurement), and all 8 decision tables (7 axis +
-    // 1 programme) have an empty Horyzont cell.
+    // Mirrors the real demo-metalpol-session document after FIX-1/2/3/DEDUP:
+    // 10 areas print the "not assessed" sentence once each (the notice
+    // paragraph alone — the area-comment fallback is suppressed for
+    // not-assessed areas since DEDUP, nadzorca 2026-08-28), 6
+    // deliberately-skipped areas print no comment paragraph at all (the
+    // skip notice alone explains them — not reproduced here, irrelevant
+    // to this measurement), and all 8 decision tables (7 axis + 1
+    // programme) have an empty Horyzont cell.
     const text = [
-      ...Array.from({ length: 10 }, (_, index) =>
-        Array.from(
-          { length: 2 },
-          () => `Obszaru ${index}X nie oceniono — brak danych źródłowych.`
-        ).join(' ')
+      ...Array.from(
+        { length: 10 },
+        (_, index) => `Obszaru ${index}X nie oceniono — brak danych źródłowych.`
       ),
       ...Array.from({ length: 8 }, () => 'Nie określono — brak źródła w danych.'),
     ].join(' ');
