@@ -34,12 +34,55 @@ Mobile: `DEFERRED_NON_GATING`
 > `ENABLE_V8_GLOBAL=true` globalna bramka zwraca `404 V8_DISABLED`, natomiast
 > przy kanonicznym env i pełnym runnerze realny Gateway osiąga handlery.
 > Własny pomiar wykazał 35 tras: `26 REALNE`, `2 REALNE_Z_SYNTEZĄ`,
-> `4 KIKUT_503`, `3 ODMOWA_410`, `0 NIEOSIĄGALNE`. Izolacja dwóch firm na
-> kanonicznych odczytach pieniędzy i mutacjach przeszła 8/8, w tym obcy zasób
-> → 404/odmowa oraz zimne readbacki bez zmian; nie znaleziono P0. Bramka modułu
+> `4 KIKUT_503`, `3 ODMOWA_410`, `0 NIEOSIĄGALNE`. Bramka modułu
 > **SIĘ NIE ZMIENIA**: `TECHNICAL_BROWSER_PASS / OWNER_PENDING / ECONOMICS_OFF`,
 > ponieważ Day 42 nie dostarcza akceptu właściciela ani dowodu przeglądarkowego.
 > Raport: `../../PARTNER_PORTAL_DAY42_REPORT_20260828.md`.
+
+> **SPROSTOWANIE Day 42 — 2026-08-28 (FIX-6, po odbiorze adwersaryjnym).**
+> Zdanie „izolacja przeszła 8/8 … nie znaleziono P0" wyprzedzało dowód i jest
+> wycofane w tym kształcie. Odbiór udowodnił mutacyjnie, że przy globalnym
+> `retry` z `vitest.config.ts:311` suita dawała **8/8 PASS z realnym, żywym
+> IDOR-em** cross-tenant (usunięcie `AND partner_org_id = ?` z
+> `deleteCampaignLink`, `server/src/services/partnerReferralService.ts:832`):
+> pierwsze podejście kasowało cudzy wiersz, a ponowienie widziało `404`
+> i „readback bez zmian". Zielony wynik nie był wtedy dowodem izolacji.
+>
+> Stan po naprawach (mierzony na gałęzi `day42-fixes-20260828`, własny
+> efemeryczny PostgreSQL, realny `ApiGateway`, baza migrowana pełnym runnerem):
+>
+> - suity dnia 42 są przypięte do `retry: 0` lokalnie (opcja suity, bez zmiany
+>   globalnej konfiguracji);
+> - izolacja tenantowa: **11/11 PASS przy `retry=0`** (było 8 przypadków,
+>   doszły `B1`, `B2`, `N6b`);
+> - bramka portalu: **12/12**, uczciwość koperty `D.5`: **5/5**; razem
+>   **28/28** dla trzech plików dnia 42;
+> - dowód mutacyjny 1: IDOR w `partnerReferralService.ts:832` → suita
+>   **CZERWONA** (`N1`), po cofnięciu **ZIELONA**;
+> - dowód mutacyjny 2: zniesienie wiązania tenant→partner
+>   (`server/src/services/partnerOrgResolution.ts:117`) → suita **CZERWONA**
+>   (`B1`, `B2`), po cofnięciu **ZIELONA**. Przed naprawą ta mutacja nie
+>   zapalała żadnego testu;
+> - przebieg całego katalogu `tests/integration/partners`: trzy pliki dnia 42
+>   **0 FAIL** w dwóch kolejnych przebiegach (przed naprawą wszystkie trzy
+>   padały w `beforeAll` przez destrukcyjnych sąsiadów).
+>
+> Twierdzenie o braku `P0` obowiązuje **wyłącznie** w zakresie zmierzonych
+> powierzchni: pięć kanonicznych odczytów pieniędzy V8, `DELETE`
+> `/campaign-links/:id`, `PUT /organization` oraz legacy `GET
+> /api/partners/earnings`. Nie jest to twierdzenie o całym module.
+>
+> Znalezisko przekazane dyżurowi 37 (bramka kontekstu organizacji): po usunięciu
+> **obu** ścian członkostwa z routera partnera (`partner.routes.ts:213` i `:272`)
+> odczyty pieniędzy odpowiadają `200` przy odebranym członkostwie — żadna bramka
+> platformowa nie chroni `/api/v8/partner`. Gwarancja opiera się wyłącznie na
+> middleware tego routera.
+>
+> `D.5` przestaje być `STOP`: zrealizowana w pliku objętym licencją
+> (`server/src/routes/v8/partner.routes.ts`), koperta `410` nietknięta i
+> dowiedziona testem. Jedyny wyjątek to `getPartnerConnectionHandler` — patrz
+> raport, sekcja STOP.
+> Bramka modułu nadal **SIĘ NIE ZMIENIA**.
 
 ## Contract
 
