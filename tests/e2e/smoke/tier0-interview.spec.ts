@@ -3,7 +3,7 @@
  *
  * DoD #6 for M10 requires the Interview E2E to live in the PR-blocking gate.
  * The full UI suite at tests/e2e/interview.spec.ts authenticates with a
- * hard-coded real-DB account (piotr.wisniewski@dbr77.com / 123456) and depends
+ * hard-coded real-DB account (piotr.wisniewski@dbr77.com / <HASLO>) and depends
  * on a seeded project + approved template library — neither exists under the
  * gate's MOCK_DB + ENABLE_TEST_SUPPORT web-server harness, so it cannot be
  * gated as-is. This spec mirrors the existing gated tier0 pattern instead:

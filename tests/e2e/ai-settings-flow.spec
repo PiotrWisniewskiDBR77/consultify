@@ -321,7 +321,7 @@ test.describe('AI Settings - User Workflows', () => {
         // Fill in key details
         await page.selectOption('select', 'openai');
         await page.fill('input[placeholder*="Friendly Name"]', 'My OpenAI Key');
-        await page.fill('input[placeholder*="sk-"]', 'sk-test123456789');
+        await page.fill('input[placeholder*="sk-"]', 'sk-test-local-key');
         
         // Save key
         await page.click('button:has-text("Save Key")');
@@ -536,7 +536,6 @@ test.describe('AI Settings - Permissions', () => {
         await expect(page.getByText('Budget Tier')).toBeVisible();
     });
 });
-
 
 
 

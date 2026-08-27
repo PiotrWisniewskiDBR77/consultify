@@ -64,7 +64,7 @@ test.describe('User Onboarding Flow', () => {
             // Try to register with existing email
             await page.fill('input[name="firstName"]', 'Existing');
             await page.fill('input[name="lastName"]', 'User');
-            await page.fill('input[name="email"]', 'admin@dbr77.com'); // Existing admin email
+            await page.fill('input[name="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost')); // Existing admin email
             await page.fill('input[name="password"]', 'ValidPass123!');
             await page.fill('input[name="confirmPassword"]', 'ValidPass123!');
             await page.check('input[name="acceptTerms"]');
@@ -421,8 +421,8 @@ test.describe('User Onboarding Flow', () => {
             // Login as admin to check analytics
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.goto('/admin/analytics');

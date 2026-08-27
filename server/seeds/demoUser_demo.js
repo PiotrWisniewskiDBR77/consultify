@@ -8,6 +8,17 @@
 import bcrypt from 'bcryptjs';
 import path from 'path';
 
+function requireEnv(name) {
+  const value = String(process.env[name] || '').trim();
+  if (!value) {
+    console.error(`[ODMOWA] Brak zmiennej ${name}. Ustaw ją przed uruchomieniem seeda.`);
+    process.exit(1);
+  }
+  return value;
+}
+
+export const DEMO_PASSWORD = requireEnv('SEED_USER_PASSWORD');
+
 // SQLite + Postgres compatible (mirrors v3 seed scripts)
 const isPostgres = process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith('postgres');
 
@@ -73,7 +84,6 @@ async function dbGet(sql, params = []) {
 export const DEMO_ORG_ID = 'org-demo-public';
 export const DEMO_USER_ID = 'user-demo-public-admin';
 export const DEMO_EMAIL = 'piotr.wisniewski@demo.com';
-export const DEMO_PASSWORD = '123456';
 
 async function seedDemoUser() {
   console.log('🚀 Seeding Demo User...');
@@ -125,17 +135,7 @@ async function seedDemoUser() {
           max_total_tokens,
           ai_roles_enabled_json
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        `limits-${DEMO_ORG_ID}`,
-        DEMO_ORG_ID,
-        1,
-        1,
-        10,
-        5,
-        10,
-        10000,
-        '["ADVISOR"]',
-      ]
+      [`limits-${DEMO_ORG_ID}`, DEMO_ORG_ID, 1, 1, 10, 5, 10, 10000, '["ADVISOR"]']
     );
     console.log('✅ Created demo organization limits');
   }
@@ -178,4 +178,3 @@ if (isMainModule) {
 }
 
 export default { seedDemoUser, DEMO_EMAIL, DEMO_PASSWORD, DEMO_ORG_ID, DEMO_USER_ID };
-

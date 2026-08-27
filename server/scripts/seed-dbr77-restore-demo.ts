@@ -19,6 +19,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 import { faker } from '@faker-js/faker';
+import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 
 import { createDatabase } from '../src/database/Database.js';
@@ -81,8 +82,11 @@ function nowIso() {
   return new Date().toISOString();
 }
 
-// bcrypt hash for password '123456' (same as server/scripts/fix-dbr77-credentials.sh)
-const DBR77_PASSWORD_HASH_123456 = '$2b$10$E58rGuDyiRBMosPDXp1bdu9PyFmpJ5VctXem3Zk0GYLlJv49ADUJm';
+const seedUserPassword = String(process.env.SEED_USER_PASSWORD || '').trim();
+if (!seedUserPassword) {
+  throw new Error('[ODMOWA] Brak zmiennej SEED_USER_PASSWORD. Ustaw ją przed uruchomieniem seeda.');
+}
+const DBR77_PASSWORD_HASH = bcrypt.hashSync(seedUserPassword, 10);
 
 async function run(db: Db, sql: string, params: any[] = []) {
   return new Promise<{ lastID?: number; changes?: number }>((resolve, reject) => {
@@ -169,7 +173,7 @@ async function ensureDbr77Credentials(db: Db) {
       'user-admin-dbr77',
       orgId,
       'admin@dbr77.com',
-      DBR77_PASSWORD_HASH_123456,
+      DBR77_PASSWORD_HASH,
       'SUPERADMIN',
       'active',
       'Admin',
@@ -179,7 +183,7 @@ async function ensureDbr77Credentials(db: Db) {
   await run(
     db,
     `UPDATE users SET password=?, role='SUPERADMIN', organization_id=?, status='active' WHERE email=?`,
-    [DBR77_PASSWORD_HASH_123456, orgId, 'admin@dbr77.com']
+    [DBR77_PASSWORD_HASH, orgId, 'admin@dbr77.com']
   ).catch(() => undefined);
 
   await run(
@@ -190,7 +194,7 @@ async function ensureDbr77Credentials(db: Db) {
       'user-piotr-dbr77',
       orgId,
       'piotr.wisniewski@dbr77.com',
-      DBR77_PASSWORD_HASH_123456,
+      DBR77_PASSWORD_HASH,
       'ADMIN',
       'active',
       'Piotr',
@@ -200,7 +204,7 @@ async function ensureDbr77Credentials(db: Db) {
   await run(
     db,
     `UPDATE users SET password=?, role='ADMIN', organization_id=?, status='active' WHERE email=?`,
-    [DBR77_PASSWORD_HASH_123456, orgId, 'piotr.wisniewski@dbr77.com']
+    [DBR77_PASSWORD_HASH, orgId, 'piotr.wisniewski@dbr77.com']
   ).catch(() => undefined);
 }
 
@@ -298,11 +302,12 @@ async function ensureTeamDBR77(db: Db, orgId: string, userId: string) {
        VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
       [teamId, orgId, 'DBR77', 'Zespół DBR77 (demo)', userId]
     );
-    await run(
-      db,
-      `UPDATE teams SET organization_id = ?, name = ?, lead_id = ? WHERE id = ?`,
-      [orgId, 'DBR77', userId, teamId]
-    );
+    await run(db, `UPDATE teams SET organization_id = ?, name = ?, lead_id = ? WHERE id = ?`, [
+      orgId,
+      'DBR77',
+      userId,
+      teamId,
+    ]);
     await run(
       db,
       `INSERT OR IGNORE INTO team_members (team_id, user_id, role, joined_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
@@ -347,7 +352,17 @@ async function seedMyWork(db: Db, orgId: string, userId: string, projectId: stri
         `INSERT OR IGNORE INTO tasks
          (id, title, description, status, priority, due_date, assignee_id, organization_id, project_id, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-        [uuidv4(), t.title, t.description, t.status, t.priority, t.dueDate, userId, orgId, projectId]
+        [
+          uuidv4(),
+          t.title,
+          t.description,
+          t.status,
+          t.priority,
+          t.dueDate,
+          userId,
+          orgId,
+          projectId,
+        ]
       );
     } catch {
       // older schema fallback
@@ -356,7 +371,17 @@ async function seedMyWork(db: Db, orgId: string, userId: string, projectId: stri
         `INSERT OR IGNORE INTO tasks
          (id, title, description, status, priority, due_date, assignee_id, organization_id, project_id, created_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-        [uuidv4(), t.title, t.description, t.status, t.priority, t.dueDate, userId, orgId, projectId]
+        [
+          uuidv4(),
+          t.title,
+          t.description,
+          t.status,
+          t.priority,
+          t.dueDate,
+          userId,
+          orgId,
+          projectId,
+        ]
       ).catch(() => undefined);
     }
   }
@@ -410,7 +435,8 @@ async function seedMyWork(db: Db, orgId: string, userId: string, projectId: stri
     {
       type: 'AI_RECOMMENDATION',
       title: 'AI: Wykryto luki w osi 6 (Cyber)',
-      message: 'W raporcie DRD pojawiły się brakujące dowody dla kontroli OT/IT. Sprawdź sekcję axis_6.',
+      message:
+        'W raporcie DRD pojawiły się brakujące dowody dla kontroli OT/IT. Sprawdź sekcję axis_6.',
     },
     {
       type: 'DECISION_REQUIRED',
@@ -532,7 +558,10 @@ async function seed3FullDrdAssessments(db: Db, orgId: string, userId: string) {
           scope: { plants: faker.number.int({ min: 1, max: 3 }) },
           seeded: true,
         }),
-        JSON.stringify({ overall: { actual: overall, target: 5.0, gap: 5.0 - overall }, seeded: true }),
+        JSON.stringify({
+          overall: { actual: overall, target: 5.0, gap: 5.0 - overall },
+          seeded: true,
+        }),
         JSON.stringify({ axisId: 1, areaId: '1A', level: 1 }),
         approvedAt,
         userId,
@@ -564,7 +593,11 @@ async function upsertById(db: Db, table: string, record: Record<string, any>) {
 
   const sql = `INSERT INTO ${table} (${cols.join(', ')}) VALUES (${placeholders})
                ON CONFLICT(id) DO UPDATE SET ${updates}`;
-  await run(db, sql, cols.map((c) => record[c]));
+  await run(
+    db,
+    sql,
+    cols.map((c) => record[c])
+  );
 }
 
 async function seedReportBuilderReportDirect(params: {
@@ -726,7 +759,9 @@ async function seedReportBuilderReportsForAssessments(params: {
       await seedReportBuilderReportDirect({ db, orgId, userId, assessmentId });
       log.step(`Created Report Builder report (APPROVED): rb-${assessmentId} for ${assessmentId}`);
     } catch (e: any) {
-      log.warn(`Report Builder seed skipped for assessment ${assessmentId}: ${String(e?.message || e)}`);
+      log.warn(
+        `Report Builder seed skipped for assessment ${assessmentId}: ${String(e?.message || e)}`
+      );
     }
   }
 }
@@ -848,9 +883,18 @@ async function seedInterview(db: Db, orgId: string, userId: string, projectId: s
   const completedAt = new Date(Date.now() - 6 * 24 * 3600 * 1000).toISOString();
   const progress = { strategy: 100, operations: 100, digital: 100, people: 80, finance: 60 };
   const summaryFacts = [
-    { category: 'digital', fact: 'ERP jest wdrożony, ale integracja MES jest niespójna między liniami.' },
-    { category: 'operations', fact: 'Największe straty: oczekiwanie i przezbrojenia; brak spójnych KPI OEE.' },
-    { category: 'people', fact: 'Brakuje formalnego programu rozwoju kompetencji cyfrowych na shopfloor.' },
+    {
+      category: 'digital',
+      fact: 'ERP jest wdrożony, ale integracja MES jest niespójna między liniami.',
+    },
+    {
+      category: 'operations',
+      fact: 'Największe straty: oczekiwanie i przezbrojenia; brak spójnych KPI OEE.',
+    },
+    {
+      category: 'people',
+      fact: 'Brakuje formalnego programu rozwoju kompetencji cyfrowych na shopfloor.',
+    },
   ];
 
   await run(
@@ -883,11 +927,31 @@ async function seedInterview(db: Db, orgId: string, userId: string, projectId: s
   );
 
   const questions = [
-    { category: 'strategy', q: 'Jakie są 3 priorytety transformacji cyfrowej na 12 miesięcy?', a: 'Widoczność produkcji, stabilność jakości danych, lepsze planowanie.' },
-    { category: 'operations', q: 'Gdzie są największe bottlenecki w procesie plan-to-produce?', a: 'Przezbrojenia, braki materiałowe, approvals jakości.' },
-    { category: 'digital', q: 'Jak zbierane są dane z maszyn (manual, IoT, integracja)?', a: 'Mieszane: część IoT, część ręcznie; brak standardu tagów.' },
-    { category: 'people', q: 'Jak reagują pracownicy na nowe narzędzia?', a: 'Akceptacja rośnie, ale potrzebne szkolenia i championi.' },
-    { category: 'finance', q: 'Jaki jest akceptowalny payback period?', a: '12–18 miesięcy dla inicjatyw top-tier.' },
+    {
+      category: 'strategy',
+      q: 'Jakie są 3 priorytety transformacji cyfrowej na 12 miesięcy?',
+      a: 'Widoczność produkcji, stabilność jakości danych, lepsze planowanie.',
+    },
+    {
+      category: 'operations',
+      q: 'Gdzie są największe bottlenecki w procesie plan-to-produce?',
+      a: 'Przezbrojenia, braki materiałowe, approvals jakości.',
+    },
+    {
+      category: 'digital',
+      q: 'Jak zbierane są dane z maszyn (manual, IoT, integracja)?',
+      a: 'Mieszane: część IoT, część ręcznie; brak standardu tagów.',
+    },
+    {
+      category: 'people',
+      q: 'Jak reagują pracownicy na nowe narzędzia?',
+      a: 'Akceptacja rośnie, ale potrzebne szkolenia i championi.',
+    },
+    {
+      category: 'finance',
+      q: 'Jaki jest akceptowalny payback period?',
+      a: '12–18 miesięcy dla inicjatyw top-tier.',
+    },
   ];
 
   let sort = 10;
@@ -989,8 +1053,21 @@ async function seedInterview(db: Db, orgId: string, userId: string, projectId: s
       'PL',
       420,
       JSON.stringify([{ name: 'OEE', value: '63', unit: '%' }]),
-      JSON.stringify([{ name: 'COO', role: 'Sponsor', influence: 'high', notes: 'Priorytet: stabilność produkcji' }]),
-      JSON.stringify([{ category: 'cyber', description: 'Brak formalnych KPI skuteczności kontroli OT/IT', priority: 'high' }]),
+      JSON.stringify([
+        {
+          name: 'COO',
+          role: 'Sponsor',
+          influence: 'high',
+          notes: 'Priorytet: stabilność produkcji',
+        },
+      ]),
+      JSON.stringify([
+        {
+          category: 'cyber',
+          description: 'Brak formalnych KPI skuteczności kontroli OT/IT',
+          priority: 'high',
+        },
+      ]),
       70,
       sessionId,
       startedAt,
@@ -1016,7 +1093,9 @@ async function main() {
   await ensureDbr77Credentials(db);
 
   const anchors = await ensureAnchors(db);
-  log.info(`Anchors: org=${anchors.orgId}, user=${anchors.userId} (${anchors.userEmail}), project=${anchors.projectId}`);
+  log.info(
+    `Anchors: org=${anchors.orgId}, user=${anchors.userId} (${anchors.userEmail}), project=${anchors.projectId}`
+  );
 
   await ensureTeamDBR77(db, anchors.orgId, anchors.userId);
   await seedMyWork(db, anchors.orgId, anchors.userId, anchors.projectId);
@@ -1033,9 +1112,7 @@ async function main() {
 
   log.success('DBR77 demo restore complete.');
   console.log('\nNext steps:');
-  console.log(
-    `  • Start backend with SQLITE_PATH=${path.relative(process.cwd(), resolvedDb)}`
-  );
+  console.log(`  • Start backend with SQLITE_PATH=${path.relative(process.cwd(), resolvedDb)}`);
   console.log('  • Open app and check: My Work, Interview, Assessment (DRD), Reports');
 }
 
@@ -1043,4 +1120,3 @@ main().catch((err) => {
   log.error(String(err?.message || err));
   process.exit(1);
 });
-

@@ -4,8 +4,8 @@ test.describe('Trial Management Flow', () => {
     test('should display trial status', async ({ page }) => {
         await page.goto('/');
         await page.click('text=Log In');
-        await page.fill('input[type="email"]', 'admin@dbr77.com');
-        await page.fill('input[type="password"]', '123456');
+        await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+        await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
         await page.click('button[type="submit"]');
 
         await expect(page.locator('text=Trial Period')).toBeVisible();
@@ -16,8 +16,8 @@ test.describe('Trial Management Flow', () => {
     test('should show upgrade prompts', async ({ page }) => {
         await page.goto('/');
         await page.click('text=Log In');
-        await page.fill('input[type="email"]', 'admin@dbr77.com');
-        await page.fill('input[type="password"]', '123456');
+        await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+        await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
         await page.click('button[type="submit"]');
 
         // Trigger upgrade prompt by trying premium feature
@@ -34,8 +34,8 @@ test.describe('Trial Management Flow', () => {
 
         await page.goto('/');
         await page.click('text=Log In');
-        await page.fill('input[type="email"]', 'admin@dbr77.com');
-        await page.fill('input[type="password"]', '123456');
+        await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+        await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
         await page.click('button[type="submit"]');
 
         await expect(page.locator('text=Trial Expired')).toBeVisible();

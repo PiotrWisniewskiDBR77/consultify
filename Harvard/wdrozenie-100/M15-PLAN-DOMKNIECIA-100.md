@@ -1,7 +1,7 @@
 # M15 „Rezultaty" — PLAN DOMKNIĘCIA DO 100% (SSOT operacyjny)
 
 > Start planu: 2026-06-25 · Branch: `feat/deliverables-w1` · Deploy odbioru: demo (worktree→origin/demo, Railway autodeploy)
-> Środowisko verify: lokalny backend `:3001` (DOTENV_IGNORE_LOCAL=1) → staging-trolley, org DBR77 `a3e05d4a`. Login: **`piotr.wisniewski@dbr77.com`/123456**.
+> Środowisko verify: lokalny backend `:3001` (DOTENV_IGNORE_LOCAL=1) → staging-trolley, org DBR77 `a3e05d4a`. Login: **`piotr.wisniewski@dbr77.com`/<HASLO>**.
 > Zasada twarda: M15 nie jest ZAMKNIĘTY póki nie ma 8/8. Każdy task ma własne bramki realizacji + dowód. Zero fake-greenów (każdy „green" = file:line / artefakt / live-verify).
 > Dokumenty siostrzane: `M15-STAN-PRACY-ODBIORY.md` (master 36 zadań — PRZESZACOWANY, korygowany tym planem), `M15-WIZJA-I-PLAN-FUNKCJONALNY-2026-06-24.md`, `M15-ANALIZA-SWIATOWA-2026-06-24.md` (10 prymitywów + standard graficzny), `M15-AUDYT-2026-06-24.md`, `M15-PLAN-TESTOWANIA.md`. Spec testów: `Harvard/Testy manualne/TESTY_M15_REZULTATY_W1_W6.md` (180), wyniki: `WYNIKI_*_RUN1/2/3.md`.
 

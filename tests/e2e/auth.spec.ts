@@ -9,8 +9,8 @@ test.describe('Authentication Flow', () => {
 
     // Fill login form
     await page.waitForSelector('input[type="email"]', { timeout: 10000 });
-    await page.fill('input[type="email"]', 'admin@dbr77.com');
-    await page.fill('input[type="password"]', '123456');
+    await page.fill('input[type="email"]', process.env.TEST_USER_EMAIL || 'test@localhost');
+    await page.fill('input[type="password"]', process.env.TEST_USER_PASSWORD || 'testpassword123');
 
     // Submit
     await page.click('button[type="submit"]');
@@ -53,8 +53,8 @@ test.describe('Authentication Flow', () => {
     await page.waitForLoadState('networkidle');
 
     await page.waitForSelector('input[type="email"]', { timeout: 10000 });
-    await page.fill('input[type="email"]', 'admin@dbr77.com');
-    await page.fill('input[type="password"]', '123456');
+    await page.fill('input[type="email"]', process.env.TEST_USER_EMAIL || 'test@localhost');
+    await page.fill('input[type="password"]', process.env.TEST_USER_PASSWORD || 'testpassword123');
     await page.click('button[type="submit"]');
 
     // Wait for redirect

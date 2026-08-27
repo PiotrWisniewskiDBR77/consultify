@@ -5,7 +5,7 @@ Scope: final manual verification for Chat P0 Recovery before client-facing testi
 Environment:
 - URL: `https://demo.consultify.ai`
 - User: `piotr.wisniewski@dbr77.com`
-- Password: `123456`
+- Password: `<HASLO>`
 
 Status vocabulary:
 - `PASS`: expected behavior confirmed.

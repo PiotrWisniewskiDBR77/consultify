@@ -944,6 +944,28 @@ export const authRateLimiter = createLimiter({
 });
 
 /**
+ * Quick-access PIN sign-in (`POST /api/auth/quick-access`), day-39 FIX-1.
+ *
+ * The secret here is FOUR DIGITS — a 10^4 space. Unthrottled, an attacker walks
+ * the entire keyspace in seconds, so this limiter is not hygiene, it IS the
+ * strength of the credential. The ceiling is therefore an order of magnitude
+ * below `authRateLimiter`: even a full window of attempts covers a negligible
+ * slice of the space, and the endpoint only exists off production at all.
+ *
+ * Network identity only (see `networkOnlyRateLimitKey`). The endpoint is
+ * unauthenticated, so keying on the default resolver would let a caller pick a
+ * fresh bucket per request by rotating an unverified `id` claim.
+ */
+export const quickAccessPinRateLimiter = createLimiter({
+  windowMs: 15 * 60_000,
+  max: isProd ? 5 : 50,
+  prefix: 'quick-access-pin',
+  message: 'Too many quick access attempts. Please try again later.',
+  keyResolver: networkOnlyRateLimitKey,
+  sharedStore: true,
+});
+
+/**
  * API routes (initiatives, tasks, tools, etc.).
  * Keys by userId when authenticated (see extractKey -> `u:<uid>`), else IP.
  *

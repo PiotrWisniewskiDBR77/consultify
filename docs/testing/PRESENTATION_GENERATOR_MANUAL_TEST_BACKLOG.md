@@ -8,7 +8,7 @@ Scope: Consultify presentation generator from artifact selection to generated cl
 
 - Target: `demo.consultify.ai`
 - Login: `piotr wisniewski@dbr77.com`
-- Password: `123456`
+- Password: `<HASLO>`
 
 If a test requires role switching, use the existing internal role-switch/testing mechanism (e.g., `X-Test-Role` headers where available) and record the evidence in the “Network/API evidence” section.
 

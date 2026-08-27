@@ -14,14 +14,14 @@ vi.mock('react-i18next', () => ({
 }));
 
 const loginMock = vi.fn();
-const demoLoginMock = vi.fn();
+const quickAccessSignInMock = vi.fn();
 const verifyAccessCodeMock = vi.fn();
 
 vi.mock('../../src/services/api', () => ({
   API_URL: 'https://api.example.test',
   Api: {
     login: (...args: unknown[]) => loginMock(...args),
-    demoLogin: (...args: unknown[]) => demoLoginMock(...args),
+    quickAccessSignIn: (...args: unknown[]) => quickAccessSignInMock(...args),
     verifyAccessCode: (...args: unknown[]) => verifyAccessCodeMock(...args),
     register: vi.fn(),
     registerDemo: vi.fn(),
@@ -67,7 +67,7 @@ describe('AuthView fail-closed error contract', () => {
   });
 
   it('quick access failure is non-leaking and alert-accessible', async () => {
-    demoLoginMock.mockRejectedValueOnce(new Error('pg://secret-host/internal'));
+    quickAccessSignInMock.mockRejectedValueOnce(new Error('pg://secret-host/internal'));
     const user = userEvent.setup();
 
     render(

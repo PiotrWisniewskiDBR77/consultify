@@ -17,6 +17,7 @@ import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js'
 import {
   demoSignupIdentityRateLimiter,
   demoSignupIpRateLimiter,
+  quickAccessPinRateLimiter,
 } from '../middleware/rateLimiting.middleware.js';
 import { validateBody, validateParams } from '../middleware/validation.middleware.js';
 import {
@@ -28,6 +29,12 @@ import {
   provisionPublicDemoAccount,
 } from '../services/demo/demoSignupProvisioning.js';
 import auditEventsService from '../services/AuditEventsService.js';
+import {
+  isQuickAccessEndpointEnabled,
+  QUICK_ACCESS_DISABLED_CODE,
+  QUICK_ACCESS_INVALID_PIN_CODE,
+  resolveQuickAccessAccountEmail,
+} from '../services/auth/quickAccessPinService.js';
 import legalService from '../services/legalService.js';
 import mfaService from '../services/MFAService.js';
 import {
@@ -212,6 +219,111 @@ const normalizeOrganizationStatus = (status: unknown): string => {
 // LOGIN
 logger.info('[AuthRoutes] login handler is type:', typeof login);
 router.post('/login', validateBody(LoginRequestSchema), asyncHandler(login));
+
+/**
+ * QUICK ACCESS — PIN sign-in without a password anywhere (day-39 FIX-1).
+ *
+ * The browser posts four digits and nothing else. It has never held, and can
+ * never derive, the account's password: the map that the PIN resolves against
+ * is `QUICK_ACCESS_PIN_MAP` on the SERVER, it holds email strings only, and the
+ * session is minted by the ordinary `login` controller with password
+ * verification skipped for an already-established principal.
+ *
+ * This replaces the previous client-side `VITE_QUICK_ACCESS_MAP`, which Vite
+ * inlines into every chunk that reads `import.meta.env` — the day-39 acceptance
+ * proved a configured value would land in seven separate bundle chunks, where
+ * the host filter (a runtime check inside already-shipped code) protects
+ * nothing.
+ *
+ * Three gates, all server side:
+ *   1. `isQuickAccessEndpointEnabled` — refuses on production and whenever the
+ *      map is unset or malformed. Production is decided from Railway's injected
+ *      identity, APP_ENV/RAILWAY_ENVIRONMENT_NAME, FRONTEND_URL and the
+ *      resolved production database host — never from a browser-supplied
+ *      hostname, which is what the old filter trusted.
+ *   2. `quickAccessPinRateLimiter` — the credential is four digits, so the
+ *      limiter is the strength of the credential, not a nicety.
+ *   3. every guard `login` already applies: membership, tenant suspension,
+ *      demo-session expiry, MFA enrolment.
+ *
+ * Audit: two awaited writes, `attempt` before the decision and `result` after.
+ * `AuditEventsService.log` joins the caller's Postgres transaction when one is
+ * open; `login` does not open one, so these are two ordinary awaited inserts
+ * rather than a single atomic unit with session issuance. That limitation is
+ * the pre-existing shape of the login path, not something this endpoint adds.
+ */
+router.post(
+  '/quick-access',
+  quickAccessPinRateLimiter,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const ip = req.ip;
+    const userAgent = req.get('user-agent');
+    const pin = String((req.body as { pin?: unknown } | undefined)?.pin ?? '').trim();
+
+    // Never record the PIN itself — the audit trail must not become the
+    // dictionary an attacker was looking for.
+    const auditBase = {
+      actorType: 'SYSTEM' as const,
+      resourceType: 'auth_session',
+      ip,
+      userAgent,
+    };
+
+    const enabled = isQuickAccessEndpointEnabled();
+    const email = enabled ? resolveQuickAccessAccountEmail(pin) : null;
+
+    await auditEventsService.log({
+      ...auditBase,
+      action: 'auth.quick_access.attempt',
+      metadata: {
+        endpointEnabled: enabled,
+        pinWellFormed: /^\d{4}$/.test(pin),
+        pinMatched: Boolean(email),
+      },
+    });
+
+    if (!enabled) {
+      await auditEventsService.log({
+        ...auditBase,
+        action: 'auth.quick_access.result',
+        metadata: { outcome: 'disabled', httpStatus: 404 },
+      });
+      // 404, not 403: on production the endpoint should not confirm it exists.
+      return res.status(404).json({
+        error: 'Not found',
+        code: QUICK_ACCESS_DISABLED_CODE,
+      });
+    }
+
+    if (!email) {
+      await auditEventsService.log({
+        ...auditBase,
+        action: 'auth.quick_access.result',
+        metadata: { outcome: 'invalid_pin', httpStatus: 401 },
+      });
+      return res.status(401).json({
+        error: 'Invalid quick access PIN.',
+        code: QUICK_ACCESS_INVALID_PIN_CODE,
+      });
+    }
+
+    // Reuse the ordinary login controller verbatim. The body is replaced so no
+    // caller-supplied field can reach it, and it carries no password key at all.
+    req.body = { email };
+    await login(req, res, { pinVerifiedPrincipal: true });
+
+    await auditEventsService.log({
+      ...auditBase,
+      action: 'auth.quick_access.result',
+      metadata: {
+        outcome: res.statusCode < 400 ? 'granted' : 'refused_by_login',
+        httpStatus: res.statusCode,
+        account: email,
+      },
+    });
+    return undefined;
+  })
+);
 
 // REFRESH TOKEN - Get new access token using refresh token
 router.post(

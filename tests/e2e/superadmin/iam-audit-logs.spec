@@ -10,8 +10,8 @@ test.describe('Admin Audit Logs', () => {
     test.beforeEach(async ({ page }) => {
         // Login as superadmin
         await page.goto(`${BASE_URL}/login`);
-        await page.fill('input[name="email"]', 'admin@dbr77.com');
-        await page.fill('input[name="password"]', '123456');
+        await page.fill('input[name="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+        await page.fill('input[name="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
         await page.click('button[type="submit"]');
         await page.waitForURL(`${BASE_URL}/**`);
     });

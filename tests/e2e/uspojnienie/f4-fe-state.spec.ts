@@ -13,8 +13,8 @@ import { test, expect, type APIRequestContext } from '@playwright/test';
 
 const BACKEND = process.env.USPOJNIENIE_BACKEND || 'http://localhost:3001';
 const CREDS = {
-  email: process.env.USPOJNIENIE_EMAIL || 'piotr.wisniewski@dbr77.com',
-  password: process.env.USPOJNIENIE_PASSWORD || '123456',
+  email: process.env.USPOJNIENIE_EMAIL || process.env.TEST_USER_EMAIL || 'test@localhost',
+  password: process.env.USPOJNIENIE_PASSWORD || process.env.TEST_USER_PASSWORD || 'testpassword123',
 };
 
 let token = '';
@@ -24,7 +24,7 @@ async function api(
   request: APIRequestContext,
   method: 'GET' | 'POST' | 'PATCH' | 'DELETE',
   path: string,
-  body?: object,
+  body?: object
 ): Promise<{ status: number; json: any }> {
   const res = await request.fetch(`${BACKEND}/api${path}`, {
     method,
@@ -32,7 +32,9 @@ async function api(
     ...(body ? { data: JSON.stringify(body) } : {}),
   });
   let json: any = null;
-  try { json = await res.json(); } catch {}
+  try {
+    json = await res.json();
+  } catch {}
   return { status: res.status(), json };
 }
 
@@ -58,7 +60,7 @@ test.describe('F4 — FE Shared State', () => {
     if (!id) return;
     // FINDING: GET /api/initiatives returns plain array (not {initiatives:[]}), no limit param
     const { json: list } = await api(request, 'GET', '/initiatives');
-    const items: any[] = Array.isArray(list) ? list : list?.initiatives ?? list?.data ?? [];
+    const items: any[] = Array.isArray(list) ? list : (list?.initiatives ?? list?.data ?? []);
     const found = items.find((i: any) => i.id === id);
     expect(found, 'New initiative not found in list').toBeTruthy();
     await api(request, 'DELETE', `/initiatives/${id}`);
@@ -81,13 +83,17 @@ test.describe('F4 — FE Shared State', () => {
   // ──────────────────────────────────────────────────────────────────────
   // F4-03  Status change → GET reflects new status (refresh)
   // ──────────────────────────────────────────────────────────────────────
-  test('F4-03 — status gate returns structured error (gate is active for bare DRAFT)', async ({ request }) => {
+  test('F4-03 — status gate returns structured error (gate is active for bare DRAFT)', async ({
+    request,
+  }) => {
     // FINDING: Status transitions require gate conditions. DRAFT→APPROVED blocked by gate.
     // Correct behavior: gate returns 400/422 with structured error, not 500.
     const { json: created } = await api(request, 'POST', '/initiatives', { title: 'F4-03 status' });
     const id = created?.id ?? created?.initiative?.id;
     if (!id) return;
-    const { status, json } = await api(request, 'PATCH', `/initiatives/${id}/status`, { status: 'APPROVED' });
+    const { status, json } = await api(request, 'PATCH', `/initiatives/${id}/status`, {
+      status: 'APPROVED',
+    });
     expect(status).not.toBe(500);
     if (status >= 400) expect(json?.error ?? json?.code).toBeTruthy();
     await api(request, 'DELETE', `/initiatives/${id}`);
@@ -111,7 +117,9 @@ test.describe('F4 — FE Shared State', () => {
   // F4-05  GET /api/initiatives/:id — stable ID (deep-link)
   // ──────────────────────────────────────────────────────────────────────
   test('F4-05 — initiative ID is stable after create', async ({ request }) => {
-    const { json: created } = await api(request, 'POST', '/initiatives', { title: 'F4-05 deeplink' });
+    const { json: created } = await api(request, 'POST', '/initiatives', {
+      title: 'F4-05 deeplink',
+    });
     const id = created?.id ?? created?.initiative?.id;
     if (!id) return;
     const { json: d1 } = await api(request, 'GET', `/initiatives/${id}`);
@@ -207,7 +215,9 @@ test.describe('F4 — FE Shared State', () => {
   // F4-13  Two simultaneous GETs return same data
   // ──────────────────────────────────────────────────────────────────────
   test('F4-13 — parallel GETs return identical data', async ({ request }) => {
-    const { json: created } = await api(request, 'POST', '/initiatives', { title: 'F4-13 parallel' });
+    const { json: created } = await api(request, 'POST', '/initiatives', {
+      title: 'F4-13 parallel',
+    });
     const id = created?.id ?? created?.initiative?.id;
     if (!id) return;
     const [r1, r2] = await Promise.all([
@@ -233,7 +243,9 @@ test.describe('F4 — FE Shared State', () => {
   // F4-15  Create + status change + delete → no orphan in list
   // ──────────────────────────────────────────────────────────────────────
   test('F4-15 — full lifecycle create/approve/delete → no orphan', async ({ request }) => {
-    const { json: created } = await api(request, 'POST', '/initiatives', { title: 'F4-15 lifecycle' });
+    const { json: created } = await api(request, 'POST', '/initiatives', {
+      title: 'F4-15 lifecycle',
+    });
     const id = created?.id ?? created?.initiative?.id;
     if (!id) return;
     await api(request, 'PATCH', `/initiatives/${id}/status`, { status: 'APPROVED' });
@@ -247,7 +259,9 @@ test.describe('F4 — FE Shared State', () => {
   // ──────────────────────────────────────────────────────────────────────
   // F4-16  Multiple status PATCH chain → correct final status
   // ──────────────────────────────────────────────────────────────────────
-  test('F4-16 — gate blocks 3-step chain on bare DRAFT, status stays DRAFT', async ({ request }) => {
+  test('F4-16 — gate blocks 3-step chain on bare DRAFT, status stays DRAFT', async ({
+    request,
+  }) => {
     // FINDING: All transitions are gate-blocked for bare DRAFT initiatives.
     // Full chain: DRAFT→PENDING_REVIEW→REVIEW→PROMOTED→PLANNING→APPROVED→SCHEDULED
     const { json: created } = await api(request, 'POST', '/initiatives', { title: 'F4-16 chain' });
@@ -375,7 +389,11 @@ test.describe('F4 — FE Shared State', () => {
     const { json: created } = await api(request, 'POST', '/initiatives', { title: UNIQUE });
     const id = created?.id ?? created?.initiative?.id;
     if (!id) return;
-    const { json: list } = await api(request, 'GET', `/initiatives?search=${encodeURIComponent(UNIQUE)}`);
+    const { json: list } = await api(
+      request,
+      'GET',
+      `/initiatives?search=${encodeURIComponent(UNIQUE)}`
+    );
     const items: any[] = list?.initiatives ?? list?.data ?? [];
     const found = items.find((i: any) => (i.title ?? i.name)?.includes(UNIQUE));
     // search param may not be supported — if no results, that's ok
@@ -403,7 +421,9 @@ test.describe('F4 — FE Shared State', () => {
   // F4-27  PATCH non-existent field → initiative still returns 200
   // ──────────────────────────────────────────────────────────────────────
   test('F4-27 — PATCH unknown field → no 500', async ({ request }) => {
-    const { json: created } = await api(request, 'POST', '/initiatives', { title: 'F4-27 unknown' });
+    const { json: created } = await api(request, 'POST', '/initiatives', {
+      title: 'F4-27 unknown',
+    });
     const id = created?.id ?? created?.initiative?.id;
     if (!id) return;
     const { status } = await api(request, 'PATCH', `/initiatives/${id}`, {
@@ -440,7 +460,9 @@ test.describe('F4 — FE Shared State', () => {
   // F4-30  API accepts concurrent writes without corrupting data
   // ──────────────────────────────────────────────────────────────────────
   test('F4-30 — concurrent PATCHes to same initiative → no 500', async ({ request }) => {
-    const { json: created } = await api(request, 'POST', '/initiatives', { title: 'F4-30 concurrent' });
+    const { json: created } = await api(request, 'POST', '/initiatives', {
+      title: 'F4-30 concurrent',
+    });
     const id = created?.id ?? created?.initiative?.id;
     if (!id) return;
     const [r1, r2] = await Promise.all([

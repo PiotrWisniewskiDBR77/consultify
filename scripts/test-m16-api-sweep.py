@@ -12,11 +12,21 @@ Wymaga: /tmp/m16_seed_manifest.json (z seed-m16-demo.py).
 Bezpieczeństwo: tylko demo. NIE dotyka PROD.
 """
 import json
+import os
 import sys
 import urllib.request
 import urllib.error
 
-BASE = "https://demo.consultify.ai"
+def require_env(name, hint):
+    value = os.environ.get(name, "").strip()
+    if not value:
+        sys.exit(f"[ODMOWA] Brak zmiennej {name}. {hint}")
+    return value
+
+
+BASE = require_env("CONSULTIFY_API_BASE", "Ustaw adres API przed uruchomieniem.")
+EMAIL = require_env("CONSULTIFY_EMAIL", "Ustaw adres konta używanego przez skrypt.")
+PASSWORD = require_env("CONSULTIFY_PASSWORD", "Ustaw hasło konta używanego przez skrypt.")
 UA = "Mozilla/5.0 (Macintosh) AppleWebKit/537.36 Chrome/124.0 Safari/537.36"
 
 
@@ -49,7 +59,7 @@ def req(method, path, token=None, body=None, timeout=60):
 
 
 def login():
-    st, d = req("POST", "/api/auth/login", body={"email": "piotr.wisniewski@dbr77.com", "password": "123456"})
+    st, d = req("POST", "/api/auth/login", body={"email": EMAIL, "password": PASSWORD})
     token = d.get("token") or d.get("data", {}).get("token")
     if not token:
         print(f"❌ Login failed: {st}")

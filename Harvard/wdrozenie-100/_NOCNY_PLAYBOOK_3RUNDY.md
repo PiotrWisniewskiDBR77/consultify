@@ -18,7 +18,7 @@
 **Liczniki (uczciwe, ✅=z dowodem+odbiorem Piotra — większość dziś = 🟡 wdrożone-czeka-na-odbiór):** HARVARD ~30 pozycji dotkniętych/60 · VEGAS Fala 1/7+ · OXFORD top-5+DRD komplet.
 
 ## 2. INSTRUKCJA OPERACYJNA (twarde reguły — łam=psujesz)
-- **PROD (centerbeam/consultify.ai) NIETYKALNY.** Wszystko na `feat/deliverables-w1` + deploy na gałąź `demo` → Railway auto-deploy. Login demo: piotr.wisniewski@dbr77.com / 123456. Health: `curl -A "Mozilla/5.0" https://demo.consultify.ai/api/health` (gitSha).
+- **PROD (centerbeam/consultify.ai) NIETYKALNY.** Wszystko na `feat/deliverables-w1` + deploy na gałąź `demo` → Railway auto-deploy. Login demo: piotr.wisniewski@dbr77.com / <HASLO>. Health: `curl -A "Mozilla/5.0" https://demo.consultify.ai/api/health` (gitSha).
 - **Każdy agent = osobny worktree** (`isolation: "worktree"`), NIE pushuje, commituje na swoim branchu. TY (orkiestrator) robisz merge zbiorczy w głównym drzewie.
 - **`git stash` ZAKAZANY na ślepo** — stash wspólny dla ~70 worktree = race. Path-scoped tylko z natychmiastowym pop+diff.
 - **`/tests/` jest w .gitignore** → testy dodawaj `git add -f` + weryfikuj `git ls-files`.

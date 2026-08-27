@@ -113,9 +113,12 @@ function getSafeAuthErrorLogMeta(error: unknown): {
 }
 
 /**
- * Hosts where the hidden quick-access PIN panel (Ctrl/Cmd+Shift+K) may appear.
- * Production is limited to the public marketing domain — PINs are filtered in
- * {@link resolveQuickAccessCredentials} so only the Anna demo shortcut works there.
+ * Hosts where a quick-access PIN panel could ever appear.
+ *
+ * This is an affordance filter only. It decides whether the browser bothers to
+ * DRAW the panel; it decides nothing about access. The real gate is
+ * `POST /api/auth/quick-access`, which refuses on production regardless of what
+ * hostname the browser reports (day-39 FIX-1/FIX-2).
  */
 export function isQuickAccessShortcutHost(hostname: string): boolean {
   return (
@@ -132,41 +135,19 @@ export function isQuickAccessShortcutHost(hostname: string): boolean {
   );
 }
 
-export function isQuickAccessEnabledHost(hostname: string): boolean {
-  return isQuickAccessShortcutHost(hostname);
-}
-
-type QuickAccessCredentials = { email: string; password: string } | { demo: true };
-
 /**
- * Maps a 4-digit PIN to login credentials. On consultify.ai / www only `1111`
- * (Anna Zielińska → AtelierToys demo tenant) is allowed; dev/staging codes are blocked on prod.
+ * Whether the PIN panel may be rendered at all.
+ *
+ * Narrower than {@link isQuickAccessShortcutHost}: the public production
+ * domain is excluded, so on `consultify.ai` the logo is not announced as a
+ * button and the keyboard shortcut does nothing. Before day-39 FIX-2 the
+ * component called the WIDE filter here, which `consultify.ai` passes — the
+ * logo advertised "Open quick PIN sign-in" to screen readers, the panel opened,
+ * and typing a PIN produced no login, no error and no spinner.
  */
-export function resolveQuickAccessCredentials(
-  code: string,
-  hostname: string
-): QuickAccessCredentials | null {
-  if (!isQuickAccessShortcutHost(hostname)) return null;
-
+export function isQuickAccessEnabledHost(hostname: string): boolean {
   const isProdPublic = hostname === 'consultify.ai' || hostname === 'www.consultify.ai';
-
-  if (isProdPublic) {
-    if (code === '1111') {
-      return { email: 'anna.zielinska@ateliertoys-demo.com', password: '123456' };
-    }
-    return null;
-  }
-
-  const devStagingCodes: Record<string, QuickAccessCredentials> = {
-    '7777': { email: 'piotr.wisniewski@dbr77.com', password: '123456' }, // Admin
-    '7775': { email: 'pawel.mroczkowski@dbr77.com', password: '123456' }, // Paweł (DBR77)
-    '1212': { email: 'pawel.mroczkowski@plastmetcentrum.pl', password: '123456' }, // Paweł (Plast-Met)
-    '7776': { email: 'admin@dbr77.com', password: '123456' }, // SuperAdmin
-    '7778': { demo: true },
-    '1111': { email: 'anna.zielinska@ateliertoys-demo.com', password: '123456' },
-  };
-
-  return devStagingCodes[code] ?? null;
+  return !isProdPublic && isQuickAccessShortcutHost(hostname);
 }
 
 function formatInviteRoleLabel(role?: string): string {
@@ -206,7 +187,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
   const [isDemoLoading, setIsDemoLoading] = useState(false);
   const [fromDemoRedirect, setFromDemoRedirect] = useState(false);
   const [hasAcceptedLegal, setHasAcceptedLegal] = useState(false);
-  const quickAccessEnabled = isQuickAccessShortcutHost(window.location.hostname);
+  const quickAccessEnabled = isQuickAccessEnabledHost(window.location.hostname);
 
   useEffect(() => {
     if (targetMode !== SessionMode.DEMO) return;
@@ -273,48 +254,29 @@ export const AuthView: React.FC<AuthViewProps> = ({
     setQuickCode('');
   };
 
-  // Quick access: dev/staging PINs; production consultify.ai / www → only 1111 (Anna demo).
+  // The PIN goes to the server and the server decides. The browser holds no
+  // account map and no password, so there is nothing here for a bundle scan to
+  // find (day-39 FIX-1).
   //
-  // Deliberately NOT adopting a demo session here. Neither `Api.demoLogin()` nor
-  // `Api.login()` returns a `demoSession` payload, so the only way to adopt would
-  // be an extra round trip on a path whose whole point is an instant PIN entry.
-  // The PIN accounts resolve against the shared curated org, which is what this
-  // path has always shown. See `adoptDemoSession` for the entries that do adopt.
+  // Deliberately NOT adopting a demo session here: the quick-access response
+  // carries no `demoSession` payload, so adopting would mean an extra round
+  // trip on a path whose whole point is an instant PIN entry. The PIN accounts
+  // resolve against the shared curated org, which is what this path has always
+  // shown. See `adoptDemoSession` for the entries that do adopt.
   const handleQuickAccess = async (code: string) => {
     if (!quickAccessEnabled) return;
-    const credentials = resolveQuickAccessCredentials(code, window.location.hostname);
-    if (credentials) {
-      setIsDemoLoading(true);
-      try {
-        let user;
-        if ('email' in credentials) {
-          user = await Api.login(credentials.email, credentials.password);
-        } else {
-          user = await Api.demoLogin();
-        }
-
-        if (!('email' in credentials)) {
-          const ctx = readAnnaLpCtaContext();
-          if (ctx && ctx.cta_type === 'demo') {
-            void postPublicAnnaFunnelEvent('anna_lp.cta.submit_success', {
-              session_id: ctx.session_id,
-              cta_type: ctx.cta_type,
-              language: ctx.language,
-              channel: ctx.channel,
-              turn_id: ctx.turn_id,
-              source_intent: ctx.source_intent,
-            });
-            updateAnnaLpCtaContext({ submit_success_at_ms: Date.now() });
-            clearAnnaLpCtaContext();
-          }
-        }
-
-        onAuthSuccess(user);
-      } catch (err: any) {
-        setError(mapPublicAuthError(err, 'quickAccess'));
-      } finally {
-        setIsDemoLoading(false);
-      }
+    setIsDemoLoading(true);
+    try {
+      const user = await Api.quickAccessSignIn(code);
+      onAuthSuccess(user);
+    } catch (err: any) {
+      // A wrong PIN, a disabled endpoint and a server fault all land here with
+      // the same non-leaking copy. Crucially it IS an error: the pre-FIX-2 path
+      // failed silently, which is what made the dead shortcut invisible.
+      setError(mapPublicAuthError(err, 'quickAccess'));
+      setQuickCode('');
+    } finally {
+      setIsDemoLoading(false);
     }
   };
 

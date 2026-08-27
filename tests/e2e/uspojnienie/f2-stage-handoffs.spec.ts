@@ -12,8 +12,8 @@ import { test, expect, type APIRequestContext } from '@playwright/test';
 
 const BACKEND = process.env.USPOJNIENIE_BACKEND || 'http://localhost:3001';
 const CREDS = {
-  email: process.env.USPOJNIENIE_EMAIL || 'piotr.wisniewski@dbr77.com',
-  password: process.env.USPOJNIENIE_PASSWORD || '123456',
+  email: process.env.USPOJNIENIE_EMAIL || process.env.TEST_USER_EMAIL || 'test@localhost',
+  password: process.env.USPOJNIENIE_PASSWORD || process.env.TEST_USER_PASSWORD || 'testpassword123',
 };
 
 let token = '';
@@ -23,7 +23,7 @@ async function api(
   request: APIRequestContext,
   method: 'GET' | 'POST' | 'PATCH' | 'DELETE',
   path: string,
-  body?: object,
+  body?: object
 ): Promise<{ status: number; json: any }> {
   const res = await request.fetch(`${BACKEND}/api${path}`, {
     method,
@@ -62,7 +62,9 @@ test.describe('F2 — Stage Handoffs', () => {
   //        FINDING: status transitions require AI gate conditions (card completeness).
   //        A bare DRAFT gets 422 INITIATIVE_GATE_AI_SOFT_BLOCK = expected behavior.
   // ──────────────────────────────────────────────────────────────────────
-  test('F2-01 — DRAFT→PENDING_REVIEW gate: 400/422 without full card (expected)', async ({ request }) => {
+  test('F2-01 — DRAFT→PENDING_REVIEW gate: 400/422 without full card (expected)', async ({
+    request,
+  }) => {
     const id = await createInitiative(request, 'F2-01 gate test');
     if (!id) return;
     const { status, json } = await api(request, 'PATCH', `/initiatives/${id}/status`, {
@@ -84,9 +86,12 @@ test.describe('F2 — Stage Handoffs', () => {
   test('F2-02 — APPROVED→SCHEDULED endpoint returns structured response', async ({ request }) => {
     // Use existing APPROVED initiative (read-only probe — we just look, don't change)
     const { json: list } = await api(request, 'GET', '/initiatives');
-    const arr: any[] = Array.isArray(list) ? list : list?.initiatives ?? list?.data ?? [];
+    const arr: any[] = Array.isArray(list) ? list : (list?.initiatives ?? list?.data ?? []);
     const approved = arr.find((i: any) => i.status === 'APPROVED');
-    if (!approved) { console.log('No APPROVED initiative found — skip'); return; }
+    if (!approved) {
+      console.log('No APPROVED initiative found — skip');
+      return;
+    }
     const { status, json } = await api(request, 'PATCH', `/initiatives/${approved.id}/status`, {
       status: 'SCHEDULED',
     });
@@ -100,9 +105,12 @@ test.describe('F2 — Stage Handoffs', () => {
   // ──────────────────────────────────────────────────────────────────────
   test('F2-03 — SCHEDULED→EXECUTING endpoint exists and responds', async ({ request }) => {
     const { json: list } = await api(request, 'GET', '/initiatives');
-    const arr: any[] = Array.isArray(list) ? list : list?.initiatives ?? list?.data ?? [];
+    const arr: any[] = Array.isArray(list) ? list : (list?.initiatives ?? list?.data ?? []);
     const scheduled = arr.find((i: any) => i.status === 'SCHEDULED');
-    if (!scheduled) { console.log('No SCHEDULED initiative found — skip'); return; }
+    if (!scheduled) {
+      console.log('No SCHEDULED initiative found — skip');
+      return;
+    }
     const { status } = await api(request, 'PATCH', `/initiatives/${scheduled.id}/status`, {
       status: 'EXECUTING',
     });
@@ -114,9 +122,12 @@ test.describe('F2 — Stage Handoffs', () => {
   // ──────────────────────────────────────────────────────────────────────
   test('F2-04 — EXECUTING→DONE endpoint exists and responds', async ({ request }) => {
     const { json: list } = await api(request, 'GET', '/initiatives');
-    const arr: any[] = Array.isArray(list) ? list : list?.initiatives ?? list?.data ?? [];
+    const arr: any[] = Array.isArray(list) ? list : (list?.initiatives ?? list?.data ?? []);
     const executing = arr.find((i: any) => i.status === 'EXECUTING');
-    if (!executing) { console.log('No EXECUTING initiative found — skip'); return; }
+    if (!executing) {
+      console.log('No EXECUTING initiative found — skip');
+      return;
+    }
     const { status } = await api(request, 'PATCH', `/initiatives/${executing.id}/status`, {
       status: 'DONE',
     });
@@ -128,9 +139,12 @@ test.describe('F2 — Stage Handoffs', () => {
   // ──────────────────────────────────────────────────────────────────────
   test('F2-05 — DONE→TRACKING: transition endpoint responds', async ({ request }) => {
     const { json: list } = await api(request, 'GET', '/initiatives');
-    const arr: any[] = Array.isArray(list) ? list : list?.initiatives ?? list?.data ?? [];
+    const arr: any[] = Array.isArray(list) ? list : (list?.initiatives ?? list?.data ?? []);
     const done = arr.find((i: any) => i.status === 'DONE');
-    if (!done) { console.log('No DONE initiative found — skip'); return; }
+    if (!done) {
+      console.log('No DONE initiative found — skip');
+      return;
+    }
     const { status } = await api(request, 'PATCH', `/initiatives/${done.id}/status`, {
       status: 'TRACKING',
     });
@@ -142,9 +156,12 @@ test.describe('F2 — Stage Handoffs', () => {
   // ──────────────────────────────────────────────────────────────────────
   test('F2-06 — EXECUTING→BLOCKED endpoint responds', async ({ request }) => {
     const { json: list } = await api(request, 'GET', '/initiatives');
-    const arr: any[] = Array.isArray(list) ? list : list?.initiatives ?? list?.data ?? [];
+    const arr: any[] = Array.isArray(list) ? list : (list?.initiatives ?? list?.data ?? []);
     const executing = arr.find((i: any) => i.status === 'EXECUTING');
-    if (!executing) { console.log('No EXECUTING initiative found — skip'); return; }
+    if (!executing) {
+      console.log('No EXECUTING initiative found — skip');
+      return;
+    }
     const { status } = await api(request, 'PATCH', `/initiatives/${executing.id}/status`, {
       status: 'BLOCKED',
     });
@@ -156,9 +173,12 @@ test.describe('F2 — Stage Handoffs', () => {
   // ──────────────────────────────────────────────────────────────────────
   test('F2-07 — BLOCKED→EXECUTING unblock endpoint exists', async ({ request }) => {
     const { json: list } = await api(request, 'GET', '/initiatives');
-    const arr: any[] = Array.isArray(list) ? list : list?.initiatives ?? list?.data ?? [];
+    const arr: any[] = Array.isArray(list) ? list : (list?.initiatives ?? list?.data ?? []);
     const blocked = arr.find((i: any) => i.status === 'BLOCKED');
-    if (!blocked) { console.log('No BLOCKED initiative found — skip'); return; }
+    if (!blocked) {
+      console.log('No BLOCKED initiative found — skip');
+      return;
+    }
     const { status } = await api(request, 'PATCH', `/initiatives/${blocked.id}/status`, {
       status: 'EXECUTING',
     });
@@ -259,7 +279,7 @@ test.describe('F2 — Stage Handoffs', () => {
     const { status } = await api(
       request,
       'GET',
-      '/initiatives/00000000-0000-0000-0000-000000000000/lineage',
+      '/initiatives/00000000-0000-0000-0000-000000000000/lineage'
     );
     expect(status).toBeGreaterThanOrEqual(400);
   });
@@ -343,9 +363,12 @@ test.describe('F2 — Stage Handoffs', () => {
   // ──────────────────────────────────────────────────────────────────────
   test('F2-20 — APPROVED initiative status persists on GET', async ({ request }) => {
     const { json: list } = await api(request, 'GET', '/initiatives');
-    const arr: any[] = Array.isArray(list) ? list : list?.initiatives ?? list?.data ?? [];
+    const arr: any[] = Array.isArray(list) ? list : (list?.initiatives ?? list?.data ?? []);
     const approved = arr.find((i: any) => i.status === 'APPROVED');
-    if (!approved) { console.log('No APPROVED initiative — skip'); return; }
+    if (!approved) {
+      console.log('No APPROVED initiative — skip');
+      return;
+    }
     const { json: detail } = await api(request, 'GET', `/initiatives/${approved.id}`);
     const ini = detail?.initiative ?? detail;
     expect(ini?.status?.toUpperCase()).toBe('APPROVED');

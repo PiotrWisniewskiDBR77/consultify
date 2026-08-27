@@ -228,6 +228,10 @@ function isExemptPath(path: string | undefined) {
     '/api/auth/register',
     '/api/auth/register-demo',
     '/api/auth/demo-login',
+    // Pre-session, like /login: no session cookie exists yet for a forged
+    // cross-site POST to ride on, and every existing auth entry point here is
+    // exempt for the same reason.
+    '/api/auth/quick-access',
     '/api/auth/reset-password',
     '/api/auth/verify-email',
     '/api/csrf-token',

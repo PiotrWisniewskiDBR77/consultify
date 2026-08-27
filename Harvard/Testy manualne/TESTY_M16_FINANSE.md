@@ -50,7 +50,7 @@ Lub przez `localStorage`: `localStorage.setItem('ff_valueOffice', '1')`.
 
 ### Setup środowiska testowego
 1. Uruchom dev server (`npm run dev`).
-2. Zaloguj się jako admin organizacji z seedem danych (piotr/123456 → org DBR77).
+2. Zaloguj się jako admin organizacji z seedem danych (piotr/<HASLO> → org DBR77).
 3. Przejdź na `/finance?valueOffice=1&investmentAppraisal=1&valuationVisuals=1&varianceBridge=1&driverPlanner=1&modelVersioning=1`.
 4. Otwórz DevTools → Network (filtr: `/api/v8/finance` + `/api/initiatives`).
 5. Miej pod ręką: ID inicjatywy z M13/M14 (z NetworkTab lub bazy), cashflow testowy (`-100, 40, 40, 40, 40`).

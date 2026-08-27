@@ -19,6 +19,10 @@ import { getDatabaseInstance as getSqliteDatabaseInstance } from '../legacy_arch
 
 // Detect database type
 dotenv.config();
+const SEED_USER_PASSWORD = String(process.env.SEED_USER_PASSWORD || '').trim();
+if (!SEED_USER_PASSWORD) {
+  throw new Error('[ODMOWA] Brak zmiennej SEED_USER_PASSWORD. Ustaw ją przed uruchomieniem seeda.');
+}
 const isPostgres = process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith('postgres');
 
 let db;
@@ -745,7 +749,7 @@ async function seedDBR77Complete() {
 
     if (!existingCto) {
       ctoId = uuidv4();
-      const password = bcrypt.hashSync('123456', 8);
+      const password = bcrypt.hashSync(SEED_USER_PASSWORD, 8);
       await dbRun(
         `INSERT INTO users (id, organization_id, email, password, first_name, last_name, role, status) 
                          VALUES (?, ?, 'cto@dbr77.com', ?, 'Tomasz', 'Kowalski', 'CTO', 'active')`,
@@ -758,7 +762,7 @@ async function seedDBR77Complete() {
 
     if (!existingCfo) {
       cfoId = uuidv4();
-      const password = bcrypt.hashSync('123456', 8);
+      const password = bcrypt.hashSync(SEED_USER_PASSWORD, 8);
       await dbRun(
         `INSERT INTO users (id, organization_id, email, password, first_name, last_name, role, status) 
                          VALUES (?, ?, 'cfo@dbr77.com', ?, 'Anna', 'Nowak', 'CFO', 'active')`,
@@ -1079,7 +1083,7 @@ async function seedDBR77Complete() {
     console.log('   - piotr.wisniewski@dbr77.com (ADMIN)');
     console.log('   - cto@dbr77.com (CTO reviewer)');
     console.log('   - cfo@dbr77.com (CFO reviewer)');
-    console.log('   Password: 123456');
+    console.log('   Password: <HASLO>');
   } catch (error) {
     console.error('\n❌ Error seeding:', error);
     throw error;

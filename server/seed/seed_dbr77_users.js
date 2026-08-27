@@ -14,6 +14,10 @@ import dotenv from 'dotenv';
 
 // Load environment variables
 dotenv.config();
+const SEED_USER_PASSWORD = String(process.env.SEED_USER_PASSWORD || '').trim();
+if (!SEED_USER_PASSWORD) {
+  throw new Error('[ODMOWA] Brak zmiennej SEED_USER_PASSWORD. Ustaw ją przed uruchomieniem seeda.');
+}
 
 // Detect database type
 const isPostgres = process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith('postgres');
@@ -107,7 +111,9 @@ async function seedDBR77Users() {
     // 1. Find DBR77 organization (try ID first, then name)
     let org = await dbGet(`SELECT id FROM organizations WHERE id = 'dbr77' LIMIT 1`);
     if (!org) {
-      org = await dbGet(`SELECT id FROM organizations WHERE name LIKE '%DBR77%' OR name LIKE '%Consultinity%' LIMIT 1`);
+      org = await dbGet(
+        `SELECT id FROM organizations WHERE name LIKE '%DBR77%' OR name LIKE '%Consultinity%' LIMIT 1`
+      );
     }
     if (!org) {
       console.error('❌ DBR77 organization not found. Run seed_dbr77_postgres.js first.');
@@ -117,7 +123,7 @@ async function seedDBR77Users() {
     console.log(`✅ Found DBR77 organization: ${organizationId}`);
 
     // 2. Hash password
-    const password = bcrypt.hashSync('123456', 8);
+    const password = bcrypt.hashSync(SEED_USER_PASSWORD, 8);
     console.log('✅ Password hash created');
 
     // 3. Create users
@@ -158,7 +164,7 @@ async function seedDBR77Users() {
     console.log('\n📋 Summary:');
     console.log(`   Created: ${created}`);
     console.log(`   Skipped (already exist): ${skipped}`);
-    console.log('\n   Users (password: 123456):');
+    console.log('\n   Users (password: <HASLO>):');
     for (const user of USERS) {
       console.log(`   - ${user.email} (${user.firstName} ${user.lastName})`);
     }

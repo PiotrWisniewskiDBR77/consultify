@@ -19,6 +19,12 @@ import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 
 const databaseUrl = process.env.DATABASE_URL;
+const seedUserPassword = String(process.env.SEED_USER_PASSWORD || '').trim();
+
+if (!seedUserPassword) {
+  console.error('[ODMOWA] Brak zmiennej SEED_USER_PASSWORD. Ustaw ją przed uruchomieniem seeda.');
+  process.exit(1);
+}
 
 if (!databaseUrl || !databaseUrl.startsWith('postgres')) {
   console.error('ERROR: DATABASE_URL must be a PostgreSQL connection string');
@@ -42,7 +48,7 @@ const PIOTR_ID = uuidv4();
 const JUSTYNA_ID = uuidv4();
 const PROJECT_ID = uuidv4();
 
-const DEFAULT_PASSWORD = bcrypt.hashSync('123456', 8);
+const DEFAULT_PASSWORD = bcrypt.hashSync(seedUserPassword, 8);
 
 async function seedDBR77() {
   console.log('🌱 Seeding DBR77 Anchor Tenant...\n');
@@ -117,7 +123,7 @@ async function seedDBR77() {
         'active',
       ]
     );
-    console.log(`✅ Created Super Admin: admin@dbr77.com (password: 123456)`);
+    console.log(`✅ Created Super Admin: admin@dbr77.com (password: <HASLO>)`);
 
     // 5. Create DBR77 Users
     await client.query(
@@ -140,7 +146,7 @@ async function seedDBR77() {
         'active',
       ]
     );
-    console.log(`✅ Created Admin User: piotr.wisniewski@dbr77.com (password: 123456)`);
+    console.log(`✅ Created Admin User: piotr.wisniewski@dbr77.com (password: <HASLO>)`);
 
     await client.query(
       `INSERT INTO users (id, organization_id, email, password, first_name, last_name, role, status, created_at)
@@ -162,7 +168,7 @@ async function seedDBR77() {
         'active',
       ]
     );
-    console.log(`✅ Created User: justyna.laskowska@dbr77.com (password: 123456)`);
+    console.log(`✅ Created User: justyna.laskowska@dbr77.com (password: <HASLO>)`);
 
     // 6. Create Default Project
     await client.query(
@@ -229,7 +235,7 @@ async function seedDBR77() {
     console.log(
       `   - Users: admin@dbr77.com, piotr.wisniewski@dbr77.com, justyna.laskowska@dbr77.com`
     );
-    console.log(`   - Default password: 123456`);
+    console.log(`   - Default password: <HASLO>`);
     console.log(`   - Project: Digital Transformation 2025`);
   } catch (error) {
     await client.query('ROLLBACK');

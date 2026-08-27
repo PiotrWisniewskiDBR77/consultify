@@ -59,7 +59,7 @@ cd server && DOTENV_IGNORE_LOCAL=1 \
 # 2. Czekaj na gotowość (~2-3 min zimny start)
 until curl -sf http://localhost:3001/api/auth/login \
   -X POST -H "Content-Type: application/json" \
-  -d '{"email":"piotr.wisniewski@dbr77.com","password":"123456"}' \
+  -d '{"email":"piotr.wisniewski@dbr77.com","password":"<HASLO>"}' \
   | grep -q '"token"'; do sleep 3; done
 
 # 3. Testy

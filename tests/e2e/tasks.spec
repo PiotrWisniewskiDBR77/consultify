@@ -6,8 +6,8 @@ test.describe('Task Management Flow', () => {
             // Login first
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.goto('/tasks');
@@ -38,8 +38,8 @@ test.describe('Task Management Flow', () => {
         test('should validate task creation form', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.goto('/tasks');
@@ -64,8 +64,8 @@ test.describe('Task Management Flow', () => {
         test('should create task templates', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.goto('/tasks');
@@ -87,8 +87,8 @@ test.describe('Task Management Flow', () => {
         test('should update task status', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.goto('/tasks');
@@ -111,8 +111,8 @@ test.describe('Task Management Flow', () => {
         test('should reassign tasks', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.goto('/tasks');
@@ -134,8 +134,8 @@ test.describe('Task Management Flow', () => {
         test('should set task dependencies', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.goto('/tasks');
@@ -168,8 +168,8 @@ test.describe('Task Management Flow', () => {
         test('should filter tasks by status', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.goto('/tasks');
@@ -189,21 +189,21 @@ test.describe('Task Management Flow', () => {
         test('should filter tasks by assignee', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.goto('/tasks');
 
-            await page.selectOption('select[name="assigneeFilter"]', 'admin@dbr77.com');
+            await page.selectOption('select[name="assigneeFilter"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
             await expect(page.locator('text=Showing tasks assigned to admin@dbr77.com')).toBeVisible();
         });
 
         test('should search tasks by title and description', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.goto('/tasks');
@@ -223,8 +223,8 @@ test.describe('Task Management Flow', () => {
         test('should sort tasks by different criteria', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.goto('/tasks');
@@ -252,8 +252,8 @@ test.describe('Task Management Flow', () => {
         test('should add comments to tasks', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.goto('/tasks');
@@ -275,8 +275,8 @@ test.describe('Task Management Flow', () => {
         test('should mention users in comments', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.goto('/tasks');
@@ -300,8 +300,8 @@ test.describe('Task Management Flow', () => {
         test('should attach files to tasks', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.goto('/tasks');
@@ -327,8 +327,8 @@ test.describe('Task Management Flow', () => {
         test('should track time spent on tasks', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.goto('/tasks');
@@ -358,8 +358,8 @@ test.describe('Task Management Flow', () => {
         test('should manually log time', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.goto('/tasks');
@@ -383,8 +383,8 @@ test.describe('Task Management Flow', () => {
         test('should show time tracking reports', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.goto('/tasks');
@@ -404,8 +404,8 @@ test.describe('Task Management Flow', () => {
         test('should create task templates', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.goto('/tasks');
@@ -436,8 +436,8 @@ test.describe('Task Management Flow', () => {
         test('should apply automation rules', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.goto('/tasks');
@@ -472,8 +472,8 @@ test.describe('Task Management Flow', () => {
         test('should display kanban board view', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.goto('/tasks');
@@ -501,8 +501,8 @@ test.describe('Task Management Flow', () => {
         test('should display calendar view', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.goto('/tasks');
@@ -522,8 +522,8 @@ test.describe('Task Management Flow', () => {
         test('should display timeline view', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.goto('/tasks');
@@ -545,8 +545,8 @@ test.describe('Task Management Flow', () => {
         test('should show task completion metrics', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.goto('/tasks');
@@ -565,8 +565,8 @@ test.describe('Task Management Flow', () => {
         test('should generate task reports', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.goto('/tasks');
@@ -591,8 +591,8 @@ test.describe('Task Management Flow', () => {
         test('should show team productivity metrics', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.goto('/tasks');
@@ -615,8 +615,8 @@ test.describe('Task Management Flow', () => {
         test('should integrate with project milestones', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.goto('/projects');
@@ -642,8 +642,8 @@ test.describe('Task Management Flow', () => {
         test('should integrate with AI assistant', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.goto('/tasks');
@@ -667,8 +667,8 @@ test.describe('Task Management Flow', () => {
         test('should sync with external systems', async ({ page }) => {
             await page.goto('/');
             await page.click('text=Log In');
-            await page.fill('input[type="email"]', 'admin@dbr77.com');
-            await page.fill('input[type="password"]', '123456');
+            await page.fill('input[type="email"]', (process.env.TEST_USER_EMAIL || 'test@localhost'));
+            await page.fill('input[type="password"]', (process.env.TEST_USER_PASSWORD || 'testpassword123'));
             await page.click('button[type="submit"]');
 
             await page.goto('/tasks');

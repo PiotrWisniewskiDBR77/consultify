@@ -12,15 +12,19 @@ Tworzy w pełni policzone dane, których brakowało (przyczyna 49 SKIP-ów kube�
 Idempotentny: rekordy seed mają prefiks tytułu "M16-SEED-" / "M16-THROWAWAY-".
 Skrypt sprawdza istnienie po prefiksie i pomija ponowne tworzenie (poza compute, który odświeża).
 
-Bezpieczeństwo: skrypt zapisuje dane przez REST API wskazane wyłącznie przez
-M16_SEED_BASE_URL. Poświadczenia pochodzą wyłącznie ze zmiennych środowiskowych
-i nigdy nie mogą wrócić do repozytorium. Aktualna mapa środowisk:
-docs/operations/RAILWAY_DB_TARGET_RULES.md.
+Bezpieczeństwo: tylko demo.consultify.ai (caboose). NIE dotyka centerbeam/PROD.
+
+Wymagane zmienne środowiskowe (fail-closed, brak wartości domyślnych):
+  CONSULTIFY_BASE_URL       — np. https://demo.consultify.ai (NIGDY produkcja)
+  CONSULTIFY_SEED_EMAIL     — konto seedujące
+  CONSULTIFY_SEED_PASSWORD  — hasło do tego konta
 
 Output: na końcu drukuje JSON manifest wszystkich ID do /tmp/m16_seed_manifest.json
         (konsumowany przez skrypt testów Fazy 2).
 
-Użycie:  python3 scripts/seed-m16-demo.py
+Użycie:  CONSULTIFY_BASE_URL=https://demo.consultify.ai \\
+         CONSULTIFY_SEED_EMAIL=... CONSULTIFY_SEED_PASSWORD=... \\
+         python3 scripts/seed-m16-demo.py
 """
 import json
 import os
@@ -29,10 +33,30 @@ import time
 import urllib.request
 import urllib.error
 
-BASE = os.environ.get("M16_SEED_BASE_URL", "").strip().rstrip("/")
+
+def _require_env(name, hint):
+    """Fail-closed: refuse to start rather than fall back to a baked-in value.
+
+    Day-39 FIX-4. This file used to carry the owner's WORKING demo password in
+    plain text, and the credential guard had it on its allowlist, so the one
+    check that could have objected was told not to look.
+    """
+    value = os.environ.get(name, "").strip()
+    if not value:
+        print(f"[ODMOWA] Brak zmiennej srodowiskowej {name}. {hint}")
+        sys.exit(2)
+    return value
+
+
+# Target and credentials come from the environment, never from this file.
+# Defaulting BASE would put a remote host in the source; it has to be stated.
+BASE = _require_env(
+    "CONSULTIFY_BASE_URL",
+    "Ustaw np. CONSULTIFY_BASE_URL=https://demo.consultify.ai (nigdy produkcja).",
+).rstrip("/")
 LOGIN = {
-    "email": os.environ.get("M16_SEED_EMAIL", "").strip(),
-    "password": os.environ.get("M16_SEED_PASSWORD", ""),
+    "email": _require_env("CONSULTIFY_SEED_EMAIL", "Konto uzywane do seedowania danych M16."),
+    "password": _require_env("CONSULTIFY_SEED_PASSWORD", "Haslo do tego konta."),
 }
 UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
 
@@ -299,19 +323,6 @@ def seed_throwaways(token):
 
 
 def main():
-    missing = [
-        name
-        for name, value in (
-            ("M16_SEED_BASE_URL", BASE),
-            ("M16_SEED_EMAIL", LOGIN["email"]),
-            ("M16_SEED_PASSWORD", LOGIN["password"]),
-        )
-        if not value
-    ]
-    if missing:
-        print(f"❌ Missing required environment variables: {', '.join(missing)}", file=sys.stderr)
-        sys.exit(1)
-
     token = login()
     manifest = {"token_org": "a3e05d4a-5397-419d-b486-8e44366c0063"}
     manifest["model"] = seed_model(token)

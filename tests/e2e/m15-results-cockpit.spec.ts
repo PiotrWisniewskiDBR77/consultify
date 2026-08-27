@@ -13,8 +13,8 @@ import { seedPageAuth } from './cases/_m07-helpers';
 
 const BACKEND = process.env.M15_BACKEND || 'http://localhost:3001';
 const CREDS = {
-  email: process.env.M15_EMAIL || 'piotr.wisniewski@dbr77.com',
-  password: process.env.M15_PASSWORD || '123456',
+  email: process.env.M15_EMAIL || process.env.TEST_USER_EMAIL || 'test@localhost',
+  password: process.env.M15_PASSWORD || process.env.TEST_USER_PASSWORD || 'testpassword123',
 };
 
 async function mintToken(request: APIRequestContext): Promise<string> {

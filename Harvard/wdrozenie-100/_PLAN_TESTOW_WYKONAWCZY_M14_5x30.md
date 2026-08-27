@@ -29,7 +29,7 @@ Katalog: `docs/qa/screens/m14-exec/<powierzchnia>/` (portfolio · rollout · rep
 - **tsc:** 0 błędów (FE + backend).
 - **Testy M14:** 66/66 (execution + rollout + status-reports + evm).
 - **Deploy:** F0/F1/F2/F3 zdeployowane na demo (`ada271867c`). Prod nietknięty.
-- **Harness:** metoda proxy `tests/e2e/m13/m13-demo-proxy.spec.ts` (local-FE port 3200 + VITE_API_TARGET=demo + Bearer token); demo SPA blankuje headless-cold → renderuj lokalnie, dane z demo. Login `piotr.wisniewski@dbr77.com`/`123456`, org `a3e05d4a`.
+- **Harness:** metoda proxy `tests/e2e/m13/m13-demo-proxy.spec.ts` (local-FE port 3200 + VITE_API_TARGET=demo + Bearer token); demo SPA blankuje headless-cold → renderuj lokalnie, dane z demo. Login `piotr.wisniewski@dbr77.com`/`<HASLO>`, org `a3e05d4a`.
 
 ### Rozkład automatyzowalności
 ~połowa = ✅/🟡 headless (render/API/component → zdjęcia). Reszta = ❌ real-browser (modale CRUD, drag, persist round-trip, AI live, in-app dystrybucja). Per powierzchnia w kolumnie „Wykonanie".
