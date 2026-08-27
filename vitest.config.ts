@@ -307,9 +307,30 @@ export default defineConfig({
     // Optimized concurrency for CI/CD (20+ shards)
     maxConcurrency: process.env.CI ? 8 : 4,
 
-    // Enhanced retry logic for flaky tests
-    retry: process.env.CI ? 3 : 1, // Retry 3 times in CI, 1 locally
-    retryMode: 'run', // Retry only the failed tests
+    // ★ BEZPIECZNIK: ZERO PONOWIEN (28.08.2026, dyzur 42).
+    //
+    // Bylo: `retry: process.env.CI ? 3 : 1`. Ten jeden wiersz unieważniał
+    // dowody bezpieczenstwa o ksztalcie „atak odrzucony + readback bez zmian".
+    // Mechanizm (zmierzony, nie teoretyczny):
+    //   1. proba 1 wykonuje atak; przy OTWARTEJ dziurze atak NISZCZY zasob
+    //      (np. DELETE cudzego wiersza) i test pada;
+    //   2. Vitest ponawia test; zasobu juz nie ma, wiec serwer zwraca 404 —
+    //      dokladnie ten kod, ktorego test oczekuje — a readback liczony
+    //      WEWNATRZ testu ma juz „przed" rowne stanowi PO zniszczeniu;
+    //   3. test raportuje PASS. Test wyleczyl sie skutkiem wlasnego ataku.
+    // Dowod: tests/integration/_retrymask/ (archetyp dyzuru 42) — z realna
+    // dziura IDOR suita byla ZIELONA przy retry=1/3 i CZERWONA przy retry=0.
+    //
+    // Ponowienie nigdy nie zamienia zlego kodu w dobry — zamienia tylko
+    // czerwony raport w zielony. Test niestabilny naprawiamy u zrodla
+    // (deterministyczny fixture, brak wyscigu), nie ponowieniem.
+    //
+    // Jednorazowy wyjatek dla konkretnego uruchomienia: `--retry=N` w CLI.
+    // Nie przywracaj tego globalnie — pilnuje tego
+    // tests/unit/config/vitestNoRetry.contract.test.ts.
+    retry: 0,
+    // UWAGA: bylo tu `retryMode: 'run'` — Vitest 4.1.x NIE ZNA tej opcji
+    // (fantom, ignorowany po cichu). Usuniete, zeby komentarz nie klamal.
 
     // Additional stability options
     bail: 0, // Don't bail on first failure
