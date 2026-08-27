@@ -105,7 +105,7 @@
     "test:integration": "vitest run tests/integration --no-file-parallelism",
     "test:acceptance": "DB_TYPE=postgres NODE_ENV=test vitest run --config vitest.acceptance.config.ts",
     "test:orphans": "DB_TYPE=postgres NODE_ENV=test vitest run --config vitest.orphans.config.ts",
-    "test:node-native": "node --test scripts/testing/__tests__/artifact-studio-release-evidence-gate.test.mjs",
+    "test:node-native": "node --test scripts/testing/__tests__/artifact-studio-release-evidence-gate.test.mjs tests/unit/deploy/validate-deploy-target.test.mjs tests/unit/deploy/release-migration-gate-no-tautology.test.mjs",
     "test:inventory:generate": "npx tsx scripts/testing/generate-test-inventory.ts",
     "test:discovery-gate": "npx tsx scripts/testing/test-discovery-gate.ts",
     "test:fin005:pg": "node scripts/testing/run-fin005-pg-tests.mjs --retry=0 --fileParallelism=false",
