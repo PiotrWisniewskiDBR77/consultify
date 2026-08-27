@@ -272,6 +272,20 @@ Pięć kształtów fałszywego gotowe — A.4: realny Gateway TAK; test na żywe
 
 Werdykt §A.4: `ZROBIONE_WG_DoD`; `SET-PF-001` wymaga erraty w §R.1, bo deklaracja wcześniejszego usunięcia runtime DDL była fałszywa na markerze.
 
+## §B.1 — realna osiągalność tras Ustawień
+
+Wiążącym mianownikiem są **adresy**, a nie same rejestracje. W `settings.routes.ts` pomiar dał `122` rejestracje i `122` adresy (brak rejestracji wieloadresowej). Dla zmierzonej powierzchni siedmiu grup z instrukcji, z osobno doliczoną trasą zmiany hasła zmierzoną w §A.2, wynik wynosi `156` rejestracji i `156` adresów. Pełna tabela per adres — metoda, pełny adres, plik:linia, nazwy handlerów/strażników, wykryty wołacz, realny kod oraz klasyfikacja — jest w `SETTINGS_DAY55_B1_ROUTE_EVIDENCE.json`.
+
+Rozkład realnych odpowiedzi z `ApiGateway.getInstance().initializeRoutes(app)`, podpisanym JWT aktywnego `OWNER` i `--retry=0`: `156` zmierzonych, `93×2xx` (`92×200`, `1×202`), `1×3xx` (`302`), `62×4xx` (`37×400`, `2×403`, `22×404`, `1×410`), `0×5xx`, `0×niezmierzone` w zapisanym inwentarzu. Puste payloady dla zapisów są sondą osiągalności i kodu, nie dowodem poprawności operacji biznesowej; poprawność zapisów rozlicza §B.2 i §D.1.
+
+Klasyfikacja: `70×REALNA`, `23×BEZ KONSUMENTA`, `22×ZEPSUTA` według literalnej reguły instrukcji dla `404`, `1×UCZCIWA ODMOWA` (`410`) oraz `40×ODMIANA KONTROLOWANA` dla jawnych `400/403/302`, których cztery klasy instrukcji nie klasyfikują bez fałszowania. Wśród `404` pięć GET dotyczy kontrolowanego braku zasobu lub konektora wskazanego sondą, dlatego tabela zachowuje literalny werdykt `ZEPSUTA`, ale nie przedstawiam tych pięciu jako dowodu błędnego montażu. Dwa 404 są natomiast realnym rozjazdem względem adresów wskazanych przez instrukcję: `/api/notifications/settings/` i `/api/user/profile-completeness/`.
+
+Lista `BEZ KONSUMENTA` jest filtrowalna w pełnej tabeli po polu `classification` i stanowi wejście do §C.1. Pole `caller` jest statycznym pomiarem obecności fragmentu adresu w `src/`; dynamicznie składane wywołania mogą wymagać ręcznego rozstrzygnięcia w §C.1.
+
+Z33: każdy przebieg ustawiał w tej samej linii `ENABLE_V8_GLOBAL=true`, `ENABLE_TEST_AUTH_BYPASS=false` i `RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE=enforce`, a także `RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres` oraz jawny lokalny `DATABASE_URL`. Tym samym bramka V8 nie mogła wygenerować fałszywego 404 przed autoryzacją, bypass testowy nie mógł zaakceptować ataku, a filtr Results nie działał w trybie łagodniejszym. Test używa `assertRealPostgresTestEnvironment()` bez argumentów.
+
+Trzynaście sekcji bez pozycji menu ma `13 PASS` kontraktu routingu z §A.3. Lokalny harness `dev-render:3371` renderuje tylko `AuthenticationAccessPage`, więc nie zapewnia uczciwego dowodu browser-runtime dla wszystkich trzynastu adresów. Nie zastępuję tego dowodu statycznym PASS: pełny browser-runtime pozostaje `EVIDENCE_MISSING` i §B.1 ma werdykt `PARTIAL`, mimo kompletnego pomiaru HTTP zapisanej powierzchni.
+
 ## Pomiar zasięgu testów
 
 - (a) z pełnym env: serwer 79 testów (`77 PASS`, `2 SKIPPED`, 0 asercji FAIL; pakiety PG nie wykonały przypadków), klient 204 (`203 PASS`, `1 FAIL`).

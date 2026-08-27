@@ -1,0 +1,1573 @@
+{
+  "generatedAt": "2026-08-27T23:25:00+02:00",
+  "bindingDenominator": "addresses",
+  "registrationCount": 156,
+  "addressCount": 156,
+  "measurement": {
+    "measured": 156,
+    "unmeasured": 0
+  },
+  "rows": [
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 157,
+      "caller": true,
+      "status": 403,
+      "classification": "ODMIANA KONTROLOWANA"
+    },
+    {
+      "method": "POST",
+      "registeredPath": "/api/settings/",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 196,
+      "caller": true,
+      "status": 403,
+      "classification": "ODMIANA KONTROLOWANA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/recovery",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 244,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "PUT",
+      "registeredPath": "/api/settings/recovery",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 270,
+      "caller": true,
+      "status": 400,
+      "classification": "ODMIANA KONTROLOWANA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/preferences/regional",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 329,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "PUT",
+      "registeredPath": "/api/settings/preferences/regional",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 410,
+      "caller": true,
+      "status": 400,
+      "classification": "ODMIANA KONTROLOWANA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/preferences/notifications",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 456,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "PUT",
+      "registeredPath": "/api/settings/preferences/notifications",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 519,
+      "caller": true,
+      "status": 400,
+      "classification": "ODMIANA KONTROLOWANA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/preferences/quietHours",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 578,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "PUT",
+      "registeredPath": "/api/settings/preferences/quietHours",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 652,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/preferences/inbox-ai",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 742,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "PUT",
+      "registeredPath": "/api/settings/preferences/inbox-ai",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 786,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/preferences/ai-providers",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 829,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "PUT",
+      "registeredPath": "/api/settings/preferences/ai-providers",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 867,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/notifications/dnd",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 909,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "PUT",
+      "registeredPath": "/api/settings/notifications/dnd",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 951,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/notifications",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 1019,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "POST",
+      "registeredPath": "/api/settings/notifications",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "requireActiveMembership", "<anonymous>"],
+      "line": 1057,
+      "caller": true,
+      "status": 400,
+      "classification": "ODMIANA KONTROLOWANA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/notifications/email",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 1132,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "PUT",
+      "registeredPath": "/api/settings/notifications/email",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 1180,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/notifications/sounds",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 1243,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "PUT",
+      "registeredPath": "/api/settings/notifications/sounds",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 1281,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/notifications/digest",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 1332,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "PUT",
+      "registeredPath": "/api/settings/notifications/digest",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 1370,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/integrations",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 1777,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "POST",
+      "registeredPath": "/api/settings/integrations/:provider/connect",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "activeMembershipGuard", "<anonymous>"],
+      "line": 1808,
+      "caller": false,
+      "status": 404,
+      "classification": "ZEPSUTA"
+    },
+    {
+      "method": "DELETE",
+      "registeredPath": "/api/settings/integrations/:provider",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 1957,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "POST",
+      "registeredPath": "/api/settings/integrations/:provider/test",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 1994,
+      "caller": false,
+      "status": 404,
+      "classification": "ZEPSUTA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/integrations/oauth/start/:connectorId",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 2042,
+      "caller": true,
+      "status": 404,
+      "classification": "ZEPSUTA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/integrations/oauth/callback",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>"],
+      "line": 2099,
+      "caller": true,
+      "status": 302,
+      "classification": "ODMIANA KONTROLOWANA"
+    },
+    {
+      "method": "POST",
+      "registeredPath": "/api/settings/integrations/:connectorId/oauth-disconnect",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 2181,
+      "caller": false,
+      "status": 200,
+      "classification": "BEZ KONSUMENTA"
+    },
+    {
+      "method": "POST",
+      "registeredPath": "/api/settings/integrations/:connectorId/oauth-test",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 2212,
+      "caller": false,
+      "status": 200,
+      "classification": "BEZ KONSUMENTA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/integrations/oauth/status",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 2229,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "POST",
+      "registeredPath": "/api/settings/integrations/:connectorId/basic-connect",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 2248,
+      "caller": false,
+      "status": 400,
+      "classification": "ODMIANA KONTROLOWANA"
+    },
+    {
+      "method": "POST",
+      "registeredPath": "/api/settings/integrations/:provider/refresh",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "activeMembershipGuard", "<anonymous>"],
+      "line": 2305,
+      "caller": false,
+      "status": 404,
+      "classification": "ZEPSUTA"
+    },
+    {
+      "method": "PUT",
+      "registeredPath": "/api/settings/integrations/:provider/config",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "activeMembershipGuard", "<anonymous>"],
+      "line": 2382,
+      "caller": false,
+      "status": 404,
+      "classification": "ZEPSUTA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/integrations/:provider/status",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 2481,
+      "caller": false,
+      "status": 200,
+      "classification": "BEZ KONSUMENTA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/integrations/:provider/logs",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 2499,
+      "caller": false,
+      "status": 404,
+      "classification": "ZEPSUTA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/calendar/providers",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 2565,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "POST",
+      "registeredPath": "/api/settings/calendar/connect",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 2591,
+      "caller": true,
+      "status": 400,
+      "classification": "ODMIANA KONTROLOWANA"
+    },
+    {
+      "method": "POST",
+      "registeredPath": "/api/settings/calendar/disconnect",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 2615,
+      "caller": true,
+      "status": 400,
+      "classification": "ODMIANA KONTROLOWANA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/calendar/settings",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 2635,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "PUT",
+      "registeredPath": "/api/settings/calendar/settings",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 2663,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/preferences/privacy",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 2700,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "PUT",
+      "registeredPath": "/api/settings/preferences/privacy",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 2730,
+      "caller": true,
+      "status": 400,
+      "classification": "ODMIANA KONTROLOWANA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/preferences/accessibility",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 2777,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "PUT",
+      "registeredPath": "/api/settings/preferences/accessibility",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 2801,
+      "caller": true,
+      "status": 400,
+      "classification": "ODMIANA KONTROLOWANA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/preferences/shortcuts",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 2838,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "PUT",
+      "registeredPath": "/api/settings/preferences/shortcuts",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 2862,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "POST",
+      "registeredPath": "/api/settings/export-data",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 2891,
+      "caller": true,
+      "status": 202,
+      "classification": "REALNA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/gdpr/consents",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 2928,
+      "caller": false,
+      "status": 200,
+      "classification": "BEZ KONSUMENTA"
+    },
+    {
+      "method": "PUT",
+      "registeredPath": "/api/settings/gdpr/consents",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 2952,
+      "caller": false,
+      "status": 400,
+      "classification": "ODMIANA KONTROLOWANA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/gdpr/retention",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 2976,
+      "caller": false,
+      "status": 200,
+      "classification": "BEZ KONSUMENTA"
+    },
+    {
+      "method": "PUT",
+      "registeredPath": "/api/settings/gdpr/retention",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 3000,
+      "caller": false,
+      "status": 400,
+      "classification": "ODMIANA KONTROLOWANA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/gdpr/export-status",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 3035,
+      "caller": false,
+      "status": 200,
+      "classification": "BEZ KONSUMENTA"
+    },
+    {
+      "method": "POST",
+      "registeredPath": "/api/settings/gdpr/export-request",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 3078,
+      "caller": false,
+      "status": 200,
+      "classification": "BEZ KONSUMENTA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/gdpr/export-download/:requestId",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 3202,
+      "caller": false,
+      "status": 404,
+      "classification": "ZEPSUTA"
+    },
+    {
+      "method": "POST",
+      "registeredPath": "/api/settings/gdpr/deletion-request",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 3243,
+      "caller": true,
+      "status": 400,
+      "classification": "ODMIANA KONTROLOWANA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/gdpr/deletion-status",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 3315,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "POST",
+      "registeredPath": "/api/settings/gdpr/cancel-deletion",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 3376,
+      "caller": true,
+      "status": 400,
+      "classification": "ODMIANA KONTROLOWANA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/preferences/dashboard",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 3425,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "PUT",
+      "registeredPath": "/api/settings/preferences/dashboard",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 3499,
+      "caller": true,
+      "status": 400,
+      "classification": "ODMIANA KONTROLOWANA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/preferences/work",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 3547,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "PUT",
+      "registeredPath": "/api/settings/preferences/work",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 3623,
+      "caller": true,
+      "status": 400,
+      "classification": "ODMIANA KONTROLOWANA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/working-hours",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 3671,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "PUT",
+      "registeredPath": "/api/settings/working-hours",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 3734,
+      "caller": true,
+      "status": 400,
+      "classification": "ODMIANA KONTROLOWANA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/signatures",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 3782,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "POST",
+      "registeredPath": "/api/settings/signatures",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 3818,
+      "caller": true,
+      "status": 400,
+      "classification": "ODMIANA KONTROLOWANA"
+    },
+    {
+      "method": "PUT",
+      "registeredPath": "/api/settings/signatures/:id",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 3884,
+      "caller": true,
+      "status": 404,
+      "classification": "ZEPSUTA"
+    },
+    {
+      "method": "PUT",
+      "registeredPath": "/api/settings/signatures/:id/default",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 3939,
+      "caller": false,
+      "status": 404,
+      "classification": "ZEPSUTA"
+    },
+    {
+      "method": "DELETE",
+      "registeredPath": "/api/settings/signatures/:id",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 3998,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/preferences/ai-instructions",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 4141,
+      "caller": false,
+      "status": 200,
+      "classification": "BEZ KONSUMENTA"
+    },
+    {
+      "method": "PUT",
+      "registeredPath": "/api/settings/preferences/ai-instructions",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 4168,
+      "caller": false,
+      "status": 400,
+      "classification": "ODMIANA KONTROLOWANA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/preferences/ai-model",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 4197,
+      "caller": false,
+      "status": 200,
+      "classification": "BEZ KONSUMENTA"
+    },
+    {
+      "method": "PUT",
+      "registeredPath": "/api/settings/preferences/ai-model",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 4224,
+      "caller": false,
+      "status": 400,
+      "classification": "ODMIANA KONTROLOWANA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/preferences/ai-parameters",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 4249,
+      "caller": false,
+      "status": 200,
+      "classification": "BEZ KONSUMENTA"
+    },
+    {
+      "method": "PUT",
+      "registeredPath": "/api/settings/preferences/ai-parameters",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 4276,
+      "caller": false,
+      "status": 400,
+      "classification": "ODMIANA KONTROLOWANA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/preferences/ai-personality",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 4305,
+      "caller": false,
+      "status": 200,
+      "classification": "BEZ KONSUMENTA"
+    },
+    {
+      "method": "PUT",
+      "registeredPath": "/api/settings/preferences/ai-personality",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 4332,
+      "caller": false,
+      "status": 400,
+      "classification": "ODMIANA KONTROLOWANA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/preferences/ai-autocomplete",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 4361,
+      "caller": false,
+      "status": 200,
+      "classification": "BEZ KONSUMENTA"
+    },
+    {
+      "method": "PUT",
+      "registeredPath": "/api/settings/preferences/ai-autocomplete",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 4388,
+      "caller": false,
+      "status": 400,
+      "classification": "ODMIANA KONTROLOWANA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/preferences/ai-memory",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 4416,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "PUT",
+      "registeredPath": "/api/settings/preferences/ai-memory",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 4447,
+      "caller": true,
+      "status": 400,
+      "classification": "ODMIANA KONTROLOWANA"
+    },
+    {
+      "method": "DELETE",
+      "registeredPath": "/api/settings/preferences/ai-memory/clear",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 4483,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/preferences/ai-voice",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 4506,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "PUT",
+      "registeredPath": "/api/settings/preferences/ai-voice",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 4533,
+      "caller": true,
+      "status": 400,
+      "classification": "ODMIANA KONTROLOWANA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/preferences/ai-privacy",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 4558,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "PUT",
+      "registeredPath": "/api/settings/preferences/ai-privacy",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 4586,
+      "caller": true,
+      "status": 400,
+      "classification": "ODMIANA KONTROLOWANA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/preferences/prompt-library",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 4614,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "PUT",
+      "registeredPath": "/api/settings/preferences/prompt-library",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 4642,
+      "caller": true,
+      "status": 400,
+      "classification": "ODMIANA KONTROLOWANA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/ai-usage",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 4670,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/templates",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 4770,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "POST",
+      "registeredPath": "/api/settings/templates",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 4827,
+      "caller": true,
+      "status": 400,
+      "classification": "ODMIANA KONTROLOWANA"
+    },
+    {
+      "method": "PUT",
+      "registeredPath": "/api/settings/templates/:id",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 4855,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "DELETE",
+      "registeredPath": "/api/settings/templates/:id",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 4883,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "POST",
+      "registeredPath": "/api/settings/templates/:id/apply",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 4904,
+      "caller": false,
+      "status": 404,
+      "classification": "ZEPSUTA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/history",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 4953,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "POST",
+      "registeredPath": "/api/settings/history/restore/:id",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 5005,
+      "caller": true,
+      "status": 404,
+      "classification": "ZEPSUTA"
+    },
+    {
+      "method": "POST",
+      "registeredPath": "/api/settings/export",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 5047,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "POST",
+      "registeredPath": "/api/settings/import",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 5108,
+      "caller": true,
+      "status": 400,
+      "classification": "ODMIANA KONTROLOWANA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/api-keys",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 5197,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "POST",
+      "registeredPath": "/api/settings/api-keys",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 5227,
+      "caller": true,
+      "status": 400,
+      "classification": "ODMIANA KONTROLOWANA"
+    },
+    {
+      "method": "PUT",
+      "registeredPath": "/api/settings/api-keys/:id",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 5285,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "DELETE",
+      "registeredPath": "/api/settings/api-keys/:id",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 5317,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "POST",
+      "registeredPath": "/api/settings/api-keys/:id/rotate",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 5339,
+      "caller": false,
+      "status": 200,
+      "classification": "BEZ KONSUMENTA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/webhooks",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 5380,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "POST",
+      "registeredPath": "/api/settings/webhooks",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 5421,
+      "caller": true,
+      "status": 400,
+      "classification": "ODMIANA KONTROLOWANA"
+    },
+    {
+      "method": "PUT",
+      "registeredPath": "/api/settings/webhooks/:id",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 5452,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "DELETE",
+      "registeredPath": "/api/settings/webhooks/:id",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 5492,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "POST",
+      "registeredPath": "/api/settings/webhooks/:id/test",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 5511,
+      "caller": false,
+      "status": 404,
+      "classification": "ZEPSUTA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/preferences/appearance",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 5577,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "PUT",
+      "registeredPath": "/api/settings/preferences/appearance",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 5628,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/developer",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 5680,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "PUT",
+      "registeredPath": "/api/settings/developer",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 5725,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/api-keys/:id/usage",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 5783,
+      "caller": false,
+      "status": 404,
+      "classification": "ZEPSUTA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/login-history",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 5839,
+      "caller": false,
+      "status": 200,
+      "classification": "BEZ KONSUMENTA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/connected-accounts",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 5906,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "DELETE",
+      "registeredPath": "/api/settings/connected-accounts/:provider",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 5928,
+      "caller": true,
+      "status": 400,
+      "classification": "ODMIANA KONTROLOWANA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/registry",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 6065,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/registry/:key/metadata",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 6081,
+      "caller": false,
+      "status": 404,
+      "classification": "ZEPSUTA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/settings/registry/:key/resolve",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 6095,
+      "caller": false,
+      "status": 200,
+      "classification": "BEZ KONSUMENTA"
+    },
+    {
+      "method": "PUT",
+      "registeredPath": "/api/settings/registry/:key",
+      "file": "server/src/routes/settings.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 6113,
+      "caller": true,
+      "status": 404,
+      "classification": "ZEPSUTA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/preferences/",
+      "file": "server/src/routes/user/preferences.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 30,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/preferences/options",
+      "file": "server/src/routes/user/preferences.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 61,
+      "caller": false,
+      "status": 200,
+      "classification": "BEZ KONSUMENTA"
+    },
+    {
+      "method": "PUT",
+      "registeredPath": "/api/preferences/",
+      "file": "server/src/routes/user/preferences.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 75,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "PUT",
+      "registeredPath": "/api/preferences/ui",
+      "file": "server/src/routes/user/preferences.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 95,
+      "caller": false,
+      "status": 200,
+      "classification": "BEZ KONSUMENTA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/gdpr/consents",
+      "file": "server/src/routes/gdpr.routes.ts",
+      "guards": ["<anonymous>"],
+      "line": 143,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "PUT",
+      "registeredPath": "/api/gdpr/consents",
+      "file": "server/src/routes/gdpr.routes.ts",
+      "guards": ["<anonymous>"],
+      "line": 199,
+      "caller": true,
+      "status": 400,
+      "classification": "ODMIANA KONTROLOWANA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/gdpr/retention",
+      "file": "server/src/routes/gdpr.routes.ts",
+      "guards": ["<anonymous>"],
+      "line": 261,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "PUT",
+      "registeredPath": "/api/gdpr/retention",
+      "file": "server/src/routes/gdpr.routes.ts",
+      "guards": ["<anonymous>"],
+      "line": 302,
+      "caller": true,
+      "status": 400,
+      "classification": "ODMIANA KONTROLOWANA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/gdpr/export-status",
+      "file": "server/src/routes/gdpr.routes.ts",
+      "guards": ["requireActiveMembership", "<anonymous>"],
+      "line": 367,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "POST",
+      "registeredPath": "/api/gdpr/export-request",
+      "file": "server/src/routes/gdpr.routes.ts",
+      "guards": ["requireActiveMembership", "<anonymous>"],
+      "line": 399,
+      "caller": true,
+      "status": 400,
+      "classification": "ODMIANA KONTROLOWANA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/gdpr/download-export/:requestId",
+      "file": "server/src/routes/gdpr.routes.ts",
+      "guards": ["requireActiveMembership", "<anonymous>"],
+      "line": 493,
+      "caller": true,
+      "status": 404,
+      "classification": "ZEPSUTA"
+    },
+    {
+      "method": "POST",
+      "registeredPath": "/api/gdpr/deletion-request",
+      "file": "server/src/routes/gdpr.routes.ts",
+      "guards": ["requireActiveMembership", "<anonymous>"],
+      "line": 568,
+      "caller": true,
+      "status": 400,
+      "classification": "ODMIANA KONTROLOWANA"
+    },
+    {
+      "method": "POST",
+      "registeredPath": "/api/gdpr/cancel-deletion",
+      "file": "server/src/routes/gdpr.routes.ts",
+      "guards": ["requireActiveMembership", "<anonymous>"],
+      "line": 626,
+      "caller": true,
+      "status": 400,
+      "classification": "ODMIANA KONTROLOWANA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/gdpr/deletion-status",
+      "file": "server/src/routes/gdpr.routes.ts",
+      "guards": ["requireActiveMembership", "<anonymous>"],
+      "line": 661,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/auth/login-history/",
+      "file": "server/src/routes/user/loginHistory.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 52,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "POST",
+      "registeredPath": "/api/auth/login-history/",
+      "file": "server/src/routes/user/loginHistory.routes.ts",
+      "guards": ["<anonymous>"],
+      "line": 102,
+      "caller": true,
+      "status": 400,
+      "classification": "ODMIANA KONTROLOWANA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/auth/login-history/suspicious",
+      "file": "server/src/routes/user/loginHistory.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 138,
+      "caller": false,
+      "status": 200,
+      "classification": "BEZ KONSUMENTA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/notifications/settings/",
+      "file": "server/src/routes/notifications/notificationSettings.routes.ts",
+      "guards": ["<anonymous>", "isAuthenticated", "<anonymous>"],
+      "line": 30,
+      "caller": false,
+      "status": 404,
+      "classification": "ZEPSUTA"
+    },
+    {
+      "method": "PUT",
+      "registeredPath": "/api/notifications/settings/",
+      "file": "server/src/routes/notifications/notificationSettings.routes.ts",
+      "guards": ["<anonymous>", "isAuthenticated", "<anonymous>"],
+      "line": 60,
+      "caller": false,
+      "status": 404,
+      "classification": "ZEPSUTA"
+    },
+    {
+      "method": "PATCH",
+      "registeredPath": "/api/notifications/settings/:channel",
+      "file": "server/src/routes/notifications/notificationSettings.routes.ts",
+      "guards": ["<anonymous>", "isAuthenticated", "<anonymous>"],
+      "line": 107,
+      "caller": false,
+      "status": 404,
+      "classification": "ZEPSUTA"
+    },
+    {
+      "method": "POST",
+      "registeredPath": "/api/notifications/settings/reset",
+      "file": "server/src/routes/notifications/notificationSettings.routes.ts",
+      "guards": ["<anonymous>", "isAuthenticated", "<anonymous>"],
+      "line": 169,
+      "caller": false,
+      "status": 404,
+      "classification": "ZEPSUTA"
+    },
+    {
+      "method": "POST",
+      "registeredPath": "/api/notifications/settings/test/:channel",
+      "file": "server/src/routes/notifications/notificationSettings.routes.ts",
+      "guards": ["<anonymous>", "isAuthenticated", "<anonymous>"],
+      "line": 196,
+      "caller": false,
+      "status": 404,
+      "classification": "ZEPSUTA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/user/contact-information/",
+      "file": "server/src/routes/user/user-contact.routes.ts",
+      "guards": ["<anonymous>", "isAuthenticated", "<anonymous>"],
+      "line": 15,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "PUT",
+      "registeredPath": "/api/user/contact-information/",
+      "file": "server/src/routes/user/user-contact.routes.ts",
+      "guards": ["<anonymous>", "isAuthenticated", "<anonymous>"],
+      "line": 28,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/user/availability/",
+      "file": "server/src/routes/user/user-availability.routes.ts",
+      "guards": ["<anonymous>", "isAuthenticated", "<anonymous>"],
+      "line": 24,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "PUT",
+      "registeredPath": "/api/user/availability/",
+      "file": "server/src/routes/user/user-availability.routes.ts",
+      "guards": ["<anonymous>", "isAuthenticated", "<anonymous>"],
+      "line": 45,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/user/profile-completeness/",
+      "file": "server/src/routes/user/user-profile-completeness.routes.ts",
+      "guards": ["<anonymous>", "<anonymous>"],
+      "line": 35,
+      "caller": true,
+      "status": 404,
+      "classification": "ZEPSUTA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/user/security/sessions",
+      "file": "server/src/routes/user/user-security-advanced.routes.ts",
+      "guards": ["<anonymous>", "isAuthenticated", "<anonymous>"],
+      "line": 15,
+      "caller": false,
+      "status": 200,
+      "classification": "BEZ KONSUMENTA"
+    },
+    {
+      "method": "DELETE",
+      "registeredPath": "/api/user/security/sessions/:sessionId",
+      "file": "server/src/routes/user/user-security-advanced.routes.ts",
+      "guards": ["<anonymous>", "isAuthenticated", "<anonymous>"],
+      "line": 35,
+      "caller": false,
+      "status": 200,
+      "classification": "BEZ KONSUMENTA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/user/security/login-history",
+      "file": "server/src/routes/user/user-security-advanced.routes.ts",
+      "guards": ["<anonymous>", "isAuthenticated", "<anonymous>"],
+      "line": 48,
+      "caller": false,
+      "status": 200,
+      "classification": "BEZ KONSUMENTA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/user/security/trusted-devices",
+      "file": "server/src/routes/user/user-security-advanced.routes.ts",
+      "guards": ["<anonymous>", "isAuthenticated", "<anonymous>"],
+      "line": 70,
+      "caller": false,
+      "status": 200,
+      "classification": "BEZ KONSUMENTA"
+    },
+    {
+      "method": "DELETE",
+      "registeredPath": "/api/user/security/trusted-devices/:deviceId",
+      "file": "server/src/routes/user/user-security-advanced.routes.ts",
+      "guards": ["<anonymous>", "isAuthenticated", "<anonymous>"],
+      "line": 84,
+      "caller": false,
+      "status": 200,
+      "classification": "BEZ KONSUMENTA"
+    },
+    {
+      "method": "GET",
+      "registeredPath": "/api/user/data-controls/data-export",
+      "file": "server/src/routes/user/user-data-controls.routes.ts",
+      "guards": ["requireActiveMembership", "<anonymous>"],
+      "line": 23,
+      "caller": false,
+      "status": 410,
+      "classification": "UCZCIWA ODMOWA"
+    },
+    {
+      "method": "POST",
+      "registeredPath": "/api/auth/change-password",
+      "file": "server/src/routes/auth.routes.ts",
+      "guards": ["verifyToken", "anonymous"],
+      "line": 2449,
+      "caller": true,
+      "status": 200,
+      "classification": "REALNA",
+      "measurementSource": "§A.2 real-Gateway successful scenario"
+    }
+  ]
+}
