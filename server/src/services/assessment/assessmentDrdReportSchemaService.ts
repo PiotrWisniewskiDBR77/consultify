@@ -98,7 +98,7 @@ function table(
   return { blockId, type: 'table', content: { headers, rows, caption } };
 }
 
-function areaAverage(
+export function areaAverage(
   areas: ContractArea[],
   field: 'currentLevel' | 'targetLevel',
   maxLevel: number
