@@ -105,7 +105,8 @@ function areaAverage(
 ): number | null {
   const values = areas
     .filter((area) => !area.skipped && area[field] !== null)
-    .map((area) => area[field] as number);
+    .map((area) => Number(area[field]))
+    .filter(Number.isFinite);
   if (values.length === 0) return null;
   return Math.round(
     (values.reduce((sum, value) => sum + value, 0) / values.length / maxLevel) * 100
