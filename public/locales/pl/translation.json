@@ -9886,6 +9886,7 @@
       "openFailed": "Nie udało się otworzyć inicjatywy",
       "statusUpdated": "Status zaktualizowany",
       "statusUpdateFailed": "Nie udało się zaktualizować statusu",
+      "statusGovernedGateOnly": "Status {{status}} zmienisz wyłącznie w bramce cyklu życia inicjatywy (governed gate), nie przez tę akcję.",
       "updateFailed": "Nie udało się zaktualizować",
       "archived": "Inicjatywa zarchiwizowana",
       "archiveFailed": "Nie udało się zarchiwizować inicjatywy",

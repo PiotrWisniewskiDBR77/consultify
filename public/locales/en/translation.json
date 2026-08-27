@@ -10589,6 +10589,7 @@
       "openFailed": "Failed to open initiative",
       "statusUpdated": "Status updated",
       "statusUpdateFailed": "Failed to update status",
+      "statusGovernedGateOnly": "You can only change status {{status}} from the initiative's lifecycle gate workflow, not from this action.",
       "updateFailed": "Failed to update",
       "archived": "Initiative archived",
       "archiveFailed": "Could not archive initiative",
