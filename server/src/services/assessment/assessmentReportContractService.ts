@@ -6,6 +6,11 @@ import {
   assessmentSkipReasonService,
   type AssessmentSkipReason,
 } from './assessmentSkipReasonService.js';
+import {
+  composeAreaNarrative,
+  composeChapterAggregateNarrative,
+  composeProgramAggregateNarrative,
+} from './assessmentNarrativeComposer.js';
 
 const AREA_MICROSTRUCTURE = [
   'stan_faktyczny',
@@ -95,7 +100,11 @@ function isSameCalendarDay(left: Date, right: Date): boolean {
   );
 }
 
-const PL_DATE = new Intl.DateTimeFormat('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' });
+const PL_DATE = new Intl.DateTimeFormat('pl-PL', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+});
 const PL_DATE_NO_YEAR = new Intl.DateTimeFormat('pl-PL', { day: 'numeric', month: 'long' });
 
 // The only two real anchors for "when was this assessment actually
@@ -247,6 +256,28 @@ export class AssessmentReportContractService {
       };
     };
 
+    const programNarrative = composeProgramAggregateNarrative({
+      axisCount: DRD_STRUCTURE.length,
+      totalAreas: DRD_STRUCTURE.reduce((sum, axis) => sum + axis.areas.length, 0),
+      findings: (output?.findings ?? []).map((finding) => {
+        const area = DRD_STRUCTURE.flatMap((axis) => axis.areas).find(
+          (candidate) => candidate.id === finding.unitId
+        );
+        return {
+          unitId: finding.unitId,
+          unitNamePL: area?.namePL ?? finding.unitName,
+          currentLevel: finding.currentLevel,
+          targetLevel: finding.targetLevel,
+          gap: finding.gap,
+          confidence: finding.confidence,
+          evidenceCount: finding.supportingEvidence.length,
+          recommendation: finding.recommendation,
+          expectedOutcome: finding.expectedOutcome,
+        };
+      }),
+      limitations: output?.limitations ?? [],
+    });
+
     return {
       contractVersion: 'assessment-report-contract-v1',
       sessionId,
@@ -278,76 +309,118 @@ export class AssessmentReportContractService {
       // field. Left null on purpose; the renderer shows the honest
       // "Do uzupełnienia" placeholder for it.
       clientSponsor: null as string | null,
-      chapters: DRD_STRUCTURE.map((axis) => ({
-        axisId: axis.id,
-        axisName: axis.name,
-        axisNamePL: axis.namePL,
-        maxLevel: axis.levelCount,
-        introduction: { content: null, minWords: 120, maxWords: 180 },
-        matrix: {
-          caption: { content: null, minWords: 30, maxWords: 60 },
-          areas: axis.areas.map((area) => {
+      executiveSummary: programNarrative.executiveSummary,
+      criticalGaps: programNarrative.criticalGaps,
+      finalConclusions: programNarrative.finalConclusions,
+      programDecisionLine: programNarrative.decisionLine,
+      chapters: DRD_STRUCTURE.map((axis) => {
+        const axisFindings = axis.areas.flatMap((area) => {
+          const finding = findingByUnit.get(area.id);
+          return finding
+            ? [
+                {
+                  unitId: finding.unitId,
+                  unitNamePL: area.namePL ?? area.name,
+                  currentLevel: finding.currentLevel,
+                  targetLevel: finding.targetLevel,
+                  gap: finding.gap,
+                  confidence: finding.confidence,
+                  evidenceCount: finding.supportingEvidence.length,
+                  recommendation: finding.recommendation,
+                  expectedOutcome: finding.expectedOutcome,
+                },
+              ]
+            : [];
+        });
+        const aggregateNarrative = composeChapterAggregateNarrative({
+          axisId: axis.id,
+          axisNamePL: axis.namePL ?? axis.name,
+          maxLevel: axis.levelCount,
+          totalAreas: axis.areas.length,
+          skippedCount: axis.areas.filter((area) => (skipsByUnit.get(area.id) ?? []).length > 0)
+            .length,
+          findings: axisFindings,
+          frozenDate: new Date(output?.frozenAt ?? session.created_at).toISOString().slice(0, 10),
+        });
+        return {
+          axisId: axis.id,
+          axisName: axis.name,
+          axisNamePL: axis.namePL,
+          maxLevel: axis.levelCount,
+          introduction: { content: aggregateNarrative.introduction, minWords: 120, maxWords: 180 },
+          matrix: {
+            caption: { content: aggregateNarrative.matrixCaption, minWords: 30, maxWords: 60 },
+            areas: axis.areas.map((area) => {
+              const finding = findingByUnit.get(area.id);
+              const skipInfo = areaSkipInfo(axis, area);
+              const currentLevel = finding?.currentLevel ?? null;
+              const targetLevel = finding?.targetLevel ?? null;
+              return {
+                unitId: area.id,
+                unitName: area.name,
+                unitNamePL: area.namePL,
+                currentLevel,
+                targetLevel,
+                gap:
+                  currentLevel === null || targetLevel === null ? null : targetLevel - currentLevel,
+                skipped: skipInfo.skipped,
+                skipCode: skipInfo.skipCode,
+                skips: skipInfo.skips,
+                evidenceState: finding
+                  ? finding.supportingEvidence.length > 0
+                    ? 'evidenced'
+                    : finding.confidence === 'low'
+                      ? 'incomplete'
+                      : 'declared'
+                  : 'not_assessed',
+              };
+            }),
+          },
+          areaComments: axis.areas.map((area) => {
             const finding = findingByUnit.get(area.id);
             const skipInfo = areaSkipInfo(axis, area);
-            const currentLevel = finding?.currentLevel ?? null;
-            const targetLevel = finding?.targetLevel ?? null;
+            const evidenceState = finding
+              ? finding.supportingEvidence.length > 0
+                ? ('evidenced' as const)
+                : finding.confidence === 'low'
+                  ? ('incomplete' as const)
+                  : ('declared' as const)
+              : ('not_assessed' as const);
+            const narrative = composeAreaNarrative(finding ?? null, {
+              axisId: axis.id,
+              evidenceState,
+              skipped: skipInfo.skipped,
+            });
             return {
               unitId: area.id,
-              unitName: area.name,
-              unitNamePL: area.namePL,
-              currentLevel,
-              targetLevel,
-              gap:
-                currentLevel === null || targetLevel === null ? null : targetLevel - currentLevel,
+              content: narrative?.text ?? null,
+              minWords: 110,
+              maxWords: 170,
+              microstructure: AREA_MICROSTRUCTURE,
               skipped: skipInfo.skipped,
               skipCode: skipInfo.skipCode,
               skips: skipInfo.skips,
-              evidenceState: finding
-                ? finding.supportingEvidence.length > 0
-                  ? 'evidenced'
-                  : finding.confidence === 'low'
-                    ? 'incomplete'
-                    : 'declared'
-                : 'not_assessed',
+              answerRefs: narrative?.provenance.answerRefs ?? (finding ? [finding.id] : []),
+              evidenceRefs:
+                narrative?.provenance.evidenceRefs ??
+                finding?.supportingEvidence.map((evidence) => evidence.evidenceId) ??
+                [],
+              sourceLocators: narrative?.provenance.sourceLocators ?? finding?.sourceLocators ?? [],
+              sourceFields: narrative?.provenance.sourceFields ?? [],
+              narrativeKind: narrative?.kind ?? null,
+              uncertainty: evidenceState,
             };
           }),
-        },
-        areaComments: axis.areas.map((area) => {
-          const finding = findingByUnit.get(area.id);
-          const skipInfo = areaSkipInfo(axis, area);
-          return {
-            unitId: area.id,
-            content: null,
-            minWords: 110,
-            maxWords: 170,
-            microstructure: AREA_MICROSTRUCTURE,
-            skipped: skipInfo.skipped,
-            skipCode: skipInfo.skipCode,
-            skips: skipInfo.skips,
-            answerRefs: finding ? [finding.id] : [],
-            evidenceRefs: finding?.supportingEvidence.map((evidence) => evidence.evidenceId) ?? [],
-            sourceLocators: finding?.sourceLocators ?? [],
-            uncertainty: finding
-              ? finding.supportingEvidence.length > 0
-                ? 'evidenced'
-                : finding.confidence === 'low'
-                  ? 'incomplete'
-                  : 'declared'
-              : 'not_assessed',
-          };
-        }),
-        conclusion: {
-          content: null,
-          minWords: 180,
-          maxWords: 260,
-          decisionLine: {
-            direction: null,
-            priority: null,
-            horizon: null,
-            successCondition: null,
+          conclusion: {
+            content: aggregateNarrative.conclusion,
+            minWords: 180,
+            maxWords: 260,
+            decisionLine: {
+              ...aggregateNarrative.decisionLine,
+            },
           },
-        },
-      })),
+        };
+      }),
     };
   }
 }

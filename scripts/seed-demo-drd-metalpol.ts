@@ -244,12 +244,16 @@ async function applySeed(client: Client): Promise<void> {
       await client.query(
         `INSERT INTO method_findings
          (id,organization_id,output_id,unit_id,unit_name,current_level,target_level,gap,
-          supporting_evidence_json,business_meaning,recommendation,confidence,source_locators_json)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+          supporting_evidence_json,business_meaning,root_cause_hypothesis,risk_or_opportunity,
+          recommendation,prerequisite,expected_outcome,confidence,priority_rationale,source_locators_json)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
          ON CONFLICT (id) DO UPDATE SET unit_name=EXCLUDED.unit_name,current_level=EXCLUDED.current_level,
           target_level=EXCLUDED.target_level,gap=EXCLUDED.gap,supporting_evidence_json=EXCLUDED.supporting_evidence_json,
-          business_meaning=EXCLUDED.business_meaning,recommendation=EXCLUDED.recommendation,
-          confidence=EXCLUDED.confidence,source_locators_json=EXCLUDED.source_locators_json`,
+          business_meaning=EXCLUDED.business_meaning,root_cause_hypothesis=EXCLUDED.root_cause_hypothesis,
+          risk_or_opportunity=EXCLUDED.risk_or_opportunity,recommendation=EXCLUDED.recommendation,
+          prerequisite=EXCLUDED.prerequisite,expected_outcome=EXCLUDED.expected_outcome,
+          confidence=EXCLUDED.confidence,priority_rationale=EXCLUDED.priority_rationale,
+          source_locators_json=EXCLUDED.source_locators_json`,
         [
           `demo-metalpol-finding-${area.unitId}`,
           METALPOL_IDS.organization,
@@ -260,13 +264,18 @@ async function applySeed(client: Client): Promise<void> {
           area.targetLevel,
           gap,
           JSON.stringify(evidenceFor(area)),
-          `[demo-seed] Obszar ${area.unitId} — poziom obecny ${area.currentLevel}, docelowy ${area.targetLevel}, luka ${gap}.`,
-          `[demo-seed] Podniesienie ${area.unitId} z poziomu ${area.currentLevel} do ${area.targetLevel}. Treść merytoryczna nie pochodzi z bazy.`,
+          area.businessMeaning,
+          area.rootCauseHypothesis,
+          area.riskOrOpportunity,
+          area.recommendation,
+          area.prerequisite,
+          area.expectedOutcome,
           area.evidenceClass === 'incomplete'
             ? 'low'
             : area.evidenceClass === 'declared'
               ? 'medium'
               : 'high',
+          area.priorityRationale,
           JSON.stringify([`demo-seed://metalpol-drd/${area.unitId}`]),
         ]
       );

@@ -16,6 +16,13 @@ export const EVIDENCE_STATE_PL = Object.freeze({
   not_assessed: 'nieocenione',
 } as const);
 
+export const ASSESSMENT_SKIP_REASON_PL = Object.freeze({
+  poza_modelem_operacyjnym: 'poza modelem operacyjnym',
+  poza_zakresem_zlecenia: 'poza zakresem zlecenia',
+  odroczone_do_kolejnej_rewizji: 'odroczone do kolejnej rewizji',
+  zastapione_innym_rozwiazaniem: 'zastąpione innym rozwiązaniem',
+} as const);
+
 export const DRD_REPORT_FIXED_TEXT = Object.freeze({
   title: 'Raport z oceny dojrzałości cyfrowej',
   clientMissing: '[Nazwa klienta do uzupełnienia]',
@@ -239,10 +246,23 @@ function matrixRows(chapter: ContractChapter): unknown[][] {
 }
 
 function skipNotice(area: ContractArea): string | null {
-  if (area.skipped) return `Obszar pominięty w ocenie — kod: ${area.skipCode ?? 'wiele kodów'}.`;
+  const label = (code: string) =>
+    ASSESSMENT_SKIP_REASON_PL[code as keyof typeof ASSESSMENT_SKIP_REASON_PL] ?? code;
+  if (area.skipped) {
+    const labels = [
+      ...new Set(
+        area.skips.length > 0
+          ? area.skips.map((skip) => label(skip.skipCode))
+          : area.skipCode
+            ? [label(area.skipCode)]
+            : []
+      ),
+    ];
+    return `Obszar pominięty w ocenie — kod: ${labels.join(', ') || 'wiele kodów'}.`;
+  }
   if (area.skips.length > 0) {
     return `Pominięte pytania: ${area.skips
-      .map((skip) => `${skip.questionId} — ${skip.skipCode}`)
+      .map((skip) => `${skip.questionId} — ${label(skip.skipCode)}`)
       .join('; ')}.`;
   }
   return null;
@@ -264,7 +284,9 @@ function chapterBlocks(
             chapter.introduction as { content: string | null; minWords: number; maxWords: number }
           )
         : `${DRD_REPORT_FIXED_TEXT.notAssessed} ${slotText(chapter.introduction as { content: string | null; minWords: number; maxWords: number })}`,
-      DRD_DOCX_STYLE_IDS.CAPTION
+      assessed && chapter.introduction.content
+        ? DRD_DOCX_STYLE_IDS.BODY
+        : DRD_DOCX_STYLE_IDS.CAPTION
     ),
     heading(`${chapter.axisId}-matrix-heading`, 'Matryca poziomów dojrzałości', 2),
     table(
@@ -289,19 +311,34 @@ function chapterBlocks(
       heading(`${area.unitId}-heading`, `${area.unitId}  ${area.unitNamePL ?? area.unitName}`, 3),
       paragraph(
         `${area.unitId}-signature`,
-        `Poziom obecny: ${area.currentLevel ?? '—'} (${area.currentLevel ? resolveDrdLevelLabelPL(chapter.axisId, area.currentLevel) : '—'}) · Poziom docelowy: ${area.targetLevel ?? '—'} (${area.targetLevel ? resolveDrdLevelLabelPL(chapter.axisId, area.targetLevel) : '—'}) · Luka: ${area.gap ?? '—'} · Priorytet: ${priorityForGap(area.gap)} · Dowody: ${EVIDENCE_STATE_PL[area.evidenceState]}`,
+        `Poziom obecny: ${area.currentLevel ?? '—'} (${area.currentLevel ? resolveDrdLevelLabelPL(chapter.axisId, area.currentLevel) : '—'}) · Poziom docelowy: ${area.targetLevel ?? '—'} (${area.targetLevel ? resolveDrdLevelLabelPL(chapter.axisId, area.targetLevel) : '—'}) · Luka: ${area.gap ?? '—'} · Priorytet: ${priorityForGap(area.gap)} · Dowody: ${EVIDENCE_STATE_PL[area.evidenceState as keyof typeof EVIDENCE_STATE_PL]}`,
         DRD_DOCX_STYLE_IDS.SIGNATURE
       )
     );
     const notice = skipNotice(area);
     if (notice) blocks.push(paragraph(`${area.unitId}-skip`, notice, DRD_DOCX_STYLE_IDS.CAPTION));
+    if (area.evidenceState === 'not_assessed' && !notice) {
+      blocks.push(
+        paragraph(
+          `${area.unitId}-not-assessed`,
+          `Obszaru ${area.unitId} nie oceniono — brak danych źródłowych.`,
+          DRD_DOCX_STYLE_IDS.CAPTION
+        )
+      );
+    }
     if (comment) {
       const commentText = comment.content
         ? comment.content
         : `${placeholder(comment.minWords, comment.maxWords).replace(/\.$/, '')}; wymagane: ${comment.microstructure
             .map((item) => MICROSTRUCTURE_PL[item as keyof typeof MICROSTRUCTURE_PL] ?? item)
             .join(', ')}.`;
-      blocks.push(paragraph(`${area.unitId}-comment`, commentText, DRD_DOCX_STYLE_IDS.CAPTION));
+      blocks.push(
+        paragraph(
+          `${area.unitId}-comment`,
+          commentText,
+          comment.content ? DRD_DOCX_STYLE_IDS.BODY : DRD_DOCX_STYLE_IDS.CAPTION
+        )
+      );
     }
   });
 
@@ -321,7 +358,11 @@ function chapterBlocks(
   const decisionPlaceholder = placeholder(decisionLineLimit.minWords, decisionLineLimit.maxWords);
   blocks.push(
     heading(`${chapter.axisId}-conclusion-heading`, 'Wnioski rozdziału', 2),
-    paragraph(`${chapter.axisId}-conclusion`, conclusionPlaceholder, DRD_DOCX_STYLE_IDS.CAPTION),
+    paragraph(
+      `${chapter.axisId}-conclusion`,
+      conclusionPlaceholder,
+      chapter.conclusion.content ? DRD_DOCX_STYLE_IDS.BODY : DRD_DOCX_STYLE_IDS.CAPTION
+    ),
     paragraph(
       `${chapter.axisId}-decision-label`,
       DRD_REPORT_FIXED_TEXT.decisionLine,
@@ -404,8 +445,9 @@ export function buildAssessmentDrdReportSchema(contract: AssessmentReportContrac
       blocks: [
         paragraph(
           'executive-placeholder',
-          placeholder(executiveLimit.minWords, executiveLimit.maxWords),
-          DRD_DOCX_STYLE_IDS.CAPTION
+          contract.executiveSummary ??
+            placeholder(executiveLimit.minWords, executiveLimit.maxWords),
+          contract.executiveSummary ? DRD_DOCX_STYLE_IDS.BODY : DRD_DOCX_STYLE_IDS.CAPTION
         ),
         radar,
         table(
@@ -417,8 +459,8 @@ export function buildAssessmentDrdReportSchema(contract: AssessmentReportContrac
         heading('critical-gaps-heading', DRD_REPORT_FIXED_TEXT.criticalGaps, 2),
         paragraph(
           'critical-gaps-placeholder',
-          placeholder(executiveLimit.minWords, executiveLimit.maxWords),
-          DRD_DOCX_STYLE_IDS.CAPTION
+          contract.criticalGaps ?? placeholder(executiveLimit.minWords, executiveLimit.maxWords),
+          contract.criticalGaps ? DRD_DOCX_STYLE_IDS.BODY : DRD_DOCX_STYLE_IDS.CAPTION
         ),
       ],
     },
@@ -441,20 +483,29 @@ export function buildAssessmentDrdReportSchema(contract: AssessmentReportContrac
       blocks: [
         paragraph(
           'final-placeholder',
-          placeholder(finalLimit.minWords, finalLimit.maxWords),
-          DRD_DOCX_STYLE_IDS.CAPTION
+          contract.finalConclusions ?? placeholder(finalLimit.minWords, finalLimit.maxWords),
+          contract.finalConclusions ? DRD_DOCX_STYLE_IDS.BODY : DRD_DOCX_STYLE_IDS.CAPTION
         ),
         heading('program-decision-heading', 'Linia decyzyjna programu', 2),
         table(
           'program-decision',
           ['Pole', 'Treść'],
           [
-            ['Kierunek', placeholder(decisionLineLimit.minWords, decisionLineLimit.maxWords)],
-            ['Priorytet', placeholder(decisionLineLimit.minWords, decisionLineLimit.maxWords)],
+            [
+              'Kierunek',
+              contract.programDecisionLine?.direction ??
+                placeholder(decisionLineLimit.minWords, decisionLineLimit.maxWords),
+            ],
+            [
+              'Priorytet',
+              contract.programDecisionLine?.priority ??
+                placeholder(decisionLineLimit.minWords, decisionLineLimit.maxWords),
+            ],
             ['Horyzont', placeholder(decisionLineLimit.minWords, decisionLineLimit.maxWords)],
             [
               'Warunek sukcesu',
-              placeholder(decisionLineLimit.minWords, decisionLineLimit.maxWords),
+              contract.programDecisionLine?.successCondition ??
+                placeholder(decisionLineLimit.minWords, decisionLineLimit.maxWords),
             ],
           ]
         ),
