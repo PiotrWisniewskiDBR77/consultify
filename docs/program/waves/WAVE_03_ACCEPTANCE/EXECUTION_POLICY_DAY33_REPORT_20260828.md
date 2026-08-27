@@ -76,6 +76,35 @@ P.5–P.8 i P.10–P.12 nie są gotowe. Następny wykonawca powinien kontynuowa�
 
 E-O3 ma nośnik perspektywy, ale nie ma jeszcze komendy ani klasy raportu. E-O4 ma wprowadzalną politykę, ale klasa nie jest zapisywana przy linku. E-O5 ma wprowadzalne pasma i bufor, ale nie ma jeszcze koperty `UNKNOWN`. Źródła nieobecności wystarczającego do obliczeń nie ma. Do scalenia nadają się P.1–P.4 jako fundament; całego dyżuru 33 nie wolno oznaczać jako ukończonego.
 
+## P.11 — zweryfikowany inwentarz realnej dostępności
+
+Dosłowny odczyt świeżego PG:
+
+```text
+\dt user_out_of_office
+Did not find any relation named "user_out_of_office".
+
+\d user_availability
+id text NOT NULL; user_id text NOT NULL; status_message text;
+working_hours_json text DEFAULT '{}'; dnd_hours_json text DEFAULT '{}';
+created_at timestamp DEFAULT CURRENT_TIMESTAMP; updated_at timestamp DEFAULT CURRENT_TIMESTAMP;
+settings text; UNIQUE(user_id); FK user_id -> users(id) ON DELETE CASCADE.
+
+\d users | grep -iE "vacation|out_of_office"
+out_of_office integer DEFAULT 0
+vacation_end timestamp without time zone
+out_of_office_message text
+```
+
+| Składnik dostępności     | Kandydat                                                     | Werdykt               | Brakujący kształt / pytanie właścicielskie                                                                                               |
+| ------------------------ | ------------------------------------------------------------ | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Nieobecności             | bieżący przełącznik `users.out_of_office` + jedna data końca | `ZBUDUJ_OD_ZERA`      | Potrzebne okresy start/koniec, wymiar godzinowy, historia i zakres organizacji. Kto wprowadza: HR, integracja kalendarza czy konsultant? |
+| Stałe obowiązki          | `user_availability.working_hours_json` / `dnd_hours_json`    | `PODŁĄCZ_PO_NAPRAWIE` | To dostępność nominalna/DND, nie rejestr stałych obowiązków. Czy właścicielem danych jest pracownik czy przełożony?                      |
+| Zaakceptowane rezerwacje | brak trafień w schemacie i `server/src`                      | `ZBUDUJ_OD_ZERA`      | Potrzebny tenantowy rejestr osoby, okresu, godzin/FTE, źródła i akceptacji. Kto zatwierdza rezerwację?                                   |
+| Bufor operacyjny         | `execution_control_kpi_policies.parameters.capacityBuffer`   | `PODŁĄCZ`             | Konsultant wpisuje wartość per organizacja; brak defaultu i seeda.                                                                       |
+
+Odpowiedź nadzorcy: w schemacie istnieje jedynie niepełny bieżący sygnał nieobecności, ale **nie istnieje źródło wystarczające do policzenia realnej dostępności**. Kalendarz `user_out_of_office` z migracji `129_user_availability.sql` nie jest zastosowany; runner jawnie pomija fragmenty z numerem `<500` (`server/scripts/migrate.postgres.ts:265-268`). Budowa źródła wymaga osobnej decyzji o źródle, administratorze danych i wrażliwości danych osobowych.
+
 ## Znaleziska (NIE naprawiane przeze mnie)
 
 - Dwa równoległe magazyny polityk i brak zakresu projekt/inicjatywa w `execution_control_kpi_policies`.
