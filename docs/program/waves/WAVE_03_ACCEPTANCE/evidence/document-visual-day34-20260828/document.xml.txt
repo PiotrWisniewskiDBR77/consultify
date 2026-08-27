@@ -17,7 +17,7 @@ Podpis	Do uzupełnienia — dane nie są zapisane w sesji oceny.
 Sygnatura	Metodyka
 Tresc	Digital Pathfinder — metodyka oceny dojrzałości cyfrowej DRD
 Sygnatura	Sygnatura sesji
-Tresc	session-day34-data-5173bb63
+Tresc	session-day34-data-52efe624
 Sygnatura	Data wydania
 Tresc	2026-08-27
 Kicker	NAWIGACJA
