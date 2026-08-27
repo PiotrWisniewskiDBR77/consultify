@@ -22,7 +22,11 @@
 import type { Response } from 'express';
 import { Router } from 'express';
 
+import { verifyToken } from '../middleware/auth.middleware.js';
+import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { requirePermission } from '../middleware/permission.middleware.js';
+import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import { requireOrgAccess } from '../middleware/rbac.middleware.js';
 import {
   approveInterviewCandidateHandoff,
   getInterviewCandidateHandoff,
@@ -33,6 +37,14 @@ import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
+
+// Keep this packet independently safe if Gateway mount order changes. Today the
+// broader /api/interview router happens to run the same guards first, but this
+// router must not borrow authentication from that incidental ordering.
+router.use(apiAuthRateLimiter);
+router.use(verifyToken);
+router.use(requireOrgAccess());
+router.use(demoContextMiddleware);
 
 function requireUser(req: AuthenticatedRequest) {
   const user = req.user;
