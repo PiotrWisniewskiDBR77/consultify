@@ -1,6 +1,10 @@
 import type { Pool } from 'pg';
 
 import { OwnerIndependentKpiReader } from './ownerIndependentKpiReader.js';
+import {
+  REQUIRED_POLICY_PARAMETERS,
+  validateControlKpiPolicyParameters,
+} from './controlKpiPolicySchema.js';
 
 export const CONTROL_KPI_FAMILIES = [
   'plan-delivery',
@@ -11,14 +15,6 @@ export const CONTROL_KPI_FAMILIES = [
   'capacity',
   'decision-latency',
   'intervention-effectiveness',
-] as const;
-
-const REQUIRED_POLICY_PARAMETERS = [
-  'impactWeights',
-  'atRiskThresholdDays',
-  'capacitySaturationThreshold',
-  'capacityBuffer',
-  'decisionSlaDays',
 ] as const;
 
 const POLICY_DEPENDENCIES: Partial<Record<(typeof CONTROL_KPI_FAMILIES)[number], string[]>> = {
@@ -45,38 +41,44 @@ export class ControlKpiReadModel {
       : { rows: [] };
     const policyRow = policyResult.rows[0] ?? null;
     const parameters = policyRow?.parameters ?? {};
-    const missingParameters = REQUIRED_POLICY_PARAMETERS.filter(
-      (name) => parameters[name] === undefined || parameters[name] === null
-    );
+    const { missingParameters, invalidParameters } = validateControlKpiPolicyParameters(parameters);
     const calculatedAt = new Date().toISOString();
 
     const families = CONTROL_KPI_FAMILIES.map((family) => {
       const dependencies = POLICY_DEPENDENCIES[family] ?? [];
       const decisionRequired = dependencies.some((name) => missingParameters.includes(name as any));
+      const invalid = invalidParameters.some((item) => dependencies.includes(item.parameter));
       const value = family in computed ? computed[family as keyof typeof computed] : null;
       const hasPopulation = Boolean(value && value.denominator > 0);
       return {
         family,
-        numerator: decisionRequired || !hasPopulation ? null : value!.numerator,
-        denominator: decisionRequired || !hasPopulation ? null : value!.denominator,
-        value: decisionRequired || !hasPopulation ? null : value!.numerator / value!.denominator,
-        valueReason: decisionRequired
-          ? ('DECISION_REQUIRED' as const)
-          : hasPopulation
+        numerator: decisionRequired || invalid || !hasPopulation ? null : value!.numerator,
+        denominator: decisionRequired || invalid || !hasPopulation ? null : value!.denominator,
+        value:
+          decisionRequired || invalid || !hasPopulation
             ? null
-            : ('BRAK_ŹRÓDŁA' as const),
+            : value!.numerator / value!.denominator,
+        valueReason: invalid
+          ? ('INVALID_PARAMETERS' as const)
+          : decisionRequired
+            ? ('DECISION_REQUIRED' as const)
+            : hasPopulation
+              ? null
+              : ('BRAK_ŹRÓDŁA' as const),
         drillDown: { kind: family, ids: hasPopulation ? value!.ids : ([] as string[]) },
         sourceVersion: hasPopulation ? value!.sourceVersion : 0,
-        scopeCompleteness: decisionRequired
-          ? ('NOT_CALCULABLE' as const)
-          : hasPopulation
-            ? ('FULL' as const)
-            : ('NO_POPULATION' as const),
-        valueClass: decisionRequired
-          ? ('UNKNOWN' as const)
-          : hasPopulation
-            ? ('CALCULATED' as const)
-            : ('UNKNOWN' as const),
+        scopeCompleteness:
+          decisionRequired || invalid
+            ? ('NOT_CALCULABLE' as const)
+            : hasPopulation
+              ? ('FULL' as const)
+              : ('NO_POPULATION' as const),
+        valueClass:
+          decisionRequired || invalid
+            ? ('UNKNOWN' as const)
+            : hasPopulation
+              ? ('CALCULATED' as const)
+              : ('UNKNOWN' as const),
         calculatedAt,
       };
     });
@@ -87,8 +89,10 @@ export class ControlKpiReadModel {
       families,
       policy: {
         policyId: policyRow?.policy_id ?? null,
-        resolved: Boolean(policyRow) && missingParameters.length === 0,
+        resolved:
+          Boolean(policyRow) && missingParameters.length === 0 && invalidParameters.length === 0,
         missingParameters,
+        invalidParameters,
       },
       scopeCompleteness:
         fullFamilyCount === families.length

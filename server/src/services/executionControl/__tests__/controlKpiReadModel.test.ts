@@ -35,11 +35,11 @@ describe('Day 17 X.4 control KPI read model', () => {
             {
               policy_id: 'policy-a',
               parameters: {
-                impactWeights: {},
+                impactWeights: { CRITICAL: 3, IMPORTANT: 2, SUPPORTING: 1 },
                 atRiskThresholdDays: 1,
-                capacitySaturationThreshold: 1,
-                capacityBuffer: 1,
-                decisionSlaDays: 1,
+                capacitySaturationThreshold: { normalUpper: 0.5, saturatedUpper: 0.75 },
+                capacityBuffer: 0.25,
+                decisionSlaDays: { value: 1, unit: 'BUSINESS_DAYS' },
               },
             },
           ]
@@ -54,7 +54,12 @@ describe('Day 17 X.4 control KPI read model', () => {
       'org-a',
       'policy-a',
     ]);
-    expect(result.policy).toEqual({ policyId: 'policy-a', resolved: true, missingParameters: [] });
+    expect(result.policy).toEqual({
+      policyId: 'policy-a',
+      resolved: true,
+      missingParameters: [],
+      invalidParameters: [],
+    });
     expect(result.families.every((item) => item.valueReason === 'BRAK_ŹRÓDŁA')).toBe(true);
     expect(result.scopeCompleteness).toBe('NOT_CALCULABLE');
   });
@@ -80,11 +85,11 @@ describe('Day 17 X.4 control KPI read model', () => {
             {
               policy_id: 'policy-a',
               parameters: {
-                impactWeights: {},
+                impactWeights: { CRITICAL: 3, IMPORTANT: 2, SUPPORTING: 1 },
                 atRiskThresholdDays: 1234,
-                capacitySaturationThreshold: 1234,
-                capacityBuffer: 1234,
-                decisionSlaDays: 1234,
+                capacitySaturationThreshold: { normalUpper: 0.5, saturatedUpper: 0.75 },
+                capacityBuffer: 0.25,
+                decisionSlaDays: { value: 1234, unit: 'CALENDAR_DAYS' },
               },
             },
           ],

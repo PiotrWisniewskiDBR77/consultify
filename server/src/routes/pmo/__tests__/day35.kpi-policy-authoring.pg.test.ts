@@ -32,11 +32,11 @@ describe.skipIf(!REAL_PG)('Day 35 KPI policy authoring through the mounted route
   const path = (policyId: string) =>
     `/api/initiatives/runtime-v1/execution-control-kpi-policies/${policyId}`;
   const completeParameters = {
-    impactWeights: 'fixture-impact',
-    atRiskThresholdDays: 'fixture-risk',
-    capacitySaturationThreshold: 'fixture-saturation',
-    capacityBuffer: 'fixture-buffer',
-    decisionSlaDays: 'fixture-sla',
+    impactWeights: { CRITICAL: 4, IMPORTANT: 2, SUPPORTING: 1 },
+    atRiskThresholdDays: 3,
+    capacitySaturationThreshold: { normalUpper: 0.6, saturatedUpper: 0.9 },
+    capacityBuffer: 0.2,
+    decisionSlaDays: { value: 4, unit: 'CALENDAR_DAYS' },
   };
 
   beforeAll(async () => {
