@@ -17,13 +17,21 @@ describe.skipIf(!REAL_PG)('declared goal perspective migration', () => {
   let client: Client;
 
   beforeAll(async () => {
+    // FIX-5 (odbior dyzuru 33) — DRUGI ZAMEK, niezbedny: vitest 4.1.8 URUCHAMIA hooki
+    // beforeAll/afterAll suity oznaczonej `describe.skipIf(true)`. Sam warunek przy `describe`
+    // NIE chroni polaczenia ani sprzatania. Zweryfikowane empirycznie na tej gałęzi:
+    // z pustym DATABASE_URL hooki laczyly sie przez domyslne libpq do CUDZEJ bazy
+    // (/private/tmp/.s.PGSQL.5432) i wykonywaly tam DELETE.
+    if (!REAL_PG) return;
     client = new Client({ connectionString: DATABASE_URL });
     await client.connect();
     await client.query(`INSERT INTO organizations(id,name) VALUES($1,$1)`, [organizationId]);
   });
 
   afterAll(async () => {
-    if (!client) return;
+    // FIX-5: patrz komentarz w beforeAll — hooki skipnietej suity i tak sie wykonuja,
+    // a ponizej sa DELETE-y. Bez tego zamka sprzatanie leci w cudza baze.
+    if (!REAL_PG || !client) return;
     await client.query(`DELETE FROM goals WHERE organization_id=$1`, [organizationId]);
     await client.query(`DELETE FROM organizations WHERE id=$1`, [organizationId]);
     await client.end();

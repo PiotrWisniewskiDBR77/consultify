@@ -12,7 +12,16 @@ import config from '../../../config/Config.js';
 import initiativesRoutes from '../initiatives.routes.js';
 
 const DATABASE_URL = process.env.DATABASE_URL || '';
-const REAL_PG = process.env.RUN_DB_TESTS === '1' && process.env.MOCK_DB === 'false';
+// FIX-5 (odbior dyzuru 33): Z25/Z26 — bramka MUSI sprawdzac takze DATABASE_URL.
+// Bez tego warunku `new Client({ connectionString: '' })` schodzi do domyslnych libpq
+// i na maszynie deweloperskiej trafia w gniazdo /private/tmp/.s.PGSQL.5432 — czyli w CUDZA
+// baze — a `afterAll` tej suity robi DELETE na goal_initiative_links / goals / users /
+// organizations. Ten sam ksztalt bramki co w poprawnym pliku tego samego dyzuru:
+// server/src/services/executionControl/__tests__/goalPerspectiveMigration.pg.test.ts:12.
+const REAL_PG =
+  process.env.RUN_DB_TESTS === '1' &&
+  process.env.MOCK_DB === 'false' &&
+  DATABASE_URL.startsWith('postgres');
 
 describe.skipIf(!REAL_PG)('Day 33 governance and data-quality layer', () => {
   const tag = randomUUID();
@@ -31,6 +40,12 @@ describe.skipIf(!REAL_PG)('Day 33 governance and data-quality layer', () => {
       .set({ Authorization: `Bearer ${token}` });
 
   beforeAll(async () => {
+    // FIX-5 (odbior dyzuru 33) — DRUGI ZAMEK, niezbedny: vitest 4.1.8 URUCHAMIA hooki
+    // beforeAll/afterAll suity oznaczonej `describe.skipIf(true)`. Sam warunek przy `describe`
+    // NIE chroni polaczenia ani sprzatania. Zweryfikowane empirycznie na tej gałęzi:
+    // z pustym DATABASE_URL hooki laczyly sie przez domyslne libpq do CUDZEJ bazy
+    // (/private/tmp/.s.PGSQL.5432) i wykonywaly tam DELETE.
+    if (!REAL_PG) return;
     client = new Client({ connectionString: DATABASE_URL });
     await client.connect();
     await client.query(`INSERT INTO organizations(id,name) VALUES($1,$1),($2,$2)`, [orgA, orgB]);
@@ -50,7 +65,9 @@ describe.skipIf(!REAL_PG)('Day 33 governance and data-quality layer', () => {
   });
 
   afterAll(async () => {
-    if (!client) return;
+    // FIX-5: patrz komentarz w beforeAll — hooki skipnietej suity i tak sie wykonuja,
+    // a ponizej sa DELETE-y. Bez tego zamka sprzatanie leci w cudza baze.
+    if (!REAL_PG || !client) return;
     await client.query(`DELETE FROM ie_aggregate_state WHERE organization_id=ANY($1)`, [
       [orgA, orgB],
     ]);

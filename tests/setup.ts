@@ -384,6 +384,17 @@ if (typeof process !== 'undefined' && process.env) {
   // PostgreSQL required. Unit tests use MOCK_DB (no real connection).
   // Integration tests default to the same local DB credentials as CI.
   if (!process.env.DATABASE_URL) {
+    // ★ BEZPIECZNIK Z25 (28.08.2026): przy testach na REALNEJ bazie cichy fallback na
+    // localhost:5432 trzykrotnie w jeden dzien podlaczyl dyzur do CUDZEJ, zywej bazy innej
+    // sesji — z zapisami wlacznie. Gdy ktos jawnie prosi o realna baze (RUN_DB_TESTS=1),
+    // brak DATABASE_URL jest bledem konfiguracji, nie powodem do zgadywania celu.
+    if (process.env.RUN_DB_TESTS === '1' || process.env.MOCK_DB === 'false') {
+      throw new Error(
+        '[tests/setup] RUN_DB_TESTS=1 (lub MOCK_DB=false) wymaga JAWNEGO DATABASE_URL do wlasnej, ' +
+          'efemerycznej bazy. Odmawiam domyslnego polaczenia z localhost:5432 — na tym porcie moze ' +
+          'nasluchiwac cudza baza (bezpiecznik Z25).'
+      );
+    }
     process.env.DATABASE_URL = 'postgresql://iris:iris_test@localhost:5432/iris_test';
   }
   // Stub API keys to prevent real calls if mocking is accidentally bypassed
