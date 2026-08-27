@@ -193,6 +193,8 @@ router.get(
         status?: string;
         priority?: string;
         description?: string;
+        editAuthority?: 'local_only' | 'none';
+        ownerId?: string;
       }> = [];
 
       // ── TASKS (due/start/end) ───────────────────────────────────────────────
@@ -311,6 +313,21 @@ router.get(
         );
         for (const row of rows || []) {
           const foreignBusy = row.visibility === 'busy' && String(row.owner_id) !== String(userId);
+          // day47-finish (B.2 unblock): `editAuthority` is an existing,
+          // already-typed contract field (calendarTypes.ts:36) that
+          // CalendarGrid.tsx already reads to decide whether an event is
+          // draggable/editable ('none' -> readonly) — it was simply never
+          // populated for `source: 'event'` rows, so every own event looked
+          // uniformly non-editable to the client and the client had no
+          // trustworthy signal to gate an edit/cancel action on. Computed
+          // server-side from the authenticated userId (never from
+          // `attendees[]` presence, which the day47c STOP correctly flagged
+          // as a spoofable, non-authoritative guess). Purely additive: no
+          // existing reader treats an unknown/undefined value as anything
+          // but "not editable", so this only turns on behavior that was
+          // already wired to look for it.
+          const isOwner = String(row.owner_id) === String(userId);
+          const editAuthority: 'local_only' | 'none' = isOwner ? 'local_only' : 'none';
           events.push({
             id: `event-${row.id}`,
             title: foreignBusy ? FOREIGN_BUSY_EVENT_TITLE : row.title,
@@ -320,7 +337,12 @@ router.get(
             source: 'event',
             sourceId: row.id,
             status: row.status,
-            ...(foreignBusy ? {} : { description: row.description || undefined }),
+            editAuthority,
+            // ownerId is withheld for a redacted foreign-busy placeholder —
+            // exposing it would defeat the point of the redaction (the
+            // viewer would learn who the busy owner is even though the
+            // title/description are hidden).
+            ...(foreignBusy ? {} : { description: row.description || undefined, ownerId: row.owner_id }),
           });
         }
       }
