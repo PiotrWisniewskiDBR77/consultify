@@ -43,6 +43,52 @@ exposes a raw fixture UUID/`UNKNOWN` actor label, and its workbench opens on the
 same route. This is a technical targeted pass only. The wider Plan/Capacity
 product contract and owner acceptance remain open.
 
+Day 49 finish (2026-08-27), commits `3fa8697972`/`d4be0d9056`/`e058748134` on
+`day49-finish-20260828`, report
+`../../INITIATIVES_DAY49C_REPORT_20260828.md`: `PlanScenarioSurface.tsx` moved
+from 0 to 153 `t()` calls (137 new `initiatives.planScenario.*` keys, PL+EN
+parity, additive-only locale diff verified by `git diff`), unblocking the D.1
+STOP recorded at `db36621679`. A new, licensed `dev-render` screen
+(`dev-render/screens/plan-scenario-d1.tsx`) mounts the real component with
+`demoMode={false}` through its full `load()` path; three screenshots (light,
+dark, empty register+empty initiative list) were captured with Playwright and
+inspected by eye — full Polish UI, correct `c-*` tokens in both themes, the
+StandardTable canonical empty state with translated copy. This is a technical
+i18n/harness delivery only; it does **not** constitute owner review or an
+owner-facing PASS on any G00–G20 gate below. `CapacityScenarioSurface.tsx`'s
+own full-PL translation (originally scoped alongside Plan in the source
+instruction's §D.1) remains **not done** — only its A.3 propose-flow strings
+were translated by earlier work on this branch.
+
+Same session, real-browser click evidence (not a unit test) through the
+existing `capacity-advisor-a3` dev-render screen: clicking "Zaproponuj opcje"
+on a real `<CapacityScenarioSurface demoMode={false} />` produces a genuine
+three-option comparison (RESEQUENCE/SCOPE_SPLIT/ADD_CAPACITY) with honest
+`UNKNOWN`/`EVIDENCE_MISSING` values where the deterministic advisor cannot
+derive a number — confirming `proposeCapacityOptions` in
+`src/services/initiatives-execution/runtimeApi.ts` now has a real, working
+production caller reachable by a human click, not only by an integration
+test.
+
+Route inventory (E.1, same session, report `../../INITIATIVES_DAY49C_REPORT_20260828.md`):
+self-measured denominator of 330 route handlers across the 9 Initiatives
+route files (matches the source instruction's independently-measured count).
+`pmo/initiatives.routes.ts` and its `runtime-v1` sub-router are confirmed
+double-mounted at both `/api/initiatives` and `/api/pmo/initiatives`. Direct
+grep across all 9 files found **zero** unconditional `501`/`503` stub
+handlers. Exactly 30 routes are refused by the global
+`router.use(requireCanonicalInitiativeExecutionWriter)` legacy-write gate
+(`409 EXECUTION_RUNTIME_V1_WRITE_REQUIRED`) — a genuine, working `ODMOWA`,
+not a dead route. The remaining 300 do real backend work (mechanical
+classification cross-checked against ~25 hand-read samples; the finer
+`REALNA` vs `REALNA_Z_SYNTEZĄ` split from the source instruction's four-value
+scale could not be reliably automated and is **not** claimed with precision —
+see the report's "TWIERDZENIA NIEZWERYFIKOWANE" section). A `src/`
+literal-path consumer was found mechanically for 89/330 routes; this is a
+lower bound (indirect/wrapped calls are not all caught by the method), and
+"no consumer found" is not itself evidence of `KIKUT` per the source
+instruction's own caution against that conflation.
+
 ## Contract
 
 Primary journey: review a candidate, create/open an initiative, inspect its
@@ -57,7 +103,7 @@ invalid deep link, insufficient role, foreign tenant and duplicate command.
 | G01  | Exact baseline and client/server/runtime/DB/migrations         | `PASS`                                                  | Exact adopted runtime on product/client/server `3d61730fd8ad18d19cf9967cb5513697659003cc`: server `:3980`, client `:3981`, retained DB `consultify_w3_initiatives_owner_night_20260822`, `817` migrations. Health/ready/frontend `200`, exact SHA/client marker, SQL ledger and FINAL `W3-INITIATIVES-OWNER-v1` durable marker passed; auth/test bypasses were OFF. Runtime stopped its owned process groups only, preserved the DB and left `3940/3941` untouched.                                                                                                                                                                                                                                                                                                                                                                                         |
 | G02  | Journeys, writes/readbacks, upstream/downstream and policy map | `PASS`                                                  | Approved candidate → exactly one canonical Initiative → profile/cards/portfolio allocation → auditable gate → runtime-v1 Initiative→Execution link → cold reopen. Legacy Initiative/PMO reads remain available, while legacy mutations fail closed with `409 EXECUTION_RUNTIME_V1_WRITE_REQUIRED`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | G03  | Named allowed/denied personas                                  | `PASS_FOR_PREFLIGHT`                                    | Allowed: active same-tenant OWNER/ADMIN/PMO and capability-bearing project actor. Denied: inactive membership, foreign tenant, stale role claim/version, malformed/colliding idempotency request and every legacy-spine writer. The mounted fixture binds stable OWNER, ADMIN/project actor, MEMBER, revoked ADMIN and foreign OWNER personas; browser replay used the OWNER while denied boundaries remain fixture/RealPG-backed.                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| G04  | Reproducible realistic and boundary fixtures                   | `PASS_OWNER_FIXTURE_READY`                              | Guarded `server/scripts/seed-wave3-initiatives-owner-review.ts` now persists a FINAL `wx`/`0600` manifest with durable nonce/SQL marker and supports adopted runtime qualification. Retained owner fixture has six personas, two candidates, one accepted candidate, one canonical Initiative, one system portfolio, one immutable profile receipt and one runtime-v1 Execution link/relation. Its runtime aggregate includes the complete frontend read-model contract (`source`, owner, problem, outcome and readiness), and candidate `fit_score` values use the canonical `0..1` scale. AI generation, production and legacy writers were not invoked.                                                                                                                                                                                                  |
+| G04  | Reproducible realistic and boundary fixtures                   | `PASS_OWNER_FIXTURE_READY`                              | Guarded `server/scripts/seed-wave3-initiatives-owner-review.ts` now persists a FINAL `wx`/`0600` manifest with durable nonce/SQL marker and supports adopted runtime qualification. Retained owner fixture has six personas, two candidates, one accepted candidate, one canonical Initiative, one system portfolio, one immutable profile receipt and one runtime-v1 Execution link/relation. Its runtime aggregate includes the complete frontend read-model contract (`source`, owner, problem, outcome and readiness), and candidate `fit_score` values use the canonical `0..1` scale. AI generation, production and legacy writers were not invoked. **Day 49 finish (2026-08-27), commit `e058748134`:** the script's own cold-SQL readback self-check hard-coded `successful_migrations: 834`, which is stale on current HEAD (`858`, verified by running `migrate.postgres.ts` end-to-end twice against a fresh database — 858 applied, then 0). Every `seed` invocation failed at that final assertion until this fix; re-verified idempotent with two full `reset → seed → readback` cycles (19/19 counters identical both times). The fixture still contains **no** Plan Scenario or Capacity Scenario aggregate (`SELECT count(*) FROM ie_aggregate_state WHERE aggregate_type IN ('plan_scenario','capacity_scenario')` returns `0`) — the §A.2 propose-loop presentational content this gate's owner-facing evidence would need was **not built** this session; see the Day 49 finish report for why (risk of hand-crafting `ie_aggregate_state` JSON payloads without a proven write path) and the resulting decision to keep `CapacityScenarioSurface`'s `demoMode` local shadow rather than remove it. |
 | G05  | Functional preflight and cold readback                         | `PASS_WITH_RESIDUALS`                                   | Existing `208/208` lane remains green. Current focused Hub/fixture lane: `13/13 PASS`; isolated canonical unit + RealPG lane: `18/18 PASS`, covering metadata amend cold readback/CAS/replay/collision/auth/tenant/owner eligibility and governed cancel success/locked lifecycle/rollback. Owner DB readback: personas `6`, candidates `2`, accepted `1`, Initiative/system portfolio/profile receipt/Execution link/relation/complete runtime read model each `1`, negative receipts/links `0`, migrations `817`. Browser cold-opened main, candidate inbox, canonical Initiative Card and the stable `?open=<id>&mode=doc` link.                                                                                                                                                                                                                         |
 | G06  | Desktop/tablet, PL/EN, themes, states, a11y, console/HTTP      | `PASS_TECHNICAL_WITH_RESIDUALS`                         | Desktop main register displayed the exact `IN_EXECUTION` Initiative with owner/problem/outcome/source; Discovery candidates showed the pending alternate at `42%`; accepted candidate was absent from pending inbox. Portfolio, Plan and Capacity routes loaded honest empty states because the fixture contains no scenarios. The stable canonical Card deep link survived cold reopen. The write-once fixture receipt still carries its original `deepLinks.verified:false`; this later exact-runtime evidence is recorded here instead of rewriting that receipt. PL/EN, tablet, themes and full a11y/console matrix remain pending; mobile is non-gating. Visible Hub does not expose direct metadata amend/cancel, and New Initiative still opens the AI wizard, so these remain owner/CX residuals rather than hidden completion. Not owner accepted. |
 | G07  | Piotr review card                                              | `READY_FOR_GUIDED_REPLAY`                               | Shared operator card: `../../GUIDED_OWNER_REPLAY.md`, row 6. Owner decisions remain pending.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
