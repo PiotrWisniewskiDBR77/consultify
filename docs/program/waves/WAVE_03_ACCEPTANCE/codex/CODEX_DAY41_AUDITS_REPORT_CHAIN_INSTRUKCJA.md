@@ -111,7 +111,7 @@ Użytkownik czyta zdanie, które każe mu czekać na coś, co nigdy nie nadejdzi
 1. Punktem wyjścia jest **gałąź `codex/m03-admin-20260824`**, przypięta do
    commitu-markera podanego niżej.
 
-   **SHA markera: «MARKER_SHA»**
+   **SHA markera: 23652ec80a**
 
    > **★ RAMKA WARTOWNIKA — uwaga dla nadzorcy wystawiającego ten dokument
    > (usuń tę ramkę przy wiązaniu):** w miejsce **każdego** literalnego napisu
@@ -132,13 +132,13 @@ Użytkownik czyta zdanie, które każe mu czekać na coś, co nigdy nie nadejdzi
    cd <root-repo>
    git fetch --all --prune
    git log --oneline -25 codex/m03-admin-20260824
-   git merge-base --is-ancestor «MARKER_SHA» codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
+   git merge-base --is-ancestor 23652ec80a codex/m03-admin-20260824 && echo "MARKER OK" || echo "MARKER BRAK"
    ```
 
    Wynik obu komend wklejasz do raportu **dosłownie**.
 
 3. **Jeśli marker nie jest przodkiem tipa, gałąź nie istnieje, albo
-   `«MARKER_SHA»` jest nadal literalnym napisem `«MARKER_SHA»` — STOP.**
+   `23652ec80a` jest nadal literalnym napisem `23652ec80a` — STOP.**
    Nie improwizuj bazy. Nie startuj z `origin/demo`, `main`, `Londyn`,
    `codex/preserve-*`, `codex/audits-gaps-20260826`,
    `codex/audits-polish-20260826`, `codex/document-engine-day32-20260828`,
@@ -149,7 +149,7 @@ Użytkownik czyta zdanie, które każe mu czekać na coś, co nigdy nie nadejdzi
    **Reguła rozejścia (`DEC-2026-08-26-95`).** Jeżeli marker JEST przodkiem,
    ale tip uciekł do przodu (nadzorca scalił coś po związaniu markera) — **to
    nie jest STOP**. Startujesz **dokładnie z markera**, wypisujesz w raporcie
-   `git log --oneline «MARKER_SHA»..codex/m03-admin-20260824` i listę plików
+   `git log --oneline 23652ec80a..codex/m03-admin-20260824` i listę plików
    rozejścia; scalenie z nowszym tipem wykonuje nadzorca przy odbiorze.
    **Rebase w trakcie dyżuru: ZAKAZANY.**
 
@@ -210,7 +210,7 @@ Użytkownik czyta zdanie, które każe mu czekać na coś, co nigdy nie nadejdzi
 5. **Własna gałąź i własny worktree** (nigdy praca na `codex/m03-admin-20260824`):
 
    ```bash
-   git branch codex/audits-day41-<data> «MARKER_SHA»
+   git branch codex/audits-day41-<data> 23652ec80a
    git worktree add /private/tmp/consultify-audits-day41 codex/audits-day41-<data>
    cd /private/tmp/consultify-audits-day41
    ln -s /Users/piotrwisniewski/Developer/Consultify/node_modules node_modules   # DEC-86, TYLKO ODCZYT
@@ -224,7 +224,7 @@ Użytkownik czyta zdanie, które każe mu czekać na coś, co nigdy nie nadejdzi
    nigdy wobec `HEAD~1`:
 
    ```bash
-   git diff --name-only «MARKER_SHA»...HEAD
+   git diff --name-only 23652ec80a...HEAD
    ```
 
    Ta komenda ma w tym dokumencie własną nazwę — **„komenda bazowa"** — i wraca
@@ -1498,7 +1498,7 @@ Silnik zna te typy bloków (`documentStudioTypes.ts:77-98`): `heading`,
 ### Definicja ukończenia `D.7`
 
 - [ ] plik istnieje w `server/src/services/audits/`, **zero zmian w `documentStudio/**`**
-      (dowód: `git diff --name-only «MARKER_SHA»...HEAD | grep documentStudio` → pusto);
+      (dowód: `git diff --name-only 23652ec80a...HEAD | grep documentStudio` → pusto);
 - [ ] 8 testów zielonych, w tym render do niepustego bufora;
 - [ ] dowód determinizmu i braku zegara;
 - [ ] placeholdery w jednym `Object.freeze`, każdy nazywa brakujące pole;
