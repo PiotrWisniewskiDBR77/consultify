@@ -34,6 +34,10 @@ export interface CalendarEvent {
   priority?: string;
   visibilityClass?: VisibilityClass;
   editAuthority?: EditAuthority;
+  // day47-finish (B.2): the authoritative owner of a `source: 'event'` row,
+  // computed server-side from the authenticated user (calendar.routes.ts,
+  // GET /calendar/unified). Absent for a redacted foreign-`busy` placeholder.
+  ownerId?: string;
   syncState?: SyncState;
   permissionGradient?: PermissionGradient;
   etag?: string;

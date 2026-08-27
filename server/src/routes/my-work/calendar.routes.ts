@@ -193,6 +193,8 @@ router.get(
         status?: string;
         priority?: string;
         description?: string;
+        editAuthority?: 'local_only' | 'none';
+        ownerId?: string;
       }> = [];
 
       // ── TASKS (due/start/end) ───────────────────────────────────────────────
@@ -311,6 +313,21 @@ router.get(
         );
         for (const row of rows || []) {
           const foreignBusy = row.visibility === 'busy' && String(row.owner_id) !== String(userId);
+          // day47-finish (B.2 unblock): `editAuthority` is an existing,
+          // already-typed contract field (calendarTypes.ts:36) that
+          // CalendarGrid.tsx already reads to decide whether an event is
+          // draggable/editable ('none' -> readonly) — it was simply never
+          // populated for `source: 'event'` rows, so every own event looked
+          // uniformly non-editable to the client and the client had no
+          // trustworthy signal to gate an edit/cancel action on. Computed
+          // server-side from the authenticated userId (never from
+          // `attendees[]` presence, which the day47c STOP correctly flagged
+          // as a spoofable, non-authoritative guess). Purely additive: no
+          // existing reader treats an unknown/undefined value as anything
+          // but "not editable", so this only turns on behavior that was
+          // already wired to look for it.
+          const isOwner = String(row.owner_id) === String(userId);
+          const editAuthority: 'local_only' | 'none' = isOwner ? 'local_only' : 'none';
           events.push({
             id: `event-${row.id}`,
             title: foreignBusy ? FOREIGN_BUSY_EVENT_TITLE : row.title,
@@ -320,7 +337,12 @@ router.get(
             source: 'event',
             sourceId: row.id,
             status: row.status,
-            ...(foreignBusy ? {} : { description: row.description || undefined }),
+            editAuthority,
+            // ownerId is withheld for a redacted foreign-busy placeholder —
+            // exposing it would defeat the point of the redaction (the
+            // viewer would learn who the busy owner is even though the
+            // title/description are hidden).
+            ...(foreignBusy ? {} : { description: row.description || undefined, ownerId: row.owner_id }),
           });
         }
       }
@@ -820,11 +842,18 @@ router.post(
       visibility: z.enum(['private', 'busy', 'org']).optional().default('private'),
       relatedType: z.enum(['task', 'initiative', 'meeting']).nullable().optional(),
       relatedId: z.string().nullable().optional(),
+      recurrence: z.unknown().optional(),
     });
 
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({ error: 'Invalid event data', details: parsed.error.issues });
+    }
+    if (parsed.data.recurrence !== undefined) {
+      return res.status(400).json({
+        error: 'Recurrence is not supported; create independent copies instead',
+        code: 'RECURRENCE_NOT_SUPPORTED',
+      });
     }
 
     const { title, source, description } = parsed.data;
@@ -1041,20 +1070,50 @@ router.get(
            AND date(start_at) = date(?) ORDER BY start_at ASC`,
         [orgId, userId, date]
       );
+      const meetingCols = await getTableColumns('meetings');
+      let meetingsOnDate: any[] = [];
+      if (meetingCols.has('start_at')) {
+        const meetingWhere = ['m.organization_id = ?', 'date(m.start_at) = date(?)'];
+        const meetingParams: any[] = [orgId, date];
+        if (meetingCols.has('created_by')) {
+          if (meetingCols.has('attendees_json')) {
+            meetingWhere.push('(m.created_by = ? OR m.attendees_json LIKE ?)');
+            meetingParams.push(userId, `%"${userId}"%`);
+          } else {
+            meetingWhere.push('m.created_by = ?');
+            meetingParams.push(userId);
+          }
+        }
+        const meetingResult = await db.query(
+          `SELECT m.id, m.title, m.start_at, m.end_at FROM meetings m
+           WHERE ${meetingWhere.join(' AND ')} ORDER BY m.start_at ASC`,
+          meetingParams
+        );
+        meetingsOnDate = meetingResult.rows || [];
+      }
 
       const tasksOnDate = tasksOnDateResult.rows;
       const decisionsOnDate = decisionsOnDateResult.rows;
       const calendarEventsOnDate = eventsOnDateResult.rows;
 
       const hasConflicts =
-        tasksOnDate.length + decisionsOnDate.length + calendarEventsOnDate.length > 3;
+        tasksOnDate.length +
+          decisionsOnDate.length +
+          calendarEventsOnDate.length +
+          meetingsOnDate.length >
+        3;
 
       res.json({
         date,
         tasks: tasksOnDate,
         decisions: decisionsOnDate,
         events: calendarEventsOnDate,
-        totalItems: tasksOnDate.length + decisionsOnDate.length + calendarEventsOnDate.length,
+        meetings: meetingsOnDate,
+        totalItems:
+          tasksOnDate.length +
+          decisionsOnDate.length +
+          calendarEventsOnDate.length +
+          meetingsOnDate.length,
         hasConflicts,
         suggestion: hasConflicts
           ? 'This day looks busy. Consider rescheduling lower-priority items.'
