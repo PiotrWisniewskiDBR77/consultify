@@ -13,8 +13,23 @@
  * by the migration gate against `DB_TARGET_LABEL` printed by the application.
  * Both sides read the SAME environment variable in the SAME service, so the
  * two values agreed by construction — a tautology that can never observe a
- * divergence. Nothing here reads a hand-set label: every value below is
- * DERIVED from the connection parameters the caller is really about to use.
+ * divergence.
+ *
+ * ★ THE SAME TRAP HAS A SECOND SHAPE. Deriving both sides from the same
+ * `process.env` is ALSO a tautology, even when neither side reads a hand-set
+ * label: `resolveApplicationDatabaseIdentity(process.env)` and the release
+ * gate's own `resolveReachableDatabaseUrl({ DATABASE_URL, DATABASE_PUBLIC_URL })`
+ * are literally the same expression evaluated twice. The first FIX round
+ * shipped exactly that and it reported agreement for every injected
+ * divergence. It has been removed from `server/scripts/release-migration-gate.ts`.
+ *
+ * WHAT THIS MODULE IS FOR, THEN: describing ONE side honestly, so that a
+ * process OUTSIDE both services can compare two independently supplied
+ * descriptions. That comparison lives in `scripts/validate-deploy-target.sh`
+ * (GitHub Actions), which receives APP_DATABASE_URL and MIGRATION_DATABASE_URL
+ * as separate secrets copied from two different Railway services. Never
+ * compare two values this module derived from one environment and call the
+ * result a divergence check.
  *
  * PRIVACY: identity is host + port + database name only. User and password are
  * never read, never formatted and never logged.
@@ -70,12 +85,20 @@ export function parseDatabaseIdentityFromUrl(
 }
 
 /**
- * The identity the APPLICATION will use at runtime.
+ * The identity the APPLICATION will use at runtime, given an environment.
  *
  * This mirrors `DatabaseConfig.getPostgresConfig()` exactly: DATABASE_URL
  * (through the reachability resolver, which may swap in DATABASE_PUBLIC_URL),
- * otherwise the discrete DB_HOST/DB_PORT/DB_NAME variables. Those two paths
- * are precisely where the staging divergence could hide, so both are covered.
+ * otherwise the discrete DB_HOST/DB_PORT/DB_NAME variables.
+ *
+ * ★ CORRECT USE: pass an environment that came from SOMEWHERE ELSE than the
+ * caller's own process — e.g. variables read out of another Railway service.
+ *
+ * ★ INCORRECT USE, AND THE REASON THIS WARNING EXISTS: calling this with the
+ * caller's own `process.env` and comparing the answer against a target the
+ * caller derived from that same `process.env`. That is one expression counted
+ * twice; it agrees by construction and observes nothing. `release-migration-gate.ts`
+ * did that and has been corrected — do not reintroduce it.
  */
 export function resolveApplicationDatabaseIdentity(
   env: DatabaseIdentityEnvironment

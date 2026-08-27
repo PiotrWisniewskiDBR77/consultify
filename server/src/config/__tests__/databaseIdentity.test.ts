@@ -69,7 +69,11 @@ describe('resolveApplicationDatabaseIdentity', () => {
   });
 });
 
-describe('databaseIdentitiesMatch — the DEC-165 recurrence check', () => {
+// NOTE: these are unit tests of the COMPARATOR, using two independently
+// constructed inputs. They are not, and never were, evidence that any caller
+// obtains those two inputs independently. The release gate did not — see the
+// warning at the top of databaseIdentity.ts.
+describe('databaseIdentitiesMatch — comparator semantics', () => {
   const sakura = parseDatabaseIdentityFromUrl('postgres://u:p@sakura.proxy.rlwy.net:41234/railway');
 
   it('MUTATION: an injected divergence does NOT match', () => {
