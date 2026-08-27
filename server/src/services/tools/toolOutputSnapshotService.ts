@@ -403,24 +403,24 @@ const isMissingTableError = (err: unknown): boolean => {
  *     the winner instead of erroring, so concurrent promote requests still
  *     converge on exactly one snapshot.
  *
- * MERGE NOTE (controller-merge reconciliation, 2026-08-13): `tool_outputs`
- * and `withRawPgTransaction` (a real `pg` PoolClient transaction) exist on
- * every REAL environment — production, demo, and this task's own
- * RUN_DB_TESTS=1 real-Postgres suites — because migration 946/947 and the
- * app's Postgres pool are both always present there. The ONE place that is
- * not true is `tests/integration/tools/tool-session-roundtrip.contract.test.ts`,
- * which backs `queryHelpers` with an in-memory SQLite database that never
- * runs the numbered migration set (only `ToolController.ensureToolsSchema()`'s
- * own minimal bootstrap) and does not mock `withRawPgTransaction` at all. On
- * that harness — and only there — this function degrades to an IN-MEMORY,
- * UNPERSISTED snapshot: built through the exact same `buildOutputForSession`
- * -> `submitForReview` -> `approveOutput` pipeline as the durable path, so
- * `promoteToOutput` still renders downstream content from ONE frozen object
- * and never re-reads `session.answers_json` — it just isn't durably written
- * to a table that doesn't exist on that harness. This mirrors the existing
- * `try { ... } catch { /* Table may not exist *\/ }` convention already used
- * elsewhere in ToolController.ts for the same reason (presentation/idea
- * writes).
+ * MERGE NOTE (controller-merge reconciliation, 2026-08-13; behavior revised
+ * post-day54-adversarial-review): `tool_outputs` and `withRawPgTransaction`
+ * (a real `pg` PoolClient transaction) exist on every REAL environment —
+ * production, demo, and this task's own RUN_DB_TESTS=1 real-Postgres suites
+ * — because migration 946/947 and the app's Postgres pool are both always
+ * present there. The ONE place that is not true is
+ * `tests/integration/tools/tool-session-roundtrip.contract.test.ts`, which
+ * backs `queryHelpers` with an in-memory SQLite database that never runs the
+ * numbered migration set and does not mock `withRawPgTransaction` at all.
+ * On that harness — and only there — this function CANNOT durably persist
+ * the snapshot. It no longer falls back to returning an in-memory,
+ * unpersisted `ToolOutput`: it refuses instead, throwing
+ * `ToolOutputPersistenceUnavailableError` (`code: 'TOOL_OUTPUT_PERSISTENCE_UNAVAILABLE'`,
+ * `status: 503`) from the two guard points below — missing
+ * `withRawPgTransaction` and a missing `tool_outputs` table caught in
+ * `persistSnapshot()`'s catch block. Callers (`ToolController.promoteToOutput`)
+ * propagate that as an HTTP 503; no caller ever receives an unpersisted
+ * snapshot object.
  */
 export async function ensureToolOutputSnapshot(
   session: ToolOutputSourceSession,
