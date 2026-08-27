@@ -770,7 +770,14 @@ async function readback(databaseName: string, dynamic: Record<string, unknown> |
       report_runs: 1,
       negative_profile_receipts: 0,
       negative_execution_links: 0,
-      successful_migrations: 834,
+      // Day 49 finish (F.1): 834 was the migration count when this readback
+      // assertion was last written; HEAD carries 858 (verified by running
+      // `server/scripts/migrate.postgres.ts` end-to-end against a fresh DB in
+      // this session — see the Day 49 finish report). A hard-coded exact
+      // count will drift again with every future migration landed by ANY
+      // module, not just Initiatives; that brittleness is a pre-existing
+      // design choice this dyżur does not redesign, only re-synchronizes.
+      successful_migrations: 858,
     };
     for (const [key, value] of Object.entries(expected))
       if (String(r[key]) !== String(value))

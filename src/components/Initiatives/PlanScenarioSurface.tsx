@@ -12,6 +12,7 @@ import {
   X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { StandardPreview } from '@/components/standard/StandardPreview';
@@ -149,10 +150,10 @@ const knownTimeBasis = (scenario: PlanScenario | null) =>
     scenario.periods.length &&
     parsePeriods(JSON.stringify(scenario.periods))
   );
-const planStatusLabel: Record<PlanScenario['status'], string> = {
-  DRAFT: 'Szkic',
-  PUBLISHED: 'Opublikowany',
-  SUPERSEDED: 'Zastąpiony',
+const planStatusKey: Record<PlanScenario['status'], string> = {
+  DRAFT: 'initiatives.planScenario.status.draft',
+  PUBLISHED: 'initiatives.planScenario.status.published',
+  SUPERSEDED: 'initiatives.planScenario.status.superseded',
 };
 
 const planPresets = [
@@ -172,6 +173,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
   onCountsChange,
   demoMode = false,
 }) => {
+  const { t } = useTranslation();
   const [rows, setRows] = useState<RegisterRow[]>([]);
   const [state, setState] = useState<'LOADING' | 'READY' | 'ERROR'>('LOADING');
   const [writeState, setWriteState] = useState<'IDLE' | 'SAVING' | 'CONFLICT' | 'ERROR'>('IDLE');
@@ -417,7 +419,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
         earliest: '—',
         target: '—',
         latest: '—',
-        proposedWindow: 'Nie przypisano okna planu',
+        proposedWindow: t('initiatives.planScenario.noWindowAssigned'),
         band: 'UNSCHEDULED',
         dependency: 'UNKNOWN',
         capacity: 'UNKNOWN',
@@ -430,7 +432,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
         published: draft?.status === 'PUBLISHED' ? 'PUBLISHED' : 'DRAFT',
       }));
     return [...scheduled, ...unscheduled];
-  }, [draft, initiatives]);
+  }, [draft, initiatives, t]);
   const matchesPlanPreset = useCallback(
     (row: (typeof planWindowRows)[number], preset: string) =>
       preset === 'all'
@@ -649,7 +651,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                 target: null,
                 latest: null,
                 confidence: 'UNKNOWN',
-                rationale: 'Draft window requires validation',
+                rationale: t('initiatives.planScenario.workbench.defaultRationale'),
                 dependencySnapshot: [],
                 constraintSnapshot: [],
               },
@@ -750,57 +752,58 @@ export const PlanScenarioSurface: React.FC<Props> = ({
   if (state === 'LOADING')
     return (
       <div role="status" className="flex items-center gap-2 p-6">
-        <Loader2 className="animate-spin" size={16} /> Loading Plan Scenario register
+        <Loader2 className="animate-spin" size={16} /> {t('initiatives.planScenario.loading')}
       </div>
     );
   if (state === 'ERROR')
     return (
       <div role="alert" className="m-4 flex items-center justify-between text-c-danger">
         <span>
-          <AlertTriangle size={16} className="inline" /> Persistent Plan register is unavailable.
+          <AlertTriangle size={16} className="inline" />{' '}
+          {t('initiatives.planScenario.unavailable')}
         </span>
         <button type="button" className="btn-secondary" onClick={() => void loadRegister()}>
-          Retry
+          {t('initiatives.planScenario.retry')}
         </button>
       </div>
     );
   return (
-    <section aria-label="Plan scenarios" className="flex h-full min-h-0 flex-col">
+    <section aria-label={t('initiatives.planScenario.sectionAria')} className="flex h-full min-h-0 flex-col">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-c-border p-3">
         <div>
-          <h2 className="font-semibold">Plan inicjatyw</h2>
+          <h2 className="font-semibold">{t('initiatives.planScenario.heading')}</h2>
           <p className="text-sm text-c-text-muted">
-            Kolejność, okna czasowe i zależności zatwierdzonego portfela.
+            {t('initiatives.planScenario.subheading')}
           </p>
         </div>
         <button type="button" className="btn-primary" onClick={() => setShowCreate(true)}>
-          <Plus size={15} /> Nowy plan
+          <Plus size={15} /> {t('initiatives.planScenario.newPlan')}
         </button>
       </div>
       {showCreate && (
         <div className="flex flex-wrap items-end gap-2 border-b border-c-border p-3">
           <label className="text-xs">
-            Nazwa planu
+            {t('initiatives.planScenario.form.planName')}
             <input
-              aria-label="Plan Scenario ID"
+              aria-label={t('initiatives.planScenario.form.planNameAria')}
               className="mt-1 block bg-c-surface p-2"
               value={newId}
               onChange={(e) => setNewId(e.target.value)}
             />
           </label>
           <label className="text-xs">
-            Źródłowy portfel
+            {t('initiatives.planScenario.form.sourcePortfolio')}
             <input
-              aria-label="Portfolio Scenario ID"
+              aria-label={t('initiatives.planScenario.form.sourcePortfolioAria')}
               className="mt-1 block bg-c-surface p-2"
               value={portfolioId}
               onChange={(e) => setPortfolioId(e.target.value)}
             />
           </label>
           <label className="text-xs">
-            Wersja portfela
+            {t('initiatives.planScenario.form.portfolioVersion')}
             <input
-              aria-label="Portfolio Scenario version"
+              aria-label={t('initiatives.planScenario.form.portfolioVersionAria')}
               className="mt-1 block w-20 bg-c-surface p-2"
               type="number"
               min={1}
@@ -809,30 +812,30 @@ export const PlanScenarioSurface: React.FC<Props> = ({
             />
           </label>
           <label className="text-xs">
-            Jednostka czasu
+            {t('initiatives.planScenario.form.windowUnit')}
             <select
-              aria-label="Plan window unit"
+              aria-label={t('initiatives.planScenario.form.windowUnitAria')}
               className="mt-1 block w-24 bg-c-surface p-2"
               value={newWindowUnit}
               onChange={(event) => setNewWindowUnit(event.target.value)}
             >
-              <option value="WEEK">Tydzień</option>
-              <option value="MONTH">Miesiąc</option>
+              <option value="WEEK">{t('initiatives.planScenario.form.weekOption')}</option>
+              <option value="MONTH">{t('initiatives.planScenario.form.monthOption')}</option>
             </select>
           </label>
           <label className="text-xs">
-            Strefa czasowa
+            {t('initiatives.planScenario.form.timezone')}
             <input
-              aria-label="Plan timezone"
+              aria-label={t('initiatives.planScenario.form.timezoneAria')}
               className="mt-1 block min-w-40 bg-c-surface p-2"
               value={newTimezone}
               onChange={(event) => setNewTimezone(event.target.value)}
             />
           </label>
           <label className="text-xs">
-            Początek horyzontu
+            {t('initiatives.planScenario.form.horizonStart')}
             <input
-              aria-label="Plan start date"
+              aria-label={t('initiatives.planScenario.form.horizonStartAria')}
               className="mt-1 block bg-c-surface p-2"
               type="date"
               value={newStart}
@@ -840,9 +843,9 @@ export const PlanScenarioSurface: React.FC<Props> = ({
             />
           </label>
           <label className="text-xs">
-            Liczba tygodni
+            {t('initiatives.planScenario.form.weekCount')}
             <input
-              aria-label="Plan week count"
+              aria-label={t('initiatives.planScenario.form.weekCountAria')}
               className="mt-1 block w-24 bg-c-surface p-2"
               type="number"
               min={1}
@@ -865,25 +868,25 @@ export const PlanScenarioSurface: React.FC<Props> = ({
             }
             onClick={create}
           >
-            <Plus size={15} /> Utwórz plan
+            <Plus size={15} /> {t('initiatives.planScenario.form.createPlan')}
           </button>
           <button type="button" className="btn-secondary" onClick={() => setShowCreate(false)}>
-            Anuluj
+            {t('common.cancel')}
           </button>
         </div>
       )}
       {(writeState === 'ERROR' || writeState === 'CONFLICT') && (
         <div role="alert" className="m-3 text-sm text-c-danger">
           {writeState === 'CONFLICT'
-            ? 'Plan changed or its Portfolio basis is stale. Reopen before retrying.'
-            : 'Plan operation failed; no Initiative or task date changed.'}
+            ? t('initiatives.planScenario.conflictError')
+            : t('initiatives.planScenario.writeError')}
         </div>
       )}
       <div className="flex min-w-0 flex-wrap items-center gap-2 border-b border-c-border px-3 py-2">
         <label className="w-full min-w-0 text-xs text-c-text-muted sm:w-auto">
-          Aktywny plan
+          {t('initiatives.planScenario.activePlan')}
           <select
-            aria-label="Active Plan Scenario"
+            aria-label={t('initiatives.planScenario.activePlanAria')}
             className="mt-1 block w-full min-w-0 max-w-full rounded border border-c-border bg-c-surface px-2 py-1 text-sm sm:ml-2 sm:mt-0 sm:inline-block sm:w-auto"
             value={selectedId ?? ''}
             onChange={(event) => {
@@ -895,7 +898,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
           >
             {rows.map((row) => (
               <option key={row.id} value={row.id}>
-                {row.title} · {planStatusLabel[row.state as PlanScenario['status']]} · v
+                {row.title} · {t(planStatusKey[row.state as PlanScenario['status']])} · v
                 {row.version}
               </option>
             ))}
@@ -907,7 +910,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
           disabled={!selectedId}
           onClick={showWorkspace}
         >
-          <Eye size={15} /> Otwórz narzędzia planu
+          <Eye size={15} /> {t('initiatives.planScenario.openWorkspace')}
         </button>
       </div>
       <TableWithPreviewLayout<(typeof planWindowRows)[number]>
@@ -933,26 +936,45 @@ export const PlanScenarioSurface: React.FC<Props> = ({
               trailing: <span>{row.target}</span>,
             }}
             details={{
-              label: 'Plan initiative window',
-              text: 'Tentative sequencing only. Opening the tool edits the Plan draft, never Initiative dates.',
+              label: t('initiatives.planScenario.preview.windowLabel'),
+              text: t('initiatives.planScenario.preview.windowText'),
               properties: [
-                { id: 'window', label: 'Window', value: row.band },
-                { id: 'target', label: 'Proposed target', value: row.target },
-                { id: 'dependencies', label: 'Dependencies', value: row.dependency },
-                { id: 'capacity', label: 'Capacity', value: row.capacity },
-                { id: 'conflict', label: 'Conflict', value: row.conflict },
+                { id: 'window', label: t('initiatives.planScenario.columns.window'), value: row.band },
+                {
+                  id: 'target',
+                  label: t('initiatives.planScenario.columns.proposedTarget'),
+                  value: row.target,
+                },
+                {
+                  id: 'dependencies',
+                  label: t('initiatives.planScenario.columns.dependencies'),
+                  value: row.dependency,
+                },
+                {
+                  id: 'capacity',
+                  label: t('initiatives.planScenario.columns.capacity'),
+                  value: row.capacity,
+                },
+                {
+                  id: 'conflict',
+                  label: t('initiatives.planScenario.columns.conflict'),
+                  value: row.conflict,
+                },
               ],
             }}
             ai={{
-              hints: ['Challenge dependencies', 'Compare sequencing'],
+              hints: [
+                t('initiatives.planScenario.preview.aiHintDependencies'),
+                t('initiatives.planScenario.preview.aiHintSequencing'),
+              ],
               disabled: true,
-              disabledTooltip: 'AI suggestions require an explicit governed analysis request.',
+              disabledTooltip: t('initiatives.planScenario.preview.aiDisabledTooltip'),
             }}
             relations={[
               { id: row.id, label: row.id, type: 'initiative' },
               {
                 id: draft?.portfolioScenarioId ?? 'UNKNOWN',
-                label: `Portfolio ${draft?.portfolioScenarioId ?? 'UNKNOWN'}:v${draft?.portfolioScenarioVersion ?? 'UNKNOWN'}`,
+                label: `${t('initiatives.planScenario.portfolioLabel')} ${draft?.portfolioScenarioId ?? 'UNKNOWN'}:v${draft?.portfolioScenarioVersion ?? 'UNKNOWN'}`,
                 type: 'portfolio',
               },
             ]}
@@ -961,7 +983,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                 {
                   id: 'open-workspace',
                   variant: 'neutral',
-                  label: 'Otwórz narzędzia planu',
+                  label: t('initiatives.planScenario.openWorkspace'),
                   icon: Eye,
                   shortcut: 'O',
                   onClick: showWorkspace,
@@ -973,20 +995,57 @@ export const PlanScenarioSurface: React.FC<Props> = ({
       >
         <StandardTable
           columns={[
-            { id: 'title', label: 'Initiative', sortable: true, width: '240px' },
-            { id: 'backlogState', label: 'Backlog state', sortable: true, filterable: true },
-            { id: 'proposedWindow', label: 'Tentative earliest / target / latest', sortable: true },
-            { id: 'earliest', label: 'Earliest', sortable: true },
-            { id: 'target', label: 'Proposed target', sortable: true },
-            { id: 'latest', label: 'Latest', sortable: true },
-            { id: 'dependency', label: 'Dependency readiness', sortable: true, filterable: true },
-            { id: 'mandatoryDeadline', label: 'Mandatory deadline', sortable: true },
-            { id: 'costOfDelay', label: 'Cost of delay', sortable: true },
-            { id: 'roughDemand', label: 'Rough demand', sortable: true },
-            { id: 'capacity', label: 'Capacity state', sortable: true, filterable: true },
-            { id: 'confidence', label: 'Schedule confidence', sortable: true, filterable: true },
-            { id: 'conflict', label: 'Conflict', sortable: true, filterable: true },
-            { id: 'nextAction', label: 'Next action', sortable: true },
+            { id: 'title', label: t('initiatives.planScenario.columns.initiative'), sortable: true, width: '240px' },
+            {
+              id: 'backlogState',
+              label: t('initiatives.planScenario.columns.backlogState'),
+              sortable: true,
+              filterable: true,
+            },
+            {
+              id: 'proposedWindow',
+              label: t('initiatives.planScenario.columns.tentativeWindow'),
+              sortable: true,
+            },
+            { id: 'earliest', label: t('initiatives.planScenario.columns.earliest'), sortable: true },
+            {
+              id: 'target',
+              label: t('initiatives.planScenario.columns.proposedTarget'),
+              sortable: true,
+            },
+            { id: 'latest', label: t('initiatives.planScenario.columns.latest'), sortable: true },
+            {
+              id: 'dependency',
+              label: t('initiatives.planScenario.columns.dependencyReadiness'),
+              sortable: true,
+              filterable: true,
+            },
+            {
+              id: 'mandatoryDeadline',
+              label: t('initiatives.planScenario.columns.mandatoryDeadline'),
+              sortable: true,
+            },
+            { id: 'costOfDelay', label: t('initiatives.planScenario.columns.costOfDelay'), sortable: true },
+            { id: 'roughDemand', label: t('initiatives.planScenario.columns.roughDemand'), sortable: true },
+            {
+              id: 'capacity',
+              label: t('initiatives.planScenario.columns.capacityState'),
+              sortable: true,
+              filterable: true,
+            },
+            {
+              id: 'confidence',
+              label: t('initiatives.planScenario.columns.scheduleConfidence'),
+              sortable: true,
+              filterable: true,
+            },
+            {
+              id: 'conflict',
+              label: t('initiatives.planScenario.columns.conflict'),
+              sortable: true,
+              filterable: true,
+            },
+            { id: 'nextAction', label: t('initiatives.planScenario.columns.nextAction'), sortable: true },
           ]}
           data={visiblePlanWindows}
           selectedRowId={selectedWindowId}
@@ -996,7 +1055,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
             primary: [
               {
                 id: 'open-workspace',
-                label: 'Otwórz narzędzia planu',
+                label: t('initiatives.planScenario.openWorkspace'),
                 icon: Eye,
                 onClick: showWorkspace,
               },
@@ -1004,28 +1063,30 @@ export const PlanScenarioSurface: React.FC<Props> = ({
             universalHandlers: {
               preview: () => setSelectedWindowId(String(row.id)),
               edit: showWorkspace,
-              archiveNote: 'Published plan history is immutable',
+              archiveNote: t('initiatives.planScenario.archiveNote'),
             },
-            destructive: { note: 'Plans are superseded, not deleted' },
+            destructive: { note: t('initiatives.planScenario.destructiveNote') },
           })}
           persistKey="initiatives.plan-windows.v2"
           empty={{
-            title: 'Brak inicjatyw w tym zakresie',
-            description: 'Zmień filtr albo dodaj inicjatywę w narzędziach aktywnego planu.',
+            title: t('initiatives.planScenario.emptyTitle'),
+            description: t('initiatives.planScenario.emptyDescription'),
           }}
         />
       </TableWithPreviewLayout>
       {draft && workspaceOpen && (
         <section
-          aria-label="Plan Scenario Workbench"
+          aria-label={t('initiatives.planScenario.workbenchAria')}
           className="min-h-0 border-t border-c-border p-4"
         >
           <div className="mb-3 flex flex-wrap items-center gap-2">
             <h3 className="font-semibold">
-              Plan Workbench · {draft.scenarioId}:v{draft.scenarioVersion}
+              {t('initiatives.planScenario.workbench.title')} · {draft.scenarioId}:v
+              {draft.scenarioVersion}
             </h3>
             <span className="text-xs text-c-text-muted">
-              Portfolio {draft.portfolioScenarioId}:v{draft.portfolioScenarioVersion}
+              {t('initiatives.planScenario.portfolioLabel')} {draft.portfolioScenarioId}:v
+              {draft.portfolioScenarioVersion}
             </span>
             <div className="flex w-full flex-wrap gap-2 sm:ml-auto sm:w-auto">
               <button
@@ -1041,15 +1102,15 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                 ) : (
                   <ListOrdered size={15} />
                 )}{' '}
-                Uporządkuj wg zależności
+                {t('initiatives.planScenario.workbench.sequenceByDependencies')}
               </button>
               <button
                 type="button"
                 className="btn-ghost"
-                aria-label="Zamknij narzędzia planu"
+                aria-label={t('initiatives.planScenario.workbench.closeAria')}
                 onClick={() => setWorkspaceOpen(false)}
               >
-                <X size={15} /> Zamknij
+                <X size={15} /> {t('common.close')}
               </button>
               <button
                 type="button"
@@ -1064,7 +1125,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                 ) : (
                   <Save size={15} />
                 )}{' '}
-                Save draft
+                {t('initiatives.planScenario.workbench.saveDraft')}
               </button>
               <button
                 type="button"
@@ -1077,36 +1138,50 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                 }
                 onClick={() => void write('PUBLISH')}
               >
-                <Send size={15} /> Publish Plan Scenario
+                <Send size={15} /> {t('initiatives.planScenario.workbench.publish')}
               </button>
             </div>
           </div>
           <div className="mb-4">
             <StandardTable
               columns={[
-                { id: 'title', label: 'Initiative', sortable: true },
-                { id: 'band', label: 'Window', sortable: true },
-                { id: 'target', label: 'Proposed window', sortable: true },
-                { id: 'dependency', label: 'Dependencies', sortable: true },
-                { id: 'capacity', label: 'Capacity', sortable: true },
-                { id: 'confidence', label: 'Confidence', sortable: true },
-                { id: 'conflict', label: 'Conflict', sortable: true },
+                { id: 'title', label: t('initiatives.planScenario.columns.initiative'), sortable: true },
+                { id: 'band', label: t('initiatives.planScenario.columns.window'), sortable: true },
+                {
+                  id: 'target',
+                  label: t('initiatives.planScenario.workbench.proposedWindow'),
+                  sortable: true,
+                },
+                {
+                  id: 'dependency',
+                  label: t('initiatives.planScenario.columns.dependencies'),
+                  sortable: true,
+                },
+                { id: 'capacity', label: t('initiatives.planScenario.columns.capacity'), sortable: true },
+                {
+                  id: 'confidence',
+                  label: t('initiatives.planScenario.workbench.confidence'),
+                  sortable: true,
+                },
+                { id: 'conflict', label: t('initiatives.planScenario.columns.conflict'), sortable: true },
               ]}
               data={visiblePlanWindows}
               persistKey="initiatives.plan-windows.v1"
               empty={{
-                title: 'No matching plan windows',
-                description: 'No initiative matches this preset.',
+                title: t('initiatives.planScenario.workbench.noMatchingTitle'),
+                description: t('initiatives.planScenario.workbench.noMatchingDescription'),
               }}
             />
           </div>
           <fieldset className="mb-4 rounded-md border border-c-border p-3">
-            <legend className="px-1 text-sm font-medium">Horyzont planowania</legend>
+            <legend className="px-1 text-sm font-medium">
+              {t('initiatives.planScenario.workbench.horizon')}
+            </legend>
             <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
               <label className="text-xs">
-                Jednostka czasu
+                {t('initiatives.planScenario.form.windowUnit')}
                 <select
-                  aria-label="Workbench Plan window unit"
+                  aria-label={t('initiatives.planScenario.workbench.windowUnitAria')}
                   className="mt-1 block w-full bg-c-surface p-2"
                   value={draft.windowUnit}
                   onChange={(event) =>
@@ -1115,14 +1190,14 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                     )
                   }
                 >
-                  <option value="WEEK">Tydzień</option>
-                  <option value="MONTH">Miesiąc</option>
+                  <option value="WEEK">{t('initiatives.planScenario.form.weekOption')}</option>
+                  <option value="MONTH">{t('initiatives.planScenario.form.monthOption')}</option>
                 </select>
               </label>
               <label className="text-xs">
-                Strefa czasowa
+                {t('initiatives.planScenario.form.timezone')}
                 <input
-                  aria-label="Workbench Plan timezone"
+                  aria-label={t('initiatives.planScenario.workbench.timezoneAria')}
                   className="mt-1 block w-full bg-c-surface p-2"
                   value={draft.timezone}
                   onChange={(event) =>
@@ -1133,25 +1208,29 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                 />
               </label>
             </div>
-            <div className="space-y-2" aria-label="Okresy planu">
+            <div className="space-y-2" aria-label={t('initiatives.planScenario.workbench.periodsAria')}>
               {draft.periods.map((period, index) => (
                 <div
                   key={`${period.periodId}-${index}`}
                   className="grid grid-cols-1 items-end gap-2 rounded border border-c-border p-2 sm:grid-cols-[minmax(8rem,1fr)_10rem_10rem_auto]"
                 >
                   <label className="text-xs">
-                    Nazwa okresu
+                    {t('initiatives.planScenario.workbench.periodName')}
                     <input
-                      aria-label={`Nazwa okresu ${index + 1}`}
+                      aria-label={t('initiatives.planScenario.workbench.periodNameAria', {
+                        index: index + 1,
+                      })}
                       className="mt-1 block w-full bg-c-surface p-2"
                       value={period.periodId}
                       onChange={(event) => updatePeriod(index, { periodId: event.target.value })}
                     />
                   </label>
                   <label className="text-xs">
-                    Od
+                    {t('initiatives.planScenario.workbench.periodFrom')}
                     <input
-                      aria-label={`Początek okresu ${index + 1}`}
+                      aria-label={t('initiatives.planScenario.workbench.periodFromAria', {
+                        index: index + 1,
+                      })}
                       className="mt-1 block w-full bg-c-surface p-2"
                       type="date"
                       value={toDateInput(period.start)}
@@ -1161,9 +1240,11 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                     />
                   </label>
                   <label className="text-xs">
-                    Do
+                    {t('initiatives.planScenario.workbench.periodTo')}
                     <input
-                      aria-label={`Koniec okresu ${index + 1}`}
+                      aria-label={t('initiatives.planScenario.workbench.periodToAria', {
+                        index: index + 1,
+                      })}
                       className="mt-1 block w-full bg-c-surface p-2"
                       type="date"
                       value={toDateInput(period.end)}
@@ -1175,30 +1256,34 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                   <button
                     type="button"
                     className="btn-ghost"
-                    aria-label={`Usuń okres ${index + 1}`}
+                    aria-label={t('initiatives.planScenario.workbench.removePeriodAria', {
+                      index: index + 1,
+                    })}
                     onClick={() => removePeriod(index)}
                   >
-                    <Trash2 size={15} /> Usuń
+                    <Trash2 size={15} /> {t('common.delete')}
                   </button>
                 </div>
               ))}
               <button type="button" className="btn-secondary" onClick={addPeriod}>
-                <Plus size={15} /> Dodaj okres
+                <Plus size={15} /> {t('initiatives.planScenario.workbench.addPeriod')}
               </button>
             </div>
           </fieldset>
           <fieldset className="mb-4 rounded-md border border-c-border p-3">
-            <legend className="px-1 text-sm font-medium">Zakres inicjatyw</legend>
+            <legend className="px-1 text-sm font-medium">
+              {t('initiatives.planScenario.workbench.initiativeScope')}
+            </legend>
             <div className="mb-3 flex flex-wrap items-end gap-3">
               <label className="text-xs">
-                Status inicjatywy
+                {t('initiatives.planScenario.workbench.initiativeStatus')}
                 <select
-                  aria-label="Filtr statusu inicjatyw planu"
+                  aria-label={t('initiatives.planScenario.workbench.initiativeStatusFilterAria')}
                   className="mt-1 block min-w-48 bg-c-surface p-2"
                   value={initiativeLifecycleFilter}
                   onChange={(event) => setInitiativeLifecycleFilter(event.target.value)}
                 >
-                  <option value="ALL">Wszystkie statusy</option>
+                  <option value="ALL">{t('initiatives.planScenario.workbench.allStatuses')}</option>
                   {lifecycleOptions.map((lifecycle) => (
                     <option key={lifecycle} value={lifecycle}>
                       {lifecycle}
@@ -1207,7 +1292,10 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                 </select>
               </label>
               <span className="text-xs text-c-text-muted">
-                W planie: {draft.windows.length} / {initiatives.length}
+                {t('initiatives.planScenario.workbench.inPlanCount', {
+                  count: draft.windows.length,
+                  total: initiatives.length,
+                })}
               </span>
             </div>
             <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
@@ -1221,7 +1309,9 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                     className="flex cursor-pointer items-start gap-2 rounded border border-c-border p-2"
                   >
                     <input
-                      aria-label={`Uwzględnij ${initiative.name}`}
+                      aria-label={t('initiatives.planScenario.workbench.includeAria', {
+                        name: initiative.name,
+                      })}
                       type="checkbox"
                       checked={included}
                       onChange={() =>
@@ -1231,7 +1321,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-medium">{initiative.name}</span>
                       <span className="block text-xs text-c-text-muted">
-                        {initiative.lifecycle || 'Status nieznany'}
+                        {initiative.lifecycle || t('initiatives.planScenario.workbench.statusUnknown')}
                       </span>
                     </span>
                   </label>
@@ -1240,14 +1330,16 @@ export const PlanScenarioSurface: React.FC<Props> = ({
             </div>
           </fieldset>
           <section
-            aria-label="Tygodniowa oś czasu planu"
+            aria-label={t('initiatives.planScenario.workbench.timelineAria')}
             className="mb-4 rounded-md border border-c-border p-3"
           >
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <div>
-                <h4 className="text-sm font-medium">Oś czasu</h4>
+                <h4 className="text-sm font-medium">
+                  {t('initiatives.planScenario.workbench.timelineTitle')}
+                </h4>
                 <p className="text-xs text-c-text-muted">
-                  Kliknij tydzień, aby przypisać okno. Strzałki przesuwają inicjatywę o jeden okres.
+                  {t('initiatives.planScenario.workbench.timelineHint')}
                 </p>
               </div>
             </div>
@@ -1258,7 +1350,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                 <thead>
                   <tr className="border-b border-c-border">
                     <th scope="col" className="min-w-60 p-2 text-left font-medium">
-                      Inicjatywa
+                      {t('initiatives.planScenario.columns.initiative')}
                     </th>
                     {draft.periods.map((period) => (
                       <th
@@ -1297,7 +1389,9 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                               <button
                                 type="button"
                                 className="btn-ghost p-1"
-                                aria-label={`Przesuń ${initiativeName} w lewo`}
+                                aria-label={t('initiatives.planScenario.workbench.moveLeftAria', {
+                                  name: initiativeName,
+                                })}
                                 disabled={activePeriod === 0}
                                 onClick={() => moveWindowAcrossPeriods(window.initiativeId, -1)}
                               >
@@ -1306,7 +1400,9 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                               <button
                                 type="button"
                                 className="btn-ghost p-1"
-                                aria-label={`Przesuń ${initiativeName} w prawo`}
+                                aria-label={t('initiatives.planScenario.workbench.moveRightAria', {
+                                  name: initiativeName,
+                                })}
                                 disabled={activePeriod === draft.periods.length - 1}
                                 onClick={() => moveWindowAcrossPeriods(window.initiativeId, 1)}
                               >
@@ -1324,7 +1420,10 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                             >
                               <button
                                 type="button"
-                                aria-label={`Przypisz ${initiativeName} do ${period.periodId}`}
+                                aria-label={t('initiatives.planScenario.workbench.assignAria', {
+                                  name: initiativeName,
+                                  period: period.periodId,
+                                })}
                                 aria-pressed={active}
                                 className={`min-h-12 w-full p-2 text-xs transition ${
                                   active
@@ -1349,7 +1448,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                         colSpan={draft.periods.length + 1}
                         className="p-4 text-sm text-c-text-muted"
                       >
-                        Wybierz co najmniej jedną inicjatywę, aby zbudować wariant planu.
+                        {t('initiatives.planScenario.workbench.noWindowsSelected')}
                       </td>
                     </tr>
                   )}
@@ -1359,8 +1458,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
           </section>
           {!knownTimeBasis(draft) && (
             <p role="alert" className="mb-4 text-sm text-c-danger">
-              UNKNOWN time basis — exact window unit, timezone and ordered periods are required;
-              save and publish remain blocked.
+              {t('initiatives.planScenario.workbench.unknownTimeBasis')}
             </p>
           )}
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
@@ -1372,11 +1470,11 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                   id: window.initiativeId,
                   order: index,
                 }))}
-                empty={{ title: 'No initiatives in this plan' }}
+                empty={{ title: t('initiatives.planScenario.workbench.noInitiativesInPlan') }}
                 columns={[
                   {
                     id: 'order',
-                    label: 'Order / Initiative snapshot',
+                    label: t('initiatives.planScenario.workbench.orderSnapshotColumn'),
                     render: (row) => {
                       const window = row as WindowDraft & TableRow & { order: number };
                       const index = window.order;
@@ -1384,14 +1482,18 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                         <div className="p-2">
                           <div className="flex gap-1">
                             <button
-                              aria-label={`Move ${window.initiativeId} up`}
+                              aria-label={t('initiatives.planScenario.workbench.moveUpAria', {
+                                id: window.initiativeId,
+                              })}
                               type="button"
                               onClick={() => move(index, -1)}
                             >
                               <ArrowUp size={14} />
                             </button>
                             <button
-                              aria-label={`Move ${window.initiativeId} down`}
+                              aria-label={t('initiatives.planScenario.workbench.moveDownAria', {
+                                id: window.initiativeId,
+                              })}
                               type="button"
                               onClick={() => move(index, 1)}
                             >
@@ -1401,7 +1503,9 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                           {initiatives.find((item) => item.id === window.initiativeId)?.name ??
                             window.initiativeId}
                           <input
-                            aria-label={`Initiative version ${window.initiativeId}`}
+                            aria-label={t('initiatives.planScenario.workbench.initiativeVersionAria', {
+                              id: window.initiativeId,
+                            })}
                             className="mt-1 block w-20 bg-c-surface p-1"
                             type="number"
                             min={1}
@@ -1418,7 +1522,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                   },
                   {
                     id: 'target',
-                    label: 'Draft window earliest / target / latest',
+                    label: t('initiatives.planScenario.workbench.draftWindowColumn'),
                     render: (row) => {
                       const window = row as WindowDraft & TableRow;
                       return (
@@ -1426,7 +1530,10 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                           {(['earliest', 'target', 'latest'] as const).map((key) => (
                             <input
                               key={key}
-                              aria-label={`${key} ${window.initiativeId}`}
+                              aria-label={t(
+                                `initiatives.planScenario.workbench.windowFieldAria.${key}`,
+                                { id: window.initiativeId }
+                              )}
                               className="mb-1 block bg-c-surface p-1"
                               type="datetime-local"
                               value={toInput(window[key])}
@@ -1441,13 +1548,15 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                   },
                   {
                     id: 'confidence',
-                    label: 'Confidence / rationale',
+                    label: t('initiatives.planScenario.workbench.confidenceRationaleColumn'),
                     render: (row) => {
                       const window = row as WindowDraft & TableRow;
                       return (
                         <div>
                           <select
-                            aria-label={`Confidence ${window.initiativeId}`}
+                            aria-label={t('initiatives.planScenario.workbench.confidenceAria', {
+                              id: window.initiativeId,
+                            })}
                             value={window.confidence}
                             onChange={(e) =>
                               updateWindow(window.initiativeId, {
@@ -1461,7 +1570,9 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                             <option>HIGH</option>
                           </select>
                           <textarea
-                            aria-label={`Window rationale ${window.initiativeId}`}
+                            aria-label={t('initiatives.planScenario.workbench.rationaleAria', {
+                              id: window.initiativeId,
+                            })}
                             className="mt-1 block bg-c-surface p-1"
                             value={window.rationale}
                             onChange={(e) =>
@@ -1474,12 +1585,14 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                   },
                   {
                     id: 'dependencySnapshot',
-                    label: 'Dependencies',
+                    label: t('initiatives.planScenario.columns.dependencies'),
                     render: (row) => {
                       const window = row as WindowDraft & TableRow;
                       return (
                         <textarea
-                          aria-label={`Dependencies ${window.initiativeId}`}
+                          aria-label={t('initiatives.planScenario.workbench.dependenciesAria', {
+                            id: window.initiativeId,
+                          })}
                           className="bg-c-surface p-1"
                           value={window.dependencySnapshot.join('\n')}
                           onChange={(e) =>
@@ -1496,7 +1609,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                   },
                   {
                     id: 'constraintSnapshot',
-                    label: 'Constraints',
+                    label: t('initiatives.planScenario.workbench.constraintsColumn'),
                     render: (row) => {
                       const window = row as WindowDraft & TableRow;
                       return (
@@ -1516,13 +1629,13 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                                   {
                                     constraintId: crypto.randomUUID(),
                                     state: 'UNKNOWN',
-                                    detail: 'Constraint requires validation',
+                                    detail: t('initiatives.planScenario.workbench.defaultConstraintDetail'),
                                   },
                                 ],
                               })
                             }
                           >
-                            Add constraint
+                            {t('initiatives.planScenario.workbench.addConstraint')}
                           </button>
                         </div>
                       );
@@ -1532,24 +1645,28 @@ export const PlanScenarioSurface: React.FC<Props> = ({
               />
             </div>
             <aside className="space-y-3">
-              <h4 className="font-medium">Założenia i zmiany</h4>
+              <h4 className="font-medium">{t('initiatives.planScenario.aside.assumptionsAndChanges')}</h4>
               {analysisProposal && (
                 <section
-                  aria-label="Plan analysis proposal"
+                  aria-label={t('initiatives.planScenario.aside.analysisProposalAria')}
                   className="rounded-md border border-c-border p-3 text-xs"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <h4 className="font-medium">Propozycja analizy</h4>
+                    <h4 className="font-medium">{t('initiatives.planScenario.aside.analysisProposalTitle')}</h4>
                     <span>{analysisProposal.status}</span>
                   </div>
                   <p className="mt-2 text-c-text-muted">
-                    Input: plan v{analysisProposal.inputScenarioVersion}, aggregate v
-                    {analysisProposal.inputAggregateVersion}
+                    {t('initiatives.planScenario.aside.analysisInput', {
+                      scenarioVersion: analysisProposal.inputScenarioVersion,
+                      aggregateVersion: analysisProposal.inputAggregateVersion,
+                    })}
                   </p>
                   <p className="mt-2">{analysisProposal.rationale}</p>
                   <p className="mt-2">
-                    Zmiany: {analysisProposal.changes.length} · Konflikty:{' '}
-                    {analysisProposal.conflicts.length}
+                    {t('initiatives.planScenario.aside.changesAndConflicts', {
+                      changes: analysisProposal.changes.length,
+                      conflicts: analysisProposal.conflicts.length,
+                    })}
                   </p>
                   {analysisProposal.conflicts.map((conflict) => (
                     <p key={conflict} className="mt-1 text-c-danger">
@@ -1563,31 +1680,31 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                         className="btn-primary"
                         onClick={() => void reviewAnalysis('ACCEPT')}
                       >
-                        Zastosuj do szkicu
+                        {t('initiatives.planScenario.aside.applyToDraft')}
                       </button>
                       <button
                         type="button"
                         className="btn-secondary"
                         onClick={() => void reviewAnalysis('REJECT')}
                       >
-                        Odrzuć
+                        {t('initiatives.planScenario.aside.rejectProposal')}
                       </button>
                     </div>
                   )}
                   <p className="mt-2 text-c-text-muted">
-                    Zapis i publikacja pozostają oddzielnymi decyzjami.
+                    {t('initiatives.planScenario.aside.saveAndPublishSeparate')}
                   </p>
                 </section>
               )}
               {analysisState === 'ERROR' && (
                 <p role="alert" className="text-xs text-c-danger">
-                  Analiza nie powiodła się; szkic nie został zmieniony.
+                  {t('initiatives.planScenario.aside.analysisFailed')}
                 </p>
               )}
               <label className="block text-xs">
-                Assumptions
+                {t('initiatives.planScenario.aside.assumptions')}
                 <textarea
-                  aria-label="Plan assumptions"
+                  aria-label={t('initiatives.planScenario.aside.assumptionsAria')}
                   className="mt-1 min-h-24 w-full bg-c-surface p-2"
                   value={draft.assumptions.join('\n')}
                   onChange={(e) =>
@@ -1601,40 +1718,40 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                   }
                 />
               </label>
-              <section aria-label="Plan diff">
-                <h4 className="font-medium">Porównanie wersji</h4>
+              <section aria-label={t('initiatives.planScenario.aside.diffAria')}>
+                <h4 className="font-medium">{t('initiatives.planScenario.aside.compareVersions')}</h4>
                 {history.length < 2 ? (
                   <p className="mt-1 text-xs text-c-text-muted">
-                    Porównanie będzie dostępne po zapisaniu co najmniej dwóch wersji planu.
+                    {t('initiatives.planScenario.aside.compareUnavailable')}
                   </p>
                 ) : (
                   <div className="mt-2 grid grid-cols-2 gap-2">
                     <label className="text-xs">
-                      Wersja bazowa
+                      {t('initiatives.planScenario.aside.baseVersion')}
                       <select
-                        aria-label="Bazowa wersja planu"
+                        aria-label={t('initiatives.planScenario.aside.baseVersionAria')}
                         className="mt-1 block w-full bg-c-surface p-1"
                         value={compareFrom ?? ''}
                         onChange={(event) => setCompareFrom(Number(event.target.value))}
                       >
                         {history.map((version) => (
                           <option key={version.scenarioVersion} value={version.scenarioVersion}>
-                            v{version.scenarioVersion} · {planStatusLabel[version.status]}
+                            v{version.scenarioVersion} · {t(planStatusKey[version.status])}
                           </option>
                         ))}
                       </select>
                     </label>
                     <label className="text-xs">
-                      Wersja porównywana
+                      {t('initiatives.planScenario.aside.comparedVersion')}
                       <select
-                        aria-label="Porównywana wersja planu"
+                        aria-label={t('initiatives.planScenario.aside.comparedVersionAria')}
                         className="mt-1 block w-full bg-c-surface p-1"
                         value={compareTo ?? ''}
                         onChange={(event) => setCompareTo(Number(event.target.value))}
                       >
                         {history.map((version) => (
                           <option key={version.scenarioVersion} value={version.scenarioVersion}>
-                            v{version.scenarioVersion} · {planStatusLabel[version.status]}
+                            v{version.scenarioVersion} · {t(planStatusKey[version.status])}
                           </option>
                         ))}
                       </select>
@@ -1655,19 +1772,21 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                       ) : (
                         <Eye size={15} />
                       )}{' '}
-                      Porównaj wersje
+                      {t('initiatives.planScenario.aside.compareVersionsAction')}
                     </button>
                   </div>
                 )}
                 {compareState === 'ERROR' && (
                   <p role="alert" className="mt-2 text-xs text-c-danger">
-                    Nie udało się odczytać porównania. Plan nie został zmieniony.
+                    {t('initiatives.planScenario.aside.compareFailed')}
                   </p>
                 )}
-                <h5 className="mt-3 text-xs font-medium">Zmiany ({diff.length})</h5>
+                <h5 className="mt-3 text-xs font-medium">
+                  {t('initiatives.planScenario.aside.changesCount', { count: diff.length })}
+                </h5>
                 {history.length >= 2 && compareState === 'IDLE' && diff.length === 0 && (
                   <p className="mt-1 text-xs text-c-text-muted">
-                    Brak różnic w oknach inicjatyw dla wybranych wersji.
+                    {t('initiatives.planScenario.aside.noDiff')}
                   </p>
                 )}
                 {diff.map((change) => (
@@ -1681,8 +1800,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                 ))}
               </section>
               <p className="text-xs text-c-text-muted">
-                Move only reorders this draft. Publish creates governed Plan Scenario truth; it
-                never baselines or writes Initiative/task dates.
+                {t('initiatives.planScenario.aside.moveNote')}
               </p>
             </aside>
           </div>

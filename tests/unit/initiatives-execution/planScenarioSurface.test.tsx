@@ -12,6 +12,161 @@ import {
   reviewPlanAnalysisProposal,
 } from '../../../src/services/initiatives-execution/runtimeApi';
 
+const PLAN_TRANSLATIONS: Record<string, string> = {
+  'initiatives.planScenario.activePlan': 'Aktywny plan',
+  'initiatives.planScenario.activePlanAria': 'Aktywny scenariusz planu',
+  'initiatives.planScenario.archiveNote': 'Historia opublikowanego planu jest niezmienna',
+  'initiatives.planScenario.aside.analysisFailed': 'Analiza nie powiodła się; szkic nie został zmieniony.',
+  'initiatives.planScenario.aside.analysisInput': 'Wejście: plan w{{scenarioVersion}}, agregat w{{aggregateVersion}}',
+  'initiatives.planScenario.aside.analysisProposalAria': 'Propozycja analizy planu',
+  'initiatives.planScenario.aside.analysisProposalTitle': 'Propozycja analizy',
+  'initiatives.planScenario.aside.applyToDraft': 'Zastosuj do szkicu',
+  'initiatives.planScenario.aside.assumptions': 'Założenia',
+  'initiatives.planScenario.aside.assumptionsAndChanges': 'Założenia i zmiany',
+  'initiatives.planScenario.aside.assumptionsAria': 'Założenia planu',
+  'initiatives.planScenario.aside.baseVersion': 'Wersja bazowa',
+  'initiatives.planScenario.aside.baseVersionAria': 'Bazowa wersja planu',
+  'initiatives.planScenario.aside.changesAndConflicts': 'Zmiany: {{changes}} · Konflikty: {{conflicts}}',
+  'initiatives.planScenario.aside.changesCount': 'Zmiany ({{count}})',
+  'initiatives.planScenario.aside.compareFailed': 'Nie udało się odczytać porównania. Plan nie został zmieniony.',
+  'initiatives.planScenario.aside.compareUnavailable': 'Porównanie będzie dostępne po zapisaniu co najmniej dwóch wersji planu.',
+  'initiatives.planScenario.aside.compareVersions': 'Porównanie wersji',
+  'initiatives.planScenario.aside.compareVersionsAction': 'Porównaj wersje',
+  'initiatives.planScenario.aside.comparedVersion': 'Wersja porównywana',
+  'initiatives.planScenario.aside.comparedVersionAria': 'Porównywana wersja planu',
+  'initiatives.planScenario.aside.diffAria': 'Różnice planu',
+  'initiatives.planScenario.aside.moveNote': 'Przesuwanie zmienia tylko ten szkic. Publikacja tworzy rządzoną prawdę scenariusza planu; nigdy nie ustala bazowo ani nie zapisuje dat inicjatywy/zadania.',
+  'initiatives.planScenario.aside.noDiff': 'Brak różnic w oknach inicjatyw dla wybranych wersji.',
+  'initiatives.planScenario.aside.rejectProposal': 'Odrzuć',
+  'initiatives.planScenario.aside.saveAndPublishSeparate': 'Zapis i publikacja pozostają oddzielnymi decyzjami.',
+  'initiatives.planScenario.columns.backlogState': 'Stan backlogu',
+  'initiatives.planScenario.columns.capacity': 'Moc przerobowa',
+  'initiatives.planScenario.columns.capacityState': 'Stan mocy przerobowej',
+  'initiatives.planScenario.columns.conflict': 'Konflikt',
+  'initiatives.planScenario.columns.costOfDelay': 'Koszt opóźnienia',
+  'initiatives.planScenario.columns.dependencies': 'Zależności',
+  'initiatives.planScenario.columns.dependencyReadiness': 'Gotowość zależności',
+  'initiatives.planScenario.columns.earliest': 'Najwcześniej',
+  'initiatives.planScenario.columns.initiative': 'Inicjatywa',
+  'initiatives.planScenario.columns.latest': 'Najpóźniej',
+  'initiatives.planScenario.columns.mandatoryDeadline': 'Obowiązkowy termin',
+  'initiatives.planScenario.columns.nextAction': 'Następna akcja',
+  'initiatives.planScenario.columns.proposedTarget': 'Proponowany termin docelowy',
+  'initiatives.planScenario.columns.roughDemand': 'Szacunkowe zapotrzebowanie',
+  'initiatives.planScenario.columns.scheduleConfidence': 'Pewność harmonogramu',
+  'initiatives.planScenario.columns.tentativeWindow': 'Wstępny najwcześniejszy / docelowy / najpóźniejszy',
+  'initiatives.planScenario.columns.window': 'Okno',
+  'initiatives.planScenario.conflictError': 'Plan zmienił się albo jego baza portfela jest nieaktualna. Otwórz ponownie przed próbą zapisu.',
+  'initiatives.planScenario.destructiveNote': 'Plany są zastępowane, nie usuwane',
+  'initiatives.planScenario.emptyDescription': 'Zmień filtr albo dodaj inicjatywę w narzędziach aktywnego planu.',
+  'initiatives.planScenario.emptyTitle': 'Brak inicjatyw w tym zakresie',
+  'initiatives.planScenario.form.createPlan': 'Utwórz plan',
+  'initiatives.planScenario.form.horizonStart': 'Początek horyzontu',
+  'initiatives.planScenario.form.horizonStartAria': 'Data rozpoczęcia planu',
+  'initiatives.planScenario.form.monthOption': 'Miesiąc',
+  'initiatives.planScenario.form.planName': 'Nazwa planu',
+  'initiatives.planScenario.form.planNameAria': 'Identyfikator scenariusza planu',
+  'initiatives.planScenario.form.portfolioVersion': 'Wersja portfela',
+  'initiatives.planScenario.form.portfolioVersionAria': 'Wersja scenariusza portfela',
+  'initiatives.planScenario.form.sourcePortfolio': 'Źródłowy portfel',
+  'initiatives.planScenario.form.sourcePortfolioAria': 'Identyfikator scenariusza portfela',
+  'initiatives.planScenario.form.timezone': 'Strefa czasowa',
+  'initiatives.planScenario.form.timezoneAria': 'Strefa czasowa planu',
+  'initiatives.planScenario.form.weekCount': 'Liczba tygodni',
+  'initiatives.planScenario.form.weekCountAria': 'Liczba tygodni planu',
+  'initiatives.planScenario.form.weekOption': 'Tydzień',
+  'initiatives.planScenario.form.windowUnit': 'Jednostka czasu',
+  'initiatives.planScenario.form.windowUnitAria': 'Jednostka okna planu',
+  'initiatives.planScenario.heading': 'Plan inicjatyw',
+  'initiatives.planScenario.loading': 'Wczytywanie rejestru planu…',
+  'initiatives.planScenario.newPlan': 'Nowy plan',
+  'initiatives.planScenario.noWindowAssigned': 'Nie przypisano okna planu',
+  'initiatives.planScenario.openWorkspace': 'Otwórz narzędzia planu',
+  'initiatives.planScenario.portfolioLabel': 'Portfel',
+  'initiatives.planScenario.preview.aiDisabledTooltip': 'Sugestie AI wymagają jawnego, rządzonego żądania analizy.',
+  'initiatives.planScenario.preview.aiHintDependencies': 'Zakwestionuj zależności',
+  'initiatives.planScenario.preview.aiHintSequencing': 'Porównaj kolejność',
+  'initiatives.planScenario.preview.windowLabel': 'Okno inicjatywy w planie',
+  'initiatives.planScenario.preview.windowText': 'Wyłącznie wstępna kolejność. Otwarcie narzędzia edytuje szkic planu, nigdy dat inicjatywy.',
+  'initiatives.planScenario.retry': 'Ponów',
+  'initiatives.planScenario.sectionAria': 'Scenariusze planu',
+  'initiatives.planScenario.status.draft': 'Szkic',
+  'initiatives.planScenario.status.published': 'Opublikowany',
+  'initiatives.planScenario.status.superseded': 'Zastąpiony',
+  'initiatives.planScenario.subheading': 'Kolejność, okna czasowe i zależności zatwierdzonego portfela.',
+  'initiatives.planScenario.unavailable': 'Trwały rejestr planu jest niedostępny.',
+  'initiatives.planScenario.workbench.addConstraint': 'Dodaj ograniczenie',
+  'initiatives.planScenario.workbench.addPeriod': 'Dodaj okres',
+  'initiatives.planScenario.workbench.allStatuses': 'Wszystkie statusy',
+  'initiatives.planScenario.workbench.assignAria': 'Przypisz {{name}} do {{period}}',
+  'initiatives.planScenario.workbench.closeAria': 'Zamknij narzędzia planu',
+  'initiatives.planScenario.workbench.confidence': 'Pewność',
+  'initiatives.planScenario.workbench.confidenceAria': 'Pewność {{id}}',
+  'initiatives.planScenario.workbench.confidenceRationaleColumn': 'Pewność / uzasadnienie',
+  'initiatives.planScenario.workbench.constraintsColumn': 'Ograniczenia',
+  'initiatives.planScenario.workbench.defaultConstraintDetail': 'Ograniczenie wymaga weryfikacji',
+  'initiatives.planScenario.workbench.defaultRationale': 'Szkic okna wymaga weryfikacji',
+  'initiatives.planScenario.workbench.dependenciesAria': 'Zależności {{id}}',
+  'initiatives.planScenario.workbench.draftWindowColumn': 'Szkic okna: najwcześniej / docelowo / najpóźniej',
+  'initiatives.planScenario.workbench.horizon': 'Horyzont planowania',
+  'initiatives.planScenario.workbench.inPlanCount': 'W planie: {{count}} / {{total}}',
+  'initiatives.planScenario.workbench.includeAria': 'Uwzględnij {{name}}',
+  'initiatives.planScenario.workbench.initiativeScope': 'Zakres inicjatyw',
+  'initiatives.planScenario.workbench.initiativeStatus': 'Status inicjatywy',
+  'initiatives.planScenario.workbench.initiativeStatusFilterAria': 'Filtr statusu inicjatyw planu',
+  'initiatives.planScenario.workbench.initiativeVersionAria': 'Wersja inicjatywy {{id}}',
+  'initiatives.planScenario.workbench.moveDownAria': 'Przesuń {{id}} w dół',
+  'initiatives.planScenario.workbench.moveLeftAria': 'Przesuń {{name}} w lewo',
+  'initiatives.planScenario.workbench.moveRightAria': 'Przesuń {{name}} w prawo',
+  'initiatives.planScenario.workbench.moveUpAria': 'Przesuń {{id}} w górę',
+  'initiatives.planScenario.workbench.noInitiativesInPlan': 'Brak inicjatyw w tym planie',
+  'initiatives.planScenario.workbench.noMatchingDescription': 'Żadna inicjatywa nie pasuje do tego zakresu.',
+  'initiatives.planScenario.workbench.noMatchingTitle': 'Brak pasujących okien planu',
+  'initiatives.planScenario.workbench.noWindowsSelected': 'Wybierz co najmniej jedną inicjatywę, aby zbudować wariant planu.',
+  'initiatives.planScenario.workbench.orderSnapshotColumn': 'Kolejność / migawka inicjatywy',
+  'initiatives.planScenario.workbench.periodFrom': 'Od',
+  'initiatives.planScenario.workbench.periodFromAria': 'Początek okresu {{index}}',
+  'initiatives.planScenario.workbench.periodName': 'Nazwa okresu',
+  'initiatives.planScenario.workbench.periodNameAria': 'Nazwa okresu {{index}}',
+  'initiatives.planScenario.workbench.periodTo': 'Do',
+  'initiatives.planScenario.workbench.periodToAria': 'Koniec okresu {{index}}',
+  'initiatives.planScenario.workbench.periodsAria': 'Okresy planu',
+  'initiatives.planScenario.workbench.proposedWindow': 'Proponowane okno',
+  'initiatives.planScenario.workbench.publish': 'Publikuj scenariusz planu',
+  'initiatives.planScenario.workbench.rationaleAria': 'Uzasadnienie okna {{id}}',
+  'initiatives.planScenario.workbench.removePeriodAria': 'Usuń okres {{index}}',
+  'initiatives.planScenario.workbench.saveDraft': 'Zapisz szkic',
+  'initiatives.planScenario.workbench.sequenceByDependencies': 'Uporządkuj wg zależności',
+  'initiatives.planScenario.workbench.statusUnknown': 'Status nieznany',
+  'initiatives.planScenario.workbench.timelineAria': 'Tygodniowa oś czasu planu',
+  'initiatives.planScenario.workbench.timelineHint': 'Kliknij tydzień, aby przypisać okno. Strzałki przesuwają inicjatywę o jeden okres.',
+  'initiatives.planScenario.workbench.timelineTitle': 'Oś czasu',
+  'initiatives.planScenario.workbench.timezoneAria': 'Strefa czasowa planu w warsztacie',
+  'initiatives.planScenario.workbench.title': 'Warsztat planu',
+  'initiatives.planScenario.workbench.unknownTimeBasis': 'Nieznana baza czasowa — wymagane są dokładna jednostka okna, strefa czasowa i uporządkowane okresy; zapis i publikacja pozostają zablokowane.',
+  'initiatives.planScenario.workbench.windowFieldAria.earliest': 'Najwcześniejszy termin {{id}}',
+  'initiatives.planScenario.workbench.windowFieldAria.latest': 'Najpóźniejszy termin {{id}}',
+  'initiatives.planScenario.workbench.windowFieldAria.target': 'Termin docelowy {{id}}',
+  'initiatives.planScenario.workbench.windowUnitAria': 'Jednostka okna planu w warsztacie',
+  'initiatives.planScenario.workbenchAria': 'Warsztat scenariusza planu',
+  'initiatives.planScenario.writeError': 'Operacja na planie nie powiodła się; żadna data inicjatywy ani zadania nie została zmieniona.',
+  'common.cancel': 'Anuluj',
+  'common.close': 'Zamknij',
+  'common.delete': 'Usuń',
+};
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    i18n: { language: 'pl' },
+    t: (key: string, options?: Record<string, unknown>) => {
+      const template = PLAN_TRANSLATIONS[key] ?? key;
+      if (!options) return template;
+      return template.replace(/\{\{(\w+)\}\}/g, (_match, name) =>
+        options[name] !== undefined ? String(options[name]) : `{{${name}}}`
+      );
+    },
+  }),
+}));
+
 vi.mock('../../../src/services/initiatives-execution/runtimeApi', () => ({
   RuntimeApiError: class RuntimeApiError extends Error {
     constructor(readonly status: number) {
@@ -126,25 +281,25 @@ describe('PlanScenarioSurface', () => {
 
   it('loads the persistent register and opens exact Plan Workbench with Enter', async () => {
     render(<PlanScenarioSurface initiatives={[{ id: 'initiative-1', name: 'Automation' }]} />);
-    expect((await screen.findByLabelText('Active Plan Scenario')).textContent).toContain('Szkic');
+    expect((await screen.findByLabelText('Aktywny scenariusz planu')).textContent).toContain('Szkic');
     expect(screen.queryByText(/\bDRAFT\b/)).not.toBeInTheDocument();
     const row = (await screen.findByText('Automation')).closest('tr')!;
     fireEvent.click(row);
-    expect(screen.getByText('Plan initiative window')).toBeInTheDocument();
+    expect(screen.getByText('Okno inicjatywy w planie')).toBeInTheDocument();
     const layout = row.closest('div[tabindex="0"]')!;
     layout.focus();
     fireEvent.keyDown(layout, { key: 'Enter' });
     expect(
-      await screen.findByRole('region', { name: 'Plan Scenario Workbench' })
+      await screen.findByRole('region', { name: 'Warsztat scenariusza planu' })
     ).toBeInTheDocument();
     await waitFor(() =>
-      expect(screen.queryByText('Plan initiative window')).not.toBeInTheDocument()
+      expect(screen.queryByText('Okno inicjatywy w planie')).not.toBeInTheDocument()
     );
     expect(readPlanScenario).toHaveBeenCalledWith('plan-q4');
-    expect(screen.getByLabelText('target initiative-1')).toHaveValue('2026-10-15T00:00');
+    expect(screen.getByLabelText('Termin docelowy initiative-1')).toHaveValue('2026-10-15T00:00');
     expect(screen.getByText('UNKNOWN: Supplier window unconfirmed')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Zamknij narzędzia planu' }));
-    expect(screen.queryByRole('region', { name: 'Plan Scenario Workbench' })).toBeNull();
+    expect(screen.queryByRole('region', { name: 'Warsztat scenariusza planu' })).toBeNull();
   });
 
   it('keeps move/window edits in draft and publishes only through Plan Scenario API', async () => {
@@ -157,7 +312,7 @@ describe('PlanScenarioSurface', () => {
       />
     );
     fireEvent.doubleClick((await screen.findByText('Automation')).closest('tr')!);
-    await screen.findByRole('region', { name: 'Plan Scenario Workbench' });
+    await screen.findByRole('region', { name: 'Warsztat scenariusza planu' });
     expect(screen.getByLabelText('Uwzględnij Automation')).toBeChecked();
     fireEvent.change(screen.getByLabelText('Filtr statusu inicjatyw planu'), {
       target: { value: 'SCHEDULED' },
@@ -168,12 +323,12 @@ describe('PlanScenarioSurface', () => {
     expect(screen.getByLabelText('Przypisz Digital do w1')).toHaveAttribute('aria-pressed', 'true');
     fireEvent.click(screen.getByLabelText('Przesuń Digital w prawo'));
     expect(screen.getByLabelText('Przypisz Digital do w2')).toHaveAttribute('aria-pressed', 'true');
-    fireEvent.click(screen.getByLabelText('Move initiative-2 up'));
+    fireEvent.click(screen.getByLabelText('Przesuń initiative-2 w górę'));
     expect(writePlanScenario).not.toHaveBeenCalled();
-    fireEvent.change(screen.getByLabelText('Plan assumptions'), {
+    fireEvent.change(screen.getByLabelText('Założenia planu'), {
       target: { value: 'Dependency validated\nWindow remains draft' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Save draft' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Zapisz szkic' }));
     await waitFor(() =>
       expect(writePlanScenario).toHaveBeenCalledWith(
         'plan-q4',
@@ -194,7 +349,7 @@ describe('PlanScenarioSurface', () => {
         })
       )
     );
-    fireEvent.click(screen.getByRole('button', { name: 'Publish Plan Scenario' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Publikuj scenariusz planu' }));
     await waitFor(() =>
       expect(writePlanScenario).toHaveBeenLastCalledWith(
         'plan-q4',
@@ -210,10 +365,10 @@ describe('PlanScenarioSurface', () => {
     } as any);
     render(<PlanScenarioSurface initiatives={[{ id: 'initiative-1', name: 'Automation' }]} />);
     fireEvent.click(await screen.findByRole('button', { name: 'Otwórz narzędzia planu' }));
-    await screen.findByRole('region', { name: 'Plan Scenario Workbench' });
-    expect(screen.getByRole('alert')).toHaveTextContent('UNKNOWN time basis');
-    expect(screen.getByRole('button', { name: 'Save draft' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Publish Plan Scenario' })).toBeDisabled();
+    await screen.findByRole('region', { name: 'Warsztat scenariusza planu' });
+    expect(screen.getByRole('alert')).toHaveTextContent('Nieznana baza czasowa');
+    expect(screen.getByRole('button', { name: 'Zapisz szkic' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Publikuj scenariusz planu' })).toBeDisabled();
   });
 
   it('compares two persistent Plan versions without mutating the scenario', async () => {
@@ -228,7 +383,7 @@ describe('PlanScenarioSurface', () => {
     });
     render(<PlanScenarioSurface initiatives={[{ id: 'initiative-1', name: 'Automation' }]} />);
     fireEvent.click(await screen.findByRole('button', { name: 'Otwórz narzędzia planu' }));
-    await screen.findByRole('region', { name: 'Plan Scenario Workbench' });
+    await screen.findByRole('region', { name: 'Warsztat scenariusza planu' });
 
     expect(readPlanScenarioHistory).toHaveBeenCalledWith('plan-q4');
     expect(screen.getByLabelText('Bazowa wersja planu')).toHaveValue('1');
@@ -257,30 +412,30 @@ describe('PlanScenarioSurface', () => {
 
   it('creates a weekly planning horizon without exposing raw JSON', async () => {
     render(<PlanScenarioSurface initiatives={[{ id: 'initiative-1', name: 'Automation' }]} />);
-    await screen.findByLabelText('Active Plan Scenario');
+    await screen.findByLabelText('Aktywny scenariusz planu');
 
     fireEvent.click(screen.getByRole('button', { name: 'Nowy plan' }));
     expect(screen.queryByText('Ordered periods JSON')).not.toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText('Plan Scenario ID'), {
+    fireEvent.change(screen.getByLabelText('Identyfikator scenariusza planu'), {
       target: { value: 'plan-transformation' },
     });
-    fireEvent.change(screen.getByLabelText('Portfolio Scenario ID'), {
+    fireEvent.change(screen.getByLabelText('Identyfikator scenariusza portfela'), {
       target: { value: 'portfolio-approved' },
     });
-    fireEvent.change(screen.getByLabelText('Plan start date'), {
+    fireEvent.change(screen.getByLabelText('Data rozpoczęcia planu'), {
       target: { value: '2026-09-07' },
     });
-    fireEvent.change(screen.getByLabelText('Plan week count'), { target: { value: '2' } });
+    fireEvent.change(screen.getByLabelText('Liczba tygodni planu'), { target: { value: '2' } });
     fireEvent.click(screen.getByRole('button', { name: 'Utwórz plan' }));
 
     expect(
-      await screen.findByRole('region', { name: 'Plan Scenario Workbench' })
+      await screen.findByRole('region', { name: 'Warsztat scenariusza planu' })
     ).toBeInTheDocument();
     expect(screen.getByLabelText('Nazwa okresu 1')).toHaveValue('Tydzień 1');
     expect(screen.getByLabelText('Początek okresu 1')).toHaveValue('2026-09-07');
     expect(screen.getByLabelText('Koniec okresu 2')).toHaveValue('2026-09-21');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Save draft' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Zapisz szkic' }));
     await waitFor(() =>
       expect(writePlanScenario).toHaveBeenCalledWith(
         'plan-transformation',
@@ -308,15 +463,15 @@ describe('PlanScenarioSurface', () => {
   it('reviews an analysis proposal before applying it to the unsaved draft', async () => {
     render(<PlanScenarioSurface initiatives={[{ id: 'initiative-1', name: 'Automation' }]} />);
     fireEvent.click(await screen.findByRole('button', { name: 'Otwórz narzędzia planu' }));
-    await screen.findByRole('region', { name: 'Plan Scenario Workbench' });
-    fireEvent.click(screen.getByRole('button', { name: 'Analyze' }));
-    expect(await screen.findByRole('region', { name: 'Plan analysis proposal' })).toHaveTextContent(
+    await screen.findByRole('region', { name: 'Warsztat scenariusza planu' });
+    fireEvent.click(screen.getByRole('button', { name: 'Uporządkuj wg zależności' }));
+    expect(await screen.findByRole('region', { name: 'Propozycja analizy planu' })).toHaveTextContent(
       'PENDING_REVIEW'
     );
     expect(writePlanScenario).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Zastosuj do szkicu' }));
     await waitFor(() => expect(reviewPlanAnalysisProposal).toHaveBeenCalled());
-    expect(screen.getByLabelText('target initiative-1')).toHaveValue('2026-09-01T00:00');
+    expect(screen.getByLabelText('Termin docelowy initiative-1')).toHaveValue('2026-09-01T00:00');
     expect(writePlanScenario).not.toHaveBeenCalled();
   });
 });
