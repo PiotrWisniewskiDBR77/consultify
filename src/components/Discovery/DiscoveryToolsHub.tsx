@@ -839,6 +839,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
   // Data State
   const [discoveries, setDiscoveries] = useState<DisplayItem[]>([]);
   const [outputs, setOutputs] = useState<OutputItem[]>([]);
+  const [toolOutputsUnavailable, setToolOutputsUnavailable] = useState(false);
   // TLS-01: the 'reports' surface is the formal-report subset of the same
   // `outputs` array 'outputs' already fetches -- no new fetch, no new
   // component, reuses the existing OutputItem list end to end.
@@ -1029,6 +1030,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         setIsLoading(true);
       }
       setLoadError(null);
+      setToolOutputsUnavailable(false);
 
       try {
         const [
@@ -1067,9 +1069,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             success: true,
             data: [] as any[],
           }),
-          // DEC-118 repair #1 (behind ff_toolsInsightsWiring — default
-          // flipped OFF -> ON on 2026-08-27, owner accept on dev-render
-          // screenshots): the canonical tool_outputs snapshot (migration
+          // DEC-118 repair #1 (behind ff_toolsInsightsWiring — default OFF
+          // again under DEC-158 after the live-read database lacked the
+          // table): the canonical tool_outputs snapshot (migration
           // 946) was never fetched here, so an approved tool result never
           // appeared in the module's own Outputs/Insights tab. The network
           // call is still skippable per-session via the localStorage kill
@@ -1077,6 +1079,10 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           isToolsInsightsWiringEnabled()
             ? resolveBootstrapRequest('tool outputs', Api.listToolOutputs(undefined), {
                 outputs: [] as any[],
+              }).catch((error) => {
+                console.warn('[DiscoveryToolsHub] tool outputs unavailable:', error);
+                setToolOutputsUnavailable(true);
+                return { outputs: [] as any[] };
               })
             : Promise.resolve({ outputs: [] as any[] }),
         ]);
@@ -1191,9 +1197,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         // reachable via ToolOutputsPanel inside that session's own workspace,
         // matching how `listOutputs` already documents that distinction.
         const toolOutputsRaw = (toolOutputsRes as any)?.outputs;
-        const toolOutputRows: OutputItem[] = (
-          Array.isArray(toolOutputsRaw) ? toolOutputsRaw : []
-        )
+        const toolOutputRows: OutputItem[] = (Array.isArray(toolOutputsRaw) ? toolOutputsRaw : [])
           .filter((o: any) => o?.isCurrent !== false)
           .slice(0, 200)
           .map((o: any) => ({
@@ -4403,6 +4407,20 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
 
     return (
       <div className="h-full overflow-hidden">
+        {activeTab === 'outputs' && toolOutputsUnavailable ? (
+          <div
+            role="status"
+            data-testid="tool-outputs-unavailable"
+            className="px-4 py-2 text-sm text-c-text-muted"
+          >
+            {t(
+              'tools.hub.outputs.unavailable',
+              isPolish
+                ? 'Wyniki narzędzi są chwilowo niedostępne. Pozostałe materiały pozostają widoczne.'
+                : 'Tool outputs are temporarily unavailable. Other materials remain visible.'
+            )}
+          </div>
+        ) : null}
         <TableWithPreviewLayout<ToolsPreviewItem>
           selectedId={previewItemId}
           selectedItem={selectedItem}
@@ -4899,7 +4917,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                                     duration: 1500,
                                   });
                                 } catch {
-                                  toast.error(t('tools.hub.toast.chatOpenError', 'Failed to open chat'));
+                                  toast.error(
+                                    t('tools.hub.toast.chatOpenError', 'Failed to open chat')
+                                  );
                                 }
                               },
                             },

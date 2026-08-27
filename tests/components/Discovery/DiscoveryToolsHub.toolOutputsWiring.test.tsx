@@ -41,7 +41,9 @@ vi.mock('@/services/api', () => ({
     getToolSession: vi.fn().mockResolvedValue(null),
     listToolSessions: (...args: unknown[]) => listToolSessionsMock(...args),
     listAssessments: vi.fn().mockResolvedValue({ items: [], total: 0, limit: 100, offset: 0 }),
-    listAssessmentsLegacy: vi.fn().mockResolvedValue({ items: [], total: 0, limit: 100, offset: 0 }),
+    listAssessmentsLegacy: vi
+      .fn()
+      .mockResolvedValue({ items: [], total: 0, limit: 100, offset: 0 }),
     getAssessmentReports: (...args: unknown[]) => getAssessmentReportsMock(...args),
     get: vi.fn().mockResolvedValue({ reports: [], success: true, data: [] }),
     getUsers: vi.fn().mockResolvedValue([]),
@@ -119,7 +121,6 @@ vi.mock('@/components/standard', async (importOriginal) => {
     },
   };
 });
-
 
 import { DiscoveryToolsHub } from '@/components/Discovery/DiscoveryToolsHub';
 
@@ -231,6 +232,38 @@ describe('DiscoveryToolsHub — DEC-118 repair #1: tool_outputs wiring behind ff
       expect(screen.getByTestId('row-out-1')).toBeInTheDocument();
     });
     expect(screen.queryByTestId('row-out-0-superseded')).not.toBeInTheDocument();
+  });
+
+  it('keeps the hub alive and shows an honest message when only tool outputs return 500', async () => {
+    window.localStorage.setItem('ff.tools_insights_wiring', '1');
+    resetToolsInsightsWiringFlagCache();
+    listToolOutputsMock.mockRejectedValue({ status: 500, message: 'tool_outputs missing' });
+
+    render(
+      <MemoryRouter initialEntries={['/discovery-tools']}>
+        <DiscoveryToolsHub initialTab="outputs" />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByTestId('standard-table-stub-tools.outputs')).toBeInTheDocument();
+    expect(await screen.findByTestId('tool-outputs-unavailable')).toHaveTextContent(
+      'Tool outputs are temporarily unavailable'
+    );
+    expect(screen.queryByText('Data Loading Error')).not.toBeInTheDocument();
+  });
+
+  it('preserves the full-hub error when tool sessions return 500', async () => {
+    listToolSessionsMock.mockRejectedValue({ status: 500, message: 'sessions unavailable' });
+
+    render(
+      <MemoryRouter initialEntries={['/discovery-tools']}>
+        <DiscoveryToolsHub initialTab="outputs" />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText('Data Loading Error')).toBeInTheDocument();
+    expect(screen.queryByTestId('standard-table-stub-tools.outputs')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('tool-outputs-unavailable')).not.toBeInTheDocument();
   });
 });
 

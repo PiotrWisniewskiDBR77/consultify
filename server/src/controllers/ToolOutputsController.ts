@@ -20,7 +20,14 @@
 import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
+import { renderDocumentSchemaToDocxBuffer } from '../services/documentStudio/documentDocxRenderer.js';
+import {
+  buildToolOutputReportSchema,
+  getToolReportCompleteness,
+} from '../services/tools/toolOutputReportSchemaService.js';
 import { correctToolOutput } from '../services/tools/toolOutputSnapshotService.js';
+import { renderToolReport } from '../sharedRuntime/toolOutputs/renderReport.js';
+import type { ToolOutput } from '../sharedRuntime/toolOutputs/types.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
@@ -197,48 +204,131 @@ export default class ToolOutputsController {
    * history here would defeat the "show current vs superseded" requirement.
    * A foreign-org `toolSessionId` yields an empty list, never another org's rows.
    */
-  static listOutputs = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-    const user = req.user;
-    if (!user) {
-      res.status(401).json({ error: 'Unauthorized' });
-      return;
-    }
-    const toolSessionId =
-      typeof req.query.toolSessionId === 'string' ? req.query.toolSessionId : undefined;
+  static listOutputs = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const user = req.user;
+      if (!user) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      const toolSessionId =
+        typeof req.query.toolSessionId === 'string' ? req.query.toolSessionId : undefined;
 
-    const rows = toolSessionId
-      ? await queryHelpers.queryAll<ToolOutputRow>(
-          `SELECT * FROM tool_outputs WHERE organization_id = ? AND tool_session_id = ?
+      const rows = toolSessionId
+        ? await queryHelpers.queryAll<ToolOutputRow>(
+            `SELECT * FROM tool_outputs WHERE organization_id = ? AND tool_session_id = ?
             ORDER BY version DESC`,
-          [user.organizationId, toolSessionId]
-        )
-      : await queryHelpers.queryAll<ToolOutputRow>(
-          `SELECT * FROM tool_outputs WHERE organization_id = ?
+            [user.organizationId, toolSessionId]
+          )
+        : await queryHelpers.queryAll<ToolOutputRow>(
+            `SELECT * FROM tool_outputs WHERE organization_id = ?
             ORDER BY created_at DESC LIMIT 200`,
-          [user.organizationId]
-        );
+            [user.organizationId]
+          );
 
-    res.json({ outputs: rows.map(toOutputSummary) });
-  });
+      res.json({ outputs: rows.map(toOutputSummary) });
+    }
+  );
 
   /** GET /api/tool-outputs/:outputId — org-scoped, full detail (items/tensions/conclusions). */
-  static getOutput = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-    const user = req.user;
-    if (!user) {
-      res.status(401).json({ error: 'Unauthorized' });
-      return;
+  static getOutput = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const user = req.user;
+      if (!user) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      const { outputId } = req.params;
+      const row = await queryHelpers.queryOne<ToolOutputRow>(
+        `SELECT * FROM tool_outputs WHERE id = ? AND organization_id = ?`,
+        [outputId, user.organizationId]
+      );
+      if (!row) {
+        res.status(404).json({ error: 'Tool output not found' });
+        return;
+      }
+      res.json({ output: toOutputDetail(row) });
     }
-    const { outputId } = req.params;
-    const row = await queryHelpers.queryOne<ToolOutputRow>(
-      `SELECT * FROM tool_outputs WHERE id = ? AND organization_id = ?`,
-      [outputId, user.organizationId]
-    );
-    if (!row) {
-      res.status(404).json({ error: 'Tool output not found' });
-      return;
+  );
+
+  /** GET /api/tool-outputs/:outputId/report.docx — deterministic Word export. */
+  static exportReportDocx = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const user = req.user;
+      if (!user) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      const { outputId } = req.params;
+      const row = await queryHelpers.queryOne<ToolOutputRow>(
+        `SELECT * FROM tool_outputs WHERE id = ? AND organization_id = ?`,
+        [outputId, user.organizationId]
+      );
+      if (!row) {
+        res.status(404).json({ error: 'Tool output not found' });
+        return;
+      }
+      if (row.status !== 'approved') {
+        res.status(409).json({ error: 'Only an approved tool output can be exported.' });
+        return;
+      }
+
+      const detail = toOutputDetail(row);
+      const output: ToolOutput = {
+        id: row.id,
+        organizationId: row.organization_id,
+        toolSessionId: row.tool_session_id,
+        toolType: row.tool_type,
+        methodPackVersion: row.method_pack_version,
+        version: row.version,
+        ...(row.supersedes_id ? { supersedesId: row.supersedes_id } : {}),
+        title: row.title,
+        status: 'approved',
+        items: detail.items as ToolOutput['items'],
+        tensions: detail.tensions as ToolOutput['tensions'],
+        conclusions: detail.conclusions as ToolOutput['conclusions'],
+        createdAt: row.created_at,
+        ...(row.created_by ? { createdBy: row.created_by } : {}),
+        ...(row.approved_by ? { approvedBy: row.approved_by } : {}),
+        ...(row.approved_at ? { approvedAt: row.approved_at } : {}),
+        contentHash: row.content_hash,
+        ...(detail.sourceRevision !== undefined ? { sourceRevision: detail.sourceRevision } : {}),
+        ...(detail.engineVersion ? { engineVersion: detail.engineVersion } : {}),
+      };
+      const document = renderToolReport([output], {
+        id: `tool-report-${row.id}-v${row.version}`,
+        organizationId: row.organization_id,
+        kind: 'report',
+        title: row.title,
+      });
+      const schema = buildToolOutputReportSchema({
+        document,
+        createdAt: row.created_at,
+        updatedAt: row.frozen_at ?? row.created_at,
+      });
+      const buffer = await renderDocumentSchemaToDocxBuffer(schema);
+      const safeTitle = row.title
+        .normalize('NFC')
+        .replace(/[^\p{L}\p{N}._-]+/gu, '_')
+        .replace(/^_+|_+$/g, '')
+        .slice(0, 80);
+      const filename = `Raport_Narzedzia_${safeTitle || row.id}_v${row.version}.docx`;
+      const asciiFilename = filename
+        .replace(/[Łł]/g, (character) => (character === 'Ł' ? 'L' : 'l'))
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^A-Za-z0-9._-]/g, '_');
+      res
+        .status(200)
+        .set({
+          'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'Content-Disposition': `attachment; filename="${asciiFilename}"; filename*=UTF-8''${encodeURIComponent(filename)}`,
+          'Content-Length': String(buffer.length),
+          'X-Tool-Report-Completeness': getToolReportCompleteness(document),
+        })
+        .send(buffer);
     }
-    res.json({ output: toOutputDetail(row) });
-  });
+  );
 
   /**
    * GET /api/tool-outputs/:outputId/reports
@@ -273,23 +363,25 @@ export default class ToolOutputsController {
   );
 
   /** GET /api/tool-outputs/reports/:reportId — org-scoped, full document payload for ToolReportView. */
-  static getReport = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-    const user = req.user;
-    if (!user) {
-      res.status(401).json({ error: 'Unauthorized' });
-      return;
+  static getReport = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const user = req.user;
+      if (!user) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      const { reportId } = req.params;
+      const row = await queryHelpers.queryOne<ToolReportRow>(
+        `SELECT * FROM tool_reports WHERE id = ? AND organization_id = ?`,
+        [reportId, user.organizationId]
+      );
+      if (!row) {
+        res.status(404).json({ error: 'Report not found' });
+        return;
+      }
+      res.json({ report: toReportDetail(row) });
     }
-    const { reportId } = req.params;
-    const row = await queryHelpers.queryOne<ToolReportRow>(
-      `SELECT * FROM tool_reports WHERE id = ? AND organization_id = ?`,
-      [reportId, user.organizationId]
-    );
-    if (!row) {
-      res.status(404).json({ error: 'Report not found' });
-      return;
-    }
-    res.json({ report: toReportDetail(row) });
-  });
+  );
 
   /**
    * GET /api/tool-outputs/:outputId/initiative-proposals
@@ -340,58 +432,66 @@ export default class ToolOutputsController {
    * revision — the edited-content case (different hash) is exercised by
    * passing a modified `conclusions` array.
    */
-  static reopenOutput = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-    const user = req.user;
-    if (!user) {
-      res.status(401).json({ error: 'Unauthorized' });
-      return;
+  static reopenOutput = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const user = req.user;
+      if (!user) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      const { outputId } = req.params;
+      const current = await queryHelpers.queryOne<ToolOutputRow>(
+        `SELECT * FROM tool_outputs WHERE id = ? AND organization_id = ?`,
+        [outputId, user.organizationId]
+      );
+      if (!current) {
+        res.status(404).json({ error: 'Tool output not found' });
+        return;
+      }
+      if (current.status !== 'approved') {
+        res.status(409).json({
+          error: `Only an approved output can be reopened (status is "${current.status}")`,
+        });
+        return;
+      }
+
+      const currentPayload = (parseJsonMaybe(current.payload_json) ?? {}) as {
+        conclusions?: unknown[];
+      };
+      const bodyConclusions = Array.isArray(
+        (req.body as { conclusions?: unknown[] } | undefined)?.conclusions
+      )
+        ? (req.body as { conclusions: unknown[] }).conclusions
+        : undefined;
+      const nextConclusions = (bodyConclusions ?? currentPayload.conclusions ?? []) as never[];
+
+      const now = new Date().toISOString();
+      const { superseded, revision } = await correctToolOutput({
+        approvedOutputId: outputId,
+        organizationId: user.organizationId,
+        actor: { id: user.id },
+        now,
+        nextConclusions,
+      });
+
+      await auditLog(user.organizationId, user.id, 'tool_output_reopened', outputId, {
+        supersededId: superseded.id,
+        revisionId: revision.id,
+        revisionVersion: revision.version,
+      });
+
+      res.json({
+        superseded: { id: superseded.id, status: superseded.status },
+        revision: {
+          id: revision.id,
+          version: revision.version,
+          supersedesId: revision.supersedesId,
+          status: revision.status,
+          contentHash: revision.contentHash,
+          approvedBy: revision.approvedBy,
+          approvedAt: revision.approvedAt,
+        },
+      });
     }
-    const { outputId } = req.params;
-    const current = await queryHelpers.queryOne<ToolOutputRow>(
-      `SELECT * FROM tool_outputs WHERE id = ? AND organization_id = ?`,
-      [outputId, user.organizationId]
-    );
-    if (!current) {
-      res.status(404).json({ error: 'Tool output not found' });
-      return;
-    }
-    if (current.status !== 'approved') {
-      res.status(409).json({ error: `Only an approved output can be reopened (status is "${current.status}")` });
-      return;
-    }
-
-    const currentPayload = (parseJsonMaybe(current.payload_json) ?? {}) as { conclusions?: unknown[] };
-    const bodyConclusions = Array.isArray((req.body as { conclusions?: unknown[] } | undefined)?.conclusions)
-      ? (req.body as { conclusions: unknown[] }).conclusions
-      : undefined;
-    const nextConclusions = (bodyConclusions ?? currentPayload.conclusions ?? []) as never[];
-
-    const now = new Date().toISOString();
-    const { superseded, revision } = await correctToolOutput({
-      approvedOutputId: outputId,
-      organizationId: user.organizationId,
-      actor: { id: user.id },
-      now,
-      nextConclusions,
-    });
-
-    await auditLog(user.organizationId, user.id, 'tool_output_reopened', outputId, {
-      supersededId: superseded.id,
-      revisionId: revision.id,
-      revisionVersion: revision.version,
-    });
-
-    res.json({
-      superseded: { id: superseded.id, status: superseded.status },
-      revision: {
-        id: revision.id,
-        version: revision.version,
-        supersedesId: revision.supersedesId,
-        status: revision.status,
-        contentHash: revision.contentHash,
-        approvedBy: revision.approvedBy,
-        approvedAt: revision.approvedAt,
-      },
-    });
-  });
+  );
 }

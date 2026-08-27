@@ -116,12 +116,9 @@ vi.mock('../../../server/src/services/KnownToolsService.js', () => ({
     listKnownTools: vi.fn().mockResolvedValue({ items: [], total: 0 }),
   },
 }));
-vi.mock(
-  '../../../server/src/services/organizationContext/OrganizationContextService.js',
-  () => ({
-    default: { recordToolSession: vi.fn().mockResolvedValue(undefined) },
-  })
-);
+vi.mock('../../../server/src/services/organizationContext/OrganizationContextService.js', () => ({
+  default: { recordToolSession: vi.fn().mockResolvedValue(undefined) },
+}));
 vi.mock('../../../server/src/services/permissionService.js', () => ({
   hasPermission: vi.fn().mockResolvedValue(true),
 }));
@@ -372,41 +369,42 @@ describe('H3 tool session round-trip (create → save → resume → output)', (
   });
 
   it('locks content edits after approval', async () => {
-    const res = await request(app).put(`/api/tools/${sessionId}`).send({
-      answers: { tampered: true },
-    });
+    const res = await request(app)
+      .put(`/api/tools/${sessionId}`)
+      .send({
+        answers: { tampered: true },
+      });
     expect(res.status).toBe(409);
   });
 
-  it('promotes the approved session to an output and records traceability', async () => {
+  it('refuses promotion when the harness cannot persist a canonical tool output', async () => {
     const res = await request(app).post(`/api/tools/${sessionId}/promote`).send({
       outputType: 'idea',
       title: 'SWOT output — EU expansion focus',
       description: 'Prioritize EU expansion while modernizing order-to-cash.',
     });
-    expect(res.status, JSON.stringify(res.body)).toBe(200);
-    expect(res.body.id).toBeTruthy();
-    expect(res.body.sourceSessionId).toBe(sessionId);
-    expect(res.body.sourceToolType).toBe('dynamic-swot');
+    expect(res.status, JSON.stringify(res.body)).toBe(503);
+    expect(res.body.code).toBe('TOOL_OUTPUT_PERSISTENCE_UNAVAILABLE');
 
     const link = await sqlGet<{ initiative_id: string }>(
       `SELECT initiative_id FROM tool_initiative_links WHERE tool_session_id = ? AND batch_id = ?`,
       [sessionId, 'promote-idea']
     );
-    expect(link?.initiative_id).toBe(res.body.id);
+    expect(link).toBeNull();
   });
 
-  it('re-promotion is idempotent (deduplicated, same output id)', async () => {
-    const first = await sqlGet<{ initiative_id: string }>(
-      `SELECT initiative_id FROM tool_initiative_links WHERE tool_session_id = ? AND batch_id = ?`,
-      [sessionId, 'promote-idea']
-    );
+  it('repeated promotion without persistence remains a refusal with zero ledger rows', async () => {
     const res = await request(app).post(`/api/tools/${sessionId}/promote`).send({
       outputType: 'idea',
       title: 'SWOT output — EU expansion focus',
     });
-    expect(res.status, JSON.stringify(res.body)).toBe(200);
-    expect(res.body.deduplicated).toBe(true);
-    expect(res.body.id).toBe(first?.initiative_id);
+    expect(res.status, JSON.stringify(res.body)).toBe(503);
+    expect(res.body.code).toBe('TOOL_OUTPUT_PERSISTENCE_UNAVAILABLE');
+
+    const links = await sqlAll(
+      `SELECT initiative_id FROM tool_initiative_links WHERE tool_session_id = ?`,
+      [sessionId]
+    );
+    expect(links).toHaveLength(0);
   });
 });
