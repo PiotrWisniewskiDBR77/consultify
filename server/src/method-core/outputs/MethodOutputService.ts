@@ -207,9 +207,9 @@ interface MethodFindingRow {
   output_id: string;
   unit_id: string;
   unit_name: string;
-  current_level: number | null;
-  target_level: number | null;
-  gap: number | null;
+  current_level: number | string | null;
+  target_level: number | string | null;
+  gap: number | string | null;
   supporting_evidence_json: unknown;
   contradicting_evidence_json: unknown;
   business_meaning: string;
@@ -321,15 +321,21 @@ function buildHashableOutputContent(input: FreezeOutputInput, outputVersion: num
   };
 }
 
+function numericOrNull(value: number | string | null): number | null {
+  if (value === null || value === '') return null;
+  const numeric = Number(value);
+  return Number.isNaN(numeric) ? null : numeric;
+}
+
 function toFindingRecord(row: MethodFindingRow): MethodFindingRecord {
   return {
     id: row.id,
     outputId: row.output_id,
     unitId: row.unit_id,
     unitName: row.unit_name,
-    currentLevel: row.current_level,
-    targetLevel: row.target_level,
-    gap: row.gap,
+    currentLevel: numericOrNull(row.current_level),
+    targetLevel: numericOrNull(row.target_level),
+    gap: numericOrNull(row.gap),
     supportingEvidence: parseJson(row.supporting_evidence_json, []),
     contradictingEvidence: parseJson(row.contradicting_evidence_json, []),
     businessMeaning: row.business_meaning,
