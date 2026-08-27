@@ -17,8 +17,9 @@ const AREA_MICROSTRUCTURE = [
 
 // W1 (nadzorca 2026-08-28): the cover-metadata table has five fields the
 // database can actually answer for — but none of them live on
-// method_sessions itself, so `build()` reaches into three more tables the
-// contract never touched before. Every extraction here is best-effort and
+// method_sessions itself, so `build()` reaches into four more tables the
+// contract never touched before (organization_profiles, organizations,
+// projects, users, plus the method_events answer span). Every extraction here is best-effort and
 // null-safe: a field with no real source stays null and the schema/renderer
 // layer already renders that as an honest "Do uzupełnienia" placeholder
 // (documentDocxRenderer.ts renderDrdCoverBlock). Nothing here fabricates a
@@ -26,13 +27,64 @@ const AREA_MICROSTRUCTURE = [
 // session data) actually wrote.
 const EMPLOYMENT_PATTERN = /zatrudnien\w*\s*:?\s*(?:ok\.?\s*)?(\d[\d\s]*\d|\d)/iu;
 
+// FIX-4 (nadzorca 2026-08-28): `${count} osób` is wrong Polish for 2–4
+// ("2 osób"). The cover is a CLIENT-facing document, so the wrong form is
+// visible to the reader at a glance. Polish numeral agreement for "osoba":
+//   1                       -> osoba   (nominative singular)
+//   2–4, 22–24, 102–104 ... -> osoby   (nominative plural)
+//   0, 5–21, 25–31, 111 ... -> osób    (genitive plural)
+// The teens (12–14) take the genitive even though they end in 2–4, hence
+// the `mod100` guard.
+export function formatHeadcountPL(count: number): string {
+  const abs = Math.abs(Math.trunc(count));
+  if (abs === 1) return '1 osoba';
+  const mod10 = abs % 10;
+  const mod100 = abs % 100;
+  const plural = mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14) ? 'osoby' : 'osób';
+  return `${abs} ${plural}`;
+}
+
+// FIX-3 (nadzorca 2026-08-28): `employment` used to be scraped out of
+// `projects.description` with EMPLOYMENT_PATTERN. The only producer of text
+// matching that pattern anywhere in the repository is
+// `scripts/seed-demo-drd-metalpol.ts` — i.e. for every REAL client the
+// field would render empty. The schema already carries the real column:
+// `organization_profiles.employee_count INTEGER`
+// (server/migrations/20260411_p30d_organization_type_and_new_fields.sql,
+// server/migrations/727_beta_missing_tables.sql), written by
+// OrganizationContextService. Read that first; the regex stays only as a
+// second-shot fallback so the day-36 demo seed keeps working.
 function extractEmploymentFromDescription(description: string | null): string | null {
   if (!description) return null;
   const match = EMPLOYMENT_PATTERN.exec(description);
   if (!match) return null;
   const count = match[1].replace(/\s+/g, '');
   if (!/^\d+$/.test(count)) return null;
-  return `${count} osób`;
+  const parsed = Number.parseInt(count, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) return null;
+  return formatHeadcountPL(parsed);
+}
+
+export function formatEmployeeCount(value: unknown): string | null {
+  const parsed = typeof value === 'number' ? value : Number.parseInt(String(value ?? ''), 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) return null;
+  return formatHeadcountPL(parsed);
+}
+
+// FIX-3: `businessProfile` used to read the legacy `organizations.industry`
+// column, which carries `DEFAULT 'General'`
+// (server/migrations/000_z_core_baseline.sql:34). For any organization that
+// never set an industry, the CLIENT-facing cover printed the literal word
+// "General" as its business profile. `'General'` is therefore treated as
+// absence of data, not as a value, and the real source
+// (`organization_profiles.industry`) is read first.
+const LEGACY_INDUSTRY_DEFAULT = 'general';
+
+export function normalizeIndustry(value: string | null | undefined): string | null {
+  const trimmed = (value ?? '').trim();
+  if (!trimmed) return null;
+  if (trimmed.toLowerCase() === LEGACY_INDUSTRY_DEFAULT) return null;
+  return trimmed;
 }
 
 function isSameCalendarDay(left: Date, right: Date): boolean {
@@ -93,6 +145,16 @@ export class AssessmentReportContractService {
       { fallback: false }
     );
 
+    // Deliberately left on the default `fallback: true`: a deployment whose
+    // schema predates `organization_profiles` must degrade to the legacy
+    // sources, never crash the report route.
+    const organizationProfile = await DbPromise.get<{
+      industry: string | null;
+      employee_count: number | null;
+    }>(`SELECT industry, employee_count FROM organization_profiles WHERE organization_id = ?`, [
+      organizationId,
+    ]);
+
     const ownerUser = session.owner_user_id
       ? await DbPromise.get<{
           first_name: string | null;
@@ -108,7 +170,15 @@ export class AssessmentReportContractService {
       .filter((part): part is string => Boolean(part && part.trim()))
       .join(' ')
       .trim();
-    const assessor = assessorName || ownerUser?.email || null;
+    // FIX-5 (nadzorca 2026-08-28): the previous fallback chain ended in
+    // `ownerUser?.email`, so a user row without first/last name printed a raw
+    // address ("anna.kowalczyk@demo-seed.invalid") in the "Oceniający" row of
+    // a CLIENT-facing cover. An internal e-mail on a client deliverable is
+    // worse than an honest gap — it looks unfinished AND leaks an internal
+    // identifier — so the e-mail fallback is removed. A missing name now
+    // renders the same explicit "Do uzupełnienia…" placeholder every other
+    // unsourced cover field uses (documentDocxRenderer.renderDrdCoverBlock).
+    const assessor = assessorName || null;
 
     const answerSpan = await DbPromise.get<{ started_at: string | null; ended_at: string | null }>(
       `SELECT MIN(occurred_at) AS started_at, MAX(occurred_at) AS ended_at
@@ -192,8 +262,13 @@ export class AssessmentReportContractService {
       // W1 cover-metadata fields — every one is null-safe; no field here is
       // ever fabricated. See the comment block above the helper functions
       // for exactly which table each one reads.
-      businessProfile: organization?.industry ?? null,
-      employment: extractEmploymentFromDescription(project?.description ?? null),
+      businessProfile:
+        normalizeIndustry(organizationProfile?.industry) ??
+        normalizeIndustry(organization?.industry) ??
+        null,
+      employment:
+        formatEmployeeCount(organizationProfile?.employee_count) ??
+        extractEmploymentFromDescription(project?.description ?? null),
       assessmentPeriod,
       assessor,
       // `clientSponsor` has no home anywhere in the schema today — neither
