@@ -371,6 +371,21 @@ Kontrola generowania rodziny B: wyszukanie `.routes'` znalazło tylko niezwiąza
 
 Werdykt §C.1: `ZROBIONE_WG_DoD`; usuwanie następuje dopiero w osobnym §C.2.
 
+## §C.2 — wykonanie bezspornych werdyktów `USUŃ`
+
+Usunięto dokładnie 62 pliki oznaczone `USUŃ` w §C.1; nie usunięto żadnego pliku spoza tego zbioru. Pełna lista 1:1 pozostaje w `SETTINGS_DAY55_C1_ROUTE_WRAPPERS_EVIDENCE.json`, a jej grupy są następujące:
+
+- root (`17`): `notificationSettings.routes.ts`, `preferences.routes.ts`, `user-appearance.routes.ts`, `user-availability.routes.ts`, `user-contact.routes.ts`, `user-data-controls.routes.ts`, `user-keyboard-shortcuts.routes.ts`, `user-privacy-extended.routes.ts`, `user-professional-profile.routes.ts`, `user-profile-completeness.routes.ts`, `user-profile-extended.routes.ts`, `user-security-advanced.routes.ts`, `user-settings-history.routes.ts`, `user-settings-templates.routes.ts`, `userGoals.routes.ts`, `userIntegrations.routes.ts`, `userOrgs.routes.ts`;
+- `routes/ai` (`23`): `ai-ab-testing.routes`, `ai-analytics.routes`, `ai-budgets.routes`, `ai-development.routes`, `ai-drafts.routes`, `ai-feedback.routes`, `ai-infrastructure.routes`, `ai-memory.routes`, `ai-nudges.routes`, `ai-operations.routes`, `ai-preferences-extended.routes`, `ai-prompts.routes`, `ai-security.routes`, `ai-settings.routes`, `ai-training.routes`, `aiActions.routes`, `aiAnalytics.routes`, `aiAsync.routes`, `aiCoach.routes`, `aiExplain.routes`, `aiLearning.routes`, `aiMemory.routes`, `aiPlaybooks.routes`;
+- `routes/notifications` (`3`): `notification-rules.routes`, `notificationSettings.routes`, `notifications.routes`;
+- `routes/user` (`19`): `loginHistory.routes`, `preferences.routes`, `sessions.routes`, `user-appearance.routes`, `user-availability.routes`, `user-contact.routes`, `user-data-controls.routes`, `user-keyboard-shortcuts.routes`, `user-privacy-extended.routes`, `user-professional-profile.routes`, `user-profile-completeness.routes`, `user-profile-extended.routes`, `user-security-advanced.routes`, `user-settings-history.routes`, `user-settings-templates.routes`, `userGoals.routes`, `userIntegrations.routes`, `userOrgs.routes`, `users.routes`.
+
+Smoke po tej partii: `esbuild server/src/Gateway.ts` → `Gateway kompiluje sie`; komenda Vitest z instrukcji uruchomiona dosłownie z `server/vitest.config.ts` nie znalazła pliku z powodu `root=server` i nie jest zaliczona jako PASS. Poprawne uruchomienie z rootowym `vitest.config.ts`, tym samym pełnym env i `--retry=0` dało `49 PASS / 0 FAIL / 0 SKIP`.
+
+Porównanie zasięgu po pełnych nazwach testów: przed `49`, po `49`; nie zniknął żaden przypadek. Jedna nazwa została celowo zaostrzona z „ignores body-supplied actor-identity spoof fields” na „rejects body-supplied actor-identity spoof fields before the insert”, ponieważ wspólna ściana B.2 odrzuca teraz obcy `userId` przed zapisem. Powtórny real-PG kontrakt B.2 po usunięciach: `4 PASS / 0 FAIL / 1 SKIP`; wszystkie 80 licencjonowanych zapisów nadal odrzucają odwołanego ADMINA, a wcześniejsza luka `DELETE /api/settings/integrations/:provider` została zamknięta. Dwa wcześniejsze przebiegi z `ECONNRESET`/błędem parsera HTTP są zachowane jako nieważne próby infrastrukturalne, nie jako dowód produktu.
+
+Werdykt §C.2: `ZROBIONE_WG_DoD`.
+
 ## Pomiar zasięgu testów
 
 - (a) z pełnym env: serwer 79 testów (`77 PASS`, `2 SKIPPED`, 0 asercji FAIL; pakiety PG nie wykonały przypadków), klient 204 (`203 PASS`, `1 FAIL`).

@@ -51,11 +51,17 @@ const readCookie = (header: string | undefined, name: string): string | undefine
     .join('=');
 
 const enforceSettingsBoundary = (req: AuthRequest, res: Response, next: NextFunction) => {
-  if (req.method === 'GET' && req.path === '/integrations/oauth/callback') return next();
-  return verifyToken(req, res, () =>
-    requireActiveMembership(req, res, () => {
-      const actorUserId = String(req.user?.id || '');
-      const actorOrganizationId = String(req.organizationId || req.user?.organizationId || '');
+  if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) return next();
+  return verifyToken(req, res, () => {
+    const actorUserId = String(req.user?.id || '');
+    const actorOrganizationId = String(req.organizationId || req.user?.organizationId || '');
+    if (!actorUserId || !actorOrganizationId) {
+      return res.status(403).json({
+        error: 'You no longer have access to this organization',
+        code: 'ORG_MEMBERSHIP_REVOKED',
+      });
+    }
+    const validateClaims = () => {
       const organizationClaims = [
         req.headers['x-org-context'],
         req.query?.orgId,
@@ -79,8 +85,16 @@ const enforceSettingsBoundary = (req: AuthRequest, res: Response, next: NextFunc
         return res.status(403).json({ success: false, code: 'SETTINGS_SELF_SCOPE_FORBIDDEN' });
       }
       return next();
-    })
-  );
+    };
+    const alreadyStrict = req.method === 'POST' && req.path === '/notifications';
+    const membershipAlreadyVerified =
+      (req as AuthRequest & { settingsActiveMembershipVerified?: boolean })
+        .settingsActiveMembershipVerified === true;
+    if (alreadyStrict) return next();
+    return membershipAlreadyVerified
+      ? validateClaims()
+      : requireActiveMembership(req, res, validateClaims);
+  });
 };
 
 router.use(enforceSettingsBoundary);
