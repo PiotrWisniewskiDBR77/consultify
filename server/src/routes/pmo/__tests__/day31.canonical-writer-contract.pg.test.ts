@@ -644,25 +644,35 @@ describe.skipIf(!REAL_PG)('Day 31 canonical writer mounted contract', () => {
         'execution_milestone',
         `milestone-achieved-${tag}`,
         2,
-        { executionCaseId: caseId, status: 'ACHIEVED' },
+        { executionCaseId: caseId, status: 'ACHIEVED', targetAt: '2026-08-26T12:00:00.000Z' },
       ],
       [
         'execution_milestone',
         `milestone-open-${tag}`,
         1,
-        { executionCaseId: caseId, status: 'OPEN' },
+        { executionCaseId: caseId, status: 'OPEN', targetAt: '2026-08-27T12:00:00.000Z' },
       ],
       [
         'intervention_case',
         `intervention-effective-${tag}`,
         5,
-        { initiativeId, projectId, verification: { outcome: 'EFFECTIVE' } },
+        {
+          initiativeId,
+          projectId,
+          verifyBy: '2026-08-26T12:00:00.000Z',
+          verification: { outcome: 'EFFECTIVE' },
+        },
       ],
       [
         'intervention_case',
         `intervention-partial-${tag}`,
         4,
-        { initiativeId, projectId, verification: { outcome: 'PARTIAL' } },
+        {
+          initiativeId,
+          projectId,
+          verifyBy: '2026-08-27T12:00:00.000Z',
+          verification: { outcome: 'PARTIAL' },
+        },
       ],
     ] as const;
     for (const [aggregateType, aggregateId, version, payload] of rows) {
