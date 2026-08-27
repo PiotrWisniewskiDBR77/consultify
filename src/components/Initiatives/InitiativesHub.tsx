@@ -117,6 +117,7 @@ import {
 } from './initiativeCreateFlow';
 import { InitiativeDocumentView } from './InitiativeDocumentView';
 import { initiativeLoadErrorCode, isInitiativesNetworkError } from './initiativeLoadError';
+import { PortfolioHealthView } from './PortfolioHealthView';
 import {
   InitiativePreviewV3Body,
   InitiativePreviewV3Footer,
@@ -258,7 +259,13 @@ interface InitiativesHubProps {
 
 const NEW_INITIATIVE_EMPTY_CTA_TESTID = 'initiatives-new-modal-empty-cta';
 
-const CANONICAL_INITIATIVES_TABS = new Set<ModuleTab>(['list', 'plan', 'capacity']);
+const PORTFOLIO_HEALTH_ENABLED = import.meta.env.VITE_WAVE3_INITIATIVES_PORTFOLIO_HEALTH === 'true';
+const CANONICAL_INITIATIVES_TABS = new Set<ModuleTab>([
+  'list',
+  'plan',
+  'capacity',
+  ...(PORTFOLIO_HEALTH_ENABLED ? (['portfolioHealth'] as ModuleTab[]) : []),
+]);
 
 export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'list' }) => {
   const { t, i18n } = useTranslation();
@@ -659,7 +666,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
   // Available view modes — plan and capacity are dedicated analysis workspaces.
   const availableViewModes: ViewMode[] =
-    activeTab === 'plan' || activeTab === 'capacity' ? [] : ['table', 'kanban', 'timeline', 'grid'];
+    activeTab === 'plan' || activeTab === 'capacity' || activeTab === 'portfolioHealth'
+      ? []
+      : ['table', 'kanban', 'timeline', 'grid'];
 
   // Owner-approved IA: lifecycle/statuses belong to the initiative registry.
   // Candidate and portfolio semantics remain preserved in the data model, but
@@ -681,6 +690,15 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         label: 'Obciążenie',
         icon: <Users size={16} />,
       },
+      ...(PORTFOLIO_HEALTH_ENABLED
+        ? [
+            {
+              id: 'portfolioHealth' as ModuleTab,
+              label: t('initiatives.tabs.portfolioHealth', 'Zdrowie portfela'),
+              icon: <Activity size={16} />,
+            },
+          ]
+        : []),
     ],
     [t]
   );
@@ -1570,6 +1588,19 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           onCountsChange={handleCapacityMenu3Counts}
         />
       );
+    if (activeTab === 'portfolioHealth') {
+      return (
+        <PortfolioHealthView
+          onOpenInitiative={(id, title) => {
+            const initiative = allInitiatives.find((item) => item.id === id);
+            handleOpenInitiativeDocument(
+              initiative ??
+                ({ id, name: title, status: InitiativeStatus.DRAFT } as PortfolioInitiative)
+            );
+          }}
+        />
+      );
+    }
 
     // If there's an active document, show the appropriate view based on type
     if (activeDocumentId) {
@@ -2331,7 +2362,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         }
         filterControls={rightControls}
         commandRowContent={
-          activeTab === 'plan' || activeTab === 'capacity'
+          activeTab === 'plan' || activeTab === 'capacity' || activeTab === 'portfolioHealth'
             ? undefined
             : isBulkMode
               ? bulkBarContent
@@ -2510,7 +2541,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                     </span>
                     {' — '}
                     {newLevel === 'quick_win' &&
-                      t('initiatives.form.levelDescQuickWin', 'Minimal governance. Can be self-approved.')}
+                      t(
+                        'initiatives.form.levelDescQuickWin',
+                        'Minimal governance. Can be self-approved.'
+                      )}
                     {newLevel === 'standard' &&
                       t(
                         'initiatives.form.levelDescStandard',

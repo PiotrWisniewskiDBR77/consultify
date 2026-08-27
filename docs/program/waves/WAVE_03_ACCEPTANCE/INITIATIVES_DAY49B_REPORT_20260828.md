@@ -84,3 +84,48 @@ Na HEAD po A.3 zmierzono `130` eksportowanych funkcji w `runtimeApi.ts` i `25` f
 Wszystkie siedem funkcji rodziny otrzymuje wspólny werdykt `PODŁĄCZ_PO_NAPRAWIE`. To **inna choroba niż C.1**: C.1 ma kompletny, zachowany `PortfolioHealthView` odłączony jednym `Set`-em, natomiast dla scenariuszy portfela nie znaleziono istniejącej powierzchni listy/szczegółu/historii/diff/decyzji, którą można ponownie zamontować.
 
 `DO DECYZJI WŁAŚCICIELA`: `0/25`; limit jednej trzeciej nie został przekroczony. W B.2 nie wolno podłączać wskazanych ekranów My Work/Execution, ponieważ są poza zakresem i poza licencją plikową tego dyżuru; werdykt `PODŁĄCZ` pozostaje kontraktowym wpisem dla właściwego dyżuru frontowego.
+
+## C.1 — Zdrowie portfela
+
+### Pomiar trasy przed decyzją
+
+Nowy test realdb używa pełnego `ApiGateway`, JWT, członkostwa organizacji i PostgreSQL pod `127.0.0.1:5817/cx_day49`; `MOCK_DB=false`, `RUN_DB_TESTS=1`, `retry=0`, `SKIPPED=0`.
+
+| przypadek | HTTP | wynik | dowód |
+| --- | ---: | --- | --- |
+| organizacja z inicjatywą | 200 | `total=1`, `byStatus={APPROVED:1}` | `day49.portfolio-health.realdb.test.ts` |
+| organizacja pusta | 200 | `total=0`, `readyToLaunch=[]` | ten sam świeży odczyt przez Gateway |
+| negatyw tenanta | 200 | własny `total=1`; brak obu obcych ID mimo dwóch obcych inicjatyw | asercja na pełnym body |
+
+Wynik: `3/3 PASS`, `SKIPPED=0`. Trasa realnie odpowiada danymi i zachowuje izolację organizacji.
+
+### Rozstrzygnięcie i wykonanie
+
+Wybrano wariant **(A) Podłącz z powrotem**. Dodano jeden wpis Menu 1 i jeden montaż zachowanego `PortfolioHealthView` w `InitiativesHub`, za ścisłą flagą `VITE_WAVE3_INITIATIVES_PORTFOLIO_HEALTH === 'true'`, więc domyślnie ekran pozostaje OFF. Odrzucono (B), ponieważ test realdb potwierdził, że istniejący widok konsumuje żywy kształt odpowiedzi bez przebudowy. Odrzucono (C), ponieważ działająca trasa i zachowany widok oznaczają funkcję zbudowaną, a etykieta „Planowane” byłaby nieprawdą.
+
+Dowody:
+
+- test okablowania flagi/montażu: `2/2 PASS`;
+- istniejące testy `PortfolioHealthView`: `3/3 PASS` (odziedziczone ostrzeżenia `act`, bez fail);
+- razem targetowane frontowe: `5/5 PASS`;
+- esbuild `InitiativesHub.tsx`: PASS;
+- `scripts/check-list-canon.sh`: pełny skan `394`, baseline `394`, zero nowych naruszeń;
+- zastane testy source-anchor R11/T30: `10/10 FAIL` zarówno dlatego, że oczekują nieistniejących na markerze ekranów Observability/Candidates/Goals, jak i starego montażu `PortfolioHealthTable`; nie są zielonym dowodem C.1 i nie były „naprawiane” poza licencją.
+
+Zrzuty realnego `InitiativesHub` i realnego `PortfolioHealthView` wykonano w istniejącym ekranie harnessu na porcie `3357`; odpowiedź samego GET przechwycono na warstwie transportu przeglądarki, bez zmiany kodu harnessu i bez spreparowanego DOM:
+
+1. `/private/tmp/consultify-initiatives-day49b-screenshots/c1-portfolio-health-light.png`
+2. `/private/tmp/consultify-initiatives-day49b-screenshots/c1-portfolio-health-dark.png`
+3. `/private/tmp/consultify-initiatives-day49b-screenshots/c1-portfolio-health-empty.png`
+
+Wariant pusty niesie `total=0`, puste `readyToLaunch` i zerowe rozkłady — to ten sam uczciwy kształt, który test realdb odczytał dla świeżej organizacji.
+
+### Pięć kształtów fałszywego „gotowe”
+
+| bramka | TAK/NIE | dowód |
+| --- | --- | --- |
+| realne dane backendu | TAK | `3/3` przez realny Gateway i PG |
+| reachability po odczycie | TAK | każde sprawdzenie jest osobnym GET `/api/initiatives/portfolio-health` |
+| uczciwy brak danych | TAK | `total=0`, `readyToLaunch=[]` w realdb i screenshot pusty |
+| izolacja tenanta | TAK | dwie obce inicjatywy nie występują w body aktora |
+| UI / akceptacja / release | UI TAK; akceptacja i release NIE | trzy obejrzane zrzuty; flaga pozostaje OFF, brak akceptacji właściciela i brak deployu |
