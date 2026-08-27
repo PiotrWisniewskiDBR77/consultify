@@ -251,15 +251,82 @@ Wspólny przebieg jest destrukcyjny dla jednej bazy: zastane testy kasowały
 tabele i kolidowały na `CREATE TABLE`; po pomiarze kontener został usunięty z
 wolumenem, odtworzony i ponownie zmigrowany przed testami Day 42.
 
+## Pomiar HEAD Z24
+
+Pełny zakres na HEAD: **565 PASS / 18 FAIL / 92 SKIPPED** w 80 plikach
+(`56 passed / 22 failed / 2 skipped`). Zakres uruchomiono katalogami, ponieważ
+zacytowane globy przekazane literalnie do Vitest wybrały tylko 5 plików; wynik
+tego pierwszego, niepełnego przebiegu 30/30 nie jest używany jako Z24.
+
+- Czerwone ZASTANE: marker miał 15 FAIL; dotyczą zastanych testów Partner i
+  `legacyCutover` operujących współbieżnie na jednej bazie, m.in. oczekiwań
+  503/404 przy faktycznym 403, brakujących tabel po destrukcyjnych sąsiadach i
+  wymagań prefiksu bazy.
+- Czerwone WPROWADZONE: arytmetyczna różnica wynosi +3 FAIL, ale żaden nie jest
+  w dotkniętych testach Day 42. Oba nowe pliki przeszły samodzielnie: 12/12 i
+  8/8. Nie przypisuję tych trzech do SHA bez dowodu; pełny pakiet jest
+  niehermetyczny i zmienia wspólny schemat podczas przebiegu.
+- 92 SKIPPED: jawne bramki poszczególnych zastanych harnessów wymagają innych
+  nazw/prefiksów disposable DB lub własnych zmiennych `REAL_PG`; nie były
+  raportowane jako PASS.
+- Nie osłabiono ani nie usunięto żadnego zastanego testu/`describe`. Zmieniono
+  wyłącznie nazwy dwóch istniejących przypadków Day 42 przed ich pierwszym
+  commitem; asercje pozostały identyczne.
+
+Deklaracja: **ZASIĘG PEŁNY** według listy §0.4a, z 92 jawnymi pominięciami.
+**NIE przepisałem liczb dnia 12 ani z MODULE_ACCEPTANCE — zmierzyłem sam.**
+
 ## Pozycje — stan
 
-| Pozycja | Status          | Commit                  | Dowód                                       |
-| ------- | --------------- | ----------------------- | ------------------------------------------- |
-| D.1     | ZROBIONE_WG_DoD | `8b78c335cc`            | realny Gateway + realny PG, 6/6             |
-| D.7     | ZROBIONE_WG_DoD | commit bieżącej pozycji | kotwiczony grep + lokalizacja realnej trasy |
+| Pozycja | Status          | Commit         | Dowód                                              |
+| ------- | --------------- | -------------- | -------------------------------------------------- |
+| D.1     | ZROBIONE_WG_DoD | `8b78c335cc`   | realny Gateway/PG, 6/6                             |
+| D.2     | ZROBIONE_WG_DoD | `9f8f49aebe`   | wariant 1, łańcuchy connection/read/write/readback |
+| D.3     | ZROBIONE_WG_DoD | `5104d6c328`   | komentarze + 12/12                                 |
+| D.4     | ZROBIONE_WG_DoD | `968e810ebe`   | 35 wierszy, suma 35                                |
+| D.5     | STOP            | —              | konflikt dozwolonego zakresu i guard-first         |
+| D.6     | ZROBIONE_WG_DoD | `0d4cba8c7b`   | 8/8, A/B + readback                                |
+| D.7     | ZROBIONE_WG_DoD | `1a267cd0ee`   | teza obalona                                       |
+| D.8     | ZROBIONE_WG_DoD | `80a5c3e688`   | trzy kierunki, 35 tras                             |
+| D.9     | ZROBIONE_WG_DoD | `e02f3ec481`   | pięć list kontraktu                                |
+| R.1     | ZROBIONE_WG_DoD | `3d05a5ca1e`   | jeden blok, gate bez zmian                         |
+| R.2     | ZROBIONE_WG_DoD | commit raportu | raport końcowy                                     |
 
-## Twierdzenia jeszcze niezweryfikowane
+Licznik: **10 ZROBIONE_WG_DoD / 0 CZĘŚCIOWO / 1 STOP / 0 BRAK_API / 0
+BRAK_POTRZEBY / 0 NIE_ZACZĘTE**.
 
-Na tym etapie nie zakończono pełnych łańcuchów D.2, macierzy finansowej D.6,
-inwentarza 35 tras, inwentarza konsumentów ani końcowego pomiaru Z24. Nie są
-raportowane jako ukończone.
+## Dowód braku atrapy i nietknięcia ekonomii
+
+- Cztery `503 FEATURE_NOT_AVAILABLE`, trzy `410
+PARTNER_ECONOMICS_POLICY_DISABLED`, odmowy auth i stany degraded zachowano.
+- Diff `partnerEconomicsPolicy.ts`, `partnerCommissionService.ts` i
+  `partnerPayoutSettingsService.ts` względem markera: pusty.
+- `src/` diff: 0 linii. Nie ukrywano ani nie reaktywowano kontrolek, ponieważ
+  `src/**` było poza zakresem zapisu.
+
+## Bezpieczniki i zakres
+
+- `git stash list` → puste; `git status --short` → puste przed aktualizacją
+  raportu.
+- `git diff ... -- src/ | wc -l` → `0`.
+- diff `.env.example server/src/middleware/` → `0`.
+- kontrola wiązania `grep -c 23652ec80a ...INSTRUKCJA.md` → `13`.
+- Dotknięte pliki: dwa komentarzowe pliki routera, dwa nowe testy Partner,
+  raport i jeden blok `MODULE_ACCEPTANCE.md`; dodatkowo branch bazowy niesie
+  trzy wiążące commity samej instrukcji.
+- Nie było push, stash, Railway, demo, stagingu ani produkcji.
+
+## Sprzątanie
+
+`docker rm -fv cx-day42-pg` → `cx-day42-pg`; następny `docker ps -a` dla tej
+nazwy zwrócił pusty wynik. Kontener i anonimowy wolumen zostały usunięte.
+
+## Twierdzenia niezweryfikowane / gotowość
+
+- Brak dowodu przeglądarkowego i akceptu właściciela; gate modułu pozostaje
+  `TECHNICAL_BROWSER_PASS / OWNER_PENDING / ECONOMICS_OFF`.
+- Nie zweryfikowano konfiguracji żadnego środowiska wdrożeniowego; zdanie dla
+  dnia 38 jest wyłącznie kontraktem, bez kontaktu z infrastrukturą.
+- D.5 pozostaje STOP. Portal jest osiągalny przy kanonicznym env i pełnym
+  schemacie, a izolacja finansowa V8 jest udowodniona; pakiet nie jest pełnym
+  PASS całego dyżuru z powodu D.5 i zastanej czerwieni Z24.
