@@ -115,14 +115,14 @@ Użytkownik czyta zdanie, które każe mu czekać na coś, co nigdy nie nadejdzi
 
    > **★ RAMKA WARTOWNIKA — uwaga dla nadzorcy wystawiającego ten dokument
    > (usuń tę ramkę przy wiązaniu):** w miejsce **każdego** literalnego napisu
-   > `«MARKER_SHA»` wpisujesz **rzeczywisty SHA tipa `codex/m03-admin-20260824`
+> **MARKER ZWIAZANY PRZEZ NADZORCE 2026-08-28** — pole „SHA markera" powyzej zawiera realny SHA tipa m03. Jedyny STOP z tytulu markera to negatywny wynik `git merge-base --is-ancestor` (MARKER BRAK).
    > z chwili wystawienia**, we **wszystkich** wystąpieniach w tym pliku
-   > (jest ich kilkanaście — sprawdź `grep -c '«MARKER_SHA»'`, wynik po
+>
    > podmianie musi być `0`). W dokumencie **nie ma i nie może być
    > przykładowego SHA**: dzień 29 dostał instrukcję z konkretnym SHA wpisanym
    > „na przykład" i wykonawca zawiązał się do niego dosłownie, po czym
    > pracował na martwej bazie. Dopóki ta ramka nie jest usunięta,
-   > a `«MARKER_SHA»` nadal jest literalnym napisem, **dokument NIE JEST
+>
    > ZWIĄZANY** i wykonawca ma obowiązek odrzucić go na pierwszej komendzie
    > dyżuru.
 
