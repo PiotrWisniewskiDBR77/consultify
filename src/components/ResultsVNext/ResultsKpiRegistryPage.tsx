@@ -406,7 +406,12 @@ function buildColumns(isPolish: boolean, currentUserId: string | null | undefine
       label: isPolish ? 'Proces' : 'Process',
       width: '140px',
       render: (row: KpiDefinitionDto) => (
-        <span className="text-sm text-c-text-muted">{shortId(row.primaryProcessId)}</span>
+        <span
+          className="block truncate text-sm text-c-text-muted"
+          title={row.primaryProcessId ?? undefined}
+        >
+          {row.primaryProcessId ?? '—'}
+        </span>
       ),
     },
     {
@@ -616,7 +621,7 @@ function buildPreview(
           label: t('Właściciel', 'Owner'),
           value: ownerDisplay(row.ownerUserId, ctx.currentUserId, ctx.isPolish),
         },
-        { id: 'process', label: t('Proces', 'Process'), value: shortId(row.primaryProcessId) },
+        { id: 'process', label: t('Proces', 'Process'), value: row.primaryProcessId ?? '—' },
         {
           id: 'created',
           label: t('Utworzono', 'Created'),
