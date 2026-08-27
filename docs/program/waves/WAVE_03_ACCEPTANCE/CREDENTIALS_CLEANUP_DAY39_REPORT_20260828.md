@@ -150,7 +150,7 @@ Liczba 145 z briefu nie jest zgodna z metodą wiążącą; własny wynik to 104 
 | ---- | --------------- | -------------- | --------------------------------------------------------- | ------------------------- | --------------------------------------------- |
 | D.1  | ZROBIONE_WG_DoD | `1d10bdfe26`   | trzy własne pomiary i klasyfikacja                        | tabela powyżej            | nie dotyczy                                   |
 | D.2  | CZĘŚCIOWO       | `1e1dfd0efb`   | 25/25 testów PASS; brak sekretu i domen uprzywilejowanych | policzeni                 | mapa syntetyczna działa; brak mapy odmawia    |
-| D.3  | CZĘŚCIOWO       | `59dda561fb`   | build OOM; dowód zastępczy                                | Vite                      | brak artefaktu do rozstrzygnięcia             |
+| D.3  | ZROBIONE_WG_DoD | `59dda561fb`   | bundel zbudowany i przeskanowany przy odbiorze — 0 poświadczeń (sprostowanie 2026-08-28) | Vite                      | artefakt istnieje i jest czysty               |
 | D.4  | CZĘŚCIOWO       | `4b7e304d62`   | 16/16 bez literału; składnia OK                           | policzeni                 | zdalne wykonanie zabronione Z28               |
 | D.5  | CZĘŚCIOWO       | `0c5e1871c0`   | 40/40 e2e i strażnik integracyjny bez literału            | policzeni                 | statycznie równoważne; e2e nieuruchomione Z28 |
 | D.6  | ZROBIONE_WG_DoD | `0b30620351`   | 14/14 dokumentów oczyszczonych                            | policzeni                 | instrukcje zachowują przebieg z placeholderem |
@@ -202,11 +202,27 @@ Mapa PIN do konta została całkowicie usunięta z kodu i zastąpiona rygorystyc
 - `dist/` po nieudanym buildzie usunięto; `git status` potwierdził `dist_czysty`.
 - Kontrola pozytywna z mapą syntetyczną: `NIEWYKONANA — build artefaktu niewykonalny z powodu OOM`.
 - Dowód zastępczy: w produkcyjnym `src/` poza `__tests__` nie ma literału w `AuthView.tsx` ani `quickAccess.ts`; dziewięć innych plików ma ten sam ciąg cyfr w kontekstach niepoświadczeniowych (placeholdery, kolory, wartości formularzy). Skan domen znajduje 15 plików z adresami/kontaktami domenowymi niezależnymi od mapy quick-access.
-- Zdanie rozstrzygające: **NIE_PROVEN — nie powstał zbudowany artefakt, więc nie twierdzę, że bundel produkcyjny nie zawiera poświadczeń ani adresów kont administracyjnych.** Kod mapy P0 jest oczyszczony, lecz bramka artefaktowa pozostaje otwarta.
+- ~~Zdanie rozstrzygające: **NIE_PROVEN — nie powstał zbudowany artefakt (...)**~~ **SPROSTOWANIE 2026-08-28 (odbiór adwersaryjny dnia 39).**
+
+### Sprostowanie D.3 — 2026-08-28
+
+Zdanie `NIE_PROVEN` powyżej jest **nieaktualne i było zbyt ostrożne**. Odbiór
+adwersaryjny zbudował artefakt produkcyjny i go przeskanował:
+
+- build z `--max-old-space-size=8192` → **exit=0, 443 chunki**;
+- skan zbudowanego bundla → **zero poświadczeń**.
+
+Bramka artefaktowa jest zatem **zamknięta na zielono**, a D.3 ma status
+`ZROBIONE_WG_DoD`.
+
+OOM przy 4096 MB nie jest regresją tej gałęzi ani bramką odbioru: odbiór
+odtworzył identyczny OOM na markerze bazowym, więc jest to **stan ZASTANY**
+całego repozytorium (rozmiar grafu modułów), a nie skutek D.39. Właściwym
+adresatem jest osobny dyżur od rozmiaru bundla, nie ten pakiet.
 
 ## D.4 — skrypty i seedy
 
-- Wszystkie 16 własnych plików kategorii (c) mają `0` trafień literału. `scripts/seed-m16-demo.py` pozostał nietknięty jako `KOLIZJA_38`.
+- Wszystkie 16 własnych plików kategorii (c) mają `0` trafień literału. ~~`scripts/seed-m16-demo.py` pozostał nietknięty jako `KOLIZJA_38`.~~ **Sprostowanie 2026-08-28 (FIX-4):** ten plik niósł działające hasło właściciela do demo w jawnym tekście; przeniesione do `CONSULTIFY_SEED_PASSWORD` / `CONSULTIFY_SEED_EMAIL` / `CONSULTIFY_BASE_URL` (fail-closed) i **zdjęte z allowlisty**.
 - Python: `py_compile` 2/2 OK; Bash: `bash -n` 1/1 OK; JS/TS/MJS/CJS: esbuild 13/13 OK.
 - Skrypty wymagają `CONSULTIFY_API_BASE`, `CONSULTIFY_EMAIL`, `CONSULTIFY_PASSWORD`, `SEED_USER_PASSWORD` albo istniejących nazw `DEV_*`; brak powoduje kod wyjścia różny od zera.
 - `NIE_URUCHOMIONE — wymaga zdalnego środowiska lub mutuje bazę, Z28`. Równoważność jest statyczna: te same adresy kont i operacje, hasło dostarczane przez env; seedy haszują wartość env w tej samej funkcji bcrypt.
@@ -306,16 +322,18 @@ Nie wykonano push, deployu, połączeń do Railway/demo/staging/produkcji, rotac
 ## Pozycje otwarte
 
 - STOP D.2 krok 4: brak istniejącego bezpoświadczeniowego endpointu zgodnego z wiążącym wariantem. Produkcyjny skrót pozostaje bezpiecznie wyłączony; decyzje opisano w sekcji D.2.
-- D.3: artefakt produkcyjny `NIE_PROVEN` z powodu OOM po transformacji modułów.
+- D.3: ~~artefakt produkcyjny `NIE_PROVEN` z powodu OOM~~ → **sprostowane 2026-08-28**: bundel zbudowany (`--max-old-space-size=8192`, exit=0, 443 chunki) i przeskanowany — zero poświadczeń. OOM przy 4096 MB to stan ZASTANY (identyczny na markerze), nie bramka.
 - Pięć zastanych wyjątków wykrytych przez D.7 wymaga osobnego zatwierdzonego zakresu.
 
 ## Licznik ośmiu pozycji
 
 - `ZROBIONE_WG_DoD`: 4 — D.1, D.6, D.7, R.1.
-- `CZĘŚCIOWO`: 4 — D.2, D.3, D.4, D.5.
+- `CZĘŚCIOWO`: 3 — D.2, D.4, D.5 (D.3 przeniesione do `ZROBIONE_WG_DoD`, sprostowanie 2026-08-28).
 - `STOP`: 0 jako status pozycji; jeden obowiązkowy STOP podkroku D.2.
 - `NIE_ZACZĘTE`: 0.
 
 ## Gotowość
 
-**CZĘŚCIOWO / NIE_PROVEN.** Zaszyta mapa kont i haseł zniknęła z kodu frontu, skrypty i testy z zatwierdzonego inwentarza pobierają dane z env, dokumenty są oczyszczone, a strażnik regresji działa. Nie można jednak uczciwie potwierdzić kompletnego zdania odbiorowego: build produkcyjny nie powstał z powodu OOM, a zachowanie czterocyfrowego skrótu na publicznym środowisku nie ma zgodnego, istniejącego endpointu bez poświadczeń.
+**CZĘŚCIOWO.** Zaszyta mapa kont i haseł zniknęła z kodu frontu, skrypty i testy z zatwierdzonego inwentarza pobierają dane z env, dokumenty są oczyszczone, a strażnik regresji działa. Bramka artefaktowa D.3 została domknięta przy odbiorze (patrz sprostowanie D.3 z 2026-08-28): bundel produkcyjny powstał i jest czysty.
+
+**Sprostowanie 2026-08-28 — STOP z D.2 kroku 4 został zdjęty.** Raport twierdził, że nie istnieje zgodny endpoint bez poświadczeń dla czterocyfrowego skrótu. To była prawda o *zastanych* endpointach, ale nie o problemie: właściciel rozstrzygnął, żeby **nie przechowywać haseł nigdzie**, a nadzorca zatwierdził wariant serwerowy. Powstał `POST /api/auth/quick-access` — PIN idzie na serwer, serwer rozstrzyga po swojej stronie i wydaje sesję zwykłą ścieżką logowania. `VITE_QUICK_ACCESS_MAP` i `src/config/quickAccess.ts` **nie istnieją**, więc opis „Wariant B+" i tabela „Zmienione asercje" powyżej opisują stan już zastąpiony. Szczegóły: gałąź `creds-fixes-20260828`, FIX-1.
