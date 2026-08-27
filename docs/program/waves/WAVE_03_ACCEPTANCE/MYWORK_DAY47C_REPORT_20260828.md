@@ -1,10 +1,11 @@
-# My Work dzień 47B — raport dyżuru 2026-08-27
+# My Work dzień 47C — raport dyżuru 2026-08-27
 
 ## Stan wykonania
 
-Raport żywy. Gałąź `codex/mywork-day47b-20260828` została utworzona od markera
+Raport żywy. Gałąź `codex/mywork-day47c-20260828` została utworzona od markera
 `b6c4bcb2eb32eeb17076a9c29460a696bd182796` w izolowanym worktree
-`/private/tmp/consultify-mywork-day47b`.
+`/private/tmp/consultify-mywork-day47c`. Ukończone wcześniej pozycje A.2, A.1,
+B.4 i B.5 przeniesiono commitami z gałęzi day47B; nie wykonywano ich ponownie.
 
 ## A.2 — bramka wejściowa przeniesiona do nowej linii
 
@@ -283,57 +284,73 @@ odwołane wydarzenie i pusty dzień. Odwołane wydarzenie znika także z
 `GET /calendar/conflicts`, ponieważ zapytanie ma literalny filtr
 `status <> 'cancelled'`.
 
-## B.1 — STOP na realnym Gateway
+## B.1 — własne wydarzenie przechodzi przez realny Gateway
 
-Próba wymaganej ścieżki `POST /api/my-work/calendar/events` przez realny
-`ApiGateway`, realne auth/membership i realny PG zakończyła się:
+Przed poprawką wymagana ścieżka `POST /api/my-work/calendar/events` przez
+realny `ApiGateway`, realne auth/membership i realny PG zakończyła się:
 
 ```text
 [calendar-create-event] Cannot read properties of undefined (reading 'query')
 calendar.routes.ts:854:36
 POST /api/my-work/calendar/events -> 500
 expected 201, received 500
-Test Files 1 failed (1); Tests 5 skipped (5); --retry=0
+Test Files 1 failed (1); Tests 6 skipped (6); --retry=0
 ```
 
-Przyczyną jest `const db = req.db!` w handlerze, podczas gdy realny łańcuch
-Gateway nie dostarczył `req.db`. Nie zamontowano gołego routera i nie
-podstawiono atrapy DB, bo złamałoby to Z21/Z22. B.1 jest pozycją dowodową, a
-ramka licencji pozwala zmieniać `calendar.routes.ts` w B.4 (jawna odmowa
-recurrence) i B.5 (spotkania), nie pozwala natomiast naprawiać middleware ani
-kontraktu wstrzykiwania DB dla B.1. Dlatego wynik to **STOP / BLOCKED**, bez
-zgadywania i bez obejścia.
+Przyczyną był `const db = req.db!` w handlerze przy braku produkcyjnego
+middleware ustawiającego opcjonalne `AuthRequest.db`. Zgodnie z jawną licencją
+nadzorcy dodano jedno wstrzyknięcie w rodzicu `my-work.routes.ts`: po auth,
+membership i kontekście demo, a przed montażem podrouterów, `req.db` otrzymuje
+kanoniczny proxy z `getDatabase()`. Ten punkt objął równocześnie
+`calendar.routes.ts` i `home.routes.ts`, bez duplikowania zależności i bez
+zmiany `server/src/Gateway.ts`.
 
-Teza zlecenia „front nie woła zapisu” została **OBALONA na poziomie kodu**:
+Po poprawce ten sam test z `RUN_DB_TESTS=1`, `MOCK_DB=false`,
+`DB_TYPE=postgres`, `ENABLE_V8_GLOBAL=true`, realnym `DATABASE_URL` i
+`--retry=0` zakończył się **1 plik, 6/6 PASS**. Dowody obejmują:
+
+- odpowiedź 201 z pełnym kontraktem POST;
+- niezależny odczyt wiersza z PostgreSQL (tenant, właściciel, status i brak
+  recurrence);
+- nowy GET `/calendar/unified` po pełnym reloadzie, bez korzystania z koperty
+  odpowiedzi zapisu;
+- filtrowanie źródeł oraz izolację obcej organizacji;
+- 200 z `/home/brief`, co dowodzi dotarcia tego samego kontraktu DB również do
+  drugiego wskazanego routera.
+
+Teza wcześniejszego zlecenia „front nie woła zapisu” została **OBALONA na poziomie kodu**:
 `CalendarCreateEventModal.tsx` woła `Api.createMyWorkCalendarEvent`, a klient
 wykonuje POST w `src/services/api.ts:12567`. Nie została jednak dowiedziona
-sprawność runtime — realny Gateway zwraca 500.
-
-Z powodu STOP-u B.2, B.3 i B.6 nie zostały rozpoczęte. W szczególności nie
-dodano wołaczy PUT/DELETE, nie włączono flagi i nie wykonano zrzutów.
+sprawność runtime po naprawie została potwierdzona powyższym przebiegiem.
 
 ## Bezpieczniki i sprzątanie
 
 - Chroniony checkout właściciela nie został przełączony ani zmieniony; prace
-  wykonano w `/private/tmp/consultify-mywork-day47b`.
+  wykonano w `/private/tmp/consultify-mywork-day47c`.
 - `git stash` nie został użyty; `git stash list` był pusty.
-- Kontener `cx-day47-pg` usunięto przez `docker rm -fv`; końcowy filtr
-  `docker ps -a --filter name=cx-day47-pg` był pusty.
-- Port harnessu 3355 nie nasłuchiwał.
-- Niezacommitowany, czerwony eksperyment B.1 i `junit.xml` przeniesiono
-  odzyskiwalnie do `/private/tmp/consultify-mywork-day47b-scratch/`, nie przez
-  stash. Branch nie zawiera testu udającego PASS.
-- Nie wykonano push, merge, deploy ani zmiany flagi.
+- Kontener `cx-day47-pg` i baza `cx_day47` są lokalne; pełny runner zastosował
+  858 migracji, a kontrolny drugi przebieg zastosował 0.
+- Pierwszy commit nowej gałęzi wypchnięto wyłącznie na `github-backup`; nie
+  wykonano push na `origin`, merge ani deploy.
+- `server/src/Gateway.ts` pozostał niezmieniony.
+
+## ★★ TWIERDZENIA NIEZWERYFIKOWANE
+
+- Nie zweryfikowano wdrożenia ani działania na środowisku demo/produkcyjnym;
+  dyżur nie daje upoważnienia do deployu ani zdalnej zmiany flagi.
+- Nie uzyskano akceptacji wizualnej właściciela produktu.
+- Nie zweryfikowano jeszcze pełnej ścieżki przeglądarkowej B.2, B.3 i B.6;
+  pozostają w toku i nie są objęte twierdzeniem PASS B.1.
 
 ## Pozycje
 
 | Pozycja | Status          | Commit       |
 | ------- | --------------- | ------------ |
-| A.1     | ZROBIONE_WG_DoD | `045688f04a` |
-| A.2     | ZROBIONE_WG_DoD | `51d18e9226` |
-| B.1     | STOP / BLOCKED  | —            |
+| A.1     | ZROBIONE_WG_DoD | `b0e4e5d9d8` |
+| A.2     | ZROBIONE_WG_DoD | `c2903cbabe` |
+| B.1     | ZROBIONE_WG_DoD | commit B.1   |
 | B.2     | NIEZACZĘTE      | —            |
 | B.3     | NIEZACZĘTE      | —            |
-| B.4     | ZROBIONE_WG_DoD | `2f29524ed1` |
-| B.5     | ZROBIONE_WG_DoD | `37f6836d3a` |
+| B.4     | ZROBIONE_WG_DoD | `77513befbd` |
+| B.5     | ZROBIONE_WG_DoD | `1803eea494` |
 | B.6     | NIEZACZĘTE      | —            |

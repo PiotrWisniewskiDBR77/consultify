@@ -16,6 +16,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 
 import { featureFlags } from '../config/FeatureFlags.js';
+import { getDatabase } from '../database/Database.js';
 import {
   type AuthRequest,
   requireRole,
@@ -105,6 +106,10 @@ router.use(apiAuthRateLimiter);
 router.use(verifyToken);
 router.use(validateOrgMembership);
 router.use(demoContextMiddleware);
+router.use((req: AuthRequest, _res, next) => {
+  req.db = getDatabase();
+  next();
+});
 router.use(agentMaterializationRouter);
 
 type InboxItemType =
