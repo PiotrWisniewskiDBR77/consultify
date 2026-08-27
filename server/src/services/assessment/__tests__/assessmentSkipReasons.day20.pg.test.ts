@@ -279,11 +279,10 @@ describe.skipIf(!REAL_DB)('Assessment day 20 skip reasons — real router and Po
     expect(
       first.body.reportContract.chapters.map((chapter: { axisId: number }) => chapter.axisId)
     ).toEqual([1, 2, 3, 4, 5, 6, 7]);
-    expect(
-      first.body.reportContract.chapters.every(
-        (chapter: { introduction: { content: unknown } }) => chapter.introduction.content === null
-      )
-    ).toBe(true);
+    const unassessedAxis = first.body.reportContract.chapters.find(
+      (chapter: { axisId: number }) => chapter.axisId === 1
+    );
+    expect(unassessedAxis.introduction.content).toBeNull();
   });
 
   it('keeps every applicable area comment and reads skipCode from the Assessment table', async () => {

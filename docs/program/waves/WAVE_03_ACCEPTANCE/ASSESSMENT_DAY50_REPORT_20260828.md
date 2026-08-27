@@ -34,7 +34,7 @@ Kontener: `cx-day50-pg`, obraz `pgvector/pgvector:pg16`. Hostowy port 5830 mapuj
 
 ## ★ Oświadczenie o strażnikach testów (Z31)
 
-Baseline serwera: `162 PASS / 10 failed suites / 140 SKIPPED`. Baseline roota: `177 PASS / 8 FAIL / 0 SKIPPED`. Własny test A.1: `2 PASS / 0 FAIL / 0 SKIPPED`. Własny test B.1: `4 PASS / 0 FAIL / 0 SKIPPED`. A.2/A.4: `10 PASS` czystego kompozytora i `5 PASS` realnego ApiGateway/PostgreSQL, `0 FAIL / 0 SKIPPED`. Zastane pakiety nie wszystkie używają `assertRealPostgresTestEnvironment()` i część cicho pomija przypadki; nie przedstawiam ich jako pełnego zielonego dowodu.
+Baseline serwera: `162 PASS / 10 failed suites / 140 SKIPPED`. Baseline roota: `177 PASS / 8 FAIL / 0 SKIPPED`. Własny test A.1: `2 PASS / 0 FAIL / 0 SKIPPED`. Własny test B.1: `4 PASS / 0 FAIL / 0 SKIPPED`. A.2–A.4: `12 PASS` kompozytora, `6 PASS` realnego ApiGateway/PostgreSQL oraz `17 PASS` zastanego pakietu skip reasons, `0 FAIL / 0 SKIPPED`. Zastane pakiety nie wszystkie używają `assertRealPostgresTestEnvironment()` i część cicho pomija przypadki; nie przedstawiam ich jako pełnego zielonego dowodu.
 
 ## ★★ DOWODY Z33
 
@@ -94,6 +94,7 @@ Na wejściu: dokument NADAL jest pustym formularzem — 95 z 95 gniazd pozostaje
 - PRZED: `/private/tmp/consultify-assessment-day50-artefakty/PRZED_metalpol.docx`, 232 466 B, SHA-256 `8f640a6d7d365192aaffbdc0c69cded1c17ca9605643bb77fa76ce1101650578`.
 - PO A.2: `/private/tmp/consultify-assessment-day50-artefakty/PO_A2_metalpol.docx`, 242 894 B, SHA-256 `8144ca698b8ab688a6fafe8f83ec73e01d9c8bbbb0d723652c9bb1ac9f7130a0`.
 - PO A.4: `/private/tmp/consultify-assessment-day50-artefakty/PO_A4_metalpol.docx`, 243 171 B, SHA-256 `a46e9c708e0517a40060f7f8004e1f2fdb7e1733a4928c08a846b320568735e1`.
+- PO A.3: `/private/tmp/consultify-assessment-day50-artefakty/PO_A3_metalpol.docx`, 249 852 B, SHA-256 `68ef43701e3f65b4b589f816bac5bafc928498ea6db8602b0c0f6d44b0caaf78`.
 
 ## ★★ DOWÓD STABILNOŚCI DWÓCH PRZEBIEGÓW (§A.6 pkt 3)
 
@@ -117,7 +118,8 @@ A.2/A.4 nie generują danych: czysta funkcja składa wyłącznie nazwane pola za
 | B.1     | ZROBIONE_WG_DoD                                                                         | 23/23 findingów ma 7 niepustych pól narracyjnych; ponowny seed 23/23; purge 0/0 i reapply 23/23; hash treści `d5ca73c683bf523400e6bb5e85d31929` |
 | A.2     | ZROBIONE_WG_DoD                                                                         | 23 pełne akapity / 0 skróconych / 16 placeholderów; długości 131/141/159; 13 testów, 0 skipów; ApiGateway→kontrakt→DOCX                         |
 | A.4     | ZROBIONE_WG_DoD                                                                         | 23 ocenione / 10 nieocenionych / 3 pełne pominięcia / 3 częściowe; pełne pominięcie blokuje narrację                                            |
-| A.3–R.2 | NIE ROZPOCZĘTO                                                                          | kolejność wiążąca                                                                                                                               |
+| A.3     | ZROBIONE_WG_DoD                                                                         | 48/56 agregatów wypełnionych; 8/56 `BRAK_DANYCH` wyłącznie dla Horyzontu; walidator liczb                                                       |
+| A.6–R.2 | NIE ROZPOCZĘTO                                                                          | kolejność wiążąca                                                                                                                               |
 
 ## ★ DOWODY OSIĄGALNOŚCI (Z21)
 
@@ -129,6 +131,8 @@ A.2: JWT → pełny `ApiGateway.initializeRoutes` → `verifyToken` → `/api/me
 
 A.4: ta sama ścieżka ApiGateway → kontrakt → DOCX rozróżnia 10 obszarów „nie oceniono”, 3 pełne pominięcia i 3 częściowe. Test otwiera `word/document.xml`, potwierdza polskie etykiety kodów i brak surowych enumów; pełne pominięcie ma `content=null`.
 
+A.3: realny ApiGateway zwraca treść 7 wstępów, 7 podpisów matryc, 7 wniosków rozdziałów, 21 komórek linii rozdziałów, 2 streszczeń, wniosków końcowych oraz 3 komórek linii programu. Renderer umieszcza je w DOCX; licznik znajduje 48/56 wypełnionych agregatów.
+
 ## ★★ DOWODY MUTACYJNE W OBIE STRONY
 
 A.1: zmiana wzorca komentarza z `; wymagane:` na `, wymagane:` dała `1 failed / 1 passed`; po przywróceniu z kopii `cp` wynik `2 passed`, a różnica obejmuje wyłącznie zamierzoną implementację A.1.
@@ -136,6 +140,8 @@ A.1: zmiana wzorca komentarza z `; wymagane:` na `, wymagane:` dała `1 failed /
 A.2: mutacja `content: narrative?.text ?? null` → `content: null` dała `2 failed / 2 passed` (0 zamiast 23 treści i brak akapitu w XML). Po przywróceniu właściwego wywołania wynik to `4 passed`; czysty kompozytor osobno: `9 passed`.
 
 A.4: usunięcie warunku `context.skipped` spowodowało `1 failed / 9 passed`, ponieważ wypełniony finding dla pełnego pominięcia dostał akapit. Po przywróceniu strażnika: `10 passed`.
+
+A.3: mutacja walidatora liczb do bezwarunkowego `true` spowodowała `2 failed / 10 passed`, w tym przepuszczenie zmyślonego `12`. Po przywróceniu sprawdzania zbioru faktów: `12 passed`.
 
 ## ★ LISTA KONTROLNA PIĘCIU KSZTAŁTÓW FAŁSZYWEGO „GOTOWE"
 
@@ -146,6 +152,8 @@ B.1: ścieżka zapisu realna TAK; ten sam lokalny PostgreSQL TAK; SKIPPED własn
 A.2: wołacz realny TAK; realny ApiGateway TAK; SKIPPED 0; brak fałszywego 200/0 TAK (`404` dla obcego tenanta i brakującej sesji); proza ze źródłem TAK — 23/23 komentarzy ma `unitId`, nazwane pola i identyfikator findingu, a dowód tylko wtedy, gdy faktycznie istnieje.
 
 A.4: wołacz realny TAK; realny ApiGateway TAK; SKIPPED 0; brak fałszywego sukcesu TAK; trzy stany braku danych są jawne; pełne pominięcie i brak findingu nie dostają prozy analitycznej.
+
+A.3: wołacz realny TAK; realny ApiGateway TAK; SKIPPED 0; `BRAK_DANYCH` pozostaje placeholderem, nie zerem; wszystkie cytowane rekomendacje zachowują `unitId`, a liczby przechodzą walidator zbioru faktów.
 
 ## ★ ZRZUTY
 
@@ -207,6 +215,23 @@ Długość 23 pełnych akapitów: minimum `131`, mediana `141`, maksimum `159` s
 
 Suma: `23 ocenione / 10 nie oceniono / 3 pominięte pełne / 3 pominięte częściowo`. Placeholder komentarza pozostaje świadomie: jest czytelnym rusztowaniem dla redaktora, a poprzedza go jednoznaczne polskie zdanie o braku danych albo komunikat pominięcia. Nie zmieniam jego zamrożonego brzmienia, więc licznik A.1 i klucze `emptySlot` nie wymagają zmiany.
 
+## A.3 — 56 gniazd agregatów
+
+| Rodzaj gniazda             | Wypełnione | `BRAK_DANYCH` | Źródło braku                    |
+| -------------------------- | ---------: | ------------: | ------------------------------- |
+| Wstęp rozdziału            |          7 |             0 | —                               |
+| Podpis matrycy             |          7 |             0 | —                               |
+| Wnioski rozdziału          |          7 |             0 | —                               |
+| Linia decyzyjna rozdziału  |         21 |             7 | brak horyzontu czasowego        |
+| Streszczenia               |          2 |             0 | —                               |
+| Wnioski końcowe            |          1 |             0 | —                               |
+| Programowa linia decyzyjna |          3 |             1 | brak horyzontu czasowego        |
+| **Suma**                   |     **48** |         **8** | `method_findings` nie ma źródła |
+
+Okna słów: wstępy `123–132`, podpisy `35`, wnioski rozdziałów `194–213`, streszczenie `124`, luki krytyczne `126`, wnioski końcowe `264`, wypełnione komórki linii decyzyjnych `10–18`. Poza odpowiednimi limitami: `0`.
+
+**Horyzont:** zostawiłem placeholder we wszystkich 8 komórkach. W `method_findings` ani w kontrakcie Outputu nie ma pola horyzontu czasowego; nie znalazłem więc dozwolonego źródła, a wpisanie liczby byłoby fabrykacją. Stan raportuję jako `BRAK_DANYCH: horizon`.
+
 ## Tabele werdyktów
 
 Do uzupełnienia w pozycjach C–F oraz A.4.
@@ -217,7 +242,28 @@ ZASTANE serwer: 162 PASS / 10 failed suites / 140 SKIPPED. ZASTANE root: 177 PAS
 
 ## ★ ZMIENIONE ASERCJE
 
-Brak w A.1.
+A.3 świadomie zmienia przewidzianą asercję w `assessmentSkipReasons.day20.pg.test.ts`.
+
+Stara:
+
+```ts
+expect(
+  first.body.reportContract.chapters.every(
+    (chapter: { introduction: { content: unknown } }) => chapter.introduction.content === null
+  )
+).toBe(true);
+```
+
+Nowa:
+
+```ts
+const unassessedAxis = first.body.reportContract.chapters.find(
+  (chapter: { axisId: number }) => chapter.axisId === 1
+);
+expect(unassessedAxis.introduction.content).toBeNull();
+```
+
+Nowa asercja chroni semantykę pustki osi bez Outputu, a nowy test realnego ApiGateway osobno wymaga treści wszystkich siedmiu ocenionych osi Metalpol. To jest mocniejszy kontrakt dwóch stanów, nie osłabienie.
 
 ## ★ DŁUG ZASTANY — cross-org-idor.test.ts
 
@@ -249,4 +295,4 @@ Brak STOP-u.
 
 ## Rekomendacje dla nadzorcy
 
-Kontynuować w kolejności A.4 → A.3 → A.6 → D.1; nie przechodzić do inwentarzy przed punktem kontrolnym.
+Kontynuować w kolejności A.6 → D.1; nie przechodzić do inwentarzy przed punktem kontrolnym.

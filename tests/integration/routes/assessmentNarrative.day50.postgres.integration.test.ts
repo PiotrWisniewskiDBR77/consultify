@@ -145,6 +145,26 @@ describe.skipIf(!REAL_DB)(
       }
     });
 
+    it('fills every sourced aggregate slot and keeps all eight unsupported horizons empty', async () => {
+      const response = await request(app)
+        .get('/api/method/sessions/demo-metalpol-session/assessment-report-contract')
+        .set('Authorization', `Bearer ${metalpolToken}`);
+      const contract = response.body.reportContract;
+      expect(contract.executiveSummary).toBeTruthy();
+      expect(contract.criticalGaps).toBeTruthy();
+      expect(contract.finalConclusions).toContain('demo-seed: measured values only');
+      expect(contract.programDecisionLine.horizon).toBeNull();
+      for (const chapter of contract.chapters) {
+        expect(chapter.introduction.content).toBeTruthy();
+        expect(chapter.matrix.caption.content).toBeTruthy();
+        expect(chapter.conclusion.content).toBeTruthy();
+        expect(chapter.conclusion.decisionLine.direction).toBeTruthy();
+        expect(chapter.conclusion.decisionLine.priority).toBeTruthy();
+        expect(chapter.conclusion.decisionLine.successCondition).toBeTruthy();
+        expect(chapter.conclusion.decisionLine.horizon).toBeNull();
+      }
+    });
+
     it('returns 404 for a session outside the authenticated tenant', async () => {
       const response = await request(app)
         .get('/api/method/sessions/demo-metalpol-session/assessment-report-contract')

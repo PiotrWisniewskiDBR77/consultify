@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
 import type { MethodFindingRecord } from '../../../method-core/outputs/MethodOutputService.js';
-import { composeAreaNarrative } from '../assessmentNarrativeComposer.js';
+import {
+  composeAreaNarrative,
+  composeChapterAggregateNarrative,
+  composeProgramAggregateNarrative,
+  validateNarrativeNumbers,
+} from '../assessmentNarrativeComposer.js';
 
 const finding: MethodFindingRecord = {
   id: 'finding-1A',
@@ -108,5 +113,45 @@ describe('Day 50 deterministic area narrative composer', () => {
     expect(
       composeAreaNarrative({ ...finding, businessMeaning: 'wartość '.repeat(180) }, context)
     ).toBeNull();
+  });
+
+  it('composes bounded chapter and program aggregates while leaving horizons empty', () => {
+    const findings = Array.from({ length: 4 }, (_, index) => ({
+      unitId: `1${String.fromCharCode(65 + index)}`,
+      unitNamePL: `Obszar ${index + 1}`,
+      currentLevel: 2,
+      targetLevel: 4,
+      gap: 2,
+      confidence: 'high' as const,
+      evidenceCount: 1,
+      recommendation: finding.recommendation,
+      expectedOutcome: finding.expectedOutcome,
+    }));
+    const chapter = composeChapterAggregateNarrative({
+      axisId: 1,
+      axisNamePL: 'Procesy',
+      maxLevel: 7,
+      totalAreas: 4,
+      skippedCount: 0,
+      findings,
+      frozenDate: '2026-08-28',
+    });
+    const program = composeProgramAggregateNarrative({
+      axisCount: 7,
+      totalAreas: 39,
+      findings: [...findings, ...findings, ...findings, ...findings, ...findings, ...findings],
+      limitations: ['Zakres demonstracyjny'],
+    });
+    expect(chapter.introduction).toBeNull();
+    expect(chapter.conclusion).toBeNull();
+    expect(chapter.decisionLine.horizon).toBeNull();
+    expect(program.executiveSummary).toBeTruthy();
+    expect(program.finalConclusions).toBeNull();
+    expect(program.decisionLine.horizon).toBeNull();
+  });
+
+  it('rejects a numeric token that is absent from aggregate facts', () => {
+    expect(validateNarrativeNumbers('Oceniono 3 z 5 obszarów.', [3, 5])).toBe(true);
+    expect(validateNarrativeNumbers('Oceniono 3 z 5 obszarów w 12 miesięcy.', [3, 5])).toBe(false);
   });
 });

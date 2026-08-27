@@ -284,7 +284,9 @@ function chapterBlocks(
             chapter.introduction as { content: string | null; minWords: number; maxWords: number }
           )
         : `${DRD_REPORT_FIXED_TEXT.notAssessed} ${slotText(chapter.introduction as { content: string | null; minWords: number; maxWords: number })}`,
-      DRD_DOCX_STYLE_IDS.CAPTION
+      assessed && chapter.introduction.content
+        ? DRD_DOCX_STYLE_IDS.BODY
+        : DRD_DOCX_STYLE_IDS.CAPTION
     ),
     heading(`${chapter.axisId}-matrix-heading`, 'Matryca poziomów dojrzałości', 2),
     table(
@@ -309,7 +311,7 @@ function chapterBlocks(
       heading(`${area.unitId}-heading`, `${area.unitId}  ${area.unitNamePL ?? area.unitName}`, 3),
       paragraph(
         `${area.unitId}-signature`,
-        `Poziom obecny: ${area.currentLevel ?? '—'} (${area.currentLevel ? resolveDrdLevelLabelPL(chapter.axisId, area.currentLevel) : '—'}) · Poziom docelowy: ${area.targetLevel ?? '—'} (${area.targetLevel ? resolveDrdLevelLabelPL(chapter.axisId, area.targetLevel) : '—'}) · Luka: ${area.gap ?? '—'} · Priorytet: ${priorityForGap(area.gap)} · Dowody: ${EVIDENCE_STATE_PL[area.evidenceState]}`,
+        `Poziom obecny: ${area.currentLevel ?? '—'} (${area.currentLevel ? resolveDrdLevelLabelPL(chapter.axisId, area.currentLevel) : '—'}) · Poziom docelowy: ${area.targetLevel ?? '—'} (${area.targetLevel ? resolveDrdLevelLabelPL(chapter.axisId, area.targetLevel) : '—'}) · Luka: ${area.gap ?? '—'} · Priorytet: ${priorityForGap(area.gap)} · Dowody: ${EVIDENCE_STATE_PL[area.evidenceState as keyof typeof EVIDENCE_STATE_PL]}`,
         DRD_DOCX_STYLE_IDS.SIGNATURE
       )
     );
@@ -356,7 +358,11 @@ function chapterBlocks(
   const decisionPlaceholder = placeholder(decisionLineLimit.minWords, decisionLineLimit.maxWords);
   blocks.push(
     heading(`${chapter.axisId}-conclusion-heading`, 'Wnioski rozdziału', 2),
-    paragraph(`${chapter.axisId}-conclusion`, conclusionPlaceholder, DRD_DOCX_STYLE_IDS.CAPTION),
+    paragraph(
+      `${chapter.axisId}-conclusion`,
+      conclusionPlaceholder,
+      chapter.conclusion.content ? DRD_DOCX_STYLE_IDS.BODY : DRD_DOCX_STYLE_IDS.CAPTION
+    ),
     paragraph(
       `${chapter.axisId}-decision-label`,
       DRD_REPORT_FIXED_TEXT.decisionLine,
@@ -439,8 +445,9 @@ export function buildAssessmentDrdReportSchema(contract: AssessmentReportContrac
       blocks: [
         paragraph(
           'executive-placeholder',
-          placeholder(executiveLimit.minWords, executiveLimit.maxWords),
-          DRD_DOCX_STYLE_IDS.CAPTION
+          contract.executiveSummary ??
+            placeholder(executiveLimit.minWords, executiveLimit.maxWords),
+          contract.executiveSummary ? DRD_DOCX_STYLE_IDS.BODY : DRD_DOCX_STYLE_IDS.CAPTION
         ),
         radar,
         table(
@@ -452,8 +459,8 @@ export function buildAssessmentDrdReportSchema(contract: AssessmentReportContrac
         heading('critical-gaps-heading', DRD_REPORT_FIXED_TEXT.criticalGaps, 2),
         paragraph(
           'critical-gaps-placeholder',
-          placeholder(executiveLimit.minWords, executiveLimit.maxWords),
-          DRD_DOCX_STYLE_IDS.CAPTION
+          contract.criticalGaps ?? placeholder(executiveLimit.minWords, executiveLimit.maxWords),
+          contract.criticalGaps ? DRD_DOCX_STYLE_IDS.BODY : DRD_DOCX_STYLE_IDS.CAPTION
         ),
       ],
     },
@@ -476,20 +483,29 @@ export function buildAssessmentDrdReportSchema(contract: AssessmentReportContrac
       blocks: [
         paragraph(
           'final-placeholder',
-          placeholder(finalLimit.minWords, finalLimit.maxWords),
-          DRD_DOCX_STYLE_IDS.CAPTION
+          contract.finalConclusions ?? placeholder(finalLimit.minWords, finalLimit.maxWords),
+          contract.finalConclusions ? DRD_DOCX_STYLE_IDS.BODY : DRD_DOCX_STYLE_IDS.CAPTION
         ),
         heading('program-decision-heading', 'Linia decyzyjna programu', 2),
         table(
           'program-decision',
           ['Pole', 'Treść'],
           [
-            ['Kierunek', placeholder(decisionLineLimit.minWords, decisionLineLimit.maxWords)],
-            ['Priorytet', placeholder(decisionLineLimit.minWords, decisionLineLimit.maxWords)],
+            [
+              'Kierunek',
+              contract.programDecisionLine?.direction ??
+                placeholder(decisionLineLimit.minWords, decisionLineLimit.maxWords),
+            ],
+            [
+              'Priorytet',
+              contract.programDecisionLine?.priority ??
+                placeholder(decisionLineLimit.minWords, decisionLineLimit.maxWords),
+            ],
             ['Horyzont', placeholder(decisionLineLimit.minWords, decisionLineLimit.maxWords)],
             [
               'Warunek sukcesu',
-              placeholder(decisionLineLimit.minWords, decisionLineLimit.maxWords),
+              contract.programDecisionLine?.successCondition ??
+                placeholder(decisionLineLimit.minWords, decisionLineLimit.maxWords),
             ],
           ]
         ),
