@@ -1,0 +1,823 @@
+{
+  "familyACount": 17,
+  "familyBCount": 45,
+  "serverRoutesDirectoryExists": false,
+  "buildGeneratorSearchHits": [],
+  "rows": [
+    {
+      "file": "server/src/routes/preferences.routes.ts",
+      "family": "A",
+      "textSearchHits": [],
+      "gatewayTextHits": [],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/notificationSettings.routes.ts",
+      "family": "A",
+      "textSearchHits": [],
+      "gatewayTextHits": [],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/user-appearance.routes.ts",
+      "family": "A",
+      "textSearchHits": [],
+      "gatewayTextHits": [],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/user-availability.routes.ts",
+      "family": "A",
+      "textSearchHits": [],
+      "gatewayTextHits": [],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/user-contact.routes.ts",
+      "family": "A",
+      "textSearchHits": [],
+      "gatewayTextHits": [],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/user-data-controls.routes.ts",
+      "family": "A",
+      "textSearchHits": [],
+      "gatewayTextHits": [],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/user-keyboard-shortcuts.routes.ts",
+      "family": "A",
+      "textSearchHits": [],
+      "gatewayTextHits": [],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/user-privacy-extended.routes.ts",
+      "family": "A",
+      "textSearchHits": [],
+      "gatewayTextHits": [],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/user-professional-profile.routes.ts",
+      "family": "A",
+      "textSearchHits": [],
+      "gatewayTextHits": [],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/user-profile-completeness.routes.ts",
+      "family": "A",
+      "textSearchHits": [],
+      "gatewayTextHits": [],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/user-profile-extended.routes.ts",
+      "family": "A",
+      "textSearchHits": [],
+      "gatewayTextHits": [],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/user-security-advanced.routes.ts",
+      "family": "A",
+      "textSearchHits": [],
+      "gatewayTextHits": [],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/user-settings-history.routes.ts",
+      "family": "A",
+      "textSearchHits": [],
+      "gatewayTextHits": [],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/user-settings-templates.routes.ts",
+      "family": "A",
+      "textSearchHits": [],
+      "gatewayTextHits": [],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/userGoals.routes.ts",
+      "family": "A",
+      "textSearchHits": [],
+      "gatewayTextHits": [],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/userIntegrations.routes.ts",
+      "family": "A",
+      "textSearchHits": [],
+      "gatewayTextHits": [],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/userOrgs.routes.ts",
+      "family": "A",
+      "textSearchHits": [],
+      "gatewayTextHits": [],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/ai/ai-ab-testing.routes",
+      "family": "B",
+      "textSearchHits": [
+        "server/src/routes/ai/index.ts:11:import aiAbTestingRoutes from './ai-ab-testing.routes.js';"
+      ],
+      "gatewayTextHits": [],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/ai/ai-analytics.routes",
+      "family": "B",
+      "textSearchHits": [
+        "server/src/Gateway.ts:44:import aiAnalyticsRoutes from './routes/ai/ai-analytics.routes.js';",
+        "server/src/routes/ai/index.ts:12:import aiAnalyticsRoutesV1 from './ai-analytics.routes.js';"
+      ],
+      "gatewayTextHits": [
+        "server/src/Gateway.ts:44:import aiAnalyticsRoutes from './routes/ai/ai-analytics.routes.js';"
+      ],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/ai/ai-budgets.routes",
+      "family": "B",
+      "textSearchHits": [
+        "server/src/Gateway.ts:45:import aiBudgetsRoutes from './routes/ai/ai-budgets.routes.js';",
+        "server/src/routes/ai/index.ts:13:import aiBudgetsRoutes from './ai-budgets.routes.js';",
+        "server/src/services/aiCostControlService.ts:270:// routes/ai-budgets.routes.ts and routes/ai/ai-budgets.routes.ts). The only live caller of"
+      ],
+      "gatewayTextHits": [
+        "server/src/Gateway.ts:45:import aiBudgetsRoutes from './routes/ai/ai-budgets.routes.js';"
+      ],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/ai/ai-development.routes",
+      "family": "B",
+      "textSearchHits": [
+        "server/src/Gateway.ts:46:import aiDevelopmentRoutes from './routes/ai/ai-development.routes.js';",
+        "server/src/routes/ai/index.ts:14:import aiDevelopmentRoutes from './ai-development.routes.js';"
+      ],
+      "gatewayTextHits": [
+        "server/src/Gateway.ts:46:import aiDevelopmentRoutes from './routes/ai/ai-development.routes.js';"
+      ],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/ai/ai-drafts.routes",
+      "family": "B",
+      "textSearchHits": [
+        "server/src/Gateway.ts:47:import aiDraftsRoutes from './routes/ai/ai-drafts.routes.js';",
+        "server/src/routes/ai/index.ts:15:import aiDraftsRoutes from './ai-drafts.routes.js';"
+      ],
+      "gatewayTextHits": [
+        "server/src/Gateway.ts:47:import aiDraftsRoutes from './routes/ai/ai-drafts.routes.js';"
+      ],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/ai/ai-feedback.routes",
+      "family": "B",
+      "textSearchHits": [
+        "server/src/Gateway.ts:48:import aiFeedbackRoutes from './routes/ai/ai-feedback.routes.js';",
+        "server/src/routes/ai/index.ts:16:import aiFeedbackRoutes from './ai-feedback.routes.js';"
+      ],
+      "gatewayTextHits": [
+        "server/src/Gateway.ts:48:import aiFeedbackRoutes from './routes/ai/ai-feedback.routes.js';"
+      ],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/ai/ai-infrastructure.routes",
+      "family": "B",
+      "textSearchHits": [
+        "server/src/Gateway.ts:49:import aiInfrastructureRoutes from './routes/ai/ai-infrastructure.routes.js';",
+        "server/src/routes/ai/index.ts:18:import aiInfrastructureRoutes from './ai-infrastructure.routes.js';"
+      ],
+      "gatewayTextHits": [
+        "server/src/Gateway.ts:49:import aiInfrastructureRoutes from './routes/ai/ai-infrastructure.routes.js';"
+      ],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/ai/ai-memory.routes",
+      "family": "B",
+      "textSearchHits": [
+        "server/src/Gateway.ts:50:import aiMemoryRoutes from './routes/ai/ai-memory.routes.js';",
+        "server/src/routes/ai/index.ts:19:import aiMemoryRoutesV1 from './ai-memory.routes.js';",
+        "server/src/routes/ai/index.ts:56:// /memory route only, backed by ai-memory.routes.ts + AIMemoryController guards."
+      ],
+      "gatewayTextHits": [
+        "server/src/Gateway.ts:50:import aiMemoryRoutes from './routes/ai/ai-memory.routes.js';"
+      ],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/ai/ai-nudges.routes",
+      "family": "B",
+      "textSearchHits": [
+        "server/src/routes/ai/index.ts:20:import aiNudgesRoutes from './ai-nudges.routes.js';"
+      ],
+      "gatewayTextHits": [],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/ai/ai-operations.routes",
+      "family": "B",
+      "textSearchHits": [
+        "server/src/Gateway.ts:51:import aiOperationsRoutes from './routes/ai/ai-operations.routes.js';",
+        "server/src/routes/ai/index.ts:21:import aiOperationsRoutes from './ai-operations.routes.js';"
+      ],
+      "gatewayTextHits": [
+        "server/src/Gateway.ts:51:import aiOperationsRoutes from './routes/ai/ai-operations.routes.js';"
+      ],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/ai/ai-preferences-extended.routes",
+      "family": "B",
+      "textSearchHits": [
+        "server/src/Gateway.ts:52:import aiPreferencesExtendedRoutes from './routes/ai/ai-preferences-extended.routes.js';",
+        "server/src/routes/ai/index.ts:22:import aiPreferencesExtendedRoutes from './ai-preferences-extended.routes.js';"
+      ],
+      "gatewayTextHits": [
+        "server/src/Gateway.ts:52:import aiPreferencesExtendedRoutes from './routes/ai/ai-preferences-extended.routes.js';"
+      ],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/ai/ai-prompts.routes",
+      "family": "B",
+      "textSearchHits": [
+        "server/src/Gateway.ts:61:import aiPromptsRoutes from './routes/ai-prompts.routes.js';",
+        "server/src/routes/ai/ai-prompts.routes.ts:4:import canonicalAIPromptsRoutes from '../ai-prompts.routes.js';",
+        "server/src/routes/ai/index.ts:23:import aiPromptsRoutes from './ai-prompts.routes.js';"
+      ],
+      "gatewayTextHits": [
+        "server/src/Gateway.ts:61:import aiPromptsRoutes from './routes/ai-prompts.routes.js';"
+      ],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/ai/ai-security.routes",
+      "family": "B",
+      "textSearchHits": [
+        "server/src/Gateway.ts:53:import aiSecurityRoutes from './routes/ai/ai-security.routes.js';",
+        "server/src/routes/ai/index.ts:24:import aiSecurityRoutes from './ai-security.routes.js';"
+      ],
+      "gatewayTextHits": [
+        "server/src/Gateway.ts:53:import aiSecurityRoutes from './routes/ai/ai-security.routes.js';"
+      ],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/ai/ai-settings.routes",
+      "family": "B",
+      "textSearchHits": [
+        "server/src/Gateway.ts:54:import aiSettingsRoutes from './routes/ai/ai-settings.routes.js';",
+        "server/src/routes/ai/index.ts:25:import aiSettingsRoutes from './ai-settings.routes.js';",
+        "server/src/services/aiSettingsService.ts:6:* Supported methods (used by ai-settings.routes.ts):"
+      ],
+      "gatewayTextHits": [
+        "server/src/Gateway.ts:54:import aiSettingsRoutes from './routes/ai/ai-settings.routes.js';"
+      ],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/ai/ai-training.routes",
+      "family": "B",
+      "textSearchHits": [
+        "server/src/Gateway.ts:55:import aiTrainingRoutes from './routes/ai/ai-training.routes.js';",
+        "server/src/routes/ai/index.ts:26:import aiTrainingRoutes from './ai-training.routes.js';"
+      ],
+      "gatewayTextHits": [
+        "server/src/Gateway.ts:55:import aiTrainingRoutes from './routes/ai/ai-training.routes.js';"
+      ],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/ai/aiActions.routes",
+      "family": "B",
+      "textSearchHits": [
+        "server/src/routes/ai/index.ts:28:import aiActionsRoutes from './aiActions.routes.js';"
+      ],
+      "gatewayTextHits": [],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/ai/aiAnalytics.routes",
+      "family": "B",
+      "textSearchHits": [
+        "server/src/Gateway.ts:56:import aiAnalyticsRoutesV2 from './routes/ai/aiAnalytics.routes.js';",
+        "server/src/routes/ai/aiAnalytics.routes.ts:11:logger.info(`[aiAnalytics.routes] Request: ${req.method} ${req.url}`);",
+        "server/src/routes/ai/index.ts:29:import aiAnalyticsRoutesV2 from './aiAnalytics.routes.js';"
+      ],
+      "gatewayTextHits": [
+        "server/src/Gateway.ts:56:import aiAnalyticsRoutesV2 from './routes/ai/aiAnalytics.routes.js';"
+      ],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/ai/aiAsync.routes",
+      "family": "B",
+      "textSearchHits": [
+        "server/src/Gateway.ts:57:import aiAsyncRoutes from './routes/ai/aiAsync.routes.js';",
+        "server/src/routes/ai/index.ts:30:import aiAsyncRoutes from './aiAsync.routes.js';"
+      ],
+      "gatewayTextHits": [
+        "server/src/Gateway.ts:57:import aiAsyncRoutes from './routes/ai/aiAsync.routes.js';"
+      ],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/ai/aiCoach.routes",
+      "family": "B",
+      "textSearchHits": [
+        "server/src/routes/ai/index.ts:31:import aiCoachRoutes from './aiCoach.routes.js';"
+      ],
+      "gatewayTextHits": [],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/ai/aiExplain.routes",
+      "family": "B",
+      "textSearchHits": [
+        "server/src/routes/ai/index.ts:32:import aiExplainRoutes from './aiExplain.routes.js';"
+      ],
+      "gatewayTextHits": [],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/ai/aiLearning.routes",
+      "family": "B",
+      "textSearchHits": [
+        "server/src/routes/ai/index.ts:33:import aiLearningRoutes from './aiLearning.routes.js';"
+      ],
+      "gatewayTextHits": [],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/ai/aiMemory.routes",
+      "family": "B",
+      "textSearchHits": [],
+      "gatewayTextHits": [],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/ai/aiPlaybooks.routes",
+      "family": "B",
+      "textSearchHits": [
+        "server/src/routes/ai/index.ts:34:import aiPlaybooksRoutes from './aiPlaybooks.routes.js';",
+        "server/src/routes/aiPlaybooks.routes.ts:8:export { default } from './ai/aiPlaybooks.routes.js';"
+      ],
+      "gatewayTextHits": [],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/notifications/notification-rules.routes",
+      "family": "B",
+      "textSearchHits": [
+        "server/src/Gateway.ts:203:import notificationRulesRoutes from './routes/notifications/notification-rules.routes.js';",
+        "server/src/routes/notifications/index.ts:8:import notificationRulesRoutes from './notification-rules.routes.js';"
+      ],
+      "gatewayTextHits": [
+        "server/src/Gateway.ts:203:import notificationRulesRoutes from './routes/notifications/notification-rules.routes.js';"
+      ],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/notifications/notificationSettings.routes",
+      "family": "B",
+      "textSearchHits": [
+        "server/src/Gateway.ts:205:import notificationSettingsRoutes from './routes/notifications/notificationSettings.routes.js';",
+        "server/src/routes/notifications/index.ts:10:import notificationSettingsRoutes from './notificationSettings.routes.js';"
+      ],
+      "gatewayTextHits": [
+        "server/src/Gateway.ts:205:import notificationSettingsRoutes from './routes/notifications/notificationSettings.routes.js';"
+      ],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/notifications/notifications.routes",
+      "family": "B",
+      "textSearchHits": [
+        "server/src/Gateway.ts:204:import notificationRoutes from './routes/notifications/notifications.routes.js';",
+        "server/src/routes/notifications/index.ts:9:import notificationsRoutes from './notifications.routes.js';"
+      ],
+      "gatewayTextHits": [
+        "server/src/Gateway.ts:204:import notificationRoutes from './routes/notifications/notifications.routes.js';"
+      ],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/user/loginHistory.routes",
+      "family": "B",
+      "textSearchHits": [
+        "server/src/Gateway.ts:400:import loginHistoryRoutes from './routes/user/loginHistory.routes.js';",
+        "server/src/routes/user/index.ts:8:import loginHistoryRoutes from './loginHistory.routes.js';"
+      ],
+      "gatewayTextHits": [
+        "server/src/Gateway.ts:400:import loginHistoryRoutes from './routes/user/loginHistory.routes.js';"
+      ],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/user/preferences.routes",
+      "family": "B",
+      "textSearchHits": [
+        "server/src/Gateway.ts:401:import preferencesRoutes from './routes/user/preferences.routes.js';",
+        "server/src/routes/user/index.ts:9:import preferencesRoutes from './preferences.routes.js';"
+      ],
+      "gatewayTextHits": [
+        "server/src/Gateway.ts:401:import preferencesRoutes from './routes/user/preferences.routes.js';"
+      ],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/user/sessions.routes",
+      "family": "B",
+      "textSearchHits": [
+        "server/src/Gateway.ts:35:import sessionsAdminRoutes from './routes/admin/sessions.routes.js';",
+        "server/src/Gateway.ts:402:import sessionsRoutes from './routes/user/sessions.routes.js';",
+        "server/src/routes/__tests__/sessions.routes.test.ts:4:import routes from '../admin/sessions.routes.js';",
+        "server/src/routes/user/index.ts:10:import sessionsRoutes from './sessions.routes.js';"
+      ],
+      "gatewayTextHits": [
+        "server/src/Gateway.ts:35:import sessionsAdminRoutes from './routes/admin/sessions.routes.js';",
+        "server/src/Gateway.ts:402:import sessionsRoutes from './routes/user/sessions.routes.js';"
+      ],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/user/user-appearance.routes",
+      "family": "B",
+      "textSearchHits": [
+        "server/src/routes/user/index.ts:11:import userAppearanceRoutes from './user-appearance.routes.js';"
+      ],
+      "gatewayTextHits": [],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/user/user-availability.routes",
+      "family": "B",
+      "textSearchHits": [
+        "server/src/Gateway.ts:403:import userAvailabilityRoutes from './routes/user/user-availability.routes.js';",
+        "server/src/routes/user/index.ts:12:import userAvailabilityRoutes from './user-availability.routes.js';"
+      ],
+      "gatewayTextHits": [
+        "server/src/Gateway.ts:403:import userAvailabilityRoutes from './routes/user/user-availability.routes.js';"
+      ],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/user/user-contact.routes",
+      "family": "B",
+      "textSearchHits": [
+        "server/src/Gateway.ts:404:import userContactRoutes from './routes/user/user-contact.routes.js';",
+        "server/src/routes/user/index.ts:13:import userContactRoutes from './user-contact.routes.js';"
+      ],
+      "gatewayTextHits": [
+        "server/src/Gateway.ts:404:import userContactRoutes from './routes/user/user-contact.routes.js';"
+      ],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/user/user-data-controls.routes",
+      "family": "B",
+      "textSearchHits": [
+        "server/src/Gateway.ts:405:import userDataControlsRoutes from './routes/user/user-data-controls.routes.js';",
+        "server/src/routes/user/index.ts:14:import userDataControlsRoutes from './user-data-controls.routes.js';"
+      ],
+      "gatewayTextHits": [
+        "server/src/Gateway.ts:405:import userDataControlsRoutes from './routes/user/user-data-controls.routes.js';"
+      ],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/user/user-keyboard-shortcuts.routes",
+      "family": "B",
+      "textSearchHits": [
+        "server/src/routes/user/index.ts:15:import userKeyboardShortcutsRoutes from './user-keyboard-shortcuts.routes.js';"
+      ],
+      "gatewayTextHits": [],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/user/user-privacy-extended.routes",
+      "family": "B",
+      "textSearchHits": [
+        "server/src/Gateway.ts:406:import userPrivacyExtendedRoutes from './routes/user/user-privacy-extended.routes.js';",
+        "server/src/routes/user/index.ts:16:import userPrivacyExtendedRoutes from './user-privacy-extended.routes.js';"
+      ],
+      "gatewayTextHits": [
+        "server/src/Gateway.ts:406:import userPrivacyExtendedRoutes from './routes/user/user-privacy-extended.routes.js';"
+      ],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/user/user-professional-profile.routes",
+      "family": "B",
+      "textSearchHits": [
+        "server/src/Gateway.ts:407:import userProfessionalProfileRoutes from './routes/user/user-professional-profile.routes.js';",
+        "server/src/routes/user/index.ts:17:import userProfessionalProfileRoutes from './user-professional-profile.routes.js';"
+      ],
+      "gatewayTextHits": [
+        "server/src/Gateway.ts:407:import userProfessionalProfileRoutes from './routes/user/user-professional-profile.routes.js';"
+      ],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/user/user-profile-completeness.routes",
+      "family": "B",
+      "textSearchHits": [
+        "server/src/Gateway.ts:408:import userProfileCompletenessRoutes from './routes/user/user-profile-completeness.routes.js';",
+        "server/src/routes/user/index.ts:18:import userProfileCompletenessRoutes from './user-profile-completeness.routes.js';"
+      ],
+      "gatewayTextHits": [
+        "server/src/Gateway.ts:408:import userProfileCompletenessRoutes from './routes/user/user-profile-completeness.routes.js';"
+      ],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/user/user-profile-extended.routes",
+      "family": "B",
+      "textSearchHits": [
+        "server/src/Gateway.ts:409:import userProfileExtendedRoutes from './routes/user/user-profile-extended.routes.js';",
+        "server/src/routes/user/index.ts:19:import userProfileExtendedRoutes from './user-profile-extended.routes.js';"
+      ],
+      "gatewayTextHits": [
+        "server/src/Gateway.ts:409:import userProfileExtendedRoutes from './routes/user/user-profile-extended.routes.js';"
+      ],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/user/user-security-advanced.routes",
+      "family": "B",
+      "textSearchHits": [
+        "server/src/Gateway.ts:410:import userSecurityAdvancedRoutes from './routes/user/user-security-advanced.routes.js';",
+        "server/src/routes/user/index.ts:20:import userSecurityAdvancedRoutes from './user-security-advanced.routes.js';"
+      ],
+      "gatewayTextHits": [
+        "server/src/Gateway.ts:410:import userSecurityAdvancedRoutes from './routes/user/user-security-advanced.routes.js';"
+      ],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/user/user-settings-history.routes",
+      "family": "B",
+      "textSearchHits": [
+        "server/src/routes/user/index.ts:21:import userSettingsHistoryRoutes from './user-settings-history.routes.js';"
+      ],
+      "gatewayTextHits": [],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/user/user-settings-templates.routes",
+      "family": "B",
+      "textSearchHits": [
+        "server/src/routes/user/index.ts:22:import userSettingsTemplatesRoutes from './user-settings-templates.routes.js';"
+      ],
+      "gatewayTextHits": [],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/user/userGoals.routes",
+      "family": "B",
+      "textSearchHits": [
+        "server/src/Gateway.ts:411:import userGoalsRoutes from './routes/user/userGoals.routes.js';",
+        "server/src/routes/user/index.ts:23:import userGoalsRoutes from './userGoals.routes.js';"
+      ],
+      "gatewayTextHits": [
+        "server/src/Gateway.ts:411:import userGoalsRoutes from './routes/user/userGoals.routes.js';"
+      ],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/user/userIntegrations.routes",
+      "family": "B",
+      "textSearchHits": [
+        "server/src/routes/user/index.ts:24:import userIntegrationsRoutes from './userIntegrations.routes.js';"
+      ],
+      "gatewayTextHits": [],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/user/userOrgs.routes",
+      "family": "B",
+      "textSearchHits": [
+        "server/src/Gateway.ts:412:import userOrgsRoutes from './routes/user/userOrgs.routes.js';",
+        "server/src/routes/user/index.ts:25:import userOrgsRoutes from './userOrgs.routes.js';"
+      ],
+      "gatewayTextHits": [
+        "server/src/Gateway.ts:412:import userOrgsRoutes from './routes/user/userOrgs.routes.js';"
+      ],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    },
+    {
+      "file": "server/src/routes/user/users.routes",
+      "family": "B",
+      "textSearchHits": [
+        "server/src/Gateway.ts:413:import userRoutes from './routes/user/users.routes.js';",
+        "server/src/routes/user/index.ts:26:import usersRoutes from './users.routes.js';",
+        "server/src/services/legacyCutover/registry/settings.ts:15:*    `PUT /api/users/:id` (`server/src/routes/user/users.routes.ts:78` ->",
+        "server/src/services/legacyCutover/registry/settings.ts:70:'PUT /api/users/:id -> UserController.updateUser (users.routes.ts:78, UserController.ts:182-482), ' +"
+      ],
+      "gatewayTextHits": [
+        "server/src/Gateway.ts:413:import userRoutes from './routes/user/users.routes.js';"
+      ],
+      "targetedImporters": [],
+      "dynamicTargetedImporters": [],
+      "generatedByBuild": false,
+      "verdict": "USUN"
+    }
+  ]
+}

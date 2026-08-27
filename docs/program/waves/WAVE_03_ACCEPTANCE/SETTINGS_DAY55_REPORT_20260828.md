@@ -359,6 +359,18 @@ Dowód mutacyjny: po sztucznym wyłączeniu allowlisty próba flagi i próba nar
 
 Werdykt §D.2: **BRAK TYLNYCH DRZWI** — po naprawie ustawienia osobiste nie mogą zmienić dostępności flagi ani utworzyć sesji narzędzia; wynik obejmuje kody HTTP, niezależne liczniki tabel oraz czerwony/zielony dowód mutacyjny.
 
+## §C.1 — martwe opakowania i stuby tras
+
+Pomiar własny: rodzina A ma 38 wrapperów w repo i dokładnie 17 w zakresie Settings; rodzina B ma 88 plików bez rozszerzenia globalnie i dokładnie 45 w `routes/user|notifications|ai`. Dosłowny wynik kontroli brakującego źródła rodziny A: `ls: server/routes/: No such file or directory`.
+
+Pełna tabela 62 plików znajduje się w `SETTINGS_DAY55_C1_ROUTE_WRAPPERS_EVIDENCE.json`. Każdy wiersz zawiera: rodzinę, wynik tekstowego wyszukania nazwy, dosłowne trafienia z `Gateway.ts`, importery rozstrzygnięte do dokładnej ścieżki docelowej, dynamiczne importery, wynik generatora i werdykt. Rozstrzyganie ścieżek świadomie odróżnia import `./x.routes.js`, który wskazuje źródło `x.routes.ts`, od obok leżącego pliku `x.routes` bez rozszerzenia; samo dopasowanie basename byłoby fałszywym importerem.
+
+Wynik per plik: `62×USUŃ`, `0×ZOSTAJE`, `0×DO DECYZJI`. Dla każdego z 62: `targetedImporters=[]`, `dynamicTargetedImporters=[]`; dla każdego wrappera A dokładny import z `Gateway.ts` do wrappera root jest pusty. Tekstowe trafienia basename w Gateway, jeżeli występują, wskazują żywy plik w podkatalogu i są zachowane w tabeli zamiast ukryte.
+
+Kontrola generowania rodziny B: wyszukanie `.routes'` znalazło tylko niezwiązany regex plików testowych w `scripts/testing/test-runner.ts`; wyszukanie `extensionless|writeFileSync.*\.routes` znalazło wyłącznie komentarz o extensionless test files. Nie istnieje generator route-stubów. `git log -3 -- server/src/routes/user/preferences.routes` dał jeden historyczny commit dokumentacyjny `70cc325d8f`, bez sygnału generowania.
+
+Werdykt §C.1: `ZROBIONE_WG_DoD`; usuwanie następuje dopiero w osobnym §C.2.
+
 ## Pomiar zasięgu testów
 
 - (a) z pełnym env: serwer 79 testów (`77 PASS`, `2 SKIPPED`, 0 asercji FAIL; pakiety PG nie wykonały przypadków), klient 204 (`203 PASS`, `1 FAIL`).
