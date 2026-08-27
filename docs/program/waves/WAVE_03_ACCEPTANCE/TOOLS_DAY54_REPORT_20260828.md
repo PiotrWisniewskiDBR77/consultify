@@ -135,7 +135,12 @@ zakazane `documentStudio/**`.
 werdyktu przed usunięciem, a rozstrzygnięcie właściciela nie podaje listy
 narzędzi ani autoryzacji do skasowania kontraktu historycznego.
 
-`PRZEBIEG` HTTP zostanie dodany po uruchomieniu realnego ApiGateway.
+`PRZEBIEG` przez realny `ApiGateway`, realny JWT, realne membership i realny PG:
+`dynamic-swot` → 200; znany `market-forces` → 409 z
+`This tool is inactive and cannot start a session yet`; nieznany
+`nie-ma-takiego-narzedzia` → 200. Pakiet 3 PASS / 0 FAIL / 0 SKIPPED,
+`--retry=0`, `ENABLE_V8_GLOBAL=true`. Potwierdza to realną bramkę katalogu A
+oraz osobną dziurę: nieznany typ omija warunek `availability.exists &&`.
 
 ## ★★ WYNIK GŁÓWNY nr 2 — TRZY CICHE POŁYKI: przed i po (§A.2)
 
@@ -174,22 +179,22 @@ potwierdzenia pakietów metodycznych i praw.
 
 ## Pozycje — tabela zbiorcza
 
-| Pozycja | Stan                        | Zakres po rozstrzygnięciu właściciela                 |
-| ------- | --------------------------- | ----------------------------------------------------- |
-| A.1     | `CZĘŚCIOWO`                 | pomiar katalogów i werdykt martwego kodu; HTTP w toku |
-| A.2     | `W_TOKU`                    | trzy ciche połyki                                     |
-| A.3     | `CZĘŚCIOWO`                 | 5xx degraduje tylko Insights; brak zrzutów 3365       |
-| A.4     | `POZA_ZAKRESEM_WYKONAWCZYM` | bez flipu flagi                                       |
-| B.1     | `W_TOKU`                    | forward-port `.docx`                                  |
-| B.2     | `POZA_ZAKRESEM_WYKONAWCZYM` | produkt/kontrakt dla nowych formatów                  |
-| C.1     | `POZA_ZAKRESEM_WYKONAWCZYM` | właściciel wskazał węższy dyżur defektowy             |
-| C.2     | `CZĘŚCIOWO`                 | werdykt martwego kodu tylko w zakresie wskazanym      |
-| D.1     | `POZA_ZAKRESEM_WYKONAWCZYM` | brak autoryzacji do rozszerzenia dyżuru               |
-| D.2     | `POZA_ZAKRESEM_WYKONAWCZYM` | brak autoryzacji do rozszerzenia dyżuru               |
-| E.1     | `POZA_ZAKRESEM_WYKONAWCZYM` | brak autoryzacji do rozszerzenia dyżuru               |
-| F.1     | `CZĘŚCIOWO`                 | pytanie o listę narzędzi; bez produktu                |
-| R.1     | `W_TOKU`                    | wyłącznie dowiedzione defekty                         |
-| R.2     | `W_TOKU`                    | ten raport                                            |
+| Pozycja | Stan                        | Zakres po rozstrzygnięciu właściciela             |
+| ------- | --------------------------- | ------------------------------------------------- |
+| A.1     | `ZMIERZONE`                 | real Gateway 3/3; katalog bez zmian; luka unknown |
+| A.2     | `W_TOKU`                    | trzy ciche połyki                                 |
+| A.3     | `CZĘŚCIOWO`                 | 5xx degraduje tylko Insights; brak zrzutów 3365   |
+| A.4     | `POZA_ZAKRESEM_WYKONAWCZYM` | bez flipu flagi                                   |
+| B.1     | `W_TOKU`                    | forward-port `.docx`                              |
+| B.2     | `POZA_ZAKRESEM_WYKONAWCZYM` | produkt/kontrakt dla nowych formatów              |
+| C.1     | `POZA_ZAKRESEM_WYKONAWCZYM` | właściciel wskazał węższy dyżur defektowy         |
+| C.2     | `CZĘŚCIOWO`                 | werdykt martwego kodu tylko w zakresie wskazanym  |
+| D.1     | `POZA_ZAKRESEM_WYKONAWCZYM` | brak autoryzacji do rozszerzenia dyżuru           |
+| D.2     | `POZA_ZAKRESEM_WYKONAWCZYM` | brak autoryzacji do rozszerzenia dyżuru           |
+| E.1     | `POZA_ZAKRESEM_WYKONAWCZYM` | brak autoryzacji do rozszerzenia dyżuru           |
+| F.1     | `CZĘŚCIOWO`                 | pytanie o listę narzędzi; bez produktu            |
+| R.1     | `W_TOKU`                    | wyłącznie dowiedzione defekty                     |
+| R.2     | `W_TOKU`                    | ten raport                                        |
 
 ## ★ DOWODY OSIĄGALNOŚCI (Z21)
 
