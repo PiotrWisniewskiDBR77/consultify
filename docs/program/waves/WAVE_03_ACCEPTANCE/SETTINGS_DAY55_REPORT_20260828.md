@@ -24,6 +24,9 @@ Marker: `b3179d0a52603f62b5cd3673caa754c8fc3b0055`
 
 - Instrukcja porównawczo podawała 1063 pliki SQL i tyle samo zmierzono, ale liczba zastosowanych wpisów ledgera wynosi 858; to różne mianowniki zgodnie z §BLOK 0 pkt 5.
 - Pierwsza próba serwerowego zakresu z roota i ścieżkami `server/src/**` dała `0` testów; nie została uznana za PASS. Poprawny przebieg wymaga `cwd=server`, `--config vitest.config.ts` i ścieżek `src/**`.
+- §E.1 deklaruje dziesięć uwag, ale imiennie wskazuje osiem unikalnych ID; bezpiecznie rozliczono osiem, drugi rekord kolizyjnego ID i samą kolizję, bez wymyślania treści.
+- Komenda smoke C.2 z `server/vitest.config.ts` i rootową ścieżką nie znalazła testu; wiążący PASS pochodzi z rootowego configu i 49 wykonanych przypadków.
+- Korekta nadzorcy ogranicza migracje do `20261560–20261569`; dyżur nie utworzył ani nie zmienił migracji poza tym zakresem.
 
 ## §A.1 — inwentarz osiągalności
 
@@ -441,15 +444,72 @@ Pomiar wzrokiem dostępnego harnessu po polsku wykazał oba kształty przecieku:
 
 `scripts/check-list-canon.sh`: 171 plików, 394 = baseline, brak nowej regresji. Werdykt §F.1: `PARTIAL / EVIDENCE_MISSING` — pomiar mechaniczny i lista nadmiarowa są kompletne, ale wymagane 8/8 oglądów oraz remediacja 355 kluczy nie są zakończone.
 
+## Tabela zbiorcza pozycji
+
+| pozycja | werdykt | commit | dowód |
+| --- | --- | --- | --- |
+| A.1 | `ZROBIONE_WG_DoD` | `3606261018` | §A.1 |
+| A.2 | `ZROBIONE_WG_DoD` | `b46b32efd7` | §A.2 |
+| A.3 | `ZROBIONE_WG_DoD` | `58bc18ee98` | §A.3 |
+| A.4 | `ZROBIONE_WG_DoD` | `1c5dff73af` | §A.4 |
+| B.1 | `CZĘŚCIOWO` | `52444e2e8d` | §B.1 |
+| B.2 | `CZĘŚCIOWO` | `8040950f61` | §B.2 |
+| D.1 | `CZĘŚCIOWO` | `3aa0bba1d9` | §D.1 |
+| D.2 | `ZROBIONE_WG_DoD` | `73981dc2f2` | §D.2 |
+| C.1 | `ZROBIONE_WG_DoD` | `fe9dfba54b` | §C.1 |
+| C.2 | `ZROBIONE_WG_DoD` | `b35fd885ce` | §C.2 |
+| E.1 | `CZĘŚCIOWO` | `0f99784921` | §E.1 |
+| F.2 | `ZROBIONE_WG_DoD` | `f17ec88c81` | §F.2 |
+| F.1 | `CZĘŚCIOWO` | `6e1fa704e4` | §F.1 |
+| R.1 | `ZROBIONE_WG_DoD` | `bcd01cd7d7` | `MODULE_ACCEPTANCE.md`, STAN PO DYŻURZE 55 |
+| R.2 | `ZROBIONE_WG_DoD` | bieżący commit R.2 | niniejsza sekcja |
+
+## Pięć kształtów fałszywego „gotowe"
+
+Każdą pozycję oceniono pięcioma pytaniami: (1) realny Gateway/runtime, (2) test żywej trasy/ekranu, (3) asercje faktycznie wykonane bez ukrytego SKIP, (4) niezależny readback skutku, (5) wynik oparty na HTTP/DB/oczach, nie samym grep. A.2/A.4/B.2/D.1/D.2/F.2 mają odpowiednio dowody runtime, real-PG i readback opisane w swoich sekcjach; A.1/A.3/C.1/C.2/E.1/F.1/R.1/R.2 są z natury inwentarzem, statycznym wykonaniem lub dokumentacją, więc pytania runtime/readback są `N/D`, a nie sztucznym TAK. B.1 ma realny Gateway i 156 kodów HTTP, ale brak pełnego browser runtime 13 ekranów. B.2 ma 80 zapisów z niezależnym readbackiem, ale cztery zapisy notificationSettings pozostają SKIP. D.1 ma 5/5 real-PG oraz 8 zrzutów harnessu, lecz nie pełny zalogowany runtime. E.1 ma 2/2 strażnika i profilowy DOM/focus, lecz ogląd tylko 4/50. F.1 ma kompletny pomiar 47/1126/355, lecz tylko 4/8 grup i brak remediacji; dlatego żadna z tych pozycji nie dostała fałszywego pełnego werdyktu.
+
 ## Pomiar zasięgu testów
 
 - (a) z pełnym env: serwer 79 testów (`77 PASS`, `2 SKIPPED`, 0 asercji FAIL; pakiety PG nie wykonały przypadków), klient 204 (`203 PASS`, `1 FAIL`).
 - (b) bez kompletu env: serwer 79 (`67 PASS`, `12 SKIPPED`, proces zielony), klient 204 (`204 PASS`, lecz proces niezielony z powodu błędu pliku/suity). To potwierdza, że goły przebieg maskuje testy PG.
-- (c) zostanie wykonany po ostatnim commicie i porównany po nazwach.
+- (c) po R.1: próba serwera zachowała 79 nazw, ale uruchomiła 69 PASS / 10 SKIP i proces niezielony na pakiecie legacy-cutover; jedna nazwa została świadomie zastąpiona wariantem „rejects body-supplied actor-identity spoof fields”. Próba klienta przez listę plików baseline dała 200 PASS, lecz nie odtworzyła czterech nazw Password/Security, a jedna suite MappingDrift miała błąd mock-hoist. Te dwa przebiegi nie są równoważnym zielonym (c).
+
+Porównanie nazw (a)→(c): serwer `-1/+1` (zaostrzona nazwa spoof testu), klient `-4/+0`. Deklaracja: **ZASIĘG CZĘŚCIOWY**. Nie przepisuję cudzych liczb; wszystkie liczby pochodzą z własnych JSON `zasieg-a-*` i `zasieg-c-*`. Focused końcowy dowód C.2 to 49/49, a B.2 to 4 PASS / 1 jawny SKIP.
+
+## Z33 i dowody mutacyjne
+
+Każdy pakiet real-PG opisany w A.2, A.4, B.1, B.2, D.1 i D.2 dostał na jednej linii `RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres ENABLE_V8_GLOBAL=true ENABLE_TEST_AUTH_BYPASS=false RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE=enforce`, jawny lokalny `DATABASE_URL`, `JWT_SECRET` i `--retry=0`; logi zawierają `DB_IDENTITY=127.0.0.1:5852/cx_day55`. Mutacje czerwony→zielony: A.2 (sesje), A.4 (runtime DDL), B.2 (globalna ściana i cookie OAuth), D.2 (allowlista zdolności); komendy i wyniki są zapisane w odpowiadających sekcjach. Po każdym przywróceniu `git diff --check` był pusty dla cofanej mutacji.
+
+## Pliki przekrojowe, czerwone kontrakty i artefakty
+
+`git diff -- server/src/middleware/auth.middleware.ts server/src/Gateway.ts server/src/middleware/orgContext.middleware.ts` → pusty. Czerwony kontrakt notificationSettings pozostaje jawnym `it.skip` w B.2 (`EVIDENCE_MISSING`, licencja sprawdzona: zapis dopiero D.1); nie obchodzono licencji. Wszystkie artefakty są w `/private/tmp/consultify-settings-day55-artefakty/`; `SHA256SUMS.txt` zawiera 97 pozycji, w tym każdy PNG i JSON/TXT dowodowy. Najważniejsze zrzuty i ich pełne SHA są wypisane w D.1 i F.2.
+
+## Dług zastany
+
+- `cross-org-idor.test.ts`: nie jest dowodem cx_day55 bez zgodnego bezpiecznika nazwy DB; pozostawiony bez osłabiania.
+- 16 nadmiarowych kluczy `settings.sections.*`: lista w F.1, bez kasowania.
+- dwa magazyny żądań usunięcia (`gdpr_requests`, `account_deletion_requests`) — `SET-PF-003 OPEN_POLICY_CUTOVER`.
+- `SET-PF-004`: cleanup dokładnego fixture receipt nadal otwarty.
+- GDPR export czyta nieistniejące `users.name` i degraduje do `null`.
+- pełna polszczyzna, accent na boot, tokeny status-box i `startPage` pozostają backlogiem zmierzonym, nie naprawionym.
+
+## STOP-y
+
+Brak STOP-u całego dyżuru. Nie wystąpiło ryzyko utraty danych, połączenie z bazą zdalną, brak markera ani konflikt portów. Proceduralnych STOP-ów nie tworzono. Licencja sprawdzona: §0.0 instrukcji; pliki przekrojowe i `approvedMvpToolTypes.ts` pozostały bez zmian.
+
+## Brief wynikowy dla nadzorcy
+
+Dyżur pracował na związanym markerze i wyłącznie lokalnej bazie `cx_day55`. Naprawiono zmianę hasła i unieważnianie innych sesji oraz usunięto runtime DDL przez migrację z przydzielonego zakresu. Zmierzono 156 adresów HTTP przez realny Gateway. Wspólna ściana zapisów odrzuca odwołane członkostwo, obcy tenant i obcego użytkownika na 80 licencjonowanych zapisach. OAuth callback wiąże state z krótkotrwałym cookie sesji. Ustawienia deweloperskie nie mogą włączyć flag ani narzędzi. Cztery operacje właściciela mają real-PG readback i osiem zrzutów harnessu. Usunięto 62 martwe wrappery/stuby bez utraty 49 nazw testów tras. Dodano lokalny, fail-closed seed danych demo. Nie wykonano pełnego browser runtime dla B.1, Help 50/50 ani ośmiu grup F.1. Brakuje 355 polskich kluczy w 23 żywych plikach. Końcowy pełny pomiar (c) jest niezielony/nieporównywalny, więc zasięg deklaruję jako częściowy. `CLOSED_FINAL` właściciela, jego SHA i tag pozostały nietknięte. Największe ryzyko scalenia to szeroki wspólny middleware zapisu w `settings.routes.ts`; wymaga ponowienia pełnych suite po integracji. Właściciel nadal musi rozstrzygnąć G12, pełny per-screen system wizualny i guided replay. Nie wykonano deployu, realnego OAuth ani wysyłki poczty.
 
 NIE przepisałem liczb nadzorcy ani autora instrukcji ani z `MODULE_ACCEPTANCE.md` — zmierzyłem sam.
 
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
-- Nie wykonano jeszcze pomiarów HTTP pozycji A.2–D.2; ich zachowanie pozostaje niezweryfikowane do właściwych pozycji.
-- Nie wykonano jeszcze własnych zrzutów; wygląd i stany wizualne pozostają niezweryfikowane.
+- Pełny browser runtime 13 sekcji bez menu w B.1 pozostaje niezweryfikowany; harness nie zastępuje aplikacji zalogowanej.
+- Cztery zapisy notificationSettings z B.2 pozostają `EVIDENCE_MISSING` z jawnym SKIP.
+- Help AC-004 nie ma oglądu 50/50 sekcji; istnieje tylko pełny strażnik statyczny i ogląd 4/50.
+- F.1 nie ma oglądu 8/8 grup ani remediacji 355 kluczy.
+- Nie sprawdzono wszystkich czterech gałęzi każdego `recovery/*` poza trasami objętymi A.3/D.1.
+- Końcowy przebieg zasięgu (c) nie jest zielonym odpowiednikiem (a).
+- Zrzuty D.1/F.2 pochodzą z lokalnego harnessu, nie pełnego zalogowanego runtime.
+- Nie wykonano owner replay, responsive 200%, pełnej klawiatury ani fizycznego urządzenia.
