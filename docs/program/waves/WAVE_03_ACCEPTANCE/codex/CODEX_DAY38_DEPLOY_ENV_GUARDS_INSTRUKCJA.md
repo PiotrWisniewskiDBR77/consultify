@@ -129,7 +129,7 @@ w raporcie, nie do kodu:**
 1. Punktem wyjścia jest **gałąź `codex/m03-admin-20260824`**, przypięta do
    commitu-markera podanego niżej.
 
-   **SHA markera: «MARKER_SHA»**
+   **SHA markera: 3e707a9d3c**
 
    > **★★ RAMKA WARTOWNIKA — CAŁA W BLOKU CYTOWANYM.**
    >
@@ -1371,7 +1371,7 @@ zgadywania.
 
 | # | Sytuacja | Co robisz |
 | --- | --- | --- |
-| S1 | w polu markera stoi wartownik `«MARKER_SHA»` | zakładasz raport, pozycja STOP z treścią ramki, koniec |
+| S1 | w polu markera stoi wartownik `3e707a9d3c` | zakładasz raport, pozycja STOP z treścią ramki, koniec |
 | S2 | `MARKER BRAK` — marker nie jest przodkiem tipa albo gałąź nie istnieje | j.w., z dosłownym wynikiem obu komend |
 | S3 | **stwierdzone naruszenie Z28** — doszło do połączenia z Railway/demo/stagingiem/produkcją | natychmiastowe przerwanie, raport z opisem: co, kiedy, czy był **zapis**; nie „naprawiasz" tego dalszą pracą |
 | S4 | stwierdzony **realny zapis** do bazy spoza dyżuru (Z9) | j.w. |
