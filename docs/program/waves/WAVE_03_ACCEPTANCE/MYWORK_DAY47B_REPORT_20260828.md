@@ -283,10 +283,57 @@ odwołane wydarzenie i pusty dzień. Odwołane wydarzenie znika także z
 `GET /calendar/conflicts`, ponieważ zapytanie ma literalny filtr
 `status <> 'cancelled'`.
 
+## B.1 — STOP na realnym Gateway
+
+Próba wymaganej ścieżki `POST /api/my-work/calendar/events` przez realny
+`ApiGateway`, realne auth/membership i realny PG zakończyła się:
+
+```text
+[calendar-create-event] Cannot read properties of undefined (reading 'query')
+calendar.routes.ts:854:36
+POST /api/my-work/calendar/events -> 500
+expected 201, received 500
+Test Files 1 failed (1); Tests 5 skipped (5); --retry=0
+```
+
+Przyczyną jest `const db = req.db!` w handlerze, podczas gdy realny łańcuch
+Gateway nie dostarczył `req.db`. Nie zamontowano gołego routera i nie
+podstawiono atrapy DB, bo złamałoby to Z21/Z22. B.1 jest pozycją dowodową, a
+ramka licencji pozwala zmieniać `calendar.routes.ts` w B.4 (jawna odmowa
+recurrence) i B.5 (spotkania), nie pozwala natomiast naprawiać middleware ani
+kontraktu wstrzykiwania DB dla B.1. Dlatego wynik to **STOP / BLOCKED**, bez
+zgadywania i bez obejścia.
+
+Teza zlecenia „front nie woła zapisu” została **OBALONA na poziomie kodu**:
+`CalendarCreateEventModal.tsx` woła `Api.createMyWorkCalendarEvent`, a klient
+wykonuje POST w `src/services/api.ts:12567`. Nie została jednak dowiedziona
+sprawność runtime — realny Gateway zwraca 500.
+
+Z powodu STOP-u B.2, B.3 i B.6 nie zostały rozpoczęte. W szczególności nie
+dodano wołaczy PUT/DELETE, nie włączono flagi i nie wykonano zrzutów.
+
+## Bezpieczniki i sprzątanie
+
+- Chroniony checkout właściciela nie został przełączony ani zmieniony; prace
+  wykonano w `/private/tmp/consultify-mywork-day47b`.
+- `git stash` nie został użyty; `git stash list` był pusty.
+- Kontener `cx-day47-pg` usunięto przez `docker rm -fv`; końcowy filtr
+  `docker ps -a --filter name=cx-day47-pg` był pusty.
+- Port harnessu 3355 nie nasłuchiwał.
+- Niezacommitowany, czerwony eksperyment B.1 i `junit.xml` przeniesiono
+  odzyskiwalnie do `/private/tmp/consultify-mywork-day47b-scratch/`, nie przez
+  stash. Branch nie zawiera testu udającego PASS.
+- Nie wykonano push, merge, deploy ani zmiany flagi.
+
 ## Pozycje
 
-| Pozycja | Status          | Commit             |
-| ------- | --------------- | ------------------ |
-| A.1     | W TOKU          | —                  |
-| A.2     | ZROBIONE_WG_DoD | commit tej pozycji |
-| B.1–B.6 | NIEZACZĘTE      | —                  |
+| Pozycja | Status          | Commit       |
+| ------- | --------------- | ------------ |
+| A.1     | ZROBIONE_WG_DoD | `045688f04a` |
+| A.2     | ZROBIONE_WG_DoD | `51d18e9226` |
+| B.1     | STOP / BLOCKED  | —            |
+| B.2     | NIEZACZĘTE      | —            |
+| B.3     | NIEZACZĘTE      | —            |
+| B.4     | ZROBIONE_WG_DoD | `2f29524ed1` |
+| B.5     | ZROBIONE_WG_DoD | `37f6836d3a` |
+| B.6     | NIEZACZĘTE      | —            |
