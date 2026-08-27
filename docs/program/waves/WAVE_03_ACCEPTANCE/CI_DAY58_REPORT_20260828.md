@@ -49,7 +49,7 @@ Tip był równy markerowi; zakres `marker..tip` był pusty. Worktree: `/private/
 | §C | ZROBIONE_WG_DoD | PENDING | §C |
 | §D | CZĘŚCIOWO | PENDING | §D |
 | §E | CZĘŚCIOWO | PENDING | §E |
-| §F | NIEROZPOCZĘTE | — | — |
+| §F | CZĘŚCIOWO | PENDING | §F |
 
 ## §B.0 — ESLint przed type-checkiem
 
@@ -238,6 +238,32 @@ Bilans: `BUG PRODUKTU=13`, `BUG TESTU=6`, `ARTEFAKT ŚRODOWISKA=0`. Dla 13 błę
 Dowód mutacyjny napraw produktu: NIE WYKONANO — brak licencji na świeżo zajęte pliki superadmin. Dlatego §E jest `CZĘŚCIOWO`, nie `ZROBIONE_WG_DoD`.
 
 Niezweryfikowane dla §E: dokładny wspólny diff produktu i jego czerwony→zielony→czerwony dowód; właściciel aktywnego toru superadmin musi wykonać go w swoim worktree.
+
+## §F — dowód końcowy bramki
+
+### Warstwa 1 — mutant testu
+
+Kontrola pliku bazowego: `npx vitest run tests/unit/initiatives/computeCriticalPath.test.ts --retry=0` → `BASELINE_EXIT=0`, `4 passed`. Po skopiowaniu do `day58-mutant.test.ts` i dodaniu `expect(1).toBe(2)`, dokładna komenda workflow `npm run test:initiatives` → `MUTANT_EXIT=1`; log zawiera imiennie `DAY58 MUTANT ... expected 1 to be 2`. Po usunięciu mutanta ta sama komenda → `CLEAN_EXIT=1`, ponieważ pakiet ma zastane `4 failed | 693 passed`. Mutant zwiększył liczbę nieudanych przypadków z 4 do 5, ale nie można wykazać wymaganej zieleni komendy workflow. `MUTANT_REMOVED`; `STATUS_NO_MUTANT`.
+
+### Warstwa 2 — logika pr-gate
+
+```text
+PRE_INITIATIVES_FAILURE_EXIT=0
+POST_INITIATIVES_FAILURE_EXIT=1
+POST_ALL_SUCCESS_EXIT=0
+```
+
+To jest dowód mutacyjny luki `initiatives-tests` i jej zamknięcia. Dodatkowo `acceptance-tests` jest wymagany przez ten sam `req_ok`.
+
+### Warstwa 3 — statyczny start jobów
+
+Macierz PRZED: `150 / 32` zielone bez testów. Macierz PO: `156 / 5` globalnie i zero dla `pull_request`, `push/Londyn`, `push/demo`. W tych kontekstach wiersze zmienionych jobów przechodzą z `★ ZIELONY BEZ TESTOW` na `TESTY LECA`; nowy acceptance przechodzi z `BRAK JOBA` na `TESTY LECA`.
+
+„Dowód końcowy jest trójwarstwowy i **nie obejmuje realnego uruchomienia GitHub Actions** (`Z8`). Warstwa 3 dowodzi, że job wystartuje; warstwy 1 i 2 dowodzą, że gdy wystartuje, czerwony test daje czerwoną bramkę. Ogniwo, którego NIE zweryfikowałem, to zachowanie realnego runnera GitHuba."
+
+Korekta do obowiązkowego zdania: warstwa 1 dowodzi detekcji mutanta, lecz nie dowodzi przejścia czerwony→zielony całej komendy, ponieważ bazowy pakiet initiatives jest czerwony. Dlatego §F ma werdykt `CZĘŚCIOWO`.
+
+Niezweryfikowane dla §F: realny runner GitHuba; zielony baseline całej komendy `npm run test:initiatives`; zielony baseline acceptance.
 
 ## 9. DECISION_REQUIRED
 
