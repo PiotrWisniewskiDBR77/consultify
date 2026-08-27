@@ -1,4 +1,4 @@
-import { FileCheck, FileText } from 'lucide-react';
+import { Download, FileCheck, FileText, Loader2 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -27,12 +27,41 @@ import {
   type AssessmentReportSkip,
 } from '@/method-core/api/methodCoreApi';
 import { isAssessmentReportViewEnabled } from '@/utils/assessmentReportViewFlag';
+import { isAssessmentDocxEnabled } from '@/utils/assessmentDocxFlag';
+import { getHeaders } from '@/services/api/baseClient';
 
 import { SKIP_REASON_LABELS } from '../../method-workspace/skipReasonCodes';
 
 export interface AssessmentReportContractViewProps {
   readonly sessionId: string;
   readonly className?: string;
+}
+
+export function filenameFromContentDisposition(value: string | null): string | null {
+  if (!value) return null;
+  const utf8 = /filename\*=UTF-8''([^;]+)/iu.exec(value)?.[1];
+  if (utf8) {
+    try {
+      return decodeURIComponent(utf8);
+    } catch {
+      return utf8;
+    }
+  }
+  return /filename="?([^";]+)"?/iu.exec(value)?.[1]?.trim() ?? null;
+}
+
+function fallbackDocxFilename(contract: AssessmentReportContract): string {
+  const withLabel = contract as AssessmentReportContract & {
+    sessionLabel?: { displayName?: string | null };
+  };
+  const label = withLabel.sessionLabel?.displayName ?? contract.sessionId;
+  const safeLabel = label
+    .normalize('NFC')
+    .replace(/[^\p{L}\p{N}._-]+/gu, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 80);
+  const date = new Date(contract.generatedAt).toISOString().slice(0, 10).replaceAll('-', '');
+  return `Raport_DRD_${safeLabel || contract.sessionId}_${date}.docx`;
 }
 
 type LoadState =
@@ -261,6 +290,9 @@ export const AssessmentReportContractView: React.FC<AssessmentReportContractView
   const [state, setState] = useState<LoadState>({ kind: 'loading' });
   const [reload, setReload] = useState(0);
   const [activeSection, setActiveSection] = useState('axis-1');
+  const [downloadState, setDownloadState] = useState<
+    { kind: 'idle' | 'loading' } | { kind: 'error'; message: string }
+  >({ kind: 'idle' });
 
   useEffect(() => {
     if (!enabled) return;
@@ -310,6 +342,37 @@ export const AssessmentReportContractView: React.FC<AssessmentReportContractView
   }
   if (!contract) return null;
 
+  const downloadDocx = async () => {
+    setDownloadState({ kind: 'loading' });
+    try {
+      const headers = getHeaders();
+      delete headers['Content-Type'];
+      const response = await fetch(
+        `/api/method/sessions/${encodeURIComponent(sessionId)}/assessment-report.docx`,
+        { headers }
+      );
+      if (!response.ok) {
+        const body = (await response.json().catch(() => ({}))) as { code?: string; error?: string };
+        throw new Error(body.code ?? body.error ?? `HTTP_${response.status}`);
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download =
+        filenameFromContentDisposition(response.headers.get('Content-Disposition')) ??
+        fallbackDocxFilename(contract);
+      document.body.appendChild(anchor);
+      anchor.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(anchor);
+      setDownloadState({ kind: 'idle' });
+    } catch (error) {
+      const code = error instanceof Error ? error.message : 'UNKNOWN_ERROR';
+      setDownloadState({ kind: 'error', message: `Nie udało się pobrać DOCX — kod: ${code}` });
+    }
+  };
+
   const propertyRows: ArtifactPropertyRow[] = [
     [
       'revision',
@@ -340,6 +403,28 @@ export const AssessmentReportContractView: React.FC<AssessmentReportContractView
       defaultOpen: true,
       children: (
         <div className="space-y-2">
+          {isAssessmentDocxEnabled() ? (
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={() => void downloadDocx()}
+                disabled={downloadState.kind === 'loading'}
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-c-border bg-c-surface px-3 py-2 text-xs font-semibold text-c-text transition-colors hover:bg-c-surface-raised disabled:cursor-wait disabled:opacity-60"
+              >
+                {downloadState.kind === 'loading' ? (
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                ) : (
+                  <Download className="h-4 w-4" aria-hidden="true" />
+                )}
+                {downloadState.kind === 'loading' ? 'Pobieranie DOCX…' : 'Pobierz DOCX'}
+              </button>
+              {downloadState.kind === 'error' ? (
+                <p role="alert" className="text-xs text-c-danger">
+                  {downloadState.message}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
           {/* P2-1 (day-27 acceptance fix-up): "Generuj" used to be the
               header's primaryAction — a dark, icon-bearing CTA that read as
               active even though onClick was a no-op and disabled=true (the

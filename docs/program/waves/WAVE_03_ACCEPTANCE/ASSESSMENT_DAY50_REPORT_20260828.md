@@ -134,7 +134,8 @@ A.2/A.4 nie generują danych: czysta funkcja składa wyłącznie nazwane pola za
 | A.4     | ZROBIONE_WG_DoD                                                                         | 23 ocenione / 10 nieocenionych / 3 pełne pominięcia / 3 częściowe; pełne pominięcie blokuje narrację                                            |
 | A.3     | ZROBIONE_WG_DoD                                                                         | 48/56 agregatów wypełnionych; 8/56 `BRAK_DANYCH` wyłącznie dla Horyzontu; walidator liczb                                                       |
 | A.6     | ZROBIONE_WG_DoD                                                                         | 71/95 wypełnionych, 24/95 uczciwie pustych; dwa XML mają identyczny SHA-256                                                                     |
-| D.1–R.2 | NIE ROZPOCZĘTO                                                                          | kolejność wiążąca                                                                                                                               |
+| D.1     | ZROBIONE_WG_DoD                                                                         | flaga default OFF; realna akcja `fetch` → `blob` → `a.download`; 3 zrzuty; dwie mutacje czerwone→zielone                                        |
+| A.5–R.2 | NIE ROZPOCZĘTO                                                                          | kolejność wiążąca                                                                                                                               |
 
 ## ★ DOWODY OSIĄGALNOŚCI (Z21)
 
@@ -148,6 +149,8 @@ A.4: ta sama ścieżka ApiGateway → kontrakt → DOCX rozróżnia 10 obszarów
 
 A.3: realny ApiGateway zwraca treść 7 wstępów, 7 podpisów matryc, 7 wniosków rozdziałów, 21 komórek linii rozdziałów, 2 streszczeń, wniosków końcowych oraz 3 komórek linii programu. Renderer umieszcza je w DOCX; licznik znajduje 48/56 wypełnionych agregatów.
 
+D.1: istniejący `dev-render/drd-workspace.html` na jedynym dozwolonym porcie `3359` → rzeczywisty `DrdHttpMethodWorkspaceScreen` → zakładka `Report` → leniwy import `AssessmentReportContractView` → przycisk `Pobierz DOCX`. Kontrolowane odpowiedzi lokalnych żądań XHR zasiliły tę istniejącą powierzchnię bez uruchamiania drugiego portu i bez zmiany niedozwolonego `dev-render/**`. DOM potwierdził aktywny przycisk, a grep potwierdził wołacza `src/components/assessment/report/AssessmentReportContractView.tsx:351`.
+
 ## ★★ DOWODY MUTACYJNE W OBIE STRONY
 
 A.1: zmiana wzorca komentarza z `; wymagane:` na `, wymagane:` dała `1 failed / 1 passed`; po przywróceniu z kopii `cp` wynik `2 passed`, a różnica obejmuje wyłącznie zamierzoną implementację A.1.
@@ -159,6 +162,8 @@ A.4: usunięcie warunku `context.skipped` spowodowało `1 failed / 9 passed`, po
 A.3: mutacja walidatora liczb do bezwarunkowego `true` spowodowała `2 failed / 10 passed`, w tym przepuszczenie zmyślonego `12`. Po przywróceniu sprawdzania zbioru faktów: `12 passed`.
 
 A.6: mutacja syntetycznego pomiaru z 16 do 15 pustych komentarzy dała `1 failed / 2 passed` (`23` zamiast oczekiwanych `24` pustych). Po przywróceniu: `3 passed`.
+
+D.1: odcięcie handlera przez `onClick={() => {}}` dało `2 failed / 1 passed`; po przywróceniu właściwego handlera `3 passed`. Osobna mutacja URL na `/assessment-report-does-not-exist.docx` dała `1 failed / 2 passed`; po przywróceniu produkcyjnej ścieżki `3 passed`. Po obu przywróceniach kod nie zawiera mutacji.
 
 ## ★ LISTA KONTROLNA PIĘCIU KSZTAŁTÓW FAŁSZYWEGO „GOTOWE"
 
@@ -173,6 +178,20 @@ A.4: wołacz realny TAK; realny ApiGateway TAK; SKIPPED 0; brak fałszywego sukc
 A.3: wołacz realny TAK; realny ApiGateway TAK; SKIPPED 0; `BRAK_DANYCH` pozostaje placeholderem, nie zerem; wszystkie cytowane rekomendacje zachowują `unitId`, a liczby przechodzą walidator zbioru faktów.
 
 A.6: wołacz realny TAK; dwa żądania przez realny ApiGateway TAK; SKIPPED 0; licznik nie zamienia braku na zero; pomiar odróżnia 71 treści od 24 jawnych pustek i dowodzi identyczności XML.
+
+D.1: wołacz realny TAK — DOM istniejącej powierzchni produktu i grep linii 351; realny ApiGateway NIE dla samego zrzutu (lokalne XHR były kontrolowane), ale produkcyjna ścieżka klienta jest broniona testem mutacyjnym, a serwerowa trasa została już przechodzona przez realny ApiGateway w A.1/A.2/A.6; SKIPPED 0; brak fałszywego sukcesu TAK — błąd pokazuje polski komunikat z kodem, sesja bez Outputu pozostaje prawidłowym dokumentem; proza bez źródła — nie dotyczy, D.1 nie dodaje prozy.
+
+## §D.1 — osiągalne pobranie DOCX
+
+- Flaga: query `ff_assessmentDocx` → localStorage `ff.assessment_docx` → env `VITE_ASSESSMENT_DOCX_ENABLED` → OFF. Dowód domyślnej wartości: `src/utils/assessmentDocxFlag.ts:18` zawiera dosłownie `return parsed === null ? false : parsed;`.
+- Pobranie: `fetch('/api/method/sessions/:id/assessment-report.docx')` → `blob()` → tymczasowe `<a download>`; nazwa preferuje `filename*=UTF-8''…`, a fallback odtwarza regułę serwera.
+- Stany: wskaźnik `Pobieranie…`; błąd `Nie udało się pobrać DOCX — kod: <kod>`; brak Outputu nie jest błędem.
+- Grep osiągalności: 2 trafienia w `src/`, w tym produkcyjny wołacz `src/components/assessment/report/AssessmentReportContractView.tsx:351` oraz test ścieżki.
+- `scripts/check-list-canon.sh`: pełny fallback, 394 naruszenia przy baseline 394, brak nowych naruszeń.
+- Zrzut jasny: `/private/tmp/consultify-assessment-day50-artefakty/D1_report_light.png`, SHA-256 `18a41342e526ebfecf37a7744177979fc5d819b764143504b8667e90c44b52b0`.
+- Zrzut ciemny: `/private/tmp/consultify-assessment-day50-artefakty/D1_report_dark.png`, SHA-256 `8dd968f6c4288efb8e179c70f5cf7a1617c5bb99bbedd029c8cc523c892c320b`.
+- Zrzut pustej sesji bez Outputu: `/private/tmp/consultify-assessment-day50-artefakty/D1_report_empty.png`, SHA-256 `62962292e683daa005f16a068377a335e608d206a9a545d39847149e5963528a`; przycisk był aktywny, a właściwości pokazywały `Brak zamrożonego wyniku`.
+- Zrzuty wykonano na istniejącym harnessie, w rzeczywistym `DrdHttpMethodWorkspaceScreen`; przez CDP kontrolowano wyłącznie lokalne odpowiedzi XHR `/api/method/**`. Nie zmieniono strony, plików harnessu ani ustawień systemu.
 
 ## ★ ZRZUTY
 
@@ -310,8 +329,9 @@ Brak STOP-u.
 - Nie zweryfikowano paginacji ani wyglądu pliku w Microsoft Word.
 - Nie ustalono liczby stron dokumentu A.1/A.2, ponieważ nie wykonano renderu w Microsoft Word, a serwerowy LibreOffice jest zakazany instrukcją.
 - Nie oceniono jeszcze jakości przyszłej treści demonstracyjnej przez właściciela ani nadzorcę.
-- Nie wykonano jeszcze pomiaru końcowego HEAD ani punktu kontrolnego po kroku 8.
+- Nie wykonano jeszcze pomiaru końcowego HEAD.
+- Zrzuty D.1 potwierdzają osiągalność i zachowanie powierzchni, ale nie są dowodem bieżącej odpowiedzi realnego serwera — lokalne XHR były kontrolowane, aby dochować zakazu zajmowania portu 3001.
 
 ## Rekomendacje dla nadzorcy
 
-Kontynuować w kolejności A.6 → D.1; nie przechodzić do inwentarzy przed punktem kontrolnym.
+Wykonać punkt kontrolny po kroku 8; dopiero jego werdykt rozstrzyga, czy wolno rozpocząć A.5.
