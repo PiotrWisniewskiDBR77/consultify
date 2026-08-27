@@ -971,7 +971,7 @@ const attachUser = async (
   //
   // The claim is checked first purely for cost: it is false for every ordinary
   // principal, so the extra lookup effectively never runs on the hot path.
-  const strictSuspensionDbGet = <T,>(sql: string, params?: unknown[]) =>
+  const strictSuspensionDbGet = <T>(sql: string, params?: unknown[]) =>
     dbGet<T>(sql, params, { fallback: false });
   const isSuperAdminPrincipal =
     resolvedIsSuperAdmin &&
@@ -1671,18 +1671,11 @@ const buildMembershipCacheKey = (userId: string, orgId: string): string =>
 
 export const validateOrgMembership = asyncHandler(
   async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
-    let userId = '';
-    let orgId = '';
-    try {
-      const requestUser = safeRead(() => req.user, undefined as AuthRequest['user']);
-      userId =
-        normalizeContextIdentifier(safeRead(() => req.userId, undefined)) ||
-        normalizeContextIdentifier(safeRead(() => requestUser?.id, undefined));
-      orgId = normalizeContextIdentifier(safeRead(() => req.organizationId, undefined));
-    } catch {
-      // If context accessors throw, fail-open to preserve middleware contract.
-      return next();
-    }
+    const requestUser = safeRead(() => req.user, undefined as AuthRequest['user']);
+    const userId =
+      normalizeContextIdentifier(safeRead(() => req.userId, undefined)) ||
+      normalizeContextIdentifier(safeRead(() => requestUser?.id, undefined));
+    const orgId = normalizeContextIdentifier(safeRead(() => req.organizationId, undefined));
 
     if (!userId || !orgId) {
       return next();
@@ -1690,7 +1683,11 @@ export const validateOrgMembership = asyncHandler(
     try {
       req.organizationId = orgId;
     } catch {
-      return next();
+      res.status(403).json({
+        error: 'Organization context is required',
+        code: 'ORG_CONTEXT_REQUIRED',
+      });
+      return;
     }
 
     // SuperAdmins bypass membership checks only when explicitly true.

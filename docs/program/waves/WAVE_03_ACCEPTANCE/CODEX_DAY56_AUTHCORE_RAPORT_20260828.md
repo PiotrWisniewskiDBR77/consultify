@@ -78,6 +78,15 @@ Po P.2 dokładnie cztery nowe testy są celowo czerwone: oba `refuses ... getter
 
 Pięć kształtów fałszywego gotowe dla P.2: wołacz — NIE, pozycja test-only; ApiGateway — NIE, jawne zwolnienie; skipped — 0 w tym pliku; pary HTTP — NIE, będą w pozycjach produkcyjnych; grep jako runtime — NIE, nie formułuję twierdzenia runtime.
 
+## §P.6 — dwie gałęzie akcesorów
+
+- 1682: `MARTWA — USUWAM`. Wszystkie odczyty były opakowane w `safeRead`, a normalizacja nie rzuca. Sonda nie wystąpiła w 174 testach; usunięto nieosiągalny zewnętrzny `try/catch`.
+- 1690: `ŻYWA — ZAMYKAM`. Sonda wystąpiła dwa razy w teście z ręcznym setterem; grep produkcji nie znalazł setterów `organizationId/userId`. Gdy przypisanie mimo to zawiedzie, odpowiedź to `403 ORG_CONTEXT_REQUIRED`, bez `next()`.
+
+Po P.6 test setter jest zielony. Trzy celowe czerwone P.2 pozostają: dwa dla P.3 oraz błąd DB dla P.5. Pełny zakres ma 5 czerwonych nazw: dwie zastane i trzy celowe; żadnej innej.
+
+Pięć kształtów fałszywego gotowe dla P.6: wołacz — TAK, funkcja ma 18 montaży; ApiGateway — NIE, brak jeszcze pełnej pary HTTP, dlatego werdykt końcowy pozostaje CZĘŚCIOWO do czasu dowodu integracyjnego; skipped — rozliczone w baseline; odmowa runtime — NIEZWERYFIKOWANA HTTP; grep nie jest uznany za dowód runtime.
+
 ## Pomiar zasięgu testów
 
 PRZED: patrz §P.1. Artefakty: `/private/tmp/consultify-authcore-day56-artefakty/zasieg-PRZED.json` i `zasieg-PRZED.log`.
