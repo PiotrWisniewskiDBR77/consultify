@@ -70,21 +70,21 @@ Pierwsza instrukcyjna komenda serwerowa z korzenia zwróciła `No test files fou
 
 ## Pozycje — tabela zbiorcza (13 wierszy: S.1…R.2), kolumny: pozycja | werdykt | commit SHA | dowód
 
-| pozycja | werdykt     | commit SHA         | dowód                                                                                                                                        |
-| ------- | ----------- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| S.1     | CZĘŚCIOWO   | `c06fd0cea9`       | 37/37 PASS, 0 SKIP przez realny ApiGateway; R1–R9 N1/N2/N4, trzy pozytywy, N5, N6; R10 N1/N2 zmierzone, N4 nie dowodzi aktywnego członkostwa |
-| S.2     | ZROBIONE    | `f2fcf371ab`       | warstwa A: 4/4 przez realny ApiGateway; warstwa B: 3/3 wyłącznie na `createModuleGate`; inwentarz 11 odczytów i 47 symboli bramki            |
-| S.3     | CZĘŚCIOWO   | `01254b6289`       | trzy pomiary; naprawa cichej utraty danych; 7/7 PASS i mutacja 1 FAIL                                                                        |
-| S.4     | CZĘŚCIOWO   | oczekuje na commit | ograniczenie obowiązuje; 8/8 PASS przez realny Gateway; wolny tekst nie wyznacza assignee; krok 3 i UI niewykonane                           |
-| S.5     | NIE_ZACZĘTE | —                  | —                                                                                                                                            |
-| S.6     | NIE_ZACZĘTE | —                  | —                                                                                                                                            |
-| S.7     | NIE_ZACZĘTE | —                  | —                                                                                                                                            |
-| S.8     | NIE_ZACZĘTE | —                  | —                                                                                                                                            |
-| S.9     | NIE_ZACZĘTE | —                  | —                                                                                                                                            |
-| S.10    | CZĘŚCIOWO   | `5d21cbdb3a`       | addytywny fixture: 12 uczestników, 2 załączniki, 1 seria; dwa identyczne przebiegi; oczekuje na zrzuty S.5–S.8                               |
-| S.11    | NIE_ZACZĘTE | —                  | —                                                                                                                                            |
-| R.1     | NIE_ZACZĘTE | —                  | —                                                                                                                                            |
-| R.2     | W_TOKU      | `770baf0e1c`       | szkielet raportu i baseline                                                                                                                  |
+| pozycja | werdykt     | commit SHA   | dowód                                                                                                                                        |
+| ------- | ----------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| S.1     | CZĘŚCIOWO   | `c06fd0cea9` | 37/37 PASS, 0 SKIP przez realny ApiGateway; R1–R9 N1/N2/N4, trzy pozytywy, N5, N6; R10 N1/N2 zmierzone, N4 nie dowodzi aktywnego członkostwa |
+| S.2     | ZROBIONE    | `f2fcf371ab` | warstwa A: 4/4 przez realny ApiGateway; warstwa B: 3/3 wyłącznie na `createModuleGate`; inwentarz 11 odczytów i 47 symboli bramki            |
+| S.3     | CZĘŚCIOWO   | `01254b6289` | trzy pomiary; naprawa cichej utraty danych; 7/7 PASS i mutacja 1 FAIL                                                                        |
+| S.4     | CZĘŚCIOWO   | `6cb372cbd6` | ograniczenie obowiązuje; 8/8 PASS przez realny Gateway; wolny tekst nie wyznacza assignee; krok 3 i UI niewykonane                           |
+| S.5     | NIE_ZACZĘTE | —            | —                                                                                                                                            |
+| S.6     | NIE_ZACZĘTE | —            | —                                                                                                                                            |
+| S.7     | NIE_ZACZĘTE | —            | —                                                                                                                                            |
+| S.8     | NIE_ZACZĘTE | —            | —                                                                                                                                            |
+| S.9     | NIE_ZACZĘTE | —            | —                                                                                                                                            |
+| S.10    | CZĘŚCIOWO   | `5d21cbdb3a` | addytywny fixture: 12 uczestników, 2 załączniki, 1 seria; dwa identyczne przebiegi; oczekuje na zrzuty S.5–S.8                               |
+| S.11    | NIE_ZACZĘTE | —            | —                                                                                                                                            |
+| R.1     | NIE_ZACZĘTE | —            | —                                                                                                                                            |
+| R.2     | W_TOKU      | `770baf0e1c` | szkielet raportu i baseline                                                                                                                  |
 
 ## ★ SIEDEM KSZTAŁTÓW FAŁSZYWEGO „GOTOWE" (§1.7) — siedem odpowiedzi na KAŻDĄ pozycję
 
@@ -261,16 +261,16 @@ Brak STOP-u całego dyżuru.
 
 ## Rozłączność plikowa — pełny `git diff --name-only b3179d0a52603f62b5cd3673caa754c8fc3b0055..HEAD` + porównanie z listą §1.9.3
 
-Do uzupełnienia na końcu.
+Pełny wynik przed końcowym commitem raportu: raport Day 57; addytywny fixture; cztery nowe testy `meeting.*.day57.pg.test.ts`; `meeting.routes.ts`; `meetingBoundaryService.ts`. Dokładne ścieżki: `docs/program/waves/WAVE_03_ACCEPTANCE/MEETINGS_DAY57_REPORT_20260828.md`, `scripts/dev/seed-wave3-meetings-owner-review.mjs`, `server/src/routes/__tests__/meeting.actionItemOwner.day57.pg.test.ts`, `server/src/routes/__tests__/meeting.betaGate.gateway.day57.pg.test.ts`, `server/src/routes/__tests__/meeting.runtimeTraps.day57.pg.test.ts`, `server/src/routes/__tests__/meeting.tenantIsolation.day57.pg.test.ts`, `server/src/routes/meeting.routes.ts`, `server/src/services/meetingBoundary/meetingBoundaryService.ts`. Wszystkie należą do imiennych licencji §1.9.3; brak migracji oraz zmian w `betaAccess.ts`/`betaGate.middleware.ts`.
 
 ## Sprzątanie — `git stash list` pusty, readbacki zerowe, `docker rm -fv cx-day57-pg`
 
-Do uzupełnienia na końcu.
+Readback prób S.4: `probe_users=0`, `probe_notes=0`, `probe_artifacts=0`. `git stash list` pusty. Kontener `cx-day57-pg` usunięty przez `docker rm -fv`; readback listy kontenerów pusty.
 
 ## Licznik i gotowość
 
-BLOK 0 wykonany; następna i pierwsza pozycja robocza: §S.1.
+BLOK 0 oraz S.1, S.2, S.3, S.10 i S.4 wykonane w opisanym zakresie. Werdykt całego dyżuru: **PARTIAL / NOT_PROVEN**. Następna wiążąca pozycja: §S.5; S.5–S.9, S.11, R.1 oraz finalne R.2 nie zostały wykonane.
 
 ## Brief wynikowy dla nadzorcy — po polsku, maksimum 15 zdań
 
-Do uzupełnienia po zakończeniu dyżuru.
+Marker i izolowany worktree były poprawne; produkcyjnych środowisk nie dotknięto. S.1 ujawniło brak kontroli aktywnego członkostwa i dodało fail-closed middleware, 37/37 testów przez realny Gateway. S.2 potwierdziło zamkniętą betę i przygotowało kontrakt stagingowy bez flipu, 7/7. S.3 naprawiło przyszłą cichą utratę tablic JSON, 7/7, przy czym realne kolumny są dziś `text`. S.10 rozszerzyło fixture addytywnie do 12 uczestników, 2 załączników i 1 serii; dwa seedy były identyczne. S.4 potwierdziło, że wolny tekst właściciela nie wyznacza assignee; 8/8 przez realny Gateway. Nowy blocker: persony fixture'u `w3-mtg-*` nie są UUID i realny funnel TaskService daje dla nich 500. Backend `ownerUserId` oraz UI pozostają `DECISION_REQUIRED`; migracja nie była potrzebna i żadna nie powstała. Baseline pozostał czerwony w zastanych miejscach wymienionych w raporcie. S.5–S.9, S.11, R.1 i finalne R.2 są niewykonane, więc nie ma `CLOSED_FINAL`. Kontener lokalny usunięto, próby S.4 mają zerowe readbacki.
