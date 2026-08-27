@@ -31,6 +31,9 @@ const ORG_B = 'rn-g6-org-doradztwo';
 const USER_A = 'rn-g6-user-a-admin';
 const USER_B = 'rn-g6-user-b-admin';
 const TEST_PASSWORD = 'RnG6Runtime!2026';
+const ROI_VISIBILITY_POLICY_KEY = 'AMD-FLOW-ROI-VISIBILITY-002/v1';
+const ROI_VISIBILITY_POLICY_DIGEST =
+  'sha256:2c49cd371727bd19b7164b950e523c2caa9068874c88a451700d05f0ced67c65';
 
 // B2 role diversity — five distinct org-A memberships covering the DB's
 // `organization_members.role` CHECK constraint values that map to different
@@ -71,6 +74,10 @@ async function main() {
 
     console.log('Seeding organizations + users...');
     await seedOrgsAndUsers(client);
+
+    console.log('Publishing governed ROI visibility for the seed organizations...');
+    await seedRoiVisibilityGovernance(client, ORG_A, USER_A);
+    await seedRoiVisibilityGovernance(client, ORG_B, USER_B);
 
     console.log('Seeding initiatives...');
     const initiatives = await seedInitiatives(client);
@@ -156,7 +163,7 @@ async function main() {
     // step was added. OPEN_ORG is the simplest realistic mode; it also
     // matches KPI/ROI screens' apparent default expectation of "everyone in
     // the org can see it" absent an explicit narrower policy.
-    console.log('Seeding platform visibility (OPEN_ORG) for org A resources...');
+    console.log('Seeding platform visibility for org A resources...');
     await seedOpenOrgVisibility(client, ORG_A, USER_A, [
       ...Object.entries(kpiA)
         .filter(([k]) => k.startsWith('kpi'))
@@ -175,7 +182,7 @@ async function main() {
       ...(okrA.set1 ? [{ resourceType: 'okr_set', resourceId: okrA.set1 }] : []),
     ]);
 
-    console.log('Seeding platform visibility (OPEN_ORG) for org B resources...');
+    console.log('Seeding platform visibility for org B resources...');
     await seedOpenOrgVisibility(client, ORG_B, USER_B, [
       ...Object.entries(kpiB)
         .filter(([k]) => k.startsWith('kpi'))
@@ -335,8 +342,6 @@ async function wipeOrg(client: any, orgId: string) {
     await client.query(`DELETE FROM ${t} WHERE organization_id = $1`, [orgId]);
   }
   await client.query(`DELETE FROM organization_members WHERE organization_id = $1`, [orgId]);
-  await client.query(`DELETE FROM users WHERE organization_id = $1`, [orgId]);
-  await client.query(`DELETE FROM organizations WHERE id = $1`, [orgId]);
 }
 
 async function seedOrgsAndUsers(client: any) {
@@ -344,23 +349,27 @@ async function seedOrgsAndUsers(client: any) {
 
   await client.query(
     `INSERT INTO organizations (id, name, plan, status, industry, organization_type, is_active)
-     VALUES ($1, $2, 'enterprise', 'active', 'Manufacturing', 'CUSTOMER', 1)`,
+     VALUES ($1, $2, 'enterprise', 'active', 'Manufacturing', 'CUSTOMER', 1)
+     ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, status = EXCLUDED.status, is_active = EXCLUDED.is_active`,
     [ORG_A, 'Zjednoczona Grupa Przemysłowo-Technologiczna Wschód sp. z o.o.']
   );
   await client.query(
     `INSERT INTO organizations (id, name, plan, status, industry, organization_type, is_active)
-     VALUES ($1, $2, 'enterprise', 'active', 'Professional Services', 'CUSTOMER', 1)`,
+     VALUES ($1, $2, 'enterprise', 'active', 'Professional Services', 'CUSTOMER', 1)
+     ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, status = EXCLUDED.status, is_active = EXCLUDED.is_active`,
     [ORG_B, 'Konsorcjum Doradztwa Strategicznego i Transformacji Cyfrowej S.A.']
   );
 
   await client.query(
     `INSERT INTO users (id, organization_id, email, password, first_name, last_name, role, status, access_level)
-     VALUES ($1, $2, $3, $4, 'Anna', 'Kowalska-Wróbel', 'ADMIN', 'active', 'admin')`,
+     VALUES ($1, $2, $3, $4, 'Anna', 'Kowalska-Wróbel', 'ADMIN', 'active', 'admin')
+     ON CONFLICT (id) DO UPDATE SET password = EXCLUDED.password, status = EXCLUDED.status`,
     [USER_A, ORG_A, `${USER_A}@consultify.local`, passwordHash]
   );
   await client.query(
     `INSERT INTO users (id, organization_id, email, password, first_name, last_name, role, status, access_level)
-     VALUES ($1, $2, $3, $4, 'Marek', 'Zieliński', 'ADMIN', 'active', 'admin')`,
+     VALUES ($1, $2, $3, $4, 'Marek', 'Zieliński', 'ADMIN', 'active', 'admin')
+     ON CONFLICT (id) DO UPDATE SET password = EXCLUDED.password, status = EXCLUDED.status`,
     [USER_B, ORG_B, `${USER_B}@consultify.local`, passwordHash]
   );
 
@@ -378,12 +387,12 @@ async function seedOrgsAndUsers(client: any) {
   // /interview. See RN_G6_RUNTIME_ENVIRONMENT.md "Findings" for the reproduction.
   await client.query(
     `INSERT INTO organization_members (id, organization_id, user_id, role, status)
-     VALUES ($1,$2,$3,'ADMIN','ACTIVE')`,
+     VALUES ($1,$2,$3,'ADMIN','ACTIVE') ON CONFLICT (id) DO UPDATE SET status = 'ACTIVE'`,
     [uid(ORG_A, 'orgmember-a-admin'), ORG_A, USER_A]
   );
   await client.query(
     `INSERT INTO organization_members (id, organization_id, user_id, role, status)
-     VALUES ($1,$2,$3,'ADMIN','ACTIVE')`,
+     VALUES ($1,$2,$3,'ADMIN','ACTIVE') ON CONFLICT (id) DO UPDATE SET status = 'ACTIVE'`,
     [uid(ORG_B, 'orgmember-b-admin'), ORG_B, USER_B]
   );
 
@@ -414,7 +423,8 @@ async function seedOrgsAndUsers(client: any) {
   for (const u of extraRoleUsers) {
     await client.query(
       `INSERT INTO users (id, organization_id, email, password, first_name, last_name, role, status, access_level)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,'active',$8)`,
+       VALUES ($1,$2,$3,$4,$5,$6,$7,'active',$8)
+       ON CONFLICT (id) DO UPDATE SET password = EXCLUDED.password, status = EXCLUDED.status`,
       [
         u.id,
         ORG_A,
@@ -428,7 +438,7 @@ async function seedOrgsAndUsers(client: any) {
     );
     await client.query(
       `INSERT INTO organization_members (id, organization_id, user_id, role, status)
-       VALUES ($1,$2,$3,$4,'ACTIVE')`,
+       VALUES ($1,$2,$3,$4,'ACTIVE') ON CONFLICT (id) DO UPDATE SET status = 'ACTIVE'`,
       [uid(ORG_A, `orgmember-a-${u.id}`), ORG_A, u.id, u.membershipRole]
     );
   }
@@ -1529,12 +1539,13 @@ async function seedOpenOrgVisibility(
     let policyId = policyIdByDomain.get(domain);
     if (!policyId) {
       policyId = uid(orgId, `vispolicy-${domain}`);
+      const visibilityMode = domain === 'roi' ? 'ROI_GOVERNED' : 'OPEN_ORG';
       await client.query(
         `INSERT INTO rvn_platform_visibility_policies
            (policy_id, organization_id, domain, policy_version, visibility_mode, created_by)
-         VALUES ($1,$2,$3,1,'OPEN_ORG',$4)
+         VALUES ($1,$2,$3,1,$4,$5)
          ON CONFLICT (policy_id) DO NOTHING`,
-        [policyId, orgId, domain, userId]
+        [policyId, orgId, domain, visibilityMode, userId]
       );
       policyIdByDomain.set(domain, policyId);
     }
@@ -1542,11 +1553,35 @@ async function seedOpenOrgVisibility(
     await client.query(
       `INSERT INTO rvn_platform_resource_visibility
          (resource_type, resource_id, organization_id, visibility_mode, policy_id, owner_user_id)
-       VALUES ($1,$2,$3,'OPEN_ORG',$4,$5)
+       VALUES ($1,$2,$3,$4,$5,$6)
        ON CONFLICT (resource_type, resource_id) DO NOTHING`,
-      [resourceType, resourceId, orgId, policyId, userId]
+      [
+        resourceType,
+        resourceId,
+        orgId,
+        domain === 'roi' ? 'ROI_GOVERNED' : 'OPEN_ORG',
+        policyId,
+        userId,
+      ]
     );
   }
+}
+
+async function seedRoiVisibilityGovernance(client: any, orgId: string, userId: string) {
+  await client.query(
+    `INSERT INTO rvn_roi_visibility_governance
+       (organization_id, published_by, policy_key, policy_digest, idempotency_key, request_fingerprint)
+     VALUES ($1,$2,$3,$4,$5,$6)
+     ON CONFLICT (organization_id) DO NOTHING`,
+    [
+      orgId,
+      userId,
+      ROI_VISIBILITY_POLICY_KEY,
+      ROI_VISIBILITY_POLICY_DIGEST,
+      `rn-g6-roi-visibility-${orgId}`,
+      `rn-g6-roi-visibility-${orgId}-${userId}`,
+    ]
+  );
 }
 
 function uid(orgId: string, tag: string): string {
