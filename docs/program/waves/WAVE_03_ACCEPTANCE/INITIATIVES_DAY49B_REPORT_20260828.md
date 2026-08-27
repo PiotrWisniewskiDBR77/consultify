@@ -129,3 +129,21 @@ Wariant pusty niesie `total=0`, puste `readyToLaunch` i zerowe rozkłady — to 
 | uczciwy brak danych | TAK | `total=0`, `readyToLaunch=[]` w realdb i screenshot pusty |
 | izolacja tenanta | TAK | dwie obce inicjatywy nie występują w body aktora |
 | UI / akceptacja / release | UI TAK; akceptacja i release NIE | trzy obejrzane zrzuty; flaga pozostaje OFF, brak akceptacji właściciela i brak deployu |
+
+## B.2 — wykonanie werdyktów bezspornych
+
+Pomiar powtórzony na HEAD `f942b539be4455acdadfe4ca06b5ae0163df1e98`: `130` eksportów, `25` bez wołających. Wynik B.1 zawiera `0` wierszy `USUŃ`. `createCapacityOptions` nie został usunięty: ma żywą, odmienną od doradcy trasę do jawnego zapisu kanonicznej trójki, nie ma konsumenta, a instrukcja B.2 dodatkowo zabrania kasowania funkcji związanej z dostarczonym A.2/A.3.
+
+Wiersze `PODŁĄCZ` wskazują istniejące powierzchnie, ale żaden nie mieści się w licencji B.2:
+
+- `closeEffectiveInitiative`, `getFinanceReconciliation`, `getResultsKpiObservation`, listy/żądania akceptacji, material changes i AI reviews należą do `src/components/MyWork/**`, jawnie poza zakresem;
+- `configureInitiativeCardSelection` i `readInitiativeCardSelection` wymagałyby zmiany `CanonicalInitiativeCardWorkspace.tsx`, którego nie ma w ramce zapisu;
+- `readCapacityScenarioHistory` należy do realnego ekranu Mocy, ale licencja tego pliku obejmuje tylko A.3 i D.1, nie B.2.
+
+| wiersz B.1 | co zrobiłem | commit SHA | dowód |
+| --- | --- | --- | --- |
+| `USUŃ` (`0` wierszy) | brak kasowania | ten commit dokumentacyjny | ponowny pomiar `130/25`; brak bezspornego duplikatu lub klienta bez trasy |
+| `PODŁĄCZ` (`12` wierszy) | wpis kontraktowy; zero zmian poza licencją | ten commit dokumentacyjny | mapa licencji §1.6–1.7 oraz ścieżki kandydatów w B.1 |
+| `PODŁĄCZ_PO_NAPRAWIE` (`13` wierszy) | zgodnie z definicją nie ruszano | ten commit dokumentacyjny | brak ekranu albo brak bezpiecznego kształtu integracji opisany per wiersz |
+
+Nie uruchamiano esbuild `runtimeApi.ts` ani pełnego korpusu unit po usunięciu, ponieważ nie nastąpiło żadne usunięcie ani zmiana tego pliku. Dowodem braku zmiany zachowania tras jest pusty diff `runtimeApi.ts` i ponowny grep na HEAD. B.2 jest `PASS (NO-OP BY VERDICT)`, nie fałszywym wdrożeniem poza licencją.
