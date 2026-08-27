@@ -75,6 +75,25 @@ Front nie był w zakresie i niczego nie pokazano użytkownikowi. Przyszły ekran
 7. renderuje `UNKNOWN` jako „nie wiem”, nigdy jako `0%`/`100%`;
 8. pokazuje piątą warstwę wraz z identyfikatorami braków i osobnymi stanami dowodu zadań/decyzji.
 
+### ZMIANA KONTRAKTU (breaking) — obcy cel nie potwierdza już swojego istnienia
+
+`GET /api/initiatives-v4/goals/:goalId/initiatives`: `200 {initiatives: []}` → `404 {error: 'Goal not found'}`,
+gdy `goalId` nie należy do organizacji wołającego. Zmiana pochodzi z commita `fffba8a8bd` (P.8c),
+gdzie `getGoalInitiatives` zaczęło zwracać `null` zamiast `[]`
+(`server/src/services/initiativeGovernanceService.ts:224`), a trasa mapuje `null` na 404
+(`server/src/routes/initiative-governance.routes.ts:179-182`).
+
+To jest PODNIESIENIE kontraktu do mocniejszego, nie osłabienie: pusta tablica z kodem 200 była
+potwierdzeniem istnienia obcego celu (enumeracja identyfikatorów przez różnicę 200/404).
+Dwa testy bezpieczeństwa zapisywały stary, słabszy kontrakt i zostały podniesione do `toBeNull()`
+(`server/src/routes/__tests__/cross-org-idor.test.ts:1205`,
+`tests/unit/backend/services/initiativeGovernanceService.crossorg.test.ts:118`).
+
+Skutek dla frontu: `Api.goalsGetInitiatives` (`src/services/api.ts:21204`) musi obsłużyć 404 jako
+„nie ma takiego celu w mojej organizacji", a nie jako pustą listę. Na dziś ta metoda nie ma ANI
+JEDNEGO wołacza w `src/**` (jedyne dwa wystąpienia to definicja oraz komentarz w
+`src/contracts/tableSurface/surfaceRegister.ts:703`), więc zmiana nie psuje żadnego istniejącego ekranu.
+
 Walidacja: `impactWeights` zawiera dokładnie trzy dodatnie liczby; progi dni są dodatnimi liczbami całkowitymi; SLA używa `BUSINESS_DAYS|CALENDAR_DAYS`; granice wysycenia są w `(0,1]` i rosną; bufor jest w `[0,1)`.
 
 ## Dowody testowe

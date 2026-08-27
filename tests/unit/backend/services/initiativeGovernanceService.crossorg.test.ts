@@ -108,11 +108,14 @@ describe('M13 L-09 — InitiativeGovernanceService cross-org IDOR guard', () => 
 
   // ── getGoalInitiatives / unlinkGoalFromInitiative ───────────────────────────
 
-  it('getGoalInitiatives returns [] for a goal in another org (no rollup query)', async () => {
+  // KONTRAKT PODNIESIONY (day 33, P.8c): `null` zamiast `[]` — patrz komentarz
+  // w server/src/routes/__tests__/cross-org-idor.test.ts. Trasa mapuje null na 404,
+  // wiec obcy cel nie potwierdza juz swojego istnienia odpowiedzia 200 {initiatives:[]}.
+  it('getGoalInitiatives returns null for a goal in another org (no rollup query)', async () => {
     mockQueryFirst.mockResolvedValueOnce(null); // getGoal scoped to ORG_A
     const s = await svc();
 
-    await expect(s.getGoalInitiatives(ORG_A, 'goal-of-B')).resolves.toEqual([]);
+    await expect(s.getGoalInitiatives(ORG_A, 'goal-of-B')).resolves.toBeNull();
     expect(mockQueryAll).not.toHaveBeenCalled();
   });
 

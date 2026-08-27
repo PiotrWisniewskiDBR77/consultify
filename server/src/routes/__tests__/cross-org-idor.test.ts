@@ -1196,11 +1196,17 @@ describe('W1 — initiativeGovernanceService cross-org isolation', () => {
     mockQueryRun.mockResolvedValue({ rowCount: 0 });
   });
 
-  it('getGoalInitiatives returns [] when goal belongs to a different org', async () => {
+  // KONTRAKT PODNIESIONY (day 33, P.8c): getGoalInitiatives zwraca `null`, nie `[]`,
+  // gdy cel nalezy do innej organizacji. Rozroznienie „cel nie istnieje w mojej org"
+  // od „cel istnieje i nie ma inicjatyw" jest wymagane, bo trasa
+  // GET /api/initiatives-v4/goals/:goalId/initiatives mapuje null na 404
+  // (server/src/routes/initiative-governance.routes.ts:179-182). Pusta tablica
+  // dawala 200 i potwierdzala obcemu wolajacemu istnienie celu.
+  it('getGoalInitiatives returns null when goal belongs to a different org', async () => {
     const { initiativeGovernanceService } =
       await import('../../services/initiativeGovernanceService.js');
     const result = await initiativeGovernanceService.getGoalInitiatives(ORG_A, 'goal-from-org-b');
-    expect(result).toEqual([]);
+    expect(result).toBeNull();
     // Verify org-scoped query was issued
     const scopedCall = mockQueryFirst.mock.calls.find((c) =>
       String(c?.[0]).includes('organization_id')
