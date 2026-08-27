@@ -12,6 +12,7 @@ import {
   METALPOL_CLIENT,
   METALPOL_DRD_AREAS,
   METALPOL_IDS,
+  METALPOL_SKIP_DECISIONS,
 } from './demo-seed/metalpolDrdDataset.js';
 
 const REMOTE_CONFIRMATION = 'I_UNDERSTAND_THIS_IS_A_REMOTE_DATABASE';
@@ -80,7 +81,7 @@ const TABLE_EXPECTATIONS = Object.freeze({
   method_snapshots: 1,
   method_outputs: 1,
   method_findings: METALPOL_DRD_AREAS.length,
-  assessment_skip_reasons: 0,
+  assessment_skip_reasons: METALPOL_SKIP_DECISIONS.length,
 });
 
 async function countRows(client: Client | PoolClient): Promise<Record<string, number>> {
@@ -256,6 +257,25 @@ async function applySeed(client: Client): Promise<void> {
               ? 'medium'
               : 'high',
           JSON.stringify([`demo-seed://metalpol-drd/${area.unitId}`]),
+        ]
+      );
+    }
+    for (const decision of METALPOL_SKIP_DECISIONS) {
+      await client.query(
+        `INSERT INTO assessment_skip_reasons
+         (id,organization_id,session_id,unit_id,question_id,level,skip_code,recorded_by_user_id,idempotency_key)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+         ON CONFLICT (organization_id,idempotency_key) DO NOTHING`,
+        [
+          `demo-metalpol-skip-${decision.unitId}-${decision.level}`,
+          METALPOL_IDS.organization,
+          METALPOL_IDS.session,
+          decision.unitId,
+          decision.questionId,
+          decision.level,
+          decision.skipCode,
+          METALPOL_IDS.user,
+          `demo-seed:metalpol:${decision.unitId}:${decision.questionId}`,
         ]
       );
     }

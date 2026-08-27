@@ -5,6 +5,7 @@ import { areaAverage } from '../../../server/src/services/assessment/assessmentD
 import {
   EXPECTED_RADAR,
   METALPOL_DRD_AREAS,
+  METALPOL_SKIP_DECISIONS,
 } from '../../../scripts/demo-seed/metalpolDrdDataset.js';
 
 describe('Metalpol DRD measured demo dataset', () => {
@@ -48,5 +49,24 @@ describe('Metalpol DRD measured demo dataset', () => {
       ])
     );
     expect(counts).toEqual({ evidenced: 14, incomplete: 3, declared: 6 });
+  });
+
+  it('uses 23 bounded skip decisions and every dictionary code', () => {
+    const canonical = new Map(
+      DRD_STRUCTURE.flatMap((axis) => axis.areas.map((area) => [area.id, axis] as const))
+    );
+    expect(METALPOL_SKIP_DECISIONS).toHaveLength(23);
+    for (const decision of METALPOL_SKIP_DECISIONS) {
+      expect(decision.level).toBeGreaterThanOrEqual(1);
+      expect(decision.level).toBeLessThanOrEqual(canonical.get(decision.unitId)!.levelCount);
+    }
+    expect(new Set(METALPOL_SKIP_DECISIONS.map((decision) => decision.skipCode))).toEqual(
+      new Set([
+        'poza_modelem_operacyjnym',
+        'poza_zakresem_zlecenia',
+        'odroczone_do_kolejnej_rewizji',
+        'zastapione_innym_rozwiazaniem',
+      ])
+    );
   });
 });

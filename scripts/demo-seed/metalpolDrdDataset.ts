@@ -227,3 +227,35 @@ export const EXPECTED_RADAR = Object.freeze({
   6: { currentLevel: 33, targetLevel: 78 },
   7: { currentLevel: 27, targetLevel: 67 },
 } as const);
+
+export type SkipCode =
+  | 'poza_modelem_operacyjnym'
+  | 'poza_zakresem_zlecenia'
+  | 'odroczone_do_kolejnej_rewizji'
+  | 'zastapione_innym_rozwiazaniem';
+
+export type MetalpolSkipDecision = Readonly<{
+  unitId: string;
+  level: number;
+  questionId: string;
+  skipCode: SkipCode;
+}>;
+
+function levels(unitId: string, count: number, skipCode: SkipCode): MetalpolSkipDecision[] {
+  return Array.from({ length: count }, (_, index) => ({
+    unitId,
+    level: index + 1,
+    questionId: `${unitId}-L${index + 1}`,
+    skipCode,
+  }));
+}
+
+export const METALPOL_SKIP_DECISIONS: readonly MetalpolSkipDecision[] = Object.freeze([
+  ...levels('1B', 7, 'poza_zakresem_zlecenia'),
+  ...levels('3B', 5, 'poza_modelem_operacyjnym'),
+  ...levels('6B', 6, 'zastapione_innym_rozwiazaniem'),
+  ...levels('4E', 2, 'odroczone_do_kolejnej_rewizji'),
+  { unitId: '7C', level: 1, questionId: '7C-L1', skipCode: 'odroczone_do_kolejnej_rewizji' },
+  { unitId: '5D', level: 1, questionId: '5D-L1', skipCode: 'poza_zakresem_zlecenia' },
+  { unitId: '5D', level: 2, questionId: '5D-L2', skipCode: 'poza_modelem_operacyjnym' },
+]);
