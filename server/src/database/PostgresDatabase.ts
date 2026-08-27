@@ -9,6 +9,7 @@
 import { Client, Pool, type PoolClient, type PoolConfig, type QueryResultRow } from 'pg';
 
 import databaseConfig from '../config/DatabaseConfig.js';
+import { resolveDbTargetLabel } from '../config/dbTargetLabel.js';
 import logger from '../utils/Logger.js';
 import { recordQueryPerformance } from '../utils/queryHelpers.js';
 import { getConflictTarget, resolveConflictTargetSql } from './conflictTargets.js';
@@ -458,6 +459,7 @@ function getPool(): Pool {
       host: effectiveConfig?.host,
       database: effectiveConfig?.database,
       max: effectiveConfig?.max,
+      dbTarget: resolveDbTargetLabel(process.env),
     });
     pool = new Pool(effectiveConfig);
 
