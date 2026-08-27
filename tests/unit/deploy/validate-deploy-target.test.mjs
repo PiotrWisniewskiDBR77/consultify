@@ -18,6 +18,16 @@ const SAKURA = 'postgresql://app:s3cret@sakura.proxy.rlwy.net:41234/railway';
 const TROLLEY = 'postgresql://app:s3cret@trolley.proxy.rlwy.net:28146/railway';
 const THOMAS = 'postgresql://app:s3cret@thomas.proxy.rlwy.net:28864/railway';
 
+// FIX-2. The original suite only ever used `s3cret` — a password with neither
+// `@` nor `/` — which is precisely why it stayed green next to a credential
+// leak. Postgres passwords containing `@` are ordinary; a raw `/` makes the
+// string an invalid URL that the old parser smeared into a printed "identity".
+const PW_AT = 'pa@ss@word';
+const PW_SLASH = 'taj/nehaslo';
+const SAKURA_PW_AT = `postgresql://uzytkownik:${PW_AT}@sakura.proxy.rlwy.net:41234/railway`;
+const TROLLEY_PW_AT = `postgresql://uzytkownik:${PW_AT}@trolley.proxy.rlwy.net:28146/railway`;
+const SAKURA_PW_SLASH = `postgresql://uzytkownik:${PW_SLASH}@sakura.proxy.rlwy.net:41234/railway`;
+
 /** Fully configured, armed staging: both sides point at the same database. */
 const staging = {
   DEPLOY_ENVIRONMENT: 'staging',
@@ -225,4 +235,157 @@ test('arming accepts the documented spellings and rejects the rest', () => {
     });
     assert.equal(result.status, 0, `expected ${value} to leave the guard advisory`);
   }
+});
+
+// ---------------------------------------------------------------------------
+// FIX-2 — credentials must never reach a log line, whatever the password is.
+// ---------------------------------------------------------------------------
+
+test('MUTATION: a password containing @ never leaks, and the host is still right', () => {
+  const result = runGuard({
+    ...staging,
+    APP_DATABASE_URL: SAKURA_PW_AT,
+    MIGRATION_DATABASE_URL: TROLLEY_PW_AT,
+  });
+  const output = result.stdout + result.stderr;
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /DEC-165 DIVERGENCE for staging/);
+  // The whole password, and every tail of it that the first-@ cut used to
+  // leave behind, must be absent.
+  assert.doesNotMatch(output, /pa@ss@word/);
+  assert.doesNotMatch(output, /ss@word/);
+  assert.doesNotMatch(output, /word@/);
+  assert.doesNotMatch(output, /uzytkownik/);
+  // ...and the identity must be the one new URL() derives (LAST @), not the
+  // one the old sed derived (FIRST @).
+  assert.match(result.stderr, /app 'sakura\.proxy\.rlwy\.net:41234\/railway'/);
+  assert.match(result.stderr, /migration 'trolley\.proxy\.rlwy\.net:28146\/railway'/);
+});
+
+test('MUTATION: a password containing / is refused without printing the string', () => {
+  const result = runGuard({ ...staging, APP_DATABASE_URL: SAKURA_PW_SLASH });
+  const output = result.stdout + result.stderr;
+  assert.notEqual(result.status, 0);
+  assert.doesNotMatch(output, /taj\/nehaslo/);
+  assert.doesNotMatch(output, /nehaslo/);
+  assert.doesNotMatch(output, /uzytkownik/);
+  assert.match(result.stderr, /no valid host:port could be parsed/);
+});
+
+test('the shell parser and new URL() agree on where userinfo ends', () => {
+  // databaseIdentity.ts (the in-Railway side) parses with new URL(), which
+  // splits userinfo at the LAST @. The shell guard must not disagree, or the
+  // two guards derive different identities from one connection string.
+  const parsed = new URL(SAKURA_PW_AT);
+  assert.equal(parsed.hostname, 'sakura.proxy.rlwy.net');
+  const result = runGuard({
+    ...staging,
+    APP_DATABASE_URL: SAKURA_PW_AT,
+    MIGRATION_DATABASE_URL: TROLLEY_PW_AT,
+  });
+  assert.match(result.stderr, new RegExp(`app '${parsed.hostname.replace(/\./g, '\\.')}:41234/`));
+  // And on the /-password case: new URL() throws, the shell refuses.
+  assert.throws(() => new URL(SAKURA_PW_SLASH));
+});
+
+test('an agreed pair with an @-password still deploys and prints no credentials', () => {
+  const result = runGuard({
+    ...staging,
+    APP_DATABASE_URL: SAKURA_PW_AT,
+    MIGRATION_DATABASE_URL: SAKURA_PW_AT,
+  });
+  assert.equal(result.status, 0, result.stderr);
+  const output = result.stdout + result.stderr;
+  assert.doesNotMatch(output, /pa@ss@word/);
+  assert.doesNotMatch(output, /ss@word/);
+  assert.doesNotMatch(output, /uzytkownik/);
+});
+
+// ---------------------------------------------------------------------------
+// FIX-4 — the fingerprint pins the HOST, not the whole identity string.
+// ---------------------------------------------------------------------------
+
+test('MUTATION: a fingerprint set to the database name is refused, not accepted', () => {
+  // Before the fix this exited 0: `railway` is a substring of
+  // `trolley.proxy.rlwy.net:28146/railway`, so every host on earth passed.
+  const result = runGuard({
+    ...staging,
+    APP_DATABASE_URL: TROLLEY,
+    MIGRATION_DATABASE_URL: TROLLEY,
+    STAGING_DB_HOST_FINGERPRINT: 'railway',
+  });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /set to the DATABASE NAME, not to a host fragment/);
+});
+
+test('a fingerprint that only matches the database name does not pass', () => {
+  // The fingerprint is a substring of the DATABASE part but not of the host.
+  // The old whole-string match accepted it; only the host may satisfy the pin.
+  const result = runGuard({
+    ...staging,
+    APP_DATABASE_URL: 'postgresql://app:s3cret@trolley.proxy.rlwy.net:28146/sakura_prod',
+    MIGRATION_DATABASE_URL: 'postgresql://app:s3cret@trolley.proxy.rlwy.net:28146/sakura_prod',
+    STAGING_DB_HOST_FINGERPRINT: 'sakura',
+  });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /the resolved database HOST does not contain the fingerprint/);
+});
+
+test('MUTATION REVERSED: a genuine host fragment still passes', () => {
+  const result = runGuard(staging);
+  assert.equal(result.status, 0, result.stderr);
+});
+
+test('the port is never mistaken for a fingerprint match', () => {
+  const result = runGuard({
+    ...staging,
+    STAGING_DB_HOST_FINGERPRINT: '41234',
+  });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /HOST does not contain the fingerprint/);
+});
+
+// ---------------------------------------------------------------------------
+// FIX-5 — a pre-derived identity without a port is not a divergence.
+// ---------------------------------------------------------------------------
+
+test('a pre-derived identity without a port is completed to :5432', () => {
+  const { APP_DATABASE_URL: _a, ...env } = staging;
+  const result = runGuard({
+    ...env,
+    APP_DB_IDENTITY: 'sakura.proxy.rlwy.net/railway',
+    MIGRATION_DATABASE_URL: 'postgresql://app:s3cret@sakura.proxy.rlwy.net:5432/railway',
+  });
+  assert.equal(result.status, 0, result.stderr);
+});
+
+test('a URL without a port and an identity with :5432 are the same database', () => {
+  const { APP_DATABASE_URL: _a, ...env } = staging;
+  const result = runGuard({
+    ...env,
+    APP_DB_IDENTITY: 'sakura.proxy.rlwy.net:5432/railway',
+    MIGRATION_DATABASE_URL: 'postgresql://app:s3cret@sakura.proxy.rlwy.net/railway',
+  });
+  assert.equal(result.status, 0, result.stderr);
+});
+
+test('a real port difference is still a divergence', () => {
+  const { APP_DATABASE_URL: _a, ...env } = staging;
+  const result = runGuard({
+    ...env,
+    APP_DB_IDENTITY: 'sakura.proxy.rlwy.net:41234/railway',
+    MIGRATION_DATABASE_URL: 'postgresql://app:s3cret@sakura.proxy.rlwy.net:5432/railway',
+  });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /DEC-165 DIVERGENCE/);
+});
+
+test('a connection string pasted into APP_DB_IDENTITY is refused, not printed', () => {
+  const { APP_DATABASE_URL: _a, ...env } = staging;
+  const result = runGuard({ ...env, APP_DB_IDENTITY: SAKURA_PW_AT });
+  const output = result.stdout + result.stderr;
+  assert.notEqual(result.status, 0);
+  assert.doesNotMatch(output, /pa@ss@word/);
+  assert.doesNotMatch(output, /uzytkownik/);
+  assert.match(result.stderr, /is not a bare host\[:port\]\/database/);
 });
