@@ -165,23 +165,31 @@ Stan: CZEKA NA DECYZJĘ WŁAŚCICIELA — NIE ZMIENIŁEM WARTOŚCI DOMYŚLNEJ.
 
 Dowód nietknięcia plików bramki: `git diff b151977e4b...HEAD -- server/src/middleware/betaGate.middleware.ts src/utils/betaAccess.ts` jest pusty.
 
+## Kanon list i kolory (§M.9)
+
+`bash scripts/check-list-canon.sh; echo "kod wyjścia: $?"` przed pierwszym commitem i po commicie M.2 zwrócił w obu przebiegach: pełny skan 171 plików, 394 zastane naruszenia, 0 nowych naruszeń, kod wyjścia 0. Liczby zmierzyłem sam.
+
+`MeetingHub.tsx` importuje i renderuje `StandardModuleBar` (`:34,833`), `StandardTable` (`:31,878`) i `StandardPreview` (`:27,959`). Nie dołożono własnej tabeli, menu ani preview.
+
+Grep kolorystyczny na diffie `src/ dev-render/` jest pusty, ponieważ nie zmieniono tych katalogów. Nie powstało żadne nowe użycie crimson ani pierścienia fokusowego.
+
 ## Pozycje — tabela zbiorcza
 
-| Pozycja | Commit                            | Status          | Dowód                                           |
-| ------- | --------------------------------- | --------------- | ----------------------------------------------- |
-| M.1     | do wpisania po commicie           | ZROBIONE_WG_DoD | kompletny mianownik 33 tras powyżej             |
-| M.2     | dokumentacyjny commit do wpisania | CZĘŚCIOWO       | inwentarz i kontrakt gotowe; brak testu Gateway |
-| M.3     | —                                 | NIE_ZACZĘTE     | —                                               |
-| M.4     | —                                 | NIE_ZACZĘTE     | —                                               |
-| M.5     | —                                 | NIE_ZACZĘTE     | —                                               |
-| M.6     | —                                 | NIE_ZACZĘTE     | —                                               |
-| M.7     | —                                 | NIE_ZACZĘTE     | —                                               |
-| M.8     | —                                 | NIE_ZACZĘTE     | —                                               |
-| M.9     | —                                 | NIE_ZACZĘTE     | —                                               |
-| M.10    | —                                 | NIE_ZACZĘTE     | —                                               |
-| M.11    | —                                 | NIE_ZACZĘTE     | —                                               |
-| R.1     | —                                 | NIE_ZACZĘTE     | —                                               |
-| R.2     | —                                 | CZĘŚCIOWO       | raport prowadzony na bieżąco                    |
+| Pozycja | Commit                            | Status          | Dowód                                                   |
+| ------- | --------------------------------- | --------------- | ------------------------------------------------------- |
+| M.1     | do wpisania po commicie           | ZROBIONE_WG_DoD | kompletny mianownik 33 tras powyżej                     |
+| M.2     | dokumentacyjny commit do wpisania | CZĘŚCIOWO       | inwentarz i kontrakt gotowe; brak testu Gateway         |
+| M.3     | —                                 | NIE_ZACZĘTE     | —                                                       |
+| M.4     | —                                 | NIE_ZACZĘTE     | —                                                       |
+| M.5     | —                                 | NIE_ZACZĘTE     | —                                                       |
+| M.6     | —                                 | NIE_ZACZĘTE     | —                                                       |
+| M.7     | —                                 | NIE_ZACZĘTE     | —                                                       |
+| M.8     | —                                 | NIE_ZACZĘTE     | —                                                       |
+| M.9     | commit do wpisania                | ZROBIONE_WG_DoD | dwa pomiary kanonu, pusty grep kolorów, triada standard |
+| M.10    | —                                 | NIE_ZACZĘTE     | —                                                       |
+| M.11    | —                                 | NIE_ZACZĘTE     | —                                                       |
+| R.1     | —                                 | NIE_ZACZĘTE     | —                                                       |
+| R.2     | —                                 | CZĘŚCIOWO       | raport prowadzony na bieżąco                            |
 
 ## Korekty wobec instrukcji
 
