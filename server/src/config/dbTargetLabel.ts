@@ -2,7 +2,10 @@ export type DbTargetLabelEnvironment = Record<string, string | undefined>;
 
 export function resolveDbTargetLabel(env: DbTargetLabelEnvironment): string {
   try {
-    const normalized = (env.DB_TARGET_LABEL ?? '')
+    const raw = env.DB_TARGET_LABEL ?? '';
+    if (raw.includes('://') || raw.includes('@')) return 'unset';
+
+    const normalized = raw
       .trim()
       .toLowerCase()
       .replace(/[^a-z0-9-]+/g, '-')
