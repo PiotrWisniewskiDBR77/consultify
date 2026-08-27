@@ -2,6 +2,7 @@ import type { Pool } from 'pg';
 
 import { OwnerIndependentKpiReader } from './ownerIndependentKpiReader.js';
 import { GovernanceDataQualityReadModel } from './governanceDataQualityReadModel.js';
+import { NumericContributionReadModel } from './numericContributionReadModel.js';
 import { ReportClassificationReadModel } from './reportClassificationReadModel.js';
 import { readCapacitySaturation } from './capacitySaturationReadModel.js';
 import {
@@ -38,6 +39,12 @@ export class ControlKpiReadModel {
       organizationId
     );
     const reportClassification = await new ReportClassificationReadModel(this.pool).read(
+      organizationId
+    );
+    // P.9 — wariant C E-O4 udostępniony ADDYTYWNIE: jedno pole w kopercie mówiące,
+    // czy dla pary cel↔inicjatywa istnieje ZATWIERDZONY wkład liczbowy, z odsyłaczem
+    // do nośnika. Zero znaków zmienionych w server/src/services/results/**.
+    const goalInitiativeContributions = await new NumericContributionReadModel(this.pool).read(
       organizationId
     );
     const policyResult = policyId
@@ -121,6 +128,7 @@ export class ControlKpiReadModel {
       })),
       governanceDataQuality,
       reportClassification,
+      goalInitiativeContributions,
       capacitySaturation,
       scopeCompleteness:
         fullFamilyCount === families.length
