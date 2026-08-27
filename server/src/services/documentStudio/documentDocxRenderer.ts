@@ -34,6 +34,7 @@
 // types.
 import * as docxModule from 'docx';
 import { imageSize } from 'image-size';
+import { AsyncLocalStorage } from 'node:async_hooks';
 
 import { renderChartBlockToPng } from './documentChartRasterizer.js';
 import {
@@ -46,11 +47,15 @@ import {
   buildDocxStyleConfig,
   clampHeadingText,
   clampTableColumns,
+  DRD_REPORT_GEOMETRY,
+  DRD_REPORT_PALETTE,
+  DRD_DOCX_STYLE_IDS,
   DOCX_PALETTE,
   DOCX_STYLE_IDS,
   DOCX_TITLE_MAX_CHARS,
   DOCX_TONE_COLOR,
   DOCX_TONE_FILL,
+  isDrdReportProfile,
   resolveDocxFonts,
   resolveFormattingClass,
 } from './documentDocxStyles.js';
@@ -112,8 +117,9 @@ interface DocxRuntime {
   Table: new (options: Record<string, unknown>) => DocxTable;
   TableCell: new (options: Record<string, unknown>) => unknown;
   TableRow: new (options: Record<string, unknown>) => unknown;
+  TableOfContents: new (heading: string, options: Record<string, unknown>) => unknown;
   TextRun: new (options: Record<string, unknown>) => DocxTextRun;
-  WidthType: { PERCENTAGE: unknown };
+  WidthType: { PERCENTAGE: unknown; DXA: unknown };
 }
 
 interface DocxParagraph {
@@ -142,9 +148,32 @@ const {
   Table,
   TableCell,
   TableRow,
-  TextRun,
+  TableOfContents,
+  TextRun: BaseTextRun,
   WidthType,
 } = docxModule as unknown as DocxRuntime;
+
+const textRunScope = new AsyncLocalStorage<{ isPolish: boolean; namedStyleRuns: boolean }>();
+
+/** Apply Polish non-breaking spaces at the single TextRun construction seam. */
+function polishTypographicSpacing(text: string): string {
+  return text.replace(/(^|\s)([aiouwzAIOUWZ]) /g, '$1$2\u00a0');
+}
+
+class TextRun extends BaseTextRun {
+  constructor(options: Record<string, unknown>) {
+    const scope = textRunScope.getStore();
+    const text = options.text;
+    const normalized = {
+      ...options,
+      ...(scope?.isPolish && typeof text === 'string'
+        ? { text: polishTypographicSpacing(text) }
+        : {}),
+    };
+    if (scope?.namedStyleRuns) delete normalized.font;
+    super(normalized);
+  }
+}
 
 /**
  * G7 fix — real Word list outline (not manual `• ` / `1. ` text prefixes).
@@ -314,7 +343,12 @@ async function buildChartPngByBlockId(schema: DocumentSchema): Promise<Map<strin
       // Fail-soft per-blok: błąd rasteryzacji (np. brak natywnej binarki canvas)
       // NIE może położyć całego renderu dokumentu — slajd spada na placeholder.
       try {
-        const png = await renderChartBlockToPng(block);
+        const png = await renderChartBlockToPng(
+          block,
+          isDrdReportProfile(schema)
+            ? { width: 2100, height: 1212, fontFamily: 'Calibri', drdProfile: true }
+            : undefined
+        );
         if (png && png.length > 0) {
           out.set(block.blockId, png);
         }
@@ -494,7 +528,10 @@ function renderHeadingBlock(block: DocumentBlock, ctx: RenderContext): Paragraph
 }
 
 function renderParagraphBlock(block: DocumentBlock, ctx: RenderContext): Paragraph {
-  const value = (block.content ?? {}) as BlockTextContent;
+  const value = (block.content ?? {}) as BlockTextContent & {
+    docxStyleId?: string;
+    pageBreakBefore?: boolean;
+  };
   const text = asString(value.text ?? '');
   const children: TextRun[] = [
     new TextRun({
@@ -505,7 +542,13 @@ function renderParagraphBlock(block: DocumentBlock, ctx: RenderContext): Paragra
   if (block.isAssumption) children.push(buildAssumptionMarker(ctx.bodyFont));
   if (block.sourceRef) children.push(...buildCitationRuns(ctx, block.sourceRef));
   return new Paragraph({
-    style: block.isAssumption ? DOCX_STYLE_IDS.ASSUMPTION_BODY : DOCX_STYLE_IDS.BODY_TEXT,
+    style:
+      isDrdReportProfile(ctx.schema) && value.docxStyleId
+        ? value.docxStyleId
+        : block.isAssumption
+          ? DOCX_STYLE_IDS.ASSUMPTION_BODY
+          : DOCX_STYLE_IDS.BODY_TEXT,
+    pageBreakBefore: value.pageBreakBefore === true ? true : undefined,
     children,
   });
 }
@@ -748,7 +791,16 @@ function normalizeTableContent(content: unknown): {
   // Legacy array-of-arrays shape.
   const headers = Array.isArray(value.headers) ? value.headers.map((h) => asString(h)) : [];
   const rows: NormalizedCell[][] = rawRows.map((row) =>
-    (Array.isArray(row) ? row : []).map((cell) => ({ text: asString(cell), fill: null }))
+    (Array.isArray(row) ? row : []).map((cell) => {
+      if (cell != null && typeof cell === 'object' && 'value' in (cell as object)) {
+        const structured = cell as { value?: unknown; style?: { bgColor?: string } };
+        return {
+          text: asString(structured.value ?? ''),
+          fill: normalizeHex(structured.style?.bgColor),
+        };
+      }
+      return { text: asString(cell), fill: null };
+    })
   );
   return { headers, rows };
 }
@@ -776,7 +828,14 @@ function renderTableBlock(block: DocumentBlock, ctx: RenderContext): (Table | Pa
   // cell to a sliver. Keep the leading columns and fold the remainder into a
   // single "+N more" column (DeckStyler/WorkbookStyler width-clamp analogue).
   const columnCount = Math.max(headers.length, ...rows.map((r) => r.length), 0);
-  const clamp = clampTableColumns(columnCount);
+  const drdProfile = isDrdReportProfile(ctx.schema);
+  const clamp = drdProfile
+    ? {
+        overflowed: false,
+        keep: Array.from({ length: columnCount }, (_, index) => index),
+        folded: [],
+      }
+    : clampTableColumns(columnCount);
   if (clamp.overflowed) {
     const foldLabel = `+${clamp.folded.length} more`;
     const pick = <T>(arr: T[], fallback: T): T[] => clamp.keep.map((i) => arr[i] ?? fallback);
@@ -794,16 +853,35 @@ function renderTableBlock(block: DocumentBlock, ctx: RenderContext): (Table | Pa
   }
 
   const tableRows: unknown[] = [];
+  const drdMatrix = drdProfile && block.blockId.endsWith('-matrix') && columnCount >= 8;
+  const levelCount = Math.max(columnCount - 3, 1);
+  const drdColumnWidths = drdMatrix
+    ? [3200, ...Array.from({ length: levelCount }, () => Math.floor(3812 / levelCount)), 1100, 1300]
+    : [];
+  const drdCellOptions = (columnIndex: number) =>
+    drdMatrix
+      ? {
+          width: { size: drdColumnWidths[columnIndex], type: WidthType.DXA },
+          margins: { top: 80, bottom: 80, left: 90, right: 90 },
+          borders: {
+            top: { style: 'single', size: 2, color: DRD_REPORT_PALETTE.hair },
+            bottom: { style: 'single', size: 2, color: DRD_REPORT_PALETTE.hair },
+            left: { style: 'nil', size: 0, color: DRD_REPORT_PALETTE.white },
+            right: { style: 'nil', size: 0, color: DRD_REPORT_PALETTE.white },
+          },
+        }
+      : {};
   if (headers.length > 0) {
     tableRows.push(
       new TableRow({
         tableHeader: true,
         children: headers.map(
-          (cell) =>
+          (cell, columnIndex) =>
             // Navy header band + white bold text — the DOCX analogue of
             // WorkbookStyler's navy header fill and DeckStyler's dominant band.
             new TableCell({
-              shading: { fill: DOCX_PALETTE.navy },
+              ...drdCellOptions(columnIndex),
+              shading: { fill: drdProfile ? DRD_REPORT_PALETTE.fillHead : DOCX_PALETTE.navy },
               children: [
                 new Paragraph({
                   style: DOCX_STYLE_IDS.BODY_TEXT,
@@ -813,7 +891,7 @@ function renderTableBlock(block: DocumentBlock, ctx: RenderContext): (Table | Pa
                       bold: true,
                       font: ctx.bodyFont,
                       size: 20,
-                      color: DOCX_PALETTE.white,
+                      color: drdProfile ? DRD_REPORT_PALETTE.navyDark : DOCX_PALETTE.white,
                     }),
                   ],
                 }),
@@ -826,12 +904,13 @@ function renderTableBlock(block: DocumentBlock, ctx: RenderContext): (Table | Pa
   rows.forEach((row, rowIndex) => {
     // Subtle zebra striping on odd body rows (WorkbookStyler zebra analogue).
     // An explicit per-cell fill (status semaphore etc.) always wins.
-    const zebra = rowIndex % 2 === 1;
+    const zebra = !drdProfile && rowIndex % 2 === 1;
     tableRows.push(
       new TableRow({
-        children: row.map((cell) => {
+        children: row.map((cell, columnIndex) => {
           const fill = cell.fill ?? (zebra ? DOCX_PALETTE.zebraFill : null);
           return new TableCell({
+            ...drdCellOptions(columnIndex),
             ...(fill ? { shading: { fill } } : {}),
             children: [
               new Paragraph({
@@ -858,6 +937,7 @@ function renderTableBlock(block: DocumentBlock, ctx: RenderContext): (Table | Pa
   const table = new Table({
     rows: tableRows,
     width: { size: 100, type: WidthType.PERCENTAGE },
+    ...(drdMatrix ? { columnWidths: drdColumnWidths } : {}),
   });
 
   // Auto-numbered caption — emitted after the table so Word's "Update
@@ -865,8 +945,17 @@ function renderTableBlock(block: DocumentBlock, ctx: RenderContext): (Table | Pa
   // counter increments per renderer invocation so two tables in the
   // same document end up "Table 1" / "Table 2" regardless of section.
   ctx.tableCounter.value += 1;
-  const captionLabel = `Table ${ctx.tableCounter.value}`;
-  const captionText = value.caption ? `${captionLabel} — ${asString(value.caption)}` : captionLabel;
+  const captionLabel = drdProfile
+    ? `Tabela ${ctx.tableCounter.value}.`
+    : `Table ${ctx.tableCounter.value}`;
+  const captionText = value.caption
+    ? drdProfile
+      ? `${captionLabel} ${asString(value.caption)}`
+      : `${captionLabel} — ${asString(value.caption)}`
+    : drdProfile
+      ? null
+      : captionLabel;
+  if (!captionText) return [table];
   const captionChildren: TextRun[] = [new TextRun({ text: captionText, font: ctx.bodyFont })];
   if (block.sourceRef) captionChildren.push(...buildCitationRuns(ctx, block.sourceRef));
   const caption = new Paragraph({
@@ -886,9 +975,14 @@ function renderImageBlock(block: DocumentBlock, ctx: RenderContext): Paragraph[]
     widthCm?: number;
   };
   ctx.figureCounter.value += 1;
-  const captionLabel = `Figure ${ctx.figureCounter.value}`;
+  const drdProfile = isDrdReportProfile(ctx.schema);
+  const captionLabel = drdProfile
+    ? `Rysunek ${ctx.figureCounter.value}.`
+    : `Figure ${ctx.figureCounter.value}`;
   const description = value.caption ? asString(value.caption) : (value.alt ?? 'Image');
-  const captionText = `${captionLabel} — ${description}`;
+  const captionText = drdProfile
+    ? `${captionLabel} ${description}`
+    : `${captionLabel} — ${description}`;
   const raw = typeof value.dataBase64 === 'string' ? value.dataBase64 : '';
   const base64 = raw.includes(',') ? raw.slice(raw.indexOf(',') + 1) : raw;
   let buffer: Buffer | null = null;
@@ -939,7 +1033,10 @@ function renderImageBlock(block: DocumentBlock, ctx: RenderContext): Paragraph[]
 
 function renderChartBlock(block: DocumentBlock, ctx: RenderContext): Paragraph[] {
   ctx.figureCounter.value += 1;
-  const captionLabel = `Figure ${ctx.figureCounter.value}`;
+  const drdProfile = isDrdReportProfile(ctx.schema);
+  const captionLabel = drdProfile
+    ? `Rysunek ${ctx.figureCounter.value}.`
+    : `Figure ${ctx.figureCounter.value}`;
   const summary = summarizeDocumentChartBlock(block);
   const titleText = summary.title ?? '(untitled chart)';
   const chartImage = ctx.chartPngByBlockId.get(block.blockId);
@@ -950,7 +1047,7 @@ function renderChartBlock(block: DocumentBlock, ctx: RenderContext): Paragraph[]
         children: [
           new ImageRun({
             data: chartImage,
-            transformation: { width: 640, height: 360 },
+            transformation: drdProfile ? { width: 606, height: 350 } : { width: 640, height: 360 },
             type: 'png',
           }),
         ],
@@ -980,7 +1077,11 @@ function renderChartBlock(block: DocumentBlock, ctx: RenderContext): Paragraph[]
           ],
         });
       })();
-  const captionText = `${captionLabel} — ${titleText}`;
+  const content = documentChartBlockContent(block);
+  const captionDescription = content?.caption?.trim() || titleText;
+  const captionText = drdProfile
+    ? `${captionLabel} ${captionDescription}`
+    : `${captionLabel} — ${titleText}`;
   const captionChildren: TextRun[] = [new TextRun({ text: captionText, font: ctx.bodyFont })];
   if (block.sourceRef) captionChildren.push(...buildCitationRuns(ctx, block.sourceRef));
   const caption = new Paragraph({
@@ -990,8 +1091,7 @@ function renderChartBlock(block: DocumentBlock, ctx: RenderContext): Paragraph[]
   // Optional descriptive caption from the schema gets its own
   // paragraph so it is visually distinct from the figure caption.
   const out: Paragraph[] = [visualParagraph, caption];
-  const content = documentChartBlockContent(block);
-  if (content?.caption && content.caption.trim().length > 0) {
+  if (!drdProfile && content?.caption && content.caption.trim().length > 0) {
     out.push(
       new Paragraph({
         style: DOCX_STYLE_IDS.CAPTION,
@@ -1080,17 +1180,26 @@ function renderSection(
   options: { pageBreakBefore?: boolean } = {}
 ): (Paragraph | Table)[] {
   const level = section.level ?? 1;
+  const drdKicker =
+    isDrdReportProfile(ctx.schema) && section.purpose
+      ? new Paragraph({
+          style: DRD_DOCX_STYLE_IDS.KICKER,
+          pageBreakBefore: options.pageBreakBefore === true ? true : undefined,
+          keepNext: true,
+          children: [new TextRun({ text: section.purpose })],
+        })
+      : null;
   const heading = new Paragraph({
     style: styleIdForHeadingLevel(level),
     heading: headingLevelForSection(level),
     children: [new TextRun({ text: headingText, font: ctx.headingFont })],
-    pageBreakBefore: options.pageBreakBefore === true ? true : undefined,
+    pageBreakBefore: drdKicker ? undefined : options.pageBreakBefore === true ? true : undefined,
     // A section heading must travel with at least the first paragraph/table.
     // Without this explicit pagination hint Word/LibreOffice may leave a
     // heading as the last line on a page while its body starts on the next.
     keepNext: true,
   });
-  const normalizedPurpose = asString(section.purpose ?? '').trim();
+  const normalizedPurpose = drdKicker ? '' : asString(section.purpose ?? '').trim();
   const normalizedTitle = asString(section.title ?? '').trim();
   // Generated outlines often use the section title verbatim as `purpose`.
   // Rendering both produces an accidental duplicate immediately below the
@@ -1121,7 +1230,7 @@ function renderSection(
   for (const block of section.blocks) {
     blockOutputs.push(...renderBlock(block, ctx));
   }
-  return [heading, ...purpose, ...blockOutputs];
+  return [...(drdKicker ? [drdKicker] : []), heading, ...purpose, ...blockOutputs];
 }
 
 function renderCoverBlock(ctx: RenderContext, options: DocumentRenderOptions = {}): Paragraph[] {
@@ -1256,6 +1365,94 @@ function renderCoverBlock(ctx: RenderContext, options: DocumentRenderOptions = {
   return out;
 }
 
+function renderDrdCoverBlock(ctx: RenderContext): (Paragraph | Table)[] {
+  const metadata = ctx.schema.drdReportMetadata;
+  const missing = 'Do uzupełnienia — dane nie są zapisane w sesji oceny.';
+  const rows: Array<[string, string, boolean]> = [
+    ['Klient', metadata?.clientName ?? ctx.schema.audience[0] ?? missing, false],
+    ['Profil działalności', metadata?.businessProfile ?? missing, !metadata?.businessProfile],
+    ['Zatrudnienie', metadata?.employment ?? missing, !metadata?.employment],
+    ['Okres oceny', metadata?.assessmentPeriod ?? missing, !metadata?.assessmentPeriod],
+    ['Oceniający', metadata?.assessor ?? missing, !metadata?.assessor],
+    ['Sponsor po stronie klienta', metadata?.clientSponsor ?? missing, !metadata?.clientSponsor],
+    ['Metodyka', metadata?.methodology ?? missing, !metadata?.methodology],
+    ['Sygnatura sesji', metadata?.sessionSignature ?? missing, !metadata?.sessionSignature],
+    [
+      'Data wydania',
+      metadata?.issuedAt ? new Date(metadata.issuedAt).toISOString().slice(0, 10) : missing,
+      !metadata?.issuedAt,
+    ],
+  ];
+  const metadataTable = new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    rows: rows.map(
+      ([label, value, placeholder]) =>
+        new TableRow({
+          children: [
+            new TableCell({
+              width: { size: 32, type: WidthType.PERCENTAGE },
+              children: [
+                new Paragraph({
+                  style: DRD_DOCX_STYLE_IDS.SIGNATURE,
+                  children: [new TextRun({ text: label, bold: true, font: ctx.bodyFont })],
+                }),
+              ],
+            }),
+            new TableCell({
+              width: { size: 68, type: WidthType.PERCENTAGE },
+              children: [
+                new Paragraph({
+                  style: placeholder ? DRD_DOCX_STYLE_IDS.CAPTION : DRD_DOCX_STYLE_IDS.BODY,
+                  children: [
+                    new TextRun({ text: value, italics: placeholder, font: ctx.bodyFont }),
+                  ],
+                }),
+              ],
+            }),
+          ],
+        })
+    ),
+  });
+  return [
+    new Paragraph({
+      style: DRD_DOCX_STYLE_IDS.KICKER,
+      children: [
+        new TextRun({ text: '● ', color: DRD_REPORT_PALETTE.crimson, font: ctx.bodyFont }),
+        new TextRun({
+          text: 'C O N S U L T I F Y',
+          color: DRD_REPORT_PALETTE.crimson,
+          font: ctx.bodyFont,
+        }),
+      ],
+    }),
+    new Paragraph({
+      style: DRD_DOCX_STYLE_IDS.KICKER,
+      children: [
+        new TextRun({
+          text: 'OCENA DOJRZAŁOŚCI CYFROWEJ · DIGITAL PATHFINDER',
+          color: DRD_REPORT_PALETTE.teal,
+          font: ctx.bodyFont,
+        }),
+      ],
+    }),
+    new Paragraph({
+      style: DOCX_STYLE_IDS.TITLE,
+      children: [new TextRun({ text: ctx.schema.title, font: ctx.headingFont })],
+    }),
+    new Paragraph({
+      style: DOCX_STYLE_IDS.SUBTITLE,
+      children: [
+        new TextRun({
+          text: metadata?.clientName ?? ctx.schema.audience[0] ?? missing,
+          font: ctx.bodyFont,
+        }),
+      ],
+    }),
+    metadataTable,
+    new Paragraph({ children: [new PageBreak()] }),
+  ];
+}
+
 /**
  * Slice E15.5.coverPageLogo — DOCX logo paragraph builder. Decodes
  * the base64 asset bytes once, sizes the embed to ~4cm wide (safe
@@ -1315,6 +1512,19 @@ function buildCoverLogoParagraph(
  */
 function renderTocBlock(ctx: RenderContext): unknown[] {
   const isPolish = ctx.schema.language.toLowerCase().startsWith('pl');
+  if (ctx.schema.formattingSchema.tocConfig?.nativeField) {
+    return [
+      new Paragraph({
+        style: DRD_DOCX_STYLE_IDS.KICKER,
+        pageBreakBefore: true,
+        children: [new TextRun({ text: isPolish ? 'NAWIGACJA' : 'NAVIGATION' })],
+      }),
+      new TableOfContents(isPolish ? 'Spis treści' : 'Table of Contents', {
+        hyperlink: true,
+        headingStyleRange: '1-2',
+      }),
+    ];
+  }
   const heading = new Paragraph({
     style: DOCX_STYLE_IDS.TOC_HEADING,
     children: [
@@ -1416,7 +1626,7 @@ function renderSources(ctx: RenderContext): (Paragraph | Table)[] {
   return [heading, ...items];
 }
 
-export async function renderDocumentSchemaToDocxBuffer(
+async function renderDocumentSchemaToDocxBufferInternal(
   schemaInput: DocumentSchema,
   options: DocumentRenderOptions = {}
 ): Promise<Buffer> {
@@ -1430,9 +1640,14 @@ export async function renderDocumentSchemaToDocxBuffer(
   const formattingClass = resolveFormattingClass(schema);
   const styles = buildDocxStyleConfig(schema, formattingClass);
   const margins = formatting.page.marginsCm;
+  const drdProfile = isDrdReportProfile(schema);
 
   const sectionChildren: unknown[] = [];
-  if (formatting.coverPage) sectionChildren.push(...renderCoverBlock(ctx, options));
+  if (formatting.coverPage) {
+    sectionChildren.push(
+      ...(isDrdReportProfile(schema) ? renderDrdCoverBlock(ctx) : renderCoverBlock(ctx, options))
+    );
+  }
   if (formatting.toc) sectionChildren.push(...renderTocBlock(ctx));
 
   // Partition into body + appendix groups so appendices always land
@@ -1440,7 +1655,16 @@ export async function renderDocumentSchemaToDocxBuffer(
   // regardless of where the schema author placed them.
   const partitioned = partitionSections(schema.sections);
   partitioned.body.forEach((section, index) => {
-    sectionChildren.push(...renderSection(section, ctx, formatBodyHeading(section, index)));
+    sectionChildren.push(
+      ...renderSection(
+        section,
+        ctx,
+        drdProfile ? section.title : formatBodyHeading(section, index),
+        {
+          pageBreakBefore: drdProfile && index > 0,
+        }
+      )
+    );
   });
   partitioned.appendix.forEach((section, index) => {
     sectionChildren.push(
@@ -1587,14 +1811,73 @@ export async function renderDocumentSchemaToDocxBuffer(
     }
   }
   const footerChildren =
-    footerEnabled && footerRuns.length > 0
+    footerEnabled && drdProfile
       ? [
           new Paragraph({
-            alignment: AlignmentType.RIGHT,
-            children: footerRuns,
+            alignment: AlignmentType.LEFT,
+            tabStops: [
+              { type: 'center', position: Math.round(DRD_REPORT_GEOMETRY.contentWidthTwips / 2) },
+              { type: 'right', position: DRD_REPORT_GEOMETRY.contentWidthTwips },
+            ],
+            border: {
+              top: { color: DRD_REPORT_PALETTE.hair, space: 6, style: 'single', size: 2 },
+            },
+            children: [
+              new TextRun({
+                text: formatting.footers.content?.trim() || `Poufne — ${schema.audience[0] ?? ''}`,
+                size: 16,
+                color: DRD_REPORT_PALETTE.muted,
+                font: ctx.bodyFont,
+              }),
+              new TextRun({ text: '\t', size: 16, font: ctx.bodyFont }),
+              new TextRun({
+                text: 'Strona ',
+                size: 16,
+                color: DRD_REPORT_PALETTE.muted,
+                font: ctx.bodyFont,
+              }),
+              new TextRun({
+                children: [PageNumber.CURRENT],
+                size: 16,
+                color: DRD_REPORT_PALETTE.muted,
+                font: ctx.bodyFont,
+              }),
+              new TextRun({
+                text: ' z ',
+                size: 16,
+                color: DRD_REPORT_PALETTE.muted,
+                font: ctx.bodyFont,
+              }),
+              new TextRun({
+                children: [PageNumber.TOTAL_PAGES],
+                size: 16,
+                color: DRD_REPORT_PALETTE.muted,
+                font: ctx.bodyFont,
+              }),
+              new TextRun({ text: '\t', size: 16, font: ctx.bodyFont }),
+              new TextRun({
+                text: '● ',
+                size: 16,
+                color: DRD_REPORT_PALETTE.crimson,
+                font: ctx.bodyFont,
+              }),
+              new TextRun({
+                text: 'Consultify',
+                size: 16,
+                color: DRD_REPORT_PALETTE.muted,
+                font: ctx.bodyFont,
+              }),
+            ],
           }),
         ]
-      : [];
+      : footerEnabled && footerRuns.length > 0
+        ? [
+            new Paragraph({
+              alignment: AlignmentType.RIGHT,
+              children: footerRuns,
+            }),
+          ]
+        : [];
 
   // Materialise the accumulated footnote registry into the
   // string-keyed shape `Document({ footnotes })` expects. Empty when
@@ -1615,6 +1898,7 @@ export async function renderDocumentSchemaToDocxBuffer(
     creator: 'Consultify Document Studio',
     title: schema.title,
     description: `Consultify Document Studio · ${schema.documentType} · ${formattingClass}`,
+    ...(formatting.tocConfig?.nativeField ? { features: { updateFields: true } } : {}),
     styles,
     numbering: { config: DOCX_NUMBERING_CONFIG },
     ...(footnotesPayload ? { footnotes: footnotesPayload } : {}),
@@ -1622,19 +1906,39 @@ export async function renderDocumentSchemaToDocxBuffer(
       {
         properties: {
           page: {
-            size: { width: 11906, height: 16838 }, // A4 in twips
+            size: drdProfile
+              ? {
+                  width: DRD_REPORT_GEOMETRY.pageWidthTwips,
+                  height: DRD_REPORT_GEOMETRY.pageHeightTwips,
+                }
+              : { width: 11906, height: 16838 }, // A4 in twips
             margin: {
-              top: Math.round(margins.top * TWIPS_PER_CM),
-              bottom: Math.round(margins.bottom * TWIPS_PER_CM),
-              left: Math.round(margins.left * TWIPS_PER_CM),
-              right: Math.round(margins.right * TWIPS_PER_CM),
+              top: drdProfile
+                ? DRD_REPORT_GEOMETRY.marginTopTwips
+                : Math.round(margins.top * TWIPS_PER_CM),
+              bottom: drdProfile
+                ? DRD_REPORT_GEOMETRY.marginBottomTwips
+                : Math.round(margins.bottom * TWIPS_PER_CM),
+              left: drdProfile
+                ? DRD_REPORT_GEOMETRY.marginLeftTwips
+                : Math.round(margins.left * TWIPS_PER_CM),
+              right: drdProfile
+                ? DRD_REPORT_GEOMETRY.marginRightTwips
+                : Math.round(margins.right * TWIPS_PER_CM),
+              ...(drdProfile ? { footer: DRD_REPORT_GEOMETRY.footerTwips } : {}),
             },
           },
+          ...(drdProfile ? { titlePage: DRD_REPORT_GEOMETRY.titlePage } : {}),
         },
         headers: headerEnabled ? { default: new Header({ children: headerChildren }) } : undefined,
         footers:
           footerEnabled && footerChildren.length > 0
-            ? { default: new Footer({ children: footerChildren }) }
+            ? {
+                default: new Footer({ children: footerChildren }),
+                ...(drdProfile
+                  ? { first: new Footer({ children: [new Paragraph({ children: [] })] }) }
+                  : {}),
+              }
             : undefined,
         children: sectionChildren,
       },
@@ -1643,4 +1947,18 @@ export async function renderDocumentSchemaToDocxBuffer(
 
   const buffer = await Packer.toBuffer(doc);
   return buffer;
+}
+
+export async function renderDocumentSchemaToDocxBuffer(
+  schemaInput: DocumentSchema,
+  options: DocumentRenderOptions = {}
+): Promise<Buffer> {
+  const isPolish = schemaInput.language.toLowerCase().startsWith('pl');
+  return textRunScope.run(
+    {
+      isPolish: isPolish && isDrdReportProfile(schemaInput),
+      namedStyleRuns: isDrdReportProfile(schemaInput),
+    },
+    () => renderDocumentSchemaToDocxBufferInternal(schemaInput, options)
+  );
 }

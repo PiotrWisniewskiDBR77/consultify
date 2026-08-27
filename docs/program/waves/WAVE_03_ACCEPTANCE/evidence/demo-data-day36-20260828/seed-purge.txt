@@ -1,0 +1,19 @@
+assessment_skip_reasons: usunięto 23
+method_findings: usunięto 23
+method_outputs: usunięto 1
+method_snapshots: usunięto 1
+method_events: usunięto 24
+method_sessions: usunięto 1
+projects: usunięto 1
+users: usunięto 1
+organizations: usunięto 1
+purge readback:
+organizations: 0/1
+users: 0/1
+projects: 0/1
+method_sessions: 0/1
+method_events: 0/24
+method_snapshots: 0/1
+method_outputs: 0/1
+method_findings: 0/23
+assessment_skip_reasons: 0/23

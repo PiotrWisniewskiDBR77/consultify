@@ -11,6 +11,7 @@ describe('Day 17 X.4 control KPI read model', () => {
     expect(result.families.map((item) => item.family)).toEqual(CONTROL_KPI_FAMILIES);
     expect(result.families).toHaveLength(8);
     expect(result.families.every((item) => item.value === null)).toBe(true);
+    expect(result.scopeCompleteness).toBe('NOT_CALCULABLE');
   });
 
   it('marks policy-dependent families DECISION_REQUIRED without defaults', async () => {
@@ -28,20 +29,22 @@ describe('Day 17 X.4 control KPI read model', () => {
   });
 
   it('resolves a complete tenant policy but keeps unsupported populations explicit', async () => {
-    const query = vi.fn().mockResolvedValue({
-      rows: [
-        {
-          policy_id: 'policy-a',
-          parameters: {
-            impactWeights: {},
-            atRiskThresholdDays: 1,
-            capacitySaturationThreshold: 1,
-            capacityBuffer: 1,
-            decisionSlaDays: 1,
-          },
-        },
-      ],
-    });
+    const query = vi.fn().mockImplementation(async (sql: string) => ({
+      rows: sql.includes('execution_control_kpi_policies')
+        ? [
+            {
+              policy_id: 'policy-a',
+              parameters: {
+                impactWeights: {},
+                atRiskThresholdDays: 1,
+                capacitySaturationThreshold: 1,
+                capacityBuffer: 1,
+                decisionSlaDays: 1,
+              },
+            },
+          ]
+        : [],
+    }));
     const result = await new ControlKpiReadModel({ query } as any).read(
       'org-a',
       '2026-08-24',
@@ -53,5 +56,47 @@ describe('Day 17 X.4 control KPI read model', () => {
     ]);
     expect(result.policy).toEqual({ policyId: 'policy-a', resolved: true, missingParameters: [] });
     expect(result.families.every((item) => item.valueReason === 'BRAK_ŹRÓDŁA')).toBe(true);
+    expect(result.scopeCompleteness).toBe('NOT_CALCULABLE');
+  });
+
+  it('derives PARTIAL when at least one family is full and others are not', async () => {
+    const query = vi.fn().mockImplementation(async (sql: string) => {
+      if (sql.includes('ie_aggregate_state item')) {
+        return {
+          rows: [
+            {
+              aggregate_type: 'execution_task',
+              aggregate_id: 'task-a',
+              version: 1,
+              payload_json: { dueAt: '2026-08-25T00:00:00Z', status: 'COMPLETED' },
+              initiative_id: 'initiative-a',
+            },
+          ],
+        };
+      }
+      if (sql.includes('execution_control_kpi_policies')) {
+        return {
+          rows: [
+            {
+              policy_id: 'policy-a',
+              parameters: {
+                impactWeights: {},
+                atRiskThresholdDays: 1234,
+                capacitySaturationThreshold: 1234,
+                capacityBuffer: 1234,
+                decisionSlaDays: 1234,
+              },
+            },
+          ],
+        };
+      }
+      return { rows: [] };
+    });
+    const result = await new ControlKpiReadModel({ query } as any).read(
+      'org-a',
+      '2026-08-24',
+      'policy-a'
+    );
+    expect(result.scopeCompleteness).toBe('PARTIAL');
   });
 });

@@ -59,6 +59,15 @@ import {
   transitionCanonicalTask,
 } from '../../domain/initiatives-execution/executionWorkHardening.js';
 import {
+  createExecutionBudgetEntry,
+  executeCanonicalManagerAction,
+  recordRaidMitigation,
+  recordExecutionRealization,
+  reviewManagerSuggestion,
+  voidExecutionBudgetEntry,
+} from '../../domain/initiatives-execution/executionControlWrites.js';
+import { authorExecutionControlKpiPolicy } from '../../domain/initiatives-execution/executionControlKpiPolicyAuthoring.js';
+import {
   gateSignoffId,
   submitGateSignoff,
 } from '../../domain/initiatives-execution/gateSignoff.js';
@@ -107,6 +116,7 @@ import {
   PostgresGovernancePolicyResolver,
 } from '../../domain/initiatives-execution/postgresGovernancePolicyResolver.js';
 import { PostgresInitiativeReader } from '../../domain/initiatives-execution/postgresInitiativeReader.js';
+import { PostgresAsOfVersionReader } from '../../domain/initiatives-execution/postgresAsOfVersionReader.js';
 import { PostgresMaterialCommandUnitOfWork } from '../../domain/initiatives-execution/postgresMaterialCommandUnitOfWork.js';
 import { publishInitiativeCard } from '../../domain/initiatives-execution/publishInitiativeCard.js';
 import { refreshInitiativeSource } from '../../domain/initiatives-execution/refreshInitiativeSource.js';
@@ -782,6 +792,62 @@ const SignalIngestSchema = z.object({
   occurredAt: z.string().datetime(),
   evidenceRef: z.string().min(1),
 });
+const ExecutionBudgetEntrySchema = z.object({
+  expectedVersion: z.number().int().min(0),
+  clientRequestId: z.string().min(1),
+  entryType: z.string().min(1),
+  costType: z.string().min(1),
+  category: z.string().min(1),
+  amount: z.number().finite(),
+  currency: z.string().min(3).max(3),
+  description: z.string().nullable().default(null),
+  periodMonth: z.number().int().min(1).max(12),
+  periodYear: z.number().int().min(2000),
+  source: z.string().min(1),
+});
+const ExecutionBudgetVoidSchema = z.object({
+  expectedVersion: z.number().int().min(0),
+  clientRequestId: z.string().min(1),
+});
+const ExecutionRealizationSchema = z.object({
+  expectedVersion: z.number().int().min(0),
+  clientRequestId: z.string().min(1),
+  periodMonth: z.string().regex(/^\d{4}-\d{2}$/),
+  realizedRevenueDelta: z.number().finite().nullable().default(null),
+  realizedCostDelta: z.number().finite().nullable().default(null),
+  realizedSavings: z.number().finite().nullable().default(null),
+  varianceNotes: z.string().nullable().default(null),
+});
+const RaidMitigationSchema = z.object({
+  expectedVersion: z.number().int().min(0),
+  clientRequestId: z.string().min(1),
+  mitigationPlan: z.string().min(1),
+  responseStrategy: z.string().min(1),
+  mitigationOwnerId: z.string().min(1),
+  mitigationDueDate: z.string().datetime().nullable().default(null),
+  mitigationStatus: z.string().min(1),
+});
+const ManagerExecutionActionSchema = z.object({
+  expectedVersion: z.number().int().min(0),
+  clientRequestId: z.string().min(1),
+  laneId: z.string().min(1),
+  problemId: z.string().min(1),
+  actionId: z.string().min(1),
+  rationale: z.string().nullable().default(null),
+});
+const ManagerSuggestionReviewSchema = z.object({
+  expectedVersion: z.number().int().min(0),
+  clientRequestId: z.string().min(1),
+  laneId: z.string().min(1),
+  outcome: z.enum(['APPROVE', 'DEFER']),
+  notes: z.string().nullable().default(null),
+});
+const ExecutionControlKpiPolicySchema = z.object({
+  expectedVersion: z.number().int().min(0),
+  clientRequestId: z.string().min(1),
+  name: z.string().min(1),
+  parameters: z.record(z.string(), z.unknown()),
+});
 const InterventionDraftSchema = z.object({
   expectedVersion: z.number().int().min(0),
   clientRequestId: z.string().min(1),
@@ -1119,6 +1185,7 @@ export interface InitiativesExecutionRuntimeDependencies {
     initiativeId?: string | null
   ) => Promise<EffectiveGovernancePolicy>;
   controlKpis?: ControlKpiReadModel;
+  asOfVersions?: PostgresAsOfVersionReader;
 }
 
 function actorFromRequest(req: Request): RuntimeActor | null {
@@ -2114,6 +2181,53 @@ export function createInitiativesExecutionRuntimeRouter(
         canUpdate,
         canReview,
         canSelfApprove: Boolean(policy.config.selfApproval),
+        executionWrites: {
+          budgetEntry: {
+            available: canUpdate,
+            canonicalCommand:
+              'POST /api/initiatives/runtime-v1/initiatives/:initiativeId/budget-entries/:entryId',
+            denialAt: canUpdate ? null : 'ZDOLNOŚĆ',
+            denialCode: canUpdate ? null : 'NOT_FOUND',
+            legacyDenialAt: 'BRAMKA_LEGACY',
+            legacyDenialCode: 'EXECUTION_RUNTIME_V1_WRITE_REQUIRED',
+          },
+          realization: {
+            available: canUpdate,
+            canonicalCommand:
+              'POST /api/initiatives/runtime-v1/initiatives/:initiativeId/realizations/:realizationId',
+            denialAt: canUpdate ? null : 'ZDOLNOŚĆ',
+            denialCode: canUpdate ? null : 'NOT_FOUND',
+            legacyDenialAt: 'BRAMKA_LEGACY',
+            legacyDenialCode: 'EXECUTION_RUNTIME_V1_WRITE_REQUIRED',
+          },
+          raidMitigation: {
+            available: canUpdate,
+            canonicalCommand:
+              'POST /api/initiatives/runtime-v1/initiatives/:initiativeId/raid-mitigations/:raidItemId',
+            denialAt: canUpdate ? null : 'ZDOLNOŚĆ',
+            denialCode: canUpdate ? null : 'NOT_FOUND',
+            legacyDenialAt: 'BRAMKA_LEGACY',
+            legacyDenialCode: 'EXECUTION_RUNTIME_V1_WRITE_REQUIRED',
+          },
+          managerAction: {
+            available: canUpdate,
+            canonicalCommand:
+              'POST /api/initiatives/runtime-v1/initiatives/:initiativeId/manager-actions/:managerActionId',
+            denialAt: canUpdate ? null : 'ZDOLNOŚĆ',
+            denialCode: canUpdate ? null : 'NOT_FOUND',
+            legacyDenialAt: 'BRAMKA_LEGACY',
+            legacyDenialCode: 'EXECUTION_RUNTIME_V1_WRITE_REQUIRED',
+          },
+          managerSuggestionReview: {
+            available: canReview,
+            canonicalCommand:
+              'POST /api/initiatives/runtime-v1/initiatives/:initiativeId/manager-suggestions/:suggestionId/review',
+            denialAt: canReview ? null : 'ZDOLNOŚĆ',
+            denialCode: canReview ? null : 'NOT_FOUND',
+            legacyDenialAt: 'BRAMKA_LEGACY',
+            legacyDenialCode: 'EXECUTION_RUNTIME_V1_WRITE_REQUIRED',
+          },
+        },
       });
     })
   );
@@ -4497,6 +4611,365 @@ export function createInitiativesExecutionRuntimeRouter(
   );
 
   router.post(
+    '/execution-control-kpi-policies/:policyId',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      const parsed = ExecutionControlKpiPolicySchema.safeParse(req.body);
+      if (!actor) return void res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+      if (!parsed.success)
+        return void res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
+      const claimedOrganizationId = String(
+        (req.body as Record<string, unknown> | undefined)?.organizationId ||
+          req.header('X-Organization-Id') ||
+          ''
+      ).trim();
+      if (claimedOrganizationId && claimedOrganizationId !== actor.organizationId)
+        return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
+      if (!(await deps.authorize(actor, '', 'initiative.update')))
+        return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
+
+      const { expectedVersion, clientRequestId, name, parameters } = parsed.data;
+      const policyId = firstParam(req.params.policyId);
+      const result = await authorExecutionControlKpiPolicy(deps.unitOfWork, {
+        organizationId: actor.organizationId,
+        actorId: actor.userId,
+        aggregateType: 'execution_control_kpi_policy',
+        aggregateId: policyId,
+        expectedVersion,
+        clientRequestId,
+        correlationId: clientRequestId,
+        policyId,
+        policyVersion: expectedVersion + 1,
+        commandType: 'execution-control-kpi-policy.author',
+        createIfMissing: true,
+        payload: { name, parameters },
+      });
+      res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
+    })
+  );
+  router.post(
+    '/initiatives/:initiativeId/budget-entries/:entryId/void',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      const parsed = ExecutionBudgetVoidSchema.safeParse(req.body);
+      if (!actor) return void res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+      if (!parsed.success)
+        return void res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
+      const initiativeId = firstParam(req.params.initiativeId);
+      const projectIds = await deps.reader.resolveProjectIdsForAggregate(
+        actor.organizationId,
+        'initiative',
+        initiativeId
+      );
+      if (!(await authorizeProjects(actor, projectIds, 'initiative.update')))
+        return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
+      const result = await voidExecutionBudgetEntry(deps.unitOfWork, {
+        organizationId: actor.organizationId,
+        actorId: actor.userId,
+        aggregateType: 'execution_budget_entry',
+        aggregateId: firstParam(req.params.entryId),
+        expectedVersion: parsed.data.expectedVersion,
+        clientRequestId: parsed.data.clientRequestId,
+        correlationId: parsed.data.clientRequestId,
+        policyId: 'execution-control',
+        policyVersion: 1,
+        commandType: 'execution-budget-entry.void',
+        payload: { initiativeId },
+      });
+      res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
+    })
+  );
+  router.post(
+    '/initiatives/:initiativeId/budget-entries/:entryId',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      const parsed = ExecutionBudgetEntrySchema.safeParse(req.body);
+      if (!actor) {
+        res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+        return;
+      }
+      if (!parsed.success) {
+        res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
+        return;
+      }
+      const initiativeId = firstParam(req.params.initiativeId);
+      const projectIds = await deps.reader.resolveProjectIdsForAggregate(
+        actor.organizationId,
+        'initiative',
+        initiativeId
+      );
+      if (!(await authorizeProjects(actor, projectIds, 'initiative.update'))) {
+        res.status(404).json({ error: { code: 'NOT_FOUND' } });
+        return;
+      }
+      const { expectedVersion, clientRequestId, ...entry } = parsed.data;
+      const result = await createExecutionBudgetEntry(deps.unitOfWork, {
+        organizationId: actor.organizationId,
+        actorId: actor.userId,
+        aggregateType: 'execution_budget_entry',
+        aggregateId: firstParam(req.params.entryId),
+        expectedVersion,
+        clientRequestId,
+        correlationId: clientRequestId,
+        policyId: 'execution-control',
+        policyVersion: 1,
+        commandType: 'execution-budget-entry.create',
+        createIfMissing: true,
+        payload: { ...entry, initiativeId },
+      });
+      res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
+    })
+  );
+  router.post(
+    '/initiatives/:initiativeId/realizations/:realizationId',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      const parsed = ExecutionRealizationSchema.safeParse(req.body);
+      if (!actor) return void res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+      if (!parsed.success)
+        return void res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
+      const initiativeId = firstParam(req.params.initiativeId);
+      const projectIds = await deps.reader.resolveProjectIdsForAggregate(
+        actor.organizationId,
+        'initiative',
+        initiativeId
+      );
+      if (!(await authorizeProjects(actor, projectIds, 'initiative.update')))
+        return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
+      const { expectedVersion, clientRequestId, ...entry } = parsed.data;
+      const result = await recordExecutionRealization(deps.unitOfWork, {
+        organizationId: actor.organizationId,
+        actorId: actor.userId,
+        aggregateType: 'execution_realization',
+        aggregateId: firstParam(req.params.realizationId),
+        expectedVersion,
+        clientRequestId,
+        correlationId: clientRequestId,
+        policyId: 'execution-control',
+        policyVersion: 1,
+        commandType: 'execution-realization.record',
+        createIfMissing: true,
+        payload: { ...entry, initiativeId },
+      });
+      res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
+    })
+  );
+  router.get(
+    '/initiatives/:initiativeId/realizations',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      if (!actor) return void res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+      const initiativeId = firstParam(req.params.initiativeId);
+      const items = await deps.reader.listExecutionRealizations(actor.organizationId, initiativeId);
+      res.json({
+        items: await filterVisibleAggregates(
+          actor,
+          items,
+          'execution_realization',
+          (item: any) => item.realizationId
+        ),
+      });
+    })
+  );
+  router.post(
+    '/initiatives/:initiativeId/raid-mitigations/:raidItemId',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      const parsed = RaidMitigationSchema.safeParse(req.body);
+      if (!actor) return void res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+      if (!parsed.success)
+        return void res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
+      const initiativeId = firstParam(req.params.initiativeId);
+      const projectIds = await deps.reader.resolveProjectIdsForAggregate(
+        actor.organizationId,
+        'initiative',
+        initiativeId
+      );
+      if (!(await authorizeProjects(actor, projectIds, 'initiative.update')))
+        return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
+      const { expectedVersion, clientRequestId, ...mitigation } = parsed.data;
+      const raidItemId = firstParam(req.params.raidItemId);
+      const result = await recordRaidMitigation(deps.unitOfWork, {
+        organizationId: actor.organizationId,
+        actorId: actor.userId,
+        aggregateType: 'raid_mitigation',
+        aggregateId: raidItemId,
+        expectedVersion,
+        clientRequestId,
+        correlationId: clientRequestId,
+        policyId: 'execution-control',
+        policyVersion: 1,
+        commandType: 'raid-mitigation.record',
+        createIfMissing: true,
+        payload: { ...mitigation, initiativeId, raidItemId },
+      });
+      res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
+    })
+  );
+  router.get(
+    '/initiatives/:initiativeId/raid-mitigations',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      if (!actor) return void res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+      const initiativeId = firstParam(req.params.initiativeId);
+      const items = await deps.reader.listRaidMitigations(actor.organizationId, initiativeId);
+      res.json({
+        items: await filterVisibleAggregates(
+          actor,
+          items,
+          'raid_mitigation',
+          (item: any) => item.raidItemId
+        ),
+      });
+    })
+  );
+  router.post(
+    '/initiatives/:initiativeId/manager-actions/:managerActionId',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      const parsed = ManagerExecutionActionSchema.safeParse(req.body);
+      if (!actor) return void res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+      if (!parsed.success)
+        return void res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
+      const initiativeId = firstParam(req.params.initiativeId);
+      const projectIds = await deps.reader.resolveProjectIdsForAggregate(
+        actor.organizationId,
+        'initiative',
+        initiativeId
+      );
+      if (!(await authorizeProjects(actor, projectIds, 'initiative.update')))
+        return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
+      const { expectedVersion, clientRequestId, ...action } = parsed.data;
+      const result = await executeCanonicalManagerAction(deps.unitOfWork, {
+        organizationId: actor.organizationId,
+        actorId: actor.userId,
+        aggregateType: 'manager_execution_action',
+        aggregateId: firstParam(req.params.managerActionId),
+        expectedVersion,
+        clientRequestId,
+        correlationId: clientRequestId,
+        policyId: 'execution-control',
+        policyVersion: 1,
+        commandType: 'manager-action.execute',
+        createIfMissing: true,
+        payload: { ...action, initiativeId },
+      });
+      res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
+    })
+  );
+  router.get(
+    '/initiatives/:initiativeId/manager-actions',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      if (!actor) return void res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+      const initiativeId = firstParam(req.params.initiativeId);
+      const items = await deps.reader.listManagerExecutionActions(
+        actor.organizationId,
+        initiativeId
+      );
+      res.json({
+        items: await filterVisibleAggregates(
+          actor,
+          items,
+          'manager_execution_action',
+          (item: any) => item.managerActionId
+        ),
+      });
+    })
+  );
+  router.post(
+    '/initiatives/:initiativeId/manager-suggestions/:suggestionId/review',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      const parsed = ManagerSuggestionReviewSchema.safeParse(req.body);
+      if (!actor) return void res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+      if (!parsed.success)
+        return void res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
+      const initiativeId = firstParam(req.params.initiativeId);
+      const projectIds = await deps.reader.resolveProjectIdsForAggregate(
+        actor.organizationId,
+        'initiative',
+        initiativeId
+      );
+      if (!(await authorizeProjects(actor, projectIds, 'initiative.review')))
+        return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
+      const { expectedVersion, clientRequestId, ...review } = parsed.data;
+      const suggestionId = firstParam(req.params.suggestionId);
+      const result = await reviewManagerSuggestion(deps.unitOfWork, {
+        organizationId: actor.organizationId,
+        actorId: actor.userId,
+        aggregateType: 'manager_suggestion_review',
+        aggregateId: suggestionId,
+        expectedVersion,
+        clientRequestId,
+        correlationId: clientRequestId,
+        policyId: 'execution-control',
+        policyVersion: 1,
+        commandType: 'manager-suggestion.review',
+        createIfMissing: true,
+        payload: { ...review, initiativeId, suggestionId },
+      });
+      res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
+    })
+  );
+  router.get(
+    '/initiatives/:initiativeId/manager-suggestion-reviews',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      if (!actor) return void res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+      const initiativeId = firstParam(req.params.initiativeId);
+      const items = await deps.reader.listManagerSuggestionReviews(
+        actor.organizationId,
+        initiativeId
+      );
+      res.json({
+        items: await filterVisibleAggregates(
+          actor,
+          items,
+          'manager_suggestion_review',
+          (item: any) => item.suggestionId
+        ),
+      });
+    })
+  );
+  router.get('/execution-write-map', (_req, res) => {
+    res.json({
+      canonicalWriter: '/api/initiatives/runtime-v1',
+      mappings: [
+        {
+          legacyMethod: 'POST',
+          legacyPath: '/api/v8/execution-control/budget/entries',
+          canonicalCommand:
+            'POST /api/initiatives/runtime-v1/initiatives/:initiativeId/budget-entries/:entryId',
+        },
+        {
+          legacyMethod: 'POST',
+          legacyPath: '/api/v8/execution-control/realizations',
+          canonicalCommand:
+            'POST /api/initiatives/runtime-v1/initiatives/:initiativeId/realizations/:realizationId',
+        },
+        {
+          legacyMethod: 'PATCH',
+          legacyPath: '/api/v8/execution-control/raid/:raidItemId/mitigation',
+          canonicalCommand:
+            'POST /api/initiatives/runtime-v1/initiatives/:initiativeId/raid-mitigations/:raidItemId',
+        },
+        {
+          legacyMethod: 'POST',
+          legacyPath: '/api/v8/execution-control/manager/lanes/:laneId/problem-actions/execute',
+          canonicalCommand:
+            'POST /api/initiatives/runtime-v1/initiatives/:initiativeId/manager-actions/:managerActionId',
+        },
+        {
+          legacyMethod: 'POST',
+          legacyPath: '/api/v8/execution-control/manager/lanes/:laneId/suggestions/apply',
+          canonicalCommand:
+            'POST /api/initiatives/runtime-v1/initiatives/:initiativeId/manager-suggestions/:suggestionId/review',
+        },
+      ],
+    });
+  });
+  router.post(
     '/management-signals/ingest',
     asyncHandler(async (req, res) => {
       const actor = actorFromRequest(req),
@@ -4810,7 +5283,14 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(404).json({ error: { code: 'NOT_FOUND' } });
         return;
       }
-      res.json(reconstructReportRun(run as any, parsed.data.asOf));
+      const versions = deps.asOfVersions
+        ? await deps.asOfVersions.resolve(
+            actor.organizationId,
+            (run as any).sources,
+            parsed.data.asOf
+          )
+        : new Date().toISOString();
+      res.json(reconstructReportRun(run as any, parsed.data.asOf, versions));
     })
   );
   router.get(
@@ -5935,6 +6415,7 @@ const runtimeDependencies: InitiativesExecutionRuntimeDependencies = {
   unitOfWork: new PostgresMaterialCommandUnitOfWork(runtimePool),
   reader: new PostgresInitiativeReader(runtimePool),
   controlKpis: new ControlKpiReadModel(runtimePool),
+  asOfVersions: new PostgresAsOfVersionReader(runtimePool),
   resolvePolicy: (organizationId, projectId, initiativeId) =>
     new PostgresGovernancePolicyResolver(runtimePool).resolve(
       organizationId,

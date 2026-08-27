@@ -1,0 +1,573 @@
+Kicker	● C O N S U L T I F Y
+Kicker	OCENA DOJRZAŁOŚCI CYFROWEJ · DIGITAL PATHFINDER
+DocStudioTitle	Raport z oceny dojrzałości cyfrowej
+Subtitle	Zakład Wtryskowni Ćmielów
+Sygnatura	Klient
+Tresc	Zakład Wtryskowni Ćmielów
+Sygnatura	Profil działalności
+Podpis	Do uzupełnienia — dane nie są zapisane w sesji oceny.
+Sygnatura	Zatrudnienie
+Podpis	Do uzupełnienia — dane nie są zapisane w sesji oceny.
+Sygnatura	Okres oceny
+Podpis	Do uzupełnienia — dane nie są zapisane w sesji oceny.
+Sygnatura	Oceniający
+Podpis	Do uzupełnienia — dane nie są zapisane w sesji oceny.
+Sygnatura	Sponsor po stronie klienta
+Podpis	Do uzupełnienia — dane nie są zapisane w sesji oceny.
+Sygnatura	Metodyka
+Tresc	Digital Pathfinder — metodyka oceny dojrzałości cyfrowej DRD
+Sygnatura	Sygnatura sesji
+Tresc	session-day34-data-52efe624
+Sygnatura	Data wydania
+Tresc	2026-08-27
+Kicker	NAWIGACJA
+Kicker	STRESZCZENIE
+Heading1	Streszczenie zarządcze
+Podpis	Sekcja do uzupełnienia — limit 120–150 słów.
+Caption	Rysunek 1. Profil dojrzałości cyfrowej według siedmiu osi DRD.
+BodyText	Oś
+BodyText	Obecny
+BodyText	Docelowy
+BodyText	Luki krytyczne
+BodyText	Procesy Cyfrowe
+BodyText	18%
+BodyText	54%
+BodyText	1
+BodyText	Produkty Cyfrowe
+BodyText	30%
+BodyText	70%
+BodyText	0
+BodyText	Cyfrowe Modele Biznesowe
+BodyText	40%
+BodyText	80%
+BodyText	0
+BodyText	Zarządzanie Danymi
+BodyText	21%
+BodyText	57%
+BodyText	1
+BodyText	Kultura Transformacji
+BodyText	17%
+BodyText	50%
+BodyText	0
+BodyText	Cyberbezpieczeństwo
+BodyText	33%
+BodyText	67%
+BodyText	0
+BodyText	Dojrzałość AI
+BodyText	—
+BodyText	—
+BodyText	0
+Caption	Tabela 1. Zestawienie siedmiu osi DRD.
+Heading2	Luki krytyczne i rekomendacja główna
+Podpis	Sekcja do uzupełnienia — limit 120–150 słów.
+Kicker	Rozdział 1 z 7 · oś 1 struktury DRD
+Heading1	1. Procesy Cyfrowe
+Podpis	Sekcja do uzupełnienia — limit 120–180 słów.
+Heading2	Matryca poziomów dojrzałości
+BodyText	Obszar
+BodyText	1
+BodyText	2
+BodyText	3
+BodyText	4
+BodyText	5
+BodyText	6
+BodyText	7
+BodyText	Luka
+BodyText	Priorytet
+BodyText	Procesy Sprzedaży
+BodyText	4
+BodyText	Krytyczny
+BodyText	Procesy Marketingowe
+BodyText	—
+BodyText	—
+BodyText	Technologia Procesowa i R&amp;D
+BodyText	—
+BodyText	—
+BodyText	Procesy Zakupowe
+BodyText	—
+BodyText	—
+BodyText	Procesy Logistyczne
+BodyText	2
+BodyText	Wysoki
+BodyText	Procesy Produkcyjne
+BodyText	2
+BodyText	Wysoki
+BodyText	Procesy Jakości
+BodyText	2
+BodyText	Wysoki
+BodyText	Zarządzanie Finansami
+BodyText	—
+BodyText	—
+BodyText	Procesy HR
+BodyText	—
+BodyText	—
+Caption	Tabela 2. Sekcja do uzupełnienia — limit 30–60 słów.
+Heading2	Ocena obszarów
+Heading3	1A Procesy Sprzedaży
+Sygnatura	Poziom obecny: 1 (Rejestracja danych) · Poziom docelowy: 5 (MES) · Luka: 4 · Priorytet: Krytyczny · Dowody: udokumentowane
+Podpis	Sekcja do uzupełnienia — limit 110–170 słów; wymagane: stan faktyczny, ocena i wiarygodność, znaczenie dla przedsiębiorstwa, luka i sens poziomu docelowego, najbliższy krok.
+Heading3	1B Procesy Marketingowe
+Sygnatura	Poziom obecny: — (—) · Poziom docelowy: — (—) · Luka: — · Priorytet: — · Dowody: nieocenione
+Podpis	Obszar pominięty w ocenie — kod: wiele kodów.
+Podpis	Sekcja do uzupełnienia — limit 110–170 słów; wymagane: stan faktyczny, ocena i wiarygodność, znaczenie dla przedsiębiorstwa, luka i sens poziomu docelowego, najbliższy krok.
+Heading3	1C Technologia Procesowa i R&amp;D
+Sygnatura	Poziom obecny: — (—) · Poziom docelowy: — (—) · Luka: — · Priorytet: — · Dowody: nieocenione
+Podpis	Sekcja do uzupełnienia — limit 110–170 słów; wymagane: stan faktyczny, ocena i wiarygodność, znaczenie dla przedsiębiorstwa, luka i sens poziomu docelowego, najbliższy krok.
+Heading3	1D Procesy Zakupowe
+Sygnatura	Poziom obecny: — (—) · Poziom docelowy: — (—) · Luka: — · Priorytet: — · Dowody: nieocenione
+Podpis	Sekcja do uzupełnienia — limit 110–170 słów; wymagane: stan faktyczny, ocena i wiarygodność, znaczenie dla przedsiębiorstwa, luka i sens poziomu docelowego, najbliższy krok.
+Heading3	1E Procesy Logistyczne
+Sygnatura	Poziom obecny: 1 (Rejestracja danych) · Poziom docelowy: 3 (Kontrola procesu) · Luka: 2 · Priorytet: Wysoki · Dowody: udokumentowane
+Podpis	Sekcja do uzupełnienia — limit 110–170 słów; wymagane: stan faktyczny, ocena i wiarygodność, znaczenie dla przedsiębiorstwa, luka i sens poziomu docelowego, najbliższy krok.
+Heading3	1F Procesy Produkcyjne
+Sygnatura	Poziom obecny: 2 (Kontrola stanowiska) · Poziom docelowy: 4 (Automatyzacja) · Luka: 2 · Priorytet: Wysoki · Dowody: udokumentowane
+Podpis	Sekcja do uzupełnienia — limit 110–170 słów; wymagane: stan faktyczny, ocena i wiarygodność, znaczenie dla przedsiębiorstwa, luka i sens poziomu docelowego, najbliższy krok.
+Heading3	1G Procesy Jakości
+Sygnatura	Poziom obecny: 1 (Rejestracja danych) · Poziom docelowy: 3 (Kontrola procesu) · Luka: 2 · Priorytet: Wysoki · Dowody: udokumentowane
+Podpis	Sekcja do uzupełnienia — limit 110–170 słów; wymagane: stan faktyczny, ocena i wiarygodność, znaczenie dla przedsiębiorstwa, luka i sens poziomu docelowego, najbliższy krok.
+Heading3	1H Zarządzanie Finansami
+Sygnatura	Poziom obecny: — (—) · Poziom docelowy: — (—) · Luka: — · Priorytet: — · Dowody: nieocenione
+Podpis	Sekcja do uzupełnienia — limit 110–170 słów; wymagane: stan faktyczny, ocena i wiarygodność, znaczenie dla przedsiębiorstwa, luka i sens poziomu docelowego, najbliższy krok.
+Heading3	1I Procesy HR
+Sygnatura	Poziom obecny: — (—) · Poziom docelowy: — (—) · Luka: — · Priorytet: — · Dowody: nieocenione
+Podpis	Sekcja do uzupełnienia — limit 110–170 słów; wymagane: stan faktyczny, ocena i wiarygodność, znaczenie dla przedsiębiorstwa, luka i sens poziomu docelowego, najbliższy krok.
+Heading2	Wnioski rozdziału
+Podpis	Sekcja do uzupełnienia — limit 180–260 słów.
+Kicker	LINIA DECYZYJNA
+BodyText	Pole
+BodyText	Treść
+BodyText	Kierunek
+BodyText	Sekcja do uzupełnienia — limit 180–260 słów.
+BodyText	Priorytet
+BodyText	Sekcja do uzupełnienia — limit 180–260 słów.
+BodyText	Horyzont
+BodyText	Sekcja do uzupełnienia — limit 180–260 słów.
+BodyText	Warunek sukcesu
+BodyText	Sekcja do uzupełnienia — limit 180–260 słów.
+Kicker	Rozdział 2 z 7 · oś 2 struktury DRD
+Heading1	2. Produkty Cyfrowe
+Podpis	Sekcja do uzupełnienia — limit 120–180 słów.
+Heading2	Matryca poziomów dojrzałości
+BodyText	Obszar
+BodyText	1
+BodyText	2
+BodyText	3
+BodyText	4
+BodyText	5
+BodyText	Luka
+BodyText	Priorytet
+BodyText	Produkty Cyfrowe
+BodyText	2
+BodyText	Wysoki
+BodyText	Produkty Społecznościowe
+BodyText	—
+BodyText	—
+BodyText	Produkty ICT
+BodyText	—
+BodyText	—
+BodyText	Dopasowanie Produktu do Oczekiwań Klienta
+BodyText	2
+BodyText	Wysoki
+BodyText	Skalowalność Produktu
+BodyText	—
+BodyText	—
+Caption	Tabela 4. Sekcja do uzupełnienia — limit 30–60 słów.
+Heading2	Ocena obszarów
+Heading3	2A Produkty Cyfrowe
+Sygnatura	Poziom obecny: 2 (Średniozaawansowany) · Poziom docelowy: 4 (Interaktywny) · Luka: 2 · Priorytet: Wysoki · Dowody: udokumentowane
+Podpis	Pominięte pytania: 2A-1 — odroczone_do_kolejnej_rewizji.
+Podpis	Sekcja do uzupełnienia — limit 110–170 słów; wymagane: stan faktyczny, ocena i wiarygodność, znaczenie dla przedsiębiorstwa, luka i sens poziomu docelowego, najbliższy krok.
+Heading3	2B Produkty Społecznościowe
+Sygnatura	Poziom obecny: — (—) · Poziom docelowy: — (—) · Luka: — · Priorytet: — · Dowody: nieocenione
+Podpis	Sekcja do uzupełnienia — limit 110–170 słów; wymagane: stan faktyczny, ocena i wiarygodność, znaczenie dla przedsiębiorstwa, luka i sens poziomu docelowego, najbliższy krok.
+Heading3	2C Produkty ICT
+Sygnatura	Poziom obecny: — (—) · Poziom docelowy: — (—) · Luka: — · Priorytet: — · Dowody: nieocenione
+Podpis	Sekcja do uzupełnienia — limit 110–170 słów; wymagane: stan faktyczny, ocena i wiarygodność, znaczenie dla przedsiębiorstwa, luka i sens poziomu docelowego, najbliższy krok.
+Heading3	2D Dopasowanie Produktu do Oczekiwań Klienta
+Sygnatura	Poziom obecny: 1 (Podstawowy) · Poziom docelowy: 3 (Zaawansowany) · Luka: 2 · Priorytet: Wysoki · Dowody: udokumentowane
+Podpis	Sekcja do uzupełnienia — limit 110–170 słów; wymagane: stan faktyczny, ocena i wiarygodność, znaczenie dla przedsiębiorstwa, luka i sens poziomu docelowego, najbliższy krok.
+Heading3	2E Skalowalność Produktu
+Sygnatura	Poziom obecny: — (—) · Poziom docelowy: — (—) · Luka: — · Priorytet: — · Dowody: nieocenione
+Podpis	Sekcja do uzupełnienia — limit 110–170 słów; wymagane: stan faktyczny, ocena i wiarygodność, znaczenie dla przedsiębiorstwa, luka i sens poziomu docelowego, najbliższy krok.
+Heading2	Wnioski rozdziału
+Podpis	Sekcja do uzupełnienia — limit 180–260 słów.
+Kicker	LINIA DECYZYJNA
+BodyText	Pole
+BodyText	Treść
+BodyText	Kierunek
+BodyText	Sekcja do uzupełnienia — limit 180–260 słów.
+BodyText	Priorytet
+BodyText	Sekcja do uzupełnienia — limit 180–260 słów.
+BodyText	Horyzont
+BodyText	Sekcja do uzupełnienia — limit 180–260 słów.
+BodyText	Warunek sukcesu
+BodyText	Sekcja do uzupełnienia — limit 180–260 słów.
+Kicker	Rozdział 3 z 7 · oś 3 struktury DRD
+Heading1	3. Cyfrowe Modele Biznesowe
+Podpis	Sekcja do uzupełnienia — limit 120–180 słów.
+Heading2	Matryca poziomów dojrzałości
+BodyText	Obszar
+BodyText	1
+BodyText	2
+BodyText	3
+BodyText	4
+BodyText	5
+BodyText	Luka
+BodyText	Priorytet
+BodyText	Modele E-commerce
+BodyText	2
+BodyText	Wysoki
+BodyText	Rozwiązania Platformowe
+BodyText	—
+BodyText	—
+BodyText	Model As-a-Service
+BodyText	—
+BodyText	—
+BodyText	Modele Współdzielenia Zasobów
+BodyText	—
+BodyText	—
+BodyText	Modele Monetyzacji Danych
+BodyText	—
+BodyText	—
+Caption	Tabela 6. Sekcja do uzupełnienia — limit 30–60 słów.
+Heading2	Ocena obszarów
+Heading3	3A Modele E-commerce
+Sygnatura	Poziom obecny: 2 (Intermediate) · Poziom docelowy: 4 (Advanced Personalization) · Luka: 2 · Priorytet: Wysoki · Dowody: udokumentowane
+Podpis	Sekcja do uzupełnienia — limit 110–170 słów; wymagane: stan faktyczny, ocena i wiarygodność, znaczenie dla przedsiębiorstwa, luka i sens poziomu docelowego, najbliższy krok.
+Heading3	3B Rozwiązania Platformowe
+Sygnatura	Poziom obecny: — (—) · Poziom docelowy: — (—) · Luka: — · Priorytet: — · Dowody: nieocenione
+Podpis	Sekcja do uzupełnienia — limit 110–170 słów; wymagane: stan faktyczny, ocena i wiarygodność, znaczenie dla przedsiębiorstwa, luka i sens poziomu docelowego, najbliższy krok.
+Heading3	3C Model As-a-Service
+Sygnatura	Poziom obecny: — (—) · Poziom docelowy: — (—) · Luka: — · Priorytet: — · Dowody: nieocenione
+Podpis	Sekcja do uzupełnienia — limit 110–170 słów; wymagane: stan faktyczny, ocena i wiarygodność, znaczenie dla przedsiębiorstwa, luka i sens poziomu docelowego, najbliższy krok.
+Heading3	3D Modele Współdzielenia Zasobów
+Sygnatura	Poziom obecny: — (—) · Poziom docelowy: — (—) · Luka: — · Priorytet: — · Dowody: nieocenione
+Podpis	Sekcja do uzupełnienia — limit 110–170 słów; wymagane: stan faktyczny, ocena i wiarygodność, znaczenie dla przedsiębiorstwa, luka i sens poziomu docelowego, najbliższy krok.
+Heading3	3E Modele Monetyzacji Danych
+Sygnatura	Poziom obecny: — (—) · Poziom docelowy: — (—) · Luka: — · Priorytet: — · Dowody: nieocenione
+Podpis	Sekcja do uzupełnienia — limit 110–170 słów; wymagane: stan faktyczny, ocena i wiarygodność, znaczenie dla przedsiębiorstwa, luka i sens poziomu docelowego, najbliższy krok.
+Heading2	Wnioski rozdziału
+Podpis	Sekcja do uzupełnienia — limit 180–260 słów.
+Kicker	LINIA DECYZYJNA
+BodyText	Pole
+BodyText	Treść
+BodyText	Kierunek
+BodyText	Sekcja do uzupełnienia — limit 180–260 słów.
+BodyText	Priorytet
+BodyText	Sekcja do uzupełnienia — limit 180–260 słów.
+BodyText	Horyzont
+BodyText	Sekcja do uzupełnienia — limit 180–260 słów.
+BodyText	Warunek sukcesu
+BodyText	Sekcja do uzupełnienia — limit 180–260 słów.
+Kicker	Rozdział 4 z 7 · oś 4 struktury DRD
+Heading1	4. Zarządzanie Danymi
+Podpis	Sekcja do uzupełnienia — limit 120–180 słów.
+Heading2	Matryca poziomów dojrzałości
+BodyText	Obszar
+BodyText	1
+BodyText	2
+BodyText	3
+BodyText	4
+BodyText	5
+BodyText	6
+BodyText	7
+BodyText	Luka
+BodyText	Priorytet
+BodyText	Zbieranie Danych
+BodyText	2
+BodyText	Wysoki
+BodyText	Metodologia Przechowywania Danych
+BodyText	3
+BodyText	Krytyczny
+BodyText	Komunikacja Danych
+BodyText	—
+BodyText	—
+BodyText	Analiza Big Data
+BodyText	—
+BodyText	—
+BodyText	Przetwarzanie Danych
+BodyText	—
+BodyText	—
+Caption	Tabela 8. Sekcja do uzupełnienia — limit 30–60 słów.
+Heading2	Ocena obszarów
+Heading3	4A Zbieranie Danych
+Sygnatura	Poziom obecny: 1 (Manual Data Collection) · Poziom docelowy: 3 (Advanced Technological Solutions) · Luka: 2 · Priorytet: Wysoki · Dowody: udokumentowane
+Podpis	Sekcja do uzupełnienia — limit 110–170 słów; wymagane: stan faktyczny, ocena i wiarygodność, znaczenie dla przedsiębiorstwa, luka i sens poziomu docelowego, najbliższy krok.
+Heading3	4B Metodologia Przechowywania Danych
+Sygnatura	Poziom obecny: 2 (Graphic Symbols) · Poziom docelowy: 5 (Mobile Data Collection) · Luka: 3 · Priorytet: Krytyczny · Dowody: udokumentowane
+Podpis	Sekcja do uzupełnienia — limit 110–170 słów; wymagane: stan faktyczny, ocena i wiarygodność, znaczenie dla przedsiębiorstwa, luka i sens poziomu docelowego, najbliższy krok.
+Heading3	4C Komunikacja Danych
+Sygnatura	Poziom obecny: — (—) · Poziom docelowy: — (—) · Luka: — · Priorytet: — · Dowody: nieocenione
+Podpis	Sekcja do uzupełnienia — limit 110–170 słów; wymagane: stan faktyczny, ocena i wiarygodność, znaczenie dla przedsiębiorstwa, luka i sens poziomu docelowego, najbliższy krok.
+Heading3	4D Analiza Big Data
+Sygnatura	Poziom obecny: — (—) · Poziom docelowy: — (—) · Luka: — · Priorytet: — · Dowody: nieocenione
+Podpis	Sekcja do uzupełnienia — limit 110–170 słów; wymagane: stan faktyczny, ocena i wiarygodność, znaczenie dla przedsiębiorstwa, luka i sens poziomu docelowego, najbliższy krok.
+Heading3	4E Przetwarzanie Danych
+Sygnatura	Poziom obecny: — (—) · Poziom docelowy: — (—) · Luka: — · Priorytet: — · Dowody: nieocenione
+Podpis	Sekcja do uzupełnienia — limit 110–170 słów; wymagane: stan faktyczny, ocena i wiarygodność, znaczenie dla przedsiębiorstwa, luka i sens poziomu docelowego, najbliższy krok.
+Heading2	Wnioski rozdziału
+Podpis	Sekcja do uzupełnienia — limit 180–260 słów.
+Kicker	LINIA DECYZYJNA
+BodyText	Pole
+BodyText	Treść
+BodyText	Kierunek
+BodyText	Sekcja do uzupełnienia — limit 180–260 słów.
+BodyText	Priorytet
+BodyText	Sekcja do uzupełnienia — limit 180–260 słów.
+BodyText	Horyzont
+BodyText	Sekcja do uzupełnienia — limit 180–260 słów.
+BodyText	Warunek sukcesu
+BodyText	Sekcja do uzupełnienia — limit 180–260 słów.
+Kicker	Rozdział 5 z 7 · oś 5 struktury DRD
+Heading1	5. Kultura Transformacji
+Podpis	Sekcja do uzupełnienia — limit 120–180 słów.
+Heading2	Matryca poziomów dojrzałości
+BodyText	Obszar
+BodyText	1
+BodyText	2
+BodyText	3
+BodyText	4
+BodyText	5
+BodyText	6
+BodyText	Luka
+BodyText	Priorytet
+BodyText	Postawy przywódcze
+BodyText	2
+BodyText	Wysoki
+BodyText	Gotowość na zmianę
+BodyText	—
+BodyText	—
+BodyText	Ciągły rozwój kompetencji
+BodyText	—
+BodyText	—
+BodyText	Kultura innowacji
+BodyText	—
+BodyText	—
+BodyText	Dostępność zasobów
+BodyText	—
+BodyText	—
+Caption	Tabela 10. Sekcja do uzupełnienia — limit 30–60 słów.
+Heading2	Ocena obszarów
+Heading3	5A Postawy przywódcze
+Sygnatura	Poziom obecny: 1 (Pasywny) · Poziom docelowy: 3 (Dyrektywny) · Luka: 2 · Priorytet: Wysoki · Dowody: udokumentowane
+Podpis	Sekcja do uzupełnienia — limit 110–170 słów; wymagane: stan faktyczny, ocena i wiarygodność, znaczenie dla przedsiębiorstwa, luka i sens poziomu docelowego, najbliższy krok.
+Heading3	5B Gotowość na zmianę
+Sygnatura	Poziom obecny: — (—) · Poziom docelowy: — (—) · Luka: — · Priorytet: — · Dowody: nieocenione
+Podpis	Sekcja do uzupełnienia — limit 110–170 słów; wymagane: stan faktyczny, ocena i wiarygodność, znaczenie dla przedsiębiorstwa, luka i sens poziomu docelowego, najbliższy krok.
+Heading3	5C Ciągły rozwój kompetencji
+Sygnatura	Poziom obecny: — (—) · Poziom docelowy: — (—) · Luka: — · Priorytet: — · Dowody: nieocenione
+Podpis	Sekcja do uzupełnienia — limit 110–170 słów; wymagane: stan faktyczny, ocena i wiarygodność, znaczenie dla przedsiębiorstwa, luka i sens poziomu docelowego, najbliższy krok.
+Heading3	5D Kultura innowacji
+Sygnatura	Poziom obecny: — (—) · Poziom docelowy: — (—) · Luka: — · Priorytet: — · Dowody: nieocenione
+Podpis	Sekcja do uzupełnienia — limit 110–170 słów; wymagane: stan faktyczny, ocena i wiarygodność, znaczenie dla przedsiębiorstwa, luka i sens poziomu docelowego, najbliższy krok.
+Heading3	5E Dostępność zasobów
+Sygnatura	Poziom obecny: — (—) · Poziom docelowy: — (—) · Luka: — · Priorytet: — · Dowody: nieocenione
+Podpis	Sekcja do uzupełnienia — limit 110–170 słów; wymagane: stan faktyczny, ocena i wiarygodność, znaczenie dla przedsiębiorstwa, luka i sens poziomu docelowego, najbliższy krok.
+Heading2	Wnioski rozdziału
+Podpis	Sekcja do uzupełnienia — limit 180–260 słów.
+Kicker	LINIA DECYZYJNA
+BodyText	Pole
+BodyText	Treść
+BodyText	Kierunek
+BodyText	Sekcja do uzupełnienia — limit 180–260 słów.
+BodyText	Priorytet
+BodyText	Sekcja do uzupełnienia — limit 180–260 słów.
+BodyText	Horyzont
+BodyText	Sekcja do uzupełnienia — limit 180–260 słów.
+BodyText	Warunek sukcesu
+BodyText	Sekcja do uzupełnienia — limit 180–260 słów.
+Kicker	Rozdział 6 z 7 · oś 6 struktury DRD
+Heading1	6. Cyberbezpieczeństwo
+Podpis	Sekcja do uzupełnienia — limit 120–180 słów.
+Heading2	Matryca poziomów dojrzałości
+BodyText	Obszar
+BodyText	1
+BodyText	2
+BodyText	3
+BodyText	4
+BodyText	5
+BodyText	6
+BodyText	Luka
+BodyText	Priorytet
+BodyText	Strategia i zarządzanie ryzykiem
+BodyText	2
+BodyText	Wysoki
+BodyText	Ochrona sieci i systemów
+BodyText	—
+BodyText	—
+BodyText	Ochrona danych
+BodyText	—
+BodyText	—
+BodyText	Edukacja i jakość systemów
+BodyText	—
+BodyText	—
+BodyText	Plany awaryjne
+BodyText	—
+BodyText	—
+Caption	Tabela 12. Sekcja do uzupełnienia — limit 30–60 słów.
+Heading2	Ocena obszarów
+Heading3	6A Strategia i zarządzanie ryzykiem
+Sygnatura	Poziom obecny: 2 (Analiza ryzyka) · Poziom docelowy: 4 (Polityki bezpieczeństwa) · Luka: 2 · Priorytet: Wysoki · Dowody: udokumentowane
+Podpis	Sekcja do uzupełnienia — limit 110–170 słów; wymagane: stan faktyczny, ocena i wiarygodność, znaczenie dla przedsiębiorstwa, luka i sens poziomu docelowego, najbliższy krok.
+Heading3	6B Ochrona sieci i systemów
+Sygnatura	Poziom obecny: — (—) · Poziom docelowy: — (—) · Luka: — · Priorytet: — · Dowody: nieocenione
+Podpis	Sekcja do uzupełnienia — limit 110–170 słów; wymagane: stan faktyczny, ocena i wiarygodność, znaczenie dla przedsiębiorstwa, luka i sens poziomu docelowego, najbliższy krok.
+Heading3	6C Ochrona danych
+Sygnatura	Poziom obecny: — (—) · Poziom docelowy: — (—) · Luka: — · Priorytet: — · Dowody: nieocenione
+Podpis	Sekcja do uzupełnienia — limit 110–170 słów; wymagane: stan faktyczny, ocena i wiarygodność, znaczenie dla przedsiębiorstwa, luka i sens poziomu docelowego, najbliższy krok.
+Heading3	6D Edukacja i jakość systemów
+Sygnatura	Poziom obecny: — (—) · Poziom docelowy: — (—) · Luka: — · Priorytet: — · Dowody: nieocenione
+Podpis	Sekcja do uzupełnienia — limit 110–170 słów; wymagane: stan faktyczny, ocena i wiarygodność, znaczenie dla przedsiębiorstwa, luka i sens poziomu docelowego, najbliższy krok.
+Heading3	6E Plany awaryjne
+Sygnatura	Poziom obecny: — (—) · Poziom docelowy: — (—) · Luka: — · Priorytet: — · Dowody: nieocenione
+Podpis	Sekcja do uzupełnienia — limit 110–170 słów; wymagane: stan faktyczny, ocena i wiarygodność, znaczenie dla przedsiębiorstwa, luka i sens poziomu docelowego, najbliższy krok.
+Heading2	Wnioski rozdziału
+Podpis	Sekcja do uzupełnienia — limit 180–260 słów.
+Kicker	LINIA DECYZYJNA
+BodyText	Pole
+BodyText	Treść
+BodyText	Kierunek
+BodyText	Sekcja do uzupełnienia — limit 180–260 słów.
+BodyText	Priorytet
+BodyText	Sekcja do uzupełnienia — limit 180–260 słów.
+BodyText	Horyzont
+BodyText	Sekcja do uzupełnienia — limit 180–260 słów.
+BodyText	Warunek sukcesu
+BodyText	Sekcja do uzupełnienia — limit 180–260 słów.
+Kicker	Rozdział 7 z 7 · oś 7 struktury DRD
+Heading1	7. Dojrzałość AI
+Podpis	Oś nie została oceniona. Sekcja do uzupełnienia — limit 120–180 słów.
+Heading2	Matryca poziomów dojrzałości
+BodyText	Obszar
+BodyText	1
+BodyText	2
+BodyText	3
+BodyText	4
+BodyText	5
+BodyText	Luka
+BodyText	Priorytet
+BodyText	Dane i Fundamenty AI
+BodyText	—
+BodyText	—
+BodyText	Procesy Wspierane przez AI
+BodyText	—
+BodyText	—
+BodyText	AI w Produktach i Usługach
+BodyText	—
+BodyText	—
+BodyText	Governance, Bezpieczeństwo i Etyka
+BodyText	—
+BodyText	—
+BodyText	Kompetencje i Kultura AI
+BodyText	—
+BodyText	—
+Caption	Tabela 14. Sekcja do uzupełnienia — limit 30–60 słów.
+Heading2	Ocena obszarów
+Heading3	7A Dane i Fundamenty AI
+Sygnatura	Poziom obecny: — (—) · Poziom docelowy: — (—) · Luka: — · Priorytet: — · Dowody: nieocenione
+Podpis	Sekcja do uzupełnienia — limit 110–170 słów; wymagane: stan faktyczny, ocena i wiarygodność, znaczenie dla przedsiębiorstwa, luka i sens poziomu docelowego, najbliższy krok.
+Heading3	7B Procesy Wspierane przez AI
+Sygnatura	Poziom obecny: — (—) · Poziom docelowy: — (—) · Luka: — · Priorytet: — · Dowody: nieocenione
+Podpis	Sekcja do uzupełnienia — limit 110–170 słów; wymagane: stan faktyczny, ocena i wiarygodność, znaczenie dla przedsiębiorstwa, luka i sens poziomu docelowego, najbliższy krok.
+Heading3	7C AI w Produktach i Usługach
+Sygnatura	Poziom obecny: — (—) · Poziom docelowy: — (—) · Luka: — · Priorytet: — · Dowody: nieocenione
+Podpis	Sekcja do uzupełnienia — limit 110–170 słów; wymagane: stan faktyczny, ocena i wiarygodność, znaczenie dla przedsiębiorstwa, luka i sens poziomu docelowego, najbliższy krok.
+Heading3	7D Governance, Bezpieczeństwo i Etyka
+Sygnatura	Poziom obecny: — (—) · Poziom docelowy: — (—) · Luka: — · Priorytet: — · Dowody: nieocenione
+Podpis	Sekcja do uzupełnienia — limit 110–170 słów; wymagane: stan faktyczny, ocena i wiarygodność, znaczenie dla przedsiębiorstwa, luka i sens poziomu docelowego, najbliższy krok.
+Heading3	7E Kompetencje i Kultura AI
+Sygnatura	Poziom obecny: — (—) · Poziom docelowy: — (—) · Luka: — · Priorytet: — · Dowody: nieocenione
+Podpis	Sekcja do uzupełnienia — limit 110–170 słów; wymagane: stan faktyczny, ocena i wiarygodność, znaczenie dla przedsiębiorstwa, luka i sens poziomu docelowego, najbliższy krok.
+Heading2	Wnioski rozdziału
+Podpis	Sekcja do uzupełnienia — limit 180–260 słów.
+Kicker	LINIA DECYZYJNA
+BodyText	Pole
+BodyText	Treść
+BodyText	Kierunek
+BodyText	Sekcja do uzupełnienia — limit 180–260 słów.
+BodyText	Priorytet
+BodyText	Sekcja do uzupełnienia — limit 180–260 słów.
+BodyText	Horyzont
+BodyText	Sekcja do uzupełnienia — limit 180–260 słów.
+BodyText	Warunek sukcesu
+BodyText	Sekcja do uzupełnienia — limit 180–260 słów.
+Kicker	SYNTEZA
+Heading1	8. Wnioski końcowe
+Podpis	Sekcja do uzupełnienia — limit 250–300 słów.
+Heading2	Linia decyzyjna programu
+BodyText	Pole
+BodyText	Treść
+BodyText	Kierunek
+BodyText	Sekcja do uzupełnienia — limit 10–30 słów.
+BodyText	Priorytet
+BodyText	Sekcja do uzupełnienia — limit 10–30 słów.
+BodyText	Horyzont
+BodyText	Sekcja do uzupełnienia — limit 10–30 słów.
+BodyText	Warunek sukcesu
+BodyText	Sekcja do uzupełnienia — limit 10–30 słów.
+Kicker	ZAŁĄCZNIK
+Heading1	Załącznik A. Rejestr luk
+BodyText	Obszar
+BodyText	Oś
+BodyText	Priorytet
+BodyText	Luka
+BodyText	Poziom docelowy
+BodyText	1A Procesy Sprzedaży
+BodyText	Procesy Cyfrowe
+BodyText	Krytyczny
+BodyText	4
+BodyText	5 — MES
+BodyText	4B Metodologia Przechowywania Danych
+BodyText	Zarządzanie Danymi
+BodyText	Krytyczny
+BodyText	3
+BodyText	5 — Mobile Data Collection
+BodyText	1G Procesy Jakości
+BodyText	Procesy Cyfrowe
+BodyText	Wysoki
+BodyText	2
+BodyText	3 — Kontrola procesu
+BodyText	1E Procesy Logistyczne
+BodyText	Procesy Cyfrowe
+BodyText	Wysoki
+BodyText	2
+BodyText	3 — Kontrola procesu
+BodyText	1F Procesy Produkcyjne
+BodyText	Procesy Cyfrowe
+BodyText	Wysoki
+BodyText	2
+BodyText	4 — Automatyzacja
+BodyText	2D Dopasowanie Produktu do Oczekiwań Klienta
+BodyText	Produkty Cyfrowe
+BodyText	Wysoki
+BodyText	2
+BodyText	3 — Zaawansowany
+BodyText	2A Produkty Cyfrowe
+BodyText	Produkty Cyfrowe
+BodyText	Wysoki
+BodyText	2
+BodyText	4 — Interaktywny
+BodyText	3A Modele E-commerce
+BodyText	Cyfrowe Modele Biznesowe
+BodyText	Wysoki
+BodyText	2
+BodyText	4 — Advanced Personalization
+BodyText	4A Zbieranie Danych
+BodyText	Zarządzanie Danymi
+BodyText	Wysoki
+BodyText	2
+BodyText	3 — Advanced Technological Solutions
+BodyText	5A Postawy przywódcze
+BodyText	Kultura Transformacji
+BodyText	Wysoki
+BodyText	2
+BodyText	3 — Dyrektywny
+BodyText	6A Strategia i zarządzanie ryzykiem
+BodyText	Cyberbezpieczeństwo
+BodyText	Wysoki
+BodyText	2
+BodyText	4 — Polityki bezpieczeństwa
+Caption	Tabela 17. Rejestr luk posortowany malejąco według wielkości luki.
+Heading1	Źródła i identyfikowalność
+AssumptionBody	Nie dołączono źródeł. Merytoryczne bloki treści oznaczono jako założenia i przed dystrybucją do klienta wymagają pakietu źródłowego.
+TABLE_COUNT	18

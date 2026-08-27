@@ -322,6 +322,84 @@ export class PostgresInitiativeReader {
       ...r.payload_json,
     }));
   }
+  private async listExecutionControlProjection(
+    organizationId: string,
+    aggregateType: string,
+    initiativeId?: string
+  ) {
+    const result = await this.pool.query<{
+      version: number;
+      aggregate_id: string;
+      payload_json: Record<string, unknown>;
+    }>(
+      `SELECT version,aggregate_id,payload_json FROM ie_aggregate_state
+        WHERE organization_id=$1 AND aggregate_type=$2
+          AND ($3::text IS NULL OR payload_json->>'initiativeId'=$3)
+        ORDER BY updated_at DESC,aggregate_id`,
+      [organizationId, aggregateType, initiativeId ?? null]
+    );
+    return result.rows;
+  }
+  async listExecutionBudgetEntries(organizationId: string, initiativeId?: string) {
+    const rows = await this.listExecutionControlProjection(
+      organizationId,
+      'execution_budget_entry',
+      initiativeId
+    );
+    return rows.map((row) => ({
+      version: row.version,
+      entryId: row.aggregate_id,
+      ...row.payload_json,
+    }));
+  }
+  async listExecutionRealizations(organizationId: string, initiativeId?: string) {
+    const rows = await this.listExecutionControlProjection(
+      organizationId,
+      'execution_realization',
+      initiativeId
+    );
+    return rows.map((row) => ({
+      version: row.version,
+      realizationId: row.aggregate_id,
+      ...row.payload_json,
+    }));
+  }
+  async listRaidMitigations(organizationId: string, initiativeId?: string) {
+    const rows = await this.listExecutionControlProjection(
+      organizationId,
+      'raid_mitigation',
+      initiativeId
+    );
+    return rows.map((row) => ({
+      version: row.version,
+      raidItemId: row.aggregate_id,
+      ...row.payload_json,
+    }));
+  }
+  async listManagerExecutionActions(organizationId: string, initiativeId?: string) {
+    const rows = await this.listExecutionControlProjection(
+      organizationId,
+      'manager_execution_action',
+      initiativeId
+    );
+    return rows.map((row) => ({
+      version: row.version,
+      managerActionId: row.aggregate_id,
+      ...row.payload_json,
+    }));
+  }
+  async listManagerSuggestionReviews(organizationId: string, initiativeId?: string) {
+    const rows = await this.listExecutionControlProjection(
+      organizationId,
+      'manager_suggestion_review',
+      initiativeId
+    );
+    return rows.map((row) => ({
+      version: row.version,
+      suggestionId: row.aggregate_id,
+      ...row.payload_json,
+    }));
+  }
   async listExecutionMilestones(organizationId: string, executionCaseId?: string) {
     const result = await this.pool.query<{
       version: number;

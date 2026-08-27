@@ -96,6 +96,8 @@ import {
   assessmentSkipReasonService,
 } from '../services/assessment/assessmentSkipReasonService.js';
 import { assessmentReportContractService } from '../services/assessment/assessmentReportContractService.js';
+import { buildAssessmentDrdReportSchema } from '../services/assessment/assessmentDrdReportSchemaService.js';
+import { renderDocumentSchemaToDocxBuffer } from '../services/documentStudio/documentDocxRenderer.js';
 
 // ---------------------------------------------------------------------------
 // Wiring — one bridge, one session service instance, matching how the rest
@@ -541,6 +543,48 @@ router.get(
         isNonEmptyString(req.query.outputId) ? req.query.outputId : undefined
       );
       res.status(200).json({ reportContract });
+    } catch (error) {
+      sendAssessmentSkipReasonError(res, error);
+    }
+  })
+);
+
+router.get(
+  '/sessions/:sessionId/assessment-report.docx',
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
+    const organizationId = requireOrg(req, res);
+    if (!organizationId) return;
+    try {
+      const reportContract = await assessmentReportContractService.build(
+        organizationId,
+        req.params.sessionId,
+        isNonEmptyString(req.query.outputId) ? req.query.outputId : undefined
+      );
+      const buffer = await renderDocumentSchemaToDocxBuffer(
+        buildAssessmentDrdReportSchema(reportContract)
+      );
+      const label = reportContract.sessionLabel.displayName ?? reportContract.sessionId;
+      const safeLabel = label
+        .normalize('NFC')
+        .replace(/[^\p{L}\p{N}._-]+/gu, '_')
+        .replace(/^_+|_+$/g, '')
+        .slice(0, 80);
+      const date = new Date(reportContract.generatedAt).toISOString().slice(0, 10).replaceAll('-', '');
+      const filename = `Raport_DRD_${safeLabel || reportContract.sessionId}_${date}.docx`;
+      const asciiFilename = filename
+        .replace(/[Łł]/g, (character) => (character === 'Ł' ? 'L' : 'l'))
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^A-Za-z0-9._-]/g, '_');
+      res
+        .status(200)
+        .set({
+          'Content-Type':
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'Content-Disposition': `attachment; filename="${asciiFilename}"; filename*=UTF-8''${encodeURIComponent(filename)}`,
+          'Content-Length': String(buffer.length),
+        })
+        .send(buffer);
     } catch (error) {
       sendAssessmentSkipReasonError(res, error);
     }

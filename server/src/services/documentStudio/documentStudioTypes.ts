@@ -95,7 +95,7 @@ export type DocumentBlockType =
  * patterns. The renderer follow-up slice maps these to chart.js
  * configurations.
  */
-export type DocumentChartKind = 'bar' | 'line' | 'pie' | 'donut' | 'scatter' | 'area';
+export type DocumentChartKind = 'bar' | 'line' | 'pie' | 'donut' | 'scatter' | 'area' | 'radar';
 
 /**
  * Slice E17.charts — single chart series: a label + an array of
@@ -105,7 +105,7 @@ export type DocumentChartKind = 'bar' | 'line' | 'pie' | 'donut' | 'scatter' | '
  */
 export interface DocumentChartSeries {
   label: string;
-  values: number[];
+  values: Array<number | null>;
   /**
    * Optional series colour hint (any CSS-compatible string the
    * renderer can map to its chart library). Renderers may ignore
@@ -381,6 +381,8 @@ export interface FormattingSchema {
   tocConfig?: {
     enabled: boolean;
     maxDepth?: 1 | 2 | 3;
+    /** Emit a native Word TOC field; absent keeps the legacy static TOC byte-identical. */
+    nativeField?: boolean;
   };
   /**
    * Cover-page configuration object. When present, upgraded
@@ -542,6 +544,7 @@ export function isDocumentChartBlock(
     if (typeof s.label !== 'string') return false;
     if (!Array.isArray(s.values)) return false;
     for (const v of s.values) {
+      if (v === null && content.kind === 'radar') continue;
       if (typeof v !== 'number' || !Number.isFinite(v)) return false;
     }
   }
@@ -555,7 +558,8 @@ function isValidChartKind(value: unknown): value is DocumentChartKind {
     value === 'pie' ||
     value === 'donut' ||
     value === 'scatter' ||
-    value === 'area'
+    value === 'area' ||
+    value === 'radar'
   );
 }
 
@@ -616,6 +620,7 @@ export function summarizeDocumentChartBlock(block: DocumentBlock | undefined | n
       if (!Array.isArray(s.values)) continue;
       let valid = true;
       for (const v of s.values) {
+        if (v === null && content.kind === 'radar') continue;
         if (typeof v !== 'number' || !Number.isFinite(v)) {
           valid = false;
           break;
@@ -715,6 +720,18 @@ export interface DocumentSchema {
   sourceRefs: DocumentSourceRef[];
   createdAt: string;
   updatedAt: string;
+  /** Deterministic DRD cover metadata. Optional so every legacy schema remains unchanged. */
+  drdReportMetadata?: {
+    clientName: string;
+    businessProfile?: string | null;
+    employment?: string | null;
+    assessmentPeriod?: string | null;
+    assessor?: string | null;
+    clientSponsor?: string | null;
+    methodology: string;
+    sessionSignature: string;
+    issuedAt: string;
+  };
   /**
    * Lifecycle status — Epic E5. Optional on the type to keep historical
    * artifacts (created before E5 shipped) readable; service overlays a
@@ -963,7 +980,12 @@ export interface DocumentExportResult {
  *                  SSOT 6-scope edit doctrine.
  */
 export type DocumentEditorScope =
-  'local' | 'section' | 'global' | 'methodology' | 'source' | 'transformative';
+  | 'local'
+  | 'section'
+  | 'global'
+  | 'methodology'
+  | 'source'
+  | 'transformative';
 export type DocumentProposalStatus = 'proposed' | 'approved' | 'rejected' | 'executed';
 
 /**
@@ -1376,7 +1398,10 @@ export interface DocumentCommentSectionCounts {
  *                       snapshots are never pruned by that cap.
  */
 export type DocumentVersionSnapshotOrigin =
-  'manual' | 'auto_status_change' | 'rollback_revert' | 'autosave';
+  | 'manual'
+  | 'auto_status_change'
+  | 'rollback_revert'
+  | 'autosave';
 
 /**
  * Frozen, addressable copy of a `DocumentSchema` at a point in time.
@@ -2282,7 +2307,10 @@ export interface AudienceProfileUpdateInput {
 }
 
 export type AudienceProfileAuditAction =
-  'profile_drafted' | 'profile_updated' | 'profile_activated' | 'profile_archived';
+  | 'profile_drafted'
+  | 'profile_updated'
+  | 'profile_activated'
+  | 'profile_archived';
 
 export interface AudienceProfileAuditEntry {
   auditId: string;
@@ -2342,7 +2370,11 @@ export interface DocumentVariant {
  * Terminal states: approved, rejected, changes_requested, cancelled.
  */
 export type DocumentApprovalStatus =
-  'pending' | 'approved' | 'rejected' | 'changes_requested' | 'cancelled';
+  | 'pending'
+  | 'approved'
+  | 'rejected'
+  | 'changes_requested'
+  | 'cancelled';
 
 /** A single reviewer's verdict on an open approval request. */
 export type DocumentApprovalDecisionKind = 'approve' | 'reject' | 'request_changes';

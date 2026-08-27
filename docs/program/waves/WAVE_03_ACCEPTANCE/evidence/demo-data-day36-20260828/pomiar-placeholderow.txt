@@ -1,0 +1,2 @@
+{"file":"raport-drd-PRZED-pusta-sesja.docx","totalWords":2810,"placeholderWords":746,"placeholderRatio":0.26548042704626335,"placeholderCount":102,"notAssessedCount":7,"clientMissingCount":1,"bytes":73994}
+{"file":"raport-drd-PO-metalpol.docx","totalWords":3370,"placeholderWords":714,"placeholderRatio":0.21186943620178042,"placeholderCount":102,"notAssessedCount":0,"clientMissingCount":0,"bytes":101286}
