@@ -320,8 +320,48 @@ Po poprawce ten sam test z `RUN_DB_TESTS=1`, `MOCK_DB=false`,
 
 Teza wcześniejszego zlecenia „front nie woła zapisu” została **OBALONA na poziomie kodu**:
 `CalendarCreateEventModal.tsx` woła `Api.createMyWorkCalendarEvent`, a klient
-wykonuje POST w `src/services/api.ts:12567`. Nie została jednak dowiedziona
-sprawność runtime po naprawie została potwierdzona powyższym przebiegiem.
+wykonuje POST w `src/services/api.ts:12567`. Sprawność runtime po naprawie
+została potwierdzona powyższym przebiegiem.
+
+### STOP — B.2
+
+Licencja, którą sprawdziłem: „`src/components/MyWork/Calendar/** §B.2,
+§B.3, §B.4, §B.6`” oraz „`server/src/routes/my-work/calendar.routes.ts
+§B.4 (schemat POST), §B.5 (conflicts)`”. Wynik: wolno zbudować klienta i UI
+B.2, ale nie wolno zmienić kontraktu odczytu `unified` w tej pozycji.
+
+Brakująca informacja / konflikt: odpowiedź `GET /calendar/unified` nie
+zawiera `owner_id`, `canEdit` ani innego wiarygodnego sygnału pozwalającego
+frontowi odróżnić właściciela od uczestnika. DoD wymaga, aby uczestnik nie
+widział akcji edycji. Jednocześnie obowiązkowy operator mutacyjny każe usunąć
+wyłącznie `AND organization_id = ?` z końcowego `UPDATE` i wymaga czerwieni.
+Realne wykonanie dokładnie tej mutacji pozostało **6/6 PASS**, ponieważ obcy
+tenant jest wcześniej zatrzymywany przez osobny
+`SELECT ... WHERE id = ? AND organization_id = ?`, a `UPDATE` nadal wymaga
+`owner_id = ?`. Nie wolno deklarować wymaganego czerwonego wyniku, który nie
+wystąpił.
+
+Co sprawdziłem: przed mutacją realny `ApiGateway` + PG dał 6/6 PASS dla:
+właściciel 200 z readbackiem, błędny koniec 400 bez zmiany, uczestnik 403 bez
+zmiany, obcy uczestnik 400, obcy tenant bez danych i bez zmiany, brakujące ID 404. Po mutacji test nadal dał 6/6 PASS. Plik serwera odtworzono przez `cp`,
+a niedomknięty prototyp i test zachowano odzyskiwalnie w
+`/private/tmp/consultify-mywork-day47c-scratch/b2-partial/`; branch nie zawiera
+częściowej implementacji.
+
+Ryzyko: zgadywanie właściciela po obecności w `attendees[]` może pokazać akcję
+nieuprawnionej osobie; uznanie zielonej mutacji za dowód Z29 byłoby fałszywym
+PASS-em.
+
+Rekomendacja: nadzorca powinien (1) rozszerzyć licencję B.2 na addytywne pole
+`editAuthority`/`ownerId` w gałęzi własnych wydarzeń `unified` albo wskazać
+istniejący autorytatywny sygnał właściciela oraz (2) skorygować operator
+mutacyjny tak, by usuwał faktycznie aktywną barierę tenantową, np. warunek z
+poprzedzającego `SELECT`, zamiast redundantnej bariery końcowego `UPDATE`.
+
+Następna bezpieczna czynność po odblokowaniu: przywrócić prototyp ze scratcha,
+uruchomić skorygowany dowód mutacyjny czerwony → `cp` → zielony, wykonać trzy
+zrzuty B.2 i dopiero wtedy commit pozycji. B.3 i B.6 nie zostały rozpoczęte po
+STOP-ie B.2, zgodnie z kolejnością wznowienia podaną przez nadzorcę.
 
 ## Bezpieczniki i sprzątanie
 
@@ -339,8 +379,8 @@ sprawność runtime po naprawie została potwierdzona powyższym przebiegiem.
 - Nie zweryfikowano wdrożenia ani działania na środowisku demo/produkcyjnym;
   dyżur nie daje upoważnienia do deployu ani zdalnej zmiany flagi.
 - Nie uzyskano akceptacji wizualnej właściciela produktu.
-- Nie zweryfikowano jeszcze pełnej ścieżki przeglądarkowej B.2, B.3 i B.6;
-  pozostają w toku i nie są objęte twierdzeniem PASS B.1.
+- Nie zweryfikowano pełnej ścieżki przeglądarkowej B.2, B.3 i B.6; zostały
+  zatrzymane na opisanym blockerze i nie są objęte twierdzeniem PASS B.1.
 
 ## Pozycje
 
@@ -348,8 +388,8 @@ sprawność runtime po naprawie została potwierdzona powyższym przebiegiem.
 | ------- | --------------- | ------------ |
 | A.1     | ZROBIONE_WG_DoD | `b0e4e5d9d8` |
 | A.2     | ZROBIONE_WG_DoD | `c2903cbabe` |
-| B.1     | ZROBIONE_WG_DoD | commit B.1   |
-| B.2     | NIEZACZĘTE      | —            |
+| B.1     | ZROBIONE_WG_DoD | `b81c3cccb7` |
+| B.2     | STOP / BLOCKED  | —            |
 | B.3     | NIEZACZĘTE      | —            |
 | B.4     | ZROBIONE_WG_DoD | `77513befbd` |
 | B.5     | ZROBIONE_WG_DoD | `1803eea494` |
