@@ -43,14 +43,40 @@ describeReal('Day 42 Partner tenant isolation through the real ApiGateway', NO_R
   const ownerA = randomUUID();
   const ownerB = randomUUID();
   const memberA = randomUUID();
+  // FIX-2 / FIX-4 fixtures: every case that must exercise a guard inside the
+  // partner router itself gets its own principal, so no case depends on the
+  // side effect of another one and file order cannot change the verdict.
+  const crossTenantUser = randomUUID();
+  const unboundPartnerUser = randomUUID();
+  const revokedUser = randomUUID();
+  const cacheWindowUser = randomUUID();
   const partnerA = randomUUID();
   const partnerB = randomUUID();
+  const partnerNull = randomUUID();
   const linkB = randomUUID();
   const transactionA = randomUUID();
   const transactionB = randomUUID();
   const payoutA = randomUUID();
   const payoutB = randomUUID();
   const bSentinel = '987654.32';
+  const allUsers = [
+    ownerA,
+    ownerB,
+    memberA,
+    crossTenantUser,
+    unboundPartnerUser,
+    revokedUser,
+    cacheWindowUser,
+  ];
+  const allPartners = [partnerA, partnerB, partnerNull];
+  /** The five economic read surfaces named by the duty scenario N5/N6. */
+  const MONEY_READS = [
+    '/api/v8/partner/program/ledger',
+    '/api/v8/partner/earnings-summary',
+    '/api/v8/partner/commission-transactions',
+    '/api/v8/partner/payouts',
+    '/api/v8/partner/payout-settings',
+  ];
 
   const token = (userId: string, organizationId: string, role: string) =>
     jwt.sign({ id: userId, email: `${userId}@day42.local`, organizationId, role }, JWT_SECRET, {
@@ -112,6 +138,10 @@ describeReal('Day 42 Partner tenant isolation through the real ApiGateway', NO_R
       [ownerA, orgA, 'OWNER'],
       [ownerB, orgB, 'OWNER'],
       [memberA, orgA, 'MEMBER'],
+      [crossTenantUser, orgA, 'OWNER'],
+      [unboundPartnerUser, orgA, 'OWNER'],
+      [revokedUser, orgA, 'OWNER'],
+      [cacheWindowUser, orgA, 'OWNER'],
     ]) {
       await sql.query(
         `INSERT INTO users (id, organization_id, email, password, role, status)
@@ -128,14 +158,28 @@ describeReal('Day 42 Partner tenant isolation through the real ApiGateway', NO_R
       `INSERT INTO partner_organizations
          (id, name, contact_email, contact_phone, website, status, owner_organization_id)
        VALUES ($1, 'Partner A', 'a@day42.local', 'A-BEFORE', 'https://a.before', 'active', $2),
-              ($3, 'Partner B', 'b@day42.local', 'B-IMMUTABLE', 'https://b.immutable', 'active', $4)`,
-      [partnerA, orgA, partnerB, orgB]
+              ($3, 'Partner B', 'b@day42.local', 'B-IMMUTABLE', 'https://b.immutable', 'active', $4),
+              ($5, 'Partner NULL', 'n@day42.local', 'N-IMMUTABLE', 'https://n.immutable', 'active', NULL)`,
+      [partnerA, orgA, partnerB, orgB, partnerNull]
     );
     await sql.query(
       `INSERT INTO partner_users (partner_org_id, user_id, role, status)
        VALUES ($1, $2, 'owner', 'active'), ($1, $3, 'member', 'active'),
-              ($4, $5, 'owner', 'active')`,
-      [partnerA, ownerA, memberA, partnerB, ownerB]
+              ($1, $6, 'owner', 'active'), ($1, $7, 'owner', 'active'),
+              ($4, $5, 'owner', 'active'), ($4, $8, 'owner', 'active'),
+              ($9, $10, 'owner', 'active')`,
+      [
+        partnerA,
+        ownerA,
+        memberA,
+        partnerB,
+        ownerB,
+        revokedUser,
+        cacheWindowUser,
+        crossTenantUser,
+        partnerNull,
+        unboundPartnerUser,
+      ]
     );
     await sql.query(
       `INSERT INTO partner_campaign_links (id, partner_org_id, name, slug, destination_url)
@@ -168,29 +212,25 @@ describeReal('Day 42 Partner tenant isolation through the real ApiGateway', NO_R
     delete process.env.PARTNER_ACCRUAL_POLICY_JSON;
     if (!sql) return;
     await sql.query('DELETE FROM partner_payouts WHERE partner_org_id = ANY($1::uuid[])', [
-      [partnerA, partnerB],
+      allPartners,
     ]);
     await sql.query(
       'DELETE FROM partner_commission_transactions WHERE partner_org_id = ANY($1::uuid[])',
-      [[partnerA, partnerB]]
+      [allPartners]
     );
     await sql.query('DELETE FROM partner_program_ledger WHERE partner_org_id = ANY($1::text[])', [
-      [partnerA, partnerB],
+      allPartners,
     ]);
     await sql.query('DELETE FROM partner_program_runtime WHERE partner_org_id = ANY($1::text[])', [
-      [partnerA, partnerB],
+      allPartners,
     ]);
     await sql.query('DELETE FROM partner_campaign_links WHERE partner_org_id = ANY($1::uuid[])', [
-      [partnerA, partnerB],
+      allPartners,
     ]);
-    await sql.query('DELETE FROM partner_users WHERE user_id = ANY($1::uuid[])', [
-      [ownerA, ownerB, memberA],
-    ]);
-    await sql.query('DELETE FROM partner_organizations WHERE id = ANY($1::uuid[])', [
-      [partnerA, partnerB],
-    ]);
+    await sql.query('DELETE FROM partner_users WHERE user_id = ANY($1::uuid[])', [allUsers]);
+    await sql.query('DELETE FROM partner_organizations WHERE id = ANY($1::uuid[])', [allPartners]);
     await sql.query('DELETE FROM organization_members WHERE id LIKE $1', [`${prefix}%`]);
-    await sql.query('DELETE FROM users WHERE id = ANY($1::text[])', [[ownerA, ownerB, memberA]]);
+    await sql.query('DELETE FROM users WHERE id = ANY($1::text[])', [allUsers]);
     await sql.query('DELETE FROM organizations WHERE id = ANY($1::text[])', [[orgA, orgB]]);
     await sql.end();
   });
@@ -211,7 +251,14 @@ describeReal('Day 42 Partner tenant isolation through the real ApiGateway', NO_R
       .get('/api/v8/partner/earnings-summary')
       .set('Authorization', `Bearer ${token(ownerA, orgA, 'OWNER')}`)
       .set('x-org-context', orgB);
-    expect(response.status).not.toBe(200);
+    // FIX-3: `not.toBe(200)` also accepted a 500, i.e. a crash would have been
+    // scored as working isolation. The refusal is `requireExactPartnerTenantContext`
+    // (server/src/routes/v8/partner.routes.ts:103-106), so the exact contract is
+    // asserted here.
+    expect({ status: response.status, code: response.body?.code }).toEqual({
+      status: 403,
+      code: 'ORG_MEMBERSHIP_REVOKED',
+    });
     expect(JSON.stringify(response.body)).not.toContain(bSentinel);
     expect(JSON.stringify(response.body)).not.toContain(partnerB);
   });
@@ -243,7 +290,11 @@ describeReal('Day 42 Partner tenant isolation through the real ApiGateway', NO_R
       .set('Authorization', `Bearer ${token(ownerA, orgA, 'OWNER')}`)
       .set('x-org-context', orgB)
       .send({ organizationId: orgB, contactPhone: 'FORBIDDEN' });
-    expect(response.status).not.toBe(200);
+    // FIX-3: exact refusal, not merely "anything but 200".
+    expect({ status: response.status, code: response.body?.code }).toEqual({
+      status: 403,
+      code: 'ORG_MEMBERSHIP_REVOKED',
+    });
     expect(
       await coldRows('SELECT * FROM partner_organizations WHERE id = ANY($1::uuid[]) ORDER BY id', [
         [partnerA, partnerB],
@@ -252,13 +303,7 @@ describeReal('Day 42 Partner tenant isolation through the real ApiGateway', NO_R
   });
 
   it('N5 keeps every V8 money read scoped to A and excludes B identifiers and sentinel amounts', async () => {
-    for (const path of [
-      '/api/v8/partner/program/ledger',
-      '/api/v8/partner/earnings-summary',
-      '/api/v8/partner/commission-transactions',
-      '/api/v8/partner/payouts',
-      '/api/v8/partner/payout-settings',
-    ]) {
+    for (const path of MONEY_READS) {
       const response = await request(app).get(path).set(auth(ownerA, orgA));
       expect(response.status, `${path} ${JSON.stringify(response.body)}`).toBe(200);
       const body = JSON.stringify(response.body);
@@ -269,19 +314,24 @@ describeReal('Day 42 Partner tenant isolation through the real ApiGateway', NO_R
     }
   });
 
-  it('denies MEMBER access to every money read and leaves all financial rows unchanged', async () => {
+  /**
+   * FIX-3/FIX-4 — this case DOES bite the partner router: `memberA` has a live
+   * ACTIVE membership, so every upstream membership wall passes and the only
+   * thing left is `requirePartnerEconomicsReadAccess`
+   * (`requireOrgRole('admin')`, server/src/routes/v8/partner.routes.ts:272).
+   * Asserting the exact RBAC code is what makes deleting that array red.
+   */
+  it('denies MEMBER access to every money read through the partner router RBAC guard', async () => {
     const before = await financialSnapshot();
-    for (const path of [
-      '/api/v8/partner/program/ledger',
-      '/api/v8/partner/earnings-summary',
-      '/api/v8/partner/commission-transactions',
-      '/api/v8/partner/payouts',
-      '/api/v8/partner/payout-settings',
-    ]) {
+    for (const path of MONEY_READS) {
       const response = await request(app)
         .get(path)
         .set(auth(memberA, orgA, 'MEMBER'));
-      expect(response.status, path).toBe(403);
+      expect({ path, status: response.status, code: response.body?.code }).toEqual({
+        path,
+        status: 403,
+        code: 'RBAC_INSUFFICIENT_ROLE',
+      });
     }
     expect(await financialSnapshot()).toEqual(before);
   });
@@ -295,22 +345,172 @@ describeReal('Day 42 Partner tenant isolation through the real ApiGateway', NO_R
     expect(JSON.stringify(response.body)).not.toContain(bSentinel);
   });
 
-  it('N6 denies all five money reads after revocation and leaves cold financial readback unchanged', async () => {
+  /**
+   * FIX-2 — the tenant-to-partner binding itself.
+   *
+   * Until now nothing in this file exercised
+   * `server/src/services/partnerOrgResolution.ts:117`
+   * (`WHERE po.owner_organization_id = ?`): every principal was bound to the
+   * partner organization owned by its own tenant, so neutralising that
+   * predicate changed no observable behaviour. These two cases are the missing
+   * half — a user whose partner membership points at a partner organization
+   * owned by a FOREIGN tenant, and the historical `owner_organization_id IS NULL`
+   * row that `partner.routes.ts:136-138` explicitly says must not pass.
+   */
+  it('B1 refuses a caller whose partner membership belongs to a partner org owned by another tenant', async () => {
+    const beforeB = await coldRows('SELECT * FROM partner_organizations WHERE id = $1', [partnerB]);
+
+    const clients = await request(app)
+      .get('/api/v8/partner/clients')
+      .set(auth(crossTenantUser, orgA));
+    expect({ status: clients.status, code: clients.body?.code }).toEqual({
+      status: 403,
+      code: 'PARTNER_ORG_REQUIRED',
+    });
+    expect(JSON.stringify(clients.body)).not.toContain(partnerB);
+
+    for (const path of MONEY_READS) {
+      const money = await request(app).get(path).set(auth(crossTenantUser, orgA));
+      expect({ path, status: money.status, code: money.body?.code }).toEqual({
+        path,
+        status: 403,
+        code: 'PARTNER_ORG_REQUIRED',
+      });
+      expect(JSON.stringify(money.body), path).not.toContain(bSentinel);
+    }
+
+    const write = await request(app)
+      .put('/api/v8/partner/organization')
+      .set(auth(crossTenantUser, orgA))
+      .send({ contactPhone: 'CROSS-TENANT-FORBIDDEN', website: 'https://cross.forbidden' });
+    expect({ status: write.status, code: write.body?.code }).toEqual({
+      status: 403,
+      code: 'PARTNER_ORG_REQUIRED',
+    });
+    expect(await coldRows('SELECT * FROM partner_organizations WHERE id = $1', [partnerB])).toEqual(
+      beforeB
+    );
+  });
+
+  it('B2 refuses a caller bound to a historical partner org whose owner_organization_id is NULL', async () => {
+    const beforeNull = await coldRows('SELECT * FROM partner_organizations WHERE id = $1', [
+      partnerNull,
+    ]);
+    expect(beforeNull[0].owner_organization_id).toBeNull();
+
+    const clients = await request(app)
+      .get('/api/v8/partner/clients')
+      .set(auth(unboundPartnerUser, orgA));
+    expect({ status: clients.status, code: clients.body?.code }).toEqual({
+      status: 403,
+      code: 'PARTNER_ORG_REQUIRED',
+    });
+    expect(JSON.stringify(clients.body)).not.toContain(partnerNull);
+
+    const write = await request(app)
+      .put('/api/v8/partner/organization')
+      .set(auth(unboundPartnerUser, orgA))
+      .send({ contactPhone: 'NULL-OWNER-FORBIDDEN', website: 'https://null.forbidden' });
+    expect({ status: write.status, code: write.body?.code }).toEqual({
+      status: 403,
+      code: 'PARTNER_ORG_REQUIRED',
+    });
+    expect(
+      await coldRows('SELECT * FROM partner_organizations WHERE id = $1', [partnerNull])
+    ).toEqual(beforeNull);
+  });
+
+  /**
+   * FIX-4 — the partner router's OWN membership wall.
+   *
+   * `validateOrgMembership` (server/src/middleware/auth.middleware.ts:1740-1747)
+   * caches its membership answer for 60 s
+   * (`MEMBERSHIP_CACHE_TTL_MS`, auth.middleware.ts:1662). This case warms that
+   * cache with a legitimate 200 read, revokes the membership, and reads again
+   * inside the cache window, so any cached upstream "valid" verdict is in play
+   * and only a per-request re-read can still refuse. Measured on this branch:
+   * removing BOTH partner-router membership walls (`partner.routes.ts:213` and
+   * `:272`) makes these five reads answer 200 — this case is red exactly then.
+   * The refusal body is `{ success:false, code }` with no `error` field, which
+   * identifies `requireActiveMembership`
+   * (server/src/services/legacyCutover/requireActiveMembership.ts:35) as the
+   * responder rather than the platform gate (`{ error, code }`).
+   */
+  it('N6b denies money reads inside the upstream membership-cache window, from the partner router itself', async () => {
+    const before = await financialSnapshot();
+    const warm = await request(app)
+      .get('/api/v8/partner/earnings-summary')
+      .set(auth(cacheWindowUser, orgA));
+    expect(warm.status).toBe(200);
+
+    await sql.query(
+      `UPDATE organization_members SET status = 'INACTIVE'
+       WHERE organization_id = $1 AND user_id = $2`,
+      [orgA, cacheWindowUser]
+    );
+
+    for (const path of MONEY_READS) {
+      const response = await request(app).get(path).set(auth(cacheWindowUser, orgA));
+      expect({ path, status: response.status, code: response.body?.code }).toEqual({
+        path,
+        status: 403,
+        code: 'ORG_MEMBERSHIP_REVOKED',
+      });
+      expect(response.body.error, path).toBeUndefined();
+      expect(response.body.success, path).toBe(false);
+      expect(JSON.stringify(response.body), path).not.toContain(bSentinel);
+    }
+    expect(await financialSnapshot()).toEqual(before);
+  });
+
+  /**
+   * FIX-4 — renamed to what it actually proves, after measuring the layer.
+   *
+   * The old name implied this case pinned the partner router's guard. It does
+   * not pin any single mount, because the wall is deliberately redundant:
+   * `requireActiveMembership` sits BOTH on the catch-all
+   * `router.use(/^(?!\/(?:connect|connection)\/?$)/, ...)`
+   * (server/src/routes/v8/partner.routes.ts:213) AND on the economic-read array
+   * (`partner.routes.ts:272`). Measured mutationally on this branch:
+   *   - deleting only `requirePartnerEconomicsReadAccess` (:272) -> this case stays green
+   *     (the MEMBER case above turns red, because only :272 carries the role check);
+   *   - deleting only the catch-all's `requireActiveMembership` (:213) -> stays green;
+   *   - deleting BOTH -> every money read answers 200 with the revoked membership,
+   *     and this case, N6b and the MEMBER case all turn red.
+   *
+   * The refusal body is `{ success:false, code }` with NO `error` field, i.e. it
+   * comes from `requireActiveMembership`
+   * (server/src/services/legacyCutover/requireActiveMembership.ts:35) inside the
+   * partner router — NOT from `validateOrgMembership`
+   * (server/src/middleware/auth.middleware.ts:1740-1747), whose body is
+   * `{ error, code }`. Asserting the body shape is what keeps that attribution
+   * honest.
+   *
+   * FINDING FOR DUTY 37 (organization-context gate): with both partner-router
+   * walls removed the money reads answer 200 for a revoked membership, so no
+   * platform-level organization-context gate covers `/api/v8/partner`. The whole
+   * guarantee rests on this router's own middleware.
+   *
+   * Uses its own principal so that revoking a membership cannot poison any other
+   * case in this file regardless of execution order.
+   */
+  it('N6 denies all five money reads after revocation, from the partner router membership wall', async () => {
     const before = await financialSnapshot();
     await sql.query(
       `UPDATE organization_members SET status = 'INACTIVE'
        WHERE organization_id = $1 AND user_id = $2`,
-      [orgA, ownerA]
+      [orgA, revokedUser]
     );
-    for (const path of [
-      '/api/v8/partner/program/ledger',
-      '/api/v8/partner/earnings-summary',
-      '/api/v8/partner/commission-transactions',
-      '/api/v8/partner/payouts',
-      '/api/v8/partner/payout-settings',
-    ]) {
-      const response = await request(app).get(path).set(auth(ownerA, orgA));
-      expect(response.status, path).toBe(403);
+    for (const path of MONEY_READS) {
+      const response = await request(app).get(path).set(auth(revokedUser, orgA));
+      expect({ path, status: response.status, code: response.body?.code }).toEqual({
+        path,
+        status: 403,
+        code: 'ORG_MEMBERSHIP_REVOKED',
+      });
+      expect(response.body.success, path).toBe(false);
+      expect(response.body.error, path).toBeUndefined();
+      expect(JSON.stringify(response.body), path).not.toContain(bSentinel);
     }
     expect(await financialSnapshot()).toEqual(before);
   });
