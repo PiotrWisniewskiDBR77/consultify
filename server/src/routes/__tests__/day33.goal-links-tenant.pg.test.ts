@@ -39,9 +39,10 @@ describe.skipIf(!REAL_PG)('Day 33 goal-initiative tenant carrier', () => {
       `INSERT INTO organization_members(id,organization_id,user_id,role,status) VALUES($1,$2,$3,'OWNER','ACTIVE'),($4,$5,$6,'OWNER','ACTIVE')`,
       [`m-${userA}`, orgA, userA, `m-${userB}`, orgB, userB]
     );
-    await client.query(`INSERT INTO goals(id,organization_id,title) VALUES($1,$2,$1)`, [
+    await client.query(`INSERT INTO goals(id,organization_id,title,owner_id) VALUES($1,$2,$1,$3)`, [
       goalA,
       orgA,
+      userA,
     ]);
     await client.query(
       `INSERT INTO initiatives(id,organization_id,name,progress) VALUES($1,$2,$1,50)`,
@@ -61,6 +62,9 @@ describe.skipIf(!REAL_PG)('Day 33 goal-initiative tenant carrier', () => {
   afterAll(async () => {
     if (!client) return;
     await client.query(`DELETE FROM goal_initiative_links WHERE organization_id=$1`, [orgA]);
+    await client.query(`DELETE FROM execution_control_kpi_policies WHERE organization_id=$1`, [
+      orgA,
+    ]);
     await client.query(`DELETE FROM goals WHERE organization_id=$1`, [orgA]);
     await client.query(`DELETE FROM initiatives WHERE organization_id=$1`, [orgA]);
     await client.query(`DELETE FROM organization_members WHERE organization_id=ANY($1)`, [
@@ -95,5 +99,135 @@ describe.skipIf(!REAL_PG)('Day 33 goal-initiative tenant carrier', () => {
       .set(auth(tokenA));
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject({ linkedInitiatives: 1, initiativeProgressCount: 1 });
+  });
+
+  it('stores a declared class without changing the frozen weight when policy is missing', async () => {
+    const before = (
+      await client.query(
+        `SELECT contribution_weight FROM goal_initiative_links WHERE organization_id=$1 AND goal_id=$2`,
+        [orgA, goalA]
+      )
+    ).rows[0].contribution_weight;
+    const response = await request(app)
+      .post(`/api/initiatives-v4/goals/${goalA}/initiatives`)
+      .set(auth(tokenA))
+      .send({ initiativeId: initiativeA, contributionClass: 'CRITICAL' });
+    expect(response.status).toBe(201);
+    expect(response.body).toMatchObject({
+      contributionClass: 'CRITICAL',
+      valueReason: 'DECISION_REQUIRED',
+      missingParameters: ['impactWeights'],
+    });
+    const stored = (
+      await client.query(
+        `SELECT contribution_class,contribution_weight FROM goal_initiative_links WHERE organization_id=$1 AND goal_id=$2`,
+        [orgA, goalA]
+      )
+    ).rows[0];
+    expect(stored).toEqual({ contribution_class: 'CRITICAL', contribution_weight: before });
+  });
+
+  it('derives and freezes the weight from the named policy version', async () => {
+    const policyId = `policy-${tag}`;
+    await client.query(
+      `INSERT INTO execution_control_kpi_policies(organization_id,policy_id,name,parameters,row_version)
+       VALUES($1,$2,$2,$3::jsonb,1)`,
+      [
+        orgA,
+        policyId,
+        JSON.stringify({ impactWeights: { CRITICAL: 4, IMPORTANT: 2, SUPPORTING: 1 } }),
+      ]
+    );
+    const response = await request(app)
+      .post(`/api/initiatives-v4/goals/${goalA}/initiatives`)
+      .set(auth(tokenA))
+      .send({ initiativeId: initiativeA, contributionClass: 'IMPORTANT', policyId });
+    expect(response.status).toBe(201);
+    expect(response.body).toMatchObject({
+      contributionClass: 'IMPORTANT',
+      contributionWeight: 2,
+      contributionPolicy: { policyId, rowVersion: 1 },
+      valueReason: null,
+    });
+    await client.query(
+      `UPDATE execution_control_kpi_policies SET parameters=$1::jsonb,row_version=2
+        WHERE organization_id=$2 AND policy_id=$3`,
+      [
+        JSON.stringify({ impactWeights: { CRITICAL: 8, IMPORTANT: 6, SUPPORTING: 3 } }),
+        orgA,
+        policyId,
+      ]
+    );
+    const stored = (
+      await client.query(
+        `SELECT contribution_class,contribution_weight,contribution_policy_row_version
+           FROM goal_initiative_links WHERE organization_id=$1 AND goal_id=$2`,
+        [orgA, goalA]
+      )
+    ).rows[0];
+    expect(stored).toEqual({
+      contribution_class: 'IMPORTANT',
+      contribution_weight: 2,
+      contribution_policy_row_version: 1,
+    });
+  });
+
+  it('rejects an undeclared contribution class without mutation', async () => {
+    const response = await request(app)
+      .post(`/api/initiatives-v4/goals/${goalA}/initiatives`)
+      .set(auth(tokenA))
+      .send({ initiativeId: initiativeA, contributionClass: 'URGENT' });
+    expect(response.status).toBe(400);
+  });
+
+  it('rejects conflicting class and numeric weight instead of choosing silently', async () => {
+    const response = await request(app)
+      .post(`/api/initiatives-v4/goals/${goalA}/initiatives`)
+      .set(auth(tokenA))
+      .send({
+        initiativeId: initiativeA,
+        contributionClass: 'IMPORTANT',
+        contributionWeight: 999,
+        policyId: `policy-${tag}`,
+      });
+    expect(response.status).toBe(400);
+  });
+
+  it('keeps the legacy contributionWeight-only request compatible', async () => {
+    const response = await request(app)
+      .post(`/api/initiatives-v4/goals/${goalA}/initiatives`)
+      .set(auth(tokenA))
+      .send({ initiativeId: initiativeA, contributionWeight: 7 });
+    expect(response.status).toBe(201);
+    expect(
+      (
+        await client.query(
+          `SELECT contribution_weight FROM goal_initiative_links WHERE organization_id=$1 AND goal_id=$2`,
+          [orgA, goalA]
+        )
+      ).rows[0].contribution_weight
+    ).toBe(7);
+  });
+
+  it('requires the goal owner to approve a contribution class', async () => {
+    const goal = `unowned-${tag}`;
+    await client.query(`INSERT INTO goals(id,organization_id,title,owner_id) VALUES($1,$2,$1,$3)`, [
+      goal,
+      orgA,
+      `someone-else-${tag}`,
+    ]);
+    const response = await request(app)
+      .post(`/api/initiatives-v4/goals/${goal}/initiatives`)
+      .set(auth(tokenA))
+      .send({ initiativeId: initiativeA, contributionClass: 'SUPPORTING' });
+    expect(response.status).toBe(403);
+    expect(
+      (
+        await client.query(
+          `SELECT COUNT(*)::int count FROM goal_initiative_links WHERE organization_id=$1 AND goal_id=$2`,
+          [orgA, goal]
+        )
+      ).rows[0].count
+    ).toBe(0);
   });
 });

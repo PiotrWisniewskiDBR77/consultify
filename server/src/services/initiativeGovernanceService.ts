@@ -7,6 +7,10 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
+import {
+  CONTRIBUTION_CLASSES,
+  type PolicyParameterName,
+} from './executionControl/controlKpiPolicySchema.js';
 
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
@@ -116,7 +120,15 @@ class InitiativeGovernanceService {
     return { ok: true };
   }
 
-  async linkGoalToInitiative(orgId: string, goalId: string, initiativeId: string, weight?: number) {
+  async linkGoalToInitiative(
+    orgId: string,
+    goalId: string,
+    initiativeId: string,
+    weight?: number,
+    contributionClass?: (typeof CONTRIBUTION_CLASSES)[number],
+    policyId?: string,
+    actorId?: string
+  ) {
     const goal = await this.getGoal(orgId, goalId);
     if (!goal) throw Object.assign(new Error('Goal not found'), { status: 404 });
     const init = await queryHelpers.queryFirst(
@@ -125,11 +137,84 @@ class InitiativeGovernanceService {
     );
     if (!init) throw Object.assign(new Error('Initiative not found'), { status: 404 });
     const id = uuidv4();
+    if (contributionClass) {
+      if (!CONTRIBUTION_CLASSES.includes(contributionClass)) {
+        throw Object.assign(new Error('INVALID_CONTRIBUTION_CLASS'), { status: 400 });
+      }
+      if (!actorId || goal.owner_id !== actorId) {
+        throw Object.assign(new Error('GOAL_OWNER_APPROVAL_REQUIRED'), { status: 403 });
+      }
+      const policy = policyId
+        ? await queryHelpers.queryFirst<{
+            policy_id: string;
+            parameters: Record<string, unknown>;
+            row_version: number;
+          }>(
+            `SELECT policy_id,parameters,row_version
+               FROM execution_control_kpi_policies
+              WHERE organization_id=$1 AND policy_id=$2`,
+            [orgId, policyId]
+          )
+        : null;
+      const impactWeights = policy?.parameters?.impactWeights as
+        | Record<string, unknown>
+        | undefined;
+      const derivedWeight = impactWeights?.[contributionClass];
+      if (
+        derivedWeight !== undefined &&
+        (typeof derivedWeight !== 'number' || !Number.isFinite(derivedWeight))
+      ) {
+        throw Object.assign(new Error('INVALID_PARAMETERS:impactWeights'), { status: 400 });
+      }
+      if (weight !== undefined && derivedWeight !== undefined && weight !== derivedWeight) {
+        throw Object.assign(new Error('CONTRIBUTION_CLASS_WEIGHT_CONFLICT'), { status: 400 });
+      }
+      if (weight !== undefined && derivedWeight === undefined) {
+        throw Object.assign(new Error('CONTRIBUTION_CLASS_WEIGHT_CONFLICT'), { status: 400 });
+      }
+      await queryHelpers.queryRun(
+        `INSERT INTO goal_initiative_links
+           (id,organization_id,goal_id,initiative_id,contribution_class,contribution_weight,
+            contribution_policy_id,contribution_policy_row_version)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+         ON CONFLICT (goal_id,initiative_id) DO UPDATE SET
+           organization_id=EXCLUDED.organization_id,
+           contribution_class=EXCLUDED.contribution_class,
+           contribution_weight=CASE
+             WHEN EXCLUDED.contribution_policy_id IS NULL THEN goal_initiative_links.contribution_weight
+             ELSE EXCLUDED.contribution_weight
+           END,
+           contribution_policy_id=EXCLUDED.contribution_policy_id,
+           contribution_policy_row_version=EXCLUDED.contribution_policy_row_version`,
+        [
+          id,
+          orgId,
+          goalId,
+          initiativeId,
+          contributionClass,
+          derivedWeight ?? null,
+          policy?.policy_id ?? null,
+          policy?.row_version ?? null,
+        ]
+      );
+      return {
+        id,
+        contributionClass,
+        contributionWeight: derivedWeight ?? null,
+        contributionPolicy: policy
+          ? { policyId: policy.policy_id, rowVersion: policy.row_version }
+          : null,
+        valueReason: policy ? null : ('DECISION_REQUIRED' as const),
+        missingParameters: policy ? [] : (['impactWeights'] satisfies PolicyParameterName[]),
+      };
+    }
     await queryHelpers.queryRun(
-      `INSERT INTO goal_initiative_links (id, goal_id, initiative_id, contribution_weight)
-       VALUES ($1,$2,$3,$4)
-       ON CONFLICT (goal_id, initiative_id) DO UPDATE SET contribution_weight=$4`,
-      [id, goalId, initiativeId, weight ?? 1.0]
+      `INSERT INTO goal_initiative_links (id,organization_id,goal_id,initiative_id,contribution_weight)
+       VALUES ($1,$2,$3,$4,$5)
+       ON CONFLICT (goal_id,initiative_id) DO UPDATE SET
+         organization_id=EXCLUDED.organization_id,
+         contribution_weight=EXCLUDED.contribution_weight`,
+      [id, orgId, goalId, initiativeId, weight ?? 1.0]
     );
     return { id };
   }

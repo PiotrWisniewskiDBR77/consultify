@@ -26,7 +26,7 @@ export class ReportClassificationReadModel {
            LEFT JOIN initiatives i
              ON i.organization_id=$1 AND i.id=c.initiative_id
            LEFT JOIN goal_initiative_links gil
-             ON gil.initiative_id=i.id
+             ON gil.organization_id=$1 AND gil.initiative_id=i.id
            LEFT JOIN goals g
              ON g.organization_id=$1 AND g.id=gil.goal_id
           GROUP BY c.aggregate_id

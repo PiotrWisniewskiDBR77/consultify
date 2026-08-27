@@ -55,8 +55,8 @@ describe.skipIf(!REAL_PG)('Day 33 operational versus strategic report classifica
         [goal, org, perspective]
       );
       await client.query(
-        `INSERT INTO goal_initiative_links(id,goal_id,initiative_id) VALUES($1,$2,$3)`,
-        [`link-${org}`, goal, initiative]
+        `INSERT INTO goal_initiative_links(id,organization_id,goal_id,initiative_id) VALUES($1,$2,$3,$4)`,
+        [`link-${org}`, org, goal, initiative]
       );
       await client.query(
         `INSERT INTO ie_aggregate_state(organization_id,aggregate_type,aggregate_id,version,payload_json) VALUES($1,'execution_task',$2,1,$3::jsonb)`,

@@ -5,6 +5,7 @@
 
 import { type Response, Router } from 'express';
 import { z } from 'zod';
+import { CONTRIBUTION_CLASSES } from '../services/executionControl/controlKpiPolicySchema.js';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { initiativeGovernanceService } from '../services/initiativeGovernanceService.js';
@@ -142,7 +143,12 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const id = requireUser(req, res);
     if (!id) return;
-    const s = z.object({ initiativeId: z.string(), contributionWeight: z.number().optional() });
+    const s = z.object({
+      initiativeId: z.string(),
+      contributionWeight: z.number().optional(),
+      contributionClass: z.enum(CONTRIBUTION_CLASSES).optional(),
+      policyId: z.string().min(1).optional(),
+    });
     const p = s.safeParse(req.body);
     if (!p.success) {
       res.status(400).json({ error: p.error.message });
@@ -152,7 +158,10 @@ router.post(
       id.orgId,
       req.params.goalId,
       p.data.initiativeId,
-      p.data.contributionWeight
+      p.data.contributionWeight,
+      p.data.contributionClass,
+      p.data.policyId,
+      id.userId
     );
     res.status(201).json({ ...linked, ownerDomain: INITIATIVE_GOALS_OWNER_DOMAIN });
   })
