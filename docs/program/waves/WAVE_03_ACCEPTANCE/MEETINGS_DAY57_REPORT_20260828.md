@@ -30,7 +30,10 @@ Do uzupełnienia.
 
 ## ★★ WERYFIKACJA SZEŚCIU USTALEŃ AUTORA INSTRUKCJI (I–VI) — per punkt: ZGADZA SIĘ / NIE ZGADZA SIĘ + własny dowód
 
-Do uzupełnienia.
+1. **I — ZGADZA SIĘ dla routera Spotkań.** Po usunięciu nowej kontroli aktywnego członkostwa token `ADMIN` użytkownika z `organization_members.status='INACTIVE'` dostał m.in. `200` na R1/R2/R4/R5/R7/R8. Dziewięć testów N4 zrobiło się czerwonych.
+2. **II — ZGADZA SIĘ.** Wszystkie N1/N2 wykonano rolą `OWNER`; wszystkie odpowiedzi miały `code != BETA_LOCKED`. Osobny N5 użył `ADMINISTRATOR`.
+3. **III — ZGADZA SIĘ.** Zastany pakiet mockuje `closedBetaModuleGate` i montuje goły router; nowy pakiet używa `ApiGateway.getInstance().initializeRoutes(app)` bez mocka bramek.
+4. IV–VI — do uzupełnienia we właściwych pozycjach.
 
 ## Warunki wstępne — BLOK 0, jedenaście punktów, per punkt wynik
 
@@ -67,7 +70,21 @@ Pierwsza instrukcyjna komenda serwerowa z korzenia zwróciła `No test files fou
 
 ## Pozycje — tabela zbiorcza (13 wierszy: S.1…R.2), kolumny: pozycja | werdykt | commit SHA | dowód
 
-Do uzupełnienia w kolejności wiążącej.
+| pozycja | werdykt     | commit SHA         | dowód                                                                                                                                        |
+| ------- | ----------- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| S.1     | CZĘŚCIOWO   | oczekuje na commit | 37/37 PASS, 0 SKIP przez realny ApiGateway; R1–R9 N1/N2/N4, trzy pozytywy, N5, N6; R10 N1/N2 zmierzone, N4 nie dowodzi aktywnego członkostwa |
+| S.2     | NIE_ZACZĘTE | —                  | —                                                                                                                                            |
+| S.3     | NIE_ZACZĘTE | —                  | —                                                                                                                                            |
+| S.4     | NIE_ZACZĘTE | —                  | —                                                                                                                                            |
+| S.5     | NIE_ZACZĘTE | —                  | —                                                                                                                                            |
+| S.6     | NIE_ZACZĘTE | —                  | —                                                                                                                                            |
+| S.7     | NIE_ZACZĘTE | —                  | —                                                                                                                                            |
+| S.8     | NIE_ZACZĘTE | —                  | —                                                                                                                                            |
+| S.9     | NIE_ZACZĘTE | —                  | —                                                                                                                                            |
+| S.10    | NIE_ZACZĘTE | —                  | —                                                                                                                                            |
+| S.11    | NIE_ZACZĘTE | —                  | —                                                                                                                                            |
+| R.1     | NIE_ZACZĘTE | —                  | —                                                                                                                                            |
+| R.2     | W_TOKU      | `770baf0e1c`       | szkielet raportu i baseline                                                                                                                  |
 
 ## ★ SIEDEM KSZTAŁTÓW FAŁSZYWEGO „GOTOWE" (§1.7) — siedem odpowiedzi na KAŻDĄ pozycję
 
@@ -75,15 +92,20 @@ Do uzupełnienia.
 
 ## ★ DOWODY OSIĄGALNOŚCI (Z21) — pełny łańcuch per rodzina tras
 
-Do uzupełnienia.
+§S.1: podpisany JWT → realny `ApiGateway` → `verifyToken` → `closedBetaModuleGate` → nowa kontrola aktywnego `organization_members` → router Spotkań → realny PostgreSQL. R1/R7/R8 mają pozytywne `200`. R1–R9 mają negatywy N1/N2 bez `BETA_LOCKED` oraz N4=`403 ORG_MEMBERSHIP_REVOKED`. R10 jest osiągalny przez `/api/ai-operator`, ale leży poza routerem Spotkań i jego N4 pozostaje nieudowodnione.
 
 ## ★★ DOWODY MUTACYJNE (Z29/Z32) — per rodzina: z --retry=0 → CZERWIEŃ; bez --retry=0 → wynik; po cofnięciu → ZIELEŃ; git diff pusty
 
-Do uzupełnienia.
+§S.1 R1–R9, mutacja: usunięto `router.use(asyncHandler(requireActiveMeetingMembership));`.
+
+- przed mutacją, `--retry=0`: 37 PASS / 0 FAIL / 0 SKIP;
+- po mutacji, `--retry=0`: 28 PASS / 9 FAIL / 0 SKIP; wszystkie dziewięć N4 czerwone, część zwróciła `200` zamiast `403`;
+- po mutacji bez `--retry=0`: 28 PASS / 9 FAIL / 0 SKIP — retry nie zamaskował tej dziury;
+- po odtworzeniu przez `cp`: niezastage'owany `git diff` pusty; 37 PASS / 0 FAIL / 0 SKIP.
 
 ## Akapity Z33 — po jednym na każdy uruchomiony pakiet, z rozliczeniem pułapki (d) bramki bety
 
-Do uzupełnienia.
+`meeting.tenantIsolation.day57.pg.test.ts`: (a) `ENABLE_V8_GLOBAL=true`; (b) `RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE=enforce`; (c) config nadpisał `DB_TYPE` na `sqlite`, więc pierwszy przebieg uczciwie padł i pominął 23 testy; pakiet przywraca `postgres` przed inicjalizacją oraz wywołuje `assertRealPostgresTestEnvironment()`, a log potwierdza `DB_IDENTITY ... 127.0.0.1:5857/consultify_w3_meetings_owner_day57`; (d) N1/N2 używają roli `OWNER`, N5 roli `ADMINISTRATOR`, a każda odmowa izolacji asertuje `code != BETA_LOCKED`. Końcowy wynik: 37 PASS, 0 SKIP.
 
 ## Tabela werdyktów tras (§S.9) — 33 wiersze
 
@@ -117,7 +139,7 @@ NIE przepisałem liczb nadzorcy, raportów dni 10/16/19/24/28/45, autora instruk
 
 ## ★ DŁUG PRZEKAZANY — czerwony kontrakt testowy dla dyżuru 56 (jeżeli powstał) + zastane czerwone, których nie zapaliłem
 
-Do uzupełnienia.
+R10 (`ai-operator.routes.ts`) leży poza licencją zapisu §1.9.3 i poza routerem objętym nową kontrolą. N1/N2 dają odmowę, lecz N4 nie identyfikuje kodu aktywnego członkostwa; wymaga osobnego czerwonego kontraktu/briefu. Zastane czerwone baseline'u pozostają wymienione wyżej.
 
 ## Korekty wobec instrukcji — KAŻDA rozbieżność wobec tego dokumentu, z dowodem. Ta sekcja jest CENNA, nie wstydliwa
 
@@ -134,8 +156,9 @@ Brak STOP-u całego dyżuru.
 
 ## ★★ TWIERDZENIA NIEZWERYFIKOWANE — sekcja OBOWIĄZKOWA, NIE MOŻE BYĆ PUSTA
 
-- Nie zmierzono jeszcze zachowania izolacji przez realny `ApiGateway`; rozpoczyna się jako §S.1.
-- Nie zmierzono jeszcze pełnego zasięgu N2–N6 na dziesięciu rodzinach.
+- R10 N4 nie dowodzi jeszcze aktywnego członkostwa, bo wcześniejsze bramki `/api/ai-operator` mogą odmawiać z innego powodu.
+- N3 nie został zmierzony per każda rodzina; N5 zmierzono na trzech trasach administracyjnych, N6 na wejściu routera.
+- N1/N2 są testami odmowy bez mutacji danych; niezależny readback zera zmian dla każdej rodziny zapisowej nie został jeszcze wykonany.
 
 ## Rozłączność plikowa — pełny `git diff --name-only b3179d0a52603f62b5cd3673caa754c8fc3b0055..HEAD` + porównanie z listą §1.9.3
 

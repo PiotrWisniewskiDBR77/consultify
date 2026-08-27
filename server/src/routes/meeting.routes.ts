@@ -51,6 +51,7 @@ import {
   updateMeetingStatus,
 } from '../services/meetingService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { get as dbGet } from '../utils/DbPromise.js';
 
 export const MEETING_CAPTURE_POLICY = Object.freeze({
   recordingEnabled: false,
@@ -161,6 +162,46 @@ function denyMeetingAccess(res: Response): Response {
   return res.status(404).json({ error: 'Meeting not found' });
 }
 
+async function requireActiveMeetingMembership(
+  req: AuthRequest,
+  res: Response,
+  next: () => void
+): Promise<void> {
+  const userId = String(req.user?.id || '').trim();
+  const organizationId = String(req.user?.organizationId || '').trim();
+  if (!userId || !organizationId) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
+
+  try {
+    const membership = await dbGet<{ status?: string }>(
+      `SELECT status FROM organization_members
+       WHERE user_id = ? AND organization_id = ?
+       LIMIT 1`,
+      [userId, organizationId],
+      { fallback: false }
+    );
+    if (
+      String(membership?.status || '')
+        .trim()
+        .toUpperCase() !== 'ACTIVE'
+    ) {
+      res.status(403).json({
+        error: 'You no longer have access to this organization',
+        code: 'ORG_MEMBERSHIP_REVOKED',
+      });
+      return;
+    }
+    next();
+  } catch {
+    res.status(403).json({
+      error: 'Meeting membership could not be verified',
+      code: 'MEETING_MEMBERSHIP_UNVERIFIED',
+    });
+  }
+}
+
 // FIX-2 (P1-2, 2026-08-26): recurrenceRule used to flow straight from the
 // request body into icsBuilder's RRULE line with no server-side validation —
 // a CR/LF in the string let a caller inject arbitrary extra ICS lines (e.g.
@@ -260,6 +301,7 @@ function rejectDirectMeetingOutputs(res: Response): Response {
 router.use(verifyToken);
 router.use(isAuthenticated);
 router.use(closedBetaModuleGate);
+router.use(asyncHandler(requireActiveMeetingMembership));
 router.use(async (_req, _res, next) => {
   await ensureMeetingTables();
   next();
