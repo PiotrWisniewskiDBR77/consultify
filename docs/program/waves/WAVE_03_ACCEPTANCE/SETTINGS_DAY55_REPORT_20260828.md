@@ -431,6 +431,16 @@ Kanoniczny readback: `pl`; `Europe/Warsaw`; `PLN`; `DD/MM/YYYY`; `24h`; `metric`
 
 Werdykt §F.2: `ZROBIONE_WG_DoD` dla lokalnego seeda i readbacku; browser evidence ma jawny zakres harnessu.
 
+## §F.1 — polszczyzna żywych powierzchni
+
+Pomiar wykonany skryptem `i18n-live.mjs` wyłącznie na `LIVE` z `orphans-baseline.txt` plus `src/views/SettingsView.tsx`: **47 plików, 1126 unikalnych użytych kluczy, 355 kluczy bez PL w 23 plikach**. Pełna lista per plik znajduje się w artefakcie `i18n-live.txt`; największe skupiska: AuthenticationAccess 48, SecurityOverview 43, Webhooks 38, APIAccess 32, AIPrivacy 28, AIMemory 24, MappingDrift 24, AIModelParameters 21. Nie dopisywałem tłumaczeń do ORPHAN.
+
+`settings.sections` istnieje i ma 66 kluczy przy 50 sekcjach. Szesnaście nadmiarowych, pozostawionych bez kasowania: `ai-instructions`, `ai-model`, `ai-parameters`, `prompt-library`, `ai-personality`, `notifications-email`, `notifications-push`, `notifications-sounds`, `notifications-quiet-hours`, `notifications-digest`, `email-digest`, `desktop-sounds`, `availability`, `notifications-dnd`, `export-data`, `delete-account`.
+
+Pomiar wzrokiem dostępnego harnessu po polsku wykazał oba kształty przecieku: na Profile/Regional/Notifications/Theme widoczne są angielskie opisy i wartości, m.in. `Personal Information`, `OWNER`, `Regional Settings`, `Save Changes`, `Monday`, `Weekly`, `System`, `Dark`. Zrzuty D.1/F.2 obejmują grupy my-settings, work-preferences, notifications i appearance. Brakuje uczciwych zrzutów dla ai-automation, security, integrations i data-privacy; nie zastępuję ich grepem. Nie wykonano masowego dopisania 355 wartości: bez przeglądu terminologii taki automat zamieniłby angielski fallback na niezweryfikowaną polszczyznę. Tym samym nie było commita dotykającego `public/locales/**` i reguła parytetu PL+EN nie została uruchomiona.
+
+`scripts/check-list-canon.sh`: 171 plików, 394 = baseline, brak nowej regresji. Werdykt §F.1: `PARTIAL / EVIDENCE_MISSING` — pomiar mechaniczny i lista nadmiarowa są kompletne, ale wymagane 8/8 oglądów oraz remediacja 355 kluczy nie są zakończone.
+
 ## Pomiar zasięgu testów
 
 - (a) z pełnym env: serwer 79 testów (`77 PASS`, `2 SKIPPED`, 0 asercji FAIL; pakiety PG nie wykonały przypadków), klient 204 (`203 PASS`, `1 FAIL`).
