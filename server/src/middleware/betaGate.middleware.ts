@@ -11,9 +11,10 @@ import { BETA_MENU_STATUS, type BetaStatus } from '../../../src/utils/betaAccess
  * For modules with public sub-paths (e.g. presentations share links) use
  * createBetaGate(skipPaths) to pass prefixes that should remain accessible.
  */
-// All beta modules are currently 'open' in the client-side betaAccess.ts SSOT.
-// This middleware mirrors that state: pass through all requests.
-// Re-enable per-module gating here when any module is set back to 'closed'.
+// This compatibility middleware does not enforce the client SSOT: it always
+// passes through, even though MODULE_ECONOMICS, MODULE_CONCLUSIONS,
+// MODULE_MEETING and MODULE_CASE_WORKSPACE are currently `closed` there.
+// Closed modules need an explicit createModuleGate(moduleId) at their mount.
 export function betaGate(req: Request, res: Response, next: NextFunction): void {
   next();
 }
