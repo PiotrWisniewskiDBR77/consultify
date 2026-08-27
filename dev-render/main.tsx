@@ -318,6 +318,7 @@ const StagingFixesInitiativesI18nScreen = React.lazy(
   () => import('./screens/staging-fixes-initiatives-i18n')
 );
 const CapacityAdvisorA3Screen = React.lazy(() => import('./screens/capacity-advisor-a3'));
+const PlanScenarioD1Screen = React.lazy(() => import('./screens/plan-scenario-d1'));
 const StagingFixesExecutionI18nScreen = React.lazy(
   () => import('./screens/staging-fixes-execution-i18n')
 );
@@ -402,6 +403,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'Day 49 A.3 — real CapacityScenarioSurface demoMode=false, transport capacity-options intercepted; &phase=before|after &state=default|empty',
     render: () => <CapacityAdvisorA3Screen />,
+  },
+  'plan-scenario-d1': {
+    label:
+      'Day 49 D.1 — real PlanScenarioSurface demoMode=false, transport plan-scenarios intercepted, full load() path, full PL i18n; &state=default|empty',
+    render: () => <PlanScenarioD1Screen />,
   },
   'staging-fixes-execution-i18n': {
     label:
