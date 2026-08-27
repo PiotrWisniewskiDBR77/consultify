@@ -64,6 +64,7 @@ import {
   recordRaidMitigation,
   recordExecutionRealization,
   reviewManagerSuggestion,
+  voidExecutionBudgetEntry,
 } from '../../domain/initiatives-execution/executionControlWrites.js';
 import { authorExecutionControlKpiPolicy } from '../../domain/initiatives-execution/executionControlKpiPolicyAuthoring.js';
 import {
@@ -803,6 +804,10 @@ const ExecutionBudgetEntrySchema = z.object({
   periodMonth: z.number().int().min(1).max(12),
   periodYear: z.number().int().min(2000),
   source: z.string().min(1),
+});
+const ExecutionBudgetVoidSchema = z.object({
+  expectedVersion: z.number().int().min(0),
+  clientRequestId: z.string().min(1),
 });
 const ExecutionRealizationSchema = z.object({
   expectedVersion: z.number().int().min(0),
@@ -4638,6 +4643,38 @@ export function createInitiativesExecutionRuntimeRouter(
         commandType: 'execution-control-kpi-policy.author',
         createIfMissing: true,
         payload: { name, parameters },
+      });
+      res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
+    })
+  );
+  router.post(
+    '/initiatives/:initiativeId/budget-entries/:entryId/void',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      const parsed = ExecutionBudgetVoidSchema.safeParse(req.body);
+      if (!actor) return void res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+      if (!parsed.success)
+        return void res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
+      const initiativeId = firstParam(req.params.initiativeId);
+      const projectIds = await deps.reader.resolveProjectIdsForAggregate(
+        actor.organizationId,
+        'initiative',
+        initiativeId
+      );
+      if (!(await authorizeProjects(actor, projectIds, 'initiative.update')))
+        return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
+      const result = await voidExecutionBudgetEntry(deps.unitOfWork, {
+        organizationId: actor.organizationId,
+        actorId: actor.userId,
+        aggregateType: 'execution_budget_entry',
+        aggregateId: firstParam(req.params.entryId),
+        expectedVersion: parsed.data.expectedVersion,
+        clientRequestId: parsed.data.clientRequestId,
+        correlationId: parsed.data.clientRequestId,
+        policyId: 'execution-control',
+        policyVersion: 1,
+        commandType: 'execution-budget-entry.void',
+        payload: { initiativeId },
       });
       res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
     })

@@ -11,6 +11,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import config from '../../../config/Config.js';
 import { v8FeatureGate } from '../../../middleware/v8FeatureGate.middleware.js';
 import initiativesRoutes from '../initiatives.routes.js';
+import executionControlRoutes from '../../executionControl.routes.js';
 import v8Router from '../../v8/index.js';
 
 const DATABASE_URL = process.env.DATABASE_URL || '';
@@ -104,6 +105,7 @@ describe.skipIf(!REAL_PG)('Day 31 canonical writer mounted contract', () => {
     app = express();
     app.use(express.json());
     app.use('/api/initiatives', initiativesRoutes);
+    app.use('/api/execution-control', executionControlRoutes);
     app.use('/api/v8', v8FeatureGate, v8Router);
   });
 
@@ -935,5 +937,63 @@ describe.skipIf(!REAL_PG)('Day 31 canonical writer mounted contract', () => {
       expect(readback.rows[0].version).toBe(2);
       expect(readback.rows[0].payload_json[command.changedField]).toBe('changed');
     }
+  });
+
+  it('projects the canonical budget lifecycle into the legacy read surface', async () => {
+    const entryId = `budget-lifecycle-${randomUUID()}`;
+    const writePath = `/api/initiatives/runtime-v1/initiatives/${initiativeId}/budget-entries/${entryId}`;
+    const readPath = `/api/execution-control/budget/entries/${initiativeId}`;
+    const initial = {
+      expectedVersion: 0,
+      clientRequestId: `budget-lifecycle-create-${tag}`,
+      entryType: 'ACTUAL',
+      costType: 'OPEX',
+      category: 'lifecycle',
+      amount: 1,
+      currency: 'PLN',
+      description: null,
+      periodMonth: 8,
+      periodYear: 2026,
+      source: 'MANUAL',
+    };
+    expect((await request(app).post(writePath).set(auth()).send(initial)).status).toBe(201);
+    const createdRead = await request(app).get(readPath).set(auth());
+    expect(createdRead.status).toBe(200);
+    expect(createdRead.body.entries).toContainEqual(
+      expect.objectContaining({ id: entryId, amount: 1, origin: 'CANONICAL', version: 1 })
+    );
+
+    expect(
+      (
+        await request(app)
+          .post(writePath)
+          .set(auth())
+          .send({
+            ...initial,
+            expectedVersion: 1,
+            clientRequestId: `budget-lifecycle-update-${tag}`,
+            amount: 2,
+          })
+      ).status
+    ).toBe(201);
+    const updatedRead = await request(app).get(readPath).set(auth());
+    expect(updatedRead.body.entries).toContainEqual(
+      expect.objectContaining({ id: entryId, amount: 2, origin: 'CANONICAL', version: 2 })
+    );
+
+    const voided = await request(app)
+      .post(`${writePath}/void`)
+      .set(auth())
+      .send({ expectedVersion: 2, clientRequestId: `budget-lifecycle-void-${tag}` });
+    expect(voided.status).toBe(201);
+    const finalRead = await request(app).get(readPath).set(auth());
+    expect(finalRead.body.entries.map((entry: any) => entry.id)).not.toContain(entryId);
+    expect(
+      await client.query(
+        `SELECT version,payload_json->>'status' status FROM ie_aggregate_state
+          WHERE organization_id=$1 AND aggregate_type='execution_budget_entry' AND aggregate_id=$2`,
+        [organizationId, entryId]
+      )
+    ).toMatchObject({ rows: [{ version: 3, status: 'VOIDED' }] });
   });
 });

@@ -11,7 +11,10 @@
  *  - Budget planning & financial control — T042
  */
 import { Response, Router } from 'express';
+import { Pool, type PoolConfig } from 'pg';
 import { z } from 'zod';
+
+import databaseConfig from '../config/DatabaseConfig.js';
 
 import { type AuthRequest, isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
 import { requireOrgRole } from '../middleware/rbac.middleware.js';
@@ -38,6 +41,7 @@ import {
   getBudgetDeleteReceipt,
 } from '../services/executionBudgetDeleteCommandService.js';
 import { getTimelineWarningsSnapshot } from '../services/executionControlReadService.js';
+import { CanonicalExecutionReadProjections } from '../services/executionControl/canonicalExecutionReadProjections.js';
 import { dispatchProjectCommunicationEvent } from '../services/integrations/communicationSyncService.js';
 import { detectRiskSignals } from '../services/riskDetectionService.js';
 import { getCapacityTimeline, getOverloadAlerts } from '../services/workloadCapacityService.js';
@@ -46,6 +50,9 @@ import { all as dbAll, run as dbRun } from '../utils/DbPromise.js';
 import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 
 const router = Router();
+const canonicalReadProjections = new CanonicalExecutionReadProjections(
+  new Pool(databaseConfig.postgres as PoolConfig | undefined)
+);
 
 // ================================================================
 // T040: Risk Signals
@@ -498,7 +505,19 @@ router.get(
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
 
     const initId = String(req.params.initiativeId);
-    const entries = await getBudgetEntries(orgId, initId);
+    const [legacyEntries, canonicalEntries] = await Promise.all([
+      getBudgetEntries(orgId, initId),
+      canonicalReadProjections.listBudgetEntries(orgId, initId),
+    ]);
+    const byId = new Map<string, any>();
+    for (const entry of legacyEntries) byId.set(entry.id, { ...entry, origin: 'LEGACY' });
+    for (const entry of canonicalEntries) byId.set(entry.id, entry);
+    const entries = [...byId.values()].sort((left, right) => {
+      const period =
+        Number(right.periodYear ?? 0) - Number(left.periodYear ?? 0) ||
+        Number(right.periodMonth ?? 0) - Number(left.periodMonth ?? 0);
+      return period || String(right.createdAt).localeCompare(String(left.createdAt));
+    });
     return res.json({ entries, count: entries.length });
   })
 );

@@ -52,6 +52,38 @@ export async function createExecutionBudgetEntry(
   });
 }
 
+export async function voidExecutionBudgetEntry(
+  unitOfWork: MaterialCommandUnitOfWork,
+  envelope: MaterialCommandEnvelope<{ initiativeId: string }>
+): Promise<
+  MaterialCommandResult<
+    ExecutionBudgetEntry & { status: 'VOIDED'; voidedAt: string; voidedBy: string }
+  >
+> {
+  return executeMaterialCommand(unitOfWork, envelope, async (tx) => {
+    const current = await tx.getAggregatePayload<ExecutionBudgetEntry>(
+      envelope.organizationId,
+      'execution_budget_entry',
+      envelope.aggregateId
+    );
+    if (!current || current.initiativeId !== envelope.payload.initiativeId)
+      throw new MaterialCommandValidationError('Budget entry not found');
+    const voided = {
+      ...current,
+      status: 'VOIDED' as const,
+      voidedAt: new Date().toISOString(),
+      voidedBy: envelope.actorId,
+    };
+    return {
+      mutation: voided,
+      response: voided,
+      eventType: 'execution-budget-entry.voided',
+      eventPayload: voided,
+      auditPayload: voided,
+    };
+  });
+}
+
 export interface ExecutionRealizationEntry {
   realizationId: string;
   initiativeId: string;
