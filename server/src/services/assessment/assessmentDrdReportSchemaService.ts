@@ -191,7 +191,10 @@ function skipNotice(area: ContractArea): string | null {
   return null;
 }
 
-function chapterBlocks(chapter: ContractChapter): DocumentBlock[] {
+function chapterBlocks(
+  chapter: ContractChapter,
+  decisionLineLimit: { minWords: number; maxWords: number }
+): DocumentBlock[] {
   const blocks: DocumentBlock[] = [];
   const assessed = chapter.matrix.areas.some(
     (area) => !area.skipped && area.currentLevel !== null && area.targetLevel !== null
@@ -248,6 +251,14 @@ function chapterBlocks(chapter: ContractChapter): DocumentBlock[] {
   const conclusionPlaceholder = slotText(
     chapter.conclusion as { content: string | null; minWords: number; maxWords: number }
   );
+  // W4 (nadzorca 2026-08-28): the four decision-line cells are short fields
+  // (15–40 words per the wzorzec measurement), not chapter-conclusion prose
+  // (180–260 words). Falling back to `conclusionPlaceholder` here — as the
+  // seven per-axis tables did before this fix — printed the wrong limit
+  // ("limit 180–260 słów") in every empty decision-line cell. Use the same
+  // dedicated short placeholder the day-34 fix already gave the
+  // program-level decision table.
+  const decisionPlaceholder = placeholder(decisionLineLimit.minWords, decisionLineLimit.maxWords);
   blocks.push(
     heading(`${chapter.axisId}-conclusion-heading`, 'Wnioski rozdziału', 2),
     paragraph(`${chapter.axisId}-conclusion`, conclusionPlaceholder, DRD_DOCX_STYLE_IDS.CAPTION),
@@ -260,12 +271,12 @@ function chapterBlocks(chapter: ContractChapter): DocumentBlock[] {
       `${chapter.axisId}-decision`,
       ['Pole', 'Treść'],
       [
-        ['Kierunek', chapter.conclusion.decisionLine.direction ?? conclusionPlaceholder],
-        ['Priorytet', chapter.conclusion.decisionLine.priority ?? conclusionPlaceholder],
-        ['Horyzont', chapter.conclusion.decisionLine.horizon ?? conclusionPlaceholder],
+        ['Kierunek', chapter.conclusion.decisionLine.direction ?? decisionPlaceholder],
+        ['Priorytet', chapter.conclusion.decisionLine.priority ?? decisionPlaceholder],
+        ['Horyzont', chapter.conclusion.decisionLine.horizon ?? decisionPlaceholder],
         [
           'Warunek sukcesu',
-          chapter.conclusion.decisionLine.successCondition ?? conclusionPlaceholder,
+          chapter.conclusion.decisionLine.successCondition ?? decisionPlaceholder,
         ],
       ]
     )
@@ -358,7 +369,7 @@ export function buildAssessmentDrdReportSchema(contract: AssessmentReportContrac
       title: `${chapter.axisId}. ${chapter.axisNamePL ?? chapter.axisName}`,
       purpose: `Rozdział ${index + 1} z 7 · oś ${chapter.axisId} struktury DRD`,
       sourceRefs: [],
-      blocks: chapterBlocks(chapter),
+      blocks: chapterBlocks(chapter, decisionLineLimit),
     })),
     {
       sectionId: 'final-conclusions',
