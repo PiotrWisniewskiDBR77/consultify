@@ -163,13 +163,15 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const id = requireUser(req, res);
     if (!id) return;
-    res.json({
-      initiatives: await initiativeGovernanceService.getGoalInitiatives(
-        id.orgId,
-        req.params.goalId
-      ),
-      ownerDomain: INITIATIVE_GOALS_OWNER_DOMAIN,
-    });
+    const initiatives = await initiativeGovernanceService.getGoalInitiatives(
+      id.orgId,
+      req.params.goalId
+    );
+    if (initiatives === null) {
+      res.status(404).json({ error: 'Goal not found' });
+      return;
+    }
+    res.json({ initiatives, ownerDomain: INITIATIVE_GOALS_OWNER_DOMAIN });
   })
 );
 

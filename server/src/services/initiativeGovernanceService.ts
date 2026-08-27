@@ -136,7 +136,7 @@ class InitiativeGovernanceService {
 
   async getGoalInitiatives(orgId: string, goalId: string) {
     const goal = await this.getGoal(orgId, goalId);
-    if (!goal) return [];
+    if (!goal) return null;
     return queryHelpers.queryAll(
       `SELECT gil.*, i.name as initiative_name, i.status as initiative_status
        FROM goal_initiative_links gil
@@ -159,7 +159,13 @@ class InitiativeGovernanceService {
     const links = await queryHelpers.queryAll<{
       contribution_weight: number;
       initiative_id: string;
-    }>(`SELECT * FROM goal_initiative_links WHERE goal_id=$1`, [goalId]);
+    }>(
+      `SELECT gil.*
+         FROM goal_initiative_links gil
+         JOIN initiatives i ON i.id=gil.initiative_id AND i.organization_id=$2
+        WHERE gil.goal_id=$1 AND gil.organization_id=$2`,
+      [goalId, orgId]
+    );
     const childGoals = await queryHelpers.queryAll<{ id: string; progress: number }>(
       `SELECT id, progress FROM goals WHERE parent_goal_id=$1`,
       [goalId]
