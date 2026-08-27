@@ -65,6 +65,19 @@ Pięć kształtów fałszywego gotowe dla P.1: wołacze policzone — TAK; realn
 
 TWIERDZENIE NIEZWERYFIKOWANE P.1: rzeczywiste kody HTTP wszystkich 18 montaży nie zostały jeszcze zmierzone.
 
+## §P.2 — rozliczenie czterech kotwic
+
+Wszystkie cztery kotwice mają werdykt `PRZEPISANA`; asercje zostały wzmocnione z przepuszczenia do jawnej odmowy:
+
+1. Stare: `fails open when membership context accessor throws`, brak statusu i `next()`. Nowe: `refuses when membership context accessor throws`, `403`, kod `ORG_CONTEXT_REQUIRED`, brak `next()`. Test kanonizował przepuszczenie przy nierozstrzygniętym kontekście; decyzja P.3 wymaga odmowy dla zalogowanego użytkownika bez organizacji.
+2. Stare: `fails open when req.organizationId getter throws during normalization`, brak statusu i `next()`. Nowe: `refuses when req.organizationId getter throws during normalization`, `403`, kod `ORG_CONTEXT_REQUIRED`, brak `next()`. To ta sama furtka 1687 co w pkt 1, więc werdykt jest identyczny.
+3. Stare: `logs and fails open when membership DB lookup fails`, brak statusu i `next()`, log `ORG_MEMBERSHIP_LOOKUP_FAIL_OPEN`. Nowe: `logs and refuses when membership DB lookup fails`, `503`, kod i log `ORG_MEMBERSHIP_LOOKUP_UNAVAILABLE`, brak `next()`. Niedostępność magazynu autoryzacji nie może poszerzać dostępu; 503 odróżnia awarię od braku uprawnienia.
+4. Stare: `fails open when assigning normalized organizationId throws`, brak statusu i `next()`. Nowe: `refuses when assigning normalized organizationId throws`, `403`, kod `ORG_CONTEXT_REQUIRED`, brak `next()`. Test ręcznie tworzy setter, ale gdy taka ścieżka wystąpi, bezpiecznym wynikiem jest odmowa.
+
+Po P.2 dokładnie cztery nowe testy są celowo czerwone: oba `refuses ... getter/context accessor` mają zazielenić się w P.3, setter w P.6, a błąd DB w P.5. Każda inna nazwa: brak.
+
+Pięć kształtów fałszywego gotowe dla P.2: wołacz — NIE, pozycja test-only; ApiGateway — NIE, jawne zwolnienie; skipped — 0 w tym pliku; pary HTTP — NIE, będą w pozycjach produkcyjnych; grep jako runtime — NIE, nie formułuję twierdzenia runtime.
+
 ## Pomiar zasięgu testów
 
 PRZED: patrz §P.1. Artefakty: `/private/tmp/consultify-authcore-day56-artefakty/zasieg-PRZED.json` i `zasieg-PRZED.log`.

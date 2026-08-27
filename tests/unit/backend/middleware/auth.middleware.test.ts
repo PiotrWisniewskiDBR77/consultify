@@ -271,7 +271,9 @@ describe('AuthMiddleware', () => {
       mockReq.headers!['authorization'] = 'Bearer valid-token';
       mockReq.headers!['x-demo-mode'] = 'true';
       mockReq.headers!['x-demo-session-org'] = 'demo-org-session-user123';
-      mockReq.get = vi.fn((header: string) => mockReq.headers?.[header.toLowerCase()] || null) as any;
+      mockReq.get = vi.fn(
+        (header: string) => mockReq.headers?.[header.toLowerCase()] || null
+      ) as any;
       mockJwt.verify.mockImplementation((_token, _secret, callback) => {
         callback(null, { id: 'user-123', role: 'ADMIN', organizationId: 'real-org-id' });
       });
@@ -428,11 +430,7 @@ describe('AuthMiddleware', () => {
 
       await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
 
-      expect(mockJwt.verify).toHaveBeenCalledWith(
-        'raw-token',
-        'test-secret',
-        expect.any(Function)
-      );
+      expect(mockJwt.verify).toHaveBeenCalledWith('raw-token', 'test-secret', expect.any(Function));
       expect(mockReq.user?.id).toBe('user-raw');
       expect(mockNext).toHaveBeenCalled();
     });
@@ -762,7 +760,9 @@ describe('AuthMiddleware', () => {
     it('ignores oversized x-org-context header for org override membership lookup', async () => {
       mockReq.headers!['authorization'] = 'Bearer oversized-org-context-header';
       mockReq.headers!['x-org-context'] = 'o'.repeat(200);
-      mockReq.get = vi.fn((header: string) => mockReq.headers?.[header.toLowerCase()] || null) as any;
+      mockReq.get = vi.fn(
+        (header: string) => mockReq.headers?.[header.toLowerCase()] || null
+      ) as any;
       mockJwt.verify.mockImplementation((_token, _secret, callback) => {
         callback(null, { id: 'user-ctx-oversized', role: 'ADMIN', organizationId: 'token-org' });
       });
@@ -773,7 +773,10 @@ describe('AuthMiddleware', () => {
       expect(mockReq.organizationId).toBe('token-org');
       expect(mockReq.user?.organizationId).toBe('token-org');
       expect(mockNext).toHaveBeenCalled();
-      expect(mockDbGet).not.toHaveBeenCalledWith(expect.any(String), ['user-ctx-oversized', 'o'.repeat(200)]);
+      expect(mockDbGet).not.toHaveBeenCalledWith(expect.any(String), [
+        'user-ctx-oversized',
+        'o'.repeat(200),
+      ]);
     });
 
     it('should reject verified payloads with missing id', async () => {
@@ -969,9 +972,8 @@ describe('AuthMiddleware', () => {
           decode: vi.fn().mockReturnValue({ e2e: true, id: 'e2e-user' }),
         };
 
-        const mod = await import(
-          '../../../../server/src/middleware/auth.middleware.ts?prod_e2e_no_bypass=1'
-        );
+        const mod =
+          await import('../../../../server/src/middleware/auth.middleware.ts?prod_e2e_no_bypass=1');
         mod.setDependencies({
           jwt: prodJwt as any,
           config: mockConfig,
@@ -1001,9 +1003,8 @@ describe('AuthMiddleware', () => {
       try {
         process.env.NODE_ENV = 'production';
         vi.resetModules();
-        const mod = await import(
-          '../../../../server/src/middleware/auth.middleware.ts?prod_query_token_disabled=1'
-        );
+        const mod =
+          await import('../../../../server/src/middleware/auth.middleware.ts?prod_query_token_disabled=1');
         mod.setDependencies({
           jwt: mockJwt as any,
           config: mockConfig,
@@ -1037,9 +1038,8 @@ describe('AuthMiddleware', () => {
       try {
         process.env.NODE_ENV = 'production';
         vi.resetModules();
-        const mod = await import(
-          '../../../../server/src/middleware/auth.middleware.ts?prod_body_token_disabled=1'
-        );
+        const mod =
+          await import('../../../../server/src/middleware/auth.middleware.ts?prod_body_token_disabled=1');
         mod.setDependencies({
           jwt: mockJwt as any,
           config: mockConfig,
@@ -1089,7 +1089,11 @@ describe('AuthMiddleware', () => {
     it('treats non-boolean isSuperAdmin claim as false', async () => {
       mockReq.headers!['authorization'] = 'Bearer superadmin-string';
       mockJwt.verify.mockImplementation((_token, _secret, callback) => {
-        callback(null, { id: 'user-superadmin-string', role: 'ADMIN', isSuperAdmin: 'true' as any });
+        callback(null, {
+          id: 'user-superadmin-string',
+          role: 'ADMIN',
+          isSuperAdmin: 'true' as any,
+        });
       });
       mockDbGet.mockResolvedValue(null);
 
@@ -1538,9 +1542,8 @@ describe('AuthMiddleware', () => {
 
       try {
         vi.resetModules();
-        const mod = await import(
-          '../../../../server/src/middleware/auth.middleware.ts?force_superadmin=1'
-        );
+        const mod =
+          await import('../../../../server/src/middleware/auth.middleware.ts?force_superadmin=1');
         mod.setDependencies({
           jwt: mockJwt as any,
           config: mockConfig,
@@ -1586,9 +1589,8 @@ describe('AuthMiddleware', () => {
 
       try {
         vi.resetModules();
-        const mod = await import(
-          '../../../../server/src/middleware/auth.middleware.ts?force_superadmin_frozen=1'
-        );
+        const mod =
+          await import('../../../../server/src/middleware/auth.middleware.ts?force_superadmin_frozen=1');
         mod.setDependencies({
           jwt: mockJwt as any,
           config: mockConfig,
@@ -1650,9 +1652,8 @@ describe('AuthMiddleware', () => {
           return { ...actual, run: mockRun };
         });
 
-        const mod = await import(
-          '../../../../server/src/middleware/auth.middleware.ts?e2e_mode_bypass=1'
-        );
+        const mod =
+          await import('../../../../server/src/middleware/auth.middleware.ts?e2e_mode_bypass=1');
         mod.setDependencies({
           jwt: e2eJwt as any,
           config: mockConfig,
@@ -1708,9 +1709,8 @@ describe('AuthMiddleware', () => {
           return { ...actual, run: mockRun };
         });
 
-        const mod = await import(
-          '../../../../server/src/middleware/auth.middleware.ts?e2e_mode_bypass_normalize=1'
-        );
+        const mod =
+          await import('../../../../server/src/middleware/auth.middleware.ts?e2e_mode_bypass_normalize=1');
         mod.setDependencies({
           jwt: e2eJwt as any,
           config: mockConfig,
@@ -1767,9 +1767,8 @@ describe('AuthMiddleware', () => {
           return { ...actual, run: mockRun };
         });
 
-        const mod = await import(
-          '../../../../server/src/middleware/auth.middleware.ts?e2e_mode_bypass_frozen_payload=1'
-        );
+        const mod =
+          await import('../../../../server/src/middleware/auth.middleware.ts?e2e_mode_bypass_frozen_payload=1');
         mod.setDependencies({
           jwt: e2eJwt as any,
           config: mockConfig,
@@ -2628,16 +2627,18 @@ describe('AuthMiddleware', () => {
           throw new Error('email getter failed');
         },
       });
-      expect(__private__.readOptionalStringClaim(payloadWithThrowingGetter, 'email')).toBeUndefined();
+      expect(
+        __private__.readOptionalStringClaim(payloadWithThrowingGetter, 'email')
+      ).toBeUndefined();
     });
 
     it('reads strict boolean true claim safely from payload', () => {
       expect(__private__.readBooleanTrueClaim({ isSuperAdmin: true } as any, 'isSuperAdmin')).toBe(
         true
       );
-      expect(__private__.readBooleanTrueClaim({ isSuperAdmin: 'true' } as any, 'isSuperAdmin')).toBe(
-        false
-      );
+      expect(
+        __private__.readBooleanTrueClaim({ isSuperAdmin: 'true' } as any, 'isSuperAdmin')
+      ).toBe(false);
       expect(__private__.readBooleanTrueClaim(undefined as any, 'isSuperAdmin')).toBe(false);
 
       const payloadWithThrowingGetter: any = {};
@@ -2647,7 +2648,9 @@ describe('AuthMiddleware', () => {
           throw new Error('isSuperAdmin getter failed');
         },
       });
-      expect(__private__.readBooleanTrueClaim(payloadWithThrowingGetter, 'isSuperAdmin')).toBe(false);
+      expect(__private__.readBooleanTrueClaim(payloadWithThrowingGetter, 'isSuperAdmin')).toBe(
+        false
+      );
     });
 
     it('does not bypass membership validation for truthy non-boolean superadmin flag', async () => {
@@ -2658,10 +2661,10 @@ describe('AuthMiddleware', () => {
 
       await validateOrgMembership(mockReq as AuthRequest, mockRes as Response, mockNext);
 
-      expect(mockDbGet).toHaveBeenCalledWith(
-        expect.stringContaining('FROM organization_members'),
-        ['user-1', 'org-1']
-      );
+      expect(mockDbGet).toHaveBeenCalledWith(expect.stringContaining('FROM organization_members'), [
+        'user-1',
+        'org-1',
+      ]);
       expect(mockRes.status).toHaveBeenCalledWith(403);
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({ code: 'ORG_MEMBERSHIP_REVOKED' })
@@ -2684,10 +2687,10 @@ describe('AuthMiddleware', () => {
 
       await validateOrgMembership(mockReq as AuthRequest, mockRes as Response, mockNext);
 
-      expect(mockDbGet).toHaveBeenCalledWith(
-        expect.stringContaining('FROM organization_members'),
-        ['user-1', 'org-1']
-      );
+      expect(mockDbGet).toHaveBeenCalledWith(expect.stringContaining('FROM organization_members'), [
+        'user-1',
+        'org-1',
+      ]);
       expect(mockRes.status).toHaveBeenCalledWith(403);
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({ code: 'ORG_MEMBERSHIP_REVOKED' })
@@ -2695,7 +2698,7 @@ describe('AuthMiddleware', () => {
       expect(mockNext).not.toHaveBeenCalled();
     });
 
-    it('fails open when membership context accessor throws', async () => {
+    it('refuses when membership context accessor throws', async () => {
       mockReq.user = { id: 'user-1', isSuperAdmin: false } as any;
       mockReq.userId = 'user-1';
       Object.defineProperty(mockReq, 'organizationId', {
@@ -2709,11 +2712,14 @@ describe('AuthMiddleware', () => {
       await validateOrgMembership(mockReq as AuthRequest, mockRes as Response, mockNext);
 
       expect(mockDbGet).not.toHaveBeenCalled();
-      expect(mockRes.status).not.toHaveBeenCalled();
-      expect(mockNext).toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(403);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({ code: 'ORG_CONTEXT_REQUIRED' })
+      );
+      expect(mockNext).not.toHaveBeenCalled();
     });
 
-    it('fails open when req.organizationId getter throws during normalization', async () => {
+    it('refuses when req.organizationId getter throws during normalization', async () => {
       mockReq.user = { id: 'user-1', organizationId: 'org-fallback', isSuperAdmin: false } as any;
       mockReq.userId = 'user-1';
       Object.defineProperty(mockReq, 'organizationId', {
@@ -2728,11 +2734,14 @@ describe('AuthMiddleware', () => {
       await validateOrgMembership(mockReq as AuthRequest, mockRes as Response, mockNext);
 
       expect(mockDbGet).not.toHaveBeenCalled();
-      expect(mockNext).toHaveBeenCalled();
-      expect(mockRes.status).not.toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(403);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({ code: 'ORG_CONTEXT_REQUIRED' })
+      );
+      expect(mockNext).not.toHaveBeenCalled();
     });
 
-    it('logs and fails open when membership DB lookup fails', async () => {
+    it('logs and refuses when membership DB lookup fails', async () => {
       mockReq.user = { id: 'user-1', isSuperAdmin: false } as any;
       mockReq.userId = 'user-1';
       mockReq.organizationId = 'org-lookup';
@@ -2741,12 +2750,15 @@ describe('AuthMiddleware', () => {
 
       await validateOrgMembership(mockReq as AuthRequest, mockRes as Response, mockNext);
 
-      expect(mockNext).toHaveBeenCalled();
-      expect(mockRes.status).not.toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(503);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({ code: 'ORG_MEMBERSHIP_LOOKUP_UNAVAILABLE' })
+      );
       expect(warnSpy).toHaveBeenCalledWith(
-        '[AuthMiddleware] org membership check failed; failing open',
+        '[AuthMiddleware] org membership check failed; refusing request',
         expect.objectContaining({
-          code: 'ORG_MEMBERSHIP_LOOKUP_FAIL_OPEN',
+          code: 'ORG_MEMBERSHIP_LOOKUP_UNAVAILABLE',
           path: '/test',
           reason: 'db unavailable',
         })
@@ -2768,15 +2780,15 @@ describe('AuthMiddleware', () => {
 
       await validateOrgMembership(mockReq as AuthRequest, mockRes as Response, mockNext);
 
-      expect(mockDbGet).toHaveBeenCalledWith(
-        expect.stringContaining('FROM organization_members'),
-        ['user-fallback', 'org-1']
-      );
+      expect(mockDbGet).toHaveBeenCalledWith(expect.stringContaining('FROM organization_members'), [
+        'user-fallback',
+        'org-1',
+      ]);
       expect(mockNext).toHaveBeenCalled();
       expect(mockRes.status).not.toHaveBeenCalled();
     });
 
-    it('fails open when assigning normalized organizationId throws', async () => {
+    it('refuses when assigning normalized organizationId throws', async () => {
       const reqWithThrowingSetter: Partial<AuthRequest> = {
         ...mockReq,
         user: { id: 'user-1', isSuperAdmin: false } as any,
@@ -2801,8 +2813,11 @@ describe('AuthMiddleware', () => {
       );
 
       expect(mockDbGet).not.toHaveBeenCalled();
-      expect(mockRes.status).not.toHaveBeenCalled();
-      expect(mockNext).toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(403);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({ code: 'ORG_CONTEXT_REQUIRED' })
+      );
+      expect(mockNext).not.toHaveBeenCalled();
       currentOrgId = 'org-1'; // keep getter backing value explicit for readability
     });
   });
@@ -2816,9 +2831,8 @@ describe('AuthMiddleware', () => {
         default: { can: vi.fn() },
       }));
 
-      const mod = await import(
-        '../../../../server/src/middleware/auth.middleware.ts?get_deps_no_default=1'
-      );
+      const mod =
+        await import('../../../../server/src/middleware/auth.middleware.ts?get_deps_no_default=1');
       const deps = await mod.__private__.getDeps();
 
       expect(deps.jwt.verify).toBeTypeOf('function');
@@ -2841,9 +2855,8 @@ describe('AuthMiddleware', () => {
         default: { can: vi.fn() },
       }));
 
-      const mod = await import(
-        '../../../../server/src/middleware/auth.middleware.ts?get_deps_default_config=1'
-      );
+      const mod =
+        await import('../../../../server/src/middleware/auth.middleware.ts?get_deps_default_config=1');
       const deps = await mod.__private__.getDeps();
 
       expect(deps.config.JWT_SECRET).toBe('y');
