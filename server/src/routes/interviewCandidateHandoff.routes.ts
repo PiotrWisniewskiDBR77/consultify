@@ -22,7 +22,7 @@
 import type { Response } from 'express';
 import { Router } from 'express';
 
-import { verifyToken } from '../middleware/auth.middleware.js';
+import { validateOrgMembership, verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { requirePermission } from '../middleware/permission.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
@@ -41,8 +41,30 @@ const router = Router();
 // Keep this packet independently safe if Gateway mount order changes. Today the
 // broader /api/interview router happens to run the same guards first, but this
 // router must not borrow authentication from that incidental ordering.
+//
+// FIX-3 (day44 remediation, 2026-08-28): `requireOrgAccess()` only checks
+// that the JWT carries a syntactically valid `organizationId` claim — it
+// never queries `organization_members`. Measured on real Postgres with this
+// router mounted alone: a user whose `organization_members` row has been
+// revoked (status != 'ACTIVE') and a user with a fully fabricated
+// org/user id pair BOTH reached the preview handler and got the same
+// `404 SUBMISSION_NOT_FOUND` — `requirePermission('INTERVIEW_ASSIGN_MANAGE'
+// | 'INTERVIEW_INSIGHTS_HANDOFF')` grants OWNER/SUPERADMIN roles an
+// unconditional bypass regardless of membership validity
+// (`permissionService.ts` `hasPermission`), so nothing downstream of
+// `requireOrgAccess()` catches a revoked membership either.
+// `validateOrgMembership` (`auth.middleware.ts:1672`) is the only guard in
+// this codebase that does a real DB membership check and returns
+// `403 ORG_MEMBERSHIP_REVOKED`. The sibling `insightSourceBaskets.routes.ts`
+// has the identical 4-line chain without this guard — that is a real,
+// pre-existing repo convention, not invented here — but this router
+// performs a real write (creates `initiative_candidates` rows via
+// `/approve`), so the gap is closed here rather than documented-only.
+// `insightSourceBaskets.routes.ts` is intentionally left untouched; it was
+// not in scope for this fix.
 router.use(apiAuthRateLimiter);
 router.use(verifyToken);
+router.use(validateOrgMembership);
 router.use(requireOrgAccess());
 router.use(demoContextMiddleware);
 
