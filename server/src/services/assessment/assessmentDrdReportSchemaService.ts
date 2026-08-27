@@ -203,22 +203,12 @@ function chapterBlocks(chapter: ContractChapter): DocumentBlock[] {
     const notice = skipNotice(area);
     if (notice) blocks.push(paragraph(`${area.unitId}-skip`, notice, DRD_DOCX_STYLE_IDS.CAPTION));
     if (comment) {
-      blocks.push(
-        paragraph(
-          `${area.unitId}-comment`,
-          slotText(comment as { content: string | null; minWords: number; maxWords: number }),
-          DRD_DOCX_STYLE_IDS.CAPTION
-        ),
-        {
-          blockId: `${area.unitId}-microstructure`,
-          type: 'bullet_list',
-          content: {
-            items: comment.microstructure.map(
-              (item) => MICROSTRUCTURE_PL[item as keyof typeof MICROSTRUCTURE_PL] ?? item
-            ),
-          },
-        }
-      );
+      const commentText = comment.content
+        ? comment.content
+        : `${placeholder(comment.minWords, comment.maxWords).replace(/\.$/, '')}; wymagane: ${comment.microstructure
+            .map((item) => MICROSTRUCTURE_PL[item as keyof typeof MICROSTRUCTURE_PL] ?? item)
+            .join(', ')}.`;
+      blocks.push(paragraph(`${area.unitId}-comment`, commentText, DRD_DOCX_STYLE_IDS.CAPTION));
     }
   });
 
