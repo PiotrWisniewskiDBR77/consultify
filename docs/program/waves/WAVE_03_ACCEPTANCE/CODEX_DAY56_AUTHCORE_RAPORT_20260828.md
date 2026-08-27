@@ -1,0 +1,80 @@
+# Raport dyżuru 56 — rdzeń uwierzytelniania
+
+## Marker i baza
+
+- Baza: `github-backup/codex/m03-admin-20260824`.
+- Marker związany: `b3179d0a52603f62b5cd3673caa754c8fc3b0055`.
+- `merge-base --is-ancestor ...` → `MARKER OK`.
+- `rev-parse HEAD` po utworzeniu worktree → `b3179d0a52603f62b5cd3673caa754c8fc3b0055`.
+- Worktree: `/private/tmp/consultify-authcore-day56`; gałąź: `codex/authcore-day56-20260828`.
+- Wolne miejsce przed startem: 8.6 GiB; port 5856: `WOLNY`.
+
+## Weryfikacja stanu wejściowego
+
+1. `organizationContextGuard.ts`: BRAK; liczba odwołań: 0.
+2. Pięć furtek potwierdzono w `auth.middleware.ts:1682-1758`.
+3. Cztery kotwice potwierdzono w liniach 2698, 2716, 2735 i 2779 właściwego pliku testowego.
+4. Błędna ścieżka `server/src/middleware/__tests__/auth.middleware.test.ts`: BRAK; właściwy plik: 2857 linii.
+5. `optionalAuth`: 5 trafień tekstowych, 4 pliki, dokładnie 1 realny montaż (`share.routes.ts:474`). Dodatkowe piąte trafienie to martwy import w `legal.routes.ts:17`.
+6. `attachUser`: 8 odmów bez rzutu; `optionalAuth` łapie tylko wyjątki.
+7. Egzekutor bezczynności: 0 trafień; `checkTokenRevocation` jest przed `trackSessionActivity`.
+8. Wzorzec ścisłego członkostwa eksportuje trzy strażniki w liniach 146, 157, 168.
+9. `ENABLE_TEST_AUTH_BYPASS` omija `verifyToken` w linii 1238.
+
+## BLOK 0
+
+- Kontener: `cx-day56-pg`, lokalny port `127.0.0.1:5856`, baza `cx_day56`.
+- Pełny pierwszy przebieg: 858 migracji; drugi przebieg: 0 migracji, sukces.
+- `user_sessions` ma `created_at`, `last_active_at`, `last_activity_at`, `is_active`, `token_jti`.
+- `revoked_tokens` ma `jti`, `user_id`, `expires_at`, `revoked_at`, `reason`.
+- `organization_members` ma unikalną parę `(organization_id,user_id)` i role ograniczone do OWNER/ADMIN/MEMBER/CONSULTANT/USER/GUEST.
+- `organization_settings.setting_value` jest typu `text`.
+- Migracja day56: nie jest obecnie potrzebna; przedział pozostaje `20261570-20261579` wyłącznie.
+- Dowód Z30: `server/src/services/emailService.ts:179-219` wysyła realnie tylko przy jednoczesnym `smtpConfig.host` i użytkowniku; środowisko nie zawiera żadnej nazwy `SMTP_*`, a niezależny odczyt lokalnej bazy `SELECT count(*) FROM settings WHERE key LIKE 'smtp_%'` zwrócił `0`. Dostawca pozostaje `Mock (Console)` i realna wysyłka jest niemożliwa w tym środowisku.
+
+## Korekty wobec instrukcji
+
+- Teza o 4 trafieniach tekstowych `optionalAuth` jest SPROSTOWANA: własny pomiar dał 5 trafień, ponieważ instrukcja pominęła martwy import w `legal.routes.ts:17`. Mianownik realnych montaży nadal wynosi 1.
+- Skan trójkropkowy wykazał poza gałęzią 37 również `github-backup/fix/elkomtech-interview-dom-20260827` dotykającą `auth.middleware.ts`. Nie przejmuję tej gałęzi; ryzyko scalenia pozostaje jawne.
+
+## §P.1 — inwentarz furtek, kotwic i mianowników
+
+| furtka                     | osiągalność                                                                            |    promień | kotwica                               | wzorzec                         |
+| -------------------------- | -------------------------------------------------------------------------------------- | ---------: | ------------------------------------- | ------------------------------- |
+| 1682-1685, catch akcesorów | MARTWA w obecnym kodzie: `safeRead` połyka rzuty; sonda nie zapaliła się w 174 testach | 18 montaży | brak                                  | fail-closed w strict membership |
+| 1687-1689, brak user/org   | ŻYWA; dwie kotwice getterów trafiają tutaj                                             |         18 | 2698, 2716                            | strict membership               |
+| 1690-1694, setter org      | osiągalna w testach; sonda zapaliła się 2 razy; brak produkcyjnego `defineProperty`    |         18 | 2779                                  | strict membership               |
+| 1718-1739, cache 60 s      | ŻYWA; brak produkcyjnego unieważnienia                                                 |         18 | brak (test 2561 dotyczy tylko klucza) | bezcache'owy strict membership  |
+| 1750-1758, błąd DB         | ŻYWA                                                                                   |         18 | 2735                                  | fail-closed strict membership   |
+
+Mapowanie kotwic udowodniono sondami `PROBE-1682` i `PROBE-1690`: tylko `PROBE-1690` wystąpiła (2 razy), pakiet zakończył się `174/174 PASS`; po przywróceniu kopii `git diff` był pusty.
+
+Mianowniki:
+
+- `optionalAuth`: 4 pliki wspominające symbol; 1 realny montaż — wiążące: 1.
+- `validateOrgMembership`: 17 plików; 8 `router.use`, 10 surowych trafień per-trasa minus 3 importy = 7 montaży, 3 montaże w Gateway; wiążące: 18.
+- Gateway: 360 `app.use(`, 336 z literalną ścieżką, 37 `mountStub`, 20 z `gatewayVerifyToken`.
+- `verifyToken`: 2117 trafień bez testów, 2401 z testami.
+
+Baseline PRZED: 79 plików, 1720 PASS / 2 FAIL / 65 SKIPPED. Czerwone:
+
+1. `tests/unit/auth/auth.middleware.private.test.ts :: auth.middleware private helpers mapRole maps superadmin to owner`
+2. `tests/unit/backend/middleware/rateLimiting.middleware.test.ts :: rateLimiting.middleware (L1) fails open to next when Date.now throws during limiter evaluation`
+
+Pięć kształtów fałszywego gotowe dla P.1: wołacze policzone — TAK; realny ApiGateway — NIE, pozycja inwentarzowa zwolniona; skipped policzone — TAK (65); pary HTTP — NIE, pozycja inwentarzowa zwolniona; dowód wyłącznie grep — TAK, bez twierdzenia o działaniu runtime.
+
+TWIERDZENIE NIEZWERYFIKOWANE P.1: rzeczywiste kody HTTP wszystkich 18 montaży nie zostały jeszcze zmierzone.
+
+## Pomiar zasięgu testów
+
+PRZED: patrz §P.1. Artefakty: `/private/tmp/consultify-authcore-day56-artefakty/zasieg-PRZED.json` i `zasieg-PRZED.log`.
+
+## Dług zastany
+
+- Dwa czerwone testy baseline wskazane w §P.1.
+- Martwy import `optionalAuth` w `legal.routes.ts:17` — tylko raport, brak licencji zapisu.
+- `cross-org-idor.test.ts` — pomiar i rekomendacja do uzupełnienia.
+
+## TWIERDZENIA NIEZWERYFIKOWANE
+
+- Kody HTTP dla tras, których nie objęto jeszcze realnym żądaniem przez ApiGateway.
