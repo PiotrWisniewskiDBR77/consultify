@@ -8,8 +8,11 @@
 
 import { Router } from 'express';
 
+import { buildAuditReportDocumentSchema } from '../../services/audits/auditReportDocumentSchemaService.js';
 import * as reportService from '../../services/audits/reportService.js';
+import type { AuditReportDocument } from '../../services/audits/reportRenderer.js';
 import type { ReportKind } from '../../services/audits/types.js';
+import { renderDocumentSchemaToDocxBuffer } from '../../services/documentStudio/documentDocxRenderer.js';
 
 import { auditActor, assertActor, route } from './context.js';
 
@@ -24,6 +27,46 @@ router.get(
     const reportKind = typeof req.query.reportKind === 'string' ? (req.query.reportKind as ReportKind) : undefined;
     const reports = await reportService.listReports(actor.organizationId, { programId, reportKind });
     res.json({ success: true, data: reports });
+  }),
+);
+
+router.get(
+  '/:id/export.docx',
+  route('GET /reports/:id/export.docx', async (req, res) => {
+    const actor = auditActor(req);
+    assertActor(actor);
+    const report = await reportService.getReport(actor.organizationId, req.params.id);
+    if (!report) {
+      res.status(404).json({ success: false, error: 'Raport nie został znaleziony', code: 'AUDIT_NOT_FOUND' });
+      return;
+    }
+    const schema = buildAuditReportDocumentSchema(
+      report,
+      report.payload as unknown as AuditReportDocument,
+      { programName: null, organizationName: null }
+    );
+    const buffer = await renderDocumentSchemaToDocxBuffer(schema);
+    const safeTitle = report.title
+      .normalize('NFC')
+      .replace(/[^\p{L}\p{N}._-]+/gu, '_')
+      .replace(/^_+|_+$/g, '')
+      .slice(0, 80);
+    const generatedAt = report.generatedAt ?? report.createdAt;
+    const date = generatedAt.slice(0, 10).replaceAll('-', '');
+    const filename = `Raport_audytu_${safeTitle || report.id}_v${report.version}_${date}.docx`;
+    const asciiFilename = filename
+      .replace(/[Łł]/g, (character) => (character === 'Ł' ? 'L' : 'l'))
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^A-Za-z0-9._-]/g, '_');
+    res
+      .status(200)
+      .set({
+        'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'Content-Disposition': `attachment; filename="${asciiFilename}"; filename*=UTF-8''${encodeURIComponent(filename)}`,
+        'Content-Length': String(buffer.length),
+      })
+      .send(buffer);
   }),
 );
 
