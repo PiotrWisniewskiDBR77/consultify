@@ -77,6 +77,7 @@ import {
   UpdateInitiativeTemplateSchema,
 } from '../../validators/initiative.validators.js';
 import initiativesExecutionRuntimeRouter from './initiativesExecutionRuntime.routes.js';
+import initiativesCapacityAdvisorRouter from './initiativesCapacityAdvisor.routes.js';
 
 const router = Router();
 
@@ -152,6 +153,7 @@ router.use(demoContextMiddleware);
 // Canonical Initiatives + Execution vertical. Parent middleware supplies authenticated,
 // tenant-scoped actor context; the child router additionally enforces project capability.
 router.use('/runtime-v1', initiativesExecutionRuntimeRouter);
+router.use('/runtime-v1', initiativesCapacityAdvisorRouter);
 // Runtime-v1 above remains the sole execution-work writer. Everything below
 // is the legacy Initiative/PMO compatibility surface and is read-only under
 // AMD-EXE-SPINE-AUTHORITY-004.
