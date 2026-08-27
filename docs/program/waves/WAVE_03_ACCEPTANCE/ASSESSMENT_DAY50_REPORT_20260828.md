@@ -193,6 +193,12 @@ D.1: wołacz realny TAK — DOM istniejącej powierzchni produktu i grep linii 3
 - Zrzut pustej sesji bez Outputu: `/private/tmp/consultify-assessment-day50-artefakty/D1_report_empty.png`, SHA-256 `62962292e683daa005f16a068377a335e608d206a9a545d39847149e5963528a`; przycisk był aktywny, a właściwości pokazywały `Brak zamrożonego wyniku`.
 - Zrzuty wykonano na istniejącym harnessie, w rzeczywistym `DrdHttpMethodWorkspaceScreen`; przez CDP kontrolowano wyłącznie lokalne odpowiedzi XHR `/api/method/**`. Nie zmieniono strony, plików harnessu ani ustawień systemu.
 
+### Korekta układu po oględzinach właściciela
+
+Właściciel zakwestionował ściskanie centralnej treści przez wewnętrzny układ kolumnowy. Oględziny potwierdziły trzy równoczesne warstwy: globalny `Method Navigator`, lewy spis sekcji N-mode oraz dokowany prawy panel Akcje/Właściwości. To było niezgodne z `docs/ui-standards/01-shell-layout/presentation-modes.md` §1.2: N-mode zachowuje lewy spis sekcji i centralny canvas na całą pozostałą szerokość, ale nie używa osobnej prawej kolumny `Control`.
+
+Usunięto wyłącznie dokowany prawy panel. Sześć metadanych przeniesiono do pełnoszerokiego `NModePropertiesStrip`, a jedyną realną akcję `Pobierz DOCX` do zwartego wiersza akcji. Nieusuwany lewy spis rozdziałów pozostaje zgodnie z kanonem dokumentowego N-mode. Test regresji potwierdza brak roli `complementary`, obecność properties stripu i osiągalność przycisku. Zrzut po korekcie: `/private/tmp/consultify-assessment-day50-artefakty/D1_report_layout_corrected.png`, SHA-256 `9c3aff2b46ef6f642ab0082fd57627dc4f9cfe0561063c1102ca6e98a5b6b8da`.
+
 ## ★ ZRZUTY
 
 A.1 nie jest pozycją wizualną UI; przedmiotem jest plik DOCX.
@@ -332,6 +338,7 @@ ZASIĘG CZĘŚCIOWY na tym etapie; pomiar HEAD nastąpi po ostatnim commicie. NI
 - Nie wykonano jeszcze pomiaru końcowego HEAD.
 - Zrzuty D.1 potwierdzają osiągalność i zachowanie powierzchni, ale nie są dowodem bieżącej odpowiedzi realnego serwera — lokalne XHR były kontrolowane, aby dochować zakazu zajmowania portu 3001.
 - Nie zweryfikowano, czy nadzorca uznaje 24 uczciwe pustki za akceptowalne domknięcie dokumentu; punkt kontrolny wymaga jego decyzji przed A.5.
+- Korekta szerokości jest zweryfikowana w lokalnym renderze i testach, ale nie ma jeszcze ponownej akceptacji właściciela na podstawie nowego zrzutu.
 
 ## Rekomendacje dla nadzorcy
 
