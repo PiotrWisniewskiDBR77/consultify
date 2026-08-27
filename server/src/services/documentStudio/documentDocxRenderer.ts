@@ -940,8 +940,17 @@ function renderTableBlock(block: DocumentBlock, ctx: RenderContext): (Table | Pa
   // counter increments per renderer invocation so two tables in the
   // same document end up "Table 1" / "Table 2" regardless of section.
   ctx.tableCounter.value += 1;
-  const captionLabel = `Table ${ctx.tableCounter.value}`;
-  const captionText = value.caption ? `${captionLabel} — ${asString(value.caption)}` : captionLabel;
+  const captionLabel = drdProfile
+    ? `Tabela ${ctx.tableCounter.value}.`
+    : `Table ${ctx.tableCounter.value}`;
+  const captionText = value.caption
+    ? drdProfile
+      ? `${captionLabel} ${asString(value.caption)}`
+      : `${captionLabel} — ${asString(value.caption)}`
+    : drdProfile
+      ? null
+      : captionLabel;
+  if (!captionText) return [table];
   const captionChildren: TextRun[] = [new TextRun({ text: captionText, font: ctx.bodyFont })];
   if (block.sourceRef) captionChildren.push(...buildCitationRuns(ctx, block.sourceRef));
   const caption = new Paragraph({
@@ -961,9 +970,14 @@ function renderImageBlock(block: DocumentBlock, ctx: RenderContext): Paragraph[]
     widthCm?: number;
   };
   ctx.figureCounter.value += 1;
-  const captionLabel = `Figure ${ctx.figureCounter.value}`;
+  const drdProfile = isDrdReportProfile(ctx.schema);
+  const captionLabel = drdProfile
+    ? `Rysunek ${ctx.figureCounter.value}.`
+    : `Figure ${ctx.figureCounter.value}`;
   const description = value.caption ? asString(value.caption) : (value.alt ?? 'Image');
-  const captionText = `${captionLabel} — ${description}`;
+  const captionText = drdProfile
+    ? `${captionLabel} ${description}`
+    : `${captionLabel} — ${description}`;
   const raw = typeof value.dataBase64 === 'string' ? value.dataBase64 : '';
   const base64 = raw.includes(',') ? raw.slice(raw.indexOf(',') + 1) : raw;
   let buffer: Buffer | null = null;
@@ -1014,7 +1028,10 @@ function renderImageBlock(block: DocumentBlock, ctx: RenderContext): Paragraph[]
 
 function renderChartBlock(block: DocumentBlock, ctx: RenderContext): Paragraph[] {
   ctx.figureCounter.value += 1;
-  const captionLabel = `Figure ${ctx.figureCounter.value}`;
+  const drdProfile = isDrdReportProfile(ctx.schema);
+  const captionLabel = drdProfile
+    ? `Rysunek ${ctx.figureCounter.value}.`
+    : `Figure ${ctx.figureCounter.value}`;
   const summary = summarizeDocumentChartBlock(block);
   const titleText = summary.title ?? '(untitled chart)';
   const chartImage = ctx.chartPngByBlockId.get(block.blockId);
@@ -1055,7 +1072,11 @@ function renderChartBlock(block: DocumentBlock, ctx: RenderContext): Paragraph[]
           ],
         });
       })();
-  const captionText = `${captionLabel} — ${titleText}`;
+  const content = documentChartBlockContent(block);
+  const captionDescription = content?.caption?.trim() || titleText;
+  const captionText = drdProfile
+    ? `${captionLabel} ${captionDescription}`
+    : `${captionLabel} — ${titleText}`;
   const captionChildren: TextRun[] = [new TextRun({ text: captionText, font: ctx.bodyFont })];
   if (block.sourceRef) captionChildren.push(...buildCitationRuns(ctx, block.sourceRef));
   const caption = new Paragraph({
@@ -1065,8 +1086,7 @@ function renderChartBlock(block: DocumentBlock, ctx: RenderContext): Paragraph[]
   // Optional descriptive caption from the schema gets its own
   // paragraph so it is visually distinct from the figure caption.
   const out: Paragraph[] = [visualParagraph, caption];
-  const content = documentChartBlockContent(block);
-  if (content?.caption && content.caption.trim().length > 0) {
+  if (!drdProfile && content?.caption && content.caption.trim().length > 0) {
     out.push(
       new Paragraph({
         style: DOCX_STYLE_IDS.CAPTION,

@@ -180,13 +180,6 @@ function chapterBlocks(chapter: ContractChapter): DocumentBlock[] {
         chapter.matrix.caption as { content: string | null; minWords: number; maxWords: number }
       )
     ),
-    paragraph(
-      `${chapter.axisId}-matrix-caption`,
-      slotText(
-        chapter.matrix.caption as { content: string | null; minWords: number; maxWords: number }
-      ),
-      DRD_DOCX_STYLE_IDS.CAPTION
-    ),
     heading(`${chapter.axisId}-areas-heading`, 'Ocena obszarów', 2)
   );
 
@@ -278,7 +271,7 @@ export function buildAssessmentDrdReportSchema(contract: AssessmentReportContrac
           color: `#${DRD_REPORT_PALETTE.teal}`,
         },
       ],
-      caption: 'Rys. 1. Profil dojrzałości cyfrowej według siedmiu osi DRD.',
+      caption: 'Profil dojrzałości cyfrowej według siedmiu osi DRD.',
     },
   };
 
@@ -301,7 +294,7 @@ export function buildAssessmentDrdReportSchema(contract: AssessmentReportContrac
           'axis-summary',
           ['Oś', 'Obecny', 'Docelowy', 'Luki krytyczne'],
           axisRows,
-          'Tab. 1. Zestawienie siedmiu osi DRD.'
+          'Zestawienie siedmiu osi DRD.'
         ),
         heading('critical-gaps-heading', DRD_REPORT_FIXED_TEXT.criticalGaps, 2),
         paragraph(
