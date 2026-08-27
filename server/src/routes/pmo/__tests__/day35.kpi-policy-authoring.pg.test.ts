@@ -271,6 +271,51 @@ describe.skipIf(!REAL_PG)('Day 35 KPI policy authoring through the mounted route
     ).toMatchObject({ rows: [{ count: 2 }] });
   });
 
+  it('enters and reads back the DEC-169 starting values without production defaults', async () => {
+    const policyId = `dec-169-${tag}`;
+    const parameters = {
+      impactWeights: { CRITICAL: 3, IMPORTANT: 2, SUPPORTING: 1 },
+      atRiskThresholdDays: 7,
+      decisionSlaDays: { value: 5, unit: 'BUSINESS_DAYS' },
+      capacitySaturationThreshold: { normalUpper: 0.8, saturatedUpper: 0.95 },
+      capacityBuffer: 0.15,
+    };
+    const created = await request(app)
+      .post(path(policyId))
+      .set(auth('ownerA'))
+      .send({
+        expectedVersion: 0,
+        clientRequestId: `dec-169-${tag}`,
+        name: 'DEC-169 entered by consultant',
+        parameters,
+      });
+    expect(created.status, JSON.stringify(created.body)).toBe(201);
+
+    const read = await request(app)
+      .get(`/api/initiatives/runtime-v1/control-kpis?weekStart=2026-08-24&policyId=${policyId}`)
+      .set(auth('ownerA'));
+    expect(read.status).toBe(200);
+    expect(read.body.policy).toMatchObject({
+      policyId,
+      resolved: true,
+      missingParameters: [],
+      invalidParameters: [],
+    });
+
+    const independent = new Client({ connectionString: DATABASE_URL });
+    await independent.connect();
+    try {
+      const stored = await independent.query(
+        `SELECT parameters FROM execution_control_kpi_policies
+          WHERE organization_id=$1 AND policy_id=$2`,
+        [organizationA, policyId]
+      );
+      expect(stored.rows[0]?.parameters).toEqual(parameters);
+    } finally {
+      await independent.end();
+    }
+  });
+
   it('fails closed for a foreign organization and an actor without capability', async () => {
     const deniedId = `denied-${tag}`;
     const foreign = await request(app)
