@@ -272,29 +272,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Deferred outside main/develop
-        if: ${{ !(github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
+        if: ${{ !(github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop') }}
         run: |
           echo "Coverage gates deferred (run on main/develop or via workflow_dispatch)." >> "$GITHUB_STEP_SUMMARY"
       - name: Capture job start
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
       - name: Setup Node.js
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
       - name: Install dependencies
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npm ci
       - name: Run L1 coverage gate
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npm run test:l1:coverage
       - name: Run L2 coverage gate
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npm run test:l2:coverage
       - name: Run L3 coverage gate
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npm run test:l3:coverage
       - name: Job duration
         if: always()
@@ -318,30 +318,30 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Deferred outside main/develop
-        if: ${{ !(github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
+        if: ${{ !(github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop') }}
         run: |
           echo "Unit test shards deferred (run on main/develop or via workflow_dispatch)." >> "$GITHUB_STEP_SUMMARY"
       - name: Capture job start
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
 
       - name: Setup Node.js
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
       - name: Install dependencies
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npm ci
 
       - name: Run unit tests (Shard ${{ matrix.shard }})
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npx vitest run tests/unit --shard=${{ matrix.shard }}/4 --reporter=junit --outputFile=junit-unit-${{ matrix.shard }}.xml
 
       - name: Upload test results
-        if: ${{ always() && (github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
+        if: ${{ always() && (github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop') }}
         uses: actions/upload-artifact@v4
         with:
           name: unit-test-results-${{ matrix.shard }}
@@ -362,7 +362,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 8
     needs: lint-typecheck
-    if: ${{ github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+    if: ${{ github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
     steps:
       - uses: actions/checkout@v4
       - name: Capture job start
@@ -383,6 +383,52 @@ jobs:
           dur=$((end - JOB_START))
           echo "Job duration: ${dur}s" >> "$GITHUB_STEP_SUMMARY"
 
+  acceptance-tests:
+    name: ✅ Acceptance Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: lint-typecheck
+    if: ${{ github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: consultify_acceptance_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DB_TYPE: postgres
+      NODE_ENV: test
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/consultify_acceptance_test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Capture job start
+        run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Apply PostgreSQL migrations
+        run: npx tsx server/scripts/migrate.postgres.ts
+      - name: Run acceptance tests
+        run: npm run test:acceptance
+      - name: Job duration
+        if: always()
+        run: |
+          end=$(date +%s)
+          dur=$((end - JOB_START))
+          echo "Job duration: ${dur}s" >> "$GITHUB_STEP_SUMMARY"
+
   # ═══════════════════════════════════════════════════════════════
   # COMPONENT & INTEGRATION TESTS
   # ═══════════════════════════════════════════════════════════════
@@ -394,26 +440,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Deferred outside main/develop
-        if: ${{ !(github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
+        if: ${{ !(github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop') }}
         run: |
           echo "Component tests deferred (run on main/develop or via workflow_dispatch)." >> "$GITHUB_STEP_SUMMARY"
       - name: Capture job start
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
 
       - name: Setup Node.js
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
       - name: Install dependencies
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npm ci
 
       - name: Run component tests
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npm run test:component -- --reporter=junit --outputFile=junit-component.xml
 
       # M08 L-05: My Work co-located component tests live under src/**/__tests__ and
@@ -421,11 +467,11 @@ jobs:
       # config include). Run them here so the ~195 cases (table cells/provenance/forms,
       # ideas canvas, etc.) actually gate merges to main/develop.
       - name: Run My Work co-located tests (M08 L-05)
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npx vitest run src/components/MyWork --reporter=junit --outputFile=junit-mywork-colocated.xml
 
       - name: Upload test results
-        if: ${{ always() && (github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
+        if: ${{ always() && (github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop') }}
         uses: actions/upload-artifact@v4
         with:
           name: component-test-results
@@ -463,30 +509,30 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Deferred outside main/develop
-        if: ${{ !(github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
+        if: ${{ !(github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop') }}
         run: |
           echo "Performance tests deferred (run on main/develop or via workflow_dispatch)." >> "$GITHUB_STEP_SUMMARY"
       - name: Capture job start
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
 
       - name: Setup Node.js
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
       - name: Install dependencies
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npm ci
 
       - name: Migrate DB (strict)
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: DB_TYPE=postgres DATABASE_URL=postgres://iris:iris_test@localhost:5432/iris_test npm run db:migrate:strict
 
       - name: Run performance tests (real DB)
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npm run test:performance:real -- --reporter=junit --outputFile=junit-performance.xml
         env:
           DATABASE_URL: postgres://iris:iris_test@localhost:5432/iris_test
@@ -509,7 +555,7 @@ jobs:
           PERF_SCALABILITY_TX_MS: '20000'
 
       - name: Upload test results
-        if: ${{ always() && (github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
+        if: ${{ always() && (github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop') }}
         uses: actions/upload-artifact@v4
         with:
           name: performance-test-results
@@ -551,26 +597,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Deferred outside main/develop
-        if: ${{ !(github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
+        if: ${{ !(github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop') }}
         run: |
           echo "Colocated __tests__ deferred (run on main/develop or via workflow_dispatch)." >> "$GITHUB_STEP_SUMMARY"
       - name: Capture job start
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
 
       - name: Setup Node.js
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
       - name: Install dependencies
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npm ci
 
       - name: Migrate DB (strict)
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: DB_TYPE=postgres DATABASE_URL=postgres://iris:iris_test@localhost:5432/iris_test npm run db:migrate:strict
 
       # Server colocated tests run under the `node` environment + Postgres.
@@ -578,7 +624,7 @@ jobs:
       # the config `include` (server/src/**/__tests__/**), so it does NOT
       # duplicate tests/unit|integration|components.
       - name: Run server/src colocated __tests__
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npx vitest run server/src --no-file-parallelism --reporter=junit --outputFile=junit-colocated-server.xml
         env:
           DB_TYPE: postgres
@@ -592,11 +638,11 @@ jobs:
 
       # Frontend colocated tests run under jsdom (no DB).
       - name: Run src colocated __tests__
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npx vitest run src --reporter=junit --outputFile=junit-colocated-src.xml
 
       - name: Upload test results
-        if: ${{ always() && (github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
+        if: ${{ always() && (github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop') }}
         uses: actions/upload-artifact@v4
         with:
           name: colocated-test-results
@@ -637,30 +683,30 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Deferred outside main/develop
-        if: ${{ !(github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
+        if: ${{ !(github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop') }}
         run: |
           echo "Integration tests deferred (run on main/develop or via workflow_dispatch)." >> "$GITHUB_STEP_SUMMARY"
       - name: Capture job start
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
 
       - name: Setup Node.js
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
       - name: Install dependencies
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npm ci
 
       - name: Migrate DB (strict)
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: DB_TYPE=postgres DATABASE_URL=postgres://iris:iris_test@localhost:5432/iris_test npm run db:migrate:strict
 
       - name: Run integration tests (Shard ${{ matrix.shard }})
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npx vitest run tests/integration --no-file-parallelism --shard=${{ matrix.shard }}/3 --reporter=junit --outputFile=junit-integration-${{ matrix.shard }}.xml
         env:
           DB_TYPE: postgres
@@ -671,7 +717,7 @@ jobs:
           MOCK_DB: 'false'
 
       - name: Upload test results
-        if: ${{ always() && (github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
+        if: ${{ always() && (github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop') }}
         uses: actions/upload-artifact@v4
         with:
           name: integration-test-results-${{ matrix.shard }}
@@ -761,35 +807,35 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Deferred outside main/develop
-        if: ${{ !(github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
+        if: ${{ !(github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop') }}
         run: |
           echo "E2E Tier-0 deferred (run on main/develop or via workflow_dispatch)." >> "$GITHUB_STEP_SUMMARY"
       - name: Capture job start
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
 
       - name: Setup Node.js
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
       - name: Install dependencies
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npm ci
 
       - name: Install Playwright browsers
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npx playwright install --with-deps chromium
 
       - name: Build application
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npm run build
 
       - name: Run E2E tests
         # Tier-0 deterministic smoke suite (PR gate)
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npm run test:e2e:tier0
         env:
           CI: true
@@ -802,7 +848,7 @@ jobs:
           TEST_SUPPORT_KEY: local-test-support-key-change-me
 
       - name: Upload Playwright report
-        if: ${{ always() && (github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
+        if: ${{ always() && (github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop') }}
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
@@ -841,32 +887,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Deferred outside main/develop
-        if: ${{ !(github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
+        if: ${{ !(github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop') }}
         run: |
           echo "E2E M06 gate deferred (run on main/develop or via workflow_dispatch)." >> "$GITHUB_STEP_SUMMARY"
       - name: Capture job start
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
 
       - name: Setup Node.js
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
       - name: Install dependencies
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npm ci
 
       - name: Install Playwright browsers
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npx playwright install --with-deps chromium
 
       - name: Run M06 gate specs
         # Base playwright.config.ts webServer builds the frontend itself
         # (npm run build && vite preview) — no separate build step needed.
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npm run test:e2e:m06:gate
         env:
           CI: true
@@ -874,7 +920,7 @@ jobs:
           TEST_SUPPORT_KEY: local-test-support-key-change-me
 
       - name: Upload M06 gate artifacts
-        if: ${{ always() && (github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
+        if: ${{ always() && (github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop') }}
         uses: actions/upload-artifact@v4
         with:
           name: e2e-m06-gate-report
@@ -950,7 +996,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: [unit-tests, component-tests, readiness-paths]
-    if: ${{ needs.readiness-paths.outputs.run_readiness == 'true' && (github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
+    if: ${{ needs.readiness-paths.outputs.run_readiness == 'true' && (github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop') }}
     steps:
       - uses: actions/checkout@v4
       - name: Capture job start
@@ -1136,35 +1182,35 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Deferred outside main/develop
-        if: ${{ !(github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
+        if: ${{ !(github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop') }}
         run: |
           echo "Critical path coverage deferred (run on main/develop or via workflow_dispatch)." >> "$GITHUB_STEP_SUMMARY"
       - name: Capture job start
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
 
       - name: Setup Node.js
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
       - name: Install dependencies
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npm ci
 
       - name: Install bc + jq (for numeric comparison + JSON)
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: sudo apt-get update && sudo apt-get install -y bc jq
 
       - name: Run critical tests with coverage
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: |
           npm run test:unit:critical -- --coverage --reporter=junit --outputFile=junit-critical.xml
 
       - name: Check critical path coverage threshold
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: |
           if [ ! -f coverage/coverage-summary.json ]; then
             echo "::error::Coverage report not found (coverage/coverage-summary.json). Failing gate."
@@ -1205,7 +1251,7 @@ jobs:
           check_min "/server/src/middleware/inputSanitization.middleware.ts" 95
 
       - name: Upload critical coverage report
-        if: ${{ always() && (github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
+        if: ${{ always() && (github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop') }}
         uses: actions/upload-artifact@v4
         with:
           name: critical-coverage-report
@@ -1213,7 +1259,7 @@ jobs:
           retention-days: 30
 
       - name: Upload critical JUnit report
-        if: ${{ always() && (github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
+        if: ${{ always() && (github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop') }}
         uses: actions/upload-artifact@v4
         with:
           name: critical-junit-report
@@ -1234,37 +1280,37 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: [unit-tests, component-tests, integration-tests]
-    if: ${{ github.event_name == 'pull_request' }}
+    if: ${{ always() && github.event_name == 'pull_request' }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Deferred outside main/develop
-        if: ${{ !(github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
+        if: ${{ !(github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop') }}
         run: |
           echo "Patch coverage deferred (run on main/develop or via workflow_dispatch)." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Setup Node.js
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
       - name: Install dependencies
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npm ci
 
       - name: Run tests with coverage
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npm run test:coverage
 
       - name: Run patch coverage gate
-        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npx tsx scripts/testing/patch-coverage-gate.ts --coverage-json coverage/coverage-final.json --threshold 80 --base origin/${{ github.base_ref }}
 
       - name: Upload patch coverage report
-        if: ${{ always() && (github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
+        if: ${{ always() && (github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop') }}
         uses: actions/upload-artifact@v4
         with:
           name: patch-coverage-report
@@ -1412,6 +1458,7 @@ jobs:
         readiness-smoke,
         patch-coverage,
         initiatives-tests,
+        acceptance-tests,
       ]
     if: ${{ github.event_name == 'pull_request' }}
     steps:
@@ -1430,6 +1477,8 @@ jobs:
           E2E_M06_GATE: ${{ needs.e2e-m06-gate.result }}
           READINESS: ${{ needs.readiness-smoke.result }}
           PATCH_COVERAGE: ${{ needs.patch-coverage.result }}
+          INITIATIVES: ${{ needs.initiatives-tests.result }}
+          ACCEPTANCE: ${{ needs.acceptance-tests.result }}
         run: |
           echo "PR Gate results:"
           echo "  lint-typecheck=$LINT"
@@ -1445,6 +1494,8 @@ jobs:
           echo "  e2e-m06-gate=$E2E_M06_GATE"
           echo "  readiness-smoke=$READINESS"
           echo "  patch-coverage=$PATCH_COVERAGE"
+          echo "  initiatives-tests=$INITIATIVES"
+          echo "  acceptance-tests=$ACCEPTANCE"
 
           fail=0
 
@@ -1480,6 +1531,8 @@ jobs:
           req_ok "e2e-m06-gate" "$E2E_M06_GATE"
           req_ok_or_skipped "readiness-smoke" "$READINESS"
           req_ok "patch-coverage" "$PATCH_COVERAGE"
+          req_ok "initiatives-tests" "$INITIATIVES"
+          req_ok "acceptance-tests" "$ACCEPTANCE"
 
           exit "$fail"
 

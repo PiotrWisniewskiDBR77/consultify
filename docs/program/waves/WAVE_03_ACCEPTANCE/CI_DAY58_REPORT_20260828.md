@@ -45,7 +45,7 @@ Tip był równy markerowi; zakres `marker..tip` był pusty. Worktree: `/private/
 | --- | --- | --- | --- |
 | §B.0 | ZROBIONE_WG_DoD | PENDING | §B.0 |
 | §B.1 | ZROBIONE_WG_DoD | PENDING | §B.1 |
-| §A | NIEROZPOCZĘTE | — | — |
+| §A | ZROBIONE_WG_DoD | PENDING | §A |
 | §C | NIEROZPOCZĘTE | — | — |
 | §D | NIEROZPOCZĘTE | — | — |
 | §E | NIEROZPOCZĘTE | — | — |
@@ -143,9 +143,41 @@ Superadmin — uzupełnić nowo wymagane katalogi w fiksturze:
 
 Niezweryfikowane dla §B.1: nie rozstrzygałem zachowania ekranu admin dla nieobsługiwanych `screen`; trzy rekomendowane zmiany nie zostały nałożone ani uruchomione.
 
+## §A — warunki jobów i PR gate
+
+Własny mianownik PRZED: `ci-matrix.mjs` → `150` kombinacji, `32` zielone bez testów. Lista do zmiany wynikała z wierszy `push/Londyn`, `push/demo` i `pull_request/42/merge`, nie z listy autora. PO: `156` kombinacji (nowy job), globalnie `5` zielonych bez testów; dla trzech wymaganych kontekstów grep zwrócił zero wierszy `★ ZIELONY BEZ TESTOW`.
+
+Zachowano warunki per krok, zamiast przepisywać dziesięć zróżnicowanych jobów na jeden kształt job-level: jest to mniejszy diff infrastrukturalny, zachowuje `workflow_dispatch`, warunki `always()` uploadów i istniejące job-level ograniczenia performance/patch. Warunek wykonania rozszerzono na PR, `Londyn` i `demo`. `demo` włączono, ponieważ jest aktywnym celem wdrożenia i zielony job bez treści na tej gałęzi ma zerową wartość dowodową.
+
+Tabela pełna PRZED/PO dla wszystkich zmienionych kombinacji znajduje się w artefaktach `ci-matrix-PRZED.txt`, `ci-matrix-PO.txt`; zostanie wklejona do końcowej sekcji raportu §R. Najważniejszy mianownik:
+
+| joby | zdarzenie | ref_name | PRZED | PO |
+| --- | --- | --- | --- | --- |
+| `levels-coverage-gates`, `unit-tests`, `component-tests`, `colocated-tests`, `integration-tests`, `e2e-tests`, `e2e-m06-gate`, `critical-path-coverage`, `patch-coverage` (zgodnie z eventowym job-if) | `pull_request` | `42/merge` | ★ ZIELONY BEZ TESTOW | TESTY LECA |
+| joby z zastaną bramką per krok, zgodnie z macierzą | `push` | `Londyn` | ★ ZIELONY BEZ TESTOW | TESTY LECA |
+| joby z zastaną bramką per krok, zgodnie z macierzą | `push` | `demo` | ★ ZIELONY BEZ TESTOW | TESTY LECA |
+| `acceptance-tests` | PR / push | `42/merge`, `Londyn`, `demo` | BRAK JOBA | TESTY LECA |
+
+`pr-gate` ma teraz `always()`, czyta `initiatives-tests` i `acceptance-tests`, a oba są wymagane przez `req_ok`. Lokalny mutant logiki bramki:
+
+```text
+PRE_INITIATIVES_FAILURE_EXIT=0
+POST_INITIATIVES_FAILURE_EXIT=1
+POST_ALL_SUCCESS_EXIT=0
+```
+
+YAML: parser pakietu `yaml` → `jobow: 26`, zero `BRAK runs-on`. Liczba jobów wzrosła o jeden; żaden job nie został usunięty. `grep -c 'req_ok'` → `17` (wlicza definicje i `req_ok_or_skipped`).
+
+Pakiet acceptance zmierzony przed dodaniem joba na świeżym PG: `exit=1`, `114 failed | 19 passed | 6 skipped` plików; `380 failed | 589 passed | 143 skipped` przypadków. Job został dodany bez `continue-on-error`, więc obecnie świadomie blokowałby PR po usunięciu wcześniejszej blokady ESLint.
+
+`DECISION_REQUIRED`: czy właściciel akceptuje natychmiastowe włączenie czerwonego `acceptance-tests` jako uczciwej bramki (blokada 380 przypadków), czy zatwierdza osobny plan naprawczy przed scaleniem §A? Wyciszenie lub `continue-on-error` nie jest wariantem.
+
+Niezweryfikowane dla §A: realny runner GitHuba nie został uruchomiony (Z8); statyczny analizator nie modeluje `needs`, matrix ani dynamicznego outputu readiness.
+
 ## 9. DECISION_REQUIRED
 
 - ESLint: W1 albo W2, zgodnie z §B.0.
+- Acceptance: scalić od razu jako czerwoną bramkę czy najpierw wykonać osobny program naprawczy 380 przypadków.
 
 ## 11. TWIERDZENIA NIEZWERYFIKOWANE
 
