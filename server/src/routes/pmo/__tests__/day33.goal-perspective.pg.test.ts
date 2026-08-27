@@ -194,6 +194,29 @@ describe.skipIf(!REAL_PG)('Day 33 human-declared goal perspective', () => {
     expect(response.status).toBe(404);
   });
 
+  // FIX-4 (odbior dyzuru 33): powyzszy test wysyla naglowek X-Organization-Id, wiec trafia
+  // w INNA bramke (odrzucenie deklarowanej, obcej organizacji) i nigdy nie dochodzi do
+  // UPDATE goals ... WHERE organization_id=... . Realna sciezka tenantowa — obcy cel, ZERO
+  // naglowka, organizacja brana wylacznie z tokenu — byla nieprzetestowana i zwracala
+  // 400 COMMAND_VALIDATION_FAILED zamiast wymaganego przez DoD 404.
+  it('answers 404, not 400, for a foreign goal without any organization header', async () => {
+    const before = await client.query(`SELECT perspective FROM goals WHERE id=$1`, [goalA]);
+    const response = await request(app)
+      .post(path(goalA))
+      .set(auth('ownerB'))
+      .send(body(`foreign-noheader-${tag}`, 0, 'financial'));
+    expect(response.status).toBe(404);
+    expect(response.body).toMatchObject({ error: { code: 'GOAL_NOT_FOUND' } });
+    // i zaden zapis nie doszedl do skutku
+    const after = await client.query(`SELECT perspective FROM goals WHERE id=$1`, [goalA]);
+    expect(after.rows[0]).toEqual(before.rows[0]);
+    const audits = await client.query(
+      `SELECT COUNT(*)::int count FROM ie_audit_events WHERE organization_id=$1 AND aggregate_id=$2`,
+      [orgB, goalA]
+    );
+    expect(audits.rows[0].count).toBe(0);
+  });
+
   it('rejects an actor without capability and leaves no audit or mutation', async () => {
     const before = await client.query(`SELECT perspective FROM goals WHERE id=$1`, [goalA]);
     const response = await request(app)

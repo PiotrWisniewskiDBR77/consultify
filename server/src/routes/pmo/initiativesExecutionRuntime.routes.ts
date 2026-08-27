@@ -6447,6 +6447,17 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(403).json({ error: { code: 'GATE_SIGNOFF_AUTHORITY_REQUIRED' } });
         return;
       }
+      // FIX-4 (odbior dyzuru 33): „nie ma takiego celu w mojej organizacji" to NIE jest
+      // bledna komenda, tylko brak zasobu. DoD wymaga 404. Zrodlo:
+      // server/src/domain/initiatives-execution/postgresMaterialCommandUnitOfWork.ts:516
+      // rzuca GOAL_NOT_FOUND, gdy UPDATE goals ... WHERE organization_id=$2 AND id=$3
+      // nie trafil w zaden wiersz — czyli takze wtedy, gdy cel nalezy do innego tenanta.
+      // Wczesniej wpadalo to w ogolne 400 COMMAND_VALIDATION_FAILED, wiec obcy tenant
+      // dostawal inna odpowiedz niz na nieistniejacy identyfikator.
+      if (error.message === 'GOAL_NOT_FOUND') {
+        res.status(404).json({ error: { code: 'GOAL_NOT_FOUND' } });
+        return;
+      }
       res.status(400).json({ error: { code: 'COMMAND_VALIDATION_FAILED' } });
       return;
     }
