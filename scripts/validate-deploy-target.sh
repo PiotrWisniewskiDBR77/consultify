@@ -2,6 +2,13 @@
 
 set -euo pipefail
 
+# Required, fail-closed database target declarations:
+#   staging: RELEASE_TARGET_DB_HOST_FINGERPRINT + STAGING_DB_HOST_FINGERPRINT
+#   demo: RELEASE_TARGET_DB_HOST_FINGERPRINT + DEMO_DB_HOST_FINGERPRINT
+#   production: RELEASE_TARGET_DB_HOST_FINGERPRINT + PRODUCTION_DB_HOST_FINGERPRINT
+# Configure both variables on the Railway service for each environment before
+# deployment. Missing declarations block the deployment.
+
 environment="${DEPLOY_ENVIRONMENT:-${1:-}}"
 git_ref="${GIT_REF:-${GITHUB_REF:-}}"
 frontend_url="${FRONTEND_URL:-}"
@@ -24,16 +31,19 @@ case "$environment" in
     expected_refs="refs/heads/develop refs/heads/staging"
     expected_environment="staging"
     allowed_hosts="staging.consultify.ai"
+    expected_db_fingerprint_var="STAGING_DB_HOST_FINGERPRINT"
     ;;
   demo)
     expected_refs="refs/heads/demo"
     expected_environment="demo"
     allowed_hosts="demo.consultify.ai stage.consultinity.ai"
+    expected_db_fingerprint_var="DEMO_DB_HOST_FINGERPRINT"
     ;;
   production)
     expected_refs="refs/heads/main"
     expected_environment="production"
     allowed_hosts="consultify.ai www.consultify.ai"
+    expected_db_fingerprint_var="PRODUCTION_DB_HOST_FINGERPRINT"
     ;;
   *)
     fail "unknown DEPLOY_ENVIRONMENT '$environment' (expected staging, demo, or production)"
@@ -68,4 +78,21 @@ done
 
 [ "$host_ok" -eq 0 ] || fail "frontend host '$frontend_host' is not allowed for $environment (expected one of: $allowed_hosts)"
 
-printf 'deploy-target: ok for %s (%s -> %s)\n' "$environment" "$git_ref" "$frontend_host"
+actual_db_fingerprint="${RELEASE_TARGET_DB_HOST_FINGERPRINT:-}"
+expected_db_fingerprint="${!expected_db_fingerprint_var:-}"
+
+[ -n "$actual_db_fingerprint" ] || fail "missing RELEASE_TARGET_DB_HOST_FINGERPRINT on the Railway service for $environment"
+[ -n "$expected_db_fingerprint" ] || fail "missing $expected_db_fingerprint_var on the Railway service for $environment"
+
+normalize_fingerprint() {
+  printf '%s' "$1" | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//' | tr '[:upper:]' '[:lower:]'
+}
+
+actual_db_fingerprint_normalized="$(normalize_fingerprint "$actual_db_fingerprint")"
+expected_db_fingerprint_normalized="$(normalize_fingerprint "$expected_db_fingerprint")"
+
+[ -n "$actual_db_fingerprint_normalized" ] || fail "RELEASE_TARGET_DB_HOST_FINGERPRINT is blank after trimming on the Railway service for $environment"
+[ -n "$expected_db_fingerprint_normalized" ] || fail "$expected_db_fingerprint_var is blank after trimming on the Railway service for $environment"
+[ "$actual_db_fingerprint_normalized" = "$expected_db_fingerprint_normalized" ] || fail "database target mismatch for $environment: actual target differs from declaration in $expected_db_fingerprint_var"
+
+printf 'deploy-target: ok for %s (%s -> %s, db target fingerprint verified)\n' "$environment" "$git_ref" "$frontend_host"
