@@ -148,14 +148,52 @@ Liczba 145 z briefu nie jest zgodna z metodą wiążącą; własny wynik to 104 
 
 | poz. | status | commit SHA | dowód | konsumenci | równoważność |
 | --- | --- | --- | --- | --- | --- |
-| D.1 | ZROBIONE_WG_DoD | do uzupełnienia po commicie | trzy własne pomiary i klasyfikacja | tabela powyżej | nie dotyczy |
-| D.2 | NIE_ZACZĘTE | — | — | policzeni | — |
+| D.1 | ZROBIONE_WG_DoD | `1d10bdfe26` | trzy własne pomiary i klasyfikacja | tabela powyżej | nie dotyczy |
+| D.2 | CZĘŚCIOWO | do uzupełnienia po commicie | 25/25 testów PASS; brak sekretu i domen uprzywilejowanych | policzeni | mapa syntetyczna działa; brak mapy odmawia |
 | D.3 | NIE_ZACZĘTE | — | — | — | — |
 | D.4 | NIE_ZACZĘTE | — | — | policzeni | — |
 | D.5 | NIE_ZACZĘTE | — | — | policzeni | — |
 | D.6 | NIE_ZACZĘTE | — | — | policzeni | — |
 | D.7 | NIE_ZACZĘTE | — | — | — | — |
 | R.1 | NIE_ZACZĘTE | — | — | — | — |
+
+## D.2 — front
+
+### Wariant B+
+
+Mapa PIN do konta została całkowicie usunięta z kodu i zastąpiona rygorystycznie walidowanym JSON-em z `VITE_QUICK_ACCESS_MAP`. Brak albo błędna wartość daje pustą mapę, a filtr hostowy pozostaje niezależną drugą bramką. Wariant A odrzucono, bo usuwa użyteczne narzędzie; wariant C odrzucono, bo pozostawiałby publiczną enumerację kont bez zachowania wygody.
+
+### Krok 4 — dowód i STOP
+
+- `isDemoLoginGatewayOpen` wymaga `NODE_ENV=test`, jawnego gateway flag oraz odpowiednio długiego `TEST_SUPPORT_KEY`; `/demo-login` zwraca poza tym `410 DEMO_LOGIN_DEPRECATED`.
+- `/register-demo` jest żywy, ale jego kontrakt wymaga `email`, `password`, a w kliencie również przekazania zaakceptowanych dokumentów i czasu zgody. Nie jest więc bezpoświadczeniowym endpointem, który czterocyfrowy skrót może legalnie wywołać bez dodatkowego wejścia użytkownika.
+- Zgodnie z §D.2 krok 4 otrzymuje STOP, a produkcyjny skrót jest wyłączony. Nie zmieniono serwera auth.
+
+### STOP — D.2 krok 4
+
+- Co miałem zrobić: skierować publiczny skrót demo do istniejącego endpointu bez poświadczeń.
+- Czego brakuje: taki endpoint nie istnieje na związanym markerze; wskazany kandydat rejestracyjny wymaga nowych poświadczeń i zgód prawnych.
+- Co sprawdziłem: implementacje `/demo-login`, `/register-demo`, sygnaturę `Api.registerDemo` oraz obu istniejących konsumentów.
+- Wariant 1: właściciel zatwierdza przejście skrótu do istniejącego formularza rejestracji demo; zachowuje legal consent, ale skrót nie loguje jednym krokiem.
+- Wariant 2: osobny dyżur projektuje anonimowy, ograniczony endpoint demo; zachowuje jednoetapowy skrót, ale rozszerza powierzchnię auth i wymaga decyzji bezpieczeństwa.
+- Rekomendacja: wariant 1 jako bezpieczny i zgodny z żywym kontraktem; nie wymaga otwierania zamkniętego gatewaya.
+
+### Zmienione asercje
+
+| plik | PRZED | PO | dlaczego to nie osłabienie |
+| --- | --- | --- | --- |
+| `src/views/__tests__/AuthView.quickAccess.test.ts` | konkretne realne konta i hasło | brak env, syntetyczna mapa, zły host, prod-public, zły JSON i zły kształt | testuje granice zachowania i nie utrwala sekretu |
+| `tests/components/AuthView.quick-access-guard.test.tsx` | realne PIN-y i konta | panel default-OFF, syntetyczne credentials/demo, host allowlist i blokada prod | zachowuje hostową regresję i dodaje konfigurację fail-closed |
+| `tests/components/AuthView.fail-closed-errors.contract.test.tsx` | niejawna zależność od zaszytej mapy | syntetyczny wpis demo przez `vi.stubEnv` | zachowuje test bezpiecznego błędu bez realnego sekretu |
+
+### Dowody
+
+- Literał hasła: `AuthView.tsx=0`, `quickAccess.ts=0`.
+- Domeny `dbr77`, `plastmetcentrum`, `ateliertoys-demo` w tych dwóch plikach: `0`.
+- Szeroki wzorzec `password: '` w całym `AuthView.tsx`: `5`, wszystkie to puste wartości stanu formularza; kryterium `0` z instrukcji jest błędne dla całego pliku i nie oznacza poświadczenia.
+- `.gitignore:36:.env.local` potwierdza ignorowanie `.env.local`.
+- Prettier: 4 pliki TS/TSX; esbuild: 5 plików TS/TSX — OK.
+- Testy pełnego zakresu importerów `AuthView`: 5/5 plików PASS, 25/25 testów PASS, 0 SKIPPED, z wymaganym własnym PG i kompletem env.
 
 ## Errata i korekty wobec instrukcji
 

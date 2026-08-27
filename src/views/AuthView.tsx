@@ -2,6 +2,7 @@ import { AlertCircle, ArrowRight, ChevronLeft, Lock, Sparkles, X } from 'lucide-
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { readQuickAccessMap, type QuickAccessEntry } from '@/config/quickAccess';
 import { ROUTES } from '@/routes/routeConfig';
 import {
   clearAnnaLpCtaContext,
@@ -132,41 +133,32 @@ export function isQuickAccessShortcutHost(hostname: string): boolean {
   );
 }
 
-export function isQuickAccessEnabledHost(hostname: string): boolean {
-  return isQuickAccessShortcutHost(hostname);
+export function isQuickAccessEnabledHost(
+  hostname: string,
+  env: { VITE_QUICK_ACCESS_MAP?: unknown } = import.meta.env
+): boolean {
+  const isProdPublic = hostname === 'consultify.ai' || hostname === 'www.consultify.ai';
+  return (
+    !isProdPublic &&
+    isQuickAccessShortcutHost(hostname) &&
+    Object.keys(readQuickAccessMap(env)).length > 0
+  );
 }
 
-type QuickAccessCredentials = { email: string; password: string } | { demo: true };
+type QuickAccessCredentials = QuickAccessEntry;
 
-/**
- * Maps a 4-digit PIN to login credentials. On consultify.ai / www only `1111`
- * (Anna Zielińska → AtelierToys demo tenant) is allowed; dev/staging codes are blocked on prod.
- */
+/** Maps a configured 4-digit PIN on explicitly allowed non-production hosts. */
 export function resolveQuickAccessCredentials(
   code: string,
-  hostname: string
+  hostname: string,
+  env: { VITE_QUICK_ACCESS_MAP?: unknown } = import.meta.env
 ): QuickAccessCredentials | null {
   if (!isQuickAccessShortcutHost(hostname)) return null;
 
   const isProdPublic = hostname === 'consultify.ai' || hostname === 'www.consultify.ai';
+  if (isProdPublic) return null;
 
-  if (isProdPublic) {
-    if (code === '1111') {
-      return { email: 'anna.zielinska@ateliertoys-demo.com', password: '123456' };
-    }
-    return null;
-  }
-
-  const devStagingCodes: Record<string, QuickAccessCredentials> = {
-    '7777': { email: 'piotr.wisniewski@dbr77.com', password: '123456' }, // Admin
-    '7775': { email: 'pawel.mroczkowski@dbr77.com', password: '123456' }, // Paweł (DBR77)
-    '1212': { email: 'pawel.mroczkowski@plastmetcentrum.pl', password: '123456' }, // Paweł (Plast-Met)
-    '7776': { email: 'admin@dbr77.com', password: '123456' }, // SuperAdmin
-    '7778': { demo: true },
-    '1111': { email: 'anna.zielinska@ateliertoys-demo.com', password: '123456' },
-  };
-
-  return devStagingCodes[code] ?? null;
+  return readQuickAccessMap(env)[code] ?? null;
 }
 
 function formatInviteRoleLabel(role?: string): string {
@@ -273,7 +265,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
     setQuickCode('');
   };
 
-  // Quick access: dev/staging PINs; production consultify.ai / www → only 1111 (Anna demo).
+  // Quick access is configured only for explicitly allowed non-production hosts.
   //
   // Deliberately NOT adopting a demo session here. Neither `Api.demoLogin()` nor
   // `Api.login()` returns a `demoSession` payload, so the only way to adopt would

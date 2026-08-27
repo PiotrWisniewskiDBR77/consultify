@@ -38,6 +38,7 @@ describe('AuthView fail-closed error contract', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubEnv('VITE_QUICK_ACCESS_MAP', JSON.stringify({ '7778': { demo: true } }));
     sessionStorage.clear();
     localStorage.clear();
     Object.defineProperty(window, 'location', {
