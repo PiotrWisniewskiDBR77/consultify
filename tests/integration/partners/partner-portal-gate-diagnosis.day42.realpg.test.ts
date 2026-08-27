@@ -171,7 +171,13 @@ describeReal(
         .set('Authorization', `Bearer ${token(boundUser, orgA)}`)
         .set('x-org-context', orgB)
         .send({ organizationId: orgB, name: 'FOREIGN-MUTATION' });
-      expect(response.status).not.toBe(200);
+      // FIX-3: `not.toBe(200)` also accepted a 500 as proof of isolation. The
+      // refusal is `requireExactPartnerTenantContext`
+      // (server/src/routes/v8/partner.routes.ts:103-106), so pin it exactly.
+      expect({ status: response.status, code: response.body?.code }).toEqual({
+        status: 403,
+        code: 'ORG_MEMBERSHIP_REVOKED',
+      });
       expect(JSON.stringify(response.body)).not.toContain('Partner B');
       const after = await sql.query(
         'SELECT id, name, updated_at FROM partner_organizations WHERE id = ANY($1::uuid[]) ORDER BY id',
