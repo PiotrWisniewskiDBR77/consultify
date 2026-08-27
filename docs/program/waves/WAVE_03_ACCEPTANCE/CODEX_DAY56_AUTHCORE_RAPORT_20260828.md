@@ -87,6 +87,14 @@ Po P.6 test setter jest zielony. Trzy celowe czerwone P.2 pozostają: dwa dla P.
 
 Pięć kształtów fałszywego gotowe dla P.6: wołacz — TAK, funkcja ma 18 montaży; ApiGateway — NIE, brak jeszcze pełnej pary HTTP, dlatego werdykt końcowy pozostaje CZĘŚCIOWO do czasu dowodu integracyjnego; skipped — rozliczone w baseline; odmowa runtime — NIEZWERYFIKOWANA HTTP; grep nie jest uznany za dowód runtime.
 
+## §P.3 — brak kontekstu organizacji
+
+Wybrano wariant W2: brak rozstrzygniętego użytkownika nadal przechodzi (anonimowość nie jest sprawą strażnika członkostwa), natomiast rozpoznany użytkownik bez organizacji dostaje `403 ORG_CONTEXT_REQUIRED`. W1 odrzucono jako zbyt szeroki dla anonimów, W3 nie różni się praktycznie na jawnych montażach tenantowych, W4 pozostawiałby znaną furtkę. Publiczny `/api/share/:token` używa jedynie `optionalAuth`, nie `validateOrgMembership`, więc zmiana nie tworzy regresji gałęzi 37.
+
+Pakiet jednostkowy: 173 PASS / 1 celowy FAIL należący do P.5; obie kotwice getterów P.2 zazieleniły się. Pełna tabela HTTP dla 18 montaży nie została jeszcze wykonana, dlatego pozycja pozostaje `CZĘŚCIOWO`, mimo wdrożonego fail-closed.
+
+Pięć kształtów fałszywego gotowe dla P.3: wołacz — TAK (18 montaży); ApiGateway — NIE; skipped — 0 w pakiecie punktowym; para HTTP — NIE; grep — tylko dowód montażu, nie runtime.
+
 ## Pomiar zasięgu testów
 
 PRZED: patrz §P.1. Artefakty: `/private/tmp/consultify-authcore-day56-artefakty/zasieg-PRZED.json` i `zasieg-PRZED.log`.

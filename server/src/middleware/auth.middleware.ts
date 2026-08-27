@@ -1677,8 +1677,18 @@ export const validateOrgMembership = asyncHandler(
       normalizeContextIdentifier(safeRead(() => requestUser?.id, undefined));
     const orgId = normalizeContextIdentifier(safeRead(() => req.organizationId, undefined));
 
-    if (!userId || !orgId) {
+    // Authentication remains optional for callers without a resolved user.
+    if (!userId) {
       return next();
+    }
+    // A known principal reaching an organization-scoped mount must carry a
+    // resolved tenant. Passing through here would bypass membership entirely.
+    if (!orgId) {
+      res.status(403).json({
+        error: 'Organization context is required',
+        code: 'ORG_CONTEXT_REQUIRED',
+      });
+      return;
     }
     try {
       req.organizationId = orgId;
