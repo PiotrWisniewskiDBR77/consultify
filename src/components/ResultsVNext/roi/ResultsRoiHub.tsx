@@ -72,8 +72,8 @@ import { useAppStore } from '@/store/useAppStore';
 
 import {
   getResultsDomainPath,
+  getResultsDomainTabs,
   isResultsDomain,
-  RESULTS_DOMAIN_TABS,
 } from '../resultsDomainNavigation';
 import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
 import { shouldUseResultsVNextOwnerSampleData } from '../resultsVNextOwnerSampleData';
@@ -554,10 +554,10 @@ export const ResultsRoiHub: React.FC = () => {
           domain="roi"
           sampleData={shouldUseResultsVNextOwnerSampleData()}
           moduleBar={{
-            tabs: RESULTS_DOMAIN_TABS,
+            tabs: getResultsDomainTabs(),
             activeTab: 'roi',
             onTabChange: (id) => {
-              if (isResultsDomain(id)) navigate(getResultsDomainPath(id));
+              if (id === 'search' || isResultsDomain(id)) navigate(getResultsDomainPath(id));
             },
             showTabCounts: false,
             viewModes: ['table'],
@@ -609,10 +609,10 @@ export const ResultsRoiHub: React.FC = () => {
         domain="roi"
         sampleData={shouldUseResultsVNextOwnerSampleData()}
         moduleBar={{
-          tabs: RESULTS_DOMAIN_TABS,
+          tabs: getResultsDomainTabs(),
           activeTab: 'roi',
           onTabChange: (id) => {
-            if (isResultsDomain(id)) navigate(getResultsDomainPath(id));
+            if (id === 'search' || isResultsDomain(id)) navigate(getResultsDomainPath(id));
           },
           showTabCounts: false,
           viewModes: ['table'],

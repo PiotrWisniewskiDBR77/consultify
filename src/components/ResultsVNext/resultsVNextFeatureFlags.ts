@@ -46,6 +46,11 @@ const FLAGS = {
     localStorage: 'ff.results_vnext_okr_registry',
     env: 'VITE_RESULTS_VNEXT_OKR_ENABLED',
   },
+  resultsSearch: {
+    query: 'ff_resultsVNextSearch',
+    localStorage: 'ff.results_vnext_search',
+    env: 'VITE_RESULTS_VNEXT_SEARCH_ENABLED',
+  },
 } as const satisfies Record<string, FlagKeys>;
 
 export type ResultsVNextFlag = keyof typeof FLAGS;
@@ -145,6 +150,7 @@ export function isResultsVNextFlagEnabled(
       typeof window !== 'undefined' ? (window.location?.hostname ?? '') : ''
     );
   }
+  if (flag === 'resultsSearch') return false;
   // No D-D default-on set yet for roi/okr. Every host (prod, demo, stage,
   // dev) reads OFF until an explicit opt-in.
   return false;

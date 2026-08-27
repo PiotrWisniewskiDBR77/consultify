@@ -140,10 +140,11 @@ import { KpiTransitionDialog, type KpiTransitionKind } from './KpiTransitionDial
 import { LifecycleLockBadge, lockedRowMenuAction } from './LifecycleLockBadge';
 import {
   getResultsDomainPath,
+  getResultsDomainTabs,
   isResultsDomain,
-  RESULTS_DOMAIN_TABS,
 } from './resultsDomainNavigation';
 import { isResultsVNextFlagEnabled } from './resultsVNextFeatureFlags';
+import { ResultsSearchRegistry } from './ResultsSearchRegistry';
 import {
   ResultsVNextRegistryShell,
   type ResultsVNextTableProps,
@@ -809,7 +810,12 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
   // the old prop). Scorecards' legacy cutover is already enforced
   // server-side, so this mounted successor must not be strandable behind
   // the `kpiRegistry` rollout flag.
-  const enabled = initialTab === 'scorecards' || isResultsVNextFlagEnabled('kpiRegistry');
+  const searchMode =
+    isResultsVNextFlagEnabled('resultsSearch') &&
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('resultsView') === 'search';
+  const enabled =
+    !searchMode && (initialTab === 'scorecards' || isResultsVNextFlagEnabled('kpiRegistry'));
 
   const navigate = useNavigate();
   const [rows, setRows] = useState<KpiDefinitionDto[]>([]);
@@ -1357,6 +1363,8 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
     [visibleRows]
   );
 
+  if (searchMode) return <ResultsSearchRegistry />;
+
   if (!enabled) {
     return (
       <div
@@ -1413,10 +1421,10 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
           domain="kpi"
           sampleData={shouldUseResultsVNextOwnerSampleData()}
           moduleBar={{
-            tabs: RESULTS_DOMAIN_TABS,
+            tabs: getResultsDomainTabs(),
             activeTab: 'kpi',
             onTabChange: (id) => {
-              if (isResultsDomain(id)) navigate(getResultsDomainPath(id));
+              if (id === 'search' || isResultsDomain(id)) navigate(getResultsDomainPath(id));
             },
             showTabCounts: false,
             viewModes: ['table'],
@@ -1543,10 +1551,10 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
           domain="kpi"
           sampleData={shouldUseResultsVNextOwnerSampleData()}
           moduleBar={{
-            tabs: RESULTS_DOMAIN_TABS,
+            tabs: getResultsDomainTabs(),
             activeTab: 'kpi',
             onTabChange: (id) => {
-              if (isResultsDomain(id)) navigate(getResultsDomainPath(id));
+              if (id === 'search' || isResultsDomain(id)) navigate(getResultsDomainPath(id));
             },
             showTabCounts: false,
             viewModes: ['table'],

@@ -66,11 +66,16 @@ describe('isResultsVNextFlagEnabled', () => {
     it('URL query "0" still disables it despite the ON default, and persists to localStorage', () => {
       setLocation({ search: `?${RESULTS_VNEXT_FLAG_KEYS.kpiRegistry.query}=0` });
       expect(isResultsVNextFlagEnabled('kpiRegistry')).toBe(false);
-      expect(window.localStorage.getItem(RESULTS_VNEXT_FLAG_KEYS.kpiRegistry.localStorage)).toBe('0');
+      expect(window.localStorage.getItem(RESULTS_VNEXT_FLAG_KEYS.kpiRegistry.localStorage)).toBe(
+        '0'
+      );
     });
 
     it('URL query "1" keeps it enabled on production too (explicit opt-in beats the host guard)', () => {
-      setLocation({ hostname: 'consultify.ai', search: `?${RESULTS_VNEXT_FLAG_KEYS.kpiRegistry.query}=1` });
+      setLocation({
+        hostname: 'consultify.ai',
+        search: `?${RESULTS_VNEXT_FLAG_KEYS.kpiRegistry.query}=1`,
+      });
       expect(isResultsVNextFlagEnabled('kpiRegistry')).toBe(true);
     });
 
@@ -103,6 +108,14 @@ describe('isResultsVNextFlagEnabled', () => {
       expect(isResultsVNextFlagEnabled('roiRegistry')).toBe(true);
       setLocation({ search: `?${RESULTS_VNEXT_FLAG_KEYS.okrRegistry.query}=1` });
       expect(isResultsVNextFlagEnabled('okrRegistry')).toBe(true);
+    });
+  });
+
+  describe('resultsSearch — owner-contract Menu 2 entry', () => {
+    it('stays OFF by default and turns ON only with an explicit carrier', () => {
+      expect(isResultsVNextFlagEnabled('resultsSearch')).toBe(false);
+      setLocation({ search: `?${RESULTS_VNEXT_FLAG_KEYS.resultsSearch.query}=1` });
+      expect(isResultsVNextFlagEnabled('resultsSearch')).toBe(true);
     });
   });
 
