@@ -32,11 +32,11 @@ describe.skipIf(!REAL_PG)('Day 35 KPI policy authoring through the mounted route
   const path = (policyId: string) =>
     `/api/initiatives/runtime-v1/execution-control-kpi-policies/${policyId}`;
   const completeParameters = {
-    impactWeights: 'fixture-impact',
-    atRiskThresholdDays: 'fixture-risk',
-    capacitySaturationThreshold: 'fixture-saturation',
-    capacityBuffer: 'fixture-buffer',
-    decisionSlaDays: 'fixture-sla',
+    impactWeights: { CRITICAL: 4, IMPORTANT: 2, SUPPORTING: 1 },
+    atRiskThresholdDays: 3,
+    capacitySaturationThreshold: { normalUpper: 0.6, saturatedUpper: 0.9 },
+    capacityBuffer: 0.2,
+    decisionSlaDays: { value: 4, unit: 'CALENDAR_DAYS' },
   };
 
   beforeAll(async () => {
@@ -269,6 +269,99 @@ describe.skipIf(!REAL_PG)('Day 35 KPI policy authoring through the mounted route
           WHERE policy_id='execution-control'`
       )
     ).toMatchObject({ rows: [{ count: 2 }] });
+  });
+
+  it('enters and reads back the DEC-169 starting values without production defaults', async () => {
+    const policyId = `dec-169-${tag}`;
+    const parameters = {
+      impactWeights: { CRITICAL: 3, IMPORTANT: 2, SUPPORTING: 1 },
+      atRiskThresholdDays: 7,
+      decisionSlaDays: { value: 5, unit: 'BUSINESS_DAYS' },
+      capacitySaturationThreshold: { normalUpper: 0.8, saturatedUpper: 0.95 },
+      capacityBuffer: 0.15,
+    };
+    const created = await request(app)
+      .post(path(policyId))
+      .set(auth('ownerA'))
+      .send({
+        expectedVersion: 0,
+        clientRequestId: `dec-169-${tag}`,
+        name: 'DEC-169 entered by consultant',
+        parameters,
+      });
+    expect(created.status, JSON.stringify(created.body)).toBe(201);
+
+    const read = await request(app)
+      .get(`/api/initiatives/runtime-v1/control-kpis?weekStart=2026-08-24&policyId=${policyId}`)
+      .set(auth('ownerA'));
+    expect(read.status).toBe(200);
+    expect(read.body.policy).toMatchObject({
+      policyId,
+      resolved: true,
+      missingParameters: [],
+      invalidParameters: [],
+    });
+    expect(read.body.capacitySaturation).toMatchObject({
+      knowledgeState: 'UNKNOWN',
+      valueReason: 'AVAILABILITY_SOURCE_UNAVAILABLE',
+      saturationRange: null,
+      missingAvailabilityComponents: ['ABSENCE', 'FIXED_DUTIES', 'ACCEPTED_RESERVATIONS'],
+      configuredPolicy: {
+        thresholds: { normalUpper: 0.8, saturatedUpper: 0.95 },
+        capacityBuffer: 0.15,
+        bufferApplication: 'SUBTRACT_FROM_AVAILABILITY_BEFORE_SATURATION',
+      },
+    });
+
+    const independent = new Client({ connectionString: DATABASE_URL });
+    await independent.connect();
+    try {
+      const stored = await independent.query(
+        `SELECT parameters FROM execution_control_kpi_policies
+          WHERE organization_id=$1 AND policy_id=$2`,
+        [organizationA, policyId]
+      );
+      expect(stored.rows[0]?.parameters).toEqual(parameters);
+    } finally {
+      await independent.end();
+    }
+  });
+
+  it('keeps saturation bands and buffer tenant-editable for two organizations', async () => {
+    const policyId = `tenant-capacity-${tag}`;
+    const policies = {
+      ownerA: {
+        ...completeParameters,
+        capacitySaturationThreshold: { normalUpper: 0.55, saturatedUpper: 0.75 },
+        capacityBuffer: 0.1,
+      },
+      ownerB: {
+        ...completeParameters,
+        capacitySaturationThreshold: { normalUpper: 0.7, saturatedUpper: 0.9 },
+        capacityBuffer: 0.25,
+      },
+    };
+    for (const owner of ['ownerA', 'ownerB'] as const) {
+      const created = await request(app)
+        .post(path(policyId))
+        .set(auth(owner))
+        .send({
+          expectedVersion: 0,
+          clientRequestId: `${policyId}-${owner}`,
+          name: `Capacity ${owner}`,
+          parameters: policies[owner],
+        });
+      expect(created.status).toBe(201);
+      const read = await request(app)
+        .get(`/api/initiatives/runtime-v1/control-kpis?weekStart=2026-08-24&policyId=${policyId}`)
+        .set(auth(owner));
+      expect(read.body.capacitySaturation.configuredPolicy).toEqual({
+        thresholds: policies[owner].capacitySaturationThreshold,
+        capacityBuffer: policies[owner].capacityBuffer,
+        bufferApplication: 'SUBTRACT_FROM_AVAILABILITY_BEFORE_SATURATION',
+      });
+      expect(read.body.capacitySaturation.saturationRange).toBeNull();
+    }
   });
 
   it('fails closed for a foreign organization and an actor without capability', async () => {

@@ -7,9 +7,21 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
+import {
+  CONTRIBUTION_CLASSES,
+  type PolicyParameterName,
+} from './executionControl/controlKpiPolicySchema.js';
 
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
+
+/**
+ * FIX-2 (day 33 odbior): arytmetyczny zastepnik dla wagi, ktorej nikt nie ustawil.
+ * Nie jest to default zapisywany do bazy — do bazy nie idzie NIC (patrz linkGoalToInitiative).
+ * Jest to JAWNIE NAZWANY, udokumentowany fallback wylacznie w liczeniu rollupu, raportowany
+ * na zewnatrz przez `unsetContributionWeights` i `contributionWeightValueReason`.
+ */
+const DECLARED_UNSET_CONTRIBUTION_WEIGHT = 1;
 
 class InitiativeGovernanceService {
   // ── V4-INIT-04: Goals/OKR ──
@@ -116,7 +128,15 @@ class InitiativeGovernanceService {
     return { ok: true };
   }
 
-  async linkGoalToInitiative(orgId: string, goalId: string, initiativeId: string, weight?: number) {
+  async linkGoalToInitiative(
+    orgId: string,
+    goalId: string,
+    initiativeId: string,
+    weight?: number,
+    contributionClass?: (typeof CONTRIBUTION_CLASSES)[number],
+    policyId?: string,
+    actorId?: string
+  ) {
     const goal = await this.getGoal(orgId, goalId);
     if (!goal) throw Object.assign(new Error('Goal not found'), { status: 404 });
     const init = await queryHelpers.queryFirst(
@@ -125,18 +145,144 @@ class InitiativeGovernanceService {
     );
     if (!init) throw Object.assign(new Error('Initiative not found'), { status: 404 });
     const id = uuidv4();
+    if (contributionClass) {
+      if (!CONTRIBUTION_CLASSES.includes(contributionClass)) {
+        throw Object.assign(new Error('INVALID_CONTRIBUTION_CLASS'), { status: 400 });
+      }
+      if (!actorId || goal.owner_id !== actorId) {
+        throw Object.assign(new Error('GOAL_OWNER_APPROVAL_REQUIRED'), { status: 403 });
+      }
+      const policy = policyId
+        ? await queryHelpers.queryFirst<{
+            policy_id: string;
+            parameters: Record<string, unknown>;
+            row_version: number;
+          }>(
+            `SELECT policy_id,parameters,row_version
+               FROM execution_control_kpi_policies
+              WHERE organization_id=$1 AND policy_id=$2`,
+            [orgId, policyId]
+          )
+        : null;
+      const impactWeights = policy?.parameters?.impactWeights as
+        | Record<string, unknown>
+        | undefined;
+      const derivedWeight = impactWeights?.[contributionClass];
+      if (
+        derivedWeight !== undefined &&
+        (typeof derivedWeight !== 'number' || !Number.isFinite(derivedWeight))
+      ) {
+        throw Object.assign(new Error('INVALID_PARAMETERS:impactWeights'), { status: 400 });
+      }
+      if (weight !== undefined && derivedWeight !== undefined && weight !== derivedWeight) {
+        throw Object.assign(new Error('CONTRIBUTION_CLASS_WEIGHT_CONFLICT'), { status: 400 });
+      }
+      if (weight !== undefined && derivedWeight === undefined) {
+        throw Object.assign(new Error('CONTRIBUTION_CLASS_WEIGHT_CONFLICT'), { status: 400 });
+      }
+      // FIX-2 (day 33 odbior): przy braku rozstrzygnietej polityki NIE zapisujemy tej kolumny.
+      // Poprzednio szla tu wartosc `derivedWeight ?? null`, czyli NULL, a `getGoalRollup`
+      // robil `contribution_weight || 1` — waga, ktorej nikt nie ustawil, udawala pelny wklad.
+      // §P.8.d pkt 3: „Nie wpisujesz 1.0. Nie wpisujesz null-a". Kolumna zostaje pominieta
+      // w liscie INSERT, a migracja 20261222 zdejmuje z niej DEFAULT 1.0, zeby pominiecie
+      // naprawde znaczylo „nieustalona", a nie ciche 1.0 ostemplowane przez schemat.
+      const hasPolicyWeight = derivedWeight !== undefined;
+      const columns = [
+        'id',
+        'organization_id',
+        'goal_id',
+        'initiative_id',
+        'contribution_class',
+        'contribution_policy_id',
+        'contribution_policy_row_version',
+      ];
+      const values: unknown[] = [
+        id,
+        orgId,
+        goalId,
+        initiativeId,
+        contributionClass,
+        policy?.policy_id ?? null,
+        policy?.row_version ?? null,
+      ];
+      if (hasPolicyWeight) {
+        columns.push('contribution_weight');
+        values.push(derivedWeight);
+      }
+      const updateSets = [
+        'organization_id=EXCLUDED.organization_id',
+        'contribution_class=EXCLUDED.contribution_class',
+        'contribution_policy_id=EXCLUDED.contribution_policy_id',
+        'contribution_policy_row_version=EXCLUDED.contribution_policy_row_version',
+      ];
+      if (hasPolicyWeight) {
+        updateSets.push('contribution_weight=EXCLUDED.contribution_weight');
+      }
+      await queryHelpers.queryRun(
+        `INSERT INTO goal_initiative_links (${columns.join(',')})
+         VALUES (${columns.map((_, i) => `$${i + 1}`).join(',')})
+         ON CONFLICT (goal_id,initiative_id) DO UPDATE SET
+           ${updateSets.join(',\n           ')}`,
+        values
+      );
+      return {
+        id,
+        contributionClass,
+        contributionWeight: derivedWeight ?? null,
+        contributionPolicy: policy
+          ? { policyId: policy.policy_id, rowVersion: policy.row_version }
+          : null,
+        valueReason: policy ? null : ('DECISION_REQUIRED' as const),
+        missingParameters: policy ? [] : (['impactWeights'] satisfies PolicyParameterName[]),
+      };
+    }
+    // FIX-3 (day 33 odbior): stempel polityki nie moze klamac.
+    // Poprzednio sciezka legacy (liczba bez klasy) robila `contribution_weight=EXCLUDED...`,
+    // czyli ODMRAZALA wage zamrozona z polityki, zostawiajac `contribution_class`,
+    // `contribution_policy_id` i `contribution_policy_row_version` nietkniete. Odczyt
+    // „z ktorej polityki wyliczono te wage" stawal sie nieprawda.
+    // ROZSTRZYGNIECIE: sciezka legacy odmawia dotkniecia wiersza, ktory niesie klase wkladu
+    // — niezaleznie od tego, czy klasa ma juz stempel polityki (waga zamrozona), czy czeka
+    // na decyzje (`DECISION_REQUIRED`). Reczna liczba na rzadzonym linku jest z definicji
+    // niezgodna z klasa, wiec zwracamy ten sam blad, ktorego uzywa juz sciezka klasowa.
+    // Odrzucenie (400) wybrano zamiast cichego czyszczenia klasy i stempla: skasowanie
+    // rzadzenia jest decyzja wlasciciela celu, a nie efektem ubocznym zapisu liczby.
+    // Sciezka wyjscia istnieje i jest jawna: DELETE /goals/:goalId/initiatives/:initiativeId,
+    // po ktorym link mozna zalozyc od nowa jako legacy.
+    // To jest zarazem PIERWSZY PRODUKCYJNY CZYTELNIK `contribution_policy_id` — kolumna
+    // wchodzi w decyzje zapisu, nie jest juz zapisem bez czytelnika.
+    const governedLink = await queryHelpers.queryFirst<{
+      contribution_class: string | null;
+      contribution_policy_id: string | null;
+      contribution_policy_row_version: number | null;
+    }>(
+      `SELECT contribution_class, contribution_policy_id, contribution_policy_row_version
+         FROM goal_initiative_links
+        WHERE goal_id=$1 AND initiative_id=$2`,
+      [goalId, initiativeId]
+    );
+    if (governedLink?.contribution_class) {
+      throw Object.assign(new Error('CONTRIBUTION_CLASS_WEIGHT_CONFLICT'), {
+        status: 400,
+        contributionClass: governedLink.contribution_class,
+        contributionPolicyId: governedLink.contribution_policy_id,
+        contributionPolicyRowVersion: governedLink.contribution_policy_row_version,
+      });
+    }
     await queryHelpers.queryRun(
-      `INSERT INTO goal_initiative_links (id, goal_id, initiative_id, contribution_weight)
-       VALUES ($1,$2,$3,$4)
-       ON CONFLICT (goal_id, initiative_id) DO UPDATE SET contribution_weight=$4`,
-      [id, goalId, initiativeId, weight ?? 1.0]
+      `INSERT INTO goal_initiative_links (id,organization_id,goal_id,initiative_id,contribution_weight)
+       VALUES ($1,$2,$3,$4,$5)
+       ON CONFLICT (goal_id,initiative_id) DO UPDATE SET
+         organization_id=EXCLUDED.organization_id,
+         contribution_weight=EXCLUDED.contribution_weight`,
+      [id, orgId, goalId, initiativeId, weight ?? 1.0]
     );
     return { id };
   }
 
   async getGoalInitiatives(orgId: string, goalId: string) {
     const goal = await this.getGoal(orgId, goalId);
-    if (!goal) return [];
+    if (!goal) return null;
     return queryHelpers.queryAll(
       `SELECT gil.*, i.name as initiative_name, i.status as initiative_status
        FROM goal_initiative_links gil
@@ -159,7 +305,13 @@ class InitiativeGovernanceService {
     const links = await queryHelpers.queryAll<{
       contribution_weight: number;
       initiative_id: string;
-    }>(`SELECT * FROM goal_initiative_links WHERE goal_id=$1`, [goalId]);
+    }>(
+      `SELECT gil.*
+         FROM goal_initiative_links gil
+         JOIN initiatives i ON i.id=gil.initiative_id AND i.organization_id=$2
+        WHERE gil.goal_id=$1 AND gil.organization_id=$2`,
+      [goalId, orgId]
+    );
     const childGoals = await queryHelpers.queryAll<{ id: string; progress: number }>(
       `SELECT id, progress FROM goals WHERE parent_goal_id=$1`,
       [goalId]
@@ -169,7 +321,10 @@ class InitiativeGovernanceService {
       progress: number;
       contribution_weight: number;
     }>(
-      `SELECT i.id, COALESCE(i.progress, 0) as progress, COALESCE(gil.contribution_weight, 1.0) as contribution_weight
+      // FIX-2 (day 33 odbior): bez `COALESCE(...,1.0)` w SQL — brak wagi ma dojechac
+      // do JS jako NULL, zeby dalo sie go POLICZYC i NAZWAC, zamiast po cichu scalic
+      // z realnie ustawionym 1.0.
+      `SELECT i.id, COALESCE(i.progress, 0) as progress, gil.contribution_weight as contribution_weight
        FROM goal_initiative_links gil
        JOIN initiatives i ON i.id = gil.initiative_id
        WHERE gil.goal_id=$1 AND i.organization_id=$2`,
@@ -182,8 +337,17 @@ class InitiativeGovernanceService {
       weightedProgress += child.progress || 0;
       totalWeight += 1;
     }
+    // FIX-2: waga nieustalona nadal liczy sie arytmetycznie jako 1 (zmiana samej arytmetyki
+    // rollupu wymaga decyzji wlasciciela — czyta ja ekran Wyniki/Scorecards), ale przestaje
+    // byc CICHA: odpowiedz podaje ile linkow nie ma ustalonej wagi i dlaczego.
+    // Zmieniono tez `|| 1` na `?? DECLARED_UNSET_CONTRIBUTION_WEIGHT`: poprzednia forma
+    // zamieniala jawnie zapisane 0 („ta inicjatywa nie wnosi wkladu") na pelny wklad 1.
+    let unsetContributionWeights = 0;
     for (const initiative of linkedInitiatives) {
-      const weight = initiative.contribution_weight || 1;
+      const stored = initiative.contribution_weight;
+      const isUnset = stored === null || stored === undefined;
+      if (isUnset) unsetContributionWeights += 1;
+      const weight = isUnset ? DECLARED_UNSET_CONTRIBUTION_WEIGHT : Number(stored);
       weightedProgress += (initiative.progress || 0) * weight;
       totalWeight += weight;
     }
@@ -195,6 +359,9 @@ class InitiativeGovernanceService {
       childGoals: childGoals.length,
       initiativeProgressCount: linkedInitiatives.length,
       rollupProgress: avgProgress,
+      unsetContributionWeights,
+      contributionWeightValueReason:
+        unsetContributionWeights > 0 ? ('DECISION_REQUIRED' as const) : null,
     };
   }
 

@@ -58,6 +58,12 @@ const ORG_B = 'org-B';
  */
 function armForeignTenantRows() {
   mockQueryAll.mockImplementation(async (sql: string) => {
+    if (/goal_initiative_links/i.test(sql) && /JOIN\s+initiatives/i.test(sql)) {
+      return [
+        { contribution_weight: 1, initiative_id: 'init-of-B-1' },
+        { contribution_weight: 1, initiative_id: 'init-of-B-2' },
+      ];
+    }
     if (/goal_initiative_links/i.test(sql) && !/JOIN\s+initiatives/i.test(sql)) {
       return [
         { contribution_weight: 1, initiative_id: 'init-of-B-1' },

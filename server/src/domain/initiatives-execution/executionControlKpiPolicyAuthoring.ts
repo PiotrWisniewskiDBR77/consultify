@@ -7,6 +7,7 @@ import {
   type MaterialCommandUnitOfWork,
   MaterialCommandValidationError,
 } from './materialCommand.js';
+import { validateControlKpiPolicyParameters } from '../../services/executionControl/controlKpiPolicySchema.js';
 
 export interface KpiPolicyCapableTransaction extends MaterialCommandTransaction {
   upsertExecutionControlKpiPolicy(input: {
@@ -47,6 +48,13 @@ export async function authorExecutionControlKpiPolicy(
   if (!name) throw new MaterialCommandValidationError('name is required');
   if (parameters === null || Array.isArray(parameters) || typeof parameters !== 'object') {
     throw new MaterialCommandValidationError('parameters must be an object');
+  }
+  const validation = validateControlKpiPolicyParameters(parameters);
+  if (validation.invalidParameters.length > 0) {
+    const invalid = validation.invalidParameters[0];
+    throw new MaterialCommandValidationError(
+      `INVALID_PARAMETERS:${invalid.parameter}:${invalid.rule}`
+    );
   }
 
   return executeMaterialCommand(

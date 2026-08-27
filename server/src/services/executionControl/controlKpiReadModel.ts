@@ -1,6 +1,14 @@
 import type { Pool } from 'pg';
 
 import { OwnerIndependentKpiReader } from './ownerIndependentKpiReader.js';
+import { GovernanceDataQualityReadModel } from './governanceDataQualityReadModel.js';
+import { NumericContributionReadModel } from './numericContributionReadModel.js';
+import { ReportClassificationReadModel } from './reportClassificationReadModel.js';
+import { readCapacitySaturation } from './capacitySaturationReadModel.js';
+import {
+  REQUIRED_POLICY_PARAMETERS,
+  validateControlKpiPolicyParameters,
+} from './controlKpiPolicySchema.js';
 
 export const CONTROL_KPI_FAMILIES = [
   'plan-delivery',
@@ -11,14 +19,6 @@ export const CONTROL_KPI_FAMILIES = [
   'capacity',
   'decision-latency',
   'intervention-effectiveness',
-] as const;
-
-const REQUIRED_POLICY_PARAMETERS = [
-  'impactWeights',
-  'atRiskThresholdDays',
-  'capacitySaturationThreshold',
-  'capacityBuffer',
-  'decisionSlaDays',
 ] as const;
 
 const POLICY_DEPENDENCIES: Partial<Record<(typeof CONTROL_KPI_FAMILIES)[number], string[]>> = {
@@ -35,6 +35,18 @@ export class ControlKpiReadModel {
       organizationId,
       weekStart
     );
+    const governanceDataQuality = await new GovernanceDataQualityReadModel(this.pool).read(
+      organizationId
+    );
+    const reportClassification = await new ReportClassificationReadModel(this.pool).read(
+      organizationId
+    );
+    // P.9 — wariant C E-O4 udostępniony ADDYTYWNIE: jedno pole w kopercie mówiące,
+    // czy dla pary cel↔inicjatywa istnieje ZATWIERDZONY wkład liczbowy, z odsyłaczem
+    // do nośnika. Zero znaków zmienionych w server/src/services/results/**.
+    const goalInitiativeContributions = await new NumericContributionReadModel(this.pool).read(
+      organizationId
+    );
     const policyResult = policyId
       ? await this.pool.query<{ policy_id: string; parameters: Record<string, unknown> }>(
           `SELECT policy_id, parameters
@@ -44,39 +56,56 @@ export class ControlKpiReadModel {
         )
       : { rows: [] };
     const policyRow = policyResult.rows[0] ?? null;
-    const parameters = policyRow?.parameters ?? {};
-    const missingParameters = REQUIRED_POLICY_PARAMETERS.filter(
-      (name) => parameters[name] === undefined || parameters[name] === null
+    const goalPerspectives = await this.pool.query<{
+      id: string;
+      perspective: string | null;
+    }>(
+      `SELECT id, perspective
+         FROM goals
+        WHERE organization_id=$1
+        ORDER BY id`,
+      [organizationId]
     );
+    const parameters = policyRow?.parameters ?? {};
+    const { missingParameters, invalidParameters } = validateControlKpiPolicyParameters(parameters);
+    const capacitySaturation = readCapacitySaturation(parameters);
     const calculatedAt = new Date().toISOString();
 
     const families = CONTROL_KPI_FAMILIES.map((family) => {
       const dependencies = POLICY_DEPENDENCIES[family] ?? [];
       const decisionRequired = dependencies.some((name) => missingParameters.includes(name as any));
+      const invalid = invalidParameters.some((item) => dependencies.includes(item.parameter));
       const value = family in computed ? computed[family as keyof typeof computed] : null;
       const hasPopulation = Boolean(value && value.denominator > 0);
       return {
         family,
-        numerator: decisionRequired || !hasPopulation ? null : value!.numerator,
-        denominator: decisionRequired || !hasPopulation ? null : value!.denominator,
-        value: decisionRequired || !hasPopulation ? null : value!.numerator / value!.denominator,
-        valueReason: decisionRequired
-          ? ('DECISION_REQUIRED' as const)
-          : hasPopulation
+        numerator: decisionRequired || invalid || !hasPopulation ? null : value!.numerator,
+        denominator: decisionRequired || invalid || !hasPopulation ? null : value!.denominator,
+        value:
+          decisionRequired || invalid || !hasPopulation
             ? null
-            : ('BRAK_ŹRÓDŁA' as const),
+            : value!.numerator / value!.denominator,
+        valueReason: invalid
+          ? ('INVALID_PARAMETERS' as const)
+          : decisionRequired
+            ? ('DECISION_REQUIRED' as const)
+            : hasPopulation
+              ? null
+              : ('BRAK_ŹRÓDŁA' as const),
         drillDown: { kind: family, ids: hasPopulation ? value!.ids : ([] as string[]) },
         sourceVersion: hasPopulation ? value!.sourceVersion : 0,
-        scopeCompleteness: decisionRequired
-          ? ('NOT_CALCULABLE' as const)
-          : hasPopulation
-            ? ('FULL' as const)
-            : ('NO_POPULATION' as const),
-        valueClass: decisionRequired
-          ? ('UNKNOWN' as const)
-          : hasPopulation
-            ? ('CALCULATED' as const)
-            : ('UNKNOWN' as const),
+        scopeCompleteness:
+          decisionRequired || invalid
+            ? ('NOT_CALCULABLE' as const)
+            : hasPopulation
+              ? ('FULL' as const)
+              : ('NO_POPULATION' as const),
+        valueClass:
+          decisionRequired || invalid
+            ? ('UNKNOWN' as const)
+            : hasPopulation
+              ? ('CALCULATED' as const)
+              : ('UNKNOWN' as const),
         calculatedAt,
       };
     });
@@ -87,9 +116,20 @@ export class ControlKpiReadModel {
       families,
       policy: {
         policyId: policyRow?.policy_id ?? null,
-        resolved: Boolean(policyRow) && missingParameters.length === 0,
+        resolved:
+          Boolean(policyRow) && missingParameters.length === 0 && invalidParameters.length === 0,
         missingParameters,
+        invalidParameters,
       },
+      goalPerspectives: goalPerspectives.rows.map((goal) => ({
+        goalId: goal.id,
+        perspective: goal.perspective ?? ('UNASSIGNED' as const),
+        sourceClass: goal.perspective ? ('FACT' as const) : null,
+      })),
+      governanceDataQuality,
+      reportClassification,
+      goalInitiativeContributions,
+      capacitySaturation,
       scopeCompleteness:
         fullFamilyCount === families.length
           ? ('FULL' as const)

@@ -1,0 +1,175 @@
+/** @vitest-environment node */
+
+import { randomUUID } from 'node:crypto';
+
+import express from 'express';
+import jwt from 'jsonwebtoken';
+import { Client } from 'pg';
+import request from 'supertest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+
+import config from '../../../config/Config.js';
+import initiativesRoutes from '../initiatives.routes.js';
+
+const DATABASE_URL = process.env.DATABASE_URL || '';
+// FIX-5 (odbior dyzuru 33): Z25/Z26 — bramka MUSI sprawdzac takze DATABASE_URL.
+// Bez tego warunku `new Client({ connectionString: '' })` schodzi do domyslnych libpq
+// i na maszynie deweloperskiej trafia w gniazdo /private/tmp/.s.PGSQL.5432 — czyli w CUDZA
+// baze — a `afterAll` tej suity robi DELETE na goal_initiative_links / goals / users /
+// organizations. Ten sam ksztalt bramki co w poprawnym pliku tego samego dyzuru:
+// server/src/services/executionControl/__tests__/goalPerspectiveMigration.pg.test.ts:12.
+// ★ TRZECI ZAMEK, dzialajacy NIEZALEZNIE od tests/setup.ts (Z20 — tego pliku nie dotykamy
+// z tej pozycji). tests/setup.ts:386-388 PODMIENIA brak/pusty DATABASE_URL na ten adres,
+// wiec warunek `startsWith('postgres')` sam z siebie jest ZAWSZE prawdziwy i niczego nie
+// chroni. Odrzucamy wiec wstrzyknieta wartosc wartownicza wprost: port 5432 na tej maszynie
+// nasluchuje i NIE jest baza tego dyzuru.
+const SETUP_INJECTED_FALLBACK_URL = 'postgresql://iris:iris_test@localhost:5432/iris_test';
+const REAL_PG =
+  process.env.RUN_DB_TESTS === '1' &&
+  process.env.MOCK_DB === 'false' &&
+  DATABASE_URL.startsWith('postgres') &&
+  DATABASE_URL !== SETUP_INJECTED_FALLBACK_URL;
+
+describe.skipIf(!REAL_PG)('Day 33 governance and data-quality layer', () => {
+  const tag = randomUUID();
+  const orgA = `day33-quality-a-${tag}`;
+  const orgB = `day33-quality-b-${tag}`;
+  const ownerA = `owner-a-${tag}`;
+  const ownerB = `owner-b-${tag}`;
+  let client: Client;
+  let app: express.Express;
+  let tokenA: string;
+  let tokenB: string;
+
+  const read = (token: string) =>
+    request(app)
+      .get('/api/initiatives/runtime-v1/control-kpis?weekStart=2026-08-24')
+      .set({ Authorization: `Bearer ${token}` });
+
+  beforeAll(async () => {
+    // FIX-5 (odbior dyzuru 33) — DRUGI ZAMEK, niezbedny: vitest 4.1.8 URUCHAMIA hooki
+    // beforeAll/afterAll suity oznaczonej `describe.skipIf(true)`. Sam warunek przy `describe`
+    // NIE chroni polaczenia ani sprzatania. Zweryfikowane empirycznie na tej gałęzi:
+    // z pustym DATABASE_URL hooki laczyly sie przez domyslne libpq do CUDZEJ bazy
+    // (/private/tmp/.s.PGSQL.5432) i wykonywaly tam DELETE.
+    if (!REAL_PG) return;
+    client = new Client({ connectionString: DATABASE_URL });
+    await client.connect();
+    await client.query(`INSERT INTO organizations(id,name) VALUES($1,$1),($2,$2)`, [orgA, orgB]);
+    await client.query(
+      `INSERT INTO users(id,organization_id,email,role,status) VALUES($1,$2,$3,'OWNER','active'),($4,$5,$6,'OWNER','active')`,
+      [ownerA, orgA, `${ownerA}@test`, ownerB, orgB, `${ownerB}@test`]
+    );
+    await client.query(
+      `INSERT INTO organization_members(id,organization_id,user_id,role,status) VALUES($1,$2,$3,'OWNER','ACTIVE'),($4,$5,$6,'OWNER','ACTIVE')`,
+      [`m-${ownerA}`, orgA, ownerA, `m-${ownerB}`, orgB, ownerB]
+    );
+    tokenA = jwt.sign({ id: ownerA, organizationId: orgA, role: 'OWNER' }, config.JWT_SECRET);
+    tokenB = jwt.sign({ id: ownerB, organizationId: orgB, role: 'OWNER' }, config.JWT_SECRET);
+    app = express();
+    app.use(express.json());
+    app.use('/api/initiatives', initiativesRoutes);
+  });
+
+  afterAll(async () => {
+    // FIX-5: patrz komentarz w beforeAll — hooki skipnietej suity i tak sie wykonuja,
+    // a ponizej sa DELETE-y. Bez tego zamka sprzatanie leci w cudza baze.
+    if (!REAL_PG || !client) return;
+    await client.query(`DELETE FROM ie_aggregate_state WHERE organization_id=ANY($1)`, [
+      [orgA, orgB],
+    ]);
+    await client.query(`DELETE FROM organization_members WHERE organization_id=ANY($1)`, [
+      [orgA, orgB],
+    ]);
+    await client.query(`DELETE FROM users WHERE organization_id=ANY($1)`, [[orgA, orgB]]);
+    await client.query(`DELETE FROM organizations WHERE id=ANY($1)`, [[orgA, orgB]]);
+    await client.end();
+  });
+
+  const insert = async (org: string, type: string, id: string, payload: object) =>
+    client.query(
+      `INSERT INTO ie_aggregate_state(organization_id,aggregate_type,aggregate_id,version,payload_json) VALUES($1,$2,$3,1,$4::jsonb)`,
+      [org, type, id, JSON.stringify(payload)]
+    );
+
+  it('returns an honest 0/0 for an organization without commitments', async () => {
+    const response = await read(tokenA);
+    expect(response.body.governanceDataQuality.dimensions.missingOwner).toMatchObject({
+      knowledgeState: 'KNOWN',
+      numerator: 0,
+      denominator: 0,
+      ids: [],
+    });
+  });
+
+  it('returns the complete exact drill-down set for missing owners and dates', async () => {
+    await insert(orgA, 'execution_task', `task-missing-${tag}`, {
+      ownerId: '',
+      dueAt: '',
+      evidenceRefs: [],
+    });
+    await insert(orgA, 'execution_task', `task-complete-${tag}`, {
+      ownerId: ownerA,
+      dueAt: '2026-09-01',
+      evidenceRefs: ['proof'],
+    });
+    const response = await read(tokenA);
+    expect(response.body.governanceDataQuality.dimensions.missingOwner.ids).toEqual([
+      `task-missing-${tag}`,
+    ]);
+    expect(response.body.governanceDataQuality.dimensions.missingDueDate.ids).toEqual([
+      `task-missing-${tag}`,
+    ]);
+  });
+
+  it('uses the evidence-required task population as its own denominator', async () => {
+    await insert(orgA, 'execution_decision', `decision-${tag}`, {
+      authorityId: ownerA,
+      dueAt: '2026-09-02',
+    });
+    const response = await read(tokenA);
+    const quality = response.body.governanceDataQuality;
+    expect(quality.commitmentCount).toBe(3);
+    expect(quality.dimensions.missingEvidence.tasks).toMatchObject({
+      numerator: 1,
+      denominator: 2,
+    });
+  });
+
+  it('reports decision evidence as UNKNOWN because no carrier exists', async () => {
+    const response = await read(tokenA);
+    expect(response.body.governanceDataQuality.dimensions.missingEvidence.decisions).toEqual({
+      knowledgeState: 'UNKNOWN',
+      numerator: null,
+      denominator: null,
+      ids: null,
+      reason: 'DECISION_EVIDENCE_CARRIER_UNAVAILABLE',
+    });
+  });
+
+  it('isolates the exact population by token organization', async () => {
+    await insert(orgB, 'execution_task', `foreign-${tag}`, {
+      ownerId: '',
+      dueAt: '',
+      evidenceRefs: [],
+    });
+    const a = await read(tokenA);
+    const b = await read(tokenB);
+    expect(a.body.governanceDataQuality.dimensions.missingOwner.ids).not.toContain(
+      `foreign-${tag}`
+    );
+    expect(b.body.governanceDataQuality.dimensions.missingOwner.ids).toEqual([`foreign-${tag}`]);
+  });
+
+  it('reconciles the HTTP denominator with an independent database count', async () => {
+    const response = await read(tokenA);
+    const independent = new Client({ connectionString: DATABASE_URL });
+    await independent.connect();
+    const count = await independent.query(
+      `SELECT COUNT(*)::int count FROM ie_aggregate_state WHERE organization_id=$1 AND aggregate_type IN ('execution_task','execution_decision')`,
+      [orgA]
+    );
+    await independent.end();
+    expect(response.body.governanceDataQuality.commitmentCount).toBe(count.rows[0].count);
+  });
+});
