@@ -233,43 +233,26 @@ success:false, code, decision, operation, message, policyUnavailable }`.
   `meta.dataFidelityReason` **nie zostało dostarczone w D.5** z powodu STOP
   zakresowego opisanego niżej. Front nie może zakładać obecności tych pól.
 
-### STOP — D.5
+### STOP — D.5 — ★ WYCOFANY PO ODBIORZE (2026-08-28)
 
-Stan: NIE ZACOMMITOWANO; STOP uznany przez nadzorcę za zasadny. Dokładny punkt
-zmiany znajduje się w
-`server/src/services/partnerEconomicsPolicy.ts:445-454`: wspólna funkcja
-`partnerEconomicsPolicyBody(operation)` buduje ciało odmowy. Guard wysyła to
-ciało bezpośrednio jako `410` w tym samym pliku, linia 494. Plik nie należał do
-dozwolonego zakresu D.5.
+**Ten STOP był NIEZASADNY i cała poniższa propozycja jest WYKREŚLONA.**
 
-Brakujące pole to addytywne `meta.dataFidelity` o wartości `'unavailable'`
-oraz towarzyszące mu `meta.dataFidelityReason`, np. dokładny mechanizm:
-`'partner economics disabled by owner policy AMD-PRT-ECONOMICS-002'`. Obecne
-pola `success`, `code`, `decision`, `operation`, `message` i
-`policyUnavailable` muszą pozostać bez zmian.
+Ramka licencji dyżuru (`§1.7`) dopuszczała `server/src/routes/v8/partner.routes.ts`
+w zakresie „addytywne pola `meta` z `§D.5`". Jednocześnie DoD `§D.5` wymagało,
+by koperta trasy `ODMOWA_410` pozostała **NIETKNIĘTA**. Plik, na który
+powołano STOP — `server/src/services/partnerEconomicsPolicy.ts` — był
+dokładnie tym, którego **nie wolno** było ruszać, a licencjonowana praca leżała
+gdzie indziej. Wykonawca nie doczytał licencji.
 
-**Minimalny wariant do osobnej licencji nadzorcy, bez wykonywania go w tym
-dyżurze:** wyłącznie w obiekcie zwracanym przez
-`partnerEconomicsPolicyBody()` po `...partnerEconomicsPolicyProjection()`
-dodać:
+**WYKREŚLONE:** propozycja dopisania `meta: { dataFidelity: 'unavailable', … }`
+do `partnerEconomicsPolicyBody()`. Jest sprzeczna z DoD `§D.5`, a guard jest
+zamontowany na **czterech** powierzchniach (`v8/partner.routes.ts:121`,
+`partners.routes.ts:277`, `:2491`, `:2966`), więc zmiana wyszłaby również na
+legacy i dwie powierzchnie superadmina. Nie realizować jej ani teraz, ani
+później, bez osobnej decyzji właściciela dotyczącej kontraktu `410`.
 
-```ts
-meta: {
-  dataFidelity: 'unavailable',
-  dataFidelityReason:
-    'partner economics disabled by owner policy AMD-PRT-ECONOMICS-002',
-},
-```
-
-Jest to jedna addytywna zmiana koperty w jednym wspólnym konstruktorze; nie
-zmienia `PARTNER_ECONOMICS_POLICY_STATUS`, stałej
-`PARTNER_ECONOMICS_OPERATIONS_ENABLED`, reguł tras, telemetrii, kolejności
-middleware ani wywołania guarda. Ponieważ funkcja jest współdzielona przez
-V8, legacy i powierzchnie operatora, kolejny dyżur musi jawnie licencjonować
-ten zasięg oraz dodać testy parytetu wszystkich konsumentów odpowiedzi 410:
-stare pola bitowo/semantycznie zachowane, status nadal 410, nowe `meta` obecne,
-zero dojścia do handlera i zero zapisu ekonomicznego. Bez tej licencji wariant
-pozostaje wyłącznie propozycją dokumentacyjną.
+`§D.5` została wykonana w pliku objętym licencją — patrz sekcja
+„SPROSTOWANIA PO ODBIORZE" niżej.
 
 ## Pomiar bazowy Z24
 
@@ -306,22 +289,23 @@ Deklaracja: **ZASIĘG PEŁNY** według listy §0.4a, z 92 jawnymi pominięciami.
 
 ## Pozycje — stan
 
-| Pozycja | Status          | Commit         | Dowód                                              |
-| ------- | --------------- | -------------- | -------------------------------------------------- |
-| D.1     | ZROBIONE_WG_DoD | `8b78c335cc`   | realny Gateway/PG, 6/6                             |
-| D.2     | ZROBIONE_WG_DoD | `9f8f49aebe`   | wariant 1, łańcuchy connection/read/write/readback |
-| D.3     | ZROBIONE_WG_DoD | `5104d6c328`   | komentarze + 12/12                                 |
-| D.4     | ZROBIONE_WG_DoD | `968e810ebe`   | 35 wierszy, suma 35                                |
-| D.5     | STOP            | —              | konflikt dozwolonego zakresu i guard-first         |
-| D.6     | ZROBIONE_WG_DoD | `0d4cba8c7b`   | 8/8, A/B + readback                                |
-| D.7     | ZROBIONE_WG_DoD | `1a267cd0ee`   | teza obalona                                       |
-| D.8     | ZROBIONE_WG_DoD | `80a5c3e688`   | trzy kierunki, 35 tras                             |
-| D.9     | ZROBIONE_WG_DoD | `e02f3ec481`   | pięć list kontraktu                                |
-| R.1     | ZROBIONE_WG_DoD | `3d05a5ca1e`   | jeden blok, gate bez zmian                         |
-| R.2     | ZROBIONE_WG_DoD | commit raportu | raport końcowy                                     |
+| Pozycja | Status          | Commit         | Dowód                                                                        |
+| ------- | --------------- | -------------- | ---------------------------------------------------------------------------- |
+| D.1     | ZROBIONE_WG_DoD | `8b78c335cc`   | realny Gateway/PG, 6/6                                                       |
+| D.2     | ZROBIONE_WG_DoD | `9f8f49aebe`   | wariant 1, łańcuchy connection/read/write/readback                           |
+| D.3     | ZROBIONE_WG_DoD | `5104d6c328`   | komentarze + 12/12                                                           |
+| D.4     | ZROBIONE_WG_DoD | `968e810ebe`   | 35 wierszy, suma 35                                                          |
+| D.5     | ZROBIONE_WG_DoD | `f7e50bec80`   | addytywne `meta` w pliku licencjonowanym, 5/5; STOP wycofany jako niezasadny |
+| D.6     | ZROBIONE_WG_DoD | `0d4cba8c7b`   | 8/8, A/B + readback                                                          |
+| D.7     | ZROBIONE_WG_DoD | `1a267cd0ee`   | teza obalona                                                                 |
+| D.8     | ZROBIONE_WG_DoD | `80a5c3e688`   | trzy kierunki, 35 tras                                                       |
+| D.9     | ZROBIONE_WG_DoD | `e02f3ec481`   | pięć list kontraktu                                                          |
+| R.1     | ZROBIONE_WG_DoD | `3d05a5ca1e`   | jeden blok, gate bez zmian                                                   |
+| R.2     | ZROBIONE_WG_DoD | commit raportu | raport końcowy                                                               |
 
-Licznik: **10 ZROBIONE_WG_DoD / 0 CZĘŚCIOWO / 1 STOP / 0 BRAK_API / 0
-BRAK_POTRZEBY / 0 NIE_ZACZĘTE**.
+Licznik po naprawach: **11 ZROBIONE_WG_DoD / 0 CZĘŚCIOWO / 0 STOP /
+0 BRAK_API / 0 BRAK_POTRZEBY / 0 NIE_ZACZĘTE** (jeden wąski, nazwany STOP
+cząstkowy dotyczy wyłącznie `getPartnerConnectionHandler` — patrz niżej).
 
 ## Dowód braku atrapy i nietknięcia ekonomii
 
@@ -358,3 +342,211 @@ nazwy zwrócił pusty wynik. Kontener i anonimowy wolumen zostały usunięte.
 - D.5 pozostaje STOP. Portal jest osiągalny przy kanonicznym env i pełnym
   schemacie, a izolacja finansowa V8 jest udowodniona; pakiet nie jest pełnym
   PASS całego dyżuru z powodu D.5 i zastanej czerwieni Z24.
+
+---
+
+## SPROSTOWANIA PO ODBIORZE ADWERSARYJNYM (FIX-1 … FIX-7)
+
+Gałąź naprawcza: `day42-fixes-20260828` (baza `e741931a06`). Własny efemeryczny
+PostgreSQL 17 + pgvector, host `127.0.0.1`, port `5799`, kontener `cx-fix42-pg`,
+baza migrowana pełnym runnerem. Zero kontaktu z Railway, demo, stagingiem i
+produkcją. Bez `git stash`, bez `push`.
+
+### FIX-1 — test bezpieczeństwa leczył się skutkiem ataku
+
+`vitest.config.ts:311` ustawia `retry: process.env.CI ? 3 : 1`. Suita izolacji
+dnia 42 dawała przez to **8/8 PASS przy realnym, żywym IDOR-ze**: pierwsze
+podejście kasowało cudzy wiersz, ponowienie widziało `404` i „readback bez
+zmian". Odtworzone tutaj co do znaku.
+
+Naprawa jest **lokalna**: opcja suity `{ retry: 0 }` w plikach dnia 42
+(`@vitest/runner`: `retry: options.retry ?? runner.config.retry`, a opcje suity
+są scalane w każdy test). **`vitest.config.ts` NIE został zmieniony** — trwa
+osobne śledztwo nad tym wektorem.
+
+| Przebieg     | Stan kodu produkcyjnego                                      | Wynik suity izolacji                         |
+| ------------ | ------------------------------------------------------------ | -------------------------------------------- |
+| bazowy       | czysty `HEAD`                                                | `11 passed (11)`                             |
+| mutant M1    | `partnerReferralService.ts:832` bez `AND partner_org_id = ?` | `1 failed \| 10 passed (11)` — czerwony `N1` |
+| po cofnięciu | czysty `HEAD`                                                | `11 passed (11)`                             |
+
+### FIX-2 — wiązanie tenant→partner nie było sprawdzane
+
+Dodane przypadki `B1` (użytkownik w `partner_users` partner-orga należącego do
+OBCEGO tenanta) i `B2` (`owner_organization_id IS NULL`), każdy na odczycie,
+pięciu odczytach pieniędzy i zapisie z zimnym readbackiem.
+
+| Przebieg     | Stan kodu produkcyjnego                                                  | Wynik                                             |
+| ------------ | ------------------------------------------------------------------------ | ------------------------------------------------- |
+| mutant M2    | `partnerOrgResolution.ts:117` → `(po.owner_organization_id = ? OR TRUE)` | `2 failed \| 9 passed (11)` — czerwone `B1`, `B2` |
+| po cofnięciu | czysty `HEAD`                                                            | `11 passed (11)`                                  |
+
+Przed FIX-2 ta sama mutacja nie zapalała **żadnego** testu.
+
+### FIX-3 — asercje bez zębów
+
+`expect(status).not.toBe(200)` w `N2`, `N4` i w teście bramki przepuszczało `500`
+jako „izolacja działa". Wszystkie trzy zaostrzone do dokładnego statusu i kodu
+(`403` / `ORG_MEMBERSHIP_REVOKED`, źródło: `partner.routes.ts:103-106`).
+Dodatkowo przypadek `MEMBER` zaostrzony do `RBAC_INSUFFICIENT_ROLE` — i to
+właśnie ten przypadek pilnuje `partner.routes.ts:272` (mutacja tej tablicy →
+czerwień).
+
+### FIX-4 — ★ TEZA ODBIORU CZĘŚCIOWO OBALONA
+
+Odbiór twierdził, że `403` po odebraniu członkostwa przychodzi z
+`server/src/middleware/auth.middleware.ts`, nie z routera partnera. **Pomiar tego
+nie potwierdza.** Ciało odmowy to `{ success:false, code }` **bez** pola `error`,
+czyli `requireActiveMembership`
+(`server/src/services/legacyCutover/requireActiveMembership.ts:35`) wewnątrz
+routera partnera; `validateOrgMembership` odpowiada kształtem `{ error, code }`.
+
+Prawdziwy powód, dla którego usunięcie `partner.routes.ts:272` nie zapalało `N6`,
+to **redundancja**: ta sama ściana stoi też na łapaczu `router.use` w
+`partner.routes.ts:213`.
+
+| Mutacja                                                    | `MEMBER` | `N6`     | `N6b`                                |
+| ---------------------------------------------------------- | -------- | -------- | ------------------------------------ |
+| tylko `:272` (`requirePartnerEconomicsReadAccess` → puste) | CZERWONY | zielony  | zielony                              |
+| tylko `:213` (łapacz bez `requireActiveMembership`)        | zielony  | zielony  | zielony                              |
+| `:272` **oraz** `:213`                                     | CZERWONY | CZERWONY | CZERWONY (`200` na pięciu odczytach) |
+
+Rozstrzygnięcie: `N6` **przemianowany** na to, co realnie dowodzi, z asercją
+kształtu ciała (przypisanie warstwy), z własnym pryncypałem (odporność na
+kolejność) — oraz **dodany `N6b`**, który rozgrzewa 60-sekundowy cache
+`validateOrgMembership` (`auth.middleware.ts:1662`) legalnym odczytem `200`,
+dopiero potem odbiera członkostwo. Nie przemianowałem testu „w bok": rozdzieliłem
+twierdzenie od dowodu.
+
+**ZNALEZISKO DLA DYŻURU 37 (bramka kontekstu organizacji):** po usunięciu **obu**
+ścian routera odczyty pieniędzy odpowiadają `200` przy odebranym członkostwie.
+Żadna bramka platformowa nie chroni `/api/v8/partner` — cała gwarancja opiera się
+na middleware tego jednego routera.
+
+### FIX-5 — D.5 wykonane, STOP wycofany
+
+Wykonane wyłącznie w `server/src/routes/v8/partner.routes.ts` (plik objęty
+licencją), addytywnie, bez zmiany żadnego istniejącego pola i bez zmiany żadnego
+statusu:
+
+| Trasa / grupa               | `dataFidelity` | Powód (mechanizm)                                                                                                  |
+| --------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------ |
+| 4 kikuty `503` (`:149-176`) | `unavailable`  | brak polecenia biznesowego dla danej `capability`                                                                  |
+| `GET /program/status`       | `synthesized`  | runtime materializowany na odczycie przez `getOrCreateRuntime`; przy `degraded` doklejany powód zerowego snapshotu |
+| `GET /referral-tools`       | `synthesized`  | kod, slug i QR wyprowadzone z NAZWY organizacji przez `ensurePartnerReferralIdentity`                              |
+| pozostałe odczyty realne    | `real`         | przez `partnerReadMeta` / `partnerProgramMeta`                                                                     |
+| **`410 ODMOWA`**            | **brak pola**  | **koperta polityki NIETKNIĘTA**                                                                                    |
+
+`GET /referral-tools` deklaruje `synthesized` na **każdej** gałęzi, bo synteza
+zachodzi w serwisie (`partnerReferralService.ts:574`), a nie tylko w fallbackach
+trasy — gałąź, która się wykonała, nie jest dla wołacza obserwowalna.
+Rozróżnienie „zsyntetyzowane teraz" od „zsyntetyzowane wcześniej i utrwalone"
+wymagałoby dodatkowego odczytu kolumn tożsamości, czyli zmiany zachowania, a nie
+addytywnego pola `meta` — dlatego tego nie zrobiono (decyzja jawna, nie zgadywana).
+
+Dowód nienaruszenia koperty `410`: test `D.5-4` sprawdza dokładny zestaw kluczy
+najwyższego poziomu (`code, decision, message, operation, policyUnavailable,
+success`), brak `meta`, plus `D.5-4b` statycznie dowodzi, że wspólny builder
+`partnerEconomicsPolicyBody()` nigdy nie dostał pola `dataFidelity`.
+
+Dowód niezłamania konsumenta: `src/services/api/v8/client.ts:21` (`v8Get`) zwraca
+`json.data` i **odrzuca `meta` w całości**, więc żadna z 28 metod klienta
+partnera nie widzi dodanego pola. Ścieżka błędu czyta `data.code`
+(`src/services/api/v8/partner.ts:376`), które pozostało bez zmian.
+
+**★ WĄSKI STOP — jedna trasa.** `meta.dataFidelity: 'real'` należy się też
+`getPartnerConnectionHandler`, ale zastany
+`tests/integration/partners/partner-connection-handler.day12.test.ts:45`
+asercjonuje tę kopertę dokładnie (`toHaveBeenCalledWith`), a licencja dnia 42 dla
+`tests/integration/partners/**` obejmuje **wyłącznie nowe pliki**. Dodanie pola
+bez licencji na edycję tej asercji świadomie zaczerwieniłoby zielony zastany test,
+a osłabienie go zabrania `Z24`. Zostawione nietknięte, z komentarzem w kodzie.
+Potrzebna licencja: jedna linia w trasie + jedna linia w tej asercji.
+
+Parytet i18n: `dataFidelityReason` jest łańcuchem maszynowym cytującym mechanizm
+(wymóg `§D.5` pkt 4), a nie napisem UI — spójnie z istniejącymi `message`
+w tym routerze. Copy PL/EN dla użytkownika należy do dyżuru frontowego (`§D.9`).
+
+### FIX-6 — rejestr modułu
+
+`docs/…/modules/16_PARTNER/MODULE_ACCEPTANCE.md` dostał jawne sprostowanie:
+zdanie „8/8 … nie znaleziono P0" wyprzedzało dowód, bo te 8/8 współistniało
+z żywym IDOR-em. Wpisany stan po naprawach i zawężenie twierdzenia o braku `P0`
+do faktycznie zmierzonych powierzchni. Bramka modułu bez zmian.
+
+### FIX-7 — higiena
+
+**Prefiksy commitów — sprostowanie.** `9f8f49aebe` i `5104d6c328` niosą prefiks
+`fix(partner)`, który sugeruje naprawę produkcyjną. Faktyczna zawartość:
+
+| Commit       | Prefiks w historii | Co realnie zawiera                                                             |
+| ------------ | ------------------ | ------------------------------------------------------------------------------ |
+| `9f8f49aebe` | `fix(partner)`     | **wyłącznie** nowy test integracyjny + komentarz mountu; zero zmian zachowania |
+| `5104d6c328` | `fix(partner)`     | **wyłącznie** komentarze w routerze + przypadki testowe; zero zmian zachowania |
+
+Historii nie przepisujemy — poprawny opis jest tutaj. Poprawny prefiks brzmiałby
+`test(partner)` / `docs(partner)`.
+
+**Zmienna środowiskowa.** `afterAll` zostawiał globalnie
+`ENABLE_V8_GLOBAL='true'` dla wszystkich plików uruchamianych później w tym samym
+workerze. Wartość wejściowa jest teraz zapamiętywana i przywracana dokładnie,
+łącznie z przypadkiem „w ogóle nie była ustawiona".
+
+**Przebieg całego katalogu.** Sąsiedzi z `tests/integration/partners` są
+destrukcyjni: `m16-final-repair.realdb.test.ts:43` kasuje `organizations`,
+`users`, `projects`, `partner_payouts`, `partner_program_ledger` `CASCADE`
+i odtwarza `organizations` jako `(id text, name text, plan text)` — bez kolumny
+`status`; `partner-accrual-payout-atomic.realdb.test.ts:21` odtwarza
+`partner_organizations` jako `(id uuid, payout_method text)`. Stąd
+`column "status" of relation "organizations" does not exist` w `beforeAll`
+i `operator does not exist: uuid = text` w sprzątaniu.
+
+Nowy `tests/integration/partners/day42SchemaResilience.ts` addytywnie
+i idempotentnie odtwarza **tylko** kolumny zapisywane przez fikstury dnia 42
+(`ADD COLUMN IF NOT EXISTS`, nigdy `DROP`/`ALTER TYPE`, wyłącznie na bazie
+`cx_day42`), a gdy tabeli brakuje w całości — przerywa nazwanym błędem
+`DAY42_PRECONDITION_SCHEMA_DAMAGED` wskazującym sąsiada. Sprzątanie porównuje
+`partner_org_id::text`, co działa niezależnie od typu kolumny.
+
+| Przebieg `tests/integration/partners` (cały katalog, świeża baza) | Pliki dnia 42                                                                                                                       |
+| ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| przed FIX-7                                                       | **3/3 CZERWONE** (`beforeAll`), katalog: `12 failed \| 11 passed \| 2 skipped` (25 plików), `14 failed \| 190 passed \| 84 skipped` |
+| po FIX-7, przebieg 1                                              | **0 FAIL**, katalog: `8 failed \| 15 passed \| 2 skipped`, `9 failed \| 191 passed \| 88 skipped`                                   |
+| po FIX-7, przebieg 2                                              | **0 FAIL**, katalog: `8 failed \| 15 passed \| 2 skipped`, `15 failed \| 185 passed \| 88 skipped`                                  |
+
+Zmienność liczb sąsiadów jest ich własną, zastaną niestabilnością (współdzielona
+baza, destrukcyjne `DROP`), nie skutkiem tych zmian: żaden zastany test nie był
+edytowany ani osłabiony, a dwa pliki sąsiadów wręcz przestały padać.
+
+### Mianownik testów po naprawach
+
+| Plik                                                    | Przed             | Po                       |
+| ------------------------------------------------------- | ----------------- | ------------------------ |
+| `partner-tenant-isolation.day42.realpg.test.ts`         | 8/8 (z `retry`)   | **11/11 przy `retry=0`** |
+| `partner-portal-gate-diagnosis.day42.realpg.test.ts`    | 12/12 (z `retry`) | **12/12 przy `retry=0`** |
+| `partner-envelope-fidelity.day42.realpg.test.ts` (nowy) | —                 | **5/5 przy `retry=0`**   |
+| razem                                                   | 20                | **28/28**                |
+
+### TWIERDZENIA NIEZWERYFIKOWANE (po naprawach)
+
+1. **Brak dowodu przeglądarkowego i akceptu właściciela.** Bramka modułu
+   pozostaje `TECHNICAL_BROWSER_PASS / OWNER_PENDING / ECONOMICS_OFF`.
+2. **Brak `P0` dotyczy wyłącznie zmierzonych powierzchni**: pięciu kanonicznych
+   odczytów pieniędzy V8, `DELETE /campaign-links/:id`, `PUT /organization`
+   i legacy `GET /api/partners/earnings`. Pozostałe z 35 tras nie były testowane
+   pod kątem izolacji.
+3. **Nie wykonano pomiaru `Z24` całego repozytorium** po tych naprawach — mierzony
+   był katalog `tests/integration/partners` oraz trzy pliki dnia 42. Wpływ
+   `meta.dataFidelity` na testy spoza tego katalogu nie został zmierzony; jedyny
+   znany konsument zastany (`partner-connection-handler.day12.test.ts`) jest
+   zielony i celowo nietknięty.
+4. **Nie zmierzono ani nie naprawiono globalnego `retry`** w `vitest.config.ts` —
+   inne suity bezpieczeństwa w repozytorium mogą mieć ten sam defekt. To jest
+   przedmiotem osobnego śledztwa.
+5. **Odporność na sąsiadów ma granicę.** Naprawa odtwarza kolumny i nazywa
+   przyczynę; jeżeli destrukcyjny sąsiad usunie tabelę **w trakcie** przebiegu
+   dnia 42, żaden mechanizm wewnątrz pliku tego nie uratuje.
+6. **`N7` (legacy) nie był ponownie badany mutacyjnie** — pozostaje w kształcie
+   z dyżuru, jako udokumentowany fakt, nie jako gwarancja.
+7. **Nie zweryfikowano żadnego środowiska wdrożeniowego.** Zdanie dla dnia 38
+   pozostaje kontraktem bez kontaktu z infrastrukturą.
