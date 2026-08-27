@@ -110,7 +110,7 @@ describeReal('Day 42 Partner portal global-gate diagnosis through the real ApiGa
     await sql.end();
   });
 
-  it('returns the pre-authentication 404 V8_DISABLED on representative partner routes when the env flag is absent', async () => {
+  it('D.3 returns the pre-authentication 404 V8_DISABLED on representative partner routes when the env flag is absent', async () => {
     delete process.env.ENABLE_V8_GLOBAL;
     const probes: Array<{ method: 'get' | 'post' | 'put'; path: string }> = [
       { method: 'get', path: '/api/v8/partner/connection' },
@@ -166,7 +166,7 @@ describeReal('Day 42 Partner portal global-gate diagnosis through the real ApiGa
     expect(after.rows).toEqual(before.rows);
   });
 
-  it('proves the partner mount bypasses the org-level V8 flag while remaining behind the global gate', async () => {
+  it('D.3 proves the partner mount bypasses the org-level V8 flag while remaining behind the global gate', async () => {
     process.env.ENABLE_V8_GLOBAL = 'true';
     const response = await request(app)
       .get('/api/v8/partner/connection')

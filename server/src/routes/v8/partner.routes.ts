@@ -115,26 +115,26 @@ async function getBoundPartnerOrgId(req: AuthRequest): Promise<string | null> {
 }
 
 // AMD-PRT-ECONOMICS-002: economic mutations are refused here, as the FIRST
-// middleware on this router. Placement is load-bearing: the demo-dataset
-// middleware below performs writes (seeding), so guarding after it would let a
-// policy-denied request mutate the database before being refused.
+// middleware on this router. Placement is load-bearing: later handlers can
+// perform writes, so a policy-denied request must be refused before reaching
+// any of them. This V8 router has no request-time demo seeder.
 router.use(createPartnerEconomicsPolicyGuard(V8_PARTNER_ECONOMIC_WRITERS, 'v8_partner'));
 router.use(requireExactPartnerTenantContext);
 
-// Certification mutations must fail closed before the shared partner demo
-// seeder below can perform any write. Route-level membership checks remain as
-// defence in depth, but this ordering is what makes revoked requests no-write.
+// Certification mutations must fail closed before any route handler can write.
+// Route-level membership checks remain as defence in depth, but this ordering
+// is what makes revoked requests no-write.
 router.use(
   /^\/certifications\/[^/]+\/(?:modules\/[^/]+\/progress|exam\/(?:start|submit))\/?$/,
   requireActiveMembership
 );
 
 // Self-connect acquires Partner capability, so live tenant membership and an
-// ADMIN/OWNER role must be established before any resolver/seeder can write.
+// ADMIN/OWNER role must be established before the connection handler can write.
 router.use('/connect', requireActiveMembership, requireOrgRole('admin'));
 
 // Every real V8 successor for PRT-W01..W08 and PRT-W13..W15 must prove the
-// exact tenant-to-Partner binding before the shared demo seeder can write.
+// exact tenant-to-Partner binding before any matching handler can write.
 // Historical owner_organization_id=NULL rows intentionally fail this guard.
 router.use(
   /^(?:\/payouts\/request|\/campaign-links(?:\/[^/]+)?|\/organization(?:\/specializations|\/regions|\/listing)?|\/payout-settings|\/certifications\/[^/]+\/(?:modules\/[^/]+\/progress|exam\/(?:start|submit)))\/?$/,
@@ -144,8 +144,8 @@ router.use(
 
 // These four legacy endpoints were deliberate no-write 503 stubs. Their V8
 // successors preserve that honest contract until the corresponding business
-// commands are approved. They are registered before the demo seeder so even an
-// authorized request cannot mutate Partner demo data on its way to a refusal.
+// commands are approved. They return before any later matching handler, so an
+// authorized request cannot mutate Partner data on its way to a refusal.
 router.post(
   '/clients',
   requireActiveMembership,

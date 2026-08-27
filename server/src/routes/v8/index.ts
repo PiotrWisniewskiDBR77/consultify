@@ -77,9 +77,10 @@ v8Router.use(
   agentOperationsBootstrapRouter
 );
 
-// Partner Portal has its own partner-org authorization boundary. Keep the V8
-// partner bridge available even when the tenant-wide V8 flag is disabled, so
-// partner reads do not degrade to 404 before partner scope can be resolved.
+// Partner Portal has its own partner-org authorization boundary. This mount is
+// intentionally before the org-level `v8OrgGate` below, but the whole `/api/v8`
+// router is still behind the global gate in `Gateway.ts`. With
+// `ENABLE_V8_GLOBAL` unset, Partner requests therefore return 404 V8_DISABLED.
 v8Router.use('/partner', attachV8Context, v8MetricsMiddleware, mutationAbortCanary, partnerRoutes);
 
 // Non-admin routes require org-level V8 enablement
