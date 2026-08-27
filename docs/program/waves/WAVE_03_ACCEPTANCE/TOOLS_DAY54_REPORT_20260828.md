@@ -363,3 +363,13 @@ Po testach usunięto wyłącznie dedykowany kontener `cx-day54-pg`; końcowy
 1. Przyjąć od właściciela konkretną listę typów oraz potwierdzenie pakietów i praw.
 2. Dopiero w osobnym, autoryzowanym dyżurze zmienić katalog i mosty tych typów.
 3. Nie usuwać `toolAvailability.ts` przed pisemnym wyborem docelowego katalogu.
+
+## KOREKTA ODBIORU ADWERSARYJNEGO (nadzorca, 2026-08-28)
+
+Tabela zbiorcza A.2 (sekcja „Pozycje — tabela zbiorcza") sugeruje trzy
+zamknięte połyki. Stan faktyczny z odbioru: DWIE naprawy dowiedzione
+mutacyjnie (brak tabeli → 503; brak helpera → 503, przy czym ta ścieżka jest
+osiągalna wyłącznie w harnessie, bo `withRawPgTransaction` jest bezwarunkowym
+eksportem), a `PROMOTION_LEDGER_UPDATE_MISSED` to strażnik w martwej gałęzi
+bez żadnego testu (jedyne wystąpienie w repo: kod produkcyjny
+`ToolController.ts:2962`).
