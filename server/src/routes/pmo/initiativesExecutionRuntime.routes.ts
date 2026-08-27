@@ -792,7 +792,7 @@ const SignalIngestSchema = z.object({
   evidenceRef: z.string().min(1),
 });
 const ExecutionBudgetEntrySchema = z.object({
-  expectedVersion: z.literal(0),
+  expectedVersion: z.number().int().min(0),
   clientRequestId: z.string().min(1),
   entryType: z.string().min(1),
   costType: z.string().min(1),
@@ -805,7 +805,7 @@ const ExecutionBudgetEntrySchema = z.object({
   source: z.string().min(1),
 });
 const ExecutionRealizationSchema = z.object({
-  expectedVersion: z.literal(0),
+  expectedVersion: z.number().int().min(0),
   clientRequestId: z.string().min(1),
   periodMonth: z.string().regex(/^\d{4}-\d{2}$/),
   realizedRevenueDelta: z.number().finite().nullable().default(null),
@@ -814,7 +814,7 @@ const ExecutionRealizationSchema = z.object({
   varianceNotes: z.string().nullable().default(null),
 });
 const RaidMitigationSchema = z.object({
-  expectedVersion: z.literal(0),
+  expectedVersion: z.number().int().min(0),
   clientRequestId: z.string().min(1),
   mitigationPlan: z.string().min(1),
   responseStrategy: z.string().min(1),
@@ -823,7 +823,7 @@ const RaidMitigationSchema = z.object({
   mitigationStatus: z.string().min(1),
 });
 const ManagerExecutionActionSchema = z.object({
-  expectedVersion: z.literal(0),
+  expectedVersion: z.number().int().min(0),
   clientRequestId: z.string().min(1),
   laneId: z.string().min(1),
   problemId: z.string().min(1),
@@ -831,7 +831,7 @@ const ManagerExecutionActionSchema = z.object({
   rationale: z.string().nullable().default(null),
 });
 const ManagerSuggestionReviewSchema = z.object({
-  expectedVersion: z.literal(0),
+  expectedVersion: z.number().int().min(0),
   clientRequestId: z.string().min(1),
   laneId: z.string().min(1),
   outcome: z.enum(['APPROVE', 'DEFER']),

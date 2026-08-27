@@ -812,4 +812,128 @@ describe.skipIf(!REAL_PG)('Day 31 canonical writer mounted contract', () => {
       expect(readback.rows).toEqual([{ states: 1, audits: 1 }]);
     }
   });
+
+  it('updates every execution control aggregate from version one to version two', async () => {
+    const commands = [
+      {
+        aggregateType: 'execution_budget_entry',
+        id: `update-budget-${tag}`,
+        path: (id: string) =>
+          `/api/initiatives/runtime-v1/initiatives/${initiativeId}/budget-entries/${id}`,
+        initial: {
+          entryType: 'PLANNED',
+          costType: 'OPEX',
+          category: 'initial',
+          amount: 1,
+          currency: 'PLN',
+          description: null,
+          periodMonth: 8,
+          periodYear: 2026,
+          source: 'MANUAL',
+        },
+        changed: { category: 'changed' },
+        changedField: 'category',
+      },
+      {
+        aggregateType: 'execution_realization',
+        id: `update-realization-${tag}`,
+        path: (id: string) =>
+          `/api/initiatives/runtime-v1/initiatives/${initiativeId}/realizations/${id}`,
+        initial: {
+          periodMonth: '2026-08',
+          realizedRevenueDelta: 1,
+          realizedCostDelta: null,
+          realizedSavings: null,
+          varianceNotes: 'initial',
+        },
+        changed: { varianceNotes: 'changed' },
+        changedField: 'varianceNotes',
+      },
+      {
+        aggregateType: 'raid_mitigation',
+        id: `update-raid-${tag}`,
+        path: (id: string) =>
+          `/api/initiatives/runtime-v1/initiatives/${initiativeId}/raid-mitigations/${id}`,
+        initial: {
+          mitigationPlan: 'initial',
+          responseStrategy: 'MITIGATE',
+          mitigationOwnerId: userId,
+          mitigationDueDate: null,
+          mitigationStatus: 'PLANNED',
+        },
+        changed: { mitigationPlan: 'changed' },
+        changedField: 'mitigationPlan',
+      },
+      {
+        aggregateType: 'manager_execution_action',
+        id: `update-manager-${tag}`,
+        path: (id: string) =>
+          `/api/initiatives/runtime-v1/initiatives/${initiativeId}/manager-actions/${id}`,
+        initial: {
+          laneId: 'blocked',
+          problemId: `update-problem-${tag}`,
+          actionId: 'initial',
+          rationale: null,
+        },
+        changed: { actionId: 'changed' },
+        changedField: 'actionId',
+      },
+      {
+        aggregateType: 'manager_suggestion_review',
+        id: `update-suggestion-${tag}`,
+        path: (id: string) =>
+          `/api/initiatives/runtime-v1/initiatives/${initiativeId}/manager-suggestions/${id}/review`,
+        initial: { laneId: 'blocked', outcome: 'DEFER', notes: 'initial' },
+        changed: { notes: 'changed' },
+        changedField: 'notes',
+      },
+    ];
+
+    for (const command of commands) {
+      const created = await request(app)
+        .post(command.path(command.id))
+        .set(auth())
+        .send({
+          expectedVersion: 0,
+          clientRequestId: `update-create-${command.aggregateType}-${tag}`,
+          ...command.initial,
+        });
+      expect(created.status, JSON.stringify(created.body)).toBe(201);
+      const updated = await request(app)
+        .post(command.path(command.id))
+        .set(auth())
+        .send({
+          expectedVersion: 1,
+          clientRequestId: `update-change-${command.aggregateType}-${tag}`,
+          ...command.initial,
+          ...command.changed,
+        });
+      expect(updated.status, JSON.stringify(updated.body)).toBe(201);
+      const stale = await request(app)
+        .post(command.path(command.id))
+        .set(auth())
+        .send({
+          expectedVersion: 0,
+          clientRequestId: `update-stale-${command.aggregateType}-${tag}`,
+          ...command.initial,
+        });
+      expect(stale.status).toBe(409);
+      const invalid = await request(app)
+        .post(command.path(`${command.id}-invalid`))
+        .set(auth())
+        .send({
+          expectedVersion: -1,
+          clientRequestId: `update-invalid-${command.aggregateType}-${tag}`,
+          ...command.initial,
+        });
+      expect(invalid.status).toBe(400);
+      const readback = await client.query(
+        `SELECT version,payload_json FROM ie_aggregate_state
+          WHERE organization_id=$1 AND aggregate_type=$2 AND aggregate_id=$3`,
+        [organizationId, command.aggregateType, command.id]
+      );
+      expect(readback.rows[0].version).toBe(2);
+      expect(readback.rows[0].payload_json[command.changedField]).toBe('changed');
+    }
+  });
 });
