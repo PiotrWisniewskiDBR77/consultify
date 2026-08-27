@@ -221,6 +221,30 @@ Pięć kształtów fałszywego gotowe — A.2: wołający TAK (realny Gateway); 
 
 Werdykt §A.2: `ZROBIONE_WG_DoD` dla DROGI B. Niezrealizowane unieważnienie istniejących access tokenów pozostaje nazwanym czerwonym kontraktem, a produkt przestał składać fałszywą obietnicę.
 
+## §A.3 — martwe ekrany hasła
+
+Werdykt i wykonanie:
+
+| plik                                   | werdykt                                                                                                 | wykonanie                                                    |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `PasswordSecuritySettings.tsx`         | `USUNĄĆ` — martwy duplikat żywego `AuthenticationAccessPage`                                            | usunięty razem z `PasswordSecuritySettings.honesty.test.tsx` |
+| `PasswordSettings.tsx`                 | `USUNĄĆ` — martwy duplikat                                                                              | usunięty; brak testu                                         |
+| `SecuritySettings.tsx`                 | `USUNĄĆ` — martwy duplikat                                                                              | usunięty razem z `SecuritySettings.test.tsx`                 |
+| `SecurityOverviewSettings.tsx`         | `USUNĄĆ` — zero importerów, żywy odpowiednik `SecurityOverviewPage`/`AuthenticationAccessPage`          | usunięty; brak testu                                         |
+| `src/views/settings/ProfileModule.tsx` | `USUNĄĆ` — martwy importer martwych ekranów; żywy profil jest obsługiwany bezpośrednio w `SettingsView` | usunięty; brak testu                                         |
+
+Barrele `src/components/settings/index.ts` i `security/index.ts` nie eksportowały tych pięciu plików; po usunięciu `rg` nie znalazł żadnych pozostałych referencji. BFS po zmianie: `46 LIVE / 108 ORPHAN`, czyli dokładny spadek `113 → 108` odpowiada pięciu usuniętym kandydatom i nie osierocił nowego pliku.
+
+Adresy 13 sekcji bez pozycji menu zostały zmierzone testem `day55-direct-section-aliases.test.ts`: `13 PASS`. Każdy `/settings/<sekcja>` zachowuje identyfikator w `normalizeSettingsSectionFromPath` i ma imienny `case` w `SettingsView`; aliasy `password/mfa/recovery/sessions/login-history/sessions-activity` prowadzą do żywego `AuthenticationAccessPage`. Jest to dowód kontraktu routingu na poziomie klienta; pełnego wpisania adresu w produkcyjnym browser runtime jeszcze nie wykonano i nie przedstawiam tego jako dowodu wizualnego.
+
+Zrzuty żywego ekranu `auth-access`: te same dwa artefakty z §A.2, sprawdzone wzrokiem w jasnym i ciemnym motywie; formularz zmiany hasła jest widoczny i rozwinięty.
+
+Pomiar zasięgu klienta po usunięciu: 200 testów, `200 PASS / 0 FAIL / 0 SKIPPED`; porównanie po nazwach wobec (a) wykazało 5 nazw usuniętych: cztery asercje dwóch usuniętych plików testowych oraz zastany czerwony przypadek `RecoveryOptionsSettings`, który w tym przebiegu przeszedł. Jedna nazwa została dodana względem listy bazowej wskutek zmiany statusu tego samego Recovery testu z `failed` na `passed`; nie jest to nowy przypadek. Artefakty: `a3-removed-test-names.txt`, `a3-added-test-names.txt`.
+
+`scripts/check-list-canon.sh`: brak nowych naruszeń (`394`, baseline `394`). Pięć kształtów fałszywego gotowe — A.3: osiągalność mierzona BFS TAK; testy martwych plików usunięte TAK; zakres bez SKIP TAK; zapis/konsument NIE DOTYCZY; grep nie służy jako dowód działania, a jedynie brak referencji TAK.
+
+Werdykt §A.3: `CZĘŚCIOWO` — bezsporne martwe duplikaty i ich testy usunięto, ale bezpośrednich adresów nie potwierdzono jeszcze pełnym browser runtime.
+
 ## Pomiar zasięgu testów
 
 - (a) z pełnym env: serwer 79 testów (`77 PASS`, `2 SKIPPED`, 0 asercji FAIL; pakiety PG nie wykonały przypadków), klient 204 (`203 PASS`, `1 FAIL`).
