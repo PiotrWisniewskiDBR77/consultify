@@ -244,7 +244,27 @@ $ git diff --name-only 3e707a9d3c...HEAD -- server/migrations/
   właściciela. Pozostaje w historii gita, więc usunięcie z pliku nie wystarcza.
   Czyszczenie historii nie należy do tego dyżuru i wymaga osobnej decyzji.
 
-Procedura odbioru (poprawiona):
+★★ SPROSTOWANIE (druga runda FIX, 2026-08-28) — PONIŻSZA PROCEDURA JEST BŁĘDNA
+
+Poniższe kroki 1-3 każą porównać `DB_IDENTITY role=migration` z
+`DB_IDENTITY role=app`. **Te dwie linie zawsze były identyczne.** Bramka
+migracji chodzi jako `preDeployCommand` w TEJ SAMEJ usłudze co aplikacja
+(`railway.json:13`), więc czyta te same zmienne; obie „strony" liczyły jedno
+wyrażenie dwa razy (`resolveReachableDatabaseUrl` z `DATABASE_URL`/
+`DATABASE_PUBLIC_URL`). Pomiar na realnych modułach: rozjazd wstrzyknięty
+w `DATABASE_PUBLIC_URL`, w `DB_HOST` oraz osobny URL migracji — za każdym
+razem `match: true`. Wiersz „różne wartości → ROZJAZD" opisywał zdarzenie,
+które w tym kodzie nie mogło nastąpić.
+
+Check został **usunięty** z `server/scripts/release-migration-gate.ts` wraz
+z linią `appIdentityMatches=true`. Bramka mówi teraz w logu wprost, że
+rozjazdu wykryć nie może.
+
+**Obowiązująca procedura:** `docs/operations/RUNBOOK_ROZJAZD_BAZ_RAILWAY_PL.md`
+— KROK 4 służy tylko do odczytania, jakiej bazy użyto; jedynym dowodem
+działania bezpiecznika jest KROK 6 (test na sucho na sekrecie GitHuba).
+
+Procedura odbioru (BŁĘDNA — zachowana jako zapis stanu z pierwszej rundy):
 
 1. znajdź w logu deployu linię `DB_IDENTITY role=migration ...`
 2. znajdź linię `DB_IDENTITY role=app ...`

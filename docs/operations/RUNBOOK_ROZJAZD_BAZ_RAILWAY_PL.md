@@ -13,13 +13,32 @@ zawartość bezwartościowa.
 
 ## Co się zmieniło w kodzie
 
-Bezpiecznik porównuje teraz **dwie niezależne rzeczy**:
+Bezpiecznik porównuje **dwie niezależne rzeczy**:
 
 - do jakiej bazy łączy się **migracja**,
 - do jakiej bazy łączy się **aplikacja**.
 
 Wcześniej porównywał jedną i tę samą etykietę wpisaną ręcznie — takie
 porównanie zawsze wypadało zgodnie i niczego nie wykrywało.
+
+### ★ GDZIE ten bezpiecznik naprawdę jest (to jest sedno)
+
+Rozjazd da się zobaczyć **tylko z zewnątrz obu usług** — tam, gdzie istnieją
+dwie osobno podane wartości. Takie miejsce jest jedno:
+
+> **GitHub Actions**, skrypt `scripts/validate-deploy-target.sh`, porównujący
+> sekrety `..._APP_DATABASE_URL` i `..._MIGRATION_DATABASE_URL`.
+
+**W środku wdrożenia (Railway) rozjazdu wykryć się NIE DA.** Bramka migracji
+uruchamia się jako `preDeployCommand` w **tej samej usłudze co aplikacja**,
+więc czyta **te same zmienne** co aplikacja. Cokolwiek by tam porównała,
+porówna jedną wartość ze sobą samą i zawsze wyjdzie „zgadza się".
+
+Dwie poprzednie wersje kodu robiły dokładnie to (raz przez `DB_TARGET_LABEL`,
+raz przez ponowne policzenie tej samej zmiennej) i wypisywały do logu
+zielone `appIdentityMatches=true`. Zostało to **usunięte** — „nie wiem" jest
+uczciwsze niż fałszywe „zgadza się". Bramka migracji mówi to teraz wprost
+w logu wdrożenia, linią zaczynającą się od `[release-gate] NOTE:`.
 
 Bezpiecznik jest **domyślnie WYŁĄCZONY** (tryb ostrzegawczy). Dopóki go nie
 uzbroisz, wdrożenia działają normalnie, a w logu GitHub Actions pojawia się
@@ -92,7 +111,12 @@ Idź: **GitHub → repozytorium → Settings → Secrets and variables → Actio
 
 | Nazwa | Wartość |
 | --- | --- |
-| `STAGING_DB_HOST_FINGERPRINT` | kawałek nazwy hosta z kroku 1.3, np. `sakura` |
+| `STAGING_DB_HOST_FINGERPRINT` | kawałek nazwy **hosta** z kroku 1.3, np. `sakura` |
+
+★ **NIE wpisuj tu `railway`.** To jest nazwa BAZY, taka sama we wszystkich
+trzech bazach — nie odróżnia niczego. Bezpiecznik od teraz taką wartość
+odrzuca i mówi o tym wprost, zamiast ją po cichu przyjąć (wcześniej `railway`
+przepuszczało dowolny host). Wpisz słowo między `@` a `.proxy`.
 
 **Jeszcze NIE wpisuj** `DEPLOY_TARGET_GUARD_ENFORCE`. To krok 5.
 
@@ -116,37 +140,48 @@ Opcjonalnie, dla czytelności logów, możesz dodać `DB_TARGET_LABEL` (np.
 
 ---
 
-## KROK 4. Zrób jedno zwykłe wdrożenie i sprawdź logi
+## KROK 4. Zrób jedno zwykłe wdrożenie i zapisz, jakiej bazy użyło
 
-Wdróż normalnie (push na `develop` / zwykły deploy demo).
+★ **Uwaga: ten krok NICZEGO nie dowodzi o rozjeździe.** Poprzednia wersja tej
+instrukcji kazała porównać dwie linie z logu i uznać zgodność za dowód. Te
+linie pochodzą z jednej i tej samej zmiennej środowiskowej, więc **zawsze**
+były identyczne — wiersz „wartości różne = rozjazd" opisywał zdarzenie, które
+nie mogło nastąpić. Wykonanie tego kroku dawało fałszywe poczucie, że coś
+zostało sprawdzone. Dowodem jest **wyłącznie KROK 6.**
 
-W logu wdrożenia znajdź **dwie linie** zaczynające się od `DB_IDENTITY`:
+Ten krok robisz po to, żeby **zobaczyć na oczy, jakiej bazy wdrożenie
+naprawdę użyło** — i porównać ją z tym, co odczytałeś w KROKU 1.
+
+Wdróż normalnie (push na `develop` / zwykły deploy demo). W logu wdrożenia
+znajdź linię:
 
 ```
 DB_IDENTITY role=migration identity=sakura.proxy.rlwy.net:41234/railway ...
-DB_IDENTITY role=app       identity=sakura.proxy.rlwy.net:41234/railway ...
 ```
-
-Czytasz tylko pole `identity=`:
 
 | Co widzisz | Co to znaczy | Co robisz |
 | --- | --- | --- |
-| obie wartości **identyczne** | wszystko dobrze | idź do kroku 5 |
-| wartości **różne** | to jest rozjazd DEC-165 | wdrożenie samo się zatrzymało; napraw `DATABASE_URL` tak, żeby obie usługi wskazywały tę samą bazę, i wróć do kroku 1 |
-| `identity=unresolved` | ta strona nie umie ustalić bazy | sprawdź, czy `DATABASE_URL` nie jest puste albo nie zawiera nierozwiniętego `${{...}}` |
-| brak którejś linii | ta strona chodzi na starym buildzie | wdróż ponownie z aktualnego kodu |
+| `identity=` zgadza się z adresem z KROKU 1 | wdrożenie migrowało bazę, o której myślisz | idź do kroku 5 |
+| `identity=` to **inna** baza niż z KROKU 1 | źle odczytałeś adres albo Railway ma inną zmienną, niż myślisz | wróć do kroku 1 i odczytaj ponownie |
+| `identity=unresolved` | ta strona nie umie ustalić bazy | sprawdź, czy `DATABASE_URL` nie jest puste ani nie zawiera nierozwiniętego `${{...}}` |
+| brak tej linii | usługa chodzi na starym buildzie | wdróż ponownie z aktualnego kodu |
 
-> Te linie są odporne na poziom logowania — pojawią się także na produkcyjnym
-> ustawieniu `LOG_LEVEL`. Nie zawierają hasła ani nazwy użytkownika.
+Obok zobaczysz też linię `[release-gate] NOTE: ...`, w której bramka sama
+pisze, że rozjazdu wykryć nie może i że robi to dopiero GitHub Actions. To
+jest zamierzone, nie błąd.
+
+> Linia `DB_IDENTITY` jest odporna na poziom logowania — pojawi się także na
+> produkcyjnym `LOG_LEVEL`. Nie zawiera hasła ani nazwy użytkownika.
 > **Stara procedura** kazała porównywać pole `dbTarget=` w liniach
 > `RELEASE_MIGRATION_GATE_PASS` i `[Postgres] Config:` — była bezwartościowa
-> i tej pary już nie używamy.
+> i tej pary już nie używamy. Para `role=migration` / `role=app` była
+> bezwartościowa z dokładnie tego samego powodu i też jej nie używamy.
 
 ---
 
 ## KROK 5. Uzbrój bezpiecznik
 
-Dopiero gdy krok 4 pokazał **dwie identyczne** wartości `identity=`:
+Gdy krok 4 pokazał bazę, której się spodziewałeś:
 
 **GitHub → Settings → Secrets and variables → Actions → Variables** →
 „New repository variable":
@@ -160,7 +195,11 @@ zamiast tylko ostrzegać.
 
 ---
 
-## KROK 6. Sprawdź, że bezpiecznik naprawdę działa (test na sucho)
+## KROK 6. ★ JEDYNY PRAWDZIWY DOWÓD — test na sucho
+
+To jest jedyne miejsce w całej procedurze, w którym bezpiecznik jest naprawdę
+sprawdzany. Nie pomijaj go i nie zastępuj go patrzeniem w logi z kroku 4.
+
 
 1. W GitHubie **tymczasowo** zmień secret `STAGING_MIGRATION_DATABASE_URL` na
    adres innej bazy (np. tej z `demo`).
@@ -192,3 +231,20 @@ osobnej zgodzie (E5).
 
 Nie sprawdzono żadnej żywej wartości w Railway ani w GitHubie — ten dokument
 powstał wyłącznie z kodu. Wartości `DATABASE_URL` odczytujesz Ty w kroku 1.
+
+## Czego ten bezpiecznik NIE potrafi
+
+- **Nie wykryje rozjazdu, jeśli nie uzbroisz go w GitHubie** (krok 2 + krok 5).
+  Bez `..._APP_DATABASE_URL` i `..._MIGRATION_DATABASE_URL` nie ma dwóch
+  niezależnych wartości i nie ma czego porównywać — wdrożenie przechodzi
+  z żółtym ostrzeżeniem.
+- **Nie wykryje rozjazdu w środku wdrożenia.** Bramka w Railway czyta
+  środowisko aplikacji i nie ma dostępu do żadnej innej usługi. Mówi o tym
+  wprost w logu.
+- **Nie wykryje sytuacji, w której oba sekrety w GitHubie wskazują tę samą
+  ZŁĄ bazę** — od tego jest przypięcie do hosta (`..._DB_HOST_FINGERPRINT`),
+  i tylko wtedy, gdy wpisałeś tam kawałek nazwy hosta, a nie `railway`.
+- **Nie pilnuje, żeby sekrety w GitHubie nadal odpowiadały temu, co jest
+  w Railway.** Jeśli ktoś zmieni `DATABASE_URL` w panelu Railway i nie
+  zaktualizuje sekretu, bezpiecznik będzie porównywał nieaktualne wartości.
+  Powtórz kroki 1-2 po każdej takiej zmianie.

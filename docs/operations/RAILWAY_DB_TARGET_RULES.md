@@ -97,10 +97,21 @@ table below names the plane that actually feeds each consumer.
 `APP_DATABASE_URL` and `MIGRATION_DATABASE_URL` are connection strings, hence
 secrets. The guard parses host/port/database out of them and never prints the
 value; the tests in `tests/unit/deploy/validate-deploy-target.test.mjs` assert
-that no credential and no `postgresql://` prefix reaches stdout or stderr.
+that no credential and no `postgresql://` prefix reaches stdout or stderr —
+now including passwords that contain `@` and `/`, the two characters on which
+the previous `sed`-based parser leaked the password (and, for `@`, disagreed
+with `new URL()` about where the host begins). Parsing follows `new URL()`:
+authority ends at the first `/`, `?` or `#`; userinfo ends at the LAST `@`
+inside it; host, port and database are validated before anything is emitted,
+so an unparseable string produces no output rather than a printable smear of
+the credentials. A raw `/` in a password is not a valid URL — percent-encode
+it as `%2F`.
+
 Operators who do not want connection strings in CI may instead supply the
 already-derived `APP_DB_IDENTITY` / `MIGRATION_DB_IDENTITY`
-(`host:port/database`).
+(`host[:port]/database`; a missing port is completed to `:5432`, so
+`host/railway` and `host:5432/railway` are the same database and not a false
+alarm). A full connection string pasted into those variables is refused.
 
 `RELEASE_TARGET_DB_HOST_FINGERPRINT` was not set in production in the state
 recorded by `DEC-2026-08-28-165`/`DEC-2026-08-28-172`. Setting it is E5 and
@@ -121,12 +132,28 @@ fingerprint.
   cannot detect a target that changes between the guard run and the deploy.
 - The guard is advisory until `DEPLOY_TARGET_GUARD_ENFORCE` is set. An observed
   divergence blocks in either mode, but missing inputs only warn while unarmed.
-- Confirm the actual deployed target by comparing the two `DB_IDENTITY` lines in
-  the deploy log (`role=migration` from the release gate, `role=app` from the
-  application). Both are printed with `console.log`, so no `LOG_LEVEL` can
-  suppress them; the older `[Postgres] Config:` line goes through winston, whose
-  level defaults to `warn` outside development, and is therefore absent in
-  production.
+- **The in-Railway release gate cannot observe a divergence at all, and no
+  longer claims to.** It runs as `preDeployCommand` inside the application
+  service, so its `process.env` IS the application's environment; any
+  "application identity" it derives is the migration identity computed twice.
+  Two successive attempts shipped that tautology (first via `DB_TARGET_LABEL`,
+  then via `resolveApplicationDatabaseIdentity(process.env)`), and the second
+  printed `appIdentityMatches=true` for every injected divergence. Both are
+  removed; the gate now states the limitation in the deploy log
+  (`[release-gate] NOTE: ...`). `scripts/validate-deploy-target.sh` in GitHub
+  Actions is the only place a divergence is observable, and only when armed.
+- The `DB_IDENTITY` line in the deploy log tells you WHICH database the deploy
+  used — useful, and printed with `console.log` so no `LOG_LEVEL` suppresses it
+  (the older `[Postgres] Config:` line goes through winston, whose level
+  defaults to `warn` outside development, and is absent in production). Do NOT
+  read agreement between a `role=migration` and a `role=app` line as evidence:
+  they come from one environment and agree by construction. The only dry-run
+  proof is step 6 of `docs/operations/RUNBOOK_ROZJAZD_BAZ_RAILWAY_PL.md`.
+- `*_DB_HOST_FINGERPRINT` is matched against the HOST part of the derived
+  identity only. Matching it against the whole `host:port/database` string let
+  the value `railway` — the database name, identical on all three Railway
+  databases — accept any host whatsoever. A fingerprint equal to the database
+  name is now refused outright.
 
 ## Enforced In Code
 
