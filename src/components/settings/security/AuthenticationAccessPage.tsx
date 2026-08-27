@@ -225,7 +225,12 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
     setSavingPassword(true);
     try {
       await Api.changePassword(currentPassword, newPassword);
-      toast.success(t('settings.password.success', 'Password changed successfully'));
+      toast.success(
+        t(
+          'settings.password.success',
+          'Password changed. Other devices will need to sign in again after their current access expires.'
+        )
+      );
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');

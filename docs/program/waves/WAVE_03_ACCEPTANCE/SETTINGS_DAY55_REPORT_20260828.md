@@ -191,6 +191,36 @@ Własny pomiar wykazał dokładnie 22 pliki; pełna lista jest poniżej.
 
 Werdykt §A.1: `ZROBIONE_WG_DoD` w zakresie inwentarza; decyzje produktowe pozostają jawnie oznaczone `DO DECYZJI WŁAŚCICIELA` z brakującą przesłanką.
 
+## §A.2 — zmiana hasła i inne sesje
+
+Wybrana droga: **DROGA B — POWIEDZ PRAWDĘ**. Realny pomiar przez `ApiGateway`, dwa logowania i lokalny PostgreSQL potwierdził tezę instrukcji:
+
+- token T2 przed zmianą: `GET /api/settings/preferences/regional` → `200`;
+- zmiana hasła przez T1: `POST /api/auth/change-password` → `200`;
+- token T2 po zmianie: ten sam GET → `200`;
+- token bieżący T1 po zmianie: `200`;
+- niezależny readback: `revoked_tokens=0`, `refresh_tokens revoked_at IS NOT NULL=2`;
+- błędne obecne hasło → `401` i hash bez zmian;
+- nowe hasło równe obecnemu → `400` i hash bez zmian;
+- poprawna zmiana: hash różny, `bcrypt.compareSync(nowe, hash)=true`;
+- dodatkowe `userId` innego użytkownika w body nie zmienia jego hasła — cel pochodzi wyłącznie z JWT.
+
+Komunikat API nie twierdzi już, że inne sesje zostały wylogowane. Mówi wprost, że unieważniono sesje odświeżania, ale istniejący access token może działać do wygaśnięcia. Ten sam sens ma fallback komunikatu UI. Docelowe zachowanie „T2 → 401, T1 → 200” zapisano jako pominięty czerwony kontrakt `CZERWONY KONTRAKT DYŻURU 55 — patrz §A.2`; jego realizacja wymaga powiązania access-JTI z sesją bieżącą poza bezpiecznie udowodnionym zakresem tej pozycji.
+
+Test: `tests/integration/settings/day55.password-change.realdb.test.ts`; wynik: `4 PASS / 1 SKIPPED / 0 FAIL`, `--retry=0`. Pełny log: `/private/tmp/consultify-settings-day55-artefakty/a2-password-test.txt`.
+
+Z33: pakiet uruchomiono z `RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres ENABLE_V8_GLOBAL=true ENABLE_TEST_AUTH_BYPASS=false RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE=enforce`, jawnym `DATABASE_URL` na `127.0.0.1:5852/cx_day55` i `--retry=0`. Log tożsamości bazy: `DB_IDENTITY ... 127.0.0.1:5852/cx_day55`; żądania przechodzą przez realny `ApiGateway`, bez mockowania `verifyToken` ani członkostwa.
+
+Zrzuty wykonane przeze mnie i sprawdzone wzrokiem:
+
+- jasny: `/private/tmp/consultify-settings-day55-artefakty/settings-auth-access-light.png`, SHA-256 `a691f2aae845c003bc663384926aff087ba2c093b5f044b1640586a268166195`;
+- ciemny: `/private/tmp/consultify-settings-day55-artefakty/settings-auth-access-dark.png`, SHA-256 `5a23253fb204e356f4a547424d3b182d16f9023533a22f94cfdc2c8b9a4b8eb2`;
+- `shot.mjs`: oba przebiegi `OK`, bez raportowanych `KONSOLA-BLEDY` i `SIEC-4XX5XX`.
+
+Pięć kształtów fałszywego gotowe — A.2: wołający TAK (realny Gateway); test nie testuje martwego ekranu TAK (`AuthenticationAccessPage` LIVE); asercje wykonane TAK (4 PASS, 1 jawny kontrakt SKIPPED); skutek zapisu sprawdzony TAK (hash + oba magazyny tokenów); grep nie był dowodem działania TAK (kody HTTP z supertest).
+
+Werdykt §A.2: `ZROBIONE_WG_DoD` dla DROGI B. Niezrealizowane unieważnienie istniejących access tokenów pozostaje nazwanym czerwonym kontraktem, a produkt przestał składać fałszywą obietnicę.
+
 ## Pomiar zasięgu testów
 
 - (a) z pełnym env: serwer 79 testów (`77 PASS`, `2 SKIPPED`, 0 asercji FAIL; pakiety PG nie wykonały przypadków), klient 204 (`203 PASS`, `1 FAIL`).

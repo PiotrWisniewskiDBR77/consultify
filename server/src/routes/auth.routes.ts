@@ -2357,10 +2357,10 @@ router.post(
               // error, which the guard would read as "not suspended".
               // ---------------------------------------------------------------
               if (
-                await isOrganizationSuspended(existingOrg.id, <T,>(
-                  sql: string,
-                  params?: unknown[]
-                ) => dbGet<T>(sql, params, { fallback: false }))
+                await isOrganizationSuspended(
+                  existingOrg.id,
+                  <T>(sql: string, params?: unknown[]) => dbGet<T>(sql, params, { fallback: false })
+                )
               ) {
                 return res.status(403).json(buildOrgSuspendedResponseBody());
               }
@@ -2502,7 +2502,7 @@ router.post(
       return res.json({
         success: true,
         message:
-          'Password changed successfully. All other sessions have been logged out for security.',
+          'Password changed successfully. Refresh sessions on other devices were revoked; an existing access token can remain valid until it expires.',
       });
     } catch (error: unknown) {
       logger.error('[Auth] Change password error:', error);
