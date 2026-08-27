@@ -79,6 +79,8 @@ import { useNavigate } from 'react-router-dom';
 import type { StandardBreadcrumb, StandardCounterChip, TableRow } from '@/components/standard';
 import { Button } from '@/components/ui/primitives';
 import { ROUTES } from '@/routes/routeConfig';
+import { OrganizationApi } from '@/services/api/organizations.api';
+import { useAppStore } from '@/store/useAppStore';
 
 import {
   getResultsDomainPath,
@@ -169,6 +171,32 @@ export const ResultsOkrHub: React.FC = () => {
   const { i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
   const navigate = useNavigate();
+  const currentOrganization = useAppStore((s) => s.currentOrganization);
+  const [memberNameById, setMemberNameById] = useState<Record<string, string>>({});
+  useEffect(() => {
+    if (!currentOrganization?.id) return;
+    let cancelled = false;
+    OrganizationApi.getOrganizationMembers(currentOrganization.id)
+      .then((members) => {
+        if (cancelled) return;
+        const names: Record<string, string> = {};
+        members.forEach((member) => {
+          const label = (member.name && member.name.trim()) || member.email || member.userId;
+          if (label) names[member.userId] = label;
+        });
+        setMemberNameById(names);
+      })
+      .catch(() => {
+        if (!cancelled) setMemberNameById({});
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [currentOrganization?.id]);
+  const resolveMemberName = useCallback(
+    (userId: string) => memberNameById[userId] || null,
+    [memberNameById]
+  );
 
   const restoredUiState = useMemo(() => readOkrHubUiState(), []);
   const [tab] = useState<OkrTab>(restoredUiState.tab ?? 'org');
@@ -439,7 +467,7 @@ export const ResultsOkrHub: React.FC = () => {
         primaryCtaContent: adminLinksCta,
       }}
       table={{
-        columns: buildOkrSetColumns(isPolish),
+        columns: buildOkrSetColumns(isPolish, resolveMemberName),
         data: rows,
         persistKey: `results-vnext.okr-registry.${tab}`,
         loading,
@@ -473,6 +501,7 @@ export const ResultsOkrHub: React.FC = () => {
         selectedSet
           ? buildOkrSetPreview(selectedSet, {
               isPolish,
+              resolveMemberName,
               onClose: () => setSelectedSetId(null),
               onOpenObjectives: (r) => setDrill({ level: 'objectives', set: r }),
               onOpenWorkspace: (r) =>

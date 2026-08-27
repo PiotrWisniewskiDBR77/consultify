@@ -37,7 +37,12 @@ import {
 // return the same `OkrSetDto` shape, see okrApi.ts header note).
 // ==========================================
 
-export function buildOkrSetColumns(isPolish: boolean): TableColumn[] {
+export type OkrMemberNameResolver = (userId: string) => string | null;
+
+export function buildOkrSetColumns(
+  isPolish: boolean,
+  resolveMemberName: OkrMemberNameResolver = () => null
+): TableColumn[] {
   return [
     {
       id: 'title',
@@ -99,12 +104,28 @@ export function buildOkrSetColumns(isPolish: boolean): TableColumn[] {
       id: 'owner',
       label: isPolish ? 'Właściciel' : 'Owner',
       width: '140px',
+      render: (row: OkrSetDto) => {
+        const name = resolveMemberName(row.ownerUserId);
+        return (
+          <span
+            className={`block truncate text-sm text-c-text-secondary${name ? '' : ' font-mono'}`}
+            title={row.ownerUserId}
+          >
+            {name || shortOkrId(row.ownerUserId)}
+          </span>
+        );
+      },
+    },
+    {
+      id: 'checkins',
+      label: isPolish ? 'Ostatni / następny check-in' : 'Last / next check-in',
+      width: '190px',
       render: (row: OkrSetDto) => (
-        <span
-          className="block truncate text-sm text-c-text-secondary font-mono"
-          title={row.ownerUserId}
-        >
-          {shortOkrId(row.ownerUserId)}
+        <span className="block text-xs leading-5 text-c-text-secondary tabular-nums">
+          <span className="block">{formatOkrDate(row.lastCheckinAt, isPolish)}</span>
+          <span className="block text-c-text-muted">
+            {formatOkrDate(row.nextCheckinDueAt, isPolish)}
+          </span>
         </span>
       ),
     },
@@ -258,10 +279,12 @@ export interface OkrSetPreviewDeps {
   onOpenObjectives?: (row: OkrSetDto) => void;
   /** RN-G3 lane `okr` full-tool task — optional, opens `OkrSetWorkspace`. */
   onOpenWorkspace?: (row: OkrSetDto) => void;
+  resolveMemberName?: OkrMemberNameResolver;
 }
 
 export function buildOkrSetPreview(row: OkrSetDto, deps: OkrSetPreviewDeps): StandardPreviewProps {
   const { isPolish, onClose, onOpenObjectives, onOpenWorkspace } = deps;
+  const resolveMemberName = deps.resolveMemberName ?? (() => null);
   const lock = getOkrSetLockInfo(row.status);
   const progress = parseOkrProgress(row.overallProgress);
 
@@ -311,14 +334,16 @@ export function buildOkrSetPreview(row: OkrSetDto, deps: OkrSetPreviewDeps): Sta
         {
           id: 'owner',
           label: isPolish ? 'Właściciel' : 'Owner',
-          value: row.ownerUserId,
-          mono: true,
+          value: resolveMemberName(row.ownerUserId) || row.ownerUserId,
+          mono: !resolveMemberName(row.ownerUserId),
         },
         {
           id: 'reviewer',
           label: isPolish ? 'Recenzent' : 'Reviewer',
-          value: row.reviewerUserId ?? '—',
-          mono: !!row.reviewerUserId,
+          value: row.reviewerUserId
+            ? resolveMemberName(row.reviewerUserId) || row.reviewerUserId
+            : '—',
+          mono: !!row.reviewerUserId && !resolveMemberName(row.reviewerUserId),
         },
         {
           id: 'program',
