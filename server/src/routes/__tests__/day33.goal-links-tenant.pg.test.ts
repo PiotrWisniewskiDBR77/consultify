@@ -210,20 +210,119 @@ describe.skipIf(!REAL_PG)('Day 33 goal-initiative tenant carrier', () => {
     expect(response.status).toBe(400);
   });
 
-  it('keeps the legacy contributionWeight-only request compatible', async () => {
+  // FIX-2 (odbior dyzuru 33): sciezka INSERT byla NIEPRZETESTOWANA. Wszystkie testy wyzej
+  // trafiaja w wiersz zaseedowany w beforeAll, wiec ida przez ON CONFLICT. Ten test tworzy
+  // NOWY link z klasa i BEZ polityki — czyli dokladnie ta sciezke, ktora zapisywala NULL,
+  // a `getGoalRollup` zamieniala go po cichu na pelny wklad 1.0.
+  it('creates a NEW class link without writing any contribution weight at all', async () => {
+    const goal = `fresh-goal-${tag}`;
+    const initiative = `fresh-init-${tag}`;
+    await client.query(`INSERT INTO goals(id,organization_id,title,owner_id) VALUES($1,$2,$1,$3)`, [
+      goal,
+      orgA,
+      userA,
+    ]);
+    await client.query(
+      `INSERT INTO initiatives(id,organization_id,name,progress) VALUES($1,$2,$1,40)`,
+      [initiative, orgA]
+    );
+
+    const response = await request(app)
+      .post(`/api/initiatives-v4/goals/${goal}/initiatives`)
+      .set(auth(tokenA))
+      .send({ initiativeId: initiative, contributionClass: 'SUPPORTING' });
+    expect(response.status).toBe(201);
+    expect(response.body).toMatchObject({
+      contributionClass: 'SUPPORTING',
+      contributionWeight: null,
+      valueReason: 'DECISION_REQUIRED',
+      missingParameters: ['impactWeights'],
+    });
+
+    const stored = (
+      await client.query(
+        `SELECT contribution_class,contribution_weight,contribution_policy_id
+           FROM goal_initiative_links WHERE organization_id=$1 AND goal_id=$2`,
+        [orgA, goal]
+      )
+    ).rows[0];
+    // Ani 1.0 (§P.8.d pkt 3), ani ciche 1.0 z DEFAULT-u schematu (migracja 20261222
+    // zdjela DEFAULT). Kolumna jest po prostu nieustalona.
+    expect(stored.contribution_weight).toBeNull();
+    expect(stored.contribution_class).toBe('SUPPORTING');
+    expect(stored.contribution_policy_id).toBeNull();
+
+    // I najwazniejsze: rollup NIE udaje, ze ta waga wynosi 1 — mowi to wprost.
+    const rollup = await request(app)
+      .get(`/api/initiatives-v4/goals/${goal}/rollup`)
+      .set(auth(tokenA));
+    expect(rollup.status).toBe(200);
+    expect(rollup.body).toMatchObject({
+      linkedInitiatives: 1,
+      unsetContributionWeights: 1,
+      contributionWeightValueReason: 'DECISION_REQUIRED',
+    });
+  });
+
+  // FIX-3 (odbior dyzuru 33): stempel polityki nie moze klamac. Poprzednio ten test
+  // wysylal liczbe na link, ktory NIOSL juz klase 'IMPORTANT' i stempel polityki
+  // (policy-${tag}, rowVersion 1), dostawal 201, a asercja sprawdzala WYLACZNIE liczbe.
+  // Wiersz zostawal z odmrozona, reczna waga 7 i nietknietym stemplem — odczyt
+  // „z ktorej polityki wyliczono te wage" stawal sie nieprawda.
+  it('refuses a legacy numeric weight on a governed link and leaves the policy stamp intact', async () => {
+    const before = (
+      await client.query(
+        `SELECT contribution_class,contribution_weight,contribution_policy_id,contribution_policy_row_version
+           FROM goal_initiative_links WHERE organization_id=$1 AND goal_id=$2`,
+        [orgA, goalA]
+      )
+    ).rows[0];
+    expect(before.contribution_class).toBe('IMPORTANT');
+    expect(before.contribution_policy_id).toBe(`policy-${tag}`);
+
     const response = await request(app)
       .post(`/api/initiatives-v4/goals/${goalA}/initiatives`)
       .set(auth(tokenA))
       .send({ initiativeId: initiativeA, contributionWeight: 7 });
+    expect(response.status).toBe(400);
+
+    const after = (
+      await client.query(
+        `SELECT contribution_class,contribution_weight,contribution_policy_id,contribution_policy_row_version
+           FROM goal_initiative_links WHERE organization_id=$1 AND goal_id=$2`,
+        [orgA, goalA]
+      )
+    ).rows[0];
+    expect(after).toEqual(before);
+  });
+
+  it('keeps the legacy contributionWeight-only request compatible on an ungoverned link', async () => {
+    const goal = `legacy-goal-${tag}`;
+    const initiative = `legacy-init-${tag}`;
+    await client.query(`INSERT INTO goals(id,organization_id,title,owner_id) VALUES($1,$2,$1,$3)`, [
+      goal,
+      orgA,
+      userA,
+    ]);
+    await client.query(
+      `INSERT INTO initiatives(id,organization_id,name,progress) VALUES($1,$2,$1,30)`,
+      [initiative, orgA]
+    );
+    const response = await request(app)
+      .post(`/api/initiatives-v4/goals/${goal}/initiatives`)
+      .set(auth(tokenA))
+      .send({ initiativeId: initiative, contributionWeight: 7 });
     expect(response.status).toBe(201);
-    expect(
-      (
-        await client.query(
-          `SELECT contribution_weight FROM goal_initiative_links WHERE organization_id=$1 AND goal_id=$2`,
-          [orgA, goalA]
-        )
-      ).rows[0].contribution_weight
-    ).toBe(7);
+    const stored = (
+      await client.query(
+        `SELECT contribution_weight,contribution_class,contribution_policy_id
+           FROM goal_initiative_links WHERE organization_id=$1 AND goal_id=$2`,
+        [orgA, goal]
+      )
+    ).rows[0];
+    expect(stored.contribution_weight).toBe(7);
+    expect(stored.contribution_class).toBeNull();
+    expect(stored.contribution_policy_id).toBeNull();
   });
 
   it('requires the goal owner to approve a contribution class', async () => {
