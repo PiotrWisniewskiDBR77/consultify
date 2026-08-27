@@ -462,7 +462,7 @@ router.put(
       return res.status(401).json({ error: 'User not authenticated' });
     }
 
-    if (!preferences) {
+    if (!preferences || typeof preferences !== 'object' || Array.isArray(preferences)) {
       return res.status(400).json({ error: 'Preferences object is required' });
     }
 

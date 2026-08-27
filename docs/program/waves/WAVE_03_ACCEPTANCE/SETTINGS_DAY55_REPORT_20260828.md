@@ -310,6 +310,37 @@ Callback OAuth sprawdza obecnie: obecność `state`; zgodność z krótkotrwały
 
 Z33: pełny komplet flag był na tej samej linii każdego przebiegu, `assertRealPostgresTestEnvironment()` był bez argumentów, `--retry=0` jawne. SMTP pozostawał nieustawiony. Werdykt §B.2: `PARTIAL` — naprawione i mutacyjnie udowodnione są callback oraz 80 licencjonowanych zapisów, ale 4 zapisy notificationSettings pozostają czerwonym kontraktem, a dla części tras bez poprawnego payloadu B.1 daje tylko kontrolowane 4xx zamiast wymaganej per-trasa pozytywnej kontroli 2xx.
 
+## §D.1 — cztery operacje właściciela po pełnym przeładowaniu
+
+Pakiet `day55.owner-operations.realdb.test.ts`, realny Gateway/PG, osobny `pg.Client`, `--retry=0`: `5 PASS / 0 FAIL / 0 SKIP`.
+
+| operacja               | zapis                                                              | niezależny SQL                                                                  | świeży GET przez Gateway    | negatyw / pusty stan                                     |
+| ---------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------- | --------------------------- | -------------------------------------------------------- |
+| profil + kontakt       | `PUT /api/users/:id` 200; `PUT /api/user/contact-information/` 200 | `users.first_name/last_name = Piotr/Reloaded`; `user_contact.phone/city` zgodne | oba GET 200 i nowe wartości | drugi MEMBER → 403, wiersz bez zmian                     |
+| język + motyw          | dwa PUT 200                                                        | `users.language=pl`; `settings:appearance` = dark, blue, comfortable, 100%      | oba GET 200 i zgodne        | pusty użytkownik nie dostał wiersza                      |
+| regionalne             | PUT 200                                                            | pełna koperta `Europe/Warsaw`, PLN, DD.MM.YYYY, 24h, metric                     | GET 200, koperta identyczna | nieobiektowy payload → 400, readback bez zmian           |
+| powiadomienia + digest | dwa PUT 200                                                        | `settings:notification-email` i `settings:notification-digest` zgodne           | oba GET 200 i zgodne        | SMTP_HOST/SMTP_USER nadal UNSET; nie uruchomiono wysyłki |
+
+W profilu ujawnił się dług: `users.phone` nie istnieje, a `UserController` ignoruje to pole zamiast zapisać fallback. Żywy ekran ma jednak osobną licencjonowaną trasę kontaktową, która zapisuje `user_contact`; dowód D.1 korzysta z tej kanonicznej pary i nie przedstawia ignorowanego pola jako sukcesu.
+
+`SET-PF-006` potwierdzone: jedyne wywołania klienta dla zapisu regionalnego prowadzą przez `SettingsApi` do `/settings/preferences/regional`; Profil pokazuje tylko przejście do Regional Settings. `SET-PF-005` potwierdzone: handler, klient i seed właścicielski używają literalnie `settings:notification-digest`.
+
+Zrzuty po przeładowaniu harnessu 3371 (wizualnie sprawdzone; jasny/ciemny):
+
+- profil: `d1-profile-light.png` `d71369dad24a80bfaebc09670e7afbd34cf2e39ba259d3d1e6dc80b822a33e55`; dark `86242bc6eb5e7d959e85855b480169d16f65db6c69e9ed89fd88e4d14b465533`;
+- język+motyw: light `018e3f21a53684a89d43b6de4a28084aa5bcecdc72dfaf5b51be0065b06f3e64`; dark `be7e1b83b46b204ffdd7284224599405d2adb9a709c765ca7bad9f38aaac3bf2`;
+- regionalne: light `43e0f4f16f1301d1058263e4069b8e2adca7ab4caaa92ea971651d991078f8d7`; dark `2fd50ec81ee528cbc787b72491672a84481c5f69aef67d8c399e89a6e62b95b3`;
+- powiadomienia+digest: light `0aea069719a5df9f3378231a24f478da3226cfdd006c5eb819343736014afa63`; dark `548fee9d4705d28eb18f33873e8483500ca9d174e69ef2d38bb5597c44d90712`.
+
+Pomiary backlogu po-MVP:
+
+1. Mieszany PL/EN: **potwierdzony** na zrzutach — Profil jest prawie cały EN; Regional ma polski tytuł i kontrolki, ale angielski opis. Szczegółowy remediacyjny inwentarz w §F.1.
+2. Accent na boot: `rg user-accent src ... | rg -v components/settings` → 0. Zmienna jest ustawiana tylko po wejściu do ThemeSettings; boot readback `NOT_PROVEN`, naprawa wizualna wymaga osobnej flagi default OFF.
+3. Surowe kolory zamiast `c-*`: w 46 żywych plikach 33 pliki / 507 trafień wzorca `bg|text|border-(red|green|yellow|blue|amber|emerald|cyan|orange|purple|pink|indigo|slate|gray)-N`. To mianownik mechaniczny, nie każda pozycja jest status-boxem.
+4. `startPage`: poza katalogiem settings są wyłącznie dwie deklaracje typów; brak konsumenta po loginie. Kontrolka w sierocym `AppearanceSettings.tsx` jest atrapą bez konsumenta (`Z23`).
+
+Z30: dostawca poczty pozostawał nieustawiony, a operacja modyfikowała wyłącznie preferencje; żadna ścieżka wysyłki nie została wywołana. Z33: pełny komplet flag i lokalny `DATABASE_URL` były w jednej komendzie, `--retry=0`. Werdykt §D.1: `PARTIAL` — trzy readbacki HTTP/SQL oraz osiem lokalnych zrzutów istnieją, ale obrazy pochodzą z kontrolowanego harnessu danych readback, nie z zalogowanego pełnego runtime aplikacji.
+
 ## Pomiar zasięgu testów
 
 - (a) z pełnym env: serwer 79 testów (`77 PASS`, `2 SKIPPED`, 0 asercji FAIL; pakiety PG nie wykonały przypadków), klient 204 (`203 PASS`, `1 FAIL`).
