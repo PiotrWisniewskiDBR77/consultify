@@ -1,4 +1,5 @@
 import { Api } from '@/services/api';
+import i18n from '@/i18n';
 import {
   V8PlanningApi,
   type V8PlanningGateReadinessCheck,
@@ -269,7 +270,17 @@ export async function updateInitiativeStatusWriteTruth(
   targetStatus: string,
   overrideReason?: string
 ): Promise<InitiativeWriteTruthBundle> {
-  throw new Error(`Lifecycle status ${targetStatus} must be changed in its governed gate workflow`);
+  // #74/UI-latki-20260828: this message reaches the user verbatim — callers
+  // surface `error.message` straight into a toast (InitiativesHub,
+  // InitiativeDocumentView, InitiativeCompactPanel). Translate at the
+  // source instead of patching every catch block.
+  throw new Error(
+    i18n.t(
+      'initiatives.toast.statusGovernedGateOnly',
+      "You can only change status {{status}} from the initiative's lifecycle gate workflow, not from this action.",
+      { status: targetStatus }
+    )
+  );
 }
 
 export async function quickUpdateInitiativeWriteTruth(

@@ -4408,6 +4408,18 @@ export const InterviewHub: React.FC = () => {
       string,
       { label: { en: string; pl: string }; bgColor: string; textColor: string; dotColor: string }
     > = {
+      // #UI-latki-20260828: `normalizeInterviewAssignmentStatus` (above) can
+      // return 'assigned' (session created but not yet started — 0%
+      // progress), but this map had no entry for it, so the `|| configs.in_progress`
+      // fallback below silently mislabeled a not-started session as
+      // "In Progress" (English, and factually wrong — nothing happened yet).
+      assigned: {
+        label: { en: 'Assigned', pl: 'Przydzielony' },
+        bgColor:
+          'bg-slate-100 border border-slate-200 dark:bg-slate-500/20 dark:border-slate-500/30',
+        textColor: 'text-slate-700 dark:text-slate-300',
+        dotColor: 'bg-slate-500 dark:bg-slate-400',
+      },
       in_progress: {
         label: { en: 'In Progress', pl: 'W trakcie' },
         bgColor:
