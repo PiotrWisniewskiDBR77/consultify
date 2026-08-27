@@ -996,4 +996,82 @@ describe.skipIf(!REAL_PG)('Day 31 canonical writer mounted contract', () => {
       )
     ).toMatchObject({ rows: [{ version: 3, status: 'VOIDED' }] });
   });
+
+  it('reads the four non-budget execution control writes through runtime projections', async () => {
+    const suffix = randomUUID();
+    const commands = [
+      {
+        id: `read-realization-${suffix}`,
+        write: (id: string) =>
+          `/api/initiatives/runtime-v1/initiatives/${initiativeId}/realizations/${id}`,
+        read: `/api/initiatives/runtime-v1/initiatives/${initiativeId}/realizations`,
+        idField: 'realizationId',
+        payload: {
+          periodMonth: '2026-08',
+          realizedRevenueDelta: 1,
+          realizedCostDelta: null,
+          realizedSavings: null,
+          varianceNotes: null,
+        },
+      },
+      {
+        id: `read-raid-${suffix}`,
+        write: (id: string) =>
+          `/api/initiatives/runtime-v1/initiatives/${initiativeId}/raid-mitigations/${id}`,
+        read: `/api/initiatives/runtime-v1/initiatives/${initiativeId}/raid-mitigations`,
+        idField: 'raidItemId',
+        payload: {
+          mitigationPlan: 'Read projection',
+          responseStrategy: 'MITIGATE',
+          mitigationOwnerId: userId,
+          mitigationDueDate: null,
+          mitigationStatus: 'PLANNED',
+        },
+      },
+      {
+        id: `read-manager-${suffix}`,
+        write: (id: string) =>
+          `/api/initiatives/runtime-v1/initiatives/${initiativeId}/manager-actions/${id}`,
+        read: `/api/initiatives/runtime-v1/initiatives/${initiativeId}/manager-actions`,
+        idField: 'managerActionId',
+        payload: {
+          laneId: 'blocked',
+          problemId: `read-problem-${suffix}`,
+          actionId: 'read-action',
+          rationale: null,
+        },
+      },
+      {
+        id: `read-suggestion-${suffix}`,
+        write: (id: string) =>
+          `/api/initiatives/runtime-v1/initiatives/${initiativeId}/manager-suggestions/${id}/review`,
+        read: `/api/initiatives/runtime-v1/initiatives/${initiativeId}/manager-suggestion-reviews`,
+        idField: 'suggestionId',
+        payload: { laneId: 'blocked', outcome: 'DEFER', notes: null },
+      },
+    ];
+    for (const command of commands) {
+      const written = await request(app)
+        .post(command.write(command.id))
+        .set(auth())
+        .send({
+          expectedVersion: 0,
+          clientRequestId: `read-${command.id}`,
+          ...command.payload,
+        });
+      expect(written.status, JSON.stringify(written.body)).toBe(201);
+      const read = await request(app).get(command.read).set(auth());
+      expect(read.status, JSON.stringify(read.body)).toBe(200);
+      expect(read.body.items.map((item: any) => item[command.idField])).toContain(command.id);
+      const foreign = await request(app)
+        .get(command.read)
+        .set(auth())
+        .set({
+          Authorization: `Bearer ${foreignToken}`,
+          'X-Organization-Id': organizationId,
+        });
+      expect(foreign.status).toBe(200);
+      expect(foreign.body.items).toEqual([]);
+    }
+  });
 });

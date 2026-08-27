@@ -4754,6 +4754,23 @@ export function createInitiativesExecutionRuntimeRouter(
       res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
     })
   );
+  router.get(
+    '/initiatives/:initiativeId/realizations',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      if (!actor) return void res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+      const initiativeId = firstParam(req.params.initiativeId);
+      const items = await deps.reader.listExecutionRealizations(actor.organizationId, initiativeId);
+      res.json({
+        items: await filterVisibleAggregates(
+          actor,
+          items,
+          'execution_realization',
+          (item: any) => item.realizationId
+        ),
+      });
+    })
+  );
   router.post(
     '/initiatives/:initiativeId/raid-mitigations/:raidItemId',
     asyncHandler(async (req, res) => {
@@ -4787,6 +4804,23 @@ export function createInitiativesExecutionRuntimeRouter(
         payload: { ...mitigation, initiativeId, raidItemId },
       });
       res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
+    })
+  );
+  router.get(
+    '/initiatives/:initiativeId/raid-mitigations',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      if (!actor) return void res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+      const initiativeId = firstParam(req.params.initiativeId);
+      const items = await deps.reader.listRaidMitigations(actor.organizationId, initiativeId);
+      res.json({
+        items: await filterVisibleAggregates(
+          actor,
+          items,
+          'raid_mitigation',
+          (item: any) => item.raidItemId
+        ),
+      });
     })
   );
   router.post(
@@ -4823,6 +4857,26 @@ export function createInitiativesExecutionRuntimeRouter(
       res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
     })
   );
+  router.get(
+    '/initiatives/:initiativeId/manager-actions',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      if (!actor) return void res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+      const initiativeId = firstParam(req.params.initiativeId);
+      const items = await deps.reader.listManagerExecutionActions(
+        actor.organizationId,
+        initiativeId
+      );
+      res.json({
+        items: await filterVisibleAggregates(
+          actor,
+          items,
+          'manager_execution_action',
+          (item: any) => item.managerActionId
+        ),
+      });
+    })
+  );
   router.post(
     '/initiatives/:initiativeId/manager-suggestions/:suggestionId/review',
     asyncHandler(async (req, res) => {
@@ -4856,6 +4910,26 @@ export function createInitiativesExecutionRuntimeRouter(
         payload: { ...review, initiativeId, suggestionId },
       });
       res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
+    })
+  );
+  router.get(
+    '/initiatives/:initiativeId/manager-suggestion-reviews',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      if (!actor) return void res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+      const initiativeId = firstParam(req.params.initiativeId);
+      const items = await deps.reader.listManagerSuggestionReviews(
+        actor.organizationId,
+        initiativeId
+      );
+      res.json({
+        items: await filterVisibleAggregates(
+          actor,
+          items,
+          'manager_suggestion_review',
+          (item: any) => item.suggestionId
+        ),
+      });
     })
   );
   router.get('/execution-write-map', (_req, res) => {
