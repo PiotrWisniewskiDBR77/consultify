@@ -5785,13 +5785,23 @@ router.put(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
-    const { developerMode, apiLogging, verboseErrors, showDebugInfo, betaFeatures } = req.body;
+    const { developerMode, apiLogging, verboseErrors, showDebugInfo } = req.body;
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    const allowedKeys = new Set(['developerMode', 'apiLogging', 'verboseErrors', 'showDebugInfo']);
+    const capabilityKeys = Object.keys(req.body || {}).filter((key) => !allowedKeys.has(key));
+    if (capabilityKeys.length > 0) {
+      return res.status(403).json({
+        error: 'Developer settings cannot change feature flags or tool availability',
+        code: 'DEVELOPER_SETTINGS_CAPABILITY_WRITE_FORBIDDEN',
+        rejectedKeys: capabilityKeys,
+      });
+    }
 
     await ensureDeveloperSettingsTable();
 
-    const existing = await dbGet<{ id: string }>(
-      `SELECT id FROM developer_settings WHERE user_id = ?`,
+    const existing = await dbGet<{ id: string; beta_features?: string | null }>(
+      `SELECT id, beta_features FROM developer_settings WHERE user_id = ?`,
       [userId]
     );
 
@@ -5816,7 +5826,7 @@ router.put(
         apiLogging ? 1 : 0,
         verboseErrors ? 1 : 0,
         showDebugInfo ? 1 : 0,
-        JSON.stringify(betaFeatures || []),
+        existing?.beta_features || '[]',
       ],
       { fallback: false }
     );

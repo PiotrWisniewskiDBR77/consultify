@@ -341,6 +341,24 @@ Pomiary backlogu po-MVP:
 
 Z30: dostawca poczty pozostawał nieustawiony, a operacja modyfikowała wyłącznie preferencje; żadna ścieżka wysyłki nie została wywołana. Z33: pełny komplet flag i lokalny `DATABASE_URL` były w jednej komendzie, `--retry=0`. Werdykt §D.1: `PARTIAL` — trzy readbacki HTTP/SQL oraz osiem lokalnych zrzutów istnieją, ale obrazy pochodzą z kontrolowanego harnessu danych readback, nie z zalogowanego pełnego runtime aplikacji.
 
+## §D.2 — DEC-238 i tylne drzwi do flag/narzędzi
+
+Ślad klienta: `DeveloperSettings` → `SettingsApi.saveDeveloperSettings` → `PUT /api/settings/developer` → montaż `settingsRoutes` pod `/api/settings` w `Gateway.ts`. Odczyt flag: `Api.getFeatureFlags` → `GET /api/feature-flags` → `featureFlagsRoutes` pod `/api/feature-flags`; `/runtime` jest uwierzytelnione, ale pełny inwentarz po tej trasie ma `requireSuperAdmin`.
+
+Pakiet `day55.dec238-no-backdoor.realdb.test.ts`: 4 PASS, realny Gateway/PG, `--retry=0`.
+
+| scenariusz                                         |                                                 kod | readback `developer_settings` | `v8_feature_flags` | `feature_flags` | `tool_sessions` |
+| -------------------------------------------------- | --------------------------------------------------: | ----------------------------- | -----------------: | --------------: | --------------: |
+| normalne `developerMode/apiLogging/showDebugInfo`  |                                                 200 | zapisane 1/1/1                |                0→0 |             0→0 |             0→0 |
+| próba `betaFeatures/v8_feature_flags/featureFlags` | 403 `DEVELOPER_SETTINGS_CAPABILITY_WRITE_FORBIDDEN` | bez zmiany                    |                0→0 |             0→0 |             0→0 |
+| próba `enabledTools/toolTypes/betaTools`           |                                     403 ten sam kod | bez zmiany                    |                0→0 |             0→0 |             0→0 |
+
+`v8_feature_flags`, `feature_flags` i `tool_sessions` wszystkie istnieją w lokalnym schemacie; niezależny `psql` potwierdził po 0 wierszy. MEMBER i ADMIN dostają po 403 z pełnego `/api/feature-flags`. Przed hardeningiem handler przyjmował dowolne pola z 200 (choć nie zmieniał tabel zdolności); obecnie ma zamkniętą allowlistę czterech osobistych ustawień i nie resetuje odziedziczonego `beta_features` przy zwykłym zapisie.
+
+Dowód mutacyjny: po sztucznym wyłączeniu allowlisty próba flagi i próba narzędzia dostały 200, 2/4 FAIL; po przywróceniu 4/4 PASS. `git diff server/src/services/toolCatalog/approvedMvpToolTypes.ts` jest pusty. Nie włączono żadnej flagi ani typu narzędzia.
+
+Werdykt §D.2: **BRAK TYLNYCH DRZWI** — po naprawie ustawienia osobiste nie mogą zmienić dostępności flagi ani utworzyć sesji narzędzia; wynik obejmuje kody HTTP, niezależne liczniki tabel oraz czerwony/zielony dowód mutacyjny.
+
 ## Pomiar zasięgu testów
 
 - (a) z pełnym env: serwer 79 testów (`77 PASS`, `2 SKIPPED`, 0 asercji FAIL; pakiety PG nie wykonały przypadków), klient 204 (`203 PASS`, `1 FAIL`).
