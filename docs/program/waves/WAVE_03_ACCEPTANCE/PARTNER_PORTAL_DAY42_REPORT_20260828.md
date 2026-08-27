@@ -235,13 +235,41 @@ success:false, code, decision, operation, message, policyUnavailable }`.
 
 ### STOP — D.5
 
-Stan: NIE ZACOMMITOWANO. Odpowiedź `410` jest konstruowana w
-`server/src/services/partnerEconomicsPolicy.ts:445-455`, który nie należy do
-dozwolonego zakresu D.5. Jedyny sposób ograniczony do routera wymagałby
-middleware przed `createPartnerEconomicsPolicyGuard`, a `Z11` i uwaga przy
-`partner.routes.ts` zakazują zmiany kolejności guardów. Nie zgadnięto i nie
-naruszono polityki. Potrzebna jest zgoda na addytywną zmianę wspólnej funkcji
-`partnerEconomicsPolicyBody` albo korekta wymogu `dataFidelity` dla `410`.
+Stan: NIE ZACOMMITOWANO; STOP uznany przez nadzorcę za zasadny. Dokładny punkt
+zmiany znajduje się w
+`server/src/services/partnerEconomicsPolicy.ts:445-454`: wspólna funkcja
+`partnerEconomicsPolicyBody(operation)` buduje ciało odmowy. Guard wysyła to
+ciało bezpośrednio jako `410` w tym samym pliku, linia 494. Plik nie należał do
+dozwolonego zakresu D.5.
+
+Brakujące pole to addytywne `meta.dataFidelity` o wartości `'unavailable'`
+oraz towarzyszące mu `meta.dataFidelityReason`, np. dokładny mechanizm:
+`'partner economics disabled by owner policy AMD-PRT-ECONOMICS-002'`. Obecne
+pola `success`, `code`, `decision`, `operation`, `message` i
+`policyUnavailable` muszą pozostać bez zmian.
+
+**Minimalny wariant do osobnej licencji nadzorcy, bez wykonywania go w tym
+dyżurze:** wyłącznie w obiekcie zwracanym przez
+`partnerEconomicsPolicyBody()` po `...partnerEconomicsPolicyProjection()`
+dodać:
+
+```ts
+meta: {
+  dataFidelity: 'unavailable',
+  dataFidelityReason:
+    'partner economics disabled by owner policy AMD-PRT-ECONOMICS-002',
+},
+```
+
+Jest to jedna addytywna zmiana koperty w jednym wspólnym konstruktorze; nie
+zmienia `PARTNER_ECONOMICS_POLICY_STATUS`, stałej
+`PARTNER_ECONOMICS_OPERATIONS_ENABLED`, reguł tras, telemetrii, kolejności
+middleware ani wywołania guarda. Ponieważ funkcja jest współdzielona przez
+V8, legacy i powierzchnie operatora, kolejny dyżur musi jawnie licencjonować
+ten zasięg oraz dodać testy parytetu wszystkich konsumentów odpowiedzi 410:
+stare pola bitowo/semantycznie zachowane, status nadal 410, nowe `meta` obecne,
+zero dojścia do handlera i zero zapisu ekonomicznego. Bez tej licencji wariant
+pozostaje wyłącznie propozycją dokumentacyjną.
 
 ## Pomiar bazowy Z24
 
