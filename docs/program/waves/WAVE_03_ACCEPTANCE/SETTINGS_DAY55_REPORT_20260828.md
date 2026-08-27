@@ -286,6 +286,30 @@ Z33: każdy przebieg ustawiał w tej samej linii `ENABLE_V8_GLOBAL=true`, `ENABL
 
 Trzynaście sekcji bez pozycji menu ma `13 PASS` kontraktu routingu z §A.3. Lokalny harness `dev-render:3371` renderuje tylko `AuthenticationAccessPage`, więc nie zapewnia uczciwego dowodu browser-runtime dla wszystkich trzynastu adresów. Nie zastępuję tego dowodu statycznym PASS: pełny browser-runtime pozostaje `EVIDENCE_MISSING` i §B.1 ma werdykt `PARTIAL`, mimo kompletnego pomiaru HTTP zapisanej powierzchni.
 
+## §B.2 — granica self, tenant i callback OAuth
+
+Macierz `day55.write-boundary-matrix.realdb.test.ts` bierze wszystkie zapisy z inwentarza B.1. Osiemdziesiąt licencjonowanych rejestracji (68 `settings.routes.ts`, 5 GDPR, 2 preferences, 1 login-history, 1 contact, 1 availability, 2 security-advanced) dostało realne żądania przez `ApiGateway`, bez retry. Dla każdej: `REVOKED ADMIN` → `403`; obcy `x-org-context` + `orgId` w query/body → kod `<500` i niezależny readback wszystkich chronionych wierszy użytkowników ofiary/obcego bez zmiany; obcy `userId` w body/query/params → readback po każdym żądaniu bez zmiany. Pozytywna kontrola zatwierdzonego wyjątku: trwały `OWNER` → aktywny członek tego samego tenanta, `POST /api/settings/notifications` → `200` i dokładnie jeden wiersz `settings:notifications-channel-admin`; obcy tenant → `403`, zero zmiany.
+
+Naprawa w module: `settings.routes.ts` dostał wspólną ścianę aktywnego członkostwa oraz jawne `ORG_CONTEXT_MISMATCH` / `SETTINGS_SELF_SCOPE_FORBIDDEN` (z zachowanym wyjątkiem delegacji). Routery GDPR, preferences, login-history, contact, availability i security-advanced dostały obowiązkowe `requireActiveMembership`. Chronione `auth.middleware.ts`, `Gateway.ts` i `orgContext.middleware.ts` mają pusty diff.
+
+Dowód mutacyjny ściany Settings: po sztucznym wyłączeniu `router.use(enforceSettingsBoundary)` test czerwony na `PUT /api/settings/recovery`: oczekiwane `403`, otrzymane `400`; po przywróceniu 6 PASS / 1 SKIP. Dowód mutacyjny callbacku: po sztucznym wyłączeniu porównania cookie cudzy stan dał `oauth_success=gmail`, a pakiet 2/2 FAIL; po przywróceniu 2/2 PASS.
+
+Callback OAuth sprawdza obecnie: obecność `state`; zgodność z krótkotrwałym cookie `consultify_settings_oauth_state` (`HttpOnly`, `SameSite=Lax`, ścieżka callbacku); istnienie i TTL wpisu `consumeState`; obecność `code`; powodzenie wymiany tokenu. Scenariusze: brak/losowy state → `302 oauth_error`, zero zapisu; poprawny state z innej sesji/organizacji → `302 state_session_mismatch`, zero zapisu; poprawny state w tej samej sesji → `302 oauth_success=gmail`, jeden zapis odczytany niezależnym połączeniem. Exchange był lokalną atrapą `fetch`; nie wykonano połączenia do dostawcy OAuth.
+
+| powierzchnia           | liczba zapisów w macierzy | REVOKED            | tenant/self readback   | pozytywna kontrola                       |
+| ---------------------- | ------------------------: | ------------------ | ---------------------- | ---------------------------------------- |
+| `/api/settings`        |                        68 | 68×403             | zero zmian obcego celu | B.1: realne 2xx/4xx; delegacja 200       |
+| `/api/gdpr`            |                         5 | 5×403              | zero zmian obcego celu | B.1: realne 2xx/4xx                      |
+| `/api/preferences`     |                         2 | 2×403              | zero zmian obcego celu | B.1: realne 200                          |
+| login-history          |                         1 | 1×403              | zero zmian obcego celu | B.1: realny 200                          |
+| contact / availability |                         2 | 2×403              | zero zmian obcego celu | B.1: realne 200                          |
+| security-advanced      |                         2 | 2×403              | zero zmian obcego celu | B.1: realne 404 dla sond zasobowych      |
+| notificationSettings   |                         4 | `EVIDENCE_MISSING` | `EVIDENCE_MISSING`     | B.1: montaż wskazany instrukcją daje 404 |
+
+`notificationSettings.routes.ts` ma licencję zapisu dopiero w §D.1, nie w §B.2. Test zachowuje jawny `it.skip` „CZERWONY KONTRAKT DYŻURU 55”; nie obchodziłem tabeli licencji. Trzy starsze pakiety granic nie są dowodem dla bazy `cx_day55`: ich własne bezpieczniki wymagają nazw zaczynających się odpowiednio od `set_bvp_`, `set_export_` i `oauth_`; wspólny przebieg zakończył się 3 błędami setupu, 4 PASS i 20 SKIP. Nie osłabiałem tych bezpieczników.
+
+Z33: pełny komplet flag był na tej samej linii każdego przebiegu, `assertRealPostgresTestEnvironment()` był bez argumentów, `--retry=0` jawne. SMTP pozostawał nieustawiony. Werdykt §B.2: `PARTIAL` — naprawione i mutacyjnie udowodnione są callback oraz 80 licencjonowanych zapisów, ale 4 zapisy notificationSettings pozostają czerwonym kontraktem, a dla części tras bez poprawnego payloadu B.1 daje tylko kontrolowane 4xx zamiast wymaganej per-trasa pozytywnej kontroli 2xx.
+
 ## Pomiar zasięgu testów
 
 - (a) z pełnym env: serwer 79 testów (`77 PASS`, `2 SKIPPED`, 0 asercji FAIL; pakiety PG nie wykonały przypadków), klient 204 (`203 PASS`, `1 FAIL`).

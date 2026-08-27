@@ -29,6 +29,7 @@ const router = Router();
 
 // Apply auth middleware to all routes
 router.use(verifyToken);
+router.use(requireActiveMembership);
 
 // ==========================================
 // TYPES

@@ -4,7 +4,7 @@
  */
 
 import crypto from 'crypto';
-import { Response, Router } from 'express';
+import { NextFunction, Response, Router } from 'express';
 
 import { requireActiveAuditsMembership } from '../middleware/auditsStrictMembership.middleware.js';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
@@ -40,6 +40,50 @@ const router = Router();
 const preferencesKey = (prefType: string) => `settings:${prefType}`;
 const LEGACY_SETTINGS_ROOT_GUIDANCE =
   'Use /api/settings/registry for scoped settings and /api/superadmin for platform-wide settings.';
+const SETTINGS_OAUTH_STATE_COOKIE = 'consultify_settings_oauth_state';
+const SETTINGS_OAUTH_COOKIE_PATH = '/api/settings/integrations/oauth';
+const readCookie = (header: string | undefined, name: string): string | undefined =>
+  header
+    ?.split(';')
+    .map((part) => part.trim().split('='))
+    .find(([key]) => key === name)
+    ?.slice(1)
+    .join('=');
+
+const enforceSettingsBoundary = (req: AuthRequest, res: Response, next: NextFunction) => {
+  if (req.method === 'GET' && req.path === '/integrations/oauth/callback') return next();
+  return verifyToken(req, res, () =>
+    requireActiveMembership(req, res, () => {
+      const actorUserId = String(req.user?.id || '');
+      const actorOrganizationId = String(req.organizationId || req.user?.organizationId || '');
+      const organizationClaims = [
+        req.headers['x-org-context'],
+        req.query?.orgId,
+        req.query?.organizationId,
+        req.body?.orgId,
+        req.body?.organizationId,
+      ]
+        .flat()
+        .filter((value) => value != null && String(value).trim() !== '')
+        .map(String);
+      if (organizationClaims.some((claim) => claim !== actorOrganizationId)) {
+        return res.status(403).json({ success: false, code: 'ORG_CONTEXT_MISMATCH' });
+      }
+
+      const delegatedNotificationWrite = req.method === 'POST' && req.path === '/notifications';
+      const userClaims = [req.query?.userId, req.body?.userId, req.params?.userId]
+        .flat()
+        .filter((value) => value != null && String(value).trim() !== '')
+        .map(String);
+      if (!delegatedNotificationWrite && userClaims.some((claim) => claim !== actorUserId)) {
+        return res.status(403).json({ success: false, code: 'SETTINGS_SELF_SCOPE_FORBIDDEN' });
+      }
+      return next();
+    })
+  );
+};
+
+router.use(enforceSettingsBoundary);
 const PROFILE_EXPORT_COLUMNS = [
   'id',
   'email',
@@ -2088,6 +2132,14 @@ router.get(
       userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : null,
     });
 
+    res.cookie(SETTINGS_OAUTH_STATE_COOKIE, result.state, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      path: SETTINGS_OAUTH_COOKIE_PATH,
+      maxAge: 10 * 60 * 1000,
+    });
+
     return res.json({ authUrl: result.url, state: result.state });
   })
 );
@@ -2110,10 +2162,16 @@ router.get(
       return res.redirect('/settings/integrations?oauth_error=missing_state');
     }
 
+    const stateCookie = readCookie(req.headers.cookie, SETTINGS_OAUTH_STATE_COOKIE);
+    if (!stateCookie || stateCookie !== state) {
+      return res.redirect('/settings/integrations?oauth_error=state_session_mismatch');
+    }
+
     const pending = oauthEngine.consumeState(state);
     if (!pending) {
       return res.redirect('/settings/integrations?oauth_error=invalid_or_expired_state');
     }
+    res.clearCookie(SETTINGS_OAUTH_STATE_COOKIE, { path: SETTINGS_OAUTH_COOKIE_PATH });
 
     if (!code) {
       return res.redirect('/settings/integrations?oauth_error=missing_code');

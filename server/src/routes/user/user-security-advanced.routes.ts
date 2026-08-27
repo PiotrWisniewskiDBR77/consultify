@@ -4,10 +4,12 @@
 import { Request, Response, Router } from 'express';
 
 import { isAuthenticated, verifyToken } from '../../middleware/auth.middleware.js';
+import { requireActiveMembership } from '../../services/legacyCutover/requireActiveMembership.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 
 const router = Router();
+router.use(verifyToken, requireActiveMembership);
 interface AuthRequest extends Request {
   user?: { id: string };
 }
