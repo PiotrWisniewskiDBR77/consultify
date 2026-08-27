@@ -8,6 +8,41 @@ export default defineConfig(({ mode }) => {
   const apiTarget = env.VITE_API_TARGET || process.env.VITE_API_TARGET || 'http://127.0.0.1:3001';
   const stableDev = env.VITE_STABLE_DEV === '1' || process.env.VITE_STABLE_DEV === '1';
 
+  // ---------------------------------------------------------------------------
+  // BEZPIECZNIK: VITE_QUICK_ACCESS_MAP nie może nigdy trafić do buildu
+  // produkcyjnego (2026-08-28).
+  //
+  // `vite build` wstawia CAŁY obiekt `import.meta.env` w każde miejsce jego
+  // użycia — więc jeśli ta zmienna (mapa PIN → e-mail+hasło kont
+  // właściciela/Pawła/superadmina) jest ustawiona, ląduje w bundlu JS
+  // pobieranym przez przeglądarkę, w wielu chunkach niezwiązanych z
+  // logowaniem. Filtr hostowy w runtime (np. isQuickAccessShortcutHost) NIE
+  // chroni — build już się wydarzył, sekret jest w plikach na serwerze
+  // statycznym.
+  //
+  // Na tej gałęzi VITE_QUICK_ACCESS_MAP nie jest dziś nigdzie w kodzie
+  // używana (kody PIN w src/views/AuthView.tsx są na razie wpisane wprost
+  // w źródle — osobny, równolegle prowadzony wątek bezpieczeństwa
+  // przenosi je na endpoint serwerowy). Ta bramka jest zabezpieczeniem
+  // wyprzedzającym: gdyby ta zmienna trafiła tu przez merge z innej gałęzi
+  // albo wróciła w przyszłości, build produkcyjny PADA zamiast po cichu
+  // wkleić sekret do bundla — zamiast polegać wyłącznie na komentarzu w
+  // pliku `.env.example`, który sam w sobie niczego nie blokuje.
+  //
+  // Nie dodawaj tu wyjątków ani nie usuwaj tego bloku, żeby "odblokować"
+  // wdrożenie — usuń/wyczyść zmienną VITE_QUICK_ACCESS_MAP w Railway zamiast
+  // tego.
+  if (mode === 'production') {
+    const quickAccessMap = (env.VITE_QUICK_ACCESS_MAP ?? process.env.VITE_QUICK_ACCESS_MAP ?? '').trim();
+    if (quickAccessMap.length > 0) {
+      throw new Error(
+        'VITE_QUICK_ACCESS_MAP is set for a production build. This variable carries a PIN -> ' +
+          'credential map and must never be baked into a browser-downloadable bundle via Vite. ' +
+          'Unset VITE_QUICK_ACCESS_MAP for this build (Railway service variable) and retry.'
+      );
+    }
+  }
+
   const watchIgnored = [
     '**/coverage/**',
     '**/playwright-report/**',
