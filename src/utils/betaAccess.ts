@@ -38,7 +38,10 @@ export const BETA_ADMINS_EXEMPT = true;
 export const BETA_MENU_STATUS: Record<string, BetaStatus> = {
   MODULE_BENEFITS: 'open', // Results (M15 — GA per D-A)
   MODULE_CONCLUSIONS: 'closed', // HIDDEN 2026-07-04 (owner decision — added without consent); nav entry removed in menuConfig too
-  // Finance — ZAMKNIĘTE przed klientami (decyzja Piotra, MVP 2026-07-28):
+  // DEC-2026-08-28-177 supersedes the July decision: Finance enters the MVP.
+  // Keep it closed until the owner accepts the visual polish screenshots
+  // (CLAUDE.md rule 7); the supervisor then performs the reversible flip here.
+  // Historical rationale for the still-current closed state:
   // „MVP finansów nie ładowałbym, to jest ogromny projekt… zostawiłbym w wersji
   // beta i klientom bym tego później nie pokazywał, zakluczyłbym to. Nie jesteśmy
   // w stanie do poniedziałku rozwinąć tego modułu."
