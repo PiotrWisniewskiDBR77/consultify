@@ -30,6 +30,17 @@ Mobile: `DEFERRED_NON_GATING`
 > the module gate above remains unchanged. Full evidence:
 > `../../PARTNER_DAY12_REPORT_20260825.md`.
 
+> Day 42 — 2026-08-28: przyczyną portalowego `404` jest konfiguracja — bez
+> `ENABLE_V8_GLOBAL=true` globalna bramka zwraca `404 V8_DISABLED`, natomiast
+> przy kanonicznym env i pełnym runnerze realny Gateway osiąga handlery.
+> Własny pomiar wykazał 35 tras: `26 REALNE`, `2 REALNE_Z_SYNTEZĄ`,
+> `4 KIKUT_503`, `3 ODMOWA_410`, `0 NIEOSIĄGALNE`. Izolacja dwóch firm na
+> kanonicznych odczytach pieniędzy i mutacjach przeszła 8/8, w tym obcy zasób
+> → 404/odmowa oraz zimne readbacki bez zmian; nie znaleziono P0. Bramka modułu
+> **SIĘ NIE ZMIENIA**: `TECHNICAL_BROWSER_PASS / OWNER_PENDING / ECONOMICS_OFF`,
+> ponieważ Day 42 nie dostarcza akceptu właściciela ani dowodu przeglądarkowego.
+> Raport: `../../PARTNER_PORTAL_DAY42_REPORT_20260828.md`.
+
 ## Contract
 
 Primary journey: open partner profile/certification/attribution and inspect
