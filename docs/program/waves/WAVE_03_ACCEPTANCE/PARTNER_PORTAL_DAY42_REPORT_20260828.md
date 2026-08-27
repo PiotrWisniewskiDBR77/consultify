@@ -181,6 +181,68 @@ pełny pomiar 28 metod wykonano osobno dla każdej nazwy.
 Podsumowanie kierunku 2: dwa typy zapisu bez pełnego czytelnika. Kierunek 3:
 pięć rodzin kontrolek wymagających kontraktu frontowego. Zero zmian w `src/`.
 
+## D.9 — kontrakt dla przyszłego dyżuru frontowego
+
+### 1. DO UKRYCIA
+
+- Akcje tworzenia klienta, pracownika, linku dostępu i zamówienia licencji:
+  backend zwraca `503` (`partner.routes.ts:149-176`). Zgodnie z
+  `DEC-2026-08-25-21/22` kontrolka nie może udawać dostępnej funkcji.
+- Żądanie wypłaty i edycja ustawień wypłat: backend zwraca `410`
+  (`partner.routes.ts:1122,1582`); nie wolno spłaszczać tej odmowy do neutralnego
+  sukcesu.
+- Pewne zera z fallbacków UI (`EarningsSection.tsx:113-120`,
+  `PartnerRuntimeSummaryStrip.tsx:51-58`) muszą być ukryte przy `degraded`, bo
+  UNKNOWN nie jest zerem.
+
+### 2. DO OPISANIA JAKO „PLANOWANE”
+
+- Cztery kikuty: PL „Funkcja planowana — obecnie niedostępna”; EN “Planned
+  capability — currently unavailable”. Źródło capability:
+  `partner.routes.ts:149-176`.
+- Pełny odczyt skutków zmian profilu: PL „Pełny podgląd profilu — planowany”;
+  EN “Full profile readback — planned”. Brak kompletnego GET w tabeli D.4.
+
+### 3. DO WŁĄCZENIA
+
+- `GET /program/ledger` i zapis postępu modułu certyfikacji nie mają metod
+  klienta (`partner.routes.ts:367,1476`); można je podłączyć dopiero po osobnym
+  kontrakcie ekranu.
+- Każde włączenie ma nastąpić **za flagą domyślnie OFF, z polish-passem i
+  akceptem właściciela na zrzutach**, zgodnie z regułą 7 `CLAUDE.md`.
+
+### 4. DO NIETKNIĘCIA
+
+- Cała ekonomia Partnera: lifecycle payout, payout request, payout settings
+  write oraz wszystkie powiązane kontrolki. `AMD-PRT-ECONOMICS-002` jest stałą
+  kompilacyjną (`partnerEconomicsPolicy.ts:55-72,164-172`); reaktywacja wymaga
+  nowej decyzji właściciela.
+
+### 5. KSZTAŁT KOPERTY
+
+- Trasy realne zachowują `{ data, meta }`; `meta` zawiera `version`,
+  `contract`, `partnerOrgId` i `v8TenantOrganizationId` zgodnie z
+  `partner.routes.ts:213-232`. Odczyty ekonomiczne dodają
+  `policyUnavailable` z decyzją, kodem, operacjami i `historicalReadOnly`.
+- `program/status` i `earnings-summary` mogą zawierać `data.degraded = {
+reason, snapshotAt }`; UI musi pokazać UNKNOWN, nie pewne zero.
+- Kikut zachowuje `503 { success:false, code:'FEATURE_NOT_AVAILABLE',
+capability, message }`; odmowa ekonomiczna zachowuje `410 {
+success:false, code, decision, operation, message, policyUnavailable }`.
+- Planowane `meta.dataFidelity: 'real'|'synthesized'|'unavailable'` oraz
+  `meta.dataFidelityReason` **nie zostało dostarczone w D.5** z powodu STOP
+  zakresowego opisanego niżej. Front nie może zakładać obecności tych pól.
+
+### STOP — D.5
+
+Stan: NIE ZACOMMITOWANO. Odpowiedź `410` jest konstruowana w
+`server/src/services/partnerEconomicsPolicy.ts:445-455`, który nie należy do
+dozwolonego zakresu D.5. Jedyny sposób ograniczony do routera wymagałby
+middleware przed `createPartnerEconomicsPolicyGuard`, a `Z11` i uwaga przy
+`partner.routes.ts` zakazują zmiany kolejności guardów. Nie zgadnięto i nie
+naruszono polityki. Potrzebna jest zgoda na addytywną zmianę wspólnej funkcji
+`partnerEconomicsPolicyBody` albo korekta wymogu `dataFidelity` dla `410`.
+
 ## Pomiar bazowy Z24
 
 Pełny zakres przed pierwszym commitem: **548 PASS / 15 FAIL / 92 SKIPPED** w
