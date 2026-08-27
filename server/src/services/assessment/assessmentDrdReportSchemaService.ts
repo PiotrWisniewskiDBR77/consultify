@@ -50,6 +50,43 @@ function placeholder(minWords: number, maxWords: number): string {
   return `Sekcja do uzupełnienia — limit ${minWords}–${maxWords} słów.`;
 }
 
+// W2 (nadzorca 2026-08-28): the cover used to show the raw session UUID
+// (`session-day34-data-52efe624`) as the "session signature". A signature
+// meant for a human reader needs to be legible, so this derives a
+// consulting-report-style code — `DRD-YYYY-MMDD-XXX` — deterministically
+// from data already on the contract: the report's own generation date plus
+// a 3-letter client-name skeleton. Reasoning for the skeleton: Polish legal
+// suffixes ("Sp. z o.o.", "S.A.", ...) carry no identity, so they're
+// stripped first; consonants are then preferred over the first N raw
+// letters because they read like real reference codes ("MTP", "PKN") and
+// spread better across similarly-named clients that share a first
+// syllable. The raw session UUID is never rendered on the cover — it only
+// ever appears inside `documentId`, an internal field that is not printed
+// anywhere in the DOCX output.
+const LEGAL_SUFFIX_PATTERN = /\b(sp\.?\s*z\s*o\.?\s*o\.?|s\.?\s*a\.?|sc|ltd|gmbh|inc|ag|se)\b/giu;
+
+function clientAbbreviation(name: string): string {
+  const ascii = name
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(LEGAL_SUFFIX_PATTERN, ' ')
+    .replace(/[^a-zA-Z]/g, ' ')
+    .trim();
+  if (!ascii) return 'XXX';
+  const consonants = ascii.replace(/[aeiouyAEIOUY\s]/g, '');
+  const source = consonants.length >= 3 ? consonants : ascii.replace(/\s/g, '');
+  return (source.slice(0, 3) || 'XXX').toUpperCase().padEnd(3, 'X');
+}
+
+function buildSessionSignature(clientName: string, generatedAt: string): string {
+  const date = new Date(generatedAt);
+  if (Number.isNaN(date.getTime())) return `DRD-${clientAbbreviation(clientName)}`;
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(date.getUTCDate()).padStart(2, '0');
+  return `DRD-${year}-${month}${day}-${clientAbbreviation(clientName)}`;
+}
+
 function slotText(slot: { content: string | null; minWords: number; maxWords: number }): string {
   return slot.content ?? placeholder(slot.minWords, slot.maxWords);
 }
@@ -448,7 +485,7 @@ export function buildAssessmentDrdReportSchema(contract: AssessmentReportContrac
       assessor: contract.assessor ?? null,
       clientSponsor: contract.clientSponsor ?? null,
       methodology: 'Digital Pathfinder — metodyka oceny dojrzałości cyfrowej DRD',
-      sessionSignature: contract.sessionId,
+      sessionSignature: buildSessionSignature(clientName, contract.generatedAt),
       issuedAt: contract.generatedAt,
     },
   };
