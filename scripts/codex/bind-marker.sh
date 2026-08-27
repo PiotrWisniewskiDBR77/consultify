@@ -27,7 +27,10 @@ podmienione = pominiete = 0
 for i, l in enumerate(linie):
     if '«MARKER_SHA»' not in l:
         continue
-    if l.lstrip().startswith('>'):        # blok cytowany = wyjaśnienie wartownika
+    low = l.lower()
+    # (1) blok cytowany = wyjaśnienie wartownika; (2) linia MÓWIĄCA o wartowniku,
+    # nawet poza cytatem (tabela STOP, lista kontrolna) — tam sentinel ma zostać literałem.
+    if l.lstrip().startswith('>') or 'wartownik' in low or 'sentinel' in low or 'niezwiązan' in low:
         pominiete += l.count('«MARKER_SHA»')
         continue
     podmienione += l.count('«MARKER_SHA»')
