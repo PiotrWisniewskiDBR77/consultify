@@ -46,7 +46,7 @@ Tip był równy markerowi; zakres `marker..tip` był pusty. Worktree: `/private/
 | §B.0 | ZROBIONE_WG_DoD | PENDING | §B.0 |
 | §B.1 | ZROBIONE_WG_DoD | PENDING | §B.1 |
 | §A | ZROBIONE_WG_DoD | PENDING | §A |
-| §C | NIEROZPOCZĘTE | — | — |
+| §C | ZROBIONE_WG_DoD | PENDING | §C |
 | §D | NIEROZPOCZĘTE | — | — |
 | §E | NIEROZPOCZĘTE | — | — |
 | §F | NIEROZPOCZĘTE | — | — |
@@ -173,6 +173,23 @@ Pakiet acceptance zmierzony przed dodaniem joba na świeżym PG: `exit=1`, `114 
 `DECISION_REQUIRED`: czy właściciel akceptuje natychmiastowe włączenie czerwonego `acceptance-tests` jako uczciwej bramki (blokada 380 przypadków), czy zatwierdza osobny plan naprawczy przed scaleniem §A? Wyciszenie lub `continue-on-error` nie jest wariantem.
 
 Niezweryfikowane dla §A: realny runner GitHuba nie został uruchomiony (Z8); statyczny analizator nie modeluje `needs`, matrix ani dynamicznego outputu readiness.
+
+## §C — testy bramkowane nazwą bazy
+
+Mianownik z własnych komend: 38 unikalnych tokenów `*_DB_PREFIX`; rodzina 1 obejmuje 50 plików, rodzina 2 siedem, unia 56, z czego 51 ma nazwę `*.test.*`/`*.spec.*`. Pełna tabela `plik | zmienna | literał | teren` została wygenerowana z `db-union.txt`; dziewięć pozycji ma etykietę CUDZY: `financeSettingsCommandService.pg.test.ts`, trzy `tests/e2e/settings/*`, trzy `tests/integration/settings/*`, `meeting-basic.spec.ts`, `meeting-notebook-evidence.realdb.test.ts`. Pozostałe 47 są WOLNE. Żadnego z 56 plików nie zmieniono.
+
+Werdykt architektoniczny: bramkowanie po indywidualnej nazwie bazy powinno zniknąć z testów. Docelowy wspólny warunek to `RUN_DB_TESTS=1 && MOCK_DB=false && DB_TYPE=postgres && DATABASE_URL` wskazujący PostgreSQL, a izolację zapewnia wspólny helper tworzący unikalną bazę. Utrzymanie obecnego modelu wymaga przekazywania 38 zmiennych i tworzenia wielu baz w CI; cena to duża konfiguracja i dalsze ryzyko cichych `SKIPPED`. Usunięcie wymaga osobnego szeregowanego dyżuru na 56 plików; ryzyko to kolizje z terenami 55/57, dlatego nie wykonano go tutaj.
+
+Dowód wykonalności rodziny 2, oba z `RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres NODE_ENV=test`, realnym PG na porcie 5858 i `--retry=0`:
+
+```text
+raid.routes.tenant-isolation.mounted.realdb.test.ts: exit=0; 1 file passed; 4 tests passed; zero SKIPPED
+accessCodes.routes.cross-org-escalation.mounted.realdb.test.ts: exit=0; 1 file passed; 6 tests passed; zero SKIPPED
+```
+
+Acceptance na tej samej instancji: `exit=1`; pliki `114 failed | 19 passed | 6 skipped`, przypadki `380 failed | 589 passed | 143 skipped`. Pełna lista nazw jest w `C-acceptance.txt` (6506+ linii).
+
+Niezweryfikowane dla §C: nie uruchomiono wszystkich 56 plików z odpowiadającymi im indywidualnymi bazami; nie udowodniono, że wspólny helper usunie wszystkie przyczyny `SKIPPED`.
 
 ## 9. DECISION_REQUIRED
 
