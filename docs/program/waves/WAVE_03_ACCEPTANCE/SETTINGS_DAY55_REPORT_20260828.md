@@ -245,6 +245,33 @@ Pomiar zasięgu klienta po usunięciu: 200 testów, `200 PASS / 0 FAIL / 0 SKIPP
 
 Werdykt §A.3: `CZĘŚCIOWO` — bezsporne martwe duplikaty i ich testy usunięto, ale bezpośrednich adresów nie potwierdzono jeszcze pełnym browser runtime.
 
+## §A.4 — runtime DDL
+
+Własny pomiar wejściowy: 28 instrukcji DDL, w tym 8 `CREATE TABLE`. Po pełnym runnerze wszystkie osiem tabel zwróciło `ISTNIEJE`, dlatego nie dodano żadnej migracji. Przedział `20261560–20261569` był pusty przed zmianą i pozostaje pusty. Runtime DDL w `settings.routes.ts` wynosi po zmianie `0`; funkcje kompatybilności zachowano jako bezskutkowe awaitable punkty, a własność schematu należy wyłącznie do migracji.
+
+| tabela               | po migracjach | write przez Gateway               | GET przez Gateway       | niezależny readback | migracja |
+| -------------------- | ------------- | --------------------------------- | ----------------------- | ------------------- | -------- |
+| `user_preferences`   | ISTNIEJE      | regional PUT `200`                | regional GET `200`      | `count > 0`         | brak     |
+| `gdpr_requests`      | ISTNIEJE      | export POST `200`                 | export-status GET `200` | `count = 1`         | brak     |
+| `email_signatures`   | ISTNIEJE      | POST `200`                        | GET `200`               | `count = 1`         | brak     |
+| `settings_templates` | ISTNIEJE      | POST `200`                        | GET `200`               | `count = 1`         | brak     |
+| `settings_audit_log` | ISTNIEJE      | developer PUT `200` emituje audit | history GET `200`       | `count > 0`         | brak     |
+| `user_api_keys`      | ISTNIEJE      | POST `200`                        | GET `200`               | `count = 1`         | brak     |
+| `user_webhooks`      | ISTNIEJE      | POST `200`                        | GET `200`               | `count = 1`         | brak     |
+| `developer_settings` | ISTNIEJE      | PUT `200`                         | GET `200`               | `count = 1`         | brak     |
+
+Pakiet `day55.runtime-ddl-removal.realdb.test.ts`: `7 PASS / 0 FAIL / 0 SKIP`, realny Gateway i PG, `--retry=0`; log `/private/tmp/consultify-settings-day55-artefakty/a4-runtime-ddl-test.txt`.
+
+Dowód mutacyjny: lokalnie zmieniono nazwę `user_webhooks` na `user_webhooks__day55_mutation`; ten sam przypadek zakończył się czerwono `relation "user_webhooks" does not exist`, RC `1`. Nazwę przywrócono; `to_regclass('public.user_webhooks') = user_webhooks`, a pełny przebieg wrócił do `7 PASS`. Mutacja dotyczyła wyłącznie efemerycznej bazy, nie kodu ani migracji. Log czerwony: `a4-mutation-red.txt`.
+
+Z33: pełny komplet env w jednej linii, jawny `DATABASE_URL` na `127.0.0.1:5852/cx_day55`, `DB_IDENTITY` potwierdzony, `--retry=0`; bez mocków auth/DB. Z30: brak konfiguracji SMTP, więc export nie mógł wysłać e-maila.
+
+Znalezisko poboczne: GDPR export wykonuje `SELECT ... name FROM users`, chociaż po migracjach kolumna `name` nie istnieje. `DbPromise` zdegradował ten odczyt do `null`, a żądanie zakończyło się `200`; zapisuję to jako dług zastany, nie jako dowód pełnej treści eksportu.
+
+Pięć kształtów fałszywego gotowe — A.4: realny Gateway TAK; test na żywej trasie TAK; 7 asercji wykonanych bez SKIP TAK; skutki odczytane niezależnie TAK; kody HTTP, nie grep TAK.
+
+Werdykt §A.4: `ZROBIONE_WG_DoD`; `SET-PF-001` wymaga erraty w §R.1, bo deklaracja wcześniejszego usunięcia runtime DDL była fałszywa na markerze.
+
 ## Pomiar zasięgu testów
 
 - (a) z pełnym env: serwer 79 testów (`77 PASS`, `2 SKIPPED`, 0 asercji FAIL; pakiety PG nie wykonały przypadków), klient 204 (`203 PASS`, `1 FAIL`).

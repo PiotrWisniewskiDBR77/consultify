@@ -234,32 +234,8 @@ router.post(
 // USER PREFERENCES
 // ===========================================
 
-/**
- * Ensure user_preferences table exists
- */
-const ensureUserPreferencesTable = async () => {
-  // Keep schema compatible with DatabaseInitializer (`user_id`, `key`, `value`, `updated_at`).
-  // This DDL is purely opportunistic — the table already exists in every real deployment.
-  // Use fallback:true so a transient DDL failure (lock/timeout/brief read-only/connection blip)
-  // can NEVER reject and bubble up as a bare 500 on the read endpoints that call this first.
-  await dbRun(
-    `
-      CREATE TABLE IF NOT EXISTS user_preferences (
-        user_id TEXT NOT NULL,
-        key TEXT NOT NULL,
-        value TEXT NOT NULL,
-        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-        PRIMARY KEY (user_id, key),
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-      )
-    `,
-    [],
-    { fallback: true }
-  );
-  await dbRun(`CREATE INDEX IF NOT EXISTS idx_user_prefs_user ON user_preferences(user_id)`, [], {
-    fallback: true,
-  });
-};
+// Schema ownership belongs to the migration chain; request handlers never repair it at runtime.
+const ensureUserPreferencesTable = async (): Promise<void> => undefined;
 
 /**
  * GET /api/settings/recovery
@@ -3050,28 +3026,7 @@ router.put(
 // GDPR REQUESTS TABLE
 // ===========================================
 
-const ensureGdprRequestsTable = async () => {
-  await dbRun(`
-        CREATE TABLE IF NOT EXISTS gdpr_requests (
-            id TEXT PRIMARY KEY,
-            user_id TEXT NOT NULL,
-            type TEXT NOT NULL,
-            status TEXT DEFAULT 'pending',
-            reason TEXT,
-            download_url TEXT,
-            file_path TEXT,
-            expires_at TEXT,
-            scheduled_at TEXT,
-            processed_at TEXT,
-            completed_at TEXT,
-            error_message TEXT,
-            metadata TEXT DEFAULT '{}',
-            created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users(id)
-        )
-    `);
-};
+const ensureGdprRequestsTable = async (): Promise<void> => undefined;
 
 /**
  * GET /api/settings/gdpr/export-status
@@ -3818,24 +3773,7 @@ router.put(
 // EMAIL SIGNATURES
 // ===========================================
 
-/**
- * Ensure email_signatures table exists
- */
-const ensureEmailSignaturesTable = async () => {
-  await dbRun(`
-        CREATE TABLE IF NOT EXISTS email_signatures (
-            id TEXT PRIMARY KEY,
-            user_id TEXT NOT NULL,
-            name TEXT NOT NULL,
-            content TEXT NOT NULL,
-            is_default INTEGER DEFAULT 0,
-            created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-        )
-    `);
-  await dbRun(`CREATE INDEX IF NOT EXISTS idx_email_sig_user ON email_signatures(user_id)`);
-};
+const ensureEmailSignaturesTable = async (): Promise<void> => undefined;
 
 /**
  * GET /api/settings/signatures
@@ -4824,23 +4762,7 @@ router.get(
 // ADVANCED: SETTINGS TEMPLATES
 // ===========================================
 
-const ensureSettingsTemplatesTable = async () => {
-  await dbRun(`
-        CREATE TABLE IF NOT EXISTS settings_templates (
-            id TEXT PRIMARY KEY,
-            user_id TEXT NOT NULL,
-            name TEXT NOT NULL,
-            description TEXT,
-            icon TEXT DEFAULT '📋',
-            type TEXT DEFAULT 'custom',
-            settings_data TEXT NOT NULL,
-            is_active INTEGER DEFAULT 1,
-            created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-        )
-    `);
-};
+const ensureSettingsTemplatesTable = async (): Promise<void> => undefined;
 
 /**
  * GET /api/settings/templates
@@ -5023,23 +4945,7 @@ router.post(
 // ADVANCED: SETTINGS HISTORY
 // ===========================================
 
-const ensureSettingsAuditLogTable = async () => {
-  await dbRun(`
-        CREATE TABLE IF NOT EXISTS settings_audit_log (
-            id TEXT PRIMARY KEY,
-            user_id TEXT NOT NULL,
-            category TEXT NOT NULL,
-            setting_key TEXT NOT NULL,
-            action TEXT NOT NULL,
-            old_value TEXT,
-            new_value TEXT,
-            device TEXT,
-            ip_address TEXT,
-            created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-        )
-    `);
-};
+const ensureSettingsAuditLogTable = async (): Promise<void> => undefined;
 
 /**
  * GET /api/settings/history
@@ -5273,51 +5179,7 @@ router.post(
 // ADVANCED: USER API KEYS
 // ===========================================
 
-const ensureUserApiKeysTable = async () => {
-  await dbRun(
-    `
-      CREATE TABLE IF NOT EXISTS user_api_keys (
-        id TEXT PRIMARY KEY,
-        user_id TEXT NOT NULL,
-        name TEXT NOT NULL,
-        key_hash TEXT NOT NULL,
-        key_prefix TEXT NOT NULL,
-        permissions TEXT DEFAULT '[]',
-        rate_limit INTEGER DEFAULT 1000,
-        last_used_at TIMESTAMPTZ,
-        expires_at TIMESTAMPTZ,
-        is_active INTEGER DEFAULT 1,
-        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-      )
-    `,
-    [],
-    { fallback: false }
-  );
-
-  const cols = await getTableColumns('user_api_keys');
-  const alterations: Array<[string, string]> = [
-    ['name', `ALTER TABLE user_api_keys ADD COLUMN name TEXT`],
-    ['key_hash', `ALTER TABLE user_api_keys ADD COLUMN key_hash TEXT`],
-    ['key_prefix', `ALTER TABLE user_api_keys ADD COLUMN key_prefix TEXT`],
-    ['permissions', `ALTER TABLE user_api_keys ADD COLUMN permissions TEXT DEFAULT '[]'`],
-    ['rate_limit', `ALTER TABLE user_api_keys ADD COLUMN rate_limit INTEGER DEFAULT 1000`],
-    ['last_used_at', `ALTER TABLE user_api_keys ADD COLUMN last_used_at TIMESTAMPTZ`],
-    ['expires_at', `ALTER TABLE user_api_keys ADD COLUMN expires_at TIMESTAMPTZ`],
-    ['is_active', `ALTER TABLE user_api_keys ADD COLUMN is_active INTEGER DEFAULT 1`],
-    [
-      'updated_at',
-      `ALTER TABLE user_api_keys ADD COLUMN updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP`,
-    ],
-  ];
-
-  for (const [column, sql] of alterations) {
-    if (!cols.has(column)) {
-      await dbRun(sql, [], { fallback: true });
-    }
-  }
-};
+const ensureUserApiKeysTable = async (): Promise<void> => undefined;
 
 const generateApiKey = (): string => {
   // 256-bit random key; URL-safe via hex.
@@ -5510,52 +5372,7 @@ router.post(
 // ADVANCED: USER WEBHOOKS
 // ===========================================
 
-const ensureUserWebhooksTable = async () => {
-  await dbRun(
-    `
-      CREATE TABLE IF NOT EXISTS user_webhooks (
-        id TEXT PRIMARY KEY,
-        user_id TEXT NOT NULL,
-        name TEXT NOT NULL,
-        url TEXT NOT NULL,
-        events TEXT NOT NULL,
-        secret TEXT,
-        headers TEXT DEFAULT '{}',
-        is_active INTEGER DEFAULT 1,
-        last_triggered_at TIMESTAMPTZ,
-        last_status INTEGER,
-        failure_count INTEGER DEFAULT 0,
-        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-      )
-    `,
-    [],
-    // Opportunistic DDL — never let a transient CREATE failure reject and 500 the read.
-    { fallback: true }
-  );
-
-  const cols = await getTableColumns('user_webhooks');
-  const alterations: Array<[string, string]> = [
-    ['name', `ALTER TABLE user_webhooks ADD COLUMN name TEXT`],
-    ['secret', `ALTER TABLE user_webhooks ADD COLUMN secret TEXT`],
-    ['headers', `ALTER TABLE user_webhooks ADD COLUMN headers TEXT DEFAULT '{}'`],
-    ['is_active', `ALTER TABLE user_webhooks ADD COLUMN is_active INTEGER DEFAULT 1`],
-    ['last_triggered_at', `ALTER TABLE user_webhooks ADD COLUMN last_triggered_at TIMESTAMPTZ`],
-    ['last_status', `ALTER TABLE user_webhooks ADD COLUMN last_status INTEGER`],
-    ['failure_count', `ALTER TABLE user_webhooks ADD COLUMN failure_count INTEGER DEFAULT 0`],
-    [
-      'updated_at',
-      `ALTER TABLE user_webhooks ADD COLUMN updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP`,
-    ],
-  ];
-
-  for (const [column, sql] of alterations) {
-    if (!cols.has(column)) {
-      await dbRun(sql, [], { fallback: true });
-    }
-  }
-};
+const ensureUserWebhooksTable = async (): Promise<void> => undefined;
 
 /**
  * GET /api/settings/webhooks
@@ -5854,28 +5671,7 @@ router.put(
 // DEVELOPER SETTINGS
 // ===========================================
 
-/**
- * Ensure developer_settings table exists
- */
-const ensureDeveloperSettingsTable = async () => {
-  await dbRun(`
-        CREATE TABLE IF NOT EXISTS developer_settings (
-            id TEXT PRIMARY KEY,
-            user_id TEXT NOT NULL UNIQUE,
-            developer_mode INTEGER DEFAULT 0,
-            api_logging INTEGER DEFAULT 0,
-            verbose_errors INTEGER DEFAULT 0,
-            show_debug_info INTEGER DEFAULT 0,
-            beta_features TEXT DEFAULT '[]',
-            created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-        )
-    `);
-  await dbRun(
-    `CREATE INDEX IF NOT EXISTS idx_developer_settings_user ON developer_settings(user_id)`
-  );
-};
+const ensureDeveloperSettingsTable = async (): Promise<void> => undefined;
 
 /**
  * GET /api/settings/developer
