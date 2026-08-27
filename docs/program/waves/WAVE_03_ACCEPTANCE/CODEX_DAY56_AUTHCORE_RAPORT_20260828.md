@@ -111,6 +111,14 @@ Pakiet jednostkowy `auth.middleware.test.ts`: 174 PASS / 0 FAIL; wszystkie czter
 
 Pięć kształtów: wołacz — TAK; ApiGateway — NIE; skipped — 0; para HTTP — NIE; grep nie jest uznany za dowód egzekucji.
 
+## §P.7 — optionalAuth
+
+Własny mianownik: 4 pliki wspominające symbol, 5 trafień tekstowych, dokładnie 1 montaż. Wybrano S3 w ograniczonym kształcie: `optionalAuth` przekazuje `attachUser` odpowiedź przechwytującą `status/json/setHeader`; odmowa hydratacji nie wysyła nagłówków ani treści i kończy się anonimowym `next()`. Required auth nadal używa rzeczywistego `res`. S1 odrzucono z powodu zmiany kontraktu ośmiu odmów, S2 wymagałby rozgałęzienia każdej odmowy, S4 pozostawiałby wadę strukturalną.
+
+Pakiet regresyjny `auth.middleware.test.ts` + `auth.middleware.verifyToken.test.ts`: 182 PASS / 0 FAIL. Tabela realnej osiągalności ośmiu odmów i sześć żądań przez ApiGateway pozostają niewykonane, więc werdykt: `CZĘŚCIOWO`.
+
+Martwy import `legal.routes.ts:17` pozostawiono bez zmiany zgodnie z licencją. Pięć kształtów: wołacz — TAK; ApiGateway — NIE; skipped — 0; para HTTP — NIE; grep nie jest uznany za runtime.
+
 ## Pomiar zasięgu testów
 
 PRZED: patrz §P.1. Artefakty: `/private/tmp/consultify-authcore-day56-artefakty/zasieg-PRZED.json` i `zasieg-PRZED.log`.

@@ -1557,8 +1557,22 @@ export const optionalAuth = asyncHandler(
 
     try {
       const normalizedDecoded: JWTPayload = { ...sanitizedDecoded, id: decodedUserId };
-      // Attach user without revocation check for optional auth.
-      await attachUser(normalizedDecoded, req, next, _res);
+      // Hydration is best-effort here. Capture attachUser refusals without
+      // committing headers/body to the public response; required auth keeps
+      // using the real response object and therefore remains fail-closed.
+      let refused = false;
+      const optionalResponse = Object.create(_res) as Response;
+      optionalResponse.status = (() => optionalResponse) as Response['status'];
+      optionalResponse.json = (() => {
+        refused = true;
+        return optionalResponse;
+      }) as Response['json'];
+      optionalResponse.setHeader = (() => optionalResponse) as Response['setHeader'];
+
+      await attachUser(normalizedDecoded, req, next, optionalResponse);
+      if (refused) {
+        return next();
+      }
     } catch {
       // Optional auth must remain non-blocking even if user hydration fails.
       return next();
