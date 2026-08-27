@@ -18,6 +18,7 @@ import { SettingsApi } from '../src/services/api/settings.api';
 const params = new URLSearchParams(window.location.search);
 const theme = params.get('theme') === 'dark' ? 'dark' : 'light';
 const operation = params.get('op') || 'auth';
+const demoState = params.get('demo') === 'empty' ? 'empty' : 'seeded';
 document.documentElement.classList.toggle('dark', theme === 'dark');
 document.documentElement.style.colorScheme = theme;
 
@@ -27,15 +28,18 @@ const appearance = {
   density: 'comfortable',
   fontScale: 100,
 };
-const regional = {
-  timezone: 'Europe/Warsaw',
-  currency: 'PLN',
-  dateFormat: 'DD.MM.YYYY',
-  timeFormat: '24h',
-  units: 'metric',
-  firstDayOfWeek: 'monday',
-  numberFormat: 'pl-PL',
-};
+const regional =
+  demoState === 'empty'
+    ? {}
+    : {
+        timezone: 'Europe/Warsaw',
+        currency: 'PLN',
+        dateFormat: 'DD/MM/YYYY',
+        timeFormat: '24h',
+        units: 'metric',
+        firstDayOfWeek: 'monday',
+        numberFormat: 'pl-PL',
+      };
 const currentUser = {
   id: 'day55-owner',
   email: 'owner@local.test',

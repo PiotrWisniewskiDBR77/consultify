@@ -410,6 +410,27 @@ Cztery pozycje backlogu po-MVP przeniesione z §D.1: mieszany PL/EN — `NIEZROB
 
 `scripts/check-list-canon.sh`: pełny fallback scan 171 plików; 394 naruszenia = baseline 394, brak nowej regresji. Werdykt §E.1: `PARTIAL / EVIDENCE_MISSING` — korpus został rozliczony bez fałszywego `ZROBIONE`, lecz literalna liczba 10 unikalnych uwag nie zgadza się z ośmioma ID wymienionymi przez instrukcję, a `AC-004` nie ma browser replay 50/50.
 
+## §F.2 — dane demo Ustawień
+
+`rg "user_settings|user_preferences|notification_settings" server/src/services/demo/demoSeedService.ts` → 0 trafień; teza o braku seeda preferencji potwierdzona. Przed seedem niezależny `psql` zmierzył:
+
+| tabela | liczba przed / pusta? | zasilana przez nowy skrypt | niezależny readback po |
+| --- | ---: | --- | --- |
+| `user_preferences` | 4 / nie (dane testów B.2) | tak: język, regionalne, digest | 7; trzy wiersze użytkownika demo, wartości zgodne |
+| `notification_settings` | 0 / tak | tak | 1; weekly/email/inApp |
+| `email_signatures` | 0 / tak | tak | 1; `Podpis główny`, default |
+| `developer_settings` | 0 / tak | nie — poza kanonicznym zestawem | 0 |
+| `settings_templates` | 0 / tak | nie | 0 |
+| `user_api_keys` | 0 / tak | nie; zakaz sztucznych sekretów | 0 |
+| `user_webhooks` | 0 / tak | nie; zakaz sztucznego endpointu | 0 |
+| `gdpr_requests` | 3 / nie (dane wcześniejszych testów) | tak: deterministyczny export pending | 4; dokładnie jeden `settings-day55-demo-export` pending |
+
+Nowy `scripts/seed-settings-demo.ts` działa wyłącznie dla lokalnego hosta i literalnej bazy `cx_day55`, wymaga argumentu `--confirm-db=cx_day55` oraz istniejącej pary użytkownik-organizacja. Nie używa ani nie ustawia `*_SEED_TARGET_CONFIRM`. Uruchomienie bez argumentu odmówiło: `odmowa: wymagane jawne --confirm-db=cx_day55`; dopiero jawne potwierdzenie dało `OK`. Seed jest idempotentny (upsert deterministycznych kluczy/ID).
+
+Kanoniczny readback: `pl`; `Europe/Warsaw`; `PLN`; `DD/MM/YYYY`; `24h`; `metric`; digest `weekly`; jeden podpis; jeden export `pending`. Cztery zrzuty porównawcze z realnego komponentu Regional w harnessie: `f2-regional-empty-light.png` (`00df6f...`), `f2-regional-empty-dark.png` (`48a47c...`), `f2-regional-seeded-light.png` (`24c8b...`), `f2-regional-seeded-dark.png` (`004799...`). Wizualnie sprawdzone: stan bez osobistej koperty spada do wartości komponentu/tenanta (m.in. USD), stan seeded pokazuje PLN, polski format liczb, 24h i metric. Harness jest lokalnym dowodem prezentacji tej samej koperty, nie dowodem zalogowanego pełnego runtime po SQL.
+
+Werdykt §F.2: `ZROBIONE_WG_DoD` dla lokalnego seeda i readbacku; browser evidence ma jawny zakres harnessu.
+
 ## Pomiar zasięgu testów
 
 - (a) z pełnym env: serwer 79 testów (`77 PASS`, `2 SKIPPED`, 0 asercji FAIL; pakiety PG nie wykonały przypadków), klient 204 (`203 PASS`, `1 FAIL`).
