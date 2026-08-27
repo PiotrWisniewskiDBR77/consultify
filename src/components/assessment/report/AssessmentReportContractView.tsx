@@ -3,12 +3,17 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ArtifactBreadcrumb } from '@/components/standard/ArtifactBreadcrumb';
+import {
+  ArtifactPropertiesTable,
+  type ArtifactPropertyRow,
+} from '@/components/standard/ArtifactPropertiesTable';
+import {
+  ARTIFACT_PANEL_CARD_CLASS_DOCKED,
+  ArtifactRightPanel,
+  type ArtifactRightPanelSection,
+} from '@/components/standard/ArtifactRightPanel';
 import { NModeShell } from '@/components/shared/NModeLayout/NModeShell';
-import type {
-  NModeHeaderConfig,
-  NModePropertyField,
-  NModeSection,
-} from '@/components/shared/NModeLayout/types';
+import type { NModeHeaderConfig, NModeSection } from '@/components/shared/NModeLayout/types';
 import { EmptyState, ErrorState, LoadingState } from '@/components/shared/states';
 import {
   getAssessmentReportContract,
@@ -368,7 +373,7 @@ export const AssessmentReportContractView: React.FC<AssessmentReportContractView
     }
   };
 
-  const properties: NModePropertyField[] = [
+  const propertyRows: ArtifactPropertyRow[] = [
     [
       'revision',
       contract.revision === 0
@@ -387,15 +392,70 @@ export const AssessmentReportContractView: React.FC<AssessmentReportContractView
     ['sessionId', contract.sessionId],
   ].map(([id, value]) => ({
     id,
-    label: {
-      pl: t(`assessment.reportView.properties.${id}`, { lng: 'pl' }),
-      en: t(`assessment.reportView.properties.${id}`, { lng: 'en' }),
-    },
-    type: 'text' as const,
+    label: t(`assessment.reportView.properties.${id}`),
     value,
-    onChange: () => {},
-    readOnly: true,
+    mono: true,
   }));
+  const panelSections: ArtifactRightPanelSection[] = [
+    {
+      id: 'actions',
+      label: t('assessment.reportView.panel.actions'),
+      defaultOpen: true,
+      children: (
+        <div className="space-y-2">
+          {isAssessmentDocxEnabled() ? (
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={() => void downloadDocx()}
+                disabled={downloadState.kind === 'loading'}
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-c-border bg-c-surface px-3 py-2 text-xs font-semibold text-c-text transition-colors hover:bg-c-surface-raised disabled:cursor-wait disabled:opacity-60"
+              >
+                {downloadState.kind === 'loading' ? (
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                ) : (
+                  <Download className="h-4 w-4" aria-hidden="true" />
+                )}
+                {downloadState.kind === 'loading' ? 'Pobieranie DOCX…' : 'Pobierz DOCX'}
+              </button>
+              {downloadState.kind === 'error' ? (
+                <p role="alert" className="text-xs text-c-danger">
+                  {downloadState.message}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+          {(['generate', 'pdf', 'all'] as const).map((kind) => (
+            <div
+              key={kind}
+              className="flex items-center justify-between rounded-lg border border-c-border-subtle px-3 py-2 opacity-60"
+            >
+              <span className="text-xs text-c-text-muted">
+                {kind === 'generate'
+                  ? t('assessment.reportView.generate')
+                  : t(`assessment.reportView.export.${kind}`)}
+              </span>
+              <span className="text-[10px] font-medium text-c-text-muted">
+                {t('assessment.reportView.planned')}
+              </span>
+            </div>
+          ))}
+        </div>
+      ),
+    },
+    {
+      id: 'properties',
+      label: t('assessment.reportView.panel.properties'),
+      defaultOpen: true,
+      children: (
+        <ArtifactPropertiesTable
+          rows={propertyRows}
+          propertyLabel={t('assessment.reportView.property')}
+          valueLabel={t('assessment.reportView.value')}
+        />
+      ),
+    },
+  ];
   const header: NModeHeaderConfig = {
     title: t('assessment.reportView.title'),
     onTitleChange: () => {},
@@ -435,41 +495,25 @@ export const AssessmentReportContractView: React.FC<AssessmentReportContractView
           { label: t('assessment.reportView.report') },
         ]}
       />
-      <div className="min-h-0 flex-1">
+      <div
+        className="min-h-0 flex-1"
+        data-testid="assessment-report-layout"
+        style={{ '--ntype-left-panel-width': '6.5rem' } as React.CSSProperties}
+      >
         <NModeShell
           header={header}
           sections={sections}
-          properties={properties}
-          propertiesMaxColumns={6}
           activeSection={activeSection}
           onSectionChange={setActiveSection}
           presentationMode="n"
           onPresentationModeChange={() => {}}
           showModeSwitcher={false}
-          hideToolbarWhenEmpty
-          renderActionBar={() =>
-            isAssessmentDocxEnabled() ? (
-              <div className="flex flex-wrap items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => void downloadDocx()}
-                  disabled={downloadState.kind === 'loading'}
-                  className="flex items-center justify-center gap-2 rounded-lg border border-c-border bg-c-surface px-3 py-2 text-xs font-semibold text-c-text transition-colors hover:bg-c-surface-raised disabled:cursor-wait disabled:opacity-60"
-                >
-                  {downloadState.kind === 'loading' ? (
-                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                  ) : (
-                    <Download className="h-4 w-4" aria-hidden="true" />
-                  )}
-                  {downloadState.kind === 'loading' ? 'Pobieranie DOCX…' : 'Pobierz DOCX'}
-                </button>
-                {downloadState.kind === 'error' ? (
-                  <p role="alert" className="text-xs text-c-danger">
-                    {downloadState.message}
-                  </p>
-                ) : null}
-              </div>
-            ) : null
+          rightPanel={
+            <ArtifactRightPanel
+              sections={panelSections}
+              ariaLabel={t('assessment.reportView.panelLabel')}
+              className={ARTIFACT_PANEL_CARD_CLASS_DOCKED}
+            />
           }
         />
       </div>

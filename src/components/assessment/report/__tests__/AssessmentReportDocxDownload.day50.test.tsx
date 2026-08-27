@@ -62,12 +62,14 @@ describe('Day 50 Assessment DOCX product download', () => {
     ).toBe('Raport_DRD_Łódź.docx');
   });
 
-  it('keeps document navigation but does not squeeze the canvas with a docked right panel', async () => {
+  it('keeps the card information panel and narrows only the internal chapter rail', async () => {
     render(<AssessmentReportContractView sessionId="session-1" />);
 
     await screen.findByRole('button', { name: 'Pobierz DOCX' });
-    expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
-    expect(screen.getByText('assessment.reportView.properties.revision')).toBeInTheDocument();
+    expect(screen.getByRole('complementary')).toBeInTheDocument();
+    expect(screen.getByTestId('assessment-report-layout')).toHaveStyle({
+      '--ntype-left-panel-width': '6.5rem',
+    });
   });
 
   it('fetches the production route, downloads its blob and uses the server filename', async () => {
