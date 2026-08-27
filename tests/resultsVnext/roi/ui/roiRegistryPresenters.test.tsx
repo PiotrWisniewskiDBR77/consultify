@@ -55,6 +55,11 @@ function makeRow(overrides: Partial<RoiCaseListItem> = {}): RoiCaseListItem {
 
 describe('humanizeActionType — known ROI next_action_type values get real PL/EN sentences', () => {
   it('translates every value the real server actually emits', () => {
+    expect(humanizeActionType('complete_economic_model', true)).toBe('Uzupełnij model ekonomiczny');
+    expect(humanizeActionType('review_decision', true)).toBe('Podejmij decyzję');
+    expect(humanizeActionType('start_tracking', true)).toBe('Rozpocznij śledzenie korzyści');
+    expect(humanizeActionType('record_actual', true)).toBe('Zarejestruj wartość rzeczywistą');
+    expect(humanizeActionType('set_baseline', true)).toBe('Ustal wartość bazową');
     expect(humanizeActionType('conduct_post_investment_review', true)).toBe(
       'Przeprowadź przegląd poinwestycyjny'
     );
@@ -66,7 +71,9 @@ describe('humanizeActionType — known ROI next_action_type values get real PL/E
   });
 
   it('falls back to an honest humanized label for any value not in the known table (never a raw code)', () => {
-    expect(humanizeActionType('some_future_action_type', true)).toBe('Some Future Action Type');
+    expect(humanizeActionType('some_future_action_type', true)).toBe(
+      'Nieznana akcja: Some Future Action Type'
+    );
   });
 });
 

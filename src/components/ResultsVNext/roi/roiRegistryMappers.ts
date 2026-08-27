@@ -203,7 +203,10 @@ export function deriveIrrHonestValue(run: RoiCalculationRunSummary | null): Hone
   return run.irrPct;
 }
 
-export const ROI_IRR_STATUS_REASON: Record<Exclude<RoiIrrStatus, 'computed'>, { pl: string; en: string }> = {
+export const ROI_IRR_STATUS_REASON: Record<
+  Exclude<RoiIrrStatus, 'computed'>,
+  { pl: string; en: string }
+> = {
   not_applicable: {
     pl: 'IRR nie ma zastosowania do kształtu przepływów tej sprawy.',
     en: 'IRR is not applicable to this case’s cash-flow shape.',
@@ -218,8 +221,12 @@ export const ROI_IRR_STATUS_REASON: Record<Exclude<RoiIrrStatus, 'computed'>, { 
   },
 };
 
-export function irrNotCalculableReason(run: RoiCalculationRunSummary | null, isPolish: boolean): string {
-  if (!run) return isPolish ? 'Brak jeszcze żadnego przebiegu kalkulacji.' : 'No calculation run yet.';
+export function irrNotCalculableReason(
+  run: RoiCalculationRunSummary | null,
+  isPolish: boolean
+): string {
+  if (!run)
+    return isPolish ? 'Brak jeszcze żadnego przebiegu kalkulacji.' : 'No calculation run yet.';
   if (run.status === 'failed') {
     return isPolish
       ? 'Ostatni przebieg kalkulacji zakończył się niepowodzeniem.'
@@ -232,8 +239,12 @@ export function irrNotCalculableReason(run: RoiCalculationRunSummary | null, isP
   return isPolish ? 'Nie do obliczenia.' : 'Not calculable.';
 }
 
-export function npvNotCalculableReason(run: RoiCalculationRunSummary | null, isPolish: boolean): string {
-  if (!run) return isPolish ? 'Brak jeszcze żadnego przebiegu kalkulacji.' : 'No calculation run yet.';
+export function npvNotCalculableReason(
+  run: RoiCalculationRunSummary | null,
+  isPolish: boolean
+): string {
+  if (!run)
+    return isPolish ? 'Brak jeszcze żadnego przebiegu kalkulacji.' : 'No calculation run yet.';
   if (run.status === 'failed') {
     return isPolish
       ? 'Ostatni przebieg kalkulacji zakończył się niepowodzeniem — sprawdź ustalenia walidacji.'
@@ -252,7 +263,9 @@ export function npvNotCalculableReason(run: RoiCalculationRunSummary | null, isP
 // belongs to a later Actuals/Variance package (RN_G2_UI_SCOPE.md §G #18/#19),
 // not this one.
 // ==========================================
-export function derivePaybackHonestValue(run: RoiCalculationRunSummary | null): HonestValue<number> {
+export function derivePaybackHonestValue(
+  run: RoiCalculationRunSummary | null
+): HonestValue<number> {
   if (!run) return null;
   if (run.status === 'failed') return 'not_calculable';
   return run.paybackPeriods;
@@ -569,6 +582,26 @@ export function isRoiTransitionAllowedFromStatus(
  * `financeLineageTransformationKindLabel` uses in Finance.
  */
 const KNOWN_ROI_NEXT_ACTION_LABELS: Record<string, { pl: string; en: string }> = {
+  complete_economic_model: {
+    pl: 'Uzupełnij model ekonomiczny',
+    en: 'Complete economic model',
+  },
+  review_decision: {
+    pl: 'Podejmij decyzję',
+    en: 'Review decision',
+  },
+  start_tracking: {
+    pl: 'Rozpocznij śledzenie korzyści',
+    en: 'Start benefits tracking',
+  },
+  record_actual: {
+    pl: 'Zarejestruj wartość rzeczywistą',
+    en: 'Record actual value',
+  },
+  set_baseline: {
+    pl: 'Ustal wartość bazową',
+    en: 'Set baseline',
+  },
   conduct_post_investment_review: {
     pl: 'Przeprowadź przegląd poinwestycyjny',
     en: 'Conduct post-investment review',
@@ -586,7 +619,6 @@ const KNOWN_ROI_NEXT_ACTION_LABELS: Record<string, { pl: string; en: string }> =
 export function humanizeActionType(value: string, isPolish = true): string {
   const known = KNOWN_ROI_NEXT_ACTION_LABELS[value];
   if (known) return isPolish ? known.pl : known.en;
-  return value
-    .replace(/_/g, ' ')
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+  const humanized = value.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  return isPolish ? `Nieznana akcja: ${humanized}` : `Unknown action: ${humanized}`;
 }
