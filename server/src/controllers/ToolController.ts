@@ -38,6 +38,7 @@ import {
   persistCanonicalReport,
   recordInitiativeProposal,
   renderToolReportSectionFromOutput,
+  ToolOutputPersistenceUnavailableError,
 } from '../services/tools/toolOutputSnapshotService.js';
 import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
@@ -2319,6 +2320,10 @@ export class ToolController {
           res.status(err.status).json({ error: err.message, code: err.code });
           return;
         }
+        if (err instanceof ToolOutputPersistenceUnavailableError) {
+          res.status(err.status).json({ error: err.message, code: err.code });
+          return;
+        }
         throw err;
       }
 
@@ -2937,7 +2942,7 @@ export class ToolController {
         // actually created with, so this is normally a no-op — guarded in
         // case that ever changes upstream.
         if (effectiveOutputId !== outputId) {
-          await queryHelpers.queryRun(
+          const updateResult = await queryHelpers.queryRun(
             `UPDATE tool_initiative_links
              SET initiative_id = ?
              WHERE organization_id = ? AND tool_session_id = ? AND source_revision = ?
@@ -2951,6 +2956,13 @@ export class ToolController {
               rawIdempotencyKey,
             ]
           );
+          if (!updateResult.changes) {
+            res.status(409).json({
+              error: 'Promotion ledger changed before the generated output could be linked',
+              code: 'PROMOTION_LEDGER_UPDATE_MISSED',
+            });
+            return;
+          }
         }
       } else {
         // report / funnel-enabled initiative: claim now, after content

@@ -54,7 +54,11 @@ do nazwy bazy, hosta ani portu; testy realdb muszą użyć
 
 ## ★★ DOWODY Z33
 
-Do uzupełnienia per wykonany pakiet.
+Pakiet `tool-session-roundtrip.contract.test.ts` dotyczy pułapki (d): mockuje
+`queryHelpers` bez `withRawPgTransaction`. Nie jest dowodem realdb; jest
+negatywnym kontraktem, że brak trwałego helpera daje `503`, a nie `200`.
+Komenda miała jawny komplet env i `--retry=0`; wynik 11 PASS / 0 FAIL /
+0 SKIPPED.
 
 ## ★★ WERYFIKACJA TRZYNASTU TEZ ZLECENIA
 
@@ -137,7 +141,11 @@ narzędzi ani autoryzacji do skasowania kontraktu historycznego.
 
 Stan przed (`GREP`): dwa `return built` zwracają niezapisany snapshot; trzeci
 połyk odrzuca `changes` z `UPDATE tool_initiative_links` i bezwarunkowo zwraca
-JSON sukcesu. Stan po: w toku.
+JSON sukcesu. Stan po (`PRZEBIEG` punktowy): brak helpera transakcyjnego i brak
+tabeli są mapowane na nazwany `503 TOOL_OUTPUT_PERSISTENCE_UNAVAILABLE`; zero
+`changes` z aktualizacji ledgera daje nazwany
+`409 PROMOTION_LEDGER_UPDATE_MISSED`. Pakiet mock-SQLite potwierdza pierwszą
+odmowę 11/11, ale dowody realdb i mutacyjne wszystkich trzech dróg są w toku.
 
 ## ★★ ZDANIE O POŁYKU (§A.2 DoD)
 
