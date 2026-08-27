@@ -3,6 +3,7 @@ import type { Pool } from 'pg';
 import { OwnerIndependentKpiReader } from './ownerIndependentKpiReader.js';
 import { GovernanceDataQualityReadModel } from './governanceDataQualityReadModel.js';
 import { ReportClassificationReadModel } from './reportClassificationReadModel.js';
+import { readCapacitySaturation } from './capacitySaturationReadModel.js';
 import {
   REQUIRED_POLICY_PARAMETERS,
   validateControlKpiPolicyParameters,
@@ -60,6 +61,7 @@ export class ControlKpiReadModel {
     );
     const parameters = policyRow?.parameters ?? {};
     const { missingParameters, invalidParameters } = validateControlKpiPolicyParameters(parameters);
+    const capacitySaturation = readCapacitySaturation(parameters);
     const calculatedAt = new Date().toISOString();
 
     const families = CONTROL_KPI_FAMILIES.map((family) => {
@@ -119,6 +121,7 @@ export class ControlKpiReadModel {
       })),
       governanceDataQuality,
       reportClassification,
+      capacitySaturation,
       scopeCompleteness:
         fullFamilyCount === families.length
           ? ('FULL' as const)
