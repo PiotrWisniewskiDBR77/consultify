@@ -26,11 +26,13 @@ export const DRD_REPORT_FIXED_TEXT = Object.freeze({
   decisionLine: 'LINIA DECYZYJNA',
 } as const);
 
-// Contract v1 has no slots for chapters 0 and 8. These deterministic limits
-// keep the owner-accepted placeholder voice visible without inventing prose.
+// Skalibrowane wzorcem c2a91d0258 (RAPORT_DRD_METALPOL_WZORZEC.docx).
+// Pomiar: streszczenie 131 słów prozy, wnioski końcowe 276, komórki linii
+// decyzyjnej 12–21. Okna dobrane wokół pomiaru — patrz raport dnia 34 §G.
 export const CONTRACT_V1_MISSING_SLOT_LIMITS = Object.freeze({
-  executiveSummary: { minWords: 180, maxWords: 260 },
-  finalConclusions: { minWords: 180, maxWords: 260 },
+  executiveSummary: { minWords: 120, maxWords: 150 },
+  finalConclusions: { minWords: 250, maxWords: 300 },
+  decisionLineField: { minWords: 10, maxWords: 30 },
 } as const);
 
 const MICROSTRUCTURE_PL = Object.freeze({
@@ -103,7 +105,8 @@ function areaAverage(
 ): number | null {
   const values = areas
     .filter((area) => !area.skipped && area[field] !== null)
-    .map((area) => area[field] as number);
+    .map((area) => Number(area[field]))
+    .filter(Number.isFinite);
   if (values.length === 0) return null;
   return Math.round(
     (values.reduce((sum, value) => sum + value, 0) / values.length / maxLevel) * 100
@@ -119,19 +122,24 @@ function matrixRows(chapter: ContractChapter): unknown[][] {
       if (!area.skipped && area.currentLevel !== null && area.targetLevel !== null) {
         if (level < area.currentLevel) fill = DRD_REPORT_PALETTE.fillBelow;
         if (level === area.currentLevel) {
-          value = `${level} — ${resolveDrdLevelLabelPL(chapter.axisId, level)}`;
+          value = String(level);
           fill = DRD_REPORT_PALETTE.navy;
         }
         if (level > area.currentLevel && level < area.targetLevel)
           fill = DRD_REPORT_PALETTE.fillToGo;
         if (level === area.targetLevel) {
-          value = `${level} — ${resolveDrdLevelLabelPL(chapter.axisId, level)}`;
+          value = String(level);
           fill = DRD_REPORT_PALETTE.fillTarget;
         }
       }
       cells.push(fill ? { value, style: { bgColor: fill } } : value);
     }
-    cells.push(area.gap ?? '—', priorityForGap(area.gap));
+    cells.push(
+      area.gap ?? '—',
+      area.gap !== null && area.gap >= 3
+        ? { value: priorityForGap(area.gap), style: { bgColor: DRD_REPORT_PALETTE.crimson } }
+        : priorityForGap(area.gap)
+    );
     return cells;
   });
 }
@@ -175,13 +183,6 @@ function chapterBlocks(chapter: ContractChapter): DocumentBlock[] {
         chapter.matrix.caption as { content: string | null; minWords: number; maxWords: number }
       )
     ),
-    paragraph(
-      `${chapter.axisId}-matrix-caption`,
-      slotText(
-        chapter.matrix.caption as { content: string | null; minWords: number; maxWords: number }
-      ),
-      DRD_DOCX_STYLE_IDS.CAPTION
-    ),
     heading(`${chapter.axisId}-areas-heading`, 'Ocena obszarów', 2)
   );
 
@@ -198,22 +199,12 @@ function chapterBlocks(chapter: ContractChapter): DocumentBlock[] {
     const notice = skipNotice(area);
     if (notice) blocks.push(paragraph(`${area.unitId}-skip`, notice, DRD_DOCX_STYLE_IDS.CAPTION));
     if (comment) {
-      blocks.push(
-        paragraph(
-          `${area.unitId}-comment`,
-          slotText(comment as { content: string | null; minWords: number; maxWords: number }),
-          DRD_DOCX_STYLE_IDS.CAPTION
-        ),
-        {
-          blockId: `${area.unitId}-microstructure`,
-          type: 'bullet_list',
-          content: {
-            items: comment.microstructure.map(
-              (item) => MICROSTRUCTURE_PL[item as keyof typeof MICROSTRUCTURE_PL] ?? item
-            ),
-          },
-        }
-      );
+      const commentText = comment.content
+        ? comment.content
+        : `${placeholder(comment.minWords, comment.maxWords).replace(/\.$/, '')}; wymagane: ${comment.microstructure
+            .map((item) => MICROSTRUCTURE_PL[item as keyof typeof MICROSTRUCTURE_PL] ?? item)
+            .join(', ')}.`;
+      blocks.push(paragraph(`${area.unitId}-comment`, commentText, DRD_DOCX_STYLE_IDS.CAPTION));
     }
   });
 
@@ -249,6 +240,7 @@ export function buildAssessmentDrdReportSchema(contract: AssessmentReportContrac
   const clientName = contract.sessionLabel.displayName ?? DRD_REPORT_FIXED_TEXT.clientMissing;
   const executiveLimit = CONTRACT_V1_MISSING_SLOT_LIMITS.executiveSummary;
   const finalLimit = CONTRACT_V1_MISSING_SLOT_LIMITS.finalConclusions;
+  const decisionLineLimit = CONTRACT_V1_MISSING_SLOT_LIMITS.decisionLineField;
   const axisRows = contract.chapters.map((chapter) => {
     const current = areaAverage(chapter.matrix.areas, 'currentLevel', chapter.maxLevel);
     const target = areaAverage(chapter.matrix.areas, 'targetLevel', chapter.maxLevel);
@@ -266,24 +258,30 @@ export function buildAssessmentDrdReportSchema(contract: AssessmentReportContrac
     content: {
       kind: 'radar',
       title: 'Profil dojrzałości DRD',
-      categories: contract.chapters.map((chapter) => chapter.axisNamePL ?? chapter.axisName),
+      categories: contract.chapters.map((chapter) => {
+        const current = areaAverage(chapter.matrix.areas, 'currentLevel', chapter.maxLevel);
+        const target = areaAverage(chapter.matrix.areas, 'targetLevel', chapter.maxLevel);
+        return current === null || target === null
+          ? `${chapter.axisNamePL ?? chapter.axisName} · ${DRD_REPORT_FIXED_TEXT.notAssessed}`
+          : `${chapter.axisNamePL ?? chapter.axisName} · ${current}% → ${target}%`;
+      }),
       series: [
         {
-          label: 'Poziom obecny',
+          label: 'Poziom obecny · stan oceny',
           values: contract.chapters.map((chapter) =>
             areaAverage(chapter.matrix.areas, 'currentLevel', chapter.maxLevel)
           ),
           color: `#${DRD_REPORT_PALETTE.navy}`,
         },
         {
-          label: 'Poziom docelowy',
+          label: 'Poziom docelowy · horyzont docelowy',
           values: contract.chapters.map((chapter) =>
             areaAverage(chapter.matrix.areas, 'targetLevel', chapter.maxLevel)
           ),
           color: `#${DRD_REPORT_PALETTE.teal}`,
         },
       ],
-      caption: 'Rys. 1. Profil dojrzałości cyfrowej według siedmiu osi DRD.',
+      caption: 'Profil dojrzałości cyfrowej według siedmiu osi DRD.',
     },
   };
 
@@ -306,7 +304,7 @@ export function buildAssessmentDrdReportSchema(contract: AssessmentReportContrac
           'axis-summary',
           ['Oś', 'Obecny', 'Docelowy', 'Luki krytyczne'],
           axisRows,
-          'Tab. 1. Zestawienie siedmiu osi DRD.'
+          'Zestawienie siedmiu osi DRD.'
         ),
         heading('critical-gaps-heading', DRD_REPORT_FIXED_TEXT.criticalGaps, 2),
         paragraph(
@@ -343,10 +341,13 @@ export function buildAssessmentDrdReportSchema(contract: AssessmentReportContrac
           'program-decision',
           ['Pole', 'Treść'],
           [
-            ['Kierunek', placeholder(finalLimit.minWords, finalLimit.maxWords)],
-            ['Priorytet', placeholder(finalLimit.minWords, finalLimit.maxWords)],
-            ['Horyzont', placeholder(finalLimit.minWords, finalLimit.maxWords)],
-            ['Warunek sukcesu', placeholder(finalLimit.minWords, finalLimit.maxWords)],
+            ['Kierunek', placeholder(decisionLineLimit.minWords, decisionLineLimit.maxWords)],
+            ['Priorytet', placeholder(decisionLineLimit.minWords, decisionLineLimit.maxWords)],
+            ['Horyzont', placeholder(decisionLineLimit.minWords, decisionLineLimit.maxWords)],
+            [
+              'Warunek sukcesu',
+              placeholder(decisionLineLimit.minWords, decisionLineLimit.maxWords),
+            ],
           ]
         ),
       ],
@@ -431,6 +432,17 @@ export function buildAssessmentDrdReportSchema(contract: AssessmentReportContrac
     sourceRefs: [],
     createdAt: contract.generatedAt,
     updatedAt: contract.generatedAt,
+    drdReportMetadata: {
+      clientName,
+      businessProfile: null,
+      employment: null,
+      assessmentPeriod: null,
+      assessor: null,
+      clientSponsor: null,
+      methodology: 'Digital Pathfinder — metodyka oceny dojrzałości cyfrowej DRD',
+      sessionSignature: contract.sessionId,
+      issuedAt: contract.generatedAt,
+    },
   };
 }
 

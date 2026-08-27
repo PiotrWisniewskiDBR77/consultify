@@ -146,3 +146,7 @@ This does not raise the module-level gate or owner verdict. It records only the 
 ## Day 32 document engine — bounded update (2026-08-28)
 
 `CZĘŚCIOWO` — the existing server-side DOCX renderer now maps the tenant-scoped Assessment report contract into a deterministic DRD report and exposes one read-only JWT-scoped download route. Real PostgreSQL/router/JWT evidence covers populated, empty, foreign-tenant, missing-session and pinned-revision cases; two non-Metalpol tenant files are retained under `../../evidence/document-engine-day32-20260828/`. Narrative gaps remain explicit placeholders, pagination is not measurable without a prohibited office-suite render, and no frontend flag, browser replay, owner acceptance or release is claimed.
+
+## Day 34 document visual parity — bounded update (2026-08-28)
+
+`CZĘŚCIOWO` — the DRD-only profile now has a dedicated nine-row cover, unclamped 8/9/10-column matrices, editorial metadata instead of authoring bullets, Polish non-orphan captions, a 2100×1212 print-resolution radar, the accepted three-part footer and golden-calibrated word-limit windows. Three rich legacy schemas retain byte-identical `document.xml`, `styles.xml` and `numbering.xml`; real route/JWT/PostgreSQL evidence for two tenants and 36 inspected LibreOffice-rendered pages is retained under `../../evidence/document-visual-day34-20260828/`. Native TOC behavior in Microsoft Word remains `NIEMIERZALNE` in this session, and no frontend, owner acceptance or release is claimed.

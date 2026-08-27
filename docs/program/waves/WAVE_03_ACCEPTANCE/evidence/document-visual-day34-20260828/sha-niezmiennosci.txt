@@ -1,0 +1,9 @@
+af0310084828567f998b24e706dd7ab246f452fb33070f0dacab0972748ef757  server/src/services/documentStudio/__tests__/fixtures/day34-rich-en.document.xml
+1807eaa3eeda4104ec059cf491de9f646a519c16fb9d1294ce0c67f61179d250  server/src/services/documentStudio/__tests__/fixtures/day34-rich-en.numbering.xml
+3e45b8537c4931afa9cd5d9c36ee6d77d1a3b667543fac008cfc739fa529640b  server/src/services/documentStudio/__tests__/fixtures/day34-rich-en.styles.xml
+4f5aa81f73d89b1aeaef6a7bfe3d5834cc48b76cc829c687dd01ff79a34737c0  server/src/services/documentStudio/__tests__/fixtures/day34-rich-pl.document.xml
+1807eaa3eeda4104ec059cf491de9f646a519c16fb9d1294ce0c67f61179d250  server/src/services/documentStudio/__tests__/fixtures/day34-rich-pl.numbering.xml
+a5af8365ff8ccc6f1e8f191a2faa2e3776f48e608912085167fcff1e020308da  server/src/services/documentStudio/__tests__/fixtures/day34-rich-pl.styles.xml
+cc91fe0052e53149779b8205c138e0d88a75faaa6d6714bb8acc25f2042617b9  server/src/services/documentStudio/__tests__/fixtures/day34-rich-technical.document.xml
+1807eaa3eeda4104ec059cf491de9f646a519c16fb9d1294ce0c67f61179d250  server/src/services/documentStudio/__tests__/fixtures/day34-rich-technical.numbering.xml
+3e45b8537c4931afa9cd5d9c36ee6d77d1a3b667543fac008cfc739fa529640b  server/src/services/documentStudio/__tests__/fixtures/day34-rich-technical.styles.xml
