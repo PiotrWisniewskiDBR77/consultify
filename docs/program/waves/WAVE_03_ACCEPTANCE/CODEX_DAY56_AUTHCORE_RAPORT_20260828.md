@@ -103,6 +103,14 @@ Koszt statyczny zmiany to jedno indeksowane zapytanie po unikalnej parze `(organ
 
 Pakiet jednostkowy po zmianie: jedynym czerwonym jest celowy kontrakt P.5. Pięć kształtów: wołacz — TAK; ApiGateway — NIE; skipped — 0; para HTTP — NIE; grep nie jest uznany za dowód runtime.
 
+## §P.5 — błąd magazynu członkostwa
+
+Werdykt: `ODMAWIAM 503`. 403 sugerowałby ustalony brak uprawnienia, podczas gdy awaria magazynu oznacza brak możliwości rozstrzygnięcia; 503 zachowuje fail-closed bez fałszowania przyczyny. Log i koperta używają `ORG_MEMBERSHIP_LOOKUP_UNAVAILABLE`.
+
+Pakiet jednostkowy `auth.middleware.test.ts`: 174 PASS / 0 FAIL; wszystkie cztery kotwice P.2 są zielone. Symulacja używa zastanego publicznego `setDependencies`, nie globalnego mocka. Pełny dowód HTTP i mutacyjny pozostaje niewykonany, więc pozycja jest `CZĘŚCIOWO`.
+
+Pięć kształtów: wołacz — TAK; ApiGateway — NIE; skipped — 0; para HTTP — NIE; grep nie jest uznany za dowód egzekucji.
+
 ## Pomiar zasięgu testów
 
 PRZED: patrz §P.1. Artefakty: `/private/tmp/consultify-authcore-day56-artefakty/zasieg-PRZED.json` i `zasieg-PRZED.log`.

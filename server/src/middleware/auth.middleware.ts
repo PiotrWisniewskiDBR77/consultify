@@ -1738,13 +1738,16 @@ export const validateOrgMembership = asyncHandler(
 
       next();
     } catch (error) {
-      // On DB error, allow request through (fail-open) to avoid blocking all requests
-      logger.warn('[AuthMiddleware] org membership check failed; failing open', {
-        code: 'ORG_MEMBERSHIP_LOOKUP_FAIL_OPEN',
+      logger.warn('[AuthMiddleware] org membership check failed; refusing request', {
+        code: 'ORG_MEMBERSHIP_LOOKUP_UNAVAILABLE',
         path: safeReadRequestPath(req),
         reason: error instanceof Error ? error.message : 'unknown_error',
       });
-      next();
+      res.status(503).json({
+        error: 'Organization membership could not be verified',
+        code: 'ORG_MEMBERSHIP_LOOKUP_UNAVAILABLE',
+      });
+      return;
     }
   }
 );
