@@ -5,14 +5,35 @@ import {
   listCapacityScenarioRegister,
   listCapacityOptions,
   listPlanScenarioRegister,
+  proposeCapacityOptions,
   readCapacityScenario,
   requestResourceCommitment,
+  RuntimeApiError,
   selectCapacityOption,
   writeCapacityScenario,
 } from '../../../src/services/initiatives-execution/runtimeApi';
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    i18n: { language: 'pl' },
+    t: (key: string) =>
+      ({
+        'initiatives.capacityAdvisor.propose': 'Zaproponuj opcje',
+        'initiatives.capacityAdvisor.applied': 'Opcje zostały zapisane i przeładowane.',
+        'initiatives.capacityAdvisor.noPressure': 'Brak przeciążenia — nie ma czego rozwiązywać',
+        'initiatives.capacityAdvisor.conflict':
+          'Wariant został zmieniony. Odśwież dane przed ponowną próbą.',
+        'initiatives.capacityAdvisor.failed': 'Nie udało się zaproponować opcji.',
+      })[key] ?? key,
+  }),
+}));
 vi.mock('../../../src/services/initiatives-execution/runtimeApi', () => ({
   RuntimeApiError: class extends Error {
-    status = 409;
+    constructor(
+      readonly status = 409,
+      readonly code = 'VERSION_CONFLICT'
+    ) {
+      super(code);
+    }
   },
   listCapacityScenarioRegister: vi.fn(),
   listCapacityOptions: vi.fn(),
@@ -23,6 +44,7 @@ vi.mock('../../../src/services/initiatives-execution/runtimeApi', () => ({
   acceptResourceCommitment: vi.fn(),
   decideResourceCommitment: vi.fn(),
   selectCapacityOption: vi.fn(),
+  proposeCapacityOptions: vi.fn(),
 }));
 const range = {
   knowledgeState: 'UNKNOWN',
@@ -38,6 +60,7 @@ const range = {
 };
 describe('CapacityScenarioSurface', () => {
   beforeEach(() => {
+    vi.stubEnv('VITE_WAVE3_INITIATIVES_CAPACITY_ADVISOR', 'true');
     vi.mocked(listPlanScenarioRegister).mockResolvedValue({
       scenarios: [
         {
@@ -162,6 +185,59 @@ describe('CapacityScenarioSurface', () => {
     });
     vi.mocked(requestResourceCommitment).mockResolvedValue({ status: 'APPLIED' });
     vi.mocked(selectCapacityOption).mockResolvedValue({ status: 'APPLIED' });
+    vi.mocked(proposeCapacityOptions).mockResolvedValue({ status: 'APPLIED' });
+  });
+  it('proposes options and fully reloads the register before showing the canonical three', async () => {
+    const loadedOptions = await vi.mocked(listCapacityOptions).getMockImplementation()!();
+    vi.mocked(listCapacityOptions).mockImplementation(async () =>
+      vi.mocked(proposeCapacityOptions).mock.calls.length ? loadedOptions : { items: [] }
+    );
+    render(<CapacityScenarioSurface />);
+    fireEvent.doubleClick((await screen.findByText('p1')).closest('tr')!);
+    fireEvent.click(screen.getByRole('button', { name: 'Zaproponuj opcje' }));
+    await waitFor(() => expect(proposeCapacityOptions).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(listCapacityScenarioRegister).toHaveBeenCalledTimes(2));
+    expect(
+      await screen.findByRole('region', { name: 'Opcja obciążenia: Zmień kolejność' })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('region', { name: 'Opcja obciążenia: Podziel zakres' })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('region', { name: 'Opcja obciążenia: Zwiększ dostępność' })
+    ).toBeInTheDocument();
+  });
+
+  it('treats no capacity pressure as a neutral truthful outcome', async () => {
+    vi.mocked(proposeCapacityOptions).mockRejectedValue(
+      new RuntimeApiError(409, 'NO_CAPACITY_PRESSURE_TO_RESOLVE')
+    );
+    render(<CapacityScenarioSurface />);
+    fireEvent.doubleClick((await screen.findByText('p1')).closest('tr')!);
+    fireEvent.click(screen.getByRole('button', { name: 'Zaproponuj opcje' }));
+    const outcome = await screen.findByText('Brak przeciążenia — nie ma czego rozwiązywać');
+    expect(outcome).toHaveAttribute('role', 'status');
+    expect(outcome).not.toHaveClass('text-c-danger');
+  });
+  it('distinguishes a version conflict from the no-pressure outcome', async () => {
+    vi.mocked(proposeCapacityOptions).mockRejectedValue(
+      new RuntimeApiError(409, 'VERSION_CONFLICT')
+    );
+    render(<CapacityScenarioSurface />);
+    fireEvent.doubleClick((await screen.findByText('p1')).closest('tr')!);
+    fireEvent.click(screen.getByRole('button', { name: 'Zaproponuj opcje' }));
+    expect(
+      await screen.findByText('Wariant został zmieniony. Odśwież dane przed ponowną próbą.')
+    ).toHaveAttribute('role', 'alert');
+    expect(screen.queryByText('Brak przeciążenia — nie ma czego rozwiązywać')).toBeNull();
+  });
+
+  it('hides the advisor when the published Capacity snapshot has no exact published Plan', async () => {
+    vi.mocked(listPlanScenarioRegister).mockResolvedValue({ scenarios: [] });
+    render(<CapacityScenarioSurface />);
+    fireEvent.doubleClick((await screen.findByText('p1')).closest('tr')!);
+    expect(screen.queryByRole('button', { name: 'Zaproponuj opcje' })).toBeNull();
+    expect(proposeCapacityOptions).not.toHaveBeenCalled();
   });
   it('opens persistent register by keyboard and keeps UNKNOWN non-numeric', async () => {
     render(<CapacityScenarioSurface />);

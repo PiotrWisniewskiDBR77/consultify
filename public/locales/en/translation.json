@@ -8725,6 +8725,13 @@
       "candidates": "Candidates",
       "portfolioHealth": "Portfolio health"
     },
+    "capacityAdvisor": {
+      "propose": "Propose options",
+      "applied": "Options were saved and reloaded.",
+      "noPressure": "No overload — there is nothing to resolve",
+      "conflict": "The scenario changed. Refresh the data before trying again.",
+      "failed": "Options could not be proposed."
+    },
     "analysis": {
       "resources": {
         "title": "Resources",

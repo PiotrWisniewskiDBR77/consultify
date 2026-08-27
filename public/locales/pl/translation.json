@@ -8022,6 +8022,13 @@
       "candidates": "Kandydaci",
       "portfolioHealth": "Zdrowie portfela"
     },
+    "capacityAdvisor": {
+      "propose": "Zaproponuj opcje",
+      "applied": "Opcje zostały zapisane i przeładowane.",
+      "noPressure": "Brak przeciążenia — nie ma czego rozwiązywać",
+      "conflict": "Wariant został zmieniony. Odśwież dane przed ponowną próbą.",
+      "failed": "Nie udało się zaproponować opcji."
+    },
     "analysis": {
       "resources": {
         "title": "Zasoby",

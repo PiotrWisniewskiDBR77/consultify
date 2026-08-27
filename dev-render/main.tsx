@@ -317,6 +317,7 @@ const OrgIdentityOperatingScreen = React.lazy(() => import('./screens/org-identi
 const StagingFixesInitiativesI18nScreen = React.lazy(
   () => import('./screens/staging-fixes-initiatives-i18n')
 );
+const CapacityAdvisorA3Screen = React.lazy(() => import('./screens/capacity-advisor-a3'));
 const StagingFixesExecutionI18nScreen = React.lazy(
   () => import('./screens/staging-fixes-execution-i18n')
 );
@@ -396,6 +397,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'TRI-MUST-05 staging-fixes-20260826 Naprawa 1 — REALNY <InitiativesHub>: weryfikacja brakujących kluczy i18n (toast/hub/filters/materialize/kanban) i selektora poziomu inicjatywy w modalu "Nowa inicjatywa" (getInitiativeLevels(t) zamiast statycznej angielskiej stałej).',
     render: () => <StagingFixesInitiativesI18nScreen />,
+  },
+  'capacity-advisor-a3': {
+    label:
+      'Day 49 A.3 — real CapacityScenarioSurface demoMode=false, transport capacity-options intercepted; &phase=before|after &state=default|empty',
+    render: () => <CapacityAdvisorA3Screen />,
   },
   'staging-fixes-execution-i18n': {
     label:

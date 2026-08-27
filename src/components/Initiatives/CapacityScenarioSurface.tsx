@@ -1,5 +1,6 @@
 import { AlertTriangle, Eye, Loader2, Plus, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { StandardPreview } from '@/components/standard/StandardPreview';
@@ -10,6 +11,7 @@ import {
   listCapacityOptions,
   listCapacityScenarioRegister,
   listPlanScenarioRegister,
+  proposeCapacityOptions,
   readCapacityScenario,
   requestResourceCommitment,
   RuntimeApiError,
@@ -181,6 +183,9 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
   onCountsChange,
   demoMode = false,
 }) => {
+  const { t } = useTranslation();
+  const capacityAdvisorEnabled =
+    String(import.meta.env.VITE_WAVE3_INITIATIVES_CAPACITY_ADVISOR).toLowerCase() === 'true';
   const [state, setState] = useState<'LOADING' | 'READY' | 'ERROR'>('LOADING'),
     [rows, setRows] = useState<Row[]>([]),
     [selectedId, setSelectedId] = useState<string | null>(null),
@@ -191,6 +196,9 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
     [publishedPlans, setPublishedPlans] = useState<PublishedPlanBasis[]>([]),
     [aggregateVersion, setAggregateVersion] = useState(0),
     [writeState, setWriteState] = useState<'IDLE' | 'SAVING' | 'CONFLICT' | 'FAILED'>('IDLE');
+  const [advisorState, setAdvisorState] = useState<
+    'IDLE' | 'SAVING' | 'APPLIED' | 'NO_PRESSURE' | 'CONFLICT' | 'FAILED'
+  >('IDLE');
   const [showCreate, setShowCreate] = useState(false);
   const [newAnalysisId, setNewAnalysisId] = useState('');
   const [newPlanId, setNewPlanId] = useState('');
@@ -684,6 +692,38 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
       );
     }
   };
+  const proposeOptions = async () => {
+    if (!scenario || advisorState === 'SAVING') return;
+    const linkedPlan = publishedPlans.find(
+      (plan) => plan.id === scenario.planScenarioId && plan.version === scenario.planScenarioVersion
+    );
+    if (scenario.status !== 'PUBLISHED' || !linkedPlan) return;
+    const existing = comparisons.find(
+      (comparison) =>
+        comparison.planRef.scenarioId === linkedPlan.id &&
+        comparison.planRef.version === linkedPlan.version &&
+        comparison.capacityRef.scenarioId === scenario.scenarioId
+    );
+    setAdvisorState('SAVING');
+    try {
+      await proposeCapacityOptions(existing?.comparisonId ?? `advisor-${scenario.scenarioId}`, {
+        expectedVersion: existing?.version ?? 0,
+        clientRequestId: crypto.randomUUID(),
+        planRef: { scenarioId: linkedPlan.id, version: linkedPlan.version },
+        capacityRef: { scenarioId: scenario.scenarioId, version: aggregateVersion },
+      });
+      await load();
+      setAdvisorState('APPLIED');
+    } catch (error) {
+      if (error instanceof RuntimeApiError && error.code === 'NO_CAPACITY_PRESSURE_TO_RESOLVE') {
+        setAdvisorState('NO_PRESSURE');
+      } else if (error instanceof RuntimeApiError && error.status === 409) {
+        setAdvisorState('CONFLICT');
+      } else {
+        setAdvisorState('FAILED');
+      }
+    }
+  };
   if (state === 'LOADING')
     return (
       <div role="status" className="p-6">
@@ -1021,6 +1061,44 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
                 </button>
               ))}
             </div>
+            {capacityAdvisorEnabled &&
+              scenario.status === 'PUBLISHED' &&
+              publishedPlans.some(
+                (plan) =>
+                  plan.id === scenario.planScenarioId &&
+                  plan.version === scenario.planScenarioVersion
+              ) && (
+                <div className="rounded border border-c-border p-3">
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    disabled={advisorState === 'SAVING'}
+                    onClick={() => void proposeOptions()}
+                  >
+                    {advisorState === 'SAVING' && <Loader2 className="animate-spin" size={15} />}
+                    {t('initiatives.capacityAdvisor.propose')}
+                  </button>
+                  {advisorState === 'APPLIED' && (
+                    <p role="status" className="mt-2 text-sm text-c-text-muted">
+                      {t('initiatives.capacityAdvisor.applied')}
+                    </p>
+                  )}
+                  {advisorState === 'NO_PRESSURE' && (
+                    <p role="status" className="mt-2 text-sm text-c-text-muted">
+                      {t('initiatives.capacityAdvisor.noPressure')}
+                    </p>
+                  )}
+                  {(advisorState === 'CONFLICT' || advisorState === 'FAILED') && (
+                    <p role="alert" className="mt-2 text-sm text-c-danger">
+                      {t(
+                        advisorState === 'CONFLICT'
+                          ? 'initiatives.capacityAdvisor.conflict'
+                          : 'initiatives.capacityAdvisor.failed'
+                      )}
+                    </p>
+                  )}
+                </div>
+              )}
             <CapacityOptionsPanel
               comparisons={comparisons.filter(
                 (comparison) => comparison.capacityRef.scenarioId === scenario.scenarioId
