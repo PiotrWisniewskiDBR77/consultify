@@ -206,7 +206,12 @@ ale pozycja A.3 pozostaje `CZĘŚCIOWO` bez dowodu `OCZY`.
 
 ## ★★ PLIK .docx (§B.1)
 
-W toku.
+`PRZEBIEG`: `/private/tmp/consultify-tools-day54-artefakty/dynamic-swot-output-report.docx`.
+SHA-256: `0190d6eb66482db10437cefb727f32fcdd5bab0b399e2afec0817e3027fd7f66`;
+rozmiar 10 272 B; po konwersji LibreOffice: 2 strony A4. `OCZY/ekstrakcja`:
+dokument zawiera metryczkę klienta, spis treści, wynik Dynamic SWOT, napięcie
+„Wzrost”, dwa potwierdzone fakty, znaczenie, działania, efekt, wybór i lineage
+do konkretnego `tool_output`. Polskie znaki są obecne. Nie jest pustym szkieletem.
 
 ## Tabele werdyktów
 
@@ -254,7 +259,23 @@ nowego typu. Defekty wskazane w zleceniu są wykonywalne; produkt czeka na list�
 
 ### §B.1 — pliki rozejścia 40c
 
-W toku; `GREP`: rozejście ma 10 plików, `documentStudio/**` ma 0 plików.
+| Plik                               | Decyzja           | Powód                            |
+| ---------------------------------- | ----------------- | -------------------------------- |
+| `ToolOutputsController.ts`         | WZIĘTY            | org-scoped realny DOCX           |
+| `toolOutputs.routes.ts`            | WZIĘTY            | trasa w istniejącym routerze     |
+| `toolOutputReportSchemaService.ts` | WZIĘTY            | deterministyczne mapowanie       |
+| test schematu                      | WZIĘTY            | 5/5 PASS                         |
+| test realdb dnia 40                | WZIĘTY            | 6/6 PASS; zapis artefaktu dodany |
+| `DiscoveryToolsHub.tsx`            | WZIĘTY OSOBNO A.3 | defekt 5xx, nie B.1              |
+| test wiring huba                   | WZIĘTY OSOBNO A.3 | defekt 5xx, nie B.1              |
+| `toolsInsightsWiringFlag.ts`       | NIEWZIĘTY         | brak flipu i A.4 poza zakresem   |
+| raport dnia 40                     | NIEWZIĘTY         | cudzy raport, nie źródło wyniku  |
+| instrukcja dnia 40                 | NIEWZIĘTA         | dokument tylko do odczytu        |
+
+`GREP`: `documentStudio/**` ma 0 zmienionych plików. Trasa nie ma konsumenta
+w `src/`; nie dodałem nowej powierzchni ani nie edytowałem `src/services/api.ts`,
+bo tego pliku nie ma w licencji §1.7. B.1 jest backendowo osiągalne i dowiedzione,
+ale produktowo `CZĘŚCIOWO` z jawnym „brak konsumenta”.
 
 ## ★ POMIAR ZASIĘGU (§0.4a)
 

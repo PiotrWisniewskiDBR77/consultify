@@ -25,9 +25,13 @@ router.use(demoContextMiddleware);
 
 router.get('/', ToolOutputsController.listOutputs);
 router.get('/reports/:reportId', ToolOutputsController.getReport);
+router.get('/:outputId/report.docx', ToolOutputsController.exportReportDocx);
 router.get('/:outputId', ToolOutputsController.getOutput);
 router.get('/:outputId/reports', ToolOutputsController.listReportsForOutput);
-router.get('/:outputId/initiative-proposals', ToolOutputsController.listInitiativeProposalsForOutput);
+router.get(
+  '/:outputId/initiative-proposals',
+  ToolOutputsController.listInitiativeProposalsForOutput
+);
 router.post('/:outputId/reopen', ToolOutputsController.reopenOutput);
 
 export default router;
