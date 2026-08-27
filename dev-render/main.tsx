@@ -247,6 +247,9 @@ const KartaInsightScreen = React.lazy(() => import('./screens/karta-insight'));
 const KartaInterviewScreen = React.lazy(() => import('./screens/karta-interview'));
 const InterviewPreviewCanonScreen = React.lazy(() => import('./screens/interview-preview-canon'));
 const InterviewCreatorShellScreen = React.lazy(() => import('./screens/interview-creator-shell'));
+const InterviewSessionsStatusScreen = React.lazy(
+  () => import('./screens/interview-sessions-status')
+);
 const KartaDecisionScreen = React.lazy(() => import('./screens/karta-decision'));
 const KartaNotificationScreen = React.lazy(() => import('./screens/karta-notification'));
 const KartaTaskScreen = React.lazy(() => import('./screens/karta-task'));
@@ -751,6 +754,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'interview-creator-shell': {
     label: 'DEC-2026-08-25-67 — Interview Creator Shell (&step=1|2|3 &scene=default|off|empty)',
     render: () => <InterviewCreatorShellScreen />,
+  },
+  'interview-sessions-status': {
+    label:
+      'UI-latki-20260828 — REALNY <InterviewHub /> zakładka Sesje, kolumna status: 5 wierszy (assigned/in_progress/submitted/approved/completed) — weryfikacja etykiety "Przydzielony" i neutralnego tonu dla assigned.',
+    render: () => <InterviewSessionsStatusScreen />,
   },
   'karta-decision': {
     label: 'KARTY N — Decision (harness odbioru 2026-07-21)',

@@ -405,6 +405,19 @@
         "--strictPort"
       ],
       "port": 4530
+    },
+    {
+      "name": "ui-latki-20260828",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "3360",
+        "--strictPort"
+      ],
+      "port": 3360
     }
   ]
 }
