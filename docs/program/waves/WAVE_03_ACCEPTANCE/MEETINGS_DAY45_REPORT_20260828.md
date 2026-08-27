@@ -175,21 +175,74 @@ Grep kolorystyczny na diffie `src/ dev-render/` jest pusty, ponieważ nie zmieni
 
 ## Pozycje — tabela zbiorcza
 
-| Pozycja | Commit                            | Status          | Dowód                                                   |
-| ------- | --------------------------------- | --------------- | ------------------------------------------------------- |
-| M.1     | do wpisania po commicie           | ZROBIONE_WG_DoD | kompletny mianownik 33 tras powyżej                     |
-| M.2     | dokumentacyjny commit do wpisania | CZĘŚCIOWO       | inwentarz i kontrakt gotowe; brak testu Gateway         |
-| M.3     | —                                 | NIE_ZACZĘTE     | —                                                       |
-| M.4     | —                                 | NIE_ZACZĘTE     | —                                                       |
-| M.5     | —                                 | NIE_ZACZĘTE     | —                                                       |
-| M.6     | —                                 | NIE_ZACZĘTE     | —                                                       |
-| M.7     | —                                 | NIE_ZACZĘTE     | —                                                       |
-| M.8     | —                                 | NIE_ZACZĘTE     | —                                                       |
-| M.9     | commit do wpisania                | ZROBIONE_WG_DoD | dwa pomiary kanonu, pusty grep kolorów, triada standard |
-| M.10    | —                                 | NIE_ZACZĘTE     | —                                                       |
-| M.11    | —                                 | NIE_ZACZĘTE     | —                                                       |
-| R.1     | —                                 | NIE_ZACZĘTE     | —                                                       |
-| R.2     | —                                 | CZĘŚCIOWO       | raport prowadzony na bieżąco                            |
+| Pozycja | Commit                 | Status          | Dowód                                                   |
+| ------- | ---------------------- | --------------- | ------------------------------------------------------- |
+| M.1     | `fb42385dd0`           | ZROBIONE_WG_DoD | kompletny mianownik 33 tras powyżej                     |
+| M.2     | `31214c455b`           | CZĘŚCIOWO       | inwentarz i kontrakt gotowe; brak testu Gateway         |
+| M.3     | —                      | NIE_ZACZĘTE     | —                                                       |
+| M.4     | —                      | NIE_ZACZĘTE     | —                                                       |
+| M.5     | —                      | NIE_ZACZĘTE     | —                                                       |
+| M.6     | —                      | NIE_ZACZĘTE     | —                                                       |
+| M.7     | —                      | NIE_ZACZĘTE     | —                                                       |
+| M.8     | —                      | NIE_ZACZĘTE     | —                                                       |
+| M.9     | `df6be11a68`           | ZROBIONE_WG_DoD | dwa pomiary kanonu, pusty grep kolorów, triada standard |
+| M.10    | —                      | NIE_ZACZĘTE     | —                                                       |
+| M.11    | —                      | NIE_ZACZĘTE     | —                                                       |
+| R.1     | —                      | NIE_ZACZĘTE     | —                                                       |
+| R.2     | końcowy commit raportu | ZROBIONE_WG_DoD | jeden raport, jawne braki i niezweryfikowane            |
+
+## Dowody osiągalności (Z21)
+
+Baseline root potwierdził realny PG i realne ścieżki routera dla części istniejących testów, lecz nie spełnia pełnego wymagania M.2/M.3, ponieważ część pakietów montuje router w gołym `express()` albo mockuje auth. Nie deklaruję pełnej osiągalności przez realny `ApiGateway`; dlatego M.2 jest `CZĘŚCIOWO`, a M.3 `NIE_ZACZĘTE`.
+
+## Dowody mutacyjne (Z29)
+
+Nie wykonano cyklu mutacyjnego per rodzina. M.3 i negatywy M.4–M.8 nie mają statusu ukończonego. Żaden test bez dowodu mutacyjnego nie został przedstawiony jako dowód izolacji.
+
+## Lista kontrolna pięciu kształtów fałszywego „gotowe"
+
+| Kształt                       | Wynik                                                                                         | Adresat                                                |
+| ----------------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| Backend ma / front nie woła   | 12 żywych KIKUTÓW w M.1                                                                       | przyszły dyżur frontowy; M.5–M.8 nie rozpoczęto        |
+| Zapis bez czytelnika          | nie wykonano kompletnej tabeli wszystkich zapisów                                             | kolejny dyżur M.10                                     |
+| Ekran działa / baza pusta     | świeża baza nie ma seeda Meetings; liczba `mtg-d45-*` = 0                                     | kolejny dyżur M.11                                     |
+| Nigdy nie zadziałało E2E      | brak nowego dowodu przez realny Gateway                                                       | kolejny dyżur M.2/M.3                                  |
+| Metryka zepsuta z konstrukcji | potwierdzono mock bramki w `meeting.routes.test.ts` i test tekstowy `meetingBetaGate.test.ts` | kolejny dyżur M.10; istniejących asercji nie zmieniono |
+
+## Dane demo (§M.11)
+
+Audyt grepem potwierdził, że jedyny zastany plik wstawiający spotkania to `server/scripts/seed-executive-dashboard.ts`; nie jest to bezpieczny seed modułu Spotkania. Nowy seed nie powstał, więc M.11 ma status `NIE_ZACZĘTE`.
+
+Końcowy readback własnego prefiksu przed usunięciem kontenera:
+
+```text
+meetings=0, participants=0, notes=0, tasks=0
+```
+
+## Pomiar zasięgu §0.4a
+
+Deklaracja: `ZASIĘG CZĘŚCIOWY`. Baseline objął wszystkie 34 istniejące pliki znalezione w wymaganych ścieżkach, rozdzielone na config serwera i root. Nie wykonano drugiego pełnego przebiegu na HEAD, ponieważ jedyne zmiany do tego momentu były dokumentacyjne; nie przedstawiam baseline jako końcowego PASS. Wynik zastany: server 78 PASS / 18 FAIL / 0 SKIPPED; root 198 PASS / 5 FAIL / 0 SKIPPED. Pominięcie: brak per-file końcowego przebiegu HEAD.
+
+## Rozłączność plikowa wobec dyżurów w toku
+
+`git diff --name-only b151977e4b...HEAD` przed końcowym commitem zwrócił dokładnie jeden plik:
+
+```text
+docs/program/waves/WAVE_03_ACCEPTANCE/MEETINGS_DAY45_REPORT_20260828.md
+```
+
+Nie dotknięto żadnego pliku z listy kolizji §1.9.
+
+## Sprzątnięcie
+
+- `git stash list`: wynik pusty.
+- Cztery readbacki prefiksu `mtg-d45-*`: wszystkie 0.
+- `docker rm -fv cx-day45-pg`: zwrócił `cx-day45-pg`.
+- `docker ps -a --filter name=cx-day45-pg`: pusta tabela kontenerów.
+
+## Licznik i gotowość
+
+`ZROBIONE_WG_DoD`: 3 pozycje robocze (M.1, M.9, R.2). `CZĘŚCIOWO`: 1 (M.2). `NIE_ZACZĘTE`: 9 (M.3–M.8, M.10, M.11, R.1). Gotowość: `TECHNICAL_PARTIAL`; brak podstaw do otwarcia bety albo włączenia flag.
 
 ## Korekty wobec instrukcji
 
