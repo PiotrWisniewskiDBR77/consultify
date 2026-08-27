@@ -135,6 +135,28 @@ Brakuje wymaganego negatywu tenanta body/query/header, dlatego werdykt P.8 pozos
 
 Pięć kształtów: wołacz — TAK, przed `checkTokenRevocation`; ApiGateway — TAK; skipped — 0; para 200→401 i 200→200 — TAK; grep — nie jest podstawą twierdzenia runtime.
 
+## §P.9 — gałąź 37
+
+Baza wiążąca dla własnej pracy gałęzi 37 to merge-base `3e707a9d3ca8dbe10ea1b2cd6538c9b496770296..98af8945eb`: 11 plików i 11 commitów. Porównanie stanów marker→37 ma 426 plików; marker wnosi 324 commity od merge-base. Liczby instrukcji 321/322 są zatem nieaktualne dla związanego markera.
+
+Ocena 11 plików:
+
+1. Raport day37 — inspiruje opisem regresji share; u mnie rozwiązano ją bez nowej bramki.
+2. Instrukcja day37 — źródło kontekstu, bez przejęcia kodu.
+3. Test organizationContextGuard — nieużyty, ponieważ plik strażnika nie powstaje.
+4. `auth.middleware.ts` — inspiracja zasadą fail-closed, odtworzona własnym kodem i z zachowaniem optionalAuth.
+5. `organizationContextGuard.ts` — odrzucony; zakaz utworzenia.
+6. assessment-ai route — brak inspiracji dla rdzenia auth.
+7. assessment-workflow route — brak inspiracji dla rdzenia auth.
+8. enterprise-platform route — brak inspiracji dla rdzenia auth.
+9. scim route — brak inspiracji dla rdzenia auth.
+10. report-builder route — brak inspiracji dla rdzenia auth.
+11. oauthService — brak inspiracji dla rdzenia auth.
+
+Werdykt: `INSPIRACJA WYKORZYSTANA` wyłącznie jako zasada fail-closed; implementacja jest własna, bez merge/cherry-pick/rebase/kopii. Historia od markera to prosta linia ośmiu commitów. Nie powołuję się na niezweryfikowane „+53 czerwone”, więc nie tworzono sondy worktree.
+
+Pięć kształtów: wołacz — NIE, pozycja porównawcza; ApiGateway — NIE, zwolniona; skipped — nie dotyczy; para HTTP — nie dotyczy; grep/diff służy wyłącznie porównaniu historii.
+
 ## Pomiar zasięgu testów
 
 PRZED: patrz §P.1. Artefakty: `/private/tmp/consultify-authcore-day56-artefakty/zasieg-PRZED.json` i `zasieg-PRZED.log`.
