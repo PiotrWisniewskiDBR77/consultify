@@ -149,8 +149,8 @@ Liczba 145 z briefu nie jest zgodna z metodą wiążącą; własny wynik to 104 
 | poz. | status | commit SHA | dowód | konsumenci | równoważność |
 | --- | --- | --- | --- | --- | --- |
 | D.1 | ZROBIONE_WG_DoD | `1d10bdfe26` | trzy własne pomiary i klasyfikacja | tabela powyżej | nie dotyczy |
-| D.2 | CZĘŚCIOWO | do uzupełnienia po commicie | 25/25 testów PASS; brak sekretu i domen uprzywilejowanych | policzeni | mapa syntetyczna działa; brak mapy odmawia |
-| D.3 | NIE_ZACZĘTE | — | — | — | — |
+| D.2 | CZĘŚCIOWO | `1e1dfd0efb` | 25/25 testów PASS; brak sekretu i domen uprzywilejowanych | policzeni | mapa syntetyczna działa; brak mapy odmawia |
+| D.3 | CZĘŚCIOWO | do uzupełnienia po commicie | build OOM; dowód zastępczy | Vite | brak artefaktu do rozstrzygnięcia |
 | D.4 | NIE_ZACZĘTE | — | — | policzeni | — |
 | D.5 | NIE_ZACZĘTE | — | — | policzeni | — |
 | D.6 | NIE_ZACZĘTE | — | — | policzeni | — |
@@ -194,6 +194,15 @@ Mapa PIN do konta została całkowicie usunięta z kodu i zastąpiona rygorystyc
 - `.gitignore:36:.env.local` potwierdza ignorowanie `.env.local`.
 - Prettier: 4 pliki TS/TSX; esbuild: 5 plików TS/TSX — OK.
 - Testy pełnego zakresu importerów `AuthView`: 5/5 plików PASS, 25/25 testów PASS, 0 SKIPPED, z wymaganym własnym PG i kompletem env.
+
+## D.3 — dowód na artefakcie
+
+- `env -u VITE_QUICK_ACCESS_MAP npx vite build --mode production`: transformacja 10 503 modułów zakończona, następnie `FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory` przy renderowaniu chunków.
+- Zgodnie z instrukcją nie zwiększano heapu i nie zmieniano `vite.config.ts`.
+- `dist/` po nieudanym buildzie usunięto; `git status` potwierdził `dist_czysty`.
+- Kontrola pozytywna z mapą syntetyczną: `NIEWYKONANA — build artefaktu niewykonalny z powodu OOM`.
+- Dowód zastępczy: w produkcyjnym `src/` poza `__tests__` nie ma literału w `AuthView.tsx` ani `quickAccess.ts`; dziewięć innych plików ma ten sam ciąg cyfr w kontekstach niepoświadczeniowych (placeholdery, kolory, wartości formularzy). Skan domen znajduje 15 plików z adresami/kontaktami domenowymi niezależnymi od mapy quick-access.
+- Zdanie rozstrzygające: **NIE_PROVEN — nie powstał zbudowany artefakt, więc nie twierdzę, że bundel produkcyjny nie zawiera poświadczeń ani adresów kont administracyjnych.** Kod mapy P0 jest oczyszczony, lecz bramka artefaktowa pozostaje otwarta.
 
 ## Errata i korekty wobec instrukcji
 
