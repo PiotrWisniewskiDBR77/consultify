@@ -132,23 +132,56 @@ Mianownik zmierzyłem komendą `grep -nE '^router\.(get|post|put|patch|delete)\(
 
 Podsumowanie własnego pomiaru: `REALNA=13`, `REALNA_Z_SYNTEZĄ=5`, `KIKUT=12`, `ODMOWA=3` (razem 33). Synteza dotyczy kopert listy/detalu/notatek oraz briefu, gdzie pola są dołączane lub wyliczane z kilku źródeł; nie oznacza danych fikcyjnych.
 
+## Prawda o bramce beta (§M.2)
+
+| Miejsce                                                | Stan na markerze                                                    | Kto przechodzi / kto odpada                                                  |
+| ------------------------------------------------------ | ------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `server/src/routes/meeting.routes.ts:260-266`          | `verifyToken` → `isAuthenticated` → `closedBetaModuleGate` → tabele | brak tokenu odpada przed betą; zwykły członek dochodzi do 403                |
+| `server/src/middleware/betaGate.middleware.ts:27-57`   | realne `createModuleGate('MODULE_MEETING')`                         | OWNER/ADMIN/ADMINISTRATOR/SUPERADMIN przechodzą; pozostali `403 BETA_LOCKED` |
+| `server/src/Gateway.ts:763`                            | montaż `/api/meeting`; brak drugiej bramki                          | zachowanie routera jest wiążące                                              |
+| `src/utils/betaAccess.ts:32,53`                        | `BETA_ADMINS_EXEMPT=true`, `MODULE_MEETING='closed'`                | admini widzą, zwykli użytkownicy są blokowani                                |
+| menu i blokada pilota (`grep -rn MODULE_MEETING src/`) | status pochodzi z klientowego SSOT                                  | zamknięte pozycje są ukrywane lub blokowane zależnie od roli                 |
+| `AppRoutes.tsx` / `routeConfig.ts`                     | trasa istnieje; dostęp nie jest rozstrzygany samą rejestracją       | bramki klienta i serwera pozostają potrzebne                                 |
+
+Test behawioralny przełączalności przez pełny realny `ApiGateway` nie powstał, dlatego M.2 ma werdykt `CZĘŚCIOWO`, nie `ZROBIONE_WG_DoD`. Istniejący `meeting.m12-golden-flows...` montuje sam router i mockuje auth, więc zgodnie z Z22 nie jest dowodem wymaganym przez tę pozycję.
+
+### Kontrakt otwarcia bety — MODULE_MEETING
+
+Dokładna zmiana, która otwiera moduł: właściciel lub nadzorca zmienia `src/utils/betaAccess.ts` przy `BETA_MENU_STATUS.MODULE_MEETING` z `'closed'` na `'open'`; w tym dyżurze zmiany nie wykonano.
+
+Kto dziś widzi moduł: `OWNER`, `ADMIN`, `ADMINISTRATOR`, `SUPERADMIN`.
+
+Kto zobaczy po zmianie: także zwykłe role uwierzytelnione, z zachowaniem drugiej osi `canAccessMeeting`.
+
+Powierzchnie, które staną się widoczne: obecna lista `/meetings`, karta `/meetings/:meetingId` i istniejące, obecnie podłączone sekcje. Dwanaście żywych tras nadal nie ma konsumenta.
+
+Ryzyko przy otwarciu: moduł odsłoni mechanikę bez ekranów uczestników, zaproszeń, załączników, wystąpień oraz dwóch operacji notatek. Nie ma akceptacji wizualnej właściciela. Świeża baza nie ma prezentacyjnych danych Spotkań. Statusy `captured` i `blocked_demo` nie mają jeszcze UI.
+
+Warunki, które moim zdaniem muszą być spełnione: dowód realnego Gateway dla 401/403/200; pełne dowody izolacji N1–N6; pojedyncza akceptacja każdej flagowanej powierzchni; seed demo; pomiar regresji po integracji z nowszym tipem.
+
+Odwrót: zmiana tej samej wartości z `'open'` na `'closed'` i redeploy aplikacji; stan danych nie wymaga rollbacku.
+
+Stan: CZEKA NA DECYZJĘ WŁAŚCICIELA — NIE ZMIENIŁEM WARTOŚCI DOMYŚLNEJ.
+
+Dowód nietknięcia plików bramki: `git diff b151977e4b...HEAD -- server/src/middleware/betaGate.middleware.ts src/utils/betaAccess.ts` jest pusty.
+
 ## Pozycje — tabela zbiorcza
 
-| Pozycja | Commit                  | Status          | Dowód                               |
-| ------- | ----------------------- | --------------- | ----------------------------------- |
-| M.1     | do wpisania po commicie | ZROBIONE_WG_DoD | kompletny mianownik 33 tras powyżej |
-| M.2     | —                       | NIE_ZACZĘTE     | —                                   |
-| M.3     | —                       | NIE_ZACZĘTE     | —                                   |
-| M.4     | —                       | NIE_ZACZĘTE     | —                                   |
-| M.5     | —                       | NIE_ZACZĘTE     | —                                   |
-| M.6     | —                       | NIE_ZACZĘTE     | —                                   |
-| M.7     | —                       | NIE_ZACZĘTE     | —                                   |
-| M.8     | —                       | NIE_ZACZĘTE     | —                                   |
-| M.9     | —                       | NIE_ZACZĘTE     | —                                   |
-| M.10    | —                       | NIE_ZACZĘTE     | —                                   |
-| M.11    | —                       | NIE_ZACZĘTE     | —                                   |
-| R.1     | —                       | NIE_ZACZĘTE     | —                                   |
-| R.2     | —                       | CZĘŚCIOWO       | raport prowadzony na bieżąco        |
+| Pozycja | Commit                            | Status          | Dowód                                           |
+| ------- | --------------------------------- | --------------- | ----------------------------------------------- |
+| M.1     | do wpisania po commicie           | ZROBIONE_WG_DoD | kompletny mianownik 33 tras powyżej             |
+| M.2     | dokumentacyjny commit do wpisania | CZĘŚCIOWO       | inwentarz i kontrakt gotowe; brak testu Gateway |
+| M.3     | —                                 | NIE_ZACZĘTE     | —                                               |
+| M.4     | —                                 | NIE_ZACZĘTE     | —                                               |
+| M.5     | —                                 | NIE_ZACZĘTE     | —                                               |
+| M.6     | —                                 | NIE_ZACZĘTE     | —                                               |
+| M.7     | —                                 | NIE_ZACZĘTE     | —                                               |
+| M.8     | —                                 | NIE_ZACZĘTE     | —                                               |
+| M.9     | —                                 | NIE_ZACZĘTE     | —                                               |
+| M.10    | —                                 | NIE_ZACZĘTE     | —                                               |
+| M.11    | —                                 | NIE_ZACZĘTE     | —                                               |
+| R.1     | —                                 | NIE_ZACZĘTE     | —                                               |
+| R.2     | —                                 | CZĘŚCIOWO       | raport prowadzony na bieżąco                    |
 
 ## Korekty wobec instrukcji
 
