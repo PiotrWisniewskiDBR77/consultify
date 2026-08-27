@@ -22,6 +22,7 @@ export interface AssessmentNarrativeProvenance {
 export interface AreaNarrativeContext {
   readonly axisId: number;
   readonly evidenceState: keyof typeof EVIDENCE_STATE_PL;
+  readonly skipped?: boolean;
 }
 
 export interface ComposedAreaNarrative {
@@ -61,7 +62,7 @@ export function composeAreaNarrative(
   finding: MethodFindingRecord | null,
   context: AreaNarrativeContext
 ): ComposedAreaNarrative | null {
-  if (!finding) return null;
+  if (!finding || context.skipped) return null;
 
   const currentLabel =
     finding.currentLevel === null

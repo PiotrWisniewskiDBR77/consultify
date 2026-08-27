@@ -59,6 +59,10 @@ describe('Day 50 deterministic area narrative composer', () => {
     expect(composeAreaNarrative(null, context)).toBeNull();
   });
 
+  it('returns null for a fully skipped area even when narrative fields are filled', () => {
+    expect(composeAreaNarrative(finding, { ...context, skipped: true })).toBeNull();
+  });
+
   it('describes low confidence and no supporting evidence in Polish', () => {
     const result = composeAreaNarrative(
       { ...finding, confidence: 'low', supportingEvidence: [] },

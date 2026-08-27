@@ -16,6 +16,13 @@ export const EVIDENCE_STATE_PL = Object.freeze({
   not_assessed: 'nieocenione',
 } as const);
 
+export const ASSESSMENT_SKIP_REASON_PL = Object.freeze({
+  poza_modelem_operacyjnym: 'poza modelem operacyjnym',
+  poza_zakresem_zlecenia: 'poza zakresem zlecenia',
+  odroczone_do_kolejnej_rewizji: 'odroczone do kolejnej rewizji',
+  zastapione_innym_rozwiazaniem: 'zastąpione innym rozwiązaniem',
+} as const);
+
 export const DRD_REPORT_FIXED_TEXT = Object.freeze({
   title: 'Raport z oceny dojrzałości cyfrowej',
   clientMissing: '[Nazwa klienta do uzupełnienia]',
@@ -239,10 +246,23 @@ function matrixRows(chapter: ContractChapter): unknown[][] {
 }
 
 function skipNotice(area: ContractArea): string | null {
-  if (area.skipped) return `Obszar pominięty w ocenie — kod: ${area.skipCode ?? 'wiele kodów'}.`;
+  const label = (code: string) =>
+    ASSESSMENT_SKIP_REASON_PL[code as keyof typeof ASSESSMENT_SKIP_REASON_PL] ?? code;
+  if (area.skipped) {
+    const labels = [
+      ...new Set(
+        area.skips.length > 0
+          ? area.skips.map((skip) => label(skip.skipCode))
+          : area.skipCode
+            ? [label(area.skipCode)]
+            : []
+      ),
+    ];
+    return `Obszar pominięty w ocenie — kod: ${labels.join(', ') || 'wiele kodów'}.`;
+  }
   if (area.skips.length > 0) {
     return `Pominięte pytania: ${area.skips
-      .map((skip) => `${skip.questionId} — ${skip.skipCode}`)
+      .map((skip) => `${skip.questionId} — ${label(skip.skipCode)}`)
       .join('; ')}.`;
   }
   return null;
@@ -295,6 +315,15 @@ function chapterBlocks(
     );
     const notice = skipNotice(area);
     if (notice) blocks.push(paragraph(`${area.unitId}-skip`, notice, DRD_DOCX_STYLE_IDS.CAPTION));
+    if (area.evidenceState === 'not_assessed' && !notice) {
+      blocks.push(
+        paragraph(
+          `${area.unitId}-not-assessed`,
+          `Obszaru ${area.unitId} nie oceniono — brak danych źródłowych.`,
+          DRD_DOCX_STYLE_IDS.CAPTION
+        )
+      );
+    }
     if (comment) {
       const commentText = comment.content
         ? comment.content

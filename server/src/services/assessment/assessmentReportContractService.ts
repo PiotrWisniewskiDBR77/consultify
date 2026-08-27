@@ -330,6 +330,7 @@ export class AssessmentReportContractService {
           const narrative = composeAreaNarrative(finding ?? null, {
             axisId: axis.id,
             evidenceState,
+            skipped: skipInfo.skipped,
           });
           return {
             unitId: area.id,

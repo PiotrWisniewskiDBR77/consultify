@@ -102,6 +102,47 @@ describe.skipIf(!REAL_DB)(
       const xml = (await zip.file('word/document.xml')!.async('string')).replaceAll('\u00a0', ' ');
       expect(xml).toContain(expected);
       expect(xml).toContain('Sekcja do uzupełnienia — limit 110–170 słów; wymagane:');
+      expect(xml).toContain('Obszaru 1C nie oceniono — brak danych źródłowych.');
+      expect(xml).toContain('Obszar pominięty w ocenie — kod: poza zakresem zlecenia.');
+      expect(xml).toContain('Pominięte pytania: 4E-L1 — odroczone do kolejnej rewizji;');
+      expect(xml).not.toMatch(/poza_zakresem_zlecenia|odroczone_do_kolejnej_rewizji/u);
+    });
+
+    it('classifies all 39 areas without turning full or partial skips into invented prose', async () => {
+      const response = await request(app)
+        .get('/api/method/sessions/demo-metalpol-session/assessment-report-contract')
+        .set('Authorization', `Bearer ${metalpolToken}`);
+      const areas = response.body.reportContract.chapters.flatMap(
+        (chapter: { matrix: { areas: unknown[] } }) => chapter.matrix.areas
+      );
+      const comments = response.body.reportContract.chapters.flatMap(
+        (chapter: { areaComments: unknown[] }) => chapter.areaComments
+      );
+      const fullSkipped = areas.filter((area: { skipped: boolean }) => area.skipped);
+      const partialSkipped = areas.filter(
+        (area: { skipped: boolean; skips: unknown[] }) => !area.skipped && area.skips.length > 0
+      );
+      const assessed = areas.filter(
+        (area: { evidenceState: string; skips: unknown[] }) =>
+          area.evidenceState !== 'not_assessed' && area.skips.length === 0
+      );
+      const notAssessed = areas.filter(
+        (area: { evidenceState: string; skips: unknown[] }) =>
+          area.evidenceState === 'not_assessed' && area.skips.length === 0
+      );
+
+      expect({
+        assessed: assessed.length,
+        notAssessed: notAssessed.length,
+        fullSkipped: fullSkipped.length,
+        partialSkipped: partialSkipped.length,
+      }).toEqual({ assessed: 23, notAssessed: 10, fullSkipped: 3, partialSkipped: 3 });
+      for (const area of fullSkipped) {
+        const comment = comments.find(
+          (candidate: { unitId: string }) => candidate.unitId === area.unitId
+        );
+        expect(comment.content).toBeNull();
+      }
     });
 
     it('returns 404 for a session outside the authenticated tenant', async () => {

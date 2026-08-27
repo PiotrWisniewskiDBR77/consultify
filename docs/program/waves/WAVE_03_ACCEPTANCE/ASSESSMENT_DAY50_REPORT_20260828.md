@@ -34,7 +34,7 @@ Kontener: `cx-day50-pg`, obraz `pgvector/pgvector:pg16`. Hostowy port 5830 mapuj
 
 ## ★ Oświadczenie o strażnikach testów (Z31)
 
-Baseline serwera: `162 PASS / 10 failed suites / 140 SKIPPED`. Baseline roota: `177 PASS / 8 FAIL / 0 SKIPPED`. Własny test A.1: `2 PASS / 0 FAIL / 0 SKIPPED`. Własny test B.1: `4 PASS / 0 FAIL / 0 SKIPPED`. A.2: `9 PASS` czystego kompozytora i `4 PASS` realnego ApiGateway/PostgreSQL, `0 FAIL / 0 SKIPPED`. Zastane pakiety nie wszystkie używają `assertRealPostgresTestEnvironment()` i część cicho pomija przypadki; nie przedstawiam ich jako pełnego zielonego dowodu.
+Baseline serwera: `162 PASS / 10 failed suites / 140 SKIPPED`. Baseline roota: `177 PASS / 8 FAIL / 0 SKIPPED`. Własny test A.1: `2 PASS / 0 FAIL / 0 SKIPPED`. Własny test B.1: `4 PASS / 0 FAIL / 0 SKIPPED`. A.2/A.4: `10 PASS` czystego kompozytora i `5 PASS` realnego ApiGateway/PostgreSQL, `0 FAIL / 0 SKIPPED`. Zastane pakiety nie wszystkie używają `assertRealPostgresTestEnvironment()` i część cicho pomija przypadki; nie przedstawiam ich jako pełnego zielonego dowodu.
 
 ## ★★ DOWODY Z33
 
@@ -93,6 +93,7 @@ Na wejściu: dokument NADAL jest pustym formularzem — 95 z 95 gniazd pozostaje
 
 - PRZED: `/private/tmp/consultify-assessment-day50-artefakty/PRZED_metalpol.docx`, 232 466 B, SHA-256 `8f640a6d7d365192aaffbdc0c69cded1c17ca9605643bb77fa76ce1101650578`.
 - PO A.2: `/private/tmp/consultify-assessment-day50-artefakty/PO_A2_metalpol.docx`, 242 894 B, SHA-256 `8144ca698b8ab688a6fafe8f83ec73e01d9c8bbbb0d723652c9bb1ac9f7130a0`.
+- PO A.4: `/private/tmp/consultify-assessment-day50-artefakty/PO_A4_metalpol.docx`, 243 171 B, SHA-256 `a46e9c708e0517a40060f7f8004e1f2fdb7e1733a4928c08a846b320568735e1`.
 
 ## ★★ DOWÓD STABILNOŚCI DWÓCH PRZEBIEGÓW (§A.6 pkt 3)
 
@@ -104,7 +105,9 @@ A.2: każdy komentarz ma `unitId`, `sourceFields`, `answerRefs`, `evidenceRefs` 
 
 ## ★★ WERDYKT O HALUCYNACJACH
 
-A.2 nie generuje danych: czysta funkcja składa wyłącznie nazwane pola zamrożonego findingu i zamrożone etykiety. Nie importuje klienta LLM, nie woła sieci i przeszła z usuniętymi kluczami AI. Pełny werdykt obejmujący nieocenione obszary nastąpi w A.4.
+A.2/A.4 nie generują danych: czysta funkcja składa wyłącznie nazwane pola zamrożonego findingu i zamrożone etykiety. Nie importuje klienta LLM, nie woła sieci i przeszła z usuniętymi kluczami AI. Pełne pominięcie wymusza `null` nawet przy wypełnionych polach narracyjnych; brak findingu nigdy nie dostaje narracji.
+
+**Ani jeden akapit w dokumencie nie zawiera zdania, którego źródła nie umiem wskazać.** Teksty „nie oceniono” i „pominięto” są komunikatami stanu kontraktu, a nie analizą przedsiębiorstwa.
 
 ## Pozycje — tabela zbiorcza
 
@@ -113,7 +116,8 @@ A.2 nie generuje danych: czysta funkcja składa wyłącznie nazwane pola zamroż
 | A.1     | ZROBIONE_WG_DoD w zakresie licznika i pliku wejściowego; pełne DoD dyżuru nadal otwarte | 95/95 pustych; test mutacyjny czerwony→zielony; realny ApiGateway→plik                                                                          |
 | B.1     | ZROBIONE_WG_DoD                                                                         | 23/23 findingów ma 7 niepustych pól narracyjnych; ponowny seed 23/23; purge 0/0 i reapply 23/23; hash treści `d5ca73c683bf523400e6bb5e85d31929` |
 | A.2     | ZROBIONE_WG_DoD                                                                         | 23 pełne akapity / 0 skróconych / 16 placeholderów; długości 131/141/159; 13 testów, 0 skipów; ApiGateway→kontrakt→DOCX                         |
-| A.4–R.2 | NIE ROZPOCZĘTO                                                                          | kolejność wiążąca                                                                                                                               |
+| A.4     | ZROBIONE_WG_DoD                                                                         | 23 ocenione / 10 nieocenionych / 3 pełne pominięcia / 3 częściowe; pełne pominięcie blokuje narrację                                            |
+| A.3–R.2 | NIE ROZPOCZĘTO                                                                          | kolejność wiążąca                                                                                                                               |
 
 ## ★ DOWODY OSIĄGALNOŚCI (Z21)
 
@@ -123,11 +127,15 @@ B.1: pełny seed uruchomiony dwukrotnie do lokalnego PostgreSQL na porcie 5830, 
 
 A.2: JWT → pełny `ApiGateway.initializeRoutes` → `verifyToken` → `/api/method/sessions/:sessionId/assessment-report-contract` → tenant-scoped `AssessmentReportContractService` → czysty kompozytor → 23 treści oraz 16 `null`; drugi request do `/assessment-report.docx` → schema → renderer → ZIP → `word/document.xml`, w którym test odnajduje treść kontraktu i uczciwy placeholder. Obcy tenant oraz brakująca sesja zwracają `404`.
 
+A.4: ta sama ścieżka ApiGateway → kontrakt → DOCX rozróżnia 10 obszarów „nie oceniono”, 3 pełne pominięcia i 3 częściowe. Test otwiera `word/document.xml`, potwierdza polskie etykiety kodów i brak surowych enumów; pełne pominięcie ma `content=null`.
+
 ## ★★ DOWODY MUTACYJNE W OBIE STRONY
 
 A.1: zmiana wzorca komentarza z `; wymagane:` na `, wymagane:` dała `1 failed / 1 passed`; po przywróceniu z kopii `cp` wynik `2 passed`, a różnica obejmuje wyłącznie zamierzoną implementację A.1.
 
 A.2: mutacja `content: narrative?.text ?? null` → `content: null` dała `2 failed / 2 passed` (0 zamiast 23 treści i brak akapitu w XML). Po przywróceniu właściwego wywołania wynik to `4 passed`; czysty kompozytor osobno: `9 passed`.
+
+A.4: usunięcie warunku `context.skipped` spowodowało `1 failed / 9 passed`, ponieważ wypełniony finding dla pełnego pominięcia dostał akapit. Po przywróceniu strażnika: `10 passed`.
 
 ## ★ LISTA KONTROLNA PIĘCIU KSZTAŁTÓW FAŁSZYWEGO „GOTOWE"
 
@@ -136,6 +144,8 @@ A.1: wołacz realny TAK; realny ApiGateway TAK; SKIPPED własnego testu 0; brak 
 B.1: ścieżka zapisu realna TAK; ten sam lokalny PostgreSQL TAK; SKIPPED własnego testu 0; kompletność 23/23 potwierdzona niezależnym SQL; proza ma jawne źródło w wersjonowanym zbiorze Metalpol i nie zawiera `[demo-seed]` ani nazw norm ISO.
 
 A.2: wołacz realny TAK; realny ApiGateway TAK; SKIPPED 0; brak fałszywego 200/0 TAK (`404` dla obcego tenanta i brakującej sesji); proza ze źródłem TAK — 23/23 komentarzy ma `unitId`, nazwane pola i identyfikator findingu, a dowód tylko wtedy, gdy faktycznie istnieje.
+
+A.4: wołacz realny TAK; realny ApiGateway TAK; SKIPPED 0; brak fałszywego sukcesu TAK; trzy stany braku danych są jawne; pełne pominięcie i brak findingu nie dostają prozy analitycznej.
 
 ## ★ ZRZUTY
 
@@ -150,6 +160,52 @@ A.1 nie jest pozycją wizualną UI; przedmiotem jest plik DOCX.
 | Placeholder     |     16 | brak wiersza findingu — celowa niepełność 23/39                         |
 
 Długość 23 pełnych akapitów: minimum `131`, mediana `141`, maksimum `159` słów; poza oknem 110–170: `0`. Akapit z realną treścią używa stylu `BODY`, ponieważ jest prozą raportu; styl `CAPTION` zostaje dla placeholdera redakcyjnego.
+
+## A.4 — 39 obszarów × stan
+
+| Obszar | Stan                |
+| ------ | ------------------- |
+| 1A     | oceniony            |
+| 1B     | pominięty pełny     |
+| 1C     | nie oceniono        |
+| 1D     | nie oceniono        |
+| 1E     | oceniony            |
+| 1F     | oceniony            |
+| 1G     | oceniony            |
+| 1H     | nie oceniono        |
+| 1I     | nie oceniono        |
+| 2A     | oceniony            |
+| 2B     | nie oceniono        |
+| 2C     | nie oceniono        |
+| 2D     | oceniony            |
+| 2E     | oceniony            |
+| 3A     | oceniony            |
+| 3B     | pominięty pełny     |
+| 3C     | oceniony            |
+| 3D     | nie oceniono        |
+| 3E     | oceniony            |
+| 4A     | oceniony            |
+| 4B     | oceniony            |
+| 4C     | oceniony            |
+| 4D     | oceniony            |
+| 4E     | pominięty częściowy |
+| 5A     | oceniony            |
+| 5B     | oceniony            |
+| 5C     | oceniony            |
+| 5D     | pominięty częściowy |
+| 5E     | nie oceniono        |
+| 6A     | oceniony            |
+| 6B     | pominięty pełny     |
+| 6C     | oceniony            |
+| 6D     | nie oceniono        |
+| 6E     | oceniony            |
+| 7A     | oceniony            |
+| 7B     | oceniony            |
+| 7C     | pominięty częściowy |
+| 7D     | nie oceniono        |
+| 7E     | oceniony            |
+
+Suma: `23 ocenione / 10 nie oceniono / 3 pominięte pełne / 3 pominięte częściowo`. Placeholder komentarza pozostaje świadomie: jest czytelnym rusztowaniem dla redaktora, a poprzedza go jednoznaczne polskie zdanie o braku danych albo komunikat pominięcia. Nie zmieniam jego zamrożonego brzmienia, więc licznik A.1 i klucze `emptySlot` nie wymagają zmiany.
 
 ## Tabele werdyktów
 
