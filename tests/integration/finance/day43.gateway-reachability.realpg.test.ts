@@ -8,12 +8,9 @@ import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
 
 import { ApiGateway } from '../../../server/src/Gateway.js';
+import { assertRealPostgresTestEnvironment } from '../_helpers/assertRealPostgres.js';
 
 const databaseUrl = process.env.DATABASE_URL ?? '';
-const realPg =
-  process.env.RUN_DB_TESTS === '1' &&
-  process.env.MOCK_DB === 'false' &&
-  databaseUrl.startsWith('postgresql://postgres:cx@127.0.0.1:5810/cx_day43');
 const jwtSecret = 'test-jwt-secret-key-min-32-chars-long-for-validation';
 
 const unknownReads = [
@@ -31,7 +28,7 @@ function gatewayApp() {
   return app;
 }
 
-describe.skipIf(!realPg)('day43 A.1 — real ApiGateway reachability', () => {
+describe('day43 A.1 — real ApiGateway reachability', () => {
   const organizationId = `day43-org-${randomUUID()}`;
   const userId = randomUUID();
   const app = gatewayApp();
@@ -40,6 +37,7 @@ describe.skipIf(!realPg)('day43 A.1 — real ApiGateway reachability', () => {
   const existingReads: Array<readonly [string, string]> = [];
 
   beforeAll(async () => {
+    await assertRealPostgresTestEnvironment();
     process.env.JWT_SECRET = jwtSecret;
     await pool.query(`INSERT INTO organizations(id,name) VALUES($1,$1)`, [organizationId]);
     await pool.query(

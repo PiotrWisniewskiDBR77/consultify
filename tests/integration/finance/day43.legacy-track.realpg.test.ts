@@ -8,12 +8,9 @@ import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
 
 import { ApiGateway } from '../../../server/src/Gateway.js';
+import { assertRealPostgresTestEnvironment } from '../_helpers/assertRealPostgres.js';
 
 const databaseUrl = process.env.DATABASE_URL ?? '';
-const realPg =
-  process.env.RUN_DB_TESTS === '1' &&
-  process.env.MOCK_DB === 'false' &&
-  databaseUrl.startsWith('postgresql://postgres:cx@127.0.0.1:5810/cx_day43');
 const jwtSecret = 'test-jwt-secret-key-min-32-chars-long-for-validation';
 const legacyReads = [
   ['Statements', '/api/finance-statements/packs'],
@@ -23,7 +20,7 @@ const legacyReads = [
   ['Budgets', '/api/economics/budgets'],
 ] as const;
 
-describe.skipIf(!realPg)('day43 A.3 — legacy track through real ApiGateway', () => {
+describe('day43 A.3 — legacy track through real ApiGateway', () => {
   const organizationId = `day43-a3-${randomUUID()}`;
   const userId = randomUUID();
   const app = express();
@@ -32,6 +29,7 @@ describe.skipIf(!realPg)('day43 A.3 — legacy track through real ApiGateway', (
   let token = '';
 
   beforeAll(async () => {
+    await assertRealPostgresTestEnvironment();
     process.env.JWT_SECRET = jwtSecret;
     const pool = new Pool({ connectionString: databaseUrl });
     await pool.query(`INSERT INTO organizations(id,name) VALUES($1,$1)`, [organizationId]);
