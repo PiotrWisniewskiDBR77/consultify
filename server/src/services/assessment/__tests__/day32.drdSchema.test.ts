@@ -215,19 +215,42 @@ describe('Day 32 — assessment contract to DRD document schema', () => {
   it('does not smuggle Metalpol, lorem ipsum, or model-generated prose into the output', () => {
     const text = allText(buildAssessmentDrdReportSchema(contract()));
     expect(text).not.toMatch(/Metalpol|lorem ipsum|jako model|as an AI/i);
-    // FIX-7 (nadzorca 2026-08-28): this line asserted
-    // 'Sekcja do uzupełnienia — limit 110–170 słów.' (with the full stop),
-    // which the builder has never produced for an area comment — it strips
-    // the trailing dot and appends the required microstructure
-    // ('…; wymagane: …'). The assertion was red on this branch AND on
-    // 87e7cecf3a, i.e. it was never a regression, just a stale expectation
-    // left standing. Pinned to the string the code really emits, which is
-    // also the stronger assertion (it now covers the microstructure hint).
-    expect(text).toContain(
-      'Sekcja do uzupełnienia — limit 110–170 słów; wymagane: stan faktyczny, ' +
-        'ocena i wiarygodność, znaczenie dla przedsiębiorstwa, ' +
-        'luka i sens poziomu docelowego, najbliższy krok.'
-    );
+    // FIX-3 (nadzorca 2026-08-28, second pass): the area-comment fallback
+    // used to be the raw editorial instruction
+    // ('Sekcja do uzupełnienia — limit 110–170 słów; wymagane: ...'), which
+    // reads as an unfinished template in a client-facing document. It is
+    // now an honest, jargon-free sentence — see areaCommentPlaceholder() in
+    // assessmentDrdReportSchemaService.ts. The fixture area here is
+    // `evidenceState: 'evidenced'` (assessed, just no composed narrative),
+    // so the honest sentence does NOT claim "not assessed".
+    expect(text).not.toContain('Sekcja do uzupełnienia — limit 110–170 słów');
+    expect(text).toContain('Komentarz obszaru 1A nie został przygotowany.');
+  });
+
+  it('FIX-3: an area with no finding gets an honest "not assessed" comment, never the raw editorial placeholder', () => {
+    const input = contract();
+    input.chapters[0].matrix.areas[0].evidenceState = 'not_assessed';
+    input.chapters[0].matrix.areas[0].currentLevel = null;
+    input.chapters[0].matrix.areas[0].targetLevel = null;
+    input.chapters[0].matrix.areas[0].gap = null;
+    const text = allText(buildAssessmentDrdReportSchema(input));
+    expect(text).not.toContain('Sekcja do uzupełnienia — limit 110–170 słów');
+    expect(text).toContain('Obszaru 1A nie oceniono — brak danych źródłowych.');
+  });
+
+  it('FIX-3: a deliberately skipped area does not also get a contradicting "not assessed" comment line', () => {
+    const input = contract();
+    const area = input.chapters[0].matrix.areas[0];
+    area.skipped = true;
+    area.skipCode = 'OUT_OF_SCOPE';
+    const text = allText(buildAssessmentDrdReportSchema(input));
+    expect(text).toContain('Obszar pominięty w ocenie — kod: OUT_OF_SCOPE.');
+    // The skip notice already explains the gap honestly — no second,
+    // contradicting "not assessed" sentence and no raw editorial
+    // placeholder underneath it.
+    expect(text).not.toContain('nie oceniono — brak danych źródłowych');
+    expect(text).not.toContain('Komentarz obszaru 1A nie został przygotowany.');
+    expect(text).not.toContain('Sekcja do uzupełnienia — limit 110–170 słów');
   });
 });
 
@@ -282,20 +305,35 @@ describe('DRD cover — regression guards for the W1–W4 fixes', () => {
     expect(xml).not.toMatch(/\d{4}-\d{2}-\d{2}/);
   });
 
-  it('W4 — every decision-line cell carries the short field limit, all 32 of them', () => {
+  it('W4 — every non-Horyzont decision-line cell carries the short field limit (24 of them); Horyzont is always the honest FIX-3 sentence (8 of them)', () => {
     const schema = buildAssessmentDrdReportSchema(contract());
     const limit = CONTRACT_V1_MISSING_SLOT_LIMITS.decisionLineField;
     const expected = `Sekcja do uzupełnienia — limit ${limit.minWords}–${limit.maxWords} słów.`;
-    // 7 per-axis decision tables + 1 programme-level table, 4 cells each.
-    const occurrences = allText(schema).split(expected).length - 1;
-    expect(occurrences).toBe(32);
-    // The chapter-conclusion limit must NOT leak into a decision-line cell.
+    // FIX-3 (nadzorca 2026-08-28): "Horyzont" is never populated by the
+    // composer (assessmentNarrativeComposer.ts always sets `horizon: null`)
+    // — printing the raw editorial placeholder there is therefore not a
+    // "missing slot", it's a structural certainty, so it gets its own
+    // honest sentence instead (see HORIZON_PLACEHOLDER). The other three
+    // cells (Kierunek/Priorytet/Warunek sukcesu) are unaffected by this fix
+    // and keep the generic placeholder when genuinely empty.
+    // 7 per-axis decision tables + 1 programme-level table, 4 cells each:
+    // 3 generic-placeholder cells + 1 Horyzont cell per table.
+    const genericOccurrences = allText(schema).split(expected).length - 1;
+    expect(genericOccurrences).toBe(24);
+    const horizonOccurrences = allText(schema).split('Nie określono — brak źródła w danych.').length - 1;
+    expect(horizonOccurrences).toBe(8);
     for (const section of schema.sections) {
       const decision = section.blocks.find((block) => block.blockId.endsWith('-decision'));
       if (!decision) continue;
       const rows = (decision.content as { rows: Array<Array<unknown>> }).rows;
       expect(rows).toHaveLength(4);
-      for (const row of rows) expect(row[1]).toBe(expected);
+      for (const row of rows) {
+        if (row[0] === 'Horyzont') {
+          expect(row[1]).toBe('Nie określono — brak źródła w danych.');
+        } else {
+          expect(row[1]).toBe(expected);
+        }
+      }
     }
   });
 
