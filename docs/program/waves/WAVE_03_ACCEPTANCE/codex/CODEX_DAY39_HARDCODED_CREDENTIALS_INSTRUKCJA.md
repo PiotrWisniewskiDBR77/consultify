@@ -97,17 +97,17 @@ pracy jest „nie zepsuć tego, co działa", a nie „usunąć, bo brzydkie".**
 1. Punktem wyjścia jest **gałąź `codex/m03-admin-20260824`**, przypięta do
    commitu-markera podanego niżej.
 
-   **SHA markera: 87e7cecf3a**
+   **SHA markera: 23652ec80a**
 
    > **★ RAMKA WARTOWNIKA — uwaga dla nadzorcy wystawiającego ten dokument
    > (usuń tę ramkę przy wiązaniu):** w miejsce **każdego** literalnego napisu
-   > `«MARKER_SHA»` wpisujesz **rzeczywisty SHA tipa `codex/m03-admin-20260824`
+> **MARKER ZWIAZANY PRZEZ NADZORCE 2026-08-28** — pole „SHA markera" powyzej zawiera realny SHA. Jedyny STOP z tytulu markera to negatywny wynik `git merge-base --is-ancestor`.
    > z chwili wystawienia**, we **wszystkich** wystąpieniach w tym pliku
-   > (sprawdź `grep -c '«MARKER_SHA»'` — wynik po podmianie musi być `0`).
+>
    > W dokumencie **nie ma i nie może być przykładowego SHA**: dzień 29 dostał
    > instrukcję z konkretnym SHA wpisanym „na przykład" i wykonawca zawiązał się
    > do niego dosłownie, po czym pracował na martwej bazie. Dopóki ta ramka nie
-   > jest usunięta, a `«MARKER_SHA»` nadal jest literalnym napisem, **dokument
+>
    > NIE JEST ZWIĄZANY** i wykonawca ma obowiązek odrzucić go na pierwszej
    > komendzie dyżuru.
 
