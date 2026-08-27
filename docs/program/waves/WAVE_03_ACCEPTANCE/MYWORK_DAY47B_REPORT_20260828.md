@@ -270,6 +270,19 @@ Klucze `recurrence`, `none`, `daily`, `weekly`, `monthly` w PL/EN pozostają
 świadomie osierocone po B.4 — instrukcja zabrania ich usuwać. Dodano parę
 PL/EN `recurrencePlanned` dla uczciwej notatki.
 
+## B.5 — spotkania w „obciążeniu dnia”
+
+Do `/api/my-work/calendar/conflicts` dodano defensywne zapytanie spotkań,
+oparte na tym samym wzorcu co `unified`: organizacja jest obowiązkowa, a przy
+dostępnych kolumnach użytkownik musi być twórcą albo występować w
+`attendees_json`. Koperta jest addytywna (`meetings`), a `totalItems` i próg
+`hasConflicts` uwzględniają spotkania.
+
+Test celowany: 14/14 PASS. Obejmuje twórcę, samego uczestnika, negatyw tenanta,
+odwołane wydarzenie i pusty dzień. Odwołane wydarzenie znika także z
+`GET /calendar/conflicts`, ponieważ zapytanie ma literalny filtr
+`status <> 'cancelled'`.
+
 ## Pozycje
 
 | Pozycja | Status          | Commit             |

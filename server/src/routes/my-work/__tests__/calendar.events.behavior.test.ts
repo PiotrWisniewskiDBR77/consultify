@@ -6,6 +6,7 @@ const mockGetTableColumns = vi.fn();
 const mockQueryAll = vi.fn();
 const mockQueryOne = vi.fn();
 const mockQueryRun = vi.fn();
+const mockDbQuery = vi.fn();
 
 vi.mock('../../../utils/dbSchema.js', () => ({
   getTableColumns: (...args: unknown[]) => mockGetTableColumns(...args),
@@ -27,7 +28,7 @@ function createApp(): Express {
   app.use((req: any, _res, next) => {
     req.userId = USER;
     req.organizationId = ORG;
-    req.db = { query: vi.fn().mockResolvedValue({ rows: [] }) };
+    req.db = { query: (...args: unknown[]) => mockDbQuery(...args) };
     next();
   });
   app.use('/api/my-work', calendarRoutes);
@@ -37,6 +38,7 @@ function createApp(): Express {
 describe('calendar event and meeting behavior', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockDbQuery.mockResolvedValue({ rows: [] });
     mockGetTableColumns.mockImplementation((table: string) =>
       Promise.resolve(
         table === 'meetings'
@@ -209,5 +211,76 @@ describe('calendar event and meeting behavior', () => {
 
     expect(res.status).toBe(400);
     expect(res.body.code).toBe('RECURRENCE_NOT_SUPPORTED');
+  });
+
+  it.each([
+    ['creator', { id: 'meeting-owner', created_by: USER, attendees_json: '[]' }],
+    ['attendee', { id: 'meeting-attendee', created_by: 'other', attendees_json: `["${USER}"]` }],
+  ])('counts a meeting for its %s in the day-load response', async (_label, meeting) => {
+    mockDbQuery.mockImplementation(async (sql: string, params: unknown[]) => {
+      if (!sql.includes('FROM meetings')) return { rows: [] };
+      expect(sql).toContain('m.organization_id = ?');
+      expect(sql).toContain('(m.created_by = ? OR m.attendees_json LIKE ?)');
+      expect(params).toEqual([ORG, '2026-08-25', USER, `%"${USER}"%`]);
+      return {
+        rows: [
+          {
+            ...meeting,
+            title: 'Counted meeting',
+            start_at: '2026-08-25T09:00:00.000Z',
+            end_at: '2026-08-25T10:00:00.000Z',
+          },
+        ],
+      };
+    });
+
+    const res = await request(createApp())
+      .get('/api/my-work/calendar/conflicts')
+      .query({ date: '2026-08-25' });
+    expect(res.status).toBe(200);
+    expect(res.body.meetings).toHaveLength(1);
+    expect(res.body.totalItems).toBe(1);
+  });
+
+  it('keeps foreign-organization meetings out of the day-load query', async () => {
+    mockDbQuery.mockImplementation(async (sql: string, params: unknown[]) => {
+      if (sql.includes('FROM meetings')) {
+        expect(params[0]).toBe(ORG);
+      }
+      return { rows: [] };
+    });
+    const res = await request(createApp())
+      .get('/api/my-work/calendar/conflicts')
+      .query({ date: '2026-08-25' });
+    expect(res.body.meetings).toEqual([]);
+    expect(res.body.totalItems).toBe(0);
+  });
+
+  it('excludes cancelled own events from the day load', async () => {
+    mockDbQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes('FROM calendar_events')) {
+        expect(sql).toContain("status <> 'cancelled'");
+      }
+      return { rows: [] };
+    });
+    const res = await request(createApp())
+      .get('/api/my-work/calendar/conflicts')
+      .query({ date: '2026-08-25' });
+    expect(res.body.events).toEqual([]);
+    expect(res.body.totalItems).toBe(0);
+  });
+
+  it('returns an honest empty day-load state', async () => {
+    const res = await request(createApp())
+      .get('/api/my-work/calendar/conflicts')
+      .query({ date: '2026-08-25' });
+    expect(res.body).toEqual(
+      expect.objectContaining({
+        meetings: [],
+        totalItems: 0,
+        hasConflicts: false,
+        suggestion: null,
+      })
+    );
   });
 });

@@ -1048,20 +1048,50 @@ router.get(
            AND date(start_at) = date(?) ORDER BY start_at ASC`,
         [orgId, userId, date]
       );
+      const meetingCols = await getTableColumns('meetings');
+      let meetingsOnDate: any[] = [];
+      if (meetingCols.has('start_at')) {
+        const meetingWhere = ['m.organization_id = ?', 'date(m.start_at) = date(?)'];
+        const meetingParams: any[] = [orgId, date];
+        if (meetingCols.has('created_by')) {
+          if (meetingCols.has('attendees_json')) {
+            meetingWhere.push('(m.created_by = ? OR m.attendees_json LIKE ?)');
+            meetingParams.push(userId, `%"${userId}"%`);
+          } else {
+            meetingWhere.push('m.created_by = ?');
+            meetingParams.push(userId);
+          }
+        }
+        const meetingResult = await db.query(
+          `SELECT m.id, m.title, m.start_at, m.end_at FROM meetings m
+           WHERE ${meetingWhere.join(' AND ')} ORDER BY m.start_at ASC`,
+          meetingParams
+        );
+        meetingsOnDate = meetingResult.rows || [];
+      }
 
       const tasksOnDate = tasksOnDateResult.rows;
       const decisionsOnDate = decisionsOnDateResult.rows;
       const calendarEventsOnDate = eventsOnDateResult.rows;
 
       const hasConflicts =
-        tasksOnDate.length + decisionsOnDate.length + calendarEventsOnDate.length > 3;
+        tasksOnDate.length +
+          decisionsOnDate.length +
+          calendarEventsOnDate.length +
+          meetingsOnDate.length >
+        3;
 
       res.json({
         date,
         tasks: tasksOnDate,
         decisions: decisionsOnDate,
         events: calendarEventsOnDate,
-        totalItems: tasksOnDate.length + decisionsOnDate.length + calendarEventsOnDate.length,
+        meetings: meetingsOnDate,
+        totalItems:
+          tasksOnDate.length +
+          decisionsOnDate.length +
+          calendarEventsOnDate.length +
+          meetingsOnDate.length,
         hasConflicts,
         suggestion: hasConflicts
           ? 'This day looks busy. Consider rescheduling lower-priority items.'
