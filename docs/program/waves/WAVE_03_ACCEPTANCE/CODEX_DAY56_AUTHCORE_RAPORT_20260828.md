@@ -95,6 +95,14 @@ Pakiet jednostkowy: 173 PASS / 1 celowy FAIL należący do P.5; obie kotwice get
 
 Pięć kształtów fałszywego gotowe dla P.3: wołacz — TAK (18 montaży); ApiGateway — NIE; skipped — 0 w pakiecie punktowym; para HTTP — NIE; grep — tylko dowód montażu, nie runtime.
 
+## §P.4 — cache pozytywnego członkostwa
+
+Wybrano K1: brak cache członkostwa. K2 odrzucono, bo negatywny cache opóźniałby legalne przywrócenie dostępu; K3 wymagałby wołaczy poza licencją i nadal był podatny na pominięcie; K4 jedynie skracałaby okno podatności. Produkcyjne unieważnienie nie istniało — jedynym czyszczeniem był helper testowy.
+
+Koszt statyczny zmiany to jedno indeksowane zapytanie po unikalnej parze `(organization_id,user_id)` na każde żądanie przechodzące przez jeden z 18 montaży. Pomiar runtime liczby zapytań i para HTTP ACTIVE→REVOKED→ACTIVE nie zostały jeszcze wykonane, więc pozycja jest `CZĘŚCIOWO`.
+
+Pakiet jednostkowy po zmianie: jedynym czerwonym jest celowy kontrakt P.5. Pięć kształtów: wołacz — TAK; ApiGateway — NIE; skipped — 0; para HTTP — NIE; grep nie jest uznany za dowód runtime.
+
 ## Pomiar zasięgu testów
 
 PRZED: patrz §P.1. Artefakty: `/private/tmp/consultify-authcore-day56-artefakty/zasieg-PRZED.json` i `zasieg-PRZED.log`.

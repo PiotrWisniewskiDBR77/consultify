@@ -1656,10 +1656,8 @@ export const requireOrganization = (req: AuthRequest, res: Response, next: NextF
 
 /**
  * Validate that the user still has an active membership in the org from their JWT.
- * Uses in-memory cache (60s TTL) to avoid per-request DB hits.
+ * Reads membership on every request so a revoke is effective immediately.
  */
-const _membershipCache = new Map<string, { valid: boolean; ts: number }>();
-const MEMBERSHIP_CACHE_TTL_MS = 60_000;
 const normalizeMembershipStatus = (value: unknown): string =>
   String(value || '')
     .trim()
@@ -1722,19 +1720,6 @@ export const validateOrgMembership = asyncHandler(
       return next();
     }
 
-    const cacheKey = buildMembershipCacheKey(userId, orgId);
-    const cached = _membershipCache.get(cacheKey);
-    if (cached && Date.now() - cached.ts < MEMBERSHIP_CACHE_TTL_MS) {
-      if (!cached.valid) {
-        res.status(403).json({
-          error: 'You no longer have access to this organization',
-          code: 'ORG_MEMBERSHIP_REVOKED',
-        });
-        return;
-      }
-      return next();
-    }
-
     try {
       const { dbGet: dbGetFromDeps } = await getDeps();
       const membership = await dbGetFromDeps<{ status: string }>(
@@ -1743,8 +1728,6 @@ export const validateOrgMembership = asyncHandler(
       );
 
       const valid = !!membership && normalizeMembershipStatus(membership.status) === 'ACTIVE';
-      _membershipCache.set(cacheKey, { valid, ts: Date.now() });
-
       if (!valid) {
         res.status(403).json({
           error: 'You no longer have access to this organization',
@@ -1848,9 +1831,7 @@ export const __private__ = {
     _revokeInflight.clear();
     _revokeAllInflight.clear();
   },
-  resetMembershipCacheForTests: () => {
-    _membershipCache.clear();
-  },
+  resetMembershipCacheForTests: () => undefined,
   resetDepsForTests: () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     deps = undefined as any;
