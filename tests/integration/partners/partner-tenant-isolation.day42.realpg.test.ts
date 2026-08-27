@@ -16,7 +16,25 @@ const RUN =
 const describeReal = RUN ? describe : describe.skip;
 const JWT_SECRET = process.env.JWT_SECRET || 'test-jwt-secret-key-min-32-chars-long-for-validation';
 
-describeReal('Day 42 Partner tenant isolation through the real ApiGateway', () => {
+/**
+ * Day 42 FIX-1 — this suite must never be retried.
+ *
+ * `vitest.config.ts` sets `retry: process.env.CI ? 3 : 1` globally. A security
+ * suite that retries heals itself with the effect of the attack it is supposed
+ * to detect: the first attempt performs the real cross-tenant DELETE, the retry
+ * then observes a 404 and an unchanged readback, and the file reports 8/8 PASS
+ * while a live IDOR is present. Proven mutationally by removing
+ * `AND partner_org_id = ?` from `deleteCampaignLink`
+ * (server/src/services/partnerReferralService.ts:832).
+ *
+ * Vitest suite options win over the config value
+ * (@vitest/runner: `retry: options.retry ?? runner.config.retry`, and suite
+ * options are merged into every test in the suite), so this pin is local to
+ * this file and does not touch the global configuration.
+ */
+const NO_RETRY = { retry: 0 } as const;
+
+describeReal('Day 42 Partner tenant isolation through the real ApiGateway', NO_RETRY, () => {
   let sql: Client;
   let app: Express;
   const prefix = `day42iso_${randomUUID().replaceAll('-', '')}`;
