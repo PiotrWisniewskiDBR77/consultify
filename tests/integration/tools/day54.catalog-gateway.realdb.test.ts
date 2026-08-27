@@ -7,8 +7,6 @@ import { Pool } from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { ApiGateway } from '../../../server/src/Gateway.js';
-import config from '../../../server/src/config/Config.js';
 import { assertRealPostgresTestEnvironment } from '../_helpers/assertRealPostgres.js';
 
 process.env.DB_TYPE = 'postgres';
@@ -22,26 +20,29 @@ describe('Day 54 — catalog reachability through real ApiGateway', NO_RETRY, ()
   const userId = `${prefix}-owner`;
   const pool = new Pool({ connectionString: databaseUrl });
   const app = express();
-
-  app.use(express.json());
-  ApiGateway.getInstance().initializeRoutes(app);
-
-  const token = jwt.sign(
-    {
-      id: userId,
-      userId,
-      email: `${userId}@test.invalid`,
-      organizationId,
-      organization_id: organizationId,
-      role: 'OWNER',
-      isSuperAdmin: false,
-    },
-    config.JWT_SECRET,
-    { algorithm: 'HS256', expiresIn: '10m' }
-  );
+  let token = '';
 
   beforeAll(async () => {
     await assertRealPostgresTestEnvironment();
+    const [{ ApiGateway }, { default: config }] = await Promise.all([
+      import('../../../server/src/Gateway.js'),
+      import('../../../server/src/config/Config.js'),
+    ]);
+    app.use(express.json());
+    ApiGateway.getInstance().initializeRoutes(app);
+    token = jwt.sign(
+      {
+        id: userId,
+        userId,
+        email: `${userId}@test.invalid`,
+        organizationId,
+        organization_id: organizationId,
+        role: 'OWNER',
+        isSuperAdmin: false,
+      },
+      config.JWT_SECRET,
+      { algorithm: 'HS256', expiresIn: '10m' }
+    );
     await pool.query(`INSERT INTO organizations(id,name,status) VALUES($1,$1,'active')`, [
       organizationId,
     ]);
