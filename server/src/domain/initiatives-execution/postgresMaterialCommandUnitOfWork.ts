@@ -495,6 +495,28 @@ class PostgresMaterialCommandTransaction implements MaterialCommandTransaction {
     return updated.rowCount === 1 ? 'UPDATED' : 'CONFLICT';
   }
 
+  async assignGoalPerspective(input: {
+    organizationId: string;
+    goalId: string;
+    perspective:
+      | 'financial'
+      | 'customer'
+      | 'process'
+      | 'learning'
+      | 'governance_data_quality'
+      | null;
+  }): Promise<void> {
+    const result = await this.client.query(
+      `UPDATE goals
+          SET perspective=$1, updated_at=CURRENT_TIMESTAMP
+        WHERE organization_id=$2 AND id=$3`,
+      [input.perspective, input.organizationId, input.goalId]
+    );
+    if (result.rowCount !== 1) {
+      throw new MaterialCommandValidationError('GOAL_NOT_FOUND');
+    }
+  }
+
   async markSourceProposalDisposition(
     organizationId: string,
     proposalId: string,

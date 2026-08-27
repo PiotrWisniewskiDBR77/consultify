@@ -40,6 +40,16 @@ export class ControlKpiReadModel {
         )
       : { rows: [] };
     const policyRow = policyResult.rows[0] ?? null;
+    const goalPerspectives = await this.pool.query<{
+      id: string;
+      perspective: string | null;
+    }>(
+      `SELECT id, perspective
+         FROM goals
+        WHERE organization_id=$1
+        ORDER BY id`,
+      [organizationId]
+    );
     const parameters = policyRow?.parameters ?? {};
     const { missingParameters, invalidParameters } = validateControlKpiPolicyParameters(parameters);
     const calculatedAt = new Date().toISOString();
@@ -94,6 +104,11 @@ export class ControlKpiReadModel {
         missingParameters,
         invalidParameters,
       },
+      goalPerspectives: goalPerspectives.rows.map((goal) => ({
+        goalId: goal.id,
+        perspective: goal.perspective ?? ('UNASSIGNED' as const),
+        sourceClass: goal.perspective ? ('FACT' as const) : null,
+      })),
       scopeCompleteness:
         fullFamilyCount === families.length
           ? ('FULL' as const)

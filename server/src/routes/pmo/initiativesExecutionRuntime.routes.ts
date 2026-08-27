@@ -68,6 +68,10 @@ import {
 } from '../../domain/initiatives-execution/executionControlWrites.js';
 import { authorExecutionControlKpiPolicy } from '../../domain/initiatives-execution/executionControlKpiPolicyAuthoring.js';
 import {
+  assignGoalPerspective,
+  GOAL_PERSPECTIVES,
+} from '../../domain/initiatives-execution/assignGoalPerspective.js';
+import {
   gateSignoffId,
   submitGateSignoff,
 } from '../../domain/initiatives-execution/gateSignoff.js';
@@ -847,6 +851,11 @@ const ExecutionControlKpiPolicySchema = z.object({
   clientRequestId: z.string().min(1),
   name: z.string().min(1),
   parameters: z.record(z.string(), z.unknown()),
+});
+const GoalPerspectiveAssignmentSchema = z.object({
+  expectedVersion: z.number().int().min(0),
+  clientRequestId: z.string().min(1),
+  perspective: z.enum(GOAL_PERSPECTIVES).nullable(),
 });
 const InterventionDraftSchema = z.object({
   expectedVersion: z.number().int().min(0),
@@ -4643,6 +4652,42 @@ export function createInitiativesExecutionRuntimeRouter(
         commandType: 'execution-control-kpi-policy.author',
         createIfMissing: true,
         payload: { name, parameters },
+      });
+      res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
+    })
+  );
+  router.post(
+    '/goals/:goalId/perspective',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      const parsed = GoalPerspectiveAssignmentSchema.safeParse(req.body);
+      if (!actor) return void res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+      if (!parsed.success)
+        return void res.status(400).json({ error: { code: 'INVALID_PERSPECTIVE' } });
+      const claimedOrganizationId = String(
+        (req.body as Record<string, unknown> | undefined)?.organizationId ||
+          req.header('X-Organization-Id') ||
+          ''
+      ).trim();
+      if (claimedOrganizationId && claimedOrganizationId !== actor.organizationId)
+        return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
+      if (!(await deps.authorize(actor, '', 'initiative.update')))
+        return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
+      const goalId = firstParam(req.params.goalId);
+      const { expectedVersion, clientRequestId, perspective } = parsed.data;
+      const result = await assignGoalPerspective(deps.unitOfWork, {
+        organizationId: actor.organizationId,
+        actorId: actor.userId,
+        aggregateType: 'goal_perspective',
+        aggregateId: goalId,
+        expectedVersion,
+        clientRequestId,
+        correlationId: clientRequestId,
+        policyId: 'execution-control',
+        policyVersion: expectedVersion + 1,
+        commandType: 'goal-perspective.assign',
+        createIfMissing: true,
+        payload: { perspective },
       });
       res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
     })
