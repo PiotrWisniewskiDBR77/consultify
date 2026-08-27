@@ -34,7 +34,7 @@ describe('report reconstruction honesty', () => {
       {
         sourceType: 'execution_task',
         sourceId: 'task-1',
-        reason: 'SOURCE_NOT_EVENT_SOURCED',
+        reason: 'NO_EVENT_HISTORY_BEFORE_AS_OF',
       },
     ]);
   });
@@ -58,6 +58,16 @@ describe('report reconstruction honesty', () => {
     expect(reconstructReportRun(run([source()]), '2026-08-10T00:00:00.000Z', timestamp)).toEqual(
       reconstructReportRun(run([source()]), '2026-08-10T00:00:00.000Z', timestamp)
     );
+  });
+
+  it('preserves the source-not-event-sourced gap for a run with no sources', () => {
+    expect(reconstructReportRun(run([]), '2026-08-10T00:00:00.000Z').gaps).toEqual([
+      {
+        sourceType: 'report_run',
+        sourceId: 'run-1',
+        reason: 'SOURCE_NOT_EVENT_SOURCED',
+      },
+    ]);
   });
 
   it('rejects a future asOf', () => {

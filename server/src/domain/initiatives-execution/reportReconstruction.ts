@@ -71,9 +71,7 @@ export function reconstructReportRun(
         sourceId: source.sourceId,
         reason: (source.accessState === 'DENIED'
           ? 'ACCESS_DENIED'
-          : hasVersionReader
-            ? 'NO_EVENT_HISTORY_BEFORE_AS_OF'
-            : 'SOURCE_NOT_EVENT_SOURCED') as ReconstructionGapReason,
+          : 'NO_EVENT_HISTORY_BEFORE_AS_OF') as ReconstructionGapReason,
       },
     ];
   });

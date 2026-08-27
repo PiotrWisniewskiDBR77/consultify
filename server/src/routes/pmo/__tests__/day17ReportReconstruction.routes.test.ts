@@ -66,7 +66,7 @@ describe('Day 17 X.1 report reconstruction HTTP contract', () => {
       asOf: '2026-08-10T00:00:00.000Z',
       reconstructable: false,
       sources: [],
-      gaps: [{ reason: 'SOURCE_NOT_EVENT_SOURCED' }],
+      gaps: [{ reason: 'NO_EVENT_HISTORY_BEFORE_AS_OF' }],
     });
     expect(Object.keys(unitOfWork)).toHaveLength(0);
   });
