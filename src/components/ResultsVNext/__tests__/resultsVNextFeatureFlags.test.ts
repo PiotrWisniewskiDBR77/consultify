@@ -119,6 +119,14 @@ describe('isResultsVNextFlagEnabled', () => {
     });
   });
 
+  describe('managementReportEntry — E.1 entry point to the existing Management Reports screen', () => {
+    it('stays OFF by default and turns ON only with an explicit carrier', () => {
+      expect(isResultsVNextFlagEnabled('managementReportEntry')).toBe(false);
+      setLocation({ search: `?${RESULTS_VNEXT_FLAG_KEYS.managementReportEntry.query}=1` });
+      expect(isResultsVNextFlagEnabled('managementReportEntry')).toBe(true);
+    });
+  });
+
   describe('resultsVNextHostAllowsDefaultOn', () => {
     it('is true off public production and false on it — the guard kpiRegistry now uses', () => {
       expect(resultsVNextHostAllowsDefaultOn('localhost')).toBe(true);
