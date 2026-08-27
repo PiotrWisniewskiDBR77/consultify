@@ -74,6 +74,8 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [transitioning, setTransitioning] = useState<string | null>(null);
   const [transitionError, setTransitionError] = useState<string | null>(null);
+  const [exportingId, setExportingId] = useState<string | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -115,6 +117,54 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
       }
     },
     [isPolish, load]
+  );
+
+  /**
+   * FIX-1 (dyżur 41, odbiór): `GET /reports/:id/export.docx` istniało od
+   * dawna i renderowało realny DOCX (`renderDocumentSchemaToDocxBuffer`),
+   * ale `grep -rn "export.docx" src/` dawał 0 trafień — żaden ekran nie
+   * miał wołacza. Wzorzec pobierania (blob → tymczasowy `<a download>` →
+   * revoke) skopiowany z `AuditReportDocumentView.tsx` (D.9), która ma tę
+   * samą trasę spiętą w pełnym widoku raportu; tu dopinamy DRUGIE miejsce —
+   * kanoniczny slot `⋮ Pobierz` w kebabie bloku Details podglądu
+   * (`StandardPreviewDetails.onDownload`, patrz `StandardPreview.tsx`) —
+   * żeby ścieżka istniała też z samej listy, bez otwierania pełnego widoku.
+   */
+  const downloadReportDocx = useCallback(
+    async (report: AuditReportSummary) => {
+      if (exportingId) return;
+      setExportingId(report.id);
+      setExportError(null);
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(
+          `/api/audits/reports/${encodeURIComponent(report.id)}/export.docx`,
+          { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+        );
+        if (!response.ok) {
+          const payload = await response.json().catch(() => ({}));
+          throw new Error(
+            payload.error ||
+              (isPolish ? 'Nie udało się pobrać DOCX.' : 'Could not download the DOCX.')
+          );
+        }
+        const blobUrl = URL.createObjectURL(await response.blob());
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = `audit-report-${report.id}.docx`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(blobUrl);
+      } catch (e: any) {
+        setExportError(
+          e?.message || (isPolish ? 'Nie udało się pobrać DOCX.' : 'Could not download the DOCX.')
+        );
+      } finally {
+        setExportingId(null);
+      }
+    },
+    [exportingId, isPolish]
   );
 
   const columns: TableColumn[] = [
@@ -349,10 +399,13 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
             title: isPolish ? 'Brak raportów' : 'No reports yet',
             description: isPolish
               ? reportChainEnabled
-                ? 'Raport powstaje z Outputu programu audytowego. Otwórz zakładkę Outputy i użyj akcji „Wystaw raport”.'
+                ? // FIX-4 (dyżur 41, odbiór): pusty stan wskazywał nieistniejącą
+                  // etykietę „Wystaw raport” — realny kebab Outputów (AuditOutputsTab.tsx)
+                  // ma dwie osobne pozycje: „Generuj raport audytu” / „Generuj raport naprawczy”.
+                  'Raport powstaje z Outputu programu audytowego. Otwórz zakładkę Outputy i użyj akcji „Generuj raport audytu” lub „Generuj raport naprawczy”.'
                 : 'Raport powstaje z Outputu programu audytowego. W tej wersji interfejsu ścieżka wystawienia raportu nie jest dostępna z ekranu.'
               : reportChainEnabled
-                ? 'A report is issued from a program Output. Open Outputs and use “Issue report”.'
+                ? 'A report is issued from a program Output. Open Outputs and use “Generate audit report” or “Generate remediation report”.'
                 : 'A report is issued from a program Output. The report-issuance path is not available from the screen in this interface version.',
           }}
         />
@@ -362,6 +415,11 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
           className="w-[380px] shrink-0 border-l border-c-border-subtle"
           data-testid="audit-report-preview"
         >
+          {exportError ? (
+            <div className="m-2 rounded-lg border border-c-danger/30 bg-c-danger/5 px-3 py-2 text-xs text-c-danger" role="alert">
+              {exportError}
+            </div>
+          ) : null}
           <StandardPreview
             title={selected.title}
             onClose={() => setSelectedId(null)}
@@ -391,6 +449,18 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
               label: isPolish ? 'Szczegóły' : 'Details',
               propertyLabel: isPolish ? 'Właściwość' : 'Property',
               valueLabel: isPolish ? 'Wartość' : 'Value',
+              // FIX-1 (dyżur 41, odbiór): kanoniczny slot „⋮ Pobierz" —
+              // za tą samą flagą co reszta łańcucha raportów (D.2-D.9),
+              // flaga NIE jest tu włączana.
+              onDownload: reportChainEnabled ? () => void downloadReportDocx(selected) : undefined,
+              downloadLabel:
+                exportingId === selected.id
+                  ? isPolish
+                    ? 'Pobieranie…'
+                    : 'Downloading…'
+                  : isPolish
+                    ? 'Pobierz DOCX'
+                    : 'Download DOCX',
             }}
           />
         </div>
