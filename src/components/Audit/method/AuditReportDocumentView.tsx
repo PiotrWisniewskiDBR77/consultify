@@ -80,6 +80,7 @@ import {
   BookOpen,
   CheckCircle2,
   Clock,
+  Download,
   ExternalLink,
   FileSearch,
   FileText,
@@ -87,6 +88,7 @@ import {
   Layers,
   Lightbulb,
   ListChecks,
+  Loader2,
   Paperclip,
   Presentation as PresentationIcon,
   Send,
@@ -111,6 +113,7 @@ import { EmptyState, ErrorState, LoadingState } from '@/components/shared/states
 import { StatusChip } from '@/components/ui/primitives/chips';
 import { Api } from '@/services/api';
 import { formatListDate } from '@/utils/listDateFormat';
+import { isAuditsReportChainEnabled } from '@/utils/auditsReportChainFlag';
 
 import { auditRoleLabel } from './auditRoleLabels';
 import {
@@ -537,6 +540,9 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
   const [activeSection, setActiveSection] = useState<string>('executive_summary');
   const [transitioning, setTransitioning] = useState<'approve' | 'publish' | null>(null);
   const [transitionError, setTransitionError] = useState<string | null>(null);
+  const reportChainEnabled = useMemo(() => isAuditsReportChainEnabled(), []);
+  const [exportingDocx, setExportingDocx] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   /** R1: DRUGI, jawnie nazwany tryb — domyślnie OFF, ładowany leniwie na żądanie (patrz `switchToPresentation`). */
   const [viewMode, setViewMode] = useState<'full' | 'presentation'>('full');
@@ -545,6 +551,40 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
   const [presentationError, setPresentationError] = useState<string | null>(null);
 
   const goBack = useCallback(() => navigate('/audit-programs?tab=reports'), [navigate]);
+
+  const downloadDocx = useCallback(async () => {
+    if (!reportId || exportingDocx) return;
+    setExportingDocx(true);
+    setExportError(null);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/audits/reports/${encodeURIComponent(reportId)}/export.docx`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || (isPolish ? 'Nie udało się pobrać DOCX.' : 'Could not download DOCX.'));
+      }
+      const blobUrl = URL.createObjectURL(await response.blob());
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `audit-report-${reportId}.docx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+    } catch (downloadError) {
+      setExportError(
+        downloadError instanceof Error
+          ? downloadError.message
+          : isPolish
+            ? 'Nie udało się pobrać DOCX.'
+            : 'Could not download DOCX.'
+      );
+    } finally {
+      setExportingDocx(false);
+    }
+  }, [exportingDocx, isPolish, reportId]);
 
   const load = useCallback(() => {
     if (!reportId) {
@@ -1247,6 +1287,11 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
               {transitionError}
             </div>
           ) : null}
+          {exportError ? (
+            <div className="rounded-lg border border-c-danger/30 bg-c-danger/5 px-3 py-2 text-xs text-c-danger" role="alert">
+              {exportError}
+            </div>
+          ) : null}
           <button
             type="button"
             disabled={!canApprove || transitioning !== null}
@@ -1278,6 +1323,17 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
                 ? `Wymagany status „zatwierdzony” (obecny: ${reportStatusLabel(report.status, true)}).`
                 : `Requires approved status (current: ${reportStatusLabel(report.status, false)}).`}
             </p>
+          ) : null}
+          {reportChainEnabled ? (
+            <button
+              type="button"
+              disabled={exportingDocx}
+              onClick={() => void downloadDocx()}
+              className="flex items-center justify-center gap-2 rounded-lg border border-c-border px-3 py-2 text-xs font-medium text-c-text transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+            >
+              {exportingDocx ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+              {isPolish ? 'Pobierz DOCX' : 'Download DOCX'}
+            </button>
           ) : null}
           <div className="mt-1 flex items-center justify-between rounded-lg border border-c-border-subtle px-3 py-2 opacity-60">
             <span className="text-xs text-c-text-muted">{isPolish ? 'Eksport PDF' : 'PDF export'}</span>
