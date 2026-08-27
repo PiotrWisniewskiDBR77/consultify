@@ -148,7 +148,8 @@ function toIso(value: Date | string): string {
   return value instanceof Date ? value.toISOString() : value;
 }
 
-function parseJsonArray<T>(value: string): T[] {
+export function parseJsonArray<T>(value: unknown): T[] {
+  if (Array.isArray(value)) return value as T[];
   if (typeof value !== 'string' || !value.trim()) return [];
   try {
     const parsed = JSON.parse(value);

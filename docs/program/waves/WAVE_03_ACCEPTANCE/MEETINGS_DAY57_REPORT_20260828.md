@@ -74,7 +74,7 @@ Pierwsza instrukcyjna komenda serwerowa z korzenia zwróciła `No test files fou
 | ------- | ----------- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | S.1     | CZĘŚCIOWO   | oczekuje na commit | 37/37 PASS, 0 SKIP przez realny ApiGateway; R1–R9 N1/N2/N4, trzy pozytywy, N5, N6; R10 N1/N2 zmierzone, N4 nie dowodzi aktywnego członkostwa |
 | S.2     | NIE_ZACZĘTE | —                  | —                                                                                                                                            |
-| S.3     | NIE_ZACZĘTE | —                  | —                                                                                                                                            |
+| S.3     | CZĘŚCIOWO   | oczekuje na commit | trzy pomiary; naprawa cichej utraty danych; 7/7 PASS i mutacja 1 FAIL                                                                        |
 | S.4     | NIE_ZACZĘTE | —                  | —                                                                                                                                            |
 | S.5     | NIE_ZACZĘTE | —                  | —                                                                                                                                            |
 | S.6     | NIE_ZACZĘTE | —                  | —                                                                                                                                            |
@@ -103,9 +103,13 @@ Do uzupełnienia.
 - po mutacji bez `--retry=0`: 28 PASS / 9 FAIL / 0 SKIP — retry nie zamaskował tej dziury;
 - po odtworzeniu przez `cp`: niezastage'owany `git diff` pusty; 37 PASS / 0 FAIL / 0 SKIP.
 
+§S.3, mutacja: usunięto obsługę `Array.isArray(value)` z `parseJsonArray`. Z `--retry=0`: 6 PASS / 1 FAIL — przyszły wynik `json/jsonb` został cicho zamieniony na `[]`. Po odtworzeniu: niezastage'owany diff pusty i 7 PASS / 0 FAIL / 0 SKIP.
+
 ## Akapity Z33 — po jednym na każdy uruchomiony pakiet, z rozliczeniem pułapki (d) bramki bety
 
 `meeting.tenantIsolation.day57.pg.test.ts`: (a) `ENABLE_V8_GLOBAL=true`; (b) `RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE=enforce`; (c) config nadpisał `DB_TYPE` na `sqlite`, więc pierwszy przebieg uczciwie padł i pominął 23 testy; pakiet przywraca `postgres` przed inicjalizacją oraz wywołuje `assertRealPostgresTestEnvironment()`, a log potwierdza `DB_IDENTITY ... 127.0.0.1:5857/consultify_w3_meetings_owner_day57`; (d) N1/N2 używają roli `OWNER`, N5 roli `ADMINISTRATOR`, a każda odmowa izolacji asertuje `code != BETA_LOCKED`. Końcowy wynik: 37 PASS, 0 SKIP.
+
+`meeting.runtimeTraps.day57.pg.test.ts`: realny PG potwierdzony helperem i `DB_IDENTITY`; realny Gateway używa aktywnego `OWNER`, więc beta nie maskuje odczytu. Pułapka (c) rozliczona przez jawne przywrócenie `DB_TYPE=postgres`; pozytyw daje `200` i `code != BETA_LOCKED`. Wynik: 7 PASS, 0 SKIP.
 
 ## Tabela werdyktów tras (§S.9) — 33 wiersze
 
@@ -145,6 +149,9 @@ R10 (`ai-operator.routes.ts`) leży poza licencją zapisu §1.9.3 i poza routere
 
 - Instrukcyjna komenda fixture'u przez `node` jest niewykonalna na zastanym runtime; `npx tsx` działa.
 - Instrukcyjna komenda Vitest z korzenia i `--config server/vitest.config.ts` nie znajduje plików serwerowych; uruchomienie z `server/` działa.
+- `vitest.config.ts` na markerze ma `retry: 0`, nie wartość większą od zera; przebieg S.1 po mutacji bez jawnego `--retry=0` pozostał czerwony 9/37.
+- `req.db` nie występuje w Spotkaniach; `my-work.routes.ts:110` zawiera zastane `req.db = getDatabase()`.
+- Osiem rzeczywistych kolumn `*_json` Spotkań ma typ `text`; teza żywego 500 jest obalona, ale przyszła zmiana na `json/jsonb` powodowała cichą utratę danych przed naprawą.
 
 ## Znaleziska poza zakresem (z adresatem)
 
