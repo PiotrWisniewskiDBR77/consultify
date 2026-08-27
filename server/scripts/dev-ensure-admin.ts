@@ -35,18 +35,25 @@ if (process.env.ENV_FILE) {
   dotenv.config({ path: process.env.ENV_FILE, override: true });
 }
 
+function requireEnv(name: string): string {
+  const value = String(process.env[name] || '').trim();
+  if (!value)
+    throw new Error(`[ODMOWA] Brak zmiennej ${name}. Ustaw ją przed uruchomieniem skryptu.`);
+  return value;
+}
+
 const orgId = String(process.env.DEV_ORG_ID || 'dbr77').trim();
 const orgName = String(process.env.DEV_ORG_NAME || 'DBR77').trim();
 
 const superAdminEmail = String(process.env.DEV_SUPERADMIN_EMAIL || 'admin@dbr77.com')
   .trim()
   .toLowerCase();
-const superAdminPassword = String(process.env.DEV_SUPERADMIN_PASSWORD || '123456').trim();
+const superAdminPassword = requireEnv('DEV_SUPERADMIN_PASSWORD');
 
 const ownerEmail = String(process.env.DEV_OWNER_EMAIL || 'piotr.wisniewski@dbr77.com')
   .trim()
   .toLowerCase();
-const ownerPassword = String(process.env.DEV_OWNER_PASSWORD || '123456').trim();
+const ownerPassword = requireEnv('DEV_OWNER_PASSWORD');
 
 const quickAccessCode = String(process.env.DEV_QUICK_ACCESS_CODE || '7777').trim();
 
@@ -61,7 +68,11 @@ const DEFAULT_DBR77_ADMINS: Array<{ firstName: string; lastName: string; email: 
   { firstName: 'Bartłomiej', lastName: 'Straszka', email: 'bartlomiej.straszka@dbr77.com' },
   { firstName: 'Torian', lastName: 'Richardson', email: 'torian.richardson@dbr77.com' },
   { firstName: 'Tomasz', lastName: 'Jankowski', email: 'tomasz.jankowski@dbr77.com' },
-  { firstName: 'Katarzyna', lastName: 'Marszałkiewicz', email: 'katarzyna.marszalkiewicz@dbr77.com' },
+  {
+    firstName: 'Katarzyna',
+    lastName: 'Marszałkiewicz',
+    email: 'katarzyna.marszalkiewicz@dbr77.com',
+  },
   { firstName: 'Katarzyna', lastName: 'Szwarocka', email: 'katarzyna.szwarocka@dbr77.com' },
   { firstName: 'Michał', lastName: 'Łomżyński', email: 'michal.lomzynski@dbr77.com' },
   { firstName: 'Jeremiasz', lastName: 'Kaźmierczak', email: 'jeremiasz.kazmierczak@dbr77.com' },
@@ -104,7 +115,9 @@ async function main() {
     const passwordHash = bcrypt.hashSync(opts.password, 10);
     // Staging DB can contain duplicate/dirty emails (case, spaces, old inactive rows).
     // Force-correct ALL rows matching by lower(trim(email)) so login can't hit a stale record.
-    const normalizedEmail = String(opts.email || '').trim().toLowerCase();
+    const normalizedEmail = String(opts.email || '')
+      .trim()
+      .toLowerCase();
     const updateRes = await db.query<{ id: string }>(
       `UPDATE users
        SET organization_id = $2,
@@ -138,7 +151,11 @@ async function main() {
       [id, orgId, normalizedEmail, passwordHash, opts.firstName, opts.lastName, opts.role, nowIso()]
     );
 
-    logger.info('[dev-ensure-admin] Ensured user (inserted)', { email: normalizedEmail, id, role: opts.role });
+    logger.info('[dev-ensure-admin] Ensured user (inserted)', {
+      email: normalizedEmail,
+      id,
+      role: opts.role,
+    });
     return { id };
   };
 
@@ -178,10 +195,12 @@ async function main() {
   });
   await ensureOrgMembership(owner.id, orgId, 'OWNER');
 
-  // 3) Ensure default DBR77 admins (all password=123456 unless overridden)
-  const adminPassword = String(process.env.DEV_ADMIN_PASSWORD || '123456').trim();
+  // 3) Ensure default DBR77 admins (all password=<HASLO> unless overridden)
+  const adminPassword = requireEnv('DEV_ADMIN_PASSWORD');
   for (const u of DEFAULT_DBR77_ADMINS) {
-    const normalized = String(u.email || '').trim().toLowerCase();
+    const normalized = String(u.email || '')
+      .trim()
+      .toLowerCase();
     if (normalized === superAdminEmail || normalized === ownerEmail) continue;
     const adminUser = await ensureUser({
       email: normalized,
@@ -258,4 +277,3 @@ main().catch((e) => {
   console.error('[dev-ensure-admin] Failed:', e);
   process.exit(1);
 });
-

@@ -4,6 +4,9 @@
 # Usage: ./server/scripts/fix-dbr77-credentials.sh
 # Or:    npm run fix:credentials
 
+set -euo pipefail
+: "${CONSULTIFY_PASSWORD:?[ODMOWA] Ustaw CONSULTIFY_PASSWORD przed uruchomieniem skryptu}"
+
 cd "$(dirname "$0")/../.."
 
 # Pick the SQLite DB to operate on:
@@ -22,8 +25,8 @@ if [ -z "$DB_PATH" ]; then
   fi
 fi
 
-# Generate bcrypt hash for password '123456'
-HASH='$2b$10$E58rGuDyiRBMosPDXp1bdu9PyFmpJ5VctXem3Zk0GYLlJv49ADUJm'
+# Generate bcrypt hash for password '<HASLO>'
+HASH="$(node -e "const b=require('bcryptjs'); process.stdout.write(b.hashSync(process.env.CONSULTIFY_PASSWORD, 10))")"
 
 echo "🔧 Fixing DBR77 Credentials..."
 echo "   DB: $DB_PATH"
@@ -36,12 +39,12 @@ sqlite3 "$DB_PATH" "UPDATE organizations SET name='DBR77', plan='full', status='
 # Fix superadmin
 sqlite3 "$DB_PATH" "INSERT OR IGNORE INTO users (id, organization_id, email, password, role, status, first_name, last_name) VALUES ('user-admin-dbr77', 'org-dbr77-system', 'admin@dbr77.com', '$HASH', 'SUPERADMIN', 'active', 'Admin', 'DBR77');"
 sqlite3 "$DB_PATH" "UPDATE users SET password='$HASH', role='SUPERADMIN', organization_id='org-dbr77-system', status='active' WHERE email='admin@dbr77.com';"
-echo "   ✅ admin@dbr77.com → SUPERADMIN (password: 123456)"
+echo "   ✅ admin@dbr77.com → SUPERADMIN (password: <HASLO>)"
 
 # Fix piotr
 sqlite3 "$DB_PATH" "INSERT OR IGNORE INTO users (id, organization_id, email, password, role, status, first_name, last_name) VALUES ('user-piotr-dbr77', 'org-dbr77-system', 'piotr.wisniewski@dbr77.com', '$HASH', 'ADMIN', 'active', 'Piotr', 'Wiśniewski');"
 sqlite3 "$DB_PATH" "UPDATE users SET password='$HASH', role='ADMIN', organization_id='org-dbr77-system', status='active' WHERE email='piotr.wisniewski@dbr77.com';"
-echo "   ✅ piotr.wisniewski@dbr77.com → ADMIN (password: 123456)"
+echo "   ✅ piotr.wisniewski@dbr77.com → ADMIN (password: <HASLO>)"
 
 echo ""
 echo "=================================================="
@@ -50,7 +53,7 @@ echo "=================================================="
 echo ""
 echo "📋 Login accounts:"
 echo "   ┌─────────────────────────────────────────────┐"
-echo "   │ SUPERADMIN: admin@dbr77.com / 123456        │"
-echo "   │ ADMIN:      piotr.wisniewski@dbr77.com / 123456 │"
+echo "   │ SUPERADMIN: admin@dbr77.com / <HASLO>        │"
+echo "   │ ADMIN:      piotr.wisniewski@dbr77.com / <HASLO> │"
 echo "   └─────────────────────────────────────────────┘"
 echo ""

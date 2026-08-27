@@ -10,7 +10,7 @@ import demoSeed from './demoUser_demo.js';
 
 export const seedDemoUser = demoSeed.seedDemoUser || demoSeed.seedDemoUserDBR77;
 export const DEMO_EMAIL = demoSeed.DEMO_EMAIL || 'piotr.wisniewski@demo.com';
-export const DEMO_PASSWORD = demoSeed.DEMO_PASSWORD || '123456';
+export const DEMO_PASSWORD = demoSeed.DEMO_PASSWORD;
 export const DEMO_ORG_ID = demoSeed.DEMO_ORG_ID || 'org-demo-public';
 export const DEMO_USER_ID = demoSeed.DEMO_USER_ID || 'user-demo-public-admin';
 

@@ -150,8 +150,8 @@ Liczba 145 z briefu nie jest zgodna z metodą wiążącą; własny wynik to 104 
 | --- | --- | --- | --- | --- | --- |
 | D.1 | ZROBIONE_WG_DoD | `1d10bdfe26` | trzy własne pomiary i klasyfikacja | tabela powyżej | nie dotyczy |
 | D.2 | CZĘŚCIOWO | `1e1dfd0efb` | 25/25 testów PASS; brak sekretu i domen uprzywilejowanych | policzeni | mapa syntetyczna działa; brak mapy odmawia |
-| D.3 | CZĘŚCIOWO | do uzupełnienia po commicie | build OOM; dowód zastępczy | Vite | brak artefaktu do rozstrzygnięcia |
-| D.4 | NIE_ZACZĘTE | — | — | policzeni | — |
+| D.3 | CZĘŚCIOWO | `59dda561fb` | build OOM; dowód zastępczy | Vite | brak artefaktu do rozstrzygnięcia |
+| D.4 | CZĘŚCIOWO | do uzupełnienia po commicie | 16/16 bez literału; składnia OK | policzeni | zdalne wykonanie zabronione Z28 |
 | D.5 | NIE_ZACZĘTE | — | — | policzeni | — |
 | D.6 | NIE_ZACZĘTE | — | — | policzeni | — |
 | D.7 | NIE_ZACZĘTE | — | — | — | — |
@@ -203,6 +203,29 @@ Mapa PIN do konta została całkowicie usunięta z kodu i zastąpiona rygorystyc
 - Kontrola pozytywna z mapą syntetyczną: `NIEWYKONANA — build artefaktu niewykonalny z powodu OOM`.
 - Dowód zastępczy: w produkcyjnym `src/` poza `__tests__` nie ma literału w `AuthView.tsx` ani `quickAccess.ts`; dziewięć innych plików ma ten sam ciąg cyfr w kontekstach niepoświadczeniowych (placeholdery, kolory, wartości formularzy). Skan domen znajduje 15 plików z adresami/kontaktami domenowymi niezależnymi od mapy quick-access.
 - Zdanie rozstrzygające: **NIE_PROVEN — nie powstał zbudowany artefakt, więc nie twierdzę, że bundel produkcyjny nie zawiera poświadczeń ani adresów kont administracyjnych.** Kod mapy P0 jest oczyszczony, lecz bramka artefaktowa pozostaje otwarta.
+
+## D.4 — skrypty i seedy
+
+- Wszystkie 16 własnych plików kategorii (c) mają `0` trafień literału. `scripts/seed-m16-demo.py` pozostał nietknięty jako `KOLIZJA_38`.
+- Python: `py_compile` 2/2 OK; Bash: `bash -n` 1/1 OK; JS/TS/MJS/CJS: esbuild 13/13 OK.
+- Skrypty wymagają `CONSULTIFY_API_BASE`, `CONSULTIFY_EMAIL`, `CONSULTIFY_PASSWORD`, `SEED_USER_PASSWORD` albo istniejących nazw `DEV_*`; brak powoduje kod wyjścia różny od zera.
+- `NIE_URUCHOMIONE — wymaga zdalnego środowiska lub mutuje bazę, Z28`. Równoważność jest statyczna: te same adresy kont i operacje, hasło dostarczane przez env; seedy haszują wartość env w tej samej funkcji bcrypt.
+
+| plik/grupa | konsumenci | odmowa bez env | położenie odmowy względem I/O |
+| --- | --- | --- | --- |
+| dwa `scripts/test-m16-*` | ręczne | exit 1, brak `CONSULTIFY_API_BASE` | przed pierwszym `urlopen` |
+| `_audit_script.mjs` | historyczny QA | exit 1, brak `CONSULTIFY_API_BASE` | przed dynamicznym importem Playwright i startem przeglądarki |
+| `fix-dbr77-credentials.sh` | `npm run fix:credentials` | exit 1, brak `CONSULTIFY_PASSWORD` | przed `sqlite3` |
+| `dev-ensure-admin.ts` | ręczny/runbook | exit 1, brak `DEV_SUPERADMIN_PASSWORD` | przed funkcją main i DB |
+| `seed-production-dbr77-users.ts`, `seed-interview-demo.ts` | package/ręczne | exit 1, brak `SEED_USER_PASSWORD` | przed `Pool.connect` / `getDatabaseAsync` |
+| `seed-dbr77-restore-demo.ts` | ręczny | exit 1, brak `SEED_USER_PASSWORD` | przed utworzeniem bazy |
+| `seedEnglishTestData.js`, `seedLegolexDemoOrg.js` | ręczne | exit 1; zastane problemy uruchomieniowe ESM widoczne przed pełnym komunikatem | deklaracja odmowy przed otwarciem DB; składnia esbuild OK |
+| `seed_dbr77_postgres.js` | ręczny | exit 1, brak `SEED_USER_PASSWORD` | przed utworzeniem Pool |
+| `test_login.cjs` | ręczny | exit 1, brak `CONSULTIFY_EMAIL` | przed otwarciem SQLite |
+| `server/seed/seed_dbr77_complete.js`, `seed_dbr77_users.js` | ręczne | exit 1; jeden ma zastany błąd importu uruchomieniowego | sprawdzenie env przed inicjalizacją DB w module; esbuild OK |
+| `server/seeds/demoUser*.js` | wrapper + ręczny | exit 1, brak `SEED_USER_PASSWORD` | przed otwarciem DB |
+
+`grep` zdalnych wartości domyślnych w dwóch M16: `0`. Pozostałe skrypty nie dostały nowych zdalnych wartości domyślnych.
 
 ## Errata i korekty wobec instrukcji
 

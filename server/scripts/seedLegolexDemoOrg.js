@@ -34,11 +34,16 @@ if (process.env.NODE_ENV === 'production') {
   process.exit(1);
 }
 
+const DEFAULT_PASSWORD = String(process.env.SEED_USER_PASSWORD || '').trim();
+if (!DEFAULT_PASSWORD) {
+  console.error('[ODMOWA] Brak zmiennej SEED_USER_PASSWORD. Ustaw ją przed uruchomieniem seeda.');
+  process.exit(1);
+}
+
 // ==========================================
 // CONFIGURATION
 // ==========================================
 
-const DEFAULT_PASSWORD = '123456';
 const HASHED_PASSWORD = bcrypt.hashSync(DEFAULT_PASSWORD, 8);
 
 // Fixed IDs for findability and idempotency (Legolex v2 - Deterministic)
@@ -1455,13 +1460,13 @@ async function main() {
     console.log('  🎉 LEGOLEX v2 SEED COMPLETE (ENTERPRISE MODE)');
     console.log('═══════════════════════════════════════════════════');
     console.log('\nLogin credentials:');
-    console.log('  Anna (ADMIN):     anna@legolex.com / 123456');
-    console.log('  Piotr (USER):    piotr@legolex.com / 123456');
-    console.log('  Marta (USER):    marta@legolex.com / 123456');
-    console.log('  Kamil (USER):    kamil@legolex.com / 123456');
-    console.log('  Julia (RISK):    julia@legolex.com / 123456');
-    console.log('  Tomasz (PARTNER): tomasz@legolex.com / 123456');
-    console.log('  SuperAdmin:      super@legolex.com / 123456');
+    console.log('  Anna (ADMIN):     anna@legolex.com / <HASLO>');
+    console.log('  Piotr (USER):    piotr@legolex.com / <HASLO>');
+    console.log('  Marta (USER):    marta@legolex.com / <HASLO>');
+    console.log('  Kamil (USER):    kamil@legolex.com / <HASLO>');
+    console.log('  Julia (RISK):    julia@legolex.com / <HASLO>');
+    console.log('  Tomasz (PARTNER): tomasz@legolex.com / <HASLO>');
+    console.log('  SuperAdmin:      super@legolex.com / <HASLO>');
     console.log('\nUsage: node server/scripts/seedLegolexDemoOrg.js [--clean] [--verify]');
 
     if (db.close) db.close();

@@ -39,6 +39,13 @@ function requireNotEmpty<T>(v: T | null | undefined, msg: string): T {
   return v;
 }
 
+function requireEnv(name: string): string {
+  const value = String(process.env[name] || '').trim();
+  if (!value)
+    throw new Error(`[ODMOWA] Brak zmiennej ${name}. Ustaw ją przed uruchomieniem seeda.`);
+  return value;
+}
+
 function qIdent(name: string): string {
   // Hardcoded identifiers only; still quote to avoid reserved words.
   return `"${String(name).replace(/"/g, '""')}"`;
@@ -102,9 +109,7 @@ async function upsertIfPossible(
   const conflictTarget = opts?.conflictTarget?.length ? opts.conflictTarget : ['id'];
   for (const k of conflictTarget) {
     if (!cols.includes(k)) {
-      throw new Error(
-        `upsertIfPossible requires conflict target field "${k}" for table=${table}`
-      );
+      throw new Error(`upsertIfPossible requires conflict target field "${k}" for table=${table}`);
     }
   }
   const values = cols.map((c) => row[c]);
@@ -117,9 +122,14 @@ async function upsertIfPossible(
   await db.run(sql, values);
 }
 
-async function ensureSeedUsers(db: any, orgId: string, managerUser: AnyRow) {
+async function ensureSeedUsers(
+  db: any,
+  orgId: string,
+  managerUser: AnyRow,
+  seedUserPassword: string
+) {
   const usersCols = await getColumns(db, 'users');
-  const passwordHash = await bcrypt.hash('123456', 10);
+  const passwordHash = await bcrypt.hash(seedUserPassword, 10);
   const baseNow = nowIso();
 
   const seedUsers = [
@@ -203,6 +213,7 @@ async function main() {
   dotenv.config({ path: path.resolve(process.cwd(), '.env'), override: false });
 
   requireSafeMode();
+  const seedUserPassword = requireEnv('SEED_USER_PASSWORD');
 
   // Seed scripts should not attempt to mutate/patch full DB schema (especially on staging/prod-like DBs).
   // We only insert Interview demo rows (idempotently), so disable managed schema init.
@@ -238,43 +249,45 @@ async function main() {
     `[seed-interview-demo] Target organization "${requestedOrgId}" not found.`
   );
 
-  const managerUser =
-    (await (async () => {
-      if (seedUserEmail) {
-        const row = await db.get(
-          `SELECT id, email, role, first_name, last_name
+  const managerUser = (await (async () => {
+    if (seedUserEmail) {
+      const row = await db.get(
+        `SELECT id, email, role, first_name, last_name
            FROM users
            WHERE email = ?
            LIMIT 1`,
-          [seedUserEmail]
-        );
-        if (!row?.id) throw new Error(`User not found for SEED_USER_EMAIL=${seedUserEmail}`);
-        return row;
-      }
+        [seedUserEmail]
+      );
+      if (!row?.id) throw new Error(`User not found for SEED_USER_EMAIL=${seedUserEmail}`);
+      return row;
+    }
 
-      // Prefer a manager/admin-like user.
-      const preferred = await db.get(
-        `SELECT id, email, role, first_name, last_name
+    // Prefer a manager/admin-like user.
+    const preferred = await db.get(
+      `SELECT id, email, role, first_name, last_name
          FROM users
          WHERE organization_id = ?
            AND role IN ('OWNER', 'ADMIN', 'SUPERADMIN', 'PROJECT_MANAGER')
          ORDER BY created_at DESC
          LIMIT 1`,
-        [orgId]
-      );
-      if (preferred?.id) return preferred;
+      [orgId]
+    );
+    if (preferred?.id) return preferred;
 
-      const anyUser = await db.get(
-        `SELECT id, email, role, first_name, last_name
+    const anyUser = await db.get(
+      `SELECT id, email, role, first_name, last_name
          FROM users
          WHERE organization_id = ?
          ORDER BY created_at DESC
          LIMIT 1`,
-        [orgId]
-      );
-      return anyUser;
-    })()) as AnyRow;
-  requireNotEmpty(managerUser?.id, 'No users found for selected organization. Create a user first.');
+      [orgId]
+    );
+    return anyUser;
+  })()) as AnyRow;
+  requireNotEmpty(
+    managerUser?.id,
+    'No users found for selected organization. Create a user first.'
+  );
 
   const projectId =
     seedProjectId ||
@@ -286,7 +299,12 @@ async function main() {
       return row?.id ? String(row.id) : null;
     })());
 
-  const { opsLeadId, financeId, itId } = await ensureSeedUsers(db, orgId, managerUser);
+  const { opsLeadId, financeId, itId } = await ensureSeedUsers(
+    db,
+    orgId,
+    managerUser,
+    seedUserPassword
+  );
 
   const tablesNeeded = [
     'organization_context',
@@ -327,14 +345,41 @@ async function main() {
           { name: 'Inventory turns', value: 4, unit: 'x/yr' },
         ]),
         stakeholders: JSON.stringify([
-          { name: 'CFO', role: 'Executive Sponsor', influence: 'high', notes: 'ROI-focused, wants payback <18 months' },
-          { name: 'Head of Operations', role: 'Process Owner', influence: 'high', notes: 'Bottlenecks in approvals and changeovers' },
-          { name: 'IT Manager', role: 'Technology Owner', influence: 'medium', notes: 'Small team; integration debt' },
+          {
+            name: 'CFO',
+            role: 'Executive Sponsor',
+            influence: 'high',
+            notes: 'ROI-focused, wants payback <18 months',
+          },
+          {
+            name: 'Head of Operations',
+            role: 'Process Owner',
+            influence: 'high',
+            notes: 'Bottlenecks in approvals and changeovers',
+          },
+          {
+            name: 'IT Manager',
+            role: 'Technology Owner',
+            influence: 'medium',
+            notes: 'Small team; integration debt',
+          },
         ]),
         open_gaps: JSON.stringify([
-          { category: 'finance', description: 'True cost-to-serve per product line', priority: 'high' },
-          { category: 'digital', description: 'Current integrations map (ERP/MES/WMS/Excel)', priority: 'medium' },
-          { category: 'people', description: 'Training baseline and skill matrix coverage', priority: 'medium' },
+          {
+            category: 'finance',
+            description: 'True cost-to-serve per product line',
+            priority: 'high',
+          },
+          {
+            category: 'digital',
+            description: 'Current integrations map (ERP/MES/WMS/Excel)',
+            priority: 'medium',
+          },
+          {
+            category: 'people',
+            description: 'Training baseline and skill matrix coverage',
+            priority: 'medium',
+          },
         ]),
         completeness_percent: 55,
         last_interview_id: null,
@@ -497,8 +542,12 @@ async function main() {
   // -------------------------------------------
   // Sessions + questions
   // -------------------------------------------
-  const sessionCols = tableOk.interview_sessions ? await getColumns(db, 'interview_sessions') : new Set();
-  const questionCols = tableOk.interview_questions ? await getColumns(db, 'interview_questions') : new Set();
+  const sessionCols = tableOk.interview_sessions
+    ? await getColumns(db, 'interview_sessions')
+    : new Set();
+  const questionCols = tableOk.interview_questions
+    ? await getColumns(db, 'interview_questions')
+    : new Set();
 
   const makeSession = async (input: {
     id: string;
@@ -532,12 +581,21 @@ async function main() {
       total_questions: input.total,
       answered_questions: input.answered,
       summary_facts: JSON.stringify([
-        { category: 'operations', fact: 'Approval steps create queue time and unpredictable lead times.' },
+        {
+          category: 'operations',
+          fact: 'Approval steps create queue time and unpredictable lead times.',
+        },
         { category: 'digital', fact: 'Excel is used as an integration layer between systems.' },
       ]),
-      summary_gaps: JSON.stringify([{ category: 'finance', gap: 'No baseline ROI framework for initiatives.' }]),
-      summary_constraints: JSON.stringify([{ category: 'people', constraint: 'Limited IT capacity (small team).' }]),
-      summary_pain_points: JSON.stringify([{ category: 'operations', pain_point: 'Changeovers and approvals are main bottlenecks.' }]),
+      summary_gaps: JSON.stringify([
+        { category: 'finance', gap: 'No baseline ROI framework for initiatives.' },
+      ]),
+      summary_constraints: JSON.stringify([
+        { category: 'people', constraint: 'Limited IT capacity (small team).' },
+      ]),
+      summary_pain_points: JSON.stringify([
+        { category: 'operations', pain_point: 'Changeovers and approvals are main bottlenecks.' },
+      ]),
       started_at: input.startedAt,
       completed_at: input.completedAt ?? null,
       last_activity_at: input.completedAt ?? isoPlusDays(-1),
@@ -550,10 +608,20 @@ async function main() {
 
   const addQuestions = async (sessionId: string, ownerId: string, seed: number) => {
     if (!tableOk.interview_questions) return;
-    const mk = async (i: number, category: string, questionText: string, answer?: string, tags?: string[]) => {
+    const mk = async (
+      i: number,
+      category: string,
+      questionText: string,
+      answer?: string,
+      tags?: string[]
+    ) => {
       const id = `seed_iq_${orgId}_${sessionId}_${i}`;
       const status =
-        answer && answer.trim().length > 0 ? 'answered' : i % 5 === 0 ? 'in_progress' : 'not_started';
+        answer && answer.trim().length > 0
+          ? 'answered'
+          : i % 5 === 0
+            ? 'in_progress'
+            : 'not_started';
       const confidence = answer ? (i % 2 === 0 ? 4 : 3) : 0;
       const row: Record<string, any> = {
         id,
@@ -575,15 +643,57 @@ async function main() {
       await insertIfPossible(db, 'interview_questions', row, questionCols);
     };
 
-    await mk(0, 'strategy', 'What is the main business objective for the next 12 months?', 'Reduce lead time by 20% and improve OTIF to 95%.', ['priority']);
-    await mk(1, 'operations', 'Where is the biggest bottleneck today?', 'Approvals between planning and production plus long changeovers on Line 3.', ['pain_point']);
-    await mk(2, 'digital', 'Which systems support planning and execution?', 'ERP (SAP), MES (basic), Excel for scheduling adjustments.', ['fact']);
-    await mk(3, 'people', 'Where do skills/training gaps show up most?', 'Shift leads rely on tribal knowledge; limited training documentation.', ['risk']);
-    await mk(4, 'finance', 'What constraints apply to investments?', 'Payback must be under 18 months; 2026 capex is constrained.', ['constraint']);
+    await mk(
+      0,
+      'strategy',
+      'What is the main business objective for the next 12 months?',
+      'Reduce lead time by 20% and improve OTIF to 95%.',
+      ['priority']
+    );
+    await mk(
+      1,
+      'operations',
+      'Where is the biggest bottleneck today?',
+      'Approvals between planning and production plus long changeovers on Line 3.',
+      ['pain_point']
+    );
+    await mk(
+      2,
+      'digital',
+      'Which systems support planning and execution?',
+      'ERP (SAP), MES (basic), Excel for scheduling adjustments.',
+      ['fact']
+    );
+    await mk(
+      3,
+      'people',
+      'Where do skills/training gaps show up most?',
+      'Shift leads rely on tribal knowledge; limited training documentation.',
+      ['risk']
+    );
+    await mk(
+      4,
+      'finance',
+      'What constraints apply to investments?',
+      'Payback must be under 18 months; 2026 capex is constrained.',
+      ['constraint']
+    );
     await mk(5, 'operations', 'How do you measure performance today?', undefined, []);
-    await mk(6, 'digital', 'What integrations are missing?', 'No API layer; manual exports/imports weekly.', ['gap']);
+    await mk(
+      6,
+      'digital',
+      'What integrations are missing?',
+      'No API layer; manual exports/imports weekly.',
+      ['gap']
+    );
     await mk(7, 'strategy', 'Who owns the decision-making for exceptions?', undefined, []);
-    await mk(8, 'finance', 'How do you measure ROI on improvements?', 'Ad-hoc; no standard benefits register.', ['gap']);
+    await mk(
+      8,
+      'finance',
+      'How do you measure ROI on improvements?',
+      'Ad-hoc; no standard benefits register.',
+      ['gap']
+    );
     await mk(9, 'people', 'How do employees react to process changes?', undefined, []);
   };
 
@@ -723,7 +833,8 @@ async function main() {
         due_at: isoPlusDays(5),
         started_at: isoPlusDays(-12),
         sent_back_at: isoPlusDays(-1),
-        sent_back_reason: 'Please add concrete KPI definitions + owners; finance section is too vague.',
+        sent_back_reason:
+          'Please add concrete KPI definitions + owners; finance section is too vague.',
         priority: 'high',
         notes: 'Need more specificity, then resubmit.',
         created_by: managerUser.id,
@@ -860,7 +971,8 @@ async function main() {
         content: input.content,
         description: input.content, // legacy field
         status: input.status,
-        error_message: input.status === 'failed' ? 'Seeded failure example (safe to delete).' : null,
+        error_message:
+          input.status === 'failed' ? 'Seeded failure example (safe to delete).' : null,
         source_session_count: input.sessionIds.length,
         tokens_used: input.status === 'completed' ? 1200 : 0,
         generation_time_ms: input.status === 'completed' ? 850 : null,
@@ -965,4 +1077,3 @@ main().catch((e) => {
   console.error('❌ seed-interview-demo failed:', e?.message || e);
   process.exit(1);
 });
-

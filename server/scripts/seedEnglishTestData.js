@@ -30,10 +30,15 @@ if (process.env.NODE_ENV === 'production') {
   process.exit(1);
 }
 
+const DEFAULT_PASSWORD = String(process.env.SEED_USER_PASSWORD || '').trim();
+if (!DEFAULT_PASSWORD) {
+  console.error('[ODMOWA] Brak zmiennej SEED_USER_PASSWORD. Ustaw ją przed uruchomieniem seeda.');
+  process.exit(1);
+}
+
 const dbPath = path.resolve(__dirname, '../consultinity.db');
 const db = new sqlite3.Database(dbPath);
 
-const DEFAULT_PASSWORD = 'test123456';
 const HASHED_PASSWORD = bcrypt.hashSync(DEFAULT_PASSWORD, 8);
 
 // Fixed IDs for test data
@@ -409,7 +414,7 @@ async function seedSuperAdmin() {
         'active',
       ]
     );
-    console.log('✓ SuperAdmin user created: superadmin@consultinity.com / test123456');
+    console.log('✓ SuperAdmin user created: superadmin@consultinity.com / test<HASLO>');
   } catch (error) {
     console.error('Error seeding SuperAdmin:', error);
     throw error;
@@ -825,11 +830,11 @@ async function seedAll() {
 
     console.log('\n✅ All test data seeded successfully!');
     console.log('\nTest Accounts:');
-    console.log('  SuperAdmin: superadmin@consultinity.com / test123456');
-    console.log('  Admin (Acme): john.smith@acme.com / test123456');
-    console.log('  Admin (Technova): sarah.williams@technova.com / test123456');
-    console.log('  User: jane.doe@acme.com / test123456');
-    console.log('\nAll users use password: test123456');
+    console.log('  SuperAdmin: superadmin@consultinity.com / test<HASLO>');
+    console.log('  Admin (Acme): john.smith@acme.com / test<HASLO>');
+    console.log('  Admin (Technova): sarah.williams@technova.com / test<HASLO>');
+    console.log('  User: jane.doe@acme.com / test<HASLO>');
+    console.log('\nAll users use password: test<HASLO>');
   } catch (error) {
     console.error('❌ Error seeding test data:', error);
     throw error;

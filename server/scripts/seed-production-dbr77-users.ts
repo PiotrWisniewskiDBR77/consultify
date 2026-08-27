@@ -5,7 +5,7 @@
  * What it does:
  * - Ensures the target organization exists (default: id "dbr77")
  * - Creates/updates a fixed list of DBR77 internal users
- * - Sets initial password to "123456" (bcrypt hash) and role to ADMIN (per request)
+ * - Sets initial password to "<HASLO>" (bcrypt hash) and role to ADMIN (per request)
  *
  * Safety:
  * - PostgreSQL only
@@ -74,6 +74,8 @@ async function main() {
   dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
   dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
+  const seedUserPassword = requireEnv('SEED_USER_PASSWORD');
+
   // Safety checks
   requireProductionConfirmation();
 
@@ -90,24 +92,99 @@ async function main() {
   const orgId = String(process.env.SEED_ORG_ID || 'dbr77');
   const orgName = String(process.env.SEED_ORG_NAME || 'Consultinity / DBR77');
 
-  // Requested users (password: 123456 for all)
+  // Requested users (password: <HASLO> for all)
   const users: SeedUser[] = [
-    { email: 'piotr.wisniewski@dbr77.com', firstName: 'Piotr', lastName: 'Wiśniewski', role: 'OWNER' },
-    { email: 'justyna.laskowska@dbr77.com', firstName: 'Justyna', lastName: 'Laskowska', role: 'ADMIN' },
-    { email: 'konrad.milewski@dbr77.com', firstName: 'Konrad', lastName: 'Milewski', role: 'ADMIN' },
-    { email: 'bartosz.solomski@dbr77.com', firstName: 'Bartosz', lastName: 'Sołomski', role: 'ADMIN' },
-    { email: 'konrad.stefanik@dbr77.com', firstName: 'Konrad', lastName: 'Stefanik', role: 'ADMIN' },
-    { email: 'wojciech.wesolowski@dbr77.com', firstName: 'Wojciech', lastName: 'Wesołowski', role: 'ADMIN' },
-    { email: 'pawel.mroczkowski@dbr77.com', firstName: 'Paweł', lastName: 'Mroczkowski', role: 'ADMIN' },
-    { email: 'bartlomiej.straszka@dbr77.com', firstName: 'Bartłomiej', lastName: 'Straszka', role: 'ADMIN' },
-    { email: 'torian.richardson@dbr77.com', firstName: 'Torian', lastName: 'Richardson', role: 'ADMIN' },
-    { email: 'tomasz.jankowski@dbr77.com', firstName: 'Tomasz', lastName: 'Jankowski', role: 'ADMIN' },
-    { email: 'katarzyna.marszalkiewicz@dbr77.com', firstName: 'Katarzyna', lastName: 'Marszałkiewicz', role: 'ADMIN' },
-    { email: 'katarzyna.szwarocka@dbr77.com', firstName: 'Katarzyna', lastName: 'Szwarocka', role: 'ADMIN' },
-    { email: 'michal.lomzynski@dbr77.com', firstName: 'Michał', lastName: 'Łomżyński', role: 'ADMIN' },
-    { email: 'jeremiasz.kazmierczak@dbr77.com', firstName: 'Jeremiasz', lastName: 'Kaźmierczak', role: 'ADMIN' },
+    {
+      email: 'piotr.wisniewski@dbr77.com',
+      firstName: 'Piotr',
+      lastName: 'Wiśniewski',
+      role: 'OWNER',
+    },
+    {
+      email: 'justyna.laskowska@dbr77.com',
+      firstName: 'Justyna',
+      lastName: 'Laskowska',
+      role: 'ADMIN',
+    },
+    {
+      email: 'konrad.milewski@dbr77.com',
+      firstName: 'Konrad',
+      lastName: 'Milewski',
+      role: 'ADMIN',
+    },
+    {
+      email: 'bartosz.solomski@dbr77.com',
+      firstName: 'Bartosz',
+      lastName: 'Sołomski',
+      role: 'ADMIN',
+    },
+    {
+      email: 'konrad.stefanik@dbr77.com',
+      firstName: 'Konrad',
+      lastName: 'Stefanik',
+      role: 'ADMIN',
+    },
+    {
+      email: 'wojciech.wesolowski@dbr77.com',
+      firstName: 'Wojciech',
+      lastName: 'Wesołowski',
+      role: 'ADMIN',
+    },
+    {
+      email: 'pawel.mroczkowski@dbr77.com',
+      firstName: 'Paweł',
+      lastName: 'Mroczkowski',
+      role: 'ADMIN',
+    },
+    {
+      email: 'bartlomiej.straszka@dbr77.com',
+      firstName: 'Bartłomiej',
+      lastName: 'Straszka',
+      role: 'ADMIN',
+    },
+    {
+      email: 'torian.richardson@dbr77.com',
+      firstName: 'Torian',
+      lastName: 'Richardson',
+      role: 'ADMIN',
+    },
+    {
+      email: 'tomasz.jankowski@dbr77.com',
+      firstName: 'Tomasz',
+      lastName: 'Jankowski',
+      role: 'ADMIN',
+    },
+    {
+      email: 'katarzyna.marszalkiewicz@dbr77.com',
+      firstName: 'Katarzyna',
+      lastName: 'Marszałkiewicz',
+      role: 'ADMIN',
+    },
+    {
+      email: 'katarzyna.szwarocka@dbr77.com',
+      firstName: 'Katarzyna',
+      lastName: 'Szwarocka',
+      role: 'ADMIN',
+    },
+    {
+      email: 'michal.lomzynski@dbr77.com',
+      firstName: 'Michał',
+      lastName: 'Łomżyński',
+      role: 'ADMIN',
+    },
+    {
+      email: 'jeremiasz.kazmierczak@dbr77.com',
+      firstName: 'Jeremiasz',
+      lastName: 'Kaźmierczak',
+      role: 'ADMIN',
+    },
     { email: 'anja.nugmanowa@dbr77.com', firstName: 'Anja', lastName: 'Nugmanowa', role: 'ADMIN' },
-    { email: 'doreen.mittelstaedt@dbr77.com', firstName: 'Doreen', lastName: 'Mittelstaedt', role: 'ADMIN' },
+    {
+      email: 'doreen.mittelstaedt@dbr77.com',
+      firstName: 'Doreen',
+      lastName: 'Mittelstaedt',
+      role: 'ADMIN',
+    },
     { email: 'pawel.dera@dbr77.com', firstName: 'Paweł', lastName: 'Dera', role: 'ADMIN' },
     { email: 'kamil.kuczek@dbr77.com', firstName: 'Kamil', lastName: 'Kuczek', role: 'ADMIN' },
   ];
@@ -126,7 +203,7 @@ async function main() {
 
     await ensureOrganization(client, { id: orgId, name: orgName });
 
-    const passwordHash = await bcrypt.hash('123456', 10);
+    const passwordHash = await bcrypt.hash(seedUserPassword, 10);
 
     let created = 0;
     let updated = 0;
@@ -179,7 +256,7 @@ async function main() {
     // eslint-disable-next-line no-console
     console.log(`- Updated: ${updated}`);
     // eslint-disable-next-line no-console
-    console.log(`- Initial password for all accounts: 123456`);
+    console.log('- Initial password for all accounts: supplied through SEED_USER_PASSWORD');
   } catch (e) {
     try {
       await client.query('ROLLBACK');
