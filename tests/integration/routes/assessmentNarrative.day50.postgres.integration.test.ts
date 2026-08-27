@@ -101,7 +101,14 @@ describe.skipIf(!REAL_DB)(
       const zip = await JSZip.loadAsync(response.body);
       const xml = (await zip.file('word/document.xml')!.async('string')).replaceAll('\u00a0', ' ');
       expect(xml).toContain(expected);
-      expect(xml).toContain('Sekcja do uzupełnienia — limit 110–170 słów; wymagane:');
+      // FIX-3 (nadzorca 2026-08-28): the area-comment fallback used to be
+      // the raw editorial instruction ('Sekcja do uzupełnienia — limit
+      // 110–170 słów; wymagane: ...'), which reads as an unfinished
+      // template in a client-facing document. It is now the same honest
+      // sentence already shown by the "not assessed" notice above it (see
+      // areaCommentPlaceholder() in assessmentDrdReportSchemaService.ts) —
+      // and the raw instruction must not appear anywhere in the document.
+      expect(xml).not.toContain('Sekcja do uzupełnienia');
       expect(xml).toContain('Obszaru 1C nie oceniono — brak danych źródłowych.');
       expect(xml).toContain('Obszar pominięty w ocenie — kod: poza zakresem zlecenia.');
       expect(xml).toContain('Pominięte pytania: 4E-L1 — odroczone do kolejnej rewizji;');

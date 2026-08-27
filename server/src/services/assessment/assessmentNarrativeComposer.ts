@@ -271,6 +271,10 @@ export function composeProgramAggregateNarrative(input: {
         (right.gap ?? -1) - (left.gap ?? -1) || left.unitId.localeCompare(right.unitId)
     )
     .slice(0, 5);
+  const usableLimitations = input.limitations.filter(usable);
+  const limitationsClause = usableLimitations.length
+    ? ` Ograniczenia zamrożonego Outputu: ${usableLimitations.map((limitation) => `„${limitation}”`).join('; ')}.`
+    : '';
   const finalConclusions = withinValidated(
     `W całym programie oceniono ${input.findings.length} z ${input.totalAreas} obszarów w ${input.axisCount} osiach. Luki mieszczą się od ${Math.min(...gaps)} do ${Math.max(...gaps)}, a liczba luk krytycznych wynosi ${critical.length}. Stan udokumentowany dotyczy ${evidenced} obszarów, niepełny ${incomplete}, a zadeklarowany ${declared}. ${selected
       .map(
@@ -280,7 +284,7 @@ export function composeProgramAggregateNarrative(input: {
       )
       .join(
         ' '
-      )} Ograniczenia zamrożonego Outputu: ${input.limitations.map((limitation) => `„${limitation}”`).join('; ')}. Synteza nie dodaje porównań rynkowych, horyzontu czasowego ani prognozy. Wszystkie liczby pochodzą z findingów albo z policzalnych mianowników kontraktu.`,
+      )}${limitationsClause} Synteza nie dodaje porównań rynkowych, horyzontu czasowego ani prognozy. Wszystkie liczby pochodzą z findingów albo z policzalnych mianowników kontraktu.`,
     250,
     300,
     allowedNumbers

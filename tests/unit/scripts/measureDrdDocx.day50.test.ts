@@ -44,4 +44,68 @@ describe('Day 50 DRD narrative-slot measurement', () => {
     expect(slots.komentarz_obszaru).toMatchObject({ total: 39, empty: 16, filled: 23 });
     expect(slots.linia_decyzyjna_rozdzialu.empty).toBe(8);
   });
+
+  // FIX-4 (nadzorca 2026-08-28): FIX-3 replaced the raw placeholder with
+  // honest sentences for the area comment and the "Horyzont" decision-line
+  // cell. This tool has to keep recognising those as empty slots — a
+  // regression a live docx measurement caught: after FIX-3 alone, the
+  // Metalpol document's `emptySlotCount` silently dropped to 0 even though
+  // 18 slots were genuinely still empty, because the old regexes only knew
+  // the raw "Sekcja do uzupełnienia" text.
+  it('FIX-3 follow-up: counts the honest "not assessed" area-comment sentence as ONE empty slot, not two, even though it is printed twice', () => {
+    // assessmentDrdReportSchemaService.ts prints this exact sentence twice
+    // for a not-assessed area with no skip notice — once as the area's own
+    // notice paragraph, once again as the area-comment fallback. Both are
+    // real printed words (so word-counting must see two), but there is only
+    // one logical "comment" slot for that area (so the slot count must see
+    // one).
+    const text = Array.from(
+      { length: 2 },
+      () => 'Obszaru 1C nie oceniono — brak danych źródłowych.'
+    ).join(' ');
+    const slots = measureNarrativeSlots(text);
+    expect(slots.komentarz_obszaru.empty).toBe(1);
+  });
+
+  it('FIX-3 follow-up: counts the honest "no narrative composed" area-comment sentence', () => {
+    const slots = measureNarrativeSlots('Komentarz obszaru 4B nie został przygotowany.');
+    expect(slots.komentarz_obszaru.empty).toBe(1);
+  });
+
+  it('FIX-3 follow-up: counts the honest Horyzont sentence with a plain space', () => {
+    const slots = measureNarrativeSlots('Nie określono — brak źródła w danych.');
+    expect(slots.linia_decyzyjna_rozdzialu.empty).toBe(1);
+  });
+
+  it('FIX-3 follow-up: counts the honest Horyzont sentence when the renderer used a non-breaking space (U+00A0) after the preposition “w”', () => {
+    // word/document.xml literally contains U+00A0 here (confirmed
+    // against the real rendered Metalpol report) — a regex with only a
+    // plain space would silently never match the real document.
+    const withNbsp = 'Nie określono — brak źródła w danych.';
+    const slots = measureNarrativeSlots(withNbsp);
+    expect(slots.linia_decyzyjna_rozdzialu.empty).toBe(1);
+  });
+
+  it('FIX-3 follow-up: a realistic mixed document (10 not-assessed areas, 6 silently-skipped areas with no comment slot at all, 8 empty Horyzont cells) matches the real Metalpol measurement', () => {
+    // Mirrors the real demo-metalpol-session document after FIX-1/2/3: 10
+    // areas print the "not assessed" sentence twice (notice + comment
+    // fallback), 6 deliberately-skipped areas print no comment paragraph
+    // at all (the skip notice alone explains them — not reproduced here,
+    // irrelevant to this measurement), and all 8 decision tables (7 axis +
+    // 1 programme) have an empty Horyzont cell.
+    const text = [
+      ...Array.from({ length: 10 }, (_, index) =>
+        Array.from(
+          { length: 2 },
+          () => `Obszaru ${index}X nie oceniono — brak danych źródłowych.`
+        ).join(' ')
+      ),
+      ...Array.from({ length: 8 }, () => 'Nie określono — brak źródła w danych.'),
+    ].join(' ');
+    const slots = measureNarrativeSlots(text);
+    expect(slots.komentarz_obszaru.empty).toBe(10);
+    expect(slots.linia_decyzyjna_rozdzialu.empty + slots.linia_decyzyjna_programu.empty).toBe(8);
+    const empty = Object.values(slots).reduce((sum, slot) => sum + slot.empty, 0);
+    expect(empty).toBe(18);
+  });
 });

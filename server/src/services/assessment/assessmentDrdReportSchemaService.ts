@@ -51,19 +51,36 @@ export const CONTRACT_V1_MISSING_SLOT_LIMITS = Object.freeze({
   decisionLineField: { minWords: 10, maxWords: 30 },
 } as const);
 
-const MICROSTRUCTURE_PL = Object.freeze({
-  stan_faktyczny: 'stan faktyczny',
-  ocena_i_wiarygodnosc: 'ocena i wiarygodność',
-  znaczenie_dla_przedsiebiorstwa: 'znaczenie dla przedsiębiorstwa',
-  luka_i_sens_targetu: 'luka i sens poziomu docelowego',
-  najblizszy_krok: 'najbliższy krok',
-} as const);
-
 type ContractChapter = AssessmentReportContract['chapters'][number];
 type ContractArea = ContractChapter['matrix']['areas'][number];
 
 function placeholder(minWords: number, maxWords: number): string {
   return `Sekcja do uzupełnienia — limit ${minWords}–${maxWords} słów.`;
+}
+
+// FIX-3 (nadzorca 2026-08-28): the raw editorial instruction
+// (`placeholder()`, "Sekcja do uzupełnienia — limit ... słów; wymagane: ...")
+// reads as an unfinished template to the client reading this document —
+// exactly the owner's standing fear about this report. Two slots print it
+// even when every other honest gap already reads as a plain sentence:
+//
+//   1. the per-area comment, when no narrative was composed for that area
+//      (see the `comment` branch in chapterBlocks below);
+//   2. the "Horyzont" decision-line cell, which is NEVER populated by the
+//      composer (assessmentNarrativeComposer.ts always sets `horizon: null`
+//      — there is no source for it yet, structurally, on every chapter AND
+//      the programme-level table: 8 cells total).
+//
+// Both get an honest, jargon-free sentence instead. Every OTHER empty slot
+// (executive summary, chapter introduction/conclusion, matrix caption,
+// Kierunek/Priorytet/Warunek sukcesu) keeps the generic `placeholder()` —
+// they are not touched by this fix.
+const HORIZON_PLACEHOLDER = 'Nie określono — brak źródła w danych.';
+
+function areaCommentPlaceholder(area: ContractArea): string {
+  return area.evidenceState === 'not_assessed'
+    ? `Obszaru ${area.unitId} nie oceniono — brak danych źródłowych.`
+    : `Komentarz obszaru ${area.unitId} nie został przygotowany.`;
 }
 
 // W2 (nadzorca 2026-08-28) + FIX-2 (nadzorca 2026-08-28, drugi obieg):
@@ -327,18 +344,27 @@ function chapterBlocks(
       );
     }
     if (comment) {
+      // FIX-3 (nadzorca 2026-08-28): when there is no composed narrative
+      // AND a skip notice already printed above (deliberate skip, either a
+      // whole-area code or specific skipped questions), that notice already
+      // honestly explains the gap — a second, generic "not assessed"
+      // sentence right under it would blur the distinction the notice draws
+      // (deliberately skipped vs. genuinely never reached). Say nothing
+      // twice; only add the fallback sentence when there was no notice.
       const commentText = comment.content
         ? comment.content
-        : `${placeholder(comment.minWords, comment.maxWords).replace(/\.$/, '')}; wymagane: ${comment.microstructure
-            .map((item) => MICROSTRUCTURE_PL[item as keyof typeof MICROSTRUCTURE_PL] ?? item)
-            .join(', ')}.`;
-      blocks.push(
-        paragraph(
-          `${area.unitId}-comment`,
-          commentText,
-          comment.content ? DRD_DOCX_STYLE_IDS.BODY : DRD_DOCX_STYLE_IDS.CAPTION
-        )
-      );
+        : notice
+          ? null
+          : areaCommentPlaceholder(area);
+      if (commentText) {
+        blocks.push(
+          paragraph(
+            `${area.unitId}-comment`,
+            commentText,
+            comment.content ? DRD_DOCX_STYLE_IDS.BODY : DRD_DOCX_STYLE_IDS.CAPTION
+          )
+        );
+      }
     }
   });
 
@@ -374,7 +400,7 @@ function chapterBlocks(
       [
         ['Kierunek', chapter.conclusion.decisionLine.direction ?? decisionPlaceholder],
         ['Priorytet', chapter.conclusion.decisionLine.priority ?? decisionPlaceholder],
-        ['Horyzont', chapter.conclusion.decisionLine.horizon ?? decisionPlaceholder],
+        ['Horyzont', chapter.conclusion.decisionLine.horizon ?? HORIZON_PLACEHOLDER],
         [
           'Warunek sukcesu',
           chapter.conclusion.decisionLine.successCondition ?? decisionPlaceholder,
@@ -501,7 +527,7 @@ export function buildAssessmentDrdReportSchema(contract: AssessmentReportContrac
               contract.programDecisionLine?.priority ??
                 placeholder(decisionLineLimit.minWords, decisionLineLimit.maxWords),
             ],
-            ['Horyzont', placeholder(decisionLineLimit.minWords, decisionLineLimit.maxWords)],
+            ['Horyzont', contract.programDecisionLine?.horizon ?? HORIZON_PLACEHOLDER],
             [
               'Warunek sukcesu',
               contract.programDecisionLine?.successCondition ??

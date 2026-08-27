@@ -61,6 +61,69 @@ describe.skipIf(!REAL_DB)('Assessment day 20 skip reasons — real router and Po
       [`role-${suffix}`, org, session, owner]
     );
 
+    // FIX-2 (nadzorca 2026-08-28): four findings on axis 1 only, so the
+    // report-contract's chapter narrative composer has enough to write a
+    // real introduction for exactly that chapter — the positive half of the
+    // landmine restored in "returns six deterministic empty chapters...".
+    // Axes 2-7 stay finding-less on purpose.
+    const evidence = (unitId: string) =>
+      JSON.stringify([
+        { evidenceId: `ev-${unitId}`, evidenceType: 'interview', strength: 'E2', locator: 'Q1' },
+      ]);
+    await pool.query(
+      `INSERT INTO method_snapshots (id, organization_id, session_id, method_pack_version, payload_json, content_hash)
+       VALUES ($1,$2,$3,'v1',$4,$5)`,
+      [`snapshot-${suffix}`, org, session, JSON.stringify({ source: 'test' }), `hash-snapshot-${suffix}`]
+    );
+    await pool.query(
+      `INSERT INTO method_outputs
+       (id, organization_id, session_id, snapshot_id, module, method_pack_id, method_pack_version,
+        output_version, scope, limitations_json, lineage_json, content_hash)
+       VALUES ($1,$2,$3,$4,'assessment','drd','v1',1,'organization',$5,$6,$7)`,
+      [
+        `output-${suffix}`,
+        org,
+        session,
+        `snapshot-${suffix}`,
+        JSON.stringify(['Ocena testowa: dane wyłącznie z fixture tego testu.']),
+        JSON.stringify({}),
+        `hash-output-${suffix}`,
+      ]
+    );
+    const axis1Findings: Array<{
+      unitId: string;
+      unitName: string;
+      current: number;
+      target: number;
+      gap: number;
+    }> = [
+      { unitId: '1A', unitName: 'Procesy Sprzedaży', current: 3, target: 5, gap: 2 },
+      { unitId: '1E', unitName: 'Procesy Logistyczne', current: 2, target: 4, gap: 2 },
+      { unitId: '1F', unitName: 'Procesy Produkcyjne', current: 2, target: 5, gap: 3 },
+      { unitId: '1H', unitName: 'Zarządzanie Finansami', current: 3, target: 5, gap: 2 },
+    ];
+    for (const finding of axis1Findings) {
+      await pool.query(
+        `INSERT INTO method_findings
+         (id, organization_id, output_id, unit_id, unit_name, current_level, target_level, gap,
+          supporting_evidence_json, business_meaning, recommendation, confidence)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'high')`,
+        [
+          `finding-${finding.unitId}-${suffix}`,
+          org,
+          `output-${suffix}`,
+          finding.unitId,
+          finding.unitName,
+          finding.current,
+          finding.target,
+          finding.gap,
+          evidence(finding.unitId),
+          `Obszar ${finding.unitId} działa poniżej możliwości: dane ${finding.unitName.toLowerCase()} nie są jeszcze cyfrowo skonsolidowane.`,
+          `Podnieść ${finding.unitId} do poziomu ${finding.target} przez wdrożenie wspólnego systemu rejestracji danych.`,
+        ]
+      );
+    }
+
     const { default: config } = await import('../../../config/Config.js');
     const sign = (id: string, organizationId: string) =>
       jwt.sign({ id, organizationId, role: 'user' }, config.JWT_SECRET, {
@@ -267,7 +330,7 @@ describe.skipIf(!REAL_DB)('Assessment day 20 skip reasons — real router and Po
     expect(response.body.code).toBe('SESSION_NOT_FOUND');
   });
 
-  it('returns seven deterministic empty chapters in canonical axis order', async () => {
+  it('returns six deterministic empty chapters and writes real content for the one chapter with findings, in canonical axis order', async () => {
     const first = await request(app)
       .get(`/api/method/sessions/${session}/assessment-report-contract`)
       .set('Authorization', `Bearer ${token}`);
@@ -279,10 +342,26 @@ describe.skipIf(!REAL_DB)('Assessment day 20 skip reasons — real router and Po
     expect(
       first.body.reportContract.chapters.map((chapter: { axisId: number }) => chapter.axisId)
     ).toEqual([1, 2, 3, 4, 5, 6, 7]);
-    const unassessedAxis = first.body.reportContract.chapters.find(
+    // FIX-2 (nadzorca 2026-08-28): axes 2-7 have zero findings in this
+    // fixture — restores the landmine that a previous pass weakened from
+    // `every` down to a single-chapter check. The composer must not
+    // fabricate an introduction where there is nothing to report.
+    expect(
+      first.body.reportContract.chapters
+        .filter((chapter: { axisId: number }) => chapter.axisId !== 1)
+        .every(
+          (chapter: { introduction: { content: string | null } }) =>
+            chapter.introduction.content === null
+        )
+    ).toBe(true);
+    // FIX-2 positive half (never asserted before this fix): axis 1 DOES
+    // have findings (seeded in beforeAll), so the composer must actually
+    // write content for it instead of staying null — proves the engine
+    // writes, not just that it correctly stays silent.
+    const populatedAxis = first.body.reportContract.chapters.find(
       (chapter: { axisId: number }) => chapter.axisId === 1
     );
-    expect(unassessedAxis.introduction.content).toBeNull();
+    expect(populatedAxis.introduction.content).not.toBeNull();
   });
 
   it('keeps every applicable area comment and reads skipCode from the Assessment table', async () => {
