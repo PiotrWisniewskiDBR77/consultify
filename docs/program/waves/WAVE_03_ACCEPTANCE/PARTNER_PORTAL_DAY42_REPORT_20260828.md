@@ -143,6 +143,44 @@ dokładny stan jej użycia rozstrzyga D.8.
 |  34 | GET `/payout-settings`                                    |  1555 | REALNE           | partner org/payout accounts | `getPayoutSettings:447`                 | Wypłaty        | odczyt audytowy                       |
 |  35 | PUT `/payout-settings`                                    |  1582 | ODMOWA_410       | brak zapisu                 | `updatePayoutSettings:448`              | Wypłaty        | polityka ekonomii                     |
 
+## D.8 — inwentarz dwukierunkowy
+
+### Backend ma, front nie woła
+
+| Stan                      | Trasy/metody                                                                                                                                                                                                                                                           | Dowód                                                                                                     |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| WOŁANA (25)               | connection; analytics; clients; projects; employees; dwa exam; onboarding status + trzy mutacje; program status + participant ledger; referral tools; earnings; attributions; commissions; payouts; campaign create/delete; cztery update profilu; payout settings GET | `PartnerPortalView.tsx:1117,1583,2571`, `EarningsSection.tsx:261-335`, `ReferralToolsSection.tsx:229-436` |
+| MARTWA_METODA_KLIENTA (3) | `connect`, `requestPayout`, `updatePayoutSettings`                                                                                                                                                                                                                     | definicje `src/services/api/v8/partner.ts:395,433,448`; grep wołaczy poza klientem = 0                    |
+| BRAK_METODY_KLIENTA (7)   | cztery kikuty POST; `GET /program/ledger`; `POST /program/lifecycle/request-payout-phase`; certification progress                                                                                                                                                      | tabela D.4 + brak ścieżek w `partner.ts:384-451`                                                          |
+
+Suma 25 + 3 + 7 = 35. „WOŁANA” oznacza co najmniej jeden bezpośredni wołacz;
+pełny pomiar 28 metod wykonano osobno dla każdej nazwy.
+
+### Zapis bez czytelnika
+
+| Zapis                                              | Czytelnik + użycie frontu                              | Werdykt                               |
+| -------------------------------------------------- | ------------------------------------------------------ | ------------------------------------- |
+| connect                                            | connection, `PartnerPortalView.tsx:3035`               | skutek czytelny, metoda zapisu martwa |
+| onboarding (3)                                     | onboarding status, `EnterpriseOnboardingWizard.tsx:84` | czytelny                              |
+| campaign create/delete                             | referral tools, `ReferralToolsSection.tsx:229`         | czytelny                              |
+| organization + specializations + regions + listing | brak kompletnego kanonicznego GET profilu w 35 trasach | **zapis bez pełnego czytelnika**      |
+| exam start/submit/progress                         | start/submit mają UI; progress nie ma metody klienta   | progress: brak czytelnika/wołacza     |
+| trzy odmowy ekonomiczne                            | brak zapisu z definicji (`410`)                        | nie wolno przedstawiać jako zapis     |
+| cztery kikuty                                      | brak zapisu z definicji (`503`)                        | nie wolno przedstawiać jako zapis     |
+
+### Kontrolka bez trasy / trasa zawsze odmawia / liczba frontowa
+
+| Kontrolka                                                      | Stan                                                         | Dowód                                                                         |
+| -------------------------------------------------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------- |
+| żądanie wypłaty                                                | metoda klienta istnieje, brak wołacza; backend zawsze `410`  | `partner.ts:433`, `partner.routes.ts:1122`                                    |
+| zapis ustawień wypłat                                          | metoda istnieje, brak wołacza; backend zawsze `410`          | `partner.ts:448`, `partner.routes.ts:1582`                                    |
+| tworzenie klienta/pracownika/linku dostępu/zamówienia licencji | backend `503`, brak metod klienta                            | `partner.routes.ts:149-176`                                                   |
+| `totalEarned` / `readyForPayout`                               | UI stosuje fallback `?? 0`; może spłaszczyć UNKNOWN/degraded | `EarningsSection.tsx:113-120,455-475`, `PartnerRuntimeSummaryStrip.tsx:51-58` |
+| sidebar przed connection                                       | disabled zależy od `connected`, nie od capability            | `PartnerSidebar.tsx:427-428`                                                  |
+
+Podsumowanie kierunku 2: dwa typy zapisu bez pełnego czytelnika. Kierunek 3:
+pięć rodzin kontrolek wymagających kontraktu frontowego. Zero zmian w `src/`.
+
 ## Pomiar bazowy Z24
 
 Pełny zakres przed pierwszym commitem: **548 PASS / 15 FAIL / 92 SKIPPED** w
