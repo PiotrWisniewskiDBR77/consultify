@@ -569,6 +569,35 @@ export async function listOutputs(programId?: string): Promise<ListResult<AuditO
   return { items, total: toTotal(payload, items.length, 'total') };
 }
 
+export async function finalizeOutput(
+  programId: string,
+  title?: string
+): Promise<AuditOutputSummary> {
+  const res = await Api.post('/audits/outputs/finalize', { programId, title });
+  const payload = unwrapEnvelope(res) as AuditOutputSummary | undefined;
+  if (!payload?.id) {
+    throw new Error('AUDITS_API_CONTRACT_ERROR: finalized Output is missing id');
+  }
+  return payload;
+}
+
+export interface GenerateAuditReportInput {
+  programId: string;
+  outputId: string;
+  reportKind: 'audit_report' | 'remediation_progress';
+  title?: string;
+  asOfDate?: string;
+}
+
+export async function generateReport(input: GenerateAuditReportInput): Promise<AuditReportSummary> {
+  const res = await Api.post('/audits/reports', input);
+  const payload = unwrapEnvelope(res) as AuditReportSummary | undefined;
+  if (!payload?.id) {
+    throw new Error('AUDITS_API_CONTRACT_ERROR: generated report is missing id');
+  }
+  return payload;
+}
+
 export async function listReports(programId?: string): Promise<ListResult<AuditReportSummary>> {
   const qs = buildQuery({ programId });
   const res = await Api.get(`/audits/reports${qs}`);
