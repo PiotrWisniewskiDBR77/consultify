@@ -160,10 +160,22 @@ produktem dla frontu jest **kontrakt** (`P.12`), nie ekran.
    grep -n "row_version" server/migrations/20261077_day17_execution_control_kpi_policy.sql  # oczekiwane: 1 trafienie
    grep -n "No default policy is seeded" server/migrations/20261077_day17_execution_control_kpi_policy.sql  # oczekiwane: :1
 
-   # (b) ★ WARUNEK WSTĘPNY — czy dyżur 31 B.7 (komenda zapisu polityki) JEST SCALONY
-   grep -rn "execution_control_kpi_policies" server/src | wc -l
-   #   1  → tylko ODCZYT (controlKpiReadModel.ts:35) → B.7 NIE JEST scalony → STOP (BLOK 0 pkt 8)
-   #   >1 → jest pisarz → sprawdzasz jego kształt i idziesz dalej
+   # (b) ★ WARUNEK WSTĘPNY — BRAMKA BEHAWIORALNA (poprawiona przez nadzorcę 2026-08-28)
+   #
+   # NIE mierzymy tekstu (grep po nazwie tabeli dawał fałszywe wyniki w OBIE strony:
+   # komentarz podnosił licznik i przepuszczał niegotowy dyżur, a poprawna implementacja
+   # przez ie_aggregate_state bez wzmianki o tabeli zatrzymywała gotowy).
+   # Mierzymy ZACHOWANIE na Twoim jednorazowym PG, po pełnych migracjach:
+   #
+   #   1. POST kompletnej polityki dla organizacji A       → oczekiwane 201
+   #   2. POST kompletnej polityki dla organizacji B, TEN SAM policyId → oczekiwane 201
+   #      (jeśli drugi POST zwraca konflikt — klucz nie jest tenantowy → STOP)
+   #   3. GET /control-kpis?policyId=<ten sam> jako A       → policy.resolved: true, missingParameters: []
+   #   4. GET /control-kpis?policyId=<ten sam> jako B       → policy.resolved: true, missingParameters: []
+   #
+   # Którykolwiek krok pada (brak trasy, 4xx/5xx, resolved:false, niepuste missingParameters)
+   # → komenda zapisu polityki (dyżur 35, pozycja D.2) NIE jest scalona → STOP całego dyżuru
+   # (BLOK 0 pkt 8). Dosłowne ciała czterech odpowiedzi wklejasz do raportu.
 
    # (c) pięć wymaganych parametrów polityki
    grep -n "REQUIRED_POLICY_PARAMETERS" -A 8 server/src/services/executionControl/controlKpiReadModel.ts  # oczekiwane: :14-20, pięć nazw
@@ -793,7 +805,7 @@ a nie tylko rozłączność.
 > | perspektywa celu, piąta warstwa, klasa raportu, waga wkładu, uczciwe `UNKNOWN` mocy | **brak** | **buduje** |
 >
 > **Reguła operacyjna, twarda:** jeżeli w BLOKU 0 pkt 8 grep
-> `grep -rn "execution_control_kpi_policies" server/src | wc -l` zwróci **`1`**
+> bramka behawioralna z BLOKU 0 pkt (b) NIE PRZEJDZIE (brak trasy zapisu polityki)
 > (czyli tylko odczyt w `controlKpiReadModel.ts:35`), to **dyżur 31 `B.7` NIE
 > jest scalony** → **STOP CAŁEGO DYŻURU**. Zakładasz raport, wpisujesz pozycję
 > STOP „warunek wstępny: dyżur 31 pozycja B.7 niescalona", wklejasz wynik grepa
