@@ -26,18 +26,18 @@ W tym raporcie nie występuje wartość żadnego hasła. Wszystkie odwołania u�
 
 ## Warunki wstępne
 
-| punkt | wynik |
-| --- | --- |
-| a | Mapa PIN do kont istnieje w `AuthView.tsx`; pięć wpisów zawiera hasło. Szeroki grep `password: '` daje 11, nie oczekiwane 5, ponieważ dalsza część widoku zawiera dodatkowe wartości lokalno-testowe. |
-| b | Filtr hostowy obejmuje localhost, domeny demo/stage/staging, publiczne domeny produktu oraz `*.railway.app`. |
-| c | Definicja mapy i jej konsument w `handleQuickAccess` istnieją; gałąź demo woła `Api.demoLogin`. |
-| d | Oba wskazane testy istnieją i zastany kontrakt asertuje literał. |
-| e | `scripts/seed-m16-demo.py` nadal zawiera poświadczenie i zdalny BASE; `KOLIZJA_38`, plik nietykalny. |
-| f | Oba skrypty M16 zawierają poświadczenie i zdalny BASE. |
-| g | `billing.spec.ts` ma zastany wzorzec `TEST_USER_EMAIL` / `TEST_USER_PASSWORD` z lokalnym fallbackiem. |
-| h | Brak istniejącego strażnika o wskazanych nazwach. |
-| i | Przedział migracji `20261280-89` pusty. |
-| j | Pliki dnia 38 istnieją i mają po 0 trafień literału. |
+| punkt | wynik                                                                                                                                                                                                 |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| a     | Mapa PIN do kont istnieje w `AuthView.tsx`; pięć wpisów zawiera hasło. Szeroki grep `password: '` daje 11, nie oczekiwane 5, ponieważ dalsza część widoku zawiera dodatkowe wartości lokalno-testowe. |
+| b     | Filtr hostowy obejmuje localhost, domeny demo/stage/staging, publiczne domeny produktu oraz `*.railway.app`.                                                                                          |
+| c     | Definicja mapy i jej konsument w `handleQuickAccess` istnieją; gałąź demo woła `Api.demoLogin`.                                                                                                       |
+| d     | Oba wskazane testy istnieją i zastany kontrakt asertuje literał.                                                                                                                                      |
+| e     | `scripts/seed-m16-demo.py` nadal zawiera poświadczenie i zdalny BASE; `KOLIZJA_38`, plik nietykalny.                                                                                                  |
+| f     | Oba skrypty M16 zawierają poświadczenie i zdalny BASE.                                                                                                                                                |
+| g     | `billing.spec.ts` ma zastany wzorzec `TEST_USER_EMAIL` / `TEST_USER_PASSWORD` z lokalnym fallbackiem.                                                                                                 |
+| h     | Brak istniejącego strażnika o wskazanych nazwach.                                                                                                                                                     |
+| i     | Przedział migracji `20261280-89` pusty.                                                                                                                                                               |
+| j     | Pliki dnia 38 istnieją i mają po 0 trafień literału.                                                                                                                                                  |
 
 ## Baseline testowy
 
@@ -52,11 +52,11 @@ W tym raporcie nie występuje wartość żadnego hasła. Wszystkie odwołania u�
 
 Liczenie wykonano samodzielnie na śledzonych plikach tekstowych (`git grep -I`), z wyłączeniem `dist/**` i `coverage/**`; literał był składany wyłącznie w pamięci procesu.
 
-| metoda | wynik |
-| --- | ---: |
-| M1: surowy literał | 194 pliki |
-| M2: literał po odfiltrowaniu oczywistych ciągów dłuższych | 104 pliki, 274 linie |
-| M3: realne adresy kont lub literał w kontekście hasła | 211 plików; część hasłowa 55 plików |
+| metoda                                                    |                               wynik |
+| --------------------------------------------------------- | ----------------------------------: |
+| M1: surowy literał                                        |                           194 pliki |
+| M2: literał po odfiltrowaniu oczywistych ciągów dłuższych |                104 pliki, 274 linie |
+| M3: realne adresy kont lub literał w kontekście hasła     | 211 plików; część hasłowa 55 plików |
 
 Metodą wiążącą jest M2 rozszerzona kontrolą kontekstu M3, ponieważ obejmuje miejsca wymagające ręcznej klasyfikacji, nie utożsamiając samego adresu e-mail z poświadczeniem.
 
@@ -64,14 +64,14 @@ Liczba 145 z briefu nie jest zgodna z metodą wiążącą; własny wynik to 104 
 
 ### Pięć kategorii
 
-| kategoria | pliki | linie | uwagi |
-| --- | ---: | ---: | --- |
-| (a) kod produkcyjny frontu | 2 | 7 | `AuthView.tsx` jest P0; placeholder telefonu w ustawieniach to fałszywka |
-| (b) kod produkcyjny serwera | 0 | 0 | zgodnie z oczekiwaniem |
-| (c) skrypty i seedy | 17 | 62 | 16 własnych, 1 `KOLIZJA_38` |
-| (d) testy | 69 | 184 | rzeczywiste poświadczenia e2e oraz fałszywki: OTP, kolory, kwoty, identyfikatory |
-| (e) dokumentacja | 16 | 21 | procedury i historyczne raporty; dwa trafienia są fałszywe |
-| **suma** | **104** | **274** | zgodna z M2 |
+| kategoria                   |   pliki |   linie | uwagi                                                                            |
+| --------------------------- | ------: | ------: | -------------------------------------------------------------------------------- |
+| (a) kod produkcyjny frontu  |       2 |       7 | `AuthView.tsx` jest P0; placeholder telefonu w ustawieniach to fałszywka         |
+| (b) kod produkcyjny serwera |       0 |       0 | zgodnie z oczekiwaniem                                                           |
+| (c) skrypty i seedy         |      17 |      62 | 16 własnych, 1 `KOLIZJA_38`                                                      |
+| (d) testy                   |      69 |     184 | rzeczywiste poświadczenia e2e oraz fałszywki: OTP, kolory, kwoty, identyfikatory |
+| (e) dokumentacja            |      16 |      21 | procedury i historyczne raporty; dwa trafienia są fałszywe                       |
+| **suma**                    | **104** | **274** | zgodna z M2                                                                      |
 
 ### Pełna lista kategorii (c)
 
@@ -127,35 +127,35 @@ Liczba 145 z briefu nie jest zgodna z metodą wiążącą; własny wynik to 104 
 
 ## Inwentarz konsumentów wykonany przed zmianą
 
-| plik / grupa | konsumenci |
-| --- | --- |
-| `src/views/AuthView.tsx` | `src/routes/AppRoutes.tsx`; cztery testy komponentowe importujące `AuthView`; dwa testy importujące helpery quick-access |
-| `src/config/quickAccess.ts` | nowy moduł, planowany konsument: `AuthView.tsx` i testy D.2 |
-| `.env.example` | wzorzec konfiguracji deweloperskiej; brak wykonawczego importu |
-| dwa skrypty `scripts/test-m16-*` | brak wpisu package/workflow; instrukcja D.39 i uruchomienie ręczne |
-| `server/scripts/fix-dbr77-credentials.sh` | `package.json` skrypt `fix:credentials` |
-| `server/scripts/seed-production-dbr77-users.ts` | `package.json` skrypt `db:seed:dbr77` |
-| `server/scripts/dev-ensure-admin.ts` | ręczny skrypt operacyjny; opisany w runbooku OPS-SEC-001 |
-| `server/scripts/seed-interview-demo.ts` | ręczny seed; wpisy w rejestrze lease |
-| pozostałe skrypty/seedy D.4 | brak wywołania w `package.json`, Makefile lub workflow; tylko dokumentacja albo brak — `MARTWY_SKRYPT`/ręczne użycie |
-| `tests/e2e/m16/_m16.ts` | `m16-w1-w3.spec.ts`, `m16-w4-w6.spec.ts` |
-| pliki `tests/e2e/**/*.spec.ts` | discovery Playwright i `package.json:test:e2e`; punktowo `--list`, bez wykonania |
-| pliki `tests/e2e/*.spec` bez rozszerzenia `.ts` | brak discovery — `MARTWY_PLIK` |
-| `tests/integration/publicSystemSurface.contract.test.ts` | discovery Vitest `test:integration` |
-| dokumenty D.6 | konsumenci ludzcy/proceduralni; brak wykonawczego importu |
+| plik / grupa                                             | konsumenci                                                                                                               |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `src/views/AuthView.tsx`                                 | `src/routes/AppRoutes.tsx`; cztery testy komponentowe importujące `AuthView`; dwa testy importujące helpery quick-access |
+| `src/config/quickAccess.ts`                              | nowy moduł, planowany konsument: `AuthView.tsx` i testy D.2                                                              |
+| `.env.example`                                           | wzorzec konfiguracji deweloperskiej; brak wykonawczego importu                                                           |
+| dwa skrypty `scripts/test-m16-*`                         | brak wpisu package/workflow; instrukcja D.39 i uruchomienie ręczne                                                       |
+| `server/scripts/fix-dbr77-credentials.sh`                | `package.json` skrypt `fix:credentials`                                                                                  |
+| `server/scripts/seed-production-dbr77-users.ts`          | `package.json` skrypt `db:seed:dbr77`                                                                                    |
+| `server/scripts/dev-ensure-admin.ts`                     | ręczny skrypt operacyjny; opisany w runbooku OPS-SEC-001                                                                 |
+| `server/scripts/seed-interview-demo.ts`                  | ręczny seed; wpisy w rejestrze lease                                                                                     |
+| pozostałe skrypty/seedy D.4                              | brak wywołania w `package.json`, Makefile lub workflow; tylko dokumentacja albo brak — `MARTWY_SKRYPT`/ręczne użycie     |
+| `tests/e2e/m16/_m16.ts`                                  | `m16-w1-w3.spec.ts`, `m16-w4-w6.spec.ts`                                                                                 |
+| pliki `tests/e2e/**/*.spec.ts`                           | discovery Playwright i `package.json:test:e2e`; punktowo `--list`, bez wykonania                                         |
+| pliki `tests/e2e/*.spec` bez rozszerzenia `.ts`          | brak discovery — `MARTWY_PLIK`                                                                                           |
+| `tests/integration/publicSystemSurface.contract.test.ts` | discovery Vitest `test:integration`                                                                                      |
+| dokumenty D.6                                            | konsumenci ludzcy/proceduralni; brak wykonawczego importu                                                                |
 
 ## Pozycje — tabela zbiorcza
 
-| poz. | status | commit SHA | dowód | konsumenci | równoważność |
-| --- | --- | --- | --- | --- | --- |
-| D.1 | ZROBIONE_WG_DoD | `1d10bdfe26` | trzy własne pomiary i klasyfikacja | tabela powyżej | nie dotyczy |
-| D.2 | CZĘŚCIOWO | `1e1dfd0efb` | 25/25 testów PASS; brak sekretu i domen uprzywilejowanych | policzeni | mapa syntetyczna działa; brak mapy odmawia |
-| D.3 | CZĘŚCIOWO | `59dda561fb` | build OOM; dowód zastępczy | Vite | brak artefaktu do rozstrzygnięcia |
-| D.4 | CZĘŚCIOWO | `4b7e304d62` | 16/16 bez literału; składnia OK | policzeni | zdalne wykonanie zabronione Z28 |
-| D.5 | CZĘŚCIOWO | `0c5e1871c0` | 40/40 e2e i strażnik integracyjny bez literału | policzeni | statycznie równoważne; e2e nieuruchomione Z28 |
-| D.6 | ZROBIONE_WG_DoD | `0b30620351` | 14/14 dokumentów oczyszczonych | policzeni | instrukcje zachowują przebieg z placeholderem |
-| D.7 | ZROBIONE_WG_DoD | do uzupełnienia po commicie | 3/3 testy PASS | skan rzeczywistych plików | czysty/nieczysty fixture potwierdzony |
-| R.1 | NIE_ZACZĘTE | — | — | — | — |
+| poz. | status          | commit SHA     | dowód                                                     | konsumenci                | równoważność                                  |
+| ---- | --------------- | -------------- | --------------------------------------------------------- | ------------------------- | --------------------------------------------- |
+| D.1  | ZROBIONE_WG_DoD | `1d10bdfe26`   | trzy własne pomiary i klasyfikacja                        | tabela powyżej            | nie dotyczy                                   |
+| D.2  | CZĘŚCIOWO       | `1e1dfd0efb`   | 25/25 testów PASS; brak sekretu i domen uprzywilejowanych | policzeni                 | mapa syntetyczna działa; brak mapy odmawia    |
+| D.3  | CZĘŚCIOWO       | `59dda561fb`   | build OOM; dowód zastępczy                                | Vite                      | brak artefaktu do rozstrzygnięcia             |
+| D.4  | CZĘŚCIOWO       | `4b7e304d62`   | 16/16 bez literału; składnia OK                           | policzeni                 | zdalne wykonanie zabronione Z28               |
+| D.5  | CZĘŚCIOWO       | `0c5e1871c0`   | 40/40 e2e i strażnik integracyjny bez literału            | policzeni                 | statycznie równoważne; e2e nieuruchomione Z28 |
+| D.6  | ZROBIONE_WG_DoD | `0b30620351`   | 14/14 dokumentów oczyszczonych                            | policzeni                 | instrukcje zachowują przebieg z placeholderem |
+| D.7  | ZROBIONE_WG_DoD | `7de3703fae`   | 3/3 testy PASS                                            | skan rzeczywistych plików | czysty/nieczysty fixture potwierdzony         |
+| R.1  | ZROBIONE_WG_DoD | commit finalny | raport, zakres i cleanup                                  | nie dotyczy               | nie dotyczy                                   |
 
 ## D.2 — front
 
@@ -180,11 +180,11 @@ Mapa PIN do konta została całkowicie usunięta z kodu i zastąpiona rygorystyc
 
 ### Zmienione asercje
 
-| plik | PRZED | PO | dlaczego to nie osłabienie |
-| --- | --- | --- | --- |
-| `src/views/__tests__/AuthView.quickAccess.test.ts` | konkretne realne konta i hasło | brak env, syntetyczna mapa, zły host, prod-public, zły JSON i zły kształt | testuje granice zachowania i nie utrwala sekretu |
-| `tests/components/AuthView.quick-access-guard.test.tsx` | realne PIN-y i konta | panel default-OFF, syntetyczne credentials/demo, host allowlist i blokada prod | zachowuje hostową regresję i dodaje konfigurację fail-closed |
-| `tests/components/AuthView.fail-closed-errors.contract.test.tsx` | niejawna zależność od zaszytej mapy | syntetyczny wpis demo przez `vi.stubEnv` | zachowuje test bezpiecznego błędu bez realnego sekretu |
+| plik                                                             | PRZED                               | PO                                                                             | dlaczego to nie osłabienie                                   |
+| ---------------------------------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------ |
+| `src/views/__tests__/AuthView.quickAccess.test.ts`               | konkretne realne konta i hasło      | brak env, syntetyczna mapa, zły host, prod-public, zły JSON i zły kształt      | testuje granice zachowania i nie utrwala sekretu             |
+| `tests/components/AuthView.quick-access-guard.test.tsx`          | realne PIN-y i konta                | panel default-OFF, syntetyczne credentials/demo, host allowlist i blokada prod | zachowuje hostową regresję i dodaje konfigurację fail-closed |
+| `tests/components/AuthView.fail-closed-errors.contract.test.tsx` | niejawna zależność od zaszytej mapy | syntetyczny wpis demo przez `vi.stubEnv`                                       | zachowuje test bezpiecznego błędu bez realnego sekretu       |
 
 ### Dowody
 
@@ -211,19 +211,19 @@ Mapa PIN do konta została całkowicie usunięta z kodu i zastąpiona rygorystyc
 - Skrypty wymagają `CONSULTIFY_API_BASE`, `CONSULTIFY_EMAIL`, `CONSULTIFY_PASSWORD`, `SEED_USER_PASSWORD` albo istniejących nazw `DEV_*`; brak powoduje kod wyjścia różny od zera.
 - `NIE_URUCHOMIONE — wymaga zdalnego środowiska lub mutuje bazę, Z28`. Równoważność jest statyczna: te same adresy kont i operacje, hasło dostarczane przez env; seedy haszują wartość env w tej samej funkcji bcrypt.
 
-| plik/grupa | konsumenci | odmowa bez env | położenie odmowy względem I/O |
-| --- | --- | --- | --- |
-| dwa `scripts/test-m16-*` | ręczne | exit 1, brak `CONSULTIFY_API_BASE` | przed pierwszym `urlopen` |
-| `_audit_script.mjs` | historyczny QA | exit 1, brak `CONSULTIFY_API_BASE` | przed dynamicznym importem Playwright i startem przeglądarki |
-| `fix-dbr77-credentials.sh` | `npm run fix:credentials` | exit 1, brak `CONSULTIFY_PASSWORD` | przed `sqlite3` |
-| `dev-ensure-admin.ts` | ręczny/runbook | exit 1, brak `DEV_SUPERADMIN_PASSWORD` | przed funkcją main i DB |
-| `seed-production-dbr77-users.ts`, `seed-interview-demo.ts` | package/ręczne | exit 1, brak `SEED_USER_PASSWORD` | przed `Pool.connect` / `getDatabaseAsync` |
-| `seed-dbr77-restore-demo.ts` | ręczny | exit 1, brak `SEED_USER_PASSWORD` | przed utworzeniem bazy |
-| `seedEnglishTestData.js`, `seedLegolexDemoOrg.js` | ręczne | exit 1; zastane problemy uruchomieniowe ESM widoczne przed pełnym komunikatem | deklaracja odmowy przed otwarciem DB; składnia esbuild OK |
-| `seed_dbr77_postgres.js` | ręczny | exit 1, brak `SEED_USER_PASSWORD` | przed utworzeniem Pool |
-| `test_login.cjs` | ręczny | exit 1, brak `CONSULTIFY_EMAIL` | przed otwarciem SQLite |
-| `server/seed/seed_dbr77_complete.js`, `seed_dbr77_users.js` | ręczne | exit 1; jeden ma zastany błąd importu uruchomieniowego | sprawdzenie env przed inicjalizacją DB w module; esbuild OK |
-| `server/seeds/demoUser*.js` | wrapper + ręczny | exit 1, brak `SEED_USER_PASSWORD` | przed otwarciem DB |
+| plik/grupa                                                  | konsumenci                | odmowa bez env                                                                | położenie odmowy względem I/O                                |
+| ----------------------------------------------------------- | ------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| dwa `scripts/test-m16-*`                                    | ręczne                    | exit 1, brak `CONSULTIFY_API_BASE`                                            | przed pierwszym `urlopen`                                    |
+| `_audit_script.mjs`                                         | historyczny QA            | exit 1, brak `CONSULTIFY_API_BASE`                                            | przed dynamicznym importem Playwright i startem przeglądarki |
+| `fix-dbr77-credentials.sh`                                  | `npm run fix:credentials` | exit 1, brak `CONSULTIFY_PASSWORD`                                            | przed `sqlite3`                                              |
+| `dev-ensure-admin.ts`                                       | ręczny/runbook            | exit 1, brak `DEV_SUPERADMIN_PASSWORD`                                        | przed funkcją main i DB                                      |
+| `seed-production-dbr77-users.ts`, `seed-interview-demo.ts`  | package/ręczne            | exit 1, brak `SEED_USER_PASSWORD`                                             | przed `Pool.connect` / `getDatabaseAsync`                    |
+| `seed-dbr77-restore-demo.ts`                                | ręczny                    | exit 1, brak `SEED_USER_PASSWORD`                                             | przed utworzeniem bazy                                       |
+| `seedEnglishTestData.js`, `seedLegolexDemoOrg.js`           | ręczne                    | exit 1; zastane problemy uruchomieniowe ESM widoczne przed pełnym komunikatem | deklaracja odmowy przed otwarciem DB; składnia esbuild OK    |
+| `seed_dbr77_postgres.js`                                    | ręczny                    | exit 1, brak `SEED_USER_PASSWORD`                                             | przed utworzeniem Pool                                       |
+| `test_login.cjs`                                            | ręczny                    | exit 1, brak `CONSULTIFY_EMAIL`                                               | przed otwarciem SQLite                                       |
+| `server/seed/seed_dbr77_complete.js`, `seed_dbr77_users.js` | ręczne                    | exit 1; jeden ma zastany błąd importu uruchomieniowego                        | sprawdzenie env przed inicjalizacją DB w module; esbuild OK  |
+| `server/seeds/demoUser*.js`                                 | wrapper + ręczny          | exit 1, brak `SEED_USER_PASSWORD`                                             | przed otwarciem DB                                           |
 
 `grep` zdalnych wartości domyślnych w dwóch M16: `0`. Pozostałe skrypty nie dostały nowych zdalnych wartości domyślnych.
 
@@ -240,12 +240,12 @@ Mapa PIN do konta została całkowicie usunięta z kodu i zastąpiona rygorystyc
 
 ### Równoważność per plik D.5
 
-| plik/grupa | esbuild | `playwright --list` | wynik |
-| --- | --- | --- | --- |
-| 22 żywe `*.spec.ts` | 22/22 OK | 282 testy zebrane | ta sama ścieżka logowania, dane z env lub lokalnego fallbacku |
-| `tests/e2e/m16/_m16.ts` | OK | moduł pomocniczy, zebrany przez dwóch konsumentów | wspólne `EMAIL`/`PASSWORD` zachowane |
-| 17 plików `*.spec` bez `.ts` | nie dotyczy | nie są zbierane | `MARTWY_PLIK`; literał usunięty bez dodawania testów |
-| `tests/integration/publicSystemSurface.contract.test.ts` | OK | nie dotyczy | ten sam zestaw trzech zabronionych wzorców, składany bez przechowywania sekretu |
+| plik/grupa                                               | esbuild     | `playwright --list`                               | wynik                                                                           |
+| -------------------------------------------------------- | ----------- | ------------------------------------------------- | ------------------------------------------------------------------------------- |
+| 22 żywe `*.spec.ts`                                      | 22/22 OK    | 282 testy zebrane                                 | ta sama ścieżka logowania, dane z env lub lokalnego fallbacku                   |
+| `tests/e2e/m16/_m16.ts`                                  | OK          | moduł pomocniczy, zebrany przez dwóch konsumentów | wspólne `EMAIL`/`PASSWORD` zachowane                                            |
+| 17 plików `*.spec` bez `.ts`                             | nie dotyczy | nie są zbierane                                   | `MARTWY_PLIK`; literał usunięty bez dodawania testów                            |
+| `tests/integration/publicSystemSurface.contract.test.ts` | OK          | nie dotyczy                                       | ten sam zestaw trzech zabronionych wzorców, składany bez przechowywania sekretu |
 
 ## D.6 — dokumentacja
 
@@ -274,7 +274,48 @@ Adresy kont bez hasła pozostały nietknięte. Przegląd diffu potwierdza brak z
 ## Znaleziska
 
 - Zastane przykłady `ENCRYPTION_KEY` i syntetycznych kluczy API są inną klasą sekretu lub danymi testowymi. Nie zostały uznane za poświadczenia konta ani zmienione w D.39.
+- Strażnik ujawnił dwa dodatkowe seedy z badaną parą poświadczeń oraz trzy zdalne fallbacki poza zatwierdzonym inwentarzem napraw. Są jawnie datowane w allowliście; wymagają osobnego zakresu.
+- Podczas kontroli odmów lokalna pętla z omyłkowo używaną zastrzeżoną nazwą tablicy zsh uruchomiła kilka lokalnych poleceń systemowych. Pętlę przerwano; nie miała adresu ani zmiennych środowisk produktu i nie wykonała połączenia do środowiska produktu.
+
+## Pomiar testów Z24
+
+- Baseline przed zmianą: minimalny zakres 2/2 pliki, 8/8 PASS, 0 SKIPPED. Flaga `--reporter=basic` była niewykonalna w Vitest 4.1.8, więc ten sam zakres powtórzono bez niej.
+- Końcowy pełny zakres importerów `AuthView` plus strażnik: 6/6 plików, 28/28 PASS, 0 SKIPPED.
+- Dodatkowy zmieniony test integracyjny: 9/11 PASS, 2 FAIL, 0 SKIPPED; oba czerwone są środowiskowe i niezależne od zmiany stałej skanera. Czerwone wprowadzone: 0.
+- E2E: 23/23 żywe pliki skompilowane; 282 testy w 22 plikach zebrane przez `playwright --list`; 17 `MARTWY_PLIK` nie jest zbieranych. Wykonanie E2E: `NIE_ZMIERZONE — Z28`.
+- D.4: nie wykonano ścieżek z prawidłowymi poświadczeniami, ponieważ mutują bazę lub wymagają środowiska produktu; dowód równoważności jest statyczny i obejmuje składnię oraz odmowę bez env.
+- Deklaracja: **ZASIĘG CZĘŚCIOWY** z powodu niewykonalnego builda OOM, zakazu wykonania E2E/Z28 oraz niewykonanych mutujących skryptów. Nie przepisałem żadnej cudzej liczby — wyniki zmierzyłem sam.
+
+## Bezpieczniki i cleanup
+
+| kontrola                                 | wynik                                         |
+| ---------------------------------------- | --------------------------------------------- |
+| pełna lista względem `23652ec80a`        | 80 zmienionych plików przed finalnym raportem |
+| pliki dnia 38                            | 0                                             |
+| auth/assessment dnia 37                  | 0                                             |
+| konfiguracja i infrastruktura testów Z19 | 0                                             |
+| chronione Finance/Execution              | 0                                             |
+| migracje                                 | 0; przedział `20261280-89` nadal pusty        |
+| nowe linie zawierające wartość hasła Z18 | 0                                             |
+| wartość hasła w raporcie                 | 0                                             |
+| `git stash list`                         | 0                                             |
+| `dist/`                                  | czysty                                        |
+
+Nie wykonano push, deployu, połączeń do Railway/demo/staging/produkcji, rotacji hasła, czyszczenia historii ani `docker volume prune`.
+
+## Pozycje otwarte
+
+- STOP D.2 krok 4: brak istniejącego bezpoświadczeniowego endpointu zgodnego z wiążącym wariantem. Produkcyjny skrót pozostaje bezpiecznie wyłączony; decyzje opisano w sekcji D.2.
+- D.3: artefakt produkcyjny `NIE_PROVEN` z powodu OOM po transformacji modułów.
+- Pięć zastanych wyjątków wykrytych przez D.7 wymaga osobnego zatwierdzonego zakresu.
+
+## Licznik ośmiu pozycji
+
+- `ZROBIONE_WG_DoD`: 4 — D.1, D.6, D.7, R.1.
+- `CZĘŚCIOWO`: 4 — D.2, D.3, D.4, D.5.
+- `STOP`: 0 jako status pozycji; jeden obowiązkowy STOP podkroku D.2.
+- `NIE_ZACZĘTE`: 0.
 
 ## Gotowość
 
-Raport roboczy; D.1 zakończone, dalsze pozycje oczekują wykonania.
+**CZĘŚCIOWO / NIE_PROVEN.** Zaszyta mapa kont i haseł zniknęła z kodu frontu, skrypty i testy z zatwierdzonego inwentarza pobierają dane z env, dokumenty są oczyszczone, a strażnik regresji działa. Nie można jednak uczciwie potwierdzić kompletnego zdania odbiorowego: build produkcyjny nie powstał z powodu OOM, a zachowanie czterocyfrowego skrótu na publicznym środowisku nie ma zgodnego, istniejącego endpointu bez poświadczeń.
