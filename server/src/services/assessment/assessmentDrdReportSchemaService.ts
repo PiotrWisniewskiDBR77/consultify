@@ -434,11 +434,19 @@ export function buildAssessmentDrdReportSchema(contract: AssessmentReportContrac
     updatedAt: contract.generatedAt,
     drdReportMetadata: {
       clientName,
-      businessProfile: null,
-      employment: null,
-      assessmentPeriod: null,
-      assessor: null,
-      clientSponsor: null,
+      // W1 (nadzorca 2026-08-28): these five fields used to be hardcoded to
+      // null. They now read from `AssessmentReportContractService.build()`,
+      // which pulls them from organizations.industry, projects.description,
+      // the method_events answer span, and the session owner's user row
+      // (see that file for exactly which table each one comes from). A
+      // field with no real source anywhere in the schema — clientSponsor —
+      // stays null on purpose; the renderer already shows an honest
+      // "Do uzupełnienia" placeholder for any null value here.
+      businessProfile: contract.businessProfile ?? null,
+      employment: contract.employment ?? null,
+      assessmentPeriod: contract.assessmentPeriod ?? null,
+      assessor: contract.assessor ?? null,
+      clientSponsor: contract.clientSponsor ?? null,
       methodology: 'Digital Pathfinder — metodyka oceny dojrzałości cyfrowej DRD',
       sessionSignature: contract.sessionId,
       issuedAt: contract.generatedAt,
