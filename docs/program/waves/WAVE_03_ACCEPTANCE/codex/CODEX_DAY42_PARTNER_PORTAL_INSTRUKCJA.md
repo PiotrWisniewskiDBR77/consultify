@@ -94,7 +94,7 @@ domknięcie zadania.**
 1. Punktem wyjścia jest **gałąź `codex/m03-admin-20260824`**, przypięta do
    commitu-markera podanego niżej.
 
-   **SHA markera: «MARKER_SHA»**
+   **SHA markera: 23652ec80a**
 
    > **★ RAMKA WARTOWNIKA — uwaga dla nadzorcy wiążącego ten dokument
    > (usuń tę ramkę przy wiązaniu).**
