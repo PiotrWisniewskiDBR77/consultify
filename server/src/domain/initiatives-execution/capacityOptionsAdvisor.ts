@@ -61,7 +61,8 @@ export function proposeCapacityOptions(
     const proposed = periodIndex.get(periodId);
     return current >= 0 && proposed !== undefined && proposed > current ? [proposed - current] : [];
   });
-  const shiftPeriods = shifts.length ? Math.max(...shifts) : 1;
+  const canResequence = shifts.length > 0;
+  const shiftPeriods = canResequence ? Math.max(...shifts) : null;
   const primaryPeriod = overloaded[0];
   const primaryResource = affectedResources[0] ?? 'zasób bez potwierdzonego przypisania';
   const sourceRef = `capacity-scenario:${capacity.scenarioId}`;
@@ -71,6 +72,12 @@ export function proposeCapacityOptions(
     sourceRef: { ref: sourceRef, version: capacity.scenarioVersion },
     knowledgeState: 'KNOWN' as const,
   };
+  const solverConflictAssumptions = solver.conflicts.map((conflict) => ({
+    assumption: `Solver zgłosił konflikt planu: ${conflict}`,
+    ownerId: capacity.publishedBy || capacity.updatedBy || capacity.createdBy,
+    sourceRef: { ref: sourceRef, version: capacity.scenarioVersion },
+    knowledgeState: 'KNOWN' as const,
+  }));
   const memberships = affectedInitiatives.map((initiativeId) => ({
     initiativeId,
     membershipVersion:
@@ -81,7 +88,7 @@ export function proposeCapacityOptions(
     version: capacity.scenarioVersion,
   }));
   const common = {
-    assumptions: [assumption],
+    assumptions: [assumption, ...solverConflictAssumptions],
     affectedMemberships: memberships,
     affectedPeriods: overloaded.map((period) => period.periodId),
     affectedResources: resources,
@@ -93,12 +100,16 @@ export function proposeCapacityOptions(
       optionId: `${capacity.scenarioId}:resequence:v${capacity.scenarioVersion}`,
       kind: 'RESEQUENCE',
       impact: {
-        date: estimatedRange('periods', shiftPeriods, sourceRef, capacity.scenarioVersion),
+        date: canResequence
+          ? estimatedRange('periods', shiftPeriods as number, sourceRef, capacity.scenarioVersion)
+          : unknownRange('periods'),
         scope: unknownRange('items'),
         cost: unknownRange('PLN'),
         risk: unknownRange('score'),
       },
-      rationale: `Przesuń kolejność prac obciążających okres ${primaryPeriod.periodId} dla zasobu ${primaryResource}; doradca wyliczył przesunięcie z okien Planu i ograniczeń Mocy.`,
+      rationale: canResequence
+        ? `Przesuń kolejność prac obciążających okres ${primaryPeriod.periodId} dla zasobu ${primaryResource}; doradca wyliczył przesunięcie z okien Planu i ograniczeń Mocy.`
+        : `Resekwencja okresu ${primaryPeriod.periodId} dla zasobu ${primaryResource} jest niewykonalna przy obecnych ograniczeniach — deterministyczny solver nie znalazł żadnego wykonalnego okresu (granica zależności, własne okno lub znana Moc wykluczają każdy okres); przesunięcie pozostaje UNKNOWN.`,
     },
     {
       ...common,
