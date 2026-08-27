@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { renderDocumentSchemaToDocxBuffer } from '../../documentStudio/documentDocxRenderer.js';
 import {
   buildAssessmentDrdReportSchema,
+  CONTRACT_V1_MISSING_SLOT_LIMITS,
   type AssessmentReportContract,
 } from '../assessmentDrdReportSchemaService.js';
 
@@ -77,8 +78,31 @@ function contract(): AssessmentReportContract {
     generatedAt: '2026-08-28T12:00:00.000Z',
     methodVersion: 'drd-v1',
     sessionLabel: { displayName: 'Zakład Ćmielów', source: 'project', projectId: 'project-1' },
+    // Cover-metadata fields (W1). Values are deliberately distinctive so a
+    // `toContain` on the rendered `word/document.xml` cannot pass by
+    // accident on some other string in the document.
+    businessProfile: 'Ceramika techniczna · odlewnictwo precyzyjne',
+    employment: '3 osoby',
+    assessmentPeriod: '11 – 14 sierpnia 2026',
+    assessor: 'Anna Kowalczyk',
+    clientSponsor: null,
     chapters,
   } as AssessmentReportContract;
+}
+
+async function renderedDocumentXml(
+  schema: ReturnType<typeof buildAssessmentDrdReportSchema>
+): Promise<string> {
+  const zip = await JSZip.loadAsync(await renderDocumentSchemaToDocxBuffer(schema));
+  const xml = await zip.file('word/document.xml')?.async('string');
+  if (!xml) throw new Error('word/document.xml missing from rendered DOCX');
+  return xml;
+}
+
+function metadata(schema: ReturnType<typeof buildAssessmentDrdReportSchema>) {
+  const value = schema.drdReportMetadata;
+  if (!value) throw new Error('drdReportMetadata missing — DRD cover profile not built');
+  return value;
 }
 
 function allText(schema: ReturnType<typeof buildAssessmentDrdReportSchema>): string {
@@ -191,6 +215,123 @@ describe('Day 32 — assessment contract to DRD document schema', () => {
   it('does not smuggle Metalpol, lorem ipsum, or model-generated prose into the output', () => {
     const text = allText(buildAssessmentDrdReportSchema(contract()));
     expect(text).not.toMatch(/Metalpol|lorem ipsum|jako model|as an AI/i);
-    expect(text).toContain('Sekcja do uzupełnienia — limit 110–170 słów.');
+    // FIX-7 (nadzorca 2026-08-28): this line asserted
+    // 'Sekcja do uzupełnienia — limit 110–170 słów.' (with the full stop),
+    // which the builder has never produced for an area comment — it strips
+    // the trailing dot and appends the required microstructure
+    // ('…; wymagane: …'). The assertion was red on this branch AND on
+    // 87e7cecf3a, i.e. it was never a regression, just a stale expectation
+    // left standing. Pinned to the string the code really emits, which is
+    // also the stronger assertion (it now covers the microstructure hint).
+    expect(text).toContain(
+      'Sekcja do uzupełnienia — limit 110–170 słów; wymagane: stan faktyczny, ' +
+        'ocena i wiarygodność, znaczenie dla przedsiębiorstwa, ' +
+        'luka i sens poziomu docelowego, najbliższy krok.'
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// FIX-1 (nadzorca 2026-08-28): the four W1–W4 cover fixes shipped with ZERO
+// test coverage — reverting all three changed files left the suite result
+// bit-identical (55 PASS / 1 FAIL before and after). Exactly one test reached
+// the cover code and it asserted no metadata field at all. Every `it` below
+// is written so that reverting its fix turns it red; the mutation proof is
+// recorded in the task report.
+// ---------------------------------------------------------------------------
+describe('DRD cover — regression guards for the W1–W4 fixes', () => {
+  it('W2 — session signature is a human-readable code, never the raw session id', () => {
+    const input = contract();
+    const signature = metadata(buildAssessmentDrdReportSchema(input)).sessionSignature;
+    expect(signature).toMatch(/^DRD-\d{4}-\d{4}-[A-Z]{3}/);
+    expect(signature).not.toBe(input.sessionId);
+    expect(signature).not.toContain(input.sessionId);
+  });
+
+  it('W2/FIX-2 — the signature identifies the session, and is stable on re-render', () => {
+    const first = contract();
+    const second = contract();
+    second.sessionId = 'session-day32-schema-SECOND';
+    const firstSignature = metadata(buildAssessmentDrdReportSchema(first)).sessionSignature;
+    const secondSignature = metadata(buildAssessmentDrdReportSchema(second)).sessionSignature;
+    // Two different sessions of the same client, frozen the same day, must
+    // not share a signature — the pre-FIX-2 `(clientName, generatedAt)`
+    // input collided here (measured: Metalpol Sp. z o.o. / Metalpolska S.A.
+    // / Metal Polska all produced DRD-2026-0827-MTL).
+    expect(secondSignature).not.toBe(firstSignature);
+    expect(secondSignature).toMatch(/^DRD-\d{4}-\d{4}-[A-Z]{3}/);
+    // Same frozen output rendered twice reproduces the identical code.
+    expect(metadata(buildAssessmentDrdReportSchema(contract())).sessionSignature).toBe(
+      firstSignature
+    );
+  });
+
+  it('W2/FIX-2 — Ł is transliterated, not deleted, in the client skeleton', () => {
+    const input = contract();
+    input.sessionLabel.displayName = 'Łódź S.A.';
+    const signature = metadata(buildAssessmentDrdReportSchema(input)).sessionSignature;
+    // Before the fix NFD left `Ł` intact and `[^a-zA-Z]` deleted it, so the
+    // client's own initial vanished: `Łódź S.A.` -> `ODZ`.
+    expect(signature).toMatch(/^DRD-\d{4}-\d{4}-LDZ-/);
+    expect(signature).not.toMatch(/^DRD-\d{4}-\d{4}-ODZ/);
+  });
+
+  it('W3 — the rendered cover date is Polish long form and no ISO date survives', async () => {
+    const xml = await renderedDocumentXml(buildAssessmentDrdReportSchema(contract()));
+    expect(xml).toContain('28 sierpnia 2026');
+    expect(xml).not.toMatch(/\d{4}-\d{2}-\d{2}/);
+  });
+
+  it('W4 — every decision-line cell carries the short field limit, all 32 of them', () => {
+    const schema = buildAssessmentDrdReportSchema(contract());
+    const limit = CONTRACT_V1_MISSING_SLOT_LIMITS.decisionLineField;
+    const expected = `Sekcja do uzupełnienia — limit ${limit.minWords}–${limit.maxWords} słów.`;
+    // 7 per-axis decision tables + 1 programme-level table, 4 cells each.
+    const occurrences = allText(schema).split(expected).length - 1;
+    expect(occurrences).toBe(32);
+    // The chapter-conclusion limit must NOT leak into a decision-line cell.
+    for (const section of schema.sections) {
+      const decision = section.blocks.find((block) => block.blockId.endsWith('-decision'));
+      if (!decision) continue;
+      const rows = (decision.content as { rows: Array<Array<unknown>> }).rows;
+      expect(rows).toHaveLength(4);
+      for (const row of rows) expect(row[1]).toBe(expected);
+    }
+  });
+
+  it('W1 — every cover field supplied by the contract reaches the rendered cover', async () => {
+    const input = contract();
+    const schema = buildAssessmentDrdReportSchema(input);
+    const meta = metadata(schema);
+    expect(meta.businessProfile).toBe(input.businessProfile);
+    expect(meta.employment).toBe(input.employment);
+    expect(meta.assessmentPeriod).toBe(input.assessmentPeriod);
+    expect(meta.assessor).toBe(input.assessor);
+
+    const xml = await renderedDocumentXml(schema);
+    for (const value of [
+      'Ceramika techniczna · odlewnictwo precyzyjne',
+      '3 osoby',
+      '11 – 14 sierpnia 2026',
+      'Anna Kowalczyk',
+    ]) {
+      expect(xml).toContain(value);
+    }
+    // Sponsor has no source in the schema — it must stay an honest gap, and
+    // it must be the ONLY remaining gap on the cover.
+    expect(meta.clientSponsor).toBeNull();
+    expect(xml.match(/Do uzupełnienia/g)).toHaveLength(1);
+  });
+
+  it('W1 — a contract with no cover data renders honest placeholders, never invented text', async () => {
+    const input = contract();
+    input.businessProfile = null;
+    input.employment = null;
+    input.assessmentPeriod = null;
+    input.assessor = null;
+    const xml = await renderedDocumentXml(buildAssessmentDrdReportSchema(input));
+    expect(xml.match(/Do uzupełnienia/g)).toHaveLength(5);
+    expect(xml).not.toContain('General');
+    expect(xml).not.toMatch(/@[a-z0-9.-]+\.[a-z]{2,}/i);
   });
 });

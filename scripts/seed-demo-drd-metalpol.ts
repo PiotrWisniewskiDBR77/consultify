@@ -127,10 +127,21 @@ async function applySeed(client: Client): Promise<void> {
       [METALPOL_IDS.organization, METALPOL_CLIENT.name, METALPOL_CLIENT.industry]
     );
     await client.query(
-      `INSERT INTO users (id,organization_id,email,role)
-       VALUES ($1,$2,$3,'user')
-       ON CONFLICT (id) DO UPDATE SET organization_id=EXCLUDED.organization_id,email=EXCLUDED.email,role=EXCLUDED.role`,
-      [METALPOL_IDS.user, METALPOL_IDS.organization, 'anna.kowalczyk@demo-seed.invalid']
+      // FIX-5 (nadzorca 2026-08-28): first_name/last_name were never seeded,
+      // so the DRD cover's "Oceniający" row fell back to the raw e-mail.
+      // The columns exist since server/migrations/000_initdb_core_tables.sql;
+      // the seed just never filled them.
+      `INSERT INTO users (id,organization_id,email,first_name,last_name,role)
+       VALUES ($1,$2,$3,$4,$5,'user')
+       ON CONFLICT (id) DO UPDATE SET organization_id=EXCLUDED.organization_id,email=EXCLUDED.email,
+         first_name=EXCLUDED.first_name,last_name=EXCLUDED.last_name,role=EXCLUDED.role`,
+      [
+        METALPOL_IDS.user,
+        METALPOL_IDS.organization,
+        'anna.kowalczyk@demo-seed.invalid',
+        'Anna',
+        'Kowalczyk',
+      ]
     );
     await client.query(
       `INSERT INTO projects (id,organization_id,name,description)

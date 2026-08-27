@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 import DRD_STRUCTURE, { type DRDAxis } from '../../data/drdStructure.js';
 import type { DocumentBlock, DocumentSchema } from '../documentStudio/documentStudioTypes.js';
 import { DRD_DOCX_STYLE_IDS, DRD_REPORT_PALETTE } from '../documentStudio/documentDocxStyles.js';
@@ -27,8 +29,15 @@ export const DRD_REPORT_FIXED_TEXT = Object.freeze({
 } as const);
 
 // Skalibrowane wzorcem c2a91d0258 (RAPORT_DRD_METALPOL_WZORZEC.docx).
-// Pomiar: streszczenie 131 słów prozy, wnioski końcowe 276, komórki linii
-// decyzyjnej 12–21. Okna dobrane wokół pomiaru — patrz raport dnia 34 §G.
+// SUROWY POMIAR wzorca: streszczenie 131 słów prozy, wnioski końcowe 276,
+// komórki linii decyzyjnej 12–21 słów. OKNA poniżej są dobrane wokół tego
+// pomiaru z zapasem i to ONE, nie pomiar, są drukowane w placeholderach —
+// patrz raport dnia 34 §G.
+//
+// FIX-6 (nadzorca 2026-08-28): wcześniej wokół tej jednej wartości krążyły
+// cztery różne liczby (stała 10–30, komentarz „12–21", komentarz przy
+// użyciu „15–40", komunikat commita c9bfe34032 „15-40"). Obowiązuje
+// WYŁĄCZNIE wartość ze stałej: linia decyzyjna = 10–30 słów.
 export const CONTRACT_V1_MISSING_SLOT_LIMITS = Object.freeze({
   executiveSummary: { minWords: 120, maxWords: 150 },
   finalConclusions: { minWords: 250, maxWords: 300 },
@@ -48,6 +57,91 @@ type ContractArea = ContractChapter['matrix']['areas'][number];
 
 function placeholder(minWords: number, maxWords: number): string {
   return `Sekcja do uzupełnienia — limit ${minWords}–${maxWords} słów.`;
+}
+
+// W2 (nadzorca 2026-08-28) + FIX-2 (nadzorca 2026-08-28, drugi obieg):
+// the cover used to show the raw session UUID (`session-day34-data-52efe624`)
+// as the "session signature". A signature meant for a human reader needs to
+// be legible, so this derives a consulting-report-style code —
+// `DRD-YYYY-MMDD-XXX-HHHH` — deterministically from data already on the
+// contract.
+//
+// Reasoning for the client skeleton (`XXX`): Polish legal suffixes
+// ("Sp. z o.o.", "S.A.", ...) carry no identity, so they're stripped first;
+// consonants are then preferred over the first N raw letters because they
+// read like real reference codes ("MTP", "PKN").
+//
+// FIX-2: the skeleton alone does NOT identify a session. Measured
+// collisions on the previous `(clientName, generatedAt)` input:
+// `Metalpol Sp. z o.o.`, `Metalpolska S.A.` and `Metal Polska` all produced
+// `DRD-2026-0827-MTL`, and two sessions of the SAME client on the same day
+// produced the same code too. For an auditable advisory document that is a
+// loss of identifiability, so the signature now carries a fourth segment:
+// four hex characters of a SHA-256 digest of the session id. Properties:
+//   * discriminating — two different sessions never share a signature
+//     unless they also collide on a 16-bit digest, and the two clients in
+//     the collision example are necessarily two different sessions;
+//   * stable on re-render — `sessionId` never changes for a given session,
+//     and `generatedAt` is still `output.frozenAt ?? session.created_at`,
+//     so re-rendering a frozen output reproduces the identical signature
+//     byte for byte (asserted by day32.drdSchema.test.ts);
+//   * not the raw id — the digest is one-way and 4 chars long, so the UUID
+//     itself is still never printed on the cover. It survives only inside
+//     `documentId`, an internal field that is not rendered anywhere.
+// `outputId` is deliberately NOT part of the input: the field is labelled
+// "Sygnatura sesji", and two revisions of one session are the same session.
+const LEGAL_SUFFIX_PATTERN = /\b(sp\.?\s*z\s*o\.?\s*o\.?|s\.?\s*a\.?|sc|ltd|gmbh|inc|ag|se)\b/giu;
+
+// NFD decomposition handles Polish diacritics that are "letter + combining
+// mark" (ą ć ę ń ó ś ź ż), but NOT the ones encoded as their own base
+// letter. `Ł`/`ł` (U+0141/U+0142) is exactly that case: NFD leaves it
+// untouched and the `[^a-zA-Z]` filter then deleted it, so `Łódź S.A.`
+// yielded `ODZ` — the client's own initial silently dropped. Transliterate
+// those first. Same class of problem for Đ/đ, Ø/ø, Æ/æ, ß.
+const NON_DECOMPOSING_LATIN: ReadonlyArray<readonly [RegExp, string]> = Object.freeze([
+  [/\u0141/g, 'L'],
+  [/\u0142/g, 'l'],
+  [/\u0110/g, 'D'],
+  [/\u0111/g, 'd'],
+  [/\u00D8/g, 'O'],
+  [/\u00F8/g, 'o'],
+  [/\u00C6/g, 'AE'],
+  [/\u00E6/g, 'ae'],
+  [/\u00DF/g, 'ss'],
+] as const);
+
+function transliterateLatin(name: string): string {
+  return NON_DECOMPOSING_LATIN.reduce(
+    (acc, [pattern, replacement]) => acc.replace(pattern, replacement),
+    name
+  );
+}
+
+function clientAbbreviation(name: string): string {
+  const ascii = transliterateLatin(name)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(LEGAL_SUFFIX_PATTERN, ' ')
+    .replace(/[^a-zA-Z]/g, ' ')
+    .trim();
+  if (!ascii) return 'XXX';
+  const consonants = ascii.replace(/[aeiouyAEIOUY\s]/g, '');
+  const source = consonants.length >= 3 ? consonants : ascii.replace(/\s/g, '');
+  return (source.slice(0, 3) || 'XXX').toUpperCase().padEnd(3, 'X');
+}
+
+export function sessionDiscriminator(sessionId: string): string {
+  return createHash('sha256').update(sessionId, 'utf8').digest('hex').slice(0, 4).toUpperCase();
+}
+
+function buildSessionSignature(clientName: string, generatedAt: string, sessionId: string): string {
+  const suffix = `${clientAbbreviation(clientName)}-${sessionDiscriminator(sessionId)}`;
+  const date = new Date(generatedAt);
+  if (Number.isNaN(date.getTime())) return `DRD-0000-0000-${suffix}`;
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(date.getUTCDate()).padStart(2, '0');
+  return `DRD-${year}-${month}${day}-${suffix}`;
 }
 
 function slotText(slot: { content: string | null; minWords: number; maxWords: number }): string {
@@ -154,7 +248,10 @@ function skipNotice(area: ContractArea): string | null {
   return null;
 }
 
-function chapterBlocks(chapter: ContractChapter): DocumentBlock[] {
+function chapterBlocks(
+  chapter: ContractChapter,
+  decisionLineLimit: { minWords: number; maxWords: number }
+): DocumentBlock[] {
   const blocks: DocumentBlock[] = [];
   const assessed = chapter.matrix.areas.some(
     (area) => !area.skipped && area.currentLevel !== null && area.targetLevel !== null
@@ -211,6 +308,17 @@ function chapterBlocks(chapter: ContractChapter): DocumentBlock[] {
   const conclusionPlaceholder = slotText(
     chapter.conclusion as { content: string | null; minWords: number; maxWords: number }
   );
+  // W4 (nadzorca 2026-08-28): the four decision-line cells are short fields
+  // — CONTRACT_V1_MISSING_SLOT_LIMITS.decisionLineField, i.e. 10–30 words —
+  // not chapter-conclusion prose (180–260 words). Falling back to
+  // `conclusionPlaceholder` here — as the seven per-axis tables did before
+  // this fix — printed the wrong limit ("limit 180–260 słów") in every empty
+  // decision-line cell. Use the same dedicated short placeholder the day-34
+  // fix already gave the program-level decision table.
+  // FIX-6: this comment used to say "15–40 words per the wzorzec
+  // measurement", contradicting both the constant (10–30) and the header
+  // comment (12–21). The single authority is the constant.
+  const decisionPlaceholder = placeholder(decisionLineLimit.minWords, decisionLineLimit.maxWords);
   blocks.push(
     heading(`${chapter.axisId}-conclusion-heading`, 'Wnioski rozdziału', 2),
     paragraph(`${chapter.axisId}-conclusion`, conclusionPlaceholder, DRD_DOCX_STYLE_IDS.CAPTION),
@@ -223,12 +331,12 @@ function chapterBlocks(chapter: ContractChapter): DocumentBlock[] {
       `${chapter.axisId}-decision`,
       ['Pole', 'Treść'],
       [
-        ['Kierunek', chapter.conclusion.decisionLine.direction ?? conclusionPlaceholder],
-        ['Priorytet', chapter.conclusion.decisionLine.priority ?? conclusionPlaceholder],
-        ['Horyzont', chapter.conclusion.decisionLine.horizon ?? conclusionPlaceholder],
+        ['Kierunek', chapter.conclusion.decisionLine.direction ?? decisionPlaceholder],
+        ['Priorytet', chapter.conclusion.decisionLine.priority ?? decisionPlaceholder],
+        ['Horyzont', chapter.conclusion.decisionLine.horizon ?? decisionPlaceholder],
         [
           'Warunek sukcesu',
-          chapter.conclusion.decisionLine.successCondition ?? conclusionPlaceholder,
+          chapter.conclusion.decisionLine.successCondition ?? decisionPlaceholder,
         ],
       ]
     )
@@ -321,7 +429,7 @@ export function buildAssessmentDrdReportSchema(contract: AssessmentReportContrac
       title: `${chapter.axisId}. ${chapter.axisNamePL ?? chapter.axisName}`,
       purpose: `Rozdział ${index + 1} z 7 · oś ${chapter.axisId} struktury DRD`,
       sourceRefs: [],
-      blocks: chapterBlocks(chapter),
+      blocks: chapterBlocks(chapter, decisionLineLimit),
     })),
     {
       sectionId: 'final-conclusions',
@@ -434,13 +542,24 @@ export function buildAssessmentDrdReportSchema(contract: AssessmentReportContrac
     updatedAt: contract.generatedAt,
     drdReportMetadata: {
       clientName,
-      businessProfile: null,
-      employment: null,
-      assessmentPeriod: null,
-      assessor: null,
-      clientSponsor: null,
+      // W1 (nadzorca 2026-08-28): these five fields used to be hardcoded to
+      // null. They now read from `AssessmentReportContractService.build()`,
+      // which pulls them from organization_profiles.industry (legacy
+      // organizations.industry only as fallback, with 'General' rejected),
+      // organization_profiles.employee_count (projects.description regex
+      // only as fallback), the method_events answer span, and the session
+      // owner's user row (see that file for exactly which table each one
+      // comes from). A
+      // field with no real source anywhere in the schema — clientSponsor —
+      // stays null on purpose; the renderer already shows an honest
+      // "Do uzupełnienia" placeholder for any null value here.
+      businessProfile: contract.businessProfile ?? null,
+      employment: contract.employment ?? null,
+      assessmentPeriod: contract.assessmentPeriod ?? null,
+      assessor: contract.assessor ?? null,
+      clientSponsor: contract.clientSponsor ?? null,
       methodology: 'Digital Pathfinder — metodyka oceny dojrzałości cyfrowej DRD',
-      sessionSignature: contract.sessionId,
+      sessionSignature: buildSessionSignature(clientName, contract.generatedAt, contract.sessionId),
       issuedAt: contract.generatedAt,
     },
   };
