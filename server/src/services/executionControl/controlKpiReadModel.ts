@@ -50,46 +50,52 @@ export class ControlKpiReadModel {
     );
     const calculatedAt = new Date().toISOString();
 
+    const families = CONTROL_KPI_FAMILIES.map((family) => {
+      const dependencies = POLICY_DEPENDENCIES[family] ?? [];
+      const decisionRequired = dependencies.some((name) => missingParameters.includes(name as any));
+      const value = family in computed ? computed[family as keyof typeof computed] : null;
+      const hasPopulation = Boolean(value && value.denominator > 0);
+      return {
+        family,
+        numerator: decisionRequired || !hasPopulation ? null : value!.numerator,
+        denominator: decisionRequired || !hasPopulation ? null : value!.denominator,
+        value: decisionRequired || !hasPopulation ? null : value!.numerator / value!.denominator,
+        valueReason: decisionRequired
+          ? ('DECISION_REQUIRED' as const)
+          : hasPopulation
+            ? null
+            : ('BRAK_ŹRÓDŁA' as const),
+        drillDown: { kind: family, ids: hasPopulation ? value!.ids : ([] as string[]) },
+        sourceVersion: hasPopulation ? value!.sourceVersion : 0,
+        scopeCompleteness: decisionRequired
+          ? ('NOT_CALCULABLE' as const)
+          : hasPopulation
+            ? ('FULL' as const)
+            : ('NO_POPULATION' as const),
+        valueClass: decisionRequired
+          ? ('UNKNOWN' as const)
+          : hasPopulation
+            ? ('CALCULATED' as const)
+            : ('UNKNOWN' as const),
+        calculatedAt,
+      };
+    });
+    const fullFamilyCount = families.filter((family) => family.scopeCompleteness === 'FULL').length;
+
     return {
       weekStart,
-      families: CONTROL_KPI_FAMILIES.map((family) => {
-        const dependencies = POLICY_DEPENDENCIES[family] ?? [];
-        const decisionRequired = dependencies.some((name) =>
-          missingParameters.includes(name as any)
-        );
-        const value = family in computed ? computed[family as keyof typeof computed] : null;
-        const hasPopulation = Boolean(value && value.denominator > 0);
-        return {
-          family,
-          numerator: decisionRequired || !hasPopulation ? null : value!.numerator,
-          denominator: decisionRequired || !hasPopulation ? null : value!.denominator,
-          value: decisionRequired || !hasPopulation ? null : value!.numerator / value!.denominator,
-          valueReason: decisionRequired
-            ? ('DECISION_REQUIRED' as const)
-            : hasPopulation
-              ? null
-              : ('BRAK_ŹRÓDŁA' as const),
-          drillDown: { kind: family, ids: hasPopulation ? value!.ids : ([] as string[]) },
-          sourceVersion: hasPopulation ? value!.sourceVersion : 0,
-          scopeCompleteness: decisionRequired
-            ? ('NOT_CALCULABLE' as const)
-            : hasPopulation
-              ? ('FULL' as const)
-              : ('NO_POPULATION' as const),
-          valueClass: decisionRequired
-            ? ('UNKNOWN' as const)
-            : hasPopulation
-              ? ('CALCULATED' as const)
-              : ('UNKNOWN' as const),
-          calculatedAt,
-        };
-      }),
+      families,
       policy: {
         policyId: policyRow?.policy_id ?? null,
         resolved: Boolean(policyRow) && missingParameters.length === 0,
         missingParameters,
       },
-      scopeCompleteness: 'PARTIAL' as const,
+      scopeCompleteness:
+        fullFamilyCount === families.length
+          ? ('FULL' as const)
+          : fullFamilyCount === 0
+            ? ('NOT_CALCULABLE' as const)
+            : ('PARTIAL' as const),
       calculatedAt,
     };
   }
