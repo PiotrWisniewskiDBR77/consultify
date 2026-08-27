@@ -34,9 +34,47 @@ Wiążące są: wartości liczbowe są danymi wpisywanymi per klient, perspektyw
 
 ## Pozycje — tabela zbiorcza
 
-| Pozycja | Status          | Commit          | Dowód                         | Poziom       |
-| ------- | --------------- | --------------- | ----------------------------- | ------------ |
-| P.1     | ZROBIONE_WG_DoD | do uzupełnienia | tabela dwóch nośników powyżej | dokumentacja |
+| Pozycja | Status          | Commit         | Dowód                                          |
+| ------- | --------------- | -------------- | ---------------------------------------------- |
+| P.1     | ZROBIONE_WG_DoD | `cb79d43796`   | tabela dwóch nośników                          |
+| P.2     | ZROBIONE_WG_DoD | `d82c5cc05b`   | schemat; pakiet celowany `18/18 PASS`          |
+| P.3     | ZROBIONE_WG_DoD | `aaa32f4e79`   | realny HTTP i niezależny readback; `7/7 PASS`  |
+| P.4     | ZROBIONE_WG_DoD | `edc04bea29`   | migracja `20261220`; `7/7 PASS`                |
+| P.5     | NIE_ZACZĘTE     | —              | brak kanonicznej komendy przypisania           |
+| P.6     | NIE_ZACZĘTE     | —              | brak read-modelu piątej warstwy                |
+| P.7     | NIE_ZACZĘTE     | —              | zależy od P.5                                  |
+| P.8     | NIE_ZACZĘTE     | —              | brak migracji izolacji i klasy wkładu          |
+| P.9     | STOP            | —              | brak udowodnionego seam odczytu Results        |
+| P.10    | CZĘŚCIOWO       | `d82c5cc05b`   | pasma/bufor walidowane; brak koperty `UNKNOWN` |
+| P.11    | CZĘŚCIOWO       | raport końcowy | inwentarz PG, bez osobnego commita             |
+| P.12    | NIE_ZACZĘTE     | —              | brak pełnego kontraktu frontowego              |
+| R.1     | NIE_ZACZĘTE     | —              | `MODULE_ACCEPTANCE.md` nietknięty              |
+| R.2     | CZĘŚCIOWO       | raport końcowy | uczciwy zakres i STOP-y                        |
+
+## Dowody P.3/P.4
+
+Wartości `7 / 5 dni roboczych / 80–95 % / bufor 15 %` zostały wprowadzone przez realny router HTTP i odczytane niezależnym połączeniem z PostgreSQL w `day35.kpi-policy-authoring.pg.test.ts`; przebieg `7/7 PASS`. W kodzie produkcyjnym nie są defaultami ani fallbackami.
+
+`goals.perspective` jest nullowalnym `TEXT` bez wartości domyślnej. Baza przyjmuje dokładnie `financial`, `customer`, `process`, `learning`, `governance_data_quality` oraz `NULL`; szóstą wartość odrzuca kodem `23514`. Migracja nie wykonuje backfillu ani heurystyki.
+
+## P.11 — inwentarz dostępności
+
+Na świeżym PG nie ma `user_out_of_office`. `users.out_of_office` i `vacation_end` są tylko bieżącym przełącznikiem bez historii i daty początku. `user_availability` istnieje z `working_hours_json`, `dnd_hours_json` i `settings`, lecz bez kalendarza nieobecności i zakresu organizacji. Werdykty: nieobecności `ZBUDUJ_OD_ZERA`; godziny pracy `PODŁĄCZ_PO_NAPRAWIE`; stałe obowiązki `ZBUDUJ_OD_ZERA`; zaakceptowane rezerwacje `ZBUDUJ_OD_ZERA`; bufor `PODŁĄCZ`. Otwarte pytanie właścicielskie: kto wprowadza dane nieobecności i czy źródłem jest HR, kalendarz, czy konsultant.
+
+## STOP-y i otwarte pozycje
+
+### STOP — P.9
+
+Powód: wystawienie zatwierdzonego wkładu liczbowego bez dotykania chronionego modułu Results wymaga jawnego tenantowego seam odczytu, którego nie udowodniono.
+Stan: NIE ZACOMMITOWANO.
+
+P.5–P.8 i P.10–P.12 nie są gotowe. Następny wykonawca powinien kontynuować od `edc04bea29`, zachowując kolejność P.5→P.7, P.6, P.8c→P.8d i P.10.
+
+## Bezpieczniki i brief
+
+`src/**`, `inferPerspective`, `server/src/services/results/**` i chronione middleware są nietknięte. Nie użyto `git stash`, `docker volume prune`, Railway ani push do `origin`.
+
+E-O3 ma nośnik perspektywy, ale nie ma jeszcze komendy ani klasy raportu. E-O4 ma wprowadzalną politykę, ale klasa nie jest zapisywana przy linku. E-O5 ma wprowadzalne pasma i bufor, ale nie ma jeszcze koperty `UNKNOWN`. Źródła nieobecności wystarczającego do obliczeń nie ma. Do scalenia nadają się P.1–P.4 jako fundament; całego dyżuru 33 nie wolno oznaczać jako ukończonego.
 
 ## Znaleziska (NIE naprawiane przeze mnie)
 
