@@ -1884,10 +1884,14 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
                         )}
                       </div>
                       <div className="mt-0.5 text-[11px] text-slate-400">
+                        {/* #UI-latki-20260828: was a manual 1-vs-other ternary,
+                            wrong for PL 2-4 ("2 sesji" instead of "2 sesje").
+                            i18next resolves the correct one/few/many/other
+                            form from `count` via the CLDR rule for `pl`. */}
                         {respondent.sessionCount}{' '}
-                        {respondent.sessionCount === 1
-                          ? t('interview.insightCreatorModal.sessionUnitOne')
-                          : t('interview.insightCreatorModal.sessionUnitOther')}
+                        {t('interview.insightCreatorModal.sessionUnit', {
+                          count: respondent.sessionCount,
+                        })}
                       </div>
                     </div>
                   </label>
@@ -1928,8 +1932,12 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
                 },
                 ...baskets.map((basket) => ({
                   value: basket.id,
+                  // #UI-latki-20260828: static "sesji" regardless of count was
+                  // wrong for 1/2-4 baskets ("1 sesji", "3 sesji"). Same fix
+                  // as the respondent list above — resolve via `count`.
                   label: `${basket.name} · ${basket.sessionIds.length} ${t(
-                    'interview.insightCreatorModal.sessions'
+                    'interview.insightCreatorModal.sessionUnit',
+                    { count: basket.sessionIds.length }
                   )} · ${t('interview.insightCreatorModal.usedNTimes', { count: basket.usageCount })}`,
                 })),
               ]}
@@ -2585,26 +2593,52 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
   };
 
   const scopeTitle = title || t('interview.creator.shell.untitled');
+  // #UI-latki-20260828: each of these quantities needs its OWN Polish plural
+  // form (1 typ / 2-4 typy / 5+ typów, etc.) — a single i18next key can only
+  // pluralize on one `count`, so each noun is resolved through its own
+  // `*Count` key first and the results are composed into the summary string
+  // (which itself takes no `count` — it just interpolates pre-pluralized text).
+  const creatorScopeTypesText = t('interview.creator.shell.outputTypesCount', {
+    count: selectedTypes.length,
+  });
+  const creatorScopeSessionsText = t('interview.creator.shell.sessionsCount', {
+    count: selectedSessions.length,
+  });
+  const creatorScopeApprovedSessionsText = t('interview.insightCreatorModal.approvedSessionsCount', {
+    count: selectedSessions.length,
+  });
+  const creatorScopePeopleText = t('interview.creator.shell.peopleCount', {
+    count: selectedRespondents.length,
+  });
+  const creatorScopeDocumentsText = t('interview.creator.shell.documentsCount', {
+    count: selectedContextDocumentIds.length,
+  });
+  const creatorScopeModesText = t('interview.creator.shell.modesCount', {
+    count: selectedAnalysisModes.length,
+  });
+  const creatorScopeTopicsText = t('interview.creator.shell.topicsCount', {
+    count: selectedTopicFocus.length,
+  });
   const creatorScopeText =
     currentStep === 0
       ? t('interview.creator.shell.scopeDefine', {
           title: scopeTitle,
-          types: selectedTypes.length,
+          typesText: creatorScopeTypesText,
         })
       : currentStep === 1
         ? t('interview.creator.shell.scopeMaterial', {
             title: scopeTitle,
-            types: selectedTypes.length,
-            sessions: selectedSessions.length,
-            people: selectedRespondents.length,
+            typesText: creatorScopeTypesText,
+            sessionsText: creatorScopeApprovedSessionsText,
+            peopleText: creatorScopePeopleText,
           })
         : t('interview.creator.shell.scopeRefine', {
             title: scopeTitle,
-            types: selectedTypes.length,
-            sessions: selectedSessions.length,
-            documents: selectedContextDocumentIds.length,
-            modes: selectedAnalysisModes.length,
-            topics: selectedTopicFocus.length,
+            typesText: creatorScopeTypesText,
+            sessionsText: creatorScopeSessionsText,
+            documentsText: creatorScopeDocumentsText,
+            modesText: creatorScopeModesText,
+            topicsText: creatorScopeTopicsText,
           });
   const creatorFooterNote =
     currentStep === 0
@@ -2636,7 +2670,7 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
           <>
             <span className="font-semibold uppercase tracking-[0.14em] text-c-text-muted">
               {t('interview.creator.shell.scopeLabel')}
-            </span>
+            </span>{' '}
             <span className="truncate text-c-text-secondary">{creatorScopeText}</span>
           </>
         }
