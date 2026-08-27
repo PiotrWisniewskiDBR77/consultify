@@ -11,7 +11,7 @@ import { ApiGateway } from '../../../server/src/Gateway.js';
 import { assertRealPostgresTestEnvironment } from '../_helpers/assertRealPostgres.js';
 
 const databaseUrl = process.env.DATABASE_URL ?? '';
-const jwtSecret = 'day49-test-jwt-secret-key-min-32-chars';
+const jwtSecret = process.env.JWT_SECRET || 'test-jwt-secret-key-min-32-chars-long-for-validation';
 const NO_RETRY = { retry: 0 } as const;
 
 describe('Day 49 A.1 capacity loop baseline through the real ApiGateway', NO_RETRY, () => {
