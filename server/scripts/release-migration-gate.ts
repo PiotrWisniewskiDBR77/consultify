@@ -29,6 +29,13 @@ import { Pool } from 'pg';
 import '../src/config/loadEnv.js';
 import { resolveReachableDatabaseUrl } from '../src/config/databaseTargetResolver.js';
 import { resolveDbTargetLabel } from '../src/config/dbTargetLabel.js';
+import {
+  databaseIdentitiesMatch,
+  emitDatabaseIdentity,
+  formatDatabaseIdentity,
+  parseDatabaseIdentityFromUrl,
+  resolveApplicationDatabaseIdentity,
+} from '../src/config/databaseIdentity.js';
 import { isRuntimeMigrationFile } from '../src/services/tablePlatform/migrationIdentity.js';
 import {
   evaluateSqlChain,
@@ -232,11 +239,55 @@ async function main() {
   const databaseUrl = resolved.databaseUrl;
   if (!databaseUrl) throw new Error('DATABASE_URL is required');
 
-  const host = assertExpectedTarget(databaseUrl, process.env.RELEASE_TARGET_DB_HOST_FINGERPRINT);
+  // Environment pin: the resolved host must contain the operator's declared fingerprint.
+  // Throws on mismatch; the returned host is deliberately not printed.
+  assertExpectedTarget(databaseUrl, process.env.RELEASE_TARGET_DB_HOST_FINGERPRINT);
   const dbTarget = resolveDbTargetLabel(process.env);
+
+  // ---- DEC-2026-08-28-165 divergence check (two INDEPENDENT sources) --------------------------
+  //
+  // Source 1: the database this gate is really about to migrate — derived from the connection
+  //           string the gate resolved for itself a few lines above.
+  // Source 2: the database the APPLICATION will really open at runtime — derived by replaying
+  //           the application's own resolution order (DATABASE_URL through the reachability
+  //           resolver, otherwise DB_HOST/DB_PORT/DB_NAME).
+  //
+  // These two can and did differ in staging: the gate follows DATABASE_PUBLIC_URL / an explicit
+  // migration URL while the application follows DATABASE_URL or the discrete DB_* variables.
+  // Comparing a single declared label (the previous `dbTarget=` pair) could never see that,
+  // because both sides read the identical environment variable.
+  const migrationIdentity = parseDatabaseIdentityFromUrl(databaseUrl, 'migration:resolved-url');
+  const applicationIdentity = resolveApplicationDatabaseIdentity(process.env);
+  emitDatabaseIdentity('migration', migrationIdentity);
+  emitDatabaseIdentity('app', applicationIdentity);
+
+  if (!migrationIdentity) {
+    throw new Error(
+      'Release gate cannot derive the migration database identity from its resolved connection ' +
+        'string. Refusing to migrate an unidentifiable target.'
+    );
+  }
+  if (!applicationIdentity) {
+    throw new Error(
+      'Release gate cannot derive the application database identity from the environment ' +
+        '(neither DATABASE_URL nor DB_HOST resolves). Refusing to migrate a database that cannot ' +
+        'be proven to be the one the application will use.'
+    );
+  }
+  if (!databaseIdentitiesMatch(migrationIdentity, applicationIdentity)) {
+    throw new Error(
+      'DEC-165 DIVERGENCE: the migration target and the application target are different ' +
+        `databases. migration=${formatDatabaseIdentity(migrationIdentity)} ` +
+        `app=${formatDatabaseIdentity(applicationIdentity)}. ` +
+        'Migrating would apply the chain to a database the application never reads. ' +
+        'Release blocked.'
+    );
+  }
+
   // eslint-disable-next-line no-console
   console.log(
-    `[release-gate] target host verified against expected fingerprint (host redacted). dbTarget=${dbTarget}`
+    `[release-gate] target host verified against expected fingerprint (host redacted). ` +
+      `dbTarget=${dbTarget} dbIdentity=${formatDatabaseIdentity(migrationIdentity)} appIdentityMatches=true`
   );
   // eslint-disable-next-line no-console
   console.log(`[release-gate] build sha: ${resolveBuildSha()}`);
@@ -295,7 +346,7 @@ async function main() {
     // ---- 3. success receipt --------------------------------------------------------------------
     // eslint-disable-next-line no-console
     console.log(
-      `\nRELEASE_MIGRATION_GATE_PASS buildSha=${resolveBuildSha()} checks=${findings.length} hostVerified=true dbTarget=${dbTarget}`
+      `\nRELEASE_MIGRATION_GATE_PASS buildSha=${resolveBuildSha()} checks=${findings.length} hostVerified=true dbTarget=${dbTarget} dbIdentity=${formatDatabaseIdentity(migrationIdentity)}`
     );
   } finally {
     await pool.end();
