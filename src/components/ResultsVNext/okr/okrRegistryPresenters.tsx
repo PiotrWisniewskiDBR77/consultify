@@ -44,7 +44,9 @@ export function buildOkrSetColumns(isPolish: boolean): TableColumn[] {
       label: isPolish ? 'Zestaw OKR' : 'OKR set',
       width: '300px',
       sortable: true,
-      render: (row: OkrSetDto) => <span className="text-sm font-medium text-c-text">{row.title}</span>,
+      render: (row: OkrSetDto) => (
+        <span className="text-sm font-medium text-c-text">{row.title}</span>
+      ),
     },
     {
       id: 'status',
@@ -59,13 +61,19 @@ export function buildOkrSetColumns(isPolish: boolean): TableColumn[] {
         const lock = getOkrSetLockInfo(row.status);
         return (
           <div className="flex flex-wrap items-center gap-1.5">
-            <StatusChip label={okrSetStatusLabel(row.status, isPolish)} tone={OKR_SET_STATUS_TONE[row.status]} />
+            <StatusChip
+              label={okrSetStatusLabel(row.status, isPolish)}
+              tone={OKR_SET_STATUS_TONE[row.status]}
+            />
             {lock ? (
               // Icon-only lock signal in the narrow table cell, full reason
               // still available via `title` tooltip — same TRIADA §C3
               // "honest reason available, not necessarily full chrome at
               // every density" precedent as `roiRegistryPresenters.tsx`.
-              <span className="inline-flex shrink-0" title={isPolish ? lock.reason.pl : lock.reason.en}>
+              <span
+                className="inline-flex shrink-0"
+                title={isPolish ? lock.reason.pl : lock.reason.en}
+              >
                 <Lock
                   size={13}
                   className="shrink-0 text-c-text-muted"
@@ -82,7 +90,9 @@ export function buildOkrSetColumns(isPolish: boolean): TableColumn[] {
       label: isPolish ? 'Zasięg' : 'Scope',
       width: '150px',
       render: (row: OkrSetDto) => (
-        <span className="text-sm text-c-text-secondary">{okrSetScopeLabel(row.scopeType, isPolish)}</span>
+        <span className="text-sm text-c-text-secondary">
+          {okrSetScopeLabel(row.scopeType, isPolish)}
+        </span>
       ),
     },
     {
@@ -90,7 +100,10 @@ export function buildOkrSetColumns(isPolish: boolean): TableColumn[] {
       label: isPolish ? 'Właściciel' : 'Owner',
       width: '140px',
       render: (row: OkrSetDto) => (
-        <span className="block truncate text-sm text-c-text-secondary font-mono" title={row.ownerUserId}>
+        <span
+          className="block truncate text-sm text-c-text-secondary font-mono"
+          title={row.ownerUserId}
+        >
           {shortOkrId(row.ownerUserId)}
         </span>
       ),
@@ -108,7 +121,11 @@ export function buildOkrSetColumns(isPolish: boolean): TableColumn[] {
           // API data today (see `parseOkrProgress`'s own doc comment for the
           // full, code-cited explanation of why the wire never carries a
           // distinct `'not_calculable'` signal for this field).
-          format={(v) => <span className="tabular-nums text-sm text-c-text">{formatOkrProgressPercent(v, isPolish)}</span>}
+          format={(v) => (
+            <span className="tabular-nums text-sm text-c-text">
+              {formatOkrProgressPercent(v, isPolish)}
+            </span>
+          )}
         />
       ),
     },
@@ -131,12 +148,17 @@ export function buildOkrSetColumns(isPolish: boolean): TableColumn[] {
       label: isPolish ? 'Uwaga' : 'Attention',
       width: '130px',
       filterable: true,
-      filterOptions: (Object.keys(OKR_SET_ATTENTION_TONE) as OkrSetDto['attentionState'][]).map((s) => ({
-        value: s,
-        label: okrSetAttentionLabel(s, isPolish),
-      })),
+      filterOptions: (Object.keys(OKR_SET_ATTENTION_TONE) as OkrSetDto['attentionState'][]).map(
+        (s) => ({
+          value: s,
+          label: okrSetAttentionLabel(s, isPolish),
+        })
+      ),
       render: (row: OkrSetDto) => (
-        <StatusChip label={okrSetAttentionLabel(row.attentionState, isPolish)} tone={OKR_SET_ATTENTION_TONE[row.attentionState]} />
+        <StatusChip
+          label={okrSetAttentionLabel(row.attentionState, isPolish)}
+          tone={OKR_SET_ATTENTION_TONE[row.attentionState]}
+        />
       ),
     },
     {
@@ -145,7 +167,9 @@ export function buildOkrSetColumns(isPolish: boolean): TableColumn[] {
       width: '130px',
       sortable: true,
       render: (row: OkrSetDto) => (
-        <span className="text-sm text-c-text-muted tabular-nums">{formatOkrDate(row.updatedAt, isPolish)}</span>
+        <span className="text-sm text-c-text-muted tabular-nums">
+          {formatOkrDate(row.updatedAt, isPolish)}
+        </span>
       ),
     },
   ];
@@ -185,25 +209,23 @@ export function buildOkrSetRowMenu(
     onOpenWorkspace?: (row: OkrSetDto) => void;
   }
 ): StandardRowMenu {
-  const lock = getOkrSetLockInfo(row.status);
-  const lockReason = lock ? (isPolish ? lock.reason.pl : lock.reason.en) : undefined;
-
   return {
     primary: [
-      {
-        id: 'open',
-        label: isPolish ? 'Otwórz' : 'Open',
-        onClick: () => handlers.onPreview(row),
-      },
       ...(handlers.onOpenWorkspace
         ? [
             {
-              id: 'open-workspace',
-              label: isPolish ? 'Obszar roboczy OKR' : 'OKR workspace',
+              id: 'open',
+              label: isPolish ? 'Otwórz' : 'Open',
               onClick: () => handlers.onOpenWorkspace!(row),
             },
           ]
-        : []),
+        : [
+            {
+              id: 'open',
+              label: isPolish ? 'Otwórz' : 'Open',
+              onClick: () => handlers.onPreview(row),
+            },
+          ]),
       ...(handlers.onOpenObjectives
         ? [
             {
@@ -220,8 +242,6 @@ export function buildOkrSetRowMenu(
     statusTransitions: [],
     universalHandlers: {
       preview: () => handlers.onPreview(row),
-      editNote: lockReason,
-      archiveNote: lockReason,
     },
   };
 }
@@ -258,7 +278,10 @@ export function buildOkrSetPreview(row: OkrSetDto, deps: OkrSetPreviewDeps): Sta
       pills: [
         { label: okrSetStatusLabel(row.status, isPolish), tone: OKR_SET_STATUS_TONE[row.status] },
         { label: okrSetScopeLabel(row.scopeType, isPolish), tone: 'neutral' },
-        { label: okrSetAttentionLabel(row.attentionState, isPolish), tone: OKR_SET_ATTENTION_TONE[row.attentionState] },
+        {
+          label: okrSetAttentionLabel(row.attentionState, isPolish),
+          tone: OKR_SET_ATTENTION_TONE[row.attentionState],
+        },
       ],
       trailing: row.nextCheckinDueAt ? (
         <span className="text-[11px] font-semibold text-c-text-secondary">
@@ -285,14 +308,24 @@ export function buildOkrSetPreview(row: OkrSetDto, deps: OkrSetPreviewDeps): Sta
       propertyLabel: isPolish ? 'Właściwość' : 'Property',
       valueLabel: isPolish ? 'Wartość' : 'Value',
       properties: [
-        { id: 'owner', label: isPolish ? 'Właściciel' : 'Owner', value: row.ownerUserId, mono: true },
+        {
+          id: 'owner',
+          label: isPolish ? 'Właściciel' : 'Owner',
+          value: row.ownerUserId,
+          mono: true,
+        },
         {
           id: 'reviewer',
           label: isPolish ? 'Recenzent' : 'Reviewer',
           value: row.reviewerUserId ?? '—',
           mono: !!row.reviewerUserId,
         },
-        { id: 'program', label: isPolish ? 'Program' : 'Program', value: row.programId, mono: true },
+        {
+          id: 'program',
+          label: isPolish ? 'Program' : 'Program',
+          value: row.programId,
+          mono: true,
+        },
         { id: 'cycle', label: isPolish ? 'Cykl' : 'Cycle', value: row.cycleId, mono: true },
         {
           id: 'progress',
@@ -308,7 +341,9 @@ export function buildOkrSetPreview(row: OkrSetDto, deps: OkrSetPreviewDeps): Sta
         {
           id: 'confidence',
           label: isPolish ? 'Ogólna pewność' : 'Overall confidence',
-          value: row.overallConfidence ? okrSetConfidenceLabel(row.overallConfidence, isPolish) : '—',
+          value: row.overallConfidence
+            ? okrSetConfidenceLabel(row.overallConfidence, isPolish)
+            : '—',
         },
         {
           id: 'lastCheckin',
@@ -328,7 +363,9 @@ export function buildOkrSetPreview(row: OkrSetDto, deps: OkrSetPreviewDeps): Sta
       ],
     },
     ai: {
-      hints: isPolish ? ['Podsumuj zestaw', 'Zaproponuj następny krok'] : ['Summarize set', 'Suggest next step'],
+      hints: isPolish
+        ? ['Podsumuj zestaw', 'Zaproponuj następny krok']
+        : ['Summarize set', 'Suggest next step'],
       disabled: true,
       disabledTooltip: isPolish ? 'Wkrótce' : 'Coming soon',
     },
