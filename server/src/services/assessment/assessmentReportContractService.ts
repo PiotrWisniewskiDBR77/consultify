@@ -6,6 +6,7 @@ import {
   assessmentSkipReasonService,
   type AssessmentSkipReason,
 } from './assessmentSkipReasonService.js';
+import { composeAreaNarrative } from './assessmentNarrativeComposer.js';
 
 const AREA_MICROSTRUCTURE = [
   'stan_faktyczny',
@@ -95,7 +96,11 @@ function isSameCalendarDay(left: Date, right: Date): boolean {
   );
 }
 
-const PL_DATE = new Intl.DateTimeFormat('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' });
+const PL_DATE = new Intl.DateTimeFormat('pl-PL', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+});
 const PL_DATE_NO_YEAR = new Intl.DateTimeFormat('pl-PL', { day: 'numeric', month: 'long' });
 
 // The only two real anchors for "when was this assessment actually
@@ -315,25 +320,35 @@ export class AssessmentReportContractService {
         areaComments: axis.areas.map((area) => {
           const finding = findingByUnit.get(area.id);
           const skipInfo = areaSkipInfo(axis, area);
+          const evidenceState = finding
+            ? finding.supportingEvidence.length > 0
+              ? ('evidenced' as const)
+              : finding.confidence === 'low'
+                ? ('incomplete' as const)
+                : ('declared' as const)
+            : ('not_assessed' as const);
+          const narrative = composeAreaNarrative(finding ?? null, {
+            axisId: axis.id,
+            evidenceState,
+          });
           return {
             unitId: area.id,
-            content: null,
+            content: narrative?.text ?? null,
             minWords: 110,
             maxWords: 170,
             microstructure: AREA_MICROSTRUCTURE,
             skipped: skipInfo.skipped,
             skipCode: skipInfo.skipCode,
             skips: skipInfo.skips,
-            answerRefs: finding ? [finding.id] : [],
-            evidenceRefs: finding?.supportingEvidence.map((evidence) => evidence.evidenceId) ?? [],
-            sourceLocators: finding?.sourceLocators ?? [],
-            uncertainty: finding
-              ? finding.supportingEvidence.length > 0
-                ? 'evidenced'
-                : finding.confidence === 'low'
-                  ? 'incomplete'
-                  : 'declared'
-              : 'not_assessed',
+            answerRefs: narrative?.provenance.answerRefs ?? (finding ? [finding.id] : []),
+            evidenceRefs:
+              narrative?.provenance.evidenceRefs ??
+              finding?.supportingEvidence.map((evidence) => evidence.evidenceId) ??
+              [],
+            sourceLocators: narrative?.provenance.sourceLocators ?? finding?.sourceLocators ?? [],
+            sourceFields: narrative?.provenance.sourceFields ?? [],
+            narrativeKind: narrative?.kind ?? null,
+            uncertainty: evidenceState,
           };
         }),
         conclusion: {

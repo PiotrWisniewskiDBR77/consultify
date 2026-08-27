@@ -301,7 +301,13 @@ function chapterBlocks(
         : `${placeholder(comment.minWords, comment.maxWords).replace(/\.$/, '')}; wymagane: ${comment.microstructure
             .map((item) => MICROSTRUCTURE_PL[item as keyof typeof MICROSTRUCTURE_PL] ?? item)
             .join(', ')}.`;
-      blocks.push(paragraph(`${area.unitId}-comment`, commentText, DRD_DOCX_STYLE_IDS.CAPTION));
+      blocks.push(
+        paragraph(
+          `${area.unitId}-comment`,
+          commentText,
+          comment.content ? DRD_DOCX_STYLE_IDS.BODY : DRD_DOCX_STYLE_IDS.CAPTION
+        )
+      );
     }
   });
 
