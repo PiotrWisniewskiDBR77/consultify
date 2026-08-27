@@ -343,7 +343,12 @@ async function buildChartPngByBlockId(schema: DocumentSchema): Promise<Map<strin
       // Fail-soft per-blok: błąd rasteryzacji (np. brak natywnej binarki canvas)
       // NIE może położyć całego renderu dokumentu — slajd spada na placeholder.
       try {
-        const png = await renderChartBlockToPng(block);
+        const png = await renderChartBlockToPng(
+          block,
+          isDrdReportProfile(schema)
+            ? { width: 2100, height: 1212, fontFamily: 'Calibri', drdProfile: true }
+            : undefined
+        );
         if (png && png.length > 0) {
           out.set(block.blockId, png);
         }
@@ -1042,7 +1047,7 @@ function renderChartBlock(block: DocumentBlock, ctx: RenderContext): Paragraph[]
         children: [
           new ImageRun({
             data: chartImage,
-            transformation: { width: 640, height: 360 },
+            transformation: drdProfile ? { width: 606, height: 350 } : { width: 640, height: 360 },
             type: 'png',
           }),
         ],

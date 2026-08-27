@@ -177,7 +177,7 @@ function buildDatasets(
       data: series.values,
       borderColor: color,
       backgroundColor: isRadar
-        ? rgba(color, series.label === 'Poziom obecny' ? 0.17 : 0.1)
+        ? rgba(color, series.label.startsWith('Poziom obecny') ? 0.17 : 0.1)
         : isArea
           ? rgba(color, 0.24)
           : rgba(color, 0.75),
@@ -185,7 +185,7 @@ function buildDatasets(
       tension: isArea || content.kind === 'line' ? 0.28 : 0,
       pointRadius: isRadar ? 4 : content.kind === 'line' || isArea ? 2 : 0,
       pointHoverRadius: isRadar ? 5 : undefined,
-      borderWidth: isRadar ? (series.label === 'Poziom obecny' ? 3 : 2.5) : undefined,
+      borderWidth: isRadar ? (series.label.startsWith('Poziom obecny') ? 3 : 2.5) : undefined,
     };
   });
 }
@@ -196,7 +196,7 @@ function buildDatasets(
  */
 export async function renderChartBlockToPng(
   block: DocumentBlock,
-  options: { width?: number; height?: number } = {}
+  options: { width?: number; height?: number; fontFamily?: string; drdProfile?: boolean } = {}
 ): Promise<Buffer | null> {
   const CanvasCtor = await getChartCanvasCtor();
   if (!CanvasCtor) return null;
@@ -246,12 +246,12 @@ export async function renderChartBlockToPng(
           display: true,
           text: content.title,
           color: '#0F172A',
-          font: { size: 18, weight: 'bold' },
+          font: { size: 18, weight: 'bold', family: options.fontFamily },
         },
         legend: {
           display: datasets.length > 1,
           position: 'bottom',
-          labels: { color: '#0F172A' },
+          labels: { color: '#0F172A', font: { family: options.fontFamily } },
         },
       },
       scales:
@@ -263,10 +263,18 @@ export async function renderChartBlockToPng(
                   min: 0,
                   max: 100,
                   beginAtZero: true,
-                  ticks: { stepSize: 20, color: '#6B7280', backdropColor: 'transparent' },
-                  grid: { color: '#D6DFE8' },
-                  angleLines: { color: '#D6DFE8' },
-                  pointLabels: { color: '#1F2937', font: { size: 12 } },
+                  ticks: {
+                    stepSize: 20,
+                    color: '#6B7280',
+                    backdropColor: 'transparent',
+                    font: { family: options.fontFamily },
+                  },
+                  grid: { color: '#D6DFE8', lineWidth: options.drdProfile ? 1 : undefined },
+                  angleLines: { color: '#D6DFE8', lineWidth: options.drdProfile ? 1 : undefined },
+                  pointLabels: {
+                    color: '#1F2937',
+                    font: { size: 12, family: options.fontFamily },
+                  },
                 },
               }
             : {

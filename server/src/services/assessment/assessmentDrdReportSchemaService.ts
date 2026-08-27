@@ -254,17 +254,23 @@ export function buildAssessmentDrdReportSchema(contract: AssessmentReportContrac
     content: {
       kind: 'radar',
       title: 'Profil dojrzałości DRD',
-      categories: contract.chapters.map((chapter) => chapter.axisNamePL ?? chapter.axisName),
+      categories: contract.chapters.map((chapter) => {
+        const current = areaAverage(chapter.matrix.areas, 'currentLevel', chapter.maxLevel);
+        const target = areaAverage(chapter.matrix.areas, 'targetLevel', chapter.maxLevel);
+        return current === null || target === null
+          ? `${chapter.axisNamePL ?? chapter.axisName} · ${DRD_REPORT_FIXED_TEXT.notAssessed}`
+          : `${chapter.axisNamePL ?? chapter.axisName} · ${current}% → ${target}%`;
+      }),
       series: [
         {
-          label: 'Poziom obecny',
+          label: 'Poziom obecny · stan oceny',
           values: contract.chapters.map((chapter) =>
             areaAverage(chapter.matrix.areas, 'currentLevel', chapter.maxLevel)
           ),
           color: `#${DRD_REPORT_PALETTE.navy}`,
         },
         {
-          label: 'Poziom docelowy',
+          label: 'Poziom docelowy · horyzont docelowy',
           values: contract.chapters.map((chapter) =>
             areaAverage(chapter.matrix.areas, 'targetLevel', chapter.maxLevel)
           ),
