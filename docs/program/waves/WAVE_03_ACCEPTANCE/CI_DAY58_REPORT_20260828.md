@@ -44,7 +44,7 @@ Tip był równy markerowi; zakres `marker..tip` był pusty. Worktree: `/private/
 | pozycja | werdykt | commit SHA | dowód |
 | --- | --- | --- | --- |
 | §B.0 | ZROBIONE_WG_DoD | PENDING | §B.0 |
-| §B.1 | NIEROZPOCZĘTE | — | — |
+| §B.1 | ZROBIONE_WG_DoD | PENDING | §B.1 |
 | §A | NIEROZPOCZĘTE | — | — |
 | §C | NIEROZPOCZĘTE | — | — |
 | §D | NIEROZPOCZĘTE | — | — |
@@ -91,6 +91,57 @@ Warianty decyzji:
 `DECISION_REQUIRED`: czy właściciel wybiera jednorazowe pełne sformatowanie w szeregowanym oknie (W1), czy rozdzielenie joba z zapadką (W2)?
 
 Niezweryfikowane dla §B.0: nie uruchamiałem realnego runnera GitHuba (Z8); nie mierzyłem jeszcze, czy wynik lintu różni się na `origin/Londyn`.
+
+## §B.1 — inwentarz i klasyfikacja błędów TSC
+
+Komenda PRZED: `npm run type-check > .../tsc-PRZED.txt 2>&1`; wynik `exit=2`. Komenda inwentarza: `grep -E "^[^ ].*\\([0-9]+,[0-9]+\\): error TS" .../tsc-PRZED.txt`. Mianownik: 24 diagnostyki w 16 plikach.
+
+| plik | linie / kody | liczba | etykieta | wynik |
+| --- | --- | ---: | --- | --- |
+| `src/components/Audit/method/__tests__/AuditFindingsTab.test.tsx` | 96 TS2741 | 1 | NAPRAWIAM | dodano wymagane `reviewedAt: null` |
+| `src/components/Audit/method/workspace/v2/__tests__/CriterionWorkspaceV2.test.tsx` | 287 TS2740 | 1 | NAPRAWIAM | fikstura odzwierciedla pełny `WorkspaceFinding` |
+| `src/components/Execution/ExecutionHub.tsx` | 5932 TS2345 | 1 | NAPRAWIAM | lokalny alias `TFn` związano z `i18next.TFunction` |
+| `src/components/Execution/reports-intelligence/__tests__/reportsFlagOff.test.tsx` | 54,57,60,63 TS2554 | 4 | NAPRAWIAM | mocki jawnie przyjmują props |
+| `src/components/Initiatives/InitiativesHub.tsx` | 1243,2476,2540 TS2345 | 3 | NAPRAWIAM | chip ma wymagane pola; `TFn` = `TFunction` |
+| `src/components/Initiatives/__tests__/initiativeRegisterProjection.scope.test.ts` | 18,21,27,29 TS2345/TS2339 | 4 | NAPRAWIAM | zachowano generyczny typ wiersza, matcher przyjmuje minimalny kształt |
+| `src/components/Interview/InterviewHub.tsx` | 7523 TS2322 | 1 | NAPRAWIAM | jawny fallback statusu `UNKNOWN` |
+| `src/components/MyWork/IdeaMapWorkspace.tsx` | 4512 TS2322 | 1 | NAPRAWIAM | `state` zawężony do deklarowanego `NodeStatus` |
+| `src/components/MyWork/IdeaRecommendationMap.tsx` | 7365 TS2322 | 1 | NAPRAWIAM | brakujący seed mapowany na pusty tekst |
+| `src/components/ResultsVNext/ResultsSearchRegistry.tsx` | 174 TS2322 | 1 | NAPRAWIAM | akcja dostosowana do `StandardPreviewActions` |
+| `src/components/ResultsVNext/resultsSearchApi.ts` | 31 TS2558 | 1 | NAPRAWIAM | generyk usunięty z niegenerycznego `Api.get`; typ odpowiedzi przy granicy |
+| `src/components/navigation/Sidebar/__tests__/menuConfig.interview.test.ts` | 26 TS2538 | 1 | NAPRAWIAM | indeksowanie dopiero po sprawdzeniu `viewId` |
+| `src/routes/__tests__/interviewAliasRedirect.test.ts` | 21 TS2345 | 1 | NAPRAWIAM | callback tabelaryczny przyjmuje oba argumenty |
+| `src/services/api.ts` | 12613 TS2345 | 1 | PRZEKROJOWY | REKOMENDUJĘ, aktywne zmiany z ostatnich 5 dni |
+| `src/views/admin/AdminSettingsModule.tsx` | 500 TS2322 | 1 | REKOMENDUJĘ | teren dyżuru 53 |
+| `src/views/superadmin/__tests__/PlatformOperationsView.test.tsx` | 33 TS2345 | 1 | REKOMENDUJĘ | aktywne zmiany superadmin z 25–26.08 |
+
+Bilans: `NAPRAWIAM=21`, `REKOMENDUJĘ=2`, `PRZEKROJOWY=1`. PO: `npm run type-check > .../tsc-B1-PO.txt 2>&1` → `exit=2`; pozostały dokładnie trzy powyższe pliki i trzy diagnostyki. Żaden błąd z terenu 55/56/57 nie wystąpił.
+
+Regresja skupiona: `npx vitest run <6 zmienionych plików testowych> --retry=0 --reporter=verbose` → `exit=0`, `6 passed`, `27 passed`. Strażnik `npx tsx scripts/testing/skip-scan-gate.ts` → `exit=1`: zastany mianownik `skip=338`, `only=0`, blokuje 26 `.skip()` wyłącznie w `tests/unit/backend/aiSettingsService.test.ts`; żaden zmieniony plik nie występuje w znaleziskach.
+
+Gotowe rekomendacje nienałożone:
+
+Dyżur przekrojowy / właściciel `src/services/api.ts` — przed wywołaniem V8 wymagane jest zawężenie opcjonalnego `start`:
+
+```diff
+@@
+     try {
++      if (!body.start) throw new Error('CALENDAR_START_REQUIRED');
+       return await V8MyWorkApi.createCalendarEvent(body);
+```
+
+Dyżur 53 — `AdminSettingsModule.tsx`: zawęzić `resolvedLocation.screen` do unii obsługiwanej przez `AdminCommandCenterPanel` przed przekazaniem prop; nie rozszerzać typu panelu o wszystkie ekrany admina. Dokładny docelowy diff wymaga wyboru zachowania dla nieobsługiwanych ekranów przez właściciela dyżuru 53.
+
+Superadmin — uzupełnić nowo wymagane katalogi w fiksturze:
+
+```diff
+@@
+       users: [{ id: 'user-1', name: 'ada@example.com', status: 'active' }],
++      connectors: [],
++      virtualWorkers: [],
+```
+
+Niezweryfikowane dla §B.1: nie rozstrzygałem zachowania ekranu admin dla nieobsługiwanych `screen`; trzy rekomendowane zmiany nie zostały nałożone ani uruchomione.
 
 ## 9. DECISION_REQUIRED
 

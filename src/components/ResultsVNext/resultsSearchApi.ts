@@ -28,6 +28,6 @@ export async function searchResults(
 ): Promise<ResultsSearchResponse> {
   const params = new URLSearchParams({ q: query });
   if (cursor) params.set('cursor', cursor);
-  const response = await Api.get<ResultsSearchResponse>(`/vnext/results/search?${params}`);
-  return response.data;
+  const response = await Api.get(`/vnext/results/search?${params}`);
+  return response.data as ResultsSearchResponse;
 }

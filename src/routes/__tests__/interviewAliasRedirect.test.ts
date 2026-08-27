@@ -18,7 +18,7 @@ describe('Interview alias redirects (DEC-2026-08-24-01)', () => {
   it.each([
     ['ROUTES.DISCOVERY_CONSULTANT', ROUTES.DISCOVERY_CONSULTANT],
     ['ROUTES.PROJECT_INTELLIGENCE', ROUTES.PROJECT_INTELLIGENCE],
-  ])('redirects %s to ROUTES.INTERVIEW via RedirectWithTracking', (routeConstantName) => {
+  ])('redirects %s to ROUTES.INTERVIEW via RedirectWithTracking', (routeConstantName, _route) => {
     const routeIndex = source.indexOf(`path={${routeConstantName}}`);
     expect(routeIndex).toBeGreaterThan(-1);
     const routeSlice = source.slice(routeIndex, routeIndex + 400);

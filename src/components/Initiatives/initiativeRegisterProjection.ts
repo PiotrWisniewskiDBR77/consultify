@@ -101,7 +101,7 @@ export const selectInitiativeRegisterSource = <T>(
 
 /** Keep the visible register and its counters inside the selected canonical scope. */
 export const canonicalInitiativeMatchesRegisterFilters = (
-  initiative: Pick<PortfolioInitiative, 'projectId' | 'priority'>,
+  initiative: { projectId?: string | null; priority?: string | null },
   filters: CanonicalInitiativeRegisterFilters
 ) => {
   const requestedProjectId = String(filters.projectId || '').trim();
@@ -125,7 +125,7 @@ export const canonicalInitiativeMatchesRegisterFilters = (
 
 /** Apply the canonical register identity/scope filter once for rows and counters. */
 export const filterCanonicalInitiativeRegisterScope = <
-  T extends Pick<PortfolioInitiative, 'projectId' | 'priority'>,
+  T extends { projectId?: string | null; priority?: string | null },
 >(
   initiatives: T[],
   filters: CanonicalInitiativeRegisterFilters

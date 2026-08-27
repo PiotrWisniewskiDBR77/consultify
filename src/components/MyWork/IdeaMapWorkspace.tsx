@@ -95,7 +95,11 @@ import {
 import { IdeaExportMenu } from './IdeaExportMenu';
 import { IdeaGhostCards } from './IdeaGhostCards';
 import { ideaMapToMarkdown } from './ideaMapToMarkdown';
-import { type ExtendedNodeData, IdeaNodeDetailDrawer } from './IdeaNodeDetailDrawer';
+import {
+  type ExtendedNodeData,
+  IdeaNodeDetailDrawer,
+  type NodeStatus,
+} from './IdeaNodeDetailDrawer';
 import { IdeaProcessFlowTool } from './IdeaProcessFlowTool';
 import { IdeaProposalReview } from './IdeaProposalReview';
 import { IdeaRecommendationMap } from './IdeaRecommendationMap';
@@ -4511,7 +4515,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                     if (!selection.primaryId) throw new Error('NO_SELECTION');
                     const nativePatch: Partial<ExtendedNodeData> = {
                       ...(patch.label !== undefined ? { label: patch.label } : {}),
-                      ...(patch.state !== undefined ? { status: patch.state } : {}),
+                      ...(patch.state !== undefined ? { status: patch.state as NodeStatus } : {}),
                       ...(patch.priority !== undefined ? { priority: patch.priority } : {}),
                       ...(patch.description !== undefined
                         ? { description: patch.description }

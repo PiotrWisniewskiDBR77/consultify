@@ -23,7 +23,7 @@ describe('Sidebar menu Interview entry (DEC-2026-08-24-01)', () => {
     const menu = getMenuStructure(identityT as any);
     const interviewItem = menu.find((item) => item.id === 'INTERVIEW');
     expect(interviewItem).toBeDefined();
-    const route = APP_VIEW_TO_ROUTE[interviewItem!.viewId];
+    const route = interviewItem?.viewId ? APP_VIEW_TO_ROUTE[interviewItem.viewId] : undefined;
     expect(route).toBe(ROUTES.INTERVIEW);
     expect(route).toBe('/interview');
   });
