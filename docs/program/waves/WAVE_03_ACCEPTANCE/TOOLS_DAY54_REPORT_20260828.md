@@ -145,11 +145,19 @@ JSON sukcesu. Stan po (`PRZEBIEG` punktowy): brak helpera transakcyjnego i brak
 tabeli są mapowane na nazwany `503 TOOL_OUTPUT_PERSISTENCE_UNAVAILABLE`; zero
 `changes` z aktualizacji ledgera daje nazwany
 `409 PROMOTION_LEDGER_UPDATE_MISSED`. Pakiet mock-SQLite potwierdza pierwszą
-odmowę 11/11, ale dowody realdb i mutacyjne wszystkich trzech dróg są w toku.
+odmowę 11/11. Pakiet real-PG potwierdza happy path, trwały readback i brak tabeli
+7/7. Korekta: trzecia gałąź jest obecnie martwa — `canClaimUpfront` obejmuje
+`presentation`, `idea` oraz initiative z wyłączonym funnelem, a wszystkie te
+ścieżki zachowują `effectiveOutputId === outputId`; warunek aktualizacji nie
+może być spełniony. Zabezpieczenie `changes` dodano dla przyszłej zmiany tej
+inwarianty, ale nie nazywam go dowiedzionym runtime.
 
 ## ★★ ZDANIE O POŁYKU (§A.2 DoD)
 
-Nie można go jeszcze uczciwie wpisać — dowody realdb i mutacyjne są w toku.
+Nie mogę uczciwie wpisać zdania wymaganego przez instrukcję o „trzech drogach”.
+Dwie aktywne drogi są zamknięte (`503`, dowód mock-SQLite i real-PG); trzecia
+jest martwa przy obecnym zbiorze gałęzi i ma zabezpieczenie bez dowodu
+osiągalności. Dowody mutacyjne w obie strony pozostają niewykonane.
 
 ## ★★ PAKIET DECYZYJNY DLA WŁAŚCICIELA
 

@@ -243,6 +243,88 @@ describe.sequential('Day 40 tool value chain (real Postgres)', () => {
     expect(res.body.outputs).toEqual([]);
   });
 
+  it('refuses promotion when tool_outputs is unavailable instead of returning 200', async () => {
+    const sessionId = `${P}missing-table`;
+    const client = await db();
+    await client.query(
+      `INSERT INTO tool_sessions
+         (id, organization_id, tool_type, name, status, completion_percent,
+          confidence_avg, answers_json, created_by, updated_by, version, created_at, updated_at)
+       VALUES ($1,$2,'dynamic-swot',$3,'APPROVED',100,4,$4,$5,$5,1,NOW(),NOW())`,
+      [
+        sessionId,
+        ORG_A,
+        `${P}missing-table`,
+        JSON.stringify({
+          items: [
+            {
+              id: 's1',
+              text: 'Silny zespół',
+              quadrant: 'strengths',
+              impact: 'high',
+              proposalStatus: 'accepted',
+              evidenceStatus: 'confirmed',
+            },
+            {
+              id: 'o1',
+              text: 'Popyt DACH',
+              quadrant: 'opportunities',
+              impact: 'high',
+              proposalStatus: 'accepted',
+              evidenceStatus: 'confirmed',
+            },
+          ],
+          tensions: [
+            {
+              id: 't1',
+              title: 'Wzrost',
+              type: 'attack',
+              linkedItemIds: ['s1', 'o1'],
+              linkedCorrelationIds: [],
+              insight: 'Działać',
+            },
+          ],
+          recommendedMoves: [
+            {
+              id: 'm1',
+              title: 'Uruchomić pilota',
+              category: 'quick-win',
+              rationale: 'Popyt',
+              linkedTensionIds: ['t1'],
+              linkedItemIds: ['s1'],
+              expectedImpact: 'high',
+              estimatedEffort: 'medium',
+              firstStep: 'Klient',
+              ownerRole: 'Sprzedaż',
+              tradeoff: { chosen: 'Pilot', deferred: 'Produkt', cost: 'Czas' },
+              rejectedAlternative: { option: 'Partner', reason: 'Kontrola' },
+            },
+          ],
+        }),
+        ACTOR_A,
+      ]
+    );
+
+    try {
+      await client.query(`ALTER TABLE tool_outputs RENAME TO tool_outputs_day54_missing`);
+      const promoted = await request(app)
+        .post(`/api/tools/${sessionId}/promote`)
+        .set(as(ORG_A, ACTOR_A))
+        .send({ outputType: 'report', title: 'must fail closed' });
+      expect(promoted.status).toBe(503);
+      expect(promoted.body.code).toBe('TOOL_OUTPUT_PERSISTENCE_UNAVAILABLE');
+
+      const ledger = await client.query(
+        `SELECT COUNT(*)::int AS count FROM tool_initiative_links WHERE tool_session_id=$1`,
+        [sessionId]
+      );
+      expect(ledger.rows[0].count).toBe(0);
+    } finally {
+      await client.query(`ALTER TABLE tool_outputs_day54_missing RENAME TO tool_outputs`);
+      await client.end();
+    }
+  });
+
   it('exports the approved SWOT output as real OOXML', async () => {
     const res = await request(app)
       .get(`/api/tool-outputs/${swotOutputId}/report.docx`)
