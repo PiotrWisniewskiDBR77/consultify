@@ -11,6 +11,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import config from '../../../config/Config.js';
 import { v8FeatureGate } from '../../../middleware/v8FeatureGate.middleware.js';
 import initiativesRoutes from '../initiatives.routes.js';
+import executionControlRoutes from '../../executionControl.routes.js';
 import v8Router from '../../v8/index.js';
 
 const DATABASE_URL = process.env.DATABASE_URL || '';
@@ -104,6 +105,7 @@ describe.skipIf(!REAL_PG)('Day 31 canonical writer mounted contract', () => {
     app = express();
     app.use(express.json());
     app.use('/api/initiatives', initiativesRoutes);
+    app.use('/api/execution-control', executionControlRoutes);
     app.use('/api/v8', v8FeatureGate, v8Router);
   });
 
@@ -642,25 +644,35 @@ describe.skipIf(!REAL_PG)('Day 31 canonical writer mounted contract', () => {
         'execution_milestone',
         `milestone-achieved-${tag}`,
         2,
-        { executionCaseId: caseId, status: 'ACHIEVED' },
+        { executionCaseId: caseId, status: 'ACHIEVED', targetAt: '2026-08-26T12:00:00.000Z' },
       ],
       [
         'execution_milestone',
         `milestone-open-${tag}`,
         1,
-        { executionCaseId: caseId, status: 'OPEN' },
+        { executionCaseId: caseId, status: 'OPEN', targetAt: '2026-08-27T12:00:00.000Z' },
       ],
       [
         'intervention_case',
         `intervention-effective-${tag}`,
         5,
-        { initiativeId, projectId, verification: { outcome: 'EFFECTIVE' } },
+        {
+          initiativeId,
+          projectId,
+          verifyBy: '2026-08-26T12:00:00.000Z',
+          verification: { outcome: 'EFFECTIVE' },
+        },
       ],
       [
         'intervention_case',
         `intervention-partial-${tag}`,
         4,
-        { initiativeId, projectId, verification: { outcome: 'PARTIAL' } },
+        {
+          initiativeId,
+          projectId,
+          verifyBy: '2026-08-27T12:00:00.000Z',
+          verification: { outcome: 'PARTIAL' },
+        },
       ],
     ] as const;
     for (const [aggregateType, aggregateId, version, payload] of rows) {
@@ -719,6 +731,44 @@ describe.skipIf(!REAL_PG)('Day 31 canonical writer mounted contract', () => {
       sourceVersion: 0,
       scopeCompleteness: 'NO_POPULATION',
       valueClass: 'UNKNOWN',
+    });
+  });
+
+  it('selects KPI populations by their business due date, not row modification time', async () => {
+    const dueTaskId = `due-window-${randomUUID()}`;
+    const invalidTaskId = `invalid-window-${randomUUID()}`;
+    await client.query(
+      `INSERT INTO ie_aggregate_state
+        (organization_id,aggregate_type,aggregate_id,version,payload_json,updated_at)
+       VALUES($1,'execution_task',$2,1,$3::jsonb,'2040-01-01T00:00:00Z'),
+             ($1,'execution_task',$4,1,$5::jsonb,'2031-01-07T00:00:00Z')`,
+      [
+        organizationId,
+        dueTaskId,
+        JSON.stringify({
+          executionCaseId: 'none',
+          initiativeId,
+          dueAt: '2031-01-07T12:00:00Z',
+          status: 'OPEN',
+        }),
+        invalidTaskId,
+        JSON.stringify({
+          executionCaseId: 'none',
+          initiativeId,
+          dueAt: 'not-a-date',
+          status: 'OPEN',
+        }),
+      ]
+    );
+    const response = await request(app)
+      .get('/api/initiatives/runtime-v1/control-kpis?weekStart=2031-01-06')
+      .set(auth());
+    expect(response.status, JSON.stringify(response.body)).toBe(200);
+    expect(
+      response.body.families.find((family: any) => family.family === 'plan-delivery')
+    ).toMatchObject({
+      denominator: 1,
+      drillDown: { ids: [] },
     });
   });
 
@@ -810,6 +860,266 @@ describe.skipIf(!REAL_PG)('Day 31 canonical writer mounted contract', () => {
         [organizationId, command.aggregateType, command.id]
       );
       expect(readback.rows).toEqual([{ states: 1, audits: 1 }]);
+    }
+  });
+
+  it('updates every execution control aggregate from version one to version two', async () => {
+    const commands = [
+      {
+        aggregateType: 'execution_budget_entry',
+        id: `update-budget-${tag}`,
+        path: (id: string) =>
+          `/api/initiatives/runtime-v1/initiatives/${initiativeId}/budget-entries/${id}`,
+        initial: {
+          entryType: 'PLANNED',
+          costType: 'OPEX',
+          category: 'initial',
+          amount: 1,
+          currency: 'PLN',
+          description: null,
+          periodMonth: 8,
+          periodYear: 2026,
+          source: 'MANUAL',
+        },
+        changed: { category: 'changed' },
+        changedField: 'category',
+      },
+      {
+        aggregateType: 'execution_realization',
+        id: `update-realization-${tag}`,
+        path: (id: string) =>
+          `/api/initiatives/runtime-v1/initiatives/${initiativeId}/realizations/${id}`,
+        initial: {
+          periodMonth: '2026-08',
+          realizedRevenueDelta: 1,
+          realizedCostDelta: null,
+          realizedSavings: null,
+          varianceNotes: 'initial',
+        },
+        changed: { varianceNotes: 'changed' },
+        changedField: 'varianceNotes',
+      },
+      {
+        aggregateType: 'raid_mitigation',
+        id: `update-raid-${tag}`,
+        path: (id: string) =>
+          `/api/initiatives/runtime-v1/initiatives/${initiativeId}/raid-mitigations/${id}`,
+        initial: {
+          mitigationPlan: 'initial',
+          responseStrategy: 'MITIGATE',
+          mitigationOwnerId: userId,
+          mitigationDueDate: null,
+          mitigationStatus: 'PLANNED',
+        },
+        changed: { mitigationPlan: 'changed' },
+        changedField: 'mitigationPlan',
+      },
+      {
+        aggregateType: 'manager_execution_action',
+        id: `update-manager-${tag}`,
+        path: (id: string) =>
+          `/api/initiatives/runtime-v1/initiatives/${initiativeId}/manager-actions/${id}`,
+        initial: {
+          laneId: 'blocked',
+          problemId: `update-problem-${tag}`,
+          actionId: 'initial',
+          rationale: null,
+        },
+        changed: { actionId: 'changed' },
+        changedField: 'actionId',
+      },
+      {
+        aggregateType: 'manager_suggestion_review',
+        id: `update-suggestion-${tag}`,
+        path: (id: string) =>
+          `/api/initiatives/runtime-v1/initiatives/${initiativeId}/manager-suggestions/${id}/review`,
+        initial: { laneId: 'blocked', outcome: 'DEFER', notes: 'initial' },
+        changed: { notes: 'changed' },
+        changedField: 'notes',
+      },
+    ];
+
+    for (const command of commands) {
+      const created = await request(app)
+        .post(command.path(command.id))
+        .set(auth())
+        .send({
+          expectedVersion: 0,
+          clientRequestId: `update-create-${command.aggregateType}-${tag}`,
+          ...command.initial,
+        });
+      expect(created.status, JSON.stringify(created.body)).toBe(201);
+      const updated = await request(app)
+        .post(command.path(command.id))
+        .set(auth())
+        .send({
+          expectedVersion: 1,
+          clientRequestId: `update-change-${command.aggregateType}-${tag}`,
+          ...command.initial,
+          ...command.changed,
+        });
+      expect(updated.status, JSON.stringify(updated.body)).toBe(201);
+      const stale = await request(app)
+        .post(command.path(command.id))
+        .set(auth())
+        .send({
+          expectedVersion: 0,
+          clientRequestId: `update-stale-${command.aggregateType}-${tag}`,
+          ...command.initial,
+        });
+      expect(stale.status).toBe(409);
+      const invalid = await request(app)
+        .post(command.path(`${command.id}-invalid`))
+        .set(auth())
+        .send({
+          expectedVersion: -1,
+          clientRequestId: `update-invalid-${command.aggregateType}-${tag}`,
+          ...command.initial,
+        });
+      expect(invalid.status).toBe(400);
+      const readback = await client.query(
+        `SELECT version,payload_json FROM ie_aggregate_state
+          WHERE organization_id=$1 AND aggregate_type=$2 AND aggregate_id=$3`,
+        [organizationId, command.aggregateType, command.id]
+      );
+      expect(readback.rows[0].version).toBe(2);
+      expect(readback.rows[0].payload_json[command.changedField]).toBe('changed');
+    }
+  });
+
+  it('projects the canonical budget lifecycle into the legacy read surface', async () => {
+    const entryId = `budget-lifecycle-${randomUUID()}`;
+    const writePath = `/api/initiatives/runtime-v1/initiatives/${initiativeId}/budget-entries/${entryId}`;
+    const readPath = `/api/execution-control/budget/entries/${initiativeId}`;
+    const initial = {
+      expectedVersion: 0,
+      clientRequestId: `budget-lifecycle-create-${tag}`,
+      entryType: 'ACTUAL',
+      costType: 'OPEX',
+      category: 'lifecycle',
+      amount: 1,
+      currency: 'PLN',
+      description: null,
+      periodMonth: 8,
+      periodYear: 2026,
+      source: 'MANUAL',
+    };
+    expect((await request(app).post(writePath).set(auth()).send(initial)).status).toBe(201);
+    const createdRead = await request(app).get(readPath).set(auth());
+    expect(createdRead.status).toBe(200);
+    expect(createdRead.body.entries).toContainEqual(
+      expect.objectContaining({ id: entryId, amount: 1, origin: 'CANONICAL', version: 1 })
+    );
+
+    expect(
+      (
+        await request(app)
+          .post(writePath)
+          .set(auth())
+          .send({
+            ...initial,
+            expectedVersion: 1,
+            clientRequestId: `budget-lifecycle-update-${tag}`,
+            amount: 2,
+          })
+      ).status
+    ).toBe(201);
+    const updatedRead = await request(app).get(readPath).set(auth());
+    expect(updatedRead.body.entries).toContainEqual(
+      expect.objectContaining({ id: entryId, amount: 2, origin: 'CANONICAL', version: 2 })
+    );
+
+    const voided = await request(app)
+      .post(`${writePath}/void`)
+      .set(auth())
+      .send({ expectedVersion: 2, clientRequestId: `budget-lifecycle-void-${tag}` });
+    expect(voided.status).toBe(201);
+    const finalRead = await request(app).get(readPath).set(auth());
+    expect(finalRead.body.entries.map((entry: any) => entry.id)).not.toContain(entryId);
+    expect(
+      await client.query(
+        `SELECT version,payload_json->>'status' status FROM ie_aggregate_state
+          WHERE organization_id=$1 AND aggregate_type='execution_budget_entry' AND aggregate_id=$2`,
+        [organizationId, entryId]
+      )
+    ).toMatchObject({ rows: [{ version: 3, status: 'VOIDED' }] });
+  });
+
+  it('reads the four non-budget execution control writes through runtime projections', async () => {
+    const suffix = randomUUID();
+    const commands = [
+      {
+        id: `read-realization-${suffix}`,
+        write: (id: string) =>
+          `/api/initiatives/runtime-v1/initiatives/${initiativeId}/realizations/${id}`,
+        read: `/api/initiatives/runtime-v1/initiatives/${initiativeId}/realizations`,
+        idField: 'realizationId',
+        payload: {
+          periodMonth: '2026-08',
+          realizedRevenueDelta: 1,
+          realizedCostDelta: null,
+          realizedSavings: null,
+          varianceNotes: null,
+        },
+      },
+      {
+        id: `read-raid-${suffix}`,
+        write: (id: string) =>
+          `/api/initiatives/runtime-v1/initiatives/${initiativeId}/raid-mitigations/${id}`,
+        read: `/api/initiatives/runtime-v1/initiatives/${initiativeId}/raid-mitigations`,
+        idField: 'raidItemId',
+        payload: {
+          mitigationPlan: 'Read projection',
+          responseStrategy: 'MITIGATE',
+          mitigationOwnerId: userId,
+          mitigationDueDate: null,
+          mitigationStatus: 'PLANNED',
+        },
+      },
+      {
+        id: `read-manager-${suffix}`,
+        write: (id: string) =>
+          `/api/initiatives/runtime-v1/initiatives/${initiativeId}/manager-actions/${id}`,
+        read: `/api/initiatives/runtime-v1/initiatives/${initiativeId}/manager-actions`,
+        idField: 'managerActionId',
+        payload: {
+          laneId: 'blocked',
+          problemId: `read-problem-${suffix}`,
+          actionId: 'read-action',
+          rationale: null,
+        },
+      },
+      {
+        id: `read-suggestion-${suffix}`,
+        write: (id: string) =>
+          `/api/initiatives/runtime-v1/initiatives/${initiativeId}/manager-suggestions/${id}/review`,
+        read: `/api/initiatives/runtime-v1/initiatives/${initiativeId}/manager-suggestion-reviews`,
+        idField: 'suggestionId',
+        payload: { laneId: 'blocked', outcome: 'DEFER', notes: null },
+      },
+    ];
+    for (const command of commands) {
+      const written = await request(app)
+        .post(command.write(command.id))
+        .set(auth())
+        .send({
+          expectedVersion: 0,
+          clientRequestId: `read-${command.id}`,
+          ...command.payload,
+        });
+      expect(written.status, JSON.stringify(written.body)).toBe(201);
+      const read = await request(app).get(command.read).set(auth());
+      expect(read.status, JSON.stringify(read.body)).toBe(200);
+      expect(read.body.items.map((item: any) => item[command.idField])).toContain(command.id);
+      const foreign = await request(app)
+        .get(command.read)
+        .set(auth())
+        .set({
+          Authorization: `Bearer ${foreignToken}`,
+          'X-Organization-Id': organizationId,
+        });
+      expect(foreign.status).toBe(200);
+      expect(foreign.body.items).toEqual([]);
     }
   });
 });

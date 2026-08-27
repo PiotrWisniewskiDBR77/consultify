@@ -49,8 +49,30 @@ export class OwnerIndependentKpiReader {
           AND execution_case.aggregate_id=item.payload_json->>'executionCaseId'
         WHERE item.organization_id=$1
           AND item.aggregate_type IN ('execution_task','execution_milestone','intervention_case')
-          AND item.updated_at >= $2::date
-          AND item.updated_at < $2::date + INTERVAL '7 days'`,
+          AND CASE item.aggregate_type
+                WHEN 'execution_task' THEN item.payload_json->>'dueAt'
+                WHEN 'execution_milestone' THEN item.payload_json->>'targetAt'
+                WHEN 'intervention_case' THEN COALESCE(
+                  item.payload_json->>'verifyBy',
+                  item.payload_json->>'slaAt'
+                )
+              END ~ '^\\d{4}-\\d{2}-\\d{2}'
+          AND (CASE item.aggregate_type
+                 WHEN 'execution_task' THEN item.payload_json->>'dueAt'
+                 WHEN 'execution_milestone' THEN item.payload_json->>'targetAt'
+                 WHEN 'intervention_case' THEN COALESCE(
+                   item.payload_json->>'verifyBy',
+                   item.payload_json->>'slaAt'
+                 )
+               END)::timestamptz >= $2::date
+          AND (CASE item.aggregate_type
+                 WHEN 'execution_task' THEN item.payload_json->>'dueAt'
+                 WHEN 'execution_milestone' THEN item.payload_json->>'targetAt'
+                 WHEN 'intervention_case' THEN COALESCE(
+                   item.payload_json->>'verifyBy',
+                   item.payload_json->>'slaAt'
+                 )
+               END)::timestamptz < $2::date + INTERVAL '7 days'`,
       [organizationId, weekStart]
     );
     const dependencies = await this.pool.query<{

@@ -456,6 +456,45 @@ class PostgresMaterialCommandTransaction implements MaterialCommandTransaction {
     requireSingleRow(result, 'source proposal read-back');
   }
 
+  async upsertExecutionControlKpiPolicy(input: {
+    organizationId: string;
+    policyId: string;
+    name: string;
+    parameters: Record<string, unknown>;
+    expectedRowVersion: number;
+    nextRowVersion: number;
+  }): Promise<'INSERTED' | 'UPDATED' | 'CONFLICT'> {
+    const inserted = await this.client.query(
+      `INSERT INTO execution_control_kpi_policies
+         (organization_id, policy_id, name, parameters, row_version)
+       VALUES ($1, $2, $3, $4::jsonb, $5)
+       ON CONFLICT (organization_id, policy_id) DO NOTHING`,
+      [
+        input.organizationId,
+        input.policyId,
+        input.name,
+        JSON.stringify(input.parameters),
+        input.nextRowVersion,
+      ]
+    );
+    if (inserted.rowCount === 1) return 'INSERTED';
+
+    const updated = await this.client.query(
+      `UPDATE execution_control_kpi_policies
+          SET name = $1, parameters = $2::jsonb, row_version = $3, updated_at = NOW()
+        WHERE organization_id = $4 AND policy_id = $5 AND row_version = $6`,
+      [
+        input.name,
+        JSON.stringify(input.parameters),
+        input.nextRowVersion,
+        input.organizationId,
+        input.policyId,
+        input.expectedRowVersion,
+      ]
+    );
+    return updated.rowCount === 1 ? 'UPDATED' : 'CONFLICT';
+  }
+
   async markSourceProposalDisposition(
     organizationId: string,
     proposalId: string,
