@@ -405,6 +405,19 @@
         "--strictPort"
       ],
       "port": 4530
+    },
+    {
+      "name": "results-day46b-20260828",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "3354",
+        "--strictPort"
+      ],
+      "port": 3354
     }
   ]
 }

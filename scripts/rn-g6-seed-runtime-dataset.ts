@@ -12,14 +12,13 @@
  *  - refuses to run unless DATABASE_URL points at localhost AND
  *    NODE_ENV=test/CI/VITEST (assertNoLocalDatabaseOutsideTests)
  *  - refuses to run unless SEED_CONFIRM=YES_SEED_RN_G6_LOCAL is set
- *  - is NOT idempotent by default: re-running without --wipe will hit unique
- *    constraints. Pass --wipe to delete prior rows for the two seed org ids
- *    first (scoped delete, not a truncate).
+ *  - is idempotent: every run first replaces rows belonging to the two
+ *    dedicated seed organizations only (scoped delete, never a truncate).
  *
  * Usage:
  *   DATABASE_URL=postgresql://postgres@127.0.0.1:55821/rn_g6_runtime \
  *   NODE_ENV=test SEED_CONFIRM=YES_SEED_RN_G6_LOCAL \
- *   npx tsx scripts/rn-g6-seed-runtime-dataset.ts --wipe
+ *   npx tsx scripts/rn-g6-seed-runtime-dataset.ts
  */
 import { Pool } from 'pg';
 import bcrypt from 'bcryptjs';
@@ -60,19 +59,15 @@ async function main() {
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) throw new Error('DATABASE_URL is required.');
 
-  const wipe = process.argv.includes('--wipe');
-
   const pool = new Pool({ connectionString: databaseUrl });
   const client = await pool.connect();
 
   try {
     await client.query('BEGIN');
 
-    if (wipe) {
-      console.log('--wipe: deleting prior RN-G6 seed rows for', ORG_A, ORG_B);
-      await wipeOrg(client, ORG_A);
-      await wipeOrg(client, ORG_B);
-    }
+    console.log('Replacing prior RN-G6 seed rows for', ORG_A, ORG_B);
+    await wipeOrg(client, ORG_A);
+    await wipeOrg(client, ORG_B);
 
     console.log('Seeding organizations + users...');
     await seedOrgsAndUsers(client);
@@ -143,7 +138,13 @@ async function main() {
     );
 
     console.log('Seeding Teresa proposal (org A)...');
-    const teresaProposal = await seedTeresaProposal(client, ORG_A, USER_A, kpiA.kpi1, kpiA.deviationCase1);
+    const teresaProposal = await seedTeresaProposal(
+      client,
+      ORG_A,
+      USER_A,
+      kpiA.kpi1,
+      kpiA.deviationCase1
+    );
 
     // Platform visibility rows — WITHOUT these, every list/detail read on
     // KPI/ROI/OKR-set goes through `buildVisibilityScopedCte`
@@ -191,12 +192,48 @@ async function main() {
     const summary = {
       organizations: [ORG_A, ORG_B],
       users: [
-        { id: USER_A, email: `${USER_A}@consultify.local`, org: ORG_A, dbRole: 'ADMIN', concept: 'menedzer/manager' },
-        { id: USER_A_OWNER, email: `${USER_A_OWNER}@consultify.local`, org: ORG_A, dbRole: 'OWNER', concept: 'wlasciciel/owner' },
-        { id: USER_A_CONTRIBUTOR, email: `${USER_A_CONTRIBUTOR}@consultify.local`, org: ORG_A, dbRole: 'MEMBER', concept: 'wspoltworca/contributor' },
-        { id: USER_A_REVIEWER, email: `${USER_A_REVIEWER}@consultify.local`, org: ORG_A, dbRole: 'CONSULTANT', concept: 'recenzent-zatwierdzajacy/reviewer' },
-        { id: USER_A_OUTSIDER, email: `${USER_A_OUTSIDER}@consultify.local`, org: ORG_A, dbRole: 'GUEST', concept: 'obcy-ograniczony-dostep/outsider' },
-        { id: USER_B, email: `${USER_B}@consultify.local`, org: ORG_B, dbRole: 'ADMIN', concept: 'org-B admin (tenant isolation)' },
+        {
+          id: USER_A,
+          email: `${USER_A}@consultify.local`,
+          org: ORG_A,
+          dbRole: 'ADMIN',
+          concept: 'menedzer/manager',
+        },
+        {
+          id: USER_A_OWNER,
+          email: `${USER_A_OWNER}@consultify.local`,
+          org: ORG_A,
+          dbRole: 'OWNER',
+          concept: 'wlasciciel/owner',
+        },
+        {
+          id: USER_A_CONTRIBUTOR,
+          email: `${USER_A_CONTRIBUTOR}@consultify.local`,
+          org: ORG_A,
+          dbRole: 'MEMBER',
+          concept: 'wspoltworca/contributor',
+        },
+        {
+          id: USER_A_REVIEWER,
+          email: `${USER_A_REVIEWER}@consultify.local`,
+          org: ORG_A,
+          dbRole: 'CONSULTANT',
+          concept: 'recenzent-zatwierdzajacy/reviewer',
+        },
+        {
+          id: USER_A_OUTSIDER,
+          email: `${USER_A_OUTSIDER}@consultify.local`,
+          org: ORG_A,
+          dbRole: 'GUEST',
+          concept: 'obcy-ograniczony-dostep/outsider',
+        },
+        {
+          id: USER_B,
+          email: `${USER_B}@consultify.local`,
+          org: ORG_B,
+          dbRole: 'ADMIN',
+          concept: 'org-B admin (tenant isolation)',
+        },
       ],
       password: TEST_PASSWORD,
       initiatives,
@@ -360,8 +397,18 @@ async function seedOrgsAndUsers(client: any) {
     membershipRole: string;
   }> = [
     { id: USER_A_OWNER, firstName: 'Zofia', lastName: 'Baran-Sikorska', membershipRole: 'OWNER' },
-    { id: USER_A_CONTRIBUTOR, firstName: 'Grzegorz', lastName: 'Lewandowski', membershipRole: 'MEMBER' },
-    { id: USER_A_REVIEWER, firstName: 'Katarzyna', lastName: 'Wisniewska', membershipRole: 'CONSULTANT' },
+    {
+      id: USER_A_CONTRIBUTOR,
+      firstName: 'Grzegorz',
+      lastName: 'Lewandowski',
+      membershipRole: 'MEMBER',
+    },
+    {
+      id: USER_A_REVIEWER,
+      firstName: 'Katarzyna',
+      lastName: 'Wisniewska',
+      membershipRole: 'CONSULTANT',
+    },
     { id: USER_A_OUTSIDER, firstName: 'Tomasz', lastName: 'Kaczmarek', membershipRole: 'GUEST' },
   ];
   for (const u of extraRoleUsers) {
@@ -525,7 +572,13 @@ async function seedKpiDomain(
        (action_id, deviation_case_id, organization_id, title, owner_user_id, due_date, status, expected_effect, created_by)
      VALUES ($1,$2,$3,$4,$5, now() + interval '14 days', 'active',
              'Odzyskanie 60% odchylenia do końca Q3 poprzez renegocjację kontraktu serwisowego.', $5)`,
-    [uid(orgId, 'act1'), dev1, orgId, 'Renegocjacja kontraktu serwisowego z dostawcą części zamiennych', userId]
+    [
+      uid(orgId, 'act1'),
+      dev1,
+      orgId,
+      'Renegocjacja kontraktu serwisowego z dostawcą części zamiennych',
+      userId,
+    ]
   );
   ids.deviationCase1 = dev1;
 
@@ -863,7 +916,13 @@ async function seedRoiDomain(
   await client.query(
     `INSERT INTO rvn_roi_cases (case_id, organization_id, initiative_id, title, owner_user_id, status, currency, granularity, analysis_start, analysis_end, created_by)
      VALUES ($1,$2,$3,$4,$5,'modeling','PLN','monthly','2026-07-01','2028-06-30',$5)`,
-    [case1, orgId, initiativeId, 'Predykcyjne utrzymanie ruchu — budowa uzasadnienia biznesowego', userId]
+    [
+      case1,
+      orgId,
+      initiativeId,
+      'Predykcyjne utrzymanie ruchu — budowa uzasadnienia biznesowego',
+      userId,
+    ]
   );
   await client.query(
     `INSERT INTO rvn_roi_assumptions (assumption_id, case_id, organization_id, category, label, unit, base_value, downside_value, upside_value, confidence, owner_user_id, created_by)
@@ -898,7 +957,13 @@ async function seedRoiDomain(
   await client.query(
     `INSERT INTO rvn_roi_cases (case_id, organization_id, initiative_id, title, owner_user_id, status, currency, granularity, analysis_start, analysis_end, submitted_by, submitted_at, approved_by, approved_at, created_by)
      VALUES ($1,$2,$3,$4,$5,'approved','PLN','monthly','2026-04-01','2028-03-31',$5, now() - interval '30 days', $5, now() - interval '20 days', $5)`,
-    [case2, orgId, initiativeId2 ?? initiativeId, 'Cyfryzacja łańcucha dostaw — decyzja inwestycyjna zatwierdzona przez zarząd', userId]
+    [
+      case2,
+      orgId,
+      initiativeId2 ?? initiativeId,
+      'Cyfryzacja łańcucha dostaw — decyzja inwestycyjna zatwierdzona przez zarząd',
+      userId,
+    ]
   );
   await client.query(
     `INSERT INTO rvn_roi_cost_lines (cost_line_id, case_id, organization_id, category, label, amount, currency, timing_type, one_time_period_date, confidence, owner_user_id, created_by)
@@ -928,7 +993,10 @@ async function seedRoiDomain(
       userId,
     ]
   );
-  await client.query(`UPDATE rvn_roi_cases SET decision_calculation_run_id = $1 WHERE case_id = $2`, [run2, case2]);
+  await client.query(
+    `UPDATE rvn_roi_cases SET decision_calculation_run_id = $1 WHERE case_id = $2`,
+    [run2, case2]
+  );
   const snap2 = uid(orgId, 'roi2-snap1');
   await client.query(
     `INSERT INTO rvn_roi_approval_snapshots (snapshot_id, case_id, organization_id, sequence_number, decision_calculation_run_id, approved_by, content_hash, snapshot_payload)
@@ -948,7 +1016,13 @@ async function seedRoiDomain(
     await client.query(
       `INSERT INTO rvn_roi_cases (case_id, organization_id, initiative_id, title, owner_user_id, status, currency, granularity, analysis_start, analysis_end, approved_by, approved_at, created_by)
        VALUES ($1,$2,$3,$4,$5,'tracking','PLN','monthly','2025-10-01','2027-09-30',$5, now() - interval '200 days', $5)`,
-      [case3, orgId, initiativeId3 ?? initiativeId, 'Automatyzacja procesów zakupowych — realizacja wartości w toku', userId]
+      [
+        case3,
+        orgId,
+        initiativeId3 ?? initiativeId,
+        'Automatyzacja procesów zakupowych — realizacja wartości w toku',
+        userId,
+      ]
     );
     const cl3 = uid(orgId, 'roi3-c1');
     await client.query(
@@ -972,7 +1046,10 @@ async function seedRoiDomain(
        VALUES ($1,$2,$3,1,'2026-06-30',$4, 3100000.00, 612000.00, -0.6753, -2488000.00, 2, 24, 8.3, 0, 0, '[]'::jsonb)`,
       [actSnap3, case3, orgId, userId]
     );
-    await client.query(`UPDATE rvn_roi_cases SET current_actual_snapshot_id = $1 WHERE case_id = $2`, [actSnap3, case3]);
+    await client.query(
+      `UPDATE rvn_roi_cases SET current_actual_snapshot_id = $1 WHERE case_id = $2`,
+      [actSnap3, case3]
+    );
     await client.query(
       `INSERT INTO rvn_roi_actual_entries (actual_entry_id, case_id, organization_id, entry_type, cost_line_id, period_start, period_end, amount, currency, data_quality_status, source, recorded_by)
        VALUES ($1,$2,$3,'cost',$4,'2025-11-01','2025-11-30', 3100000.00,'PLN','verified','finance_import',$5)`,
@@ -997,7 +1074,13 @@ async function seedRoiDomain(
     await client.query(
       `INSERT INTO rvn_roi_cases (case_id, organization_id, initiative_id, title, owner_user_id, status, currency, granularity, analysis_start, analysis_end, approved_by, approved_at, created_by)
        VALUES ($1,$2,$3,$4,$5,'post_investment_review','PLN','monthly','2024-01-01','2025-12-31',$5, now() - interval '700 days', $5)`,
-      [case4, orgId, initiativeId4 ?? initiativeId, 'Robotyzacja pakowania — przegląd po wdrożeniu (PIR) zamknięty', userId]
+      [
+        case4,
+        orgId,
+        initiativeId4 ?? initiativeId,
+        'Robotyzacja pakowania — przegląd po wdrożeniu (PIR) zamknięty',
+        userId,
+      ]
     );
     await client.query(
       `INSERT INTO rvn_roi_post_investment_reviews
@@ -1045,7 +1128,13 @@ async function seedRoiExtraScenarios(
   await client.query(
     `INSERT INTO rvn_roi_cases (case_id, organization_id, initiative_id, title, owner_user_id, status, currency, granularity, analysis_start, analysis_end, submitted_by, submitted_at, created_by)
      VALUES ($1,$2,$3,$4,$5,'changes_requested','PLN','monthly','2026-08-01','2028-07-31',$5, now() - interval '3 days', $5)`,
-    [case5, orgId, errorInitiativeId, 'Migracja platformy analitycznej do chmury — model odrzucony przez silnik obliczeniowy', userId]
+    [
+      case5,
+      orgId,
+      errorInitiativeId,
+      'Migracja platformy analitycznej do chmury — model odrzucony przez silnik obliczeniowy',
+      userId,
+    ]
   );
   await client.query(
     `INSERT INTO rvn_roi_cost_lines (cost_line_id, case_id, organization_id, category, label, amount, currency, timing_type, one_time_period_date, confidence, owner_user_id, created_by)
@@ -1088,7 +1177,13 @@ async function seedRoiExtraScenarios(
   await client.query(
     `INSERT INTO rvn_roi_cases (case_id, organization_id, initiative_id, title, owner_user_id, status, currency, granularity, analysis_start, analysis_end, approved_by, approved_at, created_by)
      VALUES ($1,$2,$3,$4,$5,'closed','PLN','monthly','2023-01-01','2024-12-31',$5, now() - interval '900 days', $5)`,
-    [case6, orgId, lockedInitiativeId, 'Wdrożenie starego systemu raportowania — sprawa zamknięta, tylko odczyt', userId]
+    [
+      case6,
+      orgId,
+      lockedInitiativeId,
+      'Wdrożenie starego systemu raportowania — sprawa zamknięta, tylko odczyt',
+      userId,
+    ]
   );
   ids.case6LockedClosed = case6;
 
@@ -1113,10 +1208,10 @@ async function seedOkrDomain(client: any, orgId: string, userId: string, depth: 
      VALUES ($1,$2,$3,1,$4::jsonb,$5)`,
     [policy, program, orgId, JSON.stringify({ seed: true, scoringModel: 'zero_to_one' }), userId]
   );
-  await client.query(`UPDATE okr_vnext_programs SET active_policy_version_id = $1 WHERE program_id = $2`, [
-    policy,
-    program,
-  ]);
+  await client.query(
+    `UPDATE okr_vnext_programs SET active_policy_version_id = $1 WHERE program_id = $2`,
+    [policy, program]
+  );
 
   if (depth === 'light') {
     // Org B stays program-only (draft, never activated) — an honest
@@ -1456,7 +1551,7 @@ async function seedOpenOrgVisibility(
 
 function uid(orgId: string, tag: string): string {
   // Deterministic, readable, valid-format UUIDs so docs can reference exact
-  // seeded ids across re-runs with --wipe. Not cryptographically derived —
+  // seeded ids across re-runs. Not cryptographically derived —
   // just a stable hash-free encoding for local seed data only.
   const base = `${orgId}-${tag}`;
   let h1 = 0,
