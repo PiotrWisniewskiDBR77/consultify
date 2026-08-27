@@ -8,6 +8,7 @@ import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { ApiGateway } from '../../../server/src/Gateway.js';
+import { assertDay42Preconditions, restoreDay42FixtureColumns } from './day42SchemaResilience.js';
 
 const DATABASE_URL = String(process.env.DATABASE_URL || '');
 const RUN =
@@ -36,6 +37,18 @@ const NO_RETRY = { retry: 0 } as const;
 describeReal('Day 42 Partner envelope fidelity (D.5) through the real ApiGateway', NO_RETRY, () => {
   let sql: Client;
   let app: Express;
+
+  /**
+   * FIX-7: this file flips a PROCESS-WIDE env flag, and the original teardown
+   * left `ENABLE_V8_GLOBAL='true'` behind for every file that ran afterwards in
+   * the same worker. Capture the entry value and put it back exactly, including
+   * the "was not set at all" case.
+   */
+  const originalEnableV8Global = process.env.ENABLE_V8_GLOBAL;
+  const restoreEnableV8Global = () => {
+    if (originalEnableV8Global === undefined) delete process.env.ENABLE_V8_GLOBAL;
+    else process.env.ENABLE_V8_GLOBAL = originalEnableV8Global;
+  };
   const prefix = `day42fid_${randomUUID().replaceAll('-', '')}`;
   const orgA = randomUUID();
   const ownerA = randomUUID();
@@ -59,6 +72,9 @@ describeReal('Day 42 Partner envelope fidelity (D.5) through the real ApiGateway
     if (target.rows[0]?.name !== 'cx_day42') {
       throw new Error(`DAY42_REFUSING_DATABASE:${target.rows[0]?.name || 'unknown'}`);
     }
+    // FIX-7: survive destructive neighbours in a whole-directory run.
+    await assertDay42Preconditions(sql);
+    await restoreDay42FixtureColumns(sql);
 
     await sql.query(
       `INSERT INTO organizations (id, name, plan, status) VALUES ($1, $2, 'enterprise', 'active')`,
@@ -91,19 +107,22 @@ describeReal('Day 42 Partner envelope fidelity (D.5) through the real ApiGateway
   });
 
   afterAll(async () => {
+    restoreEnableV8Global();
     if (!sql) return;
-    await sql.query('DELETE FROM partner_campaign_links WHERE partner_org_id = $1', [partnerA]);
-    await sql.query('DELETE FROM partner_program_ledger WHERE partner_org_id = $1::text', [
+    await sql.query('DELETE FROM partner_campaign_links WHERE partner_org_id::text = $1', [
       partnerA,
     ]);
-    await sql.query('DELETE FROM partner_program_runtime WHERE partner_org_id = $1::text', [
+    await sql.query('DELETE FROM partner_program_ledger WHERE partner_org_id::text = $1', [
       partnerA,
     ]);
-    await sql.query('DELETE FROM partner_users WHERE user_id = $1', [ownerA]);
-    await sql.query('DELETE FROM partner_organizations WHERE id = $1', [partnerA]);
+    await sql.query('DELETE FROM partner_program_runtime WHERE partner_org_id::text = $1', [
+      partnerA,
+    ]);
+    await sql.query('DELETE FROM partner_users WHERE user_id::text = $1', [ownerA]);
+    await sql.query('DELETE FROM partner_organizations WHERE id::text = $1', [partnerA]);
     await sql.query('DELETE FROM organization_members WHERE id LIKE $1', [`${prefix}%`]);
-    await sql.query('DELETE FROM users WHERE id = $1', [ownerA]);
-    await sql.query('DELETE FROM organizations WHERE id = $1', [orgA]);
+    await sql.query('DELETE FROM users WHERE id::text = $1', [ownerA]);
+    await sql.query('DELETE FROM organizations WHERE id::text = $1', [orgA]);
     await sql.end();
   });
 

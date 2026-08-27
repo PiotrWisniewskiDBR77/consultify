@@ -8,6 +8,7 @@ import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { ApiGateway } from '../../../server/src/Gateway.js';
+import { assertDay42Preconditions, restoreDay42FixtureColumns } from './day42SchemaResilience.js';
 
 const DATABASE_URL = String(process.env.DATABASE_URL || '');
 const RUN =
@@ -31,6 +32,18 @@ describeReal(
   () => {
     let sql: Client;
     let app: Express;
+
+    /**
+     * FIX-7: this file flips a PROCESS-WIDE env flag, and the original teardown
+     * left `ENABLE_V8_GLOBAL='true'` behind for every file that ran afterwards in
+     * the same worker. Capture the entry value and put it back exactly, including
+     * the "was not set at all" case.
+     */
+    const originalEnableV8Global = process.env.ENABLE_V8_GLOBAL;
+    const restoreEnableV8Global = () => {
+      if (originalEnableV8Global === undefined) delete process.env.ENABLE_V8_GLOBAL;
+      else process.env.ENABLE_V8_GLOBAL = originalEnableV8Global;
+    };
     const prefix = `day42_${randomUUID().replaceAll('-', '')}`;
     const orgA = `${prefix}_org_a`;
     const orgB = `${prefix}_org_b`;
@@ -58,6 +71,9 @@ describeReal(
       if (target.rows[0]?.name !== 'cx_day42') {
         throw new Error(`DAY42_REFUSING_DATABASE:${target.rows[0]?.name || 'unknown'}`);
       }
+      // FIX-7: survive destructive neighbours in a whole-directory run.
+      await assertDay42Preconditions(sql);
+      await restoreDay42FixtureColumns(sql);
 
       await sql.query(
         `INSERT INTO organizations (id, name, plan, status)
@@ -98,27 +114,31 @@ describeReal(
     });
 
     afterAll(async () => {
-      process.env.ENABLE_V8_GLOBAL = 'true';
+      restoreEnableV8Global();
       if (!sql) return;
-      await sql.query('DELETE FROM partner_campaign_links WHERE partner_org_id = ANY($1::uuid[])', [
-        [partnerA, partnerB],
-      ]);
-      await sql.query('DELETE FROM partner_program_ledger WHERE partner_org_id = ANY($1::text[])', [
-        [partnerA, partnerB],
-      ]);
       await sql.query(
-        'DELETE FROM partner_program_runtime WHERE partner_org_id = ANY($1::text[])',
+        'DELETE FROM partner_campaign_links WHERE partner_org_id::text = ANY($1::text[])',
         [[partnerA, partnerB]]
       );
-      await sql.query('DELETE FROM partner_users WHERE user_id = ANY($1::uuid[])', [
+      await sql.query(
+        'DELETE FROM partner_program_ledger WHERE partner_org_id::text = ANY($1::text[])',
+        [[partnerA, partnerB]]
+      );
+      await sql.query(
+        'DELETE FROM partner_program_runtime WHERE partner_org_id::text = ANY($1::text[])',
+        [[partnerA, partnerB]]
+      );
+      await sql.query('DELETE FROM partner_users WHERE user_id::text = ANY($1::text[])', [
         [unboundUser, boundUser],
       ]);
-      await sql.query('DELETE FROM partner_organizations WHERE id = ANY($1::uuid[])', [
+      await sql.query('DELETE FROM partner_organizations WHERE id::text = ANY($1::text[])', [
         [partnerA, partnerB],
       ]);
       await sql.query('DELETE FROM organization_members WHERE id LIKE $1', [`${prefix}%`]);
-      await sql.query('DELETE FROM users WHERE id = ANY($1::text[])', [[unboundUser, boundUser]]);
-      await sql.query('DELETE FROM organizations WHERE id = ANY($1::text[])', [[orgA, orgB]]);
+      await sql.query('DELETE FROM users WHERE id::text = ANY($1::text[])', [
+        [unboundUser, boundUser],
+      ]);
+      await sql.query('DELETE FROM organizations WHERE id::text = ANY($1::text[])', [[orgA, orgB]]);
       await sql.end();
     });
 
@@ -163,7 +183,7 @@ describeReal(
     it('rejects a foreign tenant header and leaves both partner organizations unchanged', async () => {
       process.env.ENABLE_V8_GLOBAL = 'true';
       const before = await sql.query(
-        'SELECT id, name, updated_at FROM partner_organizations WHERE id = ANY($1::uuid[]) ORDER BY id',
+        'SELECT id, name, updated_at FROM partner_organizations WHERE id::text = ANY($1::text[]) ORDER BY id',
         [[partnerA, partnerB]]
       );
       const response = await request(app)
@@ -180,7 +200,7 @@ describeReal(
       });
       expect(JSON.stringify(response.body)).not.toContain('Partner B');
       const after = await sql.query(
-        'SELECT id, name, updated_at FROM partner_organizations WHERE id = ANY($1::uuid[]) ORDER BY id',
+        'SELECT id, name, updated_at FROM partner_organizations WHERE id::text = ANY($1::text[]) ORDER BY id',
         [[partnerA, partnerB]]
       );
       expect(after.rows).toEqual(before.rows);
