@@ -322,7 +322,7 @@ ZASIĘG CZĘŚCIOWY na tym etapie; pomiar HEAD nastąpi po ostatnim commicie. NI
 
 ## STOP-y (jeśli były)
 
-Brak STOP-u.
+**STOP po wiążącym punkcie kontrolnym kroku 8.** Dokument ma `71/95` gniazd wypełnionych i `24/95` pustych, czyli `25,26%` gniazd pozostaje rusztowaniem. Te pustki są uczciwe i wyjaśnione: 16 komentarzy dotyczy obszarów bez findingu, a 8 komórek horyzontu nie ma źródła w `method_findings` ani w kontrakcie Outputu. Ramka licencji §1.7 została ponownie sprawdzona: dozwala pracę nad kompozytorem i treścią kontraktu, ale Z16 zabrania zastępowania `UNKNOWN`/`null` treścią zmyśloną. Zgodnie z punktem kontrolnym nie rozpocząłem A.5 ani późniejszych inwentarzy.
 
 ## ★★ TWIERDZENIA NIEZWERYFIKOWANE
 
@@ -331,7 +331,8 @@ Brak STOP-u.
 - Nie oceniono jeszcze jakości przyszłej treści demonstracyjnej przez właściciela ani nadzorcę.
 - Nie wykonano jeszcze pomiaru końcowego HEAD.
 - Zrzuty D.1 potwierdzają osiągalność i zachowanie powierzchni, ale nie są dowodem bieżącej odpowiedzi realnego serwera — lokalne XHR były kontrolowane, aby dochować zakazu zajmowania portu 3001.
+- Nie zweryfikowano, czy nadzorca uznaje 24 uczciwe pustki za akceptowalne domknięcie dokumentu; punkt kontrolny wymaga jego decyzji przed A.5.
 
 ## Rekomendacje dla nadzorcy
 
-Wykonać punkt kontrolny po kroku 8; dopiero jego werdykt rozstrzyga, czy wolno rozpocząć A.5.
+Nadzorca powinien rozstrzygnąć jedno z dwóch: zaakceptować `71/95` jako uczciwe domknięcie przy braku danych źródłowych albo dostarczyć autoryzowane źródło dla 16 nieocenionych obszarów i 8 horyzontów. Do tego czasu nie rozpoczynać A.5.
