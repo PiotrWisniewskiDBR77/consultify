@@ -6,10 +6,17 @@ import { Client } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 const DATABASE_URL = process.env.DATABASE_URL || '';
+// ★ TRZECI ZAMEK, dzialajacy NIEZALEZNIE od tests/setup.ts (Z20 — tego pliku nie dotykamy
+// z tej pozycji). tests/setup.ts:386-388 PODMIENIA brak/pusty DATABASE_URL na ten adres,
+// wiec warunek `startsWith('postgres')` sam z siebie jest ZAWSZE prawdziwy i niczego nie
+// chroni. Odrzucamy wiec wstrzyknieta wartosc wartownicza wprost: port 5432 na tej maszynie
+// nasluchuje i NIE jest baza tego dyzuru.
+const SETUP_INJECTED_FALLBACK_URL = 'postgresql://iris:iris_test@localhost:5432/iris_test';
 const REAL_PG =
   process.env.RUN_DB_TESTS === '1' &&
   process.env.MOCK_DB === 'false' &&
-  DATABASE_URL.startsWith('postgres');
+  DATABASE_URL.startsWith('postgres') &&
+  DATABASE_URL !== SETUP_INJECTED_FALLBACK_URL;
 
 describe.skipIf(!REAL_PG)('declared goal perspective migration', () => {
   const organizationId = `day33-perspective-${randomUUID()}`;
