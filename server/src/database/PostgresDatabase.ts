@@ -10,6 +10,11 @@ import { Client, Pool, type PoolClient, type PoolConfig, type QueryResultRow } f
 
 import databaseConfig from '../config/DatabaseConfig.js';
 import { resolveDbTargetLabel } from '../config/dbTargetLabel.js';
+import {
+  emitDatabaseIdentity,
+  parseDatabaseIdentityFromUrl,
+  type DatabaseIdentity,
+} from '../config/databaseIdentity.js';
 import logger from '../utils/Logger.js';
 import { recordQueryPerformance } from '../utils/queryHelpers.js';
 import { getConflictTarget, resolveConflictTargetSql } from './conflictTargets.js';
@@ -461,6 +466,26 @@ function getPool(): Pool {
       max: effectiveConfig?.max,
       dbTarget: resolveDbTargetLabel(process.env),
     });
+
+    // DEC-2026-08-28-165 recurrence check, half 2 of 2.
+    //
+    // The line above goes through winston, whose level defaults to `warn`
+    // outside development (server/src/utils/Logger.ts:29-39), so in production
+    // it is not emitted at all and the operator has nothing to compare. The
+    // line below is derived from the pool configuration this process is really
+    // about to open — not from any declared label — and is printed with
+    // console.log so no LOG_LEVEL can suppress it. It carries host, port and
+    // database name only: never the user, never the password.
+    const appIdentity: DatabaseIdentity | null = effectiveConfig?.host
+      ? {
+          host: String(effectiveConfig.host).toLowerCase(),
+          port: Number(effectiveConfig.port ?? 5432),
+          database: String(effectiveConfig.database ?? ''),
+          source: 'app:pool-config',
+        }
+      : parseDatabaseIdentityFromUrl(process.env.DATABASE_URL, 'app:DATABASE_URL');
+    emitDatabaseIdentity('app', appIdentity);
+
     pool = new Pool(effectiveConfig);
 
     pool.on('error', (err: Error, _client: PoolClient) => {
