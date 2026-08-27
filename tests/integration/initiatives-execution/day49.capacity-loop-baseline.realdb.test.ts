@@ -108,7 +108,24 @@ describe('Day 49 A.1 capacity loop baseline through the real ApiGateway', NO_RET
           windowUnit: 'WEEK',
           timezone: 'Europe/Warsaw',
           periods: [{ periodId: '2026-W35', start: '2026-08-24', end: '2026-08-31' }],
-          memberships: [{ initiativeId: `initiative-${suffix}`, initiativeVersion: 1 }],
+          windows: [
+            {
+              initiativeId: `initiative-${suffix}`,
+              initiativeVersion: 1,
+              earliest: '2026-08-24',
+              target: '2026-08-27',
+              latest: '2026-08-31',
+              confidence: 'HIGH',
+              rationale: 'Okno z opublikowanego planu',
+              dependencySnapshot: [],
+              constraintSnapshot: [],
+            },
+          ],
+          assumptions: [],
+          createdBy: userId,
+          updatedBy: userId,
+          publishedBy: userId,
+          publishedAt: '2026-08-28T00:00:00.000Z',
         }),
         capacityId,
         JSON.stringify({
@@ -119,8 +136,63 @@ describe('Day 49 A.1 capacity loop baseline through the real ApiGateway', NO_RET
           planScenarioVersion: 4,
           windowUnit: 'WEEK',
           timezone: 'Europe/Warsaw',
-          periods: [{ periodId: '2026-W35', start: '2026-08-24', end: '2026-08-31' }],
-          commitments: [],
+          periods: [
+            {
+              periodId: '2026-W35',
+              start: '2026-08-24',
+              end: '2026-08-31',
+              demand: {
+                knowledgeState: 'KNOWN',
+                low: 8,
+                base: 8,
+                high: 8,
+                sourceRef: 'demand-ledger',
+                sourceVersion: 1,
+                asOf: '2026-08-28T00:00:00.000Z',
+                confidence: 'HIGH',
+                ownerId: userId,
+                reason: null,
+              },
+              supply: {
+                knowledgeState: 'KNOWN',
+                low: 4,
+                base: 4,
+                high: 4,
+                sourceRef: 'capacity-ledger',
+                sourceVersion: 1,
+                asOf: '2026-08-28T00:00:00.000Z',
+                confidence: 'HIGH',
+                ownerId: userId,
+                reason: null,
+              },
+            },
+          ],
+          constraints: [],
+          proposedAssignments: [
+            {
+              assignmentId: `assignment-${suffix}`,
+              initiativeId: `initiative-${suffix}`,
+              resourceOrRoleId: `team-${suffix}`,
+              periodIds: ['2026-W35'],
+              demand: {
+                knowledgeState: 'KNOWN',
+                low: 8,
+                base: 8,
+                high: 8,
+                sourceRef: 'demand-ledger',
+                sourceVersion: 1,
+                asOf: '2026-08-28T00:00:00.000Z',
+                confidence: 'HIGH',
+                ownerId: userId,
+                reason: null,
+              },
+              rationale: 'Przypisanie opublikowanego scenariusza',
+            },
+          ],
+          createdBy: userId,
+          updatedBy: userId,
+          publishedBy: userId,
+          publishedAt: '2026-08-28T00:00:00.000Z',
         }),
       ]
     );
@@ -210,6 +282,113 @@ describe('Day 49 A.1 capacity loop baseline through the real ApiGateway', NO_RET
       .set('x-org-context', foreignOrganizationId)
       .send({ ...command([]), organizationId: foreignOrganizationId });
     expect(response.status).not.toBe(200);
+    const after = await sql.query(
+      `SELECT count(*)::int AS count FROM ie_aggregate_state WHERE organization_id=$1`,
+      [foreignOrganizationId]
+    );
+    expect(after.rows).toEqual(before.rows);
+  });
+
+  it('proposes and persists the canonical three through the advisor route', async () => {
+    const comparisonId = `advisor-${suffix}`;
+    const proposed = await request(app)
+      .post(`/api/initiatives/runtime-v1/capacity-options/${comparisonId}/propose`)
+      .set(auth)
+      .send({
+        expectedVersion: 0,
+        clientRequestId: randomUUID(),
+        planRef: { scenarioId: planId, version: 4 },
+        capacityRef: { scenarioId: capacityId, version: 3 },
+      });
+    expect(proposed.status, JSON.stringify(proposed.body)).toBe(200);
+    const independent = new Client({ connectionString: databaseUrl });
+    await independent.connect();
+    const stored = await independent.query(
+      `SELECT payload_json FROM ie_aggregate_state
+       WHERE organization_id=$1 AND aggregate_type='capacity_options' AND aggregate_id=$2`,
+      [organizationId, comparisonId]
+    );
+    await independent.end();
+    expect(stored.rows[0].payload_json.options).toHaveLength(3);
+    const reloaded = await request(app)
+      .get('/api/initiatives/runtime-v1/capacity-options')
+      .set(auth);
+    expect(
+      reloaded.body.items.some(
+        (item: { comparisonId: string }) => item.comparisonId === comparisonId
+      )
+    ).toBe(true);
+  });
+
+  it('returns a truthful 409 when there is no capacity pressure', async () => {
+    await sql.query(
+      `UPDATE ie_aggregate_state
+       SET payload_json=jsonb_set(payload_json,'{periods,0,demand,base}','4'::jsonb)
+       WHERE organization_id=$1 AND aggregate_type='capacity_scenario' AND aggregate_id=$2`,
+      [organizationId, capacityId]
+    );
+    const response = await request(app)
+      .post(`/api/initiatives/runtime-v1/capacity-options/no-pressure-${suffix}/propose`)
+      .set(auth)
+      .send({
+        expectedVersion: 0,
+        clientRequestId: randomUUID(),
+        planRef: { scenarioId: planId, version: 4 },
+        capacityRef: { scenarioId: capacityId, version: 3 },
+      });
+    expect(response.status).toBe(409);
+    expect(response.body).toEqual({ error: { code: 'NO_CAPACITY_PRESSURE_TO_RESOLVE' } });
+    await sql.query(
+      `UPDATE ie_aggregate_state
+       SET payload_json=jsonb_set(payload_json,'{periods,0,demand,base}','8'::jsonb)
+       WHERE organization_id=$1 AND aggregate_type='capacity_scenario' AND aggregate_id=$2`,
+      [organizationId, capacityId]
+    );
+  });
+
+  it('rejects unlinked scenario references', async () => {
+    const response = await request(app)
+      .post(`/api/initiatives/runtime-v1/capacity-options/unlinked-${suffix}/propose`)
+      .set(auth)
+      .send({
+        expectedVersion: 0,
+        clientRequestId: randomUUID(),
+        planRef: { scenarioId: planId, version: 999 },
+        capacityRef: { scenarioId: capacityId, version: 3 },
+      });
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: { code: 'EXACT_PUBLISHED_SCENARIOS_REQUIRED' } });
+  });
+
+  it('rejects an unauthenticated advisor command', async () => {
+    const response = await request(app)
+      .post(`/api/initiatives/runtime-v1/capacity-options/unauth-${suffix}/propose`)
+      .send({
+        expectedVersion: 0,
+        clientRequestId: randomUUID(),
+        planRef: { scenarioId: planId, version: 4 },
+        capacityRef: { scenarioId: capacityId, version: 3 },
+      });
+    expect(response.status).toBe(401);
+  });
+
+  it('cannot use foreign organization hints to write advisor output', async () => {
+    const before = await sql.query(
+      `SELECT count(*)::int AS count FROM ie_aggregate_state WHERE organization_id=$1`,
+      [foreignOrganizationId]
+    );
+    const response = await request(app)
+      .post(`/api/initiatives/runtime-v1/capacity-options/foreign-advisor-${suffix}/propose`)
+      .set(auth)
+      .set('x-org-context', foreignOrganizationId)
+      .send({
+        organizationId: foreignOrganizationId,
+        expectedVersion: 0,
+        clientRequestId: randomUUID(),
+        planRef: { scenarioId: planId, version: 4 },
+        capacityRef: { scenarioId: capacityId, version: 3 },
+      });
+    expect(response.status).toBe(200);
     const after = await sql.query(
       `SELECT count(*)::int AS count FROM ie_aggregate_state WHERE organization_id=$1`,
       [foreignOrganizationId]

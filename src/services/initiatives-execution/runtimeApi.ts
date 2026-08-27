@@ -1712,3 +1712,7 @@ export function getMyGateSignoffs() {
 export function listGateQuorums() {
   return allocationRequest('/gate-quorums', 'GET');
 }
+
+export function proposeCapacityOptions(id: string, command: unknown) {
+  return allocationRequest(`/capacity-options/${encodeURIComponent(id)}/propose`, 'POST', command);
+}
