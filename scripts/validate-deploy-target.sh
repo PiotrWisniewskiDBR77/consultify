@@ -16,10 +16,18 @@ fail() {
   exit 1
 }
 
+# Railway-generated environment domains are currently crossed: the demo
+# environment also uses stage.consultinity.ai. Remove that alias only after the
+# supervisor completes the E0 domain uncrossing.
 case "$environment" in
   staging)
     expected_refs="refs/heads/develop refs/heads/staging"
     expected_environment="staging"
+    allowed_hosts="staging.consultify.ai"
+    ;;
+  demo)
+    expected_refs="refs/heads/demo"
+    expected_environment="demo"
     allowed_hosts="demo.consultify.ai stage.consultinity.ai"
     ;;
   production)
@@ -28,7 +36,7 @@ case "$environment" in
     allowed_hosts="consultify.ai www.consultify.ai"
     ;;
   *)
-    fail "unknown DEPLOY_ENVIRONMENT '$environment' (expected staging or production)"
+    fail "unknown DEPLOY_ENVIRONMENT '$environment' (expected staging, demo, or production)"
     ;;
 esac
 
