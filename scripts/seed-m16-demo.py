@@ -14,19 +14,50 @@ Skrypt sprawdza istnienie po prefiksie i pomija ponowne tworzenie (poza compute,
 
 Bezpieczeństwo: tylko demo.consultify.ai (caboose). NIE dotyka centerbeam/PROD.
 
+Wymagane zmienne środowiskowe (fail-closed, brak wartości domyślnych):
+  CONSULTIFY_BASE_URL       — np. https://demo.consultify.ai (NIGDY produkcja)
+  CONSULTIFY_SEED_EMAIL     — konto seedujące
+  CONSULTIFY_SEED_PASSWORD  — hasło do tego konta
+
 Output: na końcu drukuje JSON manifest wszystkich ID do /tmp/m16_seed_manifest.json
         (konsumowany przez skrypt testów Fazy 2).
 
-Użycie:  python3 scripts/seed-m16-demo.py
+Użycie:  CONSULTIFY_BASE_URL=https://demo.consultify.ai \\
+         CONSULTIFY_SEED_EMAIL=... CONSULTIFY_SEED_PASSWORD=... \\
+         python3 scripts/seed-m16-demo.py
 """
 import json
+import os
 import sys
 import time
 import urllib.request
 import urllib.error
 
-BASE = "https://demo.consultify.ai"
-LOGIN = {"email": "piotr.wisniewski@dbr77.com", "password": "123456"}
+
+def _require_env(name, hint):
+    """Fail-closed: refuse to start rather than fall back to a baked-in value.
+
+    Day-39 FIX-4. This file used to carry the owner's WORKING demo password in
+    plain text, and the credential guard had it on its allowlist, so the one
+    check that could have objected was told not to look.
+    """
+    value = os.environ.get(name, "").strip()
+    if not value:
+        print(f"[ODMOWA] Brak zmiennej srodowiskowej {name}. {hint}")
+        sys.exit(2)
+    return value
+
+
+# Target and credentials come from the environment, never from this file.
+# Defaulting BASE would put a remote host in the source; it has to be stated.
+BASE = _require_env(
+    "CONSULTIFY_BASE_URL",
+    "Ustaw np. CONSULTIFY_BASE_URL=https://demo.consultify.ai (nigdy produkcja).",
+).rstrip("/")
+LOGIN = {
+    "email": _require_env("CONSULTIFY_SEED_EMAIL", "Konto uzywane do seedowania danych M16."),
+    "password": _require_env("CONSULTIFY_SEED_PASSWORD", "Haslo do tego konta."),
+}
 UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
 
 SEED = "M16-SEED-"

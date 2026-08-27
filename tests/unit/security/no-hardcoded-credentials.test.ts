@@ -77,7 +77,8 @@ const REMOTE_DEFAULT =
   /(?:\|\||\?\?|:-|\.get\([^,]+,)\s*["'`](?:https:\/\/demo\.consultify\.ai|https:\/\/[^"'`]*\.railway\.app)/i;
 
 const ALLOWLIST: Record<string, string> = {
-  'scripts/seed-m16-demo.py': 'KOLIZJA_38 — naprawiane w dyżurze 38; 2026-08-28',
+  // 'scripts/seed-m16-demo.py' — usunięte z allowlisty w dyżurze 39 (FIX-4):
+  // hasło właściciela przeniesione do CONSULTIFY_SEED_PASSWORD, fail-closed.
   'server/scripts/seed-dbr77-data.js':
     'ZASTANE_POZA_INWENTARZEM_D39 — osobny pakiet naprawczy wymagany; 2026-08-28',
   'server/seed/seed_dbr77_full_demo.js':
