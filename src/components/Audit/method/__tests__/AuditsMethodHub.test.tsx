@@ -16,7 +16,8 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, fallback?: string | { defaultValue?: string }) => {
       if (typeof fallback === 'string') return fallback;
-      if (fallback && typeof fallback === 'object' && fallback.defaultValue) return fallback.defaultValue;
+      if (fallback && typeof fallback === 'object' && fallback.defaultValue)
+        return fallback.defaultValue;
       return key;
     },
     i18n: { language: 'en' },
@@ -26,7 +27,13 @@ vi.mock('react-i18next', () => ({
 
 vi.mock('react-hot-toast', () => {
   const fn = vi.fn();
-  return { default: Object.assign(fn, { success: vi.fn(), error: vi.fn(), loading: vi.fn(() => 'toast-id') }) };
+  return {
+    default: Object.assign(fn, {
+      success: vi.fn(),
+      error: vi.fn(),
+      loading: vi.fn(() => 'toast-id'),
+    }),
+  };
 });
 
 vi.mock('../auditsMethodApi', async () => {
@@ -158,18 +165,32 @@ function setupApiMocks() {
   mockedListReports.mockResolvedValue({ items: [], total: 0 });
   mockedListProposals.mockResolvedValue({ items: [], total: 0 });
   mockedGetProgram.mockResolvedValue({
-    ...programs[0], objective: null, scopeText: null, projectId: null, members: [],
+    ...programs[0],
+    objective: null,
+    scopeText: null,
+    projectId: null,
+    members: [],
   });
   mockedGetProgramCoverage.mockResolvedValue({
-    applicableCriteria: 10, concludedCriteria: 4, insufficientEvidenceCriteria: 1,
+    applicableCriteria: 10,
+    concludedCriteria: 4,
+    insufficientEvidenceCriteria: 1,
   });
   mockedGetProgramLifecycle.mockResolvedValue({ state: 'fieldwork', allowed: [] });
   mockedListProgramCriteria.mockResolvedValue([
     {
-      id: 'criterion-1', programId: 'prog-1', parentId: null, ordinal: 1,
-      refCode: 'INT-01', title: 'Customer complaint intake', applicable: true,
-      conformityStatus: 'not_tested', workStatus: 'open', evidenceCount: 2,
-      findingCount: 1, children: [],
+      id: 'criterion-1',
+      programId: 'prog-1',
+      parentId: null,
+      ordinal: 1,
+      refCode: 'INT-01',
+      title: 'Customer complaint intake',
+      applicable: true,
+      conformityStatus: 'not_tested',
+      workStatus: 'open',
+      evidenceCount: 2,
+      findingCount: 1,
+      children: [],
     },
   ]);
 }
@@ -223,7 +244,14 @@ describe('AuditsMethodHub', () => {
     expect(tabButtons).toHaveLength(6);
     // Order in the DOM must match the required Library·Sessions·Outputs·Reports·Findings·Initiatives order.
     const allTabs = screen.getAllByRole('tab').map((b) => b.textContent);
-    expect(allTabs).toEqual(['Library', 'Sessions', 'Outputs', 'Reports', 'Findings', 'Initiatives']);
+    expect(allTabs).toEqual([
+      'Library',
+      'Sessions',
+      'Outputs',
+      'Reports',
+      'Findings',
+      'Initiatives',
+    ]);
     // "Processes" must not leak anywhere as a tab label.
     expect(screen.queryByRole('tab', { name: 'Processes' })).toBeNull();
   });
@@ -332,7 +360,8 @@ describe('AuditsMethodHub', () => {
     setupApiMocks();
     renderHub(['/audit-programs/method?tab=outputs']);
     await waitFor(() => expect(screen.getByText('No Outputs yet')).toBeInTheDocument());
-    expect(screen.getByText(/created automatically when an audit program is finalized/i)).toBeInTheDocument();
+    expect(screen.getByText(/separate, explicit audit-program finalization/i)).toBeInTheDocument();
+    expect(screen.queryByText(/use “Finalize Output”/i)).not.toBeInTheDocument();
   });
 
   describe('Library — single-axis Menu 3 (DEC-2026-08-25-66)', () => {

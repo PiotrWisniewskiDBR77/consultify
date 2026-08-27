@@ -23,6 +23,7 @@ import {
 import type { ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
 import { ErrorState } from '@/components/shared/states';
 import { StatusChip } from '@/components/ui/primitives/chips';
+import { isAuditsReportChainEnabled } from '@/utils/auditsReportChainFlag';
 import { formatListDate } from '@/utils/listDateFormat';
 
 import { listOutputs, type AuditOutputSummary } from '../auditsMethodApi';
@@ -47,6 +48,7 @@ export const AuditOutputsTab: React.FC<AuditOutputsTabProps> = ({
   programNameById = EMPTY_MAP,
   userNameById = EMPTY_MAP,
 }) => {
+  const reportChainEnabled = isAuditsReportChainEnabled();
   const [items, setItems] = useState<AuditOutputSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -57,7 +59,11 @@ export const AuditOutputsTab: React.FC<AuditOutputsTabProps> = ({
     setError(null);
     listOutputs()
       .then((result) => setItems(result.items))
-      .catch((e: any) => setError(e?.message || (isPolish ? 'Nie udało się wczytać Outputów' : 'Failed to load Outputs')))
+      .catch((e: any) =>
+        setError(
+          e?.message || (isPolish ? 'Nie udało się wczytać Outputów' : 'Failed to load Outputs')
+        )
+      )
       .finally(() => setLoading(false));
   }, [isPolish]);
 
@@ -106,7 +112,9 @@ export const AuditOutputsTab: React.FC<AuditOutputsTabProps> = ({
       width: '160px',
       sortable: true,
       render: (row: AuditOutputSummary) => (
-        <span className="text-xs text-c-text-secondary tabular-nums">{formatListDate(row.finalizedAt)}</span>
+        <span className="text-xs text-c-text-secondary tabular-nums">
+          {formatListDate(row.finalizedAt)}
+        </span>
       ),
     },
     {
@@ -116,7 +124,9 @@ export const AuditOutputsTab: React.FC<AuditOutputsTabProps> = ({
       render: (row: AuditOutputSummary) => {
         const name = (row.finalizedBy && userNameById.get(row.finalizedBy)) || row.finalizedByName;
         return (
-          <span className="text-sm text-c-text truncate">{name || <span className="text-slate-400">—</span>}</span>
+          <span className="text-sm text-c-text truncate">
+            {name || <span className="text-slate-400">—</span>}
+          </span>
         );
       },
     },
@@ -158,7 +168,9 @@ export const AuditOutputsTab: React.FC<AuditOutputsTabProps> = ({
           id: 'finalizedBy',
           label: isPolish ? 'Kto' : 'By',
           value:
-            (selected.finalizedBy && userNameById.get(selected.finalizedBy)) || selected.finalizedByName || '—',
+            (selected.finalizedBy && userNameById.get(selected.finalizedBy)) ||
+            selected.finalizedByName ||
+            '—',
         },
         {
           id: 'status',
@@ -210,8 +222,12 @@ export const AuditOutputsTab: React.FC<AuditOutputsTabProps> = ({
             icon: Package,
             title: isPolish ? 'Brak Outputów' : 'No Outputs yet',
             description: isPolish
-              ? 'Output powstaje automatycznie przy finalizacji programu audytowego (zamknięcie etapu closure) — jest wtedy niezmienny i wersjonowany. Żaden program nie doszedł jeszcze do tego etapu.'
-              : 'An Output is created automatically when an audit program is finalized (closure stage) — it is then immutable and versioned. No program has reached that stage yet.',
+              ? reportChainEnabled
+                ? 'Output powstaje przez osobną, jawną finalizację programu audytowego. Otwórz sesję na zakładce Sesje i użyj „Sfinalizuj Output”.'
+                : 'Output powstaje przez osobną, jawną finalizację programu audytowego. W tej wersji interfejsu ta czynność nie jest dostępna z ekranu.'
+              : reportChainEnabled
+                ? 'An Output is created by a separate, explicit audit-program finalization. Open the session on Sessions and use “Finalize Output”.'
+                : 'An Output is created by a separate, explicit audit-program finalization. This action is not available from the screen in this interface version.',
           }}
         />
       </div>

@@ -30,6 +30,7 @@ import type { ArtifactPropertyRow } from '@/components/standard/ArtifactProperti
 import { ErrorState } from '@/components/shared/states';
 import { StatusChip } from '@/components/ui/primitives/chips';
 import { isAuditsFindingsAndReportViewEnabled } from '@/utils/auditsFindingsAndReportViewFlag';
+import { isAuditsReportChainEnabled } from '@/utils/auditsReportChainFlag';
 import { formatListDate } from '@/utils/listDateFormat';
 
 import { reportStatusLabel, reportStatusTone } from '../auditStatusTones';
@@ -63,6 +64,7 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
   isPolish,
   programNameById = EMPTY_MAP,
 }) => {
+  const reportChainEnabled = isAuditsReportChainEnabled();
   const navigate = useNavigate();
   const [items, setItems] = useState<AuditReportSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -76,7 +78,11 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
     setError(null);
     listReports()
       .then((result) => setItems(result.items))
-      .catch((e: any) => setError(e?.message || (isPolish ? 'Nie udało się wczytać raportów' : 'Failed to load reports')))
+      .catch((e: any) =>
+        setError(
+          e?.message || (isPolish ? 'Nie udało się wczytać raportów' : 'Failed to load reports')
+        )
+      )
       .finally(() => setLoading(false));
   }, [isPolish]);
 
@@ -98,7 +104,9 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
       } catch (e: any) {
         setTransitionError(
           e?.message ||
-            (isPolish ? 'Nie udało się zmienić statusu raportu' : 'Failed to change the report status')
+            (isPolish
+              ? 'Nie udało się zmienić statusu raportu'
+              : 'Failed to change the report status')
         );
       } finally {
         setTransitioning(null);
@@ -126,7 +134,11 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
       width: '170px',
       render: (row: AuditReportSummary) => {
         const entry = REPORT_KIND_LABEL[row.reportKind];
-        return <span className="text-xs text-c-text-secondary">{entry ? (isPolish ? entry.pl : entry.en) : row.reportKind}</span>;
+        return (
+          <span className="text-xs text-c-text-secondary">
+            {entry ? (isPolish ? entry.pl : entry.en) : row.reportKind}
+          </span>
+        );
       },
     },
     { id: 'version', label: isPolish ? 'Wersja' : 'Version', width: '90px' },
@@ -140,7 +152,10 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
         label: reportStatusLabel(value, isPolish),
       })),
       render: (row: AuditReportSummary) => (
-        <StatusChip label={reportStatusLabel(row.status, isPolish)} tone={reportStatusTone(row.status)} />
+        <StatusChip
+          label={reportStatusLabel(row.status, isPolish)}
+          tone={reportStatusTone(row.status)}
+        />
       ),
     },
     {
@@ -156,7 +171,9 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
       label: isPolish ? 'Odbiorca' : 'Audience',
       width: '140px',
       render: (row: AuditReportSummary) => (
-        <span className="text-xs text-c-text-secondary truncate block max-w-[130px]">{row.audience || '—'}</span>
+        <span className="text-xs text-c-text-secondary truncate block max-w-[130px]">
+          {row.audience || '—'}
+        </span>
       ),
     },
     {
@@ -175,7 +192,9 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
       width: '150px',
       sortable: true,
       render: (row: AuditReportSummary) => (
-        <span className="text-xs text-c-text-secondary tabular-nums">{formatListDate(row.publishedAt)}</span>
+        <span className="text-xs text-c-text-secondary tabular-nums">
+          {formatListDate(row.publishedAt)}
+        </span>
       ),
     },
     {
@@ -184,7 +203,9 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
       width: '140px',
       sortable: true,
       render: (row: AuditReportSummary) => (
-        <span className="text-xs text-c-text-secondary tabular-nums">{formatListDate(row.updatedAt)}</span>
+        <span className="text-xs text-c-text-secondary tabular-nums">
+          {formatListDate(row.updatedAt)}
+        </span>
       ),
     },
   ];
@@ -254,19 +275,42 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
           label: isPolish ? 'Rodzaj' : 'Kind',
           value:
             (REPORT_KIND_LABEL[selected.reportKind] &&
-              (isPolish ? REPORT_KIND_LABEL[selected.reportKind].pl : REPORT_KIND_LABEL[selected.reportKind].en)) ||
+              (isPolish
+                ? REPORT_KIND_LABEL[selected.reportKind].pl
+                : REPORT_KIND_LABEL[selected.reportKind].en)) ||
             selected.reportKind,
         },
-        { id: 'version', label: isPolish ? 'Wersja' : 'Version', value: String(selected.version), mono: true },
-        { id: 'language', label: isPolish ? 'Język' : 'Language', value: selected.language?.toUpperCase() || '—' },
-        { id: 'audience', label: isPolish ? 'Odbiorca' : 'Audience', value: selected.audience || '—' },
+        {
+          id: 'version',
+          label: isPolish ? 'Wersja' : 'Version',
+          value: String(selected.version),
+          mono: true,
+        },
+        {
+          id: 'language',
+          label: isPolish ? 'Język' : 'Language',
+          value: selected.language?.toUpperCase() || '—',
+        },
+        {
+          id: 'audience',
+          label: isPolish ? 'Odbiorca' : 'Audience',
+          value: selected.audience || '—',
+        },
         {
           id: 'confidentiality',
           label: isPolish ? 'Poufność' : 'Confidentiality',
           value: selected.confidentiality || '—',
         },
-        { id: 'approvedAt', label: isPolish ? 'Data zatwierdzenia' : 'Approved at', value: formatListDate(selected.approvedAt) },
-        { id: 'publishedAt', label: isPolish ? 'Data publikacji' : 'Published at', value: formatListDate(selected.publishedAt) },
+        {
+          id: 'approvedAt',
+          label: isPolish ? 'Data zatwierdzenia' : 'Approved at',
+          value: formatListDate(selected.approvedAt),
+        },
+        {
+          id: 'publishedAt',
+          label: isPolish ? 'Data publikacji' : 'Published at',
+          value: formatListDate(selected.publishedAt),
+        },
       ]
     : undefined;
 
@@ -302,13 +346,20 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
             icon: FileText,
             title: isPolish ? 'Brak raportów' : 'No reports yet',
             description: isPolish
-              ? 'Raport powstaje z Outputu programu audytowego. Sfinalizuj program, żeby móc wystawić pierwszy raport.'
-              : 'A report is issued from a program Output. Finalize a program to issue the first report.',
+              ? reportChainEnabled
+                ? 'Raport powstaje z Outputu programu audytowego. Otwórz zakładkę Outputy i użyj akcji „Wystaw raport”.'
+                : 'Raport powstaje z Outputu programu audytowego. W tej wersji interfejsu ścieżka wystawienia raportu nie jest dostępna z ekranu.'
+              : reportChainEnabled
+                ? 'A report is issued from a program Output. Open Outputs and use “Issue report”.'
+                : 'A report is issued from a program Output. The report-issuance path is not available from the screen in this interface version.',
           }}
         />
       </div>
       {selected ? (
-        <div className="w-[380px] shrink-0 border-l border-c-border-subtle" data-testid="audit-report-preview">
+        <div
+          className="w-[380px] shrink-0 border-l border-c-border-subtle"
+          data-testid="audit-report-preview"
+        >
           <StandardPreview
             title={selected.title}
             onClose={() => setSelectedId(null)}
