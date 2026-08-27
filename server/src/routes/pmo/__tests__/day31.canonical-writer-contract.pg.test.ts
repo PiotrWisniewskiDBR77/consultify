@@ -724,6 +724,44 @@ describe.skipIf(!REAL_PG)('Day 31 canonical writer mounted contract', () => {
     });
   });
 
+  it('selects KPI populations by their business due date, not row modification time', async () => {
+    const dueTaskId = `due-window-${randomUUID()}`;
+    const invalidTaskId = `invalid-window-${randomUUID()}`;
+    await client.query(
+      `INSERT INTO ie_aggregate_state
+        (organization_id,aggregate_type,aggregate_id,version,payload_json,updated_at)
+       VALUES($1,'execution_task',$2,1,$3::jsonb,'2040-01-01T00:00:00Z'),
+             ($1,'execution_task',$4,1,$5::jsonb,'2031-01-07T00:00:00Z')`,
+      [
+        organizationId,
+        dueTaskId,
+        JSON.stringify({
+          executionCaseId: 'none',
+          initiativeId,
+          dueAt: '2031-01-07T12:00:00Z',
+          status: 'OPEN',
+        }),
+        invalidTaskId,
+        JSON.stringify({
+          executionCaseId: 'none',
+          initiativeId,
+          dueAt: 'not-a-date',
+          status: 'OPEN',
+        }),
+      ]
+    );
+    const response = await request(app)
+      .get('/api/initiatives/runtime-v1/control-kpis?weekStart=2031-01-06')
+      .set(auth());
+    expect(response.status, JSON.stringify(response.body)).toBe(200);
+    expect(
+      response.body.families.find((family: any) => family.family === 'plan-delivery')
+    ).toMatchObject({
+      denominator: 1,
+      drillDown: { ids: [] },
+    });
+  });
+
   it('allows exactly one winner under concurrent CAS for every new execution command', async () => {
     const commands = [
       {
