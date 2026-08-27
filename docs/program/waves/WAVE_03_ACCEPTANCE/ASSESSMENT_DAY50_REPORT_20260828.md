@@ -195,9 +195,11 @@ D.1: wołacz realny TAK — DOM istniejącej powierzchni produktu i grep linii 3
 
 ### Korekta układu po oględzinach właściciela
 
-Właściciel zakwestionował ściskanie centralnej treści przez wewnętrzny układ kolumnowy. Oględziny potwierdziły trzy równoczesne warstwy: globalny `Method Navigator`, lewy spis sekcji N-mode oraz dokowany prawy panel Akcje/Właściwości. To było niezgodne z `docs/ui-standards/01-shell-layout/presentation-modes.md` §1.2: N-mode zachowuje lewy spis sekcji i centralny canvas na całą pozostałą szerokość, ale nie używa osobnej prawej kolumny `Control`.
+Właściciel zakwestionował ściskanie centralnej treści przez wewnętrzny układ kolumnowy, a następnie doprecyzował na zrzucie, że prawy panel informacji o karcie jest prawidłowy. Problemem był wewnętrzny rail rozdziałów o globalnej szerokości `216px`: przy krótkich etykietach `Oś 1…7` pozostawiał szeroki pusty pas i odbierał miejsce macierzy.
 
-Usunięto wyłącznie dokowany prawy panel. Sześć metadanych przeniesiono do pełnoszerokiego `NModePropertiesStrip`, a jedyną realną akcję `Pobierz DOCX` do zwartego wiersza akcji. Nieusuwany lewy spis rozdziałów pozostaje zgodnie z kanonem dokumentowego N-mode. Test regresji potwierdza brak roli `complementary`, obecność properties stripu i osiągalność przycisku. Zrzut po korekcie: `/private/tmp/consultify-assessment-day50-artefakty/D1_report_layout_corrected.png`, SHA-256 `9c3aff2b46ef6f642ab0082fd57627dc4f9cfe0561063c1102ca6e98a5b6b8da`.
+Przywrócono dokowany prawy panel Akcje/Właściwości oraz jego wcześniejszą strukturę. Wyłącznie dla `AssessmentReportContractView` szerokość wewnętrznego raila rozdziałów zmniejszono do `6.5rem` (`104px`), bez zmiany wspólnego `NModeLeftNav` i bez wpływu na inne moduły. Test regresji potwierdza jednocześnie obecność roli `complementary`, osiągalność `Pobierz DOCX` i lokalny token szerokości `6.5rem`. Commit implementacyjny: `e2ed57ac37`.
+
+Finalny zrzut przekazania: `/private/tmp/consultify-assessment-day50-artefakty/D1_report_final_layout.png`, SHA-256 `f4e0aeff1241fe776b0f5f67fcfc915bbb4f913c1631b9adee229215525f9f6d`. Kontrolowany lokalny render potwierdził: panel kart `1`, przycisk DOCX `1`, styl raila `--ntype-left-panel-width: 6.5rem`.
 
 ## ★ ZRZUTY
 
@@ -338,8 +340,19 @@ ZASIĘG CZĘŚCIOWY na tym etapie; pomiar HEAD nastąpi po ostatnim commicie. NI
 - Nie wykonano jeszcze pomiaru końcowego HEAD.
 - Zrzuty D.1 potwierdzają osiągalność i zachowanie powierzchni, ale nie są dowodem bieżącej odpowiedzi realnego serwera — lokalne XHR były kontrolowane, aby dochować zakazu zajmowania portu 3001.
 - Nie zweryfikowano, czy nadzorca uznaje 24 uczciwe pustki za akceptowalne domknięcie dokumentu; punkt kontrolny wymaga jego decyzji przed A.5.
-- Korekta szerokości jest zweryfikowana w lokalnym renderze i testach, ale nie ma jeszcze ponownej akceptacji właściciela na podstawie nowego zrzutu.
+- Finalna korekta szerokości jest zweryfikowana w lokalnym renderze i testach, ale nie ma jeszcze ponownej akceptacji właściciela na podstawie zrzutu z railem `6.5rem`.
 
 ## Rekomendacje dla nadzorcy
 
 Nadzorca powinien rozstrzygnąć jedno z dwóch: zaakceptować `71/95` jako uczciwe domknięcie przy braku danych źródłowych albo dostarczyć autoryzowane źródło dla 16 nieocenionych obszarów i 8 horyzontów. Do tego czasu nie rozpoczynać A.5.
+
+## Handoff do dalszej pracy
+
+- Repo/worktree: `/private/tmp/consultify-assessment-day50`.
+- Gałąź: `codex/assessment-day50-20260828`; push wyłącznie `github-backup`.
+- Marker bazowy: `7ab512e6fc`.
+- Ostatni commit implementacyjny układu: `e2ed57ac37`.
+- Stan ukończony: BLOK 0, A.1, B.1, A.2, A.4, A.3, A.6, D.1 wraz z dwiema korektami właściciela.
+- Testy ostatniej korekty: `9/9 PASS`, `0 SKIPPED`; root `type-check` PASS; `check-list-canon` bez nowych naruszeń.
+- Wiążący STOP pozostaje po kroku 8: `24/95` gniazd jest uczciwie pustych; nie rozpoczynać A.5 bez decyzji nadzorcy.
+- Artefakt do wizualnego retestu: `/private/tmp/consultify-assessment-day50-artefakty/D1_report_final_layout.png`.
