@@ -28,6 +28,7 @@ import { Pool } from 'pg';
 
 import '../src/config/loadEnv.js';
 import { resolveReachableDatabaseUrl } from '../src/config/databaseTargetResolver.js';
+import { resolveDbTargetLabel } from '../src/config/dbTargetLabel.js';
 import { isRuntimeMigrationFile } from '../src/services/tablePlatform/migrationIdentity.js';
 import {
   evaluateSqlChain,
@@ -232,8 +233,11 @@ async function main() {
   if (!databaseUrl) throw new Error('DATABASE_URL is required');
 
   const host = assertExpectedTarget(databaseUrl, process.env.RELEASE_TARGET_DB_HOST_FINGERPRINT);
+  const dbTarget = resolveDbTargetLabel(process.env);
   // eslint-disable-next-line no-console
-  console.log(`[release-gate] target host verified against expected fingerprint (host redacted).`);
+  console.log(
+    `[release-gate] target host verified against expected fingerprint (host redacted). dbTarget=${dbTarget}`
+  );
   // eslint-disable-next-line no-console
   console.log(`[release-gate] build sha: ${resolveBuildSha()}`);
 
@@ -291,7 +295,7 @@ async function main() {
     // ---- 3. success receipt --------------------------------------------------------------------
     // eslint-disable-next-line no-console
     console.log(
-      `\nRELEASE_MIGRATION_GATE_PASS buildSha=${resolveBuildSha()} checks=${findings.length} hostVerified=true`
+      `\nRELEASE_MIGRATION_GATE_PASS buildSha=${resolveBuildSha()} checks=${findings.length} hostVerified=true dbTarget=${dbTarget}`
     );
   } finally {
     await pool.end();
