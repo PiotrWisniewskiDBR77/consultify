@@ -1,0 +1,10 @@
+verify:
+organizations: 1/1
+users: 1/1
+projects: 1/1
+method_sessions: 1/1
+method_events: 24/24
+method_snapshots: 1/1
+method_outputs: 1/1
+method_findings: 23/23
+assessment_skip_reasons: 23/23
