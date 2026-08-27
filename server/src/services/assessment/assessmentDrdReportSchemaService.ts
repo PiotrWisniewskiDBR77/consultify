@@ -26,11 +26,13 @@ export const DRD_REPORT_FIXED_TEXT = Object.freeze({
   decisionLine: 'LINIA DECYZYJNA',
 } as const);
 
-// Contract v1 has no slots for chapters 0 and 8. These deterministic limits
-// keep the owner-accepted placeholder voice visible without inventing prose.
+// Skalibrowane wzorcem c2a91d0258 (RAPORT_DRD_METALPOL_WZORZEC.docx).
+// Pomiar: streszczenie 131 słów prozy, wnioski końcowe 276, komórki linii
+// decyzyjnej 12–21. Okna dobrane wokół pomiaru — patrz raport dnia 34 §G.
 export const CONTRACT_V1_MISSING_SLOT_LIMITS = Object.freeze({
-  executiveSummary: { minWords: 180, maxWords: 260 },
-  finalConclusions: { minWords: 180, maxWords: 260 },
+  executiveSummary: { minWords: 120, maxWords: 150 },
+  finalConclusions: { minWords: 250, maxWords: 300 },
+  decisionLineField: { minWords: 10, maxWords: 30 },
 } as const);
 
 const MICROSTRUCTURE_PL = Object.freeze({
@@ -237,6 +239,7 @@ export function buildAssessmentDrdReportSchema(contract: AssessmentReportContrac
   const clientName = contract.sessionLabel.displayName ?? DRD_REPORT_FIXED_TEXT.clientMissing;
   const executiveLimit = CONTRACT_V1_MISSING_SLOT_LIMITS.executiveSummary;
   const finalLimit = CONTRACT_V1_MISSING_SLOT_LIMITS.finalConclusions;
+  const decisionLineLimit = CONTRACT_V1_MISSING_SLOT_LIMITS.decisionLineField;
   const axisRows = contract.chapters.map((chapter) => {
     const current = areaAverage(chapter.matrix.areas, 'currentLevel', chapter.maxLevel);
     const target = areaAverage(chapter.matrix.areas, 'targetLevel', chapter.maxLevel);
@@ -337,10 +340,13 @@ export function buildAssessmentDrdReportSchema(contract: AssessmentReportContrac
           'program-decision',
           ['Pole', 'Treść'],
           [
-            ['Kierunek', placeholder(finalLimit.minWords, finalLimit.maxWords)],
-            ['Priorytet', placeholder(finalLimit.minWords, finalLimit.maxWords)],
-            ['Horyzont', placeholder(finalLimit.minWords, finalLimit.maxWords)],
-            ['Warunek sukcesu', placeholder(finalLimit.minWords, finalLimit.maxWords)],
+            ['Kierunek', placeholder(decisionLineLimit.minWords, decisionLineLimit.maxWords)],
+            ['Priorytet', placeholder(decisionLineLimit.minWords, decisionLineLimit.maxWords)],
+            ['Horyzont', placeholder(decisionLineLimit.minWords, decisionLineLimit.maxWords)],
+            [
+              'Warunek sukcesu',
+              placeholder(decisionLineLimit.minWords, decisionLineLimit.maxWords),
+            ],
           ]
         ),
       ],
