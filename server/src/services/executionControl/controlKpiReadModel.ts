@@ -2,6 +2,7 @@ import type { Pool } from 'pg';
 
 import { OwnerIndependentKpiReader } from './ownerIndependentKpiReader.js';
 import { GovernanceDataQualityReadModel } from './governanceDataQualityReadModel.js';
+import { ReportClassificationReadModel } from './reportClassificationReadModel.js';
 import {
   REQUIRED_POLICY_PARAMETERS,
   validateControlKpiPolicyParameters,
@@ -33,6 +34,9 @@ export class ControlKpiReadModel {
       weekStart
     );
     const governanceDataQuality = await new GovernanceDataQualityReadModel(this.pool).read(
+      organizationId
+    );
+    const reportClassification = await new ReportClassificationReadModel(this.pool).read(
       organizationId
     );
     const policyResult = policyId
@@ -114,6 +118,7 @@ export class ControlKpiReadModel {
         sourceClass: goal.perspective ? ('FACT' as const) : null,
       })),
       governanceDataQuality,
+      reportClassification,
       scopeCompleteness:
         fullFamilyCount === families.length
           ? ('FULL' as const)
