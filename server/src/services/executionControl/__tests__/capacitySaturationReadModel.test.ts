@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { classifyCapacityBand, readCapacitySaturation } from '../capacitySaturationReadModel.js';
+import { readCapacitySaturation } from '../capacitySaturationReadModel.js';
 
 const policy = () => ({
   impactWeights: { CRITICAL: 3, IMPORTANT: 2, SUPPORTING: 1 },
@@ -36,15 +36,19 @@ describe('honest capacity saturation read model', () => {
     });
   });
 
-  it('classifies a future known ratio in the configured normal band', () => {
-    expect(classifyCapacityBand(0.5, policy().capacitySaturationThreshold)).toBe('NORMAL');
-  });
-
-  it('classifies a future known ratio in the configured saturated band', () => {
-    expect(classifyCapacityBand(0.7, policy().capacitySaturationThreshold)).toBe('SATURATED');
-  });
-
-  it('classifies a future known ratio above configured bands as overloaded', () => {
-    expect(classifyCapacityBand(0.9, policy().capacitySaturationThreshold)).toBe('OVERLOADED');
+  // FIX-7 (odbior dyzuru 33): trzy testy `classifyCapacityBand` USUNIETO razem z funkcja.
+  // Badaly kod o ZERO wolaczach produkcyjnych, wiec podnosily licznik zielonych testow,
+  // nie dowodzac niczego o dzialaniu modulu. Zamiast nich jeden test pilnuje granicy,
+  // ktora ma dzis realne znaczenie: progi z polityki sa PRZENOSZONE bez zmiany
+  // i bez wyliczania jakiegokolwiek pasma.
+  it('carries the configured thresholds through without inventing a band', () => {
+    const result = readCapacitySaturation(policy());
+    expect(result.configuredPolicy).toEqual({
+      thresholds: { normalUpper: 0.6, saturatedUpper: 0.85 },
+      capacityBuffer: 0.2,
+      bufferApplication: 'SUBTRACT_FROM_AVAILABILITY_BEFORE_SATURATION',
+    });
+    expect(result).not.toHaveProperty('band');
+    expect(result.saturationRange).toBeNull();
   });
 });
