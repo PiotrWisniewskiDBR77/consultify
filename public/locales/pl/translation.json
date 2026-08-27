@@ -5361,6 +5361,7 @@
       "typeDeletePrefix": "Wpisz",
       "typeDeleteSuffix": ", aby potwierdzić",
       "sessionStatusLabel": {
+        "assigned": "Przydzielony",
         "in_progress": "W trakcie",
         "submitted": "Wysłany",
         "sent_back": "Do poprawy",
