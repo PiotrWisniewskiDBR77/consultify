@@ -51,6 +51,7 @@ export interface AuditReportsTabProps {
    * danych, które Hub już wczytał (`programsAll`).
    */
   programNameById?: Map<string, string>;
+  reloadToken?: number;
 }
 
 const EMPTY_MAP = new Map<string, string>();
@@ -63,6 +64,7 @@ const REPORT_KIND_LABEL: Record<string, { pl: string; en: string }> = {
 export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
   isPolish,
   programNameById = EMPTY_MAP,
+  reloadToken = 0,
 }) => {
   const reportChainEnabled = isAuditsReportChainEnabled();
   const navigate = useNavigate();
@@ -88,7 +90,7 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
 
   useEffect(() => {
     load();
-  }, [load]);
+  }, [load, reloadToken]);
 
   const runTransition = useCallback(
     async (id: string, action: 'approve' | 'publish') => {
