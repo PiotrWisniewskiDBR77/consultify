@@ -47,7 +47,7 @@ Tip był równy markerowi; zakres `marker..tip` był pusty. Worktree: `/private/
 | §B.1 | ZROBIONE_WG_DoD | PENDING | §B.1 |
 | §A | ZROBIONE_WG_DoD | PENDING | §A |
 | §C | ZROBIONE_WG_DoD | PENDING | §C |
-| §D | NIEROZPOCZĘTE | — | — |
+| §D | CZĘŚCIOWO | PENDING | §D |
 | §E | NIEROZPOCZĘTE | — | — |
 | §F | NIEROZPOCZĘTE | — | — |
 
@@ -191,10 +191,27 @@ Acceptance na tej samej instancji: `exit=1`; pliki `114 failed | 19 passed | 6 s
 
 Niezweryfikowane dla §C: nie uruchomiono wszystkich 56 plików z odpowiadającymi im indywidualnymi bazami; nie udowodniono, że wspólny helper usunie wszystkie przyczyny `SKIPPED`.
 
+## §D — pomiar Playwright retries
+
+Porty 3374 i 3375 były wolne. Wykonano 15 wywołań CLI z `--retries=0` i wymaganymi URL/portami; pełne dane po nazwach są w `D-flake.txt`.
+
+| specyfikacja | próby 1–5 | werdykt |
+| --- | --- | --- |
+| `presentations-role-wall.signed.spec.ts` | 5× `Process from config.webServer was not able to start. Exit code: 1` | BRAK_DANYCH o testach; harness deterministycznie niewykonalny |
+| `partner-v8-zero-writer.signed.spec.ts` | próba 1: webServer fail; próby 2–5: ten sam test „uses governed company/campaign writers...” FAIL i ten sam „keeps signed SUPERADMIN...” PASS | testy stabilnie czerwony/zielony w czterech wykonalnych próbach; start harnessu niestabilny |
+| `settings-mfa-lifecycle.signed.spec.ts` | 5× ten sam przypadek „enrols, recovers, regenerates, revokes and disables...” FAIL | stabilnie czerwony; teren 55, tylko rekomendacja |
+
+Nie zmieniono `playwright.config.ts:80`: brak pięciu wykonalnych prób presentations oraz niestabilny start harnessu nie wspiera globalnego `retries:0`. Retry nie uratowałby deterministycznie czerwonych przypadków partner/settings, ale to nie wystarcza do decyzji globalnej. `e2e-nightly.yml` i `e2e-weekly.yml` nie zawierają własnego `--retries` ani `retries:`.
+
+`DECISION_REQUIRED`: retries w Playwright — brak kompletnego lokalnego pomiaru niestabilności wszystkich trzech specyfikacji; czy czekamy na okno ze stabilnym harnessem (rekomendowane), czy właściciel świadomie zmienia globalnie w ciemno? Cena oczekiwania: retry może nadal maskować; cena zmiany w ciemno: fałszywie czerwone CI przez niestabilny start/kontekst.
+
+Niezweryfikowane dla §D: wynik presentations po starcie przeglądarki; przyczyna porażki procesu webServer (odfiltrowany log CLI podał tylko exit 1); zachowanie realnego runnera GitHuba.
+
 ## 9. DECISION_REQUIRED
 
 - ESLint: W1 albo W2, zgodnie z §B.0.
 - Acceptance: scalić od razu jako czerwoną bramkę czy najpierw wykonać osobny program naprawczy 380 przypadków.
+- Playwright retries: czekać na stabilny harness czy zmienić globalnie bez pełnego pomiaru.
 
 ## 11. TWIERDZENIA NIEZWERYFIKOWANE
 
