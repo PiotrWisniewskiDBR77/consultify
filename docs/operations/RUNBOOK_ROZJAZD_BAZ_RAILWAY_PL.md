@@ -1,6 +1,7 @@
 # Runbook: bezpiecznik „rozjazdu baz" — co ustawić i jak sprawdzić
 
 **Dla kogo:** właściciel (nie-koder). **Czas:** ~20 minut.
+**Kolejność jest istotna** — krok 0 wykonaj przed scaleniem albo tuż po nim.
 **Czego dotyczy:** DEC-2026-08-28-165 — aplikacja czytała JEDNĄ bazę, a migracje
 szły do INNEJ. Trzy bazy nazywają się `railway`, więc nazwa niczego nie mówi.
 
@@ -24,6 +25,28 @@ Bezpiecznik jest **domyślnie WYŁĄCZONY** (tryb ostrzegawczy). Dopóki go nie
 uzbroisz, wdrożenia działają normalnie, a w logu GitHub Actions pojawia się
 żółte ostrzeżenie. **Wyjątek: jeśli bezpiecznik zobaczy rozjazd, blokuje
 wdrożenie zawsze — także wyłączony.**
+
+---
+
+## KROK 0. ★ ZRÓB TO NAJPIERW — inaczej wdrożenia stagingu staną
+
+Bezpiecznik sprawdza także, czy adres strony pasuje do środowiska. To NIE jest
+objęte włącznikiem z kroku 5 — działa od razu po scaleniu.
+
+Wg zapisu DEC-2026-08-28-172 zmienna GitHub `STAGING_FRONTEND_URL` wskazuje
+dziś `stage.consultinity.ai`, czyli domenę środowiska **demo** (domeny Railway
+są skrzyżowane). Bezpiecznik dla stagingu dopuszcza wyłącznie
+`staging.consultify.ai`, więc dopóki tego nie poprawisz, wdrożenie stagingu
+zatrzyma się na kroku „Validate staging target mapping".
+
+★ Tej wartości nie sprawdziłem — musisz ją odczytać sam.
+
+1. Wejdź: **GitHub → Settings → Secrets and variables → Actions → Variables**.
+2. Sprawdź `STAGING_FRONTEND_URL`. Jeśli zawiera `consultinity` lub `demo` —
+   zmień na `https://staging.consultify.ai`.
+3. Sprawdź `STAGING_API_HEALTH_URL`. Ma wskazywać API **stagingu**, nie demo.
+
+Jeśli obie już wskazują staging — nic nie rób, przejdź dalej.
 
 ---
 
