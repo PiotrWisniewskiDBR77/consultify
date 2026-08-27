@@ -231,7 +231,9 @@ async function applySeed(client: Client): Promise<void> {
         METALPOL_IDS.session,
         METALPOL_IDS.snapshot,
         PACK_VERSION,
-        JSON.stringify(['demo-seed: measured values only']),
+        JSON.stringify([
+          'Ocena opiera się wyłącznie na wartościach zmierzonych podczas sesji oceniającej Metalpol; nie uwzględnia benchmarku rynkowego ani prognozy przyszłych poziomów.',
+        ]),
         JSON.stringify({
           sourceRevisionOfSessionId: null,
           demoSeed: { dataset: 'metalpol-drd', datasetVersion: '1', source: 'demo-seed' },
