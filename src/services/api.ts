@@ -1476,6 +1476,44 @@ export const Api = {
     });
   },
 
+  /**
+   * Quick-access PIN sign-in (day-39 FIX-1).
+   *
+   * Posts four digits and nothing else. There is deliberately no password
+   * parameter and no client-side PIN→account map: the map lives only in the
+   * server's `QUICK_ACCESS_PIN_MAP`, and the server mints the session through
+   * the same path as an ordinary login. Nothing about the account reaches the
+   * bundle, so nothing about it can be read out of a shipped chunk.
+   */
+  quickAccessSignIn: async (pin: string): Promise<User> => {
+    let res: Response;
+    try {
+      res = await fetch(`${API_URL}/auth/quick-access`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ pin }),
+      });
+    } catch (e: any) {
+      const msg = e?.message ? String(e.message) : String(e);
+      throw new Error(`Network error contacting API (${API_URL}). ${msg}.`);
+    }
+
+    return handleResponse(res, 'Quick access failed').then((data) => {
+      if (data?.mfaRequired === true && !data?.token) {
+        const error: any = new Error(data.message || 'Two-factor authentication required');
+        error.code = 'AUTH_MFA_REQUIRED';
+        error.data = data;
+        throw error;
+      }
+      if (!data?.token || !data?.user) {
+        throw new Error('Invalid quick access response');
+      }
+      tokenService.saveTokens(data.token, data.refreshToken);
+      return data.user as User;
+    });
+  },
+
   register: async (userData: any): Promise<User | any> => {
     let res: Response;
     try {

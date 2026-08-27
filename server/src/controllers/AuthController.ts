@@ -20,6 +20,7 @@ import {
 } from '../services/organizationSuspensionGuard.js';
 import refreshTokenService from '../services/RefreshTokenService.js';
 import { recordFailedLogin } from '../services/securityAlerts.js';
+import { assertQuickAccessRuntimeEnabled } from '../services/auth/quickAccessPinService.js';
 import { setAuthCookies } from '../utils/cookieAuth.js';
 import logger from '../utils/Logger.js';
 import type { LoginRequest } from '../validators/auth.validators.js';
@@ -125,10 +126,41 @@ const comparePassword = async (
 };
 
 /**
+ * Options for the one caller that authenticates by something other than a
+ * password: the server-side quick-access PIN endpoint (day-39 FIX-1).
+ */
+export interface LoginOptions {
+  /**
+   * The principal was already established by the quick-access PIN, so no
+   * password is compared. This exists so the PIN flow reuses THIS function
+   * verbatim — the same membership, suspension, demo-expiry, MFA, token,
+   * cookie and activity-log behaviour as an ordinary login — instead of a
+   * parallel session-minting path that would drift away from it.
+   *
+   * Everything else stays on: an MFA-enrolled account still gets a challenge,
+   * a revoked membership is still refused, a suspended tenant still cannot
+   * mint a session.
+   */
+  pinVerifiedPrincipal?: boolean;
+}
+
+/**
  * Handle User Login
  */
-export const login = async (req: Request, res: Response): Promise<void> => {
+export const login = async (
+  req: Request,
+  res: Response,
+  options: LoginOptions = {}
+): Promise<void> => {
   const dependencies = await getDeps();
+
+  // A password skip is only ever legitimate while the quick-access runtime is
+  // enabled, which is never true on production. Re-asserted here rather than
+  // trusted from the caller, so this option cannot become a bypass if some
+  // future route passes it by mistake.
+  if (options.pinVerifiedPrincipal) {
+    assertQuickAccessRuntimeEnabled();
+  }
 
   logger.info('[AuthController] Login request received for email:', req.body?.email);
 
@@ -230,9 +262,10 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     logger.info('[Auth] Verifying password...');
     // Verify password
-    const passwordIsValid = verifiedChallenge?.success
-      ? true
-      : await comparePassword(dependencies.bcrypt, password, user.password);
+    const passwordIsValid =
+      verifiedChallenge?.success || options.pinVerifiedPrincipal
+        ? true
+        : await comparePassword(dependencies.bcrypt, password, user.password);
     logger.info(`[Auth] Password valid: ${passwordIsValid}`);
     if (!passwordIsValid) {
       void recordFailedLogin(normalizedEmail, req.ip);
