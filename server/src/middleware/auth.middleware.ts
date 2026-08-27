@@ -29,6 +29,7 @@ import {
   resolveBlockingOrgStatus,
 } from '../services/organizationSuspensionGuard.js';
 import { DEMO_ORG_ID, DEMO_SESSION_ORG_HEADER } from './demoGuard.middleware.js';
+import { evaluateSessionIdlePolicy } from './sessionIdlePolicy.js';
 
 // Used by security integrity gate and to ensure test bypasses never run in prod.
 const isProductionEnv = (): boolean => process.env.NODE_ENV === 'production';
@@ -1456,6 +1457,31 @@ export const verifyToken = asyncHandler(
         return;
       }
       const normalizedDecoded: JWTPayload = { ...sanitizedDecoded, id: decodedId };
+
+      if (process.env.SESSION_IDLE_ENFORCEMENT === 'true') {
+        const decodedClaims = normalizedDecoded as unknown as Record<string, unknown>;
+        const organizationId =
+          readOptionalStringClaim(decodedClaims, 'organizationId') ||
+          readOptionalStringClaim(decodedClaims, 'organization_id');
+        const tokenJti = readOptionalStringClaim(decodedClaims, 'jti');
+        if (organizationId && tokenJti) {
+          const { dbGet: dbGetFromDeps } = await getDeps();
+          const idleDecision = await evaluateSessionIdlePolicy(
+            dbGetFromDeps,
+            organizationId,
+            decodedId,
+            tokenJti
+          );
+          if (idleDecision.kind === 'EXPIRED') {
+            res.status(401).json({
+              code: 'SESSION_IDLE_TIMEOUT',
+              message: 'Your session expired because of inactivity. Sign in again.',
+              messagePl: 'Sesja wygasła z powodu bezczynności. Zaloguj się ponownie.',
+            });
+            return;
+          }
+        }
+      }
 
       await checkTokenRevocation(normalizedDecoded, req, res, next);
       trackSessionActivity(req, res);

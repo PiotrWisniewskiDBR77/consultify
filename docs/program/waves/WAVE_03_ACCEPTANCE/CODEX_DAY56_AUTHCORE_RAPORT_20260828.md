@@ -119,6 +119,22 @@ Pakiet regresyjny `auth.middleware.test.ts` + `auth.middleware.verifyToken.test.
 
 Martwy import `legal.routes.ts:17` pozostawiono bez zmiany zgodnie z licencją. Pięć kształtów: wołacz — TAK; ApiGateway — NIE; skipped — 0; para HTTP — NIE; grep nie jest uznany za runtime.
 
+## §P.8 — egzekutor bezczynności sesji
+
+Dodano `sessionIdlePolicy.ts` i wywołanie wewnątrz `verifyToken` przed `checkTokenRevocation`. Flaga `SESSION_IDLE_ENFORCEMENT` jest aktywna wyłącznie dla dosłownego `true`, więc domyślnie pozostaje OFF. Polityka istnieje tylko przy dodatnim, liczbowym `security.sessionTimeout`; brak wpisu lub brak pola nie włącza wartości domyślnej. Brak wiersza sesji albo brak `jti` przepuszcza legacy token, ponieważ nie da się uczciwie dowieść bezczynności.
+
+Kontrakt day53 został odtworzony pod własną ścieżką bez naruszenia Z31. Stare: `expect(proof.database).toBe('cx_day53')`. Nowe: `expect(proof.serverVersion).toContain('PostgreSQL')`, po `assertRealPostgresTestEnvironment()` bez argumentów.
+
+Realny pakiet przez `ApiGateway.getInstance().initializeRoutes(app)`: 8 PASS / 0 FAIL / 0 SKIPPED. Obejmuje 401 z polskim komunikatem, aktywną sesję z niezależnym readbackiem, brak polityki, zapis security bez sessionTimeout, brak aktualizacji odrzuconej sesji, token bez jti, flagę OFF i brak wiersza sesji. Regresja jednostkowa: 182 PASS / 0 FAIL.
+
+Dowód mutacyjny: po zmianie warunku egzekutora na `false && ...` test `rejects the first request after the tenant idle threshold` był czerwony (`expected 401, received 200`); po przywróceniu był zielony, a roboczy `git diff` wobec staged P.8 był pusty.
+
+Koszt: flaga OFF = 0 nowych zapytań; flaga ON i brak jawnej polityki = 1 zapytanie ustawień; flaga ON i polityka = 2 zapytania (ustawienia + sesja). Wymóg „zero nowych zapytań, jeżeli organizacja nie ma polityki” jest niewykonalny bez wcześniejszego cache/preloadu, którego instrukcja nie montuje; bez odczytu nie da się odróżnić braku polityki od jej istnienia. Wybrano bezpieczniejszą, uczciwą interpretację i wpisano korektę.
+
+Brakuje wymaganego negatywu tenanta body/query/header, dlatego werdykt P.8 pozostaje `CZĘŚCIOWO`, mimo zazielenienia rdzenia i ośmiu przypadków. Pułapki Z33: (a) `ENABLE_V8_GLOBAL=true`; (b) `RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE=enforce`; (c) test lokalnie przywraca `DB_TYPE=postgres`, a helper dowodzi serwera; (d) `ENABLE_TEST_AUTH_BYPASS=false` w komendzie i asercji.
+
+Pięć kształtów: wołacz — TAK, przed `checkTokenRevocation`; ApiGateway — TAK; skipped — 0; para 200→401 i 200→200 — TAK; grep — nie jest podstawą twierdzenia runtime.
+
 ## Pomiar zasięgu testów
 
 PRZED: patrz §P.1. Artefakty: `/private/tmp/consultify-authcore-day56-artefakty/zasieg-PRZED.json` i `zasieg-PRZED.log`.
