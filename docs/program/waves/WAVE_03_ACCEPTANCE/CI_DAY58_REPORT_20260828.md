@@ -43,13 +43,13 @@ Tip był równy markerowi; zakres `marker..tip` był pusty. Worktree: `/private/
 
 | pozycja | werdykt | commit SHA | dowód |
 | --- | --- | --- | --- |
-| §B.0 | ZROBIONE_WG_DoD | PENDING | §B.0 |
-| §B.1 | ZROBIONE_WG_DoD | PENDING | §B.1 |
-| §A | ZROBIONE_WG_DoD | PENDING | §A |
-| §C | ZROBIONE_WG_DoD | PENDING | §C |
-| §D | CZĘŚCIOWO | PENDING | §D |
-| §E | CZĘŚCIOWO | PENDING | §E |
-| §F | CZĘŚCIOWO | PENDING | §F |
+| §B.0 | ZROBIONE_WG_DoD | `320f793182` | §B.0 |
+| §B.1 | CZĘŚCIOWO | `f2574b8c1f` | §B.1; 3 błędy bez licencji pozostały |
+| §A | ZROBIONE_WG_DoD | `ee49f5eb3b` | §A |
+| §C | ZROBIONE_WG_DoD | `59c53e0d53` | §C |
+| §D | CZĘŚCIOWO | `02146f1a2c` | §D |
+| §E | CZĘŚCIOWO | `8cf04de2c7` | §E |
+| §F | CZĘŚCIOWO | `46efce51e7` | §F |
 
 ## §B.0 — ESLint przed type-checkiem
 
@@ -264,6 +264,41 @@ Macierz PRZED: `150 / 32` zielone bez testów. Macierz PO: `156 / 5` globalnie i
 Korekta do obowiązkowego zdania: warstwa 1 dowodzi detekcji mutanta, lecz nie dowodzi przejścia czerwony→zielony całej komendy, ponieważ bazowy pakiet initiatives jest czerwony. Dlatego §F ma werdykt `CZĘŚCIOWO`.
 
 Niezweryfikowane dla §F: realny runner GitHuba; zielony baseline całej komendy `npm run test:initiatives`; zielony baseline acceptance.
+
+## 7. Rozłączność — wynik kontroli
+
+`git diff --name-only b3179d0a52603f62b5cd3673caa754c8fc3b0055..HEAD` zwrócił 15 plików. Workflow i raport mają licencję jawną. Pozostałe 13 to wyłącznie pliki z inwentarza błędów TSC oznaczone `NAPRAWIAM`: Audit (2), Execution (2), Initiatives (2), Interview (1), MyWork (2), ResultsVNext (2), Sidebar test (1), route test (1). Zero plików settings, middleware/Gateway/auth, Meeting/Calendar, admin, superadmin i `vitest*.config`. Kontrola `staged.txt` przed każdym commitem zwracała `rozlacznosc OK`.
+
+## 8. Wszystkie pozycje REKOMENDUJĘ
+
+- Dyżur 53: `AdminSettingsModule.tsx:500` — zawęzić screen do unii `AdminCommandCenterPanel`; decyzja fallbacku wymagana.
+- Dyżur 55: naprawić deterministycznie czerwony `settings-mfa-lifecycle`; nie zmieniać retry globalnie jako substytutu.
+- Dyżur 56: brak błędów TSC w jego terenie; brak diffu.
+- Dyżur 57: usunięcie bramki nazwą bazy dla dwóch plików Meeting wykonać w osobnym szeregowanym dyżurze.
+- Superadmin: wspólny unwrap envelope + reset kolejek mocków zgodnie z §E; bez osłabiania asercji.
+- Przekrojowy `src/services/api.ts`: wymagane zawężenie `body.start` przed klientem V8; gotowy diff w §B.1.
+
+## 10. STOP-y
+
+Brak STOP-u całego dyżuru. Ograniczenia merytoryczne zapisano jako `CZĘŚCIOWO`: §B.1 (3 pliki bez licencji), §D (niewykonalny pełny harness), §E (zajęty teren superadmin), §F (czerwony baseline dokładnej komendy workflow). Każde ma rekomendację zamiast nieautoryzowanej zmiany.
+
+## 13. Lista kontrolna nadzorcy
+
+- [x] marker i baza zweryfikowane; tip równy markerowi
+- [x] własne mianowniki ESLint, TSC, DB gates, acceptance, §E i CI matrix
+- [x] zero push na origin; każdy commit wypchnięty na `github-backup/codex/ci-day58-20260828`
+- [x] zero Railway/demo/staging/production i realnych Actions
+- [x] zero `--fix`, `prettier --write`, wyciszeń, `continue-on-error`, usuniętych jobów
+- [x] YAML parsuje się; 26 jobów, każdy ma `runs-on`
+- [x] mutant usunięty; brak `day58-mutant` w statusie
+- [x] porty i kontener zgodne z dyżurem 58
+- [x] kontener `cx-day58-pg` usunięty przez `docker rm -fv`; `MUTANT_ABSENT`
+- [x] rozłączność sprawdzona przed każdym commitem
+- [ ] pełne DoD §D/§E/§F — jawnie CZĘŚCIOWO z dowodem
+
+## 14. Brief wynikowy dla nadzorcy
+
+Pierwsza teza została rozstrzygnięta: ESLint ma 48 506 błędów i zatrzymuje workflow przed type-checkiem. Naprawiłem 21 z 24 błędów TSC w wolnych plikach; trzy pozostają w terenach przekrojowym/admin/superadmin. Warunki testowych jobów obejmują teraz PR, Londyn i demo. `pr-gate` ma `always()` i sprawdza initiatives oraz nowy acceptance. Statyczna liczba zielonych pustych kombinacji spadła z 32 do 5 globalnie i do zera w trzech wymaganych kontekstach. Acceptance jest uczciwie czerwony: 380 FAIL i nie został wyciszony. Dwa testy z twardą nazwą bazy realnie przeszły na PostgreSQL bez SKIPPED. Playwright nie dostał globalnego `retries:0`, bo pełny harness nie był stabilnie wykonalny. W §E rozdzieliłem 13 błędów produktu od sześciu błędów izolacji testów. Nie dotknąłem zajętych plików superadmin. Mutant initiatives został wykryty, ale cały pakiet initiatives jest zastanie czerwony także po jego usunięciu. Największe ryzyko scalania to świadome włączenie dwóch czerwonych bramek: acceptance i istniejącego initiatives. Właściciel musi wybrać W1/W2 dla ESLint oraz kolejność naprawy czerwonych pakietów. Realnego zachowania runnera GitHuba nie zweryfikowano z powodu Z8. Gałąź wynikowa to `github-backup/codex/ci-day58-20260828`.
 
 ## 9. DECISION_REQUIRED
 
