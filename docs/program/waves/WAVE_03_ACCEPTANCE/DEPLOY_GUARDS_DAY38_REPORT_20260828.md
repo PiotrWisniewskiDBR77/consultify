@@ -207,17 +207,34 @@ $ git diff --name-only 3e707a9d3c...HEAD -- server/migrations/
 (pusto)
 ```
 
-## 6. ★ SKUTKI OPERACYJNE — do wykonania przez nadzorcę PRZED scaleniem
+## 6. ★ SKUTKI OPERACYJNE — do wykonania przez nadzorcę
 
-- [ ] Staging: ustawić i zweryfikować
-  `RELEASE_TARGET_DB_HOST_FINGERPRINT`, `STAGING_DB_HOST_FINGERPRINT`,
-  `DB_TARGET_LABEL`.
-- [ ] Demo: ustawić i zweryfikować
-  `RELEASE_TARGET_DB_HOST_FINGERPRINT`, `DEMO_DB_HOST_FINGERPRINT`,
-  `DB_TARGET_LABEL`.
-- [ ] Production: po osobnej zgodzie właściciela E5 ustawić i zweryfikować
-  `RELEASE_TARGET_DB_HOST_FINGERPRINT`, `PRODUCTION_DB_HOST_FINGERPRINT`,
-  `DB_TARGET_LABEL`. Bez dwóch fingerprintów deploy będzie fail-closed.
+> ★★ **SPROSTOWANIE 2026-08-28 (wewnętrzna partia napraw `day38-fixes-20260828`).**
+> Poniższa lista w wersji pierwotnej była **FAŁSZYWA w dwóch punktach**:
+>
+> 1. Kazała ustawić `*_DB_HOST_FINGERPRINT` „w panelu Railway". Bramka
+>    `scripts/validate-deploy-target.sh` biegnie w **GitHub Actions**, a nie w
+>    Railway — zmienna z panelu Railway NIGDY do niej nie dociera. Zmienne
+>    bramki muszą być przekazane z `.github/workflows/railway-deploy.yml`
+>    (naprawione) albo ze środowiska powłoki dla `scripts/deploy-demo.sh`.
+> 2. Zdanie „Bez dwóch fingerprintów deploy będzie fail-closed" oznaczało, że
+>    scalenie unieruchamia WSZYSTKIE wdrożenia do czasu ręcznej konfiguracji.
+>    Bramka ma teraz jawne **uzbrojenie** `DEPLOY_TARGET_GUARD_ENFORCE`:
+>    nieuzbrojona ostrzega głośno i przepuszcza, uzbrojona blokuje. Wykryty
+>    rozjazd blokuje w OBU trybach.
+>
+> Prawdziwy plan naprawy: `docs/operations/RUNBOOK_ROZJAZD_BAZ_RAILWAY_PL.md`.
+
+- [ ] GitHub → Settings → Secrets and variables → Actions, **secrets**:
+  `STAGING_APP_DATABASE_URL`, `STAGING_MIGRATION_DATABASE_URL`
+  (oraz `PRODUCTION_*` przed E5).
+- [ ] GitHub → **variables**: `STAGING_DB_HOST_FINGERPRINT`,
+  `PRODUCTION_DB_HOST_FINGERPRINT`, a na końcu
+  `DEPLOY_TARGET_GUARD_ENFORCE=1`.
+- [ ] Railway (osobny konsument, bramka migracji w środku wdrożenia):
+  `RELEASE_TARGET_DB_HOST_FINGERPRINT` w staging i demo; produkcja dopiero po
+  osobnej zgodzie właściciela (E5). `DB_TARGET_LABEL` jest wyłącznie etykietą
+  czytelności logu i niczego nie weryfikuje.
 - [ ] GitHub: po E0 poprawić `vars.STAGING_FRONTEND_URL` oraz
   `vars.STAGING_API_HEALTH_URL`, aby oba wskazywały staging; inaczej workflow
   będzie blokowany lub nadal sprawdzi niewłaściwe środowisko.
@@ -227,17 +244,23 @@ $ git diff --name-only 3e707a9d3c...HEAD -- server/migrations/
   właściciela. Pozostaje w historii gita, więc usunięcie z pliku nie wystarcza.
   Czyszczenie historii nie należy do tego dyżuru i wymaga osobnej decyzji.
 
-Procedura odbioru:
+Procedura odbioru (poprawiona):
 
-1. znajdź w logu deployu linię zaczynającą się od `RELEASE_MIGRATION_GATE_PASS`
-2. znajdź linię `[Postgres] Config:`
-3. porównaj pole `dbTarget=` w obu
+1. znajdź w logu deployu linię `DB_IDENTITY role=migration ...`
+2. znajdź linię `DB_IDENTITY role=app ...`
+3. porównaj pole `identity=` w obu (format `host:port/nazwa-bazy`)
    - te same wartości → OK
-   - różne wartości → ROZJAZD, wstrzymaj wdrożenie
-   - którakolwiek = `unset` → `DB_TARGET_LABEL` nieustawiona w tym środowisku
-   - brak pola `dbTarget` w którejś → ta strona chodzi na starym buildzie
+   - różne wartości → ROZJAZD (bramka migracji sama się już zatrzymała)
+   - `identity=unresolved` → ta strona nie umie ustalić celu, wdrożenie stoi
+   - brak którejś linii → ta strona chodzi na starym buildzie
 
-Brak pola po jednej stronie oznacza stary build, nie brak etykiety.
+★ Stara procedura porównywała pole `dbTarget=` w liniach
+`RELEASE_MIGRATION_GATE_PASS` i `[Postgres] Config:`. Była BEZWARTOŚCIOWA:
+obie strony czytały tę samą zmienną `DB_TARGET_LABEL`, więc zawsze wypadały
+zgodnie, a `[Postgres] Config:` idzie przez winstona, którego poziom domyślny
+poza developmentem to `warn` (`server/src/utils/Logger.ts:29-39`) — w produkcji
+ta linia w ogóle nie powstawała. Nowe linie `DB_IDENTITY` idą przez
+`console.log` i są odporne na `LOG_LEVEL`.
 
 ## 7. Znaleziska (nie weszły do kodu)
 

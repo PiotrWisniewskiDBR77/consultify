@@ -5,12 +5,20 @@
 > (`DEC-2026-08-28-165`). Railway-generated domains are crossed: staging has a
 > domain containing "demo", while demo has one containing "staging"; a domain
 > name does not identify the environment (`DEC-2026-08-28-172`). The reliable
-> deployment check is the database host against
-> `RELEASE_TARGET_DB_HOST_FINGERPRINT`, followed by matching `dbTarget=` labels
-> in the migration-gate and application startup logs
-> (`server/src/services/releaseGate/gateContract.ts:33-47`,
+> deployment check compares the database the MIGRATION connects to against the
+> database the APPLICATION connects to — two values DERIVED from two different
+> connection sources, never a single declared label
+> (`server/src/config/databaseIdentity.ts`,
 > `server/scripts/release-migration-gate.ts`,
-> `server/src/database/PostgresDatabase.ts`).
+> `server/src/database/PostgresDatabase.ts`,
+> `scripts/validate-deploy-target.sh`).
+>
+> **CORRECTION 2026-08-28 (day-38 fix pass).** The first version of this check
+> compared a `dbTarget=` label printed by the gate against a `dbTarget=` label
+> printed by the application. Both read the same `DB_TARGET_LABEL` variable in
+> the same service, so the two values agreed by construction and could never
+> observe a divergence. The label survives as a human-readable hint only; it is
+> no longer the check.
 
 ## Purpose
 
@@ -69,11 +77,30 @@ would break production.
 Values are intentionally absent from the repository. The supervisor must set
 them in the named configuration plane and verify the current host first.
 
-| Environment | Required variables | Configuration plane | Effect when absent |
+**CORRECTION 2026-08-28 (day-38 fix pass).** The previous version of this
+section said the fingerprints belong in the "Railway staging/demo/production
+app/service variables". That was WRONG for the deploy-target guard.
+`scripts/validate-deploy-target.sh` runs in **GitHub Actions** (and in
+`scripts/deploy-demo.sh` on an operator laptop) — it never executes inside
+Railway, so a variable set only in the Railway panel is invisible to it. The
+table below names the plane that actually feeds each consumer.
+
+| Variable | Consumer | Plane where it must be set | Effect when absent |
 | --- | --- | --- | --- |
-| staging | `RELEASE_TARGET_DB_HOST_FINGERPRINT`, `STAGING_DB_HOST_FINGERPRINT`, `DB_TARGET_LABEL` | Railway staging app/service variables; GitHub `vars.STAGING_FRONTEND_URL` and `vars.STAGING_API_HEALTH_URL` must also identify staging | deploy-target guard blocks on either fingerprint; logs show `dbTarget=unset` without the label |
-| demo | `RELEASE_TARGET_DB_HOST_FINGERPRINT`, `DEMO_DB_HOST_FINGERPRINT`, `DB_TARGET_LABEL` | Railway demo app/service variables | deploy-target guard blocks on either fingerprint; logs show `dbTarget=unset` without the label |
-| production | `RELEASE_TARGET_DB_HOST_FINGERPRINT`, `PRODUCTION_DB_HOST_FINGERPRINT`, `DB_TARGET_LABEL` | Railway production app/service variables, with owner approval for E5 | deploy-target guard blocks on either fingerprint; logs show `dbTarget=unset` without the label |
+| `APP_DATABASE_URL` | deploy-target guard | GitHub **secret** per environment (`STAGING_APP_DATABASE_URL`, `PRODUCTION_APP_DATABASE_URL`); shell env for `deploy-demo.sh` | divergence check cannot run: loud warning when unarmed, hard block when armed |
+| `MIGRATION_DATABASE_URL` | deploy-target guard | GitHub **secret** per environment (`STAGING_MIGRATION_DATABASE_URL`, `PRODUCTION_MIGRATION_DATABASE_URL`); shell env for `deploy-demo.sh` | as above |
+| `STAGING_/DEMO_/PRODUCTION_DB_HOST_FINGERPRINT` | deploy-target guard | GitHub **variable** (`vars.…`); shell env for `deploy-demo.sh` | derived host is not pinned to the environment |
+| `DEPLOY_TARGET_GUARD_ENFORCE` | deploy-target guard | GitHub **variable**, set to `1` when the four above are configured | guard stays advisory: it warns loudly and lets the deploy through |
+| `RELEASE_TARGET_DB_HOST_FINGERPRINT` | release migration gate, **inside** Railway | Railway app/service variables per environment | the gate refuses to migrate (`gateContract.ts:33-47`) |
+| `DB_TARGET_LABEL` | log readability only | Railway app/service variables | logs show `dbTarget=unset`; the divergence check is unaffected |
+
+`APP_DATABASE_URL` and `MIGRATION_DATABASE_URL` are connection strings, hence
+secrets. The guard parses host/port/database out of them and never prints the
+value; the tests in `tests/unit/deploy/validate-deploy-target.test.mjs` assert
+that no credential and no `postgresql://` prefix reaches stdout or stderr.
+Operators who do not want connection strings in CI may instead supply the
+already-derived `APP_DB_IDENTITY` / `MIGRATION_DB_IDENTITY`
+(`host:port/database`).
 
 `RELEASE_TARGET_DB_HOST_FINGERPRINT` was not set in production in the state
 recorded by `DEC-2026-08-28-165`/`DEC-2026-08-28-172`. Setting it is E5 and
@@ -89,13 +116,22 @@ fingerprint.
 - Target verification is a case-insensitive host substring comparison. It
   protects against accidental mismatch, not a malicious configuration
   (`server/src/services/releaseGate/gateContract.ts:33-47`).
-- `scripts/validate-deploy-target.sh` compares declarations; it does not open a
-  database connection. Confirm the actual deployed target by comparing the
-  `dbTarget=` field on `RELEASE_MIGRATION_GATE_PASS` and `[Postgres] Config:`.
+- `scripts/validate-deploy-target.sh` does not open a database connection. It
+  compares two connection descriptions supplied from two different planes; it
+  cannot detect a target that changes between the guard run and the deploy.
+- The guard is advisory until `DEPLOY_TARGET_GUARD_ENFORCE` is set. An observed
+  divergence blocks in either mode, but missing inputs only warn while unarmed.
+- Confirm the actual deployed target by comparing the two `DB_IDENTITY` lines in
+  the deploy log (`role=migration` from the release gate, `role=app` from the
+  application). Both are printed with `console.log`, so no `LOG_LEVEL` can
+  suppress them; the older `[Postgres] Config:` line goes through winston, whose
+  level defaults to `warn` outside development, and is therefore absent in
+  production.
 
 ## Enforced In Code
 
 - `server/src/config/databaseTargetResolver.ts`
+- `server/src/config/databaseIdentity.ts`
 - `server/src/config/dbTargetLabel.ts`
 - `server/src/config/DatabaseConfig.ts`
 - `server/scripts/migrate.postgres.ts`
