@@ -65,6 +65,7 @@ import {
   recordExecutionRealization,
   reviewManagerSuggestion,
 } from '../../domain/initiatives-execution/executionControlWrites.js';
+import { authorExecutionControlKpiPolicy } from '../../domain/initiatives-execution/executionControlKpiPolicyAuthoring.js';
 import {
   gateSignoffId,
   submitGateSignoff,
@@ -835,6 +836,12 @@ const ManagerSuggestionReviewSchema = z.object({
   laneId: z.string().min(1),
   outcome: z.enum(['APPROVE', 'DEFER']),
   notes: z.string().nullable().default(null),
+});
+const ExecutionControlKpiPolicySchema = z.object({
+  expectedVersion: z.number().int().min(0),
+  clientRequestId: z.string().min(1),
+  name: z.string().min(1),
+  parameters: z.record(z.string(), z.unknown()),
 });
 const InterventionDraftSchema = z.object({
   expectedVersion: z.number().int().min(0),
@@ -4598,6 +4605,43 @@ export function createInitiativesExecutionRuntimeRouter(
     })
   );
 
+  router.post(
+    '/execution-control-kpi-policies/:policyId',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      const parsed = ExecutionControlKpiPolicySchema.safeParse(req.body);
+      if (!actor) return void res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+      if (!parsed.success)
+        return void res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
+      const claimedOrganizationId = String(
+        (req.body as Record<string, unknown> | undefined)?.organizationId ||
+          req.header('X-Organization-Id') ||
+          ''
+      ).trim();
+      if (claimedOrganizationId && claimedOrganizationId !== actor.organizationId)
+        return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
+      if (!(await deps.authorize(actor, '', 'initiative.update')))
+        return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
+
+      const { expectedVersion, clientRequestId, name, parameters } = parsed.data;
+      const policyId = firstParam(req.params.policyId);
+      const result = await authorExecutionControlKpiPolicy(deps.unitOfWork, {
+        organizationId: actor.organizationId,
+        actorId: actor.userId,
+        aggregateType: 'execution_control_kpi_policy',
+        aggregateId: policyId,
+        expectedVersion,
+        clientRequestId,
+        correlationId: clientRequestId,
+        policyId,
+        policyVersion: expectedVersion + 1,
+        commandType: 'execution-control-kpi-policy.author',
+        createIfMissing: true,
+        payload: { name, parameters },
+      });
+      res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
+    })
+  );
   router.post(
     '/initiatives/:initiativeId/budget-entries/:entryId',
     asyncHandler(async (req, res) => {
