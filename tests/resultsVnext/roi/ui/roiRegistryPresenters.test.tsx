@@ -15,10 +15,13 @@
  */
 import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { humanizeActionType } from '../../../../src/components/ResultsVNext/roi/roiRegistryMappers';
-import { buildRoiCaseColumns } from '../../../../src/components/ResultsVNext/roi/roiRegistryPresenters';
+import {
+  buildRoiCaseColumns,
+  buildRoiCaseRowMenu,
+} from '../../../../src/components/ResultsVNext/roi/roiRegistryPresenters';
 import type { RoiCaseListItem } from '../../../../src/components/ResultsVNext/roi/roiApi';
 
 function makeRow(overrides: Partial<RoiCaseListItem> = {}): RoiCaseListItem {
@@ -93,5 +96,19 @@ describe('ROI registry — Owner column resolves ownerUserId to a real name', ()
     render(<>{ownerColumn.render?.(makeRow())}</>);
 
     expect(screen.getByText('user-anna-kowalska')).toBeInTheDocument();
+  });
+});
+
+describe('ROI registry — concise owner-approved row menu', () => {
+  it('offers one canonical full-tool entry and preview without unavailable actions', () => {
+    const menu = buildRoiCaseRowMenu(makeRow({ status: 'modeling' }), true, {
+      onPreview: vi.fn(),
+      onTransition: vi.fn(),
+      onModel: vi.fn(),
+    });
+
+    expect(menu.primary?.map((action) => action.label)).toEqual(['Otwórz pełne narzędzie']);
+    expect(menu.statusTransitions).toEqual([]);
+    expect(menu.universalHandlers).toEqual({ preview: expect.any(Function) });
   });
 });

@@ -78,7 +78,10 @@ export function buildRoiCaseColumns(
         const lock = getRoiCaseLockInfo(row.status);
         return (
           <div className="flex flex-wrap items-center gap-1.5">
-            <StatusChip label={roiStatusLabel(row.status, isPolish)} tone={ROI_STATUS_TONE[row.status]} />
+            <StatusChip
+              label={roiStatusLabel(row.status, isPolish)}
+              tone={ROI_STATUS_TONE[row.status]}
+            />
             {lock ? (
               // Icon-only lock signal in the (narrow, fixed-width) table cell —
               // the reason is still available via `title` (same tooltip text
@@ -144,7 +147,9 @@ export function buildRoiCaseColumns(
       width: '130px',
       sortable: true,
       render: (row: RoiCaseListItem) => (
-        <span className="text-sm text-c-text-muted tabular-nums">{formatRoiDate(row.updatedAt, isPolish)}</span>
+        <span className="text-sm text-c-text-muted tabular-nums">
+          {formatRoiDate(row.updatedAt, isPolish)}
+        </span>
       ),
     },
   ];
@@ -183,7 +188,10 @@ export function buildRoiBenefitsRealizationColumns(isPolish: boolean): TableColu
       label: isPolish ? 'Status' : 'Status',
       width: '170px',
       render: (row: RoiBenefitsRealizationRowVm) => (
-        <StatusChip label={roiStatusLabel(row.status, isPolish)} tone={ROI_STATUS_TONE[row.status]} />
+        <StatusChip
+          label={roiStatusLabel(row.status, isPolish)}
+          tone={ROI_STATUS_TONE[row.status]}
+        />
       ),
     },
     {
@@ -195,7 +203,9 @@ export function buildRoiBenefitsRealizationColumns(isPolish: boolean): TableColu
         <HonestValueCell
           value={row.approvedFinancialBenefits}
           align="right"
-          format={(v) => <span className="tabular-nums text-sm text-c-text">{formatRoiNumber(v, isPolish)}</span>}
+          format={(v) => (
+            <span className="tabular-nums text-sm text-c-text">{formatRoiNumber(v, isPolish)}</span>
+          )}
         />
       ),
     },
@@ -208,7 +218,9 @@ export function buildRoiBenefitsRealizationColumns(isPolish: boolean): TableColu
         <HonestValueCell
           value={row.actualFinancialBenefits}
           align="right"
-          format={(v) => <span className="tabular-nums text-sm text-c-text">{formatRoiNumber(v, isPolish)}</span>}
+          format={(v) => (
+            <span className="tabular-nums text-sm text-c-text">{formatRoiNumber(v, isPolish)}</span>
+          )}
         />
       ),
     },
@@ -227,7 +239,9 @@ export function buildRoiBenefitsRealizationColumns(isPolish: boolean): TableColu
               : 'No approved benefits (zero denominator) or no actual value recorded yet.'
           }
           format={(v) => (
-            <span className="tabular-nums font-medium text-sm text-c-text">{formatRoiPercent(v, isPolish)}</span>
+            <span className="tabular-nums font-medium text-sm text-c-text">
+              {formatRoiPercent(v, isPolish)}
+            </span>
           )}
         />
       ),
@@ -261,33 +275,28 @@ export function buildRoiCaseRowMenu(
     onModel?: (row: RoiCaseListItem) => void;
   }
 ): StandardRowMenu {
-  const lock = getRoiCaseLockInfo(row.status);
-  const lockReason = lock ? (isPolish ? lock.reason.pl : lock.reason.en) : undefined;
   return {
-    primary: [
-      {
-        id: 'open',
-        label: isPolish ? 'Otwórz' : 'Open',
-        onClick: () => handlers.onPreview(row),
-      },
-      ...(handlers.onModel
-        ? [
-            {
-              id: 'model',
-              label: isPolish ? 'Otwórz pełne narzędzie' : 'Open full tool',
-              onClick: () => handlers.onModel!(row),
-            },
-          ]
-        : []),
-    ],
+    primary: handlers.onModel
+      ? [
+          {
+            id: 'open',
+            label: isPolish ? 'Otwórz pełne narzędzie' : 'Open full tool',
+            onClick: () => handlers.onModel!(row),
+          },
+        ]
+      : [
+          {
+            id: 'open',
+            label: isPolish ? 'Otwórz' : 'Open',
+            onClick: () => handlers.onPreview(row),
+          },
+        ],
     // Lifecycle transitions are intentionally handled inside the full ROI
     // tool. The registry remains a concise navigation surface instead of
     // exposing the whole state machine (including disabled actions).
     statusTransitions: [],
     universalHandlers: {
       preview: () => handlers.onPreview(row),
-      editNote: lockReason,
-      archiveNote: lockReason,
     },
   };
 }
@@ -307,7 +316,10 @@ export interface RoiPreviewDeps {
   resolveMemberName?: RoiMemberNameResolver;
 }
 
-export function buildRoiCasePreview(row: RoiCaseListItem, deps: RoiPreviewDeps): StandardPreviewProps {
+export function buildRoiCasePreview(
+  row: RoiCaseListItem,
+  deps: RoiPreviewDeps
+): StandardPreviewProps {
   const { isPolish, onClose, calculationRun, resolveMemberName = () => null } = deps;
   const lock = getRoiCaseLockInfo(row.status);
   const runResolved = calculationRun !== undefined;
@@ -329,7 +341,10 @@ export function buildRoiCasePreview(row: RoiCaseListItem, deps: RoiPreviewDeps):
     meta: {
       pills: [
         { label: roiStatusLabel(row.status, isPolish), tone: ROI_STATUS_TONE[row.status] },
-        { label: `${row.currency} · ${row.granularity === 'monthly' ? (isPolish ? 'miesięczna' : 'monthly') : isPolish ? 'roczna' : 'annual'}`, tone: 'neutral' },
+        {
+          label: `${row.currency} · ${row.granularity === 'monthly' ? (isPolish ? 'miesięczna' : 'monthly') : isPolish ? 'roczna' : 'annual'}`,
+          tone: 'neutral',
+        },
       ],
       trailing: row.nextActionDueAt ? (
         <span className="text-[11px] font-semibold text-c-text-secondary">
@@ -357,7 +372,12 @@ export function buildRoiCasePreview(row: RoiCaseListItem, deps: RoiPreviewDeps):
           value: resolveMemberName(row.ownerUserId) || row.ownerUserId,
           mono: !resolveMemberName(row.ownerUserId),
         },
-        { id: 'initiative', label: isPolish ? 'Inicjatywa' : 'Initiative', value: row.initiativeId, mono: true },
+        {
+          id: 'initiative',
+          label: isPolish ? 'Inicjatywa' : 'Initiative',
+          value: row.initiativeId,
+          mono: true,
+        },
         {
           id: 'analysisWindow',
           label: isPolish ? 'Okres analizy' : 'Analysis window',
@@ -377,7 +397,9 @@ export function buildRoiCasePreview(row: RoiCaseListItem, deps: RoiPreviewDeps):
               format={(v) => formatRoiCurrency(v, row.currency, isPolish)}
             />
           ) : (
-            <span className="text-c-text-muted text-sm">{isPolish ? 'Wczytywanie…' : 'Loading…'}</span>
+            <span className="text-c-text-muted text-sm">
+              {isPolish ? 'Wczytywanie…' : 'Loading…'}
+            </span>
           ),
         },
         {
@@ -391,7 +413,9 @@ export function buildRoiCasePreview(row: RoiCaseListItem, deps: RoiPreviewDeps):
               format={(v) => formatRoiPercent(v, isPolish)}
             />
           ) : (
-            <span className="text-c-text-muted text-sm">{isPolish ? 'Wczytywanie…' : 'Loading…'}</span>
+            <span className="text-c-text-muted text-sm">
+              {isPolish ? 'Wczytywanie…' : 'Loading…'}
+            </span>
           ),
         },
         {
@@ -406,10 +430,14 @@ export function buildRoiCasePreview(row: RoiCaseListItem, deps: RoiPreviewDeps):
                   ? 'Ostatni przebieg kalkulacji zakończył się niepowodzeniem.'
                   : 'The latest calculation run failed.'
               }
-              format={(v) => `${v.toLocaleString(isPolish ? 'pl-PL' : 'en-US', { maximumFractionDigits: 1 })} ${isPolish ? 'okr.' : 'periods'}`}
+              format={(v) =>
+                `${v.toLocaleString(isPolish ? 'pl-PL' : 'en-US', { maximumFractionDigits: 1 })} ${isPolish ? 'okr.' : 'periods'}`
+              }
             />
           ) : (
-            <span className="text-c-text-muted text-sm">{isPolish ? 'Wczytywanie…' : 'Loading…'}</span>
+            <span className="text-c-text-muted text-sm">
+              {isPolish ? 'Wczytywanie…' : 'Loading…'}
+            </span>
           ),
         },
         {
@@ -420,7 +448,9 @@ export function buildRoiCasePreview(row: RoiCaseListItem, deps: RoiPreviewDeps):
       ],
     },
     ai: {
-      hints: isPolish ? ['Podsumuj sprawę', 'Zaproponuj następny krok'] : ['Summarize case', 'Suggest next step'],
+      hints: isPolish
+        ? ['Podsumuj sprawę', 'Zaproponuj następny krok']
+        : ['Summarize case', 'Suggest next step'],
       disabled: true,
       disabledTooltip: isPolish ? 'Wkrótce' : 'Coming soon',
     },
@@ -466,16 +496,31 @@ export function buildRoiBenefitsRealizationPreview(
     details: {
       showWordCount: false,
       properties: [
-        { id: 'initiative', label: isPolish ? 'Inicjatywa' : 'Initiative', value: row.initiativeId, mono: true },
+        {
+          id: 'initiative',
+          label: isPolish ? 'Inicjatywa' : 'Initiative',
+          value: row.initiativeId,
+          mono: true,
+        },
         {
           id: 'approved',
           label: isPolish ? 'Zaakceptowane korzyści' : 'Approved benefits',
-          value: <HonestValueCell value={row.approvedFinancialBenefits} format={(v) => formatRoiNumber(v, isPolish)} />,
+          value: (
+            <HonestValueCell
+              value={row.approvedFinancialBenefits}
+              format={(v) => formatRoiNumber(v, isPolish)}
+            />
+          ),
         },
         {
           id: 'actual',
           label: isPolish ? 'Rzeczywiste korzyści' : 'Actual benefits',
-          value: <HonestValueCell value={row.actualFinancialBenefits} format={(v) => formatRoiNumber(v, isPolish)} />,
+          value: (
+            <HonestValueCell
+              value={row.actualFinancialBenefits}
+              format={(v) => formatRoiNumber(v, isPolish)}
+            />
+          ),
         },
         {
           id: 'pct',
