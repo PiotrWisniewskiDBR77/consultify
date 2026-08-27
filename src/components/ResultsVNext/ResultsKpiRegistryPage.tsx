@@ -13,12 +13,10 @@
  * production-denied `?sampleData=results-vnext` gate and is visibly labelled
  * by the shared registry shell. Empty API responses remain empty.
  *
- * -- HONEST-DATA CAVEAT (see kpiApi.ts header for the full backend-gap
- * writeup): `GET /kpi` returns `KpiDefinition` rows only — no KPI *name*, no
- * target/current-value fields (those live on `rvn_kpi_definition_versions`,
- * which has no GET endpoint anywhere in this backend surface today). This
- * page therefore displays `kpiCode` as the row identity (never a fabricated
- * "name"), and shows the KPI's *latest measurement* value (lazily fetched
+ * -- HONEST-DATA CAVEAT: `GET /kpi` now returns the current definition's
+ * business name additively (or `null` when no current version exists), while
+ * target/current-value fields remain outside the list envelope. This page
+ * shows the KPI's *latest measurement* value (lazily fetched
  * only for the selected row, honest `null` when none was ever recorded) in
  * the preview pane instead of a table column — putting it in the table would
  * mean either an N+1 fetch per visible row or a fabricated placeholder,
@@ -142,10 +140,11 @@ import { KpiTransitionDialog, type KpiTransitionKind } from './KpiTransitionDial
 import { LifecycleLockBadge, lockedRowMenuAction } from './LifecycleLockBadge';
 import {
   getResultsDomainPath,
+  getResultsDomainTabs,
   isResultsDomain,
-  RESULTS_DOMAIN_TABS,
 } from './resultsDomainNavigation';
 import { isResultsVNextFlagEnabled } from './resultsVNextFeatureFlags';
+import { ResultsSearchRegistry } from './ResultsSearchRegistry';
 import {
   ResultsVNextRegistryShell,
   type ResultsVNextTableProps,
@@ -371,13 +370,16 @@ function buildDefinitionActions(
 function buildColumns(isPolish: boolean, currentUserId: string | null | undefined): TableColumn[] {
   return [
     {
-      id: 'kpiCode',
-      label: isPolish ? 'Kod KPI' : 'KPI code',
+      id: 'name',
+      label: 'KPI',
       width: '260px',
       render: (row: KpiDefinitionDto) => (
-        <span className="text-sm font-medium text-c-text" title={row.kpiId}>
-          {row.kpiCode}
-        </span>
+        <div title={row.kpiId}>
+          <div className="text-sm font-medium text-c-text">{row.name ?? row.kpiCode}</div>
+          <div className="text-xs text-c-text-muted">
+            {row.name ? row.kpiCode : isPolish ? 'Kod KPI (brak nazwy)' : 'KPI code (name missing)'}
+          </div>
+        </div>
       ),
     },
     {
@@ -405,7 +407,12 @@ function buildColumns(isPolish: boolean, currentUserId: string | null | undefine
       label: isPolish ? 'Proces' : 'Process',
       width: '140px',
       render: (row: KpiDefinitionDto) => (
-        <span className="text-sm text-c-text-muted">{shortId(row.primaryProcessId)}</span>
+        <span
+          className="block truncate text-sm text-c-text-muted"
+          title={row.primaryProcessId ?? undefined}
+        >
+          {row.primaryProcessId ?? '—'}
+        </span>
       ),
     },
     {
@@ -615,7 +622,7 @@ function buildPreview(
           label: t('Właściciel', 'Owner'),
           value: ownerDisplay(row.ownerUserId, ctx.currentUserId, ctx.isPolish),
         },
-        { id: 'process', label: t('Proces', 'Process'), value: shortId(row.primaryProcessId) },
+        { id: 'process', label: t('Proces', 'Process'), value: row.primaryProcessId ?? '—' },
         {
           id: 'created',
           label: t('Utworzono', 'Created'),
@@ -803,7 +810,12 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
   // the old prop). Scorecards' legacy cutover is already enforced
   // server-side, so this mounted successor must not be strandable behind
   // the `kpiRegistry` rollout flag.
-  const enabled = initialTab === 'scorecards' || isResultsVNextFlagEnabled('kpiRegistry');
+  const searchMode =
+    isResultsVNextFlagEnabled('resultsSearch') &&
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('resultsView') === 'search';
+  const enabled =
+    !searchMode && (initialTab === 'scorecards' || isResultsVNextFlagEnabled('kpiRegistry'));
 
   const navigate = useNavigate();
   const [rows, setRows] = useState<KpiDefinitionDto[]>([]);
@@ -1351,6 +1363,8 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
     [visibleRows]
   );
 
+  if (searchMode) return <ResultsSearchRegistry />;
+
   if (!enabled) {
     return (
       <div
@@ -1407,10 +1421,10 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
           domain="kpi"
           sampleData={shouldUseResultsVNextOwnerSampleData()}
           moduleBar={{
-            tabs: RESULTS_DOMAIN_TABS,
+            tabs: getResultsDomainTabs(),
             activeTab: 'kpi',
             onTabChange: (id) => {
-              if (isResultsDomain(id)) navigate(getResultsDomainPath(id));
+              if (id === 'search' || isResultsDomain(id)) navigate(getResultsDomainPath(id));
             },
             showTabCounts: false,
             viewModes: ['table'],
@@ -1537,10 +1551,10 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
           domain="kpi"
           sampleData={shouldUseResultsVNextOwnerSampleData()}
           moduleBar={{
-            tabs: RESULTS_DOMAIN_TABS,
+            tabs: getResultsDomainTabs(),
             activeTab: 'kpi',
             onTabChange: (id) => {
-              if (isResultsDomain(id)) navigate(getResultsDomainPath(id));
+              if (id === 'search' || isResultsDomain(id)) navigate(getResultsDomainPath(id));
             },
             showTabCounts: false,
             viewModes: ['table'],

@@ -46,6 +46,28 @@ const FLAGS = {
     localStorage: 'ff.results_vnext_okr_registry',
     env: 'VITE_RESULTS_VNEXT_OKR_ENABLED',
   },
+  resultsSearch: {
+    query: 'ff_resultsVNextSearch',
+    localStorage: 'ff.results_vnext_search',
+    env: 'VITE_RESULTS_VNEXT_SEARCH_ENABLED',
+  },
+  /**
+   * E.1 (day46-finish) — the ONE new flag this package is licensed to add
+   * (see the duty instruction's Z10). Gates a single navigational entry
+   * point FROM the Results module TO the existing Management Reports
+   * screen (`ROUTES.REPORTS.MANAGEMENT`). Does NOT touch
+   * `src/components/Reports/Management/**`,
+   * `ManagementReportRepository.ts` or `managementReportsService.ts` —
+   * those stay untouched (out of this duty's scope); this flag only
+   * decides whether Results renders a link to that pre-existing screen.
+   * Default OFF everywhere, same conservative shape as `resultsSearch`
+   * above — no D-D default-on set (no dev-render odbiór yet).
+   */
+  managementReportEntry: {
+    query: 'ff_resultsVNextManagementReportEntry',
+    localStorage: 'ff.results_vnext_management_report_entry',
+    env: 'VITE_RESULTS_VNEXT_MANAGEMENT_REPORT_ENTRY_ENABLED',
+  },
 } as const satisfies Record<string, FlagKeys>;
 
 export type ResultsVNextFlag = keyof typeof FLAGS;
@@ -145,6 +167,8 @@ export function isResultsVNextFlagEnabled(
       typeof window !== 'undefined' ? (window.location?.hostname ?? '') : ''
     );
   }
+  if (flag === 'resultsSearch') return false;
+  if (flag === 'managementReportEntry') return false;
   // No D-D default-on set yet for roi/okr. Every host (prod, demo, stage,
   // dev) reads OFF until an explicit opt-in.
   return false;

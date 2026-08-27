@@ -15,10 +15,13 @@
  */
 import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { humanizeActionType } from '../../../../src/components/ResultsVNext/roi/roiRegistryMappers';
-import { buildRoiCaseColumns } from '../../../../src/components/ResultsVNext/roi/roiRegistryPresenters';
+import {
+  buildRoiCaseColumns,
+  buildRoiCaseRowMenu,
+} from '../../../../src/components/ResultsVNext/roi/roiRegistryPresenters';
 import type { RoiCaseListItem } from '../../../../src/components/ResultsVNext/roi/roiApi';
 
 function makeRow(overrides: Partial<RoiCaseListItem> = {}): RoiCaseListItem {
@@ -52,6 +55,11 @@ function makeRow(overrides: Partial<RoiCaseListItem> = {}): RoiCaseListItem {
 
 describe('humanizeActionType — known ROI next_action_type values get real PL/EN sentences', () => {
   it('translates every value the real server actually emits', () => {
+    expect(humanizeActionType('complete_economic_model', true)).toBe('Uzupełnij model ekonomiczny');
+    expect(humanizeActionType('review_decision', true)).toBe('Podejmij decyzję');
+    expect(humanizeActionType('start_tracking', true)).toBe('Rozpocznij śledzenie korzyści');
+    expect(humanizeActionType('record_actual', true)).toBe('Zarejestruj wartość rzeczywistą');
+    expect(humanizeActionType('set_baseline', true)).toBe('Ustal wartość bazową');
     expect(humanizeActionType('conduct_post_investment_review', true)).toBe(
       'Przeprowadź przegląd poinwestycyjny'
     );
@@ -63,7 +71,9 @@ describe('humanizeActionType — known ROI next_action_type values get real PL/E
   });
 
   it('falls back to an honest humanized label for any value not in the known table (never a raw code)', () => {
-    expect(humanizeActionType('some_future_action_type', true)).toBe('Some Future Action Type');
+    expect(humanizeActionType('some_future_action_type', true)).toBe(
+      'Nieznana akcja: Some Future Action Type'
+    );
   });
 });
 
@@ -93,5 +103,19 @@ describe('ROI registry — Owner column resolves ownerUserId to a real name', ()
     render(<>{ownerColumn.render?.(makeRow())}</>);
 
     expect(screen.getByText('user-anna-kowalska')).toBeInTheDocument();
+  });
+});
+
+describe('ROI registry — concise owner-approved row menu', () => {
+  it('offers one canonical full-tool entry and preview without unavailable actions', () => {
+    const menu = buildRoiCaseRowMenu(makeRow({ status: 'modeling' }), true, {
+      onPreview: vi.fn(),
+      onTransition: vi.fn(),
+      onModel: vi.fn(),
+    });
+
+    expect(menu.primary?.map((action) => action.label)).toEqual(['Otwórz pełne narzędzie']);
+    expect(menu.statusTransitions).toEqual([]);
+    expect(menu.universalHandlers).toEqual({ preview: expect.any(Function) });
   });
 });

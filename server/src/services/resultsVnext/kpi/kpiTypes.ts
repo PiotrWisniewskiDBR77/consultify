@@ -73,6 +73,7 @@ export interface KpiDefinitionRow {
   created_by: string;
   created_at: string;
   updated_at: string;
+  current_definition_name?: string | null;
 }
 
 export interface KpiDefinition {
@@ -88,6 +89,7 @@ export interface KpiDefinition {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+  name?: string | null;
 }
 
 export function toKpiDefinition(row: KpiDefinitionRow): KpiDefinition {
@@ -104,6 +106,7 @@ export function toKpiDefinition(row: KpiDefinitionRow): KpiDefinition {
     createdBy: row.created_by,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    name: row.current_definition_name ?? null,
   };
 }
 
