@@ -36,6 +36,9 @@
 
 - Teza o 4 trafieniach tekstowych `optionalAuth` jest SPROSTOWANA: własny pomiar dał 5 trafień, ponieważ instrukcja pominęła martwy import w `legal.routes.ts:17`. Mianownik realnych montaży nadal wynosi 1.
 - Skan trójkropkowy wykazał poza gałęzią 37 również `github-backup/fix/elkomtech-interview-dom-20260827` dotykającą `auth.middleware.ts`. Nie przejmuję tej gałęzi; ryzyko scalenia pozostaje jawne.
+- Związany marker daje 426 plików różnicy stanów marker→37 i 324 commity markera od merge-base, nie 321/322.
+- Wymóg P.8 „zero nowych zapytań przy braku polityki” koliduje z brakiem preloadu: samo ustalenie braku wpisu wymaga jednego SELECT. Zastosowano 1 zapytanie bez polityki i 2 z polityką.
+- Tezy erraty 1–14 potwierdzono co do zachowania, z korektą tezy 12 do 5 trafień tekstowych/1 montażu. Tezę 15 potwierdzono co do merge-base i 11 plików, ale obalono aktualne liczby różnicy stanów/commitów.
 
 ## §P.1 — inwentarz furtek, kotwic i mianowników
 
@@ -159,14 +162,60 @@ Pięć kształtów: wołacz — NIE, pozycja porównawcza; ApiGateway — NIE, z
 
 ## Pomiar zasięgu testów
 
-PRZED: patrz §P.1. Artefakty: `/private/tmp/consultify-authcore-day56-artefakty/zasieg-PRZED.json` i `zasieg-PRZED.log`.
+PRZED: 79 plików, 1720 PASS / 2 FAIL / 65 SKIPPED. PO: 79 plików, 1720 PASS / 2 FAIL / 65 SKIPPED. Listy czerwonych PRZED i PO są identyczne z listą §P.1. `NOWE CZERWONE (0)`; `NAPRAWIONE (0)`.
+
+Zakres dodatkowy PO: 61 plików, 382 PASS / 14 FAIL / 0 SKIPPED. Nie wykonano odpowiadającego baseline dodatkowego na markerze, więc 14 nazw pozostaje nieprzypisanych i zakres całości deklaruję jako `ZASIĘG CZĘŚCIOWY`. Pełny katalog integracyjny auth: 10 plików, 46 PASS / 15 FAIL / 0 SKIPPED; własny plik day56 ma 8 PASS / 0 FAIL / 0 SKIPPED.
+
+**NIE przepisałem liczb nadzorcy, dyżurów 37/53, autora instrukcji ani z żadnego `MODULE_ACCEPTANCE.md` — zmierzyłem sam.**
+
+## Tabela zbiorcza
+
+| pozycja | werdykt         | commit       | dowód                              |
+| ------- | --------------- | ------------ | ---------------------------------- |
+| P.1     | ZROBIONE_WG_DoD | `3bd488dbc4` | §P.1                               |
+| P.2     | ZROBIONE_WG_DoD | `c166947a05` | §P.2                               |
+| P.6     | CZĘŚCIOWO       | `b4d2641555` | brak pary HTTP                     |
+| P.3     | CZĘŚCIOWO       | `acaecbb573` | brak macierzy 18 montaży           |
+| P.4     | CZĘŚCIOWO       | `fe542680a0` | brak realnego pomiaru kosztu       |
+| P.5     | CZĘŚCIOWO       | `89c76d1fe8` | brak HTTP błędu DB                 |
+| P.7     | CZĘŚCIOWO       | `e9c51873a1` | brak tabeli 8 odmów                |
+| P.8     | CZĘŚCIOWO       | `08f49485fa` | 8/8 real PG, brak negatywu tenanta |
+| P.9     | ZROBIONE_WG_DoD | `cc62eeabe2` | §P.9                               |
+| R.1     | ZROBIONE_WG_DoD | ten commit   | ten raport                         |
+
+## Artefakty
+
+- `zasieg-PRZED.json` — `bb2aaa7a476a09e53b348947d72dcf3ad7f815e219042f882739faf873ad79d9`; log — `c91bf9dba8ad8996027d285127708f6e62d531633be8d3ad2af4db0e21e038aa`.
+- `zasieg-PO.json` — `d8d21b0d3b331409ec9a93c6eee7881f7751055fbe0d3ae94563b2fa521a271e`; log — `eac382b53d6e96e3816698b7706d645939338d054a97a1549c58085d012f7b65`.
+- `p8-kontrakt.json` — `bb80aca3de66ed6eede8cfcb8dc3784f87daaa43893785a1a379257ffe737120`; log — `81f35852aa3a906668fe87094df5f5be050eb70a9cc5706e5e8e71253d061b7e`.
+- `p8-regresja.json` — `ad64d8c565d02351d1882f296b96d95ca79c8036309239115ad11509facf1dd3`; log — `e68a432a4b73bde2f6dcfb0c8399852bd57473c9d78c109dc64c22a450e5a054`.
+- `integracja.json` — `2b6f946e6dcc2500d1ad257d6cad37e4f0d3b7fe3823abd752812da59804ab93`; log — `2702437a5fe43e30331bcfff20f56c4cd8635abc1e2cea4dc8e722bf962f6726`.
+- Pozostałe sumy są dostępne z `shasum -a 256 /private/tmp/consultify-authcore-day56-artefakty/*`.
 
 ## Dług zastany
 
 - Dwa czerwone testy baseline wskazane w §P.1.
 - Martwy import `optionalAuth` w `legal.routes.ts:17` — tylko raport, brak licencji zapisu.
 - `cross-org-idor.test.ts` — pomiar i rekomendacja do uzupełnienia.
+- Własny pomiar `cross-org-idor.test.ts`: 22 PASS / 92 FAIL. Mockuje nieistniejący eksport z rbac i nie izoluje faktycznego `validateOrgMembership`; nadzorca powinien zlecić osobny dyżur naprawiający mock/fixture bez osłabienia oczekiwanych 403.
 
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
 - Kody HTTP dla tras, których nie objęto jeszcze realnym żądaniem przez ApiGateway.
+- Pochodzenie 14 czerwonych testów dodatkowego zakresu tras oraz 15 czerwonych pełnego katalogu integracyjnego auth nie zostało porównane z markerem.
+
+## STOP-y
+
+Brak STOP-u całego dyżuru. Pozycje P.3–P.8 oznaczono uczciwie jako CZĘŚCIOWO tam, gdzie nie osiągnięto indywidualnego DoD.
+
+## Rekomendacje przy scalaniu
+
+1. Usunąć duplikat kontraktu day53 po przyjęciu testu day56; nie zachowywać przypięcia `cx_day53`.
+2. Nie scalać gałęzi 37; wykorzystana została wyłącznie zasada fail-closed.
+3. Naprawić `cross-org-idor.test.ts` w osobnym dyżurze z poprawnym źródłem symbolu i fixture organizacji.
+4. Przed merge wykonać baseline dodatkowych katalogów na markerze i porównać 14/15 czerwonych nazw.
+5. Rozstrzygnąć preload/cache jawnego braku polityki, jeśli właściciel podtrzymuje twarde 0 zapytań przy braku ustawienia.
+
+## Brief wynikowy dla nadzorcy
+
+Rdzeń członkostwa odmawia zalogowanemu użytkownikowi bez organizacji. Odebrane członkostwo nie jest już cache'owane przez 60 sekund. Awaria magazynu członkostwa zwraca 503 zamiast wpuszczać ruch. `optionalAuth` nie wysyła odmowy hydratacji na publicznej trasie. Egzekutor bezczynności działa przed przekazaniem żądania dalej i jest domyślnie wyłączony. Kontrakt realnego PG ma 8/8 PASS i nie jest przypięty do nazwy bazy. Pełny główny zakres ma zero nowych czerwonych nazw. Pozycje P.3–P.8 pozostają formalnie CZĘŚCIOWO z powodu brakujących macierzy HTTP lub negatywu tenanta. Nie powstała migracja. Gałąź 37 nie została przejęta. Największym ryzykiem merge są niezbazelinowane czerwone testy dodatkowych tras i zastany uszkodzony `cross-org-idor.test.ts`.
