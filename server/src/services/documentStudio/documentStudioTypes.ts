@@ -720,6 +720,18 @@ export interface DocumentSchema {
   sourceRefs: DocumentSourceRef[];
   createdAt: string;
   updatedAt: string;
+  /** Deterministic DRD cover metadata. Optional so every legacy schema remains unchanged. */
+  drdReportMetadata?: {
+    clientName: string;
+    businessProfile?: string | null;
+    employment?: string | null;
+    assessmentPeriod?: string | null;
+    assessor?: string | null;
+    clientSponsor?: string | null;
+    methodology: string;
+    sessionSignature: string;
+    issuedAt: string;
+  };
   /**
    * Lifecycle status — Epic E5. Optional on the type to keep historical
    * artifacts (created before E5 shipped) readable; service overlays a

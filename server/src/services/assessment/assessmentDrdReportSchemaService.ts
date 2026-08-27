@@ -431,6 +431,17 @@ export function buildAssessmentDrdReportSchema(contract: AssessmentReportContrac
     sourceRefs: [],
     createdAt: contract.generatedAt,
     updatedAt: contract.generatedAt,
+    drdReportMetadata: {
+      clientName,
+      businessProfile: null,
+      employment: null,
+      assessmentPeriod: null,
+      assessor: null,
+      clientSponsor: null,
+      methodology: 'Digital Pathfinder — metodyka oceny dojrzałości cyfrowej DRD',
+      sessionSignature: contract.sessionId,
+      issuedAt: contract.generatedAt,
+    },
   };
 }
 

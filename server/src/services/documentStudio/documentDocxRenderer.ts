@@ -1313,6 +1313,94 @@ function renderCoverBlock(ctx: RenderContext, options: DocumentRenderOptions = {
   return out;
 }
 
+function renderDrdCoverBlock(ctx: RenderContext): (Paragraph | Table)[] {
+  const metadata = ctx.schema.drdReportMetadata;
+  const missing = 'Do uzupełnienia — dane nie są zapisane w sesji oceny.';
+  const rows: Array<[string, string, boolean]> = [
+    ['Klient', metadata?.clientName ?? ctx.schema.audience[0] ?? missing, false],
+    ['Profil działalności', metadata?.businessProfile ?? missing, !metadata?.businessProfile],
+    ['Zatrudnienie', metadata?.employment ?? missing, !metadata?.employment],
+    ['Okres oceny', metadata?.assessmentPeriod ?? missing, !metadata?.assessmentPeriod],
+    ['Oceniający', metadata?.assessor ?? missing, !metadata?.assessor],
+    ['Sponsor po stronie klienta', metadata?.clientSponsor ?? missing, !metadata?.clientSponsor],
+    ['Metodyka', metadata?.methodology ?? missing, !metadata?.methodology],
+    ['Sygnatura sesji', metadata?.sessionSignature ?? missing, !metadata?.sessionSignature],
+    [
+      'Data wydania',
+      metadata?.issuedAt ? new Date(metadata.issuedAt).toISOString().slice(0, 10) : missing,
+      !metadata?.issuedAt,
+    ],
+  ];
+  const metadataTable = new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    rows: rows.map(
+      ([label, value, placeholder]) =>
+        new TableRow({
+          children: [
+            new TableCell({
+              width: { size: 32, type: WidthType.PERCENTAGE },
+              children: [
+                new Paragraph({
+                  style: DRD_DOCX_STYLE_IDS.SIGNATURE,
+                  children: [new TextRun({ text: label, bold: true, font: ctx.bodyFont })],
+                }),
+              ],
+            }),
+            new TableCell({
+              width: { size: 68, type: WidthType.PERCENTAGE },
+              children: [
+                new Paragraph({
+                  style: placeholder ? DRD_DOCX_STYLE_IDS.CAPTION : DRD_DOCX_STYLE_IDS.BODY,
+                  children: [
+                    new TextRun({ text: value, italics: placeholder, font: ctx.bodyFont }),
+                  ],
+                }),
+              ],
+            }),
+          ],
+        })
+    ),
+  });
+  return [
+    new Paragraph({
+      style: DRD_DOCX_STYLE_IDS.KICKER,
+      children: [
+        new TextRun({ text: '● ', color: DRD_REPORT_PALETTE.crimson, font: ctx.bodyFont }),
+        new TextRun({
+          text: 'C O N S U L T I F Y',
+          color: DRD_REPORT_PALETTE.crimson,
+          font: ctx.bodyFont,
+        }),
+      ],
+    }),
+    new Paragraph({
+      style: DRD_DOCX_STYLE_IDS.KICKER,
+      children: [
+        new TextRun({
+          text: 'OCENA DOJRZAŁOŚCI CYFROWEJ · DIGITAL PATHFINDER',
+          color: DRD_REPORT_PALETTE.teal,
+          font: ctx.bodyFont,
+        }),
+      ],
+    }),
+    new Paragraph({
+      style: DOCX_STYLE_IDS.TITLE,
+      children: [new TextRun({ text: ctx.schema.title, font: ctx.headingFont })],
+    }),
+    new Paragraph({
+      style: DOCX_STYLE_IDS.SUBTITLE,
+      children: [
+        new TextRun({
+          text: metadata?.clientName ?? ctx.schema.audience[0] ?? missing,
+          font: ctx.bodyFont,
+        }),
+      ],
+    }),
+    metadataTable,
+    new Paragraph({ children: [new PageBreak()] }),
+  ];
+}
+
 /**
  * Slice E15.5.coverPageLogo — DOCX logo paragraph builder. Decodes
  * the base64 asset bytes once, sizes the embed to ~4cm wide (safe
@@ -1503,7 +1591,11 @@ async function renderDocumentSchemaToDocxBufferInternal(
   const drdProfile = isDrdReportProfile(schema);
 
   const sectionChildren: unknown[] = [];
-  if (formatting.coverPage) sectionChildren.push(...renderCoverBlock(ctx, options));
+  if (formatting.coverPage) {
+    sectionChildren.push(
+      ...(isDrdReportProfile(schema) ? renderDrdCoverBlock(ctx) : renderCoverBlock(ctx, options))
+    );
+  }
   if (formatting.toc) sectionChildren.push(...renderTocBlock(ctx));
 
   // Partition into body + appendix groups so appendices always land
