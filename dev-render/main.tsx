@@ -348,6 +348,9 @@ const ResultsVNextRoiFullToolScreen = React.lazy(
 const ResultsVNextOkrRegistryScreen = React.lazy(
   () => import('./screens/results-vnext-okr-registry')
 );
+const ResultsVNextSearchRegistryScreen = React.lazy(
+  () => import('./screens/results-vnext-search-registry')
+);
 const ResultsVNextOkrObjectivesScreen = React.lazy(
   () => import('./screens/results-vnext-okr-objectives')
 );
@@ -476,6 +479,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'RN-G2 P3 #23 — REALNY route entry <ResultsOkrRegistryPage> (flaga okrRegistry: OFF -> EmptyState "results-vnext-okr-disabled", ON -> realny <ResultsOkrHub>), window.fetch stubbed for /api/vnext/results/okr*. Organization/My/Company tabs (real clicks, real fetch per tab), honest progress/confidence, lock badges, real ?setId= deep link. &state=ready|loading|empty|error &ff=off',
     render: () => <ResultsVNextOkrRegistryScreen />,
+  },
+  'results-vnext-search-registry': {
+    label:
+      'D.2 — REALNY <ResultsSearchRegistry> (the same component ResultsKpiRegistryPage mounts for ?resultsView=search), Api.get stubbed for /vnext/results/search. &state=ready|empty|error &q=<initial query>',
+    render: () => <ResultsVNextSearchRegistryScreen />,
   },
   'results-vnext-okr-objectives': {
     label:
