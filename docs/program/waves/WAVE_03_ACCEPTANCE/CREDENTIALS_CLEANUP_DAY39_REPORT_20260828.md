@@ -153,8 +153,8 @@ Liczba 145 z briefu nie jest zgodna z metodą wiążącą; własny wynik to 104 
 | D.3 | CZĘŚCIOWO | `59dda561fb` | build OOM; dowód zastępczy | Vite | brak artefaktu do rozstrzygnięcia |
 | D.4 | CZĘŚCIOWO | `4b7e304d62` | 16/16 bez literału; składnia OK | policzeni | zdalne wykonanie zabronione Z28 |
 | D.5 | CZĘŚCIOWO | `0c5e1871c0` | 40/40 e2e i strażnik integracyjny bez literału | policzeni | statycznie równoważne; e2e nieuruchomione Z28 |
-| D.6 | ZROBIONE_WG_DoD | do uzupełnienia po commicie | 14/14 dokumentów oczyszczonych | policzeni | instrukcje zachowują przebieg z placeholderem |
-| D.7 | NIE_ZACZĘTE | — | — | — | — |
+| D.6 | ZROBIONE_WG_DoD | `0b30620351` | 14/14 dokumentów oczyszczonych | policzeni | instrukcje zachowują przebieg z placeholderem |
+| D.7 | ZROBIONE_WG_DoD | do uzupełnienia po commicie | 3/3 testy PASS | skan rzeczywistych plików | czysty/nieczysty fixture potwierdzony |
 | R.1 | NIE_ZACZĘTE | — | — | — | — |
 
 ## D.2 — front
@@ -253,6 +253,17 @@ Mapa PIN do konta została całkowicie usunięta z kodu i zastąpiona rygorystyc
 - W 14 dokumentach z inwentarza zastąpiono 25 wystąpień wartością `<HASLO>`. Po zmianie każdy z 14 plików ma 0 trafień literału.
 - Procedury zachowują użytkownika, kolejność kroków i cel testu; usunięta została wyłącznie gotowa wartość poświadczenia. Operator musi dostarczyć hasło poza repozytorium.
 - Fałszywe trafienia w dokumentacji IAM i deployment pozostawiono bez zmian zgodnie z klasyfikacją D.1.
+
+Adresy kont bez hasła pozostały nietknięte. Przegląd diffu potwierdza brak zmian merytorycznych poza zastąpieniem wartości placeholderem oraz opisem obowiązku dostarczenia jej poza repozytorium.
+
+## D.7 — strażnik regresji
+
+- Zgodnie z `Z19` plik umieszczono w istniejącym, zbieranym przez Vitest katalogu `tests/unit/security/`; `tests/security/` nie znajduje się w `include` bieżącej konfiguracji, której nie zmieniono.
+- Strażnik skanuje rzeczywiste drzewa `src`, `server/src`, `server/scripts`, `server/seed`, `server/seeds`, `scripts` i `tests/e2e`; wzorzec składa z fragmentów i nie wypisuje znalezionej wartości.
+- Test repozytorium PASS; brudna atrapa została wykryta, a komunikat nie ujawnił wartości; czysta atrapa nie dała trafienia. Razem 3/3 PASS, 0 SKIPPED, z wymaganym własnym PG i kompletem env.
+- Pierwszy przebieg poprawnie wykrył zastany dług: dwa dodatkowe seedy z parą poświadczeń i trzy pliki ze zdalnym URL-em domyślnym. Nie rozszerzano samowolnie zakresu D.39; wszystkie pięć ścieżek dodano do allowlisty z powodem i datą.
+- Allowlista zawiera ponadto wymagane `scripts/seed-m16-demo.py` z powodem `KOLIZJA_38` i datą. Każdy wpis ma powód oraz datę.
+- Plik strażnika ma 0 trafień literału. Dodanie do indeksu wykonano przez `git add -f`.
 
 ## Errata i korekty wobec instrukcji
 
