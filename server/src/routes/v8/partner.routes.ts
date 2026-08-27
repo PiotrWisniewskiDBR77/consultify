@@ -61,6 +61,23 @@ type BoundPartnerRequest = AuthRequest & { boundPartnerOrgId?: string };
 export const V8_PARTNER_READ_CONTRACT = 'partner_runtime_read_v1';
 export const V8_PARTNER_PROGRAM_CONTRACT = 'partner_program_p29_v1';
 
+/**
+ * D.5 / DEC-2026-08-25-21/22 ("zero placebo") — envelope honesty.
+ *
+ * `meta.dataFidelity` says, additively and server-side, whether the payload the
+ * caller just received is real data, data this route synthesized, or no data at
+ * all. `meta.dataFidelityReason` is present only when the value is not `'real'`
+ * and quotes the MECHANISM (never a judgement). No existing envelope field is
+ * changed or removed, and no status code changes.
+ *
+ * Deliberately NOT applied to the `410 PARTNER_ECONOMICS_POLICY_DISABLED`
+ * envelope: that body is built by `partnerEconomicsPolicyBody()` in
+ * `server/src/services/partnerEconomicsPolicy.ts`, which is shared with the
+ * legacy surface and two superadmin surfaces and is out of this scope. The
+ * policy envelope must stay byte-for-byte as it is.
+ */
+export type PartnerDataFidelity = 'real' | 'synthesized' | 'unavailable';
+
 const unavailablePartnerWriter = (capability: string) =>
   asyncHandler(async (_req: AuthRequest, res: Response) =>
     res.status(503).json({
@@ -68,6 +85,10 @@ const unavailablePartnerWriter = (capability: string) =>
       code: 'FEATURE_NOT_AVAILABLE',
       capability,
       message: 'This Partner capability is not available yet.',
+      meta: {
+        dataFidelity: 'unavailable' as PartnerDataFidelity,
+        dataFidelityReason: `no backing command exists for capability ${capability}; this route has never written Partner data`,
+      },
     })
   );
 
@@ -181,6 +202,14 @@ export async function getPartnerConnectionHandler(req: AuthRequest, res: Respons
     const connection = await getPartnerConnectionForTenant({ organizationId, userId });
     return res.json({
       data: connection,
+      // D.5 STOP (scoped to this one handler): `meta.dataFidelity: 'real'`
+      // belongs here too, but the pre-existing
+      // tests/integration/partners/partner-connection-handler.day12.test.ts:45
+      // asserts this exact envelope with `toHaveBeenCalledWith`, and that file
+      // is an EXISTING test — the day 42 licence covers only NEW files under
+      // tests/integration/partners/**. Adding the field without licence to edit
+      // that assertion would knowingly redden a green legacy test; weakening or
+      // deleting it is forbidden by Z24. Left untouched on purpose.
       meta: {
         version: 'v8',
         contract: V8_PARTNER_READ_CONTRACT,
@@ -219,6 +248,9 @@ function partnerReadMeta(req: AuthRequest, partnerOrgId: string) {
     contract: V8_PARTNER_READ_CONTRACT,
     partnerOrgId,
     v8TenantOrganizationId: organizationId,
+    // D.5: default for every route whose payload comes straight out of the
+    // Partner tables. Routes that synthesize override this after the spread.
+    dataFidelity: 'real' as PartnerDataFidelity,
   };
 }
 
@@ -229,6 +261,7 @@ function partnerProgramMeta(req: AuthRequest, partnerOrgId: string) {
     contract: V8_PARTNER_PROGRAM_CONTRACT,
     partnerOrgId,
     v8TenantOrganizationId: organizationId,
+    dataFidelity: 'real' as PartnerDataFidelity,
   };
 }
 
@@ -356,7 +389,20 @@ router.get(
       // fields — the one place a client already looks for server-derived
       // envelope state, so the UI needs no second, client-side copy of the
       // policy to render an honest read-only audit view.
-      meta: { ...partnerProgramMeta(req, partnerOrgId), ...partnerEconomicsPolicyProjection() },
+      //
+      // D.5: this route is REALNE_Z_SYNTEZA. Two mechanisms synthesize:
+      // `PartnerProgramLedgerService.getOrCreateRuntime` materialises the
+      // lifecycle runtime row on a GET, and a failed ledger read is answered
+      // with a zero snapshot flagged as `degraded`. The `dataFidelity` override
+      // comes last so it wins over the `'real'` default in `partnerProgramMeta`.
+      meta: {
+        ...partnerProgramMeta(req, partnerOrgId),
+        ...partnerEconomicsPolicyProjection(),
+        dataFidelity: 'synthesized' as PartnerDataFidelity,
+        dataFidelityReason: detail.degraded
+          ? `lifecycle runtime materialised on read by getOrCreateRuntime; balances are a zero snapshot (degraded.reason=${detail.degraded.reason})`
+          : 'lifecycle runtime materialised on read by getOrCreateRuntime',
+      },
     });
   })
 );
@@ -419,6 +465,7 @@ router.get(
         monetaryAccrual: false,
         payoutAvailable: false,
         decision: 'AMD-PRT-ECONOMICS-002',
+        dataFidelity: 'real' as PartnerDataFidelity,
       },
     });
   })
@@ -906,13 +953,36 @@ router.get(
       };
     };
 
+    // D.5: this whole route is REALNE_Z_SYNTEZA, on every branch.
+    //
+    // `PartnerReferralService.getReferralTools` calls
+    // `ensurePartnerReferralIdentity` (server/src/services/partnerReferralService.ts:574),
+    // which DERIVES `referral_code` and `referral_link_slug` from the partner
+    // organization NAME plus a slice of its id and persists them the first time
+    // they are read. The two route-level fallbacks below derive the same values
+    // the same way. So a caller can receive an invented referral identity on any
+    // branch, and the branch that ran is not observable to it — which is exactly
+    // the "confident placebo" DEC-2026-08-25-21/22 forbids.
+    //
+    // The value is therefore declared unconditionally, and the reason names the
+    // mechanism rather than guessing which branch produced it. Distinguishing
+    // "synthesized just now" from "synthesized on an earlier read and persisted
+    // since" would require an extra pre-read of the identity columns; that is a
+    // behavioural change, not an additive `meta` field, so it is not done here.
+    const SYNTHESIZED_IDENTITY_REASON =
+      'referral code, link slug and QR url derived from the partner organization name by ensurePartnerReferralIdentity';
+
     if (!tools) {
       // Compatibility guard: preserve a usable shape for clients even when
       // campaign rows are unavailable.
       const fallbackTools = await normalizeWithEnsuredIdentity(null);
       return res.json({
         data: { tools: fallbackTools },
-        meta: partnerReadMeta(req, partnerOrgId),
+        meta: {
+          ...partnerReadMeta(req, partnerOrgId),
+          dataFidelity: 'synthesized' as PartnerDataFidelity,
+          dataFidelityReason: `${SYNTHESIZED_IDENTITY_REASON}; campaign links unavailable`,
+        },
       });
     }
 
@@ -920,13 +990,21 @@ router.get(
       const healedTools = await normalizeWithEnsuredIdentity(tools);
       return res.json({
         data: { tools: healedTools },
-        meta: partnerReadMeta(req, partnerOrgId),
+        meta: {
+          ...partnerReadMeta(req, partnerOrgId),
+          dataFidelity: 'synthesized' as PartnerDataFidelity,
+          dataFidelityReason: SYNTHESIZED_IDENTITY_REASON,
+        },
       });
     }
 
     return res.json({
       data: { tools },
-      meta: partnerReadMeta(req, partnerOrgId),
+      meta: {
+        ...partnerReadMeta(req, partnerOrgId),
+        dataFidelity: 'synthesized' as PartnerDataFidelity,
+        dataFidelityReason: SYNTHESIZED_IDENTITY_REASON,
+      },
     });
   })
 );
