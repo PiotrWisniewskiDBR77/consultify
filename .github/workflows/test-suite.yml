@@ -1460,7 +1460,7 @@ jobs:
         initiatives-tests,
         acceptance-tests,
       ]
-    if: ${{ github.event_name == 'pull_request' }}
+    if: ${{ always() && github.event_name == 'pull_request' }}
     steps:
       - name: Fail if any required job failed
         env:
