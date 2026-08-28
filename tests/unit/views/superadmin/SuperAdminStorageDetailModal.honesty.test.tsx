@@ -79,7 +79,8 @@ describe('SuperAdminStorageDetailModal honest UI', () => {
     );
 
     await screen.findByText('report.pdf');
-    fireEvent.click(screen.getByRole('button', { name: /Delete file reports\/report\.pdf/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Row actions/i }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /Permanently Delete/i }));
 
     await waitFor(() => {
       expect(screen.getByText('File deletion was not confirmed by the server')).toBeInTheDocument();
@@ -140,9 +141,8 @@ describe('SuperAdminStorageDetailModal honest UI', () => {
     expect(screen.queryByText('[object Object]')).not.toBeInTheDocument();
     expect(screen.getByText('0 B')).toBeInTheDocument();
     expect(screen.getByText('Unknown date')).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: /Delete file reports\/wrapped\.pdf/i })
-    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Row actions/i }));
+    expect(screen.getByRole('menuitem', { name: /Permanently Delete/i })).toBeInTheDocument();
     expect(screen.queryByText('Organization files unavailable')).not.toBeInTheDocument();
   });
 
