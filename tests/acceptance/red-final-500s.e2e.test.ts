@@ -164,13 +164,13 @@ describe('RED-FINAL · rewir czysty (schema-green) + pinned known exceptions', (
     expect([200, 201]).toContain(rv.status);
   });
 
-  it('KNOWN K1 · GET /api/user/ai-preferences pinned 500 (lazy-wrapper self-import, decyzja Piotra)', async () => {
+  it('GET /api/user/ai-preferences returns the configured preferences contract', async () => {
     const tok = mintToken();
     const app = await appFor('/api/user/ai-preferences', '../../server/src/routes/ai/ai-preferences-extended.routes.js');
     const res = await request(app).get('/api/user/ai-preferences/').set('Authorization', `Bearer ${tok}`);
-    // Udokumentowany defekt rodziny lazy-wrapperów — NIE schema-500. Pinnięte.
-    expect(res.status).toBe(500);
-    expect(res.body).toMatchObject({ error: 'Failed to load route' });
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ success: true });
+    expect(res.body).toHaveProperty('data');
   });
 
   it('KNOWN K2 · degraded-mode stuby zwracają świadome 503 not_configured', async () => {
