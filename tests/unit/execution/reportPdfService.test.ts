@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * M14 / ExecutionHub — reportPdfService unit tests (Slice F8 / 8.4).
  *
