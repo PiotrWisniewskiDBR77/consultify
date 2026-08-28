@@ -157,3 +157,33 @@ lepiej** — to jedyna liczba, przy której nieuczciwość kosztuje najwięcej.
 3. **Dokładanie pozycji do biegnącego dyżuru.** „Zrób jeszcze X przed §C" to najczęstsza
    forma chaosu. Nowa praca idzie do następnej fali albo do wewnętrznego robotnika — nigdy
    do dyżuru, który już biegnie.
+
+---
+
+## 9. FORMAT WYDAWANIA — właściciel jest kanałem, więc format służy jemu
+
+**Model wiążący (decyzja właściciela 2026-08-28):** integrator PISZE prompty, właściciel
+WKLEJA je do osobnych okien wykonawczych. Integrator nie dysponuje zadaniami sam, nawet
+jeśli technicznie potrafi. Powód: jawność i kontrola — właściciel widzi, co idzie do
+wykonania, zanim pójdzie, a jeden padnięty wykonawca nie pociąga reszty.
+
+Cena tego modelu: przy 6 dyżurach × 4 fale to ~24 wklejki dziennie plus raporty zwrotne.
+Dlatego format jest obowiązkowy i służy właścicielowi, nie wygodzie integratora:
+
+**F1. Cała fala w JEDNEJ wiadomości.** Sześć promptów jeden pod drugim, każdy w osobnym
+bloku do skopiowania, każdy z nagłówkiem `DYŻUR <<NR>> — <<MODUŁ>>`. Właściciel kopiuje
+sześć razy z rzędu, bez szukania i bez przewijania między wiadomościami.
+
+**F2. Prompt jest kompletny i samodzielny.** Zero „jak w poprzedniej wiadomości", zero
+odsyłaczy do rozmowy. Wykonawca dostaje wszystko, czego potrzebuje, w jednym bloku:
+ścieżkę instrukcji w repo, marker, port, zakres. Komentarz dla właściciela — NAD blokiem,
+jednym zdaniem, nigdy w środku.
+
+**F3. Raporty zwracane zbiorczo.** Właściciel nie wkleja sześciu raportów pojedynczo.
+Zbiera je i oddaje jedną wiadomością; integrator ma być na to przygotowany i umieć
+rozdzielić je po nagłówkach. Jeśli któryś dyżur wymaga natychmiastowej decyzji (STOP),
+integrator mówi to WPROST w pierwszym zdaniu odpowiedzi, żeby właściciel nie musiał
+czytać całości, by to wyłowić.
+
+**Zasada nadrzędna:** jeśli format zmusza właściciela do szukania, przewijania albo
+składania czegokolwiek z kawałków — format jest zły, nie właściciel.
