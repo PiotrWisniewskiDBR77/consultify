@@ -477,38 +477,9 @@ describe('MW-DEC-001 — Canonical Decision Workflow (real Postgres, real router
     expect(after.rows[0].decided_by).toBeNull();
   });
 
-  // ═══════════════════════════ CRITICAL FINDING ═══════════════════════════
-  // decision_impacts.is_blocker is INTEGER in the live schema (created by
-  // server/migrations/292_decision_management.sql: `is_blocker INTEGER
-  // DEFAULT 0`; CREATE TABLE IF NOT EXISTS means this definition wins over
-  // the later 297/728 files that redefine the table with a BOOLEAN column —
-  // whichever numeric-sorted file runs FIRST against a fresh DB keeps its
-  // column types). DecisionController.decide() (server/src/controllers/
-  // DecisionController.ts:1324) unconditionally runs, after every successful
-  // approve/reject commit:
-  //   SELECT impacted_type, impacted_id, is_blocker FROM decision_impacts
-  //   WHERE decision_id = ? AND is_blocker = TRUE
-  // On real Postgres this is a hard type error — "operator does not exist:
-  // integer = boolean" — REGARDLESS of whether any rows match (proven below
-  // with a raw query against zero matching rows). SQLite's dynamic typing
-  // (and any mock) would never surface this; it only appears against a real,
-  // strictly-typed Postgres instance, which is exactly why this test suite
-  // exists. The query is NOT wrapped in try/catch, so it crashes the
-  // in-flight request with an uncaught 500 — AFTER
-  // finalizeDecisionTransition's BEGIN/COMMIT has already landed the
-  // approve/reject atomically. Net effect: every terminal PATCH
-  // /api/decisions/:id/decide on real Postgres returns 500 to the caller
-  // even though the decision WAS correctly, atomically approved/rejected in
-  // the database. This is a genuine, high-severity, pre-existing bug
-  // (unrelated to the atomicity work MW-DEC-001 itself added — that part
-  // works correctly, see the DB assertions immediately below still hold)
-  // that the sibling backend agent needs to fix, e.g. `is_blocker = TRUE` ->
-  // `is_blocker = 1` (or make the column genuinely BOOLEAN and fix the two
-  // duplicate table definitions). Reported here, NOT patched by this
-  // Postgres-integration-test-owner seat — out of scope (application code,
-  // not the test harness) — and the tests below are left asserting the
-  // CORRECT (200) behavior so the suite stays honestly RED until it's fixed,
-  // per this task's explicit "do not fake a false pass" instruction.
+  // Current fresh-schema contract: decision_impacts.is_blocker is BOOLEAN.
+  // Keep a direct real-Postgres predicate proof here so a future migration-order
+  // regression cannot silently revive the obsolete INTEGER/BOOLEAN diagnosis.
   it('decision_impacts.is_blocker accepts the canonical boolean predicate on current Postgres', async () => {
     const result = await client.query(
       `SELECT impacted_type, impacted_id, is_blocker FROM decision_impacts WHERE decision_id = $1 AND is_blocker = TRUE`,
@@ -518,7 +489,7 @@ describe('MW-DEC-001 — Canonical Decision Workflow (real Postgres, real router
   });
 
   // ═══════════════════════════ CASE 5 + 10 ═══════════════════════════
-  it('case 5+10: authorized decision-maker CAN approve; rationale/actor/timestamp/history persist atomically [BLOCKED by the is_blocker finding above — see comment]', async () => {
+  it('case 5+10: authorized decision-maker CAN approve; rationale/actor/timestamp/history persist atomically', async () => {
     const beforeHistoryCount = await client.query(
       `SELECT COUNT(*)::int AS c FROM decision_history WHERE decision_id=$1`,
       [DEC_APPROVE]
