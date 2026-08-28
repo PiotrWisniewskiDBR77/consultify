@@ -160,3 +160,51 @@ kontraktów. Nie jest rozszerzany w ramach test-local P3; wymaga osobnego planu 
 dyżurów oraz decyzji właściciela dla widocznych zachowań, w tym czterech handlerów AI.
 
 SHA commita raportu jest podany w końcowym handoffie; nie może być zapisany w treści własnego commita bez zmiany tego SHA.
+
+## Finalizacja integratora — 2026-08-28
+
+Status P3: **ZROBIONE**.
+
+Integrator przejął 39 czerwonych plików po handoffie i domknął je bez ponownego
+przekazywania dyżuru. Kluczowe rozstrzygnięcia:
+
+- kontrakty SuperAdmin zostały przeprowadzone przez rzeczywisty kebab
+  `StandardTable`; testy przestały pinować usunięte, bezpośrednie przyciski, ale
+  zachowały pełny dowód mutacji oraz read-back;
+- `AuditEventsViewer` i `BulkOperationsView` odzyskały jawne, kontekstowe stany
+  degraded zamiast samego technicznego komunikatu;
+- naprawiono rzeczywiste kontrakty Benefits, Results/V8, migracji, notebooka,
+  statusów workflow, publicznego rdzenia produktu i discovery gate;
+- bramka S2-LOCALE dostała obie granice historyczne. Wcześniej deklarowała
+  zakres zamknięty 13.08, lecz porównywała bazę z bieżącym EN i bezpodstawnie
+  obejmowała 2160 późniejszych kluczy na język. Po związaniu górnej granicy z
+  końcowym commitem strumienia pozostały trzy realne klucze Teresa Action; dodano
+  ich tłumaczenia DE/ES/AR/JA;
+- przywrócono z istniejącego, historycznie zaakceptowanego commita kompletne
+  niemieckie poddrzewa `help` i `reports`, utracone na późniejszej integracji.
+
+Końcowy pełny regres literalnej listy P3 z mapy:
+
+- mapa: 77 pozycji;
+- istniejące pliki: 74;
+- świadomie usunięte i nieodtwarzane: 3;
+- wynik: **74/74 pliki PASS, 635/635 testów PASS**;
+- retry: `--retry=0`;
+- czas przebiegu: 155,45 s;
+- zielone→czerwone: 0.
+
+Trzy nieodtwarzane ścieżki:
+
+- `tests/unit/initiatives-execution/portfolioScenarioSurface.test.tsx`;
+- `tests/unit/initiatives-execution/sourceProposalRegistrationWorkbench.test.tsx`;
+- `tests/unit/initiatives/resourceLoadMath.test.ts`.
+
+Pełny log: `/private/tmp/p3-full.log`.
+
+### Granice dowodu końcowego
+
+- Kompilacje produkcyjne, pełny wspólny regres P2+P3 i końcowy `diff --check`
+  są bramką integracyjną wykonywaną po domknięciu obu pakietów; nie są jeszcze
+  dowodem tej sekcji.
+- Nie wykonywano połączeń do Railway, demo, stagingu ani produkcji.
+- Nie odtworzono trzech usuniętych testów wyłącznie po to, by podnieść mianownik.
