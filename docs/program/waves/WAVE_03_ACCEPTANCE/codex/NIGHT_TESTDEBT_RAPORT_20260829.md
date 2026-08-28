@@ -1059,7 +1059,47 @@ z pierwszego przebiegu było skutkiem zanieczyszczonej bazy, nie długiem P2.
 
 ## Faza 2 — P3
 
-Nie rozpoczęto.
+**ZROBIONE.** Mapa zawiera 77 ścieżek; istnieją 74. Zgodnie z instrukcją nie
+odtworzono trzech usuniętych testów: `portfolioScenarioSurface.test.tsx`,
+`sourceProposalRegistrationWorkbench.test.tsx` i `resourceLoadMath.test.ts`.
+
+Pierwszy przebieg: 72 pliki PASS, 2 FAIL; 621 PASS, 14 FAIL. Przyczyny:
+
+1. `wave3OwnerRuntimeGuard.test.ts` ignorował przydzielony `DATABASE_URL` i w
+   29 miejscach zakładał cudzy port 5940 oraz hasło `cx`. Test korzysta teraz z
+   jawnego lokalnego URL zadania, zachowując wszystkie kontrole hosta, portu,
+   użytkownika, nazw baz i sprzątania.
+2. Po obowiązkowym przywróceniu zastosowanej wcześniej migracji
+   `948_tool_promotion_idempotency.sql` test kolejności wykrył, że na świeżej
+   bazie stawała się ona przypadkowym producentem przed kanonicznym
+   `20260719_baseline_gap.sql`. Pliku migracji ani checksumy nie zmieniono.
+   Logika runnera przesuwa nieedytowalną migrację historyczną do fazy późnej;
+   test dopuszcza wyłącznie dwa jawne historyczne pliki i nadal odrzuca każdego
+   nowego producenta.
+
+Dowód mutacyjny zmiany produkcyjnej `migrationOrdering.ts`:
+
+- po usunięciu nowego wpisu manifestu: exit 1, nazwany czerwony test
+  `GATE I1 — kolejność producent → konsument > producent jest JEDYNY — żadna
+  inna migracja nie tworzy tej tabeli`;
+- dosłowny błąd: `expected 694 to be less than 460` dla
+  `20260719_baseline_gap.sql przed 948_tool_promotion_idempotency.sql`;
+- po przywróceniu: **14/14 PASS**.
+
+Incydent wykonawczy: pierwsza mechaniczna próba parametryzacji portu została
+źle zinterpretowana przez powłokę i uszkodziła wyłącznie niezatwierdzony plik
+testowy. Plik odtworzono bajt w bajt z HEAD przez archiwum i `cp`, bez stash,
+reset ani checkout; dopiero potem zastosowano kontrolowaną poprawkę. Uszkodzona
+wersja nie była uruchamiana ani zatwierdzana.
+
+Końcowo:
+
+- **74/74 pliki PASS**;
+- **635/635 testów PASS**;
+- `--retry=0`;
+- K1: PASS;
+- K2: PASS;
+- nowe czerwone wobec Fazy 0: **zero**.
 
 ## Faza 3 — 13 testów pinujących bugi
 

@@ -58,6 +58,10 @@ const MIGRATIONS_DIR = path.resolve(__dirname, '../../server/migrations');
 
 /** Kanoniczny producent `tool_initiative_links` — decyzja koordynatora I2. */
 const CANONICAL_PRODUCER = '20260719_baseline_gap.sql';
+const IMMUTABLE_LEGACY_PRODUCERS = [
+  '291_tools_initiatives.sql',
+  '948_tool_promotion_idempotency.sql',
+] as const;
 /** Skonsolidowany konsument (tenant + idempotencja). */
 const CONSOLIDATED_CONSUMER = '948_tool_promotion_tenant_idempotency.sql';
 
@@ -153,9 +157,19 @@ describe('GATE I1 — kolejność producent → konsument', () => {
       producers.sort(),
       `producenci tool_initiative_links: ${producers.join(', ')}. ` +
         'Decyzja I2: kanoniczny jest wyłącznie 20260719_baseline_gap.sql; ' +
-        '291_tools_initiatives.sql jest historyczny i wykluczony przez runner, ' +
-        'a migracja konsumencka NIE MOŻE tworzyć tabeli.'
-    ).toEqual([CANONICAL_PRODUCER, '291_tools_initiatives.sql'].sort());
+      '291_tools_initiatives.sql jest historyczny i wykluczony przez runner, ' +
+        'a zastosowana wcześniej na stagingu 948_tool_promotion_idempotency.sql ' +
+        'jest nieedytowalną historią. Każdy inny producent jest zabroniony.'
+    ).toEqual([CANONICAL_PRODUCER, ...IMMUTABLE_LEGACY_PRODUCERS].sort());
+
+    const order = orderedFilenames();
+    // 291 is deliberately excluded by the runner; only the restored, applied
+    // 948 file participates in executable ordering.
+    for (const legacy of [IMMUTABLE_LEGACY_PRODUCERS[1]]) {
+      expect(indexOf(order, CANONICAL_PRODUCER), `${CANONICAL_PRODUCER} przed ${legacy}`).toBeLessThan(
+        indexOf(order, legacy)
+      );
+    }
   });
 
   // 5 + 6: finalna kolejność i konsument po producencie
