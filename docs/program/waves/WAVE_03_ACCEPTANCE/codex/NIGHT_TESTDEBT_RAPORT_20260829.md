@@ -1151,7 +1151,25 @@ nie osłabiono i nie wyciszono.
 
 ## Faza 4 — błędy typów
 
-Nie rozpoczęto.
+**ZROBIONE.** Wszystkie trzy wskazane błędy nadal istniały i zostały usunięte:
+
+1. `src/services/api.ts:12613` — adapter kalendarza przekazywał opcjonalny
+   `start` do kontraktu V8 wymagającego wartości. Teraz normalizuje
+   `start ?? startAt`, odrzuca brak obu i nie przekazuje źródła `event` do
+   ścieżki V8 przeznaczonej dla task/initiative/decision.
+2. `src/views/admin/AdminSettingsModule.tsx:500` — po wcześniejszej bramce
+   rozpoznającej podwidok Command Center zawężono typ propsa do kontraktu
+   `AdminCommandCenterPanel`; zachowanie routingu pozostaje bez zmian.
+3. `src/views/superadmin/__tests__/PlatformOperationsView.test.tsx:33` — fixture
+   uzupełniono o wymagane katalogi `connectors` i `virtualWorkers`.
+
+Pełny `npm run type-check`: **exit 0**. Regres dwóch bezpośrednio związanych
+plików UI: **68/68 PASS**.
+
+Dowód mutacyjny zmian produkcyjnych: po podmianie obu plików produkcyjnych
+wersjami sprzed fazy kompilator wrócił do nazwanych błędów `TS2345` dokładnie
+w `api.ts(12613,52)` i `TS2322` dokładnie w `AdminSettingsModule.tsx(500,13)`
+(exit 2). Po odtworzeniu kopii pełny type-check ponownie przeszedł (exit 0).
 
 ## Faza 5 — inwentarz lintu
 

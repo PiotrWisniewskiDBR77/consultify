@@ -33,6 +33,8 @@ describe('PlatformOperationsView', () => {
     getTargets.mockResolvedValue({
       organizations: [{ id: 'org-1', name: 'Acme', status: 'active' }],
       users: [{ id: 'user-1', name: 'ada@example.com', status: 'active' }],
+      connectors: [],
+      virtualWorkers: [],
     });
     run.mockResolvedValue({ success: true });
   });
