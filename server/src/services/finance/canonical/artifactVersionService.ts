@@ -893,6 +893,27 @@ export async function approveVersion(params: ApproveVersionParams): Promise<Appr
     );
     if (!current) return { ok: false, code: 'NOT_FOUND', message: 'Business version not found' };
 
+    // A concurrent retry can miss the receipt in the first lookup, then wait
+    // on this row while the winning approval commits. Re-read the receipt
+    // after acquiring the lock so the loser returns the same success instead
+    // of a false STATE_PRECONDITION_FAILED.
+    if (params.idempotencyKey && current.status === 'APPROVED') {
+      const replayAfterLock = await tx.queryOne<{ snapshot_id: string | null }>(
+        `SELECT snapshot_id FROM artifact_lifecycle_events
+          WHERE organization_id = ? AND business_version_id = ? AND action = 'APPROVE'
+            AND idempotency_key = ? ORDER BY created_at DESC LIMIT 1`,
+        [params.organizationId, params.businessVersionId, params.idempotencyKey]
+      );
+      if (replayAfterLock) {
+        return {
+          ok: true,
+          businessVersion: current,
+          computeSnapshotId: replayAfterLock.snapshot_id || current.compute_snapshot_id || '',
+          idempotentReplay: true,
+        };
+      }
+    }
+
     if (current.version !== params.expectedVersion) {
       return {
         ok: false,

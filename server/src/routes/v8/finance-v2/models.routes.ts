@@ -132,7 +132,15 @@ router.post(
       return res.status(400).json({ error: 'expectedVersion must be a finite number' });
     }
 
-    const current = await findCurrentArtifactVersion(organizationId, artifactId, ['IN_REVIEW']);
+    // An idempotent retry necessarily arrives after the winning request has
+    // moved the version to APPROVED. Include that state only when a replay key
+    // is present; approveVersion validates the receipt before its state gate.
+    const idempotencyKey = readIdempotencyKey(req);
+    const current = await findCurrentArtifactVersion(
+      organizationId,
+      artifactId,
+      idempotencyKey ? ['IN_REVIEW', 'APPROVED'] : ['IN_REVIEW']
+    );
     if (!current) {
       return res.status(409).json({
         error: 'Cannot approve: no version of this model is in IN_REVIEW',
@@ -146,7 +154,7 @@ router.post(
       actorId: userId,
       role,
       expectedVersion: expectedVersion ?? current.version,
-      idempotencyKey: readIdempotencyKey(req),
+      idempotencyKey,
     });
 
     if (!result.ok) {
