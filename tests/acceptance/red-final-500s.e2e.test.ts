@@ -164,13 +164,16 @@ describe('RED-FINAL · rewir czysty (schema-green) + pinned known exceptions', (
     expect([200, 201]).toContain(rv.status);
   });
 
-  it('GET /api/user/ai-preferences returns the configured preferences contract', async () => {
+  it('GET /api/user/ai-preferences returns an honest not-configured contract', async () => {
     const tok = mintToken();
     const app = await appFor('/api/user/ai-preferences', '../../server/src/routes/ai/ai-preferences-extended.routes.js');
     const res = await request(app).get('/api/user/ai-preferences/').set('Authorization', `Bearer ${tok}`);
-    expect(res.status).toBe(200);
-    expect(res.body).toMatchObject({ success: true });
-    expect(res.body).toHaveProperty('data');
+    expect(res.status).toBe(503);
+    expect(res.body).toMatchObject({
+      status: false,
+      type: 'not_configured',
+    });
+    expect(res.body.message).toMatch(/not implemented/i);
   });
 
   it('KNOWN K2 · degraded-mode stuby zwracają świadome 503 not_configured', async () => {
