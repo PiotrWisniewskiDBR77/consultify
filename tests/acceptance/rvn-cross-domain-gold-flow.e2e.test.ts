@@ -166,8 +166,8 @@ async function insertFixtureKpi(
     await client.query(
       `INSERT INTO rvn_kpi_definition_versions
          (definition_version_id, kpi_id, organization_id, version_number, name, target_geometry,
-          target_min, approval_status, created_by, effective_from)
-       VALUES ($1, $2, $3, 1, 'RN-G0 fixture KPI', 'threshold_min', 100, 'approved', $4, now())`,
+          target_value, warning_low, critical_low, approval_status, created_by, effective_from)
+       VALUES ($1, $2, $3, 1, 'RN-G0 fixture KPI', 'threshold_min', 100, 90, 80, 'approved', $4, now())`,
       [versionId, kpiId, orgId, ownerUserId]
     );
     await client.query(
