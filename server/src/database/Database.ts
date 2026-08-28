@@ -128,10 +128,10 @@ export function getDatabaseInstance(): IDatabase {
   }
 
   if (
-    process.env.NODE_ENV === 'test' &&
-    process.env.RUN_DB_TESTS !== '1' &&
-    process.env.MOCK_DB !== 'false' &&
-    true
+    process.env.MOCK_DB === 'true' ||
+    (process.env.NODE_ENV === 'test' &&
+      process.env.RUN_DB_TESTS !== '1' &&
+      process.env.MOCK_DB !== 'false')
   ) {
     const mockDb = createMockDatabase();
     setToGlobal(mockDb);
