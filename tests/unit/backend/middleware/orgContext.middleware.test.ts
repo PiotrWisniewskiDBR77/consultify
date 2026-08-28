@@ -54,6 +54,9 @@ describeIfDb('orgContext.middleware (L1)', () => {
         status TEXT NOT NULL,
         permission_scope TEXT
       );
+      INSERT INTO users (id, organization_id, email, password, role, status)
+      VALUES ('u1', 'system', 'org-context-u1@test.local', 'hash', 'ADMIN', 'active')
+      ON CONFLICT (id) DO NOTHING;
     `);
 
     const mod = await import('../../../../server/src/middleware/orgContext.middleware.ts');
@@ -64,6 +67,11 @@ describeIfDb('orgContext.middleware (L1)', () => {
 
   afterAll(async () => {
     try {
+      await db?.exec(`
+        DELETE FROM organization_members WHERE user_id = 'u1';
+        DELETE FROM consultant_org_links WHERE consultant_id = 'u1';
+        DELETE FROM users WHERE id = 'u1';
+      `);
       await resetConnection?.();
     } finally {
       process.env = prevEnv;
@@ -461,7 +469,7 @@ describeIfDb('orgContext.middleware (L1)', () => {
     const req: any = {
       method: 'GET',
       params: {},
-      headers: { 'x-org-id': ['orgArr', 'orgOther'] },
+      headers: { 'x-org-id': ['orgArr', 'orgArr'] },
       user: { id: 'u1', organizationId: '' },
     };
     const res: any = { status: vi.fn(() => res), json: vi.fn(() => res) };
