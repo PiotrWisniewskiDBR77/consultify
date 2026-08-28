@@ -260,6 +260,52 @@ describe('Day 55 B.2 — write-surface membership, tenant and self matrix', NO_R
     }
   });
 
+  it('keeps all 12 personal writes outside /api/settings bound to the authenticated actor', async () => {
+    const personalWritesOutsideSettings = routes.filter(
+      ({ registeredPath }) => !registeredPath.startsWith('/api/settings')
+    );
+    expect(personalWritesOutsideSettings.map(({ registeredPath }) => registeredPath)).toEqual([
+      '/api/preferences/',
+      '/api/preferences/ui',
+      '/api/gdpr/consents',
+      '/api/gdpr/retention',
+      '/api/gdpr/export-request',
+      '/api/gdpr/deletion-request',
+      '/api/gdpr/cancel-deletion',
+      '/api/auth/login-history/',
+      '/api/user/contact-information/',
+      '/api/user/availability/',
+      '/api/user/security/sessions/:sessionId',
+      '/api/user/security/trusted-devices/:deviceId',
+    ]);
+    const expectedStatus = new Map<string, number>([
+      ['PUT /api/preferences/', 200],
+      ['PUT /api/preferences/ui', 200],
+      ['PUT /api/gdpr/consents', 400],
+      ['PUT /api/gdpr/retention', 400],
+      ['POST /api/gdpr/export-request', 200],
+      ['POST /api/gdpr/deletion-request', 400],
+      ['POST /api/gdpr/cancel-deletion', 400],
+      ['POST /api/auth/login-history/', 200],
+      ['PUT /api/user/contact-information/', 200],
+      ['PUT /api/user/availability/', 200],
+      ['DELETE /api/user/security/sessions/:sessionId', 200],
+      ['DELETE /api/user/security/trusted-devices/:deviceId', 200],
+    ]);
+    for (const route of personalWritesOutsideSettings) {
+      const victimBefore = await protectedSnapshot();
+      const response = await send(route, actorToken, orgA, {
+        userId: victim,
+        organizationId: orgB,
+        key: 'day55-boundary',
+        value: true,
+      });
+      const routeName = `${route.method} ${route.registeredPath}`;
+      expect(response.status, routeName).toBe(expectedStatus.get(routeName));
+      expect(await protectedSnapshot(), `${route.method} ${route.registeredPath}`).toEqual(victimBefore);
+    }
+  }, 120_000);
+
   const notificationWrites = [
     { method: 'put', path: '/api/notification-settings', body: { email: { enabled: false } } },
     { method: 'patch', path: '/api/notification-settings/email', body: { digest: 'weekly' } },

@@ -336,7 +336,7 @@ Callback OAuth sprawdza obecnie: obecność `state`; zgodność z krótkotrwały
 | powierzchnia | liczba zapisów | polityka końcowa | dowód |
 | --- | ---: | --- | --- |
 | `/api/settings` | 68 | self bez membership; delegacja z membership | dokładne kody tenant/self + niezależny snapshot |
-| osobiste routery poza Settings | 12 | self bez membership; handler nie może przyjąć obcego celu | wszystkie 12 zinwentaryzowane; dług `PUT /api/preferences/` opisany osobno |
+| osobiste routery poza Settings | 12 | self bez membership; handler nie może przyjąć obcego celu | wszystkie 12 przez realny Gateway; dokładny kod odpowiedzi per trasa i niezależny snapshot obcego użytkownika bez zmian |
 | notificationSettings | 4 | self bez membership, obcy kontekst 403 | 4×200 własne, 4×403 `ORG_CONTEXT_MISMATCH`, niezależny SELECT |
 
 Kontynuacja uruchomiła `notificationSettings.routes.ts` przez istniejący mount `ApiGateway.getInstance().initializeRoutes(app)` pod `/api/notification-settings` z `ENABLE_STUB_ROUTES=true`; chroniony `Gateway.ts` pozostał bez zmian. Podpisany JWT i realny PG potwierdziły wszystkie cztery mutujące rejestracje. Niezależne połączenie SQL wykonało readback po każdej:
@@ -350,9 +350,11 @@ Kontynuacja uruchomiła `notificationSettings.routes.ts` przez istniejący mount
 
 Pierwszy przebieg ujawnił realny defekt: obcy `x-org-context` na `PUT` dostał 200. Po dodaniu lokalnej kontroli zgodności kontekstu wynik zmienił się na 4×403 `ORG_CONTEXT_MISMATCH`; brak/odwołanie członkostwa nie odcina już własnych ustawień. Po każdej odmowie niezależny `SELECT` potwierdza zero zmiany. Pakiet końcowy po tej korekcie jest uruchamiany ponownie przed commitem z `--retry=0` i `DB_IDENTITY=127.0.0.1:5852/cx_day55`.
 
+Pozostałe 12 zapisów poza `/api/settings` sprawdzono mutacyjnie z `userId` ofiary i obcym `organizationId` w body/query. Dokładne odpowiedzi: preferences `200/200`, GDPR `400/400/200/400/400`, login-history `200`, contact `200`, availability `200`, oba DELETE security `200`. Po każdej trasie niezależny snapshot tabel ofiary był identyczny. Decyzja: nie dokładam szerokiej bramki organizacyjnej do danych własnych; utrwalam kontrakt „cel zawsze z podpisanego JWT” testem wszystkich 12. Zastany defekt higieny `PUT /api/preferences/` nadal zapisuje każdy klucz body, w tym `userId`, ale zapis trafia do aktora, nie ofiary.
+
 Trzy starsze pakiety granic nie są dowodem dla bazy `cx_day55`: ich własne bezpieczniki wymagają nazw zaczynających się odpowiednio od `set_bvp_`, `set_export_` i `oauth_`; wspólny przebieg zakończył się 3 błędami setupu, 4 PASS i 20 SKIP. Nie osłabiałem tych bezpieczników.
 
-Z33: pełny komplet flag był na tej samej linii każdego przebiegu, `assertRealPostgresTestEnvironment()` był bez argumentów, `--retry=0` jawne. SMTP pozostawał nieustawiony. Końcowa macierz po korekcie B2: **6 PASS / 0 FAIL / 0 SKIP**. Werdykt §B.2: `ZROBIONE_WG_DoD` dla rozdzielonego kontraktu self/tenant; REVOKED blokuje delegację organizacyjną, lecz nie dane własne.
+Z33: pełny komplet flag był na tej samej linii każdego przebiegu, `assertRealPostgresTestEnvironment()` był bez argumentów, `--retry=0` jawne. SMTP pozostawał nieustawiony. Końcowa macierz po korekcie B2: **7 PASS / 0 FAIL / 0 SKIP**. Werdykt §B.2: `ZROBIONE_WG_DoD` dla rozdzielonego kontraktu self/tenant; REVOKED blokuje delegację organizacyjną, lecz nie dane własne.
 
 ## §D.1 — cztery operacje właściciela po pełnym przeładowaniu
 
@@ -579,11 +581,11 @@ Każdą pozycję oceniono pięcioma pytaniami: (1) realny Gateway/runtime, (2) t
 
 ## Pomiar zasięgu testów
 
-- (a) z pełnym env: serwer 79 testów (`77 PASS`, `2 SKIPPED`, 0 asercji FAIL; pakiety PG nie wykonały przypadków), klient 204 (`203 PASS`, `1 FAIL`).
-- (b) bez kompletu env: serwer 79 (`67 PASS`, `12 SKIPPED`, proces zielony), klient 204 (`204 PASS`, lecz proces niezielony z powodu błędu pliku/suity). To potwierdza, że goły przebieg maskuje testy PG.
-- (c) po R.1: próba serwera zachowała 79 nazw, ale uruchomiła 69 PASS / 10 SKIP i proces niezielony na pakiecie legacy-cutover; jedna nazwa została świadomie zastąpiona wariantem „rejects body-supplied actor-identity spoof fields”. Próba klienta przez listę plików baseline dała 200 PASS, lecz nie odtworzyła czterech nazw Password/Security, a jedna suite MappingDrift miała błąd mock-hoist. Te dwa przebiegi nie są równoważnym zielonym (c).
+- (a) HEAD z pełnymi pułapkami: klient jest zielony i wykonuje wszystkie nazwane przypadki. Serwer wykonuje wszystkie nazwane przypadki bez czerwonej asercji, ale proces jest czerwony w `afterAll`: `B1_LEGACY_TEST_CLEANUP_DB_REFUSED:cx_day55` — cleanup dopuszcza tylko `consultify_b1_*`, podczas gdy instrukcja wiążąco wymaga `cx_day55`.
+- (b) HEAD bez kompletu env: klient pozostaje zielony. Serwer jest pozornie zielony, bo dokładnie 12 nazw PG zmienia status z `passed` na `skipped`: dwa `20261038 Settings MFA legacy upgrade` oraz dziesięć `SETTINGS legacy-cutover guard` wymienionych w JSON. To jest zmierzona pułapka, nie wynik równoważny.
+- (c) HEAD z pełnymi pułapkami, powtórzony po naprawie mock-hoist `MappingDriftPanel`: status każdej nazwy jest identyczny z (a); klient zielony, serwer ponownie czerwony wyłącznie na odmowie cleanupu po przejściu nazwanych asercji.
 
-Porównanie nazw (a)→(c): serwer `-1/+1` (zaostrzona nazwa spoof testu), klient `-4/+0`. Deklaracja na tym etapie: **ZASIĘG CZĘŚCIOWY**. Nie przepisuję cudzych liczb; wszystkie liczby pochodzą z własnych JSON `zasieg-a-*` i `zasieg-c-*`. Focused końcowy dowód C.2 to 49/49, a B.2 po kontynuacji to 6 PASS / 0 SKIP.
+Porównanie markerowego (a) z końcowym (c), wyłącznie po pełnych nazwach: **brak testu zielonego przed i czerwonego po — lista jest pusta**. Jedna nazwa spoof została zastąpiona ostrzejszą (`ignores … spoof fields` → `rejects … spoof fields before the insert`); trzy nazwy `SecuritySettings Component` i jedna `PasswordSecuritySettings honest UI` zniknęły wraz z zaakceptowanymi martwymi plikami; `RecoveryOptionsSettings smoke :: loads recovery options on mount` zmienił się z czerwonego na zielony; doszły dwa zielone przypadki `MappingDriftPanel honest UI`. Deklaracja: **ZASIĘG PEŁNY** w znaczeniu kompletnego, trzykrotnego pomiaru i porównania nazw. Nie deklaruję zielonego procesu serwera: konflikt bezpiecznika cleanupu z wiążącą nazwą bazy pozostaje jawny. Nie przepisuję cudzych liczb; źródłem są własne JSON `zasieg-a-*`, `zasieg2-a-*`, `zasieg2-b-*`, `zasieg2-c-*`.
 
 ## Z33 i dowody mutacyjne
 
@@ -608,7 +610,7 @@ Brak STOP-u całego dyżuru. Nie wystąpiło ryzyko utraty danych, połączenie 
 
 ## Brief wynikowy dla nadzorcy
 
-Dyżur pracował na związanym markerze i wyłącznie lokalnej bazie `cx_day55`. Naprawiono komunikat zmiany hasła — nie unieważnianie istniejących access tokenów — oraz usunięto runtime DDL, opierając zapis na zastanym łańcuchu migracji. Zmierzono 156 adresów HTTP przez realny Gateway. Ściana odrzuca obcy tenant i obcego użytkownika dokładnymi kodami, a membership jest wymagane tylko dla delegacji organizacyjnej, nie danych własnych. OAuth callback wiąże state z krótkotrwałym cookie sesji. Ustawienia deweloperskie nie mogą włączyć flag ani narzędzi. Cztery operacje właściciela mają real-PG readback i osiem zrzutów harnessu. Usunięto 62 martwe wrappery/stuby bez utraty 49 nazw testów tras. Dodano lokalny, fail-closed seed danych demo. Kontynuacja uzupełniła 352 unikalne brakujące klucze żywych powierzchni, obejrzała po polsku wszystkie 8/8 grup oraz domknęła Help 50/50 oczami. Audyt tych 50 powierzchni wykazał osobno 18 sekcji z treścią, 12 atrap i 20 sekcji z angielskim. Pełny browser runtime B.1 zmierzył 13/13 adresów: 7 właściwych ekranów i 6 błędnych przejść do Profilu. Końcowy pełny pomiar (c) pozostaje na tym etapie niezielony/nieporównywalny, więc zasięg nadal deklaruję jako częściowy do pozycji 5 kontynuacji. `CLOSED_FINAL` właściciela, jego SHA i tag pozostały nietknięte. Największe ryzyko scalenia to szeroki wspólny middleware zapisu w `settings.routes.ts`; wymaga ponowienia pełnych suite po integracji. Właściciel nadal musi rozstrzygnąć G12, pełny per-screen system wizualny i guided replay. Nie wykonano deployu, realnego OAuth ani wysyłki poczty.
+Dyżur pracował na związanym markerze i wyłącznie lokalnej bazie `cx_day55`. Naprawiono komunikat zmiany hasła — nie unieważnianie istniejących access tokenów — oraz usunięto runtime DDL, opierając zapis na zastanym łańcuchu migracji. Zmierzono 156 adresów HTTP przez realny Gateway. Ściana odrzuca obcy tenant i obcego użytkownika dokładnymi kodami, a membership jest wymagane tylko dla delegacji organizacyjnej, nie danych własnych. OAuth callback wiąże state z krótkotrwałym cookie sesji. Ustawienia deweloperskie nie mogą włączyć flag ani narzędzi. Cztery operacje właściciela mają real-PG readback i osiem zrzutów harnessu. Usunięto 62 martwe wrappery/stuby bez utraty 49 nazw testów tras. Dodano lokalny, fail-closed seed danych demo. Kontynuacja uzupełniła 352 unikalne brakujące klucze żywych powierzchni, obejrzała po polsku wszystkie 8/8 grup oraz domknęła Help 50/50 oczami. Audyt tych 50 powierzchni wykazał osobno 18 sekcji z treścią, 12 atrap i 20 sekcji z angielskim. Pełny browser runtime B.1 zmierzył 13/13 adresów: 7 właściwych ekranów i 6 błędnych przejść do Profilu. Zasięg jest pełny jako trzy przebiegi i porównanie nazw; brak zielony→czerwony, lecz serwerowy proces z pułapkami pozostaje czerwony na konflikcie cleanup `consultify_b1_*` kontra wymagane `cx_day55`. `CLOSED_FINAL` właściciela, jego SHA i tag pozostały nietknięte. Największe ryzyko scalenia to szeroki wspólny middleware zapisu w `settings.routes.ts`; wymaga ponowienia pełnych suite po integracji. Właściciel nadal musi rozstrzygnąć G12, pełny per-screen system wizualny i guided replay. Nie wykonano deployu, realnego OAuth ani wysyłki poczty.
 
 NIE przepisałem liczb nadzorcy ani autora instrukcji ani z `MODULE_ACCEPTANCE.md` — zmierzyłem sam.
 
@@ -616,6 +618,6 @@ NIE przepisałem liczb nadzorcy ani autora instrukcji ani z `MODULE_ACCEPTANCE.m
 
 - Browser runtime 13/13 jest zmierzony; sześć adresów (`overview`, `module-preferences`, `tenant-defaults`, `tenant-branding`, `tenant-security`, `shortcuts`) błędnie renderuje Profil.
 - Nie sprawdzono wszystkich czterech gałęzi każdego `recovery/*` poza trasami objętymi A.3/D.1.
-- Końcowy przebieg zasięgu (c) nie jest zielonym odpowiednikiem (a).
+- Końcowy przebieg zasięgu (c) jest równoważny (a) po nazwach/statusach, ale proces serwera nie jest zielony: `afterAll` odmawia cleanupu bazy `cx_day55`.
 - Zrzuty D.1/F.2 pochodzą z lokalnego harnessu, nie pełnego zalogowanego runtime.
 - Nie wykonano owner replay, responsive 200%, pełnej klawiatury ani fizycznego urządzenia.
