@@ -40,6 +40,14 @@ vi.mock('../../../../server/src/middleware/superAdmin.middleware.js', () => ({
   verifySuperAdmin: (_req: any, _res: any, next: () => void) => next(),
 }));
 
+vi.mock('../../../../server/src/middleware/rbac.middleware.js', () => ({
+  requireOrgRole: () => (_req: any, _res: any, next: () => void) => next(),
+}));
+
+vi.mock('../../../../server/src/services/legacyCutover/requireActiveMembership.js', () => ({
+  requireActiveMembership: (_req: any, _res: any, next: () => void) => next(),
+}));
+
 vi.mock('../../../../server/src/services/partnerOrgResolution.js', () => ({
   getActivePartnerOrgIdForUser: vi.fn(async () => resolvedPartnerOrgId),
 }));
@@ -55,6 +63,8 @@ vi.mock('../../../../server/src/services/partnerCommissionService.js', () => ({
 }));
 
 vi.mock('../../../../server/src/utils/DbPromise.js', () => ({
+  get: vi.fn(async () => null),
+  run: vi.fn(async () => ({ changes: 0 })),
   tableExists: vi.fn(async () => true),
 }));
 
