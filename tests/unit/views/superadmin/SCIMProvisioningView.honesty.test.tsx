@@ -7,6 +7,7 @@ import SCIMProvisioningView from '@/views/superadmin/SCIMProvisioningView';
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (_key: string, fallback?: any) => (typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key)),
+    i18n: { language: 'en', resolvedLanguage: 'en' },
   }),
 }));
 
