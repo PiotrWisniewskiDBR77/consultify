@@ -39,6 +39,8 @@ Ten dyżur nie dostarczył Piotrowi gotowej sesji przeglądowej. Wiążąca inst
 
 Uwaga środowiskowa: host nie ma klienta `psql` (`exit 127`); te same odczyty wykonano klientem wewnątrz kontenera (`exit 0`). Szeroki pierwszy grep procesów dawał fałszywe trafienia Microsoft Teams; wiążący pomiar zawężono do procesów tego worktree/kontenera i workerów — wynik pusty.
 
+Odchyłka proceduralna: `git -C "$VAULT" rev-parse --git-path "worktrees/…"` zwrócił ścieżkę względną. Pierwsza próba utworzyła wyłącznie nasz plik `worktrees/consultify-materials-day61-review/config.worktree` w chronionym checkoutcie. Plik oraz oba utworzone, puste katalogi zostały natychmiast usunięte; ponowny `git status --short` chronionego checkoutu pokazał wyłącznie zastany WIP, a status izolowanego worktree był czysty. Żaden istniejący plik ani WIP właściciela nie został zmieniony. Właściwy `config.worktree` zapisano w dokładnej ścieżce odczytanej z `$WT/.git`.
+
 ## Mianownik
 
 Marker montuje pięć widoków rejestru i trzy pełne karty. Mianownik wynosi `8` powierzchni; bazowa macierz wizualna wynosi `8 × 2 motywy × 2 stany = 32` zrzuty, przed dodatkowymi ujęciami menu i podglądu.
@@ -126,7 +128,7 @@ Data: `2026-08-28`
 
 - Marker jest przodkiem tipa: `TAK`; `git merge-base --is-ancestor … HEAD` → `0`.
 - Kopia zapasowa po pierwszym commicie: push wyłącznie `github-backup`, wynik w handoffie.
-- Commitów ponad marker: `1` po finalnym commicie; zmienionych plików: `3`.
+- Commitów ponad marker: `2` po finalnym commicie; zmienionych plików: `3`.
 
 ### 2. Rozłączność
 
