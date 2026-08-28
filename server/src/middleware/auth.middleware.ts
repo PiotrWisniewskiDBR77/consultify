@@ -1704,8 +1704,11 @@ const normalizeMembershipStatus = (value: unknown): string =>
     .toUpperCase();
 const normalizeContextIdentifier = (value: unknown): string =>
   typeof value === 'string' ? value.trim() : '';
-const buildMembershipCacheKey = (userId: string, orgId: string): string =>
-  JSON.stringify([userId, orgId]);
+const ORGANIZATION_OPTIONAL_MOUNTS = new Set(['/api/conversations', '/api/chat-projects']);
+const permitsOrganizationlessPrincipal = (req: AuthRequest): boolean => {
+  const baseUrl = normalizeContextIdentifier(safeRead(() => req.baseUrl, undefined));
+  return ORGANIZATION_OPTIONAL_MOUNTS.has(baseUrl);
+};
 
 export const validateOrgMembership = asyncHandler(
   async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
@@ -1722,9 +1725,13 @@ export const validateOrgMembership = asyncHandler(
     if (!userId) {
       return next();
     }
-    // A known principal reaching an organization-scoped mount must carry a
-    // resolved tenant. Passing through here would bypass membership entirely.
+    // Personal conversations and chat projects are user-scoped before a fresh
+    // account joins an organization. They accept no-org principals, but an
+    // explicitly requested org still goes through the strict membership path.
     if (!orgId) {
+      if (!requestedOrgId && permitsOrganizationlessPrincipal(req)) {
+        return next();
+      }
       res.status(403).json({
         error: 'Organization context is required',
         code: 'ORG_CONTEXT_REQUIRED',
@@ -1884,14 +1891,13 @@ export const __private__ = {
     _revokeInflight.clear();
     _revokeAllInflight.clear();
   },
-  resetMembershipCacheForTests: () => undefined,
   resetDepsForTests: () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     deps = undefined as any;
   },
   normalizeMembershipStatus,
   normalizeContextIdentifier,
-  buildMembershipCacheKey,
+  permitsOrganizationlessPrincipal,
   buildSessionActivityUpdateSql,
   buildRevokeAllLookupSql,
   extractIssuedAtSeconds,

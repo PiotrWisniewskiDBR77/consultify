@@ -66,6 +66,12 @@ async function conversations(
   return call.send(requestedOrg ? { organizationId: requestedOrg } : {});
 }
 
+async function authenticatedGet(path: string, id: string, organizationId?: string) {
+  return request(app)
+    .get(path)
+    .set('Authorization', `Bearer ${token(id, organizationId)}`);
+}
+
 function expectRefusal(response: request.Response, status: number, code: string): void {
   expect(response.status).toBe(status);
   expect(response.body).toMatchObject({ code });
@@ -204,8 +210,21 @@ describe('Day 56 auth-core exact HTTP matrices', { retry: 0 }, () => {
     );
   });
 
-  it('P.3/P.4/P.5/P.6/P.8 actor without organization is exactly 403 ORG_CONTEXT_REQUIRED', async () => {
-    expectRefusal(await conversations(noOrgUser), 403, 'ORG_CONTEXT_REQUIRED');
+  it('F1 personal conversations and chat projects allow an organizationless principal', async () => {
+    expect((await conversations(noOrgUser)).status).toBe(200);
+    expect((await authenticatedGet('/api/chat-projects', noOrgUser)).status).toBe(200);
+  });
+
+  it('P.3/P.4/P.5/P.6/P.8 tenant route without organization is exactly 403 ORG_CONTEXT_REQUIRED', async () => {
+    expectRefusal(await authenticatedGet('/api/signals', noOrgUser), 403, 'ORG_CONTEXT_REQUIRED');
+  });
+
+  it('F1 organizationless principal cannot claim a foreign tenant on personal chat', async () => {
+    expectRefusal(
+      await conversations(noOrgUser, undefined, undefined, orgA),
+      403,
+      'ORG_CONTEXT_REQUIRED'
+    );
   });
 
   it('P.4 revoke is effective on the very next request and restore returns 200', async () => {
@@ -282,11 +301,18 @@ describe('Day 56 auth-core exact HTTP matrices', { retry: 0 }, () => {
   });
 
   it('P.8 flag ON rejects idle session with exactly 401 SESSION_IDLE_TIMEOUT', async () => {
-    expectRefusal(
-      await conversations(idleUser, orgA, `jti-${idleUser}`),
-      401,
-      'SESSION_IDLE_TIMEOUT'
-    );
+    const previous = process.env.SESSION_IDLE_ENFORCEMENT;
+    process.env.SESSION_IDLE_ENFORCEMENT = 'true';
+    try {
+      expectRefusal(
+        await conversations(idleUser, orgA, `jti-${idleUser}`),
+        401,
+        'SESSION_IDLE_TIMEOUT'
+      );
+    } finally {
+      if (previous === undefined) delete process.env.SESSION_IDLE_ENFORCEMENT;
+      else process.env.SESSION_IDLE_ENFORCEMENT = previous;
+    }
   });
 
   it('P.8 flag OFF preserves the same idle request at exactly 200', async () => {

@@ -27,6 +27,7 @@ const activeJti = `day56-active-jti-${runId}`;
 const noPolicyJti = `day56-no-policy-jti-${runId}`;
 let client: Client;
 let app: Express;
+const previousIdleEnforcement = process.env.SESSION_IDLE_ENFORCEMENT;
 
 function signedToken(id: string, organizationId: string, jti: string): string {
   return jwt.sign({ id, organizationId, role: 'ADMIN', jti }, config.JWT_SECRET, {
@@ -38,6 +39,7 @@ function signedToken(id: string, organizationId: string, jti: string): string {
 
 describe('Day 56 idle-session enforcement through real ApiGateway', { retry: 0 }, () => {
   beforeAll(async () => {
+    process.env.SESSION_IDLE_ENFORCEMENT = 'true';
     expect(process.env.DB_TYPE).toBe('postgres');
     expect(process.env.ENABLE_TEST_AUTH_BYPASS).toBe('false');
     const proof = await assertRealPostgresTestEnvironment();
@@ -111,18 +113,26 @@ describe('Day 56 idle-session enforcement through real ApiGateway', { retry: 0 }
   }, 60_000);
 
   afterAll(async () => {
-    if (!client) return;
-    const users = [idleUserId, activeUserId, noPolicyUserId];
-    await client.query(`DELETE FROM revoked_tokens WHERE user_id=ANY($1::text[])`, [users]);
-    await client.query(`DELETE FROM user_sessions WHERE user_id=ANY($1::text[])`, [users]);
-    await client.query(`DELETE FROM organization_members WHERE organization_id=ANY($1::text[])`, [
-      [orgId, noPolicyOrgId],
-    ]);
-    await client.query(`DELETE FROM users WHERE id=ANY($1::text[])`, [users]);
-    await client.query(`DELETE FROM organizations WHERE id=ANY($1::text[])`, [
-      [orgId, noPolicyOrgId],
-    ]);
-    await client.end();
+    try {
+      if (!client) return;
+      const users = [idleUserId, activeUserId, noPolicyUserId];
+      await client.query(`DELETE FROM revoked_tokens WHERE user_id=ANY($1::text[])`, [users]);
+      await client.query(`DELETE FROM user_sessions WHERE user_id=ANY($1::text[])`, [users]);
+      await client.query(`DELETE FROM organization_members WHERE organization_id=ANY($1::text[])`, [
+        [orgId, noPolicyOrgId],
+      ]);
+      await client.query(`DELETE FROM users WHERE id=ANY($1::text[])`, [users]);
+      await client.query(`DELETE FROM organizations WHERE id=ANY($1::text[])`, [
+        [orgId, noPolicyOrgId],
+      ]);
+      await client.end();
+    } finally {
+      if (previousIdleEnforcement === undefined) {
+        delete process.env.SESSION_IDLE_ENFORCEMENT;
+      } else {
+        process.env.SESSION_IDLE_ENFORCEMENT = previousIdleEnforcement;
+      }
+    }
   });
 
   it('rejects the first request after the tenant idle threshold', async () => {
@@ -219,7 +229,8 @@ describe('Day 56 idle-session enforcement through real ApiGateway', { retry: 0 }
         .set('Authorization', `Bearer ${signedToken(idleUserId, orgId, idleJti)}`);
       expect(response.status).toBe(200);
     } finally {
-      process.env.SESSION_IDLE_ENFORCEMENT = previous;
+      if (previous === undefined) delete process.env.SESSION_IDLE_ENFORCEMENT;
+      else process.env.SESSION_IDLE_ENFORCEMENT = previous;
     }
   });
 

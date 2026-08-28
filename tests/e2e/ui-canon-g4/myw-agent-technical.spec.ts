@@ -347,7 +347,6 @@ test.describe.serial('MYW-AGT-UI-CANON owner-free technical closure', () => {
     }
   });
 
-
   /**
    * The four preceding cells only ever proved that a surface MOUNTS. A surface
    * that renders an empty list settles exactly like one that renders rows, so
@@ -462,10 +461,12 @@ test.describe.serial('MYW-AGT-UI-CANON owner-free technical closure', () => {
         await expect(titleInput).toHaveValue(titles.taskTitle);
         await titleInput.fill(localDraftTitle);
         await titleInput.press('Enter');
+        await expect(page.getByText(/changed in another session.*draft is preserved/i)).toBeVisible(
+          { timeout: 30_000 }
+        );
         await expect(
-          page.getByText(/changed in another session.*draft is preserved/i)
-        ).toBeVisible({ timeout: 30_000 });
-        await expect(page.getByRole('button', { name: localDraftTitle, exact: true })).toBeVisible();
+          page.getByRole('button', { name: localDraftTitle, exact: true })
+        ).toBeVisible();
 
         const afterConflict = await identityApi.get(`/api/my-work/personal-tasks/${seed.taskId}`);
         expect(afterConflict.status()).toBe(200);
@@ -579,10 +580,7 @@ test.describe.serial('MYW-AGT-UI-CANON owner-free technical closure', () => {
           // session-open failure — capture NOW, BEFORE any recovery cleanup
           // deletes the parents and makes the children unnameable forever.
           if (!retained) {
-            retained = await captureFixtureIds(verify, [
-              own.organizationId,
-              decoy.organizationId,
-            ]);
+            retained = await captureFixtureIds(verify, [own.organizationId, decoy.organizationId]);
           }
           try {
             if (!ownCleaned) {
@@ -675,9 +673,7 @@ test.describe.serial('MYW-AGT-UI-CANON owner-free technical closure', () => {
         try {
           if (!retained) retained = await captureFixtureIds(verify, [own.organizationId]);
           await cleanupRunAsserted(support, own.runId).catch(() => undefined);
-          expectNoResidue(
-            await measureResidueStrict(verify, [own.organizationId], retained)
-          );
+          expectNoResidue(await measureResidueStrict(verify, [own.organizationId], retained));
         } finally {
           await verify.release();
         }
@@ -689,17 +685,9 @@ test.describe.serial('MYW-AGT-UI-CANON owner-free technical closure', () => {
   });
 
   /**
-   * Revocation must bite on the FIRST request, not after a TTL. The membership
-   * guard caches its verdict for MEMBERSHIP_CACHE_TTL_MS
-   * (server/src/middleware/auth.middleware.ts:1556) and nothing in production
-   * invalidates that entry when a membership flips, so this test deliberately
-   * keeps the cache COLD: the identity performs no guarded request before the
-   * revoke. That makes the assertion below a genuine first-request denial
-   * rather than an expired-cache artefact.
-   *
-   * The warm-cache case is NOT asserted here because the product does not yet
-   * satisfy it; it is recorded as NOT_VERIFIED in the packet instead of being
-   * papered over by clearing the cache from the harness.
+   * Revocation must bite on the first request. The membership guard now reads
+   * the membership row per request, so both cold and previously warmed callers
+   * are expected to observe the revoke immediately.
    */
   test('revoked membership is denied on the first guarded request with a cold cache', async () => {
     const bootstrap = readTestSupportState();

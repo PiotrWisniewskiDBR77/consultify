@@ -43,7 +43,6 @@ describe('AuthMiddleware', () => {
     mockPermissionService.can.mockReset();
     mockDbGet.mockReset();
     __private__.resetRevocationCachesForTests();
-    __private__.resetMembershipCacheForTests();
 
     mockReq = {
       headers: {},
@@ -2555,15 +2554,6 @@ describe('AuthMiddleware', () => {
       expect(__private__.normalizeMembershipStatus('active')).toBe('ACTIVE');
       expect(__private__.normalizeMembershipStatus(' Active ')).toBe('ACTIVE');
       expect(__private__.normalizeMembershipStatus(undefined)).toBe('');
-    });
-
-    it('builds deterministic collision-safe membership cache keys', () => {
-      const keyA = __private__.buildMembershipCacheKey('u:1', 'org:2');
-      const keyB = __private__.buildMembershipCacheKey('u', '1:org:2');
-      const keyC = __private__.buildMembershipCacheKey('u:1', 'org:2');
-
-      expect(keyA).toBe(keyC);
-      expect(keyA).not.toBe(keyB);
     });
 
     it('normalizes context identifiers for membership checks', () => {
