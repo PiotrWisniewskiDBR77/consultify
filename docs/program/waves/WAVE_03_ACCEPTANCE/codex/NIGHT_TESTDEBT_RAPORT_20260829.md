@@ -1,8 +1,8 @@
 # NIGHT TESTDEBT — raport ciągły 2026-08-29
 
-Marker: `fc20525ba8212e7b44f956a99b9345c25e436e7d`  
-Gałąź: `codex/night-testdebt-20260829`  
-Środowisko: wyłącznie lokalny PostgreSQL `127.0.0.1:5945/consultify_night`  
+Marker: `fc20525ba8212e7b44f956a99b9345c25e436e7d`
+Gałąź: `codex/night-testdebt-20260829`
+Środowisko: wyłącznie lokalny PostgreSQL `127.0.0.1:5945/consultify_night`
 Retry: `--retry=0`
 
 ## Faza 0 — punkt odniesienia
@@ -1205,17 +1205,42 @@ to możliwość sensownego review i przypisania regresji.
 
 ## Kryteria K1–K5
 
-- K1: PASS na markerze; do powtórzenia na finalnym tipie.
-- K2: PASS na markerze; do powtórzenia na finalnym tipie.
-- K3: baseline nazw zapisany; porównanie końcowe jeszcze niewykonane.
-- K4: nie powstała jeszcze zmiana kodu produkcyjnego.
-- K5: sekcja poniżej jest niepusta.
+- **K1 PASS** — czysty produkcyjny build serwera przez
+  `server/tsconfig.build.json`, limit 3072 MB, exit 0.
+- **K2 PASS** — produkcyjny build frontendu, limit 6144 MB, exit 0.
+- **K3 PASS** — zero potwierdzonych zielone→czerwone po pełnych nazwach.
+  Pełny unit ma 8 FAIL wobec 17 na baseline; cztery pozornie nowe kontrakty
+  Gateway przeszły w izolacji 18/18. Components ma identyczne 165 FAIL i
+  identyczny zbiór nazw. Pełne uruchomienie integration niszczy współdzielony
+  schemat w trakcie suity, więc jego surowy wynik nie jest porównywalny.
+  Wszystkie podejrzane nazwy zawężono do 16 plików i uruchomiono symetrycznie
+  na świeżej bazie na osobnym checkoutcie markera oraz na kandydacie:
+  kandydat miał 34 FAIL wobec 38 na markerze; różnice bez nazwy testu były
+  błędami całego pliku. Jedyny podejrzany My Work sprawdzony osobno ma już na
+  markerze 17/17 FAIL. Acceptance uruchomiona symetrycznie na świeżych bazach:
+  kandydat 31 FAIL, marker 32 FAIL; jedyna pozorna regresja — Socket.IO
+  `presence READ` — przeszła natychmiastowy nazwany rerun 4/4.
+- **K4 PASS** — każda zmiana produkcyjna ma czerwony→zielony: kolejność
+  migracji (nazwany Gate I1), filtr T2 SLA (nazwany test artefaktu), adapter
+  kalendarza i zawężenie Command Center (dokładne błędy kompilatora TS2345 i
+  TS2322 po mutacji, pełny type-check po odtworzeniu).
+- **K5 PASS** — sekcja poniżej jest niepusta.
+
+Kontrole końcowe: pełny migrator na świeżym PG zastosował 863 migracje, drugi
+przebieg 0; `git diff --check marker..HEAD` jest czysty; zero zmian migracji,
+zero zmian w plikach chronionych, zero połączeń do środowisk zdalnych.
 
 ## Twierdzenia niezweryfikowane
 
 - Nie zweryfikowano jeszcze, które czerwone wyniki integracyjne są niezależnymi
   defektami, a które są wtórnym skutkiem współdzielonego stanu bazy i sześciu
   błędów procesu.
-- Nie zweryfikowano jeszcze końcowego K3 wobec markera.
+- Nie zweryfikowano przyczyny wszystkich istniejących 31 czerwonych testów
+  acceptance ani wszystkich istniejących czerwieni pozostałych suit; zakres
+  zadania wymagał braku regresji, nie spłaty całego historycznego długu spoza
+  P2/P3 i pinów.
+- Nie udowodniono, że surowe liczniki pełnej integration są powtarzalne;
+  przeciwnie, pomiar wykazał zależność od destrukcyjnej kolejności i stanu
+  schematu. K3 oparto dlatego na nazwach oraz symetrycznej świeżej izolacji.
 - Nie wykonano żadnego testu na Railway, stagingu, demo ani produkcji — i zgodnie
   z zakazem tego zadania nie zostanie wykonany.
