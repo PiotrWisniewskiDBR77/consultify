@@ -34,6 +34,10 @@ import { randomUUID } from 'node:crypto';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import {
+  ensureRoiFixtureMembership,
+  ensureRoiGovernedVisibility,
+} from '../resultsVnext/roi/roiRealdbOrgFixture.js';
 import { pgClient, requireLocalDbUrl } from './harness.js';
 
 requireLocalDbUrl();
@@ -202,7 +206,20 @@ describe('RN-G4 · Point 1+2 — ROI Benefit optional KPI evidence link + Financ
 
   beforeAll(async () => {
     await insertOrgAndUser(ORG_ID, OWNER, `${OWNER}@acceptance.local`);
-    await insertVisibilityPolicy(ORG_ID, 'roi', 'OPEN_ORG', OWNER);
+    const governanceClient = pgClient();
+    await governanceClient.connect();
+    try {
+      await ensureRoiFixtureMembership(governanceClient, {
+        organizationId: ORG_ID, userId: OWNER, role: 'OWNER',
+      });
+    } finally {
+      await governanceClient.end();
+    }
+    await ensureRoiGovernedVisibility({
+      organizationId: ORG_ID,
+      actorUserId: OWNER,
+      idempotencyKey: `${MARKER}--roi-policy`,
+    });
     kpiPolicyId = await insertVisibilityPolicy(ORG_ID, 'kpi', 'OPEN_ORG', OWNER);
 
     const caseCommands: CaseCommandsModule = await import(
@@ -312,9 +329,8 @@ describe('RN-G4 · Point 1+2 — ROI Benefit optional KPI evidence link + Financ
       await client.query(`DELETE FROM rvn_kpi_definition_versions WHERE organization_id = $1`, [ORG_ID]);
       await client.query(`DELETE FROM rvn_kpi_definitions WHERE organization_id = $1`, [ORG_ID]);
       await client.query(`DELETE FROM initiatives WHERE organization_id = $1`, [ORG_ID]);
-      await client.query(`DELETE FROM organization_members WHERE organization_id = $1`, [ORG_ID]);
-      await client.query(`DELETE FROM users WHERE organization_id = $1`, [ORG_ID]);
-      await client.query(`DELETE FROM organizations WHERE id = $1`, [ORG_ID]);
+      // Governed ROI policy is immutable and FK-bound to the organization;
+      // the disposable acceptance database owns this unique fixture residue.
     } finally {
       await client.end();
     }

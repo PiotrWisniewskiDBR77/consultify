@@ -27,6 +27,10 @@ import { randomUUID } from 'node:crypto';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import {
+  ensureRoiFixtureMembership,
+  ensureRoiGovernedVisibility,
+} from '../resultsVnext/roi/roiRealdbOrgFixture.js';
 import { pgClient, requireLocalDbUrl } from './harness.js';
 
 requireLocalDbUrl();
@@ -84,12 +88,12 @@ async function insertOrgAndUsers(): Promise<void> {
         [id, ORG_ID, email]
       );
     }
-    await client.query(
-      `INSERT INTO rvn_platform_visibility_policies
-         (organization_id, domain, policy_version, visibility_mode, is_active, created_by)
-       VALUES ($1, 'roi', 1, 'OPEN_ORG', true, $2)`,
-      [ORG_ID, OWNER]
-    );
+    await ensureRoiFixtureMembership(client, {
+      organizationId: ORG_ID, userId: OWNER, role: 'OWNER',
+    });
+    await ensureRoiFixtureMembership(client, {
+      organizationId: ORG_ID, userId: MANAGER, role: 'ADMIN',
+    });
     // The organizational perspective (`buildScopedRoiCasesBase`) scopes to
     // the manager's OWN management-chain descendants — MANAGER must be a
     // real ancestor of OWNER in the closure table to see OWNER's case at
@@ -103,6 +107,11 @@ async function insertOrgAndUsers(): Promise<void> {
   } finally {
     await client.end();
   }
+  await ensureRoiGovernedVisibility({
+    organizationId: ORG_ID,
+    actorUserId: OWNER,
+    idempotencyKey: `${MARKER}--roi-policy`,
+  });
 }
 
 describe('RN-G4 · Point 6, ROI leg — individual (getRoiCase) and organizational (listOrganizationRoiBenefitsRealization) perspectives return the SAME caseId/rowVersion, live', () => {
@@ -193,9 +202,8 @@ describe('RN-G4 · Point 6, ROI leg — individual (getRoiCase) and organization
       );
       await client.query(`DELETE FROM rvn_platform_events WHERE organization_id = $1`, [ORG_ID]);
       await client.query(`DELETE FROM initiatives WHERE organization_id = $1`, [ORG_ID]);
-      await client.query(`DELETE FROM organization_members WHERE organization_id = $1`, [ORG_ID]);
-      await client.query(`DELETE FROM users WHERE organization_id = $1`, [ORG_ID]);
-      await client.query(`DELETE FROM organizations WHERE id = $1`, [ORG_ID]);
+      // Governed ROI policy is immutable and FK-bound to the organization;
+      // the disposable acceptance database owns this unique fixture residue.
     } finally {
       await client.end();
     }
