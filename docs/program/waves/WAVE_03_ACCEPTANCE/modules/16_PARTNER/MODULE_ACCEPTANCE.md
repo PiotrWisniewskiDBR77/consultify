@@ -118,6 +118,26 @@ attribution, self-approval denial, foreign tenant and no false economics state.
 
 ## Piotr review card
 
+### Day62 owner-review result — 2026-08-28
+
+Marker/HEAD `5e30cb9bf66c8e75481ba723debdd04f3c1a6893`. Stan wejściowy zachowany literalnie: G07 `READY_FOR_GUIDED_REPLAY`, G08–G20 `NOT_STARTED`, G04/G05 owner pending, G06 `PARTIAL_BROWSER_PASS`. Wynik tego dyżuru nie podnosi wcześniejszych bramek do zbiorczego PASS:
+
+- G07: `PARTIAL — REVIEW_CARD_PREPARED / OWNER_DECISION_PENDING`;
+- G08: `PARTIAL — AUTH_BARRIER_CAPTURED / 0_OF_25_RUNTIME_SCREENS`;
+- G09: `PARTIAL — ENTRY_REPLAYED / PARTNER_JOURNEY_NOT_PROVEN`;
+- G10: `PARTIAL — ALTERNATE_STATES_NOT_PROVEN`;
+- G11–G20: bez zmian, nadal `NOT_STARTED`.
+
+Pełny mianownik źródłowy wynosi 25 sekcji; rzeczywisty sidebar i runtime switch są zgodne. Pięć ścieżek legacy normalizuje się do już policzonych ekranów i nie zwiększa mianownika. Repozytoryjny fixture odmówił wymaganej bazy dyżuru: `server/scripts/seed-wave3-partner-owner-review.ts:16-24` akceptuje tylko `consultify_w3_partner_owner_*`, natomiast instrukcja wiąże `consultify_day62_partner_review`. Nie utworzono obejścia, nowego seedera ani fikcyjnych danych. Osiągalny runtime przekierował anonimowe `/partner` do `/login?redirect=%2Fpartner`. Szczegóły, manifest i karta dowodowa: `../../codex/CODEX_DAY62_PARTNER_OWNER_REVIEW_REPORT.md`.
+
+Znaleziska Day62:
+
+| ID | Objaw | Reprodukcja | Plik + linia | Dowód | Wpływ |
+| --- | --- | --- | --- | --- | --- |
+| `PRT-D62-001` | Fixture nie akceptuje nazwy DB wymaganej przez dyżur. | Uruchom udokumentowany seeder z `SEED_WAVE3_PARTNER_OWNER_REVIEW=YES` na DB 5934. | `server/scripts/seed-wave3-partner-owner-review.ts:16-24` | kod `1`, `Database name must match consultify_w3_partner_owner_*`, log SHA-256 `dd4d0bc05d2380e50c72958591e1619e984a3636bf3033ae2e0e85ac76da435a` | `EVIDENCE_MISSING`; blokuje full-state oraz G08–G10 |
+| `PRT-D62-002` | Anonimowe wejście do Partnera podczas polskiego odbioru pokazuje angielski login. | Otwórz `/partner` na lokalnym Vite 3992 bez sesji. | `src/routes/AppRoutes.tsx:3422-3429` (granica auth) | `partner-reachability-auth-dark.png`, SHA-256 `337ce0c77b46db90e8fc4e6111c8b3668fbed0ebd2de721fbed61e2987cbced2` | niespójne pierwsze wrażenie; portal pozostaje nieobejrzany |
+| `PRT-D62-003` | Wzorzec `04_KARTA_DOWODOWA.md` nie istnieje na markerze. | Przeszukaj drzewo `WAVE_03_ACCEPTANCE`. | `EVIDENCE_MISSING` | zero wyników `find` | zgodność karty raportowej ze wzorcem `NOT_PROVEN` |
+
 | Purpose/value        | Starting route | Persona/data | Guided actions                                                               | Conscious exclusions                     | Observation prompts                                                              |
 | -------------------- | -------------- | ------------ | ---------------------------------------------------------------------------- | ---------------------------------------- | -------------------------------------------------------------------------------- |
 | _prepare before G07_ | `/partner`     | _pending_    | Open partner profile → certification/attribution → ledger → denied economics | Accrual, commission and payout execution | Partner value, trust, certification clarity, honest excluded-economics messaging |
