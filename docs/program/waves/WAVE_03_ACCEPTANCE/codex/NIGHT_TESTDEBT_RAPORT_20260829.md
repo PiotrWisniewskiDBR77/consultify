@@ -1103,7 +1103,51 @@ Końcowo:
 
 ## Faza 3 — 13 testów pinujących bugi
 
-Nie rozpoczęto.
+**ZROBIONE.** Mapa nazywa tę grupę „13 rekordów”, ale jej własne składniki
+sumują się do **14** (8 + 1 + 1 + 1 + 1 + 2). Nie ukryto czternastego rekordu;
+sprawdzono wszystkie rzeczywiste pozycje:
+
+1. `GET assessment-workflow/:id/status` — **KANONIZOWAŁ BUG**: historyczny 500
+   z błędem typu identyfikatora; obecny kontrakt zabrania 5xx i przechodzi.
+2. `GET assessment-workflow/:id/versions` — **KANONIZOWAŁ BUG**: historyczny
+   brak relacji; świeża pełna baza i obecny kontrakt przechodzą.
+3. `GET assessment-workflow/:id/history` — **KANONIZOWAŁ BUG**: historyczny
+   błąd typu identyfikatora; obecnie bez 5xx.
+4. `GET assessment-workflow/pending-reviews` — **KANONIZOWAŁ BUG**:
+   historyczny brak relacji; obecnie bez 5xx.
+5. `POST assessment-workflow/:id/initialize` — **KANONIZOWAŁ BUG**:
+   historyczny błąd typu identyfikatora; obecnie bez 5xx.
+6. `GET assessment-workflow-v2/:id/initiative-batches` — **KANONIZOWAŁ BUG**:
+   historyczny brak kolumny `generated_by`; obecnie bez 5xx.
+7. `GET assessments-v4/.../diff/...` — **KANONIZOWAŁ BUG**: historyczny
+   surowy HTML 500; obecnie bez 5xx.
+8. `GET assessment-evidence/:id/report` — **KANONIZOWAŁ BUG**: historyczny
+   brak `assessment_questions`; obecnie bez 5xx.
+9. AI preferences w `red-final` — historyczny pin 500 **KANONIZOWAŁ BUG**.
+   Obecny zamierzony kontrakt to jawny 503 `not_configured`, nie awaria 500.
+10. T2 artifact SLA — **KANONIZOWAŁ BUG** i był nadal aktywny: globalny sweep
+    eskalował także artefakty należące do osobnej ścieżki SLA. Produkt filtruje
+    teraz `assignment_kind=project_gate`; test T2 przechodzi 3/3.
+11. B9 Harvard — **ZAMIERZONY KONTRAKT STUB** na obecnej granicy produktu.
+    Rejestr jawnie oznacza brak pełnego handoffu governed tables; nie wolno
+    przemianować kotwic na działającą integrację bez dowodu read-back.
+12. `SECTION_AI_NOOP` — **ZAMIERZONY KONTRAKT**: trzy dostarczone sekcje mają
+    realne handlery, a cztery autentycznie niewdrożone pozostają fail-closed.
+13. DECCASE, gałąź `DONE` — historyczna lowercase asercja **KANONIZOWAŁA BUG**;
+    obecny wykonywalny kontrakt zachowuje kanoniczne uppercase `DONE`.
+14. DECCASE, gałąź `BLOCKED` — historyczna lowercase asercja
+    **KANONIZOWAŁA BUG**; obecny kontrakt zapisuje uppercase `BLOCKED`.
+
+Dowód mutacyjny zmiany produkcyjnej `slaService.ts`:
+
+- po usunięciu filtra rodzaju przypisania: nazwany czerwony test
+  `T2 · FINDING ... > leaves assignment_kind=artifact for its dedicated review SLA path`,
+  z błędem `expected '<uuid>' to be null`;
+- po odtworzeniu kopii pliku: **3/3 PASS** i identyczna treść naprawy.
+
+Końcowy regres pinów: **100/100 acceptance PASS** oraz **25/25 unit PASS**,
+`--retry=0`. Jedyna zmiana produktu w tej fazie to filtr T2; testów pinujących
+nie osłabiono i nie wyciszono.
 
 ## Faza 4 — błędy typów
 
