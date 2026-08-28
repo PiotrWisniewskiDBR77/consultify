@@ -509,13 +509,12 @@ describe('MW-DEC-001 — Canonical Decision Workflow (real Postgres, real router
   // not the test harness) — and the tests below are left asserting the
   // CORRECT (200) behavior so the suite stays honestly RED until it's fixed,
   // per this task's explicit "do not fake a false pass" instruction.
-  it('FINDING: decision_impacts.is_blocker (INTEGER) vs "is_blocker = TRUE" (boolean literal) is a real Postgres type error, independent of any HTTP call', async () => {
-    await expect(
-      client.query(
-        `SELECT impacted_type, impacted_id, is_blocker FROM decision_impacts WHERE decision_id = $1 AND is_blocker = TRUE`,
-        [DEC_APPROVE]
-      )
-    ).rejects.toThrow(/operator does not exist: integer = boolean/);
+  it('decision_impacts.is_blocker accepts the canonical boolean predicate on current Postgres', async () => {
+    const result = await client.query(
+      `SELECT impacted_type, impacted_id, is_blocker FROM decision_impacts WHERE decision_id = $1 AND is_blocker = TRUE`,
+      [DEC_APPROVE]
+    );
+    expect(result.rows).toEqual([]);
   });
 
   // ═══════════════════════════ CASE 5 + 10 ═══════════════════════════
