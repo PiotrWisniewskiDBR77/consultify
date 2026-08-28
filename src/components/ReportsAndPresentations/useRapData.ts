@@ -1332,17 +1332,18 @@ export function useTemplates() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchTemplates = useCallback(async () => {
+  const fetchTemplates = useCallback(async (includeDrafts = false) => {
     setLoading(true);
     try {
+      const visibility = includeDrafts ? '&include=drafts' : '';
       const [rptRes, presRes, sheetRes] = await Promise.all([
-        fetch(`${API_URL}/artifacts?limit=200&artifactFamily=template&outputType=report`, {
+        fetch(`${API_URL}/artifacts?limit=200&artifactFamily=template&outputType=report${visibility}`, {
           headers: getHeaders(),
         }),
-        fetch(`${API_URL}/artifacts?limit=200&artifactFamily=template&outputType=presentation`, {
+        fetch(`${API_URL}/artifacts?limit=200&artifactFamily=template&outputType=presentation${visibility}`, {
           headers: getHeaders(),
         }),
-        fetch(`${API_URL}/artifacts?limit=200&artifactFamily=template&outputType=sheet`, {
+        fetch(`${API_URL}/artifacts?limit=200&artifactFamily=template&outputType=sheet${visibility}`, {
           headers: getHeaders(),
         }),
       ]);

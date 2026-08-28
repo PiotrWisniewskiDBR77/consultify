@@ -67,15 +67,15 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
   },
   get: async (sql: string, params: any[] = []) => {
     const normalized = sql.replace(/\s+/g, ' ').trim();
-    if (normalized.includes('FROM benefits_register')) {
-      // handoff dedupe lookup: org + initiative + source + kpi_name
-      const [organizationId, initiativeId, source, , kpiName] = params;
+    if (normalized.includes('FROM initiative_benefits')) {
+      // handoff dedupe lookup: org + initiative + source_tag + persisted name
+      const [organizationId, initiativeId, source, name] = params;
       const match = Array.from(db.benefits.values()).find(
         (row) =>
           row.organization_id === organizationId &&
           row.initiative_id === initiativeId &&
           row.source === source &&
-          ((row.kpi_name == null && kpiName == null) || row.kpi_name === kpiName)
+          row.name === name
       );
       return match || null;
     }

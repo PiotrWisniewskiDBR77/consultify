@@ -245,12 +245,16 @@ export async function handoffFromClosure(
     (kpiDelta?.name || '').trim() || (kpiName ? `Benefit: ${kpiName}` : 'Initiative benefit');
 
   // Dedupe against an existing handoff row for the same KPI on this initiative.
+  const persistedName = kpiName ? `${name} (${kpiName})` : name;
   const existing = await dbGet<BenefitRecord>(
-    `SELECT * FROM benefits_register
-     WHERE organization_id = ? AND initiative_id = ? AND source = ?
-       AND ((kpi_name IS NULL AND ? IS NULL) OR kpi_name = ?)
+    `SELECT id, organization_id, initiative_id, name, owner_id,
+            NULL AS kpi_name, baseline_value, target_value, current_value,
+            measurement_frequency AS cadence, status, source_tag AS source,
+            created_at, updated_at
+       FROM initiative_benefits
+     WHERE organization_id = ? AND initiative_id = ? AND source_tag = ? AND name = ?
      ORDER BY created_at DESC LIMIT 1`,
-    [organizationId, initiativeId, BENEFIT_HANDOFF_SOURCE, kpiName, kpiName]
+    [organizationId, initiativeId, BENEFIT_HANDOFF_SOURCE, persistedName]
   );
 
   if (existing) {
