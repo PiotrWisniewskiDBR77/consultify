@@ -1,5 +1,27 @@
 # Dyżur 61 — Materiały — pakiet odbioru właściciela G07–G10
 
+## Finalne wznowienie — marker f87043a
+
+Poprzedni STOP jest historycznym wejściem do tego raportu. Po naprawie seedera dyżur został wykonany ponownie na `f87043a9412d6f208f99bd0b5c7e23bce4d01c4d`. Lokalny PostgreSQL działał na 5933, prawdziwy server/Gateway na 4391, a klient na 3991. Runtime potwierdził dokładny SHA, 862 migracje, oba ledgery migracji i readiness 200.
+
+Seeder utworzył personę OWNER oraz pełne dane DOC/PPT/XLSX i kontrolowane szablony. Logowanie przez produkcyjny endpoint zwróciło 200. Następnie realne odczyty `/api/artifacts` dla całości, dokumentów, prezentacji i arkuszy oraz szczegóły dokumentu, decku i workbooka zwróciły kolejno siedem razy HTTP 200.
+
+Końcowy mianownik dowodowy wynosi 32 zrzuty: osiem powierzchni × jasny/ciemny × pusty/pełny. Dodatkowo zapisano kebab wiersza i panel podglądu. Artefakty oraz `screenshots.sha256` znajdują się w `/private/tmp/cx-day61-materials-review-f87043a/`. Pełna baza została przed pustym przebiegiem zapisana do własnego lokalnego dumpu, a po zrzutach odtworzona; odczyt końcowy potwierdził ponownie 615 outputów organizacji oraz po jednej karcie dokumentu, decku i workbooka.
+
+Werdykt: G07 `READY_FOR_OWNER_REVIEW`, G08 i G10 `EVIDENCE_PACKAGE_READY`, G09 `PASS_TECHNICAL_OWNER_REPLAY_READY`. Nie jest to `CLOSED_FINAL`, ponieważ G11–G20 wymagają uwag właściciela. Pakiet ujawnił defekt `MAT-D61-003`: polski UI nadal zawiera angielskie etykiety i daty. Nie został ukryty ani naprawiony w dyżurze odbiorczym.
+
+Kompilacja produkcyjna serwera przez `server/tsconfig.build.json`: exit 0. Produkcyjny build frontu: exit 0. Vitest/esbuild nie był używany jako substytut kontroli typów. Nie zmieniano testów, więc werdykt testu pinującego buga: `NIE DOTYCZY`.
+
+## Twierdzenia niezweryfikowane po wznowieniu
+
+- Nie zweryfikowano zewnętrznych providerów, wysyłki, udostępniania ani eksportów.
+- Nie ma decyzji właściciela dotyczącej akceptacji wyglądu i mieszanej lokalizacji.
+- Nie wykonano G11–G20 ani finalnego retestu po przyszłych poprawkach.
+
+## Historyczny przebieg na markerze 5e30 — zastąpiony przez wznowienie
+
+Poniższa część zachowuje dowód pierwotnego, prawidłowego STOP-u. Jej statusy `0/32`, `PARTIAL` i `STOP` nie są statusem końcowym dyżuru; wiążący wynik znajduje się w sekcji „Finalne wznowienie” powyżej.
+
 ## Karta przeglądu dla Piotra
 
 Materiały są wspólnym miejscem, w którym konsultant odnajduje i otwiera końcowe rezultaty swojej pracy. Moduł zbiera dokumenty, prezentacje, arkusze i szablony w jednym rejestrze, dzięki czemu użytkownik nie musi pamiętać, w którym narzędziu dany rezultat powstał. Głównym punktem wejścia jest lista wszystkich materiałów. Z niej można przejść do widoku ograniczonego do dokumentów, prezentacji, arkuszy albo biblioteki szablonów.

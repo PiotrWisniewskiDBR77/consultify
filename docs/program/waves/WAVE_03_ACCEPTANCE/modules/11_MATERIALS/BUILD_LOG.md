@@ -1,5 +1,14 @@
 # Materials — build log
 
+## 2026-08-28 — Day 61 replay na markerze f87043a
+
+- Seeder po naprawie zaakceptował jawnie potwierdzoną lokalną bazę i utworzył personę OWNER oraz pełny DOC/PPT/XLSX/template fixture; odczyt potwierdził `2/1/1/1/1` głównych rekordów.
+- Runtime został przyjęty fail-closed na SHA `f87043a9412d6f208f99bd0b5c7e23bce4d01c4d`, PG `5933`, server `4391`, klient `3991`, 862 migracje i zielone readiness.
+- Wykonano 32 końcowe zrzuty (8 ekranów × 2 motywy × pusty/pełny), kebab i podgląd; każdy ekran przeszedł przez prawdziwy Gateway i lokalną DB bez auth bypass.
+- Siedem nazwanych odczytów HTTP zwróciło 200. Produkcyjna kompilacja serwera i build frontu zakończyły się kodem 0.
+- Znalezisko: niepełna polonizacja widoczna w rejestrach, podglądzie i builderach. Nie naprawiano jej w dyżurze odbiorczym; została przekazana do G11–G20.
+- Wynik: G07–G10 mają kompletny pakiet techniczny do odbioru właściciela; nie oznacza to jeszcze `CLOSED_FINAL`.
+
 ## 2026-08-28 — Day 61 owner review G07–G10
 
 - Marker/HEAD at review start: `5e30cb9bf66c8e75481ba723debdd04f3c1a6893`.
