@@ -23,7 +23,25 @@
  */
 import express, { type Express } from 'express';
 import request from 'supertest';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+
+// The contract under test starts after the probabilistic provider boundary:
+// route validation + real formatter + graph-patch semantics. Keep the LLM
+// response deterministic while leaving all product code on the real path.
+vi.mock('../../server/src/services/ai/modelRouter.js', () => ({
+  default: { select: vi.fn(async () => ({ provider: 'acceptance-local', model: 'edit-step' })) },
+}));
+vi.mock('../../server/src/services/ai/llmService.js', () => ({
+  llmService: {
+    callStructured: vi.fn(async () => ({
+      object: {
+        label: 'Kontrola jakości przez kierownika zmiany',
+        description: 'Kierownik zmiany potwierdza wynik przed przekazaniem dalej.',
+        rationale: 'Doprecyzowano właściciela kontroli jakości.',
+      },
+    })),
+  },
+}));
 
 import { mintToken, pgClient } from './harness.js';
 import { SEED, seed } from './seed.mjs';
