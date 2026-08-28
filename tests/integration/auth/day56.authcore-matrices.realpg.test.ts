@@ -192,11 +192,11 @@ describe('Day 56 auth-core exact HTTP matrices', { retry: 0 }, () => {
     expect((await conversations(activeUser, orgA, `jti-${activeUser}`)).status).toBe(200);
   });
 
-  it('P.3/P.8 revoked actor is exactly 403 ORG_MEMBERSHIP_REVOKED', async () => {
+  it('P.3/P.4/P.5/P.6/P.8 revoked actor is exactly 403 ORG_MEMBERSHIP_REVOKED', async () => {
     expectRefusal(await conversations(revokedUser, orgA), 403, 'ORG_MEMBERSHIP_REVOKED');
   });
 
-  it('P.3/P.8 foreign actor is exactly 403 ORG_CONTEXT_MISMATCH', async () => {
+  it('P.3/P.4/P.5/P.6/P.8 foreign actor is exactly 403 ORG_CONTEXT_MISMATCH', async () => {
     expectRefusal(
       await conversations(foreignUser, orgA, undefined, orgA),
       403,
@@ -204,7 +204,7 @@ describe('Day 56 auth-core exact HTTP matrices', { retry: 0 }, () => {
     );
   });
 
-  it('P.3/P.8 actor without organization is exactly 403 ORG_CONTEXT_REQUIRED', async () => {
+  it('P.3/P.4/P.5/P.6/P.8 actor without organization is exactly 403 ORG_CONTEXT_REQUIRED', async () => {
     expectRefusal(await conversations(noOrgUser), 403, 'ORG_CONTEXT_REQUIRED');
   });
 
