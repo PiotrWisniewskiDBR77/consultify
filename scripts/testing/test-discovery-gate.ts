@@ -140,12 +140,27 @@ function vitestList(config: string): string[] {
  * against this set.
  */
 export function computeRealExecutedSet(): Set<string> {
+  const nodeNativeFiles = [
+    'scripts/testing/__tests__/artifact-studio-release-evidence-gate.test.mjs',
+    'scripts/cleanup/__tests__/verify-ui-canon-all.test.mjs',
+    'scripts/dev/__tests__/verifyCanonical16Bindings.test.mjs',
+    'scripts/recovery/__tests__/report-worktree-inventory.test.mjs',
+    'scripts/wave3/__tests__/report-acceptance-gates.test.mjs',
+    'scripts/wave3/__tests__/verify-acceptance-packages.citedPaths.test.mjs',
+    'scripts/wave3/__tests__/verify-acceptance-packages.denominator.test.mjs',
+    'scripts/wave3/__tests__/verify-acceptance-packages.test.mjs',
+    'tests/unit/deploy/validate-deploy-target.test.mjs',
+    'tests/unit/deploy/release-migration-gate-no-tautology.test.mjs',
+    'tests/unit/release/generate-release-candidate-bundle.test.mjs',
+    'tests/unit/release/verify-release-candidate-bundle.test.mjs',
+    'tests/unit/scripts/checkActionsStagedScope.test.mjs',
+  ];
   const sets = [
     vitestList('vitest.config.ts'),
     vitestList('vitest.acceptance.config.ts'),
     vitestList('vitest.orphans.config.ts'),
     // node:test-run file(s), wired via `npm run test:node-native`.
-    ['scripts/testing/__tests__/artifact-studio-release-evidence-gate.test.mjs'],
+    nodeNativeFiles,
   ];
   return new Set(sets.flat());
 }
