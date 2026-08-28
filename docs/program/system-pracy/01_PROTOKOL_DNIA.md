@@ -14,9 +14,9 @@ fali · ocenę wyglądu. Nic poza tym. Reszta należy do Ciebie.
   [1] PLANOWANIE      → wybór 6 dyżurów, sprawdzenie rozłączności, przydział zasobów
   [2] WYDANIE         → 6 instrukcji z markerem związanym, wysłane równolegle
   [3] WYKONANIE       → 6 dyżurów pracuje; każdy pushuje po pierwszym commicie
-  [4] SAMOPOPRAWA     → każdy dyżur domyka własne PARTIAL-e, zanim odda
-  [5] ODBIÓR          → 6 sceptyków, jeden na dyżur, ZAWSZE inny agent niż autor
-  [6] FIX             → poprawki po odbiorze, wykonywane przez autora dyżuru
+  [4] SAMOPOPRAWA     → wykonawca domyka oczywiste błędy w dużym zakresie, potem oddaje raz
+  [5] ODBIÓR          → integrator obala twierdzenia raportu i rozdziela ogony od dużych napraw
+  [6] FIX             → integrator sam domyka małe/średnie ogony; tylko dużą naprawę zwraca wykonawcy
   [7] KARTA           → każdy dyżur wypełnia kartę dowodową
   [8] PRÓBKOWANIE     → nadzorca mierzy 1-2 twierdzenia nośne z całej fali
   [9] SCALENIE        → po zgodzie nadzorcy, kolejność wg protokołu §5
@@ -73,8 +73,10 @@ z części C szkieletu. Cztery rzeczy, które najczęściej wywalały dyżury w 
 
 ## 4. ODBIÓR — najważniejszy krok, którego nie wolno skracać
 
-**Sceptyk nigdy nie jest autorem dyżuru.** To jedyna reguła bez wyjątku. Nikt nie potrafi
-być własnym sceptykiem — nie z braku uczciwości, tylko dlatego, że sprawdza to, o czym pomyślał.
+**Integrator odbierający nie jest autorem pierwotnego dyżuru.** Wykonawca dostaje duży,
+zamknięty zakres i oddaje jeden raport po własnej samopoprawie. Od tego momentu właścicielem
+domknięcia jest integrator — nie odsyła raportu do wykonawcy za każdy brak, nie prowadzi
+wielorundowej korespondencji i nie żąda kolejnych wielostronicowych suplementów.
 
 **Zadanie sceptyka brzmi „obal", nie „potwierdź".** Dostaje rozkazy pomiarowe, nie pytania.
 
@@ -92,6 +94,28 @@ Minimum odbioru — bez tego nie ma karty:
 Pełna lista wzorców do sprawdzenia: `03_KATALOG_DEFEKTOW.md`. Przejdź kategorie A–D
 i zaznacz, których szukałeś. **Kategoria, której nikt nie sprawdził, jest kategorią,
 w której defekt przetrwa.**
+
+### 4a. ZASADA JEDNEGO POWROTU — kto domyka po raporcie
+
+Po pierwszym raporcie integrator klasyfikuje pozostałą pracę według kosztu, nie według tego,
+kto popełnił błąd:
+
+- **mały lub średni ogon** — pojedyncze testy, fixture, mock, opis raportu, higiena diffu,
+  brakujący rerun, drobna korekta w licencji: integrator naprawia i weryfikuje sam;
+- **duża naprawa** — osobny klaster wymagający szerokiej implementacji, wielu plików,
+  długiego środowiska albo istotnego nowego dowodu: integrator może zwrócić ją wykonawcy,
+  ale jednym krótkim zleceniem zawierającym tylko nierozwiązany zakres;
+- **nowa licencja, decyzja produktowa lub zmiana widoczna** — integrator nie zgaduje;
+  eskaluje zgodnie z §6, a niezależne ogony nadal domyka sam.
+
+Domyślna decyzja brzmi: **integrator kończy**. Powrót do wykonawcy wymaga w raporcie odbioru
+jednego zdania: `ZWROT UZASADNIONY — naprawa jest duża, ponieważ ...`. Brak takiego
+uzasadnienia oznacza zakaz kolejnego promptu kontynuacyjnego.
+
+Integrator po własnej poprawce zapisuje osobny commit, wykonuje proporcjonalny dowód
+mutacyjny i regres oraz aktualizuje kartę. Nie zastępuje tym niezależnego próbkowania
+nadzorcy przed scaleniem. Własna poprawka integratora nie uruchamia kolejnej pełnej rundy
+wykonawca → raport → integrator; trafia bezpośrednio do karty i próbkowania.
 
 ---
 
