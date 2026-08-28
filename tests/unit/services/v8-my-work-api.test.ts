@@ -132,7 +132,9 @@ describe('V8MyWorkApi', () => {
     expect(v8Put).toHaveBeenCalledWith('/my-work/notebook/pages/note-1', { title: 'Updated note' });
     expect(v8Put).toHaveBeenCalledWith('/my-work/notebook/pages/note-1/pin');
     expect(v8Put).toHaveBeenCalledWith('/my-work/notebook/pages/note-1/status', { status: 'archived' });
-    expect(v8Delete).toHaveBeenCalledWith('/my-work/notebook/pages/note-1');
+    expect(v8Delete).toHaveBeenCalledWith('/my-work/notebook/pages/note-1', {
+      extraHeaders: { 'Idempotency-Key': undefined },
+    });
   });
 
   it('routes notebook capture upload through the V8 namespace', async () => {
