@@ -36,36 +36,43 @@ const ASSESSMENT_REPORT_ID = 'odbior--redas--areport-0001';
 const FIN_PACK_ID = 'odbior--redas--finpack-0001';
 const FIN_STMT_ID = 'odbior--redas--finstmt-0001';
 
-/**
- * KNOWN RED — confirmed real 500s (parity pg18, 2026-07-19) that are OUT of
- * safe-migration scope (missing tables / type-mismatch column / wrong
- * column names referenced by code — see RAPORT RED in the handoff). These
- * are asserted to their current status/message so a change here is a
- * visible signal (fixed, or regressed differently) rather than silent scope
- * creep in this sweep. Do NOT add new entries here without a matching
- * RAPORT RED writeup — this list is a tracked debt ledger, not a rug.
- */
-// The eight schema failures recorded on 2026-07-19 now return bounded 2xx/4xx
-// responses on a fresh migrated database. Keep the ledger empty so every route
-// is held to the stronger common contract below: it must respond and never 5xx.
-const KNOWN_RED: Record<string, { status: number; messageIncludes: string }> = {};
+type RouteContract = {
+  path: string;
+  status: 200 | 201 | 400 | 404;
+  state: 'success' | 'created' | 'validation' | 'not-found';
+  shape: `key:${string}` | 'array' | 'empty-object' | `error:${string}`;
+};
 
-/** Assert a sweep result: KNOWN_RED entries stay pinned, everything else must not 5xx/HANG. */
-function assertNotRegressed(r: { label: string; status: number | 'HANG'; body?: any; error?: string }) {
-  const known = KNOWN_RED[r.label];
-  if (known) {
-    expect(r.status, `${r.label} — expected pinned KNOWN RED status`).toBe(known.status);
-    if (known.messageIncludes) {
-      const msg = JSON.stringify(r.body || '');
-      expect(msg, `${r.label} — KNOWN RED message drifted`).toContain(known.messageIncludes);
-    }
-    return;
+const ok = (path: string, shape: RouteContract['shape']): RouteContract => ({ path, status: 200, state: 'success', shape });
+const created = (path: string, shape: RouteContract['shape']): RouteContract => ({ path, status: 201, state: 'created', shape });
+const invalid = (path: string, error: string): RouteContract => ({ path, status: 400, state: 'validation', shape: `error:${error}` });
+const missing = (path: string, error?: string): RouteContract => ({
+  path,
+  status: 404,
+  state: 'not-found',
+  shape: error ? `error:${error}` : 'empty-object',
+});
+
+/** Exact route contract. The imported router path is included in every failure as source justification. */
+function assertRouteContract(
+  r: { label: string; status: number | 'HANG'; body?: any; error?: string },
+  contract: RouteContract,
+  routerImportPath: string
+) {
+  expect(r.status, `${r.label} — ${contract.state} status from ${routerImportPath}`).toBe(contract.status);
+  const body = r.body;
+  if (contract.shape === 'array') {
+    expect(Array.isArray(body), `${r.label} — array payload from ${routerImportPath}`).toBe(true);
+  } else if (contract.shape === 'empty-object') {
+    expect(body, `${r.label} — empty not-found payload from ${routerImportPath}`).toEqual({});
+  } else if (contract.shape.startsWith('key:')) {
+    const key = contract.shape.slice('key:'.length);
+    expect(body, `${r.label} — object payload from ${routerImportPath}`).toBeTypeOf('object');
+    expect(body, `${r.label} — required payload key from ${routerImportPath}`).toHaveProperty(key);
+  } else {
+    const message = contract.shape.slice('error:'.length);
+    expect(body, `${r.label} — error payload from ${routerImportPath}`).toMatchObject({ error: message });
   }
-  expect(r.status, `${r.label} — NEW regression (not in KNOWN_RED)`).not.toBe('HANG');
-  expect(
-    typeof r.status === 'number' ? r.status : 999,
-    `${r.label} — NEW regression (not in KNOWN_RED): ${JSON.stringify(r.body)}`
-  ).toBeLessThan(500);
 }
 
 let token: string;
@@ -206,18 +213,19 @@ function sweepGet(
   describeLabel: string,
   prefix: string,
   routerPath: string,
-  paths: string[],
+  contracts: RouteContract[],
   extraMiddleware: any[] = []
 ) {
   describe(describeLabel, () => {
-    for (const p of paths) {
+    for (const contract of contracts) {
+      const p = contract.path;
       it(`GET ${prefix}${p}`, async () => {
         const app = await mountRouter(prefix, routerPath, { extraMiddleware });
         const r = await tryReq(`GET ${prefix}${p}`, () =>
           request(app).get(`${prefix}${p}`).set('Authorization', `Bearer ${token}`)
         );
         RESULTS.push(r);
-        assertNotRegressed(r);
+        assertRouteContract(r, contract, routerPath);
       }, 20_000);
     }
   });
@@ -227,10 +235,10 @@ function sweepGet(
 // 1. Assessment Hub — /api/assessments
 // ============================================================================
 sweepGet('RED-ASSESS: assessment-hub /api/assessments', '/api/assessments', '../../server/src/routes/assessment/assessment-hub.routes.js', [
-  '/my-assessments',
-  '/',
-  '/canonical-index',
-  `/${ASSESSMENT_ID}`,
+  ok('/my-assessments', 'key:assessments'),
+  ok('/', 'key:assessments'),
+  ok('/canonical-index', 'key:items'),
+  ok(`/${ASSESSMENT_ID}`, 'key:assessment'),
 ]);
 
 describe('RED-ASSESS: assessment-hub writes', () => {
@@ -243,7 +251,7 @@ describe('RED-ASSESS: assessment-hub writes', () => {
         .send({ name: 'odbior--redas-- create test', type: 'DRD' })
     );
     RESULTS.push(r);
-    assertNotRegressed(r);
+    assertRouteContract(r, created('/', 'key:assessment'), '../../server/src/routes/assessment/assessment-hub.routes.js');
   }, 20_000);
 });
 
@@ -254,7 +262,10 @@ sweepGet(
   'RED-ASSESS: assessment-level-attachments',
   '/api/assessment-level-attachments',
   '../../server/src/routes/assessment/assessment-level-attachments.routes.js',
-  [`/level/${ASSESSMENT_ID}/axis1/1`, `/download/${RANDOM_UUID}`]
+  [
+    ok(`/level/${ASSESSMENT_ID}/axis1/1`, 'key:attachments'),
+    missing(`/download/${RANDOM_UUID}`, 'Attachment not found'),
+  ]
 );
 
 // ============================================================================
@@ -265,14 +276,14 @@ sweepGet(
   '/api/assessment-workflow',
   '../../server/src/routes/assessment/assessment-workflow.routes.js',
   [
-    `/${ASSESSMENT_ID}/status`,
-    `/${ASSESSMENT_ID}/versions`,
-    `/${ASSESSMENT_ID}/history`,
-    '/pending-reviews',
-    `/${ASSESSMENT_ID}/activity-logs`,
-    `/${ASSESSMENT_ID}/my-role`,
-    `/${ASSESSMENT_ID}/roles`,
-    `/${ASSESSMENT_ID}/access-requests`,
+    ok(`/${ASSESSMENT_ID}/status`, 'key:assessmentId'),
+    ok(`/${ASSESSMENT_ID}/versions`, 'key:versions'),
+    ok(`/${ASSESSMENT_ID}/history`, 'key:history'),
+    ok('/pending-reviews', 'key:reviews'),
+    ok(`/${ASSESSMENT_ID}/activity-logs`, 'key:logs'),
+    missing(`/${ASSESSMENT_ID}/my-role`),
+    missing(`/${ASSESSMENT_ID}/roles`),
+    ok(`/${ASSESSMENT_ID}/access-requests`, 'key:requests'),
   ]
 );
 
@@ -289,7 +300,7 @@ describe('RED-ASSESS: assessment-workflow writes (org_id type-mismatch suspect)'
         .send({})
     );
     RESULTS.push(r);
-    assertNotRegressed(r);
+    assertRouteContract(r, created(`/${ASSESSMENT_ID}/initialize`, 'key:id'), '../../server/src/routes/assessment/assessment-workflow.routes.js');
   }, 20_000);
 });
 
@@ -301,22 +312,22 @@ sweepGet(
   '/api/assessment-workflow-v2',
   '../../server/src/routes/assessment-workflow-v2.routes.js',
   [
-    '/',
-    '/sessions',
-    `/${ASSESSMENT_ID}/users`,
-    `/${ASSESSMENT_ID}`,
-    `/${ASSESSMENT_ID}/user-state`,
-    `/${ASSESSMENT_ID}/assignments`,
-    `/${ASSESSMENT_ID}/report/versions`,
-    `/${ASSESSMENT_ID}/my-role`,
-    `/${ASSESSMENT_ID}/roles`,
-    `/${ASSESSMENT_ID}/eligibility`,
-    `/${ASSESSMENT_ID}/access-requests`,
-    `/${ASSESSMENT_ID}/generated-initiatives`,
-    `/${ASSESSMENT_ID}/initiative-generation-runs`,
-    `/${ASSESSMENT_ID}/initiative-batches`,
-    `/${ASSESSMENT_ID}/gate-decisions`,
-    `/${ASSESSMENT_ID}/benchmark-comparison`,
+    ok('/', 'key:items'),
+    ok('/sessions', 'key:sessions'),
+    ok(`/${ASSESSMENT_ID}/users`, 'key:users'),
+    ok(`/${ASSESSMENT_ID}`, 'key:id'),
+    ok(`/${ASSESSMENT_ID}/user-state`, 'key:assessmentId'),
+    ok(`/${ASSESSMENT_ID}/assignments`, 'key:assignments'),
+    ok(`/${ASSESSMENT_ID}/report/versions`, 'key:versions'),
+    ok(`/${ASSESSMENT_ID}/my-role`, 'key:role'),
+    ok(`/${ASSESSMENT_ID}/roles`, 'key:roles'),
+    ok(`/${ASSESSMENT_ID}/eligibility`, 'key:assessment'),
+    ok(`/${ASSESSMENT_ID}/access-requests`, 'key:requests'),
+    ok(`/${ASSESSMENT_ID}/generated-initiatives`, 'key:initiatives'),
+    ok(`/${ASSESSMENT_ID}/initiative-generation-runs`, 'key:runs'),
+    ok(`/${ASSESSMENT_ID}/initiative-batches`, 'key:batches'),
+    ok(`/${ASSESSMENT_ID}/gate-decisions`, 'key:decisions'),
+    ok(`/${ASSESSMENT_ID}/benchmark-comparison`, 'key:benchmark'),
   ]
 );
 
@@ -328,18 +339,18 @@ sweepGet(
   '/api/assessments-v4',
   '../../server/src/routes/assessment-enterprise.routes.js',
   [
-    `/assessments/${ASSESSMENT_ID}/findings`,
-    `/findings/${RANDOM_UUID}`,
-    `/findings/${RANDOM_UUID}/capa`,
-    '/evidence/clause-map',
-    `/evidence/clause-coverage/${RANDOM_UUID}`,
-    '/evidence/access-log',
-    `/assessments/${ASSESSMENT_ID}/scoring-proposals`,
-    '/eval/datasets',
-    `/eval/datasets/${RANDOM_UUID}/runs`,
-    `/eval/runs/${RANDOM_UUID}/compare/${RANDOM_UUID}`,
-    `/assessments/${ASSESSMENT_ID}/reviews`,
-    `/assessments/${ASSESSMENT_ID}/versions/1/diff/2`,
+    ok(`/assessments/${ASSESSMENT_ID}/findings`, 'key:findings'),
+    missing(`/findings/${RANDOM_UUID}`, 'Finding not found'),
+    ok(`/findings/${RANDOM_UUID}/capa`, 'key:actions'),
+    ok('/evidence/clause-map', 'key:mappings'),
+    ok(`/evidence/clause-coverage/${RANDOM_UUID}`, 'key:coverage'),
+    ok('/evidence/access-log', 'key:log'),
+    ok(`/assessments/${ASSESSMENT_ID}/scoring-proposals`, 'key:proposals'),
+    ok('/eval/datasets', 'key:datasets'),
+    ok(`/eval/datasets/${RANDOM_UUID}/runs`, 'key:runs'),
+    missing(`/eval/runs/${RANDOM_UUID}/compare/${RANDOM_UUID}`, 'One or both runs not found'),
+    ok(`/assessments/${ASSESSMENT_ID}/reviews`, 'key:reviews'),
+    missing(`/assessments/${ASSESSMENT_ID}/versions/1/diff/2`, 'Version(s) not found'),
   ]
 );
 
@@ -350,16 +361,16 @@ sweepGet(
   'RED-ASSESS: assessment-evidence',
   '/api/assessment-evidence',
   '../../server/src/routes/assessmentEvidence.routes.js',
-  [`/${ASSESSMENT_ID}`, `/${ASSESSMENT_ID}/report`]
+  [ok(`/${ASSESSMENT_ID}`, 'key:evidence'), ok(`/${ASSESSMENT_ID}/report`, 'key:frameworkId')]
 );
 
 // ============================================================================
 // 7. Reports — /api/reports
 // ============================================================================
 sweepGet('RED-ASSESS: reports /api/reports', '/api/reports', '../../server/src/routes/reports.routes.js', [
-  '/executive-overview',
-  '/org-overview',
-  `/project/${PROJECT_ID}`,
+  ok('/executive-overview', 'key:data'),
+  ok('/org-overview', 'key:data'),
+  ok(`/project/${PROJECT_ID}`, 'key:data'),
 ]);
 
 // ============================================================================
@@ -370,21 +381,21 @@ sweepGet(
   '/api/finance-statements',
   '../../server/src/routes/finance-statements.routes.js',
   [
-    '/',
-    '/packs',
-    `/packs/${FIN_PACK_ID}`,
-    `/packs/${FIN_PACK_ID}/reconcile-summary`,
-    `/packs/${FIN_PACK_ID}/report-section/lineage`,
-    `/aggregate-scope/initiatives/${RANDOM_UUID}/delta`,
-    `/packs/${FIN_PACK_ID}/aggregate-scope/portfolio`,
-    '/canonical-lines',
-    `/${FIN_STMT_ID}/analytics`,
-    `/${FIN_STMT_ID}/values/${RANDOM_UUID}/explain`,
-    `/${FIN_STMT_ID}`,
-    `/${FIN_STMT_ID}/document-intelligence/search`,
-    '/ratios/catalog',
-    `/${FIN_STMT_ID}/ratios`,
-    '/benchmarks',
+    ok('/', 'array'),
+    ok('/packs', 'array'),
+    ok(`/packs/${FIN_PACK_ID}`, 'key:id'),
+    ok(`/packs/${FIN_PACK_ID}/reconcile-summary`, 'key:packId'),
+    ok(`/packs/${FIN_PACK_ID}/report-section/lineage`, 'key:lineage'),
+    ok(`/aggregate-scope/initiatives/${RANDOM_UUID}/delta`, 'key:delta'),
+    ok(`/packs/${FIN_PACK_ID}/aggregate-scope/portfolio`, 'key:statements'),
+    ok('/canonical-lines', 'array'),
+    ok(`/${FIN_STMT_ID}/analytics`, 'key:rows'),
+    missing(`/${FIN_STMT_ID}/values/${RANDOM_UUID}/explain`, 'Statement value not found'),
+    ok(`/${FIN_STMT_ID}`, 'key:id'),
+    invalid(`/${FIN_STMT_ID}/document-intelligence/search`, 'q is required'),
+    ok('/ratios/catalog', 'array'),
+    missing(`/${FIN_STMT_ID}/ratios`, 'Statement must be statement-ready before ratio computation'),
+    missing('/benchmarks', 'Statement not found'),
   ]
 );
 
@@ -396,19 +407,19 @@ sweepGet(
   '/api/finance-v4',
   '../../server/src/routes/finance-enterprise.routes.js',
   [
-    `/models/${RANDOM_UUID}/versions`,
-    `/versions/${RANDOM_UUID}/compare/${RANDOM_UUID}`,
-    '/dimensions',
-    `/models/${RANDOM_UUID}/allocations`,
-    '/consolidations',
-    `/models/${RANDOM_UUID}/budgets`,
-    `/budgets/${RANDOM_UUID}/variance-alerts`,
-    '/connectors',
-    `/connectors/${RANDOM_UUID}/sync-log`,
-    `/models/${RANDOM_UUID}/valuations`,
-    `/valuations/${RANDOM_UUID}/audit`,
-    `/models/${RANDOM_UUID}/ai-assumptions`,
-    `/models/${RANDOM_UUID}/roi-links`,
+    ok(`/models/${RANDOM_UUID}/versions`, 'key:versions'),
+    missing(`/versions/${RANDOM_UUID}/compare/${RANDOM_UUID}`, 'Version not found'),
+    ok('/dimensions', 'key:dimensions'),
+    ok(`/models/${RANDOM_UUID}/allocations`, 'key:allocations'),
+    ok('/consolidations', 'key:consolidations'),
+    ok(`/models/${RANDOM_UUID}/budgets`, 'key:budgets'),
+    ok(`/budgets/${RANDOM_UUID}/variance-alerts`, 'key:alerts'),
+    ok('/connectors', 'key:connectors'),
+    ok(`/connectors/${RANDOM_UUID}/sync-log`, 'key:logs'),
+    ok(`/models/${RANDOM_UUID}/valuations`, 'key:snapshots'),
+    ok(`/valuations/${RANDOM_UUID}/audit`, 'key:audit'),
+    ok(`/models/${RANDOM_UUID}/ai-assumptions`, 'key:assumptions'),
+    ok(`/models/${RANDOM_UUID}/roi-links`, 'key:links'),
   ]
 );
 
@@ -420,18 +431,18 @@ sweepGet(
   '/api/management-reports',
   '../../server/src/routes/managementReports.routes.js',
   [
-    '/history',
-    '/templates',
-    '/schedules',
-    '/pending-approvals',
-    `/${RANDOM_UUID}`,
-    `/${RANDOM_UUID}/approval-status`,
-    `/${RANDOM_UUID}/versions`,
-    `/${RANDOM_UUID}/versions/compare`,
-    `/${RANDOM_UUID}/comments`,
-    `/${RANDOM_UUID}/audit-log`,
-    '/analytics/usage',
-    '/analytics/types',
+    ok('/history', 'key:reports'),
+    ok('/templates', 'key:templates'),
+    ok('/schedules', 'key:schedules'),
+    ok('/pending-approvals', 'key:pending'),
+    missing(`/${RANDOM_UUID}`, 'Report not found'),
+    missing(`/${RANDOM_UUID}/approval-status`),
+    missing(`/${RANDOM_UUID}/versions`),
+    missing(`/${RANDOM_UUID}/versions/compare`),
+    missing(`/${RANDOM_UUID}/comments`),
+    missing(`/${RANDOM_UUID}/audit-log`),
+    ok('/analytics/usage', 'key:data'),
+    ok('/analytics/types', 'key:data'),
   ]
 );
 
@@ -442,5 +453,5 @@ sweepGet(
   'RED-ASSESS: management-reports-analytics',
   '/api/management-reports/analytics',
   '../../server/src/routes/managementReportsAnalytics.routes.js',
-  ['/usage', '/types']
+  [ok('/usage', 'key:data'), ok('/types', 'key:data')]
 );
