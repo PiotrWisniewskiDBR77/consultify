@@ -1,131 +1,121 @@
-# PLAN DOJŚCIA DO KOŃCA — stan na 2026-08-28
+# PLAN DOJŚCIA — powrót do Fazy 2: pętla per moduł
 
-Cel: 16+1 modułów zintegrowanych, ≥9,5/10 w panelach niezależnych ekspertów,
-aplikacja działająca jako całość.
-
----
-
-## 1. RACHUNEK — uczciwy, z jawnym wzrostem
-
-**Wykonane: 59 dyżurów numerowanych.**
-
-Pozostało — oszacowanie z podziałem, nie jedną liczbą:
-
-| blok | dyżurów | podstawa oszacowania |
-|---|---|---|
-| 16 modułów × domknięcie | 45–55 | ~3 na moduł: główny + dokończenie + odbiór końcowy |
-| dług testowy (~700 czerwonych) | 4–8 | zależne od wyniku diagnozy (dyżur 59) |
-| bloki przekrojowe (auth, CI, typy) | 4–6 | dwa już w toku, częściowo domknięte |
-| dokumenty i szablony | 6–10 | największa niewiadoma — patrz §4 |
-| wygląd i polerowanie | 8–12 | sekwencyjne przez akcept właściciela, nie da się zrównoleglić |
-| odbiory końcowe `CLOSED_FINAL` | 16 | po jednym na moduł, nieusuwalne |
-| rezerwa na nieprzewidziane | +15% | historyczna, wyliczona z ostatnich trzech dni |
-
-**Razem pozostało: 95–125. Łącznie z wykonanymi: 155–185.**
-
-Poprzedni cel 128 był postawiony, zanim zmierzyliśmy dług testowy i stan CI.
-**Nie dopasowuję starego szacunku — podaję nowy z przyczyną.**
-
-Przy rytmie 4 fale × 6 dyżurów = 24 dziennie: **4–5 dni roboczych.**
+**Podstawa:** plan zaakceptowany przez właściciela 2026-08-24. Faza 0 i 1 zamknięte.
+**Jesteśmy w Fazie 2** i tylko w niej: integracja 16 modułów, moduł po module.
+Ten dokument NIE wprowadza nowej metodyki — przywraca ustaloną.
 
 ---
 
-## 2. FAZY
+## 1. PĘTLA PER MODUŁ — jedyny sposób zamykania
 
-### FAZA A — FUNDAMENT (w toku, kończy się dziś)
-Domknięcie dyżurów 55–59. Przyrząd pomiarowy musi działać, zanim ruszy produkcja
-seryjna: bez zielonej siatki testów żadna kolejna fala nie wykryje, że coś zepsuła.
-**Warunek wyjścia:** 55, 56, 57 scalone; mapa długu testowego z dyżuru 59 gotowa.
-
-### FAZA B — DŁUG TESTOWY (pierwsza fala nowego integratora)
-Naprawa ~700 czerwonych, pokrojona na rozłączne pakiety wg mapy z dyżuru 59.
-**Warunek wyjścia:** bramka CI potrafi zaświecić na czerwono i świeci na zielono
-na czystym przebiegu. Dopiero wtedy „testy przeszły" zaczyna cokolwiek znaczyć.
-
-### FAZA C — MODUŁY (rdzeń, największa objętość)
-16 modułów, fale po 6 dyżurów rozłącznych plikowo. Kolejność wg dwóch kryteriów:
-najpierw moduły z największą liczbą otwartych pozycji, ale **moduły dzielące pliki
-przekrojowe nigdy w tej samej fali**.
-**Warunek wyjścia per moduł:** wszystkie pozycje zamknięte albo jawnie odroczone
-decyzją właściciela; odbiór adwersaryjny bez blokujących.
-
-### FAZA D — DOKUMENTY I SZABLONY
-Wydzielona, bo rządzi się inną regułą: **najpierw prototyp dokumentu jako PLIK
-do akceptu właściciela, dopiero potem mechanika.** Powód: przez cały program nie
-powstał ani jeden naprawdę dobry dokument z szablonu, a każde podejście „zbudujmy
-silnik, potem zobaczymy" kończyło się pustym formularzem.
-
-### FAZA E — WYGLĄD
-Nie da się zrównoleglić: każdy ekran wymaga prototypu, akceptu, budowy z parytetem
-i oględzin. Planować partiami, rzadziej, większymi. To wąskie gardło całego programu
-i trzeba je przyjąć, nie obchodzić.
-
-### FAZA F — INTEGRACJA KOŃCOWA
-**Prowadzi nadzorca osobiście, nie integrator.** Powód: to jedyna faza, w której
-liczy się nie moduł, lecz produkt jako całość — a nikt, kto budował części, nie
-zobaczy ich szwów.
-Zakres: przejścia między modułami · spójność danych demo · pełne ścieżki użytkownika
-end-to-end · panel ekspercki · promocja na środowisko docelowe.
-
----
-
-## 3. TEST DYMNY PRODUKTU — czego nam brakuje najbardziej
-
-**Problem:** mierzymy moduły, nie produkt. Każdy moduł może być zielony, a aplikacja
-jako całość nie działać, bo pęka na szwach między nimi.
-
-**Rozwiązanie:** jedna ścieżka end-to-end przez cały produkt, uruchamiana **po każdej
-fali**, przez realny Gateway na realnej bazie:
 ```
-logowanie → wybór organizacji → utworzenie oceny → wypełnienie →
-wygenerowanie dokumentu → utworzenie inicjatywy z wyniku →
-zadanie w Mojej pracy → raport → udostępnienie linkiem
+  podepnij → pogódź nazwane pliki → sprawdź → KOMPLETNE ZRZUTY → werdykt właściciela
 ```
-Wynik binarny: przeszło / nie przeszło, z numerem kroku, na którym pękło.
 
-To jest jedyna liczba, która mówi „produkt żyje". Wszystkie inne mówią o częściach.
-**Zbudować w Fazie B**, razem z długiem testowym — bez tego Faza C leci na ślepo.
+**`CLOSED_FINAL` = SHA + hash zrzutów + tag `final-XX-nazwa`.**
+Zamknięty moduł **nie wraca**. Nowe pomysły → backlog po-MVP.
 
----
-
-## 4. RZECZY, KTÓRE MOGĄ WYSADZIĆ PLAN
-
-| ryzyko | dlaczego groźne | co robimy |
-|---|---|---|
-| **Dokumenty i szablony** | nigdy nie powstał dobry dokument z szablonu; nie wiemy, ile pracy dzieli nas od pierwszego | prototyp-plik przed mechaniką; jeśli po dwóch podejściach nie ma dobrego pliku — zawężamy zakres MVP |
-| **Wygląd nie skaluje się** | akcept wzrokowy jest sekwencyjny, przez jedną osobę | partie zamiast pojedynczych ekranów; planować od początku, nie na końcu |
-| **Dług testowy głębszy niż mapa** | 700 to liczba porażek, nie przyczyn | diagnoza (59) przed naprawą; jeśli przyczyn jest ponad 30 — osobna faza |
-| **Integrator bez pamięci wraca do rozstrzygniętych spraw** | brak pamięci między sesjami | rejestr z uzasadnieniami + lista spraw zamkniętych i nieotwieralnych (§5) |
-| **Prognoza rośnie dalej** | każdy tydzień odsłania nowe | raportować wzrost jawnie; nigdy nie dopasowywać starych liczb |
+**Warunek zrzutów (nienaruszalny):** kompletne z góry — jasny i ciemny motyw, stan pusty
+i pełny, kebab wiersza, podgląd, karta. Właściciel nigdy nie jest pierwszym, który je widzi:
+ogląda wykonawca → ogląda nadzorca → dopiero właściciel, do AKCEPTU.
 
 ---
 
-## 5. SPRAWY ZAMKNIĘTE — NIE OTWIERAĆ BEZ DECYZJI WŁAŚCICIELA
+## 2. STAN FAKTYCZNY — 16 modułów, zmierzony 2026-08-28
 
-Lista istnieje, bo operator bez pamięci między sesjami będzie próbował je odkryć
-ponownie. Każda pozycja: rozstrzygnięta, z powodem, w rejestrze.
+| # | moduł | status | co blokuje zamknięcie |
+|---|---|---|---|
+| 15 | Ustawienia | **CLOSED_FINAL** | — (tag `final-02`) |
+| 01 | Organizacja | OWNER_REVIEW | 2 pozycje zamknięte; czeka werdykt |
+| 03 | Narzędzia | OWNER_REVIEW | panel ekspercki 5,0/9,5 |
+| 04 | Ocena | OWNER_REVIEW + **NO_GO** | panel 4,0; baza pusta (1 oceniony obszar na 39) |
+| 08 | Spotkania | OWNER_REVIEW | 5 pozycji z dyżuru 57 otwartych |
+| 09 | Wyniki | OWNER_REVIEW | panel; koperta uprawnień |
+| 12 | Audyty | OWNER_REVIEW | panel 6,5 — najwyższy wynik programu |
+| 13 | Czat | OWNER_REVIEW | producent sygnałów |
+| 14 | Administracja | OWNER_REVIEW | 5 pozycji z dyżuru 53 otwartych |
+| 02 | Wywiad | BLOCKED | ścieżka respondenta publicznego |
+| 06 | Realizacja | BLOCKED | panel 3,6 — najniższy; zapis bez czytelnika |
+| 07 | Moja praca | BLOCKED | parytet paneli, flagi cofnięte |
+| 05 | Inicjatywy | **BLOCKED + NO_GO** | panel 4,0 |
+| 10 | Finanse | **bez wpisu** | nigdy nie przechodzone |
+| 11 | Materiały | **bez wpisu** | nigdy nie przechodzone |
+| 16 | Partner | **bez wpisu** | łamie DEC-08 |
+| 17 | Agent/Teresa | wydzielony (DEC-23) | na sam koniec, zaczyna od architektury |
 
-- **Gałąź org-context (37)** — NIE przejmujemy w całości. Niesie regresję i +53 czerwone.
-- **Katalog narzędzi MVP** — wyłącznie Dynamic SWOT. Zakaz rozszerzania bez decyzji.
-- **Bramka CI** — blokująca, bez wyjątków. Dług spłacamy, nie obchodzimy.
-- **Migracje demo/staging z poziomu dyżuru** — zakazane. Operacje na środowiskach
-  wykonuje wyłącznie właściciel.
-- **Produkcja** — nietykalna bez osobnej zgody, za każdym razem.
+**Zamknięte: 1 z 16.** Panele eksperckie: 3,6–6,5 przy celu 9,5.
 
 ---
 
-## 6. DOKUMENTACJA POWSTAJE W TRAKCIE, NIE NA KOŃCU
+## 3. KOLEJNOŚĆ — trzy grupy, nie szesnaście osobnych planów
 
-**Zasada:** wykonawca dokumentuje w czasie budowy, nie po niej. Dokumentacja pisana
-po fakcie jest rekonstrukcją, a rekonstrukcja gubi to, co najcenniejsze: dlaczego
-odrzucono inne rozwiązanie i co nie zadziałało.
+Kolejność wynika z jednej zasady: **najpierw to, co blokuje najwięcej innych.**
 
-**Dziennik budowy modułu** — jeden plik na moduł, dopisywany przez każdy dyżur,
-który go dotyka. Cztery rubryki:
-1. **Co zbudowano** — jednym zdaniem, z plikami.
-2. **Dlaczego tak, a nie inaczej** — jakie rozwiązanie odrzucono i z jakiego powodu.
-3. **Czego nie wiemy** — pytania otwarte, założenia niezweryfikowane.
-4. **Co się zepsuło po drodze** — ślepe uliczki. To jest rubryka, która ratuje
-   następcę przed powtórzeniem tej samej pomyłki.
+### GRUPA A — trzy moduły nigdy nie przechodzone (10, 11, 16)
+Idą pierwsze, bo nie wiemy o nich nic. Moduł bez wpisu to niewiadoma, a niewiadoma
+psuje każdy szacunek. Pierwszy dyżur każdego to **rekonesans + pełne zrzuty**, nie budowa.
 
-Wpis do dziennika jest **warunkiem karty dowodowej**, nie dodatkiem.
+### GRUPA B — dziewięć modułów w OWNER_REVIEW (01, 03, 04, 08, 09, 12, 13, 14)
+Mechanika jest, brakuje domknięcia i werdyktu. To najkrótsza droga do podniesienia
+licznika zamkniętych. Każdy potrzebuje: domknięcia otwartych pozycji → zrzutów → werdyktu.
+
+### GRUPA C — cztery zablokowane (02, 05, 06, 07)
+Najdroższe. Każdy ma blokadę wymagającą decyzji produktowej albo przebudowy.
+Idą na końcu, bo praca nad nimi bez rozstrzygnięcia blokady jest stratą.
+
+---
+
+## 4. CO DYŻUR MA ROBIĆ — żeby system nie wymyślał zadań
+
+**Dyżur modułowy ma DOKŁADNIE trzy produkty i nic poza tym:**
+
+1. **Domknięcie pozycji otwartych** wymienionych w `MODULE_ACCEPTANCE.md` tego modułu —
+   po nazwie, nie „co się znajdzie".
+2. **Komplet zrzutów** wg warunku z §1.
+3. **Karta dowodowa** + wpis do dziennika budowy modułu.
+
+**Czego dyżur NIE robi:** nie szuka pracy poza listą pozycji · nie refaktoryzuje ·
+nie dodaje funkcji · nie poprawia innych modułów. Znalezisko poza zakresem → wpis
+do rejestru jako pozycja otwarta, **bez naprawiania**.
+
+To jest odpowiedź na „system zawsze wymyśli zadanie": **zakres dyżuru to lista pozycji
+z rejestru modułu, zamknięta przed wydaniem.** Jeśli lista jest pusta — moduł idzie
+od razu do zrzutów i werdyktu, bez dyżuru.
+
+---
+
+## 5. RACHUNEK
+
+| grupa | modułów | dyżurów na moduł | razem |
+|---|---|---|---|
+| A — nieprzechodzone | 3 | 1 rekonesans + 1–2 budowa | 6–9 |
+| B — owner review | 9 | 1 domknięcie + 1 zrzuty/werdykt | 18 |
+| C — zablokowane | 4 | 1 rozstrzygnięcie + 2 budowa | 12 |
+| moduł 17 Agent | 1 | architektura + 2 | 3 |
+| bloki przekrojowe | — | dług testowy (6, plan gotowy) + wygląd | 6 + wygląd |
+
+**Razem: 45–48 dyżurów modułowych + 6 długu testowego.**
+Ta liczba **nie jest mnożeniem** — wynika z listy pozycji otwartych per moduł.
+Zweryfikuje się po Grupie A: jeśli rekonesans trzech nieprzechodzonych pokaże więcej
+pracy, niż zakładam, podnoszę liczbę jawnie i z przyczyną.
+
+---
+
+## 6. ODBIÓR GRAFIKI — wrócił do pętli
+
+Przestaliśmy odbierać grafikę i to był błąd. **Wraca jako warunek werdyktu**, nie
+osobna faza: moduł bez kompletu zrzutów nie dostaje `CLOSED_FINAL`, niezależnie od
+tego, jak zielona jest jego mechanika.
+
+Kolejność bez wyjątku: wykonawca renderuje i ogląda → nadzorca ogląda → właściciel akceptuje.
+
+---
+
+## 7. CZEGO PILNUJEMY, ŻEBY NIE POWTÓRZYĆ
+
+- **Nie mnożymy metodyk.** Obowiązuje pętla per moduł z §1. Wszystko inne — test dymny,
+  ścieżki użytkownika, inwentaryzacje — to narzędzia wewnątrz tej pętli, nie zamiast niej.
+- **Nie zamykamy modułu bez zrzutów.** Zielona mechanika bez oględzin to połowa dowodu.
+- **Nie otwieramy zamkniętych.** `CLOSED_FINAL` jest ostateczny.
+- **Nie planujemy pojemnością.** Liczba dyżurów wynika z listy pozycji, nie z mnożenia
+  modułów przez średnią.
