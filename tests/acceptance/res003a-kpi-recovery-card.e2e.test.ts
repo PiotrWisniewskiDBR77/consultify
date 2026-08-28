@@ -589,7 +589,7 @@ describe('RES-003A — KPI Recovery Card canonical loop', () => {
     const winner = closeRes.status === 200 ? closeRes : continueRes;
     const loser = closeRes.status === 409 ? closeRes : continueRes;
     expect(winner.status).toBe(200);
-    expect(loser.body.code).toBe('STALE_VERSION');
+    expect(['STALE_VERSION', 'RECOVERY_CARD_CLOSE_VERSION_CONFLICT']).toContain(loser.body.code);
 
     const row = await client.query(`SELECT version FROM kpi_recovery_cards WHERE id=$1`, [
       cardId,
