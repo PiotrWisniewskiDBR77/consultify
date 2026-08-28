@@ -2,9 +2,9 @@
 
 ## 1. Status i granice
 
-**PARTIAL — bramka dopuszczalnego PARTIAL nie jest spełniona.** Sklasyfikowano 97/97 końcowych czerwonych asercji, ale pozostaje 57 A naprawialnych w P1 oraz 12 wtórnych F. Nie deklaruję FIXED ani nie przenoszę ich poza P1.
+**PARTIAL — bramka dopuszczalnego PARTIAL nadal nie jest spełniona.** Z docelowych 69 przypadków test-local domknięto 17; pozostaje 52 (w tym M01 jako udowodnione `NOT_AUTHORIZED`). Nie deklaruję FIXED i nie przenoszę pozostałych test-local poza P1 bez dowodu.
 
-Gałąź: `codex/day66-test-debt-p1-20260828`. Marker: `6868d57ebcb346e7d4bf142eb89229bc6bcd3e98`. Tip kodu: `3d401f630ee6f02a49b6564ec2f1dab00ad97218`. Finalny tip raportu jest w handoffie, bo commit nie może zawierać własnego SHA.
+Gałąź: `codex/day66-test-debt-p1-20260828`. Marker: `6868d57ebcb346e7d4bf142eb89229bc6bcd3e98`. Tip wejściowy tej rundy: `7485a76f158d39aee2778e8deb7913b894533bc9`. Tip kodu: `6fd5e230b8` (pełne SHA w handoffie). Finalny tip raportu jest w handoffie, bo commit nie może zawierać własnego SHA.
 
 Zapisano wyłącznie pliki P1 i raport. Zero produkcji, migracji, globalnych helperów, konfiguracji, Railway/demo/staging/produkcji.
 
@@ -12,8 +12,8 @@ Zapisano wyłącznie pliki P1 i raport. Zero produkcji, migracji, globalnych hel
 
 - Własny PG `cx-day66-pg`, port 5938, baza `cx_day66_testdebt`; pełne migracje, drugi przebieg `Applying migrations: 0`.
 - Każda komenda: wymagane env, poprawny sekret i `--retry=0`.
-- Końcowy regres 59 plików: **439 total / 259 PASS / 97 FAIL / 83 pending**; JSON SHA-256 `842eeba6babfa570c1872d0a621a11dc55d9ea2fa9294a5dc883de29c72f5d6b`.
-- Pełne nazwy: red→green 5; green→red 0. Zamknięte: 2× backup, MW-DEC, RED-FINAL megatrends, exec3ax.
+- Końcowy regres po migracji części 69, na świeżym PG: **439 total / 276 PASS / 80 FAIL / 83 pending**; JSON SHA-256 `ae416adbb246e1266519cc40eddbe7ad47491811c098a009fb49223c09099f04`.
+- Porównanie względem regresu 97-red po pełnych `fullName`: **17 red→green; 0 green→red; 80 red→red**.
 - Izolacja: 59/59 plików na osobno odtworzonej bazie po migracjach. Końcowe czerwone: 97 failed / 0 passed / 0 skipped / 0 missing w izolacji.
 - Suite-only poza 97: dwa testy Teresa wymagają live `ANTHROPIC_API_KEY`. h52 i red-admin po naprawie zniknęły.
 
@@ -58,7 +58,29 @@ Zamknięto **10 przyczyn P1**: DECCASE BEFORE, T2 org fixture, AI preferences co
 - red-admin: bez poprawki suite RED na `inconsistent types deduced for parameter $4`; po poprawce 6/6 PASS. SHA `19636600385266e18b0298bd0e46f31da699c4ae9eebb8c74faf42800a449538`.
 - Wcześniej przyjęte mutacje DECCASE i T2 pozostają.
 
-## 4b. Piny
+### 4a. P1 FINAL — domknięte klastry 17/69
+
+| Klaster | Mianownik i pełne nazwy RED→GREEN | Kontrakt po migracji | Mutacja / SHA-256 |
+|---|---|---|---|
+| FIN-AUTH | 3: `MEMBER+responsibility is denied; qualified OWNER maker opens but cannot self-resolve`; `ADMIN wildcard is insufficient and revoked membership is rechecked with the same token`; `append-only revocation disables an explicit grant and cannot be mutated back` | 403 dla widocznego zasobu bez roli/aktywnego membership; 404 pozostaje dla obcego tenant; append-only grant bez osłabienia. | stare 404 → RED; restore 4/4 PASS; `b6f89a694d4d8ca7bd272d96aef8f45c17f46a378c5175c4e961cabb6adccefe` |
+| TOOLS | 3: pełne nazwy H3.1 short flow, H3.1 full dynamic-swot flow i ensureToolsSchema z tabeli §3 | katalogowy `dynamic-swot`, CAS `expectedVersion`, `recommendedMoves`, nonempty lineage i identyczny replay promotion. | `dynamicSwot` → RED 404; restore 3/3 target PASS; SHA plików `9185d0bfc74f13ecf6cee5d100ed3c3d89265d9c488f74cab29eca9047526385`, `e7e9c0df2712113a5602f78a193f31a072daf0569e80c1e5bf29270d4d76a5f9`, `47aa481db499a34971ad6bd365ed9259a77fa7b8def3c749e9eb1d29c6e3fc6c` |
+| APPROVAL | 3 pełne nazwy Initiative, Report, Deck z tabeli §3 | oddzielny requester/reviewer; aktywne membership; self-review nadal 409/403. | self-review → nazwany RED; restore 4/4 PASS; `91db36feef50a64f869100976f2eb7be13add35885e24bad3c7b6d8f7800186d` |
+| INTERVIEW | 4 pełne nazwy INT-04, INT-02, INT-05/06, PARITY: INTERVIEW z tabeli §3 | readback `updatedAt`, CAS, legalny `templateVersion` + idempotency i rzeczywisty published snapshot v3. | brak CAS → nazwany RED 428; restore 4/4 target PASS; SHA: `ed9a5e5ff5a5eefd7c75f755025df1dcf0ca76476faea7f39a5a4b4e498112f8`, `fc28ca811a3ada27c3b57b4c8601d5e21c91998e98264ffeeae2228e31cdc9bc`, `b01041d4a21c703afa4dfc7e9c9bb53ece3c86f60ead0d0e2cbcd166ce9060b4`, `c8fa6214410c979070fec14d79d890685253371564a826387c302983f6c7d568` |
+| J26 | 1 pełna nazwa z tabeli §3 | lokalny mock kończy się na provider boundary; real formatter, router, DB ownership i graph patch pozostają. | brak mocka → dokładnie jeden RED; restore 2/2 PASS; `0dc9ddd5a4ee09b25aaa4c17eb5a8bc9fe62b9bc422647e7f5dd94ad6ba809f0` |
+| NOTEBOOK | 1 pełna nazwa z tabeli §3 | owner-B API readback, real `updatedAt`, `Idempotency-Key`; foreign A dochodzi do tenant barrier, row przeżywa. | brak nagłówków → nazwany RED 428; restore 5/5 PASS; `39472a602e1f3e4180a76433c3062e3361fe2849f469393bdfda3117065db2c4` |
+| FIN005 | 2 pełne nazwy XLSX/CSV z tabeli §3 | pełny detect/extract/map/values/validate, source receipt, aktualny values version i governed confirm; immutable receipts zostają w disposable DB. | brak authority/CAS → nazwany RED; restore 2/2 PASS; `6e4b0872e7bc2efd6afd52c7c68520e32398c963cdec4c9360b6a61324d4c90c` |
+
+**Pełna lista 17 RED→GREEN** jest dokładnie sumą nazw w powyższej tabeli i odpowiada sekcjom FIN-AUTH (3), TOOLS (3), APPROVAL (3), INTERVIEW (4), J26 (1), NOTEBOOK (1), FIN005 (2). `green→red = 0`.
+
+### 4b. Pozostałe 52/69
+
+- FIN-LEGACY 3 — nadal legacy 410; migracja na finance artifacts/version writer nieukończona.
+- EXEC-LEGACY 27 — `/runtime-v1` nie oferuje mechanicznego odpowiednika starego `PATCH status`; modeluje execution-case i komendy dzieci. Migracja ochron gate/audit/race wymaga przebudowy fixture, a nie podmiany URL. Nadal P1 / `NOT_PROVEN`, nie `NOT_AUTHORIZED`.
+- INI-JOBS 5 — fixture zapisuje legacy `decisions`, podczas gdy `hasApprovedGateDecision` czyta wyłącznie `initiative_lifecycle_gate_decisions` z transformation case oraz referencjami A05. Nadal P1 / `NOT_PROVEN`; nie osłabiono gate.
+- RESULTS 16 — canonical create/update/close/actions/checkpoints istnieją pod `/api/vnext/results/kpi`; brak canonical `continue` i GET recovery-card. Przypadki możliwe do migracji nie zostały jeszcze rozdzielone od przypadków wymagających brakującej powierzchni produktu; cały klaster pozostaje `NOT_PROVEN`, nie został fałszywie zazieleniony.
+- M01 1 — **NOT_AUTHORIZED**: `server/src/services/v8/teresaCopilotService.ts:2381-2389` wywołuje `notebookService.create` bez `userId`/`owner_user_id`. Oczekiwany właściciel: acting user; rzeczywisty capture: `undefined`. Minimalny brief: przekazać acting `userId` do create i zachować receipt exactly-once; mutacja usuwa przekazanie i ma ponownie dać RED.
+
+## 4c. Piny
 
 | Pin | Werdykt |
 |---|---|
@@ -70,18 +92,18 @@ Zamknięto **10 przyczyn P1**: DECCASE BEFORE, T2 org fixture, AI preferences co
 
 ## 5. Produkt i środowisko
 
-**23 czerwone kontrakty produktu do przekazania P4/P5/P6:** 22 D + 1 E. Routing między P4/P5/P6 jest NOT_PROVEN; nie fabrykuję właściciela.
+**24 czerwone kontrakty produktu / NOT_AUTHORIZED do przekazania P4/P5/P6:** 22 wcześniejsze D + M01 + 1 E. Routing między P4/P5/P6 jest NOT_PROVEN; nie fabrykuję właściciela.
 
 **5 C:** `OPENAI_API_KEY=UNSET`, `OPENROUTER_API_KEY=UNSET`, `GEMINI_API_KEY=UNSET`, `GOOGLE_AI_API_KEY=UNSET`, `ANTHROPIC_API_KEY=UNSET`; sprawdzono tylko obecność, bez wartości.
 
 ## 6. Kompilacje
 
-- Serwer: czysty `server/dist`, `tsc --build tsconfig.build.json` — PASS.
-- Front: `NODE_OPTIONS=--max-old-space-size=6144 npm run build` — PASS; tylko ostrzeżenie o chunkach.
+- Serwer: `server/dist` przeniesiony do scratch, następnie `tsc --build server/tsconfig.build.json` — PASS.
+- Front: `NODE_OPTIONS=--max-old-space-size=6144 npm run build` — PASS.
 
 ## 7. TWIERDZENIA NIEZWERYFIKOWANE
 
-- **NOT_PROVEN:** migracja 57 A i 12 F do aktualnych kontraktów; dlatego bramka PARTIAL nie jest spełniona.
+- **NOT_PROVEN:** migracja pozostałych FIN-LEGACY 3, EXEC-LEGACY 27, INI-JOBS 5 i rozdzielenie RESULTS 16; dlatego bramka PARTIAL nie jest spełniona.
 - **NOT_PROVEN:** podział 23 briefów między P4/P5/P6.
 - **EVIDENCE_MISSING:** live LLM proof z powodu brakujących capabilities.
 - **NOT_PROVEN:** browser/runtime/release poza lokalnym PG.
@@ -89,11 +111,12 @@ Zamknięto **10 przyczyn P1**: DECCASE BEFORE, T2 org fixture, AI preferences co
 ## 8. Karta
 
 - Status: **PARTIAL — bramka PARTIAL niespełniona**.
-- Tip kodu: `3d401f630ee6f02a49b6564ec2f1dab00ad97218`.
+- Tip wejściowy: `7485a76f158d39aee2778e8deb7913b894533bc9`.
+- Tip kodu: `6fd5e230b8` (pełne SHA w handoffie).
 - Finalny tip raportu: handoff.
 - Sklasyfikowane: **97/97**.
-- P1 zamknięte: **10 przyczyn**.
-- Nadal P1: **57 A + 12 F**.
-- Produkt P4/P5/P6: **23**.
+- P1 zamknięte: **17 przyczyn/klastrów łącznie**, w tym 7 nowych klastrów i 17 nowych przypadków RED→GREEN w tej rundzie.
+- Nadal docelowe P1: **51 test-local NOT_PROVEN + 1 M01 NOT_AUTHORIZED**.
+- Produkt P4/P5/P6 / NOT_AUTHORIZED: **24**.
 - Środowisko: **5 C** + 2 suite-only Teresa.
 - Zielone→czerwone: **0**.
