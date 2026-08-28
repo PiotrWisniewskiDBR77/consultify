@@ -91,6 +91,41 @@ beforeAll(async () => {
        ON CONFLICT (id) DO UPDATE SET status = 'approved', version = 3, updated_at = EXCLUDED.updated_at`,
       [TEMPLATE_ID, SEED.ORG_ID, SEED.USER_ID, now]
     );
+    await client.query(
+      `INSERT INTO interview_library_template_versions
+         (id, template_id, organization_id, version, snapshot_json, published_by, published_at)
+       VALUES ($1, $2, $3, 3, $4::jsonb, $5, $6)
+       ON CONFLICT (template_id, version) DO UPDATE
+       SET snapshot_json = EXCLUDED.snapshot_json, published_by = EXCLUDED.published_by,
+           published_at = EXCLUDED.published_at`,
+      [
+        `${PREFIX}template-version-3`,
+        TEMPLATE_ID,
+        SEED.ORG_ID,
+        JSON.stringify({
+          template: {
+            id: TEMPLATE_ID,
+            organization_id: SEED.ORG_ID,
+            name: 'INT-02 delivery template',
+            status: 'approved',
+            version: 3,
+            template_scope: 'organization',
+          },
+          questions: [
+            {
+              id: `${PREFIX}published-question`,
+              category: 'operations',
+              questionText: 'Jak poprawimy dostarczenie wyniku?',
+              sortOrder: 1,
+              answerType: 'open',
+              isRequired: true,
+            },
+          ],
+        }),
+        SEED.USER_ID,
+        now,
+      ]
+    );
   } finally {
     await client.end();
   }
@@ -139,6 +174,9 @@ afterAll(async () => {
       ]);
       await client.query('DELETE FROM interview_assignments WHERE id = $1', [assignmentId]);
     }
+    await client.query('DELETE FROM interview_library_template_versions WHERE template_id = $1', [
+      TEMPLATE_ID,
+    ]);
     await client.query('DELETE FROM interview_library_templates WHERE id = $1', [TEMPLATE_ID]);
     await client.query('DELETE FROM organization_members WHERE id = ANY($1)', [
       [`${PREFIX}owner-membership`, `${PREFIX}assignee-membership`, `${PREFIX}foreign-membership`],
@@ -155,13 +193,23 @@ describe('INT-02 assignment tenant/role and delivery acceptance', () => {
     const forbiddenRole = await request(app)
       .post('/api/interview/assignments')
       .set('Authorization', `Bearer ${assigneeToken}`)
-      .send({ assigneeUserId: ASSIGNEE_ID, templateId: TEMPLATE_ID });
+      .send({
+        assigneeUserId: ASSIGNEE_ID,
+        templateId: TEMPLATE_ID,
+        templateVersion: 3,
+        idempotencyKey: `${PREFIX}forbidden-role`,
+      });
     expect(forbiddenRole.status).toBe(403);
 
     const foreignAssignee = await request(app)
       .post('/api/interview/assignments')
       .set('Authorization', `Bearer ${foreignToken}`)
-      .send({ assigneeUserId: ASSIGNEE_ID, templateId: TEMPLATE_ID });
+      .send({
+        assigneeUserId: ASSIGNEE_ID,
+        templateId: TEMPLATE_ID,
+        templateVersion: 3,
+        idempotencyKey: `${PREFIX}foreign-assignee`,
+      });
     expect(foreignAssignee.status).toBe(403);
     expect(foreignAssignee.body?.code).toBe('ASSIGNEE_NOT_IN_ORG');
 
@@ -171,6 +219,8 @@ describe('INT-02 assignment tenant/role and delivery acceptance', () => {
       .send({
         assigneeUserId: ASSIGNEE_ID,
         templateId: TEMPLATE_ID,
+        templateVersion: 3,
+        idempotencyKey: `${PREFIX}owner-create`,
         dueAt: new Date(Date.now() + 86_400_000).toISOString(),
         priority: 'high',
       });
