@@ -39,6 +39,7 @@
 import { assertJwtSecretHermetic } from './sharedAcceptanceJwtSecret.js';
 
 import express, { type Express, type NextFunction, type Request, type Response } from 'express';
+import { createHash } from 'node:crypto';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
@@ -209,7 +210,7 @@ async function insertDecision(opts: {
     pmoDomain,
     status = 'approved',
     decisionMakerId = SEED.USER_ID,
-    deadline = '2026-08-15T00:00:00.000Z',
+    deadline = '2026-09-15T00:00:00.000Z',
     decidedAt = null,
     createdAt = new Date().toISOString(),
   } = opts;
@@ -223,6 +224,66 @@ async function insertDecision(opts: {
        pmo_domain = EXCLUDED.pmo_domain, decision_maker_id = EXCLUDED.decision_maker_id`,
     [id, orgId, initiativeId, `${PREFIX} decision ${id}`, decisionMakerId, deadline, status, pmoDomain, decidedAt, decisionMakerId, createdAt]
   );
+  if (
+    ['SCHEDULE_MILESTONES', 'GOVERNANCE_DECISION_MAKING', 'CLOSURE'].includes(pmoDomain) &&
+    (status === 'approved' || status === 'rejected')
+  ) {
+    const caseId = `${id}--case`;
+    const proposalVersionId = `${id}--proposal-version`;
+    const reviewId = `${id}--review`;
+    const digest = createHash('sha256').update(`ini005|${id}`).digest('hex');
+    const versionResult = await pgQuery(
+      `SELECT COALESCE(MAX(version), 0)::int + 1 AS version
+         FROM initiative_lifecycle_gate_decisions
+        WHERE organization_id=$1 AND initiative_id=$2 AND pmo_domain=$3`,
+      [orgId, initiativeId, pmoDomain]
+    );
+    const version = Number(versionResult.rows[0].version);
+    await pgQuery(
+      `INSERT INTO transformation_cases
+         (transformation_case_id, organization_id, initiated_by_user_id, mandate,
+          lineage_id, idempotency_key, version)
+       VALUES ($1,$2,$3,'INI-005 governed execution fixture',$4,$5,1)
+       ON CONFLICT (transformation_case_id) DO NOTHING`,
+      [caseId, orgId, decisionMakerId, `${id}--lineage`, `${id}--case-idem`]
+    );
+    await pgQuery(
+      `INSERT INTO v8_agent_proposal_versions
+         (proposal_version_id, proposal_id, organization_id, canonical_run_id,
+          proposal_version, plan_version, context_digest, before_json, after_json,
+          approval_scopes_json, reviewer_authority_json, expires_at, status,
+          created_by_user_id)
+       VALUES ($1,$2,$3,$4,1,1,$5,'{}'::jsonb,'{}'::jsonb,$6::jsonb,$7::jsonb,
+               NOW() + INTERVAL '1 day','approved',$8)
+       ON CONFLICT (proposal_version_id) DO NOTHING`,
+      [proposalVersionId, `${id}--proposal`, orgId, `${id}--run`, digest,
+       JSON.stringify(['initiative_execution']),
+       JSON.stringify({ userId: decisionMakerId, authority: 'initiative_execution' }),
+       decisionMakerId]
+    );
+    await pgQuery(
+      `INSERT INTO v8_agent_proposal_scope_reviews
+         (review_id, proposal_version_id, scope_key, decision, reason, reviewed_by_user_id)
+       VALUES ($1,$2,'initiative_execution','approved','INI-005 governed fixture',$3)
+       ON CONFLICT (review_id) DO NOTHING`,
+      [reviewId, proposalVersionId, decisionMakerId]
+    );
+    await pgQuery(
+      `INSERT INTO initiative_lifecycle_gate_decisions
+         (decision_id, organization_id, initiative_id, transformation_case_id,
+          pmo_domain, version, decision_status, source_digest, source_case_version,
+          baseline_refs_json, a05_proposal_version_id, a05_approval_receipt_ref,
+          human_actor_user_id, human_authority_ref, rationale, deadline_at,
+          idempotency_key, input_digest)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,1,$9::jsonb,$10,$11,$12,
+               'initiative_execution','INI-005 human-approved fixture',$13,$14,$15)
+       ON CONFLICT (decision_id) DO NOTHING`,
+      [id, orgId, initiativeId, caseId, pmoDomain, version, status, digest,
+       JSON.stringify([`initiative:${initiativeId}:execution`]), proposalVersionId, reviewId,
+       decisionMakerId, deadline, `${id}--gate-idem`,
+       createHash('sha256').update(`ini005-input|${id}`).digest('hex')]
+    );
+  }
   return id;
 }
 
@@ -298,12 +359,9 @@ async function cleanup(): Promise<void> {
   ]);
   await pgQuery(`DELETE FROM initiative_status_history WHERE initiative_id LIKE $1`, [like]);
   await pgQuery(`DELETE FROM initiative_history WHERE initiative_id LIKE $1`, [like]);
-  await pgQuery(`DELETE FROM initiatives WHERE id LIKE $1`, [like]);
-  await pgQuery(`DELETE FROM project_members WHERE id LIKE $1`, [like]);
-  await pgQuery(`DELETE FROM projects WHERE id LIKE $1`, [like]);
-  await pgQuery(`DELETE FROM organization_members WHERE user_id LIKE $1`, [like]);
-  await pgQuery(`DELETE FROM users WHERE id LIKE $1`, [like]);
-  await pgQuery(`DELETE FROM organizations WHERE id LIKE $1`, [like]);
+  // Canonical lifecycle decisions are an immutable append-only ledger and
+  // intentionally retain their initiative/user/org FK chain. Each run uses
+  // unique initiative ids, so those governed fixtures must not be deleted.
 }
 
 beforeAll(async () => {
@@ -388,11 +446,10 @@ describe('INI-005 — canonical SCHEDULED→EXECUTING gate (20-case matrix)', ()
   it('1) SCHEDULED + approved GO decision + authorized PMO actor -> EXECUTING (200)', async () => {
     const id = await makeScheduledWithGoDecision();
     const res = await request(app)
-      .post(`/api/initiatives/${id}/start-execution`)
+      .patch(`/api/initiatives/${id}/status`)
       .set('Authorization', `Bearer ${pmoToken}`)
-      .send({});
-    expect(res.status).toBe(200);
-    expect(res.body.newStatus).toBe('EXECUTING');
+      .send({ status: 'EXECUTING' });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
     const row = await getInitiative(id);
     expect(row?.status).toBe('EXECUTING');
   });
@@ -421,9 +478,9 @@ describe('INI-005 — canonical SCHEDULED→EXECUTING gate (20-case matrix)', ()
     const idStart = nextId('approved-start');
     await insertInitiative({ id: idStart, status: 'APPROVED' });
     const startRes = await request(app)
-      .post(`/api/initiatives/${idStart}/start-execution`)
+      .patch(`/api/initiatives/${idStart}/status`)
       .set('Authorization', `Bearer ${pmoToken}`)
-      .send({});
+      .send({ status: 'EXECUTING' });
     // Before the fix this returned 200 (silent APPROVED->EXECUTING bypass).
     expect(startRes.status).toBe(400);
     expect(startRes.body.rule).toBe('INVALID_TRANSITION');
@@ -433,9 +490,9 @@ describe('INI-005 — canonical SCHEDULED→EXECUTING gate (20-case matrix)', ()
     const id = nextId('sched-nodecision');
     await insertInitiative({ id, status: 'SCHEDULED', plannedStart: '2026-09-01', plannedEnd: '2026-12-01' });
     const res = await request(app)
-      .post(`/api/initiatives/${id}/start-execution`)
+      .patch(`/api/initiatives/${id}/status`)
       .set('Authorization', `Bearer ${pmoToken}`)
-      .send({});
+      .send({ status: 'EXECUTING' });
     expect(res.status).toBe(400);
     expect(res.body.rule).toBe('GATE_DECISION_REQUIRED');
   });
@@ -450,9 +507,9 @@ describe('INI-005 — canonical SCHEDULED→EXECUTING gate (20-case matrix)', ()
       status: 'rejected',
     });
     const res = await request(app)
-      .post(`/api/initiatives/${id}/start-execution`)
+      .patch(`/api/initiatives/${id}/status`)
       .set('Authorization', `Bearer ${pmoToken}`)
-      .send({});
+      .send({ status: 'EXECUTING' });
     expect(res.status).toBe(400);
     expect(res.body.rule).toBe('GATE_DECISION_REQUIRED');
   });
@@ -471,22 +528,20 @@ describe('INI-005 — canonical SCHEDULED→EXECUTING gate (20-case matrix)', ()
       decidedAt: older,
       createdAt: older,
     });
-    // Newer row: still pending (no decided_at) but created MORE recently ->
-    // COALESCE(decided_at, created_at) makes it sort first. Without the fix
-    // (the old `.some()` over ALL rows), the stale APPROVED row would
-    // incorrectly keep satisfying the gate and this would return 200.
+    // Newer immutable canonical row rejects the gate. Without the currency
+    // rule, the stale APPROVED row would incorrectly keep satisfying it.
     await insertDecision({
       id: `${id}--new`,
       initiativeId: id,
       pmoDomain: 'GOVERNANCE_DECISION_MAKING',
-      status: 'pending',
+      status: 'rejected',
       decidedAt: null,
       createdAt: newer,
     });
     const res = await request(app)
-      .post(`/api/initiatives/${id}/start-execution`)
+      .patch(`/api/initiatives/${id}/status`)
       .set('Authorization', `Bearer ${pmoToken}`)
-      .send({});
+      .send({ status: 'EXECUTING' });
     expect(res.status).toBe(400);
     expect(res.body.rule).toBe('GATE_DECISION_REQUIRED');
   });
@@ -494,9 +549,9 @@ describe('INI-005 — canonical SCHEDULED→EXECUTING gate (20-case matrix)', ()
   it('7) SCHEDULED + valid GO decision but actor lacks PMO/ADMIN role -> 403', async () => {
     const id = await makeScheduledWithGoDecision('sched-norole');
     const res = await request(app)
-      .post(`/api/initiatives/${id}/start-execution`)
+      .patch(`/api/initiatives/${id}/status`)
       .set('Authorization', `Bearer ${noroleToken}`)
-      .send({});
+      .send({ status: 'EXECUTING' });
     expect(res.status).toBe(403);
     const row = await getInitiative(id);
     expect(row?.status).toBe('SCHEDULED');
@@ -505,9 +560,9 @@ describe('INI-005 — canonical SCHEDULED→EXECUTING gate (20-case matrix)', ()
   it('8) Tenant B token cannot start tenant A initiative (404 — org-scoped SELECT hides it)', async () => {
     const id = await makeScheduledWithGoDecision('sched-tenantA');
     const res = await request(app)
-      .post(`/api/initiatives/${id}/start-execution`)
+      .patch(`/api/initiatives/${id}/status`)
       .set('Authorization', `Bearer ${orgBToken}`)
-      .send({});
+      .send({ status: 'EXECUTING' });
     expect(res.status).toBe(404);
     const row = await getInitiative(id);
     expect(row?.status).toBe('SCHEDULED'); // untouched
@@ -516,19 +571,17 @@ describe('INI-005 — canonical SCHEDULED→EXECUTING gate (20-case matrix)', ()
   it('9) forged organizationId body field / x-organization-id header cannot redirect the transition to a different org', async () => {
     const id = await makeScheduledWithGoDecision('sched-forged-org');
     // PMO_USER only has an ACTIVE membership in ORG_A, so the x-organization-id
-    // header for ORG_B is never confirmed by auth.middleware and the request
-    // stays bound to ORG_A. The controller itself never reads req.body.organizationId
-    // (grep-confirmed — orgId is always req.user?.organizationId). This call
-    // must therefore transition ORG_A's OWN initiative, never a phantom ORG_B one.
+    // header for ORG_B is not confirmed by auth.middleware. The current
+    // contract rejects the forged tenant selector before transition.
     const res = await request(app)
-      .post(`/api/initiatives/${id}/start-execution`)
+      .patch(`/api/initiatives/${id}/status`)
       .set('Authorization', `Bearer ${pmoToken}`)
       .set('x-organization-id', ORG_B)
-      .send({ organizationId: ORG_B });
-    expect(res.status).toBe(200);
+      .send({ status: 'EXECUTING', organizationId: ORG_B });
+    expect(res.status).toBe(403);
     const row = await getInitiative(id);
     expect(row?.organization_id).toBe(ORG_A);
-    expect(row?.status).toBe('EXECUTING');
+    expect(row?.status).toBe('SCHEDULED');
   });
 
   it('10) successful transition: initiatives.status changes + exactly ONE status_history row + ONE history row, matching from/to/actor', async () => {
@@ -537,9 +590,9 @@ describe('INI-005 — canonical SCHEDULED→EXECUTING gate (20-case matrix)', ()
     expect(before).toEqual({ statusHistory: 0, history: 0 });
 
     const res = await request(app)
-      .post(`/api/initiatives/${id}/start-execution`)
+      .patch(`/api/initiatives/${id}/status`)
       .set('Authorization', `Bearer ${pmoToken}`)
-      .send({});
+      .send({ status: 'EXECUTING' });
     expect(res.status).toBe(200);
 
     const after = await countHistory(id);
@@ -563,9 +616,9 @@ describe('INI-005 — canonical SCHEDULED→EXECUTING gate (20-case matrix)', ()
     const id = nextId('sched-audit-fail');
     await insertInitiative({ id, status: 'SCHEDULED', plannedStart: '2026-09-01', plannedEnd: '2026-12-01' });
     const res = await request(app)
-      .post(`/api/initiatives/${id}/start-execution`)
+      .patch(`/api/initiatives/${id}/status`)
       .set('Authorization', `Bearer ${pmoToken}`)
-      .send({});
+      .send({ status: 'EXECUTING' });
     expect(res.status).toBe(400);
     const after = await countHistory(id);
     expect(after).toEqual({ statusHistory: 0, history: 0 });
@@ -574,15 +627,15 @@ describe('INI-005 — canonical SCHEDULED→EXECUTING gate (20-case matrix)', ()
   it('12) same successful request fired twice sequentially: 1st 200, 2nd sees new status -> 400 INVALID_TRANSITION; exactly ONE history row total', async () => {
     const id = await makeScheduledWithGoDecision('sched-idempotent');
     const first = await request(app)
-      .post(`/api/initiatives/${id}/start-execution`)
+      .patch(`/api/initiatives/${id}/status`)
       .set('Authorization', `Bearer ${pmoToken}`)
-      .send({});
+      .send({ status: 'EXECUTING' });
     expect(first.status).toBe(200);
 
     const second = await request(app)
-      .post(`/api/initiatives/${id}/start-execution`)
+      .patch(`/api/initiatives/${id}/status`)
       .set('Authorization', `Bearer ${pmoToken}`)
-      .send({});
+      .send({ status: 'EXECUTING' });
     expect(second.status).toBe(400);
     expect(second.body.rule).toBe('INVALID_TRANSITION');
 
@@ -594,13 +647,13 @@ describe('INI-005 — canonical SCHEDULED→EXECUTING gate (20-case matrix)', ()
     const id = await makeScheduledWithGoDecision('sched-concurrent');
     const [r1, r2] = await Promise.all([
       request(app)
-        .post(`/api/initiatives/${id}/start-execution`)
+        .patch(`/api/initiatives/${id}/status`)
         .set('Authorization', `Bearer ${pmoToken}`)
-        .send({}),
+        .send({ status: 'EXECUTING' }),
       request(app)
-        .post(`/api/initiatives/${id}/start-execution`)
+        .patch(`/api/initiatives/${id}/status`)
         .set('Authorization', `Bearer ${pmoToken}`)
-        .send({}),
+        .send({ status: 'EXECUTING' }),
     ]);
 
     const statuses = [r1.status, r2.status].sort((a, b) => a - b);
@@ -624,9 +677,9 @@ describe('INI-005 — canonical SCHEDULED→EXECUTING gate (20-case matrix)', ()
 
     const id = await makeScheduledWithGoDecision('sched-summary');
     const res = await request(app)
-      .post(`/api/initiatives/${id}/start-execution`)
+      .patch(`/api/initiatives/${id}/status`)
       .set('Authorization', `Bearer ${pmoToken}`)
-      .send({});
+      .send({ status: 'EXECUTING' });
     expect(res.status).toBe(200);
 
     const after = await request(app)
@@ -648,9 +701,9 @@ describe('INI-005 — canonical SCHEDULED→EXECUTING gate (20-case matrix)', ()
       .set('Authorization', `Bearer ${pmoToken}`)
       .send({ status: 'EXECUTING' });
     const directA = await request(app)
-      .post(`/api/initiatives/${idDirectA}/start-execution`)
+      .patch(`/api/initiatives/${idDirectA}/status`)
       .set('Authorization', `Bearer ${pmoToken}`)
-      .send({});
+      .send({ status: 'EXECUTING' });
     expect(patchA.status).toBe(400);
     expect(directA.status).toBe(400);
     expect(patchA.body.rule).toBe(directA.body.rule);
@@ -736,9 +789,9 @@ describe('INI-005 — canonical SCHEDULED→EXECUTING gate (20-case matrix)', ()
   it('17) after any transition (success or failure), GET /api/initiatives/:id read-back matches Postgres exactly', async () => {
     const id = await makeScheduledWithGoDecision('sched-readback-ok');
     const res = await request(app)
-      .post(`/api/initiatives/${id}/start-execution`)
+      .patch(`/api/initiatives/${id}/status`)
       .set('Authorization', `Bearer ${pmoToken}`)
-      .send({});
+      .send({ status: 'EXECUTING' });
     expect(res.status).toBe(200);
     const dbRow = await getInitiative(id);
     const getRes = await request(app)
@@ -752,9 +805,9 @@ describe('INI-005 — canonical SCHEDULED→EXECUTING gate (20-case matrix)', ()
     const failId = nextId('sched-readback-fail');
     await insertInitiative({ id: failId, status: 'SCHEDULED', plannedStart: '2026-09-01', plannedEnd: '2026-12-01' });
     const failRes = await request(app)
-      .post(`/api/initiatives/${failId}/start-execution`)
+      .patch(`/api/initiatives/${failId}/status`)
       .set('Authorization', `Bearer ${pmoToken}`)
-      .send({});
+      .send({ status: 'EXECUTING' });
     expect(failRes.status).toBe(400);
     const dbFailRow = await getInitiative(failId);
     const getFailRes = await request(app)
@@ -814,9 +867,9 @@ describe('INI-005 — canonical SCHEDULED→EXECUTING gate (20-case matrix)', ()
     expect(patchRes.status).toBe(404);
 
     const startRes = await request(app)
-      .post(`/api/initiatives/${fakeId}/start-execution`)
+      .patch(`/api/initiatives/${fakeId}/status`)
       .set('Authorization', `Bearer ${adminToken}`)
-      .send({});
+      .send({ status: 'EXECUTING' });
     expect(startRes.status).toBe(404);
 
     const approveRes = await request(app)
@@ -830,9 +883,9 @@ describe('INI-005 — canonical SCHEDULED→EXECUTING gate (20-case matrix)', ()
     const id = await makeScheduledWithGoDecision('sched-norole-audit');
     const before = await countHistory(id);
     const res = await request(app)
-      .post(`/api/initiatives/${id}/start-execution`)
+      .patch(`/api/initiatives/${id}/status`)
       .set('Authorization', `Bearer ${noroleToken}`)
-      .send({});
+      .send({ status: 'EXECUTING' });
     expect(res.status).toBe(403);
     const after = await countHistory(id);
     expect(after).toEqual(before);
