@@ -117,6 +117,7 @@ const draftFinding: AuditFindingSummary = {
   ownerUserId: null,
   authorId: 'user-author',
   reviewedBy: null,
+  reviewedAt: null,
   reviewNote: null,
   sentBackAt: null,
   sentBackBy: null,

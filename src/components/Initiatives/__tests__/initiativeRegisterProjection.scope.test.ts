@@ -1,17 +1,25 @@
 import { describe, expect, it } from 'vitest';
 
+import type { PortfolioInitiative } from '@/types';
+
 import {
   filterCanonicalInitiativeRegisterScope,
   selectInitiativeRegisterSource,
 } from '../initiativeRegisterProjection';
 
 describe('canonical initiative register scope', () => {
-  const rows = [
+  type FixtureRow = { id: string } & Pick<PortfolioInitiative, 'projectId' | 'priority'>;
+
+  const rows: FixtureRow[] = [
     { id: 'p1-high', projectId: 'project-1', priority: 'HIGH' },
     { id: 'p1-low', projectId: 'project-1', priority: 'LOW' },
     { id: 'p2-high', projectId: 'project-2', priority: 'HIGH' },
-    { id: 'p1-none', projectId: 'project-1', priority: undefined },
-  ] as const;
+    // Contract declares `priority` required, but real-world rows can still
+    // arrive without one (unvalidated DB read) — the assertion below
+    // simulates that malformed-but-real case on purpose, it is not a
+    // loophole in the production signature above.
+    { id: 'p1-none', projectId: 'project-1', priority: undefined as unknown as FixtureRow['priority'] },
+  ];
 
   it('returns exactly the selected project and priority denominator', () => {
     expect(

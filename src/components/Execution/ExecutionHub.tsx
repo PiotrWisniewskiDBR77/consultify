@@ -48,6 +48,7 @@ import {
 import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { GeneratedReportView } from '@/components/Reports/GeneratedReportView';
@@ -641,7 +642,7 @@ interface ExecutionHubProps {
   initialTab?: ModuleTab;
 }
 
-type TFn = (key: string, defaultValue?: string) => string;
+type TFn = TFunction;
 
 // NAPRAWA 1 i18n fix (staging-fixes-20260826, TRI-MUST-05): this was a static,
 // module-level, English-only constant feeding the Menu 3 filter-chip row

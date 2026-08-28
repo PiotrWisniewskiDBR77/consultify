@@ -7362,7 +7362,7 @@ function MindMapInner({
           organizationId={currentUser?.organizationId || null}
           activeTool={'mindmap' as any}
           title={ideaTitle}
-          seedText={seedText}
+          seedText={seedText ?? ''}
           isAccepted
           graphNodes={nodes as any[]}
           graphEdges={edges as any[]}

@@ -205,13 +205,16 @@ export const ResultsSearchRegistry: React.FC = () => {
                   },
                 ],
               },
-              actions: [
-                {
-                  id: 'open',
-                  label: isPolish ? 'Otwórz' : 'Open',
-                  onClick: () => navigate(selected.href),
-                },
-              ],
+              actions: {
+                informational: [
+                  {
+                    id: 'open',
+                    variant: 'neutral',
+                    label: isPolish ? 'Otwórz' : 'Open',
+                    onClick: () => navigate(selected.href),
+                  },
+                ],
+              },
             }
           : null
       }

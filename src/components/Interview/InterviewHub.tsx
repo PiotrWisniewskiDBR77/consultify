@@ -7520,7 +7520,7 @@ Return ONLY the answer text (no markdown fences).`;
           <InterviewInitiativePreviewBody
             initiative={{
               id: item.id,
-              status: item.status,
+              status: item.status ?? 'UNKNOWN',
               priority: item.priority,
               description: desc,
             }}

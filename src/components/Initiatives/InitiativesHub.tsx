@@ -33,6 +33,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import {
@@ -200,7 +201,7 @@ export type InitiativeLevel = 'quick_win' | 'standard' | 'strategic' | 'transfor
 // translation-key-backed builder, matching this file's dominant `t()`
 // convention (react-i18next + public/locales), called from inside the
 // component where `t` is available.
-type TFn = (key: string, defaultValue?: string) => string;
+type TFn = TFunction;
 
 export function getInitiativeLevels(t: TFn): {
   id: InitiativeLevel;
@@ -1247,6 +1248,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               {
                 id: `priority:${value}`,
                 label: `${t('initiatives.filters.priority', 'Priority')}: ${value}`,
+                column: 'priority',
+                value,
               },
             ]
           : []),

@@ -45,10 +45,10 @@ const api = vi.hoisted(() => ({
 vi.mock('@/services/initiatives-execution/runtimeApi', () => api);
 
 const reportComponents = vi.hoisted(() => ({
-  workRender: vi.fn(() => <div data-testid="mock-work-intelligence-report" />),
-  resourcesRender: vi.fn(() => <div data-testid="mock-resources-capacity-report" />),
-  controlRender: vi.fn(() => <div data-testid="mock-control-loop-report" />),
-  generatorRender: vi.fn(() => <div data-testid="mock-unified-generator" />),
+  workRender: vi.fn((_props: unknown) => <div data-testid="mock-work-intelligence-report" />),
+  resourcesRender: vi.fn((_props: unknown) => <div data-testid="mock-resources-capacity-report" />),
+  controlRender: vi.fn((_props: unknown) => <div data-testid="mock-control-loop-report" />),
+  generatorRender: vi.fn((_props: unknown) => <div data-testid="mock-unified-generator" />),
 }));
 vi.mock('../WorkIntelligenceReport', () => ({
   WorkIntelligenceReport: (props: any) => reportComponents.workRender(props),
