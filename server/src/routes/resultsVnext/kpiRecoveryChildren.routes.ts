@@ -20,6 +20,7 @@ import {
 } from '../../services/resultsVnext/kpi/kpiRecoveryChildCommands.js';
 import {
   closeRecoveryCard,
+  progressRecoveryCard,
   updateRecoveryCard,
 } from '../../services/resultsVnext/kpi/kpiRecoveryCardCommands.js';
 import {
@@ -93,6 +94,12 @@ const CloseCard = z.object({
 }).refine((value) => Boolean(value.evidenceText || value.evidenceRef), {
   message: 'Evidence text or reference is required',
 });
+const ProgressCard = z.object({
+  expectedVersion: Version,
+  decision: z.enum(['CONTINUE', 'ESCALATE']),
+  note: z.string().trim().max(10000).nullable().optional(),
+  idempotencyKey: Idempotency,
+});
 
 function auth(req: AuthenticatedRequest, res: Response) {
   const organizationId = req.user?.organizationId || req.user?.organization_id;
@@ -153,6 +160,17 @@ router.post('/:cardId/close', validateParams(CardParams), validateBody(CloseCard
       idempotencyKey: key(b.idempotencyKey) });
     res.status(200).json({ ...outcome, card: outcome.result });
   } catch (err) { fail(res, err, 'closeRecoveryCard'); }
+});
+
+router.post('/:cardId/continue', validateParams(CardParams), validateBody(ProgressCard), async (req: AuthenticatedRequest, res) => {
+  const a = auth(req, res); if (!a) return;
+  try {
+    const b = req.body as z.infer<typeof ProgressCard>;
+    const outcome = await progressRecoveryCard({ ...(await context(req, a)), cardId: req.params.cardId!,
+      expectedVersion: b.expectedVersion, decision: b.decision, note: b.note,
+      idempotencyKey: key(b.idempotencyKey) });
+    res.status(200).json({ ...outcome, card: outcome.result });
+  } catch (err) { fail(res, err, 'progressRecoveryCard'); }
 });
 
 router.post('/:cardId/actions', validateParams(CardParams), validateBody(CreateAction), async (req: AuthenticatedRequest, res) => {
