@@ -684,47 +684,18 @@ class IntegrationHubServiceClass {
     return rows || [];
   }
 
-  /**
-   * Initialize database tables
-   */
-  async initialize(): Promise<void> {
-    await this.deps.db.run(
-      `CREATE TABLE IF NOT EXISTS integrations (
-                id TEXT PRIMARY KEY,
-                organization_id TEXT NOT NULL,
-                connector_id TEXT NOT NULL,
-                name TEXT NOT NULL,
-                category TEXT NOT NULL,
-                status TEXT DEFAULT 'pending',
-                config TEXT,
-                capabilities TEXT,
-                auth_type TEXT,
-                sync_settings TEXT,
-                last_sync_at DATETIME,
-                last_error TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )`
-    );
-
-    await this.deps.db.run(
-      `CREATE TABLE IF NOT EXISTS integration_sync_logs (
-                id TEXT PRIMARY KEY,
-                integration_id TEXT NOT NULL,
-                event TEXT NOT NULL,
-                data TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )`
-    );
-
-    await this.deps.db.run(
-      `CREATE INDEX IF NOT EXISTS idx_int_org ON integrations(organization_id)`
-    );
-    await this.deps.db.run(`CREATE INDEX IF NOT EXISTS idx_int_status ON integrations(status)`);
-    await this.deps.db.run(
-      `CREATE INDEX IF NOT EXISTS idx_sync_int ON integration_sync_logs(integration_id)`
-    );
-  }
+  // USUNIETE 2026-08-28 (audyt rozjazdow schematu, S7 "usun przyczyne"):
+  // `initialize()` zakladalo `integrations` przez CREATE TABLE IF NOT EXISTS w
+  // CZWARTYM ksztalcie (connector_id/name/category jako NOT NULL, znaczniki
+  // czasu jako DATETIME, bez organization-scoped kolumn 256/727). Przy zasadzie
+  // "first writer wins" wystarczyloby, zeby wykonalo sie raz przed lancuchem
+  // migracji, i baza wpadalaby w ksztalt, ktorego zaden straznik migracji nie
+  // rozpoznaje. Eksport `initialize` nie mial ANI JEDNEGO importera w
+  // server/src ani w testach (sprawdzone grepem po calym repo), wiec byl to
+  // martwy producent. Kanoniczna zbieznosc ksztaltu robi dzis
+  // DatabaseInitializer.ensureIntegrationRuntimeTables() (identycznie
+  // odwzorowana w server/migrations/20261023_integrations_connector_runtime_shape.sql),
+  // a `integration_sync_logs` i indeksy zakladaja migracje.
 }
 
 // ==========================================
@@ -1136,7 +1107,6 @@ export const getSyncHistory = (integrationId: string, limit?: number) =>
   integrationHubServiceInstance.getSyncHistory(integrationId, limit);
 export const getIntegrationStats = (organizationId: string) =>
   integrationHubServiceInstance.getIntegrationStats(organizationId);
-export const initialize = () => integrationHubServiceInstance.initialize();
 
 // Default export for backward compatibility
 const integrationHubService = {
@@ -1154,7 +1124,6 @@ const integrationHubService = {
   logSyncEvent,
   getSyncHistory,
   getIntegrationStats,
-  initialize,
   setDependencies: (newDeps: Partial<IntegrationHubServiceDependencies>) =>
     integrationHubServiceInstance.setDependencies(newDeps),
 };
