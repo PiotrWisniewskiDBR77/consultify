@@ -43,6 +43,17 @@ Dla KAŻDEJ naprawy osobno. Kopia pliku przez `cp` (NIGDY git stash).
 
 Naprawa bez wiersza w tej tabeli = naprawa NIEUDOWODNIONA. Wpisz ją jawnie jako taką.
 
+── 4b. KOMPILACJA PRODUKCYJNA (dodane 2026-08-28 po incydencie) ────────
+Serwer:  cd server && rm -rf dist && NODE_OPTIONS="--max-old-space-size=3072" \
+         ../node_modules/.bin/tsc --build tsconfig.build.json     → exit <<0/n>>
+Front:   NODE_OPTIONS="--max-old-space-size=6144" npm run build     → exit <<0/n>>
+
+★ To NIE JEST `tsc --noEmit` z głównego tsconfig.json. Przez tydzień scalaliśmy kod,
+który się nie kompilował, bo wszyscy mierzyli konfigurację FRONTU zamiast SERWERA.
+Wdrożenie było pierwszym momentem, w którym cokolwiek uruchomiło prawdziwą kompilację.
+Karta bez tych dwóch linii jest kartą odrzuconą — niezależnie od tego, jak zielone
+są testy. Testy chodzą na esbuild, który typów nie sprawdza.
+
 ── 5. REGRES (po NAZWACH, nigdy po liczbach) ───────────────────────────
 Zakres: <<które pakiety, komenda>>       Przebieg z --retry=0: TAK / NIE
 Zielony przed → czerwony po:  <<n>>   <<nazwy>>
