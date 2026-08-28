@@ -327,7 +327,7 @@ describe('T2 · FINDING — SLA sweep has no assignment_kind filter (also escala
     }
   });
 
-  it('an overdue assignment_kind=artifact row is escalated by the SAME generic sweep as workqueue proposals', async () => {
+  it('leaves assignment_kind=artifact for its dedicated review SLA path', async () => {
     await runSlaCheck();
 
     const client = pgClient();
@@ -340,18 +340,14 @@ describe('T2 · FINDING — SLA sweep has no assignment_kind filter (also escala
       );
       expect(rows).toHaveLength(1);
       expect(rows[0].assignment_kind).toBe('artifact');
-      expect(rows[0].escalated_to_user_id).toBe(ADMIN_ID);
-      expect(rows[0].escalated_at).toBeTruthy();
+      expect(rows[0].escalated_to_user_id).toBeNull();
+      expect(rows[0].escalated_at).toBeNull();
 
       const { rows: outboxRows } = await client.query(
         `SELECT type, payload_json FROM notification_outbox WHERE payload_json LIKE $1`,
         [`%${ARTIFACT_ID}%`]
       );
-      expect(outboxRows.length).toBeGreaterThanOrEqual(1);
-      const payload = JSON.parse(outboxRows[0].payload_json);
-      expect(payload.proposalId).toBe(ARTIFACT_ID);
-      expect(payload).not.toHaveProperty('artifactType');
-      expect(payload).not.toHaveProperty('assignmentKind');
+      expect(outboxRows).toEqual([]);
     } finally {
       await client.end();
     }
