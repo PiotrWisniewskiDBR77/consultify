@@ -92,11 +92,11 @@ Plik: `tests/unit/initiativeDocumentView.section-ai-noop.test.ts`.
 ## KARTA DOWODOWA — DYŻUR 68 (TEST DEBT P3)
 
 Gałąź: `codex/day68-test-debt-p3-20260828`  
-Tip: do uzupełnienia po commicie  
+Pierwszy commit i push: `21bdbab7c9`
 Marker: `6868d57ebcb346e7d4bf142eb89229bc6bcd3e98`  
 Data: 2026-08-28
 
-1. Rodowód: marker jest bazą pracy — TAK. Pierwszy commit/push — do uzupełnienia po commicie. Commitów ponad marker: 0 przed raportem.
+1. Rodowód: marker jest bazą pracy — TAK. Pierwszy commit/push — `21bdbab7c9`. Commitów ponad marker: 1 po pierwszym pushu.
 2. Rozłączność: pliki spoza licencji — ŻADNE; migracje `20261680-20261689` wykorzystane: 0; port PG/harness: 5940/3998.
 3. Osiągalność: NIE DOTYCZY, brak zmiany runtime.
 4. Dowód mutacyjny: brak deklarowanych napraw; NIE DOTYCZY.
