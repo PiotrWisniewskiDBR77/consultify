@@ -187,6 +187,11 @@
     "finalizing": "Finalizing..."
   },
   "aiChat": {
+    "teresaAction": {
+      "unconfirmed": "No tengo confirmación de que la acción «{{action}}» se haya realizado realmente; nada la confirmó. Compruébalo manualmente antes de darla por hecha.",
+      "error": "La acción «{{action}}» ha fallado: se produjo un error. Nada se confirmó como realizado.",
+      "refusedNoReason": "No realicé la acción «{{action}}»: el registro la rechazó sin indicar el motivo."
+    },
     "language": "Conversation language",
     "chatMenuTitle": "Menu",
     "openSidebar": "Open sidebar",
