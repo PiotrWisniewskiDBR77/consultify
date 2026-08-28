@@ -208,3 +208,18 @@ Pełny log: `/private/tmp/p3-full.log`.
   dowodem tej sekcji.
 - Nie wykonywano połączeń do Railway, demo, stagingu ani produkcji.
 - Nie odtworzono trzech usuniętych testów wyłącznie po to, by podnieść mianownik.
+
+## Bramka integracyjna P2+P3 — finalizacja
+
+Wspólny przebieg wykrył defekt izolacji w
+`m16-final-repair.realdb.test.ts`: fixture usuwał i odtwarzał publiczne tabele
+`users`, `organizations` i `projects`, przez co zatruwał późniejsze suity. Test
+otrzymał własny schemat `m16_final_repair_test`, usuwa wyłącznie ten schemat i
+ustawia go ponownie po świeżym połączeniu. Wynik real-PG: **13/13 PASS**;
+niezależny read-back po teście: publiczne `users` zachowało 68 kolumn, schemat
+fixture został usunięty.
+
+Łączny mianownik P2+P3 w trybie standardowym: **117/121 plików PASS, 4 SKIP,
+0 FAIL; 1042 PASS, 140 SKIP, 0 FAIL**. Cztery warunkowe pliki DB przeszły
+osobno **49/49** na świeżym PG. Pierwszy migrator PASS, drugi PASS i 0 nowych
+migracji. Połączenia z Railway, demo, stagingiem i produkcją: **zero**.

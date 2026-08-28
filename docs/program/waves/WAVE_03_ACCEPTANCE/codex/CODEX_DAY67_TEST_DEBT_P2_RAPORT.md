@@ -151,3 +151,20 @@ Pełny log: `/private/tmp/p2-full-final.log`.
 - Kompilacje produkcyjne, pełny wspólny regres P2+P3 i końcowy `diff --check`
   są wykonywane jako osobna bramka integracyjna.
 - Nie wykonywano połączeń do Railway, demo, stagingu ani produkcji.
+
+## Bramka integracyjna P2+P3 — finalizacja
+
+Po połączeniu pakietów integrator uruchomił literalny mianownik 121 istniejących
+plików P2+P3 w jednym procesie, `--retry=0`: **117 plików PASS, 4 pliki SKIP,
+0 FAIL; 1042 PASS, 140 SKIP, 0 FAIL**. Cztery pliki mają jawną bramkę
+`RUN_DB_TESTS=1`; na świeżym lokalnym PostgreSQL, po pełnym migratorze, przeszły
+osobno **4/4 pliki i 49/49 testów**. Nie są już przedstawiane wyłącznie jako
+warunkowy SKIP.
+
+Wspólny przebieg real-DB ujawnił rozbieżność między synchroniczną i asynchroniczną
+fabryką bazy: jawne `MOCK_DB=true` było ignorowane przez ścieżkę synchroniczną,
+gdy proces miał `RUN_DB_TESTS=1`. Naprawiono wybór adaptera; celowany kontrakt
+`mockDatabase.test.ts` przechodzi **2/2** w takim właśnie procesie.
+
+Świeża baza: pierwszy migrator PASS, drugi PASS z `Applying migrations: 0`.
+Połączenia z Railway, demo, stagingiem i produkcją: **zero**.

@@ -141,9 +141,9 @@ G00–G06 nie zostały przepisane jako jednolity PASS. G11–G20 pozostają bez 
 
 ## KARTA DOWODOWA — DYŻUR 61 (MATERIAŁY)
 
-Gałąź: `codex/materials-day61-owner-review-20260828`  
-Tip: commit zawierający ten raport; SHA podany w handoffie  
-Marker: `5e30cb9bf66c8e75481ba723debdd04f3c1a6893`  
+Gałąź: `codex/materials-day61-owner-review-20260828`
+Tip: commit zawierający ten raport; SHA podany w handoffie
+Marker: `5e30cb9bf66c8e75481ba723debdd04f3c1a6893`
 Data: `2026-08-28`
 
 ### 1. Rodowód
