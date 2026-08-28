@@ -271,6 +271,70 @@ Końcowy główny zakres: 79 plików, **1720 PASS / 2 FAIL / 65 SKIPPED**. Poró
 
 Brak STOP-u całego dyżuru. P.3–P.8 domknięto w kontynuacji dowodami HTTP, tenantowymi, mutacyjnymi i ratchetem nazw.
 
+## Kontynuacja po odbiorze adwersaryjnym — F1–F5
+
+Odbiór niezależnie potwierdził realność czterech napraw, wzmocnienie czterech kotwic, natychmiastowe `403` po odebraniu członkostwa oraz `NOWE_CZERWONE=0`. Prostuję też wcześniejszą analizę nadzorcy: egzekutor bezczynności zaczyna się w `auth.middleware.ts:1461`, a `checkTokenRevocation` jest dopiero w `:1486`; kolejność jest prawidłowa.
+
+### F1 — czat osobisty i wszystkie 18 montaży
+
+Regresja odbiorowa została odtworzona i naprawiona. `validateOrgMembership` przepuszcza brak organizacji wyłącznie wtedy, gdy rzeczywisty `req.baseUrl` jest `/api/conversations` albo `/api/chat-projects` i żądanie nie wskazuje żadnej organizacji. Próba wskazania organizacji przez principal bez członkostwa nadal kończy się dokładnym `403 ORG_CONTEXT_REQUIRED`. `/api/signals` i wszystkie pozostałe powierzchnie pozostają tenantowe.
+
+Ten sam test, podpisany JWT bez organizacji, realny PostgreSQL i realny `ApiGateway.getInstance().initializeRoutes(app)` zmierzył:
+
+| montaż / trasa                                                                  | marker                                  | tip po F1                               | klasa                                        |
+| ------------------------------------------------------------------------------- | --------------------------------------- | --------------------------------------- | -------------------------------------------- |
+| Gateway `/api/conversations`                                                    | `200`                                   | `200`                                   | bez organizacji — czat osobisty              |
+| Gateway `/api/signals`                                                          | `401`, bez `code`                       | `403 ORG_CONTEXT_REQUIRED`              | wymaga organizacji                           |
+| Gateway `/api/chat-projects`                                                    | `200`                                   | `200`                                   | bez organizacji — czat osobisty              |
+| candidate handoff `/api/interview/candidate-handoff/submission/missing/preview` | `403 RBAC_ORGANIZATION_ACCESS_REQUIRED` | `403 ORG_CONTEXT_REQUIRED`              | wymaga organizacji                           |
+| initiative candidates `/api/initiatives/flow-transform/certify`                 | `401`, bez `code`                       | `403 ORG_CONTEXT_REQUIRED`              | wymaga organizacji                           |
+| idea business case `/api/idea-business-case/missing`                            | `401`, bez `code`                       | `403 ORG_CONTEXT_REQUIRED`              | wymaga organizacji                           |
+| interview `/api/interview/sessions`                                             | `403 RBAC_ORGANIZATION_ACCESS_REQUIRED` | `403 ORG_CONTEXT_REQUIRED`              | wymaga organizacji                           |
+| PMO `/api/pmo/initiatives`                                                      | `403 RBAC_ORGANIZATION_ACCESS_REQUIRED` | `403 ORG_CONTEXT_REQUIRED`              | wymaga organizacji                           |
+| My Work `/api/my-work/inbox`                                                    | `401`, bez `code`                       | `403 ORG_CONTEXT_REQUIRED`              | wymaga organizacji                           |
+| organization context `/api/organization-context`                                | `401`, bez `code`                       | `403 ORG_CONTEXT_REQUIRED`              | wymaga organizacji                           |
+| V8 Chat `/api/v8/chat/snapshots`                                                | `403 V8_MISSING_ORG_CONTEXT`            | `403 V8_MISSING_ORG_CONTEXT`            | wymaga organizacji; wcześniejsza bramka V8   |
+| workbook template build                                                         | `403 RBAC_ORGANIZATION_ACCESS_REQUIRED` | `403 RBAC_ORGANIZATION_ACCESS_REQUIRED` | wymaga organizacji; wcześniejsza bramka RBAC |
+| workbook schema command                                                         | `403 RBAC_ORGANIZATION_ACCESS_REQUIRED` | `403 RBAC_ORGANIZATION_ACCESS_REQUIRED` | wymaga organizacji; wcześniejsza bramka RBAC |
+| audit processing summary                                                        | `401`, bez `code`                       | `403 ORG_CONTEXT_REQUIRED`              | wymaga organizacji                           |
+| audit processing jobs                                                           | `401`, bez `code`                       | `403 ORG_CONTEXT_REQUIRED`              | wymaga organizacji                           |
+| audit recover stale locks                                                       | `401`, bez `code`                       | `403 ORG_CONTEXT_REQUIRED`              | wymaga organizacji                           |
+| audit requeue job                                                               | `401`, bez `code`                       | `403 ORG_CONTEXT_REQUIRED`              | wymaga organizacji                           |
+| audit run worker                                                                | `401`, bez `code`                       | `403 ORG_CONTEXT_REQUIRED`              | wymaga organizacji                           |
+
+Test tip przypina dokładne dwie klasy: 2× `200` dla powierzchni osobistych oraz 16× dokładna odmowa właściwej bramki. Pomiar wykazał, że `server/src/routes/organization-context.routes.ts:39` nie jest wyborem organizacji: wszystkie jego handlery wymagają istniejącego org. Faktyczny bootstrap wyboru to `POST /api/auth/switch-organization`, stojący za samym `verifyToken`; zakleszczenia nowego użytkownika nie ma. Komentarz Gateway został skorygowany.
+
+### F2 — kontrakt bezczynności domyślnie zielony
+
+Test sam zapisuje `SESSION_IDLE_ENFORCEMENT=true` w `beforeAll`, a w `afterAll` przywraca wartość albo usuwa zmienną, jeśli wcześniej nie istniała. Analogicznie lokalny przypadek OFF nie zapisuje już literału `"undefined"`. Dodano skrypt `test:auth:day56:idle`, który jawnie ustawia flagę. Przebieg bez zmiennej odziedziczonej z powłoki oraz przebieg przez skrypt: **8 PASS / 0 FAIL / 0 SKIPPED**.
+
+### F3 — trwałe regresje cache i optionalAuth
+
+`day56.authcore-matrices.realpg.test.ts` zawiera dwa jawne kontrakty realnego HTTP:
+
+- ogrzane `200`, aktualizacja membership `ACTIVE→REVOKED`, następne żądanie bez czekania: dokładne `403 ORG_MEMBERSHIP_REVOKED`, potem `REVOKED→ACTIVE` i `200`;
+- członek zawieszonej organizacji na publicznym `/api/share/:token`: dokładne `200` i brak `x-session-id`.
+
+Końcowy plik macierzy: **16 PASS / 0 FAIL / 0 SKIPPED**. Są to trwałe testy w repo, nie tylko logi mutacyjne.
+
+### F4 — komentarze po zmianie kontraktu
+
+Skorygowano sześć wskazanych miejsc: dwa bloki w `Gateway.ts`, dwa komentarze w `auth.routes.ts`, komentarz partner day42 i komentarz E2E My Work. Nie twierdzą już, że `validateOrgMembership` ma cache 60 s albo fail-open na błędzie DB.
+
+### F5 — martwy kod
+
+Usunięto `buildMembershipCacheKey`, jego eksport i tautologiczny test. Usunięto też no-op `resetMembershipCacheForTests` oraz jego bezwarunkowy wołacz w teście jednostkowym. Zastany wołacz w `organizationSuspensionEnforcement.middleware.test.ts` używa bezpiecznego optional chaining (`?.()`), więc po usunięciu eksportu niczego nie wykonuje i nie wymaga edycji obcego testu.
+
+### Koszt i resztkowe ryzyka
+
+- Usunięcie cache oznacza mierzone `0→1` zapytanie do `organization_members` na każde żądanie przechodzące przez te montaże, czyli około +50% ruchu do tej tabeli w pomiarze odbiorowym. Pozostawiamy obecny model: memo per-request nie usunie jedynego zapytania między różnymi requestami, a w zmierzonych łańcuchach nie ma dwóch wywołań guardu na tym samym `req`. Jeżeli koszt okaże się materialny, właściwym łagodzeniem jest cache unieważniany zdarzeniem membership, nie TTL ani memo per-request.
+- `NO_SESSION` pozostaje fail-open dla poprawnego tokena z `jti`, którego nie ma w `user_sessions`. Skutek: egzekutor bezczynności nie może wygasić takiego tokena, choć nadal działają weryfikacja podpisu, revocation i membership. Rekomendacja: po określeniu granicy legacy dodać wersję/claim tokena i dla nowych tokenów pod flagą ON odmawiać dokładnym `SESSION_RECORD_REQUIRED`; nie zamykać istniejących tokenów bez planu migracji.
+- `SESSION_IDLE_ENFORCEMENT` nadal jest produkcyjnie domyślnie OFF. Nowy skrypt włącza ją wyłącznie dla kontraktu testowego.
+
+Artefakty: `followup-18-marker.log` SHA-256 `8f657c323435354933db88e380dd390fbf34db3e30284451862ab8d8c9d7cdb5`; `followup-18-tip.log` `3eb063f91d63cee95b25a7455a7fdf5b44870a36afa738ed5f100a269215ed0e`; `followup-matrix.json` `e71c9752c88a6899f22f7da3fba04a2f2dbaf8366dbeab89c52b8f01a900b83e`; `followup-idle-default.json` `f829e4142f2a0d50d33a3b5c8875ea4df0fb3d71f17115a8b9dd7634aa67c3ac`; `followup-unit-auth.json` `60486b42c779b4508623b40f76773a0fe9a6be8326d4bddae5d179e6e185a116`.
+
+Końcowy ratchet po F1–F5: PRZED 1787 testów = 1720 PASS / 2 FAIL / 65 SKIPPED; PO 1786 testów = 1719 PASS / 2 FAIL / 65 SKIPPED. Spadek mianownika o jeden to jawne usunięcie tautologicznego testu `buildMembershipCacheKey` w F5. Pełne nazwy obu czerwonych testów są identyczne PRZED i PO; `NOWE_CZERWONE=[]`, `USUNIĘTE_CZERWONE=[]`. Artefakt `zasieg-FOLLOWUP-PO.json` SHA-256 `2beb7baa71d20ee4c7d25ff1b6503e8c77594246e40b85ef1e9afd21fd25135e`, log `7312e9ff02281a986f7df6517cd6f9b2f012804fc4d4dfae5da9f8255ebfe79a`. Bezpośredni przebieg idle z usuniętą z powłoki zmienną `SESSION_IDLE_ENFORCEMENT`: 8/8; JSON `ff086d301c4275a9f0d90e172ef3e0378df62edd90e116a8760e28519eef1ad8`, log `10cb7bbef6f1a73cb172293a9bb7afca7c6647149f5198a101e127aebcef04c8`.
+
 ## Rekomendacje przy scalaniu
 
 1. Usunąć duplikat kontraktu day53 po przyjęciu testu day56; nie zachowywać przypięcia `cx_day53`.
