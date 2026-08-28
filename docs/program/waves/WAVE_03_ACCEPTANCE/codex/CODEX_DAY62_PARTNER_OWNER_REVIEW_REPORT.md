@@ -1,5 +1,29 @@
 # Dyżur 62 — Partner — pakiet odbioru właściciela G07–G10
 
+## Finalne wznowienie — marker f87043a, tip a3c702e
+
+Historyczny STOP opisany dalej został usunięty. Seeder zaakceptował jawną lokalną bazę po naprawie drugiej, niezależnej blokady: przestarzałego wymagania dokładnie 831 migracji. Poprawiony kontrakt wymaga niepustego, w pełni zielonego ledgera; test kontraktu przeszedł 8/8. Nie utworzono migracji.
+
+Runtime został zakwalifikowany na tipie `a3c702efa50ca6861d7a37fa3bc1dbfc8e650954`, którego rodzicem jest marker `f87043a9412d6f208f99bd0b5c7e23bce4d01c4d`. Lokalna PG działała na 5934, Gateway na 4392, klient na 3992; readiness i oba ledgery migracji były zielone, licznik wynosił 862.
+
+Powstało 100 końcowych zrzutów: 25 sekcji × jasny/ciemny × pusty/pełny. Artefakty i manifest SHA-256 znajdują się w `/private/tmp/cx-day62-partner-review-f87043a/`. Kontrolowany pusty stan usunął wyłącznie dane programu Partnera w naszej lokalnej DB; pełny fixture został następnie odtworzony z lokalnego dumpu.
+
+Realne logowanie zwróciło 200. Spośród 20 nazwanych odczytów prawdziwego Gateway 19 zwróciło 200. `/api/v8/partner/earnings-summary` zwrócił 500 `PARTNER_ACCRUAL_POLICY_BLOCKED_OWNER`. Odczyt projektów zwrócił 200, ale log serwera ujawnił błąd SQL `operator does not exist: uuid = text`, więc pusty wynik nie jest uczciwym dowodem braku projektów.
+
+Werdykt: G07 `READY_FOR_OWNER_REVIEW`; G08/G10 `EVIDENCE_PACKAGE_READY_WITH_DEFECTS`; G09 `PARTIAL_PRODUCT_DEFECT_FOUND`. Pakiet G07–G10 jest wykonany, ale moduł nie jest `CLOSED_FINAL`. Znaleziska do G11–G20: błąd HTTP earnings, ukryty błąd UUID/text, niepełna lokalizacja i brak pełnych danych dla części 25 ekranów.
+
+Kompilacja serwera przez `server/tsconfig.build.json` oraz produkcyjny build frontu: exit 0. Vitest/esbuild nie zastępował typechecku. Zmieniony test denominatora nie pinował buga — stara asercja 831 kanonizowała historyczny stan i została zastąpiona kontraktem semantycznym.
+
+## Twierdzenia niezweryfikowane po wznowieniu
+
+- Nie wykonano wypłaty, naliczenia, publicznej publikacji, outreachu ani operacji zewnętrznego providera.
+- Nie ma decyzji właściciela o wyglądzie i lokalizacji 25 ekranów.
+- Nie wykonano G11–G20 ani retestu po naprawach produktu.
+
+## Historyczny przebieg na 5e30 — zachowany jako dowód STOP-u
+
+Poniższe `0/25`, `PARTIAL` i `NOT_PROVEN` opisują wcześniejszy przebieg, nie wynik końcowego wznowienia.
+
 ## Karta dla Piotra
 
 Portal Partner ma być codziennym miejscem pracy firmy partnerskiej. Z jednego panelu partner powinien zobaczyć swój status, wyniki programu, narzędzia poleceń, polecone organizacje, projekty i użytkowników klientów, postęp nauki i certyfikaty, materiały oraz publiczny profil firmy. Główna ścieżka prowadzi od ustalenia statusu partnera, przez orientację i dashboard, do poleceń, obsługi klientów, akademii, profilu oraz zasobów.
