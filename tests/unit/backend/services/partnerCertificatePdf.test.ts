@@ -52,4 +52,24 @@ describe('generatePartnerCertificatePdf', () => {
     });
     expect(buf.subarray(0, 5).toString('latin1')).toBe('%PDF-');
   });
+
+  it('integration contract: application font renders Polish glyph input into a valid PDF', async () => {
+    vi.resetModules();
+    vi.doUnmock('../../../../server/src/utils/pdfFonts.js');
+    const { generatePartnerCertificatePdf: generateWithApplicationFonts } = await import(
+      '../../../../server/src/services/partnerCertificatePdf.js'
+    );
+
+    const buf = await generateWithApplicationFonts({
+      ...base,
+      partnerOrgName: 'Zażółć Gęślą Jaźń Sp. z o.o.',
+      userName: 'Łukasz Świątek',
+      certificateType: 'delivery',
+      language: 'pl',
+    });
+
+    expect(Buffer.isBuffer(buf)).toBe(true);
+    expect(buf.length).toBeGreaterThan(500);
+    expect(buf.subarray(0, 5).toString('latin1')).toBe('%PDF-');
+  });
 });
