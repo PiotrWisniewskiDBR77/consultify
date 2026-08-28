@@ -130,7 +130,7 @@ describe('H3.1 — SWOT (dynamicSwot) tool-sesja e2e (real router + auth + DB)',
     const createRes = await request(toolsApp)
       .post('/api/tools')
       .set('Authorization', `Bearer ${token}`)
-      .send({ toolType: 'dynamicSwot', name: `${PREFIX}swot-session` });
+      .send({ toolType: 'dynamic-swot', name: `${PREFIX}swot-session` });
 
     expect(createRes.status).toBe(200);
     const sessionId: string = createRes.body?.id;
@@ -150,6 +150,7 @@ describe('H3.1 — SWOT (dynamicSwot) tool-sesja e2e (real router + auth + DB)',
       .put(`/api/tools/${sessionId}`)
       .set('Authorization', `Bearer ${token}`)
       .send({
+        expectedVersion: createRes.body.version,
         status: 'IN_PROGRESS',
         completionPercent: 80,
         confidenceAvg: 4,

@@ -78,14 +78,14 @@ describe('T7b-2 backupService — real logical export', () => {
 
     const obj = await storage.getObject(backup.storageKey);
     const parsed = JSON.parse((await streamToBuffer(obj.stream)).toString('utf8'));
-    expect(parsed.format).toBe('consultify-encrypted-json-v1');
+    expect(parsed.format).toBe('consultify-logical-backup-v2');
     expect(parsed.algorithm).toBe('aes-256-gcm');
     expect(parsed.checksumSha256).toBe(backup.checksumSha256);
     expect(parsed.ciphertext).toBeTruthy();
 
     // Per-table counts remain queryable from the authenticated manifest row.
     const manifestTables: Array<{ name: string; rowCount: number; skipped?: boolean }> = backup.tables;
-    const checked = ['organizations', 'users', 'initiatives'];
+    const checked = ['organizations', 'users', 'organization_members'];
     for (const name of checked) {
       const entry = manifestTables.find((t) => t.name === name);
       expect(entry, `manifest must include ${name}`).toBeTruthy();
@@ -149,7 +149,7 @@ describe('T7b-2 backupService — real logical export', () => {
     const { getStorage } = await import('../../server/src/services/storage/index.js');
     const obj = await getStorage().getObject(backup.storageKey);
     const raw = (await streamToBuffer(obj.stream)).toString('utf8');
-    expect(raw).toContain('consultify-encrypted-json-v1');
+    expect(raw).toContain('consultify-logical-backup-v2');
     expect(raw).not.toContain(seedOrg);
   });
 });

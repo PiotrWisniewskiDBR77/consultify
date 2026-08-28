@@ -177,7 +177,7 @@ describe('H4.4 — M13 initiative generator flow: create → DRAFT → document 
     expect(getRes.body.displayStatus).toBeTruthy();
   });
 
-  it('4) timeline/harmonogram: milestones start empty, then persist real rows in order', async () => {
+  it('4) legacy timeline writer is retired fail-closed and cannot mutate milestone rows', async () => {
     const emptyRes = await request(app)
       .get(`/api/initiatives/${initiativeId}/milestones`)
       .set('Authorization', `Bearer ${token}`);
@@ -193,54 +193,25 @@ describe('H4.4 — M13 initiative generator flow: create → DRAFT → document 
         targetDate: '2026-08-15',
         isGate: false,
       });
-    expect(m1.status).toBe(201);
-    expect(m1.body.milestone.id).toBeTruthy();
-    expect(m1.body.milestone.orderIndex).toBe(1);
-    expect(m1.body.milestone.status).toBe('PENDING');
-
-    const m2 = await request(app)
-      .post(`/api/initiatives/${initiativeId}/milestones`)
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        name: `${PREFIX} Go-live CRM (gate)`,
-        description: 'Faza 2 — bramka decyzyjna',
-        targetDate: '2026-10-01',
-        isGate: true,
-      });
-    expect(m2.status).toBe(201);
-    expect(m2.body.milestone.orderIndex).toBe(2);
-    expect(m2.body.milestone.isGate).toBe(true);
+    expect(m1.status).toBe(409);
+    expect(m1.body.code).toBe('EXECUTION_RUNTIME_V1_WRITE_REQUIRED');
+    expect(m1.body.canonicalWriter).toBe('/api/initiatives/runtime-v1');
 
     const listRes = await request(app)
       .get(`/api/initiatives/${initiativeId}/milestones`)
       .set('Authorization', `Bearer ${token}`);
     expect(listRes.status).toBe(200);
-    expect(listRes.body.milestones).toHaveLength(2);
-    const [row1, row2] = listRes.body.milestones;
-    expect(row1.orderIndex).toBe(1);
-    expect(row1.name).toContain('Kick-off');
-    // Date-only column round-tripped through the pg driver as a JS Date at local
-    // midnight, then JSON-serialized as UTC — asserting via a ::text cast below
-    // (timezone-proof) instead of string-matching the API's Date-shifted ISO value.
-    expect(row1.targetDate).toBeTruthy();
-    expect(row2.orderIndex).toBe(2);
-    expect(row2.isGate).toBe(true);
+    expect(listRes.body.milestones).toEqual([]);
 
     // Real rows in the plan/harmonogram table, verified independently of the API layer.
     const c = pgClient();
     await c.connect();
     try {
       const r = await c.query(
-        `SELECT name, order_index, is_gate, status, target_date::text AS target_date_text
-           FROM initiative_milestones WHERE initiative_id = $1 ORDER BY order_index ASC`,
+        `SELECT id FROM initiative_milestones WHERE initiative_id = $1`,
         [initiativeId]
       );
-      expect(r.rows).toHaveLength(2);
-      expect(r.rows[0].order_index).toBe(1);
-      expect(r.rows[0].status).toBe('PENDING');
-      expect(r.rows[0].target_date_text).toBe('2026-08-15');
-      expect(r.rows[1].is_gate).toBe(1);
-      expect(r.rows[1].target_date_text).toBe('2026-10-01');
+      expect(r.rows).toHaveLength(0);
     } finally {
       await c.end();
     }

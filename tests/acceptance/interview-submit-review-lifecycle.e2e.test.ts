@@ -166,16 +166,33 @@ describe('INT-05/INT-06 — immutable submit and manager review lifecycle', () =
       await client.end();
     }
 
+    const submittedQuestions = await request(app)
+      .get(`/api/interview/sessions/${SESSION_ID}/questions`)
+      .set('Authorization', `Bearer ${respondentToken}`);
+    expect(submittedQuestions.status).toBe(200);
+    const submittedUpdatedAt = submittedQuestions.body.find(
+      (question: { id: string }) => question.id === QUESTION_ID
+    )?.updatedAt;
+    expect(submittedUpdatedAt).toEqual(expect.any(String));
+
     const mutateWhileSubmitted = await request(app)
       .patch(`/api/interview/questions/${QUESTION_ID}`)
       .set('Authorization', `Bearer ${respondentToken}`)
-      .send({ answerText: 'Niedozwolona cicha zmiana', status: 'answered' });
+      .send({
+        answerText: 'Niedozwolona cicha zmiana',
+        status: 'answered',
+        expectedUpdatedAt: submittedUpdatedAt,
+      });
     expect(mutateWhileSubmitted.status).toBe(409);
 
     const foreignMutation = await request(app)
       .patch(`/api/interview/questions/${QUESTION_ID}`)
       .set('Authorization', `Bearer ${foreignToken}`)
-      .send({ answerText: 'Atak między tenantami', status: 'answered' });
+      .send({
+        answerText: 'Atak między tenantami',
+        status: 'answered',
+        expectedUpdatedAt: submittedUpdatedAt,
+      });
     expect(foreignMutation.status).toBe(404);
 
     const respondentApprove = await request(app)
@@ -191,10 +208,19 @@ describe('INT-05/INT-06 — immutable submit and manager review lifecycle', () =
     expect(sendBack.status).toBe(200);
     expect(sendBack.body?.assignment?.status).toBe('in_progress');
 
+    const editableQuestions = await request(app)
+      .get(`/api/interview/sessions/${SESSION_ID}/questions`)
+      .set('Authorization', `Bearer ${respondentToken}`);
+    expect(editableQuestions.status).toBe(200);
+    const editableUpdatedAt = editableQuestions.body.find(
+      (question: { id: string }) => question.id === QUESTION_ID
+    )?.updatedAt;
+    expect(editableUpdatedAt).toEqual(expect.any(String));
+
     const revise = await request(app)
       .patch(`/api/interview/questions/${QUESTION_ID}`)
       .set('Authorization', `Bearer ${respondentToken}`)
-      .send({ answerText: REVISED_ANSWER, status: 'answered' });
+      .send({ answerText: REVISED_ANSWER, status: 'answered', expectedUpdatedAt: editableUpdatedAt });
     expect(revise.status).toBe(200);
 
     const submit2 = await request(app)
@@ -227,7 +253,11 @@ describe('INT-05/INT-06 — immutable submit and manager review lifecycle', () =
     const mutateAfterApproval = await request(app)
       .patch(`/api/interview/questions/${QUESTION_ID}`)
       .set('Authorization', `Bearer ${respondentToken}`)
-      .send({ answerText: 'Niedozwolona zmiana po akceptacji', status: 'answered' });
+      .send({
+        answerText: 'Niedozwolona zmiana po akceptacji',
+        status: 'answered',
+        expectedUpdatedAt: revise.body.updatedAt,
+      });
     expect(mutateAfterApproval.status).toBe(409);
   });
 });

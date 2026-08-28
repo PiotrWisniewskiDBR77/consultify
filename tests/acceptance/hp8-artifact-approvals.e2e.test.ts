@@ -71,13 +71,40 @@ async function ensureWorkflowColumns(): Promise<void> {
 
 let app: Express;
 let token: string;
+let reviewerToken: string;
+const REVIEWER_ID = `odbior--hp8--reviewer-${process.pid}`;
 const createdArtifactIds: string[] = [];
 
 beforeAll(async () => {
   await seed(); // idempotent
   await ensureWorkflowColumns();
+  const client = pgClient();
+  await client.connect();
+  try {
+    await client.query(
+      `INSERT INTO users
+         (id, organization_id, email, password, role, status, first_name, last_name, created_at)
+       VALUES ($1, $2, $3, 'unused', 'ADMIN', 'active', 'HP8', 'Reviewer', NOW())
+       ON CONFLICT (id) DO NOTHING`,
+      [REVIEWER_ID, SEED.ORG_ID, `${REVIEWER_ID}@acceptance.local`]
+    );
+    await client.query(
+      `INSERT INTO organization_members
+         (id, organization_id, user_id, role, status, created_at)
+       VALUES ($1, $2, $3, 'ADMIN', 'ACTIVE', NOW())
+       ON CONFLICT (id) DO NOTHING`,
+      [`${REVIEWER_ID}-membership`, SEED.ORG_ID, REVIEWER_ID]
+    );
+  } finally {
+    await client.end();
+  }
   app = await buildApp();
   token = mintToken();
+  reviewerToken = mintToken({
+    id: REVIEWER_ID,
+    email: `${REVIEWER_ID}@acceptance.local`,
+    role: 'ADMIN',
+  });
 }, 60_000);
 
 afterAll(async () => {
@@ -92,6 +119,8 @@ afterAll(async () => {
         [createdArtifactIds]
       );
     }
+    await client.query(`DELETE FROM organization_members WHERE user_id = $1`, [REVIEWER_ID]);
+    await client.query(`DELETE FROM users WHERE id = $1`, [REVIEWER_ID]);
   } finally {
     await client.end();
   }
@@ -144,7 +173,7 @@ describe('Acceptance HP-8 · Initiative approval (real router + auth + DB)', () 
     const submitRes = await request(app)
       .post(`/api/artifact-approvals/${artifactType}/${artifactId}/approval/submit`)
       .set('Authorization', `Bearer ${token}`)
-      .send({ assignedToUserId: SEED.USER_ID });
+      .send({ assignedToUserId: REVIEWER_ID });
     expect(submitRes.status).toBe(201);
     expect(submitRes.body.state).toBe('review');
     expect(submitRes.body.assignment.artifact_type).toBe('initiative');
@@ -159,7 +188,7 @@ describe('Acceptance HP-8 · Initiative approval (real router + auth + DB)', () 
     // 3) APPROVE review -> approved.
     const approveRes = await request(app)
       .post(`/api/artifact-approvals/${artifactType}/${artifactId}/approval/approve`)
-      .set('Authorization', `Bearer ${token}`)
+      .set('Authorization', `Bearer ${reviewerToken}`)
       .send({});
     expect(approveRes.status).toBe(200);
     expect(approveRes.body.state).toBe('approved');
@@ -193,13 +222,13 @@ describe('Acceptance HP-8 · Report approval (real router + auth + DB)', () => {
     const submitRes = await request(app)
       .post(`/api/artifact-approvals/${artifactType}/${artifactId}/approval/submit`)
       .set('Authorization', `Bearer ${token}`)
-      .send({ assignedToUserId: SEED.USER_ID });
+      .send({ assignedToUserId: REVIEWER_ID });
     expect(submitRes.status).toBe(201);
     expect(submitRes.body.state).toBe('review');
 
     const rejectRes = await request(app)
       .post(`/api/artifact-approvals/${artifactType}/${artifactId}/approval/reject`)
-      .set('Authorization', `Bearer ${token}`)
+      .set('Authorization', `Bearer ${reviewerToken}`)
       .send({ reason: 'odbior--hp8-- brak dowodów' });
     expect(rejectRes.status).toBe(200);
     expect(rejectRes.body.state).toBe('rejected');
@@ -214,7 +243,7 @@ describe('Acceptance HP-8 · Report approval (real router + auth + DB)', () => {
     const resubmitRes = await request(app)
       .post(`/api/artifact-approvals/${artifactType}/${artifactId}/approval/submit`)
       .set('Authorization', `Bearer ${token}`)
-      .send({ assignedToUserId: SEED.USER_ID });
+      .send({ assignedToUserId: REVIEWER_ID });
     expect(resubmitRes.status).toBe(201);
     expect(resubmitRes.body.state).toBe('review');
   }, 30_000);
@@ -233,13 +262,13 @@ describe('Acceptance HP-8 · Deck approval (real router + auth + DB)', () => {
     const submitRes = await request(app)
       .post(`/api/artifact-approvals/${artifactType}/${artifactId}/approval/submit`)
       .set('Authorization', `Bearer ${token}`)
-      .send({ assignedToUserId: SEED.USER_ID });
+      .send({ assignedToUserId: REVIEWER_ID });
     expect(submitRes.status).toBe(201);
     expect(submitRes.body.state).toBe('review');
 
     const approveRes = await request(app)
       .post(`/api/artifact-approvals/${artifactType}/${artifactId}/approval/approve`)
-      .set('Authorization', `Bearer ${token}`)
+      .set('Authorization', `Bearer ${reviewerToken}`)
       .send({});
     expect(approveRes.status).toBe(200);
     expect(approveRes.body.state).toBe('approved');

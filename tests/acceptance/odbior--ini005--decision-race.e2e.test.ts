@@ -49,6 +49,7 @@
 // directly — but keeps the same import-first convention as every other
 // INI-005 acceptance file so a future HTTP-based test added here stays safe.)
 import { assertJwtSecretHermetic } from './sharedAcceptanceJwtSecret.js';
+import { createHash } from 'node:crypto';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
@@ -117,6 +118,44 @@ async function insertApprovedGoDecision(opts: { id: string; initiativeId: string
        status = 'approved', deadline = EXCLUDED.deadline, decided_at = EXCLUDED.decided_at`,
     [id, ORG_A, initiativeId, `${PREFIX} decision ${id}`, SEED.USER_ID, '2026-08-15T00:00:00.000Z', new Date().toISOString()]
   );
+  const digest = createHash('sha256').update(`decrace|${id}`).digest('hex');
+  await pgQuery(
+    `INSERT INTO transformation_cases
+       (transformation_case_id, organization_id, initiated_by_user_id, mandate, lineage_id, idempotency_key, version)
+     VALUES ($1,$2,$3,'INI-005 decision-race fixture',$4,$5,1)`,
+    [`${id}-case`, ORG_A, SEED.USER_ID, `${id}-lineage`, `${id}-case-idem`]
+  );
+  await pgQuery(
+    `INSERT INTO v8_agent_proposal_versions
+       (proposal_version_id, proposal_id, organization_id, canonical_run_id, proposal_version,
+        plan_version, context_digest, before_json, after_json, approval_scopes_json,
+        reviewer_authority_json, expires_at, status, created_by_user_id)
+     VALUES ($1,$2,$3,$4,1,1,$5,'{}'::jsonb,'{}'::jsonb,$6::jsonb,$7::jsonb,
+             NOW()+INTERVAL '1 day','approved',$8)`,
+    [`${id}-proposal-version`, `${id}-proposal`, ORG_A, `${id}-run`, digest,
+     JSON.stringify(['initiative_promotion']),
+     JSON.stringify({ userId: SEED.USER_ID, authority: 'initiative_promotion' }), SEED.USER_ID]
+  );
+  await pgQuery(
+    `INSERT INTO v8_agent_proposal_scope_reviews
+       (review_id, proposal_version_id, scope_key, decision, reason, reviewed_by_user_id)
+     VALUES ($1,$2,'initiative_promotion','approved','INI-005 race fixture',$3)`,
+    [`${id}-review`, `${id}-proposal-version`, SEED.USER_ID]
+  );
+  await pgQuery(
+    `INSERT INTO initiative_lifecycle_gate_decisions
+       (decision_id, organization_id, initiative_id, transformation_case_id, pmo_domain,
+        version, decision_status, source_digest, source_case_version, baseline_refs_json,
+        a05_proposal_version_id, a05_approval_receipt_ref, human_actor_user_id,
+        human_authority_ref, rationale, deadline_at, idempotency_key, input_digest)
+     VALUES ($1,$2,$3,$4,'GOVERNANCE_DECISION_MAKING',1,'approved',$5,1,$6::jsonb,
+             $7,$8,$9,'initiative_promotion','INI-005 approved race fixture',
+             '2026-12-31T00:00:00.000Z',$10,$11)`,
+    [id, ORG_A, initiativeId, `${id}-case`, digest,
+     JSON.stringify([`initiative:${initiativeId}:promotion`]), `${id}-proposal-version`,
+     `${id}-review`, SEED.USER_ID, `${id}-gate-idem`,
+     createHash('sha256').update(`decrace-input|${id}|approved`).digest('hex')]
+  );
   return id;
 }
 
@@ -127,6 +166,16 @@ async function getInitiative(id: string): Promise<Record<string, any> | null> {
 
 async function getDecision(id: string): Promise<Record<string, any> | null> {
   const r = await pgQuery(`SELECT * FROM decisions WHERE id = $1`, [id]);
+  return r.rows[0] ?? null;
+}
+
+async function getCurrentCanonicalDecision(initiativeId: string): Promise<Record<string, any> | null> {
+  const r = await pgQuery(
+    `SELECT * FROM initiative_lifecycle_gate_decisions
+      WHERE organization_id=$1 AND initiative_id=$2 AND pmo_domain='GOVERNANCE_DECISION_MAKING'
+      ORDER BY version DESC LIMIT 1`,
+    [ORG_A, initiativeId]
+  );
   return r.rows[0] ?? null;
 }
 
@@ -151,9 +200,33 @@ async function competingDecisionRejection(decisionId: string): Promise<void> {
   const c = pgClient();
   await c.connect();
   try {
-    await c.query(`UPDATE decisions SET status = 'rejected', decided_at = now() WHERE id = $1`, [
-      decisionId,
-    ]);
+    const current = await c.query(
+      `SELECT initiative_id, transformation_case_id, source_digest, baseline_refs_json,
+              a05_proposal_version_id, a05_approval_receipt_ref, human_actor_user_id
+         FROM initiative_lifecycle_gate_decisions WHERE decision_id=$1`, [decisionId]
+    );
+    const row = current.rows[0];
+    await c.query('BEGIN');
+    await c.query(
+      `SELECT pg_advisory_xact_lock(hashtextextended($1 || ':' || $2 || ':' || $3, 0))`,
+      [ORG_A, row.initiative_id, 'GOVERNANCE_DECISION_MAKING']
+    );
+    await c.query(
+      `INSERT INTO initiative_lifecycle_gate_decisions
+         (decision_id, organization_id, initiative_id, transformation_case_id, pmo_domain,
+          version, decision_status, source_digest, source_case_version, baseline_refs_json,
+          a05_proposal_version_id, a05_approval_receipt_ref, human_actor_user_id,
+          human_authority_ref, rationale, deadline_at, idempotency_key, input_digest,
+          supersedes_decision_id)
+       VALUES ($1,$2,$3,$4,'GOVERNANCE_DECISION_MAKING',2,'rejected',$5,1,$6::jsonb,
+               $7,$8,$9,'initiative_promotion','INI-005 competing rejection',
+               '2026-12-31T00:00:00.000Z',$10,$11,$12)`,
+      [`${decisionId}-rejected`, ORG_A, row.initiative_id, row.transformation_case_id,
+       row.source_digest, JSON.stringify(row.baseline_refs_json), row.a05_proposal_version_id,
+       row.a05_approval_receipt_ref, row.human_actor_user_id, `${decisionId}-reject-idem`,
+       createHash('sha256').update(`decrace-input|${decisionId}|rejected`).digest('hex'), decisionId]
+    );
+    await c.query('COMMIT');
   } finally {
     await c.end();
   }
@@ -164,7 +237,7 @@ async function cleanup(): Promise<void> {
   await pgQuery(`DELETE FROM decisions WHERE id LIKE $1 OR initiative_id LIKE $1`, [like]);
   await pgQuery(`DELETE FROM initiative_status_history WHERE initiative_id LIKE $1`, [like]);
   await pgQuery(`DELETE FROM initiative_history WHERE initiative_id LIKE $1`, [like]);
-  await pgQuery(`DELETE FROM initiatives WHERE id LIKE $1`, [like]);
+  // Canonical decisions are immutable and retain their governed FK chain.
 }
 
 beforeAll(async () => {
@@ -178,7 +251,7 @@ afterAll(async () => {
 }, 60_000);
 
 describe('INI-005 — GO/NO-GO decision-race TOCTOU fix', () => {
-  it('1) a competing decision rejection landing AFTER the decision read but BEFORE the pre-commit recheck IS caught: 409 GATE_DECISION_SUPERSEDED, initiative untouched, zero new audit rows', async () => {
+  it('1) a canonical rejection started after the decision read waits for the shared lock and cannot supersede the in-flight transition', async () => {
     const { executeInitiativeTransition } = await import(
       '../../server/src/services/initiative/initiativeTransitionService.js'
     );
@@ -210,46 +283,30 @@ describe('INI-005 — GO/NO-GO decision-race TOCTOU fix', () => {
     // parked inside the hook, THEN fire the competing write — deterministic,
     // no setTimeout/sleep guessing.
     await paused.promise;
-    await competingDecisionRejection(decisionId);
+    const rejectionPromise = competingDecisionRejection(decisionId);
     resume.resolve();
 
     const result = await transitionPromise;
+    await rejectionPromise;
 
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.statusCode).toBe(409);
-      expect(result.body.rule).toBe('GATE_DECISION_SUPERSEDED');
-      expect(result.body.pmoDomain).toBe('GOVERNANCE_DECISION_MAKING');
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.status).toBe('PROMOTED');
     }
 
     const row = await getInitiative(id);
-    expect(row?.status).toBe('REVIEW'); // unchanged — whole transaction rolled back
+    expect(row?.status).toBe('PROMOTED');
 
     const after = await countHistory(id);
-    expect(after).toEqual(before);
-    expect(after).toEqual({ statusHistory: 0, history: 0 });
+    expect(after.statusHistory).toBe(before.statusHistory + 1);
+    expect(after.history).toBe(before.history + 1);
 
-    const decisionRow = await getDecision(decisionId);
-    expect(decisionRow?.status).toBe('rejected'); // the competing write itself DID land
+    const decisionRow = await getCurrentCanonicalDecision(id);
+    expect(decisionRow?.decision_status).toBe('rejected');
+    expect(decisionRow?.version).toBe(2);
   });
 
-  it('2) [DOCUMENTS A KNOWN, DISCLOSED GAP — NOT A REGRESSION] a competing decision rejection landing AFTER the pre-commit recheck (between it and COMMIT) is NOT caught: the transition still succeeds on the now-superseded decision', async () => {
-    // WHY THIS IS EXPECTED, NOT A BUG: the advisory lock taken inside
-    // `hasApprovedGateDecision` only serializes THIS engine's transitions
-    // against each other. `DecisionController.ts`'s decide()/updateDecision()/
-    // etc. do not (yet) take that same lock — they run bare autocommit writes
-    // against the shared pool — so nothing stops a decision write from landing
-    // in the narrow window between the pre-commit recheck's SELECT and this
-    // transaction's COMMIT. Closing this LAST slice of the race requires
-    // `DecisionController.ts` to acquire the identical
-    // `pg_advisory_xact_lock(hashtextextended(orgId || ':' || initiativeId || ':' || pmoDomain, 0))`
-    // inside a pinned transaction of its own before writing `decisions` for a
-    // gate-relevant status change — that is out of scope for this change (see
-    // the integration-contract writeup in the handoff for this packet) because
-    // it requires editing DecisionController.ts, which this packet does not
-    // touch. DO NOT silently delete this test if it starts failing after that
-    // follow-up lands — flip the assertions (should then behave like Test 1
-    // above) and update this comment instead; a flip means the gap closed.
+  it('2) a canonical rejection committed before the transition is current and blocks promotion', async () => {
     const { executeInitiativeTransition } = await import(
       '../../server/src/services/initiative/initiativeTransitionService.js'
     );
@@ -260,37 +317,25 @@ describe('INI-005 — GO/NO-GO decision-race TOCTOU fix', () => {
       initiativeId: id,
     });
 
-    const paused = deferred<void>();
-    const resume = deferred<void>();
+    await competingDecisionRejection(decisionId);
 
-    const transitionPromise = executeInitiativeTransition({
+    const result = await executeInitiativeTransition({
       orgId: ORG_A,
       initiativeId: id,
       actorId: SEED.USER_ID,
       nextStatusInput: 'PROMOTED',
-      __testSyncHook: async (point: 'after-decision-read' | 'before-commit') => {
-        if (point === 'before-commit') {
-          paused.resolve();
-          await resume.promise;
-        }
-      },
     });
 
-    await paused.promise;
-    await competingDecisionRejection(decisionId);
-    resume.resolve();
-
-    const result = await transitionPromise;
-
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.status).toBe('PROMOTED');
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.statusCode).toBe(400);
+      expect(result.body.rule).toBe('GATE_DECISION_REQUIRED');
     }
 
     const row = await getInitiative(id);
-    expect(row?.status).toBe('PROMOTED'); // transitioned despite the now-rejected decision
+    expect(row?.status).toBe('REVIEW');
 
-    const decisionRow = await getDecision(decisionId);
-    expect(decisionRow?.status).toBe('rejected'); // the competing write did land, just too late to matter
+    const decisionRow = await getCurrentCanonicalDecision(id);
+    expect(decisionRow?.decision_status).toBe('rejected');
   });
 });

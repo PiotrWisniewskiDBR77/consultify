@@ -190,11 +190,18 @@ describe('PARITY: INTERVIEW — /api/interview/sessions (real runtime)', () => {
     expect(questionsRes.body.length).toBeGreaterThan(0);
 
     const questionId = String(questionsRes.body[0].id);
+    const expectedUpdatedAt = questionsRes.body[0].updatedAt;
+    expect(expectedUpdatedAt).toEqual(expect.any(String));
     const answerText = `${PREFIX}durable answer ${Date.now()}`;
     const saveRes = await request(interviewApp)
       .patch(`/api/interview/questions/${questionId}`)
       .set('Authorization', `Bearer ${token}`)
-      .send({ answerText, status: 'answered', notes: 'verified respondent context' });
+      .send({
+        answerText,
+        status: 'answered',
+        notes: 'verified respondent context',
+        expectedUpdatedAt,
+      });
     expect(saveRes.status).toBe(200);
     expect(saveRes.body?.id).toBe(questionId);
     expect(saveRes.body?.answerText).toBe(answerText);
@@ -243,7 +250,11 @@ describe('PARITY: INTERVIEW — /api/interview/sessions (real runtime)', () => {
     await request(interviewApp)
       .patch(`/api/interview/questions/${questionId}`)
       .set('Authorization', `Bearer ${foreignToken}`)
-      .send({ answerText: 'foreign overwrite', status: 'answered' })
+      .send({
+        answerText: 'foreign overwrite',
+        status: 'answered',
+        expectedUpdatedAt: saveRes.body.updatedAt,
+      })
       .expect(404);
 
     const ownerReadAfterAttack = await request(interviewApp)

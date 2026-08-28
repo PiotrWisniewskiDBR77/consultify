@@ -84,7 +84,7 @@ describe('ensureToolsSchema — no 42701 log spam on repeat calls', () => {
       const res1 = await request(toolsApp)
         .post('/api/tools')
         .set('Authorization', `Bearer ${token}`)
-        .send({ toolType: 'SWOT', name: `${PREFIX}session-1` });
+        .send({ toolType: 'dynamic-swot', name: `${PREFIX}session-1` });
       expect([200, 201]).toContain(res1.status);
       createdToolSessionIds.push(res1.body?.id);
 
@@ -95,7 +95,7 @@ describe('ensureToolsSchema — no 42701 log spam on repeat calls', () => {
       const res2 = await request(toolsApp)
         .post('/api/tools')
         .set('Authorization', `Bearer ${token}`)
-        .send({ toolType: 'SWOT', name: `${PREFIX}session-2` });
+        .send({ toolType: 'dynamic-swot', name: `${PREFIX}session-2` });
       expect([200, 201]).toContain(res2.status);
       createdToolSessionIds.push(res2.body?.id);
 

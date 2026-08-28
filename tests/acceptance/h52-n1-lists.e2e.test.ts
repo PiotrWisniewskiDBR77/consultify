@@ -19,6 +19,7 @@
  * Artifacts use the reversible `odbior--h52--` prefix; the probe cleans up after
  * itself (demo-data hygiene). JEDYNY plik tej pracy.
  */
+import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
@@ -29,7 +30,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { mintToken, pgClient } from './harness.js';
 import { SEED, seed } from './seed.mjs';
 
-const P = 'odbior--h52--';
+const P = `odbior--h52--${randomUUID()}--`;
 const TEAM_A = `${P}team-a`;
 const TEAM_B = `${P}team-b`;
 const TEAM_C = `${P}team-c`;
@@ -134,8 +135,9 @@ async function cleanup(): Promise<void> {
   await c.connect();
   try {
     await c.query(`DELETE FROM v8_kpi_finance_reconciliations WHERE organization_id = $1 AND kpi_id LIKE $2`, [SEED.ORG_ID, `${P}%`]);
-    await c.query(`DELETE FROM v8_roi_realization_entries WHERE entry_id LIKE $1`, [`${P}%`]);
-    await c.query(`DELETE FROM v8_kpi_definitions WHERE kpi_id LIKE $1`, [`${P}%`]);
+    // ROI-E007 makes realization rows append-only. Their KPI identities must
+    // remain with them; the whole local database is disposable and removed by
+    // the acceptance harness after the run.
     await c.query(`DELETE FROM team_members WHERE team_id LIKE $1`, [`${P}%`]);
     await c.query(`DELETE FROM teams WHERE id LIKE $1`, [`${P}%`]);
     await c.query(`DELETE FROM users WHERE id LIKE $1 AND id <> $2`, [`${P}%`, SEED.USER_ID]);

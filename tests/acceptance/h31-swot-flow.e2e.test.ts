@@ -243,6 +243,7 @@ describe('H3.1 — dynamic-swot pełny cykl e2e (real router + auth + DB + engin
       .put(`/api/tools/${sessionId}`)
       .set('Authorization', `Bearer ${token}`)
       .send({
+        expectedVersion: createRes.body.version,
         status: 'IN_PROGRESS',
         completionPercent: 40,
         confidenceAvg: 3,
@@ -401,9 +402,10 @@ describe('H3.1 — dynamic-swot pełny cykl e2e (real router + auth + DB + engin
       .put(`/api/tools/${sessionId}`)
       .set('Authorization', `Bearer ${token}`)
       .send({
+        expectedVersion: reload1Res.body.version,
         completionPercent: 100,
         confidenceAvg: 4,
-        answers: { items: reloadedItems, tensions, moves, summary },
+        answers: { items: reloadedItems, tensions, recommendedMoves: moves, summary },
       });
 
     expect(save2Res.status).toBe(200);
@@ -421,12 +423,12 @@ describe('H3.1 — dynamic-swot pełny cykl e2e (real router + auth + DB + engin
     const finalAnswers = reload2Res.body?.answers || {};
     expect(finalAnswers.items).toHaveLength(8);
     expect(finalAnswers.tensions).toHaveLength(4);
-    expect(finalAnswers.moves).toHaveLength(2);
+    expect(finalAnswers.recommendedMoves).toHaveLength(2);
     expect(finalAnswers.summary?.verdict).toBe(verdict);
     expect(finalAnswers.summary?.executiveSummary).toBe(executiveSummary);
     expect(finalAnswers.summary?.tradeoffs).toHaveLength(1);
     evidence(
-      `[h31] RELOAD 2 OK — komplet: items=${finalAnswers.items.length} tensions=${finalAnswers.tensions.length} moves=${finalAnswers.moves.length} summary.verdict="${finalAnswers.summary.verdict.slice(0, 60)}..."`
+      `[h31] RELOAD 2 OK — komplet: items=${finalAnswers.items.length} tensions=${finalAnswers.tensions.length} moves=${finalAnswers.recommendedMoves.length} summary.verdict="${finalAnswers.summary.verdict.slice(0, 60)}..."`
     );
 
     // -------------------------------------------------------------------
@@ -436,7 +438,7 @@ describe('H3.1 — dynamic-swot pełny cykl e2e (real router + auth + DB + engin
     const coveragePost = computeTensionCoverage(finalAnswers.items, finalAnswers.tensions);
     expect(coveragePost.covered.sort()).toEqual(['SO', 'ST', 'WO', 'WT']);
     const moveGatePost = validateMoveSet(
-      finalAnswers.moves,
+      finalAnswers.recommendedMoves,
       finalAnswers.items,
       finalAnswers.tensions
     );
@@ -612,7 +614,7 @@ describe('H3.1 — dynamic-swot pełny cykl e2e (real router + auth + DB + engin
           title: `${PREFIX}SWOT generated report`,
           selectedSections: ['executive-summary', 'swot-matrix', 'insights'],
         });
-      expect(promoteReport.status).toBe(200);
+      expect(promoteReport.status, JSON.stringify(promoteReport.body)).toBe(200);
       const reportId = String(promoteReport.body?.id || '');
       expect(reportId).toBeTruthy();
       createdReportIds.push(reportId);
@@ -643,7 +645,7 @@ describe('H3.1 — dynamic-swot pełny cykl e2e (real router + auth + DB + engin
       const repeatPromotion = await request(toolsApp)
         .post(`/api/tools/${sessionId}/promote`)
         .set('Authorization', `Bearer ${token}`)
-        .send({ outputType: 'report', title: `${PREFIX}ignored duplicate title` });
+        .send({ outputType: 'report', title: `${PREFIX}SWOT generated report` });
       expect(repeatPromotion.status).toBe(200);
       expect(repeatPromotion.body?.id).toBe(reportId);
       expect(repeatPromotion.body?.deduplicated).toBe(true);

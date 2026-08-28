@@ -1737,6 +1737,41 @@ export async function executeProposal(params: {
   }
 
   const currentState = row.state as ActionEnvelopeState;
+  if (currentState === 'completed') {
+    const receipt = await dbGet<{ target_module: HandoffTargetModule; result_ref: string }>(
+      `SELECT target_module, result_ref
+         FROM teresa_handoff_results
+        WHERE proposal_id = ? AND organization_id = ?
+        ORDER BY created_at DESC
+        LIMIT 1`,
+      [proposalId, organizationId],
+      { fallback: true }
+    );
+    const completedAudit = await dbGet<{ id: string }>(
+      `SELECT id
+         FROM teresa_audit_log
+        WHERE proposal_id = ? AND action = 'execution_completed'
+        ORDER BY timestamp DESC
+        LIMIT 1`,
+      [proposalId],
+      { fallback: true }
+    );
+    if (!receipt || !completedAudit) {
+      throw new TeresaCopilotError(
+        'Completed proposal is missing its durable handoff receipt or completion audit.',
+        'P08_COMPLETED_RECEIPT_MISSING',
+        409
+      );
+    }
+    return {
+      success: true,
+      proposal_id: proposalId,
+      target_module: receipt.target_module,
+      state: 'completed',
+      audit_entry_id: completedAudit.id,
+      handoff_result: { result_ref: receipt.result_ref, idempotent_replay: true },
+    };
+  }
   if (currentState !== 'approved') {
     throw new TeresaCopilotError(
       `Cannot execute proposal in state: ${currentState}. Must be approved first.`,
@@ -2182,7 +2217,13 @@ async function performHandoff(params: {
         userId
       );
     case 'notebook':
-      return handleNotebookHandoff(proposalId, organizationId, handoffContext, targetPayload);
+      return handleNotebookHandoff(
+        proposalId,
+        organizationId,
+        userId,
+        handoffContext,
+        targetPayload
+      );
     case 'interview':
       return handleInterviewHandoff(proposalId, organizationId, handoffContext, targetPayload);
     case 'excele':
@@ -2366,6 +2407,7 @@ async function handleCalendarHandoff(
 async function handleNotebookHandoff(
   proposalId: string,
   organizationId: string,
+  userId: string,
   context: TeresaHandoffContext,
   payload: Record<string, unknown>
 ): Promise<Record<string, unknown>> {
@@ -2380,6 +2422,8 @@ async function handleNotebookHandoff(
       const reminder = (nbCtx.reminder || null) as { dueAt?: string; term?: string } | null;
       const result = await create?.({
         organizationId,
+        userId,
+        owner_user_id: userId,
         title: nbCtx.title || 'Teresa handoff note',
         body: nbCtx.body_preview || '',
         source: 'teresa',

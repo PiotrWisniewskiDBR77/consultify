@@ -91,7 +91,7 @@ import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { pgClient, requireLocalDbUrl } from './harness.js';
-import { seed, SEED } from './seed.mjs';
+import { seed } from './seed.mjs';
 
 requireLocalDbUrl();
 
@@ -108,6 +108,7 @@ describe('T2 · slaService.runSlaCheck — overdue approval_assignments escalate
   const ASSIGNEE_ID = randomUUID();
   const ASSIGNMENT_ID = `odbior--t2sla--aa-${randomUUID().slice(0, 8)}`;
   const PROPOSAL_ID = `odbior--t2sla--proposal-${randomUUID().slice(0, 8)}`;
+  const ORG_ID = randomUUID();
 
   let runSlaCheck: typeof import('../../server/src/services/slaService.js').runSlaCheck;
 
@@ -118,16 +119,21 @@ describe('T2 · slaService.runSlaCheck — overdue approval_assignments escalate
     await client.connect();
     try {
       await client.query(
+        `INSERT INTO organizations (id, name, status, created_at, updated_at)
+         VALUES ($1, $2, 'active', NOW(), NOW())`,
+        [ORG_ID, `odbior--t2sla--org-${ORG_ID}`]
+      );
+      await client.query(
         `INSERT INTO users (id, organization_id, email, password, role, status, first_name, last_name)
          VALUES ($1, $2, $3, 'x', 'ADMIN', 'active', 'Odbior', 'T2SlaAdmin')
          ON CONFLICT (id) DO NOTHING`,
-        [ADMIN_ID, SEED.ORG_ID, `odbior--t2sla--admin-${ADMIN_ID}@acceptance.local`]
+        [ADMIN_ID, ORG_ID, `odbior--t2sla--admin-${ADMIN_ID}@acceptance.local`]
       );
       await client.query(
         `INSERT INTO users (id, organization_id, email, password, role, status, first_name, last_name)
          VALUES ($1, $2, $3, 'x', 'MEMBER', 'active', 'Odbior', 'T2SlaAssignee')
          ON CONFLICT (id) DO NOTHING`,
-        [ASSIGNEE_ID, SEED.ORG_ID, `odbior--t2sla--assignee-${ASSIGNEE_ID}@acceptance.local`]
+        [ASSIGNEE_ID, ORG_ID, `odbior--t2sla--assignee-${ASSIGNEE_ID}@acceptance.local`]
       );
 
       // Seed an ALREADY-OVERDUE assignment directly (sla_due_at 2h in the
@@ -139,7 +145,7 @@ describe('T2 · slaService.runSlaCheck — overdue approval_assignments escalate
         `INSERT INTO approval_assignments
            (id, org_id, proposal_id, assigned_to_user_id, status, sla_due_at, created_at)
          VALUES ($1, $2, $3, $4, 'PENDING', $5, NOW())`,
-        [ASSIGNMENT_ID, SEED.ORG_ID, PROPOSAL_ID, ASSIGNEE_ID, overdueIso]
+        [ASSIGNMENT_ID, ORG_ID, PROPOSAL_ID, ASSIGNEE_ID, overdueIso]
       );
     } finally {
       await client.end();
@@ -160,6 +166,7 @@ describe('T2 · slaService.runSlaCheck — overdue approval_assignments escalate
       await client.query(`DELETE FROM users WHERE id = ANY($1::text[])`, [
         [ADMIN_ID, ASSIGNEE_ID],
       ]);
+      await client.query(`DELETE FROM organizations WHERE id = $1`, [ORG_ID]);
     } finally {
       await client.end();
     }
@@ -248,6 +255,7 @@ describe('T2 · FINDING — SLA sweep has no assignment_kind filter (also escala
   const ASSIGNEE_ID = randomUUID();
   const ARTIFACT_ASSIGNMENT_ID = `odbior--t2sla--artifact-aa-${randomUUID().slice(0, 8)}`;
   const ARTIFACT_ID = `odbior--t2sla--artifact-${randomUUID().slice(0, 8)}`;
+  const ORG_ID = randomUUID();
 
   let runSlaCheck: typeof import('../../server/src/services/slaService.js').runSlaCheck;
 
@@ -257,16 +265,21 @@ describe('T2 · FINDING — SLA sweep has no assignment_kind filter (also escala
     await client.connect();
     try {
       await client.query(
+        `INSERT INTO organizations (id, name, status, created_at, updated_at)
+         VALUES ($1, $2, 'active', NOW(), NOW())`,
+        [ORG_ID, `odbior--t2sla--artifact-org-${ORG_ID}`]
+      );
+      await client.query(
         `INSERT INTO users (id, organization_id, email, password, role, status, first_name, last_name)
          VALUES ($1, $2, $3, 'x', 'ADMIN', 'active', 'Odbior', 'T2SlaKindAdmin')
          ON CONFLICT (id) DO NOTHING`,
-        [ADMIN_ID, SEED.ORG_ID, `odbior--t2sla--kind-admin-${ADMIN_ID}@acceptance.local`]
+        [ADMIN_ID, ORG_ID, `odbior--t2sla--kind-admin-${ADMIN_ID}@acceptance.local`]
       );
       await client.query(
         `INSERT INTO users (id, organization_id, email, password, role, status, first_name, last_name)
          VALUES ($1, $2, $3, 'x', 'MEMBER', 'active', 'Odbior', 'T2SlaKindAssignee')
          ON CONFLICT (id) DO NOTHING`,
-        [ASSIGNEE_ID, SEED.ORG_ID, `odbior--t2sla--kind-assignee-${ASSIGNEE_ID}@acceptance.local`]
+        [ASSIGNEE_ID, ORG_ID, `odbior--t2sla--kind-assignee-${ASSIGNEE_ID}@acceptance.local`]
       );
 
       const overdueIso = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
@@ -280,7 +293,7 @@ describe('T2 · FINDING — SLA sweep has no assignment_kind filter (also escala
          VALUES ($1, $2, $3, $4, 'PENDING', $5, 'artifact', 'decision', $6, NOW())`,
         [
           ARTIFACT_ASSIGNMENT_ID,
-          SEED.ORG_ID,
+          ORG_ID,
           ARTIFACT_ID, // proposal_id mirrors the artifact id, same as the real service does
           ASSIGNEE_ID,
           overdueIso,
@@ -308,12 +321,13 @@ describe('T2 · FINDING — SLA sweep has no assignment_kind filter (also escala
       await client.query(`DELETE FROM users WHERE id = ANY($1::text[])`, [
         [ADMIN_ID, ASSIGNEE_ID],
       ]);
+      await client.query(`DELETE FROM organizations WHERE id = $1`, [ORG_ID]);
     } finally {
       await client.end();
     }
   });
 
-  it('an overdue assignment_kind=artifact row is escalated by the SAME generic sweep as workqueue proposals', async () => {
+  it('leaves assignment_kind=artifact for its dedicated review SLA path', async () => {
     await runSlaCheck();
 
     const client = pgClient();
@@ -325,23 +339,15 @@ describe('T2 · FINDING — SLA sweep has no assignment_kind filter (also escala
         [ARTIFACT_ASSIGNMENT_ID]
       );
       expect(rows).toHaveLength(1);
-      // Current (undesired but real) behavior: the artifact-review row was
-      // swept and escalated exactly like a workqueue proposal would be.
       expect(rows[0].assignment_kind).toBe('artifact');
-      expect(rows[0].escalated_to_user_id).toBe(ADMIN_ID);
-      expect(rows[0].escalated_at).toBeTruthy();
+      expect(rows[0].escalated_to_user_id).toBeNull();
+      expect(rows[0].escalated_at).toBeNull();
 
       const { rows: outboxRows } = await client.query(
         `SELECT type, payload_json FROM notification_outbox WHERE payload_json LIKE $1`,
         [`%${ARTIFACT_ID}%`]
       );
-      // The notification exists, but its payload has no artifact_type/kind
-      // marker — just a bare `proposalId` that happens to be the artifact id.
-      expect(outboxRows.length).toBeGreaterThanOrEqual(1);
-      const payload = JSON.parse(outboxRows[0].payload_json);
-      expect(payload.proposalId).toBe(ARTIFACT_ID);
-      expect(payload).not.toHaveProperty('artifactType');
-      expect(payload).not.toHaveProperty('assignmentKind');
+      expect(outboxRows).toEqual([]);
     } finally {
       await client.end();
     }

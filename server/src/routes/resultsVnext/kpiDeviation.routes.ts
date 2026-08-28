@@ -102,7 +102,10 @@ import {
   listDeviationCases,
   listEffectivenessVerifications,
 } from '../../services/resultsVnext/kpi/kpiDeviationRepository.js';
-import { createRecoveryCard } from '../../services/resultsVnext/kpi/kpiRecoveryCardCommands.js';
+import {
+  createRecoveryCard,
+  getRecoveryCardByCase,
+} from '../../services/resultsVnext/kpi/kpiRecoveryCardCommands.js';
 import { CORRECTIVE_ACTION_STATUSES, type CorrectiveActionRow } from '../../services/resultsVnext/kpi/kpiDeviationTypes.js';
 import {
   AtomicWriteAggregateNotFoundError,
@@ -149,7 +152,7 @@ const ListEffectivenessVerificationsQuerySchema = z.object({
 });
 
 const CreateRecoveryCardSchema = z.object({
-  hypothesis: z.string().trim().min(1).max(10000),
+  hypothesis: z.string().trim().min(1).max(10000).optional(),
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).optional(),
   expectedImpact: z.string().trim().max(10000).optional(),
   expectedRecoveryDate: z.string().date().optional(),
@@ -331,13 +334,21 @@ router.post(
         access: await resolveAccess(req, auth),
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
-        initialPatch: {
+        initialPatch: Object.values({
           hypothesis: body.hypothesis,
           priority: body.priority,
           expectedImpact: body.expectedImpact,
           expectedRecoveryDate: body.expectedRecoveryDate,
           effectivenessCriteria: body.effectivenessCriteria,
-        },
+        }).some((value) => value !== undefined)
+          ? {
+              hypothesis: body.hypothesis,
+              priority: body.priority,
+              expectedImpact: body.expectedImpact,
+              expectedRecoveryDate: body.expectedRecoveryDate,
+              effectivenessCriteria: body.effectivenessCriteria,
+            }
+          : undefined,
       });
       res.status(outcome.outcome === 'applied' ? 201 : 200).json({
         outcome: outcome.outcome,
@@ -347,6 +358,28 @@ router.post(
       });
     } catch (err) {
       handleDeviationRouteError(res, err, 'createRecoveryCard');
+    }
+  }
+);
+
+router.get(
+  '/:caseId/recovery-card',
+  validateParams(CaseIdParamsSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const card = await getRecoveryCardByCase({
+        organizationId: auth.organizationId,
+        caseId: req.params.caseId!,
+      });
+      if (!card) {
+        res.status(404).json({ error: 'Recovery card not found', code: 'NOT_FOUND' });
+        return;
+      }
+      res.status(200).json({ card });
+    } catch (err) {
+      handleDeviationRouteError(res, err, 'getRecoveryCardByCase');
     }
   }
 );

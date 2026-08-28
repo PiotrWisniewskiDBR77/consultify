@@ -60,6 +60,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { mintToken, pgClient } from './harness.js';
 import { SEED, seed } from './seed.mjs';
+import { seedCanonicalLifecycleDecision } from './initiativeLifecycleGateFixture.js';
 
 const INIT_APPROVED = 'odbior--h16--init-approved';
 const INIT_DRAFT = 'odbior--h16--init-draft';
@@ -132,6 +133,10 @@ async function insertGoDecision(id: string, initiativeId: string): Promise<void>
        ON CONFLICT (id) DO UPDATE SET status = 'approved', deadline = EXCLUDED.deadline`,
       [id, SEED.ORG_ID, initiativeId, `odbior--h16 decision ${id}`, SEED.USER_ID, '2026-08-15T00:00:00.000Z']
     );
+    await seedCanonicalLifecycleDecision(c, {
+      decisionId: `${id}-canonical`, organizationId: SEED.ORG_ID, initiativeId,
+      actorUserId: SEED.USER_ID, pmoDomain: 'GOVERNANCE_DECISION_MAKING',
+    });
   } finally {
     await c.end();
   }
@@ -195,12 +200,7 @@ afterAll(async () => {
       INIT_DRAFT,
       INIT_SCHEDULED_GO,
     ]);
-    await c.query(`DELETE FROM initiatives WHERE id IN ($1, $2, $3)`, [
-      INIT_APPROVED,
-      INIT_DRAFT,
-      INIT_SCHEDULED_GO,
-    ]);
-    await c.query(`DELETE FROM projects WHERE id = $1`, [PROJECT_ID]);
+    // Canonical decisions are immutable and retain the fixture FK chain.
   } finally {
     await c.end();
   }
@@ -209,8 +209,8 @@ afterAll(async () => {
 describe('H1.6 — POST /api/initiatives/:id/start-execution (kanoniczny kontrakt PO fixie H16)', () => {
   it('bez tokenu → 401 (auth realnie egzekwowany na tej trasie)', async () => {
     const res = await request(app)
-      .post(`/api/initiatives/${INIT_APPROVED}/start-execution`)
-      .send({});
+      .patch(`/api/initiatives/${INIT_APPROVED}/status`)
+      .send({ status: 'EXECUTING' });
     expect(res.status).toBe(401);
   });
 
@@ -219,9 +219,9 @@ describe('H1.6 — POST /api/initiatives/:id/start-execution (kanoniczny kontrak
     expect(before?.status).toBe('DRAFT');
 
     const res = await request(app)
-      .post(`/api/initiatives/${INIT_DRAFT}/start-execution`)
+      .patch(`/api/initiatives/${INIT_DRAFT}/status`)
       .set('Authorization', `Bearer ${token}`)
-      .send({});
+      .send({ status: 'EXECUTING' });
 
     expect(res.status).toBe(400);
     expect(res.body.rule).toBe('INVALID_TRANSITION');
@@ -236,9 +236,9 @@ describe('H1.6 — POST /api/initiatives/:id/start-execution (kanoniczny kontrak
     expect(before?.status).toBe('APPROVED');
 
     const res = await request(app)
-      .post(`/api/initiatives/${INIT_APPROVED}/start-execution`)
+      .patch(`/api/initiatives/${INIT_APPROVED}/status`)
       .set('Authorization', `Bearer ${token}`)
-      .send({});
+      .send({ status: 'EXECUTING' });
 
     // PRZED fixem H16 to zwracało 200 + status EXECUTING (silent bypass —
     // skakało APPROVED->EXECUTING, pomijając SCHEDULED). PO fixie: 400.
@@ -262,12 +262,11 @@ describe('H1.6 — POST /api/initiatives/:id/start-execution (kanoniczny kontrak
     expect(before?.execution_started_at).toBeNull();
 
     const res = await request(app)
-      .post(`/api/initiatives/${INIT_SCHEDULED_GO}/start-execution`)
+      .patch(`/api/initiatives/${INIT_SCHEDULED_GO}/status`)
       .set('Authorization', `Bearer ${token}`)
-      .send({});
+      .send({ status: 'EXECUTING' });
 
     expect(res.status).toBe(200);
-    expect(res.body.newStatus).toBe('EXECUTING');
 
     const after = await getRow(INIT_SCHEDULED_GO);
     expect(after?.status).toBe('EXECUTING'); // UPPERCASE — zgodne z kanonem i summary
@@ -294,11 +293,10 @@ describe('H1.6 — POST /api/initiatives/:id/start-execution (kanoniczny kontrak
     await insertGoDecision(decisionId, initId);
 
     const start = await request(app)
-      .post(`/api/initiatives/${initId}/start-execution`)
+      .patch(`/api/initiatives/${initId}/status`)
       .set('Authorization', `Bearer ${token}`)
-      .send({});
+      .send({ status: 'EXECUTING' });
     expect(start.status).toBe(200);
-    expect(start.body.newStatus).toBe('EXECUTING');
 
     // Summary PO starcie — liczniki rosną o 1.
     const after = await request(app)
@@ -315,7 +313,7 @@ describe('H1.6 — POST /api/initiatives/:id/start-execution (kanoniczny kontrak
       await c.query(`DELETE FROM decisions WHERE id = $1`, [decisionId]);
       await c.query(`DELETE FROM initiative_status_history WHERE initiative_id = $1`, [initId]);
       await c.query(`DELETE FROM initiative_history WHERE initiative_id = $1`, [initId]);
-      await c.query(`DELETE FROM initiatives WHERE id = $1`, [initId]);
+      // The immutable canonical gate retains this disposable fixture.
     } finally {
       await c.end();
     }

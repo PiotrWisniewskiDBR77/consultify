@@ -3,11 +3,13 @@ import { createHash, randomUUID } from 'node:crypto';
 import type { PoolClient } from 'pg';
 
 import type { IDatabase } from '../../../database/IDatabase.js';
+import { acquirePgClient } from '../../../database/PostgresDatabase.js';
 import {
   buildRecoveryCardDTO,
   closeRecoveryCard as closeLegacyRecoveryCard,
   ensureRecoveryCardForCase,
   getRecoveryCardDTO,
+  progressRecoveryCard as progressLegacyRecoveryCard,
   RecoveryCardServiceError,
   updateRecoveryCard as updateLegacyRecoveryCard,
   type RecoveryCardDTO,
@@ -376,6 +378,75 @@ export async function closeRecoveryCard(
       }
     },
     buildEvent: ({ result }) => event(input, result, 'kpi.recovery_card_closed', input.expectedVersion),
+  });
+  return unwrap(outcome);
+}
+
+export async function getRecoveryCardByCase(input: {
+  organizationId: string;
+  caseId: string;
+}): Promise<RecoveryCardDTO | null> {
+  const client = await acquirePgClient();
+  try {
+    const row = await client.query<{ id: string }>(
+      `SELECT id FROM kpi_recovery_cards
+        WHERE deviation_case_id=$1 AND organization_id=$2`,
+      [input.caseId, input.organizationId]
+    );
+    if (!row.rows[0]) return null;
+    return getRecoveryCardDTO(database(client), input.organizationId, row.rows[0].id);
+  } finally {
+    client.release();
+  }
+}
+
+export async function progressRecoveryCard(
+  input: Context & {
+    cardId: string;
+    expectedVersion: number;
+    decision: 'CONTINUE' | 'ESCALATE';
+    note?: string | null;
+  }
+): Promise<AtomicCommandOutcome<RecoveryCardDTO>> {
+  const hash = fingerprint({
+    op: 'progress-card',
+    actorUserId: input.actorUserId,
+    cardId: input.cardId,
+    expectedVersion: input.expectedVersion,
+    decision: input.decision,
+    note: input.note ?? null,
+  });
+  const outcome = await executeAtomicCreate<CommandResult>({
+    organizationId: input.organizationId,
+    idempotencyKey: input.idempotencyKey,
+    preflight: async (client) => {
+      const authority = await loadCardAuthority(client, input.organizationId, input.cardId);
+      authorize(input, authority.owner_user_id, CAPABILITIES.update);
+      await assertActiveMember(client, input.organizationId, input.actorUserId);
+    },
+    validateExistingResult: validateReplay(hash),
+    applyMutation: async (client) => {
+      const authority = await loadCardAuthority(client, input.organizationId, input.cardId, true);
+      authorize(input, authority.owner_user_id, CAPABILITIES.update);
+      await assertActiveMember(client, input.organizationId, input.actorUserId);
+      const progressed = await progressLegacyRecoveryCard({
+        db: database(client),
+        orgId: input.organizationId,
+        recoveryCardId: input.cardId,
+        expectedVersion: input.expectedVersion,
+        decision: input.decision,
+        note: input.note,
+        actorUserId: input.actorUserId,
+      });
+      if (!progressed.ok) {
+        throw new AtomicWriteConflictError('Recovery card changed', 'STALE_VERSION', {
+          currentVersion: (await getRecoveryCardDTO(database(client), input.organizationId, input.cardId))?.version,
+          expectedVersion: input.expectedVersion,
+        });
+      }
+      return { card: progressed.card, requestHash: hash, deviationCaseId: authority.deviation_case_id };
+    },
+    buildEvent: ({ result }) => event(input, result, 'kpi.recovery_card_updated', input.expectedVersion),
   });
   return unwrap(outcome);
 }

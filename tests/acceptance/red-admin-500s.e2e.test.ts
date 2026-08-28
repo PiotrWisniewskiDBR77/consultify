@@ -63,9 +63,9 @@ async function seed(client: pg.Client): Promise<void> {
   );
   await client.query(
     `INSERT INTO users (id, organization_id, email, password, role, status, first_name, last_name, created_at, updated_at)
-     VALUES ($1, $2, $3, 'x', 'superadmin', 'active', 'Red', 'SA', $4, $4)
+     VALUES ($1, $2, $3, 'x', 'superadmin', 'active', 'Red', 'SA', $4, $5)
      ON CONFLICT (id) DO UPDATE SET role='superadmin'`,
-    [SA_USER, ORG, `${SA_USER}@acceptance.local`, now]
+    [SA_USER, ORG, `${SA_USER}@acceptance.local`, now, now]
   );
   await client.query(
     `INSERT INTO organization_members (id, organization_id, user_id, role, status, created_at)

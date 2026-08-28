@@ -181,10 +181,24 @@ describe('INT-04 — durable Teresa suggestion provenance', () => {
       .set('Authorization', `Bearer ${foreignToken}`);
     expect(foreignRead.status).toBe(404);
 
+    const questionRead = await request(app)
+      .get(`/api/interview/sessions/${SESSION_ID}/questions`)
+      .set('Authorization', `Bearer ${respondentToken}`);
+    expect(questionRead.status).toBe(200);
+    const expectedUpdatedAt = questionRead.body.find(
+      (question: { id: string }) => question.id === QUESTION_ID
+    )?.updatedAt;
+    expect(expectedUpdatedAt).toEqual(expect.any(String));
+
     const accepted = await request(app)
       .patch(`/api/interview/questions/${QUESTION_ID}`)
       .set('Authorization', `Bearer ${respondentToken}`)
-      .send({ answerText: FINAL_ANSWER, status: 'answered', aiSuggestionId: suggestionId });
+      .send({
+        answerText: FINAL_ANSWER,
+        status: 'answered',
+        aiSuggestionId: suggestionId,
+        expectedUpdatedAt,
+      });
     expect(accepted.status, JSON.stringify(accepted.body)).toBe(200);
 
     const replay = await request(app)
@@ -194,6 +208,7 @@ describe('INT-04 — durable Teresa suggestion provenance', () => {
         answerText: 'Replay must not win.',
         status: 'answered',
         aiSuggestionId: suggestionId,
+        expectedUpdatedAt: accepted.body.updatedAt,
       });
     expect(replay.status).toBe(409);
 

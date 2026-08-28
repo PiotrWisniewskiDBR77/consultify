@@ -127,7 +127,16 @@ describe('RED-FINAL · rewir czysty (schema-green) + pinned known exceptions', (
         for (let attempt = 0; attempt < 2; attempt++) {
           try {
             const res = await request(app).get(g.mount + p).set('Authorization', `Bearer ${tok}`);
-            last = res.status >= 500 ? { status: res.status, body: JSON.stringify(res.body).slice(0, 200) } : null;
+            const isHonestMegatrendNotConfigured =
+              g.mount === '/api/megatrends' &&
+              ['/baseline', '/radar'].includes(p) &&
+              res.status === 503 &&
+              res.body?.status === false &&
+              res.body?.type === 'not_configured' &&
+              /not yet configured/i.test(String(res.body?.userMessage));
+            last = res.status >= 500 && !isHonestMegatrendNotConfigured
+              ? { status: res.status, body: JSON.stringify(res.body).slice(0, 200) }
+              : null;
             break;
           } catch (e: any) {
             last = { status: -1, body: `THROW: ${e.message}` };
@@ -164,13 +173,16 @@ describe('RED-FINAL · rewir czysty (schema-green) + pinned known exceptions', (
     expect([200, 201]).toContain(rv.status);
   });
 
-  it('KNOWN K1 · GET /api/user/ai-preferences pinned 500 (lazy-wrapper self-import, decyzja Piotra)', async () => {
+  it('GET /api/user/ai-preferences returns an honest not-configured contract', async () => {
     const tok = mintToken();
     const app = await appFor('/api/user/ai-preferences', '../../server/src/routes/ai/ai-preferences-extended.routes.js');
     const res = await request(app).get('/api/user/ai-preferences/').set('Authorization', `Bearer ${tok}`);
-    // Udokumentowany defekt rodziny lazy-wrapperów — NIE schema-500. Pinnięte.
-    expect(res.status).toBe(500);
-    expect(res.body).toMatchObject({ error: 'Failed to load route' });
+    expect(res.status).toBe(503);
+    expect(res.body).toMatchObject({
+      status: false,
+      type: 'not_configured',
+    });
+    expect(res.body.message).toMatch(/not implemented/i);
   });
 
   it('KNOWN K2 · degraded-mode stuby zwracają świadome 503 not_configured', async () => {

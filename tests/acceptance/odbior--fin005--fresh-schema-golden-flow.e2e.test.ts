@@ -33,7 +33,7 @@ import * as XLSX from 'xlsx';
 import { mintToken } from './harness.js';
 import { SEED, seed } from './seed.mjs';
 
-const MARK = 'odbior--fin005-fresh--';
+const MARK = `odbior--fin005-fresh--${process.pid}-${Date.now()}--`;
 
 function guardedDatabaseUrl(): string {
   const raw = process.env.DATABASE_URL;
@@ -51,12 +51,24 @@ function client(): pg.Client {
 
 const PL_ROWS: Array<[string, number, number]> = [
   ['Przychody ze sprzedaży', 1_250_000, 1_100_000],
+  ['Pozostałe przychody operacyjne', 25_000, 20_000],
+  ['Zmiana stanu produktów', 10_000, 8_000],
+  ['Usługi obce', -145_000, -132_000],
+  ['Wynagrodzenia', -180_000, -165_000],
+  ['Ubezpieczenia społeczne', -38_000, -35_000],
+  ['Amortyzacja', -42_000, -39_000],
+  ['Pozostałe koszty rodzajowe', -27_000, -24_000],
   ['Koszt własny sprzedaży', -700_000, -620_000],
   ['Zysk brutto', 550_000, 480_000],
   ['Koszty operacyjne', -300_000, -260_000],
+  ['EBITDA', 242_000, 214_000],
   ['EBIT', 200_000, 175_000],
+  ['Przychody finansowe', 6_000, 5_000],
   ['Koszty finansowe', -12_000, -10_000],
+  ['Zysk przed opodatkowaniem', 194_000, 170_000],
   ['Podatek dochodowy', -38_000, -33_000],
+  ['Zysk z działalności kontynuowanej', 156_000, 137_000],
+  ['Wynik na działalności zaniechanej', 6_000, 5_000],
   ['Zysk netto', 162_000, 142_000],
 ];
 
@@ -98,6 +110,15 @@ async function cleanup(): Promise<void> {
     const packIds = new Set<string>();
     for (const { id, statement_pack_id } of statements.rows) {
       if (statement_pack_id) packIds.add(statement_pack_id);
+      await db.query(
+        `DELETE FROM finance_statement_confirmation_receipts WHERE statement_id = $1`,
+        [id]
+      );
+      await db.query(
+        `DELETE FROM finance_statement_manual_mapping_decisions WHERE statement_id = $1`,
+        [id]
+      );
+      await db.query(`DELETE FROM finance_statement_source_receipts WHERE statement_id = $1`, [id]);
       await db.query(
         `DELETE FROM financial_statement_value_evidence WHERE statement_value_id IN (SELECT id FROM financial_statement_values WHERE statement_id = $1)`,
         [id]
@@ -143,15 +164,36 @@ async function runGoldenFlow(app: Express, token: string, fixture: Buffer, filen
   expect(statementId).toBeTruthy();
   expect(upload.body.detection.statementType).toBe('P&L');
 
-  await request(app)
+  const detection = await request(app)
     .post(`/api/finance-statements/${statementId}/detect`)
     .set('Authorization', `Bearer ${token}`)
+    .send({
+      statementType: 'P&L',
+      periodLabel: 'FY2025',
+      periodStart: '2025-01-01',
+      periodEnd: '2025-12-31',
+      currency: 'PLN',
+      scaling: 'units',
+    })
     .expect(200);
+  expect(detection.body.detection).toMatchObject({
+    statementType: 'P&L',
+    periodLabel: 'FY2025',
+    currency: 'PLN',
+    scaling: 'units',
+  });
 
   const extract = await request(app)
     .post(`/api/finance-statements/${statementId}/extract`)
     .set('Authorization', `Bearer ${token}`)
-    .expect(200);
+    .send({
+      statementTypes: ['P&L'],
+      periodLabel: 'FY2025',
+      currency: 'PLN',
+      scaling: 'units',
+      entityName: 'FIN-005 acceptance entity',
+    });
+  expect(extract.status, JSON.stringify(extract.body)).toBe(200);
   expect(extract.body.lines.length).toBeGreaterThanOrEqual(3);
 
   const mapping = await request(app)
@@ -172,23 +214,45 @@ async function runGoldenFlow(app: Express, token: string, fixture: Buffer, filen
     isNonFinancial: Boolean(line.isNonFinancial),
   }));
 
-  await request(app)
+  const savedValues = await request(app)
     .put(`/api/finance-statements/${statementId}/values`)
     .set('Authorization', `Bearer ${token}`)
     .send({ values })
     .expect(200);
+  expect(savedValues.body.valuesVersion).toEqual(expect.any(Number));
 
   const validation = await request(app)
     .post(`/api/finance-statements/${statementId}/validate`)
     .set('Authorization', `Bearer ${token}`)
     .expect(200);
   expect(['pass', 'warnings']).toContain(validation.body.validation.status);
-  expect(validation.body.readiness.isReady).toBe(true);
+  expect(validation.body.readiness.isReady, JSON.stringify(validation.body)).toBe(true);
 
-  await request(app)
-    .post(`/api/finance-statements/${statementId}/confirm`)
+  const versionReadback = client();
+  await versionReadback.connect();
+  const currentVersion = await versionReadback.query(
+    `SELECT values_version FROM financial_statements WHERE id = $1 AND organization_id = $2`,
+    [statementId, SEED.ORG_ID]
+  );
+  await versionReadback.end();
+  expect(currentVersion.rows).toHaveLength(1);
+  expect(currentVersion.rows[0].values_version).toEqual(expect.any(Number));
+
+  const sourceReceipt = await request(app)
+    .get(`/api/finance-statements/${statementId}/source-receipt`)
     .set('Authorization', `Bearer ${token}`)
     .expect(200);
+  expect(sourceReceipt.body.receipt.receipt_id).toEqual(expect.any(String));
+
+  const confirmation = await request(app)
+    .post(`/api/finance-statements/${statementId}/confirm`)
+    .set('Authorization', `Bearer ${token}`)
+    .set('Idempotency-Key', `${MARK}confirm-${filename}`)
+    .send({
+      expectedValuesVersion: currentVersion.rows[0].values_version,
+      sourceReceiptId: sourceReceipt.body.receipt.receipt_id,
+    });
+  expect(confirmation.status, JSON.stringify(confirmation.body)).toBe(200);
 
   const readBack = await request(app)
     .get(`/api/finance-statements/${statementId}`)
@@ -213,7 +277,9 @@ describe('FIN-005 fresh-schema bootstrap — sanctioned migration path alone is 
   });
 
   afterAll(async () => {
-    await cleanup();
+    // The current governed path intentionally writes immutable source and
+    // confirmation receipts. This suite runs only on its disposable local DB;
+    // do not weaken append-only governance merely to delete its evidence.
   });
 
   it('XLSX golden flow works on a database that only ever ran the sanctioned migration path', async () => {

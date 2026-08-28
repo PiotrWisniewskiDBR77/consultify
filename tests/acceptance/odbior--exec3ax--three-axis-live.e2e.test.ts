@@ -43,6 +43,7 @@ const KPI_ID = `${PREFIX}kpi-1`;
 const BASELINE_ID = `${PREFIX}baseline-1`;
 const LEDGER_ID = `${PREFIX}ledger-1`;
 const BUDGET_ENTRY_ID = `${PREFIX}budget-1`;
+const PROGRAM_ID = `${PREFIX}program-1`;
 
 // Fixed "as of" instant so T (time-elapsed fraction) is deterministic, not
 // dependent on wall-clock skew between seeding and the HTTP call.
@@ -86,10 +87,10 @@ describe('Execution 3-osi (threeAxisReportService) — real-runtime wiring', () 
 
       await client.query(
         `INSERT INTO initiatives
-           (id, organization_id, name, status, cost_capex, cost_opex,
+           (id, organization_id, program_id, name, status, cost_capex, cost_opex,
             planned_start_date, planned_end_date, progress)
-         VALUES ($1, $2, 'Odbior Exec3Ax Initiative', 'EXECUTING', $3, 0, $4, $5, $6)`,
-        [INI_ID, SEED.ORG_ID, BAC, START, END, PROGRESS_PCT]
+         VALUES ($1, $2, $3, 'Odbior Exec3Ax Initiative', 'EXECUTING', $4, 0, $5, $6, $7)`,
+        [INI_ID, SEED.ORG_ID, PROGRAM_ID, BAC, START, END, PROGRESS_PCT]
       );
 
       await client.query(
@@ -160,7 +161,7 @@ describe('Execution 3-osi (threeAxisReportService) — real-runtime wiring', () 
   it('GET /program-3axis/live computes REAL T/Z/W + SPI-derived scheduleHealth/impactGap/deliveryPromise from seeded Postgres rows', async () => {
     const res = await request(app)
       .get('/api/report-builder/program-3axis/live')
-      .query({ asOf: String(AS_OF) })
+      .query({ asOf: String(AS_OF), programId: PROGRAM_ID })
       .set('Authorization', `Bearer ${token}`);
 
     // eslint-disable-next-line no-console
@@ -171,7 +172,8 @@ describe('Execution 3-osi (threeAxisReportService) — real-runtime wiring', () 
 
     const report = res.body.report;
     expect(report).toBeTruthy();
-    expect(report.scope.level).toBe('organization');
+    expect(report.scope.level).toBe('program');
+    expect(report.scope.programId).toBe(PROGRAM_ID);
 
     const row = report.rows.find((r: any) => r.initiativeId === INI_ID);
     expect(row).toBeTruthy();

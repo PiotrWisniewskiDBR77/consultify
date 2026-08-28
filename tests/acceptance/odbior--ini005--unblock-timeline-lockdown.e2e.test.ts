@@ -32,6 +32,7 @@ import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { mintToken, pgClient } from './harness.js';
+import { seedCanonicalLifecycleDecision } from './initiativeLifecycleGateFixture.js';
 import { SEED, seed } from './seed.mjs';
 
 const PREFIX = 'odbior--ini005--unblk--';
@@ -68,6 +69,14 @@ async function insertDecision(id: string, initiativeId: string, status: string):
        ON CONFLICT (id) DO UPDATE SET status = EXCLUDED.status`,
       [id, ORG_A, initiativeId, `${PREFIX}decision ${id}`, SEED.USER_ID, status]
     );
+    await seedCanonicalLifecycleDecision(c, {
+      decisionId: `${id}-canonical`,
+      organizationId: ORG_A,
+      initiativeId,
+      actorUserId: SEED.USER_ID,
+      pmoDomain: 'GOVERNANCE_DECISION_MAKING',
+      decisionStatus: status === 'approved' ? 'approved' : 'rejected',
+    });
   });
 }
 
@@ -173,7 +182,7 @@ afterAll(async () => {
     await c.query(`DELETE FROM initiative_history WHERE initiative_id LIKE $1`, [`${PREFIX}%`]);
     await c.query(`DELETE FROM decisions WHERE initiative_id LIKE $1`, [`${PREFIX}%`]);
     await c.query(`DELETE FROM execution_audit_log WHERE initiative_id LIKE $1`, [`${PREFIX}%`]);
-    await c.query(`DELETE FROM initiatives WHERE id LIKE $1`, [`${PREFIX}%`]);
+    // Canonical decisions are immutable and retain their fixture FK chain.
     await c.query(`DELETE FROM project_members WHERE id LIKE $1`, [`${PREFIX}%`]);
     await c.query(`DELETE FROM organization_members WHERE id LIKE $1`, [`${PREFIX}%`]);
     await c.query(`DELETE FROM users WHERE id LIKE $1`, [`${PREFIX}%`]);
@@ -181,19 +190,18 @@ afterAll(async () => {
   });
 });
 
-describe('INI-005 — unblockInitiative (POST /:id/unblock)', () => {
+describe('INI-005 — canonical UNBLOCK through PATCH /:id/status', () => {
   it('BLOCKED + current approved GO decision + PROJECT_SPONSOR role → 200 EXECUTING with audit rows', async () => {
     const id = `${PREFIX}unblock-happy`;
     await insertInitiative(id, 'BLOCKED');
     await insertDecision(`${id}-decision`, id, 'approved');
 
     const res = await request(unblockApp)
-      .post(`/api/initiatives/${id}/unblock`)
+      .patch(`/api/initiatives/${id}/status`)
       .set('Authorization', `Bearer ${sponsorToken}`)
-      .send({ reason: 'rework complete' });
+      .send({ status: 'EXECUTING', reason: 'rework complete' });
 
     expect(res.status).toBe(200);
-    expect(res.body.newStatus).toBe('EXECUTING');
     const row = await getInitiative(id);
     expect(row?.status).toBe('EXECUTING');
     expect(await countStatusHistory(id)).toBe(1);
@@ -203,28 +211,27 @@ describe('INI-005 — unblockInitiative (POST /:id/unblock)', () => {
     const id = `${PREFIX}unblock-nodecision`;
     await insertInitiative(id, 'BLOCKED');
     const res = await request(unblockApp)
-      .post(`/api/initiatives/${id}/unblock`)
+      .patch(`/api/initiatives/${id}/status`)
       .set('Authorization', `Bearer ${sponsorToken}`)
-      .send({});
+      .send({ status: 'EXECUTING' });
     expect(res.status).toBe(400);
     expect(res.body.rule).toBe('GATE_DECISION_REQUIRED');
     const row = await getInitiative(id);
     expect(row?.status).toBe('BLOCKED');
   });
 
-  it('SCHEDULED (not BLOCKED) → 400 UNEXPECTED_CURRENT_STATUS — old bypass let ANY status jump straight to EXECUTING', async () => {
+  it('SCHEDULED uses the canonical START transition, not a separate unblock bypass', async () => {
     const id = `${PREFIX}unblock-notblocked`;
     await insertInitiative(id, 'SCHEDULED');
     await insertDecision(`${id}-decision`, id, 'approved');
     const res = await request(unblockApp)
-      .post(`/api/initiatives/${id}/unblock`)
+      .patch(`/api/initiatives/${id}/status`)
       .set('Authorization', `Bearer ${sponsorToken}`)
-      .send({});
-    expect(res.status).toBe(400);
-    expect(res.body.rule).toBe('UNEXPECTED_CURRENT_STATUS');
+      .send({ status: 'EXECUTING' });
+    expect(res.status).toBe(200);
     const row = await getInitiative(id);
-    expect(row?.status).toBe('SCHEDULED');
-    expect(await countStatusHistory(id)).toBe(0);
+    expect(row?.status).toBe('EXECUTING');
+    expect(await countStatusHistory(id)).toBe(1);
   });
 });
 

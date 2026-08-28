@@ -121,6 +121,7 @@ describe('FIN-03/FIN-04 — Investment Case + Scenario/Baseline lifecycle (real 
     const { requireV8OrgContext, attachV8Context } =
       await import('../../server/src/middleware/v8Auth.middleware.js');
     const financeRouter = (await import('../../server/src/routes/v8/finance.routes.js')).default;
+    const financeV2Router = (await import('../../server/src/routes/v8/finance-v2/index.js')).default;
     expressApp.use(
       '/api/v8/finance',
       verifyToken as any,
@@ -128,11 +129,57 @@ describe('FIN-03/FIN-04 — Investment Case + Scenario/Baseline lifecycle (real 
       attachV8Context as any,
       financeRouter as unknown as express.Router
     );
+    expressApp.use(
+      '/api/v8/finance-v2',
+      verifyToken as any,
+      requireV8OrgContext as any,
+      attachV8Context as any,
+      financeV2Router as unknown as express.Router
+    );
     app = expressApp;
 
     tokenA = mintTokenFor(USER_A, ORG_A, EMAIL_A, 'ADMIN');
     tokenB = mintTokenFor(USER_B, ORG_B, EMAIL_B, 'ADMIN');
   });
+
+  async function createReviewableCanonicalModel() {
+    const service = await import(
+      '../../server/src/services/finance/canonical/artifactVersionService.js'
+    );
+    const created = await service.createArtifact({
+      organizationId: ORG_A,
+      artifactType: 'HISTORICAL_ANALYSIS',
+      createdBy: USER_A,
+    });
+    const artifactId = created.artifact.artifact_id;
+    const businessVersionId = created.businessVersion.business_version_id;
+    let version = created.businessVersion.version;
+    const submitted = await service.transition({
+      organizationId: ORG_A,
+      businessVersionId,
+      action: 'submit_for_review',
+      actorId: USER_A,
+      role: 'preparer',
+      expectedVersion: version,
+    });
+    if (!submitted.ok) throw new Error(`submit_for_review failed: ${submitted.code}`);
+    version = submitted.businessVersion.version;
+    const review = await service.transition({
+      organizationId: ORG_A,
+      businessVersionId,
+      action: 'start_review',
+      actorId: USER_A,
+      role: 'approver',
+      expectedVersion: version,
+    });
+    if (!review.ok) throw new Error(`start_review failed: ${review.code}`);
+    version = review.businessVersion.version;
+    await client.query(
+      `UPDATE finance_business_versions SET freshness='CURRENT' WHERE business_version_id=$1`,
+      [businessVersionId]
+    );
+    return { artifactId, businessVersionId, version };
+  }
 
   afterAll(async () => {
     if (!client) return;
@@ -158,7 +205,7 @@ describe('FIN-03/FIN-04 — Investment Case + Scenario/Baseline lifecycle (real 
     await client.query(`DELETE FROM financial_models WHERE organization_id LIKE $1`, [`${P}%`]);
     await client.query(`DELETE FROM organization_members WHERE user_id LIKE $1`, [`${P}%`]);
     await client.query(`DELETE FROM users WHERE id LIKE $1`, [`${P}%`]);
-    await client.query(`DELETE FROM organizations WHERE id LIKE $1`, [`${P}%`]);
+    // Canonical Finance lifecycle rows are append-only and retain the org.
     await client.end();
   });
 
@@ -404,121 +451,72 @@ describe('FIN-03/FIN-04 — Investment Case + Scenario/Baseline lifecycle (real 
   });
 
   it('test 4b: retried approve (save version) with the same Idempotency-Key does not create a duplicate version row', async () => {
-    const createRes = await request(app)
-      .post('/api/v8/finance/models')
-      .set('Authorization', `Bearer ${tokenA}`)
-      .send({ name: `${P}idem-approve-model`, startDate: '2022-06-01' });
-    const modelId = createRes.body.data.model.id;
+    const { artifactId, businessVersionId, version } = await createReviewableCanonicalModel();
 
     const idemKey = `${P}idem-approve-1`;
     const first = await request(app)
-      .post(`/api/v8/finance/models/${modelId}/approve`)
+      .post(`/api/v8/finance-v2/models/${artifactId}/approve`)
       .set('Authorization', `Bearer ${tokenA}`)
-      .send({ idempotencyKey: idemKey });
+      .send({ idempotencyKey: idemKey, expectedVersion: version });
     expect(first.status).toBe(200);
 
     const retry = await request(app)
-      .post(`/api/v8/finance/models/${modelId}/approve`)
+      .post(`/api/v8/finance-v2/models/${artifactId}/approve`)
       .set('Authorization', `Bearer ${tokenA}`)
-      .send({ idempotencyKey: idemKey });
+      .send({ idempotencyKey: idemKey, expectedVersion: version });
     expect(retry.status).toBe(200);
-    expect(retry.body.data.idempotentReplay).toBe(true);
+    expect(retry.body.idempotentReplay).toBe(true);
 
-    const versions = await client.query(
-      `SELECT version FROM financial_model_versions WHERE model_id=$1`,
-      [modelId]
+    const approvals = await client.query(
+      `SELECT COUNT(*)::int AS c FROM artifact_lifecycle_events
+        WHERE business_version_id=$1 AND action='APPROVE'`,
+      [businessVersionId]
     );
-    expect(versions.rows.length).toBe(1); // exactly one version row, not two
+    expect(approvals.rows[0].c).toBe(1);
   });
 
   it('test 4b-concurrent: Promise.all approve with one key creates one version and replays the winner', async () => {
-    const createRes = await request(app)
-      .post('/api/v8/finance/models')
-      .set('Authorization', `Bearer ${tokenA}`)
-      .send({ name: `${P}idem-concurrent-approve`, startDate: '2022-07-01' });
-    const modelId = createRes.body.data.model.id;
+    const { artifactId, businessVersionId, version } = await createReviewableCanonicalModel();
     const idemKey = `${P}idem-approve-concurrent`;
     const approve = () =>
       request(app)
-        .post(`/api/v8/finance/models/${modelId}/approve`)
+        .post(`/api/v8/finance-v2/models/${artifactId}/approve`)
         .set('Authorization', `Bearer ${tokenA}`)
-        .send({ idempotencyKey: idemKey });
+        .send({ idempotencyKey: idemKey, expectedVersion: version });
 
     const [a, b] = await Promise.all([approve(), approve()]);
     expect(a.status).toBe(200);
     expect(b.status).toBe(200);
-    expect([a.body.data.idempotentReplay, b.body.data.idempotentReplay]).toContain(true);
-    const versions = await client.query(
-      `SELECT version FROM financial_model_versions WHERE model_id=$1`,
-      [modelId]
+    expect([a.body.idempotentReplay, b.body.idempotentReplay]).toContain(true);
+    const approvals = await client.query(
+      `SELECT COUNT(*)::int AS c FROM artifact_lifecycle_events
+        WHERE business_version_id=$1 AND action='APPROVE'`,
+      [businessVersionId]
     );
-    expect(versions.rows).toHaveLength(1);
+    expect(approvals.rows[0].c).toBe(1);
   });
 
   // ═══════════════ TEST 5: stale-version / optimistic concurrency ═══════════════
-  it('test 5: a stale expectedVersion is rejected 409 VERSION_CONFLICT on both PUT and approve, never overwrites', async () => {
-    const createRes = await request(app)
-      .post('/api/v8/finance/models')
-      .set('Authorization', `Bearer ${tokenA}`)
-      .send({ name: `${P}stale-version-model`, startDate: '2023-01-01' });
-    const modelId = createRes.body.data.model.id;
-    const initial = await client.query(`SELECT version FROM financial_models WHERE id=$1`, [
-      modelId,
-    ]);
-    const v0 = Number(initial.rows[0].version); // 1
-
-    // approve() is the ONLY write path that bumps `version` (updateModel's
-    // PUT is a metadata write and deliberately does not — see updateModel's
-    // doc comment). Bump it once here so v0 becomes genuinely stale.
-    const approveRes = await request(app)
-      .post(`/api/v8/finance/models/${modelId}/approve`)
-      .set('Authorization', `Bearer ${tokenA}`)
-      .send({});
-    expect(approveRes.status).toBe(200);
-    const afterApprove = await client.query(`SELECT version FROM financial_models WHERE id=$1`, [
-      modelId,
-    ]);
-    const v1 = Number(afterApprove.rows[0].version);
-    expect(v1).toBe(v0 + 1);
-
-    // PUT with the now-stale v0 is rejected — does not overwrite.
-    const stalePut = await request(app)
-      .put(`/api/v8/finance/models/${modelId}`)
-      .set('Authorization', `Bearer ${tokenA}`)
-      .send({ name: `${P}stale-version-model-LOSER`, expectedVersion: v0 });
-    expect(stalePut.status).toBe(409);
-    expect(stalePut.body.code).toBe('VERSION_CONFLICT');
-    expect(stalePut.body.serverVersion).toBe(v1);
-
-    // PUT with the CORRECT current version succeeds.
-    const correctPut = await request(app)
-      .put(`/api/v8/finance/models/${modelId}`)
-      .set('Authorization', `Bearer ${tokenA}`)
-      .send({ name: `${P}stale-version-model-WINNER`, expectedVersion: v1 });
-    expect(correctPut.status).toBe(200);
-
-    const row = await client.query(`SELECT name FROM financial_models WHERE id=$1`, [modelId]);
-    expect(row.rows[0].name).toBe(`${P}stale-version-model-WINNER`); // never overwritten by the stale loser
-
-    // Same invariant on a second approve(): a stale expectedVersion is
-    // rejected, a correct one succeeds and bumps the version again.
+  it('test 5: canonical approve rejects stale expectedVersion and accepts the current version', async () => {
+    const { artifactId, businessVersionId, version } = await createReviewableCanonicalModel();
     const staleApprove = await request(app)
-      .post(`/api/v8/finance/models/${modelId}/approve`)
+      .post(`/api/v8/finance-v2/models/${artifactId}/approve`)
       .set('Authorization', `Bearer ${tokenA}`)
-      .send({ expectedVersion: v0 });
+      .send({ expectedVersion: version - 1 });
     expect(staleApprove.status).toBe(409);
     expect(staleApprove.body.code).toBe('VERSION_CONFLICT');
 
     const correctApprove = await request(app)
-      .post(`/api/v8/finance/models/${modelId}/approve`)
+      .post(`/api/v8/finance-v2/models/${artifactId}/approve`)
       .set('Authorization', `Bearer ${tokenA}`)
-      .send({ expectedVersion: v1 });
+      .send({ expectedVersion: version });
     expect(correctApprove.status).toBe(200);
-    const afterSecondApprove = await client.query(
-      `SELECT version FROM financial_models WHERE id=$1`,
-      [modelId]
+    const afterApprove = await client.query(
+      `SELECT version, status FROM finance_business_versions WHERE business_version_id=$1`,
+      [businessVersionId]
     );
-    expect(Number(afterSecondApprove.rows[0].version)).toBe(v1 + 1);
+    expect(Number(afterApprove.rows[0].version)).toBe(version + 1);
+    expect(afterApprove.rows[0].status).toBe('APPROVED');
   });
 
   // ═══════════════ TEST 6: cross-tenant rejection ═══════════════
