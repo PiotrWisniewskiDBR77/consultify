@@ -325,3 +325,42 @@ Twierdzenie „`pr-gate` ma teraz `always()`" — zapisane w §A (linia: „`pr-
 Zabezpieczenie (`always() &&` dopisane do warunku `pr-gate`) zostało realnie dodane dopiero w osobnej naprawie FIX-1, commit `f5a45432deaf7945853949f06f74653dcbed6210` na gałęzi `day58-fixes-20260828`.
 
 Warto odnotować: autor tego raportu **sam** zapisał w §11 „TWIERDZENIA NIEZWERYFIKOWANE" pozycję „Zachowanie realnego runnera GitHuba przy `needs` i `if` bez `always()`" — czyli świadomie oznaczył, że nie sprawdził, jak `needs` i `if` bez `always()` zachowują się na realnym runnerze. Mimo to w dwóch innych miejscach tego samego dokumentu (§A i §14) ogłosił, jako fakt dokonany, że `pr-gate` „ma teraz `always()`" — twierdzenie sprzeczne zarówno z własną niepewnością zapisaną obok, jak i ze stanem kodu w chwili pisania. To ma zostać w dokumencie jako ostrzeżenie: wpisanie czegoś do listy niezweryfikowanych nie zwalnia z obowiązku niepisania tej samej rzeczy jako faktu gdzie indziej w tym samym raporcie.
+
+## POZYCJE DO AKCEPTU WŁAŚCICIELA — zmiany zachowania przemycone w dyżurze typecheckowym (nadzorca, 2026-08-28)
+
+Odbiór adwersaryjny wykrył, że commit `f2574b8c1f` (§B.1, „clear the typecheck gate outside other duties' territory") — pod pretekstem naprawy typów TSC — wniósł dwie zmiany ZACHOWANIA dla użytkownika, nie tylko zmiany typów. Instrukcja tej naprawy zakazuje ich dotykania w tym dyżurze (wymagają osobnego akceptu wzrokowego właściciela na zrzutach, zgodnie z regułą UI §7 z `CLAUDE.md`). Poniżej dokładny opis obu, bez modyfikacji kodu — do decyzji Piotra.
+
+### 1. `src/components/Initiatives/InitiativesHub.tsx:1251-1252`
+
+Funkcja `handlePriorityFilterChange` buduje chip aktywnego filtra "priority" dodawany do `activeFilters`. PRZED commitem `f2574b8c1f` chip miał tylko `id` i `label`. Commit dopisał dwa nowe pola do obiektu chipa:
+
+```
+column: 'priority',
+value,
+```
+
+Co to zmienia dla użytkownika: sam chip nadal wygląda identycznie w UI (label bez zmian) — ale teraz niesie dodatkowe metadane (`column`, `value`), których wcześniej nie miał. Jeśli którykolwiek konsument `activeFilters` (np. logika usuwania/edycji chipa, serializacja stanu filtrów, telemetria) czyta te pola, zacznie dostawać realne wartości zamiast `undefined` — może to zmienić zachowanie przy kliknięciu „x" na chipie, przy zapisie widoku, albo przy dowolnej innej ścieżce, która wcześniej cicho failowała lub pomijała ten chip z powodu brakujących pól. Nie zweryfikowano, czy taki konsument istnieje i jak dokładnie się zachowa — to należy sprawdzić przed akceptem.
+
+### 2. `src/components/ResultsVNext/ResultsSearchRegistry.tsx:208-217`
+
+Prop `actions` przekazywany do komponentu podglądu (preview pane) dla wyniku wyszukiwania Results. PRZED commitem `f2574b8c1f`:
+
+```
+actions: [
+  { id: 'open', label: 'Otwórz'/'Open', onClick: () => navigate(selected.href) },
+],
+```
+
+PO commicie:
+
+```
+actions: {
+  informational: [
+    { id: 'open', variant: 'neutral', label: 'Otwórz'/'Open', onClick: () => navigate(selected.href) },
+  ],
+},
+```
+
+Co to zmienia dla użytkownika: kształt propa zmienił się z płaskiej tablicy na obiekt z kluczem `informational` (dopasowanie do kontraktu `StandardPreviewActions`), a przycisk „Otwórz" dostał jawny `variant: 'neutral'`. To może zmienić: (a) gdzie i jak przycisk „Otwórz" renderuje się w stopce podglądu (inna kategoria akcji = inne miejsce/styl wg kanonu `StandardPreviewActions`, patrz `consultify-preview`), (b) czy przycisk dostaje inny wygląd wizualny niż miał wcześniej (neutral vs. domyślny). Commit najprawdopodobniej naprawiał realny błąd typu (poprzedni kształt nie pasował do kontraktu komponentu), więc stary kod mógł już renderować się niepoprawnie lub wcale — ale to wciąż zmiana widocznego zachowania ekranu preview, więc wymaga odbioru wzrokowego (zrzut PRZED/PO), nie tylko przejścia typecheck.
+
+**Żadna z tych dwóch zmian nie została cofnięta ani zmodyfikowana w ramach FIX-1..FIX-4** — zgodnie z instrukcją, zostały tylko opisane tutaj do akceptu.
