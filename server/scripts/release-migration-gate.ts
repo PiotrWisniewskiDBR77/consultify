@@ -137,7 +137,26 @@ async function collectFindings(pool: Pool, migrationsDir: string): Promise<GateF
     const tp = await pool.query(`SELECT filename FROM tp_migration_history`);
     const tpSet = new Set<string>(tp.rows.map((r: any) => String(r.filename)));
     const tpPending = onDisk.filter((f) => isRuntimeMigrationFile(f) && !tpSet.has(f));
-    add('tp_chain_no_pending', tpPending.length === 0, tpPending.length === 0 ? 'runtime ledger complete' : `pending=${tpPending.length}`);
+    // FIX 2026-08-28: this check used to FAIL on pending rows, which made the gate
+    // structurally unable to pass any release that ADDS runtime migrations to an
+    // environment whose app has already booted once (the ledger exists, so the
+    // `else` branch below never applies, and the new files are pending by definition
+    // because only boot applies them). It blocked five consecutive staging deploys.
+    //
+    // The runtime chain is applied by DatabaseInitializer AT BOOT and enforced by
+    // startup/databaseReadiness, which refuses to serve traffic when it does not
+    // converge. Requiring convergence BEFORE the boot that performs it is a
+    // contradiction, not a safeguard — the real gate is readiness, and it stays armed.
+    //
+    // Pending is therefore reported, never fatal. A pending count that does NOT drop
+    // after deploy is a readiness failure and shows up there.
+    add(
+      'tp_chain_no_pending',
+      true,
+      tpPending.length === 0
+        ? 'runtime ledger complete'
+        : `pending=${tpPending.length} (applied at boot by DatabaseInitializer; enforced by readiness, not by this pre-deploy gate)`
+    );
   } else {
     add('tp_chain_no_pending', true, 'tp_migration_history not yet created (expected pre-deploy; enforced by readiness at boot)');
   }
