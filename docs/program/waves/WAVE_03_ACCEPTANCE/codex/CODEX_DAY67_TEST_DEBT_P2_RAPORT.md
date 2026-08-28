@@ -111,3 +111,43 @@ Commity drugiej samopoprawy: `4634fe69eb`, `f616691cdb`, `a7e4085014`, `d041d2a4
 - marker przodkiem: TAK; produkt/migracje/setup/helpers/`__mocks__`/Vitest config bez zmian;
 - finalnie: 41 PASS / 8 FAIL; naprawialny dług testowy P2 ZROBIONE; B9 `stub`, `NOT_AUTHORIZED`;
 - status: `PARTIAL`.
+
+## Finalizacja integratora — 2026-08-28
+
+Status P2: **ZROBIONE**.
+
+Integrator domknął techniczny ogon bez ponownego przekazywania dyżuru. Po
+naprawach produktu, schematu i kontraktów pozostały dwa problemy inwentarza:
+
+1. `tests/unit/backend/subscriptionAnalyticsService.test.ts` był testem
+   nieistniejącego monolitu. Historia repo zawiera wcześniejsze, jawne usunięcie
+   tego pliku w `60689129cf` z powodu zastąpienia architektury. Stara gałąź P2
+   omyłkowo go wskrzesiła. Test usunięto ponownie; aktualny modularny kontrakt
+   `tests/unit/backend/services/subscriptionAnalyticsService.test.ts` ma **5/5
+   PASS**.
+2. `partner-payouts-auth.test.ts` wykonywał nieobjęty zakresem trwały guard
+   cutoveru przeciwko bazie wskazanej w środowisku i kończył się 503 przed trasą
+   podlegającą testowi. Guard pozostaje w łańcuchu routera, ale w tym skupionym
+   teście jego warstwę persistence zastąpiono no-op middleware; właściwy kontrakt
+   rozpoznania organizacji partnera ma **2/2 PASS**.
+
+Końcowy pełny regres literalnej listy P2 z mapy:
+
+- mapa: 48 pozycji;
+- istniejące, obowiązujące pliki: 47;
+- historycznie usunięty kontrakt monolitu: 1;
+- wynik: **43 pliki PASS, 4 pliki SKIP zgodnie z własnymi bramkami środowiskowymi,
+  0 plików FAIL**;
+- testy: **407 PASS, 140 SKIP, 0 FAIL**;
+- retry: `--retry=0`;
+- zielone→czerwone: 0.
+
+Pełny log: `/private/tmp/p2-full-final.log`.
+
+### Granice dowodu końcowego
+
+- Cztery pliki z warunkowym SKIP nie są przedstawiane jako wykonane testy DB;
+  ich bramki środowiskowe pozostały nienaruszone.
+- Kompilacje produkcyjne, pełny wspólny regres P2+P3 i końcowy `diff --check`
+  są wykonywane jako osobna bramka integracyjna.
+- Nie wykonywano połączeń do Railway, demo, stagingu ani produkcji.
