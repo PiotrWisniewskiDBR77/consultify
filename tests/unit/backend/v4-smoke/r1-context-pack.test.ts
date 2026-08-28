@@ -8,6 +8,7 @@ vi.mock('../../../../server/src/utils/queryHelpers.js', () => ({
   queryOne: vi.fn().mockResolvedValue(null),
   queryRun: vi.fn().mockResolvedValue({ changes: 1 }),
   recordQueryPerformance: vi.fn(),
+  getCurrentPgTransactionClient: vi.fn().mockReturnValue(undefined),
 }));
 vi.mock('../../../../server/src/utils/Logger.js', () => ({
   default: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
