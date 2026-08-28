@@ -31,6 +31,10 @@ import { randomUUID } from 'node:crypto';
 
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
+import {
+  ensureRoiFixtureMembership,
+  ensureRoiGovernedVisibility,
+} from '../resultsVnext/roi/roiRealdbOrgFixture.js';
 import { pgClient, requireLocalDbUrl } from './harness.js';
 
 requireLocalDbUrl();
@@ -128,21 +132,6 @@ async function insertOrgAndUser(orgId: string, userId: string, email: string): P
        VALUES ($1, $2, $3, 'x', 'ADMIN', 'active', 'RNG0', 'Fixture', now())
        ON CONFLICT (id) DO NOTHING`,
       [userId, orgId, email]
-    );
-  } finally {
-    await client.end();
-  }
-}
-
-async function insertVisibilityPolicy(orgId: string, domain: string, mode: string, createdBy: string): Promise<void> {
-  const client = pgClient();
-  await client.connect();
-  try {
-    await client.query(
-      `INSERT INTO rvn_platform_visibility_policies
-         (organization_id, domain, policy_version, visibility_mode, is_active, created_by)
-       VALUES ($1, $2, 1, $3, true, $4)`,
-      [orgId, domain, mode, createdBy]
     );
   } finally {
     await client.end();
@@ -588,8 +577,28 @@ describe('RN-G0 · cross-domain gold-flow (KPI + ROI + outbox as one product)', 
     void APPROVER_A;
     void APPROVER_B;
 
-    await insertVisibilityPolicy(ORG_A, 'roi', 'OPEN_ORG', OWNER_A);
-    await insertVisibilityPolicy(ORG_B, 'roi', 'OPEN_ORG', OWNER_B);
+    const governanceClient = pgClient();
+    await governanceClient.connect();
+    try {
+      await ensureRoiFixtureMembership(governanceClient, {
+        organizationId: ORG_A, userId: OWNER_A, role: 'OWNER',
+      });
+      await ensureRoiFixtureMembership(governanceClient, {
+        organizationId: ORG_B, userId: OWNER_B, role: 'OWNER',
+      });
+    } finally {
+      await governanceClient.end();
+    }
+    await ensureRoiGovernedVisibility({
+      organizationId: ORG_A,
+      actorUserId: OWNER_A,
+      idempotencyKey: `${MARKER}--roi-policy-a`,
+    });
+    await ensureRoiGovernedVisibility({
+      organizationId: ORG_B,
+      actorUserId: OWNER_B,
+      idempotencyKey: `${MARKER}--roi-policy-b`,
+    });
 
     const measurementCommands: CommandsKpiMeasurement = await import(
       '../../server/src/services/resultsVnext/kpi/kpiMeasurementCommands.js'
