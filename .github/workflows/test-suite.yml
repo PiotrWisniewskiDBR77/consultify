@@ -362,7 +362,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 8
     needs: lint-typecheck
-    if: ${{ github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
     steps:
       - uses: actions/checkout@v4
       - name: Capture job start
@@ -388,7 +388,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: lint-typecheck
-    if: ${{ github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'demo' || github.ref_name == 'main' || github.ref_name == 'develop' }}
     services:
       postgres:
         image: pgvector/pgvector:pg16
