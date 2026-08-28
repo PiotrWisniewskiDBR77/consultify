@@ -480,7 +480,12 @@ RUN if [ ! -f src/lib/utils.ts ]; then \
       mkdir -p src/lib && \
       printf "import { type ClassValue, clsx } from 'clsx';\nimport { twMerge } from 'tailwind-merge';\n\nexport function cn(...inputs: ClassValue[]) {\n  return twMerge(clsx(inputs));\n}\n" > src/lib/utils.ts; \
     fi
-RUN NODE_OPTIONS="--max-old-space-size=4096" npm run build
+# Frontend heap: 4096 was set in 33e975a7e7 (2026-06-13) at 9013 modules. The app
+# is now 10508 modules with a 3.9 MB App chunk and Rollup's "rendering chunks"
+# phase peaks at ~6.1 GB RSS, so 4096 OOMs (measured: 4096 = 1 pass / 3 aborts,
+# 6144 = 3/3 passes). Raised with headroom rather than left on the edge, where
+# the build fails nondeterministically. Lasting fix is splitting the App chunk.
+RUN NODE_OPTIONS="--max-old-space-size=6144" npm run build
 
 # ==========================================
 # STAGE 3: Backend Builder

@@ -276,8 +276,12 @@ export default defineConfig(({ mode }) => {
       minify: 'esbuild',
       // Target modern browsers
       target: 'es2020',
-      // Reduce bundle size
-      reportCompressedSize: true,
+      // Off on purpose: Vite keeps every rendered chunk in memory and gzips it
+      // solely to print the informational "gzip:" column. With a 3.9 MB App
+      // chunk and a 2.3 MB charts chunk that is real pressure in exactly the
+      // "rendering chunks" phase where the production build OOMs. Emitted
+      // assets are byte-identical either way.
+      reportCompressedSize: false,
       // Tree shaking optimization
       treeshake: {
         moduleSideEffects: 'no-external',

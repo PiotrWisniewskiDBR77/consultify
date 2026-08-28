@@ -10,11 +10,11 @@ import { requireResultsInternalBetaVisibility } from '../../middleware/resultsIn
 import { validateQuery } from '../../middleware/validation.middleware.js';
 import { requireActiveMembership } from '../../services/legacyCutover/requireActiveMembership.js';
 import { searchResults } from '../../services/resultsVnext/platform/resultsSearchRepository.js';
+import type { AuthenticatedRequest } from '../../types/index.js';
 import {
   RESULTS_SEARCH_KINDS,
   ResultsVnextSearchQuerySchema,
 } from '../../validators/resultsVnextSearch.validators.js';
-import type { AuthenticatedRequest } from '../../types/index.js';
 
 const router = Router();
 router.use(apiAuthRateLimiter);
