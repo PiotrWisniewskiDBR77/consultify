@@ -512,11 +512,15 @@ async function ensurePartnerReferralSchema(): Promise<void> {
       updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
     );
 
+    -- KSZTALT KANONICZNY = server/migrations/957_partner_public_referral_click_receipts.sql.
+    -- Rozjazd tego DDL z migracja 957 zablokowal release (957 odmawiala:
+    -- "partner_referral_clicks has incompatible nullable columns: clicked_at,converted").
+    -- Kazda zmiana tutaj musi isc rownolegle z 957, inaczej bramka migracji stanie.
     CREATE TABLE IF NOT EXISTS partner_referral_clicks (
-      id UUID PRIMARY KEY,
-      partner_org_id UUID NOT NULL,
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      partner_org_id UUID NOT NULL REFERENCES partner_organizations(id) ON DELETE CASCADE,
       referral_code VARCHAR(50) NOT NULL,
-      clicked_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      clicked_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
       ip_hash VARCHAR(64),
       user_agent TEXT,
       referer VARCHAR(500),
@@ -526,7 +530,7 @@ async function ensurePartnerReferralSchema(): Promise<void> {
       utm_campaign VARCHAR(100),
       utm_content VARCHAR(100),
       utm_term VARCHAR(100),
-      converted BOOLEAN DEFAULT false,
+      converted BOOLEAN NOT NULL DEFAULT false,
       converted_at TIMESTAMP WITH TIME ZONE,
       converted_organization_id UUID,
       conversion_type VARCHAR(30),
@@ -534,9 +538,10 @@ async function ensurePartnerReferralSchema(): Promise<void> {
       cookie_id VARCHAR(100)
     );
 
+    -- KSZTALT KANONICZNY = server/migrations/957_partner_public_referral_click_receipts.sql (patrz wyzej).
     CREATE TABLE IF NOT EXISTS partner_campaign_links (
-      id UUID PRIMARY KEY,
-      partner_org_id UUID NOT NULL,
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      partner_org_id UUID NOT NULL REFERENCES partner_organizations(id) ON DELETE CASCADE,
       name VARCHAR(255) NOT NULL,
       description TEXT,
       slug VARCHAR(100) NOT NULL,
@@ -545,13 +550,13 @@ async function ensurePartnerReferralSchema(): Promise<void> {
       utm_medium VARCHAR(100),
       utm_campaign VARCHAR(100),
       utm_content VARCHAR(100),
-      click_count INTEGER DEFAULT 0,
-      signup_count INTEGER DEFAULT 0,
-      conversion_count INTEGER DEFAULT 0,
-      is_active BOOLEAN DEFAULT true,
+      click_count INTEGER NOT NULL DEFAULT 0,
+      signup_count INTEGER NOT NULL DEFAULT 0,
+      conversion_count INTEGER NOT NULL DEFAULT 0,
+      is_active BOOLEAN NOT NULL DEFAULT true,
       expires_at TIMESTAMP WITH TIME ZONE,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
       CONSTRAINT unique_partner_campaign_slug UNIQUE (partner_org_id, slug)
     );
 
