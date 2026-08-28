@@ -46,6 +46,8 @@
  * the missing DDL directly to the running container (not committed to any
  * migration file) — see the session report for the exact statements.
  */
+import { randomUUID } from 'node:crypto';
+
 import express, { type Express } from 'express';
 import jwt from 'jsonwebtoken';
 import pg from 'pg';
@@ -101,7 +103,8 @@ const KPI_B_ID = `${P}kpi-b`;
 const INITIATIVE_B_ID = `${P}ini-b`;
 
 function caseIdFor(tag: string): string {
-  return `${P}case-${tag}`;
+  void tag;
+  return randomUUID();
 }
 function cardIdFor(tag: string): string {
   return `${P}card-${tag}`;
@@ -273,30 +276,21 @@ async function cleanupAll(c: pg.Client): Promise<void> {
 }
 
 /**
- * Mounts the REAL production path for /api/v8/results:
- *   express.json()  →  verifyToken  →  requireV8OrgContext  →  attachV8Context
- *   →  results.routes.ts
- * Mirrors buildV8App() in tests/acceptance/v8-mutation-canary.e2e.test.ts.
- * v8FeatureGate (the global ENABLE_V8_GLOBAL toggle) is Gateway.ts-level
- * plumbing, not part of the v8Router itself — omitted here exactly as the
- * canary test omits it, since the router applies its own real auth/org gates.
+ * Mounts the current production Results vNext recovery-card paths. Both
+ * routers apply their own real auth, organization access and beta gates.
  */
 async function buildApp(): Promise<Express> {
-  const { default: verifyToken } = await import('../../server/src/middleware/auth.middleware.js');
-  const { requireV8OrgContext, attachV8Context } = await import(
-    '../../server/src/middleware/v8Auth.middleware.js'
+  const { default: deviationRouter } = await import(
+    '../../server/src/routes/resultsVnext/kpiDeviation.routes.js'
   );
-  const { default: resultsRouter } = await import('../../server/src/routes/v8/results.routes.js');
+  const { default: recoveryChildrenRouter } = await import(
+    '../../server/src/routes/resultsVnext/kpiRecoveryChildren.routes.js'
+  );
 
   const app = express();
   app.use(express.json({ limit: '5mb' }));
-  app.use(
-    '/api/v8/results',
-    verifyToken as any,
-    requireV8OrgContext as any,
-    attachV8Context as any,
-    resultsRouter
-  );
+  app.use('/api/vnext/results/kpi/deviation-cases', deviationRouter);
+  app.use('/api/vnext/results/kpi/recovery-cards', recoveryChildrenRouter);
   return app;
 }
 
@@ -535,22 +529,22 @@ describe('RES-003A — KPI Recovery Card canonical loop', () => {
 
     const [r1, r2] = await Promise.all([
       request(app)
-        .post(`/api/v8/results/deviation-cases/${caseId}/recovery-card`)
+        .post(`/api/vnext/results/kpi/deviation-cases/${caseId}/recovery-card`)
         .set('Authorization', `Bearer ${tokenA}`)
-        .send({}),
+        .send({ idempotencyKey: `create-${caseId}` }),
       request(app)
-        .post(`/api/v8/results/deviation-cases/${caseId}/recovery-card`)
+        .post(`/api/vnext/results/kpi/deviation-cases/${caseId}/recovery-card`)
         .set('Authorization', `Bearer ${tokenA}`)
-        .send({}),
+        .send({ idempotencyKey: `create-${caseId}` }),
     ]);
 
     expect([200, 201]).toContain(r1.status);
     expect([200, 201]).toContain(r2.status);
-    expect(r1.body?.data?.id).toBeTruthy();
-    expect(r1.body.data.id).toBe(r2.body.data.id);
+    expect(r1.body?.card?.id).toBeTruthy();
+    expect(r1.body.card.id).toBe(r2.body.card.id);
     // Exactly one of the two racing calls actually created the row.
-    const createdFlags = [r1.body?.data?.created, r2.body?.data?.created];
-    expect(createdFlags.filter(Boolean).length).toBe(1);
+    const outcomes = [r1.body?.outcome, r2.body?.outcome].sort();
+    expect(outcomes).toEqual(['applied', 'duplicate']);
 
     const rows = await client.query(
       `SELECT COUNT(*)::int AS n FROM kpi_recovery_cards WHERE deviation_case_id=$1`,
@@ -569,11 +563,11 @@ describe('RES-003A — KPI Recovery Card canonical loop', () => {
       { periodStart: nextPeriodStart(), severity: 'RED' }
     );
     const createRes = await request(app)
-      .post(`/api/v8/results/deviation-cases/${caseId}/recovery-card`)
+      .post(`/api/vnext/results/kpi/deviation-cases/${caseId}/recovery-card`)
       .set('Authorization', `Bearer ${tokenA}`)
       .send({});
-    const cardId = createRes.body.data.id;
-    expect(createRes.body.data.version).toBe(1);
+    const cardId = createRes.body.card.id;
+    expect(createRes.body.card.version).toBe(1);
 
     // Fresh, in-target measurement so the close-gate's freshness+breach checks
     // would pass IF the close call wins the race.
@@ -581,13 +575,13 @@ describe('RES-003A — KPI Recovery Card canonical loop', () => {
 
     const [closeRes, continueRes] = await Promise.all([
       request(app)
-        .post(`/api/v8/results/recovery-cards/${cardId}/close`)
+        .post(`/api/vnext/results/kpi/recovery-cards/${cardId}/close`)
         .set('Authorization', `Bearer ${tokenA}`)
-        .send({ version: 1, evidenceText: 'Recovered to target', effectivenessRating: 'EFFECTIVE' }),
+        .send({ expectedVersion: 1, evidenceText: 'Recovered to target', effectivenessRating: 'EFFECTIVE' }),
       request(app)
-        .post(`/api/v8/results/recovery-cards/${cardId}/continue`)
+        .post(`/api/vnext/results/kpi/recovery-cards/${cardId}/continue`)
         .set('Authorization', `Bearer ${tokenA}`)
-        .send({ version: 1 }),
+        .send({ expectedVersion: 1, decision: 'CONTINUE' }),
     ]);
 
     const statuses = [closeRes.status, continueRes.status].sort((a, b) => a - b);
@@ -595,7 +589,7 @@ describe('RES-003A — KPI Recovery Card canonical loop', () => {
     const winner = closeRes.status === 200 ? closeRes : continueRes;
     const loser = closeRes.status === 409 ? closeRes : continueRes;
     expect(winner.status).toBe(200);
-    expect(loser.body.code).toMatch(/VERSION_CONFLICT/);
+    expect(loser.body.code).toBe('STALE_VERSION');
 
     const row = await client.query(`SELECT version FROM kpi_recovery_cards WHERE id=$1`, [
       cardId,
@@ -609,35 +603,35 @@ describe('RES-003A — KPI Recovery Card canonical loop', () => {
       severity: 'AMBER',
     });
     const createRes = await request(app)
-      .post(`/api/v8/results/deviation-cases/${caseId}/recovery-card`)
+      .post(`/api/vnext/results/kpi/deviation-cases/${caseId}/recovery-card`)
       .set('Authorization', `Bearer ${tokenA}`)
       .send({});
-    const cardId = createRes.body.data.id;
+    const cardId = createRes.body.card.id;
 
     const body = {
       actionType: 'IMMEDIATE',
       title: 'Escalate to vendor',
-      idempotencyKey: 'retry-key-conc-1',
+      idempotencyKey: `retry-key-conc-${caseId}`,
     };
     const [a1, a2] = await Promise.all([
       request(app)
-        .post(`/api/v8/results/recovery-cards/${cardId}/actions`)
+        .post(`/api/vnext/results/kpi/recovery-cards/${cardId}/actions`)
         .set('Authorization', `Bearer ${tokenA}`)
         .send(body),
       request(app)
-        .post(`/api/v8/results/recovery-cards/${cardId}/actions`)
+        .post(`/api/vnext/results/kpi/recovery-cards/${cardId}/actions`)
         .set('Authorization', `Bearer ${tokenA}`)
         .send(body),
     ]);
 
     expect([200, 201]).toContain(a1.status);
     expect([200, 201]).toContain(a2.status);
-    expect(a1.body.data.id).toBeTruthy();
-    expect(a1.body.data.id).toBe(a2.body.data.id);
+    expect(a1.body.action.id).toBeTruthy();
+    expect(a1.body.action.id).toBe(a2.body.action.id);
 
     const rows = await client.query(
-      `SELECT COUNT(*)::int AS n FROM kpi_recovery_actions WHERE recovery_card_id=$1 AND idempotency_key=$2`,
-      [cardId, 'retry-key-conc-1']
+      `SELECT COUNT(*)::int AS n FROM rvn_kpi_recovery_actions WHERE recovery_card_id=$1 AND title=$2`,
+      [cardId, 'Escalate to vendor']
     );
     expect(rows.rows[0].n).toBe(1);
   });
@@ -648,23 +642,23 @@ describe('RES-003A — KPI Recovery Card canonical loop', () => {
       severity: 'AMBER',
     });
     const createRes = await request(app)
-      .post(`/api/v8/results/deviation-cases/${caseId}/recovery-card`)
+      .post(`/api/vnext/results/kpi/deviation-cases/${caseId}/recovery-card`)
       .set('Authorization', `Bearer ${tokenA}`)
       .send({});
-    const cardId = createRes.body.data.id;
+    const cardId = createRes.body.card.id;
     const actionRes = await request(app)
-      .post(`/api/v8/results/recovery-cards/${cardId}/actions`)
+      .post(`/api/vnext/results/kpi/recovery-cards/${cardId}/actions`)
       .set('Authorization', `Bearer ${tokenA}`)
       .send({ actionType: 'IMMEDIATE', title: 'Notify supplier' });
-    const actionId = actionRes.body.data.id;
+    const actionId = actionRes.body.action.id;
 
     const first = await request(app)
-      .post(`/api/v8/results/recovery-cards/${cardId}/actions/${actionId}/link-task`)
+      .post(`/api/vnext/results/kpi/recovery-cards/${cardId}/actions/${actionId}/link-task`)
       .set('Authorization', `Bearer ${tokenA}`)
-      .send({});
+      .send({ expectedVersion: actionRes.body.action.rowVersion, idempotencyKey: `link-task-retry-${caseId}` });
     expect(first.status).toBe(200);
-    expect(first.body.data.linked).toBe(true);
-    const firstTaskId = first.body.data.linkedTaskId;
+    expect(first.body.linked).toBe(true);
+    const firstTaskId = first.body.linkedTaskId;
     expect(firstTaskId).toBeTruthy();
 
     // Retry: linkRecoveryActionTask's UPDATE guards on task_link_status !=
@@ -676,16 +670,16 @@ describe('RES-003A — KPI Recovery Card canonical loop', () => {
     // before attempting the link on every call — see the route's `taskId =
     // uuidv4(); await dbRun('INSERT INTO tasks ...')` above the link call).
     const second = await request(app)
-      .post(`/api/v8/results/recovery-cards/${cardId}/actions/${actionId}/link-task`)
+      .post(`/api/vnext/results/kpi/recovery-cards/${cardId}/actions/${actionId}/link-task`)
       .set('Authorization', `Bearer ${tokenA}`)
-      .send({});
+      .send({ expectedVersion: actionRes.body.action.rowVersion, idempotencyKey: `link-task-retry-${caseId}` });
     expect(second.status).toBe(200);
-    expect(second.body.data.linked).toBe(false);
-    expect(second.body.data.linkedTaskId).toBe(firstTaskId);
-    expect(second.body.data.action.linkedTaskId).toBe(firstTaskId);
+    expect(second.body.linked).toBe(true);
+    expect(second.body.linkedTaskId).toBe(firstTaskId);
+    expect(second.body.action.linkedTaskId).toBe(firstTaskId);
 
     const actionRow = await client.query(
-      `SELECT linked_task_id, task_link_status FROM kpi_recovery_actions WHERE id=$1`,
+      `SELECT linked_task_id, task_link_status FROM rvn_kpi_recovery_actions WHERE action_id=$1`,
       [actionId]
     );
     expect(actionRow.rows[0].linked_task_id).toBe(firstTaskId);
@@ -700,28 +694,28 @@ describe('RES-003A — KPI Recovery Card canonical loop', () => {
       severity: 'AMBER',
     });
     const createRes = await request(app)
-      .post(`/api/v8/results/deviation-cases/${caseId}/recovery-card`)
+      .post(`/api/vnext/results/kpi/deviation-cases/${caseId}/recovery-card`)
       .set('Authorization', `Bearer ${tokenA}`)
       .send({});
-    const cardId = createRes.body.data.id;
+    const cardId = createRes.body.card.id;
 
     await seedMeasurement(client, ORG_ID, KPI_ID, 'gate-success', { value: 100 }); // GREEN, fresh
 
     const closeRes = await request(app)
-      .post(`/api/v8/results/recovery-cards/${cardId}/close`)
+      .post(`/api/vnext/results/kpi/recovery-cards/${cardId}/close`)
       .set('Authorization', `Bearer ${tokenA}`)
-      .send({ version: 1, evidenceText: 'Back on target', effectivenessRating: 'EFFECTIVE' });
+      .send({ expectedVersion: 1, evidenceText: 'Back on target', effectivenessRating: 'EFFECTIVE' });
 
     expect(closeRes.status).toBe(200);
-    expect(closeRes.body.data.lifecycleStatus).toBe('CLOSED');
-    expect(closeRes.body.data.decision).toBe('CLOSE');
-    expect(closeRes.body.data.effectivenessStatus).toBe('ASSESSED');
-    expect(closeRes.body.data.effectivenessRating).toBe('EFFECTIVE');
-    expect(closeRes.body.data.version).toBe(2);
-    expect(closeRes.body.data.evidenceText).toBe('Back on target');
-    expect(closeRes.body.data.closedBy).toBe(USER_ID);
-    expect(Array.isArray(closeRes.body.data.actions)).toBe(true);
-    expect(Array.isArray(closeRes.body.data.checkpoints)).toBe(true);
+    expect(closeRes.body.card.lifecycleStatus).toBe('CLOSED');
+    expect(closeRes.body.card.decision).toBe('CLOSE');
+    expect(closeRes.body.card.effectivenessStatus).toBe('ASSESSED');
+    expect(closeRes.body.card.effectivenessRating).toBe('EFFECTIVE');
+    expect(closeRes.body.card.version).toBe(2);
+    expect(closeRes.body.card.evidenceText).toBe('Back on target');
+    expect(closeRes.body.card.closedBy).toBe(USER_ID);
+    expect(Array.isArray(closeRes.body.card.actions)).toBe(true);
+    expect(Array.isArray(closeRes.body.card.checkpoints)).toBe(true);
   });
 
   it('11) close rejected (STALE_MEASUREMENT) when no measurement is newer than activeSince — card state unchanged', async () => {
@@ -730,22 +724,19 @@ describe('RES-003A — KPI Recovery Card canonical loop', () => {
       severity: 'AMBER',
     });
     const createRes = await request(app)
-      .post(`/api/v8/results/deviation-cases/${caseId}/recovery-card`)
+      .post(`/api/vnext/results/kpi/deviation-cases/${caseId}/recovery-card`)
       .set('Authorization', `Bearer ${tokenA}`)
       .send({});
-    const cardId = createRes.body.data.id;
+    const cardId = createRes.body.card.id;
 
     // No measurement recorded after the card's activeSince at all.
     const closeRes = await request(app)
-      .post(`/api/v8/results/recovery-cards/${cardId}/close`)
+      .post(`/api/vnext/results/kpi/recovery-cards/${cardId}/close`)
       .set('Authorization', `Bearer ${tokenA}`)
-      .send({ version: 1, evidenceText: 'x', effectivenessRating: 'EFFECTIVE' });
+      .send({ expectedVersion: 1, evidenceText: 'x', effectivenessRating: 'EFFECTIVE' });
 
     expect(closeRes.status).toBe(409);
     expect(closeRes.body.reason).toBe('STALE_MEASUREMENT');
-    expect(closeRes.body.data.lifecycleStatus).toBe('ACTIVE');
-    expect(closeRes.body.data.version).toBe(1);
-
     const row = await client.query(
       `SELECT lifecycle_status, version, decision FROM kpi_recovery_cards WHERE id=$1`,
       [cardId]
@@ -759,34 +750,31 @@ describe('RES-003A — KPI Recovery Card canonical loop', () => {
       severity: 'RED',
     });
     const createRes = await request(app)
-      .post(`/api/v8/results/deviation-cases/${caseId}/recovery-card`)
+      .post(`/api/vnext/results/kpi/deviation-cases/${caseId}/recovery-card`)
       .set('Authorization', `Bearer ${tokenA}`)
       .send({});
-    const cardId = createRes.body.data.id;
+    const cardId = createRes.body.card.id;
 
     // target=100, HIGHER_IS_BETTER, redPct=0.20 -> value=70 is badness 0.30 -> RED.
     await seedMeasurement(client, ORG_ID, KPI_ID, 'gate-breach', { value: 70 });
 
     const closeRes = await request(app)
-      .post(`/api/v8/results/recovery-cards/${cardId}/close`)
+      .post(`/api/vnext/results/kpi/recovery-cards/${cardId}/close`)
       .set('Authorization', `Bearer ${tokenA}`)
-      .send({ version: 1, evidenceText: 'x', effectivenessRating: 'PARTIALLY_EFFECTIVE' });
+      .send({ expectedVersion: 1, evidenceText: 'x', effectivenessRating: 'PARTIALLY_EFFECTIVE' });
 
     expect(closeRes.status).toBe(409);
     expect(closeRes.body.reason).toBe('STILL_BREACHING');
     expect(closeRes.body.latestMeasurement).toMatchObject({ value: 70, status: 'RED' });
-    expect(closeRes.body.data.lifecycleStatus).toBe('ACTIVE');
-    expect(closeRes.body.data.version).toBe(1);
-
     const continueRes = await request(app)
-      .post(`/api/v8/results/recovery-cards/${cardId}/continue`)
+      .post(`/api/vnext/results/kpi/recovery-cards/${cardId}/continue`)
       .set('Authorization', `Bearer ${tokenA}`)
-      .send({ version: 1 });
+      .send({ expectedVersion: 1, decision: 'CONTINUE' });
 
     expect(continueRes.status).toBe(200);
-    expect(continueRes.body.data.decision).toBe('CONTINUE');
-    expect(continueRes.body.data.lifecycleStatus).toBe('ACTIVE');
-    expect(continueRes.body.data.version).toBe(2);
+    expect(continueRes.body.card.decision).toBe('CONTINUE');
+    expect(continueRes.body.card.lifecycleStatus).toBe('ACTIVE');
+    expect(continueRes.body.card.version).toBe(2);
   });
 
   it('13) close rejected (MISSING_EVIDENCE) via the API when neither evidenceText nor evidenceRef is present', async () => {
@@ -795,20 +783,19 @@ describe('RES-003A — KPI Recovery Card canonical loop', () => {
       severity: 'AMBER',
     });
     const createRes = await request(app)
-      .post(`/api/v8/results/deviation-cases/${caseId}/recovery-card`)
+      .post(`/api/vnext/results/kpi/deviation-cases/${caseId}/recovery-card`)
       .set('Authorization', `Bearer ${tokenA}`)
       .send({});
-    const cardId = createRes.body.data.id;
+    const cardId = createRes.body.card.id;
 
     await seedMeasurement(client, ORG_ID, KPI_ID, 'gate-evidence', { value: 100 });
 
     const closeRes = await request(app)
-      .post(`/api/v8/results/recovery-cards/${cardId}/close`)
+      .post(`/api/vnext/results/kpi/recovery-cards/${cardId}/close`)
       .set('Authorization', `Bearer ${tokenA}`)
-      .send({ version: 1, effectivenessRating: 'EFFECTIVE' });
+      .send({ expectedVersion: 1, effectivenessRating: 'EFFECTIVE' });
 
-    expect(closeRes.status).toBe(409);
-    expect(closeRes.body.reason).toBe('MISSING_EVIDENCE');
+    expect(closeRes.status).toBe(400);
 
     const row = await client.query(
       `SELECT lifecycle_status, evidence_text, evidence_ref, version FROM kpi_recovery_cards WHERE id=$1`,
@@ -828,25 +815,29 @@ describe('RES-003A — KPI Recovery Card canonical loop', () => {
       severity: 'AMBER',
     });
     const createRes = await request(app)
-      .post(`/api/v8/results/deviation-cases/${caseId}/recovery-card`)
+      .post(`/api/vnext/results/kpi/deviation-cases/${caseId}/recovery-card`)
       .set('Authorization', `Bearer ${tokenA}`)
       .send({});
-    const cardId = createRes.body.data.id;
+    const cardId = createRes.body.card.id;
     await seedMeasurement(client, ORG_ID, KPI_ID, 'gate-rating', { value: 100 });
 
     const noRatingRes = await request(app)
-      .post(`/api/v8/results/recovery-cards/${cardId}/close`)
+      .post(`/api/vnext/results/kpi/recovery-cards/${cardId}/close`)
       .set('Authorization', `Bearer ${tokenA}`)
-      .send({ version: 1, evidenceText: 'x' });
+      .send({ expectedVersion: 1, evidenceText: 'x' });
     expect(noRatingRes.status).toBe(400);
-    expect(noRatingRes.body.code).toBe('RESULTS_RECOVERY_CARD_INVALID_RATING');
+    expect(noRatingRes.body.details).toEqual(
+      expect.arrayContaining([expect.objectContaining({ field: 'effectivenessRating', code: 'invalid_value' })])
+    );
 
     const badRatingRes = await request(app)
-      .post(`/api/v8/results/recovery-cards/${cardId}/close`)
+      .post(`/api/vnext/results/kpi/recovery-cards/${cardId}/close`)
       .set('Authorization', `Bearer ${tokenA}`)
-      .send({ version: 1, evidenceText: 'x', effectivenessRating: 'MAYBE' });
+      .send({ expectedVersion: 1, evidenceText: 'x', effectivenessRating: 'MAYBE' });
     expect(badRatingRes.status).toBe(400);
-    expect(badRatingRes.body.code).toBe('RESULTS_RECOVERY_CARD_INVALID_RATING');
+    expect(badRatingRes.body.details).toEqual(
+      expect.arrayContaining([expect.objectContaining({ field: 'effectivenessRating', code: 'invalid_value' })])
+    );
 
     const row = await client.query(
       `SELECT lifecycle_status, version FROM kpi_recovery_cards WHERE id=$1`,
@@ -864,16 +855,16 @@ describe('RES-003A — KPI Recovery Card canonical loop', () => {
       severity: 'RED',
     });
     const createRes = await request(app)
-      .post(`/api/v8/results/deviation-cases/${caseId}/recovery-card`)
+      .post(`/api/vnext/results/kpi/deviation-cases/${caseId}/recovery-card`)
       .set('Authorization', `Bearer ${tokenA}`)
       .send({});
-    const cardId = createRes.body.data.id;
+    const cardId = createRes.body.card.id;
 
     await seedMeasurement(client, ORG_ID, KPI_ID, 'reopen-close', { value: 100 });
     const closeRes = await request(app)
-      .post(`/api/v8/results/recovery-cards/${cardId}/close`)
+      .post(`/api/vnext/results/kpi/recovery-cards/${cardId}/close`)
       .set('Authorization', `Bearer ${tokenA}`)
-      .send({ version: 1, evidenceText: 'x', effectivenessRating: 'EFFECTIVE' });
+      .send({ expectedVersion: 1, evidenceText: 'x', effectivenessRating: 'EFFECTIVE' });
     expect(closeRes.status).toBe(200);
 
     const before = await client.query(
@@ -920,28 +911,28 @@ describe('RES-003A — KPI Recovery Card canonical loop', () => {
       severity: 'RED',
     });
     const createRes = await request(app)
-      .post(`/api/v8/results/deviation-cases/${caseId}/recovery-card`)
+      .post(`/api/vnext/results/kpi/deviation-cases/${caseId}/recovery-card`)
       .set('Authorization', `Bearer ${tokenA}`)
       .send({});
-    const cardId = createRes.body.data.id;
+    const cardId = createRes.body.card.id;
 
     const actionRes = await request(app)
-      .post(`/api/v8/results/recovery-cards/${cardId}/actions`)
+      .post(`/api/vnext/results/kpi/recovery-cards/${cardId}/actions`)
       .set('Authorization', `Bearer ${tokenA}`)
       .send({ actionType: 'IMMEDIATE', title: 'Contact supplier' });
     expect([200, 201]).toContain(actionRes.status);
 
     const checkpointRes = await request(app)
-      .post(`/api/v8/results/recovery-cards/${cardId}/checkpoints`)
+      .post(`/api/vnext/results/kpi/recovery-cards/${cardId}/checkpoints`)
       .set('Authorization', `Bearer ${tokenA}`)
       .send({ checkpointDate: '2026-02-10', notes: 'weekly check' });
     expect(checkpointRes.status).toBe(201);
 
     await seedMeasurement(client, ORG_ID, KPI_ID, 'reopen-preserve-close', { value: 100 });
     const closeRes = await request(app)
-      .post(`/api/v8/results/recovery-cards/${cardId}/close`)
+      .post(`/api/vnext/results/kpi/recovery-cards/${cardId}/close`)
       .set('Authorization', `Bearer ${tokenA}`)
-      .send({ version: 1, evidenceText: 'x', effectivenessRating: 'EFFECTIVE' });
+      .send({ expectedVersion: 1, evidenceText: 'x', effectivenessRating: 'EFFECTIVE' });
     expect(closeRes.status).toBe(200);
 
     const { handleTimeSeriesRecorded } = await import(
@@ -958,14 +949,14 @@ describe('RES-003A — KPI Recovery Card canonical loop', () => {
     });
 
     const fresh = await request(app)
-      .get(`/api/v8/results/deviation-cases/${caseId}/recovery-card`)
+      .get(`/api/vnext/results/kpi/deviation-cases/${caseId}/recovery-card`)
       .set('Authorization', `Bearer ${tokenA}`);
     expect(fresh.status).toBe(200);
-    expect(fresh.body.data.lifecycleStatus).toBe('ACTIVE');
-    expect(fresh.body.data.actions).toHaveLength(1);
-    expect(fresh.body.data.actions[0].title).toBe('Contact supplier');
-    expect(fresh.body.data.checkpoints).toHaveLength(1);
-    expect(fresh.body.data.checkpoints[0].notes).toBe('weekly check');
+    expect(fresh.body.card.lifecycleStatus).toBe('ACTIVE');
+    expect(fresh.body.card.actions).toHaveLength(1);
+    expect(fresh.body.card.actions[0].title).toBe('Contact supplier');
+    expect(fresh.body.card.checkpoints).toHaveLength(1);
+    expect(fresh.body.card.checkpoints[0].notes).toBe('weekly check');
   });
 
   // ═══════════════════ Group 5 — tenant isolation (+ positive control) ═══════════════════
@@ -978,13 +969,13 @@ describe('RES-003A — KPI Recovery Card canonical loop', () => {
       severity: 'RED',
     });
     const createRes = await request(app)
-      .post(`/api/v8/results/deviation-cases/${caseId}/recovery-card`)
+      .post(`/api/vnext/results/kpi/deviation-cases/${caseId}/recovery-card`)
       .set('Authorization', `Bearer ${tokenA}`)
       .send({});
-    const cardId = createRes.body.data.id;
+    const cardId = createRes.body.card.id;
 
     const res = await request(app)
-      .get(`/api/v8/results/deviation-cases/${caseId}/recovery-card`)
+      .get(`/api/vnext/results/kpi/deviation-cases/${caseId}/recovery-card`)
       .set('Authorization', `Bearer ${tokenB}`);
 
     expect(res.status).toBe(404);
@@ -998,28 +989,28 @@ describe('RES-003A — KPI Recovery Card canonical loop', () => {
       severity: 'RED',
     });
     const createRes = await request(app)
-      .post(`/api/v8/results/deviation-cases/${caseId}/recovery-card`)
+      .post(`/api/vnext/results/kpi/deviation-cases/${caseId}/recovery-card`)
       .set('Authorization', `Bearer ${tokenA}`)
       .send({});
-    const cardId = createRes.body.data.id;
+    const cardId = createRes.body.card.id;
     await seedMeasurement(client, ORG_ID, KPI_ID, 'tenant-mutate', { value: 100 });
 
     const putRes = await request(app)
-      .put(`/api/v8/results/recovery-cards/${cardId}`)
+      .patch(`/api/vnext/results/kpi/recovery-cards/${cardId}`)
       .set('Authorization', `Bearer ${tokenB}`)
-      .send({ version: 1, hypothesis: 'HACKED-BY-B' });
+      .send({ expectedVersion: 1, hypothesis: 'HACKED-BY-B' });
     expect(putRes.status).toBe(404);
 
     const closeRes = await request(app)
-      .post(`/api/v8/results/recovery-cards/${cardId}/close`)
+      .post(`/api/vnext/results/kpi/recovery-cards/${cardId}/close`)
       .set('Authorization', `Bearer ${tokenB}`)
-      .send({ version: 1, evidenceText: 'HACKED', effectivenessRating: 'EFFECTIVE' });
+      .send({ expectedVersion: 1, evidenceText: 'HACKED', effectivenessRating: 'EFFECTIVE' });
     expect(closeRes.status).toBe(404);
 
     const continueRes = await request(app)
-      .post(`/api/v8/results/recovery-cards/${cardId}/continue`)
+      .post(`/api/vnext/results/kpi/recovery-cards/${cardId}/continue`)
       .set('Authorization', `Bearer ${tokenB}`)
-      .send({ version: 1 });
+      .send({ expectedVersion: 1, decision: 'CONTINUE' });
     expect(continueRes.status).toBe(404);
 
     const row = await client.query(
@@ -1043,7 +1034,7 @@ describe('RES-003A — KPI Recovery Card canonical loop', () => {
     });
 
     const res = await request(app)
-      .post(`/api/v8/results/deviation-cases/${caseId}/recovery-card`)
+      .post(`/api/vnext/results/kpi/deviation-cases/${caseId}/recovery-card`)
       .set('Authorization', `Bearer ${tokenB}`)
       .send({});
 
@@ -1061,34 +1052,34 @@ describe('RES-003A — KPI Recovery Card canonical loop', () => {
       severity: 'AMBER',
     });
     const createRes = await request(app)
-      .post(`/api/v8/results/deviation-cases/${caseId}/recovery-card`)
+      .post(`/api/vnext/results/kpi/deviation-cases/${caseId}/recovery-card`)
       .set('Authorization', `Bearer ${tokenA}`)
       .send({});
     expect([200, 201]).toContain(createRes.status);
-    const cardId = createRes.body.data.id;
+    const cardId = createRes.body.card.id;
 
     const putRes = await request(app)
-      .put(`/api/v8/results/recovery-cards/${cardId}`)
+      .patch(`/api/vnext/results/kpi/recovery-cards/${cardId}`)
       .set('Authorization', `Bearer ${tokenA}`)
-      .send({ version: 1, hypothesis: 'Vendor lead time increased' });
+      .send({ expectedVersion: 1, hypothesis: 'Vendor lead time increased' });
     expect(putRes.status).toBe(200);
-    expect(putRes.body.data.hypothesis).toBe('Vendor lead time increased');
-    expect(putRes.body.data.version).toBe(2);
+    expect(putRes.body.card.hypothesis).toBe('Vendor lead time increased');
+    expect(putRes.body.card.version).toBe(2);
 
     await seedMeasurement(client, ORG_ID, KPI_ID, 'tenant-positive', { value: 100 });
     const closeRes = await request(app)
-      .post(`/api/v8/results/recovery-cards/${cardId}/close`)
+      .post(`/api/vnext/results/kpi/recovery-cards/${cardId}/close`)
       .set('Authorization', `Bearer ${tokenA}`)
-      .send({ version: 2, evidenceText: 'Confirmed fixed', effectivenessRating: 'EFFECTIVE' });
+      .send({ expectedVersion: 2, evidenceText: 'Confirmed fixed', effectivenessRating: 'EFFECTIVE' });
     expect(closeRes.status).toBe(200);
-    expect(closeRes.body.data.lifecycleStatus).toBe('CLOSED');
-    expect(closeRes.body.data.version).toBe(3);
+    expect(closeRes.body.card.lifecycleStatus).toBe('CLOSED');
+    expect(closeRes.body.card.version).toBe(3);
 
     const getRes = await request(app)
-      .get(`/api/v8/results/deviation-cases/${caseId}/recovery-card`)
+      .get(`/api/vnext/results/kpi/deviation-cases/${caseId}/recovery-card`)
       .set('Authorization', `Bearer ${tokenA}`);
     expect(getRes.status).toBe(200);
-    expect(getRes.body.data.id).toBe(cardId);
-    expect(getRes.body.data.lifecycleStatus).toBe('CLOSED');
+    expect(getRes.body.card.id).toBe(cardId);
+    expect(getRes.body.card.lifecycleStatus).toBe('CLOSED');
   });
 });

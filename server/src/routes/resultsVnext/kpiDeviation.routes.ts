@@ -152,7 +152,7 @@ const ListEffectivenessVerificationsQuerySchema = z.object({
 });
 
 const CreateRecoveryCardSchema = z.object({
-  hypothesis: z.string().trim().min(1).max(10000),
+  hypothesis: z.string().trim().min(1).max(10000).optional(),
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).optional(),
   expectedImpact: z.string().trim().max(10000).optional(),
   expectedRecoveryDate: z.string().date().optional(),
@@ -334,13 +334,21 @@ router.post(
         access: await resolveAccess(req, auth),
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
-        initialPatch: {
+        initialPatch: Object.values({
           hypothesis: body.hypothesis,
           priority: body.priority,
           expectedImpact: body.expectedImpact,
           expectedRecoveryDate: body.expectedRecoveryDate,
           effectivenessCriteria: body.effectivenessCriteria,
-        },
+        }).some((value) => value !== undefined)
+          ? {
+              hypothesis: body.hypothesis,
+              priority: body.priority,
+              expectedImpact: body.expectedImpact,
+              expectedRecoveryDate: body.expectedRecoveryDate,
+              effectivenessCriteria: body.effectivenessCriteria,
+            }
+          : undefined,
       });
       res.status(outcome.outcome === 'applied' ? 201 : 200).json({
         outcome: outcome.outcome,
