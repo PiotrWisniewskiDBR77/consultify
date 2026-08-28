@@ -222,10 +222,10 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
   ];
 
   const contextLengthOptions = [
-    { value: '2000', label: '2K tokens' },
-    { value: '4000', label: '4K tokens' },
-    { value: '8000', label: '8K tokens' },
-    { value: '16000', label: '16K tokens' },
+    { value: '2000', label: t('settings.ai.tokenCountLabel', '{{count}}K tokens', { count: 2 }) },
+    { value: '4000', label: t('settings.ai.tokenCountLabel', '{{count}}K tokens', { count: 4 }) },
+    { value: '8000', label: t('settings.ai.tokenCountLabel', '{{count}}K tokens', { count: 8 }) },
+    { value: '16000', label: t('settings.ai.tokenCountLabel', '{{count}}K tokens', { count: 16 }) },
   ];
 
   if (loadError) {

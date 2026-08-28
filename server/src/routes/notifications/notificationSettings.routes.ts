@@ -2,7 +2,7 @@
  * Notification Settings Routes
  * API endpoints for user notification preferences
  */
-import { Request, Response, Router } from 'express';
+import { NextFunction, Request, Response, Router } from 'express';
 
 import { isAuthenticated, verifyToken } from '../../middleware/auth.middleware.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
@@ -13,6 +13,23 @@ const router = Router();
 
 interface AuthRequest extends Request {
   user?: { id: string; organizationId: string };
+}
+
+function requireMatchingOrganizationContext(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): void {
+  const requestedOrganizationId = String(req.get('x-org-context') || '').trim();
+  const authenticatedOrganizationId = String(req.user?.organizationId || '').trim();
+  if (
+    requestedOrganizationId &&
+    (!authenticatedOrganizationId || requestedOrganizationId !== authenticatedOrganizationId)
+  ) {
+    res.status(403).json({ success: false, code: 'ORG_CONTEXT_MISMATCH' });
+    return;
+  }
+  next();
 }
 
 const DEFAULT_SETTINGS = {
@@ -61,6 +78,7 @@ router.put(
   '/',
   verifyToken,
   isAuthenticated,
+  requireMatchingOrganizationContext,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
     const newSettings = req.body;
@@ -108,6 +126,7 @@ router.patch(
   '/:channel',
   verifyToken,
   isAuthenticated,
+  requireMatchingOrganizationContext,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
     const { channel } = req.params;
@@ -170,6 +189,7 @@ router.post(
   '/reset',
   verifyToken,
   isAuthenticated,
+  requireMatchingOrganizationContext,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
 
@@ -197,6 +217,7 @@ router.post(
   '/test/:channel',
   verifyToken,
   isAuthenticated,
+  requireMatchingOrganizationContext,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
     const { channel } = req.params;

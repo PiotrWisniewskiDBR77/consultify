@@ -8,6 +8,7 @@ import { asyncHandler } from '../../utils/asyncHandler.js';
 import { get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 
 const router = Router();
+router.use(verifyToken);
 interface AuthRequest extends Request {
   user?: { id: string };
 }

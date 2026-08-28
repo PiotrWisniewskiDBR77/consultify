@@ -225,7 +225,12 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
     setSavingPassword(true);
     try {
       await Api.changePassword(currentPassword, newPassword);
-      toast.success(t('settings.password.success', 'Password changed successfully'));
+      toast.success(
+        t(
+          'settings.password.success',
+          'Password changed. Other devices will need to sign in again after their current access expires.'
+        )
+      );
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
@@ -243,12 +248,12 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
     try {
       await Api.revokeSession(sessionId);
       await refreshSessions();
-      toast.success(t('settings.security.sessionTerminated', 'Session terminated'));
+      toast.success(t('settings.securityMessages.sessionTerminated', 'Session terminated'));
     } catch (error: unknown) {
       toast.error(
         normalizeApiErrorMessage(
           error,
-          t('settings.security.sessionError', 'Failed to terminate session')
+          t('settings.securityMessages.sessionError', 'Failed to terminate session')
         )
       );
     }
@@ -258,12 +263,12 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
     try {
       await Api.revokeAllSessions();
       await refreshSessions();
-      toast.success(t('settings.security.allSessionsRevoked', 'All other sessions revoked'));
+      toast.success(t('settings.securityMessages.allSessionsRevoked', 'All other sessions revoked'));
     } catch (error: unknown) {
       toast.error(
         normalizeApiErrorMessage(
           error,
-          t('settings.security.revokeAllError', 'Failed to revoke sessions')
+          t('settings.securityMessages.revokeAllError', 'Failed to revoke sessions')
         )
       );
     }
@@ -278,7 +283,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
     } catch (error: unknown) {
       setSessions([]);
       setSessionsLoadError(normalizeApiErrorMessage(error, 'Failed to load active sessions'));
-      toast.error(t('settings.security.sessionsError', 'Failed to load sessions'));
+      toast.error(t('settings.securityMessages.sessionsError', 'Failed to load sessions'));
     } finally {
       setLoadingSessions(false);
     }

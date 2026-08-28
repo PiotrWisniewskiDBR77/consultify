@@ -2502,7 +2502,7 @@ router.post(
       return res.json({
         success: true,
         message:
-          'Password changed successfully. All other sessions have been logged out for security.',
+          'Password changed successfully. Refresh sessions on other devices were revoked; an existing access token can remain valid until it expires.',
       });
     } catch (error: unknown) {
       logger.error('[Auth] Change password error:', error);

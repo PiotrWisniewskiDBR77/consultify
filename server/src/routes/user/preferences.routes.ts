@@ -9,6 +9,7 @@ import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, run as dbRun } from '../../utils/DbPromise.js';
 
 const router = Router();
+router.use(verifyToken);
 
 const upsertUserPreference = async (userId: string, key: string, value: unknown) => {
   const result = await dbRun(

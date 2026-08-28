@@ -16,6 +16,7 @@ import logger from '../../utils/Logger.js';
 
 // Apply rate limiting
 const router = Router();
+router.use(verifyToken);
 
 /**
  * Helper function to parse user agent string

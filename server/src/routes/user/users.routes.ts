@@ -5,7 +5,7 @@
  * All user-related API endpoints with Zod validation
  */
 
-import { Router } from 'express';
+import { NextFunction, Response, Router } from 'express';
 import fs from 'fs';
 import multer from 'multer';
 import path from 'path';
@@ -24,6 +24,15 @@ import { resolveStoredRelativePath, uploadsDir } from '../../utils/storagePaths.
 import { UpdateUserRoleSchema, UpdateUserSchema } from '../../validators/user.validators.js';
 
 const router = Router();
+
+const requireMembershipForDelegatedUserUpdate = (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  if (String(req.user?.id || '') === String(req.params.id || '')) return next();
+  return requireActiveMembership(req, res, next);
+};
 
 // Configure multer for avatar uploads
 const avatarStorage = multer.diskStorage({
@@ -78,7 +87,7 @@ router.get('/:id', UserController.getUserById);
  */
 router.put(
   '/:id',
-  requireActiveMembership,
+  requireMembershipForDelegatedUserUpdate,
   validateBody(UpdateUserSchema),
   UserController.updateUser
 );

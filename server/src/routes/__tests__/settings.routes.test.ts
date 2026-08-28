@@ -73,6 +73,7 @@ vi.mock('../../middleware/auth.middleware.js', () => ({
     };
     req.userRole = role;
     req.organizationId = organizationId;
+    req.settingsActiveMembershipVerified = true;
     next();
   },
 }));
@@ -379,7 +380,7 @@ describe('settings integrations authority continuity', () => {
       expect((call![1] as unknown[])[columnIndex]).toBe('user-1');
     });
 
-    it('ignores body-supplied actor-identity spoof fields; only the authenticated id reaches the insert', async () => {
+    it('rejects body-supplied actor-identity spoof fields before the insert', async () => {
       const app = express();
       app.use(express.json());
       app.use('/api/settings', settingsRoutes);
@@ -395,17 +396,9 @@ describe('settings integrations authority continuity', () => {
           connected_by_id: 'attacker-connected-by-id',
         });
 
-      expect(res.status).toBe(200);
-      const call = findIntegrationsInsertCall();
-      expect(call).toBeDefined();
-      const params = call![1] as unknown[];
-      const columnIndex = insertColumnIndex(String(call![0]), 'connected_by');
-      expect(params[columnIndex]).toBe('user-1');
-      expect(params).not.toContain('attacker-connected-by');
-      expect(params).not.toContain('attacker-connectedBy');
-      expect(params).not.toContain('attacker-actorId');
-      expect(params).not.toContain('attacker-userId');
-      expect(params).not.toContain('attacker-connected-by-id');
+      expect(res.status).toBe(403);
+      expect(res.body.code).toBe('SETTINGS_SELF_SCOPE_FORBIDDEN');
+      expect(findIntegrationsInsertCall()).toBeUndefined();
     });
 
     it('fails closed with zero database writes when there is no authenticated identity', async () => {
@@ -959,7 +952,10 @@ describe('SET-MVP-OAUTH-001: membership wall + approval ordering on governed con
           };
         });
         mockDbRun.mockImplementation(async (sql: string) => {
-          if (String(sql).includes('INSERT INTO integrations') || String(sql).includes('UPDATE integrations')) {
+          if (
+            String(sql).includes('INSERT INTO integrations') ||
+            String(sql).includes('UPDATE integrations')
+          ) {
             order.push('write:dbRun');
           }
           return { success: true };
@@ -1057,8 +1053,7 @@ describe('settings preferences and advanced flows', () => {
     expect(res.status).toBe(200);
     expect(
       mockDbRun.mock.calls.some(
-        (call) =>
-          Array.isArray(call[1]) && (call[1] as unknown[])[1] === 'settings:notifications'
+        (call) => Array.isArray(call[1]) && (call[1] as unknown[])[1] === 'settings:notifications'
       )
     ).toBe(true);
   });
@@ -1410,8 +1405,7 @@ describe('POST /api/settings/notifications tenant authorization', () => {
     // clobbered the other's data — notyfikacje-audyt.md §2.3).
     expect(
       mockDbRun.mock.calls.some(
-        (call) =>
-          Array.isArray(call[1]) && (call[1] as unknown[])[1] === 'settings:notifications'
+        (call) => Array.isArray(call[1]) && (call[1] as unknown[])[1] === 'settings:notifications'
       )
     ).toBe(false);
     expect(

@@ -4,7 +4,7 @@
  */
 
 import crypto from 'crypto';
-import { Response, Router } from 'express';
+import { NextFunction, Response, Router } from 'express';
 
 import { requireActiveAuditsMembership } from '../middleware/auditsStrictMembership.middleware.js';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
@@ -40,6 +40,74 @@ const router = Router();
 const preferencesKey = (prefType: string) => `settings:${prefType}`;
 const LEGACY_SETTINGS_ROOT_GUIDANCE =
   'Use /api/settings/registry for scoped settings and /api/superadmin for platform-wide settings.';
+const SETTINGS_OAUTH_STATE_COOKIE = 'consultify_settings_oauth_state';
+const SETTINGS_OAUTH_COOKIE_PATH = '/api/settings/integrations/oauth';
+const isSettingsSchemaNotMigrated = (error: unknown): boolean => {
+  const candidate = error as { code?: unknown; message?: unknown } | null;
+  const code = String(candidate?.code || '');
+  const message = String(candidate?.message || '').toLowerCase();
+  return (
+    code === '42P01' ||
+    code === '42703' ||
+    message.includes('does not exist') ||
+    message.includes('no such table')
+  );
+};
+const readCookie = (header: string | undefined, name: string): string | undefined =>
+  header
+    ?.split(';')
+    .map((part) => part.trim().split('='))
+    .find(([key]) => key === name)
+    ?.slice(1)
+    .join('=');
+
+const enforceSettingsBoundary = (req: AuthRequest, res: Response, next: NextFunction) => {
+  if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) return next();
+  return verifyToken(req, res, () => {
+    const actorUserId = String(req.user?.id || '');
+    const actorOrganizationId = String(req.organizationId || req.user?.organizationId || '');
+    if (!actorUserId || !actorOrganizationId) {
+      return res.status(403).json({
+        error: 'You no longer have access to this organization',
+        code: 'ORG_MEMBERSHIP_REVOKED',
+      });
+    }
+    const validateClaims = () => {
+      const organizationClaims = [
+        req.headers['x-org-context'],
+        req.query?.orgId,
+        req.query?.organizationId,
+        req.body?.orgId,
+        req.body?.organizationId,
+      ]
+        .flat()
+        .filter((value) => value != null && String(value).trim() !== '')
+        .map(String);
+      if (organizationClaims.some((claim) => claim !== actorOrganizationId)) {
+        return res.status(403).json({ success: false, code: 'ORG_CONTEXT_MISMATCH' });
+      }
+
+      const delegatedNotificationWrite = req.method === 'POST' && req.path === '/notifications';
+      const userClaims = [req.query?.userId, req.body?.userId, req.params?.userId]
+        .flat()
+        .filter((value) => value != null && String(value).trim() !== '')
+        .map(String);
+      if (!delegatedNotificationWrite && userClaims.some((claim) => claim !== actorUserId)) {
+        return res.status(403).json({ success: false, code: 'SETTINGS_SELF_SCOPE_FORBIDDEN' });
+      }
+      return next();
+    };
+    const alreadyStrict = req.method === 'POST' && req.path === '/notifications';
+    if (alreadyStrict) return validateClaims();
+    // Personal settings remain available to an authenticated account even when
+    // it no longer has an organization_members row. Tenant claims and attempts
+    // to redirect the write to another user are still rejected above. The one
+    // delegated organization write has its own strict membership wall.
+    return validateClaims();
+  });
+};
+
+router.use(enforceSettingsBoundary);
 const PROFILE_EXPORT_COLUMNS = [
   'id',
   'email',
@@ -234,32 +302,8 @@ router.post(
 // USER PREFERENCES
 // ===========================================
 
-/**
- * Ensure user_preferences table exists
- */
-const ensureUserPreferencesTable = async () => {
-  // Keep schema compatible with DatabaseInitializer (`user_id`, `key`, `value`, `updated_at`).
-  // This DDL is purely opportunistic — the table already exists in every real deployment.
-  // Use fallback:true so a transient DDL failure (lock/timeout/brief read-only/connection blip)
-  // can NEVER reject and bubble up as a bare 500 on the read endpoints that call this first.
-  await dbRun(
-    `
-      CREATE TABLE IF NOT EXISTS user_preferences (
-        user_id TEXT NOT NULL,
-        key TEXT NOT NULL,
-        value TEXT NOT NULL,
-        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-        PRIMARY KEY (user_id, key),
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-      )
-    `,
-    [],
-    { fallback: true }
-  );
-  await dbRun(`CREATE INDEX IF NOT EXISTS idx_user_prefs_user ON user_preferences(user_id)`, [], {
-    fallback: true,
-  });
-};
+// Schema ownership belongs to the migration chain; request handlers never repair it at runtime.
+const ensureUserPreferencesTable = async (): Promise<void> => undefined;
 
 /**
  * GET /api/settings/recovery
@@ -442,7 +486,7 @@ router.put(
       return res.status(401).json({ error: 'User not authenticated' });
     }
 
-    if (!preferences) {
+    if (!preferences || typeof preferences !== 'object' || Array.isArray(preferences)) {
       return res.status(400).json({ error: 'Preferences object is required' });
     }
 
@@ -465,6 +509,12 @@ router.put(
         err,
         correlationId: (req as any).correlationId,
       });
+      if (isSettingsSchemaNotMigrated(err)) {
+        return res.status(409).json({
+          error: 'Baza danych nie ma wymaganego schematu ustawień',
+          code: 'SETTINGS_SCHEMA_NOT_MIGRATED',
+        });
+      }
       return res.status(500).json({
         error: 'Nie udało się zapisać preferencji regionalnych',
         code: 'SETTINGS_REGIONAL_UPDATE_FAILED',
@@ -2112,6 +2162,14 @@ router.get(
       userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : null,
     });
 
+    res.cookie(SETTINGS_OAUTH_STATE_COOKIE, result.state, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      path: SETTINGS_OAUTH_COOKIE_PATH,
+      maxAge: 10 * 60 * 1000,
+    });
+
     return res.json({ authUrl: result.url, state: result.state });
   })
 );
@@ -2134,10 +2192,16 @@ router.get(
       return res.redirect('/settings/integrations?oauth_error=missing_state');
     }
 
+    const stateCookie = readCookie(req.headers.cookie, SETTINGS_OAUTH_STATE_COOKIE);
+    if (!stateCookie || stateCookie !== state) {
+      return res.redirect('/settings/integrations?oauth_error=state_session_mismatch');
+    }
+
     const pending = oauthEngine.consumeState(state);
     if (!pending) {
       return res.redirect('/settings/integrations?oauth_error=invalid_or_expired_state');
     }
+    res.clearCookie(SETTINGS_OAUTH_STATE_COOKIE, { path: SETTINGS_OAUTH_COOKIE_PATH });
 
     if (!code) {
       return res.redirect('/settings/integrations?oauth_error=missing_code');
@@ -3050,28 +3114,7 @@ router.put(
 // GDPR REQUESTS TABLE
 // ===========================================
 
-const ensureGdprRequestsTable = async () => {
-  await dbRun(`
-        CREATE TABLE IF NOT EXISTS gdpr_requests (
-            id TEXT PRIMARY KEY,
-            user_id TEXT NOT NULL,
-            type TEXT NOT NULL,
-            status TEXT DEFAULT 'pending',
-            reason TEXT,
-            download_url TEXT,
-            file_path TEXT,
-            expires_at TEXT,
-            scheduled_at TEXT,
-            processed_at TEXT,
-            completed_at TEXT,
-            error_message TEXT,
-            metadata TEXT DEFAULT '{}',
-            created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users(id)
-        )
-    `);
-};
+const ensureGdprRequestsTable = async (): Promise<void> => undefined;
 
 /**
  * GET /api/settings/gdpr/export-status
@@ -3818,24 +3861,7 @@ router.put(
 // EMAIL SIGNATURES
 // ===========================================
 
-/**
- * Ensure email_signatures table exists
- */
-const ensureEmailSignaturesTable = async () => {
-  await dbRun(`
-        CREATE TABLE IF NOT EXISTS email_signatures (
-            id TEXT PRIMARY KEY,
-            user_id TEXT NOT NULL,
-            name TEXT NOT NULL,
-            content TEXT NOT NULL,
-            is_default INTEGER DEFAULT 0,
-            created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-        )
-    `);
-  await dbRun(`CREATE INDEX IF NOT EXISTS idx_email_sig_user ON email_signatures(user_id)`);
-};
+const ensureEmailSignaturesTable = async (): Promise<void> => undefined;
 
 /**
  * GET /api/settings/signatures
@@ -4824,23 +4850,7 @@ router.get(
 // ADVANCED: SETTINGS TEMPLATES
 // ===========================================
 
-const ensureSettingsTemplatesTable = async () => {
-  await dbRun(`
-        CREATE TABLE IF NOT EXISTS settings_templates (
-            id TEXT PRIMARY KEY,
-            user_id TEXT NOT NULL,
-            name TEXT NOT NULL,
-            description TEXT,
-            icon TEXT DEFAULT '📋',
-            type TEXT DEFAULT 'custom',
-            settings_data TEXT NOT NULL,
-            is_active INTEGER DEFAULT 1,
-            created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-        )
-    `);
-};
+const ensureSettingsTemplatesTable = async (): Promise<void> => undefined;
 
 /**
  * GET /api/settings/templates
@@ -5023,23 +5033,7 @@ router.post(
 // ADVANCED: SETTINGS HISTORY
 // ===========================================
 
-const ensureSettingsAuditLogTable = async () => {
-  await dbRun(`
-        CREATE TABLE IF NOT EXISTS settings_audit_log (
-            id TEXT PRIMARY KEY,
-            user_id TEXT NOT NULL,
-            category TEXT NOT NULL,
-            setting_key TEXT NOT NULL,
-            action TEXT NOT NULL,
-            old_value TEXT,
-            new_value TEXT,
-            device TEXT,
-            ip_address TEXT,
-            created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-        )
-    `);
-};
+const ensureSettingsAuditLogTable = async (): Promise<void> => undefined;
 
 /**
  * GET /api/settings/history
@@ -5273,51 +5267,7 @@ router.post(
 // ADVANCED: USER API KEYS
 // ===========================================
 
-const ensureUserApiKeysTable = async () => {
-  await dbRun(
-    `
-      CREATE TABLE IF NOT EXISTS user_api_keys (
-        id TEXT PRIMARY KEY,
-        user_id TEXT NOT NULL,
-        name TEXT NOT NULL,
-        key_hash TEXT NOT NULL,
-        key_prefix TEXT NOT NULL,
-        permissions TEXT DEFAULT '[]',
-        rate_limit INTEGER DEFAULT 1000,
-        last_used_at TIMESTAMPTZ,
-        expires_at TIMESTAMPTZ,
-        is_active INTEGER DEFAULT 1,
-        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-      )
-    `,
-    [],
-    { fallback: false }
-  );
-
-  const cols = await getTableColumns('user_api_keys');
-  const alterations: Array<[string, string]> = [
-    ['name', `ALTER TABLE user_api_keys ADD COLUMN name TEXT`],
-    ['key_hash', `ALTER TABLE user_api_keys ADD COLUMN key_hash TEXT`],
-    ['key_prefix', `ALTER TABLE user_api_keys ADD COLUMN key_prefix TEXT`],
-    ['permissions', `ALTER TABLE user_api_keys ADD COLUMN permissions TEXT DEFAULT '[]'`],
-    ['rate_limit', `ALTER TABLE user_api_keys ADD COLUMN rate_limit INTEGER DEFAULT 1000`],
-    ['last_used_at', `ALTER TABLE user_api_keys ADD COLUMN last_used_at TIMESTAMPTZ`],
-    ['expires_at', `ALTER TABLE user_api_keys ADD COLUMN expires_at TIMESTAMPTZ`],
-    ['is_active', `ALTER TABLE user_api_keys ADD COLUMN is_active INTEGER DEFAULT 1`],
-    [
-      'updated_at',
-      `ALTER TABLE user_api_keys ADD COLUMN updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP`,
-    ],
-  ];
-
-  for (const [column, sql] of alterations) {
-    if (!cols.has(column)) {
-      await dbRun(sql, [], { fallback: true });
-    }
-  }
-};
+const ensureUserApiKeysTable = async (): Promise<void> => undefined;
 
 const generateApiKey = (): string => {
   // 256-bit random key; URL-safe via hex.
@@ -5510,52 +5460,7 @@ router.post(
 // ADVANCED: USER WEBHOOKS
 // ===========================================
 
-const ensureUserWebhooksTable = async () => {
-  await dbRun(
-    `
-      CREATE TABLE IF NOT EXISTS user_webhooks (
-        id TEXT PRIMARY KEY,
-        user_id TEXT NOT NULL,
-        name TEXT NOT NULL,
-        url TEXT NOT NULL,
-        events TEXT NOT NULL,
-        secret TEXT,
-        headers TEXT DEFAULT '{}',
-        is_active INTEGER DEFAULT 1,
-        last_triggered_at TIMESTAMPTZ,
-        last_status INTEGER,
-        failure_count INTEGER DEFAULT 0,
-        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-      )
-    `,
-    [],
-    // Opportunistic DDL — never let a transient CREATE failure reject and 500 the read.
-    { fallback: true }
-  );
-
-  const cols = await getTableColumns('user_webhooks');
-  const alterations: Array<[string, string]> = [
-    ['name', `ALTER TABLE user_webhooks ADD COLUMN name TEXT`],
-    ['secret', `ALTER TABLE user_webhooks ADD COLUMN secret TEXT`],
-    ['headers', `ALTER TABLE user_webhooks ADD COLUMN headers TEXT DEFAULT '{}'`],
-    ['is_active', `ALTER TABLE user_webhooks ADD COLUMN is_active INTEGER DEFAULT 1`],
-    ['last_triggered_at', `ALTER TABLE user_webhooks ADD COLUMN last_triggered_at TIMESTAMPTZ`],
-    ['last_status', `ALTER TABLE user_webhooks ADD COLUMN last_status INTEGER`],
-    ['failure_count', `ALTER TABLE user_webhooks ADD COLUMN failure_count INTEGER DEFAULT 0`],
-    [
-      'updated_at',
-      `ALTER TABLE user_webhooks ADD COLUMN updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP`,
-    ],
-  ];
-
-  for (const [column, sql] of alterations) {
-    if (!cols.has(column)) {
-      await dbRun(sql, [], { fallback: true });
-    }
-  }
-};
+const ensureUserWebhooksTable = async (): Promise<void> => undefined;
 
 /**
  * GET /api/settings/webhooks
@@ -5854,28 +5759,7 @@ router.put(
 // DEVELOPER SETTINGS
 // ===========================================
 
-/**
- * Ensure developer_settings table exists
- */
-const ensureDeveloperSettingsTable = async () => {
-  await dbRun(`
-        CREATE TABLE IF NOT EXISTS developer_settings (
-            id TEXT PRIMARY KEY,
-            user_id TEXT NOT NULL UNIQUE,
-            developer_mode INTEGER DEFAULT 0,
-            api_logging INTEGER DEFAULT 0,
-            verbose_errors INTEGER DEFAULT 0,
-            show_debug_info INTEGER DEFAULT 0,
-            beta_features TEXT DEFAULT '[]',
-            created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-        )
-    `);
-  await dbRun(
-    `CREATE INDEX IF NOT EXISTS idx_developer_settings_user ON developer_settings(user_id)`
-  );
-};
+const ensureDeveloperSettingsTable = async (): Promise<void> => undefined;
 
 /**
  * GET /api/settings/developer
@@ -5931,13 +5815,23 @@ router.put(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
-    const { developerMode, apiLogging, verboseErrors, showDebugInfo, betaFeatures } = req.body;
+    const { developerMode, apiLogging, verboseErrors, showDebugInfo } = req.body;
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    const allowedKeys = new Set(['developerMode', 'apiLogging', 'verboseErrors', 'showDebugInfo']);
+    const capabilityKeys = Object.keys(req.body || {}).filter((key) => !allowedKeys.has(key));
+    if (capabilityKeys.length > 0) {
+      return res.status(403).json({
+        error: 'Developer settings cannot change feature flags or tool availability',
+        code: 'DEVELOPER_SETTINGS_CAPABILITY_WRITE_FORBIDDEN',
+        rejectedKeys: capabilityKeys,
+      });
+    }
 
     await ensureDeveloperSettingsTable();
 
-    const existing = await dbGet<{ id: string }>(
-      `SELECT id FROM developer_settings WHERE user_id = ?`,
+    const existing = await dbGet<{ id: string; beta_features?: string | null }>(
+      `SELECT id, beta_features FROM developer_settings WHERE user_id = ?`,
       [userId]
     );
 
@@ -5962,7 +5856,7 @@ router.put(
         apiLogging ? 1 : 0,
         verboseErrors ? 1 : 0,
         showDebugInfo ? 1 : 0,
-        JSON.stringify(betaFeatures || []),
+        existing?.beta_features || '[]',
       ],
       { fallback: false }
     );
