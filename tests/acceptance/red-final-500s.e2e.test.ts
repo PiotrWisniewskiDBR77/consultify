@@ -127,7 +127,16 @@ describe('RED-FINAL · rewir czysty (schema-green) + pinned known exceptions', (
         for (let attempt = 0; attempt < 2; attempt++) {
           try {
             const res = await request(app).get(g.mount + p).set('Authorization', `Bearer ${tok}`);
-            last = res.status >= 500 ? { status: res.status, body: JSON.stringify(res.body).slice(0, 200) } : null;
+            const isHonestMegatrendNotConfigured =
+              g.mount === '/api/megatrends' &&
+              ['/baseline', '/radar'].includes(p) &&
+              res.status === 503 &&
+              res.body?.status === false &&
+              res.body?.type === 'not_configured' &&
+              /not yet configured/i.test(String(res.body?.userMessage));
+            last = res.status >= 500 && !isHonestMegatrendNotConfigured
+              ? { status: res.status, body: JSON.stringify(res.body).slice(0, 200) }
+              : null;
             break;
           } catch (e: any) {
             last = { status: -1, body: `THROW: ${e.message}` };
