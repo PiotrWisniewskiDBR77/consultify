@@ -72,9 +72,18 @@ describeIfDb('orgContext.middleware (L1)', () => {
 
   beforeEach(async () => {
     await db.exec(`
-      DELETE FROM organization_members;
-      DELETE FROM consultant_org_links;
-      DELETE FROM organizations;
+      DELETE FROM organization_members
+      WHERE organization_id NOT IN (
+        SELECT organization_id FROM users WHERE organization_id IS NOT NULL
+      );
+      DELETE FROM consultant_org_links
+      WHERE organization_id NOT IN (
+        SELECT organization_id FROM users WHERE organization_id IS NOT NULL
+      );
+      DELETE FROM organizations AS organization
+      WHERE NOT EXISTS (
+        SELECT 1 FROM users WHERE users.organization_id = organization.id
+      );
     `);
   });
 
