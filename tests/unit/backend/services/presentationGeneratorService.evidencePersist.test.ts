@@ -81,13 +81,6 @@ vi.mock('../../../../server/src/services/presentationBrandLayoutService.js', () 
   buildBrandLayoutSystem: vi.fn().mockReturnValue({}),
 }));
 
-vi.mock('../../../../server/src/services/presentationDeckDocumentService.js', () => ({
-  deckDocumentFromUnifiedJson: vi.fn().mockReturnValue({
-    generation: { warnings: [] },
-    lifecycle: {},
-  }),
-}));
-
 vi.mock('../../../../server/src/services/presentationLayoutVariantsService.js', () => ({
   generateDeckVariants: vi.fn().mockResolvedValue({ variants: [], tierUsed: 'STANDARD' }),
 }));
