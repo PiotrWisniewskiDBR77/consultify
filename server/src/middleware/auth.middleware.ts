@@ -29,6 +29,7 @@ import {
   resolveBlockingOrgStatus,
 } from '../services/organizationSuspensionGuard.js';
 import { DEMO_ORG_ID, DEMO_SESSION_ORG_HEADER } from './demoGuard.middleware.js';
+import { evaluateSessionIdlePolicy } from './sessionIdlePolicy.js';
 
 // Used by security integrity gate and to ensure test bypasses never run in prod.
 const isProductionEnv = (): boolean => process.env.NODE_ENV === 'production';
@@ -971,7 +972,7 @@ const attachUser = async (
   //
   // The claim is checked first purely for cost: it is false for every ordinary
   // principal, so the extra lookup effectively never runs on the hot path.
-  const strictSuspensionDbGet = <T,>(sql: string, params?: unknown[]) =>
+  const strictSuspensionDbGet = <T>(sql: string, params?: unknown[]) =>
     dbGet<T>(sql, params, { fallback: false });
   const isSuperAdminPrincipal =
     resolvedIsSuperAdmin &&
@@ -1457,6 +1458,31 @@ export const verifyToken = asyncHandler(
       }
       const normalizedDecoded: JWTPayload = { ...sanitizedDecoded, id: decodedId };
 
+      if (process.env.SESSION_IDLE_ENFORCEMENT === 'true') {
+        const decodedClaims = normalizedDecoded as unknown as Record<string, unknown>;
+        const organizationId =
+          readOptionalStringClaim(decodedClaims, 'organizationId') ||
+          readOptionalStringClaim(decodedClaims, 'organization_id');
+        const tokenJti = readOptionalStringClaim(decodedClaims, 'jti');
+        if (organizationId && tokenJti) {
+          const { dbGet: dbGetFromDeps } = await getDeps();
+          const idleDecision = await evaluateSessionIdlePolicy(
+            dbGetFromDeps,
+            organizationId,
+            decodedId,
+            tokenJti
+          );
+          if (idleDecision.kind === 'EXPIRED') {
+            res.status(401).json({
+              code: 'SESSION_IDLE_TIMEOUT',
+              message: 'Your session expired because of inactivity. Sign in again.',
+              messagePl: 'Sesja wygasła z powodu bezczynności. Zaloguj się ponownie.',
+            });
+            return;
+          }
+        }
+      }
+
       await checkTokenRevocation(normalizedDecoded, req, res, next);
       trackSessionActivity(req, res);
     } catch (err: any) {
@@ -1557,8 +1583,22 @@ export const optionalAuth = asyncHandler(
 
     try {
       const normalizedDecoded: JWTPayload = { ...sanitizedDecoded, id: decodedUserId };
-      // Attach user without revocation check for optional auth.
-      await attachUser(normalizedDecoded, req, next, _res);
+      // Hydration is best-effort here. Capture attachUser refusals without
+      // committing headers/body to the public response; required auth keeps
+      // using the real response object and therefore remains fail-closed.
+      let refused = false;
+      const optionalResponse = Object.create(_res) as Response;
+      optionalResponse.status = (() => optionalResponse) as Response['status'];
+      optionalResponse.json = (() => {
+        refused = true;
+        return optionalResponse;
+      }) as Response['json'];
+      optionalResponse.setHeader = (() => optionalResponse) as Response['setHeader'];
+
+      await attachUser(normalizedDecoded, req, next, optionalResponse);
+      if (refused) {
+        return next();
+      }
     } catch {
       // Optional auth must remain non-blocking even if user hydration fails.
       return next();
@@ -1656,41 +1696,63 @@ export const requireOrganization = (req: AuthRequest, res: Response, next: NextF
 
 /**
  * Validate that the user still has an active membership in the org from their JWT.
- * Uses in-memory cache (60s TTL) to avoid per-request DB hits.
+ * Reads membership on every request so a revoke is effective immediately.
  */
-const _membershipCache = new Map<string, { valid: boolean; ts: number }>();
-const MEMBERSHIP_CACHE_TTL_MS = 60_000;
 const normalizeMembershipStatus = (value: unknown): string =>
   String(value || '')
     .trim()
     .toUpperCase();
 const normalizeContextIdentifier = (value: unknown): string =>
   typeof value === 'string' ? value.trim() : '';
-const buildMembershipCacheKey = (userId: string, orgId: string): string =>
-  JSON.stringify([userId, orgId]);
+const ORGANIZATION_OPTIONAL_MOUNTS = new Set(['/api/conversations', '/api/chat-projects']);
+const permitsOrganizationlessPrincipal = (req: AuthRequest): boolean => {
+  const baseUrl = normalizeContextIdentifier(safeRead(() => req.baseUrl, undefined));
+  return ORGANIZATION_OPTIONAL_MOUNTS.has(baseUrl);
+};
 
 export const validateOrgMembership = asyncHandler(
   async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
-    let userId = '';
-    let orgId = '';
-    try {
-      const requestUser = safeRead(() => req.user, undefined as AuthRequest['user']);
-      userId =
-        normalizeContextIdentifier(safeRead(() => req.userId, undefined)) ||
-        normalizeContextIdentifier(safeRead(() => requestUser?.id, undefined));
-      orgId = normalizeContextIdentifier(safeRead(() => req.organizationId, undefined));
-    } catch {
-      // If context accessors throw, fail-open to preserve middleware contract.
+    const requestUser = safeRead(() => req.user, undefined as AuthRequest['user']);
+    const userId =
+      normalizeContextIdentifier(safeRead(() => req.userId, undefined)) ||
+      normalizeContextIdentifier(safeRead(() => requestUser?.id, undefined));
+    const orgId = normalizeContextIdentifier(safeRead(() => req.organizationId, undefined));
+    const requestedOrgId = normalizeContextIdentifier(
+      safeRead(() => req.requestedOrganizationId, undefined)
+    );
+
+    // Authentication remains optional for callers without a resolved user.
+    if (!userId) {
       return next();
     }
-
-    if (!userId || !orgId) {
-      return next();
+    // Personal conversations and chat projects are user-scoped before a fresh
+    // account joins an organization. They accept no-org principals, but an
+    // explicitly requested org still goes through the strict membership path.
+    if (!orgId) {
+      if (!requestedOrgId && permitsOrganizationlessPrincipal(req)) {
+        return next();
+      }
+      res.status(403).json({
+        error: 'Organization context is required',
+        code: 'ORG_CONTEXT_REQUIRED',
+      });
+      return;
+    }
+    if (requestedOrgId && requestedOrgId !== orgId) {
+      res.status(403).json({
+        error: 'Requested organization context does not match the authorized organization',
+        code: 'ORG_CONTEXT_MISMATCH',
+      });
+      return;
     }
     try {
       req.organizationId = orgId;
     } catch {
-      return next();
+      res.status(403).json({
+        error: 'Organization context is required',
+        code: 'ORG_CONTEXT_REQUIRED',
+      });
+      return;
     }
 
     // SuperAdmins bypass membership checks only when explicitly true.
@@ -1715,19 +1777,6 @@ export const validateOrgMembership = asyncHandler(
       return next();
     }
 
-    const cacheKey = buildMembershipCacheKey(userId, orgId);
-    const cached = _membershipCache.get(cacheKey);
-    if (cached && Date.now() - cached.ts < MEMBERSHIP_CACHE_TTL_MS) {
-      if (!cached.valid) {
-        res.status(403).json({
-          error: 'You no longer have access to this organization',
-          code: 'ORG_MEMBERSHIP_REVOKED',
-        });
-        return;
-      }
-      return next();
-    }
-
     try {
       const { dbGet: dbGetFromDeps } = await getDeps();
       const membership = await dbGetFromDeps<{ status: string }>(
@@ -1736,8 +1785,6 @@ export const validateOrgMembership = asyncHandler(
       );
 
       const valid = !!membership && normalizeMembershipStatus(membership.status) === 'ACTIVE';
-      _membershipCache.set(cacheKey, { valid, ts: Date.now() });
-
       if (!valid) {
         res.status(403).json({
           error: 'You no longer have access to this organization',
@@ -1748,13 +1795,16 @@ export const validateOrgMembership = asyncHandler(
 
       next();
     } catch (error) {
-      // On DB error, allow request through (fail-open) to avoid blocking all requests
-      logger.warn('[AuthMiddleware] org membership check failed; failing open', {
-        code: 'ORG_MEMBERSHIP_LOOKUP_FAIL_OPEN',
+      logger.warn('[AuthMiddleware] org membership check failed; refusing request', {
+        code: 'ORG_MEMBERSHIP_LOOKUP_UNAVAILABLE',
         path: safeReadRequestPath(req),
         reason: error instanceof Error ? error.message : 'unknown_error',
       });
-      next();
+      res.status(503).json({
+        error: 'Organization membership could not be verified',
+        code: 'ORG_MEMBERSHIP_LOOKUP_UNAVAILABLE',
+      });
+      return;
     }
   }
 );
@@ -1841,16 +1891,13 @@ export const __private__ = {
     _revokeInflight.clear();
     _revokeAllInflight.clear();
   },
-  resetMembershipCacheForTests: () => {
-    _membershipCache.clear();
-  },
   resetDepsForTests: () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     deps = undefined as any;
   },
   normalizeMembershipStatus,
   normalizeContextIdentifier,
-  buildMembershipCacheKey,
+  permitsOrganizationlessPrincipal,
   buildSessionActivityUpdateSql,
   buildRevokeAllLookupSql,
   extractIssuedAtSeconds,

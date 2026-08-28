@@ -711,9 +711,8 @@ router.get(
       let membershipRole: string | null = null;
       // Tracks whether the ACTIVE-membership lookup actually ran (vs. threw,
       // e.g. missing table/column on a legacy schema). Kept separate from
-      // `membershipRole` so a DB/schema error still fails OPEN (matches
-      // `validateOrgMembership`'s own fail-open-on-DB-error contract) instead
-      // of being misread as "membership confirmed revoked".
+      // `membershipRole` so this identity-response compatibility path can keep
+      // its historical fallback without claiming parity with the strict guard.
       let membershipLookupSucceeded = false;
       if (user.organization_id) {
         try {
@@ -746,8 +745,8 @@ router.get(
       // flips away from ACTIVE — so without this gate a JWT minted before
       // revocation keeps reading its old org's name/plan through this
       // identity endpoint even though every org-scoped resource endpoint
-      // (validateOrgMembership) would now 403 it. Fails OPEN (keeps prior
-      // behavior) when the membership lookup itself didn't run/succeed, when
+      // (validateOrgMembership) would now 403 it. This /me projection keeps its
+      // historical fallback when the membership lookup didn't run/succeed, when
       // there is no org on the account at all (nothing to leak), and for
       // SUPERADMIN (mirrors validateOrgMembership's own bypass) — only a
       // lookup that ran, found the account has an org, and came back
@@ -2357,10 +2356,10 @@ router.post(
               // error, which the guard would read as "not suspended".
               // ---------------------------------------------------------------
               if (
-                await isOrganizationSuspended(existingOrg.id, <T,>(
-                  sql: string,
-                  params?: unknown[]
-                ) => dbGet<T>(sql, params, { fallback: false }))
+                await isOrganizationSuspended(
+                  existingOrg.id,
+                  <T>(sql: string, params?: unknown[]) => dbGet<T>(sql, params, { fallback: false })
+                )
               ) {
                 return res.status(403).json(buildOrgSuspendedResponseBody());
               }

@@ -446,12 +446,10 @@ describeReal('Day 42 Partner tenant isolation through the real ApiGateway', NO_R
   /**
    * FIX-4 — the partner router's OWN membership wall.
    *
-   * `validateOrgMembership` (server/src/middleware/auth.middleware.ts:1740-1747)
-   * caches its membership answer for 60 s
-   * (`MEMBERSHIP_CACHE_TTL_MS`, auth.middleware.ts:1662). This case warms that
-   * cache with a legitimate 200 read, revokes the membership, and reads again
-   * inside the cache window, so any cached upstream "valid" verdict is in play
-   * and only a per-request re-read can still refuse. Measured on this branch:
+   * `validateOrgMembership` re-reads membership on every request. This case
+   * warms the route with a legitimate 200 read, revokes membership, and reads
+   * again immediately, proving there is no stale upstream positive verdict.
+   * Measured on this branch:
    * removing BOTH partner-router membership walls (`partner.routes.ts:213` and
    * `:272`) makes these five reads answer 200 — this case is red exactly then.
    * The refusal body is `{ success:false, code }` with no `error` field, which

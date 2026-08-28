@@ -444,11 +444,9 @@ import { safeFetchHtml, SsrfBlockedError } from './utils/ssrfGuard.js';
 
 const gatewayVerifyToken = verifyToken as unknown as RequestHandler;
 /**
- * Audits-only strict membership. `validateOrgMembership` caches a positive
- * result for 60s and fails open on a DB error; on the Audits mounts a revoked
- * membership must be refused on the very next request, and an unreadable
- * membership table must deny rather than admit. Scoped deliberately to these
- * four mounts so no other route's behaviour changes.
+ * Audits-only strict membership. This guard predates the now fail-closed,
+ * per-request `validateOrgMembership`; keep it scoped to the Audits mounts
+ * until their duplicate enforcement can be retired by the owning duty.
  */
 const auditsStrictMembership = requireActiveAuditsMembership as unknown as RequestHandler;
 const tenantStrictMembership = requireActiveMembership as unknown as RequestHandler;
@@ -706,9 +704,9 @@ export class ApiGateway {
       app.use('/api/admin/model-registry', modelRegistryRoutes);
 
       // AI-related legacy/duplicate routes (cleaned up)
-      // gatewayVerifyToken populates req.organizationId from the token BEFORE validateOrgMembership
-      // re-checks active membership against the DB (fail-fast on revocation; passes through when
-      // no org context = personal chat). Closes the stale-token tenancy gap on chat routes.
+      // validateOrgMembership re-checks ACTIVE membership when an organization is present.
+      // Organizationless principals pass only on personal conversations/chat-projects;
+      // signals remain tenant-scoped and fail closed without an organization.
       app.use('/api/conversations', gatewayVerifyToken, orgMembershipGuard, conversationsRoutes);
       app.use('/api/signals', gatewayVerifyToken, orgMembershipGuard, signalsFeedRoutes);
       app.use('/api/chat-projects', gatewayVerifyToken, orgMembershipGuard, chatProjectsRoutes);
