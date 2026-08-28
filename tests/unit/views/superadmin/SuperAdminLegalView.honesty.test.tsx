@@ -102,7 +102,8 @@ describe('SuperAdminLegalView honest workflows', () => {
 
     expect(await screen.findByText('PRIVACY')).toBeInTheDocument();
     expect(screen.getByText('Active')).toBeInTheDocument();
-    expect(screen.getByTitle('Deactivate')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Row actions/i }));
+    expect(screen.getByRole('menuitem', { name: /^Deactivate$/i })).toBeInTheDocument();
   });
 
   it('does not treat string false active values as active documents', async () => {
@@ -121,8 +122,9 @@ describe('SuperAdminLegalView honest workflows', () => {
 
     expect(await screen.findByText('Terms of Service')).toBeInTheDocument();
     expect(screen.getByText('Inactive')).toBeInTheDocument();
-    expect(screen.getByTitle('Activate')).toBeInTheDocument();
-    expect(screen.queryByTitle('Deactivate')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Row actions/i }));
+    expect(screen.getByRole('menuitem', { name: /^Activate$/i })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: /^Deactivate$/i })).not.toBeInTheDocument();
   });
 
   it('does not render malformed legal document payloads as an empty document list', async () => {
@@ -203,7 +205,8 @@ describe('SuperAdminLegalView honest workflows', () => {
     render(<SuperAdminLegalView />);
 
     expect(await screen.findByText('Unknown date')).toBeInTheDocument();
-    fireEvent.click(screen.getByTitle('Deactivate'));
+    fireEvent.click(screen.getByRole('button', { name: /Row actions/i }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /^Deactivate$/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Legal document status was not confirmed by the server')).toBeInTheDocument();

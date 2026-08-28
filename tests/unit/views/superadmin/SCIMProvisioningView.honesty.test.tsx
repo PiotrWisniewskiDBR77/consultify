@@ -217,7 +217,8 @@ describe('SCIMProvisioningView honest UI', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: /Group Mappings/i }));
     expect(await screen.findByText('Consultify Admins')).toBeInTheDocument();
-    fireEvent.click(screen.getByTitle('Delete mapping Consultify Admins'));
+    fireEvent.click(screen.getByRole('button', { name: /Row actions/i }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /^Delete mapping$/i }));
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent(
