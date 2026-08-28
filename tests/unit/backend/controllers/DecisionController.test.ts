@@ -10,13 +10,36 @@ const mockQueryAll = vi.fn();
 const mockQueryOne = vi.fn();
 const mockQueryRun = vi.fn();
 const mockTransformRow = vi.fn((row) => row);
+const mockFinalizeDecisionTransition = vi.fn();
+
+const transactionClient = {
+  query: vi.fn(async (sql: string, params?: unknown[]) => {
+    if (/^\s*(SELECT|WITH)\b/i.test(sql)) {
+      const row = await mockQueryOne(sql, params);
+      return { rows: row ? [row] : [], rowCount: row ? 1 : 0 };
+    }
+    const result = await mockQueryRun(sql, params);
+    return { rows: [], rowCount: result?.changes ?? 0 };
+  }),
+};
 
 vi.mock('../../../../server/src/utils/queryHelpers.js', () => ({
   queryAll: (...args: unknown[]) => mockQueryAll(...args),
   queryOne: (...args: unknown[]) => mockQueryOne(...args),
   queryRun: (...args: unknown[]) => mockQueryRun(...args),
   transformRow: (row: unknown) => mockTransformRow(row),
+  withPgTransaction: (fn: (client: typeof transactionClient) => unknown) => fn(transactionClient),
 }));
+
+vi.mock('../../../../server/src/services/decisionCollaborationService.js', async (importOriginal) => {
+  const actual = await importOriginal<
+    typeof import('../../../../server/src/services/decisionCollaborationService.js')
+  >();
+  return {
+    ...actual,
+    finalizeDecisionTransition: (...args: unknown[]) => mockFinalizeDecisionTransition(...args),
+  };
+});
 
 vi.mock('../../../../server/src/utils/DbPromise.js', () => ({
   all: vi.fn().mockResolvedValue([]),
@@ -47,6 +70,11 @@ describe('DecisionController', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockFinalizeDecisionTransition.mockImplementation(async (input) => ({
+      status: input.targetStatus,
+      decidedBy: input.actorId,
+      decidedAt: '2026-08-28T00:00:00.000Z',
+    }));
 
     mockReq = {
       user: {
@@ -174,6 +202,7 @@ describe('DecisionController', () => {
         description: 'Test description',
         pmoDomain: 'GOVERNANCE_DECISION_MAKING',
       };
+      mockQueryOne.mockResolvedValue({ id: 'proj-123' });
       mockQueryRun.mockResolvedValue({ changes: 1 });
 
       const { DecisionController } =
@@ -357,7 +386,7 @@ describe('DecisionController', () => {
       mockReq.body = { status: 'PENDING' };
       mockQueryOne.mockResolvedValue({
         id: 'd-status',
-        status: 'approved',
+        status: 'draft',
         created_by: 'user-123',
       });
       mockQueryRun.mockResolvedValue({ changes: 1 });
@@ -372,7 +401,7 @@ describe('DecisionController', () => {
       );
       expect(mockQueryRun).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO decision_history'),
-        expect.arrayContaining(['approved', 'pending'])
+        expect.arrayContaining(['pending', 'pending'])
       );
       expect(mockRes.json).toHaveBeenCalledWith({ id: 'd-status', message: 'Decision updated' });
     });
@@ -398,6 +427,8 @@ describe('DecisionController', () => {
         id: 'd-approve',
         status: 'APPROVED',
         decidedBy: 'user-123',
+        decidedAt: '2026-08-28T00:00:00.000Z',
+        version: undefined,
       });
     });
   });
