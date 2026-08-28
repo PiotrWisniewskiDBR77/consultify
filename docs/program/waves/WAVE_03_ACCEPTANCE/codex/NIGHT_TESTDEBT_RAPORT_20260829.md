@@ -1173,7 +1173,35 @@ w `api.ts(12613,52)` i `TS2322` dokładnie w `AdminSettingsModule.tsx(500,13)`
 
 ## Faza 5 — inwentarz lintu
 
-Nie rozpoczęto.
+**ZROBIONE — inwentarz, bez masowego autofixu.** Pomiar JSON obejmuje całe repo:
+
+- 48 539 błędów w 1 934 plikach;
+- 48 526 błędów ma mechaniczną poprawkę ESLint, ale nie została zastosowana;
+- `prettier/prettier`: 47 409;
+- `simple-import-sort/imports`: 1 070;
+- `simple-import-sort/exports`: 27;
+- `prefer-const`: 18;
+- semantyczne pojedyncze: `react-hooks/rules-of-hooks` 3,
+  `no-irregular-whitespace` 2, `no-extra-boolean-cast` 2,
+  `no-useless-escape` 2, `no-unused-expressions` 2,
+  `no-namespace` 1, `no-fallthrough` 1, `no-unsafe-finally` 1,
+  `no-this-alias` 1.
+
+Rozkład katalogów: `server/src` 38 849, `src/components` 6 367,
+`dev-render` 978, `docs` 798, `src/views` 616, `src/toolPacks` 262,
+`src/method-core` 218, `src/services` 200, pozostałe katalogi 251 łącznie.
+
+Największe pojedyncze pliki: `openapiSchemaValidity.contract.test.ts` 1 090,
+`eventInboxService.pg.test.ts` 851, `artifactLinkService.pg.test.ts` 833,
+`freezeOutputFlow.integration.test.ts` 826, `resilience.pg.test.ts` 816,
+`financeValue.membershipGate.pg.test.ts` 807, `drdVerticalSlice.e2e.test.ts` 785
+i `my-work.routes.ts` 785.
+
+Bezpieczna kolejność spłaty: (1) 13 semantycznych naruszeń innych niż
+`prefer-const`, każde osobno z testem; (2) 18 `prefer-const`; (3) importy małymi,
+rozłącznymi pakietami katalogów; (4) formatowanie wyłącznie modułami z pełnym
+regresem nazw. Nie wolno puścić 48 526 autofixów jako jednego commita — zniszczyłoby
+to możliwość sensownego review i przypisania regresji.
 
 ## Kryteria K1–K5
 
