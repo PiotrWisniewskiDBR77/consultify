@@ -4,7 +4,9 @@
  *
  * KRYTYCZNE: FT-4 demaskuje fasadę. Generujemy .xlsx, parsujemy jako ZIP+XML,
  * asercja że w `xl/worksheets/sheet1.xml` JEST `<conditionalFormatting>`
- * (lub `<x14:conditionalFormatting>` dla iconSet w extended namespace).
+ * (lub `<x14:conditionalFormatting>` dla iconSet w extended namespace). Builder
+ * poprzedza arkusze danych arkuszem metadanych, więc pierwszy arkusz schematu
+ * jest zapisywany jako `sheet2.xml`.
  *
  * To jest test "evidence-grade" — nie wystarcza, że builder wywołał exceljs API.
  * Sprawdzamy że w prawdziwym pliku jest CF w XML.
@@ -39,7 +41,7 @@ const BASE_SCHEMA: WorkbookSchema = {
   ],
 };
 
-async function extractSheetXml(buf: Buffer, sheetIndex = 1): Promise<string> {
+async function extractSheetXml(buf: Buffer, sheetIndex = 2): Promise<string> {
   const zip = await JSZip.loadAsync(buf);
   const file = zip.file(`xl/worksheets/sheet${sheetIndex}.xml`);
   expect(file).not.toBeNull();
