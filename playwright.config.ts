@@ -77,7 +77,11 @@ export default defineConfig({
   ],
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
+  // DAY58, 2026-08-28: 5 runs each of the destructive presentations, partner,
+  // and settings specs with --retries=0 produced identical named outcomes in
+  // every run. A retry would mask deterministic failures, not browser flake.
+  // One-off diagnostic exception: pass `--retries=N` explicitly on the CLI.
+  retries: 0,
   workers: process.env.CI ? 1 : undefined,
   timeout: 60000, // 60 seconds per test
   expect: {
