@@ -31,6 +31,7 @@ vi.mock('react-i18next', () => ({
 }));
 
 vi.mock('@/services/funnelAnalytics', () => ({ trackFunnelEvent: vi.fn() }));
+vi.mock('@/utils/orgRedesignFlag', () => ({ isOrgRedesignV1Enabled: () => false }));
 
 // Stub heavy child surfaces — the smoke test only asserts the shell + routing wiring.
 vi.mock('@/components/Organization/KnowledgeGraphExplorer', () => ({
@@ -84,8 +85,6 @@ describe('OrganizationView (smoke)', () => {
     ['/organization/challenges', 'challenges-module'],
     ['/organization/strategy', 'strategy-module'],
     ['/organization/knowledge-graph', 'kg-explorer'],
-    ['/organization/members', 'route-redirect'],
-    ['/organization/limits', 'route-redirect'],
   ];
 
   it.each(sectionCases)('renders %s without crashing', async (path, testId) => {
@@ -97,6 +96,16 @@ describe('OrganizationView (smoke)', () => {
   it('always renders the live context summary banner', async () => {
     render(<OrganizationView />);
     expect(await screen.findByTestId('context-banner')).toBeInTheDocument();
+  });
+
+  it.each([
+    ['/organization/members', '/admin/people'],
+    ['/organization/limits', '/admin/billing'],
+  ])('hands legacy admin route %s to the canonical admin surface', async (path, target) => {
+    locationState.pathname = path;
+    render(<OrganizationView />);
+    await screen.findByTestId('profile-module');
+    expect(navigateMock).toHaveBeenCalledWith(target, { replace: true });
   });
 
   it('renders the sidebar shell', () => {

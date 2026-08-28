@@ -2132,6 +2132,7 @@
         "updatedObject": "Zmieniono właściwości obiektu"
       },
       "toast": {
+        "pasted": "Wklejono",
         "selectFirst": "Najpierw zaznacz elementy",
         "libraryEmpty": "Biblioteka jest pusta",
         "noSnapshot": "Brak snapshotu do przywrócenia",
@@ -32458,6 +32459,8 @@
   },
   "myWorkIdeas": {
     "processFlowTool": {
+      "title": "Przepływ procesu",
+      "summarizeInChat": "Podsumuj ten przepływ procesu",
       "you": "Ty",
       "aiProposalApplied": "Zastosowano propozycję AI",
       "failedLoad": "Nie udało się wczytać",
@@ -32903,7 +32906,8 @@
     },
     "aiNudgeStrip": {
       "go": "Działaj",
-      "dismissNudge": "Odrzuć podpowiedź"
+      "dismissNudge": "Odrzuć podpowiedź",
+      "selectionReady": "Zaznaczono niepołączone elementy. Połącz je na tablicy; podpowiedź pozostanie widoczna do potwierdzenia wyniku."
     },
     "votingMode": {
       "votingMode": "Tryb głosowania",
@@ -33672,6 +33676,16 @@
     },
     "addColumnDialog": {
       "addColumn": "Dodaj kolumnę",
+      "nameRequired": "Nadaj polu nazwę przed jego utworzeniem.",
+      "duplicateName": "Pole o nazwie „{{name}}” już istnieje — wybierz inną nazwę.",
+      "addedCount": "Dodano pól w tej sesji: {{count}} — kontynuuj albo wybierz Gotowe.",
+      "enterToCreate": "Naciśnij Enter, aby utworzyć pole i dodać następne.",
+      "preview": "Podgląd",
+      "untitledField": "Pole bez nazwy",
+      "addedThisSession": "Dodane w tej sesji",
+      "undo": "Cofnij",
+      "done": "Gotowe",
+      "addAnother": "Utwórz pole i dodaj następne",
       "name": "Nazwa",
       "eGStatusPriority": "np. Status, Priorytet...",
       "type": "Typ",

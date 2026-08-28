@@ -12,6 +12,14 @@ ALTER TABLE organizations
 ALTER TABLE organizations
   ADD COLUMN IF NOT EXISTS domain TEXT;
 
-ALTER TABLE slack_router_dedupe
-  ALTER COLUMN last_sent_at TYPE TIMESTAMPTZ
-  USING last_sent_at AT TIME ZONE 'UTC';
+-- This table is created lazily by SlackRouter on first use, so a fresh database
+-- legitimately does not have it during the migration pass. Upgrade existing
+-- installations without making fresh installs order-dependent on runtime DDL.
+DO $$
+BEGIN
+  IF to_regclass('public.slack_router_dedupe') IS NOT NULL THEN
+    ALTER TABLE slack_router_dedupe
+      ALTER COLUMN last_sent_at TYPE TIMESTAMPTZ
+      USING last_sent_at AT TIME ZONE 'UTC';
+  END IF;
+END $$;
