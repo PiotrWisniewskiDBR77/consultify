@@ -2357,10 +2357,10 @@ router.post(
               // error, which the guard would read as "not suspended".
               // ---------------------------------------------------------------
               if (
-                await isOrganizationSuspended(
-                  existingOrg.id,
-                  <T>(sql: string, params?: unknown[]) => dbGet<T>(sql, params, { fallback: false })
-                )
+                await isOrganizationSuspended(existingOrg.id, <T,>(
+                  sql: string,
+                  params?: unknown[]
+                ) => dbGet<T>(sql, params, { fallback: false }))
               ) {
                 return res.status(403).json(buildOrgSuspendedResponseBody());
               }

@@ -152,7 +152,6 @@ describe(
           await put('/api/settings/developer', {
             developerMode: false,
             apiLogging: true,
-            betaFeatures: [],
           })
         ).status
       ).toBe(200);

@@ -50,7 +50,8 @@ vi.mock('../../../server/src/utils/DbPromise.js', async () => {
   const actual = (await vi.importActual('../../../server/src/utils/DbPromise.js')) as any;
   return {
     ...actual,
-    get: (...args: any[]) => mockDbGet(...args),
+    get: (sql: string, ...args: any[]) =>
+      sql.includes('organization_members') ? Promise.resolve({ status: 'ACTIVE' }) : mockDbGet(sql, ...args),
     run: (...args: any[]) => mockDbRun(...args),
     all: (...args: any[]) => mockDbAll(...args),
   };

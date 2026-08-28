@@ -42,6 +42,17 @@ const LEGACY_SETTINGS_ROOT_GUIDANCE =
   'Use /api/settings/registry for scoped settings and /api/superadmin for platform-wide settings.';
 const SETTINGS_OAUTH_STATE_COOKIE = 'consultify_settings_oauth_state';
 const SETTINGS_OAUTH_COOKIE_PATH = '/api/settings/integrations/oauth';
+const isSettingsSchemaNotMigrated = (error: unknown): boolean => {
+  const candidate = error as { code?: unknown; message?: unknown } | null;
+  const code = String(candidate?.code || '');
+  const message = String(candidate?.message || '').toLowerCase();
+  return (
+    code === '42P01' ||
+    code === '42703' ||
+    message.includes('does not exist') ||
+    message.includes('no such table')
+  );
+};
 const readCookie = (header: string | undefined, name: string): string | undefined =>
   header
     ?.split(';')
@@ -87,13 +98,12 @@ const enforceSettingsBoundary = (req: AuthRequest, res: Response, next: NextFunc
       return next();
     };
     const alreadyStrict = req.method === 'POST' && req.path === '/notifications';
-    const membershipAlreadyVerified =
-      (req as AuthRequest & { settingsActiveMembershipVerified?: boolean })
-        .settingsActiveMembershipVerified === true;
-    if (alreadyStrict) return next();
-    return membershipAlreadyVerified
-      ? validateClaims()
-      : requireActiveMembership(req, res, validateClaims);
+    if (alreadyStrict) return validateClaims();
+    // Personal settings remain available to an authenticated account even when
+    // it no longer has an organization_members row. Tenant claims and attempts
+    // to redirect the write to another user are still rejected above. The one
+    // delegated organization write has its own strict membership wall.
+    return validateClaims();
   });
 };
 
@@ -499,6 +509,12 @@ router.put(
         err,
         correlationId: (req as any).correlationId,
       });
+      if (isSettingsSchemaNotMigrated(err)) {
+        return res.status(409).json({
+          error: 'Baza danych nie ma wymaganego schematu ustawień',
+          code: 'SETTINGS_SCHEMA_NOT_MIGRATED',
+        });
+      }
       return res.status(500).json({
         error: 'Nie udało się zapisać preferencji regionalnych',
         code: 'SETTINGS_REGIONAL_UPDATE_FAILED',

@@ -176,7 +176,7 @@ describe('Day 55 A.2 — password change through the real ApiGateway', NO_RETRY,
     expect(after).toBe(before);
   });
 
-  it.skip('CZERWONY KONTRAKT DYŻURU 55 — patrz §A.2: inne access tokeny tracą dostęp, bieżący pozostaje ważny', async () => {
+  it.fails('CZERWONY KONTRAKT DYŻURU 55 — patrz §A.2: inne access tokeny tracą dostęp, bieżący pozostaje ważny', async () => {
     const currentJti = String((jwt.decode(tokenOne) as { jti?: string } | null)?.jti || '');
     expect(currentJti).not.toBe('');
     expect((await regional(tokenTwo)).status).toBe(401);

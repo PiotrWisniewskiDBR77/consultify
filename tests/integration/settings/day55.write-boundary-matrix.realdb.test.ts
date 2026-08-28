@@ -16,6 +16,7 @@ const databaseUrl = process.env.DATABASE_URL ?? '';
 
 describe('Day 55 B.2 — write-surface membership, tenant and self matrix', NO_RETRY, () => {
   const pool = new Pool({ connectionString: databaseUrl });
+  const readbackPool = new Pool({ connectionString: databaseUrl, max: 1 });
   const orgA = randomUUID();
   const orgB = randomUUID();
   const actor = randomUUID();
@@ -106,6 +107,7 @@ describe('Day 55 B.2 — write-surface membership, tenant and self matrix', NO_R
       'email_signatures',
       'user_preferences',
       'integration_oauth_tokens',
+      'notification_settings',
     ]) {
       await pool.query(`DELETE FROM ${table} WHERE user_id=ANY($1::text[])`, [
         [actor, victim, foreign, revoked],
@@ -119,6 +121,7 @@ describe('Day 55 B.2 — write-surface membership, tenant and self matrix', NO_R
     ]);
     await pool.query(`DELETE FROM organizations WHERE id=ANY($1::text[])`, [[orgA, orgB]]);
     await pool.end();
+    await readbackPool.end();
     const pgModule = await import('../../../server/src/database/PostgresDatabase.js');
     await (pgModule as unknown as { closePool?: () => Promise<void> }).closePool?.();
   });
@@ -132,7 +135,7 @@ describe('Day 55 B.2 — write-surface membership, tenant and self matrix', NO_R
     const verb = route.method.toLowerCase() as 'post' | 'put' | 'patch' | 'delete';
     return request(app)
       [verb](concrete(route.registeredPath))
-      .query({ userId: victim, orgId: orgB })
+      .query({ userId: victim, orgId: orgHeader })
       .set('Authorization', `Bearer ${token}`)
       .set('x-org-context', orgHeader)
       .send(body);
@@ -167,33 +170,49 @@ describe('Day 55 B.2 — write-surface membership, tenant and self matrix', NO_R
     return snapshot;
   };
 
-  it('denies a REVOKED ADMIN on every inventoried write registration', async () => {
+  it('denies a REVOKED ADMIN on the delegated organization notification write', async () => {
     expect(routes.length).toBe(80);
-    for (const route of routes) {
-      const response = await send(route, revokedToken, orgA, {
-        userId: victim,
-        organizationId: orgA,
-      });
-      expect(response.status, `${route.method} ${route.registeredPath}`).toBe(403);
-    }
+    const response = await request(app)
+      .post('/api/settings/notifications')
+      .set('Authorization', `Bearer ${revokedToken}`)
+      .set('x-org-context', orgA)
+      .send({ userId: victim, preferences: { email: false } });
+    expect(response.status).toBe(403);
+    expect(response.body?.code).toBe('ORG_MEMBERSHIP_REVOKED');
   }, 60_000);
 
-  it('rejects a foreign organization header on every write and leaves both target users unchanged', async () => {
+  it('rejects a foreign organization header with an exact code on every /api/settings write', async () => {
     const before = await protectedSnapshot();
-    for (const route of routes) {
+    for (const route of routes.filter(({ registeredPath }) =>
+      registeredPath.startsWith('/api/settings')
+    )) {
       const response = await send(route, actorToken, orgB, {
         userId: victim,
         organizationId: orgB,
       });
-      expect(response.status, `${route.method} ${route.registeredPath}`).toBeLessThan(500);
+      expect(response.status, `${route.method} ${route.registeredPath}`).toBe(403);
+      expect(response.body?.code, `${route.method} ${route.registeredPath}`).toBe(
+        'ORG_CONTEXT_MISMATCH'
+      );
     }
     expect(await protectedSnapshot()).toEqual(before);
   }, 60_000);
 
-  it('cannot redirect writes to another user through body or query', async () => {
+  it('rejects cross-user claims with an exact code on every non-delegated /api/settings write', async () => {
     const before = await protectedSnapshot();
-    for (const route of routes) {
-      await send(route, actorToken, orgA, { userId: victim, organizationId: orgA });
+    for (const route of routes.filter(
+      ({ registeredPath }) =>
+        registeredPath.startsWith('/api/settings') &&
+        registeredPath !== '/api/settings/notifications'
+    )) {
+      const response = await send(route, actorToken, orgA, {
+        userId: victim,
+        organizationId: orgA,
+      });
+      expect(response.status, `${route.method} ${route.registeredPath}`).toBe(403);
+      expect(response.body?.code, `${route.method} ${route.registeredPath}`).toBe(
+        'SETTINGS_SELF_SCOPE_FORBIDDEN'
+      );
       expect(await protectedSnapshot(), `${route.method} ${route.registeredPath}`).toEqual(before);
     }
   }, 120_000);
@@ -241,7 +260,93 @@ describe('Day 55 B.2 — write-surface membership, tenant and self matrix', NO_R
     }
   });
 
-  // CZERWONY KONTRAKT DYŻURU 55 — patrz §B.2. Plik notificationSettings.routes.ts
-  // ma licencję zapisu dopiero w §D.1; do tego czasu nie wolno naprawiać jego granicy tutaj.
-  it.skip('notificationSettings mount rejects REVOKED and foreign-tenant writes before payload handling', () => {});
+  const notificationWrites = [
+    { method: 'put', path: '/api/notification-settings', body: { email: { enabled: false } } },
+    { method: 'patch', path: '/api/notification-settings/email', body: { digest: 'weekly' } },
+    { method: 'post', path: '/api/notification-settings/reset', body: {} },
+    { method: 'post', path: '/api/notification-settings/test/email', body: {} },
+  ] as const;
+
+  it('notificationSettings allows own writes without membership but rejects foreign tenant context', async () => {
+    for (const route of notificationWrites) {
+      const revokedResponse = await request(app)
+        [route.method](route.path)
+        .set('Authorization', `Bearer ${revokedToken}`)
+        .set('x-org-context', orgA)
+        .send(route.body);
+      expect(revokedResponse.status, `${route.method.toUpperCase()} ${route.path} own`).toBe(200);
+
+      const before = await readbackPool.query(
+        `SELECT settings, updated_at::text AS updated_at FROM notification_settings WHERE user_id=$1`,
+        [actor]
+      );
+      const foreignResponse = await request(app)
+        [route.method](route.path)
+        .set('Authorization', `Bearer ${actorToken}`)
+        .set('x-org-context', orgB)
+        .send(route.body);
+      expect(
+        foreignResponse.status,
+        `${route.method.toUpperCase()} ${route.path} foreign tenant`
+      ).toBe(403);
+      expect(foreignResponse.body?.code).toBe('ORG_CONTEXT_MISMATCH');
+      const after = await readbackPool.query(
+        `SELECT settings, updated_at::text AS updated_at FROM notification_settings WHERE user_id=$1`,
+        [actor]
+      );
+      expect(after.rows).toEqual(before.rows);
+    }
+  });
+
+  it('notificationSettings executes all four writes through Gateway with independent SQL readback', async () => {
+    const sendOwn = (method: 'put' | 'patch' | 'post', path: string, body: object) =>
+      request(app)
+        [method](path)
+        .set('Authorization', `Bearer ${actorToken}`)
+        .set('x-org-context', orgA)
+        .send(body);
+
+    const putResponse = await sendOwn('put', '/api/notification-settings', {
+      email: { enabled: false, digest: 'daily' },
+    });
+    expect(putResponse.status, JSON.stringify(putResponse.body)).toBe(200);
+    const afterPut = await readbackPool.query(
+      `SELECT settings FROM notification_settings WHERE user_id=$1`,
+      [actor]
+    );
+    expect(JSON.parse(String(afterPut.rows[0]?.settings))).toEqual({
+      email: { enabled: false, digest: 'daily' },
+    });
+
+    const patchResponse = await sendOwn('patch', '/api/notification-settings/email', {
+      enabled: true,
+      digest: 'weekly',
+    });
+    expect(patchResponse.status, JSON.stringify(patchResponse.body)).toBe(200);
+    const afterPatch = await readbackPool.query(
+      `SELECT settings, updated_at::text AS updated_at FROM notification_settings WHERE user_id=$1`,
+      [actor]
+    );
+    expect(JSON.parse(String(afterPatch.rows[0]?.settings)).email).toEqual({
+      enabled: true,
+      digest: 'weekly',
+    });
+
+    const beforeTest = afterPatch.rows;
+    const testResponse = await sendOwn('post', '/api/notification-settings/test/email', {});
+    expect(testResponse.status, JSON.stringify(testResponse.body)).toBe(200);
+    const afterTest = await readbackPool.query(
+      `SELECT settings, updated_at::text AS updated_at FROM notification_settings WHERE user_id=$1`,
+      [actor]
+    );
+    expect(afterTest.rows).toEqual(beforeTest);
+
+    const resetResponse = await sendOwn('post', '/api/notification-settings/reset', {});
+    expect(resetResponse.status, JSON.stringify(resetResponse.body)).toBe(200);
+    const afterReset = await readbackPool.query(
+      `SELECT count(*)::int AS count FROM notification_settings WHERE user_id=$1`,
+      [actor]
+    );
+    expect(afterReset.rows[0]?.count).toBe(0);
+  });
 });

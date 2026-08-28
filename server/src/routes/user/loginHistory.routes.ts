@@ -10,14 +10,13 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
-import { requireActiveMembership } from '../../services/legacyCutover/requireActiveMembership.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 
 // Apply rate limiting
 const router = Router();
-router.use(verifyToken, requireActiveMembership);
+router.use(verifyToken);
 
 /**
  * Helper function to parse user agent string

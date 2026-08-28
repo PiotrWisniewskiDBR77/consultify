@@ -22,14 +22,12 @@ import logger from '../utils/Logger.js';
 import { flagOn } from '../utils/pgFlags.js';
 import { verifyUserPassword } from '../utils/verifyUserPassword.js';
 import { collectUserData, materializeUserDataExport } from '../services/gdprService.js';
-import { requireActiveMembership } from '../services/legacyCutover/requireActiveMembership.js';
 
 // Apply rate limiting
 const router = Router();
 
 // Apply auth middleware to all routes
 router.use(verifyToken);
-router.use(requireActiveMembership);
 
 // ==========================================
 // TYPES
@@ -367,7 +365,6 @@ router.put(
  */
 router.get(
   '/export-status',
-  requireActiveMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const userId = req.user!.id;
@@ -399,7 +396,6 @@ router.get(
  */
 router.post(
   '/export-request',
-  requireActiveMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const userId = req.user!.id;
@@ -493,7 +489,6 @@ router.post(
  */
 router.get(
   '/download-export/:requestId',
-  requireActiveMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const userId = req.user!.id;
@@ -568,7 +563,6 @@ router.get(
  */
 router.post(
   '/deletion-request',
-  requireActiveMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const userId = req.user!.id;
@@ -626,7 +620,6 @@ router.post(
  */
 router.post(
   '/cancel-deletion',
-  requireActiveMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const userId = req.user!.id;
@@ -661,7 +654,6 @@ router.post(
  */
 router.get(
   '/deletion-status',
-  requireActiveMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const userId = req.user!.id;

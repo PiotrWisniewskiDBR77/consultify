@@ -110,6 +110,23 @@ describe('/api/settings/preferences/* — fail-soft reads + fail-closed writes (
     expect(JSON.stringify(res.body)).not.toContain('duplicate key');
   });
 
+  it('PUT /preferences/regional names an unmigrated schema as 409 instead of 500', async () => {
+    const missingRelation = Object.assign(
+      new Error('relation "user_preferences" does not exist'),
+      { code: '42P01' }
+    );
+    dbRun.mockRejectedValue(missingRelation);
+    const app = await loadApp();
+
+    const res = await request(app)
+      .put('/api/settings/preferences/regional')
+      .send({ preferences: { timezone: 'UTC' } });
+
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe('SETTINGS_SCHEMA_NOT_MIGRATED');
+    expect(JSON.stringify(res.body)).not.toContain('user_preferences');
+  });
+
   it('GET /preferences/notifications degrades to 200 + safe defaults when DB subsystem throws', async () => {
     dbRun.mockRejectedValue(new Error('relation "user_preferences" does not exist'));
     dbGet.mockRejectedValue(new Error('relation "user_preferences" does not exist'));

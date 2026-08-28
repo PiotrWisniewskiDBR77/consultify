@@ -28,6 +28,20 @@ Marker: `b3179d0a52603f62b5cd3673caa754c8fc3b0055`
 - Komenda smoke C.2 z `server/vitest.config.ts` i rootową ścieżką nie znalazła testu; wiążący PASS pochodzi z rootowego configu i 49 wykonanych przypadków.
 - Korekta nadzorcy ogranicza migracje do `20261560–20261569`; dyżur nie utworzył ani nie zmienił migracji poza tym zakresem.
 
+## Kontynuacja po odbiorze adwersaryjnym — B1–B5
+
+Odbiór potwierdził jako poprawne: grafową martwość 62 usuniętych plików, dokładne kody ściany `/api/settings`, czterowarstwowy fail-closed seeda demo oraz brak nowej regresji typów względem zastanego baseline. Jednocześnie ujawnił pięć blokad, które rozliczono przed dalszymi pozycjami:
+
+| blok | pomiar wejściowy | korekta i wynik |
+| --- | --- | --- |
+| B1 | marker 12/12, wcześniejszy tip 5/12; siedem odpowiedzi 403 w trzech fixture’ach | fixture’y jawnie zwracają `organization_members.status=ACTIVE`; bez osłabienia asercji końcowo 12/12 |
+| B2 | realny JWT, istniejący użytkownik, brak wiersza członkostwa: hasło 200, profil 403, język 403, powiadomienia 403 | rozdzielono dane własne od delegowanego zapisu organizacyjnego; końcowo wszystkie cztery dają 200; obce `organizationId` i obcy `userId` nadal mają dokładne 403/kody na ścianie Settings |
+| B3 | drugi access token po zmianie hasła nadal 200; `revoked_tokens=0` | sprostowano: naprawiony został komunikat, nie unieważnianie access tokenów; kontrakt jest wykonywany jako `it.fails`, implementacja wymaga osobnej decyzji |
+| B4 | żadnej migracji `20261560–20261569`; runtime DDL 25→0 opiera się na zastanym łańcuchu | opis sprostowany; brak tabeli dla regionalnego zapisu daje teraz 409 `SETTINGS_SCHEMA_NOT_MIGRATED`, nie 500 |
+| B5 | A.4 po D.2: 6/7, bo fixture wysyłał zabronione `betaFeatures` | usunięto niedozwolony klucz z fixture; końcowy real-Gateway/PG: 7/7 |
+
+Niedozwolone formatowanie w handlerze `/register` w `auth.routes.ts` zostało cofnięte. Jedyny pozostawiony diff tego pliku jest wewnątrz `/change-password`, zgodnie z licencją. Zastany `PUT /api/preferences/` przyjmujący `userId` jako klucz preferencji jest zgłoszony jako dług higieny danych; nie przedstawiam tego zachowania jako poprawnego kontraktu.
+
 ## §A.1 — inwentarz osiągalności
 
 Surowy dowód: `/private/tmp/consultify-settings-day55-artefakty/orphans-baseline.txt`  
@@ -208,9 +222,9 @@ Wybrana droga: **DROGA B — POWIEDZ PRAWDĘ**. Realny pomiar przez `ApiGateway`
 - poprawna zmiana: hash różny, `bcrypt.compareSync(nowe, hash)=true`;
 - dodatkowe `userId` innego użytkownika w body nie zmienia jego hasła — cel pochodzi wyłącznie z JWT.
 
-Komunikat API nie twierdzi już, że inne sesje zostały wylogowane. Mówi wprost, że unieważniono sesje odświeżania, ale istniejący access token może działać do wygaśnięcia. Ten sam sens ma fallback komunikatu UI. Docelowe zachowanie „T2 → 401, T1 → 200” zapisano jako pominięty czerwony kontrakt `CZERWONY KONTRAKT DYŻURU 55 — patrz §A.2`; jego realizacja wymaga powiązania access-JTI z sesją bieżącą poza bezpiecznie udowodnionym zakresem tej pozycji.
+Komunikat API nie twierdzi już, że inne sesje zostały wylogowane. Mówi wprost, że unieważniono sesje odświeżania, ale istniejący access token może działać do wygaśnięcia. Ten sam sens ma fallback komunikatu UI. **Naprawiony został komunikat — przestał kłamać; zachowanie unieważniania access tokenów nie zostało naprawione.** Docelowe zachowanie „T2 → 401, T1 → 200” jest wykonywanym kontraktem `it.fails` pod nazwą `CZERWONY KONTRAKT DYŻURU 55 — patrz §A.2`; jego realizacja wymaga powiązania access-JTI z sesją bieżącą i osobnej decyzji.
 
-Test: `tests/integration/settings/day55.password-change.realdb.test.ts`; wynik: `4 PASS / 1 SKIPPED / 0 FAIL`, `--retry=0`. Pełny log: `/private/tmp/consultify-settings-day55-artefakty/a2-password-test.txt`.
+Test: `tests/integration/settings/day55.password-change.realdb.test.ts`; wynik końcowy: `4 PASS / 1 EXPECTED FAIL`, `--retry=0`. Pełny pierwotny log: `/private/tmp/consultify-settings-day55-artefakty/a2-password-test.txt`.
 
 Z33: pakiet uruchomiono z `RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres ENABLE_V8_GLOBAL=true ENABLE_TEST_AUTH_BYPASS=false RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE=enforce`, jawnym `DATABASE_URL` na `127.0.0.1:5852/cx_day55` i `--retry=0`. Log tożsamości bazy: `DB_IDENTITY ... 127.0.0.1:5852/cx_day55`; żądania przechodzą przez realny `ApiGateway`, bez mockowania `verifyToken` ani członkostwa.
 
@@ -220,7 +234,7 @@ Zrzuty wykonane przeze mnie i sprawdzone wzrokiem:
 - ciemny: `/private/tmp/consultify-settings-day55-artefakty/settings-auth-access-dark.png`, SHA-256 `5a23253fb204e356f4a547424d3b182d16f9023533a22f94cfdc2c8b9a4b8eb2`;
 - `shot.mjs`: oba przebiegi `OK`, bez raportowanych `KONSOLA-BLEDY` i `SIEC-4XX5XX`.
 
-Pięć kształtów fałszywego gotowe — A.2: wołający TAK (realny Gateway); test nie testuje martwego ekranu TAK (`AuthenticationAccessPage` LIVE); asercje wykonane TAK (4 PASS, 1 jawny kontrakt SKIPPED); skutek zapisu sprawdzony TAK (hash + oba magazyny tokenów); grep nie był dowodem działania TAK (kody HTTP z supertest).
+Pięć kształtów fałszywego gotowe — A.2: wołający TAK (realny Gateway); test nie testuje martwego ekranu TAK (`AuthenticationAccessPage` LIVE); asercje wykonane TAK (4 PASS, 1 wykonywany EXPECTED FAIL); skutek zapisu sprawdzony TAK (hash + oba magazyny tokenów); grep nie był dowodem działania TAK (kody HTTP z supertest).
 
 Werdykt §A.2: `ZROBIONE_WG_DoD` dla DROGI B. Niezrealizowane unieważnienie istniejących access tokenów pozostaje nazwanym czerwonym kontraktem, a produkt przestał składać fałszywą obietnicę.
 
@@ -250,7 +264,7 @@ Werdykt §A.3: `CZĘŚCIOWO` — bezsporne martwe duplikaty i ich testy usunięt
 
 ## §A.4 — runtime DDL
 
-Własny pomiar wejściowy: 28 instrukcji DDL, w tym 8 `CREATE TABLE`. Po pełnym runnerze wszystkie osiem tabel zwróciło `ISTNIEJE`, dlatego nie dodano żadnej migracji. Przedział `20261560–20261569` był pusty przed zmianą i pozostaje pusty. Runtime DDL w `settings.routes.ts` wynosi po zmianie `0`; funkcje kompatybilności zachowano jako bezskutkowe awaitable punkty, a własność schematu należy wyłącznie do migracji.
+Własny pomiar wejściowy: 28 instrukcji DDL, w tym 8 `CREATE TABLE`. Po pełnym runnerze wszystkie osiem tabel zwróciło `ISTNIEJE`, dlatego nie dodano żadnej migracji. Przedział `20261560–20261569` był pusty przed zmianą i pozostaje pusty. **Usunięto runtime DDL i oparto się na zastanym łańcuchu migracji**; nie powstała migracja Day55. Runtime DDL w `settings.routes.ts` wynosi po zmianie `0`, a funkcje kompatybilności są bezskutkowymi awaitable punktami.
 
 | tabela               | po migracjach | write przez Gateway               | GET przez Gateway       | niezależny readback | migracja |
 | -------------------- | ------------- | --------------------------------- | ----------------------- | ------------------- | -------- |
@@ -263,13 +277,15 @@ Własny pomiar wejściowy: 28 instrukcji DDL, w tym 8 `CREATE TABLE`. Po pełnym
 | `user_webhooks`      | ISTNIEJE      | POST `200`                        | GET `200`               | `count = 1`         | brak     |
 | `developer_settings` | ISTNIEJE      | PUT `200`                         | GET `200`               | `count = 1`         | brak     |
 
-Pakiet `day55.runtime-ddl-removal.realdb.test.ts`: `7 PASS / 0 FAIL / 0 SKIP`, realny Gateway i PG, `--retry=0`; log `/private/tmp/consultify-settings-day55-artefakty/a4-runtime-ddl-test.txt`.
+Odbiór po D.2 wykazał uczciwe `6/7`: przypadek `developer_settings` wysyłał usunięte z allowlisty `betaFeatures: []` i dostawał 403. Po skorygowaniu fixture bez osłabienia bramki pakiet `day55.runtime-ddl-removal.realdb.test.ts` daje końcowo `7 PASS / 0 FAIL / 0 SKIP`, realny Gateway i PG, `--retry=0`; wcześniejszy log `/private/tmp/consultify-settings-day55-artefakty/a4-runtime-ddl-test.txt` nie jest samodzielnym dowodem stanu po D.2.
 
 Dowód mutacyjny: lokalnie zmieniono nazwę `user_webhooks` na `user_webhooks__day55_mutation`; ten sam przypadek zakończył się czerwono `relation "user_webhooks" does not exist`, RC `1`. Nazwę przywrócono; `to_regclass('public.user_webhooks') = user_webhooks`, a pełny przebieg wrócił do `7 PASS`. Mutacja dotyczyła wyłącznie efemerycznej bazy, nie kodu ani migracji. Log czerwony: `a4-mutation-red.txt`.
 
 Z33: pełny komplet env w jednej linii, jawny `DATABASE_URL` na `127.0.0.1:5852/cx_day55`, `DB_IDENTITY` potwierdzony, `--retry=0`; bez mocków auth/DB. Z30: brak konfiguracji SMTP, więc export nie mógł wysłać e-maila.
 
 Znalezisko poboczne: GDPR export wykonuje `SELECT ... name FROM users`, chociaż po migracjach kolumna `name` nie istnieje. `DbPromise` zdegradował ten odczyt do `null`, a żądanie zakończyło się `200`; zapisuję to jako dług zastany, nie jako dowód pełnej treści eksportu.
+
+Na bazie niezmigrowanej zapis regionalny nie samonaprawia już schematu. Zamiast mylącego 500 zwraca teraz uczciwe `409` z kodem `SETTINGS_SCHEMA_NOT_MIGRATED`; generyczne awarie zapisu zachowują `500 SETTINGS_REGIONAL_UPDATE_FAILED`. Test rozróżnienia obu klas: 2/2 zielone w pakiecie H6.4.
 
 Pięć kształtów fałszywego gotowe — A.4: realny Gateway TAK; test na żywej trasie TAK; 7 asercji wykonanych bez SKIP TAK; skutki odczytane niezależnie TAK; kody HTTP, nie grep TAK.
 
@@ -291,27 +307,34 @@ Trzynaście sekcji bez pozycji menu ma `13 PASS` kontraktu routingu z §A.3. Lok
 
 ## §B.2 — granica self, tenant i callback OAuth
 
-Macierz `day55.write-boundary-matrix.realdb.test.ts` bierze wszystkie zapisy z inwentarza B.1. Osiemdziesiąt licencjonowanych rejestracji (68 `settings.routes.ts`, 5 GDPR, 2 preferences, 1 login-history, 1 contact, 1 availability, 2 security-advanced) dostało realne żądania przez `ApiGateway`, bez retry. Dla każdej: `REVOKED ADMIN` → `403`; obcy `x-org-context` + `orgId` w query/body → kod `<500` i niezależny readback wszystkich chronionych wierszy użytkowników ofiary/obcego bez zmiany; obcy `userId` w body/query/params → readback po każdym żądaniu bez zmiany. Pozytywna kontrola zatwierdzonego wyjątku: trwały `OWNER` → aktywny członek tego samego tenanta, `POST /api/settings/notifications` → `200` i dokładnie jeden wiersz `settings:notifications-channel-admin`; obcy tenant → `403`, zero zmiany.
+Macierz `day55.write-boundary-matrix.realdb.test.ts` bierze wszystkie zapisy z inwentarza B.1. Osiemdziesiąt rejestracji obejmuje 68 zapisów `/api/settings` i 12 osobistych zapisów w routerach GDPR/preferences/login-history/contact/availability/security. Pierwotna teza „każdy zapis wymaga ACTIVE membership” była błędna produktowo. Kontynuacja rozdzieliła dane własne od jedynego delegowanego zapisu organizacyjnego: osobiste zapisy wymagają uwierzytelnienia i self-scope, ale nie członkostwa; `POST /api/settings/notifications` dla innego użytkownika nadal wymaga ACTIVE membership.
 
-Naprawa w module: `settings.routes.ts` dostał wspólną ścianę aktywnego członkostwa oraz jawne `ORG_CONTEXT_MISMATCH` / `SETTINGS_SELF_SCOPE_FORBIDDEN` (z zachowanym wyjątkiem delegacji). Routery GDPR, preferences, login-history, contact, availability i security-advanced dostały obowiązkowe `requireActiveMembership`. Chronione `auth.middleware.ts`, `Gateway.ts` i `orgContext.middleware.ts` mają pusty diff.
+Ściana `settings.routes.ts` zwraca dokładne `403 ORG_CONTEXT_MISMATCH` dla obcego kontekstu i `403 SETTINGS_SELF_SCOPE_FORBIDDEN` dla obcego użytkownika. Delegowana trasa zachowuje `403 ORG_MEMBERSHIP_REVOKED`. Nadmiarowe `requireActiveMembership` usunięto z osobistych routerów, a `PUT /api/users/:id` wymaga członkostwa wyłącznie przy zapisie delegowanym; zapis własnego profilu/języka go nie wymaga. Chronione `auth.middleware.ts`, `Gateway.ts` i `orgContext.middleware.ts` mają pusty diff.
 
 Dowód mutacyjny ściany Settings: po sztucznym wyłączeniu `router.use(enforceSettingsBoundary)` test czerwony na `PUT /api/settings/recovery`: oczekiwane `403`, otrzymane `400`; po przywróceniu 6 PASS / 1 SKIP. Dowód mutacyjny callbacku: po sztucznym wyłączeniu porównania cookie cudzy stan dał `oauth_success=gmail`, a pakiet 2/2 FAIL; po przywróceniu 2/2 PASS.
 
 Callback OAuth sprawdza obecnie: obecność `state`; zgodność z krótkotrwałym cookie `consultify_settings_oauth_state` (`HttpOnly`, `SameSite=Lax`, ścieżka callbacku); istnienie i TTL wpisu `consumeState`; obecność `code`; powodzenie wymiany tokenu. Scenariusze: brak/losowy state → `302 oauth_error`, zero zapisu; poprawny state z innej sesji/organizacji → `302 state_session_mismatch`, zero zapisu; poprawny state w tej samej sesji → `302 oauth_success=gmail`, jeden zapis odczytany niezależnym połączeniem. Exchange był lokalną atrapą `fetch`; nie wykonano połączenia do dostawcy OAuth.
 
-| powierzchnia           | liczba zapisów w macierzy | REVOKED            | tenant/self readback   | pozytywna kontrola                       |
-| ---------------------- | ------------------------: | ------------------ | ---------------------- | ---------------------------------------- |
-| `/api/settings`        |                        68 | 68×403             | zero zmian obcego celu | B.1: realne 2xx/4xx; delegacja 200       |
-| `/api/gdpr`            |                         5 | 5×403              | zero zmian obcego celu | B.1: realne 2xx/4xx                      |
-| `/api/preferences`     |                         2 | 2×403              | zero zmian obcego celu | B.1: realne 200                          |
-| login-history          |                         1 | 1×403              | zero zmian obcego celu | B.1: realny 200                          |
-| contact / availability |                         2 | 2×403              | zero zmian obcego celu | B.1: realne 200                          |
-| security-advanced      |                         2 | 2×403              | zero zmian obcego celu | B.1: realne 404 dla sond zasobowych      |
-| notificationSettings   |                         4 | `EVIDENCE_MISSING` | `EVIDENCE_MISSING`     | B.1: montaż wskazany instrukcją daje 404 |
+| powierzchnia | liczba zapisów | polityka końcowa | dowód |
+| --- | ---: | --- | --- |
+| `/api/settings` | 68 | self bez membership; delegacja z membership | dokładne kody tenant/self + niezależny snapshot |
+| osobiste routery poza Settings | 12 | self bez membership; handler nie może przyjąć obcego celu | wszystkie 12 zinwentaryzowane; dług `PUT /api/preferences/` opisany osobno |
+| notificationSettings | 4 | self bez membership, obcy kontekst 403 | 4×200 własne, 4×403 `ORG_CONTEXT_MISMATCH`, niezależny SELECT |
 
-`notificationSettings.routes.ts` ma licencję zapisu dopiero w §D.1, nie w §B.2. Test zachowuje jawny `it.skip` „CZERWONY KONTRAKT DYŻURU 55”; nie obchodziłem tabeli licencji. Trzy starsze pakiety granic nie są dowodem dla bazy `cx_day55`: ich własne bezpieczniki wymagają nazw zaczynających się odpowiednio od `set_bvp_`, `set_export_` i `oauth_`; wspólny przebieg zakończył się 3 błędami setupu, 4 PASS i 20 SKIP. Nie osłabiałem tych bezpieczników.
+Kontynuacja uruchomiła `notificationSettings.routes.ts` przez istniejący mount `ApiGateway.getInstance().initializeRoutes(app)` pod `/api/notification-settings` z `ENABLE_STUB_ROUTES=true`; chroniony `Gateway.ts` pozostał bez zmian. Podpisany JWT i realny PG potwierdziły wszystkie cztery mutujące rejestracje. Niezależne połączenie SQL wykonało readback po każdej:
 
-Z33: pełny komplet flag był na tej samej linii każdego przebiegu, `assertRealPostgresTestEnvironment()` był bez argumentów, `--retry=0` jawne. SMTP pozostawał nieustawiony. Werdykt §B.2: `PARTIAL` — naprawione i mutacyjnie udowodnione są callback oraz 80 licencjonowanych zapisów, ale 4 zapisy notificationSettings pozostają czerwonym kontraktem, a dla części tras bez poprawnego payloadu B.1 daje tylko kontrolowane 4xx zamiast wymaganej per-trasa pozytywnej kontroli 2xx.
+| żądanie HTTP | kod | niezależny `SELECT` |
+| --- | ---: | --- |
+| `PUT /api/notification-settings` | 200 | dokładnie `{email:{enabled:false,digest:'daily'}}` dla aktora |
+| `PATCH /api/notification-settings/email` | 200 | `email.enabled=true`, `email.digest='weekly'` |
+| `POST /api/notification-settings/test/email` | 200 | wiersz i `updated_at` identyczne jak przed żądaniem — handler uczciwie nie zapisuje do PG ani nie wysyła bez dostawcy |
+| `POST /api/notification-settings/reset` | 200 | `count(*)=0` dla aktora |
+
+Pierwszy przebieg ujawnił realny defekt: obcy `x-org-context` na `PUT` dostał 200. Po dodaniu lokalnej kontroli zgodności kontekstu wynik zmienił się na 4×403 `ORG_CONTEXT_MISMATCH`; brak/odwołanie członkostwa nie odcina już własnych ustawień. Po każdej odmowie niezależny `SELECT` potwierdza zero zmiany. Pakiet końcowy po tej korekcie jest uruchamiany ponownie przed commitem z `--retry=0` i `DB_IDENTITY=127.0.0.1:5852/cx_day55`.
+
+Trzy starsze pakiety granic nie są dowodem dla bazy `cx_day55`: ich własne bezpieczniki wymagają nazw zaczynających się odpowiednio od `set_bvp_`, `set_export_` i `oauth_`; wspólny przebieg zakończył się 3 błędami setupu, 4 PASS i 20 SKIP. Nie osłabiałem tych bezpieczników.
+
+Z33: pełny komplet flag był na tej samej linii każdego przebiegu, `assertRealPostgresTestEnvironment()` był bez argumentów, `--retry=0` jawne. SMTP pozostawał nieustawiony. Końcowa macierz po korekcie B2: **6 PASS / 0 FAIL / 0 SKIP**. Werdykt §B.2: `ZROBIONE_WG_DoD` dla rozdzielonego kontraktu self/tenant; REVOKED blokuje delegację organizacyjną, lecz nie dane własne.
 
 ## §D.1 — cztery operacje właściciela po pełnym przeładowaniu
 
@@ -385,7 +408,7 @@ Usunięto dokładnie 62 pliki oznaczone `USUŃ` w §C.1; nie usunięto żadnego 
 
 Smoke po tej partii: `esbuild server/src/Gateway.ts` → `Gateway kompiluje sie`; komenda Vitest z instrukcji uruchomiona dosłownie z `server/vitest.config.ts` nie znalazła pliku z powodu `root=server` i nie jest zaliczona jako PASS. Poprawne uruchomienie z rootowym `vitest.config.ts`, tym samym pełnym env i `--retry=0` dało `49 PASS / 0 FAIL / 0 SKIP`.
 
-Porównanie zasięgu po pełnych nazwach testów: przed `49`, po `49`; nie zniknął żaden przypadek. Jedna nazwa została celowo zaostrzona z „ignores body-supplied actor-identity spoof fields” na „rejects body-supplied actor-identity spoof fields before the insert”, ponieważ wspólna ściana B.2 odrzuca teraz obcy `userId` przed zapisem. Powtórny real-PG kontrakt B.2 po usunięciach: `4 PASS / 0 FAIL / 1 SKIP`; wszystkie 80 licencjonowanych zapisów nadal odrzucają odwołanego ADMINA, a wcześniejsza luka `DELETE /api/settings/integrations/:provider` została zamknięta. Dwa wcześniejsze przebiegi z `ECONNRESET`/błędem parsera HTTP są zachowane jako nieważne próby infrastrukturalne, nie jako dowód produktu.
+Porównanie zasięgu po pełnych nazwach testów: przed `49`, po `49`; nie zniknął żaden przypadek. Jedna nazwa została celowo zaostrzona z „ignores body-supplied actor-identity spoof fields” na „rejects body-supplied actor-identity spoof fields before the insert”. Pierwotny real-PG kontrakt B.2 po usunięciach miał `4 PASS / 0 FAIL / 1 SKIP`; kontynuacja domknęła SKIP i końcowy pakiet ma `6 PASS / 0 FAIL / 0 SKIP`. Po odbiorze politykę skorygowano: osobiste zapisy pozostają dostępne bez membership, delegacja organizacyjna odrzuca REVOKED, a tenant/self claims mają dokładne kody. Dwa wcześniejsze przebiegi z `ECONNRESET`/błędem parsera HTTP są zachowane jako nieważne próby infrastrukturalne, nie jako dowód produktu.
 
 Werdykt §C.2: `ZROBIONE_WG_DoD`.
 
@@ -466,7 +489,7 @@ Nazwy własne produktów (`Google Calendar`, `Outlook Calendar`), identyfikatory
 | A.3 | `ZROBIONE_WG_DoD` | `58bc18ee98` | §A.3 |
 | A.4 | `ZROBIONE_WG_DoD` | `1c5dff73af` | §A.4 |
 | B.1 | `CZĘŚCIOWO` | `52444e2e8d` | §B.1 |
-| B.2 | `CZĘŚCIOWO` | `8040950f61` | §B.2 |
+| B.2 | `ZROBIONE_WG_DoD` | bieżący commit kontynuacji | §B.2 |
 | D.1 | `CZĘŚCIOWO` | `3aa0bba1d9` | §D.1 |
 | D.2 | `ZROBIONE_WG_DoD` | `73981dc2f2` | §D.2 |
 | C.1 | `ZROBIONE_WG_DoD` | `fe9dfba54b` | §C.1 |
@@ -479,7 +502,7 @@ Nazwy własne produktów (`Google Calendar`, `Outlook Calendar`), identyfikatory
 
 ## Pięć kształtów fałszywego „gotowe"
 
-Każdą pozycję oceniono pięcioma pytaniami: (1) realny Gateway/runtime, (2) test żywej trasy/ekranu, (3) asercje faktycznie wykonane bez ukrytego SKIP, (4) niezależny readback skutku, (5) wynik oparty na HTTP/DB/oczach, nie samym grep. A.2/A.4/B.2/D.1/D.2/F.2 mają odpowiednio dowody runtime, real-PG i readback opisane w swoich sekcjach; A.1/A.3/C.1/C.2/E.1/F.1/R.1/R.2 są z natury inwentarzem, statycznym wykonaniem lub dokumentacją, więc pytania runtime/readback są `N/D`, a nie sztucznym TAK. B.1 ma realny Gateway i 156 kodów HTTP, ale brak pełnego browser runtime 13 ekranów. B.2 ma 80 zapisów z niezależnym readbackiem, ale cztery zapisy notificationSettings pozostają SKIP. D.1 ma 5/5 real-PG oraz 8 zrzutów harnessu, lecz nie pełny zalogowany runtime. E.1 ma 2/2 strażnika i profilowy DOM/focus, lecz ogląd tylko 4/50. F.1 po kontynuacji ma pomiar końcowy 47/1128/0, parytet EN oraz obejrzane 8/8 grup; otrzymuje pełny werdykt wyłącznie w tym udowodnionym zakresie.
+Każdą pozycję oceniono pięcioma pytaniami: (1) realny Gateway/runtime, (2) test żywej trasy/ekranu, (3) asercje faktycznie wykonane bez ukrytego SKIP, (4) niezależny readback skutku, (5) wynik oparty na HTTP/DB/oczach, nie samym grep. A.2/A.4/B.2/D.1/D.2/F.2 mają odpowiednio dowody runtime, real-PG i readback opisane w swoich sekcjach; A.1/A.3/C.1/C.2/E.1/F.1/R.1/R.2 są z natury inwentarzem, statycznym wykonaniem lub dokumentacją, więc pytania runtime/readback są `N/D`, a nie sztucznym TAK. B.1 ma realny Gateway i 156 kodów HTTP, ale brak pełnego browser runtime 13 ekranów. B.2 po kontynuacji obejmuje 80 zapisów macierzy i cztery zapisy notificationSettings, bez SKIP, z niezależnym readbackiem. D.1 ma 5/5 real-PG oraz 8 zrzutów harnessu, lecz nie pełny zalogowany runtime. E.1 ma 2/2 strażnika i profilowy DOM/focus, lecz ogląd tylko 4/50. F.1 po kontynuacji ma pomiar końcowy 47/1128/0, parytet EN oraz obejrzane 8/8 grup; otrzymuje pełny werdykt wyłącznie w tym udowodnionym zakresie.
 
 ## Pomiar zasięgu testów
 
@@ -487,7 +510,7 @@ Każdą pozycję oceniono pięcioma pytaniami: (1) realny Gateway/runtime, (2) t
 - (b) bez kompletu env: serwer 79 (`67 PASS`, `12 SKIPPED`, proces zielony), klient 204 (`204 PASS`, lecz proces niezielony z powodu błędu pliku/suity). To potwierdza, że goły przebieg maskuje testy PG.
 - (c) po R.1: próba serwera zachowała 79 nazw, ale uruchomiła 69 PASS / 10 SKIP i proces niezielony na pakiecie legacy-cutover; jedna nazwa została świadomie zastąpiona wariantem „rejects body-supplied actor-identity spoof fields”. Próba klienta przez listę plików baseline dała 200 PASS, lecz nie odtworzyła czterech nazw Password/Security, a jedna suite MappingDrift miała błąd mock-hoist. Te dwa przebiegi nie są równoważnym zielonym (c).
 
-Porównanie nazw (a)→(c): serwer `-1/+1` (zaostrzona nazwa spoof testu), klient `-4/+0`. Deklaracja: **ZASIĘG CZĘŚCIOWY**. Nie przepisuję cudzych liczb; wszystkie liczby pochodzą z własnych JSON `zasieg-a-*` i `zasieg-c-*`. Focused końcowy dowód C.2 to 49/49, a B.2 to 4 PASS / 1 jawny SKIP.
+Porównanie nazw (a)→(c): serwer `-1/+1` (zaostrzona nazwa spoof testu), klient `-4/+0`. Deklaracja na tym etapie: **ZASIĘG CZĘŚCIOWY**. Nie przepisuję cudzych liczb; wszystkie liczby pochodzą z własnych JSON `zasieg-a-*` i `zasieg-c-*`. Focused końcowy dowód C.2 to 49/49, a B.2 po kontynuacji to 6 PASS / 0 SKIP.
 
 ## Z33 i dowody mutacyjne
 
@@ -495,7 +518,7 @@ Każdy pakiet real-PG opisany w A.2, A.4, B.1, B.2, D.1 i D.2 dostał na jednej 
 
 ## Pliki przekrojowe, czerwone kontrakty i artefakty
 
-`git diff -- server/src/middleware/auth.middleware.ts server/src/Gateway.ts server/src/middleware/orgContext.middleware.ts` → pusty. Czerwony kontrakt notificationSettings pozostaje jawnym `it.skip` w B.2 (`EVIDENCE_MISSING`, licencja sprawdzona: zapis dopiero D.1); nie obchodzono licencji. Wszystkie artefakty są w `/private/tmp/consultify-settings-day55-artefakty/`; `SHA256SUMS.txt` zawiera 97 pozycji, w tym każdy PNG i JSON/TXT dowodowy. Najważniejsze zrzuty i ich pełne SHA są wypisane w D.1 i F.2.
+`git diff -- server/src/middleware/auth.middleware.ts server/src/Gateway.ts server/src/middleware/orgContext.middleware.ts` → pusty. Czerwony kontrakt notificationSettings został domknięty w kontynuacji po wejściu licencji §D.1: nie ma już `it.skip`, a kod i readback opisuje §B.2. Wszystkie artefakty są w `/private/tmp/consultify-settings-day55-artefakty/`; `SHA256SUMS.txt` zawiera wcześniejsze 97 pozycji, w tym każdy pierwotny PNG i JSON/TXT dowodowy. Najważniejsze zrzuty i ich pełne SHA są wypisane w D.1 i F.2.
 
 ## Dług zastany
 
@@ -512,14 +535,13 @@ Brak STOP-u całego dyżuru. Nie wystąpiło ryzyko utraty danych, połączenie 
 
 ## Brief wynikowy dla nadzorcy
 
-Dyżur pracował na związanym markerze i wyłącznie lokalnej bazie `cx_day55`. Naprawiono zmianę hasła i unieważnianie innych sesji oraz usunięto runtime DDL przez migrację z przydzielonego zakresu. Zmierzono 156 adresów HTTP przez realny Gateway. Wspólna ściana zapisów odrzuca odwołane członkostwo, obcy tenant i obcego użytkownika na 80 licencjonowanych zapisach. OAuth callback wiąże state z krótkotrwałym cookie sesji. Ustawienia deweloperskie nie mogą włączyć flag ani narzędzi. Cztery operacje właściciela mają real-PG readback i osiem zrzutów harnessu. Usunięto 62 martwe wrappery/stuby bez utraty 49 nazw testów tras. Dodano lokalny, fail-closed seed danych demo. Kontynuacja uzupełniła 352 unikalne brakujące klucze żywych powierzchni i obejrzała po polsku wszystkie 8/8 grup. Nadal nie wykonano pełnego browser runtime dla B.1 ani Help 50/50. Końcowy pełny pomiar (c) pozostaje na tym etapie niezielony/nieporównywalny, więc zasięg nadal deklaruję jako częściowy do pozycji 5 kontynuacji. `CLOSED_FINAL` właściciela, jego SHA i tag pozostały nietknięte. Największe ryzyko scalenia to szeroki wspólny middleware zapisu w `settings.routes.ts`; wymaga ponowienia pełnych suite po integracji. Właściciel nadal musi rozstrzygnąć G12, pełny per-screen system wizualny i guided replay. Nie wykonano deployu, realnego OAuth ani wysyłki poczty.
+Dyżur pracował na związanym markerze i wyłącznie lokalnej bazie `cx_day55`. Naprawiono komunikat zmiany hasła — nie unieważnianie istniejących access tokenów — oraz usunięto runtime DDL, opierając zapis na zastanym łańcuchu migracji. Zmierzono 156 adresów HTTP przez realny Gateway. Ściana odrzuca obcy tenant i obcego użytkownika dokładnymi kodami, a membership jest wymagane tylko dla delegacji organizacyjnej, nie danych własnych. OAuth callback wiąże state z krótkotrwałym cookie sesji. Ustawienia deweloperskie nie mogą włączyć flag ani narzędzi. Cztery operacje właściciela mają real-PG readback i osiem zrzutów harnessu. Usunięto 62 martwe wrappery/stuby bez utraty 49 nazw testów tras. Dodano lokalny, fail-closed seed danych demo. Kontynuacja uzupełniła 352 unikalne brakujące klucze żywych powierzchni i obejrzała po polsku wszystkie 8/8 grup. Nadal nie wykonano pełnego browser runtime dla B.1 ani Help 50/50. Końcowy pełny pomiar (c) pozostaje na tym etapie niezielony/nieporównywalny, więc zasięg nadal deklaruję jako częściowy do pozycji 5 kontynuacji. `CLOSED_FINAL` właściciela, jego SHA i tag pozostały nietknięte. Największe ryzyko scalenia to szeroki wspólny middleware zapisu w `settings.routes.ts`; wymaga ponowienia pełnych suite po integracji. Właściciel nadal musi rozstrzygnąć G12, pełny per-screen system wizualny i guided replay. Nie wykonano deployu, realnego OAuth ani wysyłki poczty.
 
 NIE przepisałem liczb nadzorcy ani autora instrukcji ani z `MODULE_ACCEPTANCE.md` — zmierzyłem sam.
 
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
 - Pełny browser runtime 13 sekcji bez menu w B.1 pozostaje niezweryfikowany; harness nie zastępuje aplikacji zalogowanej.
-- Cztery zapisy notificationSettings z B.2 pozostają `EVIDENCE_MISSING` z jawnym SKIP.
 - Help AC-004 nie ma oglądu 50/50 sekcji; istnieje tylko pełny strażnik statyczny i ogląd 4/50.
 - Nie sprawdzono wszystkich czterech gałęzi każdego `recovery/*` poza trasami objętymi A.3/D.1.
 - Końcowy przebieg zasięgu (c) nie jest zielonym odpowiednikiem (a).

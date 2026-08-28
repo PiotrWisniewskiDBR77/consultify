@@ -3,14 +3,16 @@ import request from 'supertest';
 
 import { makeTestApp } from './_helpers/testApp';
 
-const { dbAll, dbRun } = vi.hoisted(() => ({
+const { dbAll, dbGet, dbRun } = vi.hoisted(() => ({
   dbAll: vi.fn(),
+  dbGet: vi.fn(),
   dbRun: vi.fn(),
 }));
 
 vi.mock('../../server/src/utils/DbPromise.js', () => ({
   all: (...args: any[]) => dbAll(...args),
-  get: vi.fn(),
+  get: (sql: string, ...args: any[]) =>
+    sql.includes('organization_members') ? Promise.resolve({ status: 'ACTIVE' }) : dbGet(sql, ...args),
   run: (...args: any[]) => dbRun(...args),
 }));
 
@@ -40,7 +42,7 @@ describe('Settings API (root) - REAL integration', () => {
       router,
       beforeMount: (a) =>
         a.use((req, _res, next) => {
-          (req as any).user = { id: 'u1' };
+          (req as any).user = { id: 'u1', organizationId: 'org1' };
           (req as any).userRole = 'superadmin';
           next();
         }),
@@ -57,7 +59,7 @@ describe('Settings API (root) - REAL integration', () => {
       router,
       beforeMount: (a) =>
         a.use((req, _res, next) => {
-          (req as any).user = { id: 'u1' };
+          (req as any).user = { id: 'u1', organizationId: 'org1' };
           (req as any).userRole = 'superadmin';
           next();
         }),
