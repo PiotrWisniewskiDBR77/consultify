@@ -14,7 +14,7 @@ Status: **PARTIAL — naprawialny dług test-local usunięty; pozostały nazwane
 ## Wynik końcowy
 
 - Baseline: 9 PASS / 65 FAIL / 20 markerów unhandled.
-- Final: **33 PASS / 41 FAIL / 0 unhandled**.
+- Final wykonawcy: **33 PASS / 41 FAIL / 0 unhandled**. Po domknięciu integratora: **35 PASS / 39 FAIL / 0 unhandled**.
 - Czerwone→zielone: 24 pliki. Zielone→czerwone: 0.
 - W tej kontynuacji zmieniono 16 licencjonowanych plików testowych; 12 dodatkowych czerwonych plików stało się zielonych, a dwa mocki usunęły unhandled bez osłabiania nadal czerwonych kontraktów.
 - Pozostałe 41 plików dochodzi do nazwanych zachowań produktu; ich kontrakty i właściciele są w tabeli.
@@ -43,7 +43,6 @@ Dowody mutacyjne zawierają czerwony wynik kontrolowanej mutacji, zielony po odt
 
 | # | plik | exit | czerwone testy | unhandled | pierwsza przyczyna | kategoria | właściciel | status |
 |---:|---|---:|---:|---:|---|---|---|---|
-| index | `file` | exit | 0 | unhandled_markers | — |  | `` | PRODUCT_DEFECT_NOT_AUTHORIZED |
 | 01 | `tests/integration/partners/m16-final-repair.realdb.test.ts` | 0 | 0 | 0 | GREEN | test | `tests/integration/partners/m16-final-repair.realdb.test.ts` | GREEN_BASELINE |
 | 02 | `tests/resultsVnext/okr/alignmentNoScoreMutation.static.test.ts` | 0 | 0 | 0 | GREEN | test | `tests/resultsVnext/okr/alignmentNoScoreMutation.static.test.ts` | GREEN_BASELINE |
 | 03 | `tests/unit/AIChat/agentPlanPanel.blocksToSteps.test.ts` | 0 | 0 | 0 | expected 'Search knowledge' to be 'Szukaj w wiedzy' // Object.is equality | test | `tests/unit/AIChat/agentPlanPanel.blocksToSteps.test.ts` | FIXED_P3 |
@@ -86,7 +85,7 @@ Dowody mutacyjne zawierają czerwony wynik kontrolowanej mutacji, zielony po odt
 | 40 | `tests/unit/scripts/adminOwnerFixtureGuard.test.ts` | 0 | 0 | 0 | expected '/private/tmp/consultify-day68-test-de…' to contain 'requires ADMIN_OWNER_FIXTURE_CONFIRM=…' | środowisko | `tests/unit/scripts/adminOwnerFixtureGuard.test.ts` | FIXED_P3 |
 | 41 | `tests/unit/scripts/g4FocusMeasurement.contract.test.ts` | 1 | 1 | 0 | expected true to be false // Object.is equality | test | `tests/unit/scripts/g4FocusMeasurement.contract.test.ts` | PRODUCT_DEFECT_NOT_AUTHORIZED |
 | 42 | `tests/unit/scripts/wave3OwnerRuntimeGuard.test.ts` | 0 | 0 | 0 | expected 'node:internal/modules/run_main:107\n …' to contain 'adopted runtime database does not exi…' | środowisko | `tests/unit/scripts/wave3OwnerRuntimeGuard.test.ts` | FIXED_P3 |
-| 43 | `tests/unit/server/utils/queryHelpers.test.ts` | 1 | 10 | 0 | default.info is not a function | produkt | `server/src/config/loadEnv.ts` | PRODUCT_DEFECT_NOT_AUTHORIZED |
+| 43 | `tests/unit/server/utils/queryHelpers.test.ts` | 0 | 0 | 0 | lokalny mock Logger nie eksportował `info`/`debug` wymaganych przez loadEnv | test | `tests/unit/server/utils/queryHelpers.test.ts` | FIXED_P3 |
 | 44 | `tests/unit/services/auditIntegrityService.test.ts` | 0 | 0 | 0 | GREEN | test | `tests/unit/services/auditIntegrityService.test.ts` | GREEN_BASELINE |
 | 45 | `tests/unit/services/drdAxisDataGuard.test.ts` | 1 | 1 | 0 | expected 6 to be less than or equal to 5 | test | `tests/unit/services/drdAxisDataGuard.test.ts` | PRODUCT_DEFECT_NOT_AUTHORIZED |
 | 46 | `tests/unit/services/ssoAzureAD.test.ts` | 0 | 0 | 0 | GREEN | test | `tests/unit/services/ssoAzureAD.test.ts` | GREEN_BASELINE |
@@ -108,7 +107,7 @@ Dowody mutacyjne zawierają czerwony wynik kontrolowanej mutacji, zielony po odt
 | 62 | `tests/unit/views/superadmin/AuditEventsViewer.honesty.test.tsx` | 1 | 2 | 0 | Unable to find an element with the text: Audit events unavailable. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible. | test | `tests/unit/views/superadmin/AuditEventsViewer.honesty.test.tsx` | PRODUCT_DEFECT_NOT_AUTHORIZED |
 | 63 | `tests/unit/views/superadmin/DLPView.honesty.test.tsx` | 1 | 7 | 0 | Unable to find an accessible element with the role "button" and name `/Resolve DLP violation violation-1/i` | test | `tests/unit/views/superadmin/DLPView.honesty.test.tsx` | PRODUCT_DEFECT_NOT_AUTHORIZED |
 | 64 | `tests/unit/views/superadmin/DeviceManagementView.honesty.test.tsx` | 1 | 1 | 0 | Unable to find an accessible element with the role "button" and name `/Block device device-1/i` | test | `tests/unit/views/superadmin/DeviceManagementView.honesty.test.tsx` | PRODUCT_DEFECT_NOT_AUTHORIZED |
-| 65 | `tests/unit/views/superadmin/DocumentsRAGTab.honesty.test.tsx` | 1 | 3 | 0 | Api.getMyProjectMemberships is not a function | produkt | `src/views/superadmin/AIPlatformModule/Knowledge/DocumentsRAGTab.tsx` | PRODUCT_DEFECT_NOT_AUTHORIZED |
+| 65 | `tests/unit/views/superadmin/DocumentsRAGTab.honesty.test.tsx` | 0 | 0 | 0 | lokalny mock API nie eksportował `getMyProjectMemberships` | test | `tests/unit/views/superadmin/DocumentsRAGTab.honesty.test.tsx` | FIXED_P3 |
 | 66 | `tests/unit/views/superadmin/IPWhitelistView.honesty.test.tsx` | 1 | 3 | 0 | Unable to find an accessible element with the role "button" and name `/Remove IP 10\.0\.0\.1/i` | test | `tests/unit/views/superadmin/IPWhitelistView.honesty.test.tsx` | PRODUCT_DEFECT_NOT_AUTHORIZED |
 | 67 | `tests/unit/views/superadmin/SCIMProvisioningView.honesty.test.tsx` | 1 | 1 | 0 | Unable to find an element with the text: Consultify Admins. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible. | test | `tests/unit/views/superadmin/SCIMProvisioningView.honesty.test.tsx` | PRODUCT_DEFECT_NOT_AUTHORIZED |
 | 68 | `tests/unit/views/superadmin/SecurityEventsView.honesty.test.tsx` | 1 | 5 | 0 | Unable to find an accessible element with the role "button" and name `/Resolve security event event-1/i` | test | `tests/unit/views/superadmin/SecurityEventsView.honesty.test.tsx` | PRODUCT_DEFECT_NOT_AUTHORIZED |
@@ -135,11 +134,29 @@ Dowody mutacyjne zawierają czerwony wynik kontrolowanej mutacji, zielony po odt
 
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
-- Nie zweryfikowano ani nie naprawiono produktu wskazanego przez 41 czerwonych plików; zmiany produktu były poza licencją.
+- Nie zweryfikowano ani nie naprawiono produktu wskazanego przez 39 czerwonych plików; zmiany produktu były poza licencją.
 - Nie wykonano osiągalności HTTP ani dowodu wizualnego, ponieważ nie zmieniano runtime/UI.
 - Nie rozstrzygnięto decyzji produktowej dla czterech handlerów AI.
 - Nie wykonano żadnego testu wobec Railway, demo, stagingu ani produkcji.
 
 ## Finalny SHA
+
+## Domknięcie integratora po handoffie
+
+Integrator usunął dwa błędnie sklasyfikowane, małe ogony test-local bez ponownego
+przekazywania dyżuru:
+
+- `queryHelpers.test.ts`: lokalny mock Logger nie miał metod `info` i `debug`, których
+  `loadEnv.ts` używa podczas importu; po uzupełnieniu **10/10 PASS**;
+- `DocumentsRAGTab.honesty.test.tsx`: lokalny mock `Api` nie miał wywoływanego przez
+  komponent `getMyProjectMemberships`; po dodaniu eksportu i pustego fixture **3/3 PASS**.
+
+Wspólny celowany regres: **13/13 PASS**, `--retry=0`. Produkt pozostał bez zmian.
+Usunięto również sztuczny wiersz parsera `index/file`; tabela zawiera dokładnie 74
+rzeczywiste pliki. Końcowy stan po odbiorze integratora: **35 PASS / 39 FAIL / 0 unhandled**.
+
+Pozostałe 39 plików stanowi duży, wielomodułowy klaster zmian produktu lub widocznych
+kontraktów. Nie jest rozszerzany w ramach test-local P3; wymaga osobnego planu rozłącznych
+dyżurów oraz decyzji właściciela dla widocznych zachowań, w tym czterech handlerów AI.
 
 SHA commita raportu jest podany w końcowym handoffie; nie może być zapisany w treści własnego commita bez zmiany tego SHA.
