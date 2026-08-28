@@ -354,3 +354,35 @@ Zielone→czerwone wśród testów wykonanych po obu stronach: **0**. Nowy zamie
 - **NOT_AUTHORIZED:** naprawa `slaService` dla artifact SLA oraz pozostałych plików produkcyjnych ujawnionych przez regres.
 - **NOT_PROVEN:** globalna zieleń P2–P6, wdrożenie i stan środowisk zdalnych; nie były używane.
 - **PARTIAL:** porównanie względem pierwszego baseline ma 4 czerwone→zielone i 0 zielone→czerwone tylko dla testów wykonanych po obu stronach; testy zablokowane wcześniej przez sekret są nieporównywalne.
+
+## 12. Drugie dokończenie po odbiorze — stan faktyczny
+
+Status tej iteracji: **NIEZAKOŃCZONE / PARTIAL NIEKWALIFIKOWANE DO AKCEPTACJI**. Nie wszystkie 102 czerwone testy mają jeszcze zweryfikowaną pierwszą przyczynę, dlatego nie ma deklaracji `FIXED` ani twierdzenia, że długi ogon leży poza P1.
+
+### 12.1 Pomiar izolacyjny
+
+Wszystkie 41 plików zawierających 102 czerwone testy uruchomiono osobno, sekwencyjnie, z poprawnym sekretem i `--retry=0`. 40 plików pozostało czerwonych. `tests/acceptance/odbior--exec3ax--three-axis-live.e2e.test.ts` przeszedł izolowanie i jego jeden test sklasyfikowano jako **środowisko / konflikt między suite'ami**; naprawa jest w P1 i pozostaje otwarta.
+
+### 12.2 Nowe przyczyny P1 zamknięte
+
+| Klaster / pełne testy | Pierwsza przyczyna | Kategoria | Odpowiedzialny plik i linia | Licencja | Dowód i produkt |
+| --- | --- | --- | --- | --- | --- |
+| `T7b-2 backupService — real logical export > createBackup writes a storage file + manifest with counts matching the DB`; `... > org-scoped backup only dumps the target org rows` | Test oczekiwał legacy envelope `consultify-encrypted-json-v1` i tabeli `initiatives`; kanon v2 definiuje `consultify-logical-backup-v2` i owner tables | test | `server/src/services/backupService.ts:50`, `:355`; stare asercje `tests/acceptance/backup-service-t7b2.e2e.test.ts:81,86,152` | TAK | bez poprawki named test exit 1; po poprawce 6/6 PASS; SHA kopii i pliku `2e59e8ba...` identyczne |
+| `MW-DEC-001 — Canonical Decision Workflow... > FINDING: decision_impacts.is_blocker...` | Historyczny test pinował nieistniejący już błąd integer-vs-boolean | pin buga | odporny runtime `server/src/controllers/DecisionController.ts:1679`; stary pin `tests/acceptance/mw-dec-001-decision-workflow.e2e.test.ts:511` | TAK | bez poprawki exit 1 (`promise resolved instead of rejecting`); po poprawce cały plik PASS; SHA `65f33c30...` identyczne |
+| `RED-FINAL... > GET rewir: żaden endpoint nie zwraca 5xx` | Helper traktował jawne 503 `not_configured` megatrends jak crash | test | kontrakt `server/src/routes/megatrend.routes.ts:18-25`; helper `tests/acceptance/red-final-500s.e2e.test.ts:129-148` | TAK | bez poprawki exit 1 dla `/baseline` i `/radar`; po poprawce cały plik PASS; SHA `93f800d5...` identyczne |
+
+Commity: `fc8d7fec13`, `300617be39`, `106ec76bb3`; każdy wypchnięty na `github-backup`.
+
+### 12.3 Pokrycie klasyfikacji 102
+
+- 4 testy zamknięte powyżej jako przyczyny P1.
+- 1 test `odbior--exec3ax` sklasyfikowany jako konflikt suite, przyczyna P1 nadal otwarta.
+- 1 test T2 artifact SLA sklasyfikowany wcześniej jako prawidłowy czerwony kontrakt produktu poza P1 (`server/src/services/slaService.ts`).
+- **96 testów pozostaje bez zweryfikowanej pierwszej przyczyny.** Ich wcześniejsza lista nazw nie jest klasyfikacją. Nie przypisano im zbiorczo kategorii ani terytorium.
+
+### 12.4 TWIERDZENIA NIEZWERYFIKOWANE
+
+- **NOT_PROVEN:** pierwsza przyczyna 96 pozostałych czerwonych testów.
+- **NOT_PROVEN:** że wszystkie naprawialne przyczyny P1 zostały zamknięte.
+- **NOT_PROVEN:** nowy pełny regres 59 plików po trzech dodatkowych naprawach; nie został uruchomiony w tej iteracji.
+- **NOT_PROVEN:** liczba czerwonych kontraktów do P4/P5/P6 poza już potwierdzonym T2.
