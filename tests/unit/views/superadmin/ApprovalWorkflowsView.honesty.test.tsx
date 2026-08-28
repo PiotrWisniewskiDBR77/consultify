@@ -94,7 +94,8 @@ describe('ApprovalWorkflowsView honest data states', () => {
     });
     expect(Api.getApprovalWorkflows).toHaveBeenCalledTimes(2);
 
-    fireEvent.click(screen.getByRole('button', { name: /Delete approval workflow Security approval/i }));
+    fireEvent.click(screen.getAllByRole('button', { name: /Row actions/i }).at(-1)!);
+    fireEvent.click(screen.getByRole('menuitem', { name: /^Delete$/i }));
     fireEvent.click(screen.getByRole('button', { name: /^Delete Workflow$/i }));
 
     await waitFor(() => {
@@ -164,13 +165,15 @@ describe('ApprovalWorkflowsView honest data states', () => {
       expect(screen.getByText('Billing approval')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /Approve request req-1/i }));
+    fireEvent.click(screen.getAllByRole('button', { name: /Row actions/i })[0]);
+    fireEvent.click(screen.getByRole('menuitem', { name: /^Approve$/i }));
     await waitFor(() => {
       expect(Api.approveRequest).toHaveBeenCalledWith('req-1');
       expect(screen.queryByText('Billing approval')).not.toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /Reject request req-2/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Row actions/i }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /^Reject$/i }));
     await waitFor(() => {
       expect(Api.rejectRequest).toHaveBeenCalledWith('req-2');
       expect(screen.queryByText('Security approval')).not.toBeInTheDocument();
@@ -203,14 +206,16 @@ describe('ApprovalWorkflowsView honest data states', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: /Requests/i }));
     await screen.findByText('Billing approval');
-    fireEvent.click(screen.getByRole('button', { name: /Approve request req-1/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Row actions/i }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /^Approve$/i }));
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent(
         'Approval request approval was not confirmed by the server'
       );
     });
-    expect(screen.getByRole('button', { name: /Approve request req-1/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Row actions/i }));
+    expect(screen.getByRole('menuitem', { name: /^Approve$/i })).toBeInTheDocument();
   });
 
   it('accepts wrapped workflow and request payloads', async () => {
@@ -260,7 +265,8 @@ describe('ApprovalWorkflowsView honest data states', () => {
     expect(await screen.findByText('Billing approval')).toBeInTheDocument();
     expect(screen.getByText('Unknown date')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /Requests/i }));
-    expect(await screen.findByRole('button', { name: /Approve request req-1/i })).toBeInTheDocument();
+    fireEvent.click(await screen.findByRole('button', { name: /Row actions/i }));
+    expect(screen.getByRole('menuitem', { name: /^Approve$/i })).toBeInTheDocument();
   });
 
   it('keeps create modal open when wrapped create response is not confirmed by read-back', async () => {
