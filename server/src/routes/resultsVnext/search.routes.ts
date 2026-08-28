@@ -2,7 +2,6 @@ import type { Response } from 'express';
 import { Router } from 'express';
 import type { z } from 'zod';
 
-import type { AuthenticatedRequest } from '../../middleware/auth.middleware.js';
 import { verifyToken } from '../../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
@@ -11,6 +10,7 @@ import { requireResultsInternalBetaVisibility } from '../../middleware/resultsIn
 import { validateQuery } from '../../middleware/validation.middleware.js';
 import { requireActiveMembership } from '../../services/legacyCutover/requireActiveMembership.js';
 import { searchResults } from '../../services/resultsVnext/platform/resultsSearchRepository.js';
+import type { AuthenticatedRequest } from '../../types/index.js';
 import {
   RESULTS_SEARCH_KINDS,
   ResultsVnextSearchQuerySchema,

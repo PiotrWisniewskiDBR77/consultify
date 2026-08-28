@@ -1,4 +1,9 @@
-import type { SignalDTO, SignalQuery, WorkSignalRow } from '../../types/workSignals.js';
+import type {
+  SignalDTO,
+  SignalEvidence,
+  SignalQuery,
+  WorkSignalRow,
+} from '../../types/workSignals.js';
 import { isSignalProducerEnabled } from '../../jobs/workSignalProducerJob.js';
 import { translateSignal } from './i18n/dictionary.js';
 
@@ -109,7 +114,7 @@ export async function readSignalFeed(params: {
   const signals = page.map((row): SignalDTO => {
     const titleParams = parseJson(row.title_params, {});
     const bodyParams = {
-      value: parseJson(row.evidence, [{}])[0]?.observedValue,
+      value: parseJson<SignalEvidence[]>(row.evidence, [])[0]?.observedValue,
       ...parseJson(row.body_params, {}),
     };
     const action = parseJson(row.action, { kind: '', route: '', params: {}, permission: '' });

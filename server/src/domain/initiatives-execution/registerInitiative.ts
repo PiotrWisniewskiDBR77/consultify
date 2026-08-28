@@ -118,7 +118,6 @@ export async function registerInitiative(
       proposal.title === payload.title &&
       proposal.problem === payload.problem &&
       proposal.proposedOutcome === payload.proposedOutcome &&
-      (proposal.priority || 'MEDIUM') === payload.priority &&
       proposal.projectId === payload.projectId &&
       proposal.visibility === payload.visibility &&
       proposal.initiativeOwnerId === payload.initiativeOwnerId;
@@ -136,7 +135,14 @@ export async function registerInitiative(
       title: proposal.title,
       problem: proposal.problem,
       proposedOutcome: proposal.proposedOutcome,
-      priority: proposal.priority || 'MEDIUM',
+      // Priority is a REGISTER-time attribute, not a Source Proposal attribute:
+      // `initiative_candidates` has no `priority` column and `insertSourceProposal`
+      // never writes one, so `SourceProposalSnapshot` carries none. Reading it off
+      // the proposal (commit c355e354bc) also made the content-match guard above
+      // reject every Register with a non-MEDIUM priority — `undefined || 'MEDIUM'`
+      // could never equal 'HIGH'/'CRITICAL'/'LOW'. The validated payload is the
+      // single source of the canonical value (defaulted to 'MEDIUM' in validate()).
+      priority: payload.priority || 'MEDIUM',
       projectId: proposal.projectId,
       visibility: proposal.visibility,
       initiativeOwnerId: proposal.initiativeOwnerId,

@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
 
-import { BETA_MENU_STATUS, type BetaStatus } from '../../../src/utils/betaAccess.js';
+import { BETA_MENU_STATUS, type BetaStatus } from '../sharedRuntime/utils/betaMenuStatus.js';
 
 /**
  * Server-side mirror of the client betaAccess.ts SSOT.

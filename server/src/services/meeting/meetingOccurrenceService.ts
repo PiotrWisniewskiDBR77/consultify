@@ -41,6 +41,10 @@ export async function editMeetingOccurrence(input: {
   if (!master || !master.recurrenceRule || master.recurrenceParentId)
     throw new Error('RECURRENCE_NOT_FOUND');
   if (!parseRRule(master.recurrenceRule)) throw new Error('INVALID_RECURRENCE_RULE');
+  // Property narrowing (`master.recurrenceRule` is non-null after the guard above)
+  // is NOT carried into the `withPgTransaction` callback below — only narrowing of
+  // the `const` binding itself is. Capture the narrowed value once, here.
+  const masterRecurrenceRule: string = master.recurrenceRule;
   const cutover = new Date(input.recurrenceId);
   if (!Number.isFinite(cutover.getTime()) || /[\r\n]/.test(input.recurrenceId))
     throw new Error('INVALID_RECURRENCE_ID');
@@ -121,7 +125,7 @@ export async function editMeetingOccurrence(input: {
       );
       return;
     }
-    const oldRule = withUntil(master.recurrenceRule, cutover.toISOString());
+    const oldRule = withUntil(masterRecurrenceRule, cutover.toISOString());
     splitMeetingId = `meeting-series-${uuidv4()}`;
     await query(
       `UPDATE meetings SET recurrence_rule=$1, invitation_sequence=COALESCE(invitation_sequence,0)+1, updated_at=$2 WHERE id=$3 AND organization_id=$4`,
