@@ -1038,7 +1038,24 @@ pochodzi z `vitest.acceptance.config.ts`.
 
 ## Faza 1 — P2
 
-W toku.
+**ZROBIONE.** Mapa zawiera 48 ścieżek; istnieje 47. Nie odtworzono historycznie
+usuniętego `tests/unit/backend/subscriptionAnalyticsService.test.ts`, ponieważ
+aktywny produkt ma modularny kontrakt zastępczy.
+
+Pierwszy przebieg na bazie użytej wcześniej przez pełną Fazę 0 dał 12 FAIL w
+`organizationService.test.js` i błąd asynchroniczny `orgContext.middleware`.
+Wynik odrzucono: wcześniejsze suity zmieniły współdzielony schemat. Po odtworzeniu
+kontenera, pełnym migratorze i identycznym poleceniu wynik wynosi:
+
+- **47/47 plików PASS**;
+- **521 PASS, 26 SKIP, 0 FAIL**;
+- `--retry=0`;
+- K1: PASS;
+- K2: PASS;
+- nowe czerwone wobec Fazy 0: **zero**.
+
+Nie zmieniono kodu ani testów w Fazie 1. Pomiar dowodzi również, że 12 czerwonych
+z pierwszego przebiegu było skutkiem zanieczyszczonej bazy, nie długiem P2.
 
 ## Faza 2 — P3
 
