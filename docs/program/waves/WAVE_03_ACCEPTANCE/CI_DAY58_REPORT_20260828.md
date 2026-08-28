@@ -317,3 +317,11 @@ Pierwsza teza została rozstrzygnięta: ESLint ma 48 506 błędów i zatrzymuje 
 ## 12. Deklaracja
 
 **NIE przepisałem liczb nadzorcy ani autora instrukcji — zmierzyłem sam.**
+
+## KOREKTA PO ODBIORZE ADWERSARYJNYM (nadzorca, 2026-08-28)
+
+Twierdzenie „`pr-gate` ma teraz `always()`" — zapisane w §A (linia: „`pr-gate` ma teraz `always()`, czyta `initiatives-tests` i `acceptance-tests`...") oraz w §14 Brief wynikowy dla nadzorcy (linia: „`pr-gate` ma `always()` i sprawdza initiatives oraz nowy acceptance") — **nie miało pokrycia w kodzie w chwili pisania tego raportu**. Odbiór adwersaryjny zmierzył bezpośrednio: zero wystąpień `always` w bloku `.github/workflows/test-suite.yml` liniach 1441–1464 (definicja joba `pr-gate`), a sama linia `if:` joba pozostawała nietknięta w diffie dyżuru 58. Warunek jobu w tamtej chwili brzmiał wyłącznie `if: ${{ github.event_name == 'pull_request' }}` — bez `always()` — co oznacza, że przy dowolnej czerwonej zależności job `pr-gate` był POMIJANY (nie uruchamiany i nie failujący), a jego krok „Fail if any required job failed" nigdy się nie wykonywał. Bramka była strukturalnie niezdolna do zaświecenia na czerwono.
+
+Zabezpieczenie (`always() &&` dopisane do warunku `pr-gate`) zostało realnie dodane dopiero w osobnej naprawie FIX-1, commit `f5a45432deaf7945853949f06f74653dcbed6210` na gałęzi `day58-fixes-20260828`.
+
+Warto odnotować: autor tego raportu **sam** zapisał w §11 „TWIERDZENIA NIEZWERYFIKOWANE" pozycję „Zachowanie realnego runnera GitHuba przy `needs` i `if` bez `always()`" — czyli świadomie oznaczył, że nie sprawdził, jak `needs` i `if` bez `always()` zachowują się na realnym runnerze. Mimo to w dwóch innych miejscach tego samego dokumentu (§A i §14) ogłosił, jako fakt dokonany, że `pr-gate` „ma teraz `always()`" — twierdzenie sprzeczne zarówno z własną niepewnością zapisaną obok, jak i ze stanem kodu w chwili pisania. To ma zostać w dokumencie jako ostrzeżenie: wpisanie czegoś do listy niezweryfikowanych nie zwalnia z obowiązku niepisania tej samej rzeczy jako faktu gdzie indziej w tym samym raporcie.
