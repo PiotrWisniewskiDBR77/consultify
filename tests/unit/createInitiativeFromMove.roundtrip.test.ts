@@ -24,6 +24,7 @@ const createInitiativeMock = vi.fn(async (payload: Record<string, unknown>) => (
   source_type: payload.sourceType,
   source_id: payload.sourceId,
 }));
+const t = (key: string) => key;
 
 vi.mock('@/services/api', () => ({
   Api: {
@@ -33,6 +34,14 @@ vi.mock('@/services/api', () => ({
 
 vi.mock('react-hot-toast', () => ({
   default: { success: vi.fn(), error: vi.fn() },
+}));
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, fallback?: any) =>
+      typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? key),
+    i18n: { language: 'en' },
+  }),
 }));
 
 const makeSession = (): ToolSession =>
@@ -67,7 +76,7 @@ describe('createInitiativeFromMove — generic tool→initiative round-trip', ()
       linkedQuadrants: ['q-market-dev'],
     };
 
-    const ok = await createInitiativeFromMove({ session, move, isPolish: false, addInitiative });
+    const ok = await createInitiativeFromMove({ session, move, t, addInitiative });
 
     expect(ok).toBe(true);
 
@@ -98,7 +107,7 @@ describe('createInitiativeFromMove — generic tool→initiative round-trip', ()
     const addInitiative = vi.fn();
     const move = { id: 'm', title: 'Fallback move', rationale: 'r' };
 
-    const ok = await createInitiativeFromMove({ session, move, isPolish: false, addInitiative });
+    const ok = await createInitiativeFromMove({ session, move, t, addInitiative });
 
     expect(ok).toBe(false);
     // Draft still captured locally so the tool flow is never broken.

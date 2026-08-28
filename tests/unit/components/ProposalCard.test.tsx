@@ -9,6 +9,18 @@ import { ProposalCard } from '../../../src/components/DiscoveryTools/shared/Prop
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
+    t: (key: string, fallback?: any) => {
+      const labels: Record<string, string> = {
+        'discoveryToolsSteps.proposalCard.accept': 'Accept',
+        'discoveryToolsSteps.proposalCard.commentAndRethink': 'Comment & rethink',
+        'discoveryToolsSteps.proposalCard.reject': 'Reject',
+        'discoveryToolsSteps.proposalCard.rethink': 'Rethink',
+        'discoveryToolsSteps.proposalCard.rethinkShort': 'Rethink',
+        'discoveryToolsSteps.proposalCard.feedbackPlaceholder': 'Your feedback for AI...',
+      };
+      return labels[key] ??
+        (typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? key));
+    },
     i18n: { language: 'en' },
   }),
 }));

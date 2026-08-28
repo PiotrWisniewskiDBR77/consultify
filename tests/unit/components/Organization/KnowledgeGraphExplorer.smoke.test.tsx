@@ -21,7 +21,11 @@ vi.mock('react-router-dom', () => ({
 }));
 
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ i18n: { language: 'en' } }),
+  useTranslation: () => ({
+    t: (key: string, fallback?: any) =>
+      typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? key),
+    i18n: { language: 'en' },
+  }),
 }));
 
 // dagre layout is irrelevant to smoke assertions.
