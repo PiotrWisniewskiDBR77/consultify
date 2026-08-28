@@ -19,6 +19,17 @@ vi.mock('../../../../server/src/utils/queryHelpers.js', () => ({
   queryOne: (...args: unknown[]) => mockQueryOne(...args),
   queryRun: (...args: unknown[]) => mockQueryRun(...args),
   getTableColumns: (...args: unknown[]) => mockGetTableColumns(...args),
+  withPgTransaction: async (fn: (client: unknown) => Promise<unknown>) =>
+    fn({
+      query: async (sql: string, params?: unknown[]) => {
+        if (/^\s*(SELECT|WITH)\b/i.test(sql)) {
+          const row = await mockQueryOne(sql, params);
+          return { rows: row == null ? [] : [row], rowCount: row == null ? 0 : 1 };
+        }
+        const result = await mockQueryRun(sql, params);
+        return { rows: [], rowCount: result?.changes ?? result?.rowCount ?? 0 };
+      },
+    }),
 }));
 
 vi.mock('../../../../server/src/services/initiative/initiativeAccessResolver.js', () => ({
