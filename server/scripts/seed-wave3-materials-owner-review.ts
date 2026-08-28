@@ -10,6 +10,9 @@ const databaseUrl = process.env.DATABASE_URL ?? '';
 const manifestPath = process.env.MATERIALS_OWNER_FIXTURE_MANIFEST ?? '';
 const password = process.env.MATERIALS_OWNER_FIXTURE_PASSWORD ?? '';
 const reset = process.argv.includes('--reset');
+const confirmDbArg = (
+  process.argv.find((arg) => arg.startsWith('--confirm-db=')) || ''
+).slice('--confirm-db='.length);
 const FIXTURE_ID = 'W3-MATERIALS-OWNER-v1';
 const FIXTURE_NAME = 'wave3-materials-owner-review-v1';
 if (YES !== 'YES') throw new Error('SEED_WAVE3_MATERIALS_OWNER_REVIEW=YES is required');
@@ -18,8 +21,24 @@ const parsed = new URL(databaseUrl);
 const databaseName = parsed.pathname.replace(/^\//, '');
 if (!['127.0.0.1', 'localhost'].includes(parsed.hostname))
   throw new Error('Loopback PostgreSQL required');
-if (!/^consultify_w3_materials_owner_[a-z0-9_]+$/.test(databaseName)) {
-  throw new Error('Database name must match consultify_w3_materials_owner_*');
+// Any database name is accepted here (never a hardcoded prefix) as long as the
+// caller explicitly confirms the name it sees, via --confirm-db=<database
+// name>, and that matches the database in DATABASE_URL exactly. This is an
+// operator-confirmation contract against typos/wrong-target, not a naming
+// restriction — see docs FIN-D60-002/MAT-D61-001 for why the previous
+// hardcoded prefix broke every duty assigned a differently named database.
+if (!/^[a-zA-Z0-9_]+$/.test(databaseName)) {
+  throw new Error(
+    `database name "${databaseName}" contains characters unsafe for a PostgreSQL identifier`
+  );
+}
+if (!confirmDbArg) {
+  throw new Error('--confirm-db=<database name> is required and must match DATABASE_URL');
+}
+if (confirmDbArg !== databaseName) {
+  throw new Error(
+    `--confirm-db="${confirmDbArg}" does not match the database in DATABASE_URL ("${databaseName}")`
+  );
 }
 const adminUrl = new URL(databaseUrl);
 adminUrl.pathname = '/postgres';

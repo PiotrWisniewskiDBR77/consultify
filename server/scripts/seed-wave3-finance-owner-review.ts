@@ -3,9 +3,13 @@
  * Durable Wave 3 Finance owner-review fixture.
  *
  * Commands: seed | readback | reset
- * The retained database is created only on loopback under the exact
- * consultify_w3_finance_owner_* prefix. Reset requires a matching 0600 receipt
- * and durable in-database marker.
+ * The retained database is created only on loopback PostgreSQL (never a
+ * remote host). Any database name is accepted, but the caller must pass
+ * --confirm-db=<database name> that matches the database in
+ * FINANCE_OWNER_FIXTURE_DATABASE_URL exactly — this is an operator
+ * confirmation contract (catches typos/wrong-target), not a naming
+ * restriction. Reset requires a matching 0600 receipt and durable
+ * in-database marker.
  */
 
 import crypto from 'node:crypto';
@@ -20,6 +24,9 @@ const TARGET_URL = process.env.FINANCE_OWNER_FIXTURE_DATABASE_URL || '';
 const MANIFEST_PATH = process.env.FINANCE_OWNER_FIXTURE_MANIFEST || '';
 const PDF_PATH = process.env.FINANCE_STATEMENT_ACCEPTANCE_PDF || '';
 const CONFIRM = process.env.FINANCE_OWNER_FIXTURE_CONFIRM;
+const CONFIRM_DB = (
+  process.argv.slice(3).find((arg) => arg.startsWith('--confirm-db=')) || ''
+).slice('--confirm-db='.length);
 const FIXTURE_ID = 'W3-FINANCE-OWNER-v1';
 const SOURCE_SHA = 'e993f390ccf5d67143b1076ef7b6d9eed23f234f1c29dc23892eeb57418e3c0e';
 const MAIN_ORG = 'wave3-finance-owner-org-v1';
@@ -43,8 +50,20 @@ function context() {
   }
   if (!LOCAL_HOSTS.has(target.hostname)) fail('Finance fixture requires loopback PostgreSQL');
   const databaseName = target.pathname.replace(/^\//, '');
-  if (!/^consultify_w3_finance_owner_[a-z0-9_]+$/.test(databaseName)) {
-    fail('database name must match consultify_w3_finance_owner_*');
+  if (!/^[a-zA-Z0-9_]+$/.test(databaseName)) {
+    fail(`database name "${databaseName}" contains characters unsafe for a PostgreSQL identifier`);
+  }
+  if (!CONFIRM_DB) {
+    fail(
+      '--confirm-db=<database name> is required and must match the database in ' +
+        'FINANCE_OWNER_FIXTURE_DATABASE_URL'
+    );
+  }
+  if (CONFIRM_DB !== databaseName) {
+    fail(
+      `--confirm-db="${CONFIRM_DB}" does not match the database in ` +
+        `FINANCE_OWNER_FIXTURE_DATABASE_URL ("${databaseName}")`
+    );
   }
   if (COMMAND === 'seed') {
     if (fs.existsSync(MANIFEST_PATH)) fail('manifest exists; overwrite refused');

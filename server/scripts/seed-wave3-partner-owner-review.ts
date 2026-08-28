@@ -12,6 +12,9 @@ const databaseUrl = process.env.DATABASE_URL ?? '';
 const manifestPath = process.env.PARTNER_OWNER_FIXTURE_MANIFEST ?? '';
 const fixturePassword = process.env.PARTNER_OWNER_FIXTURE_PASSWORD ?? '';
 const reset = process.argv.includes('--reset');
+const confirmDbArg = (
+  process.argv.find((arg) => arg.startsWith('--confirm-db=')) || ''
+).slice('--confirm-db='.length);
 
 if (confirmation !== 'YES') throw new Error('SEED_WAVE3_PARTNER_OWNER_REVIEW=YES is required');
 if (!databaseUrl) throw new Error('DATABASE_URL is required');
@@ -20,8 +23,22 @@ const databaseName = parsed.pathname.replace(/^\//, '');
 if (!['127.0.0.1', 'localhost'].includes(parsed.hostname)) {
   throw new Error('Partner owner fixture requires loopback PostgreSQL');
 }
-if (!/^consultify_w3_partner_owner_[a-z0-9_]+$/.test(databaseName)) {
-  throw new Error('Database name must match consultify_w3_partner_owner_*');
+// Any database name is accepted (never a hardcoded prefix) as long as the
+// caller explicitly confirms the name it sees, via --confirm-db=<database
+// name>, matching DATABASE_URL exactly. Operator-confirmation contract
+// against typos/wrong-target, not a naming restriction — see PRT-D62-001.
+if (!/^[a-zA-Z0-9_]+$/.test(databaseName)) {
+  throw new Error(
+    `database name "${databaseName}" contains characters unsafe for a PostgreSQL identifier`
+  );
+}
+if (!confirmDbArg) {
+  throw new Error('--confirm-db=<database name> is required and must match DATABASE_URL');
+}
+if (confirmDbArg !== databaseName) {
+  throw new Error(
+    `--confirm-db="${confirmDbArg}" does not match the database in DATABASE_URL ("${databaseName}")`
+  );
 }
 
 const adminUrl = new URL(databaseUrl);
