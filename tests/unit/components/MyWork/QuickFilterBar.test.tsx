@@ -63,7 +63,7 @@ describe('QuickFilterBar', () => {
     expect(mockOnFilterChange).toHaveBeenCalledWith('overdue');
   });
 
-  it('disables filter chips with zero count (except "all")', () => {
+  it('keeps zero-count filter chips available and marks their count state', () => {
     const zeroCounts = { overdue: 0, today: 0, week: 0, urgent: 0 };
     render(
       <QuickFilterBar
@@ -75,7 +75,8 @@ describe('QuickFilterBar', () => {
     );
 
     const overdueBtn = screen.getByText('Overdue').closest('button');
-    expect(overdueBtn?.disabled).toBe(true);
+    expect(overdueBtn?.disabled).toBe(false);
+    expect(overdueBtn).toHaveAttribute('data-count-state', 'available-zero');
 
     const allBtn = screen.getByText('All').closest('button');
     expect(allBtn?.disabled).toBe(false);

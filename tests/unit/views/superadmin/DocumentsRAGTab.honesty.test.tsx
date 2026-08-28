@@ -19,6 +19,7 @@ vi.mock('@/services/api', () => ({
     updateKnowledgeDocument: vi.fn(),
     updateAIGovernanceDocumentVisibility: vi.fn(),
     updateAIGovernanceDocumentSensitivity: vi.fn(),
+    getMyProjectMemberships: vi.fn(),
   },
 }));
 
@@ -44,6 +45,7 @@ describe('DocumentsRAGTab honest UI', () => {
     vi.mocked(Api.updateKnowledgeDocument).mockResolvedValue({ success: true });
     vi.mocked(Api.updateAIGovernanceDocumentVisibility).mockResolvedValue({ success: true });
     vi.mocked(Api.updateAIGovernanceDocumentSensitivity).mockResolvedValue({ success: true });
+    vi.mocked(Api.getMyProjectMemberships).mockResolvedValue([]);
   });
 
   it('accepts deep wrapped document payloads', async () => {

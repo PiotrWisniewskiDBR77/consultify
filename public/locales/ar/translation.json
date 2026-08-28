@@ -187,6 +187,11 @@
     "finalizing": "Finalizing..."
   },
   "aiChat": {
+    "teresaAction": {
+      "unconfirmed": "ليس لدي تأكيد بأن الإجراء «{{action}}» قد نُفِّذ بالفعل — لم يؤكد أي شيء حدوثه. تحقّق منه يدويًا قبل اعتباره منجزًا.",
+      "error": "فشل الإجراء «{{action}}» — حدث خطأ. لم يتم تأكيد إنجاز أي شيء.",
+      "refusedNoReason": "لم أنفّذ الإجراء «{{action}}» — رفضه السجل دون توضيح السبب."
+    },
     "language": "Conversation language",
     "chatMenuTitle": "Menu",
     "openSidebar": "Open sidebar",

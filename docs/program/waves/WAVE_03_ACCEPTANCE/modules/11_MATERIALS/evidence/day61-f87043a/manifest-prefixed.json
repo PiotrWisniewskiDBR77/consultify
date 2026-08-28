@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "fixture": "wave3-materials-owner-review-v1",
+  "fixtureId": "W3-MATERIALS-OWNER-v1",
+  "ownershipState": "FINAL",
+  "ownershipNonce": "b3f6a8c1379beb24f6849ebf403cc49e99d83be5d29c94bdd7eb25e4603f4029",
+  "marker": {
+    "table": "wave3_owner_fixture_markers",
+    "fixtureId": "W3-MATERIALS-OWNER-v1",
+    "ownershipNonce": "b3f6a8c1379beb24f6849ebf403cc49e99d83be5d29c94bdd7eb25e4603f4029"
+  },
+  "fixtureState": "READY_FOR_LOCAL_OWNER_REVIEW",
+  "ownerReviewReady": false,
+  "generatedAt": "2026-08-21T08:00:00.000Z",
+  "databaseName": "consultify_w3_materials_owner_day61_f87043a",
+  "deepLinkVerified": false,
+  "persona": {
+    "email": "wave3.materials.owner.20260821@local.test",
+    "role": "ADMIN",
+    "membershipRole": "OWNER",
+    "credentialsIncluded": false
+  },
+  "routes": {
+    "document": "/document-studio/b1120000-0000-4000-8000-000000000001",
+    "presentations": "/presentations/builder/b1160000-0000-4000-8000-000000000001",
+    "workbook": "/excele?ff_excele=1&artifactId=b1180000-0000-4000-8000-000000000001"
+  },
+  "artifacts": {
+    "document": {
+      "id": "b1120000-0000-4000-8000-000000000001",
+      "versions": 2
+    },
+    "presentation": {
+      "id": "b1160000-0000-4000-8000-000000000001",
+      "slides": 4,
+      "notes": 4,
+      "altText": 4,
+      "versions": 1
+    },
+    "workbook": {
+      "id": "b1180000-0000-4000-8000-000000000001",
+      "sheets": 1,
+      "formula": "B4 = B2-B3",
+      "revisions": 1
+    }
+  },
+  "templates": {
+    "approved": {
+      "id": "b1140000-0000-4000-8000-000000000001",
+      "status": "approved"
+    },
+    "unknown": {
+      "id": "b1140000-0000-4000-8000-000000000002",
+      "status": "UNKNOWN_RIGHTS_QUARANTINED",
+      "runtimeStatus": "draft"
+    }
+  },
+  "policy": {
+    "restrictedNativeOnly": true,
+    "policyConfirmationRequired": true,
+    "externalProvidersEnabled": false,
+    "unprovenTemplateFontImageRightsEnabled": false
+  },
+  "sharing": {
+    "seeded": false,
+    "providerState": "UNAVAILABLE_NOT_SIMULATED",
+    "revokeEvidence": "NOT_RUN_OWNER_GATE"
+  },
+  "readback": {
+    "doc_versions": 2,
+    "decks": 1,
+    "deck_versions": 1,
+    "workbook_revisions": 1,
+    "document_registry_projections": 1,
+    "presentation_registry_projections": 1,
+    "workbook_registry_projections": 1,
+    "approved_templates": 1,
+    "unknown_templates": 1,
+    "non_draft_registry_rows": 3
+  }
+}

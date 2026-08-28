@@ -218,9 +218,11 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
       return { changes: 1 };
     }
     if (normalized.startsWith('INSERT INTO tasks')) {
-      const [id, projectId, title, description, assigneeId, dueDate, createdBy] = params;
+      const [id, organizationId, projectId, title, description, assigneeId, dueDate, createdBy] =
+        params;
       db.tasks.push({
         id,
+        organization_id: organizationId,
         project_id: projectId,
         title,
         description,

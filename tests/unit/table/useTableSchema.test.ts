@@ -3,13 +3,23 @@
  * Tests: column add, rename, delete, config update, toggle visibility, resize, reorder.
  */
 import { act, renderHook } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { useTableSchema } from '@/components/MyWork/table/useTableSchema';
 import type { ColumnDef } from '@/components/MyWork/table/tableTypes';
 
-function renderSchema(isPl = false, ideaId = 'test-idea') {
-  return renderHook(() => useTableSchema(isPl, ideaId));
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, fallback?: any) =>
+      typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? key),
+    i18n: { language: 'en' },
+  }),
+}));
+
+const t = (_key: string, fallback?: string) => fallback ?? _key;
+
+function renderSchema(ideaId = 'test-idea') {
+  return renderHook(() => useTableSchema(t, ideaId));
 }
 
 describe('useTableSchema', () => {

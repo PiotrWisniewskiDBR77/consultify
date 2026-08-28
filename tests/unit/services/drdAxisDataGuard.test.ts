@@ -48,18 +48,18 @@ const META = {
 describe('O1 W7 — write-adjacent guard: areaScoresFromAxisData clamps out-of-range levels', () => {
   it('server: clamps a mistaken 0-100 "percentage" (100) into the axis levelCount, never passes it through raw', () => {
     const warnSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    // "processes" (axis 1) has levelCount=7; "cybersecurity" (axis 6) has levelCount=5.
+    // "processes" (axis 1) has levelCount=7; "cybersecurity" (axis 6) has levelCount=6.
     const corrupt = {
       processes: { actual: 100, target: 100 }, // way past 7
       cybersecurity: { actual: 100, target: 50 }, // way past 5
     };
     const scores = areaScoresFromAxisDataServer(corrupt);
-    // Every area under axis 1 must be clamped to <=7, axis 6 to <=5 — never 100.
+    // Every area under axis 1 must be clamped to <=7, axis 6 to <=6 — never 100.
     expect(scores['1A'].actual).toBeLessThanOrEqual(7);
     expect(scores['1A'].target).toBeLessThanOrEqual(7);
     expect(scores['1A'].actual).not.toBe(100);
-    expect(scores['6A'].actual).toBeLessThanOrEqual(5);
-    expect(scores['6A'].target).toBeLessThanOrEqual(5);
+    expect(scores['6A'].actual).toBeLessThanOrEqual(6);
+    expect(scores['6A'].target).toBeLessThanOrEqual(6);
     expect(scores['6A'].actual).not.toBe(100);
     warnSpy.mockRestore();
   });

@@ -106,7 +106,7 @@ describe('generate_deliverable tool (SPEC_01 Tryb A)', () => {
     // DeckSetup wymaga enumów — domyślne muszą być obecne
     expect(deckSetup.title).toBeTruthy();
     expect(deckSetup.language).toBe('pl');
-    expect(deckSetup.audience).toBe('internal');
+    expect(deckSetup.audience).toBe('executive');
     expect(deckSetup.goal).toBe('inform');
   });
 

@@ -822,6 +822,7 @@ describeIfDb('apiKeyAuth.middleware (L1)', () => {
     process.env.SQLITE_PATH = sqlitePath;
 
     vi.resetModules();
+    vi.doUnmock('../../../../server/src/services/apiKeyService.js');
 
     const dbMod = await import('../../../../server/src/database/Database.js');
     resetConnection = dbMod.resetConnection;
@@ -847,6 +848,27 @@ describeIfDb('apiKeyAuth.middleware (L1)', () => {
         created_at TEXT NOT NULL DEFAULT (datetime('now')),
         updated_at TEXT NOT NULL DEFAULT (datetime('now'))
       );
+      INSERT INTO organizations (id, name, plan, status) VALUES
+        ('orgW', 'API Key orgW', 'pro', 'active'),
+        ('org1', 'API Key org1', 'pro', 'active'),
+        ('org2', 'API Key org2', 'pro', 'active'),
+        ('org3', 'API Key org3', 'pro', 'active'),
+        ('org4', 'API Key org4', 'pro', 'active'),
+        ('org5', 'API Key org5', 'pro', 'active'),
+        ('org6', 'API Key org6', 'pro', 'active'),
+        ('orgQ', 'API Key orgQ', 'pro', 'active'),
+        ('orgSock', 'API Key orgSock', 'pro', 'active'),
+        ('orgCleanup', 'API Key orgCleanup', 'pro', 'active'),
+        ('orgHeaderThrow', 'API Key orgHeaderThrow', 'pro', 'active'),
+        ('org-array-auth', 'API Key array', 'pro', 'active'),
+        ('org-forwarded', 'API Key forwarded', 'pro', 'active'),
+        ('org-forwarded-port', 'API Key forwarded port', 'pro', 'active'),
+        ('org-ipv4mapped', 'API Key mapped', 'pro', 'active'),
+        ('org-rate-no-store', 'API Key rate', 'pro', 'active')
+      ON CONFLICT (id) DO NOTHING;
+      INSERT INTO users (id, organization_id, email, password, role, status)
+      VALUES ('u1', 'org1', 'api-key-u1@test.local', 'hash', 'ADMIN', 'active')
+      ON CONFLICT (id) DO NOTHING;
     `);
 
     const svcMod = await import('../../../../server/src/services/apiKeyService.js');
@@ -862,6 +884,15 @@ describeIfDb('apiKeyAuth.middleware (L1)', () => {
 
   afterAll(async () => {
     try {
+      await db.exec(`
+        DELETE FROM api_keys;
+        DELETE FROM users WHERE id = 'u1';
+        DELETE FROM organizations WHERE id IN (
+          'orgW', 'org1', 'org2', 'org3', 'org4', 'org5', 'org6', 'orgQ', 'orgSock',
+          'orgCleanup', 'orgHeaderThrow', 'org-array-auth', 'org-forwarded',
+          'org-forwarded-port', 'org-ipv4mapped', 'org-rate-no-store'
+        );
+      `);
       await resetConnection?.();
     } finally {
       for (const key of Object.keys(process.env)) {
@@ -1161,6 +1192,7 @@ describeIfDb('apiKeyAuth.middleware (L1)', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-02-18T00:00:00.000Z'));
     vi.resetModules();
+    vi.doUnmock('../../../../server/src/services/apiKeyService.js');
 
     process.env.NODE_ENV = 'test';
     process.env.MOCK_DB = 'false';

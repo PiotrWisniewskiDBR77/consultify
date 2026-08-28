@@ -28,6 +28,9 @@ describe('deliverableTemplateService — CRUD (T3)', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
+    queryOneMock.mockReset();
+    queryAllMock.mockReset();
+    queryRunMock.mockReset();
     vi.resetModules();
     const mod = await import('../../../server/src/services/deliverableTemplateService.js');
     createDeliverableTemplate = mod.createDeliverableTemplate;
@@ -62,15 +65,13 @@ describe('deliverableTemplateService — CRUD (T3)', () => {
 
     const result = await createDeliverableTemplate('doc', 'My Doc', undefined, undefined, 'org-A', 'user-1');
 
-    // Sprawdź INSERT SQL
-    expect(queryOneMock).toHaveBeenCalledWith(
+    // Documents use the canonical Document Studio lifecycle rather than a
+    // legacy report_builder_templates INSERT.
+    expect(queryOneMock).not.toHaveBeenCalledWith(
       expect.stringContaining('INSERT INTO report_builder_templates'),
-      expect.arrayContaining(['My Doc', 'org-A', 'user-1'])
+      expect.anything()
     );
-    // Sprawdź że is_system=false wbudowane w SQL
-    const insertSql: string = queryOneMock.mock.calls[0][0];
-    expect(insertSql).toContain('false');
-    expect(result.id).toBe('new-doc-id');
+    expect(result.id).toMatch(/^doc-template-/);
     expect(result.type).toBe('doc');
     expect(result.isSystem).toBe(false);
   });
@@ -117,22 +118,19 @@ describe('deliverableTemplateService — CRUD (T3)', () => {
 
   // FT-1.U4 — updateDeliverableTemplate z system template → rzuca TemplateForbiddenError
   it('updateDeliverableTemplate throws TemplateForbiddenError for system templates', async () => {
-    // getDeliverableTemplate: doc is_system=true
-    queryOneMock
-      .mockResolvedValueOnce(null)     // deck lookup
-      .mockResolvedValueOnce({         // doc lookup
-        id: 'sys-doc',
-        name: 'System Doc',
+    // getDeliverableTemplate: deck is_system=true
+    queryOneMock.mockResolvedValueOnce({
+        id: 'sys-deck',
+        name: 'System Deck',
         description: null,
         is_system: true,
-        is_public: true,
-        report_type: 'audit_report',
-        sections_json: '[]',
+        theme: null,
+        outline_json: '[]',
         organization_id: null,
       });
 
     await expect(
-      updateDeliverableTemplate('sys-doc', { name: 'Hacked Name' }, 'org-A')
+      updateDeliverableTemplate('sys-deck', { name: 'Hacked Name' }, 'org-A')
     ).rejects.toThrow(TemplateForbiddenError);
   });
 
@@ -142,7 +140,7 @@ describe('deliverableTemplateService — CRUD (T3)', () => {
 
     const result = await getDeliverableTemplate('nonexistent-id', 'org-A');
     expect(result).toBeNull();
-    expect(queryOneMock).toHaveBeenCalledTimes(3); // deck, doc, table
+    expect(queryOneMock).toHaveBeenCalledTimes(3); // deck, registry hydration, and table
   });
 
   // FT-1.U6 — createDeliverableTemplate(type='table') trafia w tp_base_templates z org_scope

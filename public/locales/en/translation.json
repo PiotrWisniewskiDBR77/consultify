@@ -2888,6 +2888,7 @@
         "updatedObject": "Updated object properties"
       },
       "toast": {
+        "pasted": "Pasted",
         "selectFirst": "Select elements first",
         "libraryEmpty": "Library is empty",
         "noSnapshot": "No snapshot to restore",
@@ -31265,6 +31266,8 @@
   },
   "myWorkIdeas": {
     "processFlowTool": {
+      "title": "Process flow",
+      "summarizeInChat": "Summarize this process flow",
       "you": "You",
       "aiProposalApplied": "AI proposal applied",
       "failedLoad": "Failed to load",
@@ -31704,7 +31707,8 @@
     },
     "aiNudgeStrip": {
       "go": "Go",
-      "dismissNudge": "Dismiss nudge"
+      "dismissNudge": "Dismiss nudge",
+      "selectionReady": "Selected the unconnected elements. Connect them on the canvas; this suggestion will remain until you confirm the result."
     },
     "votingMode": {
       "votingMode": "Voting Mode",
@@ -32473,6 +32477,16 @@
     },
     "addColumnDialog": {
       "addColumn": "Add Column",
+      "nameRequired": "Give the field a name before creating it.",
+      "duplicateName": "A field named \"{{name}}\" already exists — choose a different name.",
+      "addedCount": "{{count}} field(s) added this session — keep going or press Done.",
+      "enterToCreate": "Press Enter to create and add another.",
+      "preview": "Preview",
+      "untitledField": "Untitled field",
+      "addedThisSession": "Added this session",
+      "undo": "Undo",
+      "done": "Done",
+      "addAnother": "Create field & add another",
       "name": "Name",
       "eGStatusPriority": "e.g. Status, Priority...",
       "type": "Type",

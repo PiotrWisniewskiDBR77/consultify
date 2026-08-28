@@ -36,6 +36,7 @@ vi.mock('../../../../server/src/services/effectiveAccessService.js', async (impo
 describe('access role builder guardrails', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockQueryOne.mockReset();
     mockResolveEffectiveAccess.mockResolvedValue({
       capabilities: ['admin.project_roles.manage'],
       platformRole: null,

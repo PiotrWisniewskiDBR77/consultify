@@ -12,7 +12,7 @@ type MockDb = {
 };
 
 let mockDb: MockDb;
-const logger = { error: vi.fn(), warn: vi.fn() };
+const logger = { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() };
 
 vi.mock('../../../../server/src/database/Database.js', () => ({
   getDatabase: () => mockDb,

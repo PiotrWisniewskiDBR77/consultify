@@ -135,13 +135,18 @@ describe('GATE I1 — kolejność producent → konsument', () => {
     // `create table if not exists "public"."tool_initiative_links"`.
     // Zakotwiczenie na wielkich literach przeoczyło ten producent podczas
     // analizy I2 i o mało nie doprowadziło do błędnej decyzji.
-    const re = /create\s+table\s+(if\s+not\s+exists\s+)?"?(public"?\."?)?tool_initiative_links/i;
+    const re = /create\s+table\s+(if\s+not\s+exists\s+)?"?(public"?\."?)?tool_initiative_links\b/i;
     const producers = allMigrations()
       .map((m) => m.filename)
       .filter((f) => {
         const p = path.join(MIGRATIONS_DIR, f);
         if (!fs.existsSync(p)) return false;
-        return re.test(fs.readFileSync(p, 'utf8'));
+        const sqlWithoutComments = fs
+          .readFileSync(p, 'utf8')
+          .replace(/\/\*[\s\S]*?\*\//g, '')
+          .replace(/^\s*--.*$/gm, '')
+          .replace(/'(?:''|[^'])*'/g, "''");
+        return re.test(sqlWithoutComments);
       });
 
     expect(

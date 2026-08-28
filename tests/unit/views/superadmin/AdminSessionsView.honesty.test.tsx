@@ -71,7 +71,8 @@ describe('AdminSessionsView honest UI', () => {
 
     await screen.findByText('admin@example.com');
     expect(screen.getAllByText('Unknown date').length).toBeGreaterThan(0);
-    fireEvent.click(screen.getByRole('button', { name: /Revoke admin session session-1/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Row actions/i }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /^Revoke Session$/i }));
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent(
@@ -89,7 +90,8 @@ describe('AdminSessionsView honest UI', () => {
     render(<AdminSessionsView />);
 
     await screen.findByText('admin@example.com');
-    fireEvent.click(screen.getByRole('button', { name: /Revoke admin session session-1/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Row actions/i }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /^Revoke Session$/i }));
 
     await waitFor(() => {
       expect(screen.queryByText('admin@example.com')).not.toBeInTheDocument();
@@ -150,9 +152,8 @@ describe('AdminSessionsView honest UI', () => {
     render(<AdminSessionsView />);
 
     expect(await screen.findByText('admin@example.com')).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: /Revoke admin session session-1/i })
-    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Row actions/i }));
+    expect(screen.getByRole('menuitem', { name: /^Revoke Session$/i })).toBeInTheDocument();
     expect(screen.queryByText('Admin sessions unavailable')).not.toBeInTheDocument();
   });
 

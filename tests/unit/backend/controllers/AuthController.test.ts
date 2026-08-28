@@ -19,6 +19,7 @@ const mockActivityService = {
 const mockMFAService = {
   getMFAStatus: vi.fn(),
   isDeviceTrusted: vi.fn(),
+  createLoginChallenge: vi.fn(),
   verifyTOTP: vi.fn(),
   trustDevice: vi.fn(),
 };
@@ -295,6 +296,7 @@ describe('AuthController (Genuine)', () => {
       mockBcrypt.compareSync.mockReturnValue(true);
       mockMFAService.getMFAStatus.mockResolvedValue({ enabled: true });
       mockMFAService.isDeviceTrusted.mockResolvedValue(false);
+      mockMFAService.createLoginChallenge.mockResolvedValue({ id: 'challenge-1' });
 
       await login(mockReq as Request, mockRes as Response);
 

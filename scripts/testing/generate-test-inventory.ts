@@ -113,6 +113,29 @@ const MANUAL_OVERRIDES: Record<string, { classification: Entry['classification']
   },
 };
 
+const NODE_NATIVE_FILES = [
+  'scripts/cleanup/__tests__/verify-ui-canon-all.test.mjs',
+  'scripts/dev/__tests__/verifyCanonical16Bindings.test.mjs',
+  'scripts/recovery/__tests__/report-worktree-inventory.test.mjs',
+  'scripts/wave3/__tests__/report-acceptance-gates.test.mjs',
+  'scripts/wave3/__tests__/verify-acceptance-packages.citedPaths.test.mjs',
+  'scripts/wave3/__tests__/verify-acceptance-packages.denominator.test.mjs',
+  'scripts/wave3/__tests__/verify-acceptance-packages.test.mjs',
+  'tests/unit/deploy/validate-deploy-target.test.mjs',
+  'tests/unit/deploy/release-migration-gate-no-tautology.test.mjs',
+  'tests/unit/release/generate-release-candidate-bundle.test.mjs',
+  'tests/unit/release/verify-release-candidate-bundle.test.mjs',
+  'tests/unit/scripts/checkActionsStagedScope.test.mjs',
+] as const;
+
+for (const file of NODE_NATIVE_FILES) {
+  MANUAL_OVERRIDES[file] = {
+    classification: 'ACTIVE',
+    reason: 'node:test suite wired via npm run test:node-native.',
+    runner: 'node --test (npm run test:node-native)',
+  };
+}
+
 async function main() {
   const all = discoverAll();
 

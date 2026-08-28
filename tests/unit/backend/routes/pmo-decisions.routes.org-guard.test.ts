@@ -59,8 +59,14 @@ vi.mock('../../../../server/src/services/decisionPlaybookService.js', () => ({
 }));
 
 vi.mock('../../../../server/src/validators/decision.validators.js', () => ({
+  CreateDecisionCommentSchema: {},
+  CreateDecisionAlternativeSchema: {},
+  CreateDecisionRiskSchema: {},
   CreateDecisionSchema: {},
   UpdateDecisionSchema: {},
+  UpdateDecisionAlternativeSchema: {},
+  UpdateDecisionCommentSchema: {},
+  UpdateDecisionRiskSchema: {},
   DecideSchema: {},
   EscalateDecisionSchema: {},
   RemindDecisionSchema: {},

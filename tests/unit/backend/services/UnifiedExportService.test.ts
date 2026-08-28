@@ -4,7 +4,20 @@
  * these lock the binary generators before other modules migrate onto them.
  */
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
+vi.mock('../../../../server/src/utils/pdfFonts.js', () => {
+  const PDF_FONT = {
+    regular: 'Helvetica',
+    bold: 'Helvetica-Bold',
+    italic: 'Helvetica-Oblique',
+    boldItalic: 'Helvetica-BoldOblique',
+  } as const;
+  return {
+    PDF_FONT,
+    registerPdfFonts: (doc: any) => doc.font(PDF_FONT.regular),
+  };
+});
 
 import { unifiedExportService } from '../../../../server/src/services/export/UnifiedExportService.js';
 

@@ -19,6 +19,17 @@ vi.mock('../../../../server/src/utils/queryHelpers.js', () => ({
   queryOne: (...args: unknown[]) => mockQueryOne(...args),
   queryRun: (...args: unknown[]) => mockQueryRun(...args),
   getTableColumns: (...args: unknown[]) => mockGetTableColumns(...args),
+  withPgTransaction: async (fn: (client: unknown) => Promise<unknown>) =>
+    fn({
+      query: async (sql: string, params?: unknown[]) => {
+        if (/^\s*(SELECT|WITH)\b/i.test(sql)) {
+          const row = await mockQueryOne(sql, params);
+          return { rows: row == null ? [] : [row], rowCount: row == null ? 0 : 1 };
+        }
+        const result = await mockQueryRun(sql, params);
+        return { rows: [], rowCount: result?.changes ?? result?.rowCount ?? 0 };
+      },
+    }),
 }));
 
 vi.mock('../../../../server/src/services/initiative/initiativeAccessResolver.js', () => ({
@@ -58,6 +69,9 @@ describe('InitiativeController', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockQueryAll.mockReset();
+    mockQueryOne.mockReset();
+    mockQueryRun.mockReset();
     mockResolveInitiativeAccessContext.mockReset();
     mockGetTableColumns.mockReset();
     mockGetBlockingReadinessItems.mockReset();
@@ -84,6 +98,12 @@ describe('InitiativeController', () => {
       { name: 'updated_by' },
     ]);
     mockGetBlockingReadinessItems.mockResolvedValue([]);
+    mockResolveInitiativeAccessContext.mockResolvedValue({
+      effectiveRoles: ['ADMIN'],
+      steeringBoard: { enabled: false, memberType: null },
+      roleAssignments: [],
+      projectId: null,
+    });
 
     mockReq = {
       user: {
@@ -211,6 +231,7 @@ describe('InitiativeController', () => {
         hypothesis: 'Test hypothesis',
         businessValue: 100000,
       };
+      mockQueryOne.mockResolvedValue({ id: 'proj-123' });
       mockQueryRun.mockResolvedValue({ changes: 1 });
 
       const { InitiativeController } =
@@ -238,19 +259,29 @@ describe('InitiativeController', () => {
       expect(mockRes.status).toHaveBeenCalledWith(401);
     });
 
-    it('should return 400 when title missing', async () => {
+    it('should return the card-content gate violation when title is missing', async () => {
       mockReq.body = { projectId: 'proj-123' };
+      mockQueryOne.mockResolvedValue({ id: 'proj-123' });
 
       const { InitiativeController } =
         await import('../../../../server/src/controllers/InitiativeController.js');
       await InitiativeController.createInitiative(mockReq, mockRes, mockNext);
 
-      expect(mockRes.status).toHaveBeenCalledWith(400);
-      expect(mockRes.json).toHaveBeenCalledWith({ error: 'Title is required' });
+      expect(mockRes.status).toHaveBeenCalledWith(422);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: 'CARD_CONTENT_FORMULA_VIOLATION',
+          kind: 'initiative',
+          violations: expect.arrayContaining([
+            expect.objectContaining({ code: 'initiative.title_present' }),
+          ]),
+        })
+      );
     });
 
     it('should store JSON arrays for deliverables and risks', async () => {
       mockReq.body = {
+        projectId: 'proj-123',
         title: 'Initiative with arrays',
         deliverables: ['D1', 'D2'],
         successCriteria: ['SC1'],
@@ -258,6 +289,7 @@ describe('InitiativeController', () => {
         scopeOut: ['Out of scope'],
         keyRisks: ['Risk 1', 'Risk 2'],
       };
+      mockQueryOne.mockResolvedValue({ id: 'proj-123' });
       mockQueryRun.mockResolvedValue({ changes: 1 });
 
       const { InitiativeController } =
@@ -343,14 +375,15 @@ describe('InitiativeController', () => {
     it('should block DONE -> TRACKING when Benefits KPIs are missing', async () => {
       mockReq.params.id = 'i1';
       mockReq.body = { status: 'TRACKING' };
-      mockQueryOne
-        .mockResolvedValueOnce({
+      mockQueryOne.mockImplementation(async (sql: string) => {
+        if (String(sql).includes('COUNT(*)')) return { c: 0 };
+        return {
           status: 'DONE',
           name: 'Test Initiative',
           created_by: 'user-123',
-        })
-        .mockResolvedValueOnce({ ownerBusinessId: 'bo-1' })
-        .mockResolvedValueOnce({ c: 0 });
+          owner_business_id: 'bo-1',
+        };
+      });
 
       mockResolveInitiativeAccessContext.mockResolvedValue({
         effectiveRoles: ['BUSINESS_OWNER'],
@@ -458,7 +491,7 @@ describe('InitiativeController', () => {
       });
     };
 
-    it('invokes closure handoff (M14→M15) on EXECUTING → DONE', async () => {
+    it('requires the closure gate decision for EXECUTING → DONE', async () => {
       setupCloseToDone();
       mockHandoffFromClosure.mockResolvedValue({ created: 2, skipped: 0, considered: 2 });
 
@@ -466,13 +499,14 @@ describe('InitiativeController', () => {
         await import('../../../../server/src/controllers/InitiativeController.js');
       await InitiativeController.updateInitiativeStatus(mockReq, mockRes, mockNext);
 
-      expect(mockHandoffFromClosure).toHaveBeenCalledWith('org-123', 'i1', 'user-123');
+      expect(mockHandoffFromClosure).not.toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.json).toHaveBeenCalledWith(
-        expect.objectContaining({ status: 'DONE', message: 'Status updated' })
+        expect.objectContaining({ rule: 'CLOSURE_GATE_DECISION_REQUIRED' })
       );
     });
 
-    it('(4) handoff failure does NOT block the status change (fail-safe)', async () => {
+    it('does not call the legacy handoff while rejecting direct DONE', async () => {
       setupCloseToDone();
       mockHandoffFromClosure.mockRejectedValue(new Error('benefits service down'));
 
@@ -480,16 +514,15 @@ describe('InitiativeController', () => {
         await import('../../../../server/src/controllers/InitiativeController.js');
       await InitiativeController.updateInitiativeStatus(mockReq, mockRes, mockNext);
 
-      // Status UPDATE still ran…
       const statusUpdateCall = mockQueryRun.mock.calls.find((call) =>
         String(call[0] || '').includes('UPDATE initiatives SET')
       );
-      expect(statusUpdateCall).toBeTruthy();
-      // …and the response is the successful status change, not an error.
+      expect(statusUpdateCall).toBeUndefined();
+      expect(mockHandoffFromClosure).not.toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.json).toHaveBeenCalledWith(
-        expect.objectContaining({ status: 'DONE', message: 'Status updated' })
+        expect.objectContaining({ rule: 'CLOSURE_GATE_DECISION_REQUIRED' })
       );
-      expect(mockRes.status).not.toHaveBeenCalledWith(500);
     });
 
     it('does NOT invoke closure handoff for non-DONE transitions', async () => {

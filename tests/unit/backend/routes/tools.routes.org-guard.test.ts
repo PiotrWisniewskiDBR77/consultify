@@ -35,6 +35,7 @@ vi.mock('../../../../server/src/controllers/ToolController.js', () => ({
     getHistory: (_req: any, res: any) => res.status(200).json({ history: [] }),
     createSwotProposals: (_req: any, res: any) => res.status(201).json({}),
     listSwotProposals: (_req: any, res: any) => res.status(200).json({ proposals: [] }),
+    listSwotCandidateReceipts: (_req: any, res: any) => res.status(200).json({ receipts: [] }),
     acceptSwotProposal: (_req: any, res: any) => res.status(200).json({}),
     rejectSwotProposal: (_req: any, res: any) => res.status(200).json({}),
   },
@@ -70,6 +71,7 @@ vi.mock('../../../../server/src/middleware/validation.middleware.js', () => ({
 }));
 
 vi.mock('../../../../server/src/validators/tool.validators.js', () => ({
+  HandoffSwotCandidateSchema: {},
   CreateToolSessionSchema: {},
   CreateSwotProposalsSchema: {},
   AcceptSwotProposalSchema: {},

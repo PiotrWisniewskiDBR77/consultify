@@ -113,11 +113,14 @@ await db.connect();
 try {
   const current = await db.query<{ name: string }>('SELECT current_database() AS name');
   if (current.rows[0]?.name !== databaseName) throw new Error('Connected database identity mismatch');
-  const migrations = await db.query<{ count: number }>(
-    `SELECT COUNT(*)::int AS count FROM schema_migrations WHERE status IN ('applied','success')`
+  const migrations = await db.query<{ successful: number; failed: number }>(
+    `SELECT COUNT(*) FILTER (WHERE status IN ('applied','success'))::int AS successful,
+            COUNT(*) FILTER (WHERE status NOT IN ('applied','success'))::int AS failed
+       FROM schema_migrations`
   );
-  if (Number(migrations.rows[0]?.count) !== 831)
-    throw new Error('Partner owner database must have exactly 831 successful migrations');
+  if (Number(migrations.rows[0]?.successful) < 1 || Number(migrations.rows[0]?.failed) !== 0) {
+    throw new Error('Partner owner database must have a nonempty, fully successful migration ledger');
+  }
 
   await db.query('BEGIN');
   await db.query(

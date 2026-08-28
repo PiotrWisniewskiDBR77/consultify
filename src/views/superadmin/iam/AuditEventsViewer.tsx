@@ -299,14 +299,18 @@ const AuditEventsViewer: React.FC = () => {
 
       {/* Table */}
       <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 overflow-hidden">
-        <StandardTable
-          columns={columns}
-          data={events as unknown as TableRow[]}
-          loading={loading && events.length === 0}
-          error={loadError}
-          onRetry={fetchEvents}
-          empty={{ title: 'No audit events found' }}
-        />
+        {loadError ? (
+          <div className="p-6">
+            <DegradedState title="Audit events unavailable" description={loadError} />
+          </div>
+        ) : (
+          <StandardTable
+            columns={columns}
+            data={events as unknown as TableRow[]}
+            loading={loading && events.length === 0}
+            empty={{ title: 'No audit events found' }}
+          />
+        )}
       </div>
 
       {/* Pagination */}

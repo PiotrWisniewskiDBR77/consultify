@@ -152,7 +152,7 @@ describeIfDb('NotificationService', () => {
         db.get(`SELECT * FROM notifications WHERE id = ?`, [notifId], (_, row) => resolve(row));
       });
 
-      expect(notif).toBeUndefined();
+      expect(notif).toBeNull();
     });
   });
 
@@ -212,7 +212,7 @@ describeIfDb('NotificationService', () => {
         );
       });
 
-      expect(result.count).toBe(2);
+      expect(Number(result.count)).toBe(2);
     });
   });
 
@@ -243,7 +243,7 @@ describeIfDb('NotificationService', () => {
         );
       });
 
-      expect(unreadCount.count).toBe(0);
+      expect(Number(unreadCount.count)).toBe(0);
     });
   });
 });

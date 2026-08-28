@@ -61,7 +61,8 @@ describe('SecurityEventsView honest UI', () => {
     render(<SecurityEventsView />);
 
     expect(await screen.findByText('Unknown date')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /Resolve security event event-1/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Row actions/i }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /^Resolve event$/i }));
 
     await waitFor(() => {
       expect(
@@ -89,7 +90,8 @@ describe('SecurityEventsView honest UI', () => {
     render(<SecurityEventsView />);
 
     await screen.findByText('LOGIN_FAILED');
-    fireEvent.click(screen.getByRole('button', { name: /Resolve security event event-1/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Row actions/i }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /^Resolve event$/i }));
 
     await waitFor(() => {
       expect(
@@ -142,7 +144,8 @@ describe('SecurityEventsView honest UI', () => {
     render(<SecurityEventsView />);
 
     expect(await screen.findByText('LOGIN_FAILED')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Resolve security event event-1/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Row actions/i }));
+    expect(screen.getByRole('menuitem', { name: /^Resolve event$/i })).toBeInTheDocument();
   });
 
   it('does not treat string false resolved values as resolved', async () => {
@@ -162,6 +165,7 @@ describe('SecurityEventsView honest UI', () => {
     const row = screen.getByText('LOGIN_FAILED').closest('tr');
     expect(row).not.toBeNull();
     expect(within(row as HTMLElement).queryByText('Resolved')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Resolve security event event-1/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Row actions/i }));
+    expect(screen.getByRole('menuitem', { name: /^Resolve event$/i })).toBeInTheDocument();
   });
 });

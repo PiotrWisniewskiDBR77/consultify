@@ -169,13 +169,14 @@ describe('rateLimiting.middleware (L1)', () => {
 
   it('fails open to next when Date.now throws during limiter evaluation', async () => {
     const prev = process.env.NODE_ENV;
-    const nowSpy = vi.spyOn(Date, 'now').mockImplementation(() => {
-      throw new Error('clock failure');
-    });
+    let nowSpy: ReturnType<typeof vi.spyOn> | undefined;
     try {
       process.env.NODE_ENV = 'production';
       vi.resetModules();
       const mod = await import('../../../../server/src/middleware/rateLimiting.middleware.ts');
+      nowSpy = vi.spyOn(Date, 'now').mockImplementation(() => {
+        throw new Error('clock failure');
+      });
       const res = makeRes();
       const next = vi.fn();
       const req: any = { method: 'GET', ip: '6.6.6.6', headers: {}, socket: {} };
@@ -183,7 +184,7 @@ describe('rateLimiting.middleware (L1)', () => {
       expect(() => mod.defaultRateLimiter(req, res as any, next as any)).not.toThrow();
       expect(next).toHaveBeenCalledTimes(1);
     } finally {
-      nowSpy.mockRestore();
+      nowSpy?.mockRestore();
       process.env.NODE_ENV = prev;
     }
   });
@@ -1049,4 +1050,3 @@ describe('rateLimiting.middleware (L1)', () => {
     }
   });
 });
-
