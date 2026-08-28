@@ -364,3 +364,106 @@ actions: {
 Co to zmienia dla użytkownika: kształt propa zmienił się z płaskiej tablicy na obiekt z kluczem `informational` (dopasowanie do kontraktu `StandardPreviewActions`), a przycisk „Otwórz" dostał jawny `variant: 'neutral'`. To może zmienić: (a) gdzie i jak przycisk „Otwórz" renderuje się w stopce podglądu (inna kategoria akcji = inne miejsce/styl wg kanonu `StandardPreviewActions`, patrz `consultify-preview`), (b) czy przycisk dostaje inny wygląd wizualny niż miał wcześniej (neutral vs. domyślny). Commit najprawdopodobniej naprawiał realny błąd typu (poprzedni kształt nie pasował do kontraktu komponentu), więc stary kod mógł już renderować się niepoprawnie lub wcale — ale to wciąż zmiana widocznego zachowania ekranu preview, więc wymaga odbioru wzrokowego (zrzut PRZED/PO), nie tylko przejścia typecheck.
 
 **Żadna z tych dwóch zmian nie została cofnięta ani zmodyfikowana w ramach FIX-1..FIX-4** — zgodnie z instrukcją, zostały tylko opisane tutaj do akceptu.
+
+## 15. Kontynuacja po wiążącej decyzji właściciela — 2026-08-28
+
+Ta sekcja jest późniejsza i nadrzędna wobec wcześniejszych wpisów `CZĘŚCIOWO` dla §D i §F oraz wobec wcześniejszego `DECISION_REQUIRED` dotyczącego acceptance. Właściciel zdecydował: acceptance pozostaje blokujący i ma być naprawiany, nie obchodzony.
+
+### 15.1 Inwentarz dokładnie 380 porażek
+
+Komenda, która zmierzyła dokładnie 380 przypadków na świeżym PostgreSQL:
+
+```text
+DB_TYPE=postgres NODE_ENV=test DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5858/consultify_acceptance_test npm run test:acceptance
+```
+
+Wynik: `114 failed | 19 passed | 6 skipped` plików oraz `380 failed | 589 passed | 143 skipped` testów, `exit=1`. Pełny, wierszowy inwentarz (`category`, `file`, pełna nazwa testu, przyczyna źródłowa, pierwszy komunikat) jest w `CI_DAY58_ACCEPTANCE_INVENTORY_20260828.tsv`; ma 381 linii z nagłówkiem.
+
+| kategoria | liczba | udział | przyczyna dominująca |
+| --- | ---: | ---: | --- |
+| (a) defekt produktu | 2 | 0,5% | dwa realne 500/42703: update projektu i writer integracji |
+| (b) defekt testu | 74 | 19,5% | wycofane writery, stare precondition/ledger/formaty, deadlock harnessu |
+| (c) brak danych/fixture | 45 | 11,8% | brak progów KPI, governed ROI membership/policy, nieaktualne dane domenowe |
+| (d) pułapka środowiska | 259 | 68,2% | 255 nazwanych testów znika po wymuszeniu realnego PG; 4 przypadki wymagają realnego LLM |
+| **suma** | **380** | **100,0%** | |
+
+Dowód przypisania 255 przypadków do jednej pułapki środowiska: przecięcie klucza `plik + pełna nazwa` między dwoma raportami JSON dało `before=380`, `after=128`, `both=125`, `removed=255`, `added=3`. `NODE_ENV=test` wybierał mock DB, dopóki job nie ustawił jednocześnie `RUN_DB_TESTS=1` i `MOCK_DB=false`. Niezależny SELECT tego samego rekordu zwracał `null` przez `DbPromise` przed wymuszeniem i realny wiersz po wymuszeniu.
+
+### 15.2 Zastosowane naprawy b/c/d
+
+- `3fae436bb8`: job acceptance ustawia `RUN_DB_TESTS=1`, `MOCK_DB=false`; pozostaje blokujący.
+- `55b366a06c`: pięć guardów Finance akceptuje hermetyczną lokalną bazę kończącą się `_test`, zamiast jednego literału nazwy.
+- `dbb195a366`: hermetyczny `JWT_SECRET` w jobie; skupiony test My Work przeszedł 1/1 na realnym PG.
+- `ad8e836160`: usunięty historyczny ledger ośmiu oczekiwanych 500 Assessment; 91/91 zielone.
+- `46fb48cd9d`: dwa fixture’y KPI dostały rzeczywisty `target_value` i progi; `rvn-outbox-mywork-projection` 9/9 zielone, cross-domain pierwsze cztery kroki zielone.
+- `4094049295`: cross-domain publikuje kanoniczną governed ROI policy; tworzenie ROI przestało padać `NO_GOVERNED_POLICY`.
+- `f972bd90d2`: dwa dalsze pakiety ROI używają kanonicznego membership/policy; `rvn-g4-roi-perspectives-parity` 2/2 zielone, drugi pakiet poprawił się z 4 do 2 porażek.
+
+Pełny pomiar po wcześniejszej paczce napraw (przed trzema ostatnimi commitami fixture) dał `54 failed | 83 passed | 2 skipped` pliki oraz `131 failed | 930 passed | 51 skipped` testów. Późniejszych zielonych pomiarów skupionych nie odejmuję arytmetycznie od 131; pełny aktualny mianownik wymaga następnego świeżego przebiegu.
+
+### 15.3 Defekty produktu — gotowe diffy, NIELAŁOŻONE
+
+Defekt 1, `ProjectController.updateProject`: writer zawsze wymienia `projects.goal`, której nie ma w zmigrowanym schemacie, i zwraca 500/`42703`. Gotowy kierunek diffu w terenie właściciela produktu: budować listę `SET` wyłącznie z pól obecnych w `getTableColumns('projects')`, tak jak pozostałe kompatybilne writery; nie dodawać fikcyjnej wartości `goal` do testu. Minimalny wariant schematowy:
+
+```diff
+--- /dev/null
++++ server/migrations/20261590_day58_product_candidates.sql
+@@
++ALTER TABLE projects ADD COLUMN IF NOT EXISTS goal TEXT;
+```
+
+Defekt 2 ma dwie niezależne niezgodności realnego writera integracji. `integration_api_keys` mogła istnieć ze starej migracji bez `updated_at`, ponieważ późniejsze `CREATE TABLE IF NOT EXISTS` nie alteruje tabeli. Następnie `integrationHubService.connectIntegration` nie zapisuje wymaganej kolumny `connected_by`, mimo że router ma `userId`. Gotowy diff do nałożenia przez właściciela produktu:
+
+```diff
+--- a/server/migrations/20261590_day58_product_candidates.sql
++++ b/server/migrations/20261590_day58_product_candidates.sql
+@@
+ ALTER TABLE projects ADD COLUMN IF NOT EXISTS goal TEXT;
++ALTER TABLE integration_api_keys ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+--- a/server/src/routes/syncHub.routes.ts
++++ b/server/src/routes/syncHub.routes.ts
+@@
+-      result = await connectIntegration(orgId, connectorId, config);
++      result = await connectIntegration(orgId, connectorId, config, userId);
+--- a/server/src/services/integrationHubService.ts
++++ b/server/src/services/integrationHubService.ts
+@@
+-    config: Record<string, unknown>
++    config: Record<string, unknown>,
++    connectedBy: string
+@@
+       'auth_type',
++      'connected_by',
+@@
+       connector.authType,
++      connectedBy,
+@@
+ export const connectIntegration = (
+   organizationId: string,
+   connectorId: string,
+-  config: Record<string, unknown>
+-) => integrationHubServiceInstance.connectIntegration(organizationId, connectorId, config);
++  config: Record<string, unknown>,
++  connectedBy: string
++) => integrationHubServiceInstance.connectIntegration(organizationId, connectorId, config, connectedBy);
+```
+
+Nie utworzono migracji `20261590`: powyższe są kandydatami produktu i zgodnie z decyzją właściciela nie zostały nałożone.
+
+### 15.4 §D — Playwright domknięty pomiarem
+
+Każdą z trzech specyfikacji uruchomiono pięć razy z `--retries=0` na wymaganych portach i DB. Wyniki nazwanych testów były deterministyczne: presentations 5/5 ten sam FAIL, partner 5/5 ten sam FAIL i ten sam PASS, settings 5/5 ten sam FAIL. Nie zaobserwowano zmiany wyniku testu między próbami; wahania dotyczyły wyłącznie czasu budowy. `playwright.config.ts` ma teraz `retries: 0` z komentarzem dowodowym; nightly/weekly nie nadpisują retry. Commit `0dce3790ab`.
+
+### 15.5 §F — initiatives i mutant
+
+`npm run test:initiatives` po korektach kontraktów jest zielony: `109 passed` plików, `697 passed` testów. Mutant `tests/unit/initiatives/day58-mutant.test.ts` z `expect(1).toBe(2)` zmienił tę dokładną komendę na `exit=1`, `1 failed | 109 passed` plików i `1 failed | 697 passed` testów. Po usunięciu mutanta ta sama komenda wróciła do `109/109`, `697/697`, `exit=0`. Mutant nie istnieje w worktree. Commity `763ea0a6a6`, `a212b3ecf8`.
+
+Końcowy mutant dla pełnego `acceptance-tests` pozostaje `NOT_PROVEN`, ponieważ jego baseline nadal jest czerwony; dodanie kolejnej czerwonej asercji do już czerwonej komendy nie dowodzi przejścia zielony→czerwony.
+
+### 15.6 Trzy pozostałe błędy TSC i teren
+
+- `src/services/api.ts:12613`, TS2345 — przekrojowy klient API, ale konkretny payload Calendar należy do terenu dyżuru 57; zakaz mutacji tutaj.
+- `src/views/admin/AdminSettingsModule.tsx:500`, TS2322 — teren Admin, dyżur 53.
+- `src/views/superadmin/__tests__/PlatformOperationsView.test.tsx:33`, TS2345 — tor Superadmin aktywny 25–26.08, poza terenami 53/55/56/57, lecz bez licencji tej pozycji.
+
+Aktualny werdykt całego dyżuru: `PARTIAL / NOT_PROVEN`. §D i initiatives-owa część §F są domknięte; acceptance nadal blokuje zgodnie z decyzją właściciela i nie został wyciszony ani zawężony.

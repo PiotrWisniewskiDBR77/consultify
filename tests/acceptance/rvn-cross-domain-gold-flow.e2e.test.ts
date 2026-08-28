@@ -31,6 +31,10 @@ import { randomUUID } from 'node:crypto';
 
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
+import {
+  ensureRoiFixtureMembership,
+  ensureRoiGovernedVisibility,
+} from '../resultsVnext/roi/roiRealdbOrgFixture.js';
 import { pgClient, requireLocalDbUrl } from './harness.js';
 
 requireLocalDbUrl();
@@ -134,21 +138,6 @@ async function insertOrgAndUser(orgId: string, userId: string, email: string): P
   }
 }
 
-async function insertVisibilityPolicy(orgId: string, domain: string, mode: string, createdBy: string): Promise<void> {
-  const client = pgClient();
-  await client.connect();
-  try {
-    await client.query(
-      `INSERT INTO rvn_platform_visibility_policies
-         (organization_id, domain, policy_version, visibility_mode, is_active, created_by)
-       VALUES ($1, $2, 1, $3, true, $4)`,
-      [orgId, domain, mode, createdBy]
-    );
-  } finally {
-    await client.end();
-  }
-}
-
 async function insertFixtureKpi(
   orgId: string,
   ownerUserId: string,
@@ -166,8 +155,8 @@ async function insertFixtureKpi(
     await client.query(
       `INSERT INTO rvn_kpi_definition_versions
          (definition_version_id, kpi_id, organization_id, version_number, name, target_geometry,
-          target_min, approval_status, created_by, effective_from)
-       VALUES ($1, $2, $3, 1, 'RN-G0 fixture KPI', 'threshold_min', 100, 'approved', $4, now())`,
+          target_value, warning_low, critical_low, approval_status, created_by, effective_from)
+       VALUES ($1, $2, $3, 1, 'RN-G0 fixture KPI', 'threshold_min', 100, 90, 80, 'approved', $4, now())`,
       [versionId, kpiId, orgId, ownerUserId]
     );
     await client.query(
@@ -588,8 +577,28 @@ describe('RN-G0 · cross-domain gold-flow (KPI + ROI + outbox as one product)', 
     void APPROVER_A;
     void APPROVER_B;
 
-    await insertVisibilityPolicy(ORG_A, 'roi', 'OPEN_ORG', OWNER_A);
-    await insertVisibilityPolicy(ORG_B, 'roi', 'OPEN_ORG', OWNER_B);
+    const governanceClient = pgClient();
+    await governanceClient.connect();
+    try {
+      await ensureRoiFixtureMembership(governanceClient, {
+        organizationId: ORG_A, userId: OWNER_A, role: 'OWNER',
+      });
+      await ensureRoiFixtureMembership(governanceClient, {
+        organizationId: ORG_B, userId: OWNER_B, role: 'OWNER',
+      });
+    } finally {
+      await governanceClient.end();
+    }
+    await ensureRoiGovernedVisibility({
+      organizationId: ORG_A,
+      actorUserId: OWNER_A,
+      idempotencyKey: `${MARKER}--roi-policy-a`,
+    });
+    await ensureRoiGovernedVisibility({
+      organizationId: ORG_B,
+      actorUserId: OWNER_B,
+      idempotencyKey: `${MARKER}--roi-policy-b`,
+    });
 
     const measurementCommands: CommandsKpiMeasurement = await import(
       '../../server/src/services/resultsVnext/kpi/kpiMeasurementCommands.js'

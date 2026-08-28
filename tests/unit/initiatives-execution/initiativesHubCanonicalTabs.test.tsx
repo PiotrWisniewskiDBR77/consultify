@@ -14,13 +14,13 @@ describe('InitiativesHub canonical intake navigation', () => {
       source.indexOf('const CANONICAL_INITIATIVES_TABS'),
       source.indexOf('export const InitiativesHub')
     );
-    expect(canonicalTabs).toContain("['list', 'plan', 'capacity']");
+    expect(canonicalTabs).toMatch(/'list',\s*'plan',\s*'capacity'/);
     expect(canonicalTabs).not.toContain("'candidates'");
     expect(canonicalTabs).not.toContain("'portfolio'");
   });
 
-  it('preserves the selected proposal in URL context and links a scheduled initiative to Execution', () => {
-    expect(source).toContain("next.set('sourceProposalId', proposalId)");
+  it('clears retired proposal context and links a scheduled initiative to Execution', () => {
+    expect(source).toContain("next.delete('sourceProposalId')");
     expect(source).toContain('onOpenExecution={(executionCaseId, initiativeId) =>');
     expect(source).toContain(
       '`/execution?tab=list&mode=initiative&open=${encodeURIComponent(initiativeId)}&executionCaseId=${encodeURIComponent(executionCaseId)}`'

@@ -90,7 +90,13 @@ function guardedDatabaseUrl(): string {
   if (!raw) throw new Error('[FIN-005] DATABASE_URL is unset');
   const url = new URL(raw);
   const dbName = decodeURIComponent(url.pathname.replace(/^\//, ''));
-  if (!['localhost', '127.0.0.1', '::1'].includes(url.hostname) || dbName !== 'consultinity_test') {
+  if (
+    !['localhost', '127.0.0.1', '::1'].includes(url.hostname) ||
+    !dbName.endsWith('_test') ||
+    process.env.RUN_DB_TESTS !== '1' ||
+    process.env.MOCK_DB !== 'false' ||
+    process.env.DB_TYPE !== 'postgres'
+  ) {
     throw new Error(`[FIN-005] REFUSING database target host=${url.hostname} db=${dbName}`);
   }
   return raw;

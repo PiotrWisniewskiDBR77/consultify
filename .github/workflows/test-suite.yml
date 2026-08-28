@@ -406,6 +406,9 @@ jobs:
     env:
       DB_TYPE: postgres
       NODE_ENV: test
+      RUN_DB_TESTS: '1'
+      MOCK_DB: 'false'
+      JWT_SECRET: acceptance-tests-local-secret-at-least-32-characters
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/consultify_acceptance_test
     steps:
       - uses: actions/checkout@v4
