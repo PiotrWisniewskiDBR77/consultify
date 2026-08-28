@@ -1,3 +1,5 @@
+/** @vitest-environment node */
+
 /**
  * Characterization test for generatePartnerCertificatePdf — added as the safety
  * net BEFORE migrating its pdfkit plumbing onto UnifiedExportService.renderPdf.
@@ -5,26 +7,7 @@
  * non-empty PDF without throwing" across EN/PL and certificate types.
  */
 
-import { describe, expect, it, vi } from 'vitest';
-
-vi.mock('../../../../server/src/utils/pdfFonts.js', () => {
-  const PDF_FONT = {
-    regular: 'Helvetica',
-    bold: 'Helvetica-Bold',
-    italic: 'Helvetica-Oblique',
-    boldItalic: 'Helvetica-BoldOblique',
-  } as const;
-  return {
-    PDF_FONT,
-    PDF_FONT_FROM_HELVETICA: {
-      Helvetica: PDF_FONT.regular,
-      'Helvetica-Bold': PDF_FONT.bold,
-      'Helvetica-Oblique': PDF_FONT.italic,
-      'Helvetica-BoldOblique': PDF_FONT.boldItalic,
-    },
-    registerPdfFonts: (doc: any) => doc.font(PDF_FONT.regular),
-  };
-});
+import { describe, expect, it } from 'vitest';
 
 import { generatePartnerCertificatePdf } from '../../../../server/src/services/partnerCertificatePdf.js';
 
@@ -54,13 +37,7 @@ describe('generatePartnerCertificatePdf', () => {
   });
 
   it('integration contract: application font renders Polish glyph input into a valid PDF', async () => {
-    vi.resetModules();
-    vi.doUnmock('../../../../server/src/utils/pdfFonts.js');
-    const { generatePartnerCertificatePdf: generateWithApplicationFonts } = await import(
-      '../../../../server/src/services/partnerCertificatePdf.js'
-    );
-
-    const buf = await generateWithApplicationFonts({
+    const buf = await generatePartnerCertificatePdf({
       ...base,
       partnerOrgName: 'Zażółć Gęślą Jaźń Sp. z o.o.',
       userName: 'Łukasz Świątek',

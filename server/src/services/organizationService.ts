@@ -33,6 +33,27 @@ export const ROLES = {
 
 export type OrganizationRole = (typeof ROLES)[keyof typeof ROLES];
 
+const RECOGNIZED_ORGANIZATION_ROLE_INPUTS = new Set([
+  'OWNER',
+  'ADMIN',
+  'SUPERADMIN',
+  'SUPER_ADMIN',
+  'ADMINISTRATOR',
+  'VIEWER',
+  'GUEST',
+  'CONSULTANT',
+  'USER',
+  'MEMBER',
+]);
+
+function requireOrganizationRole(rawRole: string | null | undefined): OrganizationRole {
+  const normalized = String(rawRole || '').trim().toUpperCase();
+  if (!RECOGNIZED_ORGANIZATION_ROLE_INPUTS.has(normalized)) {
+    throw new Error('Invalid role');
+  }
+  return normalizeOrganizationRole(normalized);
+}
+
 export function normalizeOrganizationRole(rawRole: string | null | undefined): OrganizationRole {
   const normalized = String(rawRole || '')
     .trim()
@@ -329,11 +350,7 @@ export async function updateOrganization(
  */
 export async function addMember(params: AddMemberParams): Promise<AddMemberResult> {
   const { organizationId, userId, invitedBy } = params;
-  const role = normalizeOrganizationRole(params.role);
-
-  if (!Object.values(ROLES).includes(role)) {
-    throw new Error('Invalid role');
-  }
+  const role = requireOrganizationRole(params.role);
 
   const id = uuidv4();
 
@@ -529,11 +546,7 @@ export async function updateMemberRole(
   params: UpdateMemberRoleParams
 ): Promise<UpdateMemberRoleResult> {
   const { organizationId, userId } = params;
-  const role = normalizeOrganizationRole(params.role);
-
-  if (!Object.values(ROLES).includes(role)) {
-    throw new Error('Invalid role');
-  }
+  const role = requireOrganizationRole(params.role);
 
   const result = await DbPromise.run(
     db,

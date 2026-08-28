@@ -146,7 +146,7 @@ async function ensureDedupeTable(): Promise<boolean> {
     await dbRun(
       `CREATE TABLE IF NOT EXISTS slack_router_dedupe (
          dedupe_key TEXT PRIMARY KEY,
-         last_sent_at TIMESTAMP
+         last_sent_at TIMESTAMPTZ
        )`
     );
     dedupeTableEnsured = true;

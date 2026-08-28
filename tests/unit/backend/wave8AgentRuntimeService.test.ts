@@ -26,6 +26,24 @@ vi.mock('../../../server/src/services/ai/toolDefinitions.js', () => ({
     JSON.stringify({ toolName, input, ok: true }),
 }));
 
+vi.mock('../../../server/src/services/v8/agentToolExecutionGovernanceService.js', () => ({
+  authorizeAgentToolExecution: async (input: { preliminaryDenial?: string | null }) => ({
+    allowed: !input.preliminaryDenial,
+    reason: input.preliminaryDenial || 'allowed',
+    eventId: 'tool-governance-event-1',
+    toolId: input.preliminaryDenial ? null : 'tool-1',
+  }),
+}));
+
+vi.mock('../../../server/src/services/v8/agentResourceGovernanceService.js', () => ({
+  executeWithAgentResourceReservation: async (input: { execute: () => Promise<unknown> }) => ({
+    allowed: true,
+    replayed: false,
+    result: await input.execute(),
+    resourceDecision: { allowed: true, reason: 'unit_test_reservation' },
+  }),
+}));
+
 vi.mock('../../../server/src/utils/DbPromise.js', () => ({
   run: async (sql: string, params: any[] = []) => {
     const normalized = sql.replace(/\s+/g, ' ').trim();
@@ -34,7 +52,7 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
       normalized.startsWith('CREATE INDEX') ||
       normalized.startsWith('ALTER TABLE')
     ) {
-      return { changes: 0 };
+      return { success: true, changes: 0 };
     }
     if (normalized.startsWith('INSERT INTO wave8_agent_definitions')) {
       const [
@@ -75,7 +93,7 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
         updated_by: updatedBy,
         updated_at: updatedAt,
       });
-      return { changes: 1 };
+      return { success: true, changes: 1 };
     }
     if (normalized.startsWith('INSERT INTO wave8_agent_runs')) {
       const [
@@ -111,7 +129,7 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
         created_at: new Date().toISOString(),
         completed_at: completedAt,
       });
-      return { changes: 1 };
+      return { success: true, changes: 1 };
     }
     if (normalized.startsWith('INSERT INTO wave8_agent_schedules')) {
       const [
@@ -120,9 +138,16 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
         agentId,
         ownerUserId,
         cadence,
+        goal,
+        projectId,
+        timezone,
         nextRunAt,
         schedulerMode,
         status,
+        timeoutSeconds,
+        maxAttempts,
+        mandateJson,
+        canonicalRunId,
       ] = params;
       db.schedules.set(scheduleId, {
         schedule_id: scheduleId,
@@ -130,13 +155,20 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
         agent_id: agentId,
         owner_user_id: ownerUserId,
         cadence,
+        goal,
+        project_id: projectId,
+        timezone,
         next_run_at: nextRunAt,
         scheduler_mode: schedulerMode,
         status,
+        timeout_seconds: timeoutSeconds,
+        max_attempts: maxAttempts,
+        mandate_json: mandateJson,
+        canonical_run_id: canonicalRunId,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       });
-      return { changes: 1 };
+      return { success: true, changes: 1 };
     }
     if (normalized.startsWith('INSERT INTO wave8_agent_notifications')) {
       const [notificationId, organizationId, runId, ownerUserId, notificationType, payloadJson] =
@@ -150,15 +182,15 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
         payload_json: payloadJson,
         created_at: new Date().toISOString(),
       });
-      return { changes: 1 };
+      return { success: true, changes: 1 };
     }
     if (normalized.startsWith('UPDATE wave8_agent_schedules')) {
       const [nextRunAt, status, scheduleId] = params;
       const row = db.schedules.get(scheduleId);
-      if (!row) return { changes: 0 };
+      if (!row) return { success: true, changes: 0 };
       row.next_run_at = nextRunAt;
       row.status = status;
-      return { changes: 1 };
+      return { success: true, changes: 1 };
     }
     throw new Error(`Unhandled dbRun SQL: ${normalized}`);
   },
@@ -328,8 +360,8 @@ describe('Wave 8 agent runtime', () => {
     expect(scheduled.run.schemaValid).toBe(false);
     expect(scheduled.run.audit.scheduler).toEqual(
       expect.objectContaining({
-        schedulerMode: 'manual_process_due_endpoint',
-        cronBacked: false,
+        schedulerMode: 'durable_cron_worker',
+        cronBacked: true,
         status: 'registered',
       })
     );
@@ -338,7 +370,7 @@ describe('Wave 8 agent runtime', () => {
     expect(schedules[0]).toEqual(
       expect.objectContaining({
         ownerUserId: 'owner-1',
-        schedulerMode: 'manual_process_due_endpoint',
+        schedulerMode: 'durable_cron_worker',
       })
     );
     const notifications = await listWave8AgentNotifications({ organizationId: 'org-1' });
