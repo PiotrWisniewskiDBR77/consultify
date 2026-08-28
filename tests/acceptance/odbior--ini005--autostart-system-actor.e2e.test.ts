@@ -34,6 +34,7 @@
 // to a fixed value before any dynamic import can load server/src/config/Config.ts.
 // See tests/acceptance/sharedAcceptanceJwtSecret.ts for the full root-cause writeup.
 import { assertJwtSecretHermetic } from './sharedAcceptanceJwtSecret.js';
+import { createHash } from 'node:crypto';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
@@ -94,6 +95,54 @@ async function insertDecision(d: DecisionFixture): Promise<void> {
         d.status,
         d.decidedAt || new Date().toISOString(),
       ]
+    );
+    if (d.status !== 'approved' && d.status !== 'rejected') return;
+    const caseId = `${d.id}-case`;
+    const proposalVersionId = `${d.id}-proposal-version`;
+    const reviewId = `${d.id}-review`;
+    const digest = createHash('sha256').update(`autostart|${d.id}`).digest('hex');
+    const current = await c.query(
+      `SELECT COALESCE(MAX(version),0)::int + 1 AS version
+         FROM initiative_lifecycle_gate_decisions
+        WHERE organization_id=$1 AND initiative_id=$2 AND pmo_domain='GOVERNANCE_DECISION_MAKING'`,
+      [ORG_A, d.initiativeId]
+    );
+    await c.query(
+      `INSERT INTO transformation_cases
+         (transformation_case_id, organization_id, initiated_by_user_id, mandate, lineage_id, idempotency_key, version)
+       VALUES ($1,$2,$3,'INI-005 auto-start fixture',$4,$5,1)`,
+      [caseId, ORG_A, SEED.USER_ID, `${d.id}-lineage`, `${d.id}-case-idem`]
+    );
+    await c.query(
+      `INSERT INTO v8_agent_proposal_versions
+         (proposal_version_id, proposal_id, organization_id, canonical_run_id, proposal_version,
+          plan_version, context_digest, before_json, after_json, approval_scopes_json,
+          reviewer_authority_json, expires_at, status, created_by_user_id)
+       VALUES ($1,$2,$3,$4,1,1,$5,'{}'::jsonb,'{}'::jsonb,$6::jsonb,$7::jsonb,
+               NOW()+INTERVAL '1 day','approved',$8)`,
+      [proposalVersionId, `${d.id}-proposal`, ORG_A, `${d.id}-run`, digest,
+       JSON.stringify(['initiative_execution']),
+       JSON.stringify({ userId: SEED.USER_ID, authority: 'initiative_execution' }), SEED.USER_ID]
+    );
+    await c.query(
+      `INSERT INTO v8_agent_proposal_scope_reviews
+         (review_id, proposal_version_id, scope_key, decision, reason, reviewed_by_user_id)
+       VALUES ($1,$2,'initiative_execution','approved','INI-005 auto-start fixture',$3)`,
+      [reviewId, proposalVersionId, SEED.USER_ID]
+    );
+    await c.query(
+      `INSERT INTO initiative_lifecycle_gate_decisions
+         (decision_id, organization_id, initiative_id, transformation_case_id, pmo_domain,
+          version, decision_status, source_digest, source_case_version, baseline_refs_json,
+          a05_proposal_version_id, a05_approval_receipt_ref, human_actor_user_id,
+          human_authority_ref, rationale, deadline_at, idempotency_key, input_digest)
+       VALUES ($1,$2,$3,$4,'GOVERNANCE_DECISION_MAKING',$5,$6,$7,1,$8::jsonb,
+               $9,$10,$11,'initiative_execution','INI-005 auto-start governed fixture',
+               '2026-12-31T00:00:00.000Z',$12,$13)`,
+      [d.id, ORG_A, d.initiativeId, caseId, Number(current.rows[0].version), d.status, digest,
+       JSON.stringify([`initiative:${d.initiativeId}:execution`]), proposalVersionId, reviewId,
+       SEED.USER_ID, `${d.id}-gate-idem`,
+       createHash('sha256').update(`autostart-input|${d.id}`).digest('hex')]
     );
   });
 }
@@ -189,7 +238,8 @@ afterAll(async () => {
     await c.query(`DELETE FROM initiative_status_history WHERE initiative_id LIKE $1`, [`${PREFIX}%`]);
     await c.query(`DELETE FROM initiative_history WHERE initiative_id LIKE $1`, [`${PREFIX}%`]);
     await c.query(`DELETE FROM decisions WHERE initiative_id LIKE $1`, [`${PREFIX}%`]);
-    await c.query(`DELETE FROM initiatives WHERE id LIKE $1`, [`${PREFIX}%`]);
+    // Canonical gate decisions are immutable and retain their FK lineage.
+    // The disposable database is removed as a whole after final evidence.
   });
 });
 
