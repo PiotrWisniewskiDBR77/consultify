@@ -252,7 +252,7 @@ Werdykt i wykonanie:
 
 Barrele `src/components/settings/index.ts` i `security/index.ts` nie eksportowały tych pięciu plików; po usunięciu `rg` nie znalazł żadnych pozostałych referencji. BFS po zmianie: `46 LIVE / 108 ORPHAN`, czyli dokładny spadek `113 → 108` odpowiada pięciu usuniętym kandydatom i nie osierocił nowego pliku.
 
-Adresy 13 sekcji bez pozycji menu zostały zmierzone testem `day55-direct-section-aliases.test.ts`: `13 PASS`. Każdy `/settings/<sekcja>` zachowuje identyfikator w `normalizeSettingsSectionFromPath` i ma imienny `case` w `SettingsView`; aliasy `password/mfa/recovery/sessions/login-history/sessions-activity` prowadzą do żywego `AuthenticationAccessPage`. Jest to dowód kontraktu routingu na poziomie klienta; pełnego wpisania adresu w produkcyjnym browser runtime jeszcze nie wykonano i nie przedstawiam tego jako dowodu wizualnego.
+Adresy 13 sekcji bez pozycji menu zostały zmierzone testem `day55-direct-section-aliases.test.ts`: `13 PASS`. Każdy `/settings/<sekcja>` zachowuje identyfikator w `normalizeSettingsSectionFromPath` i ma imienny `case` w `SettingsView`; aliasy `password/mfa/recovery/sessions/login-history/sessions-activity` prowadzą do żywego `AuthenticationAccessPage`. Pełny pomiar browser-runtime opisany w §B.1 ujawnił jednak, że sześć adresów renderuje ekran Profil zamiast nazwanej sekcji; kontrakt statyczny nie był dowodem poprawnego rezultatu wizualnego.
 
 Zrzuty żywego ekranu `auth-access`: te same dwa artefakty z §A.2, sprawdzone wzrokiem w jasnym i ciemnym motywie; formularz zmiany hasła jest widoczny i rozwinięty.
 
@@ -260,7 +260,7 @@ Pomiar zasięgu klienta po usunięciu: 200 testów, `200 PASS / 0 FAIL / 0 SKIPP
 
 `scripts/check-list-canon.sh`: brak nowych naruszeń (`394`, baseline `394`). Pięć kształtów fałszywego gotowe — A.3: osiągalność mierzona BFS TAK; testy martwych plików usunięte TAK; zakres bez SKIP TAK; zapis/konsument NIE DOTYCZY; grep nie służy jako dowód działania, a jedynie brak referencji TAK.
 
-Werdykt §A.3: `CZĘŚCIOWO` — bezsporne martwe duplikaty i ich testy usunięto, ale bezpośrednich adresów nie potwierdzono jeszcze pełnym browser runtime.
+Werdykt §A.3: `CZĘŚCIOWO` — bezsporne martwe duplikaty i ich testy usunięto, a bezpośrednie adresy zmierzono pełnym browser runtime; 7/13 daje nazwany ekran, 6/13 błędnie pokazuje Profil.
 
 ## §A.4 — runtime DDL
 
@@ -303,7 +303,25 @@ Lista `BEZ KONSUMENTA` jest filtrowalna w pełnej tabeli po polu `classification
 
 Z33: każdy przebieg ustawiał w tej samej linii `ENABLE_V8_GLOBAL=true`, `ENABLE_TEST_AUTH_BYPASS=false` i `RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE=enforce`, a także `RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres` oraz jawny lokalny `DATABASE_URL`. Tym samym bramka V8 nie mogła wygenerować fałszywego 404 przed autoryzacją, bypass testowy nie mógł zaakceptować ataku, a filtr Results nie działał w trybie łagodniejszym. Test używa `assertRealPostgresTestEnvironment()` bez argumentów.
 
-Trzynaście sekcji bez pozycji menu ma `13 PASS` kontraktu routingu z §A.3. Lokalny harness `dev-render:3371` renderuje tylko `AuthenticationAccessPage`, więc nie zapewnia uczciwego dowodu browser-runtime dla wszystkich trzynastu adresów. Nie zastępuję tego dowodu statycznym PASS: pełny browser-runtime pozostaje `EVIDENCE_MISSING` i §B.1 ma werdykt `PARTIAL`, mimo kompletnego pomiaru HTTP zapisanej powierzchni.
+Trzynaście sekcji bez pozycji menu przeszło pełny pomiar browser-runtime przez pełny `SettingsView` na `dev-render:3371`, z każdym adresem wpisanym osobno i indywidualnym zrzutem obejrzanym oczami. Wszystkie powierzchnie coś renderują, ale wynik funkcjonalny to `7/13 właściwy ekran` i `6/13 błędne przejście do Profilu`:
+
+| adres | widoczny ekran | werdykt | dowód |
+|---|---|---|---|
+| `/settings/password` | Hasło | właściwy | `e1-help-27-password.png`, SHA-256 `26b3319b3dbd…` |
+| `/settings/mfa` | Uwierzytelnianie dwuskładnikowe | właściwy | `e1-help-28-mfa.png`, `fb111f03b4e2…` |
+| `/settings/sessions` | Aktywne sesje | właściwy | `e1-help-29-sessions.png`, `f845f6d467cc…` |
+| `/settings/login-history` | Historia logowań | właściwy | `e1-help-30-login-history.png`, `a9ce8a0aa58b…` |
+| `/settings/recovery` | Opcje odzyskiwania | właściwy | `e1-help-31-recovery.png`, `b899a716c4cf…` |
+| `/settings/security-overview` | Przegląd bezpieczeństwa | właściwy, lecz treść błędu po angielsku | `e1-help-32-security-overview.png`, `384e614923a2…` |
+| `/settings/sessions-activity` | Sesje i aktywność | właściwy | `e1-help-33-sessions-activity.png`, `5f7f26f6197e…` |
+| `/settings/overview` | Profil | błędny | `e1-help-01-overview.png`, `2d8f93d1ec56…` |
+| `/settings/module-preferences` | Profil | błędny | `e1-help-05-module-preferences.png`, `2d8f93d1ec56…` |
+| `/settings/tenant-defaults` | Profil | błędny | `e1-help-02-tenant-defaults.png`, `2d8f93d1ec56…` |
+| `/settings/tenant-branding` | Profil | błędny | `e1-help-03-tenant-branding.png`, `2d8f93d1ec56…` |
+| `/settings/tenant-security` | Profil | błędny | `e1-help-04-tenant-security.png`, `2d8f93d1ec56…` |
+| `/settings/shortcuts` | Profil | błędny | `e1-help-45-shortcuts.png`, `2d8f93d1ec56…` |
+
+Werdykt §B.1 pozostaje `PARTIAL`, ale pełny pomiar browser-runtime nie jest już `EVIDENCE_MISSING`: sześć imiennych defektów jest teraz udowodnionych oczami.
 
 ## §B.2 — granica self, tenant i callback OAuth
 
@@ -557,7 +575,7 @@ Nazwy własne produktów (`Google Calendar`, `Outlook Calendar`), identyfikatory
 
 ## Pięć kształtów fałszywego „gotowe"
 
-Każdą pozycję oceniono pięcioma pytaniami: (1) realny Gateway/runtime, (2) test żywej trasy/ekranu, (3) asercje faktycznie wykonane bez ukrytego SKIP, (4) niezależny readback skutku, (5) wynik oparty na HTTP/DB/oczach, nie samym grep. A.2/A.4/B.2/D.1/D.2/F.2 mają odpowiednio dowody runtime, real-PG i readback opisane w swoich sekcjach; A.1/A.3/C.1/C.2/E.1/F.1/R.1/R.2 są z natury inwentarzem, statycznym wykonaniem lub dokumentacją, więc pytania runtime/readback są `N/D`, a nie sztucznym TAK. B.1 ma realny Gateway i 156 kodów HTTP, ale brak pełnego browser runtime 13 ekranów. B.2 po kontynuacji obejmuje 80 zapisów macierzy i cztery zapisy notificationSettings, bez SKIP, z niezależnym readbackiem. D.1 ma 5/5 real-PG oraz 8 zrzutów harnessu, lecz nie pełny zalogowany runtime. E.1 ma 2/2 strażnika i ogląd pełnego `SettingsView` 50/50 oczami; odrębny audyt treści wykazuje 12 atrap i 20 sekcji z angielskim. F.1 po kontynuacji ma pomiar końcowy 47/1128/0, parytet EN oraz obejrzane 8/8 grup; otrzymuje pełny werdykt wyłącznie w tym udowodnionym zakresie.
+Każdą pozycję oceniono pięcioma pytaniami: (1) realny Gateway/runtime, (2) test żywej trasy/ekranu, (3) asercje faktycznie wykonane bez ukrytego SKIP, (4) niezależny readback skutku, (5) wynik oparty na HTTP/DB/oczach, nie samym grep. A.2/A.4/B.2/D.1/D.2/F.2 mają odpowiednio dowody runtime, real-PG i readback opisane w swoich sekcjach; A.1/A.3/C.1/C.2/E.1/F.1/R.1/R.2 są z natury inwentarzem, statycznym wykonaniem lub dokumentacją, więc pytania runtime/readback są `N/D`, a nie sztucznym TAK. B.1 ma realny Gateway, 156 kodów HTTP i pełny browser-runtime 13/13; wynik to 7 właściwych ekranów i 6 błędnych przejść do Profilu. B.2 po kontynuacji obejmuje 80 zapisów macierzy i cztery zapisy notificationSettings, bez SKIP, z niezależnym readbackiem. D.1 ma 5/5 real-PG oraz 8 zrzutów harnessu, lecz nie pełny zalogowany runtime. E.1 ma 2/2 strażnika i ogląd pełnego `SettingsView` 50/50 oczami; odrębny audyt treści wykazuje 12 atrap i 20 sekcji z angielskim. F.1 po kontynuacji ma pomiar końcowy 47/1128/0, parytet EN oraz obejrzane 8/8 grup; otrzymuje pełny werdykt wyłącznie w tym udowodnionym zakresie.
 
 ## Pomiar zasięgu testów
 
@@ -590,13 +608,13 @@ Brak STOP-u całego dyżuru. Nie wystąpiło ryzyko utraty danych, połączenie 
 
 ## Brief wynikowy dla nadzorcy
 
-Dyżur pracował na związanym markerze i wyłącznie lokalnej bazie `cx_day55`. Naprawiono komunikat zmiany hasła — nie unieważnianie istniejących access tokenów — oraz usunięto runtime DDL, opierając zapis na zastanym łańcuchu migracji. Zmierzono 156 adresów HTTP przez realny Gateway. Ściana odrzuca obcy tenant i obcego użytkownika dokładnymi kodami, a membership jest wymagane tylko dla delegacji organizacyjnej, nie danych własnych. OAuth callback wiąże state z krótkotrwałym cookie sesji. Ustawienia deweloperskie nie mogą włączyć flag ani narzędzi. Cztery operacje właściciela mają real-PG readback i osiem zrzutów harnessu. Usunięto 62 martwe wrappery/stuby bez utraty 49 nazw testów tras. Dodano lokalny, fail-closed seed danych demo. Kontynuacja uzupełniła 352 unikalne brakujące klucze żywych powierzchni, obejrzała po polsku wszystkie 8/8 grup oraz domknęła Help 50/50 oczami. Audyt tych 50 powierzchni wykazał osobno 18 sekcji z treścią, 12 atrap i 20 sekcji z angielskim. Nadal nie wykonano pełnego browser runtime dla B.1. Końcowy pełny pomiar (c) pozostaje na tym etapie niezielony/nieporównywalny, więc zasięg nadal deklaruję jako częściowy do pozycji 5 kontynuacji. `CLOSED_FINAL` właściciela, jego SHA i tag pozostały nietknięte. Największe ryzyko scalenia to szeroki wspólny middleware zapisu w `settings.routes.ts`; wymaga ponowienia pełnych suite po integracji. Właściciel nadal musi rozstrzygnąć G12, pełny per-screen system wizualny i guided replay. Nie wykonano deployu, realnego OAuth ani wysyłki poczty.
+Dyżur pracował na związanym markerze i wyłącznie lokalnej bazie `cx_day55`. Naprawiono komunikat zmiany hasła — nie unieważnianie istniejących access tokenów — oraz usunięto runtime DDL, opierając zapis na zastanym łańcuchu migracji. Zmierzono 156 adresów HTTP przez realny Gateway. Ściana odrzuca obcy tenant i obcego użytkownika dokładnymi kodami, a membership jest wymagane tylko dla delegacji organizacyjnej, nie danych własnych. OAuth callback wiąże state z krótkotrwałym cookie sesji. Ustawienia deweloperskie nie mogą włączyć flag ani narzędzi. Cztery operacje właściciela mają real-PG readback i osiem zrzutów harnessu. Usunięto 62 martwe wrappery/stuby bez utraty 49 nazw testów tras. Dodano lokalny, fail-closed seed danych demo. Kontynuacja uzupełniła 352 unikalne brakujące klucze żywych powierzchni, obejrzała po polsku wszystkie 8/8 grup oraz domknęła Help 50/50 oczami. Audyt tych 50 powierzchni wykazał osobno 18 sekcji z treścią, 12 atrap i 20 sekcji z angielskim. Pełny browser runtime B.1 zmierzył 13/13 adresów: 7 właściwych ekranów i 6 błędnych przejść do Profilu. Końcowy pełny pomiar (c) pozostaje na tym etapie niezielony/nieporównywalny, więc zasięg nadal deklaruję jako częściowy do pozycji 5 kontynuacji. `CLOSED_FINAL` właściciela, jego SHA i tag pozostały nietknięte. Największe ryzyko scalenia to szeroki wspólny middleware zapisu w `settings.routes.ts`; wymaga ponowienia pełnych suite po integracji. Właściciel nadal musi rozstrzygnąć G12, pełny per-screen system wizualny i guided replay. Nie wykonano deployu, realnego OAuth ani wysyłki poczty.
 
 NIE przepisałem liczb nadzorcy ani autora instrukcji ani z `MODULE_ACCEPTANCE.md` — zmierzyłem sam.
 
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
-- Pełny browser runtime 13 sekcji bez menu w B.1 pozostaje niezweryfikowany; harness nie zastępuje aplikacji zalogowanej.
+- Browser runtime 13/13 jest zmierzony; sześć adresów (`overview`, `module-preferences`, `tenant-defaults`, `tenant-branding`, `tenant-security`, `shortcuts`) błędnie renderuje Profil.
 - Nie sprawdzono wszystkich czterech gałęzi każdego `recovery/*` poza trasami objętymi A.3/D.1.
 - Końcowy przebieg zasięgu (c) nie jest zielonym odpowiednikiem (a).
 - Zrzuty D.1/F.2 pochodzą z lokalnego harnessu, nie pełnego zalogowanego runtime.
