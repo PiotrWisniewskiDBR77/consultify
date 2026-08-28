@@ -19,8 +19,8 @@ describe('InitiativesHub canonical intake navigation', () => {
     expect(canonicalTabs).not.toContain("'portfolio'");
   });
 
-  it('preserves the selected proposal in URL context and links a scheduled initiative to Execution', () => {
-    expect(source).toContain("next.set('sourceProposalId', proposalId)");
+  it('clears retired proposal context and links a scheduled initiative to Execution', () => {
+    expect(source).toContain("next.delete('sourceProposalId')");
     expect(source).toContain('onOpenExecution={(executionCaseId, initiativeId) =>');
     expect(source).toContain(
       '`/execution?tab=list&mode=initiative&open=${encodeURIComponent(initiativeId)}&executionCaseId=${encodeURIComponent(executionCaseId)}`'
