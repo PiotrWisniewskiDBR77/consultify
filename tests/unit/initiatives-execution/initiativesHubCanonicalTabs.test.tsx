@@ -14,7 +14,7 @@ describe('InitiativesHub canonical intake navigation', () => {
       source.indexOf('const CANONICAL_INITIATIVES_TABS'),
       source.indexOf('export const InitiativesHub')
     );
-    expect(canonicalTabs).toContain("['list', 'plan', 'capacity']");
+    expect(canonicalTabs).toMatch(/'list',\s*'plan',\s*'capacity'/);
     expect(canonicalTabs).not.toContain("'candidates'");
     expect(canonicalTabs).not.toContain("'portfolio'");
   });

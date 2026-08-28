@@ -220,7 +220,7 @@ describe('CanonicalInitiativeCardWorkspace', () => {
       expect.any(AbortSignal)
     );
     fireEvent.click(screen.getByRole('button', { name: 'Open Execution' }));
-    expect(onOpenExecution).toHaveBeenCalledWith('execution-case-1');
+    expect(onOpenExecution).toHaveBeenCalledWith('execution-case-1', 'initiative-card-ui');
   });
 
   it('labels a schedule conflict accurately and offers bounded truth reload', async () => {
