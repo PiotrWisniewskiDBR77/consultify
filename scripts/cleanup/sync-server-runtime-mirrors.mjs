@@ -23,6 +23,23 @@ const sources = [
   'src/toolOutputs/outputLifecycle.ts',
   'src/toolOutputs/buildSwotOutput.ts',
   'src/toolOutputs/renderReport.ts',
+  // Pure beta-gating SSOT consumed by server/src/middleware/betaGate.middleware.ts.
+  // The backend image is built from `COPY server/ .`, so the server may never
+  // import `../../../src/**` directly — it silently hits the ambient
+  // `declare module '*.js'` and fails the production build with TS2614.
+  'src/utils/betaMenuStatus.ts',
+];
+
+/**
+ * Contract mirrors that do NOT live under `src/`. Same reason as above: the
+ * production backend image only contains `server/`, so `shared/**` is out of
+ * reach for `server/src/**` imports. Source of truth stays in `shared/`.
+ */
+const contractSources = [
+  {
+    from: 'shared/contracts/federatedActionManifest.types.d.ts',
+    to: 'contracts/federatedActionManifest.types.ts',
+  },
 ];
 
 const addEsmExtensions = (source) =>
@@ -93,4 +110,16 @@ export interface SWOTMove {
 mkdirSync(path.join(targetRoot, 'types'), { recursive: true });
 emit(path.join(targetRoot, 'types/swot.ts'), swotTypes);
 
-console.log(`${checkOnly ? 'Verified' : 'Synchronized'} ${sources.length + 1} server runtime mirror files.`);
+for (const { from, to } of contractSources) {
+  const source = addEsmExtensions(readFileSync(path.join(root, from), 'utf8'));
+  const target = path.join(targetRoot, to);
+  mkdirSync(path.dirname(target), { recursive: true });
+  emit(
+    target,
+    `/** GENERATED MIRROR of ${from} — run scripts/cleanup/sync-server-runtime-mirrors.mjs; do not edit directly. */\n${source}`
+  );
+}
+
+console.log(
+  `${checkOnly ? 'Verified' : 'Synchronized'} ${sources.length + contractSources.length + 1} server runtime mirror files.`
+);

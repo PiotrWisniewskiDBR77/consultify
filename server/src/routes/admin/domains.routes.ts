@@ -144,7 +144,7 @@ router.put(
       organizationId,
       resourceId: found.id,
       resourceName: found.domain,
-      oldValues: { autoJoin: Boolean(found.auto_join) },
+      previousValues: { autoJoin: Boolean(found.auto_join) },
       newValues: { autoJoin: Boolean(req.body?.autoJoin) },
       result: 'success',
     });
@@ -174,7 +174,7 @@ router.delete(
       organizationId,
       resourceId: found.id,
       resourceName: found.domain,
-      oldValues: { autoJoin: Boolean(found.auto_join), verified: Boolean(found.verified) },
+      previousValues: { autoJoin: Boolean(found.auto_join), verified: Boolean(found.verified) },
       result: 'success',
     });
     verificationAttempts.delete(`${organizationId}:${req.params.domainId}`);

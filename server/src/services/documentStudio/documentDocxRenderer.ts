@@ -164,7 +164,7 @@ class TextRun extends BaseTextRun {
   constructor(options: Record<string, unknown>) {
     const scope = textRunScope.getStore();
     const text = options.text;
-    const normalized = {
+    const normalized: Record<string, unknown> = {
       ...options,
       ...(scope?.isPolish && typeof text === 'string'
         ? { text: polishTypographicSpacing(text) }
@@ -233,12 +233,17 @@ const DOCX_NUMBERING_CONFIG = [
 ];
 
 // Re-declare the names in the type namespace so call sites can keep using
-// `: Paragraph`, `: Table`, `: TextRun` for nominal typing. These coexist with
-// the equally-named constructors above (TypeScript keeps value- and
-// type-namespace identifiers separate).
+// `: Paragraph` and `: Table` for nominal typing. These coexist with the
+// equally-named `const` constructors above (TypeScript keeps value- and
+// type-namespace identifiers separate for `const` bindings).
+//
+// `TextRun` is deliberately NOT aliased here: it is a `class` above, and a
+// class declaration already occupies BOTH namespaces. Its instance type is
+// `DocxTextRun` anyway (it extends `BaseTextRun`, typed
+// `new (options) => DocxTextRun`), so call sites annotating `: TextRun` get
+// exactly the same type. Re-adding the alias re-introduces TS2300.
 type Paragraph = DocxParagraph;
 type Table = DocxTable;
-type TextRun = DocxTextRun;
 
 const TWIPS_PER_CM = 567; // 1 cm = 567 twips at 1440 dpi
 

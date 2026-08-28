@@ -116,7 +116,9 @@ export class AssessmentSkipReasonService {
       { fallback: false }
     );
 
-    const id = genId('asm-skip');
+    // `genId` (method-core/db) is the shared UUID generator and takes no prefix;
+    // keep the readable `asm-skip-` namespace by composing it here.
+    const id = `asm-skip-${genId()}`;
     const insert = await DbPromise.run(
       `INSERT INTO assessment_skip_reasons
        (id, organization_id, session_id, unit_id, question_id, level, skip_code,

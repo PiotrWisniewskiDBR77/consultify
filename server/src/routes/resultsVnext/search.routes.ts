@@ -2,7 +2,6 @@ import type { Response } from 'express';
 import { Router } from 'express';
 import type { z } from 'zod';
 
-import type { AuthenticatedRequest } from '../../middleware/auth.middleware.js';
 import { verifyToken } from '../../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
@@ -15,6 +14,7 @@ import {
   RESULTS_SEARCH_KINDS,
   ResultsVnextSearchQuerySchema,
 } from '../../validators/resultsVnextSearch.validators.js';
+import type { AuthenticatedRequest } from '../../types/index.js';
 
 const router = Router();
 router.use(apiAuthRateLimiter);
