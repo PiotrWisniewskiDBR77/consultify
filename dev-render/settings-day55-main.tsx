@@ -3,7 +3,7 @@ import '../src/index.css';
 
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter, MemoryRouter } from 'react-router-dom';
 
 import { EmailDigestSettings } from '../src/components/settings/EmailDigestSettings';
 import { AIBehaviorSettings } from '../src/components/settings/AIBehaviorSettings';
@@ -17,10 +17,12 @@ import { AuthenticationAccessPage } from '../src/components/settings/security/Au
 import i18n from '../src/i18n';
 import { Api } from '../src/services/api';
 import { SettingsApi } from '../src/services/api/settings.api';
+import SettingsView from '../src/views/SettingsView';
 
 const params = new URLSearchParams(window.location.search);
 const theme = params.get('theme') === 'dark' ? 'dark' : 'light';
 const operation = params.get('op') || 'auth';
+const section = params.get('section') || 'profile';
 const demoState = params.get('demo') === 'empty' ? 'empty' : 'seeded';
 document.documentElement.classList.toggle('dark', theme === 'dark');
 document.documentElement.style.colorScheme = theme;
@@ -143,13 +145,28 @@ const renderOperation = () => {
 
 const el = document.getElementById('root');
 if (el) {
-  createRoot(el).render(
-    <React.StrictMode>
+  const content =
+    operation === 'full-settings' ? (
+      <MemoryRouter initialEntries={[`/settings/${section}`]}>
+        <div className="h-screen overflow-hidden">
+          <SettingsView
+            currentUser={currentUser}
+            onUpdateUser={() => undefined}
+            theme={theme}
+            toggleTheme={() => undefined}
+          />
+        </div>
+      </MemoryRouter>
+    ) : (
       <BrowserRouter>
         <main className="min-h-screen bg-canvas p-8 text-c-text">
           <div className="mx-auto max-w-5xl">{renderOperation()}</div>
         </main>
       </BrowserRouter>
+    );
+  createRoot(el).render(
+    <React.StrictMode>
+      {content}
     </React.StrictMode>
   );
 }

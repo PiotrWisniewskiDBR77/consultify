@@ -418,7 +418,7 @@ Instrukcja mówi o dziesięciu uwagach, lecz imiennie wskazuje osiem: `SET-OWN-0
 
 | rekord | dosłowne słowa właściciela (źródło) | pomiar Settings | werdykt |
 | --- | --- | --- | --- |
-| `SET-OWN-001` — Help | „Tutaj jest mały przycisk informacyjny, skrót do Helba. Usuń go trwale.” (`owner_feedback/13_SETTINGS/OWNER_FEEDBACK_REGISTER.md:13`) | commit `9b2ad340d6`; strażnik całego drzewa Settings `2/2 PASS`; w profilu DOM nie ma elementu z tekstem/aria/title Help/Helba, lista 14 widocznych elementów interaktywnych nie zawiera Help; zrzut `e1-profile-help-dom.png` | `ZROBIONE CZĘŚCIOWO` — implementacja i Profil potwierdzone, ale oczami przegrano 4/50 sekcji, nie 50/50 |
+| `SET-OWN-001` — Help | „Tutaj jest mały przycisk informacyjny, skrót do Helba. Usuń go trwale.” (`owner_feedback/13_SETTINGS/OWNER_FEEDBACK_REGISTER.md:13`) | commit `9b2ad340d6`; strażnik całego drzewa Settings `2/2 PASS`; 50 indywidualnych zrzutów pełnego `SettingsView`, obejrzanych oczami; na żadnym nie ma skrótu Help/Helba | `ZROBIONE` — AC-001..AC-004 potwierdzone 50/50 oczami; niezależnie od tego audyt treści ujawnia atrapy i angielski, wyszczególnione poniżej |
 | kolizyjny `SET-OWN-001` — kierunek | „Ustawienia są ok” (`modules/15_SETTINGS/MODULE_ACCEPTANCE.md:70`) | kierunek zachowany; ten dyżur nie przebudowuje modułu, ale ujawnia mierzalne długi | `ZROBIONE CZĘŚCIOWO` — wcześniejszy ACCEPT pozostaje, guided owner replay nadal pending |
 | `XMOD-OWN-002` | „Zacznijmy od tego, że musisz przejść najlepiej sam przez wszystkie zakładki, jakie mamy w organizacji, adminie i ustawieniach, ale wszystkie i przeanalizować szerokość tych ekranów. Albo inaczej: wyznacz po prostu szerokość ekranu, szerszą niż ten, który tutaj mamy, i zmień wszystkie ekrany, żeby miały tę samą szerokość kolumny, w której są narzędzia. Teraz wszystkie zakładki mają zupełnie różne kolumny.” (`owner_feedback/CROSS_MODULE/OWNER_FEEDBACK_REGISTER.md:13`) | 50 identyfikatorów sekcji; 40 bezpośrednio importowanych plików ekranowych; pięć klas szerokości kontentu (`max-w-3xl/4xl/md/lg/sm`, pomijając lokalne `max-w-[150px]`), dominujące `max-w-4xl` występuje tylko 9 razy | `NIEZROBIONE`; Organization/Admin: `POZA ZAKRESEM TEGO DYŻURU` |
 | `XMOD-OWN-003` | „Trzeba przejść przez wszystkie zakładki i zidentyfikować, zobacz, wielkości czcionek w nagłówkach i w tekstach. Nie ma w tym żadnego składu i ładu. Jakby każdy jest inny. To znaczy, ja mam takie wrażenie, że one mają jakiś system, tylko ten system totalnie nie ma sensu. Więc wyznacz jeden wspólny system wielkości czcionek na poszczególnych nagłówkach i zrób to teraz poprawnie. Ale do tego trzeba zrobić analizę wszystkich zakładek z organizacją, adminem i settings.” (`.../CROSS_MODULE/OWNER_FEEDBACK_REGISTER.md:78`) | w 40 bezpośrednich plikach: 11 klas rozmiaru (`text-[10px]`, `[11px]`, `[13px]`, `xs`, `sm`, `base`, `lg`, `xl`, `2xl`, `3xl`, `5xl`); m.in. 20 użyć 10px poniżej proponowanego minimum | `NIEZROBIONE`; Organization/Admin poza zakresem |
@@ -430,11 +430,66 @@ Instrukcja mówi o dziesięciu uwagach, lecz imiennie wskazuje osiem: `SET-OWN-0
 
 Kolizja ID: nie renumeruję ani nie scalam. Rekomendacja dla G12: zachować historyczny `SET-OWN-001` jako `owner-direction`, a rekord Help identyfikować kwalifikatorem `SET-OWN-001/help-shortcut` w raportach; właściciel/rejestrator powinien nadać formalny alias dopiero w autoryzowanej zmianie rejestru. Werdykt kolizji: `NIEZROBIONE` (rekomendacja istnieje, rejestr nadal `OPEN_UNRECONCILED`).
 
-Kryteria Help: `AC-001` — potwierdzone oczami na Profilu; `AC-002` — potwierdzone na Profilu (brak widocznej luki/overlay, szerokość body 1440 = viewport 1440); `AC-003` — potwierdzone na Profilu przez pełną listę kolejności interaktywnych elementów, bez Help/Helba; `AC-004` — `ZROBIONE CZĘŚCIOWO`, strażnik obejmuje całe drzewo, lecz ogląd obejmuje 4/50 sekcji. Nie przedstawiam dowodu statycznego jako pełnego dowodu oczami.
+Kryteria Help: `AC-001`–`AC-004` — `ZROBIONE`. Obejrzano oczami 50/50 indywidualnych zrzutów pełnego `SettingsView`; na żadnym ekranie nie ma widocznego Help/Helba ani pozostawionej po nim luki/overlay. Dowód: `e1-help-01-overview.png` … `e1-help-50-settings-history.png` oraz rejestr `e1-help-50.json`. Poniższy werdykt dotyczy jakości widocznej treści żądanej sekcji (mieszany polski/angielski kwalifikuję jako „jest po angielsku”; przekierowanie, pusta powierzchnia albo jawne „wkrótce” jako „jest atrapą”):
+
+| # | Sekcja | Werdykt oczami |
+|---:|---|---|
+| 1 | overview | jest atrapą |
+| 2 | tenant-defaults | jest atrapą |
+| 3 | tenant-branding | jest atrapą |
+| 4 | tenant-security | jest atrapą |
+| 5 | module-preferences | jest atrapą |
+| 6 | profile | treść jest |
+| 7 | avatar | treść jest |
+| 8 | signatures | jest po angielsku |
+| 9 | working-hours | jest po angielsku |
+| 10 | dashboard | jest po angielsku |
+| 11 | work-preferences | jest po angielsku |
+| 12 | regional | treść jest |
+| 13 | language | jest po angielsku |
+| 14 | ai-behavior | treść jest |
+| 15 | ai-model-params | jest po angielsku |
+| 16 | ai-autocomplete | jest po angielsku |
+| 17 | ai-memory | jest atrapą |
+| 18 | ai-chat-history | jest atrapą |
+| 19 | ai-privacy | jest po angielsku |
+| 20 | ai-prompt-library | jest po angielsku |
+| 21 | ai-voice | jest po angielsku |
+| 22 | ai-usage | jest po angielsku |
+| 23 | notifications-overview | treść jest |
+| 24 | notifications-email-digest | treść jest |
+| 25 | notifications-desktop-sounds | jest atrapą |
+| 26 | notifications-availability | jest po angielsku |
+| 27 | password | treść jest |
+| 28 | mfa | treść jest |
+| 29 | sessions | treść jest |
+| 30 | login-history | treść jest |
+| 31 | recovery | treść jest |
+| 32 | security-overview | jest po angielsku |
+| 33 | sessions-activity | treść jest |
+| 34 | security-dashboard | jest po angielsku |
+| 35 | auth-access | treść jest |
+| 36 | connected-apps | jest po angielsku |
+| 37 | calendar-sync | treść jest |
+| 38 | api-keys | jest po angielsku |
+| 39 | webhooks | treść jest |
+| 40 | data-controls | treść jest |
+| 41 | privacy | jest po angielsku |
+| 42 | billing | jest atrapą |
+| 43 | theme | treść jest |
+| 44 | accessibility | jest po angielsku |
+| 45 | shortcuts | jest atrapą |
+| 46 | import-export | treść jest |
+| 47 | templates | jest po angielsku |
+| 48 | developer | jest atrapą |
+| 49 | beta-features | jest atrapą |
+| 50 | settings-history | jest po angielsku |
+
+Bilans audytu treści: `18 treść jest / 12 jest atrapą / 20 jest po angielsku`. Ten bilans nie zastępuje werdyktu Help: skrót Help jest usunięty na 50/50.
 
 Cztery pozycje backlogu po-MVP przeniesione z §D.1: mieszany PL/EN — `NIEZROBIONE`; accent na boot — `NIEZROBIONE` (`0` konsumentów poza Settings); tokeny status-box — `NIEZROBIONE` (33/46 plików, 507 mechanicznych trafień); `startPage` — `NIEZROBIONE` (deklaracje typów i sieroca kontrolka, brak konsumenta po loginie). Cytat źródłowy wszystkich czterech: „mieszany PL/EN w treściach ekranów; aplikacja koloru akcentu na boot; tokeny c-success/warning/info w status-boxach; strona startowa (User.startPage) — wymaga realnego routingu po loginie.” (`modules/15_SETTINGS/MODULE_ACCEPTANCE.md:108-110`).
 
-`scripts/check-list-canon.sh`: pełny fallback scan 171 plików; 394 naruszenia = baseline 394, brak nowej regresji. Werdykt §E.1: `PARTIAL / EVIDENCE_MISSING` — korpus został rozliczony bez fałszywego `ZROBIONE`, lecz literalna liczba 10 unikalnych uwag nie zgadza się z ośmioma ID wymienionymi przez instrukcję, a `AC-004` nie ma browser replay 50/50.
+`scripts/check-list-canon.sh`: pełny fallback scan 171 plików; 394 naruszenia = baseline 394, brak nowej regresji. Werdykt §E.1: `PARTIAL / EVIDENCE_MISSING` — Help `AC-004` ma pełny ogląd 50/50, lecz cały korpus nie może dostać fałszywego `ZROBIONE`: literalna liczba 10 unikalnych uwag nie zgadza się z ośmioma ID wymienionymi przez instrukcję, a pozostałe uwagi mają imienne braki wskazane w tabeli.
 
 ## §F.2 — dane demo Ustawień
 
@@ -502,7 +557,7 @@ Nazwy własne produktów (`Google Calendar`, `Outlook Calendar`), identyfikatory
 
 ## Pięć kształtów fałszywego „gotowe"
 
-Każdą pozycję oceniono pięcioma pytaniami: (1) realny Gateway/runtime, (2) test żywej trasy/ekranu, (3) asercje faktycznie wykonane bez ukrytego SKIP, (4) niezależny readback skutku, (5) wynik oparty na HTTP/DB/oczach, nie samym grep. A.2/A.4/B.2/D.1/D.2/F.2 mają odpowiednio dowody runtime, real-PG i readback opisane w swoich sekcjach; A.1/A.3/C.1/C.2/E.1/F.1/R.1/R.2 są z natury inwentarzem, statycznym wykonaniem lub dokumentacją, więc pytania runtime/readback są `N/D`, a nie sztucznym TAK. B.1 ma realny Gateway i 156 kodów HTTP, ale brak pełnego browser runtime 13 ekranów. B.2 po kontynuacji obejmuje 80 zapisów macierzy i cztery zapisy notificationSettings, bez SKIP, z niezależnym readbackiem. D.1 ma 5/5 real-PG oraz 8 zrzutów harnessu, lecz nie pełny zalogowany runtime. E.1 ma 2/2 strażnika i profilowy DOM/focus, lecz ogląd tylko 4/50. F.1 po kontynuacji ma pomiar końcowy 47/1128/0, parytet EN oraz obejrzane 8/8 grup; otrzymuje pełny werdykt wyłącznie w tym udowodnionym zakresie.
+Każdą pozycję oceniono pięcioma pytaniami: (1) realny Gateway/runtime, (2) test żywej trasy/ekranu, (3) asercje faktycznie wykonane bez ukrytego SKIP, (4) niezależny readback skutku, (5) wynik oparty na HTTP/DB/oczach, nie samym grep. A.2/A.4/B.2/D.1/D.2/F.2 mają odpowiednio dowody runtime, real-PG i readback opisane w swoich sekcjach; A.1/A.3/C.1/C.2/E.1/F.1/R.1/R.2 są z natury inwentarzem, statycznym wykonaniem lub dokumentacją, więc pytania runtime/readback są `N/D`, a nie sztucznym TAK. B.1 ma realny Gateway i 156 kodów HTTP, ale brak pełnego browser runtime 13 ekranów. B.2 po kontynuacji obejmuje 80 zapisów macierzy i cztery zapisy notificationSettings, bez SKIP, z niezależnym readbackiem. D.1 ma 5/5 real-PG oraz 8 zrzutów harnessu, lecz nie pełny zalogowany runtime. E.1 ma 2/2 strażnika i ogląd pełnego `SettingsView` 50/50 oczami; odrębny audyt treści wykazuje 12 atrap i 20 sekcji z angielskim. F.1 po kontynuacji ma pomiar końcowy 47/1128/0, parytet EN oraz obejrzane 8/8 grup; otrzymuje pełny werdykt wyłącznie w tym udowodnionym zakresie.
 
 ## Pomiar zasięgu testów
 
@@ -535,14 +590,13 @@ Brak STOP-u całego dyżuru. Nie wystąpiło ryzyko utraty danych, połączenie 
 
 ## Brief wynikowy dla nadzorcy
 
-Dyżur pracował na związanym markerze i wyłącznie lokalnej bazie `cx_day55`. Naprawiono komunikat zmiany hasła — nie unieważnianie istniejących access tokenów — oraz usunięto runtime DDL, opierając zapis na zastanym łańcuchu migracji. Zmierzono 156 adresów HTTP przez realny Gateway. Ściana odrzuca obcy tenant i obcego użytkownika dokładnymi kodami, a membership jest wymagane tylko dla delegacji organizacyjnej, nie danych własnych. OAuth callback wiąże state z krótkotrwałym cookie sesji. Ustawienia deweloperskie nie mogą włączyć flag ani narzędzi. Cztery operacje właściciela mają real-PG readback i osiem zrzutów harnessu. Usunięto 62 martwe wrappery/stuby bez utraty 49 nazw testów tras. Dodano lokalny, fail-closed seed danych demo. Kontynuacja uzupełniła 352 unikalne brakujące klucze żywych powierzchni i obejrzała po polsku wszystkie 8/8 grup. Nadal nie wykonano pełnego browser runtime dla B.1 ani Help 50/50. Końcowy pełny pomiar (c) pozostaje na tym etapie niezielony/nieporównywalny, więc zasięg nadal deklaruję jako częściowy do pozycji 5 kontynuacji. `CLOSED_FINAL` właściciela, jego SHA i tag pozostały nietknięte. Największe ryzyko scalenia to szeroki wspólny middleware zapisu w `settings.routes.ts`; wymaga ponowienia pełnych suite po integracji. Właściciel nadal musi rozstrzygnąć G12, pełny per-screen system wizualny i guided replay. Nie wykonano deployu, realnego OAuth ani wysyłki poczty.
+Dyżur pracował na związanym markerze i wyłącznie lokalnej bazie `cx_day55`. Naprawiono komunikat zmiany hasła — nie unieważnianie istniejących access tokenów — oraz usunięto runtime DDL, opierając zapis na zastanym łańcuchu migracji. Zmierzono 156 adresów HTTP przez realny Gateway. Ściana odrzuca obcy tenant i obcego użytkownika dokładnymi kodami, a membership jest wymagane tylko dla delegacji organizacyjnej, nie danych własnych. OAuth callback wiąże state z krótkotrwałym cookie sesji. Ustawienia deweloperskie nie mogą włączyć flag ani narzędzi. Cztery operacje właściciela mają real-PG readback i osiem zrzutów harnessu. Usunięto 62 martwe wrappery/stuby bez utraty 49 nazw testów tras. Dodano lokalny, fail-closed seed danych demo. Kontynuacja uzupełniła 352 unikalne brakujące klucze żywych powierzchni, obejrzała po polsku wszystkie 8/8 grup oraz domknęła Help 50/50 oczami. Audyt tych 50 powierzchni wykazał osobno 18 sekcji z treścią, 12 atrap i 20 sekcji z angielskim. Nadal nie wykonano pełnego browser runtime dla B.1. Końcowy pełny pomiar (c) pozostaje na tym etapie niezielony/nieporównywalny, więc zasięg nadal deklaruję jako częściowy do pozycji 5 kontynuacji. `CLOSED_FINAL` właściciela, jego SHA i tag pozostały nietknięte. Największe ryzyko scalenia to szeroki wspólny middleware zapisu w `settings.routes.ts`; wymaga ponowienia pełnych suite po integracji. Właściciel nadal musi rozstrzygnąć G12, pełny per-screen system wizualny i guided replay. Nie wykonano deployu, realnego OAuth ani wysyłki poczty.
 
 NIE przepisałem liczb nadzorcy ani autora instrukcji ani z `MODULE_ACCEPTANCE.md` — zmierzyłem sam.
 
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
 - Pełny browser runtime 13 sekcji bez menu w B.1 pozostaje niezweryfikowany; harness nie zastępuje aplikacji zalogowanej.
-- Help AC-004 nie ma oglądu 50/50 sekcji; istnieje tylko pełny strażnik statyczny i ogląd 4/50.
 - Nie sprawdzono wszystkich czterech gałęzi każdego `recovery/*` poza trasami objętymi A.3/D.1.
 - Końcowy przebieg zasięgu (c) nie jest zielonym odpowiednikiem (a).
 - Zrzuty D.1/F.2 pochodzą z lokalnego harnessu, nie pełnego zalogowanego runtime.
