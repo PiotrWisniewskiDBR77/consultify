@@ -1714,6 +1714,9 @@ export const validateOrgMembership = asyncHandler(
       normalizeContextIdentifier(safeRead(() => req.userId, undefined)) ||
       normalizeContextIdentifier(safeRead(() => requestUser?.id, undefined));
     const orgId = normalizeContextIdentifier(safeRead(() => req.organizationId, undefined));
+    const requestedOrgId = normalizeContextIdentifier(
+      safeRead(() => req.requestedOrganizationId, undefined)
+    );
 
     // Authentication remains optional for callers without a resolved user.
     if (!userId) {
@@ -1725,6 +1728,13 @@ export const validateOrgMembership = asyncHandler(
       res.status(403).json({
         error: 'Organization context is required',
         code: 'ORG_CONTEXT_REQUIRED',
+      });
+      return;
+    }
+    if (requestedOrgId && requestedOrgId !== orgId) {
+      res.status(403).json({
+        error: 'Requested organization context does not match the authorized organization',
+        code: 'ORG_CONTEXT_MISMATCH',
       });
       return;
     }
