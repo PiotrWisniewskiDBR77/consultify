@@ -60,11 +60,6 @@ import { seed } from './seed.mjs';
 const PREFIX = 'odbior--deccase--';
 const ORG_ID = 'odbior--org-0001';
 
-// Verbatim BEFORE (buggy, lowercase-literal) CASE fragments, as they existed
-// in server/src/controllers/DecisionController.ts prior to this fix.
-const BEFORE_UNBLOCK_CASE = `CASE WHEN status = 'blocked' THEN 'executing' ELSE status END`;
-const BEFORE_AUTOBLOCK_CASE = `CASE WHEN status = 'done' THEN status ELSE 'blocked' END`;
-
 // Verbatim AFTER (fixed) CASE fragments, as they exist in the file post-fix.
 const AFTER_UNBLOCK_CASE = `CASE WHEN UPPER(status) = 'BLOCKED' THEN 'EXECUTING' ELSE status END`;
 const AFTER_AUTOBLOCK_CASE = `CASE WHEN UPPER(status) = 'DONE' THEN status ELSE 'BLOCKED' END`;
@@ -118,17 +113,7 @@ afterAll(async () => {
   await cleanup();
 });
 
-describe('DecisionController initiative-status CASE: before (buggy) vs after (fixed)', () => {
-  it('unblock CASE (BLOCKED -> EXECUTING): buggy lowercase literal is a dead branch on real UPPERCASE data', async () => {
-    const id = uuidv4();
-    await insertInitiative(id, 'BLOCKED');
-
-    const statusAfterBuggy = await applyCaseAndGetStatus(id, BEFORE_UNBLOCK_CASE);
-    // Bug: `status = 'blocked'` (lowercase) never matches 'BLOCKED' (uppercase)
-    // -> ELSE status fires -> stays stuck on BLOCKED forever.
-    expect(statusAfterBuggy).toBe('BLOCKED');
-  });
-
+describe('DecisionController initiative-status CASE: canonical uppercase contract', () => {
   it('unblock CASE (BLOCKED -> EXECUTING): fixed UPPER() comparison correctly transitions real data', async () => {
     const id = uuidv4();
     await insertInitiative(id, 'BLOCKED');
@@ -141,26 +126,6 @@ describe('DecisionController initiative-status CASE: before (buggy) vs after (fi
     await insertInitiative(id2, 'EXECUTING');
     const untouched = await applyCaseAndGetStatus(id2, AFTER_UNBLOCK_CASE);
     expect(untouched).toBe('EXECUTING');
-  });
-
-  it('auto-block CASE (-> BLOCKED unless DONE): buggy lowercase literal corrupts EVERY status, including DONE, into lowercase', async () => {
-    const executingId = uuidv4();
-    await insertInitiative(executingId, 'EXECUTING');
-    const executingAfterBuggy = await applyCaseAndGetStatus(executingId, BEFORE_AUTOBLOCK_CASE);
-    // ELSE branch fires (intended outcome here, but via the wrong literal) —
-    // writes non-canonical lowercase 'blocked' instead of canonical 'BLOCKED'.
-    expect(executingAfterBuggy).toBe('blocked');
-    expect(executingAfterBuggy).not.toBe('BLOCKED');
-
-    const doneId = uuidv4();
-    await insertInitiative(doneId, 'DONE');
-    const doneAfterBuggy = await applyCaseAndGetStatus(doneId, BEFORE_AUTOBLOCK_CASE);
-    // Bug: `status = 'done'` (lowercase) never matches 'DONE' (uppercase)
-    // -> guard fails -> ELSE fires unconditionally -> a DONE initiative gets
-    // corrupted to lowercase 'blocked'. This is the worse half of the bug:
-    // not dead code, but active data corruption.
-    expect(doneAfterBuggy).toBe('blocked');
-    expect(doneAfterBuggy).not.toBe('DONE');
   });
 
   it('auto-block CASE (-> BLOCKED unless DONE): fixed UPPER() comparison blocks EXECUTING but preserves DONE, using canonical UPPERCASE', async () => {
