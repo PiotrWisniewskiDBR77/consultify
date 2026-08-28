@@ -21,6 +21,7 @@ const NOTE_A = `${PREFIX}note-a`;
 let client: pg.Client;
 let app: Express;
 let tokenA: string;
+let tokenB: string;
 
 async function seedTenant(orgId: string, userId: string, email: string) {
   const now = new Date().toISOString();
@@ -84,6 +85,17 @@ beforeAll(async () => {
       email: `${PREFIX}a@acceptance.local`,
       organizationId: ORG_A,
       organization_id: ORG_A,
+      role: 'OWNER',
+    },
+    getJwtSecret(),
+    { algorithm: 'HS256', expiresIn: '1h' }
+  );
+  tokenB = jwt.sign(
+    {
+      id: USER_B,
+      email: `${PREFIX}b@acceptance.local`,
+      organizationId: ORG_B,
+      organization_id: ORG_B,
       role: 'OWNER',
     },
     getJwtSecret(),
@@ -173,9 +185,18 @@ describe('MW-08 notebook tenant isolation', () => {
   });
 
   it('rejects foreign delete and the stored row survives', async () => {
+    const ownerRead = await request(app)
+      .get(`/api/v8/my-work/notebook/pages/${NOTE_B}`)
+      .set('Authorization', `Bearer ${tokenB}`);
+    expect(ownerRead.status).toBe(200);
+    const expectedUpdatedAt = ownerRead.body.data.updatedAt;
+    expect(expectedUpdatedAt).toEqual(expect.any(String));
+
     const res = await request(app)
       .delete(`/api/v8/my-work/notebook/pages/${NOTE_B}`)
-      .set('Authorization', `Bearer ${tokenA}`);
+      .set('Authorization', `Bearer ${tokenA}`)
+      .set('Idempotency-Key', `${PREFIX}foreign-delete`)
+      .set('X-Notebook-Expected-Updated-At', expectedUpdatedAt);
     expect([403, 404]).toContain(res.status);
     const row = await client.query(`SELECT 1 FROM notebook_pages WHERE id=$1`, [NOTE_B]);
     expect(row.rowCount).toBe(1);
