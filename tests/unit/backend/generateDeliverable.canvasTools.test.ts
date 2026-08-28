@@ -65,6 +65,7 @@ vi.mock('../../../server/src/services/ai/canvasGraphLlm.js', async () => {
     // tools' builders are exercised directly, not stubbed).
     buildMindmapEvidenceContract: actual.buildMindmapEvidenceContract,
     buildProcessFlowEvidenceContract: actual.buildProcessFlowEvidenceContract,
+    buildNoteEvidenceContract: actual.buildNoteEvidenceContract,
   };
 });
 
