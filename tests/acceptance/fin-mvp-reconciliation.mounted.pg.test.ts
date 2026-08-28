@@ -205,7 +205,7 @@ describe('FIN-MVP-RECONCILIATION mounted realPG auth/tenant matrix', () => {
       .post(`/api/vnext/results/roi/cases/${caseId}/finance-reconciliations`)
       .set('Authorization', `Bearer ${token(MEMBER, ORG_A, 'USER')}`)
       .send({ financeLinkId: linkIds[0], ...actualSources.get(linkIds[0]!)!, reconciliationKind: 'proposal', roiValue: 100, financeValue: 106, idempotencyKey: `${P}member-denied` });
-    expect(member.status).toBe(404);
+    expect(member.status).toBe(403);
     const opened = await openAsOwner(linkIds[0]!, `${P}open-owner`);
     expect(opened.status).toBe(201);
     const reconciliation = opened.body.financeReconciliation;
@@ -255,7 +255,7 @@ describe('FIN-MVP-RECONCILIATION mounted realPG auth/tenant matrix', () => {
     expect(admin.body.code).toBe('FINANCE_OWNER_GRANT_REQUIRED');
     await db.query(`UPDATE organization_members SET status='REVOKED' WHERE organization_id=$1 AND user_id=$2`, [ORG_A, OWNER]);
     const cachedTokenDenied = await openAsOwner(linkIds[2]!, `${P}cached-revoked`);
-    expect(cachedTokenDenied.status).toBe(404);
+    expect(cachedTokenDenied.status).toBe(403);
     await db.query(`UPDATE organization_members SET status='ACTIVE' WHERE organization_id=$1 AND user_id=$2`, [ORG_A, OWNER]);
     const cold = await db.query(
       `SELECT reconciliation_kind, decision_policy_version, decision_policy_digest, roi_value, finance_value, resolved_by
