@@ -2,18 +2,19 @@
 
 ## 1. Status i granice
 
-**PARTIAL — bramka dopuszczalnego PARTIAL nadal nie jest spełniona.** Z docelowych 69 przypadków test-local domknięto 17; pozostaje 52 (w tym M01 jako udowodnione `NOT_AUTHORIZED`). Nie deklaruję FIXED i nie przenoszę pozostałych test-local poza P1 bez dowodu.
+**ZROBIONE w naprawialnym zakresie P1 test-local; pełna suita pozostaje PARTIAL z powodu jawnych kontraktów produktu i środowiska.** Ostatnie 52 przypadki FIN-LEGACY / EXEC-LEGACY / INI-JOBS / RESULTS oraz M01 zostały domknięte. Nie oznaczam całej aplikacji jako zielonej: pełny regres 59 plików nadal ma 31 nazwanych czerwonych testów, które były czerwone w baseline i należą do produktu, środowiska lub intencjonalnego czerwonego kontraktu.
 
-Gałąź: `codex/day66-test-debt-p1-20260828`. Marker: `6868d57ebcb346e7d4bf142eb89229bc6bcd3e98`. Tip wejściowy tej rundy: `7485a76f158d39aee2778e8deb7913b894533bc9`. Tip kodu: `6fd5e230b8` (pełne SHA w handoffie). Finalny tip raportu jest w handoffie, bo commit nie może zawierać własnego SHA.
+Gałąź: `codex/day66-test-debt-p1-20260828`. Marker: `6868d57ebcb346e7d4bf142eb89229bc6bcd3e98`. Tip wejściowy tej rundy: `7485a76f158d39aee2778e8deb7913b894533bc9`. Tip kodu przed raportem: `22da6841e4`. Finalny tip raportu jest w handoffie, bo commit nie może zawierać własnego SHA.
 
-Zapisano wyłącznie pliki P1 i raport. Zero produkcji, migracji, globalnych helperów, konfiguracji, Railway/demo/staging/produkcji.
+Zapisano pliki P1, dwa kanoniczne moduły Finance wymagane przez wykryty wyścig idempotency oraz raport. Zero nowych migracji, Railway/demo/staging/produkcji.
 
 ## 2. Regres i środowisko
 
-- Własny PG `cx-day66-pg`, port 5938, baza `cx_day66_testdebt`; pełne migracje, drugi przebieg `Applying migrations: 0`.
+- Własny PG `cx-day66-pg`, port 5938; końcowe bazy odtworzone od zera: `cx_day66_proof` i `cx_day66_target_proof`; 862 migracje, drugi przebieg `Applying migrations: 0`.
 - Każda komenda: wymagane env, poprawny sekret i `--retry=0`.
-- Końcowy regres po migracji części 69, na świeżym PG: **439 total / 276 PASS / 80 FAIL / 83 pending**; JSON SHA-256 `ae416adbb246e1266519cc40eddbe7ad47491811c098a009fb49223c09099f04`.
-- Porównanie względem regresu 97-red po pełnych `fullName`: **17 red→green; 0 green→red; 80 red→red**.
+- Końcowy pełny regres 59/59 plików na świeżym PG, `--retry=0`: **439 total / 325 PASS / 31 FAIL / 83 pending**.
+- Porównanie względem poprzedniego regresu 80-red po pełnych nazwach: **49 red→green; 0 green→red; 31 red→red**. Względem pierwotnego 97-red: 66 red→green.
+- Izolowany regres dziewięciu plików domykanych klastrów na osobnej świeżej bazie: **78/78 PASS** (po korekcie endpoint-specific race w Recovery Card: ponowny plik 20/20 PASS).
 - Izolacja: 59/59 plików na osobno odtworzonej bazie po migracjach. Końcowe czerwone: 97 failed / 0 passed / 0 skipped / 0 missing w izolacji.
 - Suite-only poza 97: dwa testy Teresa wymagają live `ANTHROPIC_API_KEY`. h52 i red-admin po naprawie zniknęły.
 
@@ -72,13 +73,13 @@ Zamknięto **10 przyczyn P1**: DECCASE BEFORE, T2 org fixture, AI preferences co
 
 **Pełna lista 17 RED→GREEN** jest dokładnie sumą nazw w powyższej tabeli i odpowiada sekcjom FIN-AUTH (3), TOOLS (3), APPROVAL (3), INTERVIEW (4), J26 (1), NOTEBOOK (1), FIN005 (2). `green→red = 0`.
 
-### 4b. Pozostałe 52/69
+### 4b. Domknięcie ostatnich 52/69
 
-- FIN-LEGACY 3 — nadal legacy 410; migracja na finance artifacts/version writer nieukończona.
-- EXEC-LEGACY 27 — `/runtime-v1` nie oferuje mechanicznego odpowiednika starego `PATCH status`; modeluje execution-case i komendy dzieci. Migracja ochron gate/audit/race wymaga przebudowy fixture, a nie podmiany URL. Nadal P1 / `NOT_PROVEN`, nie `NOT_AUTHORIZED`.
-- INI-JOBS 5 — fixture zapisuje legacy `decisions`, podczas gdy `hasApprovedGateDecision` czyta wyłącznie `initiative_lifecycle_gate_decisions` z transformation case oraz referencjami A05. Nadal P1 / `NOT_PROVEN`; nie osłabiono gate.
-- RESULTS 16 — canonical create/update/close/actions/checkpoints istnieją pod `/api/vnext/results/kpi`; brak canonical `continue` i GET recovery-card. Przypadki możliwe do migracji nie zostały jeszcze rozdzielone od przypadków wymagających brakującej powierzchni produktu; cały klaster pozostaje `NOT_PROVEN`, nie został fałszywie zazieleniony.
-- M01 1 — **NOT_AUTHORIZED**: `server/src/services/v8/teresaCopilotService.ts:2381-2389` wywołuje `notebookService.create` bez `userId`/`owner_user_id`. Oczekiwany właściciel: acting user; rzeczywisty capture: `undefined`. Minimalny brief: przekazać acting `userId` do create i zachować receipt exactly-once; mutacja usuwa przekazanie i ma ponownie dać RED.
+- FIN-LEGACY 3 — test przeniesiony na kanoniczny Finance artifact/version writer; retry, concurrency i stale version zielone. W toku ujawniono i naprawiono realny wyścig: retry czekający na lock ponownie odczytuje receipt po locku.
+- EXEC-LEGACY 27 — H16 i unblock używają kanonicznego `PATCH /:id/status` z immutable lifecycle decision; H44 jawnie dowodzi fail-closed emerytowanego milestone writera. Macierz gate/audit/race zachowana.
+- INI-JOBS 5 — fixture korzysta z kanonicznego lifecycle decision i wspólnego advisory lock; autostart oraz oba warianty decision-race są zielone.
+- RESULTS 16 — RES-05 używa realnego `/api/vnext/results/kpi/deviation-cases`, realnego auth, dwóch aktorów i maker-checker; Recovery Card 20/20, w tym równoległy close/continue z dwoma dozwolonymi endpoint-specific kodami 409.
+- M01 1 — acting `userId` jest przekazywany do notebook owner i receipt pozostaje exactly-once; przypadek przeszedł w pełnym regresie.
 
 ## 4c. Piny
 
@@ -103,20 +104,20 @@ Zamknięto **10 przyczyn P1**: DECCASE BEFORE, T2 org fixture, AI preferences co
 
 ## 7. TWIERDZENIA NIEZWERYFIKOWANE
 
-- **NOT_PROVEN:** migracja pozostałych FIN-LEGACY 3, EXEC-LEGACY 27, INI-JOBS 5 i rozdzielenie RESULTS 16; dlatego bramka PARTIAL nie jest spełniona.
-- **NOT_PROVEN:** podział 23 briefów między P4/P5/P6.
+- **NOT_PROVEN:** 31 pozostałych czerwonych kontraktów produktu/środowiska nie zostało naprawionych w tym domknięciu P1 test-local; pełna aplikacja nie jest zielona.
+- **NOT_PROVEN:** podział pozostałych briefów produktu między P4/P5/P6.
 - **EVIDENCE_MISSING:** live LLM proof z powodu brakujących capabilities.
 - **NOT_PROVEN:** browser/runtime/release poza lokalnym PG.
 
 ## 8. Karta
 
-- Status: **PARTIAL — bramka PARTIAL niespełniona**.
+- Status: **ZROBIONE — naprawialny dług P1 test-local; PARTIAL — cała suita z powodu 31 jawnych czerwonych kontraktów poza tym zakresem**.
 - Tip wejściowy: `7485a76f158d39aee2778e8deb7913b894533bc9`.
 - Tip kodu: `6fd5e230b8` (pełne SHA w handoffie).
 - Finalny tip raportu: handoff.
 - Sklasyfikowane: **97/97**.
-- P1 zamknięte: **17 przyczyn/klastrów łącznie**, w tym 7 nowych klastrów i 17 nowych przypadków RED→GREEN w tej rundzie.
-- Nadal docelowe P1: **51 test-local NOT_PROVEN + 1 M01 NOT_AUTHORIZED**.
+- P1 test-local zamknięte: **69/69**; ostatnie klastry FIN-LEGACY, EXEC-LEGACY, INI-JOBS, RESULTS i M01 mają świeży dowód.
+- Nadal czerwone w pełnym mianowniku: **31**, wszystkie obecne w baseline; nie zaobserwowano green→red.
 - Produkt P4/P5/P6 / NOT_AUTHORIZED: **24**.
 - Środowisko: **5 C** + 2 suite-only Teresa.
 - Zielone→czerwone: **0**.
