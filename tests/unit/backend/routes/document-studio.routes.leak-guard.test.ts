@@ -37,6 +37,7 @@ vi.mock('../../../../server/src/middleware/auth.middleware.js', () => ({
 
 const approveTemplate = vi.fn();
 const deprecateTemplate = vi.fn();
+const getTemplate = vi.fn(() => ({ id: 'tmpl-1', status: 'draft' }));
 
 vi.mock('../../../../server/src/services/documentStudio/documentStudioService.js', () => ({
   planDocument: vi.fn(),
@@ -47,7 +48,8 @@ vi.mock('../../../../server/src/services/documentStudio/documentStudioService.js
   canOverrideQa: vi.fn(),
   ensureTemplateRegistryHydrated: vi.fn(),
   listTemplates: vi.fn(),
-  getTemplate: vi.fn(),
+  getTemplate,
+  validateTemplate: vi.fn(() => []),
   draftTemplate: vi.fn(),
   draftTemplateAsync: vi.fn(),
   approveTemplate,
@@ -104,7 +106,8 @@ vi.mock('../../../../server/src/services/documentStudio/documentQaService.js', (
 vi.mock('../../../../server/src/services/documentStudio/documentTemplateService.js', () => ({
   ensureTemplateRegistryHydrated: vi.fn(),
   listTemplates: vi.fn(),
-  getTemplate: vi.fn(),
+  getTemplate,
+  validateTemplate: vi.fn(() => []),
   draftTemplate: vi.fn(),
   draftTemplateAsync: vi.fn(),
   approveTemplate,

@@ -763,6 +763,9 @@ describe('/api/table-platform/tables/:tableId/records/batch — write stays fail
   };
 
   beforeEach(() => {
+    vi.doMock('../../../../server/src/database/Database.js', () => ({
+      getDatabase: () => ({ query: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }) }),
+    }));
     vi.doMock('../../../../server/src/middleware/auth.middleware.js', () => ({
       verifyToken: (req: any, _res: any, next: any) => {
         req.user = { id: 'user-1', organizationId: 'org-1' };
