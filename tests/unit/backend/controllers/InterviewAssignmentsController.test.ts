@@ -14,6 +14,7 @@ vi.mock('../../../../server/src/utils/queryHelpers.js', () => ({
   queryAll: (...args: unknown[]) => mockQueryAll(...args),
   queryOne: (...args: unknown[]) => mockQueryOne(...args),
   queryRun: (...args: unknown[]) => mockQueryRun(...args),
+  withPgTransaction: (fn: () => unknown) => fn(),
 }));
 
 vi.mock('../../../../server/src/utils/asyncHandler.js', () => ({
@@ -50,6 +51,7 @@ describe('InterviewController assignments', () => {
     mockQueryAll.mockReset();
     mockQueryOne.mockReset();
     mockQueryRun.mockReset();
+    mockQueryRun.mockResolvedValue({ changes: 1 });
     mockLlmCall.mockReset();
     mockGetTableColumns.mockReset();
     mockGetTableColumns.mockResolvedValue(
@@ -203,7 +205,7 @@ describe('InterviewController assignments', () => {
     );
   });
 
-  it('submitAssignment: allows re-submit from an already submitted assignment', async () => {
+  it('submitAssignment: treats re-submit of an already submitted assignment as idempotent', async () => {
     mockReq.params.id = 'a3';
     mockQueryAll.mockResolvedValue([]);
 
@@ -246,20 +248,16 @@ describe('InterviewController assignments', () => {
 
     expect(mockRes.status).not.toHaveBeenCalledWith(409);
     expect(
-      mockQueryRun.mock.calls.some(
-        (call) =>
-          typeof call[0] === 'string' &&
-          String(call[0]).includes('sent_back_at = NULL') &&
-          String(call[0]).includes('sent_back_reason = NULL')
+      mockQueryRun.mock.calls.some((call) =>
+        String(call[0]).includes('UPDATE interview_assignments')
       )
-    ).toBe(true);
+    ).toBe(false);
     expect(mockRes.json).toHaveBeenCalledWith(
       expect.objectContaining({
         entersContext: false,
         completenessPercent: 80,
-        aiReview: expect.objectContaining({
-          overallVerdict: 'empty',
-        }),
+        idempotentReplay: true,
+        aiReview: null,
       })
     );
   });
