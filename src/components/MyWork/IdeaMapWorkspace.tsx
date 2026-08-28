@@ -4515,6 +4515,21 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                     if (!selection.primaryId) throw new Error('NO_SELECTION');
                     const nativePatch: Partial<ExtendedNodeData> = {
                       ...(patch.label !== undefined ? { label: patch.label } : {}),
+                      // NOT a real narrowing — `patch.state` is a plain `string`
+                      // (IdeaInspectorElement.state?: string) and `NodeStatus`
+                      // (IdeaNodeDetailDrawer.ts) only covers 'idea' | 'exploring'
+                      // | 'ready' | 'rejected'. The `nativeStates` options actually
+                      // offered a few lines above include values outside that
+                      // union — 'validated' | 'ready_to_convert' | 'converted' for
+                      // the mindmap tool, and 'todo' | 'in_progress' | 'done' |
+                      // 'blocked' for the table tool. A real membership check
+                      // against NodeStatus would silently drop every one of those
+                      // legitimate, user-selectable status updates instead of
+                      // saving them — a behavior regression, not a fix. Doing this
+                      // safely needs NodeStatus itself widened to match the real
+                      // domain (or a per-tool status union), which is a contract
+                      // change out of scope here. Left as a tracked assertion; see
+                      // CI_DAY58_REPORT_20260828.md §B.1 for the corrected note.
                       ...(patch.state !== undefined ? { status: patch.state as NodeStatus } : {}),
                       ...(patch.priority !== undefined ? { priority: patch.priority } : {}),
                       ...(patch.description !== undefined
