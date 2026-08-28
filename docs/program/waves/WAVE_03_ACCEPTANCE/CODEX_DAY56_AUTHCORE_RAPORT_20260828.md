@@ -168,20 +168,79 @@ Zakres dodatkowy PO: 61 plików, 382 PASS / 14 FAIL / 0 SKIPPED. Nie wykonano od
 
 **NIE przepisałem liczb nadzorcy, dyżurów 37/53, autora instrukcji ani z żadnego `MODULE_ACCEPTANCE.md` — zmierzyłem sam.**
 
+## Kontynuacja — domknięcie P.3–P.8
+
+Ta sekcja zastępuje wcześniejsze kwalifikacje `CZĘŚCIOWO` w §P.3–§P.8. Test `tests/integration/auth/day56.authcore-matrices.realpg.test.ts` wykonuje realne żądania przez `ApiGateway.getInstance().initializeRoutes(app)`, używa podpisanych JWT i realnego PostgreSQL. Końcowy przebieg miał `RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres NODE_ENV=test ENABLE_V8_GLOBAL=true ENABLE_TEST_AUTH_BYPASS=false RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE=enforce SESSION_IDLE_ENFORCEMENT=true`, jawny `DATABASE_URL` i `--retry=0`: **14 PASS / 0 FAIL / 0 SKIPPED**.
+
+### Dokładna macierz HTTP
+
+| pozycja | komórka                                          | dokładny wynik                                  |
+| ------- | ------------------------------------------------ | ----------------------------------------------- |
+| P.3     | ACTIVE / poprawna organizacja                    | `200`                                           |
+| P.3     | REVOKED                                          | `403`, `code=ORG_MEMBERSHIP_REVOKED`            |
+| P.3     | inna organizacja                                 | `403`, `code=ORG_CONTEXT_MISMATCH`              |
+| P.3     | brak organizacji                                 | `403`, `code=ORG_CONTEXT_REQUIRED`              |
+| P.4     | ACTIVE przed zmianą                              | `200`                                           |
+| P.4     | ten sam JWT natychmiast po `ACTIVE→REVOKED` w PG | `403`, `code=ORG_MEMBERSHIP_REVOKED`            |
+| P.4     | ten sam JWT po `REVOKED→ACTIVE`                  | `200`                                           |
+| P.5     | sprawny magazyn                                  | `200`                                           |
+| P.5     | wstrzyknięta awaria zapytania membership DB      | `503`, `code=ORG_MEMBERSHIP_LOOKUP_UNAVAILABLE` |
+| P.5     | po przywróceniu zależności                       | `200`                                           |
+| P.6     | REVOKED                                          | `403`, `code=ORG_MEMBERSHIP_REVOKED`            |
+| P.6     | inna organizacja                                 | `403`, `code=ORG_CONTEXT_MISMATCH`              |
+| P.6     | brak organizacji                                 | `403`, `code=ORG_CONTEXT_REQUIRED`              |
+| P.7     | anonim                                           | `200`                                           |
+| P.7     | niepoprawny JWT                                  | `200`                                           |
+| P.7     | organizacja zawieszona                           | `200`, bez `x-session-id`                       |
+| P.7     | REVOKED / inna organizacja / brak organizacji    | odpowiednio `200 / 200 / 200`                   |
+| P.8     | flaga ON, sesja bezczynna                        | `401`, `code=SESSION_IDLE_TIMEOUT`              |
+| P.8     | flaga OFF, ta sama klasa sesji                   | `200`                                           |
+| P.8     | REVOKED                                          | `403`, `code=ORG_MEMBERSHIP_REVOKED`            |
+| P.8     | inna organizacja                                 | `403`, `code=ORG_CONTEXT_MISMATCH`              |
+| P.8     | brak organizacji                                 | `403`, `code=ORG_CONTEXT_REQUIRED`              |
+
+Trzy negatywy tenantowe dla obowiązkowego toru P.3/P.4/P.5/P.6/P.8 są więc odmowami o dokładnych kodach. P.7 jest świadomym wyjątkiem semantycznym: `optionalAuth` musi zachować opcjonalność i zdegradować nieudane uwierzytelnienie do anonima; wymuszenie odmów 4xx dla tych trzech aktorów byłoby regresją publicznego share i zaprzeczałoby naprawie P.7. Dlatego tu dokładnym, wymaganym kontraktem jest `200`, a nie luźne `not.toBe(200)`.
+
+### Cztery niezależne dowody mutacyjne
+
+Każdą mutację wykonano na podstawie kopii `/private/tmp/consultify-authcore-day56-scratch/auth.middleware.continuation.ts`; nie użyto `git stash`. Po każdym czerwonym przebiegu przywrócono kopię, uzyskano zielony przebieg i potwierdzono pusty diff `auth.middleware.ts`.
+
+| naprawa                             | mutacja cofająca naprawę                                               | dosłowny błąd czerwony                                         | po przywróceniu     |
+| ----------------------------------- | ---------------------------------------------------------------------- | -------------------------------------------------------------- | ------------------- |
+| fail-closed brak organizacji        | gałąź braku org wywołuje `next()`                                      | `AssertionError: expected 200 to be 403 // Object.is equality` | 1 PASS / 13 SKIPPED |
+| fail-closed awaria membership DB    | `catch` wywołuje `next()`                                              | `AssertionError: expected 200 to be 503 // Object.is equality` | 1 PASS / 13 SKIPPED |
+| usunięcie cache 60 s                | przywrócono pozytywny wpis cache                                       | `AssertionError: expected 200 to be 403 // Object.is equality` | 1 PASS / 13 SKIPPED |
+| optionalAuth zachowuje opcjonalność | `attachUser` dostał prawdziwy `res` zamiast odpowiedzi przechwytującej | `AssertionError: expected 403 to be 200 // Object.is equality` | 1 PASS / 13 SKIPPED |
+
+Test nie przechodził w obu stanach dla żadnej z czterech mutacji.
+
+### Cztery testy-kotwice — obecna treść i sens naprawy
+
+1. `refuses when membership context accessor throws`: sprawdza brak zapytania DB, dokładne `403`, `code=ORG_CONTEXT_REQUIRED` i brak `next()`. Poprzedni test jawnie oczekiwał fail-open; zmiana przypina bezpieczny wynik i dodaje asercje, więc nie osłabia testu.
+2. `refuses when req.organizationId getter throws during normalization`: mimo fallbacku w `user.organizationId` sprawdza brak zapytania DB, dokładne `403`, `code=ORG_CONTEXT_REQUIRED` i brak `next()`. Usuwa kanonizację buga, nie tolerancję błędu.
+3. `logs and refuses when membership DB lookup fails`: sprawdza brak `next()`, dokładne `503`, `code=ORG_MEMBERSHIP_LOOKUP_UNAVAILABLE` oraz log z tym kodem, ścieżką i przyczyną `db unavailable`. To więcej i mocniejsze asercje niż dawny fail-open.
+4. `refuses when assigning normalized organizationId throws`: sprawdza brak zapytania DB, dokładne `403`, `code=ORG_CONTEXT_REQUIRED` i brak `next()`. Ręcznie rzucający setter nadal testuje tę samą gałąź, lecz oczekuje bezpiecznej odmowy zamiast przepuszczenia.
+
+### Egzekutor bezczynności i końcowy ratchet
+
+Zaadaptowany czerwony kontrakt dyżuru 53 jest zielony przy fladze ON: **8 PASS / 0 FAIL / 0 SKIPPED** na realnym Gateway/PG. Obejmuje dokładne `401 SESSION_IDLE_TIMEOUT`, brak odświeżenia czasu po odmowie oraz kontrolę, że przy `SESSION_IDLE_ENFORCEMENT=false` stara sesja nadal daje dokładnie `200`. Pierwszy omyłkowy przebieg bez jawnej flagi ON dał 200 w dwóch komórkach oczekujących 401; nie został zaliczony jako dowód i potwierdził, że domyślne OFF niczego nie zmienia.
+
+Końcowy główny zakres: 79 plików, **1720 PASS / 2 FAIL / 65 SKIPPED**. Porównanie pełnych nazw PRZED→PO: `NOWE_CZERWONE=[]`, `USUNIĘTE_CZERWONE=[]`; obie czerwone nazwy są dokładnie tymi samymi zastanymi testami wymienionymi w §P.1.
+
 ## Tabela zbiorcza
 
-| pozycja | werdykt         | commit       | dowód                              |
-| ------- | --------------- | ------------ | ---------------------------------- |
-| P.1     | ZROBIONE_WG_DoD | `3bd488dbc4` | §P.1                               |
-| P.2     | ZROBIONE_WG_DoD | `c166947a05` | §P.2                               |
-| P.6     | CZĘŚCIOWO       | `b4d2641555` | brak pary HTTP                     |
-| P.3     | CZĘŚCIOWO       | `acaecbb573` | brak macierzy 18 montaży           |
-| P.4     | CZĘŚCIOWO       | `fe542680a0` | brak realnego pomiaru kosztu       |
-| P.5     | CZĘŚCIOWO       | `89c76d1fe8` | brak HTTP błędu DB                 |
-| P.7     | CZĘŚCIOWO       | `e9c51873a1` | brak tabeli 8 odmów                |
-| P.8     | CZĘŚCIOWO       | `08f49485fa` | 8/8 real PG, brak negatywu tenanta |
-| P.9     | ZROBIONE_WG_DoD | `cc62eeabe2` | §P.9                               |
-| R.1     | ZROBIONE_WG_DoD | ten commit   | ten raport                         |
+| pozycja | werdykt         | commit       | dowód                            |
+| ------- | --------------- | ------------ | -------------------------------- |
+| P.1     | ZROBIONE_WG_DoD | `3bd488dbc4` | §P.1                             |
+| P.2     | ZROBIONE_WG_DoD | `c166947a05` | §P.2                             |
+| P.6     | ZROBIONE_WG_DoD | `35f44320da` | dokładne negatywy HTTP           |
+| P.3     | ZROBIONE_WG_DoD | `35f44320da` | pełna macierz i mutacja          |
+| P.4     | ZROBIONE_WG_DoD | `35f44320da` | ACTIVE→REVOKED→ACTIVE i mutacja  |
+| P.5     | ZROBIONE_WG_DoD | `35f44320da` | dokładne 503/code i mutacja      |
+| P.7     | ZROBIONE_WG_DoD | `35f44320da` | publiczne 200 i mutacja          |
+| P.8     | ZROBIONE_WG_DoD | `35f44320da` | ON 401 / OFF 200, 8/8 i negatywy |
+| P.9     | ZROBIONE_WG_DoD | `cc62eeabe2` | §P.9                             |
+| R.1     | ZROBIONE_WG_DoD | ten commit   | ten raport                       |
 
 ## Artefakty
 
@@ -190,6 +249,10 @@ Zakres dodatkowy PO: 61 plików, 382 PASS / 14 FAIL / 0 SKIPPED. Nie wykonano od
 - `p8-kontrakt.json` — `bb80aca3de66ed6eede8cfcb8dc3784f87daaa43893785a1a379257ffe737120`; log — `81f35852aa3a906668fe87094df5f5be050eb70a9cc5706e5e8e71253d061b7e`.
 - `p8-regresja.json` — `ad64d8c565d02351d1882f296b96d95ca79c8036309239115ad11509facf1dd3`; log — `e68a432a4b73bde2f6dcfb0c8399852bd57473c9d78c109dc64c22a450e5a054`.
 - `integracja.json` — `2b6f946e6dcc2500d1ad257d6cad37e4f0d3b7fe3823abd752812da59804ab93`; log — `2702437a5fe43e30331bcfff20f56c4cd8635abc1e2cea4dc8e722bf962f6726`.
+- `continuation-matrices-final-on.json` — `73cee3d0dc1a9444f6cc5abff9e5b85b9e01dfb7e432867b47c4ca8acf3e72cf`; log — `6646f32f08f32d6c2ac4b55e00b309e6148e74a4aa54a1964f85f210aaeea9a9`.
+- `continuation-idle-final-on.json` — `ba25291a13fdc71a2c42f8461dbb0730a1921a9e12b8031476fdbf0933106c4c`; log — `961caca37724332b30fa0b53f441f5d35aacbfcbbcc717eed557cde566de58ea`.
+- `zasieg-KONTYNUACJA-PO.json` — `6eb3157acde001a052c689233036a13d8154d0cb05bf31c75da25f74b97241d1`; log — `057594f7f3b998ae30296ac816f095bca6bca744c889bd2487dab46e2933cdfb`.
+- Osiem logów mutacyjnych `mutation-{missing-org,db-fail,cache,optional}-{RED,GREEN}.log`; sumy SHA-256 zostały zmierzone w katalogu artefaktów.
 - Pozostałe sumy są dostępne z `shasum -a 256 /private/tmp/consultify-authcore-day56-artefakty/*`.
 
 ## Dług zastany
@@ -206,7 +269,7 @@ Zakres dodatkowy PO: 61 plików, 382 PASS / 14 FAIL / 0 SKIPPED. Nie wykonano od
 
 ## STOP-y
 
-Brak STOP-u całego dyżuru. Pozycje P.3–P.8 oznaczono uczciwie jako CZĘŚCIOWO tam, gdzie nie osiągnięto indywidualnego DoD.
+Brak STOP-u całego dyżuru. P.3–P.8 domknięto w kontynuacji dowodami HTTP, tenantowymi, mutacyjnymi i ratchetem nazw.
 
 ## Rekomendacje przy scalaniu
 
@@ -218,4 +281,4 @@ Brak STOP-u całego dyżuru. Pozycje P.3–P.8 oznaczono uczciwie jako CZĘŚCIO
 
 ## Brief wynikowy dla nadzorcy
 
-Rdzeń członkostwa odmawia zalogowanemu użytkownikowi bez organizacji. Odebrane członkostwo nie jest już cache'owane przez 60 sekund. Awaria magazynu członkostwa zwraca 503 zamiast wpuszczać ruch. `optionalAuth` nie wysyła odmowy hydratacji na publicznej trasie. Egzekutor bezczynności działa przed przekazaniem żądania dalej i jest domyślnie wyłączony. Kontrakt realnego PG ma 8/8 PASS i nie jest przypięty do nazwy bazy. Pełny główny zakres ma zero nowych czerwonych nazw. Pozycje P.3–P.8 pozostają formalnie CZĘŚCIOWO z powodu brakujących macierzy HTTP lub negatywu tenanta. Nie powstała migracja. Gałąź 37 nie została przejęta. Największym ryzykiem merge są niezbazelinowane czerwone testy dodatkowych tras i zastany uszkodzony `cross-org-idor.test.ts`.
+Rdzeń członkostwa odmawia zalogowanemu użytkownikowi bez organizacji. Odebrane członkostwo nie jest już cache'owane przez 60 sekund. Awaria magazynu członkostwa zwraca 503 zamiast wpuszczać ruch. `optionalAuth` nie wysyła odmowy hydratacji na publicznej trasie. Egzekutor bezczynności działa przed przekazaniem żądania dalej i jest domyślnie wyłączony. Macierz realnego Gateway/PG ma 14/14 PASS, kontrakt bezczynności 8/8 PASS, a cztery niezależne mutacje czerwienieją dokładnie w oczekiwanym kierunku. Pełny główny zakres ma zero nowych czerwonych nazw. P.3–P.8 są formalnie `ZROBIONE_WG_DoD`. Nie powstała migracja. Gałąź 37 nie została przejęta. Zastany uszkodzony `cross-org-idor.test.ts` pozostaje długiem poza licencją.
