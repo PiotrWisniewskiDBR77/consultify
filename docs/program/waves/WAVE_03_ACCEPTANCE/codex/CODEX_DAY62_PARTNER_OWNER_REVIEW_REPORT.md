@@ -6,7 +6,7 @@ Historyczny STOP opisany dalej został usunięty. Seeder zaakceptował jawną lo
 
 Runtime został zakwalifikowany na tipie `a3c702efa50ca6861d7a37fa3bc1dbfc8e650954`, którego rodzicem jest marker `f87043a9412d6f208f99bd0b5c7e23bce4d01c4d`. Lokalna PG działała na 5934, Gateway na 4392, klient na 3992; readiness i oba ledgery migracji były zielone, licznik wynosił 862.
 
-Powstało 100 końcowych zrzutów: 25 sekcji × jasny/ciemny × pusty/pełny. Artefakty i manifest SHA-256 znajdują się w `/private/tmp/cx-day62-partner-review-f87043a/`. Kontrolowany pusty stan usunął wyłącznie dane programu Partnera w naszej lokalnej DB; pełny fixture został następnie odtworzony z lokalnego dumpu.
+Powstało 100 końcowych zrzutów: 25 sekcji × jasny/ciemny × pusty/pełny. Trwała kopia wszystkich obrazów, manifestów i `screenshots.sha256` znajduje się w `modules/16_PARTNER/evidence/day62-f87043a/`. Kontrolowany pusty stan usunął wyłącznie dane programu Partnera w naszej lokalnej DB; pełny fixture został następnie odtworzony z lokalnego dumpu.
 
 Realne logowanie zwróciło 200. Spośród 20 nazwanych odczytów prawdziwego Gateway 19 zwróciło 200. `/api/v8/partner/earnings-summary` zwrócił 500 `PARTNER_ACCRUAL_POLICY_BLOCKED_OWNER`. Odczyt projektów zwrócił 200, ale log serwera ujawnił błąd SQL `operator does not exist: uuid = text`, więc pusty wynik nie jest uczciwym dowodem braku projektów.
 

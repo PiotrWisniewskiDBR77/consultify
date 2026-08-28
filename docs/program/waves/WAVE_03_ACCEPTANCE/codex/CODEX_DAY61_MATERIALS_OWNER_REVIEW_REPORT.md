@@ -6,7 +6,7 @@ Poprzedni STOP jest historycznym wejściem do tego raportu. Po naprawie seedera 
 
 Seeder utworzył personę OWNER oraz pełne dane DOC/PPT/XLSX i kontrolowane szablony. Logowanie przez produkcyjny endpoint zwróciło 200. Następnie realne odczyty `/api/artifacts` dla całości, dokumentów, prezentacji i arkuszy oraz szczegóły dokumentu, decku i workbooka zwróciły kolejno siedem razy HTTP 200.
 
-Końcowy mianownik dowodowy wynosi 32 zrzuty: osiem powierzchni × jasny/ciemny × pusty/pełny. Dodatkowo zapisano kebab wiersza i panel podglądu. Artefakty oraz `screenshots.sha256` znajdują się w `/private/tmp/cx-day61-materials-review-f87043a/`. Pełna baza została przed pustym przebiegiem zapisana do własnego lokalnego dumpu, a po zrzutach odtworzona; odczyt końcowy potwierdził ponownie 615 outputów organizacji oraz po jednej karcie dokumentu, decku i workbooka.
+Końcowy mianownik dowodowy wynosi 32 zrzuty: osiem powierzchni × jasny/ciemny × pusty/pełny. Dodatkowo zapisano kebab wiersza i panel podglądu. Trwała kopia 34 zakwalifikowanych obrazów, manifestów i `screenshots.sha256` znajduje się w `modules/11_MATERIALS/evidence/day61-f87043a/`; 16 wcześniejszych obrazów roboczych nie weszło do pakietu. Pełna baza została przed pustym przebiegiem zapisana do własnego lokalnego dumpu, a po zrzutach odtworzona; odczyt końcowy potwierdził ponownie 615 outputów organizacji oraz po jednej karcie dokumentu, decku i workbooka.
 
 Werdykt: G07 `READY_FOR_OWNER_REVIEW`, G08 i G10 `EVIDENCE_PACKAGE_READY`, G09 `PASS_TECHNICAL_OWNER_REPLAY_READY`. Nie jest to `CLOSED_FINAL`, ponieważ G11–G20 wymagają uwag właściciela. Pakiet ujawnił defekt `MAT-D61-003`: polski UI nadal zawiera angielskie etykiety i daty. Nie został ukryty ani naprawiony w dyżurze odbiorczym.
 
