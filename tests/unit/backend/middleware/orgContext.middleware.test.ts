@@ -225,9 +225,7 @@ describeIfDb('orgContext.middleware (L1)', () => {
     const next = vi.fn();
     await mw(req, res, next);
     expect(res.status).toHaveBeenCalledWith(403);
-    expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ error: 'Access denied' })
-    );
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'Access denied' }));
     expect(next).not.toHaveBeenCalled();
   });
 
@@ -302,51 +300,48 @@ describeIfDb('orgContext.middleware (L1)', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
-  it('sanitizes whitespace-padded membership role before attaching org context', async () => {
+  it('fails closed at the PostgreSQL schema boundary for illegal membership roles', async () => {
     await db.run(`INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)`, [
-      'orgRoleTrim',
-      'Org Role Trim',
+      'orgRoleInvalid',
+      'Org Role Invalid',
       'pro',
       'active',
     ]);
-    await db.run(
-      `INSERT INTO organization_members (id, organization_id, user_id, role, status)
-       VALUES (?, ?, ?, ?, ?)`,
-      ['mRoleTrim', 'orgRoleTrim', 'u1', '  ADMIN  ', 'ACTIVE']
-    );
 
-    const mw = orgContextMiddleware();
-    const req: any = {
-      method: 'GET',
-      params: { orgId: 'orgRoleTrim' },
-      headers: {},
-      user: { id: 'u1', organizationId: '' },
-    };
-    const res: any = { status: vi.fn(() => res), json: vi.fn(() => res) };
-    const next = vi.fn();
-    await mw(req, res, next);
-
-    expect(req.org?.role).toBe('ADMIN');
-    expect(next).toHaveBeenCalledTimes(1);
+    for (const [id, role] of [
+      ['mRoleTrim', '  ADMIN  '],
+      ['mRoleCtrl', 'ADMIN\u0007'],
+    ]) {
+      await expect(
+        db.run(
+          `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+           VALUES (?, ?, ?, ?, ?)`,
+          [id, 'orgRoleInvalid', 'u1', role, 'ACTIVE']
+        )
+      ).rejects.toMatchObject({
+        code: '23514',
+        constraint: 'organization_members_role_check',
+      });
+    }
   });
 
-  it('falls back to MEMBER role when membership role contains control characters', async () => {
+  it('attaches org context for a legal membership role accepted by PostgreSQL', async () => {
     await db.run(`INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)`, [
-      'orgRoleCtrl',
-      'Org Role Ctrl',
+      'orgRoleLegal',
+      'Org Role Legal',
       'pro',
       'active',
     ]);
     await db.run(
       `INSERT INTO organization_members (id, organization_id, user_id, role, status)
        VALUES (?, ?, ?, ?, ?)`,
-      ['mRoleCtrl', 'orgRoleCtrl', 'u1', 'ADMIN\u0007', 'ACTIVE']
+      ['mRoleLegal', 'orgRoleLegal', 'u1', 'ADMIN', 'ACTIVE']
     );
 
     const mw = orgContextMiddleware();
     const req: any = {
       method: 'GET',
-      params: { orgId: 'orgRoleCtrl' },
+      params: { orgId: 'orgRoleLegal' },
       headers: {},
       user: { id: 'u1', organizationId: '' },
     };
@@ -354,7 +349,13 @@ describeIfDb('orgContext.middleware (L1)', () => {
     const next = vi.fn();
     await mw(req, res, next);
 
-    expect(req.org?.role).toBe('MEMBER');
+    expect(req.org).toMatchObject({
+      id: 'orgRoleLegal',
+      role: 'ADMIN',
+      source: 'url_param',
+      isMember: true,
+      isConsultant: false,
+    });
     expect(next).toHaveBeenCalledTimes(1);
   });
 
@@ -1086,7 +1087,9 @@ describeIfDb('orgContext.middleware (L1)', () => {
 
   it('does not attempt catch-path 500 write when headers are already sent', async () => {
     const dbPromise = await import('../../../../server/src/utils/DbPromise.js');
-    const getSpy = vi.spyOn(dbPromise, 'get').mockRejectedValueOnce(new Error('simulated db failure'));
+    const getSpy = vi
+      .spyOn(dbPromise, 'get')
+      .mockRejectedValueOnce(new Error('simulated db failure'));
 
     const mw = orgContextMiddleware();
     const req: any = {
@@ -1112,20 +1115,14 @@ describeIfDb('orgContext.middleware (L1)', () => {
   });
 
   it('getUserOrganizations returns unique orgs with access types', async () => {
-    await db.run(`INSERT INTO organizations (id, name, plan, status, is_active) VALUES (?, ?, ?, ?, ?)`, [
-      'orgA',
-      'Org A',
-      'pro',
-      'active',
-      1,
-    ]);
-    await db.run(`INSERT INTO organizations (id, name, plan, status, is_active) VALUES (?, ?, ?, ?, ?)`, [
-      'orgB',
-      'Org B',
-      'pro',
-      'active',
-      1,
-    ]);
+    await db.run(
+      `INSERT INTO organizations (id, name, plan, status, is_active) VALUES (?, ?, ?, ?, ?)`,
+      ['orgA', 'Org A', 'pro', 'active', 1]
+    );
+    await db.run(
+      `INSERT INTO organizations (id, name, plan, status, is_active) VALUES (?, ?, ?, ?, ?)`,
+      ['orgB', 'Org B', 'pro', 'active', 1]
+    );
     await db.run(
       `INSERT INTO organization_members (id, organization_id, user_id, role, status)
        VALUES (?, ?, ?, ?, ?)`,
@@ -1150,7 +1147,9 @@ describeIfDb('orgContext.middleware (L1)', () => {
   });
 
   it('resolveUserOrgAccess returns allowed=false for malformed user/org identifiers', async () => {
-    await expect(resolveUserOrgAccess('u'.repeat(129), 'orgM')).resolves.toEqual({ allowed: false });
+    await expect(resolveUserOrgAccess('u'.repeat(129), 'orgM')).resolves.toEqual({
+      allowed: false,
+    });
     await expect(resolveUserOrgAccess('u1', 'o'.repeat(129))).resolves.toEqual({ allowed: false });
   });
 
@@ -1246,25 +1245,22 @@ describeIfDb('orgContext.middleware (L1)', () => {
 
 describe('orgContext.middleware options validation', () => {
   it('throws when paramName is empty', async () => {
-    const { default: orgContextMiddleware } = await import(
-      '../../../../server/src/middleware/orgContext.middleware.ts'
-    );
+    const { default: orgContextMiddleware } =
+      await import('../../../../server/src/middleware/orgContext.middleware.ts');
 
     expect(() => orgContextMiddleware({ paramName: '' })).toThrow('Invalid paramName');
   });
 
   it('throws when paramName contains path separators', async () => {
-    const { default: orgContextMiddleware } = await import(
-      '../../../../server/src/middleware/orgContext.middleware.ts'
-    );
+    const { default: orgContextMiddleware } =
+      await import('../../../../server/src/middleware/orgContext.middleware.ts');
 
     expect(() => orgContextMiddleware({ paramName: 'org/../id' })).toThrow('Invalid paramName');
   });
 
   it('throws when allowHeader=true and headerName contains newline characters', async () => {
-    const { default: orgContextMiddleware } = await import(
-      '../../../../server/src/middleware/orgContext.middleware.ts'
-    );
+    const { default: orgContextMiddleware } =
+      await import('../../../../server/src/middleware/orgContext.middleware.ts');
 
     expect(() =>
       orgContextMiddleware({
