@@ -2182,7 +2182,13 @@ async function performHandoff(params: {
         userId
       );
     case 'notebook':
-      return handleNotebookHandoff(proposalId, organizationId, handoffContext, targetPayload);
+      return handleNotebookHandoff(
+        proposalId,
+        organizationId,
+        userId,
+        handoffContext,
+        targetPayload
+      );
     case 'interview':
       return handleInterviewHandoff(proposalId, organizationId, handoffContext, targetPayload);
     case 'excele':
@@ -2366,6 +2372,7 @@ async function handleCalendarHandoff(
 async function handleNotebookHandoff(
   proposalId: string,
   organizationId: string,
+  userId: string,
   context: TeresaHandoffContext,
   payload: Record<string, unknown>
 ): Promise<Record<string, unknown>> {
@@ -2380,6 +2387,8 @@ async function handleNotebookHandoff(
       const reminder = (nbCtx.reminder || null) as { dueAt?: string; term?: string } | null;
       const result = await create?.({
         organizationId,
+        userId,
+        owner_user_id: userId,
         title: nbCtx.title || 'Teresa handoff note',
         body: nbCtx.body_preview || '',
         source: 'teresa',
