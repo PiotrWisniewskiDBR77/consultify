@@ -48,6 +48,14 @@ vi.mock('../../../../server/src/services/legacyCutover/requireActiveMembership.j
   requireActiveMembership: (_req: any, _res: any, next: () => void) => next(),
 }));
 
+// This file proves payout auth resolution, not durable cutover signalling.
+// Keep the router-level guard in the chain while isolating its persistence
+// subsystem; otherwise the focused test reaches the developer DATABASE_URL
+// and fails before the route under test is executed.
+vi.mock('../../../../server/src/services/legacyCutover/legacyCutoverKernel.js', () => ({
+  createLegacyCutoverGuard: () => (_req: any, _res: any, next: () => void) => next(),
+}));
+
 vi.mock('../../../../server/src/services/partnerOrgResolution.js', () => ({
   getActivePartnerOrgIdForUser: vi.fn(async () => resolvedPartnerOrgId),
 }));
