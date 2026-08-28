@@ -436,13 +436,26 @@ Werdykt §F.2: `ZROBIONE_WG_DoD` dla lokalnego seeda i readbacku; browser eviden
 
 ## §F.1 — polszczyzna żywych powierzchni
 
-Pomiar wykonany skryptem `i18n-live.mjs` wyłącznie na `LIVE` z `orphans-baseline.txt` plus `src/views/SettingsView.tsx`: **47 plików, 1126 unikalnych użytych kluczy, 355 kluczy bez PL w 23 plikach**. Pełna lista per plik znajduje się w artefakcie `i18n-live.txt`; największe skupiska: AuthenticationAccess 48, SecurityOverview 43, Webhooks 38, APIAccess 32, AIPrivacy 28, AIMemory 24, MappingDrift 24, AIModelParameters 21. Nie dopisywałem tłumaczeń do ORPHAN.
+Pomiar wykonany skryptem `i18n-live.mjs` wyłącznie na `LIVE` z `orphans-baseline.txt` plus `src/views/SettingsView.tsx`: przed remediacją **47 plików, 1126 unikalnych użytych kluczy, 355 brakujących wystąpień/352 unikalne klucze bez PL w 23 plikach**. Pełna lista per plik znajduje się w artefakcie `i18n-live.txt`; największe skupiska: AuthenticationAccess 48, SecurityOverview 43, Webhooks 38, APIAccess 32, AIPrivacy 28, AIMemory 24, MappingDrift 24, AIModelParameters 21. Nie dopisano tłumaczeń do ORPHAN. Po remediacji ten sam pomiar daje **47 / 1128 / 0 / 0** (dwa nowe klucze prezentacyjne zastąpiły surowe wartości dynamiczne), a niezależna kontrola parytetu daje również **0 brakujących kluczy EN**.
 
 `settings.sections` istnieje i ma 66 kluczy przy 50 sekcjach. Szesnaście nadmiarowych, pozostawionych bez kasowania: `ai-instructions`, `ai-model`, `ai-parameters`, `prompt-library`, `ai-personality`, `notifications-email`, `notifications-push`, `notifications-sounds`, `notifications-quiet-hours`, `notifications-digest`, `email-digest`, `desktop-sounds`, `availability`, `notifications-dnd`, `export-data`, `delete-account`.
 
-Pomiar wzrokiem dostępnego harnessu po polsku wykazał oba kształty przecieku: na Profile/Regional/Notifications/Theme widoczne są angielskie opisy i wartości, m.in. `Personal Information`, `OWNER`, `Regional Settings`, `Save Changes`, `Monday`, `Weekly`, `System`, `Dark`. Zrzuty D.1/F.2 obejmują grupy my-settings, work-preferences, notifications i appearance. Brakuje uczciwych zrzutów dla ai-automation, security, integrations i data-privacy; nie zastępuję ich grepem. Nie wykonano masowego dopisania 355 wartości: bez przeglądu terminologii taki automat zamieniłby angielski fallback na niezweryfikowaną polszczyznę. Tym samym nie było commita dotykającego `public/locales/**` i reguła parytetu PL+EN nie została uruchomiona.
+Po remediacji wykonano nowy render każdej z ośmiu grup i każdy zrzut obejrzano wzrokiem, ze szczególną kontrolą mieszania języków w jednym zdaniu:
 
-`scripts/check-list-canon.sh`: 171 plików, 394 = baseline, brak nowej regresji. Werdykt §F.1: `PARTIAL / EVIDENCE_MISSING` — pomiar mechaniczny i lista nadmiarowa są kompletne, ale wymagane 8/8 oglądów oraz remediacja 355 kluczy nie są zakończone.
+| grupa | werdykt wzrokowy | SHA-256 zrzutu |
+| --- | --- | --- |
+| my-settings | `polski` | `f25f0afcfdb81c495564edfafa3913545a0857c1e5535e331bb8ec48e77c7bb0` |
+| work-preferences | `polski` | `d50df5838bde396d5ec3a6e4e3fe12247b42f21ded7498778ffdf723a9ceb11d` |
+| ai-automation | `polski` | `3b5cc2edae129370c3d4f9fc3fbe41ff57116e21547ebbd7da2f222b0fd4bbea` |
+| notifications | `polski` | `e55d70261d0a23676e8c294cd60d73452f0ae9e93febc671bf40723303ef2108` |
+| security | `polski` | `81a7cfa4f16b35b53cdc7ce08613d7b6b0356d03901ba097c90d3d48648ce1c4` |
+| integrations | `polski` | `8f168b78e2c96638460c4915d3956f874d81993fb310951cc3e13a5065214c3e` |
+| data-privacy | `polski` | `d2ea8000f951a394f25ed8f32c7d4ce16cc33d5ccbe2a3b4283cf1ace8d34177` |
+| appearance | `polski` | `b4a75edfbb393e840c91538611546a02b09c768a133120865fd63eaea07ae538` |
+
+Nazwy własne produktów (`Google Calendar`, `Outlook Calendar`), identyfikatory stref (`Europe/Warsaw`) i skróty techniczne (`AI`, `MFA`, `GDPR`, `PLN`) pozostają nazwami/danymi, nie angielskimi fragmentami zdań. Ogląd nie wykazał zdania mieszanego językowo. Naprawiono także prezentacyjne wycieki danych enum/dynamicznych: `OWNER`, status eksportu i etykiety liczby tokenów.
+
+`scripts/check-list-canon.sh`: 171 plików, 394 = baseline, brak nowej regresji. Werdykt §F.1: `ZROBIONE_WG_DoD` — remediacja kompletna dla żywych powierzchni, parytet PL+EN zachowany i wykonano wymagane oględziny 8/8 grup.
 
 ## Tabela zbiorcza pozycji
 
@@ -460,13 +473,13 @@ Pomiar wzrokiem dostępnego harnessu po polsku wykazał oba kształty przecieku:
 | C.2 | `ZROBIONE_WG_DoD` | `b35fd885ce` | §C.2 |
 | E.1 | `CZĘŚCIOWO` | `0f99784921` | §E.1 |
 | F.2 | `ZROBIONE_WG_DoD` | `f17ec88c81` | §F.2 |
-| F.1 | `CZĘŚCIOWO` | `6e1fa704e4` | §F.1 |
+| F.1 | `ZROBIONE_WG_DoD` | bieżący commit kontynuacji | §F.1 |
 | R.1 | `ZROBIONE_WG_DoD` | `bcd01cd7d7` | `MODULE_ACCEPTANCE.md`, STAN PO DYŻURZE 55 |
 | R.2 | `ZROBIONE_WG_DoD` | bieżący commit R.2 | niniejsza sekcja |
 
 ## Pięć kształtów fałszywego „gotowe"
 
-Każdą pozycję oceniono pięcioma pytaniami: (1) realny Gateway/runtime, (2) test żywej trasy/ekranu, (3) asercje faktycznie wykonane bez ukrytego SKIP, (4) niezależny readback skutku, (5) wynik oparty na HTTP/DB/oczach, nie samym grep. A.2/A.4/B.2/D.1/D.2/F.2 mają odpowiednio dowody runtime, real-PG i readback opisane w swoich sekcjach; A.1/A.3/C.1/C.2/E.1/F.1/R.1/R.2 są z natury inwentarzem, statycznym wykonaniem lub dokumentacją, więc pytania runtime/readback są `N/D`, a nie sztucznym TAK. B.1 ma realny Gateway i 156 kodów HTTP, ale brak pełnego browser runtime 13 ekranów. B.2 ma 80 zapisów z niezależnym readbackiem, ale cztery zapisy notificationSettings pozostają SKIP. D.1 ma 5/5 real-PG oraz 8 zrzutów harnessu, lecz nie pełny zalogowany runtime. E.1 ma 2/2 strażnika i profilowy DOM/focus, lecz ogląd tylko 4/50. F.1 ma kompletny pomiar 47/1126/355, lecz tylko 4/8 grup i brak remediacji; dlatego żadna z tych pozycji nie dostała fałszywego pełnego werdyktu.
+Każdą pozycję oceniono pięcioma pytaniami: (1) realny Gateway/runtime, (2) test żywej trasy/ekranu, (3) asercje faktycznie wykonane bez ukrytego SKIP, (4) niezależny readback skutku, (5) wynik oparty na HTTP/DB/oczach, nie samym grep. A.2/A.4/B.2/D.1/D.2/F.2 mają odpowiednio dowody runtime, real-PG i readback opisane w swoich sekcjach; A.1/A.3/C.1/C.2/E.1/F.1/R.1/R.2 są z natury inwentarzem, statycznym wykonaniem lub dokumentacją, więc pytania runtime/readback są `N/D`, a nie sztucznym TAK. B.1 ma realny Gateway i 156 kodów HTTP, ale brak pełnego browser runtime 13 ekranów. B.2 ma 80 zapisów z niezależnym readbackiem, ale cztery zapisy notificationSettings pozostają SKIP. D.1 ma 5/5 real-PG oraz 8 zrzutów harnessu, lecz nie pełny zalogowany runtime. E.1 ma 2/2 strażnika i profilowy DOM/focus, lecz ogląd tylko 4/50. F.1 po kontynuacji ma pomiar końcowy 47/1128/0, parytet EN oraz obejrzane 8/8 grup; otrzymuje pełny werdykt wyłącznie w tym udowodnionym zakresie.
 
 ## Pomiar zasięgu testów
 
@@ -491,7 +504,7 @@ Każdy pakiet real-PG opisany w A.2, A.4, B.1, B.2, D.1 i D.2 dostał na jednej 
 - dwa magazyny żądań usunięcia (`gdpr_requests`, `account_deletion_requests`) — `SET-PF-003 OPEN_POLICY_CUTOVER`.
 - `SET-PF-004`: cleanup dokładnego fixture receipt nadal otwarty.
 - GDPR export czyta nieistniejące `users.name` i degraduje do `null`.
-- pełna polszczyzna, accent na boot, tokeny status-box i `startPage` pozostają backlogiem zmierzonym, nie naprawionym.
+- accent na boot, tokeny status-box i `startPage` pozostają backlogiem zmierzonym, nie naprawionym.
 
 ## STOP-y
 
@@ -499,7 +512,7 @@ Brak STOP-u całego dyżuru. Nie wystąpiło ryzyko utraty danych, połączenie 
 
 ## Brief wynikowy dla nadzorcy
 
-Dyżur pracował na związanym markerze i wyłącznie lokalnej bazie `cx_day55`. Naprawiono zmianę hasła i unieważnianie innych sesji oraz usunięto runtime DDL przez migrację z przydzielonego zakresu. Zmierzono 156 adresów HTTP przez realny Gateway. Wspólna ściana zapisów odrzuca odwołane członkostwo, obcy tenant i obcego użytkownika na 80 licencjonowanych zapisach. OAuth callback wiąże state z krótkotrwałym cookie sesji. Ustawienia deweloperskie nie mogą włączyć flag ani narzędzi. Cztery operacje właściciela mają real-PG readback i osiem zrzutów harnessu. Usunięto 62 martwe wrappery/stuby bez utraty 49 nazw testów tras. Dodano lokalny, fail-closed seed danych demo. Nie wykonano pełnego browser runtime dla B.1, Help 50/50 ani ośmiu grup F.1. Brakuje 355 polskich kluczy w 23 żywych plikach. Końcowy pełny pomiar (c) jest niezielony/nieporównywalny, więc zasięg deklaruję jako częściowy. `CLOSED_FINAL` właściciela, jego SHA i tag pozostały nietknięte. Największe ryzyko scalenia to szeroki wspólny middleware zapisu w `settings.routes.ts`; wymaga ponowienia pełnych suite po integracji. Właściciel nadal musi rozstrzygnąć G12, pełny per-screen system wizualny i guided replay. Nie wykonano deployu, realnego OAuth ani wysyłki poczty.
+Dyżur pracował na związanym markerze i wyłącznie lokalnej bazie `cx_day55`. Naprawiono zmianę hasła i unieważnianie innych sesji oraz usunięto runtime DDL przez migrację z przydzielonego zakresu. Zmierzono 156 adresów HTTP przez realny Gateway. Wspólna ściana zapisów odrzuca odwołane członkostwo, obcy tenant i obcego użytkownika na 80 licencjonowanych zapisach. OAuth callback wiąże state z krótkotrwałym cookie sesji. Ustawienia deweloperskie nie mogą włączyć flag ani narzędzi. Cztery operacje właściciela mają real-PG readback i osiem zrzutów harnessu. Usunięto 62 martwe wrappery/stuby bez utraty 49 nazw testów tras. Dodano lokalny, fail-closed seed danych demo. Kontynuacja uzupełniła 352 unikalne brakujące klucze żywych powierzchni i obejrzała po polsku wszystkie 8/8 grup. Nadal nie wykonano pełnego browser runtime dla B.1 ani Help 50/50. Końcowy pełny pomiar (c) pozostaje na tym etapie niezielony/nieporównywalny, więc zasięg nadal deklaruję jako częściowy do pozycji 5 kontynuacji. `CLOSED_FINAL` właściciela, jego SHA i tag pozostały nietknięte. Największe ryzyko scalenia to szeroki wspólny middleware zapisu w `settings.routes.ts`; wymaga ponowienia pełnych suite po integracji. Właściciel nadal musi rozstrzygnąć G12, pełny per-screen system wizualny i guided replay. Nie wykonano deployu, realnego OAuth ani wysyłki poczty.
 
 NIE przepisałem liczb nadzorcy ani autora instrukcji ani z `MODULE_ACCEPTANCE.md` — zmierzyłem sam.
 
@@ -508,7 +521,6 @@ NIE przepisałem liczb nadzorcy ani autora instrukcji ani z `MODULE_ACCEPTANCE.m
 - Pełny browser runtime 13 sekcji bez menu w B.1 pozostaje niezweryfikowany; harness nie zastępuje aplikacji zalogowanej.
 - Cztery zapisy notificationSettings z B.2 pozostają `EVIDENCE_MISSING` z jawnym SKIP.
 - Help AC-004 nie ma oglądu 50/50 sekcji; istnieje tylko pełny strażnik statyczny i ogląd 4/50.
-- F.1 nie ma oglądu 8/8 grup ani remediacji 355 kluczy.
 - Nie sprawdzono wszystkich czterech gałęzi każdego `recovery/*` poza trasami objętymi A.3/D.1.
 - Końcowy przebieg zasięgu (c) nie jest zielonym odpowiednikiem (a).
 - Zrzuty D.1/F.2 pochodzą z lokalnego harnessu, nie pełnego zalogowanego runtime.

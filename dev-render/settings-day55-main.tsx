@@ -6,6 +6,9 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 
 import { EmailDigestSettings } from '../src/components/settings/EmailDigestSettings';
+import { AIBehaviorSettings } from '../src/components/settings/AIBehaviorSettings';
+import { CalendarSyncSettings } from '../src/components/settings/CalendarSyncSettings';
+import { DataControlsSettings } from '../src/components/settings/DataControlsSettings';
 import { NotificationSettings } from '../src/components/settings/NotificationSettings';
 import { ProfileSettings } from '../src/components/settings/ProfileSettings';
 import { RegionalSettings } from '../src/components/settings/RegionalSettings';
@@ -21,6 +24,7 @@ const operation = params.get('op') || 'auth';
 const demoState = params.get('demo') === 'empty' ? 'empty' : 'seeded';
 document.documentElement.classList.toggle('dark', theme === 'dark');
 document.documentElement.style.colorScheme = theme;
+void i18n.changeLanguage('pl');
 
 const appearance = {
   theme: 'dark',
@@ -52,6 +56,23 @@ const currentUser = {
 } as any;
 
 Object.assign(Api, {
+  getAIInstructions: async () => ({
+    preferences: { systemPrompt: '', responseStyle: 'balanced', includeContext: true, maxContextLength: 4000 },
+  }),
+  getAIPersonality: async () => ({
+    preferences: { tone: 'professional', formality: 'balanced', verbosity: 'concise' },
+  }),
+  getGdprConsents: async () => ({
+    consents: { analytics: true, personalization: true, marketing: false, thirdPartySharing: false, aiTraining: false },
+  }),
+  getGdprRetention: async () => ({ retention: { period: '365', autoDelete: false } }),
+  getGdprDeletionStatus: async () => ({ request: null, latestRequest: null }),
+  getGdprExportStatus: async () => ({ request: { id: 'settings-day55-demo-export', status: 'pending' } }),
+  getCalendars: async () => [
+    { id: 'google', name: 'Google Calendar', icon: '📅', connected: true, connection: { externalEmail: 'owner@local.test', calendarName: 'Kalendarz główny', lastSyncAt: new Date().toISOString(), syncTasks: true, syncMeetings: true } },
+    { id: 'outlook', name: 'Outlook Calendar', icon: '📆', connected: false, connection: null },
+  ],
+  getCalendarSettings: async () => ({ syncTasks: true, syncMeetings: true }),
   getActiveSessions: async () => ({ sessions: [] }),
   getLoginHistory: async () => ({ history: [] }),
   getRecoveryOptions: async () => ({ recoveryEmail: '', recoveryPhone: '', backupCodesCount: 0 }),
@@ -89,7 +110,6 @@ const renderOperation = () => {
     case 'profile':
       return <ProfileSettings currentUser={currentUser} onUpdateUser={() => undefined} />;
     case 'language-theme':
-      void i18n.changeLanguage('pl');
       return (
         <div className="space-y-6">
           <div className="rounded-xl border border-c-border bg-c-surface p-4">
@@ -108,6 +128,14 @@ const renderOperation = () => {
           <EmailDigestSettings currentUser={currentUser} onUpdateUser={() => undefined} />
         </div>
       );
+    case 'ai':
+      return <AIBehaviorSettings />;
+    case 'security':
+      return <AuthenticationAccessPage currentUser={currentUser} />;
+    case 'integrations':
+      return <CalendarSyncSettings />;
+    case 'data-privacy':
+      return <DataControlsSettings currentUser={currentUser} onUpdateUser={() => undefined} />;
     default:
       return <AuthenticationAccessPage currentUser={currentUser} />;
   }

@@ -599,7 +599,9 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
               </div>
               <div className="flex items-center gap-2">
                 <Building2 size={14} />
-                <span className="truncate">{currentUser.role}</span>
+                <span className="truncate">
+                  {t(`settings.profile.roles.${String(currentUser.role).toLowerCase()}`, currentUser.role)}
+                </span>
               </div>
               {formState.department && (
                 <div className="flex items-center gap-2">
@@ -803,7 +805,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                   <input
                     value={formState.linkedinId}
                     onChange={(e) => updateFormField('linkedinId', e.target.value)}
-                    placeholder="e.g. piotr-wisniewski-123"
+                    placeholder={t('settings.profile.linkedinPlaceholder', 'e.g. piotr-wisniewski-123')}
                     className={inputWithIconClass}
                   />
                   <p className="text-[10px] text-[var(--c-text-muted)] mt-1 ml-1">

@@ -4854,9 +4854,9 @@
         "nextRefine": "Dalej: Dostrojenie",
         "runNow": "Uruchom teraz",
         "runSessions_one": "Uruchom analizę · {{count}} sesja",
-      "runSessions_few": "Uruchom analizę · {{count}} sesje",
-      "runSessions_many": "Uruchom analizę · {{count}} sesji",
-      "runSessions_other": "Uruchom analizę · {{count}} sesji",
+        "runSessions_few": "Uruchom analizę · {{count}} sesje",
+        "runSessions_many": "Uruchom analizę · {{count}} sesji",
+        "runSessions_other": "Uruchom analizę · {{count}} sesji",
         "defineNote": "Wersja robocza kreatora — dokończ konfigurację przed zamknięciem okna.",
         "materialNote": "Krok 3 jest opcjonalny — możesz uruchomić analizę już teraz na ustawieniach domyślnych.",
         "refineNote": "Wynik pojawi się jako wniosek w stanie »Do przeglądu« — dopiero Twoja akceptacja czyni go materiałem dla inicjatyw."
@@ -7015,8 +7015,14 @@
       "toComplete": "Do uzupełnienia",
       "emptySlot": "Sekcja do uzupełnienia — limit {{min}}–{{max}} słów.",
       "wordLimit": "Limit {{min}}–{{max}} słów",
-      "panel": { "actions": "Akcje", "properties": "Właściwości" },
-      "export": { "pdf": "Eksportuj PDF", "all": "Eksportuj wszystko" },
+      "panel": {
+        "actions": "Akcje",
+        "properties": "Właściwości"
+      },
+      "export": {
+        "pdf": "Eksportuj PDF",
+        "all": "Eksportuj wszystko"
+      },
       "sections": {
         "introduction": "Wstęp do osi",
         "matrix": "Macierz osi i podpis",
@@ -12711,10 +12717,11 @@
       "firstName": "Imię",
       "lastName": "Nazwisko",
       "company": "Firma",
-      "linkedinId": "LinkedIn Profile ID",
+      "linkedinId": "Identyfikator profilu LinkedIn",
       "linkedinHint": "Wpisz ID profilu z adresu URL LinkedIn (po /in/)",
       "jobTitle": "Stanowisko",
-      "jobTitlePlaceholder": "np. Product Manager, Developer...",
+      "jobTitlePlaceholder": "np. menedżer produktu, programista...",
+      "linkedinPlaceholder": "np. piotr-wisniewski-123",
       "availability": "Dostępność i status",
       "statusMessage": "Wiadomość statusu",
       "statusPlaceholder": "np. Na spotkaniach do 15, Praca zdalna...",
@@ -12807,7 +12814,7 @@
         "selectDepartment": "Wybierz dział...",
         "engineering": "Inżynieria",
         "product": "Produkt",
-        "design": "Design",
+        "design": "Projektowanie",
         "marketing": "Marketing",
         "sales": "Sprzedaż",
         "operations": "Operacje",
@@ -12818,6 +12825,12 @@
         "support": "Wsparcie",
         "executive": "Zarząd",
         "other": "Inne"
+      },
+      "roles": {
+        "owner": "Właściciel",
+        "admin": "Administrator",
+        "member": "Użytkownik",
+        "superadmin": "Superadministrator"
       },
       "professional": {
         "saved": "Zapisane",
@@ -12841,6 +12854,11 @@
       "workHours": {
         "saved": "Zapisane",
         "error": "Błąd"
+      },
+      "openRegionalSettings": "Otwórz ustawienia regionalne",
+      "regionalCanonicalHint": "Strefa czasowa, data, godzina, liczba i formaty jednostek są zarządzane razem w Ustawieniach regionalnych.",
+      "validation": {
+        "firstNameRequired": "Przed zapisaniem wymagane jest imię"
       }
     },
     "signatures": {
@@ -12972,7 +12990,8 @@
         "45min": "45 minut",
         "60min": "1 godzina",
         "90min": "90 minut"
-      }
+      },
+      "notAppliedNote": "Te preferencje są zapisywane na Twoim koncie. Nie są one jeszcze automatycznie stosowane we wszystkich widokach zadania, projektu i kalendarza — wdrażanie jest w toku."
     },
     "regional": {
       "title": "Ustawienia regionalne",
@@ -13034,7 +13053,8 @@
       "timeFormats": {
         "24h": "24-godzinny",
         "12h": "12-godzinny"
-      }
+      },
+      "descriptionPersonal": "Twoje osobiste preferencje wyświetlania. Poniższy podgląd na żywo odzwierciedla te wybory; szersze formatowanie w całej aplikacji z czasem je przyjmie."
     },
     "workingHours": {
       "title": "Godziny pracy",
@@ -13105,7 +13125,8 @@
       "guideline3": "Minimalny zalecany rozmiar: 400x400 pikseli",
       "removeTitle": "Usuń zdjęcie profilowe",
       "removeDesc": "Zamiast zdjęcia będą wyświetlane Twoje inicjały",
-      "remove": "Usuń zdjęcie"
+      "remove": "Usuń zdjęcie",
+      "guideline4": "Profesjonalne zdjęcia pomagają budować zaufanie w zespole"
     },
     "billing": "Rozliczenia",
     "financeDefaults": "Domyślne ustawienia finansowe",
@@ -13218,7 +13239,116 @@
       "parameters": {
         "saved": "Zapisane",
         "error": "Błąd"
-      }
+      },
+      "aiDataRetention": "Przechowywanie danych AI",
+      "aiDataRetentionDesc": "Jak długo dane interakcji sztucznej inteligencji (podpowiedzi, odpowiedzi) są przechowywane przed automatycznym usunięciem.",
+      "allowClients": "Informacje o kliencie",
+      "allowClientsDesc": "Sztuczna inteligencja może uzyskać dostęp do nazwisk klientów, kontaktów i szczegółów zaangażowania.",
+      "allowFinancial": "Dane finansowe",
+      "allowFinancialDesc": "Sztuczna inteligencja może uzyskać dostęp do budżetów, faktur i wskaźników finansowych.",
+      "allowNotes": "Notatki osobiste",
+      "allowNotesDesc": "Sztuczna inteligencja może odczytywać Twoje prywatne notatki i wpisy do dziennika.",
+      "allowProjects": "Projekty i inicjatywy",
+      "allowProjectsDesc": "Sztuczna inteligencja może odnosić się do szczegółów projektu, harmonogramów i produktów końcowych.",
+      "anonymizeExports": "Anonimizuj eksport sztucznej inteligencji",
+      "anonymizeExportsDesc": "Usuń identyfikatory osobiste i identyfikatory klientów z eksportów i raportów generowanych przez sztuczną inteligencję.",
+      "auditCompliance": "Audyt i zgodność",
+      "auditLog": "Dziennik audytu AI",
+      "auditLogDesc": "Rejestruj wszystkie interakcje sztucznej inteligencji (kto, kiedy, o co został poproszony) do przeglądu zgodności.",
+      "autocompleteDesc": "Skonfiguruj automatyczne uzupełnianie oparte na sztucznej inteligencji i miejsce, w którym pojawiają się sugestie.",
+      "autocompleteError": "Nie udało się zapisać ustawień autouzupełniania",
+      "autocompleteSaved": "Zapisano ustawienia autouzupełniania",
+      "autocompleteTitle": "Autouzupełnianie i sugestie",
+      "behaviorDesc": "Zdefiniuj, w jaki sposób sztuczna inteligencja komunikuje się z Tobą — podpowiedź systemowa, ton, styl i preferencje kontekstowe.",
+      "behaviorTitle": "Zachowanie i instrukcje sztucznej inteligencji",
+      "browseOllamaModels": "Przeglądaj bibliotekę modeli Ollama",
+      "clearMemory": "Wyczyść całą pamięć",
+      "clearMemoryWarning": "Trwale usuń wszystkie dane pamięci AI. Tej czynności nie można cofnąć.",
+      "cloudModels": "Dostawcy usług w chmurze",
+      "confirmClear": "Tak, wyczyść wszystko",
+      "creative": "Kreatywny",
+      "dangerZone": "Strefa niebezpieczna",
+      "dataAccessScope": "Zakres dostępu do danych",
+      "dataAccessScopeDesc": "Wybierz typy danych, do których sztuczna inteligencja ma dostęp w celu kontekstu i analizy.",
+      "days": "dni",
+      "enableAutoSuggestions": "Włącz automatyczne sugestie",
+      "enableAutoSuggestionsDesc": "Otrzymuj sugestie oparte na sztucznej inteligencji podczas pisania w aplikacji.",
+      "enableMemory": "Włącz pamięć",
+      "enableMemoryDesc": "Sztuczna inteligencja zapamięta kontekst w rozmowach, aby zapewnić bardziej spersonalizowane odpowiedzi.",
+      "focused": "Skupiony",
+      "generationParams": "Parametry generowania",
+      "includeContext": "Uwzględnij kontekst",
+      "includeContextDesc": "Zezwalaj sztucznej inteligencji na używanie Twojej ostatniej aktywności i projektów jako kontekstu.",
+      "instructionsPlaceholder": "np. „Wolę zwięzłe odpowiedzi z punktami. Skup się na praktycznych rozwiązaniach ”.",
+      "lessFrequent": "Rzadziej",
+      "localModels": "Modele lokalne",
+      "maxContextLength": "Maksymalna długość kontekstu",
+      "tokenCountLabel": "{{count}} tys. tokenów",
+      "maxContextLengthDesc": "Maksymalna liczba tokenów kontekstu do uwzględnienia w żądaniach sztucznej inteligencji.",
+      "maxTokens": "Maks. liczba tokenów na odpowiedź",
+      "maxTokensDesc": "Maksymalna liczba tokenów, które sztuczna inteligencja może wygenerować w jednej odpowiedzi (100–8000).",
+      "memoryCleared": "Wyczyszczono pamięć sztucznej inteligencji",
+      "memoryClearError": "Nie udało się wyczyścić pamięci",
+      "memoryConfirmError": "Ustawienia pamięci AI nie zostały potwierdzone przez serwer",
+      "memoryDesc": "Kontroluj, w jaki sposób sztuczna inteligencja zapamiętuje i wykorzystuje kontekst z Twoich rozmów i aktywności.",
+      "memoryError": "Nie udało się zapisać ustawień pamięci",
+      "memorySaved": "Zapisano ustawienia pamięci AI",
+      "memoryTitle": "Pamięć i kontekst",
+      "memoryUnavailable": "Ustawienia pamięci AI niedostępne",
+      "modelInfo": "Włącz modele, których chcesz użyć i ustaw jeden jako preferowany. Dostępne modele są zarządzane przez administratora Twojej organizacji za pośrednictwem SuperAdmin.",
+      "modelParamsDesc": "Wybierz modele sztucznej inteligencji i dostosuj parametry generowania. Modelami zarządza administrator Twojej organizacji.",
+      "modelParamsError": "Nie udało się zapisać modelu i parametrów",
+      "modelParamsSaved": "Zapisano model i parametry",
+      "modelParamsTitle": "Model i parametry",
+      "moreFrequent": "Częściej",
+      "nearLimit": "Zbliża się limit",
+      "noModels": "Nie skonfigurowano jeszcze żadnych modeli sztucznej inteligencji. Skontaktuj się z administratorem, aby włączyć modele.",
+      "optOutTraining": "Zrezygnuj ze szkolenia modelów",
+      "optOutTrainingDesc": "Twoje dane NIE będą wykorzystywane do szkolenia ani ulepszania modeli sztucznej inteligencji. Zalecane w przypadku poufnych danych konsultingowych.",
+      "platformModel": "Model platformy",
+      "platformModelBadge": "Model AI platformy",
+      "preferred": "Preferowane",
+      "privacyDesc": "Kontroluj, do jakich danych może uzyskać dostęp sztuczna inteligencja, w jaki sposób jest ona przechowywana i czy jest wykorzystywana do szkolenia modeli.",
+      "privacyError": "Nie udało się zapisać ustawień prywatności AI",
+      "privacySaved": "Zapisano ustawienia prywatności AI",
+      "privacyTitle": "Dane i prywatność AI",
+      "quickTemplates": "Szybkie szablony",
+      "rememberContext": "Kontekst projektu",
+      "rememberContextDesc": "Zachowaj kontekst dotyczący swoich projektów, zadań i struktury organizacyjnej.",
+      "rememberConversations": "Konwersacje",
+      "rememberConversationsDesc": "Zapamiętaj kluczowe punkty i decyzje z poprzednich rozmów o sztucznej inteligencji.",
+      "rememberPreferences": "Preferencje użytkownika",
+      "rememberPreferencesDesc": "Poznaj swoje preferencje w czasie (formatowanie, terminologia, przepływ pracy).",
+      "responseStyle": "Styl odpowiedzi",
+      "responseStyleDesc": "Wybierz, jak szczegółowe mają być odpowiedzi sztucznej inteligencji.",
+      "retention30d": "30 dni",
+      "retention7d": "7 dn",
+      "retention90d": "90 dn",
+      "retentionDays": "Zachowanie pamięci",
+      "retentionDaysDesc": "Liczba dni do zachowania pamięci AI przed automatycznym czyszczeniem (1–365).",
+      "retentionSession": "Tylko bieżąca sesja",
+      "retentionUnlimited": "Bez ograniczeń",
+      "sensitivity": "Wrażliwość sugestii",
+      "sensitivityDesc": "Wyższa czułość częściej wyzwala sugestie.",
+      "setPreferred": "Ustaw preferowane",
+      "suggestChat": "Wejście czatu AI",
+      "suggestChatDesc": "Automatyczne uzupełnianie monitów w interfejsie czatu AI.",
+      "suggestComments": "Komentarze i dyskusje",
+      "suggestCommentsDesc": "Pokaż sugestie sztucznej inteligencji podczas pisania komentarzy do zadań i artefaktów.",
+      "suggestDocuments": "Dokumenty i raporty",
+      "suggestDocumentsDesc": "Sugeruj uzupełnienia podczas edycji dokumentów i zawartości raportu.",
+      "suggestIn": "Pokaż sugestie w",
+      "systemPrompt": "Instrukcja systemowa",
+      "systemPromptDesc": "Zostanie to uwzględnione w każdej rozmowie ze sztuczną inteligencją.",
+      "temperature": "Temperatura",
+      "temperatureDesc": "Niższe wartości dają bardziej ukierunkowane odpowiedzi, wyższe wartości są bardziej kreatywne.",
+      "tip1": "Konkretnie określ swoją rolę i wiedzę",
+      "tip2": "Wymień preferowane formaty (wypunktowania, tabele itp.)",
+      "tip3": "Określ terminologię lub żargon, którego chcesz użyć",
+      "tips": "Wskazówki",
+      "toneSection": "Ton i komunikacja",
+      "vectorDesc": "Zoptymalizowany pod kątem przepływów pracy konsultantów: analizy wywiadów, generowania raportów i rekomendacji strategicznych.",
+      "whatToRemember": "O czym pamiętać"
     },
     "aiUsage": {
       "title": "Przegląd użycia AI",
@@ -13250,7 +13380,10 @@
         "autocomplete": "Autouzupełnianie",
         "summary": "Podsumowania",
         "general": "Ogólne"
-      }
+      },
+      "noDailyUsage": "Dla tego okresu nie zgłoszono codziennego korzystania ze sztucznej inteligencji.",
+      "noFeatureUsage": "Dla tego okresu nie zgłoszono użycia sztucznej inteligencji na poziomie funkcji.",
+      "unavailableTitle": "Niedostępne użycie sztucznej inteligencji"
     },
     "notifications": {
       "label": "Powiadomienia",
@@ -13447,7 +13580,13 @@
       },
       "error": "Błąd",
       "disconnect": "Odłącz",
-      "deprecated": "Wycofany"
+      "deprecated": "Wycofany",
+      "availabilityError": "Nie można zweryfikować dostępności dostawcy. Połączenia OAuth pozostają wyłączone.",
+      "comingSoon": "Już wkrótce",
+      "connectProvider": "Podłącz {{name}}",
+      "notConfigured": "Ta integracja nie jest jeszcze dostępna — nie została skonfigurowana na serwerze.",
+      "oauthSuccess": "Połączenie zakończone pomyślnie",
+      "viewMappings": "Wyświetl mapowania"
     },
     "availability": {
       "title": "Dostępność i skupienie",
@@ -13587,7 +13726,28 @@
       "demoToggle": "Przeglądaj przykładową przestrzeń roboczą",
       "demoToggleOnDesc": "Dane przykładowe są aktywne — przeglądasz tylko-do-odczytu organizację demo. Wyłącz, aby wrócić do własnej przestrzeni roboczej.",
       "demoToggleOffDesc": "Załaduj tylko-do-odczytu przykładową organizację, aby poznać produkt bez naruszania własnych danych.",
-      "demoActiveOrg": "Aktywny przykład: {{name}} (tylko do odczytu)"
+      "demoActiveOrg": "Aktywny przykład: {{name}} (tylko do odczytu)",
+      "cancelDeletionRequest": "Anuluj prośbę o usunięcie",
+      "deletePasswordLabel": "Wprowadź hasło, aby potwierdzić:",
+      "deletePasswordPlaceholder": "Hasło do Twojego konta",
+      "deletePasswordRequired": "Wprowadź hasło, aby potwierdzić usunięcie",
+      "deletionCancelError": "Nie udało się anulować prośby o usunięcie konta",
+      "deletionCancelled": "Prośba o usunięcie anulowana",
+      "deletionCancelledStatus": "Poprzednia prośba o usunięcie została anulowana",
+      "deletionCancelledStatusDesc": "Nie zaplanowano automatycznego usuwania. W razie potrzeby możesz przesłać nową prośbę.",
+      "deletionPending": "Oczekująca prośba o usunięcie",
+      "deletionPendingDesc": "Twoja prośba została zarejestrowana i można ją anulować. Nie zaplanowano automatycznego usuwania.",
+      "exportStatus": "Status eksportu",
+      "exportStatuses": {
+        "pending": "oczekuje",
+        "processing": "w trakcie",
+        "ready": "gotowy",
+        "failed": "nieudany",
+        "expired": "wygasł"
+      },
+      "loadingDeletionStatus": "Wczytywanie statusu żądania...",
+      "loadingExportStatus": "Ładowanie statusu eksportu...",
+      "requestReceipt": "Potwierdzenie żądania"
     },
     "importExport": {
       "title": "Eksport i import ustawień",
@@ -13961,7 +14121,9 @@
           "name": "Komendy głosowe",
           "description": "Steruj aplikacją za pomocą komend głosowych"
         }
-      }
+      },
+      "emptyDesc": "Obecnie na Twoim koncie nie ma żadnych funkcji beta. Nowe funkcje eksperymentalne pojawią się tutaj, gdy staną się dostępne.",
+      "emptyTitle": "W tej chwili brak dostępnych funkcji beta"
     },
     "flags": {
       "tab": "Flagi funkcji",
@@ -14338,7 +14500,11 @@
           "medium": "Średnie",
           "large": "Duże"
         }
-      }
+      },
+      "languageChangeError": "Nie udało się zmienić języka",
+      "languageDesc": "Wybierz preferowany język interfejsu.",
+      "languageTenantHint": "Domyślne ustawienia języka organizacji pozostają tutaj tylko do odczytu. Nadal możesz zastąpić język interfejsu dla własnego konta.",
+      "languageTitle": "Język"
     },
     "sidebar": {
       "title": "USTAWIENIA",
@@ -14406,7 +14572,15 @@
       "templates": "Szablony",
       "developer": "Deweloper",
       "betaFeatures": "Funkcje beta",
-      "settingsHistory": "Historia"
+      "settingsHistory": "Historia",
+      "aiChatHistory": "Historia czatu",
+      "closeNavigation": "Zamknij nawigację ustawień",
+      "navigation": "Sekcje ustawień",
+      "navigationRegion": "Nawigacja po ustawieniach",
+      "notificationsAvailability": "Dostępność",
+      "notificationsDesktopSounds": "Pulpit i dźwięki",
+      "notificationsEmailDigest": "E-mail i podsumowanie",
+      "openNavigation": "Otwórz nawigację ustawień"
     },
     "voice": {
       "saved": "Ustawienia głosu zapisane",
@@ -14705,7 +14879,39 @@
       "notifications": "Powiadomienia"
     },
     "api": {
-      "deleteConfirm": "Usunąć „{{title}}”? Tej operacji nie można cofnąć."
+      "deleteConfirm": "Usunąć „{{title}}”? Tej operacji nie można cofnąć.",
+      "advancedSettings": "Ustawienia zaawansowane",
+      "allowedIPs": "dozwolony (e) adres(y) IP",
+      "createError": "Nie udało się utworzyć klucza API",
+      "createKey": "Utwórz klucz",
+      "deleteError": "Nie udało się usunąć klucza",
+      "desc": "Zarządzaj kluczami API w celu uzyskania dostępu programowego.",
+      "dismiss": "Mój klucz został zapisany",
+      "expired": "Wygasła",
+      "expires": "Wygasa",
+      "expiringSoon": "Wkrótce wygaśnie",
+      "keyCreated": "Utworzono klucz API",
+      "keyDeleted": "Klucz API usunięty",
+      "keyName": "Nazwa klucza",
+      "keyNamePlaceholder": "np. Production API",
+      "keyRotated": "Klucz API został pomyślnie obrócony",
+      "lastUsed": "Ostatnio używane",
+      "loadError": "Nie udało się załadować kluczy API",
+      "newKeyWarning": "Zapisz ten klucz teraz. Nie zobaczysz go ponownie.",
+      "noKeys": "Nie ma jeszcze kluczy API. Utwórz go, aby rozpocząć.",
+      "quota": "Limit użycia",
+      "rateLimit": "Limit żądań",
+      "requestsPerMin": "żądań/min",
+      "resetsAt": "Reset limitu",
+      "rotate": "Odnów klucz",
+      "rotateConfirm": "Czy na pewno chcesz odnowić ten klucz? Stary klucz zostanie natychmiast unieważniony.",
+      "rotateError": "Nie udało się odnowić klucza",
+      "saveError": "Nie udało się zapisać ustawień",
+      "scopes": "Uprawnienia",
+      "settingsSaved": "Ustawienia zostały zapisane",
+      "title": "Dostęp do API",
+      "usageDashboard": "Statystyki użycia",
+      "viewUsage": "Wyświetl użycie"
     },
     "account": {
       "exportSuccess": "Rozpoczęto eksport",
@@ -14724,8 +14930,22 @@
       "saved": "Zapisane",
       "error": "Błąd",
       "widgets": {
-        "quickActions": "Szybkie akcje"
-      }
+        "quickActions": "Szybkie akcje",
+        "aiInsights": "AI Insights",
+        "initiatives": "Aktywne inicjatywy",
+        "metrics": "Omówienie wskaźników"
+      },
+      "compactMode": "Tryb kompaktowy",
+      "compactModeDescription": "Zmniejsz wypełnienie i marginesy, aby uzyskać gęstsze wyświetlanie informacji",
+      "description": "Dostosuj układ pulpitu nawigacyjnego i domyślne widoki",
+      "displayOptions": "Opcje wyświetlania",
+      "reset": "Preferencje zresetowane do ustawień domyślnych",
+      "resetDefaults": "Przywróć ustawienia domyślne",
+      "showGreeting": "Pokaż wiadomość powitalną",
+      "showGreetingDescription": "Wyświetlaj spersonalizowane pozdrowienia na pulpicie nawigacyjnym",
+      "title": "Preferencje pulpitu nawigacyjnego",
+      "widgetVisibility": "Widoczność widżetu",
+      "widgetVisibilityDescription": "Wybierz widżety do wyświetlenia na pulpicie nawigacyjnym"
     },
     "dataPrivacy": {
       "saveFailed": "Nie udało się zapisać",
@@ -14741,7 +14961,20 @@
       "error": "Błąd"
     },
     "password": {
-      "error": "Błąd"
+      "error": "Błąd",
+      "confirm": "Potwierdź nowe hasło",
+      "current": "Aktualne hasło",
+      "mismatch": "Hasła nie pasują do siebie",
+      "new": "Nowe hasło",
+      "req": {
+        "length": "Co najmniej 8 znaków",
+        "lowercase": "Jedna mała litera",
+        "number": "Jedna cyfra",
+        "special": "Jeden znak specjalny",
+        "uppercase": "Jedna wielka litera"
+      },
+      "success": "Hasło zostało zmienione. Inne urządzenia będą musiały zalogować się ponownie po wygaśnięciu bieżącego dostępu.",
+      "update": "Zaktualizuj hasło"
     },
     "webhooks": {
       "deleteConfirm": "Usunąć „{{title}}”? Tej operacji nie można cofnąć.",
@@ -14749,7 +14982,45 @@
       "empty": "Nie skonfigurowano webhooków",
       "emptyDescription": "Dodaj webhook, aby otrzymywać powiadomienia o zdarzeniach w czasie rzeczywistym na własnych punktach końcowych.",
       "failed": "Błąd",
-      "retry": "Spróbuj ponownie"
+      "retry": "Spróbuj ponownie",
+      "add": "Dodaj webhook",
+      "advancedSettings": "Ustawienia zaawansowane",
+      "backoffStrategy": "Strategia odstępów między próbami",
+      "created": "Utworzono webhooka",
+      "createError": "Nie udało się utworzyć elementu webhook",
+      "createNew": "Utwórz nowy webhook",
+      "deleted": "Webhook usunięty",
+      "deleteError": "Nie udało się usunąć",
+      "deliveriesError": "Nie udało się załadować historii dostaw",
+      "deliveryHistory": "Historia dostaw",
+      "desc": "Otrzymuj powiadomienia w czasie rzeczywistym za pośrednictwem wywołania zwrotnego http.",
+      "eventFilters": "Filtry zdarzeń",
+      "events": "Wydarzenia",
+      "exponential": "Wykładniczy",
+      "fillRequired": "Wypełnij wszystkie wymagane pola",
+      "lastTriggered": "Ostatnio uruchomiony",
+      "linear": "Liniowy",
+      "maxRetries": "Maksymalna liczba ponownych prób",
+      "namePlaceholder": "Mój webhook",
+      "noDeliveries": "Nie ma jeszcze żadnych dostaw",
+      "retries": "Ponowienia",
+      "retryConfig": "Konfiguracja ponowień",
+      "retryError": "Nie udało się ponowić",
+      "retryStarted": "Rozpoczęto ponowną próbę",
+      "saveError": "Nie udało się zapisać ustawień",
+      "secretHint": "Służy do weryfikacji autentyczności webhooka za pomocą podpisu HMAC",
+      "secretPlaceholder": "Sekret HMAC",
+      "settingsSaved": "Ustawienia zostały zapisane",
+      "signatureSecret": "Sekret podpisu",
+      "signed": "Podpis",
+      "test": "Wyślij zdarzenie testowe",
+      "testError": "Nie udało się wysłać zdarzenia testowego",
+      "testFailed": "Test nie powiódł",
+      "testSent": "Wysłano zdarzenie testowe",
+      "title": "Webhooki",
+      "unnamed": "Nienazwany webhook",
+      "url": "Adres URL punktu końcowego",
+      "viewDeliveries": "Zobacz dostawy"
     },
     "preferences": {
       "saved": "Zapisane",
@@ -14856,6 +15127,94 @@
       "autoApproveEnabled": "Auto-zatwierdzanie włączone",
       "autoApproveHintApproved": "Podobne akcje będą automatycznie akceptowane.",
       "autoApproveHintRejected": "Podobne akcje będą automatycznie odrzucane."
+    },
+    "authAccess": {
+      "backupCodes": "Kody zapasowe",
+      "changePassword": "Zmień hasło",
+      "changePasswordDesc": "Zaktualizuj hasło, aby Twoje konto było bezpieczne",
+      "codesNeedMfa": "Kody zapasowe są tworzone po skonfigurowaniu uwierzytelniania dwuskładnikowego",
+      "codesRemaining": "Pozostało kodów {{count}}",
+      "current": "Bieżące",
+      "description": "Zarządzaj hasłem, uwierzytelnianiem dwuskładnikowym, sesjami i opcjami odzyskiwania",
+      "emailPlaceholder": "Wprowadź adres e-mail do odzyskiwania",
+      "generateCodes": "Wygeneruj kody",
+      "loginHistorySection": "Historia logowania",
+      "mfaActiveDesc": "Twoje konto jest chronione za pomocą uwierzytelniania dwuetapowego",
+      "mfaDeferredDescription": "Konfiguracja i regeneracja MFA są odroczone do następnej rundy utwardzania.",
+      "mfaDeferredTitle": "Niedostępne w demo MVP",
+      "mfaInactiveDesc": "Dodaj dodatkową warstwę zabezpieczeń do swojego konta",
+      "mfaSection": "Uwierzytelnianie dwuskładnikowe",
+      "noCodesGenerate": "Brak kodów zapasowych — wygeneruj nowy zestaw z ustawień 2FA",
+      "noHistory": "Brak dostępnej historii logowania",
+      "noSessions": "Nie znaleziono aktywnych sesji",
+      "notConfigured": "Nie skonfigurowano",
+      "off": "WYŁ.",
+      "on": "WŁ.",
+      "passwordSection": "Hasło",
+      "phonePlaceholder": "+48...",
+      "recoveryEmail": "E-mail odzyskiwania",
+      "recoveryPhone": "Telefon do odzyskiwania",
+      "recoverySection": "Opcje odzyskiwania",
+      "revokeAll": "Odwołaj wszystkie inne",
+      "sessionsSection": "Aktywne sesje",
+      "setUp2fa": "Skonfiguruj uwierzytelnianie dwuetapowe",
+      "terminate": "Zakończ",
+      "title": "Uwierzytelnianie i dostęp",
+      "twoFactor": "Uwierzytelnianie dwuskładnikowe"
+    },
+    "save": "Zapisz zmiany",
+    "saving": "Zapisywanie...",
+    "securityMessages": {
+      "allSessionsRevoked": "Wszystkie inne sesje zostały odwołane",
+      "revokeAllError": "Nie udało się odwołać sesji",
+      "sessionError": "Nie udało się zakończyć sesji",
+      "sessionsError": "Nie udało się załadować sesji",
+      "sessionTerminated": "Sesja zakończona"
+    },
+    "securityOverview": {
+      "allSet": "Wszystko ustawione",
+      "change": "Zmień",
+      "configure": "Konfiguruj",
+      "deferred": "Odroczone",
+      "description": "Monitoruj stan bezpieczeństwa konta i zarządzaj ustawieniami ochrony",
+      "disabled": "Wyłączone",
+      "enable": "Włącz",
+      "enabled": "Włączone",
+      "lastChanged": "Ostatnio zmieniony {{date}}",
+      "manage": "Zarządzaj",
+      "mfaActive": "Twoje konto ma dodatkową warstwę ochrony",
+      "mfaDeferred": "Nieuwzględnione w demo MVP",
+      "mfaInactive": "Dodaj 2FA, aby chronić swoje konto",
+      "noEvents": "Brak ostatnich zdarzeń związanych z bezpieczeństwem",
+      "noEventsDesc": "Tutaj pojawią się próby logowania i zdarzenia związane z bezpieczeństwem",
+      "notConfigured": "Nie skonfigurowano",
+      "partial": "{{count}}/{{total}} skonfigurowany",
+      "password": "Hasło",
+      "passwordSet": "Ustaw",
+      "protectionStatus": "Status ochrony",
+      "recBackup": "Wygeneruj kody zapasowe jako zabezpieczenie dostępu do konta",
+      "recentActivity": "Ostatnia aktywność",
+      "recMfa": "Włącz uwierzytelnianie dwuskładnikowe dla maksymalnej ochrony konta",
+      "recommendations": "Zalecenia",
+      "recovery": "Opcje odzyskiwania",
+      "recoveryDesc": "Sposoby odzyskania konta w przypadku zablokowania",
+      "recRecovery": "Skonfiguruj opcje odzyskiwania, aby uniknąć zablokowania konta",
+      "recSessions": "Masz wiele aktywnych sesji — przeglądaj i odwołuj nieużywane",
+      "scoreExcellent": "Doskonale",
+      "scoreExcellentDesc": "Twoje konto jest dobrze chronione. Przestrzegaj dobrych praktyk w zakresie bezpieczeństwa.",
+      "scoreGood": "Dobrze",
+      "scoreGoodDesc": "Twoje konto ma podstawową ochronę. Włącz dodatkowe funkcje poniżej dla lepszego bezpieczeństwa.",
+      "scoreWeak": "Wymaga poprawy",
+      "scoreWeakDesc": "Twoje konto wymaga uwagi. Postępuj zgodnie z poniższymi zaleceniami, aby poprawić bezpieczeństwo.",
+      "sessionCount": "{{count}} aktywny",
+      "sessions": "Aktywne sesje",
+      "sessionsDesc": "Urządzenia aktualnie zalogowane na Twoje konto",
+      "title": "Omówienie bezpieczeństwa",
+      "twoFactor": "Uwierzytelnianie dwuskładnikowe",
+      "updateRegularly": "Regularnie aktualizuj, aby zapewnić najlepsze bezpieczeństwo",
+      "viewAll": "Zobacz wszystkie",
+      "viewAvailability": "Zobacz dostępność",
+      "viewFullHistory": "Zobacz pełną historię"
     }
   },
   "showcase": {
@@ -27619,7 +27978,33 @@
       "disconnected": "Odłączony"
     },
     "mappings": {
-      "saved": "Zapisane"
+      "saved": "Zapisane",
+      "detected": "Wykryto",
+      "entityMaps": "Mapy encji",
+      "errorClass": "Klasa błędu",
+      "externalId": "Zewnętrzny identyfikator",
+      "externalType": "Typ zewnętrzny",
+      "fieldEditor": "Konfiguracja mapowania pól",
+      "fieldMappings": "Mapowania pól",
+      "lastSync": "Ostatnia synchronizacja",
+      "loadError": "Nie udało się załadować danych mapowania",
+      "localId": "Lokalny identyfikator",
+      "localType": "Typ lokalny",
+      "noData": "Brak dostępnych danych mapowania dla tej integracji.",
+      "noDrift": "Nie wykryto rozbieżności schematu",
+      "noIntegrations": "Nie znaleziono integracji z mapowaniami.",
+      "objectId": "Identyfikator obiektu",
+      "objectType": "Typ obiektu",
+      "openDrift": "Otwarte rozbieżności",
+      "overviewDesc": "Wybierz integrację, aby wyświetlić jej mapowania pól i zarządzać nimi.",
+      "overviewTitle": "Omówienie mapowania",
+      "saveError": "Nie udało się zapisać mapowań",
+      "tabs": {
+        "drift": "Rozbieżności schematu",
+        "entities": "Mapy encji",
+        "fields": "Mapowanie pól",
+        "sync": "Synchronizuj stany"
+      }
     }
   },
   "decisions": {

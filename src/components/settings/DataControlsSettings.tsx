@@ -743,7 +743,8 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                 {exportRequest && !exportStatusLoading && !exportStatusError && (
                   <div className="mt-4 rounded-lg border border-c-border-subtle bg-c-surface p-4">
                     <p className="text-sm font-medium text-c-text">
-                      {t('settings.data.exportStatus', 'Export status')}: {exportRequest.status}
+                      {t('settings.data.exportStatus', 'Export status')}:{' '}
+                      {t(`settings.data.exportStatuses.${exportRequest.status}`, exportRequest.status)}
                     </p>
                     <p className="mt-2 break-all font-mono text-[11px] text-c-text-muted">
                       {t('settings.data.requestReceipt', 'Receipt')}: {exportRequest.id}
