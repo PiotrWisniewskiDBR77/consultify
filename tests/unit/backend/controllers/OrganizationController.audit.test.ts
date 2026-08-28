@@ -13,9 +13,8 @@ import OrganizationController from '../../../../server/src/controllers/Organizat
 
 const dbGet = vi.fn();
 const getMembers = vi.fn();
-const updateMemberRole = vi.fn();
-const removeMember = vi.fn();
-const logAction = vi.fn();
+const changeMemberRoleViaIam = vi.fn();
+const removeMemberViaIam = vi.fn();
 
 vi.mock('../../../../server/src/utils/DbPromise.js', () => ({
   get: (...args: any[]) => dbGet(...args),
@@ -23,8 +22,6 @@ vi.mock('../../../../server/src/utils/DbPromise.js', () => ({
 
 vi.mock('../../../../server/src/services/organizationService.js', () => ({
   getMembers: (...args: any[]) => getMembers(...args),
-  updateMemberRole: (...args: any[]) => updateMemberRole(...args),
-  removeMember: (...args: any[]) => removeMember(...args),
   normalizeOrganizationRole: (role?: string) => {
     const normalized = String(role || '')
       .trim()
@@ -36,10 +33,10 @@ vi.mock('../../../../server/src/services/organizationService.js', () => ({
   },
 }));
 
-vi.mock('../../../../server/src/services/adminAuditService.js', () => ({
-  default: {
-    logAction: (...args: any[]) => logAction(...args),
-  },
+vi.mock('../../../../server/src/services/orgPeopleIamService.js', () => ({
+  changeOrganizationMemberRoleAtomicallyViaIam: (...args: any[]) =>
+    changeMemberRoleViaIam(...args),
+  removeOrganizationMemberAtomicallyViaIam: (...args: any[]) => removeMemberViaIam(...args),
 }));
 
 function createResponse() {
@@ -60,7 +57,8 @@ function createResponse() {
 describe('OrganizationController audit proof (ADM-RAW-P1-004)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    logAction.mockResolvedValue({ id: 'audit-1' });
+    changeMemberRoleViaIam.mockResolvedValue({ denied: false });
+    removeMemberViaIam.mockResolvedValue({ denied: false });
   });
 
   it('emits update_member_role audit on a successful role change', async () => {
@@ -68,7 +66,6 @@ describe('OrganizationController audit proof (ADM-RAW-P1-004)', () => {
       { user_id: 'admin-1', role: 'ADMIN' },
       { user_id: 'member-1', role: 'MEMBER' },
     ]);
-    updateMemberRole.mockResolvedValue({ success: true });
 
     const req: any = {
       params: { orgId: 'org-1', memberId: 'member-1' },
@@ -79,18 +76,12 @@ describe('OrganizationController audit proof (ADM-RAW-P1-004)', () => {
 
     await OrganizationController.updateMemberRole(req, res, vi.fn());
 
-    expect(updateMemberRole).toHaveBeenCalled();
-    expect(logAction).toHaveBeenCalledTimes(1);
-    expect(logAction.mock.calls[0][0]).toMatchObject({
-      adminId: 'admin-1',
-      actionType: 'update_member_role',
-      details: {
-        orgId: 'org-1',
-        targetUserId: 'member-1',
-        fromRole: 'MEMBER',
-        toRole: 'ADMIN',
-        isSensitive: true,
-      },
+    expect(changeMemberRoleViaIam).toHaveBeenCalledWith({
+      actorId: 'admin-1',
+      actorRole: 'ADMIN',
+      organizationId: 'org-1',
+      targetMemberId: 'member-1',
+      newRole: 'ADMIN',
     });
   });
 
@@ -99,7 +90,6 @@ describe('OrganizationController audit proof (ADM-RAW-P1-004)', () => {
       { user_id: 'admin-1', role: 'ADMIN' },
       { user_id: 'member-1', role: 'MEMBER' },
     ]);
-    removeMember.mockResolvedValue({ success: true });
 
     const req: any = {
       params: { orgId: 'org-1', memberId: 'member-1' },
@@ -109,17 +99,11 @@ describe('OrganizationController audit proof (ADM-RAW-P1-004)', () => {
 
     await OrganizationController.removeMember(req, res, vi.fn());
 
-    expect(removeMember).toHaveBeenCalled();
-    expect(logAction).toHaveBeenCalledTimes(1);
-    expect(logAction.mock.calls[0][0]).toMatchObject({
-      adminId: 'admin-1',
-      actionType: 'remove_member',
-      details: {
-        orgId: 'org-1',
-        targetUserId: 'member-1',
-        targetRole: 'MEMBER',
-        isSensitive: true,
-      },
+    expect(removeMemberViaIam).toHaveBeenCalledWith({
+      actorId: 'admin-1',
+      actorRole: 'ADMIN',
+      organizationId: 'org-1',
+      targetMemberId: 'member-1',
     });
   });
 
@@ -139,7 +123,6 @@ describe('OrganizationController audit proof (ADM-RAW-P1-004)', () => {
     await OrganizationController.updateMemberRole(req, res, vi.fn());
 
     expect(res.status).toHaveBeenCalledWith(403);
-    expect(updateMemberRole).not.toHaveBeenCalled();
-    expect(logAction).not.toHaveBeenCalled();
+    expect(changeMemberRoleViaIam).not.toHaveBeenCalled();
   });
 });

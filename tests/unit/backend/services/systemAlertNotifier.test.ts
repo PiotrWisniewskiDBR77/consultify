@@ -4,9 +4,14 @@ const sendSlackAlert = vi.fn().mockResolvedValue(undefined);
 const sendWhatsAppAlert = vi.fn().mockResolvedValue(undefined);
 
 vi.mock('../../../../server/src/services/slackService.js', () => ({
+  SlackServiceClass: class {},
   default: {
     sendSystemAlert: (...args: any[]) => sendSlackAlert(...args),
   },
+}));
+
+vi.mock('../../../../server/src/services/slack/slackRouter.js', () => ({
+  routeToSlack: (...args: any[]) => sendSlackAlert(...args),
 }));
 
 vi.mock('../../../../server/src/services/WhatsAppService.js', () => ({
@@ -37,11 +42,14 @@ describe('systemAlertNotifier', () => {
       source: 'Database',
     });
 
-    expect(sendSlackAlert).toHaveBeenCalledWith(
-      'Database: Database unreachable',
-      'Timed out while connecting to postgres',
-      'CRITICAL'
-    );
+    expect(sendSlackAlert).toHaveBeenCalledWith({
+      channel: 'alerts',
+      category: 'Awaria',
+      severity: 'CRITICAL',
+      title: 'Database: Database unreachable',
+      text: 'Timed out while connecting to postgres',
+      dedupeKey: 'CRITICAL:Database:Database unreachable',
+    });
     expect(sendWhatsAppAlert).toHaveBeenCalledWith({
       title: 'Database: Database unreachable',
       message: 'Timed out while connecting to postgres',
