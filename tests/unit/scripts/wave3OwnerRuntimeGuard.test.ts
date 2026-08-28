@@ -20,7 +20,7 @@ function env(name = 'guard') {
     WAVE3_RUNTIME_CONFIRM: 'YES',
     WAVE3_RUNTIME_EXPECTED_SHA: fp.sha,
     WAVE3_RUNTIME_DIRTY_FINGERPRINT: fp.dirtyFingerprint,
-    WAVE3_RUNTIME_DATABASE_URL: `postgresql://consultinity:consultinity@127.0.0.1:34940/consultify_w3_runtime_${name}`,
+    WAVE3_RUNTIME_DATABASE_URL: `postgresql://postgres:cx@127.0.0.1:5940/consultify_w3_runtime_${name}`,
     WAVE3_RUNTIME_MANIFEST: `/tmp/consultify-wave3-runtime-manifest-${name}.json`,
     WAVE3_RUNTIME_STATE_DIR: `/tmp/consultify-wave3-runtime-${name}`,
     WAVE3_RUNTIME_SERVER_PORT: '3960',
@@ -45,7 +45,7 @@ function adoptedEnv(name: string, manifestPath: string) {
   return {
     ...env(name),
     WAVE3_RUNTIME_MODE: 'adopt-existing',
-    WAVE3_RUNTIME_DATABASE_URL: `postgresql://consultinity:consultinity@127.0.0.1:34940/consultify_w3_organization_owner_${name}`,
+    WAVE3_RUNTIME_DATABASE_URL: `postgresql://postgres:cx@127.0.0.1:5940/consultify_w3_organization_owner_${name}`,
     WAVE3_RUNTIME_FIXTURE_MANIFEST: manifestPath,
   };
 }
@@ -115,7 +115,7 @@ describe('Wave3 owner runtime guards', () => {
       run('start', {
         WAVE3_RUNTIME_MODE: 'adopt-existing',
         WAVE3_RUNTIME_DATABASE_URL:
-          'postgresql://consultinity:consultinity@127.0.0.1:34940/consultify_w3_unknown_owner_guard',
+          'postgresql://postgres:cx@127.0.0.1:5940/consultify_w3_unknown_owner_guard',
       }).stderr
     ).toContain('closed Wave3 owner prefix allowlist');
     expect(
@@ -129,7 +129,7 @@ describe('Wave3 owner runtime guards', () => {
       run('start', {
         WAVE3_RUNTIME_MODE: 'adopt-existing',
         WAVE3_RUNTIME_DATABASE_URL:
-          'postgresql://consultinity:consultinity@127.0.0.1:34940/consultify_w3_admin_owner_guard',
+          'postgresql://postgres:cx@127.0.0.1:5940/consultify_w3_admin_owner_guard',
         WAVE3_RUNTIME_FIXTURE_MANIFEST: '/tmp/consultify-wave3-admin-owner-missing.json',
       }).stderr
     ).toContain('fixture manifest must exist');
@@ -137,7 +137,7 @@ describe('Wave3 owner runtime guards', () => {
       run('start', {
         WAVE3_RUNTIME_MODE: 'adopt-existing',
         WAVE3_RUNTIME_DATABASE_URL:
-          'postgresql://consultinity:consultinity@127.0.0.1:34940/consultify_w3_organization_owner_guard',
+          'postgresql://postgres:cx@127.0.0.1:5940/consultify_w3_organization_owner_guard',
         WAVE3_RUNTIME_FIXTURE_MANIFEST: '/tmp/consultify-wave3-fixture-manifest-missing.json',
       }).stderr
     ).toContain('fixture manifest must exist');
@@ -148,7 +148,7 @@ describe('Wave3 owner runtime guards', () => {
       run('start', {
         WAVE3_RUNTIME_MODE: 'adopt-existing',
         WAVE3_RUNTIME_DATABASE_URL:
-          'postgresql://consultinity:consultinity@127.0.0.1:34940/consultify_w3_organization_owner_guard',
+          'postgresql://postgres:cx@127.0.0.1:5940/consultify_w3_organization_owner_guard',
         WAVE3_RUNTIME_FIXTURE_MANIFEST: manifestPath,
       }).stderr
     ).toContain('databaseName differs');
@@ -157,7 +157,7 @@ describe('Wave3 owner runtime guards', () => {
       run('start', {
         WAVE3_RUNTIME_MODE: 'adopt-existing',
         WAVE3_RUNTIME_DATABASE_URL:
-          'postgresql://consultinity:consultinity@127.0.0.1:34940/consultify_w3_organization_owner_guard',
+          'postgresql://postgres:cx@127.0.0.1:5940/consultify_w3_organization_owner_guard',
         WAVE3_RUNTIME_FIXTURE_MANIFEST: manifestPath,
       }).stderr
     ).toContain('regular 0600 file');
@@ -179,7 +179,7 @@ describe('Wave3 owner runtime guards', () => {
 
     const result = run('start', {
       WAVE3_RUNTIME_MODE: 'adopt-existing',
-      WAVE3_RUNTIME_DATABASE_URL: `postgresql://consultinity:consultinity@127.0.0.1:34940/${dbName}`,
+      WAVE3_RUNTIME_DATABASE_URL: `postgresql://postgres:cx@127.0.0.1:5940/${dbName}`,
       WAVE3_RUNTIME_FIXTURE_MANIFEST: manifestPath,
     });
 
@@ -199,7 +199,7 @@ describe('Wave3 owner runtime guards', () => {
 
     const result = run('start', {
       WAVE3_RUNTIME_MODE: 'adopt-existing',
-      WAVE3_RUNTIME_DATABASE_URL: `postgresql://consultinity:consultinity@127.0.0.1:34940/${dbName}`,
+      WAVE3_RUNTIME_DATABASE_URL: `postgresql://postgres:cx@127.0.0.1:5940/${dbName}`,
       WAVE3_RUNTIME_FIXTURE_MANIFEST: manifestPath,
     });
 
@@ -217,7 +217,7 @@ describe('Wave3 owner runtime guards', () => {
 
     const wrongFamily = run('start', {
       WAVE3_RUNTIME_MODE: 'adopt-existing',
-      WAVE3_RUNTIME_DATABASE_URL: `postgresql://consultinity:consultinity@127.0.0.1:34940/${dbName}`,
+      WAVE3_RUNTIME_DATABASE_URL: `postgresql://postgres:cx@127.0.0.1:5940/${dbName}`,
       WAVE3_RUNTIME_FIXTURE_MANIFEST: manifestPath,
       WAVE3_RUNTIME_MANIFEST: runtimeManifest,
       WAVE3_RUNTIME_STATE_DIR: runtimeState,
@@ -234,7 +234,7 @@ describe('Wave3 owner runtime guards', () => {
     );
     const exactFamily = run('start', {
       WAVE3_RUNTIME_MODE: 'adopt-existing',
-      WAVE3_RUNTIME_DATABASE_URL: `postgresql://consultinity:consultinity@127.0.0.1:34940/${dbName}`,
+      WAVE3_RUNTIME_DATABASE_URL: `postgresql://postgres:cx@127.0.0.1:5940/${dbName}`,
       WAVE3_RUNTIME_FIXTURE_MANIFEST: manifestPath,
       WAVE3_RUNTIME_MANIFEST: runtimeManifest,
       WAVE3_RUNTIME_STATE_DIR: runtimeState,
@@ -258,7 +258,7 @@ describe('Wave3 owner runtime guards', () => {
     );
     const result = run('start', {
       WAVE3_RUNTIME_MODE: 'adopt-existing',
-      WAVE3_RUNTIME_DATABASE_URL: `postgresql://consultinity:consultinity@127.0.0.1:34940/${dbName}`,
+      WAVE3_RUNTIME_DATABASE_URL: `postgresql://postgres:cx@127.0.0.1:5940/${dbName}`,
       WAVE3_RUNTIME_FIXTURE_MANIFEST: manifestPath,
       WAVE3_RUNTIME_MANIFEST: runtimeManifest,
       WAVE3_RUNTIME_STATE_DIR: runtimeState,
@@ -282,7 +282,7 @@ describe('Wave3 owner runtime guards', () => {
     );
     const result = run('start', {
       WAVE3_RUNTIME_MODE: 'adopt-existing',
-      WAVE3_RUNTIME_DATABASE_URL: `postgresql://consultinity:consultinity@127.0.0.1:34940/${dbName}`,
+      WAVE3_RUNTIME_DATABASE_URL: `postgresql://postgres:cx@127.0.0.1:5940/${dbName}`,
       WAVE3_RUNTIME_FIXTURE_MANIFEST: manifestPath,
       WAVE3_RUNTIME_MANIFEST: runtimeManifest,
       WAVE3_RUNTIME_STATE_DIR: runtimeState,
@@ -304,7 +304,7 @@ describe('Wave3 owner runtime guards', () => {
     );
     const result = run('start', {
       WAVE3_RUNTIME_MODE: 'adopt-existing',
-      WAVE3_RUNTIME_DATABASE_URL: `postgresql://consultinity:consultinity@127.0.0.1:34940/${dbName}`,
+      WAVE3_RUNTIME_DATABASE_URL: `postgresql://postgres:cx@127.0.0.1:5940/${dbName}`,
       WAVE3_RUNTIME_FIXTURE_MANIFEST: manifestPath,
       WAVE3_RUNTIME_MANIFEST: runtimeManifest,
       WAVE3_RUNTIME_STATE_DIR: runtimeState,
@@ -319,7 +319,7 @@ describe('Wave3 owner runtime guards', () => {
       manifestPath = `/tmp/consultify-wave3-fixture-manifest-${name}.json`,
       e = adoptedEnv(name, manifestPath),
       admin = new pg.Client({
-        connectionString: 'postgresql://consultinity:consultinity@127.0.0.1:34940/postgres',
+        connectionString: 'postgresql://postgres:cx@127.0.0.1:5940/postgres',
       });
     artifacts.push(manifestPath, e.WAVE3_RUNTIME_STATE_DIR);
     fs.writeFileSync(manifestPath, JSON.stringify(fixtureManifestValue(dbName)), { mode: 0o600 });
@@ -382,7 +382,7 @@ describe('Wave3 owner runtime guards', () => {
       e = adoptedEnv(name, manifestPath),
       statePath = path.join(e.WAVE3_RUNTIME_STATE_DIR, 'state.json'),
       admin = new pg.Client({
-        connectionString: 'postgresql://consultinity:consultinity@127.0.0.1:34940/postgres',
+        connectionString: 'postgresql://postgres:cx@127.0.0.1:5940/postgres',
       });
     artifacts.push(manifestPath, e.WAVE3_RUNTIME_STATE_DIR);
     fs.writeFileSync(manifestPath, JSON.stringify(fixtureManifestValue(dbName)), { mode: 0o600 });
@@ -406,7 +406,7 @@ describe('Wave3 owner runtime guards', () => {
       mode: 'adopt-existing',
       fixture: { path: fs.realpathSync(manifestPath), sha256: 'bad' },
       database: {
-        configured: { host: '127.0.0.1', port: 34940, user: 'consultinity', name: dbName },
+        configured: { host: '127.0.0.1', port: 5940, user: 'postgres', name: dbName },
         preserved: true,
       },
       server: null,
@@ -465,7 +465,7 @@ describe('Wave3 owner runtime guards', () => {
           sha256: crypto.createHash('sha256').update(fs.readFileSync(manifestPath)).digest('hex'),
         },
         database: {
-          configured: { host: '127.0.0.1', port: 34940, user: 'consultinity', name: dbName },
+          configured: { host: '127.0.0.1', port: 5940, user: 'postgres', name: dbName },
         },
         server: null,
         client: null,
@@ -483,10 +483,10 @@ describe('Wave3 owner runtime guards', () => {
   it('adopted SIGINT and SIGTERM terminate owned stages but preserve marker, sentinel and catalog', async () => {
     const name = `adopt_signal_${process.pid}`,
       dbName = `consultify_w3_organization_owner_${name}`,
-      databaseUrl = `postgresql://consultinity:consultinity@127.0.0.1:34940/${dbName}`,
+      databaseUrl = `postgresql://postgres:cx@127.0.0.1:5940/${dbName}`,
       fixturePath = `/tmp/consultify-wave3-fixture-manifest-${name}.json`,
       admin = new pg.Client({
-        connectionString: 'postgresql://consultinity:consultinity@127.0.0.1:34940/postgres',
+        connectionString: 'postgresql://postgres:cx@127.0.0.1:5940/postgres',
       });
     let activeRuntime: ReturnType<typeof spawn> | null = null;
     artifacts.push(fixturePath);
@@ -620,7 +620,7 @@ describe('Wave3 owner runtime guards', () => {
         database: {
           configured: {
             host: '127.0.0.1',
-            port: 34940,
+            port: 5940,
             user: 'different',
             name: 'consultify_w3_runtime_identity',
           },
@@ -657,7 +657,7 @@ describe('Wave3 owner runtime guards', () => {
     expect(r.status).not.toBe(0);
     expect(r.stderr).toContain('injected after-db failure');
     const c = new pg.Client({
-      connectionString: 'postgresql://consultinity:consultinity@127.0.0.1:34940/postgres',
+      connectionString: 'postgresql://postgres:cx@127.0.0.1:5940/postgres',
     });
     await c.connect();
     const q = await c.query('select count(*)::int n from pg_database where datname=$1', [
@@ -714,7 +714,7 @@ describe('Wave3 owner runtime guards', () => {
       ['readiness', 3990, 3991],
     ] as const;
     const admin = new pg.Client({
-      connectionString: 'postgresql://consultinity:consultinity@127.0.0.1:34940/postgres',
+      connectionString: 'postgresql://postgres:cx@127.0.0.1:5940/postgres',
     });
     await admin.connect();
     for (const [failure, serverPort, clientPort] of cases) {
@@ -782,7 +782,7 @@ describe('Wave3 owner runtime guards', () => {
       dir = e.WAVE3_RUNTIME_STATE_DIR,
       statePath = path.join(dir, 'state.json'),
       admin = new pg.Client({
-        connectionString: 'postgresql://consultinity:consultinity@127.0.0.1:34940/postgres',
+        connectionString: 'postgresql://postgres:cx@127.0.0.1:5940/postgres',
       });
     artifacts.push(dir);
     await admin.connect();
@@ -811,8 +811,8 @@ describe('Wave3 owner runtime guards', () => {
         database: {
           configured: {
             host: '127.0.0.1',
-            port: 34940,
-            user: 'consultinity',
+            port: 5940,
+            user: 'postgres',
             name: `consultify_w3_runtime_${name}`,
           },
         },
@@ -871,7 +871,7 @@ describe('Wave3 owner runtime guards', () => {
       }).stdout.trim()
     );
     const admin = new pg.Client({
-      connectionString: 'postgresql://consultinity:consultinity@127.0.0.1:34940/postgres',
+      connectionString: 'postgresql://postgres:cx@127.0.0.1:5940/postgres',
     });
     await admin.connect();
     for (const [signal, expectedCode, serverPort, clientPort] of [
@@ -960,7 +960,7 @@ describe('Wave3 owner runtime guards', () => {
       }).stdout.trim()
     );
     const admin = new pg.Client({
-      connectionString: 'postgresql://consultinity:consultinity@127.0.0.1:34940/postgres',
+      connectionString: 'postgresql://postgres:cx@127.0.0.1:5940/postgres',
     });
     await admin.connect();
     for (const [suffix, signal, expectedCode, shouldFail, serverPort, clientPort] of [
