@@ -1,0 +1,276 @@
+{
+  "_meta": {
+    "cel": "Mechaniczny rejestr zasobów do zapobiegania kolizjom miedzy rownoleglymi dyzurami (migracje, porty, terytoria plikowe). Zrodlo: pomiar repo na galezi github-backup/codex/m03-admin-20260824, SHA 13daa7528f25770d0adbd89353ef9e606e34f61e, plus DEC-2026-08-28-249 (OWNER_DECISION_LEDGER_2026-08-24.md) dla rozstrzygnietej kolizji 55-58.",
+    "data_pomiaru": "2026-08-28",
+    "sprawdzaj_skryptem": "node scripts/waves/check-resource-collisions.mjs docs/program/system-pracy/05_REJESTR_ZASOBOW.json"
+  },
+  "migracje": {
+    "schemat": "Dwa rownolegle systemy numeracji wspoloistnieja w server/migrations/: (A) czysto sekwencyjny numer 1-4 cyfry (np. 953_partner_certification_mutation_receipts.sql, najwyzszy zaobserwowany 960; 464 pliki), (B) data/sekwencja 8-cyfrowa 2026NNNN (619 plikow). W obrebie (B) pula 20260101-20261231 to prawdziwe daty (np. 20260806_v8_agent_template_version_prerequisite.sql), a pula OD 20261560 WZWYZ jest rezerwowanym pasmem przydzielanym dyzurom z gory (numery NIE odpowiadaja realnej dacie — 20261560 jako data byloby nieprawidlowe, miesiac 15/dzien 60). Rezerwacja dziala 'najwyzszy+1 TYLKO wewnatrz przydzielonego przedzialu' — patrz CODEX_DAY34/DAY35_INSTRUKCJA.md Z2.",
+    "historia_przydzialow_przed_seria_55_58": {
+      "dzien_30": "20261190-20261199",
+      "dzien_31": "20261200-20261209",
+      "dzien_32": "20261210-20261219",
+      "dzien_33": "20261220-20261229",
+      "dzien_34": "20261230-20261239",
+      "dzien_35": "20261240-20261249",
+      "uwaga": "Dni 36-54 NIE zostaly zmierzone w tym worktree (brak instrukcji z jawnym przedzialem na galezi m03-admin-20260824) — patrz sekcja 'Twierdzenia niezweryfikowane' w raporcie koncowym. Pasmo 20261250-20261559 traktowac jako POTENCJALNIE zajete i NIE brac bez sprawdzenia grep."
+    },
+    "nastepny_wolny_przedzial": "20261600-20261609",
+    "przydzielone": {
+      "55": "20261560-20261569",
+      "56": "20261570-20261579",
+      "57": "20261580-20261589",
+      "58": "20261590-20261599"
+    },
+    "najwyzszy_zajety_w_rezerwowanym_pasmie": "20261599",
+    "najwyzszy_plik_sekwencyjny_1_4cyfry": 960,
+    "najwyzszy_plik_data_realna": "20260915_user_data_export_receipts.sql",
+    "liczba_plikow_migracji_server_migrations": 1063,
+    "liczba_plikow_migracji_server_migrations_v2": 39,
+    "uwaga_v2": "server/migrations-v2 uzywa WLASNEJ, oddzielnej numeracji 001-038 (padding 3-cyfrowy) — nie miesza sie z pasmem 2026NNNN i nie jest przedmiotem tego rejestru (brak dowodow rownoleglych dyzurow pracujacych w tej sciezce)."
+  },
+  "porty_pg": {
+    "zajete": [
+      5432, 5474, 5511, 5521, 5597, 5641, 5698, 5799, 5810, 5811, 5813, 5814,
+      5816, 5822, 5830, 5831, 5833, 5834, 5835, 5838, 5844, 5847, 5852, 5856,
+      5857, 5858, 5871, 5877, 5901, 5911, 5921, 5922, 5923, 5931
+    ],
+    "zrodlo_uzupelnienia": "Baza 23 portow z instrukcji nadzorcy potwierdzona grepem (5857/5858/5877/5911/5931 NIE znalezione w tym worktree — patrz niezweryfikowane). Dolozono 10 dodatkowych portow znalezionych tekstowo w docs/program/waves/WAVE_03_ACCEPTANCE/*.md: 5521 (dzien 32, cx-day32-pg), 5597 (dzien 33, cx-day33-pg), 5641 (dzien 35, cx-day35-pg), 5799 (dzien 42 fix, cx-fix42-pg), 5810 (dzien 43, cx-day43-pg), 5811 (dzien 44, cx-day44-pg), 5813 (dzien 41 fix, cx-fix41-pg), 5814 (dzien 46c, cx_day46), 5822 (dzien 43 fix, cx-fix43-pg), 5831 (dzien 46 finish, cx-fin46-pg), 5833 (dzien 49c, cx-fin49-pg).",
+    "nastepny_wolny": 5932
+  },
+  "porty_harness": {
+    "zajete": [3371, 3372, 3374, 3375, 3987],
+    "zrodlo_uzupelnienia": "Lista z instrukcji nadzorcy. Potwierdzone grepem: 3371 (1 plik), 3372 (2 pliki), 3375 (1 plik), 3987 (28 plikow — dominujacy harness dev-render). 3374 NIE znalezione w tym worktree.",
+    "nastepny_wolny": 3988
+  },
+  "terytoria": {
+    "01_ORGANIZATION": [
+      "src/components/Organization/**",
+      "src/components/OrgSwitcher.tsx",
+      "src/views/OrganizationView.tsx",
+      "src/views/OrgSetupWizard.tsx",
+      "server/src/routes/organization*.routes.ts",
+      "server/src/routes/organization/**",
+      "server/src/controllers/OrganizationController.ts",
+      "server/src/services/org*.ts",
+      "server/src/services/organization*.ts"
+    ],
+    "02_INTERVIEW": [
+      "src/components/Interview/**",
+      "src/views/InterviewView.tsx",
+      "src/views/PublicInterviewRespondentView.tsx",
+      "server/src/routes/interview*.routes.ts",
+      "server/src/routes/interviewDelivery/**",
+      "server/src/controllers/InterviewController.ts",
+      "server/src/services/interview*.ts",
+      "server/src/services/Interview*.ts"
+    ],
+    "03_TOOLS": [
+      "src/components/DiscoveryTools/**",
+      "src/views/ToolsShowcasePage.tsx",
+      "src/views/discovery-tools/**",
+      "server/src/routes/tools.routes.ts",
+      "server/src/routes/tool-enterprise.routes.ts",
+      "server/src/routes/toolAssets.routes.ts",
+      "server/src/routes/toolOutputs.routes.ts",
+      "server/src/routes/knownTools.routes.ts",
+      "server/src/controllers/Tool*.ts",
+      "server/src/controllers/KnownToolsController.ts",
+      "server/src/services/*Tool*.ts",
+      "server/src/services/*tool*.ts"
+    ],
+    "04_ASSESSMENT": [
+      "src/components/assessment/**",
+      "src/views/AssessmentSessionEditorView.tsx",
+      "src/views/FreeAssessmentView.tsx",
+      "src/views/PublicMiniAssessmentView.tsx",
+      "server/src/routes/assessment*.routes.ts",
+      "server/src/routes/assessment/**",
+      "server/src/routes/assessmentCatalog/**",
+      "server/src/routes/multi-framework-assessment.routes.ts",
+      "server/src/controllers/Assessment*.ts",
+      "server/src/services/*assessment*.ts",
+      "server/src/services/aiAssessment*.ts"
+    ],
+    "05_INITIATIVES": [
+      "src/components/Initiatives/**",
+      "src/components/InitiativeCard.tsx",
+      "src/components/InitiativeDetail/**",
+      "src/components/InitiativeDetailModal.tsx",
+      "src/components/InitiativeIntelligenceTab.tsx",
+      "src/components/InitiativeTaskBoard.tsx",
+      "src/components/InitiativeTasksTab.tsx",
+      "src/views/FullInitiativesView.tsx",
+      "src/views/InitiativeManagementView.tsx",
+      "server/src/routes/initiative*.routes.ts",
+      "server/src/routes/initiatives-additive.routes.ts",
+      "server/src/controllers/InitiativeController.ts",
+      "server/src/domain/initiatives-execution/**",
+      "server/src/services/*initiative*.ts"
+    ],
+    "06_EXECUTION": [
+      "src/components/Execution/**",
+      "src/views/FullExecutionView.tsx",
+      "server/src/routes/execution*.routes.ts",
+      "server/src/routes/executionControl.routes.ts",
+      "server/src/routes/executionAnalytics.routes.ts",
+      "server/src/controllers/ExecutionController.ts",
+      "server/src/services/*execution*.ts",
+      "server/src/services/capacityPolicy/**"
+    ],
+    "07_MY_WORK_AGENT": [
+      "src/components/MyWork/**",
+      "src/views/MyWorkView.tsx",
+      "src/views/MyApprovalsView.tsx",
+      "src/views/vault/**",
+      "server/src/routes/my-work*.routes.ts",
+      "server/src/routes/my-work/**",
+      "server/src/routes/knowledge*.routes.ts",
+      "server/src/routes/knowledge-graph.routes.ts"
+    ],
+    "08_MEETINGS": [
+      "src/components/Meeting/**",
+      "server/src/routes/meeting.routes.ts",
+      "server/src/services/*meeting*.ts",
+      "server/src/services/*Meeting*.ts"
+    ],
+    "09_RESULTS": [
+      "src/components/Results/**",
+      "src/components/ResultsVNext/**",
+      "server/src/routes/results*.routes.ts",
+      "server/src/routes/resultsVnext/**",
+      "server/src/routes/managementReports*.routes.ts",
+      "server/src/repositories/ManagementReportRepository.ts"
+    ],
+    "10_FINANCE": [
+      "src/components/Finance/**",
+      "src/views/EconomicsView.tsx",
+      "src/views/FullROIView.tsx",
+      "server/src/routes/finance*.routes.ts",
+      "server/src/routes/financeCandidateHandoff*.routes.ts",
+      "server/src/routes/budget*.routes.ts",
+      "server/src/routes/revenue.routes.ts",
+      "server/src/services/finance/**"
+    ],
+    "11_MATERIALS": [
+      "src/components/Knowledge/**",
+      "server/src/routes/knowledgeBase.routes.ts",
+      "server/src/services/KnowledgeBaseService.ts",
+      "server/src/services/KnowledgeService.ts"
+    ],
+    "12_AUDITS": [
+      "src/components/Audit/**",
+      "src/views/AuditsShowcasePage.tsx",
+      "server/src/routes/audit*.routes.ts",
+      "server/src/routes/audits/**",
+      "server/src/services/Audit*.ts"
+    ],
+    "13_CHAT": [
+      "src/components/Chat/**",
+      "src/components/AIChat/**",
+      "src/views/AIChatView.tsx",
+      "server/src/routes/conversations.routes.ts",
+      "server/src/routes/chat-projects.routes.ts"
+    ],
+    "14_ADMIN": [
+      "src/components/Admin/**",
+      "src/components/SuperAdmin/**",
+      "src/views/admin/**",
+      "src/views/superadmin/**",
+      "server/src/routes/admin/**",
+      "server/src/routes/admin-*.routes.ts",
+      "server/src/controllers/Admin*.ts",
+      "server/src/controllers/superadmin/**",
+      "server/src/controllers/SuperAdminController.ts"
+    ],
+    "15_SETTINGS": [
+      "src/components/settings/**",
+      "src/views/settings/**",
+      "src/views/SettingsView.tsx",
+      "server/src/routes/settings.routes.ts",
+      "server/src/routes/user-*.routes.ts",
+      "server/src/routes/user/**"
+    ],
+    "16_PARTNER": [
+      "src/components/Partner/**",
+      "src/views/partner/**",
+      "src/views/BecomePartnerView.tsx",
+      "server/src/routes/partners.routes.ts",
+      "server/src/routes/partnerOutreach.routes.ts",
+      "server/src/routes/public-partner-applications.routes.ts",
+      "server/src/services/partner*.ts"
+    ],
+    "_uwaga_dokladnosci": "Wzorce sciezek to NAJLEPSZE PRZYBLIZENIE wg konwencji nazewnictwa (>350 plikow tras w plaskiej strukturze server/src/routes/, nie per-modul), nie wynik pelnego audytu kazdego pliku. Skrypt sprawdzajacy wykrywa nachodzenie WZORCOW, wiec falszywie-dodatnie nachodzenie miedzy modulami o podobnych nazwach jest mozliwe i wymaga ludzkiej weryfikacji przy realnej kolizji."
+  },
+  "pliki_przekrojowe": [
+    "server/src/middleware/**",
+    "server/src/Gateway.ts",
+    "vitest*.config.ts",
+    "playwright.config.ts",
+    ".github/workflows/**",
+    "package.json",
+    "tsconfig*.json",
+    "server/src/database.js",
+    "server/src/database/**",
+    "server/src/config/**",
+    "tests/setup.ts",
+    "server/scripts/migrate.postgres.ts"
+  ],
+  "pliki_przekrojowe_dowod": {
+    "server/src/database.js + server/src/database/**": "19 plikow importuje 'server/src/database' (ConnectionPool.ts, ConnectionHealthMonitor.ts i in.) — kregoslup polaczen PG dla calego backendu.",
+    "server/src/config/**": "7 plikow w server/src importuje 'server/src/config' — konfiguracja dzielona.",
+    "tests/setup.ts": "44 pliki odwoluja sie do 'tests/setup' — globalny setup vitest, zmiana psuje kazdy modul rownoczesnie (Z19 z instrukcji dzien 35).",
+    "server/scripts/migrate.postgres.ts": "Jedyny uruchamiany runner migracji (uzywany przez wszystkie dyzury do stosowania migracji na efemerycznym PG) — zmiana logiki stosowania migracji dotyka kazdego modulu."
+  },
+  "aktywne_dyzury": [
+    {
+      "numer": 55,
+      "galaz": "settings",
+      "migracje": "20261560-20261569",
+      "port_pg": 5852,
+      "terytorium": [
+        "src/components/settings/**",
+        "src/views/settings/**",
+        "src/views/SettingsView.tsx",
+        "server/src/routes/settings.routes.ts",
+        "server/src/routes/user-*.routes.ts",
+        "server/src/routes/user/**"
+      ]
+    },
+    {
+      "numer": 56,
+      "galaz": "authcore",
+      "migracje": "20261570-20261579",
+      "port_pg": 5856,
+      "terytorium": ["server/src/middleware/**"],
+      "uwaga": "DEC-2026-08-28-249: jedyny z serii 55-58, ktory faktycznie dotknal server/src/middleware/auth.middleware.ts (wylaczna licencja pliku przekrojowego) — 55/57/58 maja tam pusty diff."
+    },
+    {
+      "numer": 57,
+      "galaz": "meetings",
+      "migracje": "20261580-20261589",
+      "port_pg": 5857,
+      "terytorium": [
+        "src/components/Meeting/**",
+        "server/src/routes/meeting.routes.ts",
+        "server/src/services/*meeting*.ts",
+        "server/src/services/*Meeting*.ts"
+      ]
+    },
+    {
+      "numer": 58,
+      "galaz": "ci",
+      "migracje": "20261590-20261599",
+      "port_pg": 5858,
+      "terytorium": [".github/workflows/**", "vitest*.config.ts"]
+    },
+    {
+      "numer": 59,
+      "galaz": "testdebt",
+      "migracje": null,
+      "port_pg": 5931,
+      "terytorium": [],
+      "uwaga": "Brak migracji wg zlecenia nadzorcy — pole 'migracje' celowo null, pomijane przez sprawdzanie nachodzenia przedzialow."
+    }
+  ]
+}
