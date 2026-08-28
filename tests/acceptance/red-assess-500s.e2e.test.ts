@@ -45,40 +45,10 @@ const FIN_STMT_ID = 'odbior--redas--finstmt-0001';
  * creep in this sweep. Do NOT add new entries here without a matching
  * RAPORT RED writeup — this list is a tracked debt ledger, not a rug.
  */
-const KNOWN_RED: Record<string, { status: number; messageIncludes: string }> = {
-  [`GET /api/assessment-workflow/${ASSESSMENT_ID}/status`]: {
-    status: 500,
-    messageIncludes: 'invalid input syntax for type integer',
-  },
-  [`GET /api/assessment-workflow/${ASSESSMENT_ID}/versions`]: {
-    status: 500,
-    messageIncludes: 'assessment_versions',
-  },
-  [`GET /api/assessment-workflow/${ASSESSMENT_ID}/history`]: {
-    status: 500,
-    messageIncludes: 'invalid input syntax for type integer',
-  },
-  ['GET /api/assessment-workflow/pending-reviews']: {
-    status: 500,
-    messageIncludes: 'assessment_reviews',
-  },
-  [`POST /api/assessment-workflow/${ASSESSMENT_ID}/initialize`]: {
-    status: 500,
-    messageIncludes: 'invalid input syntax for type integer',
-  },
-  [`GET /api/assessment-workflow-v2/${ASSESSMENT_ID}/initiative-batches`]: {
-    status: 500,
-    messageIncludes: 'generated_by',
-  },
-  [`GET /api/assessments-v4/assessments/${ASSESSMENT_ID}/versions/1/diff/2`]: {
-    status: 500,
-    messageIncludes: '', // raw HTML (no error-middleware in the narrow test app) — status is the signal
-  },
-  [`GET /api/assessment-evidence/${ASSESSMENT_ID}/report`]: {
-    status: 500,
-    messageIncludes: '', // raw HTML — root cause: assessment_questions relation missing (42P01)
-  },
-};
+// The eight schema failures recorded on 2026-07-19 now return bounded 2xx/4xx
+// responses on a fresh migrated database. Keep the ledger empty so every route
+// is held to the stronger common contract below: it must respond and never 5xx.
+const KNOWN_RED: Record<string, { status: number; messageIncludes: string }> = {};
 
 /** Assert a sweep result: KNOWN_RED entries stay pinned, everything else must not 5xx/HANG. */
 function assertNotRegressed(r: { label: string; status: number | 'HANG'; body?: any; error?: string }) {
