@@ -30,6 +30,7 @@ import {
 } from '../../../server/src/services/initiative/initiativeCandidateService.js';
 
 const RUN = process.env.RUN_DB_TESTS === '1' && !!process.env.DATABASE_URL;
+const TEST_SCHEMA = 'day71_m05fix01_candidate_acceptance_receipt';
 
 const MIGRATION = path.resolve(
   __dirname,
@@ -72,6 +73,9 @@ const ORG = 'org-m05fix';
 const OTHER_ORG = 'org-intruder';
 
 async function baselineSchema() {
+  await client.query(`DROP SCHEMA IF EXISTS ${TEST_SCHEMA} CASCADE`);
+  await client.query(`CREATE SCHEMA ${TEST_SCHEMA}`);
+  await client.query(`SET search_path TO ${TEST_SCHEMA}, public`);
   // Deliberately the DEMO shape: initiative_candidates WITHOUT the 932 columns.
   await client.query(`DROP TABLE IF EXISTS initiative_candidates, initiatives`);
   await client.query(`
@@ -108,8 +112,12 @@ describe.skipIf(!RUN)('M05-FIX-01 — candidate acceptance receipt (real Postgre
   beforeAll(async () => {
     client = new Client({ connectionString: process.env.DATABASE_URL });
     await client.connect(); // throws loudly if unusable — never a silent skip
+    await client.query(`DROP SCHEMA IF EXISTS ${TEST_SCHEMA} CASCADE`);
+    await client.query(`CREATE SCHEMA ${TEST_SCHEMA}`);
+    await client.query(`SET search_path TO ${TEST_SCHEMA}, public`);
   });
   afterAll(async () => {
+    await client?.query(`DROP SCHEMA IF EXISTS ${TEST_SCHEMA} CASCADE`);
     await client?.end();
   });
   beforeEach(() => {
