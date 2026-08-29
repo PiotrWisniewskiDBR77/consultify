@@ -2551,6 +2551,7 @@
       "tasks": "Zadania",
       "decisions": "Decyzje",
       "manager": "Menedżer",
+      "agent": "Uruchom agenta",
       "myWork": "Moja Praca",
       "idea": "Pomysł",
       "toastSuccess": "Pobrano arkusz (.xlsx)",
@@ -2689,6 +2690,7 @@
       "unifiedCreateNew": "+ Nowy",
       "vault": "Sejf klienta"
     },
+    "openDocuments": "Otwarte dokumenty",
     "inboxContent": {
       "justNow": "Przed chwilą",
       "dToLocaleDateString": "pl-PL",
@@ -3118,6 +3120,7 @@
       }
     },
     "decisionsPanel": {
+      "loadErrorHint": "Sprawdź połączenie i spróbuj ponownie.",
       "critical": "Krytyczny",
       "high": "Wysoki",
       "low": "Niski",
@@ -3427,6 +3430,8 @@
       "priorityLow": "Niski"
     },
     "tasksList": {
+      "possibleDuplicate": "Możliwy duplikat ({{count}})",
+      "possibleDuplicateHint": "Istnieje inne zadanie o tym samym tytule i projekcie — sprawdź, czy to nie duplikat.",
       "you": "Ty",
       "ariaLabel": "Zaznacz zadanie",
       "label": "Otwórz podgląd",
@@ -7306,7 +7311,25 @@
       "resumeLatestTooltip": "Otwiera edytor najnowszego assessmentu i wraca do miejsca, w którym skończyłeś.",
       "aiTriageTooltip": "Otwiera czat AI z gotowym pytaniem: co w tej liście wymaga uwagi najpierw.",
       "chatTooltip": "Otwiera pusty czat AI dla tego huba.",
-      "connectionError": "Błąd połączenia"
+      "connectionError": "Błąd połączenia",
+      "warnings": {
+        "methodCoreUnavailable": "Nie udało się wczytać sesji DRD z Rdzenia metody. Nie pokazujemy zastępczych danych DRD.",
+        "rateLimitedCached": "Dane ocen są chwilowo ograniczone. Pokazujemy ostatnią dostępną listę.",
+        "rateLimitedEmpty": "Dane ocen są chwilowo ograniczone. Spróbuj ponownie za chwilę lub utwórz nową ocenę.",
+        "legacyUnavailable": "Nie udało się odświeżyć ocen innych niż DRD. Kanoniczne sesje DRD są nadal widoczne."
+      },
+      "tabs": {
+        "assessment": "Ocena",
+        "library": "Biblioteka",
+        "processes": "Procesy",
+        "insights": "Wnioski",
+        "reports": "Raporty",
+        "initiatives": "Inicjatywy"
+      },
+      "allStatuses": "Wszystkie statusy",
+      "statusValue": "Status: {{status}}",
+      "focusedDocuments": "Otwarte dokumenty",
+      "listWorkspace": "Lista robocza"
     },
     "newModal": {
       "comingSoonBadge": "Wkrótce",
@@ -7556,7 +7579,9 @@
       "assessmentLabel": "Assessment",
       "descriptionLabel": "Opis",
       "whatYouGet": "Co dostajesz",
-      "startAssessment": "Rozpocznij assessment"
+      "startAssessment": "Rozpocznij assessment",
+      "aiSummarize": "Podsumuj ocenę",
+      "aiNextSteps": "Zaproponuj następne kroki"
     },
     "form": {
       "current": "Aktualny",
@@ -7593,7 +7618,11 @@
       "relatedHint": "Powiązane z aktualnym assessmentem",
       "goAfterPlanning": "Przejdź do Inicjatyw po PLANNING",
       "goTo": "Idź do Inicjatyw",
-      "sourceReport": "Raport źródłowy"
+      "sourceReport": "Raport źródłowy",
+      "emptyState": {
+        "title": "Brak inicjatyw",
+        "generate": "Pakiet inicjatyw"
+      }
     },
     "drd": {
       "whyThisMatters": {
@@ -7778,7 +7807,16 @@
       }
     },
     "reports": {
-      "source": "Assessment źródłowy"
+      "source": "Assessment źródłowy",
+      "emptyState": {
+        "title": "Brak raportów",
+        "generate": "Wygeneruj raport"
+      }
+    },
+    "whatsNext": {
+      "report": "Raport",
+      "initiatives": "Pakiet inicjatyw",
+      "note": "Wykorzystuje tę ocenę jako źródło."
     },
     "emptyState": {
       "title": "Brak assessmentów",
