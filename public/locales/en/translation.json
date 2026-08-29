@@ -11754,6 +11754,8 @@
     },
     "empty": {
       "noInExecution": "No initiatives in execution. Move initiatives to execution first.",
+      "noTimelineDates_one": "{{count}} of {{total}} initiative in execution has no dates and is not visible on the timeline. Add dates to show it.",
+      "noTimelineDates_other": "{{count}} of {{total}} initiatives in execution have no dates and are not visible on the timeline. Add dates to show them.",
       "noAvailable": "No initiatives available.",
       "noDeadlines": "No deadlines scheduled",
       "deadlinesWillAppear": "Tasks and decisions will appear here",

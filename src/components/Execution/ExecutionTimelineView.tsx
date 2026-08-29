@@ -971,6 +971,7 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
       })
       .sort((a, b) => a.startIdx - b.startIdx);
   }, [filteredInitiatives, getWeekIndex, weeks.length]);
+  const initiativesWithoutTimelineDates = filteredInitiatives.length - processedInitiatives.length;
 
   const initiativeRows = useMemo(() => {
     const rows: (typeof processedInitiatives)[] = [];
@@ -1493,7 +1494,12 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
                   <p className="text-sm">
                     {activeFilters
                       ? t('execution.timeline.noResults')
-                      : t('execution.empty.noInExecution')}
+                      : filteredInitiatives.length > 0
+                        ? t('execution.empty.noTimelineDates', {
+                            count: initiativesWithoutTimelineDates,
+                            total: filteredInitiatives.length,
+                          })
+                        : t('execution.empty.noInExecution')}
                   </p>
                 </div>
               </div>
