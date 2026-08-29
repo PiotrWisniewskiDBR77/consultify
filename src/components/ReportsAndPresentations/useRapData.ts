@@ -437,7 +437,7 @@ function resolveArtifactTitle(raw: any, kindLabel: string): string {
   const date = dateRaw ? new Date(dateRaw) : null;
   const dateLabel =
     date && !Number.isNaN(date.getTime())
-      ? date.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
+      ? date.toLocaleDateString('pl-PL', { day: 'numeric', month: 'short', year: 'numeric' })
       : '';
   return dateLabel ? `${kindLabel} · ${dateLabel}` : kindLabel;
 }

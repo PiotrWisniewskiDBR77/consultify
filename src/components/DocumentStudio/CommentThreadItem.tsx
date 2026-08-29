@@ -27,7 +27,7 @@ export function formatCommentAuthor(authorId: string | undefined | null): string
 
 function formatTimestamp(iso: string): string {
   const date = new Date(iso);
-  return Number.isNaN(date.getTime()) ? iso : date.toLocaleString();
+  return Number.isNaN(date.getTime()) ? iso : date.toLocaleString('pl-PL');
 }
 
 const STATUS_CHIP_CLASS: Record<'open' | 'resolved', string> = {

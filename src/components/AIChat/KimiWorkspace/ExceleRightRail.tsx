@@ -375,6 +375,7 @@ export const ExceleRightRail: React.FC<ExceleRightRailProps> = ({
       collapsed={rail.rightCollapsed}
       onToggleCollapse={rail.toggleRight}
       onResize={rail.setRightWidth}
+      resizeLabel={t('excele.rightRail.resize', 'Resize right rail')}
       collapseLabel={t('excele.rightRail.collapseLabel', 'Zwiń/rozwiń pasek narzędzi')}
       testId="excele-right-rail"
     />

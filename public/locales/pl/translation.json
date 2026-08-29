@@ -845,6 +845,49 @@
     "useAiHints": "Użyj AI hintów w stopce, aby wygenerować brief."
   },
   "presentations": {
+    "comments": {
+      "addComment": "Dodaj komentarz",
+      "addFailed": "Nie udało się dodać komentarza",
+      "added": "Dodano komentarz",
+      "adding": "Dodawanie…",
+      "anchorDeck": "Cała prezentacja",
+      "anchorSlide": "Slajd {{number}}",
+      "anchorSlideUnknown": "Slajd (usunięty)",
+      "anchorToDeck": "Do całej prezentacji",
+      "anchorToSlide": "Do slajdu {{number}}",
+      "composerPlaceholder": "Dodaj komentarz do przeglądu…",
+      "delete": "Usuń",
+      "deleteFailed": "Nie udało się usunąć komentarza",
+      "deleted": "Usunięto komentarz",
+      "deletedBody": "(komentarz usunięty)",
+      "empty": "Nie ma jeszcze komentarzy.",
+      "emptyFilter": "Żaden wątek nie pasuje do filtra.",
+      "filterAll": "Wszystkie",
+      "filterLabel": "Filtruj wątki",
+      "filterOpen": "Otwarte",
+      "filterResolved": "Rozwiązane",
+      "loadFailed": "Nie udało się wczytać komentarzy",
+      "loading": "Ładowanie…",
+      "openBadge": "Otwarty",
+      "refresh": "Odśwież",
+      "reopen": "Otwórz ponownie",
+      "reopened": "Ponownie otwarto wątek",
+      "reply": "Odpowiedz",
+      "replyAdded": "Dodano odpowiedź",
+      "replyFailed": "Nie udało się dodać odpowiedzi",
+      "replyPlaceholder": "Napisz odpowiedź…",
+      "resolve": "Rozwiąż",
+      "resolveFailed": "Nie udało się wykonać działania",
+      "resolvedBadge": "Rozwiązany",
+      "resolvedToast": "Rozwiązano wątek",
+      "subtitle": "Wątki przeglądu tej prezentacji. Komentarz można przypiąć do bieżącego slajdu lub całej prezentacji.",
+      "title": "Komentarze",
+      "untitledSlide": "Slajd bez tytułu"
+    },
+    "qualitySignal": {
+      "badge": "Jakość: {{count}} ostrzeżeń",
+      "score": "Wynik {{score}}/100"
+    },
     "wizard": {
       "title": "Generator prezentacji",
       "titleRequired": "Podaj tytuł",
@@ -1027,6 +1070,8 @@
       "subtitle": "Tworzenie slajdów klasy konsultingowej z walidacją jakości. To może chwilę potrwać..."
     },
     "result": {
+      "qualityBadge": "Jakość: {{count}} ostrzeżeń",
+      "qualityScore": "Wynik {{score}}/100",
       "ready": "Twój deck jest gotowy!",
       "slidesGenerated": "slajdów wygenerowanych pomyślnie",
       "warnings": "Ostrzeżenia jakości",
@@ -1056,6 +1101,20 @@
       }
     },
     "templateArchitect": {
+      "approveAndPublish": "Zatwierdź i opublikuj",
+      "approving": "Publikowanie…",
+      "customMasterTheme": "Własny motyw i wzorce slajdów PowerPoint",
+      "deleteDraftConfirm": "Usuń wersję roboczą",
+      "deleteDraftTemplate": "Usuń wersję roboczą",
+      "deleteDraftTitle": "Usunąć roboczy wzorzec?",
+      "deleteDraftWarning": "Ta wersja robocza zostanie trwale usunięta. Tej operacji nie można cofnąć.",
+      "deprecateConfirm": "Wycofaj wzorzec",
+      "deprecatePublishedDescription": "Wzorzec nie będzie dostępny dla nowych prezentacji. Jego historia i istniejące prezentacje zostaną zachowane.",
+      "deprecatePublishedTemplate": "Wycofaj opublikowany wzorzec",
+      "deprecatePublishedTitle": "Wycofać opublikowany wzorzec?",
+      "deprecateReason": "Powód",
+      "deprecateReasonPlaceholder": "Wyjaśnij, dlaczego ten wzorzec jest wycofywany.",
+      "errApproveTemplate": "Nie udało się zatwierdzić i opublikować wzorca",
       "heading": "Kreator szablonów prezentacji",
       "subheading": "Zaprojektuj wielokrotnego użytku, zarządzany szablon prezentacji. Zatwierdzanie i wycofywanie odbywa się w rejestrze zarządzania SuperAdmin.",
       "draftHeading": "Utwórz szkic nowego szablonu",
@@ -1169,6 +1228,44 @@
       "saveFailed": "Nie udało się zapisać"
     },
     "builder": {
+      "selection": {
+        "tools": "Narzędzia zaznaczenia wielu bloków",
+        "count": "Zaznaczone bloki: {{count}}",
+        "clickHint": "Shift/⌘ + kliknięcie",
+        "groupAria": "Grupuj zaznaczone bloki",
+        "group": "Grupuj",
+        "ungroupAria": "Rozgrupuj zaznaczone bloki",
+        "ungroup": "Rozgrupuj",
+        "alignTools": "Wyrównaj zaznaczone bloki",
+        "distributeTools": "Rozmieść zaznaczone bloki",
+        "distributeHorizontal": "Rozmieść poziomo",
+        "distributeVertical": "Rozmieść pionowo",
+        "distributeH": "Rozmieść w poziomie",
+        "distributeV": "Rozmieść w pionie",
+        "alignmentHint": "Wyrównanie jest dostępne dla bloków pozycjonowanych swobodnie.",
+        "align": {
+          "left": "Wyrównaj do lewej", "center": "Wyrównaj do środka", "right": "Wyrównaj do prawej", "top": "Wyrównaj do góry", "middle": "Wyrównaj w pionie", "bottom": "Wyrównaj do dołu"
+        },
+        "position": {
+          "left": "lewo", "center": "środek", "right": "prawo", "top": "góra", "middle": "środek w pionie", "bottom": "dół"
+        }
+      },
+      "conflict": {
+        "help": "Wczytaj najnowszą wersję albo zachowaj swoją i zapisz ją zamiast zmian z innej sesji.",
+        "keepMine": "Zachowaj moją wersję",
+        "reload": "Wczytaj najnowszą",
+        "serverVersion": "(najnowsza to v{{version}})",
+        "title": "Ta prezentacja została zmieniona w innej sesji"
+      },
+      "contextMenu": "Menu kontekstowe prezentacji",
+      "contextSurface": "Obszar roboczy prezentacji",
+      "contextTools": "Narzędzia prezentacji",
+      "presence": {
+        "hereNow": "Obecni teraz: {{count}}"
+      },
+      "rewriteSend": "Wyślij",
+      "selectSlide": "Wybierz slajd",
+      "slideActions": "Akcje slajdu",
       "title": "Kreator decka",
       "exit": "Wróć do Prezentacji",
       "untitled": "Deck bez tytułu",
@@ -1179,6 +1276,7 @@
       "addAi": "AI generuje",
       "addFromTemplate": "Z szablonu",
       "topBar": {
+        "more": "Więcej",
         "theme": "Motyw",
         "share": "Udostępnij",
         "agent": "Agent",
@@ -1260,6 +1358,22 @@
         "shareFollow": "Udostępnij link do śledzenia"
       },
       "share": {
+        "editDesc": "Może wyświetlać i edytować",
+        "editLabel": "Edycja",
+        "expires": "Wygasa",
+        "invalidEmail": "Wpisz prawidłowy adres e-mail",
+        "inviteAdded": "Dodano współpracownika",
+        "inviteAddedAndSent": "Dodano współpracownika — skopiowano odnośnik i otwarto wiadomość e-mail",
+        "inviteNote": "Zaproszenie dodaje tę osobę jako współpracownika z wybraną rolą i przesyła jej odnośnik.",
+        "inviteSent": "Zaproszenie gotowe — skopiowano odnośnik i otwarto wiadomość e-mail",
+        "permEdit": "edycja",
+        "permView": "wyświetlanie",
+        "permissions": "Uprawnienia",
+        "revokeFailed": "Nie udało się cofnąć odnośnika do udostępniania",
+        "revoked": "Cofnięto odnośnik do udostępniania",
+        "rotate": "Utwórz nowy odnośnik",
+        "viewDesc": "Może wyświetlać prezentację",
+        "viewLabel": "Wyświetlanie",
         "collaborate": "Współpracuj",
         "shareLink": "Udostępnij link",
         "export": "Eksportuj",
@@ -1310,6 +1424,10 @@
         }
       },
       "versionHistory": {
+        "loading": "Ładowanie historii wersji…",
+        "retry": "Spróbuj ponownie",
+        "unavailable": "Historia wersji jest niedostępna",
+        "unavailableHint": "Prezentacja jest nadal dostępna. Spróbuj ponownie wczytać zapisane wersje.",
         "title": "Historia wersji",
         "unsavedChanges": "Niezapisane zmiany",
         "allSaved": "Wszystkie zmiany zapisane",
@@ -1511,6 +1629,7 @@
       "deletedNoun": "usunięto"
     },
     "relations": {
+      "usedOnCount": "Użyto w {{count}} materiałach",
       "empty": "Brak powiązanych źródeł. Bloki wygenerowane z inicjatyw, analiz i narzędzi pojawią się tutaj.",
       "jumpTo": "Przejdź do artefaktu",
       "subtitle": "Wszystkie źródła powiązane z tą prezentacją — kliknij, aby przejść do artefaktu.",
@@ -25266,9 +25385,12 @@
         "shared": "Udostępniony",
         "deprecated": "Wycofany"
       },
-      "showDrafts": "Pokaż robocze"
+      "showDrafts": "Pokaż robocze",
+      "statusLabel": "Status"
     },
     "actions": {
+      "newDocument": "Nowy dokument",
+      "newSheet": "Nowy arkusz",
       "newTemplate": "Nowy wzorzec",
       "newReport": "Nowy raport",
       "newPresentation": "Nowa prezentacja",
@@ -25309,6 +25431,14 @@
       "outputs": "Brak outputów"
     },
     "preview": {
+      "ai": {
+        "improve": "Zaproponuj ulepszenia",
+        "summary": "Podsumuj sekcje"
+      },
+      "aiNextSteps": "Zaproponuj kolejne kroki",
+      "aiSummarize": "Podsumuj raport",
+      "open": "Podgląd",
+      "source": "Źródło",
       "useTemplate": "Użyj tego wzorca",
       "openFull": "Otwórz pełny",
       "slides": "slajdów",
@@ -25322,6 +25452,37 @@
       "migrationHint": "Zamiennik",
       "replacedBy": "Nowy wzorzec",
       "updatedAt": "Ostatnia zmiana"
+    },
+    "materialsLauncher": {
+      "aiDesc": "Opisz materiał — AI przygotuje pierwszą wersję.",
+      "aiTitle": "Z AI",
+      "blankDesc": "Ręczny start w pustym edytorze, bez AI.",
+      "blankTitle": "Czysto",
+      "chooseMode": "Jak chcesz zacząć?",
+      "document": "Dokument",
+      "modeHint": "Wybierz tryb — wszystkie trzy są równorzędne.",
+      "presentation": "Prezentacja",
+      "spreadsheet": "Arkusz",
+      "subtitle": "Wybierz format",
+      "templateDesc": "Wybierz istniejący wzorzec i dostosuj go.",
+      "templateTitle": "Z wzorca",
+      "title": "Nowy materiał"
+    },
+    "templatesLauncher": {
+      "aiDesc": "Opisz wzorzec — architekt zaplanuje jego strukturę.",
+      "aiTitle": "Z AI",
+      "blankDesc": "Nowy wzorzec od zera w architekcie.",
+      "blankTitle": "Od zera",
+      "document": "Dokument",
+      "existingDesc": "Sklonuj zatwierdzony wzorzec i dostosuj go.",
+      "existingTitle": "Na bazie istniejącego",
+      "moreOptions": "Więcej opcji tworzenia wzorców",
+      "openDeckArchitect": "Architekt wzorców prezentacji",
+      "openWorkbookTemplates": "Generator wzorców arkuszy",
+      "presentation": "Prezentacja",
+      "spreadsheet": "Arkusz",
+      "subtitle": "Wybierz rodzaj wzorca",
+      "title": "Nowy wzorzec"
     },
     "toast": {
       "exported": "Wyeksportowano",
@@ -25353,6 +25514,16 @@
       "retry": "Spróbuj ponownie"
     },
     "outputs": {
+      "ai": {
+        "suggestNext": "Zaproponuj kolejne kroki",
+        "summarize": "Podsumuj"
+      },
+      "archive": {
+        "sheetsComingSoon": "Archiwizacja arkuszy nie jest jeszcze dostępna"
+      },
+      "delete": {
+        "comingSoon": "Usuwanie nie jest jeszcze dostępne"
+      },
       "launcher": {
         "title": "Nowy output",
         "subtitle": "Wybierz, co chcesz utworzyć",
@@ -25379,6 +25550,7 @@
         "suggestResult": "Teresa rekomenduje",
         "suggestAccept": "Użyj tego szablonu",
         "bundle": "Komplet AI",
+        "bundleBriefPlaceholder": "Opisz firmę, produkt, rynek, potrzebne finansowanie i najważniejsze wskaźniki.",
         "bundleHint": "Jeden brief → DOCX + XLSX + PPTX pobrane jako ZIP",
         "bundleTitle": "Komplet AI — brief",
         "bundleSubtitle": "Opisz swoją firmę, produkt, rynek i ask w jednym akapicie. AI wygeneruje DOCX + XLSX + PPTX i pobierze je jako ZIP.",
@@ -25408,6 +25580,7 @@
         "document": "Dokument"
       },
       "columns": {
+        "format": "Format",
         "source": "źródło",
         "visibility": "Widoczność",
         "review": "Przegląd",
@@ -25415,6 +25588,8 @@
         "exports": "Eksporty"
       },
       "preview": {
+        "originsCount": "Źródła pochodzenia: {{count}}",
+        "sourcesCount": "Materiały źródłowe: {{count}}",
         "status": "Status",
         "source": "źródło",
         "lineageLoadFailed": "Nie udało się załadować pełnej genezy tego uruchomienia",
@@ -25503,6 +25678,18 @@
       }
     },
     "bundles": {
+      "untitled": "Komplet bez tytułu",
+      "detail": {
+        "created": "Utworzono",
+        "language": "Język",
+        "quality": "Jakość",
+        "status": "Status"
+      },
+      "quality": {
+        "issues": "Problemy z jakością",
+        "ok": "Jakość poprawna",
+        "pending": "Oczekuje na kontrolę"
+      },
       "title": "Komplet AI — historia generacji",
       "empty": "Brak wygenerowanych materiałów",
       "loading": "Ładowanie historii…",
@@ -25554,9 +25741,26 @@
       "confirmArchiveDecksDesc": "Zarchiwizujesz {{count}} prezentacji. Operacja jest odwracalna."
     },
     "templateBuilder": {
-      "saved": "Szablon zapisany"
+      "saved": "Wzorzec zapisany",
+      "savedBuildNow": "Wzorzec zapisany — wybierz „Zbuduj skoroszyt”"
     },
     "templates": {
+      "allFormats": "Wszystkie formaty",
+      "allScopes": "Wszystkie źródła",
+      "backToLibrary": "Wzorce",
+      "deprecatedUseBlocked": "Wycofanego wzorca nie można użyć.",
+      "galleryEmpty": "Żaden wzorzec nie pasuje do filtrów.",
+      "legacyBadge": "Starszy wzorzec",
+      "orphanedBadge": "Brak źródła",
+      "orphanedHint": "Brak rekordu źródłowego wzorca — generowanie jest niedostępne.",
+      "provenanceQueue": "Pochodzenie i prawa",
+      "scopeUnknown": "Nieznany",
+      "statusApproved": "Zatwierdzony",
+      "statusPublished": "Opublikowany",
+      "statusUnknown": "Nieznany",
+      "useBlocked": "Brak rekordu źródłowego wzorca — generowanie jest niedostępne.",
+      "viewGallery": "Galeria",
+      "viewTable": "Tabela",
       "legacySourceLine": "Starszy rejestr wzorców — działa bez zmian",
       "legacyHint": "Wzorzec ze starszego rejestru wzorców — generacja działa bez zmian."
     }
@@ -28311,6 +28515,19 @@
     "breadcrumb": {
       "new": "Nowy arkusz",
       "open": "Arkusz"
+    },
+    "rightPanel": {
+      "actions": "Akcje", "allFiles": "Wszystkie pliki", "ariaLabel": "Szczegóły arkusza", "checkpoint": "Utwórz punkt kontrolny", "comments": "Komentarze", "commentsEmpty": "Komentarze będą dostępne wkrótce", "download": "Pobierz XLSX", "exportCsv": "Eksportuj CSV", "fileName": "Plik", "format": "Format", "history": "Historia", "historyEmpty": "Historia pojawi się po wygenerowaniu", "historyFailed": "Generowanie nie powiodło się", "openWorkspace": "Otwórz w arkuszu", "properties": "Właściwości", "propertiesEmpty": "Właściwości pojawią się po wygenerowaniu arkusza", "quality": "Jakość", "relations": "Powiązania", "relationsEmpty": "Brak powiązanych obiektów", "revokeShare": "Cofnij udostępnienie", "share": "Udostępnij i skopiuj link", "sheets": "Arkusze", "sourceTable": "Tabela źródłowa", "versionHistory": "Historia wersji"
+    },
+    "rightRail": {
+      "resize": "Zmień szerokość panelu",
+      "checkpoint": "Utwórz punkt kontrolny", "collapseLabel": "Zwiń lub rozwiń pasek narzędzi", "download": "Pobierz XLSX", "exportCsv": "Eksportuj CSV", "fileName": "Plik", "format": "Format", "history": "Historia i wydania", "historyEmpty": "Historia pojawi się po wygenerowaniu", "historyFailed": "Generowanie nie powiodło się", "historySubtitle": "Kroki generowania tego arkusza.", "historyTitle": "Historia i wydania", "quality": "Jakość", "revokeShare": "Cofnij udostępnienie", "selected": "Wybrane", "selectedSubtitle": "Nic nie jest zaznaczone — pokazano właściwości całego dokumentu.", "selectedTitle": "Wybrane", "share": "Udostępnij i skopiuj link", "sheets": "Arkusze", "sourceTable": "Tabela źródłowa", "sources": "Źródła i liczby", "sourcesEmpty": "Ten arkusz nie ma zapisanego źródła danych.", "sourcesSubtitle": "Pochodzenie danych w tym arkuszu.", "sourcesTitle": "Źródła i liczby", "structure": "Struktura", "structureDisabled": "Arkusz nie ma jeszcze żadnej karty do pokazania", "structureEmpty": "Arkusz nie ma jeszcze żadnej karty.", "structureRows": "{{count}} wierszy", "structureSubtitle": "Układ skoroszytu i arkuszy.", "structureTitle": "Struktura", "versionHistory": "Historia wersji"
+    },
+    "shared": {
+      "badge": "Udostępniony skoroszyt — tylko do odczytu", "loading": "Ładowanie udostępnionego skoroszytu…", "selectSheet": "Wybierz arkusz", "unavailableBody": "Link do udostępnienia jest nieprawidłowy, cofnięty albo wygasł.", "unavailableTitle": "Skoroszyt jest niedostępny", "untitled": "Skoroszyt bez tytułu"
+    },
+    "versionHistory": {
+      "confirmAction": "Przywróć", "confirmMessage": "Przywrócić wersję {{version}}? Bieżący stan zostanie zachowany w historii jako nowa wersja.", "conflict": "Skoroszyt zmienił się w międzyczasie. Bieżąca wersja: {{version}}. Odśwież i spróbuj ponownie.", "empty": "Brak zapisanej historii — edytuj komórkę, aby utworzyć pierwszą wersję.", "loadFailed": "Nie udało się wczytać historii wersji.", "loading": "Ładowanie…", "refresh": "Odśwież", "restore": "Przywróć", "restoreFailed": "Nie udało się przywrócić wersji", "restoring": "Przywracanie…", "sheets": "arkusze", "title": "Historia wersji", "version": "Wersja"
     }
   },
   "aiActions": {
@@ -29526,6 +29743,73 @@
     }
   },
   "documentStudio": {
+    "aiEntry": {
+      "placeholderHint": "Opisz w oknie obok, jakiego dokumentu potrzebujesz — Teresa zaplanuje strukturę i przygotuje pierwszą wersję.",
+      "placeholderTitle": "Twój dokument pojawi się tutaj",
+      "startingReply": "Zaczynam planować i pisać dokument — pojawi się obok za chwilę.",
+      "teresaTitle": "Teresa"
+    },
+    "blank": {
+      "creating": "Tworzenie pustego dokumentu…",
+      "description": "Pusty dokument roboczy do samodzielnej edycji.",
+      "section": "Sekcja 1",
+      "title": "Nowy dokument"
+    },
+    "comments": {
+      "addComment": "Dodaj komentarz",
+      "addFailed": "Nie udało się dodać komentarza",
+      "added": "Dodano komentarz",
+      "adding": "Dodawanie…",
+      "anchorBlock": "Blok",
+      "anchorDocument": "Cały dokument",
+      "anchorGoTo": "Przejdź do tego miejsca w dokumencie",
+      "anchorNotFound": "Ta sekcja nie jest widoczna w bieżącym widoku.",
+      "anchorSection": "Sekcja",
+      "anchorUnknownSection": "Nieznana sekcja",
+      "cancel": "Anuluj",
+      "composerPlaceholder": "Dodaj komentarz do przeglądu całego dokumentu…",
+      "delete": "Usuń",
+      "deleteFailed": "Nie udało się usunąć komentarza",
+      "deleted": "Usunięto komentarz",
+      "deletedComment": "Usunięty komentarz",
+      "empty": "Nie ma jeszcze komentarzy.",
+      "emptyFilter": "Żaden wątek nie pasuje do filtra.",
+      "filterAll": "Wszystkie",
+      "filterLabel": "Filtruj wątki",
+      "filterOpen": "Otwarte",
+      "filterResolved": "Rozwiązane",
+      "loadFailed": "Nie udało się wczytać komentarzy",
+      "loading": "Ładowanie…",
+      "refresh": "Odśwież",
+      "reopen": "Otwórz ponownie",
+      "reopenFailed": "Nie udało się ponownie otworzyć wątku",
+      "reopened": "Ponownie otwarto wątek",
+      "reply": "Odpowiedz",
+      "replyAdded": "Dodano odpowiedź",
+      "replyFailed": "Nie udało się dodać odpowiedzi",
+      "replyPlaceholder": "Napisz odpowiedź…",
+      "replySend": "Wyślij odpowiedź",
+      "resolve": "Rozwiąż",
+      "resolveConfirm": "Potwierdź rozwiązanie",
+      "resolveFailed": "Nie udało się rozwiązać wątku",
+      "resolveReasonPlaceholder": "Opcjonalny powód rozwiązania…",
+      "resolved": "Rozwiązano wątek",
+      "resolvedBy": "Rozwiązał(a): {{name}}",
+      "statusOpen": "Otwarty",
+      "statusResolved": "Rozwiązany",
+      "subtitle": "Wątki przeglądu tego dokumentu. Odnośniki do sekcji i bloków prowadzą do właściwego miejsca w edytorze.",
+      "title": "Komentarze"
+    },
+    "tri": {
+      "aiDesc": "Opisz dokument — Studio zaplanuje strukturę i pierwszą wersję.",
+      "aiTitle": "Z AI",
+      "cleanDesc": "Pusty dokument w edytorze. Piszesz samodzielnie, bez AI.",
+      "cleanTitle": "Od zera",
+      "heading": "Jak chcesz zacząć dokument?",
+      "subheading": "Wybierz tryb — wszystkie trzy są równorzędne.",
+      "templateDesc": "Zacznij od zatwierdzonego wzorca i dostosuj treść.",
+      "templateTitle": "Z wzorca"
+    },
     "editor": {
       "target": "cel",
       "reject": "Odrzuć",
@@ -29667,6 +29951,11 @@
       "align": "Uzgodnić z interesariuszami"
     },
     "intake": {
+      "backToModes": "Wybór trybu",
+      "requiredSourcePlaceholder": "Wklej treść, adres URL lub identyfikator istniejącego załącznika",
+      "sourceAttachment": "Identyfikator załącznika",
+      "sourceText": "Tekst",
+      "sourceUrl": "Adres URL",
       "titleTemplateMode": "Generuj z zatwierdzonego szablonu",
       "titleFreeMode": "Generuj bez szablonu",
       "subtitleTemplateMode": "Konspekt i formatowanie są uzupełniane na podstawie wybranego szablonu. Poniższy brief dostarcza treści dokumentu.",
@@ -29697,6 +29986,10 @@
       "contextChip": "Kontekst: {{organizationName}}"
     },
     "outline": {
+      "addSection": "+ Dodaj sekcję",
+      "newSectionDefault": "Nowa sekcja",
+      "newSectionPrompt": "Nazwa nowej sekcji",
+      "saveFailed": "Nie udało się zapisać struktury.",
       "type": "Typ",
       "density": "Gęstość",
       "register": "Rejestr",
@@ -29706,6 +29999,22 @@
       "generate": "Generuj dokument"
     },
     "templateArchitect": {
+      "bodyFont": "Krój i styl tekstu",
+      "deleteDraft": "Usuń wersję roboczą",
+      "footer": "Stopka",
+      "footerContent": "Treść stopki",
+      "footerContentPlaceholder": "np. Tylko do użytku wewnętrznego",
+      "header": "Nagłówek",
+      "headerContent": "Treść nagłówka",
+      "headerContentPlaceholder": "np. Poufne — dla zarządu",
+      "history": "Historia wersji",
+      "newVersion": "Utwórz nową wersję",
+      "pageNumbering": "Numerowanie stron",
+      "requiredInputs": "Wymagane materiały źródłowe (po jednym w wierszu)",
+      "requiredSectionMarker": "Sekcja wymagana",
+      "structurePreviewAriaLabel": "Podgląd struktury dokumentu, liczba sekcji: {{count}}",
+      "validate": "Sprawdź",
+      "wordSettings": "Układ dokumentu",
       "heading": "Kreator szablonów dokumentów",
       "subheading": "Zaprojektuj wielokrotnego użytku, zarządzany szablon Word/PDF. Szkice muszą zostać zatwierdzone, zanim będą mogły napędzać generowanie w Trybie 3.",
       "draftHeading": "Utwórz szkic nowego szablonu",
@@ -29771,6 +30080,16 @@
       "structurePreviewEmpty": "Brak sekcji do pokazania."
     },
     "view": {
+      "artifactLoadFailedGeneric": "Nie udało się załadować dokumentu. Spróbuj ponownie za chwilę.",
+      "artifactNotFound": "Nie znaleziono tego dokumentu. Mógł zostać usunięty albo odnośnik prowadzi do innego typu materiału.",
+      "backToLibrary": "Wróć do biblioteki wzorców",
+      "templateDeprecated": "Ten wzorzec został wycofany.",
+      "templateForbidden": "Nie masz dostępu do tego wzorca.",
+      "templateFormatUnsupported": "Format tego wzorca nie jest obsługiwany.",
+      "templateNotIndexed": "Ten wzorzec nie jest dostępny w bibliotece.",
+      "templateOrphaned": "Nie znaleziono źródła tego wzorca.",
+      "templateResolveFailed": "Nie udało się sprawdzić wybranego wzorca.",
+      "templateResolving": "Sprawdzam wybrany wzorzec…",
       "templatesLoadFailedWithReason": "Nie udało się wczytać zatwierdzonych szablonów ({{reason}}). Nadal możesz generować bez szablonu.",
       "templatesLoadFailed": "Nie udało się wczytać zatwierdzonych szablonów. Nadal możesz generować bez szablonu.",
       "loadFailed": "Nie udało się wczytać dokumentu",
@@ -29808,12 +30127,38 @@
       "attention": "Wymaga uwagi",
       "allClear": "Wszystko w porządku",
       "fabrication": {
+        "notDetected": "Nie wykryto nieoznaczonych dokładnych liczb — zgodność ze źródłami nie została potwierdzona",
         "verified": "Zweryfikowane — brak niepopartych liczb",
         "degraded": "Zdegradowane ({{count}} nieoznaczonych liczb)",
         "hint": "Zweryfikuj te liczby wobec źródeł lub oznacz jako założenie „(założenie)\" przed eksportem partnerskim/klientowi."
       }
     },
     "panel": {
+      "approvalTab": "Zatwierdzenie",
+      "chipQaReview": "Kontrola jakości i przegląd",
+      "contextMenu": "Menu kontekstowe dokumentu",
+      "contextTools": "Narzędzia dokumentu",
+      "documentPanelViews": "Widoki panelu dokumentu",
+      "reviewTabs": "Kontrola jakości i zatwierdzanie",
+      "sectionCount": "Liczba sekcji: {{count}}",
+      "shareRevoke": "Cofnij udostępnienie",
+      "shareRevoked": "Cofnięto odnośnik do udostępniania",
+      "shareRotate": "Utwórz nowy odnośnik",
+      "shareRotated": "Utworzono nowy odnośnik do udostępniania",
+      "snapshotCapture": "Utwórz punkt kontrolny",
+      "snapshotCapturing": "Tworzenie…",
+      "snapshotCreateFailed": "Nie udało się utworzyć punktu kontrolnego",
+      "snapshotManualLabel": "Ręczny punkt kontrolny",
+      "snapshotRestore": "Przywróć wybrany",
+      "snapshotRestoreConfirm": "Potwierdź przywrócenie",
+      "snapshotRestoreFailed": "Nie udało się przywrócić punktu kontrolnego",
+      "snapshotRestoring": "Przywracanie…",
+      "structureTitle": "Struktura dokumentu",
+      "toolEvidence": "Źródła i założenia",
+      "toolHistory": "Historia",
+      "toolMore": "Więcej narzędzi",
+      "toolMoreBack": "Wróć do narzędzi",
+      "toolQaReview": "Kontrola jakości i przegląd",
       "assumptionFlag": "Założenie — wymaga źródła",
       "notSet": "Nie ustawiono",
       "connectorDegraded": "ograniczone: bramka konektora zewnętrznego",

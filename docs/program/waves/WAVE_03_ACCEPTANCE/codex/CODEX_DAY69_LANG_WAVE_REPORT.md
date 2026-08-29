@@ -3,7 +3,7 @@
 Data: 2026-08-29  
 Gałąź: `codex/day69-lang-wave-20260829`  
 Marker: `f21bc627ad9c30b5dcc33b07af6e259d22a3456f`  
-Werdykt: **PARTIAL — C.1 domknięte; C.2 rozpoczęte po checkpointcie; C.3–C.6 NIEZWERYFIKOWANE**
+Werdykt: **PARTIAL — C.1 i C.2 domknięte; C.3–C.6 NIEZWERYFIKOWANE**
 
 ## §0.1 — baza, marker i sanity
 
@@ -320,3 +320,51 @@ Po ostatniej korekcie kompatybilności testów oba buildy powtórzono: backend *
 ### Stan po C.1
 
 C.1 spełnia K1–K4: klasa A **418 z 418**, klasa F Finance **57 z 57**, klasy B–E **73 z 73 plików**, K3 **4 z 4 powierzchni**, porównanie K4 **23 z 23 nazw bez delty**. C.2 wolno rozpocząć dopiero od kolejnego checkpointu tej gałęzi.
+
+## C.2 — Materiały: Document Studio, Prezentacje, Excele i Raporty
+
+### Klasa A — 4 z 4 obszarów
+
+Niezależny pomiar początkowy wykazał **352 z 1250** brakujących wartości: `documentStudio 121 z 530`, `presentations 89 z 385`, `excele 73 z 75`, `rap 69 z 260`. Po zmianie wszystkie wywołania mają polską wartość:
+
+- `documentStudio`: **529 z 529** (jedno wystąpienie w komentarzu skorygowano do rzeczywistego klucza z obiektu breadcrumbów);
+- `presentations`: **385 z 385**;
+- `excele`: **75 z 75**;
+- `rap`: **260 z 260**.
+
+Łącznie końcowy wynik klasy A to **1249 z 1249** używanych kluczy w 4 z 4 obszarów. JSON parsuje się poprawnie i ma **0 z 0** zduplikowanych nazw kluczy. Kolizję `rap.filters.status` rozwiązano przez osobny klucz etykiety `statusLabel`; obiekt statusów i kontrakt API pozostały bez zmian.
+
+### Klasy B–E i F — 73 z 73 plików
+
+Przejrzano **73 z 73** unikalnych plików zakresu zapisanych w `/private/tmp/cx-day69-artefakty/c2-scope-files.txt`:
+
+- B: usunięto widoczne angielskie teksty z komentarzy, konfliktów współpracy, historii wersji, ustawień marki, architektów wzorców, palet, narzędzi bloków i stanów raportów;
+- C: techniczne wartości opcji pozostają niezmienione, lecz ich etykiety są polskie; nie zmieniono kontraktów API;
+- D: określenia `snapshot`, `Brand Kit`, `telemetry`, surowe etykiety uprawnień i angielskie nazwy narzędzi zastąpiono opisami dla użytkownika. `P0/P1/P2`, formaty `PPT/PPTX/XLSX/DOCX/JSON` i nazwy krojów pisma pozostają jako rzeczywiste oznaczenia produktu lub formatów;
+- E: porównano znaczenie istniejących wartości PL z fallbackami EN w **73 z 73** plików; potwierdzone rozjazdy czynność dostępna/niedostępna: **0 z 73**;
+- F: zinwentaryzowano **29 z 29** widocznych wywołań formatowania dat i liczb w zakresie. Wszystkie **29 z 29** oceniono kontekstowo; daty bez jawnego locale otrzymały `pl-PL`, istniejące przełączenia `pl-PL/en-US` pozostawiono, a czas oglądania używa przecinka dziesiętnego w języku polskim. W tym zakresie nie znaleziono widocznej kwoty wymagającej zmiany formatu.
+
+Widoczna w runtime angielska etykieta dostępności `Resize right rail` została usunięta przez opcjonalną etykietę wspólnego uchwytu; ekran Excele pokazuje „Zmień szerokość panelu”.
+
+### K3 — 4 z 4 powierzchni ze stylami
+
+Harness działał na porcie `4630`, importował rzeczywiste komponenty i `src/index.css`. Obejrzano **4 z 4** powierzchni w runtime:
+
+- Document Studio: `/private/tmp/cx-day69-artefakty/c2-k3-documentStudio.jpg`, SHA-256 `80d203343e3a5783ccb8369b9688490da854d6fb2245e99ad8295266a307da75`;
+- Prezentacje: `/private/tmp/cx-day69-artefakty/c2-k3-presentations.jpg`, SHA-256 `9779be25932a77bc0fc8681496018b6cd23f4a6155688bf9787ed9270c9e3c71`;
+- Excele: `/private/tmp/cx-day69-artefakty/c2-k3-excele.jpg`, SHA-256 `815f89b87b3571c21e7f4ed71a81932293d49b363bea03b0121094e128f9ef78`;
+- Raporty: `/private/tmp/cx-day69-artefakty/c2-k3-rap.jpg`, SHA-256 `09484bafbd21330c79781d013ca2cf6b2a76a7287d5cfee3ceb63ae76d4ef4bb`.
+
+Zrzut Excele wykonano ponownie z otwartym panelem „Wybrane”, dlatego dowodzi treści produktu, a nie samego paska ikon. Teksty mieszczą się; na 4 z 4 zrzutach nie stwierdzono pęknięcia układu.
+
+### K4 — marker kontra bieżący stan
+
+Ten sam pakiet **234 z 234** przypadków uruchomiono z `--retry=0` na markerze i po zmianach. Marker: **233 z 234 PASS, 1 z 234 FAIL**. Stan bieżący: **233 z 234 PASS, 1 z 234 FAIL**. Zgodność po pełnych nazwach: **234 z 234**, delta regresji: **0 z 234**.
+
+Jedyny czerwony przypadek w obu stanach to `PresentationStudioLayoutCapacityAdminPanel — loadWarning > renders a rose loadWarning banner for signature_mismatch`. Dotyczy crimson i zgodnie z poleceniem pozostał nietknięty. Dowody: marker `/private/tmp/cx-day69-artefakty/c2-tests-marker.json`, SHA-256 `4d031f1230882233004111cd5f3b1b1c8d1624ec3cfdfe03e37eae211518402d`; stan bieżący `/private/tmp/cx-day69-artefakty/c2-tests-current-final3.json`, SHA-256 `e75d5bd5a05f12970bf3642aae7ac32ae62330974efe68968147952db54833a4`.
+
+K2: backend **1 z 1 PASS**. Frontend **1 z 1 PASS**, `✓ built in 42.35s`; log `/private/tmp/cx-day69-artefakty/c2-frontend-build-final.log`, SHA-256 `0ed250b83c405a4f1263f76f1f374101adee0d16f4d8e1865532aeb85dad3d1b`.
+
+### Stan po C.2
+
+C.2 spełnia K1–K4: klasa A **1249 z 1249**, klasy B–E **73 z 73 plików**, klasa F **29 z 29 wywołań**, K3 **4 z 4 powierzchni**, K4 **234 z 234 nazw bez delty**, backend **1 z 1 PASS** i frontend **1 z 1 PASS**. Crimson: **1 z 1** zastanych czerwonych przypadków świadomie nietknięty. C.3–C.6 pozostają NIEZWERYFIKOWANE.

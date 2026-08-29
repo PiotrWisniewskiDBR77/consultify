@@ -996,10 +996,10 @@ export const PresentationTemplateArchitectView: React.FC<
 
             <section
               className="mt-3 rounded-lg border border-c-border-subtle bg-c-surface p-3"
-              aria-label="Template version history"
+              aria-label="Historia wersji wzorca"
             >
               <div className="flex items-center justify-between gap-2">
-                <h4 className="text-xs font-semibold text-c-text">Version history</h4>
+                <h4 className="text-xs font-semibold text-c-text">Historia wersji</h4>
                 <span className="text-[10px] text-c-text-secondary">
                   {lineage.length} version(s)
                 </span>
@@ -1272,7 +1272,7 @@ export const PresentationTemplateArchitectView: React.FC<
                         onChange={(event) =>
                           updateTemplateVariable(index, { key: event.target.value })
                         }
-                        placeholder="key"
+                        placeholder="klucz"
                         className="rounded border border-c-border-subtle bg-c-surface px-2 py-1 text-xs"
                       />
                       <input
@@ -1282,7 +1282,7 @@ export const PresentationTemplateArchitectView: React.FC<
                         onChange={(event) =>
                           updateTemplateVariable(index, { label: event.target.value })
                         }
-                        placeholder="Label"
+                        placeholder="Etykieta"
                         className="rounded border border-c-border-subtle bg-c-surface px-2 py-1 text-xs"
                       />
                       <select
@@ -1309,7 +1309,7 @@ export const PresentationTemplateArchitectView: React.FC<
                         onChange={(event) =>
                           updateTemplateVariable(index, { defaultValue: event.target.value })
                         }
-                        placeholder="Default"
+                        placeholder="Wartość domyślna"
                         className="rounded border border-c-border-subtle bg-c-surface px-2 py-1 text-xs"
                       />
                       <label className="flex items-center gap-1 text-xs text-c-text-secondary">
@@ -1343,7 +1343,7 @@ export const PresentationTemplateArchitectView: React.FC<
                         onChange={(event) =>
                           updateTemplateVariable(index, { description: event.target.value })
                         }
-                        placeholder="Description"
+                        placeholder="Opis"
                         className="rounded border border-c-border-subtle bg-c-surface px-2 py-1 text-xs sm:col-span-3"
                       />
                       {variable.type === 'enum' ? (
@@ -1359,7 +1359,7 @@ export const PresentationTemplateArchitectView: React.FC<
                                 .filter(Boolean),
                             })
                           }
-                          placeholder="Options, comma separated"
+                          placeholder="Opcje oddzielone przecinkami"
                           className="rounded border border-c-border-subtle bg-c-surface px-2 py-1 text-xs sm:col-span-3"
                         />
                       ) : null}
@@ -1647,7 +1647,7 @@ export const PresentationTemplateArchitectView: React.FC<
                 className={`mt-3 rounded-lg border p-3 text-xs ${validationIssues.length === 0 ? 'border-success-500/30 bg-success-500/10 text-success-700' : 'border-danger-500/30 bg-danger-500/10 text-danger-700'}`}
               >
                 {validationIssues.length === 0 ? (
-                  <p className="font-medium">Validation passed. This draft is ready to publish.</p>
+                  <p className="font-medium">Kontrola zakończona pomyślnie. Wersja robocza jest gotowa do publikacji.</p>
                 ) : (
                   <>
                     <p className="font-medium">

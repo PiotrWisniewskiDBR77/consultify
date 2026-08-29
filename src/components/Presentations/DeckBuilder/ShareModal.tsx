@@ -422,7 +422,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                   {shareExpiresAt ? (
                     <p className="text-xs text-c-text-secondary">
                       {t('presentations.builder.share.expires', 'Expires')}:{' '}
-                      {new Date(shareExpiresAt).toLocaleString()}
+                      {new Date(shareExpiresAt).toLocaleString('pl-PL')}
                     </p>
                   ) : null}
                   <button

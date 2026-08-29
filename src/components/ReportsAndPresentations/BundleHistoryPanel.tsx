@@ -56,10 +56,10 @@ function LifecycleBadge({ state }: { state: string }) {
 
 function QualityIcon({ passed }: { passed: boolean | null }) {
   if (passed === true)
-    return <CheckCircle2 className="h-4 w-4 text-green-500" aria-label="Quality OK" />;
+    return <CheckCircle2 className="h-4 w-4 text-green-500" aria-label="Jakość poprawna" />;
   if (passed === false)
-    return <XCircle className="h-4 w-4 text-red-500" aria-label="Quality issues" />;
-  return <Clock className="h-4 w-4 text-c-text-muted" aria-label="Quality pending" />;
+    return <XCircle className="h-4 w-4 text-red-500" aria-label="Problemy z jakością" />;
+  return <Clock className="h-4 w-4 text-c-text-muted" aria-label="Kontrola jakości w toku" />;
 }
 
 // ---------------------------------------------------------------------------
@@ -68,7 +68,7 @@ function QualityIcon({ passed }: { passed: boolean | null }) {
 
 function formatDate(iso: string): string {
   try {
-    return new Date(iso).toLocaleDateString(undefined, {
+    return new Date(iso).toLocaleDateString('pl-PL', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
