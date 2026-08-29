@@ -13,6 +13,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 
+import bcrypt from 'bcryptjs';
 import pg from 'pg';
 
 const CONFIRM_ENV = 'SEED_WAVE3_INTERVIEW_OWNER_REVIEW';
@@ -84,6 +85,40 @@ const questions = [
 const client = new pg.Client({ connectionString: databaseUrl });
 await client.connect();
 try {
+  if (command === 'seed') {
+    // Migrations never create this fixture principal and no other seeder owns
+    // it, so the Interview fixture bootstraps its own organization and owner.
+    // Idempotent ON CONFLICT(id) DO UPDATE mirrors the Wave 3 Tools fixture.
+    await client.query(
+      `INSERT INTO organizations(id,name,status) VALUES($1,'W3 Interview Owner Review','active')
+       ON CONFLICT(id) DO UPDATE SET name=excluded.name, status=excluded.status`,
+      [organizationId]
+    );
+    await client.query(
+      `INSERT INTO users(id,organization_id,email,password,first_name,last_name,role,status,language,timezone)
+       VALUES($1,$2,$3,$4,'Piotr','Wiśniewski','ADMIN','active','pl','Europe/Warsaw')
+       ON CONFLICT(id) DO UPDATE SET
+         organization_id=excluded.organization_id, email=excluded.email,
+         role=excluded.role, status=excluded.status, updated_at=CURRENT_TIMESTAMP`,
+      [
+        ownerId,
+        organizationId,
+        'w3.interview.owner@local.test',
+        await bcrypt.hash(process.env.WAVE3_OWNER_PASSWORD ?? 'Wave3InterviewOwner!2026', 10),
+      ]
+    );
+    // AuthController login gate reads organization_members with
+    // UPPER(COALESCE(status,''))='ACTIVE' and overwrites the session role with
+    // the membership role; without this row login fails ORG_MEMBERSHIP_REVOKED.
+    // Conflict target is the natural key, not the synthetic id.
+    await client.query(
+      `INSERT INTO organization_members(id,organization_id,user_id,role,status)
+       VALUES($1,$2,$3,'ADMIN','ACTIVE')
+       ON CONFLICT(organization_id,user_id) DO UPDATE SET
+         role=excluded.role, status=excluded.status`,
+      [`membership-${ownerId}`, organizationId, ownerId]
+    );
+  }
   const identity = await client.query<{
     organization_id: string;
     role: string;
