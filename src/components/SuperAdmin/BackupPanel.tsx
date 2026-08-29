@@ -5,11 +5,22 @@
 import { CheckCircle, Download, HardDrive, Loader2, Plus, Trash2, XCircle } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
+import {
+  formatPresentationCount,
+  knownPresentation,
+  type PresentationState,
+  unknownPresentation,
+} from '../../utils/presentationState';
 
 export const BackupPanel: React.FC = () => {
+  const { t } = useTranslation();
   const [backups, setBackups] = useState<any[]>([]);
+  const [backupsPresentation, setBackupsPresentation] = useState<PresentationState<number>>(
+    unknownPresentation(t('presentationState.backupsPendingReason', 'backups are loading'))
+  );
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
 
@@ -22,9 +33,15 @@ export const BackupPanel: React.FC = () => {
     try {
       const data = await (Api as any).getBackups();
       setBackups(data);
+      setBackupsPresentation(knownPresentation(Array.isArray(data) ? data.length : 0));
     } catch (error) {
       console.error('Failed to fetch backups:', error);
       toast.error('Failed to load backups');
+      setBackupsPresentation(
+        unknownPresentation(
+          t('presentationState.backupsLoadFailedReason', 'backups could not be loaded')
+        )
+      );
     } finally {
       setLoading(false);
     }
@@ -85,7 +102,17 @@ export const BackupPanel: React.FC = () => {
       </div>
 
       <div className="space-y-2">
-        {backups.length === 0 ? (
+        {backupsPresentation.state === 'unknown' ? (
+          <div className="text-center py-12 text-slate-400 dark:text-slate-500">
+            <XCircle size={48} className="mx-auto mb-4 text-danger-400" />
+            <p>
+              {formatPresentationCount(backupsPresentation, {
+                hidden: t('presentationState.hidden', 'hidden'),
+                unknown: t('presentationState.unknown', 'unknown'),
+              })}
+            </p>
+          </div>
+        ) : backups.length === 0 ? (
           <div className="text-center py-12 text-slate-400 dark:text-slate-500">
             <HardDrive size={48} className="mx-auto mb-4 opacity-50" />
             <p>No backups available</p>

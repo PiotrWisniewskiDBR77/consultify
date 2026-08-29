@@ -41373,5 +41373,15 @@
         "cancel": "Anuluj"
       }
     }
+  },
+  "presentationState": {
+    "hidden": "ukryte",
+    "unknown": "nieznane",
+    "outputsUnavailableReason": "licznik wyników jest niedostępny",
+    "outputStatusHiddenReason": "hub nie pobiera podziału wyników według statusu",
+    "findingsPendingReason": "trwa pobieranie ustaleń",
+    "findingsLoadFailedReason": "nie udało się pobrać ustaleń",
+    "backupsPendingReason": "trwa pobieranie kopii zapasowych",
+    "backupsLoadFailedReason": "nie udało się pobrać kopii zapasowych"
   }
 }
