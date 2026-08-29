@@ -19,6 +19,8 @@ export interface BodyTextProps {
   charSpacing?: number;
   /** Line spacing multiple (pptxgenjs lineSpacingMultiple). */
   lineSpacingMultiple?: number;
+  /** Rotate the text direction while preserving the supplied text box. */
+  vertical?: 'vert' | 'vert270';
 }
 
 export function BodyText(props: BodyTextProps, tokens: DesignTokens): RenderedElement {
@@ -41,6 +43,7 @@ export function BodyText(props: BodyTextProps, tokens: DesignTokens): RenderedEl
         ...(props.lineSpacingMultiple != null
           ? { lineSpacingMultiple: props.lineSpacingMultiple }
           : {}),
+        ...(props.vertical ? { vert: props.vertical } : {}),
       });
     },
   };
