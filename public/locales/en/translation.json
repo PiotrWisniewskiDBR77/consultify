@@ -38911,7 +38911,7 @@
     "outputStatusHiddenReason": "the hub does not load the output status breakdown",
     "findingsPendingReason": "findings are loading",
     "findingsLoadFailedReason": "findings could not be loaded",
-    "teamMembersPendingReason": "team members are loading",
-    "teamMembersLoadFailedReason": "team members could not be loaded"
+    "templatesPendingReason": "templates are loading",
+    "templatesLoadFailedReason": "templates could not be loaded"
   }
 }

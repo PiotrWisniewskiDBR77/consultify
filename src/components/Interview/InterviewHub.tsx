@@ -122,6 +122,12 @@ import { useAppStore } from '@/store/useAppStore';
 import { isInterviewPendingReviewTabEnabled } from '@/utils/interviewPendingReviewTabFlag';
 import { isInterviewPipelineStepperEnabled } from '@/utils/interviewPipelineStepperFlag';
 import { formatListDate } from '@/utils/listDateFormat';
+import {
+  formatPresentationCount,
+  knownPresentation,
+  type PresentationState,
+  unknownPresentation,
+} from '@/utils/presentationState';
 
 import {
   type FilterChip,
@@ -757,6 +763,9 @@ export const InterviewHub: React.FC = () => {
   );
   const [showInitiativeWizard, setShowInitiativeWizard] = useState(false);
   const [templates, setTemplates] = useState<InterviewTemplate[]>([]);
+  const [templatesPresentation, setTemplatesPresentation] = useState<PresentationState<number>>(
+    unknownPresentation(t('presentationState.templatesPendingReason', 'templates are loading'))
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [isUsingDemoData, setIsUsingDemoData] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -1165,10 +1174,19 @@ export const InterviewHub: React.FC = () => {
       }
 
       if (templatesRes.status === 'fulfilled') {
-        setTemplates(unwrapApiList(templatesRes.value, 'templates').map(normalizeTemplateRecord));
+        const nextTemplates = unwrapApiList(templatesRes.value, 'templates').map(
+          normalizeTemplateRecord
+        );
+        setTemplates(nextTemplates);
+        setTemplatesPresentation(knownPresentation(nextTemplates.length));
       } else {
         console.error('[InterviewHub] Failed to load templates:', templatesRes.reason);
         setTemplates([]);
+        setTemplatesPresentation(
+          unknownPresentation(
+            t('presentationState.templatesLoadFailedReason', 'templates could not be loaded')
+          )
+        );
       }
 
       // Lineage read-back — degrade gracefully to an honest empty state on
@@ -6925,6 +6943,12 @@ Return ONLY the answer text (no markdown fences).`;
       if (activeTab === 'sessions') return sessionsLoadError;
       if (activeTab === 'insights') return insightsLoadError;
       if (activeTab === 'initiatives') return initiativesLoadError;
+      if (activeTab === 'templates' && templatesPresentation.state === 'unknown') {
+        return formatPresentationCount(templatesPresentation, {
+          hidden: t('presentationState.hidden', 'hidden'),
+          unknown: t('presentationState.unknown', 'unknown'),
+        });
+      }
       if (
         activeTab === 'my_assignments' ||
         activeTab === 'managed' ||

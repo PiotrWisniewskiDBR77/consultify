@@ -56,13 +56,11 @@ describe('Day 119 three-state presentation contract', () => {
     expect(loader).not.toContain('return [];');
   });
 
-  it('renders team-member read failure separately from a known empty list', () => {
-    const source = read('src/components/Interview/NewSessionModal.tsx');
-    expect(source).toContain("teamMembersPresentation.state === 'unknown'");
-    expect(source).toContain('formatPresentationCount(teamMembersPresentation');
-    expect(source.indexOf("teamMembersPresentation.state === 'unknown'")).toBeLessThan(
-      source.indexOf('teamMembers.length === 0')
-    );
+  it('renders Interview template read failure separately from a known empty list', () => {
+    const source = read('src/components/Interview/InterviewHub.tsx');
+    expect(source).toContain("templatesPresentation.state === 'unknown'");
+    expect(source).toContain('formatPresentationCount(templatesPresentation');
+    expect(source).toContain('templatesLoadFailedReason');
   });
 
   it('ships the shared copy in English and Polish', () => {
@@ -70,7 +68,7 @@ describe('Day 119 three-state presentation contract', () => {
     const pl = JSON.parse(read('public/locales/pl/translation.json'));
     expect(en.presentationState.findingsLoadFailedReason).toBeTruthy();
     expect(pl.presentationState.findingsLoadFailedReason).toBeTruthy();
-    expect(en.presentationState.teamMembersLoadFailedReason).toBeTruthy();
-    expect(pl.presentationState.teamMembersLoadFailedReason).toBeTruthy();
+    expect(en.presentationState.templatesLoadFailedReason).toBeTruthy();
+    expect(pl.presentationState.templatesLoadFailedReason).toBeTruthy();
   });
 });

@@ -38,8 +38,8 @@ Praca rozpoczęta dokładnie z markera, bez rebase.
    rozkładu statusów.
 2. `src/components/Interview/InsightViewer.tsx` — błąd `listFindings` jest
    zamieniany na `[]`, a licznik Findings pokazuje znane zero.
-3. `src/components/Interview/NewSessionModal.tsx` — błąd pobrania członków
-   zespołu zostawia `[]`, po czym modal mówi, że członków nie ma.
+3. `src/components/Interview/InterviewHub.tsx` — błąd pobrania szablonów
+   zostawia `[]`, a zakładka Szablony nie dostaje bannera błędu.
 
 ## 2. Korekty wobec instrukcji
 
@@ -58,8 +58,12 @@ Praca rozpoczęta dokładnie z markera, bez rebase.
 4. Pierwszy wybór trzeciego komponentu, `SuperAdmin/BackupPanel.tsx`, został
    obalony w runtime preflight: pełny grep konsumentów znalazł tylko definicję
    i default export, a `SystemModule.tsx` montuje `EnterpriseBackupPanel.tsx`.
-   Wycofałem zmianę z osieroconego pliku i użyłem osiągalnego
-   `Interview/NewSessionModal.tsx`, montowanego przez `InterviewHub.tsx`.
+   Wycofałem zmianę z osieroconego pliku.
+5. Drugi wybór, `Interview/NewSessionModal.tsx`, również został obalony:
+   `rg NewSessionModal InterviewHub.tsx` trafiał wyłącznie w nazwę lokalnego
+   stanu, a nie import/render komponentu. Wycofałem tę zmianę. Trzecią
+   aplikacją jest osiągalny `InterviewHub.tsx`, który sam pobiera szablony,
+   renderuje ich zakładkę i był potwierdzony w runtime na `/interview`.
 
 ## 3. Baza, migracje i Z30
 

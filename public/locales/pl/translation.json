@@ -41381,7 +41381,7 @@
     "outputStatusHiddenReason": "hub nie pobiera podziału wyników według statusu",
     "findingsPendingReason": "trwa pobieranie ustaleń",
     "findingsLoadFailedReason": "nie udało się pobrać ustaleń",
-    "teamMembersPendingReason": "trwa pobieranie członków zespołu",
-    "teamMembersLoadFailedReason": "nie udało się pobrać członków zespołu"
+    "templatesPendingReason": "trwa pobieranie szablonów",
+    "templatesLoadFailedReason": "nie udało się pobrać szablonów"
   }
 }
