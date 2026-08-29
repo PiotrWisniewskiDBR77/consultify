@@ -180,6 +180,17 @@ CSS oraz rozmiaru chunków nie są błędami i nie zostały naprawiane poza zakr
    flag Artifact Studio w URL, bez zmiany kodu ani defaultów; inaczej K3 byłoby
    nieweryfikowalne.
 
+## Sprzątanie
+
+Kontener `cx-day81-pg` usunięto przez `docker rm -fv`. Pierwsze wywołanie
+kanonicznego `stop` odmówiło po commitach komunikatem `state candidate identity differs`,
+ponieważ stan runtime był związany ze startowym SHA `f6032bda…`, a HEAD wynosił już
+`470b3d6f…`. Kontener został usunięty wcześniej w tej samej sekwencji, więc ponowne
+`stop` nie mogło wykonać własnego sprawdzenia bazy. Przed sygnałem zweryfikowano
+dosłowne identity i PGID zapisanych, należących do dyżuru procesów `19362/19362`
+oraz `19384/19384`; wysłano `TERM` wyłącznie do tych dwóch grup. Końcowo porty
+`4750` i `4751` mają `0 z 2` listenerów, a oba PID-y są nieobecne.
+
 ## Zakres końcowy
 
 Zmodyfikowane pliki:
