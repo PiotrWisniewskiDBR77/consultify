@@ -43,7 +43,7 @@ Każda pozycja menu docelowo otrzyma jeden komplet:
 | 6 | Initiatives | aktywny | [`modules/05_inicjatywy/CURRENT_CONTRACT.md`](modules/05_inicjatywy/CURRENT_CONTRACT.md) | skonsolidowany |
 | 7 | Execution | aktywny | [`modules/06_realizacja/CURRENT_CONTRACT.md`](modules/06_realizacja/CURRENT_CONTRACT.md) | skonsolidowany |
 | 8 | Results | beta | [`modules/07_rezultaty/CURRENT_CONTRACT.md`](modules/07_rezultaty/CURRENT_CONTRACT.md) | skonsolidowany |
-| 9 | Finance | beta | [`modules/08_finanse/CURRENT_CONTRACT.md`](modules/08_finanse/CURRENT_CONTRACT.md) | skonsolidowany |
+| 9 | Finance | **pełny zakres MVP** (DEC-2026-08-28-177 odwrócił wcześniejsze zamknięcie w becie) | [`modules/08_finanse/CURRENT_CONTRACT.md`](modules/08_finanse/CURRENT_CONTRACT.md) | skonsolidowany |
 | 10 | Materials | beta | [`functional/10_materials/README.md`](functional/10_materials/README.md) | kontrakt konsolidujący utworzony |
 | 11 | Audits | fragment runtime oznaczony beta; produkt poza MVP | [`functional/11_audits/README.md`](functional/11_audits/README.md) | kierunek zaakceptowany; pełna implementacja w drugiej fali |
 | 12 | Meeting | realny fundament + zaakceptowana wizja docelowa | [`modules/13_meeting/CURRENT_CONTRACT.md`](modules/13_meeting/CURRENT_CONTRACT.md) | Teresa jako aktywny facilitator i orkiestrator całej aplikacji; podstawowy golden flow przed roadmapą live |
@@ -52,10 +52,28 @@ Każda pozycja menu docelowo otrzyma jeden komplet:
 
 | # | Pozycja | Widoczność | Kontrakt / punkt wejścia |
 | ---: | --- | --- | --- |
-| 13 | Organization | zależna od dostępu | [`modules/16_organizacja/CURRENT_CONTRACT.md`](modules/16_organizacja/CURRENT_CONTRACT.md) |
+| 13 | Organization | zależna od dostępu · **CLOSED_FINAL 2026-08-25**, tag `final-01-organization` | [`modules/16_organizacja/CURRENT_CONTRACT.md`](modules/16_organizacja/CURRENT_CONTRACT.md) |
 | 14 | Admin Panel | administrator | [`modules/17_panel-administratora/CURRENT_CONTRACT.md`](modules/17_panel-administratora/CURRENT_CONTRACT.md) |
-| 15 | Settings | aktywny | [`modules/18_ustawienia/CURRENT_CONTRACT.md`](modules/18_ustawienia/CURRENT_CONTRACT.md) |
+| 15 | Settings | aktywny · **CLOSED_FINAL 2026-08-25**, tag `final-02-settings` | [`modules/18_ustawienia/CURRENT_CONTRACT.md`](modules/18_ustawienia/CURRENT_CONTRACT.md) |
 | 16 | Partner Portal | zależna od dostępu | [`modules/19_portal-partnerski/CURRENT_CONTRACT.md`](modules/19_portal-partnerski/CURRENT_CONTRACT.md) |
+
+## ★ Gdzie żyje aktualny stan decyzji — czytaj to razem ze spisem
+
+Wszystkie kontrakty modułów pochodzą z jednego commita z **2026-07-31**, a ich
+warstwa źródłowa z maja 2026. Decyzje właściciela podjęte po tej dacie **nie
+zostały do nich przeniesione** i żyją w rejestrze:
+[`program/waves/WAVE_03_ACCEPTANCE/OWNER_DECISION_LEDGER_2026-08-24.md`](program/waves/WAVE_03_ACCEPTANCE/OWNER_DECISION_LEDGER_2026-08-24.md).
+
+**Kolejność czytania przy rozbieżności:** rejestr decyzji → kontrakt modułu →
+warstwa źródłowa `00_META`…`07_ACCEPTANCE`. Nowsza decyzja właściciela wygrywa
+ze starszym kontraktem.
+
+**★ Pułapka, którą trzeba znać przed użyciem słowa „domknięty".**
+`DEC-2026-08-25-74` ustalił wzorzec `RUNTIME-IDENTITY-MISMATCH`: wpis
+`CLOSED_FINAL` potrafi opisywać stan **za flagą wyłączoną**, którego użytkownik
+nigdy nie widzi. Dotyczy to m.in. Organizacji, gdzie odebrany komplet 11 ekranów
+leży za flagą, a domyślny runtime pokazuje stary układ. **„Zrobione za flagą" nie
+znaczy „widoczne dla użytkownika".**
 
 ## 2. My Work — zakres zagnieżdżony
 
