@@ -129,6 +129,22 @@ więc `4/4` zrzuty przed/po pokazują ten sam uczciwy stan `endpoint does not
 exist`. G08–G10 i akceptacja modułu nie są podnoszone. Pełny raport:
 `../../codex/CODEX_DAY117_STATUS_AI_REPORT.md`.
 
+## Day 118 — propagacja statusu AI do ekranu (2026-08-29)
+
+`FIXED / MUTATION_VERIFIED` wyłącznie dla widocznego ekranu System Health:
+główny health i mapa dostawców korzystają z istniejącego
+`/superadmin/system-health`, a services, metrics i alerts z istniejącego
+`/system-health/*`. Ekran pokazuje OpenRouter i Google AI obok trzech
+dotychczasowych dostawców. Mutacja: `2/5 PASS, 3/5 FAIL`; po przywróceniu
+`5/5 PASS`; delta pięciu pełnych nazw `0/5`; zrzuty `4/4` w dwóch motywach.
+Commity produktu/testu: `9a39cd41d6`, `73cb3bf395`.
+
+Komunikat wyceny pozostaje `BLOCKED / NOT_AUTHORIZED`: realny wołacz jest w
+`src/components/Economics/hooks/useFinanceRowActions.ts`, poza licencją §D.
+Czerwony kontrakt `1/1 FAIL` zapisano w `0caec88e83`. G08–G10 i akceptacja
+modułu pozostają bez zmian. Pełny raport:
+`../../codex/CODEX_DAY118_PROPAGACJA_REPORT.md`.
+
 ## Owner verdict
 
 Decision: `PENDING`
