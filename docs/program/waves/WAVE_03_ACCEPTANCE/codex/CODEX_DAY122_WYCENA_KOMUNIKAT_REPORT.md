@@ -273,6 +273,11 @@ Runtime uruchomiono wyłącznie kanonicznym skryptem, a następnie zatrzymano ty
 samym skryptem: `ownedProcessGroupsOnly=true`, `processGroupsVerifiedTerminated=true`,
 porty `4910` i `4911` wolne.
 
+Po zakończeniu dowodów usunięto wyłącznie własny kontener komendą
+`docker rm -fv cx-day122-pg`. Efemeryczna baza została usunięta razem z jego
+wolumenem; porty `6005`, `4910` i `4911` są **3 z 3 wolne**. Dane nie są
+odzyskiwalne z kontenera; dowody pozostały w katalogu artefaktów poza repo.
+
 ## 6. Z30 — zero wysyłki
 
 Przed zapisami:
