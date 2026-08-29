@@ -21070,6 +21070,7 @@
       "budgetApproved": "Budget approved",
       "computeFailed": "Recalculation failed",
       "computeDcfFailed": "DCF computation failed",
+      "approvedVersionImmutable": "This valuation version is approved and immutable. To recompute WACC, create a new version.",
       "computed": "Forecast computed",
       "modelApproved": "Model approved",
       "pptxExported": "PPTX generated",

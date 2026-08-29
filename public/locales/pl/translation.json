@@ -22090,6 +22090,7 @@
       "budgetApproved": "Budżet zatwierdzony",
       "computeFailed": "Nie udało się przeliczyć",
       "computeDcfFailed": "Nie udało się obliczyć DCF",
+      "approvedVersionImmutable": "Ta wersja wyceny jest zatwierdzona i niezmienna. Aby ponownie obliczyć WACC, utwórz nową wersję.",
       "computed": "Prognoza przeliczona",
       "modelApproved": "Model zatwierdzony",
       "pptxExported": "PPTX wygenerowany",
