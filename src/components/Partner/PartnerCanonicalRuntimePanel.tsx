@@ -136,6 +136,19 @@ export const PartnerCanonicalRuntimePanel: React.FC<{
   const { t } = useTranslation();
   const currency = snapshot.program?.balances?.currency || 'EUR';
   const latestParticipantFact = snapshot.participantLedger.entries[0];
+  const lifecycleFallback: Record<string, string> = {
+    active: 'Aktywny',
+    certified: 'Certyfikowany',
+    onboarding: 'W trakcie uruchamiania',
+    pending: 'Oczekuje',
+    suspended: 'Wstrzymany',
+  };
+  const organizationStatusFallback: Record<string, string> = {
+    active: 'Aktywna organizacja partnerska',
+    onboarding: 'Trwa uruchamianie organizacji partnerskiej',
+    pending: 'Organizacja partnerska oczekuje na weryfikację',
+    suspended: 'Organizacja partnerska jest wstrzymana',
+  };
   const stateCopy: Record<SurfaceState, string> = {
     ready: t('partner.canonicalRuntime.state.ready', 'Ready'),
     empty: t('partner.canonicalRuntime.state.empty', 'Empty'),
@@ -151,14 +164,16 @@ export const PartnerCanonicalRuntimePanel: React.FC<{
       state: snapshot.programState,
       value: snapshot.program?.lifecyclePhase
         ? t(
-            `partner.canonicalRuntime.lifecycle.${snapshot.program.lifecyclePhase}`,
-            snapshot.program.lifecyclePhase
+            `partner.canonicalRuntime.lifecycle.${snapshot.program.lifecyclePhase.toLowerCase()}`,
+            lifecycleFallback[snapshot.program.lifecyclePhase.toLowerCase()] ||
+              snapshot.program.lifecyclePhase
           )
         : t('partner.canonicalRuntime.unknown', 'Unknown'),
       detail: snapshot.program?.partnerOrganizationStatus
         ? t(
-            `partner.canonicalRuntime.organizationStatus.${snapshot.program.partnerOrganizationStatus}`,
-            snapshot.program.partnerOrganizationStatus
+            `partner.canonicalRuntime.organizationStatus.${snapshot.program.partnerOrganizationStatus.toLowerCase()}`,
+            organizationStatusFallback[snapshot.program.partnerOrganizationStatus.toLowerCase()] ||
+              snapshot.program.partnerOrganizationStatus
           )
         : t('partner.canonicalRuntime.statusUnverified', 'Status could not be verified'),
     },
@@ -181,13 +196,9 @@ export const PartnerCanonicalRuntimePanel: React.FC<{
       icon: Link2,
       state: snapshot.attributions.state,
       value: String(snapshot.attributions.total),
-      detail: t(
-        'partner.canonicalRuntime.activeAttributions',
-        '{{count}} active attribution records',
-        {
-          count: snapshot.attributions.active,
-        }
-      ),
+      detail: t('partner.canonicalRuntime.activeAttributions', 'Aktywne polecenia: {{count}}', {
+        count: snapshot.attributions.active,
+      }),
     },
     {
       id: 'ledger',
@@ -196,7 +207,7 @@ export const PartnerCanonicalRuntimePanel: React.FC<{
       state: snapshot.participantLedger.state,
       value: String(snapshot.participantLedger.entries.length),
       detail: latestParticipantFact
-        ? t('partner.canonicalRuntime.latestReferralRecorded', 'Latest referral recorded')
+        ? t('partner.canonicalRuntime.latestReferralRecorded', 'Zapisano ostatnie polecenie')
         : t('partner.canonicalRuntime.noReferralsRecorded', 'No immutable referral facts recorded'),
     },
     {
@@ -207,7 +218,7 @@ export const PartnerCanonicalRuntimePanel: React.FC<{
       value: money(snapshot.program?.balances?.availableToPayout, currency),
       detail: t(
         'partner.canonicalRuntime.payoutEligibilityDetail',
-        'Recorded balance only; eligibility requires an approved versioned rule.'
+        'Widoczne saldo ma charakter informacyjny. Możliwość wypłaty zależy od zatwierdzonych zasad programu.'
       ),
     },
   ];

@@ -178,3 +178,30 @@ Pierwszy push, wykonany natychmiast po commicie zgodnie z Z34a:
 To https://github.com/PiotrWisniewskiDBR77/consultify-recovery-private-20260820.git
  * [new branch]            codex/day69-lang-wave-20260829 -> codex/day69-lang-wave-20260829
 ```
+
+## Wznowienie po zwolnieniu K4 — 2026-08-29
+
+Właściciel udzielił licencji na zmianę asercji dokładnie dwóch przypadków. Zmieniono wyłącznie:
+
+1. `EarningsSection V8 payout settings seam renders governed payout settings as historical read-only data`;
+2. `PartnerCanonicalRuntimePanel renders verified values while keeping accrual policy-gated`.
+
+Oba nadal dowodzą trybu tylko do odczytu i niedostępności operacji; dodatkowo sprawdzają brak `AMD-PRT-ECONOMICS-002` i identyfikatora rekordu na ekranie. Żaden inny test z kodem polityki nie został zmieniony.
+
+Pełny pakiet pięciu plików komponentowych: **17/17 PASS po `fullName`**, `--retry=0`. JSON: `/private/tmp/cx-day69-artefakty/c1-resume-partner-tests.json`, SHA-256 `a792283e99aecf1c6c40da3455957fb6687bf38020adbfd9ab0fd96da5936ca9`.
+
+Klasa E: `partner.earnings.bankInfoRuntimeNotice` zmieniono z zachęty do edycji wyłączonej funkcji na komunikat „ustawienia tylko do odczytu / operacje niedostępne”. Skorygowano również `bankInfoRequired` oraz usunięto z polskich wartości określenia `routing`, `V8`, `governed`, `RESOURCE_RESPONSIBILITY` i wewnętrzne nazwy procesów tam, gdzie były renderowane użytkownikowi.
+
+K3 wykonano ponownie na pełnej powierzchni produktu z arkuszami stylów. Dowód załadowania CSS: `mainPadding=32px`, `stylesheets=2`, szerokość dokumentu `1280` przy viewport `1280`. Pierwszy stylowany zrzut ujawnił wartości `Lifecycle`, `items`, `approved`, `last month` i `BANK TRANSFER`; po korekcie ponowny zrzut nie zawiera tych tekstów, a karty mieszczą się bez przepełnienia.
+
+Zrzut: `/private/tmp/cx-day69-artefakty/c1-partner-product-light.png`, SHA-256 `79cf707e7dd6fde849dacc8c7d2d6df4a4d1afc2a8f2b08b85bb4cc9998e432c`.
+
+K2 po wznowieniu: backend PASS; frontend PASS z limitem 8 GiB (`✓ built in 36.83s`). Log: `/private/tmp/cx-day69-artefakty/c1-resume-frontend-build.log`, SHA-256 `69755eb096c8b43c23924b44e721c19a5e2e7ec12630362d13cb2ca1029e4bcf`.
+
+K1 po wznowieniu: `31194` klucze, JSON poprawny. Pomiar nadal wykazuje niezamknięty mianownik C.1 (`partner 76`, `finance 216`, a także obszary `billing`, `v8`, `valuation` z raportu bazowego), dlatego **C.1 pozostaje PARTIAL i C.2 nie zostało rozpoczęte**. Pełny pomiar: `/private/tmp/cx-day69-artefakty/c1-resume-after-missing.txt`, SHA-256 `efdca904108215dfbe0d0840f50a6f0eb977d06ba4b0dea3a26335801db2e449`.
+
+### Dalsze domykanie klasy A w C.1
+
+Po ręcznym przejściu pozostałych kluczy obszaru `partner` konserwatywny parser wywołań `t('klucz', 'fallback')` wykazuje `partner 0`. Uzupełniono między innymi kwalifikację do programu, nawigację, ekran startowy, opisy klientów, metryki oraz pełne etykiety narzędzi poleceń. Teksty opisujące dane uwierzytelnione, kontrolowane odczyty i wewnętrzną wersję architektury zastąpiono zdaniami opisującymi produkt dla partnera.
+
+Stan tego samego pomiaru po checkpointcie: `finance 263`, `billing 88`, `v8 76`, `valuation 47`; liczba spłaszczonych kluczy PL: `31304`. Rozbieżność względem wcześniejszego parsera (`finance 216` itd.) wynika z bardziej konserwatywnego rozpoznawania cudzysłowów i nie jest podstawą do pomniejszenia mianownika. **C.1 nadal PARTIAL; C.2 nadal nierozpoczęte.**
