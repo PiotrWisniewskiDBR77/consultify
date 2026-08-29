@@ -231,3 +231,5 @@ Pułapki (a)–(d) nie dotyczą tego pakietu, bo `RUN_DB_TESTS=0 MOCK_DB=true`, 
 | K6 | SPEŁNIONE po commicie — wyłącznie raport i `MODULE_ACCEPTANCE.md`; zero `src/`, `server/src/`, migracji i seedera. |
 
 Nie naprawiono żadnego defektu produktu (`Z40`).
+
+Sprzątanie: kanoniczny `stop` po wymaganym commicie odmówił działania (`state candidate identity differs`), ponieważ stan startu był związany z markerem, a HEAD przeszedł na commit raportu. Po porównaniu zapisanych `pid`/`pgid`/`lstart`/`command` z żywymi procesami zakończono wyłącznie własne grupy `64849` (server) i `64869` (client). `docker rm -fv cx-day95-pg` usunął własny kontener i wolumen. Końcowy pomiar: `0/3` listenerów na `5975`, `4850`, `4851`.
