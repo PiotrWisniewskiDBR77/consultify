@@ -793,7 +793,10 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
             <p className="text-2xl font-bold text-c-text">
               {formatCurrency(summary?.readyForPayout)}
             </p>
-            <p className="mt-2 text-xs text-c-text-muted" data-testid="partner-economics-approved-out">
+            <p
+              className="mt-2 text-xs text-c-text-muted"
+              data-testid="partner-economics-approved-out"
+            >
               {t(
                 'partner.earnings.payoutOperationsUnavailable',
                 'Payout operations are unavailable. Historical balances remain read-only.'
@@ -1100,20 +1103,28 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
         className="rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-700/60 dark:bg-amber-500/10"
         role="note"
       >
-        <p className="font-medium text-c-text">Payout operations unavailable</p>
+        <p className="font-medium text-c-text">
+          {t('partner.payoutSettings.operationsUnavailable', 'Payout operations unavailable')}
+        </p>
         <p className="mt-1 text-sm text-c-text-secondary">
-          Commission, accrual and payout operations are unavailable under AMD-PRT-ECONOMICS-002.
-          Historical settings remain read-only.
+          {t(
+            'partner.payoutSettings.operationsUnavailableDesc',
+            'Commission, accrual and payout operations are unavailable. Historical settings remain read-only.'
+          )}
         </p>
       </div>
 
       {/* Historical payout method */}
       <div className="bg-c-surface-raised/50 rounded-xl border border-c-border-subtle dark:border-white/5 p-4">
-        <h3 className="text-lg font-semibold text-c-text mb-4">Payout Method</h3>
+        <h3 className="text-lg font-semibold text-c-text mb-4">
+          {t('partner.payoutSettings.method', 'Payout Method')}
+        </h3>
         <p className="text-c-text" data-testid="historical-payout-method">
           {payoutSettings.payoutMethod.replace('_', ' ')}
         </p>
-        <p className="mt-1 text-xs text-c-text-muted">Historical value</p>
+        <p className="mt-1 text-xs text-c-text-muted">
+          {t('partner.payoutSettings.historicalValue', 'Historical value')}
+        </p>
       </div>
 
       {/* Bank Details */}
