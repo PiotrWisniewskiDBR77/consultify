@@ -1,8 +1,11 @@
 # CODEX DAY 93 — Wywiad — pakiet odbioru właściciela
 
-Data pomiaru: 2026-08-29  
-Gałąź: `codex/day93-interview-owner-20260829`  
-Marker: `d80dd85cc7784095eed6f711b42366e5d9b7f74e`  
+Data pomiaru: 2026-08-29
+
+Gałąź: `codex/day93-interview-owner-20260829`
+
+Marker: `d80dd85cc7784095eed6f711b42366e5d9b7f74e`
+
 Remote do odczytu i pushu: wyłącznie `github-backup`
 
 ## Stan wejściowy
