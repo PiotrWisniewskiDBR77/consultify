@@ -1,11 +1,73 @@
 # CODEX DAY 107 — Karta Insight: prawda czy atrapa
 
 Data: 2026-08-29  
-Gałąź: `codex/day107-karta-insight-20260829`  
+Gałąź wznowienia: `codex/day107b-karta-insight-20260829`
 Baza: wyłącznie lokalna `consultify_w3_interview_owner_day107`, kontener `cx-day107-pg`, port `127.0.0.1:5988`  
 Zakres zapisu: wyłącznie ten raport i `modules/02_INTERVIEW/MODULE_ACCEPTANCE.md`. Nie zmieniono produktu ani testów.
 
-## Wynik właścicielski
+## Wznowienie DAY107B — pomiar na naprawionym fixture
+
+Marker wznowienia: `c44c1efe181bd3d5c1cb3bacdc9ec6783b63bbd8`. Naprawiony seeder idempotentnie utworzył syntetycznego właściciela, organizację i aktywne członkostwo. Zalogowano jako właściciel fixture przez formularz na `127.0.0.1:4875`; auth bypass i test support były wyłączone. Hasła nie utrwalono w tym raporcie ani na zrzutach.
+
+Wznowienie usuwa poprzednią blokadę logowania, ale ujawnia następną granicę kontraktu: fixture tworzy `2` sesje, `6` pytań i `2` dystrybucje, lecz **`0` rekordów `interview_insights`**. Sesja review ma status `submitted`, przydział `submitted` i `3 z 3` niepustych odpowiedzi. Jednocześnie realny odczyt sesji przez ApiGateway zwrócił `summaryFacts=[]`, `summaryGaps=[]`, `summaryConstraints=[]`, `summaryPainPoints=[]`, a `GET /api/v8/interview/insights` zwrócił HTTP `200` z `{"data":{"insights":[]},...}`.
+
+UI po prawdziwym logowaniu potwierdził ten stan: zakładka Wnioski pokazuje wszystkie liczniki `0` i pusty ekran „Brak wniosków”. Nie uruchomiono „Generuj wnioski AI”, ponieważ dyżur zakazuje wywołań LLM. Nie utworzono ręcznie Insightu ani nie zmieniono statusów fixture.
+
+### Rozstrzygnięcie trzech wcześniejszych ustaleń
+
+| Ustalenie statyczne | Pomiar DAY107B | Werdykt end-to-end |
+| --- | --- | --- |
+| `Findings 0` może być atrapą fail-soft | Brak `insightId`, więc trasa findings konkretnej karty nie ma mianownika; lista Insightów zwraca poprawne `200` i pustą tablicę | **NIE POTWIERDZONO I NIE OBALONO na karcie**. Ryzyko kodowe pozostaje udowodnione, ale fixture nie pozwala wymusić ani odróżnić błędu findings od prawdziwego zera. |
+| `Confidence —` to uczciwe `UNKNOWN` | Brak karty i brak wartości confidence do renderu | **NIE POTWIERDZONO I NIE OBALONO na karcie**. Statyczny werdykt `UNKNOWN` pozostaje właściwy, lecz nie został wykonany w runtime. |
+| `ACTIONS 0` to atrapa semantyczna | Brak karty i jej read-mode badge | **NIE POTWIERDZONO I NIE OBALONO na karcie**. Statycznie badge nadal opisuje tryb podglądu, nie liczbę działań; fixture nie osiąga tego ekranu. |
+
+To jest wynik pomiaru, nie unik: poprawka principalu była skuteczna, ale nie dodała badanego Insightu. Pełna karta wymagałaby uruchomienia generatora AI albo zmiany fixture, czego zakres DAY107 zabrania. Nadal **`0 z 6` pól konkretnej karty** ma pełny łańcuch SQL → trasa → UI. Dodatkowy, mierzalny defekt projekcji: baza ma `3` niepuste odpowiedzi, podczas gdy oba summary API zwracają cztery puste tablice; dlatego ewentualne `OFFICIAL ANSWERS 0` nie byłoby uczciwym licznikiem surowych odpowiedzi tej sesji.
+
+### Dowody wznowienia
+
+```text
+seeder readback: fixture W3-INTERVIEW-OWNER-v1, status FINAL
+principal: istnieje; organization_members: ACTIVE
+sesje / pytania / dystrybucje: 2 / 6 / 2
+sesja review: submitted, answeredQuestions 3/3
+interview_insights: 0
+GET /api/v8/interview/insights: HTTP 200, data.insights=[]
+runtime: LOCAL @c44c1efe181b, server 4874, client 4875
+auth bypass / test support: OFF / OFF
+```
+
+Zrzuty po zalogowaniu, bez widocznego hasła:
+
+- light: `/private/tmp/cx-day107b-karta-insight-artefakty/day107b-insights-empty-light.png`, SHA-256 `c306020f9d534b0a74bebf2754b3b1d91e1d52b556cc7d90ab0e691eacc2cae0`;
+- dark: `/private/tmp/cx-day107b-karta-insight-artefakty/day107b-insights-empty-dark.png`, SHA-256 `0f6cfc2e29ac53a8d7efe78fd6f32bba06f2bb1e61d994c1a15f353803a7b25d`.
+
+Pokrycie zrzutów: **`2 z 4`** — pusty light i pusty dark. Pełny light/dark: **`0 z 2`**, ponieważ fixture nie zawiera Insightu, a jego wygenerowanie naruszyłoby zakaz LLM. Zrzuty pustego widoku są dowodem realnego stanu produktu, nie substytutem pełnej karty.
+
+### Kryteria po wznowieniu
+
+| Kryterium | Wynik DAY107B |
+| --- | --- |
+| K1 | SQL wykonany: `3` odpowiedzi w sesji review, `0` Insightów, więc `0 z 6` pól karty ma mianownik |
+| K2 | realny podpisany auth i ApiGateway: `GET insights` HTTP `200`; detail/findings karty `N/D` z powodu braku `insightId` |
+| K3 | tabela sześciu pól poniżej pozostaje aktualna; dla karty nadal `N/D` |
+| K4 | trzy wskazane hipotezy uczciwie pozostają niewykonane E2E, nie zostały ogłoszone jako potwierdzone |
+| K5 | bez zmian: hipoteza Document Studio obalona statycznie, runtime nieweryfikowany |
+| K6 | `2 z 4` — oba puste motywy; pełna karta `0 z 2` |
+| K7 | spełnione — sekcja twierdzeń niezweryfikowanych pozostaje niepusta i została uzupełniona poniżej |
+| K8 | spełnione — bez zmian produktu/testów; tylko dwa licencjonowane dokumenty |
+
+### TWIERDZENIA NIEZWERYFIKOWANE — uzupełnienie DAY107B
+
+1. Nie zweryfikowano żadnego z sześciu pól na pełnej karcie, bo naprawiony fixture nadal nie tworzy `interview_insights`.
+2. Nie zweryfikowano zachowania trasy findings dla istniejącego Insightu ani jej stanu awarii.
+3. Nie zweryfikowano renderu `Confidence —` i `ACTIONS 0` w runtime; zachowano wyłącznie wcześniejsze dowody statyczne.
+4. Nie zweryfikowano pełnej karty w light/dark; dwa zrzuty dotyczą kanonicznego pustego widoku.
+5. Nie zweryfikowano generatora AI, ponieważ wywołanie LLM było jawnie zabronione.
+6. Nie uznano `summaryFacts=[]` za dowód braku odpowiedzi: niezależny SQL wykazał `3` niepuste odpowiedzi, więc jest to rozjazd projekcji summary.
+
+Po pomiarze kanoniczny skrypt zatrzymał wyłącznie należące do dyżuru grupy procesów i potwierdził wolne porty. Następnie usunięto kontener `cx-day107-pg`; kontrola wykazała brak kontenera i brak listenerów na `5988`, `4874`, `4875`.
+
+## Wynik pierwszego przebiegu (historyczny STOP przed markerem `c44c1efe18`)
 
 Nie ma uczciwej podstawy, aby uznać obserwowane cztery zera za potwierdzoną prawdę o badanym Insighcie. Kanoniczny seeder Interview ma zamek: wymaga istniejącego właściciela, ale go nie tworzy. Po pełnych migracjach w bazie było `0` właścicieli fixture, `0` sesji i `0` Insightów, a próba seedowania przerwała się przed pierwszym zapisem. W efekcie nie powstał badany rekord, nie było realnego `insightId`, żądania przez `ApiGateway` ani karty do sfotografowania.
 
