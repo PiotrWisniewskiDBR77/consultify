@@ -155,6 +155,24 @@ Przed zapisami: `BRAK ZMIENNYCH POCZTY`; `Gateway.ts`: `BRAK DRENAZY W GATEWAY`;
 4. Nie uruchomiono całego repo testów. Zmierzono 66 wykonanych, nazwanych przypadków związanych z zakresem (4 + 3 + 49 + 14), bez traktowania podzbioru jako pełnej regresji.
 5. Nie zaktualizowano `MODULE_ACCEPTANCE.md`, bo status całości pozostaje PARTIAL.
 
+## Commit, push i sprzątanie
+
+Pierwszy commit: `cf0e0daa6b924e71a4bab91ece26eeadfde602fc`. Po Z34a został natychmiast wypchnięty na `github-backup/codex/day131-teresa-wiedza-20260829`; `git ls-remote` zwrócił ten sam SHA.
+
+Lista plików z `git diff --name-only 70d8e8a9c9b290dbad559cd0f4330aa3959f6b3b..HEAD`:
+
+```text
+docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY131_TERESA_WIEDZA_REPORT.md
+server/migrations/20261720_day131_teresa_knowledge_boundaries.sql
+server/src/routes/ai.routes.ts
+server/src/services/ai/documentGovernance.ts
+server/src/services/ai/embeddingService.ts
+tests/integration/ai/day131-teresa-knowledge-boundaries.realpg.test.ts
+tests/unit/backend/ai/day131TeresaKnowledgeBoundaries.test.ts
+```
+
+Sprzątanie: `docker rm -fv cx-day131-pg` zwróciło `cx-day131-pg`; ponowny odczyt `docker ps -a` potwierdził `KONTENER USUNIETY`.
+
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
 - Niezweryfikowane: realny model otrzymuje blok organizacji i cytuje `[K#]` w odpowiedzi końcowej.
