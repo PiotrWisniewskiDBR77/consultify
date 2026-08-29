@@ -552,9 +552,60 @@ jak i zgrubny pomiar nadzorcy**:
 Zgodność SPEC-N **nieudowodniona dla `7 z 7`**; wszystkie mają status migracji
 `przed`, a smoke dyżuru 82 wykazał **brak `7 z 7` ekranów harnessu**.
 
+> ### ★★★ POPRAWKA WYDANIA — SIEDEM TO ARCHETYPY, NIE KARTY DO ODBIORU
+>
+> **Dodana 2026-08-29, po tym jak właściciel zakwestionował liczbę (`DEC-310`).**
+>
+> Dyżur 82 policzył **siedem TYPÓW ARTEFAKTÓW N**. Właściciel pytał o **karty,
+> które otwierają się WEWNĄTRZ artefaktu** — i miał rację, że jest ich znacznie
+> więcej. Nadzorca zmierzył ponownie:
+>
+> **Źródło prawdy: `src/components/shared/NModeLayout/cardSets.ts`** — jego własny
+> komentarz mówi, że każdy artefakt N deklaruje `catalog`, czyli **wszystkie karty,
+> które MOGĄ pojawić się na tym artefakcie**, i to zasila selektor „+ Nowa karta ▾".
+>
+> **W katalogu jest `61` kart**, w ośmiu grupach:
+>
+> | Grupa | Kart |
+> | --- | ---: |
+> | `CONTENT` | 14 |
+> | `CONTROL` | 13 |
+> | `AUDIT` | 8 |
+> | `TASK` | 6 |
+> | `INSIGHT` | 6 |
+> | `DECISION` | 4 |
+> | `EVIDENCE` | 3 |
+> | `DELIVERABLES` | 1 |
+> | **RAZEM** | **61** |
+>
+> ★ Plik zawiera `71` wystąpień `id:`, z czego `61` ma przypisaną `group` —
+> **różnicę `10` masz wyjaśnić** (mogą to być zestawy `sets`, a nie karty katalogu).
+>
+> ★★ **ZMIANA ZAKRESU: mianownik NIE wynosi 7 i NIE wynosi 28 zrzutów.**
+> Twoim pierwszym zadaniem jest **ustalić prawdziwy mianownik kart do odbioru**,
+> a dopiero potem robić zrzuty — porcjami, w kolejności ustalonej w §B.0.
+
 ★★★ **TWOJE ZADANIE: dostarczyć właścicielowi materiał do AKCEPTACJI GRAFICZNEJ
-wszystkich siedmiu kart. Nie merytorycznej — tej właściciel nie może sprawdzić
-z Twojego raportu i sam to powiedział.**
+kart N. Nie merytorycznej — tej właściciel nie może sprawdzić z Twojego raportu
+i sam to powiedział.**
+
+### B.0. ★★ NAJPIERW MIANOWNIK, POTEM ZRZUTY
+
+Zanim zrobisz jakikolwiek zrzut, rozstrzygnij z `plik:linia`:
+
+1. **Ile kart jest w katalogu każdego z artefaktów N** — osobno dla
+   `insight`, `initiative`, `decision`, `task`, `notification`, `tool`, `interview`.
+   Podaj tabelę `artefakt → liczba kart`.
+2. **Co to jest te `10` pozycji `id:` bez `group`** — karty czy elementy zestawów?
+3. **Które karty są RÓŻNE, a które to ta sama karta użyta w kilku artefaktach.**
+   To rozstrzyga, czy odbiór dotyczy `61` pozycji, czy mniejszej liczby unikalnych.
+4. **Ile z nich jest realnie osiągalnych** z interfejsu, a ile to katalog
+   bez implementacji.
+
+★★ **Dopiero ten mianownik decyduje o zakresie zrzutów.** Jeżeli wyjdzie, że
+unikalnych kart do odbioru jest np. `40`, to zrzuty robisz **porcjami po 6–8 kart**,
+a nie wszystkie naraz — i **kończysz dyżur po pierwszej porcji**, oddając
+mianownik i porcję pierwszą. **Uczciwe „porcja 1 z 6" jest wynikiem.**
 
 ## Komendy weryfikacji stanu wejściowego
 
@@ -594,8 +645,9 @@ Runtime: `scripts/dev/start-wave3-owner-runtime.mjs`,
 `WAVE3_RUNTIME_SERVER_PORT=4780`, `WAVE3_RUNTIME_CLIENT_PORT=4781`.
 Realne logowanie, `ENABLE_TEST_AUTH_BYPASS=false`.
 
-**Dla każdej osiągalnej karty: motyw jasny i ciemny × stan pełny i pusty = 4 zrzuty.**
-Docelowo `28 z 28` przy siedmiu osiągalnych.
+**Dla każdej karty w PIERWSZEJ PORCJI: motyw jasny i ciemny × stan pełny i pusty = 4 zrzuty.**
+Rozmiar porcji ustalasz sam w §B.0, rekomendacja: `6–8` kart, czyli `24–32` zrzuty.
+★ **Nie próbuj zrobić wszystkich 61 kart w jednym dyżurze.**
 
 > ### ★★ ZAKAZ RELABELOWANIA I ZAKAZ ATRAP
 > Stanu, którego nie da się osiągnąć, **NIE zastępujesz innym zrzutem**.
@@ -631,10 +683,10 @@ i czy jest widoczne dla użytkownika.
 
 | # | Kryterium | Dowód |
 | --- | --- | --- |
-| **K1** | `7 z 7` kart zlokalizowanych: trasa, moduł, warunki | mianownik osiągalnych |
+| **K1** | ★ **PRAWDZIWY MIANOWNIK kart do odbioru** ustalony wg §B.0 | tabela `artefakt → liczba kart`, unikalne vs powtórzone, osiągalne vs katalog |
 | **K2** | Zrzuty **ze stylami**, `N z 28`, mianownik PRAWDZIWY | `shasum -a 256` każdego |
-| **K3** | `7 z 7` kart ocenionych listą z §B.3 | co widzisz, nie „wygląda dobrze" |
-| **K4** | Zgodność SPEC-N `7 z 7` + wyjaśnione R1 | z `plik:linia` |
+| **K3** | Karty z PORCJI 1 ocenione listą z §B.3 | `N z N` porcji, co widzisz, nie „wygląda dobrze" |
+| **K4** | Zgodność SPEC-N dla porcji 1 + wyjaśnione ostrzeżenie R1 (karta Task) | z `plik:linia` |
 | **K5** | `git diff`: **wyłącznie raport** | zero zmian w kodzie |
 
 ★ **Defekty ZGŁASZASZ, nie naprawiasz.** Po TRZECH podejściach: zostaw,
