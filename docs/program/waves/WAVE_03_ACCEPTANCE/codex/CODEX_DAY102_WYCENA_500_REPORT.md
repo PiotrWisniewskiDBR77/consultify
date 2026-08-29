@@ -155,4 +155,4 @@ Naprawy nie wprowadzono zgodnie z Z40. Rekomendacja dla nadzorcy: osobno zdecydo
 
 ## 10. Sprzątanie
 
-Po commicie, pushu i końcowym sprawdzeniu kontener zostanie usunięty przez `docker rm -fv cx-day102-pg`. Nie wykonano żadnego połączenia do Railway, demo, stagingu ani produkcji.
+Po pierwszym commicie i pushu usunięto wyłącznie własny kontener poleceniem `docker rm -fv cx-day102-pg`; wynik: `cx-day102-pg`, a kontrola katalogu kontenerów zwróciła `0`. Porty `5985`, `4866` i `4867` po sprzątaniu: `0 z 3` procesów nasłuchujących. Nie wykonano żadnego połączenia do Railway, demo, stagingu ani produkcji.
