@@ -65,6 +65,12 @@ import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
 import { createWorkspaceContext } from '@/types/workspace';
 import { formatListDate, formatListDateTime } from '@/utils/listDateFormat';
+import {
+  formatPresentationCount,
+  knownPresentation,
+  partialPresentation,
+  unknownPresentation,
+} from '@/utils/presentationState';
 
 import { InitiativeDocumentView } from '../Initiatives/InitiativeDocumentView';
 import { DecisionDetailView } from '../MyWork/DecisionDetailView';
@@ -87,12 +93,12 @@ import { Menu3BulkRow } from '../shared/ModuleMenu3';
 import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { AssessmentMenu3ActionBar } from './AssessmentMenu3ActionBar';
 import { AssessmentOutputsTab } from './AssessmentOutputsTab';
-import { AssessmentQualityReviewPanel } from './AssessmentQualityReviewPanel';
 import {
   buildAssessmentInitiativePreviewDetails,
   buildAssessmentPreviewDetails,
   buildAssessmentReportPreviewDetails,
 } from './assessmentPreviewDetails';
+import { AssessmentQualityReviewPanel } from './AssessmentQualityReviewPanel';
 import { ImportedReportDetailView } from './ImportedReportDetailView';
 import { InitiativesGenerationWizardModal } from './InitiativesGenerationWizardModal';
 import { AssessmentLibraryTab } from './library/AssessmentLibraryTab';
@@ -1558,7 +1564,28 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
       statusChipOptions.map((opt) => ({
         id: `status-${opt.id}`,
         label: isPolish ? opt.labelPL : opt.label,
-        badge: statusCounts[opt.id] ?? 0,
+        badge: formatPresentationCount(
+          activeTab !== 'outputs'
+            ? knownPresentation(statusCounts[opt.id] ?? 0)
+            : outputsCount === null
+              ? unknownPresentation(
+                  t('presentationState.outputsUnavailableReason', 'output count is unavailable')
+                )
+              : opt.id === 'all'
+                ? knownPresentation(outputsCount)
+                : partialPresentation(
+                    0,
+                    outputsCount,
+                    t(
+                      'presentationState.outputStatusHiddenReason',
+                      'the hub does not load the output status breakdown'
+                    )
+                  ),
+          {
+            hidden: t('presentationState.hidden', 'hidden'),
+            unknown: t('presentationState.unknown', 'unknown'),
+          }
+        ),
         active: statusFilter === opt.id,
         icon: <span className={`h-1.5 w-1.5 rounded-full ${opt.bgColor}`} />,
         onClick: () => setStatusFilter(statusFilter === opt.id ? 'all' : opt.id),
@@ -1566,7 +1593,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
           status: isPolish ? opt.labelPL : opt.label,
         }),
       })),
-    [isPolish, statusChipOptions, statusCounts, statusFilter, t]
+    [activeTab, isPolish, outputsCount, statusChipOptions, statusCounts, statusFilter, t]
   );
 
   const hubMenu3InfoChips = useMemo(

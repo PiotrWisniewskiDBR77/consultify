@@ -41,6 +41,19 @@ organization navigation, insufficient manager role and duplicate submission.
 | G19 | Later-change regression obligations resolved | `NOT_STARTED` | — |
 | G20 | Final 16/16 replay | `NOT_STARTED` | — |
 
+### Day 119 — przekrojowy kontrakt trzech stanów
+
+`FIXED_WITH_MUTATION_EVIDENCE / OWNER_REVIEW_PENDING`: na SHA
+`70c68154f8770ad41ac76e976aae5591ff789068` osiągalne powierzchnie
+`InterviewHub` (Templates) i `InsightViewer` (Findings) używają wspólnego
+kontraktu `known/partial/unknown`; błąd odczytu nie jest już prezentowany jako
+znane zero. Mutacja unknown→`0` dała dokładnie jeden czerwony przypadek z
+`--retry=0`; przywrócenie przez `cp` dało `7/7` i pusty diff. Kanoniczny runtime
+z auth bypass OFF pokazał realny alert unknown dla błędu Templates; pakiet
+`known/unknown × light/dark` ma `4/4` PNG. Raport:
+`../../codex/CODEX_DAY119_TRZY_STANY_REPORT.md`. To nie zamyka G18 ani odbioru
+właściciela.
+
 ## Piotr review card
 
 | Purpose/value | Starting route | Persona/data | Guided actions | Conscious exclusions | Observation prompts |

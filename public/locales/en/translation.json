@@ -38903,5 +38903,15 @@
         "cancel": "Cancel"
       }
     }
+  },
+  "presentationState": {
+    "hidden": "hidden",
+    "unknown": "unknown",
+    "outputsUnavailableReason": "output count is unavailable",
+    "outputStatusHiddenReason": "the hub does not load the output status breakdown",
+    "findingsPendingReason": "findings are loading",
+    "findingsLoadFailedReason": "findings could not be loaded",
+    "templatesPendingReason": "templates are loading",
+    "templatesLoadFailedReason": "templates could not be loaded"
   }
 }
