@@ -90,6 +90,31 @@ uruchomiono runtime'u `4884/4885`; macierz wizualna pozostaje uczciwie `0 z 20`,
 a G08–G10 nie są podnoszone. Szczegóły i mapa powierzchni AI/knowledge:
 `../../codex/CODEX_DAY111_ADMIN_OWNER_REPORT.md`.
 
+## Day 111b — wznowiony odbiór wizualny (2026-08-29)
+
+Stan: `PARTIAL / 20_OF_20_FILES / 12_OF_20_SEMANTIC / OWNER_REVIEW_PENDING`.
+
+Na markerze `4f63c65d85d77073b2cc14fbc43419ed53ad3ebb` poprawiony seeder
+zaakceptował rosnący ledger migracji: świeża lokalna baza przeszła kanoniczny
+readback przy `863` migracjach, a drugi przebieg zastosował `0` zmian.
+Kanoniczny runtime na `4884/4885`, realnym PostgreSQL `5992`, z
+`ENABLE_TEST_AUTH_BYPASS=false`, został zakwalifikowany i posłużył wyłącznie
+do odbioru pięciu powierzchni w dwóch motywach i dwóch deklarowanych stanach.
+
+Powstało i obejrzano `20 z 20` plików. Semantycznie prawidłowe są `12 z 20`:
+Members `4/4`, Audit Events `4/4`, Billing `2/4`, Security Policy `2/4`,
+AI Policy `0/4`. Stany `empty` dla Billing, AI i Security nie są osiągalne
+bez mutacji produktu/fixture; pliki zachowano jawnie jako `empty-attempt`.
+AI Policy dodatkowo pokazuje `Nieznany / 0 / n/d` po błędzie nieistniejącej
+relacji `llm_org_policies`. Log ujawnia także niezgodności schematu Billing
+(`invoices.issue_date`) i SCIM (`organization_id`).
+
+G08–G10 pozostają `NOT_STARTED`: wykonany pakiet jest technicznym odbiorem
+wizualnym i rejestrem defektów, nie werdyktem Ownera ani dowodem alternatywnych
+stanów dla wszystkich pięciu powierzchni. Pełna macierz, oględziny każdego
+pliku, hashe, deklaracja bezpieczeństwa poczty i zachowana mapa Admin/SuperAdmin
+AI: `../../codex/CODEX_DAY111_ADMIN_OWNER_REPORT.md`.
+
 ## Owner verdict
 
 Decision: `PENDING`
