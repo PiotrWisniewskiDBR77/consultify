@@ -139,6 +139,8 @@ Rekomendacja dla nadzorcy: scalić z wynikiem 79 i powtórzyć B.3; nie rozszerz
 Stan: zacommitowano częściowo — SHA poniżej.  
 Czy kontynuowałem pozostałe pozycje: TAK — K4, K5 i K6 wykonane.
 
+Pierwszy commit i obowiązkowy push po nim: `befff2cc3f` (`github-backup/codex/day80-template-lifecycle-20260829`).
+
 ## Kryteria K1–K6
 
 - K1: PASS.
@@ -152,4 +154,3 @@ Czy kontynuowałem pozostałe pozycje: TAK — K4, K5 i K6 wykonane.
 server/src/services/deliverableTemplateService.ts
 docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY80_TEMPLATE_LIFECYCLE_REPORT.md
 ```
-
