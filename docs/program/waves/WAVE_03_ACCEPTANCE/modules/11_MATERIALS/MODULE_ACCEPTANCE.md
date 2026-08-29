@@ -119,3 +119,59 @@ Accepted SHA: —
 Date: —
 Accepted-out/deferred: Mobile is non-gating. New external renderers/providers and any template/font/image rights without explicit authority remain OFF. Piotr must still confirm that Wave 3 accepts the restricted native-format scope rather than treating this as a blanket policy waiver.
 Evidence manifest: —
+
+---
+
+## ★★ ZAKRES ROZSZERZONY — PIĘĆ GENERATORÓW (decyzja właściciela, 2026-08-29)
+
+**Właściciel rozstrzygnął (`DEC-2026-08-29-303`), że moduł 11_MATERIALS NIE MOŻE
+zostać odebrany, dopóki nie działa komplet pięciu generatorów.** Powód: plan
+dojścia (`docs/program/system-pracy/07_PLAN_DOJSCIA.md`) **nie zawierał ani jednej
+wzmianki** o generatorach dokumentów ani szablonów, a wszystkie trzy generatory
+dokumentów były schowane jako zadania wewnątrz tego modułu
+(`MAT-MVP-DOC-001`, `MAT-MVP-PPT-001`, `MAT-MVP-XLSX-001`). Generator szablonów
+nie miał własnej pozycji nigdzie; generator szablonów Word nie występował
+w planie ani razu.
+
+### Rozróżnienie wiążące
+
+- **Generator DOKUMENTU** — bierze treść i produkuje plik, w dwóch trybach:
+  **(1) od zera** (jak Gamma) oraz **(2) z szablonu** (wypełnia zdefiniowaną formę).
+- **Generator SZABLONÓW** — narzędzie, w którym użytkownik definiuje tę formę.
+
+To są **dwa różne produkty**, nie dwa widoki tego samego.
+
+### Bramki generatorów — `GEN-1` … `GEN-5`
+
+| # | Generator | Stan zmierzony 2026-08-29 | Dowód | Bramka |
+| --- | --- | --- | --- | --- |
+| `GEN-1` | **Dokument PPT** | działa; **jakość graficzna `7 z 18`** przy wymaganym minimum `15 z 18` (`3 z 3` decków) | `DEC-300`, dyżur 78 | `FAIL` — próg rubryki niespełniony |
+| `GEN-2` | **Dokument Word** | działa; pętla szablonowa domknięta end-to-end, znacznik w wygenerowanym DOCX | `DEC-299`, dyżur 77 | `PARTIAL` — treść sekcji to `„This section is awaiting content"` po angielsku, czyli wymiar `K5 = 0` wg rubryki |
+| `GEN-3` | **Dokument Excel** | działa; `WorkbookBuilder` na ExcelJS produkuje realny `.xlsx`, **8 gotowych szablonów finansowych** (DCF, cashflow 12m, break-even, budżet operacyjny, amortyzacja kredytu, opłacalność projektu, benefits realization) | `DEC-303` | `NOT_ASSESSED` — nigdy nie oceniony rubryką |
+| `GEN-4` | **Szablony PPT** | istnieje (`TemplateBuilder`, 7 ekranów, realny backend, flaga domyślnie ON); **most do generatora ISTNIEJE, blokuje go `403 TEMPLATE_FORBIDDEN`** przy `lifecycle_state=draft` i `provenance_status=unknown` | `DEC-299`, dyżur 77 | `FAIL` — PPTX nie powstaje |
+| `GEN-5` | **Szablony Word** | ★★ **NIE ISTNIEJE — zero kodu.** `TemplateBuilder` obsługuje wyłącznie prezentacje: 52 wystąpienia `deck`, 44 `slide`, **zero `docx`** | `DEC-303` | `NOT_STARTED` |
+
+### Zasada odbioru — rozszerzona
+
+★★ **Moduł 11_MATERIALS nie jest odebrany na podstawie listy artefaktów ani
+macierzy zrzutów.** Macierz `20 z 20` mierzy POWŁOKĘ. Odbiór wymaga dodatkowo:
+
+1. **`GEN-1` … `GEN-5` na `PASS`**, każdy z własnym dowodem;
+2. dla generatorów dokumentu — **wygenerowany plik obejrzany przez nadzorcę
+   i oceniony rubryką** `Harvard/wdrozenie-100/DELIVERABLES_QUALITY_RUBRIC.md`
+   (jakość graficzna ≥ 80%, **żaden wymiar = 0**);
+3. dla generatorów szablonów — **dowód pętli end-to-end**: szablon ze znacznikiem
+   przechodzi przez generator i znacznik jest w wynikowym pliku.
+
+★ Powód tej zasady jest zapisany w `DEC-2026-08-29-288`: właściciel odrzucił
+pakiet odbioru Finansów słowami *„pokazujesz mi tabelę zewnętrzną"*. **Ta sama
+pułapka dotyczy Materiałów i została tu zamknięta jawnie.**
+
+### Ryzyko przyjęte świadomie
+
+Właściciel wybrał tę opcję, znając jej koszt: **Materiały stają się najcięższym
+modułem programu i mogą blokować licznik przez wiele tygodni** — `GEN-5` to
+budowa od zera. Nadzorca ma obowiązek raportować postęp generatorów **osobno**
+od postępu pozostałych piętnastu modułów, żeby licznik `N z 16` nie ukrywał
+stanu prac nad generatorami.
+
