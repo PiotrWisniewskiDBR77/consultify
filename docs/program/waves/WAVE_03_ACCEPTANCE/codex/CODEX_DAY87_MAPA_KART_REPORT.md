@@ -191,7 +191,7 @@ Pełna lista 23 nieczystych pozycji wraz z opisami i dowodami: `/private/tmp/cx-
 | K4 | ZROBIONE: 61 wystąpień, 55 unikalnych id, 3 wspólne id |
 | K5 | ZROBIONE: render/persystencja 7 z 7; builder 42 z 61 |
 | K6 | PARTIAL: stan kontraktów 67 z 90; zgodność z brakującym SPEC-N `EVIDENCE_MISSING` |
-| K7 | do potwierdzenia komendą końcową po commicie |
+| K7 | ZROBIONE: `git diff --name-only 07f8768..HEAD` zwraca wyłącznie ten raport; pierwszy commit `08e54f0373` |
 
 Nie uruchamiano pakietów testowych, więc ramka Z33 (a–d) nie ma zastosowania. Pułapkę (e) wyłączono przez budowę mianownika wyłącznie z `cardSets.ts` i eksportowanych kontraktów, nie przez nazwy plików `*Card*.tsx`.
 
@@ -201,4 +201,3 @@ Nie uruchamiano pakietów testowych, więc ramka Z33 (a–d) nie ma zastosowania
 - `/private/tmp/cx-day87-artefakty/sets.tsv` — `649fb4d643f2c820e5eb4b6e60d19d93fad2e065ba41a1ff6bb9488cab092cd5`
 - `/private/tmp/cx-day87-artefakty/nonclean.tsv` — `7dd4a4b9e7c28005d9ddd5a36bda19e900a95dee45c788d8d09508750c5d7437`
 - `/private/tmp/cx-day87-artefakty/card-structure-rg.txt` — `e1192e310efb925ee1ad0ff2c6e7b52bc2aa611ffd247aa75eb5b2fdb770cc33`
-
