@@ -40,6 +40,7 @@ export function ProblemCauseImpactLayout(
   const pciElements = ProblemCauseImpact(
     {
       problem: c.problem,
+      language: meta.language,
       causes: c.causes,
       position: { x: g.contentX, y: g.contentY, w: g.contentW, h: g.contentH },
     },

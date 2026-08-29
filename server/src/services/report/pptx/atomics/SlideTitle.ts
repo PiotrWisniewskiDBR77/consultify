@@ -85,7 +85,7 @@ function fitTitle(rawText: string, widthPt: number, heightPt: number, baseFont: 
 
   // 1) Fits on one line at full size.
   if (auOne * baseFont <= widthPt || words.length <= 1) {
-    return { text, fontSize: baseFont, wrap: true };
+    return { text, fontSize: baseFont, wrap: false };
   }
 
   // 2) Shrink to a readable floor and try to keep it on one line — this is
@@ -117,9 +117,9 @@ export function SlideTitle(props: SlideTitleProps, tokens: DesignTokens): Render
   // break, or neither.
   const pos: ElementPosition = {
     x: props.position?.x ?? tokens.grid.contentX,
-    y: props.position?.y ?? 0.1,
+    y: props.position?.y ?? 0.08,
     w: props.position?.w ?? tokens.grid.contentW,
-    h: props.position?.h ?? 0.72,
+    h: props.position?.h ?? 0.64,
   };
 
   const fit = fitTitle(props.text, pos.w * 72, pos.h * 72, tokens.fontSizes.slideTitle);

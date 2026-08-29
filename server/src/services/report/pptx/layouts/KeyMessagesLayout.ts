@@ -85,7 +85,16 @@ export function KeyMessagesLayout(
 
   const gutter = tokens.spacing.gutter;
   const cardW = (g.contentW - gutter * (cols - 1)) / cols;
-  const cardH = (g.contentH - gutter * (rows - 1)) / rows;
+  const availableCardH = (g.contentH - gutter * (rows - 1)) / rows;
+  const charsPerLine = Math.max(18, Math.floor(cardW * 11));
+  const descriptionLines = Math.max(
+    1,
+    ...c.messages.slice(0, total).map((message) =>
+      Math.ceil(message.description.length / charsPerLine)
+    )
+  );
+  const naturalCardH = isStacked ? 0.9 : Math.min(2.6, 1.25 + descriptionLines * 0.24);
+  const cardH = Math.min(availableCardH, naturalCardH);
 
   for (let i = 0; i < total; i++) {
     const msg = c.messages[i];
@@ -97,9 +106,9 @@ export function KeyMessagesLayout(
     // Stacked rows are short and wide → lay the icon/title/description on a
     // horizontal baseline; column cards keep the centred vertical block.
     const iconH = 0.5;
-    const titleH = 0.5;
+    const titleH = isStacked ? 0.3 : 0.5;
     const descH = isStacked
-      ? Math.min(cardH - 0.3, 1.2)
+      ? Math.max(0.25, cardH - titleH - 0.24)
       : Math.min(cardH - (iconH + titleH) - 0.5, 1.8);
     const blockH = isStacked ? cardH : iconH + 0.1 + titleH + 0.1 + descH;
     const blockTop = cardY + Math.max(0.1, (cardH - blockH) / 2);

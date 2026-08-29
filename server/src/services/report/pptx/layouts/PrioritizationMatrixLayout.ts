@@ -68,15 +68,18 @@ export function PrioritizationMatrixLayout(
   const matrixW = g.contentW - axisLabelGap;
   const matrixH = g.contentH - 0.25; // leave room for X-axis label
 
-  // Y-axis label (rotated concept — just place vertically on the left)
+  // Y-axis label rotated as one readable word, rather than wrapped character-by-character.
   elements.push(
     BodyText(
       {
         text: c.yAxisLabel || 'Impact',
-        position: { x: g.contentX, y: matrixY + matrixH / 2 - 0.2, w: axisLabelGap - 0.05, h: 0.4 },
+        position: { x: g.contentX, y: matrixY, w: axisLabelGap - 0.05, h: matrixH },
         bold: true,
         fontSize: 10,
         color: tokens.colors.textSecondary,
+        align: 'center',
+        valign: 'middle',
+        vertical: 'vert270',
       },
       tokens
     )

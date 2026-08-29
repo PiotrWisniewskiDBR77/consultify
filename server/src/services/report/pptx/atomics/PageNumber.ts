@@ -8,23 +8,12 @@ export interface PageNumberProps {
   color?: string;
 }
 
-export function PageNumber(props: PageNumberProps, tokens: DesignTokens): RenderedElement {
+export function PageNumber(_props: PageNumberProps, _tokens: DesignTokens): RenderedElement {
   return {
     kind: 'text',
-    apply(slide) {
-      // Right-aligned in an explicit box that ends at 98% of the slide width, so
-      // the number never overflows the right edge. Without an explicit `w` the
-      // default slide-number box started at 92% and ran ~0.07" past the slide.
-      slide.slideNumber = {
-        x: '88%',
-        y: '94%',
-        w: '10%',
-        h: '4%',
-        align: 'right',
-        fontFace: tokens.fonts.body,
-        fontSize: tokens.fontSizes.footnote,
-        color: props.color ?? tokens.colors.muted,
-      };
-    },
+    // Page numbering is owned centrally by PptxPipelineService.addHeaderFooter,
+    // which has the page/total context. Keep this atomic as a compatibility
+    // no-op so existing layouts do not add a second native slide number.
+    apply() {},
   };
 }
