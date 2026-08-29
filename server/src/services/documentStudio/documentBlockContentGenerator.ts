@@ -426,6 +426,21 @@ function groundingPlaceholder(language: 'pl' | 'en'): string {
     : 'Content removed — unsupported claim (assumption to verify).';
 }
 
+/**
+ * Grounding strictness for all-caps acronyms / named entities (rule B).
+ *
+ * 'allowed'  — acronyms and proper names pass through; only unsupported
+ *              NUMBERS (rule A) are removed. Owner decision 2026-08-29:
+ *              rule B was deleting normal consulting prose ("OTD", "SLA",
+ *              "WIP", "ERP", "RCA") and left generated documents empty.
+ * 'enforced' — original behaviour: a new all-caps token must occur in the
+ *              brief/source verbatim (EPSILON anti-fabrication guard).
+ *
+ * To restore the strict guard, flip this single constant back to 'enforced'.
+ */
+type GroundingAcronymRule = 'allowed' | 'enforced';
+const GROUNDING_ACRONYM_RULE: GroundingAcronymRule = 'allowed';
+
 function unsupportedClaimInString(
   text: string,
   allowedNumbers: ReadonlySet<string>,
@@ -433,6 +448,8 @@ function unsupportedClaimInString(
 ): boolean {
   const numericTokens: string[] = text.match(QUANT_TOKEN_RE) ?? [];
   if (numericTokens.some((token) => !allowedNumbers.has(token.replace(',', '.')))) return true;
+
+  if (GROUNDING_ACRONYM_RULE === 'allowed') return false;
 
   // Catch obvious invented named market/entity claims such as "DACH". This is
   // deliberately conservative: normal business abbreviations stay allowed,
