@@ -589,7 +589,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               <p className="mt-1 text-sm text-c-text-secondary">
                 {t(
                   'partner.earnings.payoutOperationsUnavailable',
-                  'Commission, accrual and payout operations are unavailable under AMD-PRT-ECONOMICS-002.'
+                  'Commission accrual and payout operations are currently unavailable.'
                 )}
               </p>
               <p className="mt-2 text-xs text-c-text-muted">
@@ -641,7 +641,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
                   <div className="text-sm text-amber-300">
                     {t(
                       'partner.earnings.bankInfoRuntimeNotice',
-                      'Payout settings are read-only and payout operations are unavailable under AMD-PRT-ECONOMICS-002.'
+                      'Payout settings are read-only and payout operations are currently unavailable.'
                     )}
                   </div>
                 </div>
