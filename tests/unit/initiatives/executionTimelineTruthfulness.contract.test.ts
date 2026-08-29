@@ -12,8 +12,11 @@ describe('Initiatives timeline truthful empty-state contract', { retry: 0 }, () 
     const en = JSON.parse(fs.readFileSync(path.resolve('public/locales/en/translation.json'), 'utf8'));
 
     expect(source).toContain('filteredInitiatives.length > 0');
-    expect(source).toContain("t('execution.empty.noTimelineDates')");
-    expect(en.execution.empty.noTimelineDates).toMatch(/date|schedule/i);
-    expect(en.execution.empty.noTimelineDates).not.toMatch(/move initiatives to execution/i);
+    expect(source).toContain("t('execution.empty.noTimelineDates', {");
+    expect(source).toContain('count: initiativesWithoutTimelineDates');
+    expect(source).toContain('total: filteredInitiatives.length');
+    expect(en.execution.empty.noTimelineDates_one).toMatch(/\{\{count\}\}.*\{\{total\}\}.*date/i);
+    expect(en.execution.empty.noTimelineDates_one).toMatch(/add dates/i);
+    expect(en.execution.empty.noTimelineDates_one).not.toMatch(/move initiatives to execution/i);
   });
 });

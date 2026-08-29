@@ -11254,6 +11254,10 @@
     },
     "empty": {
       "noInExecution": "Brak inicjatyw w realizacji. Przenieś inicjatywy do realizacji.",
+      "noTimelineDates_one": "{{count}} z {{total}} inicjatywy w realizacji nie ma dat i nie jest widoczna na osi. Uzupełnij daty, aby ją wyświetlić.",
+      "noTimelineDates_few": "{{count}} z {{total}} inicjatyw w realizacji nie ma dat i nie jest widocznych na osi. Uzupełnij daty, aby je wyświetlić.",
+      "noTimelineDates_many": "{{count}} z {{total}} inicjatyw w realizacji nie ma dat i nie jest widocznych na osi. Uzupełnij daty, aby je wyświetlić.",
+      "noTimelineDates_other": "{{count}} z {{total}} inicjatyw w realizacji nie ma dat i nie jest widocznych na osi. Uzupełnij daty, aby je wyświetlić.",
       "noAvailable": "Brak dostępnych inicjatyw.",
       "noDeadlines": "Brak zaplanowanych terminów",
       "deadlinesWillAppear": "Zadania i decyzje pojawią się tutaj",
