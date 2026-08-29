@@ -13,6 +13,8 @@ Zgodnie z §B.1 nie uruchomiono runtime'u ani macierzy zrzutów.
 
 - Marker: `f21bc627ad9c30b5dcc33b07af6e259d22a3456f`.
 - Gałąź: `codex/day70-finance-owner-20260829`.
+- Pierwszy commit i natychmiastowy push `github-backup`:
+  `6ef8c3f08ca60481639645b061a66d0450e6e3a8`.
 - Worktree: `/private/tmp/cx-day70-finance` utworzony z bare-vaulta.
 - Remote użyty do fetch/push: wyłącznie `github-backup`; nie użyto `--all`.
 - Wolne miejsce przed startem: `18Gi` (próg STOP: poniżej `5 GB`).
@@ -236,7 +238,14 @@ bez zielonego readbacku.
 - K2: `PASS` — raport `0`, dysk `0` PNG.
 - K3: `N/A / EVIDENCE_MISSING` — nie powstał żaden zrzut; sekcja
   NIEZWERYFIKOWANE jest jawna.
-- K4: sprawdzane po commitach; tylko dwa dokumenty są licencjonowane.
+- K4: `PASS` — po pierwszym commicie komenda wypisała dosłownie:
+
+  ```text
+  docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY70_FINANCE_OWNER_REPORT.md
+  docs/program/waves/WAVE_03_ACCEPTANCE/modules/10_FINANCE/MODULE_ACCEPTANCE.md
+  ```
+
+  Nie ma plików z `src/` ani `server/src/`.
 - K5: `PASS` dla prawdomówności rejestru — G07–G10 pozostają `PARTIAL`.
 
 ## Pliki i testy
@@ -247,4 +256,3 @@ bez zielonego readbacku.
 - Pakiety Vitest uruchomione jako dowód: `0`.
 - Dowód mutacyjny: `N/A` — niczego nie oznaczono `FIXED` ani `VERIFIED`.
 - `--retry=0`: `N/A` — nie uruchomiono Vitest.
-
