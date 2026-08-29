@@ -61,8 +61,17 @@ Hierarchia z §2 rozstrzyga konflikty **między warstwami**. Czwarty audyt (2026
 
 ## 2.2 ★ ROZSTRZYGNIĘCIA SPRZECZNOŚCI MIĘDZY STANDARDAMI — 2026-08-29
 
-Audyt standardów wykazał **siedem par dokumentów mówiących co innego**. Zgodnie
-z §0 („decyzje systemowe rozstrzygaj przez kanon, właściciela angażuj wyłącznie
+Audyt standardów z 2026-08-29 wykazał **siedem par dokumentów mówiących co innego**.
+
+> **Uwaga porządkowa:** to **NIE jest** ta sama siódemka co `K-16`…`K-22`
+> w [`_KOREKTY_PO_PANELU_ADWERSARYJNYM_2026-08-02.md`](_KOREKTY_PO_PANELU_ADWERSARYJNYM_2026-08-02.md).
+> Tamten rejestr ma własną, otwartą listę (m.in. hex najgłębszego tła, ramka
+> paska bocznego, hover wiersza, kolor aktywnej zakładki, wzorzec pozycji
+> nawigacji, dwie pominięte szerokości panelu) i **pozostaje w mocy**. Pozycje
+> `S6` i `S7` poniżej pokrywają się z `K-16` i `K-19`/`K-20`; reszta to sprzeczności
+> spoza tamtego rejestru. Kto porządkuje standardy, przechodzi **obie listy**.
+
+Zgodnie z §0 („decyzje systemowe rozstrzygaj przez kanon, właściciela angażuj wyłącznie
 w nieredukowalne decyzje biznesowe") rozstrzygam sześć z nich tutaj. Siódma
 wymaga pomiaru na ekranie, nie decyzji przy biurku.
 
