@@ -478,3 +478,192 @@ Niezależny katalog zwrócił `0 rows`. Własny kontener usunięto przez
 `docker rm -fv cx-day70-pg`; wszystkie porty `5942`, `4640`, `4641`, `3940`,
 `3941`, `4363`, `4364` są wolne. Trzy kanoniczne manifesty STOP oraz pomocniczy
 manifest `.generated-*` zachowano poza repo jako dowody.
+
+## Czwarta próba — punktowa licencja na naprawę fixture'u
+
+### Zmiana kodu
+
+Licencja właściciela objęła wyłącznie
+`server/scripts/seed-wave3-finance-owner-review.ts` i jedną asercję migracji.
+Commit `d3010f3da9795bf3142da2caf95dedf16910546f` zmienił:
+
+```diff
+- Number(readback.migrations) !== 834
++ Number(readback.migrations) < 834
+
+- migrations: 834
++ migrations: Number(readback.migrations)
+```
+
+Nie zmieniono czterech pozostałych kardynalności `5/6/6/1`, `SOURCE_SHA`,
+innego seedera, testów, migracji ani flag. Historyczne minimum pozostaje
+fail-closed: ledger poniżej `834` nadal jest odrzucany, a raportowany wynik
+pochodzi z rzeczywistego SQL readbacku.
+
+Dowód mutacyjny w obu kierunkach jest rzeczywisty, bez sztucznego psucia:
+
+- przed zmianą, próba trzecia: czerwony
+  `cold readback mismatch` dla `migrations=863` przy prawidłowych `5/6/6/1`;
+- po zmianie, próba czwarta: zielony seed oraz osobny zielony readback z tymi
+  samymi `863` i `5/6/6/1`.
+
+### B.1 — zielony seed i readback
+
+Użyto nowego manifestu
+`/private/tmp/cx-day70-artefakty/finance-owner-fixture-manifest-resume-3.json`
+oraz tej samej wiążącej bazy
+`consultify_w3_finance_owner_day70`. Oba wcześniejsze manifesty i manifest
+pierwszej próby pozostały nietknięte.
+
+Seed, dosłownie:
+
+```json
+{"fixtureId":"W3-FINANCE-OWNER-v1","databaseName":"consultify_w3_finance_owner_day70","readback":{"migrations":863,"approvedVersions":5,"statements":6,"sourceReceipts":6,"baselineContexts":1,"lifecycleHashRunIdentityVerified":true}}
+```
+
+Osobny cold readback, dosłownie:
+
+```json
+{"fixtureId":"W3-FINANCE-OWNER-v1","databaseName":"consultify_w3_finance_owner_day70","readback":{"migrations":863,"approvedVersions":5,"statements":6,"sourceReceipts":6,"baselineContexts":1,"lifecycleHashRunIdentityVerified":true}}
+```
+
+Porównanie wymagane licencją: historyczne minimum `834`; zmierzony aktualny
+ledger `863`. Manifest FINAL ma tryb `0600`, SHA-256
+`9fda5f7905f65323e89b19481eb1d61ee95b73d64f3e225df16e1795ea2602ed`.
+Baza nie miała wierszy konfiguracji SMTP.
+
+### Dług migracyjny w pozostałych seederach — tylko zgłoszenie
+
+Pełny inwentarz dziesięciu plików `seed-wave3-*-owner-review.ts`:
+
+| Seeder | Kontrakt migracji | Werdykt |
+| --- | --- | --- |
+| Admin | `EXPECTED_MIGRATIONS=831`, dokładna równość (`:29,320-321`) | dług — dryfująca równość |
+| Assessment | `successful_migrations: 831` w dokładnej mapie (`:466,468-469`) | dług — dryfująca równość |
+| Finance | minimum `834`, zwraca pomiar (`:238,247`) | naprawione w licencji Day 70 |
+| Initiatives | `successful_migrations: 858`, dokładna mapa (`:773-784`) | dług — komentarz sam opisuje przyszły dryf |
+| Interview | brak asercji liczby migracji | brak tego wzorca |
+| Materials | minimum `800` (`:250-253`) | wzorzec odporny na wzrost |
+| Organization | dokładna równość `831` (`:589-590`) | dług — dryfująca równość |
+| Partner | minimum `1` i dokładnie zero failed (`:116-122`) | wzorzec odporny na wzrost |
+| Results | minimum `800` (`:136-138`) | wzorzec odporny na wzrost |
+| Tools | brak asercji liczby migracji | brak tego wzorca |
+
+Nie zmieniono żadnego z wymienionych seederów poza Finance.
+
+### Runtime B.2
+
+Kanoniczny `scripts/dev/start-wave3-owner-runtime.mjs` adoptował FINAL fixture
+na serwerze `4640` i kliencie `4641`:
+
+- exact SHA klienta/serwera:
+  `d3010f3da9795bf3142da2caf95dedf16910546f`;
+- dirty fingerprint: pusty SHA-256
+  `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`;
+- health / ready / frontend: `200 / 200 / 200`;
+- migrations / SQL migrations: `ok / ok`, zmierzone `863`;
+- marker fixture'u: zweryfikowany;
+- `ENABLE_TEST_AUTH_BYPASS=false`, E2E/test gateway/test support wyłączone;
+- logowanie: realny OWNER z fixture'u, po nim route
+  `/finance?tab=statements`;
+- konsola po macierzy: `0` ostrzeżeń i `0` błędów.
+
+Runtime manifest:
+`/private/tmp/consultify-wave3-runtime-manifest-day70.json`.
+
+### B.2 — manifest 20 zrzutów
+
+Liczba plików PNG na dysku: `20`. Liczba zakwalifikowana w raporcie: `20/20`.
+Każdy obraz przedstawia ostylowany produkt po realnym logowaniu. Stan pusty
+osiągnięto widocznym filtrem z licznikiem `0`: `Kolejka naprawcza 0` dla
+Sprawozdań oraz `Szkic 0` dla pozostałych czterech ekranów.
+
+| Plik | SHA-256 |
+| --- | --- |
+| `day70-analysis-dark-empty.png` | `a02c3038286bfd8c8ef14d168762895be3ccdc49676e60609a1668ff9a670871` |
+| `day70-analysis-dark-full.png` | `60ed5b02fbc2c967c3c7f5f9e88fb22507291a0d64f6e76ba7bdfc22ebafec40` |
+| `day70-analysis-light-empty.png` | `db74a7a94396e0eb33e3fdb594e993e788c21bd308fa088456ea06bd04921a35` |
+| `day70-analysis-light-full.png` | `24ce69149868cd0b058ce970397ba4a96757b47d675b5e23e1c661d30b28bca9` |
+| `day70-baseline-dark-empty.png` | `43a0dd3b186f889284ca39ba0dd5cc7976abc450874bf4428efb0490477d8ef4` |
+| `day70-baseline-dark-full.png` | `9e6840c7e982a50be7e83cfad08ffc66c38fc196fcc39b1577f09f9c5f5d8e35` |
+| `day70-baseline-light-empty.png` | `043727466e1e463017cdca90e9632dacacafc23ef5ab75ebb0f4e711c635d7da` |
+| `day70-baseline-light-full.png` | `80302837b49b1be560f6aae7dad9e5894962eec771d568bcf5fcd6635149079e` |
+| `day70-prediction-dark-empty.png` | `ee1abf85ae97e39a63a6bbc3c8aae49f1ffe8131ebc0590af43c4a26231869d0` |
+| `day70-prediction-dark-full.png` | `22fac6324d418596ada28baf5b2ef9e83fc2e15397737ef44f00dbc93569f76e` |
+| `day70-prediction-light-empty.png` | `ecf58cf2ce643a74fed2df9fc31352b0d88f1891b1f320e390b50ad236a69ad0` |
+| `day70-prediction-light-full.png` | `18457b0a1e66b5e60dd42442902e179fd78b47ebef0ec871ae0cd23f774397a2` |
+| `day70-statement-dark-empty.png` | `f3a70e4366706c26e2ea4b858ee20584cfb4375b9fcaeb926de6d96c0abe4ea6` |
+| `day70-statement-dark-full.png` | `537ea302872664032df3ac53cba6e7e27fcfd0ead739f3541c81d9d3433c51c9` |
+| `day70-statement-light-empty.png` | `bd26d9ad9676c46f79491de79812e4fc0eac8f1fa6d0d6ce9dbe1c98ff76d335` |
+| `day70-statement-light-full.png` | `492eb9563c5680fbe7175e63d4d782994af42ceb86dc6289057090ef6e47053a` |
+| `day70-valuation-dark-empty.png` | `5d97a25ce09693abe05626f623952cde9d5205aac452c4f3390a6e92d176971d` |
+| `day70-valuation-dark-full.png` | `387a10db97a8664372b0747ea693f39ba1c10c6ecc45f0aeee27fd8e89a12578` |
+| `day70-valuation-light-empty.png` | `e1d9b29b477a1321a09b39745e8cffbb911b143a4b7492f726f52056dafbe304` |
+| `day70-valuation-light-full.png` | `19d2083c58e3217069c7b14371f49ceb605372df01e9242f6990e9b51b9f1a70` |
+
+### B.3 — inspekcja każdego zrzutu
+
+Wszystkie 20 plików obejrzano osobno. Nie stwierdzono nachodzenia elementów,
+surowych UUID ani wyglądu awarii. Znaleziska dotyczą obu motywów:
+
+| Ekran / stan | Ogląd |
+| --- | --- |
+| Sprawozdania pełny, light/dark | nagłówki i statusy PL; wartości `P&L / BS / CF`, `PLN` są domenowymi skrótami; brak surowych ID i kolizji |
+| Sprawozdania pusty, light/dark | uczciwy filtr `Kolejka naprawcza 0`; angielskie `FILTERS`, `Clear all`, `No items found` |
+| Analiza pełny, light/dark | nagłówki i status PL; nazwa `CD PROJEKT — Analiza historyczn…` jest wizualnie ucięta wielokropkiem |
+| Analiza pusty, light/dark | uczciwy `Szkic 0`; angielskie `FILTERS`, `Clear all`, `No items found` |
+| Model bazowy pełny, light/dark | kolumna `LEVELS` pozostaje EN; prawa kolumna/status są ucięte do `STAT` i `Z`; nazwa modelu ucięta wielokropkiem |
+| Model bazowy pusty, light/dark | główny empty-state jest poprawnie PL i wygląda zamierzenie; pasek filtra nadal ma `FILTERS` i `Clear all` po angielsku |
+| Prognoza pełny, light/dark | nagłówki/status PL; nazwa scenariusza ucięta wielokropkiem; brak surowych ID |
+| Prognoza pusty, light/dark | uczciwy `Szkic 0`; angielskie `FILTERS`, `Clear all`, `No items found` |
+| Wycena pełny, light/dark | nagłówki/status PL; nazwa wyceny ucięta wielokropkiem; uczciwe `—` dla brakujących projekcji |
+| Wycena pusty, light/dark | uczciwy `Szkic 0`; angielskie `FILTERS`, `Clear all`, `No items found` |
+
+Lokalizacja jednego źródła: `src/components/Economics/FinanceHub.tsx:1790`
+ma fallback `t('finance.columns.analyticsDepth', 'Levels')`; polski locale nie
+zawiera odpowiadającej wartości. `No items found` istnieje jako angielski
+`sharedComponents.gridView.emptyDefault` w
+`public/locales/en/translation.json:34517`; analogicznego trafienia w PL nie
+znaleziono. Pozostałe źródła wspólnej belki filtrów pozostają
+`EVIDENCE_MISSING` na poziomie dokładnej lokalizacji; defekt jest jednoznaczny
+na dziesięciu zrzutach pustych stanów.
+
+Defekty są zgłoszone, nie naprawione — teren `public/locales/**` i `.tsx` nie
+jest objęty punktową licencją tej próby.
+
+### Wynik po czwartej próbie
+
+| Gate | Wynik techniczny | Granica |
+| --- | --- | --- |
+| G07 | `PARTIAL / OWNER_REVIEW_READY` | polska karta i pakiet 20 zrzutów gotowe; decyzja Piotra nadal pending |
+| G08 | `PARTIAL / OWNER_REVIEW_PENDING` | 20/20 obejrzane przez wykonawcę; ujawnione defekty lokalizacji i ucięcia |
+| G09 | `PARTIAL / OWNER_REVIEW_PENDING` | realne logowanie i pięć kanonicznych rejestrów osiągalne; nie deklarowano pełnego owner walkthrough detali/kebaba |
+| G10 | `PARTIAL / OWNER_REVIEW_PENDING` | light/dark × full/empty kompletne technicznie; decyzje właściciela pending |
+
+### K1–K5 po czwartej próbie
+
+- K1: `PASS` — zielony seed i osobny cold readback `863/5/6/6/1`.
+- K2: `PASS` — raport `20`, dysk `20`, każdy plik ma SHA-256.
+- K3: `PASS Z ZNALEZISKAMI` — każdy obraz obejrzany; produkt ze stylami po
+  realnym logowaniu; sekcja NIEZWERYFIKOWANE poniżej.
+- K4: `PASS Z JAWNĄ LICENCJĄ WŁAŚCICIELA` — oprócz dwóch dokumentów zmieniono
+  wyłącznie punktowo licencjonowany
+  `server/scripts/seed-wave3-finance-owner-review.ts`; żaden plik `src/`,
+  `server/src/`, locale ani inny seeder nie został zmieniony.
+- K5: `PASS DLA PRAWDZIWOŚCI` — G07–G10 nie są zawyżone do owner PASS.
+
+### NIEZWERYFIKOWANE po czwartej próbie
+
+- `NOT_PROVEN`: akceptacja lub odrzucenie któregokolwiek ekranu przez Piotra.
+- `NOT_PROVEN`: pełny owner walkthrough szczegółów, podglądu i kebaba.
+- `NOT_PROVEN`: tablet/mobile, staging, produkcja i release.
+- `NOT_PROVEN`: źródło każdego angielskiego napisu wspólnej belki filtrów.
+- `NOT_PROVEN`: czy ucięcia wielokropkiem są zaakceptowaną decyzją UX.
+
+### Cleanup czwartej próby
+
+Kanoniczne `stop` potwierdziło zakończenie wyłącznie własnych grup procesów,
+wolne porty i zachowanie adoptowanej bazy. Następnie marker-bound `reset`
+zwrócił `dropped=true, catalogAbsent=true`; niezależny katalog zwrócił `0 rows`.
+Kontener `cx-day70-pg` usunięto z wolumenem. Porty `5942`, `4640`, `4641`,
+`3940`, `3941`, `4363`, `4364` są wolne.
