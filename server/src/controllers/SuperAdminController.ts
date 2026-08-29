@@ -3493,8 +3493,19 @@ const getSystemHealth = catchAsync(async (req, res, next) => {
   const uptimeDays = Math.floor(uptimeHours / 24);
 
   // Check AI service (just return status based on config)
+  const googleApiKey =
+    process.env.GOOGLE_API_KEY ||
+    process.env.GEMINI_API_KEY ||
+    process.env.GOOGLE_AI_KEY ||
+    process.env.GOOGLE_AI_API_KEY;
   const aiServiceStatus =
-    process.env.OPENAI_API_KEY || process.env.ANTHROPIC_API_KEY ? 'online' : 'no_keys';
+    process.env.OPENROUTER_API_KEY ||
+    process.env.OPENAI_API_KEY ||
+    process.env.ANTHROPIC_API_KEY ||
+    process.env.GROQ_API_KEY ||
+    googleApiKey
+      ? 'online'
+      : 'no_keys';
 
   res.json({
     api: {
@@ -3506,9 +3517,11 @@ const getSystemHealth = catchAsync(async (req, res, next) => {
     ai: {
       status: aiServiceStatus,
       providers: {
+        openrouter: !!process.env.OPENROUTER_API_KEY,
         openai: !!process.env.OPENAI_API_KEY,
         anthropic: !!process.env.ANTHROPIC_API_KEY,
         groq: !!process.env.GROQ_API_KEY,
+        google: !!googleApiKey,
       },
     },
     system: {
