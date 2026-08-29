@@ -2110,15 +2110,15 @@ const CertificationSection: React.FC<{
                 <div className="flex-1">
                   <h4 className="font-medium text-c-text">{cert.name}</h4>
                   <p className="text-sm text-c-text-secondary">
-                    Issued:{' '}
+                    {t('partner.certification.issued', 'Issued')}:{' '}
                     {cert.completedAt ? new Date(cert.completedAt).toLocaleDateString() : 'N/A'}
                   </p>
                   {cert.validUntil && (
                     <p className="text-xs text-c-text-muted mt-1">
-                      Valid until: {new Date(cert.validUntil).toLocaleDateString()}
+                      {t('partner.certification.validUntil', 'Valid until')}:{' '}
+                      {new Date(cert.validUntil).toLocaleDateString()}
                     </p>
                   )}
-                  <p className="text-xs text-c-text-muted mt-1">ID: {cert.certificateId}</p>
                 </div>
                 <button
                   onClick={() => {
@@ -2128,7 +2128,9 @@ const CertificationSection: React.FC<{
                         ? `/api/partners/certificates/${cert.certificateId}/download`
                         : null);
                     if (!url) {
-                      toast.error('Certificate not available');
+                      toast.error(
+                        t('partner.certification.certificateUnavailable', 'Certificate unavailable')
+                      );
                       return;
                     }
                     window.open(url, '_blank');

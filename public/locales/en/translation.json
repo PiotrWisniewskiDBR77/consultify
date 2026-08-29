@@ -1329,7 +1329,10 @@
       "noCourses": "No courses available",
       "certificatesEmpty": "No certificates earned yet",
       "examTitle": "Certification exam",
-      "deadline": "Deadline"
+      "deadline": "Deadline",
+      "issued": "Issued",
+      "validUntil": "Valid until",
+      "certificateUnavailable": "Certificate unavailable"
     },
     "clients": {
       "organizations": "Organizations",
@@ -1503,6 +1506,9 @@
       "minimumNotReached": "Minimum payout amount is {{amount}}",
       "bankInfoRequired": "Up-to-date bank and tax information is required to receive commission payments.",
       "bankInfoRuntimeNotice": "Use the governed payout settings surface to keep payout details up to date.",
+      "policyUnavailableTitle": "Partner financial operations are unavailable",
+      "payoutOperationsUnavailable": "Commission accrual and payout operations are currently unavailable.",
+      "historicalReadOnlyUnavailable": "No historical financial records are available for this partner.",
       "recentTransactions": "Recent Commission Statements",
       "noDataToExport": "No transactions to export",
       "exported": "Exported {{n}} transactions",
@@ -1557,6 +1563,32 @@
     },
     "referrals": {
       "deleteFailed": "Failed to delete deck"
+    },
+    "canonicalRuntime": {
+      "title": "Current partner programme status",
+      "subtitle": "Current programme, certification, referral and financial information.",
+      "readOnly": "Information overview",
+      "partnerStatus": "Partner status",
+      "certification": "Certification",
+      "attribution": "Referrals",
+      "referralHistory": "Referral history",
+      "payoutEligibility": "Amount available for payout",
+      "payoutEligibilityDetail": "The displayed balance is informational. Payout availability depends on approved programme rules.",
+      "latestReferralRecorded": "Latest referral recorded",
+      "noReferralsRecorded": "No referrals recorded yet",
+      "unknown": "Unknown",
+      "statusUnverified": "Status could not be verified",
+      "awaitingReview": "Awaiting review: {{count}}",
+      "noPendingReview": "No referrals awaiting review",
+      "activeAttributions": "Active referrals: {{count}}",
+      "policyNotice": "This history contains referral information only. Commission accrual, payout requests and automated payouts are currently unavailable.",
+      "state": {
+        "ready": "Ready",
+        "empty": "No data",
+        "degraded": "Limited operation",
+        "unavailable": "Unavailable",
+        "policyGated": "Subject to programme rules"
+      }
     },
     "common": {
       "comingSoon": "Coming soon"
@@ -26432,6 +26464,12 @@
     "delete": "Delete"
   },
   "canvas": {
+    "viewMode": {
+      "ariaLabel": "Document view",
+      "rich": "Editor",
+      "document": "Document",
+      "markdown": "Markdown"
+    },
     "aiMenu": {
       "promptPlaceholder": "What should Teresa do with this text?",
       "explanation": "Explanation",

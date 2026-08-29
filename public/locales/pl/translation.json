@@ -16997,6 +16997,9 @@
       "certificatesEmpty": "Brak zdobytych certyfikatów",
       "examTitle": "Egzamin certyfikacyjny",
       "deadline": "Termin",
+      "issued": "Wydano",
+      "validUntil": "Ważny do",
+      "certificateUnavailable": "Certyfikat jest niedostępny",
       "learningPathDesc": "Ukończ kursy, aby zdobywać certyfikaty",
       "noCertificates": "Ukończ kursy i zdaj egzaminy, aby zdobyć certyfikaty"
     },
@@ -28674,6 +28677,12 @@
     "delete": "Usuń"
   },
   "canvas": {
+    "viewMode": {
+      "ariaLabel": "Widok dokumentu",
+      "rich": "Edytor",
+      "document": "Dokument",
+      "markdown": "Markdown"
+    },
     "aiMenu": {
       "promptPlaceholder": "Co Teresa ma zrobić z tym tekstem?",
       "explanation": "Wyjaśnienie",
