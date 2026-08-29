@@ -1,7 +1,7 @@
 # CODEX DAY 88 — LLM domyślnie ON — RAPORT
 
-Data: 2026-08-29  
-Gałąź: `codex/day88-llm-default-on-20260829`  
+Data: 2026-08-29
+Gałąź: `codex/day88-llm-default-on-20260829`
 Baza: marker `800576e969432c583beae0293ad296c39b86d84d`
 
 ## Wynik
@@ -98,14 +98,14 @@ nie dowód dostarczenia treści przez model.
 
 ### STOP — B.1 dostawca modelu
 
-Rodzaj: MERYTORYCZNY  
-Powód: żadna z przewidzianych zmiennych dostawcy modelu nie jest obecna w środowisku; instrukcja nakazuje w tym przypadku zakończyć dyżur przed zmianą.  
-Licencja, którą sprawdziłem: §0.2 `Z12` wymienia cztery pliki z licencją wyłączną; nie zmieniłem żadnego z nich. §D dopuszcza zapis tylko czterech plików z licencji i raportu; przy STOP B.1 zapisuję wyłącznie raport.  
-Dowód: komenda obecności nazw zmiennych zwróciła `BRAK ZMIENNYCH DOSTAWCY`; wartości sekretów nie odczytywano ani nie logowano.  
-Co dostarczyłem ZAMIAST zmiany: pomiar obecności dostawcy, weryfikację stanu wejściowego W1–W3 i odczyt zachowania fallbacku bez uruchamiania modelu.  
-Co zrobiłbym, gdyby zapadła decyzja X: po bezpiecznym skonfigurowaniu dostawcy powtórzyłbym §B.1, a dopiero po jego realnej odpowiedzi zmienił najmniejszą możliwą wartość domyślną, zachowując przełącznik i kontrakt PPT.  
-Rekomendacja dla nadzorcy: zapewnić w kontrolowanym środowisku dyżuru dokładnie jeden skonfigurowany klucz dostawcy i ponowić dyżur od §B.1; nie scalać zmiany domyślnej bez dowodu odpowiedzi dostawcy.  
-Stan: zacommitowano wyłącznie raport STOP.  
+Rodzaj: MERYTORYCZNY
+Powód: żadna z przewidzianych zmiennych dostawcy modelu nie jest obecna w środowisku; instrukcja nakazuje w tym przypadku zakończyć dyżur przed zmianą.
+Licencja, którą sprawdziłem: §0.2 `Z12` wymienia cztery pliki z licencją wyłączną; nie zmieniłem żadnego z nich. §D dopuszcza zapis tylko czterech plików z licencji i raportu; przy STOP B.1 zapisuję wyłącznie raport.
+Dowód: komenda obecności nazw zmiennych zwróciła `BRAK ZMIENNYCH DOSTAWCY`; wartości sekretów nie odczytywano ani nie logowano.
+Co dostarczyłem ZAMIAST zmiany: pomiar obecności dostawcy, weryfikację stanu wejściowego W1–W3 i odczyt zachowania fallbacku bez uruchamiania modelu.
+Co zrobiłbym, gdyby zapadła decyzja X: po bezpiecznym skonfigurowaniu dostawcy powtórzyłbym §B.1, a dopiero po jego realnej odpowiedzi zmienił najmniejszą możliwą wartość domyślną, zachowując przełącznik i kontrakt PPT.
+Rekomendacja dla nadzorcy: zapewnić w kontrolowanym środowisku dyżuru dokładnie jeden skonfigurowany klucz dostawcy i ponowić dyżur od §B.1; nie scalać zmiany domyślnej bez dowodu odpowiedzi dostawcy.
+Stan: zacommitowano wyłącznie raport STOP.
 Czy kontynuowałem pozostałe pozycje: NIE — jawny warunek §B.1 i decyzja właściciela brzmią `BRAK DOSTAWCY = STOP, koniec dyżuru`.
 
 ## Kryteria K1–K7
