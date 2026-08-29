@@ -154,6 +154,20 @@ Format kwot `1 250,00 €` nie występuje na żadnym z `20 z 20` ekranów, więc
 
 Wynik K4: `8 z 8` rozstrzygniętych; `8 z 8` nadal występuje; `0 z 8` naprawionych.
 
+## Wznowienie — diagnoza przyczyny `MAT-D76-004` (bez naprawy)
+
+Werdykt: dane nie urywają się ani w HTTP, ani w stanie React, ani w samym rendererze. Karty są renderowane, lecz właściwy obszar roboczy dostaje wysokość `0px` i zostaje przycięty. Przyczyną jest pełnowysokościowy dolny pasek użyty jako bezpośrednie, niekurczliwe dziecko pionowego kontenera w trybie innym niż Artifact Studio.
+
+Łańcuch dowodowy:
+
+1. `GET /api/presentations/decks/b1160000-0000-4000-8000-000000000001` zwrócił HTTP `200`. Odpowiedź miała kształt `{ success: true, data: { deck_json: string, slide_count: 4, declared_slide_count: 4, ... } }`; po parsowaniu `data.deck_json` zawierało `cards` o długości `4`, z tytułami `Transformacja operacyjna`, `Stan obecny`, `Plan 90 dni`, `Decyzja`.
+2. `DeckBuilder` odbiera wrapper odpowiedzi w `src/components/Presentations/DeckBuilder/DeckBuilder.tsx:648-652`, parsuje `deck_json` w linii `662`, sprawdza `deckJson.cards` w linii `684` i zapisuje pełną talię do stanu w liniach `685-699`. Następnie przekazuje dokładnie `deck.cards` do `SlideSorter` w liniach `1643-1649` oraz do `CardCanvas` w liniach `1669-1673`.
+3. Odczyt DOM potwierdził istnienie elementów wszystkich czterech kart. Renderer nie ma `display:none` ani `visibility:hidden`; dla właściwego `<main aria-label="Prezentacje canvas">` computed style wyniósł `display:block`, `visibility:visible`, `opacity:1`, `z-index:auto`, ale `height:0px` i rect `487×0` przy `x=344, y=48`. Nie jest to problem `z-index`.
+4. Źródło zerowej wysokości: `DeckBuilderBottomBar` nadaje swojemu korzeniowi `h-full ... flex-shrink-0` w `src/components/Presentations/DeckBuilder/DeckBuilderBottomBar.tsx:25`. Gdy `artifactStudioMode` jest fałszywy, adapter wstawia ten pasek bezpośrednio jako rodzeństwo głównej części przez `src/components/Presentations/DeckBuilder/DeckBuilderMelsView.tsx:404-407`. Pomiar dzieci `deck-builder-mels-root` przy wysokości `672px` wykazał: główna część `flex-1 ... overflow-hidden` = `0px`, pasek `h-full ... flex-shrink-0` = `672px`.
+5. Następnie `ExecutiveModuleShell` dziedziczy już `0px`: korzeń `h-full` w `src/components/shared/ExecutiveModuleShell/index.tsx:463`, środkowy flex w linii `485` i canvas `<main>` w liniach `587-595`. Przodek z `overflow-hidden` w `DeckBuilderMelsView.tsx:404` przycina wyrenderowaną treść. Dlatego na zrzucie zostaje praktycznie tylko pełnowysokościowy pasek `Karta 1 z 4`, mimo że cztery slajdy istnieją w DOM.
+
+Klasyfikacja: `DIAGNOSED_OPEN_BLOCKER`. Nie zmieniono żadnego pliku produktu ani testu.
+
 ## Hashe zrzutów
 
 ```text
@@ -204,7 +218,7 @@ b9232dc676bb24f38d4975693d2745762dc5eb8cb97bc805c1c0228abc8ca40b  day76-template
 - `NOT_PROVEN`: kwoty i liczby dziesiętne, ponieważ nie wystąpiły na `20 z 20` ekranów.
 - `NOT_PROVEN`: realne share/export/provider; zgodnie z zakazami nie klikano działań wysyłkowych ani AI.
 - `NOT_PROVEN`: akceptacja właściciela oraz G11–G20.
-- `NOT_PROVEN`: przyczyna techniczna pustego renderu prezentacji; dyżur Z40 wyłącznie zgłasza stan i nie naprawia kodu.
+- Przyczyna techniczna pustego renderu prezentacji została zdiagnozowana w sekcji wznowienia; naprawa pozostaje poza zakresem i nie została wykonana.
 
 ## Rozłączność
 
