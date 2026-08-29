@@ -127,7 +127,7 @@ git -C "$WT" push github-backup codex/day72-results-owner-20260829
 
 Powtarzasz go **po każdej kolejnej pozycji**.
 
-**Komenda bazowa dla listy plików, które dotknąłeś** (do `§0.4a`):
+**Komenda bazowa dla listy plików, które dotknąłeś** (do `§C` / `K4`):
 
 ```bash
 git -C "$WT" diff --name-only b57253c0397994d2acd7eb79dd56e874fe40c55a..HEAD
@@ -168,7 +168,7 @@ Komplet komend weryfikacji stanu wejściowego znajdziesz w **§A** (W1–W3). Wy
 | `Z21` | **DoD wymaga DOWODU OSIĄGALNOŚCI, nie istnienia pliku** (`DEC-2026-08-26-104`). Pełna ścieżka: realne wejście HTTP → realny `ApiGateway` → `verifyToken` → trasa → handler → zapytanie → **wiersz w Twojej bazie** → odczyt, który ten wiersz podnosi → konsument w `src/` **albo jawne zdanie „brak konsumenta"** | Istnienie kodu ≠ działanie |
 | `Z22` | **★★ Test wstrzykujący zależności albo montujący router w gołym `express()` NIE dowodzi ścieżki produkcyjnej** (`DEC-2026-08-26-107`). Dowodem jest `ApiGateway.getInstance().initializeRoutes(app)` | Replika rozjeżdża się z produkcją i nikt tego nie zauważa |
 | `Z23` | **★★ ZERO ATRAP.** `200` z pustą kopertą tam, gdzie zapytanie padło, jest atrapą. `0` tam, gdzie wartość jest nieznana, jest atrapą. Ekran, który zapisuje do magazynu, którego nikt nie czyta, jest atrapą. Przycisk bez trasy jest atrapą | `DEC-2026-08-25-21/22`, `DEC-51` |
-| `Z24` | **Pomiar zasięgu testów wg `§0.4a` jest warunkiem oddania raportu.** Zawężony wybór albo **przepisanie cudzej liczby** = zawyżenie i podstawa odrzucenia | Liczby autora instrukcji i nadzorcy krążą po dokumentach i utrwalają się jako „fakt" |
+| `Z24` | ★ **NIE DOTYCZY W TYM DYŻURZE — to dyżur DOWODOWY, nie uruchamia pakietów testowych, więc sekcji `§0.4a` w tej instrukcji NIE MA i nie masz jej szukać.** Obowiązuje natomiast rdzeń zakazu: **przepisanie cudzej liczby albo podanie liczby bez mianownika = zawyżenie i podstawa odrzucenia raportu.** Każda liczba w Twoim raporcie ma mieć mianownik („N z 20", nie „N"). | **Pomiar zasięgu testów wg `§0.4a` jest warunkiem oddania raportu.** Zawężony wybór albo **przepisanie cudzej liczby** = zawyżenie i podstawa odrzucenia | Liczby autora instrukcji i nadzorcy krążą po dokumentach i utrwalają się jako „fakt" |
 | `Z25` | **★★ Testy realdb WYŁĄCZNIE z jawnym `DATABASE_URL` wskazującym Twój efemeryczny kontener.** `tests/setup.ts` ma bezpiecznik i rzuca błędem zamiast fallbacku | **Port `5432` NASŁUCHUJE i nie jest Twój** — fallback = zapis do cudzych danych |
 | `Z26` | **★★ Komplet env w tej samej linii — patrz `§0.2c`.** Bez `MOCK_DB=false` odczyty idą cicho na atrapę bazy; bez `ENABLE_V8_GLOBAL=true` część tras daje `404` **przed uwierzytelnieniem**; bez `ENABLE_TEST_AUTH_BYPASS=false` `verifyToken` **jest omijany** | Tak zginął dzień 23 |
 | `Z27` | **★★ ZAKAZ `git stash` w każdej postaci** (`stash`, `stash -u`, `stash pop`, `stash apply`). Stan odkładasz przez `cp` do `/private/tmp/cx-day72-scratch` i wracasz przez `cp` | **Schowek jest współdzielony między wszystkimi worktree** tego repozytorium; dwa incydenty kolizji |
@@ -283,7 +283,7 @@ Dla testów **serwerowych** dodajesz `--config server/vitest.config.ts`.
 wymaga dana ścieżka, i **wpisz to do raportu**.
 
 **(C) PAKIETY CZYSTO JEDNOSTKOWE** (mockują `dbGet`, nigdy nie otwierają
-połączenia — m.in. pomiar zasięgu `§0.4a`):
+połączenia):
 
 ```bash
 cd /private/tmp/cx-day72-results && \
