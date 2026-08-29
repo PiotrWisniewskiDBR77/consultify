@@ -16,7 +16,7 @@ to osobnym modułem głównego menu.
 1. **Standard jest KODEM, nie opisem**: ekrany listowe budujemy WYŁĄCZNIE komponentami
    `src/components/standard/` (StandardModuleBar · StandardTable · StandardPreview).
    Moduł deklaruje treść, komponent narzuca wygląd. Zakaz własnych tabel/menu/preview per ekran.
-2. **SSOT wyglądu: `docs/ui-standards/TRIADA_KANON.md`** (opis + twarde wartości + 40-punktowa
+2. **SSOT wyglądu: `docs/ui-standards/TRIADA_KANON.md`** (opis + twarde wartości + 43-punktowa
    lista czekowania + fotki referencyjne). Surowe słowa właściciela:
    `Harvard/wdrozenie-100/_STANDARD_TRIADA_NOTATKA.md`. Przy każdej pracy nad ekranem listowym
    użyj skilla `consultify-triada`.

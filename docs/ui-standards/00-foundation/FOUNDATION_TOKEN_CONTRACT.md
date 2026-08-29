@@ -89,7 +89,7 @@ Dozwolona skala: `space-1=4`, `2=8`, `3=12`, `4=16`, `5=20`, `6=24`, `8=32`, `10
 | sidebar expanded | 240 px |
 | module bar / Menu 2 | 48 px |
 | artifact identity / Menu 1 | 60 px |
-| contextual command / Menu 3 | 44 px — **DŁUG DOC↔KOD, otwarty.** Zmierzone w kodzie: `MENU_3_ROW_CLASS` (`src/components/shared/ModuleMenu3.tsx:53-54`, `px-4 py-2`) + `MENU_3_INNER_CLASS` (`min-h-8`) dają wysokość ≈48 px, nie 44 px. Rozbieżność nie jest tu rozstrzygana (ani doc→48, ani kod→44 nie jest wybrany w tym kroku); do decyzji. |
+| contextual command / Menu 3 | **48 px** — dług doc↔kod **ZAMKNIĘTY 2026-08-29** (rozstrzygnięcie `S2`, CANON §2.2) na korzyść kodu: `MENU_3_ROW_CLASS` (`px-4 py-2`) + `MENU_3_INNER_CLASS` (`min-h-8`) dają ≈48 px. Powód: zmiana 48→44 byłaby zmianą wizualną na wszystkich ekranach listowych, której nikt nie odebrał. |
 | preview listowy (SPEC-L, panel podglądu przy tabeli) | `clamp(340px, 28%, 480px)` |
 | prawy panel właściwości / drawer artefaktu i formularza (SPEC-A) | 360 px domyślnie, zakres 320–420 px |
 | form drawer wide | 420 px |

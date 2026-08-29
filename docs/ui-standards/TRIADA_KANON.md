@@ -70,7 +70,7 @@ separatora między każdym z 5 bloków.
 5. **Relations:** klikalne pigułki albo „No relations".
 6. **AKCJE:** siatka 2 kolumny — rząd 1: rozstrzygnięcia · rząd 2: informacyjne · rząd 3: czas/eskalacja.
 
-## A8. PRZYCISK AKCJI (preview i wszędzie) — JEDEN komponent, 4 warianty
+## A8. PRZYCISK AKCJI (preview i wszędzie) — JEDEN komponent, 5 wariantów
 Pigułka h-9 rounded-full, **widoczna ramka**, ikona + etykieta + (opcjonalnie) szary badge skrótu `[A]`.
 Warianty (ustabilizowane, niepodmienialne): **pozytywny** zielony tint · **destrukcyjny** czerwony tint · **uwaga** bursztynowy tint · **neutralny** ghost z ramką · **główny** granatowo-biały kontrast (`primary`, **maks. jeden na preview**, nigdy crimson). Moduł wybiera wariant+etykietę+handler — nic więcej.
 
@@ -134,7 +134,7 @@ Czerwień = wyłącznie semantyka krytyczna (overdue/error/blocked/delete). Akty
 
 **PRZYCISKI (2)**
 - [ ] 31. Wszystkie akcje preview = pigułki h-9 z ramką, ikona+etykieta(+skrót)
-- [ ] 32. Kolory tylko z 4 wariantów (zielony/czerwony/bursztyn/neutral) — zero innych
+- [ ] 32. Kolory tylko z 5 wariantów (`primary` granatowy · `emerald` · `amber` · `red` · `neutral`) — zero innych. **Rozstrzygnięcie `S1`, CANON §2.2 (2026-08-29):** było „4 warianty", uzgodnione z `TABLE_AND_PREVIEW_CANON.md` §7.3b na pięć.
 
 **KANBAN (5 — jeśli ekran ma widok kanban)**
 - [ ] 33. Kolumny bez tła/obrysu, z kropką+licznikiem; puste widoczne z placeholderem

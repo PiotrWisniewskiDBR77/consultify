@@ -1371,6 +1371,12 @@ moment marki/destrukcja", nie „stan aktywny/wybrany".
 - **Fix A-4 (Edit Columns):** ikony eye NIE czerwone (`c.text-muted`), label NIE UPPERCASE (L3), instrukcja „drag to reorder" → `title`/tooltip nie body.
 
 ### 14.5 Preview pane — żelazny układ (§7.3b)
+
+> **★ KOREKTA `S6` (CANON §2.2, 2026-08-29).** Blok „Co dalej" stoi **PO akcjach**,
+> nie przed. Kod (`StandardPreview.tsx`), `TRIADA_KANON.md` i
+> `TABLE_AND_PREVIEW_CANON.md` §7.3c są zgodne — ten paragraf był jedynym
+> miejscem nienaprawionym po korekcie `K-16` z 2026-08-02.
+
 Szer. **`clamp(340px, 28%, 480px)`** (SYS-2 §9.1a — preview listowy, powierzchnia SPEC-L; RÓŻNA od
 prawego panelu artefaktu 360px/320–420px, §9.1a pkt 2), separacja `gap-1.5` **bez `border-l`**. SSOT
 kodu i implementacja **zgodne**: `shared/TableWithPreviewLayout.tsx:437,455` (orkiestracja §14.0, **18
