@@ -1,0 +1,377 @@
+<meta charset="utf-8">
+<title>Lancuch dostarczenia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+  :root{
+    --ground:#F4F7FB; --surface:#FFFFFF; --surface-2:#EDF2F8;
+    --ink:#121B2E; --ink-soft:#46536B; --ink-mute:#6E7B92;
+    --line:#DBE3EE;
+    --accent:#1F5A8F; --accent-soft:#E3EDF6;
+    --critical:#85182F; --critical-bg:#F7E7EA;
+    --good:#1F6B4D; --good-bg:#E4F0EA;
+    --warn:#8A5A12; --warn-bg:#F6EDDC;
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --ground:#0D1524; --surface:#141F33; --surface-2:#1B2942;
+    --ink:#E9EFF7; --ink-soft:#B0BCD0; --ink-mute:#8492AA;
+    --line:#26344E;
+    --accent:#7FB2DD; --accent-soft:#1A2C42;
+    --critical:#E8879B; --critical-bg:#35161F;
+    --good:#7CC7A4; --good-bg:#14291F;
+    --warn:#D9AE68; --warn-bg:#2E2413;
+  }}
+  :root[data-theme="dark"]{
+    --ground:#0D1524; --surface:#141F33; --surface-2:#1B2942;
+    --ink:#E9EFF7; --ink-soft:#B0BCD0; --ink-mute:#8492AA;
+    --line:#26344E;
+    --accent:#7FB2DD; --accent-soft:#1A2C42;
+    --critical:#E8879B; --critical-bg:#35161F;
+    --good:#7CC7A4; --good-bg:#14291F;
+    --warn:#D9AE68; --warn-bg:#2E2413;
+  }
+
+  *{box-sizing:border-box;}
+  body{background:var(--ground);color:var(--ink);
+    font-family:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+    font-size:16.5px;line-height:1.62;margin:0;padding:0 20px 96px;
+    -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:980px;margin:0 auto;}
+  .col{max-width:660px;}
+
+  .masthead{padding:60px 0 34px;border-bottom:2px solid var(--ink);margin-bottom:44px;}
+  .eyebrow{font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--ink-mute);margin:0 0 18px;}
+  h1{font-family:Spectral,Georgia,serif;font-weight:600;font-size:clamp(38px,6vw,60px);
+    line-height:1.04;letter-spacing:-.015em;margin:0 0 20px;text-wrap:balance;}
+  .standfirst{font-family:Spectral,Georgia,serif;font-size:clamp(18px,2.4vw,21px);
+    line-height:1.55;color:var(--ink-soft);max-width:640px;margin:0;}
+
+  h2{font-family:Spectral,Georgia,serif;font-weight:600;font-size:clamp(25px,3.4vw,32px);
+    line-height:1.18;letter-spacing:-.01em;margin:0 0 8px;text-wrap:balance;}
+  section{margin-bottom:66px;}
+  .lead{color:var(--ink-soft);margin:0 0 26px;max-width:640px;}
+  p{margin:0 0 16px;}
+  .col p:last-child{margin-bottom:0;}
+
+  .rule-label{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--accent);margin:0 0 14px;display:flex;align-items:center;gap:12px;}
+  .rule-label::after{content:"";flex:1;height:1px;background:var(--line);}
+
+  /* faza */
+  .phase{background:var(--surface);border:1px solid var(--line);border-radius:3px;
+    margin-bottom:20px;overflow:hidden;}
+  .ph-head{display:grid;grid-template-columns:70px 1fr auto;gap:20px;align-items:start;
+    padding:24px 26px;border-bottom:1px solid var(--line);}
+  .ph-num{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:500;color:var(--accent);
+    letter-spacing:.08em;padding-top:5px;}
+  .ph-head h3{font-size:20px;font-weight:600;margin:0 0 5px;line-height:1.3;letter-spacing:-.01em;}
+  .ph-head .why{font-size:15px;color:var(--ink-soft);margin:0;}
+  .tagset{display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex:0 0 auto;}
+  .tag{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.1em;
+    text-transform:uppercase;padding:3px 9px;border-radius:2px;white-space:nowrap;}
+  .t-crit{background:var(--critical-bg);color:var(--critical);}
+  .t-warn{background:var(--warn-bg);color:var(--warn);}
+  .t-good{background:var(--good-bg);color:var(--good);}
+  .t-neut{background:var(--surface-2);color:var(--ink-mute);}
+
+  .ph-body{padding:22px 26px;}
+  .ph-body h4{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.13em;
+    text-transform:uppercase;color:var(--ink-mute);margin:0 0 10px;}
+  .ph-body h4:not(:first-child){margin-top:22px;}
+  .ph-body ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:9px;}
+  .ph-body li{display:flex;gap:11px;font-size:15.5px;line-height:1.55;color:var(--ink-soft);}
+  .ph-body li::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--accent);
+    flex:0 0 auto;margin-top:9px;}
+  .ph-body li b{color:var(--ink);font-weight:600;}
+  .ph-body li>span{flex:1;min-width:0;}
+  .gate{margin-top:22px;background:var(--surface-2);border-left:3px solid var(--accent);
+    padding:13px 17px;border-radius:0 3px 3px 0;font-size:15px;}
+  .gate b{color:var(--accent);}
+
+  /* liczby */
+  .figures{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:1px;
+    background:var(--line);border:1px solid var(--line);border-radius:3px;overflow:hidden;margin-bottom:28px;}
+  .fig{background:var(--surface);padding:20px 22px;}
+  .fig .n{font-family:"IBM Plex Mono",monospace;font-size:31px;font-weight:500;line-height:1;
+    letter-spacing:-.02em;font-variant-numeric:tabular-nums;display:block;margin-bottom:8px;}
+  .fig .k{font-size:13.5px;color:var(--ink-mute);line-height:1.4;display:block;}
+  .fig.crit .n{color:var(--critical);}
+  .fig.good .n{color:var(--good);}
+
+  .note{border-left:3px solid var(--line);padding-left:22px;color:var(--ink-soft);font-size:15.5px;}
+  .note strong{color:var(--ink);}
+  .note+.note{margin-top:15px;}
+
+  table.plain{width:100%;border-collapse:collapse;font-size:15px;}
+  table.plain th,table.plain td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--line);
+    vertical-align:top;}
+  table.plain th{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.13em;
+    text-transform:uppercase;color:var(--ink-mute);font-weight:500;}
+  table.plain td:first-child{font-weight:600;width:30%;}
+  table.plain tbody tr:last-child td{border-bottom:none;}
+  .scroller{overflow-x:auto;border:1px solid var(--line);border-radius:3px;background:var(--surface);}
+
+  code{font-family:"IBM Plex Mono",monospace;font-size:.875em;background:var(--surface-2);
+    padding:1px 5px;border-radius:2px;}
+  .quote{font-family:Spectral,Georgia,serif;font-size:19px;font-style:italic;color:var(--ink-soft);
+    border-left:2px solid var(--accent);padding-left:20px;margin:0 0 18px;}
+
+  footer{margin-top:30px;padding-top:26px;border-top:1px solid var(--line);
+    font-size:14px;color:var(--ink-mute);}
+  footer p{margin:0 0 8px;}
+  a{color:var(--accent);}
+  a:focus-visible{outline:2px solid var(--accent);outline-offset:3px;}
+  @media (max-width:620px){.ph-head{grid-template-columns:1fr;gap:10px;}.tagset{align-items:flex-start;flex-direction:row;flex-wrap:wrap;}}
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="eyebrow">Consultify · plan dokończenia funkcji · 29 sierpnia 2026</p>
+    <h1>Łańcuch dostarczenia</h1>
+    <p class="standfirst">Stanu docelowego nie trzeba wymyślać — jest napisany w kontraktach szesnastu modułów i jest bogatszy, niż zakładałem. Inicjatywa ma jedenaście nazwanych bramek i dwadzieścia sześć kart, wskaźnik ma rozstrzygniętą własność, dokument ma rubrykę odbioru z progami. <strong>Problem jest inny: prawie nic z tego nie zostało przyjęte, a w kilku miejscach dwa obowiązujące dokumenty mówią co innego.</strong></p>
+  </header>
+
+  <section>
+    <p class="rule-label">Stan wyjściowy · zmierzone w źródłach i na żywej bazie</p>
+    <div class="figures">
+      <div class="fig crit"><span class="n">0</span><span class="k">pakietów stanu docelowego z podpisem właściciela — wszystkie <code>DRAFT_FOR_OWNER_REVIEW</code>, puste pole akceptacji</span></div>
+      <div class="fig crit"><span class="n">2×</span><span class="k">dwa dokumenty naraz oznaczone jako obowiązujące, opisujące inne menu — dla Inicjatyw i Realizacji</span></div>
+      <div class="fig"><span class="n">31.07</span><span class="k">data ostatniej zmiany <em>wszystkich</em> szesnastu kontraktów; warstwa źródłowa pod nimi jest z maja</span></div>
+      <div class="fig crit"><span class="n">34 : 170</span><span class="k">inicjatywy w dwóch rozłącznych magazynach na żywej bazie. Wspólny rekord: jeden</span></div>
+      <div class="fig crit"><span class="n">26 177</span><span class="k">fragmentów wiedzy bez znacznika organizacji — sto procent tego, co jest</span></div>
+      <div class="fig good"><span class="n">3712</span><span class="k">słów prawdziwej prozy w wygenerowanym raporcie, zero wypełniaczy — treść <em>powstaje</em></span></div>
+      <div class="fig"><span class="n">2 z 16</span><span class="k">moduły formalnie domknięte: Organizacja i Ustawienia — a ich kontrakty nadal opisują je jako otwarte</span></div>
+      <div class="fig crit"><span class="n">5</span><span class="k">niezależnych systemów stylowania plików wychodzących do klienta — żaden nie czyta tokenów produktu</span></div>
+    </div>
+    <div class="col">
+      <p class="note"><strong>Zdanie, które trzeba powiedzieć na początku — i jest inne niż tydzień temu.</strong> Poprzednia wersja tego planu mówiła: „prawie wszystko jest zbudowane, brakuje połączeń". Sprawdziłem to adwersaryjnie i <strong>to zdanie było najgroźniejsze w całym dokumencie</strong>, bo zamieniało problem nieznanej wielkości w mały. Uczciwa wersja brzmi: <em>wiele rzeczy zbudowano po dwa razy i nikt nigdy nie wybrał, która wersja jest ta.</em> Praca polega w dużej części na <strong>wybieraniu i wygaszaniu</strong>, nie na łączeniu — bo łączenie duplikatów daje produkt z dwoma wszystkiego i mostem pośrodku.</p>
+      <p class="note"><strong>Co się zmieniło w pomiarze przez jeden dzień.</strong> Flaga, którą obwinialiśmy o puste dokumenty, jest na demo <strong>włączona</strong>. Wypełniacz „21,2%" zmierzono na starym pliku — dziś ten sam skrypt daje 1,56%. Trzy widżety wskazane jako „jedna przyczyna 28 z 35 miejsc utraty" okazały się dotyczyć <strong>trzynastu</strong> miejsc, z których <strong>żadne nie jest na osiągalnym ekranie</strong>. Każda z tych trzech liczb prowadziłaby wykonawców w złą stronę.</p>
+    </div>
+  </section>
+
+  <section>
+    <p class="rule-label">Siedem faz</p>
+    <h2>Plan</h2>
+    <p class="lead">Kolejność wynika z tego, co blokuje następne — i z jednej zasady, której poprzednia wersja nie miała: <strong>nie naprawiamy kodu, którego nikt nie renderuje</strong>.</p>
+
+    <div class="phase">
+      <div class="ph-head">
+        <span class="ph-num">FAZA 0</span>
+        <div>
+          <h3>Dokumentacja przestaje kłamać</h3>
+          <p class="why">Wykonawcy realizują dziś dokumenty, których nikt nie przyjął, i wybierają między dwoma, które oba twierdzą, że obowiązują.</p>
+        </div>
+        <div class="tagset"><span class="tag t-crit">blokuje wszystko</span><span class="tag t-neut">robię sam</span></div>
+      </div>
+      <div class="ph-body">
+        <h4>Co dokładnie</h4>
+        <ul>
+          <li><span><b>Rozstrzygnięcie sporów o kanon.</b> Dla Inicjatyw i Realizacji dwa dokumenty mają status obowiązujący i opisują inne zestawy funkcji. Nasz własny standard nazywa to stanem spornym i zabrania wdrażać na zgadywanie. Wskazuję zwycięzcę, przegranemu wpisuję odsyłacz — <b>nie kasując go</b>.</span></li>
+          <li><span><b>Przeniesienie decyzji sierpniowych do kontraktów.</b> Cała wiedza z ostatniego miesiąca — dwa moduły domknięte, odwrócenie decyzji o Finansach, gramatyka adresów spotkań — żyje w rejestrze programu, a kontrakty modułów jej nie znają i nadal opisują stan sprzed.</span></li>
+          <li><span><b>Podpięcie rubryki jakości dokumentu do mapy źródeł prawdy.</b> Definicja dobrego pliku istnieje, jest mierzalna i ma progi — ale leży poza mapą, a kontrakt najważniejszego modułu jej nie zna.</span></li>
+          <li><span><b>Uzupełnienie dwóch sekcji, których brakuje niemal wszędzie:</b> „Testy i dowody" oraz „Changelog decyzji". Bez nich każdy kolejny wykonawca zaczyna od zera.</span></li>
+          <li><span><b>Usunięcie martwych odsyłaczy</b> — katalog wskazywany jako źródło przez wszystkie moduły nie istnieje, dwie reguły kanonu wskazują pliki, których nie ma.</span></li>
+        </ul>
+        <div class="gate"><b>Bramka:</b> dla każdego z szesnastu modułów istnieje jeden dokument obowiązujący, wskazany w mapie źródeł, młodszy niż ostatnia decyzja, która go dotyczy. Zero stanów spornych.</div>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="ph-head">
+        <span class="ph-num">FAZA 1</span>
+        <div>
+          <h3>Produkt przestaje gubić pracę</h3>
+          <p class="why">Doradca dodaje załącznik albo ryzyko i po odświeżeniu tego nie ma. Ale przyczyna leży gdzie indziej, niż mówiliśmy.</p>
+        </div>
+        <div class="tagset"><span class="tag t-crit">fundament</span><span class="tag t-warn">teza obalona</span></div>
+      </div>
+      <div class="ph-body">
+        <h4>Sprostowanie, które zmienia cel tej fazy</h4>
+        <ul>
+          <li><span><b>Trzy widżety wskazane jako główna przyczyna są martwe.</b> Są instancjonowane w ośmiu miejscach, mają trzynaście lokalnych obsług zapisu — i <b>ani jedno z tych miejsc nie jest dziś osiągalne</b>: dwa leżą w starych trybach prezentacji za flagą bez wartości domyślnej, reszta w komponentach, których nikt nie renderuje.</span></li>
+          <li><span><b>Żywa utrata siedzi w kanwach nowego trybu</b> — i jest <b>cicha</b>. Produkt nawet nie kłamie, że zapisał; po prostu gubi. To zmienia opis problemu i miejsce naprawy.</span></li>
+          <li><span><b>Rejestr ryzyk ma działający zapis cztery tysiące linii wyżej w tym samym pliku</b> — potwierdzone. Kanwa go nie używa.</span></li>
+          <li><span><b>Backend załączników dla Inicjatywy, Zadania i Decyzji nie istnieje</b> — ani tabela, ani trasa, ani serwis. To jest migracja, więc ta faza wchodzi w tę samą dyscyplinę co faza wiedzy: addytywnie, z wpisem w rejestrze.</span></li>
+        </ul>
+        <div class="gate"><b>Bramka:</b> lista zmierzonych miejsc utraty, dla każdego dowód mutacyjny w obie strony. Test, który przechodzi także przed naprawą, nie liczy się. <b>Nie naprawiamy ani jednego miejsca, dopóki nie wykażemy, że ekran jest osiągalny.</b></div>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="ph-head">
+        <span class="ph-num">FAZA 2</span>
+        <div>
+          <h3>Dokument klasy doradczej wychodzi z produktu</h3>
+          <p class="why">Twoja najstarsza obawa. Awansuje z piątego miejsca na drugie, bo pomiar obalił powód, dla którego stała tak nisko.</p>
+        </div>
+        <div class="tagset"><span class="tag t-crit">najwyższa waga</span><span class="tag t-good">treść działa</span></div>
+      </div>
+      <div class="ph-body">
+        <h4>Dlaczego wcześniej, niż planowałem</h4>
+        <ul>
+          <li><span>Uzasadnienie „dokument bez wiedzy o kliencie będzie ogólnikiem" <b>nie wytrzymało</b>. Przyczyna pustych dokumentów leży wewnątrz tej fazy, nie w wiedzy o kliencie: <b>zepsuty jest skład, nie generator</b>.</span></li>
+          <li><span>Otworzyłem pliki. Raport: 11 stron, 3712 słów gęstej polskiej prozy, zero wypełniaczy. <b>Ale</b>: pusty spis treści po angielsku · znaczniki wewnętrzne <code>[DANGER]</code> i <code>[INFO]</code> wydrukowane w tekście dla klienta · tytuł rozdziału długości akapitu · metadane techniczne na stronie tytułowej.</span></li>
+          <li><span>Prezentacja: 16 slajdów polskiej treści, ale <b>„8 200 000 thousands EUR"</b>, kafle nachodzące na tekst, to samo zdanie dwa razy jedno na drugim i <b>zero wykresów</b>.</span></li>
+          <li><span><b>Generator szablonów Word nie istnieje</b> — zero linijek kodu; narzędzie obsługuje wyłącznie prezentacje. To dwa różne produkty, nie dwa widoki tego samego, i plan musi je rozróżniać.</span></li>
+          <li><span><b>Pięć niezależnych systemów stylowania eksportu</b>, z których żaden nie czyta tokenów produktu — klient dostaje inny odcień zależnie od trasy. Standard, który to porządkuje, jest zatwierdzony i nietknięty.</span></li>
+        </ul>
+        <div class="gate"><b>Bramka — istnieje i jest mierzalna, nie wymyślam jej:</b> rubryka trzech osi (kompletność ≥90%, merytoryka ≥80%, grafika ≥80%, <b>żaden wymiar równy zeru</b>), reguła koniunkcji — dokument piękny-ale-pusty pada tak samo jak mądry-ale-brzydki. Do tego dziesięciopunktowa lista odbioru każdego eksportu, weryfikowana wzrokiem na realnym renderze.</div>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="ph-head">
+        <span class="ph-num">FAZA 3</span>
+        <div>
+          <h3>Karta staje się obiektem</h3>
+          <p class="why">Stan docelowy jest tu najbogatszy w całym produkcie i prawie nic z niego nie działa.</p>
+        </div>
+        <div class="tagset"><span class="tag t-neut">rdzeń</span></div>
+      </div>
+      <div class="ph-body">
+        <h4>Co mówi kontrakt, a czego nie ma</h4>
+        <ul>
+          <li><span><b>Jedenaście nazwanych bramek</b> z właścicielem wniosku, władzą decyzyjną i terminem; <b>dwanaście statusów</b>; <b>dwadzieścia sześć kart</b> z modelem kompletności, jakości i świeżości. Kanon mówi wprost: automatyczne zatwierdzenie nie istnieje.</span></li>
+          <li><span><b>Bramka analizy jest nieosiągalna</b> — trzy blokady, jedna to poprawka jednoliniowej stałej przybitej na „nie zażądano". Kontrakt sam to potwierdza pośrednio: opisuje zakładkę analizy jako diagnostyczną <em>bez władzy decyzyjnej</em>, a żadna inna powierzchnia do złożenia wniosku nie istnieje.</span></li>
+          <li><span><b>Most między dwoma magazynami napisany i nigdy niepodłączony</b> — zero wołaczy w interfejsie. Na żywej bazie: 34 inicjatywy w jednym, 170 w drugim, jeden wspólny rekord. <b>Żaden kontrakt nie wie, że drugi magazyn istnieje</b> — a kanon zabrania rejestrów-cieni.</span></li>
+          <li><span><b>Siedem udokumentowanych rodzin źródeł inicjatywy</b>, z czego dwie oznaczone jako luka. Dokument śledzenia źródeł uznaje tylko dwie z siedmiu — i sam mówi, że musi zostać poszerzony, zanim ktokolwiek zacznie implementować.</span></li>
+        </ul>
+        <div class="gate"><b>Bramka:</b> inicjatywa utworzona z Oceny pojawia się na liście i przechodzi bramkę definicji przez interfejs, bez ani jednego wpisu do bazy z boku.</div>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="ph-head">
+        <span class="ph-num">FAZA 4</span>
+        <div>
+          <h3>Teresa wie o kliencie — granice pierwsze</h3>
+          <p class="why">Kolejność wewnątrz tej fazy jest ważniejsza niż sama faza. Naturalna kolejność pracy jest tu dokładnie odwrotna do bezpiecznej.</p>
+        </div>
+        <div class="tagset"><span class="tag t-crit">bezpieczeństwo</span></div>
+      </div>
+      <div class="ph-body">
+        <h4>Wiążąca kolejność, od której nie ma odstępstwa</h4>
+        <ul>
+          <li><span><b>Najpierw policz, potem ruszaj kod.</b> Zrobione: 26 177 fragmentów, sto procent bez znacznika organizacji; nawet pośrednia izolacja przez dokument nadrzędny zawodzi dla 70% z nich.</span></li>
+          <li><span><b>Potem zamknij dwie dziury</b> — strażnik poufności odpytujący inną tabelę niż ta, w której leżą dokumenty, i filtr, który przy braku kontekstu organizacji nie filtruje wcale.</span></li>
+          <li><span><b>Potem backfill, dopiero potem zamknięcie.</b> Zamknięcie bez backfillu wygasza całą wiedzę na demo — to nie hipoteza, to wynik z liczby powyżej.</span></li>
+          <li><span><b>Na końcu podpięcie wyniku do rozmowy</b>, za flagą, po zielonym teście różnicującym. Podpięcie jest tanie i kuszące jako pierwszy krok — i właśnie dlatego jest ostatnie.</span></li>
+          <li><span><b>Tryb wyszukiwania ustala serwer, nie klient.</b> Dziś szerokość odczytu przychodzi w ciele żądania i nikt nie sprawdza uprawnień do niej.</span></li>
+        </ul>
+        <div class="gate"><b>Bramka:</b> test różnicujący — przy cofniętej naprawie materiał obcej organizacji jest widoczny, po naprawie nie jest. Plus dowód, że naprawa dotyczy tabeli, <b>przez którą realnie idzie rozmowa</b>.</div>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="ph-head">
+        <span class="ph-num">FAZA 5</span>
+        <div>
+          <h3>Liczby są jedne</h3>
+          <p class="why">Nie jest to decyzja do podjęcia — kontrakt Wyników już ją podjął. Trzeba ją tylko wykonać.</p>
+        </div>
+        <div class="tagset"><span class="tag t-good">rozstrzygnięte</span></div>
+      </div>
+      <div class="ph-body">
+        <h4>Co jest już przesądzone w źródłach</h4>
+        <ul>
+          <li><span><b>„Docelowy wskaźnik może zostać zdefiniowany na poziomie inicjatywy. Po zatwierdzeniu trafia do wspólnego rejestru Wyników"</b> — jeden rejestr, jedna tożsamość, relacja wiele-do-wielu z kartami wyników. To rozstrzyga pytanie, które chciałem Ci zadać. Nie zadam go.</span></li>
+          <li><span><b>Czego brakuje:</b> nazwy klucza tożsamości wskaźnika i wskazania fizycznego rejestru. Do tego dwie powierzchnie zapisujące wskaźniki <b>są poza jakimkolwiek strażnikiem</b> — bez ich zamknięcia rozjazd wróci nazajutrz po migracji.</span></li>
+          <li><span><b>Istnieje już maszyneria przejścia</b> ze stanami „rozstrzygnięty / kwarantanna / niezmigrowany" i dźwignią wycofania. Poprzedni plan o niej nie wiedział i planował budowę od zera.</span></li>
+        </ul>
+        <div class="gate"><b>Bramka:</b> zmień wartość wskaźnika w inicjatywie, odśwież Wyniki — zmieniła się. I odwrotnie. To odróżnia jeden obiekt od dwóch, które dziś przypadkiem się zgadzają.</div>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="ph-head">
+        <span class="ph-num">FAZA 6</span>
+        <div>
+          <h3>Agent proponuje, człowiek zatwierdza</h3>
+          <p class="why">Okrojone świadomie. Trzy braki naraz — brak wykonawcy, brak produktu na końcu planu, brak śladu — każdy nieograniczony.</p>
+        </div>
+        <div class="tagset"><span class="tag t-neut">zakres cięty</span></div>
+      </div>
+      <div class="ph-body">
+        <h4>Dlaczego w tej postaci</h4>
+        <ul>
+          <li><span>Jest prawdziwa pętla agentowa i jest sterowanie artefaktem tą samą drogą co klik człowieka, z potwierdzeniami — to najlepszy wzorzec bezpieczeństwa w produkcie.</span></li>
+          <li><span><b>Nie ma śladu pochodzenia.</b> Zadanie utworzone przez model jest w bazie nieodróżnialne od wpisanego ręcznie i nie da się go cofnąć.</span></li>
+          <li><span><b>Ograniczenie do „agent proponuje, człowiek akceptuje" likwiduje trzy problemy naraz</b> — pochodzenie, cofanie i wykonawcę w tle — a na demo wygląda tak samo. Pełny wykonawca wraca, gdy łańcuch będzie miał co wykonywać.</span></li>
+        </ul>
+        <div class="gate"><b>Bramka:</b> wszystko, co utworzył model, da się wskazać i cofnąć jednym ruchem, potwierdzone liczbą wierszy przed i po.</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <p class="rule-label">Szesnaście modułów</p>
+    <h2>Gdzie każdy z nich jest</h2>
+    <p class="lead">Kamień milowy nie jest „skończonym modułem" — jest dłuższym działającym łańcuchem. Kolumna „stan docelowy" mówi, czy jest co realizować; kolumna „odbiór" — czy ktokolwiek to przyjął.</p>
+    <div class="scroller">
+      <table class="plain">
+        <thead><tr><th>Moduł</th><th>Stan docelowy w kontrakcie</th><th>Odbiór</th><th>Kamień</th></tr></thead>
+        <tbody>
+          <tr><td>Czat</td><td>Jedyny bez kontraktu; płótno oznaczone jako niegotowe, wejście jednocześnie „otwarte" i „zamknięte decyzją"</td><td>brak</td><td>M5</td></tr>
+          <tr><td>Moja praca</td><td>Bogaty; radar ma zamknięty kanon wizualny, ale dwa rozłączne spisy funkcji w jednym module</td><td><b>bramka wisi od 18 maja</b></td><td>M1 · M2</td></tr>
+          <tr><td>Wywiad</td><td>Kompletny lifecycle; cztery różne ujęcia tego, która trasa jest kanoniczna</td><td>pakiet nieodebrany</td><td>M2</td></tr>
+          <tr><td>Narzędzia</td><td>Najsłabszy z czterech pierwszych; kontrakt nie zna własnego wzorcowego przepływu, który opisuje niezalinkowany pakiet</td><td>pakiet nieodebrany i niezalinkowany</td><td>M3</td></tr>
+          <tr><td>Ocena</td><td><b>Nie ma napisanego stanu docelowego</b> — sekcja to lista czterech plików „do scalenia"</td><td>brak</td><td>M3</td></tr>
+          <tr><td>Inicjatywy</td><td>Najbogatszy w produkcie: 11 bramek, 12 statusów, 26 kart</td><td><b>spór o kanon</b> + decyzja blokująca kanoniczność</td><td>M2</td></tr>
+          <tr><td>Realizacja</td><td>Pięć funkcji w kontrakcie, zupełnie inne pięć w kanonie</td><td><b>spór o kanon</b>; własny status modułu mówi „zablokowany"</td><td>M2 → M4</td></tr>
+          <tr><td>Wyniki</td><td>Własność wskaźnika rozstrzygnięta; 18 luk, najdłuższa lista w produkcie</td><td>brak; kanon wskaźnika jest szkicem sprzed pięciu miesięcy</td><td>M3</td></tr>
+          <tr><td>Finanse</td><td>Pełna pętla od sprawozdania po decyzję inwestycyjną</td><td>status „beta" w spisie <b>nieaktualny</b> — właściciel odwrócił decyzję i wpuścił moduł w pełnym zakresie</td><td>M3</td></tr>
+          <tr><td>Materiały</td><td>Rozproszony na cztery kontrakty podsystemów; nadrzędny zapowiedziany w czasie przyszłym</td><td>bramka stoi na potwierdzeniu zawężonego zakresu</td><td>M4</td></tr>
+          <tr><td>Audyty</td><td>Kierunek zaakceptowany, produkt poza pierwszą falą — wolno wyłącznie porządkować</td><td>odbiór się nie odbył; mimo to dostawy są scalane</td><td>M3</td></tr>
+          <tr><td>Spotkania</td><td>Wizja zaakceptowana; warstwa źródłowa opisuje moduł jako zaślepkę i tak go „odbiera"</td><td>wymaga odbioru runtime zamiast traktowania jak placeholder</td><td>M2 → M4</td></tr>
+          <tr><td>Organizacja</td><td>Sześć modułów menu, kontrakt snapshotu dla całego produktu</td><td><b>domknięty 25.08</b> — ale kontrakt nadal opisuje moduł jako otwarty</td><td>M2</td></tr>
+          <tr><td>Panel administratora</td><td>Siedem domen, 55 ekranów, odbioru częściowego nie będzie</td><td>brak; pomiar: podłączonych 14 z 55</td><td>poza kamieniami</td></tr>
+          <tr><td>Ustawienia</td><td>Osiem modułów, pięciopoziomowa reguła rozstrzygania wartości</td><td><b>domknięty 25.08</b>; pomiar po zamknięciu: 12 z 20 semantycznie poprawnych</td><td>poza kamieniami</td></tr>
+          <tr><td>Portal partnerski</td><td>Najsłabiej dospecyfikowany; ekonomia wyłączona decyzją</td><td>brak; własne sprostowanie: „izolacja 8/8" była fałszywa, żywy wyciek między organizacjami</td><td>poza kamieniami</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="col" style="margin-top:22px">
+      <p class="note"><strong>Wspólny system narzędziowy istnieje — ale dla trójki, nie czwórki.</strong> Organizacja, Administracja i Ustawienia mają jeden kontrakt architektury informacji, jedną powłokę i pięć zamkniętych bramek. Portal partnerski jest w tej grupie wyłącznie z powodu miejsca w menu, a merytorycznie jest kanałem sprzedaży z własną ekonomią i własnym, nieukończonym kontraktem. Nie będę go traktował jak czwartą konsolę.</p>
+    </div>
+  </section>
+
+  <section>
+    <p class="rule-label">Trzy pytania</p>
+    <h2>Czego naprawdę potrzebuję od Ciebie</h2>
+    <p class="lead">Obiecałem sześć decyzji. Po sprawdzeniu zostały trzy — reszta była zadaniami technicznymi przebranymi za pytania albo rzeczami, które kontrakty już rozstrzygają. Nie będę mnożył pytań tam, gdzie mam decydować sam.</p>
+    <div class="scroller">
+      <table class="plain">
+        <thead><tr><th>Pytanie</th><th>Dlaczego tylko Ty</th><th>Konsekwencja braku odpowiedzi</th></tr></thead>
+        <tbody>
+          <tr><td><b>Które pięć narzędzi</b> użyjesz na trzech najbliższych realnych projektach?</td><td>To wybór oferty, nie techniki. Wariantów jest trzydzieści jeden, szesnaście ma własną ścieżkę.</td><td>Największe dostępne cięcie zakresu w całym programie zostaje niewykonane — „sto procent" znaczy 31 zamiast 5.</td></tr>
+          <tr><td><b>Trzy do pięciu realnych tematów</b> z Twojej praktyki na każdy typ dokumentu — do porównania ślepego.</td><td>Rubryka odbioru wymaga porównania z realnym dokumentem. Bez Twoich tematów jej najostrzejsze kryterium jest martwe.</td><td>Zostaje nam ocena „ładny / brzydki", czyli dokładnie to, co zawiodło do tej pory.</td></tr>
+          <tr><td><b>Rozliczenia w pierwszej wersji</b> — realne płatności czy tylko plan, zużycie i faktury?</td><td>Decyzja komercyjna. Dziś pozycja „Subskrypcja i rozliczenia" jest w menu doradcy i wyrzuca go na czat.</td><td>Buduję kafelek z linkiem read-only, bo tak mówi zatwierdzona decyzja — i mogę się mylić co do Twoich planów.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <p class="rule-label">Uczciwie</p>
+    <h2>Czego w tym planie nie ma</h2>
+    <div class="col">
+      <p class="note"><strong>Nie ma wyceny w dniach.</strong> Podam ją po fazie 0 i pierwszej pełnej fazie roboczej. Wcześniej byłaby zgadywaniem w kostiumie planu — a tym razem wiem to na pewno, bo trzy liczby z poprzedniej wersji rozsypały się w jeden dzień.</p>
+      <p class="note"><strong>Nie ma liczby „35 miejsc utraty" ani jej rozbicia.</strong> Zmierzyłem sufit dla trzech widżetów i wyszło trzynaście, w całości na martwych ścieżkach. Skąd wzięła się reszta — nie wiem. To zostaje rozkazem pomiarowym, nie tezą.</p>
+      <p class="note"><strong>Nie ma dowodu, że eksport działa „wszędzie".</strong> Cztery formaty da się pobrać i mam pliki na dysku, ale wejść eksportu jest kilkanaście, a jedno z nich ma twardą bramkę jakości zwracającą odmowę. „Działa" nie znaczy „wychodzi zawsze".</p>
+      <p class="note"><strong>Nie ma jedenastu dróg utworzenia inicjatywy.</strong> Kontrakt dokumentuje siedem rodzin. Liczba jedenaście i podział trzy do ośmiu nie ma w repozytorium źródła — usuwam ją, zamiast powtarzać.</p>
+      <p class="note"><strong>Nie ma stanu runtime dla większości twierdzeń o modułach.</strong> Tabela wyżej opisuje, co mówią kontrakty i kto co odebrał — nie to, co działa. Te dwie prawdy są w tym produkcie osobne i mylenie ich kosztowało nas najwięcej.</p>
+    </div>
+  </section>
+
+  <footer>
+    <div class="col">
+      <p>Stan docelowy pochodzi z kontraktów szesnastu modułów wskazanych w mapie źródeł prawdy. Liczby z żywej bazy demo zmierzone 29 sierpnia 2026 zapytaniami wyłącznie odczytu. Liczby z kodu zweryfikowane niezależnie i tam, gdzie upadły, są w tym dokumencie sprostowane.</p>
+      <p>Plan rozwoju grafiki jest osobnym dokumentem — te dwa czyta się razem, bo ekranu bez działającej funkcji pod spodem nie ma sensu malować.</p>
+    </div>
+  </footer>
+
+</div>
