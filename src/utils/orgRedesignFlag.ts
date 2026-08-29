@@ -50,10 +50,18 @@ function readEnvFlag(): boolean {
   try {
     const meta = import.meta as unknown as { env?: Record<string, string | undefined> };
     const parsed = parseFlag(meta?.env?.[ENV_KEY]);
-    // DEC-2026-08-26-78: brak build-time override → domyślnie ON.
-    return parsed === null ? true : parsed;
+    // DEC-2026-08-26-78 autoryzował flip ON na PROTOTYPIE, a nie na realnym
+    // ekranie. Odbiór wizualny realnego builda (evidence/build-20260826, 5 z 5
+    // zrzutów) nigdy nie wrócił do rejestru jako akcept właściciela — krok (d)
+    // reguły 7 z CLAUDE.md nie został wykonany. Do czasu jego wykonania
+    // domyślną wartością jest OFF (2026-08-29, nadzorca).
+    return parsed === null ? false : parsed;
   } catch {
-    return true;
+    // ★ fail-CLOSED. Poprzednio `return true` — ta flaga była JEDYNĄ z siedmiu,
+    // która przy błędzie odczytu środowiska otwierała ekran zamiast go zamykać,
+    // mimo komentarza deklarującego wzorzec „1:1" z pozostałymi flagami.
+    // Wzorzec odniesienia: chatSignalsFeedFlag.ts — `catch { cached = false }`.
+    return false;
   }
 }
 
