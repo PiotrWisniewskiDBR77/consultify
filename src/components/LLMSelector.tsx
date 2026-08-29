@@ -250,7 +250,7 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
         title={buttonTitle}
         className={`inline-flex h-9 items-center gap-2 rounded-full border ${compact ? 'px-2' : 'px-3'} transition-colors duration-150 ${
           isUnavailable
-            ? 'bg-danger-50/70 dark:bg-danger-500/10 border-danger-400/50 dark:border-danger-500/40 hover:bg-danger-100/70 dark:hover:bg-danger-500/15'
+            ? 'bg-slate-50 dark:bg-white/5 border-slate-300 dark:border-navy-600 hover:bg-slate-100 dark:hover:bg-white/10'
             : isDegraded
               ? 'bg-amber-50/70 dark:bg-amber-500/10 border-amber-400/50 dark:border-amber-500/40 hover:bg-amber-100/70 dark:hover:bg-amber-500/15'
               : isOpen
