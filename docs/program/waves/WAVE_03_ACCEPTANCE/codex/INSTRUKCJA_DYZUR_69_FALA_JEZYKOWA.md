@@ -1,4 +1,4 @@
-# INSTRUKCJA DYŻURU nr 63 — Codex — „Fala językowa — polszczyzna i usunięcie żargonu z interfejsu, wszystkie moduły"
+# INSTRUKCJA DYŻURU nr 69 — Codex — „Fala językowa — polszczyzna i usunięcie żargonu z interfejsu, wszystkie moduły"
 
 Dokument samodzielny. Zakładam, że dostajesz **TYLKO ten plik** i repozytorium
 Consultify. Nie masz dostępu do rozmowy, w której powstał, ani do instrukcji
@@ -20,7 +20,7 @@ wskazanymi ścieżkami w repo.
 > pracę i dyżur stanął na STOP-ie, który nie miał prawa powstać.
 > **Dlatego w `§0.1` masz PEŁNĄ, DOSŁOWNĄ procedurę worktree Z VAULTA.**
 > Nie improwizuj jej i nie zastępuj „swoim sposobem". Twoje miejsce pracy to
-> **wyłącznie** `/private/tmp/cx-day63-lang`.
+> **wyłącznie** `/private/tmp/cx-day69-lang`.
 
 > ### ★★ MARKER I STAN WYDANIA
 >
@@ -57,7 +57,7 @@ którą MUSISZ obsłużyć — krok (4).**
 
 ```bash
 VAULT=/Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git
-WT=/private/tmp/cx-day63-lang
+WT=/private/tmp/cx-day69-lang
 MARKER=f21bc627ad9c30b5dcc33b07af6e259d22a3456f
 
 # (0) miejsce na dysku — ponizej 5 GB wolnego to STOP calego dyzuru
@@ -72,19 +72,19 @@ git -C "$VAULT" merge-base --is-ancestor "$MARKER" github-backup/codex/m03-admin
   && echo "MARKER OK" || echo "MARKER BRAK"
 
 # (3) worktree — TWORZONY Z VAULTA, nigdy z katalogu wlasciciela
-git -C "$VAULT" worktree add "$WT" -b codex/day63-lang-wave-20260829 "$MARKER"
+git -C "$VAULT" worktree add "$WT" -b codex/day69-lang-wave-20260829 "$MARKER"
 
 # (4) ★★ BEZ TEGO GIT ODMOWI PRACY W WORKTREE (vault jest BARE)
-printf '[core]\n\tbare = false\n' > "$VAULT/worktrees/cx-day63-lang/config.worktree"
-cat "$VAULT/worktrees/cx-day63-lang/config.worktree"   # ma wypisac dwie linie
+printf '[core]\n\tbare = false\n' > "$VAULT/worktrees/cx-day69-lang/config.worktree"
+cat "$VAULT/worktrees/cx-day69-lang/config.worktree"   # ma wypisac dwie linie
 
 # (5) node_modules przez SYMLINK — jedyny dozwolony kontakt z katalogiem
 #     wlasciciela (DEC-2026-08-26-86, odczyt)
 ln -s /Users/piotrwisniewski/Developer/Consultify/node_modules "$WT/node_modules"
 
 # (6) katalogi pomocnicze POZA repo (Z13)
-mkdir -p /private/tmp/cx-day63-scratch
-mkdir -p /private/tmp/cx-day63-artefakty
+mkdir -p /private/tmp/cx-day69-scratch
+mkdir -p /private/tmp/cx-day69-artefakty
 
 # (7) sanity
 git -C "$WT" rev-parse HEAD
@@ -122,7 +122,7 @@ Scalenie z nowszym tipem wykonuje **nadzorca przy odbiorze**.
 **★★ PUSH PO PIERWSZYM COMMICIE** (`Z34a`), nie na koniec:
 
 ```bash
-git -C "$WT" push github-backup codex/day63-lang-wave-20260829
+git -C "$WT" push github-backup codex/day69-lang-wave-20260829
 ```
 
 Powtarzasz go **po każdej kolejnej pozycji**.
@@ -145,19 +145,19 @@ Komplet komend weryfikacji stanu wejściowego znajdziesz w **§A** tego dokument
 
 | # | Zakaz | Dlaczego (incydent) |
 | --- | --- | --- |
-| `Z1` | **Żadnego `git push` na `origin`** — na żadną gałąź. Jedyny dozwolony push to `github-backup`, wyłącznie gałęzi `codex/day63-lang-wave-20260829` | Push na `origin`/demo wykonuje wyłącznie nadzorca; krach 3/4 wyszedł z pushu wykonawcy |
+| `Z1` | **Żadnego `git push` na `origin`** — na żadną gałąź. Jedyny dozwolony push to `github-backup`, wyłącznie gałęzi `codex/day69-lang-wave-20260829` | Push na `origin`/demo wykonuje wyłącznie nadzorca; krach 3/4 wyszedł z pushu wykonawcy |
 | `Z2` | **Nie zmieniasz i nie pushujesz** `origin/demo`, `Londyn`, `codex/m03-admin-20260824` ani żadnej cudzej gałęzi `codex/*`, `fix/*`, `chore/*`, `recovery/*`. **Odczyt (`git show`, `git diff`, `git log`) jest dozwolony i często jawnie zamówiony** | Cudze tory w toku — 28.08 biegło równolegle kilkanaście dyżurów |
 | `Z3` | **Żadnego `--force`, `--force-with-lease`, `git reset --hard` na gałęziach współdzielonych**, żadnego `rebase` w trakcie dyżuru | Krach 3/4: regresja demo z force/reset na złej bazie |
 | `Z4` | **Nie czytasz i nie kopiujesz wariantów WIP właściciela** (`PRESERVED_PRODUCT_WIP` / `NO_COPY`) ani katalogu `server/src/_backup/**` | Warianty produktowe właściciela; `_backup` to śmietnik kolizji TS/JS |
 | `Z5` | **★★ Nie dotykasz katalogu `/Users/piotrwisniewski/Developer/Consultify`** — ani do zapisu, ani do odczytu, ani `git`, ani `cat`, ani `grep -r`, ani `ls`. Jedyny dozwolony kontakt: **symlink `node_modules` (odczyt)**, `DEC-2026-08-26-86` | Brudny checkout właściciela. **Naruszony 28.08: STOP dyżuru 53 kosztował godzinę** |
 | `Z6` | **Nie dotykasz cudzych worktree** w `/private/tmp/consultify-*`, `/private/tmp/cx-*`, `/private/tmp/fix-*`, `/private/tmp/odbior-*`, `/private/tmp/instr-*`, `/private/tmp/finish-*`. **Wyjątek: katalogi, które SAM zakładasz w tym dyżurze, są Twoje** | Żyje ich ponad 100 |
-| `Z7` | **★★ Twój JEDYNY port bazy to `5941`. Twój JEDYNY port harnessu to `4630`.** Nazwa kontenera musi nieść numer dyżuru: **`cx-day63-pg`**. **ZAKAZANE:** ``5432` (NASŁUCHUJE i NIE JEST TWÓJ), `5000`, `5037`, `5838`, `5835`, `5830`, `5816`, `5932`, `5933`, `3990`, `4342`, `4380`, `4381`, `4390`, oraz `5942` i `4640`/`4641` (dyżur 64, biegnie równolegle)`. **Sprawdzasz sam przed startem** (BLOK 0) | Trzy incydenty zapisu do cudzej bazy; `docker ps` 28.08 pokazał żywe `cx-day53-pg:5838`, `cx-day52-pg:5835`, `cx-day50-pg:5830`, `cx-day48-pg:5816` |
+| `Z7` | **★★ Twój JEDYNY port bazy to `5941`. Twój JEDYNY port harnessu to `4630`.** Nazwa kontenera musi nieść numer dyżuru: **`cx-day69-pg`**. **ZAKAZANE:** ``5432` (NASŁUCHUJE i NIE JEST TWÓJ), `5000`, `5037`, `5838`, `5835`, `5830`, `5816`, `5932`, `5933`, `3990`, `4342`, `4380`, `4381`, `4390`, oraz `5942` i `4640`/`4641` (dyżur 70, biegnie równolegle)`. **Sprawdzasz sam przed startem** (BLOK 0) | Trzy incydenty zapisu do cudzej bazy; `docker ps` 28.08 pokazał żywe `cx-day53-pg:5838`, `cx-day52-pg:5835`, `cx-day50-pg:5830`, `cx-day48-pg:5816` |
 | `Z8` | **Zero interakcji z Railway** — brak `railway` CLI, brak produkcyjnych env, brak redeployu, brak zdalnych migracji i seedów | Produkcja `consultify.ai` NIETYKALNA (`DEC-2026-08-25-65`) |
 | `Z9` | **Żadnej bazy poza jednorazowym lokalnym kontenerem tego dyżuru** — nigdy demo, staging, produkcja ani cudza retained-DB | **Baza demo i staging to JEDNA baza** (`DEC-2026-08-28-176`) |
 | `Z10` | **★★ Zero nowych flag funkcyjnych i zero zmian wartości domyślnej istniejącej flagi** — w kodzie, w `.env*`, w `docker-compose*`, w `railway*`. Wyjątek: flagi jawnie zamówione w `brak — ten dyżur nie wprowadza ani nie zmienia żadnej flagi`, wszystkie `default OFF` | Krach 07-12: masowe włączenie flag wizualnych na żywo, „tabelki jak dla trzylatka" (`CLAUDE.md` §9) |
 | `Z11` | **★★ NIE ODSŁANIASZ NOWEGO EKRANU BEZ AKCEPTU.** Nowe wizualium ma flagę `default OFF` i idzie do właściciela **na zrzutach zrobionych przez Ciebie**. Zmiana domyślnej na `ON` = **odrzucenie pozycji** | `CLAUDE.md` reguła 7: właściciel NIGDY nie jest pierwszym testerem wizualnym (powód: załamanie 07-11) |
 | `Z12` | **★★ NIE ZMIENIASZ MODELU UPRAWNIEŃ ANI BRAMEK PLATFORMOWYCH.** Nietykalne do zapisu: ``server/src/middleware/permission.middleware.ts`, `server/src/middleware/resultsInternalBetaVisibility.middleware.ts`, `server/src/middleware/v8OrgGate*`, `src/i18n.ts` (konfiguracja i18next — dopisujesz WARTOŚCI do plików `public/locales/**`, nie zmieniasz konfiguracji)`. **Wyjątek — jeżeli istnieje — jest wymieniony imiennie w tabeli licencji** | Pliki przekrojowe; dyżury 37/43/46/52 rozjechały się właśnie na nich |
-| `Z13` | **Nie tworzysz nowych dokumentów rejestrowych.** Dokładnie JEDEN plik raportu: `docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY63_LANG_WAVE_REPORT.md`. Nie zmieniasz żadnego `MODULE_ACCEPTANCE.md`, bo ten dyżur jest przekrojowy. **Zrzuty, logi i pliki wynikowe NIE wchodzą do repo** — leżą w `/private/tmp/cx-day63-artefakty`, a raport podaje ścieżki i `shasum -a 256` | Dokumentacja rośnie szybciej niż produkt |
+| `Z13` | **Nie tworzysz nowych dokumentów rejestrowych.** Dokładnie JEDEN plik raportu: `docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY69_LANG_WAVE_REPORT.md`. Nie zmieniasz żadnego `MODULE_ACCEPTANCE.md`, bo ten dyżur jest przekrojowy. **Zrzuty, logi i pliki wynikowe NIE wchodzą do repo** — leżą w `/private/tmp/cx-day69-artefakty`, a raport podaje ścieżki i `shasum -a 256` | Dokumentacja rośnie szybciej niż produkt |
 | `Z14` | **Nie zmieniasz `docs/program/waves/WAVE_03_ACCEPTANCE/OWNER_DECISION_LEDGER_2026-08-24.md`** i nie podważasz decyzji w kodzie. Uważasz, że decyzja się myli → **errata w raporcie** | SSOT decyzji właściciela |
 | `Z15` | **Zero modelu językowego w tym dyżurze.** Żaden pomiar, strażnik ani ekran nie woła `llmService`, `/api/ai/**` ani `GoogleGenerativeAI` | `DEC-51` — zakaz atrapy AI; bezpieczeństwo nie ma prawa zależeć od sieci |
 | `Z16` | **Nie usuwasz i nie „naprawiasz" uczciwych stanów pustych, `503 not_configured`, `null`, `UNKNOWN` ani nagrobków `410`** | „Zero placebo i atrap"; uczciwy `503` jest wzorcem POPRAWNYM |
@@ -171,7 +171,7 @@ Komplet komend weryfikacji stanu wejściowego znajdziesz w **§A** tego dokument
 | `Z24` | **Pomiar zasięgu testów wg `§0.4a` jest warunkiem oddania raportu.** Zawężony wybór albo **przepisanie cudzej liczby** = zawyżenie i podstawa odrzucenia | Liczby autora instrukcji i nadzorcy krążą po dokumentach i utrwalają się jako „fakt" |
 | `Z25` | **★★ Testy realdb WYŁĄCZNIE z jawnym `DATABASE_URL` wskazującym Twój efemeryczny kontener.** `tests/setup.ts` ma bezpiecznik i rzuca błędem zamiast fallbacku | **Port `5432` NASŁUCHUJE i nie jest Twój** — fallback = zapis do cudzych danych |
 | `Z26` | **★★ Komplet env w tej samej linii — patrz `§0.2c`.** Bez `MOCK_DB=false` odczyty idą cicho na atrapę bazy; bez `ENABLE_V8_GLOBAL=true` część tras daje `404` **przed uwierzytelnieniem**; bez `ENABLE_TEST_AUTH_BYPASS=false` `verifyToken` **jest omijany** | Tak zginął dzień 23 |
-| `Z27` | **★★ ZAKAZ `git stash` w każdej postaci** (`stash`, `stash -u`, `stash pop`, `stash apply`). Stan odkładasz przez `cp` do `/private/tmp/cx-day63-scratch` i wracasz przez `cp` | **Schowek jest współdzielony między wszystkimi worktree** tego repozytorium; dwa incydenty kolizji |
+| `Z27` | **★★ ZAKAZ `git stash` w każdej postaci** (`stash`, `stash -u`, `stash pop`, `stash apply`). Stan odkładasz przez `cp` do `/private/tmp/cx-day69-scratch` i wracasz przez `cp` | **Schowek jest współdzielony między wszystkimi worktree** tego repozytorium; dwa incydenty kolizji |
 | `Z28` | **★★ ZERO POŁĄCZEŃ DO RAILWAY, DEMO, STAGINGU I PRODUKCJI — w każdą stronę i każdym narzędziem.** Zakaz obejmuje `railway` CLI, `psql`/`docker exec psql` do hosta innego niż `127.0.0.1`, `curl`/`wget`/`fetch` do `*.railway.app`, `demo.consultify.ai`, `consultify.ai`, `staging.*` | Produkcja NIETYKALNA; demo i staging są jedną bazą. **To jedyny zakaz, którego naruszenie zatrzymuje CAŁY dyżur** |
 | `Z29` | **★★ Testy o kształcie „atak odrzucony + readback bez zmian" MUSZĄ biec BEZ PONAWIANIA: `--retry=0` w KAŻDEJ komendzie** i `retry: 0` w opcjach `describe`/`it`, jeśli plik je ustawia | `vitest.config.ts` ustawia `retry: CI ? 3 : 1`. Przy otwartej dziurze pierwszy przebieg realnie zmienia stan, asercja pada, Vitest ponawia — i test **raportuje `PASS` mimo otwartej dziury**. Udowodnione na module Partner |
 | `Z30` | **★★ ZAKAZ REALNEJ WYSYŁKI E-MAILI, ZAPROSZEŃ KALENDARZOWYCH I POWIADOMIEŃ.** Przed pierwszym przebiegiem zapisującym **udowodnij w raporcie**, że dostawca poczty jest atrapą — protokół `§0.2b` | Wysłany e-mail i zaproszenie kalendarzowe są **nieodwracalne** i trafiają do skrzynek osób trzecich |
@@ -206,14 +206,14 @@ Komplet komend weryfikacji stanu wejściowego znajdziesz w **§A** tego dokument
 zapisującego:**
 
 ```bash
-cd /private/tmp/cx-day63-lang
+cd /private/tmp/cx-day69-lang
 
 # (a) srodowisko nie ma ani jednej zmiennej poczty
 env | grep -iE "^(SMTP_|RESEND|SENDGRID|MAIL|SMTP_ENABLED)" || echo "BRAK ZMIENNYCH POCZTY"
 
 # (b) ★ DRUGIE DNO: emailService czyta SMTP NAJPIERW Z BAZY (emailService.ts:180-185).
 #     Dowod „nie mam zmiennych" NIE WYSTARCZA. Po migracjach uruchom:
-docker exec cx-day63-pg psql -U postgres -d cx_day63 \
+docker exec cx-day69-pg psql -U postgres -d cx_day69 \
   -c "SELECT key, left(coalesce(value,''),8) FROM settings WHERE key LIKE 'smtp%';"
 #   oczekiwane: 0 wierszy. Jezeli tabela `settings` nie istnieje — wklej TEN blad,
 #   to tez jest dowod (nie ma skad wziac konfiguracji poczty).
@@ -240,22 +240,22 @@ przybija część wartości (`DB_TYPE='sqlite'`), więc komplet musi stać
 **(A) MIGRACJE — pełny łańcuch, przed jakimkolwiek pomiarem (`Z20`):**
 
 ```bash
-cd /private/tmp/cx-day63-lang
+cd /private/tmp/cx-day69-lang
 
-docker run -d --name cx-day63-pg \
-  -e POSTGRES_PASSWORD=cx -e POSTGRES_DB=cx_day63 \
+docker run -d --name cx-day69-pg \
+  -e POSTGRES_PASSWORD=cx -e POSTGRES_DB=cx_day69 \
   -p 127.0.0.1:5941:5432 pgvector/pgvector:pg16
 #   ★ `postgres:15` NIE PRZECHODZI migracji — brak rozszerzenia `vector`
 
-until docker exec cx-day63-pg pg_isready -U postgres >/dev/null 2>&1; do sleep 1; done
+until docker exec cx-day69-pg pg_isready -U postgres >/dev/null 2>&1; do sleep 1; done
 
 NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres \
-DATABASE_URL=postgresql://postgres:cx@127.0.0.1:5941/cx_day63 \
+DATABASE_URL=postgresql://postgres:cx@127.0.0.1:5941/cx_day69 \
   npx tsx server/scripts/migrate.postgres.ts 2>&1 | tail -20
 
 # DRUGI przebieg — musi byc bezbledny i bez zmian (idempotencja):
 NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres \
-DATABASE_URL=postgresql://postgres:cx@127.0.0.1:5941/cx_day63 \
+DATABASE_URL=postgresql://postgres:cx@127.0.0.1:5941/cx_day69 \
   npx tsx server/scripts/migrate.postgres.ts 2>&1 | tail -20
 ```
 
@@ -267,14 +267,14 @@ localhost odmawia albo `getDatabaseAsync()` zwraca MOCK
 **(B) PAKIETY DOTYKAJĄCE BAZY — komplet obowiązkowy, gotowy do wklejenia:**
 
 ```bash
-cd /private/tmp/cx-day63-lang && \
+cd /private/tmp/cx-day69-lang && \
 RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres NODE_ENV=test \
 ENABLE_V8_GLOBAL=true ENABLE_TEST_AUTH_BYPASS=false \
 RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE=enforce \
-DATABASE_URL=postgresql://postgres:cx@127.0.0.1:5941/cx_day63 \
-JWT_SECRET=cx-day63-local-secret \
+DATABASE_URL=postgresql://postgres:cx@127.0.0.1:5941/cx_day69 \
+JWT_SECRET=cx-day69-local-secret \
 npx vitest run <ścieżki pakietu, który mierzysz> --retry=0 \
-  --reporter=json --outputFile=/private/tmp/cx-day63-artefakty/<nazwa pliku wynikowego>.json
+  --reporter=json --outputFile=/private/tmp/cx-day69-artefakty/<nazwa pliku wynikowego>.json
 ```
 
 Dla testów **serwerowych** dodajesz `--config server/vitest.config.ts`.
@@ -286,10 +286,10 @@ wymaga dana ścieżka, i **wpisz to do raportu**.
 połączenia — m.in. pomiar zasięgu `§0.4a`):
 
 ```bash
-cd /private/tmp/cx-day63-lang && \
+cd /private/tmp/cx-day69-lang && \
 RUN_DB_TESTS=0 MOCK_DB=true \
 npx vitest run <ścieżki pakietu, który mierzysz> --retry=0 \
-  --reporter=json --outputFile=/private/tmp/cx-day63-artefakty/<nazwa pliku wynikowego>.json
+  --reporter=json --outputFile=/private/tmp/cx-day69-artefakty/<nazwa pliku wynikowego>.json
 ```
 
 **To NIE jest naruszenie `Z26`, tylko warunek `Z25`:** bez `DATABASE_URL`
@@ -318,14 +318,14 @@ npx vitest run <ścieżki pakietu, który mierzysz> --retry=0 \
 **Czytaj to, ZANIM uznasz cokolwiek za zepsute.**
 
 1. **Vault jest BARE + `extensions.worktreeConfig=true`.** Po `git worktree add`
-   **musisz** utworzyć `<vault>/worktrees/cx-day63-lang/config.worktree`
+   **musisz** utworzyć `<vault>/worktrees/cx-day69-lang/config.worktree`
    z treścią `[core]` / `bare = false`, inaczej `git` w worktree odmawia pracy.
    Komenda dosłowna: `§0.1` krok (4).
 2. **Remote `icloud-source` w vaulcie jest MARTWY** (wskazuje na nieistniejący
    `/private/tmp/consultify-staging-deploy-e6ca`). **Nie wołaj `git fetch --all`.**
    Jego błąd **NIE jest** negatywnym wynikiem markera i nie jest powodem STOP-u.
 3. **Host NIE MA binarki `psql`** (`which psql` → `psql not found`).
-   Każde zapytanie: `docker exec cx-day63-pg psql -U postgres -d cx_day63 -c '…'`.
+   Każde zapytanie: `docker exec cx-day69-pg psql -U postgres -d cx_day69 -c '…'`.
 4. **Runner migracji wymaga `NODE_ENV=test` przy bazie lokalnej.** Bez tego
    strażnik localhost odmawia albo `getDatabaseAsync()` zwraca MOCK
    (`server/scripts/migrate.postgres.ts:640-650`).
@@ -344,7 +344,7 @@ npx vitest run <ścieżki pakietu, który mierzysz> --retry=0 \
    `lint-typecheck` pada na zastanych błędach `tsc`, a `pr-gate` czyta wynik
    pominiętego joba jako sukces (`DEC-2026-08-28-246`). **„CI zielone" nie jest
    w tym repo żadnym dowodem.** Dowodem jest wyłącznie Twój przebieg z `--retry=0`.
-8. **`docker rm -f` bez `-v` NIE kasuje wolumenu.** Sprzątanie: `docker rm -fv cx-day63-pg`.
+8. **`docker rm -f` bez `-v` NIE kasuje wolumenu.** Sprzątanie: `docker rm -fv cx-day69-pg`.
 9. **Reporter `basic` NIE ISTNIEJE w tej wersji vitest** (`--reporter=basic` →
    `Failed to load custom Reporter from basic`). Do porównania nazw używasz
    `--reporter=json --outputFile=<plik poza repo>`.
@@ -437,9 +437,9 @@ a zgadywanie karane** (dzień 23 dostał `SUPERVISOR_ACCEPT` za STOP,
 | „Ścieżka podana w instrukcji nie istnieje" | Sprawdzasz `ls`, wpisujesz **swój wynik** do „Korekt", szukasz realnego odpowiednika i **idziesz dalej**. Rozbieżność pomiaru z instrukcją **nie jest sprzecznością — jest WYNIKIEM** |
 | „Instrukcja podaje dwie różne liczby" | Mierzysz sam, podajesz **swoją** liczbę z komendą (`Z24`). To **nie jest** powód do STOP-u |
 | „`git fetch` zwrócił błąd `icloud-source`" | To **nie jest** błąd. `§0.2d` pkt 2. Idziesz dalej |
-| „`psql` nie istnieje na hoście" | `docker exec cx-day63-pg psql …`. `§0.2d` pkt 3 |
+| „`psql` nie istnieje na hoście" | `docker exec cx-day69-pg psql …`. `§0.2d` pkt 3 |
 | „Hook pre-commit blokuje commit" | **Naprawiasz kodem, nie omijasz.** `--no-verify` jest zakazem, nie STOP-em |
-| „Musiałbym odłożyć stan roboczy" | `cp` do `/private/tmp/cx-day63-scratch`. `git stash` jest zakazem (`Z27`), nie STOP-em |
+| „Musiałbym odłożyć stan roboczy" | `cp` do `/private/tmp/cx-day69-scratch`. `git stash` jest zakazem (`Z27`), nie STOP-em |
 | „Test przeszkadza" | **Nie osłabiasz asercji.** Opisujesz, co blokuje. Osłabienie = odrzucenie pozycji, nie STOP |
 | „Nie zdążę zrobić wszystkich pozycji" | Robisz **rdzeń** (`§C.1 Partner i Finanse oraz §C.2 Materiały`) i **uczciwie opisujesz resztę jako niezrobioną**. Odwrotna kolejność (inwentarze zrobione, rdzeń „częściowo") jest podstawą odrzucenia |
 | „Port `5941` albo `4630` jest zajęty" | **To JEST powód do STOP-u całości** — nie bierzesz innego portu (`Z7`) |
@@ -544,7 +544,7 @@ której nigdy nie było (`DEC-2026-08-28`, dyżur 44). Nie powtarzamy tego.
 **Komendy weryfikacji stanu wejściowego — wszystkie obowiązkowe, wynik do raportu:**
 
 ```bash
-cd /private/tmp/cx-day63-lang
+cd /private/tmp/cx-day69-lang
 
 # (W1) konfiguracja i18n
 sed -n '100,120p' src/i18n.ts
@@ -654,16 +654,16 @@ w sekcji NIEZWERYFIKOWANE, idź dalej. Nie zapętlaj się.
 
 **Zapisujesz NA PEWNO:** `public/locales/pl/translation.json` ·
 pliki `.tsx`/`.ts` w `src/`, w których siedzą teksty klas B/C/D ·
-`docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY63_LANG_WAVE_REPORT.md`
+`docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY69_LANG_WAVE_REPORT.md`
 
 **JAWNIE NIE ZAPISUJESZ:** `server/scripts/seed-wave3-finance-owner-review.ts` ·
 `docs/program/waves/WAVE_03_ACCEPTANCE/modules/10_FINANCE/**` ·
 jakiegokolwiek `MODULE_ACCEPTANCE.md` · `OWNER_DECISION_LEDGER_2026-08-24.md` (`Z14`) ·
 `public/locales/en/**` i pozostałych języków · plików wymienionych w `Z18`
 
-★ **Dyżur 64 (Finanse) biegnie RÓWNOLEGLE.** Jego wyłączny teren to
+★ **Dyżur 70 (Finanse) biegnie RÓWNOLEGLE.** Jego wyłączny teren to
 `server/scripts/seed-wave3-finance-owner-review.ts`, `modules/10_FINANCE/**`,
-port `5942`, kontener `cx-day64-pg`, worktree `/private/tmp/cx-day64-finance`.
+port `5942`, kontener `cx-day70-pg`, worktree `/private/tmp/cx-day70-finance`.
 **Nie wchodzisz tam** (`Z6`). Jeśli musisz zmienić tekst w module Finansów —
 zmieniasz go w `src/` i w tłumaczeniach, **nigdy w dowodach ani w
 `MODULE_ACCEPTANCE.md` tego modułu**.
