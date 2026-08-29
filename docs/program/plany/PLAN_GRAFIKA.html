@@ -132,20 +132,20 @@
   <header class="masthead">
     <p class="eyebrow">Consultify · plan grafiki · 29 sierpnia 2026</p>
     <h1>Kanon na każdym ekranie</h1>
-    <p class="standfirst">Definicji „stu procent" nie trzeba wymyślać — jest napisana w standardach i liczy 43 punkty dla listy, 18 dla artefaktu, 7 bloków dla podglądu. Problem jest inny: <strong>ani jeden moduł nie ma odbioru</strong>, a wzorce referencyjne, do których standard każe porównywać, nie istnieją jako pliki.</p>
+    <p class="standfirst">Definicji „stu procent" nie trzeba wymyślać — jest napisana w standardach i liczy 43 punkty dla listy, 18 dla artefaktu, 7 bloków dla podglądu. Problem jest inny: <strong>mamy dwa rejestry odbioru, które się nie znają</strong> — macierz zgodności UI z 2 sierpnia nie ma ani jednego modułu ze statusem „odebrany", a rejestr decyzji z 24–27 sierpnia notuje <strong>59 akceptów właściciela</strong> i dwa moduły domknięte. Pierwszym krokiem jest pogodzenie tych dwóch, nie planowanie na podstawie starszego.</p>
   </header>
 
   <section>
     <p class="rule-label">Stan wyjściowy · zmierzone w źródłach</p>
     <div class="figures">
-      <div class="fig crit"><span class="n">0 z 19</span><span class="k">modułów ma status <code>ACCEPTED</code> w macierzy zgodności UI</span></div>
-      <div class="fig good"><span class="n">2</span><span class="k">wzorce naprawdę odebrane: Zadania i Decyzje, 36 zrzutów</span></div>
+      <div class="fig crit"><span class="n">2 rejestry</span><span class="k">odbioru, które się nie znają: macierz UI (2.08) — zero modułów odebranych; rejestr decyzji (24–27.08) — 59 akceptów właściciela</span></div>
+      <div class="fig good"><span class="n">2</span><span class="k">ekrany oznaczone jako referencyjne — Zadania i Decyzje; katalog z ich 36 zrzutami <b>nie istnieje w repo</b></span></div>
       <div class="fig"><span class="n">43</span><span class="k">punkty listy czekowania dla ekranu listowego — nie 40, jak mówi nasza własna reguła</span></div>
       <div class="fig"><span class="n">9</span><span class="k">czerwonych MUST bramki parytetu, przed jakąkolwiek oceną jakości</span></div>
       <div class="fig crit"><span class="n">404</span><span class="k">naruszenia kanonu tabel w 131 plikach — bezpiecznik przepuszcza je z założenia</span></div>
-      <div class="fig crit"><span class="n">0</span><span class="k">obrazów referencyjnych triady — katalog wskazany w kanonie nie istnieje</span></div>
+      <div class="fig"><span class="n">2 z 6</span><span class="k">obrazów referencyjnych istnieje (złota referencja tabeli, jasna i ciemna); brakuje czterech zrzutów triady</span></div>
       <div class="fig crit"><span class="n">7</span><span class="k">sprzeczności między dokumentami standardu, nierozstrzygniętych</span></div>
-      <div class="fig crit"><span class="n">119</span><span class="k">plików, w których fokus jest crimsonowy zamiast niebieskiego — wbrew nienaruszalnemu zakazowi</span></div>
+      <div class="fig crit"><span class="n">101 · 289</span><span class="k">plików z crimsonowym fokusem · plików z crimsonem jako tłem i obramowaniem — ten drugi dług jest większy</span></div>
     </div>
     <div class="col">
       <p class="note"><strong>Zdanie, które trzeba powiedzieć na początku.</strong> Nie brakuje standardu. Standard jest gęsty, spisany i w większości słuszny — <em>jest kodem, nie opisem</em>: ekrany listowe mają powstawać wyłącznie z komponentów <code>src/components/standard/</code>, a moduł deklaruje treść, nie wygląd. Brakuje trzech innych rzeczy: <strong>odbioru</strong> (żaden moduł go nie ma), <strong>obrazów</strong> (odbiór wzrokowy opiera się dziś na opisie słownym) i <strong>egzekucji</strong> (bezpiecznik pilnuje struktury tabel, ale nie koloru, i jest ślepy na pliki spoza gita).</p>
@@ -171,11 +171,11 @@
         <h4>Co musi być prawdą</h4>
         <ul>
           <li><span><b>Bramka parytetu — dziewięć czerwonych MUST przed oceną jakości:</b> podgląd, filtry kolumn, sortowanie, zmiana szerokości, przyklejony nagłówek, popover kolumn, kebab z realną treścią, pasek akcji masowych, stany pusty/ładowanie/błąd. Brak któregokolwiek zatrzymuje pracę nad ekranem.</span></li>
-          <li><span><b>Lista czekowania w ośmiu grupach:</b> menu (7) · tabela (8) · pstryczek (3) · kebab (5) · podgląd (7) · przyciski (2) · kanban (5) · kolor i fokus (3) · klawiatura (3). Ekran przechodzi <b>wyłącznie przy komplecie</b> — „n/d" tylko z podanym powodem.</span></li>
+          <li><span><b>Lista czekowania w dziewięciu grupach:</b> menu (7) · tabela (8) · pstryczek (3) · kebab (5) · podgląd (7) · przyciski (2) · kanban (5) · kolor i fokus (3) · klawiatura (3). Ekran przechodzi <b>wyłącznie przy komplecie</b> — „n/d" tylko z podanym powodem. <b>Grupa kanban jest warunkowa</b>: ekran bez widoku kanban ma komplet 38, nie 43.</span></li>
           <li><span><b>Weryfikacja przez zmierzone style, nie „na oko"</b> — i osobno dla każdej zakładki i każdego statusu, nie raz na moduł.</span></li>
           <li><span><b>Dziewięć obowiązkowych ujęć</b> w pakiecie dowodowym, z nazewnictwem niosącym stan, motyw, szerokość i język.</span></li>
         </ul>
-        <div class="gate"><b>Bramka:</b> komplet 43 punktów plus 9 MUST parytetu, w jasnym i ciemnym motywie, potwierdzone zrzutami z realnego runtime — nie z prototypu.</div>
+        <div class="gate"><b>Bramka:</b> 9 MUST parytetu, a potem komplet listy czekowania — <b>43 punkty dla ekranu z kanbanem, 38 bez</b> — w jasnym i ciemnym motywie, potwierdzone zrzutami z realnego runtime, nie z prototypu.</div>
       </div>
     </div>
 
@@ -186,17 +186,17 @@
           <h3>Ekran-obiekt — pięć archetypów, jedna powłoka</h3>
           <p class="why">Inicjatywa, Zadanie, Decyzja, Wniosek, raport, warsztat narzędzia, prezentacja.</p>
         </div>
-        <div class="tagset"><span class="tag t-neut">18 pozycji DoD</span></div>
+        <div class="tagset"><span class="tag t-neut">16 pozycji DoD</span></div>
       </div>
       <div class="ph-body">
         <h4>Co jest wspólne, a co zmienia archetyp</h4>
         <ul>
-          <li><span><b>Powłoka jest zawsze ta sama:</b> pasek tożsamości artefaktu, prawy panel w stałej kolejności sekcji (akcje drugorzędne · właściwości · powiązania · komentarze · historia), kebab, stany. <b>Archetyp zmienia wyłącznie centrum</b> — płótno, dokument, rekord, matryca albo slajd.</span></li>
+          <li><span><b>Powłoka jest zawsze ta sama:</b> pasek tożsamości artefaktu, prawy panel w stałej kolejności sekcji (akcje drugorzędne · właściwości · powiązania · komentarze · historia i AI), kebab, stany. <b>Archetyp zmienia wyłącznie centrum</b> — płótno, dokument, rekord, matryca albo slajd.</span></li>
           <li><span><b>Status to pigułka z tekstem, nie naga kropka</b> — kropka zapadała się do zera na wąskim ekranie. Kod obiektu i link stały schodzą do kebaba, bo rozpychały pasek.</span></li>
           <li><span><b>Zero crimsonu</b> na fokusie, statusie, odznace i zaznaczeniu. Pełny cykl klawiatury, Esc warstwowy, komunikat czytany na głos przy strumieniowaniu odpowiedzi Teresy.</span></li>
           <li><span><b>Płótno bez minimalnego zestawu klawiaturowego nie przechodzi odbioru</b> — niezależnie od tego, jak wygląda.</span></li>
         </ul>
-        <div class="gate"><b>Bramka:</b> 18 pozycji definicji ukończenia, oczami, w obu motywach.</div>
+        <div class="gate"><b>Bramka:</b> 16 pozycji definicji ukończenia (trzy z nich warunkowe — kreator i dwie dla płótna), oczami, w obu motywach.</div>
       </div>
     </div>
 
@@ -216,7 +216,7 @@
           <li><span><b>Blok „Co dalej" stoi PO akcjach</b> i pojawia się wtedy i tylko wtedy, gdy istnieje realna obsługa konwersji. Kanon zapisał przy tym zdanie, które warto powtórzyć: <em>reguła, której nie da się sprawdzić w kodzie, nie jest regułą</em>.</span></li>
           <li><span>Wymiar pochodzi wyłącznie z komponentu — własna szerokość i własna ramka po lewej są zakazane.</span></li>
         </ul>
-        <div class="gate"><b>Bramka:</b> każdy nowy ekran z podglądem ma wpis opisujący jego zawartość per zakładka. Brak wpisu = zgłoszenie niekompletne.</div>
+        <div class="gate"><b>Bramka, mierzalna:</b> zrzut panelu obok listy sześciu bloków z komponentu, blok po bloku, w obu motywach — plus wpis opisujący zawartość per zakładka. Brak wpisu = zgłoszenie niekompletne.</div>
       </div>
     </div>
   </section>
@@ -230,11 +230,11 @@
       <table class="plain">
         <thead><tr><th>Co jest zepsute</th><th>Dowód</th><th>Co robię</th></tr></thead>
         <tbody>
-          <tr><td>Brak obrazów referencyjnych</td><td>Kanon triady wskazuje cztery pliki wzorcowe; katalog nie istnieje w repozytorium. Odbiór wzrokowy opiera się na opisie słownym.</td><td>Odtwarzam wzorce zrzutami z ekranów Zadania i Decyzje — jedynych dwóch, które mają Twój odbiór — i wkładam je do repo jako obraz referencyjny.</td></tr>
+          <tr><td>Brak czterech z sześciu obrazów referencyjnych</td><td><b>Dwie złote referencje tabeli istnieją</b> (jasna i ciemna, osadzone w standardzie i już będące pozycją listy czekowania). Brakuje czterech zrzutów triady wskazanych w części D kanonu — katalog nie istnieje.</td><td>Uzupełniam brakujące cztery zrzutami z Zadań i Decyzji. Przy rozjeździe z istniejącą złotą referencją <b>rozstrzygam jawnie, która wygrywa</b> — nie dokładam trzeciego wzorca po cichu.</td></tr>
           <tr><td>Siedem sprzeczności między standardami</td><td>Cztery warianty przycisku czy pięć · 44 czy 48 piksela paska · który dokument jest nadrzędny · ramki widoczne czy niewidzialne · 40 czy 43 punkty · kolejność „Co dalej" · hover wiersza w jasnym motywie.</td><td>Rozstrzygam wszystkie siedem na korzyść <b>kodu i tego, co już odebrałeś</b>, i zapisuję rozstrzygnięcie w jednym miejscu. Dwie wymagają Twojego zdania — są niżej.</td></tr>
-          <tr><td>Pięć rozjazdów dokument–kod, wszystkie przeterminowane</td><td>Ostatni pomiar 2 sierpnia, a rejestr sam mówi, że wpis starzeje się po dwóch tygodniach. Największy: crimsonowy fokus w 119 plikach.</td><td>Przemierzam wszystkie pięć od nowa, zanim ktokolwiek na nich oprze decyzję.</td></tr>
-          <tr><td>Bezpiecznik jest ślepy na część plików</td><td>Sprawdza wyłącznie pliki znane gitowi — plik z pięcioma naruszeniami, którego nie dodano, przechodzi na zielono. Osobna bramka pilnująca crimsonowego fokusa <b>nie jest wpięta nigdzie</b>.</td><td>Domykam obie dziury. To jest warunek, żeby „zielone" cokolwiek znaczyło.</td></tr>
-          <tr><td>Osiem rodzin kolorów Tailwinda jest przepiętych</td><td><code>bg-blue-500</code> nie renderuje niebieskiego. Każda tabela w standardach posługująca się nazwami rodzin jest bez tej wiedzy myląca.</td><td>Wypisuję to jednym akapitem na górze standardu koloru i przechodzę na tokeny <code>--c-*</code> wszędzie, gdzie dotykam ekranu.</td></tr>
+          <tr><td>Pięć rozjazdów dokument–kod, wszystkie przeterminowane</td><td>Ostatni pomiar 2 sierpnia, a rejestr sam mówi, że wpis starzeje się po dwóch tygodniach. Przemierzone dziś: fokus to <b>101</b> plików, nie 119; największy rozjazd to jednak crimson jako tło i obramowanie — <b>289</b> plików.</td><td>Przemierzam wszystkie pięć od nowa, zanim ktokolwiek na nich oprze decyzję.</td></tr>
+          <tr><td>Jeden bezpiecznik jest ślepy na pliki spoza gita</td><td><b>Sprostowanie:</b> bramka fokusa <b>jest</b> wpięta w hook przedcommitowy i <b>widzi</b> pliki nieśledzone — obie dziury zamknięto 2 sierpnia. Otwarta zostaje jedna: <code>check-list-canon.sh</code> buduje zakres bez <code>--others</code>, więc nowy plik z własną tabelą przechodzi na zielono, dopóki nie trafi do gita.</td><td>Domykam <b>tę jedną</b>. Wcześniejsza wersja tego planu twierdziła, że obie są otwarte — cytowała stan sprzed czterech tygodni.</td></tr>
+          <tr><td><b>Siedemnaście</b> rodzin kolorów Tailwinda jest przepiętych</td><td><code>bg-blue-500</code> nie renderuje niebieskiego. Przepięte są wszystkie rodziny barwne; nietknięte zostają tylko neutralne i marka. Każda tabela w standardach posługująca się nazwami rodzin jest bez tej wiedzy myląca.</td><td>Wypisuję to jednym akapitem na górze standardu koloru i przechodzę na tokeny <code>--c-*</code> wszędzie, gdzie dotykam ekranu.</td></tr>
         </tbody>
       </table>
     </div>
@@ -262,9 +262,9 @@
         <ul>
           <li><span><b>Obrazy referencyjne z Zadań i Decyzji</b> — jasny i ciemny, tabela, podgląd, kebab, kanban. To zastępuje nieistniejący katalog wzorców.</span></li>
           <li><span><b>Rozstrzygnięcie siedmiu sprzeczności</b> i domknięcie dwóch dziur w bezpieczniku.</span></li>
-          <li><span><b>Bramka parytetu na trzech tabelach, które standard wymienia po imieniu jako niezgodne:</b> Narzędzia, Ocena, Wyniki.</span></li>
+          <li><span><b>Bramka parytetu na tabelach, które inwentarz triady wymienia po imieniu jako surowe <code>&lt;table&gt;</code>:</b> Pomysły w Mojej Pracy, Wyniki, lista pytań w Wywiadzie, zakładka wdrożenia w Realizacji, widok portfela. <b>Ocena tu nie wchodzi</b> — ten sam inwentarz opisuje ją jako moduł wzorcowy z kompletem triady. Wcześniejsza wersja tego planu wymieniała złą trójkę.</span></li>
         </ul>
-        <div class="gate"><b>Bramka:</b> nowy ekran listowy powstaje bez ani jednej decyzji projektowej — wszystko wynika z komponentu i z obrazu referencyjnego.</div>
+        <div class="gate"><b>Bramka, mierzalna:</b> <code>check-list-canon.sh --report</code> pokazuje spadek długu na wymienionych plikach, a baseline zregenerowany <b>wyłącznie w dół</b>; brakujące cztery zrzuty triady leżą w repo; siedem rozstrzygnięć sprzeczności naniesionych w źródłach, nie tylko ogłoszonych.</div>
       </div>
     </div>
 
@@ -303,7 +303,7 @@
         <h4>Jak to robimy</h4>
         <ul>
           <li><span>Administracja organizacji ma już wspólną nawigację domenową i wspólny nagłówek — <b>to jest wzorzec, nie problem</b>. Rozciągam go na konsolę platformy i portal partnerski.</span></li>
-          <li><span><b>Ustawienia to wyjątek</b> — formularze są różne. Ale nie projektuję ich po jednym: jeden generyczny renderer formularza, zero indywidualnych projektów. Klient tam nie zajrzy.</span></li>
+          <li><span><b>Ustawienia NIE wchodzą do tej fali</b> — moduł jest domknięty na komplecie 21 zrzutów, z Twoim werdyktem i otagowanym punktem cofania. Wcześniejsza wersja tego planu proponowała zaorać go generycznym rendererem; to cofnęłoby odebrany stan. Generyczny renderer formularza rozważam wyłącznie dla paneli administratora i konsoli platformy, które akceptu nie mają — i tylko za flagą.</span></li>
           <li><span>Po drodze naprawiam pozycję „Subskrypcja i rozliczenia", która jest widoczna w menu doradcy i <b>wyrzuca go z ekranu na czat</b> — pełny łańcuch przekierowań potwierdzony w kodzie.</span></li>
         </ul>
         <div class="gate"><b>Bramka:</b> nowy ekran administracyjny powstaje bez decyzji projektowej.</div>
@@ -322,11 +322,12 @@
       <div class="ph-body">
         <h4>Co już wiem, bo otworzyłem pliki</h4>
         <ul>
-          <li><span><b>Treść powstaje i jest dobra.</b> Raport: 11 stron, 3712 słów gęstej polskiej prozy, <b>zero wypełniaczy</b>. Prezentacja: 16 slajdów z polską treścią.</span></li>
-          <li><span><b>Zepsuty jest skład.</b> Spis treści pusty i po angielsku · znaczniki wewnętrzne <code>[DANGER]</code> i <code>[INFO]</code> wydrukowane w tekście dla klienta · tytuł rozdziału długości akapitu · metadane techniczne na stronie tytułowej.</span></li>
-          <li><span><b>W prezentacji:</b> „8 200 000 thousands EUR" na slajdzie o rynku · kafle liczb nachodzące na tekst · to samo zdanie wydrukowane dwa razy jedno na drugim · <b>zero wykresów na 16 slajdów</b>.</span></li>
+          <li><span><b>Treść powstaje i jest dobra.</b> Raport z 24 czerwca: 11 stron, 3712 słów gęstej polskiej prozy, <b>zero wypełniaczy</b>. Prezentacja z 25 czerwca: 16 slajdów z polską treścią.</span></li>
+          <li><span><b>Zepsuty jest skład — w tych dwóch plikach.</b> Spis treści pusty i po angielsku · znaczniki wewnętrzne <code>[DANGER]</code>, <code>[INFO]</code> i <code>[SUCCESS]</code> wydrukowane w tekście dla klienta · tytuł rozdziału długości akapitu · metadane techniczne na stronie tytułowej.</span></li>
+          <li><span><b>W prezentacji:</b> „8 200 000 thousands EUR" na slajdzie o rynku · to samo zdanie wydrukowane jako tytuł i jako treść na sześciu z szesnastu slajdów · <b>zero wykresów</b>.</span></li>
+          <li><span>★★ <b>SPROSTOWANIE, które zmienia tę falę.</b> Zmierzyłem wszystkie pliki w katalogu, nie dwa. <b>Defekty NIE reprodukują się w nowszych.</b> Sześć raportów z 28 czerwca i późniejszych ma <b>zero</b> wyciekających znaczników. Osiem decków z 28 czerwca ma po <b>1–3 wykresy</b>. Silnik został naprawiony dwa miesiące temu, a ja pokazałem najstarsze pliki w katalogu jako stan zastany. <b>Ale</b> — nowsze raporty mają ~1550 słów wobec 3712 w starym, czyli <b>o 60% mniej treści</b>. Zanim ta fala ruszy, obowiązkowy jest pomiar na <b>świeżo wygenerowanym</b> pliku, nie na tych dwóch.</span></li>
         </ul>
-        <div class="gate"><b>Bramka NIE jest do wymyślenia — istnieje i jest lepsza niż to, co chciałem zaproponować.</b> Rubryka odbioru pliku ma trzy osie i twarde progi: <b>kompletność ≥90%</b>, <b>merytoryka ≥80%</b>, <b>grafika ≥80%</b>, przy czym <b>żaden pojedynczy wymiar nie może być zerem</b>, a zero to między innymi wypełniacz albo „oczekuje na treść". Obowiązuje reguła koniunkcji: <em>dokument piękny-ale-pusty pada tak samo jak mądry-ale-brzydki</em>. Do tego dziesięciopunktowa lista odbioru każdego eksportu, z ostatnim punktem: weryfikacja wzrokiem na realnym renderze, <b>nigdy „testy przeszły" jako jedyny dowód</b>. Standard składu, typografii i marki dla plików wychodzących też jest zatwierdzony i opisuje mapowanie skali ekranowej na punkty, paletę, siatkę slajdu i metadane pliku.</div>
+        <div class="gate"><b>Bramka NIE jest do wymyślenia — istnieje i jest lepsza niż to, co chciałem zaproponować.</b> Rubryka odbioru pliku ma trzy osie i twarde progi: <b>kompletność ≥90%</b>, <b>merytoryka ≥80%</b>, <b>grafika ≥80%</b>, przy czym zerem nie może być <b>żaden wymiar kompletności ani grafiki</b> i <b>żaden z dwóch krytycznych wymiarów merytoryki</b> (uziemienie w źródłach, język), a czwarty warunek jest najostrzejszy: <b>porównanie bezpośrednie z referencją rynkową musi wypaść nie gorzej NA KAŻDYM wymiarze graficznym</b>, a zero to między innymi wypełniacz albo „oczekuje na treść". Obowiązuje reguła koniunkcji: <em>dokument piękny-ale-pusty pada tak samo jak mądry-ale-brzydki</em>. Do tego dziesięciopunktowa lista odbioru każdego eksportu, z ostatnim punktem: weryfikacja wzrokiem na realnym renderze, <b>nigdy „testy przeszły" jako jedyny dowód</b>. Standard składu, typografii i marki dla plików wychodzących też jest zatwierdzony i opisuje mapowanie skali ekranowej na punkty, paletę, siatkę slajdu i metadane pliku.</div>
       </div>
     </div>
   </section>
@@ -362,7 +363,7 @@
       </table>
     </div>
     <div class="col" style="margin-top:22px">
-      <p class="note"><strong>Odbiór partiami po pięć.</strong> Przy ~75 powierzchniach wymagających prawdziwej pracy projektowej odbiór pojedynczy zamienia Cię w najwolniejszy element programu. Partia po pięć zamienia Cię z wąskiego gardła w ustawiacza bramek. To jest jedyna zmiana rytmu, o którą proszę.</p>
+      <p class="note"><strong>Odbiór partiami po pięć.</strong> Przy każdej skali powyżej kilkunastu ekranów odbiór pojedynczy zamienia Cię w najwolniejszy element programu. Partia po pięć zamienia Cię z wąskiego gardła w ustawiacza bramek. To jest jedyna zmiana rytmu, o którą proszę.</p>
       <p class="note"><strong>Martwe powierzchnie to lista do przejrzenia, nie do skasowania.</strong> Twoje słowa. Definicja „martwy" nie jest dziś w ogóle zapisana, a dwa skrypty w repozytorium liczą to niezgodnie — ten sam plik bywa martwy w jednym module i żywy w drugim wyłącznie przez wybór narzędzia. <b>Dopóki definicji nie ma, nic nie kasuję.</b> Sprzątam przy okazji dotykania katalogu i zaczynam od poprawienia mylących nazw i kłamiących komentarzy, bo to one kosztują czas przy każdym kolejnym pomiarze.</p>
     </div>
   </section>
@@ -374,6 +375,11 @@
       <p class="note"><strong>Nie ma liczby powierzchni, której bym bronił.</strong> Poprzednia wersja tego planu podawała 514 żywych, 473 martwe i ~75 do zaprojektowania. Sprawdziłem: <strong>materiału źródłowego nie ma w repozytorium</strong>, a tabela mieszała dwie niezgodne jednostki — jedna kolumna liczyła pliki, druga coś innego. Podam liczbę dopiero z metodą, którą da się powtórzyć.</p>
       <p class="note"><strong>Nie ma wyceny w dniach.</strong> Podam ją po pierwszej pełnej partii z fali drugiej, gdy zobaczę, ile naprawdę zajmuje jeden artefakt zrobiony do końca według 18-punktowej definicji.</p>
       <p class="note"><strong>Nie ma stanów potwierdzonych wzrokiem.</strong> Wszystkie dotychczasowe pomiary stanów pustych, ładowania i błędu powstały wyszukiwaniem po kodzie. To daje fałszywe trafienia i fałszywe pominięcia w obie strony. Każdą kratkę potwierdzam okiem przed projektem — i to jest moja robota, nie Twoja.</p>
+      <p class="note"><strong>Nie ma pogodzonych dwóch rejestrów odbioru.</strong> Macierz zgodności UI (2 sierpnia) i rejestr decyzji właściciela (24–27 sierpnia) opisują ten sam produkt i nie znają się nawzajem. Pierwsza mówi, że żaden moduł nie jest odebrany; drugi notuje pięćdziesiąt dziewięć akceptów. <strong>Do czasu ich pogodzenia żadne zdanie o „stanie odbioru" w tym planie nie jest wiążące</strong> — i to jest pierwsza pozycja fali pierwszej, przed rysowaniem czegokolwiek.</p>
+      <p class="note"><strong>Nie ma czterech stanów, tylko trzy.</strong> Ten plan wymienia stan pusty, ładowania i błędu — brakuje <strong>braku uprawnień</strong>, który macierz zgodności ma w swojej bramce stanów. To niedopatrzenie tym bardziej rażące, że jedyny opisany tu łańcuch uprawnień (Subskrypcja i rozliczenia → czat) <em>jest</em> przypadkiem odmowy dostępu bez ekranu odmowy.</p>
+      <p class="note"><strong>Nie ma wersji językowych ani zachowania poniżej pełnego ekranu.</strong> Standard artefaktu ma kontrakt czterech progów szerokości; doradca prezentujący z laptopa trafia w próg, na którym prawy panel zamienia się w szufladę. Ekran przetłumaczony w połowie wygląda gorzej niż nieprzetłumaczony — i klient to widzi. Obie rzeczy dopisuję do fali drugiej po pierwszym pomiarze.</p>
+      <p class="note"><strong>Nie ma Czatu.</strong> Moduł, przez który przechodzi każda odmowa dostępu i który jest domyślnym ekranem startowym, nie występuje w żadnej fali — bo żadna z trzech definicji „stu procent" go nie obejmuje: nie jest ani listą, ani artefaktem, ani podglądem. To luka standardu, nie planu, i muszę ją najpierw domknąć w standardzie.</p>
+      <p class="note"><strong>Nie ma punktu cofania dla pliku.</strong> Ekran wycofuje się flagą i tagiem. Zły dokument, który poszedł do prezesa, nie ma ani jednego, ani drugiego. Fala czwarta potrzebuje własnej procedury wycofania — nie mam jej.</p>
       <p class="note"><strong>Nie ma jednej numeracji modułów.</strong> Macierz zgodności operuje dziewiętnastoma pozycjami, menu ma szesnaście. Te dwie numeracje nie są nigdzie ze sobą zmapowane. Zrobię to mapowanie, zanim policzę cokolwiek per moduł.</p>
     </div>
   </section>

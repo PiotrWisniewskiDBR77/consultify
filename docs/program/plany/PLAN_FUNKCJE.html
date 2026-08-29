@@ -132,18 +132,18 @@
   <header class="masthead">
     <p class="eyebrow">Consultify · plan dokończenia funkcji · 29 sierpnia 2026</p>
     <h1>Łańcuch dostarczenia</h1>
-    <p class="standfirst">Stanu docelowego nie trzeba wymyślać — jest napisany w kontraktach szesnastu modułów i jest bogatszy, niż zakładałem. Inicjatywa ma jedenaście nazwanych bramek i dwadzieścia sześć kart, wskaźnik ma rozstrzygniętą własność, dokument ma rubrykę odbioru z progami. <strong>Problem jest inny: prawie nic z tego nie zostało przyjęte, a w kilku miejscach dwa obowiązujące dokumenty mówią co innego.</strong></p>
+    <p class="standfirst">Stanu docelowego nie trzeba wymyślać — jest napisany w kontraktach szesnastu modułów i jest bogatszy, niż zakładałem. Inicjatywa ma jedenaście nazwanych bramek i dwadzieścia sześć kart, wskaźnik ma rozstrzygniętą własność, dokument ma rubrykę odbioru z progami. <strong>Problem jest inny: przyjęty jest kierunek, nie szczegóły — a w kilku miejscach dwa obowiązujące dokumenty mówią co innego.</strong></p>
   </header>
 
   <section>
     <p class="rule-label">Stan wyjściowy · zmierzone w źródłach i na żywej bazie</p>
     <div class="figures">
-      <div class="fig crit"><span class="n">0</span><span class="k">pakietów stanu docelowego z podpisem właściciela — wszystkie <code>DRAFT_FOR_OWNER_REVIEW</code>, puste pole akceptacji</span></div>
+      <div class="fig crit"><span class="n">100 z 129</span><span class="k">dokumentów uzgodnienia to szkice bez odbioru (<code>DRAFT_FOR_OWNER_REVIEW</code>); siedem modułów ma akcept <em>kierunku</em> z Twoim podpisem — żaden nie ma akceptu szczegółów</span></div>
       <div class="fig crit"><span class="n">2×</span><span class="k">dwa dokumenty naraz oznaczone jako obowiązujące, opisujące inne menu — dla Inicjatyw i Realizacji</span></div>
       <div class="fig"><span class="n">31.07</span><span class="k">data ostatniej zmiany <em>wszystkich</em> szesnastu kontraktów; warstwa źródłowa pod nimi jest z maja</span></div>
       <div class="fig crit"><span class="n">34 : 170</span><span class="k">inicjatywy w dwóch rozłącznych magazynach na żywej bazie. Wspólny rekord: jeden</span></div>
       <div class="fig crit"><span class="n">26 177</span><span class="k">fragmentów wiedzy bez znacznika organizacji — sto procent tego, co jest</span></div>
-      <div class="fig good"><span class="n">3712</span><span class="k">słów prawdziwej prozy w wygenerowanym raporcie, zero wypełniaczy — treść <em>powstaje</em></span></div>
+      <div class="fig good"><span class="n">3712</span><span class="k">słów prawdziwej prozy w raporcie z 24 czerwca, zero wypełniaczy — treść <em>powstaje</em>. Nowsze raporty mają ~1550 słów</span></div>
       <div class="fig"><span class="n">2 z 16</span><span class="k">moduły formalnie domknięte: Organizacja i Ustawienia — a ich kontrakty nadal opisują je jako otwarte</span></div>
       <div class="fig crit"><span class="n">5</span><span class="k">niezależnych systemów stylowania plików wychodzących do klienta — żaden nie czyta tokenów produktu</span></div>
     </div>
@@ -213,9 +213,10 @@
       <div class="ph-body">
         <h4>Dlaczego wcześniej, niż planowałem</h4>
         <ul>
-          <li><span>Uzasadnienie „dokument bez wiedzy o kliencie będzie ogólnikiem" <b>nie wytrzymało</b>. Przyczyna pustych dokumentów leży wewnątrz tej fazy, nie w wiedzy o kliencie: <b>zepsuty jest skład, nie generator</b>.</span></li>
-          <li><span>Otworzyłem pliki. Raport: 11 stron, 3712 słów gęstej polskiej prozy, zero wypełniaczy. <b>Ale</b>: pusty spis treści po angielsku · znaczniki wewnętrzne <code>[DANGER]</code> i <code>[INFO]</code> wydrukowane w tekście dla klienta · tytuł rozdziału długości akapitu · metadane techniczne na stronie tytułowej.</span></li>
-          <li><span>Prezentacja: 16 slajdów polskiej treści, ale <b>„8 200 000 thousands EUR"</b>, kafle nachodzące na tekst, to samo zdanie dwa razy jedno na drugim i <b>zero wykresów</b>.</span></li>
+          <li><span>Uzasadnienie „dokument bez wiedzy o kliencie będzie ogólnikiem" <b>nie wytrzymało</b>. Przyczyna nie leży w wiedzy o kliencie ani we fladze, którą obwinialiśmy — flaga jest na demo <b>włączona</b>, a generator prozy stoi za innym parametrem, domyślnie ustawionym na włączony.</span></li>
+          <li><span>Otworzyłem pliki. Raport z 24 czerwca: 11 stron, 3712 słów gęstej polskiej prozy, zero wypełniaczy. <b>Ale</b>: pusty spis treści po angielsku · znaczniki wewnętrzne <code>[DANGER]</code>, <code>[INFO]</code> i <code>[SUCCESS]</code> wydrukowane w tekście dla klienta · tytuł rozdziału długości akapitu · metadane techniczne na stronie tytułowej.</span></li>
+          <li><span>Prezentacja z 25 czerwca: 16 slajdów polskiej treści, ale <b>„8 200 000 thousands EUR"</b>, to samo zdanie jako tytuł i jako treść na sześciu slajdach, <b>zero wykresów</b>.</span></li>
+          <li><span>★★ <b>SPROSTOWANIE — zmierzyłem wszystkie pliki, nie dwa.</b> <b>Te defekty nie reprodukują się w nowszych plikach.</b> Sześć raportów z 28 czerwca i późniejszych ma <b>zero</b> wyciekających znaczników; osiem decków z 28 czerwca ma po <b>1–3 wykresy</b>. Silnik naprawiono dwa miesiące temu, a ja wziąłem najstarsze pliki w katalogu za stan dzisiejszy. <b>Nowy sygnał, gorszy:</b> nowsze raporty mają ~1550 słów wobec 3712 — <b>o 60% mniej treści</b>. Ta faza zaczyna się od pomiaru na <b>świeżo wygenerowanym</b> pliku i od odpowiedzi, czy dokumenty schudły celowo.</span></li>
           <li><span><b>Generator szablonów Word nie istnieje</b> — zero linijek kodu; narzędzie obsługuje wyłącznie prezentacje. To dwa różne produkty, nie dwa widoki tego samego, i plan musi je rozróżniać.</span></li>
           <li><span><b>Pięć niezależnych systemów stylowania eksportu</b>, z których żaden nie czyta tokenów produktu — klient dostaje inny odcień zależnie od trasy. Standard, który to porządkuje, jest zatwierdzony i nietknięty.</span></li>
         </ul>
@@ -320,17 +321,17 @@
           <tr><td>Wywiad</td><td>Kompletny lifecycle; cztery różne ujęcia tego, która trasa jest kanoniczna</td><td>pakiet nieodebrany</td><td>M2</td></tr>
           <tr><td>Narzędzia</td><td>Najsłabszy z czterech pierwszych; kontrakt nie zna własnego wzorcowego przepływu, który opisuje niezalinkowany pakiet</td><td>pakiet nieodebrany i niezalinkowany</td><td>M3</td></tr>
           <tr><td>Ocena</td><td><b>Nie ma napisanego stanu docelowego</b> — sekcja to lista czterech plików „do scalenia"</td><td>brak</td><td>M3</td></tr>
-          <tr><td>Inicjatywy</td><td>Najbogatszy w produkcie: 11 bramek, 12 statusów, 26 kart</td><td><b>spór o kanon</b> + decyzja blokująca kanoniczność</td><td>M2</td></tr>
+          <tr><td>Inicjatywy</td><td>Najbogatszy w produkcie: 11 bramek, 12 statusów, 26 kart</td><td><b>spór o kanon</b> + decyzja blokująca kanoniczność; pakiet kierunku nieodebrany</td><td>M2</td></tr>
           <tr><td>Realizacja</td><td>Pięć funkcji w kontrakcie, zupełnie inne pięć w kanonie</td><td><b>spór o kanon</b>; własny status modułu mówi „zablokowany"</td><td>M2 → M4</td></tr>
-          <tr><td>Wyniki</td><td>Własność wskaźnika rozstrzygnięta; 18 luk, najdłuższa lista w produkcie</td><td>brak; kanon wskaźnika jest szkicem sprzed pięciu miesięcy</td><td>M3</td></tr>
-          <tr><td>Finanse</td><td>Pełna pętla od sprawozdania po decyzję inwestycyjną</td><td>status „beta" w spisie <b>nieaktualny</b> — właściciel odwrócił decyzję i wpuścił moduł w pełnym zakresie</td><td>M3</td></tr>
-          <tr><td>Materiały</td><td>Rozproszony na cztery kontrakty podsystemów; nadrzędny zapowiedziany w czasie przyszłym</td><td>bramka stoi na potwierdzeniu zawężonego zakresu</td><td>M4</td></tr>
-          <tr><td>Audyty</td><td>Kierunek zaakceptowany, produkt poza pierwszą falą — wolno wyłącznie porządkować</td><td>odbiór się nie odbył; mimo to dostawy są scalane</td><td>M3</td></tr>
-          <tr><td>Spotkania</td><td>Wizja zaakceptowana; warstwa źródłowa opisuje moduł jako zaślepkę i tak go „odbiera"</td><td>wymaga odbioru runtime zamiast traktowania jak placeholder</td><td>M2 → M4</td></tr>
+          <tr><td>Wyniki</td><td>Własność wskaźnika rozstrzygnięta; 18 luk, najdłuższa lista w produkcie</td><td>akcept <b>kierunku</b> z Twoim podpisem; kanon wskaźnika jest szkicem sprzed pięciu miesięcy</td><td>M3</td></tr>
+          <tr><td>Finanse</td><td>Pełna pętla od sprawozdania po decyzję inwestycyjną</td><td>akcept kierunku, szczegóły otwarte; status „beta" w spisie <b>nieaktualny</b> — odwróciłeś decyzję i wpuściłeś moduł w pełnym zakresie</td><td>M3</td></tr>
+          <tr><td>Materiały</td><td>Rozproszony na cztery kontrakty podsystemów; nadrzędny zapowiedziany w czasie przyszłym</td><td>akcept kierunku, szczegóły otwarte; bramka stoi na potwierdzeniu zawężonego zakresu</td><td>M4</td></tr>
+          <tr><td>Audyty</td><td>Kierunek zaakceptowany, produkt poza pierwszą falą — wolno wyłącznie porządkować</td><td>akcept kierunku z podpisem; <b>odbiór modułu się nie odbył</b>, mimo to dostawy są scalane</td><td>M3</td></tr>
+          <tr><td>Spotkania</td><td>Wizja zaakceptowana; warstwa źródłowa opisuje moduł jako zaślepkę i tak go „odbiera"</td><td>akcept kierunku (governance otwarte); wymaga odbioru runtime zamiast traktowania jak zaślepka</td><td>M2 → M4</td></tr>
           <tr><td>Organizacja</td><td>Sześć modułów menu, kontrakt snapshotu dla całego produktu</td><td><b>domknięty 25.08</b> — ale kontrakt nadal opisuje moduł jako otwarty</td><td>M2</td></tr>
           <tr><td>Panel administratora</td><td>Siedem domen, 55 ekranów, odbioru częściowego nie będzie</td><td>brak; pomiar: podłączonych 14 z 55</td><td>poza kamieniami</td></tr>
           <tr><td>Ustawienia</td><td>Osiem modułów, pięciopoziomowa reguła rozstrzygania wartości</td><td><b>domknięty 25.08</b>; pomiar po zamknięciu: 12 z 20 semantycznie poprawnych</td><td>poza kamieniami</td></tr>
-          <tr><td>Portal partnerski</td><td>Najsłabiej dospecyfikowany; ekonomia wyłączona decyzją</td><td>brak; własne sprostowanie: „izolacja 8/8" była fałszywa, żywy wyciek między organizacjami</td><td>poza kamieniami</td></tr>
+          <tr><td>Portal partnerski</td><td>Najsłabiej dospecyfikowany; ekonomia wyłączona decyzją</td><td>pakiet <b>zaakceptowany</b> z Twoim podpisem, ale odbiór modułu wisi; własne sprostowanie: „izolacja 8/8" była fałszywa, żywy wyciek między organizacjami</td><td>poza kamieniami</td></tr>
         </tbody>
       </table>
     </div>
