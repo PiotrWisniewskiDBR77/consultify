@@ -244,7 +244,7 @@ d88ce9d374b84b89276b6767fe9e11b826cb09e1f043ac07bbba68ffc8a08fd4  battery-contac
 | K3 | **SPEŁNIONE** | obserwacje `8 z 8`, numer slajdu i typ dowodu |
 | K4 | **SPEŁNIONE** | przyczyny pogrupowane A–I, każda z `plik:linia` |
 | K5 | **SPEŁNIONE uczciwie** | head-to-head `NIEWYKONANY`, dokładny brak i wymagane wejścia wskazane |
-| K6 | **SPEŁNIONE** | commit `52daf0feea831bae737e822894e09f5a86a5ec17`; końcowy diff marker..HEAD zawiera wyłącznie raport, a remote `github-backup` wskazuje ten sam SHA |
+| K6 | **SPEŁNIONE** | po commicie pomiarowym `52daf0feea831bae737e822894e09f5a86a5ec17` końcowy diff marker..HEAD zawierał wyłącznie raport; gałąź została wypchnięta na `github-backup` po każdym commicie |
 
 ## K — lista plików wobec markera
 
