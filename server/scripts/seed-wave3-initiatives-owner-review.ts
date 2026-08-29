@@ -750,6 +750,7 @@ async function readback(databaseName: string, dynamic: Record<string, unknown> |
         ]
       )
     ).rows[0];
+    if (Number(r.successful_migrations) < 858) fail(`expected at least 858 successful migrations, got ${r.successful_migrations}`);
     const expected = {
       personas: 6,
       candidates: 2,
