@@ -10,6 +10,8 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 
+import pg from 'pg';
+
 const EXPECTED_SHA = 'e993f390ccf5d67143b1076ef7b6d9eed23f234f1c29dc23892eeb57418e3c0e';
 const confirmation = process.env.SEED_WAVE3_FINANCE_OWNER_REVIEW;
 const databaseUrl = process.env.DATABASE_URL ?? '';
@@ -44,7 +46,15 @@ if (retainDatabase && !/^[a-f0-9]{64}$/.test(ownershipNonce)) {
 const repoRoot = path.resolve(import.meta.dirname, '../..');
 const result = spawnSync(
   path.join(repoRoot, 'node_modules/.bin/vitest'),
-  ['run', 'server/src/services/__tests__/statementOwnerAcceptance.pg.test.ts', '--maxWorkers=1'],
+  [
+    'run',
+    'server/src/services/__tests__/statementOwnerAcceptance.pg.test.ts',
+    '--maxWorkers=1',
+    '--retry=0',
+    '--testTimeout=120000',
+    '--reporter=json',
+    `--outputFile=${manifestPath}.vitest.json`,
+  ],
   {
     cwd: repoRoot,
     env: {
@@ -88,6 +98,48 @@ if (
 ) {
   throw new Error('Retained Finance owner fixture ownership contract validation failed');
 }
+
+const valuation = manifest?.workspaces?.valuation;
+const owner = manifest?.personas?.owner;
+if (
+  !valuation?.artifactId ||
+  !valuation?.businessVersionId ||
+  !owner?.organizationId ||
+  !owner?.userId
+) {
+  throw new Error('Finance owner fixture valuation identity is incomplete');
+}
+
+const client = new pg.Client({ connectionString: databaseUrl });
+await client.connect();
+try {
+  await client.query(
+    `INSERT INTO finance_artifact_aliases
+       (legacy_table, legacy_id, legacy_version, artifact_id, organization_id,
+        business_version_id, mapping_confidence, mapping_reason, created_by)
+     VALUES ('valuations', $1, '', $1, $2, $3, 'AUTO_MIGRATE',
+             'Wave 3 Finance owner-review fixture canonical identity', $4)
+     ON CONFLICT (legacy_table, legacy_id, legacy_version) DO NOTHING`,
+    [valuation.artifactId, owner.organizationId, valuation.businessVersionId, owner.userId]
+  );
+  const identity = await client.query(
+    `SELECT artifact_id, organization_id, business_version_id, mapping_confidence
+       FROM finance_artifact_aliases
+      WHERE legacy_table='valuations' AND legacy_id=$1 AND legacy_version=''`,
+    [valuation.artifactId]
+  );
+  if (
+    identity.rowCount !== 1 ||
+    identity.rows[0].artifact_id !== valuation.artifactId ||
+    identity.rows[0].organization_id !== owner.organizationId ||
+    identity.rows[0].business_version_id !== valuation.businessVersionId ||
+    identity.rows[0].mapping_confidence !== 'AUTO_MIGRATE'
+  ) {
+    throw new Error('Finance owner fixture valuation identity readback mismatch');
+  }
+} finally {
+  await client.end();
+}
 const serialized = JSON.stringify(manifest);
 for (const secret of [
   databaseUrl,
@@ -107,5 +159,6 @@ process.stdout.write(
     statementCount: manifest.statement.statements.length,
     manifestPath: path.resolve(manifestPath),
     cleanup: manifest.cleanup,
+    valuationLegacyIdentity: valuation.artifactId,
   })}\n`
 );
