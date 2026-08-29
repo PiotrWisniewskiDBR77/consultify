@@ -17,6 +17,7 @@ import { Client } from 'pg';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 const PG_URL = process.env.RES10_PG_URL;
+const TEST_SCHEMA = 'day71_initiative_governance_goal_rollup';
 const describeIfPg = PG_URL ? describe : describe.skip;
 
 let client: Client;
@@ -45,6 +46,10 @@ describeIfPg('RES-10 — goal rollup cross-tenant (real PostgreSQL)', () => {
   beforeAll(async () => {
     client = new Client({ connectionString: PG_URL });
     await client.connect();
+
+    await client.query(`DROP SCHEMA IF EXISTS ${TEST_SCHEMA} CASCADE`);
+    await client.query(`CREATE SCHEMA ${TEST_SCHEMA}`);
+    await client.query(`SET search_path TO ${TEST_SCHEMA}, public`);
 
     // Minimal slice of the live schema (server/migrations/20260719_baseline_gap.sql).
     await client.query(`DROP TABLE IF EXISTS goal_initiative_links, goals, initiatives CASCADE`);
@@ -116,6 +121,7 @@ describeIfPg('RES-10 — goal rollup cross-tenant (real PostgreSQL)', () => {
   afterAll(async () => {
     if (!client) return;
     await client.query(`DROP TABLE IF EXISTS goal_initiative_links, goals, initiatives CASCADE`);
+    await client.query(`DROP SCHEMA IF EXISTS ${TEST_SCHEMA} CASCADE`);
     await client.end();
   });
 

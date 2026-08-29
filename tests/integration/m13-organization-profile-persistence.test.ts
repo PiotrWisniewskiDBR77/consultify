@@ -10,6 +10,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { adaptQuery } from '../../server/src/database/PostgresDatabase';
 
 const PG_URL = process.env.M13_PG_URL || 'postgres://postgres:m13@localhost:55433/m13test';
+const TEST_SCHEMA = 'day71_m13_organization_profile_persistence';
 const ORG_A = 'org-m13-alpha';
 const ORG_B = 'org-m13-beta';
 
@@ -23,6 +24,10 @@ function toPg(sql: string): string {
 beforeAll(async () => {
   client = new Client({ connectionString: PG_URL });
   await client.connect();
+
+  await client.query(`DROP SCHEMA IF EXISTS ${TEST_SCHEMA} CASCADE`);
+  await client.query(`CREATE SCHEMA ${TEST_SCHEMA}`);
+  await client.query(`SET search_path TO ${TEST_SCHEMA}, public`);
 
   await client.query(`DROP TABLE IF EXISTS organization_profiles, organizations CASCADE`);
   await client.query(`
@@ -54,6 +59,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await client.query(`DROP TABLE IF EXISTS organization_profiles, organizations CASCADE`);
+  await client.query(`DROP SCHEMA IF EXISTS ${TEST_SCHEMA} CASCADE`);
   await client.end();
 });
 
