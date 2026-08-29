@@ -170,4 +170,11 @@ Lista plików ma zostać odczytana po commicie komendą:
 git -C /private/tmp/cx-day69-lang diff --name-only f21bc627ad9c30b5dcc33b07af6e259d22a3456f..HEAD
 ```
 
-Commit i wynik pushu są wpisane poniżej po ich wykonaniu.
+Pierwszy commit częściowy: `edc11e3340` (`fix(i18n): rozpocznij fale jezykowa Partnera`).
+
+Pierwszy push, wykonany natychmiast po commicie zgodnie z Z34a:
+
+```text
+To https://github.com/PiotrWisniewskiDBR77/consultify-recovery-private-20260820.git
+ * [new branch]            codex/day69-lang-wave-20260829 -> codex/day69-lang-wave-20260829
+```
