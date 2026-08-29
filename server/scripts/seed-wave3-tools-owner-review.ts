@@ -187,6 +187,17 @@ try {
         await bcrypt.hash(process.env.WAVE3_OWNER_PASSWORD ?? 'Wave3ToolsOwner!2026', 10),
       ]
     );
+    // AuthController login gate reads organization_members with
+    // UPPER(COALESCE(status,''))='ACTIVE' and overwrites the session role with
+    // the membership role; without this row login fails ORG_MEMBERSHIP_REVOKED.
+    // Conflict target is the natural key, not the synthetic id.
+    await client.query(
+      `INSERT INTO organization_members(id,organization_id,user_id,role,status)
+       VALUES($1,$2,$3,'ADMIN','ACTIVE')
+       ON CONFLICT(organization_id,user_id) DO UPDATE SET
+         role=excluded.role, status=excluded.status`,
+      [`membership-${ownerId}`, organizationId, ownerId]
+    );
   }
   const identity = await client.query<{ organization_id: string; role: string }>(
     'SELECT organization_id, role FROM users WHERE id=$1',
