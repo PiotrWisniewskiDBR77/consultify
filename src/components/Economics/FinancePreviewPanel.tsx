@@ -379,7 +379,7 @@ export function useFinancePreview({
         if (row.startDate)
           metaPills.push({
             label: t('finance.columns.start', 'Start'),
-            value: new Date(row.startDate).toLocaleDateString(),
+            value: new Date(row.startDate).toLocaleDateString('pl-PL'),
           });
       } else if (row.kind === 'prediction') {
         const pRow = row as FinanceModelRow;

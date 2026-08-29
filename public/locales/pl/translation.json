@@ -21542,8 +21542,71 @@
         "IDENTITY_MISMATCH": "Rekord Finance nie odpowiada swojej bieżącej wersji."
       }
     },
+    "aiChat": "Finanse",
+    "openAiChat": "Otwórz czat AI dla Finansów",
+    "annual": "Rocznie",
+    "monthly": "Miesięcznie",
+    "quarterly": "Kwartalnie",
+    "currency": "Waluta",
+    "granularity": "Szczegółowość",
+    "periodOrderError": "Data końcowa musi przypadać po dacie początkowej.",
+    "document": {
+      "unsupported": {
+        "hint": "Wróć do listy i otwórz obsługiwany pakiet sprawozdań, model, analizę, budżet lub wycenę.",
+        "message": "Ten rodzaj dokumentu finansowego nie jest jeszcze dostępny w pełnym obszarze roboczym."
+      }
+    },
+    "investment": {
+      "benefits": "Korzyści roczne ({{currency}}/rok)",
+      "capex": "Inwestycja początkowa ({{currency}})",
+      "createTitle": "Nowa analiza inwestycyjna",
+      "emptyBody": "Ta karta służy do analiz inwestycji powiązanych z inicjatywami oraz decyzji na podstawie NPV, IRR, okresu zwrotu i ROI.",
+      "emptyHint": "Utwórz analizę inwestycyjną z NPV, IRR, okresem zwrotu i ROI.",
+      "emptyTitle": "Obszar analiz inwestycyjnych",
+      "horizon": "Horyzont (lata)",
+      "inputs": "Parametry inwestycji",
+      "rate": "Stopa dyskontowa (%)"
+    },
+    "link": {
+      "cta": "Powiąż inicjatywę",
+      "failed": "Nie udało się utworzyć powiązania — sprawdź identyfikator inicjatywy",
+      "financeRef": "Identyfikator modelu lub analizy finansowej",
+      "hint": "Powiąż inicjatywę z tym materiałem finansowym, aby jej ekonomika była widoczna w Wynikach i przepływie wartości.",
+      "initiativeId": "Identyfikator inicjatywy",
+      "missingFields": "Identyfikator inicjatywy oraz materiału finansowego są wymagane",
+      "success": "Inicjatywa została powiązana z materiałem finansowym",
+      "title": "Powiąż inicjatywę z finansami",
+      "type": "Rodzaj powiązania"
+    },
+    "statementPack": {
+      "title": "Sprawozdanie finansowe"
+    },
     "export": {
       "title": "Eksport analizy finansowej",
+      "audience": "Odbiorcy",
+      "audiencePlaceholder": "np. zarząd, inwestorzy, dyrektor finansowy",
+      "briefTitle": "Opis bez szablonu",
+      "checkingEligibility": "Sprawdzanie dostępności…",
+      "created": "Utworzono materiał wynikowy",
+      "format": "Format",
+      "formatPlaceholder": "np. podsumowanie zarządcze, 5 slajdów",
+      "goal": "Cel",
+      "goalPlaceholder": "np. wsparcie decyzji inwestycyjnej",
+      "initiatives": "Inicjatywy",
+      "initiativesDesc": "Utwórz szkice inicjatyw na podstawie wniosków z analizy",
+      "investmentCaseCandidateAlreadyExists": "Wysłano już jako kandydata na inicjatywę: {{title}}",
+      "investmentCaseCandidateCreated": "Wysłano jako kandydata na inicjatywę: {{title}}",
+      "investmentCaseCandidateNotice": "Analiza inwestycyjna trafi do skrzynki kandydatów do weryfikacji; inicjatywa nie zostanie utworzona automatycznie.",
+      "investmentCaseConfirmFailed": "Nie udało się utworzyć kandydata",
+      "investmentCaseEligibilityFailed": "Nie udało się sprawdzić dostępności działania",
+      "investmentCaseHandoffTitle": "Analiza inwestycyjna → kandydat na inicjatywę",
+      "investmentCaseNotApproved": "Ten model nie jest jeszcze zatwierdzony. Najpierw go zatwierdź, a następnie wyślij jako kandydata.",
+      "investmentCaseNotFound": "Nie znaleziono tego modelu.",
+      "investmentCaseUnsupported": "Dostępne dla zatwierdzonej analizy inwestycyjnej",
+      "language": "Język",
+      "scope": "Zakres",
+      "scopePlaceholder": "np. ostatnie 12 miesięcy i najważniejsze wskaźniki",
+      "sendAsCandidate": "Wyślij jako kandydata",
       "report": "Raport",
       "reportDesc": "Utwórz raport dostarczalny z tej analizy",
       "presentation": "Prezentacja",
@@ -21712,6 +21775,7 @@
       "importStatement": "Importuj sprawozdanie"
     },
     "columns": {
+      "analyticsDepth": "Poziomy",
       "scenario": "Scenariusz",
       "horizon": "Horyzont",
       "horizonYears": "Horyzont",
@@ -21732,6 +21796,7 @@
       "mappedLines": "Dok."
     },
     "empty": {
+      "statementsTitle": "Brak sprawozdań",
       "statements": "Brak sprawozdań w bieżącym widoku. Gotowe pozycje trafiają do zestawu roboczego, naprawialne do Kolejki naprawczej, a odrzucone pozostają poza dalszymi przepływami.",
       "readyStatements": "Brak gotowych sprawozdań w zestawie roboczym. Importy, które nie są gotowe, pozostają w Kolejce naprawczej lub Odrzuconych importach.",
       "recoveryQueue": "Kolejka naprawcza jest pusta. Importy wymagające remapowania, ponownej walidacji lub korekty skali pojawią się tutaj.",
@@ -21822,7 +21887,8 @@
       "periodEnd": "Okres do",
       "monthly": "Miesięczna",
       "granularity": "Granulacja",
-      "annual": "Roczna"
+      "annual": "Roczna",
+      "quarterly": "Kwartalna"
     },
     "analysis": {
       "bridgeApplied": "Założenia modelu zaktualizowano na podstawie tej analizy",
@@ -21934,6 +22000,43 @@
       "project": "Projekt"
     },
     "statements": {
+      "alternativeCandidates": "alternatywne dopasowania",
+      "documentIntelligence": "Analiza dokumentu",
+      "documentSearchPlaceholder": "Zapytaj o sprawozdanie",
+      "extractedSections": "Rozpoznane sekcje",
+      "ingestRuns": "Przebiegi importu",
+      "line": "Pozycja",
+      "mappingCandidates": "Propozycje mapowania",
+      "noDocumentMatches": "Brak wyników wyszukiwania w dokumencie",
+      "noExtractedSections": "Nie rozpoznano jeszcze sekcji",
+      "noIngestRuns": "Brak przebiegów importu",
+      "noMappedValues": "Brak rozpoznanych pozycji finansowych",
+      "noQualityRuns": "Brak kontroli jakości",
+      "noValidationMessages": "Brak komunikatów kontroli",
+      "nonFinancialLines": "Pominięte wiersze",
+      "notFound": "Nie znaleziono sprawozdania",
+      "notReadyForWork": "Niegotowe do pracy",
+      "open": "otwarte",
+      "original": "Oryginał",
+      "qualityRuns": "Kontrole jakości",
+      "ratioCoverage": "Pokrycie wskaźników",
+      "ratiosComputed": "obliczone wskaźniki",
+      "readiness": "Gotowość",
+      "readyForWork": "Gotowe do pracy",
+      "recognizedLines": "Rozpoznane pozycje finansowe",
+      "recoveryQueueLabel": "Kolejka naprawcza",
+      "recoveryWorkbench": "Obszar naprawy danych",
+      "recoveryWorkbenchHint": "Popraw mapowania, zapisz nową wersję wartości i doprowadź sprawozdanie do stanu gotowości.",
+      "rejectedImport": "Odrzucony import",
+      "repairSessions": "Sesje naprawcze",
+      "retryRecovery": "Ponów naprawę",
+      "saveRecovery": "Zapisz poprawki",
+      "scaling": "Skala",
+      "sourceFile": "Plik źródłowy",
+      "unmappedLines": "Nieprzypisane pozycje",
+      "validationMessages": "Komunikaty kontroli",
+      "value": "Wartość",
+      "workableRule": "W sprawozdaniach pracujemy wyłącznie na kompletnie zmapowanych i prawidłowo zweryfikowanych danych finansowych. Ten import wymaga poprawy, zanim stanie się sprawozdaniem roboczym.",
       "currentDocument": "Aktualny",
       "documentsLoaded": "Dokumenty załadowane do systemu",
       "documentsLoadedHint": "To jest miejsce ładowania danych, ale też szybka kontrola, czy w systemie są właściwe sprawozdania i właściwe tabele.",
@@ -21990,6 +22093,11 @@
       "linkHint": "Kliknij, aby powiązać inicjatywę z finansami"
     },
     "analyze": {
+      "laneStart": "Uruchom proces finansowy",
+      "laneStartHint": "Rozpocznij proces obejmujący import, analizę, zmianę i kontrolę wyniku.",
+      "laneStatus": "Zobacz stan procesu",
+      "laneStatusHint": "Zobacz postęp aktywnego procesu finansowego oraz jego problemy.",
+      "menuTitle": "Wybierz następny krok",
       "cta": "Analizuj",
       "analysisFromModelHint": "Przejdź do Analizy i utwórz draft w kontekście bieżącego modelu.",
       "analysisFromPredictionHint": "Przejdź do Analizy i utwórz draft w kontekście bieżącego budżetu lub scenariusza.",
@@ -22173,6 +22281,11 @@
       "missing": "brak danych"
     },
     "preview": {
+      "aiRisks": "Wskaż ryzyka w danych",
+      "aiSummarize": "Podsumuj sprawozdanie",
+      "canonicalComputed": "Obliczony wynik",
+      "openCanonicalResult": "Otwórz obszar roboczy, aby sprawdzić wynik i jego źródła.",
+      "relationsInWorkspace": "Powiązania ze źródłami są dostępne w obszarze roboczym",
       "variantOptimistic": "Optymistyczny",
       "variantConservative": "Konserwatywny",
       "statementBS": "Bilans",
@@ -22259,6 +22372,17 @@
       "confirmBulkDeleteRows": "Czy na pewno chcesz usunąć {{value}} pozycji? Tej operacji nie można cofnąć."
     },
     "pack": {
+      "candidateAlreadyExists": "Wysłano już jako kandydata na inicjatywę: {{title}}",
+      "candidateCreated": "Wysłano jako kandydata na inicjatywę: {{title}}",
+      "candidateEligibilityFailed": "Nie udało się sprawdzić dostępności działania",
+      "candidateHandoffCancel": "Anuluj",
+      "candidateHandoffClose": "Zamknij",
+      "candidateHandoffFailed": "Nie udało się utworzyć kandydata",
+      "candidateHandoffNotice": "Pakiet sprawozdań trafi do skrzynki kandydatów do weryfikacji; inicjatywa nie zostanie utworzona automatycznie.",
+      "candidateHandoffTitle": "Pakiet sprawozdań → kandydat na inicjatywę",
+      "checkingEligibility": "Sprawdzanie dostępności…",
+      "sendAsCandidate": "Wyślij jako kandydata",
+      "titleFallback": "Pakiet sprawozdań",
       "retry": "Ponów",
       "statusReady": "Gotowy",
       "statusRecovery": "Do naprawy",
@@ -22295,7 +22419,21 @@
       "noDocumentSelected": "Brak wybranego dokumentu dla tej tabeli.",
       "notFound": "Nie znaleziono pakietu sprawozdań",
       "section": {
-        "cta": "Generuj sekcję raportu"
+        "cta": "Generuj sekcję raportu",
+        "components": "Elementy: {{count}}",
+        "empty": "Wygenerowana sekcja raportu jest pusta.",
+        "emptyHint": "Sekcja raportu nie została jeszcze wygenerowana.",
+        "failed": "Nie udało się wygenerować sekcji raportu. Spróbuj ponownie.",
+        "grossValue": "Wartość brutto",
+        "initiatives": "Inicjatywy: {{count}}",
+        "loading": "Tworzenie sekcji raportu…",
+        "periods": "okresy",
+        "portfolio": "Rekomendacje dla portfela",
+        "recommended": "Rekomendowane",
+        "scenarios": "Scenariusze",
+        "tooltip": "Wygeneruj sekcję raportu finansowego: scenariusze, drzewo wartości, rekomendacje portfelowe i trend",
+        "trend": "Trend",
+        "valueTree": "Drzewo wartości"
       },
       "validation": {
         "MAPPING_COVERAGE": "Pokrycie mapowania",
@@ -22697,6 +22835,9 @@
       }
     },
     "versions": {
+      "from": "Przed (wersja ",
+      "title": "Historia wersji",
+      "to": "Po (wersja ",
       "version": "Wersja",
       "scenario": "Scenariusz",
       "status": "Status",
@@ -23388,21 +23529,50 @@
     "goToBaseline": "Przejdź do Baseline"
   },
   "valuation": {
+    "inputs": {
+      "failed": "Dane wejściowe wyceny są niedostępne"
+    },
+    "load": {
+      "failed": "Nie udało się odczytać archiwum wycen",
+      "invalid": "Odpowiedź archiwum wycen jest nieprawidłowa"
+    },
+    "source": {
+      "note": "Źródło jest wybierane podczas tworzenia wyceny: budżet albo dane ręczne."
+    },
+    "enum": {
+      "source": {
+        "budget": "Budżet",
+        "financialAnalysis": "Analiza finansowa",
+        "financialModel": "Model finansowy",
+        "manual": "Dane ręczne"
+      },
+      "status": {
+        "approved": "Zatwierdzona",
+        "draft": "Szkic",
+        "review": "W weryfikacji"
+      }
+    },
     "tabLabel": "Wycena",
     "title": "Wycena przedsiębiorstwa",
     "subtitle": "DCF + porównawcze + sensitivity, eksport do decka",
     "steps": {
+      "label": "Etapy wyceny",
+      "sensitivity": "Analiza wrażliwości",
       "source": "Źródło",
       "assumptions": "Założenia",
       "results": "Wyniki",
       "export": "Eksport"
     },
     "list": {
+      "emptyDesc": "Utwórz wycenę, aby oszacować wartość na podstawie modelu lub budżetu.",
+      "loadErrorDesc": "Źródło wycen jest niedostępne. Sprawdź połączenie i spróbuj ponownie.",
+      "loadErrorTitle": "Nie udało się załadować wycen",
       "title": "Wyceny",
       "empty": "Brak wycen. Utwórz pierwszą, aby zacząć.",
       "source": "Źródło"
     },
     "detail": {
+      "viewSource": "Zobacz źródło",
       "empty": "Wybierz wycenę, aby kontynuować",
       "status": "Status",
       "currency": "Waluta"
@@ -23429,6 +23599,9 @@
       "gLessThanWacc": "Wzrost terminalny musi być niższy niż WACC (g < WACC)"
     },
     "assumptions": {
+      "asOf": "Data wyceny",
+      "cashTax": "Efektywna stopa podatkowa (%)",
+      "failed": "Nie udało się zapisać założeń",
       "dcfTitle": "Założenia DCF",
       "wacc": "WACC (%)",
       "terminalMethod": "Metoda terminalna",
@@ -23440,6 +23613,7 @@
       "saveFailed": "Nie udało się zapisać założeń"
     },
     "comps": {
+      "failed": "Nie udało się zapisać danych porównawczych",
       "title": "Wycena porównawcza (multiples)",
       "min": "Min",
       "median": "Mediana",
@@ -23451,6 +23625,7 @@
       "saveFailed": "Nie udało się zapisać comps"
     },
     "compute": {
+      "readbackMismatch": "Odczytany wynik wyceny różni się od wyniku obliczenia",
       "cta": "Policz",
       "ok": "Policzono wycenę",
       "failed": "Nie udało się policzyć"
@@ -23461,6 +23636,7 @@
       "failed": "Nie udało się zatwierdzić"
     },
     "results": {
+      "terminalCrossCheck": "Kontrola wartości rezydualnej",
       "empty": "Policz wycenę, aby zobaczyć wyniki",
       "summary": "Podsumowanie",
       "ev": "Wartość przedsiębiorstwa (EV)",
@@ -23474,6 +23650,26 @@
       "compsEmpty": "Skonfiguruj comps w Założeniach"
     },
     "advisory": {
+      "candidateAlreadyExists": "To zalecenie zostało już wysłane jako kandydat na inicjatywę",
+      "candidateChecking": "Sprawdzanie dostępności…",
+      "candidateCreated": "Utworzono kandydata na inicjatywę",
+      "candidateFitScore": "Dopasowanie",
+      "candidateHandoffFailed": "Nie udało się wysłać kandydata",
+      "candidateModalCancel": "Anuluj",
+      "candidateModalClose": "Zamknij",
+      "candidateModalConfirm": "Wyślij",
+      "candidateModalTitle": "Wyślij jako kandydata na inicjatywę",
+      "candidatePreviewFailed": "Nie udało się sprawdzić dostępności działania",
+      "change": "Zmiana",
+      "complianceNotice": "Informacja o zgodności",
+      "current": "Bieżąca wartość",
+      "details": "Szczegóły",
+      "driver": "Czynnik wartości",
+      "driverDecomposition": "Składowe czynników wartości",
+      "effort": "Nakład pracy",
+      "evImpact": "Wpływ na wartość przedsiębiorstwa",
+      "impact": "Wpływ",
+      "lever": "Działanie",
       "title": "Rekomendacje poprawy wyceny",
       "generate": "Generuj",
       "ok": "Wygenerowano rekomendacje",
@@ -23506,7 +23702,11 @@
       "conservative": "Konserwatywnie ~1,0%"
     },
     "sensitivity": {
-      "tornadoTitle": "Tornado (główne drivery)"
+      "tornadoTitle": "Tornado (główne czynniki)",
+      "higher": "Wyżej",
+      "legend": "Legenda",
+      "lower": "Niżej",
+      "mid": "Środek"
     },
     "export": {
       "pptx": "Eksport PPTX",
@@ -26689,10 +26889,102 @@
   },
   "v8": {
     "artifactRun": {
-      "openInOutputs": "Zobacz w Outputs"
-    }
+      "openInOutputs": "Zobacz w materiałach wynikowych",
+      "acceptButton": "Zaakceptuj plan",
+      "acceptFailed": "Nie udało się zaakceptować planu materiału",
+      "accepted": "Plan zaakceptowano i utworzono propozycję",
+      "approveReviewButton": "Zatwierdź weryfikację",
+      "artifactReady": "Materiał jest gotowy",
+      "captureFirst": "Zapisz stan rozmowy, aby rozpocząć planowanie materiału",
+      "captureSnapshotAction": "Zapisz stan rozmowy",
+      "executionRun": "Przebieg wykonania",
+      "failureStage": "Etap niepowodzenia",
+      "goal": "Cel",
+      "goalPlaceholder": "Opisz materiał, który ma powstać na podstawie tej rozmowy.",
+      "governedExecution": "Wykonanie oczekujące na kontrolę",
+      "historyOriginal": "Pierwszy przebieg",
+      "historyRetry": "Ponowienie",
+      "historyTitle": "Historia przebiegów",
+      "latestSnapshot": "Ostatni zapis rozmowy jest gotowy",
+      "materializeButton": "Utwórz materiał",
+      "materializeFailed": "Nie udało się utworzyć materiału",
+      "materialized": "Utworzono docelowy materiał",
+      "noSnapshot": "Zapisz stan rozmowy przed zaplanowaniem materiału",
+      "outputType": "Rodzaj materiału",
+      "planButton": "Zaplanuj materiał",
+      "planCreated": "Utworzono plan materiału na podstawie rozmowy",
+      "planFailed": "Nie udało się utworzyć planu materiału",
+      "planVersion": "Wersja planu",
+      "preflightAction": "Sprawdź przed uruchomieniem",
+      "preflightFailed": "Nie udało się sprawdzić tego przebiegu",
+      "preflightNotRun": "Nie wykonano",
+      "preflightOk": "Kontrola została zaktualizowana",
+      "preflightTitle": "Kontrola przed uruchomieniem",
+      "proposalReady": "Propozycja jest gotowa",
+      "proposalsCount": "Propozycje",
+      "rejectReviewButton": "Odrzuć weryfikację",
+      "retried": "Ponowiono planowanie materiału na podstawie rozmowy",
+      "retryButton": "Ponów",
+      "retryFailed": "Nie udało się ponowić planowania",
+      "reviewApproveFailed": "Nie udało się zatwierdzić wykonania",
+      "reviewApproved": "Wykonanie zostało zatwierdzone",
+      "reviewRejectFailed": "Nie udało się odrzucić wykonania",
+      "reviewRejected": "Wykonanie zostało odrzucone",
+      "reviewSubmitFailed": "Nie udało się wysłać wykonania do weryfikacji",
+      "reviewSubmitted": "Wykonanie wysłano do weryfikacji",
+      "sheetTableId": "Identyfikator tabeli docelowej",
+      "sheetTableIdHint": "Dane zostaną zapisane w istniejącej tabeli docelowej.",
+      "sheetTableIdPlaceholder": "Podaj identyfikator tabeli docelowej",
+      "snapshotCaptureFailed": "Nie udało się zapisać stanu rozmowy",
+      "snapshotCaptured": "Zapisano stan tej rozmowy",
+      "snapshotMissing": "Przed rozpoczęciem planowania trzeba zapisać stan rozmowy.",
+      "snapshotMissingButCapturable": "Zapisz stan rozmowy, aby rozpocząć planowanie materiału.",
+      "snapshotReady": "Wykorzystany zostanie ostatni zapis tej rozmowy.",
+      "submitReviewButton": "Wyślij do weryfikacji",
+      "title": "Plan materiału wynikowego",
+      "trigger": "Utwórz plan materiału",
+      "waitingSnapshot": "Brak zapisanego stanu rozmowy"
+    },
+    "contextSnapshots": "Zapisy kontekstu: {{count}}",
+    "contextSnapshotsCount": "Liczba zapisów tej rozmowy: {{count}}",
+    "contextSnapshotsLabel": "Zapisy kontekstu",
+    "contextSummary": "Kontekst rozmowy",
+    "contextUnavailable": "Część kontekstu jest niedostępna",
+    "contextUnavailableHint": "Brakujące źródło nie jest traktowane jako wczytane. Spróbuj ponownie albo kontynuuj bez przekazywania zadania.",
+    "handoffCount": "Przekazania",
+    "handoffCreateAction": "Utwórz przekazanie",
+    "handoffCreateFailed": "Nie udało się utworzyć przekazania",
+    "handoffCreated": "Utworzono przekazanie na podstawie aktywnej rozmowy",
+    "handoffEmpty": "W tej rozmowie nie zapisano jeszcze przekazań.",
+    "handoffGoal": "Ostatni cel",
+    "handoffIntent": "Zamiar",
+    "handoffRun": "Przebieg",
+    "handoffSummary": "Przekazania z rozmowy",
+    "retrievalDenied": "Odmowa dostępu",
+    "retrievalEmpty": "W tej rozmowie nie zapisano jeszcze informacji o wyszukiwaniu.",
+    "retrievalLatency": "Czas odpowiedzi",
+    "retrievalPreset": "Ustawienie wyszukiwania",
+    "retrievalResults": "Wyniki",
+    "retrievalSummary": "Wyszukiwanie informacji",
+    "retrievalWarnings": "Ostrzeżenia"
   },
   "billing": {
+    "benefit1": "Analiza projektów i wnioski wspierane przez AI",
+    "benefit2": "Inteligentne rekomendacje i sugestie",
+    "benefit3": "Automatyczne raporty i dokumentacja",
+    "benefit4": "Wykrywanie ryzyk i wczesne ostrzeżenia",
+    "bonusOffer": "Przy większych pakietach możesz otrzymać do 20% dodatkowych tokenów.",
+    "buyTokens": "Kup tokeny",
+    "currentBalance": "Bieżące saldo",
+    "lowBalance": "Niskie saldo tokenów",
+    "lowBalanceDescription": "Saldo tokenów jest niskie. Kup tokeny, aby zachować nieprzerwany dostęp do funkcji AI.",
+    "lowTokenBalance": "Niskie saldo tokenów",
+    "noTokens": "Brak tokenów",
+    "noTokensDescription": "Aby nadal korzystać z funkcji AI, musisz kupić tokeny. Asystent AI zużywa tokeny podczas obsługi Twoich poleceń.",
+    "outOfTokens": "Brak tokenów",
+    "purchaseToUseAI": "Kup tokeny, aby nadal korzystać z funkcji AI",
+    "tokensRemaining": "Pozostałe tokeny: {{count}}",
+    "whatYouGet": "Co otrzymujesz w ramach tokenów",
     "addCard": {
       "title": "Metoda płatności",
       "subtitle": "Jak działa rozliczanie Twojego konta",
@@ -26706,6 +26998,19 @@
       }
     },
     "paymentMethods": {
+      "addFirst": "Dodaj pierwszą kartę",
+      "default": "Domyślna",
+      "defaultError": "Nie udało się zmienić domyślnej metody",
+      "defaultSet": "Zmieniono domyślną metodę płatności",
+      "description": "Zarządzaj zapisanymi metodami płatności",
+      "expires": "Ważna do",
+      "fetchError": "Nie udało się załadować metod płatności",
+      "removeConfirm": "Czy na pewno usunąć tę metodę płatności?",
+      "removeError": "Nie udało się usunąć metody płatności",
+      "removed": "Metoda płatności została usunięta",
+      "securityNote": "Dane płatnicze są bezpiecznie przetwarzane przez Stripe. Nie przechowujemy pełnych danych karty.",
+      "setDefault": "Ustaw jako domyślną",
+      "title": "Metody płatności",
       "add": "Dodaj kartę",
       "manage": "Informacje o rozliczeniach",
       "manualNote": "Rozliczenia są obecnie obsługiwane ręcznie przez nasz zespół. Karta nie jest wymagana.",
@@ -26722,10 +27027,71 @@
       "description": "Ta funkcja rozliczeń nie jest jeszcze włączona. Pojawi się tutaj po włączeniu samoobsługowych rozliczeń."
     },
     "tax": {
-      "saved": "Zapisane"
+      "saved": "Zapisane",
+      "addressLine1": "Adres — wiersz 1",
+      "addressLine2": "Adres — wiersz 2",
+      "billingAddress": "Adres rozliczeniowy",
+      "billingEmail": "E-mail rozliczeniowy",
+      "billingName": "Firma lub imię i nazwisko",
+      "city": "Miejscowość",
+      "country": "Kraj",
+      "description": "Ustaw numer podatkowy i dane rozliczeniowe widoczne na fakturach",
+      "fetchError": "Nie udało się załadować ustawień podatkowych",
+      "invoiceCustomization": "Ustawienia faktury",
+      "invoicePrefix": "Prefiks numeru faktury",
+      "poNumber": "Domyślny numer zamówienia",
+      "postalCode": "Kod pocztowy",
+      "saveError": "Nie udało się zapisać ustawień",
+      "selectCountry": "Wybierz…",
+      "selectType": "Wybierz rodzaj…",
+      "state": "Województwo lub region",
+      "taxExempt": "Zwolnienie podatkowe",
+      "taxExemptDesc": "Zaznacz, jeśli organizacja jest zwolniona z podatku",
+      "taxId": "NIP lub numer VAT",
+      "taxIdNumber": "Numer identyfikacji podatkowej",
+      "taxIdType": "Rodzaj identyfikatora podatkowego",
+      "title": "Ustawienia podatkowe i fakturowanie"
     },
     "alerts": {
-      "saved": "Zapisane"
+      "saved": "Zapisane",
+      "autoUpgrade": "Automatyczna zmiana planu",
+      "autoUpgradeDesc": "Automatycznie zmień plan po osiągnięciu limitu",
+      "costCap": "Miesięczny limit kosztów",
+      "costCapDesc": "Ustaw maksymalny miesięczny koszt; opłaty ponad limit zostaną zablokowane",
+      "description": "Ustaw powiadomienia o zbliżaniu się do limitów wykorzystania",
+      "emailNotifications": "Powiadomienia e-mail",
+      "emailNotificationsDesc": "Otrzymuj alerty pocztą elektroniczną",
+      "fetchError": "Nie udało się załadować ustawień",
+      "noCap": "Bez limitu",
+      "saveError": "Nie udało się zapisać ustawień",
+      "selectPlan": "Wybierz plan docelowy…",
+      "storageUsage": "Alerty wykorzystania pamięci",
+      "title": "Alerty i limity wykorzystania",
+      "tokenUsage": "Alerty wykorzystania tokenów"
+    },
+    "subscription": {
+      "apply": "Zastosuj",
+      "availablePlans": "Dostępne plany",
+      "changeError": "Nie udało się zaktualizować subskrypcji",
+      "changed": "Subskrypcja została zaktualizowana",
+      "confirm": "Potwierdź zmianę",
+      "confirmChange": "Potwierdź zmianę planu",
+      "confirmUpgrade": "Potwierdź przejście na wyższy plan",
+      "current": "Bieżący",
+      "currentPlan": "BIEŻĄCY PLAN",
+      "discountCode": "Kod rabatowy",
+      "downgradeNote": "Zmiana zacznie obowiązywać po zakończeniu bieżącego okresu rozliczeniowego.",
+      "fetchError": "Nie udało się załadować danych subskrypcji",
+      "invalidDiscount": "Nieprawidłowy kod rabatowy",
+      "newPrice": "Nowa cena miesięczna",
+      "popular": "Najpopularniejszy",
+      "proratedNote": "Proporcjonalna różnica zostanie naliczona od razu.",
+      "select": "Wybierz",
+      "switch": "Zmień",
+      "trial": "OKRES PRÓBNY",
+      "trialEnds": "Koniec okresu próbnego",
+      "upgrade": "Przejdź na wyższy plan",
+      "yourPlan": "Twój bieżący plan"
     }
   },
   "firstRun": {

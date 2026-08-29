@@ -201,7 +201,7 @@ export const FinanceLanePanel: React.FC<FinanceLanePanelProps> = ({
                         {auditEntry.length > 0 && (
                           <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                             {auditEntry.at(-1)?.at
-                              ? new Date(auditEntry.at(-1)!.at).toLocaleString()
+                              ? new Date(auditEntry.at(-1)!.at).toLocaleString('pl-PL')
                               : ''}{' '}
                             {auditEntry.at(-1)?.detail && `— ${auditEntry.at(-1)!.detail}`}
                           </p>

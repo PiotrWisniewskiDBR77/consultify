@@ -171,7 +171,7 @@ export const ExportToOutputDialog: React.FC<ExportToOutputDialogProps> = ({
 
   if (!open) return null;
 
-  const analysisDate = new Date().toLocaleDateString(undefined, {
+  const analysisDate = new Date().toLocaleDateString('pl-PL', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',

@@ -412,7 +412,7 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
   }, [ratios, selected, selectedRatioIds, t, targetModelId]);
 
   const fmtNumber = useMemo(
-    () => new Intl.NumberFormat(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+    () => new Intl.NumberFormat('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
     []
   );
 

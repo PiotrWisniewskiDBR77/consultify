@@ -176,7 +176,7 @@ function EvidenceCard({
                   {t('finance.explainPanel.contribution', 'Contribution')}
                 </span>
                 <span className="font-mono font-semibold tabular-nums">
-                  {Number(evidence.contributionValue).toLocaleString()}
+                  {Number(evidence.contributionValue).toLocaleString('pl-PL')}
                 </span>
               </div>
             )}
@@ -302,7 +302,7 @@ export const StatementExplainPanel: React.FC<Props> = ({
             <div className="flex items-end justify-between">
               <div>
                 <div className="font-mono text-2xl font-bold tabular-nums tracking-tight text-slate-900 dark:text-white">
-                  {new Intl.NumberFormat('en-US', {
+                  {new Intl.NumberFormat('pl-PL', {
                     minimumFractionDigits: 0,
                     maximumFractionDigits: 0,
                     useGrouping: true,
@@ -364,7 +364,7 @@ export const StatementExplainPanel: React.FC<Props> = ({
                         }`}
                       >
                         {pv.value != null
-                          ? new Intl.NumberFormat('en-US', { useGrouping: true }).format(pv.value)
+                          ? new Intl.NumberFormat('pl-PL', { useGrouping: true }).format(pv.value)
                           : '—'}
                       </div>
                     </div>

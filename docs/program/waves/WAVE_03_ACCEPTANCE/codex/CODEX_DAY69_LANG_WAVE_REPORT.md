@@ -225,3 +225,39 @@ Ręcznie uzupełniono 56 brakujących wartości klasy A w grupach `finance.analy
 - Ręcznie uzupełniono **76 z 207** pozostających wcześniej kluczy Finance: grupy `finance.model` i `finance.lane`. Pozostało `finance 131 z początkowych 263`.
 - Łączny pozostały mianownik C.1 zmniejszył się z `418` do `342`: `finance 131 + billing 88 + v8 76 + valuation 47`; `partner 0`.
 - Formatowanie Finance: inwentarz statyczny wskazuje `57` wywołań `Intl.NumberFormat` / `toLocaleString` / `toLocaleDateString` w przeglądanych katalogach Finance, Economics i Benefits. Nie wszystkie są kwotami ani datami widocznymi w polskim wariancie; pełna zgodność klasy F w Finance pozostaje **NIEZWERYFIKOWANA 0 z 57** do oceny kontekstowej i K3.
+
+## Wznowienie — domknięcie mianownika klasy A i ocena klasy F
+
+### Klasa A
+
+Uzupełniono **418 z 418** braków wskazanych przy wznowieniu C.1. Pozostały mianownik wywołań `t('klucz', 'fallback')` dla obszarów C.1 wynosi **0 z 418**:
+
+- `partner`: 0;
+- `finance`: 0;
+- `billing`: 0;
+- `v8`: 0;
+- `valuation`: 0.
+
+Liczba spłaszczonych kluczy PL wzrosła z `31360` na początku tego wznowienia do `31778`; JSON parsuje się poprawnie. Wartości `v8.*` opisują czynności użytkownika bez eksponowania nazwy wersji architektury i określeń typu „governed runtime”.
+
+### Klasa F — Finance
+
+Oceniono kontekstowo **57 z 57** trafień inwentarza:
+
+- 51 z 57 ma teraz jawne `pl-PL`;
+- 5 z 57 korzysta z locale zależnego od języka lub przekazanego do wspólnego formatera;
+- 1 z 57 jest wyłącznie komentarzem, nie wykonaniem formatera.
+
+Usunięto z widocznych liczb i dat wywołania z locale `en-US`, locale `undefined` oraz bez argumentu. Dowód inwentarza po zmianie: `/private/tmp/cx-day69-artefakty/c1-finance-class-f-after.txt`, SHA-256 `51f1ba783b99a004287e614f4d6dd8c0564f0969d9add9ed274e571de24c67df`.
+
+### K2 i K4 — stan checkpointu
+
+- Frontend: **PASS**, `✓ built in 36.59s`. Log: `/private/tmp/cx-day69-artefakty/c1-resume-frontend-build-after-all-a.log`, SHA-256 `213ea06ef2ea9c14b7a945217b12d670dfee65b537af003900551a55f3df306e`.
+- Pakiet 16 wybranych plików komponentowych Finance: **84 z 93 PASS, 9 z 93 FAIL**. JSON: `/private/tmp/cx-day69-artefakty/c1-finance-component-tests.json`, SHA-256 `b355e064aef35b91b9f77c198e97f4240de03573d32e01606499636e840868d4`.
+- Powtórzenie trzech czerwonych plików: **14 z 23 PASS, 9 z 23 FAIL**. Czerwone przypadki dotyczą istniejących kontraktów `DriverPlannerPanel`, `FinancialStatementWorkspace V8 read seam` i dwóch stanów pustych `ValuationVisualsPanel`; żaden z tych plików testowych ani komponentów nie został zmieniony w tym wznowieniu. Stan „zielony przed” pozostaje `NOT_PROVEN`, więc K4 nie jest spełnione.
+
+### Nadal NIEZWERYFIKOWANE
+
+- C.1 nie jest jeszcze ukończone mimo `0 z 418` braków klasy A: klasy B–E nie zostały przejrzane dla wszystkich czterech nowych obszarów, a K3 ze stylowanego harnessu nie został wykonany dla Finance, Billing, V8 i Valuation (`0 z 4` powierzchni).
+- Crimson pozostaje świadomie nietknięty.
+- C.2 nie zostało rozpoczęte, ponieważ bramka C.1 nie jest zamknięta.

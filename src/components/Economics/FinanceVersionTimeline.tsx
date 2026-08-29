@@ -48,13 +48,13 @@ export const FinanceVersionTimeline: React.FC<FinanceVersionTimelineProps> = ({ 
                 </span>
               )}
               <span className="text-[10px] text-slate-600 dark:text-slate-500 ml-auto whitespace-nowrap">
-                {new Date(snap.createdAt).toLocaleDateString()}
+                {new Date(snap.createdAt).toLocaleDateString('pl-PL')}
               </span>
             </div>
             {snap.switchoverDate && (
               <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
                 {t('finance.lane.versions.switchover', 'Switchover')}{' '}
-                {new Date(snap.switchoverDate).toLocaleDateString()}
+                {new Date(snap.switchoverDate).toLocaleDateString('pl-PL')}
                 {snap.switchoverActor &&
                   ` ${t('finance.lane.versions.by', 'by')} ${snap.switchoverActor}`}
               </p>

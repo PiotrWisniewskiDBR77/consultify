@@ -52,7 +52,7 @@ const OPS: DriverOp[] = ['+', '-', '*', '/', 'sum', 'product'];
 
 const fmt = (v: number | null | undefined): string => {
   if (v === null || v === undefined || !Number.isFinite(v)) return '—';
-  return new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 }).format(v);
+  return new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 1 }).format(v);
 };
 
 export interface DriverTreePanelProps {
