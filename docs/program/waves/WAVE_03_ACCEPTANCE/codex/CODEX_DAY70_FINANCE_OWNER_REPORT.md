@@ -22,6 +22,10 @@ Zgodnie z §B.1 nie uruchomiono runtime'u ani macierzy zrzutów.
   `pgvector/pgvector:pg16`.
 - Porty `5942` i `4640` przed startem: brak procesów nasłuchujących.
 - Artefakty poza repo: `/private/tmp/cx-day70-artefakty`.
+- Cleanup: własny kontener usunięto przez `docker rm -fv cx-day70-pg`;
+  komenda wypisała `cx-day70-pg`. Po sprzątnięciu porty `5942` i `4640`
+  ponownie nie miały procesu nasłuchującego. Baza była efemeryczna i została
+  usunięta wraz z wolumenem; manifest dowodowy poza repo zachowano.
 
 Wynik markera, dosłownie:
 
