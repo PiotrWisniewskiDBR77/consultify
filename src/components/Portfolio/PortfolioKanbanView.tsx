@@ -4,7 +4,8 @@
  * Kanban board for Initiatives — "pokazywać co przesuwamy dalej".
  *
  * Two modes controlled by parent (InitiativesHub):
- *   ACTIVE  → REVIEW → PROMOTED → PLANNING → APPROVED → SCHEDULED
+ *   ACTIVE  → full lifecycle MINUS the three terminal statuses
+ *             (DONE / CANCELLED / ARCHIVED), i.e. DRAFT → … → TRACKING
  *   ALL     → full lifecycle from DRAFT to ARCHIVED (left → right)
  *
  * Cards show: Name · Priority · Owner · Next gate · Missing/Blocking (max 3 chips)
@@ -74,6 +75,64 @@ function getColumnsForScope(scope: KanbanScope): { id: InitiativeStatus; label: 
     id: s,
     label: STATUS_METADATA[s]?.label || s,
   }));
+}
+
+export { getColumnsForScope };
+
+// ==========================================
+// GROUPING (+ anti-regression guard)
+// ==========================================
+
+/**
+ * Group initiatives into the board's columns.
+ *
+ * ANTI-REGRESSION GUARD (2026-08-29). The previous grouping was
+ *   `if (grouped[initiative.status]) grouped[initiative.status].push(...)`
+ * which SILENTLY DROPPED every initiative whose status had no column. That
+ * is why the exact same defect shipped twice: DRAFT vanished in 2026-06
+ * (M13 P1), EXECUTING vanished in 2026-08 — both invisible, because the
+ * board simply rendered zeros instead of failing. A homeless status is now
+ * returned to the caller and reported on the developer console, so the next
+ * lifecycle value added to `InitiativeStatus` without a column announces
+ * itself instead of eating records.
+ *
+ * Pure function on purpose: the invariant is testable without rendering.
+ */
+export function groupInitiativesByColumn(
+  initiatives: PortfolioInitiative[],
+  columns: { id: InitiativeStatus }[]
+): {
+  grouped: Record<string, PortfolioInitiative[]>;
+  homelessStatuses: string[];
+} {
+  const grouped: Record<string, PortfolioInitiative[]> = {};
+  columns.forEach((col) => {
+    grouped[col.id] = [];
+  });
+
+  const homeless = new Set<string>();
+  initiatives.forEach((initiative) => {
+    const bucket = grouped[initiative.status as unknown as string];
+    if (bucket) {
+      bucket.push(initiative);
+      return;
+    }
+    homeless.add(String(initiative.status));
+  });
+
+  return { grouped, homelessStatuses: Array.from(homeless) };
+}
+
+/** Console-level alarm for the guard above. Separate so tests can assert it. */
+export function warnOnHomelessStatuses(scope: KanbanScope, homelessStatuses: string[]): void {
+  if (homelessStatuses.length === 0) return;
+  // eslint-disable-next-line no-console
+  console.warn(
+    `[PortfolioKanbanView] ${homelessStatuses.length} initiative status(es) have no Kanban ` +
+      `column in scope "${scope}" and would be hidden from the board: ` +
+      `${homelessStatuses.join(', ')}. ` +
+      `Add them to ACTIVE_STATUSES/ALL_STATUSES in src/utils/initiativeHelpers.ts.`
+  );
 }
 
 // ==========================================
@@ -314,17 +373,10 @@ export const PortfolioKanbanView: React.FC<PortfolioKanbanViewProps> = ({
   );
 
   const columnData = useMemo(() => {
-    const grouped: Record<string, PortfolioInitiative[]> = {};
-    columns.forEach((col) => {
-      grouped[col.id] = [];
-    });
-    initiatives.forEach((initiative) => {
-      if (grouped[initiative.status]) {
-        grouped[initiative.status].push(initiative);
-      }
-    });
+    const { grouped, homelessStatuses } = groupInitiativesByColumn(initiatives, columns);
+    warnOnHomelessStatuses(scope, homelessStatuses);
     return grouped;
-  }, [initiatives, columns]);
+  }, [initiatives, columns, scope]);
 
   const activeInitiative = useMemo(() => {
     if (!activeId) return null;

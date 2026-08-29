@@ -182,7 +182,16 @@ export function getHealthInfo(initiative: {
  * initiative (status DRAFT) had NO Kanban column and was excluded from the
  * active data fetch, so it vanished from the default board right after
  * creation ("ALL 10 → every column 0"). They are the visible left-most
- * "Szkice / W przeglądzie" columns now. (M13 P1 fix, 2026-06-21) */
+ * "Szkice / W przeglądzie" columns now. (M13 P1 fix, 2026-06-21)
+ *
+ * EXECUTING + BLOCKED + TRACKING close the same class of defect a second
+ * time (2026-08-29). The Initiatives data feed for scope 'active' filters
+ * out ONLY the three terminal statuses below (InitiativesHub.tsx L526-535),
+ * so an initiative in EXECUTING / BLOCKED / TRACKING *reached* the board but
+ * had no column and was silently dropped by the grouping step — the module
+ * filter chip read "W realizacji 1" over a board whose every column showed
+ * 0. Owner decision 2026-08-29: the initiative lifecycle is the truth, the
+ * Kanban columns must mirror it. Order follows ALL_STATUSES. */
 export const ACTIVE_STATUSES: InitiativeStatus[] = [
   'DRAFT' as InitiativeStatus,
   'PENDING_REVIEW' as InitiativeStatus,
@@ -191,6 +200,23 @@ export const ACTIVE_STATUSES: InitiativeStatus[] = [
   'PLANNING' as InitiativeStatus,
   'APPROVED' as InitiativeStatus,
   'SCHEDULED' as InitiativeStatus,
+  'EXECUTING' as InitiativeStatus,
+  'BLOCKED' as InitiativeStatus,
+  'TRACKING' as InitiativeStatus,
+];
+
+/** The only statuses deliberately absent from the "Active" board.
+ *
+ * Mirrors the terminal-status exclusion applied to the Initiatives data feed
+ * in scope 'active' (`InitiativesHub.tsx` L526-535). Kept next to
+ * ACTIVE_STATUSES so the invariant
+ *   ACTIVE_STATUSES ∪ ACTIVE_HIDDEN_STATUSES === every InitiativeStatus
+ * (no overlap, no gap) can be asserted by a test instead of rediscovered by
+ * a user staring at an empty board. */
+export const ACTIVE_HIDDEN_STATUSES: InitiativeStatus[] = [
+  'DONE' as InitiativeStatus,
+  'CANCELLED' as InitiativeStatus,
+  'ARCHIVED' as InitiativeStatus,
 ];
 
 /** Full lifecycle order for "All" mode */
