@@ -140,6 +140,7 @@ export const PartnerCanonicalRuntimePanel: React.FC<{
   const lifecycleFallback: Record<string, string> = {
     active: 'Aktywny',
     certified: 'Certyfikowany',
+    earn: 'Rozliczenia',
     onboarding: 'W trakcie uruchamiania',
     pending: 'Oczekuje',
     suspended: 'Wstrzymany',
@@ -236,18 +237,18 @@ export const PartnerCanonicalRuntimePanel: React.FC<{
             id="partner-canonical-runtime-title"
             className="text-lg font-semibold text-slate-900 dark:text-white"
           >
-            {t('partner.canonicalRuntime.title', 'Governed Partner runtime')}
+            {t('partner.canonicalRuntime.title', 'Current partner programme status')}
           </h2>
           <p className="mt-1 max-w-3xl text-sm text-slate-600 dark:text-slate-300">
             {t(
               'partner.canonicalRuntime.subtitle',
-              'Current persisted state for program, certification, attribution, ledger and accrual.'
+              'Current programme, certification, referral and financial information.'
             )}
           </p>
         </div>
         <span className="inline-flex w-fit items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 dark:bg-navy-700 dark:text-slate-200">
           <ShieldCheck aria-hidden="true" className="h-3.5 w-3.5" />
-          {t('partner.canonicalRuntime.readOnly', 'Read-only governance view')}
+          {t('partner.canonicalRuntime.readOnly', 'Information overview')}
         </span>
       </div>
 

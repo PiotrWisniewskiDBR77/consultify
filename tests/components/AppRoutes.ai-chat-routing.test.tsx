@@ -47,11 +47,16 @@ describe('AppRoutes — AI Chat routing', () => {
     // The chat route blocks wrap the panel in MainLayout.
     const chatRouteBlock = appRoutes.slice(appRoutes.indexOf('path={ROUTES.AI_CHAT}'));
     expect(chatRouteBlock).toContain('MainLayout');
+    expect(chatRouteBlock).toContain("t('navigation.aiChat', 'AI Chat')");
   });
 
   it('has fully removed the dead AIChatWelcomeView', () => {
     expect(existsSync(resolve(process.cwd(), 'src/views/AIChatWelcomeView.tsx'))).toBe(false);
     expect(appRoutes).not.toContain("import('@/views/AIChatWelcomeView')");
     expect(appRoutes).not.toContain('<AIChatWelcomeView');
+  });
+
+  it('localizes the Partner Portal shell breadcrumb', () => {
+    expect(appRoutes).toContain("t('partner.sidebar.title', 'Partner Portal')");
   });
 });

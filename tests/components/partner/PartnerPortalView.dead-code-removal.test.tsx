@@ -54,6 +54,12 @@ const TestWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 );
 
 describe('PartnerPortalView — dead-code removal (module 19 MVP)', () => {
+  it('does not expose an internal certificate identifier in the partner UI', () => {
+    expect(SOURCE).not.toContain('ID: {cert.certificateId}');
+    expect(SOURCE).toContain("t('partner.certification.issued', 'Issued')");
+    expect(SOURCE).toContain("t('partner.certification.validUntil', 'Valid until')");
+  });
+
   it('no longer defines the hardcoded PerformanceSection component', () => {
     expect(SOURCE).not.toContain('const PerformanceSection');
     expect(SOURCE).not.toContain('Top 15% of partners');
@@ -66,6 +72,12 @@ describe('PartnerPortalView — dead-code removal (module 19 MVP)', () => {
   it('does not reference the dead components anywhere', () => {
     expect(SOURCE).not.toContain('<PerformanceSection');
     expect(SOURCE).not.toContain('<BillingSection');
+  });
+
+  it('localizes acceptance-visible dashboard values and breadcrumbs', () => {
+    expect(SOURCE).toContain("t('partner.dashboard.startProject', 'Start Project')");
+    expect(SOURCE).toContain("t('partner.sidebar.title', 'Partner Portal')");
+    expect(SOURCE).toContain('partner.dashboard.certification.${');
   });
 });
 

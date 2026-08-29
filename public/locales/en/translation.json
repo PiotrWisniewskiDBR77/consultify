@@ -1204,6 +1204,7 @@
       "title": "Partner Portal",
       "subtitle": "DBR77 Consultify",
       "backToApp": "Back to app",
+      "new": "New",
       "partnerHome": "Home",
       "dashboard": "Dashboard",
       "metrics": "Metrics",
@@ -1270,6 +1271,13 @@
       "userCount": "{{count}} users"
     },
     "dashboard": {
+      "startProject": "Start Project",
+      "viewResources": "View Resources",
+      "downloadMaterials": "Download Materials",
+      "certification": {
+        "registered": "Registered",
+        "certified": "Certified"
+      },
       "welcome": "Welcome back",
       "subtitle": "Here's an overview of your partner activity",
       "activeClients": "Active Clients",
@@ -1329,7 +1337,10 @@
       "noCourses": "No courses available",
       "certificatesEmpty": "No certificates earned yet",
       "examTitle": "Certification exam",
-      "deadline": "Deadline"
+      "deadline": "Deadline",
+      "issued": "Issued",
+      "validUntil": "Valid until",
+      "certificateUnavailable": "Certificate unavailable"
     },
     "clients": {
       "organizations": "Organizations",
@@ -1503,6 +1514,9 @@
       "minimumNotReached": "Minimum payout amount is {{amount}}",
       "bankInfoRequired": "Up-to-date bank and tax information is required to receive commission payments.",
       "bankInfoRuntimeNotice": "Use the governed payout settings surface to keep payout details up to date.",
+      "policyUnavailableTitle": "Partner financial operations are unavailable",
+      "payoutOperationsUnavailable": "Commission accrual and payout operations are currently unavailable.",
+      "historicalReadOnlyUnavailable": "No historical financial records are available for this partner.",
       "recentTransactions": "Recent Commission Statements",
       "noDataToExport": "No transactions to export",
       "exported": "Exported {{n}} transactions",
@@ -1557,6 +1571,40 @@
     },
     "referrals": {
       "deleteFailed": "Failed to delete deck"
+    },
+    "canonicalRuntime": {
+      "title": "Current partner programme status",
+      "subtitle": "Current programme, certification, referral and financial information.",
+      "readOnly": "Information overview",
+      "partnerStatus": "Partner status",
+      "certification": "Certification",
+      "attribution": "Referrals",
+      "referralHistory": "Referral history",
+      "payoutEligibility": "Amount available for payout",
+      "payoutEligibilityDetail": "The displayed balance is informational. Payout availability depends on approved programme rules.",
+      "latestReferralRecorded": "Latest referral recorded",
+      "noReferralsRecorded": "No referrals recorded yet",
+      "unknown": "Unknown",
+      "statusUnverified": "Status could not be verified",
+      "awaitingReview": "Awaiting review: {{count}}",
+      "noPendingReview": "No referrals awaiting review",
+      "activeAttributions": "Active referrals: {{count}}",
+      "policyNotice": "This history contains referral information only. Commission accrual, payout requests and automated payouts are currently unavailable.",
+      "state": {
+        "ready": "Ready",
+        "empty": "No data",
+        "degraded": "Limited operation",
+        "unavailable": "Unavailable",
+        "policyGated": "Subject to programme rules"
+      },
+      "lifecycle": {
+        "active": "Active",
+        "certified": "Certified",
+        "earn": "Earnings",
+        "onboarding": "Onboarding",
+        "pending": "Pending",
+        "suspended": "Suspended"
+      }
     },
     "common": {
       "comingSoon": "Coming soon"
@@ -16573,6 +16621,14 @@
     },
     "language": "Conversation language",
     "chatMenuTitle": "Menu",
+    "skipToInput": "Skip to chat input",
+    "conversationRegion": "Conversation",
+    "voiceUnavailable": "Voice is unavailable. You can continue by text or dictation.",
+    "send": "Send",
+    "startDictation": "Dictate (fills input; review and send)",
+    "workPanel": {
+      "open": "Open work panel"
+    },
     "openSidebar": "Open sidebar",
     "newChat": "New conversation",
     "dailyBrief": "Daily brief",
@@ -16677,6 +16733,8 @@
       }
     },
     "homeCards": {
+      "startInChat": "Start in chat",
+      "openCapability": "Open capability",
       "market": {
         "label": "Market analysis",
         "desc": "Market, competitors, positioning",
@@ -16774,6 +16832,7 @@
         "kickoff": "I want to run a financial analysis. What should we analyze (budget, costs, revenue, ROI, CAPEX/OPEX)? Ask me 5 questions, then propose an analysis structure."
       },
       "consulting": {
+        "acceptanceDesc": "Use classic frameworks and tools",
         "label": "Classic consulting",
         "desc": "Frameworks and toolkits",
         "kickoff": "I want to use classic consulting frameworks. What problem are we solving and in what context? Ask me 5 questions, then recommend 2–3 best frameworks (e.g., SWOT, 5 Forces, Ansoff, Value Chain)."
@@ -17159,6 +17218,7 @@
       "actionsPrompt": "Create a task to review our Q1 roadmap progress"
     },
     "onboarding": {
+      "acceptanceHint": "Tip: Try voice mode, attach files, or enable Deep Thinking for multi-step analysis",
       "hint": "Tip: Try voice mode, attach files, or enable Deep Thinking for multi-step analysis"
     },
     "branch": {
@@ -22875,6 +22935,7 @@
     }
   },
   "navigation": {
+    "aiChat": "AI Chat",
     "sidebar": {
       "collapse": "Collapse sidebar",
       "expand": "Expand sidebar",
@@ -26432,6 +26493,12 @@
     "delete": "Delete"
   },
   "canvas": {
+    "viewMode": {
+      "ariaLabel": "Document view",
+      "rich": "Editor",
+      "document": "Document",
+      "markdown": "Markdown"
+    },
     "aiMenu": {
       "promptPlaceholder": "What should Teresa do with this text?",
       "explanation": "Explanation",
@@ -26878,6 +26945,7 @@
   },
   "voice": {
     "legend": {
+      "trigger": "Voice modes explained",
       "copy": {
         "failed": "Failed"
       }
