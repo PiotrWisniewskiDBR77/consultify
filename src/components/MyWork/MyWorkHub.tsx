@@ -1683,7 +1683,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     const allTabs = [
       {
         id: 'home' as ModuleTab,
-        label: 'Radar',
+        label: t('myWork.hub.radar', 'Radar'),
         icon: <Home size={16} />,
         count: tabCounts.home,
         color: 'bg-sky-500',
@@ -1709,7 +1709,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       },
       {
         id: 'inbox' as ModuleTab,
-        label: 'Inbox',
+        label: t('myWork.hub.inbox', 'Inbox'),
         icon: <Inbox size={16} />,
         count: tabCounts.inbox,
         color: 'bg-blue-500',
@@ -1762,7 +1762,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       },
       {
         id: 'manager' as ModuleTab,
-        label: 'Manager',
+        label: t('myWork.hub.manager', 'Manager'),
         icon: <Users size={16} />,
         count: tabCounts.manager,
         color: 'bg-sky-500',

@@ -3137,6 +3137,7 @@
       "tasks": "Tasks",
       "decisions": "Decisions",
       "manager": "Manager",
+      "agent": "Run agent",
       "myWork": "My Work",
       "idea": "Idea",
       "toastSuccess": "Downloaded spreadsheet (.xlsx)",
@@ -3275,6 +3276,7 @@
       "unifiedCreateNew": "+ New",
       "vault": "Client Vault"
     },
+    "openDocuments": "Open documents",
     "inboxContent": {
       "justNow": "Just now",
       "dToLocaleDateString": "en-US",
@@ -3702,6 +3704,7 @@
       }
     },
     "decisionsPanel": {
+      "loadErrorHint": "Check your connection and try again.",
       "critical": "Critical",
       "high": "High",
       "low": "Low",
@@ -4011,6 +4014,8 @@
       "priorityLow": "Low"
     },
     "tasksList": {
+      "possibleDuplicate": "Possible duplicate ({{count}})",
+      "possibleDuplicateHint": "Another task with the same title and project exists — check it is not a duplicate.",
       "you": "You",
       "ariaLabel": "Select task",
       "label": "Open preview",
@@ -7822,7 +7827,25 @@
       "resumeLatestTooltip": "Opens the editor for your most recently updated assessment, back where you left off.",
       "aiTriageTooltip": "Opens AI chat with a ready-made prompt: what in this list needs attention first.",
       "chatTooltip": "Opens a blank AI chat for this hub.",
-      "connectionError": "Connection error"
+      "connectionError": "Connection error",
+      "warnings": {
+        "methodCoreUnavailable": "DRD sessions could not be loaded from Method Core. No legacy DRD data is shown.",
+        "rateLimitedCached": "Assessment data is temporarily rate limited. Showing the last available list while staging recovers.",
+        "rateLimitedEmpty": "Assessment data is temporarily rate limited. Retry in a moment or create a new assessment while staging recovers.",
+        "legacyUnavailable": "Non-DRD assessments could not be refreshed. Canonical DRD sessions are still shown."
+      },
+      "tabs": {
+        "assessment": "Assessment",
+        "library": "Library",
+        "processes": "Processes",
+        "insights": "Insights",
+        "reports": "Reports",
+        "initiatives": "Initiatives"
+      },
+      "allStatuses": "All statuses",
+      "statusValue": "Status {{status}}",
+      "focusedDocuments": "Focused documents",
+      "listWorkspace": "List workspace"
     },
     "newModal": {
       "comingSoonBadge": "Coming soon",
@@ -8071,7 +8094,9 @@
       "assessmentLabel": "Assessment",
       "descriptionLabel": "Description",
       "whatYouGet": "What you get",
-      "startAssessment": "Start assessment"
+      "startAssessment": "Start assessment",
+      "aiSummarize": "Summarize assessment",
+      "aiNextSteps": "Suggest next steps"
     },
     "form": {
       "current": "Current",
@@ -8108,7 +8133,11 @@
       "relatedHint": "Related to the current assessment",
       "goAfterPlanning": "Go to Initiatives after PLANNING",
       "goTo": "Go to Initiatives",
-      "sourceReport": "Source report"
+      "sourceReport": "Source report",
+      "emptyState": {
+        "title": "No initiatives yet",
+        "generate": "Initiative Pack"
+      }
     },
     "drd": {
       "whyThisMatters": {
@@ -8293,7 +8322,16 @@
       }
     },
     "reports": {
-      "source": "Source assessment"
+      "source": "Source assessment",
+      "emptyState": {
+        "title": "No reports yet",
+        "generate": "Generate Report"
+      }
+    },
+    "whatsNext": {
+      "report": "Report",
+      "initiatives": "Initiative pack",
+      "note": "Uses this assessment as the source."
     },
     "emptyState": {
       "title": "No assessments yet",

@@ -762,13 +762,13 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
       return [
         {
           id: 'list' as ModuleTab,
-          label: 'Assessment',
+          label: t('assessment.hub.tabs.assessment', 'Assessment'),
           icon: <FileText size={16} />,
           count: assessments.length,
         },
         {
           id: 'reports' as ModuleTab,
-          label: 'Reports',
+          label: t('assessment.hub.tabs.reports', 'Reports'),
           icon: <FileText size={16} />,
           // Count all report documents (APPROVED + legacy FINAL),
           // while the default filter still shows APPROVED only.
@@ -776,7 +776,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
         },
         {
           id: 'initiatives' as ModuleTab,
-          label: 'Initiatives',
+          label: t('assessment.hub.tabs.initiatives', 'Initiatives'),
           icon: <Lightbulb size={16} />,
           count: initiatives.length,
         },
@@ -785,14 +785,14 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
     return [
       {
         id: 'library' as ModuleTab,
-        label: 'Library',
+        label: t('assessment.hub.tabs.library', 'Library'),
         icon: <Library size={16} />,
       },
       {
         // Former 'list' — identical content (same table, columns, preview),
         // only the tab id + label changed.
         id: 'processes' as ModuleTab,
-        label: 'Processes',
+        label: t('assessment.hub.tabs.processes', 'Processes'),
         icon: <FileText size={16} />,
         count: assessments.length,
       },
@@ -801,19 +801,19 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
         // Owner-approved product language: the immutable Method Core records
         // remain `outputs` in the API/route contract, while the user-facing
         // Assessment surface is Insights.
-        label: 'Insights',
+        label: t('assessment.hub.tabs.insights', 'Insights'),
         icon: <Package size={16} />,
         count: outputsCount ?? undefined,
       },
       {
         id: 'reports' as ModuleTab,
-        label: 'Reports',
+        label: t('assessment.hub.tabs.reports', 'Reports'),
         icon: <FileText size={16} />,
         count: reports.length + importedReports.length,
       },
       {
         id: 'initiatives' as ModuleTab,
-        label: 'Initiatives',
+        label: t('assessment.hub.tabs.initiatives', 'Initiatives'),
         icon: <Lightbulb size={16} />,
         count: initiatives.length,
       },
@@ -825,6 +825,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
     initiatives,
     importedReports,
     outputsCount,
+    t,
   ]);
 
   // Table columns for assessments
@@ -1578,14 +1579,14 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
         id: 'active-tab',
         label:
           activeTab === 'reports'
-            ? 'Reports'
+            ? t('assessment.hub.tabs.reports', 'Reports')
             : activeTab === 'initiatives'
-              ? 'Initiatives'
+              ? t('assessment.hub.tabs.initiatives', 'Initiatives')
               : activeTab === 'library'
-                ? 'Library'
+                ? t('assessment.hub.tabs.library', 'Library')
                 : activeTab === 'outputs'
-                  ? 'Outputs'
-                  : 'Assessment',
+                  ? t('assessment.hub.tabs.insights', 'Insights')
+                  : t('assessment.hub.tabs.assessment', 'Assessment'),
         badge: currentData.length,
         active: true,
         title: t(
@@ -1595,7 +1596,10 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
       },
       {
         id: 'status-filter',
-        label: statusFilter === 'all' ? 'All statuses' : `Status ${statusFilter}`,
+        label:
+          statusFilter === 'all'
+            ? t('assessment.hub.allStatuses', 'All statuses')
+            : t('assessment.hub.statusValue', 'Status {{status}}', { status: statusFilter }),
         title: t(
           'assessment.hub.statusFilterAppliedTooltip',
           'Status filter applied to the list (click a status in the table to set it).'
@@ -1603,7 +1607,10 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
       },
       {
         id: 'documents',
-        label: openDocuments.length > 0 ? 'Focused documents' : 'List workspace',
+        label:
+          openDocuments.length > 0
+            ? t('assessment.hub.focusedDocuments', 'Focused documents')
+            : t('assessment.hub.listWorkspace', 'List workspace'),
         badge: openDocuments.length || null,
         title: t(
           'assessment.hub.documentsTooltip',
