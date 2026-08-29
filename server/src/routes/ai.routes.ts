@@ -4072,6 +4072,91 @@ router.post(
         } as any;
       }
 
+      const orgKnowledgeRetrievalEnabled =
+        process.env.ENABLE_ORG_KNOWLEDGE_RETRIEVAL === 'true';
+
+      // With no conversation attachment there was previously no retrieval at
+      // all. The opt-in path searches the approved organization corpus through
+      // the same ACL-aware service used below for attachment grounding.
+      if (
+        orgKnowledgeRetrievalEnabled &&
+        attachmentDocIds.length === 0 &&
+        message &&
+        message.trim().length > 0
+      ) {
+        try {
+          const sharedRetrievalModule =
+            await import('../services/organizationContext/ContextRetrievalService.js');
+          const sharedRetrieval = (sharedRetrievalModule as any).default || sharedRetrievalModule;
+          const sharedResult = await sharedRetrieval.retrieveContext({
+            organizationId: req.organizationId || '',
+            userId: (req as any).user?.id || (req as any).userId || 'system',
+            workflow: 'ai_chat',
+            workflowMode: 'org_context_research_mode',
+            retrievalQuery: message,
+            retrievalReason: 'ai_chat_organization_knowledge',
+            selectedDocumentIds: [],
+            perDocumentChunkLimit: 5,
+            totalChunkLimit: 12,
+          });
+          const orgChunks = Array.isArray(sharedResult?.chunks) ? sharedResult.chunks : [];
+
+          if (orgChunks.length > 0) {
+            await sharedRetrieval.recordContextRetrievalLineage({
+              organizationId: req.organizationId || '',
+              userId: (req as any).user?.id || (req as any).userId || 'system',
+              workflow: 'ai_chat',
+              targetType: 'ai_chat_message',
+              targetId: chatRunId || `chat_${Date.now()}`,
+              eventType: 'ai_chat_context_retrieved',
+              result: sharedResult,
+              metadata: {
+                attachmentSource: 'organization_knowledge',
+                conversationId: (context as any)?.conversationId || null,
+              },
+            });
+          }
+
+          const orgKnowledgeText =
+            orgChunks.length > 0
+              ? orgChunks
+                  .map(
+                    (chunk: any, index: number) =>
+                      `[K${index + 1}] ${String(chunk?.filename || 'Organization document')} (fragment ${typeof chunk?.chunkIndex === 'number' ? chunk.chunkIndex : 'unknown'})\n${String(chunk?.content || '').trim()}`
+                  )
+                  .join('\n\n')
+              : 'No matching organization knowledge was found for this question.';
+          pipelineRequest = {
+            ...pipelineRequest,
+            options: {
+              ...(pipelineRequest.options || {}),
+              systemInstruction:
+                String((pipelineRequest.options as any)?.systemInstruction || '') +
+                `\n\n## ORGANIZATION KNOWLEDGE\n${orgKnowledgeText}\n\nRules:\n- This block is the result of searching the organization knowledge corpus.\n- Cite a used source inline as [K1], [K2], etc.\n- If the block says no match was found, do not invent organization facts.\n`,
+            },
+          } as any;
+          if (orgChunks.length > 0) {
+            emitSSE({
+              type: 'citations',
+              citations: orgChunks.map((chunk: any, index: number) => ({
+                id: `organization_knowledge_${index + 1}`,
+                type: 'document',
+                title: String(chunk?.filename || 'Organization document'),
+                reference: `${String(chunk?.filename || 'Organization document')} — fragment ${typeof chunk?.chunkIndex === 'number' ? chunk.chunkIndex : 'unknown'}`,
+                excerpt: String(chunk?.content || '').trim().slice(0, 500),
+                fragmentIndex: typeof chunk?.chunkIndex === 'number' ? chunk.chunkIndex : null,
+              })),
+            });
+            hasGovernedGrounding = true;
+          }
+        } catch (orgKnowledgeErr: any) {
+          logger.warn(
+            '[AI Stream] Organization knowledge retrieval failed, continuing without it:',
+            orgKnowledgeErr?.message || String(orgKnowledgeErr)
+          );
+        }
+      }
+
       if (attachmentDocIds.length > 0 && message && message.trim().length > 0) {
         emitSSE({
           type: 'thought',
@@ -4096,7 +4181,9 @@ router.post(
             organizationId: req.organizationId || '',
             userId: (req as any).user?.id || (req as any).userId || 'system',
             workflow: 'ai_chat',
-            workflowMode: requestedWorkflowMode,
+            workflowMode: orgKnowledgeRetrievalEnabled
+              ? 'selected_material_plus_approved_org_context'
+              : requestedWorkflowMode,
             retrievalQuery: message,
             retrievalReason: 'ai_chat_attachment_grounding',
             selectedDocumentIds: attachmentDocIds,
@@ -4122,6 +4209,42 @@ router.post(
                 conversationId: (context as any)?.conversationId || null,
               },
             });
+          }
+
+          if (orgKnowledgeRetrievalEnabled) {
+            const orgChunks = Array.isArray(sharedResult?.chunks) ? sharedResult.chunks : [];
+            const orgKnowledgeText =
+              orgChunks.length > 0
+                ? orgChunks
+                    .map(
+                      (chunk: any, index: number) =>
+                        `[K${index + 1}] ${String(chunk?.filename || 'Organization document')} (fragment ${typeof chunk?.chunkIndex === 'number' ? chunk.chunkIndex : 'unknown'})\n${String(chunk?.content || '').trim()}`
+                    )
+                    .join('\n\n')
+                : 'No matching organization knowledge was found for this question.';
+            pipelineRequest = {
+              ...pipelineRequest,
+              options: {
+                ...(pipelineRequest.options || {}),
+                systemInstruction:
+                  String((pipelineRequest.options as any)?.systemInstruction || '') +
+                  `\n\n## ORGANIZATION KNOWLEDGE\n${orgKnowledgeText}\n\nRules:\n- This block is the result of searching the organization knowledge corpus.\n- Cite a used source inline as [K1], [K2], etc.\n- If the block says no match was found, do not invent organization facts.\n`,
+              },
+            } as any;
+            if (orgChunks.length > 0) {
+              emitSSE({
+                type: 'citations',
+                citations: orgChunks.map((chunk: any, index: number) => ({
+                  id: `organization_knowledge_${index + 1}`,
+                  type: 'document',
+                  title: String(chunk?.filename || 'Organization document'),
+                  reference: `${String(chunk?.filename || 'Organization document')} — fragment ${typeof chunk?.chunkIndex === 'number' ? chunk.chunkIndex : 'unknown'}`,
+                  excerpt: String(chunk?.content || '').trim().slice(0, 500),
+                  fragmentIndex: typeof chunk?.chunkIndex === 'number' ? chunk.chunkIndex : null,
+                })),
+              });
+              hasGovernedGrounding = true;
+            }
           }
         } catch (sharedErr: any) {
           logger.warn(
