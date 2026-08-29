@@ -339,7 +339,7 @@ export function formatAge(
   if (hours < 1) return t('finance.preview.ageJustNow', 'Just now');
   if (hours < 24) return t('finance.preview.ageHours', '{{hours}}h ago', { hours });
   if (days < 7) return t('finance.preview.ageDays', '{{days}}d ago', { days });
-  return d.toLocaleDateString();
+  return d.toLocaleDateString('pl-PL');
 }
 
 export function isWorkableStatement(

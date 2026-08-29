@@ -138,7 +138,7 @@ export const ModelVersionHistory: React.FC<Props> = ({ modelId }) => {
                   </span>
                 </td>
                 <td className="px-3 py-2 text-xs text-slate-400">
-                  {new Date(v.createdAt).toLocaleDateString()}
+                  {new Date(v.createdAt).toLocaleDateString('pl-PL')}
                 </td>
                 <td className="px-3 py-2">
                   <input

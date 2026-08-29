@@ -55,7 +55,7 @@ const DEFAULT_ROWS: InitiativeRow[] = [
 
 const fmt = (v: number | null | undefined): string => {
   if (v === null || v === undefined || !Number.isFinite(v)) return '—';
-  return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(v);
+  return new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 0 }).format(v);
 };
 
 const fmtRisk = (v: number | null | undefined): string => {
