@@ -68,7 +68,6 @@ import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { Api } from '@/services/api';
 import { V8MyWorkApi } from '@/services/api/v8/my-work';
-import { type IdempotencyState, resolveIdempotencyKey } from '@/utils/createIdempotencyKey';
 // ETAP 3 standardu n-Type — „Analizuj z AI" (silnik + panel wyników).
 import type { CardAnalysisChange, CardAnalysisField } from '@/services/cardAnalysis';
 import { mergeChangeValue } from '@/services/cardAnalysis';
@@ -78,8 +77,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
 import { buildArtifactCode } from '@/utils/artifactLinks';
-
-import { TASK_GENERATED_SECTION_PERSISTENCE } from './taskGeneratedSectionPersistence';
+import { type IdempotencyState, resolveIdempotencyKey } from '@/utils/createIdempotencyKey';
 
 // ── AI Field Enhancer (shared) ───────────────────────────────────────────────
 import { AIFieldEnhancer } from '../shared/AIFieldEnhancer';
@@ -160,6 +158,9 @@ import { type RelatedItemEntry, RelatedItemsList } from './shared/RelatedItemsLi
 // MIGRACJA (D-8): kompozycja kart Task wyprowadzona z WIĄŻĄCEGO kontraktu karty
 // (cardContract.types.ts) zamiast z luźnego TASK_SPEC — patrz taskCardContract.ts.
 import { TASK_CARD_RENDER_IDS, TASK_CARD_SPEC } from './taskCardContract';
+import { TaskCardV2 } from './TaskCardV2';
+import { isTaskCardV2Enabled } from './taskCardV2Flag';
+import { TASK_GENERATED_SECTION_PERSISTENCE } from './taskGeneratedSectionPersistence';
 
 interface TaskDetailViewProps {
   taskId: string | null;
@@ -5099,6 +5100,28 @@ Return ONLY the final comment text.`;
           </button>
         )}
       </div>
+    );
+  }
+
+  if (presentationMode === 'n' && isTaskCardV2Enabled()) {
+    const owner = users.find((user) => user.id === ownerId);
+    return (
+      <TaskCardV2
+        taskId={taskId}
+        title={title}
+        description={description}
+        status={status}
+        priority={priority}
+        dueDate={dueDate}
+        blockedReason={blockedReason}
+        ownerName={owner ? `${owner.firstName} ${owner.lastName}`.trim() : ''}
+        checklist={checklist}
+        evidenceItems={evidenceItems}
+        dependencies={dependencies}
+        saving={saving}
+        onBack={onClose}
+        onSave={() => void handleSave()}
+      />
     );
   }
 
