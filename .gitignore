@@ -119,6 +119,14 @@ vitest.out
 *_PROGRESS.md
 *_COMPLETE.md
 *_FIX*.md
+
+# ★ WYJATEK: instrukcje i raporty dyzurow NIGDY nie moga byc ignorowane.
+# Wzorce powyzej (*_FIX*, *_SUMMARY*, *_COMPLETE*, PLAN_*, FAZA*) polknely
+# 2026-08-29 instrukcje dyzuru 89 — commit twierdzil, ze ja dodaje, a dodal
+# tylko sasiada; plik istnial wylacznie na dysku, bez kopii zapasowej.
+# Ta sama pulapka wrocila tego samego dnia przy dyzurach 114-116.
+!docs/program/waves/WAVE_03_ACCEPTANCE/codex/*.md
+!docs/program/waves/WAVE_03_ACCEPTANCE/**/MODULE_ACCEPTANCE.md
 PLAN_*.md
 FAZA*.md
 SETUP_*.md
