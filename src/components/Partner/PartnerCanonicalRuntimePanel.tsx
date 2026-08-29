@@ -140,6 +140,7 @@ export const PartnerCanonicalRuntimePanel: React.FC<{
   const lifecycleFallback: Record<string, string> = {
     active: 'Aktywny',
     certified: 'Certyfikowany',
+    earn: 'Rozliczenia',
     onboarding: 'W trakcie uruchamiania',
     pending: 'Oczekuje',
     suspended: 'Wstrzymany',

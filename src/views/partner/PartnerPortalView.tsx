@@ -254,9 +254,21 @@ const DashboardSection: React.FC = () => {
   // FEATURE_NOT_AVAILABLE stub (503), so we don't surface a dead create action.
   // Client management lands in v1.1.
   const quickActions = [
-    { label: 'Start Project', icon: FolderKanban, action: 'start-project' },
-    { label: 'View Resources', icon: BookOpen, action: 'resources' },
-    { label: 'Download Materials', icon: Download, action: 'download' },
+    {
+      label: t('partner.dashboard.startProject', 'Start Project'),
+      icon: FolderKanban,
+      action: 'start-project',
+    },
+    {
+      label: t('partner.dashboard.viewResources', 'View Resources'),
+      icon: BookOpen,
+      action: 'resources',
+    },
+    {
+      label: t('partner.dashboard.downloadMaterials', 'Download Materials'),
+      icon: Download,
+      action: 'download',
+    },
   ];
 
   // Loading skeleton
@@ -318,7 +330,10 @@ const DashboardSection: React.FC = () => {
         },
         {
           label: t('partner.dashboard.certificationLevel', 'Certification Level'),
-          value: s.certificationLevel || 'Registered',
+          value: t(
+            `partner.dashboard.certification.${(s.certificationLevel || 'registered').toLowerCase()}`,
+            s.certificationLevel || 'Registered'
+          ),
           change: canonicalCertification
             ? `${certificationCount} ${t('partner.dashboard.completed', 'completed')}`
             : t('common.loading', 'Loading…'),
@@ -3025,6 +3040,7 @@ const PartnerOrientationPanel: React.FC<{
 };
 
 export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = () => {
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -3093,9 +3109,9 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = () => {
   // Get breadcrumbs based on active section
   const breadcrumbs = useMemo((): Breadcrumb[] => {
     const sectionLabels: Record<PartnerSection, string> = {
-      'partner-home': 'Home',
-      dashboard: 'Dashboard',
-      metrics: 'Metrics',
+      'partner-home': t('partner.sidebar.partnerHome', 'Home'),
+      dashboard: t('partner.sidebar.dashboard', 'Dashboard'),
+      metrics: t('partner.sidebar.metrics', 'Metrics'),
       // Referrals
       'referral-tools': 'My Links & Codes',
       'referral-analytics': 'Click Analytics',
@@ -3162,7 +3178,9 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = () => {
       'public-listing': { label: 'Profile', section: 'company-info' },
     };
 
-    const crumbs: Breadcrumb[] = [{ label: 'Partner', section: 'partner-home' }];
+    const crumbs: Breadcrumb[] = [
+      { label: t('partner.sidebar.title', 'Partner Portal'), section: 'partner-home' },
+    ];
 
     const parent = parentLabels[activeSection];
     if (parent && parent.section !== activeSection) {
@@ -3174,7 +3192,7 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = () => {
     }
 
     return crumbs;
-  }, [activeSection]);
+  }, [activeSection, t]);
 
   // Render content based on active section
   const renderContent = useCallback(() => {

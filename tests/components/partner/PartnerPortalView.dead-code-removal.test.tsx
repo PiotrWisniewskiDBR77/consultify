@@ -73,6 +73,12 @@ describe('PartnerPortalView — dead-code removal (module 19 MVP)', () => {
     expect(SOURCE).not.toContain('<PerformanceSection');
     expect(SOURCE).not.toContain('<BillingSection');
   });
+
+  it('localizes acceptance-visible dashboard values and breadcrumbs', () => {
+    expect(SOURCE).toContain("t('partner.dashboard.startProject', 'Start Project')");
+    expect(SOURCE).toContain("t('partner.sidebar.title', 'Partner Portal')");
+    expect(SOURCE).toContain('partner.dashboard.certification.${');
+  });
 });
 
 describe('MetricsSection — API-wired score breakdown (module 19 MVP)', () => {

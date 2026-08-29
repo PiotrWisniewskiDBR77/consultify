@@ -1204,6 +1204,7 @@
       "title": "Partner Portal",
       "subtitle": "DBR77 Consultify",
       "backToApp": "Back to app",
+      "new": "New",
       "partnerHome": "Home",
       "dashboard": "Dashboard",
       "metrics": "Metrics",
@@ -1270,6 +1271,13 @@
       "userCount": "{{count}} users"
     },
     "dashboard": {
+      "startProject": "Start Project",
+      "viewResources": "View Resources",
+      "downloadMaterials": "Download Materials",
+      "certification": {
+        "registered": "Registered",
+        "certified": "Certified"
+      },
       "welcome": "Welcome back",
       "subtitle": "Here's an overview of your partner activity",
       "activeClients": "Active Clients",
@@ -1588,6 +1596,14 @@
         "degraded": "Limited operation",
         "unavailable": "Unavailable",
         "policyGated": "Subject to programme rules"
+      },
+      "lifecycle": {
+        "active": "Active",
+        "certified": "Certified",
+        "earn": "Earnings",
+        "onboarding": "Onboarding",
+        "pending": "Pending",
+        "suspended": "Suspended"
       }
     },
     "common": {
@@ -16605,6 +16621,11 @@
     },
     "language": "Conversation language",
     "chatMenuTitle": "Menu",
+    "send": "Send",
+    "startDictation": "Dictate (fills input; review and send)",
+    "workPanel": {
+      "open": "Open work panel"
+    },
     "openSidebar": "Open sidebar",
     "newChat": "New conversation",
     "dailyBrief": "Daily brief",
@@ -16709,6 +16730,8 @@
       }
     },
     "homeCards": {
+      "startInChat": "Start in chat",
+      "openCapability": "Open capability",
       "market": {
         "label": "Market analysis",
         "desc": "Market, competitors, positioning",
@@ -16806,6 +16829,7 @@
         "kickoff": "I want to run a financial analysis. What should we analyze (budget, costs, revenue, ROI, CAPEX/OPEX)? Ask me 5 questions, then propose an analysis structure."
       },
       "consulting": {
+        "acceptanceDesc": "Use classic frameworks and tools",
         "label": "Classic consulting",
         "desc": "Frameworks and toolkits",
         "kickoff": "I want to use classic consulting frameworks. What problem are we solving and in what context? Ask me 5 questions, then recommend 2–3 best frameworks (e.g., SWOT, 5 Forces, Ansoff, Value Chain)."
@@ -17191,6 +17215,7 @@
       "actionsPrompt": "Create a task to review our Q1 roadmap progress"
     },
     "onboarding": {
+      "acceptanceHint": "Tip: Try voice mode, attach files, or enable Deep Thinking for multi-step analysis",
       "hint": "Tip: Try voice mode, attach files, or enable Deep Thinking for multi-step analysis"
     },
     "branch": {
@@ -22907,6 +22932,7 @@
     }
   },
   "navigation": {
+    "aiChat": "AI Chat",
     "sidebar": {
       "collapse": "Collapse sidebar",
       "expand": "Expand sidebar",
@@ -26916,6 +26942,7 @@
   },
   "voice": {
     "legend": {
+      "trigger": "Voice modes explained",
       "copy": {
         "failed": "Failed"
       }

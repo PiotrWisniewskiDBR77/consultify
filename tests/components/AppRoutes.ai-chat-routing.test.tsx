@@ -47,6 +47,7 @@ describe('AppRoutes — AI Chat routing', () => {
     // The chat route blocks wrap the panel in MainLayout.
     const chatRouteBlock = appRoutes.slice(appRoutes.indexOf('path={ROUTES.AI_CHAT}'));
     expect(chatRouteBlock).toContain('MainLayout');
+    expect(chatRouteBlock).toContain("t('navigation.aiChat', 'AI Chat')");
   });
 
   it('has fully removed the dead AIChatWelcomeView', () => {

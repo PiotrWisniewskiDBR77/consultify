@@ -1718,7 +1718,7 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.AI_CHAT}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['AI Chat']}>
+            <MainLayout breadcrumbs={breadcrumbs || [t('navigation.aiChat', 'AI Chat')]}>
               <RouteErrorBoundary>
                 <AnimationWrapper variant="fade">
                   <ConversationRouteSync />
@@ -1805,7 +1805,7 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.AI_CHAT_CONVERSATION}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['AI Chat']}>
+            <MainLayout breadcrumbs={breadcrumbs || [t('navigation.aiChat', 'AI Chat')]}>
               <RouteErrorBoundary>
                 <AnimationWrapper variant="fade">
                   <ConversationRouteSync />

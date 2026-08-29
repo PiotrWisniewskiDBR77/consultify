@@ -16861,6 +16861,7 @@
       "title": "Portal Partnerski",
       "subtitle": "DBR77 Consultify",
       "backToApp": "Powrót do aplikacji",
+      "new": "Nowość",
       "partnerHome": "Start",
       "dashboard": "Pulpit",
       "metrics": "Metryki",
@@ -16927,6 +16928,13 @@
       "userCount": "{{count}} użytkowników"
     },
     "dashboard": {
+      "startProject": "Rozpocznij projekt",
+      "viewResources": "Zobacz zasoby",
+      "downloadMaterials": "Pobierz materiały",
+      "certification": {
+        "registered": "Zarejestrowany",
+        "certified": "Certyfikowany"
+      },
       "complete": "Ukończ",
       "completed": "ukończono",
       "certificationsInLearningPath": "Szczegóły certyfikacji znajdziesz w Ścieżce nauki",
@@ -17355,6 +17363,7 @@
       "lifecycle": {
         "active": "Aktywny",
         "certified": "Certyfikowany",
+        "earn": "Rozliczenia",
         "onboarding": "W trakcie uruchamiania",
         "pending": "Oczekuje",
         "suspended": "Wstrzymany"
@@ -17778,6 +17787,11 @@
     },
     "language": "Język rozmowy",
     "chatMenuTitle": "Menu",
+    "send": "Wyślij",
+    "startDictation": "Dyktuj (uzupełnia pole; sprawdź tekst i wyślij)",
+    "workPanel": {
+      "open": "Otwórz panel roboczy"
+    },
     "openSidebar": "Otwórz panel boczny",
     "newChat": "Nowa rozmowa",
     "dailyBrief": "Dzienny brief",
@@ -17882,6 +17896,8 @@
       }
     },
     "homeCards": {
+      "startInChat": "Rozpocznij na czacie",
+      "openCapability": "Otwórz funkcję",
       "market": {
         "label": "Analiza rynku",
         "desc": "Rynek, konkurencja, pozycjonowanie",
@@ -17979,6 +17995,7 @@
         "kickoff": "Chcę zrobić analizę finansową. Jakie dane mamy przeanalizować (budżet, koszty, przychody, ROI, CAPEX/OPEX)? Zadaj mi 5 pytań, a potem zaproponuj strukturę analizy."
       },
       "consulting": {
+        "acceptanceDesc": "Korzystaj z klasycznych ram i narzędzi doradczych",
         "label": "Klasyczny consulting",
         "desc": "Ramy i narzędzia strategiczne",
         "kickoff": "Chcę użyć klasycznych narzędzi consultingowych. Jaki problem rozwiązujemy i w jakim kontekście? Zadaj mi 5 pytań, a potem zaproponuj 2–3 najlepsze ramy (np. SWOT, 5 Forces, Ansoff, Value Chain)."
@@ -18364,6 +18381,7 @@
       "actionsPrompt": "Utwórz zadanie przeglądu postępów roadmapy Q1"
     },
     "onboarding": {
+      "acceptanceHint": "Wskazówka: wypróbuj tryb głosowy, załącz pliki lub włącz pogłębioną analizę wieloetapową",
       "hint": "Tip: Wypróbuj tryb głosowy, załącz pliki lub włącz Deep Thinking dla wieloetapowej analizy"
     },
     "branch": {
@@ -24189,6 +24207,7 @@
     "tools": "Narzędzia"
   },
   "navigation": {
+    "aiChat": "Czat AI",
     "sidebar": {
       "collapse": "Zwiń sidebar",
       "expand": "Rozwiń sidebar",
@@ -29135,6 +29154,7 @@
   },
   "voice": {
     "legend": {
+      "trigger": "Objaśnienie trybów głosowych",
       "copy": {
         "failed": "Błąd"
       }

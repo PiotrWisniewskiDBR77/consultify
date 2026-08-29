@@ -6930,7 +6930,10 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                     id: 'classic-consulting',
                     icon: Wrench,
                     label: t('aiChat.homeCards.consulting.label', 'Klasyczny consulting'),
-                    desc: t('aiChat.homeCards.consulting.desc', 'Use classic frameworks and tools'),
+                    desc: t(
+                      'aiChat.homeCards.consulting.acceptanceDesc',
+                      'Use classic frameworks and tools'
+                    ),
                     prompt: t(
                       'aiChat.homeCards.consulting.kickoff',
                       'Chcę użyć klasycznych narzędzi consultingowych. Jaki problem rozwiązujemy i w jakim kontekście? Zadaj mi 5 pytań, a potem zaproponuj 2–3 najlepsze ramy (np. SWOT, 5 Forces, Ansoff, Value Chain).'
@@ -6998,7 +7001,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               <p className="mt-4 flex items-center justify-center gap-1.5 text-[11px] text-c-text-secondary">
                 <Sparkles size={11} />
                 {t(
-                  'aiChat.onboarding.hint',
+                  'aiChat.onboarding.acceptanceHint',
                   'Tip: Try voice mode, attach files, or enable Deep Thinking for multi-step analysis'
                 )}
               </p>
