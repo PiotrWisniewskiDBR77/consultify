@@ -2,7 +2,7 @@
 
 ID: `MYW`
 Routes: `/my-work`
-Current gate: `IDEAS_AND_NOTEBOOK_VISUAL_REVIEWS_COMPLETE / CORE_DESIGN_TASKS_REQUIRED / BROADER_MYW_OWNER_REVIEW_PENDING`
+Current gate: `DAY100_PARTIAL_OWNER_PACKET / 3_OF_5_SURFACES_HAVE_FULL_STATE / CORE_DESIGN_TASKS_REQUIRED / NOT_ACCEPTED`
 Owner: Piotr Wisniewski
 Integrator: Codex
 Mobile: `DEFERRED_NON_GATING`
@@ -38,6 +38,27 @@ owner/admin action, stale proposal, duplicate prevention and foreign tenant.
 | G18  | Module accepted on exact SHA and checkpointed                  | `NOT_STARTED`                                 | —                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | G19  | Later-change regression obligations resolved                   | `NOT_STARTED`                                 | —                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | G20  | Final 16/16 replay                                             | `NOT_STARTED`                                 | —                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+
+## Day 100 current-state packet — 2026-08-29
+
+Status: `PARTIAL / OWNER_REVIEW_POSSIBLE_FOR_INBOX_TASKS_DECISIONS / NOT_ACCEPTED`.
+
+On exact marker `8c7a853a6cb82c9b498210049c5487ea033caa9b`, an owned local
+PostgreSQL fixture and canonical runtime produced `20 z 20` requested desktop
+screenshots: Ideas, Notebook, Inbox, Tasks and Decisions × light/dark ×
+OWNER/foreign-empty. `16 z 20` are semantically consistent with the named
+state. The four `full` captures for Ideas and Notebook remain empty because the
+fixture readback contains `0` Ideas and `0` Notebook pages; they were not
+relabelled. Inbox (`2`), Tasks (`1` visible OWNER task) and Decisions (`1`) are
+nonempty and counters match visible rows.
+
+Current visible findings: UI is EN, not PL; Tasks/Decisions show right-edge menu
+or cell clipping; the crimson `Model` pill is non-critical decoration; empty
+states are honest but foreign-scope absence is not distinguishable from true
+zero. No raw UUID was visible. DoD §18.1 visual score: `3 z 16`; keyboard,
+tablet, PL and record mutation/cold-reload remain unmeasured. Full evidence,
+per-image observations and SHA-256 values:
+`../../codex/CODEX_DAY100_MOJA_PRACA_OWNER_REPORT.md`.
 
 ## Piotr review card
 
