@@ -13,3 +13,7 @@ Settings `SET-PF-005..007` closed through module-local fixture/presenter work an
 
 A shared fix marks every affected previously accepted module
 `REGRESSION_REQUIRED`. No module inherits another module's retest result.
+
+## XMOD-D113 — zero zamiast stanu wiedzy
+
+Pomiar Day 113 na markerze `ec0a6a4dc6` ustalił `4720` syntaktycznych kandydatów W1 i próbę `40/4720`. W próbie `2/40` odczyty błędne kończą się trwałym stanem pustym; osobny W3 znalazł `47/47` trafień tekstowych `catch => []`, w tym `46/47` wykonawczych. W sześciu znanych przypadkach wynik to: PRAWDA `1/6` (Kanban — wcześniejsza teza obalona przez `13/13` testów), PRZEMILCZENIE `2/6`, POŁKNIĘTY BŁĄD `1/6`, ZŁY KOMUNIKAT `2/6`. Rekomendowany wspólny kontrakt prezentacyjny ma trzy stany: `known`, `partial` z liczbą ukrytych rekordów i przyczyną oraz `unknown` z jawnym błędem; nie zmienia prawdziwych zer. Szczegóły i granice dowodu: `codex/CODEX_DAY113_ZERO_ZAMIAST_PRAWDY_REPORT.md`.
