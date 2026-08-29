@@ -550,6 +550,17 @@ export const MeetingObjectPage: React.FC = () => {
 
   const lifecycle = meeting ? deriveMeetingLifecycle(meeting) : null;
 
+  const approvedNoteDecisions = notes
+    .filter((note) => note.status === 'approved')
+    .flatMap((note) =>
+      note.decisions
+        .map((decision, index) => ({
+          key: `${note.id}-${index}`,
+          label: noteDecisionLabel(decision),
+        }))
+        .filter((decision) => decision.label)
+    );
+
   // The active section is derived straight from the URL, never local state,
   // so it can never drift from what the address bar/back-button say —
   // `/minutes` and `/notes/:noteId` both land on "Protokół", `/decisions` on
@@ -812,8 +823,16 @@ export const MeetingObjectPage: React.FC = () => {
               message={decisionRecordsError}
               retry={() => void loadDecisionRecords(meeting.id)}
             />
-          ) : decisionRecords.length ? (
+          ) : decisionRecords.length || approvedNoteDecisions.length ? (
             <div className="space-y-2">
+              {approvedNoteDecisions.map((decision) => (
+                <div
+                  key={decision.key}
+                  className="rounded-xl border border-c-border-subtle px-3 py-2"
+                >
+                  <div className="text-sm text-c-text-secondary">{decision.label}</div>
+                </div>
+              ))}
               {decisionRecords.map((decision) => {
                 const isEditing = editingDecisionId === decision.id;
                 const busy = decisionActionId === decision.id;
