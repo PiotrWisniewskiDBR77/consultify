@@ -179,3 +179,258 @@ Sprzątanie: `docker rm -fv cx-day131-pg` zwróciło `cx-day131-pg`; ponowny odc
 - Niezweryfikowane: prompt przy fladze OFF jest bajt w bajt identyczny z niezależnie zapisanym baseline sprzed zmiany.
 - Niezweryfikowane: liczba i klasyfikacja nieprzypisanych embeddingów w środowisku docelowym.
 - Niezweryfikowane: pełna ścieżka HTTP przez `ApiGateway → verifyToken → handler → prompt → model`, ponieważ byłaby sprzeczna z Z15 w tym dyżurze.
+
+---
+
+# NAPRAWA PO ODRZUCENIU (fix/day131-granice-20260830)
+
+Gałąź: `fix/day131-granice-20260830`, baza = `7b2e42f7c826da8d9fe6134a7f8474dffd55ba55` (tip odrzuconego dyżuru 131).
+Środowisko pomiaru: kontener `fix131-pg-20260830` (`pgvector/pgvector:pg16`, port 5544, baza `fix131`),
+migracje `NODE_ENV=test tsx server/scripts/migrate.postgres.ts` → `✅ Postgres migrations complete`.
+Wszystkie przebiegi z `--retry=0`, liczby i nazwy przypadków czytane z JSON-a, nie z kodu wyjścia.
+
+## Linia bazowa przed naprawą
+
+Komenda:
+
+```
+RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres NODE_ENV=test ENABLE_V8_GLOBAL=true ENABLE_TEST_AUTH_BYPASS=false \
+DATABASE_URL=postgresql://postgres:cx@127.0.0.1:5544/fix131 JWT_SECRET=fix131secret \
+npx vitest run tests/unit/backend/ai/day131TeresaKnowledgeBoundaries.test.ts \
+  tests/integration/ai/day131-teresa-knowledge-boundaries.realpg.test.ts --retry=0 --reporter=json
+```
+
+Wynik: 7 przypadków, 7 PASS, 0 FAIL. Nazwy: `returns own and explicitly global chunks but not foreign or unowned legacy chunks`,
+`migration exposes the indexed first-class ownership column`, `governance reads knowledge_docs and denies blocked, confidential and unknown documents`,
+`document governance reads the upload table and denies an unknown id`, `document governance denies every requested id when its query fails`,
+`keeps organization retrieval default-off and injects hits or an explicit no-hit result`,
+`uses first-class tenant ownership and only explicit global source types`.
+
+## N1 — test tautologiczny zastąpiony testem behawioralnym
+
+### Co zmieniono
+
+- `tests/unit/backend/ai/day131TeresaKnowledgeBoundaries.test.ts` — plik przepisany. Usunięto `readFileSync` oraz
+  dwa przypadki oparte na `toContain` na tekście źródłowym:
+  `keeps organization retrieval default-off and injects hits or an explicit no-hit result` i
+  `uses first-class tenant ownership and only explicit global source types`. Twierdzenia tego drugiego są
+  pokryte zachowaniem w suicie real-PG (`returns own and explicitly global chunks…`, `migration exposes the indexed first-class ownership column`).
+- `tests/integration/ai/day131-org-knowledge-injection.route.test.ts` — NOWY plik. Uruchamia realny handler
+  `POST /api/ai/chat/stream` (express + supertest), podmienia `AIPipeline` na atrapę zapisującą argument i
+  sprawdza, że blok `## ORGANIZATION KNOWLEDGE` wraz z treścią fragmentu realnie ląduje w
+  `options.systemInstruction` żądania przekazanego do `aiPipeline.process`.
+
+### Dowód mutacyjny — PRZED naprawą (test starej postaci przy odciętym wstrzyknięciu)
+
+Mutacja (dokładnie ta z odbioru): `server/src/routes/ai.routes.ts:4129` i `:4225`
+`pipelineRequest = {` → `const deadOrgInjectionA = {` / `const deadOrgInjectionB = {`.
+
+```
+npx vitest run tests/unit/backend/ai/day131TeresaKnowledgeBoundaries.test.ts --retry=0 --reporter=json
+```
+
+Wynik: **EXIT=0, pass 4, fail 0** — wszystkie cztery przypadki zielone mimo całkowicie odciętego wstrzyknięcia.
+To jest odtworzenie defektu N1.
+
+### Dowód mutacyjny — PO naprawie
+
+Ta sama mutacja (po przenumerowaniu: `ai.routes.ts:4142` i `:4245`) na nowym teście behawioralnym:
+
+```
+npx vitest run tests/integration/ai/day131-org-knowledge-injection.route.test.ts --retry=0 --reporter=json
+```
+
+Wynik: **pass 3, fail 2**
+
+```
+  failed | N1: with the flag on, retrieved organization knowledge reaches options.systemInstruction
+  passed | N1: with the flag off, no organization knowledge block is injected
+  passed | N3: an explicit selected_material_only choice is not widened by the flag (attachment path)
+  failed | N3: with no explicit choice the flag may still supply the broader default (attachment path)
+  passed | N3: an explicit narrowing choice also suppresses the attachment-free org sweep
+```
+
+Kod przywrócony, ten sam pakiet bez mutacji: **pass 5, fail 0**.
+
+## N2 — ścieżka wiedzy organizacji przepuszczona przez strażnika poufności
+
+### Co zmieniono
+
+- `server/src/services/organizationContext/ContextRetrievalService.ts:22` — dodany import
+  `filterDocumentsByVisibility` z `../ai/documentGovernance.js`.
+- `server/src/services/organizationContext/ContextRetrievalService.ts:309-343` — nowa funkcja
+  `keepOnlyGovernanceAllowedDocs()`.
+- `server/src/services/organizationContext/ContextRetrievalService.ts:346-390` — `fetchOrgApprovedContext()`
+  przepuszcza kandydatów przez strażnika przed pobraniem fragmentów, a wynik fragmentów filtruje po
+  dozwolonych `documentId`.
+
+### Uzasadnienie wyboru rozwiązania (JEDNO miejsce prawdy)
+
+Odrzucono wariant „dołóż `AND ai_visibility … AND sensitivity …` do zapytania": polityka poufności to nie tylko
+dwie kolumny — to również nadpisanie per projekt (`projects.governance_settings.ai_documents_disabled`),
+traktowanie `requires_approval` i zachowanie fail-closed przy awarii zapytania. Zduplikowanie tego w SQL dałoby
+drugie miejsce prawdy, które rozjedzie się przy pierwszej zmianie polityki. Wybrano przepuszczenie wyniku przez
+`filterDocumentsByVisibility` — tego samego strażnika, którego woła `server/src/services/aiContextBuilder.ts:973`.
+Dokumenty są grupowane po `project_id`, żeby nadpisanie projektowe działało. Korpus ogólnoorganizacyjny nie ma
+zakresu rozmowy, więc `requires_approval` NIE jest wpuszczany — do kontekstu wchodzi wyłącznie `allowed`.
+
+### Dowód mutacyjny — PRZED (strażnik usunięty)
+
+Mutacja: w `fetchOrgApprovedContext` `const rows = await keepOnlyGovernanceAllowedDocs(candidateRows || [])`
+→ `const rows = candidateRows || []` oraz usunięcie filtra `governedChunks`.
+
+```
+npx vitest run tests/unit/backend/ai/day131TeresaKnowledgeBoundaries.test.ts --retry=0 --reporter=json
+```
+
+Wynik: **pass 2, fail 3**
+
+```
+  passed | document governance reads the upload table and denies an unknown id
+  passed | document governance denies every requested id when its query fails
+  failed | org research retrieval drops blocked and confidential documents and keeps the allowed one
+  failed | approved-org augmentation of the attachment path is governed by the same guard
+  failed | a failing confidentiality guard yields no organization context at all (fail-closed)
+```
+
+Ta sama mutacja na żywej bazie:
+
+```
+npx vitest run tests/integration/ai/day131-teresa-knowledge-boundaries.realpg.test.ts --retry=0 --reporter=json
+```
+
+Wynik: **pass 3, fail 1** — czerwony przypadek
+`org knowledge retrieval on a live database never returns blocked or confidential content`.
+
+### Dowód mutacyjny — PO (strażnik przywrócony)
+
+Ten sam pakiet jednostkowy: **pass 5, fail 0**. Suita real-PG: **pass 4, fail 0**.
+Test na żywej bazie wstawia trzy dokumenty (`allowed` / `ai_visibility='blocked'` / `sensitivity='confidential'`)
+oraz fragment w `knowledge_chunks` dla KAŻDEGO z nich i sprawdza, że w wyniku jest `TRESC-ALLOWED-131`,
+a nie ma `TRESC-BLOCKED-131` ani `TRESC-CONFIDENTIAL-131`.
+
+## N3 — jawny wybór zakresu przez użytkownika jest respektowany
+
+### Co zmieniono
+
+- `server/src/routes/ai.routes.ts:49` — statyczny import `isValidContextWorkflowMode`.
+- `server/src/routes/ai.routes.ts:4082-4088` — `explicitContextWorkflowMode` (jawny, poprawny wybór albo `null`)
+  oraz `userNarrowedContextScope` (`selected_material_only` lub `selected_material_plus_selected_context`).
+- `server/src/routes/ai.routes.ts:4095` — przemiatanie korpusu przy braku załączników jest pomijane, gdy
+  użytkownik jawnie zawęził zakres.
+- `server/src/routes/ai.routes.ts:4195-4204` — `effectiveWorkflowMode`: jawny wybór wygrywa; flaga podaje wyłącznie
+  DOMYŚLNY tryb, gdy użytkownik nic nie wybrał.
+- `server/src/routes/ai.routes.ts:4234` — blok `## ORGANIZATION KNOWLEDGE` nie jest doklejany przy zawężonym
+  zakresie (inaczej użytkownik dostawałby „nie znaleziono wiedzy organizacji" tam, gdzie korpusu w ogóle nie przeszukano).
+
+### Dowód mutacyjny — PRZED (przywrócone nadpisywanie trybu)
+
+Mutacja: `effectiveWorkflowMode` z powrotem na `orgKnowledgeRetrievalEnabled ? 'selected_material_plus_approved_org_context' : requestedWorkflowMode`,
+usunięte `!userNarrowedContextScope` z obu bramek.
+
+```
+npx vitest run tests/integration/ai/day131-org-knowledge-injection.route.test.ts --retry=0 --reporter=json
+```
+
+Wynik: **pass 3, fail 2**
+
+```
+  passed | N1: with the flag on, retrieved organization knowledge reaches options.systemInstruction
+  passed | N1: with the flag off, no organization knowledge block is injected
+  failed | N3: an explicit selected_material_only choice is not widened by the flag (attachment path)
+  passed | N3: with no explicit choice the flag may still supply the broader default (attachment path)
+  failed | N3: an explicit narrowing choice also suppresses the attachment-free org sweep
+```
+
+### Dowód mutacyjny — PO
+
+Ten sam pakiet bez mutacji: **pass 5, fail 0**. Oba kierunki są zmierzone: zawężenie jest respektowane
+(`selected_material_only` przechodzi do `retrieveContext` niezmienione), a rozszerzenie nadal działa, gdy
+użytkownik NIE dokonał wyboru.
+
+## Pomiar końcowy (pakiety i nazwy przypadków)
+
+```
+RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres NODE_ENV=test ENABLE_V8_GLOBAL=true ENABLE_TEST_AUTH_BYPASS=false \
+DATABASE_URL=postgresql://postgres:cx@127.0.0.1:5544/fix131 JWT_SECRET=fix131secret \
+npx vitest run tests/unit/backend/ai/day131TeresaKnowledgeBoundaries.test.ts \
+  tests/integration/ai/day131-org-knowledge-injection.route.test.ts \
+  tests/integration/ai/day131-teresa-knowledge-boundaries.realpg.test.ts \
+  tests/integration/ai/ai-chat-stream-e2e-mode.test.ts \
+  tests/integration/ai/ai-chat.routes.test.ts --retry=0 --reporter=json
+```
+
+Wynik: **18 PASS, 0 FAIL**
+
+```
+tests/integration/ai/ai-chat-stream-e2e-mode.test.ts
+   passed | streams deterministic SSE chunks and terminates with [DONE]
+tests/integration/ai/ai-chat.routes.test.ts
+   passed | POST /api/ai/chat returns orchestrator result shape
+   passed | POST /api/ai/chat validates body
+   passed | POST /api/ai/chat returns 500 when orchestrator throws (H6.4: coded, no err.message leak)
+tests/integration/ai/day131-org-knowledge-injection.route.test.ts
+   passed | N1: with the flag on, retrieved organization knowledge reaches options.systemInstruction
+   passed | N1: with the flag off, no organization knowledge block is injected
+   passed | N3: an explicit selected_material_only choice is not widened by the flag (attachment path)
+   passed | N3: with no explicit choice the flag may still supply the broader default (attachment path)
+   passed | N3: an explicit narrowing choice also suppresses the attachment-free org sweep
+tests/integration/ai/day131-teresa-knowledge-boundaries.realpg.test.ts
+   passed | returns own and explicitly global chunks but not foreign or unowned legacy chunks
+   passed | migration exposes the indexed first-class ownership column
+   passed | governance reads knowledge_docs and denies blocked, confidential and unknown documents
+   passed | org knowledge retrieval on a live database never returns blocked or confidential content
+tests/unit/backend/ai/day131TeresaKnowledgeBoundaries.test.ts
+   passed | document governance reads the upload table and denies an unknown id
+   passed | document governance denies every requested id when its query fails
+   passed | org research retrieval drops blocked and confidential documents and keeps the allowed one
+   passed | approved-org augmentation of the attachment path is governed by the same guard
+   passed | a failing confidentiality guard yields no organization context at all (fail-closed)
+```
+
+Regresja dla drugiego wołacza zmienionego serwisu (konfiguracja serwerowa, uruchamiane z katalogu `server/`):
+
+```
+npx vitest run src/services/v8/__tests__/contextRetrievalServiceAgent.test.ts --config vitest.config.ts --retry=0 --reporter=json
+```
+
+Wynik: **4 PASS, 0 FAIL** (`requires a project for the Agent workflow before querying`,
+`enforces project membership in SQL and preserves hybrid relevance`,
+`uses PostgreSQL-safe timestamp semantics for approved-context lookup`,
+`returns no candidate for an inaccessible project document`).
+
+Lint: `npx eslint server/src/routes/ai.routes.ts` — 30 błędów przed i po zmianie (identyczna liczba;
+wszystkie zastane: `simple-import-sort` i `prettier` w plikach sprzed tego dyżuru).
+`ContextRetrievalService.ts` — 1 błąd `prettier/prettier` w linii 244, obecny również w wersji z HEAD.
+
+## USTALENIA (nie naprawiane w tym zleceniu)
+
+- Potwierdzone pomiarem: ścieżka wiedzy organizacji, którą tu uszczelniono, pobiera treść z
+  `knowledge_chunks` (fallback w `loadFallbackChunks`), a nie z `ai_knowledge_embeddings`. W teście na żywej
+  bazie `ragService.hybridSearch` nie zwrócił nic i zadziałał fallback. Migracji
+  `20261720_day131_teresa_knowledge_boundaries.sql` nie zmieniano, nie cofano i nie rozszerzano.
+- `knowledge_chunks` w zmigrowanej bazie ma kolumny: `id, doc_id, content, chunk_index, embedding, scope,
+  is_active, document_id, section_title, metadata` — **brak `organization_id`**. Izolacja najemcy na tej ścieżce
+  wynika wyłącznie z tego, że lista `doc_id` pochodzi z zapytania ograniczonego `organization_id` do
+  `knowledge_docs`; samo zapytanie o fragmenty w `loadFallbackChunks` nie powtarza warunku organizacji.
+  Uszczelnienie `knowledge_chunks` (backfill) pozostaje osobnym tematem zgodnie ze zleceniem.
+- `tryRagSearch` przypisuje zwrócony fragment do dokumentu przez dopasowanie po nazwie pliku, a przy braku
+  dopasowania — do `readyDocs[0]`. Filtr po `documentId` dodany w tej naprawie nie wykryje treści, którą
+  `ragService` zwróciłby spoza zbioru dozwolonych dokumentów, bo identyfikator jest wtedy nadpisywany.
+
+## TWIERDZENIA NIEZWERYFIKOWANE (naprawa po odrzuceniu)
+
+- Niezweryfikowane: zachowanie na żywej bazie demo/staging. Wszystkie pomiary wykonano na świeżej,
+  lokalnej bazie `fix131` (Z28 — zero połączeń poza `127.0.0.1`).
+- Niezweryfikowane: czy realny model faktycznie użyje i zacytuje wstrzyknięty blok `[K#]`. Zmierzono wyłącznie,
+  że blok trafia do `options.systemInstruction` żądania — `AIPipeline` jest w teście atrapą.
+- Niezweryfikowane: czy `ragService.hybridSearch` na bazie z realnymi embeddingami respektuje przekazane
+  `documentIds`. Na bazie testowej ta gałąź nie zwróciła wyników i zadziałał fallback, więc ścieżka wektorowa
+  strażnika nie została zmierzona na danych.
+- Niezweryfikowane: czy ścieżka załączników rozmowy (`attachmentDocIds` → `fetchAccessibleDocuments`) jest
+  objęta strażnikiem poufności. Naprawa N2 dotyczy wyłącznie korpusu ogólnoorganizacyjnego; dokumenty jawnie
+  wybrane przez użytkownika idą inną gałęzią, której nie zmieniano ani nie mierzono.
+- Niezweryfikowane: zachowanie przy `requires_approval` z zatwierdzeniem w rozmowie na ścieżce
+  ogólnoorganizacyjnej — świadomie NIE wpuszczamy takich dokumentów, ale nie ma na to testu różnicującego.
+- Niezweryfikowane: pełny `tsc` i pełny `vitest` repozytorium (zakaz z higieny wykonania). Sprawdzono składnię
+  zmienionych plików przez `esbuild` i lint zmienionych plików.

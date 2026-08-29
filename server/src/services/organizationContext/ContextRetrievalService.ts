@@ -19,6 +19,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
+import { filterDocumentsByVisibility } from '../ai/documentGovernance.js';
 import { canonicalizeContextDocumentStatus } from './ContextDocumentService.js';
 
 export type ContextWorkflowMode =
@@ -304,6 +305,44 @@ async function loadFallbackChunks(input: {
   return out;
 }
 
+/**
+ * Day 131 fix (N2): the organization-wide corpus must obey the SAME confidentiality
+ * guard as every other AI document path. We reuse documentGovernance
+ * (ai_visibility / sensitivity / per-project ai_documents_disabled override) instead of
+ * duplicating that policy in SQL here, so the policy keeps ONE place of truth and stays
+ * fail-closed: any guard error blocks every candidate document.
+ *
+ * There is no conversation scope for an org-wide sweep, so `requires_approval` documents
+ * are NOT admitted — only explicitly allowed ones are.
+ */
+async function keepOnlyGovernanceAllowedDocs(rows: KnowledgeDocRow[]): Promise<KnowledgeDocRow[]> {
+  if (!rows || rows.length === 0) return [];
+  const byProject = new Map<string, KnowledgeDocRow[]>();
+  for (const row of rows) {
+    const key = row.project_id ? String(row.project_id) : '';
+    const list = byProject.get(key) || [];
+    list.push(row);
+    byProject.set(key, list);
+  }
+
+  const allowedIds = new Set<string>();
+  for (const [projectId, projectRows] of byProject.entries()) {
+    const ids = projectRows.map((row) => String(row.id)).filter(Boolean);
+    if (ids.length === 0) continue;
+    try {
+      const access = await filterDocumentsByVisibility(ids, projectId || undefined);
+      for (const id of access?.allowed || []) allowedIds.add(String(id));
+    } catch (error) {
+      logger.warn(
+        '[ContextRetrievalService] document governance failed for approved org context — dropping this project group',
+        error
+      );
+    }
+  }
+
+  return rows.filter((row) => allowedIds.has(String(row.id)));
+}
+
 async function fetchOrgApprovedContext(input: {
   organizationId: string;
   userId: string;
@@ -314,7 +353,7 @@ async function fetchOrgApprovedContext(input: {
   chunks: ContextRetrievalChunk[];
 }> {
   try {
-    const rows = (await dbAll(
+    const candidateRows = (await dbAll(
       `SELECT id, filename, status, scope, project_id, owner_id, version, created_at
        FROM knowledge_docs
        WHERE organization_id = ?
@@ -326,14 +365,20 @@ async function fetchOrgApprovedContext(input: {
       [input.organizationId],
       { fallback: true } as any
     )) as KnowledgeDocRow[];
+    const rows = await keepOnlyGovernanceAllowedDocs(candidateRows || []);
+    if (rows.length === 0) {
+      return { rows: [], chunks: [] };
+    }
     const chunks = await retrieveChunksWithRagOrFallback({
       query: input.query,
       organizationId: input.organizationId,
-      readyDocs: rows || [],
+      readyDocs: rows,
       perDocumentLimit: 2,
       totalLimit: input.totalLimit,
     });
-    return { rows: rows || [], chunks };
+    const allowedDocIds = new Set(rows.map((row) => String(row.id)));
+    const governedChunks = chunks.filter((chunk) => allowedDocIds.has(String(chunk.documentId)));
+    return { rows, chunks: governedChunks };
   } catch (error) {
     logger.warn('[ContextRetrievalService] approved org context lookup failed', error);
     return { rows: [], chunks: [] };

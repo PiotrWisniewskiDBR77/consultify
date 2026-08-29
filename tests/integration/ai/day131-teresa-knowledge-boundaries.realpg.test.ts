@@ -53,12 +53,25 @@ beforeAll(async () => {
        ($3, 'confidential.txt', 'ready', $4, 'project', 'allowed', 'confidential')`,
     [GOVERNED_DOCS.allowed, GOVERNED_DOCS.blocked, GOVERNED_DOCS.confidential, ORG_A]
   );
+  // Fragmenty istnieją dla KAŻDEGO z trzech dokumentów — jedyne, co ma je rozdzielić,
+  // to strażnik poufności w ścieżce wiedzy organizacji.
+  for (const [kind, docId] of Object.entries(GOVERNED_DOCS)) {
+    if (kind === 'missing') continue;
+    await client.query(
+      `INSERT INTO knowledge_chunks (id, doc_id, document_id, content, chunk_index, metadata)
+       VALUES ($1, $2, $2, $3, 0, '{}')`,
+      [`${docId}_chunk`, docId, `TRESC-${kind.toUpperCase()}-131`]
+    );
+  }
 });
 
 afterAll(async () => {
   if (!client) return;
   await client.query(`DELETE FROM ai_knowledge_embeddings WHERE document_id = ANY($1::text[])`, [
     Object.values(IDS),
+  ]);
+  await client.query(`DELETE FROM knowledge_chunks WHERE doc_id = ANY($1::text[])`, [
+    Object.values(GOVERNED_DOCS),
   ]);
   await client.query(`DELETE FROM knowledge_docs WHERE id = ANY($1::text[])`, [
     Object.values(GOVERNED_DOCS),
@@ -110,5 +123,33 @@ describe('Day 131 real-PG organization embedding boundary', () => {
         GOVERNED_DOCS.missing,
       ])
     );
+  });
+
+  it('org knowledge retrieval on a live database never returns blocked or confidential content', async () => {
+    const { retrieveContext } = await import(
+      '../../../server/src/services/organizationContext/ContextRetrievalService.js'
+    );
+
+    const result = await retrieveContext({
+      organizationId: ORG_A,
+      userId: `${PREFIX}_user`,
+      workflow: 'ai_chat',
+      workflowMode: 'org_context_research_mode',
+      retrievalQuery: 'strategia',
+      retrievalReason: 'ai_chat_organization_knowledge',
+      selectedDocumentIds: [],
+      perDocumentChunkLimit: 5,
+      totalChunkLimit: 12,
+    });
+
+    const documentIds = result.documents.map((doc: any) => String(doc.id));
+    expect(documentIds).toContain(GOVERNED_DOCS.allowed);
+    expect(documentIds).not.toContain(GOVERNED_DOCS.blocked);
+    expect(documentIds).not.toContain(GOVERNED_DOCS.confidential);
+
+    const text = result.chunks.map((chunk: any) => String(chunk.content)).join('\n');
+    expect(text).toContain('TRESC-ALLOWED-131');
+    expect(text).not.toContain('TRESC-BLOCKED-131');
+    expect(text).not.toContain('TRESC-CONFIDENTIAL-131');
   });
 });
