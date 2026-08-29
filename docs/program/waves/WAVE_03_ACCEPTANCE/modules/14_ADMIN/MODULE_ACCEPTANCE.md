@@ -115,6 +115,20 @@ stanów dla wszystkich pięciu powierzchni. Pełna macierz, oględziny każdego
 pliku, hashe, deklaracja bezpieczeństwa poczty i zachowana mapa Admin/SuperAdmin
 AI: `../../codex/CODEX_DAY111_ADMIN_OWNER_REPORT.md`.
 
+## Day 117 — status dostawcy AI (2026-08-29)
+
+`FIXED` wyłącznie dla kontraktu backendowego
+`GET /api/superadmin/system-health`: status i mapa dostawców obejmują OpenRouter
+oraz cztery aliasy Google/Gemini, bez zmiany trybu OpenRouter-only. Dowód
+mutacyjny: stary fragment `3/9 PASS, 6/9 FAIL`; po przywróceniu `9/9 PASS`,
+delta pełnych nazw `tests/unit` `0/17297`. Commity `891ff965e1`, `f0af1495b9`.
+
+Widoczna powierzchnia pozostaje `PARTIAL / NO_CONSUMER`: ekran System Health
+woła `/system-health`, a naprawiona trasa jest pod `/superadmin/system-health`,
+więc `4/4` zrzuty przed/po pokazują ten sam uczciwy stan `endpoint does not
+exist`. G08–G10 i akceptacja modułu nie są podnoszone. Pełny raport:
+`../../codex/CODEX_DAY117_STATUS_AI_REPORT.md`.
+
 ## Owner verdict
 
 Decision: `PENDING`
