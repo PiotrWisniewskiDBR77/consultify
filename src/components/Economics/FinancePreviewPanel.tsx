@@ -1204,7 +1204,7 @@ export function useFinancePreview({
               await loadValuationPreviewResults(row.id);
               toast.success(t('finance.toast.valuationComputed', 'Wycena obliczona'));
             } catch (e: any) {
-              const apiError = e?.response?.data;
+              const apiError = e?.data ?? e?.response?.data;
               toast.error(
                 apiError?.code === 'APPROVED_VERSION_IMMUTABLE'
                   ? t(
