@@ -71,7 +71,16 @@ interface AlertConfig {
 interface HealthData {
   api: { status: string; responseTime: number; version: string; errorRatePercent?: number };
   database: { status: string; responseTime: number; type: string; connections?: number };
-  ai: { status: string; providers: { openai: boolean; anthropic: boolean; groq: boolean } };
+  ai: {
+    status: string;
+    providers: {
+      openrouter: boolean;
+      openai: boolean;
+      anthropic: boolean;
+      groq: boolean;
+      google: boolean;
+    };
+  };
   system: {
     nodeVersion: string;
     environment: string;
@@ -229,7 +238,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
     try {
       setHealthLoadError(null);
       const [data, servicesPayload, metricsPayload] = await Promise.all([
-        Api.get('/system-health/detailed'),
+        Api.get('/superadmin/system-health'),
         Api.get('/system-health/services'),
         Api.get('/system-health/metrics'),
       ]);
@@ -651,9 +660,11 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {[
+                    { name: 'OpenRouter', key: 'openrouter' },
                     { name: 'OpenAI', key: 'openai' },
                     { name: 'Anthropic', key: 'anthropic' },
                     { name: 'Groq', key: 'groq' },
+                    { name: 'Google AI', key: 'google' },
                   ].map(({ name, key }) => {
                     const isActive =
                       health?.ai?.providers?.[key as keyof typeof health.ai.providers];

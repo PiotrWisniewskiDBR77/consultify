@@ -17,7 +17,16 @@ vi.mock('@/services/api', () => ({
 const healthData = {
   api: { status: 'up', responseTime: 25, version: '1.0.0' },
   database: { status: 'up', responseTime: 10, type: 'postgres' },
-  ai: { status: 'up', providers: { openai: true, anthropic: false, groq: false } },
+  ai: {
+    status: 'up',
+    providers: {
+      openrouter: true,
+      openai: true,
+      anthropic: false,
+      groq: false,
+      google: true,
+    },
+  },
   system: {
     nodeVersion: 'v20',
     environment: 'test',
@@ -41,7 +50,7 @@ const alert = {
 
 const mockHealthyPayloads = (alertsPayload: unknown) => {
   vi.mocked(Api.get).mockImplementation(async (url: string) => {
-    if (url === '/system-health/detailed') {
+    if (url === '/superadmin/system-health') {
       return healthData;
     }
     if (url === '/system-health/services') {
@@ -124,10 +133,12 @@ describe('EnterpriseHealthMonitor honest UI', () => {
     render(<EnterpriseHealthMonitor />);
 
     await screen.findByText('All systems operational');
-    expect(Api.get).toHaveBeenCalledWith('/system-health/detailed');
+    expect(Api.get).toHaveBeenCalledWith('/superadmin/system-health');
     expect(Api.get).toHaveBeenCalledWith('/system-health/services');
     expect(Api.get).toHaveBeenCalledWith('/system-health/metrics');
     expect(Api.get).toHaveBeenCalledWith('/system-health/alerts');
+    expect(screen.getByText('OpenRouter')).toBeInTheDocument();
+    expect(screen.getByText('Google AI')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /Alerts/i }));
     fireEvent.click(screen.getByRole('button', { name: /Add Alert/i }));
     fireEvent.change(screen.getByPlaceholderText('Alert name'), {
