@@ -130,3 +130,6 @@ Nie nazywam pakietu zielonym.
 
 Do pierwszego commita: wyłącznie ten raport i `modules/16_PARTNER/MODULE_ACCEPTANCE.md`. Zero zmian produktu, testów i kart N.
 
+## Sprzątanie
+
+Kanoniczny `start-wave3-owner-runtime.mjs stop` po commicie raportowym odmówił z `state candidate identity differs`: stan runtime był prawidłowo związany z markerem, a HEAD wskazywał już commit dokumentacyjny. Nie zmieniano historii. Tożsamości PID/PGID odczytano z należącego do dyżuru `state.json`, porównano dosłownie z `ps`, po czym zakończono wyłącznie grupy `24557` (serwer) i `24577` (klient). Porty `4918/4919` potwierdzono jako wolne. Kontener `cx-day126-pg` usunięto przez `docker rm -fv`; port `6009` został zwolniony.
