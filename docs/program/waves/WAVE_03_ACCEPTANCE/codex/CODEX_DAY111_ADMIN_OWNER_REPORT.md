@@ -233,3 +233,14 @@ docs/program/waves/WAVE_03_ACCEPTANCE/modules/14_ADMIN/MODULE_ACCEPTANCE.md
 Nie zmieniono `src/**`, `server/src/**`, seedera, migracji, lokalizacji ani
 infrastruktury testowej. Żadnego defektu nie naprawiono.
 
+## Sprzątanie zasobów
+
+Własny kontener i jego wolumen usunięto komendą `docker rm -fv cx-day111-pg`.
+Kontrola końcowa:
+
+```text
+PORT 5992 WOLNY
+PORT 4884 WOLNY
+PORT 4885 WOLNY
+KONTENER USUNIETY
+```
