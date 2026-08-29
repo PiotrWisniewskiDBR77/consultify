@@ -8,6 +8,24 @@ last_reviewed: 2026-07-30
 
 # Meeting — aktualny kontrakt funkcjonalny
 
+> ### ★ GRAMATYKA ADRESÓW PO DECYZJI WŁAŚCICIELA (2026-08-29)
+>
+> Warstwa źródłowa tego modułu (`00_META.md`, `03_BEHAVIOR.md`, `04_UI_UX.md`,
+> `CODEMAP.md` — wszystkie z 2026-05) opisuje `/meeting` jako trasę zwracającą
+> **ekran „wkrótce"** i „odbiera" moduł jako uczciwą zaślepkę. To jest nieaktualne
+> w dwóch krokach.
+>
+> **Obowiązuje `DEC-2026-08-24-07`** (rejestr decyzji właściciela): gramatyka to
+> **`/meetings`** (lista) i **`/meetings/:meetingId`** (karta), plus `/minutes`,
+> `/decisions`, `/notes/:noteId`. Stare `/meeting` i `/meeting?meetingId=` są
+> **trwałymi przekierowaniami**. Karta spotkania budowana wg standardu artefaktów
+> (SPEC-A), nie jako kolejny ekran listowy.
+>
+> **Status w menu jest niespójny z runtime i wymaga odbioru produktowego** — pozycja
+> nosi etykietę „wkrótce", a kod montuje realny hub i backend. To jest jedna z decyzji
+> otwartych tego modułu, nie stan docelowy.
+
+
 ## Cel i stan
 
 Meeting jest docelowo wieloosobowym środowiskiem pracy, w którym Teresa działa

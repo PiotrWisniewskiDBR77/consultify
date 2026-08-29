@@ -8,6 +8,22 @@ last_reviewed: 2026-07-30
 
 # My Work — aktualny kontrakt funkcjonalny
 
+> ### ★ DWA SPISY FUNKCJI TEGO SAMEGO MODUŁU — stan do uzgodnienia (2026-08-29)
+>
+> Ten kontrakt wylicza **9** pozycji `MW-F-001…MW-F-009` (w tym Client Vault i Run
+> Agent). `00_META.md` wylicza **12** pozycji `MW_*` i **nie zawiera ani Client Vault,
+> ani Run Agent**. `STATUS.md` orzeka „pokrycie kompletne `12/12`", podczas gdy katalog
+> `functions/` zawiera **14** plików, a `function-cards/` — **11**.
+>
+> **Nie ma przelicznika `MW-F-*` ↔ `MW_*` i nikt go dotąd nie zrobił.** Do czasu jego
+> powstania **żadna liczba funkcji tego modułu nie jest wiążąca** — ani 9, ani 12,
+> ani 14. Wykonawca, który potrzebuje listy, bierze ją z katalogu `functions/`
+> i wpisuje do raportu własny pomiar (`Z24`).
+>
+> Zakres zagnieżdżony potwierdzony w [`../../FUNCTIONAL_DOCUMENTATION.md`](../../FUNCTIONAL_DOCUMENTATION.md):
+> **Client Vault i Run Agent nie są osobnymi pozycjami menu** — należą do My Work.
+
+
 Szczegółowa kolejność i granice osobnych pakietów produktowych znajdują się w
 [`MY_WORK_DOCUMENTATION_MAP.md`](../../program/WEEKEND_COMPLETION_2026-08-01/AGREEMENTS/MY_WORK_DOCUMENTATION_MAP.md).
 Niniejszy dokument pozostaje kontraktem nadrzędnym wspólnego modułu.

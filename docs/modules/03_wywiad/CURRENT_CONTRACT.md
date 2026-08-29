@@ -8,6 +8,23 @@ last_reviewed: 2026-07-30
 
 # Interview — aktualny kontrakt funkcjonalny
 
+> ### ★ KTÓRA TRASA JEST KANONICZNA — rozstrzygnięcie (2026-08-29)
+>
+> W jednym module żyją cztery różne ujęcia: `00_META.md` §Identity podaje `/discovery`,
+> `00_META.md` §Canonical Routes wymienia `/interview` jako pierwszą, ten kontrakt mówi
+> „`/interview` i **zgodnościowe** `/discovery`", a macierz akceptacji opisuje wejście
+> z paska bocznego na `/discovery` jako stan poprawny.
+>
+> **Rozstrzyga ten kontrakt: kanoniczna jest `/interview`, `/discovery` jest aliasem
+> zgodnościowym.** Aneks dowodowy tego modułu stawia to zresztą wprost jako regułę:
+> *„aliasy tras nie mogą tworzyć wielu prawd Interview"*. Alias zostaje do czasu
+> jawnej decyzji o wycofaniu — ale **nie jest drugą nazwą produktu**.
+>
+> Liczba funkcji: `00_META.md` mówi 6, `README.md` i katalogi `functions/`
+> oraz `function-cards/` mówią 7 (dochodzi `WY_INITIATIVES`, mająca własną sekcję
+> zachowania i własny aneks odbioru). **Wiążące jest 7.**
+
+
 ## Cel i granica
 
 Interview prowadzi kontrolowane zbieranie wiedzy od respondentów: od

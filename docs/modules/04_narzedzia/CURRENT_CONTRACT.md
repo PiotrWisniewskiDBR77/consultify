@@ -6,7 +6,26 @@ owner: product
 last_reviewed: 2026-07-30
 ---
 
-# Tools — aktualny kontrakt funkcjonalny
+# Tools
+
+> ### ★ ROZSTRZYGNIĘCIE — ASSESSMENT NIE JEST CZĘŚCIĄ TOOLS (2026-08-29)
+>
+> W tym samym katalogu żyły dwie sprzeczne prawdy. Ten kontrakt mówi: *„Assessment
+> jest osobną pozycją menu i nie może być opisywany jako podzakładka Tools tylko
+> dlatego, że historycznie dzielił routing lub komponenty"*. Jednocześnie
+> `00_META.md`, `02_SCOPE.md`, `07_ACCEPTANCE_AND_TESTS.md` i `functions/NZ_ASSESSMENT_HUB.md`
+> traktują `NZ_ASSESSMENT_HUB` oraz trasy `/assessment/*` jako **kanoniczne funkcje Tools**.
+>
+> **Rozstrzyga ten kontrakt oraz [`../../FUNCTIONAL_DOCUMENTATION.md`](../../FUNCTIONAL_DOCUMENTATION.md)**,
+> który przypisuje Assessment **osobną pozycję menu nr 5** z własnym punktem wejścia
+> `docs/functional/05_assessment/README.md`. Wpisy `NZ_ASSESSMENT_HUB` w warstwie
+> `00_META`/`02_SCOPE`/`07_ACCEPTANCE` są **historyczne w zakresie własności modułu**
+> — opisują stan routingu z maja 2026, nie granicę produktu.
+>
+> **Skutek operacyjny:** praca nad Assessment idzie do modułu 5, nie do Tools.
+> Wspólny routing i wspólne komponenty pozostają długiem migracyjnym, nie argumentem
+> za wspólną własnością.
+ — aktualny kontrakt funkcjonalny
 
 ## Cel i granica
 
