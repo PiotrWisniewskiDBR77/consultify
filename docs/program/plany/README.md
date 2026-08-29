@@ -1,45 +1,51 @@
-# Plany domknięcia Consultify — stan 2026-08-29
+# Plany domknięcia Consultify — stan 2026-08-29 (noc)
 
-Dwa plany, rozdzielone wg tego, KTO wykonuje.
+Dwa plany, rozdzielone wg tego, KTO wykonuje. **Obowiązują wersje drugie.**
 
-## PLAN A — dyżury Codexa
-`PLAN_A_DYZURY_CODEX.html`
+## OBOWIĄZUJĄCE
 
-Sześć faz + pięć kamieni milowych łańcucha dostarczenia. Wykonawca: Codex,
-duże klocki wydawane instrukcją z generatora. Nadzorca pisze, odbiera
-adwersaryjnie, scala. To jest kontynuacja dotychczasowego trybu pracy.
+### Plan funkcji — `PLAN_FUNKCJE.html`
+Siedem faz, tabela wszystkich szesnastu modułów (stan docelowy wg kontraktu ·
+stan odbioru), trzy pytania do właściciela. Wykonawca: Codex, duże klocki
+wydawane instrukcją z generatora; nadzorca pisze, odbiera adwersaryjnie, scala.
 
-Wydane i biegnące w chwili zapisu: dyżur 130 (utrata danych, 35 miejsc),
-dyżur 131 (Teresa i wiedza organizacji + dwie granice bezpieczeństwa).
-W kolejce: odblokowanie bramek kart, silnik agenta, odetkanie treści dokumentów.
+Definicja „stu procent" pochodzi z **kontraktów modułów** wskazanych w
+`docs/SOURCE_OF_TRUTH.md`, nie z propozycji autora.
 
-## PLAN B — pełne uruchomienie UI/UX
-`PLAN_B_UIUX.html`
+### Plan grafiki — `PLAN_GRAFIKA.html`
+Cztery fale. Definicja „stu procent" wzięta ze **standardów UI**: 43 punkty
+listy czekowania dla ekranu listowego, 18 pozycji definicji ukończenia dla
+artefaktu, 6+1 bloków dla podglądu, rubryka trzech osi dla pliku wychodzącego
+do klienta. Wykonawca: **nadzorca sam** — grafika nie idzie do Codexa.
 
-Cztery fale + sześć decyzji właściciela + przypisanie powierzchni do kamieni.
-Wykonawca: nadzorca sam (grafika nie idzie do Codexa).
+## ZASTĄPIONE — zachowane, nie kasujemy przegranego źródła
+
+- `PLAN_A_DYZURY_CODEX.html` → zastąpiony przez `PLAN_FUNKCJE.html`
+- `PLAN_B_UIUX.html` → zastąpiony przez `PLAN_GRAFIKA.html`
+
+**Powód zastąpienia:** panel trzech sceptyków i audyt liczb wykazały, że **żadna
+liczba nagłówkowa pierwszych wersji nie wytrzymała pomiaru**. Najgroźniejsze:
+faza pierwsza celowała w kod, którego nikt nie renderuje; przyczyna pustych
+dokumentów była przypisana fladze, która jest włączona; miara wypełniaczy
+pochodziła z nieaktualnego pliku. Wersje pierwsze zostają jako zapis tego, co
+sądziliśmy — i jako przypomnienie, dlaczego liczba bez odtwarzalnej komendy nie
+wchodzi do dokumentu.
 
 ## Wzorce wizualne — zaakceptowany język
-- `WZORZEC_KSZTALTY_KART.html` — 104 karty w 7 artefaktach sprowadzone do 5 kształtów
-- `WZORZEC_PRAWA_LICZBY.html` — reguły dla ekranów KPI, ROI i wyceny
-- `WZORZEC_EKRAN_INICJATYWA.html` — ekran zbudowany w języku wzoru właściciela
+- `WZORZEC_KSZTALTY_KART.html` · `WZORZEC_PRAWA_LICZBY.html` · `WZORZEC_EKRAN_INICJATYWA.html`
 
-## ★ CO MUSI ZROBIĆ NASTĘPCA, ZANIM ZACZNIE BUDOWAĆ
+> Uwaga do liczby „104 karty" w `WZORZEC_KSZTALTY_KART.html`: narzędzie, które ją
+> policzyło, ma zaszytą ścieżkę do **innego drzewa** niż to repozytorium, a jego
+> wynik nie jest śledzony w gicie. Liczba wymaga przeliczenia przed użyciem.
 
-1. **Panel trzech niezależnych sceptyków** z różnych dyscyplin nad oboma planami.
-   Zlecone przez właściciela 2026-08-29, NIEWYKONANE — zabrakło okna kontekstu.
-   Dopiero po ich werdykcie i zatwierdzeniu finalnej wersji zaczyna się budowa.
-2. **Sześć decyzji właściciela** z Planu B. Bez nich projektujemy rzeczy,
-   które być może wyrzucimy.
-3. **Dwa zapytania do żywej bazy demo** (baza demo=staging, wymienna):
-   ile inicjatyw leży w magazynie kanonicznym `ie_aggregate_state`;
-   ile fragmentów wiedzy nie ma znacznika organizacji.
-   Rozstrzygają, czy część faz to naprawa czy budowa od zera.
-4. **Stan flagi `ENABLE_DELIVERABLES_PREMIUM` na demo** — dwa dokumenty w repo
-   twierdzą co innego. Od tego zależy, czy dokumenty są puste z powodu flagi.
-
-## Zasada bezpieczeństwa dla grafiki (wprost od właściciela)
-Nie kasujemy niczego, co może mieć wartość. ~473 martwe powierzchnie to nie
-jest lista do usunięcia w ciemno — to lista do PRZEJRZENIA. Część z nich
-(np. jedyne w produkcie narzędzie przedziałowe dla NPV) niesie funkcję,
-która ma wrócić.
+## Naprawa dokumentacji wykonana przy tej okazji (2026-08-29)
+- `SOURCE_OF_TRUTH.md` — deliverable jako osobny rodzaj prawdy (rubryka odbioru
+  pliku, kanon eksportu, standard wniosków); rejestr decyzji właściciela jako
+  źródło rozstrzygające; reguła odczytu martwych prefiksów `DRD/`
+- `FUNCTIONAL_DOCUMENTATION.md` — aktualne statusy (Finanse w pełnym zakresie,
+  Organizacja i Ustawienia domknięte) + ostrzeżenie o wzorcu „domknięte za flagą"
+- Inicjatywy i Realizacja — **rozstrzygnięty spór o kanon** (dwa dokumenty
+  `canonical` opisywały różne Menu 2, bez `superseded_by` w żadną stronę)
+- Ocena — **napisany stan docelowy**, którego moduł jako jedyny nie miał
+- Wszystkie siedem dokumentów planów — deklaracja kodowania (polskie znaki się
+  sypały przy otwarciu z dysku) i naprawa układu wypunktowań
