@@ -229,7 +229,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
     try {
       setHealthLoadError(null);
       const [data, servicesPayload, metricsPayload] = await Promise.all([
-        Api.getSystemHealth(),
+        Api.get('/system-health/detailed'),
         Api.get('/system-health/services'),
         Api.get('/system-health/metrics'),
       ]);
@@ -338,7 +338,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
   const fetchAlerts = useCallback(async () => {
     try {
       setAlertsLoadError(null);
-      const resp = await Api.get('/superadmin/system-health/alerts');
+      const resp = await Api.get('/system-health/alerts');
       const normalized = normalizeAlerts(resp);
       setAlerts(normalized);
       return normalized;
@@ -358,7 +358,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
     try {
       setActionError(null);
       const expected = { ...newAlert };
-      const result = await Api.post('/superadmin/system-health/alerts', expected);
+      const result = await Api.post('/system-health/alerts', expected);
       const createdId = getCreatedAlertId(result);
       if (!createdId) {
         throw new Error('Alert creation response was incomplete');
@@ -381,7 +381,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
     try {
       setActionError(null);
       const expectedEnabled = !alert.enabled;
-      await Api.put(`/superadmin/system-health/alerts/${alert.id}/toggle`, {});
+      await Api.put(`/system-health/alerts/${alert.id}/toggle`, {});
       const refreshed = await fetchAlerts();
       if (!refreshed?.some((item) => item.id === alert.id && item.enabled === expectedEnabled)) {
         throw new Error('Alert toggle was not confirmed by the server');
@@ -397,7 +397,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
     if (!confirm('Delete this alert?')) return;
     try {
       setActionError(null);
-      await Api.delete(`/superadmin/system-health/alerts/${id}`);
+      await Api.delete(`/system-health/alerts/${id}`);
       const refreshed = await fetchAlerts();
       if (!refreshed || refreshed.some((alert) => alert.id === id)) {
         throw new Error('Alert deletion was not confirmed by the server');
