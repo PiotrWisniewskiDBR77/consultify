@@ -1474,6 +1474,28 @@ export const DeckBuilder: React.FC = () => {
           onBack={handleBackToPresentations}
           moduleLabel={t('presentations.builder.moduleLabel', 'Prezentacje')}
           backLabel={t('presentations.builder.back', 'Back to presentations')}
+          topBarLabels={{
+            internal: t('presentations.builder.topBar.internal', 'Internal'),
+            internalLabels: {
+              public: t('presentations.builder.confidentiality.public', 'Public'),
+              internal: t('presentations.builder.confidentiality.internal', 'Internal'),
+              confidential: t('presentations.builder.confidentiality.confidential', 'Confidential'),
+            },
+            theme: t('presentations.builder.topBar.theme', 'Theme'),
+            history: t('presentations.builder.topBar.history', 'History'),
+            qa: t('presentations.builder.topBar.quality', 'Quality'),
+            governance: t('presentations.builder.topBar.governance', 'Governance'),
+            analytics: t('presentations.builder.topBar.analytics', 'Analytics'),
+            audit: t('presentations.builder.topBar.auditLog', 'Audit'),
+            comments: t('presentations.builder.topBar.comments', 'Comments'),
+            share: t('presentations.builder.topBar.share', 'Share'),
+            agent: t('presentations.builder.topBar.teresa', 'Teresa'),
+            run: t('presentations.builder.topBar.present', 'Present'),
+            runOptions: t('presentations.builder.present.options', 'Presentation options'),
+            runFromCurrent: t('presentations.builder.present.fromCurrent', 'From current slide'),
+            runFromStart: t('presentations.builder.present.fromBeginning', 'Present from beginning'),
+            presenter: t('presentations.builder.present.presenterView', 'Presenter view'),
+          }}
           topBarHandlers={{
             onTheme: () => setThemeSwitcherOpen(true),
             onHistory: () => setVersionHistoryOpen((v) => !v),
@@ -1561,6 +1583,14 @@ export const DeckBuilder: React.FC = () => {
                 : null,
             openCommentCount,
           }}
+          rightRailLabels={{
+            blocks: t('presentations.builder.rightRail.blocks', 'Blocks'),
+            media: t('presentations.builder.rightRail.media', 'Media'),
+            comments: t('presentations.builder.topBar.comments', 'Comments'),
+            activity: t('presentations.builder.rightRail.activity', 'Activity'),
+            relations: t('presentations.builder.rightRail.relations', 'Relations'),
+            evidence: t('presentations.builder.rightRail.evidence', 'Sources & assumptions'),
+          }}
           rightRailPanels={{
             blocks: (
               <BlockToolbar
@@ -1612,7 +1642,7 @@ export const DeckBuilder: React.FC = () => {
                 />
               ) : undefined,
           }}
-          leftRailTitle={t('presentations.builder.slides', 'Slides')}
+          leftRailTitle={t('presentations.builder.structure', 'Structure')}
           menu3Slot={
             <ArtifactMenu3
               registry={presentationArtifactCommands}

@@ -153,7 +153,7 @@ const PresentMenu: React.FC<{
         ref={optionsButtonRef}
         type="button"
         disabled={!enabled}
-        aria-label="Presentation options"
+        aria-label={labels?.runOptions ?? 'Presentation options'}
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
@@ -164,7 +164,7 @@ const PresentMenu: React.FC<{
       {open ? (
         <div
           role="menu"
-          aria-label="Presentation options"
+          aria-label={labels?.runOptions ?? 'Presentation options'}
           className="absolute right-0 top-[calc(100%+6px)] z-dropdown min-w-56 rounded-lg border border-c-border bg-c-surface p-1.5 shadow-xl"
         >
           <button
@@ -173,7 +173,7 @@ const PresentMenu: React.FC<{
             onClick={() => run(onCurrent)}
             className="w-full rounded-md px-3 py-2 text-left text-sm text-c-text hover:bg-c-surface-raised"
           >
-            From current slide
+            {labels?.runFromCurrent ?? 'From current slide'}
           </button>
           <button
             type="button"

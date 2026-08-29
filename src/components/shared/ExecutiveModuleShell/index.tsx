@@ -700,7 +700,7 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
           <aside
             className="hidden sm:flex flex-shrink-0 border-l border-c-border-subtle bg-c-surface"
             data-testid="mels-ai-entry"
-            aria-label="Discuss with Teresa"
+            aria-label={t('mels.discussWithTeresa', 'Discuss with Teresa')}
           >
             {aiEntrySlot}
           </aside>
