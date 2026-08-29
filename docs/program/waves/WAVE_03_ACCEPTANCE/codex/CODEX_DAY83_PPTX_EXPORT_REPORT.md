@@ -139,6 +139,8 @@ exit 0
 
 ## Lista plików względem markera
 
+Pierwszy commit i obowiązkowy push po nim: `df3756b087` (`github-backup/codex/day83-pptx-export-20260829`).
+
 ```text
 server/src/routes/presentations.routes.ts
 server/src/routes/__tests__/presentations.templatePptx.day83.pg.test.ts
