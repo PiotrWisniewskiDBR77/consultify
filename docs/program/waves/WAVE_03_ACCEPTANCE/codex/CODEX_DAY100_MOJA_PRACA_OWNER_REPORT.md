@@ -214,7 +214,15 @@ Repo ma dokładnie dwa zmienione pliki dokumentacyjne: ten raport oraz
 `modules/07_MY_WORK_AGENT/MODULE_ACCEPTANCE.md`. Zero zmian w `src/**`,
 `server/src/**`, seederach, migracjach, testach i rejestrze właściciela.
 
+Cleanup: pierwsza próba kanonicznego `stop` odmówiła, ponieważ po commicie HEAD
+nie był już kwalifikowanym SHA markera; kontener został już usunięty, więc
+adopted bind nie mógł zostać powtórzony. `state.json` wskazywał dokładnie dwie
+własne grupy: server PID/PGID `13237` i client PID/PGID `13267`, z komendami w
+tym worktree. Po ponownym porównaniu PID, PGID, czasu startu i command line
+wysłano `SIGTERM` wyłącznie do tych dwóch grup. Wynik: `0 z 2` grup żywych,
+`0 z 3` listenerów na `4862/4863/5983`, kontener `cx-day100-pg` usunięty z
+wolumenem. Żadnego cudzego procesu ani kontenera nie sygnalizowano.
+
 Wynik: właściciel może ocenić Inbox, Tasks i Decisions w light/dark oraz uczciwe
 empty states. Nie ma podstaw do zdjęcia pełnego starego werdyktu: fixture nie
 daje pełnych Ideas/Notebook, występują ucięcia i crimson, a DoD wynosi `3 z 16`.
-
