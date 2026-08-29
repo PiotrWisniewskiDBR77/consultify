@@ -168,28 +168,17 @@ export class EmbeddingService {
     const { content, chunkIndex, documentId, organizationId, metadata, sourceType } = chunk;
     const vectorLiteral = `[${embedding.join(',')}]`;
     const db = getDatabase();
-    // AGT-008-bis / VLT-003 — `ai_knowledge_embeddings` has NO `organization_id`
-    // column on Postgres (confirmed live on demo: `information_schema.columns`
-    // lists id/document_id/chunk_index/chunk_text/embedding/metadata/source_type/
-    // created_at only). Every caller of `storeChunk` (KnowledgeService.
-    // processDocument, ingestionPipeline.ingestFile/ingestText) that passes
-    // `organizationId` had it silently dropped here, so `searchPg` below could
-    // not isolate tenants at all — any org's `search_knowledge_base` call could
-    // retrieve any other org's chunks (confirmed live for interview_answer /
-    // interview_evidence rows written by IngestionPipeline.ingestText via
-    // InterviewController). Fix without a schema migration: persist
-    // `organizationId` inside the existing `metadata` JSONB column and filter
-    // on it in `searchPg`. `organization_id: null` is intentionally preserved
-    // as "global/shared" (mirrors the existing DRD/methodology tool-pack
-    // convention in ragService.appendKnowledgeDocAccessFilter, where
-    // `organization_id IS NULL` stays retrievable by any caller).
+    // Keep the JSON marker for backwards compatibility, but persist tenant
+    // ownership as a first-class column. A NULL owner is never itself a signal
+    // that a chunk is global; global material is identified by source_type.
     const metadataWithOrg = { ...(metadata || {}), organization_id: organizationId ?? null };
     const result = await db.query<{ id: string }>(
       `INSERT INTO ai_knowledge_embeddings
-             (document_id, chunk_index, chunk_text, embedding, metadata, source_type)
-             VALUES ($1, $2, $3, $4::vector, $5, $6)
+             (organization_id, document_id, chunk_index, chunk_text, embedding, metadata, source_type)
+             VALUES ($1, $2, $3, $4, $5::vector, $6, $7)
              RETURNING id`,
       [
+        organizationId ?? null,
         documentId,
         chunkIndex ?? 0,
         content,
@@ -270,6 +259,7 @@ export class EmbeddingService {
     let sql = `
             SELECT
                 id,
+                organization_id,
                 document_id,
                 chunk_text as content,
                 metadata,
@@ -287,13 +277,10 @@ export class EmbeddingService {
       paramIndex++;
     }
 
-    // AGT-008-bis / VLT-003 — tenant isolation, see storeChunkPg comment. When
-    // the caller supplies an organizationId, only that org's chunks (or legacy/
-    // global chunks with no org tag) are eligible. Fail-open on missing org tag
-    // is intentional (matches the DRD tool-pack convention), NOT fail-open on a
-    // mismatched org — this is the fix for the confirmed cross-tenant leak.
+    // Tenant-owned chunks must match the caller. Only explicitly classified
+    // internal knowledge sources are global; missing ownership is fail-closed.
     if (organizationId) {
-      sql += ` AND (metadata->>'organization_id' = $${paramIndex} OR metadata->>'organization_id' IS NULL)`;
+      sql += ` AND (organization_id = $${paramIndex} OR (organization_id IS NULL AND source_type IN ('tool_pack', 'methodology', 'product_pill')))`;
       params.push(organizationId);
       paramIndex++;
     }
