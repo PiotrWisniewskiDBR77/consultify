@@ -36,6 +36,15 @@ export function SingleInsightChart(
   const sourceH = props.source ? 0.22 : 0;
   const chartH = p.h - sourceH;
   const elements: RenderedElement[] = [];
+  const seriesPalette = [
+    tokens.colors.primary,
+    tokens.colors.accent,
+    tokens.colors.secondary,
+    tokens.colors.info,
+    tokens.colors.warning,
+    tokens.colors.danger,
+    tokens.colors.success,
+  ];
 
   // Chart element (enlarged to fill the region height)
   elements.push({
@@ -55,7 +64,9 @@ export function SingleInsightChart(
         h: chartH,
         showLegend: props.chartData.series.length > 1,
         legendPos: 'b',
-        chartColors: props.chartData.series.map((s) => s.color ?? tokens.colors.primary),
+        chartColors: props.chartData.series.map(
+          (s, index) => s.color ?? seriesPalette[index % seriesPalette.length]
+        ),
         showValue: true,
         valueFontSize: 9,
       });
