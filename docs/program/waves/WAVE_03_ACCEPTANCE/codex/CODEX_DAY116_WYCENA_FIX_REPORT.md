@@ -177,4 +177,4 @@ server/src/routes/v8/finance-v2/valuation.routes.ts
 server/src/routes/v8/finance-v2/__tests__/day116-approved-valuation-wacc-conflict.realpg.test.ts
 ```
 
-Dokumentacja: ten raport oraz jeden wpis FIN-PF-015. Runtime zatrzymany; własne grupy procesów zweryfikowane jako zakończone; porty `4896/4897` wolne. Kontener i baza pozostają do momentu końcowego commita dokumentacji, po czym zostaną usunięte przez `docker rm -fv cx-day116-pg`.
+Dokumentacja: ten raport oraz jeden wpis FIN-PF-015. Runtime zatrzymany; własne grupy procesów zweryfikowane jako zakończone. `docker rm -fv cx-day116-pg` zwróciło `cx-day116-pg`; lista kontenerów po usunięciu była pusta. Porty `5998`, `4896` i `4897` są wolne (`lsof` RC `1`). Baza i wolumen dyżuru zostały usunięte.
