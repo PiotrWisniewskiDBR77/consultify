@@ -17,7 +17,29 @@ Wynik komend markera (§0.1 krok 2), dosłownie:
 ```text
 8c7a853a6c docs(day95,96,97,99): armia SPEC-A — odbior artefaktow i kreatorow wg DoD 18.1
 188cb75f5b docs(ledger): DEC-331..332 — straznik rozluzniony, Kanban naprawiony, znalezisko o granulacji
-[23 wcześniejsze pozycje wypisane przez git log --oneline -25]
+a2191d8bc7 merge: rozluznienie straznika uzasadnienia (DEC-328, wariant 3 wlasciciela)
+4497d3de60 merge: naprawa cyklu zycia w Kanbanie Inicjatyw (DEC-326)
+069b2ea81d fix(documentStudio): rozluznienie straznika uzasadnienia — skroty przechodza, liczby dalej pilnowane
+32ade513fb docs(ledger): DEC-328..330 — rozluznienie straznika, odbior 90/94, wada szablonu wklejki
+1d434bbdcc merge: dyzur 94 — ujemne EV POPRAWNE, teza nadzorcy obalona
+c8322a613e merge: dyzur 90 — wynik negatywny, ktory doprowadzil do DEC-327
+57d7a249cb merge: dyzur 93 Wywiad — pierwszy pelny pakiet 20 z 20 semantycznie zgodnych
+6c9326f4e1 merge: dyzur 92 Ocena — uczciwe 12 z 20, interfejs w calosci angielski
+95bc83cee6 docs(day93): normalize report markdown
+b3a960640d docs(day93): record interview owner screenshot evidence
+9f17e24d89 docs(ledger): DEC-327 — model pisze, straznik uzasadnienia kasuje napisane
+fb9b6d4f86 docs(day90): record DOCX LLM evidence
+1eed2946c9 fix(kanban): initiative lifecycle drives Portfolio Kanban columns + guard against silent drops
+f99cff73ac docs(day92): satisfy report whitespace check
+c027a2488f docs(day92): record assessment owner screenshot packet
+28a1debc46 docs(day94): measure negative DCF composition
+82fe23a9be docs(ledger): DEC-326 — decyzja wlasciciela, cykl inicjatywy jest zrodlem prawdy dla Kanbana
+f34952a7c9 fix(day92,93): komenda W2 nie lapala poprawnej formy licznika migracji
+8f0a678c61 docs(ledger): DEC-323..325 — odbior 91, dwie diagnozy pogleboione, dlug jezykowy Inicjatyw
+eb6f7a22e1 docs(day92): record assessment fixture evidence
+229231066f merge: dyzur 91 Inicjatywy — uczciwe 16 z 20, dwa realne defekty produktu
+efd54054af docs(day90,92,93,94): cztery instrukcje zlozone skryptem ze szkieletu
+4e67d5e2c9 docs(day91): close owner evidence report
 MARKER OK
 ```
 
@@ -237,4 +259,3 @@ lokalny `JWT_SECRET`. Nie jest to dowód egzekucji tras.
 Oczekiwany `git diff --name-only marker..HEAD`: dokładnie raport i
 `MODULE_ACCEPTANCE.md`; `0` plików w `src/`, `server/src/`, migracjach,
 seederach i test infrastructure.
-
