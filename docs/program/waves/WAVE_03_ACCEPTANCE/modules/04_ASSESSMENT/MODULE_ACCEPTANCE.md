@@ -150,3 +150,13 @@ This does not raise the module-level gate or owner verdict. It records only the 
 ## Day 34 document visual parity — bounded update (2026-08-28)
 
 `CZĘŚCIOWO` — the DRD-only profile now has a dedicated nine-row cover, unclamped 8/9/10-column matrices, editorial metadata instead of authoring bullets, Polish non-orphan captions, a 2100×1212 print-resolution radar, the accepted three-part footer and golden-calibrated word-limit windows. Three rich legacy schemas retain byte-identical `document.xml`, `styles.xml` and `numbering.xml`; real route/JWT/PostgreSQL evidence for two tenants and 36 inspected LibreOffice-rendered pages is retained under `../../evidence/document-visual-day34-20260828/`. Native TOC behavior in Microsoft Word remains `NIEMIERZALNE` in this session, and no frontend, owner acceptance or release is claimed.
+
+## Day 92 owner screenshot packet — controlling bounded update (2026-08-29)
+
+This update supersedes broader wording in G06/G10 only for the state measured on exact local SHA `eb6f7a22e1b6f947ff9bc633d81bf1b9d007b1f6`; it does not change the owner verdict.
+
+- **G06: `PARTIAL_DAY92_12_OF_20`** — real product, real login, local Postgres with 863/863 successful migrations, light/dark desktop. The packet contains 12/20 PNG files and 12/20 semantically valid states. Library-empty, Insights-empty, Reports-full and Initiatives-full are not honestly reachable in this fixture. Tablet, a11y and PL-locale remain open.
+- **G10: `PARTIAL_DAY92_MEASURED`** — Processes has honest populated and filter-empty states in both themes. Library/Insights cannot be made empty through their visible zero-status filters. Reports and Initiatives render empty despite independent readback of one frozen Method Core output and one Method Core initiative draft.
+- **G11 remains `PASS_INTAKE`, not owner acceptance** — the Day 92 operator packet and hashes are registered in `../../codex/CODEX_DAY92_ASSESSMENT_OWNER_REPORT.md`; artifacts remain outside the repository at `/private/tmp/cx-day92-assessment-artefakty` as required by the duty instruction.
+
+No product code was changed and no defect was repaired in Day 92.
