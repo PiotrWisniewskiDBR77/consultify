@@ -205,3 +205,15 @@ K1 po wznowieniu: `31194` klucze, JSON poprawny. Pomiar nadal wykazuje niezamkni
 Po ręcznym przejściu pozostałych kluczy obszaru `partner` konserwatywny parser wywołań `t('klucz', 'fallback')` wykazuje `partner 0`. Uzupełniono między innymi kwalifikację do programu, nawigację, ekran startowy, opisy klientów, metryki oraz pełne etykiety narzędzi poleceń. Teksty opisujące dane uwierzytelnione, kontrolowane odczyty i wewnętrzną wersję architektury zastąpiono zdaniami opisującymi produkt dla partnera.
 
 Stan tego samego pomiaru po checkpointcie: `finance 263`, `billing 88`, `v8 76`, `valuation 47`; liczba spłaszczonych kluczy PL: `31304`. Rozbieżność względem wcześniejszego parsera (`finance 216` itd.) wynika z bardziej konserwatywnego rozpoznawania cudzysłowów i nie jest podstawą do pomniejszenia mianownika. **C.1 nadal PARTIAL; C.2 nadal nierozpoczęte.**
+
+### Klasa F i odbiór zatwierdzonego UI Partnera
+
+- „Kwota możliwa do wypłaty” i „Gotowe do wypłaty” korzystają z **tej samej wartości** `balances.availableToPayout`, odczytywanej w obu miejscach przez `V8PartnerApi.getProgramStatus()`. Był to defekt prezentacji jednej miary. Oba miejsca używają teraz formatera `pl-PL` z dwoma miejscami dziesiętnymi; format przykładowy: `1 250,00 €`.
+- Tym samym formaterem objęto pozostałe kwoty w podsumowaniu zarobków oraz kwoty szczegółowe „zatwierdzone”, „wstrzymane” i „poprzedni miesiąc”.
+- Powtórzony tytuł „Ustawienia wypłat” rozróżniono: tytuł ekranu pozostał bez zmian, a wewnętrzna sekcja nazywa się „Preferencje historyczne”.
+- Pakiet Partnera po zmianie formatowania: **17/17 PASS po `fullName`**, `--retry=0`. JSON: `/private/tmp/cx-day69-artefakty/c1-partner-format-tests.json`.
+- Znalezisko poza zakresem językowym, świadomie nietknięte: crimson w wartości „CERTYFIKOWANY”, chipie „Zależne od zasad programu” oraz ikonie przy „Podsumowanie zarobków”. To teren kanonu wizualnego.
+
+### Kontynuacja Finance
+
+Ręcznie uzupełniono 56 brakujących wartości klasy A w grupach `finance.analysis` i `finance.budget`, wraz z komunikatami błędów, stanami pustymi i opisami zachowania. Konserwatywny mianownik `finance` spadł z `263` do `207`. Pozostałe obszary bez zmiany: `billing 88`, `v8 76`, `valuation 47`. C.1 pozostaje PARTIAL.
