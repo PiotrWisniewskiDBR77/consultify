@@ -75,6 +75,28 @@ describe('SuperAdmin system health AI provider status', () => {
     expect(health.ai.providers.google).toBe(false);
   });
 
+  it.each(['OPENAI_API_KEY', 'ANTHROPIC_API_KEY'] as const)(
+    'preserves online status for the existing %s provider',
+    async (envKey) => {
+      clearProviderEnvironment();
+      process.env[envKey] = 'day117-existing-provider-fixture';
+
+      const health = await readSystemHealth();
+
+      expect(health.ai.status).toBe('online');
+    }
+  );
+
+  it('preserves Groq presence reporting without changing the existing overall status rule', async () => {
+    clearProviderEnvironment();
+    process.env.GROQ_API_KEY = 'day117-existing-provider-fixture';
+
+    const health = await readSystemHealth();
+
+    expect(health.ai.status).toBe('no_keys');
+    expect(health.ai.providers.groq).toBe(true);
+  });
+
   it.each(['GOOGLE_API_KEY', 'GEMINI_API_KEY', 'GOOGLE_AI_KEY', 'GOOGLE_AI_API_KEY'] as const)(
     'reports online and Google present for %s',
     async (envKey) => {

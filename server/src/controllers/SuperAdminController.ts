@@ -3502,7 +3502,6 @@ const getSystemHealth = catchAsync(async (req, res, next) => {
     process.env.OPENROUTER_API_KEY ||
     process.env.OPENAI_API_KEY ||
     process.env.ANTHROPIC_API_KEY ||
-    process.env.GROQ_API_KEY ||
     googleApiKey
       ? 'online'
       : 'no_keys';
