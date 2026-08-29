@@ -16334,6 +16334,37 @@
     }
   },
   "partner": {
+    "apply": {
+      "backToProgram": "Wróć do strony programu partnerskiego",
+      "badge": "Kwalifikacja do programu partnerskiego",
+      "submit": "Wyślij zgłoszenie partnerskie",
+      "submitting": "Wysyłanie…",
+      "successTitle": "Zgłoszenie zostało wysłane",
+      "title": "Dołącz do programu partnerskiego Consultify",
+      "subtitle": "To krótki etap kwalifikacji dla nowych kandydatów. Sprawdzimy dopasowanie, model biznesowy i możliwości współpracy przed zaproszeniem do kolejnego kroku.",
+      "successBody": "Twoje zgłoszenie czeka na weryfikację. Na podstawie podanych informacji zdecydujemy o zaproszeniu do kolejnego kroku."
+    },
+    "layout": {
+      "closeNavigation": "Zamknij nawigację partnera",
+      "openNavigation": "Otwórz nawigację partnera"
+    },
+    "start": {
+      "activeSubtitle": "Aktualne saldo, status programu i następny krok.",
+      "activeTitle": "Twój program partnerski",
+      "availableToPayout": "Gotowe do wypłaty",
+      "goToEarnings": "Przejdź do prowizji",
+      "goToReferralTools": "Moje linki i kody",
+      "grossEarned": "Zarobione łącznie",
+      "heldAmount": "Wstrzymane",
+      "paidOut": "Wypłacone",
+      "retry": "Spróbuj ponownie",
+      "unknownPhaseTitle": "Nieznany etap programu partnerskiego",
+      "unknownTitle": "Nie udało się ustalić statusu Twojego programu",
+      "whatNext": "Następny krok",
+      "degraded": "Saldo jest wyświetlane z ograniczeniami, ponieważ nie udało się odczytać części danych programu.",
+      "paidProjection": "Kwota wypłacona pochodzi z rejestru zakończonych wypłat; część danych nie została jeszcze zaksięgowana w programie.",
+      "unknownDescription": "Nie pokazujemy ekranu rejestracji, ponieważ nie znamy aktualnego etapu programu. Spróbuj ponownie za chwilę."
+    },
     "day12": {
       "unconnectedTitle": "Profil partnera nie jest jeszcze podłączony",
       "unconnectedDescription": "Ten ekran służy wyłącznie do sprawdzenia połączenia z przestrzenią partnera. Administrator organizacji może potwierdzić dalszy krok poza tym pulpitem.",
@@ -16675,7 +16706,7 @@
       "lastActive": "Ostatnia aktywność",
       "subtitle": "Zarządzaj dostępem pracowników do kont klientów w jednym miejscu",
       "noEmployeesDesc": "Dodaj członków zespołu, aby zarządzać dostępem klientów.",
-      "complianceDesc": "Wszystkie zmiany dostępu są rejestrowane zgodnie z domeną PMO RESOURCE_RESPONSIBILITY i mapowane na grupę przedmiotową zasobów ISO 21500 (klauzula 4.6).",
+      "complianceDesc": "Wszystkie zmiany dostępu są rejestrowane, aby można było sprawdzić, kto i kiedy je wykonał.",
       "allRegions": "Wszystkie regiony",
       "statusActive": "Aktywny",
       "statusDeactivated": "Dezaktywowany",
@@ -16686,6 +16717,10 @@
       "userCount": "{{count}} użytkowników"
     },
     "dashboard": {
+      "complete": "Ukończ",
+      "completed": "ukończono",
+      "certificationsInLearningPath": "Szczegóły certyfikacji znajdziesz w Ścieżce nauki",
+      "certificationsUnavailable": "Status certyfikacji jest chwilowo niedostępny",
       "welcome": "Witaj ponownie",
       "subtitle": "Oto przegląd Twojej aktywności partnerskiej",
       "activeClients": "Aktywni klienci",
@@ -16723,8 +16758,14 @@
       "freshHint": "Twoje dane pojawią się tutaj po pierwszych poleceniach i transakcjach prowizyjnych."
     },
     "metrics": {
+      "runtimeConversionRate": "Współczynnik konwersji",
+      "runtimePaidCustomers": "Płacący klienci",
+      "runtimeReadyForPayout": "Gotowe do wypłaty",
+      "runtimeReferralClicks": "Kliknięcia linków polecających",
+      "runtimeTitle": "Podsumowanie programu partnerskiego",
+      "runtimeSubtitle": "Aktualne dane o wynikach zalogowanego partnera.",
       "title": "Metryki",
-      "subtitle": "Zarządzany przegląd Twoich wyników partnerskich",
+      "subtitle": "Przegląd Twoich wyników partnerskich",
       "totalRevenue": "Przychód całkowity",
       "revenueOverTime": "Przychód w czasie",
       "noRevenueData": "Brak danych o przychodach",
@@ -16745,9 +16786,14 @@
       "noCourses": "Brak dostępnych kursów",
       "certificatesEmpty": "Brak zdobytych certyfikatów",
       "examTitle": "Egzamin certyfikacyjny",
-      "deadline": "Termin"
+      "deadline": "Termin",
+      "learningPathDesc": "Ukończ kursy, aby zdobywać certyfikaty",
+      "noCertificates": "Ukończ kursy i zdaj egzaminy, aby zdobyć certyfikaty"
     },
     "clients": {
+      "technicalId": "Identyfikator",
+      "unavailable": "Klient niedostępny",
+      "organizationsDesc": "Zarządzaj organizacjami objętymi współpracą partnerską",
       "organizations": "Organizacje",
       "noOrganizations": "Brak organizacji",
       "addOrganization": "Dodaj organizację",
@@ -16758,18 +16804,26 @@
       "usersDesc": "Osoby w Twojej organizacji partnerskiej",
       "usersEmpty": "Brak członków zespołu",
       "col": {
+        "industry": "Branża",
+        "projects": "Projekty",
+        "users": "Użytkownicy",
         "organization": "Organizacja",
         "assessment": "Ocena",
         "status": "Status"
       },
       "status": {
-        "active": "Aktywny"
+        "active": "Aktywny",
+        "inactive": "Nieaktywny",
+        "onboarding": "W trakcie uruchamiania"
       }
     },
     "resources": {
       "desc": "Pobierz zasoby pakietu partnerskiego",
       "empty": "Brak zasobów w tej kategorii",
-      "downloadError": "Nie udało się pobrać zasobu."
+      "downloadError": "Nie udało się pobrać zasobu.",
+      "retry": "Spróbuj ponownie",
+      "degradedDescription": "Nie udało się odczytać katalogu, dlatego liczba dostępnych materiałów jest nieznana.",
+      "degradedTitle": "Biblioteka materiałów jest chwilowo niedostępna"
     },
     "profile": {
       "companyInfo": "Dane firmy",
@@ -16897,6 +16951,7 @@
       "totalEarnings": "Łączne prowizje",
       "pendingPayout": "Oczekująca wypłata",
       "paidOut": "Wypłacone",
+      "paidSuffix": "wypłacone",
       "thisMonth": "W tym miesiącu",
       "noEarnings": "Brak prowizji",
       "noEarningsDesc": "Prowizje pojawią się tutaj, gdy Twoje polecenia zostaną zrealizowane.",
@@ -16906,10 +16961,10 @@
       "noPayouts": "Brak wypłat",
       "loadError": "Nie udało się załadować danych prowizyjnych",
       "nextPayment": "KOLEJNA WYPŁATA PROWIZJI",
-      "howItWorksUnavailable": "Routing pomocy prowizyjnej niedostępny",
+      "howItWorksUnavailable": "Pomoc dotycząca prowizji jest obecnie niedostępna",
       "commissionDocsUnavailable": "Linki pomocy prowizyjnej dostępne dopiero po zawarciu umowy partnerskiej.",
-      "ticketUnavailable": "Routing zapytań prowizyjnych jest celowo wyłączony do momentu zawarcia umowy partner-użytkownik.",
-      "submitTicketUnavailable": "Routing zapytań prowizyjnych niedostępny",
+      "ticketUnavailable": "Wysyłanie zapytań dotyczących prowizji jest obecnie niedostępne.",
+      "submitTicketUnavailable": "Nie można teraz wysłać zapytania dotyczącego prowizji",
       "totalEarnedYtd": "Łącznie zarobione (od początku roku)",
       "momChange": "{{value}}% mies./mies.",
       "fromReferrals": "Z {{n}} poleceń",
@@ -16919,8 +16974,11 @@
       "requesting": "Wysyłanie...",
       "requestPayout": "Zażądaj wypłaty",
       "minimumNotReached": "Minimalna kwota wypłaty to {{amount}}",
-      "bankInfoRequired": "Aktualne dane bankowe i podatkowe są wymagane do otrzymania prowizji.",
-      "bankInfoRuntimeNotice": "Użyj ustawień wypłaty, aby zaktualizować dane płatnicze.",
+      "bankInfoRequired": "Historyczne dane bankowe i podatkowe są niekompletne.",
+      "bankInfoRuntimeNotice": "Ustawienia wypłat są dostępne tylko do odczytu, a operacje wypłat są niedostępne.",
+      "policyUnavailableTitle": "Rozliczenia partnera są niedostępne",
+      "payoutOperationsUnavailable": "Naliczanie prowizji oraz operacje wypłat są obecnie niedostępne.",
+      "historicalReadOnlyUnavailable": "Dla tego partnera nie ma dostępnej historii rozliczeń.",
       "recentTransactions": "Ostatnie zestawienia prowizji",
       "noDataToExport": "Brak transakcji do eksportu",
       "exported": "Wyeksportowano {{n}} transakcji",
@@ -16931,12 +16989,16 @@
       "noPayments": "Nie znaleziono żadnych płatności.",
       "noPaymentsDesc": "Płatności są przetwarzane 15. dnia każdego miesiąca.",
       "noStatements": "Nie znaleziono żadnych zestawień",
-      "v8RuntimeTitle": "Podsumowanie zarobków V8",
-      "v8RuntimeSubtitle": "Zarządzana gotowość do wypłaty i łączne zarobki partnera z przestrzeni V8.",
-      "v8TotalEarned": "Łącznie zarobione (zarządzane)",
-      "v8ThisMonth": "W tym miesiącu (zarządzane)",
-      "v8Pending": "Oczekujące (zarządzane)",
-      "v8ReadyForPayout": "Gotowe do wypłaty (zarządzane)",
+      "v8RuntimeTitle": "Podsumowanie zarobków",
+      "v8RuntimeSubtitle": "Bieżące informacje o zarobkach oraz gotowości środków do wypłaty.",
+      "v8TotalEarned": "Łącznie zarobione",
+      "v8ThisMonth": "W tym miesiącu",
+      "v8Pending": "Oczekujące",
+      "v8ReadyForPayout": "Gotowe do wypłaty",
+      "itemsCount": "Pozycje: {{count}}",
+      "approvedAmount": "Zatwierdzone: {{amount}}",
+      "heldAmount": "Wstrzymane: {{amount}}",
+      "lastMonthAmount": "Poprzedni miesiąc: {{amount}}",
       "col": {
         "customer": "Klient",
         "type": "Typ",
@@ -16965,7 +17027,21 @@
       "operationsUnavailable": "Operacje wypłat są niedostępne",
       "operationsUnavailableDesc": "Naliczanie prowizji oraz operacje wypłat są niedostępne. Historyczne ustawienia pozostają dostępne tylko do odczytu.",
       "method": "Metoda wypłaty",
-      "historicalValue": "Wartość historyczna"
+      "historicalValue": "Wartość historyczna",
+      "bankDetails": "Dane rachunku bankowego",
+      "accountHolder": "Właściciel rachunku",
+      "bankName": "Nazwa banku",
+      "preferences": "Ustawienia wypłat",
+      "minimumThreshold": "Minimalny próg wypłaty",
+      "minimumThresholdDesc": "Minimalna kwota wymagana do zlecenia wypłaty",
+      "historicalOnly": "Tylko dane historyczne",
+      "historicalOnlyDesc": "Te wartości są przechowywane wyłącznie jako dane historyczne i nie można ich zmienić w przestrzeni Partnera.",
+      "methods": {
+        "bank_transfer": "Przelew bankowy",
+        "paypal": "PayPal",
+        "stripe": "Stripe",
+        "wise": "Wise"
+      }
     },
     "commission": {
       "faq": {
@@ -16974,15 +17050,67 @@
         "incorrectAmount": "Co zrobić, jeśli kwota jest nieprawidłowa?",
         "incorrectAmountAnswer": "Użyj formularza zapytania powyżej, wybierając 'Pytanie o wyciąg'. Dołącz numer wyciągu i szczegóły rozbieżności. Finance Team odpowie w ciągu 2 dni roboczych.",
         "pmoMapping": "Jak transakcje są mapowane do standardów PMO?",
-        "pmoMappingAnswer": "Każda rejestracja transakcji jest automatycznie mapowana do GOVERNANCE_DECISION_MAKING (ISO 21500 Klauzula 4.3.4), a rozliczenie prowizji do BENEFITS_REALIZATION (Klauzula 4.4.1)."
+        "pmoMappingAnswer": "Każda transakcja i wypłata prowizji jest rejestrowana, aby zachować pełną historię rozliczeń."
       }
     },
     "referrals": {
+      "analyticsTitle": "Analityka kliknięć",
+      "analyticsSubtitle": "Przeglądaj skuteczność poleceń razem z aktywnymi linkami kampanii.",
+      "campaign": "Kampania",
+      "campaignCreated": "Utworzono link kampanii",
+      "campaignDeleted": "Usunięto link kampanii",
+      "campaignLinks": "Linki kampanii",
+      "campaignLinksDesc": "Śledź skuteczność kampanii oznaczonych parametrami UTM",
+      "clicks": "Kliknięcia",
+      "codeHint": "Klienci mogą podać ten kod podczas rejestracji",
+      "confirmDelete": "Czy na pewno usunąć ten link kampanii?",
+      "convRate": "Konwersja %",
+      "conversions": "Płacący",
+      "copied": "Skopiowano do schowka",
+      "copyFailed": "Nie udało się skopiować",
+      "copyLink": "Kopiuj link",
+      "createCampaign": "Utwórz link kampanii",
+      "createFailed": "Nie udało się utworzyć kampanii",
+      "customerAttributedAt": "Data przypisania",
+      "customerCommissionDuration": "Okres naliczania prowizji",
+      "customerCommissionEarned": "Naliczona prowizja",
+      "customerCommissionRate": "Stawka prowizji",
+      "customerFirstPayment": "Pierwsza płatność",
+      "customerLifetimeValue": "Wartość klienta w całym okresie współpracy",
+      "customerSignupCompleted": "Rejestracja zakończona",
+      "getQR": "Pobierz kod QR",
+      "loadError": "Nie udało się załadować narzędzi poleceń",
+      "identityMissingError": "Dane poleceń są przygotowywane. Odśwież ekran za chwilę.",
+      "nameRequired": "Nazwa kampanii jest wymagana",
+      "newCampaign": "Nowa kampania",
+      "noLink": "Link polecający nie jest jeszcze dostępny",
+      "noCampaigns": "Nie masz jeszcze linków kampanii. Utwórz pierwszy, aby rozpocząć śledzenie.",
+      "noReferredCustomers": "Brak poleconych klientów",
+      "noReferredCustomersDesc": "Polecone organizacje pojawią się tutaj po ich przypisaniu.",
+      "preview": "Podgląd",
+      "qrAlt": "Kod QR linku polecającego",
+      "qrFailed": "Nie udało się utworzyć kodu QR",
+      "qrHint": "Zeskanuj, aby otworzyć link polecający",
+      "qrTitle": "Kod QR polecenia",
+      "referredCustomersList": "Poleceni klienci",
+      "referredCustomersListDesc": "Lista klientów przypisanych do Twoich poleceń.",
+      "referredOrganizationsTitle": "Poleceni klienci",
+      "referredOrganizationsSubtitle": "Zobacz podsumowanie pozyskania klientów oraz używane narzędzia poleceń.",
+      "signups": "Rejestracje",
+      "tips": "Wskazówki zwiększające konwersję",
+      "title": "Moje linki i kody polecające",
+      "subtitle": "Udostępniaj własne linki i kody, aby rejestrować polecenia.",
+      "yourCode": "Twój kod polecający",
+      "yourLink": "Twój link polecający",
       "deleteFailed": "Nie udało się usunąć linku kampanii",
       "v8AnalyticsRuntimeTitle": "Skuteczność poleceń",
+      "v8AnalyticsRuntimeSubtitle": "Kliknięcia, rejestracje i współczynnik konwersji Twoich poleceń.",
       "v8ConversionRate": "Współczynnik konwersji",
       "v8PaidCustomers": "Płacący klienci",
       "v8RuntimeTitle": "Podsumowanie poleceń",
+      "v8RuntimeSubtitle": "Podsumowanie kliknięć i konwersji poleceń.",
+      "v8ReferredOrganizationsRuntimeTitle": "Podsumowanie pozyskanych klientów",
+      "v8ReferredOrganizationsRuntimeSubtitle": "Rejestracje, okresy próbne i przejścia do płatnej usługi wśród poleconych klientów.",
       "v8Signups": "Rejestracje",
       "v8TotalClicks": "Łączna liczba kliknięć"
     },
@@ -17013,6 +17141,7 @@
       },
       "lifecycle": {
         "active": "Aktywny",
+        "certified": "Certyfikowany",
         "onboarding": "W trakcie uruchamiania",
         "pending": "Oczekuje",
         "suspended": "Wstrzymany"
@@ -17026,6 +17155,9 @@
     },
     "common": {
       "comingSoon": "Wkrótce"
+    },
+    "program": {
+      "truthBoundary": "Informacje handlowe oraz dostępne możliwości zależą od potwierdzonego statusu programu i obowiązującej umowy."
     }
   },
   "thinking": {

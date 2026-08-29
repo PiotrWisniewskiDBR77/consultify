@@ -137,10 +137,12 @@ describe('PartnerCanonicalRuntimePanel', () => {
 
     render(<PartnerCanonicalRuntimePanel snapshot={snapshot} />);
 
-    expect(screen.getByText('certified')).toBeInTheDocument();
+    expect(screen.getByText('Certyfikowany')).toBeInTheDocument();
     expect(screen.getByText('2/3')).toBeInTheDocument();
-    expect(screen.getByText('3 active attribution records')).toBeInTheDocument();
-    expect(screen.getByText('partner-participant-referral-v1 · bbbbbbbbbbbb')).toBeInTheDocument();
-    expect(screen.getByText(/Recorded balance only/)).toBeInTheDocument();
+    expect(screen.getByText(/Aktywne polecenia/)).toBeInTheDocument();
+    expect(screen.getByText('Zapisano ostatnie polecenie')).toBeInTheDocument();
+    expect(screen.getByText(/Widoczne saldo ma charakter informacyjny/)).toBeInTheDocument();
+    expect(screen.queryByText(/partner-participant-referral-v1/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/AMD-PRT-ECONOMICS-002/)).not.toBeInTheDocument();
   });
 });

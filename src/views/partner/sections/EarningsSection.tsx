@@ -443,7 +443,12 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
             </p>
             {programStatus && (
               <p className="mt-2 text-xs font-medium uppercase tracking-wide text-primary-600 dark:text-primary-300">
-                {`Lifecycle: ${programStatus.lifecyclePhase}`}
+                {t(
+                  `partner.canonicalRuntime.lifecycle.${programStatus.lifecyclePhase.toLowerCase()}`,
+                  programStatus.lifecyclePhase === 'certified'
+                    ? 'Certyfikowany'
+                    : programStatus.lifecyclePhase
+                )}
               </p>
             )}
           </div>
@@ -461,12 +466,16 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
             {
               label: t('partner.earnings.v8ThisMonth', 'Governed this month'),
               value: `${v8Summary.currency ?? 'EUR'} ${(v8Summary.thisMonth ?? 0).toLocaleString()}`,
-              detail: `${v8Summary.thisMonthCount ?? 0} items`,
+              detail: t('partner.earnings.itemsCount', 'Pozycje: {{count}}', {
+                count: v8Summary.thisMonthCount ?? 0,
+              }),
             },
             {
               label: t('partner.earnings.v8Pending', 'Governed pending'),
               value: `${v8Summary.currency ?? 'EUR'} ${(v8Summary.totalPending ?? 0).toLocaleString()}`,
-              detail: `${v8Summary.totalApproved ?? 0} approved`,
+              detail: t('partner.earnings.approvedAmount', 'Zatwierdzone: {{amount}}', {
+                amount: v8Summary.totalApproved ?? 0,
+              }),
             },
             {
               label: t('partner.earnings.v8ReadyForPayout', 'Governed ready for payout'),
@@ -477,8 +486,12 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               ).toLocaleString()}`,
               detail:
                 programStatus?.hold && programStatus.hold.amount > 0
-                  ? `Hold: ${programStatus.hold.amount}`
-                  : `${v8Summary.lastMonth ?? 0} last month`,
+                  ? t('partner.earnings.heldAmount', 'Wstrzymane: {{amount}}', {
+                      amount: programStatus.hold.amount,
+                    })
+                  : t('partner.earnings.lastMonthAmount', 'Poprzedni miesiąc: {{amount}}', {
+                      amount: v8Summary.lastMonth ?? 0,
+                    }),
             },
           ].map((card) => (
             <div
@@ -564,7 +577,10 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
             <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-700 dark:text-amber-300" />
             <div>
               <h2 className="font-semibold text-c-text">
-                {t('partner.earnings.policyUnavailableTitle', 'Partner economics unavailable')}
+                {t(
+                  'partner.earnings.policyUnavailableTitle',
+                  'Partner economics unavailable'
+                )}
               </h2>
               <p className="mt-1 text-sm text-c-text-secondary">
                 {t(
@@ -695,20 +711,23 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               )}
             >
               <HelpCircle className="w-4 h-4" />
-              {t('partner.earnings.howItWorksUnavailable', 'Commission help routing unavailable')}
+              {t(
+                'partner.earnings.howItWorksUnavailable',
+                'Pomoc dotycząca prowizji jest obecnie niedostępna'
+              )}
             </div>
             <button
               disabled
               title={t(
                 'partner.earnings.ticketUnavailable',
-                'Commission inquiry routing is intentionally disabled until a governed partner-user contract exists.'
+                'Wysyłanie zapytań dotyczących prowizji jest obecnie niedostępne.'
               )}
               className="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-c-text-muted rounded-lg text-sm font-medium flex items-center gap-2 cursor-not-allowed"
             >
               <FileText className="w-4 h-4" />
               {t(
                 'partner.earnings.submitTicketUnavailable',
-                'Commission inquiry routing unavailable'
+                'Nie można teraz wysłać zapytania dotyczącego prowizji'
               )}
             </button>
           </div>
@@ -1104,12 +1123,12 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
         role="note"
       >
         <p className="font-medium text-c-text">
-          {t('partner.payoutSettings.operationsUnavailable', 'Payout operations unavailable')}
+          {t('partner.payoutSettings.operationsUnavailable', 'Operacje wypłat są niedostępne')}
         </p>
         <p className="mt-1 text-sm text-c-text-secondary">
           {t(
             'partner.payoutSettings.operationsUnavailableDesc',
-            'Commission, accrual and payout operations are unavailable. Historical settings remain read-only.'
+            'Naliczanie prowizji oraz operacje wypłat są niedostępne. Historyczne ustawienia pozostają dostępne tylko do odczytu.'
           )}
         </p>
       </div>
@@ -1120,7 +1139,12 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
           {t('partner.payoutSettings.method', 'Payout Method')}
         </h3>
         <p className="text-c-text" data-testid="historical-payout-method">
-          {payoutSettings.payoutMethod.replace('_', ' ')}
+          {t(
+            `partner.payoutSettings.methods.${payoutSettings.payoutMethod.toLowerCase()}`,
+            payoutSettings.payoutMethod === 'BANK_TRANSFER'
+              ? 'Przelew bankowy'
+              : payoutSettings.payoutMethod.replace('_', ' ')
+          )}
         </p>
         <p className="mt-1 text-xs text-c-text-muted">
           {t('partner.payoutSettings.historicalValue', 'Historical value')}
@@ -1129,10 +1153,14 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
 
       {/* Bank Details */}
       <div className="bg-c-surface-raised/50 rounded-xl border border-c-border-subtle dark:border-white/5 p-4">
-        <h3 className="text-lg font-semibold text-c-text mb-4">Bank Account Details</h3>
+        <h3 className="text-lg font-semibold text-c-text mb-4">
+          {t('partner.payoutSettings.bankDetails', 'Dane rachunku bankowego')}
+        </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <p className="text-sm text-c-text-secondary mb-1">Account Holder Name</p>
+            <p className="text-sm text-c-text-secondary mb-1">
+              {t('partner.payoutSettings.accountHolder', 'Właściciel rachunku')}
+            </p>
             <p className="text-c-text">{payoutSettings.payoutAccount?.accountHolderName || '—'}</p>
           </div>
           <div>
@@ -1144,7 +1172,9 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
             <p className="text-c-text">{payoutSettings.payoutAccount?.bicSwift || '—'}</p>
           </div>
           <div>
-            <p className="text-sm text-c-text-secondary mb-1">Bank Name</p>
+            <p className="text-sm text-c-text-secondary mb-1">
+              {t('partner.payoutSettings.bankName', 'Nazwa banku')}
+            </p>
             <p className="text-c-text">{payoutSettings.payoutAccount?.bankName || '—'}</p>
           </div>
         </div>
@@ -1152,13 +1182,20 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
 
       {/* Payout Preferences */}
       <div className="bg-c-surface-raised/50 rounded-xl border border-c-border-subtle dark:border-white/5 p-4">
-        <h3 className="text-lg font-semibold text-c-text mb-4">Payout Preferences</h3>
+        <h3 className="text-lg font-semibold text-c-text mb-4">
+          {t('partner.payoutSettings.preferences', 'Ustawienia wypłat')}
+        </h3>
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-medium text-c-text">Minimum Payout Threshold</p>
+              <p className="font-medium text-c-text">
+                {t('partner.payoutSettings.minimumThreshold', 'Minimalny próg wypłaty')}
+              </p>
               <p className="text-sm text-c-text-secondary">
-                Minimum amount before requesting payout
+                {t(
+                  'partner.payoutSettings.minimumThresholdDesc',
+                  'Minimalna kwota wymagana do zlecenia wypłaty'
+                )}
               </p>
             </div>
             <p className="text-c-text">{formatCurrency(payoutSettings.minimumThreshold)}</p>
@@ -1168,10 +1205,14 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
             role="note"
           >
             <div>
-              <p className="font-medium text-c-text">Historical settings only</p>
+              <p className="font-medium text-c-text">
+                {t('partner.payoutSettings.historicalOnly', 'Tylko dane historyczne')}
+              </p>
               <p className="mt-1 text-sm text-c-text-secondary">
-                These values are retained for historical reference and cannot be changed from the
-                Partner workspace.
+                {t(
+                  'partner.payoutSettings.historicalOnlyDesc',
+                  'Te wartości są przechowywane wyłącznie jako dane historyczne i nie można ich zmienić w przestrzeni Partnera.'
+                )}
               </p>
             </div>
           </div>
