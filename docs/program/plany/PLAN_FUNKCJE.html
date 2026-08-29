@@ -144,7 +144,7 @@
       <div class="fig crit"><span class="n">34 : 170</span><span class="k">inicjatywy w dwóch rozłącznych magazynach na żywej bazie. Wspólny rekord: jeden</span></div>
       <div class="fig crit"><span class="n">26 177</span><span class="k">fragmentów wiedzy bez znacznika organizacji — sto procent tego, co jest</span></div>
       <div class="fig good"><span class="n">3712</span><span class="k">słów prawdziwej prozy w raporcie z 24 czerwca, zero wypełniaczy — treść <em>powstaje</em>. Nowsze raporty mają ~1550 słów</span></div>
-      <div class="fig"><span class="n">2 z 16</span><span class="k">moduły formalnie domknięte: Organizacja i Ustawienia — a ich kontrakty nadal opisują je jako otwarte</span></div>
+      <div class="fig crit"><span class="n">1 z 16</span><span class="k">moduł ma <code>CLOSED_FINAL</code> (Ustawienia) — a jego własna karta cztery dni później mówi „częściowo". Organizacja ma akcept <b>warunkowy</b> z trzema niespełnionymi warunkami</span></div>
       <div class="fig crit"><span class="n">5</span><span class="k">niezależnych systemów stylowania plików wychodzących do klienta — żaden nie czyta tokenów produktu</span></div>
     </div>
     <div class="col">
@@ -165,16 +165,16 @@
           <h3>Dokumentacja przestaje kłamać</h3>
           <p class="why">Wykonawcy realizują dziś dokumenty, których nikt nie przyjął, i wybierają między dwoma, które oba twierdzą, że obowiązują.</p>
         </div>
-        <div class="tagset"><span class="tag t-crit">blokuje wszystko</span><span class="tag t-neut">robię sam</span></div>
+        <div class="tagset"><span class="tag t-crit">blokuje wszystko</span><span class="tag t-good">w większości ZROBIONE 29–30.08</span></div>
       </div>
       <div class="ph-body">
         <h4>Co dokładnie</h4>
         <ul>
-          <li><span><b>Rozstrzygnięcie sporów o kanon.</b> Dla Inicjatyw i Realizacji dwa dokumenty mają status obowiązujący i opisują inne zestawy funkcji. Nasz własny standard nazywa to stanem spornym i zabrania wdrażać na zgadywanie. Wskazuję zwycięzcę, przegranemu wpisuję odsyłacz — <b>nie kasując go</b>.</span></li>
-          <li><span><b>Przeniesienie decyzji sierpniowych do kontraktów.</b> Cała wiedza z ostatniego miesiąca — dwa moduły domknięte, odwrócenie decyzji o Finansach, gramatyka adresów spotkań — żyje w rejestrze programu, a kontrakty modułów jej nie znają i nadal opisują stan sprzed.</span></li>
-          <li><span><b>Podpięcie rubryki jakości dokumentu do mapy źródeł prawdy.</b> Definicja dobrego pliku istnieje, jest mierzalna i ma progi — ale leży poza mapą, a kontrakt najważniejszego modułu jej nie zna.</span></li>
+          <li><span><b>✔ ZROBIONE.</b> <b>Rozstrzygnięcie sporów o kanon.</b> Dla Inicjatyw i Realizacji dwa dokumenty mają status obowiązujący i opisują inne zestawy funkcji. Nasz własny standard nazywa to stanem spornym i zabrania wdrażać na zgadywanie. Wskazuję zwycięzcę, przegranemu wpisuję odsyłacz — <b>nie kasując go</b>.</span></li>
+          <li><span><b>DO ZROBIENIA — największa pozostała pozycja.</b> <b>Przeniesienie decyzji sierpniowych do kontraktów.</b> Cała wiedza z ostatniego miesiąca — dwa moduły domknięte, odwrócenie decyzji o Finansach, gramatyka adresów spotkań — żyje w rejestrze programu, a kontrakty modułów jej nie znają i nadal opisują stan sprzed.</span></li>
+          <li><span><b>✔ ZROBIONE.</b> <b>Podpięcie rubryki jakości dokumentu do mapy źródeł prawdy.</b> Definicja dobrego pliku istnieje, jest mierzalna i ma progi — ale leży poza mapą, a kontrakt najważniejszego modułu jej nie zna.</span></li>
           <li><span><b>Uzupełnienie dwóch sekcji, których brakuje niemal wszędzie:</b> „Testy i dowody" oraz „Changelog decyzji". Bez nich każdy kolejny wykonawca zaczyna od zera.</span></li>
-          <li><span><b>Usunięcie martwych odsyłaczy</b> — katalog wskazywany jako źródło przez wszystkie moduły nie istnieje, dwie reguły kanonu wskazują pliki, których nie ma.</span></li>
+          <li><span><b>✔ ZROBIONE częściowo.</b> <b>Martwe odsyłacze:</b> katalog wskazywany jako źródło nie istnieje — 4317 wystąpień w 224 plikach. Zamiast masowej podmiany (operacja, która raz już zniszczyła wydane instrukcje) wpisałem <b>regułę odczytu</b> do mapy źródeł. Prefiks poprawia się przy okazji dotykania pliku.</span></li>
         </ul>
         <div class="gate"><b>Bramka:</b> dla każdego z szesnastu modułów istnieje jeden dokument obowiązujący, wskazany w mapie źródeł, młodszy niż ostatnia decyzja, która go dotyczy. Zero stanów spornych.</div>
       </div>
@@ -192,10 +192,10 @@
       <div class="ph-body">
         <h4>Sprostowanie, które zmienia cel tej fazy</h4>
         <ul>
-          <li><span><b>Trzy widżety wskazane jako główna przyczyna są martwe.</b> Są instancjonowane w ośmiu miejscach, mają trzynaście lokalnych obsług zapisu — i <b>ani jedno z tych miejsc nie jest dziś osiągalne</b>: dwa leżą w starych trybach prezentacji za flagą bez wartości domyślnej, reszta w komponentach, których nikt nie renderuje.</span></li>
+          <li><span><b>Trzy widżety wskazane jako główna przyczyna są w większości martwe.</b> Są instancjonowane w <b>dziewięciu</b> miejscach: osiem jest nieosiągalnych (stare tryby prezentacji za flagą bez wartości domyślnej, komponenty, których nikt nie renderuje), ale <b>dziewiąte — załączniki w notatniku — ŻYJE, renderuje się bez flagi i ma realny backend. Tego nie ruszamy.</b> Liczby „trzynaście obsług zapisu" nie potwierdziłem — nie wchodzi do planu.</span></li>
           <li><span><b>Żywa utrata siedzi w kanwach nowego trybu</b> — i jest <b>cicha</b>. Produkt nawet nie kłamie, że zapisał; po prostu gubi. To zmienia opis problemu i miejsce naprawy.</span></li>
           <li><span><b>Rejestr ryzyk ma działający zapis cztery tysiące linii wyżej w tym samym pliku</b> — potwierdzone. Kanwa go nie używa.</span></li>
-          <li><span><b>Backend załączników dla Inicjatywy, Zadania i Decyzji nie istnieje</b> — ani tabela, ani trasa, ani serwis. To jest migracja, więc ta faza wchodzi w tę samą dyscyplinę co faza wiedzy: addytywnie, z wpisem w rejestrze.</span></li>
+          <li><span><b>Backend załączników dla Inicjatywy, Zadania i Decyzji nie istnieje</b> — ani tabela, ani trasa, ani serwis. <b>Ale istnieją dwa gotowe wzorce do reużycia</b> (załączniki tabel i załączniki notatnika, oba z pełnym cyklem i warstwą składowania). To <b>podpięcie, nie budowa od zera</b> — i tak samo jak faza wiedzy wymaga migracji addytywnej z wpisem w rejestrze.</span></li>
         </ul>
         <div class="gate"><b>Bramka:</b> lista zmierzonych miejsc utraty, dla każdego dowód mutacyjny w obie strony. Test, który przechodzi także przed naprawą, nie liczy się. <b>Nie naprawiamy ani jednego miejsca, dopóki nie wykażemy, że ekran jest osiągalny.</b></div>
       </div>
@@ -217,7 +217,7 @@
           <li><span>Otworzyłem pliki. Raport z 24 czerwca: 11 stron, 3712 słów gęstej polskiej prozy, zero wypełniaczy. <b>Ale</b>: pusty spis treści po angielsku · znaczniki wewnętrzne <code>[DANGER]</code>, <code>[INFO]</code> i <code>[SUCCESS]</code> wydrukowane w tekście dla klienta · tytuł rozdziału długości akapitu · metadane techniczne na stronie tytułowej.</span></li>
           <li><span>Prezentacja z 25 czerwca: 16 slajdów polskiej treści, ale <b>„8 200 000 thousands EUR"</b>, to samo zdanie jako tytuł i jako treść na sześciu slajdach, <b>zero wykresów</b>.</span></li>
           <li><span>★★ <b>SPROSTOWANIE — zmierzyłem wszystkie pliki, nie dwa.</b> <b>Te defekty nie reprodukują się w nowszych plikach.</b> Sześć raportów z 28 czerwca i późniejszych ma <b>zero</b> wyciekających znaczników; osiem decków z 28 czerwca ma po <b>1–3 wykresy</b>. Silnik naprawiono dwa miesiące temu, a ja wziąłem najstarsze pliki w katalogu za stan dzisiejszy. <b>Nowy sygnał, gorszy:</b> nowsze raporty mają ~1550 słów wobec 3712 — <b>o 60% mniej treści</b>. Ta faza zaczyna się od pomiaru na <b>świeżo wygenerowanym</b> pliku i od odpowiedzi, czy dokumenty schudły celowo.</span></li>
-          <li><span><b>Generator szablonów Word nie istnieje</b> — zero linijek kodu; narzędzie obsługuje wyłącznie prezentacje. To dwa różne produkty, nie dwa widoki tego samego, i plan musi je rozróżniać.</span></li>
+          <li><span>★ <b>SPROSTOWANIE — powieliłem błąd własnego rejestru.</b> Nasza karta odbioru mówi „Szablony Word: NIE ISTNIEJE, zero kodu". <b>To nieprawda.</b> Architekt szablonów dokumentu istnieje i <b>jest renderowany</b> (zakładka „szablony" w studiu dokumentów), a wersja prezentacyjna jest jego <b>klonem</b> — kierunek był odwrotny, niż twierdzi rejestr. Zdanie w karcie dotyczy innego komponentu i ma zły zasięg; poprawiam je u źródła. Rozróżnienie generatora dokumentu od generatora szablonów zostaje w mocy — to naprawdę dwa produkty.</span></li>
           <li><span><b>Pięć niezależnych systemów stylowania eksportu</b>, z których żaden nie czyta tokenów produktu — klient dostaje inny odcień zależnie od trasy. Standard, który to porządkuje, jest zatwierdzony i nietknięty.</span></li>
         </ul>
         <div class="gate"><b>Bramka — istnieje i jest mierzalna, nie wymyślam jej:</b> rubryka trzech osi (kompletność ≥90%, merytoryka ≥80%, grafika ≥80%, <b>żaden wymiar równy zeru</b>), reguła koniunkcji — dokument piękny-ale-pusty pada tak samo jak mądry-ale-brzydki. Do tego dziesięciopunktowa lista odbioru każdego eksportu, weryfikowana wzrokiem na realnym renderze.</div>
@@ -237,11 +237,11 @@
         <h4>Co mówi kontrakt, a czego nie ma</h4>
         <ul>
           <li><span><b>Jedenaście nazwanych bramek</b> z właścicielem wniosku, władzą decyzyjną i terminem; <b>dwanaście statusów</b>; <b>dwadzieścia sześć kart</b> z modelem kompletności, jakości i świeżości. Kanon mówi wprost: automatyczne zatwierdzenie nie istnieje.</span></li>
-          <li><span><b>Bramka analizy jest nieosiągalna</b> — trzy blokady, jedna to poprawka jednoliniowej stałej przybitej na „nie zażądano". Kontrakt sam to potwierdza pośrednio: opisuje zakładkę analizy jako diagnostyczną <em>bez władzy decyzyjnej</em>, a żadna inna powierzchnia do złożenia wniosku nie istnieje.</span></li>
+          <li><span><b>Bramka analizy jest nieosiągalna</b> — blokad jest <b>co najmniej cztery i żadna nie jest jednoliniowa</b>. Najtwardsza: kolejka decyzji analitycznych nie jest nigdzie instancjonowana, a <b>test regresyjny pilnuje, żeby nie była zamontowana</b>. Przed pracą trzeba rozstrzygnąć, czy ten test jest kanonem, czy długiem. Kontrakt sam to potwierdza pośrednio: opisuje zakładkę analizy jako diagnostyczną <em>bez władzy decyzyjnej</em>, a żadna inna powierzchnia do złożenia wniosku nie istnieje.</span></li>
           <li><span><b>Most między dwoma magazynami napisany i nigdy niepodłączony</b> — zero wołaczy w interfejsie. Na żywej bazie: 34 inicjatywy w jednym, 170 w drugim, jeden wspólny rekord. <b>Żaden kontrakt nie wie, że drugi magazyn istnieje</b> — a kanon zabrania rejestrów-cieni.</span></li>
           <li><span><b>Siedem udokumentowanych rodzin źródeł inicjatywy</b>, z czego dwie oznaczone jako luka. Dokument śledzenia źródeł uznaje tylko dwie z siedmiu — i sam mówi, że musi zostać poszerzony, zanim ktokolwiek zacznie implementować.</span></li>
         </ul>
-        <div class="gate"><b>Bramka:</b> inicjatywa utworzona z Oceny pojawia się na liście i przechodzi bramkę definicji przez interfejs, bez ani jednego wpisu do bazy z boku.</div>
+        <div class="gate"><b>Bramka — poprawiona, bo poprzednia była niewykonalna z definicji.</b> Ocena zapisuje do magazynu klasycznego, lista czyta wyłącznie kanoniczny, a most obsługuje tylko kandydatów jednego narzędzia — żaden ciąg zdarzeń nie mógł jej zaliczyć. Trzy kroki zamiast jednego: <b>(a)</b> most ma wołacza w interfejsie i realnie przenosi rekord; <b>(b)</b> tworzenie inicjatyw z Oceny idzie przez wspólną ścieżkę zapisu, nie przez bezpośredni wpis do tabeli; <b>(c)</b> dopiero wtedy inicjatywa z Oceny przechodzi bramkę definicji przez interfejs, bez ani jednego wpisu do bazy z boku.</div>
       </div>
     </div>
 
@@ -258,8 +258,9 @@
         <h4>Wiążąca kolejność, od której nie ma odstępstwa</h4>
         <ul>
           <li><span><b>Najpierw policz, potem ruszaj kod.</b> Zrobione: 26 177 fragmentów, sto procent bez znacznika organizacji; nawet pośrednia izolacja przez dokument nadrzędny zawodzi dla 70% z nich.</span></li>
-          <li><span><b>Potem zamknij dwie dziury</b> — strażnik poufności odpytujący inną tabelę niż ta, w której leżą dokumenty, i filtr, który przy braku kontekstu organizacji nie filtruje wcale.</span></li>
-          <li><span><b>Potem backfill, dopiero potem zamknięcie.</b> Zamknięcie bez backfillu wygasza całą wiedzę na demo — to nie hipoteza, to wynik z liczby powyżej.</span></li>
+          <li><span><b>Potem napraw strażnika poufności</b> — odpytuje inną tabelę niż ta, w której leżą dokumenty, i przez to jest <b>fail-open</b>: zero wierszy w odpowiedzi oznacza „wszystko dozwolone", a wyjątek też przepuszcza wszystko. Ta naprawa jest bezpieczna i idzie pierwsza.</span></li>
+          <li><span><b>Filtr wyszukiwania zamykamy DOPIERO po backfillu</b> — nie razem ze strażnikiem. Zamknięcie go przed uzupełnieniem znaczników wygasza całą wiedzę na demo. Pierwsza wersja tego planu miała tu złą kolejność mimo ostrzeżenia dwa zdania niżej.</span></li>
+          <li><span><b>Backfill znaczników organizacji</b> — na tyle, na ile da się je odtworzyć z dokumentu nadrzędnego. Reszta idzie do kwarantanny, nie do kasowania.</span></li>
           <li><span><b>Na końcu podpięcie wyniku do rozmowy</b>, za flagą, po zielonym teście różnicującym. Podpięcie jest tanie i kuszące jako pierwszy krok — i właśnie dlatego jest ostatnie.</span></li>
           <li><span><b>Tryb wyszukiwania ustala serwer, nie klient.</b> Dziś szerokość odczytu przychodzi w ciele żądania i nikt nie sprawdza uprawnień do niej.</span></li>
         </ul>
@@ -279,8 +280,9 @@
       <div class="ph-body">
         <h4>Co jest już przesądzone w źródłach</h4>
         <ul>
-          <li><span><b>„Docelowy wskaźnik może zostać zdefiniowany na poziomie inicjatywy. Po zatwierdzeniu trafia do wspólnego rejestru Wyników"</b> — jeden rejestr, jedna tożsamość, relacja wiele-do-wielu z kartami wyników. To rozstrzyga pytanie, które chciałem Ci zadać. Nie zadam go.</span></li>
-          <li><span><b>Czego brakuje:</b> nazwy klucza tożsamości wskaźnika i wskazania fizycznego rejestru. Do tego dwie powierzchnie zapisujące wskaźniki <b>są poza jakimkolwiek strażnikiem</b> — bez ich zamknięcia rozjazd wróci nazajutrz po migracji.</span></li>
+          <li><span>Kontrakt Wyników mówi dosłownie: <b>„Docelowy KPI może zostać zdefiniowany na poziomie Initiative. Po zatwierdzeniu trafia do wspólnego rejestru Results i może być przypisany do wielu kart wyników."</b> To rozstrzyga <b>własność</b> — jeden rejestr, jedna tożsamość, relacja wiele-do-wielu. <b>Sprostowanie:</b> pierwsza wersja tego akapitu cytowała moje własne tłumaczenie jako cytat i na tej podstawie skreślałem pytanie do Ciebie. Pytanie wraca niżej, bo rozstrzygnięta jest własność, a nie klucz tożsamości.</span></li>
+          <li><span><b>Czego brakuje:</b> nazwy klucza tożsamości wskaźnika i wskazania fizycznego rejestru. Ten sam kontrakt wymienia <b>„domknąć handoff KPI z Initiative do rejestru Results" jako otwartą lukę</b> — czyli własność jest przesądzona, a droga nie.</span></li>
+          <li><span><b>Sprostowanie drugie:</b> pisałem, że dwie powierzchnie zapisujące wskaźniki są „poza jakimkolwiek strażnikiem". Nieprawda — obie mają ścianę tenantową. Są poza <b>rejestrem przejścia</b>, co znaczy co innego. Realna słabość jest mniejsza: jedna z bramek działa w trybie logowania, nie egzekwowania.</span></li>
           <li><span><b>Istnieje już maszyneria przejścia</b> ze stanami „rozstrzygnięty / kwarantanna / niezmigrowany" i dźwignią wycofania. Poprzedni plan o niej nie wiedział i planował budowę od zera.</span></li>
         </ul>
         <div class="gate"><b>Bramka:</b> zmień wartość wskaźnika w inicjatywie, odśwież Wyniki — zmieniła się. I odwrotnie. To odróżnia jeden obiekt od dwóch, które dziś przypadkiem się zgadzają.</div>
@@ -323,15 +325,15 @@
           <tr><td>Ocena</td><td><b>Nie ma napisanego stanu docelowego</b> — sekcja to lista czterech plików „do scalenia"</td><td>brak</td><td>M3</td></tr>
           <tr><td>Inicjatywy</td><td>Najbogatszy w produkcie: 11 bramek, 12 statusów, 26 kart</td><td><b>spór o kanon</b> + decyzja blokująca kanoniczność; pakiet kierunku nieodebrany</td><td>M2</td></tr>
           <tr><td>Realizacja</td><td>Pięć funkcji w kontrakcie, zupełnie inne pięć w kanonie</td><td><b>spór o kanon</b>; własny status modułu mówi „zablokowany"</td><td>M2 → M4</td></tr>
-          <tr><td>Wyniki</td><td>Własność wskaźnika rozstrzygnięta; 18 luk, najdłuższa lista w produkcie</td><td>akcept <b>kierunku</b> z Twoim podpisem; kanon wskaźnika jest szkicem sprzed pięciu miesięcy</td><td>M3</td></tr>
+          <tr><td>Wyniki</td><td>Własność wskaźnika rozstrzygnięta, droga do rejestru nie; 17 luk — najdłuższa lista w produkcie</td><td>akcept <b>kierunku</b> z Twoim podpisem; kanon wskaźnika jest szkicem sprzed pięciu miesięcy</td><td>M3</td></tr>
           <tr><td>Finanse</td><td>Pełna pętla od sprawozdania po decyzję inwestycyjną</td><td>akcept kierunku, szczegóły otwarte; status „beta" w spisie <b>nieaktualny</b> — odwróciłeś decyzję i wpuściłeś moduł w pełnym zakresie</td><td>M3</td></tr>
-          <tr><td>Materiały</td><td>Rozproszony na cztery kontrakty podsystemów; nadrzędny zapowiedziany w czasie przyszłym</td><td>akcept kierunku, szczegóły otwarte; bramka stoi na potwierdzeniu zawężonego zakresu</td><td>M4</td></tr>
-          <tr><td>Audyty</td><td>Kierunek zaakceptowany, produkt poza pierwszą falą — wolno wyłącznie porządkować</td><td>akcept kierunku z podpisem; <b>odbiór modułu się nie odbył</b>, mimo to dostawy są scalane</td><td>M3</td></tr>
+          <tr><td>Materiały</td><td>Rozproszony na cztery kontrakty podsystemów; kontrakt konsolidujący istnieje jako specyfikacja produktowa, ale nie jako kontrakt modułu</td><td>akcept kierunku, szczegóły otwarte; bramka stoi na potwierdzeniu zawężonego zakresu. <b>Pięć generatorów ma osobne bramki</b> — jedna z nich opisuje stan nieprawdziwy i poprawiam ją u źródła</td><td>M4</td></tr>
+          <tr><td>Audyty</td><td>Kierunek zaakceptowany, produkt poza pierwszą falą — wolno wyłącznie porządkować</td><td>akcept kierunku z podpisem; <b>dwa panele eksperckie: 6,0 → 6,5 przy celu 9,5</b>, z werdyktem „nie da się przeczytać ani wyeksportować raportu z audytu" — czyli jedynej rzeczy, którą firma doradcza oddaje klientowi</td><td>M3</td></tr>
           <tr><td>Spotkania</td><td>Wizja zaakceptowana; warstwa źródłowa opisuje moduł jako zaślepkę i tak go „odbiera"</td><td>akcept kierunku (governance otwarte); wymaga odbioru runtime zamiast traktowania jak zaślepka</td><td>M2 → M4</td></tr>
-          <tr><td>Organizacja</td><td>Sześć modułów menu, kontrakt snapshotu dla całego produktu</td><td><b>domknięty 25.08</b> — ale kontrakt nadal opisuje moduł jako otwarty</td><td>M2</td></tr>
-          <tr><td>Panel administratora</td><td>Siedem domen, 55 ekranów, odbioru częściowego nie będzie</td><td>brak; pomiar: podłączonych 14 z 55</td><td>poza kamieniami</td></tr>
-          <tr><td>Ustawienia</td><td>Osiem modułów, pięciopoziomowa reguła rozstrzygania wartości</td><td><b>domknięty 25.08</b>; pomiar po zamknięciu: 12 z 20 semantycznie poprawnych</td><td>poza kamieniami</td></tr>
-          <tr><td>Portal partnerski</td><td>Najsłabiej dospecyfikowany; ekonomia wyłączona decyzją</td><td>pakiet <b>zaakceptowany</b> z Twoim podpisem, ale odbiór modułu wisi; własne sprostowanie: „izolacja 8/8" była fałszywa, żywy wyciek między organizacjami</td><td>poza kamieniami</td></tr>
+          <tr><td>Organizacja</td><td>Sześć modułów menu, kontrakt snapshotu dla całego produktu</td><td>akcept <b>warunkowy</b>: trzy warunki niespełnione, w tym realne zapisywanie pięciu ekranów stojących dziś na pamięci przeglądarki</td><td>M2</td></tr>
+          <tr><td>Panel administratora</td><td>Siedem domen; <b>62 sloty w kodzie, nie 55</b> — mianownik decyzji trzeba odświeżyć</td><td>brak. <b>Sprostowanie:</b> liczba „14 z 55 podłączonych" jest w naszym własnym katalogu defektów sklasyfikowana jako <b>kłamiący rejestr</b> — pomiar dał 61 z 62</td><td>poza kamieniami</td></tr>
+          <tr><td>Ustawienia</td><td>Osiem modułów, pięciopoziomowa reguła rozstrzygania wartości</td><td><b>jedyny <code>CLOSED_FINAL</code></b>; pomiar po zamknięciu: 12 z 20 zrzutów poprawnych — dla roli członka <b>2 z 10</b>, reszta cicho przekierowuje do profilu</td><td>poza kamieniami</td></tr>
+          <tr><td>Portal partnerski</td><td>Najsłabiej dospecyfikowany; ekonomia wyłączona decyzją</td><td>pakiet <b>zaakceptowany</b> z Twoim podpisem, UI odebrane 29.08, odbiór modułu wisi. <b>Sprostowanie sprostowania:</b> „izolacja 8/8" była fałszywa jako <em>dowód</em>, ale wyciek <b>jest zamknięty</b> — badana dziura była wstrzykniętym mutantem, nie defektem wysłanego kodu. Poza kamieniami z powodu wyłączonej ekonomii, nie bezpieczeństwa</td><td>poza kamieniami</td></tr>
         </tbody>
       </table>
     </div>
@@ -350,7 +352,8 @@
         <tbody>
           <tr><td><b>Które pięć narzędzi</b> użyjesz na trzech najbliższych realnych projektach?</td><td>To wybór oferty, nie techniki. Wariantów jest trzydzieści jeden, szesnaście ma własną ścieżkę.</td><td>Największe dostępne cięcie zakresu w całym programie zostaje niewykonane — „sto procent" znaczy 31 zamiast 5.</td></tr>
           <tr><td><b>Trzy do pięciu realnych tematów</b> z Twojej praktyki na każdy typ dokumentu — do porównania ślepego.</td><td>Rubryka odbioru wymaga porównania z realnym dokumentem. Bez Twoich tematów jej najostrzejsze kryterium jest martwe.</td><td>Zostaje nam ocena „ładny / brzydki", czyli dokładnie to, co zawiodło do tej pory.</td></tr>
-          <tr><td><b>Rozliczenia w pierwszej wersji</b> — realne płatności czy tylko plan, zużycie i faktury?</td><td>Decyzja komercyjna. Dziś pozycja „Subskrypcja i rozliczenia" jest w menu doradcy i wyrzuca go na czat.</td><td>Buduję kafelek z linkiem read-only, bo tak mówi zatwierdzona decyzja — i mogę się mylić co do Twoich planów.</td></tr>
+          <tr><td><b>Rozliczenia w pierwszej wersji</b> — realne płatności czy tylko plan, zużycie i faktury?</td><td>Decyzja komercyjna, wyłącznie Twoja. <b>Uwaga o stanie:</b> dwa niezależne sprawdzenia dały sprzeczny wynik — jedno prześledziło łańcuch przekierowań kończący się na czacie, drugie znalazło realny panel z planem i saldem. Prawdopodobnie zależy od roli. <b>Nie rozstrzygnę tego bez uruchomienia produktu</b> i nie będę na tym opierał planu.</td><td>Zatwierdzona decyzja mówi „kafelek z linkiem tylko do odczytu". Buduję to, chyba że powiesz inaczej.</td></tr>
+        <tr><td><b>Wskaźnik — czy żyje dłużej niż inicjatywa?</b> Rodzi się z rekomendacji i umiera razem z nią, czy należy do klienta i przeżywa projekt?</td><td>Kontrakt rozstrzyga <em>własność</em> (wspólny rejestr Wyników), ale nie mówi, co się dzieje przy zamknięciu inicjatywy. To decyduje, czy po roku umiesz pokazać klientowi, że doradztwo było warte pieniędzy.</td><td>Rekomenduję: <b>należy do klienta, z odnośnikiem do inicjatywy</b>. Konsekwencja: więcej migracji teraz, ale Wyniki przestają być drugą rzeczywistością.</td></tr>
         </tbody>
       </table>
     </div>
@@ -364,6 +367,12 @@
       <p class="note"><strong>Nie ma liczby „35 miejsc utraty" ani jej rozbicia.</strong> Zmierzyłem sufit dla trzech widżetów i wyszło trzynaście, w całości na martwych ścieżkach. Skąd wzięła się reszta — nie wiem. To zostaje rozkazem pomiarowym, nie tezą.</p>
       <p class="note"><strong>Nie ma dowodu, że eksport działa „wszędzie".</strong> Cztery formaty da się pobrać i mam pliki na dysku, ale wejść eksportu jest kilkanaście, a jedno z nich ma twardą bramkę jakości zwracającą odmowę. „Działa" nie znaczy „wychodzi zawsze".</p>
       <p class="note"><strong>Nie ma jedenastu dróg utworzenia inicjatywy.</strong> Kontrakt dokumentuje siedem rodzin. Liczba jedenaście i podział trzy do ośmiu nie ma w repozytorium źródła — usuwam ją, zamiast powtarzać.</p>
+      <p class="note"><strong>Nie ma Twojej własnej bramki odbioru — i to jest najpoważniejsze przeoczenie tego planu.</strong> Ustanowiłeś ją 26 sierpnia: <strong>adwersaryjny panel ekspertów per moduł, próg ≥9,5/10, przed każdym domknięciem</strong>, przy horyzoncie trzytygodniowym. Ten dokument jej nie cytował i wymyślał własne bramki, pisząc jednocześnie „nie ma wyceny w dniach" — choć horyzont był już zadekretowany. Jedyny moduł, który przez ten panel przeszedł, dostał 6,0 i 6,5.</p>
+      <p class="note"><strong>Nie ma wzorca „domknięte za flagą".</strong> Ustaliłeś go sam 25 sierpnia: wpis o domknięciu potrafi opisywać stan <em>za flagą wyłączoną</em>, którego użytkownik nigdy nie widzi. Dotyczy to Organizacji — odebrany komplet jedenastu ekranów leży za flagą, a na linii integracyjnej tej flagi w ogóle nie ma, więc runtime pokazuje stary układ. To unieważnia całą klasę akceptów, na które ten plan się powołuje.</p>
+      <p class="note"><strong>Nie ma powiadomień.</strong> Zmierzone 25 sierpnia: wszystkie przełączniki powiadomień są atrapą, dziesiątki emisji idą poza systemem, nieudana płatność nie wysyła listu. Zero wzmianek w tym planie, mimo że to powierzchnia, którą klient zauważa natychmiast.</p>
+      <p class="note"><strong>Nie ma naprawy wektora maskowania testów.</strong> Konfiguracja testów nadal ponawia nieudane przebiegi, więc każda suita bezpieczeństwa o kształcie „atak → odczyt bez zmian" może świecić na zielono przy żywej dziurze. Naprawa z 28 sierpnia była lokalna. <strong>To podważa dowody, a nie funkcje</strong> — i dlatego jest groźniejsze niż którakolwiek faza.</p>
+      <p class="note"><strong>Nie ma pięciu ekranów Organizacji stojących na pamięci przeglądarki</strong> — a to są miejsca utraty pracy i należą do fazy pierwszej. Wypadły, bo szukałem ich w kodzie, a one są wymienione w Twoim własnym warunku odbioru.</p>
+      <p class="note"><strong>Ten dokument jest starszy niż repozytorium, w którym leży.</strong> Powstał na jednym stanie linii integracyjnej, po czym tej samej nocy weszło sześć commitów zmieniających piętnaście plików dokładnie w zakresie fazy zerowej. Zanim rozdasz zadania — sprawdź, co z fazy 0 jest już zrobione. Połowa jest.</p>
       <p class="note"><strong>Nie ma stanu runtime dla większości twierdzeń o modułach.</strong> Tabela wyżej opisuje, co mówią kontrakty i kto co odebrał — nie to, co działa. Te dwie prawdy są w tym produkcie osobne i mylenie ich kosztowało nas najwięcej.</p>
     </div>
   </section>
