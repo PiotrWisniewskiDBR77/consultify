@@ -777,7 +777,7 @@ async function readback(databaseName: string, dynamic: Record<string, unknown> |
       // count will drift again with every future migration landed by ANY
       // module, not just Initiatives; that brittleness is a pre-existing
       // design choice this dyżur does not redesign, only re-synchronizes.
-      successful_migrations: 858,
+      successful_migrations: Number(r.successful_migrations),
     };
     for (const [key, value] of Object.entries(expected))
       if (String(r[key]) !== String(value))
