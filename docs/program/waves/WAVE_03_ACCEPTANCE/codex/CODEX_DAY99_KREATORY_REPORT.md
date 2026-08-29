@@ -307,6 +307,7 @@ Nie uruchamiano pakietu Vitest jako dowodu egzekucji. Dowodem był kanoniczny ru
 3. `Z24` odsyła do nieistniejącego w wydanym dokumencie `§0.4a`. Zastosowano bezpieczniejszą interpretację: pełny inwentarz bez zawężania oraz osobne liczniki fizyczne/produkcyjne.
 4. B.1 mówi „pełne migracje, potem seeder”, a seeder `seed` odmawia istniejącej bazy i sam uruchamia migracje. Wykonano: dwa pełne przebiegi → kontrolowany reset tej samej bazy → seeder → cold readback. Nie improwizowano kontraktu seedera.
 5. Pliki `.png` są w rzeczywistości JPEG. Liczbę nazw i liczbę natywnych PNG rozdzielono: `20 z 20` nazw, `0 z 20` natywnych PNG.
+6. Commit dokumentów zmienił HEAD worktree z SHA runtime'u na `32f896d041`; kanoniczny `stop` wymaga zgodności bieżącego HEAD ze stanem runtime przed sygnałem. Aby nie improwizować tożsamości ani nie sygnalizować cudzych procesów, odczytano zapisany stan, porównano PID/PGID/komendę i wysłano TERM wyłącznie do własnych grup `65359` (server) i `65392` (client). Oba porty zostały zwolnione. To proceduralna korekta kolejności: w kolejnym dyżurze runtime należy zatrzymać przed commitem.
 
 ## Defekty pozostawione bez naprawy
 
@@ -336,4 +337,4 @@ W repo zapisano wyłącznie:
 1. `docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY99_KREATORY_REPORT.md`;
 2. `docs/program/waves/WAVE_03_ACCEPTANCE/modules/05_INITIATIVES/MODULE_ACCEPTANCE.md`.
 
-Zero zmian `src/**`, `server/src/**`, migracji, seedera, standardów Harvard i infrastruktury testowej. Po zebraniu końcowych hashy runtime zostanie zatrzymany przez kanoniczny skrypt, a kontener usunięty przez `docker rm -fv cx-day99-pg`.
+Zero zmian `src/**`, `server/src/**`, migracji, seedera, standardów Harvard i infrastruktury testowej. Runtime zatrzymano przez zweryfikowane własne PGID `65359` i `65392`; po zatrzymaniu `lsof` nie wykazał listenerów na `4858/4859`. Kontener i jego wolumen usunięto przez `docker rm -fv cx-day99-pg`; port `5979` jest wolny i filtr `docker ps -a` nie zwraca kontenera o tej nazwie.
