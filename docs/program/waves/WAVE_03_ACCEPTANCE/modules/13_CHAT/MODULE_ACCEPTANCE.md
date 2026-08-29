@@ -24,10 +24,10 @@ stale/replayed approval, foreign tenant and no false citation or success.
 | G04 | Reproducible realistic and boundary fixtures | `PASS_OWNER_FIXTURE_RETAINED` | Guarded `scripts/dev/seed-wave3-chat-owner-review.mjs` created a fresh `817`-migration retained database. Stable owner/member/revoked/foreign identities, a UUID-valid sourced conversation and two server-extracted citations produced one pending proposal through the canonical DB-backed service with no LLM/provider call. The exclusive `0600` manifest is `FINAL`, carries a lowercase nonce and is bound to the matching durable `public.wave3_owner_fixture_markers` row; runtime adoption independently verified the tuple. The seed manifest records the pre-review pending/zero-receipt baseline; the retained database now truthfully contains the later technical OWNER decision and one receipt described in G05. Fixture manifest emits no password/database credential. |
 | G05 | Functional preflight and cold readback | `PASS_TECHNICAL / OWNER_PENDING` | Prior focused replay: `8/8` files, `139/139 PASS`; fresh RealPG/mounted lane `6/6` files, `39/39 PASS`; store regression `9/9 PASS`. Real OWNER login opened the exact sourced conversation and two-reference proposal. OWNER `Approve` followed by `Create document` produced one successful materialization receipt; new-tab cold reopen retained `Document created`. DB readback: proposal `34540062-cf51-4d0e-a15b-a04c17844df0` is `materialized`, decided by the fixture OWNER, with one succeeded mapping receipt (`attempt_count=1`, no error, target version `1`). Live-provider reliability, MEMBER decision policy and owner judgment remain open. |
 | G06 | Desktop/tablet, PL/EN, themes, states, a11y, console/HTTP | `PARTIAL_BROWSER_PASS` | Exact authenticated desktop/dark evidence captured the source URL, two preserved references, pinned hash prefix/version, pending actions, materialized status and cold reopen on `/chat/13000000-0000-4000-8000-000000000001`. No frontend defect was observed in this deterministic provider-free journey. PL/light, rejection/error states, tablet, full a11y and complete console/HTTP replay remain pending; mobile is non-gating. |
-| G07 | Piotr review card | `REVIEW_EXECUTED` | Guided review executed on `2026-08-22` at exact SHA `75bed3bb648577e5ac10fec98868893b768c4f92`; detailed record: `OWNER_REVIEW_2026-08-22.md`. Formal owner verdict remains pending. |
+| G07 | Piotr review card | `REVIEW_EXECUTED / PACKET_REFRESHED` | Jednostronicowa karta bez żargonu: `G07_KARTA_PRZEGLADU.md`; wcześniejszy odbiór zachowany w `OWNER_REVIEW_2026-08-22.md`. Formal owner verdict remains pending. |
 | G08 | First-impression review | `PASS_WITH_FINDINGS` | Piotr judged Chat understandable, readable and generally very strong; the accepted direction is preserved by the remediation contract. |
-| G09 | Guided CX journey review | `PASS_WITH_FINDINGS` | Piotr completed `Approve -> Create document -> Document created`; visual/navigation findings and integration gaps are registered as `CHAT-OWN-001`–`017`. |
-| G10 | Alternate-state owner review | `PARTIAL` | Provider-off failure was observed honestly. Rejection, permission, stale/conflict, live-provider, Canvas and voice states remain integrator/retest obligations. |
+| G09 | Guided CX journey review | `PASS_WITH_FINDINGS / REFRESHED_REALPG` | Realny Gateway/JWT/PG zwrócił `200` dla rozmowy, listy propozycji i karty propozycji; niezależny SELECT potwierdził jedną wiadomość i oczekującą propozycję. Wcześniejsza ścieżka materializacji pozostaje historycznym dowodem, nie została ponownie wykonana w tym zadaniu dowodowym. |
+| G10 | Alternate-state owner review | `PARTIAL_EVIDENCE` | Light/dark, rozmowa pełna/pusta, rozwinięte akcje oraz feed sygnałów zapisane poza repo. Rejection, permission, stale/conflict, live-provider, Canvas i voice pozostają otwarte. |
 | G11 | Every owner observation/screenshot durably registered | `PASS_INTAKE` | `25/25` screenshots copied and SHA-256 indexed under `docs/program/waves/WAVE_03_ACCEPTANCE/modules/13_CHAT/evidence/owner-review-2026-08-22/`; all observations mapped in `OWNER_REVIEW_2026-08-22.md`. |
 | G12 | Owner register reconciled and confirmed | `READY_FOR_OWNER_CONFIRMATION` | Detailed correction tasks and owner-positive constraints are reconciled; Piotr has not yet confirmed the written report or issued a formal verdict. |
 | G13 | Solution and impact analysis | `DRAFT_COMPLETE` | Seventeen prioritized tasks with acceptance criteria separate UI remediation from integrator-owned Canvas/API/provider/RBAC/voice qualification. |
@@ -85,3 +85,20 @@ Accepted SHA: —
 Date: —
 Accepted-out/deferred: —
 Evidence manifest: `OWNER_REVIEW_2026-08-22.md`; `docs/program/waves/WAVE_03_ACCEPTANCE/modules/13_CHAT/evidence/owner-review-2026-08-22/EVIDENCE_INDEX.md`
+
+## Pakiet odbioru 2026-08-29 — znaleziska otwarte
+
+| ID | Stan | Obserwacja | Adres w kodzie |
+|---|---|---|---|
+| `CHAT-OR-20260829-001` | `OPEN` | W języku polskim wiadomość źródłowa, karta propozycji, status oraz przyciski decyzji pozostają po angielsku. | `scripts/dev/seed-wave3-chat-owner-review.mjs:58`, `scripts/dev/seed-wave3-chat-owner-review.mjs:254` |
+| `CHAT-OR-20260829-002` | `OPEN` | Pusty ekran rozmowy nadal pokazuje angielskie kontrolki i etykiety, m.in. `Open capability`, kontrolki głosu i dyktowania. | `src/components/AIChat/UnifiedChatPanel.tsx:6989`, `src/components/AIChat/VoiceModeLegend.tsx:249`, `src/components/AIChat/EnhancedChatInput.tsx:1317` |
+| `CHAT-OR-20260829-003` | `KNOWN_DECISION / NOT_A_DEFECT` | Feed sygnałów jest pusty, bo producent jest wyłączony. Nie twierdzimy, że jego włączenie napełni feed: reguły nie czytają treści czatu. | `src/components/AIChat/signalsFeed/ChatSignalsFeed.tsx:266` |
+| `CHAT-OR-20260829-004` | `EVIDENCE_MISSING` | Brak pełnego wariantu feedu sygnałów na realnych danych; fixture rozmowy świadomie nie tworzy zadań, inicjatyw, decyzji, KPI ani sygnałów budżetowych. | `scripts/dev/seed-wave3-chat-owner-review.mjs:58` |
+
+## Dziennik budowy pakietu 2026-08-29
+
+- Zbudowano kartę przeglądu, świeżą bazę po 863 migracjach, fixture `FINAL`, realny odczyt rozmowy i propozycji przez Gateway oraz kadry light/dark rozmowy pełnej, pustej, akcji i feedu sygnałów.
+- Nie wykonano `Approve` ani materializacji, ponieważ zadanie jest pakietem dowodowym i nie wymaga zmiany stanu; stan `pending` zachowano do odbioru.
+- Decyzję o producencie sygnałów odczytano z rejestru: treść czatu nie jest wejściem ośmiu reguł, a natychmiastową realną drogą do sygnału może być inicjatywa bez harmonogramu bazowego.
+- Nie wiadomo, czy właściciel zaakceptuje angielski język karty i kontrolek na polskim ekranie oraz aktualną gęstość pustego startu.
+- Pierwsze kadry opisane jako light były motywem systemowym dark; zostały zastąpione po jawnym wyborze `Jasny`.
