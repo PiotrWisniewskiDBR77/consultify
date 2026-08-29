@@ -406,3 +406,20 @@ PORT 4884 WOLNY
 PORT 4885 WOLNY
 KONTENER USUNIETY
 ```
+
+### Cleanup po wznowieniu 111b
+
+Po wypchnięciu pierwszego punktu dowodowego `ce71328a73` zamknięto kartę
+Browsera. Kanoniczny stop został wykonany przy tożsamości startowej markera
+`4f63c65d85`; raportował `stopped=true`, wyłącznie własne grupy procesów,
+potwierdzone zakończenie procesów, zachowaną bazę adoptowaną oraz wolne porty
+runtime'u. Następnie usunięto wyłącznie `cx-day111-pg` wraz z jego wolumenem.
+
+Niezależna kontrola po całym cleanupie:
+
+```text
+PORT 5992 WOLNY
+PORT 4884 WOLNY
+PORT 4885 WOLNY
+CONTAINER NIEOBECNY
+```
