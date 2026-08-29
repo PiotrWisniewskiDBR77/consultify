@@ -233,14 +233,14 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
       const code = currency || activeCurrency || 'EUR';
       const value = amount ?? 0;
       try {
-        return new Intl.NumberFormat(undefined, {
+        return new Intl.NumberFormat('pl-PL', {
           style: 'currency',
           currency: code,
-          maximumFractionDigits: 0,
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
         }).format(value);
       } catch {
-        // Invalid/unknown ISO code — degrade gracefully to "<CODE> <number>".
-        return `${code} ${value.toLocaleString()}`;
+        return `${new Intl.NumberFormat('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)} ${code}`;
       }
     },
     [activeCurrency]
@@ -457,40 +457,44 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
           {[
             {
               label: t('partner.earnings.v8TotalEarned', 'Governed total earned'),
-              value: `${v8Summary.currency ?? 'EUR'} ${(v8Summary.totalEarned ?? 0).toLocaleString()}`,
+              value: formatCurrency(v8Summary.totalEarned, v8Summary.currency),
               // `totalPaid` is now projected from the same settled-payout
               // register the Payouts list renders, so this can no longer read
               // "0 paid" above a COMPLETED payout.
-              detail: `${v8Summary.currency ?? 'EUR'} ${(v8Summary.totalPaid ?? 0).toLocaleString()} ${t('partner.earnings.paidSuffix', 'wypłacone')}`,
+              detail: `${formatCurrency(v8Summary.totalPaid, v8Summary.currency)} ${t('partner.earnings.paidSuffix', 'wypłacone')}`,
             },
             {
               label: t('partner.earnings.v8ThisMonth', 'Governed this month'),
-              value: `${v8Summary.currency ?? 'EUR'} ${(v8Summary.thisMonth ?? 0).toLocaleString()}`,
+              value: formatCurrency(v8Summary.thisMonth, v8Summary.currency),
               detail: t('partner.earnings.itemsCount', 'Pozycje: {{count}}', {
                 count: v8Summary.thisMonthCount ?? 0,
               }),
             },
             {
               label: t('partner.earnings.v8Pending', 'Governed pending'),
-              value: `${v8Summary.currency ?? 'EUR'} ${(v8Summary.totalPending ?? 0).toLocaleString()}`,
+              value: formatCurrency(v8Summary.totalPending, v8Summary.currency),
               detail: t('partner.earnings.approvedAmount', 'Zatwierdzone: {{amount}}', {
-                amount: v8Summary.totalApproved ?? 0,
+                amount: formatCurrency(v8Summary.totalApproved, v8Summary.currency),
               }),
             },
             {
               label: t('partner.earnings.v8ReadyForPayout', 'Governed ready for payout'),
-              value: `${programStatus?.balances.currency ?? v8Summary.currency ?? 'EUR'} ${(
+              value: formatCurrency(
                 programStatus?.balances.availableToPayout ??
-                v8Summary.readyForPayout ??
-                0
-              ).toLocaleString()}`,
+                  v8Summary.readyForPayout ??
+                  0,
+                programStatus?.balances.currency ?? v8Summary.currency
+              ),
               detail:
                 programStatus?.hold && programStatus.hold.amount > 0
                   ? t('partner.earnings.heldAmount', 'Wstrzymane: {{amount}}', {
-                      amount: programStatus.hold.amount,
+                    amount: formatCurrency(
+                      programStatus.hold.amount,
+                      programStatus.balances.currency ?? v8Summary.currency
+                    ),
                     })
                   : t('partner.earnings.lastMonthAmount', 'Poprzedni miesiąc: {{amount}}', {
-                      amount: v8Summary.lastMonth ?? 0,
+                      amount: formatCurrency(v8Summary.lastMonth, v8Summary.currency),
                     }),
             },
           ].map((card) => (

@@ -120,13 +120,14 @@ const stateClass: Record<SurfaceState, string> = {
 
 function money(value: number | undefined, currency: string): string {
   try {
-    return new Intl.NumberFormat(undefined, {
+    return new Intl.NumberFormat('pl-PL', {
       style: 'currency',
       currency: currency || 'EUR',
+      minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(Number(value) || 0);
   } catch {
-    return `${Number(value) || 0} ${currency || 'EUR'}`;
+    return `${new Intl.NumberFormat('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(value) || 0)} ${currency || 'EUR'}`;
   }
 }
 
