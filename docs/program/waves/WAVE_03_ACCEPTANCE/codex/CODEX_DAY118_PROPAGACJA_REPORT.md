@@ -187,4 +187,15 @@ K5 dla ekranu AI: `4/4`. K5 dla wyceny: `0/4`, bo produkt nie został zmieniony.
 `NOT VERIFIED` — środowiska zdalne i owner acceptance.
 
 Runtime został zatrzymany, jego grupy procesów zakończone, porty `4902/4903`
-zwolnione. Kontener i lokalna baza są usuwane po zapisaniu raportu.
+zwolnione. Końcowe sprzątanie:
+
+```text
+docker rm -fv cx-day118-pg
+cx-day118-pg
+PORT 6001 WOLNY
+PORT 4902 WOLNY
+PORT 4903 WOLNY
+```
+
+Wolumen i obie lokalne bazy dyżuru zostały usunięte wraz z należącym do niego
+kontenerem. Artefakty dowodowe poza repo pozostawiono do odbioru nadzorcy.
