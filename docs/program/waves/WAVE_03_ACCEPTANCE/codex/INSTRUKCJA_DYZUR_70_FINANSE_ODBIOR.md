@@ -151,7 +151,7 @@ Komplet komend weryfikacji stanu wejściowego znajdziesz w **§A** tego dokument
 | `Z4` | **Nie czytasz i nie kopiujesz wariantów WIP właściciela** (`PRESERVED_PRODUCT_WIP` / `NO_COPY`) ani katalogu `server/src/_backup/**` | Warianty produktowe właściciela; `_backup` to śmietnik kolizji TS/JS |
 | `Z5` | **★★ Nie dotykasz katalogu `/Users/piotrwisniewski/Developer/Consultify`** — ani do zapisu, ani do odczytu, ani `git`, ani `cat`, ani `grep -r`, ani `ls`. Jedyny dozwolony kontakt: **symlink `node_modules` (odczyt)**, `DEC-2026-08-26-86` | Brudny checkout właściciela. **Naruszony 28.08: STOP dyżuru 53 kosztował godzinę** |
 | `Z6` | **Nie dotykasz cudzych worktree** w `/private/tmp/consultify-*`, `/private/tmp/cx-*`, `/private/tmp/fix-*`, `/private/tmp/odbior-*`, `/private/tmp/instr-*`, `/private/tmp/finish-*`. **Wyjątek: katalogi, które SAM zakładasz w tym dyżurze, są Twoje** | Żyje ich ponad 100 |
-| `Z7` | **★★ Twój JEDYNY port bazy to `5942`. Twój JEDYNY port harnessu to `4640`.** Nazwa kontenera musi nieść numer dyżuru: **`cx-day70-pg`**. **ZAKAZANE:** ``5432` (NASŁUCHUJE i NIE JEST TWÓJ), `5000`, `5037`, `5838`, `5835`, `5830`, `5816`, `5932`, `5933`, `3990`, `4342`, `4380`, `4381`, `4390`, oraz `5941` i `4630`/`4631` (dyżur 69, biegnie równolegle)`. **Sprawdzasz sam przed startem** (BLOK 0) | Trzy incydenty zapisu do cudzej bazy; `docker ps` 28.08 pokazał żywe `cx-day53-pg:5838`, `cx-day52-pg:5835`, `cx-day50-pg:5830`, `cx-day48-pg:5816` |
+| `Z7` | **★★ Twój JEDYNY port bazy to `5942`. Twój JEDYNY port harnessu to `4640`.** Nazwa kontenera musi nieść numer dyżuru: **`cx-day70-pg`**. **ZAKAZANE:** ``5432` (NASŁUCHUJE i NIE JEST TWÓJ), `5000`, `5037`, `5838`, `5835`, `5830`, `5816`, `5932`, `5933`, `3990`, `4342`, `4380`, `4381`, `4390`, oraz `5941` i `4630`/`4631` (dyżur 69, biegnie równolegle), `5943` (dyżur 71), oraz **`3940`, `3941`, `4363`, `4364` — chronione przez `start-wave3-owner-runtime.mjs`**`. **Sprawdzasz sam przed startem** (BLOK 0) | Trzy incydenty zapisu do cudzej bazy; `docker ps` 28.08 pokazał żywe `cx-day53-pg:5838`, `cx-day52-pg:5835`, `cx-day50-pg:5830`, `cx-day48-pg:5816` |
 | `Z8` | **Zero interakcji z Railway** — brak `railway` CLI, brak produkcyjnych env, brak redeployu, brak zdalnych migracji i seedów | Produkcja `consultify.ai` NIETYKALNA (`DEC-2026-08-25-65`) |
 | `Z9` | **Żadnej bazy poza jednorazowym lokalnym kontenerem tego dyżuru** — nigdy demo, staging, produkcja ani cudza retained-DB | **Baza demo i staging to JEDNA baza** (`DEC-2026-08-28-176`) |
 | `Z10` | **★★ Zero nowych flag funkcyjnych i zero zmian wartości domyślnej istniejącej flagi** — w kodzie, w `.env*`, w `docker-compose*`, w `railway*`. Wyjątek: flagi jawnie zamówione w `brak — ten dyżur nie wprowadza ani nie zmienia żadnej flagi`, wszystkie `default OFF` | Krach 07-12: masowe włączenie flag wizualnych na żywo, „tabelki jak dla trzylatka" (`CLAUDE.md` §9) |
@@ -578,10 +578,10 @@ linii komendy** (`Z26`), nie przez wcześniejszy `export`:
 | Zmienna | Wartość |
 | --- | --- |
 | `FINANCE_STATEMENT_ACCEPTANCE_PDF` | ścieżka do pliku z §A |
-| `FINANCE_OWNER_FIXTURE_DATABASE_URL` | `postgresql://postgres:cx@127.0.0.1:5942/cx_day70` |
-| `FINANCE_OWNER_FIXTURE_MANIFEST` | ścieżka bezwzględna w `/private/tmp/cx-day70-artefakty/`, **plik NIE MOŻE już istnieć** |
+| `FINANCE_OWNER_FIXTURE_DATABASE_URL` | `postgresql://postgres:cx@127.0.0.1:5942/consultify_w3_finance_owner_day70` — ★ **nazwa NARZUCONA przez kod, patrz POPRAWKA 2** |
+| `FINANCE_OWNER_FIXTURE_MANIFEST` | `/private/tmp/cx-day70-artefakty/finance-owner-fixture-manifest-resume-2.json` — ★ dwie poprzednie ścieżki są ZAJĘTE, patrz POPRAWKA 2 |
 | `FINANCE_OWNER_FIXTURE_CONFIRM` | wg wymagania skryptu |
-| argument | `--confirm-db=cx_day70` — musi zgadzać się z nazwą bazy w URL |
+| argument | `--confirm-db=consultify_w3_finance_owner_day70` — musi zgadzać się z nazwą bazy w URL |
 
 Seeder **odmówi** bazy spoza pętli zwrotnej (`127.0.0.1`/`localhost`/`::1`) —
 to jego bezpiecznik, nie usterka.
@@ -622,6 +622,58 @@ to jego bezpiecznik, nie usterka.
 > ★ Jeżeli mimo tej procedury seeder znowu odmówi — **to jest STOP, nie powód
 > do improwizacji.** Nie kasujesz baz „na wszelki wypadek", nie zmieniasz
 > `SOURCE_SHA`, nie obchodzisz bramek.
+
+> ### ★★ POPRAWKA WYDANIA NR 2 — NAZWA BAZY JEST NARZUCONA PRZEZ KOD
+>
+> **Dodana 2026-08-29 po DRUGIM zasadnym STOP-ie (`DEC-2026-08-29-269`).**
+> Autor instrukcji przeczytał tym razem **cały łańcuch wywołań**, nie fragment.
+>
+> `seed` nie kończy pracy na sobie — woła **pełny harness łańcucha**
+> `server/scripts/run-wave3-finance-owner-review.ts` (linia `:311` seedera),
+> a ten harness ma **własną bramkę nazwy bazy**:
+>
+> - `run-wave3-finance-owner-review.ts:32` — `if (!/^consultify_w3_finance_owner_[a-z0-9_]+$/.test(databaseName))`
+> - `:33` — `throw new Error('Database name must match consultify_w3_finance_owner_*')`
+>
+> Ten sam wzorzec egzekwuje **runtime potrzebny do zrzutów w §B.2**
+> (`scripts/dev/start-wave3-owner-runtime.mjs:22`) oraz test dowodowy
+> (`server/src/services/__tests__/statementOwnerAcceptance.pg.test.ts:69`).
+> **Nazwa `cx_day70` nie miała prawa przejść i to był błąd instrukcji, nie wykonawcy.**
+>
+> **WIĄŻĄCE WARTOŚCI DLA TRZECIEJ PRÓBY:**
+>
+> | Co | Wartość |
+> | --- | --- |
+> | nazwa bazy | `consultify_w3_finance_owner_day70` |
+> | `FINANCE_OWNER_FIXTURE_DATABASE_URL` | `postgresql://postgres:cx@127.0.0.1:5942/consultify_w3_finance_owner_day70` |
+> | `--confirm-db=` | `consultify_w3_finance_owner_day70` |
+> | manifest | `/private/tmp/cx-day70-artefakty/finance-owner-fixture-manifest-resume-2.json` |
+>
+> ★ **Nazwa bazy NIE łamie `Z7`.** `Z7` przydziela Ci wyłączny **port** (`5942`)
+> i wyłączną **nazwę kontenera** (`cx-day70-pg`) — te są bez zmian. Nazwa bazy
+> jest narzucona przez kod produkcyjny i numer dyżuru niesie w członie `day70`.
+>
+> ★ **Dwie poprzednie ścieżki manifestu są ZAJĘTE** i zablokują seed (`:69`):
+> `finance-owner-fixture-manifest.json` (`FAILED_BEFORE_DURABLE_MARKER`) oraz
+> `finance-owner-fixture-manifest-resume-1.json` (`FAILED_AFTER_DURABLE_MARKER`).
+> **Nie kasuj ich** — są dowodem obu STOP-ów. Użyj `-resume-2`.
+
+> ### ★★ POPRAWKA WYDANIA NR 2, część druga — NARZĘDZIE DO ZRZUTÓW (§B.2)
+>
+> Pierwsze wydanie mówiło „zrzuty przez realne logowanie", nie wskazując czym.
+> **Kanoniczne narzędzie ISTNIEJE w repo i obsługuje rodzinę Finansów:**
+> `scripts/dev/start-wave3-owner-runtime.mjs`, komendy `start` | `stop` |
+> `status` | `fingerprint`. Adoptuje bazę pasującą do
+> `^consultify_w3_finance_owner_[a-z0-9_]+$` jako fixture `W3-FINANCE-OWNER-v1`
+> (`:22`). Porty podajesz przez `WAVE3_RUNTIME_SERVER_PORT` i
+> `WAVE3_RUNTIME_CLIENT_PORT` — użyj **`4640`** i **`4641`**.
+>
+> ★★ **PORTY CHRONIONE PRZEZ TEN SKRYPT: `3940`, `3941`, `4363`, `4364`**
+> (`:11`, `protectedPorts`). **Dopisane do `Z7` jako zakazane.** Nie próbuj ich użyć.
+>
+> ★ Jeżeli runtime nie wstanie — **to jest STOP z opisem**, nie powód do
+> zrzutów z pominięciem uwierzytelniania ani do renderu komponentu bez stylów.
+> `K3` wymaga zrzutu PRODUKTU: ze stylami, przez realne logowanie.
 
 Komendy `seed` | `readback` | `reset`.
 **Po zaseedowaniu wykonujesz `readback` i cytujesz jego wynik.
