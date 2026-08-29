@@ -589,12 +589,40 @@ grep -nE "^\| G(0[7-9]|10) " docs/program/waves/WAVE_03_ACCEPTANCE/modules/06_EX
 
 Kolejność wiążąca — **wynika z kontraktu z §A, nie z uniwersalnego szablonu**:
 
-1. Kontener z `POSTGRES_DB=consultify_w3_execution_owner_day73`, port `5945`.
-2. ★ **NIE uruchamiasz migracji ręcznie** — seeder wywoła `db:migrate:strict` sam
-   (`:90`). Ręczne uruchomienie nie jest błędem krytycznym, ale jest zbędne
-   i wydłuża przebieg.
-3. `seed`.
-4. `readback`.
+> ### ★★ POPRAWKA WYDANIA — MIGRACJE SĄ W KOMENDZIE `provision`, NIE W `seed`
+>
+> **Dodana 2026-08-29 po zasadnym STOP-ie wykonawcy (`DEC-2026-08-29-283`).**
+> Pierwsze wydanie mówiło „seeder wywoła `db:migrate:strict` sam (`:90`)".
+> **To było prawdziwe co do linii, ale FAŁSZYWE co do komendy.**
+> Autor instrukcji zobaczył `spawnSync` w linii 90 i nie sprawdził, w której
+> funkcji ta linia siedzi.
+>
+> Linia `:90` jest wewnątrz funkcji **`provision(u, db)`**, którą uruchamia
+> komenda `provision` — a NIE `seed`. Ta sama funkcja **sama tworzy bazę**:
+>
+> - `:84-85` — `if ((await a.query('SELECT 1 FROM pg_database WHERE datname=$1',[db])).rowCount) fail('database already exists')`
+> - `:86` — `await a.query('CREATE DATABASE ' + db)`
+> - `:90` — `spawnSync('npm',['run','db:migrate:strict'], …)`
+> - `:91` — przy niepowodzeniu migracji **usuwa świeżo utworzoną bazę**
+>
+> Uruchomienie `seed` na niezmigrowanej bazie daje dokładnie to, co zobaczył
+> wykonawca: `relation "execution_case_links" does not exist`.
+>
+> **WIĄŻĄCA SEKWENCJA — CZTERY KOMENDY, W TEJ KOLEJNOŚCI:**
+>
+> 1. Kontener z bazą administracyjną `POSTGRES_DB=postgres`, port `5945`.
+>    ★ **NIE tworzysz bazy `consultify_w3_execution_owner_day73`** —
+>    `provision` odmówi, jeśli już istnieje (`:84-85`).
+> 2. **`provision`** — tworzy bazę I uruchamia pełny łańcuch migracji.
+> 3. **`seed`**.
+> 4. **`readback`**.
+>
+> ★ `Z20` zachowane: pełne migracje nadal wyprzedzają pomiar; uruchamia je
+> `provision`, nie Ty.
+>
+> ★ **Manifest z nieudanej próby zablokuje ponowny seed** — użyj nowej ścieżki
+> (`…-resume-1.json`) albo usuń poprzednią. **Nie kasuj manifestów STOP-ów** —
+> są dowodem.
 
 **Po zaseedowaniu wykonaj readback i zacytuj jego wynik dosłownie.
 Bez zielonego readbacku nie idziesz dalej.**
