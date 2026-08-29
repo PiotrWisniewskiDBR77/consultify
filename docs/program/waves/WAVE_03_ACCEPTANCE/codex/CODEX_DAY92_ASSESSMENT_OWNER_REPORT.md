@@ -33,7 +33,7 @@ Tip bazowy uciekł do przodu o dwa commity. Zgodnie z §0.1 nie scalałem tipa; 
 3. Wymuszony wzorzec nazwy bazy to `^consultify_w3_assessment_owner_[a-z0-9_]+$`: `server/scripts/seed-wave3-assessment-owner-review.ts:19,91-92`. Przydzielona nazwa `consultify_w3_assessment_owner_day92` pasuje. Runtime adoptuje ten sam wzorzec i fixture `W3-ASSESSMENT-OWNER-v1`: `scripts/dev/start-wave3-owner-runtime.mjs:52-54`.
 4. `ASSESSMENT_OWNER_FIXTURE_DATABASE_URL` jest obowiązkowy zawsze (`:80`), host musi być lokalny (`:88-89`). Dla `seed` obowiązkowe są ponadto absolutny lokalny `ASSESSMENT_OWNER_FIXTURE_MANIFEST`, który jeszcze nie istnieje (`:95-100`), oraz `ASSESSMENT_OWNER_FIXTURE_CONFIRM=YES` (`:103-104`). Seeder ustawia dla swojego procesu migracji `NODE_ENV=test`, `DB_TYPE=postgres` i `DATABASE_URL` (`:490-494`).
 
-W2 po korekcie nadzorcy: stary wzorzec z instrukcji zwrócił pusty wynik, ponieważ błędnie wymagał `=` po `<`. Poprawiona komenda `grep -nE "successful_migrations.*(<|<=|!==|!=) *[0-9]{3}" ...` zwróciła dosłownie: `457:    if (Number(r.successful_migrations) < 831) fail(...)`. Licznik ma poprawny kształt `< 831`, nie `!==`.  
+W2 po korekcie nadzorcy: stary wzorzec z instrukcji zwrócił pusty wynik, ponieważ błędnie wymagał `=` po `<`. Poprawiona komenda `grep -nE "successful_migrations.*(<|<=|!==|!=) *[0-9]{3}" ...` zwróciła dosłownie: `457:    if (Number(r.successful_migrations) < 831) fail(...)`. Licznik ma poprawny kształt `< 831`, nie `!==`.
 W3: runtime ma 2 wymagane trafienia identyfikatora Assessment (`scripts/dev/start-wave3-owner-runtime.mjs:53-54`).  
 W4: pomiar wykazał 21 z 21 wierszy G00–G20.
 
