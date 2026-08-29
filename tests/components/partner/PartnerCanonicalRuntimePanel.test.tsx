@@ -83,7 +83,11 @@ describe('PartnerCanonicalRuntimePanel', () => {
     const snapshot = await loadPartnerCanonicalRuntime();
     render(<PartnerCanonicalRuntimePanel snapshot={snapshot} />);
 
-    const panel = screen.getByRole('region', { name: 'Governed Partner runtime' });
+    // NAPRAWA PO ODBIORZE DYZURU 127: dyzur zmienil tekst zastepczy naglowka
+    // (`partner.canonicalRuntime.title`) z 'Governed Partner runtime' na
+    // 'Current partner programme status' i zostawil ten test czerwonym.
+    // Nazwa dostepnosciowa regionu idzie z tego samego klucza, wiec sledzi zmiane.
+    const panel = screen.getByRole('region', { name: 'Current partner programme status' });
     expect(within(panel).getAllByRole('listitem')).toHaveLength(5);
     expect(within(panel).getByText('Partner status')).toBeInTheDocument();
     expect(within(panel).getByText('Certification')).toBeInTheDocument();
