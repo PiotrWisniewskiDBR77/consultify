@@ -64,6 +64,11 @@ Praca rozpoczęta dokładnie z markera, bez rebase.
    stanu, a nie import/render komponentu. Wycofałem tę zmianę. Trzecią
    aplikacją jest osiągalny `InterviewHub.tsx`, który sam pobiera szablony,
    renderuje ich zakładkę i był potwierdzony w runtime na `/interview`.
+6. Pierwszy runtime z wymuszonym błędem tabeli szablonów obalił kompletność
+   pierwszej implementacji: `templatesPresentation` miało stan `unknown`, ale
+   gałąź Szablony nie wywoływała `renderDegradedBanner()`, więc ekran nadal
+   mówił „Brak szablonów”. Tabela została natychmiast przywrócona (`24`
+   wiersze), a brakujące wywołanie dodane i objęte kontraktem testowym.
 
 ## 3. Baza, migracje i Z30
 

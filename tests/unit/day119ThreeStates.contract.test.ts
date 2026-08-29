@@ -61,6 +61,11 @@ describe('Day 119 three-state presentation contract', () => {
     expect(source).toContain("templatesPresentation.state === 'unknown'");
     expect(source).toContain('formatPresentationCount(templatesPresentation');
     expect(source).toContain('templatesLoadFailedReason');
+    const templatesBranch = source.slice(
+      source.indexOf("if (activeTab === 'templates')", source.indexOf('const renderListContent')),
+      source.indexOf("if (activeTab === 'my_assignments'", source.indexOf('const renderListContent'))
+    );
+    expect(templatesBranch).toContain('{renderDegradedBanner()}');
   });
 
   it('ships the shared copy in English and Polish', () => {

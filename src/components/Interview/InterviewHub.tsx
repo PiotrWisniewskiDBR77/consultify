@@ -8080,6 +8080,7 @@ Return ONLY the answer text (no markdown fences).`;
       // canon §8: grid/cards MUST be inside the same TableWithPreviewLayout (preview pane stays alive)
       return (
         <div className="h-full flex flex-col">
+          {renderDegradedBanner()}
           <TableWithPreviewLayout<InterviewTemplate & { title: string }>
             selectedId={selectedTemplateId}
             selectedItem={selectedItem}
