@@ -260,3 +260,109 @@ bez zielonego readbacku.
 - Pakiety Vitest uruchomione jako dowód: `0`.
 - Dowód mutacyjny: `N/A` — niczego nie oznaczono `FIXED` ani `VERIFIED`.
 - `--retry=0`: `N/A` — nie uruchomiono Vitest.
+
+## Wznowienie po DEC-2026-08-29-264 — poprawka wydania
+
+### Rozstrzygnięcie
+
+`STOP MERYTORYCZNY` pozostaje w mocy, ale pierwszy konflikt został usunięty.
+Poprawiona procedura została wykonana dosłownie: kontener wystartował wyłącznie
+z administracyjną bazą `postgres`, potwierdzono brak `cx_day70`, nie uruchomiono
+ręcznie `migrate.postgres.ts`, po czym uruchomiono pojedynczy `seed` z nową
+ścieżką manifestu.
+
+Tip poprawionej instrukcji: `85619fcb9e`; marker nadal zwrócił `MARKER OK`.
+Przed wznowieniem worktree był czysty, porty `5942` i `4640` były wolne, a
+`/private/tmp/cx-day70-artefakty/finance-owner-fixture-manifest-resume-1.json`
+nie istniał. Stary manifest pierwszej próby zachowano bez zmian.
+
+### B.1 — rzeczywisty wynik poprawionej procedury
+
+Przed seedem katalog PostgreSQL potwierdził brak bazy docelowej:
+
+```text
+ datname
+---------
+(0 rows)
+```
+
+Seeder wykonał `CREATE DATABASE`, zapisał trwały marker oraz uruchomił pełne
+migracje, lecz zakończył się `exit 1`:
+
+```text
+Error: [W3 Finance fixture] BLOCKED: full-chain harness failed with status 1
+```
+
+Manifest `0600` zachował dokładną przyczynę:
+
+```text
+ownershipState: FAILED_AFTER_DURABLE_MARKER
+databaseName: cx_day70
+Error: Database name must match consultify_w3_finance_owner_*
+```
+
+Dowody po awarii:
+
+```text
+fixture_id: W3-FINANCE-OWNER-v1
+database_name: cx_day70
+successful_migrations: 863
+```
+
+- Manifest:
+  `/private/tmp/cx-day70-artefakty/finance-owner-fixture-manifest-resume-1.json`.
+- SHA-256 manifestu:
+  `f9018d2855106004915140270236a080d7dba6c31abf0dedfe59164cebc08f71`.
+- FINAL receipt: nie powstał.
+- Readback: nie uruchomiono, ponieważ seed nie zakończył się sukcesem i manifest
+  nie ma stanu FINAL.
+- Zrzuty: nadal `0 z 20`; §B.1 nie zezwala przejść dalej bez zielonego
+  readbacku.
+
+### STOP — B.1, wznowienie
+
+Rodzaj: MERYTORYCZNY
+
+Powód: wiążący URL i `--confirm-db` wymagają nazwy `cx_day70`, natomiast
+wewnętrzny harness wywołany przez seeder odrzuca każdą nazwę, która nie pasuje
+do `consultify_w3_finance_owner_*`.
+
+Licencja, którą sprawdziłem: §D oraz Z12/Z40 — seeder, runner, `SOURCE_SHA`,
+migracje i kod są tylko do odczytu. Wynik: zmieniono wyłącznie raport i
+`MODULE_ACCEPTANCE.md`.
+
+Dowód: §B.1 wiersz `FINANCE_OWNER_FIXTURE_DATABASE_URL` oraz argument
+`--confirm-db=cx_day70`; `server/scripts/run-wave3-finance-owner-review.ts:30-33`
+sprawdza prefiks i rzuca `Database name must match consultify_w3_finance_owner_*`.
+Rzeczywisty manifest ma `FAILED_AFTER_DURABLE_MARKER` i ten sam błąd.
+
+Co dostarczyłem ZAMIAST zmiany: realny przebieg poprawionej procedury, dowód
+utworzenia bazy i markera, ledger `863`, manifest błędu, kontraktowy reset z
+niezależnym potwierdzeniem braku bazy oraz zachowane `0/20`.
+
+Co zrobiłbym, gdyby zapadła decyzja X: po ujednoliceniu jednej wiążącej nazwy
+bazy ponowiłbym seed z kolejną nową ścieżką manifestu. Dopiero FINAL receipt i
+zielony readback odblokowałyby realne logowanie oraz macierz zrzutów.
+
+Rekomendacja dla nadzorcy: poprawić u źródła wyłącznie kontrakt nazwy — albo
+§B.1 ma używać nazwy zgodnej z `consultify_w3_finance_owner_*`, albo runner ma
+zaakceptować dokładne `cx_day70`. Nie zmieniać `SOURCE_SHA` ani nie omijać
+loopback/manifest/marker guards.
+
+Stan: dokumentacja zaktualizowana na gałęzi dyżuru; kod niezmieniony.
+
+Czy kontynuowałem pozostałe pozycje: NIE dla B.2–B.3, ponieważ poprawiona
+instrukcja dosłownie klasyfikuje ponowną odmowę seedera jako STOP, a §B.1
+zabrania przejścia bez zielonego readbacku.
+
+### Cleanup wznowienia
+
+Kontraktowy `reset` użył dokładnie dopasowanego manifestu i trwałego markera:
+
+```json
+{"fixtureId":"W3-FINANCE-OWNER-v1","databaseName":"cx_day70","dropped":true,"catalogAbsent":true}
+```
+
+Niezależny odczyt katalogu zwrócił `0 rows`. Następnie własny kontener usunięto
+przez `docker rm -fv cx-day70-pg`; porty `5942` i `4640` są wolne. Manifesty
+dowodowe poza repo zachowano.
