@@ -8,6 +8,12 @@ const source = fs.readFileSync(path.resolve(__dirname, '../NotebookRightRail.tsx
 // shared SPEC-A right-panel canon — a fixed-order accordion, 360px, no
 // tabs. This contract now checks for THAT shape instead of the old one.
 describe('Notebook right rail owner contract (SPEC-A accordion)', () => {
+  it('renders the shared ArtifactRightPanel behind the default-off rollout flag', () => {
+    expect(source).toContain("from '@/components/standard/ArtifactRightPanel'");
+    expect(source).toContain('<ArtifactRightPanel');
+    expect(source).toContain('isNotebookSpecAShellEnabled()');
+  });
+
   it('is a 360px accordion rail, not a tablist', () => {
     expect(source).toContain('<aside');
     expect(source).toContain('width: 360, minWidth: 360');
