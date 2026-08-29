@@ -185,3 +185,7 @@ Dozwolone pliki repo: `2 z 2`; kod produktu: `0` plików. Oczekiwany diff wzglę
 2. `docs/program/waves/WAVE_03_ACCEPTANCE/modules/15_SETTINGS/MODULE_ACCEPTANCE.md`
 
 Werdykt: `PARTIAL`. Świeży pakiet wizualny istnieje, ale nie domyka odbioru całej aplikacji: tylko `12 z 20` zrzutów odpowiada deklarowanym powierzchniom, `0 z 5` powierzchni osiąga `5 z 5` cech, dwa realne motywy nie są udowodnione, a owner replay pozostaje otwarty.
+
+## 12. Sprzątanie zasobów
+
+Po commicie raportowym kanoniczny `stop` nie mógł przejść kontroli tożsamości, ponieważ stan runtime był poprawnie związany z markerem `a1265154…`, a bieżący HEAD był już nowym commitem dokumentacyjnym. Nie obchodziłem strażnika. Zweryfikowałem dokładne PID/PGID i komendy własnych procesów (`53135/53135` — `tsx server/src/index.ts`; `53155/53155` — `vite --port 4915`), zatrzymałem wyłącznie te dwie grupy i potwierdziłem brak listenerów. Kontener `cx-day124-pg` usunięto poleceniem `docker rm -fv cx-day124-pg`. Końcowo porty `6007`, `4914`, `4915`: `3 z 3` wolne. Artefakty poza repo pozostawiono do odbioru.
