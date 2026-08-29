@@ -217,3 +217,11 @@ Stan tego samego pomiaru po checkpointcie: `finance 263`, `billing 88`, `v8 76`,
 ### Kontynuacja Finance
 
 Ręcznie uzupełniono 56 brakujących wartości klasy A w grupach `finance.analysis` i `finance.budget`, wraz z komunikatami błędów, stanami pustymi i opisami zachowania. Konserwatywny mianownik `finance` spadł z `263` do `207`. Pozostałe obszary bez zmiany: `billing 88`, `v8 76`, `valuation 47`. C.1 pozostaje PARTIAL.
+
+### Trzeci formatter Partnera i dalszy Finance
+
+- Odbiór wykazał trzeci formatter w `PartnerPortalView.tsx`, który używał locale `en-IE`. Po korekcie **3 z 3 zidentyfikowanych formatterów tej ścieżki kwotowej** używają `pl-PL`, symbolu waluty po liczbie i dwóch miejsc dziesiętnych.
+- Pakiet Partnera po trzeciej korekcie: **17 z 17 PASS po `fullName`**, `--retry=0`. JSON: `/private/tmp/cx-day69-artefakty/c1-partner-format-3of3-tests.json`.
+- Ręcznie uzupełniono **76 z 207** pozostających wcześniej kluczy Finance: grupy `finance.model` i `finance.lane`. Pozostało `finance 131 z początkowych 263`.
+- Łączny pozostały mianownik C.1 zmniejszył się z `418` do `342`: `finance 131 + billing 88 + v8 76 + valuation 47`; `partner 0`.
+- Formatowanie Finance: inwentarz statyczny wskazuje `57` wywołań `Intl.NumberFormat` / `toLocaleString` / `toLocaleDateString` w przeglądanych katalogach Finance, Economics i Benefits. Nie wszystkie są kwotami ani datami widocznymi w polskim wariancie; pełna zgodność klasy F w Finance pozostaje **NIEZWERYFIKOWANA 0 z 57** do oceny kontekstowej i K3.

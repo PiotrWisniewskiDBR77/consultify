@@ -704,10 +704,9 @@ const normalizeMetricsPayload = (payload: any): MetricsData | null => {
 const MetricsSection: React.FC = () => {
   const { t } = useTranslation();
   const formatEuro = useCallback((value: number) => {
-    return new Intl.NumberFormat('en-IE', {
+    return new Intl.NumberFormat('pl-PL', {
       style: 'currency',
       currency: 'EUR',
-      currencyDisplay: 'code',
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(Number.isFinite(value) ? value : 0);

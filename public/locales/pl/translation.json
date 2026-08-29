@@ -21565,6 +21565,48 @@
     },
     "model": {
       "title": "Modele finansowe",
+      "computing": "Obliczanie prognozy — model tworzy wyniki i wykonuje kontrole. Może to potrwać do 30 sekund…",
+      "defaultForecastSuffix": "prognoza",
+      "defaultLatestApproved": "Ostatnie zatwierdzone (domyślne)",
+      "deleteEvent": "Usuń zdarzenie",
+      "emptyDesc": "Wybierz model finansowy z listy albo utwórz nowy, aby rozpocząć prognozowanie.",
+      "fromAnalysisProvenance": "z analizy",
+      "fromAnalysisTitle": "Na podstawie analizy finansowej",
+      "fromStatementMode": "Oprzyj na sprawozdaniu",
+      "groundedBadgeLabel": "Oparte na",
+      "groundedGenericSource": "Zatwierdzone sprawozdanie",
+      "importedFromStatement": "Zaimportowano ze sprawozdania",
+      "manualMode": "Rozpocznij od zera",
+      "missingBaselineLines": "Brakujące pozycje bazowe",
+      "noEventsSeeded": "Brak zdarzeń prognozy. Model ma już wartości bazowe; dodaj zdarzenia, aby prognozować zmiany.",
+      "noOutputsSeeded": "Sprawozdanie jest połączone, ale model nie został jeszcze obliczony. Uruchom obliczenia, aby utworzyć prognozę.",
+      "notGroundedHint": "Ten model utworzono bez sprawozdania źródłowego. Salda początkowe wynoszą zero.",
+      "refreshSource": "Odśwież ze źródła",
+      "refreshSourceHint": "Ponownie pobierz dane historyczne ze sprawozdania źródłowego",
+      "refreshingSource": "Odświeżanie…",
+      "saved": "Zapisano",
+      "seedEntity": "Źródło",
+      "seedInputs": "Źródło i wartości bazowe",
+      "seedNeedsConfirmation": "wymaga potwierdzenia",
+      "seedPeriod": "Okres",
+      "seedReady": "gotowe",
+      "seedStartDate": "Początek prognozy",
+      "seedStatus": "Stan danych początkowych",
+      "seededFromStatement": "Utworzono na podstawie sprawozdania",
+      "seededManually": "Utworzono ręcznie od zera",
+      "selectStatement": "Wybierz pakiet sprawozdań",
+      "serverVersion": "wersja serwera",
+      "sourceStatement": "Sprawozdanie źródłowe",
+      "tabs": "Sekcje modelu",
+      "validationEmpty": "Brak wyników kontroli. Uruchom obliczenia, aby sprawdzić spójność modelu.",
+      "validationSeededEmpty": "Sprawozdanie jest połączone, ale model nie został jeszcze obliczony. Uruchom obliczenia, aby wykonać kontrole.",
+      "versionConflict": "Model został zmieniony przez inną osobę. Odśwież dane i spróbuj ponownie.",
+      "scenarios": {
+        "baseline": "Bazowy",
+        "setBaseline": "Ustaw jako bazowy",
+        "settingBaseline": "Ustawianie…",
+        "title": "Scenariusze i wariant bazowy"
+      },
       "scenarioBase": "Bazowy",
       "scenarioOptimistic": "Optymistyczny",
       "scenarioConservative": "Konserwatywny",
@@ -22079,8 +22121,52 @@
       "noMappedValues": "Brak pozycji do mapowania"
     },
     "lane": {
+      "advance": "Przejdź dalej",
+      "advanceDetailPlaceholder": "Opcjonalna informacja lub notatka…",
+      "auditTrail": "Historia działań",
+      "coherenceNotChecked": "Spójność nie została jeszcze sprawdzona.",
+      "finalizeSwitchover": "Zakończ",
+      "finalized": "Wersja została zakończona",
+      "issueCount": "{{count}} problem",
+      "issues": "Problemy",
+      "kpiCoherence": "Spójność KPI",
+      "mutationAudits": "Historia zmian",
+      "noActiveRun": "Brak aktywnego przebiegu",
+      "noActiveRunHint": "Brak aktywnego przebiegu. Uruchom go z menu Analiza.",
+      "noSnapshots": "Brak zapisanych wersji.",
+      "on": "włączone",
+      "progress": "Postęp procesu",
+      "refreshCoherence": "Sprawdź spójność ponownie",
+      "run": "Przebieg",
+      "startToCheck": "Uruchom proces, aby sprawdzić spójność.",
+      "started": "Proces finansowy został uruchomiony",
+      "title": "Proces finansowy",
+      "versionSnapshots": "Zapisane wersje",
+      "degraded": {
+        "activeIssues": "Proces finansowy ma aktywne problemy: {{count}}",
+        "viewAll": "Zobacz wszystkie"
+      },
       "kpi": {
-        "stale": "Przestarzały"
+        "stale": "Przestarzały",
+        "coherent": "KPI: spójne",
+        "unavailable": "KPI: niedostępne"
+      },
+      "steps": {
+        "analysis": "Analiza",
+        "analysisL123": "Analiza szczegółowa",
+        "import": "Import",
+        "mutation": "Zmiana",
+        "readback": "Kontrola wyniku"
+      },
+      "version": {
+        "actual": "Rzeczywista",
+        "current": "Bieżąca"
+      },
+      "versions": {
+        "by": "przez",
+        "finalized": "zakończona",
+        "history": "Historia wersji",
+        "switchover": "Zmiana wersji"
       }
     },
     "ratios": {
