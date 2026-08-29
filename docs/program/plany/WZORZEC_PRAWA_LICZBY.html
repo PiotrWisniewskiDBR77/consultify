@@ -1,0 +1,359 @@
+<title>Prawa liczby</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+  :root {
+    --ground:#F4F7FB; --surface:#FFFFFF; --surface-2:#EDF2F8;
+    --ink:#121B2E; --ink-soft:#46536B; --ink-mute:#6E7B92;
+    --line:#DBE3EE;
+    --accent:#1F5A8F; --accent-soft:#E3EDF6;
+    --critical:#85182F; --critical-bg:#F7E7EA;
+    --good:#1F6B4D; --good-bg:#E4F0EA;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:#0D1524; --surface:#141F33; --surface-2:#1B2942;
+      --ink:#E9EFF7; --ink-soft:#B0BCD0; --ink-mute:#8492AA;
+      --line:#26344E;
+      --accent:#7FB2DD; --accent-soft:#1A2C42;
+      --critical:#E8879B; --critical-bg:#35161F;
+      --good:#7CC7A4; --good-bg:#14291F;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:#0D1524; --surface:#141F33; --surface-2:#1B2942;
+    --ink:#E9EFF7; --ink-soft:#B0BCD0; --ink-mute:#8492AA;
+    --line:#26344E;
+    --accent:#7FB2DD; --accent-soft:#1A2C42;
+    --critical:#E8879B; --critical-bg:#35161F;
+    --good:#7CC7A4; --good-bg:#14291F;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--ground); color: var(--ink);
+    font-family: "IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+    font-size: 16.5px; line-height: 1.62; margin: 0; padding: 0 20px 96px;
+    -webkit-font-smoothing: antialiased;
+    font-variant-numeric: tabular-nums;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; }
+  .col { max-width: 660px; }
+
+  .masthead { padding: 60px 0 34px; border-bottom: 2px solid var(--ink); margin-bottom: 44px; }
+  .eyebrow {
+    font-family:"IBM Plex Mono",monospace; font-size:11.5px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--ink-mute); margin:0 0 18px;
+  }
+  h1 {
+    font-family:Spectral,Georgia,serif; font-weight:600;
+    font-size:clamp(38px,6vw,60px); line-height:1.04; letter-spacing:-.015em;
+    margin:0 0 20px; text-wrap:balance;
+  }
+  .standfirst {
+    font-family:Spectral,Georgia,serif; font-size:clamp(18px,2.4vw,21px);
+    line-height:1.55; color:var(--ink-soft); max-width:640px; margin:0;
+  }
+  h2 {
+    font-family:Spectral,Georgia,serif; font-weight:600;
+    font-size:clamp(25px,3.4vw,32px); line-height:1.18; letter-spacing:-.01em;
+    margin:0 0 8px; text-wrap:balance;
+  }
+  h3 { font-weight:600; font-size:17.5px; margin:0 0 6px; }
+  section { margin-bottom: 68px; }
+  .lead { color:var(--ink-soft); margin:0 0 26px; max-width:640px; }
+  p { margin:0 0 16px; }
+  .col p:last-child { margin-bottom:0; }
+
+  .rule-label {
+    font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.16em;
+    text-transform:uppercase; color:var(--accent); margin:0 0 14px;
+    display:flex; align-items:center; gap:12px;
+  }
+  .rule-label::after { content:""; flex:1; height:1px; background:var(--line); }
+
+  /* correction block */
+  .correction {
+    background: var(--critical-bg); border:1px solid var(--critical);
+    border-radius:3px; padding:24px 26px; margin-bottom:26px;
+  }
+  .correction h3 { color:var(--critical); }
+  .correction p { font-size:15.5px; margin:0 0 12px; }
+  .correction p:last-child { margin-bottom:0; }
+
+  /* screen blocks */
+  .screens { display:flex; flex-direction:column; gap:1px; background:var(--line);
+             border:1px solid var(--line); border-radius:3px; overflow:hidden; }
+  .screen { background:var(--surface); padding:26px 28px; }
+  .screen .tag {
+    font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--accent); display:block; margin-bottom:10px;
+  }
+  .screen h3 { font-size:20px; margin-bottom:10px; }
+  .screen > p { color:var(--ink-soft); font-size:15.5px; }
+  .screen ul { margin:14px 0 0; padding-left:0; list-style:none; display:flex;
+               flex-direction:column; gap:10px; }
+  .screen li { display:flex; gap:11px; align-items:flex-start; font-size:15.5px; line-height:1.5; }
+  .screen li::before {
+    content:""; width:6px; height:6px; border-radius:50%; background:var(--accent);
+    flex:0 0 auto; margin-top:9px;
+  }
+  .screen li b { font-weight:600; }
+
+  .verdict {
+    margin-top:18px; background:var(--surface-2); border-left:3px solid var(--accent);
+    padding:14px 18px; border-radius:0 3px 3px 0; font-size:15px;
+  }
+  .verdict b { color:var(--accent); }
+
+  /* compare */
+  .compare { display:grid; grid-template-columns:1fr 1fr; gap:1px;
+             background:var(--line); border:1px solid var(--line);
+             border-radius:3px; overflow:hidden; margin:22px 0 0; }
+  .compare > div { background:var(--surface); padding:20px 22px; }
+  .compare .h {
+    font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.14em;
+    text-transform:uppercase; margin:0 0 12px; display:block;
+  }
+  .compare .bad .h { color:var(--critical); }
+  .compare .good .h { color:var(--good); }
+  .compare .num {
+    font-family:"IBM Plex Mono",monospace; font-size:22px; font-weight:500;
+    letter-spacing:-.01em; display:block; margin-bottom:8px; line-height:1.3;
+  }
+  .compare .why { font-size:14px; color:var(--ink-mute); margin:0; line-height:1.5; }
+
+  /* anti-patterns */
+  .anti { display:flex; flex-direction:column; gap:14px; }
+  .ap { display:grid; grid-template-columns:34px 1fr; gap:16px;
+        background:var(--surface); border:1px solid var(--line);
+        border-radius:3px; padding:20px 22px; align-items:start; }
+  .ap .n {
+    font-family:"IBM Plex Mono",monospace; font-size:13px; color:var(--critical);
+    font-weight:500; padding-top:2px;
+  }
+  .ap h3 { font-size:16.5px; margin-bottom:5px; }
+  .ap p { font-size:15px; color:var(--ink-soft); margin:0; }
+
+  /* thresholds */
+  .thr { width:100%; border-collapse:collapse; font-size:15px; }
+  .thr th, .thr td { text-align:left; padding:12px 14px; border-bottom:1px solid var(--line); vertical-align:top; }
+  .thr th {
+    font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.13em;
+    text-transform:uppercase; color:var(--ink-mute); font-weight:500;
+  }
+  .thr td:first-child { font-weight:600; width:38%; }
+  .thr tbody tr:last-child td { border-bottom:none; }
+  .scroller { overflow-x:auto; border:1px solid var(--line); border-radius:3px; background:var(--surface); }
+
+  .note { border-left:3px solid var(--line); padding-left:22px; color:var(--ink-soft); font-size:15.5px; }
+  .note strong { color:var(--ink); }
+
+  .src {
+    font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--ink-mute);
+    margin-top:8px; display:block; line-height:1.5;
+  }
+
+  code { font-family:"IBM Plex Mono",monospace; font-size:.875em;
+         background:var(--surface-2); padding:1px 5px; border-radius:2px; }
+
+  footer { margin-top:30px; padding-top:26px; border-top:1px solid var(--line);
+           font-size:14px; color:var(--ink-mute); }
+  footer p { margin:0 0 8px; }
+  a { color:var(--accent); }
+  a:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
+
+  @media (max-width:620px) { .compare { grid-template-columns:1fr; } }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="eyebrow">Consultify · ekrany oglądane przez klienta · 29 sierpnia 2026</p>
+    <h1>Prawa liczby</h1>
+    <p class="standfirst">KPI, ROI i wycena to jedyne ekrany, na które patrzy klient doradcy, a nie doradca. Prestiż rozstrzyga się na nich — i nie bierze się z ozdób.</p>
+  </header>
+
+  <section>
+    <p class="rule-label">Zanim cokolwiek</p>
+    <div class="correction">
+      <h3>Prostuję to, co powiedziałem Ci rano o wycenie</h3>
+      <p>Powiedziałem: <em>„wycena pokazana jako przedział wygląda profesjonalnie"</em>. To było uproszczenie i w części nieprawdziwe.</p>
+      <p>Międzynarodowa rada standardów wyceny <strong>odradza pokazywanie niepewności jako samego przedziału</strong> — z konkretnego powodu: odbiorca odczytuje z niego dwie rzeczy, które nie są prawdą. Że każda wartość w środku jest równie prawdopodobna. I że poza przedziałem nic się wydarzyć nie może.</p>
+      <p><strong>Poprawnie jest tak:</strong> wartość najbardziej prawdopodobna, obok niej analiza wrażliwości, a do tego zdanie mówiące, <em>skąd</em> ta niepewność się bierze. Sama liczba potwierdza, że niepewność istnieje — nie wyjaśnia jej.</p>
+      <span class="src">IVSC, Valuation Uncertainty — ivsc.org · IVS 106, wymagane elementy raportu z wyceny</span>
+    </div>
+    <div class="col">
+      <p class="note">Druga rzecz, którą prostuję: napisałem, że <em>„sam procent bez bazy jest bezużyteczny"</em>. Zbyt ostro. Procent jest zalecany — bez niego nie da się porównać pozycji o różnej skali. Bezużyteczna jest <strong>zmiana bez nazwanej bazy i bez kontekstu zmienności</strong>, a to nie to samo.</p>
+    </div>
+  </section>
+
+  <section>
+    <p class="rule-label">Teza</p>
+    <h2>Prestiż to powściągliwość i uczciwość, nie ozdoba</h2>
+    <div class="col">
+      <p>Szukałem twardego dowodu, bo „prestiżowy" nie ma definicji projektowej. Najbliżej są dwa pomiary. Badania wiarygodności w Stanfordzie: wygląd — układ, typografia, kolor — był <strong>najczęściej przywoływanym powodem</strong> oceny wiarygodności, 46% wypowiedzi. Drugie: złożoność wizualna i kolorowość wyjaśniają około <strong>połowy zmienności pierwszego wrażenia</strong>, formowanego w jakieś 50 milisekund.</p>
+      <p>Oba mówią to samo i mówią to wbrew intuicji: <strong>mniej złożoności i mniej koloru podnosi ocenę powagi.</strong> Nie więcej wykresów. Nie efektowniejsze kafle.</p>
+      <span class="src">Stanford Web Credibility Project · Reinecke & Gajos, CHI 2013</span>
+    </div>
+  </section>
+
+  <section>
+    <p class="rule-label">Trzy ekrany, trzy różne problemy</p>
+    <h2>Co musi być na każdym z nich</h2>
+    <p class="lead">Nie są wariantami jednego wzoru. Każdy ma inne pytanie, na które odpowiada klientowi, i inny sposób, w jaki może skłamać.</p>
+
+    <div class="screens">
+
+      <div class="screen">
+        <span class="tag">Ekran pierwszy</span>
+        <h3>Karta wskaźnika</h3>
+        <p>Pytanie klienta: <em>czy to dobrze, czy źle?</em> Kafel, który podaje samą wartość, nie odpowiada na nie wcale.</p>
+        <ul>
+          <li><b>Pięć elementów obowiązkowo:</b> nazwa wskaźnika, wartość, jednostka, okres, którego dotyczy, i porównanie z <b>nazwaną</b> bazą — „wobec planu", „wobec III kwartału", nie samo „+18%".</li>
+          <li><b>Kierunek „dobry" deklarowany per wskaźnik.</b> Automatyczne „wzrost = zielono" pokazuje rosnący koszt jako sukces.</li>
+          <li><b>Zmiana z dwóch punktów bez historii jest pułapką.</b> Ruch mieszczący się w normalnej zmienności wygląda jak sygnał i prowokuje reakcję na szum.</li>
+          <li><b>Jeden kafel, jeden cel.</b> Najwyżej dwa typy wizualizacji, najwyżej jedna akcja główna.</li>
+          <li><b>Zero, brak danych i „nie dotyczy" to trzy różne rzeczy</b> i muszą wyglądać różnie. Pokazanie braku danych jako zera jest zafałszowaniem.</li>
+        </ul>
+        <div class="verdict"><b>Test:</b> wytnij kafel z kontekstu i pokaż komuś. Jeśli nie da się odczytać wszystkich pięciu elementów — kafel jest niekompletny.</div>
+      </div>
+
+      <div class="screen">
+        <span class="tag">Ekran drugi</span>
+        <h3>Analiza ROI</h3>
+        <p>Pytanie klienta: <em>a jeśli się mylicie?</em> To jest jedyne pytanie, które naprawdę pada, i większość ekranów ROI nie ma na nie odpowiedzi.</p>
+        <ul>
+          <li><b>★ Wartości progowe — najważniejsza rzecz z całego materiału.</b> Policz i pokaż, <b>o ile musiałoby się zmienić kluczowe założenie</b>, żeby wariant przestał być opłacalny albo żeby ranking wariantów się odwrócił. W brytyjskiej metodyce oceny inwestycji publicznych to obowiązkowe minimum.</li>
+          <li><b>Punkt procentowy to nie procent.</b> Marża 10% → 9% to spadek o jeden punkt procentowy i zarazem o dziesięć procent. Zarząd wychwyci pomyłkę natychmiast.</li>
+          <li><b>Przy małej bazie podaj wartości bezwzględne.</b> Wzrost z 2 na 5 to „+150%" i jest to wprowadzanie w błąd.</li>
+          <li><b>Nie pozwól odczytać „brak różnicy" z nachodzących przedziałów.</b> Policz różnicę wariantów wprost i pokaż ją z własnym przedziałem.</li>
+          <li><b>Korektę na optymizm rób jawnie</b> i podpisz jako osobną pozycję, nigdy jako cichy mnożnik.</li>
+        </ul>
+        <div class="verdict"><b>Test:</b> czy klient może zapytać „co musiałoby pójść nie tak" i dostać odpowiedź z ekranu, bez dzwonienia do doradcy?</div>
+        <span class="src">HM Treasury, Green Book §§6.102–6.105 · ONS, percentages and percentage points</span>
+      </div>
+
+      <div class="screen">
+        <span class="tag">Ekran trzeci</span>
+        <h3>Wycena przedsiębiorstwa</h3>
+        <p>Pytanie klienta: <em>skąd ta liczba?</em> Tu jest najostrzejszy standard z całej trójki — i jedyny, który mówi wprost, co musi być na ekranie.</p>
+        <ul>
+          <li><b>Zestaw obowiązkowy:</b> data wyceny, podstawa wartości, zastosowane metody, kluczowe dane wejściowe, założenia znaczące i specjalne, ograniczenia analizy.</li>
+          <li><b>Założenia na tym samym ekranie co liczba.</b> Nie w zakładce, nie w PDF-ie, nie pod ikoną „i". Ukryte założenie robi z liczby coś, co udaje pewność.</li>
+          <li><b>Wartość najbardziej prawdopodobna plus wrażliwość</b> — nie goły przedział. Jeśli pokazujesz pasmo, musi aktywnie unieważniać dwa fałszywe odczyty: że w środku wszystko jednakowo prawdopodobne, i że na zewnątrz nic nie jest możliwe.</li>
+          <li><b>Nie uśredniaj metod w jedną liczbę.</b> Zbieżność albo rozjazd metod to informacja dla klienta, nie coś do wygładzenia.</li>
+          <li><b>Scenariusze nazywaj sterownikiem, nie sentymentem.</b> Nie „bazowy / optymistyczny / pesymistyczny" — środkowy zostanie odczytany jako „ten prawdziwy". Nazwa ma mówić, co się w nim dzieje.</li>
+        </ul>
+        <div class="verdict"><b>Test:</b> przejdź listę obowiązkową punkt po punkcie. Brak choćby jednego oznacza, że to nie jest prezentacja wyceny, tylko liczba.</div>
+        <span class="src">IVS 106 · IVSC Valuation Uncertainty · Uncertainty Toolkit for Analysts in Government</span>
+      </div>
+
+    </div>
+  </section>
+
+  <section>
+    <p class="rule-label">Konkret</p>
+    <h2>Ta sama liczba, dwa razy</h2>
+    <p class="lead">Różnica nie jest kosmetyczna. Lewa strona mówi doświadczonemu odbiorcy, że autor nie rozumie własnego modelu.</p>
+
+    <div class="compare">
+      <div class="bad">
+        <span class="h">Wygląda na rzetelne</span>
+        <span class="num">47 382 914 zł</span>
+        <p class="why">Dziewięć cyfr znaczących z modelu, którego niepewność sięga trzydziestu procent. Precyzja, której nie ma pokrycia w danych, jest czytana jako brak zrozumienia modelu — nie jako staranność.</p>
+      </div>
+      <div class="good">
+        <span class="h">Jest rzetelne</span>
+        <span class="num">47 mln zł<br><span style="font-size:14px;color:var(--ink-mute)">najbardziej prawdopodobna · wrażliwość 44–51</span></span>
+        <p class="why">Zaokrąglenie wynika z reguły: niepewność do dwóch cyfr znaczących, wartość do tego samego miejsca. Obok — co najmocniej rusza wynikiem i o ile.</p>
+      </div>
+    </div>
+    <div class="col" style="margin-top:20px">
+      <p class="note"><strong>Reguła jest algorytmem, nie wyczuciem.</strong> Zaokrąglij niepewność najwyżej do dwóch cyfr znaczących, potem zaokrąglij wartość do tego samego miejsca dziesiętnego. Pochodzi z metrologii i jest w pełni sprawdzalna.</p>
+      <span class="src">JCGM 100:2008 (GUM) §7.2.6 · NIST GLP 9</span>
+    </div>
+  </section>
+
+  <section>
+    <p class="rule-label">Czego unikać</p>
+    <h2>Pięć rzeczy, które wyglądają na profesjonalne</h2>
+    <p class="lead">Każda z nich jest częstym odruchem przy projektowaniu „poważnego" ekranu. Każda działa odwrotnie.</p>
+
+    <div class="anti">
+      <div class="ap"><span class="n">01</span><div>
+        <h3>Fałszywa precyzja jako dowód pracy</h3>
+        <p>Kwota co do złotówki z modelu, który jej nie zna. Najszybszy sposób na utratę wiarygodności u kogoś, kto zna się na wycenach.</p>
+      </div></div>
+      <div class="ap"><span class="n">02</span><div>
+        <h3>Ściana wykresów jako dowód analityczności</h3>
+        <p>Osiem wykresów, z których żaden nie ma wniosku, czyta się jako brak wniosku. Jeden widok powinien nieść dwa, najwyżej trzy pojęcia.</p>
+      </div></div>
+      <div class="ap"><span class="n">03</span><div>
+        <h3>Zielono-czerwone zmiany bez znaku</h3>
+        <p>Wygląda jak nowoczesny pulpit. Znika w druku, w skali szarości i u około ośmiu procent mężczyzn. Kierunek zawsze niesie znak albo strzałka; kolor tylko dodatkowo.</p>
+      </div></div>
+      <div class="ap"><span class="n">04</span><div>
+        <h3>Zegary i pierścienie postępu jako kafle</h3>
+        <p>Wyglądają drogo, zajmują wielokrotnie więcej miejsca niż zwykła skala liniowa przy tej samej informacji i czyta się je wolniej.</p>
+      </div></div>
+      <div class="ap"><span class="n">05</span><div>
+        <h3>Wachlarz niepewności bez opisanych pasm</h3>
+        <p>Wygląda jak wykres banku centralnego. Bez podanych prawdopodobieństw jest ozdobą — sprzedaje wrażenie rygoru bez rygoru.</p>
+      </div></div>
+    </div>
+  </section>
+
+  <section>
+    <p class="rule-label">Sprawdzalne</p>
+    <h2>Progi, które da się zmierzyć</h2>
+    <p class="lead">Te nie są kwestią gustu i nie wymagają Twojej decyzji — wpisuję je do standardu i egzekwuję maszynowo.</p>
+
+    <div class="scroller">
+      <table class="thr">
+        <thead>
+          <tr><th>Reguła</th><th>Próg</th><th>Jak sprawdzam</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Cyfry tabelaryczne w każdej kolumnie liczbowej</td><td>bezwarunkowo</td><td>„111 111" i „888 888" mają tę samą szerokość</td></tr>
+          <tr><td>Liczby wyrównane do prawej i do przecinka</td><td>bezwarunkowo</td><td>pionowa linia przez przecinki jest prosta</td></tr>
+          <tr><td>Stała liczba miejsc dziesiętnych w kolumnie</td><td>bezwarunkowo</td><td>policz cyfry po przecinku w każdym wierszu</td></tr>
+          <tr><td>Polski zapis: spacja nierozdzielająca od pięciu cyfr, przecinek dziesiętny</td><td>bezwarunkowo</td><td>zero trafień na kropkę jako separator tysięcy</td></tr>
+          <tr><td>Słupki zaczynają się od zera</td><td>bezwarunkowo</td><td>minimum osi = 0; ostrzeżenie o obcięciu <em>nie naprawia</em> obcięcia</td></tr>
+          <tr><td>Kontrast tekstu</td><td>4,5 : 1</td><td>zmierzony osobno w motywie jasnym i ciemnym</td></tr>
+          <tr><td>Kontrast kontrolek, osi, obramowań</td><td>3 : 1</td><td>wobec własnego tła, nie wobec siebie nawzajem</td></tr>
+          <tr><td>Cel kliknięcia w gęstej tabeli</td><td>24 × 24 px</td><td>albo taki rozstaw środków sąsiednich celów</td></tr>
+          <tr><td>Kolory statusu nie występują jako barwy serii danych</td><td>zbiór pusty</td><td>przecięcie palety semantycznej i palety wykresów</td></tr>
+          <tr><td>Liczba kategorii na wykresie</td><td>≤ 4</td><td>policz elementy legendy</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="col" style="margin-top:20px">
+      <p class="note"><strong>Jedna z nich jest u nas ryzykiem strukturalnym.</strong> W tym projekcie <code>primary</code> to crimson — czyli barwa akcentu i barwa alarmu to ta sama rodzina. Reguła „kolory statusu nie są barwami serii" jest tu trudniejsza do utrzymania niż gdzie indziej i wymaga osobnego bezpiecznika.</p>
+      <span class="src">WCAG 2.2 · IBM Carbon, palety wykresów · UK Analysis Function</span>
+    </div>
+  </section>
+
+  <section>
+    <p class="rule-label">Uczciwie</p>
+    <h2>Czego nie ma w żadnym standardzie</h2>
+    <div class="col">
+      <p>Sprawdziłem i mówię wprost, żeby nie sprzedać Ci konwencji jako normy.</p>
+      <p><strong>Słowo „prestiżowy" nie ma definicji projektowej.</strong> Nikt go nie zoperacjonalizował. Mierzalne są rzeczy sąsiednie — wiarygodność i pierwsze wrażenie — i na nich opieram tezę o powściągliwości.</p>
+      <p><strong>Wykres porównujący metody wyceny nie ma standardu.</strong> Ani kolejności pasków, ani linii odniesienia. Wszystko, co krąży, pochodzi od komercyjnych szkoleń bankowości inwestycyjnej. To jest decyzja projektowa i będę ją traktował jako Twoją.</p>
+      <p><strong>Nie ma standardu, ile elementów mieści kafel wskaźnika ani ile poziomów typografii wolno na ekranie.</strong> Systemy publikują skale, żaden nie nakłada limitu użycia. Moje progi są propozycją, nie cytatem.</p>
+      <p><strong>Nie istnieje publiczny system projektowy żadnej instytucji finansowej pierwszej ligi.</strong> „Projektuj jak terminal giełdowy" to publicystyka, nie źródło.</p>
+      <p><strong>I rzecz, która mnie samego zaskoczyła:</strong> teza „minimalizm zawsze lepszy" jest w literaturze sporna. Są badania pokazujące, że wykresy ozdobione bywały lepiej zapamiętywane. Dlatego zakaz gradientów i cieni uzasadniam <em>Twoim celem</em> — powagą odbioru w pierwszej chwili — a nie autorytetem Tuftego. Tak też go opiszę w standardzie.</p>
+    </div>
+  </section>
+
+  <footer>
+    <div class="col">
+      <p>Research standardów, 29 sierpnia 2026. Każda reguła ma źródło; twierdzenia bez źródła są oznaczone jako moja ocena. Siostrzana kartka: <em>Pięć kształtów karty</em>.</p>
+      <p>Następny krok: te reguły wchodzą do standardu jako sprawdzalne bezpieczniki, a trzy ekrany dostają prototyp — nowy, nie dzisiejszy. Obejrzę go pierwszy.</p>
+    </div>
+  </footer>
+
+</div>

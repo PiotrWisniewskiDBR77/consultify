@@ -1,0 +1,400 @@
+<title>Ile tu naprawdę jest ekranów</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+  :root{
+    --ground:#F4F7FB; --surface:#FFFFFF; --surface-2:#EDF2F8;
+    --ink:#121B2E; --ink-soft:#46536B; --ink-mute:#6E7B92;
+    --line:#DBE3EE;
+    --accent:#1F5A8F; --accent-soft:#E3EDF6;
+    --critical:#85182F; --critical-bg:#F7E7EA;
+    --good:#1F6B4D; --good-bg:#E4F0EA;
+    --warn:#8A5A12; --warn-bg:#F6EDDC;
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --ground:#0D1524; --surface:#141F33; --surface-2:#1B2942;
+    --ink:#E9EFF7; --ink-soft:#B0BCD0; --ink-mute:#8492AA;
+    --line:#26344E;
+    --accent:#7FB2DD; --accent-soft:#1A2C42;
+    --critical:#E8879B; --critical-bg:#35161F;
+    --good:#7CC7A4; --good-bg:#14291F;
+    --warn:#D9AE68; --warn-bg:#2E2413;
+  }}
+  :root[data-theme="dark"]{
+    --ground:#0D1524; --surface:#141F33; --surface-2:#1B2942;
+    --ink:#E9EFF7; --ink-soft:#B0BCD0; --ink-mute:#8492AA;
+    --line:#26344E;
+    --accent:#7FB2DD; --accent-soft:#1A2C42;
+    --critical:#E8879B; --critical-bg:#35161F;
+    --good:#7CC7A4; --good-bg:#14291F;
+    --warn:#D9AE68; --warn-bg:#2E2413;
+  }
+
+  *{box-sizing:border-box;}
+  body{background:var(--ground);color:var(--ink);
+    font-family:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+    font-size:16.5px;line-height:1.62;margin:0;padding:0 20px 96px;
+    -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:980px;margin:0 auto;}
+  .col{max-width:660px;}
+
+  .masthead{padding:60px 0 34px;border-bottom:2px solid var(--ink);margin-bottom:44px;}
+  .eyebrow{font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--ink-mute);margin:0 0 18px;}
+  h1{font-family:Spectral,Georgia,serif;font-weight:600;font-size:clamp(38px,6vw,60px);
+    line-height:1.04;letter-spacing:-.015em;margin:0 0 20px;text-wrap:balance;}
+  .standfirst{font-family:Spectral,Georgia,serif;font-size:clamp(18px,2.4vw,21px);
+    line-height:1.55;color:var(--ink-soft);max-width:640px;margin:0;}
+
+  h2{font-family:Spectral,Georgia,serif;font-weight:600;font-size:clamp(25px,3.4vw,32px);
+    line-height:1.18;letter-spacing:-.01em;margin:0 0 8px;text-wrap:balance;}
+  section{margin-bottom:66px;}
+  .lead{color:var(--ink-soft);margin:0 0 26px;max-width:640px;}
+  p{margin:0 0 16px;}
+  .col p:last-child{margin-bottom:0;}
+
+  .rule-label{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--accent);margin:0 0 14px;display:flex;align-items:center;gap:12px;}
+  .rule-label::after{content:"";flex:1;height:1px;background:var(--line);}
+
+  .figures{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:1px;
+    background:var(--line);border:1px solid var(--line);border-radius:3px;overflow:hidden;margin-bottom:26px;}
+  .fig{background:var(--surface);padding:20px 22px;}
+  .fig .n{font-family:"IBM Plex Mono",monospace;font-size:31px;font-weight:500;line-height:1;
+    letter-spacing:-.02em;font-variant-numeric:tabular-nums;display:block;margin-bottom:8px;}
+  .fig .k{font-size:13.5px;color:var(--ink-mute);line-height:1.4;display:block;}
+  .fig.crit .n{color:var(--critical);}
+  .fig.good .n{color:var(--good);}
+
+  /* decyzje */
+  .dec{background:var(--surface);border:1px solid var(--line);border-radius:3px;
+    padding:24px 26px;margin-bottom:18px;}
+  .dec-h{display:flex;gap:14px;align-items:baseline;margin-bottom:11px;}
+  .dec-n{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:500;color:var(--accent);flex:0 0 auto;}
+  .dec h3{font-size:18.5px;font-weight:600;margin:0;line-height:1.3;}
+  .dec .today{font-size:15px;color:var(--ink-soft);margin:0 0 15px 40px;}
+  .dec .today b{color:var(--ink);font-weight:600;}
+  .rec{margin-left:40px;background:var(--surface-2);border-left:3px solid var(--accent);
+    padding:14px 18px;border-radius:0 3px 3px 0;}
+  .rec .tag{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--accent);display:block;margin-bottom:6px;}
+  .rec p{margin:0;font-size:15px;}
+
+  /* fale */
+  .wave{background:var(--surface);border:1px solid var(--line);border-radius:3px;
+    margin-bottom:20px;overflow:hidden;}
+  .w-head{display:grid;grid-template-columns:78px 1fr auto;gap:20px;align-items:start;
+    padding:24px 26px;border-bottom:1px solid var(--line);}
+  .w-num{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:500;color:var(--accent);
+    letter-spacing:.08em;padding-top:5px;}
+  .w-head h3{font-size:20px;font-weight:600;margin:0 0 5px;line-height:1.3;letter-spacing:-.01em;}
+  .w-head .why{font-size:15px;color:var(--ink-soft);margin:0;}
+  .cnt{font-family:"IBM Plex Mono",monospace;font-size:26px;font-weight:500;letter-spacing:-.02em;
+    color:var(--accent);white-space:nowrap;padding-top:2px;}
+  .cnt small{display:block;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--ink-mute);font-weight:400;margin-top:5px;text-align:right;}
+  .w-body{padding:22px 26px;}
+  .w-body h4{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.13em;
+    text-transform:uppercase;color:var(--ink-mute);margin:0 0 10px;}
+  .w-body h4:not(:first-child){margin-top:22px;}
+  .w-body ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:9px;}
+  .w-body li{display:flex;gap:11px;font-size:15.5px;line-height:1.55;color:var(--ink-soft);}
+  .w-body li::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--accent);
+    flex:0 0 auto;margin-top:9px;}
+  .w-body li b{color:var(--ink);font-weight:600;}
+  .gate{margin-top:22px;background:var(--surface-2);border-left:3px solid var(--accent);
+    padding:13px 17px;border-radius:0 3px 3px 0;font-size:15px;}
+  .gate b{color:var(--accent);}
+
+  table.plain{width:100%;border-collapse:collapse;font-size:15px;}
+  table.plain th,table.plain td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--line);
+    vertical-align:top;}
+  table.plain th{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.13em;
+    text-transform:uppercase;color:var(--ink-mute);font-weight:500;}
+  table.plain td.num{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;
+    text-align:right;white-space:nowrap;}
+  table.plain tbody tr:last-child td{border-bottom:none;}
+  table.plain td:first-child{font-weight:600;}
+  .scroller{overflow-x:auto;border:1px solid var(--line);border-radius:3px;background:var(--surface);}
+
+  .note{border-left:3px solid var(--line);padding-left:22px;color:var(--ink-soft);font-size:15.5px;}
+  .note strong{color:var(--ink);}
+  .note+.note{margin-top:15px;}
+  .quote{font-family:Spectral,Georgia,serif;font-size:19px;font-style:italic;color:var(--ink-soft);
+    border-left:2px solid var(--accent);padding-left:20px;margin:0 0 18px;}
+  code{font-family:"IBM Plex Mono",monospace;font-size:.875em;background:var(--surface-2);
+    padding:1px 5px;border-radius:2px;}
+
+  footer{margin-top:30px;padding-top:26px;border-top:1px solid var(--line);
+    font-size:14px;color:var(--ink-mute);}
+  footer p{margin:0 0 8px;}
+  a{color:var(--accent);}
+  a:focus-visible{outline:2px solid var(--accent);outline-offset:3px;}
+  @media (max-width:620px){.w-head{grid-template-columns:1fr;gap:10px;}.cnt small{text-align:left;}
+    .dec .today,.rec{margin-left:0;}}
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="eyebrow">Consultify · plan rozwoju grafik · 29 sierpnia 2026</p>
+    <h1>Ile tu naprawdę jest ekranów</h1>
+    <p class="standfirst">Odpowiedź jest jednocześnie gorsza i lepsza, niż wygląda. Powierzchni są setki — ale indywidualnego projektu wymaga ich kilkadziesiąt. Reszta to kilka wzorców powielonych dwieście razy.</p>
+  </header>
+
+  <section>
+    <p class="rule-label">Pomiar</p>
+    <div class="figures">
+      <div class="fig"><span class="n">~514</span><span class="k">żywych powierzchni w szesnastu modułach — spis kompletny</span></div>
+      <div class="fig crit"><span class="n">~473</span><span class="k">martwych — prawie połowa wszystkiego, co jest w kodzie</span></div>
+      <div class="fig"><span class="n">88</span><span class="k">za flagą albo bramką, w tym całe moduły</span></div>
+      <div class="fig good"><span class="n">~110</span><span class="k">wymaga indywidualnego projektu; reszta to powielenie wzorca</span></div>
+    </div>
+    <div class="col">
+      <p class="note"><strong>Spis jest kompletny — wszystkie szesnaście modułów zmierzone</strong> w czterech niezależnych torach. Liczby urosły wobec pierwszego szacunku o jedną czwartą, bo moduł Mojej Pracy okazał się największy w całym produkcie: pięćset siedemdziesiąt cztery pliki i około stu dwudziestu sześciu żywych powierzchni.</p>
+    </div>
+  </section>
+
+  <section>
+    <p class="rule-label">Rzecz, która zmienia wszystko</p>
+    <h2>Siedemdziesiąt procent ekranów to nie są projekty graficzne</h2>
+    <div class="col">
+      <p>W modułach 13–16 naliczono około <strong>252 żywe powierzchnie</strong>. Z tego <strong>176</strong> widzi wyłącznie administrator organizacji albo administrator platformy. To są ekrany narzędziowe: tabela, filtry, przełączniki, formularz.</p>
+      <p><strong>One nie potrzebują 176 projektów. Potrzebują jednego systemu, zastosowanego 176 razy.</strong> Administracja organizacji już to robi — ma wspólną nawigację domenową i wspólny nagłówek ekranu, i jest jedynym z czterech modułów, w którym nie ma ani jednego martwego pliku.</p>
+      <p>Indywidualnego projektu wymaga <strong>to, co widzi i czuje doradca</strong>: czat i jego panele, artefakty pracy, ekrany liczbowe i to, co wychodzi do klienta.</p>
+    </div>
+  </section>
+
+  <section>
+    <p class="rule-label">Zanim cokolwiek narysuję</p>
+    <h2>Sześć decyzji, które usuwają pracę</h2>
+    <p class="lead">Cztery pierwsze zdejmują z planu kilkadziesiąt ekranów. Dwie ostatnie usuwają pułapki, na których traci czas każdy, kto po nas przyjdzie.</p>
+
+    <div class="dec">
+      <div class="dec-h"><span class="dec-n">01</span><h3>Organizacja ma dwa komplety ekranów</h3></div>
+      <p class="today">Działa <b>21 ekranów formularzowych</b>. Obok, za flagą domyślnie wyłączoną, leży gotowy przeprojektowany komplet — <b>11 ekranów</b> z własną powłoką i prawym panelem.</p>
+      <div class="rec"><span class="tag">Rekomendacja</span>
+        <p>Obejrzeć te 11 i przyjąć je zamiast 21. Jeśli są dobre, oszczędzamy dwadzieścia jeden projektów. Jeśli nie — wiemy to, zanim zaczniemy, a nie w połowie.</p></div>
+    </div>
+
+    <div class="dec">
+      <div class="dec-h"><span class="dec-n">02</span><h3>Trzysta pięćdziesiąt martwych plików</h3></div>
+      <p class="today">W samych Ustawieniach martwe jest <b>108 plików ze 145</b> — trzy czwarte katalogu to równoległy, nieużywany zestaw ekranów, którego nikt nie usunął. W module Wyników martwy jest <b>cały stary stos</b>, 35 plików.</p>
+      <div class="rec"><span class="tag">Rekomendacja</span>
+        <p>Usunąć przed projektowaniem, nie po. Martwy plik o mylącej nazwie kosztuje przy każdym kolejnym pomiarze — dziś trzykrotnie sprowadził na manowce moich własnych wykonawców.</p></div>
+    </div>
+
+    <div class="dec">
+      <div class="dec-h"><span class="dec-n">03</span><h3>Finanse i dwie trzecie Wyników są wyłączone</h3></div>
+      <p class="today">Moduł Finansów jest w <b>zamkniętej becie</b> — osiemnaście ekranów, których zwykły użytkownik nie widzi w ogóle. W Wynikach dwie z trzech domen są wyłączone na <b>każdym</b> środowisku, łącznie z demo.</p>
+      <div class="rec"><span class="tag">Rekomendacja</span>
+        <p>Rozstrzygnąć, czy te trzydzieści siedem ekranów wchodzi do produktu w tej rundzie. Jeśli tak — projektujemy. Jeśli nie — schodzą z planu i wracają, gdy będą miały wejść.</p></div>
+    </div>
+
+    <div class="dec">
+      <div class="dec-h"><span class="dec-n">04</span><h3>Kanon tabel jest złamany na żywym ekranie</h3></div>
+      <p class="today">Lista idei w Mojej Pracy <b>buduje własną tabelę</b> zamiast używać wspólnego komponentu. Plik sam się do tego przyznaje komentarzem. To jest dokładnie ten wzorzec, który złamał zamrożony kanon w lipcu — powłoka skleiła własną tabelę i poszła na żywo.</p>
+      <div class="rec"><span class="tag">Rekomendacja</span>
+        <p>Naprawić przed jakimkolwiek projektowaniem list. Inaczej zaprojektujemy kanon, którego jeden z najczęściej używanych ekranów i tak nie stosuje. Sprawdzę też, czy bezpiecznik przedcommitowy to w ogóle łapie — bo skoro przeszło, to albo nie łapie, albo ktoś ominął.</p></div>
+    </div>
+
+    <div class="dec">
+      <div class="dec-h"><span class="dec-n">05</span><h3>Trzy flagi, które nic nie robią, i cztery komentarze, które kłamią</h3></div>
+      <p class="today">Trzy flagi mają <b>zero wywołań w całym kodzie</b> — przełączenie ich nie zmieni niczego. Cztery komentarze twierdzą coś, co nie jest prawdą: że ekran jest kanoniczny (nikt go nie renderuje), że ścieżka jest eksperymentalna i wyłączona (jest wpisana na sztywno jako włączona), że karta decyzji prowadzi do nowego warsztatu (okablowania nigdy nie było).</p>
+      <div class="rec"><span class="tag">Rekomendacja</span>
+        <p>Poprawić komentarze i usunąć martwe flagi razem ze sprzątaniem. To nie jest kosmetyka — to są pułapki, które dziś <b>trzykrotnie sprowadziły na manowce moich własnych wykonawców</b>, a mnie raz kosztowały publiczne sprostowanie.</p></div>
+    </div>
+
+    <div class="dec">
+      <div class="dec-h"><span class="dec-n">06</span><h3>Wzorzec już istnieje i jest przez Ciebie zaakceptowany</h3></div>
+      <p class="today">Warsztat kryterium w Audytach przeszedł przeprojektowanie i <b>dostał Twój akcept na zrzutach</b>. Do tego mam Twój wzór ekranu Wniosku — z nazwanymi brakami, uprawnieniami z zamkami i uczciwością wobec pewności.</p>
+      <div class="rec"><span class="tag">Rekomendacja</span>
+        <p>Nie wymyślamy języka od nowa. Bierzemy te dwa i rozciągamy na resztę. Ja już zbudowałem na nich ekran Inicjatywy — czeka na Twój odbiór.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <p class="rule-label">Cztery fale</p>
+    <h2>Plan</h2>
+    <p class="lead">Kolejność według tego, kto ogląda ekran i ile na nim traci, gdy jest zły.</p>
+
+    <div class="wave">
+      <div class="w-head">
+        <span class="w-num">FALA 1</span>
+        <div><h3>Język</h3><p class="why">Jedna karta, jeden nagłówek, jeden stan pusty, jedne prawa liczby. Wszystko dalsze jest zastosowaniem tego.</p></div>
+        <div class="cnt">5<small>kształtów</small></div>
+      </div>
+      <div class="w-body">
+        <h4>Co obejmuje</h4>
+        <ul>
+          <li><b>Pięć kształtów karty</b> — lista, pole opisowe, matryca, podgląd, oś czasu. Sto cztery karty w siedmiu artefaktach sprowadzają się do tych pięciu.</li>
+          <li><b>Sześć decyzji o karcie</b> — licznik, stan pusty, brak uprawnień, znikanie, menu, nagłówek. Rozstrzygnięte, czekają na Twoje potwierdzenie.</li>
+          <li><b>Prawa liczby</b> dla ekranów, które ogląda klient — jednostka, okres, nazwana baza, uczciwość wobec niepewności.</li>
+        </ul>
+        <div class="gate"><b>Stan:</b> gotowe i czeka na Twój odbiór. Ekran Inicjatywy zbudowany w tym języku, na realnych tokenach produktu.</div>
+      </div>
+    </div>
+
+    <div class="wave">
+      <div class="w-head">
+        <span class="w-num">FALA 2</span>
+        <div><h3>To, co widzi doradca przy kliencie</h3><p class="why">Artefakty pracy i ekrany liczbowe. Tu zły ekran kosztuje najwięcej, bo widzi go nie tylko doradca.</p></div>
+        <div class="cnt">~47<small>ekranów</small></div>
+      </div>
+      <div class="w-body">
+        <h4>Co obejmuje</h4>
+        <ul>
+          <li><b>Czat i jego panele</b> — jedenaście powierzchni. Ten sam komponent renderuje się w trzech postaciach w <b>każdym</b> module, więc zaprojektowanie go przeprojektowuje całą aplikację.</li>
+          <li><b>Artefakty</b> — Inicjatywa, Zadanie, Decyzja, Wniosek, Raport z audytu, warsztat narzędzia. Sześć powłok, sto cztery karty w środku.</li>
+          <li><b>Ekrany liczbowe</b> — wskaźniki, ROI, wycena. Osobne prawa, osobna staranność.</li>
+        </ul>
+        <h4>Rzecz, która zaniża wycenę i trzeba ją nazwać</h4>
+        <ul>
+          <li><b>Warsztat narzędzia to nie jeden ekran, tylko trzydzieści jeden wariantów.</b> Szesnaście narzędzi ma własną ścieżkę, reszta wpada w dwa zastępniki. Na liście jedna pozycja, w robocie nie jedna.</li>
+          <li><b>Wniosek i kreator szablonów mają po dziesięć tysięcy linii każdy.</b> Też po jednym wierszu na liście.</li>
+        </ul>
+        <div class="gate"><b>Bramka:</b> każdy ekran wraca do Ciebie na zrzucie z prawdziwego runtime, nie z prototypu — po tym, jak obejrzę go pierwszy.</div>
+      </div>
+    </div>
+
+    <div class="wave">
+      <div class="w-head">
+        <span class="w-num">FALA 3</span>
+        <div><h3>Powłoki narzędziowe</h3><p class="why">Administracja, konsola platformy, ustawienia. Nie dwieście projektów — trzy powłoki i jeden wzorzec tabeli.</p></div>
+        <div class="cnt">~200<small>powierzchni · 3 systemy</small></div>
+      </div>
+      <div class="w-body">
+        <h4>Jak to robimy</h4>
+        <ul>
+          <li><b>Administracja organizacji</b> — 61 ekranów, siedem domen, zero martwych plików. Ma już wspólną nawigację i nagłówek. <b>To jest wzorzec, nie problem.</b></li>
+          <li><b>Konsola platformy</b> — około 115 powierzchni, siedemdziesiąt sześć martwych plików. Najpierw sprzątanie, potem jedna powłoka.</li>
+          <li><b>Ustawienia</b> — trzydzieści sześć formularzy. Tu jest wyjątek: <b>każdy jest inny</b>, więc to jedyna część fali trzeciej wymagająca projektu ekran po ekranie.</li>
+        </ul>
+        <h4>Jedna usterka do naprawienia po drodze</h4>
+        <ul>
+          <li>Pozycja <b>„Subskrypcja i rozliczenia"</b> jest widoczna w menu doradcy i <b>prowadzi donikąd</b> — przekierowanie odbija go na czat. Widoczny przycisk, który wyrzuca użytkownika z ekranu.</li>
+        </ul>
+        <div class="gate"><b>Bramka:</b> jeden system domenowy zastosowany do wszystkich trzech konsol; dowodem jest to, że nowy ekran administracyjny powstaje bez decyzji projektowej.</div>
+      </div>
+    </div>
+
+    <div class="wave">
+      <div class="w-head">
+        <span class="w-num">FALA 4</span>
+        <div><h3>To, co klient dostaje do ręki</h3><p class="why">Dokument, prezentacja, raport. Jedyne ekrany, które opuszczają produkt.</p></div>
+        <div class="cnt">?<small>w pomiarze</small></div>
+      </div>
+      <div class="w-body">
+        <h4>Dlaczego osobna fala, a nie część drugiej</h4>
+        <ul>
+          <li>To nie jest ekran do oglądania, tylko <b>plik do oddania</b>. Rządzi się innymi prawami — składem, typografią dokumentu, marką.</li>
+          <li>Twoja własna diagnoza brzmi: <b>nie powstał ani jeden naprawdę dobry dokument z szablonu, a prezentacja nie powstała nigdy.</b></li>
+        </ul>
+        <h4>Co mierzę w tej chwili</h4>
+        <ul>
+          <li>Czy da się dziś <b>pobrać plik</b> — osobno dokument, prezentacja, arkusz. Odpowiedź z dowodem.</li>
+          <li>Ile jest szablonów, gdzie leżą, kto je edytuje.</li>
+          <li>Co usuwa wygenerowaną treść, zanim doradca ją zobaczy.</li>
+        </ul>
+        <div class="gate"><b>Bramka, którą sam proponuję:</b> doradca pobiera dokument i podpisuje go nazwiskiem bez poprawiania. Dla produktu doradczego niższa poprzeczka nie ma sensu.</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <p class="rule-label">★ Sto procent powierzchni</p>
+    <h2>Które ekrany muszą być gotowe na którym kamieniu</h2>
+    <p class="lead">Te same pięć kamieni, co w planie funkcji. Ekran bez działającej funkcji pod spodem nie ma sensu malować — dlatego oba plany zazębiają się w tych samych punktach.</p>
+
+    <div class="scroller">
+      <table class="plain">
+        <thead><tr><th>Kamień</th><th>Powierzchnie na sto procent</th><th class="num">Ile</th><th>Poziom wykończenia</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>M1 · Produkt nie gubi pracy</td>
+            <td>Zadanie · Decyzja · dokument Inicjatywy — same karty, bez powłok</td>
+            <td class="num">3</td>
+            <td>Stan pusty, brak uprawnień, potwierdzenie zapisu. <b>Bez przebudowy szaty.</b></td>
+          </tr>
+          <tr>
+            <td>M2 · Jedna sprawa od początku do końca</td>
+            <td>Organizacja (po decyzji: 21 lub 11) · Wywiad: warsztat sesji, Wniosek, szablony · Inicjatywy: dokument, lista, kreator · Moja praca: Zadanie, Decyzja, lista</td>
+            <td class="num">~28</td>
+            <td><b>Pełne wykończenie.</b> To jest ten łańcuch, który doradca pokazuje klientowi.</td>
+          </tr>
+          <tr>
+            <td>M3 · Mierzy, analizuje, wycenia</td>
+            <td>Ocena: edytor sesji + panel zarządzania · Audyty: warsztat kryterium, raport · Narzędzia: biblioteka, warsztat sesji · Wyniki: rejestr wskaźników, narzędzie wskaźnika · Finanse: hub, wycena, analiza</td>
+            <td class="num">~22</td>
+            <td>Pełne wykończenie plus <b>prawa liczby</b> — jednostka, okres, nazwana baza, uczciwość wobec niepewności.</td>
+          </tr>
+          <tr>
+            <td>M4 · Klient dostaje dokument</td>
+            <td>Materiały: biblioteka, studio dokumentów, studio prezentacji, sejf klienta · plus <b>sam dokument jako plik</b></td>
+            <td class="num">~8</td>
+            <td>Najwyższe. To jedyne powierzchnie, które <b>opuszczają produkt</b> i trafiają na biurko prezesa.</td>
+          </tr>
+          <tr>
+            <td>M5 · Produkt wykonuje pracę</td>
+            <td>Czat i jego panele · płótno robocze · hub agenta · panel sygnałów</td>
+            <td class="num">~14</td>
+            <td>Pełne. Czat renderuje się w trzech postaciach w <b>każdym</b> module — to najwyższa dźwignia w całym planie.</td>
+          </tr>
+          <tr>
+            <td>Poza kamieniami</td>
+            <td>Administracja organizacji · konsola platformy · Ustawienia · Partner</td>
+            <td class="num">~200</td>
+            <td><b>Spójny system, nie indywidualne projekty.</b> Trzy powłoki i jeden wzorzec tabeli.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="col" style="margin-top:26px">
+      <p class="note"><strong>Suma tego, co wymaga prawdziwej roboty projektowej: około siedemdziesięciu pięciu powierzchni.</strong> Nie czterysta. Reszta to albo martwy kod do usunięcia, albo powielenie wzorca, albo ekrany narzędziowe, których doradca nigdy nie zobaczy.</p>
+      <p class="note"><strong>Trzy poziomy wykończenia, nie jeden.</strong> „Sto procent" znaczy co innego dla dokumentu, który ląduje u prezesa, a co innego dla ekranu, na którym administrator dodaje użytkownika. Traktowanie ich jednakowo to najprostszy sposób, żeby zabraknąć czasu na to, co naprawdę widać.</p>
+      <p class="note"><strong>Jedna zasada obowiązująca na każdym kamieniu:</strong> żaden ekran nie idzie do Ciebie, zanim go nie obejrzę. Dostajesz go do akceptu, nie do odkrywania zepsucia.</p>
+    </div>
+  </section>
+
+  <section>
+    <p class="rule-label">Rachunek</p>
+    <h2>Skąd te liczby</h2>
+    <div class="scroller">
+      <table class="plain">
+        <thead><tr><th>Moduły</th><th class="num">Żywe</th><th class="num">Za bramką</th><th class="num">Martwe</th><th>Stan pomiaru</th></tr></thead>
+        <tbody>
+          <tr><td>1–4 · Organizacja, Wywiad, Narzędzia, Ocena</td><td class="num">52</td><td class="num">15</td><td class="num">39</td><td>zmierzone</td></tr>
+          <tr><td>5–8 · Inicjatywy, Realizacja, Moja praca, Spotkania</td><td class="num">~186</td><td class="num">18</td><td class="num">~119</td><td>zmierzone</td></tr>
+          <tr><td>9–12 · Wyniki, Finanse, Materiały, Audyty</td><td class="num">24</td><td class="num">45</td><td class="num">70</td><td>zmierzone</td></tr>
+          <tr><td>13–16 · Czat, Administracja, Ustawienia, Partner</td><td class="num">~252</td><td class="num">10</td><td class="num">~245</td><td>zmierzone</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="col" style="margin-top:22px">
+      <p class="note"><strong>Liczba „żywy" znaczy tu jedno: ekran jest zamontowany i osiągalny.</strong> Nie znaczy, że działa. Wszystkie trzy pomiary powstały z kodu, bez uruchamiania produktu — i wszystkie trzy same to zastrzegają.</p>
+    </div>
+  </section>
+
+  <section>
+    <p class="rule-label">Uczciwie</p>
+    <h2>Czego w tym planie nie ma</h2>
+    <div class="col">
+      <p class="quote">Trzy najcenniejsze rzeczy, jakie można oddać: dowód, że coś, co uchodziło za działające, nie działa; dowód, że coś, co uchodziło za zepsute, jest sprawne; i uczciwe zdanie „tego nie zmierzyłem".</p>
+      <p><strong>Nie ma jednej czwartej spisu.</strong> Moduły 5–8 jeszcze liczą — a są wśród nich Inicjatywy i Moja praca, czyli dwa najgęstsze obszary pracy doradcy. Liczba końcowa urośnie.</p>
+      <p><strong>Nie ma stanów potwierdzonych wzrokiem.</strong> Spis wykrywał stan pusty, ładowania i błędu wyszukiwaniem po kodzie. To daje fałszywe trafienia i fałszywe pominięcia. Każdą kratkę trzeba potwierdzić okiem przed projektem — i to jest moja robota, nie Twoja.</p>
+      <p><strong>Nie ma wyceny w dniach.</strong> Podam ją po pierwszej falę drugiej — gdy zobaczę, ile naprawdę zajmuje jeden artefakt zrobiony do końca. Liczba dni teraz byłaby zgadywaniem w kostiumie planu.</p>
+      <p><strong>Nie ma decyzji, których nie umiem podjąć za Ciebie.</strong> Cztery są wypisane wyżej. Bez nich mogę projektować, ale będę projektował rzeczy, które być może wyrzucimy.</p>
+    </div>
+  </section>
+
+  <footer>
+    <div class="col">
+      <p>Spis ekranów z pomiaru kodu wykonanego 29 sierpnia 2026 na linii integracyjnej, w trzech niezależnych torach. Każda liczba ma odtwarzalną metodę w materiale źródłowym.</p>
+      <p>Plan dokończenia funkcji jest osobnym dokumentem — te dwa czyta się razem, bo część ekranów nie ma sensu projektować, zanim funkcja pod nimi zacznie działać.</p>
+    </div>
+  </footer>
+
+</div>

@@ -1,0 +1,615 @@
+<title>Pięć kształtów karty</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+  :root {
+    --ground:      #F4F7FB;
+    --surface:     #FFFFFF;
+    --surface-2:   #EDF2F8;
+    --ink:         #121B2E;
+    --ink-soft:    #46536B;
+    --ink-mute:    #6E7B92;
+    --line:        #DBE3EE;
+    --line-soft:   #E9EEF5;
+    --accent:      #1F5A8F;
+    --accent-soft: #E3EDF6;
+    --critical:    #85182F;
+    --critical-bg: #F7E7EA;
+    --good:        #1F6B4D;
+    --good-bg:     #E4F0EA;
+    --warn:        #8A5A12;
+    --warn-bg:     #F6EDDC;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:      #0D1524;
+      --surface:     #141F33;
+      --surface-2:   #1B2942;
+      --ink:         #E9EFF7;
+      --ink-soft:    #B0BCD0;
+      --ink-mute:    #8492AA;
+      --line:        #26344E;
+      --line-soft:   #1E2B42;
+      --accent:      #7FB2DD;
+      --accent-soft: #1A2C42;
+      --critical:    #E8879B;
+      --critical-bg: #35161F;
+      --good:        #7CC7A4;
+      --good-bg:     #14291F;
+      --warn:        #D9AE68;
+      --warn-bg:     #2E2413;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground:      #0D1524;
+    --surface:     #141F33;
+    --surface-2:   #1B2942;
+    --ink:         #E9EFF7;
+    --ink-soft:    #B0BCD0;
+    --ink-mute:    #8492AA;
+    --line:        #26344E;
+    --line-soft:   #1E2B42;
+    --accent:      #7FB2DD;
+    --accent-soft: #1A2C42;
+    --critical:    #E8879B;
+    --critical-bg: #35161F;
+    --good:        #7CC7A4;
+    --good-bg:     #14291F;
+    --warn:        #D9AE68;
+    --warn-bg:     #2E2413;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    font-size: 16.5px;
+    line-height: 1.62;
+    margin: 0;
+    padding: 0 20px 96px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 980px; margin: 0 auto; }
+  .col  { max-width: 660px; }
+
+  /* ── masthead ─────────────────────────────────────────── */
+  .masthead {
+    padding: 60px 0 34px;
+    border-bottom: 2px solid var(--ink);
+    margin-bottom: 44px;
+  }
+  .eyebrow {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11.5px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin: 0 0 18px;
+  }
+  h1 {
+    font-family: Spectral, Georgia, serif;
+    font-weight: 600;
+    font-size: clamp(38px, 6vw, 60px);
+    line-height: 1.04;
+    letter-spacing: -.015em;
+    margin: 0 0 20px;
+    text-wrap: balance;
+  }
+  .standfirst {
+    font-family: Spectral, Georgia, serif;
+    font-size: clamp(18px, 2.4vw, 21px);
+    line-height: 1.55;
+    color: var(--ink-soft);
+    max-width: 640px;
+    margin: 0;
+  }
+
+  h2 {
+    font-family: Spectral, Georgia, serif;
+    font-weight: 600;
+    font-size: clamp(25px, 3.4vw, 32px);
+    line-height: 1.18;
+    letter-spacing: -.01em;
+    margin: 0 0 8px;
+    text-wrap: balance;
+  }
+  h3 {
+    font-family: "IBM Plex Sans", sans-serif;
+    font-weight: 600;
+    font-size: 17px;
+    margin: 0 0 6px;
+  }
+  section { margin-bottom: 68px; }
+  .lead { color: var(--ink-soft); margin: 0 0 26px; max-width: 640px; }
+  p { margin: 0 0 16px; }
+  .col p:last-child { margin-bottom: 0; }
+
+  .rule-label {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .rule-label::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--line);
+  }
+
+  /* ── numbers band ─────────────────────────────────────── */
+  .figures {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 30px;
+  }
+  .fig { background: var(--surface); padding: 20px 22px; }
+  .fig .n {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 33px;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: -.02em;
+    font-variant-numeric: tabular-nums;
+    display: block;
+    margin-bottom: 8px;
+  }
+  .fig .k {
+    font-size: 13.5px;
+    color: var(--ink-mute);
+    line-height: 1.4;
+    display: block;
+  }
+  .fig.is-critical .n { color: var(--critical); }
+
+  /* ── empty-state bar ──────────────────────────────────── */
+  .bar {
+    display: flex;
+    height: 46px;
+    border-radius: 3px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    margin-bottom: 16px;
+  }
+  .bar span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 13px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    color: var(--surface);
+  }
+  .seg-a { background: var(--good);   flex: 24; }
+  .seg-b { background: var(--warn);   flex: 22; }
+  .seg-c { background: var(--critical); flex: 20; }
+  .seg-d { background: var(--ink-mute); flex: 1; }
+
+  .legend {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 14px 26px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 14.5px;
+  }
+  .legend li { display: flex; gap: 10px; align-items: flex-start; line-height: 1.45; }
+  .swatch {
+    width: 11px; height: 11px;
+    border-radius: 2px;
+    flex: 0 0 auto;
+    margin-top: 6px;
+  }
+  .sw-a { background: var(--good); }
+  .sw-b { background: var(--warn); }
+  .sw-c { background: var(--critical); }
+  .sw-d { background: var(--ink-mute); }
+  .legend b { font-weight: 600; }
+  .legend span.q {
+    font-family: "IBM Plex Mono", monospace;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-mute);
+  }
+
+  /* ── shapes ───────────────────────────────────────────── */
+  .shapes { display: flex; flex-direction: column; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 3px; overflow: hidden; }
+  .shape {
+    background: var(--surface);
+    padding: 24px 26px;
+    display: grid;
+    grid-template-columns: 88px 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  .shape .count {
+    font-family: "IBM Plex Mono", monospace;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+  .shape .count b {
+    display: block;
+    font-size: 30px;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: -.02em;
+  }
+  .shape .count i {
+    display: block;
+    font-style: normal;
+    font-size: 11px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin-top: 6px;
+  }
+  .shape h3 { font-size: 18px; margin-bottom: 5px; }
+  .shape p { font-size: 15px; color: var(--ink-soft); margin: 0 0 10px; }
+  .shape .ex {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12.5px;
+    color: var(--ink-mute);
+    line-height: 1.6;
+    margin: 0;
+  }
+  .shape.dominant { background: var(--accent-soft); }
+  .shape.dominant .count b { color: var(--accent); }
+
+  /* ── decisions ────────────────────────────────────────── */
+  .decisions { display: flex; flex-direction: column; gap: 22px; }
+  .dec {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 24px 26px;
+  }
+  .dec-head {
+    display: flex;
+    gap: 14px;
+    align-items: baseline;
+    margin-bottom: 12px;
+  }
+  .dec-num {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+    flex: 0 0 auto;
+  }
+  .dec h3 { margin: 0; font-size: 18.5px; line-height: 1.3; }
+  .dec .today {
+    font-size: 14.5px;
+    color: var(--ink-soft);
+    margin: 0 0 16px 41px;
+  }
+  .dec .today b { color: var(--ink); font-weight: 600; }
+  .rec {
+    margin-left: 41px;
+    background: var(--surface-2);
+    border-left: 3px solid var(--accent);
+    padding: 14px 18px;
+    border-radius: 0 3px 3px 0;
+  }
+  .rec .tag {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10.5px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: block;
+    margin-bottom: 6px;
+  }
+  .rec p { margin: 0; font-size: 15px; }
+
+  /* ── flags ────────────────────────────────────────────── */
+  .flag {
+    background: var(--critical-bg);
+    border: 1px solid var(--critical);
+    border-radius: 3px;
+    padding: 22px 26px;
+    margin-bottom: 16px;
+  }
+  .flag h3 { color: var(--critical); margin-bottom: 8px; }
+  .flag p { margin: 0; font-size: 15.5px; }
+  .flag p + p { margin-top: 10px; }
+
+  .note {
+    border-left: 3px solid var(--line);
+    padding-left: 22px;
+    color: var(--ink-soft);
+    font-size: 15.5px;
+  }
+  .note strong { color: var(--ink); }
+
+  code {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: .875em;
+    background: var(--surface-2);
+    padding: 1px 5px;
+    border-radius: 2px;
+  }
+
+  .quote {
+    font-family: Spectral, Georgia, serif;
+    font-size: 19px;
+    font-style: italic;
+    color: var(--ink-soft);
+    border-left: 2px solid var(--accent);
+    padding-left: 20px;
+    margin: 0 0 18px;
+  }
+
+  footer {
+    margin-top: 30px;
+    padding-top: 26px;
+    border-top: 1px solid var(--line);
+    font-size: 14px;
+    color: var(--ink-mute);
+  }
+  footer p { margin: 0 0 8px; }
+
+  a { color: var(--accent); }
+  a:focus-visible, [tabindex]:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+
+  @media (max-width: 620px) {
+    .shape { grid-template-columns: 1fr; gap: 12px; }
+    .shape .count { text-align: left; display: flex; align-items: baseline; gap: 10px; }
+    .shape .count i { margin-top: 0; }
+    .dec .today, .rec { margin-left: 0; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="eyebrow">Consultify · inwentarz kart · 29 sierpnia 2026</p>
+    <h1>Pięć kształtów karty</h1>
+    <p class="standfirst">Trzydzieści osiem żywych kart sprowadza się do pięciu kształtów. Zamiast trzydziestu ośmiu decyzji potrzebujemy sześciu — i te same sześć obejmie artefakty, których jeszcze nie policzyłem.</p>
+  </header>
+
+  <section>
+    <p class="rule-label">Co zmierzyłem</p>
+    <div class="col">
+      <p>Obejrzałem każdą kartę w Inicjatywie, Zadaniu i Decyzji — nie oceniałem, czy jest ładna, tylko z czego jest zbudowana: co robi nagłówek, czy jest licznik, co widać przy braku danych, gdzie siedzą akcje, czy karta reaguje na brak uprawnień.</p>
+    </div>
+
+    <div class="figures" style="margin-top:26px">
+      <div class="fig"><span class="n">38</span><span class="k">żywych kart w trzech zmierzonych artefaktach</span></div>
+      <div class="fig"><span class="n">5</span><span class="k">kształtów, do których się sprowadzają</span></div>
+      <div class="fig"><span class="n">4</span><span class="k">równoległe systemy nazw, które się ze sobą nie zgadzają</span></div>
+      <div class="fig is-critical"><span class="n">18</span><span class="k">kart nie reaguje na brak uprawnień w ogóle</span></div>
+    </div>
+
+    <div class="col">
+      <p class="note"><strong>Zakres, poprawiony — i policzony do końca.</strong> Pierwsza wersja tej kartki mówiła „w trzech artefaktach" tak, jakby to była całość. Nie jest. Artefaktów kartowych jest <strong>siedem</strong>, a kart razem <strong>104</strong>: Inicjatywa 24 · Zadanie 8 · Decyzja 6 (opisane poniżej) oraz <strong>Wniosek 31 · Raport z audytu 21 · Narzędzie 11 · Powiadomienie 3</strong>. Właściciel wychwycił to zawężenie, zanim zdążyłem je naprawić.</p>
+      <p class="note"><strong>Pięć kształtów obejmuje wszystkie 104.</strong> Doliczenie czterech brakujących artefaktów nie dołożyło ani jednego nowego kształtu — dołożyło kart do już istniejących. To jest najlepszy dowód, że redukcja jest trafna.</p>
+      <p class="note"><strong>Wniosek jest najlepszą kartą w produkcie, nie najgorszą.</strong> Ma 27 z 31 stanów pustych napisanych pełnym zdaniem z podpowiedzią, co zrobić — czyli spełnia Twoją regułę lepiej niż wszystko inne. Wzorca nie trzeba wymyślać: on tam jest.</p>
+      <p class="note"><strong>Raport z audytu jest inny w rodzaju.</strong> Jego karty przychodzą z serwera razem z dokumentem: serwer produkuje <strong>27</strong> rodzajów sekcji, front rozpoznaje <strong>21</strong>. Pozostałe sześć renderuje się gorzej — pokazują surowe identyfikatory zamiast nazw. Reguły muszą działać także dla karty, której nie widzieliśmy, pisząc kod.</p>
+      <p class="note"><strong>I druga rzecz.</strong> Kart w kodzie jest znacznie więcej niż trzydzieści osiem — ale większość leży w katalogu, którego nic nie renderuje. Liczę tylko te, które użytkownik naprawdę może zobaczyć.</p>
+    </div>
+  </section>
+
+  <section>
+    <p class="rule-label">Liczba, która mówi najwięcej</p>
+    <h2>Co widzi doradca, gdy karta jest pusta</h2>
+    <p class="lead">Zaakceptowałeś regułę: stany puste mają być <em>nazwane, nie zerowe</em>. Tak wygląda jej przestrzeganie dzisiaj.</p>
+
+    <div class="bar" role="img" aria-label="Rozkład stanów pustych: 24 karty z pełnym zdaniem, 22 z samym „Brak X", 20 bez żadnej obsługi, 1 z gołym słowem">
+      <span class="seg-a">24</span>
+      <span class="seg-b">22</span>
+      <span class="seg-c">20</span>
+      <span class="seg-d"></span>
+    </div>
+
+    <ul class="legend">
+      <li><span class="swatch sw-a"></span><span><b>Pełne zdanie i co zrobić.</b> <span class="q">24 z 67</span> — „Ta inicjatywa nie ma jeszcze planu. Dodaj pierwsze zadanie albo pozwól AI zaproponować plan."</span></li>
+      <li><span class="swatch sw-b"></span><span><b>Sam rzeczownik.</b> <span class="q">22 z 67</span> — „Brak zależności." Nazwane, ale nie mówi, co dalej.</span></li>
+      <li><span class="swatch sw-c"></span><span><b>Nic.</b> <span class="q">20 z 67</span> — puste pole, pusta tabela, cisza. Doradca nie wie, czy to błąd, czy tak ma być.</span></li>
+      <li><span class="swatch sw-d"></span><span><b>Gołe słowo.</b> <span class="q">1 z 67</span> — dosłownie „Brak", powtórzone cztery razy pod rząd.</span></li>
+    </ul>
+
+    <div class="col" style="margin-top:26px">
+      <p><strong>Zatem regułę spełnia dziś nieco ponad jedna trzecia kart.</strong> Nie dlatego, że ktoś ją odrzucił — dlatego, że warstwa, która ją realizuje, obejmuje tylko sześć kart, a osiemnaście pozostałych dostaje to, co przypadkiem robi komponent w środku.</p>
+      <p class="note"><strong>Dwie pułapki, których nie widać po samym tekście.</strong> Po pierwsze, stan pusty pokazuje się <em>tylko wtedy, gdy masz prawo edytować</em> — czyli w podglądzie i bez uprawnień nie zobaczysz go w ogóle, nawet tam, gdzie jest napisany. Po drugie, siedem kart <em>znika z gęstego widoku</em>, gdy są puste — więc nie widać ani treści, ani komunikatu.</p>
+    </div>
+  </section>
+
+  <section>
+    <p class="rule-label">Redukcja</p>
+    <h2>Pięć kształtów</h2>
+    <p class="lead">To jest ta część, która zamienia trzydzieści osiem decyzji w sześć. Kształt to nie wygląd — to rodzaj rzeczy, którą karta pokazuje, i dlatego rządzi się własnymi regułami.</p>
+
+    <div class="shapes">
+      <div class="shape dominant">
+        <div class="count"><b>20</b><i>kart</i></div>
+        <div>
+          <h3>Lista obiektów</h3>
+          <p>Zbiór rzeczy, które dokładasz i usuwasz. Ponad połowa wszystkiego. Jedna decyzja o tym kształcie porządkuje dwadzieścia kart naraz.</p>
+          <p class="ex">Zadania · Decyzje · Ryzyka RAID · KPI · Zależności · Załączniki · Powiązania · Cele OKR · Produkty · Dziennik zmian · Zasoby · Opcje decyzji · Checklista · Dowody</p>
+        </div>
+      </div>
+
+      <div class="shape">
+        <div class="count"><b>7</b><i>kart</i></div>
+        <div>
+          <h3>Pole opisowe</h3>
+          <p>Tekst, który doradca pisze sam, często z pomocą AI. Nie ma tu czego liczyć — liczy się to, czy widać, że pole czeka na treść.</p>
+          <p class="ex">Definicja inicjatywy · Stan docelowy i zakres · Hipoteza · Wnioski · Opis zadania · Kontekst decyzji · Konsekwencje</p>
+        </div>
+      </div>
+
+      <div class="shape">
+        <div class="count"><b>6</b><i>kart</i></div>
+        <div>
+          <h3>Matryca</h3>
+          <p>Siatka o stałych wierszach i kolumnach. Nie dodaje się do niej pozycji — wypełnia się ją. Pusta matryca to nie brak danych, to niewypełniony formularz.</p>
+          <p class="ex">RACI i eskalacja · Bramy · Analiza finansowa · Wpływ finansowy · Ład Zadania · Ład Decyzji</p>
+        </div>
+      </div>
+
+      <div class="shape">
+        <div class="count"><b>4</b><i>karty</i></div>
+        <div>
+          <h3>Podgląd</h3>
+          <p>Okno na dane, które powstały gdzie indziej. Doradca ich tu nie tworzy, więc zachęta „dodaj pierwszy" byłaby kłamstwem.</p>
+          <p class="ex">Użyte w · Artefakty · Sugerowane zmiany · Właściciele strumieni</p>
+        </div>
+      </div>
+
+      <div class="shape">
+        <div class="count"><b>1</b><i>karta</i></div>
+        <div>
+          <h3>Oś czasu</h3>
+          <p>Jedyna w swoim rodzaju. Wykres Gantta z własnymi prawami — zostawiam ją osobno, żeby nie naginać do niej reguł pisanych dla list.</p>
+          <p class="ex">Harmonogram inicjatywy</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <p class="rule-label">Do rozstrzygnięcia</p>
+    <h2>Sześć decyzji</h2>
+    <p class="lead">Każda dotyczy wszystkich kart danego kształtu naraz. Przy każdej piszę, co jest dzisiaj i co rekomenduję — potrzebuję od Ciebie zgody albo zmiany.</p>
+
+    <div class="decisions">
+
+      <div class="dec">
+        <div class="dec-head">
+          <span class="dec-num">01</span>
+          <h3>Licznik przy tytule karty</h3>
+        </div>
+        <p class="today">Dzisiaj są <b>trzy konwencje na jednym ekranie</b>: jedne karty pokazują liczbę zawsze, także zero; inne tylko gdy jest co najmniej jedna pozycja; karty Zadania i Decyzji nie pokazują wcale. Mianownik „trzy z dziesięciu" występuje w całym produkcie <b>raz</b>.</p>
+        <div class="rec">
+          <span class="tag">Rekomendacja</span>
+          <p>Licznik zawsze, także przy zerze, i zawsze z mianownikiem, jeśli mianownik istnieje. „0 z 8 bram" niesie informację. Samo „0" wygląda na usterkę, a brak licznika każe doradcy zgadywać, czy karta się doczytała.</p>
+        </div>
+      </div>
+
+      <div class="dec">
+        <div class="dec-head">
+          <span class="dec-num">02</span>
+          <h3>Co musi zawierać stan pusty</h3>
+        </div>
+        <p class="today">Warstwa kanoniczna, która robi to porządnie, obejmuje <b>sześć kart</b>. Reszta ma to, co przypadkiem napisał autor komponentu — najczęściej samo „Brak zależności".</p>
+        <div class="rec">
+          <span class="tag">Rekomendacja</span>
+          <p>Trzy części obowiązkowo, ale <em>zależnie od kształtu</em>. Lista: co to jest, po co, przycisk dodania. Pole opisowe: czego się tu oczekuje. Matryca: że jest niewypełniona, nie że jest pusta. Podgląd: skąd te dane by przyszły — <strong>bez przycisku</strong>, bo doradca nie może ich tu utworzyć.</p>
+        </div>
+      </div>
+
+      <div class="dec">
+        <div class="dec-head">
+          <span class="dec-num">03</span>
+          <h3>Karta, której nie wolno edytować</h3>
+        </div>
+        <p class="today">Osiemnaście kart <b>ignoruje temat uprawnień całkowicie</b>. Do tego stan pusty jest dziś powiązany z prawem edycji — kto nie może edytować, ten nie widzi nawet komunikatu, że karta jest pusta.</p>
+        <div class="rec">
+          <span class="tag">Rekomendacja</span>
+          <p>Rozdzielić te dwie rzeczy. Stan pusty widzą wszyscy. Brak uprawnień pokazujemy osobno, jednym zdaniem mówiącym <em>kto</em> może to zmienić — to jedna z pięciu cech, które zaakceptowałeś przy prototypie.</p>
+        </div>
+      </div>
+
+      <div class="dec">
+        <div class="dec-head">
+          <span class="dec-num">04</span>
+          <h3>Znikanie pustych kart</h3>
+        </div>
+        <p class="today">Siedem kart <b>usuwa się z gęstego widoku</b>, gdy nie mają treści. Zamysł był porządkowy, skutek jest taki, że doradca nie wie o istnieniu sekcji, której nie wypełnił.</p>
+        <div class="rec">
+          <span class="tag">Rekomendacja</span>
+          <p>Puste karty zostają widoczne. Znikanie zamienia brak danych w brak wiedzy o brakach — a rejestr ryzyk, którego nie widać, to rejestr, którego nikt nie wypełni.</p>
+        </div>
+      </div>
+
+      <div class="dec">
+        <div class="dec-head">
+          <span class="dec-num">05</span>
+          <h3>Menu na karcie</h3>
+        </div>
+        <p class="today">Kebab na poziomie karty <b>praktycznie nie istnieje</b> — wszystkie żywe menu są przy wierszach listy. Dwa komponenty importują ikonę menu i nigdy jej nie używają.</p>
+        <div class="rec">
+          <span class="tag">Rekomendacja</span>
+          <p>Zostawić tak, jak jest, i usunąć martwe ikony. Menu na karcie ma sens dopiero wtedy, gdy jest w nim więcej niż jedna pozycja — dziś nie ma czego tam włożyć. To decyzja do odłożenia, nie do podjęcia teraz.</p>
+        </div>
+      </div>
+
+      <div class="dec">
+        <div class="dec-head">
+          <span class="dec-num">06</span>
+          <h3>Jeden nagłówek zamiast pięciu</h3>
+        </div>
+        <p class="today">Nagłówek karty jest dziś budowany na <b>pięć różnych sposobów</b>, zależnie od tego, kto pisał komponent. Jedna karta ma nagłówek przepisany ręcznie z innego — kopię, nie użycie.</p>
+        <div class="rec">
+          <span class="tag">Rekomendacja</span>
+          <p>Jeden nagłówek dla wszystkich kart: tytuł, licznik, akcja główna, znacznik stanu. Kształt decyduje tylko o tym, które z tych czterech miejsc są wypełnione — nigdy o tym, jak wyglądają.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section>
+    <p class="rule-label">Znalezione po drodze</p>
+    <h2>Trzy rzeczy, które trzeba naprawić niezależnie od decyzji</h2>
+    <p class="lead">Nie są kwestią gustu i nie czekają na Twoje rozstrzygnięcie. Zgłaszam je, żeby nie zginęły.</p>
+
+    <div class="flag">
+      <h3>Decyzja gubi połowę swojej treści</h3>
+      <p>Trzy z sześciu kart Decyzji nie zapisują się na serwer w ogóle — trafiają wyłącznie do pamięci przeglądarki. Dotyczy to ryzyk, konsekwencji oraz ładu i eskalacji.</p>
+      <p>To jest ta sama rodzina wad, którą mierzę w tle: interfejs potwierdza zapis, którego nie wykonał. Naprawa jest już w planie.</p>
+    </div>
+
+    <div class="flag">
+      <h3>Angielszczyzna w miejscu, w którym boli najbardziej</h3>
+      <p>Nagłówek karty zadań w Inicjatywie jest zaszyty po angielsku. Osobno dwanaście komunikatów nie ma polskiego tłumaczenia i pokazuje angielski tekst zastępczy.</p>
+      <p>Wśród nich — i jest w tym gorzka ironia — <em>wszystkie komunikaty ostrzegające doradcę, że jego szkic nie zostanie zapisany</em>.</p>
+    </div>
+
+    <div class="flag">
+      <h3>Tysiąc sto linii kodu, których nikt nigdy nie zobaczył</h3>
+      <p>Karta zamknięcia inicjatywy jest napisana w całości — ma stan pusty, obsługę uprawnień i dziesięć wywołań serwera. Nikt jej nie importuje. Nie wiem, czy to porzucona praca, czy funkcja wycięta na czas i czekająca na powrót — to jedno z pytań, które do Ciebie wrócą.</p>
+    </div>
+  </section>
+
+  <section>
+    <p class="rule-label">Uczciwie</p>
+    <h2>Czego jeszcze nie wiem</h2>
+    <div class="col">
+      <p class="quote">Trzy najcenniejsze rzeczy, jakie można oddać: dowód, że coś, co uchodziło za działające, nie działa; dowód, że coś, co uchodziło za zepsute, jest sprawne; i uczciwe zdanie „tego nie zmierzyłem".</p>
+      <p><strong>Nie wiem, które karty widzisz naprawdę.</strong> O widoczności rozstrzyga baza danych, nie kod. Liczby powyżej opisują stan, gdy serwer nic nie narzuci. Prawdziwą listę trzeba odczytać z żywego środowiska i zrobię to, zanim cokolwiek zbudujemy.</p>
+      <p><strong>Nie wiem, jak to wygląda.</strong> Ten inwentarz powstał z kodu, nie ze zrzutów. Wiem, jaki tekst jest w karcie — nie wiem, czy nagłówek nie nachodzi na drugi nagłówek ani jak to się łamie przy długim tytule. To następny krok i robię go ja, zanim zobaczysz cokolwiek.</p>
+      <p><strong>Nie policzyłem piątego artefaktu.</strong> Wniosek ma własny katalog około osiemnastu kart, poza tym zestawieniem. Dołożę go, ale nie chciałem opóźniać tej kartki — reguły z pięciu kształtów obejmą go bez zmian.</p>
+    </div>
+  </section>
+
+  <footer>
+    <div class="col">
+      <p>Inwentarz statyczny z kodu, gałąź integracyjna, 29 sierpnia 2026. Każda liczba ma odtwarzalną komendę w materiale źródłowym.</p>
+      <p>Następny krok po Twoim rozstrzygnięciu: prototyp jednego kształtu — listy obiektów, bo jest ich dwadzieścia. Nowy, nie dzisiejszy ekran. Obejrzę go pierwszy.</p>
+    </div>
+  </footer>
+
+</div>
