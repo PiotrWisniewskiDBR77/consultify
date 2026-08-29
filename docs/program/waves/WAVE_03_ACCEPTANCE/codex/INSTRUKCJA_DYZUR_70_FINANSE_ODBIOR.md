@@ -586,7 +586,43 @@ linii komendy** (`Z26`), nie przez wcześniejszy `export`:
 Seeder **odmówi** bazy spoza pętli zwrotnej (`127.0.0.1`/`localhost`/`::1`) —
 to jego bezpiecznik, nie usterka.
 
-Kolejność wiążąca (`Z20`): **kontener → pełne migracje → dopiero seed.**
+> ### ★★ POPRAWKA WYDANIA — PRZECZYTAJ, ZANIM POSTAWISZ KONTENER
+>
+> **Pierwsze wydanie tej instrukcji zawierało sprzeczność. Poprawiona
+> 2026-08-29 po zasadnym STOP-ie wykonawcy (`DEC-2026-08-29-264`).**
+>
+> Ten seeder ma **własny, kompletny cykl życia bazy** i wymaga, żeby baza
+> docelowa **NIE ISTNIAŁA**. Zweryfikowane w kodzie,
+> `server/scripts/seed-wave3-finance-owner-review.ts`:
+>
+> - `:269` — `if (await databaseExists(...)) fail('target database already exists')`
+> - `:270` — `await admin.query('CREATE DATABASE ...')` — **sam tworzy bazę**
+> - `:293` — `spawnSync('npm', ['run','db:migrate:strict'])` — **sam migruje**
+>
+> **Dlatego dla TEGO dyżuru obowiązuje następująca kolejność, a NIE uniwersalna
+> sekwencja z `§0.2c` (A):**
+>
+> 1. Kontener stawiasz z bazą administracyjną `POSTGRES_DB=postgres`.
+>    **NIE tworzysz bazy `cx_day70`.**
+> 2. **NIE uruchamiasz `migrate.postgres.ts` ręcznie.** Migracje są częścią
+>    `seed` i uruchamia je seeder.
+> 3. Dopiero teraz `seed`. Seeder wykona: `CREATE DATABASE` → trwały marker
+>    własności → `db:migrate:strict` → dane → FINAL receipt.
+> 4. `readback`.
+>
+> **`Z20` jest zachowane** — pełne migracje nadal wyprzedzają jakikolwiek
+> pomiar; różnica polega wyłącznie na tym, że uruchamia je seeder, a nie Ty.
+>
+> ★★ **MANIFEST Z NIEUDANEJ PRÓBY BLOKUJE PONOWNY SEED** (`:69`,
+> `fail('manifest exists; overwrite refused')`). Po każdej nieudanej próbie
+> **użyj NOWEJ ścieżki manifestu** albo usuń poprzednią.
+> Znany artefakt do ominięcia: `/private/tmp/cx-day70-artefakty/finance-owner-fixture-manifest.json`
+> ze stanem `FAILED_BEFORE_DURABLE_MARKER`.
+>
+> ★ Jeżeli mimo tej procedury seeder znowu odmówi — **to jest STOP, nie powód
+> do improwizacji.** Nie kasujesz baz „na wszelki wypadek", nie zmieniasz
+> `SOURCE_SHA`, nie obchodzisz bramek.
+
 Komendy `seed` | `readback` | `reset`.
 **Po zaseedowaniu wykonujesz `readback` i cytujesz jego wynik.
 Bez zielonego readbacku nie idziesz dalej.**
