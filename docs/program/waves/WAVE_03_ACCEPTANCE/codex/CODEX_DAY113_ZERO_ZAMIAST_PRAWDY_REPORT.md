@@ -232,6 +232,10 @@ Wzorzec nie zmienia przypadków PRAWDA, nie wymaga przeprojektowania ekranu i po
 | K5 | PASS statyczny — `6/6`; Kanban obalony, pięć pozostałych potwierdzonych w kodzie |
 | K6 | PASS — jeden gotowy fragment, nienałożony |
 | K7 | PASS — `3/46` wskazane |
-| K8 | do weryfikacji końcowym `git diff --name-only`; oczekiwane dokładnie dwa dokumenty |
+| K8 | PASS — końcowy diff markera wskazuje dokładnie dwa dozwolone dokumenty; zero `src/**` i `server/src/**` |
 
-Nie zmieniono `src/**`, `server/src/**`, tłumaczeń, migracji, seedera ani infrastruktury testów. `ls server/migrations/ | grep -cE "^202617"` zostanie zapisane w końcowej weryfikacji.
+Nie zmieniono `src/**`, `server/src/**`, tłumaczeń, migracji, seedera ani infrastruktury testów. `ls server/migrations/ | grep -cE "^202617"` zwróciło `0`.
+
+## 11. Commit, push i sprzątanie
+
+Pierwszy commit: `b03936face0f96ff0b3e22dd3e0277afc960eef4`; push na `github-backup/codex/day113-zero-zamiast-prawdy-20260829` zakończył się sukcesem. Przed sprzątaniem niezależny SQL potwierdził dokładnie bazę `consultify_w3_results_owner_day113`. Następnie `docker rm -fv cx-day113-pg` usunął wyłącznie własny kontener i wolumen. Końcowo kontener nie istnieje, a listenerów na `5995`, `4890` i `4891` jest `0/3`.
