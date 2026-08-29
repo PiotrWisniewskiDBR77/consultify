@@ -163,6 +163,13 @@ Manifest runtime:
 K1 PASS; K2 PASS; K3 PASS; K4 PASS dla mierzonego pakietu powłoki; K5 PASS
 `4/4`; K6 PASS; K7 PASS `0` zmian kart N.
 
+Sprzątanie: kontener `cx-day125-pg` usunięto z wolumenem. Kanoniczny `stop`
+odmówił po commitach: najpierw aktualny checkout nie odpowiadał startowemu SHA,
+a po podaniu aktualnego SHA stan runtime nie odpowiadał kandydatowi. Po dwóch
+odmowach zweryfikowano zapisane w należącym do dyżuru `state.json` PID/PGID i
+linie komend, następnie wysłano `TERM` wyłącznie do grup `25679` (backend) i
+`25699` (frontend). Porty `6008`, `4916`, `4917`: `3/3` wolne po sprzątaniu.
+
 Pliki zmienione względem markera:
 
 ```text
@@ -183,4 +190,3 @@ docs/program/waves/WAVE_03_ACCEPTANCE/modules/09_RESULTS/MODULE_ACCEPTANCE.md
 - Nie udowodniono, że dekoracyjne czerwienie Partnera i prawy znak zapytania są
   poprawne produktowo; udowodniono tylko, że nie pochodzą z naprawionej klasy.
 - Nie ma autoryzacji do demo, produkcji, release ani zmiany statusu G18.
-
