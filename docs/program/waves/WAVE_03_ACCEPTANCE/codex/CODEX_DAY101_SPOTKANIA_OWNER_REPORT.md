@@ -1,8 +1,8 @@
 # Dyżur 101 — Spotkania — pakiet odbioru właściciela
 
-Data pomiaru: 2026-08-29  
-Gałąź: `codex/day101-spotkania-odbior-20260829`  
-Baza pracy: `/private/tmp/cx-day101-spotkania`  
+Data pomiaru: 2026-08-29
+Gałąź: `codex/day101-spotkania-odbior-20260829`
+Baza pracy: `/private/tmp/cx-day101-spotkania`
 Zakres zapisu: ten raport oraz `modules/08_MEETINGS/MODULE_ACCEPTANCE.md`.
 
 ## Stan wejściowy
@@ -46,6 +46,7 @@ Status wejściowy `git status --short`: 0 wpisów z 0 oczekiwanych.
 1. Wiadomość zlecająca podała marker `188cb75f5b8f3b87eb8346160e5ee1aa56942988`, natomiast wydana instrukcja w `§0.1` podała marker roboczy `8c7a853a6cb82c9b498210049c5487ea033caa9b`. Oba SHA są przodkami `github-backup/codex/m03-admin-20260824`; `188cb75…` jest starszy, a instrukcja dyżuru została dodana później. Zastosowałem bezpieczniejszy, literalny marker wydanej instrukcji `8c7a853…`; nie wykonywałem rebase ani scalenia z tipem.
 2. Tip gałęzi bazowej uciekł do przodu o 10 commitów względem markera. Lista plików rozjazdu została zmierzona komendami z `§0.1`; scalenie pozostaje po stronie nadzorcy.
 3. Wydana instrukcja wielokrotnie odwołuje się do `§0.4a`, ale w pliku po `§0.2d` następuje od razu `§0.5`; sekcje `0.3` i `0.4a` nie istnieją. Zamiast proceduralnego STOP-u wykonano szeroki grep testów oraz skupiony pakiet UI i opisano mianowniki bez przepisywania cudzej liczby.
+4. Cleanup wykonano w złej kolejności: pierwsza próba kanonicznego `stop` została odrzucona, ponieważ po commicie `EXPECTED_SHA` nie odpowiadał bieżącemu HEAD; kontener usunięto przed zakończeniem procesu. Druga próba została fail-closed odrzucona przez brak zgodności candidate identity / brak adopted DB. Nie odtwarzałem fikcyjnego markera. Zamiast tego porównałem zapisane PID/PGID/tożsamości w należącym `state.json` z `ps` i listenerami, a następnie zakończyłem wyłącznie dokładne grupy `11364` i `11396` przez TERM. Wynik: PID `11364/11365/11396` zatrzymane, porty `5984/4864/4865` wolne, kontener nie istnieje.
 
 ## K1 — kontrakt seedera przed uruchomieniem bazy (4 z 4)
 
@@ -176,7 +177,7 @@ Skupiony przebieg: `RUN_DB_TESTS=0 MOCK_DB=true`, `--retry=0`, JSON reporter; `4
 
 ## Trasy
 
-Frontend: `/meetings` oraz alias legacy `/meeting`.  
+Frontend: `/meetings` oraz alias legacy `/meeting`.
 Backend: `ApiGateway` montuje `meetingRoutes` pod `/api/meeting` (`server/src/Gateway.ts:192,761`).
 
 ## TWIERDZENIA NIEZWERYFIKOWANE
@@ -191,4 +192,6 @@ Backend: `ApiGateway` montuje `meetingRoutes` pod `/api/meeting` (`server/src/Ga
 
 ## K8 — zakres zapisu
 
-Końcowy `git diff --name-only` ma zawierać wyłącznie ten raport i `modules/08_MEETINGS/MODULE_ACCEPTANCE.md`. Zero zmian w `src/`, `server/src/`, seederach, migracjach, testach i rejestrach.
+Końcowy `git diff --name-only` zawiera wyłącznie ten raport i `modules/08_MEETINGS/MODULE_ACCEPTANCE.md`. Zero zmian w `src/`, `server/src/`, seederach, migracjach, testach i rejestrach.
+
+Cleanup: `cx-day101-pg` usunięty z wolumenem; PID `11364`, `11365`, `11396` zatrzymane; porty `5984`, `4864`, `4865` wolne. Kanoniczny stop nie mógł zakończyć procedury po przedwczesnym usunięciu adopted DB; pełna korekta i fail-closed dowody są w „Korektach wobec instrukcji”.
