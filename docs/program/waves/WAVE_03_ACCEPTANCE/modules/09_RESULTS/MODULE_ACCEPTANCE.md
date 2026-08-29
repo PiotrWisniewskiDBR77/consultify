@@ -84,7 +84,7 @@ These are technical observations, not Piotr owner findings.
 
 | Finding ID | Captured | Piotr original wording | Category | Route/screen | Current behavior | Expected experience | Impact | Screenshot/hash | Product SHA | Severity | Decision/status | Fix commit | Self-QA | Owner retest |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| _none_ | | | | | | | | | | | | | | |
+| `RES-OWN-001` | 2026-08-23 | Results must expose KPI, OKR and ROI as three distinct, complete management tools with domain-specific creators and full cards, while preserving one canonical Consultify shell and visual standard. | Product/UX/architecture | `/results/kpi`, `/results/okr`, `/results/roi` | Current owner-review surfaces provide populated registries and partial tools, but cards, row commands and end-to-end workflows are incomplete or expose historical/technical structures. | Binding final implementation specification: [`RESULTS_OWNER_FINAL_IMPLEMENTATION_SPEC_2026-08-23.md`](./RESULTS_OWNER_FINAL_IMPLEMENTATION_SPEC_2026-08-23.md). | Critical: module cannot be accepted or coded coherently without a single owner contract. | owner screenshots and references retained in conversation; final specification is the durable navigation artifact | local owner-review runtime | `CRITICAL` | `REQUIREMENTS_CAPTURED / IMPLEMENTATION_REQUIRED / NOT_ACCEPTED` | — | — | — |
 
 ## Implementation/regression ledger
 

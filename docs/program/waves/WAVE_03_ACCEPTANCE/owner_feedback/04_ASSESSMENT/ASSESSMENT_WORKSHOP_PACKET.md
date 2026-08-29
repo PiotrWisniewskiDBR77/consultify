@@ -1,5 +1,12 @@
 # Assessment four-mode workshop packet
 
+> **SUPERSEDED NAVIGATION NOTICE — 2026-08-23 13:27:** subsequent owner review
+> removed both `Split` and `Workspace` as standalone modes. The current target
+> has three workspaces: `Interview`, `Matrix`, `Report`, plus a separate
+> `Settings` action. Matrix owns both maturity visualization and organized
+> target/transformation planning. Retain the historical four-mode analysis below
+> as decision provenance only; do not implement it as the current contract.
+
 Status: `WORKSHOP_READY / IMPLEMENTATION_NOT_AUTHORIZED_BY_THIS_DOCUMENT`
 
 Date: `2026-08-23`
