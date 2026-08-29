@@ -41,9 +41,14 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { NotebookPage } from '@/types/myWork';
+import {
+  ArtifactRightPanel,
+  type ArtifactRightPanelSection,
+} from '@/components/standard/ArtifactRightPanel';
 
 import type { ConvertTarget } from './AIChatInlinePanel';
 import { NotebookContextPanel } from './NotebookContextPanel';
+import { isNotebookSpecAShellEnabled } from './notebookSpecAShellFlag';
 
 interface NotebookRailPage {
   id: string;
@@ -213,7 +218,21 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
 
   if (!open || !activePage) return null;
 
+  const specAShellEnabled = isNotebookSpecAShellEnabled();
+  const specASections: ArtifactRightPanelSection[] = [];
+
   const section = (id: RailSectionId, label: string, count: number | undefined, body: React.ReactNode) => {
+    if (specAShellEnabled) {
+      specASections.push({
+        id,
+        label,
+        children: body,
+        defaultOpen: id === 'actions' || id === 'properties',
+        badge: count,
+        showZeroBadge: count === 0,
+      });
+      return null;
+    }
     const isOpen = openIds.has(id);
     return (
       <section
@@ -227,7 +246,7 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
     );
   };
 
-  return (
+  const legacyRail = (
     <aside
       aria-label={t('notebook.rightRail.label', 'Document details and context')}
       className="flex shrink-0 flex-col overflow-hidden bg-c-surface"
@@ -649,5 +668,33 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
         )}
       </div>
     </aside>
+  );
+
+  if (!specAShellEnabled) return legacyRail;
+
+  return (
+    <div className="flex h-full shrink-0 flex-col overflow-hidden bg-c-surface">
+      <div className="flex h-11 items-center gap-2 border-b border-c-border-subtle px-4">
+        <span className="min-w-0 flex-1 truncate text-[12.5px] font-semibold text-c-text">
+          {activePage.title || t('notebook.rightRail.untitled', 'Bez tytułu')}
+        </span>
+        <button
+          type="button"
+          data-notebook-action-id="rail:close"
+          onClick={onClose}
+          aria-label={t('notebook.rightRail.closePanel', 'Close panel')}
+          className="rounded-md p-1 text-c-text-muted transition-colors hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+          title={t('notebook.rightRail.closePanel', 'Close panel')}
+        >
+          <X size={15} />
+        </button>
+      </div>
+      <ArtifactRightPanel
+        ariaLabel={t('notebook.rightRail.label', 'Document details and context')}
+        className="min-h-0 flex-1 border-l-0"
+        width={360}
+        sections={specASections}
+      />
+    </div>
   );
 };
