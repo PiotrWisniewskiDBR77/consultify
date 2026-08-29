@@ -619,9 +619,14 @@ export function useFinanceRowActions({
               await loadValuationPreviewResults(row.id);
               toast.success(t('finance.toast.valuationComputed', 'Wycena obliczona'));
             } catch (e: any) {
+              const apiError = e?.data ?? e?.response?.data;
               toast.error(
-                e?.response?.data?.error ||
-                  t('finance.toast.computeDcfFailed', 'Nie udało się obliczyć DCF')
+                apiError?.code === 'APPROVED_VERSION_IMMUTABLE'
+                  ? t(
+                      'finance.toast.approvedVersionImmutable',
+                      'Ta wersja wyceny jest zatwierdzona i niezmienna. Aby ponownie obliczyć WACC, utwórz nową wersję.'
+                    )
+                  : apiError?.error || t('finance.toast.computeDcfFailed')
               );
             }
           },
