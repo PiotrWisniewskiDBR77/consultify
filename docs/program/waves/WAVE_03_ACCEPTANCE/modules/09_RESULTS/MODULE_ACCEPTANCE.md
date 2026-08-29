@@ -44,9 +44,9 @@ truth, immutable history, retry, visibility grant and foreign tenant.
 | G11 | Every owner observation/screenshot durably registered | `IN_PROGRESS` | Results findings `RES-OWN-001..008` below preserve the current owner review and point to the local replay evidence. Reconciliation against the full cross-module owner inventory remains open. |
 | G12 | Owner register reconciled and confirmed | `IN_PROGRESS / NOT_CONFIRMED` | Current Results slice reconciled; owner confirmation and atomic comparison to the umbrella inventory remain open. |
 | G13 | Solution and impact analysis | `NOT_STARTED` | — |
-| G14 | Remediation with finding-to-commit traceability | `NOT_STARTED` | — |
-| G15 | Integrator self-QA and impacted regression | `NOT_STARTED` | — |
-| G16 | Before/after owner retest packet | `NOT_STARTED` | — |
+| G14 | Remediation with finding-to-commit traceability | `PARTIAL_SHARED_TOPBAR_FIX` | Day 125 commit `dbccc2aa1c` neutralizes only the shared `LLMSelector` surface when providers are unavailable while preserving its semantic danger dot/message. Report: `../../codex/CODEX_DAY125_CRIMSON_REPORT.md`. Broader Results remediation remains open. |
+| G15 | Integrator self-QA and impacted regression | `PARTIAL_FOCUSED_PASS / FULL_UNIT_RED` | Day 125 mutation proof is red→green; focused contract `1/1 PASS`; existing layout names `16/16 PASS` with delta `0`. Full `tests/unit`: `17091/17306 PASS`, `19 FAIL`, `185 pending`, `11 todo`; no broad green claim. |
+| G16 | Before/after owner retest packet | `TECHNICAL_PACKET_4_OF_4 / OWNER_RETEST_PENDING` | Day 125 captured the same populated KPI screen before/after in light/dark. Four hashes and local-only paths are in the report; this is integrator evidence, not Piotr acceptance. |
 | G17 | Owner retest decisions for every finding | `NOT_STARTED` | — |
 | G18 | Module accepted on exact SHA and checkpointed | `NOT_STARTED` | — |
 | G19 | Later-change regression obligations resolved | `NOT_STARTED` | — |
@@ -101,6 +101,7 @@ These are technical observations, not Piotr owner findings.
 | Finding IDs | Root cause | Approved solution | Commit | Shared surfaces | Impacted modules | Tests/self-QA | Regression |
 |---|---|---|---|---|---|---|---|
 | `RES-OWN-006` | Registry presenters treated the table kebab as a lifecycle command surface. | Keep registry menus navigational and move governed transitions to the full tools. | `d157ea8fa7` | Shared standard row menu contract | Results OKR/ROI | Browser replay + screenshots; `git diff --check` PASS | Owner retest pending; KPI accepted menu pattern preserved |
+| `DAY125-SHARED-TOPBAR` | The shared model selector painted its whole surface crimson whenever provider health was unavailable, so the same non-actionable emphasis propagated through every `MainLayout` consumer. | Keep the control surface neutral; retain the red outage dot, red explanatory message and truthful unavailable title. | `dbccc2aa1c` | `LLMSelector`, `MainLayout` consumers | Cross-product; replayed on Results KPI | Mutation `1/1` red→green; existing layout `16/16`, full-name delta `0`; light/dark before/after `4/4`; full unit remains red `19/17306` | Owner retest pending; no demo/release authority |
 
 ## Preflight implementation ledger
 
