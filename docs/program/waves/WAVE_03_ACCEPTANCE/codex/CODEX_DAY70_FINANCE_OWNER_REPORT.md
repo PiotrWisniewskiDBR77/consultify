@@ -366,3 +366,115 @@ Kontraktowy `reset` użył dokładnie dopasowanego manifestu i trwałego markera
 Niezależny odczyt katalogu zwrócił `0 rows`. Następnie własny kontener usunięto
 przez `docker rm -fv cx-day70-pg`; porty `5942` i `4640` są wolne. Manifesty
 dowodowe poza repo zachowano.
+
+## Wznowienie po DEC-2026-08-29-269 — poprawka wydania nr 2
+
+### Rozstrzygnięcie trzeciej próby
+
+`STOP MERYTORYCZNY`. Poprawka nr 2 usunęła konflikt nazwy i trzeci seed
+przeszedł cały harness danych, ale kanoniczny cold readback odrzucił aktualną
+liczbę migracji. Nie uruchomiono runtime'u ani zrzutów, ponieważ wymagany
+manifest `resume-2` nie osiągnął stanu FINAL.
+
+Tip poprawionej instrukcji: `a4e3312908`; marker: `MARKER OK`. Przed próbą
+worktree był czysty, porty `5942`, `4640`, `4641` oraz chronione
+`3940`, `3941`, `4363`, `4364` były wolne. Oba poprzednie manifesty `0600`
+istniały i zostały zachowane; `resume-2` nie istniał.
+
+Wiążące wartości użyte dosłownie:
+
+```text
+database: consultify_w3_finance_owner_day70
+URL: postgresql://postgres:cx@127.0.0.1:5942/consultify_w3_finance_owner_day70
+--confirm-db=consultify_w3_finance_owner_day70
+manifest: /private/tmp/cx-day70-artefakty/finance-owner-fixture-manifest-resume-2.json
+```
+
+Kontener wystartował z `POSTGRES_DB=postgres`; przed seedem katalog zwrócił
+`0 rows` dla bazy docelowej. Nie uruchomiono ręcznie migratora.
+
+### Dokładny błąd B.1
+
+Seeder zakończył się `exit 1`:
+
+```text
+Error: [W3 Finance fixture] BLOCKED: cold readback mismatch: {"migrations":863,"approved_versions":5,"statements":6,"source_receipts":6,"baseline_contexts":1}
+```
+
+Źródło błędu:
+
+- `server/scripts/seed-wave3-finance-owner-review.ts:238` wymaga
+  `Number(readback.migrations) !== 834` jako warunku błędu;
+- `server/scripts/seed-wave3-finance-owner-review.ts:244` emituje dokładny
+  `cold readback mismatch`;
+- rzeczywisty ledger świeżo zmigrowanej bazy wynosi `863`;
+- pozostałe kardynalności są dokładnie oczekiwane: 5 approved versions,
+  6 statements, 6 source receipts i 1 baseline context.
+
+Kanoniczny manifest:
+
+- ścieżka:
+  `/private/tmp/cx-day70-artefakty/finance-owner-fixture-manifest-resume-2.json`;
+- tryb: `0600`;
+- SHA-256: `c78798a62ae342176666a3e0851d9276d6f5a506584f12216c6b165208bc125c`;
+- stan: `FAILED_AFTER_DURABLE_MARKER`;
+- baza: `consultify_w3_finance_owner_day70`.
+
+Harness pozostawił także pomocniczy manifest wygenerowanych danych:
+
+- `/private/tmp/cx-day70-artefakty/finance-owner-fixture-manifest-resume-2.json.generated-25661`;
+- tryb `0600`, SHA-256
+  `1d63fe955072d55a324fc37767cbf21a81934f8d339dbad13649d166a0f96b7e`;
+- zawiera 6 statements i pięć workspace'ów: statement, baseline, prediction,
+  valuation, analysis.
+
+Pomocniczego manifestu nie użyto do adopcji runtime'u: §B.1 wiąże dokładną
+ścieżkę `resume-2`, a kanoniczny seeder nie ukończył własnego cold readbacku
+ani nie przepisał FINAL receipt. Użycie pliku `.generated-*` byłoby obejściem
+bramki i relabelowaniem nieukończonego wyniku.
+
+### STOP — B.1, trzecia próba
+
+Rodzaj: MERYTORYCZNY
+
+Powód: aktualny marker tworzy 863 udane migracje, a cold readback seedera ma
+historyczny twardy mianownik 834 i odrzuca poza tym poprawny fixture.
+
+Licencja, którą sprawdziłem: §D oraz Z12/Z40 — seeder, jego cold readback,
+migracje i `SOURCE_SHA` są tylko do odczytu. Wynik: nie zmieniono kodu ani
+bramki `834`.
+
+Dowód: `seed-wave3-finance-owner-review.ts:238,244` oraz dokładny komunikat
+zawierający `migrations:863` i prawidłowe `5/6/6/1`.
+
+Co dostarczyłem ZAMIAST zmiany: trzeci realny seed, pełny fixture danych,
+niezależny ledger, oba manifesty `0600` z hashami, brak adopcji niekanonicznego
+receipt, marker-bound reset i zachowane uczciwe `0/20`.
+
+Co zrobiłbym, gdyby zapadła decyzja X: po aktualizacji wiążącego kontraktu
+migracji w seederze ponowiłbym seed z kolejną nową ścieżką manifestu. Dopiero
+kanoniczny FINAL receipt i zielony `readback` pozwolą uruchomić
+`start-wave3-owner-runtime.mjs` na `4640/4641` oraz realne logowanie.
+
+Rekomendacja dla nadzorcy: zaktualizować lub wyprowadzić z bieżącego ledgera
+twarde `834` w `coldReadback()` oraz zwracaną wartość `migrations: 834` na
+liniach 238 i 247. Zachować kardynalności 5/6/6/1 i wszystkie guardy źródła,
+markera, loopback oraz FINAL receipt.
+
+Stan: zacommitowano wyłącznie dokumentację na gałęzi dyżuru.
+
+Czy kontynuowałem pozostałe pozycje: NIE. §B.1 wymaga zielonego readbacku,
+a K3 zabrania substytutu runtime'u, renderu bez stylów i obejścia logowania.
+
+### Cleanup trzeciej próby
+
+Kontraktowy reset, związany dokładnym markerem i manifestem, zwrócił:
+
+```json
+{"fixtureId":"W3-FINANCE-OWNER-v1","databaseName":"consultify_w3_finance_owner_day70","dropped":true,"catalogAbsent":true}
+```
+
+Niezależny katalog zwrócił `0 rows`. Własny kontener usunięto przez
+`docker rm -fv cx-day70-pg`; wszystkie porty `5942`, `4640`, `4641`, `3940`,
+`3941`, `4363`, `4364` są wolne. Trzy kanoniczne manifesty STOP oraz pomocniczy
+manifest `.generated-*` zachowano poza repo jako dowody.
