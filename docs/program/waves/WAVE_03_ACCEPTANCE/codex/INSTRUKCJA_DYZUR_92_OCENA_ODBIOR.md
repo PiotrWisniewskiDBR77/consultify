@@ -146,7 +146,10 @@ grep -nE "argv\[2\]|CREATE DATABASE|db:migrate|throw new Error|fail\(" \
 #   oczekiwane: niepusta lista; to jest material do czterech pytan z §A
 
 # (W2) czy licznik migracji jest naprawiony (dyzur 75 zamienil rownosc na `<`)
-grep -nE "[<!]==? *8[0-9][0-9]" server/scripts/seed-wave3-assessment-owner-review.ts
+#  ★ KOREKTA NADZORCY: poprzednia wersja tej komendy miala wzorzec `[<!]==? *8[0-9][0-9]`,
+#    ktory NIE LAPIE poprawnej formy `< 831` (wymagal znaku `=` po `<`) — czyli mianownik
+#    wycinal badany obiekt. To jest ten sam blad, ktory CZESC D szkieletu opisuje jako nr 2.
+grep -nE "successful_migrations.*(<|<=|!==|!=) *[0-9]{3}" server/scripts/seed-wave3-assessment-owner-review.ts
 #   oczekiwane: porownanie `<`, NIE `!==`. Wynik `!==` to WYNIK do raportu i STOP
 #   pozycji §B.1 — nigdy improwizacja
 
