@@ -22,7 +22,7 @@ export const DeckBuilderBottomBar: React.FC<DeckBuilderBottomBarProps> = ({
   const { t } = useTranslation();
 
   return (
-    <div className="h-full w-full bg-c-surface flex items-center gap-4 flex-shrink-0">
+    <div className="w-full bg-c-surface flex items-center gap-4 flex-shrink-0">
       <span className="text-xs text-c-text-muted">
         {t('presentations.builder.bottomBar.card', 'Card')} {currentIndex + 1}{' '}
         {t('presentations.builder.bottomBar.of', 'of')} {totalCards}
