@@ -107,7 +107,7 @@ const BLANK_CARD: TemplateCard = {
 function formatCanvasUpdatedAt(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
-  return d.toLocaleDateString(undefined, { day: '2-digit', month: 'short' });
+  return d.toLocaleDateString('pl-PL', { day: '2-digit', month: 'short' });
 }
 
 // v1 — kuratorowane szablony placeholder (realna biblioteka DBR77 = seria T).

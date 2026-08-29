@@ -160,7 +160,7 @@ export const WorkbookVersionHistoryModal: React.FC<WorkbookVersionHistoryModalPr
                     {t('excele.versionHistory.version', 'Wersja')} {v.version}
                   </div>
                   <div className="truncate text-c-text-muted">
-                    {new Date(v.created_at).toLocaleString()} &middot; {v.sheet_count}{' '}
+                    {new Date(v.created_at).toLocaleString('pl-PL')} &middot; {v.sheet_count}{' '}
                     {t('excele.versionHistory.sheets', 'arkusz(e)')}
                   </div>
                 </div>

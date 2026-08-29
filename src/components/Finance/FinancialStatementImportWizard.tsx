@@ -979,6 +979,10 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
     if (scale === 'millions') return t('finance.importWizard.millions', 'Millions');
     return scale;
   };
+  const statusLabel = (status: unknown) => {
+    const normalized = String(status || 'pending').toLowerCase();
+    return t(`finance.statusValue.${normalized}`, 'Oczekuje');
+  };
   const displayedDetectionConfidence = detection?.confidence || 0;
   const detectionConfidenceHint = t(
     'finance.importWizard.confidenceAutoDetection',
@@ -1107,7 +1111,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
               </span>
               <span>
                 {t('finance.importWizard.readiness', 'Readiness')}:{' '}
-                {readiness?.readinessStatus || 'pending'} · {mappedCount}/{allReviewValues.length}{' '}
+                {statusLabel(readiness?.readinessStatus)} · {mappedCount}/{allReviewValues.length}{' '}
                 {t('finance.importWizard.mapped', 'mapped')} ·{' '}
                 {allReviewValues.length - mappedCount}{' '}
                 {t('finance.importWizard.unmapped', 'unmapped')} · {verifiedCount}{' '}
@@ -1589,7 +1593,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
                   type="text"
                   value={overridePeriod || detection.periodLabel || ''}
                   onChange={(e) => setOverridePeriod(e.target.value)}
-                  placeholder="e.g. 2024"
+                  placeholder={t('finance.importWizard.periodPlaceholder', 'np. 2024')}
                   className="mt-1 w-full px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg text-sm"
                 />
               </div>

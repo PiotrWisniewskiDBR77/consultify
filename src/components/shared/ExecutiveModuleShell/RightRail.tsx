@@ -91,6 +91,7 @@ interface RightRailProps {
    * the next width to `useRailState.setRightWidth` (clamping there).
    */
   onResize?: (nextWidth: number) => void;
+  resizeLabel?: string;
   testId?: string;
 }
 
@@ -159,6 +160,7 @@ export const RightRail: React.FC<RightRailProps> = ({
   onToggleCollapse,
   collapseLabel,
   onResize,
+  resizeLabel,
   collapsible = true,
   testId,
 }) => {
@@ -205,6 +207,7 @@ export const RightRail: React.FC<RightRailProps> = ({
           {onResize ? (
             <RailResizeHandle
               side={isLeft ? 'left' : 'right'}
+              ariaLabel={resizeLabel}
               currentWidth={panelWidth}
               onResize={onResize}
             />

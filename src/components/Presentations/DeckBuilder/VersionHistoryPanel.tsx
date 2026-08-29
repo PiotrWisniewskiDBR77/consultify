@@ -97,7 +97,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
             value={checkpointName}
             onChange={(e) => setCheckpointName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSaveCheckpoint()}
-            placeholder="Name this version..."
+            placeholder="Nadaj nazwę tej wersji…"
             className="flex-1 text-xs px-2 py-1.5 rounded-lg border border-c-border-subtle bg-c-surface-raised outline-none focus:ring-1 focus:ring-c-focus"
           />
           <button
@@ -140,7 +140,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
         ) : versions.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-32 text-c-text-secondary text-xs">
             <Clock size={16} className="mb-2 opacity-40" />
-            <p>No versions yet</p>
+            <p>Nie ma jeszcze zapisanych wersji</p>
           </div>
         ) : (
           <div className="px-2 py-2 space-y-1">
@@ -207,7 +207,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
 };
 
 function formatTime(timestamp: number): string {
-  return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return new Date(timestamp).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
 }
 
 function formatTimeAgo(timestamp: number): string {

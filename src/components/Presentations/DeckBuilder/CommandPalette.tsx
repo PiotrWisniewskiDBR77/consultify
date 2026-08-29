@@ -363,10 +363,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
         {/* Footer */}
         <div className="flex items-center gap-3 px-4 py-2 border-t border-c-border-subtle text-[10px] text-c-text-secondary">
-          <span>↑↓ Navigate</span>
-          <span>↵ Select</span>
-          <span>ESC Close</span>
-          <span className="ml-auto">Use Teresa for conversational AI</span>
+          <span>↑↓ Nawigacja</span>
+          <span>↵ Wybierz</span>
+          <span>ESC Zamknij</span>
+          <span className="ml-auto">Porozmawiaj z Teresą, aby użyć AI</span>
         </div>
       </div>
     </div>

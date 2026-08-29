@@ -840,13 +840,13 @@ export const DocumentStudioTemplateArchitectView: React.FC<
             ) : null}
             {showHistory ? (
               <div className="lg:col-span-2 rounded-lg border border-c-border-subtle bg-c-surface-raised p-3 text-sm">
-                <div className="font-semibold text-c-text">Version history</div>
+                <div className="font-semibold text-c-text">Historia wersji</div>
                 <ol className="mt-2 space-y-1 text-c-text-secondary">
                   {auditEntries.map((entry) => (
                     <li key={entry.auditId} className="flex items-center justify-between gap-3">
                       <span>
                         {entry.action.replace(/_/g, ' ')} ·{' '}
-                        {new Date(entry.occurredAt).toLocaleString()}
+                        {new Date(entry.occurredAt).toLocaleString('pl-PL')}
                       </span>
                       {entry.details?.templateSnapshot ? (
                         <span className="flex gap-2">
@@ -868,14 +868,14 @@ export const DocumentStudioTemplateArchitectView: React.FC<
                           </Button>
                         </span>
                       ) : (
-                        <span className="text-xs">Snapshot unavailable</span>
+                        <span className="text-xs">Podgląd wersji jest niedostępny</span>
                       )}
                     </li>
                   ))}
                 </ol>
                 {comparedSnapshot ? (
                   <div className="mt-3 rounded-lg border border-c-border-subtle bg-c-surface p-3">
-                    <div className="font-semibold text-c-text">Snapshot comparison</div>
+                    <div className="font-semibold text-c-text">Porównanie wersji</div>
                     <dl className="mt-2 grid gap-1 text-xs">
                       <div>
                         Sections:{' '}

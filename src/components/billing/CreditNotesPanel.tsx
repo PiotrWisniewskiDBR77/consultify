@@ -176,7 +176,7 @@ export const CreditNotesPanel: React.FC<CreditNotesPanelProps> = ({
   };
 
   const formatCurrency = (amount: number | undefined | null, currency = 'USD') => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('pl-PL', {
       style: 'currency',
       currency,
       minimumFractionDigits: 2,
@@ -184,7 +184,7 @@ export const CreditNotesPanel: React.FC<CreditNotesPanelProps> = ({
   };
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('en-US', {
+    return new Date(dateStr).toLocaleDateString('pl-PL', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',

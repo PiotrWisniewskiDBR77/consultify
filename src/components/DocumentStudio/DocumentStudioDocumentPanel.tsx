@@ -706,7 +706,7 @@ function ActivityPanel({ artifactId }: { artifactId: string }): React.ReactEleme
               </span>
             </div>
             <div className="mt-1 text-c-text-secondary">
-              {entry.actorId} · {new Date(entry.occurredAt).toLocaleString()}
+              {entry.actorId} · {new Date(entry.occurredAt).toLocaleString('pl-PL')}
             </div>
           </li>
         ))}
@@ -1220,7 +1220,7 @@ export function SchemaDiffPanel({
             </option>
             {[...snapshots].reverse().map((snapshot) => (
               <option key={snapshot.versionId} value={snapshot.versionId}>
-                {`v${snapshot.versionNumber} · ${new Date(snapshot.capturedAt).toLocaleString()}${
+                {`v${snapshot.versionNumber} · ${new Date(snapshot.capturedAt).toLocaleString('pl-PL')}${
                   snapshot.label ? ` · ${snapshot.label}` : ''
                 }`}
               </option>
@@ -1237,7 +1237,7 @@ export function SchemaDiffPanel({
                 defaultValue: 'Baseline v{{version}}',
                 version: result.baseSnapshot.versionNumber,
               })}{' '}
-              · {new Date(result.baseSnapshot.capturedAt).toLocaleString()}
+              · {new Date(result.baseSnapshot.capturedAt).toLocaleString('pl-PL')}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2 text-xs">
