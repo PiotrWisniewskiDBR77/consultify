@@ -178,3 +178,6 @@ Wydana instrukcja nie zawiera §0.4a mimo odwołań Z24. Niezależne wyszukanie 
 3. Actions: zmienić etykietę badge albo pokazywać `—`/„tylko podgląd”; obecne `0` nie opisuje treści Insightu.
 4. Zachować `Confidence —` jako poprawny fail-closed wzorzec.
 
+## Sprzątanie zasobów
+
+Po zebraniu dowodów wykonano `docker rm -fv cx-day107-pg`; komenda zwróciła nazwę kontenera. Następnie `docker ps -a --filter name=^/cx-day107-pg$` nie zwrócił żadnego wiersza, a `lsof` nie wykazał listenerów na `5988`, `4874` ani `4875`. Lokalna baza i jej wolumen są usunięte; worktree i artefakty tekstowe pozostają do odbioru nadzorcy.
