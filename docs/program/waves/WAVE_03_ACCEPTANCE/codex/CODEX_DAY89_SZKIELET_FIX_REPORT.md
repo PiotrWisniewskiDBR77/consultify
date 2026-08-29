@@ -6,6 +6,9 @@ Gałąź: `codex/day89-szkielet-fix-20260829`
 
 Marker: `800576e969432c583beae0293ad296c39b86d84d`
 
+Commit implementacyjny i pierwszy push (`Z34a`):
+`f46f6ee8fb4176c212bdae75d807f3099560b78e`.
+
 ## Stan wejściowy
 
 `§0.1` (2):
@@ -155,3 +158,8 @@ Zakres repo po zacommitowaniu ma zawierać wyłącznie:
 docs/program/system-pracy/02_SZKIELET_INSTRUKCJI.md
 docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY89_SZKIELET_FIX_REPORT.md
 ```
+
+Końcowy pomiar dla commita `f46f6ee8fb` potwierdził dokładnie powyższe dwa
+pliki, czysty `git status --short`, `BASE_Z_ROWS=46`, `HEAD_Z_ROWS=46` oraz
+brak błędów `git show --check`. Hook commita zakończył się powodzeniem i podał,
+że liczba naruszeń crimson pozostała `7` przy baseline `7` (dług nie wzrósł).
