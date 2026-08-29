@@ -31,6 +31,12 @@ export const DATED_RE = /^(\d{4})-?(\d{2})-?(\d{2})[_-]/;
 // actually depends on. See STRICT_SCHEMA_REPAIR_REPORT.md ETAP 1 for the
 // per-file dependency trace that justifies each entry.
 export const LATE_PHASE_MANIFEST: string[] = [
+  // Immutable historical migration already applied outside local development.
+  // It contains a guarded legacy CREATE for tool_initiative_links, so on a
+  // fresh database it must run after the canonical dated producer. Moving its
+  // sort phase preserves the file and checksum while preventing it from
+  // becoming the accidental producer on new installations.
+  '948_tool_promotion_idempotency.sql',
   // Consumer of tool_initiative_links, whose canonical producer is the
   // phase-1 migration 20260719_baseline_gap.sql. Keep this numeric migration
   // in phase 2 so it cannot run before its producer on a fresh database.

@@ -12609,8 +12609,16 @@ export const Api = {
       });
       return handleResponse(res, 'Failed to create calendar event');
     }
+    const start = body.start ?? body.startAt;
+    if (!start) {
+      throw new Error('Calendar event start is required');
+    }
     try {
-      return await V8MyWorkApi.createCalendarEvent(body);
+      return await V8MyWorkApi.createCalendarEvent({
+        ...body,
+        start,
+        source: body.source === 'event' ? undefined : body.source,
+      });
     } catch (error) {
       if (!Api.shouldFallbackToLegacyMyWorkCalendar(error)) {
         throw error;

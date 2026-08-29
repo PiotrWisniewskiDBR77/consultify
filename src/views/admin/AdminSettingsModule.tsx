@@ -497,7 +497,13 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
           return <AdminOrganizationDefaultsPanel organizationId={currentUser.organizationId} />;
         return (
           <AdminCommandCenterPanel
-            screen={resolvedLocation.screen === 'overview' ? undefined : resolvedLocation.screen}
+            screen={
+              resolvedLocation.screen === 'overview'
+                ? undefined
+                : (resolvedLocation.screen as React.ComponentProps<
+                    typeof AdminCommandCenterPanel
+                  >['screen'])
+            }
             // Only the Overview screen aggregates signals read-only (per
             // FINAL_IMPLEMENTATION_SPEC.md, Command "aggregates signals
             // only"). Every other Command Center screen — each now its own
