@@ -150,6 +150,10 @@ Date: —
 Accepted-out/deferred: remaining `FIN-MVP-CUTOVER-001` Wave-5 work remains later-wave scope only where it is not a direct Wave-3 acceptance dependency. No blanket waiver is implied.
 Evidence manifest: —
 
+## Day 74 — dowód merytoryczny wnętrz (2026-08-29)
+
+Na markerze `b4c883b9ec488b12733839820304bbba6f8be640` świeży, lokalny fixture CD PROJEKT przeszedł cold readback `863/5/6/6/1`, a realny OWNER otworzył `5 z 5` deep linków w jasnym motywie. Konkretne wyniki są widoczne w `4 z 5` wnętrz: Current Ratio `3` za `1 z 1` okresów; Model `31` wierszy × `12` okresów = `372` wartości; Base Prediction `30` linii × `12` okresów = `360` wierszy; DCF (FCFF) EV `-6 422 709,196 PLN` przy WACC `8,925849999999999%`. Sprawozdanie kończy się uczciwym komunikatem braku odpowiednika w nowym module i pokazuje `0 z 6` wartości. Lista Analizy z `OKRESY=0` jest niezgodna z wnętrzem `FY2025`. Na `0 z 5` wnętrz istnieje „Management report”; karta eksportu wyceny jawnie deklaruje brak eksportu. Stan: `PARTIAL / MATERIAL_PROOF_4_OF_5 / MANAGEMENT_REPORT_STOP`. Raport: `../../codex/CODEX_DAY74_FINANCE_PROOF_REPORT.md`.
+
 ## Day 60 open findings
 
 | Finding ID | Symptom | Reproduction | Source location | Evidence | Impact | State |
