@@ -38,8 +38,8 @@ Praca rozpoczęta dokładnie z markera, bez rebase.
    rozkładu statusów.
 2. `src/components/Interview/InsightViewer.tsx` — błąd `listFindings` jest
    zamieniany na `[]`, a licznik Findings pokazuje znane zero.
-3. `src/components/SuperAdmin/BackupPanel.tsx` — błąd pobrania pokazuje toast,
-   po czym trwały ekran mówi `No backups available`.
+3. `src/components/Interview/NewSessionModal.tsx` — błąd pobrania członków
+   zespołu zostawia `[]`, po czym modal mówi, że członków nie ma.
 
 ## 2. Korekty wobec instrukcji
 
@@ -55,6 +55,11 @@ Praca rozpoczęta dokładnie z markera, bez rebase.
    `filename`, a nie `name`, dlatego pierwsza dodatkowa próba `count(DISTINCT
    name)` uczciwie zakończyła się błędem kolumny i została skorygowana do
    wiążącego `count(*)`.
+4. Pierwszy wybór trzeciego komponentu, `SuperAdmin/BackupPanel.tsx`, został
+   obalony w runtime preflight: pełny grep konsumentów znalazł tylko definicję
+   i default export, a `SystemModule.tsx` montuje `EnterpriseBackupPanel.tsx`.
+   Wycofałem zmianę z osieroconego pliku i użyłem osiągalnego
+   `Interview/NewSessionModal.tsx`, montowanego przez `InterviewHub.tsx`.
 
 ## 3. Baza, migracje i Z30
 
@@ -82,4 +87,3 @@ Do uzupełnienia po pomiarach red/green, regresji po pełnych nazwach i zrzutach
 - Nie zweryfikowano jeszcze zachowania trzech powierzchni w realnym runtime.
 - Nie wykonano jeszcze czterech zrzutów przed/po w dwóch motywach.
 - Nie porównano jeszcze pełnych nazw przypadków baseline/final.
-

@@ -26,6 +26,12 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
+import {
+  formatPresentationCount,
+  knownPresentation,
+  type PresentationState,
+  unknownPresentation,
+} from '@/utils/presentationState';
 
 type AssignmentMode = 'myself' | 'team';
 type Priority = 'low' | 'medium' | 'high' | 'urgent';
@@ -83,6 +89,9 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
   // UI state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [teamMembersPresentation, setTeamMembersPresentation] = useState<PresentationState<number>>(
+    unknownPresentation(t('presentationState.teamMembersPendingReason', 'team members are loading'))
+  );
   const [loadingMembers, setLoadingMembers] = useState(false);
   const [showTemplateDropdown, setShowTemplateDropdown] = useState(false);
   const [showPriorityDropdown, setShowPriorityDropdown] = useState(false);
@@ -94,6 +103,11 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
 
     const loadTeamMembers = async () => {
       setLoadingMembers(true);
+      setTeamMembersPresentation(
+        unknownPresentation(
+          t('presentationState.teamMembersPendingReason', 'team members are loading')
+        )
+      );
       try {
         // Load project members or organization users
         const endpoint = currentProjectId ? `/projects/${currentProjectId}/members` : '/users';
@@ -107,15 +121,22 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
             role: m.projectRole || m.role,
           }))
         );
+        setTeamMembersPresentation(knownPresentation(members.length));
       } catch (err) {
         console.error('[NewSessionModal] Failed to load team members:', err);
+        setTeamMembers([]);
+        setTeamMembersPresentation(
+          unknownPresentation(
+            t('presentationState.teamMembersLoadFailedReason', 'team members could not be loaded')
+          )
+        );
       } finally {
         setLoadingMembers(false);
       }
     };
 
     loadTeamMembers();
-  }, [isOpen, mode, currentProjectId]);
+  }, [isOpen, mode, currentProjectId, t]);
 
   // Set default due date (7 days from now)
   useEffect(() => {
@@ -389,7 +410,14 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
                   </div>
                 ) : (
                   <div className="max-h-40 overflow-auto space-y-1 bg-slate-50 dark:bg-navy-800/50 rounded-lg p-2 border border-slate-200 dark:border-navy-700">
-                    {teamMembers.length === 0 ? (
+                    {teamMembersPresentation.state === 'unknown' ? (
+                      <p className="text-danger-400 text-sm p-2">
+                        {formatPresentationCount(teamMembersPresentation, {
+                          hidden: t('presentationState.hidden', 'hidden'),
+                          unknown: t('presentationState.unknown', 'unknown'),
+                        })}
+                      </p>
+                    ) : teamMembers.length === 0 ? (
                       <p className="text-slate-500 text-sm p-2">
                         {t('interview.newSessionModal.noTeamMembersAvailable')}
                       </p>
