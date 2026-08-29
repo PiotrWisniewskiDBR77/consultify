@@ -368,3 +368,24 @@ K2: backend **1 z 1 PASS**. Frontend **1 z 1 PASS**, `✓ built in 42.35s`; log 
 ### Stan po C.2
 
 C.2 spełnia K1–K4: klasa A **1249 z 1249**, klasy B–E **73 z 73 plików**, klasa F **29 z 29 wywołań**, K3 **4 z 4 powierzchni**, K4 **234 z 234 nazw bez delty**, backend **1 z 1 PASS** i frontend **1 z 1 PASS**. Crimson: **1 z 1** zastanych czerwonych przypadków świadomie nietknięty. C.3–C.6 pozostają NIEZWERYFIKOWANE.
+
+## Korekta odbioru C.2 — pełna powierzchnia DeckBuilder
+
+Nadzorca wskazał pominięcie pełnego edytora prezentacji. Przejrzano **35 z 35** plików `.tsx` w `src/components/Presentations/DeckBuilder/` oraz widoczne, współdzielone elementy powłoki i panelu Teresy.
+
+- górny pasek pokazuje „Wróć do prezentacji / Prezentacje”, „Wewnętrzne”, „Motyw”, „Udostępnij”, „Komentarze”, „Więcej działań” i „Prezentuj”;
+- statusy „Zapisano”, „Gotowe” i poziomy poufności mają polskie etykiety;
+- nagłówek „Slajdy” występuje **1 z 1**, a nadrzędny panel nazywa się „Struktura”;
+- stopka pokazuje „Slajd 1 z 4 / Zapytaj Teresę / Notatki”;
+- panel Teresy pokazuje „AI uwzględnia”, polską instrukcję stanu pustego i polski placeholder kontekstowy;
+- narzędzia slajdu, tryb prezentera, historia audytu, aktywność AI, uchwyty bloków oraz etykiety dostępności wspólnej powłoki otrzymały polskie teksty.
+
+K3: **1 z 1** pełnej powierzchni DeckBuilder obejrzano w runtime ze stylami. Zrzut: `/private/tmp/cx-day69-artefakty/c2-deckbuilder-k3.jpg`, SHA-256 `589bde57725b18649b53487a71e56b5054d96f4feafd0c3b192831358a8e4ffb`. Teksty mieszczą się, układ nie pęka.
+
+K4 po pełnych nazwach dla całego katalogu DeckBuilder: marker **92 z 92 PASS**, stan bieżący **92 z 92 PASS**, zgodność **92 z 92**, delta **0 z 92**. JSON markera: SHA-256 `9a629260164c9106f5ddee3f383b75c577728926677b7e15e6aa1082326aa5a1`; JSON bieżący: SHA-256 `694de04d707f83847ab714420c0ea3ac4716d2be0119698d996938eb0955487b`.
+
+Kolizja z dyżurem 81: w `DeckBuilderBottomBar.tsx` zmieniono **0 z 0** klas CSS i sam plik ma **0 z 0** wierszy diffu w tym checkpointcie. Odczytem potwierdzono, że commit `7e7e160929` na scalonym tipie usuwa `h-full`; nie wykonano rebase’u ani cherry-picka, ponieważ §0.1 pozostawia scalenie nowszego tipa nadzorcy. Tekstowe zmiany tego checkpointu nie cofają zmiany dyżuru 81 podczas scalenia.
+
+Crimson pozostaje **0 z 0** zmian — świadomie nietknięty.
+
+K2 po korekcie DeckBuildera: backend **1 z 1 PASS**; frontend **1 z 1 PASS**, `✓ built in 42.60s`. Log: `/private/tmp/cx-day69-artefakty/c2-deckbuilder-frontend-build.log`, SHA-256 `a13e160f4db2eb8cf245f85d5c2895bdb97f83c98445dc8319599687d7cbb073`.

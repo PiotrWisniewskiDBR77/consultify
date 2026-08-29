@@ -102,7 +102,7 @@ export const PresentMode: React.FC<PresentModeProps> = ({
           {/* Next slide preview */}
           {nextCard && (
             <div className="p-4 border-b border-c-border-subtle">
-              <p className="text-[10px] text-c-text-secondary uppercase mb-2">Next slide</p>
+              <p className="text-[10px] text-c-text-secondary uppercase mb-2">Następny slajd</p>
               <div className="pointer-events-none opacity-80">
                 <CardRenderer card={nextCard} colorSetId={colorSetId} scale={0.3} />
               </div>
@@ -111,9 +111,9 @@ export const PresentMode: React.FC<PresentModeProps> = ({
 
           {/* Speaker notes */}
           <div className="flex-1 p-4 overflow-y-auto">
-            <p className="text-[10px] text-c-text-secondary uppercase mb-2">Speaker Notes</p>
+            <p className="text-[10px] text-c-text-secondary uppercase mb-2">Notatki prezentera</p>
             <p className="text-sm text-c-text-secondary whitespace-pre-wrap">
-              {currentCard.speaker_notes || 'No notes for this slide.'}
+              {currentCard.speaker_notes || 'Brak notatek do tego slajdu.'}
             </p>
           </div>
 

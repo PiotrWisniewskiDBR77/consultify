@@ -30,6 +30,7 @@
 import type { LucideIcon } from 'lucide-react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { RailResizeHandle } from './RailResizeHandle';
 
@@ -164,6 +165,7 @@ export const RightRail: React.FC<RightRailProps> = ({
   collapsible = true,
   testId,
 }) => {
+  const { t } = useTranslation();
   const activeTool = activeToolId ? (tools.find((t) => t.id === activeToolId) ?? null) : null;
   // Gdy zwijanie jest wyłączone, zapamiętany stan `collapsed` (localStorage
   // `useRailState`) nie może schować paska — inaczej użytkownik, który kiedyś
@@ -207,7 +209,7 @@ export const RightRail: React.FC<RightRailProps> = ({
           {onResize ? (
             <RailResizeHandle
               side={isLeft ? 'left' : 'right'}
-              ariaLabel={resizeLabel}
+              ariaLabel={resizeLabel ?? t('mels.resizeRightRail', 'Resize right rail')}
               currentWidth={panelWidth}
               onResize={onResize}
             />
@@ -228,13 +230,13 @@ export const RightRail: React.FC<RightRailProps> = ({
             className="p-1 rounded text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 mb-1"
             title={
               collapsed
-                ? (collapseLabel ?? 'Expand right rail')
-                : (collapseLabel ?? 'Collapse right rail')
+                ? (collapseLabel ?? t('mels.expandRightRail', 'Expand right rail'))
+                : (collapseLabel ?? t('mels.collapseRightRail', 'Collapse right rail'))
             }
             aria-label={
               collapsed
-                ? (collapseLabel ?? 'Expand right rail')
-                : (collapseLabel ?? 'Collapse right rail')
+                ? (collapseLabel ?? t('mels.expandRightRail', 'Expand right rail'))
+                : (collapseLabel ?? t('mels.collapseRightRail', 'Collapse right rail'))
             }
             aria-expanded={!collapsed}
             aria-controls={showPanel ? panelDomId : undefined}

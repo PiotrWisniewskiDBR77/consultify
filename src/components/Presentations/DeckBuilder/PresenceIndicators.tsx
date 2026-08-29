@@ -116,7 +116,7 @@ export const PresenceIndicators: React.FC<PresenceIndicatorsProps> = ({
       {users.length === 0 && isConnected && (
         <div className="flex items-center gap-1 text-[10px] text-c-text-muted">
           <Users size={10} />
-          <span>Only you</span>
+          <span>Tylko Ty</span>
         </div>
       )}
     </div>

@@ -57,17 +57,19 @@ const GOVERNANCE_DOT_CLASS: Record<string, string> = {
 
 type ConfidentialityLevel = 'public' | 'internal' | 'confidential';
 
-const CONFIDENTIALITY_STYLES: Record<ConfidentialityLevel, { color: string; label: string }> = {
-  public: { color: 'text-emerald-500', label: 'Public' },
-  internal: { color: 'text-blue-500', label: 'Internal' },
-  confidential: { color: 'text-danger-500', label: 'Confidential' },
+const CONFIDENTIALITY_STYLES: Record<ConfidentialityLevel, { color: string }> = {
+  public: { color: 'text-emerald-500' },
+  internal: { color: 'text-blue-500' },
+  confidential: { color: 'text-danger-500' },
 };
 
 const ConfidentialityBadge: React.FC<{
   confidentiality: ConfidentialityLevel;
   lastAgentActivityAt?: string | null;
 }> = ({ confidentiality, lastAgentActivityAt }) => {
-  const { color, label } = CONFIDENTIALITY_STYLES[confidentiality];
+  const { t } = useTranslation();
+  const { color } = CONFIDENTIALITY_STYLES[confidentiality];
+  const label = t(`presentations.builder.confidentiality.${confidentiality}`, confidentiality);
 
   const isRecentAgentActivity = (() => {
     if (!lastAgentActivityAt) return false;
@@ -76,9 +78,9 @@ const ConfidentialityBadge: React.FC<{
     return Date.now() - ts <= 60_000;
   })();
 
-  const titleParts = [`Confidentiality: ${label}`];
+  const titleParts = [`${t('presentations.builder.confidentiality.label', 'Confidentiality')}: ${label}`];
   if (isRecentAgentActivity && lastAgentActivityAt) {
-    titleParts.push(`Recent agent activity at ${lastAgentActivityAt}`);
+    titleParts.push(t('presentations.builder.confidentiality.recentAiActivity', 'Recent AI activity: {{date}}', { date: lastAgentActivityAt }));
   }
 
   return (

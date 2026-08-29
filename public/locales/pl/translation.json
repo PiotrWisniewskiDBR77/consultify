@@ -844,6 +844,17 @@
     "approvalSnapshot": "Snapshot zatwierdzenia",
     "useAiHints": "Użyj AI hintów w stopce, aby wygenerować brief."
   },
+  "mels": {
+    "moreActions": "Więcej działań",
+    "outline": "Struktura",
+    "expandLeftRail": "Rozwiń lewy panel",
+    "collapseLeftRail": "Zwiń lewy panel",
+    "resizeLeftRail": "Zmień szerokość lewego panelu",
+    "expandRightRail": "Rozwiń prawy panel",
+    "collapseRightRail": "Zwiń prawy panel",
+    "resizeRightRail": "Zmień szerokość prawego panelu",
+    "discussWithTeresa": "Porozmawiaj z Teresą"
+  },
   "presentations": {
     "comments": {
       "addComment": "Dodaj komentarz",
@@ -1266,7 +1277,7 @@
       "rewriteSend": "Wyślij",
       "selectSlide": "Wybierz slajd",
       "slideActions": "Akcje slajdu",
-      "title": "Kreator decka",
+      "title": "Edytor prezentacji",
       "exit": "Wróć do Prezentacji",
       "untitled": "Deck bez tytułu",
       "slideSorter": "Sortowanie slajdów",
@@ -1277,7 +1288,11 @@
       "addFromTemplate": "Z szablonu",
       "topBar": {
         "more": "Więcej",
+        "internal": "Wewnętrzne",
         "theme": "Motyw",
+        "history": "Historia",
+        "quality": "Jakość",
+        "comments": "Komentarze",
         "share": "Udostępnij",
         "agent": "Agent",
         "present": "Prezentuj",
@@ -1289,10 +1304,41 @@
         "auditLog": "Dziennik audytu",
         "teresa": "Teresa"
       },
+      "confidentiality": {
+        "label": "Poufność",
+        "recentAiActivity": "Ostatnia aktywność AI: {{date}}",
+        "public": "Publiczne",
+        "internal": "Wewnętrzne",
+        "confidential": "Poufne"
+      },
+      "rightRail": {
+        "blocks": "Elementy",
+        "media": "Media",
+        "activity": "Aktywność AI",
+        "relations": "Powiązania",
+        "evidence": "Źródła i założenia"
+      },
+      "structure": "Struktura",
+      "cardToolbar": {
+        "layout": "Układ",
+        "chooseLayout": "Wybierz układ slajdu",
+        "background": "Tło",
+        "chooseBackground": "Wybierz tło slajdu",
+        "animations": "Animacje",
+        "toggleAnimations": "Włącz lub wyłącz animacje bloków"
+      },
+      "freeform": {
+        "move": "Przenieś zaznaczony blok",
+        "moveHint": "Przeciągnij, aby przenieść; strzałki przesuwają o 1%, a Shift o 5%",
+        "rotate": "Obróć zaznaczony blok",
+        "rotateHint": "Przeciągnij, aby obrócić",
+        "resize": "Zmień rozmiar zaznaczonego bloku",
+        "resizeHint": "Przeciągnij, aby zmienić rozmiar"
+      },
       "bottomBar": {
-        "card": "Karta",
+        "card": "Slajd",
         "of": "z",
-        "quickEdits": "Szybkie edycje",
+        "quickEdits": "Zapytaj Teresę",
         "notes": "Notatki"
       },
       "toolbar": {
@@ -1352,6 +1398,9 @@
         "tryNewLayout": "Spróbuj nowego układu"
       },
       "present": {
+        "fromBeginning": "Prezentuj od początku",
+        "fromCurrent": "Od bieżącego slajdu",
+        "options": "Opcje prezentowania",
         "inTab": "W tej zakładce",
         "fullScreen": "Pełny ekran",
         "presenterView": "Widok prezentera",
@@ -17287,7 +17336,7 @@
     "finalizing": "Finalizing…"
   },
   "contextBadge": {
-    "aiSees": "AI widzi",
+    "aiSees": "AI uwzględnia",
     "project": "Projekt",
     "focus": "Fokus"
   },
@@ -17915,7 +17964,7 @@
     "welcome": "Rozpocznij rozmowę",
     "welcomeSubtitle": "Zadawaj pytania, uzyskuj wglądy i współpracuj z AI",
     "teresaPlaceholder": "Zapytaj Teresę o swoją pracę...",
-    "teresaContextPlaceholder": "Jak Teresa może pomóc z {{context}}?",
+    "teresaContextPlaceholder": "Jak Teresa może pomóc w kontekście: {{context}}?",
     "teresaWelcome": "Porozmawiaj z Teresą",
     "teresaWelcomeSubtitle": "Przynieś wyzwanie, decyzję, pomysł albo dokument. Teresa pomoże Ci to przemyśleć i zamienić w konkretne kolejne kroki.",
     "loadingConversation": "Ładowanie rozmowy…",
@@ -18352,7 +18401,7 @@
       "urlReady": "Link przetworzony."
     },
     "stopTTS": "Zatrzymaj czytanie",
-    "sidebarEmptyHint": "Opisz tutaj, jaki materiał potrzebujesz — Teresa zaplanuje strukturę i napisze pierwszą wersję na Twoich oczach.",
+    "sidebarEmptyHint": "Zapytaj Teresę o kontekst prezentacji albo poproś o propozycję kolejnego kroku.",
     "teresaAction": {
       "unconfirmed": "Nie mam potwierdzenia, że akcja „{{action}}” się wykonała — nic tego nie potwierdziło. Sprawdź ręcznie, zanim uznasz to za zrobione.",
       "error": "Nie udało się wykonać akcji „{{action}}” — wystąpił błąd. Nic nie zostało potwierdzone jako zrobione.",

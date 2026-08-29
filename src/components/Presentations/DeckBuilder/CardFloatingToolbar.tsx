@@ -15,6 +15,7 @@ import {
   Square,
 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { DeckCard } from '../wizard/types';
 
@@ -45,6 +46,7 @@ export const CardFloatingToolbar: React.FC<CardFloatingToolbarProps> = ({
   onUpdateCard,
   onChooseBackgroundImage,
 }) => {
+  const { t } = useTranslation();
   const [expandedPanel, setExpandedPanel] = useState<'layout' | 'bg' | null>(null);
 
   const togglePanel = (panel: 'layout' | 'bg') => {
@@ -66,8 +68,8 @@ export const CardFloatingToolbar: React.FC<CardFloatingToolbarProps> = ({
                 ? 'bg-c-focus/10 text-c-focus-solid'
                 : 'text-c-text-secondary hover:bg-c-surface-raised'
             }`}
-            title="Layout"
-            aria-label="Choose slide layout"
+            title={t('presentations.builder.cardToolbar.layout', 'Layout')}
+            aria-label={t('presentations.builder.cardToolbar.chooseLayout', 'Choose slide layout')}
           >
             <Layout size={14} />
           </button>
@@ -107,8 +109,8 @@ export const CardFloatingToolbar: React.FC<CardFloatingToolbarProps> = ({
                 ? 'bg-c-focus/10 text-c-focus-solid'
                 : 'text-c-text-secondary hover:bg-c-surface-raised'
             }`}
-            title="Background"
-            aria-label="Choose slide background"
+            title={t('presentations.builder.cardToolbar.background', 'Background')}
+            aria-label={t('presentations.builder.cardToolbar.chooseBackground', 'Choose slide background')}
           >
             <Palette size={14} />
           </button>
@@ -169,8 +171,8 @@ export const CardFloatingToolbar: React.FC<CardFloatingToolbarProps> = ({
               ? 'bg-c-focus/10 text-c-focus-solid'
               : 'text-c-text-secondary hover:bg-c-surface-raised'
           }`}
-          title="Animations"
-          aria-label="Toggle block animations"
+          title={t('presentations.builder.cardToolbar.animations', 'Animations')}
+          aria-label={t('presentations.builder.cardToolbar.toggleAnimations', 'Toggle block animations')}
         >
           <Sparkles size={14} />
         </button>
