@@ -17787,6 +17787,9 @@
     },
     "language": "Język rozmowy",
     "chatMenuTitle": "Menu",
+    "skipToInput": "Przejdź do pola wiadomości",
+    "conversationRegion": "Rozmowa",
+    "voiceUnavailable": "Głos jest niedostępny. Możesz kontynuować tekstowo lub przez dyktowanie.",
     "send": "Wyślij",
     "startDictation": "Dyktuj (uzupełnia pole; sprawdź tekst i wyślij)",
     "workPanel": {

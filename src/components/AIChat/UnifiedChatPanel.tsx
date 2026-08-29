@@ -6511,7 +6511,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           href="#chat-input"
           className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-overlay focus:bg-c-text focus:text-c-bg focus:px-4 focus:py-2 focus:rounded-lg"
         >
-          {t('wcag.skipToInput', 'Skip to chat input')}
+          {t('aiChat.skipToInput', 'Skip to chat input')}
         </a>
 
         {/* Header — Tech Sexy (T104/T105) */}
@@ -6735,7 +6735,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           role="log"
           aria-live="polite"
           aria-relevant="additions text"
-          aria-label="Conversation"
+          aria-label={t('aiChat.conversationRegion', 'Conversation')}
           className={`flex-1 ${showWorkPanelEmptyState ? 'overflow-hidden' : 'overflow-y-auto'} ${
             isCompact ? 'p-3 space-y-3' : 'p-4 space-y-4'
           } ${isStreaming ? 'chat-streaming-frame' : ''}`}

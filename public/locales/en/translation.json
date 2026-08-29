@@ -16621,6 +16621,9 @@
     },
     "language": "Conversation language",
     "chatMenuTitle": "Menu",
+    "skipToInput": "Skip to chat input",
+    "conversationRegion": "Conversation",
+    "voiceUnavailable": "Voice is unavailable. You can continue by text or dictation.",
     "send": "Send",
     "startDictation": "Dictate (fills input; review and send)",
     "workPanel": {
