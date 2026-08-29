@@ -87,7 +87,7 @@ f45b79ebc8ad4fe4e64b28aeae1526b2c453dd5dc6f64374951529b8e8214216  03-off-light-d
 49ef2ef0c86600504339d54cf949dbbbbc008a9117df22596cfd5a3721177ccc  05-on-light-empty-relations.png
 c2e79ce8ad20246a14a4f41c14efd5d1c733ab60bdbe0f04530195ce02f2d30a  06-on-dark-empty-relations.png
 8c8c8f2f04ccb2ca5b8b5fd8fc85c3d39f7eb7d1f9377eb99de90d751bb88b3c  07-on-light-data.png
-0616e2b2ba0add81de6ebbe279982159ec18e5954d4543c2baa7317d1701cccf  08-on-dark-data.png
+55da56824b155c2c183c4e00d41497caab7cffeed5063ed66edf57b831379ece  08-on-dark-data.png
 ```
 
 Wszystkie obejrzane. OFF pokazuje zastany panel/listę. ON pokazuje wspólny panel,
