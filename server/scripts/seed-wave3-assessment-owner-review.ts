@@ -454,6 +454,7 @@ async function readback(db: string, d: any = null) {
         [USERS.map((u) => u.id), guided, frozen, IDS.approver]
       )
     ).rows[0];
+    if (Number(r.successful_migrations) < 831) fail(`expected at least 831 successful migrations, got ${r.successful_migrations}`);
     const exp: any = {
       personas: 5,
       guided_active: 1,
