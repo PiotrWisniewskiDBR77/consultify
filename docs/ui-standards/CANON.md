@@ -59,6 +59,30 @@ Hierarchia z §2 rozstrzyga konflikty **między warstwami**. Czwarty audyt (2026
 
 ---
 
+## 2.2 ★ ROZSTRZYGNIĘCIA SPRZECZNOŚCI MIĘDZY STANDARDAMI — 2026-08-29
+
+Audyt standardów wykazał **siedem par dokumentów mówiących co innego**. Zgodnie
+z §0 („decyzje systemowe rozstrzygaj przez kanon, właściciela angażuj wyłącznie
+w nieredukowalne decyzje biznesowe") rozstrzygam sześć z nich tutaj. Siódma
+wymaga pomiaru na ekranie, nie decyzji przy biurku.
+
+| # | Spór | Rozstrzygnięcie | Uzasadnienie |
+| --- | --- | --- | --- |
+| `S1` | Warianty koloru przycisku: **4** (`TRIADA_KANON.md` §A8 i pkt 32 listy) czy **5** (`03-modules/TABLE_AND_PREVIEW_CANON.md` §7.3b) | **PIĘĆ**: `primary · emerald · amber · red · neutral` | §7.3b jest nowsze, powstało jako jawne uzgodnienie z §A8 (2026-07-21) i domyka wcześniejszy rozjazd 8/6/4. `TRIADA §A8` wymienia te same pięć ról opisowo — rozjazd był w liczbie, nie w treści. **Poprawić należy pkt 32 listy czekowania, nie kod.** |
+| `S2` | Wysokość paska Menu 3: **44 px** (dokument) czy **≈48 px** (kod) | **48 px — dokument idzie za kodem** | Zmiana 48→44 to zmiana wizualna na wszystkich ekranach listowych, której nikt nie odebrał; zmiana dokumentu kosztuje zero. Delta `D-02` zostaje zamknięta w tę stronę. Wartość aktualizują: `00-foundation/FOUNDATION_TOKEN_CONTRACT.md` §4, `FROZEN_LAYOUTS.md` §4, `ARTIFACT_ANATOMY_STANDARD.md` §11.2. |
+| `S3` | Autorytet: `README.md` mówi „Golden Standard najwyższym SSOT", `CANON.md` §0 mówi, że autorytet ma kanon | **KANON** — zgodnie z §0 i banerem, który README już nosi | Changelog README jest przeterminowany względem własnego nagłówka. |
+| `S4` | Obramowania i cienie: „niewidzialne ramki, cień tylko na warstwach unoszących" (`README.md` §7/§11) vs „widoczna ramka pigułki, cień na karcie" (`TRIADA_KANON.md` §A2/§C4/§C8) | **TRIADA** | Kanon triady został ustanowiony przez właściciela **na żywych ekranach** (2026-07-04) i to on jest odbierany listą czekowania. Doktryna „Tech Sexy" pochodzi z warstwy indeksowej, nie z odbioru. |
+| `S5` | Lista czekowania ma **40** punktów (`CLAUDE.md` reguła UI #2, skill `consultify-triada`) czy **43** (`TRIADA_KANON.md` część B) | **43** | Grupy sumują się do 40, po czym dopisano grupę „Klawiatura / A11y (3)" = punkty 41–43. Nikt nie poprawił nazwy. **Nazwa „40-punktowa lista" jest błędna i wprowadza w błąd przy odbiorze.** |
+| `S6` | Kolejność w podglądzie: „Co dalej" **przed** akcjami (`ARTIFACT_ANATOMY_STANDARD.md` §14.5) czy **po** (kod `StandardPreview.tsx`, `TRIADA_KANON.md`, `TABLE_AND_PREVIEW_CANON.md` §7.3c, `FROZEN_LAYOUTS.md` §5) | **PO AKCJACH** | Trzy dokumenty i kod są zgodne; §14.5 jest jedynym miejscem, które zostało nienaprawione po korekcie `K-16` z 2026-08-02. |
+| `S7` | Hover wiersza tabeli (`bg-slate-100/80` vs `bg-slate-50`) i kolor aktywnej zakładki (`--c-focus-solid` vs `--c-info`) — **sprzeczność wewnątrz warstwy `00-foundation`**, w jednym pliku | **NIEROZSTRZYGNIĘTE — wymaga pomiaru na ekranie** | To jest różnica widoczna gołym okiem w jasnym motywie i dotyczy kontrastu. Rozstrzygam ją zrzutem porównawczym w fali 1 planu grafiki, nie deklaracją. Do tego czasu obowiązuje wartość, którą renderuje kod — i **należy ją zmierzyć, nie założyć**. |
+
+**Zasada, którą te siedem sporów potwierdza.** Gdy dokument i kod się rozchodzą,
+domyślnie **wygrywa to, co właściciel realnie odebrał na ekranie**; gdy nic nie
+odebrano — wygrywa kod, a dokument się aktualizuje. Zmiana wizualna, której nikt
+nie akceptował, nie może wejść tylnymi drzwiami jako „zgodność ze standardem".
+
+---
+
 ## 3. Governance — protokół zmiany standardu
 
 Standard ewoluuje **świadomie**, nigdy przez improwizację.
