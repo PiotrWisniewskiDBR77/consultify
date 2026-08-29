@@ -2711,7 +2711,7 @@ const ProfileSection: React.FC<{
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-c-text-secondary mb-2">
-                Company Name
+                {t('partner.profile.companyName', 'Company Name')}
               </label>
               <input
                 type="text"
@@ -2722,7 +2722,7 @@ const ProfileSection: React.FC<{
             </div>
             <div>
               <label className="block text-sm font-medium text-c-text-secondary mb-2">
-                Tax ID / VAT
+                {t('partner.profile.taxId', 'Tax ID / VAT')}
               </label>
               <input
                 type="text"

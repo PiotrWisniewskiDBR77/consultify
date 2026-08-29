@@ -7,6 +7,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 import {
@@ -109,14 +110,6 @@ export async function loadPartnerCanonicalRuntime(): Promise<PartnerCanonicalRun
   };
 }
 
-const stateCopy: Record<SurfaceState, string> = {
-  ready: 'Ready',
-  empty: 'Empty',
-  degraded: 'Degraded',
-  unavailable: 'Unavailable',
-  policy_gated: 'Policy gated',
-};
-
 const stateClass: Record<SurfaceState, string> = {
   ready: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300',
   empty: 'bg-slate-100 text-slate-700 dark:bg-navy-700 dark:text-slate-200',
@@ -140,53 +133,82 @@ function money(value: number | undefined, currency: string): string {
 export const PartnerCanonicalRuntimePanel: React.FC<{
   snapshot: PartnerCanonicalRuntimeSnapshot;
 }> = ({ snapshot }) => {
+  const { t } = useTranslation();
   const currency = snapshot.program?.balances?.currency || 'EUR';
   const latestParticipantFact = snapshot.participantLedger.entries[0];
+  const stateCopy: Record<SurfaceState, string> = {
+    ready: t('partner.canonicalRuntime.state.ready', 'Ready'),
+    empty: t('partner.canonicalRuntime.state.empty', 'Empty'),
+    degraded: t('partner.canonicalRuntime.state.degraded', 'Degraded'),
+    unavailable: t('partner.canonicalRuntime.state.unavailable', 'Unavailable'),
+    policy_gated: t('partner.canonicalRuntime.state.policyGated', 'Policy gated'),
+  };
   const cards = [
     {
       id: 'partner',
-      title: 'Partner status',
+      title: t('partner.canonicalRuntime.partnerStatus', 'Partner status'),
       icon: ShieldCheck,
       state: snapshot.programState,
-      value: snapshot.program?.lifecyclePhase || 'Unknown',
-      detail: snapshot.program?.partnerOrganizationStatus || 'Status could not be verified',
+      value: snapshot.program?.lifecyclePhase
+        ? t(
+            `partner.canonicalRuntime.lifecycle.${snapshot.program.lifecyclePhase}`,
+            snapshot.program.lifecyclePhase
+          )
+        : t('partner.canonicalRuntime.unknown', 'Unknown'),
+      detail: snapshot.program?.partnerOrganizationStatus
+        ? t(
+            `partner.canonicalRuntime.organizationStatus.${snapshot.program.partnerOrganizationStatus}`,
+            snapshot.program.partnerOrganizationStatus
+          )
+        : t('partner.canonicalRuntime.statusUnverified', 'Status could not be verified'),
     },
     {
       id: 'certification',
-      title: 'Certification',
+      title: t('partner.canonicalRuntime.certification', 'Certification'),
       icon: BookOpenCheck,
       state: snapshot.certifications.state,
       value: `${snapshot.certifications.completed}/${snapshot.certifications.total}`,
       detail:
         snapshot.certifications.pendingReview > 0
-          ? `${snapshot.certifications.pendingReview} awaiting review`
-          : 'No pending operator review',
+          ? t('partner.canonicalRuntime.awaitingReview', '{{count}} awaiting review', {
+              count: snapshot.certifications.pendingReview,
+            })
+          : t('partner.canonicalRuntime.noPendingReview', 'No pending operator review'),
     },
     {
       id: 'attribution',
-      title: 'Attribution',
+      title: t('partner.canonicalRuntime.attribution', 'Attribution'),
       icon: Link2,
       state: snapshot.attributions.state,
       value: String(snapshot.attributions.total),
-      detail: `${snapshot.attributions.active} active attribution records`,
+      detail: t(
+        'partner.canonicalRuntime.activeAttributions',
+        '{{count}} active attribution records',
+        {
+          count: snapshot.attributions.active,
+        }
+      ),
     },
     {
       id: 'ledger',
-      title: 'Participant ledger',
+      title: t('partner.canonicalRuntime.referralHistory', 'Participant ledger'),
       icon: Calculator,
       state: snapshot.participantLedger.state,
       value: String(snapshot.participantLedger.entries.length),
       detail: latestParticipantFact
-        ? `${latestParticipantFact.sourceVersion} · ${latestParticipantFact.sourceDigest.slice(0, 12)}`
-        : 'No immutable referral facts recorded',
+        ? t('partner.canonicalRuntime.latestReferralRecorded', 'Latest referral recorded')
+        : t('partner.canonicalRuntime.noReferralsRecorded', 'No immutable referral facts recorded'),
     },
     {
       id: 'accrual',
-      title: 'Accrual eligibility',
+      title: t('partner.canonicalRuntime.payoutEligibility', 'Accrual eligibility'),
       icon: BadgeCheck,
       state: 'policy_gated' as const,
       value: money(snapshot.program?.balances?.availableToPayout, currency),
-      detail: 'Recorded balance only; eligibility requires an approved versioned rule.',
+      detail: t(
+        'partner.canonicalRuntime.payoutEligibilityDetail',
+        'Recorded balance only; eligibility requires an approved versioned rule.'
+      ),
     },
   ];
 
@@ -202,15 +224,18 @@ export const PartnerCanonicalRuntimePanel: React.FC<{
             id="partner-canonical-runtime-title"
             className="text-lg font-semibold text-slate-900 dark:text-white"
           >
-            Governed Partner runtime
+            {t('partner.canonicalRuntime.title', 'Governed Partner runtime')}
           </h2>
           <p className="mt-1 max-w-3xl text-sm text-slate-600 dark:text-slate-300">
-            Current persisted state for program, certification, attribution, ledger and accrual.
+            {t(
+              'partner.canonicalRuntime.subtitle',
+              'Current persisted state for program, certification, attribution, ledger and accrual.'
+            )}
           </p>
         </div>
         <span className="inline-flex w-fit items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 dark:bg-navy-700 dark:text-slate-200">
           <ShieldCheck aria-hidden="true" className="h-3.5 w-3.5" />
-          Read-only governance view
+          {t('partner.canonicalRuntime.readOnly', 'Read-only governance view')}
         </span>
       </div>
 
@@ -255,8 +280,10 @@ export const PartnerCanonicalRuntimePanel: React.FC<{
       >
         <AlertTriangle aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
         <span>
-          This ledger contains non-economic referral facts only. Accrual, payout requests, automatic
-          payout and self-approval are unavailable under AMD-PRT-ECONOMICS-002.
+          {t(
+            'partner.canonicalRuntime.policyNotice',
+            'This ledger contains non-economic referral facts only. Accrual, payout requests, automatic payout and self-approval are unavailable.'
+          )}
         </span>
       </div>
     </section>

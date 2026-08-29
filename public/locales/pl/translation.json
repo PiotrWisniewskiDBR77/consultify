@@ -16774,6 +16774,8 @@
     "profile": {
       "companyInfo": "Dane firmy",
       "companyInfoDesc": "Zarządzaj danymi swojej firmy",
+      "companyName": "Nazwa firmy",
+      "taxId": "NIP / numer VAT",
       "specializations": "Specjalizacje",
       "specializationsDesc": "Wybierz swoje obszary specjalizacji",
       "regions": "Regiony",
@@ -16957,9 +16959,13 @@
     },
     "payoutSettings": {
       "title": "Ustawienia wypłat",
-      "subtitle": "Skonfiguruj preferencje wypłat i dane bankowe",
+      "subtitle": "Historyczne ustawienia wypłat i dane bankowe są dostępne tylko do odczytu",
       "saved": "Ustawienia wypłat zaktualizowane",
-      "saveFailed": "Nie udało się zaktualizować ustawień wypłat"
+      "saveFailed": "Nie udało się zaktualizować ustawień wypłat",
+      "operationsUnavailable": "Operacje wypłat są niedostępne",
+      "operationsUnavailableDesc": "Naliczanie prowizji oraz operacje wypłat są niedostępne. Historyczne ustawienia pozostają dostępne tylko do odczytu.",
+      "method": "Metoda wypłaty",
+      "historicalValue": "Wartość historyczna"
     },
     "commission": {
       "faq": {
@@ -16972,7 +16978,51 @@
       }
     },
     "referrals": {
-      "deleteFailed": "Nie udało się usunąć prezentacji"
+      "deleteFailed": "Nie udało się usunąć linku kampanii",
+      "v8AnalyticsRuntimeTitle": "Skuteczność poleceń",
+      "v8ConversionRate": "Współczynnik konwersji",
+      "v8PaidCustomers": "Płacący klienci",
+      "v8RuntimeTitle": "Podsumowanie poleceń",
+      "v8Signups": "Rejestracje",
+      "v8TotalClicks": "Łączna liczba kliknięć"
+    },
+    "canonicalRuntime": {
+      "title": "Aktualny stan programu partnerskiego",
+      "subtitle": "Bieżące informacje o programie, certyfikacji, poleceniach i rozliczeniach.",
+      "readOnly": "Podgląd informacji",
+      "partnerStatus": "Status partnera",
+      "certification": "Certyfikacja",
+      "attribution": "Polecenia",
+      "referralHistory": "Historia poleceń",
+      "payoutEligibility": "Kwota możliwa do wypłaty",
+      "payoutEligibilityDetail": "Widoczne saldo ma charakter informacyjny. Możliwość wypłaty zależy od zatwierdzonych zasad programu.",
+      "latestReferralRecorded": "Zapisano ostatnie polecenie",
+      "noReferralsRecorded": "Nie zapisano jeszcze żadnych poleceń",
+      "unknown": "Nieznany",
+      "statusUnverified": "Nie udało się potwierdzić statusu",
+      "awaitingReview": "Oczekujące na weryfikację: {{count}}",
+      "noPendingReview": "Brak zgłoszeń oczekujących na weryfikację",
+      "activeAttributions": "Aktywne polecenia: {{count}}",
+      "policyNotice": "Ta historia zawiera wyłącznie informacje o poleceniach. Naliczanie prowizji, zlecanie i automatyzacja wypłat oraz samodzielne zatwierdzanie są obecnie niedostępne.",
+      "state": {
+        "ready": "Gotowe",
+        "empty": "Brak danych",
+        "degraded": "Ograniczone działanie",
+        "unavailable": "Niedostępne",
+        "policyGated": "Zależne od zasad programu"
+      },
+      "lifecycle": {
+        "active": "Aktywny",
+        "onboarding": "W trakcie uruchamiania",
+        "pending": "Oczekuje",
+        "suspended": "Wstrzymany"
+      },
+      "organizationStatus": {
+        "active": "Aktywna organizacja partnerska",
+        "onboarding": "Trwa uruchamianie organizacji partnerskiej",
+        "pending": "Organizacja partnerska oczekuje na weryfikację",
+        "suspended": "Organizacja partnerska jest wstrzymana"
+      }
     },
     "common": {
       "comingSoon": "Wkrótce"
