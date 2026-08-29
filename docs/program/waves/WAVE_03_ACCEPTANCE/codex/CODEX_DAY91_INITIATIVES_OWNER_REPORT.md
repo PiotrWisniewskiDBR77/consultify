@@ -165,4 +165,16 @@ Zaktualizowano wyłącznie G06 i G11 do stanu faktycznego tego dyżuru. Nie wpis
 
 ## K7 — rozłączność
 
-Do uzupełnienia końcowym `git diff --name-only`; oczekiwane wyłącznie ten raport i `MODULE_ACCEPTANCE.md`.
+Końcowy wynik przed domykającym commitem:
+
+```text
+docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY91_INITIATIVES_OWNER_REPORT.md
+docs/program/waves/WAVE_03_ACCEPTANCE/modules/05_INITIATIVES/MODULE_ACCEPTANCE.md
+```
+
+Zero zmian w `src/**`, `server/src/**`, seederach, migracjach, lokalizacjach i globalnej infrastrukturze testowej. `git status --short` był pusty po dwóch pierwszych commitach. Runtime zatrzymany z `processGroupsVerifiedTerminated: true`, porty `5971` i `4842` wolne; baza zachowana do chwili kontrolowanego sprzątania, następnie własny kontener usunięto przez `docker rm -fv cx-day91-pg`.
+
+Commity i kopia na `github-backup`:
+
+- `420ad92463` — raport dowodowy; push bezpośrednio po pierwszym commicie,
+- `ba6183bcac` — aktualizacja G06/G11; push po pozycji.
