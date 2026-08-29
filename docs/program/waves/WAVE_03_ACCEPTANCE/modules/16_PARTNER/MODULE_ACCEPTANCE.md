@@ -213,3 +213,9 @@ Accepted SHA: —
 Date: —
 Accepted-out/deferred: Partner economics remain disabled pending later policy/release authorization.
 Evidence manifest: —
+
+## Day126 — weryfikacja palety Partnera (2026-08-29)
+
+Własny pomiar na dokładnym markerze `714faf5f8b0d9cda8204fec9495893c9fe97bed7`, świeżej lokalnej bazie (`863` migracje, drugi przebieg `0`) i kanonicznym runtime `4918/4919` **obalił** tezę, że preferencja Light renderuje ciemną paletę. Jawny wybór Light usuwa klasę `dark` z `<html>` i daje tło `rgb(248,250,252)` oraz tekst `rgb(15,23,42)`; Dark przywraca klasę oraz tło `rgb(15,23,42)` i tekst `rgb(244,247,251)`. Wynik powtórzono dla connected i unconnected: `4/4` obrazy rozróżniają motywy.
+
+Nie zmieniono kodu produktu ani testów i nie wykonano pozornej „naprawy”. Dwukrotny pakiet Partnera zachował identyczne `181/181` par `(fullName,status)`; oba przebiegi miały ten sam zastany wynik `180 PASS / 1 FAIL`. G06 pozostaje `PARTIAL_BROWSER_PASS`, G18 i owner acceptance bez zmian. Pełne komendy, ograniczenia i hashe: `../../codex/CODEX_DAY126_PARTNER_PALETA_REPORT.md`.
