@@ -1586,11 +1586,17 @@ export async function approveTemplateProvenance(params: {
       };
     }
 
+    const lifecycleApproval =
+      registry === 'presentation_templates'
+        ? ', lifecycle_state = \'approved\', approved_at = CURRENT_TIMESTAMP, approved_by = ?'
+        : '';
     const updated = await client.query(
       `UPDATE ${registry}
-          SET provenance_status = 'approved', provenance_json = ?::jsonb
+          SET provenance_status = 'approved', provenance_json = ?::jsonb${lifecycleApproval}
         WHERE ${idColumn}::text = ? AND organization_id = ?`,
-      [provenanceJson, templateId, organizationId]
+      registry === 'presentation_templates'
+        ? [provenanceJson, actorUserId, templateId, organizationId]
+        : [provenanceJson, templateId, organizationId]
     );
     if (updated.rowCount !== 1) {
       // Never leave a receipt asserting an approval the registry did not take.
