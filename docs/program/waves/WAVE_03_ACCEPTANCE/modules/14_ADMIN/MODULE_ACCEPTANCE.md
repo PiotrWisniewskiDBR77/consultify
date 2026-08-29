@@ -76,6 +76,20 @@ backup/restore claim.
 | `ADM-PF-002` | Exact retained fixture contains three canonical member commands and three matching audit rows, but `/admin/audit/events` rendered total `0` and an empty Admin Audit Log.                                                                      | product defect: split audit read store             | The Admin audit route previously read only legacy `admin_audit_logs`, while canonical IAM commands atomically wrote `role_change_audit_events`. A tenant-scoped normalized projection now merges both stores for list/stats/export, trusts exact `organization_id`, and uses metadata tenant identity only for legacy NULL-column rows; canonical IAM remains single-write. Focused route/component `30/30 PASS`; fresh `817`-migration mounted RealPG `1/1 PASS`; exact retained-fixture browser/API replay on `4082/4083` shows three rows and exact list/stats/CSV parity `3/3/3`. | `FIXED_LOCAL_BROWSER_PROVEN`        |
 | `ADM-PF-003` | `TRI-MUST-08` semantic audit coverage was `20/83`; global middleware is fail-open, context-dependent and forensically generic.                                                                                                                 | product defect: non-universal semantic audit       | Day 22 adds fail-closed semantic events for break-glass create/revoke and service-account create/revoke, with real-PG mutation/audit readback, secret-free metadata, tenant negatives and honest partial-success 503. Coverage is now `24/83 (28.9%)`; adding projection legs 4/5 was rejected by experiment because it duplicates request events. Bulk/access/domain and platform Superadmin visibility remain open.                                                                                                                                                                 | `CZĘŚCIOWO / 24_OF_83`              |
 
+## Day 111 — bieżący pakiet odbioru wizualnego (2026-08-29)
+
+Stan: `PARTIAL / CURRENT FRESH FIXTURE READBACK BLOCKED / 0 z 20 SCREENSHOTS`.
+
+Na markerze `74a1d733e9b6f5535c49d003844678fe87d0c9b3` świeży lokalny PostgreSQL
+zawiera spójną fixture (`8` person, `3` aktywne członkostwa głównej organizacji,
+`3` komendy i `3` audyty, marker `W3-ADMIN-OWNER-v1` z 64-znakowym nonce), a
+drugi przebieg migracji zastosował `0` zmian. Kanoniczny readback seedera jest
+jednak czerwony po `3 z 3` podejściach: kod oczekuje dokładnie `831` migracji,
+podczas gdy świeży ledger ma `863`. Manifest nie powstał. Zgodnie z §B.1 nie
+uruchomiono runtime'u `4884/4885`; macierz wizualna pozostaje uczciwie `0 z 20`,
+a G08–G10 nie są podnoszone. Szczegóły i mapa powierzchni AI/knowledge:
+`../../codex/CODEX_DAY111_ADMIN_OWNER_REPORT.md`.
+
 ## Owner verdict
 
 Decision: `PENDING`
