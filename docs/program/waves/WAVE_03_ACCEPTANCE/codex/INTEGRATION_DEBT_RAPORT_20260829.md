@@ -16,17 +16,18 @@ Aktualny kontrolny przebieg z pełnym env: 4 350 PASS / 734 FAIL / 677 SKIP, 8 b
 | Kategoria | Liczba |
 |---|---:|
 | A | 255 |
-| B | 164 |
+| B | 165 |
 | C | 133 |
-| D | 144 |
+| D | 143 |
 | E | 46 |
 | **Razem** | **742** |
 
 ### PRIORYTET — kandydaci wad izolacji organizacji
 
-Automatyczny pierwszy przesiew wskazał 1 rekordów kategorii D związanych z izolacją. Każdy wymaga odtworzenia osobno przed uznaniem wycieku; sama nazwa testu nie jest dowodem wycieku.
-
-- **tests/integration/mywork/my-work.golden-flow-inbox-task.test.ts > MW-CORE-001 golden flow: Inbox/Task (real Postgres, real routers) > #5 tenant isolation > 5b tenant B cannot mutate tenant A's Task via PUT /api/tasks/:id (404, org-scoped SELECT)** — potencjalnie niedozwolony dostęp między organizacjami; do odtworzenia na świeżej bazie i realnej trasie.
+Pierwszy przesiew wskazał jeden kandydat. Izolowane odtworzenie wykazało, że nie
+jest to wyciek: wycofany writer zatrzymuje żądanie przed lookupem zadania kodem
+`409 EXECUTION_RUNTIME_V1_WRITE_REQUIRED`. Test oczekujący dawnego `404` jest
+nieaktualny (kategoria B). **Potwierdzone wady izolacji: 0.**
 
 ### Pełna klasyfikacja
 
@@ -293,7 +294,7 @@ Automatyczny pierwszy przesiew wskazał 1 rekordów kategorii D związanych z iz
 | 259 | D | nie | tests/integration/mywork/my-work.convert.contract.test.ts > M05 L-08 — S5: idea→entity conversion contracts > S5b — validation > unknown target → 400 | kontrakt współbieżności/idempotencji wskazuje wadę runtime |
 | 260 | D | nie | tests/integration/mywork/my-work.convert.contract.test.ts > M05 L-08 — S5: idea→entity conversion contracts > S5c — not found > unknown idea → 404 | kontrakt współbieżności/idempotencji wskazuje wadę runtime |
 | 261 | A | nie | tests/integration/mywork/my-work.golden-flow-inbox-task.test.ts > MW-CORE-001 golden flow: Inbox/Task (real Postgres, real routers) > #11/#12 fault after Task commit -> 500 recovery-required; retry repairs without duplication | bramka środowiska, autoryzacji lub konfiguracji zatrzymuje ścieżkę |
-| 262 | D | TAK | tests/integration/mywork/my-work.golden-flow-inbox-task.test.ts > MW-CORE-001 golden flow: Inbox/Task (real Postgres, real routers) > #5 tenant isolation > 5b tenant B cannot mutate tenant A's Task via PUT /api/tasks/:id (404, org-scoped SELECT) | kontrakt współbieżności/idempotencji wskazuje wadę runtime |
+| 262 | B | TAK | tests/integration/mywork/my-work.golden-flow-inbox-task.test.ts > MW-CORE-001 golden flow: Inbox/Task (real Postgres, real routers) > #5 tenant isolation > 5b tenant B cannot mutate tenant A's Task via PUT /api/tasks/:id (404, org-scoped SELECT) | stary test wywołuje świadomie wycofany writer; 409 powstaje przed lookupem zadania i nie dowodzi dostępu między organizacjami |
 | 263 | A | nie | tests/integration/mywork/my-work.golden-flow-inbox-task.test.ts > MW-CORE-001 golden flow: Inbox/Task (real Postgres, real routers) > #6 missing task.update capability (OBSERVER role) returns 403 under CAPABILITY_ENFORCE=enforce, changes nothing | bramka środowiska, autoryzacji lub konfiguracji zatrzymuje ścieżkę |
 | 264 | A | nie | tests/integration/mywork/my-work.golden-flow-inbox-task.test.ts > MW-CORE-001 golden flow: Inbox/Task (real Postgres, real routers) > #7a invalid task status transition (backlog -> done) is rejected 400 INVALID_TRANSITION | bramka środowiska, autoryzacji lub konfiguracji zatrzymuje ścieżkę |
 | 265 | A | nie | tests/integration/mywork/my-work.golden-flow-inbox-task.test.ts > MW-CORE-001 golden flow: Inbox/Task (real Postgres, real routers) > #7b stale expectedStatus on close returns 409 INBOX_CLOSE_STATE_MISMATCH | bramka środowiska, autoryzacji lub konfiguracji zatrzymuje ścieżkę |
@@ -775,14 +776,31 @@ Automatyczny pierwszy przesiew wskazał 1 rekordów kategorii D związanych z iz
 | 741 | B | nie | tests/integration/workflows/decision-management-integration.test.ts > L3: Decision Management Integration > Error Handling and Edge Cases > should prevent unauthorized approval | kontrakt testowy wymaga ręcznego potwierdzenia; brak dowodu w logu na wadę produktu |
 | 742 | B | nie | tests/integration/workflows/decision-management-integration.test.ts > L3: Decision Management Integration > Error Handling and Edge Cases > should reject decision creation with invalid data | kontrakt testowy wymaga ręcznego potwierdzenia; brak dowodu w logu na wadę produktu |
 
-## Fazy 2–5
+## Faza 2 — kategorie A i C
+
+Uruchomiono wszystkie 163 pliki zawierające 388 rekordów A/C na świeżej bazie,
+po pełnym migratorze i z pełnym zestawem env. Wynik: 450 PASS, 441 FAIL,
+334 SKIP, 9 błędów procesu; tylko 4/163 pliki były w całości zielone.
+
+Wynik nie dowodzi 441 niezależnych wad. Pakiet sam niszczy współdzielony schemat:
+między innymi usuwa lub zastępuje `organizations`, po czym inne pliki dostają
+`column plan of relation organizations does not exist`. To samo dotyczy tabel
+help i projects. Każdy rekord A/C, który nie zzieleniał, ma w pełnej tabeli
+jawny powód: bramka auth/env albo brak/niezgodność fixture/schematu. Nie wolno
+ich uznać za naprawione na podstawie wspólnego przebiegu. Izolowane odtworzenie
+każdego z 159 czerwonych plików przekracza tę fazę; pozostają jawnie
+`NOT_PROVEN`, a nie fałszywie `FIXED`.
+
+## Fazy 3–5
 
 Nie rozpoczęto.
 
 ## Kryteria K1–K6
 
 - K1: klasyfikacja pełnego rejestru nazw wykonana; rozbieżność 682 vs 742 pozostaje do rozstrzygnięcia dowodowego.
-- K2–K6: w toku.
+- K2: 4/163 pliki A/C zielone; reszta jawnie `NOT_PROVEN` z powodu destrukcyjnej
+  współdzielonej bazy i wymaga izolowanych fixture.
+- K3–K6: w toku.
 
 ## Twierdzenia niezweryfikowane
 
