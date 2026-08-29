@@ -21529,6 +21529,19 @@
     }
   },
   "finance": {
+    "statusValue": {
+      "pending": "Oczekuje",
+      "ready": "Gotowe",
+      "recoverable": "Wymaga uzupełnienia",
+      "rejected": "Odrzucono",
+      "confirmed": "Potwierdzono",
+      "completed": "Ukończono",
+      "failed": "Niepowodzenie",
+      "valid": "Poprawne",
+      "invalid": "Niepoprawne",
+      "processing": "Przetwarzanie",
+      "running": "W toku"
+    },
     "sampleData": {
       "banner": "Dane przykładowe — nie z bazy"
     },
@@ -21573,10 +21586,19 @@
       "financeRef": "Identyfikator modelu lub analizy finansowej",
       "hint": "Powiąż inicjatywę z tym materiałem finansowym, aby jej ekonomika była widoczna w Wynikach i przepływie wartości.",
       "initiativeId": "Identyfikator inicjatywy",
+      "initiativeIdPlaceholder": "np. 42",
+      "financeRefPlaceholder": "np. identyfikator modelu",
       "missingFields": "Identyfikator inicjatywy oraz materiału finansowego są wymagane",
       "success": "Inicjatywa została powiązana z materiałem finansowym",
       "title": "Powiąż inicjatywę z finansami",
-      "type": "Rodzaj powiązania"
+      "type": "Rodzaj powiązania",
+      "typeValue": {
+        "financial_model": "Model finansowy",
+        "budget": "Budżet",
+        "analysis": "Analiza finansowa",
+        "valuation": "Wycena",
+        "investment_case": "Analiza inwestycji"
+      }
     },
     "statementPack": {
       "title": "Sprawozdanie finansowe"
@@ -21628,6 +21650,10 @@
     },
     "model": {
       "title": "Modele finansowe",
+      "cfOperating": "Operacyjne",
+      "cfInvesting": "Inwestycyjne",
+      "cfFinancing": "Finansowe",
+      "cfNone": "Brak",
       "computing": "Obliczanie prognozy — model tworzy wyniki i wykonuje kontrole. Może to potrwać do 30 sekund…",
       "defaultForecastSuffix": "prognoza",
       "defaultLatestApproved": "Ostatnie zatwierdzone (domyślne)",
@@ -22005,6 +22031,8 @@
       "documentSearchPlaceholder": "Zapytaj o sprawozdanie",
       "extractedSections": "Rozpoznane sekcje",
       "ingestRuns": "Przebiegi importu",
+      "importStage": "Przetwarzanie dokumentu",
+      "documentRecognized": "Rozpoznano rodzaj dokumentu",
       "line": "Pozycja",
       "mappingCandidates": "Propozycje mapowania",
       "noDocumentMatches": "Brak wyników wyszukiwania w dokumencie",
@@ -22114,6 +22142,7 @@
       "financialAnalysis": "Analiza finansowa"
     },
     "importWizard": {
+      "periodPlaceholder": "np. 2024",
       "completed": "Zakończony",
       "confidence": "pewność",
       "rejected": "Import zakończony, ale plik został odrzucony i wymaga ponownego podejścia.",
@@ -23554,7 +23583,7 @@
     },
     "tabLabel": "Wycena",
     "title": "Wycena przedsiębiorstwa",
-    "subtitle": "DCF + porównawcze + sensitivity, eksport do decka",
+    "subtitle": "Wycena na podstawie przepływów pieniężnych, porównanie rynkowe, analiza wrażliwości i eksport prezentacji",
     "steps": {
       "label": "Etapy wyceny",
       "sensitivity": "Analiza wrażliwości",
@@ -23602,6 +23631,8 @@
       "asOf": "Data wyceny",
       "cashTax": "Efektywna stopa podatkowa (%)",
       "failed": "Nie udało się zapisać założeń",
+      "gordonGrowth": "Wzrost Gordona",
+      "sourceDataRequired": "wymagane dane źródłowe",
       "dcfTitle": "Założenia DCF",
       "wacc": "WACC (%)",
       "terminalMethod": "Metoda terminalna",
@@ -26899,6 +26930,7 @@
       "captureSnapshotAction": "Zapisz stan rozmowy",
       "executionRun": "Przebieg wykonania",
       "failureStage": "Etap niepowodzenia",
+      "runFailed": "Nie udało się utworzyć materiału. Spróbuj ponownie.",
       "goal": "Cel",
       "goalPlaceholder": "Opisz materiał, który ma powstać na podstawie tej rozmowy.",
       "governedExecution": "Wykonanie oczekujące na kontrolę",
@@ -26911,6 +26943,44 @@
       "materialized": "Utworzono docelowy materiał",
       "noSnapshot": "Zapisz stan rozmowy przed zaplanowaniem materiału",
       "outputType": "Rodzaj materiału",
+      "option": {
+        "report": "Dokument",
+        "presentation": "Prezentacja",
+        "sheet": "Arkusz"
+      },
+      "status": {
+        "planned": "Zaplanowano",
+        "proposal_created": "Utworzono propozycję",
+        "awaiting_review": "Oczekuje na weryfikację",
+        "approved_for_apply": "Zatwierdzono do wykonania",
+        "applying": "Tworzenie materiału",
+        "rejected": "Odrzucono",
+        "retry_requested": "Zlecono ponowienie",
+        "completed": "Ukończono",
+        "failed": "Niepowodzenie",
+        "cancelled": "Anulowano"
+      },
+      "visibility": {
+        "private": "Tylko dla mnie",
+        "project": "Dla uczestników projektu",
+        "organization": "Dla organizacji",
+        "review_shared": "Udostępniono do weryfikacji",
+        "demo": "Wersja demonstracyjna"
+      },
+      "executionState": {
+        "unknown": "Stan niedostępny",
+        "drafting": "Przygotowywanie szkicu",
+        "planning": "Planowanie",
+        "proposals_ready": "Propozycje są gotowe",
+        "waiting_for_review": "Oczekuje na weryfikację",
+        "approved_for_apply": "Zatwierdzono do wykonania",
+        "rejected": "Odrzucono",
+        "applying": "Tworzenie materiału",
+        "completed": "Ukończono",
+        "failed": "Niepowodzenie",
+        "cancelled": "Anulowano",
+        "expired": "Termin minął"
+      },
       "planButton": "Zaplanuj materiał",
       "planCreated": "Utworzono plan materiału na podstawie rozmowy",
       "planFailed": "Nie udało się utworzyć planu materiału",
@@ -26920,6 +26990,25 @@
       "preflightNotRun": "Nie wykonano",
       "preflightOk": "Kontrola została zaktualizowana",
       "preflightTitle": "Kontrola przed uruchomieniem",
+      "preflightState": {
+        "passed": "Kontrola zakończona pomyślnie",
+        "pending": "Kontrola oczekuje na wykonanie",
+        "attention_required": "Kontrola wymaga uwagi"
+      },
+      "preflightCheck": {
+        "execution_run_resolvable": "Dostępność procesu tworzenia",
+        "plan_supported": "Obsługa wybranego rodzaju materiału",
+        "materialization_inputs": "Kompletność danych wejściowych",
+        "materialization_target": "Dostępność miejsca docelowego"
+      },
+      "preflightCheckPassed": "Kontrola zakończona pomyślnie",
+      "preflightCheckPending": "Kontrola oczekuje na wykonanie",
+      "preflightCheckFailed": "Kontrola wymaga poprawy",
+      "checkStatus": {
+        "passed": "Gotowe",
+        "pending": "Oczekuje",
+        "failed": "Wymaga poprawy"
+      },
       "proposalReady": "Propozycja jest gotowa",
       "proposalsCount": "Propozycje",
       "rejectReviewButton": "Odrzuć weryfikację",
@@ -26946,6 +27035,9 @@
       "waitingSnapshot": "Brak zapisanego stanu rozmowy"
     },
     "contextSnapshots": "Zapisy kontekstu: {{count}}",
+    "contextShortCount": "Kontekst: {{count}}",
+    "searchShortCount": "Wyszukiwania: {{count}}",
+    "handoffShortCount": "Przekazania: {{count}}",
     "contextSnapshotsCount": "Liczba zapisów tej rozmowy: {{count}}",
     "contextSnapshotsLabel": "Zapisy kontekstu",
     "contextSummary": "Kontekst rozmowy",
@@ -26958,17 +27050,28 @@
     "handoffEmpty": "W tej rozmowie nie zapisano jeszcze przekazań.",
     "handoffGoal": "Ostatni cel",
     "handoffIntent": "Zamiar",
+    "handoffIntentValue": {
+      "unknown": "Nie określono",
+      "question": "Pytanie",
+      "task": "Zadanie",
+      "decision": "Decyzja",
+      "analysis": "Analiza"
+    },
     "handoffRun": "Przebieg",
     "handoffSummary": "Przekazania z rozmowy",
     "retrievalDenied": "Odmowa dostępu",
     "retrievalEmpty": "W tej rozmowie nie zapisano jeszcze informacji o wyszukiwaniu.",
     "retrievalLatency": "Czas odpowiedzi",
     "retrievalPreset": "Ustawienie wyszukiwania",
+    "retrievalPresetConfigured": "Ustawienie dobrane do rozmowy",
     "retrievalResults": "Wyniki",
     "retrievalSummary": "Wyszukiwanie informacji",
     "retrievalWarnings": "Ostrzeżenia"
   },
   "billing": {
+    "usage": {
+      "resetsOn": "Limit odnowi się {{date}}"
+    },
     "benefit1": "Analiza projektów i wnioski wspierane przez AI",
     "benefit2": "Inteligentne rekomendacje i sugestie",
     "benefit3": "Automatyczne raporty i dokumentacja",
@@ -27020,7 +27123,43 @@
     },
     "analytics": {
       "unavailableTitle": "Analityka przychodów wkrótce",
-      "unavailableBody": "Analityka MRR, churn, kohort i ekspansji nie jest jeszcze dostępna. Pojawi się tutaj po włączeniu samoobsługowych rozliczeń."
+      "unavailableBody": "Analityka MRR, rezygnacji, kohort i rozszerzenia przychodów nie jest jeszcze dostępna. Pojawi się tutaj po włączeniu samoobsługowych rozliczeń.",
+      "title": "Analityka subskrypcji",
+      "last7Days": "Ostatnie 7 dni",
+      "last30Days": "Ostatnie 30 dni",
+      "last90Days": "Ostatnie 90 dni",
+      "last6Months": "Ostatnie 6 miesięcy",
+      "lastYear": "Ostatni rok",
+      "loadError": "Nie udało się załadować danych analitycznych",
+      "mrrLabel": "Miesięczny przychód cykliczny (MRR)",
+      "arrLabel": "Roczny przychód cykliczny (ARR)",
+      "ltvLabel": "Wartość klienta (LTV)",
+      "arpaLabel": "Średni przychód na konto (ARPA)",
+      "vsPreviousPeriod": "względem poprzedniego okresu",
+      "activeSubscriptions": "{{count}} aktywnych subskrypcji",
+      "revenueByPlan": "Przychód według planu",
+      "subscribersCount": "{{count}} subskrypcji",
+      "noPlanDistribution": "Brak danych o przychodach według planu",
+      "churnRate": "Wskaźnik rezygnacji",
+      "monthlyMrrChurn": "Miesięczna utrata MRR",
+      "monthShort": "mies.",
+      "mrrTrend": "Trend MRR",
+      "churnAnalysis": "Analiza rezygnacji",
+      "month": "Miesiąc",
+      "churned": "Rezygnacje",
+      "mrrLost": "Utracone MRR",
+      "rate": "Wskaźnik",
+      "noChurnData": "Brak danych o rezygnacjach",
+      "expansionRevenue": "Rozszerzenie przychodów",
+      "expansion": "Rozszerzenie",
+      "contraction": "Ograniczenie",
+      "net": "Netto",
+      "noCohortData": "Brak danych kohortowych",
+      "customerValueMetrics": "Wskaźniki wartości klienta",
+      "lifetimeValue": "Wartość klienta",
+      "avgRevenuePerCustomer": "Śr. przychód na klienta",
+      "avgLifespan": "Śr. okres współpracy",
+      "monthlyChurn": "Miesięczna rezygnacja"
     },
     "pending": {
       "title": "Jeszcze niedostępne",
@@ -27049,6 +27188,29 @@
       "taxExemptDesc": "Zaznacz, jeśli organizacja jest zwolniona z podatku",
       "taxId": "NIP lub numer VAT",
       "taxIdNumber": "Numer identyfikacji podatkowej",
+      "taxIdPlaceholder": "np. PL1234567890",
+      "billingNamePlaceholder": "np. Przykładowa Sp. z o.o.",
+      "billingEmailPlaceholder": "np. rozliczenia@firma.pl",
+      "addressLine1Placeholder": "np. ul. Przykładowa 12",
+      "addressLine2Placeholder": "np. lokal 10",
+      "cityPlaceholder": "np. Warszawa",
+      "statePlaceholder": "np. mazowieckie",
+      "idType": {
+        "eu_vat": "Numer VAT UE",
+        "gb_vat": "Numer VAT Wielkiej Brytanii",
+        "us_ein": "Amerykański numer EIN",
+        "au_abn": "Australijski numer ABN",
+        "br_cnpj": "Brazylijski numer CNPJ",
+        "ca_bn": "Kanadyjski numer BN",
+        "ch_vat": "Szwajcarski numer VAT",
+        "in_gst": "Indyjski numer GST",
+        "jp_cn": "Japoński numer przedsiębiorstwa",
+        "kr_brn": "Koreański numer rejestracyjny firmy",
+        "mx_rfc": "Meksykański numer RFC",
+        "nz_gst": "Nowozelandzki numer GST",
+        "sg_uen": "Singapurski numer UEN",
+        "other": "Inny"
+      },
       "taxIdType": "Rodzaj identyfikatora podatkowego",
       "title": "Ustawienia podatkowe i fakturowanie"
     },
@@ -27062,12 +27224,19 @@
       "emailNotifications": "Powiadomienia e-mail",
       "emailNotificationsDesc": "Otrzymuj alerty pocztą elektroniczną",
       "fetchError": "Nie udało się załadować ustawień",
+      "month": "miesiąc",
       "noCap": "Bez limitu",
       "saveError": "Nie udało się zapisać ustawień",
       "selectPlan": "Wybierz plan docelowy…",
       "storageUsage": "Alerty wykorzystania pamięci",
+      "storageThreshold80": "Alert przy wykorzystaniu 80% pamięci",
+      "storageThreshold90": "Alert przy wykorzystaniu 90% pamięci",
+      "storageThreshold100": "Alert przy wykorzystaniu 100% pamięci",
       "title": "Alerty i limity wykorzystania",
-      "tokenUsage": "Alerty wykorzystania tokenów"
+      "tokenUsage": "Alerty wykorzystania tokenów",
+      "tokenThreshold80": "Alert przy wykorzystaniu 80% tokenów",
+      "tokenThreshold90": "Alert przy wykorzystaniu 90% tokenów",
+      "tokenThreshold100": "Alert przy wykorzystaniu 100% tokenów"
     },
     "subscription": {
       "apply": "Zastosuj",

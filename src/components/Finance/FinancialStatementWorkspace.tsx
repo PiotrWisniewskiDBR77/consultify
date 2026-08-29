@@ -348,6 +348,10 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
     if (scaling === 'millions') return isPl ? 'Miliony' : 'Millions';
     return scaling;
   };
+  const statusLabel = (status: unknown) => {
+    const normalized = String(status || 'pending').toLowerCase();
+    return t(`finance.statusValue.${normalized}`, 'Oczekuje');
+  };
   const [detail, setDetail] = useState<StatementDetail | null>(null);
   const [ratios, setRatios] = useState<RatioResult | null>(null);
   const [canonicalLines, setCanonicalLines] = useState<FinancialStatementCanonicalLineOption[]>([]);
@@ -743,9 +747,9 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
           <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
             {[
               [t('finance.statements.scaling', 'Scaling'), scalingLabel(detail.scaling)],
-              [t('finance.statements.status', 'Status'), detail.status],
-              [t('finance.statements.readiness', 'Readiness'), detail.readinessStatus || 'pending'],
-              [t('finance.statements.validation', 'Validation'), detail.validation_status],
+              [t('finance.statements.status', 'Status'), statusLabel(detail.status)],
+              [t('finance.statements.readiness', 'Readiness'), statusLabel(detail.readinessStatus)],
+              [t('finance.statements.validation', 'Validation'), statusLabel(detail.validation_status)],
               [t('finance.statements.sourceFile', 'Source file'), detail.source_file_name || '—'],
             ].map(([label, value]) => (
               <div key={label} className="rounded-xl bg-slate-50 dark:bg-navy-800/70 p-3">
@@ -899,7 +903,7 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
                           </div>
                           <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                             {t('finance.statements.readiness', 'Readiness')}:{' '}
-                            {statement.readiness_status || 'pending'} •{' '}
+                            {statusLabel(statement.readiness_status)} •{' '}
                             {t('finance.statements.mappedLines', 'Mapped lines')}:{' '}
                             {statement.mapped_line_count || 0} •{' '}
                             {t('finance.statements.unmappedLines', 'Unmapped lines')}:{' '}
@@ -1162,10 +1166,11 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
                     className="rounded-xl bg-slate-50 p-3 text-xs text-slate-600 dark:bg-navy-800/70 dark:text-slate-300"
                   >
                     <div className="font-medium text-slate-900 dark:text-white">
-                      {run.current_stage} • {run.run_status}
+                      {t('finance.statements.importStage', 'Przetwarzanie dokumentu')} •{' '}
+                      {statusLabel(run.run_status)}
                     </div>
                     <div className="mt-1">
-                      {run.document_class || 'unknown'} • {run.extraction_strategy || '—'}
+                      {t('finance.statements.documentRecognized', 'Rozpoznano rodzaj dokumentu')}
                     </div>
                   </div>
                 ))}

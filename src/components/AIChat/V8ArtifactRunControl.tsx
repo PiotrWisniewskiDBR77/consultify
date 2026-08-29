@@ -67,28 +67,31 @@ const OUTPUT_OPTIONS: Array<{
   { outputType: 'sheet', artifactFamily: 'sheet', label: 'Sheet' },
 ];
 
-function formatRunStatus(status: ArtifactRunRecord['runStatus']): string {
+type Translate = (key: string, fallback: string) => string;
+
+function formatRunStatus(status: ArtifactRunRecord['runStatus'], t: Translate): string {
+  const key = `v8.artifactRun.status.${status}`;
   switch (status) {
     case 'proposal_created':
-      return 'Proposal created';
+      return t(key, 'Proposal created');
     case 'awaiting_review':
-      return 'Awaiting review';
+      return t(key, 'Awaiting review');
     case 'approved_for_apply':
-      return 'Approved for apply';
+      return t(key, 'Approved for apply');
     case 'applying':
-      return 'Applying';
+      return t(key, 'Applying');
     case 'rejected':
-      return 'Rejected';
+      return t(key, 'Rejected');
     case 'retry_requested':
-      return 'Retry requested';
+      return t(key, 'Retry requested');
     case 'completed':
-      return 'Completed';
+      return t(key, 'Completed');
     case 'failed':
-      return 'Failed';
+      return t(key, 'Failed');
     case 'cancelled':
-      return 'Cancelled';
+      return t(key, 'Cancelled');
     default:
-      return 'Planned';
+      return t('v8.artifactRun.status.planned', 'Planned');
   }
 }
 
@@ -132,14 +135,24 @@ function deriveEffectiveRunStatus(
   }
 }
 
-function formatPlanLabel(plan: ArtifactRunPlan | null): string {
+function formatPlanLabel(plan: ArtifactRunPlan | null, t: Translate): string {
   if (!plan) return '';
-  return `${plan.outputType} · ${plan.visibilityScope}`;
+  const option = OUTPUT_OPTIONS.find((item) => item.outputType === plan.outputType);
+  const outputLabel = t(
+    `v8.artifactRun.option.${plan.outputType}`,
+    option?.label ?? 'Materiał'
+  );
+  const scopeLabel = t(
+    `v8.artifactRun.visibility.${plan.visibilityScope}`,
+    'Dostęp zgodny z uprawnieniami'
+  );
+  return `${outputLabel} · ${scopeLabel}`;
 }
 
-function formatExecutionState(state: string | null | undefined): string {
-  if (!state) return 'Unknown';
-  return state.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
+function formatExecutionState(state: string | null | undefined, t: Translate): string {
+  if (!state) return t('v8.artifactRun.executionState.unknown', 'Unknown');
+  const englishFallback = state.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
+  return t(`v8.artifactRun.executionState.${state}`, englishFallback);
 }
 
 export function V8ArtifactRunControl({
@@ -583,23 +596,23 @@ export function V8ArtifactRunControl({
                   {currentRun.plan.titleHint}
                 </div>
                 <span className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300">
-                  {formatRunStatus(effectiveRunStatus || currentRun.runStatus)}
+                  {formatRunStatus(effectiveRunStatus || currentRun.runStatus, t)}
                 </span>
               </div>
               <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                {formatPlanLabel(currentPlan)}
+                {formatPlanLabel(currentPlan, t)}
               </div>
               <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
-                {t('v8.artifactRun.executionRun', 'Execution run')}: {currentRun.executionRunId}
+                {t('v8.artifactRun.executionRun', 'Przebieg tworzenia materiału')}
               </div>
               {currentRun.proposalId && (
                 <div className="mt-1 text-[11px] text-emerald-700 dark:text-emerald-300">
-                  {t('v8.artifactRun.proposalReady', 'Proposal ready')}: {currentRun.proposalId}
+                  {t('v8.artifactRun.proposalReady', 'Proposal ready')}
                 </div>
               )}
               {currentRun.artifactId && (
                 <div className="mt-1 text-[11px] text-sky-700 dark:text-sky-300">
-                  {t('v8.artifactRun.artifactReady', 'Artifact ready')}: {currentRun.artifactId}
+                  {t('v8.artifactRun.artifactReady', 'Artifact ready')}
                 </div>
               )}
               {currentRun.artifactId && artifactTrustState && (
@@ -612,13 +625,12 @@ export function V8ArtifactRunControl({
               )}
               {currentRun.failureReason && (
                 <div className="mt-1 text-[11px] text-danger-600 dark:text-danger-300">
-                  {currentRun.failureReason}
+                  {t('v8.artifactRun.runFailed', 'Nie udało się utworzyć materiału. Spróbuj ponownie.')}
                 </div>
               )}
               {currentRun.failurePackage && (
                 <div className="mt-1 text-[11px] text-danger-700 dark:text-danger-200">
-                  {t('v8.artifactRun.failureStage', 'Failure stage')}:{' '}
-                  {String(currentRun.failurePackage.stage || 'materialize')}
+                  {t('v8.artifactRun.failureStage', 'Niepowodzenie na etapie tworzenia materiału')}
                 </div>
               )}
 
@@ -634,7 +646,10 @@ export function V8ArtifactRunControl({
                     </div>
                     <span className="rounded-full border border-amber-200 bg-white px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
                       {currentRun.preflight?.state
-                        ? String(currentRun.preflight.state).replace(/_/g, ' ')
+                        ? t(
+                            `v8.artifactRun.preflightState.${currentRun.preflight.state}`,
+                            'Wymaga uwagi'
+                          )
                         : t('v8.artifactRun.preflightNotRun', 'Not run')}
                     </span>
                   </div>
@@ -648,14 +663,21 @@ export function V8ArtifactRunControl({
                         >
                           <div className="min-w-0 flex-1">
                             <div className="truncate font-medium">
-                              {check.id.replace(/_/g, ' ')}
+                              {t(
+                                `v8.artifactRun.preflightCheck.${check.id}`,
+                                'Kontrola materiału'
+                              )}
                             </div>
                             <div className="mt-0.5 text-amber-800/80 dark:text-amber-200/80">
-                              {check.message}
+                              {check.status === 'passed'
+                                ? t('v8.artifactRun.preflightCheckPassed', 'Kontrola zakończona pomyślnie')
+                                : check.status === 'pending'
+                                  ? t('v8.artifactRun.preflightCheckPending', 'Kontrola oczekuje na wykonanie')
+                                  : t('v8.artifactRun.preflightCheckFailed', 'Kontrola wymaga poprawy')}
                             </div>
                           </div>
                           <div className="shrink-0 rounded-full border border-amber-200 bg-white px-2 py-0.5 text-[10px] font-medium text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
-                            {check.status}
+                            {t(`v8.artifactRun.checkStatus.${check.status}`, 'Wymaga uwagi')}
                           </div>
                         </div>
                       ))}
@@ -696,10 +718,7 @@ export function V8ArtifactRunControl({
                           {index === 0
                             ? t('v8.artifactRun.historyOriginal', 'Original')
                             : t('v8.artifactRun.historyRetry', 'Retry')}{' '}
-                          · {item.runId}
-                        </div>
-                        <div className="shrink-0 text-slate-600 dark:text-slate-300">
-                          {formatRunStatus(item.runStatus)}
+                          · {formatRunStatus(item.runStatus, t)}
                         </div>
                       </div>
                     ))}
@@ -718,7 +737,7 @@ export function V8ArtifactRunControl({
                       {t('v8.artifactRun.governedExecution', 'Governed execution')}
                     </div>
                     <span className="rounded-full border border-primary-200 bg-white px-2 py-0.5 text-[11px] font-medium text-primary-700 dark:border-primary-800 dark:bg-primary-950 dark:text-primary-300">
-                      {formatExecutionState(executionRun.data.state)}
+                      {formatExecutionState(executionRun.data.state, t)}
                     </span>
                   </div>
 
@@ -743,8 +762,8 @@ export function V8ArtifactRunControl({
                     <div className="mt-2 flex items-center gap-2 text-[11px] text-primary-700 dark:text-primary-300">
                       <GitBranch size={13} />
                       <span>
-                        {formatExecutionState(latestTransition.fromState)} {'->'}{' '}
-                        {formatExecutionState(latestTransition.toState)}
+                        {formatExecutionState(latestTransition.fromState, t)} {'→'}{' '}
+                        {formatExecutionState(latestTransition.toState, t)}
                       </span>
                     </div>
                   )}

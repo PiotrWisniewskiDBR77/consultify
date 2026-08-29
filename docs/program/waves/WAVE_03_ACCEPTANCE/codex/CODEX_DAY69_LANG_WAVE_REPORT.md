@@ -3,7 +3,7 @@
 Data: 2026-08-29  
 Gałąź: `codex/day69-lang-wave-20260829`  
 Marker: `f21bc627ad9c30b5dcc33b07af6e259d22a3456f`  
-Werdykt: **PARTIAL — C.1 częściowo wykonane; C.2–C.6 NIEZWERYFIKOWANE**
+Werdykt: **PARTIAL — C.1 domknięte; C.2 rozpoczęte po checkpointcie; C.3–C.6 NIEZWERYFIKOWANE**
 
 ## §0.1 — baza, marker i sanity
 
@@ -261,3 +261,62 @@ Usunięto z widocznych liczb i dat wywołania z locale `en-US`, locale `undefine
 - C.1 nie jest jeszcze ukończone mimo `0 z 418` braków klasy A: klasy B–E nie zostały przejrzane dla wszystkich czterech nowych obszarów, a K3 ze stylowanego harnessu nie został wykonany dla Finance, Billing, V8 i Valuation (`0 z 4` powierzchni).
 - Crimson pozostaje świadomie nietknięty.
 - C.2 nie zostało rozpoczęte, ponieważ bramka C.1 nie jest zamknięta.
+
+## Wznowienie — domknięcie C.1: K3, klasy B–E i bazowe 9 czerwonych testów
+
+### K3 — 4 z 4 nowych powierzchni
+
+Uruchomiono lokalny harness produktu na jedynym dozwolonym porcie `4630`, z rzeczywistymi komponentami i `src/index.css`. Każdy z **4 z 4** zrzutów miał 3 załadowane arkusze/stylowe węzły i został obejrzany osobno, łącznie z nagłówkami i wartościami:
+
+- Finance: `/private/tmp/cx-day69-artefakty/c1-k3-finance.png`, SHA-256 `d471fbd5b31fcb8d7fcccf0f1d397dd72b8b9ec6b4854bf3666551f859696915`;
+- Billing: `/private/tmp/cx-day69-artefakty/c1-k3-billing.png`, SHA-256 `48cfbf9122e9c4a280323b75d9ebc43049ced704eb20277cbbb962e19b5c8274`;
+- V8: `/private/tmp/cx-day69-artefakty/c1-k3-v8.png`, SHA-256 `d1e97d46f11402ad71fbb28bd337a66794ef96650fd23b20f90b940ec05ae6fa`;
+- Valuation: `/private/tmp/cx-day69-artefakty/c1-k3-valuation.png`, SHA-256 `d59aa9362f2912d64fe6adc77578cba42ac5fd89c37b4aafc57c5f729223e5e2`.
+
+Oględziny ujawniły i domknęły **4 z 4** widocznych defektów językowo-formatowych: 6 z 6 dynamicznych progów Billing, surowe `$ 125000`, trzy angielskie typy materiału V8 oraz podtytuł Valuation `DCF + porównawcze + sensitivity, eksport do decka`. Po zmianie Billing pokazuje `125 000,00 USD`, V8 pokazuje `Dokument / Prezentacja / Arkusz`, a Valuation używa pełnego zdania dla człowieka.
+
+Znalezisko wizualne, świadomie nietknięte: komponent Finance renderuje własną ciemną powierzchnię mimo jasnego dokumentu harnessu. Crimson wskazany przez właściciela również pozostał nietknięty. Są to **2 z 2** znaleziska kanonu wizualnego, nie warstwy językowej.
+
+### Klasy B–E — 73 z 73 plików zakresu C.1
+
+Przejrzano kontekstowo **73 z 73** plików inwentarza C.1 (`/private/tmp/cx-day69-artefakty/c1-scope-files.txt`). Kandydaty obejmowały teksty JSX, placeholdery, opcje, surowe wartości API i wewnętrzne nazwy procesów. Wynik:
+
+- klasa B: usunięto angielskie teksty poza `t()` w analityce subskrypcji, typach materiału, placeholderach importu/powiązań i formularzu podatkowym;
+- klasa C: surowe statusy importu, gotowości, wykonania i kontroli są mapowane na etykiety po stronie frontu; wartości API nie zostały zmienione;
+- klasa D: ekran nie pokazuje identyfikatorów przebiegów/propozycji/materiałów, nazw strategii ekstrakcji, `V8`, `RAG`, `governed`, `preflight`, `lineage` ani surowych nazw stanów w poprawianych powierzchniach;
+- klasa E: porównano znaczenie polskich wartości z fallbackami w **73 z 73** plików. Skorygowano rozjazdy, w których PL zachęcał do niedostępnej czynności albo zachowywał wewnętrzną nazwę procesu. Nie pozostawiono potwierdzonego rozjazdu znaczenia w tym inwentarzu.
+
+Klasa F: wcześniejsze **57 z 57** wywołań Finance pozostają ocenione; dodatkowo poprawiono formatowanie kwot i dat w Billing. Kwoty używają `pl-PL`, daty `pl-PL`; kontrolny zrzut Billing pokazuje `125 000,00 USD` zamiast `$ 125000`.
+
+K1 po tej pozycji: liczba spłaszczonych wartości PL wzrosła z `31778` do `31923`, czyli o **145 z 145** dodanych wartości; JSON parsuje się poprawnie i nie odnotowano spadku.
+
+### K4 — marker kontra bieżący stan po pełnych nazwach
+
+Na markerze `f21bc627ad9c30b5dcc33b07af6e259d22a3456f` uruchomiono dokładnie trzy wskazane pliki i zapisano JSON. Porównanie po `fullName`:
+
+- marker: **14 z 23 PASS, 9 z 23 FAIL**;
+- bieżący stan: **14 z 23 PASS, 9 z 23 FAIL**;
+- identyczny wynik: **23 z 23** nazw;
+- delta „zielony przed / czerwony po”: **0 z 23**.
+
+Wszystkie **9 z 9** czerwonych przypadków było czerwonych już na markerze: 3 DriverPlannerPanel, 4 FinancialStatementWorkspace V8 read seam i 2 stany puste ValuationVisualsPanel. Tym samym wcześniejsze `NOT_PROVEN` zostało rozstrzygnięte jako zastany dług bazowy, a nie regresja dyżuru.
+
+Dowody:
+
+- marker JSON: `/private/tmp/cx-day69-artefakty/c1-finance-marker-three.json`, SHA-256 `39258e284e1938cf457c5c6dcfe155a4714b6fdbc725669d329d2623c2101374`;
+- bieżący JSON: `/private/tmp/cx-day69-artefakty/c1-finance-current-three.json`, SHA-256 `0aed3cf394e1602268006ae8245b2206c894cd4c67b488e78f5f208fa92f5929`.
+
+Pakiet jest czysto komponentowy (`RUN_DB_TESTS=0 MOCK_DB=true`); pułapki Z33 (a)–(e) nie leżą na jego ścieżce i wynik nie jest dowodem DB/HTTP.
+
+Dodatkowo porównano na markerze i po zmianie **40 z 40** przypadków z pięciu plików bezpośrednio obejmujących zmienione powierzchnie (`V8ArtifactRunControl`, `V8ContextIndicator`, `FinancialModelWorkspace`, `ValuationWorkspace`). Marker: **40 z 40 PASS**; bieżący stan: **40 z 40 PASS**; delta: **0 z 40**. JSON po: `/private/tmp/cx-day69-artefakty/c1-changed-surface-tests.json`, SHA-256 `b035fe4b2297bbe76ca4bcacba947062aacbacb4249801d6a06977472223ebc9`.
+
+### K2 i korekta proceduralna
+
+- Backend: **1 z 1 PASS**, exit 0, po odwracalnym przeniesieniu starego `server/dist` do scratchu. Bezpiecznik narzędzia odrzucił instrukcyjne `rm -rf dist` przed wykonaniem; nie użyto komendy destrukcyjnej.
+- Frontend: próba **1 z 2** doszła do renderowania chunków i zakończyła się OOM (`exit 134`) przy domyślnym limicie; próba **2 z 2** z `NODE_OPTIONS=--max-old-space-size=6144` zakończyła się PASS (`✓ built in 37.69s`, exit 0). Log: `/private/tmp/cx-day69-artefakty/c1-frontend-build.log`, SHA-256 `24804d56f40ceaa235f90267fd5ecc69da80022f74050f34357f19d7574f36a9`.
+
+Po ostatniej korekcie kompatybilności testów oba buildy powtórzono: backend **1 z 1 PASS**, frontend **1 z 1 PASS** (`✓ built in 34.36s`, exit 0). Końcowy log frontendu: `/private/tmp/cx-day69-artefakty/c1-frontend-build-final.log`, SHA-256 `d88e4f952a45e8269ee479cc88945f98d243c911a0bbe7e26b4ad26f9e145d6f`.
+
+### Stan po C.1
+
+C.1 spełnia K1–K4: klasa A **418 z 418**, klasa F Finance **57 z 57**, klasy B–E **73 z 73 plików**, K3 **4 z 4 powierzchni**, porównanie K4 **23 z 23 nazw bez delty**. C.2 wolno rozpocząć dopiero od kolejnego checkpointu tej gałęzi.

@@ -817,8 +817,8 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                             }
                             className="mt-1 w-full px-3 py-2 rounded-lg border border-c-border-strong dark:border-c-border-strong bg-white dark:bg-c-surface text-sm text-c-text dark:text-white"
                           >
-                            <option value="gordon">Gordon growth</option>
-                            <option value="exit_multiple">Exit multiple</option>
+                            <option value="gordon">{t('valuation.assumptions.gordonGrowth', 'Wzrost Gordona')}</option>
+                            <option value="exit_multiple">{t('valuation.assumptions.exitMultiple', 'Mnożnik wyjścia')}</option>
                           </select>
                         </div>
                         {assumptions.terminalMethod === 'gordon' ? (
@@ -915,8 +915,8 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                 className="mt-1 w-full px-3 py-2 rounded-lg border border-c-border-strong dark:border-c-border-strong bg-white dark:bg-c-surface text-sm text-c-text dark:text-white"
                               >
                                 <option value="EV/EBITDA">EV/EBITDA</option>
-                                <option value="EV/EBIT" disabled>EV/EBIT — needs canonical lineage</option>
-                                <option value="EV/Revenue" disabled>EV/Revenue — needs canonical lineage</option>
+                                <option value="EV/EBIT" disabled>EV/EBIT — {t('valuation.assumptions.sourceDataRequired', 'wymagane dane źródłowe')}</option>
+                                <option value="EV/Revenue" disabled>EV/Revenue — {t('valuation.assumptions.sourceDataRequired', 'wymagane dane źródłowe')}</option>
                               </select>
                             </div>
                           </div>

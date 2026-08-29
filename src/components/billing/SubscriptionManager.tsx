@@ -237,7 +237,7 @@ export const SubscriptionManager: React.FC<SubscriptionManagerProps> = ({ onPlan
               <div className="mt-4 pt-4 border-t border-white/20">
                 <p className="text-sm text-white/80">
                   {t('billing.subscription.trialEnds', 'Trial ends')}:{' '}
-                  {new Date(trialEndsAt).toLocaleDateString()}
+                  {new Date(trialEndsAt).toLocaleDateString('pl-PL')}
                 </p>
               </div>
             )}

@@ -55,12 +55,8 @@ export const LinkInitiativeModal: React.FC<LinkInitiativeModalProps> = ({
       toast.success(t('finance.link.success', 'Initiative linked to finance'));
       onLinked?.();
       onClose();
-    } catch (e: any) {
-      const msg =
-        e?.response?.data?.error ||
-        e?.message ||
-        t('finance.link.failed', 'Linking failed — check initiative ID');
-      toast.error(msg);
+    } catch {
+      toast.error(t('finance.link.failed', 'Nie udało się utworzyć powiązania'));
     } finally {
       setSaving(false);
     }
@@ -87,7 +83,7 @@ export const LinkInitiativeModal: React.FC<LinkInitiativeModalProps> = ({
             ref={initiativeInputRef}
             value={initiativeId}
             onChange={(e) => setInitiativeId(e.target.value)}
-            placeholder="e.g. 42 or uuid"
+            placeholder={t('finance.link.initiativeIdPlaceholder', 'np. 42')}
             autoFocus
             className="mt-1 w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm bg-white dark:bg-navy-800"
           />
@@ -100,7 +96,7 @@ export const LinkInitiativeModal: React.FC<LinkInitiativeModalProps> = ({
           <input
             value={modelRef}
             onChange={(e) => setModelRef(e.target.value)}
-            placeholder="e.g. model-uuid"
+            placeholder={t('finance.link.financeRefPlaceholder', 'np. identyfikator modelu')}
             className="mt-1 w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm bg-white dark:bg-navy-800"
           />
         </div>
@@ -114,7 +110,7 @@ export const LinkInitiativeModal: React.FC<LinkInitiativeModalProps> = ({
           >
             {LINKAGE_TYPES.map((lt) => (
               <option key={lt} value={lt}>
-                {lt.replace(/_/g, ' ')}
+                {t(`finance.link.typeValue.${lt}`, 'Inne powiązanie finansowe')}
               </option>
             ))}
           </select>
