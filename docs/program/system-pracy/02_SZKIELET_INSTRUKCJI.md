@@ -261,9 +261,12 @@ dyżurze", nie kasujesz numeru.**
 - ustawić `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`, `SMTP_PORT`, `SMTP_FROM`
   w środowisku, w `.env*`, w `docker-compose*` ani nigdzie indziej;
 - wstawić wiersza konfiguracji SMTP do tabeli ustawień w swojej bazie;
-- uruchomić serwera pełnym `server/src/index.ts` — **tam startują drenaże
-  outboxów**; Twoje testy montują `ApiGateway`, nie cały serwer, i to jest
-  różnica, która trzyma `Z30`;
+- uruchomić serwera pełnym `server/src/index.ts` **na potrzeby testów** — tam
+  startują drenaże outboxów; testy montują `ApiGateway`, nie cały serwer
+  (`Z22`);
+- uruchomić `server/src/index.ts` na potrzeby zrzutów inaczej niż przez
+  kanoniczny `scripts/dev/start-wave3-owner-runtime.mjs` i bez spełnienia
+  wszystkich warunków z punktu (4) poniżej;
 - wywołać ręcznie żadnej funkcji `drain*` / `startNotificationOutboxDrainCron`
   / `outboxWorker`.
 
@@ -283,16 +286,58 @@ docker exec <<KONTENER>> psql -U postgres -d <<BAZA>> \
 #   oczekiwane: 0 wierszy. Jezeli tabela `settings` nie istnieje — wklej TEN blad,
 #   to tez jest dowod (nie ma skad wziac konfiguracji poczty).
 
-# (c) zaden drenaz outboxu nie dziala w Twoim procesie testowym
+# (c) dla TESTOW: zaden drenaz outboxu nie dziala w procesie testowym
 grep -n "startNotificationOutboxDrainCron\|outboxWorker\|platformOutboxDrainCron" server/src/Gateway.ts
 #   oczekiwane: 0 trafien — drenaze startuja w server/src/index.ts, ktorego NIE uruchamiasz
 ```
 
-**(3) Deklaracja obowiązkowa w raporcie, dosłownie:**
+**(3) Deklaracja obowiązkowa dla TESTÓW w raporcie, dosłownie:**
 **„Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie
 zawiera wierszy konfiguracji SMTP. Nie uruchomiłem `server/src/index.ts` ani
 żadnego drenażu outboxu. Żaden e-mail ani zaproszenie kalendarzowe nie zostało
 wysłane."**
+
+**(4) Wyjątek wyłącznie dla ZRZUTÓW ODBIOROWYCH — pełny produkt, nie replika.**
+Pełny `server/src/index.ts` wolno uruchomić wyłącznie przez kanoniczny
+`scripts/dev/start-wave3-owner-runtime.mjs`, po wykonaniu dowodów (a) i (b),
+oraz tylko gdy wszystkie poniższe warunki są spełnione imiennie:
+
+- runtime pracuje wyłącznie na efemerycznej lokalnej bazie dyżuru pod
+  `127.0.0.1`, na zasobach przydzielonych w instrukcji; nie wolno adoptować
+  bazy zawierającej jakikolwiek klucz `smtp%`;
+- środowisko procesu serwera pochodzi z `childEnv(...)`, ma
+  `DOTENV_DISABLED='1'` i nie zawiera `SMTP_*`, `RESEND`, `SENDGRID` ani
+  `MAIL*`; trzeba to potwierdzić dla uruchomionego procesu, nie tylko dla
+  powłoki wywołującej;
+- zapytanie z dowodu (b), wykonane po wszystkich migracjach i seedach, zwraca
+  `0` wierszy bezpośrednio przed startem runtime'u;
+- nie ustawiasz flag drenaży na `true`, nie wywołujesz żadnego drenażu ręcznie
+  i nie wykonujesz żadnej operacji, która tworzy wiadomość, zaproszenie lub
+  powiadomienie; runtime służy wyłącznie do odczytu i wykonania zrzutów;
+- po starcie ponownie sprawdzasz środowisko należącego do Ciebie procesu oraz
+  log serwera. Trafienie konfiguracji poczty, próby realnego transportu albo
+  niejednoznaczność dowodu oznacza natychmiastowe zatrzymanie runtime'u i STOP
+  całego dyżuru (`Z30`).
+
+Brak konfiguracji nie wyłącza samych drenaży: w runtime z realną bazą startują
+one domyślnie. Ochroną jest fail-closed protokół powyżej — `emailService`
+tworzy realny transporter dopiero przy jednoczesnej obecności hosta i
+użytkownika SMTP; bez nich pozostaje atrapą konsolową. Dowody (a) i (b)
+obowiązują zatem zarówno testy, jak i zrzuty odbiorowe.
+
+**Deklaracja obowiązkowa dla ZRZUTÓW ODBIOROWYCH w raporcie, dosłownie:**
+**„Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie
+zawiera wierszy konfiguracji SMTP. Uruchomiłem `server/src/index.ts` wyłącznie
+przez kanoniczny `scripts/dev/start-wave3-owner-runtime.mjs`, na lokalnej bazie
+dyżuru, tylko w celu wykonania zrzutów. Zweryfikowałem środowisko procesu i log
+serwera zgodnie z `§0.2b` (4). Żaden e-mail, zaproszenie kalendarzowe ani
+powiadomienie zewnętrzne nie zostało wysłane."**
+
+**Ostrzeżenie wsteczne (`DEC-2026-08-29-314`):** dyżury `70`, `72`, `73`,
+`76`, `81` i `85` uruchomiły kanoniczny runtime do zrzutów, przez co
+sześciokrotnie naruszyły wcześniejsze bezwarunkowe brzmienie `§0.2b`. Do szkody
+nie doszło, ponieważ niezależny protokół `Z30` wymagał wykazania, że dostawca
+poczty jest atrapą. To ostrzeżenie nie znosi zakazu ani nie zastępuje dowodów.
 ````
 
 ---
