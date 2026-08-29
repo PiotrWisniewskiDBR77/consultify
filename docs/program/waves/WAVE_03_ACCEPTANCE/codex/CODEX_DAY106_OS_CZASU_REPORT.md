@@ -1,9 +1,9 @@
 # CODEX DAY 106 — Inicjatywy: prawdziwość osi czasu
 
-Data: 2026-08-29  
-Gałąź: `codex/day106-os-czasu-20260829`  
-Baza produktu: `5b29e4ec1b2f6180f4006be1f06ca1ebe3597f02`  
-Marker wydania instrukcji podany przez nadzorcę: `74a1d733e9`  
+Data: 2026-08-29
+Gałąź: `codex/day106-os-czasu-20260829`
+Baza produktu: `5b29e4ec1b2f6180f4006be1f06ca1ebe3597f02`
+Marker wydania instrukcji podany przez nadzorcę: `74a1d733e9`
 Werdykt: **DEFECT REPRODUCED / ROOT CAUSE PROVEN / NOT FIXED — DO DECYZJI WŁAŚCICIELA**
 
 ## Wynik w jednym zdaniu
@@ -48,8 +48,8 @@ Seeder/readback: persony `6/6`, kandydaci `2/2`, zaakceptowany `1/1`, inicjatywa
 
 ## K2 — sprzeczność na jednym zrzucie
 
-Zrzut: `/private/tmp/cx-day106-os-czasu-artefakty/day106-timeline-contradiction.png`  
-SHA-256: `fe1a537fba8d1fc5161d2ce23b0777529d9bcbc2b574a459d861026157fdba97`  
+Zrzut: `/private/tmp/cx-day106-os-czasu-artefakty/day106-timeline-contradiction.png`
+SHA-256: `fe1a537fba8d1fc5161d2ce23b0777529d9bcbc2b574a459d861026157fdba97`
 Wynik: `1 z 1` wymaganych zrzutów; oba sygnały widoczne jednocześnie.
 
 Runtime: frontend `200`, health `200`, ready `200`, server/client marker `5b29e4ec1b2f`, PostgreSQL `127.0.0.1:5987`, serwer `4872`, klient `4873`, migracje `863`, auth/test bypass `OFF`, V8 global `ON`. Runtime manifest: `/tmp/consultify-wave3-runtime-manifest-day106.json`, SHA-256 `d157ee3a36049496af6a65ac6753a34a7774e2cfa2964b2c25ed671749ed2c29`.
