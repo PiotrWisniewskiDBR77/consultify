@@ -55,4 +55,8 @@ describe('AppRoutes — AI Chat routing', () => {
     expect(appRoutes).not.toContain("import('@/views/AIChatWelcomeView')");
     expect(appRoutes).not.toContain('<AIChatWelcomeView');
   });
+
+  it('localizes the Partner Portal shell breadcrumb', () => {
+    expect(appRoutes).toContain("t('partner.sidebar.title', 'Partner Portal')");
+  });
 });

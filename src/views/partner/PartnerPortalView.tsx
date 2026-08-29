@@ -3146,8 +3146,8 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = () => {
       Record<PartnerSection, { label: string; section: PartnerSection }>
     > = {
       // Home
-      dashboard: { label: 'Home', section: 'partner-home' },
-      metrics: { label: 'Home', section: 'partner-home' },
+      dashboard: { label: t('partner.sidebar.partnerHome', 'Home'), section: 'partner-home' },
+      metrics: { label: t('partner.sidebar.partnerHome', 'Home'), section: 'partner-home' },
       // Referrals
       'referral-tools': { label: 'Referrals', section: 'referral-tools' },
       'referral-analytics': { label: 'Referrals', section: 'referral-tools' },
