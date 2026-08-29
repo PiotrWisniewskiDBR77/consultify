@@ -298,9 +298,21 @@ Wynik zasięgu testów: `NOT_PROVEN / EVIDENCE_MISSING_IN_INSTRUCTION`.
 | K1 readback | `PASS` — zielony readback seedera, 15 pól zgodnych |
 | K2 liczba zrzutów | `PASS` — 20 zadeklarowanych i 20 plików, każdy z SHA-256 |
 | K3 każdy obejrzany | `PASS_WITH_FINDINGS` — 20/20, ze stylami, dwoma motywami |
-| K4 tylko dokumentacja | do potwierdzenia po końcowym commicie |
+| K4 tylko dokumentacja | `PASS` — dokładnie raport Day 72 i MODULE_ACCEPTANCE |
 | K5 MODULE odzwierciedla wynik | `PARTIAL / OWNER_REVIEW_PENDING` |
 
 Zdanie końcowe: wykonano i obejrzano **20 z 20** zrzutów, ale pakiet pozostaje
 `PARTIAL`, ponieważ ujawnia istotne defekty języka, identyfikatorów i szerokości
 tabel, a decyzje właściciela G08–G10 nie zapadły.
+
+## Końcowy K4 po pierwszym commicie
+
+Commit dokumentacyjny: `61b902b046bd2d47b9891f7cb3cc009d739db4a7`.
+
+```text
+docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY72_RESULTS_OWNER_REPORT.md
+docs/program/waves/WAVE_03_ACCEPTANCE/modules/09_RESULTS/MODULE_ACCEPTANCE.md
+```
+
+`git status --short` po commicie nie wypisał nic. Nie ma zmian w `src/`,
+`server/src/`, seederach, migracjach ani globalnej infrastrukturze testowej.
