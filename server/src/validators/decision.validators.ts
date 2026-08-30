@@ -144,6 +144,8 @@ export const CreateDecisionRiskSchema = z.object({
   likelihood: DecisionRiskLikelihoodEnum.optional(),
   mitigation: z.string().max(2000).optional(),
   ownerId: z.string().optional().nullable(),
+  category: z.string().max(100).optional().nullable(),
+  contingency: z.string().max(2000).optional().nullable(),
 });
 
 export const UpdateDecisionRiskSchema = z.object({
@@ -152,6 +154,24 @@ export const UpdateDecisionRiskSchema = z.object({
   likelihood: DecisionRiskLikelihoodEnum.optional(),
   mitigation: z.string().max(2000).optional().nullable(),
   ownerId: z.string().optional().nullable(),
+  category: z.string().max(100).optional().nullable(),
+  contingency: z.string().max(2000).optional().nullable(),
+});
+
+export const DecisionStakeholderRoleEnum = z.enum([
+  'responsible',
+  'accountable',
+  'consulted',
+  'informed',
+]);
+
+export const ReplaceDecisionStakeholdersSchema = z.object({
+  stakeholders: z.array(
+    z.object({
+      userId: z.string().min(1),
+      role: DecisionStakeholderRoleEnum,
+    })
+  ),
 });
 
 export const EscalateDecisionSchema = z.object({
@@ -211,3 +231,4 @@ export type CreateDecisionAlternativeRequest = z.infer<typeof CreateDecisionAlte
 export type UpdateDecisionAlternativeRequest = z.infer<typeof UpdateDecisionAlternativeSchema>;
 export type CreateDecisionRiskRequest = z.infer<typeof CreateDecisionRiskSchema>;
 export type UpdateDecisionRiskRequest = z.infer<typeof UpdateDecisionRiskSchema>;
+export type ReplaceDecisionStakeholdersRequest = z.infer<typeof ReplaceDecisionStakeholdersSchema>;

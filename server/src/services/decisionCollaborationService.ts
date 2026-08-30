@@ -527,6 +527,8 @@ export interface DecisionRiskDTO {
   likelihood: string;
   mitigation: string | null;
   ownerId: string | null;
+  category: string | null;
+  contingency: string | null;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
@@ -541,6 +543,8 @@ function toRiskDTO(row: any): DecisionRiskDTO {
     likelihood: row.likelihood,
     mitigation: row.mitigation ?? null,
     ownerId: row.owner_id ?? null,
+    category: row.category ?? null,
+    contingency: row.contingency ?? null,
     createdBy: row.created_by,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -554,7 +558,7 @@ export async function listDecisionRisks(
   await getDecisionForOrgOrThrow(decisionId, organizationId);
   await assertSectionAvailable('risks');
   const rows = await queryHelpers.queryAll(
-    `SELECT id, decision_id, description, severity, likelihood, mitigation, owner_id,
+    `SELECT id, decision_id, description, severity, likelihood, mitigation, owner_id, category, contingency,
             created_by, created_at, updated_at
      FROM decision_risks
      WHERE organization_id = ? AND decision_id = ?
@@ -573,6 +577,8 @@ export async function createDecisionRisk(input: {
   likelihood?: string;
   mitigation?: string;
   ownerId?: string | null;
+  category?: string | null;
+  contingency?: string | null;
 }): Promise<DecisionRiskDTO> {
   const { decisionId, organizationId, createdBy } = input;
   const decision = await getDecisionForOrgOrThrow(decisionId, organizationId);
@@ -584,8 +590,8 @@ export async function createDecisionRisk(input: {
   await queryHelpers.queryRun(
     `INSERT INTO decision_risks
        (id, organization_id, decision_id, description, severity, likelihood, mitigation,
-        owner_id, created_by, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+        owner_id, category, contingency, created_by, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
     [
       id,
       organizationId,
@@ -595,12 +601,14 @@ export async function createDecisionRisk(input: {
       normalizeLikelihood(input.likelihood),
       optionalText(input.mitigation),
       input.ownerId || null,
+      optionalText(input.category),
+      optionalText(input.contingency),
       createdBy,
     ]
   );
 
   const row = await queryHelpers.queryOne(
-    `SELECT id, decision_id, description, severity, likelihood, mitigation, owner_id,
+    `SELECT id, decision_id, description, severity, likelihood, mitigation, owner_id, category, contingency,
             created_by, created_at, updated_at
      FROM decision_risks WHERE id = ?`,
     [id]
@@ -618,6 +626,8 @@ export async function updateDecisionRisk(input: {
     likelihood: string;
     mitigation: string | null;
     ownerId: string | null;
+    category: string | null;
+    contingency: string | null;
   }>;
 }): Promise<DecisionRiskDTO> {
   const { decisionId, organizationId, riskId, patch } = input;
@@ -653,6 +663,14 @@ export async function updateDecisionRisk(input: {
     updates.push('owner_id = ?');
     params.push(patch.ownerId || null);
   }
+  if (patch.category !== undefined) {
+    updates.push('category = ?');
+    params.push(optionalText(patch.category));
+  }
+  if (patch.contingency !== undefined) {
+    updates.push('contingency = ?');
+    params.push(optionalText(patch.contingency));
+  }
 
   if (updates.length > 0) {
     updates.push('updated_at = CURRENT_TIMESTAMP');
@@ -664,12 +682,74 @@ export async function updateDecisionRisk(input: {
   }
 
   const row = await queryHelpers.queryOne(
-    `SELECT id, decision_id, description, severity, likelihood, mitigation, owner_id,
+    `SELECT id, decision_id, description, severity, likelihood, mitigation, owner_id, category, contingency,
             created_by, created_at, updated_at
      FROM decision_risks WHERE id = ?`,
     [riskId]
   );
   return toRiskDTO(row);
+}
+
+export interface DecisionStakeholderDTO {
+  id: string;
+  decisionId: string;
+  userId: string;
+  role: 'responsible' | 'accountable' | 'consulted' | 'informed';
+  userName: string | null;
+  userEmail: string | null;
+}
+
+export async function listDecisionStakeholders(
+  decisionId: string,
+  organizationId: string
+): Promise<DecisionStakeholderDTO[]> {
+  await getDecisionForOrgOrThrow(decisionId, organizationId);
+  const rows = await queryHelpers.queryAll(
+    `SELECT ds.id, ds.decision_id, ds.user_id, ds.role,
+            TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')) AS user_name,
+            u.email AS user_email
+       FROM decision_stakeholders ds
+       LEFT JOIN users u ON u.id = ds.user_id AND u.organization_id = ?
+      WHERE ds.decision_id = ?
+      ORDER BY ds.id ASC`,
+    [organizationId, decisionId]
+  );
+  return (rows || []).map((row: any) => ({
+    id: row.id,
+    decisionId: row.decision_id,
+    userId: row.user_id,
+    role: row.role,
+    userName: row.user_name || null,
+    userEmail: row.user_email || null,
+  }));
+}
+
+export async function replaceDecisionStakeholders(input: {
+  decisionId: string;
+  organizationId: string;
+  stakeholders: Array<{
+    userId: string;
+    role: 'responsible' | 'accountable' | 'consulted' | 'informed';
+  }>;
+}): Promise<DecisionStakeholderDTO[]> {
+  await getDecisionForOrgOrThrow(input.decisionId, input.organizationId);
+  for (const stakeholder of input.stakeholders) {
+    const user = await queryHelpers.queryOne(
+      `SELECT id FROM users WHERE id = ? AND organization_id = ?`,
+      [stakeholder.userId, input.organizationId]
+    );
+    if (!user) throw new DecisionValidationError('Stakeholder must belong to the organization');
+  }
+  await queryHelpers.queryRun(`DELETE FROM decision_stakeholders WHERE decision_id = ?`, [
+    input.decisionId,
+  ]);
+  for (const stakeholder of input.stakeholders) {
+    await queryHelpers.queryRun(
+      `INSERT INTO decision_stakeholders (id, decision_id, user_id, role) VALUES (?, ?, ?, ?)`,
+      [uuidv4(), input.decisionId, stakeholder.userId, stakeholder.role]
+    );
+  }
+  return listDecisionStakeholders(input.decisionId, input.organizationId);
 }
 
 export async function deleteDecisionRisk(input: {

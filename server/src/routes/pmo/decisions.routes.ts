@@ -26,6 +26,7 @@ import {
   DecideSchema,
   EscalateDecisionSchema,
   RemindDecisionSchema,
+  ReplaceDecisionStakeholdersSchema,
   UpdateDecisionAlternativeSchema,
   UpdateDecisionCommentSchema,
   UpdateDecisionRiskSchema,
@@ -198,6 +199,15 @@ router.post('/:id/generate-section', DecisionController.generateSection);
  * client.
  */
 router.get('/:id/detail', DecisionController.getDecisionDetail);
+
+router.get('/:id/stakeholders', DecisionController.getStakeholders);
+
+router.put(
+  '/:id/stakeholders',
+  requireDecisionCapability('decision.update', { shadow: true }),
+  validateBody(ReplaceDecisionStakeholdersSchema),
+  DecisionController.replaceStakeholders
+);
 
 /**
  * POST /api/decisions/:id/comments

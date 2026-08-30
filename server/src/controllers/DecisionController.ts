@@ -25,6 +25,8 @@ import {
   finalizeDecisionTransition,
   getDecisionAggregateExtras,
   isPrivilegedRole,
+  listDecisionStakeholders,
+  replaceDecisionStakeholders,
   updateDecisionAlternative,
   updateDecisionComment,
   updateDecisionRisk,
@@ -62,6 +64,7 @@ import type {
   DecideRequest,
   EscalateDecisionRequest,
   RemindDecisionRequest,
+  ReplaceDecisionStakeholdersRequest,
   UpdateDecisionAlternativeRequest,
   UpdateDecisionCommentRequest,
   UpdateDecisionRequest,
@@ -2937,8 +2940,60 @@ export class DecisionController {
           likelihood: req.body?.likelihood,
           mitigation: req.body?.mitigation,
           ownerId: req.body?.ownerId,
+          category: req.body?.category,
+          contingency: req.body?.contingency,
         });
         res.status(201).json(risk);
+      } catch (err) {
+        if (respondToCollaborationError(res, err)) return;
+        throw err;
+      }
+    }
+  );
+
+  static getStakeholders = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      if (!orgId) return void res.status(401).json({ error: 'Unauthorized' });
+      try {
+        const stakeholders = await listDecisionStakeholders(req.params.id, orgId);
+        res.json({ stakeholders });
+      } catch (err) {
+        if (respondToCollaborationError(res, err)) return;
+        throw err;
+      }
+    }
+  );
+
+  static replaceStakeholders = asyncHandler(
+    async (
+      req: AuthenticatedRequest<ReplaceDecisionStakeholdersRequest>,
+      res: Response
+    ): Promise<void> => {
+      const { id } = req.params;
+      const userId = req.user?.id;
+      const orgId = req.user?.organizationId;
+      if (!userId || !orgId) return void res.status(401).json({ error: 'Unauthorized' });
+      const decisionRow = await queryHelpers.queryOne<{
+        created_by?: string;
+        decision_maker_id?: string;
+      }>(
+        `SELECT created_by, decision_maker_id FROM decisions WHERE id = ? AND organization_id = ?`,
+        [id, orgId]
+      );
+      if (!decisionRow) return void res.status(404).json({ error: 'Decision not found' });
+      if (!isDossierEditor(decisionRow, userId, req.user?.role)) {
+        return void res
+          .status(403)
+          .json({ error: 'Only the decision preparer, owner, or admin can edit stakeholders' });
+      }
+      try {
+        const stakeholders = await replaceDecisionStakeholders({
+          decisionId: id,
+          organizationId: orgId,
+          stakeholders: req.body?.stakeholders || [],
+        });
+        res.json({ stakeholders });
       } catch (err) {
         if (respondToCollaborationError(res, err)) return;
         throw err;
