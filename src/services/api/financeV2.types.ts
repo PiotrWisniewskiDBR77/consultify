@@ -1594,6 +1594,19 @@ export function financeLineageTransformationKindLabel(kind: string | null): stri
       return 'Wycena na bazie modelu bazowego (Baseline)';
     case 'VALUATION_FROM_SCENARIO':
       return 'Wycena na bazie scenariusza predykcji';
+    // ★ TOR GRAFIKI 2026-08-30 (finance-valuation-workspace, krok „Źródło"):
+    // te dwa kody opisują WCZEŚNIEJSZE ogniwa tego samego łańcucha pochodzenia
+    // (Sprawozdanie → Baseline → Scenariusz → Wycena) i realnie występują w
+    // konwencji API (patrz `dev-render/screens/finance-statement-pack-workspace-v2.tsx`
+    // oraz `finance-valuation-workspace.tsx`) — bez wpisu tutaj spadały do
+    // fallbacku niżej i renderowały się po angielsku ("Baseline from statement",
+    // "Scenario from baseline") obok w pełni przetłumaczonych sąsiednich kroków.
+    case 'baseline_from_statement':
+      return 'Model bazowy na bazie sprawozdania';
+    case 'scenario_from_baseline':
+      return 'Scenariusz predykcji na bazie modelu bazowego';
+    case 'analysis_from_statement':
+      return 'Analiza na bazie sprawozdania';
     default:
       return kind
         .toLowerCase()

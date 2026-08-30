@@ -167,7 +167,11 @@ export function buildOkrSetColumns(
     {
       id: 'attentionState',
       label: isPolish ? 'Uwaga' : 'Attention',
-      width: '130px',
+      // 130px ucinało najdłuższą etykietę PL ("Wymaga działania", 17 znaków)
+      // w połowie litery — patrz zrzut results-vnext-okr-registry PRZED
+      // (2026-08-30). 190px mieści ją z zapasem, analogicznie do kolumny
+      // Status (200px dla "Złożony do akceptacji").
+      width: '190px',
       filterable: true,
       filterOptions: (Object.keys(OKR_SET_ATTENTION_TONE) as OkrSetDto['attentionState'][]).map(
         (s) => ({

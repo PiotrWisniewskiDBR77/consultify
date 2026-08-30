@@ -693,39 +693,54 @@ const DEMO_ATTACHMENTS: Attachment[] = [
   },
 ];
 
-const DEMO_LINKED_ITEMS: LinkedItem[] = [
+// Tor grafiki (dyżur 00-karty-artefaktow, 2026-08-30): tytuły były na sztywno
+// PO ANGIELSKU niezależnie od języka interfejsu — na ekranie `decision-record`
+// z polskim UI sekcja „Dotyczy"/„Powiązania" pokazywała angielskie tytuły
+// zadań/decyzji obok polskiej treści (mieszany język, kanon SPEC-A zakazuje).
+// `title` w `LinkedItem` to zwykły `string` (bez wariantu {en,pl}), więc
+// wybór języka robimy w miejscu użycia, tak samo jak reszta komponentu
+// (`isPolish` z `i18n.language`).
+const getDemoLinkedItems = (isPolish: boolean): LinkedItem[] => [
   {
     id: 'link-1',
     type: 'initiative',
-    title: 'Digital Transformation 2026',
+    title: isPolish ? 'Transformacja cyfrowa 2026' : 'Digital Transformation 2026',
     status: 'In Progress',
     priority: 'high',
   },
   {
     id: 'link-2',
     type: 'task',
-    title: 'Evaluate AI model providers for report generation',
+    title: isPolish
+      ? 'Ocena dostawców modeli AI do generowania raportów'
+      : 'Evaluate AI model providers for report generation',
     status: 'Completed',
     priority: 'high',
   },
   {
     id: 'link-3',
     type: 'task',
-    title: 'Design report template engine architecture',
+    title: isPolish
+      ? 'Zaprojektować architekturę silnika szablonów raportów'
+      : 'Design report template engine architecture',
     status: 'In Progress',
     priority: 'medium',
   },
   {
     id: 'link-4',
     type: 'decision',
-    title: 'Select cloud infrastructure for AI workloads',
+    title: isPolish
+      ? 'Wybór infrastruktury chmurowej dla obciążeń AI'
+      : 'Select cloud infrastructure for AI workloads',
     status: 'Approved',
     priority: 'high',
   },
   {
     id: 'link-5',
     type: 'risk',
-    title: 'AI processing latency exceeding SLA targets',
+    title: isPolish
+      ? 'Opóźnienia przetwarzania AI przekraczające cele SLA'
+      : 'AI processing latency exceeding SLA targets',
     status: 'Monitored',
     priority: 'medium',
   },
@@ -1969,7 +1984,9 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       const apiComments = decision.comments || [];
       setComments(apiComments.length > 0 ? apiComments : isDemo ? DEMO_COMMENTS : []);
       const apiLinkedItems = decision.linkedItems || [];
-      setLinkedItems(apiLinkedItems.length > 0 ? apiLinkedItems : isDemo ? DEMO_LINKED_ITEMS : []);
+      setLinkedItems(
+        apiLinkedItems.length > 0 ? apiLinkedItems : isDemo ? getDemoLinkedItems(isPolish) : []
+      );
       setSourceType(decision.sourceType || decision.source_type || null);
       setSourceId(decision.sourceId || decision.source_id || null);
 
@@ -4816,7 +4833,24 @@ Use userId only from this list:
             {
               id: 'dueDate',
               label: t('myWork.decisionDetail.dueDate', 'Due date'),
-              value: dueDate || dash,
+              // ★ 2026-08-30: było `dueDate || dash`, czyli surowe ISO
+              // („2026-08-05") w panelu, podczas gdy Wniosek i Zadanie
+              // formatują tę samą wartość po ludzku. Zmierzone na zrzucie —
+              // niespójność między kartami tej samej rodziny.
+              value: (() => {
+                if (!dueDate) return dash;
+                const d = new Date(dueDate);
+                if (Number.isNaN(d.getTime())) return dueDate;
+                try {
+                  return d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric',
+                  });
+                } catch {
+                  return d.toISOString().slice(0, 10);
+                }
+              })(),
               mono: true,
             },
             {

@@ -124,6 +124,8 @@ export function buildRoiPirOutcomesPreview(
     },
     details: {
       showWordCount: false,
+      propertyLabel: isPolish ? 'Właściwość' : 'Property',
+      valueLabel: isPolish ? 'Wartość' : 'Value',
       properties: [
         { id: 'initiative', label: isPolish ? 'Inicjatywa' : 'Initiative', value: row.initiativeId, mono: true },
         {

@@ -65,7 +65,8 @@ export function ResultsStep(props: ResultsStepProps): React.ReactElement {
         >
           Przedział wyników metod: <span className="font-mono">{fmt(range.min as number)}</span> –{' '}
           <span className="font-mono">{fmt(range.max as number)}</span>
-          {range.spreadPct !== null && ` (rozrzut ${range.spreadPct.toFixed(1)}%)`}
+          {range.spreadPct !== null &&
+            ` (rozrzut ${range.spreadPct.toLocaleString('pl-PL', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%)`}
           {range.hasMaterialDisagreement &&
             ' — istotna rozbieżność między metodami, nie traktuj nagłówka jako pewnika.'}
         </div>
@@ -92,7 +93,9 @@ export function ResultsStep(props: ResultsStepProps): React.ReactElement {
               <td className="py-1.5 pr-2 text-c-text-muted">
                 {m.isInRecommendationBasket ? 'Tak' : 'Nie'}
               </td>
-              <td className="py-1.5 pr-2 text-c-text-muted">{m.weightPct ?? '—'}</td>
+              <td className="py-1.5 pr-2 text-c-text-muted">
+                {m.weightPct !== null && m.weightPct !== undefined ? `${m.weightPct}%` : '—'}
+              </td>
             </tr>
           ))}
         </tbody>
@@ -120,7 +123,7 @@ export function ResultsStep(props: ResultsStepProps): React.ReactElement {
             <dd className="text-c-text">
               {fmtDecimalString(results.bridge.header.enterprise_value_decimal)}
             </dd>
-            <dt>Equity Value</dt>
+            <dt>Wartość kapitału własnego (Equity Value)</dt>
             <dd className="text-c-text">
               {fmtDecimalString(results.bridge.header.equity_value_decimal)}
             </dd>
