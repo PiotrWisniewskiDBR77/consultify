@@ -15,6 +15,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { PreviewPaneShell } from '@/components/ui/ResizableTable';
+import { formatListDate } from '@/utils/listDateFormat';
 
 /** Tool session data (API or store shape) */
 export interface ToolSession {
@@ -61,12 +62,13 @@ export const getToolCategoryLabel = (toolType: string, isPolish: boolean): strin
     .join(' ');
 };
 
-const formatDate = (value: string | Date | undefined): string => {
-  if (!value) return '—';
-  const d = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(d.getTime())) return '—';
-  return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-};
+/**
+ * Odbiór 2026-08-30 (przegląd modułów 04/11/16): `toLocaleDateString(undefined, …)`
+ * bierze locale z przeglądarki, nie z konta — patrz `src/utils/listDateFormat.ts`
+ * (SSOT, 270 takich wywołań znalezionych 2026-07-27). `formatListDate` daje
+ * DD/MM/YYYY niezależnie od locale przeglądarki.
+ */
+const formatDate = (value: string | Date | undefined): string => formatListDate(value);
 
 export const ToolSessionPreviewBody: React.FC<{ session: ToolSession }> = ({ session }) => {
   const { t } = useTranslation();

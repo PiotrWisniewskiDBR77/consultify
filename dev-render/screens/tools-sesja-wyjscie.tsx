@@ -34,7 +34,9 @@ const SESSION_ID = 'tool-sess-swot-1';
 
 const SESSION_ROW = {
   id: SESSION_ID,
-  name: 'Dynamic SWOT — Session',
+  // Odbiór 2026-08-30 (przegląd modułów 04/11/16): angielska nazwa na
+  // sztywno — patrz komentarz przy drugim wystąpieniu niżej.
+  name: 'Dynamic SWOT — Sesja',
   toolType: 'dynamic-swot',
   tool_type: 'dynamic-swot',
   status: 'DRAFT',
@@ -96,7 +98,11 @@ const seedOpenSession = () => {
       openDocuments: [
         {
           id: SESSION_ID,
-          name: 'Dynamic SWOT — Session',
+          // Odbiór 2026-08-30 (przegląd modułów 04/11/16): fixture miał
+          // angielską nazwę na sztywno — realny ekran generuje domyślną
+          // nazwę sesji przez `defaultSessionName()` w `ToolDocumentView.tsx`,
+          // która teraz zwraca "… — Sesja" po polsku.
+          name: 'Dynamic SWOT — Sesja',
           type: 'tool',
           subType: 'dynamic-swot',
           status: 'DRAFT',
