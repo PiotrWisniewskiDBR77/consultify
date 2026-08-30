@@ -247,11 +247,33 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
       range.low == null || range.base == null || range.high == null
         ? range.knowledgeState
         : `${range.low}/${range.base}/${range.high} ${scenario.windowUnit}`;
+    // 98-rola-zespol-duplikat (2026-08-30): kolumna „Rola / zespół” powtarzała
+    // co do znaku kolumnę „Opiekun” dla wierszy okresu — obie brały
+    // `period.supply.ownerId` i obie szły przez `actorLabel()`. To są jednak dwie
+    // różne osie: opiekun to właściciel ŹRÓDŁA liczby (`CapacityRange.ownerId`,
+    // walidator: „Capacity source owner”), a rola/zespół to CZYJEJ mocy okres
+    // dotyczy. W `CapacityScenario` rolę nosi wyłącznie
+    // `ProposedAssignment.resourceOrRoleId`, wiązany z okresem przez `periodIds`
+    // (tego samego pola używa już panel przydziałów niżej). Brak przydziału dla
+    // okresu = 'UNKNOWN', nie pusta komórka — brak danych nie oznacza zera.
+    const rolesByPeriod = new Map<string, Set<string>>();
+    for (const assignment of scenario.proposedAssignments) {
+      if (!assignment.resourceOrRoleId?.trim()) continue;
+      for (const periodId of assignment.periodIds) {
+        const roles = rolesByPeriod.get(periodId) ?? new Set<string>();
+        roles.add(assignment.resourceOrRoleId);
+        rolesByPeriod.set(periodId, roles);
+      }
+    }
     const periods = scenario.periods.map((period) => ({
       id: `period:${period.periodId}`,
       title: period.periodId,
       kind: 'PERIOD',
-      roleTeamSkill: actorLabel(period.supply.ownerId || 'UNKNOWN'),
+      roleTeamSkill:
+        [...(rolesByPeriod.get(period.periodId) ?? [])]
+          .map((roleId) => actorLabel(roleId))
+          .sort((a, b) => a.localeCompare(b, 'pl'))
+          .join(' · ') || 'UNKNOWN',
       demand: formatRange(period.demand),
       demandState: period.demand.knowledgeState,
       supply: formatRange(period.supply),
@@ -294,7 +316,11 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
       id: `constraint:${constraint.constraintId}`,
       title: constraint.constraintId,
       kind: 'CONSTRAINT',
-      roleTeamSkill: 'Ograniczenie przekrojowe',
+      // Ograniczenie nie ma w domenie żadnego pola roli. Poprzednia wartość
+      // ('Ograniczenie przekrojowe') powtarzała kolumnę „Rodzaj” i twierdziła coś,
+      // czego w danych nie ma — w danych demo wręcz nieprawdę (`engineering-capacity`
+      // dotyczy konkretnego zespołu, nie jest przekrojowe).
+      roleTeamSkill: 'UNKNOWN',
       demand: 'UNKNOWN',
       demandState: 'UNKNOWN',
       supply: constraint.state,
@@ -938,6 +964,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
               label: 'Rola / zespół',
               sortable: true,
               filterable: true,
+              render: (row) => renderKnowledgeToken(row.roleTeamSkill),
             },
             {
               id: 'kind',
