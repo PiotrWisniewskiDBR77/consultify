@@ -17863,7 +17863,10 @@
         "approved": "Zatwierdzone",
         "pending": "Oczekujące",
         "completed": "Zakończono",
-        "processing": "Przetwarzanie"
+        "processing": "Przetwarzanie",
+        "failed": "Nieudana",
+        "cancelled": "Anulowana",
+        "unknown": "Nieznany status"
       }
     },
     "payouts": {

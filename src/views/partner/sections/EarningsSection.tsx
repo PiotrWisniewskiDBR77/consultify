@@ -985,7 +985,10 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
                           payout.status === 'PENDING' && 'bg-amber-500/20 text-amber-400'
                         )}
                       >
-                        {t(`partner.earnings.status.${payout.status.toLowerCase()}`, payout.status)}
+                        {t(
+                          `partner.earnings.status.${payout.status.toLowerCase()}`,
+                          t('partner.earnings.status.unknown', 'Nieznany status')
+                        )}
                       </span>
                       {payout.completedAt && (
                         <p className="text-xs text-c-text-muted mt-1">
@@ -1084,7 +1087,10 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
                         payout.status === 'PENDING' && 'bg-amber-500/20 text-amber-400'
                       )}
                     >
-                      {t(`partner.earnings.status.${payout.status.toLowerCase()}`, payout.status)}
+                      {t(
+                        `partner.earnings.status.${payout.status.toLowerCase()}`,
+                        t('partner.earnings.status.unknown', 'Nieznany status')
+                      )}
                     </span>
                     {payout.completedAt && (
                       <p className="text-xs text-c-text-muted mt-1">

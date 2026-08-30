@@ -1627,7 +1627,10 @@
         "approved": "Approved",
         "pending": "Pending",
         "completed": "Completed",
-        "processing": "Processing"
+        "processing": "Processing",
+        "failed": "Failed",
+        "cancelled": "Cancelled",
+        "unknown": "Unknown status"
       }
     },
     "payouts": {
