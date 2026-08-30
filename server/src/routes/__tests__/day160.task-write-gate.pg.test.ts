@@ -14,8 +14,7 @@ import { ApiGateway } from '../../Gateway.js';
 import { assertRealPostgresTestEnvironment } from '../../../../tests/integration/_helpers/assertRealPostgres.js';
 
 const NO_RETRY = { retry: 0 } as const;
-const ARTIFACT =
-  '/private/tmp/cx-day160-brama-zadania-artefakty/day160-http-db-evidence.json';
+const ARTIFACT = '/private/tmp/cx-day160-brama-zadania-artefakty/day160-http-db-evidence.json';
 
 type Evidence = {
   name: string;
@@ -40,14 +39,20 @@ describe('Day 160 task write gate through the real ApiGateway and PostgreSQL', N
 
   const taskCount = async () =>
     Number(
-      (await sql.query('SELECT count(*)::int AS count FROM tasks WHERE organization_id = $1', [organizationId]))
-        .rows[0]?.count || 0
+      (
+        await sql.query('SELECT count(*)::int AS count FROM tasks WHERE organization_id = $1', [
+          organizationId,
+        ])
+      ).rows[0]?.count || 0
     );
 
   const commentCount = async () =>
     Number(
-      (await sql.query('SELECT count(*)::int AS count FROM task_comments WHERE task_id = $1', [taskId]))
-        .rows[0]?.count || 0
+      (
+        await sql.query('SELECT count(*)::int AS count FROM task_comments WHERE task_id = $1', [
+          taskId,
+        ])
+      ).rows[0]?.count || 0
     );
 
   beforeAll(async () => {
@@ -101,9 +106,14 @@ describe('Day 160 task write gate through the real ApiGateway and PostgreSQL', N
   afterAll(async () => {
     writeFileSync(ARTIFACT, `${JSON.stringify(evidence, null, 2)}\n`, 'utf8');
     if (!sql) return;
-    await sql.query('DELETE FROM task_comments WHERE task_id IN (SELECT id FROM tasks WHERE organization_id = $1)', [organizationId]);
+    await sql.query(
+      'DELETE FROM task_comments WHERE task_id IN (SELECT id FROM tasks WHERE organization_id = $1)',
+      [organizationId]
+    );
     await sql.query('DELETE FROM tasks WHERE organization_id = $1', [organizationId]);
-    await sql.query('DELETE FROM organization_members WHERE organization_id = $1', [organizationId]);
+    await sql.query('DELETE FROM organization_members WHERE organization_id = $1', [
+      organizationId,
+    ]);
     await sql.query('DELETE FROM users WHERE id = $1', [userId]);
     // The budget-delete proof intentionally creates an immutable receipt whose
     // FK retains this organization. The disposable Day 160 container is the
@@ -153,16 +163,24 @@ describe('Day 160 task write gate through the real ApiGateway and PostgreSQL', N
   it('R1 records the governed budget-delete exception reaching its handler', async () => {
     const path = `/api/execution-control/budget/entries/${randomUUID()}?initiativeId=${randomUUID()}&expectedVersion=1`;
     const before = Number(
-      (await sql.query('SELECT count(*)::int AS count FROM budget_entries WHERE organization_id = $1', [organizationId]))
-        .rows[0]?.count || 0
+      (
+        await sql.query(
+          'SELECT count(*)::int AS count FROM budget_entries WHERE organization_id = $1',
+          [organizationId]
+        )
+      ).rows[0]?.count || 0
     );
     const response = await request(app)
       .delete(path)
       .set('Authorization', authorization)
       .set('X-Idempotency-Key', `day160-${suffix}`);
     const after = Number(
-      (await sql.query('SELECT count(*)::int AS count FROM budget_entries WHERE organization_id = $1', [organizationId]))
-        .rows[0]?.count || 0
+      (
+        await sql.query(
+          'SELECT count(*)::int AS count FROM budget_entries WHERE organization_id = $1',
+          [organizationId]
+        )
+      ).rows[0]?.count || 0
     );
     evidence.push({
       name: 'canonical budget delete exception',
