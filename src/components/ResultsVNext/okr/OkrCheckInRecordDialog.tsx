@@ -3,21 +3,8 @@
  * Fields = exactly `RecordOkrCheckInSchema` (`resultsVnextOkr.validators.ts`
  * L535-552).
  *
- * ── HONEST GAP — `cadenceOccurrenceId` has no picker source ─────────────
- * See `okrCheckInApi.ts`'s file header for the full, code-cited proof: no
- * route anywhere in `okr.routes.ts` exposes `okr_vnext_checkin_occurrences`,
- * so there is no real endpoint this form could call to populate a dropdown
- * of valid occurrences. Rather than fabricate a value (which the server
- * would silently accept as data corruption — a `crypto.randomUUID()` here
- * would create a check-in against an occurrence that was never actually
- * scheduled) or hide the capability entirely, this field is a manually
- * entered UUID with a PERSISTENT, honest explanation — same "read-only by
- * design, not an oversight" precedent `RoiCaseCreateModal.tsx` sets for its
- * own no-picker-source field (`ownerUserId`). A real occurrence id is
- * something an operator would currently have to obtain outside this UI
- * (e.g. from the scheduler's own seeded obligation, not exposed anywhere
- * else in the product today either) — flagged in the acceptance report as
- * an open question for the next package, not silently worked around.
+ * Day 170 replaced the manual UUID gap with a server-backed occurrence
+ * picker; see `CODEX_DAY170_OKNA_CHECKIN_REPORT.md`.
  *
  * `newValue` is nullable (`z.number().nullable()`, required key but
  * nullable value) — `null` = "a qualitative-only check-in this round"
@@ -30,7 +17,7 @@ import React, { useEffect, useState } from 'react';
 import { Modal } from '@/components/ui/primitives';
 import { MENU_1_PRIMARY_CTA } from '@/components/shared/ModuleMenu3';
 
-import type { OkrCheckInConfidence, OkrCheckInStatus, OkrSuggestNextCheckInValue } from './okrCheckInApi';
+import type { OkrCheckInConfidence, OkrCheckInOccurrenceOption, OkrCheckInStatus, OkrSuggestNextCheckInValue } from './okrCheckInApi';
 import { okrSuggestBasisLabel } from './okrCheckInMappers';
 
 export interface OkrCheckInRecordFormValues {
@@ -54,6 +41,7 @@ export interface OkrCheckInRecordDialogProps {
   /** `undefined` = still loading, `null` = fetch failed (shown as absent,
    * never a fabricated suggestion). */
   suggestion?: OkrSuggestNextCheckInValue | null;
+  occurrences?: OkrCheckInOccurrenceOption[];
   /** Set when the OWNING Set isn't `'active'` or the KR is `'cancelled'`
    * (`getOkrCheckInSetLock` in `okrObjectiveMappers.ts` / `KEY_RESULT_CANCELLED`)
    * — the dialog still opens (TRIADA §C3 posture: locked CTA still fires,
@@ -88,6 +76,7 @@ export const OkrCheckInRecordDialog: React.FC<OkrCheckInRecordDialogProps> = ({
   onClose,
   onSubmit,
   suggestion,
+  occurrences,
   blockedReason = null,
   busy = false,
   errorMessage = null,
@@ -214,23 +203,37 @@ export const OkrCheckInRecordDialog: React.FC<OkrCheckInRecordDialogProps> = ({
 
         <div>
           <label className={LABEL_CLASS} htmlFor="okr-checkin-cadence">
-            {isPolish ? 'ID wystąpienia cyklu (cadence occurrence)' : 'Cadence occurrence id'}
+            {isPolish ? 'Okno check-inu' : 'Check-in window'}
           </label>
-          <input
+          <select
             id="okr-checkin-cadence"
             value={cadenceOccurrenceId}
             onChange={(e) => setCadenceOccurrenceId(e.target.value)}
-            placeholder={isPolish ? 'UUID wystąpienia — wklej ręcznie' : 'Occurrence UUID — paste manually'}
             className={FIELD_CLASS}
             data-testid="okr-checkin-cadence"
             aria-invalid={cadenceError || undefined}
-          />
+            disabled={occurrences === undefined}
+          >
+            <option value="">
+              {occurrences === undefined
+                ? isPolish ? 'Wczytywanie okien…' : 'Loading windows…'
+                : occurrences.length === 0
+                  ? isPolish ? 'Brak dostępnych okien' : 'No windows available'
+                  : isPolish ? '— wybierz okno —' : '— select a window —'}
+            </option>
+            {(occurrences ?? []).map((occurrence) => (
+              <option key={occurrence.cadenceOccurrenceId} value={occurrence.cadenceOccurrenceId} disabled={occurrence.used}>
+                {occurrence.windowStart} – {occurrence.windowEnd}
+                {occurrence.used ? (isPolish ? ' (wykorzystane)' : ' (used)') : occurrence.isCurrent ? (isPolish ? ' (bieżące)' : ' (current)') : ''}
+              </option>
+            ))}
+          </select>
           <p className="mt-1 flex items-start gap-1 text-[11px] text-c-text-muted">
             <Info size={12} className="mt-0.5 shrink-0" />
             <span>
               {isPolish
-                ? 'Serwer wymaga tego pola, ale ten pakiet nie ma jeszcze punktu API, który wypisuje dostępne wystąpienia cyklu dla tego Kluczowego Rezultatu — wpisz je ręcznie. Zgłoszone jako pytanie otwarte.'
-                : "The server requires this field, but this package has no API endpoint yet that lists available cadence occurrences for this Key Result — enter it manually. Flagged as an open question."}
+                ? 'Wybierz zaplanowane okno dla tego Kluczowego Rezultatu. Wykorzystane okna są oznaczone i niedostępne.'
+                : 'Select a scheduled window for this Key Result. Used windows are marked and unavailable.'}
             </span>
           </p>
           {cadenceError ? (

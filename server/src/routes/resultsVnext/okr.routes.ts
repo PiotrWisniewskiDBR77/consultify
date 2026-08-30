@@ -163,6 +163,7 @@ import {
 } from '../../services/resultsVnext/okr/okrSupportRepository.js';
 import { listOrganizationOkrAttention } from '../../services/resultsVnext/okr/okrAttentionRepository.js';
 import { getSetCheckInSummary } from '../../services/resultsVnext/okr/okrCheckInSummaryRepository.js';
+import { listCheckInOccurrences } from '../../services/resultsVnext/okr/okrCheckInOccurrenceRepository.js';
 import {
   listMyOkrSets,
   listOrganizationOkrTeamHealth,
@@ -1951,6 +1952,34 @@ router.post(
 // ==========================================
 // OKR-E004 — Check-ins (design §11)
 // ==========================================
+
+router.get(
+  '/key-results/:keyResultId/checkin-occurrences',
+  validateParams(OkrCheckInIdParamsSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { keyResultId } = req.params as { keyResultId: string };
+      const existing = await getKeyResult({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        keyResultId,
+      });
+      if (!existing) {
+        res.status(404).json({ error: 'OKR KeyResult not found', code: 'NOT_FOUND' });
+        return;
+      }
+      const occurrences = await listCheckInOccurrences({
+        organizationId: auth.organizationId,
+        keyResultId,
+      });
+      res.status(200).json({ occurrences });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'listCheckInOccurrences');
+    }
+  }
+);
 
 // ==========================================
 // GET /api/vnext/results/okr/key-results/:keyResultId/check-ins — listCheckIns

@@ -24,6 +24,7 @@ import type { OkrKeyResultDto, OkrObjectiveWithKeyResultsDto } from './okrObject
 import { getOkrCheckInSetLock } from './okrObjectiveMappers';
 import {
   correctCheckIn,
+  listCheckInOccurrences,
   listCheckIns,
   newOkrCheckInIdempotencyKey,
   OkrCheckInApiError,
@@ -31,6 +32,7 @@ import {
   suggestNextCheckInValue,
   type CorrectOkrCheckInInput,
   type OkrCheckInDto,
+  type OkrCheckInOccurrenceOption,
   type OkrSuggestNextCheckInValue,
   type RecordOkrCheckInInput,
 } from './okrCheckInApi';
@@ -74,6 +76,7 @@ export const OkrCheckInsView: React.FC<OkrCheckInsViewProps> = ({ set, keyResult
   const [recordError, setRecordError] = useState<string | null>(null);
   const [recordConflict, setRecordConflict] = useState(false);
   const [suggestion, setSuggestion] = useState<OkrSuggestNextCheckInValue | null | undefined>(undefined);
+  const [occurrences, setOccurrences] = useState<OkrCheckInOccurrenceOption[] | undefined>(undefined);
 
   const [correctTarget, setCorrectTarget] = useState<OkrCheckInDto | null>(null);
   const [correctBusy, setCorrectBusy] = useState(false);
@@ -99,10 +102,14 @@ export const OkrCheckInsView: React.FC<OkrCheckInsViewProps> = ({ set, keyResult
     setRecordError(null);
     setRecordConflict(false);
     setSuggestion(undefined);
+    setOccurrences(undefined);
     setRecordOpen(true);
     suggestNextCheckInValue(keyResult.keyResultId)
       .then((s) => setSuggestion(s))
       .catch(() => setSuggestion(null));
+    listCheckInOccurrences(keyResult.keyResultId)
+      .then(setOccurrences)
+      .catch(() => setOccurrences([]));
   }, [keyResult.keyResultId]);
 
   const handleRecordSubmit = useCallback(
@@ -210,6 +217,7 @@ export const OkrCheckInsView: React.FC<OkrCheckInsViewProps> = ({ set, keyResult
         onClose={() => (recordBusy ? undefined : setRecordOpen(false))}
         onSubmit={handleRecordSubmit}
         suggestion={suggestion}
+        occurrences={occurrences}
         blockedReason={blockedReason}
         busy={recordBusy}
         errorMessage={recordError}
