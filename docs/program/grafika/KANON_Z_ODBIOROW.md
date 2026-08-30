@@ -81,3 +81,17 @@ zestawu (tu dodajesz wskaźniki, tu jest podsumowanie) → karta wskaźnika.
 **Wskaźnik ma JEDNĄ tożsamość na wszystkie okresy** — sierpień i wrzesień to ten
 sam wskaźnik, nie dwa. **Osoba przy OKR to kolumna, nie poziom.** **Analizy ROI
 zostają na dwóch poziomach** — bo ROI robi się raz, a wskaźnik rozlicza cyklicznie.
+
+2026-08-30 | ★ **Czerwona smuga wokół pola pisania Teresy ZOSTAJE czerwona — decyzja
+właściciela.** `CHAT-OWN-012`, `src/index.css` (`.chat-composer-idle-pulse::before`,
+`rgb(133 24 47 / 0.55)`). To jest **świadomy, zatwierdzony wyjątek** od zasady
+„crimson tylko dla semantyki krytycznej". **Nie naprawiać.** Jeśli ktoś zgłosi to
+jako defekt koloru — odesłać tutaj.
+
+2026-08-30 | ★ **Ocena i Audyt to DWA OSOBNE MODUŁY — i nigdy nie był to spór
+merytoryczny.** Słowa właściciela: *„Ocena to jest assessment, mamy cały moduł
+assessment, a audyt to cały moduł Audyt. Pomieszaliśmy, bo w jednym miejscu
+pokazywałeś mi ekrany z tych dwóch narzędzi."*
+**Przyczyną był mój arkusz odbioru**, ułożony według torów roboczych zamiast według
+modułów menu. Po przebudowie na 16 modułów problem znika sam. **Żadna zmiana
+w produkcie nie jest potrzebna** — to była wada sposobu pokazywania, nie produktu.

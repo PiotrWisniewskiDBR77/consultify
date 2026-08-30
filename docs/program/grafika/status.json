@@ -804,14 +804,6 @@
      "wyjatki": []
     },
     {
-     "id": "audyty-warsztat-kryterium",
-     "nazwa": "Warsztat kryterium (wzorzec)",
-     "ocena": "A",
-     "co": "Ekran z akceptem wlasciciela z 26.08. Arkusz audytora, lancuch osiemnastu ogniw, prawy panel.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
      "id": "assessment-artifacts-restart",
      "nazwa": "Wnioski z oceny",
      "ocena": "A",
@@ -2037,6 +2029,14 @@
    "nazwa": "Audyty",
    "opis": "Biblioteka audytów i raporty DRD.",
    "ekrany": [
+    {
+     "id": "audyty-warsztat-kryterium",
+     "nazwa": "Warsztat kryterium (wzorzec)",
+     "ocena": "A",
+     "co": "Ekran z akceptem wlasciciela z 26.08. Arkusz audytora, lancuch osiemnastu ogniw, prawy panel.",
+     "naprawione": [],
+     "wyjatki": []
+    },
     {
      "id": "audyty-piec-powierzchni",
      "nazwa": "Biblioteka audytow",
