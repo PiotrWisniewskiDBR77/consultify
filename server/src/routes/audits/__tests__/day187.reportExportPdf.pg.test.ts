@@ -1,3 +1,5 @@
+// @vitest-environment node
+
 import { writeFile } from 'node:fs/promises';
 
 import express from 'express';
@@ -138,8 +140,19 @@ describe.skipIf(!REAL_PG)('Day 187 audit report HTTP PDF export', () => {
 
     const buffer = Buffer.from(response.body);
     const parser = new PDFParse({ data: buffer });
+    const info = await parser.getInfo();
     const parsed = await parser.getText();
     await parser.destroy();
+    expect(info.total).toBe(3);
+    expect(parsed.pages).toHaveLength(3);
+    parsed.pages.forEach((page, index) => {
+      expect(page.text).toContain(`${index + 1} / 3`);
+      const textWithoutFooter = page.text
+        .replace(/restricted/g, '')
+        .replace(new RegExp(`${index + 1}\\s*\\/\\s*3`), '')
+        .trim();
+      expect(textWithoutFooter.length).toBeGreaterThan(20);
+    });
     expect(parsed.text).toContain(ORG_NAME);
     expect(parsed.text).toContain(PAYLOAD_MARKER);
 
