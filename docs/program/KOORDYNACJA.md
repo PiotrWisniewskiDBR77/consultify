@@ -49,6 +49,21 @@ gotowych do zrzutu bez logowania i bez żywej bazy. To jest krok (b) reguły 7 �
 do odbioru wizualnego. **Odbiór i ewentualna zmiana wyglądu tych paneli należy do
 toru grafiki, nie do funkcji.**
 
+**2026-08-30 · dyżur 134 — most inicjatyw. BLOKADA WŁĄCZENIA.** Tor funkcji podpiął
+most za flagą `VITE_INITIATIVE_BRIDGE` (domyślnie OFF). Operacja pyta użytkownika
+o dwa identyfikatory przez **surowe `window.prompt`** i potwierdza przez
+`window.confirm`. Przycisk używa klas standardu, ale sama interakcja nie jest
+powierzchnią produktu.
+
+**Czego potrzebuje tor funkcji od grafiki:** zastąpienia dwóch okien przeglądarki
+powierzchnią produktu — wybór rekordu z listy zamiast wpisywania identyfikatora
+z pamięci. **Do tego czasu flagi nie wolno włączyć nigdzie** (reguła 7: właściciel
+nigdy nie jest pierwszym testerem wizualnym).
+
+**Uwaga o zakresie:** most adoptuje wyłącznie inicjatywy mające zaakceptowanego
+kandydata SWOT z zatwierdzonym wynikiem narzędzia. Ekran nie może obiecywać,
+że przeniesie dowolny rekord.
+
 ### Pliki zajęte w tej chwili
 | Plik / katalog | Tor | Od kiedy |
 | --- | --- | --- |
