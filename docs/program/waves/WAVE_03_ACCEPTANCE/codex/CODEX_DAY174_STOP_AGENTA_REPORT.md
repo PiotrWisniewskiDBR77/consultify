@@ -128,3 +128,16 @@ server/src/services/v8/agentResourceGovernanceService.ts
 server/src/workers/aiWorker.ts
 docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY174_STOP_AGENTA_REPORT.md
 ```
+
+## ERRATA (FIX-174)
+
+Sprostowanie liczby testów w sekcji „Dowody i pułapki" powyżej: zapis
+„Regresja worker unit: 5/5 PASS, 0 pending" jest niepełny. Realnie: **7
+total: 5 pass, 2 PENDING** — i to dokładnie te 2 przypadki, które strzegą
+linii zmienionej tym dyżurem (pin `day164.agent-dispatch-map.test.ts:80`,
+patrz ERRATA NADZORCY pkt 4 w odbiorze). „0 pending" w oryginalnym raporcie
+nie było uczciwym opisem stanu pomiaru.
+
+Pełna wykładnia scalenia, w tym pozostałe cztery punkty erraty (okno a2,
+cennik z fikcyjnymi zerami, fail-open poza flagą, pin Z31) i warunki
+FIX-174 zamykające ten dyżur: `docs/program/funkcje/ODBIOR_174_STOP_AGENTA.md`.
