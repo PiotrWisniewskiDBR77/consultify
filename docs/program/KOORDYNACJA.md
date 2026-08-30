@@ -402,3 +402,35 @@ nie powinien być raportowany jako `enqueued`, bo to właśnie ta zamiana ukrył
 **Czego NIE zmierzono:** ścieżki z realnym wywołaniem modelu językowego — te trzy
 kroki to narzędzia deterministyczne (odczyt bazy, arytmetyka, zapis), więc do ściany
 z kluczem API nigdy nie doszło.
+
+### 2026-08-30 · KARTA DECYZJI PODŁĄCZONA — co zostaje dla toru funkcji
+
+**Zrobione po stronie grafiki (zweryfikowane mutacyjnie na żywej bazie lokalnej):**
+komentarze, alternatywy i ryzyka karty decyzji zapisują się teraz **na serwer**,
+przez trasy zbudowane 1 sierpnia i nieużywane od tamtej pory. Round-trip
+potwierdzony: dodanie → pełne wylogowanie → wyczyszczenie pamięci przeglądarki →
+ponowne wejście → treść wraca **z serwera**.
+
+**Zostaje do zrobienia po stronie funkcji — trzy rzeczy, każda z powodem:**
+
+1. **Kategoria i plan awaryjny ryzyka nie mają kolumny w bazie**
+   (`decision_risks`, migracja `932_decision_workflow_canonical.sql`). Pola istnieją
+   w interfejsie, użytkownik je wypełnia, i **resetują się po odświeżeniu**. To jest
+   ta sama klasa co „zapis bez odczytu" — wygląda na zapisane, nie jest.
+   Potrzebna migracja dokładająca dwie kolumny.
+
+2. **Przypomnienia, reguły eskalacji, powiązane elementy i notatki kontekstowe**
+   nadal siedzą **wyłącznie w pamięci przeglądarki**, pod kluczem **niezawężonym
+   do użytkownika ani organizacji** — dwie osoby na jednym komputerze widzą
+   nawzajem swoje notatki. Baner na ekranie mówi o tym wprost, więc nie kłamiemy —
+   ale to zostaje do podłączenia.
+
+3. **RACI (stakeholders) na karcie decyzji ma wyłącznie odczyt** — zero ścieżki
+   zapisu. Nie było w zakresie tej naprawy.
+
+**Osobne pytanie do rozstrzygnięcia:** strażnik rejestru akcji
+(`check-action-coverage`) zgłosił nowe handlery zapisu jako komendy spoza rejestru.
+Rejestr jest zakresowany na przestrzeń idei (mapa myśli, tablica, proces, tabela),
+a karta decyzji nią nie jest. **Czy komendy kart N mają dostać własny rejestr,
+czy heurystyka ma je wyłączyć?** Baseline podniesiony świadomie, z notatką
+w commicie — nie po cichu.
