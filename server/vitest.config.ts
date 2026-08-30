@@ -14,7 +14,7 @@ export default defineConfig({
     testTimeout: 10000,
     exclude: ['node_modules', 'dist', 'tests/performance/**'],
     env: {
-      DB_TYPE: 'sqlite',
+      DB_TYPE: process.env.DB_TYPE || 'sqlite',
       NODE_ENV: 'test',
       // Satisfy \"optional\" config assertions in legacy tests
       GOOGLE_CLIENT_ID: 'test',
