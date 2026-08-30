@@ -763,7 +763,7 @@
      "co": "Kreator decka wedlug kanonu artefaktow.",
      "naprawione": [],
      "wyjatki": [
-      "Cienka czerwonawa linia obok pola czatu — nie znaleziono zrodla w drzewie strony; podejrzenie artefaktu silnika zrzutow, wymaga potwierdzenia w zywej przegladarce"
+      "Cienka crimsonowa smuga krazaca wokol pola pisania — USTALONE: to swiadoma ozdoba CHAT-OWN-012 (obrot 12 s, tylko gdy pole puste i nieaktywne). Na nieruchomym zrzucie wyglada jak rysa. Kolor to crimson #85182F przy 55% — kolizja z zasada, ze crimson jest tylko dla semantyki krytycznej. DECYZJA WLASCICIELA."
      ]
     },
     {
@@ -802,7 +802,7 @@
      "co": "Czat Teresy w studiu dokumentow, bez formularza.",
      "naprawione": [],
      "wyjatki": [
-      "Ta sama czerwonawa linia co w decku — do potwierdzenia na zywo"
+      "Cienka crimsonowa smuga krazaca wokol pola pisania — USTALONE: to swiadoma ozdoba CHAT-OWN-012 (obrot 12 s, tylko gdy pole puste i nieaktywne). Na nieruchomym zrzucie wyglada jak rysa. Kolor to crimson #85182F przy 55% — kolizja z zasada, ze crimson jest tylko dla semantyki krytycznej. DECYZJA WLASCICIELA."
      ]
     },
     {
@@ -1030,6 +1030,179 @@
      "nazwa": "Poziomy SIRI",
      "ocena": "D",
      "co": "Nie wiem, jak wyglada — brak rejestracji w harnessie.",
+     "naprawione": [],
+     "wyjatki": [
+      "Zgloszone do naprawy narzedzia"
+     ]
+    }
+   ]
+  },
+  {
+   "katalog": "01-czat-kanwy",
+   "nazwa": "Czat, Teresa i kanwy",
+   "opis": "Rozmowa z Teresa obok artefaktu, mapa mysli, tablica, diagram procesu, warsztat agenta.",
+   "ekrany": [
+    {
+     "id": "chat-split-teresa-right",
+     "nazwa": "Czat — artefakt po lewej, Teresa po prawej",
+     "ocena": "A",
+     "co": "Uklad rozdzielony wedlug decyzji o miejscu Teresy.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "teresa-confirm-chip",
+     "nazwa": "Teresa — potwierdzenie przed dzialaniem",
+     "ocena": "A",
+     "co": "Potwierdz albo Anuluj przed czynnoscia nieodwracalna, z wyjasnieniem po co.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "teresa-chipy-panel-artefaktu",
+     "nazwa": "Teresa w panelu artefaktu",
+     "ocena": "A",
+     "co": "Panel Teresy osadzony w innym module.",
+     "naprawione": [
+      "Tytul panelu przybity na sztywno po angielsku",
+      "Angielski komunikat odzysku rozmowy"
+     ],
+     "wyjatki": [
+      "Cienka crimsonowa smuga krazaca wokol pola pisania — USTALONE: to swiadoma ozdoba CHAT-OWN-012 (obrot 12 s, tylko gdy pole puste i nieaktywne). Na nieruchomym zrzucie wyglada jak rysa. Kolor to crimson #85182F przy 55% — kolizja z zasada, ze crimson jest tylko dla semantyki krytycznej. DECYZJA WLASCICIELA."
+     ]
+    },
+    {
+     "id": "teresa-chipy-sugestii",
+     "nazwa": "Teresa — podpowiedzi",
+     "ocena": "A",
+     "co": "Dwa panele rozmowy w kontekscie raportu i wniosku.",
+     "naprawione": [],
+     "wyjatki": [
+      "Ta sama czerwonawa linia"
+     ]
+    },
+    {
+     "id": "ntype-analizuj-ai",
+     "nazwa": "Analizuj z AI — wynik",
+     "ocena": "A",
+     "co": "Braki, ryzyka, sugestie, zmiany. Ekran sam mowi: ocena AI, nie bramka systemowa — nic nie jest blokowane.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "mindmap-canvas",
+     "nazwa": "Mapa mysli",
+     "ocena": "A",
+     "co": "Realna mapa mysli z paskiem podpowiedzi AI.",
+     "naprawione": [
+      "Angielski przycisk Apply"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "mindmap-i18n-smoke",
+     "nazwa": "Mapa mysli — dodaj dowod",
+     "ocena": "A",
+     "co": "Modal dodawania dowodu i zrodla.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "whiteboard-canvas",
+     "nazwa": "Tablica",
+     "ocena": "A",
+     "co": "Tablica z paskiem podpowiedzi AI.",
+     "naprawione": [
+      "Ten sam angielski Apply"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "whiteboard-workshop",
+     "nazwa": "Tablica — warsztat",
+     "ocena": "A",
+     "co": "Tablica oddalona, szesc elementow.",
+     "naprawione": [
+      "Ten sam angielski Apply"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "processflow-canvas",
+     "nazwa": "Diagram procesu",
+     "ocena": "A",
+     "co": "Start, decyzja, koniec, dwa tory.",
+     "naprawione": [
+      "Tekst wylewal sie poza romb decyzyjny i nachodzil na etykiete Tak"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "melscanvas-workspace",
+     "nazwa": "Mala mapa mysli",
+     "ocena": "A",
+     "co": "Cztery elementy. Zero wezlow na karcie opisuje obiekt, nie widok — uczciwie.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "canvas-new-doc",
+     "nazwa": "Kanwa — nowy dokument",
+     "ocena": "A",
+     "co": "Rozwijana lista z trzema drogami startu.",
+     "naprawione": [],
+     "wyjatki": [
+      "Dane testowe nieaktualne wzgledem produktu — realny komponent ma juz polskie etykiety"
+     ]
+    },
+    {
+     "id": "canvas-kebab-restructure",
+     "nazwa": "Kanwa — menu trzech kropek",
+     "ocena": "A",
+     "co": "Zapis przebudowy menu.",
+     "naprawione": [],
+     "wyjatki": [
+      "Stary dowod inzynierski, starszy niz stan produktu"
+     ]
+    },
+    {
+     "id": "canvas-toolbar-md-history",
+     "nazwa": "Kanwa — pasek i historia",
+     "ocena": "A",
+     "co": "Zapis zmian paska glownego.",
+     "naprawione": [],
+     "wyjatki": [
+      "Dane testowe pokazuja stara nazwe przycisku, juz poprawiona w produkcie"
+     ]
+    },
+    {
+     "id": "agent-plan-canvas",
+     "nazwa": "Warsztat agenta — schemat",
+     "ocena": "A",
+     "co": "Dwie sciezki budowy schematu i paleta klockow.",
+     "naprawione": [
+      "Cala paleta po angielsku mimo gotowych tlumaczen polskich — klucze byly, nikt ich nie wpial"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "agent-warsztat",
+     "nazwa": "Warsztat agenta — pelny",
+     "ocena": "A",
+     "co": "Realny schemat procesu z paleta klockow.",
+     "naprawione": [
+      "Ta sama paleta",
+      "Ucinany tytul kroku bez wielokropka"
+     ],
+     "wyjatki": [
+      "Nazwy modulow w srodku schematu zostaja po angielsku — swiadoma decyzja: dane zapisane w schemacie nie sa tlumaczone na zywo"
+     ]
+    },
+    {
+     "id": "agent-hub",
+     "nazwa": "Centrum agentow",
+     "ocena": "D",
+     "co": "Nie wiem, jak wyglada — ekran wywraca sie w harnessie z powodu braku nawigacji.",
      "naprawione": [],
      "wyjatki": [
       "Zgloszone do naprawy narzedzia"
