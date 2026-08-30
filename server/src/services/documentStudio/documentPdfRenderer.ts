@@ -1092,41 +1092,47 @@ function drawHeaderFooter(
       .strokeColor('#E2E8F0')
       .stroke()
       .restore();
-    if (formatting.footers.confidentialityLabel) {
-      doc
-        .save()
-        .fontSize(8)
-        .fillColor('#94A3B8')
-        .font(PDF_FONT.regular)
-        .text(schema.confidentiality.replace(/_/g, ' '), margins.left, footerY, {
-          align: 'left',
-          width: doc.page.width - margins.left - margins.right,
-        })
-        .restore();
-    }
-    if (formatting.footers.pageNumbering) {
-      // Slice E15.5.formatting.render — `pageNumberingFormat` honors
-      // a template like `"Strona {N} z {M}"` (PL) or `"Page {N} of {M}"`
-      // (custom EN). `{N}` → pageNumber, `{M}` → totalPages. Default
-      // (no override) keeps the legacy `N / M` shape so existing
-      // schemas render byte-stable.
-      const formatTemplate = formatting.footers.pageNumberingFormat?.trim();
-      const numberingText =
-        formatTemplate && formatTemplate.length > 0
-          ? formatTemplate
-              .replace(/\{N\}/g, String(pageNumber))
-              .replace(/\{M\}/g, String(totalPages))
-          : `${pageNumber} / ${totalPages}`;
-      doc
-        .save()
-        .fontSize(8)
-        .fillColor('#94A3B8')
-        .font(PDF_FONT.regular)
-        .text(numberingText, margins.left, footerY, {
-          align: 'right',
-          width: doc.page.width - margins.left - margins.right,
-        })
-        .restore();
+    const originalBottomMargin = doc.page.margins.bottom;
+    doc.page.margins.bottom = 0;
+    try {
+      if (formatting.footers.confidentialityLabel) {
+        doc
+          .save()
+          .fontSize(8)
+          .fillColor('#94A3B8')
+          .font(PDF_FONT.regular)
+          .text(schema.confidentiality.replace(/_/g, ' '), margins.left, footerY, {
+            align: 'left',
+            width: doc.page.width - margins.left - margins.right,
+          })
+          .restore();
+      }
+      if (formatting.footers.pageNumbering) {
+        // Slice E15.5.formatting.render — `pageNumberingFormat` honors
+        // a template like `"Strona {N} z {M}"` (PL) or `"Page {N} of {M}"`
+        // (custom EN). `{N}` → pageNumber, `{M}` → totalPages. Default
+        // (no override) keeps the legacy `N / M` shape so existing
+        // schemas render byte-stable.
+        const formatTemplate = formatting.footers.pageNumberingFormat?.trim();
+        const numberingText =
+          formatTemplate && formatTemplate.length > 0
+            ? formatTemplate
+                .replace(/\{N\}/g, String(pageNumber))
+                .replace(/\{M\}/g, String(totalPages))
+            : `${pageNumber} / ${totalPages}`;
+        doc
+          .save()
+          .fontSize(8)
+          .fillColor('#94A3B8')
+          .font(PDF_FONT.regular)
+          .text(numberingText, margins.left, footerY, {
+            align: 'right',
+            width: doc.page.width - margins.left - margins.right,
+          })
+          .restore();
+      }
+    } finally {
+      doc.page.margins.bottom = originalBottomMargin;
     }
   }
 }
