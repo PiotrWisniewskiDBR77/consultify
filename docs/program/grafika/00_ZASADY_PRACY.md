@@ -106,6 +106,63 @@ Wiążąca jest **powłoka** i — ważniejsze — **język uczciwości**:
   - uprawnienia jako **Możesz / Nie możesz** z zamkami
 - kolor: neutralny; **crimson wyłącznie semantyka krytyczna**; fokus niebieski
 
+## ★ Audyt przedstartowy 2026-08-30 — pięć luk domkniętych
+
+Finalny przegląd procesu przed startem wykrył pięć braków operacyjnych.
+Bez nich pierwszy ekran stanąłby na pytaniu „ale jak właściwie mam to zmierzyć".
+
+### 1. Środowisko pomiarowe — JAK renderuję ekran
+
+Dwie drogi, wybór per ekran, zapis w rejestrze która:
+- **Żywy runtime**: `npm run dev` lokalnie (front `:3000`, backend `:3001`,
+  baza staging=demo). Do ekranów osiągalnych z nawigacji. Zero logowania
+  właściciela — konto testowe.
+- **Harness dev-render**: `dev-render/` + wpis w `.claude/launch.json`
+  (wzór: istniejące konfiguracje na portach 33xx/45xx). Do ekranów za flagą,
+  prototypów i ekranów bez danych. Mock-dane, bez backendu.
+
+**Flagi włączam WYŁĄCZNIE w środowisku uruchomienia** (env / config harnessu).
+Zmiana wartości domyślnej flagi w kodzie = odsłonięcie ekranu bez akceptu —
+zakazane do chwili odbioru (reguły #7/#9 `CLAUDE.md` pozostają w mocy;
+po akcepcie flagi włączamy **jedna po drugiej**, nigdy hurtem).
+
+### 2. Jednostka rejestru — czym jest „ekran"
+
+**Jeden wiersz = jedna trasa + jedna zakładka/stan główny.** Nie plik, nie
+komponent, nie moduł. Powód: poprzedni spis powierzchni upadł na mieszaniu
+jednostek (pliki vs powierzchnie) i żadnej liczby nie dało się obronić.
+
+### 3. Konwencja zrzutów — gdzie leżą dowody
+
+`evidence/grafika/<NN-modul>/<ekran>__<PRZED|PO>__<dark|light>.png`
+Podkatalog per moduł (katalog `evidence/` jest dziś płaski i ma ~500 plików —
+nie dokładamy do sterty). Zrzut wchodzi do repo w tym samym commicie co wiersz
+rejestru, który się na niego powołuje.
+
+### 4. Wzorzec musi być plikiem, nie wspomnieniem
+
+Ekran wzorcowy `INS-2026-014` **nie istnieje w repozytorium** — właściciel
+pokazał go w rozmowie. Substancja jest utrwalona jako 10 reguł
+w `KANON_Z_ODBIOROW.md` + wzorce `../plany/WZORZEC_*.html`.
+**Partia 0 tego toru: odtworzyć ekran wzorcowy jako plik w `dev-render/`**,
+porównać zrzut z regułami kanonu i dopiero wtedy używać go jako lustra.
+Do tego czasu wiążące są reguły, nie pamięć obrazu.
+
+### 5. Domknięcie partii — co znaczy „odebrane"
+
+Po akcepcie partii, **w tej samej godzinie**: wiersze rejestru dostają werdykt ·
+nowe reguły idą do `KANON_Z_ODBIOROW.md` · zrzuty PO leżą w `evidence/grafika/` ·
+commit + push na `github-backup`. Ekran bez tego kompletu **nie jest** odebrany,
+choćby właściciel powiedział „ładne".
+
+### Krok zerowy całego toru (z planu grafiki, wiążący)
+
+**Pogodzenie dwóch rejestrów odbioru** — macierz zgodności UI (2.08, zero
+odbiorów) i rejestr decyzji właściciela (24–27.08, 59 akceptów) nie znają się
+nawzajem. Zanim cokolwiek pomaluję, każdy moduł dostaje w `REJESTR_EKRANOW.md`
+stan odbioru uzgodniony z OBU źródeł. Bez tego będę „poprawiał" ekrany, które
+właściciel już przyjął — czego jawnie zakazał.
+
 ## Kolejność pracy
 
 Sidebar z góry na dół, w module funkcje od lewej do prawej, zgodnie z procesem
