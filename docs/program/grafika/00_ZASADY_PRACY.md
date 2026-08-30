@@ -106,6 +106,29 @@ Wiążąca jest **powłoka** i — ważniejsze — **język uczciwości**:
   - uprawnienia jako **Możesz / Nie możesz** z zamkami
 - kolor: neutralny; **crimson wyłącznie semantyka krytyczna**; fokus niebieski
 
+## ★★ REGUŁA NR 7 — protokół odbioru na żywym podglądzie (2026-08-30)
+
+Właściciel pracuje na kilku ekranach naraz i może przegapić wpis. Dlatego **każdy
+krok odbioru ma jawny znacznik w rozmowie**, a nie tylko w panelu podglądu.
+
+**Formuła:** ekran stoi na żywo w harnessie po prawej stronie, właściciel patrzy
+i mówi jednym zdaniem, co pasuje. Adres podaję zawsze wprost.
+
+### Trzy znaczniki, zawsze wypisane w rozmowie
+
+| Znacznik | Kto pisze | Co musi zawierać |
+| --- | --- | --- |
+| **★ DO ODBIORU** | nadzorca | adres w harnessie · co dokładnie oglądać · ocena `A` albo `B` · przy `B` **wyjątki wypisane PRZED spojrzeniem** |
+| **✔ ZATWIERDZONE** | **nadzorca, natychmiast po decyzji właściciela** | co dokładnie zostało przyjęte · jaka reguła z tego wynika · gdzie zapisana |
+| **✖ DO POPRAWKI** | nadzorca po uwagach | co konkretnie poprawiam · kiedy wraca |
+
+**Zasada nadrzędna tego protokołu:** decyzja właściciela wypowiedziana w rozmowie
+**nie jest zapisem**. Zapisem jest wpis nadzorcy: `✔ ZATWIERDZONE` w rozmowie
+**oraz** wiersz w `REJESTR_EKRANOW.md` **oraz** — jeśli doszła nowa reguła —
+linia w `KANON_Z_ODBIOROW.md`. Wszystko w tej samej godzinie.
+
+**Nigdy nie zakładam zgody z ciszy.** Brak odpowiedzi to brak odbioru, nie akcept.
+
 ## ★ Audyt przedstartowy 2026-08-30 — pięć luk domkniętych
 
 Finalny przegląd procesu przed startem wykrył pięć braków operacyjnych.
