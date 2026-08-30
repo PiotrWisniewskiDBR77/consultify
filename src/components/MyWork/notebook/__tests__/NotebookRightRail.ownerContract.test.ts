@@ -2,6 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
+import { ARTIFACT_PANEL_SECTION_ORDER } from '@/components/standard/ArtifactRightPanel';
+
 const source = fs.readFileSync(path.resolve(__dirname, '../NotebookRightRail.tsx'), 'utf8');
 
 // DEC-2026-08-25-69: replaced the bespoke Work/Context tablist with the
@@ -22,10 +24,15 @@ describe('Notebook right rail owner contract (SPEC-A accordion)', () => {
     expect(source).not.toContain('role="tabpanel"');
   });
 
-  it('declares the five canonical sections in the fixed order', () => {
-    expect(source).toContain(
-      "const RAIL_SECTION_ORDER = ['actions', 'properties', 'relations', 'comments', 'history'] as const;"
-    );
+  it('declares the five canonical sections in the fixed order, sourced from the ArtifactRightPanel canon (not a private copy)', () => {
+    expect(source).toContain('ARTIFACT_PANEL_SECTION_ORDER');
+    expect(source).toContain('const RAIL_SECTION_ORDER = ARTIFACT_PANEL_SECTION_ORDER.filter(');
+    // The filter must resolve, at runtime, to the same five ids in the same
+    // order the old literal declared — this is what keeps the change
+    // visually and behaviorally identical (docs/program/grafika/ANALIZA_PRAWY_PANEL.md §7).
+    const railIds = ['actions', 'properties', 'relations', 'comments', 'history'];
+    const derived = ARTIFACT_PANEL_SECTION_ORDER.filter((id) => (railIds as string[]).includes(id));
+    expect(derived).toEqual(railIds);
   });
 
   it('names the close control and reveals Właściwości/Powiązania from activeTab', () => {

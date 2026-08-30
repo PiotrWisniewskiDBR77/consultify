@@ -31,6 +31,7 @@ import { useTranslation } from 'react-i18next';
 
 import { PreviewActionButton } from '@/components/shared/PreviewPane';
 import {
+  ARTIFACT_PANEL_SECTION_ORDER,
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
@@ -79,8 +80,13 @@ export const ExceleRightPanel: React.FC<ExceleRightPanelProps> = ({
   const sheetCount = preview?.sheetNames?.length ?? 0;
   const qualityScore = preview?.qualityScore;
 
-  const sections: ArtifactRightPanelSection[] = [
-    {
+  // Krok 1 (docs/program/grafika/ANALIZA_PRAWY_PANEL.md §7): mapa id→sekcja;
+  // KOLEJNOŚĆ renderu pochodzi z filtracji kanonicznej
+  // `ARTIFACT_PANEL_SECTION_ORDER` (nie z własnej literałowej listy). Excel
+  // pomija 'evidence'/'results' (bez zastosowania) — filtr zachowuje 1:1
+  // dawną kolejność (actions, properties, relations, comments, history).
+  const sectionsById: Partial<Record<string, ArtifactRightPanelSection>> = {
+    actions: {
       id: 'actions',
       label: t('excele.rightPanel.actions', 'Akcje'),
       children: (
@@ -149,7 +155,7 @@ export const ExceleRightPanel: React.FC<ExceleRightPanelProps> = ({
         </div>
       ),
     },
-    {
+    properties: {
       id: 'properties',
       label: t('excele.rightPanel.properties', 'Właściwości'),
       isEmpty: !preview,
@@ -189,7 +195,7 @@ export const ExceleRightPanel: React.FC<ExceleRightPanelProps> = ({
         </dl>
       ),
     },
-    {
+    relations: {
       id: 'relations',
       label: t('excele.rightPanel.relations', 'Powiązania'),
       isEmpty: !workbookId || !onPreviewFile,
@@ -205,14 +211,14 @@ export const ExceleRightPanel: React.FC<ExceleRightPanelProps> = ({
         </button>
       ),
     },
-    {
+    comments: {
       id: 'comments',
       label: t('excele.rightPanel.comments', 'Komentarze'),
       isEmpty: true,
       emptyLabel: t('excele.rightPanel.commentsEmpty', 'Komentarze będą dostępne wkrótce'),
       children: null,
     },
-    {
+    history: {
       id: 'history',
       label: t('excele.rightPanel.history', 'Historia'),
       icon: Sparkles,
@@ -241,7 +247,11 @@ export const ExceleRightPanel: React.FC<ExceleRightPanelProps> = ({
         </ol>
       ),
     },
-  ];
+  };
+
+  const sections: ArtifactRightPanelSection[] = ARTIFACT_PANEL_SECTION_ORDER.map(
+    (id) => sectionsById[id]
+  ).filter((section): section is ArtifactRightPanelSection => section !== undefined);
 
   return (
     <ArtifactRightPanel

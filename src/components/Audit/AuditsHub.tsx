@@ -786,7 +786,14 @@ export const AuditsHub: React.FC = () => {
         viewModes={['table']}
         commandRowContent={bulkCommandRowContent}
       >
-        <div className="mx-auto max-w-6xl px-6 py-6">
+        {/* GRAFIKA 20-tabele-szerokosc (2026-08-30): usunięto `mx-auto max-w-6xl`
+            (72rem/1152px) — twardy limit ciął tabele (Audit programs + Raporty
+            DRD) do ~1046px na oknie 1440px, zgłoszenie właściciela „tabela nie
+            wygląda jak pełna tabela". AssessmentHub (wzór poprawny, ten sam
+            StandardModuleBar+StandardTable canon) nie ma tu żadnego max-w —
+            patrz `<div className="h-full min-h-0 overflow-hidden space-y-3">`
+            w AssessmentHub.tsx. Zostaje tylko padding. */}
+        <div className="px-6 py-6">
           {activeTab === 'drd-reports' ? (
             <>
               {/* Canonical failed-load state (docs/ui-standards/02-components/

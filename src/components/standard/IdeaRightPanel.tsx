@@ -54,6 +54,7 @@ import React, { useMemo } from 'react';
 
 import { PreviewActionBar } from '@/components/shared/PreviewPane';
 import {
+  ARTIFACT_PANEL_SECTION_ORDER,
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
@@ -138,8 +139,15 @@ export const IdeaRightPanel: React.FC<IdeaRightPanelProps> = ({
 
     const hasActions = actionButtons.length > 0;
 
-    const base: ArtifactRightPanelSection[] = [
-      {
+    // Krok 1 (docs/program/grafika/ANALIZA_PRAWY_PANEL.md §7): pięć sekcji
+    // idei (bez 'evidence'/'results' — dziś bez zastosowania tutaj, zobacz
+    // `evidenceArtifactId` niżej, wciąż scalone w Powiązania jak przed Z8)
+    // budujemy jako mapę id→sekcja, a KOLEJNOŚĆ renderu pochodzi z filtracji
+    // kanonicznej `ARTIFACT_PANEL_SECTION_ORDER` — nie z własnej literałowej
+    // listy. Filtr zachowuje 1:1 dawną kolejność (actions, properties,
+    // relations, comments, history).
+    const byId: Partial<Record<ArtifactRightPanelSection['id'], ArtifactRightPanelSection>> = {
+      actions: {
         id: 'actions',
         label: isPolish ? 'Akcje' : 'Actions',
         icon: Sparkles,
@@ -148,14 +156,14 @@ export const IdeaRightPanel: React.FC<IdeaRightPanelProps> = ({
         emptyLabel: isPolish ? 'Brak dostępnych akcji.' : 'No actions available.',
         children: hasActions ? <PreviewActionBar rows={[{ buttons: actionButtons }]} /> : null,
       },
-      {
+      properties: {
         id: 'properties',
         label: isPolish ? 'Właściwości' : 'Properties',
         icon: SlidersHorizontal,
         children: propertiesContent,
         defaultOpen: activeSection === 'properties',
       },
-      {
+      relations: {
         id: 'relations',
         label: isPolish ? 'Powiązania' : 'Relations',
         icon: Link2,
@@ -175,7 +183,7 @@ export const IdeaRightPanel: React.FC<IdeaRightPanelProps> = ({
           </div>
         ),
       },
-      {
+      comments: {
         id: 'comments',
         label: isPolish ? 'Komentarze' : 'Comments',
         icon: MessageSquare,
@@ -184,15 +192,17 @@ export const IdeaRightPanel: React.FC<IdeaRightPanelProps> = ({
         emptyLabel: isPolish ? 'Brak komentarzy.' : 'No comments yet.',
         children: null,
       },
-      {
+      history: {
         id: 'history',
         label: isPolish ? 'Historia' : 'History',
         icon: Sparkles,
         children: teresaContent,
         defaultOpen: activeSection === 'teresa',
       },
-    ];
-    return base;
+    };
+    return ARTIFACT_PANEL_SECTION_ORDER.map((id) => byId[id]).filter(
+      (section): section is ArtifactRightPanelSection => section !== undefined
+    );
   }, [
     isPolish,
     activeSection,

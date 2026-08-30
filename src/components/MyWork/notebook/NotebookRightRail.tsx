@@ -42,6 +42,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { NotebookPage } from '@/types/myWork';
 import {
+  ARTIFACT_PANEL_SECTION_ORDER,
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
@@ -60,7 +61,19 @@ interface NotebookRailPage {
   wordCount: number;
 }
 
-const RAIL_SECTION_ORDER = ['actions', 'properties', 'relations', 'comments', 'history'] as const;
+// Krok 1 (docs/program/grafika/ANALIZA_PRAWY_PANEL.md §7): kolejność sekcji
+// czytana z kanonu (`ARTIFACT_PANEL_SECTION_ORDER`), nie z własnej kopii —
+// notatnik pomija 'evidence'/'results' (bez zastosowania), ale kolejność
+// pozostałych pięciu pochodzi z JEDNEGO miejsca. Filtr zachowuje kolejność
+// kanonu 1:1 z dawną literałową listą.
+const RAIL_SECTION_ORDER = ARTIFACT_PANEL_SECTION_ORDER.filter(
+  (id): id is 'actions' | 'properties' | 'relations' | 'comments' | 'history' =>
+    id === 'actions' ||
+    id === 'properties' ||
+    id === 'relations' ||
+    id === 'comments' ||
+    id === 'history'
+);
 type RailSectionId = (typeof RAIL_SECTION_ORDER)[number];
 
 interface NotebookRightRailProps {
