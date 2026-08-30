@@ -160,6 +160,8 @@ W skrótach po pierwszej pełnej ścieżce prefiks pozostaje `/api/initiatives`.
 
 ## R3 — rozstrzygnięcie projektowe
 
+Kontrola kompletności R3: grupy rekomendacji są rozłączne i sumują się do R1: 2 komentarze Zadania + 3 operacje RAID + 21 innych Tasks + 27 innych Initiatives + 5 zmapowanych V8 + 15 niezmapowanych V8 = **73**. Każda powierzchnia ma dokładnie jedną rekomendację.
+
 | Powierzchnia | Rekomendacja | Uzasadnienie |
 |---|---|---|
 | **PRIORYTET: komentarz Zadania POST/DELETE** | Dodać polecenia Runtime-v1 create/delete comment i przepiąć `TaskDetailView` | Komentarz jest trwałym elementem współpracy, a obecny aktywny UI woła legacy bez alternatywy. |
