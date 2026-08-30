@@ -354,6 +354,7 @@ const InsightArtifactScreen = React.lazy(() => import('./screens/insight-artifac
 const DrdEmbeddedMatrixAxisLevelsScreen = React.lazy(
   () => import('./screens/drd-embedded-matrix-axis-levels')
 );
+const DrdMacierzOcenyScreen = React.lazy(() => import('./screens/drd-macierz-oceny'));
 const DrdMacierzObszaryPoziomyScreen = React.lazy(
   () => import('./screens/drd-macierz-obszary-poziomy')
 );
@@ -1589,6 +1590,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'DRD — EmbeddedMatrix dowód naprawy maxLevel (culture/cybersecurity=6, SSOT drdStructure.ts)',
     render: () => <DrdEmbeddedMatrixAxisLevelsScreen />,
+  },
+  'drd-macierz-oceny': {
+    label:
+      'DRD — MACIERZ OCENY, stan zastany do AUDYTU (realny DRDAssessmentEditor, żywy w produkcie), &os=1..7',
+    render: () => <DrdMacierzOcenyScreen />,
   },
   'drd-macierz-obszary-poziomy': {
     label:
