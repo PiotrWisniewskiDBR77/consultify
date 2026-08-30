@@ -391,7 +391,7 @@ export function buildKpiScorecardItemColumns(isPolish: boolean): TableColumn[] {
       label: 'KPI',
       width: '220px',
       render: (row: KpiScorecardItemDto) => (
-        <span className="text-sm text-c-text" title={row.kpiId}>
+        <span className="text-sm font-mono text-c-text" title={row.kpiId}>
           {row.kpiName ?? shortKpiScorecardId(row.kpiId)}
         </span>
       ),

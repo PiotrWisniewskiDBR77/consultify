@@ -23,15 +23,27 @@ describe('Day 171 data contracts on real ApiGateway and PostgreSQL', NO_RETRY, (
   let app: Express;
   let sql: Client;
   let authorization: string;
+  const originalEnableV8Global = process.env.ENABLE_V8_GLOBAL;
 
   beforeAll(async () => {
     expect(process.env.DB_TYPE).toBe('postgres');
     await assertRealPostgresTestEnvironment();
+    // The `/api/v8/finance-v2/*` surface (used below for the valuation results HTTP
+    // proof) sits behind a pre-auth global gate that 404s unless explicitly enabled —
+    // set it for this suite's real Gateway instance and restore it in afterAll.
+    process.env.ENABLE_V8_GLOBAL = 'true';
 
     sql = new Client({ connectionString: String(process.env.DATABASE_URL) });
     await sql.connect();
     const target = await sql.query('SELECT current_database() AS database, inet_server_port() AS port');
-    expect(target.rows[0]).toEqual({ database: 'cx171', port: 5432 });
+    // Portable: this must pass against ANY local Postgres, not just a database literally
+    // named "cx171" — pinning the database name here breaks the test on every other
+    // developer's / worker's fixture database. We still prove a REAL server connection
+    // (not a mock) by asserting a real database name and a real numeric server port came back.
+    expect(typeof target.rows[0].database).toBe('string');
+    expect(target.rows[0].database.length).toBeGreaterThan(0);
+    expect(Number.isInteger(target.rows[0].port)).toBe(true);
+    expect(target.rows[0].port).toBeGreaterThan(0);
 
     await sql.query(
       `INSERT INTO organizations (id, name, plan, status, is_active, created_at)
@@ -62,6 +74,8 @@ describe('Day 171 data contracts on real ApiGateway and PostgreSQL', NO_RETRY, (
   });
 
   afterAll(async () => {
+    if (originalEnableV8Global === undefined) delete process.env.ENABLE_V8_GLOBAL;
+    else process.env.ENABLE_V8_GLOBAL = originalEnableV8Global;
     if (sql) await sql.end();
   });
 
@@ -146,5 +160,65 @@ describe('Day 171 data contracts on real ApiGateway and PostgreSQL', NO_RETRY, (
         },
       }).text
     ).toBe('12%');
+  });
+
+  it('GET /api/v8/finance-v2/valuation/variants/:businessVersionId/results carries organization_profiles.currency, and null when the profile has none', async () => {
+    async function seedOrgWithMember(label: string) {
+      const orgId = randomUUID();
+      const uid = randomUUID();
+      const email = `day171_${label}_${suffix}@example.test`;
+      await sql.query(
+        `INSERT INTO organizations (id, name, plan, status, is_active, created_at)
+         VALUES ($1, $2, 'enterprise', 'active', 1, now())`,
+        [orgId, `day171_${label}_${suffix}`]
+      );
+      await sql.query(
+        `INSERT INTO users
+           (id, organization_id, email, password, first_name, last_name, role, status, created_at)
+         VALUES ($1, $2, $3, 'x', 'Piotr', 'Kontraktowy', 'ADMIN', 'active', now())`,
+        [uid, orgId, email]
+      );
+      await sql.query(
+        `INSERT INTO organization_members
+           (id, organization_id, user_id, role, status, created_at)
+         VALUES ($1, $2, $3, 'ADMIN', 'ACTIVE', now())`,
+        [randomUUID(), orgId, uid]
+      );
+      const orgAuthorization = `Bearer ${jwt.sign(
+        { id: uid, userId: uid, email, organizationId: orgId, organization_id: orgId, role: 'ADMIN' },
+        config.JWT_SECRET,
+        { algorithm: 'HS256', expiresIn: '1h' }
+      )}`;
+      return { orgId, orgAuthorization };
+    }
+
+    async function makeValuationBusinessVersionId(orgAuthorization: string) {
+      const created = await request(app)
+        .post('/api/v8/finance-v2/artifacts')
+        .set('Authorization', orgAuthorization)
+        .send({ artifactType: 'VALUATION_CASE' });
+      expect(created.status, JSON.stringify(created.body)).toBe(201);
+      return created.body.data.currentBusinessVersion.businessVersionId as string;
+    }
+
+    const withCurrency = await seedOrgWithMember('val-cur');
+    await sql.query(
+      `INSERT INTO organization_profiles (id, organization_id, currency) VALUES ($1, $2, 'EUR')`,
+      [randomUUID(), withCurrency.orgId]
+    );
+    const bvWithCurrency = await makeValuationBusinessVersionId(withCurrency.orgAuthorization);
+    const withCurrencyResponse = await request(app)
+      .get(`/api/v8/finance-v2/valuation/variants/${bvWithCurrency}/results`)
+      .set('Authorization', withCurrency.orgAuthorization);
+    expect(withCurrencyResponse.status, JSON.stringify(withCurrencyResponse.body)).toBe(200);
+    expect(withCurrencyResponse.body.data.currency).toBe('EUR');
+
+    const withoutCurrency = await seedOrgWithMember('val-nocur');
+    const bvWithoutCurrency = await makeValuationBusinessVersionId(withoutCurrency.orgAuthorization);
+    const withoutCurrencyResponse = await request(app)
+      .get(`/api/v8/finance-v2/valuation/variants/${bvWithoutCurrency}/results`)
+      .set('Authorization', withoutCurrency.orgAuthorization);
+    expect(withoutCurrencyResponse.status, JSON.stringify(withoutCurrencyResponse.body)).toBe(200);
+    expect(withoutCurrencyResponse.body.data.currency).toBeNull();
   });
 });
