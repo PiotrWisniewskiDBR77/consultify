@@ -41,3 +41,11 @@ zrzutami** i jest pseudo-elementem CSS, nie klasą w komponencie.
 **Reguła:** zanim zgłosisz „linię nieznanego pochodzenia", zrób drugi zrzut z innym
 czasem osiadania. Jeśli obiekt się przesunął — to animacja, nie defekt układu, i
 szukaj go w `index.css`, nie w drzewie strony.
+
+2026-08-30 | ★ **Ekran za flagą trzeba mierzyć Z flagą, inaczej mierzysz inny ekran.**
+Robotnik ocenił „Tożsamość i model działania" bez `ff_org_redesign_v1=1` i zobaczył
+**starą powierzchnię** — nie tę, która była przedmiotem oceny. Narzędzie zrzutów nie
+miało sposobu przekazania parametru adresu, więc po cichu mierzyło niewłaściwą rzecz.
+**Naprawione u źródła:** `grafika-zrzuty.mjs --parametry=ff_...=1`.
+**Reguła:** zanim ocenisz ekran, sprawdź, czy ma wariant za flagą. Jeśli ma — zrób
+zrzuty OBU i powiedz w raporcie, który z nich widzi dziś użytkownik.

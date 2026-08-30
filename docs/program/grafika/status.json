@@ -1425,7 +1425,9 @@
      "naprawione": [
       "CRIMSON poza semantyka krytyczna: pierscien kompletnosci, panel Teresy i wszystkie ikony sekcji"
      ],
-     "wyjatki": []
+     "wyjatki": [
+      "Ten ekran ma DWA warianty. Domyslnie widac stary (naprawiony przez nas). Docelowy, za flaga ff_org_redesign_v1, jest czysty. Naprawa dotyczy tego, co uzytkownik widzi dzis."
+     ]
     },
     {
      "id": "partner-settlements-view",
@@ -1479,6 +1481,107 @@
      "naprawione": [],
      "wyjatki": [
       "Ekran harnessu wyrejestrowany, plik zostaje"
+     ]
+    }
+   ]
+  },
+  {
+   "katalog": "12-wywiad-spotkania-org",
+   "nazwa": "Wywiad, Spotkania i Organizacja",
+   "opis": "Kreator wywiadu, sesje, spotkania, kalendarz, publiczna rezerwacja, notatnik, skarbiec dokumentow.",
+   "ekrany": [
+    {
+     "id": "interview-creator-shell",
+     "nazwa": "Kreator wywiadu",
+     "ocena": "A",
+     "co": "Trzy kroki, czysty formularz, po polsku.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "interview-preview-canon",
+     "nazwa": "Podglad sesji wywiadu",
+     "ocena": "A",
+     "co": "Panel podgladu. Ucinany tytul to kanoniczne zachowanie z podpowiedzia, nie defekt.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "interview-sessions-status",
+     "nazwa": "Sesje wywiadow",
+     "ocena": "A",
+     "co": "Lista sesji, statusy kolorowe — nie crimson.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "meetings-module",
+     "nazwa": "Spotkania",
+     "ocena": "A",
+     "co": "Lista spotkan, daty po polsku.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "public-booking-widget",
+     "nazwa": "Publiczna rezerwacja spotkania",
+     "ocena": "A",
+     "co": "Nadaje sie do pokazania klientowi zewnetrznemu: logo, wybor dnia poprawna polszczyzna, sloty godzinowe, zaznaczenie niebieska ramka. Zero zargonu.",
+     "naprawione": [],
+     "wyjatki": [
+      "Skrot 6 wol. zamiast 6 dostepnych terminow — kwestia tresci, nie grafiki"
+     ]
+    },
+    {
+     "id": "unified-create-launcher",
+     "nazwa": "Nowy — wybor rodzaju",
+     "ocena": "A",
+     "co": "Wniosek, inicjatywa, decyzja. Slowo Insight zostaje po angielsku swiadomie — to termin produktowy uzywany tak samo w calej aplikacji.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "calendar-sync-settings",
+     "nazwa": "Synchronizacja kalendarza",
+     "ocena": "A",
+     "co": "Trzej dostawcy, przelaczniki.",
+     "naprawione": [
+      "Ekran nie byl podlaczony do harnessu",
+      "W motywie ciemnym przelacznik wlaczony byl nieodrozninalny od wylaczonego"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "notebook-quick-capture",
+     "nazwa": "Szybkie wrzucanie notatek",
+     "ocena": "A",
+     "co": "Pasek wrzucania.",
+     "naprawione": [
+      "Ekran nie byl podlaczony do harnessu"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "prompt-registry-tab",
+     "nazwa": "Rejestr promptow",
+     "ocena": "B",
+     "co": "Narzedzie inzynierskie w calosci po angielsku — konsekwentnie, nie mieszanka.",
+     "naprawione": [],
+     "wyjatki": [
+      "Nie znaleziono decyzji potwierdzajacej, ze angielski jest tu swiadomy — do potwierdzenia"
+     ]
+    },
+    {
+     "id": "vault-scope-selector",
+     "nazwa": "Skarbiec dokumentow",
+     "ocena": "C",
+     "co": "Wgrywanie i lista dokumentow.",
+     "naprawione": [
+      "Crimson na odznakach kategorii",
+      "Daty w formacie amerykanskim"
+     ],
+     "wyjatki": [
+      "Komponent nie ma ani jednego klucza tlumaczen — obudowa w calosci po angielsku, a tytuly dokumentow wpisane przez uzytkownika po polsku. Efekt: jeden ekran, dwa jezyki. To retrofit architektury, nie poprawka koloru"
      ]
     }
    ]
