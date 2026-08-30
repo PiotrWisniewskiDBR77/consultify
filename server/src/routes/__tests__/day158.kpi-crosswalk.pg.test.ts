@@ -113,7 +113,11 @@ describe.skipIf(!enabled)('Day 158 KPI crosswalk on real PostgreSQL', () => {
   it('runs with the effective PostgreSQL environment', () => {
     expect(process.env.DB_TYPE).toBe('postgres');
     expect(process.env.MOCK_DB).toBe('false');
-    expect(databaseUrl).toContain('127.0.0.1:6045/cx158');
+    // Intencja tej asercji to dowod, ze test biegl na realnym Postgresie, a nie
+    // na sqlite przypietym w server/vitest.config.ts. Twardy adres 127.0.0.1:6045/cx158
+    // spelnial ja tylko na maszynie wykonawcy i wywracal test wszedzie indziej.
+    expect(databaseUrl).toMatch(/^postgres(ql)?:\/\//);
+    expect(databaseUrl).not.toMatch(/sqlite/i);
   });
 
   it('writes only explicitly confirmed mappings and leaves same-name rows unmapped', async () => {
