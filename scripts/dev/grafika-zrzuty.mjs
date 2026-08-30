@@ -91,16 +91,35 @@ for (const ekran of EKRANY) {
     page.on('console', (m) => {
       if (m.type() === 'error') bledy.push(m.text().slice(0, 200));
     });
+    /**
+     * `uwagi=0` — WYCINA panel uwag właściciela z kadru.
+     *
+     * ★ PROSTUJE BŁĄD Z 2026-08-30. Do tego dnia narzędzie próbowało schować
+     * kontrolki harnessu przez `addStyleTag` z selektorami
+     * `[data-dev-render-chrome], .dev-render-chrome`. Selektory te **nie istnieją
+     * w `dev-render/PanelUwag.tsx`** — reguła CSS była martwa, a pływające czarne
+     * pastylki „← Lista" i „Uwagi" siedziały na KAŻDYM zrzucie i zasłaniały realną
+     * treść produktu (m.in. nagłówek sekcji w podglądzie, rząd przycisków
+     * w pakiecie sprawozdań, ostatni wiersz tabeli w rejestrze OKR).
+     * Właściciel oglądał te zrzuty jako „czyste".
+     *
+     * Właściwy wyłącznik istniał od początku: `dev-render/main.tsx:1696`
+     * renderuje panel tylko gdy `params.get('uwagi') !== '0'`, a komentarz przy
+     * nim mówi wprost: „na zrzucie do akceptu nie mogą się pojawić (zrzut czysty,
+     * CLAUDE.md §7c)". Narzędzie po prostu nigdy tego parametru nie podawało.
+     */
     const url =
       WEJSCIE === 'html'
-        ? `${BASE}/${ekran}.html?lang=${JEZYK}&theme=${motyw}${PARAMETRY ? `&${PARAMETRY}` : ''}`
-        : `${BASE}/?screen=${ekran}&lang=${JEZYK}&theme=${motyw}${PARAMETRY ? `&${PARAMETRY}` : ''}`;
+        ? `${BASE}/${ekran}.html?lang=${JEZYK}&theme=${motyw}&uwagi=0${PARAMETRY ? `&${PARAMETRY}` : ''}`
+        : `${BASE}/?screen=${ekran}&lang=${JEZYK}&theme=${motyw}&uwagi=0${PARAMETRY ? `&${PARAMETRY}` : ''}`;
     const plik = path.join(OUT, `${ekran}__${FAZA}__${motyw}.png`);
     try {
       await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
       await page.waitForTimeout(OSIAD);
-      // Panel uwag i przycisk „Lista" to elementy harnessu, nie produktu —
-      // chowamy je, żeby nie zaśmiecały dowodu odbiorowego.
+      // Chrome harnessu wycina `uwagi=0` w adresie (patrz komentarz wyżej).
+      // Ta reguła zostaje jako PAS BEZPIECZEŃSTWA dla ekranów, które oznaczają
+      // własne elementy harnessu atrybutem `data-dev-render-chrome` — robi tak
+      // m.in. `dev-render/screens/drd-macierz-oceny.tsx:159`.
       await page.addStyleTag({
         content: '[data-dev-render-chrome], .dev-render-chrome { display: none !important; }',
       });
