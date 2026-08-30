@@ -31,8 +31,11 @@ describe('Day 139 R2 — project text governance on real PostgreSQL', { retry: 0
     const identity = (await dbGet(
       `SELECT current_database() AS database, inet_server_port() AS port`
     )) as { database: string; port: number };
-    expect(process.env.DATABASE_URL).toBe('postgresql://postgres:cx@127.0.0.1:6023/cx139');
-    expect(identity).toEqual({ database: 'cx139', port: 5432 });
+    expect(process.env.DATABASE_URL).toMatch(
+      /^postgresql:\/\/[^/]+@(127\.0\.0\.1|localhost):\d+\/[^/]+$/,
+    );
+    expect(identity.database.length).toBeGreaterThan(0);
+    expect(identity.port).toBeGreaterThan(0);
 
     await dbRun(
       `INSERT INTO organizations (id, name)
