@@ -120,3 +120,49 @@ Dziewięć odchyleń:
 | 9 | Przycisk „Analizuj z AI" — ramka i wypełnienie wyglądają jak akcent CTA; do sprawdzenia wobec tokenu AI | niska |
 
 **Ocena: `C`** — nie pokazuję właścicielowi jako produktu. Idzie do naprawy.
+
+## ★★ KOREKTA WŁASNEJ LISTY ODCHYLEŃ — karta Inicjatywy (2026-08-30)
+
+Zweryfikowałem swoje dziewięć odchyleń **w kodzie i w żywym ekranie**.
+**Pięć z nich nie było defektami.** Zapisuję to jako ostrzeżenie dla siebie
+i dla każdego następnego, bo mechanizm powtórzy się przy każdym ekranie.
+
+| # | Moje odchylenie | Werdykt po weryfikacji |
+| --- | --- | --- |
+| 1 | brak okruszków | **NIE DEFEKT PRODUKTU** — harness renderuje kartę bez powłoki aplikacji; okruszki mieszkają w powłoce. Do sprawdzenia w żywym runtime, nie w harnessie |
+| 2 | brak kodu obiektu przy tytule | **NIE DEFEKT — decyzja właściciela `D-D` z 2026-07-22**: kod obiektu i link przeniesione do kebaba celowo. Przywrócenie ich byłoby cofnięciem decyzji |
+| 3 | „Zapisano" bez daty | **DO SPRAWDZENIA** — decyzja `D-C` mówi „wskaźnik tekstowy, nieklikalny"; wzorzec pokazuje datę i godzinę. Możliwa realna luka |
+| 4 | brak przycisku głównego | **NIE DEFEKT GRAFIKI — dziura funkcjonalna.** `statusActions` jest twardo `[]` (`InitiativeDocumentView.tsx:1414`) na mocy `DEC-104` z 2026-08-26: ścieżka zapisu statusu **rzuca wyjątkiem dla każdego statusu docelowego**, więc każda akcja była gwarantowaną awarią. Wyłączenie było słuszne. **Należy do toru funkcji, nie grafiki** |
+| 5 | „AKCJE 0" | **NIE DEFEKT — zachowanie trybu Podglądu**, decyzja właściciela 2026-07-24, z jawnym zakazem komunikatu opisowego. W trybie Edycji sekcja ma dwa realne przyciski |
+| 6 | Menu 3 bez liczników postępu | **CZĘŚCIOWO** — lewy rail ma liczniki (9, 5, 5), ale to liczby pozycji, nie postęp `6/9` jak we wzorcu |
+| 7 | brak bloków uczciwości | **NIEROZSTRZYGNIĘTE** — oceniałem jedną sekcję z dwudziestu czterech |
+| 8 | ściana tekstu | **CZĘŚCIOWO** — kształt treści pochodzi z danych makietowych, nie z komponentu |
+| 9 | kolor przycisku AI | do zmierzenia tokenem |
+
+### Co znalazłem naprawdę, przy okazji
+
+- **★ Mieszany język w sekcji „Bramy"** — tabela trzynastu etapów cyklu życia ma
+  **angielskie opisy** („Benefits tracking in progress", „Initiative was cancelled",
+  „Archived for reference") obok polskich etykiet („Zarchiwizuj", „Nie rozpoczęto").
+  To realny defekt i widać go gołym okiem.
+- **Przełącznik Edycja/Podgląd działa** — moje pierwsze kliknięcie chybiło.
+- **Nawigacja po sekcjach działa** — przełącza treść centrum.
+
+### ★ KONFLIKT DO ROZSTRZYGNIĘCIA PRZEZ WŁAŚCICIELA
+
+Decyzja z **2026-07-24** (w kodzie): w Podglądzie sekcja Akcje jest zwinięta
+z licznikiem `0`, **bez komunikatu opisowego** — „SSOT go zakazuje wprost".
+
+Wzorzec z **2026-08-30** (dzisiejszy) mówi odwrotnie: „Tryb podglądu — akcje nie są
+dostępne w tym widoku; **liczba 0 nie oznacza braku działań**" oraz „To ograniczenie
+widoku, nie informacja, że działań jest zero".
+
+**Nowszy wzorzec przeczy starszej decyzji.** Nie rozstrzygam tego sam.
+
+### Wniosek metodyczny — obowiązuje od teraz
+
+**Odchylenie od wzorca nie jest defektem, dopóki nie sprawdzę, czy nie jest
+decyzją.** Kolejność: zobacz ekran → znajdź komponent → **przeczytaj komentarze
+przy kodzie** (w tym repozytorium niosą decyzje właściciela z datami) → dopiero
+wtedy orzekaj. Pominięcie tego kroku dałoby pięć „napraw", z których dwie cofnęłyby
+decyzje właściciela, a jedna złamałaby jawny zakaz.
