@@ -11374,19 +11374,57 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                 // Konsultant NIE zniknął — `AIConsultantPanel` nadal
                                 // renderuje się niżej i ma swoje wejścia; zmienia się
                                 // tylko to, co robi TEN przycisk, zgodnie z jego nazwą.
-                                <Menu2AIButton
-                                  isPolish={isPolish}
-                                  busy={initiativeCardAnalysis.loading}
-                                  aria-expanded={initiativeCardAnalysis.open}
-                                  disabled={!canUseAi}
-                                  onClick={() => {
-                                    if (!canUseAi) {
-                                      toast.error(t('initiatives.aiIsUnavailableBecauseYouHave2'));
-                                      return;
-                                    }
-                                    initiativeCardAnalysis.run();
-                                  }}
-                                />
+                                //
+                                // ★ SPROSTOWANIE (odbiór właściciela 2026-08-30, karta-initiative:
+                                //   „nie ma przycisku AI w górnym pasku, który będzie odpowiadał
+                                //   za wypełnienie karty"). Zdanie wyżej — „ma swoje wejścia" —
+                                //   było NIEPRAWDZIWE. `setAiPanelOpen(true)` nie było wołane
+                                //   NIGDZIE w tym pliku (jedyne wystąpienia: deklaracja stanu,
+                                //   `onClose` i lista `anyOverlayOpen`), więc `AIConsultantPanel`
+                                //   renderował się z `open={false}` na zawsze: kompletny, podpięty
+                                //   panel (5 akcji kanonu, w tym „Uzupełnij puste" → realny
+                                //   `runActiveSectionAi`) BEZ ŻADNEGO WEJŚCIA. Zdejmując z paska
+                                //   „AI sekcji" przeniesiono jego akcje do panelu, którego nie
+                                //   dawało się otworzyć — zdolność wypełniania karty istniała
+                                //   w kodzie i była nieosiągalna z ekranu.
+                                //
+                                //   Dlatego pasek dostaje DWA przyciski AI o rozłącznych rolach:
+                                //     „Wypełnij z AI"  → otwiera Konsultanta (pisze do karty),
+                                //     „Analizuj z AI"  → ocenia gotowość (niczego nie zapisuje).
+                                //   Nowy przycisk stoi PRZED starym, więc kontrakt „Analizuj z AI
+                                //   skrajnie po prawej" (SPEC-N §2.3) zostaje spełniony.
+                                <>
+                                  <Menu2AIButton
+                                    isPolish={isPolish}
+                                    label={isPolish ? 'Wypełnij z AI' : 'Fill with AI'}
+                                    aria-expanded={aiPanelOpen}
+                                    disabled={!canUseAi}
+                                    onClick={() => {
+                                      if (!canUseAi) {
+                                        toast.error(
+                                          t('initiatives.aiIsUnavailableBecauseYouHave2')
+                                        );
+                                        return;
+                                      }
+                                      setAiPanelOpen(true);
+                                    }}
+                                  />
+                                  <Menu2AIButton
+                                    isPolish={isPolish}
+                                    busy={initiativeCardAnalysis.loading}
+                                    aria-expanded={initiativeCardAnalysis.open}
+                                    disabled={!canUseAi}
+                                    onClick={() => {
+                                      if (!canUseAi) {
+                                        toast.error(
+                                          t('initiatives.aiIsUnavailableBecauseYouHave2')
+                                        );
+                                        return;
+                                      }
+                                      initiativeCardAnalysis.run();
+                                    }}
+                                  />
+                                </>
                               }
                               /* KEBAB MENU 2 USUNIĘTY (2026-07-24) — jego pozycje żyją teraz
                                  w kebabie Menu 1 (`extraOverflowItems` = `menu1ExtraOverflowItems`).

@@ -4112,7 +4112,27 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   były realnie DWA, nie trzy. Niebieski, nie crimson: to nie jest stan
                   krytyczny (CLAUDE.md pułapka #1). */}
               <div className="flex flex-col gap-2">
-                <div className="flex items-center justify-between gap-4 rounded-xl border border-c-border-subtle bg-c-surface-raised px-5 py-4 shadow-[inset_4px_0_0_var(--c-info)]">
+                {/* ODBIÓR WŁAŚCICIELA 2026-08-30 (druga tura): poprzednik dał temu
+                    wierszowi TYLKO niebieską szynę i niebieski napis, a tło i ramkę
+                    zostawił neutralne (`bg-c-surface-raised` = tło karty). Na zrzucie
+                    — zwłaszcza w ciemnym motywie — wiersz nie miał wtedy koloru:
+                    wypełnienie widać było w dwóch wierszach na trzy, więc „trzy kolory"
+                    czytały się jako dwa i szara pustka. Teraz wypełnienie i ramka idą
+                    z tokenu `--c-info`, jak szyna i napis — dokładnie tak, jak
+                    danger/emerald w wierszach niżej. Niebieski, nie crimson: to nie
+                    jest stan krytyczny (CLAUDE.md pułapka #1).
+
+                    JASNY MOTYW — WYPEŁNIENIE Z INNEGO ŹRÓDŁA NIŻ SZYNA, i to jest
+                    świadome. Wypełnienie liczone z `--c-info` (#3b2883, HBS Blue 1)
+                    wychodziło #E8E8F1, a Callout „Czytaj jak brief konsultingowy"
+                    tuż nad wierszem ma #EEECF9 — zmierzone z pikseli zrzutu, różnica
+                    kilku punktów na kanał i identyczny fiolet (R≈G). Wiersz czytał
+                    się jako szara plama i drugi fiolet, nie jako trzeci kolor.
+                    `hbs-blue-100` ma G>R, więc jest niebieski wobec fioletu Callouta,
+                    i tę samą jasność co `danger-50/60` i `emerald-50/60` niżej —
+                    trzy wiersze ważą tyle samo. Ciemny motyw zostaje na `--c-info`
+                    (#58a6ff), bo tam jest już jednoznacznie niebieski. */}
+                <div className="flex items-center justify-between gap-4 rounded-xl border border-blue-200 dark:border-[color-mix(in_srgb,var(--c-info)_25%,transparent)] bg-blue-100/60 dark:bg-[color-mix(in_srgb,var(--c-info)_12%,transparent)] px-5 py-4 shadow-[inset_4px_0_0_var(--c-info)]">
                   <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-c-info">
                     {t('interview.insightViewer.officialAnswers')}
                   </div>
