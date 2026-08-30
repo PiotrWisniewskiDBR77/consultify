@@ -414,7 +414,7 @@ export const AuditsHub: React.FC = () => {
           const r = row as unknown as AuditRow;
           return r.updatedAt ? (
             <span className="text-[11px] text-c-text-muted">
-              {new Date(r.updatedAt).toLocaleDateString(undefined, {
+              {new Date(r.updatedAt).toLocaleDateString(i18n.language?.startsWith('pl') ? 'pl-PL' : 'en-US', {
                 month: 'short',
                 day: 'numeric',
                 year: 'numeric',
@@ -683,7 +683,7 @@ export const AuditsHub: React.FC = () => {
           const r = row as unknown as DrdReportRow;
           return r.updatedAt ? (
             <span className="text-[11px] text-c-text-muted">
-              {new Date(r.updatedAt).toLocaleDateString(undefined, {
+              {new Date(r.updatedAt).toLocaleDateString(i18n.language?.startsWith('pl') ? 'pl-PL' : 'en-US', {
                 month: 'short',
                 day: 'numeric',
                 year: 'numeric',
@@ -952,7 +952,7 @@ export const AuditsHub: React.FC = () => {
                               <span className="text-[11px] font-semibold text-c-text-secondary">
                                 {selectedProgram.updatedAt
                                   ? new Date(selectedProgram.updatedAt).toLocaleDateString(
-                                      undefined,
+                                      i18n.language?.startsWith('pl') ? 'pl-PL' : 'en-US',
                                       {
                                         month: 'short',
                                         day: 'numeric',
