@@ -88,6 +88,7 @@ z raportu wykonawcy (reguła nr 3 — raport wykonawcy nie jest dowodem).
 | --- | --- | --- | --- |
 | 130 | Utrata danych — miejsca zapisu bez trwałości | biegnie u wykonawcy | klon `/private/tmp/cx-day130-utrata-danych` |
 | 131 | Teresa i granice wiedzy | scalony po naprawie i odbiorze | **flagi `ENABLE_ORG_KNOWLEDGE_RETRIEVAL` nie wolno włączyć przed osobnym dyżurem** |
+| 132 | Jeden strażnik poufności na trzech żywych wejściach do promptu | **wydany 2026-08-30**, marker `c05c4c3910` | klon `/private/tmp/cx-day132-straznik-poufnosci` gotowy; instrukcja w scratchu, bez `git` i bez sieci; zasoby 6015 / 4930 i 4931 |
 
 
 ---
