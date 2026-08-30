@@ -6,7 +6,7 @@ R1: `PARTIAL` — zautomatyzowany skan objął całe `src/views/partner/**` i `s
 
 R2: `PARTIAL` — usunięto defekt rozlany z odbioru 177: wszystkie breadcrumby 25 ekranów korzystają z `partner.sidebar.*`; statusy learning-path nie zwracają surowego enumu; usunięto angielskie etykiety w learning-path, earnings, referral-tools, resources i profilu. Pozostałe historyczne literały spoza czterech najgorszych ekranów są jawnie opisane niżej.
 
-R3: `W TOKU` — pierwszy realny render learning-path potwierdził polskie etykiety i brak surowych enumów. Pierwszy render metrics ujawnił pozostawione angielskie etykiety KPI (`vs last quarter`, `this quarter`, `months`, `Good`, `average`, `responses`, cztery nazwy składowych wyniku). To był negatywny dowód R3; etykiety poprawiono przed końcowym zestawem zrzutów.
+R3: `WYKONANO` — cztery końcowe zrzuty na SHA `5065acfe329c73096ee95d78b8684de51df49f0b` zweryfikowano wzrokiem. Pierwsze przebiegi ujawniły residuale metrics i organizations; poprawiono je i powtórzono cały zestaw na jednym SHA.
 
 ## §0.1 — marker i sanity (wynik dosłowny)
 
@@ -100,6 +100,21 @@ Pułapki Z33: (a)–(d) nie leżą na ścieżce — test jest statyczny, `RUN_DB
 
 Lint zmienionych TS/TSX: 0 błędów, 99 zastanych ostrzeżeń. Pełny `tsc --noEmit` zakończył się `FATAL ERROR ... heap out of memory` przy limicie około 4 GiB — nie raportuję go jako PASS.
 
+## R3 — zrzuty kontrolne
+
+Kanoniczny runtime `W3-RUNTIME-MANIFEST-v4`: server `5050`, client `5051`, baza `127.0.0.1:6109/consultify_w3_partner_owner_day189`, `healthStatus=200`, `readyStatus=200`, `frontendStatus=200`, `clientMarkerVerified=true`, `sqlMarkerVerified=true`, `ENABLE_TEST_AUTH_BYPASS=false`, `prohibitedKeysAbsentInOwnedGroupProcesses=true`.
+
+| Ekran | Werdykt wzrokowy | Artefakt | SHA-256 |
+|---|---|---|---|
+| learning-path | PASS dla etykiet produktu i enumów; angielskie nazwy kursów/tracków są danymi fixture zgodnie z T1 | `/private/tmp/cx-day189-partner-i18n-artefakty/day189-learning-path-pl-final-5065acfe32.png` | `bf746c7df2941c7be0d9ecc71381118cc5e67904987aba315cba368af83727e0` |
+| metrics | PASS; zero angielskich etykiet KPI/breakdownu | `/private/tmp/cx-day189-partner-i18n-artefakty/day189-metrics-pl-final-5065acfe32.png` | `8ada2df54383ba6429af2ee11e9a756af3b2e2c54aedd670bd5a08aade58566a` |
+| earnings | PASS; uczciwy policy-gated stan w całości po polsku | `/private/tmp/cx-day189-partner-i18n-artefakty/day189-earnings-pl-final-5065acfe32.png` | `08f74339c4d033cbdfaf053d335578b281c2670c69635ad87a51700ab2103f7f` |
+| organizations | PASS dla etykiet produktu i statusu; `Wave 3 Referred Participant` jest nazwą organizacji, czyli danymi | `/private/tmp/cx-day189-partner-i18n-artefakty/day189-organizations-pl-final-5065acfe32.png` | `6299e335d8048ec2e6524e2dee025379cae625013be42f6f5348d091c4270240` |
+
+Deklaracja Z30 dla zrzutów: **„Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie zawiera wierszy konfiguracji SMTP. Uruchomiłem `server/src/index.ts` wyłącznie przez kanoniczny `scripts/dev/start-wave3-owner-runtime.mjs`, na lokalnej bazie dyżuru, tylko w celu wykonania zrzutów. Zweryfikowałem środowisko procesu i log serwera zgodnie z `§0.2b` (4). Żaden e-mail, zaproszenie kalendarzowe ani powiadomienie zewnętrzne nie zostało wysłane.”**
+
+Sprzątanie: starter zatrzymał wyłącznie własne grupy procesów i potwierdził `portsFree=true`; `docker rm -fv cx-day189-pg` usunął własny kontener z wolumenem. Porty `6109`, `5050`, `5051` są wolne, kontener nie istnieje.
+
 ## Korekty wobec instrukcji
 
 1. §0.1 mówi „WERYFIKACJA ... `cztery` komend”, ale lista zawiera T1–T5. Bezpieczniej wykonano wszystkie pięć.
@@ -110,6 +125,5 @@ Lint zmienionych TS/TSX: 0 błędów, 99 zastanych ostrzeżeń. Pełny `tsc --no
 
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
-- Nie udowodniono jeszcze R3 zrzutami czterech ekranów.
 - Nie udowodniono kompletnej listy enumów z backendu: `server/**` pozostawało tylko do odczytu, a grep frontu nie zawierał definicji. Obsłużono osiem wartości udokumentowanych/obserwowanych oraz bezpieczny, niesurowy fallback `Nieznany status`.
 - Nie domknięto wszystkich historycznych, nieosiągalnych komponentów `src/components/Partner/**`; nie twierdzę „zero angielskiego w całym module”.
