@@ -1154,7 +1154,20 @@ class AgentPlannerService {
             sessionId: execution?.operationKey,
           }),
       });
-      if (!resourceExecution.allowed) throw new Error(resourceExecution.reason);
+      if (!resourceExecution.allowed) {
+        // FIX-180: the ONE greppable admission-denial counter for this path.
+        // Turning chat plans on in staging makes governance the new way a step
+        // can die, and a denial is invisible everywhere else (it only shows up
+        // as a step error message). Every denial — cost ceiling, concurrency
+        // ceiling, or a replayed prior refusal — passes through exactly here.
+        logger.warn('[AgentResource] admission denied', {
+          reason: resourceExecution.reason,
+          organizationId: payload.organizationId,
+          projectId: resourceScope!.project_id,
+          toolName,
+        });
+        throw new Error(resourceExecution.reason);
+      }
       return resourceExecution.result;
     };
 
