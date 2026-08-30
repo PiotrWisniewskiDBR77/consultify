@@ -516,8 +516,14 @@ export const StandardPreview: React.FC<StandardPreviewProps> = ({
                   // (`roiRegistryPresenters.tsx`, `ResultsKpiRegistryPage.tsx`,
                   // `okrRegistryPresenters.tsx`, `kpiScorecardPresenters.tsx`)
                   // — out of this package's scope, owned by other lanes.
-                  propertyLabel={details.propertyLabel ?? 'Property'}
-                  valueLabel={details.valueLabel ?? 'Value'}
+                  // Odbiór grafiki 2026-08-30: domyślną wartością było angielskie
+                  // słowo, więc KAŻDY ekran, który nie podał własnej etykiety,
+                  // pokazywał „Property/Value" w polskim interfejsie. Poprzednia
+                  // notatka spychała to na wywołujących („owned by other lanes") —
+                  // ale poprawka domyślnej wartości naprawia wszystkie naraz,
+                  // a wywołujący ze swoją etykietą dalej ją nadpisują.
+                  propertyLabel={details.propertyLabel ?? t('standardPreview.property', 'Właściwość')}
+                  valueLabel={details.valueLabel ?? t('standardPreview.value', 'Wartość')}
                 />
               ) : null}
             </PreviewDetailsSection>

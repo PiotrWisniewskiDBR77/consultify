@@ -41959,5 +41959,9 @@
     "tracking": "Śledzenie korzyści w toku",
     "cancelled": "Inicjatywa została anulowana",
     "archived": "Zarchiwizowana do celów referencyjnych"
+  },
+  "standardPreview": {
+    "property": "Właściwość",
+    "value": "Wartość"
   }
 }

@@ -105,6 +105,21 @@
    "opis": "Wskazniki, ROI i cele OKR. Modul, ktorego nigdy nie widziales — 14 z 16 ekranow bez zastrzezen.",
    "ekrany": [
     {
+     "id": "results-zestawienia",
+     "nazwa": "POZIOM 1 — Rejestr zestawien okresowych",
+     "ocena": "B",
+     "co": "Nowy, brakujacy poziom wejscia: szesc zestawien okresowych z okresem rozliczeniowym, wlascicielem, liczba wskaznikow w srodku i rozbiciem stanu. Chipy Otwarty/Zamkniety.",
+     "naprawione": [
+      "Kolizja zapamietanych szerokosci kolumn z realnym rejestrem",
+      "Siedem kolumn nie miescilo sie przy otwartym podgladzie — scalone i zwezone",
+      "Angielskie naglowki Property/Value w panelu podgladu — naprawione w KANONICZNYM komponencie, wiec dotyczy calej aplikacji"
+     ],
+     "wyjatki": [
+      "To PROTOTYP nowego poziomu, nie realny komponent produkcyjny — czeka na Twoj wstepny OK, zanim tor funkcji go zbuduje",
+      "Domyslnie podswietlony jest pierwszy wiersz; watek trzech poziomow widac na drugim (KPI jakosci — Q3 2026)"
+     ]
+    },
+    {
      "id": "results-vnext-kpi-registry",
      "nazwa": "Rejestr wskaznikow",
      "ocena": "A",

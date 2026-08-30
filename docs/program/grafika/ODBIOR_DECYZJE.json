@@ -175,5 +175,92 @@
   "decyzja": "poprawka",
   "uwaga": "Teraz tak: on jest generalnie dużo lepszy niż to, co jest w Idea. Natomiast te dra‑meni, moim zdaniem, powinny wyglądać tak samo, mieć te same elementy albo prawie zbliżone, ale na pewno rządzić się tymi samymi zasadami. Więc jeśli tam zrobiliśmy informację, że idzie to do backlogu i trzeba to koniecznie przerobić gruntownie, myślę, że tutaj ta informacja powinna być powiązana z tym, co jest tam. ",
   "kiedy": "2026-08-30T09:55:31.896Z"
+ },
+ "notatnik-centrum-mysli": {
+  "decyzja": "ok",
+  "uwaga": "To byłoby zajebiste, żeby to tak działało. ",
+  "kiedy": "2026-08-30T09:58:46.071Z"
+ },
+ "notatnik-osierocone-graf": {
+  "decyzja": "ok",
+  "uwaga": "Nie wiem, szczerze powiedziawszy, gdzie to jest, ale oby to tak działało. Dalej rozszerzać te okna, nie? Te okna po lewej stronie, żeby można było je rozszerzać i tam dokładać elementy, może. Ale generalnie, no tak, taka wizualizacja jest super ",
+  "kiedy": "2026-08-30T09:59:52.563Z"
+ },
+ "vault-sejf-wnetrze": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:00:23.904Z"
+ },
+ "vault-safes-table": {
+  "decyzja": "poprawka",
+  "uwaga": "Ja mam takie wrażenie, że tabela tego SEF‑u jest dziwnie wąska. Nie rozciąga się na całą szerokość tabeli. Pracuj nad tym, żeby wiersze mieściły się w jednej linii, a nie rozkładały się na cztery wiersze – żeby każdy wiersz był jedną linią, jak w tabeli. Układ jest okej, nie?  Tylko mogę uznać to za wąskie. ",
+  "kiedy": "2026-08-30T10:01:26.595Z"
+ },
+ "vault-folder-block-proof": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:01:48.405Z"
+ },
+ "template-builder-doc": {
+  "decyzja": "ok",
+  "uwaga": "To jest super!!!!!!! proste i czytelne - brawo ",
+  "kiedy": "2026-08-30T10:11:59.262Z"
+ },
+ "document-artifact": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:14:08.605Z"
+ },
+ "template-builder-deck": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:15:17.599Z"
+ },
+ "template-builder-table": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:16:40.021Z"
+ },
+ "template-create-wizard": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:16:44.478Z"
+ },
+ "template-library-new-entry": {
+  "decyzja": "poprawka",
+  "uwaga": "No, tak jak rozumiem, to jest normalna tabela, bo przecież to jest po prostu tabela, w której mamy w menu funkcję pod tytułem „wzorzec”, czyli template. To jest normalna tabela, ale już przyciski – przycisk dodawania, … ",
+  "kiedy": "2026-08-30T10:17:29.231Z"
+ },
+ "materialy-launcher": {
+  "decyzja": "poprawka",
+  "uwaga": "Magicznie jest w porządku, tylko mogłoby być trochę bardziej seksowne. ",
+  "kiedy": "2026-08-30T10:17:49.432Z"
+ },
+ "materialy-template-library-slice": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:18:10.255Z"
+ },
+ "materialy-draft-template-visibledraft-fix": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:18:21.671Z"
+ },
+ "document-studio-menu-pliku": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:18:53.793Z"
+ },
+ "document-studio-nowy-dokument-martwe-przyciski": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:19:00.878Z"
+ },
+ "document-studio-save-as-template": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:19:04.426Z"
+ },
+ "document-studio-blocks-i18n": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:19:18.753Z"
+ },
+ "document-studio-context-chip": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:20:19.563Z"
+ },
+ "sheet-artifact": {
+  "decyzja": "poprawka",
+  "uwaga": "Tutaj mamy niestety trochę do poprawy. ",
+  "kiedy": "2026-08-30T10:22:19.717Z"
  }
 }

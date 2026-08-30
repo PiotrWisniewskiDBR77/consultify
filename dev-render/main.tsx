@@ -384,6 +384,7 @@ const ResultsVNextRegistryShellScreen = React.lazy(
 const ResultsVNextKpiRegistryScreen = React.lazy(
   () => import('./screens/results-vnext-kpi-registry')
 );
+const ResultsZestawieniaScreen = React.lazy(() => import('./screens/results-zestawienia'));
 const ResultsVNextRoiRegistryScreen = React.lazy(
   () => import('./screens/results-vnext-roi-registry')
 );
@@ -540,6 +541,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'RN-G2 P1 — REALNY <ResultsKpiRegistryPage> (KPI registry, real GET/POST /vnext/results/kpi* stubbed): My/Org tabs, status chips, lifecycle kebab (activate/suspend/archive), lazy measurement preview, deep-link forbidden. &state=ready|loading|empty|error &kpiId=<id> &ff=off',
     render: () => <ResultsVNextKpiRegistryScreen />,
+  },
+  'results-zestawienia': {
+    label:
+      'DECYZJA_WYNIKI_TRZY_POZIOMY (2026-08-30) — prototyp POZIOMU 1: rejestr ZESTAWIEŃ OKRESOWYCH (nie pojedynczych wskaźników), ten sam budulec co results-vnext-kpi-registry (ResultsVNextRegistryShell = StandardModuleBar+StandardTable+StandardPreview) z ręcznymi wierszami — zastępuje treść dzisiejszego rejestru KPI. Klik prowadzi (docelowo) na poziom 2 = results-vnext-kpi-scorecards. &state=ready|loading|empty|error &filter=all|open|closed &selected=<id|none>',
+    render: () => <ResultsZestawieniaScreen />,
   },
   'results-vnext-roi-registry': {
     label:

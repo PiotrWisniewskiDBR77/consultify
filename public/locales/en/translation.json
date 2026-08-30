@@ -39424,5 +39424,9 @@
     "tracking": "Benefits tracking in progress",
     "cancelled": "Initiative was cancelled",
     "archived": "Archived for reference"
+  },
+  "standardPreview": {
+    "property": "Property",
+    "value": "Value"
   }
 }
