@@ -280,6 +280,16 @@ export interface ValuationAdvisorSnapshot {
 
 export type LoadValuationSnapshotResult = { ok: true; snapshot: ValuationAdvisorSnapshot } | { ok: false; code: 'VARIANT_NOT_FOUND' | 'ORGANIZATION_MISMATCH'; message: string };
 
+export async function loadValuationCurrency(organizationId: string): Promise<string | null> {
+  const row = await withPinnedPostgresTransaction((tx) =>
+    tx.queryOne<{ currency: string | null }>(
+      `SELECT currency FROM organization_profiles WHERE organization_id = ? LIMIT 1`,
+      [organizationId]
+    )
+  );
+  return row?.currency?.trim() || null;
+}
+
 export async function loadValuationSnapshot(organizationId: string, businessVersionId: string): Promise<LoadValuationSnapshotResult> {
   const bv = await withPinnedPostgresTransaction((tx) =>
     tx.queryOne<{ business_version_id: string; organization_id: string; artifact_id: string; status: string; freshness: string }>(

@@ -195,7 +195,10 @@ export async function listScorecards(params: ListScorecardsParams): Promise<KpiS
   const offsetParamIndex = values.length;
 
   const baseQuerySql = `
-    SELECT sc.* FROM rvn_kpi_scorecards sc
+    SELECT sc.*,
+           NULLIF(TRIM(CONCAT_WS(' ', owner.first_name, owner.last_name)), '') AS owner_name
+      FROM rvn_kpi_scorecards sc
+      LEFT JOIN users owner ON owner.id = sc.owner_user_id AND owner.organization_id = sc.organization_id
       INNER JOIN rvn_visible_resources vr ON vr.resource_type = 'kpi_scorecard' AND vr.resource_id = sc.scorecard_id::text
      WHERE sc.organization_id = $1 ${filters.length ? `AND ${filters.join(' AND ')}` : ''}
      ORDER BY sc.updated_at DESC LIMIT $${limitParamIndex} OFFSET $${offsetParamIndex}`;
@@ -218,7 +221,16 @@ export interface ListScorecardItemsParams {
 export async function listScorecardItems(params: ListScorecardItemsParams): Promise<KpiScorecardItem[]> {
   const { userId, organizationId, scorecardId } = params;
   const baseQuerySql = `
-    SELECT si.* FROM rvn_kpi_scorecard_items si
+    SELECT si.*,
+           dv.name AS kpi_name,
+           NULLIF(TRIM(CONCAT_WS(' ', added.first_name, added.last_name)), '') AS added_by_name
+      FROM rvn_kpi_scorecard_items si
+      LEFT JOIN rvn_kpi_definitions kd
+             ON kd.kpi_id = si.kpi_id AND kd.organization_id = si.organization_id
+      LEFT JOIN rvn_kpi_definition_versions dv
+             ON dv.definition_version_id = kd.current_definition_version_id
+            AND dv.organization_id = kd.organization_id
+      LEFT JOIN users added ON added.id = si.added_by AND added.organization_id = si.organization_id
       INNER JOIN rvn_visible_resources vr ON vr.resource_type = 'kpi' AND vr.resource_id = si.kpi_id::text
      WHERE si.organization_id = $1 AND si.scorecard_id = $${VISIBILITY_CTE_PARAM_COUNT + 1}
      ORDER BY si.sort_order ASC`;
@@ -304,7 +316,12 @@ export async function getPublishedSnapshot(
 ): Promise<KpiScorecardReviewSnapshot | null> {
   const { userId, organizationId, scorecardId } = params;
   const baseQuerySql = `
-    SELECT rs.* FROM rvn_kpi_scorecard_review_snapshots rs
+    SELECT rs.*,
+           NULLIF(TRIM(CONCAT_WS(' ', creator.first_name, creator.last_name)), '') AS created_by_name,
+           NULLIF(TRIM(CONCAT_WS(' ', publisher.first_name, publisher.last_name)), '') AS published_by_name
+      FROM rvn_kpi_scorecard_review_snapshots rs
+      LEFT JOIN users creator ON creator.id = rs.created_by AND creator.organization_id = rs.organization_id
+      LEFT JOIN users publisher ON publisher.id = rs.published_by AND publisher.organization_id = rs.organization_id
       INNER JOIN rvn_kpi_scorecards sc ON sc.scorecard_id = rs.scorecard_id
       INNER JOIN rvn_visible_resources vr ON vr.resource_type = 'kpi_scorecard' AND vr.resource_id = sc.scorecard_id::text
      WHERE rs.organization_id = $1 AND rs.scorecard_id = $${VISIBILITY_CTE_PARAM_COUNT + 1} AND rs.status = 'published'`;
@@ -380,7 +397,12 @@ export async function listReviewSnapshots(
   const offsetParamIndex = VISIBILITY_CTE_PARAM_COUNT + trailingValues.length;
 
   const baseQuerySql = `
-    SELECT rs.* FROM rvn_kpi_scorecard_review_snapshots rs
+    SELECT rs.*,
+           NULLIF(TRIM(CONCAT_WS(' ', creator.first_name, creator.last_name)), '') AS created_by_name,
+           NULLIF(TRIM(CONCAT_WS(' ', publisher.first_name, publisher.last_name)), '') AS published_by_name
+      FROM rvn_kpi_scorecard_review_snapshots rs
+      LEFT JOIN users creator ON creator.id = rs.created_by AND creator.organization_id = rs.organization_id
+      LEFT JOIN users publisher ON publisher.id = rs.published_by AND publisher.organization_id = rs.organization_id
       INNER JOIN rvn_kpi_scorecards sc ON sc.scorecard_id = rs.scorecard_id
       INNER JOIN rvn_visible_resources vr ON vr.resource_type = 'kpi_scorecard' AND vr.resource_id = sc.scorecard_id::text
      WHERE rs.organization_id = $1 AND ${baseFilters.join(' AND ')}
