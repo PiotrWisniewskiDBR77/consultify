@@ -1544,12 +1544,13 @@ export async function getPartnerProjects(
          SELECT DISTINCT organization_id
          FROM partner_attributions
          WHERE partner_org_id = ?
-       ) pa ON pa.organization_id = p.organization_id
+       ) pa ON pa.organization_id::text = p.organization_id
        LEFT JOIN organizations o ON o.id = p.organization_id
        WHERE COALESCE(p.status, '') NOT IN ('deleted', 'DELETED', 'completed', 'COMPLETED', 'done', 'DONE', 'cancelled', 'CANCELLED')
        ORDER BY COALESCE(p.updated_at, p.created_at) DESC
        LIMIT ? OFFSET ?`,
-      [partnerOrgId, limit, offset]
+      [partnerOrgId, limit, offset],
+      { fallback: false }
     );
 
     return rows.map((row) => ({
@@ -1575,7 +1576,10 @@ export async function getPartnerProjects(
     }));
   } catch (err: any) {
     logger.error('[PartnerReferralService] Error getting partner projects:', err);
-    return [];
+    throw Object.assign(new Error('Partner projects are temporarily unavailable'), {
+      code: 'PARTNER_PROJECTS_QUERY_FAILED',
+      cause: err,
+    });
   }
 }
 

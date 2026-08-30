@@ -1163,12 +1163,16 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
           setProjects((response?.projects || []).map(normalizeClientProject));
         } catch (error) {
           if (!shouldFallbackToLegacyPartner(error)) {
-            throw error;
+            setProjects([]);
+            throw new Error('Partner projects are temporarily unavailable.');
           }
           const response = await Api.get('/api/partners/projects');
           const payload = response?.data;
           if (response?.success && Array.isArray(payload?.data)) {
             setProjects(payload.data.map(normalizeClientProject));
+          } else {
+            setProjects([]);
+            throw new Error('Partner projects are temporarily unavailable.');
           }
         }
       }
