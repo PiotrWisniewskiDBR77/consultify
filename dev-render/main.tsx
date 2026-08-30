@@ -122,6 +122,14 @@ const MyWorkIdeaInspectorLekkiScreen = React.lazy(
 const MyWorkNotebookRailSpecAScreen = React.lazy(
   () => import('./screens/mywork-notebook-rail-speca')
 );
+// GRAFIKA (2026-08-30, ANALIZA_PRAWY_PANEL.md) — NOTATNIK na wspólnym prawym
+// pasie `ArtifactRightRail` (szyna 56px: Artefakt · Teresa · Struktura), za
+// flagą `?ff_artifact_right_rail=1`. Jeden plik ekranu, zarejestrowany 3× ze
+// stałym trybem startowym — `grafika-zrzuty.mjs` nie klika UI, a wszystkie
+// trzy tryby pod jednym `?screen=` nadpisywałyby sobie plik wyjściowy.
+const PrawyPasNotatnikSystemScreen = React.lazy(
+  () => import('./screens/prawy-pas-notatnik-system')
+);
 // Odbiór grafiki (2026-08-30): pliki ekranów już istniały (napisane, gotowe,
 // bez zależności Api/fetch) ale nigdy nie zostały wpięte do rejestru SCREENS —
 // `?screen=calendar-sync-settings` / `?screen=notebook-quick-capture` renderowały
@@ -588,6 +596,16 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
       'DECYZJA WŁAŚCICIELA (2026-08-30) — PROTOTYP jednej N-karty ROI (wzorzec: karta Inicjatywy), zastępuje 3 osobne ekrany (registry zostaje listą poza kartą). 5 sekcji lewego menu: Założenia/Model/Wynik/Wyniki po wdrożeniu/Wnioski i rekomendacja + prawy panel 7 sekcji kanonu. &sekcja=zalozenia|model|wynik|wyniki-po-wdrozeniu|wnioski',
     render: () => <RoiJednaKartaScreen />,
   },
+  'wskaznik-jedna-karta': {
+    label:
+      'DECYZJA WŁAŚCICIELA (2026-08-30) — PROTOTYP jednej N-karty wskaźnika (poziom 3 z DECYZJA_WYNIKI_TRZY_POZIOMY.md), ta sama formuła co roi-jedna-karta. Ciągłość NordFood/SMED L3: KPI-0087 czyta się z ROI i cel. 5 sekcji: Kontrakt/Pomiary/Odchylenia/Działania korygujące/Rodowód + prawy panel 7 sekcji kanonu. &sekcja=kontrakt|pomiary|odchylenia|dzialania-korygujace|rodowod',
+    render: () => <WskaznikJednaKartaScreen />,
+  },
+  'cel-jedna-karta': {
+    label:
+      'DECYZJA WŁAŚCICIELA (2026-08-30) — PROTOTYP jednej N-karty celu/OKR (poziom 3 z DECYZJA_WYNIKI_TRZY_POZIOMY.md), ta sama formuła co roi-jedna-karta i wskaznik-jedna-karta. Ciągłość NordFood/SMED L3: OKR-0019, KR1 czyta się automatycznie z KPI-0087. 5 sekcji: Cel/Kluczowe rezultaty/Postęp/Powiązania/Refleksja + prawy panel 7 sekcji kanonu. &sekcja=cel|kluczowe-rezultaty|postep|powiazania|refleksja',
+    render: () => <CelJednaKartaScreen />,
+  },
   'results-vnext-okr-registry': {
     label:
       'RN-G2 P3 #23 — REALNY route entry <ResultsOkrRegistryPage> (flaga okrRegistry: OFF -> EmptyState "results-vnext-okr-disabled", ON -> realny <ResultsOkrHub>), window.fetch stubbed for /api/vnext/results/okr*. Organization/My/Company tabs (real clicks, real fetch per tab), honest progress/confidence, lock badges, real ?setId= deep link. &state=ready|loading|empty|error &ff=off',
@@ -1022,6 +1040,21 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'DEC-69 — prawa szyna Notatnika w kanonie SPEC-A (5 sekcji accordion, nie tabs) wg mywork-notatnik-szyna-prototyp.html',
     render: () => <MyWorkNotebookRailSpecAScreen />,
+  },
+  'prawy-pas-notatnik-artefakt': {
+    label:
+      'PRAWY PAS (system) — Notatnik, tryb ARTEFAKT (akordeon kanonu). Wymaga ?ff_artifact_right_rail=1',
+    render: () => <PrawyPasNotatnikSystemScreen tryb="artefakt" />,
+  },
+  'prawy-pas-notatnik-teresa': {
+    label:
+      'PRAWY PAS (system) — Notatnik, tryb TERESA (pełna wysokość, własne pole pisania). Wymaga ?ff_artifact_right_rail=1',
+    render: () => <PrawyPasNotatnikSystemScreen tryb="teresa" />,
+  },
+  'prawy-pas-notatnik-struktura': {
+    label:
+      'PRAWY PAS (system) — Notatnik, tryb zależny od typu: STRUKTURA NOTATKI. Wymaga ?ff_artifact_right_rail=1',
+    render: () => <PrawyPasNotatnikSystemScreen tryb="struktura" />,
   },
   'capability-gate-demo': {
     label: 'Faza C — CapabilityGate: shadow vs debugCapabilities vs enforce (model ról PM)',
