@@ -295,3 +295,89 @@ jako „zrobione", gdyby nie odbiór.
 **Każda migracja czytająca kolumnę musi być sprawdzona pełnym przebiegiem od
 PUSTEJ bazy.** Przyrost na bazie już zmigrowanej **nie jest dowodem** — to
 dokładnie ta kolejność zdarzeń, która ukryła awarię 159.
+
+---
+
+## Seria 160 · 161 · 162 · 164 · 166 · 167 — odebrana i scalona 2026-08-30
+
+Sześć dyżurów, sześć odbiorów adwersaryjnych, **wszystkie dowody mutacyjne
+odtworzone niezależnie** (nie na artefaktach wykonawców). Karty:
+`ODBIOR_160_BRAMA_ZADANIA.md`, `ODBIOR_161_LANCUCH_MIGRACJI.md`,
+`ODBIOR_162_DOMKNIECIE_POCHODZENIA.md`, `ODBIOR_164_AGENT_NIE_WYKONUJE.md`,
+`ODBIOR_166_KARTA_DECYZJI.md`, `ODBIOR_167_DLUG_NARZEDZI.md`.
+
+| Dyżur | Ocena | Co odbiór znalazł ponad raport |
+| --- | --- | --- |
+| 160 brama zadań | **A** rdzeń, **B** inwentarze | „23 pliki" zamiast **22**; cztery ciche powierzchnie `409` |
+| 161 łańcuch migracji | **A** rdzeń, **B** inwentarz, **C** bramka | nieujawniona luka parsera; bramka niewpięta w nic |
+| 162 pochodzenie | **A** kłamstwo, **B** pochodzenie | brak przesady w drugą stronę — Teresa nietknięta |
+| 164 agent | **A** dowód, **B** mapa i ryzyko | **przyczyna źródłowa w `aiWorker.ts:111`** |
+| 166 karta decyzji | **A**×4, **C** klucz pamięci | stare notatki **cicho przejmowane i kasowane** |
+| 167 dług narzędzi | **A**×2, **B**×2 | root config nietknięty — **80 testów obchodzi ten bug ręcznie** |
+
+**Zatrzymany świadomie: 163.** Wprowadzał **aktywną regresję** — bezwarunkowy `PUT`
+do zabramkowanej trasy rzucał wyjątkiem po udanym zapisie, przez co użytkownik widział
+`Failed to save task` przy zapisanej pracy, a pominięty `setLastSavedSnapshot`
+zostawiał autozapis w nieskończonej pętli co 900 ms. **Nie scalony.**
+
+### ★★ Odpowiedź na decyzję właściciela: NIE WŁĄCZAĆ `ENABLE_AI_TASKS_WORKER`
+
+Agent **działa** — liczy ROI, czyta bazę, bramka zgody odpala się poprawnie.
+Ale łańcuch pięciu ogniw zamyka go w martwym stanie:
+
+1. `aiWorker.ts:111` — `finishAgentTask(..., true)` **bezwarunkowo**, mimo że bramka
+   zgody wraca normalnie, nie wyjątkiem → pokwitowanie **`SUCCEEDED` przy zerze pracy**
+2. `dispatchKey = route:${planId}` — zależy tylko od planu
+3. `SUCCEEDED` → `REPLAY` **przed** blokiem kolejkowania → do kolejki nic nie trafia
+4. `agent-plan.routes.ts:188` — `REPLAY` → `'enqueued'` → **API kłamie drugi raz**
+5. `redriveAgentTask` odmawia dla `SUCCEEDED` → **ratunek operatora zamknięty**
+
+Do tego front gubi pole `dispatch` na **obu** ścieżkach (`AgentPlanPanel.tsx:369`
+i **`:419`** — zatwierdzanie kroku).
+
+**Dwa twarde blokery poza tym:** `cancelPlan` robi wyłącznie `UPDATE` statusów, **nie
+dotyka zadania w kolejce** — planu nie da się zatrzymać; `estimatedCostUsd: 0` —
+**brak limitu kosztu**. Decyzja wraca po dyżurze 165 (naprawia ogniwa 1–4).
+
+### ★ Dług narzędzi — częściowo spłacony
+
+**Bramka świeżych migracji startuje teraz sama** — wpięta w CI
+(`.github/workflows/day161-fresh-migration-gate.yml`), bez warunku `if:`, wyzwalana
+na zmianie `server/migrations/**`. Czas przebiegu **14,4 s** (zmierzony niezależnie).
+**Zadziałała już przy dyżurze 166** — `DAY161_FRESH_MIGRATION_GATE=PASS`, 869 migracji.
+
+Parser inwentarza migracji naprawiony: nierozpoznanych producentów kolumn
+**424 → 63**.
+
+**Nie spłacone:** `vitest.config.ts:210` w korzeniu repo **nadal przypina `sqlite`**.
+`grep -rln "process.env.DB_TYPE = 'postgres'" tests/` → **80 plików** ręcznie obchodzi
+ten sam błąd; jeden dokumentuje go komentarzem. **Defekt znany i obchodzony
+osiemdziesiąt razy zamiast naprawiony raz.**
+
+### ★★★ BEZPIECZNIK: licencja musi obejmować CAŁĄ ŚCIEŻKĘ DANYCH
+
+**Ten sam błąd autorski nadzorcy wystąpił DWA RAZY jednego dnia:**
+
+- **167** — licencja wymieniała `server/vitest.config.ts`, a pułapka w tej samej
+  instrukcji mówiła o **obu** configach. Wykonawca naprawił jeden i **przemilczał
+  drugi** zamiast dać STOP. Naprawa w połowie.
+- **166** — licencja wymieniała walidator, trasy i kontroler, ale **nie serwis**
+  (`decisionCollaborationService.ts`), przez który dane fizycznie muszą przejść.
+  Wykonawca go zmienił (słusznie, inaczej nic by nie dojechało) i **nie zgłosił
+  odstępstwa**.
+
+**Zasada od dyżuru 168:** dla każdego pola, które ma dojechać do bazy, licencja
+wypisuje **całą ścieżkę** — walidator · trasa · kontroler · serwis · repozytorium ·
+migracja. Nie tylko pliki, które przyszły nadzorcy do głowy.
+
+**Zasada dla wykonawcy:** uzasadnione przekroczenie licencji **zgłoszone wprost** jest
+w porządku. Przemilczane — nie. Tak samo milczenie o połowie nienaprawionego problemu.
+
+### Trzy zasadne STOP-y, wszystkie na moich błędach
+
+- **160** — przygotowałem klon w ścieżce, w której `§0.1` miał założyć worktree;
+  `Z6` słusznie zabronił Codexowi go tknąć.
+- **166** — przydzieliłem port **5000**, zajęty na stałe przez macOS Control Center.
+- **163** — regresja złapana przez odbiór, nie przez wykonawcę.
+
+**Każdy STOP był słuszny i każdy oszczędził szkodę.**
