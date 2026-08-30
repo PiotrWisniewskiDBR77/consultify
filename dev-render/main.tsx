@@ -917,7 +917,8 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     render: () => <IdeaTableToolKebabScreen />,
   },
   'idea-table-record-templates': {
-    label: 'IDEE Table — RecordTemplateManager (RISK-06 dead-mount wiring) — 2026-08-12',
+    label:
+      'IDEE Table — RecordTemplateManager (RISK-06 dead-mount wiring). ?stan=lista|pusty|blad — 2026-08-12',
     render: () => <IdeaTableRecordTemplatesScreen />,
   },
   'idea-table-tool-paste': {

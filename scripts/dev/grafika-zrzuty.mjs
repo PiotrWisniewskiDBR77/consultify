@@ -61,6 +61,21 @@ const PARAMETRY = arg('parametry', '').replace(/^[?&]/, '');
  * `--wejscie=html` otwiera `${BASE}/X.html` zamiast `${BASE}/?screen=X`.
  */
 const WEJSCIE = arg('wejscie', 'screen');
+/**
+ * `--przewin=<selektor CSS>` — przewiń element DO KADRU przed zrzutem.
+ *
+ * POWÓD ISTNIENIA (przegląd przed odbiorem 2026-08-30): kontrolka poufności
+ * Idei siedzi na 1325. pikselu WEWNĄTRZ prawego panelu, który ma własny
+ * `overflow-y: auto` i widoczne 852 px. `fullPage` mierzy przewijanie STRONY,
+ * nie kontenera, więc kontrolka nie mogła trafić na żaden zrzut — i meldunek
+ * „kontrolka działa" spotkał się ze zrzutem, na którym jej nie ma. Robotnik
+ * nie mógł tego rozstrzygnąć narzędziem, którym mierzył.
+ *
+ * Można podać kilka selektorów po przecinku (przewijane po kolei). Selektor,
+ * którego nie ma na stronie, jest RAPORTOWANY jako `przewin: BRAK` — cicha
+ * porażka przewijania wyglądałaby dokładnie jak defekt produktu.
+ */
+const PRZEWIN = arg('przewin', '').split(',').map((s) => s.trim()).filter(Boolean);
 
 if (EKRANY.length === 0) {
   console.error('BŁĄD: podaj --ekrany=a,b,c');
@@ -88,6 +103,7 @@ for (const ekran of EKRANY) {
     });
     const page = await context.newPage();
     const bledy = [];
+    const przewinBrak = [];
     page.on('console', (m) => {
       if (m.type() === 'error') bledy.push(m.text().slice(0, 200));
     });
@@ -116,6 +132,16 @@ for (const ekran of EKRANY) {
     try {
       await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
       await page.waitForTimeout(OSIAD);
+      for (const sel of PRZEWIN) {
+        const trafiony = await page.evaluate((s) => {
+          const el = document.querySelector(s);
+          if (!el) return false;
+          el.scrollIntoView({ block: 'center', behavior: 'instant' });
+          return true;
+        }, sel);
+        if (!trafiony) przewinBrak.push(sel);
+      }
+      if (PRZEWIN.length > 0) await page.waitForTimeout(300);
       // Chrome harnessu wycina `uwagi=0` w adresie (patrz komentarz wyżej).
       // Ta reguła zostaje jako PAS BEZPIECZEŃSTWA dla ekranów, które oznaczają
       // własne elementy harnessu atrybutem `data-dev-render-chrome` — robi tak
@@ -128,7 +154,15 @@ for (const ekran of EKRANY) {
         szer: document.documentElement.scrollWidth,
         wys: document.documentElement.scrollHeight,
       }));
-      wyniki.push({ ekran, motyw, plik, szer, wys, bledy: bledy.length, status: 'OK' });
+      wyniki.push({
+        ekran,
+        motyw,
+        plik,
+        szer,
+        wys,
+        bledy: bledy.length,
+        status: przewinBrak.length > 0 ? `przewin BRAK: ${przewinBrak.join(' ')}` : 'OK',
+      });
     } catch (e) {
       wyniki.push({ ekran, motyw, plik: '—', szer: 0, wys: 0, bledy: bledy.length, status: `BŁĄD: ${e.message.slice(0, 80)}` });
     }
@@ -143,7 +177,7 @@ console.log('ekran                          motyw   status      wys.strony  bł�
 console.log('─'.repeat(82));
 for (const w of wyniki) {
   console.log(
-    `${w.ekran.padEnd(30)} ${w.motyw.padEnd(7)} ${w.status.padEnd(11)} ${String(w.wys).padStart(9)}  ${w.bledy > 0 ? `★ ${w.bledy}` : '0'}`
+    `${w.ekran.padEnd(30)} ${w.motyw.padEnd(7)} ${w.status.padEnd(24)} ${String(w.wys).padStart(9)}  ${w.bledy > 0 ? `★ ${w.bledy}` : '0'}`
   );
 }
 const zle = wyniki.filter((w) => w.status !== 'OK').length;
