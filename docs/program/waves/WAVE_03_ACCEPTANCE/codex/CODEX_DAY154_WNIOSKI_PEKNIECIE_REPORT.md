@@ -1,8 +1,8 @@
 # CODEX DAY154 — Wnioski: pęknięcie Wywiad → Wnioski
 
-Data pomiaru: 2026-08-30  
-Gałąź: `codex/day154-wnioski-pekniecie-20260830`  
-Marker: `e4ff8e21ae`  
+Data pomiaru: 2026-08-30
+Gałąź: `codex/day154-wnioski-pekniecie-20260830`
+Marker: `e4ff8e21ae`
 Werdykt wykonawcy: **R1–R4 wykonane; B1–B6 i B8 PASS; B7 PARTIAL / assessment NOT PROVEN**.
 
 ## Stan wejściowy
