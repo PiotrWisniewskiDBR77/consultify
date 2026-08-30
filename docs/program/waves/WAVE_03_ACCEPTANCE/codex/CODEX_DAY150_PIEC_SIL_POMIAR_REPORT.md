@@ -86,3 +86,79 @@ To estymacja inżynierska, nie decyzja produktowa. Nie obejmuje zmiany `APPROVED
 Suma arytmetyczna: **9–18 dni inżynierskich**. Realistyczny przedział kalendarzowy dla jednego wykonawcy po uwzględnieniu integracji i odbioru: **2–4 tygodnie**. Największa niepewność to kontrakt klasyfikacji Porterowych sygnałów i wniosków; bez decyzji właściciela można napisać kod, ale nie udowodnić poprawności biznesowej.
 
 T4 jest zatem potwierdzona co do rzędu wielkości: to nie jest poprawka jednego pliku. Jednocześnie wspólny renderer nie musi dostać osobnej gałęzi, jeżeli nowy builder dostarczy prawidłowy wspólny `ToolOutput`; koszt dotyczy głównie kontraktu danych, lineage i dowodów.
+
+## R4 — lokalne uruchomienie bez zmiany approved set
+
+Odpowiedź: **TAK dla GET/PUT/promocji/renderu po bezpośrednim INSERT; NIEZWERYFIKOWANE dla realnej rozmowy AI i pełnego UI.**
+
+Przebieg realny na `127.0.0.1:6036`, przez `ApiGateway.getInstance().initializeRoutes(app)` i podpisany JWT:
+
+1. Normalny `POST /api/tools` dla `market-forces` → 409 (kontrola znanej bramki).
+2. Bezpośredni INSERT jednej sesji `market-forces` do `tool_sessions`.
+3. `GET /api/tools/:id` → 200 i `toolType=market-forces`.
+4. `PUT /api/tools/:id`, `expectedVersion=1`, z Porterowym context/signals/recommendedMoves → 200, version 2; kolejny GET odczytał sygnał. Brak drugiej bramki na GET/PUT.
+5. Kontrolowane ustawienie statusu fixture na `APPROVED`, potem `POST /api/tools/:id/promote` → 200.
+6. Niezależny nowy `pg.Client`: dokładnie jeden output, `items=[]`, `tensions=[]`, `conclusions=[]`.
+7. `renderToolReport` na odczytanym outputcie: jedna sekcja, tylko pusty `signature-visual`; brak bloków evidence/tension/conclusion.
+8. Cleanup: `day150_sessions=0`, `day150_outputs=0`.
+
+Nie wywołano `/api/ai/**`, `llmService` ani dostawcy. Moduł prompt/action istnieje, ale teza „rozmowa AI przechodzi po seedzie” pozostaje nieweryfikowana z powodu bezwzględnego Z15. Nie uruchomiono browsera ani pełnego runtime na portach 4966/4967, więc nie twierdzę, że `ToolCanvas` został wizualnie otwarty; dowód UI jest statyczny, a dowód transportu sesji — realny HTTP.
+
+## Testy i integralność dowodu
+
+Komenda zakończonego przebiegu (uruchomiona z `server/`):
+
+```bash
+RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres NODE_ENV=test ENABLE_V8_GLOBAL=true ENABLE_TEST_AUTH_BYPASS=false RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE=enforce DATABASE_URL=postgresql://postgres:cx@127.0.0.1:6036/cx150 JWT_SECRET=cx150-test-secret-do-not-reuse npx vitest run src/services/tools/__tests__/day150.marketForcesPath.pg.test.ts --config /private/tmp/cx-day150-piec-sil-pomiar-scratch/day150.vitest.config.ts --retry=0 --reporter=json --outputFile=/private/tmp/cx-day150-piec-sil-pomiar-artefakty/day150-vitest.json
+```
+
+JSON: 3 total, 3 passed, 0 failed, 0 pending. `fullName`:
+
+- `... the normal product entry refuses a new market-forces session` — passed;
+- `... a directly seeded session remains reachable and writable through the real Gateway` — passed;
+- `... promotion succeeds but freezes honestly-empty lineage and renders a degenerate report` — passed.
+
+W-A: nie ma zastosowania — dyżur jest pomiarowy i nie naprawia produktu; nie wykonywano mutacji produkcyjnej red→green.  
+W-C: nie ma porównania „marker kontra po zmianie produktu”, ponieważ produktu nie zmieniono, a test Day150 nie istnieje na markerze. Wynik nie jest przedstawiany jako regresyjna delta.  
+W-B: test nie czyta tekstu źródła; wykonuje HTTP, Postgres i renderer.  
+W-D: granica plikowa jest podana niżej.
+
+Pułapki (a)–(e): (a) wyłączona `ENABLE_V8_GLOBAL=true`; (b) ustawiono `RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE=enforce`, choć Tools nie używa tego strażnika; (c) zewnętrzny config nie przypina DB_TYPE, a pierwsza asercja runtime wymaga `postgres`; (d) `ENABLE_TEST_AUTH_BYPASS=false`, realny JWT przeszedł `verifyToken`; (e) kaskady KPI nie leżą na ścieżce tego pakietu i test nie dotyka KPI.
+
+Z30: **Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie zawiera wierszy konfiguracji SMTP. Nie uruchomiłem `server/src/index.ts` ani żadnego drenażu outboxu. Żaden e-mail ani zaproszenie kalendarzowe nie zostało wysłane.** Dowody: `BRAK ZMIENNYCH POCZTY`; `settings WHERE key LIKE 'smtp%'` → 0 wierszy; brak trafień drenów w `server/src/Gateway.ts`.
+
+## Rozstrzygnięcie tez
+
+| Teza | Werdykt | Odniesienie |
+|---|---|---|
+| T1 | POTWIERDZONA Z OGRANICZENIEM | R1/R4: moduły i UI istnieją, normalny start 409; realnego LLM i wizualnego UI nie uruchomiono. |
+| T2 | POTWIERDZONA | R1/R4: promocja realnym HTTP, cold DB readback i render wykazały trzy puste kolekcje i degenerowany dokument. |
+| T3 | POTWIERDZONA | R1/R2: `setInitiatives` istnieje, lecz nie ma Porter handoff ani pinned output lineage. |
+| T4 | POTWIERDZONA CO DO SKALI | R3: 9–18 dni inżynierskich / 2–4 tygodnie kalendarzowe; renderer może pozostać wspólny. |
+
+## Artefakty poza repo
+
+| Plik | SHA-256 |
+|---|---|
+| `/private/tmp/cx-day150-piec-sil-pomiar-artefakty/day150-vitest.json` | `65a6ff6abfa47cdcf6504533422f68d4563c4e273eefb4fb6551c8755a7a5186` |
+| `/private/tmp/cx-day150-piec-sil-pomiar-artefakty/migrate-first.log` | `bf73c65c34da1ce9b883a942b9ec70716e469e177c2be7472c26704c5c06805e` |
+| `/private/tmp/cx-day150-piec-sil-pomiar-artefakty/migrate-second.log` | `9627d9cb8b3c11f6fbcdfbe6d8c680b1cdb65fc6461a0346135b58b102f620c1` |
+| `/private/tmp/cx-day150-piec-sil-pomiar-artefakty/swot-reference-tests.txt` | `3660a758af7ad08742dee6f33b95940cdc2f2c80f24e7368659bcf3d184814a7` |
+| `/private/tmp/cx-day150-piec-sil-pomiar-artefakty/market-forces-server-gates.txt` | `88a13744b6aa04d243776e920c6d59c8a47f1a04ac8aab115221c8b13913f1d5` |
+
+## W-D — rozłączność
+
+```text
+$ git diff --name-only cefa960d00..HEAD
+docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY150_PIEC_SIL_POMIAR_REPORT.md
+server/src/services/tools/__tests__/day150.marketForcesPath.pg.test.ts
+```
+
+Oba pliki są jawnie licencjonowane. Diff dla `server/src/services/toolCatalog/approvedMvpToolTypes.ts` i `src/components/MyWork/**` jest pusty. Nie pushowano.
+
+## TWIERDZENIA NIEZWERYFIKOWANE
+
+- Czy realny dostawca/model przeprowadzi pełną Porterową rozmowę po seedzie: nieweryfikowane, ponieważ Z15 zakazuje LLM.
+- Czy użytkownik faktycznie zobaczy `ToolCanvas` po otwarciu zasianej sesji w browserze: nieweryfikowane; nie uruchomiono pełnego runtime ani browsera.
+- Czy wszystkie czyste funkcje Porterowego silnika zachowują się poprawnie dla kompletnego case'u DBR: nieweryfikowane; potwierdzono kod/eksporty, nie pełny kontrakt biznesowy.
+- Czy estymacja 9–18 dni utrzyma się po decyzji właściciela o klasyfikacji evidence/accept: nieweryfikowane; to największy składnik niepewności.
